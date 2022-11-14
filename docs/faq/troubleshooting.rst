@@ -5,6 +5,10 @@ Troubleshooting
 
 /////////////////////////////////////////////////////////////////////////
 
+.. important:: This page will ultimately go away.  All of the FAQ
+               content is being folded in elsewhere in the docs.
+               Please do not maintain/extend this page.
+
 I see strange messages about missing symbols in my application; what do these mean?
 -----------------------------------------------------------------------------------
 

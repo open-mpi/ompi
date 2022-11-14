@@ -8,6 +8,10 @@
 Frequently Asked Questions (FAQ)
 ================================
 
+.. important:: This page will ultimately go away.  All of the FAQ
+               content is being folded in elsewhere in the docs.
+               Please do not maintain/extend this page.
+
 The pages below include questions that we are asked frequently enough
 that they are worth categorizing in an official way.
 

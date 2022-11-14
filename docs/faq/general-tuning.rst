@@ -5,6 +5,10 @@ General Tuning
 
 /////////////////////////////////////////////////////////////////////////
 
+.. important:: This page will ultimately go away.  All of the FAQ
+               content is being folded in elsewhere in the docs.
+               Please do not maintain/extend this page.
+
 .. _faq-general-tuning-install-components:
 
 How do I install my own components into an Open MPI installation?
