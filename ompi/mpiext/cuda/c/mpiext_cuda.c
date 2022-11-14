@@ -20,13 +20,12 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "opal/constants.h"
-#include "opal/runtime/opal_params.h"
+#include "opal/mca/accelerator/base/base.h"
 #include "ompi/mpiext/cuda/c/mpiext_cuda_c.h"
 
 /* If CUDA-aware support is configured in, return 1. Otherwise, return 0.
  * This API may be extended to return more features in the future. */
 int MPIX_Query_cuda_support(void)
 {
-    return opal_built_with_cuda_support && opal_cuda_runtime_initialized;
+    return 0 == strcmp(opal_accelerator_base_selected_component.base_version.mca_component_name, "cuda");
 }
