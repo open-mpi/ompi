@@ -88,7 +88,7 @@ typedef struct {
     char *recv_worker_addrs;
     int *recv_worker_displs;
     size_t comm_size;
-    opal_atomic_size_t num_incomplete_req_ops;
+    opal_atomic_int64_t num_incomplete_req_ops;
 } opal_common_ucx_ctx_t;
 
 /* Worker Pool memory (wpmem) is an object that represents a remotely accessible

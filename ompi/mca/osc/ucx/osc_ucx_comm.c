@@ -263,7 +263,7 @@ static inline int get_dynamic_win_info(uint64_t remote_addr,
     OSC_UCX_GET_DEFAULT_EP(ep, module, target);
     uint64_t remote_state_addr = (module->state_addrs)[target] + OSC_UCX_STATE_DYNAMIC_WIN_CNT_OFFSET;
     size_t remote_state_len = sizeof(uint64_t) + sizeof(ompi_osc_dynamic_win_info_t) * OMPI_OSC_UCX_ATTACH_MAX;
-    char *temp_buf;
+    char *temp_buf = NULL;
     ompi_osc_dynamic_win_info_t *temp_dynamic_wins;
     int contain = 0;
     uint64_t win_count;
@@ -870,11 +870,10 @@ static inline int ompi_osc_ucx_acc_rputget(void *stage_addr, int stage_count,
             }
         }
         ucx_req->target = target;
-        if (target_dt != NULL) {
-            ucx_req->target_dt = target_dt;
-            if (!ompi_datatype_is_predefined(target_dt)) {
-                OBJ_RETAIN(ucx_req->target_dt);
-            }
+        assert(target_dt != NULL);
+        ucx_req->target_dt = target_dt;
+        if (!ompi_datatype_is_predefined(target_dt)) {
+            OBJ_RETAIN(ucx_req->target_dt);
         }
         ucx_req->target_disp = target_disp;
         ucx_req->target_count = target_count;
@@ -884,9 +883,11 @@ static inline int ompi_osc_ucx_acc_rputget(void *stage_addr, int stage_count,
     module->skip_sync_check = true; /* we already hold the acc lock, so no need for sync check*/
 
     if (is_put) {
+        assert(origin_dt != NULL);
         ret = ompi_osc_ucx_put(origin_addr, origin_count, origin_dt, target, target_disp,
                                target_count, target_dt, win);
     } else {
+        assert(stage_dt != NULL);
         ret = ompi_osc_ucx_get(stage_addr, stage_count, stage_dt, target, target_disp,
                 target_count, target_dt, win);
     }
@@ -1615,7 +1616,7 @@ void ompi_osc_ucx_req_completion(void *request) {
         assert(req->phase != ACC_INIT);
         void *free_addr = NULL;
         bool release_lock = false;
-        ptrdiff_t temp_extent;
+        ptrdiff_t temp_lb, temp_extent;
         const void *origin_addr = req->origin_addr;
         int origin_count = req->origin_count;
         struct ompi_datatype_t *origin_dt = req->origin_dt;
@@ -1723,6 +1724,7 @@ void ompi_osc_ucx_req_completion(void *request) {
                     } else {
                         int i;
                         void *curr_origin_addr = origin_ucx_iov[origin_ucx_iov_idx].addr;
+                        ompi_datatype_get_true_extent(temp_dt, &temp_lb, &temp_extent);
                         for (i = 0; i < (int)temp_count; i++) {
                             ompi_op_reduce(op, curr_origin_addr,
                                            (void *)((char *)temp_addr + i * temp_extent),
