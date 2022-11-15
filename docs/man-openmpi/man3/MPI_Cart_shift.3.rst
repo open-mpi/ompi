@@ -8,7 +8,7 @@ MPI_Cart_shift
 :ref:`MPI_Cart_shift` - Returns the shifted source and destination ranks,
 given a shift direction and amount.
 
-Syntax
+SYNTAX
 ------
 
 C Syntax
@@ -47,7 +47,7 @@ Fortran 2008 Syntax
        INTEGER, INTENT(OUT) :: rank_source, rank_dest
        INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 
-Input Parameters
+INPUT PARAMETERS
 ----------------
 
 -  ``comm`` : Communicator with Cartesian structure (handle).
@@ -55,14 +55,14 @@ Input Parameters
 -  ``disp`` : Displacement ( > 0: upward shift, < 0: downward shift)
    (integer).
 
-Output Parameters
+OUTPUT PARAMETERS
 -----------------
 
 -  ``rank_source`` : Rank of source process (integer).
 -  ``rank_dest`` : Rank of destination process (integer).
 -  ``IERROR`` : Fortran only: Error status (integer).
 
-Description
+DESCRIPTION
 -----------
 
 If the process topology is a Cartesian structure, an :ref:`MPI_Sendrecv`
@@ -107,7 +107,7 @@ column) by i steps.
        CALL MPI_SENDRECV_REPLACE(A, 1, MPI_REAL, dest, 0, source, 0, comm, status,
                                  ierr)
 
-Note
+NOTE
 ----
 
 In Fortran, the dimension indicated by DIRECTION = i has DIMS(i+1)
@@ -115,7 +115,7 @@ nodes, where DIMS is the array that was used to create the grid. In C,
 the dimension indicated by direction = i is the dimension specified by
 dims[i].
 
-Errors
+ERRORS
 ------
 
 .. include:: ./ERRORS.rst

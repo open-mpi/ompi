@@ -8,7 +8,7 @@ MPI_Grequest_complete
 :ref:`MPI_Grequest_complete` - Reports that a generalized request is
 complete.
 
-Syntax
+SYNTAX
 ------
 
 C Syntax
@@ -42,17 +42,17 @@ Fortran 2008 Syntax
        TYPE(MPI_Request), INTENT(IN) :: request
        INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 
-Input/Output Parameter
+INPUT/OUTPUT PARAMETER
 ----------------------
 
 -  ``request`` : Generalized request (handle).
 
-Output Parameter
+OUTPUT PARAMETER
 ----------------
 
 -  ``IERROR`` : Fortran only: Error status (integer).
 
-Description
+DESCRIPTION
 -----------
 
 :ref:`MPI_Grequest_complete` informs MPI that the operations represented by
@@ -76,7 +76,7 @@ regardless of the state of other processes (the operation has acquired
 side-effects. The user should guarantee these same properties for newly
 defined operations.
 
-Errors
+ERRORS
 ------
 
 .. include:: ./ERRORS.rst

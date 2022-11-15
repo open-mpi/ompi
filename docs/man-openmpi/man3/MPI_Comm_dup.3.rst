@@ -8,7 +8,7 @@ MPI_Comm_dup
 :ref:`MPI_Comm_dup` - Duplicates an existing communicator with all its cached
 information.
 
-Syntax
+SYNTAX
 ------
 
 C Syntax
@@ -43,18 +43,18 @@ Fortran 2008 Syntax
        TYPE(MPI_Comm), INTENT(OUT) :: newcomm
        INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 
-Input Parameter
+INPUT PARAMETER
 ---------------
 
 -  comm : Communicator (handle).
 
-Output Parameters
+OUTPUT PARAMETERS
 -----------------
 
 -  newcomm : Copy of comm (handle).
 -  IERROR : Fortran only: Error status (integer).
 
-Description
+DESCRIPTION
 -----------
 
 :ref:`MPI_Comm_dup` duplicates the existing communicator comm with associated
@@ -65,7 +65,7 @@ delete the attribute from the new communicator. Returns in newcomm a new
 communicator with the same group, any copied cached information, but a
 new context (see Section 5.7.1 of the MPI-1 Standard, "Functionality").
 
-Notes
+NOTES
 -----
 
 This operation is used to provide a parallel library call with a
@@ -83,7 +83,7 @@ invokes other MPI functions. In Open MPI, it is not valid for attribute
 copy callbacks (or any of their children) to add or delete attributes on
 the same object on which the attribute copy callback is being invoked.
 
-Errors
+ERRORS
 ------
 
 .. include:: ./ERRORS.rst

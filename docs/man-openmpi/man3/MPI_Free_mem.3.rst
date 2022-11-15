@@ -7,7 +7,7 @@ MPI_Free_mem
 
 :ref:`MPI_Free_mem` - Frees memory that has been allocated using :ref:`MPI_Alloc_mem`.
 
-Syntax
+SYNTAX
 ------
 
 C Syntax
@@ -42,23 +42,23 @@ Fortran 2008 Syntax
        TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: base
        INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 
-Input Parameter
+INPUT PARAMETER
 ---------------
 
 -  base : Initial address of memory segment allocated by :ref:`MPI_Alloc_mem`
    (choice).
 
-Output Parameter
+OUTPUT PARAMETER
 ----------------
 
 -  IERROR : Fortran only: Error status (integer).
 
-Description
+DESCRIPTION
 -----------
 
 :ref:`MPI_Free_mem` frees memory that has been allocated by :ref:`MPI_Alloc_mem`.
 
-Errors
+ERRORS
 ------
 
 .. include:: ./ERRORS.rst

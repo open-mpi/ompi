@@ -7,7 +7,7 @@ MPI_Graph_map
 
 :ref:`MPI_Graph_map` - Maps process to graph topology information.
 
-Syntax
+SYNTAX
 ------
 
 C Syntax
@@ -44,7 +44,7 @@ Fortran 2008 Syntax
        INTEGER, INTENT(OUT) :: newrank
        INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 
-Input Parameters
+INPUT PARAMETERS
 ----------------
 
 -  comm : Input communicator (handle).
@@ -53,14 +53,14 @@ Input Parameters
    :ref:`MPI_Graph_create`.
 -  edges : Integer array specifying the graph structure.
 
-Output Parameters
+OUTPUT PARAMETERS
 -----------------
 
 -  newrank : Reordered rank of the calling process; MPI_UNDEFINED if the
    calling process does not belong to graph (integer).
 -  IERROR : Fortran only: Error status (integer).
 
-Description
+DESCRIPTION
 -----------
 
 :ref:`MPI_Cart_map` and :ref:`MPI_Graph_map` can be used to implement all other
@@ -68,7 +68,7 @@ topology functions. In general they will not be called by the user
 directly, unless he or she is creating additional virtual topology
 capability other than that provided by MPI.
 
-Errors
+ERRORS
 ------
 
 .. include:: ./ERRORS.rst

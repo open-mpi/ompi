@@ -8,7 +8,7 @@ MPI_Session_create_errhandler
 :ref:`MPI_Session_create_errhandler` - Creates an error handler that can be
 attached to sessions
 
-Syntax
+SYNTAX
 ------
 
 C Syntax
@@ -45,18 +45,18 @@ Fortran 2008 Syntax
        TYPE(MPI_Errhandler), INTENT(OUT) :: errhandler
        INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 
-Input Parameter
+INPUT PARAMETER
 ---------------
 
 -  ``function`` : User-defined error handling procedure (function).
 
-Output Parameters
+OUTPUT PARAMETERS
 -----------------
 
 -  ``errhandler`` : MPI error handler (handle).
 -  ``IERROR`` : Fortran only: Error status (integer).
 
-Description
+DESCRIPTION
 -----------
 
 :ref:`MPI_Session_create_errhandler` creates an error handler that can be
@@ -79,7 +79,7 @@ Fortran, the user routine should be of this form:
    SUBROUTINE SESSION_ERRHANDLER_FUNCTION(SESSION, ERROR_CODE, ...)
       INTEGER SESSION, ERROR_CODE
 
-Errors
+ERRORS
 ------
 
 .. include:: ./ERRORS.rst

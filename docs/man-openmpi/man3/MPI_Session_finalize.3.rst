@@ -7,7 +7,7 @@ MPI_Session_finalize
 
 :ref:`MPI_Session_finalize` - releases all MPI state associated with a session
 
-Syntax
+SYNTAX
 ------
 
 C Syntax
@@ -41,17 +41,17 @@ Fortran 2008 Syntax
        TYPE(MPI_Session), INTENT(IN) :: session
        INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 
-Input Parameters
+INPUT PARAMETERS
 ----------------
 
 -  session : session to be finalized (handle)
 
-Output Parameters
+OUTPUT PARAMETERS
 -----------------
 
 -  IERROR : Fortran only: Error status (integer).
 
-Description
+DESCRIPTION
 -----------
 
 :ref:`MPI_Session_finalize` releases all MPI state associated with the supplied
@@ -59,7 +59,7 @@ session. Every instantiated session must be finalized using
 :ref:`MPI_Session_finalize`. The handle session is set to MPI_SESSION_NULL by
 the call.
 
-Notes
+NOTES
 -----
 
 Before an MPI process invokes :ref:`MPI_Session_finalize`, the process must
@@ -78,7 +78,7 @@ later, :ref:`MPI_Session_finalize` may be synchronizing on the group associated
 with a communicator that is only freed (with MPI_Comm_free) rather than
 disconnected (with MPI_Comm_disconnect).
 
-Errors
+ERRORS
 ------
 
 .. include:: ./ERRORS.rst

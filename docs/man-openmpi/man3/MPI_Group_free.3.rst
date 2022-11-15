@@ -7,7 +7,7 @@ MPI_Group_free
 
 :ref:`MPI_Group_free` - Frees a group.
 
-Syntax
+SYNTAX
 ------
 
 C Syntax
@@ -41,29 +41,29 @@ Fortran 2008 Syntax
        TYPE(MPI_Group), INTENT(INOUT) :: group
        INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 
-Input/Output Parameter
+INPUT/OUTPUT PARAMETER
 ----------------------
 
 -  ``group`` : Group (handle).
 
-Output Parameter
+OUTPUT PARAMETER
 ----------------
 
 -  ``IERROR`` : Fortran only: Error status (integer).
 
-Description
+DESCRIPTION
 -----------
 
 This operation marks a ``group`` object for deallocation. The handle
 ``group`` is set to MPI_GROUP_NULL by the call. Any ongoing
 operation using this ``group`` will complete normally.
 
-Note
+NOTE
 ----
 
 On return, ``group`` is set to MPI_GROUP_NULL.
 
-Errors
+ERRORS
 ------
 
 .. include:: ./ERRORS.rst

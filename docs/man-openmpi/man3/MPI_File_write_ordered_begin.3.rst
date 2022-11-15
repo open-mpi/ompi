@@ -9,7 +9,7 @@ MPI_File_write_ordered_begin
 by a shared file pointer; beginning part of a split collective routine
 (nonblocking).
 
-Syntax
+SYNTAX
 ------
 
 C Syntax
@@ -48,24 +48,24 @@ Fortran 2008 Syntax
        TYPE(MPI_Datatype), INTENT(IN) :: datatype
        INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 
-Input/Output Parameter
+INPUT/OUTPUT PARAMETER
 ----------------------
 
 -  ``fh`` : File handle (handle).
 
-Input Parameters
+INPUT PARAMETERS
 ----------------
 
 -  ``buf`` : Initial address of buffer (choice).
 -  ``count`` : Number of elements in buffer (integer).
 -  ``datatype`` : Data type of each buffer element (handle).
 
-Output Parameter
+OUTPUT PARAMETER
 ----------------
 
 -  ``IERROR`` : Fortran only: Error status (integer).
 
-Description
+DESCRIPTION
 -----------
 
 :ref:`MPI_File_write_ordered_begin` is the beginning part of a split
@@ -81,7 +81,7 @@ position at which the shared file pointer would be after all processes
 whose ranks within the group are less than that of this process had
 written their data.
 
-Notes
+NOTES
 -----
 
 All the nonblocking collective routines for data access are "split" into
@@ -89,7 +89,7 @@ two routines, each with \_begin or \_end as a suffix. These split
 collective routines are subject to the semantic rules described in
 Section 9.4.5 of the MPI-2 standard.
 
-Errors
+ERRORS
 ------
 
 .. include:: ./ERRORS.rst
