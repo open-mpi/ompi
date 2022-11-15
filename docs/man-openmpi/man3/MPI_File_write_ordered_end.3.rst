@@ -9,7 +9,7 @@ MPI_File_write_ordered_end
 by a shared file pointer; ending part of a split collective routine
 (blocking).
 
-Syntax
+SYNTAX
 ------
 
 C Syntax
@@ -47,23 +47,23 @@ Fortran 2008 Syntax
        TYPE(MPI_Status) :: status
        INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 
-Input/Output Parameter
+INPUT/OUTPUT PARAMETER
 ----------------------
 
 -  ``fh`` : File handle (handle).
 
-Input Parameter
+INPUT PARAMETER
 ---------------
 
 -  ``buf`` : Initial address of buffer (choice).
 
-Output Parameters
+OUTPUT PARAMETERS
 -----------------
 
 -  ``status`` : Status object (status).
 -  ``IERROR`` : Fortran only: Error status (integer).
 
-Description
+DESCRIPTION
 -----------
 
 :ref:`MPI_File_write_ordered_end` is the ending part of a split collective
@@ -72,7 +72,7 @@ associated with the file handle ``fh``. :ref:`MPI_File_write_ordered_end`
 returns the number of elements written into the file associated with
 ``fh`` in ``status``.
 
-Notes
+NOTES
 -----
 
 All the nonblocking collective routines for data access are "split" into
@@ -80,7 +80,7 @@ two routines, each with \_begin or \_end as a suffix. These split
 collective routines are subject to the semantic rules described in
 Section 9.4.5 of the MPI-2 standard.
 
-Errors
+ERRORS
 ------
 
 .. include:: ./ERRORS.rst

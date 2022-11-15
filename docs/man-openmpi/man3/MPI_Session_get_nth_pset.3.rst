@@ -7,7 +7,7 @@ MPI_Session_get_nth_pset
 
 :ref:`MPI_Session_get_nth_pset` - Query runtime for name of the nth process set
 
-Syntax
+SYNTAX
 ------
 
 C Syntax
@@ -46,25 +46,25 @@ Fortran 2008 Syntax
        CHARACTER(LEN=*), INTENT(OUT) :: pset_name
        INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 
-Input Parameters
+INPUT PARAMETERS
 ----------------
 
 -  session : session (handle)
 -  info: info object (handle)
 -  n: index of the desired process set name (integer)
 
-Input/Output Parameter
+INPUT/OUTPUT PARAMETER
 ^^^^^^^^^^^^^^^^^^^^^^
 
 -  pset_len: length of the pset_name argument (integer)
 
-Output Parameters
+OUTPUT PARAMETERS
 -----------------
 
 -  pset_name : name of the nth process set (string)
 -  IERROR : Fortran only: Error status (integer).
 
-Description
+DESCRIPTION
 -----------
 
 :ref:`MPI_Session_get_nth_pset` returns the name of the nth process set in the
@@ -78,14 +78,14 @@ C, pset_len includes the required space for the null terminator. In C,
 this function returns a null terminated string in all cases where the
 pset_len input value is greater than 0.
 
-Notes
+NOTES
 -----
 
 Process set names have an implementation-defined maximum length of
 MPI_MAX_PSET_NAME_LEN characters. MPI_MAX_PSET_NAME_LEN shall have a
 value of at least 63.
 
-Errors
+ERRORS
 ------
 
 .. include:: ./ERRORS.rst

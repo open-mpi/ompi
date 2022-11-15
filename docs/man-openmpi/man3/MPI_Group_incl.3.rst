@@ -8,7 +8,7 @@ MPI_Group_incl
 :ref:`MPI_Group_incl` - Produces a group by reordering an existing group and
 taking only listed members.
 
-Syntax
+SYNTAX
 ------
 
 C Syntax
@@ -45,7 +45,7 @@ Fortran 2008 Syntax
        TYPE(MPI_Group), INTENT(OUT) :: newgroup
        INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 
-Input Parameters
+INPUT PARAMETERS
 ----------------
 
 -  group : Group (handle).
@@ -54,14 +54,14 @@ Input Parameters
 -  ranks : Ranks of processes in group to appear in newgroup (array of
    integers).
 
-Output Parameters
+OUTPUT PARAMETERS
 -----------------
 
 -  newgroup : New group derived from above, in the order defined by
    ranks (handle).
 -  IERROR : Fortran only: Error status (integer).
 
-Description
+DESCRIPTION
 -----------
 
 The function :ref:`MPI_Group_incl` creates a group group_out that consists of
@@ -72,13 +72,13 @@ elements must be distinct, or else the program is erroneous. If n = 0,
 then group_out is MPI_GROUP_EMPTY. This function can, for instance, be
 used to reorder the elements of a group.
 
-Note
+NOTE
 ----
 
 This implementation does not currently check to ensure that there are no
 duplicates in the list of ranks.
 
-Errors
+ERRORS
 ------
 
 .. include:: ./ERRORS.rst

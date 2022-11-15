@@ -8,7 +8,7 @@ MPI_Comm_call_errhandler
 :ref:`MPI_Comm_call_errhandler` - Passes the supplied error code to the error
 handler assigned to a communicator
 
-Syntax
+SYNTAX
 ------
 
 C Syntax
@@ -43,18 +43,18 @@ Fortran 2008 Syntax
        INTEGER, INTENT(IN) :: errorcode
        INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 
-Input Parameter
+INPUT PARAMETER
 ---------------
 
 -  comm : communicator with error handler (handle).
 -  errorcode : error code (integer).
 
-Output Parameters
+OUTPUT PARAMETERS
 -----------------
 
 -  IERROR : Fortran only: Error status (integer).
 
-Description
+DESCRIPTION
 -----------
 
 This function invokes the error handler assigned to the communicator
@@ -62,14 +62,14 @@ comm with the supplied error code errorcode. If the error handler was
 successfully called, the process is not aborted, and the error handler
 returns, this function returns MPI_SUCCESS.
 
-Notes
+NOTES
 -----
 
 Users should note that the default error handler is
 MPI_ERRORS_ARE_FATAL. Thus, calling this function will abort the
 processes in comm if the default error handler has not been changed.
 
-Errors
+ERRORS
 ------
 
 .. include:: ./ERRORS.rst

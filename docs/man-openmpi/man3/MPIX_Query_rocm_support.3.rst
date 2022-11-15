@@ -65,7 +65,7 @@ application with older versions of Open MPI or other MPI
 implementations that do not have this function.
 
 
-Examples
+EXAMPLES
 ^^^^^^^^
 
 .. code-block:: c

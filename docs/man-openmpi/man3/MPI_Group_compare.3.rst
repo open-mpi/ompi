@@ -7,7 +7,7 @@ MPI_Group_compare
 
 :ref:`MPI_Group_compare` - Compares two groups.
 
-Syntax
+SYNTAX
 ------
 
 C Syntax
@@ -43,13 +43,13 @@ Fortran 2008 Syntax
        INTEGER, INTENT(OUT) :: result
        INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 
-Input Parameters
+INPUT PARAMETERS
 ----------------
 
 -  ``group1`` : First group (handle).
 -  ``group2`` : Second group (handle).
 
-Output Parameters
+OUTPUT PARAMETERS
 -----------------
 
 -  ``result`` : Integer which is MPI_IDENT if the order and members of
@@ -57,7 +57,7 @@ Output Parameters
    same, and MPI_UNEQUAL otherwise.
 -  ``IERROR`` : Fortran only: Error status (integer).
 
-Description
+DESCRIPTION
 -----------
 
 MPI_IDENT results if the group members and group order is exactly
@@ -66,7 +66,7 @@ the same in both groups. This happens for instance if ``group1`` and
 members are the same but the order is different. MPI_UNEQUAL results
 otherwise.
 
-Errors
+ERRORS
 ------
 
 .. include:: ./ERRORS.rst

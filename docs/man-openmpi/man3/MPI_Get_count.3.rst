@@ -7,7 +7,7 @@ MPI_Get_count
 
 :ref:`MPI_Get_count` - Gets the number of top-level elements received.
 
-Syntax
+SYNTAX
 ------
 
 C Syntax
@@ -44,19 +44,19 @@ Fortran 2008 Syntax
        INTEGER, INTENT(OUT) :: count
        INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 
-Input Parameters
+INPUT PARAMETERS
 ----------------
 
 -  status : Return status of receive operation (status).
 -  datatype : Datatype of each receive buffer element (handle).
 
-Output Parameters
+OUTPUT PARAMETERS
 -----------------
 
 -  count : Number of received elements (integer).
 -  IERROR : Fortran only: Error status (integer).
 
-Description
+DESCRIPTION
 -----------
 
 Returns the number of entries received. (We count entries, each of type
@@ -71,7 +71,7 @@ A message might be received without counting the number of elements it
 contains, and the count value is often not needed. Also, this allows the
 same function to be used after a call to :ref:`MPI_Probe`.
 
-Notes
+NOTES
 -----
 
 If the size of the datatype is zero, this routine will return a count of
@@ -79,7 +79,7 @@ zero. If the amount of data in status is not an exact multiple of the
 size of datatype (so that count would not be integral), a count of
 MPI_UNDEFINED is returned instead.
 
-Errors
+ERRORS
 ------
 
 .. include:: ./ERRORS.rst

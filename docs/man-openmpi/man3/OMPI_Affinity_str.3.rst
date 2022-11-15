@@ -87,7 +87,7 @@ What processors exist.
    can see (which is *usually* all processors in the system).
 
 
-Examples
+EXAMPLES
 ^^^^^^^^
 
 **Example 1:** Print out processes binding using resource string format.

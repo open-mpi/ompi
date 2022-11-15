@@ -8,7 +8,7 @@ MPI_Get_elements
 :ref:`MPI_Get_elements`, :ref:`MPI_Get_elements_x` - Returns the number of basic
 elements in a data type.
 
-Syntax
+SYNTAX
 ------
 
 C Syntax
@@ -59,18 +59,18 @@ Fortran 2008 Syntax
        INTEGER(KIND = MPI_COUNT_KIND), INTENT(OUT) :: count
        INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 
-Input Parameters
+INPUT PARAMETERS
 ----------------
 
 -  status : Return status of receive operation (status).
 -  datatype : Datatype used by receive operation (handle).
 
-Output Parameters
+OUTPUT PARAMETERS
 -----------------
 
 -  IERROR : Fortran only: Error status (integer).
 
-Description
+DESCRIPTION
 -----------
 
 :ref:`MPI_Get_elements` and :ref:`MPI_Get_elements_x` behave different from
@@ -109,12 +109,12 @@ number of elements in the probed message. Note that the two functions
 :ref:`MPI_Get_count` and :ref:`MPI_Get_elements` return the same values when they are
 used with primitive data types.
 
-Errors
+ERRORS
 ------
 
 .. include:: ./ERRORS.rst
 
-Fortran 77 Notes
+FORTRAN 77 NOTES
 ----------------
 
 The MPI standard prescribes portable Fortran syntax for the COUNT

@@ -8,7 +8,7 @@ MPI_Session_get_info
 :ref:`MPI_Session_get_info` - Returns an info object containing the hints of an
 MPI Session
 
-Syntax
+SYNTAX
 ------
 
 C Syntax
@@ -42,18 +42,18 @@ Fortran 2008 Syntax
        TYPE(MPI_Session), INTENT(IN) :: session
        TYPE(MPI_Info), INTENT(OUT) :: info_used
 
-Input Parameters
+INPUT PARAMETERS
 ----------------
 
 -  session : session (handle)
 
-Output Parameters
+OUTPUT PARAMETERS
 -----------------
 
 -  info_used: info object (handle)
 -  IERROR : Fortran only: Error status (integer).
 
-Description
+DESCRIPTION
 -----------
 
 :ref:`MPI_Session_get_info` returns a new info object containing the hints of
@@ -66,12 +66,12 @@ hints that were set by the implementation. If no such hints exist, a
 handle to a newly created info object is returned that contains no
 key/value pair.
 
-Notes
+NOTES
 -----
 
 The user is responsible for freeing info_used via :ref:`MPI_Info_free`.
 
-Errors
+ERRORS
 ------
 
 .. include:: ./ERRORS.rst

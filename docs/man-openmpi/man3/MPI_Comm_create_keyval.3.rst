@@ -7,7 +7,7 @@ MPI_Comm_create_keyval
 
 :ref:`MPI_Comm_create_keyval` - Generates a new attribute key.
 
-Syntax
+SYNTAX
 ------
 
 C Syntax
@@ -52,7 +52,7 @@ Fortran 2008 Syntax
        INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(IN) :: extra_state
        INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 
-Input Parameters
+INPUT PARAMETERS
 ----------------
 
 -  ``comm_copy_attr_fn`` : Copy callback function for ``comm_keyval``
@@ -61,13 +61,13 @@ Input Parameters
    ``comm_keyval`` (function).
 -  ``extra_state`` : Extra state for callback functions.
 
-Output Parameter
+OUTPUT PARAMETER
 ----------------
 
 -  ``comm_keyval`` : Key value for future access (integer).
 -  ``IERROR`` : Fortran only: Error status (integer).
 
-Description
+DESCRIPTION
 -----------
 
 This function replaces :ref:`MPI_Keyval_create`, the use of which is
@@ -112,7 +112,7 @@ names are deprecated. The two Fortran callback functions are:
 
        INTEGER(KIND=MPI_ADDRESS_KIND) ATTRIBUTE_VAL, EXTRA_STATE
 
-Fortran 77 Notes
+FORTRAN 77 NOTES
 ^^^^^^^^^^^^^^^^
 
 The MPI standard prescribes portable Fortran syntax for the
@@ -126,7 +126,7 @@ the non-portable syntax
 where ``MPI_ADDRESS_KIND`` is a constant defined in mpif.h and gives the
 length of the declared integer in bytes.
 
-Errors
+ERRORS
 ------
 
 .. include:: ./ERRORS.rst

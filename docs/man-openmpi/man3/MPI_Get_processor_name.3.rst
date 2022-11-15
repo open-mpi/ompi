@@ -7,7 +7,7 @@ MPI_Get_processor_name
 
 :ref:`MPI_Get_processor_name` - Gets the name of the processor.
 
-Syntax
+SYNTAX
 ------
 
 C Syntax
@@ -43,7 +43,7 @@ Fortran 2008 Syntax
        INTEGER, INTENT(OUT) :: resultlen
        INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 
-Output Parameters
+OUTPUT PARAMETERS
 -----------------
 
 -  ``name`` : A unique specifier for the actual (as opposed to virtual)
@@ -51,7 +51,7 @@ Output Parameters
 -  ``resultlen`` : Length (in characters) of result returned in name.
 -  ``IERROR`` : Fortran only: Error status (integer).
 
-Description
+DESCRIPTION
 -----------
 
 This routine returns the ``name`` of the processor on which it was
@@ -63,7 +63,7 @@ that is at least MPI_MAX_PROCESSOR_NAME characters long.
 The number of characters actually written is returned in the output
 argument, ``resultlen``.
 
-Notes
+NOTES
 -----
 
 The user must provide at least MPI_MAX_PROCESSOR_NAME space to write
@@ -71,7 +71,7 @@ the processor ``name``; processor ``name``\ s can be this long. The user
 should examine the output argument, ``resultlen``, to determine the
 actual length of the ``name``.
 
-Errors
+ERRORS
 ------
 
 .. include:: ./ERRORS.rst
