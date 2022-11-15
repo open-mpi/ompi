@@ -1610,7 +1610,7 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
     }
     OPAL_LIST_DESTRUCT(&job_info);
 
-    if (ompi_singleton) {
+    if (opal_process_info.is_singleton) {
         /* The GDS 'hash' component is known to work for singleton, so
          * recommend it. The user may set this envar to override the setting.
          */
@@ -2154,7 +2154,7 @@ static int start_dvm(char **hostfiles, char **dash_host)
     PMIx_Commit();
 
     /* we are no longer a singleton */
-    ompi_singleton = false;
+     opal_process_info.is_singleton = false;
 
     return OMPI_SUCCESS;
 }

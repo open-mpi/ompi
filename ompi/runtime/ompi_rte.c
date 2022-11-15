@@ -8,7 +8,7 @@
  *                         reserved.
  * Copyright (c) 2014-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
- * Copyright (c) 2018-2020 Triad National Security, LLC. All rights
+ * Copyright (c) 2018-2022 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2019      Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
@@ -61,7 +61,6 @@
 /* storage to support OMPI */
 opal_process_name_t pmix_name_wildcard = {UINT32_MAX-1, UINT32_MAX-1};
 opal_process_name_t pmix_name_invalid = {UINT32_MAX, UINT32_MAX};
-bool ompi_singleton = false;
 
 static int _setup_top_session_dir(char **sdir);
 static int _setup_job_session_dir(char **sdir);
@@ -541,6 +540,7 @@ int ompi_rte_init(int *pargc, char ***pargv)
     pmix_value_t pval;
     pmix_status_t rc;
     char **tmp;
+    bool singleton = false;
 
     u32ptr = &u32;
     u16ptr = &u16;
@@ -586,7 +586,7 @@ int ompi_rte_init(int *pargc, char ***pargv)
                     opal_show_help("help-mpi-runtime.txt", "no-pmix-but", false, size);
                 }
             }
-            ompi_singleton = true;
+            singleton = true;
         } else {
             /* we cannot run - this could be due to being direct launched
              * without the required PMI support being built, so print
@@ -605,6 +605,11 @@ int ompi_rte_init(int *pargc, char ***pargv)
     OPAL_PROC_MY_NAME.vpid = pname.vpid;
     opal_process_info.my_name.jobid = OPAL_PROC_MY_NAME.jobid;
     opal_process_info.my_name.vpid = OPAL_PROC_MY_NAME.vpid;
+    if (singleton) {
+        opal_process_info.is_singleton = true;
+    } else {
+        opal_process_info.is_singleton = false;
+    }
 
 
     /* set our hostname */
@@ -623,7 +628,7 @@ int ompi_rte_init(int *pargc, char ***pargv)
     OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_LOCAL_RANK,
                                    &opal_process_info.my_name, &u16ptr, PMIX_UINT16);
     if (PMIX_SUCCESS != rc) {
-        if (ompi_singleton) {
+        if (opal_process_info.is_singleton) {
             /* just assume 0 */
             u16 = 0;
         } else {
@@ -638,7 +643,7 @@ int ompi_rte_init(int *pargc, char ***pargv)
     OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_NODE_RANK,
                                    &opal_process_info.my_name, &u16ptr, PMIX_UINT16);
     if (PMIX_SUCCESS != rc) {
-        if (ompi_singleton) {
+        if (opal_process_info.is_singleton) {
             /* just assume 0 */
             u16 = 0;
         } else {
@@ -657,7 +662,7 @@ int ompi_rte_init(int *pargc, char ***pargv)
     OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_JOB_SIZE,
                                    &pname, &u32ptr, PMIX_UINT32);
     if (PMIX_SUCCESS != rc) {
-        if (ompi_singleton) {
+        if ( opal_process_info.is_singleton) {
             /* just assume 1 */
             u32 = 1;
         } else {
@@ -672,7 +677,7 @@ int ompi_rte_init(int *pargc, char ***pargv)
     OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_UNIV_SIZE,
                                    &pname, &u32ptr, PMIX_UINT32);
     if (PMIX_SUCCESS != rc) {
-        if (ompi_singleton) {
+        if (opal_process_info.is_singleton) {
             /* just assume 1 */
             u32 = 1;
         } else {

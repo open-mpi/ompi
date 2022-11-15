@@ -11,6 +11,8 @@
  *                         reserved.
  * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.  All Rights
  *                         reserved.
+ * Copyright (c) 2022      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -54,6 +56,7 @@ opal_process_info_t opal_process_info = {
     .reincarnation = 0,
     .proc_is_bound = false,
     .initial_errhandler = NULL,
+    .is_singleton = false,
 };
 
 static opal_proc_t opal_local_proc = {{.opal_list_next = NULL, .opal_list_prev = NULL},

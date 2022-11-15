@@ -6,7 +6,7 @@
  * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2019      Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
- * Copyright (c) 2020      Triad National Security, LLC. All rights
+ * Copyright (c) 2020-2022  Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.  All Rights
  *                         reserved.
@@ -259,7 +259,6 @@ OMPI_DECLSPEC void ompi_rte_abort_peers(opal_process_name_t *procs,
 OMPI_DECLSPEC int ompi_rte_init(int *argc, char ***argv);
 OMPI_DECLSPEC int ompi_rte_finalize(void);
 OMPI_DECLSPEC void ompi_rte_wait_for_debugger(void);
-OMPI_DECLSPEC extern bool ompi_singleton;
 
 /* In a few places, we need to barrier until something happens
  * that changes a flag to indicate we can release - e.g., waiting
