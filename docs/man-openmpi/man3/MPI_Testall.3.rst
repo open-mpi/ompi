@@ -99,6 +99,8 @@ modified.
 ERRORS
 ------
 
+.. include:: ./ERRORS.rst
+
 For each invocation of :ref:`MPI_Testall`, if one or more requests generate an
 MPI error, only the *first* MPI request that caused an error will be
 passed to its corresponding error handler. No other error handlers will
@@ -106,14 +108,6 @@ be invoked (even if multiple requests generated errors). However, *all*
 requests that generate an error will have a relevant error code set in
 the corresponding status.MPI_ERROR field (unless MPI_STATUSES_IGNORE was
 used).
-
-The default error handler aborts the MPI job, except for I/O function
-errors. The error handler may be changed with :ref:`MPI_Comm_set_errhandler`,
-:ref:`MPI_File_set_errhandler`, or :ref:`MPI_Win_set_errhandler` (depending on the
-type of MPI handle that generated the MPI request); the predefined error
-handler MPI_ERRORS_RETURN may be used to cause error values to be
-returned. Note that MPI does not guarantee that an MPI program can
-continue past an error.
 
 If the invoked error handler allows :ref:`MPI_Testall` to return to the caller,
 the value MPI_ERR_IN_STATUS will be returned in the C and Fortran
