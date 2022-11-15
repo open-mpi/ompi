@@ -8,7 +8,7 @@ MPI_Grequest_start
 :ref:`MPI_Grequest_start` - Starts a generalized request and returns a
 handle to it in ``request``.
 
-Syntax
+SYNTAX
 ------
 
 C Syntax
@@ -53,7 +53,7 @@ Fortran 2008 Syntax
        TYPE(MPI_Request), INTENT(OUT) :: request
        INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 
-Input Parameters
+INPUT PARAMETERS
 ----------------
 
 -  ``query_fn`` : Callback function invoked when request status is
@@ -64,13 +64,13 @@ Input Parameters
    (function).
 -  ``extra_state`` : Extra state.
 
-Output Parameters
+OUTPUT PARAMETERS
 -----------------
 
 -  ``request`` : Generalized request (handle).
 -  ``IERROR`` : Fortran only: Error status (integer).
 
-Description
+DESCRIPTION
 -----------
 
 :ref:`MPI_Grequest_start` starts a generalized ``request`` and returns a
@@ -175,7 +175,7 @@ MPI passes to the callback function complete=true if
 ``MPI_Grequest_complete`` has already been called on the request, and
 complete=false otherwise.
 
-Fortran 77 Notes
+FORTRAN 77 NOTES
 ----------------
 
 The MPI standard prescribes portable Fortran syntax for the
@@ -189,7 +189,7 @@ the non-portable syntax
 where ``MPI_ADDRESS_KIND`` is a constant defined in mpif.h and gives the
 length of the declared integer in bytes.
 
-Errors
+ERRORS
 ------
 
 .. include:: ./ERRORS.rst

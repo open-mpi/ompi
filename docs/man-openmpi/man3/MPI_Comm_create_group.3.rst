@@ -7,7 +7,7 @@ MPI_Comm_create_group
 
 :ref:`MPI_Comm_create_group` - Creates a new communicator.
 
-Syntax
+SYNTAX
 ------
 
 C Syntax
@@ -44,20 +44,20 @@ Fortran 2008 Syntax
        TYPE(MPI_Comm), INTENT(OUT) :: newcomm
        INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 
-Input Parameters
+INPUT PARAMETERS
 ----------------
 
 -  comm : Communicator (handle).
 -  group : Group, which is a subset of the group of comm (handle).
 -  tag : Tag (integer).
 
-Output Parameters
+OUTPUT PARAMETERS
 -----------------
 
 -  newcomm : New communicator (handle).
 -  IERROR : Fortran only: Error status (integer).
 
-Description
+DESCRIPTION
 -----------
 
 :ref:`MPI_Comm_create_group` is similar to :ref:`MPI_Comm_create`; however,
@@ -79,7 +79,7 @@ associated group. If the calling process is not a member of group, e.g.,
 group is MPI_GROUP_EMPTY, then the call is a local operation and
 MPI_COMM_NULL is returned as newcomm.
 
-Notes
+NOTES
 -----
 
 :ref:`MPI_Comm_create_group` provides a means of making a subset of processes
@@ -90,7 +90,7 @@ communicator constructors) to further subdivide a computation into
 parallel sub-computations. A more general service is provided by
 :ref:`MPI_Comm_split`.
 
-Errors
+ERRORS
 ------
 
 .. include:: ./ERRORS.rst

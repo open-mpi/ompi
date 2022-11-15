@@ -8,7 +8,7 @@ MPI_Group_intersection
 :ref:`MPI_Group_intersection` - Produces a group at the intersection of two
 existing groups.
 
-Syntax
+SYNTAX
 ------
 
 C Syntax
@@ -44,19 +44,19 @@ Fortran 2008 Syntax
        TYPE(MPI_Group), INTENT(OUT) :: newgroup
        INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 
-Input Parameters
+INPUT PARAMETERS
 ----------------
 
 -  group1 : First group (handle).
 -  group2 : Second group (handle).
 
-Output Parameters
+OUTPUT PARAMETERS
 -----------------
 
 -  newgroup : Intersection group (handle).
 -  IERROR : Fortran only: Error status (integer).
 
-Description
+DESCRIPTION
 -----------
 
 The set-like operations are defined as follows:
@@ -75,7 +75,7 @@ intersection are commutative, but both are associative.
 
 The new group can be empty, that is, equal to MPI_GROUP_EMPTY.
 
-Errors
+ERRORS
 ------
 
 .. include:: ./ERRORS.rst

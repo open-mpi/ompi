@@ -8,7 +8,7 @@ MPI_Session_get_num_psets
 :ref:`MPI_Session_get_num_psets` - Query runtime for number of available
 process sets
 
-Syntax
+SYNTAX
 ------
 
 C Syntax
@@ -44,19 +44,19 @@ Fortran 2008 Syntax
        INTEGER, INTENT(OUT) :: npset_names
        INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 
-Input Parameters
+INPUT PARAMETERS
 ----------------
 
 -  session : session (handle)
 -  info: info object (handle)
 
-Output Parameters
+OUTPUT PARAMETERS
 -----------------
 
 -  npset_names : number of available process sets (non-negtive integer)
 -  IERROR : Fortran only: Error status (integer).
 
-Description
+DESCRIPTION
 -----------
 
 :ref:`MPI_Session_get_num_psets` is used to query the runtime for the number of
@@ -68,7 +68,7 @@ change the index of a particular process set name, or to change the name
 of the process set at a particular index, or to delete a process set
 name once it has been added.
 
-Notes
+NOTES
 -----
 
 When a process set becomes invalid, for example, when some processes
@@ -78,7 +78,7 @@ example, creating an MPI_Group from such a process set might succeed
 because it is a local operation, but creating an MPI_Comm from that
 group and attempting collective communication may raise an error.
 
-Errors
+ERRORS
 ------
 
 .. include:: ./ERRORS.rst

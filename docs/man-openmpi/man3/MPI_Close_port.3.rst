@@ -7,7 +7,7 @@ MPI_Close_port
 
 :ref:`MPI_Close_port` - Releases the specified network address.
 
-Syntax
+SYNTAX
 ------
 
 C Syntax
@@ -42,23 +42,23 @@ Fortran 2008 Syntax
        CHARACTER(LEN=*), INTENT(IN) :: port_name
        INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 
-Input Parameter
+INPUT PARAMETER
 ---------------
 
 -  ``port_name`` : A port (string).
 
-Output Parameter
+OUTPUT PARAMETER
 ----------------
 
 -  ``IERROR`` : Fortran only: Error status (integer).
 
-Description
+DESCRIPTION
 -----------
 
 :ref:`MPI_Close_port` releases the network address represented by
 ``port_name``.
 
-Errors
+ERRORS
 ------
 
 .. include:: ./ERRORS.rst

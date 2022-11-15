@@ -8,7 +8,7 @@ MPI_Session_get_pset_info
 :ref:`MPI_Session_get_pset_info` - Returns an info object containing properties
 of a specific process set
 
-Syntax
+SYNTAX
 ------
 
 C Syntax
@@ -45,19 +45,19 @@ Fortran 2008 Syntax
        TYPE(MPI_Info), INTENT(OUT) :: info
        INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 
-Input Parameters
+INPUT PARAMETERS
 ----------------
 
 -  session : session (handle)
 -  pset_name : name of process set (string)
 
-Output Parameters
+OUTPUT PARAMETERS
 -----------------
 
 -  info: info object (handle)
 -  IERROR : Fortran only: Error status (integer).
 
-Description
+DESCRIPTION
 -----------
 
 :ref:`MPI_Session_get_pset_info` is used to query properties of a specific
@@ -66,13 +66,13 @@ info object query functions. One key/value pair must be defined,
 "mpi_size". The value of the "mpi_size" key specifies the number of MPI
 processes in the process set.
 
-Notes
+NOTES
 -----
 
 The user is responsible for freeing the returned info object via
 :ref:`MPI_Info_free`.
 
-Errors
+ERRORS
 ------
 
 .. include:: ./ERRORS.rst

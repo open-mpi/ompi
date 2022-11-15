@@ -8,7 +8,7 @@ MPI_Group_from_session_pset
 :ref:`MPI_Group_from_session_pset` - Creates a group using a provided session
 handle and process set.
 
-Syntax
+SYNTAX
 ------
 
 C Syntax
@@ -45,21 +45,21 @@ Fortran 2008 Syntax
        TYPE(MPI_Group), INTENT(OUT) :: newgroup
        INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 
-Input Parameters
+INPUT PARAMETERS
 ----------------
 
 -  session : Session (handle).
 -  pset_name : name of process set to use to create the new group
    (string)
 
-Output Parameters
+OUTPUT PARAMETERS
 -----------------
 
 -  newgroup : New group derived from supplied session and process set
    (handle).
 -  IERROR : Fortran only: Error status (integer).
 
-Description
+DESCRIPTION
 -----------
 
 The function :ref:`MPI_Group_from_session_pset` creates a group newgroup using
@@ -68,13 +68,13 @@ be one returned from an invocation of :ref:`MPI_Session_get_nth_pset` using the
 supplied session handle. If the pset_name does not exist, MPI_GROUP_NULL
 will be returned in the newgroup argument.
 
-Note
+NOTE
 ----
 
 As with other group constructors, :ref:`MPI_Group_from_session_pset` is a local
 function.
 
-Errors
+ERRORS
 ------
 
 .. include:: ./ERRORS.rst

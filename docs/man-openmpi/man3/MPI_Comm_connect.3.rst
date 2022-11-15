@@ -7,7 +7,7 @@ MPI_Comm_connect
 
 :ref:`MPI_Comm_connect` - Establishes communication with a server.
 
-Syntax
+SYNTAX
 ------
 
 C Syntax
@@ -47,7 +47,7 @@ Fortran 2008 Syntax
        TYPE(MPI_Comm), INTENT(OUT) :: newcomm
        INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 
-Input Parameters
+INPUT PARAMETERS
 ----------------
 
 -  port_name : Port name (string, used only on *root*).
@@ -56,13 +56,13 @@ Input Parameters
 -  root : Rank in *comm* of root node (integer).
 -  comm : Intracommunicator over which call is collective (handle).
 
-Output Parameters
+OUTPUT PARAMETERS
 -----------------
 
 -  newcomm : Intercommunicator with client as remote group (handle)
 -  IERROR : Fortran only: Error status (integer).
 
-Description
+DESCRIPTION
 -----------
 
 :ref:`MPI_Comm_connect` establishes communication with a server specified by
@@ -79,7 +79,7 @@ connection attempt from being satisfied. The port_name parameter is the
 address of the server. It must be the same as the name returned by
 :ref:`MPI_Open_port` on the server.
 
-Errors
+ERRORS
 ------
 
 .. include:: ./ERRORS.rst

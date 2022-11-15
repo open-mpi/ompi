@@ -8,7 +8,7 @@ MPI_Barrier
 :ref:`MPI_Barrier`, :ref:`MPI_Ibarrier` - Synchronization between MPI processes in a
 group
 
-Syntax
+SYNTAX
 ------
 
 C Syntax
@@ -55,19 +55,19 @@ Fortran 2008 Syntax
        TYPE(MPI_Request), INTENT (OUT) :: request
        INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 
-Input Parameter
+INPUT PARAMETER
 ---------------
 
 -  comm : Communicator (handle).
 -  info : Info (handle, persistent only).
 
-Output Parameters
+OUTPUT PARAMETERS
 -----------------
 
 -  request : Request (handle, non-blocking only).
 -  IERROR : Fortran only: Error status (integer).
 
-Description
+DESCRIPTION
 -----------
 
 An MPI barrier completes after all groups members have entered the
@@ -81,7 +81,7 @@ performed across all processes in both groups. All processes in the
 first group may exit the barrier when all processes in the second group
 have entered the barrier.
 
-Errors
+ERRORS
 ------
 
 .. include:: ./ERRORS.rst

@@ -56,7 +56,7 @@ DESCRIPTION
 
 :ref:`MPI_Info_create_env` creates a new info object with the same construction as :ref:`MPI_INFO_ENV` as created during :ref:`MPI_Init` or :ref:`MPI_Init_thread` when the same arguments are used.
 
-Note
+NOTE
 ----
 
 :ref:`MPI_Info_create_env` is one of the few functions that can be called

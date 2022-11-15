@@ -8,7 +8,7 @@ MPI_Graphdims_get
 :ref:`MPI_Graphdims_get` - Retrieves graph topology information associated with
 a communicator.
 
-Syntax
+SYNTAX
 ------
 
 C Syntax
@@ -43,19 +43,19 @@ Fortran 2008 Syntax
        INTEGER, INTENT(OUT) :: nnodes, nedges
        INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 
-Input Parameter
+INPUT PARAMETER
 ---------------
 
 -  comm : Communicator for group with graph structure (handle).
 
-Output Parameters
+OUTPUT PARAMETERS
 -----------------
 
 -  nnodes : Number of nodes in graph (integer).
 -  nedges : Number of edges in graph (integer).
 -  IERROR : Fortran only: Error status (integer).
 
-Description
+DESCRIPTION
 -----------
 
 Functions :ref:`MPI_Graphdims_get` and :ref:`MPI_Graph_get` retrieve the
@@ -65,7 +65,7 @@ graph-topology information that was associated with a communicator by
 The information provided by :ref:`MPI_Graphdims_get` can be used to dimension
 the vectors index and edges correctly for a call to :ref:`MPI_Graph_get`.
 
-Errors
+ERRORS
 ------
 
 .. include:: ./ERRORS.rst

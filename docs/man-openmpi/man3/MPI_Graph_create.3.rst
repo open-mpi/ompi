@@ -8,7 +8,7 @@ MPI_Graph_create
 :ref:`MPI_Graph_create` - Makes a new communicator to which topology
 information has been attached.
 
-Syntax
+SYNTAX
 ------
 
 C Syntax
@@ -50,7 +50,7 @@ Fortran 2008 Syntax
        TYPE(MPI_Comm), INTENT(OUT) :: comm_graph
        INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 
-Input Parameters
+INPUT PARAMETERS
 ----------------
 
 -  comm_old : Input communicator without topology (handle).
@@ -59,13 +59,13 @@ Input Parameters
 -  edges : Array of integers describing graph edges (see below).
 -  reorder : Ranking may be reordered (true) or not (false) (logical).
 
-Output Parameters
+OUTPUT PARAMETERS
 -----------------
 
 -  comm_graph : Communicator with graph topology added (handle).
 -  IERROR : Fortran only: Error status (integer).
 
-Description
+DESCRIPTION
 -----------
 
 :ref:`MPI_Graph_create` returns a handle to a new communicator to which the
@@ -121,7 +121,7 @@ neighbors of node zero is stored in edges(j), for 1 <= j <= index(1) and
 the list of neighbors of node i, i > 0, is stored in edges(j), index(i)
 + 1 <= j <= index(i + 1).
 
-Errors
+ERRORS
 ------
 
 .. include:: ./ERRORS.rst

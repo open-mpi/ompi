@@ -9,7 +9,7 @@ MPI_Get_accumulate
 origin buffer with that of a target buffer and returns the target buffer
 value.
 
-Syntax
+SYNTAX
 ------
 
 C Syntax
@@ -89,7 +89,7 @@ Fortran 2008 Syntax
        TYPE(MPI_Request), INTENT(OUT) :: request
        INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 
-Input Parameters
+INPUT PARAMETERS
 ----------------
 
 -  origin_addr : Initial address of buffer (choice).
@@ -108,13 +108,13 @@ Input Parameters
 -  op : Reduce operation (handle).
 -  win : Window object (handle).
 
-Output Parameter
+OUTPUT PARAMETER
 ----------------
 
 -  :ref:`MPI_Rget_accumulate`: RMA request
 -  IERROR : Fortran only: Error status (integer).
 
-Description
+DESCRIPTION
 -----------
 
 :ref:`MPI_Get_accumulate` is a function used for one-sided MPI communication
@@ -155,7 +155,7 @@ indicates that the data is available in the result buffer and the origin
 buffer is free to be updated. It does not indicate that the operation
 has been completed at the target window.
 
-Fortran 77 Notes
+FORTRAN 77 NOTES
 ----------------
 
 The MPI standard prescribes portable Fortran syntax for the TARGET_DISP
@@ -167,7 +167,7 @@ fortran INTEGERMPI_ADDRESS_KIND TARGET_DISP
 where MPI_ADDRESS_KIND is a constant defined in mpif.h and gives the
 length of the declared integer in bytes.
 
-Notes
+NOTES
 -----
 
 The generic functionality of :ref:`MPI_Get_accumulate` might limit the
@@ -185,7 +185,7 @@ accumulate functions, the target displacement argument is such that
 accesses to the window are properly aligned according to the data type
 arguments in the call to the :ref:`MPI_Get_accumulate` function.
 
-Errors
+ERRORS
 ------
 
 .. include:: ./ERRORS.rst
