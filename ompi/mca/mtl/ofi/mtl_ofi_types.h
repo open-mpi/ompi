@@ -2,6 +2,8 @@
  * Copyright (c) 2013-2018 Intel, Inc. All rights reserved
  *
  * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2022 Triad National Security, LLC. All rights
+ *                    reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -97,6 +99,7 @@ typedef struct mca_mtl_ofi_module_t {
 
     bool is_initialized;
     bool has_posted_initial_buffer;
+    bool hmem_needs_reg;
 
 } mca_mtl_ofi_module_t;
 
