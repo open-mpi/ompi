@@ -374,7 +374,7 @@ mca_pml_cm_send(const void *buf,
                 MCA_PML_CM_SWITCH_ACCELERATOR_CONVERTOR_OFF(flags, datatype, count);
                 convertor.flags      |= flags;
                 /* Sets CONVERTOR_ACCELERATOR flag if device buffer */
-                opal_convertor_prepare_for_send(&convertor, &datatype->super, count, (unsigned char *)buf + datatype->super.true_lb);
+                opal_convertor_prepare_for_send(&convertor, &datatype->super, count, (unsigned char *)buf);
     } else
 #endif
 	{
