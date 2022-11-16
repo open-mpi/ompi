@@ -604,6 +604,10 @@ static int mca_btl_ofi_init_device(struct fi_info *info)
     module->use_fi_mr_bind = false;
     module->bypass_cache = false;
 
+    if (ofi_info->caps & FI_HMEM) {
+        module->super.btl_flags |= MCA_BTL_FLAGS_ACCELERATOR_RDMA;
+    }
+
     if (ofi_info->domain_attr->mr_mode == FI_MR_BASIC
         || ofi_info->domain_attr->mr_mode & FI_MR_VIRT_ADDR) {
         module->use_virt_addr = true;

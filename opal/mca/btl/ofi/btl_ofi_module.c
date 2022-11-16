@@ -252,6 +252,7 @@ int mca_btl_ofi_reg_mem(void *reg_data, void *base, size_t size,
     attr.access = access_flags;
     attr.offset = 0;
     attr.context = NULL;
+    attr.requested_key = (uint64_t) reg;
 
     if (OPAL_LIKELY(NULL != base)) {
         rc = opal_accelerator.check_addr(base, &dev_id, &flags);
