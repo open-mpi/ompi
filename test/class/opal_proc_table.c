@@ -164,10 +164,10 @@ static void test_ptable(opal_proc_table_t *table)
     opal_process_name_t key;
     fprintf(error_out, "\nTesting integer keys...\n");
     for (j = 0; num_keys[j]; j += 3) {
-        opal_process_name_t key;
-        key.jobid = atoi(num_keys[j]);
-        key.vpid = atoi(num_keys[j + 1]);
-        opal_proc_table_set_value(table, key, num_keys[j + 2]);
+        opal_process_name_t key2;
+        key2.jobid = atoi(num_keys[j]);
+        key2.vpid = atoi(num_keys[j + 1]);
+        opal_proc_table_set_value(table, key2, num_keys[j + 2]);
     }
     validate_table(table, num_keys);
     rc = opal_proc_table_get_first_key(table, &key, (void **) &v, (void **) &n1, (void **) &n2);
