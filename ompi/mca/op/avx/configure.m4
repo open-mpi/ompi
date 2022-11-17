@@ -315,15 +315,15 @@ AC_DEFUN([MCA_ompi_op_avx_CONFIG],[
                        [$op_sse3_support],
                        [SSE3 supported in the current build])
     AM_CONDITIONAL([MCA_BUILD_ompi_op_has_avx512_support],
-                   [test "$op_avx512_support" == "1"])
+                   [test "$op_avx512_support" = "1"])
     AM_CONDITIONAL([MCA_BUILD_ompi_op_has_avx2_support],
-                   [test "$op_avx2_support" == "1"])
+                   [test "$op_avx2_support" = "1"])
     AM_CONDITIONAL([MCA_BUILD_ompi_op_has_avx_support],
-                   [test "$op_avx_support" == "1"])
+                   [test "$op_avx_support" = "1"])
     AM_CONDITIONAL([MCA_BUILD_ompi_op_has_sse41_support],
-                   [test "$op_sse41_support" == "1"])
+                   [test "$op_sse41_support" = "1"])
     AM_CONDITIONAL([MCA_BUILD_ompi_op_has_sse3_support],
-                   [test "$op_sse3_support" == "1"])
+                   [test "$op_sse3_support" = "1"])
     AC_SUBST(MCA_BUILD_OP_AVX512_FLAGS)
     AC_SUBST(MCA_BUILD_OP_AVX2_FLAGS)
     AC_SUBST(MCA_BUILD_OP_AVX_FLAGS)

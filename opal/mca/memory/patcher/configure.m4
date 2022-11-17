@@ -51,7 +51,7 @@ AC_DEFUN([MCA_opal_memory_patcher_CONFIG],[
     # Per the above logic, memory patcher no longer supports MacOS/Darwin,
     # so we no longer support Darwin-specific logic for intercept_mmap.
     # See issue #6853: mmap infinite recurse in opal/mca/memory/patcher
-    AS_IF([test "$opal_memory_patcher_happy" == "yes"], [
+    AS_IF([test "$opal_memory_patcher_happy" = "yes"], [
         AC_CHECK_FUNCS([__curbrk])
         AC_CHECK_HEADERS([linux/mman.h sys/syscall.h])
         AC_CHECK_DECLS([__syscall], [], [], [#include <sys/syscall.h>])
