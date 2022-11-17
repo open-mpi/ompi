@@ -47,6 +47,7 @@ ucc_status_t mca_coll_ucc_gather_init(const void *sbuf, int scount, struct ompi_
 
     ucc_coll_args_t coll = {
         .mask      = 0,
+        .flags     = 0,
         .coll_type = UCC_COLL_TYPE_GATHER,
         .root      = root,
         .src.info = {

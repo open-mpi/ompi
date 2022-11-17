@@ -31,7 +31,8 @@ static inline ucc_status_t mca_coll_ucc_reduce_init(const void *sbuf, void *rbuf
         goto fallback;
     }
     ucc_coll_args_t coll = {
-        .mask = 0,
+        .mask      = 0,
+        .flags     = 0,
         .coll_type = UCC_COLL_TYPE_REDUCE,
         .root = root,
         .src.info = {

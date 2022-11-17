@@ -94,7 +94,7 @@ static void mca_coll_ucc_module_construct(mca_coll_ucc_module_t *ucc_module)
     mca_coll_ucc_module_clear(ucc_module);
 }
 
-int mca_coll_ucc_progress(void)
+static int mca_coll_ucc_progress(void)
 {
     ucc_context_progress(mca_coll_ucc_component.ucc_context);
     return OPAL_SUCCESS;

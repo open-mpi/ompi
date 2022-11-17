@@ -32,6 +32,7 @@ static inline ucc_status_t mca_coll_ucc_allreduce_init(const void *sbuf, void *r
     }
     ucc_coll_args_t coll = {
         .mask      = 0,
+        .flags     = 0,
         .coll_type = UCC_COLL_TYPE_ALLREDUCE,
         .src.info = {
             .buffer   = (void*)sbuf,
