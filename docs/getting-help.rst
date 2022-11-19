@@ -36,24 +36,33 @@ places.  If you have:
    there.
 
    .. note:: Because of spam, only subscribers to the mailing list are
-      allowed to post to the mailing list.  Specifically: you must
-      subscribe to the mailing list before posting.
+      allowed to post to the mailing list.  Specifically: **you must
+      subscribe to the mailing list before posting.**
 
-   * If you have a run-time question or problem, see the :ref:`For
-     run-time problems <getting-help-run-time-label>` section below for
-     the content of what to include in your email.
    * If you have a compile-time question or problem, see the :ref:`For
-     compile-time problems <getting-help-compile-time-label>` section
+     problems building or installing Open MPI
+     <getting-help-compile-time-label>` section below for the content
+     of what to include in your email.
+
+   * If you have problems launching your MPI or OpenSHMEM application
+     successfully, see the :ref:`For problems launching MPI or
+     OpenSHMEM applications <getting-help-launching-label>` section
      below for the content of what to include in your email.
 
-   .. note:: The mailing lists have **a 150 KB size limit on
-      messages** (this is a limitation of the mailing list web
-      archives).  If attaching your files results in an email larger
-      than this, please try compressing it and/or posting it on the
-      web somewhere for people to download.  A `Github Gist
-      <https://gist.github.com/>`_ or a `Pastebin
-      <https://pastebin.com/>`_ might be a good choice for posting
-      large text files.
+   * If you have other questions or problems about running your MPI or
+     OpenSHMEM application, see the :ref:`For problems running MPI or
+     OpenSHMEM applications <getting-help-running-label>` section
+     below for the content of what to include in your email.
+
+   .. important:: The more information you include in your report, the
+      better.  E-mails/bug reports simply stating, "It doesn't work!"
+      are not helpful; we need to know as much information about your
+      environment as possible in order to provide meaningful
+      assistance.
+
+   **The best way to get help** is to provide a "recipe" for
+   reproducing the problem.  This will allow the Open MPI developers
+   to see the error for themselves, and therefore be able to fix it.
 
    .. important:: Please **use a descriptive "subject" line in your
       email!** Some Open MPI question-answering people decide whether
@@ -75,82 +84,152 @@ places.  If you have:
    there.
 
 If you're unsure where to send your question, subscribe and send an
-email to the user's mailing list.
+email to the user's mailing list (i.e., option #1, above).
 
-.. _getting-help-run-time-label:
+.. _getting-help-compile-time-label:
 
-For run-time problems
----------------------
+For problems building or installing Open MPI
+--------------------------------------------
 
-Please provide *all* of the following information:
-
-.. important:: The more information you include in your report, the
-   better.  E-mails/bug reports simply stating, "It doesn't work!"
-   are not helpful; we need to know as much information about your
-   environment as possible in order to provide meaningful assistance.
-
-   **The best way to get help** is to provide a "recipe" for
-   reproducing the problem.  This will allow the Open MPI developers
-   to see the error for themselves, and therefore be able to fix it.
+If you cannot successfully configure, build, or install Open MPI,
+please provide *all* of the following information:
 
 #. The version of Open MPI that you're using.
 
-#. The ``config.log`` file from the top-level Open MPI directory, if
-   available (**compress or post to a Github gist or Pastebin**).
+#. The stdout and stderr from running ``configure``.
+
+#. All ``config.log`` files from the Open MPI build tree.
+
+#. Output from when you ran ``make V=1 all`` to build Open MPI.
+
+#. Output from when you ran ``make install`` to install Open MPI.
+
+The script below may be helpful to gather much of the above
+information (adjust as necessary for your specific environment):
+
+.. code-block:: bash
+
+   #!/usr/bin/env bash
+
+   set -euxo pipefail
+
+   # Make a directory for the output files
+   dir="`pwd`/ompi-output"
+   mkdir $dir
+
+   # Fill in the options you want to pass to configure here
+   options=""
+   ./configure $options 2>&1  | tee $dir/config.out
+   tar -cf - `find . -name config.log` | tar -x -C $dir -
+
+   # Build and install Open MPI
+   make V=1 all 2>&1          | tee $dir/make.out
+   make install 2>&1          | tee $dir/make-install.out
+
+   # Bundle up all of these files into a tarball
+   filename="ompi-output.tar.bz2"
+   tar -jcf $filename `basename $dir`
+   echo "Tarball $filename created"
+
+Then attach the resulting ``ompi-output.tar.bz2`` file to your report.
+
+.. caution:: The mailing lists have **a 150 KB size limit on
+   messages** (this is a limitation of the mailing list web archives).
+   If attaching the tarball makes your message larger than 150 KB, you
+   may need to post the tarball elsewhere and include a link to that
+   tarball in your mail to the list.
+
+.. _getting-help-launching-label:
+
+For problems launching MPI or OpenSHMEM applications
+----------------------------------------------------
+
+If you cannot successfully launch simple applications across multiple
+nodes (e.g., the non-MPI ``hostname`` command, or the MPI "hello world"
+or "ring" sample applications in the ``examples/`` directory), please
+provide *all* of the information from the :ref:`For problems building
+or installing Open MPI <getting-help-compile-time-label>` section, and
+*all* of the following additional information:
 
 #. The output of the ``ompi_info --all`` command from the node where
-   you're invoking ``mpirun``.
+   you are invoking :ref:`mpirun(1) <man1-mpirun>`.
 
-#. If you have questions or problems about process affinity /
-   binding, send the output from running the ``lstopo -v``
-   command from a recent version of `Hwloc
-   <https://www.open-mpi.org/projects/hwloc/>`_.  *The detailed
-   text output is preferable to a graphical output.*
+#. If you have questions or problems about process mapping or binding,
+   send the output from running the ``lstopo -v`` and ``lstopo --of
+   xml`` commands from a recent version of `Hwloc
+   <https://www.open-mpi.org/projects/hwloc/>`_.
 
-#. If running on more than one node |mdash| especially if you're
-   having problems launching Open MPI processes |mdash| also include
-   the output of the ``ompi_info --version`` command **from each node
-   on which you're trying to run**.
+#. If running on more than one node, also include the output of the
+   ``ompi_info --version`` command **from each node on which you are
+   trying to run**.
 
-   #. If you are able to launch MPI processes, you can use
-      ``mpirun`` to gather this information.  For example, if
-      the file ``my_hostfile.txt`` contains the hostnames of the
-      machines on which you are trying to run Open MPI
-      processes::
+#. The output of running ``mpirun --map-by ppr:1:node --prtemca
+   plm_base_verbose 100 --prtemca rmaps_base_verbose 100 --display
+   alloc hostname``.  Add in a ``--hostfile`` argument if needed for
+   your environment.
 
-         shell$ mpirun --map-by node --hostfile my_hostfile.txt --output tag ompi_info --version
+The script below may be helpful to gather much of the above
+information (adjust as necessary for your specific environment).
 
+.. note:: It is safe to run this script after running the script from
+   the :ref:`building and installing
+   <getting-help-compile-time-label>` section.
 
-   #. If you cannot launch MPI processes, use some other mechanism
-      |mdash| such as ``ssh`` |mdash| to gather this information.  For
-      example, if the file ``my_hostfile.txt`` contains the hostnames
-      of the machines on which you are trying to run Open MPI
-      processes:
+.. code-block:: bash
 
-      .. code-block:: sh
+   #!/usr/bin/env bash
 
-         # Bourne-style shell (e.g., bash, zsh, sh)
-         shell$ for h in `cat my_hostfile.txt`
-         > do
-         > echo "=== Hostname: $h"
-         > ssh $h ompi_info --version
-         > done
+   set -euxo pipefail
 
-      .. code-block:: sh
+   # Make a directory for the output files
+   dir="`pwd`/ompi-output"
+   mkdir -p $dir
 
-         # C-style shell (e.g., csh, tcsh)
-         shell% foreach h (`cat my_hostfile.txt`)
-         foreach? echo "=== Hostname: $h"
-         foreach? ssh $h ompi_info --version
-         foreach? end
+   # Get installation and system information
+   ompi_info --all 2>&1       | tee $dir/ompi-info-all.out
+   lstopo -v                  | tee $dir/lstopo-v.txt
+   lstopo --of xml            | tee $dir/lstopo.xml
 
-#. A *detailed* description of what is failing.  The more
-   details that you provide, the better.  E-mails saying "My
-   application doesn't work!" will inevitably be answered with
-   requests for more information about *exactly what doesn't
-   work*; so please include as much information detailed in your
-   initial e-mail as possible.  We strongly recommend that you
-   include the following information:
+   # Have a text file "my_hostfile.txt" containing the hostnames on
+   # which you are trying to launch
+   for host in `cat my_hostfile.txt`; do
+       ssh $host ompi_info --version 2>&1 | tee $dir/ompi_info-version-$host.out
+       ssh $host lstopo -v                | tee $dir/lstopo-v-$host.txt
+       ssh $host lstopo --of xml          | tee $dir/lstopo-$host.xml
+   done
+
+   # Have a my_hostfile.txt file if needed for your environment, or
+   # remove the --hostfile argument altogether if not needed.
+   set +e
+   mpirun \
+        --hostfile my_hostfile.txt \
+        --map-by ppr:1:node \
+        --prtemca plm_base_verbose 100 \
+        --prtemca rmaps_base_verbose 100 \
+        --display alloc \
+        hostname 2>&1                     | tee $dir/mpirun-hostname.out
+
+   # Bundle up all of these files into a tarball
+   filename="ompi-output.tar.bz2"
+   tar -jcf $filename `basename $dir`
+   echo "Tarball $filename created"
+
+.. _getting-help-running-label:
+
+For problems running MPI or OpenSHMEM applications
+--------------------------------------------------
+
+If you can successfully launch parallel MPI or OpenSHMEM applications,
+but the jobs fail during the run, please provide *all* of the
+information from the :ref:`For problems building or installing Open
+MPI <getting-help-compile-time-label>` section, *all* of the
+information from the :ref:`For problems launching MPI or OpenSHMEM
+applications <getting-help-launching-label>` section, and then *all*
+of the following additional information:
+
+#. A *detailed* description of what is failing.  *The more details
+   that you provide, the better.* Please include at least the
+   following information:
 
    * The exact command used to run your application.
 
@@ -164,77 +243,21 @@ Please provide *all* of the following information:
      any required support libraries, such as libraries required
      for high-speed networks such as InfiniBand).
 
-#. Detailed information about your network:
+#. The source code of a short sample program (preferably in C or
+   Fortran) that exhibits the problem.
+
+#. If you are experiencing networking problems, include detailed
+   information about your network.
 
    .. error:: TODO Update link to IB FAQ entry.
 
    #. For RoCE- or InfiniBand-based networks, include the information
       :ref:`in this FAQ entry <faq-ib-troubleshoot-label>`.
 
-   #. For Ethernet-based networks (including RoCE-based networks,
+   #. For Ethernet-based networks (including RoCE-based networks),
       include the output of the ``ip addr`` command (or the legacy
       ``ifconfig`` command) on all relevant nodes.
 
       .. note:: Some Linux distributions do not put ``ip`` or
                 ``ifconfig`` in the default ``PATH`` of normal users.
                 Try looking for it in ``/sbin`` or ``/usr/sbin``.
-
-.. _getting-help-compile-time-label:
-
-For compile problems
---------------------
-
-Please provide *all* of the following information:
-
-.. important:: The more information you include in your report, the
-   better.  E-mails/bug reports simply stating, "It doesn't work!"
-   are not helpful; we need to know as much information about your
-   environment as possible in order to provide meaningful assistance.
-
-   **The best way to get help** is to provide a "recipe" for
-   reproducing the problem.  This will allow the Open MPI developers
-   to see the error for themselves, and therefore be able to fix it.
-
-#. The version of Open MPI that you're using.
-
-#. All output (both compilation output and run time output, including
-   all error messages).
-
-#. Output from when you ran ``./configure`` to configure Open MPI
-   (**compress or post to a GitHub gist or Pastebin!**).
-
-#. The ``config.log`` file from the top-level Open MPI directory
-   (**compress or post to a GitHub gist or Pastebin!**).
-
-#. Output from when you ran ``make V=1`` to build Open MPI (**compress
-   or post to a GitHub gist or Pastebin!**).
-
-#. Output from when you ran ``make install`` to install Open MPI
-   (**compress or post to a GitHub gist or Pastebin!**).
-
-To capture the output of the configure and make steps, you can use the
-script command or the following technique to capture all the files in
-a unique directory, suitable for tarring and compressing into a single
-file:
-
-.. code-block:: sh
-
-   # Bourne-style shell (e.g., bash, zsh, sh)
-   shell$ mkdir $HOME/ompi-output
-   shell$ ./configure {options} 2>&1 | tee $HOME/ompi-output/config.out
-   shell$ make all 2>&1              | tee $HOME/ompi-output/make.out
-   shell$ make install 2>&1          | tee $HOME/ompi-output/make-install.out
-   shell$ cd $HOME
-   shell$ tar jcvf ompi-output.tar.bz2 ompi-output
-
-.. code-block:: sh
-
-   # C-style shell (e.g., csh, tcsh)
-   shell% mkdir $HOME/ompi-output
-   shell% ./configure {options} |& tee $HOME/ompi-output/config.out
-   shell% make all              |& tee $HOME/ompi-output/make.out
-   shell% make install          |& tee $HOME/ompi-output/make-install.out
-   shell% cd $HOME
-   shell% tar jcvf ompi-output.tar.bz2 ompi-output
-
-Then attach the resulting ``ompi-output.tar.bz2`` file to your report.
