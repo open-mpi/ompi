@@ -358,7 +358,9 @@ cleanup:
     free(temp_buf);
 
     /* unlock the dynamic lock */
-    return ompi_osc_ucx_dynamic_unlock(module, target);
+    ompi_osc_ucx_dynamic_unlock(module, target);
+
+    return ret;
 }
 
 static inline
