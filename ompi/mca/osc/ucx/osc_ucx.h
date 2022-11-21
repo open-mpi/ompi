@@ -82,7 +82,7 @@ typedef struct ompi_osc_ucx_epoch_type {
 #define OSC_UCX_STATE_COMPLETE_COUNT_OFFSET (sizeof(uint64_t) * 3)
 #define OSC_UCX_STATE_POST_INDEX_OFFSET (sizeof(uint64_t) * 4)
 #define OSC_UCX_STATE_POST_STATE_OFFSET (sizeof(uint64_t) * 5)
-#define OSC_UCX_STATE_DYNAMIC_LOCK_OFFSET (sizeof(uint64_t) * 6)
+#define OSC_UCX_STATE_DYNAMIC_LOCK_OFFSET (sizeof(uint64_t) * (5 + OMPI_OSC_UCX_POST_PEER_MAX))
 #define OSC_UCX_STATE_DYNAMIC_WIN_CNT_OFFSET (sizeof(uint64_t) * (6 + OMPI_OSC_UCX_POST_PEER_MAX))
 
 typedef struct ompi_osc_dynamic_win_info {
@@ -105,6 +105,7 @@ typedef struct ompi_osc_ucx_state {
     volatile uint64_t complete_count; /* # msgs received from complete processes */
     volatile uint64_t post_index;
     volatile uint64_t post_state[OMPI_OSC_UCX_POST_PEER_MAX];
+    volatile uint64_t dynamic_lock;
     volatile uint64_t dynamic_win_count;
     volatile ompi_osc_dynamic_win_info_t dynamic_wins[OMPI_OSC_UCX_ATTACH_MAX];
 } ompi_osc_ucx_state_t;
