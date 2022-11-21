@@ -843,7 +843,6 @@ static inline int ompi_osc_ucx_acc_rputget(void *stage_addr, int stage_count,
     ompi_osc_ucx_accumulate_request_t *ucx_req = NULL;
     bool sync_check;
     int ret = OMPI_SUCCESS;
-    CHECK_DYNAMIC_WIN(remote_addr, module, target, ret);
 
     if (acc_type != NONE) {
         OMPI_OSC_UCX_ACCUMULATE_REQUEST_ALLOC(win, ucx_req);
@@ -1394,8 +1393,6 @@ int ompi_osc_ucx_rput(const void *origin_addr, int origin_count,
         return ret;
     }
 
-    CHECK_DYNAMIC_WIN(remote_addr, module, target, ret);
-
     ret = ompi_osc_ucx_put(origin_addr, origin_count, origin_dt, target, target_disp,
                            target_count, target_dt, win);
     if (ret != OMPI_SUCCESS) {
@@ -1449,8 +1446,6 @@ int ompi_osc_ucx_rget(void *origin_addr, int origin_count,
     if (ret != OMPI_SUCCESS) {
         return ret;
     }
-
-    CHECK_DYNAMIC_WIN(remote_addr, module, target, ret);
 
     ret = ompi_osc_ucx_get(origin_addr, origin_count, origin_dt, target, target_disp,
                            target_count, target_dt, win);
