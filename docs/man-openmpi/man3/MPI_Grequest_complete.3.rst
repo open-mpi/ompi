@@ -8,7 +8,7 @@ MPI_Grequest_complete
 :ref:`MPI_Grequest_complete` - Reports that a generalized request is
 complete.
 
-Syntax
+SYNTAX
 ------
 
 C Syntax
@@ -42,17 +42,17 @@ Fortran 2008 Syntax
        TYPE(MPI_Request), INTENT(IN) :: request
        INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 
-Input/Output Parameter
+INPUT/OUTPUT PARAMETER
 ----------------------
 
 -  ``request`` : Generalized request (handle).
 
-Output Parameter
+OUTPUT PARAMETER
 ----------------
 
 -  ``IERROR`` : Fortran only: Error status (integer).
 
-Description
+DESCRIPTION
 -----------
 
 :ref:`MPI_Grequest_complete` informs MPI that the operations represented by
@@ -76,16 +76,7 @@ regardless of the state of other processes (the operation has acquired
 side-effects. The user should guarantee these same properties for newly
 defined operations.
 
-Errors
+ERRORS
 ------
 
-Almost all MPI routines return an error value; C routines as the value
-of the function and Fortran routines in the last argument.
-
-Before the error value is returned, the current MPI error handler is
-called. By default, this error handler aborts the MPI job, except for
-I/O function errors. The error handler may be changed with
-:ref:`MPI_Comm_set_errhandler`; the predefined error handler
-MPI_ERRORS_RETURN may be used to cause error values to be returned.
-Note that MPI does not guarantee that an MPI program can continue past
-an error.
+.. include:: ./ERRORS.rst

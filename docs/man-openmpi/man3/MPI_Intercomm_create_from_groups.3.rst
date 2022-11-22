@@ -8,7 +8,7 @@ MPI_Intercomm_create_from_groups
 :ref:`MPI_Intercomm_create_from_groups` - Creates a new inter-communicator from
 a local and remote group and stringtag
 
-Syntax
+SYNTAX
 ------
 
 C Syntax
@@ -48,7 +48,7 @@ Fortran 2008 Syntax
        TYPE(MPI_Comm), INTENT(OUT) :: newintercomm
        INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 
-Input Parameters
+INPUT PARAMETERS
 ----------------
 
 -  local_group : Local group (handler)
@@ -61,13 +61,13 @@ Input Parameters
 -  errhandler : error handler to be attached to the new
    inter-communicator (handle)
 
-Output Parameters
+OUTPUT PARAMETERS
 -----------------
 
 -  newintercomm : New inter-communicator (handle).
 -  IERROR : Fortran only: Error status (integer).
 
-Description
+DESCRIPTION
 -----------
 
 :ref:`MPI_Intercomm_create_from_groups` creates an inter-communicator. Unlike
@@ -87,7 +87,7 @@ event that MPI_GROUP_EMPTY is supplied as the local_group or
 remote_group1 or both, then the call is a local operation and
 MPI_COMM_NULL is returned as the newintercomm.
 
-Notes
+NOTES
 -----
 
 The errhandler argument specifies an error handler to be attached to the
@@ -96,17 +96,9 @@ possibly MPI implementation dependent, which indicate desired
 characteristics and guide communicator creation. MPI_MAX_STRINGTAG_LEN
 shall have a value of at least 63.
 
-Errors
+ERRORS
 ------
 
-Almost all MPI routines return an error value; C routines as the value
-of the function and Fortran routines in the last argument. Before the
-error value is returned, the current MPI error handler is called. By
-default, this error handler aborts the MPI job, except for I/O function
-errors. The error handler may be changed with :ref:`MPI_Comm_set_errhandler`;
-the predefined error handler MPI_ERRORS_RETURN may be used to cause
-error values to be returned. Note that MPI does not guarantee that an
-MPI program can continue past an error.
-
+.. include:: ./ERRORS.rst
 
 .. seealso:: :ref:`MPI_Comm_create_from_group`

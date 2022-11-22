@@ -8,7 +8,7 @@ MPI_File_write_ordered
 :ref:`MPI_File_write_ordered` - Writes a file at a location specified by a
 shared file pointer (blocking, collective).
 
-Syntax
+SYNTAX
 ------
 
 C Syntax
@@ -50,7 +50,7 @@ Fortran 2008 Syntax
        TYPE(MPI_Status) :: status
        INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 
-Input Parameters
+INPUT PARAMETERS
 ----------------
 
 -  ``fh`` : File handle (handle).
@@ -58,13 +58,13 @@ Input Parameters
 -  ``count`` : Number of elements in buffer (integer).
 -  ``datatype`` : Data type of each buffer element (handle).
 
-Output Parameters
+OUTPUT PARAMETERS
 -----------------
 
 -  ``status`` : Status object (Status).
 -  ``IERROR`` : Fortran only: Error status (integer).
 
-Description
+DESCRIPTION
 -----------
 
 :ref:`MPI_File_write_ordered` is a collective routine. This routine must be
@@ -81,15 +81,7 @@ number of ``datatype`` elements written in ``status``. The shared file
 pointer is updated by the amounts of data requested by all processes of
 the group.
 
-Errors
+ERRORS
 ------
 
-Almost all MPI routines return an error value; C routines as the value
-of the function and Fortran routines in the last argument.
-
-Before the error value is returned, the current MPI error handler is
-called. For MPI I/O function errors, the default error handler is set to
-MPI_ERRORS_RETURN. The error handler may be changed with
-:ref:`MPI_File_set_errhandler`; the predefined error handler
-MPI_ERRORS_ARE_FATAL may be used to make I/O errors fatal. Note that
-MPI does not guarantee that an MPI program can continue past an error.
+.. include:: ./ERRORS.rst

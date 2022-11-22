@@ -118,16 +118,7 @@ can not use the request in a wait or test routine (e.g., :ref:`MPI_Wait` ).
 ERRORS
 ------
 
-Almost all MPI routines return an error value; C routines as the value
-of the function and Fortran routines in the last argument.
-
-Before the error value is returned, the current MPI error handler is
-called. By default, this error handler aborts the MPI job, except for
-I/O function errors. The error handler may be changed with
-:ref:`MPI_Comm_set_errhandler`; the predefined error handler MPI_ERRORS_RETURN
-may be used to cause error values to be returned. Note that MPI does not
-guarantee that an MPI program can continue past an error.
-
+.. include ../ERRORS.rst
 
 .. seealso::
    :ref:`MPI_Isend` :ref:`MPI_Irecv` :ref:`MPI_Issend` :ref:`MPI_Ibsend` :ref:`MPI_Irsend` :ref:`MPI_Recv_init`

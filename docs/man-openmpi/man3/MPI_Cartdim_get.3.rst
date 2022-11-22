@@ -8,7 +8,7 @@ MPI_Cartdim_get
 :ref:`MPI_Cartdim_get` - Retrieves Cartesian topology information associated
 with a communicator.
 
-Syntax
+SYNTAX
 ------
 
 C Syntax
@@ -43,34 +43,26 @@ Fortran 2008 Syntax
        INTEGER, INTENT(OUT) :: ndims
        INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 
-Input Parameter
+INPUT PARAMETER
 ---------------
 
 -  comm : Communicator with Cartesian structure (handle).
 
-Output Parameters
+OUTPUT PARAMETERS
 -----------------
 
 -  ndims : Number of dimensions of the Cartesian structure (integer).
 -  IERROR : Fortran only: Error status (integer).
 
-Description
+DESCRIPTION
 -----------
 
 :ref:`MPI_Cartdim_get` returns the number of dimensions of the Cartesian
 structure.
 
-Errors
+ERRORS
 ------
 
-Almost all MPI routines return an error value; C routines as the value
-of the function and Fortran routines in the last argument. Before the
-error value is returned, the current MPI error handler is called. By
-default, this error handler aborts the MPI job, except for I/O function
-errors. The error handler may be changed with :ref:`MPI_Comm_set_errhandler`;
-the predefined error handler MPI_ERRORS_RETURN may be used to cause
-error values to be returned. Note that MPI does not guarantee that an
-MPI program can continue past an error.
-
+.. include:: ./ERRORS.rst
 
 .. seealso:: :ref:`MPI_Cart_get`

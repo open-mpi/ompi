@@ -8,7 +8,7 @@ MPI_Group_excl
 :ref:`MPI_Group_excl` - Produces a group by reordering an existing group and
 taking only unlisted members.
 
-Syntax
+SYNTAX
 ------
 
 C Syntax
@@ -45,21 +45,21 @@ Fortran 2008 Syntax
        TYPE(MPI_Group), INTENT(OUT) :: newgroup
        INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 
-Input Parameters
+INPUT PARAMETERS
 ----------------
 
 -  group : Group (handle).
 -  n : Number of elements in array ranks (integer).
 -  ranks : Array of integer ranks in group not to appear in newgroup.
 
-Output Parameters
+OUTPUT PARAMETERS
 -----------------
 
 -  newgroup : New group derived from above, preserving the order defined
    by group (handle).
 -  IERROR : Fortran only: Error status (integer).
 
-Description
+DESCRIPTION
 -----------
 
 The function :ref:`MPI_Group_excl` creates a group of processes newgroup that
@@ -69,25 +69,16 @@ the ordering in group. Each of the n elements of ranks must be a valid
 rank in group and all elements must be distinct; otherwise, the call is
 erroneous. If n = 0, then newgroup is identical to group.
 
-Note
+NOTE
 ----
 
 Currently, each of the ranks to exclude must be a valid rank in the
 group and all elements must be distinct or the function is erroneous.
 This restriction is per the draft.
 
-Errors
+ERRORS
 ------
 
-Almost all MPI routines return an error value; C routines as the value
-of the function and Fortran routines in the last argument.
-
-Before the error value is returned, the current MPI error handler is
-called. By default, this error handler aborts the MPI job, except for
-I/O function errors. The error handler may be changed with
-:ref:`MPI_Comm_set_errhandler`; the predefined error handler MPI_ERRORS_RETURN
-may be used to cause error values to be returned. Note that MPI does not
-guarantee that an MPI program can continue past an error.
-
+.. include:: ./ERRORS.rst
 
 .. seealso:: :ref:`MPI_Group_range_excl`

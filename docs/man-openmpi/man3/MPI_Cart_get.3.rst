@@ -8,7 +8,7 @@ MPI_Cart_get
 :ref:`MPI_Cart_get` - Retrieves Cartesian topology information associated with
 a communicator.
 
-Syntax
+SYNTAX
 ------
 
 C Syntax
@@ -47,14 +47,14 @@ Fortran 2008 Syntax
        LOGICAL, INTENT(OUT) :: periods(maxdims)
        INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 
-Input Parameters
+INPUT PARAMETERS
 ----------------
 
 -  comm : Communicator with Cartesian structure (handle).
 -  maxdims : Length of vectors dims, periods, and coords in the calling
    program (integer).
 
-Output Parameters
+OUTPUT PARAMETERS
 -----------------
 
 -  dims : Number of processes for each Cartesian dimension (array of
@@ -65,24 +65,16 @@ Output Parameters
    of integers).
 -  IERROR : Fortran only: Error status (integer).
 
-Description
+DESCRIPTION
 -----------
 
 The functions :ref:`MPI_Cartdim_get` and :ref:`MPI_Cart_get` return the Cartesian
 topology information that was associated with a communicator by
 :ref:`MPI_Cart_create`.
 
-Errors
+ERRORS
 ------
 
-Almost all MPI routines return an error value; C routines as the value
-of the function and Fortran routines in the last argument. Before the
-error value is returned, the current MPI error handler is called. By
-default, this error handler aborts the MPI job, except for I/O function
-errors. The error handler may be changed with :ref:`MPI_Comm_set_errhandler`;
-the predefined error handler MPI_ERRORS_RETURN may be used to cause
-error values to be returned. Note that MPI does not guarantee that an
-MPI program can continue past an error.
-
+.. include:: ./ERRORS.rst
 
 .. seealso:: :ref:`MPI_Cartdim_get`

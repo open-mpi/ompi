@@ -7,7 +7,7 @@ MPI_Cart_map
 
 :ref:`MPI_Cart_map` - Maps process to Cartesian topology information.
 
-Syntax
+SYNTAX
 ------
 
 C Syntax
@@ -46,7 +46,7 @@ Fortran 2008 Syntax
        INTEGER, INTENT(OUT) :: newrank
        INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 
-Input Parameters
+INPUT PARAMETERS
 ----------------
 
 -  comm : Input communicator (handle).
@@ -56,14 +56,14 @@ Input Parameters
 -  periods : Logical array of size ndims specifying the periodicity
    specification in each coordinate direction.
 
-Output Parameters
+OUTPUT PARAMETERS
 -----------------
 
 -  newrank : Reordered rank of the calling process; MPI_UNDEFINED if
    calling process does not belong to grid (integer).
 -  IERROR : Fortran only: Error status (integer).
 
-Description
+DESCRIPTION
 -----------
 
 :ref:`MPI_Cart_map` and :ref:`MPI_Graph_map` can be used to implement all other
@@ -74,17 +74,9 @@ capability other than that provided by MPI. :ref:`MPI_Cart_map` computes an
 possible implementation of this function is to always return the rank of
 the calling process, that is, not to perform any reordering.
 
-Errors
+ERRORS
 ------
 
-Almost all MPI routines return an error value; C routines as the value
-of the function and Fortran routines in the last argument. Before the
-error value is returned, the current MPI error handler is called. By
-default, this error handler aborts the MPI job, except for I/O function
-errors. The error handler may be changed with :ref:`MPI_Comm_set_errhandler`;
-the predefined error handler MPI_ERRORS_RETURN may be used to cause
-error values to be returned. Note that MPI does not guarantee that an
-MPI program can continue past an error.
-
+.. include:: ./ERRORS.rst
 
 .. seealso:: :ref:`MPI_Graph_map`

@@ -93,7 +93,7 @@ Fortran 2008 Syntax
        TYPE(MPI_Request), INTENT(OUT) :: request
        INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 
-Input Parameters
+INPUT PARAMETERS
 ----------------
 
 -  sendbuf : Starting address of send buffer (choice).
@@ -107,7 +107,7 @@ Input Parameters
 -  comm : Communicator (handle).
 -  info : Info (handle, persistent only).
 
-Output Parameters
+OUTPUT PARAMETERS
 -----------------
 
 -  recvbuf : Address of receive buffer (choice, significant only at
@@ -115,7 +115,7 @@ Output Parameters
 -  request : Request (handle, non-blocking only).
 -  IERROR : Fortran only: Error status (integer).
 
-Description
+DESCRIPTION
 -----------
 
 Each process (root process included) sends the contents of its send
@@ -216,18 +216,9 @@ root argument. The send buffer argument of the processes in the first
 group must be consistent with the receive buffer argument of the root
 process in the second group.
 
-Errors
+ERRORS
 ------
 
-Almost all MPI routines return an error value; C routines as the value
-of the function and Fortran routines in the last argument. Before the
-error value is returned, the current MPI error handler is called. By
-default, this error handler aborts the MPI job, except for I/O function
-errors. The error handler may be changed with :ref:`MPI_Comm_set_errhandler`;
-the predefined error handler MPI_ERRORS_RETURN may be used to cause
-error values to be returned. Note that MPI does not guarantee that an
-MPI program can continue past an error. See the MPI man page for a full
-list of MPI error codes.
-
+.. include:: ./ERRORS.rst
 
 .. seealso:: :ref:`MPI_Gatherv`

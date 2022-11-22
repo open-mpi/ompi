@@ -7,7 +7,7 @@ MPI_Free_mem
 
 :ref:`MPI_Free_mem` - Frees memory that has been allocated using :ref:`MPI_Alloc_mem`.
 
-Syntax
+SYNTAX
 ------
 
 C Syntax
@@ -42,34 +42,25 @@ Fortran 2008 Syntax
        TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: base
        INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 
-Input Parameter
+INPUT PARAMETER
 ---------------
 
 -  base : Initial address of memory segment allocated by :ref:`MPI_Alloc_mem`
    (choice).
 
-Output Parameter
+OUTPUT PARAMETER
 ----------------
 
 -  IERROR : Fortran only: Error status (integer).
 
-Description
+DESCRIPTION
 -----------
 
 :ref:`MPI_Free_mem` frees memory that has been allocated by :ref:`MPI_Alloc_mem`.
 
-Errors
+ERRORS
 ------
 
-Almost all MPI routines return an error value; C routines as the value
-of the function and Fortran routines in the last argument.
-
-Before the error value is returned, the current MPI error handler is
-called. By default, this error handler aborts the MPI job, except for
-I/O function errors. The error handler may be changed with
-:ref:`MPI_Comm_set_errhandler`; the predefined error handler MPI_ERRORS_RETURN
-may be used to cause error values to be returned. Note that MPI does not
-guarantee that an MPI program can continue past an error.
-
+.. include:: ./ERRORS.rst
 
 .. seealso:: :ref:`MPI_Alloc_mem`

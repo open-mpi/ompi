@@ -8,7 +8,7 @@ MPI_Buffer_detach
 :ref:`MPI_Buffer_detach` - Removes an existing buffer (for use in in :ref:`MPI_Bsend`,
 etc.)
 
-Syntax
+SYNTAX
 ------
 
 C Syntax
@@ -45,14 +45,14 @@ Fortran 2008 Syntax
        INTEGER, INTENT(OUT) :: size
        INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 
-Output Parameters
+OUTPUT PARAMETERS
 -----------------
 
 -  buf : Initial buffer address (choice).
 -  size : Buffer size, in bytes (integer).
 -  IERROR : Fortran only: Error status (integer).
 
-Description
+DESCRIPTION
 -----------
 
 Detach the buffer currently associated with MPI. The call returns the
@@ -69,7 +69,7 @@ MPI_Buffer_detach( &buff, &size); /* Buffer size reduced to zero */
 MPI_Buffer_attach( buff, size); /* Buffer of 10000 bytes available again
 \*/
 
-Notes
+NOTES
 -----
 
 The reason that :ref:`MPI_Buffer_detach` returns the address and size of the
@@ -97,18 +97,9 @@ differently: A pointer to the buffer is passed to :ref:`MPI_Buffer_attach`; the
 address of the pointer is passed to :ref:`MPI_Buffer_detach`, so that this call
 can return the pointer value.
 
-Errors
+ERRORS
 ------
 
-Almost all MPI routines return an error value; C routines as the value
-of the function and Fortran routines in the last argument.
-
-Before the error value is returned, the current MPI error handler is
-called. By default, this error handler aborts the MPI job, except for
-I/O function errors. The error handler may be changed with
-:ref:`MPI_Comm_set_errhandler`; the predefined error handler MPI_ERRORS_RETURN
-may be used to cause error values to be returned. Note that MPI does not
-guarantee that an MPI program can continue past an error.
-
+.. include:: ./ERRORS.rst
 
 .. seealso:: :ref:`MPI_Buffer_attach`

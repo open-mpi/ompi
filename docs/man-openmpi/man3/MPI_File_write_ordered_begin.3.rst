@@ -9,7 +9,7 @@ MPI_File_write_ordered_begin
 by a shared file pointer; beginning part of a split collective routine
 (nonblocking).
 
-Syntax
+SYNTAX
 ------
 
 C Syntax
@@ -48,24 +48,24 @@ Fortran 2008 Syntax
        TYPE(MPI_Datatype), INTENT(IN) :: datatype
        INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 
-Input/Output Parameter
+INPUT/OUTPUT PARAMETER
 ----------------------
 
 -  ``fh`` : File handle (handle).
 
-Input Parameters
+INPUT PARAMETERS
 ----------------
 
 -  ``buf`` : Initial address of buffer (choice).
 -  ``count`` : Number of elements in buffer (integer).
 -  ``datatype`` : Data type of each buffer element (handle).
 
-Output Parameter
+OUTPUT PARAMETER
 ----------------
 
 -  ``IERROR`` : Fortran only: Error status (integer).
 
-Description
+DESCRIPTION
 -----------
 
 :ref:`MPI_File_write_ordered_begin` is the beginning part of a split
@@ -81,7 +81,7 @@ position at which the shared file pointer would be after all processes
 whose ranks within the group are less than that of this process had
 written their data.
 
-Notes
+NOTES
 -----
 
 All the nonblocking collective routines for data access are "split" into
@@ -89,15 +89,7 @@ two routines, each with \_begin or \_end as a suffix. These split
 collective routines are subject to the semantic rules described in
 Section 9.4.5 of the MPI-2 standard.
 
-Errors
+ERRORS
 ------
 
-Almost all MPI routines return an error value; C routines as the value
-of the function and Fortran routines in the last argument.
-
-Before the error value is returned, the current MPI error handler is
-called. For MPI I/O function errors, the default error handler is set to
-MPI_ERRORS_RETURN. The error handler may be changed with
-:ref:`MPI_File_set_errhandler`; the predefined error handler
-MPI_ERRORS_ARE_FATAL may be used to make I/O errors fatal. Note that
-MPI does not guarantee that an MPI program can continue past an error.
+.. include:: ./ERRORS.rst

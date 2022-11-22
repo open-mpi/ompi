@@ -8,7 +8,7 @@ MPI_Cart_sub
 :ref:`MPI_Cart_sub` - Partitions a communicator into subgroups, which form
 lower-dimensional Cartesian subgrids.
 
-Syntax
+SYNTAX
 ------
 
 C Syntax
@@ -45,7 +45,7 @@ Fortran 2008 Syntax
        TYPE(MPI_Comm), INTENT(OUT) :: newcomm
        INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 
-Input Parameters
+INPUT PARAMETERS
 ----------------
 
 -  comm : Communicator with Cartesian structure (handle).
@@ -53,14 +53,14 @@ Input Parameters
    dimension is kept in the subgrid (true) or is dropped (false)
    (logical vector).
 
-Output Parameters
+OUTPUT PARAMETERS
 -----------------
 
 -  comm_new : Communicator containing the subgrid that includes the
    calling process (handle).
 -  IERROR : Fortran only: Error status (integer).
 
-Description
+DESCRIPTION
 -----------
 
 If a Cartesian topology has been created with :ref:`MPI_Cart_create`, the
@@ -83,17 +83,9 @@ to MPI_Cart_sub(comm, remain_dims, comm_new) will create six
 nonoverlapping communicators, each with four processes, in a
 one-dimensional Cartesian topology.
 
-Errors
+ERRORS
 ------
 
-Almost all MPI routines return an error value; C routines as the value
-of the function and Fortran routines in the last argument. Before the
-error value is returned, the current MPI error handler is called. By
-default, this error handler aborts the MPI job, except for I/O function
-errors. The error handler may be changed with :ref:`MPI_Comm_set_errhandler`;
-the predefined error handler MPI_ERRORS_RETURN may be used to cause
-error values to be returned. Note that MPI does not guarantee that an
-MPI program can continue past an error.
-
+.. include:: ./ERRORS.rst
 
 .. seealso:: :ref:`MPI_Cart_create`

@@ -77,11 +77,7 @@ window.
 ERRORS
 ------
 
-Almost all MPI routines return an error value; C routines as the value
-of the function and Fortran routines in the last argument.
-
-See the MPI man page for a full list of MPI error codes.
-
+.. include:: ./ERRORS.rst
 
 .. seealso::
    :ref:`MPI_Win_create_errhandler` :ref:`MPI_Win_set_errhandler`

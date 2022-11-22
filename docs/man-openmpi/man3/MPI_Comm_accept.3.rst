@@ -7,7 +7,7 @@ MPI_Comm_accept
 
 :ref:`MPI_Comm_accept` - Establishes communication with a client.
 
-Syntax
+SYNTAX
 ------
 
 C Syntax
@@ -46,7 +46,7 @@ Fortran 2008 Syntax
        TYPE(MPI_Comm), INTENT(OUT) :: newcomm
        INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 
-Input Parameters
+INPUT PARAMETERS
 ----------------
 
 -  port_name : Port name (string, used only on *root*).
@@ -55,13 +55,13 @@ Input Parameters
 -  root : Rank in *comm* of root node (integer).
 -  comm : Intracommunicator over which call is collective (handle).
 
-Output Parameters
+OUTPUT PARAMETERS
 -----------------
 
 -  newcomm : Intercommunicator with client as remote group (handle)
 -  IERROR : Fortran only: Error status (integer).
 
-Description
+DESCRIPTION
 -----------
 
 :ref:`MPI_Comm_accept` establishes communication with a client. It is
@@ -71,17 +71,9 @@ client has connected with the :ref:`MPI_Comm_accept` function using the
 :ref:`MPI_Comm_connect` function. The port_name must have been established
 through a call to :ref:`MPI_Open_port` on the root.
 
-Errors
+ERRORS
 ------
 
-Almost all MPI routines return an error value; C routines as the value
-of the function and Fortran routines in the last argument. Before the
-error value is returned, the current MPI error handler is called. By
-default, this error handler aborts the MPI job, except for I/O function
-errors. The error handler may be changed with :ref:`MPI_Comm_set_errhandler`;
-the predefined error handler MPI_ERRORS_RETURN may be used to cause
-error values to be returned. See the MPI man page for a full list of MPI
-error codes.
-
+.. include:: ./ERRORS.rst
 
 .. seealso:: :ref:`MPI_Comm_connect`

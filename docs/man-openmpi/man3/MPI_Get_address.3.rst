@@ -7,7 +7,7 @@ MPI_Get_address
 
 :ref:`MPI_Get_address` - Gets the address of a location in memory.
 
-Syntax
+SYNTAX
 ------
 
 C Syntax
@@ -44,18 +44,18 @@ Fortran 2008 Syntax
        INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(OUT) :: address
        INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 
-Input Parameters
+INPUT PARAMETERS
 ----------------
 
 -  ``location`` : Location in caller memory (choice).
 
-Output Parameters
+OUTPUT PARAMETERS
 -----------------
 
 -  ``address`` : Address of location (integer).
 -  ``IERROR`` : Fortran only: Error status (integer).
 
-Description
+DESCRIPTION
 -----------
 
 :ref:`MPI_Get_address` returns the byte ``address`` of a location in
@@ -73,7 +73,7 @@ Example: Using :ref:`MPI_Get_address` for an array.
    ! The value of DIFF is 909*sizeofreal; the values of I1 and I2 are
    ! implementation dependent.
 
-Notes
+NOTES
 -----
 
 Current Fortran MPI codes will run unmodified and will port to any
@@ -84,16 +84,7 @@ new functions. This provides compatibility with C and avoids errors on
 (slightly) rewritten to port to old Fortran 77 environments that do not
 support KIND declarations.
 
-Errors
+ERRORS
 ------
 
-Almost all MPI routines return an error value; C routines as the value
-of the function and Fortran routines in the last argument.
-
-Before the error value is returned, the current MPI error handler is
-called. By default, this error handler aborts the MPI job, except for
-I/O function errors. The error handler may be changed with
-:ref:`MPI_Comm_set_errhandler`; the predefined error handler
-MPI_ERRORS_RETURN may be used to cause error values to be returned.
-Note that MPI does not guarantee that an MPI program can continue past
-an error.
+.. include:: ./ERRORS.rst

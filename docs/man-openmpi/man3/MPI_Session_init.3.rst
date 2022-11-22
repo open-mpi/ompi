@@ -7,7 +7,7 @@ MPI_Session_init
 
 :ref:`MPI_Session_init` - Creates a new session handle
 
-Syntax
+SYNTAX
 ------
 
 C Syntax
@@ -43,20 +43,20 @@ Fortran 2008 Syntax
        TYPE(MPI_Session), INTENT(OUT) :: session
        INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 
-Input Parameters
+INPUT PARAMETERS
 ----------------
 
 -  info : info object (handle)
 -  errhandler : error handler to be attached to the returned session
    (handle)
 
-Output Parameters
+OUTPUT PARAMETERS
 -----------------
 
 -  session : New session (handle).
 -  IERROR : Fortran only: Error status (integer).
 
-Description
+DESCRIPTION
 -----------
 
 :ref:`MPI_Session_init` is used to instantiate an MPI Session. The returned
@@ -65,7 +65,7 @@ characteristics of the job within which the process is running, as well
 as other system resources. An application can make multiple calls to
 :ref:`MPI_Session_init` and the related :ref:`MPI_Session_finalize` routine.
 
-Notes
+NOTES
 -----
 
 The info argument is used to request MPI functionality requirements and
@@ -74,16 +74,9 @@ possible MPI implementation specific capabilities.
 The errhandler argument specifies an error handler to invoke in the
 event that the Session instantiation call encounters an error.
 
-Errors
+ERRORS
 ------
 
-Almost all MPI routines return an error value; C routines as the value
-of the function and Fortran routines in the last argument. Before the
-error value is returned, the current MPI error handler is called. By
-default, this error handler aborts the MPI job, except for I/O function
-errors. The predefined error handler MPI_ERRORS_RETURN may be used to
-cause error values to be returned. Note that MPI does not guarantee that
-an MPI program can continue past an error.
-
+.. include:: ./ERRORS.rst
 
 .. seealso:: :ref:`MPI_Session_get_num_psets` MPI_Session_group_from_pset

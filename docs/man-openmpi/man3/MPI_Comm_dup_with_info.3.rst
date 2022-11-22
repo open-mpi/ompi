@@ -8,7 +8,7 @@ MPI_Comm_dup_with_info
 :ref:`MPI_Comm_dup_with_info` - Duplicates an existing communicator using
 provided info.
 
-Syntax
+SYNTAX
 ------
 
 C Syntax
@@ -44,19 +44,19 @@ Fortran 2008 Syntax
        TYPE(MPI_Comm), INTENT(OUT) :: newcomm
        INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 
-Input Parameter
+INPUT PARAMETER
 ---------------
 
 -  comm : Communicator (handle).
 -  info : Info argument (handle).
 
-Output Parameters
+OUTPUT PARAMETERS
 -----------------
 
 -  newcomm : Copy of comm (handle).
 -  IERROR : Fortran only: Error status (integer).
 
-Description
+DESCRIPTION
 -----------
 
 :ref:`MPI_Comm_dup_with_info` acts exactly like :ref:`MPI_Comm_dup` except that the
@@ -65,7 +65,7 @@ newcomm. The hints provided by the argument info are associated with the
 output communicator newcomm instead. See :ref:`MPI_Comm_set_info` for the
 list of recognized info keys.
 
-Notes
+NOTES
 -----
 
 This operation is used to provide a parallel library call with a
@@ -83,17 +83,9 @@ invokes other MPI functions. In Open MPI, it is not valid for attribute
 copy callbacks (or any of their children) to add or delete attributes on
 the same object on which the attribute copy callback is being invoked.
 
-Errors
+ERRORS
 ------
 
-Almost all MPI routines return an error value; C routines as the value
-of the function and Fortran routines in the last argument. Before the
-error value is returned, the current MPI error handler is called. By
-default, this error handler aborts the MPI job, except for I/O function
-errors. The error handler may be changed with :ref:`MPI_Comm_set_errhandler`;
-the predefined error handler MPI_ERRORS_RETURN may be used to cause
-error values to be returned. Note that MPI does not guarantee that an
-MPI program can continue past an error.
-
+.. include:: ./ERRORS.rst
 
 .. seealso:: :ref:`MPI_Comm_dup`

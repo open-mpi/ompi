@@ -7,7 +7,7 @@ MPI_Comm_create_group
 
 :ref:`MPI_Comm_create_group` - Creates a new communicator.
 
-Syntax
+SYNTAX
 ------
 
 C Syntax
@@ -44,20 +44,20 @@ Fortran 2008 Syntax
        TYPE(MPI_Comm), INTENT(OUT) :: newcomm
        INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 
-Input Parameters
+INPUT PARAMETERS
 ----------------
 
 -  comm : Communicator (handle).
 -  group : Group, which is a subset of the group of comm (handle).
 -  tag : Tag (integer).
 
-Output Parameters
+OUTPUT PARAMETERS
 -----------------
 
 -  newcomm : New communicator (handle).
 -  IERROR : Fortran only: Error status (integer).
 
-Description
+DESCRIPTION
 -----------
 
 :ref:`MPI_Comm_create_group` is similar to :ref:`MPI_Comm_create`; however,
@@ -79,7 +79,7 @@ associated group. If the calling process is not a member of group, e.g.,
 group is MPI_GROUP_EMPTY, then the call is a local operation and
 MPI_COMM_NULL is returned as newcomm.
 
-Notes
+NOTES
 -----
 
 :ref:`MPI_Comm_create_group` provides a means of making a subset of processes
@@ -90,17 +90,9 @@ communicator constructors) to further subdivide a computation into
 parallel sub-computations. A more general service is provided by
 :ref:`MPI_Comm_split`.
 
-Errors
+ERRORS
 ------
 
-Almost all MPI routines return an error value; C routines as the value
-of the function and Fortran routines in the last argument. Before the
-error value is returned, the current MPI error handler is called. By
-default, this error handler aborts the MPI job, except for I/O function
-errors. The error handler may be changed with :ref:`MPI_Comm_set_errhandler`;
-the predefined error handler MPI_ERRORS_RETURN may be used to cause
-error values to be returned. Note that MPI does not guarantee that an
-MPI program can continue past an error.
-
+.. include:: ./ERRORS.rst
 
 .. seealso:: :ref:`MPI_Comm_create`

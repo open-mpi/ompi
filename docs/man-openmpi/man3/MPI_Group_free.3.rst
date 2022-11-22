@@ -7,7 +7,7 @@ MPI_Group_free
 
 :ref:`MPI_Group_free` - Frees a group.
 
-Syntax
+SYNTAX
 ------
 
 C Syntax
@@ -41,38 +41,29 @@ Fortran 2008 Syntax
        TYPE(MPI_Group), INTENT(INOUT) :: group
        INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 
-Input/Output Parameter
+INPUT/OUTPUT PARAMETER
 ----------------------
 
 -  ``group`` : Group (handle).
 
-Output Parameter
+OUTPUT PARAMETER
 ----------------
 
 -  ``IERROR`` : Fortran only: Error status (integer).
 
-Description
+DESCRIPTION
 -----------
 
 This operation marks a ``group`` object for deallocation. The handle
 ``group`` is set to MPI_GROUP_NULL by the call. Any ongoing
 operation using this ``group`` will complete normally.
 
-Note
+NOTE
 ----
 
 On return, ``group`` is set to MPI_GROUP_NULL.
 
-Errors
+ERRORS
 ------
 
-Almost all MPI routines return an error value; C routines as the value
-of the function and Fortran routines in the last argument.
-
-Before the error value is returned, the current MPI error handler is
-called. By default, this error handler aborts the MPI job, except for
-I/O function errors. The error handler may be changed with
-:ref:`MPI_Comm_set_errhandler`; the predefined error handler
-MPI_ERRORS_RETURN may be used to cause error values to be returned.
-Note that MPI does not guarantee that an MPI program can continue past
-an error.
+.. include:: ./ERRORS.rst

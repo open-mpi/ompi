@@ -7,7 +7,7 @@ MPI_Get
 
 :ref:`MPI_Get`, :ref:`MPI_Rget` - Copies data from the target memory to the origin.
 
-Syntax
+SYNTAX
 ------
 
 C Syntax
@@ -75,7 +75,7 @@ Fortran 2008 Syntax
        TYPE(MPI_Request), INTENT(OUT) :: request
        INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 
-Input Parameters
+INPUT PARAMETERS
 ----------------
 
 -  origin_addr : Initial address of origin buffer (choice).
@@ -90,13 +90,13 @@ Input Parameters
 -  target datatype : datatype of each entry in target buffer (handle)
 -  win : window object used for communication (handle)
 
-Output Parameter
+OUTPUT PARAMETER
 ----------------
 
 -  request : :ref:`MPI_Rget`: RMA request
 -  IERROR : Fortran only: Error status (integer).
 
-Description
+DESCRIPTION
 -----------
 
 :ref:`MPI_Get` copies data from the target memory to the origin, similar to
@@ -113,7 +113,7 @@ of an :ref:`MPI_Rget` operation indicates that the data is available in the
 origin buffer. If origin_addr points to memory attached to a window,
 then the data becomes available in the private copy of this window.
 
-Fortran 77 Notes
+FORTRAN 77 NOTES
 ----------------
 
 The MPI standard prescribes portable Fortran syntax for the TARGET_DISP
@@ -125,18 +125,9 @@ fortran INTEGERMPI_ADDRESS_KIND TARGET_DISP
 where MPI_ADDRESS_KIND is a constant defined in mpif.h and gives the
 length of the declared integer in bytes.
 
-Errors
+ERRORS
 ------
 
-Almost all MPI routines return an error value; C routines as the value
-of the function and Fortran routines in the last argument.
-
-Before the error value is returned, the current MPI error handler is
-called. By default, this error handler aborts the MPI job, except for
-I/O function errors. The error handler may be changed with
-:ref:`MPI_Comm_set_errhandler`; the predefined error handler MPI_ERRORS_RETURN
-may be used to cause error values to be returned. Note that MPI does not
-guarantee that an MPI program can continue past an error.
-
+.. include:: ./ERRORS.rst
 
 .. seealso:: :ref:`MPI_Put`

@@ -8,7 +8,7 @@ MPI_Cart_coords
 :ref:`MPI_Cart_coords` - Determines process coords in Cartesian topology
 given rank in group.
 
-Syntax
+SYNTAX
 ------
 
 C Syntax
@@ -45,7 +45,7 @@ Fortran 2008 Syntax
        INTEGER, INTENT(OUT) :: coords(maxdims)
        INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 
-Input Parameters
+INPUT PARAMETERS
 ----------------
 
 -  ``comm`` : Communicator with Cartesian structure (handle).
@@ -53,7 +53,7 @@ Input Parameters
 -  ``maxdims`` : Length of vector coords in the calling program
    (integer). Length of vector coords in the calling program (integer).
 
-Output Parameters
+OUTPUT PARAMETERS
 -----------------
 
 -  ``coords`` : Integer array (of size ndims,which was defined by
@@ -61,21 +61,13 @@ Output Parameters
    specified process (integer).
 -  ``IERROR`` : Fortran only: Error status (integer).
 
-Description
+DESCRIPTION
 -----------
 
 :ref:`MPI_Cart_coords` provides a mapping of ``rank``\ s to Cartesian
 coordinates.
 
-Errors
+ERRORS
 ------
 
-Almost all MPI routines return an error value; C routines as the value
-of the function and Fortran routines in the last argument. Before the
-error value is returned, the current MPI error handler is called. By
-default, this error handler aborts the MPI job, except for I/O function
-errors. The error handler may be changed with
-:ref:`MPI_Comm_set_errhandler`; the predefined error handler
-MPI_ERRORS_RETURN may be used to cause error values to be returned.
-Note that MPI does not guarantee that an MPI program can continue past
-an error.
+.. include:: ./ERRORS.rst

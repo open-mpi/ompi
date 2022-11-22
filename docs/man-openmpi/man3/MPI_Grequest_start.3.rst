@@ -8,7 +8,7 @@ MPI_Grequest_start
 :ref:`MPI_Grequest_start` - Starts a generalized request and returns a
 handle to it in ``request``.
 
-Syntax
+SYNTAX
 ------
 
 C Syntax
@@ -53,7 +53,7 @@ Fortran 2008 Syntax
        TYPE(MPI_Request), INTENT(OUT) :: request
        INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 
-Input Parameters
+INPUT PARAMETERS
 ----------------
 
 -  ``query_fn`` : Callback function invoked when request status is
@@ -64,13 +64,13 @@ Input Parameters
    (function).
 -  ``extra_state`` : Extra state.
 
-Output Parameters
+OUTPUT PARAMETERS
 -----------------
 
 -  ``request`` : Generalized request (handle).
 -  ``IERROR`` : Fortran only: Error status (integer).
 
-Description
+DESCRIPTION
 -----------
 
 :ref:`MPI_Grequest_start` starts a generalized ``request`` and returns a
@@ -175,7 +175,7 @@ MPI passes to the callback function complete=true if
 ``MPI_Grequest_complete`` has already been called on the request, and
 complete=false otherwise.
 
-Fortran 77 Notes
+FORTRAN 77 NOTES
 ----------------
 
 The MPI standard prescribes portable Fortran syntax for the
@@ -189,19 +189,10 @@ the non-portable syntax
 where ``MPI_ADDRESS_KIND`` is a constant defined in mpif.h and gives the
 length of the declared integer in bytes.
 
-Errors
+ERRORS
 ------
 
-Almost all MPI routines return an error value; C routines as the value
-of the function and Fortran routines in the last argument.
-
-Before the error value is returned, the current MPI error handler is
-called. By default, this error handler aborts the MPI job, except for
-I/O function errors. The error handler may be changed with
-:ref:`MPI_Comm_set_errhandler`; the predefined error handler
-MPI_ERRORS_RETURN may be used to cause error values to be returned.
-Note that MPI does not guarantee that an MPI program can continue past
-an error.
+.. include:: ./ERRORS.rst
 
 All callback functions return an error code. The code is passed back and
 dealt with as appropriate for the error code by the MPI function that
@@ -219,5 +210,3 @@ error code returned by the corresponding invocation of its ``free_fn``
 callback function. However, if the MPI function was passed
 MPI_STATUSES_IGNORE, then the individual error codes returned by
 each callback function will be lost.
-
-See the MPI man page for a full list of MPI error codes.

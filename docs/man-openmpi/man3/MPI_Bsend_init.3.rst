@@ -7,7 +7,7 @@ MPI_Bsend_init
 
 :ref:`MPI_Bsend_init` - Builds a handle for a buffered send.
 
-Syntax
+SYNTAX
 ------
 
 C Syntax
@@ -48,7 +48,7 @@ Fortran 2008 Syntax
        TYPE(MPI_Request), INTENT(OUT) :: request
        INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 
-Input Parameters
+INPUT PARAMETERS
 ----------------
 
 -  buf : Initial address of send buffer (choice).
@@ -58,13 +58,13 @@ Input Parameters
 -  tag : Message tag (integer).
 -  comm : Communicator (handle).
 
-Output Parameters
+OUTPUT PARAMETERS
 -----------------
 
 -  request : Communication request (handle).
 -  IERROR : Fortran only: Error status (integer).
 
-Description
+DESCRIPTION
 -----------
 
 Creates a persistent communication request for a buffered mode send, and
@@ -73,18 +73,9 @@ binds to it all the arguments of a send operation.
 A communication (send or receive) that uses a persistent request is
 initiated by the function :ref:`MPI_Start`.
 
-Errors
+ERRORS
 ------
 
-Almost all MPI routines return an error value; C routines as the value
-of the function and Fortran routines in the last argument.
-
-Before the error value is returned, the current MPI error handler is
-called. By default, this error handler aborts the MPI job, except for
-I/O function errors. The error handler may be changed with
-:ref:`MPI_Comm_set_errhandler`; the predefined error handler MPI_ERRORS_RETURN
-may be used to cause error values to be returned. Note that MPI does not
-guarantee that an MPI program can continue past an error.
-
+.. include:: ./ERRORS.rst
 
 .. seealso:: :ref:`MPI_Send_init` :ref:`MPI_Start`

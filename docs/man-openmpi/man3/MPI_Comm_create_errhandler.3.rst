@@ -8,7 +8,7 @@ MPI_Comm_create_errhandler
 :ref:`MPI_Comm_create_errhandler` - Creates an error handler that can be
 attached to communicators.
 
-Syntax
+SYNTAX
 ------
 
 C Syntax
@@ -54,18 +54,18 @@ MPI_Comm_errhandler_function and ``MPI::Comm::Errhandler_function``,
 respectively. Open MPI supports both names (indeed, the \_fn names are
 typedefs to the \_function names).
 
-Input Parameter
+INPUT PARAMETER
 ---------------
 
 -  ``function`` : User-defined error handling procedure (function).
 
-Output Parameters
+OUTPUT PARAMETERS
 -----------------
 
 -  ``errhandler`` : MPI error handler (handle).
 -  ``IERROR`` : Fortran only: Error status (integer).
 
-Description
+DESCRIPTION
 -----------
 
 :ref:`MPI_Comm_create_errhandler` creates an error handler that can be
@@ -88,15 +88,7 @@ deprecated. In Fortran, the user routine should be of this form:
    SUBROUTINE COMM_ERRHANDLER_FUNCTION(COMM, ERROR_CODE, ...)
       INTEGER COMM, ERROR_CODE
 
-Errors
+ERRORS
 ------
 
-Almost all MPI routines return an error value; C routines as the value
-of the ``function`` and Fortran routines in the last argument. Before
-the error value is returned, the current MPI error handler is called. By
-default, this error handler aborts the MPI job, except for I/O
-``function`` errors. The error handler may be changed with
-:ref:`MPI_Comm_set_errhandler`; the predefined error handler
-MPI_ERRORS_RETURN may be used to cause error values to be returned.
-Note that MPI does not guarantee that an MPI program can continue past
-an error.
+.. include:: ./ERRORS.rst

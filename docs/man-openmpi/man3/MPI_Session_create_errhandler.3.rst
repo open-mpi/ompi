@@ -8,7 +8,7 @@ MPI_Session_create_errhandler
 :ref:`MPI_Session_create_errhandler` - Creates an error handler that can be
 attached to sessions
 
-Syntax
+SYNTAX
 ------
 
 C Syntax
@@ -45,18 +45,18 @@ Fortran 2008 Syntax
        TYPE(MPI_Errhandler), INTENT(OUT) :: errhandler
        INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 
-Input Parameter
+INPUT PARAMETER
 ---------------
 
 -  ``function`` : User-defined error handling procedure (function).
 
-Output Parameters
+OUTPUT PARAMETERS
 -----------------
 
 -  ``errhandler`` : MPI error handler (handle).
 -  ``IERROR`` : Fortran only: Error status (integer).
 
-Description
+DESCRIPTION
 -----------
 
 :ref:`MPI_Session_create_errhandler` creates an error handler that can be
@@ -79,15 +79,7 @@ Fortran, the user routine should be of this form:
    SUBROUTINE SESSION_ERRHANDLER_FUNCTION(SESSION, ERROR_CODE, ...)
       INTEGER SESSION, ERROR_CODE
 
-Errors
+ERRORS
 ------
 
-Almost all MPI routines return an error value; C routines as the value
-of the ``function`` and Fortran routines in the last argument. Before
-the error value is returned, the current MPI error handler is called. By
-default, this error handler aborts the MPI job, except for I/O
-``function`` errors. The error handler may be changed with
-MPI_Session_set_errhandler; the predefined error handler
-MPI_ERRORS_RETURN may be used to cause error values to be returned.
-Note that MPI does not guarantee that an MPI program can continue past
-an error.
+.. include:: ./ERRORS.rst

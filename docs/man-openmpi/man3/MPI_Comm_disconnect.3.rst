@@ -8,7 +8,7 @@ MPI_Comm_disconnect
 :ref:`MPI_Comm_disconnect` - Deallocates communicator object and sets handle to
 MPI_COMM_NULL.
 
-Syntax
+SYNTAX
 ------
 
 C Syntax
@@ -42,17 +42,17 @@ Fortran 2008 Syntax
        TYPE(MPI_Comm), INTENT(INOUT) :: comm
        INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 
-Input/Output Parameter
+INPUT/OUTPUT PARAMETER
 ^^^^^^^^^^^^^^^^^^^^^^
 
 -  comm : Communicator (handle).
 
-Output Parameter
+OUTPUT PARAMETER
 ----------------
 
 -  IERROR : Fortran only: Error status (integer).
 
-Description
+DESCRIPTION
 -----------
 
 :ref:`MPI_Comm_disconnect` waits for all pending communication on comm to
@@ -66,7 +66,7 @@ has the same action as :ref:`MPI_Comm_free`, except that it waits for pending
 communication to finish internally and enables the guarantee about the
 behavior of disconnected processes.
 
-Notes
+NOTES
 -----
 
 To disconnect two processes you may need to call :ref:`MPI_Comm_disconnect`,
@@ -75,17 +75,9 @@ between the two processes. Note that it may be necessary to disconnect
 several communicators (or to free several windows or files) before two
 processes are completely independent.
 
-Errors
+ERRORS
 ------
 
-Almost all MPI routines return an error value; C routines as the value
-of the function and Fortran routines in the last argument. Before the
-error value is returned, the current MPI error handler is called. By
-default, this error handler aborts the MPI job, except for I/O function
-errors. The error handler may be changed with :ref:`MPI_Comm_set_errhandler`;
-the predefined error handler MPI_ERRORS_RETURN may be used to cause
-error values to be returned. Note that MPI does not guarantee that an
-MPI program can continue past an error.
-
+.. include:: ./ERRORS.rst
 
 .. seealso:: :ref:`MPI_Comm_connect`
