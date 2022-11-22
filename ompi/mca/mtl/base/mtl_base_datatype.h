@@ -46,7 +46,7 @@ ompi_mtl_datatype_pack(struct opal_convertor_t *convertor,
 						  convertor->count) &&
         !(convertor->flags & CONVERTOR_ACCELERATOR)) {
 	    *free_after = false;
-	    *buffer = convertor->pBaseBuf;
+	    *buffer = convertor->pBaseBuf + convertor->bConverted + convertor->pDesc->true_lb;
 	    *buffer_len = convertor->local_size;
 	    return OPAL_SUCCESS;
     }
