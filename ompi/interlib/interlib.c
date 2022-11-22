@@ -17,6 +17,8 @@
  * Copyright (c) 2015-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
+ * Copyright (c) 2022      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,6 +31,7 @@
 #include <string.h>
 
 #include "opal/mca/pmix/pmix-internal.h"
+#include "opal/util/proc.h"
 #include "ompi/runtime/ompi_rte.h"
 #include "ompi/interlib/interlib.h"
 
@@ -122,7 +125,7 @@ int ompi_interlib_declare(int threadlevel, char *version)
     PMIX_INFO_DESTRUCT(&info[3]);
     /* account for our refcount on pmix_init */
     PMIx_Finalize(NULL, 0);
-    if (ompi_singleton && PMIX_ERR_UNREACH == rc) {
+    if (opal_process_info.is_singleton && PMIX_ERR_UNREACH == rc) {
         ret = OMPI_SUCCESS;
     } else {
         ret = opal_pmix_convert_status(rc);

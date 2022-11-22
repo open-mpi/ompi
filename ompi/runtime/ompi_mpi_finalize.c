@@ -20,7 +20,7 @@
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
- * Copyright (c) 2019      Triad National Security, LLC. All rights
+ * Copyright (c) 2019-2022 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
@@ -272,7 +272,7 @@ int ompi_mpi_finalize(void)
        del_procs behavior around May of 2014 (see
        https://svn.open-mpi.org/trac/ompi/ticket/4669#comment:4 for
        more details). */
-    if (!ompi_async_mpi_finalize && !ompi_singleton) {
+    if (!ompi_async_mpi_finalize && !opal_process_info.is_singleton) {
         active = true;
         OPAL_POST_OBJECT(&active);
         /* Note that use of the non-blocking PMIx fence will
