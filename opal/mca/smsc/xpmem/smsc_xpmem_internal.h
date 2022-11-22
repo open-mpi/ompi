@@ -1,6 +1,8 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2021      Google, Inc. All rights reserved.
+ * Copyright (c) 2022      Computer Architecture and VLSI Systems (CARV)
+ *                         Laboratory, ICS Forth. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -12,6 +14,7 @@
 #define OPAL_MCA_SMSC_XPMEM_SMSC_XPMEM_INTERNAL_H
 
 #include "opal/mca/smsc/xpmem/smsc_xpmem.h"
+#include "opal/mca/rcache/rcache.h"
 
 #include "opal/mca/rcache/base/rcache_base_vma.h"
 #if defined(HAVE_XPMEM_H)
@@ -42,6 +45,8 @@ struct mca_smsc_xpmem_endpoint_t {
     xpmem_apid_t apid;
     /** maximum address we can attach to on this peer */
     uintptr_t address_max;
+    /** cache of xpmem attachments created using this endpoint */
+    mca_rcache_base_vma_module_t *vma_module;
 };
 
 typedef struct mca_smsc_xpmem_endpoint_t mca_smsc_xpmem_endpoint_t;
@@ -67,10 +72,6 @@ typedef struct mca_smsc_xpmem_component_t mca_smsc_xpmem_component_t;
 
 struct mca_smsc_xpmem_module_t {
     mca_smsc_module_t super;
-
-    /** cache of xpmem attachments. this cache holds attachments for all peers. the registrations
-     * are differentiated by the alloc_base which is set to the endpoint. */
-    mca_rcache_base_vma_module_t *vma_module;
 };
 
 typedef struct mca_smsc_xpmem_module_t mca_smsc_xpmem_module_t;

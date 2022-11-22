@@ -1,6 +1,8 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2021      Google, Inc. All rights reserved.
+ * Copyright (c) 2022      Computer Architecture and VLSI Systems (CARV)
+ *                         Laboratory, ICS Forth. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -76,10 +78,7 @@ static int mca_smsc_xpmem_component_open(void)
 
 static int mca_smsc_xpmem_component_close(void)
 {
-    if (mca_smsc_xpmem_module.vma_module) {
-        OBJ_RELEASE(mca_smsc_xpmem_module.vma_module);
-    }
-
+    /* nothing to do */
     return OPAL_SUCCESS;
 }
 
@@ -160,8 +159,6 @@ static mca_smsc_module_t *mca_smsc_xpmem_component_enable(void)
     /* limit segment alignment to be between 4k and 16M */
     mca_smsc_xpmem_component.log_attach_align
         = opal_min(opal_max(mca_smsc_xpmem_component.log_attach_align, 12), 25);
-
-    mca_smsc_xpmem_module.vma_module = mca_rcache_base_vma_module_alloc();
 
     return &mca_smsc_xpmem_module.super;
 }
