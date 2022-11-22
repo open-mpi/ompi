@@ -2,7 +2,7 @@
  * Copyright (c) 2016      Karol Mroz.  All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2016      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2016-2022 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -63,7 +63,7 @@ unsigned int opal_ethtool_get_speed(const char *if_name)
     }
 
     memset(&ifr, 0, sizeof(struct ifreq));
-    opal_string_copy(ifr.ifr_name, if_name, OPAL_IF_NAMESIZE);
+    opal_string_copy(ifr.ifr_name, if_name, IF_NAMESIZE);
     ifr.ifr_data = (char *) &edata;
 
     if (ioctl(sockfd, SIOCETHTOOL, &ifr) < 0) {
