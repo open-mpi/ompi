@@ -59,7 +59,7 @@ static ompi_coll_tree_t *create_topology(
         {
             int fanout = ompi_comm_size(comm) - 1;
             ompi_coll_tree_t *tree;
-            if (fanout < 1) {
+            if (fanout <= 1) {
                 tree = ompi_coll_base_topo_build_chain(1, comm, root);
             } else if (fanout <= MAXTREEFANOUT) {
                 tree = ompi_coll_base_topo_build_tree(ompi_comm_size(comm) - 1, comm, root);
