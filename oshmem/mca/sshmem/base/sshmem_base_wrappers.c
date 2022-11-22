@@ -88,7 +88,6 @@ shmem_ds_reset(map_segment_t *ds_buf)
     ds_buf->mkeys_cache = NULL;
     ds_buf->mkeys = NULL;
     ds_buf->alloc_hints = 0;
-    ds_buf->context = NULL;
     ds_buf->allocator = NULL;
 }
 
