@@ -3,8 +3,8 @@
  * Copyright (c) 2018-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2020      Bull S.A.S. All rights reserved.
  * Copyright (c) 2022      IBM Corporation. All rights reserved
+ * Copyright (c) 2020-2022 Bull S.A.S. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -29,6 +29,7 @@
 #include "coll_han.h"
 #include "coll_han_dynamic.h"
 #include "coll_han_dynamic_file.h"
+#include "coll_han_algorithms.h"
 
 #include "ompi/mca/coll/base/coll_base_util.h"
 
@@ -59,8 +60,11 @@ mca_coll_han_init_dynamic_rules(void)
     int i, j, k, l;
 
     /* Collective information */
-    long nb_coll, coll_id;
+    long nb_coll;
+    COLLTYPE_T coll_id;
+    int algorithm_id;
     char * coll_name = NULL;
+    char * algorithm_name = NULL;
     collective_rule_t *coll_rules;
 
     /* Topo information */
@@ -92,7 +96,8 @@ mca_coll_han_init_dynamic_rules(void)
         return OMPI_SUCCESS;
     }
 
-    if( NULL == (fptr = fopen(fname, "r")) ) {
+    fptr = fopen(fname, "r");
+    if( NULL == fptr ) {
         opal_output_verbose(5, mca_coll_han_component.han_output,
                             "coll:han:mca_coll_han_init_dynamic_rules cannot open dynamic file provided by "
                             "coll_han_dynamic_rules_filename=%s. Make sure it provides the  full path and "
@@ -126,6 +131,7 @@ mca_coll_han_init_dynamic_rules(void)
     /* Iterates on collective rules */
     for( i = 0 ; i < nb_coll ; i++ ) {
         coll_rules[i].nb_topologic_levels = 0;
+        coll_rules[i].topologic_rules = NULL;
         mca_coll_han_component.dynamic_rules.nb_collectives = i+1;
 
         /* Get the collective identifier */
@@ -158,7 +164,7 @@ mca_coll_han_init_dynamic_rules(void)
         if(!mca_coll_han_is_coll_dynamic_implemented(coll_id)) {
             opal_output_verbose(5, mca_coll_han_component.han_output,
                                 "coll:han:mca_coll_han_init_dynamic_rules found an error on dynamic rules file %s "
-                                "read collective id %ld at line %d but this collective is not implemented yet. "
+                                "read collective id %d at line %d but this collective is not implemented yet. "
                                 "This is not an error but this set of rules will not be used\n",
                                 fname, coll_id, fileline);
         }
@@ -199,17 +205,33 @@ mca_coll_han_init_dynamic_rules(void)
         /* Iterates on topologic rules */
         for( j = 0 ; j < nb_topo ; j++ ) {
             topo_rules[j].nb_rules = 0;
+            topo_rules[j].configuration_rules = NULL;
             coll_rules[i].nb_topologic_levels = j+1;
 
             /* Get the topologic level identifier */
-            if( (getnext_long(fptr, &topo_lvl) < 0) || (topo_lvl < INTRA_NODE) || (topo_lvl >= NB_TOPO_LVL) ) {
+            char *topo_lvl_name = NULL;
+            if( getnext_string(fptr, &topo_lvl_name) < 0 ) {
                 opal_output_verbose(5, mca_coll_han_component.han_output,
                                     "coll:han:mca_coll_han_init_dynamic_rules found an error on dynamic rules file %s "
-                                    "at line %d: an invalid topo level %ld is given or the reader encountered an unexpected EOF. "
-                                    "Topologic level must be at least %d and less than %d\n",
-                                    fname, fileline, topo_lvl, INTRA_NODE, NB_TOPO_LVL);
+                                    "at line %d: cannot read the name/id of a topo level\n",
+                                    fname, fileline);
                 goto file_reading_error;
             }
+            topo_lvl = mca_coll_han_topo_lvl_name_to_id(topo_lvl_name);
+            if (topo_lvl < 0) {
+                char *endp;
+                topo_lvl = (int)strtol(topo_lvl_name, &endp, 10);
+                if (('\0' != *endp ) || (topo_lvl < INTRA_NODE) || (topo_lvl >= NB_TOPO_LVL)) {
+                    opal_output_verbose(5, mca_coll_han_component.han_output,
+                                        "coll:han:mca_coll_han_init_dynamic_rules found an error on dynamic rules file %s "
+                                        "at line %d: unknown topo level '%s'\n",
+                                        fname, fileline, topo_lvl_name);
+                    free(topo_lvl_name);
+                    topo_lvl_name = NULL;
+                    goto file_reading_error;
+                }
+            }
+            free (topo_lvl_name);
 
             /*
              * The first information of a topologic rule
@@ -249,6 +271,7 @@ mca_coll_han_init_dynamic_rules(void)
             /* Iterate on configuration rules */
             for( k = 0; k < nb_rules; k++ ) {
                 conf_rules[k].nb_msg_size = 0;
+                conf_rules[k].msg_size_rules = NULL;
                 topo_rules[j].nb_rules = k+1;
 
                 /* Get the configuration size */
@@ -331,8 +354,45 @@ mca_coll_han_init_dynamic_rules(void)
                                             "least %d and less than %d\n",
                                             fname, fileline, target_comp_name, SELF, COMPONENTS_COUNT);
                         free(target_comp_name);
+                        target_comp_name = NULL;
                         goto file_reading_error;
                     }
+
+                    /* Get the optionnal algorithm for han  */
+                    algorithm_id = 0; // default for all collectives
+                    if ((component == HAN) && (1 == ompi_coll_base_file_peek_next_char_is(fptr, &fileline, '@')) ) {
+
+                        if( getnext_string(fptr, &algorithm_name) < 0 ) {
+                            opal_output_verbose(5, mca_coll_han_component.han_output,
+                                                "coll:han:mca_coll_han_init_dynamic_rules found an error on dynamic rules file %s "
+                                                "at line %d: cannot read the name/id of an algorithm\n",
+                                                fname, fileline);
+                            free(target_comp_name);
+                            target_comp_name = NULL;
+                            goto file_reading_error;
+                        }
+                        algorithm_id = mca_coll_han_algorithm_name_to_id(coll_id, algorithm_name);
+                        if (algorithm_id < 0) {
+                            char *endp;
+                            algorithm_id = (int)strtol(algorithm_name, &endp, 10);
+                            char endc = *endp;
+                            free(algorithm_name);
+                            algorithm_name = NULL;
+                            if (('\0' != endc ) || !mca_coll_han_algorithm_id_is_valid(coll_id, algorithm_id)) {
+                                opal_output_verbose(5, mca_coll_han_component.han_output,
+                                                    "coll:han:mca_coll_han_init_dynamic_rules found an error on dynamic rules file %s "
+                                                    "at line %d: unknown algorithm '%s' for %s\n",
+                                                    fname, fileline, algorithm_name, coll_name);
+                                free(target_comp_name);
+                                target_comp_name = NULL;
+                                goto file_reading_error;
+                            }
+                        }
+                        opal_output_verbose(5, mca_coll_han_component.han_output,
+                                            "coll:han:mca_coll_han_init_dynamic_rules found for coll=%s msg_size=%ld : algorithm '%s' %d\n",
+                                            coll_name, msg_size, algorithm_name, algorithm_id);
+                    }
+
 
                     /* Store message size rule information */
                     msg_size_rules[l].collective_id = coll_id;
@@ -340,6 +400,7 @@ mca_coll_han_init_dynamic_rules(void)
                     msg_size_rules[l].configuration_size = conf_size;
                     msg_size_rules[l].msg_size = msg_size;
                     msg_size_rules[l].component = (COMPONENT_T)component;
+                    msg_size_rules[l].algorithm_id = algorithm_id;
 
                     nb_entries++;
                     /* do we have the optional segment length */
