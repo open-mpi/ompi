@@ -784,26 +784,6 @@ static inline void opal_list_insert_pos(opal_list_t *list, opal_list_item_t *pos
 }
 
 /**
- * Add an item to the list at a specific index location in the list.
- *
- * @param list The list container
- * @param item The item to insert
- * @param index Location to add the item
- *
- * @returns true if insertion succeeded; otherwise false
- *
- * This is potentially an O(N) operation to traverse down to the
- * correct location in the list and add an item.
- *
- * Example: if idx = 2 and list = item1->item2->item3->item4, then
- * after insert, list = item1->item2->item->item3->item4.
- *
- * If index is greater than the length of the list, no action is
- * performed and false is returned.
- */
-OPAL_DECLSPEC bool opal_list_insert(opal_list_t *list, opal_list_item_t *item, long long idx);
-
-/**
  * Join a list into another list
  *
  * @param thislist List container for list being operated on
