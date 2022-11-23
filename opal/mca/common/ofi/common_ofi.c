@@ -553,6 +553,14 @@ static uint32_t get_package_rank(opal_process_info_t *process_info)
     pname.jobid = OPAL_PROC_MY_NAME.jobid;
     pname.vpid = OPAL_VPID_WILDCARD;
 
+    /*
+     * if we are a singleton just return myprocid.rank
+     * because we by definition don't know about any local peers
+     */
+    if (opal_process_info.is_singleton) {
+        return (uint32_t) process_info->myprocid.rank;
+    }
+
 #if HAVE_DECL_PMIX_PACKAGE_RANK
     // Try to get the PACKAGE_RANK from PMIx
     OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_PACKAGE_RANK, &pname, &package_rank_ptr, PMIX_UINT16);
@@ -561,13 +569,11 @@ static uint32_t get_package_rank(opal_process_info_t *process_info)
     }
 #endif
 
-    // Get the local peers - note there may not always be local peers,e.g. .singleton launch case
+    // Get the local peers
     OPAL_MODEX_RECV_VALUE(rc, PMIX_LOCAL_PEERS, &pname, &local_peers, PMIX_STRING);
     if (PMIX_SUCCESS != rc || NULL == local_peers) {
         // We can't find package_rank, fall back to procid
-        if (10 <= opal_common_ofi_verbose_level) {
-            opal_show_help("help-common-ofi.txt", "package_rank failed", true, 10);
-        }
+        opal_show_help("help-common-ofi.txt", "package_rank failed", true);
         return (uint32_t) process_info->myprocid.rank;
     }
     peers = opal_argv_split(local_peers, ',');
