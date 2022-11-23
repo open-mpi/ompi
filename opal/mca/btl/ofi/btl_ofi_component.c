@@ -15,7 +15,7 @@
  * Copyright (c) 2018-2019 Intel, Inc.  All rights reserved.
  *
  * Copyright (c) 2018-2021 Amazon.com, Inc. or its affiliates.  All Rights reserved.
- * Copyright (c) 2020-2022 Triad National Security, LLC. All rights
+ * Copyright (c) 2020-2023 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -106,7 +106,11 @@ static int validate_info(struct fi_info *info, uint64_t required_caps, char **in
     mr_mode = info->domain_attr->mr_mode;
 
     if (!(mr_mode == FI_MR_BASIC || mr_mode == FI_MR_SCALABLE
+#if defined(FI_MR_HMEM)
           || (mr_mode & ~(FI_MR_VIRT_ADDR | FI_MR_ALLOCATED | FI_MR_PROV_KEY | FI_MR_ENDPOINT | FI_MR_HMEM)) == 0)) {
+#else
+          || (mr_mode & ~(FI_MR_VIRT_ADDR | FI_MR_ALLOCATED | FI_MR_PROV_KEY | FI_MR_ENDPOINT)) == 0)) {
+#endif
         BTL_VERBOSE(("unsupported MR mode"));
         return OPAL_ERROR;
     }
@@ -339,20 +343,24 @@ static mca_btl_base_module_t **mca_btl_ofi_component_init(int *num_btl_modules,
 
     mca_btl_ofi_component.module_count = 0;
 
+#if defined(FI_HMEM)
     /* Request device transfer capabilities, separate from required_caps */
     hints.caps |= FI_HMEM;
     hints.domain_attr->mr_mode |= FI_MR_HMEM;
 no_hmem:
+#endif
 
     /* Do the query. The earliest version that supports FI_HMEM hints is 1.9  */
     rc = fi_getinfo(FI_VERSION(1, 9), NULL, NULL, 0, &hints, &info_list);
     if (0 != rc) {
+#if defined(FI_HMEM)
         if (hints.caps & FI_HMEM) {
             /* Try again without FI_HMEM hints */
             hints.caps &= ~FI_HMEM;
             hints.domain_attr->mr_mode &= ~FI_MR_HMEM;
             goto no_hmem;
         }
+#endif
         BTL_VERBOSE(("fi_getinfo failed with code %d: %s", rc, fi_strerror(-rc)));
         if (NULL != include_list) {
             opal_argv_free(include_list);
@@ -360,6 +368,7 @@ no_hmem:
         return NULL;
     }
 
+#if defined(FI_HMEM)
     /* If we get to this point with FI_HMEM hint set, we want it to be a
      * required capability
      */
@@ -375,6 +384,7 @@ no_hmem:
         }
         required_caps |= FI_HMEM;
     }
+#endif
 
     /* count the number of resources/ */
     info = info_list;
@@ -604,9 +614,11 @@ static int mca_btl_ofi_init_device(struct fi_info *info)
     module->use_fi_mr_bind = false;
     module->bypass_cache = false;
 
+#if defined(FI_HMEM)
     if (ofi_info->caps & FI_HMEM) {
         module->super.btl_flags |= MCA_BTL_FLAGS_ACCELERATOR_RDMA;
     }
+#endif
 
     if (ofi_info->domain_attr->mr_mode == FI_MR_BASIC
         || ofi_info->domain_attr->mr_mode & FI_MR_VIRT_ADDR) {
