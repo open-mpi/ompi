@@ -32,9 +32,9 @@ AC_DEFUN([MCA_ompi_mtl_ofi_CONFIG],[
                    [mtl_ofi_happy=1],
                    [mtl_ofi_happy=0])
 
-    dnl The OFI MTL requires at least OFI libfabric v1.5.
+    dnl The OFI MTL requires at least OFI libfabric v1.9.
     AS_IF([test ${mtl_ofi_happy} -eq 1],
-          [OPAL_CHECK_OFI_VERSION_GE([1,5],
+          [OPAL_CHECK_OFI_VERSION_GE([1,9],
                                      [],
                                      [mtl_ofi_happy=0])])
 
