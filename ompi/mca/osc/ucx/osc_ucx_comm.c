@@ -339,12 +339,15 @@ static inline int get_dynamic_win_info(uint64_t remote_addr,
 
     if (mem_rec->rkeys[target] != NULL) {
         ucp_rkey_destroy(mem_rec->rkeys[target]);
+        OPAL_COMMON_UCX_DEBUG_ATOMIC_ADD(opal_common_ucx_unpacked_rkey_counts, -1);
     }
 
     void *rkey_buffer = &temp_dynamic_wins[contain].mem_addr;
 
     ret = ucp_ep_rkey_unpack(mem_rec->winfo->endpoints[target], rkey_buffer,
             &mem_rec->rkeys[target]);
+
+    OPAL_COMMON_UCX_DEBUG_ATOMIC_ADD(opal_common_ucx_unpacked_rkey_counts, 1);
 
     opal_mutex_unlock(&mem_rec->winfo->mutex);
 
