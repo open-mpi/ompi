@@ -443,7 +443,8 @@ int mca_io_ompio_file_seek (ompi_file_t *fh,
 {
     int ret = OMPI_SUCCESS;
     mca_common_ompio_data_t *data;
-    OMPI_MPI_OFFSET_TYPE offset, temp_offset, temp_offset2;
+    OMPI_MPI_OFFSET_TYPE offset, temp_offset2;
+    OMPI_MPI_OFFSET_TYPE temp_offset = 0;
 
     data = (mca_common_ompio_data_t *) fh->f_io_selected_data;
 
