@@ -14,7 +14,6 @@
 #define OPAL_MCA_SMSC_XPMEM_SMSC_XPMEM_INTERNAL_H
 
 #include "opal/mca/smsc/xpmem/smsc_xpmem.h"
-#include "opal/mca/rcache/rcache.h"
 
 #include "opal/mca/rcache/base/rcache_base_vma.h"
 #if defined(HAVE_XPMEM_H)

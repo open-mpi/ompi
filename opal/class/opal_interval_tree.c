@@ -424,6 +424,8 @@ static opal_interval_tree_node_t *opal_interval_tree_find_interval(opal_interval
 static opal_interval_tree_node_t *
 opal_interval_tree_find_node(opal_interval_tree_t *tree, uint64_t low, uint64_t high, void *data)
 {
+    printf("tree find low 0x%lx high 0x%lx\n", low, high);
+
     return opal_interval_tree_find_interval(tree, tree->root.left, low, high, data);
 }
 
@@ -663,6 +665,8 @@ static void opal_interval_tree_insert_node(opal_interval_tree_t *tree,
     opal_interval_tree_node_t *parent = &tree->root;
     opal_interval_tree_node_t *n = parent->left; /* the real root of the tree */
     opal_interval_tree_node_t *nill = &tree->nill;
+
+    printf("tree insert low 0x%lx high 0x%lx\n", node->low, node->high);
 
     /* set up initial values for the node */
     node->color = OPAL_INTERVAL_TREE_COLOR_RED;
