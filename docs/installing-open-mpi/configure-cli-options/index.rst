@@ -11,6 +11,7 @@ below.
 .. toctree::
    :maxdepth: 1
 
+   what-to-install
    conventions
    installation
    networking

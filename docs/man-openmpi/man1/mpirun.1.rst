@@ -324,10 +324,13 @@ To map processes:
 
 * ``--cpu-list <cpus>``: Comma-delimited list of processor IDs to
   which to bind processes [default=``NULL``].  Processor IDs are
-  interpreted as hwloc logical core IDs.
+  interpreted as `Hwloc <https://www.open-mpi.org/projects/hwloc/>`_
+  logical core IDs.
 
-  .. note:: You can run Run the hwloc ``lstopo(1)`` command to see a
-            list of available cores and their logical IDs.
+  .. note:: You can run run the `Hwloc
+            <https://www.open-mpi.org/projects/hwloc/>`_ ``lstopo(1)``
+            command to see a list of available cores and their logical
+            IDs.
 
 To order processes' ranks in MPI_COMM_WORLD:
 
@@ -1220,8 +1223,9 @@ All package/core slot locations are specified as logical indexes.
 
 .. note:: The Open MPI v1.6 series used physical indexes. Starting in Open MPI v5.0 only logicial indexes are supported and the ``rmaps_rank_file_physical`` MCA parameter is no longer recognized.
 
-You can use tools such as Hwloc's `lstopo(1)` to find the logical
-indexes of package and cores.
+You can use tools such as `Hwloc's
+<https://www.open-mpi.org/projects/hwloc/>`_ ``lstopo(1)`` command to
+find the logical indexes of package and cores.
 
 Application Context or Executable Program?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

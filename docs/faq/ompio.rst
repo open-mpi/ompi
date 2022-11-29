@@ -5,6 +5,10 @@ Open MPI IO ("OMPIO")
 
 /////////////////////////////////////////////////////////////////////////
 
+.. important:: This page will ultimately go away.  All of the FAQ
+               content is being folded in elsewhere in the docs.
+               Please do not maintain/extend this page.
+
 What is the OMPIO?
 ------------------
 

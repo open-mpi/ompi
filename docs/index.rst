@@ -69,6 +69,7 @@ Table of contents
    version-numbering
    building-apps/index
    running-apps/index
+   debugging-apps
    networking/index
    faq/index
    developers/index
