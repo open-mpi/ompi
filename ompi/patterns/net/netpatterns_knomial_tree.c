@@ -548,6 +548,10 @@ OMPI_DECLSPEC int ompi_netpatterns_setup_recursive_knomial_tree_node(
 
     assert(num_nodes > 1);
     assert(tree_order > 1);
+    /* Also validate in release build where asserts are compiled out */
+    if ((num_nodes <= 1) || (tree_order <= 1)) {
+        goto Error;
+    }
     if (tree_order > num_nodes) {
         tree_order = num_nodes;
     }
