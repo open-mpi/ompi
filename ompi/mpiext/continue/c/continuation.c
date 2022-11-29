@@ -65,7 +65,7 @@ static void ompi_continuation_construct(ompi_continuation_t* cont)
     cont->cont_req   = NULL;
     cont->cont_cb    = NULL;
     cont->cont_data  = NULL;
-    OPAL_ATOMIC_RELAXED_STORE(&cont->cont_num_active, 0);
+    cont->cont_num_active = 0;
     cont->cont_num_opreqs = 0;
     cont->cont_opreqs = NULL;
     cont->cont_failed = 0;
