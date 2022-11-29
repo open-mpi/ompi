@@ -18,13 +18,14 @@ ucc_status_t mca_coll_ucc_reduce_scatter_block_init(const void *sbuf, void *rbuf
                                                     ucc_coll_req_h *req,
                                                     mca_coll_ucc_req_t *coll_req)
 {
-    ucc_datatype_t         ucc_dt;
-    ucc_reduction_op_t     ucc_op;
+    ucc_datatype_t ucc_dt;
+    ucc_reduction_op_t ucc_op;
     int comm_size = ompi_comm_size(ucc_module->comm);
 
     if (MPI_IN_PLACE == sbuf) {
         /* TODO: UCC defines inplace differently:
            data in rbuf of rank R is shifted by R * rcount */
+        UCC_VERBOSE(5, "inplace reduce_scatter_block is not supported");
         return UCC_ERR_NOT_SUPPORTED;
     }
     ucc_dt = ompi_dtype_to_ucc_dtype(dtype);
@@ -44,7 +45,7 @@ ucc_status_t mca_coll_ucc_reduce_scatter_block_init(const void *sbuf, void *rbuf
         .coll_type = UCC_COLL_TYPE_REDUCE_SCATTER,
         .src.info = {
             .buffer   = (void*)sbuf,
-            .count    = rcount * comm_size,
+            .count    = ((size_t)rcount) * comm_size,
             .datatype = ucc_dt,
             .mem_type = UCC_MEMORY_TYPE_UNKNOWN
         },

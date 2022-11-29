@@ -117,5 +117,5 @@ fallback:
     }
     return ucc_module->previous_igatherv(sbuf, scount, sdtype, rbuf, rcounts,
                                          disps, rdtype, root, comm, request,
-                                         ucc_module->previous_igather_module);
+                                         ucc_module->previous_igatherv_module);
 }
