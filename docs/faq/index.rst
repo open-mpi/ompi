@@ -21,7 +21,6 @@ that they are worth categorizing in an official way.
    fault-tolerance
    troubleshooting
 
-   debugging
    large-clusters
 
    ompio
