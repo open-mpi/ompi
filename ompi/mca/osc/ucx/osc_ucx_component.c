@@ -853,6 +853,7 @@ select_unlock:
     module->state.complete_count = 0;
     module->state.req_flag = 0;
     module->state.acc_lock = TARGET_LOCK_UNLOCKED;
+    module->state.dynamic_lock = TARGET_LOCK_UNLOCKED;
     module->state.dynamic_win_count = 0;
     for (i = 0; i < OMPI_OSC_UCX_ATTACH_MAX; i++) {
         module->local_dynamic_win_info[i].refcnt = 0;
