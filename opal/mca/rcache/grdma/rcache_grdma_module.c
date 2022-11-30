@@ -323,7 +323,7 @@ static int mca_rcache_grdma_register(mca_rcache_base_module_t *rcache, void *add
     base = OPAL_DOWN_ALIGN_PTR(addr, page_size, unsigned char *);
     bound = OPAL_ALIGN_PTR((intptr_t) addr + size, page_size, unsigned char *) - 1;
 
-    if (flags & MCA_RCACHE_FLAGS_ACCELERATOR_MEM) {
+    if (flags & MCA_RCACHE_FLAGS_ACCELERATOR_MEM && !bypass_cache) {
         size_t psize;
         int res = opal_accelerator.get_address_range(MCA_ACCELERATOR_NO_DEVICE_ID, addr, (void **)&base, &psize);
         if (OPAL_SUCCESS != res) {
@@ -371,7 +371,7 @@ static int mca_rcache_grdma_register(mca_rcache_base_module_t *rcache, void *add
     grdma_reg->flags = flags;
     grdma_reg->access_flags = access_flags;
     grdma_reg->ref_count = 1;
-    if (flags & MCA_RCACHE_FLAGS_ACCELERATOR_MEM) {
+    if (flags & MCA_RCACHE_FLAGS_ACCELERATOR_MEM && !bypass_cache) {
         opal_accelerator.get_buffer_id(MCA_ACCELERATOR_NO_DEVICE_ID, grdma_reg->base, &grdma_reg->gpu_bufID);
     }
 
