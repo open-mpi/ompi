@@ -339,12 +339,15 @@ static inline int get_dynamic_win_info(uint64_t remote_addr,
 
     if (mem_rec->rkeys[target] != NULL) {
         ucp_rkey_destroy(mem_rec->rkeys[target]);
+        OPAL_COMMON_UCX_DEBUG_ATOMIC_ADD(opal_common_ucx_unpacked_rkey_counts, -1);
     }
 
     void *rkey_buffer = &temp_dynamic_wins[contain].mem_addr;
 
     ret = ucp_ep_rkey_unpack(mem_rec->winfo->endpoints[target], rkey_buffer,
             &mem_rec->rkeys[target]);
+
+    OPAL_COMMON_UCX_DEBUG_ATOMIC_ADD(opal_common_ucx_unpacked_rkey_counts, 1);
 
     opal_mutex_unlock(&mem_rec->winfo->mutex);
 
@@ -929,8 +932,7 @@ static int ompi_osc_ucx_get_accumulate_nonblocking(const void *origin_addr, int 
                     struct ompi_datatype_t *origin_dt, void *result_addr, int result_count,
                     struct ompi_datatype_t *result_dt, int target, ptrdiff_t target_disp,
                     int target_count, struct ompi_datatype_t *target_dt, struct ompi_op_t
-                    *op, struct ompi_win_t *win) {
-
+                    *op, struct ompi_win_t *win, int acc_type) {
     ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t*) win->w_osc_module;
     int ret = OMPI_SUCCESS;
     uint64_t remote_addr = (module->addrs[target]) + target_disp *
@@ -943,7 +945,7 @@ static int ompi_osc_ucx_get_accumulate_nonblocking(const void *origin_addr, int 
         return ret;
     }
 
-    if (result_addr == NULL && op == &ompi_mpi_op_no_op.op) {
+    if (ACCUMULATE == acc_type && op == &ompi_mpi_op_no_op.op) {
         /* This is an accumulate (not get-accumulate) operation, so return */
         return ret;
     }
@@ -971,7 +973,7 @@ static int ompi_osc_ucx_get_accumulate_nonblocking(const void *origin_addr, int 
 
     CHECK_DYNAMIC_WIN(remote_addr, module, target, ret);
 
-    if (result_addr != NULL) {
+    if (GET_ACCUMULATE == acc_type) {
         /* This is a get-accumulate operation, so read the target data into result addr */
         ret = ompi_osc_ucx_acc_rputget(result_addr, (int)result_count, result_dt, target,
                 target_disp, target_count, target_dt, op,  win, lock_acquired,
@@ -985,7 +987,7 @@ static int ompi_osc_ucx_get_accumulate_nonblocking(const void *origin_addr, int 
     }
 
     if (op == &ompi_mpi_op_replace.op) {
-        assert(result_addr == NULL);
+        assert(ACCUMULATE == acc_type);
         /* No need for get, just use put and realize when to release the lock */
         ret = ompi_osc_ucx_acc_rputget(NULL, 0, NULL, target, target_disp,
                 target_count, target_dt, op,  win, lock_acquired, origin_addr,
@@ -1018,7 +1020,7 @@ static int ompi_osc_ucx_get_accumulate_nonblocking(const void *origin_addr, int 
         ret = ompi_osc_ucx_acc_rputget(temp_addr, (int)temp_count, temp_dt, target,
                 target_disp, target_count, target_dt, op,  win, lock_acquired,
                 origin_addr, origin_count, origin_dt, false, ACC_GET_STAGE_DATA,
-                (result_addr == NULL) ? ACCUMULATE : GET_ACCUMULATE);
+                acc_type);
         if (ret != OMPI_SUCCESS) {
             return ret;
         }
@@ -1035,7 +1037,7 @@ int ompi_osc_ucx_accumulate_nb(const void *origin_addr, int origin_count,
 
     return ompi_osc_ucx_get_accumulate_nonblocking(origin_addr, origin_count,
                             origin_dt, (void *)NULL, 0, NULL, target, target_disp,
-                            target_count, target_dt, op, win);
+                            target_count, target_dt, op, win, ACCUMULATE);
 }
 
 static int
@@ -1372,7 +1374,7 @@ int ompi_osc_ucx_get_accumulate_nb(const void *origin_addr, int origin_count,
 
     return ompi_osc_ucx_get_accumulate_nonblocking(origin_addr, origin_count, origin_dt,
                             result_addr, result_count, result_dt, target, target_disp,
-                            target_count, target_dt, op, win);
+                            target_count, target_dt, op, win, GET_ACCUMULATE);
 }
 
 int ompi_osc_ucx_rput(const void *origin_addr, int origin_count,

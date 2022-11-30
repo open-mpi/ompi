@@ -68,7 +68,7 @@ extern opal_atomic_int64_t opal_common_ucx_unpacked_rkey_counts;
         opal_atomic_add_fetch_64(&(_var), (_val));                                  \
     } while(0);
 #else
-#define OPAL_COMMON_UCX_DEBUG_ATOMIC_ADD(&(_var), (_val));
+#define OPAL_COMMON_UCX_DEBUG_ATOMIC_ADD(_var, _val);
 #endif
 
 /* Worker Pool Context (wpctx) is an object that is comprised of a set of UCP
