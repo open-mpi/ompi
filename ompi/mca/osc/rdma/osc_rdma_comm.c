@@ -27,6 +27,7 @@
 #include "opal/align.h"
 #include "opal/util/minmax.h"
 #include "ompi/mca/osc/base/osc_base_obj_convert.h"
+#include "opal/mca/accelerator/accelerator.h"
 
 /* helper functions */
 static inline void ompi_osc_rdma_cleanup_rdma (ompi_osc_rdma_sync_t *sync, bool dec_always, ompi_osc_rdma_frag_t *frag,
@@ -135,8 +136,10 @@ int ompi_osc_get_data_blocking (ompi_osc_rdma_module_t *module, uint8_t btl_inde
     opal_memchecker_base_mem_defined (ptr, len);
 
     if (frag) {
-        memcpy (data, ptr + offset, len);
-
+        ret = osc_rdma_accelerator_mem_copy(data, ptr + offset, len);
+        if (ret) {
+            return ret;
+        }
         /* done with the fragment */
         ompi_osc_rdma_frag_complete (frag);
     }
@@ -506,7 +509,10 @@ int ompi_osc_rdma_put_contig (ompi_osc_rdma_sync_t *sync, ompi_osc_rdma_peer_t *
                     return ret;
                 }
             } else {
-                memcpy(ptr, source_buffer, size);
+                ret = osc_rdma_accelerator_mem_copy(ptr, source_buffer, size);
+                if (ret) {
+                    return ret;
+                }
                 local_handle = frag->handle;
             }
         }
@@ -554,6 +560,7 @@ static void ompi_osc_rdma_get_complete (struct mca_btl_base_module_t *btl, struc
     ompi_osc_rdma_frag_t *frag = (ompi_osc_rdma_frag_t *) data;
     ompi_osc_rdma_sync_t *sync = request->sync;
     void *origin_addr = request->origin_addr;
+    int ret;
 
     OSC_RDMA_VERBOSE(status ? MCA_BASE_VERBOSE_ERROR : MCA_BASE_VERBOSE_TRACE, "btl get complete on sync %p. local "
                      "address %p. origin %p. opal status %d", (void *) sync, local_address, origin_addr, status);
@@ -562,7 +569,11 @@ static void ompi_osc_rdma_get_complete (struct mca_btl_base_module_t *btl, struc
 
     if (request->buffer || frag) {
         if (OPAL_LIKELY(OMPI_SUCCESS == status)) {
-            memcpy (origin_addr, (void *) source, request->len);
+            ret = osc_rdma_accelerator_mem_copy(origin_addr, (void *) source, request->len);
+            if (ret) {
+                /* Can't bubble up this failure, abort */
+                abort();
+            }
         }
     }
 
