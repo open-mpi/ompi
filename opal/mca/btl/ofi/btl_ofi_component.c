@@ -575,6 +575,7 @@ static int mca_btl_ofi_init_device(struct fi_info *info)
     module->outstanding_rdma = 0;
     module->use_virt_addr = false;
     module->use_fi_mr_bind = false;
+    module->bypass_cache = false;
 
     if (ofi_info->domain_attr->mr_mode == FI_MR_BASIC
         || ofi_info->domain_attr->mr_mode & FI_MR_VIRT_ADDR) {
@@ -583,6 +584,13 @@ static int mca_btl_ofi_init_device(struct fi_info *info)
 
     if (ofi_info->domain_attr->mr_mode & FI_MR_ENDPOINT) {
         module->use_fi_mr_bind = true;
+    }
+
+    /* Currently there is no API to query whether the libfabric provider
+     * uses an underlying registration cache. For now, just check for known
+     * providers that use registration caching. */
+    if (!strncasecmp(info->fabric_attr->prov_name, "efa", 3)) {
+        module->bypass_cache = true;
     }
 
     /* create endpoint list */
