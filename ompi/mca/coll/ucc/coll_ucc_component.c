@@ -1,6 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2021 Mellanox Technologies. All rights reserved.
+ * Copyright (c) 2022 NVIDIA Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -120,6 +121,18 @@ static ucc_coll_type_t mca_coll_ucc_str_to_type(const char *str)
         return UCC_COLL_TYPE_ALLGATHERV;
     } else if (0 == strcasecmp(str, "reduce")) {
         return UCC_COLL_TYPE_REDUCE;
+    } else if (0 == strcasecmp(str, "gather")) {
+        return UCC_COLL_TYPE_GATHER;
+    } else if (0 == strcasecmp(str, "gatherv")) {
+        return UCC_COLL_TYPE_GATHERV;
+    } else if (0 == strcasecmp(str, "reduce_scatter_block")) {
+        return UCC_COLL_TYPE_REDUCE_SCATTER;
+    } else if (0 == strcasecmp(str, "reduce_scatter")) {
+        return UCC_COLL_TYPE_REDUCE_SCATTERV;
+    } else if (0 == strcasecmp(str, "scatterv")) {
+        return UCC_COLL_TYPE_SCATTERV;
+    } else if (0 == strcasecmp(str, "scatter")) {
+        return UCC_COLL_TYPE_SCATTER;
     }
     UCC_ERROR("incorrect value for cts: %s, allowed: %s",
               str, COLL_UCC_CTS_STR);
