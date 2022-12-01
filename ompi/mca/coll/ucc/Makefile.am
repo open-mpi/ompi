@@ -32,6 +32,7 @@ coll_ucc_sources =                       \
 		coll_ucc_reduce.c                \
 		coll_ucc_reduce_scatter_block.c  \
 		coll_ucc_reduce_scatter.c        \
+		coll_ucc_scatter.c               \
 		coll_ucc_scatterv.c
 
 # Make the output library in this directory, and name it either

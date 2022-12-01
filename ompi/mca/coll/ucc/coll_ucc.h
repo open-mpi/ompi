@@ -31,14 +31,14 @@ BEGIN_C_DECLS
                       UCC_COLL_TYPE_REDUCE         | UCC_COLL_TYPE_ALLGATHERV | \
                       UCC_COLL_TYPE_GATHER         | UCC_COLL_TYPE_GATHERV | \
                       UCC_COLL_TYPE_REDUCE_SCATTER | UCC_COLL_TYPE_REDUCE_SCATTERV | \
-                      UCC_COLL_TYPE_SCATTERV)
+                      UCC_COLL_TYPE_SCATTERV       | UCC_COLL_TYPE_SCATTER)
 
 #define COLL_UCC_CTS_STR "barrier,bcast,allreduce,alltoall,alltoallv,allgather," \
                          "allgatherv,reduce,gather,gatherv,reduce_scatter_block,"\
-                         "reduce_scatter,scatterv," \
+                         "reduce_scatter,scatterv,scatter," \
                          "ibarrier,ibcast,iallreduce,ialltoall,ialltoallv,iallgather,"\
                          "iallgatherv,ireduce,igather,igatherv,ireduce_scatter_block,"\
-                         "ireduce_scatter,iscatterv"
+                         "ireduce_scatter,iscatterv,iscatter"
 
 typedef struct mca_coll_ucc_req {
     ompi_request_t super;
@@ -128,6 +128,10 @@ struct mca_coll_ucc_module_t {
     mca_coll_base_module_t*                         previous_scatterv_module;
     mca_coll_base_module_iscatterv_fn_t             previous_iscatterv;
     mca_coll_base_module_t*                         previous_iscatterv_module;
+    mca_coll_base_module_scatter_fn_t               previous_scatter;
+    mca_coll_base_module_t*                         previous_scatter_module;
+    mca_coll_base_module_iscatter_fn_t              previous_iscatter;
+    mca_coll_base_module_t*                         previous_iscatter_module;
 };
 typedef struct mca_coll_ucc_module_t mca_coll_ucc_module_t;
 OBJ_CLASS_DECLARATION(mca_coll_ucc_module_t);
@@ -287,6 +291,19 @@ int mca_coll_ucc_iscatterv(const void *sbuf, const int *scounts,
                            struct ompi_communicator_t *comm,
                            ompi_request_t** request,
                            mca_coll_base_module_t *module);
+
+int mca_coll_ucc_scatter(const void *sbuf, int scount,
+                         struct ompi_datatype_t *sdtype, void *rbuf, int rcount,
+                         struct ompi_datatype_t *rdtype, int root,
+                         struct ompi_communicator_t *comm,
+                         mca_coll_base_module_t *module);
+
+int mca_coll_ucc_iscatter(const void *sbuf, int scount,
+                         struct ompi_datatype_t *sdtype, void *rbuf, int rcount,
+                         struct ompi_datatype_t *rdtype, int root,
+                         struct ompi_communicator_t *comm,
+                         ompi_request_t** request,
+                         mca_coll_base_module_t *module);
 
 END_C_DECLS
 #endif
