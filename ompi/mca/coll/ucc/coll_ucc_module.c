@@ -2,6 +2,7 @@
  * Copyright (c) 2021 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
+ * Copyright (c) 2022 NVIDIA Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,39 +30,63 @@ int mca_coll_ucc_init_query(bool enable_progress_threads, bool enable_mpi_thread
 
 static void mca_coll_ucc_module_clear(mca_coll_ucc_module_t *ucc_module)
 {
-    ucc_module->ucc_team                    = NULL;
-    ucc_module->previous_allreduce          = NULL;
-    ucc_module->previous_allreduce_module   = NULL;
-    ucc_module->previous_iallreduce         = NULL;
-    ucc_module->previous_iallreduce_module  = NULL;
-    ucc_module->previous_barrier            = NULL;
-    ucc_module->previous_barrier_module     = NULL;
-    ucc_module->previous_ibarrier           = NULL;
-    ucc_module->previous_ibarrier_module    = NULL;
-    ucc_module->previous_bcast              = NULL;
-    ucc_module->previous_bcast_module       = NULL;
-    ucc_module->previous_ibcast             = NULL;
-    ucc_module->previous_ibcast_module      = NULL;
-    ucc_module->previous_alltoall           = NULL;
-    ucc_module->previous_alltoall_module    = NULL;
-    ucc_module->previous_ialltoall          = NULL;
-    ucc_module->previous_ialltoall_module   = NULL;
-    ucc_module->previous_alltoallv          = NULL;
-    ucc_module->previous_alltoallv_module   = NULL;
-    ucc_module->previous_ialltoallv         = NULL;
-    ucc_module->previous_ialltoallv_module  = NULL;
-    ucc_module->previous_allgather          = NULL;
-    ucc_module->previous_allgather_module   = NULL;
-    ucc_module->previous_iallgather         = NULL;
-    ucc_module->previous_iallgather_module  = NULL;
-    ucc_module->previous_allgatherv         = NULL;
-    ucc_module->previous_allgatherv_module  = NULL;
-    ucc_module->previous_iallgatherv        = NULL;
-    ucc_module->previous_iallgatherv_module = NULL;
-    ucc_module->previous_reduce             = NULL;
-    ucc_module->previous_reduce_module      = NULL;
-    ucc_module->previous_ireduce            = NULL;
-    ucc_module->previous_ireduce_module     = NULL;
+    ucc_module->ucc_team                              = NULL;
+    ucc_module->previous_allreduce                    = NULL;
+    ucc_module->previous_allreduce_module             = NULL;
+    ucc_module->previous_iallreduce                   = NULL;
+    ucc_module->previous_iallreduce_module            = NULL;
+    ucc_module->previous_barrier                      = NULL;
+    ucc_module->previous_barrier_module               = NULL;
+    ucc_module->previous_ibarrier                     = NULL;
+    ucc_module->previous_ibarrier_module              = NULL;
+    ucc_module->previous_bcast                        = NULL;
+    ucc_module->previous_bcast_module                 = NULL;
+    ucc_module->previous_ibcast                       = NULL;
+    ucc_module->previous_ibcast_module                = NULL;
+    ucc_module->previous_alltoall                     = NULL;
+    ucc_module->previous_alltoall_module              = NULL;
+    ucc_module->previous_ialltoall                    = NULL;
+    ucc_module->previous_ialltoall_module             = NULL;
+    ucc_module->previous_alltoallv                    = NULL;
+    ucc_module->previous_alltoallv_module             = NULL;
+    ucc_module->previous_ialltoallv                   = NULL;
+    ucc_module->previous_ialltoallv_module            = NULL;
+    ucc_module->previous_allgather                    = NULL;
+    ucc_module->previous_allgather_module             = NULL;
+    ucc_module->previous_iallgather                   = NULL;
+    ucc_module->previous_iallgather_module            = NULL;
+    ucc_module->previous_allgatherv                   = NULL;
+    ucc_module->previous_allgatherv_module            = NULL;
+    ucc_module->previous_iallgatherv                  = NULL;
+    ucc_module->previous_iallgatherv_module           = NULL;
+    ucc_module->previous_reduce                       = NULL;
+    ucc_module->previous_reduce_module                = NULL;
+    ucc_module->previous_ireduce                      = NULL;
+    ucc_module->previous_ireduce_module               = NULL;
+    ucc_module->previous_gather                       = NULL;
+    ucc_module->previous_gather_module                = NULL;
+    ucc_module->previous_igather                      = NULL;
+    ucc_module->previous_igather_module               = NULL;
+    ucc_module->previous_gatherv                      = NULL;
+    ucc_module->previous_gatherv_module               = NULL;
+    ucc_module->previous_igatherv                     = NULL;
+    ucc_module->previous_igatherv_module              = NULL;
+    ucc_module->previous_reduce_scatter_block         = NULL;
+    ucc_module->previous_reduce_scatter_block_module  = NULL;
+    ucc_module->previous_ireduce_scatter_block        = NULL;
+    ucc_module->previous_ireduce_scatter_block_module = NULL;
+    ucc_module->previous_reduce_scatter               = NULL;
+    ucc_module->previous_reduce_scatter_module        = NULL;
+    ucc_module->previous_ireduce_scatter              = NULL;
+    ucc_module->previous_ireduce_scatter_module       = NULL;
+    ucc_module->previous_scatterv                     = NULL;
+    ucc_module->previous_scatterv_module              = NULL;
+    ucc_module->previous_iscatterv                    = NULL;
+    ucc_module->previous_iscatterv_module             = NULL;
+    ucc_module->previous_scatter                      = NULL;
+    ucc_module->previous_scatter_module               = NULL;
+    ucc_module->previous_iscatter                     = NULL;
+    ucc_module->previous_iscatter_module              = NULL;
 }
 
 static void mca_coll_ucc_module_construct(mca_coll_ucc_module_t *ucc_module)
@@ -98,6 +123,18 @@ static void mca_coll_ucc_module_destruct(mca_coll_ucc_module_t *ucc_module)
     OBJ_RELEASE_IF_NOT_NULL(ucc_module->previous_iallgatherv_module);
     OBJ_RELEASE_IF_NOT_NULL(ucc_module->previous_reduce_module);
     OBJ_RELEASE_IF_NOT_NULL(ucc_module->previous_ireduce_module);
+    OBJ_RELEASE_IF_NOT_NULL(ucc_module->previous_gather_module);
+    OBJ_RELEASE_IF_NOT_NULL(ucc_module->previous_igather_module);
+    OBJ_RELEASE_IF_NOT_NULL(ucc_module->previous_gatherv_module);
+    OBJ_RELEASE_IF_NOT_NULL(ucc_module->previous_igatherv_module);
+    OBJ_RELEASE_IF_NOT_NULL(ucc_module->previous_reduce_scatter_block_module);
+    OBJ_RELEASE_IF_NOT_NULL(ucc_module->previous_ireduce_scatter_block_module);
+    OBJ_RELEASE_IF_NOT_NULL(ucc_module->previous_reduce_scatter_module);
+    OBJ_RELEASE_IF_NOT_NULL(ucc_module->previous_ireduce_scatter_module);
+    OBJ_RELEASE_IF_NOT_NULL(ucc_module->previous_scatterv_module);
+    OBJ_RELEASE_IF_NOT_NULL(ucc_module->previous_iscatterv_module);
+    OBJ_RELEASE_IF_NOT_NULL(ucc_module->previous_scatter_module);
+    OBJ_RELEASE_IF_NOT_NULL(ucc_module->previous_iscatter_module);
     mca_coll_ucc_module_clear(ucc_module);
 }
 
@@ -129,6 +166,18 @@ static int mca_coll_ucc_save_coll_handlers(mca_coll_ucc_module_t *ucc_module)
     SAVE_PREV_COLL_API(iallgatherv);
     SAVE_PREV_COLL_API(reduce);
     SAVE_PREV_COLL_API(ireduce);
+    SAVE_PREV_COLL_API(gather);
+    SAVE_PREV_COLL_API(igather);
+    SAVE_PREV_COLL_API(gatherv);
+    SAVE_PREV_COLL_API(igatherv);
+    SAVE_PREV_COLL_API(reduce_scatter_block);
+    SAVE_PREV_COLL_API(ireduce_scatter_block);
+    SAVE_PREV_COLL_API(reduce_scatter);
+    SAVE_PREV_COLL_API(ireduce_scatter);
+    SAVE_PREV_COLL_API(scatterv);
+    SAVE_PREV_COLL_API(iscatterv);
+    SAVE_PREV_COLL_API(scatter);
+    SAVE_PREV_COLL_API(iscatter);
     return OMPI_SUCCESS;
 }
 
@@ -504,14 +553,20 @@ mca_coll_ucc_comm_query(struct ompi_communicator_t *comm, int *priority)
     ucc_module->comm                     = comm;
     ucc_module->super.coll_module_enable = mca_coll_ucc_module_enable;
     *priority                            = cm->ucc_priority;
-    SET_COLL_PTR(ucc_module, BARRIER,    barrier);
-    SET_COLL_PTR(ucc_module, BCAST,      bcast);
-    SET_COLL_PTR(ucc_module, ALLREDUCE,  allreduce);
-    SET_COLL_PTR(ucc_module, ALLTOALL,   alltoall);
-    SET_COLL_PTR(ucc_module, ALLTOALLV,  alltoallv);
-    SET_COLL_PTR(ucc_module, REDUCE,     reduce);
-    SET_COLL_PTR(ucc_module, ALLGATHER,  allgather);
-    SET_COLL_PTR(ucc_module, ALLGATHERV, allgatherv);
+    SET_COLL_PTR(ucc_module, BARRIER,         barrier);
+    SET_COLL_PTR(ucc_module, BCAST,           bcast);
+    SET_COLL_PTR(ucc_module, ALLREDUCE,       allreduce);
+    SET_COLL_PTR(ucc_module, ALLTOALL,        alltoall);
+    SET_COLL_PTR(ucc_module, ALLTOALLV,       alltoallv);
+    SET_COLL_PTR(ucc_module, REDUCE,          reduce);
+    SET_COLL_PTR(ucc_module, ALLGATHER,       allgather);
+    SET_COLL_PTR(ucc_module, ALLGATHERV,      allgatherv);
+    SET_COLL_PTR(ucc_module, GATHER,          gather);
+    SET_COLL_PTR(ucc_module, GATHERV,         gatherv);
+    SET_COLL_PTR(ucc_module, REDUCE_SCATTER,  reduce_scatter_block);
+    SET_COLL_PTR(ucc_module, REDUCE_SCATTERV, reduce_scatter);
+    SET_COLL_PTR(ucc_module, SCATTERV,        scatterv);
+    SET_COLL_PTR(ucc_module, SCATTER,         scatter);
     return &ucc_module->super;
 }
 
