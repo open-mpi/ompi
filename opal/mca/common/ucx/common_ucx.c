@@ -396,8 +396,10 @@ OPAL_DECLSPEC int opal_common_ucx_mca_pmix_fence(ucp_worker_h worker)
         return ret;
     }
 
-    while (!fenced) {
-        ucp_worker_progress(worker);
+    MCA_COMMON_UCX_PROGRESS_LOOP(worker) {
+        if(fenced) {
+            break;
+        }
     }
 
     return ret;
