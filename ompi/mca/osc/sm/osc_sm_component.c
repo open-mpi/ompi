@@ -275,6 +275,7 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
         module->noncontig = false;
         if (OMPI_SUCCESS != opal_info_get_bool(info, "alloc_shared_noncontig",
                                                &module->noncontig, &flag)) {
+            free(rbuf);
             goto error;
         }
 
@@ -291,7 +292,10 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
                                                   rbuf, 1, MPI_UNSIGNED_LONG,
                                                   module->comm,
                                                   module->comm->c_coll->coll_allgather_module);
-        if (OMPI_SUCCESS != ret) return ret;
+        if (OMPI_SUCCESS != ret) {
+            free(rbuf);
+            return ret;
+        }
 
         total = 0;
         for (i = 0 ; i < comm_size ; ++i) {
