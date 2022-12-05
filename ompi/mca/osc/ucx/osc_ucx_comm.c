@@ -269,17 +269,22 @@ static inline int get_dynamic_win_info(uint64_t remote_addr,
     uint64_t win_count;
     int insert = -1;
     int ret;
+    int ret_unlock;
 
     /* We need to lock dyn-lock even if the process has an exclusive lock.
      * Remote process protects its window attach/detach operations with a
      * dynamic lock */
     ret = ompi_osc_ucx_dynamic_lock(module, target);
     if (ret != OPAL_SUCCESS) {
-        ret = OMPI_ERROR;
-        goto cleanup;
+        return OMPI_ERROR;
     }
 
     temp_buf = calloc(remote_state_len, 1);
+    if (NULL == temp_buf) {
+        ret = OMPI_ERR_OUT_OF_RESOURCE;
+        goto cleanup;
+    }
+
     ret = opal_common_ucx_wpmem_putget(module->state_mem, OPAL_COMMON_UCX_GET, target,
                                        (void *)((intptr_t)temp_buf),
                                        remote_state_len, remote_state_addr, ep);
@@ -316,6 +321,7 @@ static inline int get_dynamic_win_info(uint64_t remote_addr,
     _mem_record_t *mem_rec = NULL;
     ret = opal_tsd_tracked_key_get(&module->mem->tls_key, (void **) &mem_rec);
     if (OPAL_SUCCESS != ret) {
+        ret = OMPI_ERROR;
         goto cleanup;
     }
     
@@ -323,10 +329,12 @@ static inline int get_dynamic_win_info(uint64_t remote_addr,
         OSC_UCX_GET_DEFAULT_EP(ep, module, target);
         ret = opal_common_ucx_tlocal_fetch_spath(module->mem, target, ep);
         if (OPAL_SUCCESS != ret) {
+            ret = OMPI_ERROR;
             goto cleanup;
         }
         ret = opal_tsd_tracked_key_get(&module->mem->tls_key, (void **) &mem_rec);
         if (OPAL_SUCCESS != ret) {
+            ret = OMPI_ERROR;
             goto cleanup;
         }
 
@@ -361,9 +369,9 @@ cleanup:
     free(temp_buf);
 
     /* unlock the dynamic lock */
-    ompi_osc_ucx_dynamic_unlock(module, target);
-
-    return ret;
+    ret_unlock = ompi_osc_ucx_dynamic_unlock(module, target);
+    /* ignore unlock result in case of error */
+    return (OMPI_SUCCESS != ret) ? ret : ret_unlock;
 }
 
 static inline
@@ -1615,7 +1623,7 @@ void ompi_osc_ucx_req_completion(void *request) {
         assert(req->phase != ACC_INIT);
         void *free_addr = NULL;
         bool release_lock = false;
-        ptrdiff_t temp_lb, temp_extent;
+        ptrdiff_t temp_extent, temp_lb;
         const void *origin_addr = req->origin_addr;
         int origin_count = req->origin_count;
         struct ompi_datatype_t *origin_dt = req->origin_dt;
@@ -1786,7 +1794,7 @@ void ompi_osc_ucx_req_completion(void *request) {
             module->state_mem->skip_periodic_flush = false;
         }
     }
+    assert(module->ctx->num_incomplete_req_ops > 0);
     OSC_UCX_DECREMENT_OUTSTANDING_NB_OPS(module);
     ompi_request_complete(&(ucx_req->super.super), true);
-    assert(module->ctx->num_incomplete_req_ops >= 0);
 }

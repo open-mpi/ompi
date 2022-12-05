@@ -784,6 +784,9 @@ select_unlock:
     case MPI_WIN_FLAVOR_SHARED:
         mem_type = OPAL_COMMON_UCX_MEM_MAP;
         break;
+    default:
+        ret = OMPI_ERR_BAD_PARAM;
+        goto error;
     }
     ret = opal_common_ucx_wpmem_create(module->ctx, mem_base, module->size,
                                      mem_type, &exchange_len_info,
@@ -942,14 +945,14 @@ int ompi_osc_ucx_dynamic_lock(ompi_osc_ucx_module_t *module, int target) {
     uint64_t remote_addr = (module->state_addrs)[target] + OSC_UCX_STATE_DYNAMIC_LOCK_OFFSET;
     ucp_ep_h *ep;
     OSC_UCX_GET_DEFAULT_EP(ep, module, target);
-    int ret = OMPI_SUCCESS;
+    int ret;
 
     for (;;) {
         ret = opal_common_ucx_wpmem_cmpswp(module->state_mem,
                                         TARGET_LOCK_UNLOCKED, TARGET_LOCK_EXCLUSIVE,
                                         target, &result_value, sizeof(result_value),
                                         remote_addr, ep);
-        if (ret != OMPI_SUCCESS) {
+        if (OPAL_SUCCESS != ret) {
             OSC_UCX_VERBOSE(1, "opal_common_ucx_mem_cmpswp failed: %d", ret);
             return OMPI_ERROR;
         }
@@ -960,7 +963,7 @@ int ompi_osc_ucx_dynamic_lock(ompi_osc_ucx_module_t *module, int target) {
         opal_common_ucx_wpool_progress(mca_osc_ucx_component.wpool);
     }
 
-    return ret;
+    return OMPI_SUCCESS;
 }
 
 int ompi_osc_ucx_dynamic_unlock(ompi_osc_ucx_module_t *module, int target) {
@@ -968,10 +971,10 @@ int ompi_osc_ucx_dynamic_unlock(ompi_osc_ucx_module_t *module, int target) {
     uint64_t remote_addr = (module->state_addrs)[target] + OSC_UCX_STATE_DYNAMIC_LOCK_OFFSET;
     ucp_ep_h *ep;
     OSC_UCX_GET_DEFAULT_EP(ep, module, target);
-    int ret = OMPI_SUCCESS;
+    int ret;
 
     ret = opal_common_ucx_wpmem_fence(module->mem);
-    if (ret != OMPI_SUCCESS) {
+    if (OPAL_SUCCESS != ret) {
         OSC_UCX_VERBOSE(1, "opal_common_ucx_mem_fence failed: %d", ret);
         return OMPI_ERROR;
     }
@@ -980,8 +983,12 @@ int ompi_osc_ucx_dynamic_unlock(ompi_osc_ucx_module_t *module, int target) {
                                     UCP_ATOMIC_FETCH_OP_SWAP, TARGET_LOCK_UNLOCKED,
                                     target, &result_value, sizeof(result_value),
                                     remote_addr, ep);
+    if (OPAL_SUCCESS != ret) {
+        return OMPI_ERROR;
+    }
+
     assert(result_value == TARGET_LOCK_EXCLUSIVE);
-    return ret;
+    return OMPI_SUCCESS;
 }
 
 int ompi_osc_ucx_win_attach(struct ompi_win_t *win, void *base, size_t len) {
