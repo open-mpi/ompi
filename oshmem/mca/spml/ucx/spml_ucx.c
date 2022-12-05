@@ -709,7 +709,7 @@ sshmem_mkey_t *mca_spml_ucx_register(void* addr,
     if (MEMHEAP_SEG_INVALID == segno) {
         SPML_UCX_ERROR("mca_spml_ucx_register failed because of invalid "
             "segment number: %d\n", segno);
-        return NULL;
+        goto error_out;
     }
     mem_seg = memheap_find_seg(segno);
 
