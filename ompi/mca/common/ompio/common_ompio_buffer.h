@@ -22,11 +22,11 @@
 #define MCA_COMMON_OMPIO_CUDA_H
 
 
-#define OMPIO_PREPARE_BUF(_fh,_buf,_count,_datatype,_tbuf,_convertor,_max_data,_decoded_iov,_iov_count){ \
+#define OMPIO_PREPARE_BUF(_fh,_buf,_count,_datatype,_tbuf,_convertor,_max_data,_tmp_buf_size,_decoded_iov,_iov_count){ \
         OBJ_CONSTRUCT( _convertor, opal_convertor_t);                                    \
     opal_convertor_copy_and_prepare_for_send ( _fh->f_file_convertor,  &(_datatype->super), _count, _buf, CONVERTOR_SEND_CONVERSION, _convertor ); \
     opal_convertor_get_packed_size( _convertor, &_max_data );           \
-    _tbuf = mca_common_ompio_alloc_buf (_fh, _max_data);                \
+    _tbuf = mca_common_ompio_alloc_buf (_fh, _tmp_buf_size==0 ? _max_data : _tmp_buf_size); \
     if ( NULL == _tbuf ) {                                              \
         opal_output(1, "common_ompio: error allocating memory\n");      \
         return OMPI_ERR_OUT_OF_RESOURCE;                                \
@@ -40,11 +40,11 @@
     _decoded_iov->iov_len  = _max_data;                                 \
     _iov_count=1;}
 
-#define OMPIO_PREPARE_READ_BUF(_fh,_buf,_count,_datatype,_tbuf,_convertor,_max_data,_decoded_iov,_iov_count){ \
+#define OMPIO_PREPARE_READ_BUF(_fh,_buf,_count,_datatype,_tbuf,_convertor,_max_data,_tmp_buf_size,_decoded_iov,_iov_count){ \
         OBJ_CONSTRUCT( _convertor, opal_convertor_t);                                    \
     opal_convertor_copy_and_prepare_for_recv ( _fh->f_file_convertor,  &(_datatype->super), _count, _buf, 0, _convertor ); \
     opal_convertor_get_packed_size( _convertor, &_max_data );           \
-    _tbuf = mca_common_ompio_alloc_buf (_fh, _max_data);                \
+    _tbuf = mca_common_ompio_alloc_buf (_fh, _tmp_buf_size==0 ? _max_data : _tmp_buf_size); \
     if ( NULL == _tbuf ) {                                              \
         opal_output(1, "common_ompio: error allocating memory\n");      \
         return OMPI_ERR_OUT_OF_RESOURCE;                                \

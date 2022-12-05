@@ -14,6 +14,7 @@
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
+ * Copyright (c) 2022      Advanced Micro Devices, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -45,6 +46,7 @@
 #include "ompi/mca/common/ompio/common_ompio.h"
 
 extern int mca_io_ompio_cycle_buffer_size;
+extern int mca_io_ompio_pipeline_buffer_size;
 extern int mca_io_ompio_bytes_per_agg;
 extern int mca_io_ompio_num_aggregators;
 extern int mca_io_ompio_record_offset_info;
@@ -63,6 +65,7 @@ OMPI_DECLSPEC extern int mca_io_ompio_coll_timing_info;
  */
 #define OMPIO_PREALLOC_MAX_BUF_SIZE   33554432
 #define OMPIO_DEFAULT_CYCLE_BUF_SIZE  536870912
+#define OMPIO_DEFAULT_PIPELINE_BUF_SIZE 1048576
 #define OMPIO_TAG_GATHER              -100
 #define OMPIO_TAG_GATHERV             -101
 #define OMPIO_TAG_BCAST               -102
