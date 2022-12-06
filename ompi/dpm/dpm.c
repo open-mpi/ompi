@@ -737,10 +737,7 @@ static int dpm_convert(opal_list_t *infos,
                if (0 != strncasecmp(ck, directive, strlen(directive))) {
                     opal_asprintf(&help_str, "Conflicting directives \"%s %s\"", ck, directive);
 #if PMIX_NUMERIC_VERSION >= 0x00040000
-                    /* TODO: remove strdup if PMIx_Get_attribute_string takes const char* */
-                    char *option_dup = strdup(option);
-                    attr = PMIx_Get_attribute_string(option_dup);
-                    free(option_dup);
+                    attr = PMIx_Get_attribute_string(option);
 #else
                     attr = option;
 #endif
