@@ -118,12 +118,18 @@ mca_coll_base_alltoallv_intra_basic_inplace(const void *rbuf, const int *rcounts
                                             (char *) rbuf + rdisps[right] * extent);
             packed_size = max_size;
             err = opal_convertor_pack(&convertor, &iov, &iov_count, &packed_size);
-            if (1 != err) { goto error_hndl; }
+            if (1 != err) {
+                line = __LINE__;
+                goto error_hndl;
+            }
 
             /* Receive data from the right */
             err = MCA_PML_CALL(irecv ((char *) rbuf + rdisps[right] * extent, rcounts[right], rdtype,
                                       right, MCA_COLL_BASE_TAG_ALLTOALLV, comm, &req));
-            if (MPI_SUCCESS != err) { goto error_hndl; }
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto error_hndl;
+            }
         }
 
         if( (left != right) && (0 != rcounts[left]) ) {
@@ -131,15 +137,24 @@ mca_coll_base_alltoallv_intra_basic_inplace(const void *rbuf, const int *rcounts
             err = MCA_PML_CALL(send ((char *) rbuf + rdisps[left] * extent, rcounts[left], rdtype,
                                      left, MCA_COLL_BASE_TAG_ALLTOALLV, MCA_PML_BASE_SEND_STANDARD,
                                      comm));
-            if (MPI_SUCCESS != err) { goto error_hndl; }
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto error_hndl;
+             }
 
             err = ompi_request_wait (&req, MPI_STATUSES_IGNORE);
-            if (MPI_SUCCESS != err) { goto error_hndl; }
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto error_hndl;
+             }
 
             /* Receive data from the left */
             err = MCA_PML_CALL(irecv ((char *) rbuf + rdisps[left] * extent, rcounts[left], rdtype,
                                       left, MCA_COLL_BASE_TAG_ALLTOALLV, comm, &req));
-            if (MPI_SUCCESS != err) { goto error_hndl; }
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto error_hndl;
+            }
         }
 
         if( 0 != rcounts[right] ) {  /* nothing to exchange with the peer on the right */
@@ -147,11 +162,17 @@ mca_coll_base_alltoallv_intra_basic_inplace(const void *rbuf, const int *rcounts
             err = MCA_PML_CALL(send ((char *) tmp_buffer,  packed_size, MPI_PACKED,
                                      right, MCA_COLL_BASE_TAG_ALLTOALLV, MCA_PML_BASE_SEND_STANDARD,
                                      comm));
-            if (MPI_SUCCESS != err) { goto error_hndl; }
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto error_hndl;
+            }
         }
 
         err = ompi_request_wait (&req, MPI_STATUSES_IGNORE);
-        if (MPI_SUCCESS != err) { goto error_hndl; }
+        if (MPI_SUCCESS != err) {
+            line = __LINE__;
+            goto error_hndl;
+        }
     }
 
  error_hndl:
@@ -161,8 +182,7 @@ mca_coll_base_alltoallv_intra_basic_inplace(const void *rbuf, const int *rcounts
 
     if( MPI_SUCCESS != err ) {
         OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
-                     "%s:%4d\tError occurred %d, rank %2d", __FILE__, line, err,
-                     rank));
+                     "%s:%4d\tError occurred %d, rank %2d", __FILE__, line, err, rank));
         (void)line;  // silence compiler warning
     }
 
