@@ -380,10 +380,6 @@ mca_coll_han_scatter_intra_simple(const void *sbuf, int scount,
                     root_up_rank,
                     up_comm,
                     up_comm->c_coll->coll_scatter_module);
-        if(reorder_buf != sbuf){
-            free(reorder_buf);
-            reorder_buf = NULL;
-        }
     }
 
     /* 2. low scatter on nodes leaders */
@@ -400,6 +396,9 @@ mca_coll_han_scatter_intra_simple(const void *sbuf, int scount,
     if (low_rank == root_low_rank) {
         free(tmp_buf);
         tmp_buf = NULL;
+    }
+    if (reorder_buf != sbuf) {
+        free(reorder_buf);
     }
 
     return OMPI_SUCCESS;
