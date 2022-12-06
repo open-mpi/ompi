@@ -35,6 +35,7 @@ IMAGE_SOURCE_FILES = \
         $(srcdir)/installing-open-mpi/required-support-libraries-dependency-graph.png
 RST_SOURCE_FILES   = \
         $(srcdir)/*.rst \
+        $(srcdir)/app-debug/*.rst \
         $(srcdir)/building-apps/*.rst \
         $(srcdir)/developers/*.rst \
         $(srcdir)/faq/*.rst \
