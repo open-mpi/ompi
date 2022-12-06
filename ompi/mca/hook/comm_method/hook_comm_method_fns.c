@@ -202,6 +202,7 @@ add_string_to_conversion_struct(comm_method_string_conversion_t *data, char *str
     if (i == 0) { // didn't find string in list, so add it
         if (data->n < MAX_COMM_METHODS) {
             strncpy(data->str[data->n], string, COMM_METHOD_STRING_SIZE);
+            data->str[data->n][COMM_METHOD_STRING_SIZE - 1] = '\0';
             ++(data->n);
         }
     }
