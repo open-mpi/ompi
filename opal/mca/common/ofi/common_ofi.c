@@ -553,6 +553,14 @@ static uint32_t get_package_rank(opal_process_info_t *process_info)
     pname.jobid = OPAL_PROC_MY_NAME.jobid;
     pname.vpid = OPAL_VPID_WILDCARD;
 
+    /*
+     * if we are a singleton just return myprocid.rank
+     * because we by definition don't know about any local peers
+     */
+    if (opal_process_info.is_singleton) {
+        return (uint32_t) process_info->myprocid.rank;
+    }
+
 #if HAVE_DECL_PMIX_PACKAGE_RANK
     // Try to get the PACKAGE_RANK from PMIx
     OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_PACKAGE_RANK, &pname, &package_rank_ptr, PMIX_UINT16);
