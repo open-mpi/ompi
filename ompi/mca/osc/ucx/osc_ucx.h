@@ -110,6 +110,11 @@ typedef struct ompi_osc_ucx_state {
     volatile ompi_osc_dynamic_win_info_t dynamic_wins[OMPI_OSC_UCX_ATTACH_MAX];
 } ompi_osc_ucx_state_t;
 
+typedef struct ompi_osc_ucx_mem_ranges {
+    uint64_t base;
+    uint64_t tail;
+} ompi_osc_ucx_mem_ranges_t;
+
 typedef struct ompi_osc_ucx_module {
     ompi_osc_base_module_t super;
     struct ompi_communicator_t *comm;
@@ -140,7 +145,7 @@ typedef struct ompi_osc_ucx_module {
     opal_common_ucx_ctx_t *ctx;
     opal_common_ucx_wpmem_t *mem;
     opal_common_ucx_wpmem_t *state_mem;
-
+    ompi_osc_ucx_mem_ranges_t *epoc_outstanding_ops_mems;
     bool skip_sync_check;
     bool noncontig_shared_win;
     size_t *sizes;
