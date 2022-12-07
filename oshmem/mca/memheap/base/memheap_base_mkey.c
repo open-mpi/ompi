@@ -227,15 +227,15 @@ static void do_recv(int source_pe, pmix_data_buffer_t* buffer)
         PMIx_Data_pack(NULL, msg, &msg_type, 1, PMIX_UINT8);
 
         if (OSHMEM_SUCCESS != pack_local_mkeys(msg, source_pe, seg)) {
-            OBJ_RELEASE(msg);
+            PMIX_DATA_BUFFER_RELEASE(msg);
             goto send_fail;
         }
 
         rc = send_buffer(source_pe, msg);
+        PMIX_DATA_BUFFER_RELEASE(msg);
         if (MPI_SUCCESS != rc) {
             MEMHEAP_ERROR("FAILED to send rml message %d", rc);
             OMPI_ERROR_LOG(rc);
-            OBJ_RELEASE(msg);
             goto send_fail;
         }
         break;
@@ -272,10 +272,10 @@ static void do_recv(int source_pe, pmix_data_buffer_t* buffer)
     PMIx_Data_pack(NULL, msg, &msg_type, 1, PMIX_UINT8);
 
     rc = send_buffer(source_pe, msg);
+    PMIX_DATA_BUFFER_RELEASE(msg);
     if (MPI_SUCCESS != rc) {
         MEMHEAP_ERROR("FAILED to send rml message %d", rc);
         OMPI_ERROR_LOG(rc);
-        OBJ_RELEASE(msg);
     }
 
 }
@@ -451,7 +451,6 @@ static int send_buffer(int pe, pmix_data_buffer_t *msg)
     PMIX_DATA_BUFFER_UNLOAD(msg, buffer, size);
     rc = PMPI_Send(buffer, size, MPI_BYTE, pe, 0, oshmem_comm_world);
     free(buffer);
-    PMIX_DATA_BUFFER_RELEASE(msg);
 
     MEMHEAP_VERBOSE(5, "message sent: dst=%d, rc=%d, %d bytes!", pe, rc, size);
     return rc;
@@ -494,6 +493,7 @@ static int memheap_oob_get_mkeys(shmem_ctx_t ctx, int pe, uint32_t seg, sshmem_m
     PMIx_Data_pack(NULL, msg, &seg, 1, PMIX_UINT32);
 
     rc = send_buffer(pe, msg);
+    PMIX_DATA_BUFFER_RELEASE(msg);
     if (MPI_SUCCESS != rc) {
         OPAL_THREAD_UNLOCK(&memheap_oob.lck);
         MEMHEAP_ERROR("FAILED to send rml message %d", rc);
