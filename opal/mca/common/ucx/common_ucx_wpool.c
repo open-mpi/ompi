@@ -192,7 +192,6 @@ err_wpool_add:
     free(wpool->recv_waddr);
 err_get_addr:
     OBJ_RELEASE(winfo);
-    OBJ_RELEASE(wpool->dflt_winfo);
     wpool->dflt_winfo = NULL;
 err_worker_create:
     OBJ_DESTRUCT(&wpool->idle_workers);
