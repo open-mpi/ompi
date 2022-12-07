@@ -1998,6 +1998,7 @@ static int start_dvm(char **hostfiles, char **dash_host)
      */
     if (pipe(p) < 0) {
         OMPI_ERROR_LOG(OMPI_ERROR);
+        free(cmd);
         return OMPI_ERROR;
     }
 
@@ -2010,6 +2011,7 @@ static int start_dvm(char **hostfiles, char **dash_host)
         OMPI_ERROR_LOG(OMPI_ERROR);
         close(p[0]);
         close(p[1]);
+        free(cmd);
         return OMPI_ERROR;
     }
 
