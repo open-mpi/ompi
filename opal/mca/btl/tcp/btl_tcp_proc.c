@@ -347,14 +347,12 @@ static int mca_btl_tcp_proc_handle_modex_addresses(mca_btl_tcp_proc_t *btl_proc,
 
     rc = mca_btl_tcp_proc_store_matched_interfaces(btl_proc, local_proc_is_left, graph, num_matched,
                                                    matched_edges);
-    if (rc) {
-        goto cleanup;
-    }
 
 cleanup:
     if (NULL != graph) {
         opal_bp_graph_free(graph);
     }
+    free(matched_edges);
     return rc;
 }
 
