@@ -294,7 +294,7 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
                                                   module->comm->c_coll->coll_allgather_module);
         if (OMPI_SUCCESS != ret) {
             free(rbuf);
-            return ret;
+            goto error;
         }
 
         total = 0;
@@ -317,7 +317,8 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
                                  ompi_comm_print_cid(module->comm));
             if (ret < 0) {
                 free(rbuf);
-                return OMPI_ERR_OUT_OF_RESOURCE;
+                ret = OMPI_ERR_OUT_OF_RESOURCE;
+                goto error;
             }
 
             ret = opal_shmem_segment_create (&module->seg_ds, data_file, total + data_base_size);
