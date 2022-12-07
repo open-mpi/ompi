@@ -235,6 +235,7 @@ static void do_recv(int source_pe, pmix_data_buffer_t* buffer)
         if (MPI_SUCCESS != rc) {
             MEMHEAP_ERROR("FAILED to send rml message %d", rc);
             OMPI_ERROR_LOG(rc);
+            OBJ_RELEASE(msg);
             goto send_fail;
         }
         break;
@@ -274,6 +275,7 @@ static void do_recv(int source_pe, pmix_data_buffer_t* buffer)
     if (MPI_SUCCESS != rc) {
         MEMHEAP_ERROR("FAILED to send rml message %d", rc);
         OMPI_ERROR_LOG(rc);
+        OBJ_RELEASE(msg);
     }
 
 }
