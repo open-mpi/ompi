@@ -836,6 +836,9 @@ select_unlock:
         goto error;
     }
 
+    module->epoc_outstanding_ops_mems =
+        calloc(ompi_osc_ucx_outstanding_ops_flush_threshold,
+                sizeof(ompi_osc_ucx_mem_ranges_t));
     module->addrs = calloc(comm_size, sizeof(uint64_t));
     module->state_addrs = calloc(comm_size, sizeof(uint64_t));
     module->comm_world_ranks = calloc(comm_size, sizeof(uint64_t));
@@ -1133,6 +1136,9 @@ int ompi_osc_ucx_free(struct ompi_win_t *win) {
         }
     }
 
+    if (NULL != module->epoc_outstanding_ops_mems) {
+        free(module->epoc_outstanding_ops_mems);
+    }
     free(module->addrs);
     free(module->state_addrs);
     free(module->comm_world_ranks);
