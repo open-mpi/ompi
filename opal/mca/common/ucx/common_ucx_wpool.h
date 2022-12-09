@@ -81,7 +81,7 @@ extern opal_atomic_int64_t opal_common_ucx_unpacked_rkey_counts;
  * Context is bound to a particular Worker Pool object.
  */
 typedef struct {
-    opal_mutex_t mutex;
+    opal_recursive_mutex_t mutex;
 
     /* the reference to a Worker pool this context belongs to*/
     opal_common_ucx_wpool_t *wpool;

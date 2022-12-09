@@ -934,6 +934,110 @@ static inline int ompi_osc_ucx_acc_rputget(void *stage_addr, int stage_count,
     return ret;
 }
 
+static inline int ompi_osc_ucx_check_ops_and_flush (ompi_osc_ucx_module_t *module,
+        int target, ptrdiff_t target_disp, int target_count, struct
+        ompi_datatype_t *target_dt, bool lock_acquired) {
+    ptrdiff_t target_lb, target_extent;
+    uint64_t base_tmp, tail_tmp;
+    int ret = OMPI_SUCCESS;
+
+    if (module->ctx->num_incomplete_req_ops > ompi_osc_ucx_outstanding_ops_flush_threshold) {
+        ret = opal_common_ucx_ctx_flush(module->ctx, OPAL_COMMON_UCX_SCOPE_WORKER, 0);
+        if (ret != OPAL_SUCCESS) {
+            ret = OMPI_ERROR;
+            return ret;
+        }
+        opal_mutex_lock(&module->ctx->mutex);
+        /* Check if we need to clear the list */
+        if (ompi_osc_ucx_outstanding_ops_flush_threshold != 0
+                && module->ctx->num_incomplete_req_ops == 0) {
+            memset(module->epoc_outstanding_ops_mems, 0,
+                    sizeof(ompi_osc_ucx_mem_ranges_t) *
+                    ompi_osc_ucx_outstanding_ops_flush_threshold);
+        }
+        opal_mutex_unlock(&module->ctx->mutex);
+    }
+
+    if (ompi_osc_ucx_outstanding_ops_flush_threshold == 0) {
+        return ret;
+    }
+
+    if (!lock_acquired) {
+        /* We are not acquiring the acc lock as we already may have an exclusive lock
+         * to the target window. However, in the nb acc operation, we must
+         * preserve the atomicy of back to back calls to same target buffer
+         * even when acc lock is not available */
+
+        /* Calculate the base and range of the target buffer for this call */
+        ompi_datatype_get_true_extent(target_dt, &target_lb, &target_extent);
+        uint64_t base = (module->addrs[target]) + target_disp * OSC_UCX_GET_DISP(module, target);
+        uint64_t tail = base + target_extent * target_count;
+
+        assert((void *)base != NULL);
+
+        opal_mutex_lock(&module->ctx->mutex);
+
+        bool overlap = false;
+        /* Find overlapping outstanidng acc ops to same target */
+        size_t i;
+        for (i = 0; i < ompi_osc_ucx_outstanding_ops_flush_threshold; i++) {
+           base_tmp = module->epoc_outstanding_ops_mems[i].base;
+           tail_tmp = module->epoc_outstanding_ops_mems[i].tail;
+           if (base_tmp == tail_tmp) {
+               continue;
+           }
+           if (!(tail_tmp < base || tail < base_tmp)) {
+               overlap = true;
+               break;
+           }
+        }
+
+        /* If there are overlaps, then flush */
+        if (overlap) {
+            ret = opal_common_ucx_ctx_flush(module->ctx, OPAL_COMMON_UCX_SCOPE_WORKER, 0);
+            if (ret != OPAL_SUCCESS) {
+                ret = OMPI_ERROR;
+                return ret;
+            }
+        }
+
+        /* Add the new base and tail to the list of outstanding
+         * ops of this epoc */
+        bool op_added = false;
+        while (!op_added) {
+            /* Check if we need to clear the list */
+            if (module->ctx->num_incomplete_req_ops == 0) {
+                memset(module->epoc_outstanding_ops_mems, 0,
+                        sizeof(ompi_osc_ucx_mem_ranges_t) *
+                        ompi_osc_ucx_outstanding_ops_flush_threshold);
+            }
+
+            for (i = 0; i < ompi_osc_ucx_outstanding_ops_flush_threshold; i++) {
+               base_tmp = module->epoc_outstanding_ops_mems[i].base;
+               tail_tmp = module->epoc_outstanding_ops_mems[i].tail;
+               if (base_tmp == tail_tmp) {
+                    module->epoc_outstanding_ops_mems[i].base = base;
+                    module->epoc_outstanding_ops_mems[i].tail = tail;
+                    op_added = true;
+                    break;
+               };
+            }
+
+            if (!op_added) {
+                /* no more space so flush */
+                ret = opal_common_ucx_ctx_flush(module->ctx, OPAL_COMMON_UCX_SCOPE_WORKER, 0);
+                if (ret != OPAL_SUCCESS) {
+                    ret = OMPI_ERROR;
+                    return ret;
+                }
+            }
+        }
+        opal_mutex_unlock(&module->ctx->mutex);
+    }
+
+    return ret;
+}
+
 /* Nonblocking variant of accumulate. reduce+put happens inside completion call back
  * of rget */
 static int ompi_osc_ucx_get_accumulate_nonblocking(const void *origin_addr, int origin_count,
@@ -971,12 +1075,10 @@ static int ompi_osc_ucx_get_accumulate_nonblocking(const void *origin_addr, int 
         return ret;
     }
 
-    if (module->ctx->num_incomplete_req_ops > ompi_osc_ucx_outstanding_ops_flush_threshold) {
-        ret = opal_common_ucx_ctx_flush(module->ctx, OPAL_COMMON_UCX_SCOPE_WORKER, 0);
-        if (ret != OPAL_SUCCESS) {
-            ret = OMPI_ERROR;
-            return ret;
-        }
+    ret = ompi_osc_ucx_check_ops_and_flush(module, target, target_disp, target_count,
+            target_dt, lock_acquired);
+    if (ret != OMPI_SUCCESS) {
+        return ret;
     }
 
     CHECK_DYNAMIC_WIN(remote_addr, module, target, ret);
