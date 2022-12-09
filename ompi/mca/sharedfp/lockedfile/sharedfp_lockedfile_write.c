@@ -59,7 +59,7 @@ int mca_sharedfp_lockedfile_write (ompio_file_t *fh,
 
     /* Request the offset to write bytesRequested bytes */
     ret = mca_sharedfp_lockedfile_request_position ( sh, bytesRequested, &offset);
-    offset /= fh->f_etype_size;
+    offset /= fh->f_fview.f_etype_size;
 
     if (-1 != ret )  {
 	if ( mca_sharedfp_lockedfile_verbose ) {
@@ -177,7 +177,7 @@ int mca_sharedfp_lockedfile_write_ordered (ompio_file_t *fh,
 
     /*Each process now has its own individual offset*/
     offset = offsetBuff - sendBuff;
-    offset /= fh->f_etype_size;
+    offset /= fh->f_fview.f_etype_size;
 
     if ( mca_sharedfp_lockedfile_verbose ) {
         opal_output(ompi_sharedfp_base_framework.framework_output,

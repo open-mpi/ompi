@@ -12,7 +12,7 @@
  *  Copyright (c) 2008-2019 University of Houston. All rights reserved.
  *  Copyright (c) 2018      Research Organization for Information Science
  *                          and Technology (RIST). All rights reserved.
- *  Copyright (c) 2022      Advanced Micro Devices, Inc. All rights reserved.
+ *  Copyright (c) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
  *  $COPYRIGHT$
  *
  *  Additional copyrights may follow
@@ -75,7 +75,7 @@ int mca_common_ompio_file_read (ompio_file_t *fh,
         return MPI_ERR_ACCESS;
     }
 
-    if (0 == count || 0 == fh->f_iov_count) {
+    if (0 == count || 0 == fh->f_fview.f_iov_count) {
         if (MPI_STATUS_IGNORE != status) {
             status->_ucount = 0;
         }
@@ -124,7 +124,6 @@ int mca_common_ompio_file_read_default (ompio_file_t *fh, void *buf,
     size_t spc=0;
     ssize_t ret_code=0;
     int i = 0; /* index into the decoded iovec of the buffer */
-    int j = 0; /* index into the file via iovec */
 
     mca_common_ompio_decode_datatype (fh, datatype, count, buf,
                                       &max_data, fh->f_mem_convertor,
@@ -138,11 +137,10 @@ int mca_common_ompio_file_read_default (ompio_file_t *fh, void *buf,
             cycles, max_data);
 #endif
 
-    j = fh->f_index_in_file_view;
     for (index = 0; index < cycles; index++) {
-        mca_common_ompio_build_io_array (fh, index, cycles, bytes_per_cycle,
+        mca_common_ompio_build_io_array (&(fh->f_fview), index, cycles, bytes_per_cycle,
                                          max_data, iov_count, decoded_iov,
-                                         &i, &j, &total_bytes_read, &spc,
+                                         &i, &total_bytes_read, &spc,
                                          &fh->f_io_array, &fh->f_num_of_io_entries);
         if (fh->f_num_of_io_entries == 0) {
 	    ret_code = 0;
@@ -182,13 +180,12 @@ int mca_common_ompio_file_read_pipelined (ompio_file_t *fh, void *buf,
     int index = 0;
     int cycles = 0;
     uint32_t iov_count = 0;
-    struct iovec *decoded_iov = NULL;
+    struct iovec decoded_iov;
 
     size_t max_data=0, real_bytes_read=0;
     size_t spc=0;
     ssize_t ret_code=0;
     int i = 0; /* index into the decoded iovec of the buffer */
-    int j = 0; /* index into the file via iovec */
 
     char *tbuf1=NULL, *tbuf2=NULL;
     char *unpackbuf=NULL, *readbuf=NULL;
@@ -198,7 +195,7 @@ int mca_common_ompio_file_read_pipelined (ompio_file_t *fh, void *buf,
 
     bytes_per_cycle = OMPIO_MCA_GET(fh, pipeline_buffer_size);
     OMPIO_PREPARE_READ_BUF (fh, buf, count, datatype, tbuf1, &convertor,
-                            max_data, bytes_per_cycle, decoded_iov, iov_count);
+                            max_data, bytes_per_cycle, &decoded_iov, iov_count);
     cycles = ceil((double)max_data/bytes_per_cycle);
 
     readbuf = unpackbuf = tbuf1;
@@ -206,7 +203,6 @@ int mca_common_ompio_file_read_pipelined (ompio_file_t *fh, void *buf,
         tbuf2 = mca_common_ompio_alloc_buf (fh, bytes_per_cycle);
         if (NULL == tbuf2) {
             opal_output(1, "common_ompio: error allocating memory\n");
-            free (decoded_iov);
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
         unpackbuf = tbuf2;
@@ -236,15 +232,14 @@ int mca_common_ompio_file_read_pipelined (ompio_file_t *fh, void *buf,
     **    - unpack buffer i
     */
     
-    j = fh->f_index_in_file_view;
     if (can_overlap) {
 	mca_common_ompio_register_progress ();	    
     }
 
     for (index = 0; index < cycles+1; index++) {
         if (index < cycles) {
-            decoded_iov->iov_base = readbuf;
-            decoded_iov->iov_len  = bytes_per_cycle;
+            decoded_iov.iov_base  = readbuf;
+            decoded_iov.iov_len   = bytes_per_cycle;
             bytes_this_cycle      = (index == cycles-1) ?
                 (max_data - (index * bytes_per_cycle)) :
                 bytes_per_cycle;
@@ -253,9 +248,9 @@ int mca_common_ompio_file_read_pipelined (ompio_file_t *fh, void *buf,
             spc = 0;
             tbr = 0;
 
-            mca_common_ompio_build_io_array (fh, index, cycles, bytes_per_cycle,
+            mca_common_ompio_build_io_array (&(fh->f_fview), index, cycles, bytes_per_cycle,
                                              bytes_this_cycle, iov_count,
-                                             decoded_iov, &i, &j, &tbr, &spc,
+                                             &decoded_iov, &i, &tbr, &spc,
                                              &fh->f_io_array, &fh->f_num_of_io_entries);
 	    if (fh->f_num_of_io_entries == 0) {
 		ret_code = 0;
@@ -263,7 +258,7 @@ int mca_common_ompio_file_read_pipelined (ompio_file_t *fh, void *buf,
 	    }
 
             if (can_overlap) {
-                mca_common_ompio_request_alloc ( &ompio_req, MCA_OMPIO_REQUEST_READ);
+                mca_common_ompio_request_alloc (&ompio_req, MCA_OMPIO_REQUEST_READ);
 		fh->f_fbtl->fbtl_ipreadv (fh, (ompi_request_t *)ompio_req);
             } else {
 		ret_code = fh->f_fbtl->fbtl_preadv (fh);
@@ -293,9 +288,9 @@ int mca_common_ompio_file_read_pipelined (ompio_file_t *fh, void *buf,
 	if ((can_overlap && index != 0) ||
 	    (!can_overlap && index < cycles)) {
 	    size_t pos = 0;
-	    decoded_iov->iov_base = unpackbuf;
-	    decoded_iov->iov_len  = can_overlap ? bytes_prev_cycle : bytes_this_cycle;
-	    opal_convertor_unpack (&convertor, decoded_iov, &iov_count, &pos);
+	    decoded_iov.iov_base = unpackbuf;
+	    decoded_iov.iov_len  = can_overlap ? bytes_prev_cycle : bytes_this_cycle;
+	    opal_convertor_unpack (&convertor, &decoded_iov, &iov_count, &pos);
 	}
 
 	fh->f_num_of_io_entries = 0;
@@ -317,7 +312,6 @@ int mca_common_ompio_file_read_pipelined (ompio_file_t *fh, void *buf,
         mca_common_ompio_release_buf (fh, tbuf2);
     }
 
-    free (decoded_iov);
     if ( MPI_STATUS_IGNORE != status ) {
         status->_ucount = real_bytes_read;
     }
@@ -352,52 +346,100 @@ int mca_common_ompio_file_read_at (ompio_file_t *fh,
     return ret;
 }
 
+static void mca_common_ompio_post_next_read_subreq(struct mca_ompio_request_t *req, int index)
+{
+    uint32_t iov_count = 1;
+    size_t pos = 0, spc = 0, tbw = 0;
+    int i = 0;
+    mca_ompio_request_t *ompio_subreq=NULL;
+    size_t bytes_per_cycle = OMPIO_MCA_GET(req->req_fh, pipeline_buffer_size);
+    struct iovec decoded_iov;
+
+    /* Step 1: finish index-1 unpack operation */
+    if (index - 1 >= 0) {
+        size_t num_bytes = bytes_per_cycle;
+        /**
+         *  should really be 'req_num_subreqs -1 == index -1'
+         *  which is the same as below.
+         */
+        if (req->req_num_subreqs == index) {
+            num_bytes = req->req_max_data - (index-1)* bytes_per_cycle;
+        }
+        decoded_iov.iov_base = req->req_tbuf;
+        decoded_iov.iov_len  = num_bytes;
+        opal_convertor_unpack (&req->req_convertor, &decoded_iov, &iov_count, &pos);
+    }
+
+    /* Step 2: post next iread subrequest */
+    if (req->req_num_subreqs == index) {
+        /* all done */
+        return;
+    }
+
+    decoded_iov.iov_base = req->req_tbuf;
+    decoded_iov.iov_len  = (req->req_num_subreqs-1 == index) ?
+	req->req_max_data - (index* bytes_per_cycle) : req->req_size;
+    mca_common_ompio_build_io_array (req->req_fview, index, req->req_num_subreqs,
+                                     bytes_per_cycle, decoded_iov.iov_len,
+                                     iov_count, &decoded_iov,
+                                     &i, &tbw, &spc,
+                                     &req->req_fh->f_io_array,
+                                     &req->req_fh->f_num_of_io_entries);
+#if 0
+    printf("Next subreq: memory address %p offset %lu length %ld first element %ld\n",
+	   req->req_fh->f_io_array[0].memory_address,
+	   (long unsigned)req->req_fh->f_io_array[0].offset,
+	   req->req_fh->f_io_array[0].length,
+	   ((long*)req->req_fh->f_io_array[0].memory_address)[0]);
+#endif
+    mca_common_ompio_request_alloc ( &ompio_subreq, MCA_OMPIO_REQUEST_READ);
+    ompio_subreq->req_parent = req;
+    req->req_fh->f_fbtl->fbtl_ipreadv (req->req_fh, (ompi_request_t *)ompio_subreq);
+
+    free(req->req_fh->f_io_array);
+    req->req_fh->f_io_array = NULL;
+    req->req_fh->f_num_of_io_entries = 0;
+}
 
 int mca_common_ompio_file_iread (ompio_file_t *fh,
-			       void *buf,
-			       int count,
-			       struct ompi_datatype_t *datatype,
-			       ompi_request_t **request)
+                               void *buf,
+                               int count,
+                               struct ompi_datatype_t *datatype,
+                               ompi_request_t **request)
 {
     int ret = OMPI_SUCCESS;
     mca_ompio_request_t *ompio_req=NULL;
-    size_t spc=0;
+    struct iovec *decoded_iov = NULL;
 
     if (fh->f_amode & MPI_MODE_WRONLY){
-//      opal_output(10, "Improper use of FILE Mode, Using WRONLY for Read!\n");
         ret = MPI_ERR_ACCESS;
-      return ret;
+        return ret;
     }
 
-    mca_common_ompio_request_alloc ( &ompio_req, MCA_OMPIO_REQUEST_READ);
+    mca_common_ompio_request_alloc (&ompio_req, MCA_OMPIO_REQUEST_READ);
 
-    if ( 0 == count ) {
+    if (0 == count || 0 == fh->f_fview.f_iov_count) {
         ompio_req->req_ompi.req_status.MPI_ERROR = OMPI_SUCCESS;
         ompio_req->req_ompi.req_status._ucount = 0;
         ompi_request_complete (&ompio_req->req_ompi, false);
         *request = (ompi_request_t *) ompio_req;
-        
+
         return OMPI_SUCCESS;
     }
 
-    if ( NULL != fh->f_fbtl->fbtl_ipreadv ) {
+    if (NULL != fh->f_fbtl->fbtl_ipreadv) {
         // This fbtl has support for non-blocking operations
-
-        size_t total_bytes_read = 0;       /* total bytes that have been read*/
         uint32_t iov_count = 0;
-        struct iovec *decoded_iov = NULL;
-        
         size_t max_data = 0;
-        int i = 0; /* index into the decoded iovec of the buffer */
-        int j = 0; /* index into the file via iovec */
-        
         bool need_to_copy = false;    
-    
         int is_gpu, is_managed;
-        mca_common_ompio_check_gpu_buf ( fh, buf, &is_gpu, &is_managed);
-        if ( is_gpu && !is_managed ) {
+
+        mca_common_ompio_check_gpu_buf (fh, buf, &is_gpu, &is_managed);
+        if (is_gpu && !is_managed) {
             need_to_copy = true;
         }
+
+        mca_common_ompio_register_progress ();
 
         if ( !( fh->f_flags & OMPIO_DATAREP_NATIVE ) &&
              !(datatype == &ompi_mpi_byte.dt  ||
@@ -411,87 +453,80 @@ int mca_common_ompio_file_iread (ompio_file_t *fh,
             need_to_copy = true;
         }         
         
-        if ( need_to_copy ) {
-            char *tbuf=NULL;
+        if (need_to_copy) {
+            OMPI_MPI_OFFSET_TYPE prev_offset;
+            size_t pipeline_buf_size = OMPIO_MCA_GET(fh, pipeline_buffer_size);
             
-            OMPIO_PREPARE_READ_BUF(fh, buf, count, datatype, tbuf, &ompio_req->req_convertor,
-                                   max_data, 0, decoded_iov, iov_count);
-            
-            ompio_req->req_tbuf = tbuf;
-            ompio_req->req_size = max_data;
+            OMPIO_PREPARE_READ_BUF(fh, buf, count, datatype, ompio_req->req_tbuf,
+                                   &ompio_req->req_convertor, max_data,
+                                   pipeline_buf_size, NULL, iov_count);
+
+            ompio_req->req_num_subreqs = ceil((double)max_data/pipeline_buf_size);
+            ompio_req->req_size        = pipeline_buf_size;
+            ompio_req->req_max_data    = max_data;
+            ompio_req->req_post_next_subreq = mca_common_ompio_post_next_read_subreq;
+            ompio_req->req_fh          = fh;
+            ompio_req->req_ompi.req_status.MPI_ERROR = MPI_SUCCESS;
+
+	    ompio_req->req_fview = (struct ompio_fview_t *) malloc(sizeof(struct ompio_fview_t));
+	    if (NULL == ompio_req->req_fview) {
+		opal_output(1, "common_ompio: error allocating memory\n");
+		return OMPI_ERR_OUT_OF_RESOURCE;
+	    }
+            ret = mca_common_ompio_fview_duplicate(ompio_req->req_fview, &fh->f_fview);
+            if (OMPI_SUCCESS != ret) {
+                return ret;
+            }
+            mca_common_ompio_file_get_position (fh, &prev_offset );
+            mca_common_ompio_post_next_read_subreq (ompio_req, 0);
+
+            /* Move file pointer to the end of the operation.
+             * Otherwise posting another I/O operation will start of
+             * from the wrong file position. The request will update
+             * the position where to write the next chunk of data
+             * using its internal copy of the file view and file pointer
+             * position.
+             */
+            mca_common_ompio_set_explicit_offset (fh, prev_offset+max_data);
         }
         else {
-            mca_common_ompio_decode_datatype (fh,
-                                              datatype,
-                                              count,
-                                              buf,
-                                              &max_data,
-                                              fh->f_mem_convertor,
-                                              &decoded_iov,
-                                              &iov_count);
+	    int i = 0;
+	    size_t spc = 0, tbr = 0;
+	    mca_common_ompio_decode_datatype (fh, datatype, count, buf,
+                                              &max_data, fh->f_mem_convertor,
+                                              &decoded_iov, &iov_count);
+
+            /**
+             * Non-blocking operations have to occur in a single cycle
+             * If the f_io_array is too long, the fbtl will chunk it up
+             * internally.
+             */
+            mca_common_ompio_build_io_array (&(fh->f_fview), 0, 1, max_data, max_data,
+                                             iov_count, decoded_iov, &i,
+                                             &tbr, &spc,
+                                             &fh->f_io_array, &fh->f_num_of_io_entries);
+
+            fh->f_fbtl->fbtl_ipreadv (fh, (ompi_request_t *) ompio_req);
         }
-    
-        if ( 0 < max_data && 0 == fh->f_iov_count  ) {
-            ompio_req->req_ompi.req_status.MPI_ERROR = OMPI_SUCCESS;
-            ompio_req->req_ompi.req_status._ucount = 0;
-            ompi_request_complete (&ompio_req->req_ompi, false);
-            *request = (ompi_request_t *) ompio_req;
-            if (NULL != decoded_iov) {
-                free (decoded_iov);
-                decoded_iov = NULL;
-            }
-
-            return OMPI_SUCCESS;
-        }
-
-        // Non-blocking operations have to occur in a single cycle
-        j = fh->f_index_in_file_view;
-        
-        mca_common_ompio_build_io_array ( fh,
-                                          0,         // index
-                                          1,         // no. of cyces
-                                          max_data,  // setting bytes per cycle to match data
-                                          max_data,
-                                          iov_count,
-                                          decoded_iov,
-                                          &i,
-                                          &j,
-                                          &total_bytes_read, 
-                                          &spc,
-                                          &fh->f_io_array,
-                                          &fh->f_num_of_io_entries);
-
-	if (fh->f_num_of_io_entries) {
-	  fh->f_fbtl->fbtl_ipreadv (fh, (ompi_request_t *) ompio_req);
-	}
-
-        mca_common_ompio_register_progress ();
-
-	fh->f_num_of_io_entries = 0;
-	if (NULL != fh->f_io_array) {
-	    free (fh->f_io_array);
-	    fh->f_io_array = NULL;
-	}
-
-	if (NULL != decoded_iov) {
-	    free (decoded_iov);
-	    decoded_iov = NULL;
-	}
     }
     else {
-	// This fbtl does not  support non-blocking operations
-	ompi_status_public_t status;
-	ret = mca_common_ompio_file_read (fh, buf, count, datatype, &status);
+        // This fbtl does not  support non-blocking operations
+        ompi_status_public_t status;
+        ret = mca_common_ompio_file_read (fh, buf, count, datatype, &status);
 
-	ompio_req->req_ompi.req_status.MPI_ERROR = ret;
-	ompio_req->req_ompi.req_status._ucount = status._ucount;
-	ompi_request_complete (&ompio_req->req_ompi, false);
+        ompio_req->req_ompi.req_status.MPI_ERROR = ret;
+        ompio_req->req_ompi.req_status._ucount = status._ucount;
+        ompi_request_complete (&ompio_req->req_ompi, false);
     }
+
+    fh->f_num_of_io_entries = 0;
+    free (fh->f_io_array);
+    fh->f_io_array = NULL;
+    free (decoded_iov);
 
     *request = (ompi_request_t *) ompio_req;
     return ret;
 }
-
 
 int mca_common_ompio_file_iread_at (ompio_file_t *fh,
 				  OMPI_MPI_OFFSET_TYPE offset,
@@ -554,24 +589,20 @@ int mca_common_ompio_file_read_all (ompio_file_t *fh,
         size_t pos=0, max_data=0;
         char *tbuf=NULL;
         opal_convertor_t convertor;
-        struct iovec *decoded_iov = NULL;
+        struct iovec decoded_iov;
         uint32_t iov_count = 0;
 
         OMPIO_PREPARE_READ_BUF(fh, buf, count, datatype, tbuf, &convertor,
-                               max_data, 0, decoded_iov, iov_count);
+                               max_data, 0, &decoded_iov, iov_count);
         ret = fh->f_fcoll->fcoll_file_read_all (fh,
-                                                decoded_iov->iov_base,
-                                                decoded_iov->iov_len,
+                                                decoded_iov.iov_base,
+                                                decoded_iov.iov_len,
                                                 MPI_BYTE,
                                                 status);
-        opal_convertor_unpack (&convertor, decoded_iov, &iov_count, &pos );
+        opal_convertor_unpack (&convertor, &decoded_iov, &iov_count, &pos );
 
         opal_convertor_cleanup (&convertor);
-        mca_common_ompio_release_buf (fh, decoded_iov->iov_base);
-        if (NULL != decoded_iov) {
-            free (decoded_iov);
-            decoded_iov = NULL;
-        }
+        mca_common_ompio_release_buf (fh, decoded_iov.iov_base);
     }
     else {
         ret = fh->f_fcoll->fcoll_file_read_all (fh,
@@ -660,29 +691,29 @@ int mca_common_ompio_set_explicit_offset (ompio_file_t *fh,
     size_t i = 0;
     size_t k = 0;
 
-    if ( fh->f_view_size  > 0 ) {
+    if ( fh->f_fview.f_view_size  > 0 ) {
 	/* starting offset of the current copy of the filew view */
-	fh->f_offset = (fh->f_view_extent *
-			((offset*fh->f_etype_size) / fh->f_view_size)) + fh->f_disp;
+	fh->f_fview.f_offset = (fh->f_fview.f_view_extent *
+			((offset*fh->f_fview.f_etype_size) / fh->f_fview.f_view_size)) + fh->f_fview.f_disp;
 
 
 	/* number of bytes used within the current copy of the file view */
-	fh->f_total_bytes = (offset*fh->f_etype_size) % fh->f_view_size;
-	i = fh->f_total_bytes;
+	fh->f_fview.f_total_bytes = (offset*fh->f_fview.f_etype_size) % fh->f_fview.f_view_size;
+	i = fh->f_fview.f_total_bytes;
 
 
 	/* Initialize the block id and the starting offset of the current block
 	   within the current copy of the file view to zero */
-	fh->f_index_in_file_view = 0;
-	fh->f_position_in_file_view = 0;
+	fh->f_fview.f_index_in_file_view = 0;
+	fh->f_fview.f_position_in_file_view = 0;
 
 	/* determine block id that the offset is located in and
 	   the starting offset of that block */
-	k = fh->f_decoded_iov[fh->f_index_in_file_view].iov_len;
+	k = fh->f_fview.f_decoded_iov[fh->f_fview.f_index_in_file_view].iov_len;
 	while (i >= k) {
-	    fh->f_position_in_file_view = k;
-	    fh->f_index_in_file_view++;
-	    k += fh->f_decoded_iov[fh->f_index_in_file_view].iov_len;
+	    fh->f_fview.f_position_in_file_view = k;
+	    fh->f_fview.f_index_in_file_view++;
+	    k += fh->f_fview.f_decoded_iov[fh->f_fview.f_index_in_file_view].iov_len;
 	}
     }
 

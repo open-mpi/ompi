@@ -44,7 +44,7 @@ int mca_fs_base_file_get_size (ompio_file_t *fh,
         return OMPI_ERROR;
     }
 
-    if (-1 == (lseek(fh->fd, fh->f_offset, SEEK_SET))) {
+    if (-1 == (lseek(fh->fd, fh->f_fview.f_offset, SEEK_SET))) {
         perror ("lseek");
         return OMPI_ERROR;
     }

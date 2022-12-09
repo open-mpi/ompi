@@ -62,8 +62,8 @@ int ompi_io_ompio_generate_current_file_view (struct ompio_file_t *fh,
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    sum_previous_counts = fh->f_position_in_file_view;
-    j = fh->f_index_in_file_view;
+    sum_previous_counts = fh->f_fview.f_position_in_file_view;
+    j = fh->f_fview.f_index_in_file_view;
     bytes_to_write = max_data;
     k = 0;
 
@@ -80,40 +80,40 @@ int ompi_io_ompio_generate_current_file_view (struct ompio_file_t *fh,
             }
         }
 
-        if (fh->f_decoded_iov[j].iov_len -
-            (fh->f_total_bytes - sum_previous_counts) <= 0) {
-            sum_previous_counts += fh->f_decoded_iov[j].iov_len;
+        if (fh->f_fview.f_decoded_iov[j].iov_len -
+            (fh->f_fview.f_total_bytes - sum_previous_counts) <= 0) {
+            sum_previous_counts += fh->f_fview.f_decoded_iov[j].iov_len;
             j = j + 1;
-            if (j == (int)fh->f_iov_count) {
+            if (j == (int)fh->f_fview.f_iov_count) {
                 j = 0;
                 sum_previous_counts = 0;
-                fh->f_offset += fh->f_view_extent;
-                fh->f_position_in_file_view = sum_previous_counts;
-                fh->f_index_in_file_view = j;
-                fh->f_total_bytes = 0;
+                fh->f_fview.f_offset += fh->f_fview.f_view_extent;
+                fh->f_fview.f_position_in_file_view = sum_previous_counts;
+                fh->f_fview.f_index_in_file_view = j;
+                fh->f_fview.f_total_bytes = 0;
             }
         }
 
-        disp = (ptrdiff_t)(fh->f_decoded_iov[j].iov_base) +
-            (fh->f_total_bytes - sum_previous_counts);
-        iov[k].iov_base = (IOVBASE_TYPE *)(intptr_t)(disp + fh->f_offset);
+        disp = (ptrdiff_t)(fh->f_fview.f_decoded_iov[j].iov_base) +
+            (fh->f_fview.f_total_bytes - sum_previous_counts);
+        iov[k].iov_base = (IOVBASE_TYPE *)(intptr_t)(disp + fh->f_fview.f_offset);
 
-        if ((fh->f_decoded_iov[j].iov_len -
-             (fh->f_total_bytes - sum_previous_counts))
+        if ((fh->f_fview.f_decoded_iov[j].iov_len -
+             (fh->f_fview.f_total_bytes - sum_previous_counts))
             >= bytes_to_write) {
             iov[k].iov_len = bytes_to_write;
         }
         else {
-            iov[k].iov_len =  fh->f_decoded_iov[j].iov_len -
-                (fh->f_total_bytes - sum_previous_counts);
+            iov[k].iov_len =  fh->f_fview.f_decoded_iov[j].iov_len -
+                (fh->f_fview.f_total_bytes - sum_previous_counts);
         }
 
-        fh->f_total_bytes += iov[k].iov_len;
+        fh->f_fview.f_total_bytes += iov[k].iov_len;
         bytes_to_write -= iov[k].iov_len;
         k = k + 1;
     }
-    fh->f_position_in_file_view = sum_previous_counts;
-    fh->f_index_in_file_view = j;
+    fh->f_fview.f_position_in_file_view = sum_previous_counts;
+    fh->f_fview.f_index_in_file_view = j;
     *iov_count = k;
     *f_iov = iov;
 

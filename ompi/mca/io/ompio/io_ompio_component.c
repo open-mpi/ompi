@@ -17,7 +17,7 @@
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * Copyright (c) 2018      DataDirect Networks. All rights reserved.
- * Copyright (c) 2022      Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -88,13 +88,7 @@ static int io_progress(void);
 static int priority_param = 30;
 static int delete_priority_param = 30;
 
-
-/*
- * Global, component-wide OMPIO mutex because OMPIO is not thread safe
- */
-opal_mutex_t mca_io_ompio_mutex = {{0}};
-
-
+static opal_mutex_t mca_io_ompio_mutex = OPAL_MUTEX_STATIC_INIT;
 
 /*
  * Public string showing this component's version number
@@ -272,9 +266,6 @@ static int register_component(void)
 
 static int open_component(void)
 {
-    /* Create the mutex */
-    OBJ_CONSTRUCT(&mca_io_ompio_mutex, opal_mutex_t);
-
     mca_common_ompio_request_init ();
 
     return mca_common_ompio_set_callbacks(ompi_io_ompio_generate_current_file_view,
@@ -286,7 +277,6 @@ static int close_component(void)
 {
     mca_common_ompio_request_fini ();
     mca_common_ompio_buffer_alloc_fini();
-    OBJ_DESTRUCT(&mca_io_ompio_mutex);
 
     return OMPI_SUCCESS;
 }
