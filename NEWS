@@ -58,16 +58,23 @@ included in the vX.Y.Z section and be denoted as:
    (** also appeared: A.B.C)  -- indicating that this item was previously
                                  included in release version vA.B.C.
 
-4.1.5 -- November, 2022
+4.1.5 -- December, 2022
 -----------------------
 
 - Fix issue building with ifort on MacOS.
 - Backport patches to Libevent for CVE-2016-10195, CVE-2016-10196, and
   CVE-2016-10197.  Note that Open MPI's internal libevent does not
   use the impacted portions of the Libevent code base.
-- Fix initializer bugs in SHMEM interface.
-- Fix UCX memory registration bug that could occur when UCX was built
-  but not selected.
+- SHMEM improvements:
+  - Fix initializer bugs in SHMEM interface.
+  - Fix unsigned type comparisons generating warnings.
+  - Fix use after clear issue in shmem_ds_reset.
+- UCX improvements
+  - Fix memory registration bug that could occur when UCX was built
+    but not selected.
+  - Reduce overhead of add_procs with intercommunicators.
+  - Enable multi_send_nb by default.
+  - Call opal_progress while waiting for a UCX fence to complete.
 - Fix data corruption bug in osc/rdma component.
 - Fix overflow bug in alltoall collective
 - Fix crash when displaying topology.
