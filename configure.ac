@@ -60,6 +60,8 @@ AC_PREREQ(2.60)
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_MACRO_DIR(config)
 
+OAC_PUSH_PREFIX([OPAL])
+
 OPAL_CAPTURE_CONFIGURE_CLI([OPAL_CONFIGURE_CLI])
 
 # Get our platform support file.  This has to be done very, very early
@@ -1068,7 +1070,10 @@ AS_IF([test -z "$LEX" || \
 # Setup HTML and man page processing
 #
 
-OPAL_SETUP_SPHINX
+OAC_SETUP_SPHINX([$srcdir/docs/_build/man/MPI_T.5],
+                 dnl Note that we have to double escape the string below
+                 dnl so that the # it contains doesn't confuse the Autotools
+                 [[https://docs.open-mpi.org/en/main/developers/prerequisites.html#sphinx-and-therefore-python]])
 
 #
 # File system case sensitivity
@@ -1517,10 +1522,6 @@ AC_CONFIG_FILES([contrib/dist/mofed/debian/rules],
 AC_CONFIG_FILES([contrib/dist/mofed/compile_debian_mlnx_example],
                 [chmod +x contrib/dist/mofed/compile_debian_mlnx_example])
 
-AS_IF([test -n "$OAC_MAKEDIST_DISABLE"],
-      [AS_IF([test -n "$OPAL_MAKEDIST_DISABLE"],
-             [OPAL_MAKEDIST_DISABLE="$OPAL_MAKEDIST_DISABLE $OAC_MAKEDIST_DISABLE"],
-             [OPAL_MAKEDIST_DISABLE=$OAC_MAKEDIST_DISABLE])])
 AS_IF([test -n "$OPAL_MAKEDIST_DISABLE"],
       [AC_MSG_WARN(["make dist" will be disabled due to: $OPAL_MAKEDIST_DISABLE])])
 AC_SUBST([OPAL_MAKEDIST_DISABLE])
