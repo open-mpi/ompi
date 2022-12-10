@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2008-2022 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2016      Intel, Inc. All rights reserved
 # $COPYRIGHT$
 #
@@ -23,8 +23,8 @@
 # Version of auto tools that we want
 #
 
-M4_TARGET_VERSION=1.4.17
-AM_TARGET_VERSION=1.15
+M4_TARGET_VERSION=1.4.19
+AM_TARGET_VERSION=1.15.1
 AC_TARGET_VERSION=2.69
 LT_TARGET_VERSION=2.4.6
 FLEX_TARGET_VERSION=2.5.35
