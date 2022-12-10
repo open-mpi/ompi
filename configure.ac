@@ -1513,6 +1513,10 @@ AC_CONFIG_FILES([contrib/dist/mofed/debian/rules],
 AC_CONFIG_FILES([contrib/dist/mofed/compile_debian_mlnx_example],
                 [chmod +x contrib/dist/mofed/compile_debian_mlnx_example])
 
+AS_IF([test -n "$OAC_MAKEDIST_DISABLE"],
+      [AS_IF([test -n "$OPAL_MAKEDIST_DISABLE"],
+             [OPAL_MAKEDIST_DISABLE="$OPAL_MAKEDIST_DISABLE $OAC_MAKEDIST_DISABLE"],
+             [OPAL_MAKEDIST_DISABLE=$OAC_MAKEDIST_DISABLE])])
 AS_IF([test -n "$OPAL_MAKEDIST_DISABLE"],
       [AC_MSG_WARN(["make dist" will be disabled due to: $OPAL_MAKEDIST_DISABLE])])
 AC_SUBST([OPAL_MAKEDIST_DISABLE])
