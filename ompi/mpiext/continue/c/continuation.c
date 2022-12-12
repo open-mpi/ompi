@@ -605,6 +605,7 @@ ompi_continuation_t *ompi_continue_cont_create(
   MPI_Status                 *cont_status,
   bool                        req_volatile)
 {
+    const bool using_threads = opal_using_threads();
     ompi_continuation_t *cont;
     cont = (ompi_continuation_t *)opal_free_list_get(&ompi_continuation_freelist);
     cont->cont_req  = cont_req;
@@ -618,10 +619,19 @@ ompi_continuation_t *ompi_continue_cont_create(
 
     OPAL_THREAD_ADD_FETCH32(&cont_req->cont_num_active, 1);
 
+    /* if the continuation request was completed we mark it pending here */
+    if (REQUEST_COMPLETE(&cont_req->super)) {
+        if (using_threads) {
+            intptr_t tmp = (intptr_t)REQUEST_COMPLETED;
+            opal_atomic_compare_exchange_strong_ptr((intptr_t*)&cont_req->super.req_complete, &tmp, (intptr_t)REQUEST_PENDING);
+        } else {
+            cont_req->super.req_complete = REQUEST_PENDING;
+        }
+    }
+
     /* if we don't have the requests we cannot handle oob errors,
      * so don't bother keeping the continuation around */
     if (!req_volatile) {
-        const bool using_threads = opal_using_threads();
         if (using_threads) {
             opal_atomic_lock(&cont_req->cont_lock);
         }
@@ -998,7 +1008,10 @@ static int ompi_continue_request_start(size_t count, ompi_request_t** cont_req_p
                           &cont_req->cont_complete_defer_list);
         }
         cont_req->super.req_state = OMPI_REQUEST_ACTIVE;
-        cont_req->super.req_complete = REQUEST_PENDING;
+        /* TODO: is it correct to mark the cont_req pending once we
+         *       register a new operation request?
+         */
+        //cont_req->super.req_complete = REQUEST_PENDING;
         if (using_threads) {
             opal_atomic_unlock(&cont_req->cont_lock);
         }
