@@ -791,6 +791,7 @@ static int dpm_convert(opal_list_t *infos,
                     return OMPI_SUCCESS;
                 }
             }
+            free(ck);
         }
     }
 
