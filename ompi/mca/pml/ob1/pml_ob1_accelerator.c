@@ -90,6 +90,7 @@ int mca_pml_ob1_record_htod_event(char *msg, struct mca_btl_base_descriptor_t *f
     if (accelerator_event_htod_num_used == accelerator_event_max) {
         opal_output_verbose(1, mca_pml_ob1_output, "Out of event handles. Max: %d. Suggested to rerun with new max with --mca mpi_common_accelerator_event_max %d.",
                             accelerator_event_max, accelerator_event_max + 100);
+        OPAL_THREAD_UNLOCK(&pml_ob1_accelerator_htod_lock);
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
