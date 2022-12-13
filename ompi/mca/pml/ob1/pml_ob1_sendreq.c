@@ -1274,6 +1274,11 @@ static void mca_pml_ob1_send_request_put_frag_failed (mca_pml_ob1_rdma_frag_t *f
         opal_list_append(&mca_pml_ob1.rdma_pending, (opal_list_item_t*)frag);
         OPAL_THREAD_UNLOCK(&mca_pml_ob1.lock);
     } else {
+#if OPAL_ENABLE_FT
+        if(!ompi_proc_is_active(sendreq->req_send.req_base.req_proc)) {
+            return;
+        }
+#endif /* OPAL_ENABLE_FT */
         /* tell receiver to deregister memory */
         mca_pml_ob1_send_fin (sendreq->req_send.req_base.req_proc, bml_btl,
                               frag->rdma_hdr.hdr_rdma.hdr_frag, 0, MCA_BTL_NO_ORDER,
