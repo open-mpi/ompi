@@ -558,11 +558,11 @@ int ompi_coll_adapt_ibcast_generic(void *buff, int count, struct ompi_datatype_t
                 MCA_PML_CALL(irecv
                              (recv_buff, recv_count, datatype, context->peer,
                               con->ibcast_tag - i, comm, &recv_req));
+            /* Set receive callback */
+            OPAL_THREAD_UNLOCK(mutex);
             if (MPI_SUCCESS != err) {
                 return err;
             }
-            /* Set receive callback */
-            OPAL_THREAD_UNLOCK(mutex);
             ompi_request_set_callback(recv_req, recv_cb, context);
             OPAL_THREAD_LOCK(mutex);
         }
