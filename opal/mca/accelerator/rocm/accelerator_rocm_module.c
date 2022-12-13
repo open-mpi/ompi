@@ -68,9 +68,11 @@ opal_accelerator_base_module_t opal_accelerator_rocm_module =
 
 static int mca_accelerator_rocm_check_addr (const void *addr, int *dev_id, uint64_t *flags)
 {
-    int ret = -1;
+    int ret = 0;
     hipPointerAttribute_t srcAttr;
     hipError_t err;
+
+    *dev_id = MCA_ACCELERATOR_NO_DEVICE_ID;
 
     if (NULL == addr || NULL == flags) {
         return OPAL_ERR_BAD_PARAM;
@@ -79,7 +81,6 @@ static int mca_accelerator_rocm_check_addr (const void *addr, int *dev_id, uint6
     *flags = 0;
     err = hipPointerGetAttributes(&srcAttr, addr);
     if (hipSuccess == err) {
-        ret = 0;
         if (hipMemoryTypeDevice == srcAttr.memoryType) {
             //We might want to set additional flags in a later iteration.
             //*flags |= MCA_ACCELERATOR_FLAGS_HOST_LDSTR;
