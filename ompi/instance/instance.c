@@ -331,13 +331,12 @@ static void evhandler_dereg_callbk(pmix_status_t status,
 /**
  * @brief Function that starts up the common components needed by all instances
  */
-static int ompi_mpi_instance_init_common (int argc, char **argv)
+static int ompi_mpi_instance_init_common (int argc, char **argv, bool *background_fence)
 {
     int ret;
     ompi_proc_t **procs;
     size_t nprocs;
     volatile bool active;
-    bool background_fence = false;
     pmix_info_t info[2];
     pmix_status_t rc;
     opal_pmix_lock_t mylock;
@@ -402,7 +401,6 @@ static int ompi_mpi_instance_init_common (int argc, char **argv)
     }
 
     OMPI_TIMING_NEXT("rte_init");
-    OMPI_TIMING_IMPORT_OPAL("orte_ess_base_app_setup");
     OMPI_TIMING_IMPORT_OPAL("rte_init");
 
     ompi_rte_initialized = true;
@@ -520,7 +518,7 @@ static int ompi_mpi_instance_init_common (int argc, char **argv)
         return ret;  /* TODO: need to fix this */
     }
 
-   OMPI_TIMING_NEXT("commit");
+    OMPI_TIMING_NEXT("commit");
 #if (OPAL_ENABLE_TIMING)
     if (OMPI_TIMING_ENABLED && !opal_pmix_base_async_modex &&
             opal_pmix_collect_all_data && !opal_process_info.is_singleton) {
@@ -548,7 +546,9 @@ static int ompi_mpi_instance_init_common (int argc, char **argv)
             if (opal_pmix_collect_all_data) {
                 /* execute the fence_nb in the background to collect
                  * the data */
-                background_fence = true;
+                if (NULL != background_fence) {
+                    *background_fence = true;
+                }
                 active = true;
                 OPAL_POST_OBJECT(&active);
                 PMIX_INFO_LOAD(&info[0], PMIX_COLLECT_DATA, &opal_pmix_collect_all_data, PMIX_BOOL);
@@ -709,39 +709,6 @@ static int ompi_mpi_instance_init_common (int argc, char **argv)
         return ompi_instance_print_error ("ompi_mpi_init: ompi_comm_cid_init failed", ret);
     }
 
-    /* Do we need to wait for a debugger? */
-    ompi_rte_wait_for_debugger();
-
-    /* Next timing measurement */
-    OMPI_TIMING_NEXT("modex-barrier");
-
-    if (!opal_process_info.is_singleton) {
-        /* if we executed the above fence in the background, then
-         * we have to wait here for it to complete. However, there
-         * is no reason to do two barriers! */
-        if (background_fence) {
-            OMPI_LAZY_WAIT_FOR_COMPLETION(active);
-        } else if (!ompi_async_mpi_init) {
-            /* wait for everyone to reach this point - this is a hard
-             * barrier requirement at this time, though we hope to relax
-             * it at a later point */
-            bool flag = false;
-            active = true;
-            OPAL_POST_OBJECT(&active);
-            PMIX_INFO_LOAD(&info[0], PMIX_COLLECT_DATA, &flag, PMIX_BOOL);
-            if (PMIX_SUCCESS != (rc = PMIx_Fence_nb(NULL, 0, info, 1,
-                                                    fence_release, (void*)&active))) {
-                ret = opal_pmix_convert_status(rc);
-                return ompi_instance_print_error ("PMIx_Fence_nb() failed", ret);
-            }
-            OMPI_LAZY_WAIT_FOR_COMPLETION(active);
-        }
-    }
-
-    /* check for timing request - get stop time and report elapsed
-       time if so, then start the clock again */
-    OMPI_TIMING_NEXT("barrier");
-
 #if OPAL_ENABLE_PROGRESS_THREADS == 0
     /* Start setting up the event engine for MPI operations.  Don't
        block in the event library, so that communications don't take
@@ -794,7 +761,8 @@ static int ompi_mpi_instance_init_common (int argc, char **argv)
     return OMPI_SUCCESS;
 }
 
-int ompi_mpi_instance_init (int ts_level,  opal_info_t *info, ompi_errhandler_t *errhandler, ompi_instance_t **instance, int argc, char **argv)
+int ompi_mpi_instance_init (int ts_level,  opal_info_t *info, ompi_errhandler_t *errhandler, ompi_instance_t **instance, int argc, char **argv,
+                            bool *background_fence)
 {
     ompi_instance_t *new_instance;
     int ret;
@@ -809,7 +777,7 @@ int ompi_mpi_instance_init (int ts_level,  opal_info_t *info, ompi_errhandler_t 
 
     opal_mutex_lock (&instance_lock);
     if (0 == opal_atomic_fetch_add_32 (&ompi_instance_count, 1)) {
-        ret = ompi_mpi_instance_init_common (argc, argv);
+        ret = ompi_mpi_instance_init_common (argc, argv, background_fence);
         if (OPAL_UNLIKELY(OPAL_SUCCESS != ret)) {
             opal_mutex_unlock (&instance_lock);
             return ret;

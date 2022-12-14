@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2018      Triad National Security, LLC.  All rights reserved.
+ * Copyright (c) 2018-2022  Triad National Security, LLC.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -122,9 +122,14 @@ void ompi_mpi_instance_release (void);
  * @param[in]    ts_level  thread support level (see mpi.h)
  * @param[in]    info      info object
  * @param[in]    errhander errhandler to set on the instance
+ * @param[in]    argc       argument count to application
+ * @param[in]    argv       arrray of arguments to application
+ * @param[out]   background_fence set to true if pmix non-blocking fence initiated
+ * @param[out]   instance  handler to instance
  */
 OMPI_DECLSPEC int ompi_mpi_instance_init (int ts_level, opal_info_t *info, ompi_errhandler_t *errhandler,
-                                          ompi_instance_t **instance, int argc, char **argv);
+                                          ompi_instance_t **instance, int argc, char **argv,
+                                          bool *background_fence);
 
 /**
  * @brief Destroy an MPI instance and set it to MPI_SESSION_NULL

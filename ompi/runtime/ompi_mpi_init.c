@@ -1,3 +1,4 @@
+
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
@@ -299,6 +300,7 @@ static void fence_release(pmix_status_t status, void *cbdata)
     OPAL_POST_OBJECT(active);
 }
 
+
 int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
                   bool reinit_ok)
 {
@@ -356,7 +358,8 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
 
     ompi_mpi_thread_level(requested, provided);
 
-    ret = ompi_mpi_instance_init (*provided, &ompi_mpi_info_null.info.super, MPI_ERRORS_ARE_FATAL, &ompi_mpi_instance_default, argc, argv);
+    ret = ompi_mpi_instance_init (*provided, &ompi_mpi_info_null.info.super, MPI_ERRORS_ARE_FATAL, &ompi_mpi_instance_default, argc, argv,
+                                  &background_fence);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
         error = "ompi_mpi_init: ompi_mpi_instance_init failed";
         goto error;
@@ -391,69 +394,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
         opal_setenv("OMPI_ARGV", tmp, true, &environ);
         free(tmp);
     }
-
-#if (OPAL_ENABLE_TIMING)
-    if (OMPI_TIMING_ENABLED && !opal_pmix_base_async_modex &&
-            opal_pmix_collect_all_data && !opal_process_info.is_singleton) {
-        if (PMIX_SUCCESS != (rc = PMIx_Fence(NULL, 0, NULL, 0))) {
-            ret = opal_pmix_convert_status(rc);
-            error = "timing: pmix-barrier-1 failed";
-            goto error;
-        }
-        OMPI_TIMING_NEXT("pmix-barrier-1");
-        if (PMIX_SUCCESS != (rc = PMIx_Fence(NULL, 0, NULL, 0))) {
-            ret = opal_pmix_convert_status(rc);
-            error = "timing: pmix-barrier-2 failed";
-            goto error;
-        }
-        OMPI_TIMING_NEXT("pmix-barrier-2");
-    }
-#endif
-
-    if (!opal_process_info.is_singleton) {
-        if (opal_pmix_base_async_modex) {
-            /* if we are doing an async modex, but we are collecting all
-             * data, then execute the non-blocking modex in the background.
-             * All calls to modex_recv will be cached until the background
-             * modex completes. If collect_all_data is false, then we skip
-             * the fence completely and retrieve data on-demand from the
-             * source node.
-             */
-            if (opal_pmix_collect_all_data) {
-                /* execute the fence_nb in the background to collect
-                 * the data */
-                background_fence = true;
-                active = true;
-                OPAL_POST_OBJECT(&active);
-                PMIX_INFO_LOAD(&info[0], PMIX_COLLECT_DATA, &opal_pmix_collect_all_data, PMIX_BOOL);
-                if( PMIX_SUCCESS != (rc = PMIx_Fence_nb(NULL, 0, NULL, 0,
-                                                        fence_release,
-                                                        (void*)&active))) {
-                    ret = opal_pmix_convert_status(rc);
-                    error = "PMIx_Fence_nb() failed";
-                    goto error;
-                }
-            }
-        } else {
-            /* we want to do the modex - we block at this point, but we must
-             * do so in a manner that allows us to call opal_progress so our
-             * event library can be cycled as we have tied PMIx to that
-             * event base */
-            active = true;
-            OPAL_POST_OBJECT(&active);
-            PMIX_INFO_LOAD(&info[0], PMIX_COLLECT_DATA, &opal_pmix_collect_all_data, PMIX_BOOL);
-            rc = PMIx_Fence_nb(NULL, 0, info, 1, fence_release, (void*)&active);
-            if( PMIX_SUCCESS != rc) {
-                ret = opal_pmix_convert_status(rc);
-                error = "PMIx_Fence() failed";
-                goto error;
-            }
-            /* cannot just wait on thread as we need to call opal_progress */
-            OMPI_LAZY_WAIT_FOR_COMPLETION(active);
-        }
-    }
-
-    OMPI_TIMING_NEXT("modex");
 
     MCA_PML_CALL(add_comm(&ompi_mpi_comm_world.comm));
     MCA_PML_CALL(add_comm(&ompi_mpi_comm_self.comm));
