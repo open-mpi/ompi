@@ -21,7 +21,7 @@ this writing:
             environments with a restricted set of supported networks.
 
 * Open MPI includes support for a wide variety of supplemental
-  hardware and software package.  When configuring Open MPI, you may
+  hardware and software packages.  When configuring Open MPI, you may
   need to supply additional flags to the ``configure`` script in order
   to tell Open MPI where the header files, libraries, and any other
   required files are located.  As such, running ``configure`` by itself
