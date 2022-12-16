@@ -750,14 +750,14 @@ static int request_completion_cb(ompi_request_t *request)
 
     int32_t failed_tmp = 0;
     if (request->req_status.MPI_ERROR == MPI_SUCCESS) {
-        if (NULL != cont->cont_opreqs) {
-            cont->cont_opreqs[req_cont_data->cont_idx] = MPI_REQUEST_NULL;
-        }
 
         /* inactivate / free the request */
         if (request->req_persistent) {
             request->req_state = OMPI_REQUEST_INACTIVE;
         } else {
+            if (NULL != cont->cont_opreqs) {
+                cont->cont_opreqs[req_cont_data->cont_idx] = MPI_REQUEST_NULL;
+            }
             /* wait for any thread in the failure handler to complete handling the requests */
             while (cont->cont_request_check) {}
             /* we own the request so release it and let the caller know */
