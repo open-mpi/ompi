@@ -212,6 +212,7 @@ oshmem_group_t* oshmem_proc_group_create(int pe_start, int pe_stride, int pe_siz
     /* allocate an array */
     group->proc_vpids = (opal_vpid_t *) malloc(pe_size * sizeof(group->proc_vpids[0]));
     if (NULL == group->proc_vpids) {
+        OPAL_THREAD_UNLOCK(&oshmem_proc_lock);
         return NULL;
     }
 
