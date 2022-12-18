@@ -20,7 +20,7 @@
  * Copyright (c) 2014-2020 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
- * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
+ * Copyright (c) 2021-2022 Nanook Consulting.  All rights reserved.
  * Copyright (c) 2018-2022 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2022      IBM Corporation.  All rights reserved.
@@ -1595,18 +1595,6 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
         opal_list_append(&job_info, &info->super);
     }
 
-    /* spawn procs */
-    ninfo = opal_list_get_size(&job_info);
-    if (0 < ninfo) {
-        PMIX_INFO_CREATE(pinfo, ninfo);
-        n = 0;
-        OPAL_LIST_FOREACH(info, &job_info, opal_info_item_t) {
-            PMIX_INFO_XFER(&pinfo[n], &info->info);
-            ++n;
-        }
-    }
-    OPAL_LIST_DESTRUCT(&job_info);
-
     if (opal_process_info.is_singleton) {
         /* The GDS 'hash' component is known to work for singleton, so
          * recommend it. The user may set this envar to override the setting.
@@ -1644,6 +1632,18 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
     if (NULL != dash_host) {
         opal_argv_free(dash_host);
     }
+
+    /* spawn procs */
+    ninfo = opal_list_get_size(&job_info);
+    if (0 < ninfo) {
+        PMIX_INFO_CREATE(pinfo, ninfo);
+        n = 0;
+        OPAL_LIST_FOREACH(info, &job_info, opal_info_item_t) {
+            PMIX_INFO_XFER(&pinfo[n], &info->info);
+            ++n;
+        }
+    }
+    OPAL_LIST_DESTRUCT(&job_info);
 
     pret = PMIx_Spawn(pinfo, ninfo, apps, count, nspace);
     rc = opal_pmix_convert_status(pret);
@@ -2046,7 +2046,6 @@ static int start_dvm(char **hostfiles, char **dash_host)
     opal_asprintf(&tmp, "%d", death_pipe[0]);
     opal_argv_append_nosize(&args, tmp);
     free(tmp);
-    opal_argv_append_nosize(&args, "--daemonize");
 
     /* Fork off the child */
     pid = fork();
