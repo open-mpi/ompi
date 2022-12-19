@@ -455,6 +455,7 @@ mca_coll_han_init_dynamic_rules(void)
     fclose(fptr);
 
     check_dynamic_rules();
+    free(algorithm_name);
     return OMPI_SUCCESS;
 
 cannot_allocate:
@@ -467,6 +468,7 @@ cannot_allocate:
     if( NULL != coll_name ) {
         free(coll_name);
     }
+    free(algorithm_name);
     fclose (fptr);
     /* We disable the module, we don't need to keep the rules */
     mca_coll_han_free_dynamic_rules();
@@ -482,6 +484,7 @@ file_reading_error:
     if( NULL != coll_name ) {
         free(coll_name);
     }
+    free(algorithm_name);
     fclose (fptr);
     /* We disable the module, we don't need to keep the rules */
     mca_coll_han_free_dynamic_rules();
