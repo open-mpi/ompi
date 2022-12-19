@@ -1030,11 +1030,11 @@ static int ompi_continue_request_free(ompi_request_t** cont_req_ptr)
 
     const bool using_threads = opal_using_threads();
     if (using_threads) {
-        opal_atomic_lock(&cont_req->cont_lock);
+        opal_mutex_atomic_lock(&cont_req_list_mtx);
     }
     opal_list_remove_item(&cont_req_list, &cont_req->cont_list_item);
     if (using_threads) {
-        opal_mutex_unlock(&cont_req_list_mtx);
+        opal_mutex_atomic_unlock(&cont_req_list_mtx);
     }
 
     OBJ_RELEASE(cont_req);
