@@ -967,8 +967,6 @@ static bool check_file(const char *root, const char *path)
 
 int ompi_rte_finalize(void)
 {
-    /* shutdown pmix */
-    PMIx_Finalize(NULL, 0);
 
     /* cleanup the session directory we created */
     if (NULL != opal_process_info.job_session_dir) {
@@ -1027,6 +1025,9 @@ int ompi_rte_finalize(void)
 
 
     opal_finalize ();
+
+    /* shutdown pmix */
+    PMIx_Finalize(NULL, 0);
 
     return OMPI_SUCCESS;
 }
