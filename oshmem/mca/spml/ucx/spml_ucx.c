@@ -689,7 +689,7 @@ sshmem_mkey_t *mca_spml_ucx_register(void* addr,
 {
     sshmem_mkey_t *mkeys;
     ucs_status_t status;
-    spml_ucx_mkey_t   *ucx_mkey;
+    spml_ucx_mkey_t   *ucx_mkey = NULL;
     size_t len;
     ucp_mem_map_params_t mem_map_params;
     uint32_t segno;
@@ -740,7 +740,7 @@ sshmem_mkey_t *mca_spml_ucx_register(void* addr,
     status = ucp_rkey_pack(mca_spml_ucx.ucp_context, mem_h,
                            &mkeys[SPML_UCX_TRANSP_IDX].u.data, &len);
     if (UCS_OK != status) {
-        goto error_unmap;
+        goto error_out;
     }
     if (len >= 0xffff) {
         SPML_UCX_ERROR("packed rkey is too long: %llu >= %d",
@@ -761,7 +761,9 @@ sshmem_mkey_t *mca_spml_ucx_register(void* addr,
     return mkeys;
 
 error_unmap:
-    ucp_mem_unmap(mca_spml_ucx.ucp_context, ucx_mkey->mem_h);
+    if (NULL != ucx_mkey) {
+        ucp_mem_unmap(mca_spml_ucx.ucp_context, ucx_mkey->mem_h);
+    }
 error_out:
     free(mkeys);
 
