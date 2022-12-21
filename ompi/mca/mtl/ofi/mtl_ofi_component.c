@@ -5,7 +5,7 @@
  * Copyright (c) 2014-2021 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2015-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2018-2022 Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2018-2023 Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2020-2023 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -18,6 +18,7 @@
 #include "opal_config.h"
 #include "mtl_ofi.h"
 #include "opal/util/argv.h"
+#include "opal/util/opal_environ.h"
 #include "opal/util/printf.h"
 #include "opal/mca/common/ofi/common_ofi.h"
 
@@ -573,6 +574,7 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
     size_t namelen = 0;
     int universe_size;
     char *univ_size_str;
+    bool unset_fi_hmem_cuda_enable_xfer = false;
 
     opal_output_verbose(1, opal_common_ofi.output,
                         "%s:%d: mtl:ofi:provider_include = \"%s\"\n",
@@ -580,6 +582,10 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
     opal_output_verbose(1, opal_common_ofi.output,
                         "%s:%d: mtl:ofi:provider_exclude = \"%s\"\n",
                         __FILE__, __LINE__, *opal_common_ofi.prov_exclude);
+    opal_output_verbose(1, opal_common_ofi.output,
+                        "%s:%d: mtl:ofi:hmem_cuda_enable_xfer: %s\n",
+                        __FILE__, __LINE__,
+                        opal_common_ofi.hmem_cuda_enable_xfer ? "true" : "false");
 
     if (NULL != *opal_common_ofi.prov_include) {
         include_list = opal_argv_split(*opal_common_ofi.prov_include, ',');
@@ -621,6 +627,18 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
     hints->caps |= FI_HMEM;
     hints->domain_attr->mr_mode |= FI_MR_HMEM | FI_MR_ALLOCATED;
 #endif
+
+    /*
+     * Libfabric providers choose whether to perform CUDA memory transfers when
+     * FI_HMEM_CUDA_ENABLE_XFER is unspecified. Some providers may choose to
+     * disable CUDA memory transfers by default. Explicitly enabling this option
+     * allows providers to perform CUDA memory transfers via FI_HMEM if
+     * supported.
+     */
+    if ((false != opal_common_ofi.hmem_cuda_enable_xfer) &&
+        (OPAL_EXISTS != opal_setenv("FI_HMEM_CUDA_ENABLE_XFER", "1", false, &environ))) {
+        unset_fi_hmem_cuda_enable_xfer = true;
+    }
 
 no_hmem:
 
@@ -737,6 +755,11 @@ no_hmem:
     opal_output_verbose(1, opal_common_ofi.output,
                         "%s:%d: fi_getinfo(): %s\n",
                         __FILE__, __LINE__, fi_strerror(-ret));
+
+    if (unset_fi_hmem_cuda_enable_xfer) {
+        opal_unsetenv("FI_HMEM_CUDA_ENABLE_XFER", &environ);
+        unset_fi_hmem_cuda_enable_xfer = false;
+    }
 
     if (FI_ENODATA == -ret) {
 #if defined(FI_HMEM)

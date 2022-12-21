@@ -6,7 +6,7 @@
  *                         reserved.
  * Copyright (c) 2020-2021 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
- * Copyright (c) 2021      Amazon.com, Inc. or its affiliates. All rights
+ * Copyright (c) 2021-2023 Amazon.com, Inc. or its affiliates. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -37,9 +37,12 @@
 #include "opal/util/argv.h"
 #include "opal/util/show_help.h"
 
-opal_common_ofi_module_t opal_common_ofi = {.prov_include = NULL,
-                                            .prov_exclude = NULL,
-                                            .output = -1};
+opal_common_ofi_module_t opal_common_ofi = {
+    .prov_include = NULL,
+    .prov_exclude = NULL,
+    .output = -1,
+    .hmem_cuda_enable_xfer = true
+};
 static const char default_prov_exclude_list[] = "shm,sockets,tcp,udp,rstream,usnic,net";
 static opal_mutex_t opal_common_ofi_mutex = OPAL_MUTEX_STATIC_INIT;
 static int opal_common_ofi_verbose_level = 0;
@@ -276,6 +279,7 @@ int opal_common_ofi_mca_register(const mca_base_component_t *component)
     static int include_index = -1;
     static int exclude_index = -1;
     static int verbose_index = -1;
+    static int hmem_cuda_enable_xfer_index = -1;
     int ret;
 
     if (fi_version() < FI_VERSION(1, 0)) {
@@ -341,6 +345,20 @@ int opal_common_ofi_mca_register(const mca_base_component_t *component)
         }
     }
 
+    if (0 > hmem_cuda_enable_xfer_index) {
+        hmem_cuda_enable_xfer_index = mca_base_var_register(
+            "opal", "opal_common", "ofi", "hmem_cuda_enable_xfer",
+            "Allow OFI providers to utilize CUDA APIs to copy data to/from GPU "
+            "memory (default: true).",
+            MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+            OPAL_INFO_LVL_1, MCA_BASE_VAR_SCOPE_READONLY,
+            &opal_common_ofi.hmem_cuda_enable_xfer);
+        if (0 > hmem_cuda_enable_xfer_index) {
+            ret = hmem_cuda_enable_xfer_index;
+            goto err;
+        }
+    }
+
     if (component) {
         ret = mca_base_var_register_synonym(include_index,
                                             component->mca_project_name,
@@ -363,6 +381,14 @@ int opal_common_ofi_mca_register(const mca_base_component_t *component)
                                             component->mca_type_name,
                                             component->mca_component_name,
                                             "verbose", 0);
+        if (0 > ret) {
+            goto err;
+        }
+        ret = mca_base_var_register_synonym(hmem_cuda_enable_xfer_index,
+                                            component->mca_project_name,
+                                            component->mca_type_name,
+                                            component->mca_component_name,
+                                            "hmem_cuda_enable_xfer", 0);
         if (0 > ret) {
             goto err;
         }

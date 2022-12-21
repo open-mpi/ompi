@@ -5,7 +5,7 @@
  *                         reserved.
  * Copyright (c) 2020-2022 Triad National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2021      Amazon.com, Inc. or its affiliates. All rights
+ * Copyright (c) 2021-2023 Amazon.com, Inc. or its affiliates. All rights
  *                         reserved.
  *
  * $COPYRIGHT$
@@ -30,6 +30,7 @@ typedef struct opal_common_ofi_module {
     char **prov_include;
     char **prov_exclude;
     int output;
+    bool hmem_cuda_enable_xfer;
 } opal_common_ofi_module_t;
 
 extern opal_common_ofi_module_t opal_common_ofi;

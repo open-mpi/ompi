@@ -14,7 +14,7 @@
  *                         reserved.
  * Copyright (c) 2018-2019 Intel, Inc.  All rights reserved.
  *
- * Copyright (c) 2018-2021 Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2018-2023 Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2020-2023 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -27,6 +27,7 @@
 #include "opal_config.h"
 
 #include "opal/util/argv.h"
+#include "opal/util/opal_environ.h"
 #include "opal/util/printf.h"
 
 #include "opal/mca/btl/base/base.h"
@@ -273,6 +274,7 @@ static mca_btl_base_module_t **mca_btl_ofi_component_init(int *num_btl_modules,
     struct fi_fabric_attr fabric_attr = {0};
     struct fi_domain_attr domain_attr = {0};
     uint64_t required_caps;
+    bool unset_fi_hmem_cuda_enable_xfer = false;
 
     switch (mca_btl_ofi_component.mode) {
 
@@ -298,6 +300,10 @@ static mca_btl_base_module_t **mca_btl_ofi_component_init(int *num_btl_modules,
                         __FILE__, __LINE__, *opal_common_ofi.prov_include);
     opal_output_verbose(1, opal_common_ofi.output, "%s:%d: btl:ofi:provider_exclude = \"%s\"\n",
                         __FILE__, __LINE__, *opal_common_ofi.prov_exclude);
+    opal_output_verbose(1, opal_common_ofi.output,
+                        "%s:%d: btl:ofi:hmem_cuda_enable_xfer: %s\n",
+                        __FILE__, __LINE__,
+                        opal_common_ofi.hmem_cuda_enable_xfer ? "true" : "false");
 
     if (NULL != *opal_common_ofi.prov_include) {
         include_list = opal_argv_split(*opal_common_ofi.prov_include, ',');
@@ -347,11 +353,28 @@ static mca_btl_base_module_t **mca_btl_ofi_component_init(int *num_btl_modules,
     /* Request device transfer capabilities, separate from required_caps */
     hints.caps |= FI_HMEM;
     hints.domain_attr->mr_mode |= FI_MR_HMEM;
+
+    /*
+     * Libfabric providers choose whether to perform CUDA memory transfers when
+     * FI_HMEM_CUDA_ENABLE_XFER is unspecified. Some providers may choose to
+     * disable CUDA memory transfers by default. Explicitly enabling this option
+     * allows providers to perform CUDA memory transfers via FI_HMEM if
+     * supported.
+     */
+    if ((false != opal_common_ofi.hmem_cuda_enable_xfer) &&
+        (OPAL_EXISTS != opal_setenv("FI_HMEM_CUDA_ENABLE_XFER", "1", false, &environ))) {
+        unset_fi_hmem_cuda_enable_xfer = true;
+    }
+
 no_hmem:
 #endif
 
     /* Do the query. The earliest version that supports FI_HMEM hints is 1.9  */
     rc = fi_getinfo(FI_VERSION(1, 9), NULL, NULL, 0, &hints, &info_list);
+    if (unset_fi_hmem_cuda_enable_xfer) {
+        opal_unsetenv("FI_HMEM_CUDA_ENABLE_XFER", &environ);
+        unset_fi_hmem_cuda_enable_xfer = false;
+    }
     if (0 != rc) {
 #if defined(FI_HMEM)
         if (hints.caps & FI_HMEM) {
