@@ -30,39 +30,32 @@ MPI. Upon opening a file, the OMPIO component initializes a number of
 sub-frameworks and their components, namely:
 
 *  ``fs``: responsible for all file management operations
-* ``fbtl``: support for individual blocking and non-blocking
+* ``fbtl``: support for blocking and non-blocking individual
   I/O operations
-* ``fcoll``: support for collective blocking and non-blocking I/O
+* ``fcoll``: support for blocking and non-blocking collective I/O
   operations
 * ``sharedfp``: support for all shared file pointer operations.
 
 /////////////////////////////////////////////////////////////////////////
 
-How can I use OMPIO?
---------------------
-
-OMPIO is included in Open MPI and is used by default when invoking
-MPI IO API functions.
-
-/////////////////////////////////////////////////////////////////////////
-
-How do I know what MCA parameters are available for tuning the performance of OMPIO?
+MCA parameters of OMPIO and associated frameworks
 ------------------------------------------------------------------------------------
 
 The ``ompi_info`` command can display all the parameters available for the
-OMPIO ``io``, ``fcoll``, ``fs``, and ``sharedfp`` components:
+OMPIO ``io``, ``fcoll``, ``fs``, ``fbtl``, and ``sharedfp`` components:
 
 .. code-block:: sh
 
-   shell$ ompi_info --param io       ompio
-   shell$ ompi_info --param fcoll    all
-   shell$ ompi_info --param fs       all
-   shell$ ompi_info --param sharedfp all
+   shell$ ompi_info --param io       ompio --level 9
+   shell$ ompi_info --param fcoll    all --level 9
+   shell$ ompi_info --param fs       all --level 9
+   shell$ ompi_info --param fbtl     all --level 9
+   shell$ ompi_info --param sharedfp all --level 9
 
 /////////////////////////////////////////////////////////////////////////
 
-How can I choose the right component for a sub-framework of OMPIO?
-------------------------------------------------------------------
+OMPIO sub-framework components
+---------------------------------
 
 The OMPIO architecture is designed around sub-frameworks, which allow
 you to develop a relatively small amount of code optimized for a
@@ -86,34 +79,52 @@ mechanism available in Open MPI to influence a parameter value, e.g.:
 
 ``fs`` and ``fbtl`` components are typically chosen based on the file
 system type utilized (e.g. the ``pvfs2`` component is chosen when the
-file is located on an PVFS2 file system, the ``lustre`` component is
-chosen for Lustre file systems, etc.).
+file is located on an PVFS2/OrangeFS file system, the ``lustre``
+component is chosen for Lustre file systems, etc.). The ``ufs`` ``fs``
+component is used if no file system specific component is availabe
+(e.g. local file systems, NFS, BeefFS, etc.), and the ``posix``
+``fbtl`` component is used as the default component for read/write
+operations.
 
-The ``fcoll`` framework provides several different implementations,
-which provide different levels of data reorganization across
-processes.  ``two_phase``, ``dynamic`` segmentation, ``static``
-segmentation and ``individual`` provide decreasing communication costs
-during the shuffle phase of the collective I/O operations (in the
-order listed here), but provide also decreasing contiguity guarantuees
-of the data items before the aggregators read/write data to/from the
-file.  The current decision logic in OMPIO is using the file view
-provided by the application as well as file system level
-characteristics (stripe width of the file system) in the selection
-logic of the fcoll framework.
+The ``fcoll`` framework provides several different components. The
+current decision logic in OMPIO uses the file view provided by the
+application as well as file system level characteristics (e.g. file
+system, stripe width) to determine which component to use. The most
+important ``fcoll`` components are:
+
+* ``dynamic_gen2``: the default component used on lustre file
+  system. This component is based on the two-phase I/O algorithm with
+  a static file partioning strategy, i.e. an aggregator processes will
+  by default only write data to a single storage server.
+
+* ``vulcan``: the default component used on all other file
+  systems. This component is based on the two-phase I/O algorithm with
+  an even file partitioning strategy, i.e. each of the n aggregators
+  will write 1/n th of the overall file.
+
+* ``individual``: this components executes all collective I/O
+  operations in terms of individual I/O operations.
 
 The ``sharedfp`` framework provides a different implementation of the
-shared file pointer operations depending on file system features, such
-as:
+shared file pointer operations depending on file system features.
 
-* ``lockfile``: support for file locking.
-* ``sm``: locality of the MPI processes in the communicator that has
-  been used to open the file.
-* ``individual``: guarantees by the application on using only a subset
-  of the available functionality (i.e. write operations only).
+* ``lockfile``: this component will be used on file system which
+  support for file locking.
+
+* ``sm``: component used in scenarios in which all processes of the
+  communicator are on the same physical node.
+
+* ``individual``: a component that can be used if neither of the other
+  two components are available. This component provides however only
+  limited functionality (i.e. write operations only).
+
+  .. note:: See the section on the individual sharedfp component to
+            understand functionality and limitations.
+  
 
 /////////////////////////////////////////////////////////////////////////
 
-How can I tune OMPIO parameters to improve performance?
+Tuning OMPIO performance
 -------------------------------------------------------
 
 The most important parameters influencing the performance of an I/O
@@ -147,16 +158,27 @@ operation are listed below:
    regular 2-D or 3-D data decomposition can try changing this
    parameter to 4 (hybrid) algorithm.
 
+#. ``fs_ufs_lock_algorithm``: Parameter used to determing what part of
+   a file needs to be locked for a file operation. Since the ``ufs``
+   ``fs`` component is used on multiple file systems, OMPIO
+   automatically chooses the value required for correctness on all
+   file systems, e.g. enforcing locking on an NFS file system, while
+   disabling locking on a local file system. Users can adjust the
+   required locking behavior based on their use case, since the
+   default value might often be too restrictive for their application.
+   
 /////////////////////////////////////////////////////////////////////////
 
-What are the main parameters of the ``fs`` framework and components?
---------------------------------------------------------------------
+Setting stripe size and stripe width on parallel file systems
+---------------------------------------------------------------
 
-The main parameters of the ``fs`` components allow you to manipulate
-the layout of a new file on a parallel file system.
+Many ``fs`` components allow you to manipulate the layout of a new
+file on a parallel file system.  Note, that many file systems only
+allow changing these setting upon file creation, i.e. modifying these
+values for an already existing file might not be possible.
 
 #. ``fs_pvfs2_stripe_size``: Sets the number of storage servers for a
-   new file on a PVFS2 file system. If not set, system default will be
+   new file on a PVFS2/OrangeFS  file system. If not set, system default will be
    used. Note that this parameter can also be set through the
    ``stripe_size`` MPI Info value.
 
@@ -174,115 +196,57 @@ the layout of a new file on a parallel file system.
    for a new file on a Lustre file system. If not set, system default
    will be used. Note that this parameter can also be set through the
    ``stripe_width`` MPI Info value.
+  
+/////////////////////////////////////////////////////////////////////////
 
-////////////////////////////////////////////////////////////////////////
+Using GPU device buffers in MPI File I/O operations
+----------------------------------------------------
 
-What are the main parameters of the ``fbtl`` framework and components?
-----------------------------------------------------------------------
+OMPIO supports reading and writing directly to/from GPU buffers using
+the MPI I/O interfaces. Using this feature simplifies managing buffers
+that are exclusive used on GPU devices, and hence the necessity to
+implement a staging through host memory for file I/O operations.
 
-No performance relevant parameters are currently available for the
-``fbtl`` components.
+Internally, OMPIO splits a user buffer into chunks for performing the
+read/write operation. The chunk-size used by OMPIO can have a
+significant influence on the performance of the file I/O operation
+from device buffers, and can be controlled using the
+``io_ompio_pipeline_buffer_size`` MCA parameter.
 
 /////////////////////////////////////////////////////////////////////////
 
-What are the main parameters of the ``fcoll`` framework and components?
+Using the ``individual`` ``sharedfp`` component and its limitations
 -----------------------------------------------------------------------
-
-The design of the ``fcoll`` frameworks maximizes the utilization of
-parameters of the OMPIO component, in order to minimize the number of similar
-MCA parameters in each component.
-
-For example, the ``two_phase``, ``dynamic``, and ``static`` components
-all retrieve the ``io_ompio_bytes_per_agg`` parameter to define the
-collective buffer size and the ``io_ompio_num_aggregators`` parameter
-to force the utilization of a given number of aggregators.
-
-/////////////////////////////////////////////////////////////////////////
-
-What are the main parameters of the ``sharedfp`` framework and components?
---------------------------------------------------------------------------
-
-No performance relevant parameters are currently available for the
-``sharedfp`` components.
-
-/////////////////////////////////////////////////////////////////////////
-
-How do I tune collective I/O operations?
-----------------------------------------
-
-The most influential parameter that can be tuned in advance is the
-``io_ompio_bytes_per_agg`` parameter of the ``ompio`` component. This
-parameter is essential for the selection of the collective I/O
-component as well for determining the optimal number of aggregators
-for a collective I/O operation. It is a file system-specific value,
-independent of the application scenario. To determine the correct
-value on your system, take an I/O benchmark (e.g., the IMB or IOR
-benchmark) and run an individual, single process write test. E.g., for
-IMB:
-
-.. code-block:: sh
-
-   shell$ mpirun -n 1 ./IMB-IO S_write_indv
-
-For IMB, use the values obtained for AGGREGATE test cases. Plot the
-bandwidth over the message length. The recommended value for
-``io_ompio_bytes_per_agg`` is the smallest message length which
-achieves (close to) maximum bandwidth from that process's
-perspective.
-
-.. note:: Make sure that the ``io_ompio_cycle_buffer_size`` parameter
-          is set to -1 when running this test, which is its default
-          value).  The value of ``io_ompio_bytes_per_agg`` could be
-          set by system administrators in the system-wide Open MPI
-          configuration file, or by users individually. See :ref:`this
-          FAQ item <label-running-setting-mca-param-values>` on setting
-          MCA parameters for details.
-
-For more exhaustive tuning of I/O parameters, we recommend the
-utilization of the `Open Tool for Parameter Optimization (OTPO)
-<https://www.open-mpi.org/projects/otpo>`_, a tool specifically
-designed to explore the MCA parameter space of Open MPI.
-
-/////////////////////////////////////////////////////////////////////////
-
-When should I use the ``individual`` ``sharedfp`` component, and what are its limitations?
-------------------------------------------------------------------------------------------
 
 The ``individual`` sharedfp component provides an approximation of
 shared file pointer operations that can be used for *write operations
 only*. It is only recommended in scenarios, where neither the ``sm``
 nor the ``lockedfile`` component can be used, e.g., due to the fact
 that more than one node are being used and the file system does not
-support locking.
+support locking. 
 
 Conceptually, each process writes the data of a write_shared operation
 into a separate file along with a time stamp. In every collective
-operation (latest in file_close), data from all individual files are
-merged into the actual output file, using the time stamps as the main
-criteria.
+operation (or during the file_close operation), data from all
+individual files are merged into the actual output file, using the
+time stamps as the main criteria.
 
 The component has certain limitations and restrictions, such as its
-relience on the synchronization accuracy of the clock on the cluster
+relience on the synchronization clocks on the individual cluster nodes
 to determine the order between entries in the final file, which might
 lead to some deviations compared to the actual calling sequence.
 
+Furthermore, the component only supports ``write`` operations, read
+operations are not supported.
+
 /////////////////////////////////////////////////////////////////////////
 
-What other features of OMPIO are available?
+Other features of OMPIO
 -------------------------------------------
 
 OMPIO has a number of additional features, mostly directed towards
 developers, which could occasionally also be useful to interested
 end-users. These can typically be controlled through MCA parameters.
-
-* ``io_ompio_sharedfp_lazy_open``: By default, ``ompio`` does not
-  establish the necessary data structures required for shared file
-  pointer operations during file_open. It delays generating these data
-  structures until the first utilization of a shared file pointer
-  routine. This is done mostly to minimize the memory footprint of
-  ``ompio``, and due to the fact that shared file pointer operations
-  are rarely used compared to the other functions. Setting this
-  parameter to 0 disables this optimization.
 
 * ``io_ompio_coll_timing_info``: Setting this parameter will lead to a
   short report upon closing a file indicating the amount of time spent
@@ -312,19 +276,3 @@ end-users. These can typically be controlled through MCA parameters.
   all the column indexes. The fourth row lists all the values and the
   fifth row gives the row index. A row index represents the position
   in the value array where a new row starts.
-
-/////////////////////////////////////////////////////////////////////////
-
-Known limitations
------------------
-
-OMPIO implements most of the I/O functionality of the MPI
-specification. There are, however, two not very commonly used
-functions that are not implemented as of today:
-
-* Switching from the relaxed consistency semantics of MPI to stricter, sequential
-  consistency through the MPI_File_set_atomicity functions
-
-* Using user defined data representations
-
-.. error:: TODO Are these still accurate?
