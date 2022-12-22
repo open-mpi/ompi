@@ -44,7 +44,7 @@ void ompi_osc_rdma_atomic_complete (mca_btl_base_module_t *btl, struct mca_btl_b
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "pending atomic %p complete with status %d", (void*)pending_op, status);
 
     if (pending_op->op_result) {
-        memmove (pending_op->op_result, pending_op->op_buffer, pending_op->op_size);
+        osc_rdma_accelerator_mem_move (pending_op->op_result, pending_op->op_buffer, pending_op->op_size);
     }
 
     if (NULL != pending_op->cbfunc) {
