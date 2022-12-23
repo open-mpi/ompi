@@ -16,5 +16,5 @@ provides significantly more detailed information.
    </installing-open-mpi/quickstart>`
 #. :doc:`Quick start: Building MPI applications
    </building-apps/quickstart>`
-#. :doc:`Quick start: Running MPI applications
-   </running-apps/quickstart>`
+#. :doc:`Quick start: Launching MPI applications
+   </launching-apps/quickstart>`

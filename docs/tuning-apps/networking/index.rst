@@ -1,10 +1,10 @@
-Networking system support
-=========================
+Networking support
+==================
 
 Open MPI supports a variety of different networking transports for
-off-node communication.  Not all of these transports are supported or
-available on every platform.  Many require specialized hardware,
-operating system drivers, and/or network transport libraries.
+off-node communication.  Not all transports are supported or available
+on every platform.  Many require specialized hardware, operating
+system drivers, and/or userspace network transport libraries.
 
 When Open MPI is being configured, it will search for a variety of
 network transport libraries (and corresponding development header

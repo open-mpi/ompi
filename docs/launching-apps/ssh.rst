@@ -3,7 +3,7 @@ Launching with SSH
 
 When launching Open MPI jobs in a non-scheduled environment, ``ssh``
 is typically used to launch commands on remote nodes.  As listed in
-the :doc:`quick start section </running-apps/quickstart>`,
+the :doc:`quick start section </launching-apps/quickstart>`,
 successfully launching MPI applications with ``ssh`` requires the
 following:
 
