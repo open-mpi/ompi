@@ -29,6 +29,4 @@ that they are worth categorizing in an official way.
 
    large-clusters
 
-   ompio
-
    general-tuning

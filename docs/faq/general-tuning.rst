@@ -173,10 +173,9 @@ the ``mpi_warn_on_fork`` MCA parameter.  For example:
    shell$ mpirun --mca mpi_warn_on_fork 0 ...
 
 Of course, systems that ``dlopen("libmpi.so", ...)`` may not use Open
-MPI's ``mpirun``, and therefore may need to use (JMS: this ref no
-longer exists -- it moved to running-apps/tuning.rst) a different
-mechanism to set MCA parameters
-<faq-general-tuning-setting-mca-params>`.
+MPI's ``mpirun``, and therefore may need to use (**JMS: this ref no
+longer exists -- it moved to elsewhere**) a different mechanism to set
+MCA parameters <faq-general-tuning-setting-mca-params>`.
 
 /////////////////////////////////////////////////////////////////////////
 

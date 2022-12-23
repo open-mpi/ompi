@@ -1,6 +1,9 @@
 TCP
 ===
 
+.. error:: TODO This section needs to be converted from FAQ Q&A style
+           to regular documentation style.
+
 How do I specify to use the IP network for MPI messages?
 --------------------------------------------------------
 

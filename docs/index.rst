@@ -67,10 +67,11 @@ Table of contents
    features/index
    validate
    version-numbering
+   mca
    building-apps/index
-   running-apps/index
+   launching-apps/index
+   tuning-apps/index
    app-debug/index 
-   networking/index
    faq/index
    developers/index
    contributing

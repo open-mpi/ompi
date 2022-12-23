@@ -1,6 +1,9 @@
 OpenFabrics Interfaces (OFI) / Libfabric support
 ================================================
 
+.. error:: TODO This section needs to be converted from FAQ Q&A style
+           to regular documentation style.
+
 What is OFI / Libfabric?
 ------------------------
 
