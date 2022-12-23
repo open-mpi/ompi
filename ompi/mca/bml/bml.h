@@ -22,7 +22,7 @@
 /**
  * @file
  *
- * BML Management Layer (BML)
+ * BTL Management Layer (BML)
  *
  */
 
