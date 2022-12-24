@@ -8,10 +8,10 @@ terminology in order to make the rest of the discussion easier.
 Modular Component Architecture (MCA)
 ------------------------------------
 
-:doc:`See this section </running-apps/tuning>` for a discussion of the
-Modular Component Architecture (MCA).  Seriously.  Go read it now.
-From reading that section, you should understand the following terms
-before continuing reading these docs:
+:ref:`See this section <label-mca>` for a discussion of the Modular
+Component Architecture (MCA).  Seriously.  Go read it now.  From
+reading that section, you should understand the following terms before
+continuing reading these docs:
 
 * Project
 * Framework

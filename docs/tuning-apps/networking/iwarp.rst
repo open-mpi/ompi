@@ -1,9 +1,6 @@
 iWARP Support
 =============
 
-How are iWARP devices supported in Open MPI?
---------------------------------------------
-
 Open MPI's support for iWARP devices has changed over time.
 
 In the Open MPI |ompi_series| series, iWARP devices are

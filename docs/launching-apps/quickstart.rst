@@ -1,7 +1,7 @@
-.. _label-quickstart-running-apps:
+.. _label-quickstart-launching-apps:
 
-Quick start: Running MPI applications
-=====================================
+Quick start: Launching MPI applications
+=======================================
 
 Although this section skips many details, it offers examples that will
 probably work in many environments.
