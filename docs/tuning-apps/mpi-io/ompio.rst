@@ -100,8 +100,8 @@ important ``fcoll`` components are:
 The ``sharedfp`` framework provides a different implementation of the
 shared file pointer operations depending on file system features.
 
-* ``lockfile``: this component will be used on file system which
-  support for file locking.
+* ``lockedfile``: this component will be used on file systems which
+  support file locking.
 
 * ``sm``: component used in scenarios in which all processes of the
   communicator are on the same physical node.
@@ -131,17 +131,11 @@ operation are listed below:
    Tuning this parameter has a very high impact on the performance of
    collective operations.
 
-   .. note:: Be sure to also see recommendations for tuning collective
-             operations.
-
 #. ``io_ompio_num_aggregators``: Number of aggregators used in
    collective I/O operations.  Setting this parameter to a value
    larger zero disables the internal automatic aggregator selection
    logic of OMPIO.  Tuning this parameter has a very high impact on
    the performance of collective operations.
-
-   .. note:: Be sure to also see recommendations for tuning collective
-             operations.
 
 #. ``io_ompio_grouping_option``: Algorithm used to automatically
    decide the number of aggregators used. Applications working with
@@ -190,8 +184,8 @@ Using GPU device buffers in MPI File I/O operations
 
 OMPIO supports reading and writing directly to/from GPU buffers using
 the MPI I/O interfaces. Using this feature simplifies managing buffers
-that are exclusive used on GPU devices, and hence the necessity to
-implement a staging through host memory for file I/O operations.
+that are exclusively used on GPU devices, and hence there is no need to
+implement staging through host memory for file I/O operations.
 
 Internally, OMPIO splits a user buffer into chunks for performing the
 read/write operation. The chunk-size used by OMPIO can have a
