@@ -5,7 +5,7 @@
  * Copyright (c) 2016-2019 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2016-2018 Intel, Inc. All rights reserved.
- * Copyright (c) 2019      Triad National Security, LLC. All rights
+ * Copyright (c) 2019-2022 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2019-2021 Google, LLC. All rights reserved.
  * Copyright (c) 2021      IBM Corporation.  All rights reserved.
@@ -139,7 +139,7 @@ static inline int ompi_osc_rdma_cas_local (const void *source_addr, const void *
 
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "performing compare-and-swap with local regions");
     result_is_accel = osc_rdma_is_accel(result_addr);
-    target_is_accel = osc_rdma_is_accel(target_address);
+    target_is_accel = osc_rdma_is_accel((void *)target_address);
     compare_is_accel = osc_rdma_is_accel(compare_addr);
     if (0 < result_is_accel || 0 < target_is_accel) {
         ret = opal_accelerator.mem_copy(MCA_ACCELERATOR_NO_DEVICE_ID, MCA_ACCELERATOR_NO_DEVICE_ID,
