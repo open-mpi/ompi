@@ -221,6 +221,7 @@ test:amd:
     - ls
     - module load aocc/3.0.0
     - export PATH=$PWD/install_test/bin:$PATH
+    - export LD_LIBRARY_PATH=$PWD/install_test/lib:$LD_LIBRARY_PATH
     - which mpirun
     - cd examples
     - mpirun -np 4 hostname
