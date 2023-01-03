@@ -39,15 +39,17 @@ int mca_atomic_ucx_cswap(shmem_ctx_t ctx,
         .reply_buffer = prev
     };
 #endif
+    assert(NULL != prev);
 
-    if ((8 != size) && (4 != size)) {
+    if (size == 8) {
+        *prev = value;
+    } else if (size == 4) {
+        *(uint32_t*)prev = value;
+    } else {
         ATOMIC_ERROR("[#%d] Type size must be 4 or 8 bytes.", my_pe);
         return OSHMEM_ERROR;
     }
 
-    assert(NULL != prev);
-
-    *prev      = value;
     ucx_mkey   = mca_spml_ucx_ctx_mkey_by_va(ctx, pe, target, &rva, mca_spml_self);
     assert(NULL != ucx_mkey);
 #if HAVE_DECL_UCP_ATOMIC_OP_NBX
