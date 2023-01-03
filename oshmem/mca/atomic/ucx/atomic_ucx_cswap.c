@@ -19,6 +19,23 @@
 
 #include "atomic_ucx.h"
 
+
+#define OSHM_ATOMIC_SET_INT(ptr, size, value, my_pe) do { \
+    switch(size) {                                 \
+        case 8:                                    \
+            *ptr = value;                          \
+            break;                                 \
+        case 4:                                    \
+            uint32_t* ptr_32 = (uint32_t*)ptr;     \
+            *ptr_32 = value;                       \
+            break;                                 \
+        default:                                   \
+            ATOMIC_ERROR("[#%d] Type size must be 4 or 8 bytes.", my_pe); \
+            return OSHMEM_ERROR;                   \
+    }                                              \
+} while(0)
+
+
 int mca_atomic_ucx_cswap(shmem_ctx_t ctx,
                          void *target,
                          uint64_t *prev,
@@ -40,14 +57,9 @@ int mca_atomic_ucx_cswap(shmem_ctx_t ctx,
     };
 #endif
 
-    if ((8 != size) && (4 != size)) {
-        ATOMIC_ERROR("[#%d] Type size must be 4 or 8 bytes.", my_pe);
-        return OSHMEM_ERROR;
-    }
-
     assert(NULL != prev);
+    OSHM_ATOMIC_SET_INT(prev, size, value, my_pe);
 
-    *prev      = value;
     ucx_mkey   = mca_spml_ucx_ctx_mkey_by_va(ctx, pe, target, (void *)&rva, mca_spml_self);
     assert(NULL != ucx_mkey);
 #if HAVE_DECL_UCP_ATOMIC_OP_NBX
