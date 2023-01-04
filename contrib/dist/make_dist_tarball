@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2008-2023 Cisco Systems, Inc.  All rights reserved
 # Copyright (c) 2016      Intel, Inc. All rights reserved
 # $COPYRIGHT$
 #
@@ -23,11 +23,11 @@
 # Version of auto tools that we want
 #
 
-M4_TARGET_VERSION=1.4.17
-AM_TARGET_VERSION=1.15
-AC_TARGET_VERSION=2.69
+M4_TARGET_VERSION=1.4.19
+AM_TARGET_VERSION=1.16.5
+AC_TARGET_VERSION=2.71
 LT_TARGET_VERSION=2.4.6
-FLEX_TARGET_VERSION=2.5.35
+FLEX_TARGET_VERSION=2.6.4
 
 #
 # When running "make distcheck", use these parallelization flags.  Can
