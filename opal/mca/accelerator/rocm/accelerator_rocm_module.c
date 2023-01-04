@@ -11,6 +11,8 @@
 
 #include "accelerator_rocm.h"
 #include "opal/mca/accelerator/base/base.h"
+#include "opal/constants.h"
+#include "opal/util/output.h"
 
 /* Accelerator API's */
 static int mca_accelerator_rocm_check_addr(const void *addr, int *dev_id, uint64_t *flags);
@@ -490,5 +492,16 @@ static int mca_accelerator_rocm_device_can_access_peer(int *access, int dev1, in
 static int mca_accelerator_rocm_get_buffer_id(int dev_id, const void *addr, opal_accelerator_buffer_id_t *buf_id)
 {
     *buf_id = 0;
+
+#if HIP_VERSION >= 50120531
+    hipError_t result = hipPointerGetAttribute((unsigned long long *)&buf_id, HIP_POINTER_ATTRIBUTE_BUFFER_ID,
+                                               (hipDeviceptr_t)addr);
+    if (hipSuccess != result) {
+        opal_output_verbose(10, opal_accelerator_base_framework.framework_output,
+                            "error in hipPointerGetAttribute, could not retrieve buffer_id");
+        return OPAL_ERROR;
+    }
+#endif
+
     return OPAL_SUCCESS;
 }
