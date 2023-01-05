@@ -125,7 +125,7 @@ libopalutil_core_la_SOURCES = \
         uri.c
 
 if OPAL_COMPILE_TIMING
-libopalutil_la_SOURCES += timings.c
+libopalutil_core_la_SOURCES += timings.c
 endif
 
 libopalutil_core_la_LIBADD = \

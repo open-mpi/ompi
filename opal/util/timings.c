@@ -85,9 +85,6 @@ opal_timing_ts_func_t opal_timing_ts_func(opal_timer_type_t type)
         return NULL;
 #endif // OPAL_TIMER_USEC_NATIVE
     default:
-        if (!opal_initialized) {
-            return get_ts_gettimeofday;
-        }
 #if OPAL_TIMER_CYCLE_NATIVE
         return get_ts_cycle;
 #elif OPAL_TIMER_USEC_NATIVE
