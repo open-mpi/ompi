@@ -172,6 +172,8 @@ int ompi_osc_rdma_attach (struct ompi_win_t *win, void *base, size_t len)
     intptr_t page_size = opal_getpagesize ();
     int region_index, ret;
     size_t aligned_len;
+    int dev_id;
+    uint64_t flags;
 
     if (module->flavor != MPI_WIN_FLAVOR_DYNAMIC) {
         return OMPI_ERR_RMA_FLAVOR;
@@ -180,6 +182,16 @@ int ompi_osc_rdma_attach (struct ompi_win_t *win, void *base, size_t len)
     if (0 == len) {
         /* shot-circuit 0-byte case */
         return OMPI_SUCCESS;
+    }
+
+    /* Component query check doesn't apply for dynamic window types.
+     * We have to check whether a GPU window is supported here. */
+    if (opal_accelerator.check_addr(base, &dev_id, &flags)) {
+        if (!osc_rdma_btl_accel_support(&mca_btl_base_modules_initialized)) {
+            OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "Failed to attach %p. No components capable of attaching accelerator buffers.",
+                             base);
+            return OMPI_ERR_NOT_SUPPORTED;
+        }
     }
 
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "attach: %s, %p, %lu", win->w_name, base, (unsigned long) len);

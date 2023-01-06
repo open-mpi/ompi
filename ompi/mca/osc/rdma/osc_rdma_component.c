@@ -373,10 +373,6 @@ static int ompi_osc_rdma_component_query (struct ompi_win_t *win, void **base, s
                                           int flavor)
 {
 
-    opal_list_t *btls = NULL;
-    mca_btl_base_selected_module_t* selected_btl;
-    int gpu_check = 0;
-
     if (MPI_WIN_FLAVOR_SHARED == flavor) {
         return -1;
     }
@@ -385,7 +381,9 @@ static int ompi_osc_rdma_component_query (struct ompi_win_t *win, void **base, s
         uint64_t flags;
         int dev_id;
         if (opal_accelerator.check_addr(*base, &dev_id, &flags)) {
-            gpu_check = 1;
+            if (!osc_rdma_btl_accel_support(&mca_btl_base_modules_initialized)) {
+                return -1;
+            }
         }
     }
 
@@ -396,28 +394,6 @@ static int ompi_osc_rdma_component_query (struct ompi_win_t *win, void **base, s
         return -1;
     }
 
-    /* Not on GPU at all, skip the check */
-    if (!gpu_check) {
-        goto ok;
-    }
-
-    /* If we have any btls, we check again if any btl supports
-     * MCA_BTL_FLAGS_ACCELERATOR_RDMA */
-    btls = &mca_btl_base_modules_initialized;
-    OPAL_LIST_FOREACH(selected_btl, btls, mca_btl_base_selected_module_t) {
-        opal_output_verbose(MCA_BASE_VERBOSE_INFO, ompi_osc_base_framework.framework_output,
-                    "osc_rdma_component_query: check ACCELERATOR_RDMA flag: %s",
-                    selected_btl->btl_component->btl_version.mca_component_name);
-        mca_btl_base_module_t *btl = selected_btl->btl_module;
-        // Check flag: MCA_BTL_FLAGS_ACCELERATOR_RDMA
-        if (btl->btl_flags & MCA_BTL_FLAGS_ACCELERATOR_RDMA) {
-            goto ok;
-        }
-    }
-    /* No BTL supports the accelerator flag */
-    return -1;
-
-ok:
     return mca_osc_rdma_component.priority;
 }
 
