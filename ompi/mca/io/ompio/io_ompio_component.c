@@ -17,6 +17,7 @@
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * Copyright (c) 2018      DataDirect Networks. All rights reserved.
+ * Copyright (c) 2022      Advanced Micro Devices, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -37,6 +38,7 @@
 #include "ompi/mca/common/ompio/common_ompio_buffer.h"
 
 int mca_io_ompio_cycle_buffer_size = OMPIO_DEFAULT_CYCLE_BUF_SIZE;
+int mca_io_ompio_pipeline_buffer_size = OMPIO_DEFAULT_PIPELINE_BUF_SIZE;
 int mca_io_ompio_bytes_per_agg = OMPIO_PREALLOC_MAX_BUF_SIZE;
 int mca_io_ompio_num_aggregators = -1;
 int mca_io_ompio_record_offset_info = 0;
@@ -176,6 +178,16 @@ static int register_component(void)
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_io_ompio_cycle_buffer_size);
+
+    mca_io_ompio_pipeline_buffer_size = OMPIO_DEFAULT_PIPELINE_BUF_SIZE;
+    (void) mca_base_component_var_register(&mca_io_ompio_component.io_version,
+                                           "pipeline_buffer_size",
+                                           "Size of temporary buffer used by individual reads/writes "
+                                           "in the pipeline protocol",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_io_ompio_pipeline_buffer_size);
 
     mca_io_ompio_bytes_per_agg = OMPIO_PREALLOC_MAX_BUF_SIZE;
     (void) mca_base_component_var_register(&mca_io_ompio_component.io_version,

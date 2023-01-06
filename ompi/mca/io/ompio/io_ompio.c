@@ -15,6 +15,7 @@
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2022      Advanced Micro Devices, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -535,6 +536,9 @@ int mca_io_ompio_get_mca_parameter_value ( char *mca_parameter_name, int name_le
     }
     else if ( !strncmp ( mca_parameter_name, "cycle_buffer_size", name_length )) {
         return mca_io_ompio_cycle_buffer_size;
+    }
+    else if ( !strncmp ( mca_parameter_name, "pipeline_buffer_size", name_length )) {
+        return mca_io_ompio_pipeline_buffer_size;
     }
     else if ( !strncmp ( mca_parameter_name, "max_aggregators_ratio", name_length )) {
         return mca_io_ompio_max_aggregators_ratio;
