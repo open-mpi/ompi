@@ -78,7 +78,7 @@ mca_coll_cuda_reduce_scatter_block(const void *sbuf, void *rbuf, int rcount,
  *
  * @param addr   One pointer to check
  * @retval <0                An error has occurred.
- * @retval 0                 The buffer does not belong to a managed buffer
+ * @retval 0                 The buffer is NULL or it does not belong to a managed buffer
  *                           in device memory.
  * @retval >0                The buffer belongs to a managed buffer in
  *                           device memory.
@@ -90,7 +90,7 @@ static inline int mca_coll_cuda_check_buf(void *addr)
     if (OPAL_LIKELY(NULL != addr)) {
         return opal_accelerator.check_addr(addr, &dev_id, &flags);
     } else {
-        return OPAL_ERROR;
+        return 0;
     }
 }
 
