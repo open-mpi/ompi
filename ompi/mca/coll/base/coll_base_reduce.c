@@ -583,7 +583,10 @@ int ompi_coll_base_reduce_intra_in_order_binary( const void *sendbuf, void *recv
                                           op, io_root, comm, module,
                                           data->cached_in_order_bintree,
                                           segcount, max_outstanding_reqs );
-    if (MPI_SUCCESS != ret) { return ret; }
+    if (MPI_SUCCESS != ret) {
+        free(tmpbuf_free);
+        return ret;
+    }
 
     /* Clean up */
     if (io_root != root) {
@@ -592,14 +595,20 @@ int ompi_coll_base_reduce_intra_in_order_binary( const void *sendbuf, void *recv
             ret = MCA_PML_CALL(recv(recvbuf, count, datatype, io_root,
                                     MCA_COLL_BASE_TAG_REDUCE, comm,
                                     MPI_STATUS_IGNORE));
-            if (MPI_SUCCESS != ret) { return ret; }
+            if (MPI_SUCCESS != ret) {
+                free(tmpbuf_free);
+                return ret;
+            }
 
         } else if (io_root == rank) {
             /* Send result from use_this_recvbuf to root */
             ret = MCA_PML_CALL(send(use_this_recvbuf, count, datatype, root,
                                     MCA_COLL_BASE_TAG_REDUCE,
                                     MCA_PML_BASE_SEND_STANDARD, comm));
-            if (MPI_SUCCESS != ret) { return ret; }
+            if (MPI_SUCCESS != ret) {
+                free(tmpbuf_free);
+                return ret;
+            }
         }
     }
     if (NULL != tmpbuf_free) {
