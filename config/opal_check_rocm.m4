@@ -1,5 +1,5 @@
 dnl
-dnl Copyright (C) 2022      Advanced Micro Devices, Inc. All rights reserved.
+dnl Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -51,8 +51,10 @@ AC_DEFUN([OPAL_CHECK_ROCM],[
                        [opal_check_rocm_happy="no"])
 
      LDFLAGS="$rocm_save_LDFLAGS"
-     OPAL_APPEND([CPPFLAGS], [${$1_CPPFLAGS}] )
      LIBS="$rocm_save_LIBS"
+     OPAL_APPEND([CPPFLAGS], [${$1_CPPFLAGS}] )
+     OPAL_APPEND([LDFLAGS], [${$1_LDFLAGS}] )
+     OPAL_APPEND([LIBS], [${$1_LIBS}] )
 
      AS_IF([ test "$opal_check_rocm_happy" = "no" ],
            [ CPPFLAGS="$rocm_save_CPPFLAGS"])
