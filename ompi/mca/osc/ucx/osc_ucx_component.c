@@ -79,6 +79,7 @@ ompi_osc_ucx_component_t mca_osc_ucx_component = {
     },
     .wpool                  = NULL,
     .env_initialized        = false,
+    .priority_is_set        = false,
     .num_modules            = 0,
     .acc_single_intrinsic   = false,
     .comm_world_size        = 0,
@@ -280,17 +281,32 @@ static int ucp_context_init(bool enable_mt, int proc_world_size) {
 }
 
 static int component_init(bool enable_progress_threads, bool enable_mpi_threads) {
-    opal_common_ucx_support_level_t support_level = OPAL_COMMON_UCX_SUPPORT_NONE;
-    mca_base_var_source_t param_source = MCA_BASE_VAR_SOURCE_DEFAULT;
-    int ret = OMPI_SUCCESS,
-        param = -1;
 
     mca_osc_ucx_component.enable_mpi_threads = enable_mpi_threads;
     mca_osc_ucx_component.wpool = opal_common_ucx_wpool_allocate();
+    mca_osc_ucx_component.priority_is_set = false;
 
-    ret = ucp_context_init(enable_mpi_threads,  ompi_proc_world_size());
-    if (OMPI_ERROR == ret) {
-        return OMPI_ERR_NOT_AVAILABLE;
+    return OMPI_SUCCESS;
+}
+
+static int component_set_priority() {
+    int param, ret;
+    opal_common_ucx_support_level_t support_level = OPAL_COMMON_UCX_SUPPORT_NONE;
+    mca_base_var_source_t param_source = MCA_BASE_VAR_SOURCE_DEFAULT;
+
+    if (mca_osc_ucx_component.priority_is_set == true) {
+        return OMPI_SUCCESS;
+    }
+
+    if (mca_osc_ucx_component.wpool == NULL) {
+        mca_osc_ucx_component.wpool = opal_common_ucx_wpool_allocate();
+    }
+
+    if (mca_osc_ucx_component.wpool->ucp_ctx == NULL) {
+        ret = ucp_context_init(mca_osc_ucx_component.enable_mpi_threads,  ompi_proc_world_size());
+        if (OMPI_ERROR == ret) {
+            return OMPI_ERR_NOT_AVAILABLE;
+        }
     }
 
     support_level = opal_common_ucx_support_level(mca_osc_ucx_component.wpool->ucp_ctx);
@@ -314,6 +330,8 @@ static int component_init(bool enable_progress_threads, bool enable_mpi_threads)
                     mca_osc_ucx_component.priority : 9;
     }
     OSC_UCX_VERBOSE(2, "returning priority %d", mca_osc_ucx_component.priority);
+
+    mca_osc_ucx_component.priority_is_set = true;
 
     return OMPI_SUCCESS;
 }
@@ -344,6 +362,14 @@ static int component_finalize(void) {
 
 static int component_query(struct ompi_win_t *win, void **base, size_t size, int disp_unit,
                            struct ompi_communicator_t *comm, struct opal_info_t *info, int flavor) {
+    int ret;
+    if (mca_osc_ucx_component.priority_is_set == false) {
+        ret = component_set_priority();
+        if (OMPI_SUCCESS != ret) {
+            OSC_UCX_ERROR("OSC UCX component priority set inside component query failed \n ");
+            return ret;
+        }
+    }
     return mca_osc_ucx_component.priority;
 }
 
@@ -506,6 +532,14 @@ static int component_select(struct ompi_win_t *win, void **base, size_t size, in
          * As not all of the MPI applications are using One-Sided functionality
          * we don't want to initialize in the component_init()
          */
+
+        if (mca_osc_ucx_component.priority_is_set == false) {
+            ret = component_set_priority();
+            if (OMPI_SUCCESS != ret) {
+                OSC_UCX_ERROR("OSC UCX component priority set inside component select failed \n ");
+                return ret;
+            }
+        }
 
         OBJ_CONSTRUCT(&mca_osc_ucx_component.requests, opal_free_list_t);
         ret = opal_free_list_init (&mca_osc_ucx_component.requests,
