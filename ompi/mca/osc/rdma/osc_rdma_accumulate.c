@@ -237,6 +237,7 @@ static int ompi_osc_rdma_fetch_and_op_atomic (ompi_osc_rdma_sync_t *sync, const 
 
     if ((8 != extent && !((MCA_BTL_ATOMIC_SUPPORTS_32BIT & module->atomic_flags) && 4 == extent)) ||
         (!(OMPI_DATATYPE_FLAG_DATA_INT & dt->super.flags) && !(MCA_BTL_ATOMIC_SUPPORTS_FLOAT & module->atomic_flags)) ||
+        ((OMPI_DATATYPE_FLAG_DATA_COMPLEX & dt->super.flags) == OMPI_DATATYPE_FLAG_DATA_COMPLEX)  ||
         !ompi_op_is_intrinsic (op) || (0 == ompi_osc_rdma_op_mapping[op->op_type])) {
         return OMPI_ERR_NOT_SUPPORTED;
     }
@@ -330,6 +331,7 @@ static int ompi_osc_rdma_acc_single_atomic (ompi_osc_rdma_sync_t *sync, const vo
 
     if ((8 != extent && !((MCA_BTL_ATOMIC_SUPPORTS_32BIT & module->atomic_flags) && 4 == extent)) ||
         (!(OMPI_DATATYPE_FLAG_DATA_INT & dt->super.flags) && !(MCA_BTL_ATOMIC_SUPPORTS_FLOAT & module->atomic_flags)) ||
+        ((OMPI_DATATYPE_FLAG_DATA_COMPLEX & dt->super.flags) == OMPI_DATATYPE_FLAG_DATA_COMPLEX)  ||
         !ompi_op_is_intrinsic (op) || (0 == ompi_osc_rdma_op_mapping[op->op_type])) {
         return OMPI_ERR_NOT_SUPPORTED;
     }
