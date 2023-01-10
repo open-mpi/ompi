@@ -371,7 +371,7 @@ static int accelerator_cuda_memcpy(int dest_dev_id, int src_dev_id, void *dest, 
 {
     CUresult result;
 
-    delayed_init = opal_accelerator_cuda_delayed_init();
+    int delayed_init = opal_accelerator_cuda_delayed_init();
     if (OPAL_UNLIKELY(0 != delayed_init)) {
         return delayed_init;
     }
@@ -462,7 +462,7 @@ static int accelerator_cuda_mem_alloc(int dev_id, void **ptr, size_t size)
         if (OPAL_UNLIKELY(CUDA_SUCCESS != result)) {
             opal_show_help("help-accelerator-cuda.txt", "cuMemAlloc failed", true,
                            OPAL_PROC_MY_HOSTNAME, result);
-            return result;
+            return OPAL_ERROR;
         }
     }
     return 0;
@@ -476,7 +476,7 @@ static int accelerator_cuda_mem_release(int dev_id, void *ptr)
         if (OPAL_UNLIKELY(CUDA_SUCCESS != result)) {
             opal_show_help("help-accelerator-cuda.txt", "cuMemFree failed", true,
                            OPAL_PROC_MY_HOSTNAME, result);
-            return result;
+            return OPAL_ERROR;
         }
     }
     return 0;
@@ -525,7 +525,7 @@ static int accelerator_cuda_host_register(int dev_id, void *ptr, size_t size)
     if (OPAL_UNLIKELY(CUDA_SUCCESS != result)) {
         opal_show_help("help-accelerator-cuda.txt", "cuMemHostRegister failed", true,
                        ptr, size, OPAL_PROC_MY_HOSTNAME, result);
-        return result;
+        return OPAL_ERROR;
     }
 
     return OPAL_SUCCESS;
@@ -539,7 +539,7 @@ static int accelerator_cuda_host_unregister(int dev_id, void *ptr)
         if (OPAL_UNLIKELY(CUDA_SUCCESS != result)) {
             opal_show_help("help-accelerator-cuda.txt", "cuMemHostUnregister failed", true,
                            ptr, OPAL_PROC_MY_HOSTNAME, result);
-            return result;
+            return OPAL_ERROR;
         }
     }
     return OPAL_SUCCESS;
@@ -563,7 +563,7 @@ static int accelerator_cuda_get_device(int *dev_id)
     if (OPAL_UNLIKELY(CUDA_SUCCESS != result)) {
         opal_show_help("help-accelerator-cuda.txt", "cuCtxGetDevice failed", true,
                        result);
-        return result;
+        return OPAL_ERROR;
     }
     *dev_id = cuDev;
     return 0;
@@ -586,7 +586,7 @@ static int accelerator_cuda_device_can_access_peer(int *access, int dev1, int de
     if (OPAL_UNLIKELY(CUDA_SUCCESS != result)) {
         opal_show_help("help-accelerator-cuda.txt", "cuDeviceCanAccessPeer failed", true,
                        OPAL_PROC_MY_HOSTNAME, result);
-        return result;
+        return OPAL_ERROR;
     }
     return 0;
 }
@@ -612,14 +612,14 @@ static int accelerator_cuda_get_buffer_id(int dev_id, const void *addr, opal_acc
     if (OPAL_UNLIKELY(result != CUDA_SUCCESS)) {
         opal_show_help("help-accelerator-cuda.txt", "bufferID failed", true, OPAL_PROC_MY_HOSTNAME,
                        result);
-        return result;
+        return OPAL_ERROR;
     }
     result = cuPointerSetAttribute(&enable, CU_POINTER_ATTRIBUTE_SYNC_MEMOPS,
                                        (CUdeviceptr) addr);
     if (OPAL_UNLIKELY(CUDA_SUCCESS != result)) {
         opal_show_help("help-accelerator-cuda.txt", "cuPointerSetAttribute failed", true,
                        OPAL_PROC_MY_HOSTNAME, result, addr);
-        return result;
+        return OPAL_ERROR;
     }
     return OPAL_SUCCESS;
 }
