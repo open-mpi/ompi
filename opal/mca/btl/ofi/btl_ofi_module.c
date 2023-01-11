@@ -16,7 +16,7 @@
  *
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2020      Google, LLC. All rights reserved.
- * Copyright (c) 2022      Triad National Security, LLC. All rights
+ * Copyright (c) 2022-2023 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -254,6 +254,7 @@ int mca_btl_ofi_reg_mem(void *reg_data, void *base, size_t size,
     attr.context = NULL;
     attr.requested_key = (uint64_t) reg;
 
+#if  OPAL_OFI_HAVE_FI_MR_IFACE
     if (OPAL_LIKELY(NULL != base)) {
         rc = opal_accelerator.check_addr(base, &dev_id, &flags);
         if (rc < 0) {
@@ -270,6 +271,7 @@ int mca_btl_ofi_reg_mem(void *reg_data, void *base, size_t size,
             }
         }
     }
+#endif
 
     rc = fi_mr_regattr(btl->domain, &attr, 0, &ur->ur_mr);
     if (0 != rc) {
