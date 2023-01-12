@@ -31,11 +31,15 @@
 #include "opal/util/printf.h"
 #include "opal/util/proc.h"
 #include "opal/util/show_help.h"
-
+#include "opal/sys/atomic.h"
 
 /* Define global variables, used in accelerator_cuda.c */
 CUstream opal_accelerator_cuda_memcpy_stream = NULL;
 opal_mutex_t opal_accelerator_cuda_stream_lock = {0};
+
+/* Initialization lock for delayed cuda initialization */
+static opal_mutex_t accelerator_cuda_init_lock;
+static bool accelerator_cuda_init_complete = false;
 
 #define STRINGIFY2(x) #x
 #define STRINGIFY(x)  STRINGIFY2(x)
@@ -115,19 +119,22 @@ static int accelerator_cuda_component_register(void)
     return OPAL_SUCCESS;
 }
 
-static opal_accelerator_base_module_t* accelerator_cuda_init(void)
+int opal_accelerator_cuda_delayed_init()
 {
-    int retval, i, j;
-    CUresult result;
+    int result = OPAL_SUCCESS;
     CUcontext cuContext;
 
-    OBJ_CONSTRUCT(&opal_accelerator_cuda_stream_lock, opal_mutex_t);
+    /* Double checked locking to avoid having to
+     * grab locks post lazy-initialization.  */
+    opal_atomic_rmb();
+    if (true == accelerator_cuda_init_complete) {
+        return OPAL_SUCCESS;
+    }
+    OPAL_THREAD_LOCK(&accelerator_cuda_init_lock);
 
-    /* First check if the support is enabled.  In the case that the user has
-     * turned it off, we do not need to continue with any CUDA specific
-     * initialization.  Do this after MCA parameter registration. */
-    if (!opal_cuda_support) {
-        return NULL;
+    /* If already initialized, just exit */
+    if (true == accelerator_cuda_init_complete) {
+        goto out;
     }
 
     /* Check to see if this process is running in a CUDA context.  If
@@ -135,10 +142,11 @@ static opal_accelerator_base_module_t* accelerator_cuda_init(void)
     result = cuCtxGetCurrent(&cuContext);
     if (CUDA_SUCCESS != result) {
         opal_output_verbose(20, opal_accelerator_base_framework.framework_output, "CUDA: cuCtxGetCurrent failed");
-        return NULL;
+        goto out;
     } else if ((CUDA_SUCCESS == result) && (NULL == cuContext)) {
         opal_output_verbose(20, opal_accelerator_base_framework.framework_output, "CUDA: cuCtxGetCurrent returned NULL context");
-        return NULL;
+        result = OPAL_ERROR;
+        goto out;
     } else {
         opal_output_verbose(20, opal_accelerator_base_framework.framework_output, "CUDA: cuCtxGetCurrent succeeded");
     }
@@ -148,7 +156,7 @@ static opal_accelerator_base_module_t* accelerator_cuda_init(void)
     if (OPAL_UNLIKELY(result != CUDA_SUCCESS)) {
         opal_show_help("help-accelerator-cuda.txt", "cuStreamCreate failed", true,
                        OPAL_PROC_MY_HOSTNAME, result);
-        return NULL;
+        goto out;
     }
 
     result = cuMemHostRegister(&checkmem, sizeof(int), 0);
@@ -162,7 +170,26 @@ static opal_accelerator_base_module_t* accelerator_cuda_init(void)
         opal_output_verbose(20, opal_accelerator_base_framework.framework_output,
                             "CUDA: cuMemHostRegister OK on test region");
     }
+    result = OPAL_SUCCESS;
+    opal_atomic_wmb();
+    accelerator_cuda_init_complete = true;
+out:
+    OPAL_THREAD_UNLOCK(&accelerator_cuda_init_lock);
+    return result;
+}
 
+static opal_accelerator_base_module_t* accelerator_cuda_init(void)
+{
+    OBJ_CONSTRUCT(&opal_accelerator_cuda_stream_lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&accelerator_cuda_init_lock, opal_mutex_t);
+    /* First check if the support is enabled.  In the case that the user has
+     * turned it off, we do not need to continue with any CUDA specific
+     * initialization.  Do this after MCA parameter registration. */
+    if (!opal_cuda_support) {
+        return NULL;
+    }
+
+    opal_accelerator_cuda_delayed_init();
     return &opal_accelerator_cuda_module;
 }
 
@@ -183,5 +210,6 @@ static void accelerator_cuda_finalize(opal_accelerator_base_module_t* module)
     }
 
     OBJ_DESTRUCT(&opal_accelerator_cuda_stream_lock);
+    OBJ_DESTRUCT(&accelerator_cuda_init_lock);
     return;
 }
