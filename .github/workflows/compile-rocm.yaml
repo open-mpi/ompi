@@ -1,0 +1,28 @@
+name: GitHub Action CI
+
+on: [pull_request]
+
+env:
+  ROCM_VER: 5-4
+jobs:
+  compile-rocm:
+    runs-on: ubuntu-20.04
+    steps:
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y --no-install-recommends wget lsb-core software-properties-common gpg curl
+    - name: Install extra dependencies
+      run: |
+        curl -fsSL https://repo.radeon.com/rocm/rocm.gpg.key | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/rocm-keyring.gpg
+        echo 'deb [arch=amd64 signed-by=/etc/apt/trusted.gpg.d/rocm-keyring.gpg]  https://repo.radeon.com/rocm/apt/debian focal main' | sudo tee /etc/apt/sources.list.d/rocm.list
+        sudo apt-get update
+        sudo apt-get install -y rocm-hip-sdk
+    - uses: actions/checkout@v2
+      with:
+            submodules: recursive
+    - name: Build Open MPI
+      run: |
+        ./autogen.pl
+        ./configure --prefix=${PWD}/install --with-rocm=/opt/rocm --disable-mpi-fortran
+        make -j
