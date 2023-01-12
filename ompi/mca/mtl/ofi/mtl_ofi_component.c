@@ -777,6 +777,19 @@ select_prov:
         *accelerator_support = false;
     } else {
         *accelerator_support = true;
+        ompi_mtl_ofi.hmem_needs_reg = true;
+        /*
+         * Workaround for the fact that the CXI provider actually doesn't need for accelerator memory to be registered
+         * for local buffers, but if one does do so using fi_mr_regattr, one actually needs to manage the
+         * requested_key field in the fi_mr_attr attr argument, and the OFI MTL doesn't track which requested_keys
+         * have already been registered. So just set a flag to disable local registration.  Note the OFI BTL doesn't
+         * have a problem here since it uses fi_mr_regattr only within the context of an rcache, and manages the
+         * requested_key field in this way.
+         */
+         if (!strncasecmp(prov->fabric_attr->prov_name, "cxi", 3)) {
+             ompi_mtl_ofi.hmem_needs_reg = false;
+         }
+
     }
 
     /**
