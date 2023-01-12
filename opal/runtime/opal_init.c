@@ -138,6 +138,8 @@ int opal_init(int *pargc, char ***pargv)
 {
     int ret;
 
+    OPAL_TIMING_ENV_INIT(otmng);
+
     if (opal_initialized != 0) {
         if (opal_initialized < 0) {
             return OPAL_ERROR;
