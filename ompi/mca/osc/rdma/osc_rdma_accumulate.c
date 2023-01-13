@@ -183,6 +183,8 @@ static inline int ompi_osc_rdma_cas_local (const void *source_addr, const void *
         if (ret) {
             goto out;
         }
+    } else {
+        ret = OMPI_SUCCESS;
     }
 
     ompi_osc_rdma_peer_accumulate_cleanup (module, peer, lock_acquired);
