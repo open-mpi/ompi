@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2023      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -21,6 +23,7 @@
 
 #include "opal/constants.h"
 #include "opal/mca/timer/base/base.h"
+#include "opal/util/timings.h"
 
 bool mca_timer_base_monotonic = true;
 
@@ -41,9 +44,31 @@ static int mca_timer_base_register(mca_base_register_flag_t flags)
     return OPAL_SUCCESS;
 }
 
+static int opal_timer_base_open(mca_base_open_flag_t flags)
+{
+    if (OPAL_SUCCESS != mca_base_framework_components_open(&opal_timer_base_framework, flags)) {
+        return OPAL_ERROR;
+    }
+
+    OPAL_TIMING_ENABLE_NATIVE_TIMERS;
+
+    return OPAL_SUCCESS;
+}
+
+static int opal_timer_base_close(void)
+{
+    int ret;
+
+    OPAL_TIMING_DISABLE_NATIVE_TIMERS;
+
+    return OPAL_SUCCESS;
+}
+
 /*
  * Globals
  */
 /* Use default register/open/close functions */
-MCA_BASE_FRAMEWORK_DECLARE(opal, timer, "OPAL OS timer", mca_timer_base_register, NULL, NULL,
+MCA_BASE_FRAMEWORK_DECLARE(opal, timer, "OPAL OS timer", mca_timer_base_register,
+                           opal_timer_base_open,
+                           opal_timer_base_close,
                            mca_timer_base_static_components, 0);
