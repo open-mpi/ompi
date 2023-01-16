@@ -36,29 +36,23 @@ Launching
 When properly configured, Open MPI obtains both the list of hosts and
 how many processes to start on each host from LSF directly.  Hence, it
 is unnecessary to specify the ``--hostfile``, ``--host``, or ``-n``
-options to ``mpirun``.  Open MPI will use PBS/Torque-native mechanisms
+options to ``mpirun``.  Open MPI will use LSF-native mechanisms
 to launch and kill processes (``ssh`` is not required).
 
 For example:
 
-.. error:: TODO Need LSF specific content here
-
 .. code-block:: sh
 
-   # Allocate a PBS job with 4 nodes
-   shell$ qsub -I -lnodes=4
+   # Allocate a job with 4 nodes and run the job on LSF allocated nodes
+   shell$ bsub -n 4 "mpirun mpi-hello-world"
 
-   # Now run an Open MPI job on all the nodes allocated by PBS/Torque
-   shell$ mpirun mpi-hello-world
 
 This will run the MPI processes on the nodes that were allocated by
 LSF.  Or, if submitting a script:
-
-.. error:: TODO Need LSF specific content here
 
 .. code-block:: sh
 
    shell$ cat my_script.sh
    #!/bin/sh
    mpirun mpi-hello-world
-   shell$ qsub -l nodes=4 my_script.sh
+   shell$ bsub -n 4 < my_script.sh
