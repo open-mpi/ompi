@@ -50,8 +50,12 @@ int mca_scoll_ucc_progress(void)
 
 static void mca_scoll_ucc_module_destruct(mca_scoll_ucc_module_t *ucc_module)
 {
+    ucc_status_t status;
     if (ucc_module->ucc_team) {
-        ucc_team_destroy(ucc_module->ucc_team);
+        while(UCC_INPROGRESS == (status = ucc_team_destroy(ucc_module->ucc_team))) {}
+        if (status != UCC_OK) {
+            UCC_ERROR("UCC team destroy failed");
+        }
         MCA_MEMHEAP_CALL(private_free(ucc_module->pSync));
         --mca_scoll_ucc_component.nr_modules;
     }
