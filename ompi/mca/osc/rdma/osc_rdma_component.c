@@ -372,16 +372,18 @@ static int ompi_osc_rdma_component_query (struct ompi_win_t *win, void **base, s
                                           struct ompi_communicator_t *comm, struct opal_info_t *info,
                                           int flavor)
 {
+
     if (MPI_WIN_FLAVOR_SHARED == flavor) {
         return -1;
     }
 
-    /* GPU buffers are not supported by the rdma component */
     if (MPI_WIN_FLAVOR_CREATE == flavor) {
         uint64_t flags;
         int dev_id;
         if (opal_accelerator.check_addr(*base, &dev_id, &flags)) {
-            return -1;
+            if (!osc_rdma_btl_accel_support(&mca_btl_base_modules_initialized)) {
+                return -1;
+            }
         }
     }
 

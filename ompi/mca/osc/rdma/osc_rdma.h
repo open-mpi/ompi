@@ -44,6 +44,7 @@
 #include "ompi/mca/osc/osc.h"
 #include "ompi/mca/osc/base/base.h"
 #include "opal/mca/btl/btl.h"
+#include "opal/mca/btl/base/base.h"
 #include "opal/mca/btl/base/btl_base_am_rdma.h"
 #include "ompi/memchecker.h"
 #include "ompi/op/op.h"
@@ -673,4 +674,121 @@ static inline mca_btl_base_am_rdma_module_t *ompi_osc_rdma_selected_am_rdma(ompi
     return module->alternate_am_rdmas[btl_index];
 }
 
+/**
+ * @brief Copies from src to dest buffers that may or may not be accelerator
+ *        buffers
+ *
+ * @param[in]  dest           destination buffer
+ * @param[in]  src            source buffer
+ * @param[in]  size           length to copy
+ *
+ * @returns OMPI_SUCCESS or error
+ */
+static inline int osc_rdma_accelerator_mem_copy(void *dest, const void *src, size_t size)
+{
+    int res, dev_id;
+    uint64_t flags;
+    int dest_is_accel = opal_accelerator.check_addr(dest, &dev_id, &flags);
+    int src_is_accel = opal_accelerator.check_addr(src, &dev_id, &flags);
+
+    if (0 == dest_is_accel && 0 == src_is_accel) {
+        memcpy(dest, src, size);
+        return OMPI_SUCCESS;
+    } else if (0 > dest_is_accel) {
+        return dest_is_accel;
+    } else if (0 > src_is_accel) {
+        return src_is_accel;
+    }
+
+    res = opal_accelerator.mem_copy(MCA_ACCELERATOR_NO_DEVICE_ID, MCA_ACCELERATOR_NO_DEVICE_ID,
+                                  dest, src, size, MCA_ACCELERATOR_TRANSFER_UNSPEC);
+    if (OPAL_SUCCESS != res) {
+        opal_output(0, "Error in accelerator memcpy");
+    }
+    return res;
+}
+
+/**
+ * @brief Moves memory from src to dest buffers that may or may not be accelerator
+ *        buffers
+ *
+ * @param[in]  dest           destination buffer
+ * @param[in]  src            source buffer
+ * @param[in]  size           length to copy
+ *
+ * @returns OMPI_SUCCESS or error;
+ */
+static inline int osc_rdma_accelerator_mem_move(void *dest, const void *src, size_t size)
+{
+    int res, dev_id;
+    uint64_t flags;
+    int dest_is_accel = opal_accelerator.check_addr(dest, &dev_id, &flags);
+    int src_is_accel = opal_accelerator.check_addr(src, &dev_id, &flags);
+
+    if (0 == dest_is_accel && 0 == src_is_accel) {
+        memmove(dest, src, size);
+        return OMPI_SUCCESS;
+    } else if (0 > dest_is_accel) {
+        return dest_is_accel;
+    } else if (0 > src_is_accel) {
+        return src_is_accel;
+    }
+
+    res = opal_accelerator.mem_move(MCA_ACCELERATOR_NO_DEVICE_ID, MCA_ACCELERATOR_NO_DEVICE_ID,
+                                  dest, src, size, MCA_ACCELERATOR_TRANSFER_UNSPEC);
+    if (OPAL_SUCCESS != res) {
+        opal_output(0, "Error in accelerator memmove");
+    }
+    return res;
+}
+
+/**
+ * @brief Identifies whether the provided buffer is an accelerator buffer.
+ *
+ * @param[in]  buf            buffer
+ *
+ * @retval <0                 An error has occurred.
+ * @retval 0                  The buffer does not belong to a managed buffer
+ *                            in device memory.
+ * @retval >0                 The buffer belongs to a managed buffer in
+ *                            device memory.
+ */
+static inline int osc_rdma_is_accel(void *buf)
+{
+    int dev_id;
+    uint64_t flags;
+    return opal_accelerator.check_addr(buf, &dev_id, &flags);
+}
+
+/**
+ * @brief Checks whether any btl's are capable of accelerator support.
+ *
+ * @param[in] btls            The modules to check for btl accelerator support
+ *
+ * @returns true              If any btl module has accelerator support
+ * @returns false             Otherwise
+ */
+static inline bool osc_rdma_btl_accel_support(opal_list_t *btls)
+{
+    mca_btl_base_selected_module_t* selected_btl;
+    /* verify if we have any btls available.  Since we do not verify
+     * connectivity across all btls in the alternate case, this is as
+     * good a test as we are going to have for success. */
+    if (opal_list_is_empty(btls)) {
+        return false;
+    }
+
+    /* If we have any btls, we check again if any btl supports
+     * MCA_BTL_FLAGS_ACCELERATOR_RDMA */
+    OPAL_LIST_FOREACH(selected_btl, btls, mca_btl_base_selected_module_t) {
+        opal_output_verbose(MCA_BASE_VERBOSE_INFO, ompi_osc_base_framework.framework_output,
+                    "osc_rdma_component_query: check ACCELERATOR_RDMA flag: %s",
+                    selected_btl->btl_component->btl_version.mca_component_name);
+        mca_btl_base_module_t *btl = selected_btl->btl_module;
+        if (btl->btl_flags & MCA_BTL_FLAGS_ACCELERATOR_RDMA) {
+            return true;
+        }
+    }
+    return false;
+}
 #endif /* OMPI_OSC_RDMA_H */
