@@ -736,6 +736,7 @@ ompi_mtl_ofi_send_excid(struct mca_mtl_base_module_t *mtl,
     /**
      * Create a send request, start it and wait until it completes.
      */
+    ofi_req->type = OMPI_MTL_OFI_SEND;
     ofi_req->event_callback = ompi_mtl_ofi_send_excid_callback;
     ofi_req->error_callback = ompi_mtl_ofi_send_error_callback;
     ofi_req->buffer = start;
@@ -1060,6 +1061,7 @@ ompi_mtl_ofi_isend_generic(struct mca_mtl_base_module_t *mtl,
     ompi_ret = ompi_mtl_datatype_pack(convertor, &start, &length, &free_after);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ompi_ret)) return ompi_ret;
 
+    ofi_req->type = OMPI_MTL_OFI_SEND;
     ofi_req->buffer = (free_after) ? start : NULL;
     ofi_req->length = length;
     ofi_req->status.MPI_ERROR = OMPI_SUCCESS;
@@ -1774,9 +1776,8 @@ ompi_mtl_ofi_cancel(struct mca_mtl_base_module_t *mtl,
     int ret, ctxt_id = 0;
     ompi_mtl_ofi_request_t *ofi_req = (ompi_mtl_ofi_request_t*) mtl_request;
 
-    ctxt_id = ompi_mtl_ofi_map_comm_to_ctxt(ofi_req->comm->c_index);
-
     switch (ofi_req->type) {
+        case OMPI_MTL_OFI_PROBE:
         case OMPI_MTL_OFI_SEND:
             /**
              * Cannot cancel sends yet
@@ -1792,6 +1793,8 @@ ompi_mtl_ofi_cancel(struct mca_mtl_base_module_t *mtl,
             ompi_mtl_ofi_progress();
 
             if (!ofi_req->req_started) {
+                ctxt_id = ompi_mtl_ofi_map_comm_to_ctxt(ofi_req->comm->c_index);
+
                 ret = fi_cancel((fid_t)ompi_mtl_ofi.ofi_ctxt[ctxt_id].rx_ep,
                                &ofi_req->ctx);
                 if (0 == ret) {
