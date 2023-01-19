@@ -109,8 +109,12 @@ static int accelerator_cuda_check_addr(const void *addr, int *dev_id, uint64_t *
         *flags |= MCA_ACCELERATOR_FLAGS_UNIFIED_MEMORY;
     }
     if (CUDA_SUCCESS != result) {
-        /* Cannot identify, return an error */
-        return -1;
+        /* If cuda is not initialized, assume it is a host buffer. */
+        if (CUDA_ERROR_NOT_INITIALIZED == result) {
+            return 0;
+        } else {
+            return OPAL_ERROR;
+        }
     } else if (CU_MEMORYTYPE_HOST == mem_type) {
         /* Host memory, nothing to do here */
         return 0;
@@ -123,9 +127,12 @@ static int accelerator_cuda_check_addr(const void *addr, int *dev_id, uint64_t *
 #else /* OPAL_CUDA_GET_ATTRIBUTES */
     result = cuPointerGetAttribute(&mem_type, CU_POINTER_ATTRIBUTE_MEMORY_TYPE, dbuf);
     if (CUDA_SUCCESS != result) {
-        /* If we cannot determine it is device pointer,
-         * just assume it is not. */
-        return 0;
+        /* If cuda is not initialized, assume it is a host buffer. */
+        if (CUDA_ERROR_NOT_INITIALIZED == result) {
+            return 0;
+        } else {
+            return OPAL_ERROR;
+        }
     } else if (CU_MEMORYTYPE_HOST == mem_type) {
         /* Host memory, nothing to do here */
         return 0;
