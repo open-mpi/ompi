@@ -55,9 +55,24 @@
         }                                                                                   \
     } while (0)
 
+static bool opal_datatype_is_accel(void *dest, const void *src) {
+    int dev_id;
+    uint64_t flags;
+    if (opal_accelerator.check_addr(dest, &dev_id, &flags)) {
+        return true;
+    }
+    if (opal_accelerator.check_addr(src, &dev_id, &flags)) {
+        return true;
+    }
+    return false;
+}
+
 static void *opal_datatype_accelerator_memcpy(void *dest, const void *src, size_t size)
 {
     int res;
+    if (!opal_datatype_is_accel(dest, src)) {
+        return memcpy(dest, src, size);
+    }
     res = opal_accelerator.mem_copy(MCA_ACCELERATOR_NO_DEVICE_ID, MCA_ACCELERATOR_NO_DEVICE_ID,
                                   dest, src, size, MCA_ACCELERATOR_TRANSFER_UNSPEC);
     if (OPAL_SUCCESS != res) {
@@ -70,6 +85,9 @@ static void *opal_datatype_accelerator_memcpy(void *dest, const void *src, size_
 static void *opal_datatype_accelerator_memmove(void *dest, const void *src, size_t size)
 {
     int res;
+    if (!opal_datatype_is_accel(dest, src)) {
+        return memmove(dest, src, size);
+    }
     res = opal_accelerator.mem_move(MCA_ACCELERATOR_NO_DEVICE_ID, MCA_ACCELERATOR_NO_DEVICE_ID,
                                     dest, src, size, MCA_ACCELERATOR_TRANSFER_UNSPEC);
     if (OPAL_SUCCESS != res) {
