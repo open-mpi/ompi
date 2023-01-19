@@ -445,63 +445,122 @@ static int check_provider_attr(struct fi_info *provider_info, struct fi_info *pr
     }
 }
 
-#if OPAL_OFI_PCI_DATA_AVAILABLE
-/* Check if a process and a pci device share the same cpuset
- *     @param (IN) pci              struct fi_pci_attr pci device attributes,
- *                                  used to find hwloc object for device.
- *
- *     @param (IN) topology         hwloc_topology_t topology to get the cpusets
- *                                  from
- *
- *     @param (OUT)                 returns true if cpusets match and false if
- *                                  cpusets do not match or an error prevents comparison
- *
- *     Uses a pci device to find an ancestor that contains a cpuset, and
- *     determines if it intersects with the cpuset that the process is bound to.
- *     if the process is not bound, or if a cpuset is unavailable for whatever
- *     reason, returns false. Otherwise, returns the result of
- *     hwloc_cpuset_intersects()
- */
-static bool compare_cpusets(hwloc_topology_t topology, struct fi_pci_attr pci)
+static pmix_device_distance_t *get_nearest_nics(int *num_distances)
 {
-    bool result = false;
-    int ret;
-    hwloc_bitmap_t proc_cpuset;
-    hwloc_obj_t obj = NULL;
+    size_t ndist;
+    pmix_value_t *val;
+    int ret, i, idx = 0;
+    pmix_data_array_t *dptr;
+    uint16_t near = USHRT_MAX;
+    pmix_info_t directive;
+    pmix_device_distance_t *distances, *nearest = NULL;
+    pmix_device_type_t type = PMIX_DEVTYPE_OPENFABRICS |
+      PMIX_DEVTYPE_NETWORK |
+      PMIX_DEVTYPE_COPROC |
+      PMIX_DEVTYPE_GPU |
+      PMIX_DEVTYPE_BLOCK |
+      PMIX_DEVTYPE_DMA;
 
-    /* Cannot find topology info if no topology is found */
-    if (NULL == topology) {
+    PMIX_INFO_LOAD(&directive, PMIX_OPTIONAL, NULL, PMIX_BOOL);
+    ret = PMIx_Get(&opal_process_info.myprocid,
+             PMIX_DEVICE_DISTANCES, &directive, 1, &val);
+    PMIX_INFO_DESTRUCT(&directive);
+    if (ret != PMIX_SUCCESS) {
+        goto out;
+    }
+
+    if (PMIX_DATA_ARRAY != val->type) {
+        goto release;
+    }
+    dptr = val->data.darray;
+    if (NULL == dptr) {
+        goto release;
+    }
+    if (PMIX_DEVICE_DIST != dptr->type) {
+        goto release;
+    }
+    distances = (pmix_device_distance_t*)dptr->array;
+
+    nearest = calloc(sizeof(*distances), dptr->size);
+    if (!nearest)
+        goto release;
+
+    for (i = 0; i < dptr->size; i++) {
+        if (distances[i].mindist < near) {
+            idx = 0;
+            near = distances[i].mindist;
+            nearest[idx] = distances[i];
+            idx++;
+        } else if (distances[i].mindist == near) {
+            nearest[idx] = distances[i];
+            idx++;
+        }
+    }
+
+    *num_distances = idx;
+
+    goto out;
+
+release:
+    PMIX_VALUE_RELEASE(val);
+out:
+    return nearest;
+}
+
+#if OPAL_OFI_PCI_DATA_AVAILABLE
+static bool is_near(pmix_device_distance_t *distances,
+                    int num_distances,
+                    hwloc_topology_t topology,
+                    struct fi_pci_attr pci)
+{
+    hwloc_obj_t pcidev, osdev;
+
+    pcidev = hwloc_get_pcidev_by_busid(topology, pci.domain_id,
+                        pci.bus_id, pci.device_id,
+                        pci.function_id);
+    if (!pcidev)
         return false;
+
+    for(osdev = pcidev->io_first_child; osdev != NULL; osdev = osdev->next_sibling) {
+        int i;
+
+        if (osdev->attr->osdev.type == HWLOC_OBJ_OSDEV_OPENFABRICS) {
+            const char *nguid = hwloc_obj_get_info_by_name(osdev,"NodeGUID");
+            const char *sguid = hwloc_obj_get_info_by_name(osdev, "SysImageGUID");
+
+            if (!nguid && !sguid)
+                continue;
+
+            for (i = 0; i < num_distances; i++) {
+                char lsguid[256], lnguid[256];
+                int ret;
+
+                ret = scanf(distances[i].uuid, "fab://%256s::%256s", lnguid, lsguid);
+                if (ret != 2)
+                    continue;
+                if (0 == strcasecmp(lnguid, nguid)) {
+                    return true;
+                } else if (0 == strcasecmp(lsguid, sguid)) {
+                    return true;
+                }
+            }
+        } else if (osdev->attr->osdev.type == HWLOC_OBJ_OSDEV_NETWORK) {
+            const char *address = hwloc_obj_get_info_by_name(osdev, "Address");
+            if (!address)
+                continue;
+            for (i = 0; i < num_distances; i++) {
+                char *addr = strstr(distances[i].uuid, "://");
+                if (!addr || addr + 3 > distances[i].uuid
+                    + strlen(distances[i].uuid))
+                    continue;
+                if (!strcmp(addr+3, address)) {
+                    return true;
+                }
+            }
+        }
     }
 
-    /* Allocate memory for proc_cpuset */
-    proc_cpuset = hwloc_bitmap_alloc();
-    if (NULL == proc_cpuset) {
-        return false;
-    }
-
-    /* Fill cpuset with the collection of cpu cores that the process runs on */
-    ret = hwloc_get_cpubind(topology, proc_cpuset, HWLOC_CPUBIND_PROCESS);
-    if (0 > ret) {
-        goto error;
-    }
-
-    /* Get the pci device from bdf */
-    obj = hwloc_get_pcidev_by_busid(topology, pci.domain_id, pci.bus_id, pci.device_id,
-                                    pci.function_id);
-    if (NULL == obj) {
-        goto error;
-    }
-
-    /* pcidev objects don't have cpusets so find the first non-io object above */
-    obj = hwloc_get_non_io_ancestor_obj(topology, obj);
-    if (NULL != obj) {
-        result = hwloc_bitmap_intersects(proc_cpuset, obj->cpuset);
-    }
-
-error:
-    hwloc_bitmap_free(proc_cpuset);
-    return result;
+    return false;
 }
 #endif
 
@@ -613,10 +672,13 @@ struct fi_info *opal_common_ofi_select_provider(struct fi_info *provider_list,
 {
     struct fi_info *provider = provider_list, *current_provider = provider_list;
     struct fi_info **provider_table;
+    pmix_device_distance_t *distances = NULL;
 #if OPAL_OFI_PCI_DATA_AVAILABLE
     struct fi_pci_attr pci;
+    bool near;
 #endif
     int ret;
+    int num_distances = 0;
     unsigned int num_provider = 0, provider_limit = 0;
     bool provider_found = false, cpusets_match = false;
 
@@ -641,23 +703,22 @@ struct fi_info *opal_common_ofi_select_provider(struct fi_info *provider_list,
 
     current_provider = provider;
 
+    distances = get_nearest_nics(&num_distances);
     /* Cycle through remaining fi_info objects, looking for alike providers */
     while (NULL != current_provider) {
         if (!check_provider_attr(provider, current_provider)) {
-            cpusets_match = false;
+            near = false;
 #if OPAL_OFI_PCI_DATA_AVAILABLE
             if (NULL != current_provider->nic
                 && NULL != current_provider->nic->bus_attr
                 && current_provider->nic->bus_attr->bus_type == FI_BUS_PCI) {
                 pci = current_provider->nic->bus_attr->attr.pci;
-                cpusets_match = compare_cpusets(opal_hwloc_topology, pci);
+                near = is_near(distances, num_distances,
+                               opal_hwloc_topology, pci);
             }
 #endif
-
-            /* Reset the list if the cpusets match and no other provider was
-             * found on the same cpuset as the process.
-             */
-            if (cpusets_match && !provider_found) {
+            /* We could have multiple near providers */
+            if (near && !provider_found) {
                 provider_found = true;
                 num_provider = 0;
             }
@@ -665,7 +726,7 @@ struct fi_info *opal_common_ofi_select_provider(struct fi_info *provider_list,
             /* Add the provider to the provider list if the cpusets match or if
              * no other provider was found on the same cpuset as the process.
              */
-            if (cpusets_match || !provider_found) {
+            if (near || !provider_found) {
                 provider_table[num_provider] = current_provider;
                 num_provider++;
             }
@@ -687,17 +748,20 @@ struct fi_info *opal_common_ofi_select_provider(struct fi_info *provider_list,
         && NULL != provider->nic->bus_attr
         && provider->nic->bus_attr->bus_type == FI_BUS_PCI) {
         pci = provider->nic->bus_attr->attr.pci;
-        cpusets_match = compare_cpusets(opal_hwloc_topology, pci);
+        near = is_near(distances, num_distances,
+                       opal_hwloc_topology, pci);
     }
 #endif
 
 #if OPAL_ENABLE_DEBUG
     opal_output_verbose(1, opal_common_ofi.output,
-                        "package rank: %d device: %s cpusets match: %s\n", package_rank,
-                        provider->domain_attr->name, cpusets_match ? "true" : "false");
+                        "package rank: %d device: %s near: %s\n", package_rank,
+                        provider->domain_attr->name, near ? "true" : "false");
 #endif
 
     free(provider_table);
+    if (distances)
+        free(distances);
     return provider;
 }
 
