@@ -86,6 +86,8 @@ struct mca_pml_ob1_t {
     char* allocator_name;
     mca_allocator_base_module_t* allocator;
     unsigned int unexpected_limit;
+    /* Accelerator support initialized */
+    bool accelerator_enabled;
 };
 typedef struct mca_pml_ob1_t mca_pml_ob1_t;
 
