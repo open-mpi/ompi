@@ -21,6 +21,23 @@ static inline int to_fi_op(mca_btl_base_atomic_op_t op)
         return FI_SUM;
     case MCA_BTL_ATOMIC_SWAP:
         return FI_ATOMIC_WRITE;
+    case MCA_BTL_ATOMIC_MAX:
+        return FI_MAX;
+    case MCA_BTL_ATOMIC_MIN:
+        return FI_MIN;
+    case MCA_BTL_ATOMIC_LAND:
+        return FI_LAND;
+    case MCA_BTL_ATOMIC_AND:
+        return FI_BAND;
+    case MCA_BTL_ATOMIC_LOR:
+        return FI_LOR;
+    case MCA_BTL_ATOMIC_OR:
+        return FI_BOR;
+    case MCA_BTL_ATOMIC_LXOR:
+        return FI_LXOR;
+    case MCA_BTL_ATOMIC_XOR:
+        return FI_BXOR;
+
     default:
         BTL_ERROR(("Unknown or unsupported atomic op."));
         MCA_BTL_OFI_ABORT();
