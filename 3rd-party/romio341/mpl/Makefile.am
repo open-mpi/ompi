@@ -36,7 +36,6 @@ mpl_headers =               \
     include/mpl_gpu_fallback.h\
     include/mpl_gpu_ze.h    \
     include/mpl_math.h      \
-    include/mplconfig.h     \
     include/utlist.h    \
     include/mpl_valgrind.h  \
     include/mpl_env.h       \
@@ -75,9 +74,11 @@ mpl_headers =               \
 
 if MPL_EMBEDDED_MODE
 noinst_HEADERS += $(mpl_headers)
+nodist_noinst_HEADERS = include/mplconfig.h
 noinst_LTLIBRARIES = lib@MPLLIBNAME@.la
 else !MPL_EMBEDDED_MODE
 include_HEADERS = $(mpl_headers)
+nodist_include_HEADERS = include/mplconfig.h
 lib_LTLIBRARIES = lib@MPLLIBNAME@.la
 endif !MPL_EMBEDDED_MODE
 

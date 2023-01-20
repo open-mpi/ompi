@@ -1,7 +1,7 @@
 .. _label-running-mpi-applications:
 
-Running MPI applications
-========================
+Launching MPI applications
+==========================
 
 Open MPI can launch MPI processes in a wide variety of environments,
 but they can generally be broken down into two categories:
@@ -18,9 +18,8 @@ but they can generally be broken down into two categories:
    :maxdepth: 1
 
    quickstart
-   pmix-and-prrte
    prerequisites
-   tuning
+   pmix-and-prrte
 
    localhost
    ssh

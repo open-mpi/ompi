@@ -105,9 +105,18 @@ process as described in Section 11 of the Linux kernel document on
 <https://www.kernel.org/doc/html/latest/process/submitting-patches.html#sign-your-work-the-developer-s-certificate-of-origin>`_.
 Each proposed contribution to the Open MPI code base must include the
 text ``Signed-off-by:`` followed by the contributor's name and email
-address. This is a developer's certification that he or she has the
-right to submit the patch for inclusion into the project, and
-indicates agreement to the Developer's Certificate of Origin:
+address.
+
+.. admonition:: Pro tip
+   :class: tip
+
+   You can use the ``-s`` flag to the ``git commit`` command (i.e.,
+   ``git commit -s ...``) to automatically add the appropriate
+   ``Signed-off-by:`` line to your commit message.
+
+The ``Signed-off-by:`` line is a developer's certification that he or
+she has the right to submit the patch for inclusion into the project,
+and indicates agreement to the Developer's Certificate of Origin:
 
     By making a contribution to this project, I certify that:
 
@@ -145,12 +154,18 @@ inadvertently made without the required certification.
 If you have not already done so, please ensure that *every* commit in
 your pull request contains the ``Signed-off-by:`` line.
 
+Git commit messages
+^^^^^^^^^^^^^^^^^^^
+
+Please write a good Git commit message, with a short first line
+describing *what* was done, and then a description of *why* it was
+done.
+
 .. admonition:: Pro tip
    :class: tip
 
-   You can use the ``-s`` flag to the ``git commit`` command (i.e.,
-   ``git commit -s ...``) to automatically add the appropriate
-   ``Signed-off-by:`` line to your commit message.
+   `See this blog entry <https://cbea.ms/git-commit/>`_ for an
+   excellent description of how to write a good Git commit message.
 
 Code style
 ^^^^^^^^^^

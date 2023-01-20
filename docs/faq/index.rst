@@ -1,12 +1,18 @@
-.. Open MPI FAQ
-
-   This page will likely eventually go away (i.e., the "FAQ" section
-   will likely disappear -- its contents will likely just be folded in
-   elsewhere in the document).
-
-
 Frequently Asked Questions (FAQ)
 ================================
+
+.. error:: This section represents old content from the <= v4.x FAQ
+           that has not been properly converted to the new-style
+           documentation.  The content here was perfunctorily
+           converted to RST, but it still needs to be:
+
+           #. Converted from a question-and-answer style to a regular
+              documentation style (like the rest of these docs).
+           #. Removed from this section and folded into other sections
+              in these docs.
+
+           To be clear, this section will eventually be deleted; do
+           not write any new content in this section.
 
 The pages below include questions that we are asked frequently enough
 that they are worth categorizing in an official way.
@@ -22,8 +28,5 @@ that they are worth categorizing in an official way.
    troubleshooting
 
    large-clusters
-
-   ompio
-   macos
 
    general-tuning

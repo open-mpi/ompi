@@ -1,6 +1,9 @@
 Shared Memory
 =============
 
+.. error:: TODO This section needs to be converted from FAQ Q&A style
+           to regular documentation style.
+
 What is the sm BTL?
 -------------------
 

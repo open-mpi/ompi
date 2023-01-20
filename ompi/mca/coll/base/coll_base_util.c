@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2021 The University of Tennessee and The University
+ * Copyright (c) 2004-2022 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -244,25 +244,21 @@ int ompi_coll_base_retain_datatypes( ompi_request_t *req, ompi_datatype_t *stype
     return OMPI_SUCCESS;
 }
 
-static void release_vecs_callback(ompi_coll_base_nbc_request_t *request) {
-    ompi_communicator_t *comm = request->super.req_mpi_object.comm;
-    int scount, rcount;
-    if (OMPI_COMM_IS_TOPO(comm)) {
-        (void)mca_topo_base_neighbor_count (comm, &rcount, &scount);
-    } else {
-        scount = rcount = OMPI_COMM_IS_INTER(comm)?ompi_comm_remote_size(comm):ompi_comm_size(comm);
-    }
+static void release_vecs_callback(ompi_coll_base_nbc_request_t *request)
+{
     if (NULL != request->data.refcounted.vecs.stypes) {
-        for (int i=0; i<scount; i++) {
-            if (NULL != request->data.refcounted.vecs.stypes[i]) {
+        for (int i = 0; i < request->data.refcounted.vecs.scount; i++) {
+            if (NULL != request->data.refcounted.vecs.stypes[i] &&
+                !ompi_datatype_is_predefined(request->data.refcounted.vecs.stypes[i])) {
                 OMPI_DATATYPE_RELEASE_NO_NULLIFY(request->data.refcounted.vecs.stypes[i]);
             }
         }
         request->data.refcounted.vecs.stypes = NULL;
     }
     if (NULL != request->data.refcounted.vecs.rtypes) {
-        for (int i=0; i<rcount; i++) {
-            if (NULL != request->data.refcounted.vecs.rtypes[i]) {
+        for (int i = 0; i < request->data.refcounted.vecs.rcount; i++) {
+            if (NULL != request->data.refcounted.vecs.rtypes[i] &&
+                !ompi_datatype_is_predefined(request->data.refcounted.vecs.rtypes[i])) {
                 OMPI_DATATYPE_RELEASE_NO_NULLIFY(request->data.refcounted.vecs.rtypes[i]);
             }
         }
@@ -292,35 +288,47 @@ static int free_vecs_callback(struct ompi_request_t **rptr) {
 }
 
 int ompi_coll_base_retain_datatypes_w( ompi_request_t *req,
-                                       ompi_datatype_t * const stypes[], ompi_datatype_t * const rtypes[]) {
+                                       ompi_datatype_t * const stypes[],
+                                       ompi_datatype_t * const rtypes[],
+                                       bool use_topo)
+{
     ompi_coll_base_nbc_request_t *request = (ompi_coll_base_nbc_request_t *)req;
-    bool retain = false;
     ompi_communicator_t *comm = request->super.req_mpi_object.comm;
     int scount, rcount;
+
     if (REQUEST_COMPLETE(req)) {
         return OMPI_SUCCESS;
     }
-    if (OMPI_COMM_IS_TOPO(comm)) {
+
+    if (use_topo && OMPI_COMM_IS_TOPO(comm)) {
         (void)mca_topo_base_neighbor_count (comm, &rcount, &scount);
     } else {
         scount = rcount = OMPI_COMM_IS_INTER(comm)?ompi_comm_remote_size(comm):ompi_comm_size(comm);
     }
 
-    for (int i=0; i<scount; i++) {
-        if (NULL != stypes && NULL != stypes[i] && !ompi_datatype_is_predefined(stypes[i])) {
-            OBJ_RETAIN(stypes[i]);
-            retain = true;
+    request->data.refcounted.vecs.scount = 0;  /* default value */
+    if (NULL != stypes) {
+        for (int i = 0; i < scount; i++) {
+            if (NULL != stypes[i] && !ompi_datatype_is_predefined(stypes[i])) {
+                OBJ_RETAIN(stypes[i]);
+                request->data.refcounted.vecs.scount = i;  /* last valid type */
+            }
         }
     }
-    for (int i=0; i<rcount; i++) {
-        if (NULL != rtypes && NULL != rtypes[i] && !ompi_datatype_is_predefined(rtypes[i])) {
-            OBJ_RETAIN(rtypes[i]);
-            retain = true;
+    request->data.refcounted.vecs.rcount = 0;  /* default value */
+    if (NULL != rtypes) {
+        for (int i = 0; i < rcount; i++) {
+            if (NULL != rtypes[i] && !ompi_datatype_is_predefined(rtypes[i])) {
+                OBJ_RETAIN(rtypes[i]);
+                request->data.refcounted.vecs.rcount = i;  /* last valid type */
+            }
         }
     }
-    if (OPAL_UNLIKELY(retain)) {
+    if (OPAL_LIKELY(request->data.refcounted.vecs.scount | request->data.refcounted.vecs.rcount) ) {
         request->data.refcounted.vecs.stypes = (ompi_datatype_t **) stypes;
         request->data.refcounted.vecs.rtypes = (ompi_datatype_t **) rtypes;
+        request->data.refcounted.vecs.scount = scount;
+        request->data.refcounted.vecs.rcount = rcount;
         if (req->req_persistent) {
             request->cb.req_free = req->req_free;
             req->req_free = free_vecs_callback;

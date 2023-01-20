@@ -35,22 +35,23 @@ IMAGE_SOURCE_FILES = \
         $(srcdir)/installing-open-mpi/required-support-libraries-dependency-graph.png
 RST_SOURCE_FILES   = \
         $(srcdir)/*.rst \
-        $(srcdir)/app-debug/*.rst \
-        $(srcdir)/building-apps/*.rst \
-        $(srcdir)/developers/*.rst \
-        $(srcdir)/faq/*.rst \
-        $(srcdir)/features/*.rst \
+        $(srcdir)/release-notes/*.rst \
         $(srcdir)/installing-open-mpi/*.rst \
         $(srcdir)/installing-open-mpi/*/*.rst \
+        $(srcdir)/features/*.rst \
+        $(srcdir)/building-apps/*.rst \
+        $(srcdir)/launching-apps/*.rst \
+        $(srcdir)/tuning-apps/*.rst \
+        $(srcdir)/tuning-apps/*/*.rst \
+        $(srcdir)/app-debug/*.rst \
+        $(srcdir)/faq/*.rst \
+        $(srcdir)/developers/*.rst \
         $(srcdir)/license/*.rst \
+        $(srcdir)/news/*.rst \
         $(srcdir)/man-openmpi/*.rst \
         $(srcdir)/man-openmpi/man*/*.rst \
         $(srcdir)/man-openshmem/*.rst \
-        $(srcdir)/man-openshmem/man*/*.rst \
-        $(srcdir)/networking/*.rst \
-        $(srcdir)/news/*.rst \
-        $(srcdir)/release-notes/*.rst \
-        $(srcdir)/running-apps/*.rst
+        $(srcdir)/man-openshmem/man*/*.rst
 
 EXTRA_DIST         = \
         requirements.txt \

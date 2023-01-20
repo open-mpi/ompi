@@ -1,6 +1,9 @@
 CUDA
 ====
 
+.. error:: TODO This section needs to be converted from FAQ Q&A style
+           to regular documentation style.
+
 How do I build Open MPI with CUDA-aware support?
 ------------------------------------------------
 

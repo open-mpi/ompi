@@ -9,7 +9,7 @@ accelerators. More information can be found at the following
 
 
 Building Open MPI with ROCm support
-------------------------------------------------------------------------
+-----------------------------------
 
 ROCm-aware support means that the MPI library can send and receive
 data from AMD GPU device buffers directly. As of today, ROCm support
@@ -38,21 +38,21 @@ It should look something like:
 
 .. code-block:: sh
 
-  # Configure UCX with ROCm support
-  shell$ cd ucx
-  shell$ ./configure --prefix=/path/to/ucx-rocm-install \
+   # Configure UCX with ROCm support
+   shell$ cd ucx
+   shell$ ./configure --prefix=/path/to/ucx-rocm-install \
                      --with-rocm=/opt/rocm --without-knem
 
-  # Configure Open MPI with UCX and ROCm support
-  shell$ cd ompi
-  shell$ ./configure --with-rocm=/opt/rocm    \
-         --with-ucx=/path/to/ucx-rocm-install \
-	  <other configure params>
+   # Configure Open MPI with UCX and ROCm support
+   shell$ cd ompi
+   shell$ ./configure --with-rocm=/opt/rocm    \
+          --with-ucx=/path/to/ucx-rocm-install \
+          <other configure params>
 
 /////////////////////////////////////////////////////////////////////////
 
 Checking that Open MPI has been built with ROCm support
---------------------------------------------------------------------------
+-------------------------------------------------------
 
 Verify that Open MPI has been built with ROCm using the
 :ref:`ompi_info(1) <man1-ompi_info>` command:
@@ -60,7 +60,7 @@ Verify that Open MPI has been built with ROCm using the
 .. code-block:: sh
 
    # Use ompi_info to verify ROCm support in Open MPI
-   shell$ ./ompi_info |grep "MPI extensions"
+   shell$ ./ompi_info | grep "MPI extensions"
           MPI extensions: affinity, cuda, ftmpi, rocm
 
 /////////////////////////////////////////////////////////////////////////
@@ -91,7 +91,7 @@ for details.
 /////////////////////////////////////////////////////////////////////////
 
 Runtime querying of ROCm support in Open MPI
-------------------------------------------------------------------------
+--------------------------------------------
 
 Starting with Open MPI v5.0.0 :ref:`MPIX_Query_rocm_support(3)
 <mpix_query_rocm_support>` is available as an extension to check
@@ -102,7 +102,7 @@ function, the code needs to include ``mpi-ext.h``. Note that
 /////////////////////////////////////////////////////////////////////////
 
 Collective component supporting ROCm device memory
----------------------------------------------------------------------------
+--------------------------------------------------
 
 The `UCC <https://github.com/openucx/ucc>`_ based collective component
 in Open MPI can be configured and compiled to include ROCm support.
@@ -111,14 +111,14 @@ An example for configure UCC and Open MPI with ROCm is shown below:
 
 .. code-block::
 
-   #Configure and compile UCC with ROCm support
+   # Configure and compile UCC with ROCm support
    shell$ cd ucc
    shell$ ./configure --with-rocm=/opt/rocm                \
                       --with-ucx=/path/to/ucx-rocm-install \
                       --prefix=/path/to/ucc-rocm-install
    shell$ make -j && make install
 
-   #Configure and compile Open MPI with UCX, UCC, and ROCm support
+   # Configure and compile Open MPI with UCX, UCC, and ROCm support
    shell$ cd ompi
    shell$ ./configure --with-rocm=/opt/rocm                \
                       --with-ucx=/path/to/ucx-rocm-install \

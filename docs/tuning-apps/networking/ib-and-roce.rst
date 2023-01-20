@@ -1,6 +1,9 @@
 InifiniBand / RoCE support
 ==========================
 
+.. error:: TODO This section needs to be converted from FAQ Q&A style
+           to regular documentation style.
+
 How are InfiniBand / RoCE devices supported in Open MPI?
 --------------------------------------------------------
 

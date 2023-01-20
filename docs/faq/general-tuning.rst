@@ -1,7 +1,18 @@
 General Tuning
 ==============
 
-.. TODO How can I create a TOC just for this page here at the top?
+.. error:: This section represents old content from the <= v4.x FAQ
+           that has not been properly converted to the new-style
+           documentation.  The content here was perfunctorily
+           converted to RST, but it still needs to be:
+
+           #. Converted from a question-and-answer style to a regular
+              documentation style (like the rest of these docs).
+           #. Removed from this section and folded into other sections
+              in these docs.
+
+           To be clear, this section will eventually be deleted; do
+           not write any new content in this section.
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -162,10 +173,9 @@ the ``mpi_warn_on_fork`` MCA parameter.  For example:
    shell$ mpirun --mca mpi_warn_on_fork 0 ...
 
 Of course, systems that ``dlopen("libmpi.so", ...)`` may not use Open
-MPI's ``mpirun``, and therefore may need to use (JMS: this ref no
-longer exists -- it moved to running-apps/tuning.rst) a different
-mechanism to set MCA parameters
-<faq-general-tuning-setting-mca-params>`.
+MPI's ``mpirun``, and therefore may need to use (**JMS: this ref no
+longer exists -- it moved to elsewhere**) a different mechanism to set
+MCA parameters <faq-general-tuning-setting-mca-params>`.
 
 /////////////////////////////////////////////////////////////////////////
 

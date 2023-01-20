@@ -123,7 +123,8 @@ void ompi_mpi_instance_release (void);
  * @param[in]    info      info object
  * @param[in]    errhander errhandler to set on the instance
  */
-OMPI_DECLSPEC int ompi_mpi_instance_init (int ts_level, opal_info_t *info, ompi_errhandler_t *errhandler, ompi_instance_t **instance);
+OMPI_DECLSPEC int ompi_mpi_instance_init (int ts_level, opal_info_t *info, ompi_errhandler_t *errhandler,
+                                          ompi_instance_t **instance, int argc, char **argv);
 
 /**
  * @brief Destroy an MPI instance and set it to MPI_SESSION_NULL

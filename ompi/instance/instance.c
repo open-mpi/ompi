@@ -331,7 +331,7 @@ static void evhandler_dereg_callbk(pmix_status_t status,
 /**
  * @brief Function that starts up the common components needed by all instances
  */
-static int ompi_mpi_instance_init_common (void)
+static int ompi_mpi_instance_init_common (int argc, char **argv)
 {
     int ret;
     ompi_proc_t **procs;
@@ -385,7 +385,7 @@ static int ompi_mpi_instance_init_common (void)
     OMPI_TIMING_NEXT("initialization");
 
     /* Setup RTE */
-    if (OMPI_SUCCESS != (ret = ompi_rte_init (NULL, NULL))) {
+    if (OMPI_SUCCESS != (ret = ompi_rte_init (&argc, &argv))) {
         return ompi_instance_print_error ("ompi_mpi_init: ompi_rte_init failed", ret);
     }
 
@@ -435,8 +435,13 @@ static int ompi_mpi_instance_init_common (void)
     /* give it a name so we can distinguish it */
     PMIX_INFO_LOAD(&info[1], PMIX_EVENT_HDLR_NAME, "ULFM-Event-handler", PMIX_STRING);
     OPAL_PMIX_CONSTRUCT_LOCK(&mylock);
-    pmix_status_t codes[2] = { PMIX_ERR_PROC_ABORTED, PMIX_ERR_LOST_CONNECTION };
-    PMIx_Register_event_handler(codes, 1, info, 2, ompi_errhandler_callback, evhandler_reg_callbk, (void*)&mylock);
+    pmix_status_t codes[4] = {
+        PMIX_ERR_PROC_ABORTED,
+        PMIX_ERR_EXIT_NONZERO_TERM,
+        PMIX_ERR_PROC_ABORTED_BY_SIG,
+        PMIX_ERR_LOST_CONNECTION
+    };
+    PMIx_Register_event_handler(codes, 3, info, 2, ompi_errhandler_callback, evhandler_reg_callbk, (void*)&mylock);
     OPAL_PMIX_WAIT_THREAD(&mylock);
     rc = mylock.status;
     ompi_ulfm_pmix_err_handler = mylock.errhandler_ref;
@@ -789,7 +794,7 @@ static int ompi_mpi_instance_init_common (void)
     return OMPI_SUCCESS;
 }
 
-int ompi_mpi_instance_init (int ts_level,  opal_info_t *info, ompi_errhandler_t *errhandler, ompi_instance_t **instance)
+int ompi_mpi_instance_init (int ts_level,  opal_info_t *info, ompi_errhandler_t *errhandler, ompi_instance_t **instance, int argc, char **argv)
 {
     ompi_instance_t *new_instance;
     int ret;
@@ -804,7 +809,7 @@ int ompi_mpi_instance_init (int ts_level,  opal_info_t *info, ompi_errhandler_t 
 
     opal_mutex_lock (&instance_lock);
     if (0 == opal_atomic_fetch_add_32 (&ompi_instance_count, 1)) {
-        ret = ompi_mpi_instance_init_common ();
+        ret = ompi_mpi_instance_init_common (argc, argv);
         if (OPAL_UNLIKELY(OPAL_SUCCESS != ret)) {
             opal_mutex_unlock (&instance_lock);
             return ret;
