@@ -80,7 +80,8 @@ headers = \
         uri.h \
         info_subscriber.h \
 	info.h \
-	minmax.h
+	minmax.h \
+	sha256.h
 
 libopalutil_la_SOURCES = \
         $(headers) \
@@ -115,6 +116,7 @@ libopalutil_core_la_SOURCES = \
         printf.c \
         proc.c \
         qsort.c \
+        sha256.c \
         show_help.c \
         show_help_lex.l \
         stacktrace.c \
