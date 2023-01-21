@@ -22,8 +22,7 @@ Platform Notes
 
 * Other systems have been lightly (but not fully) tested:
 
-  * Linux (various flavors/distros), 32 bit, with gcc
-  * Cygwin 32 & 64 bit with gcc
+  * Cygwin 64 bit with gcc
   * ARMv6, ARMv7, ARMv9
   * Other 64 bit platforms.
   * OpenBSD.  Requires configure options ``--enable-mca-no-build=patcher``
@@ -31,6 +30,8 @@ Platform Notes
   * Problems have been reported when building Open MPI on FreeBSD 11.1
     using the clang-4.0 system compiler. A workaround is to build
     Open MPI using the GNU compiler.
+
+.. note:: 32-bit environments are no longer supported.
 
 * The run-time systems that are currently supported are:
 

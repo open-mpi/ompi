@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2022 Cisco Systems, Inc.  All rights reserved
+# Copyright (c) 2006-2023 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2006-2008 Sun Microsystems, Inc.  All rights reserved.
 # Copyright (c) 2006-2017 Los Alamos National Security, LLC.  All rights
 #                         reserved.
@@ -458,6 +458,10 @@ AC_CHECK_SIZEOF(double _Complex)
 AC_CHECK_SIZEOF(long double _Complex)
 
 AC_CHECK_SIZEOF(void *)
+AS_IF([test "$ac_cv_sizeof_void_p" -eq 4],
+      [AC_MSG_WARN([Open MPI no longer supports 32 bit builds.])
+       AC_MSG_WARN([Please use Open MPI v4.x or earlier if you need 32 bit support.])
+       AC_MSG_ERROR([Cannot continue])])
 AC_CHECK_SIZEOF(size_t)
 if test "$ac_cv_type_ssize_t" = yes ; then
     AC_CHECK_SIZEOF(ssize_t)
