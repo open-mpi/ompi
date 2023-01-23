@@ -42,7 +42,7 @@
 opal_common_ofi_module_t opal_common_ofi = {.prov_include = NULL,
                                             .prov_exclude = NULL,
                                             .output = -1};
-static const char default_prov_exclude_list[] = "shm,sockets,tcp,udp,rstream,usnic";
+static const char default_prov_exclude_list[] = "shm,sockets,tcp,udp,rstream,usnic,net";
 static opal_mutex_t opal_common_ofi_mutex = OPAL_MUTEX_STATIC_INIT;
 static int opal_common_ofi_verbose_level = 0;
 static int opal_common_ofi_init_ref_cnt = 0;
