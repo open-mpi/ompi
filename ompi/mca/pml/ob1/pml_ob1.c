@@ -197,7 +197,7 @@ int mca_pml_ob1_enable(bool enable)
                           mca_pml_ob1.free_list_inc,
                           NULL, 0, NULL, NULL, NULL);
 
-    mca_pml_ob1_accelerator_init();
+    mca_pml_ob1.accelerator_enabled = (0 == mca_pml_ob1_accelerator_init()) ? true : false;
 
     mca_pml_ob1.enabled = true;
 
