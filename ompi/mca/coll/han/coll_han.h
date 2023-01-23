@@ -204,6 +204,8 @@ typedef struct mca_coll_han_component_t {
 
     /** MCA parameter: Priority of this component */
     int han_priority;
+    /** MCA parameter: Priority penalty for sequential process distribution */
+    int han_priority_penalty;
     /* whether output the log message */
     int han_output;
     int han_output_verbose; /* activation level of coll han verbosity */
