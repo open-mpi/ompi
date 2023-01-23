@@ -48,6 +48,12 @@
 static mca_common_ompio_generate_current_file_view_fn_t generate_current_file_view_fn;
 static mca_common_ompio_get_mca_parameter_value_fn_t get_mca_parameter_value_fn;
 
+/*
+ * Global, component-wide OMPIO mutex
+ */
+opal_mutex_t mca_common_ompio_mutex = {{0}};
+
+
 int mca_common_ompio_file_open (ompi_communicator_t *comm,
                                 const char *filename,
                                 int amode,

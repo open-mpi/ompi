@@ -14,6 +14,7 @@
  * Copyright (c) 2018      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018      DataDirect Networks. All rights reserved.
+ * Copyright (c) 2022      Advanced Micro Devices, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -100,6 +101,8 @@
 
 #define OMPIO_PERM_NULL               -1
 #define OMPIO_IOVEC_INITIAL_SIZE      100
+
+extern opal_mutex_t mca_common_ompio_mutex;
 
 enum ompio_fs_type
 {
@@ -274,7 +277,7 @@ OMPI_DECLSPEC int mca_common_ompio_file_iwrite_at_all (ompio_file_t *fp, OMPI_MP
 
 OMPI_DECLSPEC int mca_common_ompio_build_io_array ( ompio_file_t *fh, int index, int cycles,
                                                     size_t bytes_per_cycle, size_t max_data, uint32_t iov_count,
-                                                    struct iovec *decoded_iov, int *ii, int *jj, size_t *tbw,
+                                                    struct iovec *decoded_iov, int *ii, size_t *tbw,
                                                     size_t *spc, mca_common_ompio_io_array_t **io_array,
                                                     int *num_io_entries );
 
