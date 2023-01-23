@@ -155,19 +155,6 @@ multi-threaded MPI applications.
 
 /////////////////////////////////////////////////////////////////////////
 
-Does Open MPI support 32 bit environments?
-------------------------------------------
-
-As far as we know, yes.  64 bit architectures have effectively taken
-over the world, though, so 32-bit is not tested nearly as much as
-64-bit.
-
-Specifically, most of the Open MPI developers only have 64-bit
-machines, and therefore only test 32-bit in emulation mode.
-
-
-/////////////////////////////////////////////////////////////////////////
-
 Does Open MPI support 64 bit environments?
 ------------------------------------------
 
