@@ -1,3 +1,4 @@
+CI tester
 # Open MPI
 
 [The Open MPI Project](https://www.open-mpi.org/) is an open source
