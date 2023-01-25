@@ -126,10 +126,15 @@ void *mca_smsc_xpmem_map_peer_region(mca_smsc_endpoint_t *endpoint, uint64_t fla
                     base = opal_min(base, (uintptr_t) ov_reg->base);
                     bound = opal_max(bound, (uintptr_t) ov_reg->bound);
 
-                    /* Unmap will decrement the ref count and dealloc the attachment if it's
-                     * not in use. Okay to do even though we didn't increment the ref count
-                     * when we found the reg, as there is a superfluous ref present from when
-                     * we initialized ref_count to 2 instead of 1. */
+                    /* unmap_peer_region will decrement the ref count and dealloc the attachment
+                     * if it drops to 0. But we didn't increment the ref count when we found the
+                     * reg as is customary. If PERSIST was set, there is superfluous ref present
+                     * from when we initialized ref_count to 2 instead of 1, so we good. If not,
+                     * manually add the missing reference here; otherwise the count would drop to
+                     * -1, or the reg might be deleted while still in use elsewhere. */
+                    if (!(MCA_RCACHE_FLAGS_PERSIST & ov_reg->flags))
+                        opal_atomic_add(&ov_reg->ref_count, 1);
+
                     mca_smsc_xpmem_unmap_peer_region(ov_reg);
                 }
             }
@@ -142,7 +147,9 @@ void *mca_smsc_xpmem_map_peer_region(mca_smsc_endpoint_t *endpoint, uint64_t fla
             return NULL;
         }
 
-        reg->ref_count = 2;
+        // PERSIST is implemented by keeping an extra reference around
+        reg->ref_count = ((flags & MCA_RCACHE_FLAGS_PERSIST)
+            && !(flags & MCA_RCACHE_FLAGS_CACHE_BYPASS) ? 2 : 1);
         reg->flags = flags;
         reg->base = (unsigned char *) base;
         reg->bound = (unsigned char *) bound;
@@ -184,8 +191,14 @@ void *mca_smsc_xpmem_map_peer_region(mca_smsc_endpoint_t *endpoint, uint64_t fla
 
         opal_memchecker_base_mem_defined(reg->rcache_context, bound - base + 1);
 
-        rc = mca_rcache_base_vma_insert(vma_module, reg, 0);
-        assert(OPAL_SUCCESS == rc);
+        if (!(reg->flags & MCA_RCACHE_FLAGS_CACHE_BYPASS)) {
+            rc = mca_rcache_base_vma_insert(vma_module, reg, 0);
+            assert(OPAL_SUCCESS == rc);
+
+            if (OPAL_SUCCESS != rc) {
+                reg->flags |= MCA_RCACHE_FLAGS_CACHE_BYPASS;
+            }
+        }
     }
 
     opal_atomic_wmb();
@@ -202,17 +215,17 @@ void mca_smsc_xpmem_unmap_peer_region(void *ctx)
     int32_t ref_count;
 
     ref_count = opal_atomic_add_fetch_32(&reg->ref_count, -1);
-    if (OPAL_UNLIKELY(0 == ref_count && !(reg->flags & MCA_RCACHE_FLAGS_PERSIST))) {
+    if (OPAL_UNLIKELY(0 == ref_count)) {
         opal_output_verbose(MCA_BASE_VERBOSE_INFO, opal_smsc_base_framework.framework_output,
                             "mca_smsc_xpmem_unmap_peer_region: deleting region mapping for "
                             "endpoint %p address range %p-%p",
                             (void *) endpoint, reg->base, reg->bound);
-#if OPAL_ENABLE_DEBUG
-        int ret = mca_rcache_base_vma_delete(endpoint->vma_module, reg);
-        assert(OPAL_SUCCESS == ret);
-#else
-        (void) mca_rcache_base_vma_delete(endpoint->vma_module, reg);
-#endif
+
+        if (!(reg->flags & MCA_RCACHE_FLAGS_CACHE_BYPASS)) {
+            int ret = mca_rcache_base_vma_delete(endpoint->vma_module, reg);
+            assert(OPAL_SUCCESS == ret);
+            (void) ret;
+        }
 
         opal_memchecker_base_mem_noaccess(reg->rcache_context, (uintptr_t)(reg->bound - reg->base + 1));
         (void) xpmem_detach(reg->rcache_context);
@@ -223,6 +236,10 @@ void mca_smsc_xpmem_unmap_peer_region(void *ctx)
 
 static int mca_smsc_xpmem_endpoint_rcache_entry_cleanup(mca_rcache_base_registration_t *reg, void *ctx)
 {
+    // See respective comment in mca_smsc_xpmem_map_peer_region
+    if (!(MCA_RCACHE_FLAGS_PERSIST & reg->flags))
+        opal_atomic_add(&reg->ref_count, 1);
+
     mca_smsc_xpmem_unmap_peer_region(reg);
     return OPAL_SUCCESS;
 }
@@ -273,7 +290,8 @@ int mca_smsc_xpmem_copy_to(mca_smsc_endpoint_t *endpoint, void *local_address, v
     (void) reg_handle;
 
     void *remote_ptr, *ctx;
-    ctx = mca_smsc_xpmem_map_peer_region(endpoint, /*flags=*/0, remote_address, size, &remote_ptr);
+    ctx = mca_smsc_xpmem_map_peer_region(endpoint,
+        MCA_RCACHE_FLAGS_PERSIST, remote_address, size, &remote_ptr);
     mca_smsc_xpmem_memmove(remote_ptr, local_address, size);
 
     mca_smsc_xpmem_unmap_peer_region(ctx);
@@ -289,7 +307,8 @@ int mca_smsc_xpmem_copy_from(mca_smsc_endpoint_t *endpoint, void *local_address,
 
     void *remote_ptr, *ctx;
 
-    ctx = mca_smsc_xpmem_map_peer_region(endpoint, /*flags=*/0, remote_address, size, &remote_ptr);
+    ctx = mca_smsc_xpmem_map_peer_region(endpoint,
+        MCA_RCACHE_FLAGS_PERSIST, remote_address, size, &remote_ptr);
     mca_smsc_xpmem_memmove(local_address, remote_ptr, size);
 
     mca_smsc_xpmem_unmap_peer_region(ctx);
