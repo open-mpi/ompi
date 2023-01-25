@@ -174,6 +174,7 @@ test:ibm:
     - ls
     - module load ibm
     - export PATH=$PWD/install_test/bin:$PATH
+    - export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PWD/install_test/lib
     - which mpirun
     - pushd examples
     - mpirun -np 4 hostname
