@@ -353,12 +353,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
 
     ompi_hook_base_mpi_init_top_post_opal(argc, argv, requested, provided);
 
-    /* initialize communicator subsystem */
-    if (OMPI_SUCCESS != (ret = ompi_comm_init_mpi3 ())) {
-        error = "ompi_mpi_init: ompi_comm_init_mpi3 failed";
-        goto error;
-    }
-
     /* Bozo argument check */
     if (NULL == argv && argc > 1) {
         ret = OMPI_ERR_BAD_PARAM;
