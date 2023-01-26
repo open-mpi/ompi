@@ -4,9 +4,9 @@ Open MPI v5.0.x series
 This file contains all the NEWS updates for the Open MPI v5.0.x
 series, in reverse chronological order.
 
-Open MPI version 5.0.0rc9
--------------------------
-:Date: 21 October 2022
+Open MPI version 5.0.0rc10
+--------------------------
+:Date: 27 January 2023
 
 .. admonition:: MPIR API has been removed
    :class: warning
@@ -40,23 +40,27 @@ Open MPI version 5.0.0rc9
       libraries, rather than linked into the Open MPI core libraries.
 
 
-- Changes since rc8:
+- Changes since rc9:
 
-  - Added new ``Accelerator`` gpu framework. ``CUDA`` specific code was replaced with
-    a generic framework that standardizes various device features such as copies or
-    pointer type detection. This allows for modularized implementation of various
-    devices such as the newly introduced ROCm Accelerator component. The redesign
-    also allows for Open MPI builds to be shipped with ``CUDA`` support enabled
-    without requiring ``CUDA`` libraries.
-  - Various bug fixes related to ``MPI Sessions``.
-  - autogen.pl: Fixed ifort support on OSX. Thanks to Tien Quang, NGUYEN
-    for providing the fix.
-  - Initial implementation of ``MPI_COMM_TYPE_HW_UNGUIDED`` for ``MPI_Comm_split_type``.
-  - Fixed a bug where ``MPI_Pack`` and ``MPI_Unpack`` external32 with long doubles
-    could fail. See #8918 for details.
-  - Updated MCA mutexes to use the Qthreads user-level-threading backend. Thanks
-    to Jan Ciesko for the contribution.
-  - Various other bug fixes and cleanups.
+  - coll/ucc: Added support for Scatter and Iscatter collectives.
+  - Added cache bypass mechanism to the ``OFI`` BTL. This fixes conflicts
+    with Libfabric, which has its own registration cache. This addes a bypass
+    flag which can be used for providers known to have their own registration cache.
+  - common/ompio: implement pipelined read and write operation.
+    This new new code path shows significant performance improvements for reading/writing
+    device buffers compared to the previous implementation, and reduces the memory
+    footprint of ``OMPIO`` by allocating smaller temporary buffers.
+  - 32-bit builds have been disabled. Building Open MPI in a 32-bit environment
+    is no longer supported.
+  - MPI-4: MPI_Info_get() and MPI_Infi_get_valuelen() are now deprecated.
+  - MPI-4: Issue a deprecation warning when MPI_Cancel() is called for a non-blocking send request.
+  - Fixed various bugs encountered when running MPI under a debugger.
+  - Cleaned up a number of memory leaks.
+  - Cleaned up global symbol pollution that was leaking out of libmpi.
+  - Removed opal_list_insert(), it was buggy and not used.
+    Thanks to Jinyuan Wang for the contribution.
+  - Many other bug fixes and cleanups.
+  - Various documentation updates.
 
 - All other notable updates for v5.0.0:
 
@@ -78,6 +82,12 @@ Open MPI version 5.0.0rc9
       this effort.
     - New Thread Local Storage API: Removes global visibility of TLS structures
       and allows for dynamic TLS handling.
+    - Added new ``Accelerator`` gpu framework. ``CUDA`` specific code was replaced with
+      a generic framework that standardizes various device features such as copies or
+      pointer type detection. This allows for modularized implementation of various
+      devices such as the newly introduced ROCm Accelerator component. The redesign
+      also allows for Open MPI builds to be shipped with ``CUDA`` support enabled
+      without requiring ``CUDA`` libraries.
     - Added load-linked, store-conditional atomics support for AArch64.
     - Added atomicity support to the ``ompio`` component.
     - Added support for MPI minimum alignment key to the one-sided ``RDMA`` component.
