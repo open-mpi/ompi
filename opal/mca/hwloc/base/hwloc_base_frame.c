@@ -1,8 +1,8 @@
 /*
  * Copyright (c) 2011-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
- * Copyright (c) 2016-2017 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016-2023 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -58,6 +58,7 @@ hwloc_obj_type_t opal_hwloc_levels[] = {
 };
 bool opal_hwloc_use_hwthreads_as_cpus = false;
 char *opal_hwloc_base_topo_file = NULL;
+int opal_hwloc_use_perf_cpus_only= false;
 
 static mca_base_var_enum_value_t hwloc_base_map[] = {
     {OPAL_HWLOC_BASE_MAP_NONE, "none"},
@@ -161,6 +162,12 @@ static int opal_hwloc_base_register(mca_base_register_flag_t flags)
                                  "Read local topology from file instead of directly sensing it",
                                  MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY, &opal_hwloc_base_topo_file);
+
+    opal_hwloc_use_perf_cpus_only = false;
+    (void) mca_base_var_register("opal", "hwloc", "base", "use_perf_cpus_only",
+                                 "Only use performance cpus",
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY, &opal_hwloc_base_cpukind);
 
     /* register parameters */
     return OPAL_SUCCESS;

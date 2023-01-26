@@ -1,8 +1,8 @@
 /*
  * Copyright (c) 2011-2017 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
- * Copyright (c) 2017      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2017-2023 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -68,6 +68,7 @@ OPAL_DECLSPEC char* opal_hwloc_base_print_locality(opal_hwloc_locality_t localit
 OPAL_DECLSPEC extern char *opal_hwloc_base_cpu_list;
 OPAL_DECLSPEC extern hwloc_cpuset_t opal_hwloc_base_given_cpus;
 OPAL_DECLSPEC extern char *opal_hwloc_base_topo_file;
+OPAL_DECLSPEC extern bool opal_hwloc_use_perf_cpus_only;
 
 /* convenience macro for debugging */
 #define OPAL_HWLOC_SHOW_BINDING(n, v, t)                                \

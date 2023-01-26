@@ -14,8 +14,8 @@
  * Copyright (c) 2012-2017 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2013-2020 Intel, Inc.  All rights reserved.
- * Copyright (c) 2015-2017 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2023 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (C) 2018      Mellanox Technologies, Ltd.
  *                         All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
@@ -160,6 +160,20 @@ int opal_hwloc_base_filter_cpus(hwloc_topology_t topo)
         #else
             avail = hwloc_bitmap_dup(root->cpuset);
         #endif
+        if (opal_hwloc_use_perf_cpus_only) {
+            #if HWLOC_API_VERSION < 0x24000
+                OPAL_ERROR_LOG(OPAL_ERR_NOT_SUPPORTED);
+                return OPAL_ERR_NOT_SUPPORTED;
+            #else
+                int nr = hwloc_cpukinds_get_nr(topo, 0);
+                if (0 < nr) {
+                    hwloc_bitmap_t perf_cpuset;
+                    if (0 <= hwloc_cpukinds_get_info(topo, perf_cpuset, nr-1 , NULL, NULL, NULL, 0)) {
+                        hwloc_bitmap_and(avail, avail, perf_cpuset);
+                    }
+                }
+            #endif
+        }
         OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_framework.framework_output,
                              "hwloc:base: no cpus specified - using root available cpuset"));
     } else {
