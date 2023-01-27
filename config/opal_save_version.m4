@@ -11,7 +11,7 @@ dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
-dnl Copyright (c) 2022      IBM Corporation.  All rights reserved.
+dnl Copyright (c) 2022-2023 IBM Corporation.  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -74,8 +74,8 @@ AC_DEFUN([OPAL_SAVE_MPI_STANDARD_VERSION], [
     AC_DEFINE_UNQUOTED([MPI_SUBVERSION], [MPI_SUBVERSION_NUM],
                        [MPI Standard Minor version number])
 
-    AC_SUBST([MPI_VERSION])
-    AC_SUBST([MPI_SUBVERSION])
+    AC_SUBST([MPI_VERSION], [MPI_VERSION_NUM])
+    AC_SUBST([MPI_SUBVERSION], [MPI_SUBVERSION_NUM])
 
     AC_MSG_CHECKING([MPI Standard version])
     AC_MSG_RESULT([MPI_VERSION_NUM.MPI_SUBVERSION_NUM])
