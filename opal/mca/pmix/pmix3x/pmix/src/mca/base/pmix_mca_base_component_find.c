@@ -17,6 +17,7 @@
  * Copyright (c) 2014-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2016-2020 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2023      Nanook Consulting.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -339,12 +340,16 @@ static int component_find_check (pmix_mca_base_framework_t *framework, char **re
         }
 
         if (!found) {
-            char h[PMIX_MAXHOSTNAMELEN] = {0};
-            gethostname(h, sizeof(h)-1);
-            pmix_show_help("help-pmix-mca-base.txt",
-                           "find-available:not-valid", true,
-                           h, framework->framework_name, requested_component_names[i]);
-            return PMIX_ERR_NOT_FOUND;
+            if (pmix_mca_base_component_show_load_errors) {
+                char h[PMIX_MAXHOSTNAMELEN] = {0};
+                gethostname(h, sizeof(h)-1);
+                pmix_show_help("help-pmix-mca-base.txt",
+                               "find-available:not-valid", true,
+                               h, framework->framework_name, requested_component_names[i]);
+            }
+            if (pmix_mca_base_component_abort_on_load_error) {
+                return PMIX_ERR_NOT_FOUND;
+            }
         }
     }
 

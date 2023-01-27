@@ -16,6 +16,7 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2020 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2023      Nanook Consulting.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -69,6 +70,7 @@ PMIX_EXPORT PMIX_CLASS_DECLARATION(pmix_mca_base_component_priority_list_item_t)
  */
 PMIX_EXPORT extern char *pmix_mca_base_component_path;
 PMIX_EXPORT extern bool pmix_mca_base_component_show_load_errors;
+PMIX_EXPORT extern bool pmix_mca_base_component_abort_on_load_error;
 PMIX_EXPORT extern bool pmix_mca_base_component_track_load_errors;
 PMIX_EXPORT extern bool pmix_mca_base_component_disable_dlopen;
 PMIX_EXPORT extern char *pmix_mca_base_system_default_path;

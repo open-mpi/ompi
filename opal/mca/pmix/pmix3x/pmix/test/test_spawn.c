@@ -2,6 +2,7 @@
  * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -36,6 +37,7 @@ static int test_spawn_common(char *my_nspace, int my_rank, int blocking)
     memset(nspace, 0, PMIX_MAX_NSLEN+1);
     napps = 1;
     PMIX_APP_CREATE(apps, napps);
+    apps[0].cmd = strdup("foo");  // need SOMETHING we intend to spawn!
     if (blocking) {
         if (PMIX_SUCCESS != (rc = PMIx_Spawn(NULL, 0, apps, napps, nspace))) {
             PMIX_APP_FREE(apps, napps);

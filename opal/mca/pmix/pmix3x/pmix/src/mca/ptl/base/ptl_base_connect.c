@@ -147,7 +147,7 @@ pmix_status_t pmix_ptl_base_recv_blocking(int sd, char *data, size_t size)
                 pmix_output_verbose(8, pmix_ptl_base_framework.framework_output,
                                     "blocking_recv received error %d:%s from remote - cycling",
                                     pmix_socket_errno, strerror(pmix_socket_errno));
-                return PMIX_ERR_TEMP_UNAVAILABLE;
+		continue;
             }
             if (pmix_socket_errno != EINTR ) {
                 /* If we overflow the listen backlog, it's
