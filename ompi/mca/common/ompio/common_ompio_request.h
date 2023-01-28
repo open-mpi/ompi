@@ -13,7 +13,6 @@
  * Copyright (c) 2008-2019 University of Houston. All rights reserved.
  * Copyright (c) 2018      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2022      Advanced Micro Devices, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -44,8 +43,6 @@ typedef enum {
     MCA_OMPIO_REQUEST_READ_ALL,
 } mca_ompio_request_type_t;
 
-struct mca_ompio_request_t;
-typedef void(*mca_ompio_post_next_subreq_t)(struct mca_ompio_request_t *req, int val);
 
 /**
  * Main structure for OMPIO requests
@@ -57,16 +54,9 @@ struct mca_ompio_request_t {
     opal_list_item_t                               req_item;
     void                                          *req_tbuf;
     size_t                                         req_size;
-    size_t                                     req_max_data;
     opal_convertor_t                          req_convertor;
     mca_fbtl_base_module_progress_fn_t      req_progress_fn;
     mca_fbtl_base_module_request_free_fn_t      req_free_fn;
-    mca_ompio_post_next_subreq_t       req_post_next_subreq;
-    struct mca_ompio_request_t                  *req_parent;
-    int                                     req_num_subreqs;
-    int                               req_subreqs_completed;
-    ompio_file_t                                    *req_fh;
-    bool                                  req_post_followup;
 };
 typedef struct mca_ompio_request_t mca_ompio_request_t;
 OBJ_CLASS_DECLARATION(mca_ompio_request_t);

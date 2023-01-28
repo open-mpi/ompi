@@ -88,6 +88,14 @@ static int io_progress(void);
 static int priority_param = 30;
 static int delete_priority_param = 30;
 
+
+/*
+ * Global, component-wide OMPIO mutex because OMPIO is not thread safe
+ */
+opal_mutex_t mca_io_ompio_mutex = {{0}};
+
+
+
 /*
  * Public string showing this component's version number
  */
@@ -265,7 +273,7 @@ static int register_component(void)
 static int open_component(void)
 {
     /* Create the mutex */
-    OBJ_CONSTRUCT(&mca_common_ompio_mutex, opal_mutex_t);
+    OBJ_CONSTRUCT(&mca_io_ompio_mutex, opal_mutex_t);
 
     mca_common_ompio_request_init ();
 
@@ -278,7 +286,7 @@ static int close_component(void)
 {
     mca_common_ompio_request_fini ();
     mca_common_ompio_buffer_alloc_fini();
-    OBJ_DESTRUCT(&mca_common_ompio_mutex);
+    OBJ_DESTRUCT(&mca_io_ompio_mutex);
 
     return OMPI_SUCCESS;
 }
@@ -344,9 +352,9 @@ static int delete_select(const char *filename, struct opal_info_t *info,
 {
     int ret;
 
-    OPAL_THREAD_LOCK (&mca_common_ompio_mutex);
+    OPAL_THREAD_LOCK (&mca_io_ompio_mutex);
     ret = mca_common_ompio_file_delete (filename, info);
-    OPAL_THREAD_UNLOCK (&mca_common_ompio_mutex);
+    OPAL_THREAD_UNLOCK (&mca_io_ompio_mutex);
 
     return ret;
 }
