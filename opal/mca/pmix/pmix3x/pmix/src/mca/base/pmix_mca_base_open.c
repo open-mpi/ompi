@@ -14,6 +14,7 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2016-2020 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2023      Nanook Consulting.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -49,6 +50,7 @@ int pmix_mca_base_opened = 0;
 char *pmix_mca_base_system_default_path = NULL;
 char *pmix_mca_base_user_default_path = NULL;
 bool pmix_mca_base_component_show_load_errors = (bool) PMIX_SHOW_LOAD_ERRORS_DEFAULT;
+bool pmix_mca_base_component_abort_on_load_error = false;
 bool pmix_mca_base_component_track_load_errors = false;
 bool pmix_mca_base_component_disable_dlopen = false;
 
@@ -118,6 +120,15 @@ int pmix_mca_base_open(void)
                                    &pmix_mca_base_component_show_load_errors);
     (void) pmix_mca_base_var_register_synonym(var_id, "pmix", "mca", NULL, "component_show_load_errors",
                                               PMIX_MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
+
+    pmix_mca_base_component_abort_on_load_error = false;
+    var_id = pmix_mca_base_var_register("pmix", "mca", "base", "abort_on_load_error",
+                                        "Whether to abort when a specified component isn't found or cannot be loaded",
+                                        PMIX_MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                        PMIX_INFO_LVL_9,
+                                        PMIX_MCA_BASE_VAR_SCOPE_READONLY,
+                                        &pmix_mca_base_component_abort_on_load_error);
+
 
     pmix_mca_base_component_track_load_errors = false;
     var_id = pmix_mca_base_var_register("pmix", "mca", "base", "component_track_load_errors",

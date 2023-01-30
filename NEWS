@@ -61,6 +61,7 @@ included in the vX.Y.Z section and be denoted as:
 4.1.5 -- January, 2023
 ----------------------
 
+- Update embedded OpenPMIx to version 3.2.4
 - Fix issue building with ifort on MacOS.
 - Backport patches to Libevent for CVE-2016-10195, CVE-2016-10196, and
   CVE-2016-10197.  Note that Open MPI's internal libevent does not

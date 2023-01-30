@@ -22,6 +22,14 @@ example, a bug might be fixed in the master, and then moved to
 multiple release branches.
 
 
+3.2.4 -- 22 Jan 2023
+----------------------
+ - PR #2126: Must spawn something in tests
+ - direct:   ptl/base: retry recv when it encounter EAGAIN or
+             EWOULDBLOCK
+ - direct:   Make abort on component not found optional
+
+
 3.2.3 -- 12 Feb 2021
 ----------------------
  - PR #1967: Fix thread conflict in event notification
