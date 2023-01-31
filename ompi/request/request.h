@@ -517,12 +517,12 @@ static inline void ompi_request_wait_completion(ompi_request_t *req)
 static inline int ompi_request_complete(ompi_request_t* request, bool with_signal)
 {
     int rc = 0;
+    void *complete_flag = REQUEST_COMPLETED;
+    ompi_request_complete_fn_t cb = request->req_complete_cb;
 
-    if(NULL != request->req_complete_cb) {
-        /* Set the request cb to NULL to allow resetting in the callback */
-        ompi_request_complete_fn_t fct = request->req_complete_cb;
+    if (NULL != cb) {
         request->req_complete_cb = NULL;
-        rc = fct( request );
+        rc = cb(request);
     }
 
     if (0 == rc) {
@@ -530,11 +530,46 @@ static inline int ompi_request_complete(ompi_request_t* request, bool with_signa
 
             ompi_wait_sync_t *tmp_sync = (ompi_wait_sync_t *) OPAL_ATOMIC_SWAP_PTR(&request->req_complete,
                                                                                     REQUEST_COMPLETED);
-            if( REQUEST_PENDING != tmp_sync ) {
+            if (opal_using_threads()) {
+                /* another thread may have set the callback, so check again */
+                opal_atomic_mb(); // prevent reordering of reads and writes around this point
+                if (OPAL_UNLIKELY(NULL != request->req_complete_cb)) {
+                    /* slow-path: a callback was added after we completed above, try to acquire it */
+                    cb = (ompi_request_complete_fn_t)opal_atomic_swap_ptr((opal_atomic_intptr_t*)&request->req_complete_cb,
+                                                                          (intptr_t)NULL);
+                    if (OPAL_UNLIKELY(NULL != cb)) {
+                        /* acquired the callback, invoke it */
+                        rc = cb(request);
+                        if (0 != rc) {
+                            /* the callback may have restarted or freed the request so prevent
+                             * the code below from updating the sync object and accessing the request;
+                             * requests that are restarted or freed should not have a sync object */
+                            tmp_sync = REQUEST_PENDING;
+                        }
+                    }
+                }
+            }
+
+            if (REQUEST_PENDING != tmp_sync) {
                 wait_sync_update(tmp_sync, 1, request->req_status.MPI_ERROR);
             }
         } else {
             request->req_complete = REQUEST_COMPLETED;
+            if (opal_using_threads()) {
+                /* another thread that may have set a callback, so check again */
+                opal_atomic_mb(); // prevent reordering of reads and writes across this point
+                if (OPAL_UNLIKELY(NULL != request->req_complete_cb)) {
+                    /* slow-path: a callback was added after we completed above, try to acquire it */
+                    cb = (ompi_request_complete_fn_t)opal_atomic_swap_ptr((opal_atomic_intptr_t*)&request->req_complete_cb,
+                                                                          (intptr_t)NULL);
+                    if (OPAL_UNLIKELY(NULL != cb)) {
+                        /* acquired the callback, invoke it
+                         * the callback may or may not free or restart the request, so we cannot touch
+                         * the request after this point */
+                        cb(request);
+                    }
+                }
+            }
         }
     }
 
@@ -546,12 +581,28 @@ static inline int ompi_request_set_callback(ompi_request_t* request,
                                             void* cb_data)
 {
     request->req_complete_cb_data = cb_data;
-    request->req_complete_cb = cb;
-    /* If request is completed and the callback is not called, need to call callback */
-    if ((NULL != request->req_complete_cb) && (request->req_complete == REQUEST_COMPLETED)) {
-        ompi_request_complete_fn_t fct = request->req_complete_cb;
-        request->req_complete_cb = NULL;
-        return fct( request );
+
+    if (REQUEST_COMPLETE(request)) {
+        /* invoke the callback; this is safe here because the
+         * completing thread never sees the callback */
+        cb(request); // return value ignored here
+    } else {
+        if (opal_using_threads()) {
+            opal_atomic_wmb();             // make sure the cb_data is visible
+            request->req_complete_cb = cb; // assuming pointer stores are atomic
+            opal_atomic_mb();
+            if (REQUEST_COMPLETE(request)) {
+                /* the request has completed after we swapped the callback, try to acquire it */
+                ompi_request_complete_fn_t new_cb;
+                new_cb = (ompi_request_complete_fn_t)opal_atomic_swap_ptr((opal_atomic_intptr_t*)&request->req_complete_cb,
+                                                                          (intptr_t)NULL);
+                if (NULL != new_cb) {
+                    new_cb(request); // return value ignored here
+                }
+            }
+        } else {
+            request->req_complete_cb = cb;
+        }
     }
     return OMPI_SUCCESS;
 }
