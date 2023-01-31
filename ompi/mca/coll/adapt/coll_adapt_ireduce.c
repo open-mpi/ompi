@@ -48,7 +48,7 @@ int ompi_coll_adapt_ireduce_register(void)
         mca_coll_adapt_component.adapt_ireduce_algorithm = 1;
     }
 
-    mca_coll_adapt_component.adapt_ireduce_segment_size = 163740;
+    mca_coll_adapt_component.adapt_ireduce_segment_size = 524288;
     mca_base_component_var_register(c, "reduce_segment_size",
                                     "Segment size in bytes used by default for reduce algorithms. Only has meaning if algorithm is forced and supports segmenting. 0 bytes means no segmentation.",
                                     MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
