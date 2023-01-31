@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2020 The University of Tennessee and The University
+ * Copyright (c) 2004-2022 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -343,10 +343,10 @@ int ompi_errhandler_proc_failed_internal(ompi_proc_t* ompi_proc, int status, boo
     opal_mutex_unlock(&errhandler_ftmpi_lock);
 
     opal_output_verbose(1, ompi_ftmpi_output_handle,
-                        "%s ompi: Process %s failed (state = %d).",
+                        "%s ompi: Process %s failed (state = %d %s).",
                         OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
                         OMPI_NAME_PRINT(&ompi_proc->super.proc_name),
-                        status );
+                        status, PMIx_Error_string(status) );
 
     if(90 < opal_output_get_verbosity(ompi_ftmpi_output_handle)) {
         /* how did we get there? */
@@ -413,7 +413,7 @@ int ompi_errhandler_proc_failed_internal(ompi_proc_t* ompi_proc, int status, boo
      * The wait function has a check, so all we need to do here is
      * signal it so it will check again.
      */
-    wait_sync_global_wakeup(MPI_ERR_PROC_FAILED);
+    wait_sync_global_wakeup(PMIX_ERR_PROC_ABORTED == status? MPI_ERR_PROC_ABORTED: MPI_ERR_PROC_FAILED);
 
     /* Collectives:
      * Propagate the error (this has been selected rather than the "roll
@@ -430,12 +430,11 @@ int ompi_errhandler_proc_failed_internal(ompi_proc_t* ompi_proc, int status, boo
         pmix_info_t pmix_info[1];
         pmix_status_t prc;
 
-        assert(OPAL_ERR_PROC_ABORTED == status);
         OPAL_PMIX_CONVERT_NAME(&pmix_source, OMPI_PROC_MY_NAME);
         OPAL_PMIX_CONVERT_NAME(&pmix_proc, &ompi_proc->super.proc_name);
         PMIX_INFO_CONSTRUCT(&pmix_info[0]);
         PMIX_INFO_LOAD(&pmix_info[0], PMIX_EVENT_AFFECTED_PROC, &pmix_proc, PMIX_PROC);
-        prc = PMIx_Notify_event(PMIX_ERR_PROC_ABORTED, &pmix_source, PMIX_RANGE_LOCAL,
+        prc = PMIx_Notify_event(PMIX_ERR_PROC_TERM_WO_SYNC, &pmix_source, PMIX_RANGE_LOCAL,
                                 pmix_info, 1, NULL, &active);
         if( PMIX_SUCCESS != prc &&
             PMIX_OPERATION_SUCCEEDED != prc ) {
@@ -468,10 +467,16 @@ static void *ompi_errhandler_event_cb(int fd, int flags, void *context) {
     opal_process_name_t prc;
     int rc;
 #if OPAL_ENABLE_FT_MPI
-    if( PMIX_ERR_PROC_ABORTED == status ) {
-        int i;
-        for(i = 0; i < event->nvalue; i++) {
+    switch( status ) {
+    case PMIX_ERR_PROC_TERM_WO_SYNC:
+    case PMIX_ERR_PROC_ABORTED_BY_SIG:
+    case PMIX_ERR_PROC_ABORTED: /* that is, proc aborted by pmix_abort */
+        for(int i = 0; i < event->nvalue; i++) {
             if (PMIX_PROC != event->info[i].value.type) {
+                OPAL_OUTPUT_VERBOSE((70, ompi_ftmpi_output_handle,
+                    "%s ompi: ignoring the following key for a PMIx fault event: %s",
+                    OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
+                    event->info[i].key));
                 continue;
             }
             OPAL_PMIX_CONVERT_PROCT(rc, &prc, event->info[i].value.data.proc);
@@ -484,20 +489,26 @@ static void *ompi_errhandler_event_cb(int fd, int flags, void *context) {
                 continue; /* we are not 'MPI connected' with this proc. */
             }
             assert( !ompi_proc_is_sentinel(proc) );
-            ompi_errhandler_proc_failed_internal(proc, OPAL_ERR_PROC_ABORTED, false);
+            ompi_errhandler_proc_failed_internal(proc, status, false);
         }
         opal_event_del(&event->super);
         free(event);
         return NULL;
+    case PMIX_ERR_LOST_CONNECTION:
+        opal_output_verbose(1, ompi_ftmpi_output_handle,
+            "%s ompi: Error event PMIX_ERR_LOST_CONNECTION reported, that usually means that my daemon died thus I need to go away.",
+            OMPI_NAME_PRINT(OMPI_PROC_MY_NAME));
+        break;
+    default:
+        /* An unmanaged type of failure, let it do its thing. */
+        opal_output_verbose(1, ompi_ftmpi_output_handle,
+            "%s ompi: Error event reported through PMIx from %s (state = %d). "
+            "This error type is not handled by the fault tolerant layer "
+            "and the application will now presumably abort.",
+            OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
+            OPAL_NAME_PRINT(source),
+            status );
     }
-    /* An unmanaged type of failure, let it do its thing. */
-    opal_output_verbose(1, ompi_ftmpi_output_handle,
-        "%s ompi: Error event reported through PMIx from %s (state = %d). "
-        "This error type is not handled by the fault tolerant layer "
-        "and the application will now presumably abort.",
-        OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
-        OPAL_NAME_PRINT(source),
-        status );
 #endif /* OPAL_ENABLE_FT_MPI */
     opal_event_del(&event->super);
     free(event);
