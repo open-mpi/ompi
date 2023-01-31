@@ -277,12 +277,13 @@ void ompi_continue_cont_release(ompi_continuation_t *cont, int rc)
     OBJ_RELEASE(cont_req);
 
     if (OMPI_SUCCESS == rc) {
-        opal_free_list_return(&ompi_continuation_freelist, &cont->super);
 #ifdef OPAL_ENABLE_DEBUG
         cont->cont_cb   = NULL;
         cont->cont_data = NULL;
         cont->cont_req  = NULL;
+        opal_atomic_wmb();
 #endif // OPAL_ENABLE_DEBUG
+        opal_free_list_return(&ompi_continuation_freelist, &cont->super);
     }
 }
 
@@ -888,6 +889,8 @@ int ompi_continue_attach(
 
                 req_cont_data->cont_obj = cont;
 
+                opal_atomic_wmb();
+
                 ompi_request_set_callback(request, &request_completion_cb, req_cont_data);
                 ++num_registered;
 
@@ -1065,6 +1068,7 @@ int ompi_continue_get_failed(
         cont->cont_cb   = NULL;
         cont->cont_data = NULL;
         cont->cont_req  = NULL;
+        opal_atomic_wmb();
 #endif // OPAL_ENABLE_DEBUG
         opal_free_list_return(&ompi_continuation_freelist, &cont->super);
     }
