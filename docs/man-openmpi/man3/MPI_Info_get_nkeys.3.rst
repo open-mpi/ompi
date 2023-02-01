@@ -69,4 +69,6 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Info_get` :ref:`MPI_Info_get_nthkey` :ref:`MPI_Info_get_valuelen`
+   * :ref:`MPI_Info_get`
+   * :ref:`MPI_Info_get_nthkey`
+   * :ref:`MPI_Info_get_valuelen`

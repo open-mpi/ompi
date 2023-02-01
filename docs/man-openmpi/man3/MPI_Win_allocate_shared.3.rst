@@ -141,5 +141,9 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Alloc_mem` :ref:`MPI_Free_mem` :ref:`MPI_Win_allocate` :ref:`MPI_Win_create`
-   :ref:`MPI_Win_shared_query` :ref:`MPI_Win_free`
+   * :ref:`MPI_Alloc_mem`
+   * :ref:`MPI_Free_mem`
+   * :ref:`MPI_Win_allocate`
+   * :ref:`MPI_Win_create`
+   * :ref:`MPI_Win_shared_query`
+   * :ref:`MPI_Win_free`

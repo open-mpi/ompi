@@ -82,4 +82,9 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Mprobe` :ref:`MPI_Improbe` :ref:`MPI_Probe` :ref:`MPI_Iprobe` :ref:`MPI_Imrecv` :ref:`MPI_Cancel`
+   * :ref:`MPI_Mprobe`
+   * :ref:`MPI_Improbe`
+   * :ref:`MPI_Probe`
+   * :ref:`MPI_Iprobe`
+   * :ref:`MPI_Imrecv`
+   * :ref:`MPI_Cancel`

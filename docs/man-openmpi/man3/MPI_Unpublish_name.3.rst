@@ -120,4 +120,6 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Publish_name` :ref:`MPI_Lookup_name` :ref:`MPI_Open_port`
+   * :ref:`MPI_Publish_name`
+   * :ref:`MPI_Lookup_name`
+   * :ref:`MPI_Open_port`

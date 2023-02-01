@@ -88,4 +88,4 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_File_preallocate`
+   * :ref:`MPI_File_preallocate`

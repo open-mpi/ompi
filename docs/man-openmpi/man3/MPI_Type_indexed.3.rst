@@ -157,4 +157,4 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Type_hindexed`
+   * :ref:`MPI_Type_hindexed`

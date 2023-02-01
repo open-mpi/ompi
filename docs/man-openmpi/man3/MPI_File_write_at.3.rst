@@ -106,5 +106,7 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_File_iwrite_at` :ref:`MPI_File_write_at_all` :ref:`MPI_File_write_at_all_begin`
-   :ref:`MPI_File_write_at_all_end`
+   * :ref:`MPI_File_iwrite_at`
+   * :ref:`MPI_File_write_at_all`
+   * :ref:`MPI_File_write_at_all_begin`
+   * :ref:`MPI_File_write_at_all_end`

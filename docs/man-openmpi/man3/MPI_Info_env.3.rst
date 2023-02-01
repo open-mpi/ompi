@@ -93,4 +93,4 @@ ERRORS
 
 
 .. seealso::
-   :ref:`MPI_Info_get`
+   * :ref:`MPI_Info_get`

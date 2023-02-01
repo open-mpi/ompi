@@ -85,4 +85,5 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Test` :ref:`MPI_Wait`
+   * :ref:`MPI_Test`
+   * :ref:`MPI_Wait`

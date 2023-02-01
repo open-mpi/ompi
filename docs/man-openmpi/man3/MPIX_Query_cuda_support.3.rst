@@ -94,4 +94,4 @@ EXAMPLES
    }
 
 .. seealso::
-   :ref:`MPIX_Query_rocm_support`
+   * :ref:`MPIX_Query_rocm_support`

@@ -227,5 +227,8 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Neighbor_alltoall` :ref:`MPI_Neighbor_alltoallw` :ref:`MPI_Cart_create`
-   :ref:`MPI_Graph_create` :ref:`MPI_Dist_graph_create`
+   * :ref:`MPI_Neighbor_alltoall`
+   * :ref:`MPI_Neighbor_alltoallw`
+   * :ref:`MPI_Cart_create`
+   * :ref:`MPI_Graph_create`
+   * :ref:`MPI_Dist_graph_create`

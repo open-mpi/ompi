@@ -256,4 +256,6 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Gather` :ref:`MPI_Gatherv` :ref:`MPI_Scatter`
+   * :ref:`MPI_Gather`
+   * :ref:`MPI_Gatherv`
+   * :ref:`MPI_Scatter`

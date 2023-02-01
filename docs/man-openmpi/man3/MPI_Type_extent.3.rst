@@ -92,4 +92,4 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Type_get_extent`
+   * :ref:`MPI_Type_get_extent`

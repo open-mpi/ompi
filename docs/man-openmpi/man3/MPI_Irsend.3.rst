@@ -85,4 +85,4 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Rsend`
+   * :ref:`MPI_Rsend`

@@ -90,4 +90,9 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Recv` :ref:`MPI_Probe` :ref:`MPI_Test` :ref:`MPI_Testany` :ref:`MPI_Wait` :ref:`MPI_Waitany`
+   * :ref:`MPI_Recv`
+   * :ref:`MPI_Probe`
+   * :ref:`MPI_Test`
+   * :ref:`MPI_Testany`
+   * :ref:`MPI_Wait`
+   * :ref:`MPI_Waitany`

@@ -77,4 +77,4 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Dist_graph_neighbors`
+   * :ref:`MPI_Dist_graph_neighbors`

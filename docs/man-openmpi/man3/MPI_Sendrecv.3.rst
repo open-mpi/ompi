@@ -117,4 +117,4 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Sendrecv_replace`
+   * :ref:`MPI_Sendrecv_replace`

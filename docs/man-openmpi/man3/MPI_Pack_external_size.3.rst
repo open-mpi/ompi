@@ -93,4 +93,5 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Pack_external` :ref:`MPI_Unpack_external`
+   * :ref:`MPI_Pack_external`
+   * :ref:`MPI_Unpack_external`

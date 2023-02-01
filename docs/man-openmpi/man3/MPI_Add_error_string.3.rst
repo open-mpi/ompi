@@ -75,4 +75,7 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Add_error_class` :ref:`MPI_Add_error_code` :ref:`MPI_Error_class` :ref:`MPI_Error_string`
+   * :ref:`MPI_Add_error_class`
+   * :ref:`MPI_Add_error_code`
+   * :ref:`MPI_Error_class`
+   * :ref:`MPI_Error_string`

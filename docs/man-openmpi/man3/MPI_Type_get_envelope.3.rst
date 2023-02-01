@@ -118,4 +118,4 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Type_get_contents`
+   * :ref:`MPI_Type_get_contents`

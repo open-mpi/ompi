@@ -147,4 +147,5 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Irecv` :ref:`MPI_Probe`
+   * :ref:`MPI_Irecv`
+   * :ref:`MPI_Probe`

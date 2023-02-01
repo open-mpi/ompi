@@ -220,4 +220,5 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Alltoall` :ref:`MPI_Alltoallv`
+   * :ref:`MPI_Alltoall`
+   * :ref:`MPI_Alltoallv`

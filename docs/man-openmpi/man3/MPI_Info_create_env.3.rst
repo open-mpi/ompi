@@ -68,4 +68,8 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Info_delete` :ref:`MPI_Info_dup` :ref:`MPI_Info_free` :ref:`MPI_Info_get` :ref:`MPI_Info_set`
+   * :ref:`MPI_Info_delete`
+   * :ref:`MPI_Info_dup`
+   * :ref:`MPI_Info_free`
+   * :ref:`MPI_Info_get`
+   * :ref:`MPI_Info_set`

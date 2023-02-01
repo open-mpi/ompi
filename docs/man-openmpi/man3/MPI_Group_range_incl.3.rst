@@ -107,4 +107,5 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Group_incl` :ref:`MPI_Group_free`
+   * :ref:`MPI_Group_incl`
+   * :ref:`MPI_Group_free`

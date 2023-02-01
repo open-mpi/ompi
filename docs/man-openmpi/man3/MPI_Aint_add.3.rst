@@ -91,4 +91,4 @@ initially passed to :ref:`MPI_Get_address`.
 
 
 .. seealso::
-   :ref:`MPI_Get_address`
+   * :ref:`MPI_Get_address`

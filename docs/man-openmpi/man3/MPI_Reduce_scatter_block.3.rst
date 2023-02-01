@@ -169,4 +169,4 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Reduce_scatter`
+   * :ref:`MPI_Reduce_scatter`

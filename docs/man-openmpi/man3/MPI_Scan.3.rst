@@ -241,4 +241,6 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Exscan` :ref:`MPI_Op_create` :ref:`MPI_Reduce`
+   * :ref:`MPI_Exscan`
+   * :ref:`MPI_Op_create`
+   * :ref:`MPI_Reduce`

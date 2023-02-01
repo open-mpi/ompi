@@ -100,4 +100,4 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Comm_get_name`
+   * :ref:`MPI_Comm_get_name`

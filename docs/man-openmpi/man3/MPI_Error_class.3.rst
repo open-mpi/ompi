@@ -68,4 +68,4 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Error_string`
+   * :ref:`MPI_Error_string`

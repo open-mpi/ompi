@@ -68,4 +68,4 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Op_create`
+   * :ref:`MPI_Op_create`

@@ -121,7 +121,20 @@ ERRORS
 .. include ../ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Isend` :ref:`MPI_Irecv` :ref:`MPI_Issend` :ref:`MPI_Ibsend` :ref:`MPI_Irsend` :ref:`MPI_Recv_init`
-   :ref:`MPI_Send_init` :ref:`MPI_Ssend_init` :ref:`MPI_Rsend_init` :ref:`MPI_Test` :ref:`MPI_Wait`
-   :ref:`MPI_Waitall` :ref:`MPI_Waitany` :ref:`MPI_Waitsome` :ref:`MPI_Testall` :ref:`MPI_Testany`
-   :ref:`MPI_Testsome`
+   * :ref:`MPI_Isend`
+   * :ref:`MPI_Irecv`
+   * :ref:`MPI_Issend`
+   * :ref:`MPI_Ibsend`
+   * :ref:`MPI_Irsend`
+   * :ref:`MPI_Recv_init`
+   * :ref:`MPI_Send_init`
+   * :ref:`MPI_Ssend_init`
+   * :ref:`MPI_Rsend_init`
+   * :ref:`MPI_Test`
+   * :ref:`MPI_Wait`
+   * :ref:`MPI_Waitall`
+   * :ref:`MPI_Waitany`
+   * :ref:`MPI_Waitsome`
+   * :ref:`MPI_Testall`
+   * :ref:`MPI_Testany`
+   * :ref:`MPI_Testsome`

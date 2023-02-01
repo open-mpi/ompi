@@ -100,5 +100,7 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Comm_remote_group` :ref:`MPI_Comm_remote_size` :ref:`MPI_Intercomm_create`
-   :ref:`MPI_Intercomm_merge`
+   * :ref:`MPI_Comm_remote_group`
+   * :ref:`MPI_Comm_remote_size`
+   * :ref:`MPI_Intercomm_create`
+   * :ref:`MPI_Intercomm_merge`

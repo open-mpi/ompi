@@ -77,4 +77,6 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Comm_group` :ref:`MPI_Comm_size` :ref:`MPI_Comm_compare`
+   * :ref:`MPI_Comm_group`
+   * :ref:`MPI_Comm_size`
+   * :ref:`MPI_Comm_compare`

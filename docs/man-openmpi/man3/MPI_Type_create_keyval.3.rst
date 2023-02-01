@@ -139,4 +139,4 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Type_free_keyval`
+   * :ref:`MPI_Type_free_keyval`

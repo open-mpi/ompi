@@ -98,4 +98,5 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Type_struct` :ref:`MPI_Type_create_hindexed`
+   * :ref:`MPI_Type_struct`
+   * :ref:`MPI_Type_create_hindexed`

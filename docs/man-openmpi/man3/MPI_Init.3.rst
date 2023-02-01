@@ -95,4 +95,7 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Init_thread` :ref:`MPI_Initialized` :ref:`MPI_Finalize` :ref:`MPI_Finalized`
+   * :ref:`MPI_Init_thread`
+   * :ref:`MPI_Initialized`
+   * :ref:`MPI_Finalize`
+   * :ref:`MPI_Finalized`

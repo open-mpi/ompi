@@ -108,4 +108,6 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Isendrecv` :ref:`MPI_Sendrecv` :ref:`MPI_Sendrecv_replace`
+   * :ref:`MPI_Isendrecv`
+   * :ref:`MPI_Sendrecv`
+   * :ref:`MPI_Sendrecv_replace`

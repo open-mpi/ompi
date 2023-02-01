@@ -275,4 +275,6 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Comm_spawn_multiple` :ref:`MPI_Comm_get_parent` mpirun(1)
+   * :ref:`MPI_Comm_spawn_multiple`
+   * :ref:`MPI_Comm_get_parent`
+   * mpirun(1)
