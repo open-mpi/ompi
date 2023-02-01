@@ -90,7 +90,7 @@ subsequently used for sending the packed message.
 
 **Example:** An example using :ref:`MPI_Pack`:
 
-::
+.. code-block:: c
 
        int position, i, j, a[2];
        char buff[1000];

@@ -55,17 +55,16 @@ function. Returns the (byte) address of location.
 
 Example: Using :ref:`MPI_Address` for an array.
 
-::
+.. code-block:: fortran
 
    REAL A(100,100)
 
-|
-| INTEGER I1, I2, DIFF
-| CALL MPI_ADDRESS(A(1,1), I1, IERROR)
-| CALL MPI_ADDRESS(A(10,10), I2, IERROR)
-| DIFF = I2 - I1
-| ! The value of DIFF is 909*sizeofreal; the values of I1 and I2 are
-| ! implementation dependent.
+   INTEGER I1, I2, DIFF
+   CALL MPI_ADDRESS(A(1,1), I1, IERROR)
+   CALL MPI_ADDRESS(A(10,10), I2, IERROR)
+   DIFF = I2 - I1
+   ! The value of DIFF is 909*sizeof(real)
+   !the values of I1 and I2 are implementation dependent.
 
 
 NOTES
@@ -73,7 +72,7 @@ NOTES
 
 This routine is provided for both Fortran and C programmers and may be
 useful when writing portable code. In the current release, the address
-returned by this routine will be the same as that produced by the C &
+returned by this routine will be the same as that produced by the C ``&``
 operator.
 
 C users may be tempted to avoid using :ref:`MPI_Address` and rely on the

@@ -65,15 +65,13 @@ All MPI programs must contain a call to :ref:`MPI_Init` or :ref:`MPI_Init_thread
 Open MPI accepts the C *argc* and *argv* arguments to main, but neither
 modifies, interprets, nor distributes them:
 
-::
+.. code-block:: c
 
-   	{
-   		/* declare variables */
-   		MPI_Init(&argc, &argv);
-   		/* parse arguments */
-   		/* main program */
-   		MPI_Finalize();
-   	}
+   /* declare variables */
+   MPI_Init(&argc, &argv);
+   /* parse arguments */
+   /* main program */
+   MPI_Finalize();
 
 
 NOTES

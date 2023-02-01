@@ -86,50 +86,50 @@ concurrent receive operation.
 
 **Example 1:** Use blocking probe to wait for an incoming message.
 
-::
+.. code-block:: fortran
 
    CALL MPI_COMM_RANK(comm, rank, ierr)
-          IF (rank.EQ.0) THEN
-               CALL MPI_SEND(i, 1, MPI_INTEGER, 2, 0, comm, ierr)
-          ELSE IF(rank.EQ.1) THEN
-               CALL MPI_SEND(x, 1, MPI_REAL, 2, 0, comm, ierr)
-          ELSE   ! rank.EQ.2
-              DO i=1, 2
-                 CALL MPI_PROBE(MPI_ANY_SOURCE, 0,
-                                 comm, status, ierr)
-                 IF (status(MPI_SOURCE) = 0) THEN
-   100                CALL MPI_RECV(i, 1, MPI_INTEGER, 0, 0, status, ierr)
-                 ELSE
-   200                CALL MPI_RECV(x, 1, MPI_REAL, 1, 0, status, ierr)
-                 END IF
-              END DO
-          END IF
+   IF (rank == 0) THEN
+      CALL MPI_SEND(i, 1, MPI_INTEGER, 2, 0, comm, ierr)
+   ELSE IF(rank == 1) THEN
+      CALL MPI_SEND(x, 1, MPI_REAL, 2, 0, comm, ierr)
+   ELSE   ! rank == 2
+      DO i=1, 2
+         CALL MPI_PROBE(MPI_ANY_SOURCE, 0,
+                        comm, status, ierr)
+	 IF (status(MPI_SOURCE) = 0) THEN
+	    CALL MPI_RECV(i, 1, MPI_INTEGER, 0, 0, status, ierr)
+         ELSE
+	    CALL MPI_RECV(x, 1, MPI_REAL, 1, 0, status, ierr)
+         END IF
+      END DO
+   END IF
 
 Each message is received with the right type.
 
 **Example 2:** A program similar to the previous example, but with a
 problem.
 
-::
+.. code-block:: fortran
 
    CALL MPI_COMM_RANK(comm, rank, ierr)
-          IF (rank.EQ.0) THEN
-               CALL MPI_SEND(i, 1, MPI_INTEGER, 2, 0, comm, ierr)
-          ELSE IF(rank.EQ.1) THEN
-               CALL MPI_SEND(x, 1, MPI_REAL, 2, 0, comm, ierr)
-          ELSE
-              DO i=1, 2
-                 CALL MPI_PROBE(MPI_ANY_SOURCE, 0,
-                                 comm, status, ierr)
-                 IF (status(MPI_SOURCE) = 0) THEN
-   100                CALL MPI_RECV(i, 1, MPI_INTEGER, MPI_ANY_SOURCE,
-                                    0, status, ierr)
-                 ELSE
-   200                CALL MPI_RECV(x, 1, MPI_REAL, MPI_ANY_SOURCE,
-                                    0, status, ierr)
-                 END IF
-              END DO
-          END IF
+   IF (rank == 0) THEN
+      CALL MPI_SEND(i, 1, MPI_INTEGER, 2, 0, comm, ierr)
+   ELSE IF(rank.EQ.1) THEN
+      CALL MPI_SEND(x, 1, MPI_REAL, 2, 0, comm, ierr)
+   ELSE
+      DO i=1, 2
+         CALL MPI_PROBE(MPI_ANY_SOURCE, 0,
+                        comm, status, ierr)
+	 IF (status(MPI_SOURCE) = 0) THEN
+	    CALL MPI_RECV(i, 1, MPI_INTEGER, MPI_ANY_SOURCE,
+                          0, status, ierr)
+	 ELSE
+	    CALL MPI_RECV(x, 1, MPI_REAL, MPI_ANY_SOURCE,
+                          0, status, ierr)
+	 END IF
+      END DO
+   END IF
 
 We slightly modified Example 2, using MPI_ANY_SOURCE as the source
 argument in the two receive calls in statements labeled 100 and 200. The

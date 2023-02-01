@@ -87,11 +87,11 @@ The MPI standard prescribes portable Fortran syntax for the *OFFSET*
 argument only for Fortran 90. FORTRAN 77 users may use the non-portable
 syntax
 
-::
+.. code-block:: fortran
 
-        INTEGER*MPI_OFFSET_KIND OFFSET
+   INTEGER*MPI_OFFSET_KIND OFFSET
 
-where MPI_OFFSET_KIND is a constant defined in mpif.h and gives the
+where MPI_OFFSET_KIND is a constant defined in ``mpif.h`` and gives the
 length of the declared integer in bytes.
 
 
@@ -99,7 +99,7 @@ NOTES
 -----
 
 All the nonblocking collective routines for data access are "split" into
-two routines, each with \_begin or \_end as a suffix. These split
+two routines, each with ``_begin`` or ``_end`` as a suffix. These split
 collective routines are subject to the semantic rules described in
 Section 9.4.5 of the MPI-2 standard.
 

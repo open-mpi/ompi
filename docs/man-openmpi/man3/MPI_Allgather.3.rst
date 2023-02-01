@@ -129,21 +129,23 @@ any other process.
 The outcome of a call to :ref:`MPI_Allgather` is as if all processes
 executed n calls to
 
-::
+.. code-block:: c
 
-     MPI_Gather(sendbuf,sendcount,sendtype,recvbuf,recvcount,
-                recvtype,root,comm),
+     MPI_Gather(sendbuf, sendcount, sendtype, recvbuf, recvcount,
+                recvtype, root, comm);
 
-for root = 0 , ..., n-1. The rules for correct usage of :ref:`MPI_Allgather`
+     // for root = 0 , ..., n-1.
+
+The rules for correct usage of :ref:`MPI_Allgather`
 are easily found from the corresponding rules for :ref:`MPI_Gather`.
 
 **Example:** The all-gather version of Example 1 in :ref:`MPI_Gather`. Using
 :ref:`MPI_Allgather`, we will gather 100 ints from every process in the group
 to every process.
 
-::
+.. code-block:: c
 
-   MPI_Comm comm;
+       MPI_Comm comm;
        int gsize,sendarray[100];
        int *rbuf;
        ...
@@ -167,12 +169,12 @@ receive its own contribution to the receive buffer. Specifically, the
 outcome of a call to :ref:`MPI_Allgather` that used the in-place option is
 identical to the case in which all processes executed *n* calls to
 
-::
+.. code-block:: c
 
       MPI_Allgather( MPI_IN_PLACE, 0, MPI_DATATYPE_NULL, recvbuf,
-      recvcount, recvtype, root, comm )
+                     recvcount, recvtype, root, comm )
 
-   for root =0, ... , n-1.
+      // for root =0, ... , n-1.
 
 Note that MPI_IN_PLACE is a special kind of value; it has the same
 restrictions on its use as MPI_BOTTOM.

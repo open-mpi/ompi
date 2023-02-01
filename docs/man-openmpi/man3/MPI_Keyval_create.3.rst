@@ -62,7 +62,7 @@ The copy_fn function is invoked when a communicator is duplicated by
 :ref:`MPI_COMM_DUP`. copy_fn should be of type MPI_Copy_function, which is
 defined as follows:
 
-::
+.. code-block:: c
 
      typedef int MPI_Copy_function(MPI_Comm oldcomm, int keyval,
                                    void *extra_state, void *attribute_val_in,
@@ -124,7 +124,7 @@ deleted by :ref:`MPI_Comm_free` or when a call is made explicitly to
 :ref:`MPI_Attr_delete`. delete_fn should be of type MPI_Delete_function, which
 is defined as follows:
 
-::
+.. code-block:: c
 
      typedef int MPI_Delete_function(MPI_Comm comm, int keyval,
          void *attribute_val, void *extra_state);

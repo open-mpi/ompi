@@ -87,7 +87,7 @@ external32 data representation - used by :ref:`MPI_Pack_external`,
 :ref:`MPI_Unpack_external` and many MPI_File functions - is subtle. The
 external32 representation of returned datatypes is as follows.
 
-::
+.. code-block:: c
 
    	if (r > 38):
    		external32 size = n/a (undefined)

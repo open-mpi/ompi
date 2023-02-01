@@ -104,7 +104,7 @@ MPI_STATUSES_IGNORE can be used as a special value for the
 **Example:** Same code as the example in the :ref:`MPI_Waitany` man page, but
 using :ref:`MPI_Waitsome`.
 
-::
+.. code-block:: fortran
 
        CALL MPI_COMM_SIZE(comm, size, ierr)
        CALL MPI_COMM_RANK(comm, rank, ierr)

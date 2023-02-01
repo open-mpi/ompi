@@ -94,19 +94,15 @@ non-portable syntax
 
 :ref:`MPI_Type_get_extent`:
 
-::
+.. code-block:: fortran
 
-        INTEGER*MPI_ADDRESS_KIND LB
-   or
-        INTEGER*MPI_ADDRESS_KIND EXTENT
+        INTEGER*MPI_ADDRESS_KIND LB, EXTENT
 
 :ref:`MPI_Type_get_extent_x`:
 
-::
+.. code-block:: fortran
 
-        INTEGER*MPI_COUNT_KIND LB
-   or
-        INTEGER*MPI_COUNT_KIND EXTENT
+        INTEGER*MPI_COUNT_KIND LB, EXTENT
 
 where MPI_ADDRESS_KIND and MPI_COUNT_KIND are constants defined in
 mpif.h and give the length of the declared integer in bytes.

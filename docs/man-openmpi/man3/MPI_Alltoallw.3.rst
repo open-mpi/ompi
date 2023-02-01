@@ -148,7 +148,7 @@ where each process performs 2n (n being the number of processes in
 communicator *comm) independent point-to-point communications*
 (including communication with itself).
 
-::
+.. code-block:: c
 
    	MPI_Comm_size(comm, &n);
    	for (i = 0, i < n; i++)

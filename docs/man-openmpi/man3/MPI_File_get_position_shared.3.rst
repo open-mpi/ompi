@@ -73,11 +73,11 @@ The MPI standard prescribes portable Fortran syntax for the *OFFSET*
 argument only for Fortran 90. Sun FORTRAN 77 users may use the
 non-portable syntax
 
-::
+.. code-block:: fortran
 
         INTEGER*MPI_OFFSET_KIND OFFSET
 
-where MPI_ADDRESS_KIND is a constant defined in mpif.h and gives the
+where MPI_ADDRESS_KIND is a constant defined in ``mpif.h`` and gives the
 length of the declared integer in bytes.
 
 

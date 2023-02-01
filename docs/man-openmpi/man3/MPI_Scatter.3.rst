@@ -121,16 +121,16 @@ DESCRIPTION
 
 The outcome is as if the root executed n send operations,
 
-::
+.. code-block:: c
 
        MPI_Send(sendbuf + i * sendcount * extent(sendtype), sendcount,
-                sendtype, i, ...)
+                sendtype, i, ...);
 
 and each process executed a receive,
 
-::
+.. code-block:: c
 
-       MPI_Recv(recvbuf, recvcount, recvtype, i, ...).
+       MPI_Recv(recvbuf, recvcount, recvtype, i, ...).;
 
 An alternative description is that the root sends a message with
 ``MPI_Send(sendbuf, sendcount * n, sendtype, ...)``. This message
@@ -161,7 +161,7 @@ to achieve symmetry with :ref:`MPI_Gather`, where the corresponding restriction
 **Example:** The reverse of Example 1 in the :ref:`MPI_Gather` manpage. Scatter
 sets of 100 ints from the root to each process in the group.
 
-::
+.. code-block:: c
 
            MPI_Comm comm;
            int gsize,*sendbuf;

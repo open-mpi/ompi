@@ -6,9 +6,7 @@ MPI_Publish_name
 
 .. include_body
 
-::
-
-   MPI_Publish_name - Publishes a service name associated with a port
+:ref:`MPI_Publish_name` - Publishes a service name associated with a port
 
 
 SYNTAX

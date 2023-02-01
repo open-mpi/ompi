@@ -63,15 +63,15 @@ taken by the buffer.
 
 Example: Calls to attach and detach buffers.
 
-::
-   
+.. code-block:: c
+
    #define BUFFSIZE 10000
 
    int size char *buff;
    MPI_Buffer_attach( malloc(BUFFSIZE), BUFFSIZE);
-   /*
-     a buffer of 10000 bytes can now be used by MPI_Bsend
-   */
+
+   // a buffer of 10000 bytes can now be used by MPI_Bsend
+
    MPI_Buffer_detach( &buff, &size); // Buffer size reduced to zero
    MPI_Buffer_attach( buff, size); // Buffer of 10000 bytes available again
 
@@ -82,7 +82,7 @@ The reason that :ref:`MPI_Buffer_detach` returns the address and size of the
 buffer being detached is to allow nested libraries to replace and
 restore the buffer. For example, consider
 
-::
+.. code-block:: c
    
    int size, mysize, idummy;
    void *ptr, *myptr, *dummy;

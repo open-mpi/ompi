@@ -83,7 +83,7 @@ The MPI standard prescribes portable Fortran syntax for the *STRIDE*
 argument only for Fortran 90. FORTRAN 77 users may use the non-portable
 syntax
 
-::
+.. code-block:: fortran
 
         INTEGER*MPI_ADDRESS_KIND STRIDE
 

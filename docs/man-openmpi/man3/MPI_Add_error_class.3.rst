@@ -6,9 +6,7 @@ MPI_Add_error_class
 
 .. include_body
 
-::
-
-   MPI_Add_error_class - Creates a new error class and returns its value
+:ref:`MPI_Add_error_class` - Creates a new error class and returns its value
 
 
 SYNTAX

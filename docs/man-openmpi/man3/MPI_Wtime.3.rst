@@ -62,7 +62,7 @@ This function is portable (it returns seconds, not "ticks"), it allows
 high resolution, and carries no unnecessary baggage. One would use it
 like this:
 
-::
+.. code-block:: c
 
        {
           double starttime, endtime;

@@ -130,7 +130,7 @@ layout are determined by the topology of *comm*.
 
 Example of :ref:`MPI_Neighbor_alltoall` semantics for cartesian topologies:
 
-::
+.. code-block:: c
 
            MPI_Cart_get(comm, maxdims, dims, periods, coords);
            for (dim = 0, i = 0 ; dim < dims ; ++dim) {

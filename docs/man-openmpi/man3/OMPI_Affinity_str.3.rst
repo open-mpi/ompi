@@ -92,7 +92,7 @@ EXAMPLES
 
 **Example 1:** Print out processes binding using resource string format.
 
-::
+.. code-block:: c
 
        int rank;
        char ompi_bound[OMPI_AFFINITY_STRING_MAX];
@@ -140,7 +140,7 @@ Output of mpirun -n 2 -bind-to-socket a.out:
 |
 | **Example 2:** Print out processes binding using layout string format.
 
-::
+.. code-block:: c
 
        int rank;
        char ompi_bound[OMPI_AFFINITY_STRING_MAX];

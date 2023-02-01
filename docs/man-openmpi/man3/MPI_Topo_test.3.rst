@@ -68,10 +68,10 @@ The output value *top_type* is one of the following:
 
 ::
 
-       MPI_GRAPH		graph topology
-       MPI_CART		Cartesian topology
-       MPI_DIST_GRAPH	distributed graph topology
-       MPI_UNDEFINED	no topology
+       MPI_GRAPH        graph topology
+       MPI_CART	        Cartesian topology
+       MPI_DIST_GRAPH   distributed graph topology
+       MPI_UNDEFINED    no topology
 
 
 ERRORS

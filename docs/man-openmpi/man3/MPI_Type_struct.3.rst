@@ -97,13 +97,13 @@ alignment; this was intended to allow the simple definition of
 structures that could be sent with a count greater than one. For
 example,
 
-::
+.. code-block:: c
 
        struct {int a; char b;} foo;
 
 may have
 
-::
+.. code-block:: c
 
        sizeof(foo) = sizeof(int) + sizeof(char);
 
@@ -116,8 +116,7 @@ or receive multiple items, you should explicitly include an MPI_UB entry
 as the last member of the structure. For example, the following code can
 be used for the structure foo:
 
-::
-
+.. code-block:: c
 
        blen[0] = 1; indices[0] = 0; oldtypes[0] = MPI_INT;
        blen[1] = 1; indices[1] = &foo.b - &foo; oldtypes[1] = MPI_CHAR;

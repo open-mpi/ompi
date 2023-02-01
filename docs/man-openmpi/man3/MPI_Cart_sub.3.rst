@@ -70,12 +70,12 @@ build for each subgroup a communicator with the associated subgrid
 Cartesian topology. (This function is closely related to
 :ref:`MPI_Comm_split`.)
 
-Example: Assume that MPI_Cart_create( ..., comm) has defined a (2 x 3 x
+Example: Assume that ``MPI_Cart_create( ..., comm)`` has defined a (2 x 3 x
 4) grid. Let remain_dims = (true, false, true). Then a call to
 
-::
+.. code-block:: c
 
-   MPI_Cart_sub(comm, remain_dims, comm_new)
+   MPI_Cart_sub(comm, remain_dims, comm_new);
 
 will create three communicators, each with eight processes in a 2 x 4
 Cartesian topology. If remain_dims = (false, false, true) then the call

@@ -163,7 +163,7 @@ receives from each process, not the total number of items it receives.
 
 Example 1: Gather 100 ints from every process in group to root.
 
-::
+.. code-block:: c
    
    MPI_Comm comm;
    int gsize, sendarray[100];
@@ -171,14 +171,14 @@ Example 1: Gather 100 ints from every process in group to root.
    ...
 
    MPI_Comm_size( comm, &gsize);
-   rbuf = (int*)malloc(gsize*\ 100*sizeof(int));
+   rbuf = (int*)malloc(gsize* 100*sizeof(int));
 
    MPI_Gather( sendarray, 100, MPI_INT, rbuf, 100, MPI_INT, root, comm);
 
 Example 2: Previous example modified -- only the root allocates memory
 for the receive buffer.
 
-::
+.. code-block:: c
    
    MPI_Comm comm;
    int gsize, sendarray[100];
@@ -188,7 +188,7 @@ for the receive buffer.
    MPI_Comm_rank( comm, myrank);
    if ( myrank == root) {
      MPI_Comm_size( comm, &gsize);
-     rbuf = (int *)malloc(gsize*\ 100*sizeof(int));
+     rbuf = (int *)malloc(gsize * 100*sizeof(int));
    }
    MPI_Gather( sendarray, 100, MPI_INT, rbuf, 100, MPI_INT, root, comm);
 
@@ -197,8 +197,8 @@ datatype. Note that the type cannot be the entire set of ``gsize * 100``
 ints since type matching is defined pairwise between the root and each
 process in the gather.
 
-::
-   
+.. code-block:: c
+
    MPI_Comm comm;
    int gsize, sendarray[100];
    int root, *rbuf;
@@ -208,7 +208,7 @@ process in the gather.
    MPI_Comm_size( comm, &gsize);
    MPI_Type_contiguous( 100, MPI_INT, &rtype);
    MPI_Type_commit( &rtype );
-   rbuf = (int*)malloc(gsize*\ 100*sizeof(int));
+   rbuf = (int*)malloc(gsize* 100*sizeof(int));
    MPI_Gather( sendarray, 100, MPI_INT, rbuf, 1, rtype, root, comm);
 
 

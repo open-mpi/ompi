@@ -84,7 +84,7 @@ The MPI standard prescribes portable Fortran syntax for the
 *ARRAY_OF_DISPLACEMENTS*\ (*) argument only for Fortran 90. FORTRAN 77
 users may use the non-portable syntax
 
-::
+.. code-block:: fortran
 
         INTEGER*MPI_ADDRESS_KIND ARRAY_OF_DISPLACEMENTS(*)
 

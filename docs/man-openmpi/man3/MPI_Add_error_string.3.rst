@@ -6,9 +6,7 @@ MPI_Add_error_string
 
 .. include_body
 
-::
-
-   MPI_Add_error_string - Associates a string with an error code or class
+:ref:`MPI_Add_error_string` - Associates a string with an error code or class
 
 
 SYNTAX

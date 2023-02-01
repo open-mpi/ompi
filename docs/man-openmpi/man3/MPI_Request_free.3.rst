@@ -82,7 +82,7 @@ receive has completed and the receive buffer can be reused.
 
 **Example:**
 
-::
+.. code-block:: fortran
 
        CALL MPI_COMM_RANK(MPI_COMM_WORLD, rank)
        IF(rank.EQ.0) THEN
@@ -118,7 +118,7 @@ can not use the request in a wait or test routine (e.g., :ref:`MPI_Wait` ).
 ERRORS
 ------
 
-.. include ../ERRORS.rst
+.. include:: ./ERRORS.rst
 
 .. seealso::
    * :ref:`MPI_Isend`

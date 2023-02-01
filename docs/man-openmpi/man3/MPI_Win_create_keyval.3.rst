@@ -81,15 +81,11 @@ is a function that serves only to return MPI_SUCCESS.
 
 The C callback functions are:
 
-::
+.. code-block:: c
 
    typedef int MPI_Win_copy_attr_function(MPI_Win oldwin, int win_keyval,
                 void *extra_state, void *attribute_val_in,
                 void *attribute_val_out, int *flag);
-
-and
-
-::
 
    typedef int MPI_Win_delete_attr_function(MPI_Win win, int win_keyval,
                 void *attribute_val, void *extra_state);
@@ -104,10 +100,6 @@ The Fortran callback functions are:
    	INTEGER(KIND=MPI_ADDRESS_KIND) EXTRA_STATE, ATTRIBUTE_VAL_IN,
    		ATTRIBUTE_VAL_OUT
    	LOGICAL FLAG
-
-and
-
-.. code-block:: fortran
 
    SUBROUTINE WIN_DELETE_ATTR_FN(WIN, WIN_KEYVAL, ATTRIBUTE_VAL,
    	EXTRA_STATE, IERROR)

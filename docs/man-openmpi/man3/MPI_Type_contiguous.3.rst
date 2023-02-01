@@ -72,7 +72,7 @@ size of the concatenated copies.
 extent 16, and let count = 3. The type map of the datatype returned by
 newtype is
 
-::
+.. code-block:: c
 
        {(double, 0), (char, 8), (double, 16), (char, 24),
        (double, 32), (char, 40)];
@@ -82,14 +82,14 @@ i.e., alternating double and char elements, with displacements 0, 8, 16,
 
 In general, assume that the type map of oldtype is
 
-::
+.. code-block:: c
 
        {(type(0), disp(0)),...,(type(n-1), disp(n-1))},
 
 with extent ex. Then newtype has a type map with count times n entries
 defined by:
 
-::
+.. code-block:: c
 
        {(type(0), disp(0)), ...,(type(n-1), disp(n-1)),
        (type(0), disp(0) + ex), ...,(type(n-1),
