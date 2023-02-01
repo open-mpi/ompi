@@ -51,7 +51,7 @@ Predefined and custom error handlers can be set by calling:
 Note that MPI does not guarantee that an MPI program can continue past
 an error.
 
-See the MPI man page for a full list of MPI error codes.
+See the :ref:`MPI man page <open-mpi>` for a full list of :ref:`MPI error codes <open-mpi-errors>`.
 
 See the Error Handling section of the MPI-|mpi_standard_version| standard for
 more information.
