@@ -14,7 +14,7 @@ SYNTAX
 C Syntax
 ^^^^^^^^
 
-.. code:: C
+.. code-block:: C
 
    #include <mpi.h>
 
@@ -23,7 +23,7 @@ C Syntax
 Fortran Syntax
 ^^^^^^^^^^^^^^
 
-.. code:: fortran
+.. code-block:: fortran
 
    USE MPI
    ! or the older form: INCLUDE 'mpif.h'
@@ -34,7 +34,7 @@ Fortran Syntax
 Fortran 2008 Syntax
 ^^^^^^^^^^^^^^^^^^^
 
-.. code:: fortran
+.. code-block:: fortran
 
    USE mpi_f08
 
@@ -46,13 +46,13 @@ Fortran 2008 Syntax
 INPUT PARAMETER
 ---------------
 
--  comm : Communicator with Cartesian structure (handle).
+* ``comm`` : Communicator with Cartesian structure (handle).
 
 OUTPUT PARAMETERS
 -----------------
 
--  ndims : Number of dimensions of the Cartesian structure (integer).
--  IERROR : Fortran only: Error status (integer).
+* ``ndims`` : Number of dimensions of the Cartesian structure (integer).
+* ``IERROR`` : Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -65,4 +65,5 @@ ERRORS
 
 .. include:: ./ERRORS.rst
 
-.. seealso:: :ref:`MPI_Cart_get`
+.. seealso::
+   * :ref:`MPI_Cart_get`

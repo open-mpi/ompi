@@ -13,7 +13,7 @@ SYNTAX
 C Syntax
 ^^^^^^^^
 
-.. code:: c
+.. code-block:: c
 
    #include <mpi.h>
 
@@ -22,7 +22,7 @@ C Syntax
 Fortran Syntax
 ^^^^^^^^^^^^^^
 
-.. code:: fortran
+.. code-block:: fortran
 
    USE MPI
    ! or the older form: INCLUDE 'mpif.h'
@@ -34,7 +34,7 @@ Fortran Syntax
 Fortran 2008 Syntax
 ^^^^^^^^^^^^^^^^^^^
 
-.. code:: fortran
+.. code-block:: fortran
 
    USE mpi_f08
 
@@ -45,8 +45,8 @@ Fortran 2008 Syntax
 OUTPUT PARAMETER
 ----------------
 
--  flag : True if MPI was finalized, and false otherwise (logical).
--  IERROR : Fortran only: Error status (integer).
+* ``flag`` : True if MPI was finalized, and false otherwise (logical).
+* ``IERROR`` : Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

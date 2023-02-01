@@ -81,7 +81,7 @@ is a function that serves only to return MPI_SUCCESS.
 
 The C callback functions are:
 
-.. code-block:: c
+::
 
    typedef int MPI_Win_copy_attr_function(MPI_Win oldwin, int win_keyval,
                 void *extra_state, void *attribute_val_in,
@@ -107,7 +107,7 @@ The Fortran callback functions are:
 
 and
 
-::
+.. code-block:: fortran
 
    SUBROUTINE WIN_DELETE_ATTR_FN(WIN, WIN_KEYVAL, ATTRIBUTE_VAL,
    	EXTRA_STATE, IERROR)
@@ -122,7 +122,7 @@ The MPI standard prescribes portable Fortran syntax for the
 *EXTRA_STATE* argument only for Fortran 90. FORTRAN 77 users may use the
 non-portable syntax
 
-::
+.. code-block:: fortran
 
         INTEGER*MPI_ADDRESS_KIND EXTRA_STATE
 

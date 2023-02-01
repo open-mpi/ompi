@@ -14,7 +14,7 @@ SYNTAX
 C Syntax
 ^^^^^^^^
 
-.. code:: C
+.. code-block:: C
 
    #include <mpi.h>
 
@@ -27,7 +27,7 @@ C Syntax
 Fortran Syntax
 ^^^^^^^^^^^^^^
 
-.. code:: Fortran
+.. code-block:: Fortran
 
    USE MPI
    ! or the older form: INCLUDE 'mpif.h'
@@ -42,7 +42,7 @@ Fortran Syntax
 Fortran 2008 Syntax
 ^^^^^^^^^^^^^^^^^^^
 
-.. code:: Fortran
+.. code-block:: Fortran
 
    USE mpi_f08
    MPI_Bcast(buffer, count, datatype, root, comm, ierror)
@@ -63,17 +63,17 @@ Fortran 2008 Syntax
 INPUT/OUTPUT PARAMETERS
 -----------------------
 
--  ``buffer``: Starting address of buffer (choice).
--  ``count``: Number of entries in buffer (integer).
--  ``datatype``: Data type of buffer (handle).
--  ``root``: Rank of broadcast root (integer).
--  ``comm``: Communicator (handle).
+* ``buffer``: Starting address of buffer (choice).
+* ``count``: Number of entries in buffer (integer).
+* ``datatype``: Data type of buffer (handle).
+* ``root``: Rank of broadcast root (integer).
+* ``comm``: Communicator (handle).
 
 OUTPUT PARAMETERS
 -----------------
 
--  ``request``: Request (handle, non-blocking only).
--  ``IERROR``: Fortran only: Error status (integer).
+* ``request``: Request (handle, non-blocking only).
+* ``IERROR``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -95,7 +95,7 @@ are still allowed.
 **Example:** Broadcast 100 ints from process 0 to every process in the
 group.
 
-.. code:: C
+.. code-block:: C
 
    MPI_Comm comm;
    int array[100];

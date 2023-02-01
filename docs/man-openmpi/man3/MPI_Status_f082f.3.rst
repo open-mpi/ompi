@@ -14,7 +14,7 @@ SYNTAX
 C Syntax
 ^^^^^^^^
 
-.. code:: c
+.. code-block:: c
 
    #include <mpi.h>
 
@@ -24,7 +24,7 @@ C Syntax
 Fortran mpi Module Syntax
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. code:: fortran
+.. code-block:: fortran
 
    USE MPI
 
@@ -39,7 +39,7 @@ Fortran mpi Module Syntax
 Fortran mpi_f08 Module Syntax
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. code:: fortran
+.. code-block:: fortran
 
    USE mpi_f08
 
@@ -56,8 +56,8 @@ Fortran mpi_f08 Module Syntax
 PARAMETERS
 ----------
 
--  f08_status: mpi_f08-style MPI status object
--  f_status: mpi-style INTEGER MPI status object
+* ``f08_status`` : mpi_f08-style MPI status object
+* ``f_status`` : mpi-style INTEGER MPI status object
 
 DESCRIPTION
 -----------

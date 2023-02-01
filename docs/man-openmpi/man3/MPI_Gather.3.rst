@@ -14,7 +14,7 @@ Synopsis
 C Syntax
 ^^^^^^^^
 
-.. code:: c
+.. code-block:: c
 
    #include <mpi.h>
 
@@ -33,7 +33,7 @@ C Syntax
 Fortran Syntax
 ^^^^^^^^^^^^^^
 
-.. code:: fortran
+.. code-block:: fortran
 
    USE MPI
    ! or the older form: INCLUDE 'mpif.h'
@@ -59,7 +59,7 @@ Fortran Syntax
 Fortran 2008 Syntax
 ^^^^^^^^^^^^^^^^^^^
 
-.. code:: fortran
+.. code-block:: fortran
 
    USE mpi_f08
 
@@ -96,24 +96,24 @@ Fortran 2008 Syntax
 INPUT PARAMETERS
 ----------------
 
--  sendbuf : Starting address of send buffer (choice).
--  sendcount : Number of elements in send buffer (integer).
--  sendtype : Datatype of send buffer elements (handle).
--  recvcount : Number of elements for any single receive (integer,
-   significant only at root).
--  recvtype : Datatype of recvbuffer elements (handle, significant only
-   at root).
--  root : Rank of receiving process (integer).
--  comm : Communicator (handle).
--  info : Info (handle, persistent only).
+* ``sendbuf`` : Starting address of send buffer (choice).
+* ``sendcount`` : Number of elements in send buffer (integer).
+* ``sendtype`` : Datatype of send buffer elements (handle).
+* ``recvcount`` : Number of elements for any single receive (integer,
+  significant only at root).
+* ``recvtype`` : Datatype of recvbuffer elements (handle, significant only
+  at root).
+* ``root`` : Rank of receiving process (integer).
+* ``comm`` : Communicator (handle).
+* ``info`` : Info (handle, persistent only).
 
 OUTPUT PARAMETERS
 -----------------
 
--  recvbuf : Address of receive buffer (choice, significant only at
+* ``recvbuf`` : Address of receive buffer (choice, significant only at
    root).
--  request : Request (handle, non-blocking only).
--  IERROR : Fortran only: Error status (integer).
+* ``request`` : Request (handle, non-blocking only).
+* ``IERROR`` : Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -123,20 +123,24 @@ buffer to the root process. The root process receives the messages and
 stores them in rank order. The outcome is as if each of the n processes
 in the group (including the root process) had executed a call to
 
-c MPI_Send(sendbuf, sendcount, sendtype, root, ...)
+::
+   
+   MPI_Send(sendbuf, sendcount, sendtype, root, ...)
 
 and the root had executed n calls to
 
-c MPI_Recv(recfbuf + i \* recvcount \* extent(recvtype), recvcount,
-recvtype, i, ...)
+::
+   
+   MPI_Recv(recfbuf + i * recvcount * extent(recvtype), recvcount,
+            recvtype, i, ...)
 
 where extent(recvtype) is the type extent obtained from a call to
-MPI_Type_extent().
+:ref:`MPI_Type_extent`.
 
 An alternative description is that the n messages sent by the processes
 in the group are concatenated in rank order, and the resulting message
-is received by the root as if by a call to MPI_RECV(recvbuf, recvcount\*
-n, recvtype, ... ).
+is received by the root as if by a call to
+``MPI_Recv(recvbuf, recvcount * n, recvtype, ... )``.
 
 The receive buffer is ignored for all nonroot processes.
 
@@ -159,35 +163,54 @@ receives from each process, not the total number of items it receives.
 
 Example 1: Gather 100 ints from every process in group to root.
 
-c MPI_Comm comm; int gsize,sendarray[100]; int root, \*rbuf; //...
+::
+   
+   MPI_Comm comm;
+   int gsize, sendarray[100];
+   int root, *rbuf;
+   ...
 
-MPI_Comm_size( comm, &gsize); rbuf = (int
-*)malloc(gsize*\ 100*sizeof(int));
+   MPI_Comm_size( comm, &gsize);
+   rbuf = (int*)malloc(gsize*\ 100*sizeof(int));
 
-MPI_Gather( sendarray, 100, MPI_INT, rbuf, 100, MPI_INT, root, comm);
+   MPI_Gather( sendarray, 100, MPI_INT, rbuf, 100, MPI_INT, root, comm);
 
 Example 2: Previous example modified -- only the root allocates memory
 for the receive buffer.
 
-c MPI_Comm comm; int gsize,sendarray[100]; int root, myrank, \*rbuf;
-//...
+::
+   
+   MPI_Comm comm;
+   int gsize, sendarray[100];
+   int root, myrank, *rbuf;
+   ...
 
-MPI_Comm_rank( comm, myrank); if ( myrank == root) { MPI_Comm_size(
-comm, &gsize); rbuf = (int *)malloc(gsize*\ 100*sizeof(int)); }
-MPI_Gather( sendarray, 100, MPI_INT, rbuf, 100, MPI_INT, root, comm);
+   MPI_Comm_rank( comm, myrank);
+   if ( myrank == root) {
+     MPI_Comm_size( comm, &gsize);
+     rbuf = (int *)malloc(gsize*\ 100*sizeof(int));
+   }
+   MPI_Gather( sendarray, 100, MPI_INT, rbuf, 100, MPI_INT, root, comm);
 
 Example 3: Do the same as the previous example, but use a derived
-datatype. Note that the type cannot be the entire set of gsize \* 100
+datatype. Note that the type cannot be the entire set of ``gsize * 100``
 ints since type matching is defined pairwise between the root and each
 process in the gather.
 
-c MPI_Comm comm; int gsize,sendarray[100]; int root, \*rbuf;
-MPI_Datatype rtype; //...
+::
+   
+   MPI_Comm comm;
+   int gsize, sendarray[100];
+   int root, *rbuf;
+   MPI_Datatype rtype;
+   ...
+   
+   MPI_Comm_size( comm, &gsize);
+   MPI_Type_contiguous( 100, MPI_INT, &rtype);
+   MPI_Type_commit( &rtype );
+   rbuf = (int*)malloc(gsize*\ 100*sizeof(int));
+   MPI_Gather( sendarray, 100, MPI_INT, rbuf, 1, rtype, root, comm);
 
-MPI_Comm_size( comm, &gsize); MPI_Type_contiguous( 100, MPI_INT, &rtype
-); MPI_Type_commit( &rtype ); rbuf = (int
-*)malloc(gsize*\ 100*sizeof(int)); MPI_Gather( sendarray, 100, MPI_INT,
-rbuf, 1, rtype, root, comm);
 
 Use Of In-Place Option
 ----------------------
@@ -221,4 +244,5 @@ ERRORS
 
 .. include:: ./ERRORS.rst
 
-.. seealso:: :ref:`MPI_Gatherv`
+.. seealso::
+   * :ref:`MPI_Gatherv`

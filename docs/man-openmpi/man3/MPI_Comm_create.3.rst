@@ -13,7 +13,7 @@ SYNTAX
 C Syntax
 ^^^^^^^^
 
-.. code:: C
+.. code-block:: C
 
    #include <mpi.h>
 
@@ -22,7 +22,7 @@ C Syntax
 Fortran Syntax
 ^^^^^^^^^^^^^^
 
-.. code:: Fortran
+.. code-block:: Fortran
 
    USE MPI
    ! or the older form: INCLUDE 'mpif.h'
@@ -33,7 +33,7 @@ Fortran Syntax
 Fortran 2008 Syntax
 ^^^^^^^^^^^^^^^^^^^
 
-.. code:: Fortran
+.. code-block:: Fortran
 
    USE mpi_f08
 
@@ -46,14 +46,14 @@ Fortran 2008 Syntax
 INPUT PARAMETER
 ---------------
 
--  comm : Communicator (handle).
--  group : Group, which is a subset of the group of comm (handle).
+* ``comm`` : Communicator (handle).
+* ``group`` : Group, which is a subset of the group of comm (handle).
 
 OUTPUT PARAMETERS
 -----------------
 
--  newcomm : New communicator (handle).
--  IERROR : Fortran only: Error status (integer).
+* ``newcomm`` : New communicator (handle).
+* ``IERROR`` : Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -84,4 +84,5 @@ ERRORS
 
 .. include:: ./ERRORS.rst
 
-.. seealso:: :ref:`MPI_Comm_split`
+.. seealso::
+   * :ref:`MPI_Comm_split`

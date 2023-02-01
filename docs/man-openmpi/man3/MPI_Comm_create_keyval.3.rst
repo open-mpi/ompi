@@ -13,7 +13,7 @@ SYNTAX
 C Syntax
 ^^^^^^^^
 
-.. code:: c
+.. code-block:: c
 
    #include <mpi.h>
 
@@ -25,7 +25,7 @@ C Syntax
 Fortran Syntax (See Fortran 77 Notes)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. code:: fortran
+.. code-block:: fortran
 
    USE MPI
    ! or the older form: INCLUDE 'mpif.h'
@@ -40,7 +40,7 @@ Fortran Syntax (See Fortran 77 Notes)
 Fortran 2008 Syntax
 ^^^^^^^^^^^^^^^^^^^
 
-.. code:: fortran
+.. code-block:: fortran
 
    USE mpi_f08
 
@@ -55,17 +55,17 @@ Fortran 2008 Syntax
 INPUT PARAMETERS
 ----------------
 
--  ``comm_copy_attr_fn`` : Copy callback function for ``comm_keyval``
+* ``comm_copy_attr_fn`` : Copy callback function for ``comm_keyval``
    (function).
--  ``comm_delete_attr_fn`` : Delete callback function for
+* ``comm_delete_attr_fn`` : Delete callback function for
    ``comm_keyval`` (function).
--  ``extra_state`` : Extra state for callback functions.
+* ``extra_state`` : Extra state for callback functions.
 
 OUTPUT PARAMETER
 ----------------
 
--  ``comm_keyval`` : Key value for future access (integer).
--  ``IERROR`` : Fortran only: Error status (integer).
+* ``comm_keyval`` : Key value for future access (integer).
+* ``IERROR`` : Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -84,7 +84,7 @@ MPI_SUCCESS. These replace the MPI-1 predefined callbacks
 MPI_NULL_COPY_FN and MPI_DUP_FN, the use of which is deprecated.
 The two C callback functions are:
 
-.. code:: c
+.. code-block:: c
 
    typedef int MPI_Comm_copy_attr_function(MPI_Comm oldcomm, int comm_keyval,
                 void *extra_state, void *attribute_val_in,
@@ -96,7 +96,7 @@ The two C callback functions are:
 which are the same as the MPI-1.1 calls but with a new name. The old
 names are deprecated. The two Fortran callback functions are:
 
-.. code:: fortran
+.. code-block:: fortran
 
    SUBROUTINE COMM_COPY_ATTR_FN(OLDCOMM, COMM_KEYVAL, EXTRA_STATE,
                 ATTRIBUTE_VAL_IN, ATTRIBUTE_VAL_OUT, FLAG, IERROR)
@@ -119,7 +119,7 @@ The MPI standard prescribes portable Fortran syntax for the
 ``EXTRA_STATE`` argument only for Fortran 90. FORTRAN 77 users may use
 the non-portable syntax
 
-.. code:: fortran
+.. code-block:: fortran
 
    INTEGER*MPI_ADDRESS_KIND EXTRA_STATE
 

@@ -14,7 +14,7 @@ SYNTAX
 C Syntax
 ^^^^^^^^
 
-.. code:: C
+.. code-block:: C
 
    #include <mpi.h>
 
@@ -23,7 +23,7 @@ C Syntax
 Fortran Syntax
 ^^^^^^^^^^^^^^
 
-.. code:: Fortran
+.. code-block:: Fortran
 
    USE MPI
    ! or the older form: INCLUDE 'mpif.h'
@@ -35,7 +35,7 @@ Fortran Syntax
 Fortran 2008 Syntax
 ^^^^^^^^^^^^^^^^^^^
 
-.. code:: Fortran
+.. code-block:: Fortran
 
    USE mpi_f08
 
@@ -50,17 +50,17 @@ Fortran 2008 Syntax
 INPUT PARAMETERS
 ----------------
 
--  group : Group (handler)
--  stringtag : Unique identifier for this operation (string)
--  info : info object (handler)
--  errhandler : error handler to be attached to the new
+* ``group`` : Group (handler)
+* ``stringtag`` : Unique identifier for this operation (string)
+* ``info`` : info object (handler)
+* ``errhandler`` : error handler to be attached to the new
    intra-communicator (handle)
 
 OUTPUT PARAMETERS
 -----------------
 
--  newcomm : New communicator (handle).
--  IERROR : Fortran only: Error status (integer).
+* ``newcomm`` : New communicator (handle).
+* ``IERROR`` : Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -96,4 +96,5 @@ ERRORS
 
 .. include:: ./ERRORS.rst
 
-.. seealso:: :ref:`MPI_Comm_create_group`
+.. seealso::
+   * :ref:`MPI_Comm_create_group`

@@ -91,12 +91,12 @@ For the Fortran version of *array_of_argv*, the element
 *array_of_argv*\ (i,j) is the jth argument to command number i.
 
 In any language, an application may use the constant MPI_ARGVS_NULL
-(which is likely to be (char \***)0 in C) to specify that no arguments
+(which is likely to be ``(char **)0`` in C) to specify that no arguments
 should be passed to any commands. The effect of setting individual
 elements of *array_of_argv* to MPI_ARGV_NULL is not defined. To specify
 arguments for some commands but not others, the commands without
 arguments should have a corresponding *argv* whose first element is null
-((char \*)0 in C and empty string in Fortran).
+``((char *)0`` in C and empty string in Fortran).
 
 All of the spawned processes have the same MPI_COMM_WORLD. Their ranks
 in MPI_COMM_WORLD correspond directly to the order in which the commands

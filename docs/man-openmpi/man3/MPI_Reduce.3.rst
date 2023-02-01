@@ -266,7 +266,7 @@ Now, the valid datatypes for each option is specified below.
 that are distributed across a group of processes and returns the answer
 at process zero.
 
-::
+.. code-block:: fortran
 
        SUBROUTINE PAR_BLAS1(m, a, b, c, comm)
        REAL a(m), b(m)       ! local slice of array
@@ -288,7 +288,7 @@ at process zero.
 array that are distributed across a group of processes and returns the
 answer at process zero.
 
-::
+.. code-block:: fortran
 
        SUBROUTINE PAR_BLAS2(m, n, a, b, c, comm)
        REAL a(m), b(m,n)    ! local slice of array

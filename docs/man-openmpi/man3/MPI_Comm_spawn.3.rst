@@ -146,7 +146,7 @@ The *info* Argument
 The *info* argument is an opaque handle of type MPI_Info in C and
 INTEGER in Fortran. It is a container for a number of user-specified
 (*key,value*) pairs. *key* and *value* are strings (null-terminated
-char\* in C, character*(*) in Fortran). Routines to create and
+``char *`` in C, ``character*(*)`` in Fortran). Routines to create and
 manipulate the *info* argument are described in Section 4.10 of the
 MPI-2 standard.
 

@@ -13,7 +13,7 @@ SYNTAX
 C Syntax
 ^^^^^^^^
 
-.. code:: c
+.. code-block:: c
 
    #include <mpi.h>
 
@@ -23,7 +23,7 @@ C Syntax
 Fortran Syntax
 ^^^^^^^^^^^^^^
 
-.. code:: fortran
+.. code-block:: fortran
 
    USE MPI
    ! or the older form: INCLUDE 'mpif.h'
@@ -34,7 +34,7 @@ Fortran Syntax
 Fortran 2008 Syntax
 ^^^^^^^^^^^^^^^^^^^
 
-.. code:: fortran
+.. code-block:: fortran
 
    USE mpi_f08
 
@@ -47,18 +47,18 @@ Fortran 2008 Syntax
 INPUT PARAMETERS
 ----------------
 
--  comm : Input communicator (handle).
--  nnodes : Number of graph nodes (integer).
--  index : Integer array specifying the graph structure, see
+* ``comm`` : Input communicator (handle).
+* ``nnodes`` : Number of graph nodes (integer).
+* ``index`` : Integer array specifying the graph structure, see
    :ref:`MPI_Graph_create`.
--  edges : Integer array specifying the graph structure.
+* ``edges`` : Integer array specifying the graph structure.
 
 OUTPUT PARAMETERS
 -----------------
 
--  newrank : Reordered rank of the calling process; MPI_UNDEFINED if the
+* ``newrank`` : Reordered rank of the calling process; MPI_UNDEFINED if the
    calling process does not belong to graph (integer).
--  IERROR : Fortran only: Error status (integer).
+* ``IERROR`` : Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

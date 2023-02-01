@@ -13,7 +13,7 @@ SYNTAX
 C Syntax
 ^^^^^^^^
 
-.. code:: c
+.. code-block:: c
 
    #include <mpi.h>
 
@@ -23,7 +23,7 @@ C Syntax
 Fortran Syntax
 ^^^^^^^^^^^^^^
 
-.. code:: fortran
+.. code-block:: fortran
 
    USE MPI
    ! or the older form: INCLUDE 'mpif.h'
@@ -35,7 +35,7 @@ Fortran Syntax
 Fortran 2008 Syntax
 ^^^^^^^^^^^^^^^^^^^
 
-.. code:: fortran
+.. code-block:: fortran
 
    USE mpi_f08
    MPI_Bsend(buf, count, datatype, dest, tag, comm, ierror)
@@ -48,17 +48,17 @@ Fortran 2008 Syntax
 INPUT PARAMETERS
 ----------------
 
--  ``buf`` : Initial address of send buffer (choice).
--  ``count`` : Number of entries in send buffer (nonnegative integer).
--  ``datatype`` : Datatype of each send buffer element (handle).
--  ``dest`` : Rank of destination (integer).
--  ``tag`` : Message tag (integer).
--  ``comm`` : Communicator (handle).
+* ``buf`` : Initial address of send buffer (choice).
+* ``count`` : Number of entries in send buffer (nonnegative integer).
+* ``datatype`` : Datatype of each send buffer element (handle).
+* ``dest`` : Rank of destination (integer).
+* ``tag`` : Message tag (integer).
+* ``comm`` : Communicator (handle).
 
 OUTPUT PARAMETERS
 -----------------
 
--  ``IERROR`` : Fortran only: Error status (integer).
+* ``IERROR`` : Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -78,7 +78,7 @@ you are certain that the message has been received (not just that it
 should have been received). For example, this code does not allocate
 enough buffer space:
 
-.. code:: c
+.. code-block:: c
 
    MPI_Buffer_attach( b, n*sizeof(double) + MPI_BSEND_OVERHEAD );
    for (i=0; i<m; i++) {

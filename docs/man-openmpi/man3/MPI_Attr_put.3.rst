@@ -48,7 +48,7 @@ DESCRIPTION
 -----------
 
 Note that use of this routine is *deprecated as of MPI-2, and* was
-*deleted in MPI-3. Please use :ref:`MPI_Comm_set_attr`. This* function does not
+deleted in MPI-3. Please use :ref:`MPI_Comm_set_attr`. This function does not
 have a mpi_f08 binding.
 
 :ref:`MPI_Attr_put` stores the stipulated attribute value attribute_val for
@@ -68,7 +68,7 @@ Values of the permanent attributes MPI_TAG_UB, MPI_HOST, MPI_IO, and
 MPI_WTIME_IS_GLOBAL may not be changed.
 
 The type of the attribute value depends on whether C or Fortran is being
-used. In C, an attribute value is a pointer (void \*); in Fortran, it is
+used. In C, an attribute value is a pointer (``void *``); in Fortran, it is
 a single integer (not a pointer, since Fortran has no pointers and there
 are systems for which a pointer does not fit in an integer, e.g., any
 32-bit address system that uses 64 bits for Fortran DOUBLE PRECISION).

@@ -126,7 +126,7 @@ The type signature associated with sendcount, sendtype at a process must
 be equal to the type signature associated with recvcount, recvtype at
 any other process.
 
-The outcome of a call to MPI_Allgather(...) is as if all processes
+The outcome of a call to :ref:`MPI_Allgather` is as if all processes
 executed n calls to
 
 ::
@@ -169,7 +169,7 @@ identical to the case in which all processes executed *n* calls to
 
 ::
 
-      MPI_ALLGATHER ( MPI_IN_PLACE, 0, MPI_DATATYPE_NULL, recvbuf,
+      MPI_Allgather( MPI_IN_PLACE, 0, MPI_DATATYPE_NULL, recvbuf,
       recvcount, recvtype, root, comm )
 
    for root =0, ... , n-1.

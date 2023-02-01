@@ -13,7 +13,7 @@ SYNTAX
 C Syntax
 ^^^^^^^^
 
-.. code:: c
+.. code-block:: c
 
    #include <mpi.h>
 
@@ -23,7 +23,7 @@ C Syntax
 Fortran Syntax
 ^^^^^^^^^^^^^^
 
-.. code:: fortran
+.. code-block:: fortran
 
    USE MPI
    ! or the older form: INCLUDE 'mpif.h'
@@ -34,7 +34,7 @@ Fortran Syntax
 Fortran 2008 Syntax
 ^^^^^^^^^^^^^^^^^^^
 
-.. code:: fortran
+.. code-block:: fortran
 
    USE mpi_f08
 
@@ -46,16 +46,16 @@ Fortran 2008 Syntax
 INPUT PARAMETERS
 ----------------
 
--  ``group1`` : First group (handle).
--  ``group2`` : Second group (handle).
+* ``group1`` : First group (handle).
+* ``group2`` : Second group (handle).
 
 OUTPUT PARAMETERS
 -----------------
 
--  ``result`` : Integer which is MPI_IDENT if the order and members of
+* ``result`` : Integer which is MPI_IDENT if the order and members of
    the two groups are the same, MPI_SIMILAR if only the members are the
    same, and MPI_UNEQUAL otherwise.
--  ``IERROR`` : Fortran only: Error status (integer).
+* ``IERROR`` : Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

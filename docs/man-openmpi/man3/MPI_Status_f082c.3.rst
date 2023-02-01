@@ -14,7 +14,7 @@ SYNTAX
 C Syntax
 ^^^^^^^^
 
-.. code:: c
+.. code-block:: c
 
    #include <mpi.h>
 
@@ -24,8 +24,8 @@ C Syntax
 PARAMETERS
 ----------
 
--  f08_status: mpi_f08-style MPI status object
--  c_status: C-style MPI status object
+* ``f08_status`` : mpi_f08-style MPI status object
+* ``c_status`` : C-style MPI status object
 
 DESCRIPTION
 -----------

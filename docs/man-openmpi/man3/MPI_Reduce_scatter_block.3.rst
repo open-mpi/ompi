@@ -116,7 +116,7 @@ DESCRIPTION
 -----------
 
 :ref:`MPI_Reduce_scatter_block` first does an element-wise reduction on vector
-of *count* = n \* *recvcount* elements in the send buffer defined by
+of ``count = n * recvcount`` elements in the send buffer defined by
 *sendbuf*, *count*, and *datatype*, using the operation *op*, where n is
 the number of processes in the group of *comm*. Next, the resulting
 vector of results is split into n disjoint segments, where n is the
