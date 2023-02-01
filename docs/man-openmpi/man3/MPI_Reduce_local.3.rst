@@ -61,7 +61,7 @@ INPUT PARAMETERS
 OUTPUT PARAMETERS
 -----------------
 * ``inoutbuf``: Address of in/out buffer (choice).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

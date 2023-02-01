@@ -59,7 +59,7 @@ INPUT PARAMETERS
 OUTPUT PARAMETERS
 -----------------
 * ``port_name``: a port name (string).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

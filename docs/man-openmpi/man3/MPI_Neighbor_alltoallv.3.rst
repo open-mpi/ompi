@@ -131,7 +131,7 @@ OUTPUT PARAMETERS
 -----------------
 * ``recvbuf``: Address of receive buffer.
 * ``request``: Request (handle, non-blocking only).
-* ``IERROR``: Fortran only: Error status.
+* ``ierror``: Fortran only: Error status.
 
 DESCRIPTION
 -----------

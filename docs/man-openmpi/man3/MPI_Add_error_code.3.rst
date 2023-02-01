@@ -54,7 +54,7 @@ INPUT PARAMETER
 OUTPUT PARAMETERS
 -----------------
 * ``errorcode``: Error code returned by an MPI routine or an MPI error class (integer).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

@@ -60,7 +60,7 @@ OUTPUT PARAMETERS
 * ``indegree``: Number of edges into this process (non-negative integer).
 * ``outdegree``: Number of edges out of this process (non-negative integer).
 * ``weighted``: False if MPI_UNWEIGHTED was supplied during creation, true otherwise (logical).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

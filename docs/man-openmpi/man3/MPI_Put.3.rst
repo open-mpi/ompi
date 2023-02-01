@@ -94,7 +94,7 @@ INPUT PARAMETERS
 OUTPUT PARAMETER
 ----------------
 * ``request``: MPI_Rput: RMA request
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

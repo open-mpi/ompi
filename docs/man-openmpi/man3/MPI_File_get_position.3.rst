@@ -56,7 +56,7 @@ INPUT PARAMETER
 OUTPUT PARAMETERS
 -----------------
 * ``offset``: Offset of the individual file pointer (integer).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

@@ -99,7 +99,7 @@ INPUT PARAMETERS
 OUTPUT PARAMETER
 ----------------
 * ``MPI_Raccumulate``:  RMA request
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

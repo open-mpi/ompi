@@ -67,7 +67,7 @@ INPUT PARAMETERS
 OUTPUT PARAMETERS
 -----------------
 * ``status``: Status object (status).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

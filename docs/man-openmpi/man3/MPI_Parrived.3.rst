@@ -56,7 +56,7 @@ INPUT PARAMETERS
 OUTPUT PARAMETERS
 -----------------
 * ``flag``: True if partition is completed.
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 ERRORS
 ------

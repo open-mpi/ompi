@@ -54,7 +54,7 @@ OUTPUT PARAMETERS
 -----------------
 
 * ``count`` : Number of received elements (integer).
-* ``IERROR`` : Fortran only: Error status (integer).
+* ``ierror`` : Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

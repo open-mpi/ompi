@@ -58,7 +58,7 @@ INPUT PARAMETERS
 OUTPUT PARAMETERS
 -----------------
 * ``neighbors``: Ranks of processes that are neighbors to specified process (array of integers).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

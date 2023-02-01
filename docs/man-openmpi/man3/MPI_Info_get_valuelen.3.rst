@@ -61,7 +61,7 @@ OUTPUT PARAMETERS
 -----------------
 * ``valuelen``: Length of value arg (integer).
 * ``flag``: Returns true if key defined, false if not (boolean).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

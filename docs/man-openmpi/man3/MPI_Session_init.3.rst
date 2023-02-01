@@ -54,7 +54,7 @@ OUTPUT PARAMETERS
 -----------------
 
 * ``session`` : New session (handle).
-* ``IERROR`` : Fortran only: Error status (integer).
+* ``ierror`` : Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

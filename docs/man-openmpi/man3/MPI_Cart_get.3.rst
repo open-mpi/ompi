@@ -63,7 +63,7 @@ OUTPUT PARAMETERS
    (array of logicals).
 * ``coords`` : Coordinates of calling process in Cartesian structure (array
    of integers).
-* ``IERROR`` : Fortran only: Error status (integer).
+* ``ierror`` : Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

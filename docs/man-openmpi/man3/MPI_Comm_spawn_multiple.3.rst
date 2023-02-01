@@ -75,7 +75,7 @@ OUTPUT PARAMETERS
 -----------------
 * ``intercomm``: Intercommunicator between original group and the newly spawned group (handle).
 * ``array_of_errcodes``: One code per process (array of integers).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

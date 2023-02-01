@@ -54,7 +54,7 @@ INPUT PARAMETER
 OUTPUT PARAMETERS
 -----------------
 * ``commute``: True if op is commutative, false otherwise (logical).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

@@ -56,7 +56,7 @@ INPUT PARAMETERS
 OUTPUT PARAMETERS
 -----------------
 * ``key``: Key (string).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

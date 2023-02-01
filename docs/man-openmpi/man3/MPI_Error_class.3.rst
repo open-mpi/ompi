@@ -53,7 +53,7 @@ INPUT PARAMETER
 OUTPUT PARAMETERS
 -----------------
 * ``errorclass``: Error class associated with errorcode.
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

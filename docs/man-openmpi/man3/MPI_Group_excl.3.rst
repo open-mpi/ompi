@@ -57,7 +57,7 @@ OUTPUT PARAMETERS
 
 * ``newgroup`` : New group derived from above, preserving the order defined
    by group (handle).
-* ``IERROR`` : Fortran only: Error status (integer).
+* ``ierror`` : Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

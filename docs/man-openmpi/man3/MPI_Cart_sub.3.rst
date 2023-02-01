@@ -58,7 +58,7 @@ OUTPUT PARAMETERS
 
 * ``comm_new`` : Communicator containing the subgrid that includes the
    calling process (handle).
-* ``IERROR`` : Fortran only: Error status (integer).
+* ``ierror`` : Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

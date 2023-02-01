@@ -49,7 +49,7 @@ Fortran 2008 Syntax
 OUTPUT PARAMETERS
 -----------------
 * ``info``: Info object created (handle).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

@@ -94,7 +94,7 @@ OUTPUT PARAMETER
 ----------------
 
 * ``request`` : :ref:`MPI_Rget`: RMA request
-* ``IERROR`` : Fortran only: Error status (integer).
+* ``ierror`` : Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

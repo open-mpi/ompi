@@ -57,7 +57,7 @@ OUTPUT PARAMETERS
 
 * ``newgroup`` : New group derived from supplied session and process set
    (handle).
-* ``IERROR`` : Fortran only: Error status (integer).
+* ``ierror`` : Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

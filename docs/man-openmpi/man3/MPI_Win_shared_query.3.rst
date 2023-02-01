@@ -62,7 +62,7 @@ OUTPUT PARAMETERS
 * ``size``: Size of the window segment (non-negative integer).
 * ``disp_unit``: Local unit size for displacements, in bytes (positive integer).
 * ``baseptr``: Address for load/store access to window segment (choice).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

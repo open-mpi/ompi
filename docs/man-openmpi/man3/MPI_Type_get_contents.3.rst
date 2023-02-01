@@ -70,7 +70,7 @@ OUTPUT PARAMETERS
 * ``array_of_integers``: Contains integer arguments used in constructing *datatype (array of integers).*
 * ``array_of_addresses``: Contains address arguments used in constructing *datatype (array of integers).*
 * ``array_of_datatypes``: Contains data-type arguments used in constructing *datatype (array of integers).*
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

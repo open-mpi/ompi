@@ -54,7 +54,7 @@ INPUT PARAMETER
 OUTPUT PARAMETERS
 -----------------
 * ``group``: Remote group of communicator.
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

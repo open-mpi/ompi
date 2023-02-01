@@ -54,7 +54,7 @@ OUTPUT PARAMETERS
 -----------------
 
 * ``newcomm`` : Copy of comm (handle).
-* ``IERROR`` : Fortran only: Error status (integer).
+* ``ierror`` : Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

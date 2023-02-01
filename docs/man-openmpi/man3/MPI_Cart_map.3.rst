@@ -61,7 +61,7 @@ OUTPUT PARAMETERS
 
 * ``newrank`` : Reordered rank of the calling process; MPI_UNDEFINED if
    calling process does not belong to grid (integer).
-* ``IERROR`` : Fortran only: Error status (integer).
+* ``ierror`` : Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

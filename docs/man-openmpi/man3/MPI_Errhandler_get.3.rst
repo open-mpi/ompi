@@ -41,7 +41,7 @@ INPUT PARAMETER
 OUTPUT PARAMETERS
 -----------------
 * ``errhandler``: MPI error handler currently associated with communicator (handle).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

@@ -56,7 +56,7 @@ INPUT PARAMETER
 OUTPUT PARAMETERS
 -----------------
 * ``top_type``: Topology type of communicator comm (choice).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

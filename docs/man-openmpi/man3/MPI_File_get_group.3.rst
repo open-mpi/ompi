@@ -55,7 +55,7 @@ INPUT PARAMETER
 OUTPUT PARAMETERS
 -----------------
 * ``group``: Group that opened the file (handle).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

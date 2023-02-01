@@ -65,7 +65,7 @@ OUTPUT PARAMETERS
 * ``sourceweights``: Weights of the edges into the calling process (array of non-negative integers).
 * ``destinations``: Processes for which the calling process is a source (array of non-negative integers).
 * ``destweights``: Weights of the edges out of the calling process (array of non-negative integers).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

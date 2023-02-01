@@ -53,7 +53,7 @@ INPUT PARAMETER
 OUTPUT PARAMETERS
 -----------------
 * ``newtype``: Copy of *type* (handle).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

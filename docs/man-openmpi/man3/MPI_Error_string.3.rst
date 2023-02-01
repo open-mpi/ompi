@@ -56,7 +56,7 @@ OUTPUT PARAMETERS
 -----------------
 * ``string``: Text that corresponds to the errorcode.
 * ``resultlen``: Length of string.
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

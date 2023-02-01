@@ -53,7 +53,7 @@ INPUT PARAMETER
 OUTPUT PARAMETERS
 -----------------
 * ``intercomm``: Intercommunicator between processes (handle).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

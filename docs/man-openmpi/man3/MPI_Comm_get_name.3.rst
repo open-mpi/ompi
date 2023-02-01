@@ -57,7 +57,7 @@ OUTPUT PARAMETER
 ----------------
 * ``comm_name``: Name previously stored on the communicator, or an empty string if no such name exists (string).
 * ``resultlen``: Length of returned name (integer).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

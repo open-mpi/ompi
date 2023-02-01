@@ -77,7 +77,7 @@ OUTPUT PARAMETERS
 -----------------
 * ``recvbuf``: Initial address of receive buffer (choice).
 * ``status``: Status object (status). This refers to the receive operation.
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

@@ -57,7 +57,7 @@ INPUT PARAMETERS
 OUTPUT PARAMETERS
 -----------------
 * ``array_of_statuses``: Array of status objects (array of status).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

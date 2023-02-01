@@ -46,7 +46,7 @@ OUTPUT PARAMETER
 ----------------
 
 * ``flag`` : True if MPI was finalized, and false otherwise (logical).
-* ``IERROR`` : Fortran only: Error status (integer).
+* ``ierror`` : Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

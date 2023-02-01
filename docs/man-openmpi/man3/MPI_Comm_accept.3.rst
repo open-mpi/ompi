@@ -59,7 +59,7 @@ OUTPUT PARAMETERS
 -----------------
 
 * ``newcomm`` : Intercommunicator with client as remote group (handle)
-* ``IERROR`` : Fortran only: Error status (integer).
+* ``ierror`` : Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

@@ -53,7 +53,7 @@ OUTPUT PARAMETERS
 
 * ``nnodes`` : Number of nodes in graph (integer).
 * ``nedges`` : Number of edges in graph (integer).
-* ``IERROR`` : Fortran only: Error status (integer).
+* ``ierror`` : Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

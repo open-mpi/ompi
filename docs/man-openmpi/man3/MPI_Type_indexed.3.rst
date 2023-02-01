@@ -86,7 +86,7 @@ INPUT PARAMETERS
 OUTPUT PARAMETERS
 -----------------
 * ``newtype``: New datatype (handle).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

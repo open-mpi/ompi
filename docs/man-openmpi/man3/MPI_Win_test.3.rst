@@ -53,7 +53,7 @@ INPUT PARAMETERS
 
 OUTPUT PARAMETERS
 -----------------
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 * ``flag``: The returning state of the test for epoch closure.
 
 DESCRIPTION

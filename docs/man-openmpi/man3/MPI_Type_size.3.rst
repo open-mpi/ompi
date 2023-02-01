@@ -63,7 +63,7 @@ INPUT PARAMETER
 OUTPUT PARAMETERS
 -----------------
 * ``size``: Datatype size (integer).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

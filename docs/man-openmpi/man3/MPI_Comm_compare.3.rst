@@ -52,7 +52,7 @@ OUTPUT PARAMETERS
 -----------------
 
 * ``result`` : Result of comparison (integer).
-* ``IERROR`` : Fortran only: Error status (integer).
+* ``ierror`` : Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

@@ -69,7 +69,7 @@ INPUT PARAMETERS
 OUTPUT PARAMETERS
 -----------------
 * ``request``: Request object (handle).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

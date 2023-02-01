@@ -53,7 +53,7 @@ INPUT PARAMETER
 OUTPUT PARAMETERS
 -----------------
 * ``newinfo``: Info object (handle).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

@@ -51,7 +51,7 @@ OUTPUT PARAMETERS
 -----------------
 
 * ``info_used`` : info object (handle)
-* ``IERROR`` : Fortran only: Error status (integer).
+* ``ierror`` : Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

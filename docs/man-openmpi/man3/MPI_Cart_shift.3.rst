@@ -60,7 +60,7 @@ OUTPUT PARAMETERS
 
 * ``rank_source`` : Rank of source process (integer).
 * ``rank_dest`` : Rank of destination process (integer).
-* ``IERROR`` : Fortran only: Error status (integer).
+* ``ierror`` : Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

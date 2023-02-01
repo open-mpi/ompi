@@ -53,7 +53,7 @@ OUTPUT PARAMETERS
 -----------------
 
 * ``newgroup`` : Difference group (handle).
-* ``IERROR`` : Fortran only: Error status (integer).
+* ``ierror`` : Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

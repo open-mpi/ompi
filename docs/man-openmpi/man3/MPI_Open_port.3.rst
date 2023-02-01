@@ -55,7 +55,7 @@ INPUT PARAMETER
 OUTPUT PARAMETERS
 -----------------
 * ``port_name``: Newly established port (string).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

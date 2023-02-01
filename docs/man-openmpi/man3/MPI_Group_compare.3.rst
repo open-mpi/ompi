@@ -55,7 +55,7 @@ OUTPUT PARAMETERS
 * ``result`` : Integer which is MPI_IDENT if the order and members of
    the two groups are the same, MPI_SIMILAR if only the members are the
    same, and MPI_UNEQUAL otherwise.
-* ``IERROR`` : Fortran only: Error status (integer).
+* ``ierror`` : Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

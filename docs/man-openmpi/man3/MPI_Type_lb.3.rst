@@ -41,7 +41,7 @@ INPUT PARAMETER
 OUTPUT PARAMETERS
 -----------------
 * ``displacement``: Displacement of lower bound from origin, in bytes (integer).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
