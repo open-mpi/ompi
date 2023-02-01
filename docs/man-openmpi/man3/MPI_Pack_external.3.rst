@@ -98,7 +98,7 @@ input to a subsequent call to :ref:`MPI_Pack_external`.
 
 **Example:** An example using :ref:`MPI_Pack_external`:
 
-::
+.. code-block:: c
 
    	int position, i;
    	double msg[5];

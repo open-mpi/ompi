@@ -129,16 +129,16 @@ taken from on the root, by providing the new argument, *displs*.
 
 The outcome is as if the root executed *n* send operations,
 
-::
+.. code-block:: c
 
-       MPI_Send(sendbuf + displs[i] * extent(sendtype), \
-                sendcounts[i], sendtype, i, ...)
+       MPI_Send(sendbuf + displs[i] * extent(sendtype),
+                sendcounts[i], sendtype, i, ...);
 
-   and each process executed a receive,
+       // and each process executed a receive,
 
        MPI_Recv(recvbuf, recvcount, recvtype, root, ...)
 
-   The send buffer is ignored for all nonroot processes.
+The send buffer is ignored for all nonroot processes.
 
 The type signature implied by *sendcount*\ [*i*], *sendtype* at the root
 must be equal to the type signature implied by *recvcount*, *recvtype*
@@ -162,7 +162,7 @@ a 100 x 150 C array at process *i*.
 
 .. code-block:: c
 
-       MPI_Comm comm;
+           MPI_Comm comm;
            int gsize,recvarray[100][150],*rptr;
            int root, *sendbuf, myrank, bufsize, *stride;
            MPI_Datatype rtype;
@@ -198,25 +198,25 @@ root process scatters sets of 100 ints to the other processes, but the
 sets of 100 are stride ints apart in the sending buffer. Requires use of
 :ref:`MPI_Scatterv`, where *stride* >= 100.
 
-::
+.. code-block:: c
 
        MPI_Comm comm;
-           int gsize,*sendbuf;
-           int root, rbuf[100], i, *displs, *scounts;
+       int gsize,*sendbuf;
+       int root, rbuf[100], i, *displs, *scounts;
 
        ...
 
        MPI_Comm_size(comm, &gsize);
-           sendbuf = (int *)malloc(gsize*stride*sizeof(int));
-           ...
-           displs = (int *)malloc(gsize*sizeof(int));
-           scounts = (int *)malloc(gsize*sizeof(int));
-           for (i=0; i<gsize; ++i) {
-               displs[i] = i*stride;
-               scounts[i] = 100;
-           }
-           MPI_Scatterv(sendbuf, scounts, displs, MPI_INT,
-                        rbuf, 100, MPI_INT, root, comm);
+       sendbuf = (int *)malloc(gsize*stride*sizeof(int));
+       ...
+       displs = (int *)malloc(gsize*sizeof(int));
+       scounts = (int *)malloc(gsize*sizeof(int));
+       for (i=0; i<gsize; ++i) {
+          displs[i] = i*stride;
+          scounts[i] = 100;
+       }
+       MPI_Scatterv(sendbuf, scounts, displs, MPI_INT,
+                    rbuf, 100, MPI_INT, root, comm);
 
 
 USE OF IN-PLACE OPTION

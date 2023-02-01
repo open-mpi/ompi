@@ -132,16 +132,16 @@ the root, by providing the new argument, displs.
 The outcome is as if each process, including the root process, sends a
 message to the root,
 
-::
+.. code-block:: c
    
-   MPI_Send(sendbuf, sendcount, sendtype, root, ...)
+   MPI_Send(sendbuf, sendcount, sendtype, root, ...);
 
 and the root executes n receives,
 
-::
+.. code-block:: c
    
    MPI_Recv(recvbuf + disp[i] * extent(recvtype), recvcounts[i],
-            recvtype, i, ...)
+            recvtype, i, ...);
 
 Messages are placed in the receive buffer of the root process in rank
 order, that is, the data sent from process j is placed in the jth
@@ -171,8 +171,8 @@ Example 1: Now have each process send 100 ints to root, but place each
 set (of 100) stride ints apart at receiving end. Use :ref:`MPI_Gatherv` and the
 displs argument to achieve this effect. Assume stride >= 100.
 
-::
-   
+.. code-block:: c
+
    MPI_Comm comm;
    int gsize, sendarray[100];
    int root, *rbuf, stride;
@@ -196,7 +196,7 @@ Note that the program is erroneous if stride < 100.
 Example 2: Same as Example 1 on the receiving side, but send the 100
 ints from the 0th column of a 100 150 int array, in C.
 
-::
+.. code-block:: c
    
    MPI_Comm comm;
    int gsize, sendarray[100][150];
@@ -225,7 +225,7 @@ Example 3: Process i sends (100-i) ints from the ith column of a 100 x
 150 int array, in C. It is received into a buffer with stride, as in the
 previous two examples.
 
-::
+.. code-block:: c
    
    MPI_Comm comm;
    int gsize, sendarray[100][150], *sptr;
@@ -259,7 +259,7 @@ Example 4: Same as Example 3, but done in a different way at the sending
 end. We create a datatype that causes the correct striding at the
 sending end so that we read a column of a C array.
 
-::
+.. code-block:: c
    
    MPI_Comm comm;
    int gsize, sendarray[100][150], *sptr;
@@ -295,7 +295,7 @@ sending end so that we read a column of a C array.
 Example 5: Same as Example 3 at sending side, but at receiving side we
 make the stride between received blocks vary from block to block.
 
-::
+.. code-block:: c
    
    MPI_Comm comm;
    int gsize, sendarray[100][150], *sptr;
@@ -336,7 +336,7 @@ int array, in C. The complicating factor is that the various values of
 num are not known to root, so a separate gather must first be run to
 find these out. The data is placed contiguously at the receiving end.
 
-::
+.. code-block:: c
 
    MPI_Comm comm;
    int gsize, sendarray[100][150], *sptr;

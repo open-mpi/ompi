@@ -152,7 +152,7 @@ below (MINLOC and MAXLOC). For the other predefined operations, we
 enumerate below the allowed combinations of op and datatype arguments.
 First, define groups of MPI basic datatypes in the following way:
 
-.. code-block:: c
+::
 
    	C integer:            MPI_INT, MPI_LONG, MPI_SHORT,
    	                      MPI_UNSIGNED_SHORT, MPI_UNSIGNED,
@@ -194,7 +194,7 @@ value.
 
 The operation that defines MPI_MAXLOC is
 
-.. code-block:: c
+::
 
             ( u )    (  v )      ( w )
             (   )  o (    )   =  (   )
@@ -213,8 +213,10 @@ The operation that defines MPI_MAXLOC is
             (  j           if u < v)
 
 
-   MPI_MINLOC is defined similarly:
+MPI_MINLOC is defined similarly:
 
+::
+   
             ( u )    (  v )      ( w )
             (   )  o (    )   =  (   )
             ( i )    (  j )      ( k )
@@ -276,7 +278,7 @@ datatypes:
 
 The data type MPI_2REAL is equivalent to:
 
-::
+.. code-block:: fortran
 
        MPI_TYPE_CONTIGUOUS(2, MPI_REAL, MPI_2REAL)
 
@@ -286,7 +288,7 @@ MPI_2INT.
 The datatype MPI_FLOAT_INT is as if defined by the following sequence of
 instructions.
 
-::
+::.. code-block:: c
 
        type[0] = MPI_FLOAT
        type[1] = MPI_INT

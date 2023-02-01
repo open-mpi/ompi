@@ -70,11 +70,14 @@ within a single group), the functions listed below return the expected
 values, group size, group, and rank. When dealing with an
 inter-communicator, however, they return the following values:
 
-::
+:ref:`MPI_Comm_size`
+     Returns the size of the local group.
 
-   MPI_Comm_size	Returns the size of the local group.
-   MPI_Comm_group	Returns the local group.
-   MPI_Comm_rank	Returns the rank in the local group.
+:ref:`MPI_Comm_group`
+     Returns the local group.
+
+:ref:`MPI_Comm_rank`
+     Returns the rank in the local group.
 
 To return the remote group and remote group size of an
 inter-communicator, use the :ref:`MPI_Comm_remote_group` and

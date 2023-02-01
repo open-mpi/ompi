@@ -322,7 +322,7 @@ value.
 
 The operation that defines MPI_MAXLOC is
 
-.. code-block:: c
+::
 
             ( u )    (  v )      ( w )
             (   )  o (    )   =  (   )
@@ -341,8 +341,10 @@ The operation that defines MPI_MAXLOC is
             (  j           if u < v)
 
 
-   MPI_MINLOC is defined similarly:
+MPI_MINLOC is defined similarly:
 
+::
+   
             ( u )    (  v )      ( w )
             (   )  o (    )   =  (   )
             ( i )    (  j )      ( k )
@@ -404,7 +406,7 @@ datatypes:
 
 The data type MPI_2REAL is equivalent to:
 
-::
+.. code-block:: fortran
 
        MPI_TYPE_CONTIGUOUS(2, MPI_REAL, MPI_2REAL)
 
@@ -414,7 +416,7 @@ MPI_2INT.
 The datatype MPI_FLOAT_INT is as if defined by the following sequence of
 instructions.
 
-::
+.. code-block:: c
 
        type[0] = MPI_FLOAT
        type[1] = MPI_INT
@@ -430,7 +432,7 @@ Similar statements apply for MPI_LONG_INT and MPI_DOUBLE_INT.
 of the 30 locations, compute the value and rank of the process
 containing the largest value.
 
-::
+.. code-block:: c
 
            ...
            /* each process has an array of 30 double: ain[30]
@@ -494,7 +496,7 @@ containing the largest value.
 minimum global value, the rank of the process that holds it, and its
 index on this process.
 
-::
+.. code-block:: c
 
        #define  LEN   1000
 

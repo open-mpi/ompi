@@ -69,7 +69,7 @@ type.
 ERRORS
 ------
 
-.. include ./ERRORS.rst
+.. include:: ./ERRORS.rst
 
 .. seealso::
    * :ref:`MPI_Type_get_name`

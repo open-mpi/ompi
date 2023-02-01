@@ -73,7 +73,7 @@ in the same object referenced by *base*, as described in MPI-3.1 section
 correct MPI_Aint representation of the output address, as if the process
 that originally produced *base* had called:
 
-::
+.. code-block:: c
 
    MPI_Get_address ((char *) base + disp, &result);
 

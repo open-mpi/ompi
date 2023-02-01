@@ -84,7 +84,7 @@ special value for the *status* argument.
 
 **Example:** Client-server code (starvation can occur).
 
-::
+.. code-block:: fortran
 
        CALL MPI_COMM_SIZE(comm, size, ierr)
        CALL MPI_COMM_RANK(comm, rank, ierr)

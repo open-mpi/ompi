@@ -94,7 +94,7 @@ that was committed to the communication subsystem).
 
 Example: Simple usage of nonblocking operations and :ref:`MPI_Wait`.
 
-::
+.. code-block:: fortran
 
        CALL MPI_COMM_RANK(comm, rank, ierr)
        IF(rank.EQ.0) THEN

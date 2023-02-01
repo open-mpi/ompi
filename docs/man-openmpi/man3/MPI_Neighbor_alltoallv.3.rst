@@ -146,7 +146,7 @@ topology of communicator *comm*) independent point-to-point
 communications. The neighbors and buffer layout are determined by the
 topology of *comm*.
 
-::
+.. code-block:: c
 
            MPI_Cart_get(comm, maxdims, dims, periods, coords);
            for (dim = 0, i = 0 ; dim < dims ; ++dim) {

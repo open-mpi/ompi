@@ -117,7 +117,7 @@ of all the group members.
 array that are distributed across a group of processes and returns the
 answer at all nodes (compare with Example 2, with :ref:`MPI_Reduce`, below).
 
-::
+.. code-block:: fortran
 
    SUBROUTINE PAR_BLAS2(m, n, a, b, c, comm)
    REAL a(m), b(m,n)    ! local slice of array
@@ -143,7 +143,7 @@ answer at all nodes (compare with Example 2, with :ref:`MPI_Reduce`, below).
 array that are distributed across a group of processes and returns the
 answer at node zero.
 
-::
+.. code-block:: fortran
 
    SUBROUTINE PAR_BLAS2(m, n, a, b, c, comm)
    REAL a(m), b(m,n)    ! local slice of array
