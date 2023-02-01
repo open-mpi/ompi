@@ -57,7 +57,7 @@ INPUT PARAMETERS
 OUTPUT PARAMETERS
 -----------------
 * ``baseptr``: Pointer to beginning of memory segment allocated.
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

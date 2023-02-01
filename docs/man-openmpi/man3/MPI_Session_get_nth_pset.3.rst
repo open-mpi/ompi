@@ -62,7 +62,7 @@ OUTPUT PARAMETERS
 -----------------
 
 * ``pset_name`` : name of the nth process set (string)
-* ``IERROR`` : Fortran only: Error status (integer).
+* ``ierror`` : Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

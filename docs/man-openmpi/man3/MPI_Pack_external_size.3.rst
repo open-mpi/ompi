@@ -62,7 +62,7 @@ INPUT PARAMETERS
 OUTPUT PARAMETERS
 -----------------
 * ``size``: Upper bound on size of packed message, in bytes (integer).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

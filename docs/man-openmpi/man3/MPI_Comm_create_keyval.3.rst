@@ -65,7 +65,7 @@ OUTPUT PARAMETER
 ----------------
 
 * ``comm_keyval`` : Key value for future access (integer).
-* ``IERROR`` : Fortran only: Error status (integer).
+* ``ierror`` : Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

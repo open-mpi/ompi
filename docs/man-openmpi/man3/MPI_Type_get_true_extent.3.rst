@@ -67,7 +67,7 @@ OUTPUT PARAMETERS
 -----------------
 * ``true_lb``: True lower bound of data type (integer).
 * ``true_extent``: True size of data type (integer).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

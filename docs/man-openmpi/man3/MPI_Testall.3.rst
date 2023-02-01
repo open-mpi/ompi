@@ -62,7 +62,7 @@ OUTPUT PARAMETERS
 -----------------
 * ``flag``: True if previously initiated communications are complete (logical.)
 * ``array_of_statuses``: Array of status objects (array of status).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

@@ -54,7 +54,7 @@ OUTPUT PARAMETERS
 -----------------
 
 * ``npset_names`` : number of available process sets (non-negtive integer)
-* ``IERROR`` : Fortran only: Error status (integer).
+* ``ierror`` : Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

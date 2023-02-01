@@ -63,7 +63,7 @@ OUTPUT PARAMETERS
 * ``index``: Index of operation that completed, or MPI_UNDEFINED if none completed (integer).
 * ``flag``: True if one of the operations is complete (logical).
 * ``status``: Status object (status).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

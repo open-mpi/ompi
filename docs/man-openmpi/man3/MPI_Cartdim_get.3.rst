@@ -52,7 +52,7 @@ OUTPUT PARAMETERS
 -----------------
 
 * ``ndims`` : Number of dimensions of the Cartesian structure (integer).
-* ``IERROR`` : Fortran only: Error status (integer).
+* ``ierror`` : Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

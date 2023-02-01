@@ -59,7 +59,7 @@ INPUT PARAMETERS
 OUTPUT PARAMETERS
 -----------------
 * ``extent``: Data type extent (integer).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

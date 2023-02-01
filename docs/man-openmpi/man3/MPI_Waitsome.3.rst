@@ -65,7 +65,7 @@ OUTPUT PARAMETERS
 * ``outcount``: Number of completed requests (integer).
 * ``array_of_indices``: Array of indices of operations that completed (array of integers).
 * ``array_of_statuses``: Array of status objects for operations that completed (array of status).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

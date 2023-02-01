@@ -68,7 +68,7 @@ OUTPUT PARAMETERS
 -----------------
 
 * ``request`` : Generalized request (handle).
-* ``IERROR`` : Fortran only: Error status (integer).
+* ``ierror`` : Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

@@ -65,7 +65,7 @@ INPUT PARAMETERS
 OUTPUT PARAMETERS
 -----------------
 * ``buf``: Initial address of buffer (choice).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

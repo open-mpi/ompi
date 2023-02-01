@@ -56,7 +56,7 @@ INPUT PARAMETER
 OUTPUT PARAMETER
 ----------------
 * ``flag``: true if atomic mode is enabled, false if nonatomic mode is enabled (boolean).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

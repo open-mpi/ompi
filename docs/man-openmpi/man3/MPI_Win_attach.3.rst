@@ -70,7 +70,7 @@ INPUT PARAMETERS
 OUTPUT PARAMETERS
 -----------------
 * ``win``: Window object returned by the call (handle).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

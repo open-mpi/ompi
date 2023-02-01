@@ -64,7 +64,7 @@ OUTPUT PARAMETERS
 * ``etype``: Elementary data type (handle).
 * ``filetype``: File type (handle). See Restrictions, below.
 * ``datarep``: Data representation (string).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

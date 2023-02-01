@@ -49,7 +49,7 @@ Fortran 2008 Syntax
 OUTPUT PARAMETERS
 -----------------
 * ``parent``: The parent communicator (handle).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

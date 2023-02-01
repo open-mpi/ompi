@@ -59,7 +59,7 @@ OUTPUT PARAMETERS
 * ``index`` : Array of integers containing the graph structure (for details
    see the definition of MPI_Graph_create).
 * ``edges`` : Array of integers containing the graph structure.
-* ``IERROR`` : Fortran only: Error status (integer).
+* ``ierror`` : Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

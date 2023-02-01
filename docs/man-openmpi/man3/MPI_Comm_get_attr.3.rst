@@ -60,7 +60,7 @@ OUTPUT PARAMETER
 ----------------
 * ``attribute_val``: Attribute value, unless f\ *lag* = false.
 * ``flag``: False if no attribute is associated with the key (logical).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

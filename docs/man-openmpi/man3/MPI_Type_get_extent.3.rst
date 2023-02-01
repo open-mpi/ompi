@@ -66,7 +66,7 @@ OUTPUT PARAMETERS
 -----------------
 * ``lb``: Lower bound of data type (integer).
 * ``extent``: Data type extent (integer).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

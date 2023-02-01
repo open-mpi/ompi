@@ -55,7 +55,7 @@ OUTPUT PARAMETERS
 -----------------
 
 * ``nneighbors`` : Number of neighbors of specified process (integer).
-* ``IERROR`` : Fortran only: Error status (integer).
+* ``ierror`` : Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

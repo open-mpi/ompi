@@ -65,7 +65,7 @@ OUTPUT PARAMETERS
 -----------------
 
 * ``comm_cart`` : Communicator with new Cartesian topology (handle).
-* ``IERROR`` : Fortran only: Error status (integer).
+* ``ierror`` : Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

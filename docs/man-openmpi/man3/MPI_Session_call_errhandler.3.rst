@@ -52,7 +52,7 @@ INPUT PARAMETER
 OUTPUT PARAMETERS
 -----------------
 
-* ``IERROR`` : Fortran only: Error status (integer).
+* ``ierror`` : Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

@@ -56,7 +56,7 @@ OUTPUT PARAMETERS
 -----------------
 * ``flag``: True if operation completed (logical).
 * ``status``: Status object (status).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

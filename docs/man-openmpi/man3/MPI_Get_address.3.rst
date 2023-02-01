@@ -53,7 +53,7 @@ OUTPUT PARAMETERS
 -----------------
 
 * ``address`` : Address of location (integer).
-* ``IERROR`` : Fortran only: Error status (integer).
+* ``ierror`` : Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

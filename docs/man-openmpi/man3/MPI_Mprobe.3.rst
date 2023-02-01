@@ -60,7 +60,7 @@ OUTPUT PARAMETERS
 -----------------
 * ``message``: Message (handle).
 * ``status``: Status object (status).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

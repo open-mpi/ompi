@@ -59,7 +59,7 @@ OUTPUT PARAMETERS
 * ``coords`` : Integer array (of size ndims,which was defined by
    :ref:`MPI_Cart_create` call) containing the Cartesian coordinates of
    specified process (integer).
-* ``IERROR`` : Fortran only: Error status (integer).
+* ``ierror`` : Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

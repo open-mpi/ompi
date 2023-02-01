@@ -63,7 +63,7 @@ OUTPUT PARAMETERS
 -----------------
 
 * ``comm_graph`` : Communicator with graph topology added (handle).
-* ``IERROR`` : Fortran only: Error status (integer).
+* ``ierror`` : Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

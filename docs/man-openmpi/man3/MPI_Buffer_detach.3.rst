@@ -50,7 +50,7 @@ OUTPUT PARAMETERS
 
 * ``buf`` : Initial buffer address (choice).
 * ``size`` : Buffer size, in bytes (integer).
-* ``IERROR`` : Fortran only: Error status (integer).
+* ``ierror`` : Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

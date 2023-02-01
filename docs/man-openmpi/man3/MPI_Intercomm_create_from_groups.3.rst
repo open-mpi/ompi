@@ -65,7 +65,7 @@ OUTPUT PARAMETERS
 -----------------
 
 * ``newintercomm`` : New inter-communicator (handle).
-* ``IERROR`` : Fortran only: Error status (integer).
+* ``ierror`` : Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

@@ -53,7 +53,7 @@ INPUT PARAMETERS
 OUTPUT PARAMETERS
 -----------------
 * ``size``: Number of processes in the group (integer).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
