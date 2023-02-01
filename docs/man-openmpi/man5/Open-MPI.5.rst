@@ -53,6 +53,9 @@ For a complete listing of MCA parameters and their descriptions, issue
 the command ``ompi_info --all``.  See :ref:`ompi_info(1)
 <man1-ompi_info>` for more information.
 
+
+.. _open-mpi-errors:
+
 ERRORS
 ------
 
@@ -75,7 +78,7 @@ Standard error return classes for Open MPI:
    :header-rows: 1
 
    * - Error name
-     - Error value
+     - Value
      - Description
 
    * - MPI_SUCCESS
@@ -190,7 +193,7 @@ Standard error return classes for Open MPI:
      - 27
      - Conversion functions could not be registered because a data
        representation identifier that was already defined was passed
-       to :ref:`MPI_REGISTER_DATAREP(3) <mpi_register_datarep>`.
+       to :ref:`MPI_Register_datarep(3) <MPI_Register_datarep>`.
 
    * - MPI_ERR_FILE_EXISTS
      - 28
@@ -294,8 +297,8 @@ Standard error return classes for Open MPI:
 
    * - MPI_ERR_UNSUPPORTED_DATAREP
      - 51
-     - Unsupported datarep passed to :ref:`MPI_FILE_SET_VIEW(3)
-       <mpi_file_set_view>`.
+     - Unsupported datarep passed to :ref:`MPI_File_set_view(3)
+       <MPI_File_set_view>`.
 
    * - MPI_ERR_UNSUPPORTED_OPERATION
      - 52
@@ -365,8 +368,8 @@ Standard error return classes for Open MPI:
    * - MPI_ERR_RMA_RANGE
      - 68
      - Target memory is not part of the window (in the case of a
-       window created with :ref:`MPI_WIN_CREATE_DYNAMIC(4)
-       <mpi_win_create_dynamic>`, target memory is not attached.
+       window created with :ref:`MPI_Win_create_dynamic(3)
+       <MPI_Win_create_dynamic>`, target memory is not attached.
 
    * - MPI_ERR_RMA_ATTACH
      - 69
