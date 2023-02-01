@@ -79,4 +79,5 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Intercomm_create` :ref:`MPI_Comm_free`
+   * :ref:`MPI_Intercomm_create`
+   * :ref:`MPI_Comm_free`

@@ -72,4 +72,4 @@ ERRORS
 .. include ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Type_get_name`
+   * :ref:`MPI_Type_get_name`

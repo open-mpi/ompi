@@ -90,4 +90,4 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Type_set_attr`
+   * :ref:`MPI_Type_set_attr`

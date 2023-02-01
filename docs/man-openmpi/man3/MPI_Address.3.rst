@@ -92,4 +92,4 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Get_address`
+   * :ref:`MPI_Get_address`

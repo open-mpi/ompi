@@ -83,4 +83,6 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Isend` :ref:`MPI_Bsend` :ref:`MPI_Recv`
+   * :ref:`MPI_Isend`
+   * :ref:`MPI_Bsend`
+   * :ref:`MPI_Recv`

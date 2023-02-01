@@ -78,4 +78,4 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Comm_delete_attr`
+   * :ref:`MPI_Comm_delete_attr`

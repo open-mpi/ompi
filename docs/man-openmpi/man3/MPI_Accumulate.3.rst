@@ -172,4 +172,6 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Put` :ref:`MPI_Get_accumulate` :ref:`MPI_Reduce`
+   * :ref:`MPI_Put`
+   * :ref:`MPI_Get_accumulate`
+   * :ref:`MPI_Reduce`

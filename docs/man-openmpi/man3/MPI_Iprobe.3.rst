@@ -119,4 +119,5 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Probe` :ref:`MPI_Cancel`
+   * :ref:`MPI_Probe`
+   * :ref:`MPI_Cancel`

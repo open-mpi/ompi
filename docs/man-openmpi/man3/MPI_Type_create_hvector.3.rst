@@ -97,4 +97,5 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Type_hvector` :ref:`MPI_Type_vector`
+   * :ref:`MPI_Type_hvector`
+   * :ref:`MPI_Type_vector`

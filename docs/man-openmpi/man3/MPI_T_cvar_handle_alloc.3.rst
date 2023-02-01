@@ -69,4 +69,4 @@ ERRORS
 
 
 .. seealso::
-   :ref:`MPI_T_cvar_get_info`
+   * :ref:`MPI_T_cvar_get_info`

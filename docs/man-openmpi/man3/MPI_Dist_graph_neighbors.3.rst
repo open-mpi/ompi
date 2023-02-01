@@ -88,4 +88,4 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Dist_graph_neighbors_count`
+   * :ref:`MPI_Dist_graph_neighbors_count`

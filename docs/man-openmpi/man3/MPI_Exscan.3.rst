@@ -172,4 +172,6 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Op_create` :ref:`MPI_Reduce` :ref:`MPI_Scan`
+   * :ref:`MPI_Op_create`
+   * :ref:`MPI_Reduce`
+   * :ref:`MPI_Scan`

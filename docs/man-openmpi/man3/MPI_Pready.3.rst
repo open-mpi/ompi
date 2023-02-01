@@ -62,4 +62,6 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Pready_list` :ref:`MPI_Pready_range` :ref:`MPI_Parrived`
+   * :ref:`MPI_Pready_list`
+   * :ref:`MPI_Pready_range`
+   * :ref:`MPI_Parrived`

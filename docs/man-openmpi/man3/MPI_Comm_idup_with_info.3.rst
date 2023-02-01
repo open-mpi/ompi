@@ -107,4 +107,6 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Comm_dup` :ref:`MPI_Comm_idup` :ref:`MPI_Comm_dup_with_info`
+   * :ref:`MPI_Comm_dup`
+   * :ref:`MPI_Comm_idup`
+   * :ref:`MPI_Comm_dup_with_info`

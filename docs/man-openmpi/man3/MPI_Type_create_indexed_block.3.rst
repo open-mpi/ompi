@@ -97,4 +97,4 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Type_indexed`
+   * :ref:`MPI_Type_indexed`

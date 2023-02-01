@@ -111,4 +111,4 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Graph_neighbors_count`
+   * :ref:`MPI_Graph_neighbors_count`

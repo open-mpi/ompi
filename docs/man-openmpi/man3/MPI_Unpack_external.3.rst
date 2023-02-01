@@ -157,4 +157,7 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Pack_external` :ref:`MPI_Pack_external_size` :ref:`MPI_Recv` sscanf(3C)
+   * :ref:`MPI_Pack_external`
+   * :ref:`MPI_Pack_external_size`
+   * :ref:`MPI_Recv`
+   * sscanf(3C)

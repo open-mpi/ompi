@@ -80,4 +80,5 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Graph_create` :ref:`MPI_Cart_create`
+   * :ref:`MPI_Graph_create`
+   * :ref:`MPI_Cart_create`

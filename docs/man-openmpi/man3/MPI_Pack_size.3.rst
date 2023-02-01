@@ -82,4 +82,5 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Pack` :ref:`MPI_Unpack`
+   * :ref:`MPI_Pack`
+   * :ref:`MPI_Unpack`

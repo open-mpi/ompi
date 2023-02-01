@@ -68,5 +68,6 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Comm_create_errhandler` :ref:`MPI_Comm_get_errhandler`
-   :ref:`MPI_Comm_set_errhandler`
+   * :ref:`MPI_Comm_create_errhandler`
+   * :ref:`MPI_Comm_get_errhandler`
+   * :ref:`MPI_Comm_set_errhandler`

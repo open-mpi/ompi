@@ -52,4 +52,6 @@ ERRORS
 
 
 .. seealso::
-   :ref:`MPI_T_pvar_handle_alloc` :ref:`MPI_T_pvar_get_info` :ref:`MPI_T_pvar_session_create`
+   * :ref:`MPI_T_pvar_handle_alloc`
+   * :ref:`MPI_T_pvar_get_info`
+   * :ref:`MPI_T_pvar_session_create`

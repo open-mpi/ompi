@@ -112,4 +112,4 @@ of calling it before :ref:`MPI_Init` or after :ref:`MPI_Finalize` is undefined.
 
 
 .. seealso::
-   :ref:`MPI_Wtick`
+   * :ref:`MPI_Wtick`

@@ -84,4 +84,5 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Win_post` :ref:`MPI_Win_complete`
+   * :ref:`MPI_Win_post`
+   * :ref:`MPI_Win_complete`

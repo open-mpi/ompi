@@ -94,4 +94,6 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   socket(3SOCKET) :ref:`MPI_Comm_create` :ref:`MPI_Comm_group`
+   * socket(3SOCKET)
+   * :ref:`MPI_Comm_create`
+   * :ref:`MPI_Comm_group`

@@ -95,4 +95,7 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Comm_get_info` :ref:`MPI_Info_create` :ref:`MPI_Info_set` :ref:`MPI_Info_free`
+   * :ref:`MPI_Comm_get_info`
+   * :ref:`MPI_Info_create`
+   * :ref:`MPI_Info_set`
+   * :ref:`MPI_Info_free`

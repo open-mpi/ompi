@@ -189,4 +189,5 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Gatherv` :ref:`MPI_Allgather`
+   * :ref:`MPI_Gatherv`
+   * :ref:`MPI_Allgather`

@@ -67,4 +67,4 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Comm_get_attr`
+   * :ref:`MPI_Comm_get_attr`

@@ -83,4 +83,4 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Comm_set_attr`
+   * :ref:`MPI_Comm_set_attr`

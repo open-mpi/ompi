@@ -120,5 +120,8 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Pack_external` :ref:`MPI_Sizeof` :ref:`MPI_Type_match_size` :ref:`MPI_Unpack_external`
-   SELECTED_INT_KIND
+   * :ref:`MPI_Pack_external`
+   * :ref:`MPI_Sizeof`
+   * :ref:`MPI_Type_match_size`
+   * :ref:`MPI_Unpack_external`
+   * SELECTED_INT_KIND

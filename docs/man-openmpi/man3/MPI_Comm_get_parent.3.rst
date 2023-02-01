@@ -84,4 +84,5 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Comm_spawn` :ref:`MPI_Comm_spawn_multiple`
+   * :ref:`MPI_Comm_spawn`
+   * :ref:`MPI_Comm_spawn_multiple`

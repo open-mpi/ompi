@@ -152,4 +152,5 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Pack` :ref:`MPI_Pack_size`
+   * :ref:`MPI_Pack`
+   * :ref:`MPI_Pack_size`
