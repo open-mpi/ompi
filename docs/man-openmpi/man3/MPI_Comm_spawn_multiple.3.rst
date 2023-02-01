@@ -275,4 +275,4 @@ ERRORS
 .. seealso::
    * :ref:`MPI_Comm_spawn`
    * :ref:`MPI_Comm_get_parent`
-   * mpirun(1)
+   * :ref:`mpirun(1) <man1-mpirun>`
