@@ -14,18 +14,18 @@ SYNTAX
 C Syntax
 ^^^^^^^^
 
-.. code:: C
+.. code-block:: C
 
    #include <mpi.h>
 
    int MPI_Barrier(MPI_Comm)
    int MPI_Ibarrier(MPI_Comm comm, MPI_Request *request)
-   int MPI_barrier_init(MPI_Comm comm, MPI_Info info, MPI_Request *request)
+   int MPI_Barrier_init(MPI_Comm comm, MPI_Info info, MPI_Request *request)
 
 Fortran Syntax
 ^^^^^^^^^^^^^^
 
-.. code:: Fortran
+.. code-block:: Fortran
 
    USE MPI
    ! or the older form: INCLUDE 'mpif.h'
@@ -39,7 +39,7 @@ Fortran Syntax
 Fortran 2008 Syntax
 ^^^^^^^^^^^^^^^^^^^
 
-.. code:: Fortran
+.. code-block:: Fortran
 
    USE mpi_f08
    MPI_Barrier(comm, ierror)
@@ -58,14 +58,14 @@ Fortran 2008 Syntax
 INPUT PARAMETER
 ---------------
 
--  comm : Communicator (handle).
--  info : Info (handle, persistent only).
+* ``comm`` : Communicator (handle).
+* ``info`` : Info (handle, persistent only).
 
 OUTPUT PARAMETERS
 -----------------
 
--  request : Request (handle, non-blocking only).
--  IERROR : Fortran only: Error status (integer).
+* ``request`` : Request (handle, non-blocking only).
+* ``IERROR`` : Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -86,4 +86,5 @@ ERRORS
 
 .. include:: ./ERRORS.rst
 
-.. seealso:: :ref:`MPI_Bcast`
+.. seealso::
+   * :ref:`MPI_Bcast`

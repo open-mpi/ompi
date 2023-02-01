@@ -90,7 +90,7 @@ arithmetic in RMA operations: the target displacement argument of an RMA
 operation is scaled by the factor *disp_unit* specified by the target
 process, at window creation.
 
-For supported info keys see :ref:`MPI_Win_create`\ *.*
+For supported info keys see :ref:`MPI_Win_create`.
 
 
 NOTES
@@ -102,17 +102,17 @@ type *type. The later choice will allow one to use* array indices in RMA
 calls, and have those scaled correctly to byte displacements, even in a
 heterogeneous environment.
 
-Calling :ref:`MPI_Win_free`\ *will deallocate the memory allocated
-by*\ :ref:`MPI_Win_allocate`\ *. It is thus erroneous to manually free
-baseptr.*
+Calling :ref:`MPI_Win_free` will deallocate the memory allocated
+by :ref:`MPI_Win_allocate`. It is thus erroneous to manually free
+baseptr.
 
 
 C NOTES
 -------
 
-While *baseptr is a void \* type, this is to allow easy use of any
-pointer object for this parameter. This argument is really a void \*\*
-type.*
+While *baseptr* is a ``void *`` type, this is to allow easy use of any
+pointer object for this parameter. This argument is really a ``void **``
+type.
 
 
 ERRORS

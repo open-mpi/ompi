@@ -14,7 +14,7 @@ SYNTAX
 C Syntax
 ^^^^^^^^
 
-.. code:: c
+.. code-block:: c
 
    #include <mpi.h>
 
@@ -24,7 +24,7 @@ C Syntax
 Fortran Syntax
 ^^^^^^^^^^^^^^
 
-.. code:: fortran
+.. code-block:: fortran
 
    USE MPI
    ! or the older form: INCLUDE 'mpif.h'
@@ -35,7 +35,7 @@ Fortran Syntax
 Fortran 2008 Syntax
 ^^^^^^^^^^^^^^^^^^^
 
-.. code:: fortran
+.. code-block:: fortran
 
    USE mpi_f08
 
@@ -48,18 +48,18 @@ Fortran 2008 Syntax
 INPUT PARAMETERS
 ----------------
 
--  group : Group (handle).
--  n : Number of elements in array ranks (and size of
+* ``group`` : Group (handle).
+* ``n`` : Number of elements in array ranks (and size of
    newgroup)(integer).
--  ranks : Ranks of processes in group to appear in newgroup (array of
+* ``ranks`` : Ranks of processes in group to appear in newgroup (array of
    integers).
 
 OUTPUT PARAMETERS
 -----------------
 
--  newgroup : New group derived from above, in the order defined by
+* ``newgroup`` : New group derived from above, in the order defined by
    ranks (handle).
--  IERROR : Fortran only: Error status (integer).
+* ``IERROR`` : Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

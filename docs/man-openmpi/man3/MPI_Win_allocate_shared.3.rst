@@ -130,8 +130,8 @@ Calling :ref:`MPI_Win_free` will deallocate the memory allocated by
 C NOTES
 -------
 
-While *baseptr* is a *void \** type, this is to allow easy use of any
-pointer object for this parameter. This argument is really a *void \*\**
+While *baseptr* is a ``void *`` type, this is to allow easy use of any
+pointer object for this parameter. This argument is really a ``void **``
 type.
 
 

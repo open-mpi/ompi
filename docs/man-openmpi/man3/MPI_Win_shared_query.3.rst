@@ -87,9 +87,9 @@ called with *size* = 0.
 C NOTES
 -------
 
-The parameter *baseptr* is of type *void \** to allow passing any
+The parameter *baseptr* is of type ``void *`` to allow passing any
 pointer object for this parameter. The provided argument should be a
-pointer to a pointer of arbitrary type (e.g. *void \*\**).
+pointer to a pointer of arbitrary type (e.g. ``void **``).
 
 
 ERRORS

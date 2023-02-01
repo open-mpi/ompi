@@ -108,7 +108,7 @@ Even though both formal arguments attribute_val_in and attribute_val_out
 are of type void*, their usage differs. The C copy function is passed by
 MPI in attribute_val_in the value of the attribute, and in
 attribute_val_out the address of the attribute, so as to allow the
-function to return the (new) attribute value. The use of type void\* for
+function to return the (new) attribute value. The use of type ``void *`` for
 both is to avoid messy type casts.
 
 A valid copy function is one that completely duplicates the information

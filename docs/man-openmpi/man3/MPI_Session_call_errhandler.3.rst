@@ -14,7 +14,7 @@ SYNTAX
 C Syntax
 ^^^^^^^^
 
-.. code:: c
+.. code-block:: c
 
    #include <mpi.h>
 
@@ -23,7 +23,7 @@ C Syntax
 Fortran Syntax
 ^^^^^^^^^^^^^^
 
-.. code:: Fortran
+.. code-block:: Fortran
 
    USE MPI
    ! or the older form: INCLUDE 'mpif.h'
@@ -34,7 +34,7 @@ Fortran Syntax
 Fortran 2008 Syntax
 ^^^^^^^^^^^^^^^^^^^
 
-.. code:: Fortran
+.. code-block:: Fortran
 
    USE mpi_f08
 
@@ -46,13 +46,13 @@ Fortran 2008 Syntax
 INPUT PARAMETER
 ---------------
 
--  session : session with error handler (handle).
--  errorcode : error code (integer).
+* ``session`` : session with error handler (handle).
+* ``errorcode`` : error code (integer).
 
 OUTPUT PARAMETERS
 -----------------
 
--  IERROR : Fortran only: Error status (integer).
+* ``IERROR`` : Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

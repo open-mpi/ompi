@@ -99,13 +99,13 @@ The *array_of_starts* contains the starting coordinates of each
 dimension of the subarray. Arrays are assumed to be indexed starting
 from zero. For any dimension *i*, it is erroneous to specify
 
-.. code::
+.. code-block::
 
    array_of_starts[i] < 0
 
 or
 
-.. code::
+.. code-block::
 
    array_of_starts[i] > (array_of_sizes[i] - array_of_subsizes[i]).
 
@@ -119,7 +119,7 @@ well as the full array. It must be set to one of the following:
 A *ndims*-dimensional subarray (*newtype*) with no extra padding can be
 defined by the function Subarray() as follows:
 
-.. code::
+.. code-block::
 
       newtype = Subarray(ndims, {size_0, size_1,..., size_ndims-1},
                 {subsize_0, subsize_1, ..., subsize_ndims-1},
@@ -127,7 +127,7 @@ defined by the function Subarray() as follows:
 
 Let the typemap of *oldtype* have the form:
 
-.. code::
+.. code-block::
 
       {(type_0, disp_0), (type_1, disp_1), ..., (type_n-1, disp_n-1)}
 

@@ -13,7 +13,7 @@ SYNTAX
 C Syntax
 ^^^^^^^^
 
-.. code:: c
+.. code-block:: c
 
    #include <mpi.h>
 
@@ -22,12 +22,12 @@ C Syntax
 INPUT PARAMETERS
 ----------------
 
--  required: Desired level of thread support (integer).
+* ``required``: Desired level of thread support (integer).
 
 OUTPUT PARAMETERS
 -----------------
 
--  provided: Available level of thread support (integer).
+* ``provided``: Available level of thread support (integer).
 
 DESCRIPTION
 -----------
@@ -74,4 +74,7 @@ ERRORS
   initialized
 
 
-.. seealso:: :ref:`MPI_T` :ref:`MPI_Init` :ref:`MPI_Init_thread`
+.. seealso::
+   * :ref:`MPI_T`
+   * :ref:`MPI_Init`
+   * :ref:`MPI_Init_thread`

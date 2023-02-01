@@ -14,7 +14,7 @@ SYNTAX
 C Syntax
 ^^^^^^^^
 
-.. code:: c
+.. code-block:: c
 
    #include <mpi.h>
 
@@ -24,8 +24,8 @@ C Syntax
 PARAMETERS
 ----------
 
--  ``f_session``: ``mpi``-style ``INTEGER`` MPI session object
--  ``c_session``: C-style MPI session object
+* ``f_session``: ``mpi``-style ``INTEGER`` MPI session object
+* ``c_session``: C-style MPI session object
 
 DESCRIPTION
 -----------

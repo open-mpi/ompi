@@ -14,7 +14,7 @@ SYNTAX
 C Syntax
 ^^^^^^^^
 
-.. code:: c
+.. code-block:: c
 
    #include <mpi.h>
 
@@ -23,7 +23,7 @@ C Syntax
 Fortran Syntax
 ^^^^^^^^^^^^^^
 
-.. code:: fortran
+.. code-block:: fortran
 
    USE MPI
    ! or the older form: INCLUDE 'mpif.h'
@@ -35,7 +35,7 @@ Fortran Syntax
 Fortran 2008 Syntax
 ^^^^^^^^^^^^^^^^^^^
 
-.. code:: fortran
+.. code-block:: fortran
 
    USE mpi_f08
 
@@ -51,21 +51,21 @@ Fortran 2008 Syntax
 INPUT PARAMETERS
 ----------------
 
--  local_group : Local group (handler)
--  local_leader : rank of local group leader in local_group (integer)
--  remote_group : Remote group (handler)
--  remote_leader : rank of remote leader in remote_group, significant
+* ``local_group`` : Local group (handler)
+* ``local_leader`` : rank of local group leader in local_group (integer)
+* ``remote_group`` : Remote group (handler)
+* ``remote_leader`` : rank of remote leader in remote_group, significant
    only at local_leader (integer)
--  stringtag : Unique identifier for this operation (string)
--  info : info object (handler)
--  errhandler : error handler to be attached to the new
+* ``stringtag`` : Unique identifier for this operation (string)
+* ``info`` : info object (handler)
+* ``errhandler`` : error handler to be attached to the new
    inter-communicator (handle)
 
 OUTPUT PARAMETERS
 -----------------
 
--  newintercomm : New inter-communicator (handle).
--  IERROR : Fortran only: Error status (integer).
+* ``newintercomm`` : New inter-communicator (handle).
+* ``IERROR`` : Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

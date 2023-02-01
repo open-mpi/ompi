@@ -152,12 +152,12 @@ buffer). Use the variable MPI_IN_PLACE as the value of *sendbuf*. In
 this case, *sendcount* and *sendtype* are ignored. The input data of
 each process is assumed to be in the area where that process would
 receive its own contribution to the receive buffer. Specifically, the
-outcome of a call to :ref:`MPI_Allgather` that used the in-place option is
+outcome of a call to :ref:`MPI_Allgatherv` that used the in-place option is
 identical to the case in which all processes executed *n* calls to
 
 ::
 
-      MPI_ALLGATHERV ( MPI_IN_PLACE, 0, MPI_DATATYPE_NULL, recvbuf,
+      MPI_Allgatherv ( MPI_IN_PLACE, 0, MPI_DATATYPE_NULL, recvbuf,
       recvcounts, displs, recvtype, root, comm )
 
    for root =0, ... , n-1.

@@ -14,7 +14,7 @@ SYNTAX
 C Syntax
 ^^^^^^^^
 
-.. code:: c
+.. code-block:: c
 
    #include <mpi.h>
 
@@ -23,7 +23,7 @@ C Syntax
 Fortran Syntax
 ^^^^^^^^^^^^^^
 
-.. code:: fortran
+.. code-block:: fortran
 
    USE MPI
    ! or the older form: INCLUDE 'mpif.h'
@@ -34,7 +34,7 @@ Fortran Syntax
 Fortran 2008 Syntax
 ^^^^^^^^^^^^^^^^^^^
 
-.. code:: fortran
+.. code-block:: fortran
 
    USE mpi_f08
 
@@ -46,14 +46,14 @@ Fortran 2008 Syntax
 INPUT PARAMETER
 ---------------
 
--  comm : Communicator for group with graph structure (handle).
+* ``comm`` : Communicator for group with graph structure (handle).
 
 OUTPUT PARAMETERS
 -----------------
 
--  nnodes : Number of nodes in graph (integer).
--  nedges : Number of edges in graph (integer).
--  IERROR : Fortran only: Error status (integer).
+* ``nnodes`` : Number of nodes in graph (integer).
+* ``nedges`` : Number of edges in graph (integer).
+* ``IERROR`` : Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

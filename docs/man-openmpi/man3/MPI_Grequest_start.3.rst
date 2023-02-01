@@ -14,7 +14,7 @@ SYNTAX
 C Syntax
 ^^^^^^^^
 
-.. code:: c
+.. code-block:: c
 
    #include <mpi.h>
 
@@ -26,7 +26,7 @@ C Syntax
 Fortran Syntax (See Fortran 77 Notes)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. code:: fortran
+.. code-block:: fortran
 
    USE MPI
    ! or the older form: INCLUDE 'mpif.h'
@@ -40,7 +40,7 @@ Fortran Syntax (See Fortran 77 Notes)
 Fortran 2008 Syntax
 ^^^^^^^^^^^^^^^^^^^
 
-.. code:: fortran
+.. code-block:: fortran
 
    USE mpi_f08
 
@@ -56,19 +56,19 @@ Fortran 2008 Syntax
 INPUT PARAMETERS
 ----------------
 
--  ``query_fn`` : Callback function invoked when request status is
+* ``query_fn`` : Callback function invoked when request status is
    queried (function).
--  ``free_fn`` : Callback function invoked when request is freed
+* ``free_fn`` : Callback function invoked when request is freed
    (function).
--  ``cancel_fn`` : Callback function invoked when request is canceled
+* ``cancel_fn`` : Callback function invoked when request is canceled
    (function).
--  ``extra_state`` : Extra state.
+* ``extra_state`` : Extra state.
 
 OUTPUT PARAMETERS
 -----------------
 
--  ``request`` : Generalized request (handle).
--  ``IERROR`` : Fortran only: Error status (integer).
+* ``request`` : Generalized request (handle).
+* ``IERROR`` : Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -82,14 +82,14 @@ associated with the ``request`` by the starting call
 :ref:`MPI_Grequest_start`. This can be used to maintain user-defined state
 for the ``request``. In C, the query function is
 
-.. code:: c
+.. code-block:: c
 
    typedef int MPI_Grequest_query_function(void *extra_state,
        MPI_Status *status);
 
 In Fortran, it is
 
-.. code:: fortran
+.. code-block:: fortran
 
    SUBROUTINE GREQUEST_QUERY_FUNCTION(EXTRA_STATE, STATUS, IERROR)
        INTEGER STATUS(MPI_STATUS_SIZE), IERROR
@@ -120,13 +120,13 @@ specified by MPI.
 
 In C, the free function is
 
-.. code:: c
+.. code-block:: c
 
    typedef int MPI_Grequest_free_function(void *extra_state);
 
 And in Fortran, it is
 
-.. code:: fortran
+.. code-block:: fortran
 
    SUBROUTINE GREQUEST_FREE_FUNCTION(EXTRA_STATE, IERROR)
        INTEGER IERROR
@@ -156,13 +156,13 @@ by a correct program.
 
 In C, the cancel function is
 
-.. code:: c
+.. code-block:: c
 
    typedef int MPI_Grequest_cancel_function(void *extra_state, int complete);
 
 In Fortran, the cancel function is
 
-.. code:: Fortran
+.. code-block:: Fortran
 
    SUBROUTINE GREQUEST_CANCEL_FUNCTION(EXTRA_STATE, COMPLETE, IERROR)
         INTEGER IERROR
@@ -182,7 +182,7 @@ The MPI standard prescribes portable Fortran syntax for the
 ``EXTRA_STATE`` argument only for Fortran 90. FORTRAN 77 users may use
 the non-portable syntax
 
-.. code:: fortran
+.. code-block:: fortran
 
    INTEGER*MPI_ADDRESS_KIND EXTRA_STATE
 

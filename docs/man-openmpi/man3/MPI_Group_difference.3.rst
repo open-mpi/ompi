@@ -13,7 +13,7 @@ SYNTAX
 C Syntax
 ^^^^^^^^
 
-.. code:: c
+.. code-block:: c
 
    #include <mpi.h>
 
@@ -23,7 +23,7 @@ C Syntax
 Fortran Syntax
 ^^^^^^^^^^^^^^
 
-.. code:: fortran
+.. code-block:: fortran
 
    USE MPI
    ! or the older form: INCLUDE 'mpif.h'
@@ -34,7 +34,7 @@ Fortran Syntax
 Fortran 2008 Syntax
 ^^^^^^^^^^^^^^^^^^^
 
-.. code:: fortran
+.. code-block:: fortran
 
    USE mpi_f08
 
@@ -46,25 +46,25 @@ Fortran 2008 Syntax
 INPUT PARAMETERS
 ----------------
 
--  group1 : First group (handle).
--  group2 : Second group (handle).
+* ``group1`` : First group (handle).
+* ``group2`` : Second group (handle).
 
 OUTPUT PARAMETERS
 -----------------
 
--  newgroup : Difference group (handle).
--  IERROR : Fortran only: Error status (integer).
+* ``newgroup`` : Difference group (handle).
+* ``IERROR`` : Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
 
 The set-like operations are defined as follows:
 
--  union -- All elements of the first group (group1), followed by all
+* union -- All elements of the first group (group1), followed by all
    elements of second group (group2) that are not in the first group
--  intersect -- all elements of the first group that are also in the
+* intersect -- all elements of the first group that are also in the
    second group, ordered as in first group
--  difference -- all elements of the first group that are not in the
+* difference -- all elements of the first group that are not in the
    second group, ordered as in the first group
 
 Note that for these operations the order of processes in the output

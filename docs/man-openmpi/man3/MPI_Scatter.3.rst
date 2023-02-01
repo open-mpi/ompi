@@ -133,7 +133,7 @@ and each process executed a receive,
        MPI_Recv(recvbuf, recvcount, recvtype, i, ...).
 
 An alternative description is that the root sends a message with
-MPI_Send(sendbuf, *sendcount* \* *n*, *sendtype*, ...). This message
+``MPI_Send(sendbuf, sendcount * n, sendtype, ...)``. This message
 is split into *n* equal segments, the ith segment is sent to the ith
 process in the group, and each process receives this message as above.
 

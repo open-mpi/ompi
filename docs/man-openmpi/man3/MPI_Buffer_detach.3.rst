@@ -14,7 +14,7 @@ SYNTAX
 C Syntax
 ^^^^^^^^
 
-.. code:: C
+.. code-block:: C
 
    #include <mpi.h>
 
@@ -23,7 +23,7 @@ C Syntax
 Fortran Syntax
 ^^^^^^^^^^^^^^
 
-.. code:: Fortran
+.. code-block:: Fortran
 
    USE MPI
    ! or the older form: INCLUDE 'mpif.h'
@@ -35,7 +35,7 @@ Fortran Syntax
 Fortran 2008 Syntax
 ^^^^^^^^^^^^^^^^^^^
 
-.. code:: Fortran
+.. code-block:: Fortran
 
    USE mpi_f08
 
@@ -48,9 +48,9 @@ Fortran 2008 Syntax
 OUTPUT PARAMETERS
 -----------------
 
--  buf : Initial buffer address (choice).
--  size : Buffer size, in bytes (integer).
--  IERROR : Fortran only: Error status (integer).
+* ``buf`` : Initial buffer address (choice).
+* ``size`` : Buffer size, in bytes (integer).
+* ``IERROR`` : Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -61,23 +61,38 @@ until all messages currently in the buffer have been transmitted. Upon
 return of this function, the user may reuse or deallocate the space
 taken by the buffer.
 
-Example: Calls to attach and detach buffers. c #define BUFFSIZE 10000
+Example: Calls to attach and detach buffers.
 
-int size char *buff; MPI_Buffer_attach( malloc(BUFFSIZE), BUFFSIZE); /*
-a buffer of 10000 bytes can now be used by :ref:`MPI_Bsend` */
-MPI_Buffer_detach( &buff, &size); /* Buffer size reduced to zero */
-MPI_Buffer_attach( buff, size); /* Buffer of 10000 bytes available again
-\*/
+::
+   
+   #define BUFFSIZE 10000
+
+   int size char *buff;
+   MPI_Buffer_attach( malloc(BUFFSIZE), BUFFSIZE);
+   /*
+     a buffer of 10000 bytes can now be used by MPI_Bsend
+   */
+   MPI_Buffer_detach( &buff, &size); // Buffer size reduced to zero
+   MPI_Buffer_attach( buff, size); // Buffer of 10000 bytes available again
 
 NOTES
 -----
 
 The reason that :ref:`MPI_Buffer_detach` returns the address and size of the
 buffer being detached is to allow nested libraries to replace and
-restore the buffer. For example, consider c int size, mysize, idummy;
-void \*ptr, \*myptr, *dummy; MPI_Buffer_detach( &ptr, &size );
-MPI_Buffer_attach( myptr, mysize ); /* ... library code ... \*/
-MPI_Buffer_detach( &dummy, &idummy ); MPI_Buffer_attach( ptr, size );
+restore the buffer. For example, consider
+
+::
+   
+   int size, mysize, idummy;
+   void *ptr, *myptr, *dummy;
+   MPI_Buffer_detach( &ptr, &size );
+   MPI_Buffer_attach( myptr, mysize );
+
+   /* ... library code ... */
+
+   MPI_Buffer_detach( &dummy, &idummy );
+   MPI_Buffer_attach( ptr, size );
 
 This is much like the action of the UNIX signal routine and has the same
 strengths (it's simple) and weak‐nesses (it only works for nested
@@ -102,4 +117,5 @@ ERRORS
 
 .. include:: ./ERRORS.rst
 
-.. seealso:: :ref:`MPI_Buffer_attach`
+.. seealso::
+   * :ref:`MPI_Buffer_attach`

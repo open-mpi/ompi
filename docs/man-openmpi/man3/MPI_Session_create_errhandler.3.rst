@@ -14,7 +14,7 @@ SYNTAX
 C Syntax
 ^^^^^^^^
 
-.. code:: c
+.. code-block:: c
 
    #include <mpi.h>
 
@@ -24,7 +24,7 @@ C Syntax
 Fortran Syntax
 ^^^^^^^^^^^^^^
 
-.. code:: fortran
+.. code-block:: fortran
 
    USE MPI
    ! or the older form: INCLUDE 'mpif.h'
@@ -36,7 +36,7 @@ Fortran Syntax
 Fortran 2008 Syntax
 ^^^^^^^^^^^^^^^^^^^
 
-.. code:: fortran
+.. code-block:: fortran
 
    USE mpi_f08
 
@@ -48,13 +48,13 @@ Fortran 2008 Syntax
 INPUT PARAMETER
 ---------------
 
--  ``function`` : User-defined error handling procedure (function).
+* ``function`` : User-defined error handling procedure (function).
 
 OUTPUT PARAMETERS
 -----------------
 
--  ``errhandler`` : MPI error handler (handle).
--  ``IERROR`` : Fortran only: Error status (integer).
+* ``errhandler`` : MPI error handler (handle).
+* ``IERROR`` : Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -65,7 +65,7 @@ attached to sessions. This ``function`` is identical to
 user routine should be a ``function`` of type
 MPI_Session_errhandler_function, which is defined as
 
-.. code:: c
+.. code-block:: c
 
    typedef void MPI_Session_errhandler_function(MPI_Session *, int *, ...);
 
@@ -74,7 +74,7 @@ to be returned by the MPI routine that raised the error. This typedef
 replaces ``MPI_Handler_function``, the use of which is deprecated. In
 Fortran, the user routine should be of this form:
 
-.. code:: fortran
+.. code-block:: fortran
 
    SUBROUTINE SESSION_ERRHANDLER_FUNCTION(SESSION, ERROR_CODE, ...)
       INTEGER SESSION, ERROR_CODE
