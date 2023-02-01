@@ -38,10 +38,12 @@ Fortran Syntax
 
 INPUT PARAMETER
 ---------------
+
 * ``function``: User-defined error handling procedure.
 
 OUTPUT PARAMETERS
 -----------------
+
 * ``errhandler``: MPI error handler (handle).
 * ``ierror``: Fortran only: Error status (integer).
 
@@ -76,7 +78,7 @@ NOTE
 
 The MPI-1 Standard states that an implementation may make the output
 value (errhandler) simply the address of the function. However, the
-action of MPI_Errhandler\_ free makes this impossible, since it is
+action of :ref:`MPI_Errhandler_free` makes this impossible, since it is
 required to set the value of the argument to MPI_ERRHANDLER_NULL. In
 addition, the actual error handler must remain until all communicators
 that use it are freed.

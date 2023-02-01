@@ -48,11 +48,10 @@ Fortran 2008 Syntax
 Deprecated Type Name Note
 -------------------------
 
-MPI-2.2 deprecated the MPI_Comm_errhandler_fn and
-``MPI::Comm::Errhandler_fn`` types in favor of
-MPI_Comm_errhandler_function and ``MPI::Comm::Errhandler_function``,
-respectively. Open MPI supports both names (indeed, the \_fn names are
-typedefs to the \_function names).
+MPI-2.2 deprecated the ``MPI_Comm_errhandler_fn`` type in favor of
+``MPI_Comm_errhandler_function``.
+Open MPI supports both names (indeed, the ``_fn`` names are
+typedefs to the ``_function`` names).
 
 INPUT PARAMETER
 ---------------
@@ -72,7 +71,7 @@ DESCRIPTION
 attached to communicators. This ``function`` is identical to
 :ref:`MPI_Errhandler_create`, the use of which is deprecated. In C, the
 user routine should be a ``function`` of type
-MPI_Comm_errhandler_function, which is defined as
+``MPI_Comm_errhandler_function``, which is defined as
 
 .. code-block:: c
 

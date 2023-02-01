@@ -63,7 +63,7 @@ DESCRIPTION
 attached to sessions. This ``function`` is identical to
 :ref:`MPI_Errhandler_create`, the use of which is deprecated. In C, the
 user routine should be a ``function`` of type
-MPI_Session_errhandler_function, which is defined as
+``MPI_Session_errhandler_function``, which is defined as
 
 .. code-block:: c
 
