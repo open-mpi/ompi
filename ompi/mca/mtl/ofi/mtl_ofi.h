@@ -1000,6 +1000,76 @@ free_request_buffer:
     return ofi_req.status.MPI_ERROR;
 }
 
+/*
+ * This routine is invoked in the case where a Recv finds the
+ * MTL_OFI_IS_SYNC_SEND flag was set, indicating the sender issued an SSend and
+ * is blocking while it waits on an ACK message.
+ *
+ * Issue a fire-and-forget send back to the src with a matching tag so that
+ * the sender may continue progress.
+ * Requires ofi_req->remote_addr and ofi_req->comm to be set.
+ */
+static int
+ompi_mtl_ofi_gen_ssend_ack(struct fi_cq_tagged_entry *wc,
+                           ompi_mtl_ofi_request_t *ofi_req)
+{
+    /**
+     * If this recv is part of an MPI_Ssend operation, then we send an
+     * acknowledgment back to the sender.
+     * The ack message is sent without generating a completion event in
+     * the completion queue by not setting FI_COMPLETION in the flags to
+     * fi_tsendmsg(FI_SELECTIVE_COMPLETION).
+     * This is done since the 0 byte message requires no
+     * notification on the send side for a successful completion.
+     * If a failure occurs the provider will notify the error
+     * in the cq_readerr during OFI progress. Once the message has been
+     * successfully processed the request is marked as completed.
+     */
+    int ctxt_id = 0;
+    ssize_t ret;
+    ompi_proc_t *ompi_proc = NULL;
+    mca_mtl_ofi_endpoint_t *endpoint = NULL;
+    int src = mtl_ofi_get_source(wc);
+    struct fi_msg_tagged tagged_msg;
+
+    if (ompi_mtl_ofi.total_ctxts_used > 0) {
+        ctxt_id = ofi_req->comm->c_contextid.cid_sub.u64 % ompi_mtl_ofi.total_ctxts_used;
+    } else {
+        ctxt_id = 0;
+    }
+
+    ret = MPI_SUCCESS;
+    
+    /**
+     * If the recv request was posted for any source,
+     * we need to extract the source's actual address.
+     */
+    ompi_proc = ompi_comm_peer_lookup(ofi_req->comm, src);
+    endpoint = ompi_mtl_ofi_get_endpoint(ofi_req->mtl, ompi_proc);
+    ofi_req->remote_addr = fi_rx_addr(endpoint->peer_fiaddr, ctxt_id, ompi_mtl_ofi.rx_ctx_bits);
+
+    tagged_msg.msg_iov = NULL;
+    tagged_msg.desc = NULL;
+    tagged_msg.iov_count = 0;
+    tagged_msg.addr = ofi_req->remote_addr;
+    /**
+    * We must continue to use the user's original tag but remove the
+    * sync_send protocol tag bit and instead apply the sync_send_ack
+    * tag bit to complete the initiator's sync send receive.
+    */
+    tagged_msg.tag = (wc->tag | ompi_mtl_ofi.sync_send_ack) & ~ompi_mtl_ofi.sync_send;
+    tagged_msg.context = NULL;
+    tagged_msg.data = 0;
+
+    MTL_OFI_RETRY_UNTIL_DONE(fi_tsendmsg(ompi_mtl_ofi.ofi_ctxt[ctxt_id].tx_ep,
+                                &tagged_msg, 0), ret);
+    if (OPAL_UNLIKELY(0 > ret)) {
+        MTL_OFI_LOG_FI_ERR(ret, "fi_tsendmsg failed during ompi_mtl_ofi_gen_ssend_ack");
+        ret = OMPI_ERROR;
+    }
+    return ret;
+}
+
 __opal_attribute_always_inline__ static inline int
 ompi_mtl_ofi_isend_generic(struct mca_mtl_base_module_t *mtl,
                    struct ompi_communicator_t *comm,
@@ -1136,19 +1206,9 @@ __opal_attribute_always_inline__ static inline int
 ompi_mtl_ofi_recv_callback(struct fi_cq_tagged_entry *wc,
                            ompi_mtl_ofi_request_t *ofi_req)
 {
-    int ompi_ret, ctxt_id = 0;
-    ssize_t ret;
-    ompi_proc_t *ompi_proc = NULL;
-    mca_mtl_ofi_endpoint_t *endpoint = NULL;
+    int ompi_ret;
     int src = mtl_ofi_get_source(wc);
     ompi_status_public_t *status = NULL;
-    struct fi_msg_tagged tagged_msg;
-
-    if (ompi_mtl_ofi.total_ctxts_used > 0) {
-        ctxt_id = ofi_req->comm->c_contextid.cid_sub.u64 % ompi_mtl_ofi.total_ctxts_used;
-    } else {
-        ctxt_id = 0;
-    }
 
     assert(ofi_req->super.ompi_req);
     status = &ofi_req->super.ompi_req->req_status;
@@ -1159,6 +1219,7 @@ ompi_mtl_ofi_recv_callback(struct fi_cq_tagged_entry *wc,
      */
     ofi_req->req_started = true;
 
+    status->MPI_ERROR = MPI_SUCCESS;
     status->MPI_SOURCE = src;
     status->MPI_TAG = MTL_OFI_GET_TAG(wc->tag);
     status->_ucount = wc->len;
@@ -1194,53 +1255,20 @@ ompi_mtl_ofi_recv_callback(struct fi_cq_tagged_entry *wc,
     */
     assert(!MTL_OFI_IS_SYNC_SEND_ACK(wc->tag));
 
-    /**
-     * If this recv is part of an MPI_Ssend operation, then we send an
-     * acknowledgment back to the sender.
-     * The ack message is sent without generating a completion event in
-     * the completion queue by not setting FI_COMPLETION in the flags to
-     * fi_tsendmsg(FI_SELECTIVE_COMPLETION).
-     * This is done since the 0 byte message requires no
-     * notification on the send side for a successful completion.
-     * If a failure occurs the provider will notify the error
-     * in the cq_readerr during OFI progress. Once the message has been
-     * successfully processed the request is marked as completed.
-     */
     if (OPAL_UNLIKELY(MTL_OFI_IS_SYNC_SEND(wc->tag))) {
-        /**
-         * If the recv request was posted for any source,
-         * we need to extract the source's actual address.
-         */
-        if (ompi_mtl_ofi.any_addr == ofi_req->remote_addr) {
-            ompi_proc = ompi_comm_peer_lookup(ofi_req->comm, src);
-            endpoint = ompi_mtl_ofi_get_endpoint(ofi_req->mtl, ompi_proc);
-            ofi_req->remote_addr = fi_rx_addr(endpoint->peer_fiaddr, ctxt_id, ompi_mtl_ofi.rx_ctx_bits);
-        }
+        ompi_ret = ompi_mtl_ofi_gen_ssend_ack(wc, ofi_req);
 
-        tagged_msg.msg_iov = NULL;
-        tagged_msg.desc = NULL;
-        tagged_msg.iov_count = 0;
-        tagged_msg.addr = ofi_req->remote_addr;
-        /**
-        * We must continue to use the user's original tag but remove the
-        * sync_send protocol tag bit and instead apply the sync_send_ack
-        * tag bit to complete the initiator's sync send receive.
-        */
-        tagged_msg.tag = (wc->tag | ompi_mtl_ofi.sync_send_ack) & ~ompi_mtl_ofi.sync_send;
-        tagged_msg.context = NULL;
-        tagged_msg.data = 0;
-
-        MTL_OFI_RETRY_UNTIL_DONE(fi_tsendmsg(ompi_mtl_ofi.ofi_ctxt[ctxt_id].tx_ep,
-                                 &tagged_msg, 0), ret);
-        if (OPAL_UNLIKELY(0 > ret)) {
-            MTL_OFI_LOG_FI_ERR(ret, "fi_tsendmsg failed");
-            status->MPI_ERROR = OMPI_ERROR;
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != ompi_ret)) {
+            opal_output_verbose(1, opal_common_ofi.output,
+                                "%s:%d: ompi_mtl_ofi_gen_ssend_ack failed: %d",
+                                __FILE__, __LINE__, ompi_ret);
+            status->MPI_ERROR = ompi_ret;
         }
     }
 
     ofi_req->super.completion_callback(&ofi_req->super);
 
-    return OMPI_SUCCESS;
+    return status->MPI_ERROR;
 }
 
 /**
@@ -1386,14 +1414,26 @@ ompi_mtl_ofi_mrecv_callback(struct fi_cq_tagged_entry *wc,
     status->MPI_TAG = MTL_OFI_GET_TAG(wc->tag);
     status->MPI_ERROR = MPI_SUCCESS;
     status->_ucount = wc->len;
+    int ompi_ret;
 
     ompi_mtl_ofi_deregister_and_free_buffer(ofi_req);
+
+    if (OPAL_UNLIKELY(MTL_OFI_IS_SYNC_SEND(wc->tag))) {
+        ompi_ret = ompi_mtl_ofi_gen_ssend_ack(wc, ofi_req);
+
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != ompi_ret)) {
+            opal_output_verbose(1, opal_common_ofi.output,
+                                "%s:%d: ompi_mtl_ofi_gen_ssend_ack failed: %d",
+                                __FILE__, __LINE__, ompi_ret);
+            status->MPI_ERROR = ompi_ret;
+        }
+    }
 
     free(ofi_req);
 
     mrecv_req->completion_callback(mrecv_req);
 
-    return OMPI_SUCCESS;
+    return status->MPI_ERROR;
 }
 
 /**
@@ -1472,6 +1512,8 @@ ompi_mtl_ofi_imrecv(struct mca_mtl_base_module_t *mtl,
     ofi_req->convertor = convertor;
     ofi_req->status.MPI_ERROR = OMPI_SUCCESS;
     ofi_req->mrecv_req = mtl_request;
+    ofi_req->comm = comm;
+
 
     ompi_ret = ompi_mtl_ofi_register_buffer(convertor, ofi_req, start);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ompi_ret)) {
