@@ -15,8 +15,6 @@ If no other appropriate error handler has been set, then the MPI_ERRORS_RETURN
 error handler is called for MPI I/O functions and the MPI_ERRORS_ABORT error
 handler is called for all other MPI functions.
 
-In the sessions model, the error handler can be set during :ref:`MPI_Session_init`.
-
 Open MPI includes three predefined error handlers that can be used:
 
 * ``MPI_ERRORS_ARE_FATAL``
@@ -32,21 +30,12 @@ Open MPI includes three predefined error handlers that can be used:
 * ``MPI_ERRORS_RETURN``
   Returns an error code to the application.
 
-MPI applications can also implement their own error handlers.
+MPI applications can also implement their own error handlers by calling:
 
-Custom MPI error handlers can be created by calling:
-
-* :ref:`MPI_Comm_create_errhandler`
-* :ref:`MPI_File_create_errhandler`
-* :ref:`MPI_Session_create_errhandler`
-* :ref:`MPI_Win_create_errhandler`
-
-Predefined and custom error handlers can be set by calling:
-
-* :ref:`MPI_Comm_set_errhandler`
-* :ref:`MPI_File_set_errhandler`
-* :ref:`MPI_Session_set_errhandler`
-* :ref:`MPI_Win_set_errhandler`
+* :ref:`MPI_Comm_create_errhandler` then :ref:`MPI_Comm_set_errhandler`
+* :ref:`MPI_File_create_errhandler` then :ref:`MPI_File_set_errhandler`
+* :ref:`MPI_Session_create_errhandler` then :ref:`MPI_Session_set_errhandler` or at :ref:`MPI_Session_init`
+* :ref:`MPI_Win_create_errhandler` then :ref:`MPI_Win_set_errhandler`
 
 Note that MPI does not guarantee that an MPI program can continue past
 an error.
