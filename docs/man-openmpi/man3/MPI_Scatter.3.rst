@@ -197,7 +197,7 @@ WHEN COMMUNICATOR IS AN INTER-COMMUNICATOR
 When the communicator is an inter-communicator, the root process in the
 first group sends data to all processes in the second group. The first
 group defines the root process. That process uses MPI_ROOT as the value
-of its *root* argument. The remaining processes use MPI_PROC_NULL as the
+of its *root* argument. The remaining processes use ``MPI_PROC_NULL`` as the
 value of their *root* argument. All processes in the second group use
 the rank of that root process in the first group as the value of their
 *root* argument. The receive buffer argument of the root process in the

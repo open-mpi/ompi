@@ -177,7 +177,7 @@ symmetric, full-duplex behavior.
 
 The first group defines the root process. The root process uses MPI_ROOT
 as the value of *root*. All other processes in the first group use
-MPI_PROC_NULL as the value of *root*. All processes in the second group
+``MPI_PROC_NULL`` as the value of *root*. All processes in the second group
 use the rank of the root process in the first group as the value of
 *root*.
 

@@ -74,8 +74,8 @@ The *request* returned from :ref:`MPI_Imrecv` can be used with any of the
 
 If :ref:`MPI_Imrecv` is called with MPI_MESSAGE_NULL as the message argument, a
 call to one of the :ref:`MPI_Test` or :ref:`MPI_Wait` variants will return immediately
-with the *status* object set to *source* = MPI_PROC_NULL, *tag* =
-MPI_ANY_TAG, and *count* = 0, as if a receive from MPI_PROC_NULL was
+with the *status* object set to *source* = ``MPI_PROC_NULL``, *tag* =
+``MPI_ANY_TAG``, and *count* = 0, as if a receive from ``MPI_PROC_NULL`` was
 issued.
 
 If reception of a matched message is started with :ref:`MPI_Imrecv`, then it is

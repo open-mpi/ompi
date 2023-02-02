@@ -115,5 +115,5 @@ users may use the non-portable syntax*
 
         INTEGER*MPI_COUNT_KIND COUNT
 
-where MPI_COUNT_KIND is a constant defined in mpif.h and gives the length
+where ``MPI_COUNT_KIND`` is a constant defined in ``mpif.h`` and gives the length
 of the declared integer in bytes.

@@ -104,7 +104,7 @@ non-portable syntax
 
         INTEGER*MPI_COUNT_KIND LB, EXTENT
 
-where MPI_ADDRESS_KIND and MPI_COUNT_KIND are constants defined in
+where ``MPI_ADDRESS_KIND`` and MPI_COUNT_KIND are constants defined in
 mpif.h and give the length of the declared integer in bytes.
 
 

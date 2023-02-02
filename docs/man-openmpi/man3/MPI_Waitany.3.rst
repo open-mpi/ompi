@@ -70,16 +70,16 @@ of several requests.
 The array_of_requests list may contain null or inactive handles. If the
 list contains no active handles (list has length zero or all entries are
 null or inactive), then the call returns immediately with index =
-MPI_UNDEFINED, and an empty status.
+``MPI_UNDEFINED``, and an empty status.
 
 The execution of MPI_Waitany(count, array_of_requests, index, status)
-has the same effect as the execution of MPI_Wait(&array_of_requests[i],
-status), where i is the value returned by index (unless the value of
-index is MPI_UNDEFINED). :ref:`MPI_Waitany` with an array containing one active
+has the same effect as the execution of ``MPI_Wait(&array_of_requests[i], status)``,
+where i is the value returned by index (unless the value of
+index is ``MPI_UNDEFINED``). :ref:`MPI_Waitany` with an array containing one active
 entry is equivalent to :ref:`MPI_Wait`.
 
 If your application does not need to examine the *status* field, you can
-save resources by using the predefined constant MPI_STATUS_IGNORE as a
+save resources by using the predefined constant ``MPI_STATUS_IGNORE`` as a
 special value for the *status* argument.
 
 **Example:** Client-server code (starvation can occur).
@@ -113,11 +113,11 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 Note that per MPI-1 section 3.2.5, MPI errors on requests passed to
-:ref:`MPI_WAITANY` do not set the status.MPI_ERROR field in the returned
+:ref:`MPI_WAITANY` do not set the ``status.MPI_ERROR`` field in the returned
 status. The error code is passed to the back-end error handler and may
 be passed back to the caller through the return value of :ref:`MPI_WAITANY` if
 the back-end error handler returns it. The pre-defined MPI error handler
-MPI_ERRORS_RETURN exhibits this behavior, for example.
+``MPI_ERRORS_RETURN`` exhibits this behavior, for example.
 
 
 .. seealso::

@@ -109,7 +109,7 @@ use the non-portable syntax
         INTEGER*MPI_COUNT_KIND TRUE_LB, TRUE_EXTENT
         INTEGER*MPI_COUNT_KIND TRUE_EXTENT
 
-where MPI_ADDRESS_KIND and MPI_COUNT_KIND are constants defined in
+where ``MPI_ADDRESS_KIND`` and MPI_COUNT_KIND are constants defined in
 mpif.h and give the length of the declared integer in bytes.
 
 
