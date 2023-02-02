@@ -55,7 +55,7 @@ Fortran 2008 Syntax
 INPUT PARAMETERS
 ----------------
 * ``win``: Shared memory window object (handle).
-* ``rank``: Rank in the group of window *win* (non-negative integer) or MPI_PROC_NULL.
+* ``rank``: Rank in the group of window *win* (non-negative integer) or ``MPI_PROC_NULL``.
 
 OUTPUT PARAMETERS
 -----------------
@@ -76,7 +76,7 @@ subject to the constraints defined in MPI-3.1 section 11.7. This
 function can only be called with windows of flavor
 MPI_WIN_FLAVOR_SHARED. If the passed window is not of flavor
 MPI_WIN_FLAVOR_SHARED, the error MPI_ERR_RMA_FLAVOR is raised. When
-rank is MPI_PROC_NULL, the *pointer*, *disp_unit*, and *size* returned
+rank is ``MPI_PROC_NULL``, the *pointer*, *disp_unit*, and *size* returned
 are the pointer, disp_unit, and size of the memory segment belonging
 the lowest rank that specified *size* > 0. If all processes in the
 group attached to the window specified *size* = 0, then the call

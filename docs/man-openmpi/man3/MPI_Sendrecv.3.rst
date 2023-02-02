@@ -107,7 +107,7 @@ send buffer and receive buffers must be disjoint, and may have different
 lengths and datatypes.
 
 If your application does not need to examine the *status* field, you can
-save resources by using the predefined constant MPI_STATUS_IGNORE as a
+save resources by using the predefined constant ``MPI_STATUS_IGNORE`` as a
 special value for the *status* argument.
 
 

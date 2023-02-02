@@ -49,8 +49,8 @@ Fortran 2008 Syntax
 
 INPUT PARAMETERS
 ----------------
-* ``source``: Source rank or MPI_ANY_SOURCE (integer).
-* ``tag``: Tag value or MPI_ANY_TAG (integer).
+* ``source``: Source rank or ``MPI_ANY_SOURCE`` (integer).
+* ``tag``: Tag value or ``MPI_ANY_TAG`` (integer).
 * ``comm``: Communicator (handle).
 
 OUTPUT PARAMETERS
@@ -71,7 +71,7 @@ receive buffer, according to the length of the probed message.
 returns only after a matching message has been found.
 
 If your application does not need to examine the *status* field, you can
-save resources by using the predefined constant MPI_STATUS_IGNORE as a
+save resources by using the predefined constant ``MPI_STATUS_IGNORE`` as a
 special value for the *status* argument.
 
 The semantics of :ref:`MPI_Probe` and :ref:`MPI_Iprobe` guarantee progress: If a call
@@ -131,7 +131,7 @@ problem.
       END DO
    END IF
 
-We slightly modified Example 2, using MPI_ANY_SOURCE as the source
+We slightly modified Example 2, using ``MPI_ANY_SOURCE`` as the source
 argument in the two receive calls in statements labeled 100 and 200. The
 program is now incorrect: The receive operation may receive a message
 that is distinct from the message probed by the preceding call to

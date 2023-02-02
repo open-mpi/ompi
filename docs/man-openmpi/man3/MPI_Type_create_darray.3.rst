@@ -121,7 +121,7 @@ This routine creates a new MPI data type with a typemap defined in terms
 of a function called "cyclic()" (see below).
 
 Without loss of generality, it suffices to define the typemap for the
-MPI_DISTRIBUTE_CYCLIC case where MPI_DISTRIBUTE_DFLT_DARG is not used.
+MPI_DISTRIBUTE_CYCLIC case where ``MPI_DISTRIBUTE_DFLT_DARG`` is not used.
 
 MPI_DISTRIBUTE_BLOCK and MPI_DISTRIBUTE_NONE can be reduced to the
 MPI_DISTRIBUTE_CYCLIC case for dimension *i* as follows.

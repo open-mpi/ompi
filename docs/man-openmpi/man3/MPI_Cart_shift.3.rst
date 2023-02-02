@@ -85,7 +85,7 @@ n-dimensional Cartesian mesh.
 Depending on the periodicity of the Cartesian group in the specified
 coordinate ``direction``, :ref:`MPI_Cart_shift` provides the identifiers
 for a circular or an end-off shift. In the case of an end-off shift, the
-value MPI_PROC_NULL may be returned in ``rank_source`` or
+value ``MPI_PROC_NULL`` may be returned in ``rank_source`` or
 ``rank_dest``, indicating that the source or the destination for the
 shift is out of range.
 

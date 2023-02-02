@@ -62,7 +62,7 @@ A call to :ref:`MPI_Wait` returns when the operation identified by request is
 complete. If the communication object associated with this request was
 created by a nonblocking send or receive call, then the object is
 deallocated by the call to :ref:`MPI_Wait` and the request handle is set to
-MPI_REQUEST_NULL.
+``MPI_REQUEST_NULL``.
 
 The call returns, in status, information on the completed operation. The
 content of the status object for a receive operation can be accessed as
@@ -72,7 +72,7 @@ status object for a send operation may be queried by a call to
 Cancel").
 
 If your application does not need to examine the *status* field, you can
-save resources by using the predefined constant MPI_STATUS_IGNORE as a
+save resources by using the predefined constant ``MPI_STATUS_IGNORE`` as a
 special value for the *status* argument.
 
 One is allowed to call :ref:`MPI_Wait` with a null or inactive request
@@ -114,11 +114,11 @@ ERRORS
 .. include:: ./ERRORS.rst 
 
 Note that per MPI-1 section 3.2.5, MPI errors on requests passed to
-:ref:`MPI_WAIT` do not set the status.MPI_ERROR field in the returned status.
+:ref:`MPI_WAIT` do not set the ``status.MPI_ERROR`` field in the returned status.
 The error code is passed to the back-end error handler and may be passed
 back to the caller through the return value of :ref:`MPI_WAIT` if the back-end
 error handler returns it. The pre-defined MPI error handler
-MPI_ERRORS_RETURN exhibits this behavior, for example.
+``MPI_ERRORS_RETURN`` exhibits this behavior, for example.
 
 
 .. seealso::

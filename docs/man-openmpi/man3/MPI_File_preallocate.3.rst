@@ -93,7 +93,7 @@ syntax
 
    INTEGER*MPI_OFFSET_KIND SIZE
 
-where MPI_OFFSET_KIND is a constant defined in ``mpif.h`` and gives the
+where ``MPI_OFFSET_KIND`` is a constant defined in ``mpif.h`` and gives the
 length of the declared integer in bytes.
 
 

@@ -58,8 +58,8 @@ OUTPUT PARAMETERS
 DESCRIPTION
 -----------
 
-:ref:`MPI_COMM_SET_INFO` sets new values for the hints of the communicator
-associated with *comm*. :ref:`MPI_COMM_SET_INFO` is a collective routine. The
+:ref:`MPI_Comm_set_info` sets new values for the hints of the communicator
+associated with *comm*. :ref:`MPI_Comm_set_info` is a collective routine. The
 info object may be different on each process, but any info entries that
 an implementation requires to be the same on all processes must appear
 with the same value in each process's *info* object.
@@ -67,12 +67,12 @@ with the same value in each process's *info* object.
 The following info key assertions may be accepted by Open MPI:
 
 *mpi_assert_no_any_tag* (boolean): If set to true, then the
-implementation may assume that the process will not use the MPI_ANY_TAG
+implementation may assume that the process will not use the ``MPI_ANY_TAG``
 wildcard on the given communicator.
 
 *mpi_assert_no_any_source* (boolean): If set to true, then the
 implementation may assume that the process will not use the
-MPI_ANY_SOURCE wildcard on the given communicator.
+``MPI_ANY_SOURCE`` wildcard on the given communicator.
 
 *mpi_assert_exact_length* (boolean): If set to true, then the
 implementation may assume that the lengths of messages received by the

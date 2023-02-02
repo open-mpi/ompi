@@ -186,7 +186,7 @@ the non-portable syntax
 
    INTEGER*MPI_ADDRESS_KIND EXTRA_STATE
 
-where ``MPI_ADDRESS_KIND`` is a constant defined in mpif.h and gives the
+where ``MPI_ADDRESS_KIND`` is a constant defined in ``mpif.h`` and gives the
 length of the declared integer in bytes.
 
 ERRORS
