@@ -326,9 +326,11 @@ int ompi_mtl_ofi_register_buffer(struct opal_convertor_t *convertor,
         } else if (0 == strcmp(opal_accelerator_base_selected_component.base_version.mca_component_name, "cuda")) {
             attr.iface = FI_HMEM_CUDA;
             opal_accelerator.get_device(&attr.device.cuda);
+#if OPAL_OFI_HAVE_FI_HMEM_ROCR
         } else if (0 == strcmp(opal_accelerator_base_selected_component.base_version.mca_component_name, "rocm")) {
             attr.iface = FI_HMEM_ROCR;
             opal_accelerator.get_device(&attr.device.cuda);
+#endif
         } else {
             return OPAL_ERROR;
         }

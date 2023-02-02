@@ -146,7 +146,16 @@ AC_DEFUN([OPAL_CHECK_OFI],[
 
            AC_DEFINE_UNQUOTED([OPAL_OFI_HAVE_FI_MR_IFACE],
                               [${opal_check_fi_mr_attr_iface}],
-                              [check if iface avaiable in fi_mr_attr])])
+                              [check if iface avaiable in fi_mr_attr])
+
+           AC_CHECK_DECL([FI_HMEM_ROCR],
+                         [opal_check_fi_hmem_rocr=1],
+                         [opal_check_fi_hmem_rocr=0],
+                         [#include <rdma/fi_domain.h>])
+
+           AC_DEFINE_UNQUOTED([OPAL_OFI_HAVE_FI_HMEM_ROCR],
+                              [${opal_check_fi_hmem_rocr}],
+                              [check if FI_HMEM_ROCR avaiable in fi_hmem_iface])])
 
     CPPFLAGS=${opal_check_ofi_save_CPPFLAGS}
     LDFLAGS=${opal_check_ofi_save_LDFLAGS}
