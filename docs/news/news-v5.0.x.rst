@@ -6,7 +6,7 @@ series, in reverse chronological order.
 
 Open MPI version 5.0.0rc10
 --------------------------
-:Date: 27 January 2023
+:Date: 2 February 2023
 
 .. admonition:: MPIR API has been removed
    :class: warning
@@ -64,8 +64,8 @@ Open MPI version 5.0.0rc10
 
 - All other notable updates for v5.0.0:
 
-  - Updated PMIx to the ``v4.2`` branch - current hash: ``dcc40a6``.
-  - Updated PRRTE to the ``v3.0`` branch - current hash: ``a89228a``.
+  - Updated PMIx to the ``v4.2`` branch - current hash: ``852d284``.
+  - Updated PRRTE to the ``v3.0`` branch - current hash: ``facdb35``.
 
   - New Features:
 
