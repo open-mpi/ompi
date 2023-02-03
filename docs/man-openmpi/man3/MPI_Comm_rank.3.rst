@@ -54,7 +54,7 @@ INPUT PARAMETERS
 OUTPUT PARAMETERS
 -----------------
 * ``rank``: Rank of the calling process in group of comm (integer).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -77,4 +77,6 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Comm_group` :ref:`MPI_Comm_size` :ref:`MPI_Comm_compare`
+   * :ref:`MPI_Comm_group`
+   * :ref:`MPI_Comm_size`
+   * :ref:`MPI_Comm_compare`

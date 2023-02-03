@@ -52,15 +52,15 @@ Fortran 2008 Syntax
 
 INPUT PARAMETERS
 ----------------
-* ``source``: Source rank or MPI_ANY_SOURCE (integer).
-* ``tag``: Tag value or MPI_ANY_TAG (integer).
+* ``source``: Source rank or ``MPI_ANY_SOURCE`` (integer).
+* ``tag``: Tag value or ``MPI_ANY_TAG`` (integer).
 * ``comm``: Communicator (handle).
 
 OUTPUT PARAMETERS
 -----------------
 * ``flag``: Message-waiting flag (logical).
 * ``status``: Status object (status).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -72,13 +72,13 @@ the information returned by status). In particular, the user may
 allocate memory for the receive buffer, according to the length of the
 probed message.
 
-MPI_Iprobe(source, tag, comm, flag, status) returns flag = true if there
+``MPI_Iprobe(source, tag, comm, flag, status)`` returns flag = true if there
 is a message that can be received and that matches the pattern specified
 by the arguments source, tag, and comm. The call matches the same
-message that would have been received by a call to MPI_Recv(..., source,
-tag, comm, status) executed at the same point in the program, and
+message that would have been received by a call to ``MPI_Recv(..., source,
+tag, comm, status)`` executed at the same point in the program, and
 returns in status the same value that would have been returned by
-MPI_Recv(). Otherwise, the call returns flag = false, and leaves status
+:ref:`MPI_Recv`. Otherwise, the call returns flag = false, and leaves status
 undefined.
 
 If :ref:`MPI_Iprobe` returns flag = true, then the content of the status object
@@ -92,13 +92,13 @@ matched by the probe if no other intervening receive occurs after the
 probe. If the receiving process is multithreaded, it is the user's
 responsibility to ensure that the last condition holds.
 
-The source argument of :ref:`MPI_Probe` can be MPI_ANY_SOURCE, and the tag
-argument can be MPI_ANY_TAG, so that one can probe for messages from an
+The source argument of :ref:`MPI_Probe` can be ``MPI_ANY_SOURCE``, and the tag
+argument can be ``MPI_ANY_TAG``, so that one can probe for messages from an
 arbitrary source and/or with an arbitrary tag. However, a specific
 communication context must be provided with the comm argument.
 
 If your application does not need to examine the *status* field, you can
-save resources by using the predefined constant MPI_STATUS_IGNORE as a
+save resources by using the predefined constant ``MPI_STATUS_IGNORE`` as a
 special value for the *status* argument.
 
 It is not necessary to receive a message immediately after it has been
@@ -119,4 +119,5 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Probe` :ref:`MPI_Cancel`
+   * :ref:`MPI_Probe`
+   * :ref:`MPI_Cancel`

@@ -51,7 +51,7 @@ INPUT/OUTPUT PARAMETER
 
 OUTPUT PARAMETER
 ----------------
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -79,4 +79,6 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Win_create` :ref:`MPI_Win_allocate` :ref:`MPI_Win_allocate_shared`
+   * :ref:`MPI_Win_create`
+   * :ref:`MPI_Win_allocate`
+   * :ref:`MPI_Win_allocate_shared`

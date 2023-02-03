@@ -38,12 +38,14 @@ Fortran Syntax
 
 INPUT PARAMETER
 ---------------
+
 * ``function``: User-defined error handling procedure.
 
 OUTPUT PARAMETERS
 -----------------
+
 * ``errhandler``: MPI error handler (handle).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -57,7 +59,7 @@ Returns in errhandler a handle to the registered error handler.
 In the C language, the user routine should be a C function of type
 MPI_Handler_function, which is defined as
 
-::
+.. code-block:: c
 
        typedef void (MPI_Handler_function)(MPI_Comm *, int *, ...);
 
@@ -76,7 +78,7 @@ NOTE
 
 The MPI-1 Standard states that an implementation may make the output
 value (errhandler) simply the address of the function. However, the
-action of MPI_Errhandler\_ free makes this impossible, since it is
+action of :ref:`MPI_Errhandler_free` makes this impossible, since it is
 required to set the value of the argument to MPI_ERRHANDLER_NULL. In
 addition, the actual error handler must remain until all communicators
 that use it are freed.
@@ -88,5 +90,6 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Comm_create_errhandler` :ref:`MPI_Comm_get_errhandler`
-   :ref:`MPI_Comm_set_errhandler`
+   * :ref:`MPI_Comm_create_errhandler`
+   * :ref:`MPI_Comm_get_errhandler`
+   * :ref:`MPI_Comm_set_errhandler`

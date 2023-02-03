@@ -56,7 +56,7 @@ INPUT PARAMETERS
 OUTPUT PARAMETERS
 -----------------
 * ``provided``: Available level of thread support (integer).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -96,15 +96,13 @@ All MPI programs must contain a call to :ref:`MPI_Init` or :ref:`MPI_Init_thread
 Open MPI accepts the C *argc* and *argv* arguments to main, but neither
 modifies, interprets, nor distributes them:
 
-::
+.. code-block:: c
 
-   	{
-   		/* declare variables */
-   		MPI_Init_thread(&argc, &argv, req, &prov);
-   		/* parse arguments */
-   		/* main program */
-   		MPI_Finalize();
-   	}
+   /* declare variables */
+   MPI_Init_thread(&argc, &argv, req, &prov);
+   /* parse arguments */
+   /* main program */
+   MPI_Finalize();
 
 
 NOTES
@@ -150,4 +148,7 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Init` :ref:`MPI_Initialized` :ref:`MPI_Finalize` :ref:`MPI_Finalized`
+   * :ref:`MPI_Init`
+   * :ref:`MPI_Initialized`
+   * :ref:`MPI_Finalize`
+   * :ref:`MPI_Finalized`

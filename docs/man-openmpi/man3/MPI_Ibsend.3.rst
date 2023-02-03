@@ -63,7 +63,7 @@ INPUT PARAMETERS
 OUTPUT PARAMETERS
 -----------------
 * ``request``: Communication request (handle).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -85,4 +85,5 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Test` :ref:`MPI_Wait`
+   * :ref:`MPI_Test`
+   * :ref:`MPI_Wait`

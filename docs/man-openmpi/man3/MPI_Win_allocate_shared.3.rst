@@ -65,7 +65,7 @@ OUTPUT PARAMETERS
 -----------------
 * ``baseptr``: Initial address of window.
 * ``win``: Window object returned by the call (handle).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -130,8 +130,8 @@ Calling :ref:`MPI_Win_free` will deallocate the memory allocated by
 C NOTES
 -------
 
-While *baseptr* is a *void \** type, this is to allow easy use of any
-pointer object for this parameter. This argument is really a *void \*\**
+While *baseptr* is a ``void *`` type, this is to allow easy use of any
+pointer object for this parameter. This argument is really a ``void **``
 type.
 
 
@@ -141,5 +141,9 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Alloc_mem` :ref:`MPI_Free_mem` :ref:`MPI_Win_allocate` :ref:`MPI_Win_create`
-   :ref:`MPI_Win_shared_query` :ref:`MPI_Win_free`
+   * :ref:`MPI_Alloc_mem`
+   * :ref:`MPI_Free_mem`
+   * :ref:`MPI_Win_allocate`
+   * :ref:`MPI_Win_create`
+   * :ref:`MPI_Win_shared_query`
+   * :ref:`MPI_Win_free`

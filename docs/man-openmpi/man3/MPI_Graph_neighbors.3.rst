@@ -58,7 +58,7 @@ INPUT PARAMETERS
 OUTPUT PARAMETERS
 -----------------
 * ``neighbors``: Ranks of processes that are neighbors to specified process (array of integers).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -88,21 +88,21 @@ Suppose that the communicator comm has this topology associated with it.
 The following code fragment cycles through the three types of neighbors
 and performs an appropriate permutation for each.
 
-::
+.. code-block:: fortran
 
-   C  assume: each process has stored a real number A.
-   C  extract neighborhood information
-         CALL MPI_COMM_RANK(comm, myrank, ierr)
-         CALL MPI_GRAPH_NEIGHBORS(comm, myrank, 3, neighbors, ierr)
-   C  perform exchange permutation
-         CALL MPI_SENDRECV_REPLACE(A, 1, MPI_REAL, neighbors(1), 0,
-        +     neighbors(1), 0, comm, status, ierr)
-   C  perform shuffle permutation
-         CALL MPI_SENDRECV_REPLACE(A, 1, MPI_REAL, neighbors(2), 0,
-        +     neighbors(3), 0, comm, status, ierr)
-   C  perform unshuffle permutation
-         CALL MPI_SENDRECV_REPLACE(A, 1, MPI_REAL, neighbors(3), 0,
-        +     neighbors(2), 0, comm, status, ierr)
+   !  assume: each process has stored a real number A.
+   !  extract neighborhood information
+   CALL MPI_COMM_RANK(comm, myrank, ierr)
+   CALL MPI_GRAPH_NEIGHBORS(comm, myrank, 3, neighbors, ierr)
+   !  perform exchange permutation
+   CALL MPI_SENDRECV_REPLACE(A, 1, MPI_REAL, neighbors(1), 0, &
+                             neighbors(1), 0, comm, status, ierr)
+   !  perform shuffle permutation
+   CALL MPI_SENDRECV_REPLACE(A, 1, MPI_REAL, neighbors(2), 0, &
+                             neighbors(3), 0, comm, status, ierr)
+   !  perform unshuffle permutation
+   CALL MPI_SENDRECV_REPLACE(A, 1, MPI_REAL, neighbors(3), 0, &
+                             neighbors(2), 0, comm, status, ierr)
 
 
 ERRORS
@@ -111,4 +111,4 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Graph_neighbors_count`
+   * :ref:`MPI_Graph_neighbors_count`

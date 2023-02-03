@@ -47,7 +47,7 @@ INPUT PARAMETERS
 OUTPUT PARAMETERS
 -----------------
 * ``newtype``: New datatype (handle).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -67,7 +67,7 @@ Assume that oldtype has type map
        {(type(0), disp(0)), ..., (type(n-1), disp(n-1))}
 
 with extent ex. Let bl be the blocklength. The newly created datatype
-has a type map with count \* bl \* n entries:
+has a type map with ``count * bl * n`` entries:
 
 ::
 
@@ -90,4 +90,5 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Type_create_hvector` :ref:`MPI_Type_vector`
+   * :ref:`MPI_Type_create_hvector`
+   * :ref:`MPI_Type_vector`

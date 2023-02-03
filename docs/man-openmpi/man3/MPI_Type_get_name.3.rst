@@ -57,7 +57,7 @@ OUTPUT PARAMETERS
 -----------------
 * ``type_name``: The name previously stored on the data type, or an empty string if not such name exists (string).
 * ``resultlen``: Length of returned name (integer).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -72,4 +72,4 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Type_set_name`
+   * :ref:`MPI_Type_set_name`

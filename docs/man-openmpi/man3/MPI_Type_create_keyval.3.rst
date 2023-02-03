@@ -64,7 +64,7 @@ INPUT PARAMETERS
 OUTPUT PARAMETERS
 -----------------
 * ``type_keyval``: Key value for future access (integer).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -84,15 +84,11 @@ MPI_TYPE_NULL_DELETE_FN from C or Fortran. MPI_TYPE_NULL_DELETE_FN is a
 function that does nothing beyond returning MPI_SUCCESS. The C callback
 functions are:
 
-::
+.. code-block:: c
 
    typedef int MPI_Type_copy_attr_function(MPI_Datatype oldtype,
                int type_keyval, void *extra_state, void *attribute_val_in,
                void *attribute_val_out, int *flag);
-
-and
-
-::
 
    typedef int MPI_Type_delete_attr_function(MPI_Datatype type, int type_keyval,
                 void *attribute_val, void *extra_state);
@@ -108,10 +104,6 @@ The Fortran callback functions are:
            ATTRIBUTE_VAL_IN, ATTRIBUTE_VAL_OUT
        LOGICAL FLAG
 
-and
-
-::
-
    SUBROUTINE TYPE_DELETE_ATTR_FN(TYPE, TYPE_KEYVAL, ATTRIBUTE_VAL, EXTRA_STATE,
                 IERROR)
        INTEGER TYPE, TYPE_KEYVAL, IERROR
@@ -125,11 +117,11 @@ The MPI standard prescribes portable Fortran syntax for the
 *EXTRA_STATE* argument only for Fortran 90. FORTRAN 77 users may use the
 non-portable syntax
 
-::
+.. code-block:: fortran
 
         INTEGER*MPI_ADDRESS_KIND EXTRA_STATE
 
-where MPI_ADDRESS_KIND is a constant defined in mpif.h and gives the
+where ``MPI_ADDRESS_KIND`` is a constant defined in ``mpif.h`` and gives the
 length of the declared integer in bytes.
 
 
@@ -139,4 +131,4 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Type_free_keyval`
+   * :ref:`MPI_Type_free_keyval`

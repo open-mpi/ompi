@@ -55,7 +55,7 @@ INPUT/OUTPUT PARAMETER
 OUTPUT PARAMETERS
 -----------------
 * ``errhandler``: New error handler for session (handle).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

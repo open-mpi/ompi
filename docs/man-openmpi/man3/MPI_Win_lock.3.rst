@@ -56,7 +56,7 @@ INPUT PARAMETERS
 
 OUTPUT PARAMETER
 ----------------
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -100,4 +100,5 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Win_unlock` :ref:`MPI_Win_lock_all`
+   * :ref:`MPI_Win_unlock`
+   * :ref:`MPI_Win_lock_all`

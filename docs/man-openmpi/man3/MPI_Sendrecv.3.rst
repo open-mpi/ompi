@@ -77,7 +77,7 @@ OUTPUT PARAMETERS
 -----------------
 * ``recvbuf``: Initial address of receive buffer (choice).
 * ``status``: Status object (status). This refers to the receive operation.
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -107,7 +107,7 @@ send buffer and receive buffers must be disjoint, and may have different
 lengths and datatypes.
 
 If your application does not need to examine the *status* field, you can
-save resources by using the predefined constant MPI_STATUS_IGNORE as a
+save resources by using the predefined constant ``MPI_STATUS_IGNORE`` as a
 special value for the *status* argument.
 
 
@@ -117,4 +117,4 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Sendrecv_replace`
+   * :ref:`MPI_Sendrecv_replace`

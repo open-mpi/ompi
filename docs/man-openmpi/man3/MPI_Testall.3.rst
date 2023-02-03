@@ -62,7 +62,7 @@ OUTPUT PARAMETERS
 -----------------
 * ``flag``: True if previously initiated communications are complete (logical.)
 * ``array_of_statuses``: Array of status objects (array of status).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -115,6 +115,13 @@ bindings.
 
 
 .. seealso::
-   :ref:`MPI_Comm_set_errhandler` :ref:`MPI_File_set_errhandler` :ref:`MPI_Test` :ref:`MPI_Testany`
-   :ref:`MPI_Testsome` :ref:`MPI_Wait` :ref:`MPI_Waitall` :ref:`MPI_Waitany` :ref:`MPI_Waitsome`
-   :ref:`MPI_Win_set_errhandler`
+   * :ref:`MPI_Comm_set_errhandler`
+   * :ref:`MPI_File_set_errhandler`
+   * :ref:`MPI_Test`
+   * :ref:`MPI_Testany`
+   * :ref:`MPI_Testsome`
+   * :ref:`MPI_Wait`
+   * :ref:`MPI_Waitall`
+   * :ref:`MPI_Waitany`
+   * :ref:`MPI_Waitsome`
+   * :ref:`MPI_Win_set_errhandler`

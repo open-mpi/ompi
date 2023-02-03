@@ -112,7 +112,7 @@ OUTPUT PARAMETERS
 -----------------
 * ``recvbuf``: Address of receive buffer (choice).
 * ``request``: Request (handle, non-blocking only).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -121,19 +121,19 @@ DESCRIPTION
 
 The outcome is as if the root executed n send operations,
 
-::
+.. code-block:: c
 
        MPI_Send(sendbuf + i * sendcount * extent(sendtype), sendcount,
-                sendtype, i, ...)
+                sendtype, i, ...);
 
 and each process executed a receive,
 
-::
+.. code-block:: c
 
-       MPI_Recv(recvbuf, recvcount, recvtype, i, ...).
+       MPI_Recv(recvbuf, recvcount, recvtype, i, ...).;
 
 An alternative description is that the root sends a message with
-MPI_Send(sendbuf, *sendcount* \* *n*, *sendtype*, ...). This message
+``MPI_Send(sendbuf, sendcount * n, sendtype, ...)``. This message
 is split into *n* equal segments, the ith segment is sent to the ith
 process in the group, and each process receives this message as above.
 
@@ -161,7 +161,7 @@ to achieve symmetry with :ref:`MPI_Gather`, where the corresponding restriction
 **Example:** The reverse of Example 1 in the :ref:`MPI_Gather` manpage. Scatter
 sets of 100 ints from the root to each process in the group.
 
-::
+.. code-block:: c
 
            MPI_Comm comm;
            int gsize,*sendbuf;
@@ -197,7 +197,7 @@ WHEN COMMUNICATOR IS AN INTER-COMMUNICATOR
 When the communicator is an inter-communicator, the root process in the
 first group sends data to all processes in the second group. The first
 group defines the root process. That process uses MPI_ROOT as the value
-of its *root* argument. The remaining processes use MPI_PROC_NULL as the
+of its *root* argument. The remaining processes use ``MPI_PROC_NULL`` as the
 value of their *root* argument. All processes in the second group use
 the rank of that root process in the first group as the value of their
 *root* argument. The receive buffer argument of the root process in the
@@ -211,4 +211,6 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Scatterv` :ref:`MPI_Gather` :ref:`MPI_Gatherv`
+   * :ref:`MPI_Scatterv`
+   * :ref:`MPI_Gather`
+   * :ref:`MPI_Gatherv`

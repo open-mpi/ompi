@@ -70,7 +70,7 @@ OUTPUT PARAMETER
 ----------------
 * ``intercomm``: Intercommunicator between original group and the newly spawned group (handle).
 * ``array_of_errcodes``: One code per process (array of integers).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -146,7 +146,7 @@ The *info* Argument
 The *info* argument is an opaque handle of type MPI_Info in C and
 INTEGER in Fortran. It is a container for a number of user-specified
 (*key,value*) pairs. *key* and *value* are strings (null-terminated
-char\* in C, character*(*) in Fortran). Routines to create and
+``char *`` in C, ``character*(*)`` in Fortran). Routines to create and
 manipulate the *info* argument are described in Section 4.10 of the
 MPI-2 standard.
 
@@ -275,4 +275,6 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Comm_spawn_multiple` :ref:`MPI_Comm_get_parent` mpirun(1)
+   * :ref:`MPI_Comm_spawn_multiple`
+   * :ref:`MPI_Comm_get_parent`
+   * :ref:`mpirun(1) <man1-mpirun>`

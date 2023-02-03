@@ -73,11 +73,11 @@ in the same object referenced by *base*, as described in MPI-3.1 section
 correct MPI_Aint representation of the output address, as if the process
 that originally produced *base* had called:
 
-::
+.. code-block:: c
 
-           MPI_Get_address ((char *) base + disp, &result);
+   MPI_Get_address ((char *) base + disp, &result);
 
-**MPI_Aint_diff** produces a new MPI_Aint value that is equivalent to
+:ref:`MPI_Aint_diff` produces a new MPI_Aint value that is equivalent to
 the difference between *addr1* and *addr2* arguments, where *addr1*
 and *addr2* represent addresses returned by calls to
 :ref:`MPI_Get_address`.  The resulting address is valid only at the
@@ -86,9 +86,9 @@ must correspond to locations in the same object in the same process,
 as described in MPI-3.1 section 4.1.12. The difference is calculated
 in a manner that results in the signed difference from *addr1* to
 *addr2*, as if the process that originally produced the addresses had
-called (char \*) *addr1* - (char \*) *addr2* on the addresses
+called ``(char *) addr1`` - ``(char *) addr2`` on the addresses
 initially passed to :ref:`MPI_Get_address`.
 
 
 .. seealso::
-   :ref:`MPI_Get_address`
+   * :ref:`MPI_Get_address`

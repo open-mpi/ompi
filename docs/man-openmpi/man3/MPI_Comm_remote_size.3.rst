@@ -54,7 +54,7 @@ INPUT PARAMETER
 OUTPUT PARAMETERS
 -----------------
 * ``size``: Number of processes in the remote group of comm (integer).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -72,5 +72,7 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Comm_test_inter` :ref:`MPI_Comm_remote_group` :ref:`MPI_Intercomm_create`
-   :ref:`MPI_Intercomm_merge`
+   * :ref:`MPI_Comm_test_inter`
+   * :ref:`MPI_Comm_remote_group`
+   * :ref:`MPI_Intercomm_create`
+   * :ref:`MPI_Intercomm_merge`

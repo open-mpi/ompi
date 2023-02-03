@@ -59,7 +59,7 @@ INPUT PARAMETERS
 
 OUTPUT PARAMETER
 ----------------
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -85,11 +85,11 @@ The MPI standard prescribes portable Fortran syntax for the
 *ATTRIBUTE_VAL* argument only for Fortran 90. Sun FORTRAN 77 users may
 use the non-portable syntax
 
-::
+.. code-block:: fortran
 
         INTEGER*MPI_ADDRESS_KIND ATTRIBUTE_VAL
 
-where MPI_ADDRESS_KIND is a constant defined in mpif.h and gives the
+where ``MPI_ADDRESS_KIND`` is a constant defined in ``mpif.h`` and gives the
 length of the declared integer in bytes.
 
 
@@ -100,7 +100,7 @@ Values of the permanent attributes MPI_TAG_UB, MPI_HOST, MPI_IO, and
 MPI_WTIME_IS_GLOBAL may not be changed.
 
 The type of the attribute value depends on whether C or Fortran is being
-used. In C, an attribute value is a pointer (void \*); in Fortran, it is
+used. In C, an attribute value is a pointer (``void *``); in Fortran, it is
 a single, address-size integer system for which a pointer does not fit
 in an integer.
 

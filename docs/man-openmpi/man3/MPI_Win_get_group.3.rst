@@ -54,7 +54,7 @@ INPUT PARAMETER
 OUTPUT PARAMETERS
 -----------------
 * ``group``: Group of processes that share access to the window (handle).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

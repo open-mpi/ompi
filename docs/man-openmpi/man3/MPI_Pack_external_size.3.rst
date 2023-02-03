@@ -62,7 +62,7 @@ INPUT PARAMETERS
 OUTPUT PARAMETERS
 -----------------
 * ``size``: Upper bound on size of packed message, in bytes (integer).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -93,4 +93,5 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Pack_external` :ref:`MPI_Unpack_external`
+   * :ref:`MPI_Pack_external`
+   * :ref:`MPI_Unpack_external`

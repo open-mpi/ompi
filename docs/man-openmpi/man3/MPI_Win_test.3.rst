@@ -53,7 +53,7 @@ INPUT PARAMETERS
 
 OUTPUT PARAMETERS
 -----------------
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 * ``flag``: The returning state of the test for epoch closure.
 
 DESCRIPTION
@@ -77,4 +77,5 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Win_post` :ref:`MPI_Win_wait`
+   * :ref:`MPI_Win_post`
+   * :ref:`MPI_Win_wait`

@@ -6,9 +6,7 @@ MPI_Add_error_string
 
 .. include_body
 
-::
-
-   MPI_Add_error_string - Associates a string with an error code or class
+:ref:`MPI_Add_error_string` - Associates a string with an error code or class
 
 
 SYNTAX
@@ -56,7 +54,7 @@ INPUT PARAMETERS
 
 OUTPUT PARAMETER
 ----------------
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -75,4 +73,7 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Add_error_class` :ref:`MPI_Add_error_code` :ref:`MPI_Error_class` :ref:`MPI_Error_string`
+   * :ref:`MPI_Add_error_class`
+   * :ref:`MPI_Add_error_code`
+   * :ref:`MPI_Error_class`
+   * :ref:`MPI_Error_string`

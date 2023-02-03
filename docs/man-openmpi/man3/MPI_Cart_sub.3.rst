@@ -14,7 +14,7 @@ SYNTAX
 C Syntax
 ^^^^^^^^
 
-.. code:: C
+.. code-block:: C
 
    #include <mpi.h>
 
@@ -23,7 +23,7 @@ C Syntax
 Fortran Syntax
 ^^^^^^^^^^^^^^
 
-.. code:: Fortran
+.. code-block:: Fortran
 
    USE MPI
    ! or the older form: INCLUDE 'mpif.h'
@@ -35,7 +35,7 @@ Fortran Syntax
 Fortran 2008 Syntax
 ^^^^^^^^^^^^^^^^^^^
 
-.. code:: Fortran
+.. code-block:: Fortran
 
    USE mpi_f08
 
@@ -48,17 +48,17 @@ Fortran 2008 Syntax
 INPUT PARAMETERS
 ----------------
 
--  comm : Communicator with Cartesian structure (handle).
--  remain_dims : The ith entry of remain_dims specifies whether the ith
+* ``comm`` : Communicator with Cartesian structure (handle).
+* ``remain_dims`` : The ith entry of remain_dims specifies whether the ith
    dimension is kept in the subgrid (true) or is dropped (false)
    (logical vector).
 
 OUTPUT PARAMETERS
 -----------------
 
--  comm_new : Communicator containing the subgrid that includes the
+* ``comm_new`` : Communicator containing the subgrid that includes the
    calling process (handle).
--  IERROR : Fortran only: Error status (integer).
+* ``ierror`` : Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -70,12 +70,12 @@ build for each subgroup a communicator with the associated subgrid
 Cartesian topology. (This function is closely related to
 :ref:`MPI_Comm_split`.)
 
-Example: Assume that MPI_Cart_create( ..., comm) has defined a (2 x 3 x
+Example: Assume that ``MPI_Cart_create( ..., comm)`` has defined a (2 x 3 x
 4) grid. Let remain_dims = (true, false, true). Then a call to
 
-::
+.. code-block:: c
 
-   MPI_Cart_sub(comm, remain_dims, comm_new)
+   MPI_Cart_sub(comm, remain_dims, comm_new);
 
 will create three communicators, each with eight processes in a 2 x 4
 Cartesian topology. If remain_dims = (false, false, true) then the call
@@ -88,4 +88,5 @@ ERRORS
 
 .. include:: ./ERRORS.rst
 
-.. seealso:: :ref:`MPI_Cart_create`
+.. seealso::
+   * :ref:`MPI_Cart_create`

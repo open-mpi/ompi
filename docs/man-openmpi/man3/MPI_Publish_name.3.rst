@@ -6,9 +6,7 @@ MPI_Publish_name
 
 .. include_body
 
-::
-
-   MPI_Publish_name - Publishes a service name associated with a port
+:ref:`MPI_Publish_name` - Publishes a service name associated with a port
 
 
 SYNTAX
@@ -58,7 +56,7 @@ INPUT PARAMETERS
 
 OUTPUT PARAMETER
 ----------------
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -157,4 +155,5 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Lookup_name` :ref:`MPI_Open_port`
+   * :ref:`MPI_Lookup_name`
+   * :ref:`MPI_Open_port`

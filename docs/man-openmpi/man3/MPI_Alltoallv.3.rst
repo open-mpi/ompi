@@ -131,7 +131,7 @@ OUTPUT PARAMETERS
 -----------------
 * ``recvbuf``: Address of receive buffer.
 * ``request``: Request (handle, non-blocking only).
-* ``IERROR``: Fortran only: Error status.
+* ``ierror``: Fortran only: Error status.
 
 DESCRIPTION
 -----------
@@ -145,7 +145,7 @@ process performs 2n (n being the number of processes in communicator
 *comm*) independent point-to-point communications (including
 communication with itself).
 
-::
+.. code-block:: c
 
    	MPI_Comm_size(comm, &n);
    	for (i = 0, i < n; i++)
@@ -177,7 +177,7 @@ symmetric, full-duplex behavior.
 
 The first group defines the root process. The root process uses MPI_ROOT
 as the value of *root*. All other processes in the first group use
-MPI_PROC_NULL as the value of *root*. All processes in the second group
+``MPI_PROC_NULL`` as the value of *root*. All processes in the second group
 use the rank of the root process in the first group as the value of
 *root*.
 
@@ -216,4 +216,5 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Alltoall` :ref:`MPI_Alltoallw`
+   * :ref:`MPI_Alltoall`
+   * :ref:`MPI_Alltoallw`

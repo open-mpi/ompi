@@ -53,7 +53,7 @@ INPUT PARAMETERS
 
 OUTPUT PARAMETER
 ----------------
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -67,9 +67,9 @@ abort (errorcode).
 The long-term goal of the Open MPI implementation is to terminate all
 processes in all tasks that contain a process in *comm, and the error
 code is not returned to the invoking environment. At the moment, this
-isn't fully implemented and :ref:`MPI_Abort` will terminate the entire job.*
+isn't fully implemented and* :ref:`MPI_Abort` *will terminate the entire job.*
 
-Note: All associated processes are sent a SIGTERM.
+Note: All associated processes are sent a ``SIGTERM``.
 
 
 ERRORS

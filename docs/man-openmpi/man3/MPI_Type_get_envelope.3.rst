@@ -62,7 +62,7 @@ OUTPUT PARAMETERS
 * ``num_addresses``: Number of input addresses used in the call constructing *combiner* (nonnegative integer).
 * ``num_datatypes``: Number of input data types used in the call constructing *combiner* (nonnegative integer).
 * ``combiner``: Combiner (state).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -118,4 +118,4 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Type_get_contents`
+   * :ref:`MPI_Type_get_contents`

@@ -116,7 +116,11 @@ if key in os.environ and os.environ[key] == 'True':
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 import sphinx_rtd_theme
-extensions = ['recommonmark', "sphinx_rtd_theme"]
+extensions = [
+    'recommonmark',
+    "sphinx_rtd_theme",
+    "sphinx.ext.extlinks",
+]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -138,6 +142,14 @@ html_theme = 'sphinx_rtd_theme'
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 #html_static_path = ['_static']
+
+
+# Short hand external links
+# Allows smoother transitioning for commonly used articles and sites
+extlinks = {
+    'doi': ('https://doi.org/%s', '%s'),
+}
+
 
 # -- Options for MAN output -------------------------------------------------
 

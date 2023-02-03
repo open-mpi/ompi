@@ -27,9 +27,9 @@ C Syntax
    int MPI_Ireduce_scatter(const void *sendbuf, void *recvbuf, const int recvcounts[],
    	MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request)
 
-int MPI_Reduce_scatter_init(const void \*\ *sendbuf*, void\ *\*recvbuf*,
-const int\ *recvcounts*\ [], MPI_Datatype\ *datatype*, MPI_Op\ *op*,
-MPI_Comm\ *comm*, MPI_Info *info*, MPI_Request *\*request*)
+   int MPI_Reduce_scatter_init(const void *sendbuf, void *recvbuf,
+        const int recvcounts[], MPI_Datatype datatype, MPI_Op op,
+        MPI_Comm comm, MPI_Info info, MPI_Request *request)
 
 
 Fortran Syntax
@@ -108,7 +108,7 @@ OUTPUT PARAMETERS
 -----------------
 * ``recvbuf``: Starting address of receive buffer (choice).
 * ``request``: Request (handle, non-blocking only).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

@@ -55,7 +55,7 @@ INPUT/OUTPUT PARAMETER
 OUTPUT PARAMETERS
 -----------------
 * ``errhandler``: New error handler for communicator (handle).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

@@ -13,7 +13,7 @@ SYNTAX
 C Syntax
 ^^^^^^^^
 
-.. code:: C
+.. code-block:: C
 
    #include <mpi.h>
 
@@ -23,7 +23,7 @@ C Syntax
 Fortran Syntax
 ^^^^^^^^^^^^^^
 
-.. code:: Fortran
+.. code-block:: Fortran
 
    USE MPI
    ! or the older form: INCLUDE 'mpif.h'
@@ -35,7 +35,7 @@ Fortran Syntax
 Fortran 2008 Syntax
 ^^^^^^^^^^^^^^^^^^^
 
-.. code:: Fortran
+.. code-block:: Fortran
 
    USE mpi_f08
 
@@ -49,19 +49,19 @@ Fortran 2008 Syntax
 INPUT PARAMETERS
 ----------------
 
--  comm : Input communicator (handle).
--  ndims : Number of dimensions of Cartesian structure (integer).
--  dims : Integer array of size ndims specifying the number of processes
+* ``comm`` : Input communicator (handle).
+* ``ndims`` : Number of dimensions of Cartesian structure (integer).
+* ``dims`` : Integer array of size ndims specifying the number of processes
    in each coordinate direction.
--  periods : Logical array of size ndims specifying the periodicity
+* ``periods`` : Logical array of size ndims specifying the periodicity
    specification in each coordinate direction.
 
 OUTPUT PARAMETERS
 -----------------
 
--  newrank : Reordered rank of the calling process; MPI_UNDEFINED if
+* ``newrank`` : Reordered rank of the calling process; MPI_UNDEFINED if
    calling process does not belong to grid (integer).
--  IERROR : Fortran only: Error status (integer).
+* ``ierror`` : Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -79,4 +79,5 @@ ERRORS
 
 .. include:: ./ERRORS.rst
 
-.. seealso:: :ref:`MPI_Graph_map`
+.. seealso::
+   * :ref:`MPI_Graph_map`

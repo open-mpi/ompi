@@ -74,7 +74,7 @@ INPUT PARAMETERS
 OUTPUT PARAMETERS
 -----------------
 * ``newtype``: New data type (handle).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -97,11 +97,9 @@ topologies in MPI-1.
 
 Each dimension of the array can be distributed in one of three ways:
 
-::
-
-   - MPI_DISTRIBUTE_BLOCK - Block distribution
-   - MPI_DISTRIBUTE_CYCLIC - Cyclic distribution
-   - MPI_DISTRIBUTE_NONE - Dimension not distributed.
+* ``MPI_DISTRIBUTE_BLOCK`` - Block distribution
+* ``MPI_DISTRIBUTE_CYCLIC`` - Cyclic distribution
+* ``MPI_DISTRIBUTE_NONE`` - Dimension not distributed.
 
 The constant MPI_DISTRIBUTE_DFLT_DARG specifies a default distribution
 argument. The distribution argument for a dimension that is not
@@ -123,7 +121,7 @@ This routine creates a new MPI data type with a typemap defined in terms
 of a function called "cyclic()" (see below).
 
 Without loss of generality, it suffices to define the typemap for the
-MPI_DISTRIBUTE_CYCLIC case where MPI_DISTRIBUTE_DFLT_DARG is not used.
+MPI_DISTRIBUTE_CYCLIC case where ``MPI_DISTRIBUTE_DFLT_DARG`` is not used.
 
 MPI_DISTRIBUTE_BLOCK and MPI_DISTRIBUTE_NONE can be reduced to the
 MPI_DISTRIBUTE_CYCLIC case for dimension *i* as follows.
@@ -132,7 +130,7 @@ MPI_DISTRIBUTE_BLOCK with *array_of_dargs[i]* equal to
 MPI_DISTRIBUTE_DFLT_DARG is equivalent to MPI_DISTRIBUTE_CYCLIC with
 *array_of_dargs[i]* set to
 
-::
+.. code-block:: c
 
       (array_of_gsizes[i] + array_of_psizes[i] - 1)/array_of_psizes[i]
 

@@ -63,7 +63,7 @@ INPUT PARAMETERS
 OUTPUT PARAMETERS
 -----------------
 * ``win_keyval``: Key value for future access (integer).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -87,10 +87,6 @@ The C callback functions are:
                 void *extra_state, void *attribute_val_in,
                 void *attribute_val_out, int *flag);
 
-and
-
-::
-
    typedef int MPI_Win_delete_attr_function(MPI_Win win, int win_keyval,
                 void *attribute_val, void *extra_state);
 
@@ -105,10 +101,6 @@ The Fortran callback functions are:
    		ATTRIBUTE_VAL_OUT
    	LOGICAL FLAG
 
-and
-
-::
-
    SUBROUTINE WIN_DELETE_ATTR_FN(WIN, WIN_KEYVAL, ATTRIBUTE_VAL,
    	EXTRA_STATE, IERROR)
    	INTEGER WIN, WIN_KEYVAL, IERROR
@@ -122,11 +114,11 @@ The MPI standard prescribes portable Fortran syntax for the
 *EXTRA_STATE* argument only for Fortran 90. FORTRAN 77 users may use the
 non-portable syntax
 
-::
+.. code-block:: fortran
 
         INTEGER*MPI_ADDRESS_KIND EXTRA_STATE
 
-where MPI_ADDRESS_KIND is a constant defined in mpif.h and gives the
+where ``MPI_ADDRESS_KIND`` is a constant defined in ``mpif.h`` and gives the
 length of the declared integer in bytes.
 
 

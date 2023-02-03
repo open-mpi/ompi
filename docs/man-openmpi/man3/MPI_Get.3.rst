@@ -13,7 +13,7 @@ SYNTAX
 C Syntax
 ^^^^^^^^
 
-.. code:: c
+.. code-block:: c
 
    #include <mpi.h>
 
@@ -29,7 +29,7 @@ C Syntax
 Fortran Syntax (See Fortran 77 Notes)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. code:: fortran
+.. code-block:: fortran
 
    USE MPI
    ! or the older form: INCLUDE 'mpif.h'
@@ -51,7 +51,7 @@ Fortran Syntax (See Fortran 77 Notes)
 Fortran 2008 Syntax
 ^^^^^^^^^^^^^^^^^^^
 
-.. code:: fortran
+.. code-block:: fortran
 
    USE mpi_f08
 
@@ -78,23 +78,23 @@ Fortran 2008 Syntax
 INPUT PARAMETERS
 ----------------
 
--  origin_addr : Initial address of origin buffer (choice).
--  origin_count : Number of entries in origin buffer (nonnegative
+* ``origin_addr`` : Initial address of origin buffer (choice).
+* ``origin_count`` : Number of entries in origin buffer (nonnegative
    integer).
--  origin_datatype : Data type of each entry in origin buffer (handle).
--  target_rank : Rank of target (nonnegative integer).
--  target_disp : Displacement from window start to the beginning of the
+* ``origin_datatype`` : Data type of each entry in origin buffer (handle).
+* ``target_rank`` : Rank of target (nonnegative integer).
+* ``target_disp`` : Displacement from window start to the beginning of the
    target buffer (nonnegative integer).
--  target_count : Number of entries in target buffer (nonnegative
+* ``target_count`` : Number of entries in target buffer (nonnegative
    integer).
--  target datatype : datatype of each entry in target buffer (handle)
--  win : window object used for communication (handle)
+* target datatype : datatype of each entry in target buffer (handle)
+* ``win`` : window object used for communication (handle)
 
 OUTPUT PARAMETER
 ----------------
 
--  request : :ref:`MPI_Rget`: RMA request
--  IERROR : Fortran only: Error status (integer).
+* ``request`` : :ref:`MPI_Rget`: RMA request
+* ``ierror`` : Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -122,7 +122,7 @@ syntax
 
 fortran INTEGERMPI_ADDRESS_KIND TARGET_DISP
 
-where MPI_ADDRESS_KIND is a constant defined in mpif.h and gives the
+where ``MPI_ADDRESS_KIND`` is a constant defined in ``mpif.h`` and gives the
 length of the declared integer in bytes.
 
 ERRORS

@@ -74,7 +74,7 @@ INPUT PARAMETERS
 OUTPUT PARAMETERS
 -----------------
 * ``request``: Communication request (handle).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -108,4 +108,6 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Isendrecv` :ref:`MPI_Sendrecv` :ref:`MPI_Sendrecv_replace`
+   * :ref:`MPI_Isendrecv`
+   * :ref:`MPI_Sendrecv`
+   * :ref:`MPI_Sendrecv_replace`

@@ -55,7 +55,7 @@ INPUT PARAMETER
 OUTPUT PARAMETERS
 -----------------
 * ``newtype``: New data type (handle).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -87,7 +87,7 @@ external32 data representation - used by :ref:`MPI_Pack_external`,
 :ref:`MPI_Unpack_external` and many MPI_File functions - is subtle. The
 external32 representation of returned datatypes is as follows.
 
-::
+.. code-block:: c
 
    	if (r > 38):
    		external32 size = n/a (undefined)
@@ -120,5 +120,8 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Pack_external` :ref:`MPI_Sizeof` :ref:`MPI_Type_match_size` :ref:`MPI_Unpack_external`
-   SELECTED_INT_KIND
+   * :ref:`MPI_Pack_external`
+   * :ref:`MPI_Sizeof`
+   * :ref:`MPI_Type_match_size`
+   * :ref:`MPI_Unpack_external`
+   * SELECTED_INT_KIND

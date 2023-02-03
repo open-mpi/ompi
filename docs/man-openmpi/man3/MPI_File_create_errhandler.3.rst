@@ -52,36 +52,35 @@ Fortran 2008 Syntax
 DEPRECATED TYPE NAME NOTE
 -------------------------
 
-MPI-2.2 deprecated the MPI_File_errhandler_fn and
-MPI::file::Errhandler_fn types in favor of MPI_File_errhandler_function
-and MPI::File::Errhandler_function, respectively. Open MPI supports both
-names (indeed, the \_fn names are typedefs to the \_function names).
+MPI-2.2 deprecated the ``MPI_File_errhandler_fn`` type in favor of
+``MPI_File_errhandler_function``. Open MPI supports both
+names (indeed, the ``_fn`` names are typedefs to the ``_function`` names).
 
 
 INPUT PARAMETER
 ---------------
+
 * ``function``: User-defined error handling procedure (function).
 
 OUTPUT PARAMETERS
 -----------------
+
 * ``errhandler``: MPI error handler (handle).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
 
-Registers the user routine *function* for use as an MPI error handler.
-Returns in errhandler a handle to the registered error handler.
+:ref:`MPI_Comm_create_errhandler` creates an error handler that can be
+attached to file operations. In C, the
+user routine should be a ``function`` of type
+``MPI_File_errhandler_function``, which is defined as
 
-In the C language, the user routine *function* should be a C function of
-type MPI_File_errhandler_function, which is defined as
+.. code-block:: c
 
-::
+       typedef void (MPI_File_errhandler_function)(MPI_File *, int *, ...);
 
-       typedef void (MPI_File_errhandler_function)(MPI_File *, int *,
-       ...);
-
-The first argument to *function* is the file in use. The second is the
+The first argument is the file in use. The second is the
 error code to be returned by the MPI routine that raised the error.
 
 In the Fortran language, the user routine should be of the form:

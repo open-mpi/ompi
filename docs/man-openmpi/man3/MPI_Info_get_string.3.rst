@@ -62,7 +62,7 @@ OUTPUT PARAMETER
 * ``buflen On entry, length of value arg. On return, set to required size to``: hold value string (integer).
 * ``value``: Value (string).
 * ``flag``: Returns true if key defined, false if not (boolean).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -90,5 +90,10 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Info_create` :ref:`MPI_Info_delete` :ref:`MPI_Info_dup` :ref:`MPI_Info_free`
-   :ref:`MPI_Info_get_nkeys` :ref:`MPI_Info_get_nthkey` :ref:`MPI_Info_set`
+   * :ref:`MPI_Info_create`
+   * :ref:`MPI_Info_delete`
+   * :ref:`MPI_Info_dup`
+   * :ref:`MPI_Info_free`
+   * :ref:`MPI_Info_get_nkeys`
+   * :ref:`MPI_Info_get_nthkey`
+   * :ref:`MPI_Info_set`

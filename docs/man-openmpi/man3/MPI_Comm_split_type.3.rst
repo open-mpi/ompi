@@ -60,7 +60,7 @@ INPUT PARAMETERS
 OUTPUT PARAMETERS
 -----------------
 * ``newcomm``: New communicator (handle).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -147,5 +147,8 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Comm_create` :ref:`MPI_Intercomm_create` :ref:`MPI_Comm_dup` :ref:`MPI_Comm_free`
-   :ref:`MPI_Comm_split`
+   * :ref:`MPI_Comm_create`
+   * :ref:`MPI_Intercomm_create`
+   * :ref:`MPI_Comm_dup`
+   * :ref:`MPI_Comm_free`
+   * :ref:`MPI_Comm_split`

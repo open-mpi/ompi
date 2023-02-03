@@ -14,7 +14,7 @@ SYNTAX
 C Syntax
 ^^^^^^^^
 
-.. code:: C
+.. code-block:: C
 
    #include <mpi.h>
 
@@ -27,7 +27,7 @@ C Syntax
 Fortran Syntax
 ^^^^^^^^^^^^^^
 
-.. code:: Fortran
+.. code-block:: Fortran
 
    USE MPI
    ! or the older form: INCLUDE 'mpif.h'
@@ -42,7 +42,7 @@ Fortran Syntax
 Fortran 2008 Syntax
 ^^^^^^^^^^^^^^^^^^^
 
-.. code:: Fortran
+.. code-block:: Fortran
 
    USE mpi_f08
    MPI_Bcast(buffer, count, datatype, root, comm, ierror)
@@ -63,17 +63,17 @@ Fortran 2008 Syntax
 INPUT/OUTPUT PARAMETERS
 -----------------------
 
--  ``buffer``: Starting address of buffer (choice).
--  ``count``: Number of entries in buffer (integer).
--  ``datatype``: Data type of buffer (handle).
--  ``root``: Rank of broadcast root (integer).
--  ``comm``: Communicator (handle).
+* ``buffer``: Starting address of buffer (choice).
+* ``count``: Number of entries in buffer (integer).
+* ``datatype``: Data type of buffer (handle).
+* ``root``: Rank of broadcast root (integer).
+* ``comm``: Communicator (handle).
 
 OUTPUT PARAMETERS
 -----------------
 
--  ``request``: Request (handle, non-blocking only).
--  ``IERROR``: Fortran only: Error status (integer).
+* ``request``: Request (handle, non-blocking only).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -95,7 +95,7 @@ are still allowed.
 **Example:** Broadcast 100 ints from process 0 to every process in the
 group.
 
-.. code:: C
+.. code-block:: C
 
    MPI_Comm comm;
    int array[100];
@@ -114,7 +114,7 @@ When the communicator is an inter-communicator, the root process in the
 first group broadcasts data to all the processes in the second group.
 The first group defines the root process. That process uses MPI_ROOT
 as the value of its ``root`` argument. The remaining processes use
-MPI_PROC_NULL as the value of their ``root`` argument. All processes
+``MPI_PROC_NULL`` as the value of their ``root`` argument. All processes
 in the second group use the rank of that root process in the first group
 as the value of their ``root`` argument. The receive buffer arguments of
 the processes in the second group must be consistent with the send

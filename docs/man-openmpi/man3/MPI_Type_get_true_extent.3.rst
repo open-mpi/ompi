@@ -67,7 +67,7 @@ OUTPUT PARAMETERS
 -----------------
 * ``true_lb``: True lower bound of data type (integer).
 * ``true_extent``: True size of data type (integer).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -98,21 +98,18 @@ use the non-portable syntax
 
 :ref:`MPI_Type_get_true_extent`:
 
-::
+.. code-block:: fortran
 
-        INTEGER*MPI_ADDRESS_KIND TRUE_LB
-   or
-        INTEGER*MPI_ADDRESS_KIND TRUE_EXTENT
+        INTEGER*MPI_ADDRESS_KIND TRUE_LB, TRUE_EXTENT
 
 :ref:`MPI_Type_get_true_extent_x`:
 
-::
+.. code-block:: fortran
 
-        INTEGER*MPI_COUNT_KIND TRUE_LB
-   or
+        INTEGER*MPI_COUNT_KIND TRUE_LB, TRUE_EXTENT
         INTEGER*MPI_COUNT_KIND TRUE_EXTENT
 
-where MPI_ADDRESS_KIND and MPI_COUNT_KIND are constants defined in
+where ``MPI_ADDRESS_KIND`` and MPI_COUNT_KIND are constants defined in
 mpif.h and give the length of the declared integer in bytes.
 
 

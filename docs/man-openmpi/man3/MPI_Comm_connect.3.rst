@@ -13,7 +13,7 @@ SYNTAX
 C Syntax
 ^^^^^^^^
 
-.. code:: C
+.. code-block:: C
 
    #include <mpi.h>
 
@@ -23,7 +23,7 @@ C Syntax
 Fortran Syntax
 ^^^^^^^^^^^^^^
 
-.. code:: Fortran
+.. code-block:: Fortran
 
    USE MPI
    ! or the older form: INCLUDE 'mpif.h'
@@ -35,7 +35,7 @@ Fortran Syntax
 Fortran 2008 Syntax
 ^^^^^^^^^^^^^^^^^^^
 
-.. code:: Fortran
+.. code-block:: Fortran
 
    USE mpi_f08
 
@@ -50,17 +50,17 @@ Fortran 2008 Syntax
 INPUT PARAMETERS
 ----------------
 
--  port_name : Port name (string, used only on *root*).
--  info : Options given by root for the connect (handle, used only on
+* ``port_name`` : Port name (string, used only on *root*).
+* ``info`` : Options given by root for the connect (handle, used only on
    root). No options currently supported.
--  root : Rank in *comm* of root node (integer).
--  comm : Intracommunicator over which call is collective (handle).
+* ``root`` : Rank in *comm* of root node (integer).
+* ``comm`` : Intracommunicator over which call is collective (handle).
 
 OUTPUT PARAMETERS
 -----------------
 
--  newcomm : Intercommunicator with client as remote group (handle)
--  IERROR : Fortran only: Error status (integer).
+* ``newcomm`` : Intercommunicator with client as remote group (handle)
+* ``ierror`` : Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -84,4 +84,5 @@ ERRORS
 
 .. include:: ./ERRORS.rst
 
-.. seealso:: :ref:`MPI_Comm_accept`
+.. seealso::
+   * :ref:`MPI_Comm_accept`

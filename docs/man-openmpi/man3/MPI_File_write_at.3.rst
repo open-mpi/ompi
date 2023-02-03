@@ -67,7 +67,7 @@ INPUT PARAMETERS
 OUTPUT PARAMETERS
 -----------------
 * ``status``: Status object (status).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -92,11 +92,11 @@ The MPI standard prescribes portable Fortran syntax for the *OFFSET*
 argument only for Fortran 90. FORTRAN 77 users may use the non-portable
 syntax
 
-::
+.. code-block:: fortran
 
-        INTEGER*MPI_OFFSET_KIND OFFSET
+   INTEGER*MPI_OFFSET_KIND OFFSET
 
-where MPI_OFFSET_KIND is a constant defined in mpif.h and gives the
+where ``MPI_OFFSET_KIND`` is a constant defined in ``mpif.h`` and gives the
 length of the declared integer in bytes.
 
 
@@ -106,5 +106,7 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_File_iwrite_at` :ref:`MPI_File_write_at_all` :ref:`MPI_File_write_at_all_begin`
-   :ref:`MPI_File_write_at_all_end`
+   * :ref:`MPI_File_iwrite_at`
+   * :ref:`MPI_File_write_at_all`
+   * :ref:`MPI_File_write_at_all_begin`
+   * :ref:`MPI_File_write_at_all_end`

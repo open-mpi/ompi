@@ -14,7 +14,7 @@ SYNTAX
 C Syntax
 ^^^^^^^^
 
-.. code:: c
+.. code-block:: c
 
    #include <mpi.h>
 
@@ -25,7 +25,7 @@ C Syntax
 Fortran Syntax
 ^^^^^^^^^^^^^^
 
-.. code:: fortran
+.. code-block:: fortran
 
    USE MPI
    ! or the older form: INCLUDE 'mpif.h'
@@ -38,7 +38,7 @@ Fortran Syntax
 Fortran 2008 Syntax
 ^^^^^^^^^^^^^^^^^^^
 
-.. code:: fortran
+.. code-block:: fortran
 
    USE mpi_f08
 
@@ -52,20 +52,20 @@ Fortran 2008 Syntax
 INPUT PARAMETERS
 ----------------
 
--  ``comm_old`` : Input communicator (handle).
--  ``ndims`` : Number of dimensions of Cartesian grid (integer).
--  ``dims`` : Integer array of size ndims specifying the number of
+* ``comm_old`` : Input communicator (handle).
+* ``ndims`` : Number of dimensions of Cartesian grid (integer).
+* ``dims`` : Integer array of size ndims specifying the number of
    processes in each dimension.
--  ``periods`` : Logical array of size ndims specifying whether the grid
+* ``periods`` : Logical array of size ndims specifying whether the grid
    is periodic (true) or not (false) in each dimension.
--  ``reorder`` : Ranking may be reordered (true) or not (false)
+* ``reorder`` : Ranking may be reordered (true) or not (false)
    (logical).
 
 OUTPUT PARAMETERS
 -----------------
 
--  ``comm_cart`` : Communicator with new Cartesian topology (handle).
--  ``IERROR`` : Fortran only: Error status (integer).
+* ``comm_cart`` : Communicator with new Cartesian topology (handle).
+* ``ierror`` : Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

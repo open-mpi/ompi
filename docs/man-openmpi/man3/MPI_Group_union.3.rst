@@ -55,7 +55,7 @@ INPUT PARAMETERS
 OUTPUT PARAMETERS
 -----------------
 * ``newgroup``: Union group (handle).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -82,4 +82,4 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Group_free`
+   * :ref:`MPI_Group_free`

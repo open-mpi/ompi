@@ -62,7 +62,7 @@ OUTPUT PARAMETERS
 -----------------
 * ``buf``: Initial address of receive buffer (choice).
 * ``status``: Status object (status).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -72,8 +72,8 @@ previously matched by a matching probe.
 
 If :ref:`MPI_Mrecv` is called with MPI_MESSAGE_NULL as the message argument,
 the call returns immediately with the *status* object set to *source* =
-MPI_PROC_NULL, *tag* = MPI_ANY_TAG, and *count* = 0, as if a receive
-from MPI_PROC_NULL was issued.
+``MPI_PROC_NULL``, *tag* = ``MPI_ANY_TAG``, and *count* = 0, as if a receive
+from ``MPI_PROC_NULL`` was issued.
 
 
 ERRORS
@@ -82,4 +82,9 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Mprobe` :ref:`MPI_Improbe` :ref:`MPI_Probe` :ref:`MPI_Iprobe` :ref:`MPI_Imrecv` :ref:`MPI_Cancel`
+   * :ref:`MPI_Mprobe`
+   * :ref:`MPI_Improbe`
+   * :ref:`MPI_Probe`
+   * :ref:`MPI_Iprobe`
+   * :ref:`MPI_Imrecv`
+   * :ref:`MPI_Cancel`

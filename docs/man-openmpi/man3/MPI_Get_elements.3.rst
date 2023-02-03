@@ -14,7 +14,7 @@ SYNTAX
 C Syntax
 ^^^^^^^^
 
-.. code:: c
+.. code-block:: c
 
    #include <mpi.h>
 
@@ -27,7 +27,7 @@ C Syntax
 Fortran Syntax
 ^^^^^^^^^^^^^^
 
-.. code:: fortran
+.. code-block:: fortran
 
    USE MPI
    ! or the older form: INCLUDE 'mpif.h'
@@ -43,7 +43,7 @@ Fortran Syntax
 Fortran 2008 Syntax
 ^^^^^^^^^^^^^^^^^^^
 
-.. code:: fortran
+.. code-block:: fortran
 
    USE mpi_f08
 
@@ -62,13 +62,13 @@ Fortran 2008 Syntax
 INPUT PARAMETERS
 ----------------
 
--  status : Return status of receive operation (status).
--  datatype : Datatype used by receive operation (handle).
+* ``status`` : Return status of receive operation (status).
+* ``datatype`` : Datatype used by receive operation (handle).
 
 OUTPUT PARAMETERS
 -----------------
 
--  IERROR : Fortran only: Error status (integer).
+* ``ierror`` : Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -87,32 +87,30 @@ the count parameter cannot express the value to be returned (e.g., if
 the parameter is too small to hold the output value), it is set to
 MPI_UNDEFINED.
 
-Example: Usage of :ref:`MPI_Get_count` and MPI_Get_element:
+Example: Usage of :ref:`MPI_Get_count` and :ref:`MPI_Get_elements`:
 
-fortran //... MPI_TYPE_CONTIGUOUS(2, MPI_REAL, Type2, ierr)
-MPI_TYPE_COMMIT(Type2, ierr) // ... MPI_COMM_RANK(comm, rank, ierr)
-IF(rank.EQ.0) THEN CALL MPI_SEND(a, 2, MPI_REAL, 1, 0, comm, ierr) CALL
-MPI_SEND(a, 3, MPI_REAL, 1, 0, comm, ierr) ELSE CALL MPI_RECV(a, 2,
-Type2, 0, 0, comm, stat, ierr) CALL MPI_GET_COUNT(stat, Type2, i, ierr)
-! returns i=1 CALL MPI_GET_ELEMENTS(stat, Type2, i, ierr) ! returns i=2
-CALL MPI_RECV(a, 2, Type2, 0, 0, comm, stat, ierr) CALL
-MPI_GET_COUNT(stat, Type2, i, ierr) ! returns i=MPI_UNDEFINED
+.. code-block:: fortran
 
-::
+   call MPI_TYPE_CONTIGUOUS(2, MPI_REAL, Type2, ierr)
+   call MPI_TYPE_COMMIT(Type2, ierr)
+   call MPI_COMM_RANK(comm, rank, ierr)
 
-   CALL MPI_GET_ELEMENTS(stat, Type2, i, ierr)  ! returns i=3
-
-END IF
+   IF ( rank == 0 ) THEN
+      CALL MPI_SEND(a, 2, MPI_REAL, 1, 0, comm, ierr)
+      CALL MPI_SEND(a, 3, MPI_REAL, 1, 0, comm, ierr)
+   ELSE
+      CALL MPI_RECV(a, 2, Type2, 0, 0, comm, stat, ierr)
+      CALL MPI_GET_COUNT(stat, Type2, i, ierr) ! returns i=1
+      CALL MPI_GET_ELEMENTS(stat, Type2, i, ierr) ! returns i=2
+      CALL MPI_RECV(a, 2, Type2, 0, 0, comm, stat, ierr)
+      CALL MPI_GET_COUNT(stat, Type2, i, ierr) ! returns i=MPI_UNDEFINED
+      CALL MPI_GET_ELEMENTS(stat, Type2, i, ierr)  ! returns i=3
+   END IF
 
 The function :ref:`MPI_Get_elements` can also be used after a probe to find the
 number of elements in the probed message. Note that the two functions
 :ref:`MPI_Get_count` and :ref:`MPI_Get_elements` return the same values when they are
 used with primitive data types.
-
-ERRORS
-------
-
-.. include:: ./ERRORS.rst
 
 FORTRAN 77 NOTES
 ----------------
@@ -121,10 +119,17 @@ The MPI standard prescribes portable Fortran syntax for the COUNT
 argument of :ref:`MPI_Get_elements_x` only for Fortran 90. FORTRAN 77 users may
 use the non-portable syntax
 
-Fortran INTEGERMPI_COUNT_KIND COUNT
+.. code-block:: fortran
 
-where MPI_COUNT_KIND is a constant defined in mpif.h and gives the
+   INTEGER*MPI_COUNT_KIND COUNT
+
+where ``MPI_COUNT_KIND`` is a constant defined in ``mpif.h`` and gives the
 length of the declared integer in bytes.
+
+ERRORS
+------
+
+.. include:: ./ERRORS.rst
 
 
 .. seealso:: :ref:`MPI_Get_count`

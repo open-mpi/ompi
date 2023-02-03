@@ -54,7 +54,7 @@ INPUT PARAMETER
 OUTPUT PARAMETERS
 -----------------
 * ``nkeys``: Number of defined keys (integer).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -69,4 +69,6 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Info_get` :ref:`MPI_Info_get_nthkey` :ref:`MPI_Info_get_valuelen`
+   * :ref:`MPI_Info_get`
+   * :ref:`MPI_Info_get_nthkey`
+   * :ref:`MPI_Info_get_valuelen`

@@ -14,7 +14,7 @@ SYNTAX
 C Syntax
 ^^^^^^^^
 
-.. code:: c
+.. code-block:: c
 
    #include <mpi.h>
 
@@ -24,7 +24,7 @@ C Syntax
 Fortran Syntax
 ^^^^^^^^^^^^^^
 
-.. code:: fortran
+.. code-block:: fortran
 
    USE MPI
    ! or the older form: INCLUDE 'mpif.h'
@@ -38,7 +38,7 @@ Fortran Syntax
 Fortran 2008 Syntax
 ^^^^^^^^^^^^^^^^^^^
 
-.. code:: fortran
+.. code-block:: fortran
 
    USE mpi_f08
 
@@ -53,17 +53,17 @@ Fortran 2008 Syntax
 INPUT PARAMETERS
 ----------------
 
--  comm_old : Input communicator without topology (handle).
--  nnodes : Number of nodes in graph (integer).
--  index : Array of integers describing node degrees (see below).
--  edges : Array of integers describing graph edges (see below).
--  reorder : Ranking may be reordered (true) or not (false) (logical).
+* ``comm_old`` : Input communicator without topology (handle).
+* ``nnodes`` : Number of nodes in graph (integer).
+* ``index`` : Array of integers describing node degrees (see below).
+* ``edges`` : Array of integers describing graph edges (see below).
+* ``reorder`` : Ranking may be reordered (true) or not (false) (logical).
 
 OUTPUT PARAMETERS
 -----------------
 
--  comm_graph : Communicator with graph topology added (handle).
--  IERROR : Fortran only: Error status (integer).
+* ``comm_graph`` : Communicator with graph topology added (handle).
+* ``ierror`` : Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -105,9 +105,9 @@ Process Neighbors
 
 Then, the input arguments are:
 
--  nodes = 4
--  index = 2, 3, 4, 6
--  edges = 1, 3, 0, 3, 0, 2
+* nodes = 4
+* index = 2, 3, 4, 6
+* edges = 1, 3, 0, 3, 0, 2
 
 Thus, in C, index[0] is the degree of node zero, and index[i] -
 index[i-1] is the degree of node i, i=1, . . . , nnodes-1; the list of

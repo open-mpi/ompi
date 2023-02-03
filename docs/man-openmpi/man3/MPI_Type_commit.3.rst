@@ -51,7 +51,7 @@ INPUT PARAMETER
 
 OUTPUT PARAMETER
 ----------------
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -65,7 +65,7 @@ different buffers, with different starting addresses.
 **Example:** The following Fortran code fragment gives examples of using
 :ref:`MPI_Type_commit`.
 
-::
+.. code-block:: fortran
 
        INTEGER type1, type2
        CALL MPI_TYPE_CONTIGUOUS(5, MPI_REAL, type1, ierr)

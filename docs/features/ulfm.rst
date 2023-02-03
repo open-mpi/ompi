@@ -107,7 +107,7 @@ please use:
     J. Dongarra: Post-failure recovery of MPI communication
     capability: Design and rationale. IJHPCA 27(3): 244-254 (2013).*
 
-Available from: https://journals.sagepub.com/doi/10.1177/1094342013488238.
+Available from: :doi:`10.1177/1094342013488238`.
 
 Building ULFM support in Open MPI
 ---------------------------------

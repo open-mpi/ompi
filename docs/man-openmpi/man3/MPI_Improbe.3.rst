@@ -54,8 +54,8 @@ Fortran 2008 Syntax
 
 INPUT PARAMETERS
 ----------------
-* ``source``: Source rank or MPI_ANY_SOURCE (integer).
-* ``tag``: Tag value or MPI_ANY_TAG (integer).
+* ``source``: Source rank or ``MPI_ANY_SOURCE`` (integer).
+* ``tag``: Tag value or ``MPI_ANY_TAG`` (integer).
 * ``comm``: Communicator (handle).
 
 OUTPUT PARAMETERS
@@ -63,7 +63,7 @@ OUTPUT PARAMETERS
 * ``flag``: Flag (logical).
 * ``message``: Message (handle).
 * ``status``: Status object (status).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -77,14 +77,14 @@ to decide how to receive the message, based on the information returned
 by the probe. In particular, the application may allocate memory for the
 receive buffer according to the length of the probed message.
 
-A matching probe with MPI_PROC_NULL as *source* returns *flag* = true,
+A matching probe with ``MPI_PROC_NULL`` as *source* returns *flag* = true,
 
-*message* = MPI_MESSAGE_NO_PROC, and the *status* object returns source
-^ MPI_PROC_NULL, tag ^ MPI_ANY_TAG, and count ^ 0.
+*message* =`` MPI_MESSAGE_NO_PROC``, and the *status* object returns source
+^ ``MPI_PROC_NULL``, tag ^ ``MPI_ANY_TAG``, and count ^ 0.
 
 :ref:`MPI_Iprobe` returns a true value in *flag* if a message has been matched
 and can be received by passing the *message* handle to the :ref:`MPI_Mrecv` or
-:ref:`MPI_Imrecv` functions, provided the *source* was not MPI_PROC_NULL.
+:ref:`MPI_Imrecv` functions, provided the *source* was not ``MPI_PROC_NULL``.
 
 
 ERRORS
@@ -93,4 +93,9 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Mprobe` :ref:`MPI_Probe` :ref:`MPI_Iprobe` :ref:`MPI_Mrecv` :ref:`MPI_Imrecv` :ref:`MPI_Cancel`
+   * :ref:`MPI_Mprobe`
+   * :ref:`MPI_Probe`
+   * :ref:`MPI_Iprobe`
+   * :ref:`MPI_Mrecv`
+   * :ref:`MPI_Imrecv`
+   * :ref:`MPI_Cancel`

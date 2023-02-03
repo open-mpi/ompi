@@ -15,7 +15,7 @@ SYNTAX
 C Syntax
 ^^^^^^^^
 
-.. code:: c
+.. code-block:: c
 
    #include <mpi.h>
 
@@ -35,7 +35,7 @@ C Syntax
 Fortran Syntax (See Fortran 77 Notes)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. code:: fortran
+.. code-block:: fortran
 
    USE MPI
    ! or the older form: INCLUDE 'mpif.h'
@@ -59,7 +59,7 @@ Fortran Syntax (See Fortran 77 Notes)
 Fortran 2008 Syntax
 ^^^^^^^^^^^^^^^^^^^
 
-.. code:: fortran
+.. code-block:: fortran
 
    USE mpi_f08
 
@@ -92,27 +92,27 @@ Fortran 2008 Syntax
 INPUT PARAMETERS
 ----------------
 
--  origin_addr : Initial address of buffer (choice).
--  origin_count : Number of entries in buffer (nonnegative integer).
--  origin_datatype : Data type of each buffer entry (handle).
--  result_addr : Initial address of result buffer (choice).
--  result_count : Number of entries in result buffer (nonnegative
+* ``origin_addr`` : Initial address of buffer (choice).
+* ``origin_count`` : Number of entries in buffer (nonnegative integer).
+* ``origin_datatype`` : Data type of each buffer entry (handle).
+* ``result_addr`` : Initial address of result buffer (choice).
+* ``result_count`` : Number of entries in result buffer (nonnegative
    integer).
--  result_datatype : Data type of each result buffer entry (handle).
--  target_rank : Rank of target (nonnegative integer).
--  target_disp : Displacement from start of window to beginning of
+* ``result_datatype`` : Data type of each result buffer entry (handle).
+* ``target_rank`` : Rank of target (nonnegative integer).
+* ``target_disp`` : Displacement from start of window to beginning of
    target buffer (nonnegative integer).
--  target_count : Number of entries in target buffer (nonnegative
+* ``target_count`` : Number of entries in target buffer (nonnegative
    integer).
--  target_datatype : Data type of each entry in target buffer (handle).
--  op : Reduce operation (handle).
--  win : Window object (handle).
+* ``target_datatype`` : Data type of each entry in target buffer (handle).
+* ``op`` : Reduce operation (handle).
+* ``win`` : Window object (handle).
 
 OUTPUT PARAMETER
 ----------------
 
--  :ref:`MPI_Rget_accumulate`: RMA request
--  IERROR : Fortran only: Error status (integer).
+* :ref:`MPI_Rget_accumulate`: RMA request
+* ``ierror`` : Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -164,7 +164,7 @@ syntax
 
 fortran INTEGERMPI_ADDRESS_KIND TARGET_DISP
 
-where MPI_ADDRESS_KIND is a constant defined in mpif.h and gives the
+where ``MPI_ADDRESS_KIND`` is a constant defined in ``mpif.h`` and gives the
 length of the declared integer in bytes.
 
 NOTES

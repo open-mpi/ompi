@@ -57,7 +57,7 @@ INPUT PARAMETER
 
 OUTPUT PARAMETER
 ----------------
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -69,7 +69,7 @@ type.
 ERRORS
 ------
 
-.. include ./ERRORS.rst
+.. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Type_get_name`
+   * :ref:`MPI_Type_get_name`

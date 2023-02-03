@@ -55,7 +55,7 @@ INPUT PARAMETER
 OUTPUT PARAMETERS
 -----------------
 * ``amode``: File access mode used to open the file (integer).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

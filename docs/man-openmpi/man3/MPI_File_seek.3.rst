@@ -58,7 +58,7 @@ INPUT PARAMETERS
 
 OUTPUT PARAMETER
 ----------------
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -66,11 +66,9 @@ DESCRIPTION
 :ref:`MPI_File_seek` updates the individual file pointer according to *whence,*
 which could have the following possible values:
 
- o    MPI_SEEK_SET - The pointer is set to *offset.*
-
- o    MPI_SEEK_CUR - The pointer is set to the current pointer position plus *offset.*
-
- o    MPI_SEEK_END - The pointer is set to the end of the file plus *offset.*
+* ``MPI_SEEK_SET`` - The pointer is set to *offset.*
+* ``MPI_SEEK_CUR`` - The pointer is set to the current pointer position plus *offset.*
+* ``MPI_SEEK_END`` - The pointer is set to the end of the file plus *offset.*
 
 The *offset* can be negative, which allows seeking backwards. It is
 erroneous to seek to a negative position in the file. The end of the
@@ -86,11 +84,11 @@ The MPI standard prescribes portable Fortran syntax for the *OFFSET*
 argument only for Fortran 90. FORTRAN 77 users may use the non-portable
 syntax
 
-::
+.. code-block:: fortran
 
-        INTEGER*MPI_OFFSET_KIND OFFSET
+   INTEGER*MPI_OFFSET_KIND OFFSET
 
-where MPI_OFFSET_KIND is a constant defined in mpif.h and gives the
+where ``MPI_OFFSET_KIND`` is a constant defined in ``mpif.h`` and gives the
 length of the declared integer in bytes.
 
 

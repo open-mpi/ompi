@@ -6,9 +6,7 @@ MPI_Add_error_class
 
 .. include_body
 
-::
-
-   MPI_Add_error_class - Creates a new error class and returns its value
+:ref:`MPI_Add_error_class` - Creates a new error class and returns its value
 
 
 SYNTAX
@@ -50,7 +48,7 @@ Fortran 2008 Syntax
 OUTPUT PARAMETERS
 -----------------
 * ``errorclass``: New error class (integer).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -83,4 +81,7 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Add_error_code` :ref:`MPI_Add_error_string` :ref:`MPI_Error_class` :ref:`MPI_Error_string`
+   * :ref:`MPI_Add_error_code`
+   * :ref:`MPI_Add_error_string`
+   * :ref:`MPI_Error_class`
+   * :ref:`MPI_Error_string`

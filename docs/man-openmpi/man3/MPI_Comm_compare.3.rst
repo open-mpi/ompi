@@ -13,7 +13,7 @@ SYNTAX
 C Syntax
 ^^^^^^^^
 
-.. code:: c
+.. code-block:: c
 
    #include <mpi.h>
 
@@ -22,7 +22,7 @@ C Syntax
 Fortran Syntax
 ^^^^^^^^^^^^^^
 
-.. code:: fortran
+.. code-block:: fortran
 
    USE MPI
    ! or the older form: INCLUDE 'mpif.h'
@@ -33,7 +33,7 @@ Fortran Syntax
 Fortran 2008 Syntax
 ^^^^^^^^^^^^^^^^^^^
 
-.. code:: fortran
+.. code-block:: fortran
 
    USE mpi_f08
 
@@ -45,14 +45,14 @@ Fortran 2008 Syntax
 INPUT PARAMETERS
 ----------------
 
--  ``comm1`` : Comm1 (handle).
--  ``comm2`` : Comm2 (handle).
+* ``comm1`` : Comm1 (handle).
+* ``comm2`` : Comm2 (handle).
 
 OUTPUT PARAMETERS
 -----------------
 
--  ``result`` : Result of comparison (integer).
--  ``IERROR`` : Fortran only: Error status (integer).
+* ``result`` : Result of comparison (integer).
+* ``ierror`` : Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

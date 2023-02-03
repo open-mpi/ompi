@@ -62,7 +62,7 @@ OUTPUT PARAMETER
 ----------------
 * ``value``: Value (string).
 * ``flag``: Returns true if key defined, false if not (boolean).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -84,6 +84,11 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Info_create` :ref:`MPI_Info_delete` :ref:`MPI_Info_dup` :ref:`MPI_Info_free`
-   :ref:`MPI_Info_get_valuelen` :ref:`MPI_Info_get_nkeys` :ref:`MPI_Info_get_nthkey`
-   :ref:`MPI_Info_set`
+   * :ref:`MPI_Info_create`
+   * :ref:`MPI_Info_delete`
+   * :ref:`MPI_Info_dup`
+   * :ref:`MPI_Info_free`
+   * :ref:`MPI_Info_get_valuelen`
+   * :ref:`MPI_Info_get_nkeys`
+   * :ref:`MPI_Info_get_nthkey`
+   * :ref:`MPI_Info_set`

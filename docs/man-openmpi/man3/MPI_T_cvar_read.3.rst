@@ -49,4 +49,5 @@ ERRORS
 
 
 .. seealso::
-   :ref:`MPI_T_cvar_handle_alloc` :ref:`MPI_T_cvar_get_info`
+   * :ref:`MPI_T_cvar_handle_alloc`
+   * :ref:`MPI_T_cvar_get_info`

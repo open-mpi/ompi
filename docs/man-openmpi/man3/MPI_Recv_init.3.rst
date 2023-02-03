@@ -67,7 +67,7 @@ INPUT/OUTPUT PARAMETER
 OUTPUT PARAMETERS
 -----------------
 * ``request``: Communication request (handle).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -89,5 +89,10 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Bsend_init` :ref:`MPI_Rsend_init` :ref:`MPI_Send_init` MPI_Sssend_init :ref:`MPI_Start`
-   :ref:`MPI_Startall` :ref:`MPI_Request_free`
+   * :ref:`MPI_Bsend_init`
+   * :ref:`MPI_Rsend_init`
+   * :ref:`MPI_Send_init`
+   * MPI_Sssend_init
+   * :ref:`MPI_Start`
+   * :ref:`MPI_Startall`
+   * :ref:`MPI_Request_free`

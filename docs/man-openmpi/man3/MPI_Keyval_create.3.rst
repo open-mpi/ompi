@@ -45,7 +45,7 @@ INPUT PARAMETERS
 OUTPUT PARAMETERS
 -----------------
 * ``keyval``: Key value for future access (integer).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -62,7 +62,7 @@ The copy_fn function is invoked when a communicator is duplicated by
 :ref:`MPI_COMM_DUP`. copy_fn should be of type MPI_Copy_function, which is
 defined as follows:
 
-::
+.. code-block:: c
 
      typedef int MPI_Copy_function(MPI_Comm oldcomm, int keyval,
                                    void *extra_state, void *attribute_val_in,
@@ -108,7 +108,7 @@ Even though both formal arguments attribute_val_in and attribute_val_out
 are of type void*, their usage differs. The C copy function is passed by
 MPI in attribute_val_in the value of the attribute, and in
 attribute_val_out the address of the attribute, so as to allow the
-function to return the (new) attribute value. The use of type void\* for
+function to return the (new) attribute value. The use of type ``void *`` for
 both is to avoid messy type casts.
 
 A valid copy function is one that completely duplicates the information
@@ -124,7 +124,7 @@ deleted by :ref:`MPI_Comm_free` or when a call is made explicitly to
 :ref:`MPI_Attr_delete`. delete_fn should be of type MPI_Delete_function, which
 is defined as follows:
 
-::
+.. code-block:: c
 
      typedef int MPI_Delete_function(MPI_Comm comm, int keyval,
          void *attribute_val, void *extra_state);
@@ -156,4 +156,5 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Keyval_free` :ref:`MPI_Comm_create_keyval`
+   * :ref:`MPI_Keyval_free`
+   * :ref:`MPI_Comm_create_keyval`

@@ -14,7 +14,7 @@ SYNTAX
 C Syntax
 ^^^^^^^^
 
-.. code:: c
+.. code-block:: c
 
    #include <mpi.h>
 
@@ -24,7 +24,7 @@ C Syntax
 Fortran Syntax
 ^^^^^^^^^^^^^^
 
-.. code:: fortran
+.. code-block:: fortran
 
    USE MPI
    ! or the older form: INCLUDE 'mpif.h'
@@ -37,7 +37,7 @@ Fortran Syntax
 Fortran 2008 Syntax
 ^^^^^^^^^^^^^^^^^^^
 
-.. code:: fortran
+.. code-block:: fortran
 
    USE mpi_f08
 
@@ -50,17 +50,17 @@ Fortran 2008 Syntax
 INPUT PARAMETERS
 ----------------
 
--  ``comm`` : Communicator with Cartesian structure (handle).
--  ``direction`` : Coordinate dimension of shift (integer).
--  ``disp`` : Displacement ( > 0: upward shift, < 0: downward shift)
+* ``comm`` : Communicator with Cartesian structure (handle).
+* ``direction`` : Coordinate dimension of shift (integer).
+* ``disp`` : Displacement ( > 0: upward shift, < 0: downward shift)
    (integer).
 
 OUTPUT PARAMETERS
 -----------------
 
--  ``rank_source`` : Rank of source process (integer).
--  ``rank_dest`` : Rank of destination process (integer).
--  ``IERROR`` : Fortran only: Error status (integer).
+* ``rank_source`` : Rank of source process (integer).
+* ``rank_dest`` : Rank of destination process (integer).
+* ``ierror`` : Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -85,7 +85,7 @@ n-dimensional Cartesian mesh.
 Depending on the periodicity of the Cartesian group in the specified
 coordinate ``direction``, :ref:`MPI_Cart_shift` provides the identifiers
 for a circular or an end-off shift. In the case of an end-off shift, the
-value MPI_PROC_NULL may be returned in ``rank_source`` or
+value ``MPI_PROC_NULL`` may be returned in ``rank_source`` or
 ``rank_dest``, indicating that the source or the destination for the
 shift is out of range.
 
@@ -95,7 +95,7 @@ of REALs is stored one element per process, in variable A. One wishes to
 skew this array, by shifting column i (vertically, i.e., along the
 column) by i steps.
 
-.. code:: fortran
+.. code-block:: fortran
 
    ! find process rank
        CALL MPI_COMM_RANK(comm, rank, ierr)

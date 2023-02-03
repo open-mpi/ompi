@@ -14,7 +14,7 @@ SYNTAX
 C Syntax
 ^^^^^^^^
 
-.. code:: c
+.. code-block:: c
 
    #include <mpi.h>
 
@@ -23,7 +23,7 @@ C Syntax
 Fortran Syntax
 ^^^^^^^^^^^^^^
 
-.. code:: fortran
+.. code-block:: fortran
 
    USE MPI
    ! or the older form: INCLUDE 'mpif.h'
@@ -35,7 +35,7 @@ Fortran Syntax
 Fortran 2008 Syntax
 ^^^^^^^^^^^^^^^^^^^
 
-.. code:: fortran
+.. code-block:: fortran
 
    USE mpi_f08
 
@@ -47,10 +47,10 @@ Fortran 2008 Syntax
 OUTPUT PARAMETERS
 -----------------
 
--  version : A string containing the Open MPI version (string).
--  resultlen : Length (in characters) of result returned in version
+* ``version`` : A string containing the Open MPI version (string).
+* ``resultlen`` : Length (in characters) of result returned in version
    (integer).
--  IERROR : Fortran only: Error status (integer).
+* ``ierror`` : Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
