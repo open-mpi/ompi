@@ -263,9 +263,11 @@ int mca_btl_ofi_reg_mem(void *reg_data, void *base, size_t size,
             if (0 == strcmp(opal_accelerator_base_selected_component.base_version.mca_component_name, "cuda")) {
                 attr.iface = FI_HMEM_CUDA;
                 opal_accelerator.get_device(&attr.device.cuda);
+#if OPAL_OFI_HAVE_FI_HMEM_ROCR
 	    } else if (0 == strcmp(opal_accelerator_base_selected_component.base_version.mca_component_name, "rocm")) {
                 attr.iface = FI_HMEM_ROCR;
                 opal_accelerator.get_device(&attr.device.cuda);
+#endif
             } else {
                 return OPAL_ERROR;
             }
