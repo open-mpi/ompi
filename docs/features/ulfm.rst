@@ -107,7 +107,7 @@ please use:
     J. Dongarra: Post-failure recovery of MPI communication
     capability: Design and rationale. IJHPCA 27(3): 244-254 (2013).*
 
-Available from: :doi:`10.1177/1094342013488238`.
+Available from DOI :doi:`10.1177/1094342013488238`.
 
 Building ULFM support in Open MPI
 ---------------------------------
@@ -452,7 +452,7 @@ Focus has been toward integration with current Open MPI main
 * Added support for CMA shared memory transport (Vader).
 * Added support for advanced failure detection at the MPI level.
   Implements the algorithm described in "Failure detection and
-  propagation in HPC systems." <https://doi.org/10.1109/SC.2016.26>.
+  propagation in HPC systems," DOI :doi:`10.1109/SC.2016.26`.
 * Removed the need for special handling of CID allocation.
 * Non-usable components are automatically removed from the build
   during configure
