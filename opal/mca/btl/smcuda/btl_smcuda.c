@@ -21,6 +21,8 @@
  * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2022      IBM Corporation. All rights reserved
+ * Copyright (c) 2023      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -355,8 +357,8 @@ static int smcuda_btl_first_time_init(mca_btl_smcuda_t *smcuda_btl, int32_t my_s
                         "btl:smcuda: CUDA cuMemHostRegister address=%p, size=%d",
                         mca_btl_smcuda_component.sm_mpool_base, (int) res->size);
     if (0 == strcmp(opal_accelerator_base_selected_component.base_version.mca_component_name, "cuda")) {
-        res = opal_accelerator.host_register(MCA_ACCELERATOR_NO_DEVICE_ID, mca_btl_smcuda_component.sm_mpool_base, res->size); 
-        if (OPAL_UNLIKELY(OPAL_SUCCESS != res)) {
+        rc = opal_accelerator.host_register(MCA_ACCELERATOR_NO_DEVICE_ID, mca_btl_smcuda_component.sm_mpool_base, res->size); 
+        if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
             /* If registering the memory fails, print a message and continue.
              * This is not a fatal error. */
             opal_output_verbose(10, opal_btl_base_framework.framework_output,
