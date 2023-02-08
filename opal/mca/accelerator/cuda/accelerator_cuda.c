@@ -109,8 +109,10 @@ static int accelerator_cuda_check_addr(const void *addr, int *dev_id, uint64_t *
         *flags |= MCA_ACCELERATOR_FLAGS_UNIFIED_MEMORY;
     }
     if (CUDA_SUCCESS != result) {
-        /* If cuda is not initialized, assume it is a host buffer. */
-        if (CUDA_ERROR_NOT_INITIALIZED == result) {
+        /* If cuda is not initialized, assume it is a host buffer. It can also
+         * return invalid value if the ptr was not allocated by, mapped by,
+         * or registered with a CUcontext */
+        if (CUDA_ERROR_NOT_INITIALIZED == result || CUDA_ERROR_INVALID_VALUE == result) {
             return 0;
         } else {
             return OPAL_ERROR;
