@@ -69,7 +69,7 @@ DESCRIPTION
 erroneous if there is no key with value *keyval*. On the other hand, the
 call is correct if the key value exists, but no attribute is attached on
 *comm* for that key; in that case, the call returns *flag* = false. In
-particular, MPI_KEYVAL_INVALID is an erroneous key value.
+particular, ``MPI_KEYVAL_INVALID`` is an erroneous key value.
 
 This function replaces :ref:`MPI_Attr_get`, the use of which is deprecated. The
 C binding is identical. The Fortran binding differs in that

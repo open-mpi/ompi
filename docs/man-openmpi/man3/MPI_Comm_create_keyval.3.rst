@@ -131,4 +131,5 @@ ERRORS
 
 .. include:: ./ERRORS.rst
 
-.. seealso:: :ref:`MPI`
+.. seealso::
+   * :ref:`MPI_Comm_free_keyval`

@@ -54,12 +54,6 @@ Note that use of this routine is *deprecated* as of MPI-2, and was
 *deleted* in MPI-3. Please use :ref:`MPI_Comm_get_attr`. This function does not
 have a mpi_f08 binding.
 
-Retrieves attribute value by key. The call is erroneous if there is no
-key with value keyval. On the other hand, the call is correct if the key
-value exists, but no attribute is attached on comm for that key; in such
-case, the call returns flag = false. In particular MPI_KEYVAL_INVALID is
-an erroneous key value.
-
 
 ERRORS
 ------
