@@ -49,14 +49,6 @@ DESCRIPTION
 Note that use of this routine is *deprecated* as of MPI-2. Please use
 :ref:`MPI_Comm_get_errhandler` instead.
 
-Returns in errhandler (a handle to) the error handler that is currently
-associated with communicator comm.
-
-**Example:** A library function may register at its entry point the
-current error handler for a communicator, set its own private error
-handler for this communicator, and restore before exiting the previous
-error handler.
-
 
 ERRORS
 ------

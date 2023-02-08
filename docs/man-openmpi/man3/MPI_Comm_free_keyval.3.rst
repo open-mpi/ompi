@@ -81,3 +81,6 @@ Key values are global (they can be used with any and all communicators).
 ERRORS
 ------
 .. include:: ./ERRORS.rst
+
+.. seealso::
+   * :ref:`MPI_Comm_create_keyval`

@@ -59,7 +59,7 @@ allocated, the key value can be used to associate attributes and access
 them on any locally defined communicator.
 
 The copy_fn function is invoked when a communicator is duplicated by
-:ref:`MPI_COMM_DUP`. copy_fn should be of type MPI_Copy_function, which is
+:ref:`MPI_Comm_dup`. copy_fn should be of type MPI_Copy_function, which is
 defined as follows:
 
 .. code-block:: c
@@ -158,3 +158,4 @@ ERRORS
 .. seealso::
    * :ref:`MPI_Keyval_free`
    * :ref:`MPI_Comm_create_keyval`
+   * :ref:`MPI_Comm_free_keyval`
