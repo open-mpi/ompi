@@ -27,8 +27,8 @@ C Syntax
    	datatype)
 
 
-Fortran Syntax (see FORTRAN 77 NOTES)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Fortran Syntax
+^^^^^^^^^^^^^^
 
 .. code-block:: fortran
 
@@ -78,21 +78,6 @@ routine that attempts to read from the file associated with *fh* (at the
 units relative to the current view. That is, holes are not counted when
 locating an offset. The data is taken out of those parts of the file
 specified by the current view.
-
-
-FORTRAN 77 NOTES
-----------------
-
-The MPI standard prescribes portable Fortran syntax for the *OFFSET*
-argument only for Fortran 90. FORTRAN 77 users may use the non-portable
-syntax
-
-.. code-block:: fortran
-
-   INTEGER*MPI_OFFSET_KIND OFFSET
-
-where ``MPI_OFFSET_KIND`` is a constant defined in ``mpif.h`` and gives the
-length of the declared integer in bytes.
 
 
 NOTES

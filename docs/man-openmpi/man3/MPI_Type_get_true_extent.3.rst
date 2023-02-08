@@ -28,8 +28,8 @@ C Syntax
    	MPI_Count *true_lb, MPI_Count *true_extent)
 
 
-Fortran Syntax (see FORTRAN 77 NOTES)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Fortran Syntax
+^^^^^^^^^^^^^^
 
 .. code-block:: fortran
 
@@ -87,30 +87,6 @@ hold a data type, uncompressed.
 
 See section 4.1.8 of the MPI-3 standard for more detailed definitions of these
 parameters in relation to the typemap.
-
-
-FORTRAN 77 NOTES
-----------------
-
-The MPI standard prescribes portable Fortran syntax for the *TRUE_LB*
-and *TRUE_EXTENT* arguments only for Fortran 90. FORTRAN 77 users may
-use the non-portable syntax
-
-:ref:`MPI_Type_get_true_extent`:
-
-.. code-block:: fortran
-
-        INTEGER*MPI_ADDRESS_KIND TRUE_LB, TRUE_EXTENT
-
-:ref:`MPI_Type_get_true_extent_x`:
-
-.. code-block:: fortran
-
-        INTEGER*MPI_COUNT_KIND TRUE_LB, TRUE_EXTENT
-        INTEGER*MPI_COUNT_KIND TRUE_EXTENT
-
-where ``MPI_ADDRESS_KIND`` and MPI_COUNT_KIND are constants defined in
-mpif.h and give the length of the declared integer in bytes.
 
 
 ERRORS

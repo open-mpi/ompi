@@ -25,8 +25,8 @@ C Syntax
    	MPI_Datatype *newtype)
 
 
-Fortran Syntax (see FORTRAN 77 NOTES)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Fortran Syntax
+^^^^^^^^^^^^^^
 
 .. code-block:: fortran
 
@@ -182,21 +182,6 @@ might define different paddings, a clarification to the standard made
 epsilon zero. Thus, if you define a structure datatype and wish to send
 or receive multiple items, you should explicitly include an MPI_UB entry
 as the last member of the structure. See the above example.
-
-
-FORTRAN 77 NOTES
-----------------
-
-The MPI standard prescribes portable Fortran syntax for the
-*ARRAY_OF_DISPLACEMENTS*\ (*) argument only for Fortran 90. FORTRAN 77
-users may use the non-portable syntax
-
-.. code-block:: fortran
-
-        INTEGER*MPI_ADDRESS_KIND ARRAY_OF_DISPLACEMENTS(*)
-
-where ``MPI_ADDRESS_KIND`` is a constant defined in ``mpif.h`` and gives the
-length of the declared integer in bytes.
 
 
 ERRORS

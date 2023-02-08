@@ -24,8 +24,8 @@ C Syntax
    	MPI_Aint stride, MPI_Datatype oldtype, MPI_Datatype *newtype)
 
 
-Fortran Syntax (see FORTRAN 77 NOTES)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Fortran Syntax
+^^^^^^^^^^^^^^
 
 .. code-block:: fortran
 
@@ -98,21 +98,6 @@ has a type map with ``count * bl * n`` entries:
      disp(n-1) + stride * (count -1)), ..., (type(0),
      disp(0) + stride * (count -1) + (bl -1) * ex), ...,
      (type(n-1), disp(n-1) + stride * (count -1) + (bl -1) * ex)}
-
-
-FORTRAN 77 NOTES
-----------------
-
-The MPI standard prescribes portable Fortran syntax for the *STRIDE*
-argument only for Fortran 90. FORTRAN 77 users may use the non-portable
-syntax
-
-.. code-block:: fortran
-
-        INTEGER*MPI_ADDRESS_KIND STRIDE
-
-where ``MPI_ADDRESS_KIND`` is a constant defined in ``mpif.h`` and gives the
-length of the declared integer in bytes.
 
 
 ERRORS

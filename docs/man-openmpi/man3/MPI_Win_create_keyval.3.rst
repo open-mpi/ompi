@@ -25,8 +25,8 @@ C Syntax
    	int *win_keyval, void *extra_state)
 
 
-Fortran Syntax (see FORTRAN 77 NOTES)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Fortran Syntax
+^^^^^^^^^^^^^^
 
 .. code-block:: fortran
 
@@ -105,21 +105,6 @@ The Fortran callback functions are:
    	EXTRA_STATE, IERROR)
    	INTEGER WIN, WIN_KEYVAL, IERROR
    	INTEGER(KIND=MPI_ADDRESS_KIND) ATTRIBUTE_VAL, EXTRA_STATE
-
-
-FORTRAN 77 NOTES
-----------------
-
-The MPI standard prescribes portable Fortran syntax for the
-*EXTRA_STATE* argument only for Fortran 90. FORTRAN 77 users may use the
-non-portable syntax
-
-.. code-block:: fortran
-
-        INTEGER*MPI_ADDRESS_KIND EXTRA_STATE
-
-where ``MPI_ADDRESS_KIND`` is a constant defined in ``mpif.h`` and gives the
-length of the declared integer in bytes.
 
 
 ERRORS

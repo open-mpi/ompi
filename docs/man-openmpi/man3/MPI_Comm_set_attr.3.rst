@@ -23,8 +23,8 @@ C Syntax
    int MPI_Comm_set_attr(MPI_Comm comm, int comm_keyval, void *attribute_val)
 
 
-Fortran Syntax (see FORTRAN 77 NOTES)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Fortran Syntax
+^^^^^^^^^^^^^^
 
 .. code-block:: fortran
 
@@ -76,21 +76,6 @@ delete_fn function returned an error code other than ``MPI_SUCCESS``.
 This function replaces :ref:`MPI_Attr_put`, the use of which is deprecated. The
 C binding is identical. The Fortran binding differs in that
 *attribute_val* is an address-sized integer.
-
-
-FORTRAN 77 NOTES
-----------------
-
-The MPI standard prescribes portable Fortran syntax for the
-*ATTRIBUTE_VAL* argument only for Fortran 90. Sun FORTRAN 77 users may
-use the non-portable syntax
-
-.. code-block:: fortran
-
-        INTEGER*MPI_ADDRESS_KIND ATTRIBUTE_VAL
-
-where ``MPI_ADDRESS_KIND`` is a constant defined in ``mpif.h`` and gives the
-length of the declared integer in bytes.
 
 
 NOTES

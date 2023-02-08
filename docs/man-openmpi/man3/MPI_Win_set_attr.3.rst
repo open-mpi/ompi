@@ -23,8 +23,8 @@ C Syntax
    int MPI_Win_set_attr(MPI_Win win, int win_keyval, void *attribute_val)
 
 
-Fortran Syntax (see FORTRAN 77 NOTES)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Fortran Syntax
+^^^^^^^^^^^^^^
 
 .. code-block:: fortran
 
@@ -61,23 +61,11 @@ OUTPUT PARAMETER
 ----------------
 * ``ierror``: Fortran only: Error status (integer).
 
+
 DESCRIPTION
 -----------
 
-
-FORTRAN 77 NOTES
-----------------
-
-The MPI standard prescribes portable Fortran syntax for the
-*ATTRIBUTE_VAL* argument only for Fortran 90. FORTRAN 77 users may use
-the non-portable syntax
-
-.. code-block:: fortran
-
-        INTEGER*MPI_ADDRESS_KIND ATTRIBUTE_VAL
-
-where ``MPI_ADDRESS_KIND`` is a constant defined in ``mpif.h`` and gives the
-length of the declared integer in bytes.
+Sets the value of a window attribute.
 
 
 ERRORS

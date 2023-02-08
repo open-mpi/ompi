@@ -24,8 +24,8 @@ C Syntax
    int MPI_File_set_size(MPI_File fh, MPI_Offset size)
 
 
-Fortran Syntax (see FORTRAN 77 NOTES)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Fortran Syntax
+^^^^^^^^^^^^^^
 
 .. code-block:: fortran
 
@@ -79,21 +79,6 @@ Note that the actual amount of storage space cannot be allocated by
 
 It is erroneous to call this function if MPI_MODE_SEQUENTIAL mode was
 specified when the file was opened.
-
-
-FORTRAN 77 NOTES
-----------------
-
-The MPI standard prescribes portable Fortran syntax for the *SIZE*
-argument only for Fortran 90. FORTRAN 77 users may use the non-portable
-syntax
-
-.. code-block:: fortran
-
-   INTEGER*MPI_OFFSET_KIND SIZE
-
-where ``MPI_OFFSET_KIND`` is a constant defined in ``mpif.h`` and gives the
-length of the declared integer in bytes.
 
 
 ERRORS
