@@ -27,8 +27,8 @@ C Syntax
    	MPI_Status *status)
 
 
-Fortran Syntax (see FORTRAN 77 NOTES)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Fortran Syntax
+^^^^^^^^^^^^^^
 
 .. code-block:: fortran
 
@@ -82,21 +82,6 @@ specified by the current view. :ref:`MPI_File_read_at` stores the number of
 *datatype* elements actually read in *status.* All other fields of
 *status* are undefined. It is erroneous to call this function if
 MPI_MODE_SEQUENTIAL mode was specified when the file was opened.
-
-
-FORTRAN 77 NOTES
-----------------
-
-The MPI standard prescribes portable Fortran syntax for the *OFFSET*
-argument only for Fortran 90. FORTRAN 77 users may use the non-portable
-syntax
-
-.. code-block:: fortran
-
-   INTEGER*MPI_OFFSET_KIND OFFSET
-
-where ``MPI_OFFSET_KIND`` is a constant defined in ``mpif.h`` and gives the
-length of the declared integer in bytes.
 
 
 ERRORS

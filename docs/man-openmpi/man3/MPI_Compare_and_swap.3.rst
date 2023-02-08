@@ -25,8 +25,8 @@ C Syntax
    	MPI_Aint target_disp, MPI_Win win)
 
 
-Fortran Syntax (see FORTRAN 77 NOTES)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Fortran Syntax
+^^^^^^^^^^^^^^
 
 .. code-block:: fortran
 
@@ -85,21 +85,6 @@ Multi-language types, or Byte as specified in MPI-3 section 5.9.2 on page 176.
 
 The origin and result buffers (*origin_addr* and *result_addr*) must be
 disjoint.
-
-
-FORTRAN 77 NOTES
-----------------
-
-The MPI standard prescribes portable Fortran syntax for the
-*TARGET_DISP* argument only for Fortran 90. FORTRAN 77 users may use the
-non-portable syntax
-
-.. code-block:: fortran
-
-        INTEGER*MPI_ADDRESS_KIND TARGET_DISP
-
-where ``MPI_ADDRESS_KIND`` is a constant defined in ``mpif.h`` and gives the
-length of the declared integer in bytes.
 
 
 NOTES

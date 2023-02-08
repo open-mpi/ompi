@@ -25,8 +25,8 @@ C Syntax
    int MPI_File_preallocate(MPI_File fh, MPI_Offset size)
 
 
-Fortran Syntax (see FORTRAN 77 NOTES)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Fortran Syntax
+^^^^^^^^^^^^^^
 
 .. code-block:: fortran
 
@@ -80,21 +80,6 @@ The treatment of file pointers, pending nonblocking accesses, and file
 consistency is the same as with :ref:`MPI_File_set_size`. If
 MPI_MODE_SEQUENTIAL mode was specified when the file was opened, it is
 erroneous to call this routine.
-
-
-FORTRAN 77 NOTES
-----------------
-
-The MPI standard prescribes portable Fortran syntax for the *SIZE*
-argument only for Fortran 90. FORTRAN 77 users may use the non-portable
-syntax
-
-.. code-block:: fortran
-
-   INTEGER*MPI_OFFSET_KIND SIZE
-
-where ``MPI_OFFSET_KIND`` is a constant defined in ``mpif.h`` and gives the
-length of the declared integer in bytes.
 
 
 NOTES

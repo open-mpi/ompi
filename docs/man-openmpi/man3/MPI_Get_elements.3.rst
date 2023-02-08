@@ -112,19 +112,6 @@ number of elements in the probed message. Note that the two functions
 :ref:`MPI_Get_count` and :ref:`MPI_Get_elements` return the same values when they are
 used with primitive data types.
 
-FORTRAN 77 NOTES
-----------------
-
-The MPI standard prescribes portable Fortran syntax for the COUNT
-argument of :ref:`MPI_Get_elements_x` only for Fortran 90. FORTRAN 77 users may
-use the non-portable syntax
-
-.. code-block:: fortran
-
-   INTEGER*MPI_COUNT_KIND COUNT
-
-where ``MPI_COUNT_KIND`` is a constant defined in ``mpif.h`` and gives the
-length of the declared integer in bytes.
 
 ERRORS
 ------

@@ -25,8 +25,8 @@ C Syntax
    int MPI_File_get_position_shared(MPI_File fh, MPI_Offset *offset)
 
 
-Fortran Syntax (see FORTRAN 77 NOTES)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Fortran Syntax
+^^^^^^^^^^^^^^
 
 .. code-block:: fortran
 
@@ -64,21 +64,6 @@ DESCRIPTION
 :ref:`MPI_File_get_position_shared` returns, in *offset,* the current position
 of the shared file pointer in *etype* units relative to the current
 displacement and file type.
-
-
-FORTRAN 77 NOTES
-----------------
-
-The MPI standard prescribes portable Fortran syntax for the *OFFSET*
-argument only for Fortran 90. Sun FORTRAN 77 users may use the
-non-portable syntax
-
-.. code-block:: fortran
-
-        INTEGER*MPI_OFFSET_KIND OFFSET
-
-where ``MPI_ADDRESS_KIND`` is a constant defined in ``mpif.h`` and gives the
-length of the declared integer in bytes.
 
 
 ERRORS

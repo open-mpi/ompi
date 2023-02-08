@@ -32,8 +32,8 @@ C Syntax
        MPI_Datatype target_datatype, MPI_Op op, MPI_Win win,
        MPI_Request *request)
 
-Fortran Syntax (See Fortran 77 Notes)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Fortran Syntax
+^^^^^^^^^^^^^^
 
 .. code-block:: fortran
 
@@ -155,17 +155,6 @@ indicates that the data is available in the result buffer and the origin
 buffer is free to be updated. It does not indicate that the operation
 has been completed at the target window.
 
-FORTRAN 77 NOTES
-----------------
-
-The MPI standard prescribes portable Fortran syntax for the TARGET_DISP
-argument only for Fortran 90. FORTRAN 77 users may use the non-portable
-syntax
-
-fortran INTEGERMPI_ADDRESS_KIND TARGET_DISP
-
-where ``MPI_ADDRESS_KIND`` is a constant defined in ``mpif.h`` and gives the
-length of the declared integer in bytes.
 
 NOTES
 -----
