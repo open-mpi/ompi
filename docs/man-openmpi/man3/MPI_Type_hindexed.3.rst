@@ -57,31 +57,6 @@ DESCRIPTION
 Note that use of this routine is *deprecated* as of MPI-2. Use
 :ref:`MPI_Type_create_hindexed` instead.
 
-The function is identical to :ref:`MPI_Type_indexed`, except that block
-displacements in array_of_displacements are specified in bytes, rather
-than in multiples of the oldtype extent.
-
-Assume that oldtype has type map
-
-::
-
-       {(type(0), disp(0)), ..., (type(n-1), disp(n-1))},
-
-with extent ex. Let B be the array_of_blocklength argument and D be the
-array_of_displacements argument. The newly created datatype has
-
-::
-
-   n x S^count-1
-       (i=0)        B[i]  entries:
-
-     {(type(0), disp(0) + D[0]),...,(type(n-1), disp(n-1) + D[0]),...,
-     (type(0), disp(0) + (D[0] + B[0]-1)* ex),...,
-     type(n-1), disp(n-1) + (D[0]+ B[0]-1)* ex),...,
-     (type(0), disp(0) + D[count-1]),...,(type(n-1), disp(n-1) + D[count-1]),...,
-     (type(0), disp(0) +  D[count-1] + (B[count-1] -1)* ex),...,
-     (type(n-1), disp(n-1) + D[count-1] + (B[count-1] -1)* ex)}
-
 
 ERRORS
 ------
@@ -90,4 +65,5 @@ ERRORS
 
 .. seealso::
    * :ref:`MPI_Type_create_hindexed`
+   * :ref:`MPI_Type_create_struct`
    * :ref:`MPI_Type_indexed`
