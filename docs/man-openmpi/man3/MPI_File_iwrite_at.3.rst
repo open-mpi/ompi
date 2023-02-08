@@ -26,8 +26,8 @@ C Syntax
    	const void *buf, int count, MPI_Datatype datatype, MPI_Request *request)
 
 
-Fortran Syntax (see FORTRAN 77 NOTES)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Fortran Syntax
+^^^^^^^^^^^^^^
 
 .. code-block:: fortran
 
@@ -87,21 +87,6 @@ which will return a status with the number of bytes actually accessed.
 
 It is erroneous to call this function if MPI_MODE_SEQUENTIAL mode was
 specified when the file was open.
-
-
-FORTRAN 77 NOTES
-----------------
-
-The MPI standard prescribes portable Fortran syntax for the *OFFSET*
-argument only for Fortran 90. FORTRAN 77 users may use the non-portable
-syntax
-
-.. code-block:: fortran
-
-   INTEGER*MPI_OFFSET_KIND OFFSET
-
-where ``MPI_OFFSET_KIND`` is a constant defined in ``mpif.h`` and gives the
-length of the declared integer in bytes.
 
 
 ERRORS

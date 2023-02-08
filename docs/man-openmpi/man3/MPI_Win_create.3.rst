@@ -25,8 +25,8 @@ C Syntax
    	MPI_Info info, MPI_Comm comm, MPI_Win *win)
 
 
-Fortran Syntax (see FORTRAN 77 NOTES)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Fortran Syntax
+^^^^^^^^^^^^^^
 
 .. code-block:: fortran
 
@@ -136,21 +136,6 @@ heterogeneous environment.
 Use memory allocated by :ref:`MPI_Alloc_mem` to guarantee properly aligned
 window boundaries (such as word, double-word, cache line, page frame,
 and so on).
-
-
-FORTRAN 77 NOTES
-----------------
-
-The MPI standard prescribes portable Fortran syntax for the *SIZE*
-argument only for Fortran 90. FORTRAN 77 users may use the non-portable
-syntax
-
-.. code-block:: fortran
-
-   INTEGER*MPI_ADDRESS_KIND SIZE
-
-where ``MPI_ADDRESS_KIND`` is a constant defined in ``mpif.h`` and gives the
-length of the declared integer in bytes.
 
 
 ERRORS

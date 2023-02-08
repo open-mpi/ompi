@@ -26,8 +26,8 @@ C Syntax
    	MPI_Offset *disp)
 
 
-Fortran Syntax (see FORTRAN 77 NOTES)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Fortran Syntax
+^^^^^^^^^^^^^^
 
 .. code-block:: fortran
 
@@ -68,21 +68,6 @@ DESCRIPTION
 view to its corresponding displacement value, or absolute byte position,
 from the beginning of the file. The absolute byte position of *offset*
 relative to the current view of *fh* is returned in *disp*.
-
-
-FORTRAN 77 NOTES
-----------------
-
-The MPI standard prescribes portable Fortran syntax for the *OFFSET* and
-*DISP* arguments only for Fortran 90. Sun FORTRAN 77 users may use the
-non-portable syntax
-
-.. code-block:: fortran
-
-   INTEGER*MPI_OFFSET_KIND OFFSET, DISP
-
-where ``MPI_OFFSET_KIND`` is a constant defined in ``mpif.h`` and gives the
-length of the declared integer in bytes.
 
 
 ERRORS

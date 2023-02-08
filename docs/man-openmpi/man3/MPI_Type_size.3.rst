@@ -81,17 +81,3 @@ ERRORS
 ------
 
 .. include:: ./ERRORS.rst
-
-FORTRAN 77 NOTES
-----------------
-
-The MPI standard prescribes portable Fortran syntax for the *SIZE*
-argument of :ref:`MPI_Type_size_x` only for Fortran 90. FORTRAN 77 users may
-use the non-portable syntax
-
-.. code-block:: fortran
-
-        INTEGER*MPI_COUNT_KIND SIZE
-
-where ``MPI_COUNT_KIND`` is a constant defined in ``mpif.h`` and gives the
-length of the declared integer in bytes.

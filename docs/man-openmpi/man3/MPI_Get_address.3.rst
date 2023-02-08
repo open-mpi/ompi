@@ -65,11 +65,12 @@ Example: Using :ref:`MPI_Get_address` for an array.
 
 .. code-block:: fortran
 
-   REAL A(100,100)
-       INTEGER I1, I2, DIFF
-       CALL MPI_GET_ADDRESS(A(1,1), I1, IERROR)
-       CALL MPI_GET_ADDRESS(A(10,10), I2, IERROR)
-       DIFF = I2 - I1
+   REAL :: A(100,100)
+   INTEGER(MPI_ADDRESS_KIND) :: I1, I2, DIFF
+
+   CALL MPI_GET_ADDRESS(A(1,1), I1, IERROR)
+   CALL MPI_GET_ADDRESS(A(10,10), I2, IERROR)
+   DIFF = I2 - I1
    ! The value of DIFF is 909*sizeofreal; the values of I1 and I2 are
    ! implementation dependent.
 

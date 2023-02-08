@@ -31,8 +31,8 @@ C Syntax
    	 MPI_Request *request)
 
 
-Fortran Syntax (see FORTRAN 77 NOTES)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Fortran Syntax
+^^^^^^^^^^^^^^
 
 .. code-block:: fortran
 
@@ -161,21 +161,6 @@ allocated by :ref:`MPI_Alloc_mem` may be much faster on shared memory systems;
 transfers from contiguous buffers will be faster on most, if not all,
 systems; the alignment of the communication buffers may also impact
 performance.
-
-
-FORTRAN 77 NOTES
-----------------
-
-The MPI standard prescribes portable Fortran syntax for the
-*TARGET_DISP* argument only for Fortran 90. FORTRAN 77 users may use the
-non-portable syntax
-
-.. code-block:: fortran
-
-        INTEGER*MPI_ADDRESS_KIND TARGET_DISP
-
-where ``MPI_ADDRESS_KIND`` is a constant defined in ``mpif.h`` and gives the
-length of the declared integer in bytes.
 
 
 ERRORS

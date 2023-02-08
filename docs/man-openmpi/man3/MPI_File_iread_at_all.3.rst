@@ -27,8 +27,8 @@ C Syntax
    	MPI_Request *request)
 
 
-Fortran Syntax (see FORTRAN 77 NOTES)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Fortran Syntax
+^^^^^^^^^^^^^^
 
 .. code-block:: fortran
 
@@ -83,21 +83,6 @@ view. That is, holes are not counted when locating an offset. The data
 is taken out of those parts of the file specified by the current view.
 :ref:`MPI_File_iread_at_all` stores the number of *datatype* elements actually
 read in *status.* All other fields of *status* are undefined.
-
-
-FORTRAN 77 NOTES
-----------------
-
-The MPI standard prescribes portable Fortran syntax for the *OFFSET*
-argument only for Fortran 90. Sun FORTRAN 77 users may use the
-non-portable syntax
-
-.. code-block:: fortran
-
-   INTEGER*MPI_OFFSET_KIND OFFSET
-
-where ``MPI_OFFSET_KIND`` is a constant defined in ``mpif.h`` and gives the
-length of the declared integer in bytes.
 
 
 ERRORS

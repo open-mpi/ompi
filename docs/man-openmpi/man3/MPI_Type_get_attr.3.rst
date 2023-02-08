@@ -24,8 +24,8 @@ C Syntax
    int MPI_Type_get_attr(MPI_Datatype type, int type_keyval, void *attribute_val, int *flag)
 
 
-Fortran Syntax (see FORTRAN 77 NOTES)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Fortran Syntax
+^^^^^^^^^^^^^^
 
 .. code-block:: fortran
 
@@ -67,21 +67,6 @@ DESCRIPTION
 
 For the given data type, :ref:`MPI_Type_get_attr` returns an attribute value
 that corresponds to the specified key value.
-
-
-FORTRAN 77 NOTES
-----------------
-
-The MPI standard prescribes portable Fortran syntax for the
-*ATTRIBUTE_VAL* argument only for Fortran 90. Sun FORTRAN 77 users may
-use the non-portable syntax
-
-.. code-block:: fortran
-
-        INTEGER*MPI_ADDRESS_KIND ATTRIBUTE_VAL
-
-where ``MPI_ADDRESS_KIND`` is a constant defined in ``mpif.h`` and gives the
-length of the declared integer in bytes.
 
 
 ERRORS
