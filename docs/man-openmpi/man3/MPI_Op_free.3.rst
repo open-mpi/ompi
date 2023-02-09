@@ -51,7 +51,7 @@ INPUT/OUTPUT PARAMETER
 
 OUTPUT PARAMETER
 ----------------
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -66,4 +66,8 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Op_create` :ref:`MPI_Reduce` :ref:`MPI_Allreduce` :ref:`MPI_Reduce_scatter` :ref:`MPI_Scan`
+   * :ref:`MPI_Op_create`
+   * :ref:`MPI_Reduce`
+   * :ref:`MPI_Allreduce`
+   * :ref:`MPI_Reduce_scatter`
+   * :ref:`MPI_Scan`

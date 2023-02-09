@@ -56,7 +56,7 @@ INPUT PARAMETERS
 OUTPUT PARAMETERS
 -----------------
 * ``flag``: True if partition is completed.
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 ERRORS
 ------
@@ -64,4 +64,6 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Pready_list` :ref:`MPI_Pready_range` :ref:`MPI_Parrived`
+   * :ref:`MPI_Pready_list`
+   * :ref:`MPI_Pready_range`
+   * :ref:`MPI_Parrived`

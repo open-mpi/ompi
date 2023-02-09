@@ -41,7 +41,7 @@ INPUT PARAMETER
 OUTPUT PARAMETERS
 -----------------
 * ``displacement``: Displacement of lower bound from origin, in bytes (integer).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -99,4 +99,4 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Type_get_extent`
+   * :ref:`MPI_Type_get_extent`

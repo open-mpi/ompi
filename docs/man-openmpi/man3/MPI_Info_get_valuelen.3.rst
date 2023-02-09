@@ -61,7 +61,7 @@ OUTPUT PARAMETERS
 -----------------
 * ``valuelen``: Length of value arg (integer).
 * ``flag``: Returns true if key defined, false if not (boolean).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -81,4 +81,6 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Info_get` :ref:`MPI_Info_get_nkeys` :ref:`MPI_Info_get_nthkey`
+   * :ref:`MPI_Info_get`
+   * :ref:`MPI_Info_get_nkeys`
+   * :ref:`MPI_Info_get_nthkey`

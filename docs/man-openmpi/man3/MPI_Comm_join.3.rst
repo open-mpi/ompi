@@ -53,7 +53,7 @@ INPUT PARAMETER
 OUTPUT PARAMETERS
 -----------------
 * ``intercomm``: Intercommunicator between processes (handle).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -94,4 +94,6 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   socket(3SOCKET) :ref:`MPI_Comm_create` :ref:`MPI_Comm_group`
+   * socket(3SOCKET)
+   * :ref:`MPI_Comm_create`
+   * :ref:`MPI_Comm_group`

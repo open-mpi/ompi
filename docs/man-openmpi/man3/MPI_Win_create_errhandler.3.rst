@@ -51,28 +51,29 @@ Fortran 2008 Syntax
 DEPRECATED TYPE NAME NOTE
 -------------------------
 
-MPI-2.2 deprecated the MPI_Win_errhandler_fn and MPI::Win::Errhandler_fn
-types in favor of MPI_Win_errhandler_function and
-MPI::Win::Errhandler_function, respectively. Open MPI supports both
-names (indeed, the \_fn names are typedefs to the \_function names).
+MPI-2.2 deprecated the ``MPI_Win_errhandler_fn`` type in favor of
+``MPI_Win_errhandler_function``. Open MPI supports both
+names (indeed, the ``_fn`` names are typedefs to the ``_function`` names).
 
 
 INPUT PARAMETER
 ---------------
+
 * ``function``: User-defined error-handling procedure (function).
 
 OUTPUT PARAMETERS
 -----------------
+
 * ``errhandler``: MPI error handler (handle).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
 
 :ref:`MPI_Win_create_errhandler` should be, in C, a function of type
-MPI_Win_errhandler_function, which is defined as
+``MPI_Win_errhandler_function``, which is defined as
 
-::
+.. code-block:: c
 
    typedef void MPI_Win_errhandler_function(MPI Win *, int *, ...);
 

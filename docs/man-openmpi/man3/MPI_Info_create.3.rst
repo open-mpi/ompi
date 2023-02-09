@@ -48,7 +48,7 @@ Fortran 2008 Syntax
 OUTPUT PARAMETERS
 -----------------
 * ``info``: Info object created (handle).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -63,4 +63,8 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Info_delete` :ref:`MPI_Info_dup` :ref:`MPI_Info_free` :ref:`MPI_Info_get` :ref:`MPI_Info_set`
+   * :ref:`MPI_Info_delete`
+   * :ref:`MPI_Info_dup`
+   * :ref:`MPI_Info_free`
+   * :ref:`MPI_Info_get`
+   * :ref:`MPI_Info_set`

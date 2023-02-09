@@ -54,7 +54,7 @@ INPUT PARAMETERS
 OUTPUT PARAMETERS
 -----------------
 * ``rank``: Rank of the calling process in group, or MPI_UNDEFINED if the process is not a member (integer).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

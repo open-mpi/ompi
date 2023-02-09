@@ -57,7 +57,7 @@ OUTPUT PARAMETERS
 -----------------
 * ``newcomm``: Copy of comm (handle).
 * ``request``: Communication request (handle).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -107,4 +107,6 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Comm_dup` :ref:`MPI_Comm_idup` :ref:`MPI_Comm_dup_with_info`
+   * :ref:`MPI_Comm_dup`
+   * :ref:`MPI_Comm_idup`
+   * :ref:`MPI_Comm_dup_with_info`

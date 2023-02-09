@@ -58,7 +58,7 @@ INPUT PARAMETERS
 OUTPUT PARAMETERS
 -----------------
 * ``newintracomm``: Created intracommunicator (type indicator).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -79,4 +79,5 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Intercomm_create` :ref:`MPI_Comm_free`
+   * :ref:`MPI_Intercomm_create`
+   * :ref:`MPI_Comm_free`

@@ -64,7 +64,7 @@ INPUT PARAMETERS
 OUTPUT PARAMETERS
 -----------------
 * ``request``: Communication request (handle).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 ERRORS
 ------
@@ -82,4 +82,4 @@ corrected in future versions.
 
 
 .. seealso::
-   :ref:`MPI_Precv_init`
+   * :ref:`MPI_Precv_init`

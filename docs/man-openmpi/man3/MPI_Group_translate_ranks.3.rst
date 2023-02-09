@@ -60,7 +60,7 @@ INPUT PARAMETERS
 OUTPUT PARAMETERS
 -----------------
 * ``ranks2``: Array of corresponding ranks in group2, MPI_UNDEFINED when no correspondence exists.
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

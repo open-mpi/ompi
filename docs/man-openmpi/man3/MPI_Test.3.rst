@@ -56,7 +56,7 @@ OUTPUT PARAMETERS
 -----------------
 * ``flag``: True if operation completed (logical).
 * ``status``: Status object (status).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -65,7 +65,7 @@ A call to :ref:`MPI_Test` returns flag = true if the operation identified by
 request is complete. In such a case, the status object is set to contain
 information on the completed operation; if the communication object was
 created by a nonblocking send or receive, then it is deallocated and the
-request handle is set to MPI_REQUEST_NULL. The call returns flag =
+request handle is set to ``MPI_REQUEST_NULL``. The call returns flag =
 false, otherwise. In this case, the value of the status object is
 undefined. :ref:`MPI_Test` is a local operation.
 
@@ -76,7 +76,7 @@ carries information that can be accessed by a call to :ref:`MPI_Test_cancelled`
 (see Section 3.8 of the MPI-1 Standard, "Probe and Cancel").
 
 If your application does not need to examine the *status* field, you can
-save resources by using the predefined constant MPI_STATUS_IGNORE as a
+save resources by using the predefined constant ``MPI_STATUS_IGNORE`` as a
 special value for the *status* argument.
 
 One is allowed to call :ref:`MPI_Test` with a null or inactive *request*
@@ -110,6 +110,13 @@ MPI_ERRORS_RETURN exhibits this behavior, for example.
 
 
 .. seealso::
-   :ref:`MPI_Comm_set_errhandler` :ref:`MPI_File_set_errhandler` :ref:`MPI_Testall` :ref:`MPI_Testany`
-   :ref:`MPI_Testsome` :ref:`MPI_Wait` :ref:`MPI_Waitall` :ref:`MPI_Waitany` :ref:`MPI_Waitsome`
-   :ref:`MPI_Win_set_errhandler`
+   * :ref:`MPI_Comm_set_errhandler`
+   * :ref:`MPI_File_set_errhandler`
+   * :ref:`MPI_Testall`
+   * :ref:`MPI_Testany`
+   * :ref:`MPI_Testsome`
+   * :ref:`MPI_Wait`
+   * :ref:`MPI_Waitall`
+   * :ref:`MPI_Waitany`
+   * :ref:`MPI_Waitsome`
+   * :ref:`MPI_Win_set_errhandler`

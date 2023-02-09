@@ -13,7 +13,7 @@ SYNTAX
 C Syntax
 ^^^^^^^^
 
-.. code:: c
+.. code-block:: c
 
    #include <mpi.h>
 
@@ -22,7 +22,7 @@ C Syntax
 Fortran Syntax
 ^^^^^^^^^^^^^^
 
-.. code:: fortran
+.. code-block:: fortran
 
    USE MPI
    ! or the older form: INCLUDE 'mpif.h'
@@ -35,7 +35,7 @@ Fortran Syntax
 Fortran 2008 Syntax
 ^^^^^^^^^^^^^^^^^^^
 
-.. code:: fortran
+.. code-block:: fortran
 
    USE mpi_f08
 
@@ -47,13 +47,13 @@ Fortran 2008 Syntax
 INPUT PARAMETERS
 ----------------
 
--  ``location`` : Location in caller memory (choice).
+* ``location`` : Location in caller memory (choice).
 
 OUTPUT PARAMETERS
 -----------------
 
--  ``address`` : Address of location (integer).
--  ``IERROR`` : Fortran only: Error status (integer).
+* ``address`` : Address of location (integer).
+* ``ierror`` : Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -63,7 +63,7 @@ memory.
 
 Example: Using :ref:`MPI_Get_address` for an array.
 
-.. code:: fortran
+.. code-block:: fortran
 
    EAL A(100,100)
        INTEGER I1, I2, DIFF

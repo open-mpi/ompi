@@ -49,7 +49,7 @@ Fortran 2008 Syntax
 OUTPUT PARAMETERS
 -----------------
 * ``parent``: The parent communicator (handle).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -84,4 +84,5 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Comm_spawn` :ref:`MPI_Comm_spawn_multiple`
+   * :ref:`MPI_Comm_spawn`
+   * :ref:`MPI_Comm_spawn_multiple`

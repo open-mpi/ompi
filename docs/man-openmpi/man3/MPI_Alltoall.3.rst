@@ -117,7 +117,7 @@ OUTPUT PARAMETERS
 -----------------
 * ``recvbuf``: Starting address of receive buffer (choice).
 * ``request``: Request (handle, non-blocking only).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -158,7 +158,7 @@ symmetric, full-duplex behavior.
 
 The first group defines the root process. The root process uses MPI_ROOT
 as the value of *root*. All other processes in the first group use
-MPI_PROC_NULL as the value of *root*. All processes in the second group
+``MPI_PROC_NULL`` as the value of *root*. All processes in the second group
 use the rank of the root process in the first group as the value of
 *root*.
 
@@ -196,4 +196,5 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Alltoallv` :ref:`MPI_Alltoallw`
+   * :ref:`MPI_Alltoallv`
+   * :ref:`MPI_Alltoallw`

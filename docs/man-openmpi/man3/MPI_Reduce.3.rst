@@ -112,7 +112,7 @@ OUTPUT PARAMETERS
 -----------------
 * ``recvbuf``: Address of receive buffer (choice, significant only at root).
 * ``request``: Request (handle, non-blocking only).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -169,7 +169,7 @@ When the communicator is an inter-communicator, the root process in the
 first group combines data from all the processes in the second group and
 then performs the *op* operation. The first group defines the root
 process. That process uses MPI_ROOT as the value of its *root* argument.
-The remaining processes use MPI_PROC_NULL as the value of their *root*
+The remaining processes use ``MPI_PROC_NULL`` as the value of their *root*
 argument. All processes in the second group use the rank of that root
 process in the first group as the value of their *root* argument. Only
 the send buffer arguments are significant in the second group, and only
@@ -266,7 +266,7 @@ Now, the valid datatypes for each option is specified below.
 that are distributed across a group of processes and returns the answer
 at process zero.
 
-::
+.. code-block:: fortran
 
        SUBROUTINE PAR_BLAS1(m, a, b, c, comm)
        REAL a(m), b(m)       ! local slice of array
@@ -288,7 +288,7 @@ at process zero.
 array that are distributed across a group of processes and returns the
 answer at process zero.
 
-::
+.. code-block:: fortran
 
        SUBROUTINE PAR_BLAS2(m, n, a, b, c, comm)
        REAL a(m), b(m,n)    ! local slice of array
@@ -322,7 +322,7 @@ value.
 
 The operation that defines MPI_MAXLOC is
 
-.. code-block:: c
+::
 
             ( u )    (  v )      ( w )
             (   )  o (    )   =  (   )
@@ -341,8 +341,10 @@ The operation that defines MPI_MAXLOC is
             (  j           if u < v)
 
 
-   MPI_MINLOC is defined similarly:
+MPI_MINLOC is defined similarly:
 
+::
+   
             ( u )    (  v )      ( w )
             (   )  o (    )   =  (   )
             ( i )    (  j )      ( k )
@@ -404,7 +406,7 @@ datatypes:
 
 The data type MPI_2REAL is equivalent to:
 
-::
+.. code-block:: fortran
 
        MPI_TYPE_CONTIGUOUS(2, MPI_REAL, MPI_2REAL)
 
@@ -414,7 +416,7 @@ MPI_2INT.
 The datatype MPI_FLOAT_INT is as if defined by the following sequence of
 instructions.
 
-::
+.. code-block:: c
 
        type[0] = MPI_FLOAT
        type[1] = MPI_INT
@@ -430,7 +432,7 @@ Similar statements apply for MPI_LONG_INT and MPI_DOUBLE_INT.
 of the 30 locations, compute the value and rank of the process
 containing the largest value.
 
-::
+.. code-block:: c
 
            ...
            /* each process has an array of 30 double: ain[30]
@@ -494,7 +496,7 @@ containing the largest value.
 minimum global value, the rank of the process that holds it, and its
 index on this process.
 
-::
+.. code-block:: c
 
        #define  LEN   1000
 
@@ -553,4 +555,8 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Allreduce` :ref:`MPI_Reduce_scatter` :ref:`MPI_Scan` :ref:`MPI_Op_create` :ref:`MPI_Op_free`
+   * :ref:`MPI_Allreduce`
+   * :ref:`MPI_Reduce_scatter`
+   * :ref:`MPI_Scan`
+   * :ref:`MPI_Op_create`
+   * :ref:`MPI_Op_free`

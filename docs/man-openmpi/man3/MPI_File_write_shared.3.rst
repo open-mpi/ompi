@@ -14,7 +14,7 @@ SYNTAX
 C Syntax
 ^^^^^^^^
 
-.. code:: c
+.. code-block:: c
 
    #include <mpi.h>
 
@@ -24,7 +24,7 @@ C Syntax
 Fortran Syntax
 ^^^^^^^^^^^^^^
 
-.. code:: fortran
+.. code-block:: fortran
 
    USE MPI
    ! or the older form: INCLUDE 'mpif.h'
@@ -36,7 +36,7 @@ Fortran Syntax
 Fortran 2008 Syntax
 ^^^^^^^^^^^^^^^^^^^
 
-.. code:: fortran
+.. code-block:: fortran
 
    USE mpi_f08
 
@@ -51,20 +51,20 @@ Fortran 2008 Syntax
 INPUT/OUTPUT PARAMETER
 ----------------------
 
--  ``fh`` : File handle (handle).
+* ``fh`` : File handle (handle).
 
 INPUT PARAMETERS
 ----------------
 
--  ``buf`` : Initial address of buffer (choice).
--  ``count`` : Number of elements in buffer (integer).
--  ``datatype`` : Data type of each buffer element (handle).
+* ``buf`` : Initial address of buffer (choice).
+* ``count`` : Number of elements in buffer (integer).
+* ``datatype`` : Data type of each buffer element (handle).
 
 OUTPUT PARAMETERS
 -----------------
 
--  ``status`` : Status object (status).
--  ``IERROR`` : Fortran only: Error status (integer).
+* ``status`` : Status object (status).
+* ``ierror`` : Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

@@ -53,4 +53,4 @@ ERRORS
 
 
 .. seealso::
-   :ref:`MPI_T_init_thread`
+   * :ref:`MPI_T_init_thread`

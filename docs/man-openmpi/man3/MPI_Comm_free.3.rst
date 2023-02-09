@@ -51,7 +51,7 @@ INPUT PARAMETER
 
 OUTPUT PARAMETER
 ----------------
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -81,4 +81,4 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Comm_delete_attr`
+   * :ref:`MPI_Comm_delete_attr`

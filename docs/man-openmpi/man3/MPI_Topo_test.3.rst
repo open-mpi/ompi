@@ -56,7 +56,7 @@ INPUT PARAMETER
 OUTPUT PARAMETERS
 -----------------
 * ``top_type``: Topology type of communicator comm (choice).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -68,10 +68,10 @@ The output value *top_type* is one of the following:
 
 ::
 
-       MPI_GRAPH		graph topology
-       MPI_CART		Cartesian topology
-       MPI_DIST_GRAPH	distributed graph topology
-       MPI_UNDEFINED	no topology
+       MPI_GRAPH        graph topology
+       MPI_CART	        Cartesian topology
+       MPI_DIST_GRAPH   distributed graph topology
+       MPI_UNDEFINED    no topology
 
 
 ERRORS
@@ -80,4 +80,5 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Graph_create` :ref:`MPI_Cart_create`
+   * :ref:`MPI_Graph_create`
+   * :ref:`MPI_Cart_create`

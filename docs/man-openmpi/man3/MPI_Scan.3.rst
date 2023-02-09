@@ -103,7 +103,7 @@ OUTPUT PARAMETERS
 -----------------
 * ``recvbuf``: Receive buffer (choice).
 * ``request``: Request (handle, non-blocking only).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -141,14 +141,14 @@ logical(j). The operator that produces this effect is
          [   ]  o  [   ]  =  [   ]
          [ i ]     [ j ]     [ j ]
 
-where
+   where
 
-( u + v if i = j w = ( ( v if i != j
+       ( u + v if i = j w = ( ( v if i != j
 
 Note that this is a noncommutative operator. C code that implements it
 is given below.
 
-::
+.. code-block:: c
 
    	typedef struct {
    		double val;
@@ -182,7 +182,7 @@ the right-hand operand of the operator. When using this operator, we
 must be careful to specify that it is noncommutative, as in the
 following:
 
-::
+.. code-block:: c
 
    	int			i, base;
    	SeqScanPair	a, answer;
@@ -241,4 +241,6 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Exscan` :ref:`MPI_Op_create` :ref:`MPI_Reduce`
+   * :ref:`MPI_Exscan`
+   * :ref:`MPI_Op_create`
+   * :ref:`MPI_Reduce`

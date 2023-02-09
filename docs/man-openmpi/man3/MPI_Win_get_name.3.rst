@@ -56,7 +56,7 @@ OUTPUT PARAMETERS
 -----------------
 * ``win_name``: the name previously stored on the window, or an empty string if no such name exists (string).
 * ``resultlen``: Length of returned name (integer).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

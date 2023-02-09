@@ -59,7 +59,7 @@ INPUT PARAMETERS
 OUTPUT PARAMETERS
 -----------------
 * ``disp``: Absolute byte position of offset (integer).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -77,13 +77,11 @@ The MPI standard prescribes portable Fortran syntax for the *OFFSET* and
 *DISP* arguments only for Fortran 90. Sun FORTRAN 77 users may use the
 non-portable syntax
 
-::
+.. code-block:: fortran
 
-        INTEGER*MPI_OFFSET_KIND OFFSET
-   or
-        INTEGER*MPI_OFFSET_KIND DISP
+   INTEGER*MPI_OFFSET_KIND OFFSET, DISP
 
-where MPI_OFFSET_KIND is a constant defined in mpif.h and gives the
+where ``MPI_OFFSET_KIND`` is a constant defined in ``mpif.h`` and gives the
 length of the declared integer in bytes.
 
 

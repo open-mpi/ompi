@@ -49,7 +49,7 @@ Fortran 2008 Syntax
 OUTPUT PARAMETERS
 -----------------
 * ``flag``: True if MPI has been initialized, and false otherwise (logical).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -65,4 +65,7 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Init` :ref:`MPI_Init_thread` :ref:`MPI_Finalize` :ref:`MPI_Finalized`
+   * :ref:`MPI_Init`
+   * :ref:`MPI_Init_thread`
+   * :ref:`MPI_Finalize`
+   * :ref:`MPI_Finalized`

@@ -102,7 +102,7 @@ OUTPUT PARAMETERS
 -----------------
 * ``recvbuf``: Receive buffer (choice).
 * ``request``: Request (handle, non-blocking only).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -172,4 +172,6 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Op_create` :ref:`MPI_Reduce` :ref:`MPI_Scan`
+   * :ref:`MPI_Op_create`
+   * :ref:`MPI_Reduce`
+   * :ref:`MPI_Scan`

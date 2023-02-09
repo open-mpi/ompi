@@ -118,7 +118,7 @@ OUTPUT PARAMETERS
 -----------------
 * ``recvbuf``: Address of receive buffer (choice).
 * ``request``: Request (handle, non-blocking only).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -155,11 +155,11 @@ sources and destinations in the communication routines are 2*ndims with
 ndims defined in :ref:`MPI_Cart_create`. If a neighbor does not exist, i.e., at
 the border of a Cartesian topology in the case of a non-periodic virtual
 grid dimension (i.e., periods[...]==false), then this neighbor is
-defined to be MPI_PROC_NULL.
+defined to be ``MPI_PROC_NULL``.
 
-If a neighbor in any of the functions is MPI_PROC_NULL, then the
+If a neighbor in any of the functions is ``MPI_PROC_NULL``, then the
 neighborhood collective communication behaves like a point-to-point
-communication with MPI_PROC_NULL in this direction. That is, the buffer
+communication with ``MPI_PROC_NULL`` in this direction. That is, the buffer
 is still part of the sequence of neighbors but it is neither
 communicated nor updated.
 
@@ -177,5 +177,7 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Neighbor_allgather` :ref:`MPI_Cart_create` :ref:`MPI_Graph_create`
-   :ref:`MPI_Dist_graph_create`
+   * :ref:`MPI_Neighbor_allgather`
+   * :ref:`MPI_Cart_create`
+   * :ref:`MPI_Graph_create`
+   * :ref:`MPI_Dist_graph_create`

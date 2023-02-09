@@ -57,7 +57,7 @@ INPUT PARAMETERS
 OUTPUT PARAMETERS
 -----------------
 * ``baseptr``: Pointer to beginning of memory segment allocated.
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -69,9 +69,9 @@ this memory is returned in the variable *baseptr*.
 C NOTES
 -------
 
-The parameter *baseptr* is of type *void \** to allow passing any
+The parameter *baseptr* is of type ``void *`` to allow passing any
 pointer object for this parameter. The provided argument should be a
-pointer to a pointer of arbitrary type (e.g., *void \*\**).
+pointer to a pointer of arbitrary type (e.g., ``void **``).
 
 
 FORTRAN NOTES
@@ -85,10 +85,11 @@ compilers.
 From FORTRAN 77, you can use the following non-standard declarations for
 the SIZE and BASEPTR arguments:
 
-::
+.. code-block:: fortran
 
               INCLUDE "mpif.h"
               INTEGER*MPI_ADDRESS_KIND SIZE, BASEPTR
+	      
 
 From either FORTRAN 77 or Fortran 90, you can use "Cray pointers" for
 the BASEPTR argument. Cray pointers are described further in the Fortran
@@ -115,4 +116,4 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Free_mem`
+   * :ref:`MPI_Free_mem`

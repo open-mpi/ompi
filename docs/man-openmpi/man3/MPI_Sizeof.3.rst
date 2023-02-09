@@ -44,7 +44,7 @@ INPUT PARAMETER
 OUTPUT PARAMETERS
 -----------------
 * ``SIZE``: Size of machine representation of that type (integer).
-* ``IERROR``: Error status (integer).
+* ``ierror``: Error status (integer).
 
 DESCRIPTION
 -----------

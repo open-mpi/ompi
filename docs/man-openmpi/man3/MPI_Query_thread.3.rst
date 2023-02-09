@@ -48,7 +48,7 @@ Fortran 2008 Syntax
 OUTPUT PARAMETERS
 -----------------
 * ``provided``: C/Fortran only: Level of thread support (integer).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -89,4 +89,5 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Init` :ref:`MPI_Init_thread`
+   * :ref:`MPI_Init`
+   * :ref:`MPI_Init_thread`

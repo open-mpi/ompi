@@ -70,7 +70,7 @@ OUTPUT PARAMETERS
 * ``array_of_integers``: Contains integer arguments used in constructing *datatype (array of integers).*
 * ``array_of_addresses``: Contains address arguments used in constructing *datatype (array of integers).*
 * ``array_of_datatypes``: Contains data-type arguments used in constructing *datatype (array of integers).*
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -128,11 +128,11 @@ The MPI standard prescribes portable Fortran syntax for the
 *ARRAY_OF_ADDRESSES argument only for Fortran 90. FORTRAN 77* users may
 use the non-portable syntax
 
-::
+.. code-block:: fortran
 
         INTEGER*MPI_ADDRESS_KIND ARRAY_OF_ADDRESSES(*)
 
-where MPI_ADDRESS_KIND is a constant defined in mpif.h and gives the
+where ``MPI_ADDRESS_KIND`` is a constant defined in ``mpif.h`` and gives the
 length of the declared integer in bytes.
 
 
@@ -142,4 +142,4 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Type_get_envelope`
+   * :ref:`MPI_Type_get_envelope`

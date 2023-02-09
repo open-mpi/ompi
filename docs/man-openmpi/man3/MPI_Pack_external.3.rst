@@ -75,7 +75,7 @@ INPUT/OUTPUT PARAMETER
 OUTPUT PARAMETERS
 -----------------
 * ``outbuf``: Output buffer start (choice).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -98,7 +98,7 @@ input to a subsequent call to :ref:`MPI_Pack_external`.
 
 **Example:** An example using :ref:`MPI_Pack_external`:
 
-::
+.. code-block:: c
 
    	int position, i;
    	double msg[5];
@@ -179,4 +179,7 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Pack_external_size` :ref:`MPI_Send` :ref:`MPI_Unpack_external` sscanf(3C)
+   * :ref:`MPI_Pack_external_size`
+   * :ref:`MPI_Send`
+   * :ref:`MPI_Unpack_external`
+   * sscanf(3C)

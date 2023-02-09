@@ -61,7 +61,7 @@ INPUT PARAMETERS
 
 OUTPUT PARAMETER
 ----------------
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -83,4 +83,6 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Isend` :ref:`MPI_Bsend` :ref:`MPI_Recv`
+   * :ref:`MPI_Isend`
+   * :ref:`MPI_Bsend`
+   * :ref:`MPI_Recv`

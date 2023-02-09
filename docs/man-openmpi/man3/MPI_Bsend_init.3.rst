@@ -13,7 +13,7 @@ SYNTAX
 C Syntax
 ^^^^^^^^
 
-.. code:: C
+.. code-block:: C
 
    #include <mpi.h>
 
@@ -23,7 +23,7 @@ C Syntax
 Fortran Syntax
 ^^^^^^^^^^^^^^
 
-.. code:: Fortran
+.. code-block:: Fortran
 
    USE MPI
    ! or the older form: INCLUDE 'mpif.h'
@@ -36,7 +36,7 @@ Fortran Syntax
 Fortran 2008 Syntax
 ^^^^^^^^^^^^^^^^^^^
 
-.. code:: Fortran
+.. code-block:: Fortran
 
    USE mpi_f08
 
@@ -51,18 +51,18 @@ Fortran 2008 Syntax
 INPUT PARAMETERS
 ----------------
 
--  buf : Initial address of send buffer (choice).
--  count : Number of elements sent (integer).
--  datatype : Type of each element (handle).
--  dest : Rank of destination (integer).
--  tag : Message tag (integer).
--  comm : Communicator (handle).
+* ``buf`` : Initial address of send buffer (choice).
+* ``count`` : Number of elements sent (integer).
+* ``datatype`` : Type of each element (handle).
+* ``dest`` : Rank of destination (integer).
+* ``tag`` : Message tag (integer).
+* ``comm`` : Communicator (handle).
 
 OUTPUT PARAMETERS
 -----------------
 
--  request : Communication request (handle).
--  IERROR : Fortran only: Error status (integer).
+* ``request`` : Communication request (handle).
+* ``ierror`` : Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

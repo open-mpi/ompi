@@ -55,7 +55,7 @@ INPUT PARAMETER
 OUTPUT PARAMETERS
 -----------------
 * ``flag (Logical.)``:
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -70,11 +70,14 @@ within a single group), the functions listed below return the expected
 values, group size, group, and rank. When dealing with an
 inter-communicator, however, they return the following values:
 
-::
+:ref:`MPI_Comm_size`
+     Returns the size of the local group.
 
-   MPI_Comm_size	Returns the size of the local group.
-   MPI_Comm_group	Returns the local group.
-   MPI_Comm_rank	Returns the rank in the local group.
+:ref:`MPI_Comm_group`
+     Returns the local group.
+
+:ref:`MPI_Comm_rank`
+     Returns the rank in the local group.
 
 To return the remote group and remote group size of an
 inter-communicator, use the :ref:`MPI_Comm_remote_group` and
@@ -100,5 +103,7 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Comm_remote_group` :ref:`MPI_Comm_remote_size` :ref:`MPI_Intercomm_create`
-   :ref:`MPI_Intercomm_merge`
+   * :ref:`MPI_Comm_remote_group`
+   * :ref:`MPI_Comm_remote_size`
+   * :ref:`MPI_Intercomm_create`
+   * :ref:`MPI_Intercomm_merge`

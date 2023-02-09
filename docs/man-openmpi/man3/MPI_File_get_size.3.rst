@@ -55,7 +55,7 @@ INPUT PARAMETERS
 
 OUTPUT PARAMETER
 ----------------
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -74,11 +74,11 @@ The MPI standard prescribes portable Fortran syntax for the *SIZE*
 argument only for Fortran 90. Sun FORTRAN 77 users may use the
 non-portable syntax
 
-::
+.. code-block:: fortran
 
         INTEGER*MPI_OFFSET_KIND SIZE
 
-where MPI_ADDRESS_KIND is a constant defined in mpif.h and gives the
+where ``MPI_ADDRESS_KIND`` is a constant defined in ``mpif.h`` and gives the
 length of the declared integer in bytes.
 
 
@@ -88,4 +88,4 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_File_preallocate`
+   * :ref:`MPI_File_preallocate`

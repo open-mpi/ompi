@@ -136,7 +136,7 @@ OUTPUT PARAMETERS
 -----------------
 * ``recvbuf``: Address of receive buffer.
 * ``request``: Request (handle, non-blocking only).
-* ``IERROR``: Fortran only: Error status.
+* ``ierror``: Fortran only: Error status.
 
 DESCRIPTION
 -----------
@@ -151,7 +151,7 @@ topology of communicator *comm*) independent point-to-point
 communications. The neighbors and buffer layout are determined by the
 topology of *comm*.
 
-::
+.. code-block:: c
 
            MPI_Cart_get(comm, maxdims, dims, periods, coords);
            for (dim = 0, i = 0 ; dim < dims ; ++dim) {
@@ -170,13 +170,13 @@ topology of *comm*.
 
            MPI_Wait_all (...);
 
-   	MPI_Comm_size(comm, &n);
-   	for (i = 0, i < n; i++)
-   	    MPI_Send(sendbuf + sdispls[i], sendcounts[i],
-   	        sendtypes[i], i, ..., comm);
-   	for (i = 0, i < n; i++)
-   	    MPI_Recv(recvbuf + rdispls[i], recvcounts[i],
-   	        recvtypes[i], i, ..., comm);
+     	   MPI_Comm_size(comm, &n);
+   	   for (i = 0, i < n; i++)
+   	     MPI_Send(sendbuf + sdispls[i], sendcounts[i],
+   	          sendtypes[i], i, ..., comm);
+   	   for (i = 0, i < n; i++)
+	     MPI_Recv(recvbuf + rdispls[i], recvcounts[i],
+   	          recvtypes[i], i, ..., comm);
 
 Process j sends the k-th block of its local *sendbuf* to neighbor k,
 which places the data in the j-th block of its local *recvbuf*.
@@ -214,5 +214,8 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Neighbor_alltoall` :ref:`MPI_Neighbor_alltoallv` :ref:`MPI_Cart_create`
-   :ref:`MPI_Graph_create` :ref:`MPI_Dist_graph_create`
+   * :ref:`MPI_Neighbor_alltoall`
+   * :ref:`MPI_Neighbor_alltoallv`
+   * :ref:`MPI_Cart_create`
+   * :ref:`MPI_Graph_create`
+   * :ref:`MPI_Dist_graph_create`

@@ -94,7 +94,7 @@ INPUT PARAMETERS
 OUTPUT PARAMETER
 ----------------
 * ``request``: MPI_Rput: RMA request
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -170,11 +170,11 @@ The MPI standard prescribes portable Fortran syntax for the
 *TARGET_DISP* argument only for Fortran 90. FORTRAN 77 users may use the
 non-portable syntax
 
-::
+.. code-block:: fortran
 
         INTEGER*MPI_ADDRESS_KIND TARGET_DISP
 
-where MPI_ADDRESS_KIND is a constant defined in mpif.h and gives the
+where ``MPI_ADDRESS_KIND`` is a constant defined in ``mpif.h`` and gives the
 length of the declared integer in bytes.
 
 
@@ -184,5 +184,10 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Get` :ref:`MPI_Rget` :ref:`MPI_Accumulate` :ref:`MPI_Win_flush` :ref:`MPI_Win_flush_all`
-   :ref:`MPI_Win_unlock` :ref:`MPI_Win_unlock_all`
+   * :ref:`MPI_Get`
+   * :ref:`MPI_Rget`
+   * :ref:`MPI_Accumulate`
+   * :ref:`MPI_Win_flush`
+   * :ref:`MPI_Win_flush_all`
+   * :ref:`MPI_Win_unlock`
+   * :ref:`MPI_Win_unlock_all`

@@ -14,7 +14,7 @@ SYNTAX
 C Syntax
 ^^^^^^^^
 
-.. code:: c
+.. code-block:: c
 
    #include <mpi.h>
 
@@ -24,7 +24,7 @@ C Syntax
 Fortran Syntax
 ^^^^^^^^^^^^^^
 
-.. code:: fortran
+.. code-block:: fortran
 
    USE MPI
    ! or the older form: INCLUDE 'mpif.h'
@@ -36,7 +36,7 @@ Fortran Syntax
 Fortran 2008 Syntax
 ^^^^^^^^^^^^^^^^^^^
 
-.. code:: fortran
+.. code-block:: fortran
 
    USE mpi_f08
 
@@ -49,17 +49,17 @@ Fortran 2008 Syntax
 INPUT PARAMETERS
 ----------------
 
--  comm : Communicator with graph structure (handle).
--  maxindex : Length of vector index in the calling program (integer).
--  maxedges : Length of vector edges in the calling program (integer).
+* ``comm`` : Communicator with graph structure (handle).
+* ``maxindex`` : Length of vector index in the calling program (integer).
+* ``maxedges`` : Length of vector edges in the calling program (integer).
 
 OUTPUT PARAMETERS
 -----------------
 
--  index : Array of integers containing the graph structure (for details
+* ``index`` : Array of integers containing the graph structure (for details
    see the definition of MPI_Graph_create).
--  edges : Array of integers containing the graph structure.
--  IERROR : Fortran only: Error status (integer).
+* ``edges`` : Array of integers containing the graph structure.
+* ``ierror`` : Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

@@ -59,7 +59,7 @@ INPUT PARAMETERS
 OUTPUT PARAMETERS
 -----------------
 * ``port_name``: a port name (string).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -124,4 +124,5 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Publish_name` :ref:`MPI_Open_port`
+   * :ref:`MPI_Publish_name`
+   * :ref:`MPI_Open_port`

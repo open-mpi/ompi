@@ -63,7 +63,7 @@ INPUT PARAMETERS
 OUTPUT PARAMETERS
 -----------------
 * ``fh``: New file handle (handle).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------

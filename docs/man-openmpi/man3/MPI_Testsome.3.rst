@@ -65,7 +65,7 @@ OUTPUT PARAMETERS
 * ``outcount``: Number of completed requests (integer).
 * ``array_of_indices``: Array of indices of operations that completed (array of integers).
 * ``array_of_statuses``: Array of status objects for operations that completed (array of status).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -137,6 +137,13 @@ caller, the value MPI_ERR_IN_STATUS will be returned in the C and
 Fortran bindings.
 
 .. seealso::
-   :ref:`MPI_Comm_set_errhandler` :ref:`MPI_File_set_errhandler` :ref:`MPI_Test` :ref:`MPI_Testall`
-   :ref:`MPI_Testany` :ref:`MPI_Wait` :ref:`MPI_Waitall` :ref:`MPI_Waitany` :ref:`MPI_Waitsome`
-   :ref:`MPI_Win_set_errhandler`
+   * :ref:`MPI_Comm_set_errhandler`
+   * :ref:`MPI_File_set_errhandler`
+   * :ref:`MPI_Test`
+   * :ref:`MPI_Testall`
+   * :ref:`MPI_Testany`
+   * :ref:`MPI_Wait`
+   * :ref:`MPI_Waitall`
+   * :ref:`MPI_Waitany`
+   * :ref:`MPI_Waitsome`
+   * :ref:`MPI_Win_set_errhandler`

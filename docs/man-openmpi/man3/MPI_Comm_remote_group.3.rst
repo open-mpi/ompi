@@ -54,7 +54,7 @@ INPUT PARAMETER
 OUTPUT PARAMETERS
 -----------------
 * ``group``: Remote group of communicator.
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -72,5 +72,7 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Comm_test_inter` :ref:`MPI_Comm_remote_size` :ref:`MPI_Intercomm_create`
-   :ref:`MPI_Intercomm_merge`
+   * :ref:`MPI_Comm_test_inter`
+   * :ref:`MPI_Comm_remote_size`
+   * :ref:`MPI_Intercomm_create`
+   * :ref:`MPI_Intercomm_merge`

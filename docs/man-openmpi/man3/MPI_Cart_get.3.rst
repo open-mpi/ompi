@@ -14,7 +14,7 @@ SYNTAX
 C Syntax
 ^^^^^^^^
 
-.. code:: C
+.. code-block:: C
 
    #include <mpi.h>
 
@@ -24,7 +24,7 @@ C Syntax
 Fortran Syntax
 ^^^^^^^^^^^^^^
 
-.. code:: Fortran
+.. code-block:: Fortran
 
    USE MPI
    ! or the older form: INCLUDE 'mpif.h'
@@ -36,7 +36,7 @@ Fortran Syntax
 Fortran 2008 Syntax
 ^^^^^^^^^^^^^^^^^^^
 
-.. code:: Fortran
+.. code-block:: Fortran
 
    USE mpi_f08
 
@@ -50,20 +50,20 @@ Fortran 2008 Syntax
 INPUT PARAMETERS
 ----------------
 
--  comm : Communicator with Cartesian structure (handle).
--  maxdims : Length of vectors dims, periods, and coords in the calling
+* ``comm`` : Communicator with Cartesian structure (handle).
+* ``maxdims`` : Length of vectors dims, periods, and coords in the calling
    program (integer).
 
 OUTPUT PARAMETERS
 -----------------
 
--  dims : Number of processes for each Cartesian dimension (array of
+* ``dims`` : Number of processes for each Cartesian dimension (array of
    integers).
--  periods : Periodicity (true/false) for each Cartesian dimension
+* ``periods`` : Periodicity (true/false) for each Cartesian dimension
    (array of logicals).
--  coords : Coordinates of calling process in Cartesian structure (array
+* ``coords`` : Coordinates of calling process in Cartesian structure (array
    of integers).
--  IERROR : Fortran only: Error status (integer).
+* ``ierror`` : Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -77,4 +77,5 @@ ERRORS
 
 .. include:: ./ERRORS.rst
 
-.. seealso:: :ref:`MPI_Cartdim_get`
+.. seealso::
+   * :ref:`MPI_Cartdim_get`

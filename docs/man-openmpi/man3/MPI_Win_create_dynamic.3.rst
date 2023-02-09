@@ -56,7 +56,7 @@ INPUT PARAMETERS
 OUTPUT PARAMETERS
 -----------------
 * ``win``: Window object returned by the call (handle).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -114,4 +114,6 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Win_attach` :ref:`MPI_Win_detach` :ref:`MPI_Get_address`
+   * :ref:`MPI_Win_attach`
+   * :ref:`MPI_Win_detach`
+   * :ref:`MPI_Get_address`

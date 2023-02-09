@@ -58,7 +58,7 @@ INPUT PARAMETERS
 OUTPUT PARAMETERS
 -----------------
 * ``newgroup``: New group derived from above, preserving the order in group (handle).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -80,4 +80,5 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Group_excl` :ref:`MPI_Group_free`
+   * :ref:`MPI_Group_excl`
+   * :ref:`MPI_Group_free`

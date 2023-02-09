@@ -71,7 +71,7 @@ INPUT/OUTPUT PARAMETER
 OUTPUT PARAMETERS
 -----------------
 * ``outbuf``: Output buffer start (choice).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -152,4 +152,5 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Pack` :ref:`MPI_Pack_size`
+   * :ref:`MPI_Pack`
+   * :ref:`MPI_Pack_size`

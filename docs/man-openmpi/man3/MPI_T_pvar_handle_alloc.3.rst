@@ -72,4 +72,5 @@ ERRORS
 
 
 .. seealso::
-   :ref:`MPI_T_pvar_get_info` :ref:`MPI_T_pvar_get_num`
+   * :ref:`MPI_T_pvar_get_info`
+   * :ref:`MPI_T_pvar_get_num`

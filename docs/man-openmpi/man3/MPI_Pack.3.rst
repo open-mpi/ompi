@@ -68,7 +68,7 @@ INPUT/OUTPUT PARAMETER
 OUTPUT PARAMETERS
 -----------------
 * ``outbuf``: Output buffer start (choice).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -90,27 +90,24 @@ subsequently used for sending the packed message.
 
 **Example:** An example using :ref:`MPI_Pack`:
 
-::
+.. code-block:: c
 
-       int position, i, j, a[2];
-       char buff[1000];
+   int myrank, position, i, j, a[2];
+   char buff[1000];
 
-       ....
+   // ...
 
-       MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
-       if (myrank == 0)
-       {
-          / * SENDER CODE */
-
-       position = 0;
-         MPI_Pack(&i, 1, MPI_INT, buff, 1000, &position, MPI_COMM_WORLD);
-         MPI_Pack(&j, 1, MPI_INT, buff, 1000, &position, MPI_COMM_WORLD);
-         MPI_Send( buff, position, MPI_PACKED, 1, 0, MPI_COMM_WORLD);
-       }
-       else  /* RECEIVER CODE */
-         MPI_Recv( a, 2, MPI_INT, 0, 0, MPI_COMM_WORLD)
-
-       }
+   MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+   if (myrank == 0) {
+     /* SENDER CODE */
+     position = 0;
+     MPI_Pack(&i, 1, MPI_INT, buff, 1000, &position, MPI_COMM_WORLD);
+     MPI_Pack(&j, 1, MPI_INT, buff, 1000, &position, MPI_COMM_WORLD);
+     MPI_Send(buff, position, MPI_PACKED, 1, 0, MPI_COMM_WORLD);
+   } else {
+     /* RECEIVER CODE */
+     MPI_Recv(a, 2, MPI_INT, 0, 0, MPI_COMM_WORLD);
+   }
 
 
 ERRORS
@@ -119,4 +116,5 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Unpack` :ref:`MPI_Pack_size`
+   * :ref:`MPI_Unpack`
+   * :ref:`MPI_Pack_size`

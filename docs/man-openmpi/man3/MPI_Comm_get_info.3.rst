@@ -53,7 +53,7 @@ INPUT PARAMETERS
 OUTPUT PARAMETERS
 -----------------
 * ``info_used``: New info object returned with all active hints on this communicator.
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -72,4 +72,5 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Comm_get_info` :ref:`MPI_Info_free`
+   * :ref:`MPI_Comm_get_info`
+   * :ref:`MPI_Info_free`

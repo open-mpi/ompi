@@ -73,7 +73,7 @@ INPUT PARAMETERS
 OUTPUT PARAMETERS
 -----------------
 * ``comm_dist_graph``: Communicator with distributed graph topology added (handle).
-* ``IERROR``: Fortran only: Error status (integer).
+* ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
 -----------
@@ -128,5 +128,6 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
-   :ref:`MPI_Dist_graph_create` :ref:`MPI_Dist_graph_neighbors`
-   :ref:`MPI_Dist_graph_neighbors_count`
+   * :ref:`MPI_Dist_graph_create`
+   * :ref:`MPI_Dist_graph_neighbors`
+   * :ref:`MPI_Dist_graph_neighbors_count`
