@@ -29,7 +29,9 @@ Fortran Syntax
 
 .. code-block:: fortran
 
-   INCLUDE 'mpif.h'
+   USE MPI
+   ! or the older form: INCLUDE 'mpif.h'
+
    MPI_KEYVAL_FREE(KEYVAL, IERROR)
    	INTEGER	KEYVAL, IERROR
 

@@ -29,7 +29,9 @@ Fortran Syntax
 
 .. code-block:: fortran
 
-   INCLUDE 'mpif.h'
+   USE MPI
+   ! or the older form: INCLUDE 'mpif.h'
+
    MPI_TYPE_LB(DATATYPE, DISPLACEMENT, IERROR)
    	INTEGER	DATATYPE, DISPLACEMENT, IERROR
 
