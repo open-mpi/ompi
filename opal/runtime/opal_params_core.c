@@ -25,6 +25,8 @@
  * Copyright (c) 2018-2022 Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * Copyright (c) 2022      Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (c) 2022      Computer Architecture and VLSI Systems (CARV)
+ *                         Laboratory, ICS Forth. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -49,11 +51,14 @@
 #include "opal/util/printf.h"
 #include "opal/util/show_help.h"
 #include "opal/util/timings.h"
+#include "opal/util/argv.h"
 
 char *opal_signal_string = NULL;
 char *opal_stacktrace_output_filename = NULL;
 char *opal_net_private_ipv4 = NULL;
 char *opal_set_max_sys_limits = NULL;
+
+char *opal_var_dump_color[OPAL_VAR_DUMP_COLOR_KEY_COUNT] = {NULL};
 
 #if OPAL_ENABLE_TIMING
 char *opal_timing_sync_file = NULL;
@@ -82,8 +87,30 @@ int opal_max_thread_in_progress = 1;
 
 static bool opal_register_util_done = false;
 
+/* Basic color options: 30=black, 31=red, 32=green,
+ * 33=yellow, 34=blue, 35=magenta, 36=cyan, 37=white
+ * https://en.wikipedia.org/wiki/ANSI_escape_code#Colors */
+static char *opal_var_dump_color_string = "name=34,value=32,valid_values=36";
+
+static char *opal_var_dump_color_keys[OPAL_VAR_DUMP_COLOR_KEY_COUNT] = {
+    [OPAL_VAR_DUMP_COLOR_VAR_NAME] = "name",
+    [OPAL_VAR_DUMP_COLOR_VAR_VALUE] = "value",
+    [OPAL_VAR_DUMP_COLOR_VALID_VALUES] = "valid_values"
+};
+
+/**
+ * Local functions
+ */
+static int parse_color_string(char *color_string, char **key_names, int key_count,
+    char **values_out);
+
 static void opal_deregister_util_params(void)
 {
+    for (int i = 0; i < OPAL_VAR_DUMP_COLOR_KEY_COUNT; i++) {
+        free(opal_var_dump_color[i]);
+        opal_var_dump_color[i] = NULL;
+    }
+
     /* The MCA variable system will be torn down shortly so reset the registered
      * flag. */
     opal_register_util_done = false;
@@ -92,7 +119,7 @@ static void opal_deregister_util_params(void)
 int opal_register_util_params(void)
 {
     int ret;
-    char *string = NULL;
+    char *string = NULL, *tmp = NULL;
 
     if (opal_register_util_done) {
         return OPAL_SUCCESS;
@@ -121,12 +148,15 @@ int opal_register_util_params(void)
             -1};
         for (j = 0; signals[j] != -1; ++j) {
             if (j == 0) {
-                opal_asprintf(&string, "%d", signals[j]);
+                ret = opal_asprintf(&string, "%d", signals[j]);
             } else {
-                char *tmp;
-                opal_asprintf(&tmp, "%s,%d", string, signals[j]);
+                ret = opal_asprintf(&tmp, "%s,%d", string, signals[j]);
                 free(string);
                 string = tmp;
+            }
+
+            if (0 > ret) {
+                return OPAL_ERR_OUT_OF_RESOURCE;
             }
         }
 
@@ -210,6 +240,39 @@ int opal_register_util_params(void)
     if (0 > ret) {
         return ret;
     }
+
+    /* Var-dump color */
+
+    string = opal_argv_join_range(opal_var_dump_color_keys, 0, OPAL_VAR_DUMP_COLOR_KEY_COUNT, ',');
+    if (NULL == string) {
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+
+    ret = opal_asprintf(&tmp, "The colors to use when dumping MCA vars with color "
+        "(e.g. ompi_info). The format is a comma-delimited key=value list, where the "
+        "key is the attribute whose color to adjust, and the value is the ANSI color "
+        "code (see the ANSI X3.64 CSI SGR sequence). Available keys: %s.", string);
+    free(string);
+    string = tmp;
+    if (0 > ret) {
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+
+    ret = mca_base_var_register("opal", "opal", NULL, "var_dump_color", string,
+        MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_2, MCA_BASE_VAR_SCOPE_READONLY,
+        &opal_var_dump_color_string);
+    free(string);
+    if (0 > ret) {
+        return ret;
+    }
+
+    ret = parse_color_string(opal_var_dump_color_string, opal_var_dump_color_keys,
+        OPAL_VAR_DUMP_COLOR_KEY_COUNT, opal_var_dump_color);
+    if (OPAL_SUCCESS != ret) {
+        return ret;
+    }
+
+    /* CUDA support */
 
     ret = mca_base_var_register("opal", "opal", NULL, "built_with_cuda_support",
                                 "Whether CUDA GPU buffer support is built into library or not",
@@ -349,4 +412,105 @@ int opal_register_util_params(void)
     opal_finalize_register_cleanup(opal_deregister_util_params);
 
     return OPAL_SUCCESS;
+}
+
+/* Parses a color 'string' and extracts the 'code' for each 'key'
+ * The string is in the format of 'key1=code1:key2=code2:...'
+ * Example: opal_var_dump_color MCA parameter
+ *
+ * color_string: The string containing the key=code sequences to parse
+ * key_names: The keys to extract (e.g. key1, key2)
+ * key_count: The length of key_names
+ * values_out: The extracted values for the keys, 1-1 with key_names
+ *   ATTENTION: Make sure it's at least as large as key_names...
+ */
+static int parse_color_string(char *color_string, char **key_names,
+        int key_count, char **values_out) {
+
+    char **tokens = NULL, **kv = NULL;
+    int return_code = OPAL_SUCCESS;
+
+    for (int k = 0; k < key_count; k++) {
+        values_out[k] = NULL;
+    }
+
+    tokens = opal_argv_split(color_string, ',');
+    if (NULL == tokens) {
+        return_code = OPAL_ERR_OUT_OF_RESOURCE;
+        goto end;
+    }
+
+    for (int i = 0; tokens[i] != NULL; i++) {
+        kv = opal_argv_split(tokens[i], '=');
+        if (NULL == kv) {
+            return_code = OPAL_ERR_OUT_OF_RESOURCE;
+            goto end;
+        }
+
+        // Expected format of token: key=code
+        if (opal_argv_count(kv) != 2) {
+            opal_show_help("help-opal-runtime.txt", "mpi-params:var_dump_color:format-error",
+                true, tokens[i]);
+            goto skip_token;
+        }
+
+        bool key_found = false;
+
+        // Look for key name and store value in respective position
+        for (int k = 0; k < key_count; ++k) {
+            if (strcasecmp(key_names[k], kv[0]) == 0) {
+                int ret = opal_asprintf(&values_out[k], "\033[%sm", kv[1]);
+                if (ret < 0) {
+                    return_code = OPAL_ERR_OUT_OF_RESOURCE;
+                    goto end;
+                }
+
+                key_found = true;
+                break;
+            }
+        }
+
+        if (!key_found) {
+            char *valid_keys = opal_argv_join_range(key_names, 0, key_count, ',');
+            if (NULL == valid_keys) {
+                return_code = OPAL_ERR_OUT_OF_RESOURCE;
+                goto end;
+            }
+
+            opal_show_help("help-opal-runtime.txt", "mpi-params:var_dump_color:unknown-key",
+                true, kv[0], tokens[i], valid_keys);
+            free(valid_keys);
+        }
+
+        skip_token:
+
+        opal_argv_free(kv);
+        kv = NULL;
+    }
+
+    // Set values for keys not in the MCA parameter to ""
+    for (int k = 0; k < key_count; k++) {
+        if (NULL == values_out[k]) {
+            values_out[k] = strdup(""); // needs to be free-able
+
+            if (NULL == values_out[k]) {
+                return_code = OPAL_ERR_OUT_OF_RESOURCE;
+                goto end;
+            }
+        }
+    }
+
+    end:
+
+    opal_argv_free(tokens);
+    opal_argv_free(kv);
+
+    if (return_code != OPAL_SUCCESS) {
+        for (int k = 0; k < key_count; k++) {
+            free(values_out[k]);
+            values_out[k] = NULL;
+        }
+    }
+
+    return return_code;
 }
