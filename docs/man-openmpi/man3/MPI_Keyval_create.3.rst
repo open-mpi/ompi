@@ -30,7 +30,9 @@ Fortran Syntax
 
 .. code-block:: fortran
 
-   INCLUDE 'mpif.h'
+   USE MPI
+   ! or the older form: INCLUDE 'mpif.h'
+
    MPI_KEYVAL_CREATE(COPY_FN, DELETE_FN, KEYVAL, EXTRA_STATE, IERROR)
    	EXTERNAL	COPY_FN, DELETE_FN
    	INTEGER	KEYVAL, EXTRA_STATE, IERROR
