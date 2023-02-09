@@ -108,22 +108,22 @@ using :ref:`MPI_Waitsome`.
 
        CALL MPI_COMM_SIZE(comm, size, ierr)
        CALL MPI_COMM_RANK(comm, rank, ierr)
-       IF(rank .GT. 0) THEN         ! client code
-           DO WHILE(.TRUE.)
+       IF(rank > 0) THEN         ! client code
+           DO
               CALL MPI_ISEND(a, n, MPI_REAL, 0, tag, comm, request, ierr)
               CALL MPI_WAIT(request, status, ierr)
            END DO
        ELSE         ! rank=0 -- server code
            DO i=1, size-1
-              CALL MPI_IRECV(a(1,i), n, MPI_REAL, i, tag,
+              CALL MPI_IRECV(a(1,i), n, MPI_REAL, i, tag, &
                              comm, requests(i), ierr)
            END DO
-           DO WHILE(.TRUE.)
-              CALL MPI_WAITSOME(size, request_list, numdone,
+           DO
+              CALL MPI_WAITSOME(size, request_list, numdone, &
                                indices, statuses, ierr)
               DO i=1, numdone
                  CALL DO_SERVICE(a(1, indices(i)))
-                 CALL MPI_IRECV(a(1, indices(i)), n, MPI_REAL, 0, tag,
+                 CALL MPI_IRECV(a(1, indices(i)), n, MPI_REAL, i, tag, &
                               comm, requests(indices(i)), ierr)
               END DO
            END DO

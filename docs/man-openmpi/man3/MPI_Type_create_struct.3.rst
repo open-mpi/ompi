@@ -101,7 +101,7 @@ returns a datatype with type map
 
 That is, two copies of ``MPI_FLOAT`` starting at 0, followed by one copy of
 ``type1`` starting at 16, followed by three copies of ``MPI_CHAR``, starting at
-26. (We assume that a float occupies 4 bytes.)
+26.
 
 
 **Example 2:**
@@ -147,17 +147,18 @@ An example of a struct with only some components part of the type
    if ( rank == 0 ) {
        // ... initialize values
        MPI_Send(values, 3, mpi_dt_mystruct, 1, 0, MPI_COMM_WORLD);
-   } else if ( rank == 1 )
+   } else if ( rank == 1 ) {
        MPI_Recv(values, 3, mpi_dt_mystruct, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+   }
 
 
-For more information, see section 3.12.1 of the MPI-1.1 Standard.
+For more information, see section 5.1.2 of the MPI-4.0 Standard.
 
 
 NOTES
 -----
 
-If an upperbound is set explicitly by using the MPI datatype MPI_UB, the
+If an upper bound is set explicitly by using the MPI datatype ``MPI_UB``, the
 corresponding index must be positive.
 
 The MPI-1 Standard originally made vague statements about padding and
@@ -180,7 +181,7 @@ have allowed an implementation to make the extent an MPI datatype for
 this structure equal to ``2*sizeof(int)``. However, since different systems
 might define different paddings, a clarification to the standard made
 epsilon zero. Thus, if you define a structure datatype and wish to send
-or receive multiple items, you should explicitly include an MPI_UB entry
+or receive multiple items, you should explicitly include an ``MPI_UB`` entry
 as the last member of the structure. See the above example.
 
 

@@ -469,28 +469,28 @@ containing the largest value.
        ...
        ! each process has an array of 30 double: ain(30)
 
-       DOUBLE PRECISION ain(30), aout(30)
-       INTEGER ind(30);
-       DOUBLE PRECISION in(2,30), out(2,30)
-       INTEGER i, myrank, root, ierr;
+       DOUBLE PRECISION :: ain(30), aout(30)
+       INTEGER :: ind(30)
+       DOUBLE PRECISION :: in(2,30), out(2,30)
+       INTEGER :: i, myrank, root, ierr
 
-       MPI_COMM_RANK(MPI_COMM_WORLD, myrank);
-           DO I=1, 30
-               in(1,i) = ain(i)
-               in(2,i) = myrank    ! myrank is coerced to a double
-           END DO
+       call MPI_COMM_RANK(MPI_COMM_WORLD, myrank)
+       DO I=1, 30
+           in(1,i) = ain(i)
+           in(2,i) = myrank    ! myrank is coerced to a double
+       END DO
 
-       MPI_REDUCE( in, out, 30, MPI_2DOUBLE_PRECISION, MPI_MAXLOC, root,
-                                                                 comm, ierr );
+       call MPI_REDUCE( in, out, 30, MPI_2DOUBLE_PRECISION, MPI_MAXLOC, root, &
+                                                                 comm, ierr )
        ! At this point, the answer resides on process root
 
-       IF (myrank .EQ. root) THEN
-               ! read ranks out
-               DO I= 1, 30
-                   aout(i) = out(1,i)
-                   ind(i) = out(2,i)  ! rank is coerced back to an integer
-               END DO
-           END IF
+       IF (myrank == root) THEN
+           ! read ranks out
+           DO I= 1, 30
+               aout(i) = out(1,i)
+               ind(i) = out(2,i)  ! rank is coerced back to an integer
+           END DO
+       END IF
 
 **Example 5:** Each process has a nonempty array of values. Find the
 minimum global value, the rank of the process that holds it, and its
