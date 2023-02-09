@@ -131,6 +131,15 @@ templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', 'venv', 'py*/**']
 
 
+# Clarify the language for verbatim blocks (::)
+# Never change this to anything else. Lots of verbatim code blocks
+# exists across the documentation pages.
+# The default value is actually "default" which is something like Python3
+# and on fail it reverts to "none". We just go directly to none for clarity.
+highlight_language = "none"
+
+
+
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
