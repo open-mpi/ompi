@@ -97,11 +97,11 @@ Example: Simple usage of nonblocking operations and :ref:`MPI_Wait`.
 .. code-block:: fortran
 
        CALL MPI_COMM_RANK(comm, rank, ierr)
-       IF(rank.EQ.0) THEN
+       IF(rank == 0) THEN
            CALL MPI_ISEND(a(1), 10, MPI_REAL, 1, tag, comm, request, ierr)
            **** do some computation ****
            CALL MPI_WAIT(request, status, ierr)
-       ELSE
+       ELSE IF (rank == 1) THEN
            CALL MPI_IRECV(a(1), 15, MPI_REAL, 0, tag, comm, request, ierr)
            **** do some computation ****
            CALL MPI_WAIT(request, status, ierr)

@@ -115,17 +115,17 @@ problem.
    CALL MPI_COMM_RANK(comm, rank, ierr)
    IF (rank == 0) THEN
       CALL MPI_SEND(i, 1, MPI_INTEGER, 2, 0, comm, ierr)
-   ELSE IF(rank.EQ.1) THEN
+   ELSE IF(rank == 1) THEN
       CALL MPI_SEND(x, 1, MPI_REAL, 2, 0, comm, ierr)
    ELSE
       DO i=1, 2
          CALL MPI_PROBE(MPI_ANY_SOURCE, 0,
                         comm, status, ierr)
-	 IF (status(MPI_SOURCE) = 0) THEN
-	    CALL MPI_RECV(i, 1, MPI_INTEGER, MPI_ANY_SOURCE,
+	 IF (status(MPI_SOURCE) == 0) THEN
+	    CALL MPI_RECV(i, 1, MPI_INTEGER, MPI_ANY_SOURCE, &
                           0, status, ierr)
 	 ELSE
-	    CALL MPI_RECV(x, 1, MPI_REAL, MPI_ANY_SOURCE,
+	    CALL MPI_RECV(x, 1, MPI_REAL, MPI_ANY_SOURCE, &
                           0, status, ierr)
 	 END IF
       END DO
