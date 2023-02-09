@@ -30,7 +30,9 @@ Fortran Syntax
 
 .. code-block:: fortran
 
-   INCLUDE 'mpif.h'
+   USE MPI
+   ! or the older form: INCLUDE 'mpif.h'
+
    MPI_ATTR_GET(COMM, KEYVAL, ATTRIBUTE_VAL, FLAG, IERROR)
    	INTEGER	COMM, KEYVAL, ATTRIBUTE_VAL, IERROR
    	LOGICAL	FLAG

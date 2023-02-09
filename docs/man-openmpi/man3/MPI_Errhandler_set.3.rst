@@ -29,7 +29,9 @@ Fortran Syntax
 
 .. code-block:: fortran
 
-   INCLUDE 'mpif.h'
+   USE MPI
+   ! or the older form: INCLUDE 'mpif.h'
+
    MPI_ERRHANDLER_SET(COMM, ERRHANDLER, IERROR)
    	INTEGER	COMM, ERRHANDLER, IERROR
 

@@ -30,7 +30,9 @@ Fortran Syntax
 
 .. code-block:: fortran
 
-   INCLUDE 'mpif.h'
+   USE MPI
+   ! or the older form: INCLUDE 'mpif.h'
+
    MPI_ERRHANDLER_CREATE(FUNCTION, ERRHANDLER, IERROR)
    	EXTERNAL	FUNCTION
    	INTEGER	ERRHANDLER, IERROR

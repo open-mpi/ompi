@@ -31,7 +31,9 @@ Fortran Syntax
 
 .. code-block:: fortran
 
-   INCLUDE 'mpif.h'
+   USE MPI
+   ! or the older form: INCLUDE 'mpif.h'
+
    MPI_TYPE_STRUCT(COUNT, ARRAY_OF_BLOCKLENGTHS,
    		ARRAY_OF_DISPLACEMENTS, ARRAY_OF_TYPES,
    		NEWTYPE, IERROR)
