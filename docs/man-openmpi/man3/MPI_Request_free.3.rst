@@ -85,14 +85,14 @@ receive has completed and the receive buffer can be reused.
 .. code-block:: fortran
 
        CALL MPI_COMM_RANK(MPI_COMM_WORLD, rank)
-       IF(rank.EQ.0) THEN
+       IF(rank == 0) THEN
            DO i=1, n
              CALL MPI_ISEND(outval, 1, MPI_REAL, 1, 0, req, ierr)
              CALL MPI_REQUEST_FREE(req, ierr)
              CALL MPI_IRECV(inval, 1, MPI_REAL, 1, 0, req, ierr)
              CALL MPI_WAIT(req, status, ierr)
            END DO
-       ELSE    ! rank.EQ.1
+       ELSE IF (rank == 1) THEN
            CALL MPI_IRECV(inval, 1, MPI_REAL, 0, 0, req, ierr)
            CALL MPI_WAIT(req, status)
            DO I=1, n-1

@@ -74,6 +74,33 @@ pointer object for this parameter. The provided argument should be a
 pointer to a pointer of arbitrary type (e.g., ``void **``).
 
 
+Fortran NOTES
+-------------
+
+The :ref:`MPI_Alloc_mem` calls require the use of the ``iso_c_binding`` module
+for due to the use of ``TYPE(C_PTR)``.
+
+.. code-block:: fortran
+
+   use iso_c_binding
+
+   type(c_ptr) :: alloc_ptr
+   integer :: size, ierr
+   double precision, pointer :: array(:,:)
+
+   ! A 2D array of 100 elements
+   size = 10 * 10
+   call MPI_Alloc_Mem(size * 8, MPI_INFO_NULL, alloc_ptr, ierr)
+
+   ! Point to the array
+   call c_f_pointer(alloc_ptr, array, [10, 10])
+
+   ! ... use the array ...
+
+   ! Free the memory, no need for the alloc_ptr
+   call MPI_Free_mem(array, ierr)
+
+
 ERRORS
 ------
 

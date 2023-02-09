@@ -276,11 +276,11 @@ datatypes:
        MPI_SHORT_INT            short and int
        MPI_LONG_DOUBLE_INT      long double and int
 
-The data type MPI_2REAL is equivalent to:
+The data type ``MPI_2REAL`` is equivalent to:
 
 .. code-block:: fortran
 
-       MPI_TYPE_CONTIGUOUS(2, MPI_REAL, MPI_2REAL)
+       call MPI_TYPE_CONTIGUOUS(2, MPI_REAL, MPI_2REAL)
 
 Similar statements apply for MPI_2INTEGER, MPI_2DOUBLE_PRECISION, and
 MPI_2INT.
