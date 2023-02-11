@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2020 The University of Tennessee and The University
+ * Copyright (c) 2004-2023 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -25,6 +25,7 @@
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * Copyright (c) 2018-2022 Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2023      Advanced Micro Devices, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -169,8 +170,7 @@ int ompi_comm_init(void)
     (void)opal_pointer_array_test_and_set_item(&ompi_mpi_communicators, 0, &ompi_mpi_comm_null);
     (void)opal_pointer_array_test_and_set_item(&ompi_mpi_communicators, 1, &ompi_mpi_comm_null);
 
-    opal_string_copy(ompi_mpi_comm_null.comm.c_name, "MPI_COMM_NULL",
-                     sizeof(ompi_mpi_comm_null.comm.c_name));
+    ompi_mpi_comm_null.comm.c_name = strdup ("MPI_COMM_NULL");
     ompi_mpi_comm_null.comm.c_flags |= OMPI_COMM_NAMEISSET | OMPI_COMM_INTRINSIC |
         OMPI_COMM_GLOBAL_INDEX;
 
@@ -221,8 +221,7 @@ int ompi_comm_init_mpi3 (void)
     OMPI_COMM_SET_PML_ADDED(&ompi_mpi_comm_world.comm);
     opal_pointer_array_set_item (&ompi_mpi_communicators, 0, &ompi_mpi_comm_world);
 
-    opal_string_copy(ompi_mpi_comm_world.comm.c_name, "MPI_COMM_WORLD",
-                     sizeof(ompi_mpi_comm_world.comm.c_name));
+    ompi_mpi_comm_world.comm.c_name = strdup("MPI_COMM_WORLD");
     ompi_mpi_comm_world.comm.c_flags |= OMPI_COMM_NAMEISSET | OMPI_COMM_INTRINSIC |
         OMPI_COMM_GLOBAL_INDEX;
     ompi_mpi_comm_world.comm.instance = group->grp_instance;
@@ -280,8 +279,7 @@ int ompi_comm_init_mpi3 (void)
     OMPI_COMM_SET_PML_ADDED(&ompi_mpi_comm_self.comm);
     opal_pointer_array_set_item (&ompi_mpi_communicators, 1, &ompi_mpi_comm_self);
 
-    opal_string_copy(ompi_mpi_comm_self.comm.c_name, "MPI_COMM_SELF",
-                     sizeof(ompi_mpi_comm_self.comm.c_name));
+    ompi_mpi_comm_self.comm.c_name = strdup("MPI_COMM_SELF");
     ompi_mpi_comm_self.comm.c_flags |= OMPI_COMM_NAMEISSET | OMPI_COMM_INTRINSIC |
         OMPI_COMM_GLOBAL_INDEX;
     ompi_mpi_comm_self.comm.instance = group->grp_instance;
@@ -412,7 +410,7 @@ static int ompi_comm_finalize (void)
 static void ompi_comm_construct(ompi_communicator_t* comm)
 {
     int idx;
-    comm->c_name[0]      = '\0';
+    comm->c_name         = NULL;
     comm->c_index        = MPI_UNDEFINED;
     comm->c_flags        = 0;
     comm->c_my_rank      = 0;
@@ -444,7 +442,7 @@ static void ompi_comm_construct(ompi_communicator_t* comm)
        this communicator */
     comm->c_keyhash      = NULL;
 
-    comm->errhandler_type  = OMPI_ERRHANDLER_TYPE_COMM;
+    comm->error_handler  = &ompi_mpi_errors_are_fatal.eh;
 #ifdef OMPI_WANT_PERUSE
     comm->c_peruse_handles = NULL;
 #endif
@@ -518,6 +516,11 @@ static void ompi_comm_destruct(ompi_communicator_t* comm)
     if (NULL != comm->error_handler) {
         OBJ_RELEASE ( comm->error_handler );
         comm->error_handler = NULL;
+    }
+
+    if (NULL != comm->c_name) {
+        free (comm->c_name);
+        comm->c_name = NULL;
     }
 
 #if OPAL_ENABLE_FT_MPI

@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2020 The University of Tennessee and The University
+ * Copyright (c) 2004-2023 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -24,6 +24,7 @@
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * Copyright (c) 2018-2022 Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2023      Advanced Micro Devices, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -261,7 +262,7 @@ struct ompi_communicator_t {
     opal_infosubscriber_t      super;
     opal_mutex_t               c_lock; /* mutex for name and potentially
                                           attributes */
-    char  c_name[MPI_MAX_OBJECT_NAME];
+    char                      *c_name;
     ompi_comm_extended_cid_t      c_contextid;
     ompi_comm_extended_cid_block_t c_contextidb;
     uint32_t                      c_index;
@@ -269,12 +270,22 @@ struct ompi_communicator_t {
     uint32_t                      c_flags; /* flags, e.g. intercomm,
                                               topology, etc. */
     uint32_t                      c_assertions; /* info assertions */
-    int c_id_available; /* the currently available Cid for allocation
-               to a child*/
-    int c_id_start_index; /* the starting index of the block of cids
-                 allocated to this communicator*/
+#if OPAL_ENABLE_FT_MPI
     uint32_t c_epoch;  /* Identifier used to differentiate between two communicators
                           using the same c_contextid (not at the same time, obviously) */
+#endif
+    /* Non-blocking collective tag. These tags might be shared between
+     * all non-blocking collective modules (to avoid message collision
+     * between them in the case where multiple outstanding non-blocking
+     * collective coexists using multiple backends).
+     */
+    opal_atomic_int32_t c_nbc_tag;
+
+    /**< inscribing cube dimension */
+    int c_cube_dim;
+
+    /* index in Fortran <-> C translation array */
+    int c_f_to_c_index;
 
     ompi_group_t        *c_local_group;
     ompi_group_t       *c_remote_group;
@@ -287,15 +298,9 @@ struct ompi_communicator_t {
     /* Attributes */
     struct opal_hash_table_t       *c_keyhash;
 
-    /**< inscribing cube dimension */
-    int c_cube_dim;
-
     /* Standard information about the selected topology module (or NULL
        if this is not a cart, graph or dist graph communicator) */
     struct mca_topo_base_module_t* c_topo;
-
-    /* index in Fortran <-> C translation array */
-    int c_f_to_c_index;
 
 #ifdef OMPI_WANT_PERUSE
     /*
@@ -307,9 +312,7 @@ struct ompi_communicator_t {
     /* Error handling.  This field does not have the "c_" prefix so
        that the OMPI_ERRHDL_* macros can find it, regardless of whether
        it's a comm, window, or file. */
-
     ompi_errhandler_t                  *error_handler;
-    ompi_errhandler_type_t             errhandler_type;
 
     /* Hooks for PML to hang things */
     struct mca_pml_comm_t  *c_pml_comm;
@@ -320,21 +323,14 @@ struct ompi_communicator_t {
     /* Collectives module interface and data */
     mca_coll_base_comm_coll_t *c_coll;
 
-    /* Non-blocking collective tag. These tags might be shared between
-     * all non-blocking collective modules (to avoid message collision
-     * between them in the case where multiple outstanding non-blocking
-     * collective coexists using multiple backends).
-     */
-    opal_atomic_int32_t c_nbc_tag;
-
     /* instance that this comm belongs to */
     ompi_instance_t* instance;
 
 #if OPAL_ENABLE_FT_MPI
-    /** MPI_ANY_SOURCE Failed Group Offset - OMPI_Comm_failure_get_acked */
-    int                      any_source_offset;
     /** agreement caching info for topology and previous returned decisions */
     opal_object_t           *agreement_specific;
+    /** MPI_ANY_SOURCE Failed Group Offset - OMPI_Comm_failure_get_acked */
+    int                      any_source_offset;
     /** Are MPI_ANY_SOURCE operations enabled? - OMPI_Comm_failure_ack */
     bool                     any_source_enabled;
     /** Has this communicator been revoked - OMPI_Comm_revoke() */
@@ -437,7 +433,7 @@ typedef struct ompi_communicator_t ompi_communicator_t;
  * the PREDEFINED_COMMUNICATOR_PAD macro?
  * A: Most likely not, but it would be good to check.
  */
-#define PREDEFINED_COMMUNICATOR_PAD 1024
+#define PREDEFINED_COMMUNICATOR_PAD 512
 
 struct ompi_predefined_communicator_t {
     struct ompi_communicator_t comm;

@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2020 The University of Tennessee and The University
+ * Copyright (c) 2004-2023 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -183,19 +183,19 @@ int ompi_errhandler_request_invoke(int count,
     case OMPI_REQUEST_COLL:
         return ompi_errhandler_invoke(mpi_object.comm->error_handler,
                                       mpi_object.comm,
-                                      mpi_object.comm->errhandler_type,
+                                      mpi_object.comm->error_handler->eh_mpi_object_type,
                                       ec, message);
         break;
     case OMPI_REQUEST_IO:
         return ompi_errhandler_invoke(mpi_object.file->error_handler,
                                       mpi_object.file,
-                                      mpi_object.file->errhandler_type,
+                                      mpi_object.file->error_handler->eh_mpi_object_type,
                                       ec, message);
         break;
     case OMPI_REQUEST_WIN:
         return ompi_errhandler_invoke(mpi_object.win->error_handler,
                                       mpi_object.win,
-                                      mpi_object.win->errhandler_type,
+                                      mpi_object.win->error_handler->eh_mpi_object_type,
                                       ec, message);
         break;
     default:
