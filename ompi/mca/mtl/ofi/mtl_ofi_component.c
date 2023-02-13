@@ -294,9 +294,6 @@ ompi_mtl_ofi_component_query(mca_base_module_t **module, int *priority)
 static int
 ompi_mtl_ofi_component_close(void)
 {
-#if OPAL_CUDA_SUPPORT
-    mca_common_cuda_fini();
-#endif
     return opal_common_ofi_close();
 }
 
