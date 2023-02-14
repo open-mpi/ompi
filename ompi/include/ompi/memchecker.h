@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
- * Copyright (c) 2010-2017 The University of Tennessee and The University
+ * Copyright (c) 2010-2023 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
@@ -220,8 +220,6 @@ static inline int memchecker_comm(MPI_Comm comm)
     opal_memchecker_base_isdefined (&comm->c_name, MPI_MAX_OBJECT_NAME);
     opal_memchecker_base_isdefined (&comm->c_my_rank, sizeof(int));
     opal_memchecker_base_isdefined (&comm->c_flags, sizeof(uint32_t));
-    opal_memchecker_base_isdefined (&comm->c_id_available, sizeof(int));
-    opal_memchecker_base_isdefined (&comm->c_id_start_index, sizeof(int));
     opal_memchecker_base_isdefined (&comm->c_local_group, sizeof(ompi_group_t *));
     opal_memchecker_base_isdefined (&comm->c_remote_group, sizeof(ompi_group_t *));
     opal_memchecker_base_isdefined (&comm->c_keyhash, sizeof(struct opal_hash_table_t *));

@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2022 The University of Tennessee and The University
+ * Copyright (c) 2004-2023 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -388,10 +388,10 @@ int ompi_errhandler_proc_failed_internal(ompi_proc_t* ompi_proc, int status, boo
                              OMPI_NAME_PRINT(&ompi_proc->super.proc_name),
                              ompi_comm_print_cid(comm),
                              proc_rank,
-                             (OMPI_ERRHANDLER_TYPE_PREDEFINED == comm->errhandler_type ? "P" :
-                              (OMPI_ERRHANDLER_TYPE_COMM == comm->errhandler_type ? "C" :
-                               (OMPI_ERRHANDLER_TYPE_WIN == comm->errhandler_type ? "W" :
-                                (OMPI_ERRHANDLER_TYPE_FILE == comm->errhandler_type ? "F" : "U") ) ) )
+                             (OMPI_ERRHANDLER_TYPE_PREDEFINED == comm->error_handler->eh_mpi_object_type ? "P" :
+                              (OMPI_ERRHANDLER_TYPE_COMM == comm->error_handler->eh_mpi_object_type ? "C" :
+                               (OMPI_ERRHANDLER_TYPE_WIN == comm->error_handler->eh_mpi_object_type ? "W" :
+                                (OMPI_ERRHANDLER_TYPE_FILE == comm->error_handler->eh_mpi_object_type ? "F" : "U") ) ) )
                              ));
     }
 
