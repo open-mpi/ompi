@@ -90,7 +90,9 @@ mca_coll_han_component_t mca_coll_han_component = {
     /* han-component specific information */
 
     /* (default) priority */
-    20,
+    .han_priority = 20,
+    /* workaround for nvcc compiler */
+    .dynamic_rules_filename = NULL,
 };
 
 /*
