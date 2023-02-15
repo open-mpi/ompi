@@ -5,6 +5,8 @@
  *                         reserved.
  * Copyright (c) 2020      Bull S.A.S. All rights reserved.
  * Copyright (c) 2022      IBM Corporation. All rights reserved
+ * Copyright (c) 2023      Computer Architecture and VLSI Systems (CARV)
+ *                         Laboratory, ICS Forth. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -105,6 +107,7 @@ typedef enum COMPONENTS {
     SM,
     ADAPT,
     HAN,
+    XHC,
     COMPONENTS_COUNT
 } COMPONENT_T;
 
