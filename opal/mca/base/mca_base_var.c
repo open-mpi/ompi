@@ -22,6 +22,8 @@
  *                         reserved.
  * Copyright (c) 2020      Google, LLC. All rights reserved.
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
+ * Copyright (c) 2022      Computer Architecture and VLSI Systems (CARV)
+ *                         Laboratory, ICS Forth. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -49,6 +51,7 @@
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/mca/mca.h"
 #include "opal/runtime/opal.h"
+#include "opal/runtime/opal_params_core.h"
 #include "opal/util/argv.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/os_path.h"
@@ -713,7 +716,8 @@ static int var_set_from_string(mca_base_var_t *var, char *src)
                 && ((unsigned int) int_value != int_value))) {
             if (var->mbv_enumerator) {
                 char *valid_values;
-                (void) var->mbv_enumerator->dump(var->mbv_enumerator, &valid_values);
+                (void) var->mbv_enumerator->dump(var->mbv_enumerator, &valid_values,
+                    MCA_BASE_VAR_ENUM_DUMP_READABLE);
                 opal_show_help("help-mca-var.txt", "invalid-value-enum", true, var->mbv_full_name,
                                src, valid_values);
                 free(valid_values);
@@ -2190,7 +2194,11 @@ int mca_base_var_dump(int vari, char ***out, mca_base_var_dump_type_t output_typ
         }
 
         free(tmp);
-    } else if (MCA_BASE_VAR_DUMP_READABLE == output_type) {
+    } else if (MCA_BASE_VAR_DUMP_READABLE == output_type
+        || MCA_BASE_VAR_DUMP_READABLE_COLOR == output_type) {
+
+        char *color_name = "", *color_value = "", *color_reset = "";
+
         /* There will be at most three lines in the pretty print case */
         *out = (char **) calloc(4, sizeof(char *));
         if (NULL == *out) {
@@ -2199,10 +2207,18 @@ int mca_base_var_dump(int vari, char ***out, mca_base_var_dump_type_t output_typ
             return OPAL_ERR_OUT_OF_RESOURCE;
         }
 
+        if (MCA_BASE_VAR_DUMP_READABLE_COLOR == output_type) {
+            color_name = opal_var_dump_color[OPAL_VAR_DUMP_COLOR_VAR_NAME];
+            color_value = opal_var_dump_color[OPAL_VAR_DUMP_COLOR_VAR_VALUE];
+            color_reset = "\033[0m";
+        }
+
         opal_asprintf(out[0],
-                      "%s \"%s\" (current value: \"%s\", data source: %s, level: %d %s, type: %s",
-                      VAR_IS_DEFAULT_ONLY(var[0]) ? "informational" : "parameter", full_name,
-                      value_string, source_string, var->mbv_info_lvl + 1,
+                      "%s %s\"%s\"%s (current value: %s\"%s\"%s, data source: %s, level: %d %s, type: %s",
+                      VAR_IS_DEFAULT_ONLY(var[0]) ? "informational" : "parameter",
+                      color_name, full_name, color_reset,
+                      color_value, value_string, color_reset,
+                      source_string, var->mbv_info_lvl + 1,
                       info_lvl_strings[var->mbv_info_lvl], ompi_var_type_names[var->mbv_type]);
 
         tmp = out[0][0];
@@ -2250,7 +2266,8 @@ int mca_base_var_dump(int vari, char ***out, mca_base_var_dump_type_t output_typ
         if (NULL != var->mbv_enumerator) {
             char *values;
 
-            ret = var->mbv_enumerator->dump(var->mbv_enumerator, &values);
+            ret = var->mbv_enumerator->dump(var->mbv_enumerator, &values,
+                MCA_BASE_VAR_DUMP_TYPE_TO_ENUM_DUMP_TYPE(output_type));
             if (OPAL_SUCCESS == ret) {
                 opal_asprintf(out[0] + line++, "Valid values: %s", values);
                 free(values);

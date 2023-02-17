@@ -20,6 +20,8 @@
  *                         All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * Copyright (c) 2022      Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (c) 2022      Computer Architecture and VLSI Systems (CARV)
+ *                         Laboratory, ICS Forth. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -34,6 +36,17 @@ extern char *opal_signal_string;
 extern char *opal_stacktrace_output_filename;
 extern char *opal_net_private_ipv4;
 extern char *opal_set_max_sys_limits;
+
+/* Supported color configuration keys
+ * for dumping MCA variables with colors */
+typedef enum {
+    OPAL_VAR_DUMP_COLOR_VAR_NAME = 0,
+    OPAL_VAR_DUMP_COLOR_VAR_VALUE = 1,
+    OPAL_VAR_DUMP_COLOR_VALID_VALUES = 2,
+    OPAL_VAR_DUMP_COLOR_KEY_COUNT
+} opal_var_dump_color_key_t;
+
+extern char *opal_var_dump_color[OPAL_VAR_DUMP_COLOR_KEY_COUNT];
 
 #    if OPAL_ENABLE_TIMING
 extern char *opal_timing_sync_file;
