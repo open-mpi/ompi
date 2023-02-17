@@ -103,7 +103,7 @@ static int ompi_osc_rdma_peer_setup (ompi_osc_rdma_module_t *module, ompi_osc_rd
     ompi_osc_rdma_rank_data_t rank_data;
     int registration_handle_size = 0;
     int node_id, node_rank, array_index;
-    int ret, disp_unit, comm_size;
+    int ret, disp_unit;
     char *peer_data;
 
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_DEBUG, "configuring peer for rank %d", peer->rank);
@@ -112,17 +112,15 @@ static int ompi_osc_rdma_peer_setup (ompi_osc_rdma_module_t *module, ompi_osc_rd
         registration_handle_size = module->selected_btl->btl_registration_handle_size;
     }
 
-    comm_size = ompi_comm_size (module->comm);
-
     /* each node is responsible for holding a part of the rank -> node/local rank mapping array. this code
      * calculates the node and offset the mapping can be found. once the mapping has been read the state
      * part of the peer structure can be initialized. */
-    node_id = (peer->rank * module->node_count) / comm_size;
+    node_id = peer->rank / RANK_ARRAY_COUNT(module);
     array_peer_data = (ompi_osc_rdma_region_t *) ((intptr_t) module->node_comm_info + node_id * module->region_size);
 
     /* the node leader rank is stored in the length field */
     node_rank = NODE_ID_TO_RANK(module, array_peer_data, node_id);
-    array_index = peer->rank % ((comm_size + module->node_count - 1) / module->node_count);
+    array_index = peer->rank % RANK_ARRAY_COUNT(module);
 
     array_pointer = array_peer_data->base + array_index * sizeof (rank_data);
 
