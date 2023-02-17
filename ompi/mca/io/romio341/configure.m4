@@ -114,6 +114,7 @@ AC_DEFUN([MCA_ompi_io_romio341_CONFIG],[
 
                    AS_IF([test "$io_romio341_happy" = "1"],
                          [$1],
-                         [$2])])])
+                         [OPAL_MAKEDIST_DISABLE="$OPAL_MAKEDIST_DISABLE ROMIO"
+			  $2])])])
     OPAL_VAR_SCOPE_POP
 ])
