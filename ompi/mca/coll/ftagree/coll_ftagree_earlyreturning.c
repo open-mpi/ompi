@@ -420,6 +420,7 @@ static const char *era_status_to_string(era_proc_status_t s) {
     }
     return "UNDEFINED STATUS";
 }
+#endif /* OPAL_ENABLE_DEBUG */
 
 static const char *era_msg_type_to_string(int type) {
     switch(type) {
@@ -432,7 +433,6 @@ static const char *era_msg_type_to_string(int type) {
     }
     return "UNDEFINED MESSAGE TYPE";
 }
-#endif /* OPAL_ENABLE_DEBUG */
 
 static ompi_coll_ftagree_era_agreement_info_t *era_lookup_agreement_info(era_identifier_t agreement_id)
 {
@@ -808,12 +808,12 @@ static void era_update_new_dead_list(ompi_coll_ftagree_era_agreement_info_t *ci)
     }
 
     OPAL_OUTPUT_VERBOSE((30, ompi_ftmpi_output_handle,
-                         "%s ftagree:agreement (ERA) agreement (%d.%d).%d -- adding %d procs to the list of newly dead processes",
+                         "%s ftagree:agreement (ERA) agreement (%d.%d).%d -- adding %d procs to the list of newly dead processes (%d currently; AFR size is %d)",
                          OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
                          ci->agreement_id.ERAID_FIELDS.contextid,
                          ci->agreement_id.ERAID_FIELDS.epoch,
                          ci->agreement_id.ERAID_FIELDS.agreementid,
-                         r));
+                         r, ci->current_value->new_dead_array, ags->afr_size));
 
 #if OPAL_ENABLE_DEBUG
     {
@@ -1372,16 +1372,14 @@ static void era_build_tree_structure(ompi_coll_ftagree_era_agreement_info_t *ci)
 
     era_call_tree_fn(ci);
 
-    if( ompi_comm_rank(ci->comm) == 0 ) {
-        OPAL_OUTPUT_VERBOSE((4, ompi_ftmpi_output_handle,
-                             "%s ftagree:agreement (ERA) Agreement (%d.%d).%d: re-built the tree structure with size %d: %s\n",
-                             OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
-                             ci->agreement_id.ERAID_FIELDS.contextid,
-                             ci->agreement_id.ERAID_FIELDS.epoch,
-                             ci->agreement_id.ERAID_FIELDS.agreementid,
-                             AGS(ci->comm)->tree_size,
-                             era_debug_tree(ci->ags->tree, ci->ags->tree_size)));
-    }
+    OPAL_OUTPUT_VERBOSE(((ompi_comm_rank(ci->comm) == 0)? 4: 50, ompi_ftmpi_output_handle,
+                        "%s ftagree:agreement (ERA) Agreement (%d.%d).%d: re-built the tree structure with size %d: %s\n",
+                        OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
+                        ci->agreement_id.ERAID_FIELDS.contextid,
+                        ci->agreement_id.ERAID_FIELDS.epoch,
+                        ci->agreement_id.ERAID_FIELDS.agreementid,
+                        AGS(ci->comm)->tree_size,
+                        era_debug_tree(ci->ags->tree, ci->ags->tree_size)));
 
 #if OPAL_ENABLE_DEBUG
     era_tree_check(ci->ags->tree, ci->ags->tree_size, 0);
@@ -2184,7 +2182,21 @@ static void send_msg(ompi_communicator_t *comm,
     }
     assert(NULL != peer);
     endpoint = mca_bml_base_get_endpoint(peer);
-    assert(NULL != endpoint);
+    if(NULL == endpoint) {
+      opal_output_verbose(5, ompi_ftmpi_output_handle,
+                             "%s ftagree:agreement (ERA) CANNOT send message [(%d.%d).%d, %s, %08x.%d.%d..] to %d/%s (no endpoint)\n",
+                             OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
+                             agreement_id.ERAID_FIELDS.contextid,
+                             agreement_id.ERAID_FIELDS.epoch,
+                             agreement_id.ERAID_FIELDS.agreementid,
+                             era_msg_type_to_string(type),
+                             (NULL != value->bytes)? *(int*)value->bytes: 0,
+                             value->header.ret,
+                             value->header.nb_new_dead,
+                             dst,
+                             NULL != proc_name ? OMPI_NAME_PRINT(proc_name) : "(null)");
+      return; /* bail out: the algorithm should reconnect when the failed proc is detected */
+    }
     bml_btl = mca_bml_base_btl_array_get_index(&endpoint->btl_eager, 0);
     assert(NULL != bml_btl);
     btl_endpoint = bml_btl->btl_endpoint;
@@ -2570,7 +2582,7 @@ static void msg_down(era_msg_header_t *msg_header, uint8_t *bytes, int *new_dead
          */
         return;
     }
-    /** if I receive a down message on an agreement I know about, I already participated. 
+    /** if I receive a down message on an agreement I know about, I already participated.
      * There is a non-erroneous code; erroneous execution that may also trigger this assert:
      * consider the following case with false detection:
      *   1. some ancestor A has detected the current process C as failed

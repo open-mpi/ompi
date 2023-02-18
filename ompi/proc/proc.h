@@ -471,6 +471,7 @@ static inline void ompi_proc_mark_as_failed(ompi_proc_t *proc) {
         abort();
     }
     proc->proc_active = false;
+    opal_atomic_wmb(); /* non-locked update needs a memory barrier to propagate */
 }
 #endif /* OPAL_ENABLE_FT_MPI */
 
