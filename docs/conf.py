@@ -221,5 +221,6 @@ rst_prolog = f"""
 .. |flex_min_version| replace:: {flex_min_version}
 .. |mpi_standard_version| replace:: {mpi_standard_version}
 .. |mpi_standard_subversion| replace:: {mpi_standard_subversion}
+.. |deprecated_favor| replace:: this routine is deprecated in favor of
 
 """

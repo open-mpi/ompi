@@ -6,8 +6,7 @@ MPI_Address
 
 .. include_body
 
-:ref:`MPI_Address` - Gets the address of a location in memory -- use of
-this routine is deprecated.
+:ref:`MPI_Address` - Gets the address of a location in memory -- |deprecated_favor| :ref:`MPI_Get_address`.
 
 
 SYNTAX
