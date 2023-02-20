@@ -6,8 +6,8 @@ MPI_Attr_put
 
 .. include_body
 
-:ref:`MPI_Attr_put` - Stores attribute value associated with a key -- use
-of this routine is deprecated.
+:ref:`MPI_Attr_put` - Stores attribute value associated with a key -- |deprecated_favor| :ref:`MPI_Comm_set_attr`.
+
 
 
 SYNTAX

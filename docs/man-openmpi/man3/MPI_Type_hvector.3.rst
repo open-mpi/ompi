@@ -6,8 +6,7 @@ MPI_Type_hvector
 
 .. include_body
 
-:ref:`MPI_Type_hvector` - Creates a vector (strided) datatype with offset
-in bytes -- use of this routine is deprecated.
+:ref:`MPI_Type_hvector` - Creates a vector (strided) datatype with offset in bytes -- |deprecated_favor| :ref:`MPI_Type_create_hvector`.
 
 
 SYNTAX

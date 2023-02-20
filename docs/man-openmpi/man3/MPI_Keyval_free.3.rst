@@ -6,9 +6,7 @@ MPI_Keyval_free
 
 .. include_body
 
-:ref:`MPI_Keyval_free` - Frees attribute key for communicator cache
-attribute -- use of this routine is deprecated.
-
+:ref:`MPI_Keyval_free` - Frees attribute key for communicator cache attribute -- |deprecated_favor| :ref:`MPI_Comm_free_keyval`.
 
 SYNTAX
 ------
