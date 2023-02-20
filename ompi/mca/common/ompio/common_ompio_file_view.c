@@ -13,6 +13,7 @@
  * Copyright (c) 2017-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
+ * Copyright (c) 2023      Advanced Micro Devices, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -53,6 +54,16 @@ static int datatype_duplicate  (ompi_datatype_t *oldtype, ompi_datatype_t **newt
     return OMPI_SUCCESS;
 }
 
+static void fview_clear (struct ompio_fview_t *fview) {
+    if (NULL != fview->f_decoded_iov) {
+        free (fview->f_decoded_iov);
+        fview->f_decoded_iov = NULL;
+    }
+
+    /* Reset the flags */
+    fview->f_flags &= ~OMPIO_CONTIGUOUS_FVIEW;
+    fview->f_flags &= ~OMPIO_UNIFORM_FVIEW;
+}
 
 int mca_common_ompio_set_view (ompio_file_t *fh,
                                OMPI_MPI_OFFSET_TYPE disp,
@@ -82,18 +93,15 @@ int mca_common_ompio_set_view (ompio_file_t *fh,
         shared_fp_base_module->sharedfp_get_position(fh, &disp);
     }
     
-    if ( NULL != fh->f_etype ) {
+    fview_clear(&(fh->f_fview));
+    if (NULL != fh->f_etype) {
         ompi_datatype_destroy (&fh->f_etype);
     }
-    if ( NULL != fh->f_filetype ) {
+    if (NULL != fh->f_filetype) {
         ompi_datatype_destroy (&fh->f_filetype);
     }
-    if ( NULL != fh->f_orig_filetype ) {
+    if (NULL != fh->f_orig_filetype) {
         ompi_datatype_destroy (&fh->f_orig_filetype);
-    }
-    if (NULL != fh->f_decoded_iov) {
-        free (fh->f_decoded_iov);
-        fh->f_decoded_iov = NULL;
     }
 
     if (NULL != fh->f_datarep) {
@@ -106,17 +114,8 @@ int mca_common_ompio_set_view (ompio_file_t *fh,
         free (fh->f_file_convertor);
         fh->f_file_convertor = NULL;
     }
-    
-    /* Reset the flags first */
-    if ( fh->f_flags & OMPIO_CONTIGUOUS_FVIEW ) {
-        fh->f_flags &= ~OMPIO_CONTIGUOUS_FVIEW;
-    }
-    if ( fh->f_flags & OMPIO_UNIFORM_FVIEW ) {
-        fh->f_flags &= ~OMPIO_UNIFORM_FVIEW;
-    }
-    if ( fh->f_flags & OMPIO_DATAREP_NATIVE ) {
-        fh->f_flags &= ~OMPIO_DATAREP_NATIVE;
-    }
+
+    fh->f_flags  &= ~OMPIO_DATAREP_NATIVE;
     fh->f_datarep = strdup (datarep);
 
     if ( !(strcmp(datarep, "external32") && strcmp(datarep, "EXTERNAL32"))) {
@@ -131,9 +130,9 @@ int mca_common_ompio_set_view (ompio_file_t *fh,
         fh->f_flags |= OMPIO_DATAREP_NATIVE;
     }
     
-    datatype_duplicate (filetype, &fh->f_orig_filetype );
-    opal_datatype_get_extent(&filetype->super, &lb, &ftype_extent);
-    opal_datatype_type_size (&filetype->super, &ftype_size);
+    datatype_duplicate       (filetype, &(fh->f_orig_filetype));
+    opal_datatype_get_extent (&filetype->super, &lb, &ftype_extent);
+    opal_datatype_type_size  (&filetype->super, &ftype_size);
 
     if ( etype == filetype                             &&
 	 ompi_datatype_is_predefined (filetype )       &&
@@ -144,16 +143,16 @@ int mca_common_ompio_set_view (ompio_file_t *fh,
 	ompi_datatype_commit (&newfiletype);
     }
     else {
-        newfiletype = filetype;
-	fh->f_flags |= OMPIO_FILE_VIEW_IS_SET;
+        newfiletype          = filetype;
+        fh->f_fview.f_flags |= OMPIO_FILE_VIEW_IS_SET;
     }
 
-    fh->f_iov_count   = 0;
-    fh->f_disp        = disp;
-    fh->f_offset      = disp;
-    fh->f_total_bytes = 0;
-    fh->f_index_in_file_view=0;
-    fh->f_position_in_file_view=0;
+    fh->f_fview.f_iov_count             = 0;
+    fh->f_fview.f_disp                  = disp;
+    fh->f_fview.f_offset                = disp;
+    fh->f_fview.f_total_bytes           = 0;
+    fh->f_fview.f_index_in_file_view    = 0;
+    fh->f_fview.f_position_in_file_view = 0;
 
     mca_common_ompio_decode_datatype (fh,
                                       newfiletype,
@@ -161,26 +160,26 @@ int mca_common_ompio_set_view (ompio_file_t *fh,
                                       NULL,
                                       &max_data,
                                       fh->f_file_convertor,
-                                      &fh->f_decoded_iov,
-                                      &fh->f_iov_count);
+                                      &fh->f_fview.f_decoded_iov,
+                                      &fh->f_fview.f_iov_count);
 
-    opal_datatype_get_extent(&newfiletype->super, &lb, &fh->f_view_extent);
+    opal_datatype_get_extent(&newfiletype->super, &lb, &fh->f_fview.f_view_extent);
     opal_datatype_type_ub   (&newfiletype->super, &ub);
-    opal_datatype_type_size (&etype->super, &fh->f_etype_size);
-    opal_datatype_type_size (&newfiletype->super, &fh->f_view_size);
+    opal_datatype_type_size (&etype->super, &fh->f_fview.f_etype_size);
+    opal_datatype_type_size (&newfiletype->super, &fh->f_fview.f_view_size);
     datatype_duplicate (etype, &fh->f_etype);
     // This file type is our own representation. The original is stored
     // in orig_file type, No need to set args on this one.
     ompi_datatype_duplicate (newfiletype, &fh->f_filetype);
 
-    if ( (fh->f_view_size % fh->f_etype_size) ) {
+    if ( (fh->f_fview.f_view_size % fh->f_fview.f_etype_size) ) {
         // File view is not a multiple of the etype.
         return MPI_ERR_ARG;
     }
     
     // make sure that displacement is not negative, which could
     // lead to an illegal access.
-    if ( 0 < fh->f_iov_count && 0 > (off_t)fh->f_decoded_iov[0].iov_base ) {
+    if ( 0 < fh->f_fview.f_iov_count && 0 > (off_t)fh->f_fview.f_decoded_iov[0].iov_base ) {
         // I think MPI_ERR_TYPE would be more appropriate, but
         // this is the error code expected in a testsuite, so I just
         // go with this.
@@ -197,8 +196,8 @@ int mca_common_ompio_set_view (ompio_file_t *fh,
 
     if (opal_datatype_is_contiguous_memory_layout(&etype->super,1)) {
         if (opal_datatype_is_contiguous_memory_layout(&filetype->super,1) &&
-	    fh->f_view_extent == (ptrdiff_t)fh->f_view_size ) {
-            fh->f_flags |= OMPIO_CONTIGUOUS_FVIEW;
+	    fh->f_fview.f_view_extent == (ptrdiff_t)fh->f_fview.f_view_size ) {
+            fh->f_fview.f_flags |= OMPIO_CONTIGUOUS_FVIEW;
         }
     }
 
@@ -389,17 +388,17 @@ OMPI_MPI_OFFSET_TYPE get_contiguous_chunk_size (ompio_file_t *fh, int flag)
 
     if ( flag  ) {
         global_avg[0] = MCA_IO_DEFAULT_FILE_VIEW_SIZE;
-        fh->f_avg_view_size = fh->f_view_size;
+        fh->f_avg_view_size = fh->f_fview.f_view_size;
     }
     else {
-        for (i=0 ; i<(int)fh->f_iov_count ; i++) {
-            avg[0] += fh->f_decoded_iov[i].iov_len;
+        for (i=0 ; i<(int)fh->f_fview.f_iov_count ; i++) {
+            avg[0] += fh->f_fview.f_decoded_iov[i].iov_len;
         }
-        if ( 0 != fh->f_iov_count ) {
-            avg[0] = avg[0]/fh->f_iov_count;
+        if ( 0 != fh->f_fview.f_iov_count ) {
+            avg[0] = avg[0]/fh->f_fview.f_iov_count;
         }
-        avg[1] = (OMPI_MPI_OFFSET_TYPE) fh->f_iov_count;
-        avg[2] = (OMPI_MPI_OFFSET_TYPE) fh->f_view_size;
+        avg[1] = (OMPI_MPI_OFFSET_TYPE) fh->f_fview.f_iov_count;
+        avg[2] = (OMPI_MPI_OFFSET_TYPE) fh->f_fview.f_view_size;
         
         fh->f_comm->c_coll->coll_allreduce (avg,
                                             global_avg,
@@ -416,4 +415,32 @@ OMPI_MPI_OFFSET_TYPE get_contiguous_chunk_size (ompio_file_t *fh, int flag)
     return global_avg[0];
 }
 
+int mca_common_ompio_fview_duplicate (struct ompio_fview_t *outfv, struct ompio_fview_t *infv)
+{
+    uint32_t i;
 
+    memset(outfv, 0, sizeof(struct ompio_fview_t));
+    outfv->f_flags     = infv->f_flags;
+    outfv->f_offset    = infv->f_offset;
+    outfv->f_disp      = infv->f_disp;
+    outfv->f_iov_count = infv->f_iov_count;
+
+    outfv->f_decoded_iov = (struct iovec*) malloc (outfv->f_iov_count * sizeof(struct iovec));
+    if (NULL == outfv->f_decoded_iov) {
+        opal_output(1, "common_ompio_duplicate_fview: could not allocate memory\n");
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+    for (i=0; i < outfv->f_iov_count; i++) {
+        outfv->f_decoded_iov[i].iov_base = infv->f_decoded_iov[i].iov_base;
+        outfv->f_decoded_iov[i].iov_len  = infv->f_decoded_iov[i].iov_len ;
+    }
+
+    outfv->f_position_in_file_view = infv->f_position_in_file_view;
+    outfv->f_total_bytes           = infv->f_total_bytes;
+    outfv->f_index_in_file_view    = infv->f_index_in_file_view;
+    outfv->f_view_extent           = infv->f_view_extent;
+    outfv->f_view_size             = infv->f_view_size;
+    outfv->f_etype_size            = infv->f_etype_size;
+
+    return OMPI_SUCCESS;
+}

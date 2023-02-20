@@ -90,7 +90,6 @@ OMPI_DECLSPEC extern mca_io_base_component_2_0_0_t mca_io_ompio_component;
 /*
  * global variables, instantiated in module.c
  */
-extern opal_mutex_t mca_io_ompio_mutex;
 extern mca_io_base_module_2_0_0_t mca_io_ompio_module;
 OMPI_DECLSPEC extern mca_io_base_component_2_0_0_t mca_io_ompio_component;
 

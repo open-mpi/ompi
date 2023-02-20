@@ -14,6 +14,7 @@
  * Copyright (c) 2018      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018      DataDirect Networks. All rights reserved.
+ * Copyright (c) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -140,8 +141,23 @@ typedef int (*mca_common_ompio_generate_current_file_view_fn_t) (struct ompio_fi
    temporary buffer on aggregators from the fcoll modules */
 typedef int (*mca_common_ompio_get_mca_parameter_value_fn_t) ( char *mca_parameter_name, int name_length );
 
-
 struct mca_common_ompio_print_queue;
+
+/* File View parameters and position in file*/
+struct ompio_fview_t {
+    uint32_t               f_flags;
+    OMPI_MPI_OFFSET_TYPE   f_offset; /* byte offset of current position */
+    OMPI_MPI_OFFSET_TYPE   f_disp;   /* file_view displacement */
+    struct iovec          *f_decoded_iov;
+    uint32_t               f_iov_count;
+    size_t                 f_position_in_file_view; /* in bytes */
+    size_t                 f_total_bytes; /* total bytes read/written within 1 Fview*/
+    int                    f_index_in_file_view;
+    ptrdiff_t              f_view_extent;
+    size_t                 f_view_size;
+    size_t                 f_etype_size;
+};
+typedef struct ompio_fview_t ompio_fview_t;
 
 /**
  * Back-end structure for MPI_File
@@ -150,8 +166,7 @@ struct ompio_file_t {
     /* General parameters */
     int                    fd;
     struct ompi_file_t    *f_fh;     /* pointer back to the file_t structure */
-    OMPI_MPI_OFFSET_TYPE   f_offset; /* byte offset of current position */
-    OMPI_MPI_OFFSET_TYPE   f_disp;   /* file_view displacement */
+    uint32_t               f_flags;
     int                    f_rank;
     int                    f_size;
     int                    f_amode;
@@ -163,7 +178,6 @@ struct ompio_file_t {
     opal_convertor_t      *f_mem_convertor;
     opal_convertor_t      *f_file_convertor;
     opal_info_t           *f_info;
-    int32_t                f_flags;
     void                  *f_fs_ptr;
     int                    f_fs_block_size;
     int                    f_atomicity;
@@ -180,24 +194,16 @@ struct ompio_file_t {
     */
     void                  *f_sharedfp_data;
 
-
     /* File View parameters */
-    struct iovec     *f_decoded_iov;
-    uint32_t          f_iov_count;
-    ompi_datatype_t  *f_iov_type;
-    size_t            f_position_in_file_view; /* in bytes */
-    size_t            f_total_bytes; /* total bytes read/written within 1 Fview*/
-    int               f_index_in_file_view;
-    ptrdiff_t         f_view_extent;
-    size_t            f_view_size;
-    ompi_datatype_t  *f_etype;
-    ompi_datatype_t  *f_filetype;
-    ompi_datatype_t  *f_orig_filetype; /* the fileview passed by the user to us */
-    size_t            f_etype_size;
+    struct ompio_fview_t   f_fview;
+    ompi_datatype_t       *f_iov_type;
+    ompi_datatype_t       *f_etype;
+    ompi_datatype_t       *f_filetype;
+    ompi_datatype_t       *f_orig_filetype; /* the fileview passed by the user to us */
 
     /* contains IO requests that needs to be read/written */
     mca_common_ompio_io_array_t *f_io_array;
-    int                      f_num_of_io_entries;
+    int                    f_num_of_io_entries;
 
     /* Hooks for modules to hang things */
     mca_base_component_t *f_fs_component;
@@ -272,9 +278,9 @@ OMPI_DECLSPEC int mca_common_ompio_file_iwrite_all (ompio_file_t *fp, const void
 OMPI_DECLSPEC int mca_common_ompio_file_iwrite_at_all (ompio_file_t *fp, OMPI_MPI_OFFSET_TYPE offset, const void *buf,
                                                        int count, struct ompi_datatype_t *datatype, ompi_request_t **request);
 
-OMPI_DECLSPEC int mca_common_ompio_build_io_array ( ompio_file_t *fh, int index, int cycles,
+OMPI_DECLSPEC int mca_common_ompio_build_io_array ( ompio_fview_t *fview, int index, int cycles,
                                                     size_t bytes_per_cycle, size_t max_data, uint32_t iov_count,
-                                                    struct iovec *decoded_iov, int *ii, int *jj, size_t *tbw,
+                                                    struct iovec *decoded_iov, int *ii, size_t *tbw,
                                                     size_t *spc, mca_common_ompio_io_array_t **io_array,
                                                     int *num_io_entries );
 
@@ -341,6 +347,8 @@ OMPI_DECLSPEC int mca_common_ompio_decode_datatype (struct ompio_file_t *fh,
                                                     opal_convertor_t *convertor,
                                                     struct iovec **iov,
                                                     uint32_t *iov_count);
+
+OMPI_DECLSPEC int mca_common_ompio_fview_duplicate (struct ompio_fview_t *outfv, struct ompio_fview_t *infv);
 
 OMPI_DECLSPEC int mca_common_ompio_set_callbacks(mca_common_ompio_generate_current_file_view_fn_t generate_current_file_view,
                                                  mca_common_ompio_get_mca_parameter_value_fn_t get_mca_parameter_value);

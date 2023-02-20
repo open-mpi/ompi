@@ -104,7 +104,7 @@ int mca_io_ompio_file_get_view (struct ompi_file_t *fp,
     fh = &data->ompio_fh;
 
     OPAL_THREAD_LOCK(&fp->f_lock);
-    *disp = fh->f_disp;
+    *disp = fh->f_fview.f_disp;
     datatype_duplicate (fh->f_etype, etype);
     datatype_duplicate (fh->f_orig_filetype, filetype);
     strcpy (datarep, fh->f_datarep);

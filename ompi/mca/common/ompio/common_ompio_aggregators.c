@@ -239,13 +239,13 @@ int mca_common_ompio_fview_based_grouping(ompio_file_t *fh,
     OMPI_MPI_OFFSET_TYPE *start_offsets_lens = NULL;
 
     //Store start offset,length and corresponding rank in an array
-    if(NULL == fh->f_decoded_iov){
+    if(NULL == fh->f_fview.f_decoded_iov){
       start_offset_len[0] = 0;
       start_offset_len[1] = 0;
     }
     else{
-       start_offset_len[0] = (OMPI_MPI_OFFSET_TYPE) fh->f_decoded_iov[0].iov_base;
-       start_offset_len[1] = fh->f_decoded_iov[0].iov_len;
+       start_offset_len[0] = (OMPI_MPI_OFFSET_TYPE) fh->f_fview.f_decoded_iov[0].iov_base;
+       start_offset_len[1] = fh->f_fview.f_decoded_iov[0].iov_len;
     }
     start_offset_len[2] = fh->f_rank;
 
@@ -1275,13 +1275,13 @@ int mca_common_ompio_prepare_to_group(ompio_file_t *fh,
     int ret=OMPI_SUCCESS;
 
     //Store start offset and length in an array //also add bytes per process
-    if(NULL == fh->f_decoded_iov){
+    if(NULL == fh->f_fview.f_decoded_iov){
          start_offset_len[0] = 0;
          start_offset_len[1] = 0;
     }
     else{
-         start_offset_len[0] = (OMPI_MPI_OFFSET_TYPE) fh->f_decoded_iov[0].iov_base;
-         start_offset_len[1] = fh->f_decoded_iov[0].iov_len;
+         start_offset_len[0] = (OMPI_MPI_OFFSET_TYPE) fh->f_fview.f_decoded_iov[0].iov_base;
+         start_offset_len[1] = fh->f_fview.f_decoded_iov[0].iov_len;
     }
     start_offset_len[2] = bytes_per_proc;
     start_offsets_lens_tmp = (OMPI_MPI_OFFSET_TYPE* )malloc (3 * fh->f_init_procs_per_group * sizeof(OMPI_MPI_OFFSET_TYPE));
