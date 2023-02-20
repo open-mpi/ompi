@@ -415,6 +415,7 @@ OMPI_MAN3 = \
         MPI_Status_set_cancelled.3 \
         MPI_Status_set_elements.3 \
         MPI_Status_set_elements_x.3 \
+        MPI_T.3 \
         MPI_T_category_changed.3 \
         MPI_T_category_get_categories.3 \
         MPI_T_category_get_cvars.3 \
@@ -542,9 +543,8 @@ OMPI_MAN3 = \
         MPIX_Query_rocm_support.3 \
         OMPI_Affinity_str.3
 
-OMPI_MAN5 = \
-        MPI_T.5 \
-        Open-MPI.5
+OMPI_MAN7 = \
+        Open-MPI.7
 
 OSHMEM_MAN1 = \
         oshmem-wrapper-compiler.1 \
@@ -779,8 +779,8 @@ OMPI_MAN1_BUILT = $(OMPI_MAN1:%.1=$(MAN_OUTDIR)/%.1)
 OMPI_MAN3_RST = $(OMPI_MAN3:%.3=man-openmpi/man3/%.3.rst)
 OMPI_MAN3_BUILT = $(OMPI_MAN3:%.3=$(MAN_OUTDIR)/%.3)
 
-OMPI_MAN5_RST = $(OMPI_MAN5:%.5=man-openmpi/man5/%.5.rst)
-OMPI_MAN5_BUILT = $(OMPI_MAN5:%.5=$(MAN_OUTDIR)/%.5)
+OMPI_MAN7_RST = $(OMPI_MAN7:%.7=man-openmpi/man7/%.7.rst)
+OMPI_MAN7_BUILT = $(OMPI_MAN7:%.7=$(MAN_OUTDIR)/%.7)
 
 OSHMEM_MAN1_RST = $(OSHMEM_MAN1:%.1=man-oshmem/man1/%.1.rst)
 OSHMEM_MAN1_BUILT = $(OSHMEM_MAN1:%.1=$(MAN_OUTDIR)/%.1)
@@ -791,7 +791,7 @@ OSHMEM_MAN3_BUILT = $(OSHMEM_MAN3:%.3=$(MAN_OUTDIR)/%.3)
 EXTRA_DIST += \
         $(OMPI_MAN1_BUILT) \
         $(OMPI_MAN3_BUILT) \
-        $(OMPI_MAN5_BUILT) \
+        $(OMPI_MAN7_BUILT) \
         $(OSHMEM_MAN1_BUILT) \
         $(OSHMEM_MAN3_BUILT)
 
@@ -852,7 +852,7 @@ EXTRA_DIST += \
         $(OUTDIR)/man
 
 ALL_MAN_BUILT = \
-        $(OMPI_MAN1_BUILT) $(OMPI_MAN3_BUILT) $(OMPI_MAN5_BUILT) \
+        $(OMPI_MAN1_BUILT) $(OMPI_MAN3_BUILT) $(OMPI_MAN7_BUILT) \
         $(OSHMEM_MAN1_BUILT) $(OSHMEM_MAN_3_BUILT)
 $(ALL_MAN_BUILT): $(RST_SOURCE_FILES) $(IMAGE_SOURCE_FILES)
 $(ALL_MAN_BUILT): $(TEXT_SOURCE_FILES) $(SPHINX_CONFIG)
@@ -903,7 +903,7 @@ man1_MANS += $(OMPI_MAN1_JAVA_REDIRECTS)
 endif
 
 man3_MANS = $(OMPI_MAN3_BUILT)
-man5_MANS = $(OMPI_MAN5_BUILT)
+man7_MANS = $(OMPI_MAN7_BUILT)
 
 if PROJECT_OSHMEM
 man1_MANS += \

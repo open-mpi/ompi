@@ -19,4 +19,4 @@ Open MPI man pages, by section:
 
    man1/index
    man3/index
-   man5/index
+   man7/index
