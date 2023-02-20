@@ -122,4 +122,5 @@ Open MPI's MPI_T categories are organized hierarchically:
       framework in the opal layer.
 
 
-.. seealso:: :ref:`MPI_T_init_thread(3) <mpi_t_init_thread>`
+.. seealso::
+   * :ref:`MPI_T_init_thread`
