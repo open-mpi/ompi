@@ -6,8 +6,7 @@ MPI_Type_lb
 
 .. include_body
 
-:ref:`MPI_Type_lb` - Returns the lower bound of a data type -- use of this
-routine is deprecated.
+:ref:`MPI_Type_lb` - Returns the lower bound of a data type -- |deprecated_favor| :ref:`MPI_Type_get_extent`.
 
 
 SYNTAX

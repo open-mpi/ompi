@@ -6,8 +6,7 @@ MPI_Keyval_create
 
 .. include_body
 
-:ref:`MPI_Keyval_create` - Generates a new attribute key -- use of this
-routine is deprecated.
+:ref:`MPI_Keyval_create` - Generates a new attribute key -- |deprecated_favor| :ref:`MPI_Comm_create_keyval`.
 
 
 SYNTAX

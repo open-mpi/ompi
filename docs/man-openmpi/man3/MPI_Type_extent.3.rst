@@ -6,9 +6,7 @@ MPI_Type_extent
 
 .. include_body
 
-:ref:`MPI_Type_extent` - Returns the extent of a data type, the difference
-between the upper and lower bounds of the data type -- use of this
-routine is deprecated.
+:ref:`MPI_Type_extent` - Returns the extent of a data type -- |deprecated_favor| :ref:`MPI_Type_get_extent`.
 
 
 SYNTAX
