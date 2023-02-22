@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2010-2012 Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2011-2020 The University of Tennessee and The University
+ * Copyright (c) 2011-2022 The University of Tennessee and The University
  *
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
@@ -30,7 +30,7 @@ ompi_comm_rank_failure_callback_t *ompi_rank_failure_cbfunc = NULL;
  * The handling of known failed processes is based on a two level process. On one
  * side the MPI library itself must know the failed processes (in order to be able
  * to correctly handle complex operations such as shrink). On the other side, the
- * failed processes acknowledged by the users shuould not be altered during any of
+ * failed processes acknowledged by the users should not be altered during any of
  * the internal calls, as they must only be updated upon user request.
  * Thus, the global list (ompi_group_all_failed_procs) is the list of all known
  * failed processes (by the MPI library internals), and it is allegedly updated
@@ -39,6 +39,7 @@ ompi_comm_rank_failure_callback_t *ompi_rank_failure_cbfunc = NULL;
  * in the context of a communicator. Thus, using a single index to know the user-level
  * acknowledged failure is the simplest solution.
  */
+/* deprecated ulfm v1 API */
 int ompi_comm_failure_ack_internal(ompi_communicator_t* comm)
 {
     opal_mutex_lock(&ompi_group_afp_mutex);
@@ -49,11 +50,13 @@ int ompi_comm_failure_ack_internal(ompi_communicator_t* comm)
     /* use the AFP lock implicit memory barrier to propagate the update to
      * any_source_enabled at the same time.
      */
+    comm->num_acked = -1; /* compat with v2 API: force recompute next time ack_failed is called */
     opal_mutex_unlock(&ompi_group_afp_mutex);
 
     return OMPI_SUCCESS;
 }
 
+/* deprecated ulfm v1 API; used internally in MPI_COMM_AGREE as well */
 int ompi_comm_failure_get_acked_internal(ompi_communicator_t* comm, ompi_group_t **group )
 {
     int ret, exit_status = OMPI_SUCCESS;
@@ -111,6 +114,105 @@ int ompi_comm_failure_get_acked_internal(ompi_communicator_t* comm, ompi_group_t
         tmp_sub_group = NULL;
     }
 
+    return exit_status;
+}
+
+/* New v2 interface get_failed/ack_failed.
+ * This interface uses a cached value comm->num_acked to track how many
+ * processes in the group of this comm have been acknowledged in prior calls.
+ * For compatibility with v1 interface (failure_get_acked), it still updates
+ * the comm->any_source_offset, and the v1 interface failure_ack may erase the
+ * cached value comm->num_acked with -1 to force recomputing this value in mixed
+ * use cases (that is calling failure_ack will force full recomputation of
+ * comm->num_acked during the next ack_failed call). */
+int ompi_comm_ack_failed_internal(ompi_communicator_t* comm, int num_to_ack, int *num_acked) {
+    int ret, exit_status = MPI_SUCCESS;
+    int nf = -1, na = -1;
+    ompi_group_t *c_group = OMPI_COMM_IS_INTER(comm)? comm->c_local_group: comm->c_remote_group;
+    ompi_group_t *failed_group = NULL;
+
+    opal_mutex_lock(&ompi_group_afp_mutex);
+
+    /* shortcut when reading only */
+    if(num_to_ack <= comm->num_acked)
+        goto return_num_acked;
+
+    /* shortcut when no new faults */
+    if(comm->any_source_offset == ompi_group_size(ompi_group_all_failed_procs)
+    && comm->num_acked >= 0 /* reset by a call to v1 API? */)
+        goto return_num_acked;
+
+    /* compute num_acked */
+    ret = ompi_group_intersection(ompi_group_all_failed_procs,
+                                  c_group, &failed_group);
+    if(OMPI_SUCCESS != ret) {
+        exit_status = ret;
+        goto cleanup;
+    }
+    nf = ompi_group_size(failed_group);
+    na = (num_to_ack < nf)? num_to_ack: nf; /* never ack more than requested */
+
+    if(comm->num_acked < 0) { /* reset by a call to the v1 API: recompute it */
+        if(0 == comm->any_source_offset) comm->num_acked = 0;
+        else {
+            int aso = comm->any_source_offset - 1;
+            ret = ompi_group_translate_ranks(ompi_group_all_failed_procs, 1, &aso,
+                                             failed_group, &comm->num_acked);
+            comm->num_acked++; /* make it a group size again */
+            if(OMPI_SUCCESS != ret) {
+                exit_status = ret;
+                goto cleanup;
+            }
+        }
+    }
+
+    if(comm->num_acked < na) { /* comm->num_acked needs to be updated during this call */
+        comm->num_acked = na;
+        if(nf == na) {
+            /* all faults on comm acknowledged, resume any source then */
+            comm->any_source_enabled = true;
+            comm->any_source_offset = ompi_group_size(ompi_group_all_failed_procs); // compat with v1 interface
+        }
+        else {
+            /* some faults not acknowledged, do not resume any source then, but
+             * still update any_source_offset */
+            assert(comm->num_acked > 0);
+            int cna = comm->num_acked - 1;
+            ret = ompi_group_translate_ranks(failed_group, 1, &cna,
+                                             ompi_group_all_failed_procs, &comm->any_source_offset); // compat with v1 interface
+            comm->any_source_offset++; /* make it a group size again */
+            if(OMPI_SUCCESS != ret) {
+                exit_status = ret;
+                goto cleanup;
+            }
+        }
+    }
+
+return_num_acked:
+    *num_acked = comm->num_acked;
+
+cleanup:
+    if(NULL != failed_group) OBJ_RELEASE(failed_group);
+    /* use the AFP lock implicit memory barrier to propagate the update to
+     * any_source_enabled, num_acked, etc. at the same time.
+     */
+    opal_mutex_unlock(&ompi_group_afp_mutex);
+
+    return exit_status;
+}
+
+int ompi_comm_get_failed_internal(ompi_communicator_t* comm, ompi_group_t **group)
+{
+    int ret, exit_status = OMPI_SUCCESS;
+    ompi_group_t *c_group = OMPI_COMM_IS_INTER(comm)? comm->c_local_group: comm->c_remote_group;
+    opal_mutex_lock(&ompi_group_afp_mutex);
+    ret = ompi_group_intersection(ompi_group_all_failed_procs,
+                                  c_group,
+                                  group);
+    opal_mutex_unlock(&ompi_group_afp_mutex);
+    if( OMPI_SUCCESS != ret ) {
+        exit_status = ret;
+    }
     return exit_status;
 }
 

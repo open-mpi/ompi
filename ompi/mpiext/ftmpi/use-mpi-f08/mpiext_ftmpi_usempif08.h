@@ -1,6 +1,6 @@
 ! -*- f90 -*-
 !
-! Copyright (c) 2018-2020 The University of Tennessee and the University
+! Copyright (c) 2018-2022 The University of Tennessee and the University
 !                         of Tennessee Research Foundation.  All rights
 !                         reserved.
 ! $COPYRIGHT$
@@ -88,6 +88,25 @@ subroutine pmpix_comm_failure_get_acked_f08(comm,failedgrp,ierror)
 end subroutine pmpix_comm_failure_get_acked_f08
 end interface pmpix_comm_failure_get_acked
 
+interface mpix_comm_get_failed
+subroutine mpix_comm_get_failed_f08(comm,failedgrp,ierror)
+   use :: mpi_f08_types, only : MPI_Comm, MPI_Group
+   implicit none
+   TYPE(MPI_Comm), INTENT(IN) :: comm
+   TYPE(MPI_Group), INTENT(OUT) :: failedgrp
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine mpix_comm_get_failed_f08
+end interface mpix_comm_get_failed
+
+interface pmpix_comm_get_failed
+subroutine pmpix_comm_get_failed_f08(comm,failedgrp,ierror)
+   use :: mpi_f08_types, only : MPI_Comm, MPI_Group
+   implicit none
+   TYPE(MPI_Comm), INTENT(IN) :: comm
+   TYPE(MPI_Group), INTENT(OUT) :: failedgrp
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine pmpix_comm_get_failed_f08
+end interface pmpix_comm_get_failed
 interface mpix_comm_agree
 subroutine mpix_comm_agree_f08(comm,flag,ierror)
    use :: mpi_f08_types, only : MPI_Comm
@@ -97,6 +116,28 @@ subroutine mpix_comm_agree_f08(comm,flag,ierror)
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine mpix_comm_agree_f08
 end interface mpix_comm_agree
+
+interface mpix_comm_ack_failed
+subroutine mpix_comm_ack_failed_f08(comm,num_to_ack,num_acked,ierror)
+   use :: mpi_f08_types, only : MPI_Comm
+   implicit none
+   TYPE(MPI_Comm), INTENT(IN) :: comm
+   INTEGER, INTENT(IN) :: num_to_ack
+   INTEGER, INTENT(OUT) :: num_acked
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine mpix_comm_ack_failed_f08
+end interface mpix_comm_ack_failed
+
+interface pmpix_comm_ack_failed
+subroutine pmpix_comm_ack_failed_f08(comm,num_to_ack,num_acked,ierror)
+   use :: mpi_f08_types, only : MPI_Comm, MPI_Group
+   implicit none
+   TYPE(MPI_Comm), INTENT(IN) :: comm
+   INTEGER, INTENT(IN) :: num_to_ack
+   INTEGER, INTENT(OUT) :: num_acked
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine pmpix_comm_ack_failed_f08
+end interface pmpix_comm_ack_failed
 
 interface pmpix_comm_agree
 subroutine pmpix_comm_agree_f08(comm,flag,ierror)
