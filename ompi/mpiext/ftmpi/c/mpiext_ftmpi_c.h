@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2010-2012 Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2010-2020 The University of Tennessee and the University
+ * Copyright (c) 2010-2023 The University of Tennessee and the University
  *                         of Tennessee research Foundation.  All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -48,4 +48,5 @@ OMPI_DECLSPEC int OMPI_Comm_failure_inject(MPI_Comm comm, bool notify);
 /* Provide defines to facilitate the detection of the new API */
 #define OMPI_HAVE_MPIX_COMM_GET_FAILED 1
 #define OMPI_HAVE_MPIX_COMM_ACK_FAILED 1
+#define OMPI_HAVE_MPIX_COMM_ISHRINK    1
 
