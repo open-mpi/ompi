@@ -26,6 +26,7 @@
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * Copyright (c) 2018-2022 Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2023      Advanced Micro Devices, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -215,6 +216,11 @@ int ompi_comm_set_nb (ompi_communicator_t **ncomm, ompi_communicator_t *oldcomm,
     if (NULL == newcomm) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
+    newcomm->c_name = (char*) malloc (OPAL_MAX_OBJECT_NAME);
+    if (NULL == newcomm->c_name) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+    newcomm->c_name[0]    = '\0';
     newcomm->super.s_info = NULL;
     /* fill in the inscribing hyper-cube dimensions */
     newcomm->c_cube_dim = opal_cube_dim(local_size);

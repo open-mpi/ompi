@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2009      Sun Microsystems, Inc  All rights reserved.
  * Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012-2013 The University of Tennessee and The University
+ * Copyright (c) 2012-2023 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
@@ -59,8 +59,6 @@ int main(int argc, char **argv) {
     GAP_CHECK("c_contextid", test_comm, c_contextid, c_name, 1);
     GAP_CHECK("c_my_rank", test_comm, c_my_rank, c_contextid, 1);
     GAP_CHECK("c_flags", test_comm, c_flags, c_my_rank, 1);
-    GAP_CHECK("c_id_available", test_comm, c_id_available, c_flags, 1);
-    GAP_CHECK("c_id_start_index", test_comm, c_id_start_index, c_id_available,  1);
     GAP_CHECK("c_remote_group", test_comm, c_remote_group, c_local_group, 1);
     GAP_CHECK("c_local_comm", test_comm, c_local_comm,  c_remote_group,  1);
     GAP_CHECK("c_keyhash", test_comm, c_keyhash, c_local_comm,  1);
@@ -73,8 +71,6 @@ int main(int argc, char **argv) {
 #else
     GAP_CHECK("error_handler", test_comm, error_handler, c_f_to_c_index, 1);
 #endif
-    GAP_CHECK("errhandler_type", test_comm, errhandler_type, error_handler, 1);
-    GAP_CHECK("c_pml_comm", test_comm, c_pml_comm, errhandler_type, 1);
     GAP_CHECK("c_coll", test_comm, c_coll, c_pml_comm, 1);
 
     /* Test Predefined group sizes */
@@ -129,8 +125,6 @@ int main(int argc, char **argv) {
     GAP_CHECK("w_keyhash", test_win, w_keyhash, w_flags, 1);
     GAP_CHECK("w_f_to_c_index", test_win, w_f_to_c_index, w_keyhash, 1);
     GAP_CHECK("error_handler", test_win, error_handler, w_f_to_c_index, 1);
-    GAP_CHECK("errhandler_type", test_win, errhandler_type, error_handler, 1);
-    GAP_CHECK("w_osc_module", test_win, w_osc_module, errhandler_type, 1);
 
     /* Test Predefined info sizes */
     printf("=============================================\n");
@@ -151,8 +145,6 @@ int main(int argc, char **argv) {
     GAP_CHECK("f_flags", test_file, f_flags, f_amode,  1);
     GAP_CHECK("f_f_to_c_index", test_file, f_f_to_c_index, f_flags, 1);
     GAP_CHECK("error_handler", test_file, error_handler, f_f_to_c_index, 1);
-    GAP_CHECK("errhandler_type", test_file, errhandler_type, error_handler, 1);
-    GAP_CHECK("f_io_version", test_file, f_io_version, errhandler_type, 1);
     GAP_CHECK("f_io_selected_component", test_file, f_io_selected_component, f_io_version, 1);
     GAP_CHECK("f_io_selected_module", test_file, f_io_selected_module, f_io_selected_component, 1);
     GAP_CHECK("f_io_selected_data", test_file, f_io_selected_data, f_io_selected_module, 1);
