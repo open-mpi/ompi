@@ -1,6 +1,8 @@
 /* 
  * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2022      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2023      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -34,6 +36,8 @@ static volatile int accelerator_event_ipc_num_used;
 static int accelerator_event_max = 400;
 static int accelerator_event_ipc_most = 0;
 static bool smcuda_accelerator_initialized = false;
+
+static void mca_btl_smcuda_accelerator_fini(void);
 
 int mca_btl_smcuda_accelerator_init(void)
 {
@@ -79,6 +83,14 @@ int mca_btl_smcuda_accelerator_init(void)
         goto cleanup_and_error;
     }
 
+    /*
+     * add smcuda acclerator fini code to opal's list of cleanup functions.
+     * Cleanups are called before all the MCA frameworks are closed, so by
+     * adding this function to the callback list, we avoid issues with ordering
+     * of the closing of the BTL framework with the accelerator framework, etc. etc.
+     */
+    opal_finalize_register_cleanup(mca_btl_smcuda_accelerator_fini);
+
     smcuda_accelerator_initialized = true;
 
 cleanup_and_error:
@@ -103,7 +115,7 @@ cleanup_and_error:
     return rc;
 }
 
-void mca_btl_smcuda_accelerator_fini(void)
+static void mca_btl_smcuda_accelerator_fini(void)
 {
     int i;
 
