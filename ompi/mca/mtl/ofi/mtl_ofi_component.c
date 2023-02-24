@@ -6,7 +6,7 @@
  * Copyright (c) 2015-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2018-2022 Amazon.com, Inc. or its affiliates.  All Rights reserved.
- * Copyright (c) 2020-2021 Triad National Security, LLC. All rights
+ * Copyright (c) 2020-2023 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -617,8 +617,10 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
     }
 
     /* Request device transfer capabilities */
+#if defined(FI_HMEM)
     hints->caps |= FI_HMEM;
     hints->domain_attr->mr_mode |= FI_MR_HMEM | FI_MR_ALLOCATED;
+#endif
 
 no_hmem:
 
@@ -737,12 +739,14 @@ no_hmem:
                         __FILE__, __LINE__, fi_strerror(-ret));
 
     if (FI_ENODATA == -ret) {
+#if defined(FI_HMEM)
         /* Attempt selecting a provider without FI_HMEM hints */
         if (hints->caps & FI_HMEM) {
             hints->caps &= ~FI_HMEM;
             hints->domain_attr->mr_mode &= ~FI_MR_HMEM;
             goto no_hmem;
         }
+#endif
         /* It is not an error if no information is returned. */
         goto error;
     } else if (0 != ret) {
@@ -770,11 +774,12 @@ select_prov:
     opal_argv_free(exclude_list);
     exclude_list = NULL;
 
+    *accelerator_support = false;
+#if defined(FI_HMEM)
     if (!(prov->caps & FI_HMEM)) {
         opal_output_verbose(50, opal_common_ofi.output,
                             "%s:%d: Libfabric provider does not support device buffers. Continuing with device to host copies.\n",
                             __FILE__, __LINE__);
-        *accelerator_support = false;
     } else {
         *accelerator_support = true;
         ompi_mtl_ofi.hmem_needs_reg = true;
@@ -791,6 +796,11 @@ select_prov:
          }
 
     }
+#else
+    opal_output_verbose(50, opal_common_ofi.output,
+                        "%s:%d: Libfabric provider does not support device buffers. Continuing with device to host copies.\n",
+                        __FILE__, __LINE__);
+#endif
 
     /**
      * Select the format of the OFI tag

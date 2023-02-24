@@ -137,7 +137,16 @@ AC_DEFUN([OPAL_CHECK_OFI],[
            AC_CHECK_DECLS([PMIX_PACKAGE_RANK],
                           [],
                           [],
-                          [#include <pmix.h>])])
+                          [#include <pmix.h>])
+
+           AC_CHECK_MEMBER([struct fi_mr_attr.iface],
+                           [opal_check_fi_mr_attr_iface=1],
+                           [opal_check_fi_mr_attr_iface=0],
+                           [[#include <rdma/fi_domain.h>]])
+
+           AC_DEFINE_UNQUOTED([OPAL_OFI_HAVE_FI_MR_IFACE],
+                              [${opal_check_fi_mr_attr_iface}],
+                              [check if iface avaiable in fi_mr_attr])])
 
     CPPFLAGS=${opal_check_ofi_save_CPPFLAGS}
     LDFLAGS=${opal_check_ofi_save_LDFLAGS}

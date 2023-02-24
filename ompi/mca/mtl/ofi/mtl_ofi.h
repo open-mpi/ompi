@@ -306,6 +306,8 @@ int ompi_mtl_ofi_register_buffer(struct opal_convertor_t *convertor,
         return OMPI_SUCCESS;
     }
 
+#if OPAL_OFI_HAVE_FI_MR_IFACE
+
     if ((convertor->flags & CONVERTOR_ACCELERATOR) && ompi_mtl_ofi.hmem_needs_reg) {
         /* Register buffer */
         int ret;
@@ -342,6 +344,8 @@ reg:
             return OMPI_ERROR;
         }
     }
+
+#endif
 
     return OMPI_SUCCESS;
 }
