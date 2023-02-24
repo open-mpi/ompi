@@ -354,7 +354,7 @@ int mca_coll_han_allreduce_t3_task(void *task_args)
             if (t->cur_seg == t->num_segments - 2 && t->last_seg_count != t->seg_count) {
                 tmp_count = t->last_seg_count;
             }
-            t->up_comm->c_coll->coll_ibcast((char *) t->rbuf + extent * t->seg_count, t->seg_count,
+            t->up_comm->c_coll->coll_ibcast((char *) t->rbuf + extent * t->seg_count, tmp_count,
                                             t->dtype, t->root_up_rank, t->up_comm, &(reqs[0]),
                                             t->up_comm->c_coll->coll_ibcast_module);
             req_count++;
