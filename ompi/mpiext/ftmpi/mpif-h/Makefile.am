@@ -24,6 +24,7 @@ f77_sources = \
     comm_revoke_f.c \
     comm_is_revoked_f.c \
     comm_shrink_f.c \
+    comm_ishrink_f.c \
     comm_get_failed_f.c \
     comm_ack_failed_f.c \
     comm_failure_ack_f.c \

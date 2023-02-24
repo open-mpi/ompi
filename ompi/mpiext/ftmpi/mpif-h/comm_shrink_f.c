@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2019 The University of Tennessee and the University
+ * Copyright (c) 2010-2022 The University of Tennessee and the University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -15,6 +15,8 @@
 
 #include "ompi/mpiext/ftmpi/c/mpiext_ftmpi_c.h"
 #include "ompi/mpiext/ftmpi/mpif-h/prototypes_mpi.h"
+
+#include "ompi/communicator/communicator.h"
 
 #if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPIX_COMM_SHRINK = ompix_comm_shrink_f
@@ -58,5 +60,8 @@ void ompix_comm_shrink_f(MPI_Fint *comm, MPI_Fint *newcomm, MPI_Fint *ierr)
                                               &c_newcomm));
     if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
         *newcomm = PMPI_Comm_c2f(c_newcomm);
+    }
+    else {
+        *newcomm = PMPI_Comm_c2f(&ompi_mpi_comm_null.comm);
     }
 }
