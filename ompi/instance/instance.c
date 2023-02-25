@@ -701,10 +701,6 @@ static int ompi_mpi_instance_init_common (int argc, char **argv)
         return ompi_instance_print_error ("ompi_mpi_init: ompi_comm_cid_init failed", ret);
     }
 
-    if (OMPI_SUCCESS != (ret = ompi_comm_init_mpi3 ())) {
-        return ompi_instance_print_error ("ompi_comm_init_mpi3 () failed", ret);
-    }
-
     /* Next timing measurement */
     OPAL_TIMING_ENV_NEXT(init_common, "modex-barrier");
 
