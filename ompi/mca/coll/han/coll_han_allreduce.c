@@ -354,7 +354,7 @@ int mca_coll_han_allreduce_t3_task(void *task_args)
             if (t->cur_seg == t->num_segments - 2 && t->last_seg_count != t->seg_count) {
                 tmp_count = t->last_seg_count;
             }
-            t->up_comm->c_coll->coll_ibcast((char *) t->rbuf + extent * t->seg_count, t->seg_count,
+            t->up_comm->c_coll->coll_ibcast((char *) t->rbuf + extent * t->seg_count, tmp_count,
                                             t->dtype, t->root_up_rank, t->up_comm, &(reqs[0]),
                                             t->up_comm->c_coll->coll_ibcast_module);
             req_count++;
@@ -391,7 +391,13 @@ int mca_coll_han_allreduce_t3_task(void *task_args)
                                          t->low_comm->c_coll->coll_reduce_module);
     }
     /* lb of cur_seg */
-    t->low_comm->c_coll->coll_bcast((char *) t->rbuf, t->seg_count, t->dtype, t->root_low_rank,
+    if (t->cur_seg == t->num_segments - 1 && t->last_seg_count != t->seg_count) {
+        tmp_count = t->last_seg_count;
+    } else {
+        tmp_count = t->seg_count;
+    }
+
+    t->low_comm->c_coll->coll_bcast((char *) t->rbuf, tmp_count, t->dtype, t->root_low_rank,
                                     t->low_comm, t->low_comm->c_coll->coll_bcast_module);
     if (!t->noop && req_count > 0) {
         ompi_request_wait_all(req_count, reqs, MPI_STATUSES_IGNORE);
