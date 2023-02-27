@@ -27,7 +27,7 @@
  * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
- * Copyright (c) 2021-2023 Triad National Security, LLC. All rights
+ * Copyright (c) 2021-2022 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -291,6 +291,14 @@ void ompi_mpi_thread_level(int requested, int *provided)
                                 MPI_THREAD_MULTIPLE);
 }
 
+static void fence_release(pmix_status_t status, void *cbdata)
+{
+    volatile bool *active = (volatile bool*)cbdata;
+    OPAL_ACQUIRE_OBJECT(active);
+    *active = false;
+    OPAL_POST_OBJECT(active);
+}
+
 int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
                   bool reinit_ok)
 {
@@ -299,6 +307,9 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
 #if OPAL_USING_INTERNAL_PMIX
     char *evar;
 #endif
+    volatile bool active;
+    bool background_fence = false;
+    pmix_info_t info[2];
     pmix_status_t rc;
     OMPI_TIMING_INIT(64);
 
@@ -353,6 +364,12 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
 
     ompi_hook_base_mpi_init_top_post_opal(argc, argv, requested, provided);
 
+    /* initialize communicator subsystem */
+    if (OMPI_SUCCESS != (ret = ompi_comm_init_mpi3 ())) {
+        error = "ompi_mpi_init: ompi_comm_init_mpi3 failed";
+        goto error;
+    }
+
     /* Bozo argument check */
     if (NULL == argv && argc > 1) {
         ret = OMPI_ERR_BAD_PARAM;
@@ -374,6 +391,69 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
         opal_setenv("OMPI_ARGV", tmp, true, &environ);
         free(tmp);
     }
+
+#if (OPAL_ENABLE_TIMING)
+    if (OMPI_TIMING_ENABLED && !opal_pmix_base_async_modex &&
+            opal_pmix_collect_all_data && !opal_process_info.is_singleton) {
+        if (PMIX_SUCCESS != (rc = PMIx_Fence(NULL, 0, NULL, 0))) {
+            ret = opal_pmix_convert_status(rc);
+            error = "timing: pmix-barrier-1 failed";
+            goto error;
+        }
+        OMPI_TIMING_NEXT("pmix-barrier-1");
+        if (PMIX_SUCCESS != (rc = PMIx_Fence(NULL, 0, NULL, 0))) {
+            ret = opal_pmix_convert_status(rc);
+            error = "timing: pmix-barrier-2 failed";
+            goto error;
+        }
+        OMPI_TIMING_NEXT("pmix-barrier-2");
+    }
+#endif
+
+    if (!opal_process_info.is_singleton) {
+        if (opal_pmix_base_async_modex) {
+            /* if we are doing an async modex, but we are collecting all
+             * data, then execute the non-blocking modex in the background.
+             * All calls to modex_recv will be cached until the background
+             * modex completes. If collect_all_data is false, then we skip
+             * the fence completely and retrieve data on-demand from the
+             * source node.
+             */
+            if (opal_pmix_collect_all_data) {
+                /* execute the fence_nb in the background to collect
+                 * the data */
+                background_fence = true;
+                active = true;
+                OPAL_POST_OBJECT(&active);
+                PMIX_INFO_LOAD(&info[0], PMIX_COLLECT_DATA, &opal_pmix_collect_all_data, PMIX_BOOL);
+                if( PMIX_SUCCESS != (rc = PMIx_Fence_nb(NULL, 0, NULL, 0,
+                                                        fence_release,
+                                                        (void*)&active))) {
+                    ret = opal_pmix_convert_status(rc);
+                    error = "PMIx_Fence_nb() failed";
+                    goto error;
+                }
+            }
+        } else {
+            /* we want to do the modex - we block at this point, but we must
+             * do so in a manner that allows us to call opal_progress so our
+             * event library can be cycled as we have tied PMIx to that
+             * event base */
+            active = true;
+            OPAL_POST_OBJECT(&active);
+            PMIX_INFO_LOAD(&info[0], PMIX_COLLECT_DATA, &opal_pmix_collect_all_data, PMIX_BOOL);
+            rc = PMIx_Fence_nb(NULL, 0, info, 1, fence_release, (void*)&active);
+            if( PMIX_SUCCESS != rc) {
+                ret = opal_pmix_convert_status(rc);
+                error = "PMIx_Fence() failed";
+                goto error;
+            }
+            /* cannot just wait on thread as we need to call opal_progress */
+            OMPI_LAZY_WAIT_FOR_COMPLETION(active);
+        }
+    }
+
+    OMPI_TIMING_NEXT("modex");
 
     MCA_PML_CALL(add_comm(&ompi_mpi_comm_world.comm));
     MCA_PML_CALL(add_comm(&ompi_mpi_comm_self.comm));
@@ -410,6 +490,48 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
 
     /* Do we need to wait for a debugger? */
     ompi_rte_wait_for_debugger();
+
+    /* Next timing measurement */
+    OMPI_TIMING_NEXT("modex-barrier");
+
+    if (!opal_process_info.is_singleton) {
+        /* if we executed the above fence in the background, then
+         * we have to wait here for it to complete. However, there
+         * is no reason to do two barriers! */
+        if (background_fence) {
+            OMPI_LAZY_WAIT_FOR_COMPLETION(active);
+        } else if (!ompi_async_mpi_init) {
+            /* wait for everyone to reach this point - this is a hard
+             * barrier requirement at this time, though we hope to relax
+             * it at a later point */
+            bool flag = false;
+            active = true;
+            OPAL_POST_OBJECT(&active);
+            PMIX_INFO_LOAD(&info[0], PMIX_COLLECT_DATA, &flag, PMIX_BOOL);
+            if (PMIX_SUCCESS != (rc = PMIx_Fence_nb(NULL, 0, info, 1,
+                                                    fence_release, (void*)&active))) {
+                ret = opal_pmix_convert_status(rc);
+                error = "PMIx_Fence_nb() failed";
+                goto error;
+            }
+            OMPI_LAZY_WAIT_FOR_COMPLETION(active);
+        }
+    }
+
+    /* check for timing request - get stop time and report elapsed
+       time if so, then start the clock again */
+    OMPI_TIMING_NEXT("barrier");
+
+#if OPAL_ENABLE_PROGRESS_THREADS == 0
+    /* Start setting up the event engine for MPI operations.  Don't
+       block in the event library, so that communications don't take
+       forever between procs in the dynamic code.  This will increase
+       CPU utilization for the remainder of MPI_INIT when we are
+       blocking on RTE-level events, but may greatly reduce non-TCP
+       latency. */
+    int old_event_flags = opal_progress_set_event_flag(0);
+    opal_progress_set_event_flag(old_event_flags | OPAL_EVLOOP_NONBLOCK);
+#endif
 
     /* wire up the mpi interface, if requested.  Do this after the
        non-block switch for non-TCP performance.  Do before the
@@ -469,10 +591,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
     /* All done.  Wasn't that simple? */
     opal_atomic_wmb();
     opal_atomic_swap_32(&ompi_mpi_state, OMPI_MPI_STATE_INIT_COMPLETED);
-
-    OMPI_TIMING_IMPORT_OPAL("opal_init_util");
-    OMPI_TIMING_IMPORT_OPAL("opal_init");
-    OMPI_TIMING_IMPORT_OPAL("ompi_mpi_instance_init_common");
 
     /* Finish last measurement, output results
      * and clear timing structure */

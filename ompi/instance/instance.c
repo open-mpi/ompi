@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2018-2023 Triad National Security, LLC. All rights
+ * Copyright (c) 2018-2022 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2022      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2022      The University of Tennessee and The University
@@ -21,14 +21,6 @@
 #include "opal/util/show_help.h"
 #include "opal/util/argv.h"
 #include "opal/runtime/opal_params.h"
-#include "opal/util/timings.h"
-#include "opal/mca/allocator/base/base.h"
-#include "opal/mca/rcache/base/base.h"
-#include "opal/mca/mpool/base/base.h"
-#include "opal/mca/smsc/base/base.h"
-#include "opal/mca/mpool/base/mpool_base_tree.h"
-#include "opal/mca/pmix/pmix-internal.h"
-#include "opal/mca/pmix/base/base.h"
 
 #include "ompi/mca/pml/pml.h"
 #include "ompi/runtime/params.h"
@@ -44,10 +36,13 @@
 #include "ompi/dpm/dpm.h"
 #include "ompi/file/file.h"
 #include "ompi/mpiext/mpiext.h"
-#include "ompi/util/timings.h"
 
 #include "ompi/mca/hook/base/base.h"
 #include "ompi/mca/op/base/base.h"
+#include "opal/mca/allocator/base/base.h"
+#include "opal/mca/rcache/base/base.h"
+#include "opal/mca/mpool/base/base.h"
+#include "opal/mca/smsc/base/base.h"
 #include "ompi/mca/bml/base/base.h"
 #include "ompi/mca/pml/base/base.h"
 #include "ompi/mca/coll/base/base.h"
@@ -55,8 +50,12 @@
 #include "ompi/mca/part/base/base.h"
 #include "ompi/mca/io/base/base.h"
 #include "ompi/mca/topo/base/base.h"
+#include "opal/mca/pmix/base/base.h"
 
+#include "opal/mca/mpool/base/mpool_base_tree.h"
 #include "ompi/mca/pml/base/pml_base_bsend.h"
+#include "ompi/util/timings.h"
+#include "opal/mca/pmix/pmix-internal.h"
 
 ompi_predefined_instance_t ompi_mpi_instance_null = {{{{0}}}};
 
@@ -345,8 +344,7 @@ static int ompi_mpi_instance_init_common (int argc, char **argv)
     pmix_info_t info[2];
     pmix_status_t rc;
     opal_pmix_lock_t mylock;
-
-    OPAL_TIMING_ENV_INIT(init_common);
+    OMPI_TIMING_INIT(64);
 
     ret = ompi_mpi_instance_retain ();
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
@@ -387,14 +385,12 @@ static int ompi_mpi_instance_init_common (int argc, char **argv)
         mca_base_var_set_value(ret, allvalue, 4, MCA_BASE_VAR_SOURCE_DEFAULT, NULL);
     }
 
-    OPAL_TIMING_ENV_NEXT(init_common, "initialization");
+    OMPI_TIMING_NEXT("initialization");
 
     /* Setup RTE */
     if (OMPI_SUCCESS != (ret = ompi_rte_init (&argc, &argv))) {
         return ompi_instance_print_error ("ompi_mpi_init: ompi_rte_init failed", ret);
     }
-
-    OPAL_TIMING_ENV_NEXT(init_common, "ompi_rte_init");
 
     /* open the ompi hook framework */
     for (int i = 0 ; ompi_framework_dependencies[i] ; ++i) {
@@ -407,6 +403,10 @@ static int ompi_mpi_instance_init_common (int argc, char **argv)
             return ompi_instance_print_error (error_msg, ret);
         }
     }
+
+    OMPI_TIMING_NEXT("rte_init");
+    OMPI_TIMING_IMPORT_OPAL("orte_ess_base_app_setup");
+    OMPI_TIMING_IMPORT_OPAL("rte_init");
 
     ompi_rte_initialized = true;
     /* if we are oversubscribed, then set yield_when_idle
@@ -509,6 +509,9 @@ static int ompi_mpi_instance_init_common (int argc, char **argv)
         return ompi_instance_print_error ("mca_pml_base_select() failed", ret);
     }
 
+    OMPI_TIMING_IMPORT_OPAL("orte_init");
+    OMPI_TIMING_NEXT("rte_init-commit");
+
     /* exchange connection info - this function may also act as a barrier
      * if data exchange is required. The modex occurs solely across procs
      * in our job. If a barrier is required, the "modex" function will
@@ -519,8 +522,7 @@ static int ompi_mpi_instance_init_common (int argc, char **argv)
         return ret;  /* TODO: need to fix this */
     }
 
-    OPAL_TIMING_ENV_NEXT(init_common, "PMIx_Commit");
-
+   OMPI_TIMING_NEXT("commit");
 #if (OPAL_ENABLE_TIMING)
     if (OMPI_TIMING_ENABLED && !opal_pmix_base_async_modex &&
             opal_pmix_collect_all_data && !opal_process_info.is_singleton) {
@@ -528,11 +530,11 @@ static int ompi_mpi_instance_init_common (int argc, char **argv)
             ret = opal_pmix_convert_status(rc);
             return ompi_instance_print_error ("timing: pmix-barrier-1 failed", ret);
         }
-        OPAL_TIMING_ENV_NEXT(init_common, "pmix-barrier-1");
+        OMPI_TIMING_NEXT("pmix-barrier-1");
         if (PMIX_SUCCESS != (rc = PMIx_Fence(NULL, 0, NULL, 0))) {
             return ompi_instance_print_error ("timing: pmix-barrier-2 failed", ret);
         }
-        OPAL_TIMING_ENV_NEXT(init_common, "pmix-barrier-2");
+        OMPI_TIMING_NEXT("pmix-barrier-2");
     }
 #endif
 
@@ -577,7 +579,7 @@ static int ompi_mpi_instance_init_common (int argc, char **argv)
         }
     }
 
-    OPAL_TIMING_ENV_NEXT(init_common, "modex");
+    OMPI_TIMING_NEXT("modex");
 
     /* select buffered send allocator component to be used */
     if (OMPI_SUCCESS != (ret = mca_pml_base_bsend_init ())) {
@@ -623,6 +625,14 @@ static int ompi_mpi_instance_init_common (int argc, char **argv)
     if (OMPI_SUCCESS != (ret = ompi_attr_create_predefined_keyvals())) {
         opal_mutex_unlock (&instance_lock);
         return ompi_instance_print_error ("ompi_attr_create_predefined_keyvals() failed", ret);
+    }
+
+    if (mca_pml_base_requires_world ()) {
+        /* need to set up comm world for this instance -- XXX -- FIXME -- probably won't always
+         * be the case. */
+        if (OMPI_SUCCESS != (ret = ompi_comm_init_mpi3 ())) {
+            return ompi_instance_print_error ("ompi_comm_init_mpi3 () failed", ret);
+        }
     }
 
     /* initialize file handles */
@@ -701,12 +711,11 @@ static int ompi_mpi_instance_init_common (int argc, char **argv)
         return ompi_instance_print_error ("ompi_mpi_init: ompi_comm_cid_init failed", ret);
     }
 
-    if (OMPI_SUCCESS != (ret = ompi_comm_init_mpi3 ())) {
-        return ompi_instance_print_error ("ompi_comm_init_mpi3 () failed", ret);
-    }
+    /* Do we need to wait for a debugger? */
+    ompi_rte_wait_for_debugger();
 
     /* Next timing measurement */
-    OPAL_TIMING_ENV_NEXT(init_common, "modex-barrier");
+    OMPI_TIMING_NEXT("modex-barrier");
 
     if (!opal_process_info.is_singleton) {
         /* if we executed the above fence in the background, then
@@ -731,7 +740,9 @@ static int ompi_mpi_instance_init_common (int argc, char **argv)
         }
     }
 
-    OPAL_TIMING_ENV_NEXT(init_common, "barrier");
+    /* check for timing request - get stop time and report elapsed
+       time if so, then start the clock again */
+    OMPI_TIMING_NEXT("barrier");
 
 #if OPAL_ENABLE_PROGRESS_THREADS == 0
     /* Start setting up the event engine for MPI operations.  Don't
@@ -740,8 +751,7 @@ static int ompi_mpi_instance_init_common (int argc, char **argv)
        CPU utilization for the remainder of MPI_INIT when we are
        blocking on RTE-level events, but may greatly reduce non-TCP
        latency. */
-    int old_event_flags = opal_progress_set_event_flag(0);
-    opal_progress_set_event_flag(old_event_flags | OPAL_EVLOOP_NONBLOCK);
+    opal_progress_set_event_flag(OPAL_EVLOOP_NONBLOCK);
 #endif
 
     /* Undo OPAL calling opal_progress_event_users_increment() during
