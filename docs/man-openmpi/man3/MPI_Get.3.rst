@@ -26,8 +26,8 @@ C Syntax
         int target_count, MPI_Datatype target_datatype, MPI_Win win,
             MPI_Request *request)
 
-Fortran Syntax (See Fortran 77 Notes)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Fortran Syntax
+^^^^^^^^^^^^^^
 
 .. code-block:: fortran
 
@@ -113,17 +113,6 @@ of an :ref:`MPI_Rget` operation indicates that the data is available in the
 origin buffer. If origin_addr points to memory attached to a window,
 then the data becomes available in the private copy of this window.
 
-FORTRAN 77 NOTES
-----------------
-
-The MPI standard prescribes portable Fortran syntax for the TARGET_DISP
-argument only for Fortran 90. FORTRAN 77 users may use the non-portable
-syntax
-
-fortran INTEGERMPI_ADDRESS_KIND TARGET_DISP
-
-where ``MPI_ADDRESS_KIND`` is a constant defined in ``mpif.h`` and gives the
-length of the declared integer in bytes.
 
 ERRORS
 ------

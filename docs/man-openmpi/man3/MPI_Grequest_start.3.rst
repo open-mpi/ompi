@@ -23,8 +23,8 @@ C Syntax
        MPI_Grequest_cancel_function *cancel_fn, void *extra_state,
        MPI_Request *request)
 
-Fortran Syntax (See Fortran 77 Notes)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Fortran Syntax
+^^^^^^^^^^^^^^
 
 .. code-block:: fortran
 
@@ -175,19 +175,6 @@ MPI passes to the callback function complete=true if
 ``MPI_Grequest_complete`` has already been called on the request, and
 complete=false otherwise.
 
-FORTRAN 77 NOTES
-----------------
-
-The MPI standard prescribes portable Fortran syntax for the
-``EXTRA_STATE`` argument only for Fortran 90. FORTRAN 77 users may use
-the non-portable syntax
-
-.. code-block:: fortran
-
-   INTEGER*MPI_ADDRESS_KIND EXTRA_STATE
-
-where ``MPI_ADDRESS_KIND`` is a constant defined in ``mpif.h`` and gives the
-length of the declared integer in bytes.
 
 ERRORS
 ------

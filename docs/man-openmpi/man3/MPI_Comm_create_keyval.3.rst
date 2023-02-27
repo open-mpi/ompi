@@ -22,8 +22,8 @@ C Syntax
        *comm_delete_attr_fn, int *comm_keyval,
        void *extra_state)
 
-Fortran Syntax (See Fortran 77 Notes)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Fortran Syntax
+^^^^^^^^^^^^^^
 
 .. code-block:: fortran
 
@@ -112,23 +112,11 @@ names are deprecated. The two Fortran callback functions are:
 
        INTEGER(KIND=MPI_ADDRESS_KIND) ATTRIBUTE_VAL, EXTRA_STATE
 
-FORTRAN 77 NOTES
-^^^^^^^^^^^^^^^^
-
-The MPI standard prescribes portable Fortran syntax for the
-``EXTRA_STATE`` argument only for Fortran 90. FORTRAN 77 users may use
-the non-portable syntax
-
-.. code-block:: fortran
-
-   INTEGER*MPI_ADDRESS_KIND EXTRA_STATE
-
-where ``MPI_ADDRESS_KIND`` is a constant defined in ``mpif.h`` and gives the
-length of the declared integer in bytes.
 
 ERRORS
 ------
 
 .. include:: ./ERRORS.rst
 
-.. seealso:: :ref:`MPI`
+.. seealso::
+   * :ref:`MPI_Comm_free_keyval`

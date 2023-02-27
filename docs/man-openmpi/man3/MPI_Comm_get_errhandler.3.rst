@@ -65,7 +65,20 @@ with a communicator. This call is identical to :ref:`MPI_Errhandler_get`, the
 use of which is deprecated.
 
 
+Returns in errhandler (a handle to) the error handler that is currently
+associated with communicator ``comm``.
+
+**Example:** A library function may register at its entry point the
+current error handler for a communicator, set its own private error
+handler for this communicator, and restore before exiting the previous
+error handler.
+
+
 ERRORS
 ------
 
 .. include:: ./ERRORS.rst
+
+.. seealso::
+   * :ref:`MPI_Comm_create_errhandler`
+   * :ref:`MPI_Comm_set_errhandler`

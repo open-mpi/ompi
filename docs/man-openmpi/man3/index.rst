@@ -95,6 +95,7 @@ MPI API manual pages (section 3)
    MPI_Errhandler_free.3.rst
    MPI_Errhandler_get.3.rst
    MPI_Errhandler_set.3.rst
+   MPI_Errors.3.rst
    MPI_Error_class.3.rst
    MPI_Error_string.3.rst
    MPI_Exscan.3.rst
@@ -346,6 +347,7 @@ MPI API manual pages (section 3)
    MPI_Status_set_cancelled.3.rst
    MPI_Status_set_elements.3.rst
    MPI_Status_set_elements_x.3.rst
+   MPI_T.3.rst
    MPI_T_category_changed.3.rst
    MPI_T_category_get_categories.3.rst
    MPI_T_category_get_cvars.3.rst

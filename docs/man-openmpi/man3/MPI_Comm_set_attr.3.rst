@@ -23,8 +23,8 @@ C Syntax
    int MPI_Comm_set_attr(MPI_Comm comm, int comm_keyval, void *attribute_val)
 
 
-Fortran Syntax (see FORTRAN 77 NOTES)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Fortran Syntax
+^^^^^^^^^^^^^^
 
 .. code-block:: fortran
 
@@ -67,37 +67,22 @@ DESCRIPTION
 :ref:`MPI_Comm_set_attr` stores the stipulated attribute value *attribute_val*
 for subsequent retrieval by :ref:`MPI_Comm_get_attr`. If the value is already
 present, then the outcome is as if :ref:`MPI_Comm_delete_attr` was first called
-to delete the previous value (and the callback function delete_fn was
+to delete the previous value (and the callback function ``delete_fn`` was
 executed), and a new value was next stored. The call is erroneous if
 there is no key with value *comm_keyval*; in particular
-MPI_KEYVAL_INVALID is an erroneous key value. The call will fail if the
-delete_fn function returned an error code other than MPI_SUCCESS.
+``MPI_KEYVAL_INVALID`` is an erroneous key value. The call will fail if the
+delete_fn function returned an error code other than ``MPI_SUCCESS``.
 
 This function replaces :ref:`MPI_Attr_put`, the use of which is deprecated. The
 C binding is identical. The Fortran binding differs in that
 *attribute_val* is an address-sized integer.
 
 
-FORTRAN 77 NOTES
-----------------
-
-The MPI standard prescribes portable Fortran syntax for the
-*ATTRIBUTE_VAL* argument only for Fortran 90. Sun FORTRAN 77 users may
-use the non-portable syntax
-
-.. code-block:: fortran
-
-        INTEGER*MPI_ADDRESS_KIND ATTRIBUTE_VAL
-
-where ``MPI_ADDRESS_KIND`` is a constant defined in ``mpif.h`` and gives the
-length of the declared integer in bytes.
-
-
 NOTES
 -----
 
-Values of the permanent attributes MPI_TAG_UB, MPI_HOST, MPI_IO, and
-MPI_WTIME_IS_GLOBAL may not be changed.
+Values of the permanent attributes ``MPI_TAG_UB``, ``MPI_HOST``, ``MPI_IO``, and
+``MPI_WTIME_IS_GLOBAL`` may not be changed.
 
 The type of the attribute value depends on whether C or Fortran is being
 used. In C, an attribute value is a pointer (``void *``); in Fortran, it is

@@ -25,8 +25,8 @@ C Syntax
    	MPI_Aint extent, MPI_Datatype *newtype)
 
 
-Fortran Syntax (see FORTRAN 77 NOTES)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Fortran Syntax
+^^^^^^^^^^^^^^
 
 .. code-block:: fortran
 
@@ -72,21 +72,6 @@ of lower bound and upper bound markers are put in the positions
 indicated by the *lb* and *extent* arguments. This affects the behavior
 of the data type when used in communication operations, with *count* >
 1, and when used in the construction of new derived data types.
-
-
-FORTRAN 77 NOTES
-----------------
-
-The MPI standard prescribes portable Fortran syntax for the *LB* and
-*EXTENT* arguments only for Fortran 90. FORTRAN 77 users may use the
-non-portable syntax
-
-.. code-block:: fortran
-
-        INTEGER*MPI_ADDRESS_KIND LB, EXTENT
-
-where ``MPI_ADDRESS_KIND`` is a constant defined in ``mpif.h`` and gives the
-length of the declared integer in bytes.
 
 
 NOTE

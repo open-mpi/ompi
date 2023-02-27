@@ -6,8 +6,7 @@ MPI_Errhandler_set
 
 .. include_body
 
-:ref:`MPI_Errhandler_set` - Sets the error handler for a communicator --
-use of this routine is deprecated.
+:ref:`MPI_Errhandler_set` - Sets the error handler for a communicator -- |deprecated_favor| :ref:`MPI_Comm_set_errhandler`.
 
 
 SYNTAX
@@ -29,7 +28,9 @@ Fortran Syntax
 
 .. code-block:: fortran
 
-   INCLUDE 'mpif.h'
+   USE MPI
+   ! or the older form: INCLUDE 'mpif.h'
+
    MPI_ERRHANDLER_SET(COMM, ERRHANDLER, IERROR)
    	INTEGER	COMM, ERRHANDLER, IERROR
 

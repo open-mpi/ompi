@@ -64,7 +64,8 @@ DESCRIPTION
 :ref:`MPI_Comm_delete_attr` deletes an attribute from cache by key. This
 function invokes the attribute delete function ``delete_fn`` specified
 when the ``comm_keyval`` was created. The call will fail if the
-``delete_fn`` function returns an error code other than MPI_SUCCESS.``
+``delete_fn`` function returns an error code other than ``MPI_SUCCESS``.
+
 Whenever a communicator is replicated using the function
 :ref:`MPI_Comm_dup`, all callback copy functions for attributes that are
 currently set are invoked (in arbitrary order). Whenever a communicator

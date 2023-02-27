@@ -23,8 +23,8 @@ C Syntax
    int MPI_Alloc_mem(MPI_Aint size, MPI_Info info, void *baseptr)
 
 
-Fortran Syntax (see FORTRAN NOTES)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Fortran Syntax
+^^^^^^^^^^^^^^
 
 .. code-block:: fortran
 
@@ -74,40 +74,31 @@ pointer object for this parameter. The provided argument should be a
 pointer to a pointer of arbitrary type (e.g., ``void **``).
 
 
-FORTRAN NOTES
+Fortran NOTES
 -------------
 
-There is no portable FORTRAN 77 syntax for using :ref:`MPI_Alloc_mem`. There is
-no portable Fortran syntax for using pointers returned from
-:ref:`MPI_Alloc_mem`. However, :ref:`MPI_Alloc_mem` can be used with Sun Fortran
-compilers.
-
-From FORTRAN 77, you can use the following non-standard declarations for
-the SIZE and BASEPTR arguments:
+The :ref:`MPI_Alloc_mem` calls require the use of the ``iso_c_binding`` module
+for due to the use of ``TYPE(C_PTR)``.
 
 .. code-block:: fortran
 
-              INCLUDE "mpif.h"
-              INTEGER*MPI_ADDRESS_KIND SIZE, BASEPTR
-	      
+   use iso_c_binding
 
-From either FORTRAN 77 or Fortran 90, you can use "Cray pointers" for
-the BASEPTR argument. Cray pointers are described further in the Fortran
-User's Guide and are supported by many Fortran compilers. For example,
+   type(c_ptr) :: alloc_ptr
+   integer :: size, ierr
+   double precision, pointer :: array(:,:)
 
-.. code-block:: fortran
+   ! A 2D array of 100 elements
+   size = 10 * 10
+   call MPI_Alloc_Mem(size * 8, MPI_INFO_NULL, alloc_ptr, ierr)
 
-              INCLUDE "mpif.h"
-              REAL*4 A(100,100)
-              POINTER (BASEPTR, A)
-              INTEGER*MPI_ADDRESS_KIND SIZE
+   ! Point to the array
+   call c_f_pointer(alloc_ptr, array, [10, 10])
 
-              SIZE = 4 * 100 * 100
-              CALL MPI_ALLOC_MEM(SIZE,MPI_INFO_NULL,BASEPTR,IERR)
+   ! ... use the array ...
 
-              ! use A
-
-              CALL MPI_FREE_MEM(A, IERR)
+   ! Free the memory, no need for the alloc_ptr
+   call MPI_Free_mem(array, ierr)
 
 
 ERRORS

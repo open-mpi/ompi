@@ -6,8 +6,7 @@ MPI_Keyval_create
 
 .. include_body
 
-:ref:`MPI_Keyval_create` - Generates a new attribute key -- use of this
-routine is deprecated.
+:ref:`MPI_Keyval_create` - Generates a new attribute key -- |deprecated_favor| :ref:`MPI_Comm_create_keyval`.
 
 
 SYNTAX
@@ -30,7 +29,9 @@ Fortran Syntax
 
 .. code-block:: fortran
 
-   INCLUDE 'mpif.h'
+   USE MPI
+   ! or the older form: INCLUDE 'mpif.h'
+
    MPI_KEYVAL_CREATE(COPY_FN, DELETE_FN, KEYVAL, EXTRA_STATE, IERROR)
    	EXTERNAL	COPY_FN, DELETE_FN
    	INTEGER	KEYVAL, EXTRA_STATE, IERROR
@@ -59,7 +60,7 @@ allocated, the key value can be used to associate attributes and access
 them on any locally defined communicator.
 
 The copy_fn function is invoked when a communicator is duplicated by
-:ref:`MPI_COMM_DUP`. copy_fn should be of type MPI_Copy_function, which is
+:ref:`MPI_Comm_dup`. copy_fn should be of type MPI_Copy_function, which is
 defined as follows:
 
 .. code-block:: c
@@ -158,3 +159,4 @@ ERRORS
 .. seealso::
    * :ref:`MPI_Keyval_free`
    * :ref:`MPI_Comm_create_keyval`
+   * :ref:`MPI_Comm_free_keyval`

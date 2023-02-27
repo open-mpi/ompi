@@ -103,17 +103,3 @@ ERRORS
 ------
 
 .. include:: ./ERRORS.rst
-
-FORTRAN 77 NOTES
-----------------
-
-The MPI standard prescribes portable Fortran syntax for the *COUNT
-argument of :ref:`MPI_Status_set_elements_x` only for Fortran 90. FORTRAN 77
-users may use the non-portable syntax*
-
-.. code-block:: fortran
-
-        INTEGER*MPI_COUNT_KIND COUNT
-
-where ``MPI_COUNT_KIND`` is a constant defined in ``mpif.h`` and gives the length
-of the declared integer in bytes.

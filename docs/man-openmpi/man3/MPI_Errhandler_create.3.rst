@@ -6,8 +6,8 @@ MPI_Errhandler_create
 
 .. include_body
 
-:ref:`MPI_Errhandler_create` - Creates an MPI-style error handler -- use of
-this routine is deprecated.
+:ref:`MPI_Errhandler_create` - Creates an MPI-style error handler -- |deprecated_favor| :ref:`MPI_Comm_create_errhandler`.
+
 
 
 SYNTAX
@@ -30,7 +30,9 @@ Fortran Syntax
 
 .. code-block:: fortran
 
-   INCLUDE 'mpif.h'
+   USE MPI
+   ! or the older form: INCLUDE 'mpif.h'
+
    MPI_ERRHANDLER_CREATE(FUNCTION, ERRHANDLER, IERROR)
    	EXTERNAL	FUNCTION
    	INTEGER	ERRHANDLER, IERROR
