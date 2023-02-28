@@ -26,8 +26,8 @@ C Syntax
    	char *datarep)
 
 
-Fortran Syntax (see FORTRAN 77 NOTES)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Fortran Syntax
+^^^^^^^^^^^^^^
 
 .. code-block:: fortran
 
@@ -75,21 +75,6 @@ are returned in *disp,* *etype,* and *filetype,* respectively.
 
 The :ref:`MPI_File_get_view` interface allows the user to pass a
 data-representation string via the *datarep* argument.
-
-
-FORTRAN 77 NOTES
-----------------
-
-The MPI standard prescribes portable Fortran syntax for the *DISP*
-argument only for Fortran 90. FORTRAN 77 users may use the non-portable
-syntax.
-
-.. code-block:: fortran
-
-        INTEGER*MPI_OFFSET_KIND DISP
-
-where ``MPI_OFFSET_KIND`` is a constant defined in ``mpif.h`` and gives the
-length of the declared integer in bytes.
 
 
 ERRORS

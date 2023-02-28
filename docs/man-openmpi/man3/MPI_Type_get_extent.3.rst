@@ -27,8 +27,8 @@ C Syntax
    	MPI_Count *extent)
 
 
-Fortran Syntax (see FORTRAN 77 NOTES)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Fortran Syntax
+^^^^^^^^^^^^^^
 
 .. code-block:: fortran
 
@@ -83,29 +83,6 @@ NOTE
 
 Use of :ref:`MPI_Type_get_extent` is strongly recommended over the old MPI-1
 functions :ref:`MPI_Type_extent` and :ref:`MPI_Type_lb`.
-
-
-FORTRAN 77 NOTES
-----------------
-
-The MPI standard prescribes portable Fortran syntax for the *LB* and
-*EXTENT* arguments only for Fortran 90. FORTRAN 77 users may use the
-non-portable syntax
-
-:ref:`MPI_Type_get_extent`:
-
-.. code-block:: fortran
-
-        INTEGER*MPI_ADDRESS_KIND LB, EXTENT
-
-:ref:`MPI_Type_get_extent_x`:
-
-.. code-block:: fortran
-
-        INTEGER*MPI_COUNT_KIND LB, EXTENT
-
-where ``MPI_ADDRESS_KIND`` and MPI_COUNT_KIND are constants defined in
-mpif.h and give the length of the declared integer in bytes.
 
 
 ERRORS

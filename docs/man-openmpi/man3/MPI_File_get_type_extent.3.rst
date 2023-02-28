@@ -26,8 +26,8 @@ C Syntax
    	datatype, MPI_Aint *extent)
 
 
-Fortran Syntax (see FORTRAN 77 NOTES)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Fortran Syntax
+^^^^^^^^^^^^^^
 
 .. code-block:: fortran
 
@@ -69,21 +69,6 @@ DESCRIPTION
 accessing the file associated with *fh*. If the current view uses a
 user-defined data representation, :ref:`MPI_File_get_type_extent` uses the
 *dtype_file_extent_fn* callback to calculate the extent.
-
-
-FORTRAN 77 NOTES
-----------------
-
-The MPI standard prescribes portable Fortran syntax for the *EXTENT*
-argument only for Fortran 90. FORTRAN 77 users may use the non-portable
-syntax
-
-.. code-block:: fortran
-
-        INTEGER*MPI_ADDRESS_KIND EXTENT
-
-where ``MPI_ADDRESS_KIND`` is a constant defined in ``mpif.h`` and gives the
-length of the declared integer in bytes.
 
 
 NOTES

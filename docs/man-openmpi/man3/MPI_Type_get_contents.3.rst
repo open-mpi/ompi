@@ -25,8 +25,8 @@ C Syntax
    	int max_addresses, int max_datatypes, int array_of_integers[], MPI_Aint array_of_addresses[], MPI_Datatype array_of_datatypes[])
 
 
-Fortran Syntax (see FORTRAN 77 NOTES)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Fortran Syntax
+^^^^^^^^^^^^^^
 
 .. code-block:: fortran
 
@@ -119,21 +119,6 @@ were used. Thus, the location of values returned can be thought of as
 being returned by the C bindings. It can also be determined by examining
 the new MPI-2 calls for data-type constructors for the deprecated MPI-1
 calls that involve addresses.
-
-
-FORTRAN 77 NOTES
-----------------
-
-The MPI standard prescribes portable Fortran syntax for the
-*ARRAY_OF_ADDRESSES argument only for Fortran 90. FORTRAN 77* users may
-use the non-portable syntax
-
-.. code-block:: fortran
-
-        INTEGER*MPI_ADDRESS_KIND ARRAY_OF_ADDRESSES(*)
-
-where ``MPI_ADDRESS_KIND`` is a constant defined in ``mpif.h`` and gives the
-length of the declared integer in bytes.
 
 
 ERRORS

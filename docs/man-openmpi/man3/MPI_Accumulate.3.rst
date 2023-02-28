@@ -33,8 +33,8 @@ C Syntax
    	MPI_Request *request)
 
 
-Fortran Syntax (see FORTRAN 77 NOTES)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Fortran Syntax
+^^^^^^^^^^^^^^
 
 .. code-block:: fortran
 
@@ -136,21 +136,6 @@ request handle (the argument *request*) that can be used to wait or test
 for completion. The completion of an :ref:`MPI_Raccumulate` operation
 indicates that the *origin_addr* buffer is free to be updated. It does
 not indicate that the operation has completed at the target window.
-
-
-FORTRAN 77 NOTES
-----------------
-
-The MPI standard prescribes portable Fortran syntax for the
-*TARGET_DISP* argument only for Fortran 90. FORTRAN 77 users may use the
-non-portable syntax
-
-.. code-block:: fortran
-
-        INTEGER*MPI_ADDRESS_KIND TARGET_DISP
-
-where ``MPI_ADDRESS_KIND`` is a constant defined in ``mpif.h`` and gives the
-length of the declared integer in bytes.
 
 
 NOTES

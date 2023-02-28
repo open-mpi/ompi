@@ -26,8 +26,8 @@ C Syntax
    	MPI_Op op, MPI_Win win)
 
 
-Fortran Syntax (see FORTRAN 77 NOTES)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Fortran Syntax
+^^^^^^^^^^^^^^
 
 .. code-block:: fortran
 
@@ -95,21 +95,6 @@ A new predefined operation, MPI_NO_OP, is defined. It corresponds to the
 assiciative function f(a, b) = a; that is the current value in the
 target memory is returned in the result buffer at the origin and no
 operation is performed on the target buffer.
-
-
-FORTRAN 77 NOTES
-----------------
-
-The MPI standard prescribes portable Fortran syntax for the
-*TARGET_DISP* argument only for Fortran 90. FORTRAN 77 users may use the
-non-portable syntax
-
-.. code-block:: fortran
-
-        INTEGER*MPI_ADDRESS_KIND TARGET_DISP
-
-where ``MPI_ADDRESS_KIND`` is a constant defined in ``mpif.h`` and gives the
-length of the declared integer in bytes.
 
 
 NOTES

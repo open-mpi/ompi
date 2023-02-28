@@ -24,8 +24,8 @@ C Syntax
    	void *attribute_val, int *flag)
 
 
-Fortran Syntax (see FORTRAN 77 NOTES)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Fortran Syntax
+^^^^^^^^^^^^^^
 
 .. code-block:: fortran
 
@@ -69,26 +69,11 @@ DESCRIPTION
 erroneous if there is no key with value *keyval*. On the other hand, the
 call is correct if the key value exists, but no attribute is attached on
 *comm* for that key; in that case, the call returns *flag* = false. In
-particular, MPI_KEYVAL_INVALID is an erroneous key value.
+particular, ``MPI_KEYVAL_INVALID`` is an erroneous key value.
 
 This function replaces :ref:`MPI_Attr_get`, the use of which is deprecated. The
 C binding is identical. The Fortran binding differs in that
 *attribute_val* is an address-sized integer.
-
-
-FORTRAN 77 NOTES
-----------------
-
-The MPI standard prescribes portable Fortran syntax for the
-*ATTRIBUTE_VAL* argument only for Fortran 90. Sun FORTRAN 77 users may
-use the non-portable syntax
-
-.. code-block:: fortran
-
-        INTEGER*MPI_ADDRESS_KIND ATTRIBUTE_VAL
-
-where ``MPI_ADDRESS_KIND`` is a constant defined in ``mpif.h`` and gives the
-length of the declared integer in bytes.
 
 
 ERRORS

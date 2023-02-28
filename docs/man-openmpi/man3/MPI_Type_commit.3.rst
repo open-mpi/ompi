@@ -67,7 +67,7 @@ different buffers, with different starting addresses.
 
 .. code-block:: fortran
 
-       INTEGER type1, type2
+       INTEGER :: type1, type2
        CALL MPI_TYPE_CONTIGUOUS(5, MPI_REAL, type1, ierr)
                      ! new type object created
        CALL MPI_TYPE_COMMIT(type1, ierr)

@@ -1,63 +1,11 @@
-.. _open-mpi:
-.. _mpi:
+.. _mpi_errors:
+.. _open-mpi-errors:
 
-Open-MPI
-========
+MPI Errors
+==========
 
 .. include_body
 
-Open MPI - General information
-
-OPEN MPI
---------
-
-Open MPI is an open source implementation of MPI (message-passing
-interface), the industry-standard specification for writing
-message-passing programs. Message passing is a programming model that
-gives the programmer explicit control over interprocess communication.
-
-The MPI specification was developed by the MPI Forum, a group of
-software developers, computer vendors, academics, and computer-science
-researchers whose goal was to develop a standard for writing
-message-passing programs that would be efficient, flexible, and
-portable.
-
-The outcome, known as the MPI Standard, was first published in 1993; its
-most recent version (MPI-4.0) was published in June 2021. Open MPI
-includes all MPI |mpi_standard_version|.|mpi_standard_subversion|-compliant routines.
-
-For more information about Open MPI, see https://www.open-mpi.org.
-
-The MPI standards are available at https://www.mpi-forum.org.
-
-MAN PAGE SYNTAX
----------------
-
-Man pages for Open MPI and Open MPI I/O routines are named according to
-C syntax, that is, they begin with the prefix ``MPI_``, all in
-uppercase, and the first letter following the ``MPI_`` prefix is also
-uppercase. The rest of the letters in the routine are all lowercase, for
-example, :ref:`MPI_Comm_get_attr`.
-
-ENVIRONMENT
------------
-
-To fine-tune your Open MPI environment, you can either use arguments
-to the :ref:`mpirun <man1-mpirun>` or :ref:`mpiexec <man1-mpiexec>`
-commands, or you can use MCA parameters.
-
-For more information on arguments, see the :ref:`mpirun(1)
-<man1-mpirun>` man page.
-
-For a complete listing of MCA parameters and their descriptions, issue
-the command ``ompi_info --all``.  See :ref:`ompi_info(1)
-<man1-ompi_info>` for more information.
-
-
-.. _open-mpi-errors:
-
-ERRORS
-------
 
 All MPI routines (except :ref:`MPI_Wtime` and :ref:`MPI_Wtick`) return an
 error value; C routines as the value of the function and Fortran
@@ -193,7 +141,7 @@ Standard error return classes for Open MPI:
      - 27
      - Conversion functions could not be registered because a data
        representation identifier that was already defined was passed
-       to :ref:`MPI_Register_datarep(3) <MPI_Register_datarep>`.
+       to :ref:`MPI_Register_datarep`.
 
    * - MPI_ERR_FILE_EXISTS
      - 28
@@ -297,8 +245,7 @@ Standard error return classes for Open MPI:
 
    * - MPI_ERR_UNSUPPORTED_DATAREP
      - 51
-     - Unsupported datarep passed to :ref:`MPI_File_set_view(3)
-       <MPI_File_set_view>`.
+     - Unsupported datarep passed to :ref:`MPI_File_set_view`.
 
    * - MPI_ERR_UNSUPPORTED_OPERATION
      - 52
@@ -368,8 +315,7 @@ Standard error return classes for Open MPI:
    * - MPI_ERR_RMA_RANGE
      - 68
      - Target memory is not part of the window (in the case of a
-       window created with :ref:`MPI_Win_create_dynamic(3)
-       <MPI_Win_create_dynamic>`, target memory is not attached.
+       window created with :ref:`MPI_Win_create_dynamic`, target memory is not attached.
 
    * - MPI_ERR_RMA_ATTACH
      - 69
