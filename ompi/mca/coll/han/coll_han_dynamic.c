@@ -614,6 +614,11 @@ mca_coll_han_allreduce_intra_dynamic(const void *sbuf,
     size_t dtype_size;
     int rank, verbosity = 0;
 
+    if (!han_module->enabled) {
+        return han_module->fallback.allreduce.module_fn.allreduce(sbuf, rbuf, count, dtype, op, comm,
+                                                                  han_module->fallback.allreduce.module);
+    }
+
     /* Compute configuration information for dynamic rules */
     ompi_datatype_type_size(dtype, &dtype_size);
     dtype_size = dtype_size * count;
@@ -722,6 +727,9 @@ mca_coll_han_barrier_intra_dynamic(struct ompi_communicator_t *comm,
     mca_coll_base_module_t *sub_module;
     int rank, verbosity = 0;
 
+    if (!han_module->enabled) {
+        return han_module->fallback.barrier.module_fn.barrier(comm, han_module->fallback.barrier.module);
+    }
 
     /* Compute configuration information for dynamic rules */
     sub_module = get_module(BARRIER,
@@ -820,6 +828,11 @@ mca_coll_han_bcast_intra_dynamic(void *buff,
     mca_coll_base_module_t *sub_module;
     size_t dtype_size;
     int rank, verbosity = 0;
+
+    if (!han_module->enabled) {
+        return han_module->fallback.bcast.module_fn.bcast(buff, count, dtype, root, comm,
+                                                          han_module->fallback.bcast.module);
+    }
 
     /* Compute configuration information for dynamic rules */
     ompi_datatype_type_size(dtype, &dtype_size);
@@ -931,6 +944,11 @@ mca_coll_han_gather_intra_dynamic(const void *sbuf, int scount,
     mca_coll_base_module_t *sub_module;
     size_t dtype_size;
     int rank, verbosity = 0;
+
+    if (!han_module->enabled) {
+        return han_module->fallback.gather.module_fn.gather(sbuf, scount, sdtype, rbuf, rcount, rdtype, root, comm,
+                                                            han_module->fallback.gather.module);
+    }
 
     /* Compute configuration information for dynamic rules */
     if( MPI_IN_PLACE != sbuf ) {
@@ -1051,6 +1069,11 @@ mca_coll_han_reduce_intra_dynamic(const void *sbuf,
     size_t dtype_size;
     int rank, verbosity = 0;
 
+    if (!han_module->enabled) {
+        return han_module->fallback.reduce.module_fn.reduce(sbuf, rbuf, count, dtype, op, root, comm,
+                                                            han_module->fallback.reduce.module);
+    }
+
     /* Compute configuration information for dynamic rules */
     ompi_datatype_type_size(dtype, &dtype_size);
     dtype_size = dtype_size * count;
@@ -1166,6 +1189,11 @@ mca_coll_han_scatter_intra_dynamic(const void *sbuf, int scount,
     mca_coll_base_module_t *sub_module;
     size_t dtype_size;
     int rank, verbosity = 0;
+
+    if (!han_module->enabled) {
+        return han_module->fallback.scatter.module_fn.scatter(sbuf, scount, sdtype, rbuf, rcount, rdtype, root, comm,
+                                                             han_module->fallback.scatter.module);
+    }
 
     /* Compute configuration information for dynamic rules */
     if( MPI_IN_PLACE != rbuf ) {
