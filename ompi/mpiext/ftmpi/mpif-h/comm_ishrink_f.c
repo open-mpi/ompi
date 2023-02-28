@@ -59,9 +59,9 @@ void ompix_comm_ishrink_f(MPI_Fint *comm, MPI_Fint *newcomm, MPI_Fint *request, 
     MPI_Request c_req;
     MPI_Comm c_newcomm;
 
-    *ierr = OMPI_INT_2_FINT(MPIX_Comm_ishrink(c_comm,
-                                             &c_newcomm,
-                                             &c_req));
+    *ierr = OMPI_INT_2_FINT(PMPIX_Comm_ishrink(c_comm,
+                                               &c_newcomm,
+                                               &c_req));
 
     if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
         *request = PMPI_Request_c2f(c_req);
