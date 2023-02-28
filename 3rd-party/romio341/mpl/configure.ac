@@ -425,77 +425,81 @@ pac_cv_posix_clock_realtime=no)
     ;;
 
     linux86_cycle|linux86_cycle_2)
-    
-# The following AC_TRY_RUN statements are needed because x86_64 compilers
+
+# OMPI: The following block was copy and pasted from
+# https://github.com/pmodels/mpich/blob/38552cfab7ac139754066e09f2a85e8b5a7d3df7/src/mpl/configure.ac#L451-L513
+# to wholly replace the same block set of tests that we there
+# previously.  This fixed some Autoconf 2.71 portability issues and m4
+# quoting issues.  See https://github.com/open-mpi/ompi/issues/11364
+# for details.
+
+# The following AC_RUN_IFELSE statements are needed because x86_64 compilers
 # usually know about rdtscp but the cpu may or may not actually implement the
 # feature.  This is not cross-compile safe, unfortunately.  In the long run we
 # should allow the user to override this with a configure flag.
-    AC_CACHE_CHECK([that linux86 cycle counter is available],
-        pac_cv_linux86_cycle,
-            AC_TRY_RUN([
-int main()
-{
-    /* rdtscp */
-    long long var, *var_ptr=&var;
-    __asm__ __volatile__("rdtscp; shl \$32, %%rdx; or %%rdx, %%rax" : "=a" (*var_ptr) : : "ecx", "rdx");
-    return 0;
-}
-            ],pac_cv_linux86_cycle=rdtscp,
-                AC_TRY_RUN([[
-int main()
-{
-    /* cpuid 64 */
-    long long var, *var_ptr=&var;
-    __asm__ __volatile__("push %%rbx ; cpuid ; rdtsc ; pop %%rbx ; shl $32, %%rdx; or %%rdx, %%rax" : "=a" (*var_ptr) : : "ecx", "rdx");
-    return 0;
-}
-                ]],pac_cv_linux86_cycle=cpuid_rdtsc64,
-                    AC_TRY_RUN([[[
-int main()
-{
-    /* cpuid 32 */
-    long long var, *var_ptr=&var;
-    __asm__ __volatile__("push %%ebx ; cpuid ; rdtsc ; pop %%ebx" : "=A" (*var_ptr) : : "ecx");
-    return 0;
-}
-                    ]]],pac_cv_linux86_cycle=cpuid_rdtsc32,
-                        AC_TRY_RUN([[[[
-int main()
-{
-    /* simple */
-    long long var, *var_ptr=&var;
-    __asm__ __volatile__("rdtsc" : "=A" (*var_ptr));
-    return 0;
-}
-                        ]]]],pac_cv_linux86_cycle=rdtsc,
-                        pac_cv_linux86_cycle=no)
-                    )
-                ),
-dnl The if-cross-compiling clause from the first AC_TRY_RUN.  Hope that if the
-dnl compiler knows about the instruction then it's supported by the target
-dnl platform.
-                AC_TRY_COMPILE(,[[
-                    long long var, *var_ptr=&var;
-                    __asm__ __volatile__("rdtscp; shl \$32, %%rdx; or %%rdx, %%rax" : "=a" (*var_ptr) : : "ecx", "rdx");
-                ]],pac_cv_linux86_cycle=rdtscp,
-                    AC_TRY_COMPILE(,[[[
-                        long long var, *var_ptr=&var;
-                        __asm__ __volatile__("push %%rbx ; cpuid ; rdtsc ; pop %%rbx ; shl $32, %%rdx; or %%rdx, %%rax" : "=a" (*var_ptr) : : "ecx", "rdx");
-                    ]]],pac_cv_linux86_cycle=cpuid_rdtsc64,
-                        AC_TRY_COMPILE(,[[[[
-                            long long var, *var_ptr=&var;
-                            __asm__ __volatile__("push %%ebx ; cpuid ; rdtsc ; pop %%ebx" : "=A" (*var_ptr) : : "ecx");
-                        ]]]],pac_cv_linux86_cycle=cpuid_rdtsc32,
-                            AC_TRY_COMPILE(,[[[[[
-                                long long var, *var_ptr=&var;
-                                __asm__ __volatile__("rdtsc" : "=A" (*var_ptr));
-                            ]]]]],pac_cv_linux86_cycle=rdtsc,
-                            pac_cv_linux86_cycle=no)
-                        )
-                    )
-                )
-            )
-    )
+    AC_CACHE_CHECK([that linux86 cycle counter is available], pac_cv_linux86_cycle, [
+        AC_RUN_IFELSE([AC_LANG_SOURCE([[
+            int main()
+            {
+                /* rdtscp */
+                long long var, *var_ptr=&var;
+                __asm__ __volatile__("rdtscp; shl \$32, %%rdx; or %%rdx, %%rax" : "=a" (*var_ptr) : : "ecx", "rdx");
+                return 0;
+            }
+            ]])],pac_cv_linux86_cycle=rdtscp,[
+        AC_RUN_IFELSE([AC_LANG_SOURCE([[
+            int main()
+            {
+                /* cpuid 64 */
+                long long var, *var_ptr=&var;
+                __asm__ __volatile__("push %%rbx ; cpuid ; rdtsc ; pop %%rbx ; shl $32, %%rdx; or %%rdx, %%rax" : "=a" (*var_ptr) : : "ecx", "rdx");
+                return 0;
+            }
+            ]])],pac_cv_linux86_cycle=cpuid_rdtsc64,[
+        AC_RUN_IFELSE([AC_LANG_SOURCE([[
+            int main()
+            {
+                /* cpuid 32 */
+                long long var, *var_ptr=&var;
+                __asm__ __volatile__("push %%ebx ; cpuid ; rdtsc ; pop %%ebx" : "=A" (*var_ptr) : : "ecx");
+                return 0;
+            }
+            ]])],pac_cv_linux86_cycle=cpuid_rdtsc32,[
+        AC_RUN_IFELSE([AC_LANG_SOURCE([[
+            int main()
+            {
+                /* simple */
+                long long var, *var_ptr=&var;
+                __asm__ __volatile__("rdtsc" : "=A" (*var_ptr));
+                return 0;
+            }
+            ]])],pac_cv_linux86_cycle=rdtsc,
+            pac_cv_linux86_cycle=no)
+        ])])], dnl closing the last 3 AC_RUN_IFELSE
+        [
+        dnl The if-cross-compiling clause from the first AC_RUN_IFELSE.  Hope that if the
+        dnl compiler knows about the instruction then it's supported by the target
+        dnl platform.
+        AC_COMPILE_IFELSE([AC_LANG_PROGRAM([],[[
+            long long var, *var_ptr=&var;
+            __asm__ __volatile__("rdtscp; shl \$32, %%rdx; or %%rdx, %%rax" : "=a" (*var_ptr) : : "ecx", "rdx");
+            ]])],pac_cv_linux86_cycle=rdtscp,[
+        AC_COMPILE_IFELSE([AC_LANG_PROGRAM([],[[
+            long long var, *var_ptr=&var;
+            __asm__ __volatile__("push %%rbx ; cpuid ; rdtsc ; pop %%rbx ; shl $32, %%rdx; or %%rdx, %%rax" : "=a" (*var_ptr) : : "ecx", "rdx");
+            ]])],pac_cv_linux86_cycle=cpuid_rdtsc64,[
+        AC_COMPILE_IFELSE([AC_LANG_PROGRAM([],[[
+            long long var, *var_ptr=&var;
+            __asm__ __volatile__("push %%ebx ; cpuid ; rdtsc ; pop %%ebx" : "=A" (*var_ptr) : : "ecx");
+            ]])],pac_cv_linux86_cycle=cpuid_rdtsc32,[
+        AC_COMPILE_IFELSE([AC_LANG_PROGRAM([],[[
+            long long var, *var_ptr=&var;
+            __asm__ __volatile__("rdtsc" : "=A" (*var_ptr));
+            ]])],pac_cv_linux86_cycle=rdtsc,
+            pac_cv_linux86_cycle=no
+        )])])]) dnl closing the 4 AC_COMPILE_IFELSE
+        ]) dnl end of first AC_RUN_IFELSE
+    ]) dnl end of AC_CACHE_CHECK
 
     case "$pac_cv_linux86_cycle" in
         "rdtscp")
