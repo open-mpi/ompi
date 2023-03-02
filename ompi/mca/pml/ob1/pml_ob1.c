@@ -400,6 +400,10 @@ int mca_pml_ob1_add_procs(ompi_proc_t** procs, size_t nprocs)
         return rc;
     }
 
+    if (NULL == mca_bml.bml_add_procs) {
+        return OMPI_ERR_UNREACH;
+    }
+
     rc = mca_bml.bml_add_procs (nprocs, procs, &reachable);
     OBJ_DESTRUCT(&reachable);
     if (OMPI_SUCCESS != rc) {

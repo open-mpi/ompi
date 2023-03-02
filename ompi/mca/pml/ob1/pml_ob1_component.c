@@ -326,8 +326,10 @@ int mca_pml_ob1_component_fini(void)
     int rc;
 
     /* Shutdown BML */
-    if(OMPI_SUCCESS != (rc = mca_bml.bml_finalize()))
-        return rc;
+    if (NULL != mca_bml.bml_finalize) {
+        if(OMPI_SUCCESS != (rc = mca_bml.bml_finalize()))
+            return rc;
+    }
 
     if(!mca_pml_ob1.enabled) {
         if( NULL != mca_pml_ob1.allocator ) {
