@@ -38,6 +38,7 @@ RST_SOURCE_FILES   = \
         $(srcdir)/release-notes/*.rst \
         $(srcdir)/installing-open-mpi/*.rst \
         $(srcdir)/installing-open-mpi/*/*.rst \
+        $(srcdir)/mca/*.rst \
         $(srcdir)/features/*.rst \
         $(srcdir)/building-apps/*.rst \
         $(srcdir)/launching-apps/*.rst \

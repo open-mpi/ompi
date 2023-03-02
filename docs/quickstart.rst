@@ -18,3 +18,5 @@ provides significantly more detailed information.
    </building-apps/quickstart>`
 #. :doc:`Quick start: Launching MPI applications
    </launching-apps/quickstart>`
+#. :doc:`Quick start: Customizing run-time options
+   </mca/quickstart>`
