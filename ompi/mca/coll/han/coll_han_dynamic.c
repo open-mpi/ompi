@@ -615,8 +615,8 @@ mca_coll_han_allreduce_intra_dynamic(const void *sbuf,
     int rank, verbosity = 0;
 
     if (!han_module->enabled) {
-        return han_module->fallback.allreduce.module_fn.allreduce(sbuf, rbuf, count, dtype, op, comm,
-                                                                  han_module->fallback.allreduce.module);
+        return han_module->previous_allreduce(sbuf, rbuf, count, dtype, op, comm,
+                                              han_module->previous_allreduce_module);
     }
 
     /* Compute configuration information for dynamic rules */
@@ -728,7 +728,7 @@ mca_coll_han_barrier_intra_dynamic(struct ompi_communicator_t *comm,
     int rank, verbosity = 0;
 
     if (!han_module->enabled) {
-        return han_module->fallback.barrier.module_fn.barrier(comm, han_module->fallback.barrier.module);
+        return han_module->previous_barrier(comm, han_module->previous_barrier_module);
     }
 
     /* Compute configuration information for dynamic rules */
@@ -830,8 +830,8 @@ mca_coll_han_bcast_intra_dynamic(void *buff,
     int rank, verbosity = 0;
 
     if (!han_module->enabled) {
-        return han_module->fallback.bcast.module_fn.bcast(buff, count, dtype, root, comm,
-                                                          han_module->fallback.bcast.module);
+        return han_module->previous_bcast(buff, count, dtype, root, comm,
+                                          han_module->previous_bcast_module);
     }
 
     /* Compute configuration information for dynamic rules */
@@ -946,8 +946,8 @@ mca_coll_han_gather_intra_dynamic(const void *sbuf, int scount,
     int rank, verbosity = 0;
 
     if (!han_module->enabled) {
-        return han_module->fallback.gather.module_fn.gather(sbuf, scount, sdtype, rbuf, rcount, rdtype, root, comm,
-                                                            han_module->fallback.gather.module);
+        return han_module->previous_gather(sbuf, scount, sdtype, rbuf, rcount, rdtype, root, comm,
+                                           han_module->previous_gather_module);
     }
 
     /* Compute configuration information for dynamic rules */
@@ -1070,8 +1070,8 @@ mca_coll_han_reduce_intra_dynamic(const void *sbuf,
     int rank, verbosity = 0;
 
     if (!han_module->enabled) {
-        return han_module->fallback.reduce.module_fn.reduce(sbuf, rbuf, count, dtype, op, root, comm,
-                                                            han_module->fallback.reduce.module);
+        return han_module->previous_reduce(sbuf, rbuf, count, dtype, op, root, comm,
+                                           han_module->previous_reduce_module);
     }
 
     /* Compute configuration information for dynamic rules */
@@ -1191,8 +1191,8 @@ mca_coll_han_scatter_intra_dynamic(const void *sbuf, int scount,
     int rank, verbosity = 0;
 
     if (!han_module->enabled) {
-        return han_module->fallback.scatter.module_fn.scatter(sbuf, scount, sdtype, rbuf, rcount, rdtype, root, comm,
-                                                             han_module->fallback.scatter.module);
+        return han_module->previous_scatter(sbuf, scount, sdtype, rbuf, rcount, rdtype, root, comm,
+                                            han_module->previous_scatter_module);
     }
 
     /* Compute configuration information for dynamic rules */
