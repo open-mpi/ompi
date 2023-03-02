@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 The University of Tennessee and The University
+ * Copyright (c) 2018-2023 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2020      Bull S.A.S. All rights reserved.
@@ -93,9 +93,8 @@ mca_coll_han_gather_intra(const void *sbuf, int scount,
                              "han cannot handle gather with this communicator. Fall back on another component\n"));
         /* HAN cannot work with this communicator so fallback on all collectives */
         HAN_LOAD_FALLBACK_COLLECTIVES(han_module, comm);
-        return comm->c_coll->coll_gather(sbuf, scount, sdtype, rbuf,
-                                         rcount, rdtype, root,
-                                         comm, comm->c_coll->coll_gather_module);
+        return han_module->previous_gather(sbuf, scount, sdtype, rbuf, rcount, rdtype, root,
+                                          comm, han_module->previous_gather_module);
     }
 
     /* Topo must be initialized to know rank distribution which then is used to
@@ -108,9 +107,8 @@ mca_coll_han_gather_intra(const void *sbuf, int scount,
          * future calls will then be automatically redirected.
          */
         HAN_LOAD_FALLBACK_COLLECTIVE(han_module, comm, gather);
-        return comm->c_coll->coll_gather(sbuf, scount, sdtype, rbuf,
-                                         rcount, rdtype, root,
-                                         comm, comm->c_coll->coll_gather_module);
+        return han_module->previous_gather(sbuf, scount, sdtype, rbuf, rcount, rdtype, root,
+                                          comm, han_module->previous_gather_module);
     }
 
     w_rank = ompi_comm_rank(comm);
@@ -359,9 +357,8 @@ mca_coll_han_gather_intra_simple(const void *sbuf, int scount,
                              "han cannot handle gather with this communicator. Fall back on another component\n"));
         /* HAN cannot work with this communicator so fallback on all collectives */
         HAN_LOAD_FALLBACK_COLLECTIVES(han_module, comm);
-        return comm->c_coll->coll_gather(sbuf, scount, sdtype, rbuf,
-                                         rcount, rdtype, root,
-                                         comm, comm->c_coll->coll_gather_module);
+        return han_module->previous_gather(sbuf, scount, sdtype, rbuf, rcount, rdtype, root,
+                                          comm, han_module->previous_gather_module);
     }
 
     /* Topo must be initialized to know rank distribution which then is used to
@@ -374,9 +371,8 @@ mca_coll_han_gather_intra_simple(const void *sbuf, int scount,
          * future calls will then be automatically redirected.
          */
         HAN_LOAD_FALLBACK_COLLECTIVE(han_module, comm, gather);
-        return comm->c_coll->coll_gather(sbuf, scount, sdtype, rbuf,
-                                         rcount, rdtype, root,
-                                         comm, comm->c_coll->coll_gather_module);
+        return han_module->previous_gather(sbuf, scount, sdtype, rbuf, rcount, rdtype, root,
+                                          comm, han_module->previous_gather_module);
     }
 
     ompi_communicator_t *low_comm = han_module->sub_comm[INTRA_NODE];

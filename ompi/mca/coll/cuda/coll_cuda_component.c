@@ -67,7 +67,7 @@ mca_coll_cuda_component_t mca_coll_cuda_component = {
     /* cuda-specific component information */
 
     /* Priority: make it above all point to point collectives including self */
-    78,
+    .priority = 78,
 };
 
 

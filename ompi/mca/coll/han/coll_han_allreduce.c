@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 The University of Tennessee and The University
+ * Copyright (c) 2018-2023 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2020      Bull S.A.S. All rights reserved.
@@ -110,8 +110,8 @@ mca_coll_han_allreduce_intra(const void *sbuf,
                              "han cannot handle allreduce with this communicator. Drop HAN support in this communicator and fall back on another component\n"));
         /* HAN cannot work with this communicator so fallback on all collectives */
         HAN_LOAD_FALLBACK_COLLECTIVES(han_module, comm);
-        return comm->c_coll->coll_allreduce(sbuf, rbuf, count, dtype, op,
-                                            comm, comm->c_coll->coll_allreduce_module);
+        return han_module->previous_allreduce(sbuf, rbuf, count, dtype, op,
+                                              comm, han_module->previous_allreduce_module);
     }
 
     ptrdiff_t extent, lb;
@@ -450,8 +450,8 @@ mca_coll_han_allreduce_intra_simple(const void *sbuf,
                              "han cannot handle allreduce with this communicator. Drop HAN support in this communicator and fall back on another component\n"));
         /* HAN cannot work with this communicator so fallback on all collectives */
         HAN_LOAD_FALLBACK_COLLECTIVES(han_module, comm);
-        return comm->c_coll->coll_allreduce(sbuf, rbuf, count, dtype, op,
-                                            comm, comm->c_coll->coll_allreduce_module);
+        return han_module->previous_allreduce(sbuf, rbuf, count, dtype, op,
+                                              comm, han_module->previous_allreduce_module);
     }
 
     low_comm = han_module->sub_comm[INTRA_NODE];
