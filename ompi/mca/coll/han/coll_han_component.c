@@ -90,7 +90,7 @@ mca_coll_han_component_t mca_coll_han_component = {
     /* han-component specific information */
 
     /* (default) priority */
-    .han_priority = 20,
+    .han_priority = 35,
     /* workaround for nvcc compiler */
     .dynamic_rules_filename = NULL,
 };
@@ -251,7 +251,6 @@ static int han_register(void)
     TOPO_LVL_T topo_lvl;
     COMPONENT_T component;
 
-    cs->han_priority = 35;
     (void) mca_base_component_var_register(c, "priority", "Priority of the HAN coll component",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                            OPAL_INFO_LVL_9,

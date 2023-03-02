@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 The University of Tennessee and The University
+ * Copyright (c) 2018-2023 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2020      Bull S.A.S. All rights reserved.
@@ -91,8 +91,8 @@ mca_coll_han_reduce_intra(const void *sbuf,
                              "han cannot handle reduce with this communicator. Drop HAN support in this communicator and fall back on another component\n"));
         /* HAN cannot work with this communicator so fallback on all modules */
         HAN_LOAD_FALLBACK_COLLECTIVES(han_module, comm);
-        return comm->c_coll->coll_reduce(sbuf, rbuf, count, dtype, op, root,
-                                         comm, comm->c_coll->coll_reduce_module);
+        return han_module->previous_reduce(sbuf, rbuf, count, dtype, op, root,
+                                          comm, han_module->previous_reduce_module);
     }
 
     /* Topo must be initialized to know rank distribution which then is used to
@@ -105,8 +105,8 @@ mca_coll_han_reduce_intra(const void *sbuf,
          * future calls will then be automatically redirected.
          */
         HAN_LOAD_FALLBACK_COLLECTIVE(han_module, comm, reduce);
-        return comm->c_coll->coll_reduce(sbuf, rbuf, count, dtype, op, root,
-                                         comm, comm->c_coll->coll_reduce_module);
+        return han_module->previous_reduce(sbuf, rbuf, count, dtype, op, root,
+                                          comm, han_module->previous_reduce_module);
     }
 
     ompi_datatype_get_extent(dtype, &lb, &extent);
@@ -297,8 +297,8 @@ mca_coll_han_reduce_intra_simple(const void *sbuf,
                              "han cannot handle reduce with this communicator. Drop HAN support in this communicator and fall back on another component\n"));
         /* HAN cannot work with this communicator so fallback on all collectives */
         HAN_LOAD_FALLBACK_COLLECTIVES(han_module, comm);
-        return comm->c_coll->coll_reduce(sbuf, rbuf, count, dtype, op, root,
-                                         comm, comm->c_coll->coll_reduce_module);
+        return han_module->previous_reduce(sbuf, rbuf, count, dtype, op, root,
+                                          comm, han_module->previous_reduce_module);
     }
 
     /* Topo must be initialized to know rank distribution which then is used to
@@ -311,8 +311,8 @@ mca_coll_han_reduce_intra_simple(const void *sbuf,
          * future calls will then be automatically redirected.
          */
         HAN_LOAD_FALLBACK_COLLECTIVE(han_module, comm, reduce);
-        return comm->c_coll->coll_reduce(sbuf, rbuf, count, dtype, op, root,
-                                         comm, comm->c_coll->coll_reduce_module);
+        return han_module->previous_reduce(sbuf, rbuf, count, dtype, op, root,
+                                          comm, han_module->previous_reduce_module);
     }
 
     ompi_communicator_t *low_comm =
