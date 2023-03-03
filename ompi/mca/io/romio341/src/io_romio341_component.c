@@ -64,8 +64,8 @@ static int register_datarep(const char *,
 /*
  * Private variables
  */
-static int priority_param = 20;
-static int delete_priority_param = 20;
+static int priority_param;
+static int delete_priority_param;
 
 
 /*
