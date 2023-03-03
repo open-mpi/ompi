@@ -475,6 +475,7 @@ static void ompi_op_construct(ompi_op_t *new_op)
         new_op->o_3buff_intrinsic.fns[i] = NULL;
         new_op->o_3buff_intrinsic.modules[i] = NULL;
     }
+    new_op->o_device_op = NULL;
 }
 
 
@@ -506,4 +507,22 @@ static void ompi_op_destruct(ompi_op_t *op)
             op->o_3buff_intrinsic.modules[i] = NULL;
         }
     }
+
+    if (op->o_device_op != NULL) {
+        for (i = 0; i < OMPI_OP_BASE_TYPE_MAX; ++i) {
+            if( NULL != op->o_device_op->o_intrisic.modules[i] ) {
+                OBJ_RELEASE(op->o_device_op->o_intrisic.modules[i]);
+                op->o_device_op->o_intrisic->modules[i] = NULL;
+            }
+            if( NULL != op->o_device_op->o_3buff_intrisic.modules[i] ) {
+                OBJ_RELEASE(op->o_device_op->o_3buff_intrisic.modules[i]);
+                op->o_device_op->o_3buff_intrisic->modules[i] = NULL;
+            }
+        }
+    }
+    if (op->o_device_op) {
+        OBJ_RELEASE(op->do_stream);
+        op->o_device_op->do_stream = NULL;
+    }
+    free(op->o_device_op);
 }

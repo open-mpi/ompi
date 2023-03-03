@@ -122,6 +122,15 @@ enum ompi_op_type {
     OMPI_OP_REPLACE,
     OMPI_OP_NUM_OF_TYPES
 };
+
+/* device op information */
+struct ompi_device_op_t {
+    opal_accelerator_stream_t *do_stream;
+    ompi_op_base_op_fns_t do_intrisic;
+    ompi_op_base_op_3buff_fns_t do_3buff_intrisic;
+};
+typedef struct ompi_device_op_t ompi_device_op_t;
+
 /**
  * Back-end type of MPI_Op
  */
@@ -167,6 +176,10 @@ struct ompi_op_t {
     /** 3-buffer functions, which is only for intrinsic ops.  No need
         for the C/C++/Fortran user-defined functions. */
     ompi_op_base_op_3buff_fns_t o_3buff_intrinsic;
+
+    /** device functions, only for intrinsic ops.
+        Provided if device support is detected. */
+    ompi_device_op_t *o_device_op;
 };
 
 /**
@@ -560,6 +573,24 @@ static inline void ompi_op_reduce(ompi_op_t * op, void *source,
      * :-)
      */
 
+    bool use_device_op = false;
+    int source_dev_id, target_dev_id;
+    uint64_t source_flags, target_flags;
+    /* check if either of the buffers is on a device and if so make sure we can
+     * access handle it properly */
+    if (opal_accelerator.check_addr(source, &source_dev_id, &source_flags) > 0 ||
+        opal_accelerator.check_addr(target, &target_dev_id, &target_flags) > 0) {
+        if (ompi_datatype_is_predefined(dtype) &&
+            source_dev_id == target_dev_id &&
+            0 != (op->o_flags & OMPI_OP_FLAGS_INTRINSIC) &&
+            NULL == op->o_device_intrisic) {
+            use_device_op = true;
+        } else {
+            /* TODO: can we be more graceful here? */
+            abort();
+        }
+    }
+
     /* For intrinsics, we also pass the corresponding op module */
     if (0 != (op->o_flags & OMPI_OP_FLAGS_INTRINSIC)) {
         int dtype_id;
@@ -569,9 +600,18 @@ static inline void ompi_op_reduce(ompi_op_t * op, void *source,
         } else {
             dtype_id = ompi_op_ddt_map[dtype->id];
         }
-        op->o_func.intrinsic.fns[dtype_id](source, target,
-                                           &count, &dtype,
-                                           op->o_func.intrinsic.modules[dtype_id]);
+        if (use_device_op) {
+            if (NULL == op->o_device_intrisic) {
+                abort(); // TODO: be more graceful!
+            }
+            op->o_device_intrisic->intrinsic.fns[dtype_id](source, target,
+                                                           &count, &dtype,
+                                                           op->o_device_intrisic->intrinsic.modules[dtype_id]);
+        } else {
+            op->o_func.intrinsic.fns[dtype_id](source, target,
+                                               &count, &dtype,
+                                               op->o_func.intrinsic.modules[dtype_id]);
+        }
         return;
     }
 
