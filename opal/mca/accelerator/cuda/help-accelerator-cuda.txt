@@ -162,9 +162,9 @@ cause the program to abort.
 Check the cuda.h file for what the return value means.
 #
 [cuEventDestroy failed]
-The call to cuEventDestory failed. This is a unrecoverable error and will
+The call to cuEventDestroy failed. This is a unrecoverable error and will
 cause the program to abort.
-  cuEventDestory return value:   %d
+  cuEventDestroy return value:   %d
 Check the cuda.h file for what the return value means.
 #
 [cuStreamCreate failed]

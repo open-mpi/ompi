@@ -85,7 +85,7 @@ int mca_btl_ugni_spawn_progress_thread(struct mca_btl_base_module_t *btl)
 
     rc = pthread_attr_destroy(&attr);
     if (0 != rc) {
-        BTL_ERROR(("btl/ugni pthread_attr_destory returned %s ", strerror(rc)));
+        BTL_ERROR(("btl/ugni pthread_attr_destroy returned %s ", strerror(rc)));
         ret = OPAL_ERROR;
     }
 
