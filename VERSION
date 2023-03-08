@@ -94,15 +94,15 @@ date="Unreleased developer copy"
 # Version numbers are described in the Libtool current:revision:age
 # format.
 
-libmpi_so_version=80:0:0
-libmpi_mpifh_so_version=80:0:0
-libmpi_usempi_tkr_so_version=80:0:0
-libmpi_usempi_ignore_tkr_so_version=80:0:0
-libmpi_usempif08_so_version=80:0:0
+libmpi_so_version=80:0:40
+libmpi_mpifh_so_version=80:0:40
+libmpi_usempi_tkr_so_version=80:0:40
+libmpi_usempi_ignore_tkr_so_version=80:0:40
+libmpi_usempif08_so_version=80:0:40
 libopen_pal_so_version=80:0:0
-libmpi_java_so_version=80:0:0
-liboshmem_so_version=80:0:0
-libompitrace_so_version=80:0:0
+libmpi_java_so_version=80:0:40
+liboshmem_so_version=80:0:40
+libompitrace_so_version=80:0:40
 
 # "Common" components install standalone libraries that are run-time
 # linked by one or more components.  So they need to be versioned as
