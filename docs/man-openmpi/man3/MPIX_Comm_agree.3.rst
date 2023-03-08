@@ -114,7 +114,7 @@ process in *comm*, all processes raise an error of class MPIX_ERR_PROC_FAILED.
 :ref:`MPIX_Comm_agree` users can propagate and synchronize the knowledge
 of failures across all MPI processes in *comm*.
 
-::
+.. code-block:: c
 
     Comm_get_failed_consistent(MPI_Comm c, MPI_Group * g) {
         int rc; int T=1;
@@ -168,15 +168,8 @@ the local and remote groups of the inter-communicator.
 ERRORS
 ------
 
-Almost all MPI routines return an error value; C routines as the value
-of the function and Fortran routines in the last argument.
-
-Before the error value is returned, the current MPI error handler is
-called. By default, this error handler aborts the MPI job, except for
-I/O function errors. The error handler may be changed with
-:ref:`MPI_Comm_set_errhandler`; the predefined error handler MPI_ERRORS_RETURN
-may be used to cause error values to be returned. Note that MPI does not
-guarantee that an MPI program can continue past an error.
+.. include:: ./ERRORS.rst
 
 .. seealso::
-    :ref:`MPIX_Comm_is_revoked` :ref:`MPIX_Comm_ack_failed`
+   * :ref:`MPIX_Comm_is_revoked`
+   * :ref:`MPIX_Comm_ack_failed`
