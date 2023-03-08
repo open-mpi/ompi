@@ -1,8 +1,8 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
- * Copyright (c) 2014-2017 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014-2023 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2014-2017 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2016      Cisco Systems, Inc.  All rights reserved.
@@ -93,8 +93,7 @@ int pmix3x_client_init(opal_list_t *ilist)
         PMIX_INFO_CREATE(pinfo, ninfo);
         n=0;
         OPAL_LIST_FOREACH(ival, ilist, opal_value_t) {
-            (void)strncpy(pinfo[n].key, ival->key, PMIX_MAX_KEYLEN);
-            pmix3x_value_load(&pinfo[n].value, ival);
+            pmix3x_info_load(&pinfo[n], ival);
             ++n;
         }
     } else {
@@ -222,8 +221,7 @@ int pmix3x_tool_init(opal_list_t *info)
         PMIX_INFO_CREATE(pinfo, ninfo);
         n=0;
         OPAL_LIST_FOREACH(val, info, opal_value_t) {
-            (void)strncpy(pinfo[n].key, val->key, PMIX_MAX_KEYLEN);
-            pmix3x_value_load(&pinfo[n].value, val);
+            pmix3x_info_load(&pinfo[n], val);
             ++n;
             /* check to see if our name is being given from above */
             if (0 == strcmp(val->key, OPAL_PMIX_TOOL_NSPACE)) {
@@ -647,8 +645,7 @@ int pmix3x_get(const opal_process_name_t *proc, const char *key,
         PMIX_INFO_CREATE(pinfo, sz);
         n=0;
         OPAL_LIST_FOREACH(ival, info, opal_value_t) {
-            (void)strncpy(pinfo[n].key, ival->key, PMIX_MAX_KEYLEN);
-            pmix3x_value_load(&pinfo[n].value, ival);
+            pmix3x_info_load(&pinfo[n], ival);
             ++n;
         }
     }
@@ -768,8 +765,7 @@ int pmix3x_getnb(const opal_process_name_t *proc, const char *key,
         PMIX_INFO_CREATE(op->info, op->sz);
         n=0;
         OPAL_LIST_FOREACH(val, info, opal_value_t) {
-            (void)strncpy(op->info[n].key, val->key, PMIX_MAX_KEYLEN);
-            pmix3x_value_load(&op->info[n].value, val);
+            pmix3x_info_load(&op->info[n], val);
             ++n;
         }
     }
@@ -809,8 +805,7 @@ int pmix3x_publish(opal_list_t *info)
         PMIX_INFO_CREATE(pinfo, sz);
         n=0;
         OPAL_LIST_FOREACH(iptr, info, opal_value_t) {
-            (void)strncpy(pinfo[n].key, iptr->key, PMIX_MAX_KEYLEN);
-            pmix3x_value_load(&pinfo[n].value, iptr);
+            pmix3x_info_load(&pinfo[n], iptr);
             ++n;
         }
     } else {
@@ -857,8 +852,7 @@ int pmix3x_publishnb(opal_list_t *info,
         PMIX_INFO_CREATE(op->info, op->sz);
         n=0;
         OPAL_LIST_FOREACH(iptr, info, opal_value_t) {
-            (void)strncpy(op->info[n].key, iptr->key, PMIX_MAX_KEYLEN);
-            pmix3x_value_load(&op->info[n].value, iptr);
+            pmix3x_info_load(&op->info[n], iptr);
             ++n;
         }
     }
@@ -903,8 +897,7 @@ int pmix3x_lookup(opal_list_t *data, opal_list_t *info)
         PMIX_INFO_CREATE(pinfo, sz);
         n=0;
         OPAL_LIST_FOREACH(iptr, info, opal_value_t) {
-            (void)strncpy(pinfo[n].key, iptr->key, PMIX_MAX_KEYLEN);
-            pmix3x_value_load(&pinfo[n].value, iptr);
+            pmix3x_info_load(&pinfo[n], iptr);
             ++n;
         }
     }
@@ -1052,8 +1045,7 @@ int pmix3x_lookupnb(char **keys, opal_list_t *info,
         PMIX_INFO_CREATE(op->info, op->sz);
         n=0;
         OPAL_LIST_FOREACH(iptr, info, opal_value_t) {
-            (void)strncpy(op->info[n].key, iptr->key, PMIX_MAX_KEYLEN);
-            pmix3x_value_load(&op->info[n].value, iptr);
+            pmix3x_info_load(&op->info[n], iptr);
             ++n;
         }
     }
@@ -1080,8 +1072,7 @@ int pmix3x_unpublish(char **keys, opal_list_t *info)
         PMIX_INFO_CREATE(pinfo, ninfo);
         n=0;
         OPAL_LIST_FOREACH(iptr, info, opal_value_t) {
-            (void)strncpy(pinfo[n].key, iptr->key, PMIX_MAX_KEYLEN);
-            pmix3x_value_load(&pinfo[n].value, iptr);
+            pmix3x_info_load(&pinfo[n], iptr);
             ++n;
         }
     } else {
@@ -1119,8 +1110,7 @@ int pmix3x_unpublishnb(char **keys, opal_list_t *info,
         PMIX_INFO_CREATE(op->info, op->sz);
         n=0;
         OPAL_LIST_FOREACH(iptr, info, opal_value_t) {
-            (void)strncpy(op->info[n].key, iptr->key, PMIX_MAX_KEYLEN);
-            pmix3x_value_load(&op->info[n].value, iptr);
+            pmix3x_info_load(&op->info[n], iptr);
             ++n;
         }
     }
@@ -1154,8 +1144,7 @@ int pmix3x_spawn(opal_list_t *job_info, opal_list_t *apps, opal_jobid_t *jobid)
         PMIX_INFO_CREATE(info, ninfo);
         n=0;
         OPAL_LIST_FOREACH(ival, job_info, opal_value_t) {
-            (void)strncpy(info[n].key, ival->key, PMIX_MAX_KEYLEN);
-            pmix3x_value_load(&info[n].value, ival);
+            pmix3x_info_load(&info[n], ival);
             ++n;
         }
     }
@@ -1180,7 +1169,7 @@ int pmix3x_spawn(opal_list_t *job_info, opal_list_t *apps, opal_jobid_t *jobid)
             m=0;
             OPAL_LIST_FOREACH(ival, &app->info, opal_value_t) {
                 (void)strncpy(papps[n].info[m].key, ival->key, PMIX_MAX_KEYLEN);
-                pmix3x_value_load(&papps[n].info[m].value, ival);
+                pmix3x_info_load(&papps[n].info[m], ival);
                 ++m;
             }
         }
@@ -1270,8 +1259,7 @@ int pmix3x_spawnnb(opal_list_t *job_info, opal_list_t *apps,
         PMIX_INFO_CREATE(op->info, op->ninfo);
         n=0;
         OPAL_LIST_FOREACH(info, job_info, opal_value_t) {
-            (void)strncpy(op->info[n].key, info->key, PMIX_MAX_KEYLEN);
-            pmix3x_value_load(&op->info[n].value, info);
+            pmix3x_info_load(&op->info[n], info);
             ++n;
         }
     }
@@ -1292,8 +1280,7 @@ int pmix3x_spawnnb(opal_list_t *job_info, opal_list_t *apps,
             PMIX_INFO_CREATE(op->apps[n].info, op->apps[n].ninfo);
             m=0;
             OPAL_LIST_FOREACH(info, &app->info, opal_value_t) {
-                (void)strncpy(op->apps[n].info[m].key, info->key, PMIX_MAX_KEYLEN);
-                pmix3x_value_load(&op->apps[n].info[m].value, info);
+                pmix3x_info_load(&op->apps[n].info[m], info);
                 ++m;
             }
         }
@@ -1659,8 +1646,7 @@ abort();
         PMIX_INFO_CREATE(op->info, op->ninfo);
         n=0;
         OPAL_LIST_FOREACH(iptr, directives, opal_value_t) {
-            (void)strncpy(op->info[n].key, iptr->key, PMIX_MAX_KEYLEN);
-            pmix3x_value_load(&op->info[n].value, iptr);
+            pmix3x_info_load(&op->info[n], iptr);
             ++n;
         }
     }

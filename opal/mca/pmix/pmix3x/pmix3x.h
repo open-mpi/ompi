@@ -3,8 +3,8 @@
  * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2015 Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2016      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016-2023 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2017      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2021      IBM Corporation.  All rights reserved.
@@ -334,6 +334,8 @@ OPAL_MODULE_DECLSPEC opal_pmix_data_range_t pmix3x_convert_range(pmix_data_range
 OPAL_MODULE_DECLSPEC opal_pmix_persistence_t pmix3x_convert_persist(pmix_persistence_t scope);
 OPAL_MODULE_DECLSPEC pmix_persistence_t pmix3x_convert_opalpersist(opal_pmix_persistence_t scope);
 
+OPAL_MODULE_DECLSPEC void pmix3x_info_load(pmix_info_t *v,
+                                            opal_value_t *kv);
 OPAL_MODULE_DECLSPEC void pmix3x_value_load(pmix_value_t *v,
                                             opal_value_t *kv);
 OPAL_MODULE_DECLSPEC int pmix3x_value_unload(opal_value_t *kv,

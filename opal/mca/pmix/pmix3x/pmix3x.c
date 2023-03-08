@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
- * Copyright (c) 2014-2019 Research Organization for Information Science
+ * Copyright (c) 2014-2023 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2014-2015 Mellanox Technologies, Inc.
  *                         All rights reserved.
@@ -217,8 +217,7 @@ static void return_local_event_hdlr(int status, opal_list_t *results,
             PMIX_INFO_CREATE(op->info, op->ninfo);
             n=0;
             OPAL_LIST_FOREACH(kv, cd->info, opal_value_t) {
-                (void)strncpy(op->info[n].key, kv->key, PMIX_MAX_KEYLEN);
-                pmix3x_value_load(&op->info[n].value, kv);
+                pmix3x_info_load(&op->info[n], kv);
                 ++n;
             }
         }
@@ -735,6 +734,202 @@ char* pmix3x_convert_jobid(opal_jobid_t jobid)
 /****   RHC: NEED TO ADD SUPPORT FOR NEW PMIX DATA TYPES, INCLUDING
  ****   CONVERSION OF PROC STATES    ****/
 
+void pmix3x_info_load(pmix_info_t *i,
+                       opal_value_t *kv)
+{
+    opal_pmix3x_jobid_trkr_t *job;
+    bool found;
+    opal_list_t *list;
+    opal_value_t *val;
+    pmix_info_t *info;
+    pmix_envar_t envar;
+    size_t n;
+
+    switch(kv->type) {
+        case OPAL_UNDEF:
+            PMIX_INFO_LOAD(i, kv->key, &kv->data, PMIX_UNDEF);
+            break;
+        case OPAL_BOOL:
+            PMIX_INFO_LOAD(i, kv->key, &kv->data.flag, PMIX_BOOL);
+            break;
+        case OPAL_BYTE:
+            PMIX_INFO_LOAD(i, kv->key, &kv->data.byte, PMIX_BYTE);
+            break;
+        case OPAL_STRING:
+            PMIX_INFO_LOAD(i, kv->key, kv->data.string, PMIX_STRING);
+            break;
+        case OPAL_SIZE:
+            PMIX_INFO_LOAD(i, kv->key, &kv->data.size, PMIX_SIZE);
+            break;
+        case OPAL_PID:
+            PMIX_INFO_LOAD(i, kv->key, &kv->data.pid, PMIX_PID);
+            break;
+        case OPAL_INT:
+            PMIX_INFO_LOAD(i, kv->key, &kv->data.integer, PMIX_INT);
+            break;
+        case OPAL_INT8:
+            PMIX_INFO_LOAD(i, kv->key, &kv->data.int8, PMIX_INT8);
+            break;
+        case OPAL_INT16:
+            PMIX_INFO_LOAD(i, kv->key, &kv->data.int16, PMIX_INT16);
+            break;
+        case OPAL_INT32:
+            PMIX_INFO_LOAD(i, kv->key, &kv->data.int32, PMIX_INT32);
+            break;
+        case OPAL_INT64:
+            PMIX_INFO_LOAD(i, kv->key, &kv->data.int64, PMIX_INT64);
+            break;
+        case OPAL_UINT:
+            PMIX_INFO_LOAD(i, kv->key, &kv->data.uint, PMIX_UINT);
+            break;
+        case OPAL_UINT8:
+            PMIX_INFO_LOAD(i, kv->key, &kv->data.uint8, PMIX_UINT8);
+            break;
+        case OPAL_UINT16:
+            PMIX_INFO_LOAD(i, kv->key, &kv->data.uint16, PMIX_UINT16);
+            break;
+        case OPAL_UINT32:
+            PMIX_INFO_LOAD(i, kv->key, &kv->data.uint32, PMIX_UINT32);
+            break;
+        case OPAL_UINT64:
+            PMIX_INFO_LOAD(i, kv->key, &kv->data.uint32, PMIX_UINT64);
+            break;
+        case OPAL_FLOAT:
+            PMIX_INFO_LOAD(i, kv->key, &kv->data.fval, PMIX_FLOAT);
+            break;
+        case OPAL_DOUBLE:
+            PMIX_INFO_LOAD(i, kv->key, &kv->data.dval, PMIX_DOUBLE);
+            break;
+        case OPAL_TIMEVAL:
+            PMIX_INFO_LOAD(i, kv->key, &kv->data.tv, PMIX_TIMEVAL);
+            break;
+        case OPAL_TIME:
+            PMIX_INFO_LOAD(i, kv->key, &kv->data.time, PMIX_TIME);
+            break;
+        case OPAL_STATUS:
+            i->value.type = PMIX_STATUS;
+            i->value.data.status = pmix3x_convert_opalrc(kv->data.status);
+            break;
+        case OPAL_VPID:
+            i->value.type = PMIX_PROC_RANK;
+            i->value.data.rank = pmix3x_convert_opalrank(kv->data.name.vpid);
+            break;
+        case OPAL_NAME:
+            i->value.type = PMIX_PROC;
+            /* have to stringify the jobid */
+            PMIX_PROC_CREATE(i->value.data.proc, 1);
+            /* see if this job is in our list of known nspaces */
+            found = false;
+            OPAL_LIST_FOREACH(job, &mca_pmix_pmix3x_component.jobids, opal_pmix3x_jobid_trkr_t) {
+                if (job->jobid == kv->data.name.jobid) {
+                    (void)strncpy(i->value.data.proc->nspace, job->nspace, PMIX_MAX_NSLEN);
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                (void)opal_snprintf_jobid(i->value.data.proc->nspace, PMIX_MAX_NSLEN, kv->data.name.jobid);
+            }
+            i->value.data.proc->rank = pmix3x_convert_opalrank(kv->data.name.vpid);
+            break;
+        case OPAL_BYTE_OBJECT:
+            i->value.type = PMIX_BYTE_OBJECT;
+            if (NULL != kv->data.bo.bytes) {
+                i->value.data.bo.bytes = (char*)malloc(kv->data.bo.size);
+                memcpy(i->value.data.bo.bytes, kv->data.bo.bytes, kv->data.bo.size);
+                i->value.data.bo.size = (size_t)kv->data.bo.size;
+            } else {
+                i->value.data.bo.bytes = NULL;
+                i->value.data.bo.size = 0;
+            }
+            break;
+        case OPAL_PERSIST:
+            i->value.type = PMIX_PERSIST;
+            i->value.data.persist = pmix3x_convert_opalpersist((opal_pmix_persistence_t)kv->data.uint8);
+            break;
+        case OPAL_SCOPE:
+            i->value.type = PMIX_SCOPE;
+            i->value.data.scope = pmix3x_convert_opalscope((opal_pmix_scope_t)kv->data.uint8);
+            break;
+        case OPAL_DATA_RANGE:
+            i->value.type = PMIX_DATA_RANGE;
+            i->value.data.range = pmix3x_convert_opalrange((opal_pmix_data_range_t)kv->data.uint8);
+            break;
+        case OPAL_PROC_STATE:
+            i->value.type = PMIX_PROC_STATE;
+            /* the OPAL layer doesn't have any concept of proc state,
+             * so the ORTE layer is responsible for converting it */
+            memcpy(&i->value.data.state, &kv->data.uint8, sizeof(uint8_t));
+            break;
+        case OPAL_PTR:
+            /* if the opal_value_t is passing a true pointer, then
+             * respect that request and pass it along */
+            if (0 == strcmp(kv->key, OPAL_PMIX_EVENT_RETURN_OBJECT)) {
+                i->value.type = PMIX_POINTER;
+                i->value.data.ptr = kv->data.ptr;
+                break;
+            }
+            /* otherwise, it must be to a list of
+             * opal_value_t's that we need to convert to a pmix_data_array
+             * of pmix_info_t structures */
+            list = (opal_list_t*)kv->data.ptr;
+            i->value.type = PMIX_DATA_ARRAY;
+            i->value.data.darray = (pmix_data_array_t*)malloc(sizeof(pmix_data_array_t));
+            i->value.data.darray->type = PMIX_INFO;
+            i->value.data.darray->size = opal_list_get_size(list);
+            if (0 < i->value.data.darray->size) {
+                PMIX_INFO_CREATE(info, i->value.data.darray->size);
+                i->value.data.darray->array = info;
+                n=0;
+                OPAL_LIST_FOREACH(val, list, opal_value_t) {
+                    if (NULL != val->key) {
+                        (void)strncpy(info[n].key, val->key, PMIX_MAX_KEYLEN);
+                    }
+                    pmix3x_value_load(&info[n].value, val);
+                    ++n;
+                }
+            } else {
+                i->value.data.darray->array = NULL;
+            }
+            break;
+        case OPAL_PROC_INFO:
+            i->value.type = PMIX_PROC_INFO;
+            PMIX_PROC_INFO_CREATE(i->value.data.pinfo, 1);
+            /* see if this job is in our list of known nspaces */
+            found = false;
+            OPAL_LIST_FOREACH(job, &mca_pmix_pmix3x_component.jobids, opal_pmix3x_jobid_trkr_t) {
+                if (job->jobid == kv->data.pinfo.name.jobid) {
+                    (void)strncpy(i->value.data.pinfo->proc.nspace, job->nspace, PMIX_MAX_NSLEN);
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                (void)opal_snprintf_jobid(i->value.data.pinfo->proc.nspace, PMIX_MAX_NSLEN, kv->data.pinfo.name.jobid);
+            }
+            i->value.data.pinfo->proc.rank = pmix3x_convert_opalrank(kv->data.pinfo.name.vpid);
+            if (NULL != kv->data.pinfo.hostname) {
+                i->value.data.pinfo->hostname = strdup(kv->data.pinfo.hostname);
+            }
+            if (NULL != kv->data.pinfo.executable_name) {
+                i->value.data.pinfo->executable_name = strdup(kv->data.pinfo.executable_name);
+            }
+            i->value.data.pinfo->pid = kv->data.pinfo.pid;
+            i->value.data.pinfo->exit_code = kv->data.pinfo.exit_code;
+            i->value.data.pinfo->state = pmix3x_convert_opalstate(kv->data.pinfo.state);
+            break;
+        case OPAL_ENVAR:
+            PMIX_ENVAR_CONSTRUCT(&envar);
+            PMIX_ENVAR_LOAD(&envar, kv->data.envar.envar, kv->data.envar.value, kv->data.envar.separator);
+            PMIX_INFO_LOAD(i, kv->key, &envar, PMIX_ENVAR);
+            PMIX_ENVAR_DESTRUCT(&envar);
+            break;
+        default:
+            /* silence warnings */
+            break;
+    }
+}
+
 void pmix3x_value_load(pmix_value_t *v,
                        opal_value_t *kv)
 {
@@ -747,87 +942,64 @@ void pmix3x_value_load(pmix_value_t *v,
 
     switch(kv->type) {
         case OPAL_UNDEF:
-            v->type = PMIX_UNDEF;
+            PMIX_VALUE_LOAD(v, NULL, PMIX_UNDEF);
             break;
         case OPAL_BOOL:
-            v->type = PMIX_BOOL;
-            memcpy(&(v->data.flag), &kv->data.flag, 1);
+            PMIX_VALUE_LOAD(v, &kv->data.flag, PMIX_BOOL);
             break;
         case OPAL_BYTE:
-            v->type = PMIX_BYTE;
-            memcpy(&(v->data.byte), &kv->data.byte, 1);
+            PMIX_VALUE_LOAD(v, &kv->data.byte, PMIX_BYTE);
             break;
         case OPAL_STRING:
-            v->type = PMIX_STRING;
-            if (NULL != kv->data.string) {
-                v->data.string = strdup(kv->data.string);
-            } else {
-                v->data.string = NULL;
-            }
+            PMIX_VALUE_LOAD(v, kv->data.string, PMIX_STRING);
             break;
         case OPAL_SIZE:
-            v->type = PMIX_SIZE;
-            memcpy(&(v->data.size), &kv->data.size, sizeof(size_t));
+            PMIX_VALUE_LOAD(v, &kv->data.size, PMIX_SIZE);
             break;
         case OPAL_PID:
-            v->type = PMIX_PID;
-            memcpy(&(v->data.pid), &kv->data.pid, sizeof(pid_t));
+            PMIX_VALUE_LOAD(v, &kv->data.pid, PMIX_PID);
             break;
         case OPAL_INT:
-            v->type = PMIX_INT;
-            memcpy(&(v->data.integer), &kv->data.integer, sizeof(int));
+            PMIX_VALUE_LOAD(v, &kv->data.integer, PMIX_INT);
             break;
         case OPAL_INT8:
-            v->type = PMIX_INT8;
-            memcpy(&(v->data.int8), &kv->data.int8, 1);
+            PMIX_VALUE_LOAD(v, &kv->data.int8, PMIX_INT8);
             break;
         case OPAL_INT16:
-            v->type = PMIX_INT16;
-            memcpy(&(v->data.int16), &kv->data.int16, 2);
+            PMIX_VALUE_LOAD(v, &kv->data.int16, PMIX_INT16);
             break;
         case OPAL_INT32:
-            v->type = PMIX_INT32;
-            memcpy(&(v->data.int32), &kv->data.int32, 4);
+            PMIX_VALUE_LOAD(v, &kv->data.int32, PMIX_INT32);
             break;
         case OPAL_INT64:
-            v->type = PMIX_INT64;
-            memcpy(&(v->data.int64), &kv->data.int64, 8);
+            PMIX_VALUE_LOAD(v, &kv->data.int64, PMIX_INT64);
             break;
         case OPAL_UINT:
-            v->type = PMIX_UINT;
-            memcpy(&(v->data.uint), &kv->data.uint, sizeof(int));
+            PMIX_VALUE_LOAD(v, &kv->data.uint, PMIX_UINT);
             break;
         case OPAL_UINT8:
-            v->type = PMIX_UINT8;
-            memcpy(&(v->data.uint8), &kv->data.uint8, 1);
+            PMIX_VALUE_LOAD(v, &kv->data.uint8, PMIX_UINT8);
             break;
         case OPAL_UINT16:
-            v->type = PMIX_UINT16;
-            memcpy(&(v->data.uint16), &kv->data.uint16, 2);
+            PMIX_VALUE_LOAD(v, &kv->data.uint16, PMIX_UINT16);
             break;
         case OPAL_UINT32:
-            v->type = PMIX_UINT32;
-            memcpy(&(v->data.uint32), &kv->data.uint32, 4);
+            PMIX_VALUE_LOAD(v, &kv->data.uint32, PMIX_UINT32);
             break;
         case OPAL_UINT64:
-            v->type = PMIX_UINT64;
-            memcpy(&(v->data.uint64), &kv->data.uint64, 8);
+            PMIX_VALUE_LOAD(v, &kv->data.uint64, PMIX_UINT64);
             break;
         case OPAL_FLOAT:
-            v->type = PMIX_FLOAT;
-            memcpy(&(v->data.fval), &kv->data.fval, sizeof(float));
+            PMIX_VALUE_LOAD(v, &kv->data.fval, PMIX_FLOAT);
             break;
         case OPAL_DOUBLE:
-            v->type = PMIX_DOUBLE;
-            memcpy(&(v->data.dval), &kv->data.dval, sizeof(double));
+            PMIX_VALUE_LOAD(v, &kv->data.dval, PMIX_DOUBLE);
             break;
         case OPAL_TIMEVAL:
-            v->type = PMIX_TIMEVAL;
-            memcpy(&(v->data.tv), &kv->data.tv, sizeof(struct timeval));
+            PMIX_VALUE_LOAD(v, &kv->data.tv, PMIX_TIMEVAL);
             break;
         case OPAL_TIME:
-            v->type = PMIX_TIME;
-            memcpy(&(v->data.time), &kv->data.time, sizeof(time_t));
+            PMIX_VALUE_LOAD(v, &kv->data.time, PMIX_TIME);
             break;
         case OPAL_STATUS:
             v->type = PMIX_STATUS;
@@ -1308,8 +1480,7 @@ static void register_handler(opal_list_t *event_codes,
         PMIX_INFO_CREATE(op->info, op->ninfo);
         n=0;
         OPAL_LIST_FOREACH(kv, info, opal_value_t) {
-            (void)strncpy(op->info[n].key, kv->key, PMIX_MAX_KEYLEN);
-            pmix3x_value_load(&op->info[n].value, kv);
+            pmix3x_info_load(&op->info[n], kv);
             ++n;
         }
     }
@@ -1428,7 +1599,7 @@ static int notify_event(int status,
                 op->info[n].value.type = PMIX_STATUS;
                 op->info[n].value.data.status = pmix3x_convert_opalrc(kv->data.integer);
             } else {
-                pmix3x_value_load(&op->info[n].value, kv);
+                pmix3x_info_load(&op->info[n], kv);
             }
             ++n;
         }
@@ -1533,8 +1704,7 @@ static void pmix3x_query(opal_list_t *queries,
             PMIX_INFO_CREATE(cd->queries[n].qualifiers, cd->queries[n].nqual);
             nq = 0;
             OPAL_LIST_FOREACH(ival, &q->qualifiers, opal_value_t) {
-                (void)strncpy(cd->queries[n].qualifiers[nq].key, ival->key, PMIX_MAX_KEYLEN);
-                pmix3x_value_load(&cd->queries[n].qualifiers[nq].value, ival);
+                pmix3x_info_load(&cd->queries[n].qualifiers[nq], ival);
                 ++nq;
             }
         }
@@ -1596,8 +1766,7 @@ static void pmix3x_log(opal_list_t *info,
     PMIX_INFO_CREATE(cd->info, cd->ninfo);
     n=0;
     OPAL_LIST_FOREACH(ival, info, opal_value_t) {
-        (void)strncpy(cd->info[n].key, ival->key, PMIX_MAX_KEYLEN);
-        pmix3x_value_load(&cd->info[n].value, ival);
+        pmix3x_info_load(&cd->info[n], ival);
         ++n;
     }
 
