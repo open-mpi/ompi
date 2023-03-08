@@ -90,7 +90,7 @@ static bool opal_register_util_done = false;
 /* Basic color options: 30=black, 31=red, 32=green,
  * 33=yellow, 34=blue, 35=magenta, 36=cyan, 37=white
  * https://en.wikipedia.org/wiki/ANSI_escape_code#Colors */
-static char *opal_var_dump_color_string = "name=34,value=32,valid_values=36";
+static char *opal_var_dump_color_string = NULL;
 
 static char *opal_var_dump_color_keys[OPAL_VAR_DUMP_COLOR_KEY_COUNT] = {
     [OPAL_VAR_DUMP_COLOR_VAR_NAME] = "name",
@@ -258,6 +258,7 @@ int opal_register_util_params(void)
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
+    opal_var_dump_color_string = "name=34,value=32,valid_values=36";
     ret = mca_base_var_register("opal", "opal", NULL, "var_dump_color", string,
         MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_2, MCA_BASE_VAR_SCOPE_READONLY,
         &opal_var_dump_color_string);
@@ -434,13 +435,15 @@ static int parse_color_string(char *color_string, char **key_names,
         values_out[k] = NULL;
     }
 
-    tokens = opal_argv_split(color_string, ',');
-    if (NULL == tokens) {
-        return_code = OPAL_ERR_OUT_OF_RESOURCE;
-        goto end;
+    if (NULL != color_string) {
+        tokens = opal_argv_split(color_string, ',');
+        if (NULL == tokens) {
+            return_code = OPAL_ERR_OUT_OF_RESOURCE;
+            goto end;
+        }
     }
 
-    for (int i = 0; tokens[i] != NULL; i++) {
+    for (int i = 0; tokens && tokens[i] != NULL; i++) {
         kv = opal_argv_split(tokens[i], '=');
         if (NULL == kv) {
             return_code = OPAL_ERR_OUT_OF_RESOURCE;
