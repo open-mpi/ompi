@@ -377,9 +377,9 @@ OBJ_CLASS_DECLARATION(mca_coll_han_module_t);
 #define HAN_LOAD_FALLBACK_COLLECTIVE(HANM, COMM, COLL)                            \
     do {                                                                          \
         if ( ((COMM)->c_coll->coll_ ## COLL ## _module) == (mca_coll_base_module_t*)(HANM) ) { \
-            (COMM)->c_coll->coll_ ## COLL = (HANM)->fallback.COLL.module_fn.COLL;               \
+            (COMM)->c_coll->coll_ ## COLL = (HANM)->previous_## COLL;               \
             mca_coll_base_module_t *coll_module = (COMM)->c_coll->coll_ ## COLL ## _module; \
-            (COMM)->c_coll->coll_ ## COLL ## _module = (HANM)->fallback.COLL.module;  \
+            (COMM)->c_coll->coll_ ## COLL ## _module = (HANM)->previous_ ## COLL ## _module;  \
             OBJ_RETAIN((COMM)->c_coll->coll_ ## COLL ## _module);                     \
             OBJ_RELEASE(coll_module);                                                 \
         }                                                                             \
