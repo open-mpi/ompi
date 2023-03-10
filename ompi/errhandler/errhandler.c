@@ -472,18 +472,24 @@ static void *ompi_errhandler_event_cb(int fd, int flags, void *context) {
     case PMIX_ERR_PROC_ABORTED_BY_SIG:
     case PMIX_ERR_PROC_ABORTED: /* that is, proc aborted by pmix_abort */
         for(int i = 0; i < event->nvalue; i++) {
-            if (PMIX_PROC != event->info[i].value.type) {
+            if (strcmp(PMIX_EVENT_AFFECTED_PROC, event->info[i].key)) {
                 OPAL_OUTPUT_VERBOSE((70, ompi_ftmpi_output_handle,
                     "%s ompi: ignoring the following key for a PMIx fault event: %s",
                     OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
                     event->info[i].key));
                 continue;
             }
+            assert(event->info[i].value.type == PMIX_PROC);
             OPAL_PMIX_CONVERT_PROCT(rc, &prc, event->info[i].value.data.proc);
             if (OPAL_SUCCESS != rc) {
                 OPAL_ERROR_LOG(rc);
                 break;
             }
+            OPAL_OUTPUT_VERBOSE((5, ompi_ftmpi_output_handle,
+                "%s ompi: proc %s reported dead by PMIx event handler (found at %s): %s",
+                OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
+                OPAL_NAME_PRINT(prc), OPAL_NAME_PRINT(source),
+                PMIx_Error_string(status)));
             ompi_proc_t *proc = (ompi_proc_t*)ompi_proc_for_name(prc);
             if( NULL == proc ) {
                 continue; /* we are not 'MPI connected' with this proc. */
@@ -502,12 +508,12 @@ static void *ompi_errhandler_event_cb(int fd, int flags, void *context) {
     default:
         /* An unmanaged type of failure, let it do its thing. */
         opal_output_verbose(1, ompi_ftmpi_output_handle,
-            "%s ompi: Error event reported through PMIx from %s (state = %d). "
+            "%s ompi: Error event reported through PMIx from %s (state = %s). "
             "This error type is not handled by the fault tolerant layer "
             "and the application will now presumably abort.",
             OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
             OPAL_NAME_PRINT(source),
-            status );
+            PMIx_Error_string(status));
     }
 #endif /* OPAL_ENABLE_FT_MPI */
     opal_event_del(&event->super);
