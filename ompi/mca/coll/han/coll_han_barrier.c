@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 The University of Tennessee and The University
+ * Copyright (c) 2018-2023 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2020      Bull S.A.S. All rights reserved.
@@ -40,7 +40,7 @@ mca_coll_han_barrier_intra_simple(struct ompi_communicator_t *comm,
          * future calls will then be automatically redirected.
          */
         HAN_LOAD_FALLBACK_COLLECTIVES(han_module, comm);
-        return comm->c_coll->coll_barrier(comm, comm->c_coll->coll_bcast_module);
+        return han_module->previous_barrier(comm, han_module->previous_barrier_module);
     }
 
     low_comm = han_module->sub_comm[INTRA_NODE];
