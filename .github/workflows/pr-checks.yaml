@@ -33,6 +33,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Pull Request Labeler
-        uses: open-mpi/pr-labeler@v1.0.0
+        uses: Joe-Downs/pr-labeler@main
         with:
           token: "${{ secrets.GITHUB_TOKEN }}"
