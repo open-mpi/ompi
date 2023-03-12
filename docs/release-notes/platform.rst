@@ -11,6 +11,13 @@ Platform Notes
    * OS's and compilers supported
    * network interconnects supported.
 
+Open MPI uses `PRRTE <https://github.com/openpmix/prrte>`_ as its back-end
+run-time system and therefore supports whatever run-time systems PRRTE supports.
+
+Each version of Open MPI supports a specific set of versions of
+PRRTE.  Those versions therefore determine which run-time systems that
+that release of Open MPI supports.
+
 * Systems that have been tested are:
 
   * Linux (various flavors/distros), 64 bit (x86, ppc, aarch64),

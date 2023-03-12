@@ -1,4 +1,3 @@
---use-feature=2020-resolver
 sphinx>=4.2.0
 recommonmark
 docutils

@@ -1,10 +1,12 @@
 MPI Functionality and Features
 ==============================
 
+.. _release-notes-mpi-standard-conformance-label:
+
 MPI Standard conformance
 ------------------------
 
-In the Open MPI |ompi_series| series, all MPI-|mpi_standard_version|.|mpi_standard_subversion| functionality is
+In the Open MPI |ompi_series| series, all MPI-|mpi_standard_full_version| functionality is
 supported.  Some MPI-4.0 functionality is supported, but not all of
 it.
 

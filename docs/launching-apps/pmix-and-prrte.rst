@@ -3,14 +3,17 @@
 The role of PMIx and PRRTE
 ==========================
 
-Open MPI uses two external packages for its run-time system support:
-`PMIx <https://pmix.org/>`_ and `PRRTE
-<https://github.com/openpmix/prrte>`_.
+Prior versions of Open MPI were layered on top of the Open
+Run-Time Environment (ORTE).  ORTE originally started as a small
+portion of the Open MPI code base, but over time, ORTE effectively
+spun off into its own sub-project.  ORTE ultimately evolved into the
+`Process Management Interface Exascale (PMIx) standard and
+corresponding OpenPMIx software project <https://openpmix.github.io/>`_.
+The OpenPMIx project then evolved its own `PMIx Reference Run-Time
+Environment (PRRTE) <https://github.com/openpmix/prrte>`_ project.
+PRRTE has effectively replaced ORTE in the Open MPI implementation.
 
-.. note:: Both of these packages were originally developed as an
-   internal part of Open MPI.  Over time, they split off into
-   independent packages so that they could be used outside of an Open
-   MPI-specific environment.
+Open MPI uses both of these external packages for its run-time system support.
 
 Both PMIx and PRRTE have many configure- and run-time options.  Open
 MPI attempts to hide most of these details from the end user, and

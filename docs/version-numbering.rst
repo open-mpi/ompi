@@ -1,6 +1,6 @@
 .. _version_numbers_section_label:
 
-Version numbers and binary compatibility
+Version numbers and compatibility
 ==========================================
 
 Open MPI has two sets of version numbers that are likely of interest
@@ -9,13 +9,12 @@ to end users / system administrators:
 #. Software version number
 #. Shared library version numbers
 
-Both are predicated on Open MPI's definition of "backwards
-compatibility."
+Both are predicated on Open MPI's definition of "backward compatibility."
 
-Backwards Compatibility
+Backward Compatibility
 -----------------------
 
-Open MPI version Y is backwards compatible with Open MPI version X
+Open MPI version Y is backward compatible with Open MPI version X
 (where Y>X) if users can:
 
 * Compile an MPI/OpenSHMEM application with version X,
@@ -37,7 +36,7 @@ processes in a single MPI job.  If the versions are not exactly the
 same everywhere, Open MPI is not guaranteed to work properly in any
 scenario.
 
-Backwards compatibility tends to work best when user applications are
+Backward compatibility tends to work best when user applications are
 dynamically linked to one version of the Open MPI / OSHMEM libraries,
 and can be updated at run time to link to a new version of the Open
 MPI / OSHMEM libraries.
@@ -51,6 +50,40 @@ Similarly, if using a container technology that internally bundles all
 the libraries from Open MPI vX, attempting to launch that container
 with ``mpirun`` / ``oshrun`` from Open MPI vY is not guaranteed to work.
 
+Application Programming and Binary Interface (API & ABI) Compatibility
+----------------------------------------------------------------------
+
+Open MPI provides the following source and binary compatibility guarantees
+for applications:
+
+#. Open MPI is source code compatible (i.e. API compatible) across all
+   versions.  This means that you can compile and link your compliant MPI
+   application against :ref:`any version of Open MPI that supports the version
+   of the MPI standard <release-notes-mpi-standard-conformance-label>` to
+   which your application was written.
+
+#. Open MPI provided forward application binary interface (ABI)
+   compatibility within a major series (see Software Version Number section,
+   below) for MPI applications starting with v1.3.2.  Prior to that version,
+   no ABI guarantees were provided.
+
+#. Open MPI reserves the right to break ABI compatibility at new major
+   release series.
+
+Open MPI 5.0 binary compatibility
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Open MPI v5.0.0 shared libraries are ABI compatible with v4.1.x with a few
+exceptions for Fortran.
+In the rare case that you compile a Fortran application in such a way that the
+size of an integer in C is different than the size of an integer in Fortran,
+you'll need to rebuild and relink your application.
+
+.. note:: There are also Fortran API changes involving intents and asyncs,
+    and some interfaces changed from named to unnamed.  These may require
+    changes to an application's source code, followed by recompilation and
+    relinking.
+
 Software Version Number
 -----------------------
 
@@ -60,19 +93,19 @@ format.  Each of the three numbers has a specific meaning:
 * Major: The major number is the first integer in the version string
   Changes in the major number typically indicate a significant
   change in the code base and/or end-user functionality, and also
-  indicate a break from backwards compatibility.  Specifically: Open
+  indicate a break from backward compatibility.  Specifically: Open
   MPI releases with different major version numbers are not
-  backwards compatibale with each other.
+  backward compatibale with each other.
 
   .. important:: This rule does not extend to versions prior to
-     v1.10.0.  Specifically: v1.10.x is not guaranteed to be backwards
+     v1.10.0.  Specifically: v1.10.x is not guaranteed to be backward
      compatible with other v1.x releases.
 
 * Minor: The minor number is the second integer in the version string.
   Changes in the minor number indicate a user-observable change in the
-  code base and/or end-user functionality.  Backwards compatibility
+  code base and/or end-user functionality.  Backward compatibility
   will still be preserved with prior releases that have the same major
-  version number (e.g., v2.5.3 is backwards compatible with v2.3.1).
+  version number (e.g., v2.5.3 is backward compatible with v2.3.1).
 
 * Release: The release number is the third integer in the version
   string.  Changes in the release number typically indicate a bug fix

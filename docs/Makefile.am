@@ -44,7 +44,6 @@ RST_SOURCE_FILES   = \
         $(srcdir)/tuning-apps/*.rst \
         $(srcdir)/tuning-apps/*/*.rst \
         $(srcdir)/app-debug/*.rst \
-        $(srcdir)/faq/*.rst \
         $(srcdir)/developers/*.rst \
         $(srcdir)/license/*.rst \
         $(srcdir)/news/*.rst \
