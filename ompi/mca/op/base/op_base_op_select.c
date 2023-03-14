@@ -152,22 +152,50 @@ int ompi_op_base_op_select(ompi_op_t *op)
         }
 
         /* Copy over the non-NULL pointers */
-        for (i = 0; i < OMPI_OP_BASE_TYPE_MAX; ++i) {
-            /* 2-buffer variants */
-            if (NULL != avail->ao_module->opm_fns[i]) {
-                OBJ_RELEASE(op->o_func.intrinsic.modules[i]);
-                op->o_func.intrinsic.fns[i] = avail->ao_module->opm_fns[i];
-                op->o_func.intrinsic.modules[i] = avail->ao_module;
-                OBJ_RETAIN(avail->ao_module);
+        if (avail->ao_module->opm_device_enabled) {
+            if (NULL == op->o_device_op) {
+                op->o_device_op = malloc(sizeof(*op->o_device_op));
             }
+            for (i = 0; i < OMPI_OP_BASE_TYPE_MAX; ++i) {
+                /* 2-buffer variants */
+                if (NULL != avail->ao_module->opm_fns[i]) {
+                    if (NULL != op->o_device_op->do_intrinsic.modules[i]) {
+                        OBJ_RELEASE(op->o_device_op->do_intrinsic.modules[i]);
+                    }
+                    op->o_device_op->do_intrinsic.fns[i] = avail->ao_module->opm_fns[i];
+                    op->o_device_op->do_intrinsic.modules[i] = avail->ao_module;
+                    OBJ_RETAIN(avail->ao_module);
+                }
 
-            /* 3-buffer variants */
-            if (NULL != avail->ao_module->opm_3buff_fns[i]) {
-                OBJ_RELEASE(op->o_func.intrinsic.modules[i]);
-                op->o_3buff_intrinsic.fns[i] =
-                    avail->ao_module->opm_3buff_fns[i];
-                op->o_3buff_intrinsic.modules[i] = avail->ao_module;
-                OBJ_RETAIN(avail->ao_module);
+                /* 3-buffer variants */
+                if (NULL != avail->ao_module->opm_3buff_fns[i]) {
+                    if (NULL != op->o_device_op->do_3buff_intrinsic.modules[i]) {
+                        OBJ_RELEASE(op->o_device_op->do_3buff_intrinsic.modules[i]);
+                    }
+                    op->o_device_op->do_3buff_intrinsic.fns[i] =
+                        avail->ao_module->opm_3buff_fns[i];
+                    op->o_device_op->do_3buff_intrinsic.modules[i] = avail->ao_module;
+                    OBJ_RETAIN(avail->ao_module);
+                }
+            }
+        } else {
+            for (i = 0; i < OMPI_OP_BASE_TYPE_MAX; ++i) {
+                /* 2-buffer variants */
+                if (NULL != avail->ao_module->opm_fns[i]) {
+                    OBJ_RELEASE(op->o_func.intrinsic.modules[i]);
+                    op->o_func.intrinsic.fns[i] = avail->ao_module->opm_fns[i];
+                    op->o_func.intrinsic.modules[i] = avail->ao_module;
+                    OBJ_RETAIN(avail->ao_module);
+                }
+
+                /* 3-buffer variants */
+                if (NULL != avail->ao_module->opm_3buff_fns[i]) {
+                    OBJ_RELEASE(op->o_3buff_intrinsic.modules[i]);
+                    op->o_3buff_intrinsic.fns[i] =
+                        avail->ao_module->opm_3buff_fns[i];
+                    op->o_3buff_intrinsic.modules[i] = avail->ao_module;
+                    OBJ_RETAIN(avail->ao_module);
+                }
             }
         }
 

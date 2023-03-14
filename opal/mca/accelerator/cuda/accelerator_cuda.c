@@ -77,6 +77,26 @@ opal_accelerator_base_module_t opal_accelerator_cuda_module =
     accelerator_cuda_get_buffer_id
 };
 
+static int accelerator_cuda_get_device_id(CUcontext mem_ctx) {
+    /* query the device from the context */
+    int dev_id = -1;
+    CUdevice ptr_dev;
+    int num_devices;
+    cuCtxPushCurrent(mem_ctx);
+    cuCtxGetDevice(&ptr_dev);
+    cuDeviceGetCount(&num_devices);
+    for (int i = 0; i < num_devices; ++i) {
+        CUdevice dev;
+        cuDeviceGet(&dev, i);
+        if (dev == ptr_dev) {
+            dev_id = i;
+            break;
+        }
+    }
+    cuCtxPopCurrent(&mem_ctx);
+    return dev_id;
+}
+
 static int accelerator_cuda_check_addr(const void *addr, int *dev_id, uint64_t *flags)
 {
     CUresult result;
@@ -125,6 +145,9 @@ static int accelerator_cuda_check_addr(const void *addr, int *dev_id, uint64_t *
     } else if (0 == mem_type) {
         /* This can happen when CUDA is initialized but dbuf is not valid CUDA pointer */
         return 0;
+    } else {
+        /* query the device from the context */
+        *dev_id = accelerator_cuda_get_device_id(mem_ctx);
     }
     /* Must be a device pointer */
     assert(CU_MEMORYTYPE_DEVICE == mem_type);
@@ -140,6 +163,10 @@ static int accelerator_cuda_check_addr(const void *addr, int *dev_id, uint64_t *
     } else if (CU_MEMORYTYPE_HOST == mem_type) {
         /* Host memory, nothing to do here */
         return 0;
+    } else {
+        result = cuPointerGetAttribute(&mem_ctx, CU_POINTER_ATTRIBUTE_CONTEXT, dbuf);
+        /* query the device from the context */
+        *dev_id = accelerator_cuda_get_device_id(mem_ctx);
     }
     /* Must be a device pointer */
     assert(CU_MEMORYTYPE_DEVICE == mem_type);
@@ -187,7 +214,7 @@ static int accelerator_cuda_check_addr(const void *addr, int *dev_id, uint64_t *
         }
     }
 
-    /* WORKAROUND - They are times when the above code determines a pice of memory
+    /* WORKAROUND - There are times when the above code determines a pice of memory
      * is GPU memory, but it actually is not.  That has been seen on multi-GPU systems
      * with 6 or 8 GPUs on them. Therefore, we will do this extra check.  Note if we
      * made it this far, then the assumption at this point is we have GPU memory.

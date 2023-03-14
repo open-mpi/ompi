@@ -510,19 +510,16 @@ static void ompi_op_destruct(ompi_op_t *op)
 
     if (op->o_device_op != NULL) {
         for (i = 0; i < OMPI_OP_BASE_TYPE_MAX; ++i) {
-            if( NULL != op->o_device_op->o_intrisic.modules[i] ) {
-                OBJ_RELEASE(op->o_device_op->o_intrisic.modules[i]);
-                op->o_device_op->o_intrisic->modules[i] = NULL;
+            if( NULL != op->o_device_op->do_intrinsic.modules[i] ) {
+                OBJ_RELEASE(op->o_device_op->do_intrinsic.modules[i]);
+                op->o_device_op->do_intrinsic.modules[i] = NULL;
             }
-            if( NULL != op->o_device_op->o_3buff_intrisic.modules[i] ) {
-                OBJ_RELEASE(op->o_device_op->o_3buff_intrisic.modules[i]);
-                op->o_device_op->o_3buff_intrisic->modules[i] = NULL;
+            if( NULL != op->o_device_op->do_3buff_intrinsic.modules[i] ) {
+                OBJ_RELEASE(op->o_device_op->do_3buff_intrinsic.modules[i]);
+                op->o_device_op->do_3buff_intrinsic.modules[i] = NULL;
             }
         }
+        free(op->o_device_op);
+        op->o_device_op = NULL;
     }
-    if (op->o_device_op) {
-        OBJ_RELEASE(op->do_stream);
-        op->o_device_op->do_stream = NULL;
-    }
-    free(op->o_device_op);
 }

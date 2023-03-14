@@ -1,9 +1,7 @@
 #
-# Copyright (c) 2019-2023 The University of Tennessee and The University
+# Copyright (c) 2023      The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
-# Copyright (c) 2020-2021 Research Organization for Information Science
-#                         and Technology (RIST).  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -21,8 +19,17 @@
 
 AM_CPPFLAGS = $(common_cuda_CPPFLAGS)
 
-sources = op_cuda_component.c op_cuda.h
-sources_extended = op_cuda_functions.c
+sources = op_cuda_component.c op_cuda.h op_cuda_functions.c op_cuda_impl.h
+#sources_extended = op_cuda_functions.cu
+cu_sources = op_cuda_impl.cu
+
+NVCC = nvcc -allow-unsupported-compiler
+
+.cu.l$(OBJEXT):
+	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=compile $(NVCC) -prefer-non-pic $(NVCCFLAGS) -Wc,-Xcompiler,-fPIC,-g -c $<
+
+# -o $($@.o:.lo)
 
 # Open MPI components can be compiled two ways:
 #
@@ -44,7 +51,7 @@ if MCA_BUILD_ompi_op_cuda_DSO
 component_install = mca_op_cuda.la
 else
 component_install =
-component_noinst = libmca_cuda_avx.la
+component_noinst = libmca_op_cuda.la
 endif
 
 # Specific information for DSO builds.
@@ -52,12 +59,15 @@ endif
 # The DSO should install itself in $(ompilibdir) (by default,
 # $prefix/lib/openmpi).
 
+CUDADIR=/nfs/apps/spacks/2023-01-01/opt/spack/linux-centos7-x86_64/gcc-9.5.0/cuda-11.8.0-u2modnncfevx54ibr5dy27sxkirwsf7f
+
 mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_op_cuda_la_SOURCES = $(sources)
-mca_op_cuda_la_LIBADD = $(specialized_op_libs)
-mca_op_cuda_la_LDFLAGS = -module -avoid-version $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la
-
+mca_op_cuda_la_LIBADD = $(cu_sources:.cu=.lo)
+mca_op_cuda_la_LDFLAGS = -module -avoid-version $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
+		$(accelerator_cuda_LIBS) -L$(CUDADIR)/lib64 -lcudart
+EXTRA_mca_op_cuda_la_SOURCES = $(cu_sources)
 
 # Specific information for static builds.
 #
@@ -66,6 +76,8 @@ mca_op_cuda_la_LDFLAGS = -module -avoid-version $(top_builddir)/ompi/lib@OMPI_LI
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_op_cuda_la_SOURCES = $(sources)
-libmca_op_cuda_la_LIBADD = $(specialized_op_libs)
-libmca_op_cuda_la_LDFLAGS = -module -avoid-version
+libmca_op_cuda_la_LIBADD = $(cu_sources:.cu=.lo)
+libmca_op_cuda_la_LDFLAGS = -module -avoid-version\
+		$(accelerator_cuda_LIBS) -L$(CUDADIR)/lib64 -lcudart
+EXTRA_libmca_op_cuda_la_SOURCES = $(cu_sources)
 

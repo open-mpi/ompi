@@ -18,48 +18,129 @@
 #endif
 #include "opal/util/output.h"
 
+
 #include "ompi/op/op.h"
 #include "ompi/mca/op/op.h"
 #include "ompi/mca/op/base/base.h"
-#include "ompi/mca/op/avx/op_avx.h"
+#include "ompi/mca/op/cuda/op_cuda.h"
+#include "opal/mca/accelerator/accelerator.h"
 
-#define THREADS_PER_BLOCK 512
+#include "ompi/mca/op/cuda/op_cuda.h"
+#include "ompi/mca/op/cuda/op_cuda_impl.h"
 
-#define OP_FUNC(name, type_name, type, op)                                 \
-    __global__ void                                                                 \
-    ompi_op_cuda_2buff_##name##_##type_name##_kernel(const type *in, type *inout, int n) {   \
-        int i = blockIdx.x*blockDim.x + threadIdx.x;                                \
-        if (i < n) inout[i] = inout[i] op in[i];                                    \
-    }                                                                               \
-    void ompi_op_cuda_2buff_##name##_##type_name##(const void *in, void *inout, int *count,  \
+
+static inline void device_op_pre(const void *orig_source,
+                                 void *orig_target,
+                                 int count,
+                                 struct ompi_datatype_t *dtype,
+                                 void **source,
+                                 int *source_device,
+                                 void **target,
+                                 int *target_device,
+                                 int *threads_per_block,
+                                 int *device)
+{
+    uint64_t target_flags = -1, source_flags = -1;
+    int target_rc, source_rc;
+
+    *target = orig_target;
+    *source = (void*)orig_source;
+
+    target_rc = opal_accelerator.check_addr(*target, target_device, &target_flags);
+    source_rc = opal_accelerator.check_addr(*source, source_device, &source_flags);
+    *device = *target_device;
+
+    if (0 == target_rc && 0 == source_rc) {
+        /* no buffers are on any device, select device 0 */
+        *device = 0;
+    }
+
+    /* swap contexts */
+    CHECK(cuCtxPushCurrent, (mca_op_cuda_component.cu_ctx[*device]));
+
+    if (0 == target_rc || 0 == source_rc || *target_device != *source_device) {
+        size_t nbytes;
+        ompi_datatype_type_size(dtype, &nbytes);
+        nbytes *= count;
+
+        if (0 == target_rc) {
+            // allocate memory on the device for the target buffer
+            CUdeviceptr dptr;
+            CHECK(cuMemAllocAsync,   (&dptr, nbytes, mca_op_cuda_component.cu_stream));
+            CHECK(cuMemcpyHtoDAsync, (dptr, *target, nbytes, mca_op_cuda_component.cu_stream));
+            *target = (void*)dptr;
+            *target_device = -1; // mark target device as host
+        }
+
+        if (0 == source_rc || *device != *source_device) {
+            // allocate memory on the device for the source buffer
+            CUdeviceptr dptr;
+            CHECK(cuMemAllocAsync, (&dptr, nbytes, mca_op_cuda_component.cu_stream));
+            if (0 == source_rc) {
+                /* copy from host to device */
+                CHECK(cuMemcpyHtoDAsync, (dptr, *source, nbytes, mca_op_cuda_component.cu_stream));
+            } else {
+                /* copy from one device to another device */
+                /* TODO: does this actually work? Can we enable P2P? */
+                CHECK(cuMemcpyDtoDAsync, (dptr, (CUdeviceptr)*source, nbytes, mca_op_cuda_component.cu_stream));
+            }
+        }
+    }
+    *threads_per_block = mca_op_cuda_component.cu_max_threads_per_block[*device];
+}
+
+static inline void device_op_post(void *orig_target,
+                                  int count,
+                                  struct ompi_datatype_t *dtype,
+                                  void *source,
+                                  int source_device,
+                                  void *target,
+                                  int target_device,
+                                  int device)
+{
+    if (-1 == target_device) {
+
+        size_t nbytes;
+        ompi_datatype_type_size(dtype, &nbytes);
+        nbytes *= count;
+
+        CHECK(cuMemcpyDtoHAsync, (orig_target, (CUdeviceptr)target, nbytes, mca_op_cuda_component.cu_stream));
+
+        CHECK(cuMemFreeAsync, ((CUdeviceptr)target, mca_op_cuda_component.cu_stream));
+    }
+
+    if (source_device != device) {
+        CHECK(cuMemFreeAsync, ((CUdeviceptr)source, mca_op_cuda_component.cu_stream));
+    }
+
+    /* wait for all scheduled operations to complete */
+    CHECK(cuStreamSynchronize, (mca_op_cuda_component.cu_stream));
+
+    /* restore the context */
+    CUcontext ctx;
+    CHECK(cuCtxPopCurrent, (&ctx));
+}
+
+#define FUNC(name, type_name, type)                                 \
+    static \
+    void ompi_op_cuda_2buff_##name##_##type_name(const void *in, void *inout, int *count,  \
                                                    struct ompi_datatype_t **dtype,           \
-                                                   struct ompi_op_cuda_module_1_0_0_t *module) {     \
-        int threads = THREADS_PER_BLOCK;                                            \
-        int blocks  = *count / THREADS_PER_BLOCK;                                   \
-        type *inout_ = (type*)inout;                                                \
-        const type *in_ = (const type*)in;                                          \
-        int n = *count;                                                             \
-        ompi_op_cuda_2buff_##name##_##type_name##_kernel<<<blocks, threads>>>(in_, inout_, n); \
+                                                   struct ompi_op_base_module_1_0_0_t *module) { \
+        int threads_per_block; \
+        int source_device, target_device, device; \
+        type *source, *target; \
+        int n = *count; \
+        device_op_pre(in, inout, n, *dtype, (void**)&source, &source_device, (void**)&target, &target_device, \
+                      &threads_per_block, &device); \
+        CUstream *stream = &mca_op_cuda_component.cu_stream;                        \
+        ompi_op_cuda_2buff_##name##_##type_name##_submit(source, target, n, threads_per_block, *stream); \
+        device_op_post(inout, n, *dtype, source, source_device, target, target_device, device); \
     }
 
+#define OP_FUNC(name, type_name, type, op, ...) FUNC(name, __VA_ARGS__##type_name, __VA_ARGS__##type)
 
-#define FUNC_FUNC(name, type_name, type)                                            \
-    __global__ void                                                                 \
-    ompi_op_cuda_2buff_##name##_##type_name##_kernel(const type *in, type *inout, int n) {   \
-        int i = blockIdx.x*blockDim.x + threadIdx.x;                                \
-        if (i < n) inout[i] = current_func(inout[i], in[i]);                        \
-    }                                                                               \
-    static void                                                                     \
-    ompi_op_cuda_2buff_##name##_##type_name##(const void *in, void *inout, int *count,  \
-                                              struct ompi_datatype_t **dtype,           \
-                                              struct ompi_op_cuda_module_1_0_0_t *module) {     \
-        int threads = THREADS_PER_BLOCK;                                            \
-        int blocks  = *count / THREADS_PER_BLOCK;                                   \
-        type *inout_ = (type*)inout;                                                \
-        const type *in_ = (const type*)in;                                          \
-        int n = *count;                                                             \
-        ompi_op_cuda_2buff_##name##_##type_name##_kernel<<blocks, threads>>(in_, inout_, n); \
-    }
+/* reuse the macro above, no work is actually done so we don't care about the func */
+#define FUNC_FUNC(name, type_name, type, ...) FUNC(name, __VA_ARGS__##type_name, __VA_ARGS__##type)
 
 /*
  * Since all the functions in this file are essentially identical, we
@@ -68,43 +149,51 @@
  *
  * This macro is for minloc and maxloc
  */
-#define LOC_STRUCT(type_name, type1, type2) \
-  typedef struct { \
-      type1 v; \
-      type2 k; \
-  } ompi_op_predefined_##type_name##_t;
+#define LOC_FUNC(name, type_name, op) FUNC(name, type_name, ompi_op_predefined_##type_name##_t)
 
-#define LOC_FUNC(name, type_name, op) \
-    __global__ void                   \
-    ompi_op_cuda_2buff_##name##_##type_name##_kernel(const ompi_op_predefined_##type_name##_t *in, \
-                                                     ompi_op_predefined_##type_name##_t *inout,    \
-                                                     int n)                                        \
-    {                                                                       \
-        int i = blockIdx.x*blockDim.x + threadIdx.x;                        \
-        if (i < n) {                                                        \
-            const ompi_op_predefined_##type_name##_t *a = &in[i];           \
-            ompi_op_predefined_##type_name##_t *b = &inout[i];              \
-            if (a->v op b->v) {                                             \
-                b->v = a->v;                                                \
-                b->k = a->k;                                                \
-            } else if (a->v == b->v) {                                      \
-                b->k = (b->k < a->k ? b->k : a->k);                         \
-            }                                                               \
-        }                                                                   \
-    }                                                                       \
-    static void                                                             \
-    ompi_op_cuda_2buff_##name##_##type_name(const void *in, void *out, int *count,      \
-                                            struct ompi_datatype_t **dtype,             \
-                                            struct ompi_op_cuda_module_1_0_0_t *module) \
-    {                                                                                   \
-        int i;                                                                          \
-        int threads = THREADS_PER_BLOCK;                                                \
-        int blocks  = *count / THREADS_PER_BLOCK;                                       \
-        const ompi_op_predefined_##type_name##_t *a = (const ompi_op_predefined_##type_name##_t*) in; \
-        ompi_op_predefined_##type_name##_t *b = (ompi_op_predefined_##type_name##_t*) out;            \
-        ompi_op_cuda_2buff_##name##_##type_name##_kernel<<blocks, threads>>(a, b, n);                 \
+/* Dispatch Fortran types to C types */
+#define FORT_INT_FUNC(name, type_name, type)                                 \
+    static \
+    void ompi_op_cuda_2buff_##name##_##type_name(const void *in, void *inout, int *count,  \
+                                                   struct ompi_datatype_t **dtype,           \
+                                                   struct ompi_op_base_module_1_0_0_t *module) { \
+                                                                                                 \
+        _Static_assert(sizeof(type) >= sizeof(int8_t) && sizeof(type) <= sizeof(int64_t));       \
+        switch(sizeof(type)) {  \
+            case sizeof(int8_t):  \
+                ompi_op_cuda_2buff_##name##_int8_t(in, inout, count, dtype, module); \
+                break; \
+            case sizeof(int16_t): \
+                ompi_op_cuda_2buff_##name##_int16_t(in, inout, count, dtype, module); \
+                break; \
+            case sizeof(int32_t): \
+                ompi_op_cuda_2buff_##name##_int32_t(in, inout, count, dtype, module); \
+                break; \
+            case sizeof(int64_t): \
+                ompi_op_cuda_2buff_##name##_int64_t(in, inout, count, dtype, module); \
+                break; \
+        } \
     }
 
+/* Dispatch Fortran types to C types */
+#define FORT_FLOAT_FUNC(name, type_name, type)                                 \
+    static \
+    void ompi_op_cuda_2buff_##name##_##type_name(const void *in, void *inout, int *count,  \
+                                                   struct ompi_datatype_t **dtype,           \
+                                                   struct ompi_op_base_module_1_0_0_t *module) { \
+        _Static_assert(sizeof(type) >= sizeof(float) && sizeof(type) <= sizeof(long double));       \
+        switch(sizeof(type)) {  \
+            case sizeof(float):  \
+                ompi_op_cuda_2buff_##name##_float(in, inout, count, dtype, module);  \
+                break;  \
+            case sizeof(double): \
+                ompi_op_cuda_2buff_##name##_double(in, inout, count, dtype, module); \
+                break; \
+            case sizeof(long double): \
+                ompi_op_cuda_2buff_##name##_long_double(in, inout, count, dtype, module); \
+                break; \
+        } \
+    }
 
 /*************************************************************************
  * Max
@@ -126,49 +215,52 @@ FUNC_FUNC(max,  unsigned_long, unsigned long)
 
 /* Fortran integer */
 #if OMPI_HAVE_FORTRAN_INTEGER
-FUNC_FUNC(max, fortran_integer, ompi_fortran_integer_t)
+FORT_INT_FUNC(max, fortran_integer, ompi_fortran_integer_t)
 #endif
 #if OMPI_HAVE_FORTRAN_INTEGER1
-FUNC_FUNC(max, fortran_integer1, ompi_fortran_integer1_t)
+FORT_INT_FUNC(max, fortran_integer1, ompi_fortran_integer1_t)
 #endif
 #if OMPI_HAVE_FORTRAN_INTEGER2
-FUNC_FUNC(max, fortran_integer2, ompi_fortran_integer2_t)
+FORT_INT_FUNC(max, fortran_integer2, ompi_fortran_integer2_t)
 #endif
 #if OMPI_HAVE_FORTRAN_INTEGER4
-FUNC_FUNC(max, fortran_integer4, ompi_fortran_integer4_t)
+FORT_INT_FUNC(max, fortran_integer4, ompi_fortran_integer4_t)
 #endif
 #if OMPI_HAVE_FORTRAN_INTEGER8
-FUNC_FUNC(max, fortran_integer8, ompi_fortran_integer8_t)
+FORT_INT_FUNC(max, fortran_integer8, ompi_fortran_integer8_t)
 #endif
 #if OMPI_HAVE_FORTRAN_INTEGER16
-FUNC_FUNC(max, fortran_integer16, ompi_fortran_integer16_t)
+FORT_INT_FUNC(max, fortran_integer16, ompi_fortran_integer16_t)
 #endif
+
+#if 0
 /* Floating point */
 #if defined(HAVE_SHORT_FLOAT)
 FUNC_FUNC(max, short_float, short float)
 #elif defined(HAVE_OPAL_SHORT_FLOAT_T)
 FUNC_FUNC(max, short_float, opal_short_float_t)
 #endif
+#endif // 0
 FUNC_FUNC(max, float, float)
 FUNC_FUNC(max, double, double)
 FUNC_FUNC(max, long_double, long double)
 #if OMPI_HAVE_FORTRAN_REAL
-FUNC_FUNC(max, fortran_real, ompi_fortran_real_t)
+FORT_FLOAT_FUNC(max, fortran_real, ompi_fortran_real_t)
 #endif
 #if OMPI_HAVE_FORTRAN_DOUBLE_PRECISION
-FUNC_FUNC(max, fortran_double_precision, ompi_fortran_double_precision_t)
+FORT_FLOAT_FUNC(max, fortran_double_precision, ompi_fortran_double_precision_t)
 #endif
 #if OMPI_HAVE_FORTRAN_REAL2
-FUNC_FUNC(max, fortran_real2, ompi_fortran_real2_t)
+FORT_FLOAT_FUNC(max, fortran_real2, ompi_fortran_real2_t)
 #endif
 #if OMPI_HAVE_FORTRAN_REAL4
-FUNC_FUNC(max, fortran_real4, ompi_fortran_real4_t)
+FORT_FLOAT_FUNC(max, fortran_real4, ompi_fortran_real4_t)
 #endif
 #if OMPI_HAVE_FORTRAN_REAL8
-FUNC_FUNC(max, fortran_real8, ompi_fortran_real8_t)
+FORT_FLOAT_FUNC(max, fortran_real8, ompi_fortran_real8_t)
 #endif
 #if OMPI_HAVE_FORTRAN_REAL16 && OMPI_REAL16_MATCHES_C
-FUNC_FUNC(max, fortran_real16, ompi_fortran_real16_t)
+FORT_FLOAT_FUNC(max, fortran_real16, ompi_fortran_real16_t)
 #endif
 
 
@@ -192,49 +284,53 @@ FUNC_FUNC(min,  unsigned_long, unsigned long)
 
 /* Fortran integer */
 #if OMPI_HAVE_FORTRAN_INTEGER
-FUNC_FUNC(min, fortran_integer, ompi_fortran_integer_t)
+FORT_INT_FUNC(min, fortran_integer, ompi_fortran_integer_t)
 #endif
 #if OMPI_HAVE_FORTRAN_INTEGER1
-FUNC_FUNC(min, fortran_integer1, ompi_fortran_integer1_t)
+FORT_INT_FUNC(min, fortran_integer1, ompi_fortran_integer1_t)
 #endif
 #if OMPI_HAVE_FORTRAN_INTEGER2
-FUNC_FUNC(min, fortran_integer2, ompi_fortran_integer2_t)
+FORT_INT_FUNC(min, fortran_integer2, ompi_fortran_integer2_t)
 #endif
 #if OMPI_HAVE_FORTRAN_INTEGER4
-FUNC_FUNC(min, fortran_integer4, ompi_fortran_integer4_t)
+FORT_INT_FUNC(min, fortran_integer4, ompi_fortran_integer4_t)
 #endif
 #if OMPI_HAVE_FORTRAN_INTEGER8
-FUNC_FUNC(min, fortran_integer8, ompi_fortran_integer8_t)
+FORT_INT_FUNC(min, fortran_integer8, ompi_fortran_integer8_t)
 #endif
 #if OMPI_HAVE_FORTRAN_INTEGER16
-FUNC_FUNC(min, fortran_integer16, ompi_fortran_integer16_t)
+FORT_INT_FUNC(min, fortran_integer16, ompi_fortran_integer16_t)
 #endif
+
+#if 0
 /* Floating point */
 #if defined(HAVE_SHORT_FLOAT)
 FUNC_FUNC(min, short_float, short float)
 #elif defined(HAVE_OPAL_SHORT_FLOAT_T)
 FUNC_FUNC(min, short_float, opal_short_float_t)
 #endif
+#endif // 0
+
 FUNC_FUNC(min, float, float)
 FUNC_FUNC(min, double, double)
 FUNC_FUNC(min, long_double, long double)
 #if OMPI_HAVE_FORTRAN_REAL
-FUNC_FUNC(min, fortran_real, ompi_fortran_real_t)
+FORT_FLOAT_FUNC(min, fortran_real, ompi_fortran_real_t)
 #endif
 #if OMPI_HAVE_FORTRAN_DOUBLE_PRECISION
-FUNC_FUNC(min, fortran_double_precision, ompi_fortran_double_precision_t)
+FORT_FLOAT_FUNC(min, fortran_double_precision, ompi_fortran_double_precision_t)
 #endif
 #if OMPI_HAVE_FORTRAN_REAL2
-FUNC_FUNC(min, fortran_real2, ompi_fortran_real2_t)
+FORT_FLOAT_FUNC(min, fortran_real2, ompi_fortran_real2_t)
 #endif
 #if OMPI_HAVE_FORTRAN_REAL4
-FUNC_FUNC(min, fortran_real4, ompi_fortran_real4_t)
+FORT_FLOAT_FUNC(min, fortran_real4, ompi_fortran_real4_t)
 #endif
 #if OMPI_HAVE_FORTRAN_REAL8
-FUNC_FUNC(min, fortran_real8, ompi_fortran_real8_t)
+FORT_FLOAT_FUNC(min, fortran_real8, ompi_fortran_real8_t)
 #endif
 #if OMPI_HAVE_FORTRAN_REAL16 && OMPI_REAL16_MATCHES_C
-FUNC_FUNC(min, fortran_real16, ompi_fortran_real16_t)
+FORT_FLOAT_FUNC(min, fortran_real16, ompi_fortran_real16_t)
 #endif
 
 /*************************************************************************
@@ -255,49 +351,53 @@ OP_FUNC(sum,  unsigned_long, unsigned long, +=)
 
 /* Fortran integer */
 #if OMPI_HAVE_FORTRAN_INTEGER
-OP_FUNC(sum, fortran_integer, ompi_fortran_integer_t, +=)
+FORT_INT_FUNC(sum, fortran_integer, ompi_fortran_integer_t)
 #endif
 #if OMPI_HAVE_FORTRAN_INTEGER1
-OP_FUNC(sum, fortran_integer1, ompi_fortran_integer1_t, +=)
+FORT_INT_FUNC(sum, fortran_integer1, ompi_fortran_integer1_t)
 #endif
 #if OMPI_HAVE_FORTRAN_INTEGER2
-OP_FUNC(sum, fortran_integer2, ompi_fortran_integer2_t, +=)
+FORT_INT_FUNC(sum, fortran_integer2, ompi_fortran_integer2_t)
 #endif
 #if OMPI_HAVE_FORTRAN_INTEGER4
-OP_FUNC(sum, fortran_integer4, ompi_fortran_integer4_t, +=)
+FORT_INT_FUNC(sum, fortran_integer4, ompi_fortran_integer4_t)
 #endif
 #if OMPI_HAVE_FORTRAN_INTEGER8
-OP_FUNC(sum, fortran_integer8, ompi_fortran_integer8_t, +=)
+FORT_INT_FUNC(sum, fortran_integer8, ompi_fortran_integer8_t)
 #endif
 #if OMPI_HAVE_FORTRAN_INTEGER16
-OP_FUNC(sum, fortran_integer16, ompi_fortran_integer16_t, +=)
+FORT_INT_FUNC(sum, fortran_integer16, ompi_fortran_integer16_t)
 #endif
+
+#if 0
 /* Floating point */
 #if defined(HAVE_SHORT_FLOAT)
 OP_FUNC(sum, short_float, short float, +=)
 #elif defined(HAVE_OPAL_SHORT_FLOAT_T)
 OP_FUNC(sum, short_float, opal_short_float_t, +=)
 #endif
+#endif // 0
+
 OP_FUNC(sum, float, float, +=)
 OP_FUNC(sum, double, double, +=)
 OP_FUNC(sum, long_double, long double, +=)
 #if OMPI_HAVE_FORTRAN_REAL
-OP_FUNC(sum, fortran_real, ompi_fortran_real_t, +=)
+FORT_FLOAT_FUNC(sum, fortran_real, ompi_fortran_real_t)
 #endif
 #if OMPI_HAVE_FORTRAN_DOUBLE_PRECISION
-OP_FUNC(sum, fortran_double_precision, ompi_fortran_double_precision_t, +=)
+FORT_FLOAT_FUNC(sum, fortran_double_precision, ompi_fortran_double_precision_t)
 #endif
 #if OMPI_HAVE_FORTRAN_REAL2
-OP_FUNC(sum, fortran_real2, ompi_fortran_real2_t, +=)
+FORT_FLOAT_FUNC(sum, fortran_real2, ompi_fortran_real2_t)
 #endif
 #if OMPI_HAVE_FORTRAN_REAL4
-OP_FUNC(sum, fortran_real4, ompi_fortran_real4_t, +=)
+FORT_FLOAT_FUNC(sum, fortran_real4, ompi_fortran_real4_t)
 #endif
 #if OMPI_HAVE_FORTRAN_REAL8
-OP_FUNC(sum, fortran_real8, ompi_fortran_real8_t, +=)
+FORT_FLOAT_FUNC(sum, fortran_real8, ompi_fortran_real8_t)
 #endif
 #if OMPI_HAVE_FORTRAN_REAL16 && OMPI_REAL16_MATCHES_C
-OP_FUNC(sum, fortran_real16, ompi_fortran_real16_t, +=)
+FORT_FLOAT_FUNC(sum, fortran_real16, ompi_fortran_real16_t)
 #endif
 /* Complex */
 #if 0
@@ -329,49 +429,53 @@ OP_FUNC(prod,  unsigned_long, unsigned long, *=)
 
 /* Fortran integer */
 #if OMPI_HAVE_FORTRAN_INTEGER
-OP_FUNC(prod, fortran_integer, ompi_fortran_integer_t, *=)
+FORT_INT_FUNC(prod, fortran_integer, ompi_fortran_integer_t)
 #endif
 #if OMPI_HAVE_FORTRAN_INTEGER1
-OP_FUNC(prod, fortran_integer1, ompi_fortran_integer1_t, *=)
+FORT_INT_FUNC(prod, fortran_integer1, ompi_fortran_integer1_t)
 #endif
 #if OMPI_HAVE_FORTRAN_INTEGER2
-OP_FUNC(prod, fortran_integer2, ompi_fortran_integer2_t, *=)
+FORT_INT_FUNC(prod, fortran_integer2, ompi_fortran_integer2_t)
 #endif
 #if OMPI_HAVE_FORTRAN_INTEGER4
-OP_FUNC(prod, fortran_integer4, ompi_fortran_integer4_t, *=)
+FORT_INT_FUNC(prod, fortran_integer4, ompi_fortran_integer4_t)
 #endif
 #if OMPI_HAVE_FORTRAN_INTEGER8
-OP_FUNC(prod, fortran_integer8, ompi_fortran_integer8_t, *=)
+FORT_INT_FUNC(prod, fortran_integer8, ompi_fortran_integer8_t)
 #endif
 #if OMPI_HAVE_FORTRAN_INTEGER16
-OP_FUNC(prod, fortran_integer16, ompi_fortran_integer16_t, *=)
+FORT_INT_FUNC(prod, fortran_integer16, ompi_fortran_integer16_t)
 #endif
 /* Floating point */
+
+#if 0
 #if defined(HAVE_SHORT_FLOAT)
 OP_FUNC(prod, short_float, short float, *=)
 #elif defined(HAVE_OPAL_SHORT_FLOAT_T)
 OP_FUNC(prod, short_float, opal_short_float_t, *=)
 #endif
+#endif // 0
+
 OP_FUNC(prod, float, float, *=)
 OP_FUNC(prod, double, double, *=)
 OP_FUNC(prod, long_double, long double, *=)
 #if OMPI_HAVE_FORTRAN_REAL
-OP_FUNC(prod, fortran_real, ompi_fortran_real_t, *=)
+FORT_FLOAT_FUNC(prod, fortran_real, ompi_fortran_real_t)
 #endif
 #if OMPI_HAVE_FORTRAN_DOUBLE_PRECISION
-OP_FUNC(prod, fortran_double_precision, ompi_fortran_double_precision_t, *=)
+FORT_FLOAT_FUNC(prod, fortran_double_precision, ompi_fortran_double_precision_t)
 #endif
 #if OMPI_HAVE_FORTRAN_REAL2
-OP_FUNC(prod, fortran_real2, ompi_fortran_real2_t, *=)
+FORT_FLOAT_FUNC(prod, fortran_real2, ompi_fortran_real2_t)
 #endif
 #if OMPI_HAVE_FORTRAN_REAL4
-OP_FUNC(prod, fortran_real4, ompi_fortran_real4_t, *=)
+FORT_FLOAT_FUNC(prod, fortran_real4, ompi_fortran_real4_t)
 #endif
 #if OMPI_HAVE_FORTRAN_REAL8
-OP_FUNC(prod, fortran_real8, ompi_fortran_real8_t, *=)
+FORT_FLOAT_FUNC(prod, fortran_real8, ompi_fortran_real8_t)
 #endif
 #if OMPI_HAVE_FORTRAN_REAL16 && OMPI_REAL16_MATCHES_C
-OP_FUNC(prod, fortran_real16, ompi_fortran_real16_t, *=)
+FORT_FLOAT_FUNC(prod, fortran_real16, ompi_fortran_real16_t)
 #endif
 /* Complex */
 #if 0
@@ -405,7 +509,7 @@ FUNC_FUNC(land,  unsigned_long, unsigned long)
 
 /* Logical */
 #if OMPI_HAVE_FORTRAN_LOGICAL
-FUNC_FUNC(land, fortran_logical, ompi_fortran_logical_t)
+FORT_INT_FUNC(land, fortran_logical, ompi_fortran_logical_t)
 #endif
 /* C++ bool */
 FUNC_FUNC(land, bool, bool)
@@ -430,7 +534,7 @@ FUNC_FUNC(lor,  unsigned_long, unsigned long)
 
 /* Logical */
 #if OMPI_HAVE_FORTRAN_LOGICAL
-FUNC_FUNC(lor, fortran_logical, ompi_fortran_logical_t)
+FORT_INT_FUNC(lor, fortran_logical, ompi_fortran_logical_t)
 #endif
 /* C++ bool */
 FUNC_FUNC(lor, bool, bool)
@@ -456,7 +560,7 @@ FUNC_FUNC(lxor,  unsigned_long, unsigned long)
 
 /* Logical */
 #if OMPI_HAVE_FORTRAN_LOGICAL
-FUNC_FUNC(lxor, fortran_logical, ompi_fortran_logical_t)
+FORT_INT_FUNC(lxor, fortran_logical, ompi_fortran_logical_t)
 #endif
 /* C++ bool */
 FUNC_FUNC(lxor, bool, bool)
@@ -481,22 +585,22 @@ FUNC_FUNC(band,  unsigned_long, unsigned long)
 
 /* Fortran integer */
 #if OMPI_HAVE_FORTRAN_INTEGER
-FUNC_FUNC(band, fortran_integer, ompi_fortran_integer_t)
+FORT_INT_FUNC(band, fortran_integer, ompi_fortran_integer_t)
 #endif
 #if OMPI_HAVE_FORTRAN_INTEGER1
-FUNC_FUNC(band, fortran_integer1, ompi_fortran_integer1_t)
+FORT_INT_FUNC(band, fortran_integer1, ompi_fortran_integer1_t)
 #endif
 #if OMPI_HAVE_FORTRAN_INTEGER2
-FUNC_FUNC(band, fortran_integer2, ompi_fortran_integer2_t)
+FORT_INT_FUNC(band, fortran_integer2, ompi_fortran_integer2_t)
 #endif
 #if OMPI_HAVE_FORTRAN_INTEGER4
-FUNC_FUNC(band, fortran_integer4, ompi_fortran_integer4_t)
+FORT_INT_FUNC(band, fortran_integer4, ompi_fortran_integer4_t)
 #endif
 #if OMPI_HAVE_FORTRAN_INTEGER8
-FUNC_FUNC(band, fortran_integer8, ompi_fortran_integer8_t)
+FORT_INT_FUNC(band, fortran_integer8, ompi_fortran_integer8_t)
 #endif
 #if OMPI_HAVE_FORTRAN_INTEGER16
-FUNC_FUNC(band, fortran_integer16, ompi_fortran_integer16_t)
+FORT_INT_FUNC(band, fortran_integer16, ompi_fortran_integer16_t)
 #endif
 /* Byte */
 FUNC_FUNC(band, byte, char)
@@ -521,22 +625,22 @@ FUNC_FUNC(bor,  unsigned_long, unsigned long)
 
 /* Fortran integer */
 #if OMPI_HAVE_FORTRAN_INTEGER
-FUNC_FUNC(bor, fortran_integer, ompi_fortran_integer_t)
+FORT_INT_FUNC(bor, fortran_integer, ompi_fortran_integer_t)
 #endif
 #if OMPI_HAVE_FORTRAN_INTEGER1
-FUNC_FUNC(bor, fortran_integer1, ompi_fortran_integer1_t)
+FORT_INT_FUNC(bor, fortran_integer1, ompi_fortran_integer1_t)
 #endif
 #if OMPI_HAVE_FORTRAN_INTEGER2
-FUNC_FUNC(bor, fortran_integer2, ompi_fortran_integer2_t)
+FORT_INT_FUNC(bor, fortran_integer2, ompi_fortran_integer2_t)
 #endif
 #if OMPI_HAVE_FORTRAN_INTEGER4
-FUNC_FUNC(bor, fortran_integer4, ompi_fortran_integer4_t)
+FORT_INT_FUNC(bor, fortran_integer4, ompi_fortran_integer4_t)
 #endif
 #if OMPI_HAVE_FORTRAN_INTEGER8
-FUNC_FUNC(bor, fortran_integer8, ompi_fortran_integer8_t)
+FORT_INT_FUNC(bor, fortran_integer8, ompi_fortran_integer8_t)
 #endif
 #if OMPI_HAVE_FORTRAN_INTEGER16
-FUNC_FUNC(bor, fortran_integer16, ompi_fortran_integer16_t)
+FORT_INT_FUNC(bor, fortran_integer16, ompi_fortran_integer16_t)
 #endif
 /* Byte */
 FUNC_FUNC(bor, byte, char)
@@ -561,51 +665,31 @@ FUNC_FUNC(bxor,  unsigned_long, unsigned long)
 
 /* Fortran integer */
 #if OMPI_HAVE_FORTRAN_INTEGER
-FUNC_FUNC(bxor, fortran_integer, ompi_fortran_integer_t)
+FORT_INT_FUNC(bxor, fortran_integer, ompi_fortran_integer_t)
 #endif
 #if OMPI_HAVE_FORTRAN_INTEGER1
-FUNC_FUNC(bxor, fortran_integer1, ompi_fortran_integer1_t)
+FORT_INT_FUNC(bxor, fortran_integer1, ompi_fortran_integer1_t)
 #endif
 #if OMPI_HAVE_FORTRAN_INTEGER2
-FUNC_FUNC(bxor, fortran_integer2, ompi_fortran_integer2_t)
+FORT_INT_FUNC(bxor, fortran_integer2, ompi_fortran_integer2_t)
 #endif
 #if OMPI_HAVE_FORTRAN_INTEGER4
-FUNC_FUNC(bxor, fortran_integer4, ompi_fortran_integer4_t)
+FORT_INT_FUNC(bxor, fortran_integer4, ompi_fortran_integer4_t)
 #endif
 #if OMPI_HAVE_FORTRAN_INTEGER8
-FUNC_FUNC(bxor, fortran_integer8, ompi_fortran_integer8_t)
+FORT_INT_FUNC(bxor, fortran_integer8, ompi_fortran_integer8_t)
 #endif
 #if OMPI_HAVE_FORTRAN_INTEGER16
-FUNC_FUNC(bxor, fortran_integer16, ompi_fortran_integer16_t)
+FORT_INT_FUNC(bxor, fortran_integer16, ompi_fortran_integer16_t)
 #endif
 /* Byte */
 FUNC_FUNC(bxor, byte, char)
 
 /*************************************************************************
- * Min and max location "pair" datatypes
- *************************************************************************/
-
-#if OMPI_HAVE_FORTRAN_REAL
-LOC_STRUCT(2real, ompi_fortran_real_t, ompi_fortran_real_t)
-#endif
-#if OMPI_HAVE_FORTRAN_DOUBLE_PRECISION
-LOC_STRUCT(2double_precision, ompi_fortran_double_precision_t, ompi_fortran_double_precision_t)
-#endif
-#if OMPI_HAVE_FORTRAN_INTEGER
-LOC_STRUCT(2integer, ompi_fortran_integer_t, ompi_fortran_integer_t)
-#endif
-LOC_STRUCT(float_int, float, int)
-LOC_STRUCT(double_int, double, int)
-LOC_STRUCT(long_int, long, int)
-LOC_STRUCT(2int, int, int)
-LOC_STRUCT(short_int, short, int)
-LOC_STRUCT(long_double_int, long double, int)
-LOC_STRUCT(unsigned_long, unsigned long, int)
-
-/*************************************************************************
  * Max location
  *************************************************************************/
 
+#if 0
 #if OMPI_HAVE_FORTRAN_REAL
 LOC_FUNC(maxloc, 2real, >)
 #endif
@@ -615,6 +699,7 @@ LOC_FUNC(maxloc, 2double_precision, >)
 #if OMPI_HAVE_FORTRAN_INTEGER
 LOC_FUNC(maxloc, 2integer, >)
 #endif
+#endif // 0
 LOC_FUNC(maxloc, float_int, >)
 LOC_FUNC(maxloc, double_int, >)
 LOC_FUNC(maxloc, long_int, >)
@@ -625,7 +710,7 @@ LOC_FUNC(maxloc, long_double_int, >)
 /*************************************************************************
  * Min location
  *************************************************************************/
-
+#if 0
 #if OMPI_HAVE_FORTRAN_REAL
 LOC_FUNC(minloc, 2real, <)
 #endif
@@ -635,6 +720,7 @@ LOC_FUNC(minloc, 2double_precision, <)
 #if OMPI_HAVE_FORTRAN_INTEGER
 LOC_FUNC(minloc, 2integer, <)
 #endif
+#endif // 0
 LOC_FUNC(minloc, float_int, <)
 LOC_FUNC(minloc, double_int, <)
 LOC_FUNC(minloc, long_int, <)
@@ -643,27 +729,28 @@ LOC_FUNC(minloc, short_int, <)
 LOC_FUNC(minloc, long_double_int, <)
 
 
-
+#if 0
 /*
  *  This is a three buffer (2 input and 1 output) version of the reduction
  *    routines, needed for some optimizations.
  */
 #define OP_FUNC(name, type_name, type, op)                                 \
-    __global__ void                                                                 \
+    __device__ void                                                                 \
     ompi_op_cuda_3buff_##name##_##type_name##_kernel(const type *in1, const type* in2, type *out, int n) {   \
         int i = blockIdx.x*blockDim.x + threadIdx.x;                                \
         if (i < n) out[i] = in1[i] op in2[i];                                       \
     }                                                                               \
     void ompi_op_cuda_3buff_##name##_##type_name##(const void *in1, const void *in2, void *out, int *count,  \
                                                    struct ompi_datatype_t **dtype,           \
-                                                   struct ompi_op_cuda_module_1_0_0_t *module) {     \
+                                                   struct ompi_op_base_module_1_0_0_t *module) {     \
         int threads = THREADS_PER_BLOCK;                                            \
         int blocks  = *count / THREADS_PER_BLOCK;                                   \
         type *out_ = (type*)out;                                                    \
         const type *in1_ = (const type*)in1;                                        \
         const type *in2_ = (const type*)in2;                                        \
         int n = *count;                                                             \
-        ompi_op_cuda_3buff_##name##_##type_name##_kernel<<<blocks, threads>>>(in1_, int2_, out_, n); \
+        CUstream *stream = &mca_op_cuda_component.cu_stream;                        \
+        ompi_op_cuda_3buff_##name##_##type_name##_kernel<<<blocks, threads, *stream>>>(in1_, int2_, out_, n); \
     }
 
 
@@ -675,7 +762,7 @@ LOC_FUNC(minloc, long_double_int, <)
  * This macro is for (out = op(in1, in2))
  */
 #define FUNC_FUNC(name, type_name, type)                                            \
-    __global__ void                                                                 \
+    __device__ void                                                                 \
     ompi_op_cuda_3buff_##name##_##type_name##_kernel(const type *in1, const type *in2, type *out, int n) {   \
         int i = blockIdx.x*blockDim.x + threadIdx.x;                                \
         if (i < n) out[i] = current_func(in1[i], in2[i]);                           \
@@ -683,14 +770,15 @@ LOC_FUNC(minloc, long_double_int, <)
     static void                                                                     \
     ompi_op_cuda_3buff_##name##_##type_name##(const void *in1, const void *in2, void *out, int *count,  \
                                               struct ompi_datatype_t **dtype,           \
-                                              struct ompi_op_cuda_module_1_0_0_t *module) {     \
+                                              struct ompi_op_base_module_1_0_0_t *module) { \
         int threads = THREADS_PER_BLOCK;                                            \
         int blocks  = *count / THREADS_PER_BLOCK;                                   \
         type *out_ = (type*)out;                                                    \
         const type *in1_ = (const type*)in1;                                        \
         const type *in2_ = (const type*)in2;                                        \
         int n = *count;                                                             \
-        ompi_op_cuda_3buff_##name##_##type_name##_kernel<<blocks, threads>>(in1_, in2_, out_, n); \
+        CUstream *stream = &mca_op_cuda_component.cu_stream;                        \
+        ompi_op_cuda_3buff_##name##_##type_name##_kernel<<blocks, threads, *stream>>(in1_, in2_, out_, n); \
     }
 
 /*
@@ -709,7 +797,7 @@ LOC_FUNC(minloc, long_double_int, <)
 */
 
 #define LOC_FUNC(name, type_name, op) \
-    __global__ void                   \
+    __device__ void                   \
     ompi_op_cuda_3buff_##name##_##type_name##_kernel(const ompi_op_predefined_##type_name##_t *in1, \
                                                      const ompi_op_predefined_##type_name##_t *in2, \
                                                      ompi_op_predefined_##type_name##_t *out,       \
@@ -743,7 +831,8 @@ LOC_FUNC(minloc, long_double_int, <)
         const ompi_op_predefined_##type_name##_t *a1 = (const ompi_op_predefined_##type_name##_t*) in1; \
         const ompi_op_predefined_##type_name##_t *a2 = (const ompi_op_predefined_##type_name##_t*) in2; \
         ompi_op_predefined_##type_name##_t *b = (ompi_op_predefined_##type_name##_t*) out;            \
-        ompi_op_cuda_2buff_##name##_##type_name##_kernel<<blocks, threads>>(a1, a2, b, n);            \
+        CUstream *stream = &mca_op_cuda_component.cu_stream;                            \
+        ompi_op_cuda_2buff_##name##_##type_name##_kernel<<blocks, threads, *stream>>(a1, a2, b, n); \
     }
 
 
@@ -1282,7 +1371,7 @@ LOC_FUNC_3BUF(minloc, long_int, <)
 LOC_FUNC_3BUF(minloc, 2int, <)
 LOC_FUNC_3BUF(minloc, short_int, <)
 LOC_FUNC_3BUF(minloc, long_double_int, <)
-
+#endif // 0
 
 /*
  * Helpful defines, because there's soooo many names!
@@ -1294,16 +1383,16 @@ LOC_FUNC_3BUF(minloc, long_double_int, <)
 
 /** C integer ***********************************************************/
 #define C_INTEGER(name, ftype)                                             \
-  [OMPI_OP_CUDA_TYPE_INT8_T] = ompi_op_cuda_##ftype##_##name##_int8_t,     \
-  [OMPI_OP_CUDA_TYPE_UINT8_T] = ompi_op_cuda_##ftype##_##name##_uint8_t,   \
-  [OMPI_OP_CUDA_TYPE_INT16_T] = ompi_op_cuda_##ftype##_##name##_int16_t,   \
-  [OMPI_OP_CUDA_TYPE_UINT16_T] = ompi_op_cuda_##ftype##_##name##_uint16_t, \
-  [OMPI_OP_CUDA_TYPE_INT32_T] = ompi_op_cuda_##ftype##_##name##_int32_t,   \
-  [OMPI_OP_CUDA_TYPE_UINT32_T] = ompi_op_cuda_##ftype##_##name##_uint32_t, \
-  [OMPI_OP_CUDA_TYPE_INT64_T] = ompi_op_cuda_##ftype##_##name##_int64_t,   \
-  [OMPI_OP_CUDA_TYPE_LONG] = ompi_op_cuda_##ftype##_##name##_long,   \
-  [OMPI_OP_CUDA_TYPE_UNSIGNED_LONG] = ompi_op_cuda_##ftype##_##name##_unsigned_long,   \
-  [OMPI_OP_CUDA_TYPE_UINT64_T] = ompi_op_cuda_##ftype##_##name##_uint64_t
+  [OMPI_OP_BASE_TYPE_INT8_T] = ompi_op_cuda_##ftype##_##name##_int8_t,     \
+  [OMPI_OP_BASE_TYPE_UINT8_T] = ompi_op_cuda_##ftype##_##name##_uint8_t,   \
+  [OMPI_OP_BASE_TYPE_INT16_T] = ompi_op_cuda_##ftype##_##name##_int16_t,   \
+  [OMPI_OP_BASE_TYPE_UINT16_T] = ompi_op_cuda_##ftype##_##name##_uint16_t, \
+  [OMPI_OP_BASE_TYPE_INT32_T] = ompi_op_cuda_##ftype##_##name##_int32_t,   \
+  [OMPI_OP_BASE_TYPE_UINT32_T] = ompi_op_cuda_##ftype##_##name##_uint32_t, \
+  [OMPI_OP_BASE_TYPE_INT64_T] = ompi_op_cuda_##ftype##_##name##_int64_t,   \
+  [OMPI_OP_BASE_TYPE_LONG] = ompi_op_cuda_##ftype##_##name##_long,   \
+  [OMPI_OP_BASE_TYPE_UNSIGNED_LONG] = ompi_op_cuda_##ftype##_##name##_unsigned_long,   \
+  [OMPI_OP_BASE_TYPE_UINT64_T] = ompi_op_cuda_##ftype##_##name##_uint64_t
 
 /** All the Fortran integers ********************************************/
 
@@ -1339,12 +1428,12 @@ LOC_FUNC_3BUF(minloc, long_double_int, <)
 #endif
 
 #define FORTRAN_INTEGER(name, ftype)                                  \
-    [OMPI_OP_CUDA_TYPE_INTEGER] = FORTRAN_INTEGER_PLAIN(name, ftype), \
-    [OMPI_OP_CUDA_TYPE_INTEGER1] = FORTRAN_INTEGER1(name, ftype),     \
-    [OMPI_OP_CUDA_TYPE_INTEGER2] = FORTRAN_INTEGER2(name, ftype),     \
-    [OMPI_OP_CUDA_TYPE_INTEGER4] = FORTRAN_INTEGER4(name, ftype),     \
-    [OMPI_OP_CUDA_TYPE_INTEGER8] = FORTRAN_INTEGER8(name, ftype),     \
-    [OMPI_OP_CUDA_TYPE_INTEGER16] = FORTRAN_INTEGER16(name, ftype)
+    [OMPI_OP_BASE_TYPE_INTEGER] = FORTRAN_INTEGER_PLAIN(name, ftype), \
+    [OMPI_OP_BASE_TYPE_INTEGER1] = FORTRAN_INTEGER1(name, ftype),     \
+    [OMPI_OP_BASE_TYPE_INTEGER2] = FORTRAN_INTEGER2(name, ftype),     \
+    [OMPI_OP_BASE_TYPE_INTEGER4] = FORTRAN_INTEGER4(name, ftype),     \
+    [OMPI_OP_BASE_TYPE_INTEGER8] = FORTRAN_INTEGER8(name, ftype),     \
+    [OMPI_OP_BASE_TYPE_INTEGER16] = FORTRAN_INTEGER16(name, ftype)
 
 /** All the Fortran reals ***********************************************/
 
@@ -1381,11 +1470,11 @@ LOC_FUNC_3BUF(minloc, long_double_int, <)
 #endif
 
 #define FLOATING_POINT_FORTRAN_REAL(name, ftype)                               \
-    [OMPI_OP_CUDA_TYPE_REAL] = FLOATING_POINT_FORTRAN_REAL_PLAIN(name, ftype), \
-    [OMPI_OP_CUDA_TYPE_REAL2] = FLOATING_POINT_FORTRAN_REAL2(name, ftype),     \
-    [OMPI_OP_CUDA_TYPE_REAL4] = FLOATING_POINT_FORTRAN_REAL4(name, ftype),     \
-    [OMPI_OP_CUDA_TYPE_REAL8] = FLOATING_POINT_FORTRAN_REAL8(name, ftype),     \
-    [OMPI_OP_CUDA_TYPE_REAL16] = FLOATING_POINT_FORTRAN_REAL16(name, ftype)
+    [OMPI_OP_BASE_TYPE_REAL] = FLOATING_POINT_FORTRAN_REAL_PLAIN(name, ftype), \
+    [OMPI_OP_BASE_TYPE_REAL2] = FLOATING_POINT_FORTRAN_REAL2(name, ftype),     \
+    [OMPI_OP_BASE_TYPE_REAL4] = FLOATING_POINT_FORTRAN_REAL4(name, ftype),     \
+    [OMPI_OP_BASE_TYPE_REAL8] = FLOATING_POINT_FORTRAN_REAL8(name, ftype),     \
+    [OMPI_OP_BASE_TYPE_REAL16] = FLOATING_POINT_FORTRAN_REAL16(name, ftype)
 
 /** Fortran double precision ********************************************/
 
@@ -1398,22 +1487,22 @@ LOC_FUNC_3BUF(minloc, long_double_int, <)
 
 /** Floating point, including all the Fortran reals *********************/
 
-#if defined(HAVE_SHORT_FLOAT) || defined(HAVE_OPAL_SHORT_FLOAT_T)
-#define SHORT_FLOAT(name, ftype) ompi_op_cuda_##ftype##_##name##_short_float
-#else
+//#if defined(HAVE_SHORT_FLOAT) || defined(HAVE_OPAL_SHORT_FLOAT_T)
+//#define SHORT_FLOAT(name, ftype) ompi_op_cuda_##ftype##_##name##_short_float
+//#else
 #define SHORT_FLOAT(name, ftype) NULL
-#endif
+//#endif
 #define FLOAT(name, ftype) ompi_op_cuda_##ftype##_##name##_float
 #define DOUBLE(name, ftype) ompi_op_cuda_##ftype##_##name##_double
 #define LONG_DOUBLE(name, ftype) ompi_op_cuda_##ftype##_##name##_long_double
 
 #define FLOATING_POINT(name, ftype)                                                            \
-  [OMPI_OP_CUDA_TYPE_SHORT_FLOAT] = SHORT_FLOAT(name, ftype),                                  \
-  [OMPI_OP_CUDA_TYPE_FLOAT] = FLOAT(name, ftype),                                              \
-  [OMPI_OP_CUDA_TYPE_DOUBLE] = DOUBLE(name, ftype),                                            \
+  [OMPI_OP_BASE_TYPE_SHORT_FLOAT] = SHORT_FLOAT(name, ftype),                                  \
+  [OMPI_OP_BASE_TYPE_FLOAT] = FLOAT(name, ftype),                                              \
+  [OMPI_OP_BASE_TYPE_DOUBLE] = DOUBLE(name, ftype),                                            \
   FLOATING_POINT_FORTRAN_REAL(name, ftype),                                                    \
-  [OMPI_OP_CUDA_TYPE_DOUBLE_PRECISION] = FLOATING_POINT_FORTRAN_DOUBLE_PRECISION(name, ftype), \
-  [OMPI_OP_CUDA_TYPE_LONG_DOUBLE] = LONG_DOUBLE(name, ftype)
+  [OMPI_OP_BASE_TYPE_DOUBLE_PRECISION] = FLOATING_POINT_FORTRAN_DOUBLE_PRECISION(name, ftype), \
+  [OMPI_OP_BASE_TYPE_LONG_DOUBLE] = LONG_DOUBLE(name, ftype)
 
 /** Fortran logical *****************************************************/
 
@@ -1425,8 +1514,8 @@ LOC_FUNC_3BUF(minloc, long_double_int, <)
 #endif
 
 #define LOGICAL(name, ftype)                                    \
-    [OMPI_OP_CUDA_TYPE_LOGICAL] = FORTRAN_LOGICAL(name, ftype), \
-    [OMPI_OP_CUDA_TYPE_BOOL] = ompi_op_cuda_##ftype##_##name##_bool
+    [OMPI_OP_BASE_TYPE_LOGICAL] = FORTRAN_LOGICAL(name, ftype), \
+    [OMPI_OP_BASE_TYPE_BOOL] = ompi_op_cuda_##ftype##_##name##_bool
 
 /** Complex *****************************************************/
 #if 0
@@ -1439,6 +1528,12 @@ LOC_FUNC_3BUF(minloc, long_double_int, <)
 #define FLOAT_COMPLEX(name, ftype) ompi_op_cuda_##ftype##_##name##_c_float_complex
 #define DOUBLE_COMPLEX(name, ftype) ompi_op_cuda_##ftype##_##name##_c_double_complex
 #define LONG_DOUBLE_COMPLEX(name, ftype) ompi_op_cuda_##ftype##_##name##_c_long_double_complex
+#else
+#define SHORT_FLOAT_COMPLEX(name, ftype) NULL
+#define FLOAT_COMPLEX(name, ftype) NULL
+#define DOUBLE_COMPLEX(name, ftype) NULL
+#define LONG_DOUBLE_COMPLEX(name, ftype) NULL
+#endif // 0
 
 #define COMPLEX(name, ftype)                                                  \
     [OMPI_OP_CUDA_TYPE_C_SHORT_FLOAT_COMPLEX] = SHORT_FLOAT_COMPLEX(name, ftype), \
@@ -1446,28 +1541,27 @@ LOC_FUNC_3BUF(minloc, long_double_int, <)
     [OMPI_OP_CUDA_TYPE_C_DOUBLE_COMPLEX] = DOUBLE_COMPLEX(name, ftype),       \
     [OMPI_OP_CUDA_TYPE_C_LONG_DOUBLE_COMPLEX] = LONG_DOUBLE_COMPLEX(name, ftype)
 
-#endif // 0
-
 /** Byte ****************************************************************/
 
 #define BYTE(name, ftype)                                     \
-  [OMPI_OP_CUDA_TYPE_BYTE] = ompi_op_cuda_##ftype##_##name##_byte
+  [OMPI_OP_BASE_TYPE_BYTE] = ompi_op_cuda_##ftype##_##name##_byte
 
 /** Fortran complex *****************************************************/
 /** Fortran "2" types ***************************************************/
 
-#if OMPI_HAVE_FORTRAN_REAL
-#define TWOLOC_FORTRAN_2REAL(name, ftype) ompi_op_cuda_##ftype##_##name##_2real
+#if OMPI_HAVE_FORTRAN_REAL && OMPI_SIZEOF_FLOAT == OMPI_SIZEOF_FORTRAN_REAL
+#define TWOLOC_FORTRAN_2REAL(name, ftype) ompi_op_cuda_##ftype##_##name##_2double_precision
 #else
 #define TWOLOC_FORTRAN_2REAL(name, ftype) NULL
 #endif
-#if OMPI_HAVE_FORTRAN_DOUBLE_PRECISION
+
+#if OMPI_HAVE_FORTRAN_DOUBLE_PRECISION && OMPI_SIZEOF_DOUBLE == OMPI_SIZEOF_FORTRAN_DOUBLE_PRECISION
 #define TWOLOC_FORTRAN_2DOUBLE_PRECISION(name, ftype) ompi_op_cuda_##ftype##_##name##_2double_precision
 #else
 #define TWOLOC_FORTRAN_2DOUBLE_PRECISION(name, ftype) NULL
 #endif
-#if OMPI_HAVE_FORTRAN_INTEGER
-#define TWOLOC_FORTRAN_2INTEGER(name, ftype) ompi_op_cuda_##ftype##_##name##_2integer
+#if OMPI_HAVE_FORTRAN_INTEGER && OMPI_SIZEOF_INT == OMPI_SIZEOF_FORTRAN_INTEGER
+#define TWOLOC_FORTRAN_2INTEGER(name, ftype) ompi_op_cuda_##ftype##_##name##_2int
 #else
 #define TWOLOC_FORTRAN_2INTEGER(name, ftype) NULL
 #endif
@@ -1475,15 +1569,15 @@ LOC_FUNC_3BUF(minloc, long_double_int, <)
 /** All "2" types *******************************************************/
 
 #define TWOLOC(name, ftype)                                                                   \
-    [OMPI_OP_CUDA_TYPE_2REAL] = TWOLOC_FORTRAN_2REAL(name, ftype),                            \
-    [OMPI_OP_CUDA_TYPE_2DOUBLE_PRECISION] = TWOLOC_FORTRAN_2DOUBLE_PRECISION(name, ftype),    \
-    [OMPI_OP_CUDA_TYPE_2INTEGER] = TWOLOC_FORTRAN_2INTEGER(name, ftype),                      \
-    [OMPI_OP_CUDA_TYPE_FLOAT_INT] = ompi_op_cuda_##ftype##_##name##_float_int,                \
-    [OMPI_OP_CUDA_TYPE_DOUBLE_INT] = ompi_op_cuda_##ftype##_##name##_double_int,              \
-    [OMPI_OP_CUDA_TYPE_LONG_INT] = ompi_op_cuda_##ftype##_##name##_long_int,                  \
-    [OMPI_OP_CUDA_TYPE_2INT] = ompi_op_cuda_##ftype##_##name##_2int,                          \
-    [OMPI_OP_CUDA_TYPE_SHORT_INT] = ompi_op_cuda_##ftype##_##name##_short_int,                \
-    [OMPI_OP_CUDA_TYPE_LONG_DOUBLE_INT] = ompi_op_cuda_##ftype##_##name##_long_double_int
+    [OMPI_OP_BASE_TYPE_2REAL] = TWOLOC_FORTRAN_2REAL(name, ftype),                            \
+    [OMPI_OP_BASE_TYPE_2DOUBLE_PRECISION] = TWOLOC_FORTRAN_2DOUBLE_PRECISION(name, ftype),    \
+    [OMPI_OP_BASE_TYPE_2INTEGER] = TWOLOC_FORTRAN_2INTEGER(name, ftype),                      \
+    [OMPI_OP_BASE_TYPE_FLOAT_INT] = ompi_op_cuda_##ftype##_##name##_float_int,                \
+    [OMPI_OP_BASE_TYPE_DOUBLE_INT] = ompi_op_cuda_##ftype##_##name##_double_int,              \
+    [OMPI_OP_BASE_TYPE_LONG_INT] = ompi_op_cuda_##ftype##_##name##_long_int,                  \
+    [OMPI_OP_BASE_TYPE_2INT] = ompi_op_cuda_##ftype##_##name##_2int,                          \
+    [OMPI_OP_BASE_TYPE_SHORT_INT] = ompi_op_cuda_##ftype##_##name##_short_int,                \
+    [OMPI_OP_BASE_TYPE_LONG_DOUBLE_INT] = ompi_op_cuda_##ftype##_##name##_long_double_int
 
 /*
  * MPI_OP_NULL
@@ -1495,82 +1589,82 @@ LOC_FUNC_3BUF(minloc, long_double_int, <)
     (OMPI_OP_FLAGS_INTRINSIC | OMPI_OP_FLAGS_ASSOC | \
      OMPI_OP_FLAGS_FLOAT_ASSOC | OMPI_OP_FLAGS_COMMUTE)
 
-ompi_op_cuda_handler_fn_t ompi_op_cuda_functions[OMPI_OP_CUDA_FORTRAN_OP_MAX][OMPI_OP_CUDA_TYPE_MAX] =
+ompi_op_base_handler_fn_t ompi_op_cuda_functions[OMPI_OP_BASE_FORTRAN_OP_MAX][OMPI_OP_BASE_TYPE_MAX] =
     {
         /* Corresponds to MPI_OP_NULL */
-        [OMPI_OP_CUDA_FORTRAN_NULL] = {
+        [OMPI_OP_BASE_FORTRAN_NULL] = {
             /* Leaving this empty puts in NULL for all entries */
             NULL,
         },
         /* Corresponds to MPI_MAX */
-        [OMPI_OP_CUDA_FORTRAN_MAX] = {
+        [OMPI_OP_BASE_FORTRAN_MAX] = {
             C_INTEGER(max, 2buff),
             FORTRAN_INTEGER(max, 2buff),
             FLOATING_POINT(max, 2buff),
         },
         /* Corresponds to MPI_MIN */
-        [OMPI_OP_CUDA_FORTRAN_MIN] = {
+        [OMPI_OP_BASE_FORTRAN_MIN] = {
             C_INTEGER(min, 2buff),
             FORTRAN_INTEGER(min, 2buff),
             FLOATING_POINT(min, 2buff),
         },
         /* Corresponds to MPI_SUM */
-        [OMPI_OP_CUDA_FORTRAN_SUM] = {
+        [OMPI_OP_BASE_FORTRAN_SUM] = {
             C_INTEGER(sum, 2buff),
             FORTRAN_INTEGER(sum, 2buff),
             FLOATING_POINT(sum, 2buff),
             NULL,
         },
         /* Corresponds to MPI_PROD */
-        [OMPI_OP_CUDA_FORTRAN_PROD] = {
+        [OMPI_OP_BASE_FORTRAN_PROD] = {
             C_INTEGER(prod, 2buff),
             FORTRAN_INTEGER(prod, 2buff),
             FLOATING_POINT(prod, 2buff),
             NULL,
         },
         /* Corresponds to MPI_LAND */
-        [OMPI_OP_CUDA_FORTRAN_LAND] = {
+        [OMPI_OP_BASE_FORTRAN_LAND] = {
             C_INTEGER(land, 2buff),
             LOGICAL(land, 2buff),
         },
         /* Corresponds to MPI_BAND */
-        [OMPI_OP_CUDA_FORTRAN_BAND] = {
+        [OMPI_OP_BASE_FORTRAN_BAND] = {
             C_INTEGER(band, 2buff),
             FORTRAN_INTEGER(band, 2buff),
             BYTE(band, 2buff),
         },
         /* Corresponds to MPI_LOR */
-        [OMPI_OP_CUDA_FORTRAN_LOR] = {
+        [OMPI_OP_BASE_FORTRAN_LOR] = {
             C_INTEGER(lor, 2buff),
             LOGICAL(lor, 2buff),
         },
         /* Corresponds to MPI_BOR */
-        [OMPI_OP_CUDA_FORTRAN_BOR] = {
+        [OMPI_OP_BASE_FORTRAN_BOR] = {
             C_INTEGER(bor, 2buff),
             FORTRAN_INTEGER(bor, 2buff),
             BYTE(bor, 2buff),
         },
         /* Corresponds to MPI_LXOR */
-        [OMPI_OP_CUDA_FORTRAN_LXOR] = {
+        [OMPI_OP_BASE_FORTRAN_LXOR] = {
             C_INTEGER(lxor, 2buff),
             LOGICAL(lxor, 2buff),
         },
         /* Corresponds to MPI_BXOR */
-        [OMPI_OP_CUDA_FORTRAN_BXOR] = {
+        [OMPI_OP_BASE_FORTRAN_BXOR] = {
             C_INTEGER(bxor, 2buff),
             FORTRAN_INTEGER(bxor, 2buff),
             BYTE(bxor, 2buff),
         },
         /* Corresponds to MPI_MAXLOC */
-        [OMPI_OP_CUDA_FORTRAN_MAXLOC] = {
+        [OMPI_OP_BASE_FORTRAN_MAXLOC] = {
             TWOLOC(maxloc, 2buff),
         },
         /* Corresponds to MPI_MINLOC */
-        [OMPI_OP_CUDA_FORTRAN_MINLOC] = {
+        [OMPI_OP_BASE_FORTRAN_MINLOC] = {
             TWOLOC(minloc, 2buff),
         },
         /* Corresponds to MPI_REPLACE */
-        [OMPI_OP_CUDA_FORTRAN_REPLACE] = {
+        [OMPI_OP_BASE_FORTRAN_REPLACE] = {
             /* (MPI_ACCUMULATE is handled differently than the other
                reductions, so just zero out its function
                implementations here to ensure that users don't invoke
@@ -1581,7 +1675,7 @@ ompi_op_cuda_handler_fn_t ompi_op_cuda_functions[OMPI_OP_CUDA_FORTRAN_OP_MAX][OM
 
     };
 
-
+#if 0
 ompi_op_base_3buff_handler_fn_t ompi_op_base_3buff_functions[OMPI_OP_BASE_FORTRAN_OP_MAX][OMPI_OP_BASE_TYPE_MAX] =
     {
         /* Corresponds to MPI_OP_NULL */
@@ -1666,3 +1760,4 @@ ompi_op_base_3buff_handler_fn_t ompi_op_base_3buff_functions[OMPI_OP_BASE_FORTRA
             NULL,
         },
     };
+#endif // 0

@@ -9,8 +9,8 @@
  * $HEADER$
  */
 
-#ifndef MCA_OP_AVX_EXPORT_H
-#define MCA_OP_AVX_EXPORT_H
+#ifndef MCA_OP_CUDA_EXPORT_H
+#define MCA_OP_CUDA_EXPORT_H
 
 #include "ompi_config.h"
 
@@ -18,8 +18,28 @@
 #include "opal/class/opal_object.h"
 
 #include "ompi/mca/op/op.h"
+#include "ompi/runtime/mpiruntime.h"
+
+#include <cuda.h>
+#include <cuda_runtime.h>
 
 BEGIN_C_DECLS
+
+
+#define xstr(x) #x
+#define str(x) xstr(x)
+
+#define CHECK(fn, args)                                       \
+    do {                                                      \
+        cudaError_t err = fn args;                            \
+        if (err != cudaSuccess) {                             \
+            fprintf(stderr, "%s:%d: %s failed at line: %s: %s\n", \
+                    __FILE__, __LINE__, str(fn), cudaGetErrorName(err), \
+                    cudaGetErrorString(err));                 \
+            ompi_mpi_abort(MPI_COMM_WORLD, 1);                \
+        }                                                     \
+    } while (0)
+
 
 /**
  * Derive a struct from the base op component struct, allowing us to
@@ -31,7 +51,11 @@ typedef struct {
     ompi_op_base_component_1_0_0_t super;
 
     /* a stream on which to schedule kernel calls */
-    opal_accelerator_stream_t *stream;
+    CUstream cu_stream;
+    CUcontext *cu_ctx;
+    int *cu_max_threads_per_block;
+    CUdevice *cu_devices;
+    int cu_num_devices;
 } ompi_op_cuda_component_t;
 
 /**
@@ -45,6 +69,9 @@ typedef struct {
 OMPI_DECLSPEC extern ompi_op_cuda_component_t
     mca_op_cuda_component;
 
+OMPI_DECLSPEC extern
+ompi_op_base_handler_fn_t ompi_op_cuda_functions[OMPI_OP_BASE_FORTRAN_OP_MAX][OMPI_OP_BASE_TYPE_MAX];
+
 END_C_DECLS
 
-#endif /* MCA_OP_AVX_EXPORT_H */
+#endif /* MCA_OP_CUDA_EXPORT_H */

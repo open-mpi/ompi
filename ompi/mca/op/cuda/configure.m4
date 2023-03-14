@@ -29,8 +29,8 @@ AC_DEFUN([MCA_ompi_op_cuda_CONFIG],[
           [$1],
           [$2])
 
-    AC_SUBST([accelerator_cuda_CPPFLAGS])
-    AC_SUBST([accelerator_cuda_LDFLAGS])
-    AC_SUBST([accelerator_cuda_LIBS])
+    AC_SUBST([op_cuda_CPPFLAGS])
+    AC_SUBST([op_cuda_LDFLAGS])
+    AC_SUBST([op_cuda_LIBS])
 
 ])dnl

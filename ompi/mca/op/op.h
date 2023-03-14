@@ -376,6 +376,8 @@ typedef struct ompi_op_base_module_1_0_0_t {
         is being used for */
     struct ompi_op_t *opm_op;
 
+    bool opm_device_enabled;
+
     /** Function pointers for all the different datatypes to be used
         with the MPI_Op that this module is used with */
     ompi_op_base_handler_fn_1_0_0_t opm_fns[OMPI_OP_BASE_TYPE_MAX];

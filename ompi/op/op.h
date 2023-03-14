@@ -126,8 +126,8 @@ enum ompi_op_type {
 /* device op information */
 struct ompi_device_op_t {
     opal_accelerator_stream_t *do_stream;
-    ompi_op_base_op_fns_t do_intrisic;
-    ompi_op_base_op_3buff_fns_t do_3buff_intrisic;
+    ompi_op_base_op_fns_t do_intrinsic;
+    ompi_op_base_op_3buff_fns_t do_3buff_intrinsic;
 };
 typedef struct ompi_device_op_t ompi_device_op_t;
 
@@ -576,14 +576,14 @@ static inline void ompi_op_reduce(ompi_op_t * op, void *source,
     bool use_device_op = false;
     int source_dev_id, target_dev_id;
     uint64_t source_flags, target_flags;
+    int target_check_addr = opal_accelerator.check_addr(target, &target_dev_id, &target_flags);
+    int source_check_addr = opal_accelerator.check_addr(source, &source_dev_id, &source_flags);
     /* check if either of the buffers is on a device and if so make sure we can
      * access handle it properly */
-    if (opal_accelerator.check_addr(source, &source_dev_id, &source_flags) > 0 ||
-        opal_accelerator.check_addr(target, &target_dev_id, &target_flags) > 0) {
+    if (target_check_addr > 0 || source_check_addr > 0) {
         if (ompi_datatype_is_predefined(dtype) &&
-            source_dev_id == target_dev_id &&
             0 != (op->o_flags & OMPI_OP_FLAGS_INTRINSIC) &&
-            NULL == op->o_device_intrisic) {
+            NULL != op->o_device_op) {
             use_device_op = true;
         } else {
             /* TODO: can we be more graceful here? */
@@ -601,12 +601,12 @@ static inline void ompi_op_reduce(ompi_op_t * op, void *source,
             dtype_id = ompi_op_ddt_map[dtype->id];
         }
         if (use_device_op) {
-            if (NULL == op->o_device_intrisic) {
+            if (NULL == op->o_device_op) {
                 abort(); // TODO: be more graceful!
             }
-            op->o_device_intrisic->intrinsic.fns[dtype_id](source, target,
-                                                           &count, &dtype,
-                                                           op->o_device_intrisic->intrinsic.modules[dtype_id]);
+            op->o_device_op->do_intrinsic.fns[dtype_id](source, target,
+                                                     &count, &dtype,
+                                                     op->o_device_op->do_intrinsic.modules[dtype_id]);
         } else {
             op->o_func.intrinsic.fns[dtype_id](source, target,
                                                &count, &dtype,
