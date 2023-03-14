@@ -32,6 +32,8 @@
 #include "coll_basic.h"
 #include "ompi/mca/pml/pml.h"
 
+#include "opal/mca/accelerator/accelerator.h"
+
 
 /*
  *	allreduce_intra
@@ -82,10 +84,11 @@ mca_coll_basic_allreduce_inter(const void *sbuf, void *rbuf, int count,
                                struct ompi_communicator_t *comm,
                                mca_coll_base_module_t *module)
 {
-    int err, i, rank, root = 0, rsize, line;
+    int err, i, rank, root = 0, rsize, line, rbuf_dev;
     ptrdiff_t extent, dsize, gap;
     char *tmpbuf = NULL, *pml_buffer = NULL;
     ompi_request_t **reqs = NULL;
+    bool rbuf_on_device = false;
 
     rank = ompi_comm_rank(comm);
     rsize = ompi_comm_remote_size(comm);
@@ -105,8 +108,15 @@ mca_coll_basic_allreduce_inter(const void *sbuf, void *rbuf, int count,
             return OMPI_ERROR;
         }
         dsize = opal_datatype_span(&dtype->super, count, &gap);
-        tmpbuf = (char *) malloc(dsize);
-        if (NULL == tmpbuf) { err = OMPI_ERR_OUT_OF_RESOURCE; line = __LINE__; goto exit; }
+        if (opal_accelerator.check_addr(rbuf, &rbuf_dev, NULL) > 0 && rbuf_dev >= 0) {
+            if (OPAL_SUCCESS != opal_accelerator.mem_alloc(rbuf_dev, &tmpbuf, dsize)) {
+                err = OMPI_ERR_OUT_OF_RESOURCE; line = __LINE__; goto exit;
+            }
+            rbuf_on_device = true;
+        } else {
+            tmpbuf = (char *) malloc(dsize);
+            if (NULL == tmpbuf) { err = OMPI_ERR_OUT_OF_RESOURCE; line = __LINE__; goto exit; }
+        }
         pml_buffer = tmpbuf - gap;
 
         if (rsize > 1) {
@@ -188,7 +198,9 @@ mca_coll_basic_allreduce_inter(const void *sbuf, void *rbuf, int count,
         (void)line;  // silence compiler warning
         ompi_coll_base_free_reqs(reqs, rsize - 1);
     }
-    if (NULL != tmpbuf) {
+    if (rbuf_on_device) {
+        opal_accelerator.mem_release(rbuf_dev, tmpbuf);
+    } else {
         free(tmpbuf);
     }
 

@@ -50,9 +50,14 @@ static inline void device_op_pre(const void *orig_source,
     source_rc = opal_accelerator.check_addr(*source, source_device, &source_flags);
     *device = *target_device;
 
+    //printf("device_op_pre: target rc %d dev %d, source rc %d dev %d, device %d\n",
+    //       target_rc, *target_device, source_rc, *source_device, *device);
+
     if (0 == target_rc && 0 == source_rc) {
         /* no buffers are on any device, select device 0 */
         *device = 0;
+    } else if (*target_device == -1) {
+        *device = *source_device;
     }
 
     /* swap contexts */
@@ -66,8 +71,9 @@ static inline void device_op_pre(const void *orig_source,
         if (0 == target_rc) {
             // allocate memory on the device for the target buffer
             CUdeviceptr dptr;
+            //printf("copying target from device %d to host\n", *target_device);
             CHECK(cuMemAllocAsync,   (&dptr, nbytes, mca_op_cuda_component.cu_stream));
-            CHECK(cuMemcpyHtoDAsync, (dptr, *target, nbytes, mca_op_cuda_component.cu_stream));
+            CHECK(cuMemcpyHtoDAsync, (dptr, orig_target, nbytes, mca_op_cuda_component.cu_stream));
             *target = (void*)dptr;
             *target_device = -1; // mark target device as host
         }
@@ -75,14 +81,18 @@ static inline void device_op_pre(const void *orig_source,
         if (0 == source_rc || *device != *source_device) {
             // allocate memory on the device for the source buffer
             CUdeviceptr dptr;
+            //printf("allocating source on device %d\n", *device);
             CHECK(cuMemAllocAsync, (&dptr, nbytes, mca_op_cuda_component.cu_stream));
+            *source = (void*)dptr;
             if (0 == source_rc) {
                 /* copy from host to device */
-                CHECK(cuMemcpyHtoDAsync, (dptr, *source, nbytes, mca_op_cuda_component.cu_stream));
+                //printf("copying source from host to device %d\n", *device);
+                CHECK(cuMemcpyHtoDAsync, (dptr, orig_source, nbytes, mca_op_cuda_component.cu_stream));
             } else {
                 /* copy from one device to another device */
                 /* TODO: does this actually work? Can we enable P2P? */
-                CHECK(cuMemcpyDtoDAsync, (dptr, (CUdeviceptr)*source, nbytes, mca_op_cuda_component.cu_stream));
+                //printf("attempting cross-device copy for source\n");
+                CHECK(cuMemcpyDtoDAsync, (dptr, (CUdeviceptr)orig_source, nbytes, mca_op_cuda_component.cu_stream));
             }
         }
     }
