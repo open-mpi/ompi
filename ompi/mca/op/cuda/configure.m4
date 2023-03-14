@@ -1,7 +1,7 @@
 # -*- shell-script -*-
 #
 # Copyright (c) 2011-2013 NVIDIA Corporation.  All rights reserved.
-# Copyright (c) 2013      The University of Tennessee and The University
+# Copyright (c) 2023      The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
 # Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
