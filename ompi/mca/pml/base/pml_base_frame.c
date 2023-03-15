@@ -98,6 +98,7 @@ mca_pml_base_module_t mca_pml = {
 mca_pml_base_component_t mca_pml_base_selected_component = {{0}};
 opal_pointer_array_t mca_pml_base_pml = {{0}};
 char *ompi_pml_base_bsend_allocator_name = NULL;
+bool ompi_pml_base_check_pml = true;
 
 #if !MCA_ompi_pml_DIRECT_CALL
 static char *ompi_pml_base_wrapper = NULL;
@@ -158,6 +159,15 @@ static int mca_pml_base_register(mca_base_register_flag_t flags)
                     ompi_pml_base_warn_dep_cancel_send_level);
     }
 #endif
+
+    ompi_pml_base_check_pml = true;
+    (void) mca_base_var_register("ompi", "pml", "base", "check_pml",
+                                 "Whether to check the pml selections to ensure they all match",
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &ompi_pml_base_check_pml);
+
     return OMPI_SUCCESS;
 }
 
