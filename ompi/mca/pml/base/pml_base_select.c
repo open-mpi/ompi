@@ -346,6 +346,10 @@ mca_pml_base_pml_check_selected(const char *my_pml,
     int ret = 0;
     size_t i;
 
+    if (!ompi_pml_base_check_pml) {
+        return OMPI_SUCCESS;
+    }
+
     if (!opal_pmix_collect_all_data) {
         /*
          * If direct modex, then compare our PML with the peer's PML

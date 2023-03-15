@@ -72,6 +72,7 @@ OMPI_DECLSPEC int mca_pml_base_revoke_comm(struct ompi_communicator_t *comm, boo
 OMPI_DECLSPEC extern mca_pml_base_component_t mca_pml_base_selected_component;
 OMPI_DECLSPEC extern mca_pml_base_module_t mca_pml;
 OMPI_DECLSPEC extern opal_pointer_array_t mca_pml_base_pml;
+OMPI_DECLSPEC extern bool ompi_pml_base_check_pml;
 
 END_C_DECLS
 
