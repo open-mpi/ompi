@@ -72,7 +72,11 @@ static inline void device_op_pre(const void *orig_source,
             // allocate memory on the device for the target buffer
             CUdeviceptr dptr;
             //printf("copying target from device %d to host\n", *target_device);
+#if CUDA_VERSION >= 11020
             CHECK(cuMemAllocAsync,   (&dptr, nbytes, mca_op_cuda_component.cu_stream));
+#else  // CUDA_VERSION >= 11020
+            CHECK(cuMemAlloc,   (&dptr, nbytes));
+#endif // CUDA_VERSION >= 11020
             CHECK(cuMemcpyHtoDAsync, (dptr, orig_target, nbytes, mca_op_cuda_component.cu_stream));
             *target = (void*)dptr;
             *target_device = -1; // mark target device as host
@@ -82,7 +86,11 @@ static inline void device_op_pre(const void *orig_source,
             // allocate memory on the device for the source buffer
             CUdeviceptr dptr;
             //printf("allocating source on device %d\n", *device);
+#if CUDA_VERSION >= 11020
             CHECK(cuMemAllocAsync, (&dptr, nbytes, mca_op_cuda_component.cu_stream));
+#else  // CUDA_VERSION >= 11020
+            CHECK(cuMemAlloc,   (&dptr, nbytes));
+#endif // CUDA_VERSION >= 11020
             *source = (void*)dptr;
             if (0 == source_rc) {
                 /* copy from host to device */
@@ -115,16 +123,30 @@ static inline void device_op_post(void *orig_target,
         nbytes *= count;
 
         CHECK(cuMemcpyDtoHAsync, (orig_target, (CUdeviceptr)target, nbytes, mca_op_cuda_component.cu_stream));
-
-        CHECK(cuMemFreeAsync, ((CUdeviceptr)target, mca_op_cuda_component.cu_stream));
     }
 
+#if CUDA_VERSION >= 11020
+    /* cuMemFreeAsync is supported from CUDA 11.2.0 upwards */
+    if (-1 == target_device) {
+        CHECK(cuMemFreeAsync, ((CUdeviceptr)target, mca_op_cuda_component.cu_stream));
+    }
     if (source_device != device) {
         CHECK(cuMemFreeAsync, ((CUdeviceptr)source, mca_op_cuda_component.cu_stream));
     }
+#endif // CUDA_VERSION >= 11020
 
     /* wait for all scheduled operations to complete */
     CHECK(cuStreamSynchronize, (mca_op_cuda_component.cu_stream));
+
+#if CUDA_VERSION < 11020
+    /* cuMemFreeAsync is supported from CUDA 11.2.0 upwards */
+    if (-1 == target_device) {
+        CHECK(cuMemFree, ((CUdeviceptr)target));
+    }
+    if (source_device != device) {
+        CHECK(cuMemFree, ((CUdeviceptr)source));
+    }
+#endif // CUDA_VERSION < 11020
 
     /* restore the context */
     CUcontext ctx;
