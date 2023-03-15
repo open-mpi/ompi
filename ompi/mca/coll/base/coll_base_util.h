@@ -31,6 +31,7 @@
 #include "ompi/mca/coll/base/coll_tags.h"
 #include "ompi/op/op.h"
 #include "ompi/mca/pml/pml.h"
+#include "opal/mca/accelerator/accelerator.h"
 
 BEGIN_C_DECLS
 
@@ -202,6 +203,74 @@ int ompi_coll_base_file_peek_next_char_is(FILE *fptr, int *fileline, int expecte
 /* Miscellaneous function */
 const char* mca_coll_base_colltype_to_str(int collid);
 int mca_coll_base_name_to_colltype(const char* name);
+
+/* device/host memory allocation functions */
+
+/**
+ * Returns a pointer to memory in the same memory domain as the receive or send buffer.
+ * Device memory is allocated if either the receive buffer or the send buffer are
+ * located on the device and if the op supports on-device reductions on the datatype.
+ * If memory is allocated on the host, device will be set to -1.
+ */
+static inline
+void* ompi_coll_base_allocate_op_tmpbuf(
+    const void *sendbuf, const void *recvbuf, size_t size,
+    const struct ompi_op_t *op, const struct ompi_datatype_t *dtype,
+    int *device)
+{
+    void *res = NULL;
+    uint64_t flags;
+    *device = -1;
+    if ((NULL == op && NULL == dtype) || ompi_op_supports_device(op, dtype)) {
+        /* if the recvbuf is on the device we take that device */
+        if (NULL != recvbuf && 0 < opal_accelerator.check_addr(recvbuf, device, &flags)) {
+            if (OPAL_SUCCESS != opal_accelerator.mem_alloc(*device, &res, size)) {
+                /* fall back to the host */
+                res = NULL;
+                *device = -1;
+            }
+        } else if (MPI_IN_PLACE != sendbuf && NULL != sendbuf &&
+                0 < opal_accelerator.check_addr(sendbuf, device, &flags)) {
+            /* send buffer is on a device so try to allocate memory there */
+            if (OPAL_SUCCESS != opal_accelerator.mem_alloc(*device, &res, size)) {
+                /* fall back to the host */
+                res = NULL;
+                *device = -1;
+            }
+        }
+    }
+
+    if (NULL == res) {
+        res = malloc(size);
+    }
+    return res;
+}
+
+/**
+ * Like ompi_coll_base_allocate_op_tmpbuf but without checking op-datatype
+ * device compatibility.
+ */
+static inline
+void* ompi_coll_base_allocate_tmpbuf(
+    const void *sendbuf, const void *recvbuf,
+    size_t size, int *device)
+{
+    return ompi_coll_base_allocate_op_tmpbuf(sendbuf, recvbuf, size, NULL, NULL, device);
+}
+
+/**
+ * Frees memory allocated through ompi_coll_base_allocate_op_tmpbuf
+ * or ompi_coll_base_allocate_tmpbuf.
+ */
+static inline
+void ompi_coll_base_free_tmpbuf(void *tmpbuf, int device) {
+    if (-1 == device) {
+        free(tmpbuf);
+    } else if (NULL != tmpbuf) {
+        opal_accelerator.mem_release(device, tmpbuf);
+    }
+}
+
 
 END_C_DECLS
 #endif /* MCA_COLL_BASE_UTIL_EXPORT_H */
