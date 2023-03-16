@@ -18,6 +18,8 @@
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * Copyright (c) 2018-2022 Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2022      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2023      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -68,6 +70,8 @@ static int mca_btl_smcuda_component_close(void);
 static int smcuda_register(void);
 static mca_btl_base_module_t **
 mca_btl_smcuda_component_init(int *num_btls, bool enable_progress_threads, bool enable_mpi_threads);
+
+static void mca_btl_smcuda_component_fini(void);
 
 typedef enum {
     MCA_BTL_SM_RNDV_MOD_SM = 0,
@@ -260,6 +264,14 @@ static int mca_btl_smcuda_component_open(void)
     OBJ_CONSTRUCT(&mca_btl_smcuda_component.sm_frags_max, opal_free_list_t);
     OBJ_CONSTRUCT(&mca_btl_smcuda_component.sm_frags_user, opal_free_list_t);
     OBJ_CONSTRUCT(&mca_btl_smcuda_component.pending_send_fl, opal_free_list_t);
+
+    opal_finalize_register_cleanup(mca_btl_smcuda_component_fini);
+
+    return OPAL_SUCCESS;
+}
+
+static int mca_btl_smcuda_component_close(void)
+{
     return OPAL_SUCCESS;
 }
 
@@ -267,9 +279,9 @@ static int mca_btl_smcuda_component_open(void)
  * component cleanup - sanity checking of queue lengths
  */
 
-static int mca_btl_smcuda_component_close(void)
+static void mca_btl_smcuda_component_fini(void)
 {
-    int return_value = OPAL_SUCCESS;
+    int rc;
 
     OBJ_DESTRUCT(&mca_btl_smcuda_component.sm_lock);
     /**
@@ -282,11 +294,10 @@ static int mca_btl_smcuda_component_close(void)
 
     /* unmap the shared memory control structure */
     if (mca_btl_smcuda_component.sm_seg != NULL) {
-        return_value = mca_common_sm_fini(mca_btl_smcuda_component.sm_seg);
-        if (OPAL_SUCCESS != return_value) {
-            return_value = OPAL_ERROR;
+        rc = mca_common_sm_fini(mca_btl_smcuda_component.sm_seg);
+        if (OPAL_SUCCESS != rc) {
             opal_output(0, " mca_common_sm_fini failed\n");
-            goto CLEANUP;
+            return;
         }
 
         /* unlink file, so that it will be deleted when all references
@@ -310,13 +321,7 @@ static int mca_btl_smcuda_component_close(void)
         unlink(mca_btl_smcuda_component.sm_fifo_path);
     }
 #endif
-
-CLEANUP:
-
-    mca_btl_smcuda_accelerator_fini();
-
-    /* return */
-    return return_value;
+    return;
 }
 
 /*
