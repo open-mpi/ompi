@@ -77,7 +77,7 @@ void ompi_session_get_nth_pset_f(MPI_Fint *session, MPI_Fint *info, MPI_Fint *n,
 {
     int c_ierr;
     MPI_Session c_session;
-    char c_name[MPI_MAX_OBJECT_NAME];
+    char c_name[MPI_MAX_PSET_NAME_LEN];
 
     c_session = PMPI_Session_f2c(*session);
 
