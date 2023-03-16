@@ -42,24 +42,28 @@ standard draft document.
   completion of an MPI operation (error code).
 * ``MPIX_ERR_PROC_FAILED_PENDING`` when a potential sender matching a
   non-blocking wildcard source receive has failed (error code).
-* ``MPIX_ERR_REVOKED`` when one of the ranks in the application has
-  invoked the ``MPI_Comm_revoke`` operation on the communicator (error
+* ``MPIX_ERR_REVOKED`` when the communicator is revoked (error
   code).
 * ``MPIX_Comm_revoke(MPI_Comm comm)`` Interrupts any communication
-  pending on the communicator at all ranks (API).
+  pending on the communicator at all ranks (API). See :ref:`MPIX_Comm_revoke`.
+* ``MPIX_Comm_is_revoked(MPI_Comm comm, int *flag)`` Test if a Communicator
+  is currently revoked (API). See :ref:`MPIX_Comm_is_revoked`.
 * ``MPIX_Comm_shrink(MPI_Comm comm, MPI_Comm* newcomm)`` creates a new
   communicator where dead processes in comm were removed, and the
   remaining processes are renamed to cover all the gaps in the naming
-  from the original communicator (API).
+  from the original communicator (API). See :ref:`MPIX_Comm_shrink`,
+  :ref:`MPIX_Comm_ishrink`.
 * ``MPIX_Comm_agree(MPI_Comm comm, int *flag)`` performs a consensus
   (i.e. fault tolerant allreduce operation) on flag (with the
   operation bitwise AND) (API).  Absorbs all new failures, and
-  propagate the knowledge about failures among the participants.
-* ``MPIX_Comm_failure_get_acked(MPI_Comm, MPI_Group*)`` obtains the
-  group of currently acknowledged failed processes (API).
-* ``MPIX_Comm_failure_ack(MPI_Comm)`` acknowledges that the
-  application intends to ignore the effect of currently known failures
-  on wildcard receive completions and agreement return values (API).
+  propagate the knowledge about failures among the participants. see
+  :ref:`MPIX_Comm_agree`, :ref:`MPIX_Comm_iagree`.
+* ``MPIX_Comm_get_failed(MPI_Comm comm, MPI_Group* failedgrp)`` obtains the
+  group of currently failed processes (API). See :ref:`MPIX_Comm_get_failed`.
+* ``MPIX_Comm_ack_failed(MPI_Comm comm, int num_to_ack, int* num_acked)``
+  acknowledges that the application intends to ignore the effect of currently
+  known failures on wildcard receive completions and agreement return values
+  (API). See :ref:`MPIX_Comm_ack_failed`.
 
 Supported Systems
 -----------------
