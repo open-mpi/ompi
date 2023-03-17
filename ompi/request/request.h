@@ -158,9 +158,6 @@ typedef struct ompi_request_t ompi_request_t;
 #define REQUEST_PENDING        (void *)0L
 #define REQUEST_COMPLETED      (void *)1L
 
-#define REQUEST_CB_PENDING     (void *)0L
-#define REQUEST_CB_COMPLETED   (void *)1L
-
 struct ompi_predefined_request_t {
     struct ompi_request_t request;
     char padding[PREDEFINED_REQUEST_PAD - sizeof(ompi_request_t)];
@@ -520,12 +517,12 @@ static inline void ompi_request_wait_completion(ompi_request_t *req)
 static inline int ompi_request_complete(ompi_request_t* request, bool with_signal)
 {
     int rc = 0;
-    ompi_request_complete_fn_t cb;
-	cb = (ompi_request_complete_fn_t)OPAL_ATOMIC_SWAP_PTR((opal_atomic_intptr_t*)&request->req_complete_cb,
-			                                              (intptr_t)REQUEST_CB_COMPLETED);
-    if (REQUEST_CB_PENDING != cb) {
-        request->req_complete_cb = REQUEST_CB_PENDING;
-        rc = cb(request);
+
+    if(NULL != request->req_complete_cb) {
+        /* Set the request cb to NULL to allow resetting in the callback */
+        ompi_request_complete_fn_t fct = request->req_complete_cb;
+        request->req_complete_cb = NULL;
+        rc = fct( request );
     }
 
     if (0 == rc) {
@@ -549,17 +546,12 @@ static inline int ompi_request_set_callback(ompi_request_t* request,
                                             void* cb_data)
 {
     request->req_complete_cb_data = cb_data;
-    opal_atomic_wmb();
-    if ((REQUEST_CB_COMPLETED == request->req_complete_cb) ||
-        (REQUEST_CB_COMPLETED == (void*)OPAL_ATOMIC_SWAP_PTR((opal_atomic_intptr_t*)&request->req_complete_cb,
-                                                             (intptr_t)cb))) {
-        if (NULL != cb) {
-            /* the request was marked at least partially completed, make sure it's fully complete */
-            while (!REQUEST_COMPLETE(request)) {}
-            /* Set the request cb to NULL to allow resetting in the callback */
-            request->req_complete_cb = REQUEST_CB_PENDING;
-            cb(request);
-        }
+    request->req_complete_cb = cb;
+    /* If request is completed and the callback is not called, need to call callback */
+    if ((NULL != request->req_complete_cb) && (request->req_complete == REQUEST_COMPLETED)) {
+        ompi_request_complete_fn_t fct = request->req_complete_cb;
+        request->req_complete_cb = NULL;
+        return fct( request );
     }
     return OMPI_SUCCESS;
 }
