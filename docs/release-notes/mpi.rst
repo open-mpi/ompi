@@ -6,9 +6,9 @@ MPI Functionality and Features
 MPI Standard conformance
 ------------------------
 
-In the Open MPI |ompi_series| series, all MPI-|mpi_standard_version|.|mpi_standard_subversion| functionality is
-supported.  Some MPI-4.0 functionality is supported, but not all of
-it.
+In the Open MPI |ompi_series| series, all MPI-|mpi_standard_version|
+functionality is supported.  *Some* MPI-4.0 functionality is
+supported.
 
 As such, ``MPI_VERSION`` is set to 3 and ``MPI_SUBVERSION`` is set
 to 1.
@@ -32,6 +32,38 @@ For historical reference:
 
    * - MPI-3.1
      - Open MPI v2.0
+
+MPI-4.0 partial compliance
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+In the Open MPI |ompi_series| series, only partial MPI-4.0 functionality is
+supported. This section contains a list of features added for the release.
+
+* Added support for MPI Sessions.
+* Added partitioned communication using persistent sends and persistent receives.
+* Added persistent collectives to the ``MPI_`` namespace (they were previously
+  available via the ``MPIX_`` prefix).
+* Added support for :ref:`MPI_Isendrecv()<mpi_isendrecv>` and its variants.
+* Added support for :ref:`MPI_Comm_idup_with_info()<mpi_comm_idup_with_info>`.
+* Added support for :ref:`MPI_Info_get_string()<mpi_info_get_string>`.
+* Added support for ``initial_error_handler`` info key and the
+  ``MPI_ERRORS_ABORT`` infrastructure.
+* Added support for ``mpi_minimum_alignment`` info key.
+* Added support for ``MPI_COMM_TYPE_HW_GUIDED`` and
+  ``MPI_COMM_TYPE_HW_UNGUIDED``.
+* Added support for :ref:`MPI_Info_create_env()<mpi_info_create_env>`.
+* Added error handling for "unbound" errors to ``MPI_COMM_SELF``.
+* Added ``MPI_F_STATUS_SIZE``, ``MPI_F_SOURCE``, ``MPI_F_TAG``, and
+  ``MPI_F_ERROR``.
+* Made :ref:`MPI_Comm_get_info()<mpi_comm_get_info>`,
+  :ref:`MPI_File_get_info()<mpi_file_get_info>`, and
+  :ref:`MPI_Win_get_info()<mpi_win_get_info>` MPI-4.0 compliant.
+* Info keys that are not understood by Open MPI will be silently ignored and
+  dropped on communicators, files, and windows.
+* Deprecated :ref:`MPI_Sizeof()<mpi_sizeof>`.
+* Deprecated :ref:`MPI_Cancel()<mpi_cancel>` on send requests.
+* Deprecated :ref:`MPI_Info_get()<mpi_info_get>` and
+  :ref:`MPI_Info_get_valuelen()<mpi_info_get_valuelen>`.
 
 Removed MPI APIs
 ----------------
