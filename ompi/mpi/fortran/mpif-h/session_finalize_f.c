@@ -80,4 +80,11 @@ void ompi_session_finalize_f(MPI_Fint *session, MPI_Fint *ierr)
 
     c_ierr = PMPI_Session_finalize(&c_session);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+
+    /* This value comes from the MPI_SESSION_NULL value in mpif.h.  Do not
+       change without consulting mpif.h! */
+
+    if (MPI_SUCCESS == c_ierr) {
+        *session = 0;
+    }
 }
