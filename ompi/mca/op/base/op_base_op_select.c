@@ -154,7 +154,7 @@ int ompi_op_base_op_select(ompi_op_t *op)
         /* Copy over the non-NULL pointers */
         if (avail->ao_module->opm_device_enabled) {
             if (NULL == op->o_device_op) {
-                op->o_device_op = malloc(sizeof(*op->o_device_op));
+                op->o_device_op = calloc(1, sizeof(*op->o_device_op));
             }
             for (i = 0; i < OMPI_OP_BASE_TYPE_MAX; ++i) {
                 /* 2-buffer variants */
