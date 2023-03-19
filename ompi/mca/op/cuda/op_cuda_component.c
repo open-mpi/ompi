@@ -88,7 +88,7 @@ static int cuda_component_open(void)
 static int cuda_component_close(void)
 {
     if (mca_op_cuda_component.cu_num_devices > 0) {
-        CHECK(cuStreamDestroy, (mca_op_cuda_component.cu_stream));
+        cuStreamDestroy(mca_op_cuda_component.cu_stream);
         free(mca_op_cuda_component.cu_max_threads_per_block);
         mca_op_cuda_component.cu_max_threads_per_block = NULL;
         free(mca_op_cuda_component.cu_devices);
@@ -119,7 +119,9 @@ cuda_component_init_query(bool enable_progress_threads,
                          bool enable_mpi_thread_multiple)
 {
     int num_devices;
+    int rc;
     int prio_lo, prio_hi;
+    memset(&mca_op_cuda_component, sizeof(mca_op_cuda_component));
     cuInit(0);
     CHECK(cuDeviceGetCount, (&num_devices));
     mca_op_cuda_component.cu_num_devices = num_devices;
@@ -128,19 +130,28 @@ cuda_component_init_query(bool enable_progress_threads,
     mca_op_cuda_component.cu_max_threads_per_block = (int*)malloc(num_devices*sizeof(int));
     for (int i = 0; i < num_devices; ++i) {
         CHECK(cuDeviceGet, (&mca_op_cuda_component.cu_devices[i], i));
-        CHECK(cuCtxCreate, (&mca_op_cuda_component.cu_ctx[i],
-                            CU_CTX_SCHED_YIELD,
-                            mca_op_cuda_component.cu_devices[i]));
-        mca_op_cuda_component.cu_max_threads_per_block[i] = 512;
-        // TODO: this call fails, why?!
-        //CHECK(cuDeviceGetAttribute, (&mca_op_cuda_component.cu_max_threads_per_block[i],
-        //                             CU_DEVICE_ATTRIBUTE_MAX_THREADS_PER_BLOCK,
-        //                             mca_op_cuda_component.cu_devices[i]));
+        rc = cuCtxCreate(&mca_op_cuda_component.cu_ctx[i],
+                         0, mca_op_cuda_component.cu_devices[i]);
+        if (CUDA_SUCCESS != rc) {
+            CHECK(cuDevicePrimaryCtxRetain,
+                  (&mca_op_cuda_component.cu_ctx[i], mca_op_cuda_component.cu_devices[i]));
+        }
+        rc = cuDeviceGetAttribute(&mca_op_cuda_component.cu_max_threads_per_block[i],
+                                  CU_DEVICE_ATTRIBUTE_MAX_THREADS_PER_BLOCK,
+                                  mca_op_cuda_component.cu_devices[i]);
+        if (CUDA_SUCCESS != rc) {
+            /* fall-back to value that should work on every device */
+            mca_op_cuda_component.cu_max_threads_per_block[i] = 512;
+        }
     }
 
-    CHECK(cuCtxGetStreamPriorityRange, (&prio_lo, &prio_hi));
-    CHECK(cuStreamCreateWithPriority, (&mca_op_cuda_component.cu_stream, CU_STREAM_NON_BLOCKING, prio_hi));
-
+    /* try to create a high-priority stream */
+    rc = cuCtxGetStreamPriorityRange(&prio_lo, &prio_hi);
+    if (CUDA_SUCCESS != rc) {
+        cuStreamCreateWithPriority(&mca_op_cuda_component.cu_stream, CU_STREAM_NON_BLOCKING, prio_hi);
+    } else {
+        mca_op_cuda_component.cu_stream = 0;
+    }
     return OMPI_SUCCESS;
 }
 
