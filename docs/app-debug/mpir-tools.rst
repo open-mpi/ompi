@@ -28,11 +28,11 @@ hook where debuggers and tools can set a breakpoint to read the MPIR
 processing mapping when it is available.
 
 Instructions for use of the shim module are available at
-`<https://github.com/openpmix/mpir-to-pmix-guide/blob/master/README.md>`_.
+`<https://github.com/hpc/mpir-to-pmix-guide/blob/master/README.md>`_.
 
 You may need to build this module before you can use it. The source code for this
 module can be downloaded from
-`MPIR to PMIx Shim repository <https://github.com/openpmix/mpir-to-pmix-guide>`_.
+`MPIR to PMIx Shim repository <https://github.com/hpc/mpir-to-pmix-guide>`_.
 
 Once you have the MPIR shim module built and installed, follow the
 instructions included with the debugger or tool to tell it where to
@@ -56,7 +56,7 @@ Here is an example shell script that builds the MPIR shim module
     mkdir -p git
     cd git
 
-    git clone https://github.com/openpmix/mpir-to-pmix-guide.git
+    git clone https://github.com/hpc/mpir-to-pmix-guide.git
     cd mpir-to-pmix-guide
 
     # PMIX_ROOT must be set to your PMIx install root directory
