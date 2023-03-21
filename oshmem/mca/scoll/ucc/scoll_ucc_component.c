@@ -96,12 +96,13 @@ static int ucc_register(void)
                                     OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
                                     &cm->ucc_np);
 
+    cm->cts = "";
     mca_base_component_var_register(c, "cls", 
                                     "Comma separated list of UCC CLS to be used for team creation",
                                     MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, 
                                     OPAL_INFO_LVL_6, MCA_BASE_VAR_SCOPE_READONLY,
                                     &cm->cls);
-
+    cm->cts = SCOLL_UCC_CTS_STR;
     mca_base_component_var_register(c, "cts", 
                                     "Comma separated list of UCC coll types to be enabled",
                                     MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, 
