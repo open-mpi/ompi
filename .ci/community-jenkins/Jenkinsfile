@@ -48,17 +48,6 @@ def prepare_check_stages() {
     def configure_options = ["--disable-dlopen", "--disable-oshmem", "--enable-builtin-atomic", "--enable-ipv6"]
     def compilers = ["clang10", "gcc5", "gcc6", "gcc7", "gcc8", "gcc9", "gcc10"]
     def platforms = ["amazon_linux_2", "amazon_linux_2-arm64", "rhel7", "rhel8", "ubuntu_18.04"]
-
-    // TODO: While we are debugging, limit the number of combinations
-    // that we're running so that we don't waste a bunch of resources.
-    // Make all the lists empty so that the only check we do is the
-    // "distcheck" entry, below.  When we have finished debugging,
-    // remove the following lines so that we go back to the full set
-    // of test environments.
-    configure_options = []
-    compilers = []
-    platforms = []
-
     def check_stages_list = []
 
     // Build everything stage

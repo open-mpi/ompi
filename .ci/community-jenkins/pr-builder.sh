@@ -299,7 +299,7 @@ if test "${MPIRUN_MODE}" != "none"; then
             exec="timeout -s SIGSEGV 3m mpirun -hostfile ${WORKSPACE}/hostfile -np 2 "
             ;;
         *)
-            exec="timeout -s SIGSEGV 4m mpirun --get-stack-traces --timeout 180 --hostfile ${WORKSPACE}/hostfile -np 2 "
+            exec="timeout -s SIGSEGV 4m mpirun --get-stack-traces --timeout 180 --hostfile ${WORKSPACE}/hostfile -np 2 --bind-to none "
             ;;
     esac
     singleton="timeout -s SIGSEGV 1m "
