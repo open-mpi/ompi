@@ -113,9 +113,9 @@ mca_io_base_component_2_0_0_t mca_io_romio341_component = {
     .io_register_datarep = register_datarep,
 };
 
-static char *ompi_io_romio341_version = ROMIO_VERSION_STRING;
-static char *ompi_io_romio341_user_configure_params = MCA_io_romio341_USER_CONFIGURE_FLAGS;
-static char *ompi_io_romio341_complete_configure_params = MCA_io_romio341_COMPLETE_CONFIGURE_FLAGS;
+static char *ompi_io_romio341_version = NULL;
+static char *ompi_io_romio341_user_configure_params = NULL;
+static char *ompi_io_romio341_complete_configure_params = NULL;
 
 static int register_component(void)
 {
@@ -132,11 +132,13 @@ static int register_component(void)
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY, &delete_priority_param);
+    ompi_io_romio341_version = ROMIO_VERSION_STRING;
     (void) mca_base_component_var_register(&mca_io_romio341_component.io_version,
                                            "version", "Version of ROMIO", MCA_BASE_VAR_TYPE_STRING,
                                            NULL, 0, MCA_BASE_VAR_FLAG_DEFAULT_ONLY,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY, &ompi_io_romio341_version);
+    ompi_io_romio341_user_configure_params = MCA_io_romio341_USER_CONFIGURE_FLAGS;
     (void) mca_base_component_var_register(&mca_io_romio341_component.io_version,
                                            "user_configure_params",
                                            "User-specified command line parameters passed to ROMIO's configure script",
@@ -144,6 +146,7 @@ static int register_component(void)
                                            MCA_BASE_VAR_FLAG_DEFAULT_ONLY,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY, &ompi_io_romio341_user_configure_params);
+    ompi_io_romio341_complete_configure_params = MCA_io_romio341_COMPLETE_CONFIGURE_FLAGS;
     (void) mca_base_component_var_register(&mca_io_romio341_component.io_version,
                                            "complete_configure_params",
                                            "Complete set of command line parameters passed to ROMIO's configure script",
