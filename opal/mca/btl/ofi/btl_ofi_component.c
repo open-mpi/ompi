@@ -350,8 +350,12 @@ static mca_btl_base_module_t **mca_btl_ofi_component_init(int *num_btl_modules,
 no_hmem:
 #endif
 
-    /* Do the query. The earliest version that supports FI_HMEM hints is 1.9  */
-    rc = fi_getinfo(FI_VERSION(1, 9), NULL, NULL, 0, &hints, &info_list);
+    /* Do the query. The earliest version that supports FI_HMEM hints is 1.9.
+     * The earliest version the explictly allow provider to call CUDA API is 1.18  */
+    rc = fi_getinfo(FI_VERSION(1, 18), NULL, NULL, 0, &hints, &info_list);
+    if (FI_ENOSYS == -rc) {
+	rc = fi_getinfo(FI_VERSION(1, 9), NULL, NULL, 0, &hints, &info_list);
+    }
     if (0 != rc) {
 #if defined(FI_HMEM)
         if (hints.caps & FI_HMEM) {
