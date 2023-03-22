@@ -79,6 +79,7 @@ def prepare_build(build_name, label, build_arg) {
             node(label) {
                 checkout(changelog: false, poll: false, scm: scm)
                 sh "/bin/bash -x .ci/community-jenkins/pr-builder.sh ${build_arg} ompi"
+                cleanWs(notFailBuild: true)
             }
         }
     }
