@@ -44,6 +44,9 @@ and not universally available in all environments, they are directly
 incorporated into Open MPI's configure, build, and installation
 process.  More on this below.
 
+  .. note:: The versions listed in this table are the *minimum* versions needed.  In general, the Open MPI community recommends using more recent versions of both the :ref:`required support libraries <label-install-required-support-libraries>` and any other optional support libraries.  This is because more recent versions typically tend to include bug fixes, sometimes affecting Open MPI functionality.  As a specific example, there is a known issue with `Hardware Locality <https://www.open-mpi.org/projects/hwloc/>`_ releases older than v2.8.0 on systems with Intel Ponte Vecchio accelerators.  If you run Open MPI on such systems, you need to use Hwloc v2.8.0 or newer, or you will experience undefined behavior.
+   This effect is not unique to the Hardware Locality library; this is why the Open MPI community recommends using as recent as possible versions of all support libraries.
+
 Library dependencies
 --------------------
 
