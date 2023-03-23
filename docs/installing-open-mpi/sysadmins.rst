@@ -47,17 +47,18 @@ Setting MCA Parameters for a Global Open MPI installation
 ---------------------------------------------------------
 
 Which global MCA parameters to set depends on both your specific
-parallel setup and the applications that typically run there.
+cluster setup and the applications that typically run there.
 
-The best thing to do is to use the :ref:`ompi_info(1) <man1-ompi_info>` command to see what
-parameters are available and relevant to you.  Specifically,
+The best thing to do is to use the :ref:`ompi_info(1) <man1-ompi_info>` command
+to see what parameters are available and relevant to you.  Specifically,
 ``ompi_info --all`` can be used to show all the parameters that are available
 for each plug-in.  Two common places that system administrators like
 to tweak are:
 
-* *Only allow specific networks:* Say you have a cluster with a
+* *Only allow specific networks:* If you have a cluster with a
   high-speed interconnect (such as InfiniBand) and a
-  low-speed ethernet network (e.g., 1Gpbps).  The high-speed network is intended for MPI jobs;
+  low-speed ethernet network (e.g., 1Gpbps).  The high-speed network is
+  intended for MPI jobs;
   the control network is intended for NFS and other
   administrative-level tasks.  In this case, you can simply turn off Open
   MPI's TCP support.  The ``btl`` framework contains Open MPI's network
@@ -157,8 +158,9 @@ operating environment.
 However, a system-wide Open MPI installation can be customized on a
 per-user basis in two important ways:
 
-* *Per-user MCA parameters:* Each user can set their own set of MCA
-  parameters, potentially overriding system-wide defaults.
+* *Per-user MCA parameters:* Each user can
+  :ref:`set their own set of MCA parameters, <label-running-setting-mca-param-values>`
+  potentially overriding system-wide defaults.
 * *Per-user plug-ins:* Users can install their own Open MPI
   plug-ins under ``$HOME/.openmpi/components``.  In this way, developers can
   experiment with new components without destabilizing Open MPI for the rest
