@@ -35,8 +35,8 @@ PMIx
 ----
 
 The `Process Management Interface for Exascale (PMIx)
-<https://pmix.org>`_ package is used by Open MPI for the management
-communication and coordination of MPI processes with a back-end
+<https://pmix.org>`_ package is used by Open MPI for the management,
+communication, and coordination of MPI processes with a back-end
 run-time system.
 
 The "back-end run-time system" may range from a low-infrastructure
