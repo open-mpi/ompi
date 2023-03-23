@@ -445,14 +445,14 @@ void memheap_oob_destruct(void)
 static int send_buffer(int pe, pmix_data_buffer_t *msg)
 {
     void *buffer;
-    int32_t size;
+    size_t size;
     int rc;
 
     PMIX_DATA_BUFFER_UNLOAD(msg, buffer, size);
     rc = PMPI_Send(buffer, size, MPI_BYTE, pe, 0, oshmem_comm_world);
     free(buffer);
 
-    MEMHEAP_VERBOSE(5, "message sent: dst=%d, rc=%d, %d bytes!", pe, rc, size);
+    MEMHEAP_VERBOSE(5, "message sent: dst=%d, rc=%d, %" PRIsize_t " bytes!", pe, rc, size);
     return rc;
 }
 
@@ -523,7 +523,7 @@ void mca_memheap_modex_recv_all(void)
     pmix_data_buffer_t *msg = NULL;
     void *send_buffer = NULL;
     char *rcv_buffer = NULL;
-    int size;
+    size_t size;
     int *rcv_size = NULL;
     int *rcv_n_transports = NULL;
     int *rcv_offsets = NULL;
@@ -584,7 +584,7 @@ void mca_memheap_modex_recv_all(void)
 
     /* Do allgather */
     PMIX_DATA_BUFFER_UNLOAD(msg, send_buffer, size);
-    MEMHEAP_VERBOSE(1, "local keys packed into %d bytes, %d segments", size, memheap_map->n_segments);
+    MEMHEAP_VERBOSE(1, "local keys packed into %d bytes, %" PRIsize_t " segments", size, memheap_map->n_segments);
 
     OPAL_TIMING_ENV_NEXT(recv_all, "serialize data");
 
