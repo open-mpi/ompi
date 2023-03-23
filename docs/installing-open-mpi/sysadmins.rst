@@ -49,7 +49,7 @@ Setting MCA Parameters for a Global Open MPI installation
 Which global MCA parameters to set depends on both your specific
 parallel setup and the applications that typically run there.
 
-The best thing to do is to use the ``ompi_info`` command to see what
+The best thing to do is to use the :ref:`ompi_info(1) <man1-ompi_info>` command to see what
 parameters are available and relevant to you.  Specifically,
 ``ompi_info`` can be used to show all the parameters that are available
 for each plug-in.  Two common places that system administrators like
