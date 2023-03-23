@@ -51,7 +51,7 @@ parallel setup and the applications that typically run there.
 
 The best thing to do is to use the :ref:`ompi_info(1) <man1-ompi_info>` command to see what
 parameters are available and relevant to you.  Specifically,
-``ompi_info`` can be used to show all the parameters that are available
+``ompi_info --all`` can be used to show all the parameters that are available
 for each plug-in.  Two common places that system administrators like
 to tweak are:
 
