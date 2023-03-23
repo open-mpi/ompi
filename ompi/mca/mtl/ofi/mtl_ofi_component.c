@@ -560,7 +560,7 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
                             bool enable_mpi_threads,
                             bool *accelerator_support)
 {
-    int ret, fi_version;
+    int ret, fi_primary_version, fi_alternate_version;
     int num_local_ranks, sep_support_in_provider, max_ofi_ctxts;
     int ofi_tag_leading_zeros, ofi_tag_bits_for_cid;
     char **include_list = NULL;
@@ -595,8 +595,17 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
      * (FI_REMOTE_COMM), which is insufficient for MTL selection.
      *
      * Note: API version 1.9 is the first version that supports FI_HMEM
+     *
+     * Note: API version 1.18 is the first version that clearly define
+     * provider's behavior in making CUDA API calls that all provider
+     * by default is permitted to make CUDA calls if application uses >= 1.18 API.
+     *
+     * If application is using < 1.18 API, some provider will not claim support
+     * of FI_HMEM (even if they are capable of) because it does not know
+     * whether application permits it to make CUDA calls.
      */
-    fi_version = FI_VERSION(1, 9);
+    fi_primary_version = FI_VERSION(1, 18);
+    fi_alternate_version = FI_VERSION(1, 9);
 
     /**
      * Hints to filter providers
@@ -695,7 +704,11 @@ no_hmem:
         hints_dup->caps &= ~(FI_LOCAL_COMM | FI_REMOTE_COMM);
         hints_dup->fabric_attr->prov_name = strdup("efa");
 
-        ret = fi_getinfo(fi_version, NULL, NULL, 0ULL, hints_dup, &providers);
+        ret = fi_getinfo(fi_primary_version, NULL, NULL, 0ULL, hints_dup, &providers);
+        if (FI_ENOSYS == -ret) {
+            /* libfabric is not new enough, fallback to use older version of API */
+           ret = fi_getinfo(fi_alternate_version, NULL, NULL, 0ULL, hints_dup, &providers);
+	}
 
         opal_output_verbose(1, opal_common_ofi.output,
                             "%s:%d: EFA specific fi_getinfo(): %s\n",
@@ -727,12 +740,15 @@ no_hmem:
      * remote node or service.  this does not necessarily allocate resources.
      * Pass NULL for name/service because we want a list of providers supported.
      */
-    ret = fi_getinfo(fi_version,    /* OFI version requested                    */
+    ret = fi_getinfo(fi_primary_version,    /* OFI version requested            */
                      NULL,          /* Optional name or fabric to resolve       */
                      NULL,          /* Optional service name or port to request */
                      0ULL,          /* Optional flag                            */
                      hints,         /* In: Hints to filter providers            */
                      &providers);   /* Out: List of matching providers          */
+    if (FI_ENOSYS == -ret) {
+        ret = fi_getinfo(fi_alternate_version, NULL, NULL, 0ULL, hints, &providers);
+    }
 
     opal_output_verbose(1, opal_common_ofi.output,
                         "%s:%d: fi_getinfo(): %s\n",
