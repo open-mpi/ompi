@@ -246,7 +246,7 @@ do {                                                                    \
         /* Sets CONVERTOR_ACCELERATOR flag if device buffer */                   \
         opal_convertor_prepare_for_send(                            \
             &req_send->req_base.req_convertor,                      \
-            &datatype->super, count, (unsigned char*)buf + datatype->super.true_lb); \
+            &datatype->super, count, (unsigned char*)buf); \
     } else {                                                            \
         MCA_PML_CM_SWITCH_ACCELERATOR_CONVERTOR_OFF(flags, datatype, count);   \
         opal_convertor_copy_and_prepare_for_send(                       \
