@@ -14,6 +14,39 @@ following:
 #. Open MPI's libraries must be findable (e.g., in your
    ``LD_LIBRARY_PATH``).
 
+Specifying the hosts for an MPI job
+-----------------------------------
+
+There are three mechanisms for specifying the hosts that an MPI job will run on:
+
+#. The ``--hostfile`` option to ``mpirun``.
+
+   Use this option to specify a list of hosts on which to run.  Note
+   that for compatibility with other MPI implementations,
+   ``--machinefile`` is a synonym for ``--hostfile``.
+   See :ref:`this section <running-scheduling-hostfile-option-label>` for more
+   information about the ``--hostfile`` option.
+
+#. The ``--host`` option to ``mpirun``.
+
+   This option can be used to specify a list of hosts on which to run
+   on the command line.
+   See :ref:`this section <running-scheduling-host-option-label>` for more
+   information about the ``--host`` option.
+
+#. Running in a scheduled environment.
+
+   If you are running in a scheduled environment (e.g., in a Slurm,
+   Torque, or LSF job), Open MPI will automatically get the lists of
+   hosts from the scheduler.  See the next subsections for details about
+   launching MPI jobs in supported scheduled environements.
+
+.. important:: The specification of hosts using any of the above
+               methods has nothing to do with the network interfaces
+               that are used for MPI traffic.  The list of hosts is
+               *only* used for specifying which hosts on which to
+               launch MPI processes.
+
 Non-interactive ``ssh`` logins
 ------------------------------
 
@@ -201,3 +234,4 @@ files that they read/execute upon login:
     ``$HOME/.cshrc`` if it does not
   * **Interactive login:** ``$HOME/.tcshrc`` if it exists,
     ``$HOME/.cshrc`` if it does not, followed by ``$HOME/.login``
+

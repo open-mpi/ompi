@@ -14,12 +14,30 @@ but they can generally be broken down into two categories:
    single laptop or workstation) or via ``ssh`` (e.g., across a small
    number of nodes).
 
+Similar to many MPI implementations, Open MPI provides the commands
+``mpirun`` and ``mpiexec`` to launch MPI jobs.  This section deals
+with using these commands.
+
+Note, however, that in Open MPI, ``mpirun`` and ``mpiexec`` are
+exactly identical.  Specifically, they are symbolic links to a common
+back-end launcher command.
+
+.. note:: The name of the back-end launcher command has changed over
+          time (it used to be ``orterun``, it is now ``prte``).  This
+          back-end name is largely irrelevant to the user.
+
+The rest of this section usually refers only to ``mpirun``, even though
+the same discussions also apply to ``mpiexec`` (because they are both,
+in fact, the same command).
+
+
 .. toctree::
    :maxdepth: 1
 
    quickstart
    prerequisites
    pmix-and-prrte
+   scheduling
 
    localhost
    ssh
@@ -27,3 +45,7 @@ but they can generally be broken down into two categories:
    lsf
    tm
    gridengine
+
+   unusual
+   troubleshooting
+

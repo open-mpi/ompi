@@ -14,6 +14,9 @@ probably work in many environments.
    Please consult the other sections in this chapter for more details,
    if necessary.
 
+Using ``mpirun`` to launch applications
+---------------------------------------
+
 Open MPI supports both :ref:`mpirun(1) <man1-mpirun>` and
 :ref:`mpiexec(1) <man1-mpiexec>` (they are exactly equivalent) to
 launch MPI applications.  For example:
@@ -29,6 +32,34 @@ launch MPI applications.  For example:
 are all equivalent.  For simplicity, the rest of this documentation
 will simply refer to ``mpirun``.
 
+Other ``mpirun`` options
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+``mpirun`` supports the ``--help`` option which provides a usage
+message and a summary of the options that it supports.  It should be
+considered the definitive list of what options are provided.
+
+Several notable options are:
+
+* ``--hostfile``: Specify a hostfile for launchers (such as the
+  ``rsh`` launcher) that need to be told on which hosts to start
+  parallel applications.  Note that for compatibility with other MPI
+  implementations, *--machinefile* is a synonym for ``--hostfile``.
+* ``--host``: Specify a host or list of hosts to run on (see
+  :ref:`this FAQ entry for more details
+  <running-scheduling-host-option-label>`).
+* ``-n``: Indicate the number of processes to start.
+* ``--mca``: Set MCA parameters (see :ref:`how to set MCA params
+  <label-running-setting-mca-param-values>` for more details).
+* ``--wdir DIRECTORY``: Set the working directory of the started
+  applications.  If not supplied, the current working directory is
+  assumed (or ``$HOME``, if the current working directory does not
+  exist on all nodes).
+* ``-x ENV_VARIABLE_NAME``: The name of an environment variable to
+  export to the parallel application.  The ``-x`` option can be
+  specified multiple times to export multiple environment variables to
+  the parallel application.
+
 Note that the :ref:`mpirun(1) <man1-mpirun>` command supports a
 *large* number of options.  Be sure to see the :ref:`mpirun(1)
 <man1-mpirun>` man page for much more information.
@@ -37,7 +68,8 @@ Launching on a single host
 --------------------------
 
 It is common to develop MPI applications on a single laptop or
-workstation.  In such cases, use :ref:`mpirun(1) <man1-mpirun>` and
+workstation.  In such simple "single program, multiple data (SPMD)" cases,
+use :ref:`mpirun(1) <man1-mpirun>` and
 specify how many MPI processes you want to launch via the ``-n``
 option:
 
@@ -48,6 +80,9 @@ option:
    Hello world, I am 1 of 6 (running on my-laptop)
    ...
    Hello world, I am 5 of 6 (running on my-laptop)
+
+This starts a six-process parallel application, running six copies
+of the executable named ``mpi-hello-world``.
 
 If you do not specify the ``-n`` option, :ref:`mpirun(1)
 <man1-mpirun>` will default to launching as many MPI processes as
@@ -65,8 +100,9 @@ applications:
 #. Open MPI's libraries must be findable (e.g., in your
    ``LD_LIBRARY_PATH``).
 
-:ref:`mpirun(1) <man1-mpirun>` accepts a ``--hostfile`` parameter to
-specify a hostfile containing one hostname per line:
+:ref:`mpirun(1) <man1-mpirun>` accepts a ``--hostfile`` option (and its
+synonym, the ``--machinefile`` option) to specify a hostfile containing one
+hostname per line:
 
 .. code-block:: sh
 
@@ -107,6 +143,14 @@ each node:
 * node2: 16, because no ``slots`` was specified
 * node3: 2, because ``slots=2`` was specified
 * node2: 10, because ``slots=10`` was specified
+
+Note, however, that not all environments require a hostfile.  For
+example, Open MPI will automatically detect when it is running in
+batch / scheduled environments (such as Slurm, PBS/Torque, SGE,
+LoadLeveler), and will use host information provided by those systems.
+
+Also note that if using a launcher that requires a hostfile and no
+hostfile is specified, all processes are launched on the local host.
 
 Launching in scheduled environments
 -----------------------------------
@@ -205,3 +249,4 @@ For example:
 Similar to the prior example, this example launches 40 copies of
 ``mpi-hello-world``, but it does so via the Slurm ``srun`` command
 without using :ref:`mpirun(1) <man1-mpirun>`.
+

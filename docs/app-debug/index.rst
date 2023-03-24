@@ -23,6 +23,7 @@ that can aid debugging.
    debug-tools
    debug-options
    serial-debug
+   parallel-debug
    lost-output
    memchecker
    valgrind
