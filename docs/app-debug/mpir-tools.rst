@@ -1,3 +1,5 @@
+.. _using-mpir-based-tools-label:
+
 Using MPIR-based tools with Open MPI
 ====================================
 

@@ -71,8 +71,7 @@ Table of contents
    building-apps/index
    launching-apps/index
    tuning-apps/index
-   app-debug/index 
-   faq/index
+   app-debug/index
    developers/index
    contributing
    license/index
