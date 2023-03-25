@@ -148,6 +148,7 @@ $handles->{MPI_OP_NULL} = 0;
 $handles->{MPI_REQUEST_NULL} = 0;
 $handles->{MPI_WIN_NULL} = 0;
 $handles->{MPI_MESSAGE_NULL} = 0;
+$handles->{MPI_SESSION_NULL} = 0;
 
 $handles->{MPI_BYTE} =  1;
 $handles->{MPI_PACKED} =  2;
