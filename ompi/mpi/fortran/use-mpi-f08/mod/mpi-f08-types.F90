@@ -74,6 +74,7 @@ module mpi_f08_types
   type(MPI_Request), parameter   :: MPI_REQUEST_NULL             = MPI_Request(OMPI_MPI_REQUEST_NULL)
   type(MPI_Win), parameter       :: MPI_WIN_NULL                 = MPI_Win(OMPI_MPI_WIN_NULL)
   type(MPI_File), parameter      :: MPI_FILE_NULL                = MPI_File(OMPI_MPI_FILE_NULL)
+  type(MPI_Session), parameter   :: MPI_SESSION_NULL             = MPI_Session(OMPI_MPI_SESSION_NULL)
 
   !
   ! Pre-defined datatype bindings
