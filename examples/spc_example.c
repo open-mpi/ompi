@@ -92,19 +92,18 @@ int main(int argc, char **argv)
         MPI_Abort(MPI_COMM_WORLD, -1);
     }
 
-    int ret;
     long long value;
 
     MPI_T_pvar_session session;
     MPI_T_pvar_handle handle;
     /* Create the MPI_T sessions/handles for the counters and start the counters */
-    ret = MPI_T_pvar_session_create(&session);
-    ret = MPI_T_pvar_handle_alloc(session, index, NULL, &handle, &count);
-    ret = MPI_T_pvar_start(session, handle);
+    MPI_T_pvar_session_create(&session);
+    MPI_T_pvar_handle_alloc(session, index, NULL, &handle, &count);
+    MPI_T_pvar_start(session, handle);
 
     message_exchange(num_messages, message_size);
 
-    ret = MPI_T_pvar_read(session, handle, &value);
+    MPI_T_pvar_read(session, handle, &value);
     /* Print the counter values in order by rank */
     for (i = 0; i < 2; i++) {
         if (i == rank) {
@@ -114,9 +113,9 @@ int main(int argc, char **argv)
         MPI_Barrier(MPI_COMM_WORLD);
     }
     /* Stop the MPI_T session, free the handle, and then free the session */
-    ret = MPI_T_pvar_stop(session, handle);
-    ret = MPI_T_pvar_handle_free(session, &handle);
-    ret = MPI_T_pvar_session_free(&session);
+    MPI_T_pvar_stop(session, handle);
+    MPI_T_pvar_handle_free(session, &handle);
+    MPI_T_pvar_session_free(&session);
 
     MPI_T_finalize();
     MPI_Finalize();
