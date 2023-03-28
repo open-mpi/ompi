@@ -50,7 +50,7 @@ processes:
 
 The `Makefile` in this directory will build as many of the examples as
 you have language support (e.g., if you do not have the Fortran `use
-mpi` bindings compiled as part of Open MPI, the those examples will be
+mpi` bindings compiled as part of Open MPI, those examples will be
 skipped).
 
 The `Makefile` assumes that the wrapper compilers `mpicc`, `mpic++`, and
