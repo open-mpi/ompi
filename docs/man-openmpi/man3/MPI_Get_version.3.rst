@@ -46,9 +46,9 @@ OUTPUT PARAMETERS
 -----------------
 
 * ``version`` : The major version number of the corresponding standard
-   (integer).
+  (integer).
 * ``subversion`` : The minor version number of the corresponding
-   standard (integer).
+  standard (integer).
 * ``ierror`` : Fortran only: Error status (integer).
 
 DESCRIPTION
