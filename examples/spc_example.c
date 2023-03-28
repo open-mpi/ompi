@@ -2,6 +2,8 @@
  * Copyright (c) 2018-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2023      High Performance Computing Center Stuttgart,
+ *                         University of Stuttgart.  All rights reserved.
  *
  * Simple example usage of SPCs through MPI_T.
  */
@@ -20,7 +22,6 @@ void message_exchange(int num_messages, int message_size)
     int i, rank;
     /* Use calloc to initialize data to 0's */
     char *data = (char *) calloc(message_size, sizeof(char));
-    MPI_Status status;
 
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
@@ -29,7 +30,7 @@ void message_exchange(int num_messages, int message_size)
             MPI_Send(data, message_size, MPI_BYTE, 1, 123, MPI_COMM_WORLD);
     } else if (rank == 1) {
         for (i = 0; i < num_messages; i++)
-            MPI_Recv(data, message_size, MPI_BYTE, 0, 123, MPI_COMM_WORLD, &status);
+            MPI_Recv(data, message_size, MPI_BYTE, 0, 123, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     }
 
     free(data);
