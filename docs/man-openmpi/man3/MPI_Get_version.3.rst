@@ -54,8 +54,11 @@ OUTPUT PARAMETERS
 DESCRIPTION
 -----------
 
-Since Open MPI is MPI-|mpi_standard_version|.|mpi_standard_subversion| compliant, this function will return a
-``version`` value of |mpi_standard_version| and a subversion value of |mpi_standard_subversion| for this release.
+Since Open MPI |ompi_ver| is MPI-|mpi_standard_version| compliant (see
+:ref:`this page for more details about Open MPI standards conformance
+<mpi-standard-conformance-label>`) this function will return a
+``version`` value of |mpi_standard_major_version| and a ``subversion``
+value of |mpi_standard_minor_version| for this release.
 
 NOTE
 ----
