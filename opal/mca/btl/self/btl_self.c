@@ -151,7 +151,7 @@ static struct mca_btl_base_descriptor_t *mca_btl_self_prepare_src(
     struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint,
     struct opal_convertor_t *convertor, uint8_t order, size_t reserve, size_t *size, uint32_t flags)
 {
-    bool inline_send = !opal_convertor_need_buffers(convertor);
+    bool inline_send = !(opal_convertor_need_buffers(convertor) || opal_convertor_on_device(convertor));
     size_t buffer_len = reserve + (inline_send ? 0 : *size);
     mca_btl_self_frag_t *frag;
 
@@ -229,7 +229,9 @@ static int mca_btl_self_sendi(struct mca_btl_base_module_t *btl,
 {
     mca_btl_base_descriptor_t *frag;
 
-    if (!payload_size || !opal_convertor_need_buffers(convertor)) {
+    if (!payload_size ||
+        !(opal_convertor_need_buffers(convertor) ||
+          opal_convertor_on_device(convertor))) {
         void *data_ptr = NULL;
         if (payload_size) {
             opal_convertor_get_current_pointer(convertor, &data_ptr);
