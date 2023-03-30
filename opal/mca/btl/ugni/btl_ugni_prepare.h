@@ -179,6 +179,7 @@ mca_btl_ugni_prepare_src_send(struct mca_btl_base_module_t *btl, mca_btl_base_en
 
     send_in_place = (btl->btl_flags & MCA_BTL_FLAGS_SEND_INPLACE)
                     && !(opal_convertor_need_buffers(convertor)
+                         || opal_convertor_on_device(convertor)
                          || (use_eager_get && ((uintptr_t) data_ptr & 3)));
 
     if (send_in_place) {

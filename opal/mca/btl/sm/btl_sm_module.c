@@ -429,7 +429,8 @@ static struct mca_btl_base_descriptor_t *sm_prepare_src(struct mca_btl_base_modu
     assert(NULL != data_ptr);
 
     /* in place send fragment */
-    if (OPAL_UNLIKELY(opal_convertor_need_buffers(convertor))) {
+    if (OPAL_UNLIKELY(opal_convertor_need_buffers(convertor) ||
+                      opal_convertor_on_device(convertor))) {
         uint32_t iov_count = 1;
         struct iovec iov;
 

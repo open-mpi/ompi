@@ -39,19 +39,19 @@ ompi_mtl_datatype_pack(struct opal_convertor_t *convertor,
 {
     struct iovec iov;
     uint32_t iov_count = 1;
+    bool is_accelerator = opal_convertor_on_device(convertor);
 #if !(OPAL_ENABLE_HETEROGENEOUS_SUPPORT)
     if (convertor->pDesc &&
 	!(convertor->flags & CONVERTOR_COMPLETED) &&
 	opal_datatype_is_contiguous_memory_layout(convertor->pDesc,
 						  convertor->count) &&
-        !(convertor->flags & CONVERTOR_ACCELERATOR)) {
+        !is_accelerator) {
 	    *free_after = false;
 	    *buffer = convertor->pBaseBuf + convertor->bConverted + convertor->pDesc->true_lb;
 	    *buffer_len = convertor->local_size;
 	    return OPAL_SUCCESS;
     }
 #endif
-    bool is_accelerator = convertor->flags & CONVERTOR_ACCELERATOR;
 
     opal_convertor_get_packed_size(convertor, buffer_len);
     *free_after = false;
@@ -94,7 +94,7 @@ ompi_mtl_datatype_recv_buf(struct opal_convertor_t *convertor,
         *buffer_len = 0;
         return OMPI_SUCCESS;
     }
-    bool is_accelerator = convertor->flags & CONVERTOR_ACCELERATOR;
+    bool is_accelerator = opal_convertor_on_device(convertor);;
 
     /* If we need buffers or we don't have accelerator support and it is a device buffer, we will need to copy */
     if (opal_convertor_need_buffers(convertor) || (is_accelerator && false == ompi_mtl_base_selected_component->accelerator_support)) {
@@ -122,7 +122,7 @@ ompi_mtl_datatype_unpack(struct opal_convertor_t *convertor,
 {
     struct iovec iov;
     uint32_t iov_count = 1;
-    bool is_accelerator = convertor->flags & CONVERTOR_ACCELERATOR;
+    bool is_accelerator = opal_convertor_on_device(convertor);
 
     /* If the buffer length is greater than 0 and we allocated buffers previously, we need to unpack them */
     if (buffer_len > 0 && (opal_convertor_need_buffers(convertor) || (is_accelerator && false == ompi_mtl_base_selected_component->accelerator_support))) {
