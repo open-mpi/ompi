@@ -24,6 +24,7 @@ AC_DEFUN([MCA_opal_accelerator_cuda_CONFIG],[
     AC_CONFIG_FILES([opal/mca/accelerator/cuda/Makefile])
 
     OPAL_CHECK_CUDA([accelerator_cuda])
+    OPAL_CHECK_CUDART([accelerator_cudart])
 
     AS_IF([test "x$CUDA_SUPPORT" = "x1"],
           [$1],
@@ -32,5 +33,9 @@ AC_DEFUN([MCA_opal_accelerator_cuda_CONFIG],[
     AC_SUBST([accelerator_cuda_CPPFLAGS])
     AC_SUBST([accelerator_cuda_LDFLAGS])
     AC_SUBST([accelerator_cuda_LIBS])
+
+    AC_SUBST([accelerator_cudart_CPPFLAGS])
+    AC_SUBST([accelerator_cudart_LDFLAGS])
+    AC_SUBST([accelerator_cudart_LIBS])
 
 ])dnl
