@@ -121,7 +121,7 @@ cuda_component_init_query(bool enable_progress_threads,
     int num_devices;
     int rc;
     int prio_lo, prio_hi;
-    memset(&mca_op_cuda_component, sizeof(mca_op_cuda_component));
+    memset(&mca_op_cuda_component, 0, sizeof(mca_op_cuda_component));
     cuInit(0);
     CHECK(cuDeviceGetCount, (&num_devices));
     mca_op_cuda_component.cu_num_devices = num_devices;
