@@ -430,7 +430,9 @@ static struct mca_btl_base_descriptor_t *sm_prepare_src(struct mca_btl_base_modu
 
     /* in place send fragment */
     if (OPAL_UNLIKELY(opal_convertor_need_buffers(convertor) ||
-                      opal_convertor_on_device(convertor))) {
+                      opal_convertor_on_discrete_device(convertor) ||
+                      (opal_convertor_on_unified_device(convertor) &&
+                       total_size > (size_t) mca_btl_sm_component.max_inline_send))) {
         uint32_t iov_count = 1;
         struct iovec iov;
 
