@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2020 The University of Tennessee and The University
+ * Copyright (c) 2004-2023 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
@@ -202,8 +202,15 @@ int MPI_Gatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
     }
 #endif
 
+    void* updated_recvbuf;
+    if (OMPI_COMM_IS_INTRA(comm)) {
+        updated_recvbuf = (ompi_comm_rank(comm) == root) ? recvbuf : NULL;
+    } else {
+        updated_recvbuf = (root == MPI_ROOT) ? recvbuf : NULL;
+    }
+
     /* Invoke the coll component to perform the back-end operation */
-    err = comm->c_coll->coll_gatherv(sendbuf, sendcount, sendtype, recvbuf,
+    err = comm->c_coll->coll_gatherv(sendbuf, sendcount, sendtype, updated_recvbuf,
                                     recvcounts, displs,
                                     recvtype, root, comm,
                                     comm->c_coll->coll_gatherv_module);
