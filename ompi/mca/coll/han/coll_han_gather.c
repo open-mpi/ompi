@@ -251,18 +251,16 @@ int mca_coll_han_gather_lg_task(void *task_args)
                                    &rgap);
         tmp_buf = (char *) malloc(rsize);
         tmp_rbuf = tmp_buf - rgap;
-        if (t->w_rank == t->root) {
-            if (MPI_IN_PLACE == t->sbuf) {
-                ptrdiff_t rextent;
-                ompi_datatype_type_extent(dtype, &rextent);
-                ptrdiff_t block_size = rextent * (ptrdiff_t)count;
-                ptrdiff_t src_shift = block_size * t->w_rank;
-                ptrdiff_t dest_shift = block_size * low_rank;
-                ompi_datatype_copy_content_same_ddt(dtype,
-                                                    (ptrdiff_t)count,
-                                                    tmp_rbuf + dest_shift,
-                                                    (char *)t->rbuf + src_shift);
-            }
+        if (t->w_rank == t->root && MPI_IN_PLACE == t->sbuf) {
+            ptrdiff_t rextent;
+            ompi_datatype_type_extent(dtype, &rextent);
+            ptrdiff_t block_size = rextent * (ptrdiff_t)count;
+            ptrdiff_t src_shift = block_size * t->w_rank;
+            ptrdiff_t dest_shift = block_size * low_rank;
+            ompi_datatype_copy_content_same_ddt(dtype,
+                                                (ptrdiff_t)count,
+                                                tmp_rbuf + dest_shift,
+                                                (char *)t->rbuf + src_shift);
         }
     }
 
@@ -405,6 +403,11 @@ mca_coll_han_gather_intra_simple(const void *sbuf, int scount,
     char *reorder_buf = NULL;  // allocated memory
     char *reorder_buf_start = NULL; // start of the data
     if (w_rank == root) {
+	if (MPI_IN_PLACE == sbuf) {
+            ptrdiff_t rextent;
+            ompi_datatype_type_extent(rdtype, &rextent);
+            sbuf = rbuf + rextent * (ptrdiff_t)rcount * w_rank;
+        }
         if (han_module->is_mapbycore) {
             reorder_buf_start = (char *)rbuf;
         } else {
