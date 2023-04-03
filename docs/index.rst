@@ -64,10 +64,10 @@ Table of contents
    getting-help
    release-notes/index
    installing-open-mpi/index
+   mca/index
    features/index
    validate
    version-numbering
-   mca
    building-apps/index
    launching-apps/index
    tuning-apps/index
