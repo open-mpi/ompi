@@ -41,7 +41,7 @@ AC_DEFUN([OMPI_CHECK_UCX],[
                       [ompi_check_ucx_happy="no"])
 
     ompi_check_ucx_CPPFLAGS_save=${CPPFLAGS}
-    ompi_check_ucx_LDLAGS_save=${LDFLAGS}
+    ompi_check_ucx_LDFLAGS_save=${LDFLAGS}
     ompi_check_ucx_LIBS_save=${LIBS}
 
     OPAL_FLAGS_APPEND_UNIQ([CPPFLAGS], [${$1_CPPFLAGS}])
@@ -132,7 +132,7 @@ AC_DEFUN([OMPI_CHECK_UCX],[
            ])
 
     CPPFLAGS=${ompi_check_ucx_CPPFLAGS_save}
-    LDFLAGS=${ompi_check_ucx_LDLAGS_save}
+    LDFLAGS=${ompi_check_ucx_LDFLAGS_save}
     LIBS=${ompi_check_ucx_LIBS_save}
 
     OPAL_SUMMARY_ADD([Transports], [Open UCX], [], [$ompi_check_ucx_happy])
