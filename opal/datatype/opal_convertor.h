@@ -187,6 +187,23 @@ static inline int32_t opal_convertor_need_buffers(const opal_convertor_t *pConve
     return 1;
 }
 
+static inline int32_t opal_convertor_on_device(const opal_convertor_t *pConvertor)
+{
+    return !!(pConvertor->flags & CONVERTOR_ACCELERATOR);
+}
+
+static inline int32_t opal_convertor_on_discrete_device(const opal_convertor_t *pConvertor)
+{
+    return (CONVERTOR_ACCELERATOR == ((pConvertor->flags & CONVERTOR_ACCELERATOR) |
+                                      (pConvertor->flags & CONVERTOR_ACCELERATOR_UNIFIED)));
+}
+
+static inline int32_t opal_convertor_on_unified_device(const opal_convertor_t *pConvertor)
+{
+    return (!!(pConvertor->flags & CONVERTOR_ACCELERATOR) &&
+            !!(pConvertor->flags & CONVERTOR_ACCELERATOR_UNIFIED));
+}
+
 /**
  * Update the size of the remote datatype representation. The size will
  * depend on the configuration of the master convertor. In homogeneous
