@@ -16,6 +16,7 @@
 #include "opal_config.h"
 
 #include <cuda.h>
+#include <cuda_runtime_api.h>
 
 #include "accelerator_cuda.h"
 #include "opal/mca/accelerator/base/base.h"
@@ -38,6 +39,8 @@ static int accelerator_cuda_memmove(int dest_dev_id, int src_dev_id, void *dest,
                              opal_accelerator_transfer_type_t type);
 static int accelerator_cuda_mem_alloc(int dev_id, void **ptr, size_t size);
 static int accelerator_cuda_mem_release(int dev_id, void *ptr);
+static int accelerator_cuda_mem_alloc_stream(int dev_id, void **ptr, size_t size, opal_accelerator_stream_t *stream);
+static int accelerator_cuda_mem_release_stream(int dev_id, void *ptr, opal_accelerator_stream_t *stream);
 static int accelerator_cuda_get_address_range(int dev_id, const void *ptr, void **base,
                                               size_t *size);
 
@@ -50,8 +53,12 @@ static int accelerator_cuda_device_can_access_peer( int *access, int dev1, int d
 
 static int accelerator_cuda_get_buffer_id(int dev_id, const void *addr, opal_accelerator_buffer_id_t *buf_id);
 
+static int accelerator_cuda_wait_stream(opal_accelerator_stream_t *stream);
+
 opal_accelerator_base_module_t opal_accelerator_cuda_module =
 {
+    &opal_accelerator_cuda_default_stream.base,
+
     accelerator_cuda_check_addr,
 
     accelerator_cuda_create_stream,
@@ -65,6 +72,8 @@ opal_accelerator_base_module_t opal_accelerator_cuda_module =
     accelerator_cuda_memmove,
     accelerator_cuda_mem_alloc,
     accelerator_cuda_mem_release,
+    accelerator_cuda_mem_alloc_stream,
+    accelerator_cuda_mem_release_stream,
     accelerator_cuda_get_address_range,
 
     accelerator_cuda_host_register,
@@ -74,7 +83,9 @@ opal_accelerator_base_module_t opal_accelerator_cuda_module =
     accelerator_cuda_get_device_pci_attr,
     accelerator_cuda_device_can_access_peer,
 
-    accelerator_cuda_get_buffer_id
+    accelerator_cuda_get_buffer_id,
+
+    accelerator_cuda_wait_stream
 };
 
 static int accelerator_cuda_get_device_id(CUcontext mem_ctx) {
@@ -495,13 +506,34 @@ static int accelerator_cuda_mem_alloc(int dev_id, void **ptr, size_t size)
         return OPAL_ERR_BAD_PARAM;
     }
 
-    if (size > 0) {
-        result = cuMemAlloc((CUdeviceptr *) ptr, size);
-        if (OPAL_UNLIKELY(CUDA_SUCCESS != result)) {
-            opal_show_help("help-accelerator-cuda.txt", "cuMemAlloc failed", true,
-                           OPAL_PROC_MY_HOSTNAME, result);
-            return OPAL_ERROR;
+#if CUDA_VERSION >= 11020
+    /* Try to allocate the memory from a memory pool, if available */
+    /* get the default pool */
+    cudaMemPool_t mpool;
+    result = cudaDeviceGetDefaultMemPool(&mpool, dev_id);
+    if (cudaSuccess == result) {
+        result = cudaMallocFromPoolAsync(ptr, size, mpool, opal_accelerator_cuda_alloc_stream);
+        if (cudaSuccess == result) {
+            /* this is a blocking function, so wait for the allocation to happen */
+            result = cuStreamSynchronize(opal_accelerator_cuda_alloc_stream);
+            if (cudaSuccess == result) {
+                return OPAL_SUCCESS;
+            }
         }
+    }
+    if (cudaErrorNotSupported != result) {
+        opal_show_help("help-accelerator-cuda.txt", "cudaMallocFromPoolAsync failed", true,
+                        OPAL_PROC_MY_HOSTNAME, result);
+        return OPAL_ERROR;
+    }
+    /* fall-back to regular allocation */
+#endif // CUDA_VERSION >= 11020
+
+    result = cuMemAlloc((CUdeviceptr *) ptr, size);
+    if (OPAL_UNLIKELY(CUDA_SUCCESS != result)) {
+        opal_show_help("help-accelerator-cuda.txt", "cuMemAlloc failed", true,
+                        OPAL_PROC_MY_HOSTNAME, result);
+        return OPAL_ERROR;
     }
     return 0;
 }
@@ -696,6 +728,94 @@ static int accelerator_cuda_get_buffer_id(int dev_id, const void *addr, opal_acc
     if (OPAL_UNLIKELY(CUDA_SUCCESS != result)) {
         opal_show_help("help-accelerator-cuda.txt", "cuPointerSetAttribute failed", true,
                        OPAL_PROC_MY_HOSTNAME, result, addr);
+        return OPAL_ERROR;
+    }
+    return OPAL_SUCCESS;
+}
+
+
+static int accelerator_cuda_mem_alloc_stream(
+    int dev_id,
+    void **addr,
+    size_t size,
+    opal_accelerator_stream_t *stream)
+{
+#if CUDA_VERSION >= 11020
+    cudaError_t result;
+
+    int delayed_init = opal_accelerator_cuda_delayed_init();
+    if (OPAL_UNLIKELY(0 != delayed_init)) {
+        return delayed_init;
+    }
+
+    if (NULL == stream || NULL == addr || 0 == size) {
+        return OPAL_ERR_BAD_PARAM;
+    }
+
+    /* Try to allocate the memory from a memory pool, if available */
+    /* get the default pool */
+    cudaMemPool_t mpool;
+    result = cudaDeviceGetDefaultMemPool(&mpool, dev_id);
+    if (cudaSuccess == result) {
+        result = cudaMallocFromPoolAsync(addr, size, mpool, *(cudaStream_t*)stream->stream);
+        if (cudaSuccess == result) {
+            return OPAL_SUCCESS;
+        }
+    }
+    if (cudaErrorNotSupported != result) {
+        opal_show_help("help-accelerator-cuda.txt", "cudaMallocFromPoolAsync failed", true,
+                        OPAL_PROC_MY_HOSTNAME, result);
+        return OPAL_ERROR;
+    }
+    /* fall-back to regular stream allocation */
+
+    result = cudaMallocAsync(addr, size, *(cudaStream_t*)stream->stream);
+    if (OPAL_UNLIKELY(cudaSuccess != result)) {
+        opal_show_help("help-accelerator-cuda.txt", "cuMemAlloc failed", true,
+                        OPAL_PROC_MY_HOSTNAME, result);
+        return OPAL_ERROR;
+    }
+    return OPAL_SUCCESS;
+#else
+    return accelerator_cuda_mem_alloc(dev_id, addr, size);
+#endif // CUDA_VERSION >= 11020
+}
+
+
+static int accelerator_cuda_mem_release_stream(
+    int dev_id,
+    void *addr,
+    opal_accelerator_stream_t *stream)
+{
+#if CUDA_VERSION >= 11020
+    cudaError_t result;
+
+    if (NULL == stream || NULL == addr) {
+        return OPAL_ERR_BAD_PARAM;
+    }
+
+    result = cudaFreeAsync(addr, *(cudaStream_t*)stream->stream);
+    if (OPAL_UNLIKELY(cudaSuccess != result)) {
+        opal_show_help("help-accelerator-cuda.txt", "cuMemAlloc failed", true,
+                        OPAL_PROC_MY_HOSTNAME, result);
+        return OPAL_ERROR;
+    }
+    return OPAL_SUCCESS;
+#else
+    /* wait for everything on the device to complete */
+    accelerator_cuda_wait_stream(stream);
+    return accelerator_cuda_mem_release(dev_id, addr);
+#endif // CUDA_VERSION >= 11020
+}
+
+
+static int accelerator_cuda_wait_stream(opal_accelerator_stream_t *stream)
+{
+    CUresult result;
+    result = cuStreamSynchronize(*(CUstream*)stream->stream);
+    if (OPAL_UNLIKELY(CUDA_SUCCESS != result)) {
+        opal_show_help("help-accelerator-cuda.txt", "cuStreamSynchronize failed", true,
+                       OPAL_PROC_MY_HOSTNAME, result);
         return OPAL_ERROR;
     }
     return OPAL_SUCCESS;

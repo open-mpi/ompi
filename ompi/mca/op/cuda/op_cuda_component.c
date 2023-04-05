@@ -79,6 +79,7 @@ static int cuda_component_open(void)
      * component won't even be shown in ompi_info output (which is
      * probably not what you want).
      */
+    printf("op cuda_component_open\n");
     return OMPI_SUCCESS;
 }
 
@@ -88,7 +89,7 @@ static int cuda_component_open(void)
 static int cuda_component_close(void)
 {
     if (mca_op_cuda_component.cu_num_devices > 0) {
-        cuStreamDestroy(mca_op_cuda_component.cu_stream);
+        //cuStreamDestroy(mca_op_cuda_component.cu_stream);
         free(mca_op_cuda_component.cu_max_threads_per_block);
         mca_op_cuda_component.cu_max_threads_per_block = NULL;
         free(mca_op_cuda_component.cu_devices);
@@ -126,16 +127,20 @@ cuda_component_init_query(bool enable_progress_threads,
     CHECK(cuDeviceGetCount, (&num_devices));
     mca_op_cuda_component.cu_num_devices = num_devices;
     mca_op_cuda_component.cu_devices = (CUdevice*)malloc(num_devices*sizeof(CUdevice));
+#if 0
     mca_op_cuda_component.cu_ctx = (CUcontext*)malloc(num_devices*sizeof(CUcontext));
+#endif // 0
     mca_op_cuda_component.cu_max_threads_per_block = (int*)malloc(num_devices*sizeof(int));
     for (int i = 0; i < num_devices; ++i) {
         CHECK(cuDeviceGet, (&mca_op_cuda_component.cu_devices[i], i));
+#if 0
         rc = cuCtxCreate(&mca_op_cuda_component.cu_ctx[i],
                          0, mca_op_cuda_component.cu_devices[i]);
         if (CUDA_SUCCESS != rc) {
             CHECK(cuDevicePrimaryCtxRetain,
                   (&mca_op_cuda_component.cu_ctx[i], mca_op_cuda_component.cu_devices[i]));
         }
+#endif // 0
         rc = cuDeviceGetAttribute(&mca_op_cuda_component.cu_max_threads_per_block[i],
                                   CU_DEVICE_ATTRIBUTE_MAX_THREADS_PER_BLOCK,
                                   mca_op_cuda_component.cu_devices[i]);
@@ -145,6 +150,7 @@ cuda_component_init_query(bool enable_progress_threads,
         }
     }
 
+#if 0
     /* try to create a high-priority stream */
     rc = cuCtxGetStreamPriorityRange(&prio_lo, &prio_hi);
     if (CUDA_SUCCESS != rc) {
@@ -152,6 +158,8 @@ cuda_component_init_query(bool enable_progress_threads,
     } else {
         mca_op_cuda_component.cu_stream = 0;
     }
+#endif // 0
+    printf("op cuda_component_init_query\n");
     return OMPI_SUCCESS;
 }
 
@@ -177,5 +185,6 @@ cuda_component_op_query(struct ompi_op_t *op, int *priority)
         }
     }
     *priority = 50;
+    printf("op cuda_component_query\n");
     return (ompi_op_base_module_1_0_0_t *) module;
 }

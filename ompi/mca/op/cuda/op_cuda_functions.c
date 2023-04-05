@@ -60,8 +60,10 @@ static inline void device_op_pre(const void *orig_source,
         *device = *source_device;
     }
 
+#if 0
     /* swap contexts */
     CHECK(cuCtxPushCurrent, (mca_op_cuda_component.cu_ctx[*device]));
+#endif // 0
 
     if (0 == target_rc || 0 == source_rc || *target_device != *source_device) {
         size_t nbytes;
@@ -70,37 +72,26 @@ static inline void device_op_pre(const void *orig_source,
 
         if (0 == target_rc) {
             // allocate memory on the device for the target buffer
-            CUdeviceptr dptr;
             //printf("copying target from device %d to host\n", *target_device);
-#if CUDA_VERSION >= 11020
-            CHECK(cuMemAllocAsync,   (&dptr, nbytes, mca_op_cuda_component.cu_stream));
-#else  // CUDA_VERSION >= 11020
-            CHECK(cuMemAlloc,   (&dptr, nbytes));
-#endif // CUDA_VERSION >= 11020
-            CHECK(cuMemcpyHtoDAsync, (dptr, orig_target, nbytes, mca_op_cuda_component.cu_stream));
-            *target = (void*)dptr;
+            opal_accelerator.mem_alloc_stream(*device, target, nbytes, opal_accelerator.default_stream);
+            //CHECK(cuMemAllocAsync,   (&dptr, nbytes, (CUstream*)opal_accelerator.default_stream->stream));
+            CHECK(cuMemcpyHtoDAsync, ((CUdeviceptr)*target, orig_target, nbytes, *(CUstream*)opal_accelerator.default_stream->stream));
             *target_device = -1; // mark target device as host
         }
 
         if (0 == source_rc || *device != *source_device) {
             // allocate memory on the device for the source buffer
-            CUdeviceptr dptr;
             //printf("allocating source on device %d\n", *device);
-#if CUDA_VERSION >= 11020
-            CHECK(cuMemAllocAsync, (&dptr, nbytes, mca_op_cuda_component.cu_stream));
-#else  // CUDA_VERSION >= 11020
-            CHECK(cuMemAlloc,   (&dptr, nbytes));
-#endif // CUDA_VERSION >= 11020
-            *source = (void*)dptr;
+            opal_accelerator.mem_alloc_stream(*device, source, nbytes, opal_accelerator.default_stream);
             if (0 == source_rc) {
                 /* copy from host to device */
                 //printf("copying source from host to device %d\n", *device);
-                CHECK(cuMemcpyHtoDAsync, (dptr, orig_source, nbytes, mca_op_cuda_component.cu_stream));
+                CHECK(cuMemcpyHtoDAsync, ((CUdeviceptr)*source, orig_source, nbytes, *(CUstream*)opal_accelerator.default_stream->stream));
             } else {
                 /* copy from one device to another device */
                 /* TODO: does this actually work? Can we enable P2P? */
                 //printf("attempting cross-device copy for source\n");
-                CHECK(cuMemcpyDtoDAsync, (dptr, (CUdeviceptr)orig_source, nbytes, mca_op_cuda_component.cu_stream));
+                CHECK(cuMemcpyDtoDAsync, ((CUdeviceptr)*source, (CUdeviceptr)orig_source, nbytes, *(CUstream*)opal_accelerator.default_stream->stream));
             }
         }
     }
@@ -122,35 +113,22 @@ static inline void device_op_post(void *orig_target,
         ompi_datatype_type_size(dtype, &nbytes);
         nbytes *= count;
 
-        CHECK(cuMemcpyDtoHAsync, (orig_target, (CUdeviceptr)target, nbytes, mca_op_cuda_component.cu_stream));
+        CHECK(cuMemcpyDtoHAsync, (orig_target, (CUdeviceptr)target, nbytes, *(CUstream *)opal_accelerator.default_stream->stream));
     }
 
-#if CUDA_VERSION >= 11020
     /* cuMemFreeAsync is supported from CUDA 11.2.0 upwards */
     if (-1 == target_device) {
-        CHECK(cuMemFreeAsync, ((CUdeviceptr)target, mca_op_cuda_component.cu_stream));
+        opal_accelerator.mem_release_stream(device, target, opal_accelerator.default_stream);
+        //CHECK(cuMemFreeAsync, ((CUdeviceptr)target, mca_op_cuda_component.cu_stream));
     }
     if (source_device != device) {
-        CHECK(cuMemFreeAsync, ((CUdeviceptr)source, mca_op_cuda_component.cu_stream));
+        opal_accelerator.mem_release_stream(device, source, opal_accelerator.default_stream);
+        //CHECK(cuMemFreeAsync, ((CUdeviceptr)source, mca_op_cuda_component.cu_stream));
     }
-#endif // CUDA_VERSION >= 11020
 
     /* wait for all scheduled operations to complete */
-    CHECK(cuStreamSynchronize, (mca_op_cuda_component.cu_stream));
-
-#if CUDA_VERSION < 11020
-    /* cuMemFreeAsync is supported from CUDA 11.2.0 upwards */
-    if (-1 == target_device) {
-        CHECK(cuMemFree, ((CUdeviceptr)target));
-    }
-    if (source_device != device) {
-        CHECK(cuMemFree, ((CUdeviceptr)source));
-    }
-#endif // CUDA_VERSION < 11020
-
-    /* restore the context */
-    CUcontext ctx;
-    CHECK(cuCtxPopCurrent, (&ctx));
+    //CHECK(cuStreamSynchronize, (mca_op_cuda_component.cu_stream));
+    opal_accelerator.wait_stream(opal_accelerator.default_stream);
 }
 
 #define FUNC(name, type_name, type)                                 \
@@ -164,7 +142,7 @@ static inline void device_op_post(void *orig_target,
         int n = *count; \
         device_op_pre(in, inout, n, *dtype, (void**)&source, &source_device, (void**)&target, &target_device, \
                       &threads_per_block, &device); \
-        CUstream *stream = &mca_op_cuda_component.cu_stream;                        \
+        CUstream *stream = (CUstream*)opal_accelerator.default_stream->stream;                        \
         ompi_op_cuda_2buff_##name##_##type_name##_submit(source, target, n, threads_per_block, *stream); \
         device_op_post(inout, n, *dtype, source, source_device, target, target_device, device); \
     }
@@ -781,7 +759,7 @@ LOC_FUNC(minloc, long_double_int, <)
         const type *in1_ = (const type*)in1;                                        \
         const type *in2_ = (const type*)in2;                                        \
         int n = *count;                                                             \
-        CUstream *stream = &mca_op_cuda_component.cu_stream;                        \
+        CUstream *stream = (CUstream*)opal_accelerator.default_stream->stream;     \
         ompi_op_cuda_3buff_##name##_##type_name##_kernel<<<blocks, threads, *stream>>>(in1_, int2_, out_, n); \
     }
 
@@ -809,7 +787,7 @@ LOC_FUNC(minloc, long_double_int, <)
         const type *in1_ = (const type*)in1;                                        \
         const type *in2_ = (const type*)in2;                                        \
         int n = *count;                                                             \
-        CUstream *stream = &mca_op_cuda_component.cu_stream;                        \
+        CUstream *stream = (CUstream*)opal_accelerator.default_stream->stream;     \
         ompi_op_cuda_3buff_##name##_##type_name##_kernel<<blocks, threads, *stream>>(in1_, in2_, out_, n); \
     }
 
@@ -863,7 +841,7 @@ LOC_FUNC(minloc, long_double_int, <)
         const ompi_op_predefined_##type_name##_t *a1 = (const ompi_op_predefined_##type_name##_t*) in1; \
         const ompi_op_predefined_##type_name##_t *a2 = (const ompi_op_predefined_##type_name##_t*) in2; \
         ompi_op_predefined_##type_name##_t *b = (ompi_op_predefined_##type_name##_t*) out;            \
-        CUstream *stream = &mca_op_cuda_component.cu_stream;                            \
+        CUstream *stream = (CUstream*)opal_accelerator.default_stream->stream;                       \
         ompi_op_cuda_2buff_##name##_##type_name##_kernel<<blocks, threads, *stream>>(a1, a2, b, n); \
     }
 

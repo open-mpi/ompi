@@ -262,3 +262,10 @@ Check the cuda.h file for what the return value means.
 A call to allocate memory within the CUDA support failed.  This is
 an unrecoverable error and will cause the program to abort.
   Hostname:  %s
+#
+[cudaMemPoolCreate failed]
+The call to cudaMemPoolCreate failed. This is highly unusual and should
+not happen.  Please report this error to the Open MPI developers.
+  Hostname:                         %s
+  cudaMemPoolCreate return value:   %d
+Check the cuda_runtime_api.h file for what the return value means.

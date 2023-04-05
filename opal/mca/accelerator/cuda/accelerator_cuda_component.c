@@ -35,11 +35,15 @@
 
 /* Define global variables, used in accelerator_cuda.c */
 CUstream opal_accelerator_cuda_memcpy_stream = NULL;
+CUstream opal_accelerator_cuda_alloc_stream = NULL;
+opal_accelerator_cuda_stream_t opal_accelerator_cuda_default_stream;
 opal_mutex_t opal_accelerator_cuda_stream_lock = {0};
 
 /* Initialization lock for delayed cuda initialization */
 static opal_mutex_t accelerator_cuda_init_lock;
 static bool accelerator_cuda_init_complete = false;
+
+cudaMemPool_t *opal_accelerator_cuda_mempool;
 
 #define STRINGIFY2(x) #x
 #define STRINGIFY(x)  STRINGIFY2(x)
@@ -122,6 +126,7 @@ static int accelerator_cuda_component_register(void)
 int opal_accelerator_cuda_delayed_init()
 {
     int result = OPAL_SUCCESS;
+    int prio_lo, prio_hi;
     CUcontext cuContext;
 
     /* Double checked locking to avoid having to
@@ -159,13 +164,39 @@ int opal_accelerator_cuda_delayed_init()
         goto out;
     }
 
+    /* Create stream for use in cuMemcpyAsync synchronous copies */
+    result = cuStreamCreate(&opal_accelerator_cuda_alloc_stream, 0);
+    if (OPAL_UNLIKELY(result != CUDA_SUCCESS)) {
+        opal_show_help("help-accelerator-cuda.txt", "cuStreamCreate failed", true,
+                       OPAL_PROC_MY_HOSTNAME, result);
+        goto out;
+    }
+
+    /* Create a default stream to be used by various components.
+     * We try to create a high-priority stream and fall back to a regular stream.
+     */
+    CUstream *default_stream = malloc(sizeof(CUstream));
+    result = cuCtxGetStreamPriorityRange(&prio_lo, &prio_hi);
+    if (CUDA_SUCCESS != result) {
+        result = cuStreamCreateWithPriority(default_stream,
+                                            CU_STREAM_NON_BLOCKING, prio_hi);
+    } else {
+        result = cuStreamCreate(default_stream, 0);
+    }
+    if (OPAL_UNLIKELY(result != CUDA_SUCCESS)) {
+        opal_show_help("help-accelerator-cuda.txt", "cuStreamCreate failed", true,
+                       OPAL_PROC_MY_HOSTNAME, result);
+        goto out;
+    }
+    OBJ_CONSTRUCT(&opal_accelerator_cuda_default_stream, opal_accelerator_cuda_stream_t);
+    opal_accelerator_cuda_default_stream.base.stream = default_stream;
+
     result = cuMemHostRegister(&checkmem, sizeof(int), 0);
     if (result != CUDA_SUCCESS) {
         /* If registering the memory fails, print a message and continue.
          * This is not a fatal error. */
         opal_show_help("help-accelerator-cuda.txt", "cuMemHostRegister during init failed", true,
                        &checkmem, sizeof(int), OPAL_PROC_MY_HOSTNAME, result, "checkmem");
-
     } else {
         opal_output_verbose(20, opal_accelerator_base_framework.framework_output,
                             "CUDA: cuMemHostRegister OK on test region");
@@ -216,8 +247,50 @@ static void accelerator_cuda_finalize(opal_accelerator_base_module_t* module)
     if ((NULL != opal_accelerator_cuda_memcpy_stream) && ctx_ok) {
         cuStreamDestroy(opal_accelerator_cuda_memcpy_stream);
     }
+    if ((NULL != opal_accelerator_cuda_alloc_stream) && ctx_ok) {
+        cuStreamDestroy(opal_accelerator_cuda_alloc_stream);
+    }
+    if ((NULL != opal_accelerator_cuda_default_stream.base.stream) && ctx_ok) {
+        cuStreamDestroy(opal_accelerator_cuda_default_stream.base.stream);
+    }
+
 
     OBJ_DESTRUCT(&opal_accelerator_cuda_stream_lock);
     OBJ_DESTRUCT(&accelerator_cuda_init_lock);
     return;
 }
+
+#if 0
+static int opal_acclerator_cuda_init_mempools() {
+    cudaError_t result;
+    int num_devices;
+    cuDeviceGetCount(&num_devices);
+    if (num_devices == 0) {
+        return OPAL_SUCCESS;
+    }
+    opal_accelerator_cuda_mempools = malloc(num_devices*sizeof(*mp));
+    cudaMemPoolProps pp;
+    memset(&pp, 0, sizeof(pp));
+    pp.allocType = cudaMemAllocationTypePinned;
+    pp.handleTypes = cudaMemHandleTypeNone;
+    pp.location.id = devidx;
+    pp.location.type = cudaMemLocationTypeDevice;
+    for (int i = 0; i < num_devices; ++i) {
+
+    result = cudaMemPoolCreate(mp, &pp);
+    if (OPAL_UNLIKELY(CUDA_SUCCESS != result)) {
+        opal_show_help("help-accelerator-cuda.txt", "cudaMemPoolCreate failed", true,
+                        OPAL_PROC_MY_HOSTNAME, result);
+        return OPAL_ERROR;
+    }
+
+    }
+    *mpool = OBJ_NEW(opal_accelerator_cuda_mempool_t);
+    if (NULL == *mpool) {
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+    mpool->mpool = mp;
+
+    return OPAL_SUCCESS;
+}
+#endif
