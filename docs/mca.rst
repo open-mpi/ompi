@@ -68,6 +68,8 @@ The following *projects* exist in Open MPI |ompi_ver|:
           See :ref:`the role of PMIx and PRRTE
           <label-running-role-of-pmix-and-prte>` for more information.
 
+.. _label-mca-frameworks:
+
 Frameworks
 ^^^^^^^^^^
 
@@ -94,6 +96,8 @@ between different versions of Open MPI.  You can use the
 :ref:`ompi_info(1) <man1-ompi_info>` command to see the full list of
 frameworks that are included in Open MPI |ompi_ver|.
 
+.. _label-mca-components:
+
 Components
 ^^^^^^^^^^
 
@@ -110,6 +114,8 @@ MPI.  Open MPI's code base includes support for many components, but
 not all of them may be present or available on your system.  You can
 use the :ref:`ompi_info(1) <man1-ompi_info>` command to see what
 components are included in Open MPI |ompi_ver| on your system.
+
+.. _label-mca-modules:
 
 Modules
 ^^^^^^^

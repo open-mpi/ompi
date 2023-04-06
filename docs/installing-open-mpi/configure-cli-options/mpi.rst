@@ -75,7 +75,10 @@ MPI API behaviors that can be used with ``configure``:
   component
 
 * ``--disable-io-romio``:
-  Disable the ROMIO MPI-IO component
+  Disable the :ref:`ROMIO MPI-IO <label-romio-reference>` component
+  from being compiled. This is a deprecated mechanism; it is effectively
+  the same as adding ``io-romio341`` to the list of items passed to
+  ``--enable-mca-no-build``.
 
 * ``--with-io-romio-flags=FLAGS``:
   Pass ``FLAGS`` to the ROMIO distribution configuration script.  This
