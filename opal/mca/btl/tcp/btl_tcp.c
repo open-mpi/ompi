@@ -250,7 +250,7 @@ mca_btl_base_descriptor_t *mca_btl_tcp_prepare_src(struct mca_btl_base_module_t 
     frag->segments[0].seg_len = reserve;
 
     frag->base.des_segment_count = 1;
-    if (opal_convertor_need_buffers(convertor)) {
+    if (opal_convertor_need_buffers(convertor) || opal_convertor_on_device(convertor)) {
 
         if (max_data + reserve > frag->size) {
             max_data = frag->size - reserve;

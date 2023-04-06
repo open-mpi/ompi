@@ -533,7 +533,9 @@ mca_btl_base_descriptor_t *mca_btl_portals4_prepare_src(struct mca_btl_base_modu
                          ((struct mca_btl_portals4_module_t *) btl_base)->interface_num,
                          reserve, *size, max_data));
 
-    if (0 != reserve || 0 != opal_convertor_need_buffers(convertor)) {
+    if (0 != reserve ||
+        0 != opal_convertor_need_buffers(convertor) ||
+        0 != opal_convertor_on_device(convertor)) {
         OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output,
                              "mca_btl_portals4_prepare_src NEED BUFFERS or RESERVE\n"));
         frag = (mca_btl_portals4_frag_t *) mca_btl_portals4_alloc(btl_base, peer, MCA_BTL_NO_ORDER,
