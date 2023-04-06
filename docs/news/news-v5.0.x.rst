@@ -4,9 +4,9 @@ Open MPI v5.0.x series
 This file contains all the NEWS updates for the Open MPI v5.0.x
 series, in reverse chronological order.
 
-Open MPI version 5.0.0rc10
+Open MPI version 5.0.0rc11
 --------------------------
-:Date: 2 February 2023
+:Date: 6 April 2023
 
 .. admonition:: MPIR API has been removed
    :class: warning
@@ -40,32 +40,28 @@ Open MPI version 5.0.0rc10
       libraries, rather than linked into the Open MPI core libraries.
 
 
-- Changes since rc9:
+- Changes since rc10:
 
-  - coll/ucc: Added support for Scatter and Iscatter collectives.
-  - Added cache bypass mechanism to the ``OFI`` BTL. This fixes conflicts
-    with Libfabric, which has its own registration cache. This addes a bypass
-    flag which can be used for providers known to have their own registration cache.
-  - common/ompio: implement pipelined read and write operation.
-    This new new code path shows significant performance improvements for reading/writing
-    device buffers compared to the previous implementation, and reduces the memory
-    footprint of ``OMPIO`` by allocating smaller temporary buffers.
-  - 32-bit builds have been disabled. Building Open MPI in a 32-bit environment
-    is no longer supported.
-  - MPI-4: MPI_Info_get() and MPI_Infi_get_valuelen() are now deprecated.
-  - MPI-4: Issue a deprecation warning when MPI_Cancel() is called for a non-blocking send request.
-  - Fixed various bugs encountered when running MPI under a debugger.
-  - Cleaned up a number of memory leaks.
-  - Cleaned up global symbol pollution that was leaking out of libmpi.
-  - Removed opal_list_insert(), it was buggy and not used.
-    Thanks to Jinyuan Wang for the contribution.
+  - The ``HAN`` collective is now enabled by default. This replaces ``tuned`` as the
+    default out-of-the-box collective component for Open MPI.
+  - Various fixes to make v5.0 ABI compatible with v4.1 compiled programs.
+  - Fixed support for ``OFI`` on RHEL7 and Libfabric < 1.9.
+  - Added the mca option ``--mca ompi_pml_base_check_pml 0|1`` to skip
+    ``PML`` transport validation across processes. This can speed-up launch
+    times for users who know their cluster will always choose the same
+    ``PML`` transport. Default: verify pml selections.
+  - Use Libfabric 1.18 if available when using the ``OFI`` transport.
+  - Implemented ``ompi_info`` color coding.
+  - Added ``MPI_SESSION_NULL`` to Fortran bindings. Thanks to Jan Fecht for the fix.
+  - Fixed a bug where CUDA-aware MPI is broken when using the ``OB1`` transport.
   - Many other bug fixes and cleanups.
-  - Various documentation updates.
+  - Many documentation updates.
+    Thanks to Nick Papior for the contributions.
 
 - All other notable updates for v5.0.0:
 
-  - Updated PMIx to the ``v4.2`` branch - current hash: ``852d284``.
-  - Updated PRRTE to the ``v3.0`` branch - current hash: ``facdb35``.
+  - Updated PMIx to the ``v4.2`` branch - current hash: ``7d45393``.
+  - Updated PRRTE to the ``v3.0`` branch - current hash: `20ee752`.
 
   - New Features:
 
@@ -93,6 +89,7 @@ Open MPI version 5.0.0rc10
     - Added support for MPI minimum alignment key to the one-sided ``RDMA`` component.
     - Add ability to detect patched memory to ``memory_patcher``. Thanks
       to Rich Welch for the contribution.
+    - coll/ucc: Added support for Scatter and Iscatter collectives.
 
   - MPI-4.0 updates and additions:
 
@@ -111,6 +108,8 @@ Open MPI version 5.0.0rc10
     - Droped unknown/ignored info keys on communicators, files,
       and windows.
     - Initial implementations of ``MPI_COMM_TYPE_HW_GUIDED`` and ``MPI_COMM_TYPE_HW_GUIDED`` added.
+    - ``MPI_Info_get()`` and ``MPI_Infi_get_valuelen()`` are now deprecated.
+    - Issue a deprecation warning when ``MPI_Cancel()`` is called for a non-blocking send request.
 
   - Transport updates and improvements
 
@@ -131,7 +130,12 @@ Open MPI version 5.0.0rc10
       interface matching between peers in order to improve ``MPI_Init()`` wireup
       performance.
 
-    - Changes to the BTL ``OFI`` component to better support the HPE SS11 network.
+    - OFI
+
+      - Improved support for the HPE SS11 network.
+      - Added cache bypass mechanism. This fixes conflicts
+        with Libfabric, which has its own registration cache. This addes a bypass
+        flag which can be used for providers known to have their own registration cache.
 
     - Shared Memory:
 
@@ -164,6 +168,7 @@ Open MPI version 5.0.0rc10
       This library was incomplete and unmaintained. If needed, it
       is available in the v4/v4.1 series.
     - The rankfile format no longer supports physical processor locations. Only logical processor locations are supported.
+    - 32-bit builds have been disabled. Building Open MPI in a 32-bit environment is no longer supported.
 
   - HWLOC updates:
 
@@ -214,6 +219,10 @@ Open MPI version 5.0.0rc10
   - Other updates and bug fixes:
 
     - Updated Open MPI to use ``ROMIO`` v3.4.1.
+    - common/ompio: implement pipelined read and write operation.
+      This new new code path shows significant performance improvements for reading/writing
+      device buffers compared to the previous implementation, and reduces the memory
+      footprint of ``OMPIO`` by allocating smaller temporary buffers.
     - Fixed Fortran-8-byte-INTEGER vs. C-4-byte-int issue in the ``mpi_f08``
       MPI Fortran bindings module. Thanks to @ahaichen for reporting the bug.
     - Add missing ``MPI_Status`` conversion subroutines:
