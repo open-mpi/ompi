@@ -191,6 +191,11 @@ int opal_accelerator_cuda_delayed_init()
     OBJ_CONSTRUCT(&opal_accelerator_cuda_default_stream, opal_accelerator_cuda_stream_t);
     opal_accelerator_cuda_default_stream.base.stream = default_stream;
 
+    cudaMemPool_t mpool;
+    cuuint64_t threshold =  1*1024*1024;
+    cudaDeviceGetDefaultMemPool(&mpool, 0);
+    cudaMemPoolSetAttribute(mpool, cudaMemPoolAttrReleaseThreshold, &threshold);
+
     result = cuMemHostRegister(&checkmem, sizeof(int), 0);
     if (result != CUDA_SUCCESS) {
         /* If registering the memory fails, print a message and continue.
