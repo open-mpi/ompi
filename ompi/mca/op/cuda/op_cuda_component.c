@@ -122,7 +122,7 @@ cuda_component_init_query(bool enable_progress_threads,
     int num_devices;
     int rc;
     int prio_lo, prio_hi;
-    memset(&mca_op_cuda_component, 0, sizeof(mca_op_cuda_component));
+    //memset(&mca_op_cuda_component, 0, sizeof(mca_op_cuda_component));
     cuInit(0);
     CHECK(cuDeviceGetCount, (&num_devices));
     mca_op_cuda_component.cu_num_devices = num_devices;
@@ -185,6 +185,5 @@ cuda_component_op_query(struct ompi_op_t *op, int *priority)
         }
     }
     *priority = 50;
-    printf("op cuda_component_query\n");
     return (ompi_op_base_module_1_0_0_t *) module;
 }
