@@ -1,4 +1,4 @@
-.. _label-building-dynamic-loading-libmpi:
+.. _label-running-dynamic-loading-libmpi:
 
 Dynamically loading ``libmpi`` at runtime
 =========================================
@@ -36,6 +36,9 @@ operating systems use other suffixes, such as ``.so``):
 
    mpi.MPI_Finalize()
 
+.. note:: The above is just an example showing dynamic loading.  If
+          you want to use MPI in Python, you are much better off using
+          `MPI4Py <https://mpi4py.readthedocs.io/en/stable/>`_.
+
 Other scripting languages should have similar options when dynamically
 loading shared libraries.
-

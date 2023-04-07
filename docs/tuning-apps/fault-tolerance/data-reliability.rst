@@ -31,5 +31,5 @@ these rare environments where reliability was an issue; and users were
 willing to tolerate slightly slower applications in order to guarantee
 that their job does not crash (or worse, produce wrong answers).
 
-The ``dr`` component has been
-deprecated, but is still available in some past releases.
+.. note:: The ``dr`` component has been removed from current releases
+          of Open MPI, but is still available in older releases.

@@ -15,20 +15,21 @@ but they can generally be broken down into two categories:
    number of nodes).
 
 Similar to many MPI implementations, Open MPI provides the commands
-``mpirun`` and ``mpiexec`` to launch MPI jobs.  This section deals
-with using these commands.
+:ref:`mpirun(1) <man1-mpirun>` and :ref:`mpiexec(1) <man1-mpiexec>` to
+launch MPI jobs.  This section deals with using these commands.
 
-Note, however, that in Open MPI, ``mpirun`` and ``mpiexec`` are
-exactly identical.  Specifically, they are symbolic links to a common
-back-end launcher command.
+Note, however, that in Open MPI, :ref:`mpirun(1) <man1-mpirun>` and
+:ref:`mpiexec(1) <man1-mpiexec>` are exactly identical.  Specifically,
+they are symbolic links to a common back-end launcher command.
 
 .. note:: The name of the back-end launcher command has changed over
           time (it used to be ``orterun``, it is now ``prte``).  This
           back-end name is largely irrelevant to the user.
 
-The rest of this section usually refers only to ``mpirun``, even though
-the same discussions also apply to ``mpiexec`` (because they are both,
-in fact, the same command).
+The rest of this section usually refers only to :ref:`mpirun(1)
+<man1-mpirun>`, even though the same discussions also apply to
+:ref:`mpiexec(1) <man1-mpiexec>` (because they are both, in fact, the
+same command).
 
 
 .. toctree::
@@ -48,4 +49,3 @@ in fact, the same command).
 
    unusual
    troubleshooting
-

@@ -17,6 +17,7 @@ Building and installing Open MPI
    configure-output-summary
    make-targets
    installation-location
+   custom-components
    updating
    packagers
    sysadmins

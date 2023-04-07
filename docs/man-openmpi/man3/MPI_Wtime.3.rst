@@ -86,15 +86,15 @@ value in Open MPI, as the clocks are not guaranteed to be synchronized.
 This function is intended to be a high-resolution, elapsed (or wall)
 clock. See :ref:`MPI_Wtick` to determine the resolution of :ref:`MPI_Wtime`.
 
-On POSIX platforms, this function may utilize a timer that is cheaper to
-invoke than the gettimeofday() system call, but will fall back to
+On POSIX platforms, this function may utilize a timer that is cheaper
+to invoke than the gettimeofday() system call, but will fall back to
 gettimeofday() if a cheap high-resolution timer is not available. The
-ompi_info command can be consulted to see if Open MPI supports a native
-high-resolution timer on your platform; see the value for ":ref:`MPI_WTIME`
-support" (or "options:mpi-wtime" when viewing the parsable output). If
-this value is "native", a method that is likely to be cheaper than
-gettimeofday() will be used to obtain the time when :ref:`MPI_Wtime` is
-invoked.
+:ref:`ompi_info(1) <man1-ompi_info>` command can be consulted to see if
+Open MPI supports a native high-resolution timer on your platform; see
+the value for ":ref:`MPI_WTIME` support" (or "options:mpi-wtime" when
+viewing the parsable output). If this value is "native", a method that
+is likely to be cheaper than gettimeofday() will be used to obtain the
+time when :ref:`MPI_Wtime` is invoked.
 
 For example, on platforms that support it, the *clock_gettime()*
 function will be used to obtain a monotonic clock value with whatever

@@ -144,7 +144,7 @@ in the following situations:
 #. When you login to non-interactive shells on remote nodes
 
    If your non-interactive remote environment is not configured
-   properly, executables like ``mpirun`` will not function properly,
+   properly, executables like :ref:`mpirun(1) <man1-mpirun>` will not function properly,
    and it can be somewhat confusing to figure out.
 
    The startup files in question here are the ones that are
@@ -204,28 +204,28 @@ startup files to point to one MPI implementation would be problematic.
 
 In such cases, you have two options:
 
-#. Use ``mpirun``'s ``--prefix`` command line option (described
-   below).
+#. Use the :ref:`mpirun(1) <man1-mpirun>` ``--prefix`` command line
+   option (described below).
 #. Modify the wrapper compilers to include directives to include
    run-time search locations for the Open MPI libraries.
 
-``mpirun``'s ``--prefix`` command line option takes as an argument the
+:ref:`mpirun(1) <man1-mpirun>`'s ``--prefix`` command line option takes as an argument the
 top-level directory where Open MPI was installed.  While relative
 directory names are possible, they can become ambiguous depending on
 the job launcher used; using absolute directory names is strongly
 recommended.
 
 For example, say that Open MPI was installed into
-``/opt/openmpi-$ver_current``.  You would use the ``--prefix`` option
+``/opt/openmpi-VERSION``.  You would use the ``--prefix`` option
 thusly:
 
 .. code-block::
 
-   shell$ mpirun --prefix /opt/openmpi-$ver_current -n 4 a.out
+   shell$ mpirun --prefix /opt/openmpi-VERSION -n 4 a.out
 
 This will prefix the ``PATH`` and ``LD_LIBRARY_PATH`` on both the
-local and remote hosts with ``/opt/openmpi-$ver_current/bin`` and
-``/opt/openmpi-$ver_current/lib``, respectively.  This is *usually*
+local and remote hosts with ``/opt/openmpi-VERSION/bin`` and
+``/opt/openmpi-VERSION/lib``, respectively.  This is *usually*
 unnecessary when using resource managers to launch jobs (e.g., Slurm,
 Torque, etc.) because they tend to copy the entire local environment
 |mdash| to include the ``PATH`` and ``LD_LIBRARY_PATH`` |mdash| to
@@ -237,21 +237,20 @@ The ``--prefix`` option is therefore usually most useful in
 
 It is possible to make this the default behavior by passing to
 ``configure`` the flag ``--enable-mpirun-prefix-by-default``.  This
-will make ``mpirun`` behave exactly the same as ``mpirun --prefix
-$prefix ...``, where ``$prefix`` is the value given to ``--prefix``
-in ``configure``.
+will make :ref:`mpirun(1) <man1-mpirun>` behave exactly the same as
+``mpirun --prefix $prefix ...``, where ``$prefix`` is the value given
+to ``--prefix`` in ``configure``.
 
-Finally, note that specifying the absolute pathname to ``mpirun`` is
-equivalent to using the ``--prefix`` argument.  For example, the
-following is equivalent to the above command line that uses
-``--prefix``:
+Finally, note that specifying the absolute pathname to :ref:`mpirun(1)
+<man1-mpirun>` is equivalent to using the ``--prefix`` argument.  For
+example, the following is equivalent to the above command line that
+uses ``--prefix``:
 
 .. code-block::
 
-   shell$ /opt/openmpi-$ver_current/bin/mpirun -n 4 a.out
+   shell$ /opt/openmpi-VERSION/bin/mpirun -n 4 a.out
 
 .. error:: TODO Josh H points out that we might also want to mention
            ``OMPIHOME`` for PRRTE's ``.ini`` file here.  Leaving this
            as a future to-do item, since PRRTE's ``.ini`` file support
            does not exist yet.
-

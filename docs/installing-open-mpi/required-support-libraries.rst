@@ -234,8 +234,9 @@ on Mac OS because:
    tarballs).
 #. In MacOS, it is common for `Homebrew <https://brew.sh/>`_ or
    `MacPorts <https://www.macports.org/>`_ to install:
-   * hwloc and/or Libevent
-   * gcc and gfortran
+   
+   * `Hardware Locality <https://www.open-mpi.org/projects/hwloc/>`_
+   * `Libevent <https://libevent.org/>`_
 
 For example, as of July 2019, Homebrew:
 

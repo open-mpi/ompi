@@ -20,13 +20,16 @@ place the Open MPI libraries on networked file systems:
 
 * While dynamic shared objects ("DSO") are more flexible, you
   definitely do *not* want to use them when the Open MPI libraries
-  will be mounted on a network file system! Doing so will lead to
-  significant network traffic and delayed start times, especially on
-  clusters with a large number of nodes. Instead, be sure to
-  :ref:`configure your build <building-ompi-cli-options-diable-dlopen-label>`
-  with ``--disable-dlopen``.
-  This will include the DSO's in
-  the main libraries, resulting in much faster startup times.
+  will be mounted on a network file system that is shared to a large
+  cluster!  Doing so will lead to significant network traffic and
+  delayed start times, especially on clusters with a large number of
+  nodes.  Instead, be sure to :ref:`configure your build
+  <building-ompi-cli-options-diable-dlopen-label>` with
+  ``--disable-dlopen``.  This will include the DSO's in the main
+  libraries, resulting in much faster startup times.
+
+  .. note:: As of the Open MPI v5.0.x series, ``--disable-dlopen`` is
+            now the default.
 
 * Many networked file systems use automount for user level
   directories, as well as for some locally administered system
@@ -51,4 +54,3 @@ libraries. Shared libraries will save memory when operating multiple
 processes per node, especially on clusters with high numbers of cores
 on a node, but can also take longer to launch on networked file
 systems.
-

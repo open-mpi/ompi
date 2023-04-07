@@ -12,4 +12,3 @@ installing and tuning Open MPI on large clusters.
    libraries
    reduce-wireup-time
    static-cluster-config
-

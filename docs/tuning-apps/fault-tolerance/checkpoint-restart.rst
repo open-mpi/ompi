@@ -17,12 +17,11 @@ Ethernet, and InfiniBand.
 
 The implementation introduced a series of new frameworks and
 components designed to support a variety of checkpoint and restart
-techniques. This allows us to support the methods described above
+techniques. This enabled support for the methods described above
 (application-directed, BLCR, etc.) as well as other kinds of
 checkpoint/restart systems (e.g., Condor, libckpt) and protocols
 (e.g., uncoordinated, message induced).
 
-.. note:: The
-   checkpoint/restart support was last released as part of the v1.6
-   series.
-
+.. note:: The checkpoint/restart support was last included as part of
+          the v1.6 series.  It was removed from Open MPI after failing
+          to gain adoption and lack of maintenance.

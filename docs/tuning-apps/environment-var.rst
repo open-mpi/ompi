@@ -14,8 +14,8 @@ defined on every MPI process:
   this node within its job. For example, if four processes in a job
   share a node, they will each be given a local rank ranging from 0 to
   3.
-* ``OMPI_UNIVERSE_SIZE``: the number of process slots allocated to
-  this job. Note that this may be different than the number of
-  processes in the job.
+* ``OMPI_UNIVERSE_SIZE``: the number of :ref:`process slots
+  <running-scheduling-slots-label>` allocated to this job. Note that
+  this may be different than the number of processes in the job.
 * ``OMPI_COMM_WORLD_NODE_RANK``: the relative rank of this process on
   this node looking across *all* jobs.
