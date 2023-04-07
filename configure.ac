@@ -1070,9 +1070,9 @@ AS_IF([test -z "$LEX" || \
 # Setup HTML and man page processing
 #
 
+dnl Note that we have to double escape the URL below
+dnl so that the # it contains doesn't confuse the Autotools
 OAC_SETUP_SPHINX([$srcdir/docs/_build/man/MPI_T.3],
-                 dnl Note that we have to double escape the string below
-                 dnl so that the # it contains doesn't confuse the Autotools
                  [[https://docs.open-mpi.org/en/main/developers/prerequisites.html#sphinx-and-therefore-python]])
 
 #
