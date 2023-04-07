@@ -8,10 +8,13 @@ components that can be tuned to affect behavior at run time.
    :maxdepth: 1
 
    environment-var
-   custom-components
    networking/index
+   multithreaded
+   dynamic-loading
+   fork-system-popen
    fault-tolerance/index
    large-clusters/index
    affinity
    mpi-io/index
    benchmarking
+   heterogeneity

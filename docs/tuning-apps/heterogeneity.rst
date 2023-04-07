@@ -1,4 +1,4 @@
-.. _label-building-heterogeneous-apps:
+.. _label-heterogeneous-mpi-apps:
 
 Building heterogeneous MPI applications
 =======================================
@@ -19,4 +19,3 @@ into disrepair and is currently known to be broken in this release of
 Open MPI.
 
 :doc:`Contributions to fix it would be welcome! </contributing>`
-

@@ -368,7 +368,7 @@ precedence.
 .. note:: Keep in mind that, just like components, these parameter
           files are *only* relevant where they are "visible"
           (:ref:`see this FAQ entry
-          <tuning-custom-components>`).  Specifically,
+          <installing-custom-components-label>`).  Specifically,
           Open MPI does not read all the values from these files
           during startup and then send them to all nodes in the job.
           Instead, the files are read on each node during each
@@ -412,11 +412,11 @@ This raises an important question: since MCA parameters can be set from a
 file, the environment, the command line, and even internally within Open MPI,
 how do I actually know what MCA params my job is seeing, and their value?
 
-One way, of course, is to use the ``ompi_info`` command, which is
-documented elsewhere (you can use ``man ompi_info``, or ``ompi_info
---help`` to get more info on this command). However, this still
-doesn't fully answer the question since ``ompi_info`` isn't an MPI
-process.
+One way, of course, is to use the :ref:`ompi_info(1) <man1-ompi_info>`
+command, which is documented elsewhere (you can use ``man ompi_info``,
+or ``ompi_info --help`` to get more info on this command). However,
+this still doesn't fully answer the question since ``ompi_info`` isn't
+an MPI process.
 
 To help relieve this problem, Open MPI provides the MCA parameter
 ``mpi_show_mca_params`` that directs the ``MPI_COMM_WORLD`` rank 0

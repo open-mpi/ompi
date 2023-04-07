@@ -131,6 +131,9 @@ Open MPI installation, Open MPI will
 simply open the new plugin at run-time |mdash| your applications do not need
 to be recompiled or re-linked.
 
+:ref:`See this section <installing-custom-components-label>` for more
+details.
+
 Upgrading network hardware with a global Open MPI installation
 --------------------------------------------------------------
 
@@ -166,4 +169,3 @@ per-user basis in two important ways:
   experiment with new components without destabilizing Open MPI for the rest
   of the users on the system.  Or power users can download 3rd party components
   (perhaps even research-quality components) without affecting other users.
-

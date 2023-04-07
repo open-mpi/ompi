@@ -31,4 +31,3 @@ This parameter can be included in the default MCA parameter file,
 placed in the user's environment, or added to the ``mpirun`` command
 line.  See :ref:`this FAQ entry <label-running-setting-mca-param-values>`
 for more details on how to set MCA parameters.
-

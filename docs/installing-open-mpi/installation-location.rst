@@ -16,8 +16,8 @@ nodes without using a password, etc.).
 Regardless of whether Open MPI is installed on a shared / networked
 filesystem or independently on each node, it is usually easiest if
 Open MPI is available in the same filesystem path on every node.
-For example, if you install Open MPI to ``/opt/openmpi-$ver_current`` on
-one node, ensure that it is available in ``/opt/openmpi-$ver_current``
+For example, if you install Open MPI to ``/opt/openmpi-|ompi_ver|`` on
+one node, ensure that it is available in ``/opt/openmpi-|ompi_ver|``
 on *all* nodes.
 
 .. important:: For simplicity, the Open MPI team *strongly* recommends
@@ -313,5 +313,3 @@ error) in some cases, and definitely does not work in other cases.
 There's unfortunately little that we can do about this |mdash| it's a
 compiler compatibility issue, and one that compiler authors have
 little incentive to resolve.
-
-

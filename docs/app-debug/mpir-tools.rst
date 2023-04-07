@@ -13,27 +13,29 @@ This specification has been replaced by the PMIx tools API that is part of the
 `OpenPMIx project <https://openpmix.github.io/>`_.
 
 Debuggers and tools which use the legacy MPIR specification can
-continue functioning correctly with the *MPIR shim module* described
-in this section.
+continue functioning correctly with the `MPIR shim module
+<https://github.com/hpc/mpir-to-pmix-guide>`_ described in this
+section.
 
 Obtaining Application Process Mapping Information
 -------------------------------------------------
 
-The *MPIR shim module* is a stand-alone module which can be used by
-debuggers and tools that still utilize the legacy MPIR interface to
-attach to parallel MPI applications.  The debugger or tool launches
-the shim module as an intermediate process between it and the
-application's :ref:`mpirun(1) <man1-mpirun>` command.
+The `MPIR shim module <https://github.com/hpc/mpir-to-pmix-guide>`_ is
+a stand-alone module which can be used by debuggers and tools that
+still utilize the legacy MPIR interface to attach to parallel MPI
+applications.  The debugger or tool launches the shim module as an
+intermediate process between it and the application's :ref:`mpirun(1)
+<man1-mpirun>` command.
 
 The MPIR shim module implements the ``MPIR_Breakpoint`` function, as a
 hook where debuggers and tools can set a breakpoint to read the MPIR
 processing mapping when it is available.
 
 Instructions for use of the shim module are available at
-`<https://github.com/hpc/mpir-to-pmix-guide/blob/master/README.md>`_.
+https://github.com/hpc/mpir-to-pmix-guide/blob/master/README.md.
 
-You may need to build this module before you can use it. The source code for this
-module can be downloaded from
+You may need to build this shim module before you can use it. The
+source code for this module can be downloaded from
 `MPIR to PMIx Shim repository <https://github.com/hpc/mpir-to-pmix-guide>`_.
 
 Once you have the MPIR shim module built and installed, follow the

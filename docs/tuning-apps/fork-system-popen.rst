@@ -13,4 +13,4 @@ limited to):
 Users are encouraged to avoid invoking these operations in their MPI applications
 as they may cause issues with Open MPI's operation or the operation of underlying
 components, such as `UCX <https://openucx.org/>`_
-and `libfabric <https://ofiwg.github.io/libfabric/>`_ .
+and `Libfabric <https://libfabric.org/>`_.

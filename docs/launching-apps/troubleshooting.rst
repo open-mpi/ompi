@@ -224,8 +224,8 @@ them across multiple hosts, try the following:
    .. code-block::
 
       shell$ mpirun --host remotehost,otherhost hello_c
-      Hello, world, I am 0 of 1, (Open MPI v$ver_current, package: Open MPI jsquyres@example.com Distribution, ident: $ver_current, DATE)
-      Hello, world, I am 1 of 1, (Open MPI v$ver_current, package: Open MPI jsquyres@example.com Distribution, ident: $ver_current, DATE)
+      Hello, world, I am 0 of 1, (Open MPI VERSION, package: Open MPI jsquyres@example.com Distribution, ident: VERSION, DATE)
+      Hello, world, I am 1 of 1, (Open MPI VERSION, package: Open MPI jsquyres@example.com Distribution, ident: VERSION, DATE)
 
    If you are unable to run simple, non-communication MPI jobs, this
    can indicate that your Open MPI installation is unable to
@@ -265,5 +265,3 @@ them across multiple hosts, try the following:
    .. code-block::
 
       ompi_info --level 3 --param btl tcp
-
-

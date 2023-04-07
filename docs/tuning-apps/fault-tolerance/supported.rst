@@ -5,10 +5,14 @@ Open MPI is a vehicle for research in fault tolerance and over the years
 provided support for a wide range of resilience techniques:
 
 * Current
-    * User Level Fault Mitigation techniques similar to
-      those defined in the context of the MPI Forum (this is the closest match when migrating from FT-MPI);  :ref:`See its documentation section <ulfm-label>`.
+  
+    * User Level Fault Mitigation techniques similar to those defined
+      in the context of the MPI Forum (this is the closest match when
+      migrating from FT-MPI); :ref:`see its documentation section
+      <ulfm-label>`.
 
 * Deprecated / no longer available
+  
     * Coordinated and uncoordinated process checkpoint and
       restart. Similar to those implemented in LAM/MPI and MPICH-V,
       respectively.
@@ -26,6 +30,7 @@ standardization body.
 
 For information on the Fault Tolerant MPI prototype in Open MPI see the
 links below:
+
 *  :ref:`Open MPI's ULFM documentation section <ulfm-label>`
 * `MPI Forum's Fault Tolerance Working Group <https://github.com/mpiwg-ft/ft-issues/wiki>`_
 * `Information, examples, and support <https://fault-tolerance.org/>`_
@@ -35,5 +40,3 @@ Support for other types of resilience (e.g., :ref:`data reliability <ft-data-rel
 years due to lack of adoption and lack of maintenance. If you are interested
 in doing some archeological work, traces are still available on the main
 repository.
-
-

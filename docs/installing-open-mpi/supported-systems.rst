@@ -65,4 +65,3 @@ resources.
 
 That being said, :doc:`contributions are always welcome!
 </contributing>`.
-

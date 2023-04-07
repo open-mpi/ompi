@@ -1,6 +1,8 @@
 Static cluster configurations
 =============================
 
+.. error:: This entire section needs to be checked.
+
 Clusters rarely change from day-to-day, and large clusters rarely
 change at all.  If you know your cluster's configuration, there are
 several steps you can take to both reduce Open MPI's memory footprint
@@ -39,4 +41,3 @@ This causes OMPI to not open the other components during startup, but
 allows users to override this on their command line or in their
 environment so no functionality is lost |mdash| you just save some
 memory and time.
-

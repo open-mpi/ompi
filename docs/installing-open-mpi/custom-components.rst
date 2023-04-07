@@ -1,4 +1,4 @@
-.. _tuning-custom-components:
+.. _installing-custom-components-label:
 
 Installing custom components
 ============================
@@ -31,4 +31,3 @@ run MPI jobs, then you need to ensure that it is visible on all nodes
 filesystem installs, or by installing them in a directory that is
 visible to all nodes via a networked filesystem).  Open MPI does not
 automatically send components to remote nodes when MPI jobs are run.
-

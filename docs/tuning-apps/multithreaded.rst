@@ -1,7 +1,7 @@
-.. _label-building-multithreaded-apps:
+.. _label-running-multithreaded-apps:
 
-Building multi-threaded MPI applications
-========================================
+Running multi-threaded MPI applications
+=======================================
 
 Support for ``MPI_THREAD_MULTIPLE`` (i.e., multiple threads
 executing within the MPI library) and asynchronous message passing

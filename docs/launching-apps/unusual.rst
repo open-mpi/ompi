@@ -6,10 +6,11 @@ This section describes some of the less common kinds of programs that can
 be executed.
 
 
-Running non-MPI programs with ``mpirun``
-----------------------------------------
+Running non-MPI programs with :ref:`mpirun(1) <man1-mpirun>`
+------------------------------------------------------------
 
-Non-MPI programs can be launched with ``mpirun``, for example:
+Non-MPI programs can be launched with :ref:`mpirun(1) <man1-mpirun>`,
+for example:
 
 .. code-block::
 
@@ -18,7 +19,8 @@ Non-MPI programs can be launched with ``mpirun``, for example:
 This will launch a copy of the Unix command ``uptime`` on the hosts ``a``
 and ``b``.
 
-``mpirun`` works equally well for MPI and non-MPI applications.
+:ref:`mpirun(1) <man1-mpirun>` works equally well for MPI and non-MPI
+applications.
 
 Running GUI applications
 ------------------------
@@ -60,8 +62,8 @@ from the nodes where your application will be running:
 through ``compute4``).
 
 Other methods are available, but they involve sophisticated X
-forwarding through ``mpirun`` and are generally more complicated than
-desirable.
+forwarding through :ref:`mpirun(1) <man1-mpirun>` and are generally
+more complicated than desirable.
 
 Running curses-based applications
 ---------------------------------
@@ -91,7 +93,7 @@ In MPI terms, this will be a single ``MPI_COMM_WORLD``, but the
 ``a.out`` processes will be ranks 0 and 1 in ``MPI_COMM_WORLD``, while
 the ``b.out`` processes will be ranks 2 and 3 in ``MPI_COMM_WORLD``.
 
-``mpirun`` can also accept a parallel application
+:ref:`mpirun(1) <man1-mpirun>` can also accept a parallel application
 specified in a file instead of on the command line.  For example:
 
 .. code-block::
@@ -112,4 +114,3 @@ where the file ``my_appfile`` contains the following:
 
 This will result in the same behavior as running ``a.out`` and ``b.out``
 from the command line.
-

@@ -150,4 +150,3 @@ runtime libraries with Open MPI:
 .. code-block::
 
    shell$ ./configure CC=icc CXX=icpc FC=ifort LDFLAGS=-Wc,-static-intel ...
-

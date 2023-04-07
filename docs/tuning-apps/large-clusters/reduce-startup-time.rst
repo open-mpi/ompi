@@ -1,6 +1,8 @@
 Reducing startup time for jobs
 ==============================
 
+.. error:: TODO This whole section needs to be checked.
+
 There are several ways to reduce the startup time on large
 clusters. Some of them are described on this page. We continue to work
 on making startup even faster, especially on the large clusters coming
@@ -54,4 +56,3 @@ These are activated by setting the corresponding MCA parameter, and include:
   do not require the additional barrier. Check with your transport
   provider to be sure, or you can experiment to determine the proper
   setting.
-

@@ -36,7 +36,7 @@ eliminating variable process placement.
 Memory affinity
 ---------------
 
-Memory affinity is increasingly relevant on modern servers
+Memory affinity is critically important on modern servers
 because most architectures exhibit Non-Uniform Memory Access (NUMA)
 architectures.  In a NUMA architecture, memory is physically
 distributed throughout the machine even though it is virtually treated
@@ -62,17 +62,3 @@ affinity does not make sense if processor affinity is not enabled
 because processes may allocate local memory and then move to a
 different processor, potentially remote from the memory that it just
 allocated.
-
-Enabling processor and memory
------------------------------
-
-Open MPI will, by default, enable processor and memory affinity when
-not running in an oversubscribed environment (i.e., when the number of
-MPI processes are less than or equal two the number of processors
-available).
-
-The ``mpirun(1)`` man page for each version of Open MPI contains a lot of
-information about the use of processor and memory affinity.  You
-should consult the :ref:`mpirun(1) <man1-mpirun>` page for your version of
-Open MPI for detailed information about processor and memory affinity.
-
