@@ -36,3 +36,15 @@ jobs:
         uses: open-mpi/pr-labeler@v1.0.0
         with:
           token: "${{ secrets.GITHUB_TOKEN }}"
+
+  milestone:
+    permissions:
+      issues: write
+      pull-requests: write
+    name: Milestone Pull Request
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pull Request Milestoner
+        uses: open-mpi/pr-milestoner@v1.0.0
+        with:
+          token: "${{ secrets.GITHUB_TOKEN }}"
