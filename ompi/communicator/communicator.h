@@ -483,6 +483,14 @@ OMPI_DECLSPEC extern ompi_predefined_communicator_t *ompi_mpi_comm_null_addr;
  */
 static inline int ompi_comm_invalid (const ompi_communicator_t* comm)
 {
+    /* this check is needed as OMPI_COMM_IS_INVALID returns false for
+     * MPI_COMM_SELF and MPI_COMM_WORLD even if MPI has not been initialized using the world model
+     * approach.
+     */
+    if ((((void *)&ompi_mpi_comm_world == comm) || ((void *)&ompi_mpi_comm_self == comm)) &&
+        ((ompi_mpi_state == OMPI_MPI_STATE_INIT_STARTED) || (ompi_mpi_state ==  OMPI_MPI_STATE_FINALIZE_COMPLETED)))
+        return false;
+
     if ((NULL == comm) || (MPI_COMM_NULL == comm) ||
         (OMPI_COMM_IS_FREED(comm)) || (OMPI_COMM_IS_INVALID(comm)) )
         return true;
@@ -503,7 +511,17 @@ static inline int ompi_comm_rank (const ompi_communicator_t* comm)
  */
 static inline int ompi_comm_size (const ompi_communicator_t* comm)
 {
-    return comm->c_local_group->grp_proc_count;
+#if OPAL_ENABLE_DEBUG
+    if(NULL == comm->c_local_group) {
+        opal_output(0, "ompi_comm_size: communicator (%p) is invalid", (void *)comm);
+        return -1;
+    }
+#endif
+    if (NULL != comm->c_local_group) {
+        return comm->c_local_group->grp_proc_count;
+    } else {
+        return -1;  /* return -1 in case where there's no local group (which happens when comm is invalid)*/
+    }
 }
 
 /**
@@ -561,7 +579,7 @@ static inline ompi_communicator_t *ompi_comm_lookup_cid (const ompi_comm_extende
 static inline struct ompi_proc_t* ompi_comm_peer_lookup (const ompi_communicator_t* comm, const int peer_id)
 {
 #if OPAL_ENABLE_DEBUG
-    if(peer_id >= comm->c_remote_group->grp_proc_count) {
+    if((NULL == comm->c_remote_group) || (peer_id >= comm->c_remote_group->grp_proc_count)) {
         opal_output(0, "ompi_comm_peer_lookup: invalid peer index (%d)", peer_id);
         return (struct ompi_proc_t *) NULL;
     }
