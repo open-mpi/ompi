@@ -4,7 +4,7 @@
  *                         reserved.
  * Copyright (c) 2019-2020 Triad National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2018-2020 Amazon.com, Inc. or its affiliates. All rights
+ * Copyright (c) 2018-2023 Amazon.com, Inc. or its affiliates. All rights
  *                         reserved.
  * Copyright (c) 2021      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
@@ -610,6 +610,44 @@ ompi_mtl_ofi_isend_generic(struct mca_mtl_base_module_t *mtl,
                                                            &match_bits, tag);
         if (OPAL_UNLIKELY(ofi_req->status.MPI_ERROR != OMPI_SUCCESS))
             goto free_request_buffer;
+    }
+
+    /**
+     * Try fi_inject, although since this is not a blocking send only
+     * try once before going to the normal fi_tsend
+     */
+    if (ompi_mtl_ofi.max_inject_size >= length) {
+        if (ofi_cq_data) {
+            ret = fi_tinjectdata(ompi_mtl_ofi.ofi_ctxt[ctxt_id].tx_ep,
+                                    start,
+                                    length,
+                                    comm->c_my_rank,
+                                    sep_peer_fiaddr,
+                                    match_bits);
+        } else {
+            ret = fi_tinject(ompi_mtl_ofi.ofi_ctxt[ctxt_id].tx_ep,
+                                    start,
+                                    length,
+                                    sep_peer_fiaddr,
+                                    match_bits);
+        }
+
+        if(OPAL_LIKELY(ret == 0)) {
+            ofi_req->event_callback(NULL, ofi_req);
+            return ofi_req->status.MPI_ERROR;
+        } else if(ret != -FI_EAGAIN) {
+            MTL_OFI_LOG_FI_ERR(ret,
+                               ofi_cq_data ? "fi_tinjectdata failed"
+                               : "fi_tinject failed");
+            if (ack_req) {
+                fi_cancel((fid_t)ompi_mtl_ofi.ofi_ctxt[ctxt_id].tx_ep, &ack_req->ctx);
+                free(ack_req);
+            }
+            ofi_req->status.MPI_ERROR = ompi_mtl_ofi_get_error(ret);
+            ofi_req->event_callback(NULL, ofi_req);
+            return ofi_req->status.MPI_ERROR;
+        }
+        /* otherwise fall back to the standard fi_tsend path */
     }
 
     if (ofi_cq_data) {
