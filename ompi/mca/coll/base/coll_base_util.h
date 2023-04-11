@@ -206,6 +206,12 @@ int mca_coll_base_name_to_colltype(const char* name);
 
 /* device/host memory allocation functions */
 
+
+void *ompi_coll_base_allocate_on_device(int device, size_t size,
+                                        mca_coll_base_module_t *module);
+
+void ompi_coll_base_free_on_device(int device, void *ptr, mca_coll_base_module_t *module);
+
 /**
  * Returns a pointer to memory in the same memory domain as the receive or send buffer.
  * Device memory is allocated if either the receive buffer or the send buffer are
@@ -216,7 +222,7 @@ static inline
 void* ompi_coll_base_allocate_op_tmpbuf(
     const void *sendbuf, const void *recvbuf, size_t size,
     const struct ompi_op_t *op, const struct ompi_datatype_t *dtype,
-    int *device)
+    int *device, mca_coll_base_module_t *module)
 {
     void *res = NULL;
     uint64_t flags;
@@ -224,17 +230,18 @@ void* ompi_coll_base_allocate_op_tmpbuf(
     if ((NULL == op && NULL == dtype) || ompi_op_supports_device(op, dtype)) {
         /* if the recvbuf is on the device we take that device */
         if (NULL != recvbuf && 0 < opal_accelerator.check_addr(recvbuf, device, &flags)) {
-            if (OPAL_SUCCESS != opal_accelerator.mem_alloc(*device, &res, size)) {
-                /* fall back to the host */
-                res = NULL;
+            /* allocate cache on demand */
+            res = ompi_coll_base_allocate_on_device(*device, size, module);
+            if (NULL == res) {
+                // fallback to host
                 *device = -1;
             }
         } else if (MPI_IN_PLACE != sendbuf && NULL != sendbuf &&
                 0 < opal_accelerator.check_addr(sendbuf, device, &flags)) {
             /* send buffer is on a device so try to allocate memory there */
-            if (OPAL_SUCCESS != opal_accelerator.mem_alloc(*device, &res, size)) {
-                /* fall back to the host */
-                res = NULL;
+            res = ompi_coll_base_allocate_on_device(*device, size, module);
+            if (NULL == res) {
+                // fallback to host
                 *device = -1;
             }
         }
@@ -253,9 +260,9 @@ void* ompi_coll_base_allocate_op_tmpbuf(
 static inline
 void* ompi_coll_base_allocate_tmpbuf(
     const void *sendbuf, const void *recvbuf,
-    size_t size, int *device)
+    size_t size, int *device, mca_coll_base_module_t *module)
 {
-    return ompi_coll_base_allocate_op_tmpbuf(sendbuf, recvbuf, size, NULL, NULL, device);
+    return ompi_coll_base_allocate_op_tmpbuf(sendbuf, recvbuf, size, NULL, NULL, device, module);
 }
 
 /**
@@ -263,11 +270,11 @@ void* ompi_coll_base_allocate_tmpbuf(
  * or ompi_coll_base_allocate_tmpbuf.
  */
 static inline
-void ompi_coll_base_free_tmpbuf(void *tmpbuf, int device) {
+void ompi_coll_base_free_tmpbuf(void *tmpbuf, int device, mca_coll_base_module_t *module) {
     if (-1 == device) {
         free(tmpbuf);
     } else if (NULL != tmpbuf) {
-        opal_accelerator.mem_release(device, tmpbuf);
+        ompi_coll_base_free_on_device(device, tmpbuf, module);
     }
 }
 

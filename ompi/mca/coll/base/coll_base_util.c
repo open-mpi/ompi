@@ -30,6 +30,7 @@
 #include "ompi/mca/pml/pml.h"
 #include "coll_base_util.h"
 #include "coll_base_functions.h"
+#include "opal/mca/allocator/base/base.h"
 #include <ctype.h>
 
 int ompi_coll_base_sendrecv_actual( const void* sendbuf, size_t scount,
@@ -601,4 +602,48 @@ const char* mca_coll_base_colltype_to_str(int collid)
         return NULL;
     }
     return colltype_translation_table[collid];
+}
+
+static void* ompi_coll_base_device_allocate_cb(void *ctx, size_t *size) {
+    int dev_id = (intptr_t)ctx;
+    void *ptr;
+    opal_accelerator.mem_alloc(dev_id, &ptr, *size);
+    return ptr;
+}
+
+static void ompi_coll_base_device_release_cb(void *ctx, void* ptr) {
+    int dev_id = (intptr_t)ctx;
+    opal_accelerator.mem_release(dev_id, ptr);
+}
+
+void *ompi_coll_base_allocate_on_device(int device, size_t size,
+                                        mca_coll_base_module_t *module)
+{
+    mca_allocator_base_module_t *allocator_module;
+    if (NULL == module->base_data->device_allocators) {
+        int num_dev;
+        opal_accelerator.num_devices(&num_dev);
+        module->base_data->device_allocators = calloc(num_dev, sizeof(mca_allocator_base_module_t *));
+    }
+    //printf("allocators %p module %p\n", module->base_data->device_allocators, module->base_data->device_allocators[device]);
+    if (NULL == (allocator_module = module->base_data->device_allocators[device])) {
+        mca_allocator_base_component_t *allocator_component;
+        allocator_component = mca_allocator_component_lookup("devicebucket");
+        assert(allocator_component != NULL);
+        allocator_module = allocator_component->allocator_init(false, ompi_coll_base_device_allocate_cb,
+                                                               ompi_coll_base_device_release_cb,
+                                                               (void*)(intptr_t)device);
+        assert(allocator_module != NULL);
+        module->base_data->device_allocators[device] = allocator_module;
+    }
+    //printf("allocator_module %p\n", allocator_module);
+    return allocator_module->alc_alloc(allocator_module, size, 0);
+}
+
+void ompi_coll_base_free_on_device(int device, void *ptr, mca_coll_base_module_t *module)
+{
+    mca_allocator_base_module_t *allocator_module;
+    assert(NULL != module->base_data->device_allocators);
+    allocator_module = module->base_data->device_allocators[device];
+    allocator_module->alc_free(allocator_module, ptr);
 }

@@ -38,12 +38,12 @@ CUstream opal_accelerator_cuda_memcpy_stream = NULL;
 CUstream opal_accelerator_cuda_alloc_stream = NULL;
 opal_accelerator_cuda_stream_t opal_accelerator_cuda_default_stream;
 opal_mutex_t opal_accelerator_cuda_stream_lock = {0};
+int opal_accelerator_cuda_num_devices = 0;
 
 /* Initialization lock for delayed cuda initialization */
 static opal_mutex_t accelerator_cuda_init_lock;
 static bool accelerator_cuda_init_complete = false;
 
-cudaMemPool_t *opal_accelerator_cuda_mempool;
 
 #define STRINGIFY2(x) #x
 #define STRINGIFY(x)  STRINGIFY2(x)
@@ -156,6 +156,8 @@ int opal_accelerator_cuda_delayed_init()
         opal_output_verbose(20, opal_accelerator_base_framework.framework_output, "CUDA: cuCtxGetCurrent succeeded");
     }
 
+    cuDeviceGetCount(&opal_accelerator_cuda_num_devices);
+
     /* Create stream for use in cuMemcpyAsync synchronous copies */
     result = cuStreamCreate(&opal_accelerator_cuda_memcpy_stream, 0);
     if (OPAL_UNLIKELY(result != CUDA_SUCCESS)) {
@@ -264,38 +266,3 @@ static void accelerator_cuda_finalize(opal_accelerator_base_module_t* module)
     OBJ_DESTRUCT(&accelerator_cuda_init_lock);
     return;
 }
-
-#if 0
-static int opal_acclerator_cuda_init_mempools() {
-    cudaError_t result;
-    int num_devices;
-    cuDeviceGetCount(&num_devices);
-    if (num_devices == 0) {
-        return OPAL_SUCCESS;
-    }
-    opal_accelerator_cuda_mempools = malloc(num_devices*sizeof(*mp));
-    cudaMemPoolProps pp;
-    memset(&pp, 0, sizeof(pp));
-    pp.allocType = cudaMemAllocationTypePinned;
-    pp.handleTypes = cudaMemHandleTypeNone;
-    pp.location.id = devidx;
-    pp.location.type = cudaMemLocationTypeDevice;
-    for (int i = 0; i < num_devices; ++i) {
-
-    result = cudaMemPoolCreate(mp, &pp);
-    if (OPAL_UNLIKELY(CUDA_SUCCESS != result)) {
-        opal_show_help("help-accelerator-cuda.txt", "cudaMemPoolCreate failed", true,
-                        OPAL_PROC_MY_HOSTNAME, result);
-        return OPAL_ERROR;
-    }
-
-    }
-    *mpool = OBJ_NEW(opal_accelerator_cuda_mempool_t);
-    if (NULL == *mpool) {
-        return OPAL_ERR_OUT_OF_RESOURCE;
-    }
-    mpool->mpool = mp;
-
-    return OPAL_SUCCESS;
-}
-#endif

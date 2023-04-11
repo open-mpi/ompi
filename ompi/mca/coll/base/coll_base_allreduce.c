@@ -160,7 +160,7 @@ ompi_coll_base_allreduce_intra_recursivedoubling(const void *sbuf, void *rbuf,
 
     /* Allocate and initialize temporary send buffer */
     span = opal_datatype_span(&dtype->super, count, &gap);
-    inplacebuf_free = ompi_coll_base_allocate_op_tmpbuf(sbuf, rbuf, span, op, dtype, &inplacebuf_dev);
+    inplacebuf_free = ompi_coll_base_allocate_op_tmpbuf(sbuf, rbuf, span, op, dtype, &inplacebuf_dev, module);
     if (NULL == inplacebuf_free) { ret = -1; line = __LINE__; goto error_hndl; }
     inplacebuf = inplacebuf_free - gap;
 
@@ -266,14 +266,14 @@ ompi_coll_base_allreduce_intra_recursivedoubling(const void *sbuf, void *rbuf,
         if (ret < 0) { line = __LINE__; goto error_hndl; }
     }
 
-    ompi_coll_base_free_tmpbuf(inplacebuf_free, inplacebuf_dev);
+    ompi_coll_base_free_tmpbuf(inplacebuf_free, inplacebuf_dev, module);
     return MPI_SUCCESS;
 
  error_hndl:
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output, "%s:%4d\tRank %d Error occurred %d\n",
                  __FILE__, line, rank, ret));
     (void)line;  // silence compiler warning
-    ompi_coll_base_free_tmpbuf(inplacebuf_free, inplacebuf_dev);
+    ompi_coll_base_free_tmpbuf(inplacebuf_free, inplacebuf_dev, module);
     return ret;
 }
 
@@ -402,10 +402,10 @@ ompi_coll_base_allreduce_intra_ring(const void *sbuf, void *rbuf, int count,
     max_real_segsize = true_extent + (max_segcount - 1) * extent;
 
     /* we don't care about where the send buffer is */
-    inbuf[0] = ompi_coll_base_allocate_op_tmpbuf(NULL, rbuf, max_real_segsize, op, dtype, &inbuf_dev[0]);
+    inbuf[0] = ompi_coll_base_allocate_op_tmpbuf(NULL, rbuf, max_real_segsize, op, dtype, &inbuf_dev[0], module);
     if (NULL == inbuf[0]) { ret = -1; line = __LINE__; goto error_hndl; }
     if (size > 2) {
-        inbuf[1] = ompi_coll_base_allocate_op_tmpbuf(NULL, rbuf, max_real_segsize, op, dtype, &inbuf_dev[1]);
+        inbuf[1] = ompi_coll_base_allocate_op_tmpbuf(NULL, rbuf, max_real_segsize, op, dtype, &inbuf_dev[1], module);
         if (NULL == inbuf[1]) { ret = -1; line = __LINE__; goto error_hndl; }
     }
 
@@ -525,8 +525,8 @@ ompi_coll_base_allreduce_intra_ring(const void *sbuf, void *rbuf, int count,
 
     }
 
-    ompi_coll_base_free_tmpbuf(inbuf[0], inbuf_dev[0]);
-    ompi_coll_base_free_tmpbuf(inbuf[1], inbuf_dev[1]);
+    ompi_coll_base_free_tmpbuf(inbuf[0], inbuf_dev[0], module);
+    ompi_coll_base_free_tmpbuf(inbuf[1], inbuf_dev[1], module);
 
     return MPI_SUCCESS;
 
@@ -535,8 +535,8 @@ ompi_coll_base_allreduce_intra_ring(const void *sbuf, void *rbuf, int count,
                  __FILE__, line, rank, ret));
     ompi_coll_base_free_reqs(reqs, 2);
     (void)line;  // silence compiler warning
-    ompi_coll_base_free_tmpbuf(inbuf[0], inbuf_dev[0]);
-    ompi_coll_base_free_tmpbuf(inbuf[1], inbuf_dev[1]);
+    ompi_coll_base_free_tmpbuf(inbuf[0], inbuf_dev[0], module);
+    ompi_coll_base_free_tmpbuf(inbuf[1], inbuf_dev[1], module);
     return ret;
 }
 
@@ -691,10 +691,10 @@ ompi_coll_base_allreduce_intra_ring_segmented(const void *sbuf, void *rbuf, int 
      max_real_segsize = opal_datatype_span(&dtype->super, max_segcount, &gap);
 
     /* Allocate and initialize temporary buffers */
-    inbuf[0] = ompi_coll_base_allocate_op_tmpbuf(NULL, rbuf, max_real_segsize, op, dtype, &inbuf_dev[0]);
+    inbuf[0] = ompi_coll_base_allocate_op_tmpbuf(NULL, rbuf, max_real_segsize, op, dtype, &inbuf_dev[0], module);
     if (NULL == inbuf[0]) { ret = -1; line = __LINE__; goto error_hndl; }
     if (size > 2) {
-        inbuf[1] = ompi_coll_base_allocate_op_tmpbuf(NULL, rbuf, max_real_segsize, op, dtype, &inbuf_dev[1]);
+        inbuf[1] = ompi_coll_base_allocate_op_tmpbuf(NULL, rbuf, max_real_segsize, op, dtype, &inbuf_dev[1], module);
         if (NULL == inbuf[1]) { ret = -1; line = __LINE__; goto error_hndl; }
     }
 
@@ -846,8 +846,8 @@ ompi_coll_base_allreduce_intra_ring_segmented(const void *sbuf, void *rbuf, int 
 
     }
 
-    ompi_coll_base_free_tmpbuf(inbuf[0], inbuf_dev[0]);
-    ompi_coll_base_free_tmpbuf(inbuf[1], inbuf_dev[1]);
+    ompi_coll_base_free_tmpbuf(inbuf[0], inbuf_dev[0], module);
+    ompi_coll_base_free_tmpbuf(inbuf[1], inbuf_dev[1], module);
 
     return MPI_SUCCESS;
 
@@ -856,8 +856,8 @@ ompi_coll_base_allreduce_intra_ring_segmented(const void *sbuf, void *rbuf, int 
                  __FILE__, line, rank, ret));
     ompi_coll_base_free_reqs(reqs, 2);
     (void)line;  // silence compiler warning
-    ompi_coll_base_free_tmpbuf(inbuf[0], inbuf_dev[0]);
-    ompi_coll_base_free_tmpbuf(inbuf[1], inbuf_dev[1]);
+    ompi_coll_base_free_tmpbuf(inbuf[0], inbuf_dev[0], module);
+    ompi_coll_base_free_tmpbuf(inbuf[1], inbuf_dev[1], module);
     return ret;
 }
 
@@ -1010,7 +1010,7 @@ int ompi_coll_base_allreduce_intra_redscat_allgather(
 
     /* Temporary buffer for receiving messages */
     char *tmp_buf = NULL;
-    char *tmp_buf_raw = ompi_coll_base_allocate_op_tmpbuf(NULL, rbuf, dsize, op, dtype, &tmp_buf_dev);
+    char *tmp_buf_raw = ompi_coll_base_allocate_op_tmpbuf(NULL, rbuf, dsize, op, dtype, &tmp_buf_dev, module);
     if (NULL == tmp_buf_raw)
         return OMPI_ERR_OUT_OF_RESOURCE;
     tmp_buf = tmp_buf_raw - gap;
@@ -1239,7 +1239,7 @@ int ompi_coll_base_allreduce_intra_redscat_allgather(
 
   cleanup_and_return:
 
-    ompi_coll_base_free_tmpbuf(tmp_buf_raw, tmp_buf_dev);
+    ompi_coll_base_free_tmpbuf(tmp_buf_raw, tmp_buf_dev, module);
     if (NULL != rindex)
         free(rindex);
     if (NULL != sindex)

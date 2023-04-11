@@ -449,6 +449,8 @@ typedef int (*opal_accelerator_base_module_get_buffer_id_fn_t)(
  */
 typedef int (*opal_accelerator_base_module_wait_stream_fn_t)(opal_accelerator_stream_t *stream);
 
+typedef int (*opal_accelerator_base_module_get_num_devices_fn_t)(int *num_devices);
+
 /*
  * the standard public API data structure
  */
@@ -483,6 +485,8 @@ typedef struct {
     opal_accelerator_base_module_get_buffer_id_fn_t get_buffer_id;
 
     opal_accelerator_base_module_wait_stream_fn_t wait_stream;
+
+    opal_accelerator_base_module_get_num_devices_fn_t num_devices;
 } opal_accelerator_base_module_t;
 
 /**

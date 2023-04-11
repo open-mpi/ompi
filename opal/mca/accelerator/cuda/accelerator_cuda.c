@@ -55,6 +55,8 @@ static int accelerator_cuda_get_buffer_id(int dev_id, const void *addr, opal_acc
 
 static int accelerator_cuda_wait_stream(opal_accelerator_stream_t *stream);
 
+static int accelerator_cuda_get_num_devices(int *num_devices);
+
 opal_accelerator_base_module_t opal_accelerator_cuda_module =
 {
     &opal_accelerator_cuda_default_stream.base,
@@ -85,18 +87,17 @@ opal_accelerator_base_module_t opal_accelerator_cuda_module =
 
     accelerator_cuda_get_buffer_id,
 
-    accelerator_cuda_wait_stream
+    accelerator_cuda_wait_stream,
+    accelerator_cuda_get_num_devices
 };
 
 static int accelerator_cuda_get_device_id(CUcontext mem_ctx) {
     /* query the device from the context */
     int dev_id = -1;
     CUdevice ptr_dev;
-    int num_devices;
     cuCtxPushCurrent(mem_ctx);
     cuCtxGetDevice(&ptr_dev);
-    cuDeviceGetCount(&num_devices);
-    for (int i = 0; i < num_devices; ++i) {
+    for (int i = 0; i < opal_accelerator_cuda_num_devices; ++i) {
         CUdevice dev;
         cuDeviceGet(&dev, i);
         if (dev == ptr_dev) {
@@ -818,5 +819,12 @@ static int accelerator_cuda_wait_stream(opal_accelerator_stream_t *stream)
                        OPAL_PROC_MY_HOSTNAME, result);
         return OPAL_ERROR;
     }
+    return OPAL_SUCCESS;
+}
+
+
+static int accelerator_cuda_get_num_devices(int *num_devices)
+{
+    *num_devices = opal_accelerator_cuda_num_devices;
     return OPAL_SUCCESS;
 }

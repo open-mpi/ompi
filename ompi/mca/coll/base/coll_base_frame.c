@@ -30,6 +30,7 @@
 #include "ompi/mca/mca.h"
 #include "opal/util/output.h"
 #include "opal/mca/base/base.h"
+#include "opal/mca/accelerator/accelerator.h"
 
 
 #include "ompi/mca/coll/coll.h"
@@ -70,6 +71,7 @@ static void
 coll_base_comm_construct(mca_coll_base_comm_t *data)
 {
     memset ((char *) data + sizeof (data->super), 0, sizeof (*data) - sizeof (data->super));
+    data->device_allocators = NULL;
 }
 
 static void
@@ -107,6 +109,18 @@ coll_base_comm_destruct(mca_coll_base_comm_t *data)
     }
     if (data->cached_in_order_bintree) { /* destroy in order bintree if defined */
         ompi_coll_base_topo_destroy_tree (&data->cached_in_order_bintree);
+    }
+
+    if (NULL != data->device_allocators) {
+        int num_devices;
+        opal_accelerator.num_devices(&num_devices);
+        for (int i = 0; i < num_devices; ++i) {
+            if (NULL != data->device_allocators[i]) {
+                data->device_allocators[i]->alc_finalize(data->device_allocators[i]);
+            }
+        }
+        free(data->device_allocators);
+        data->device_allocators = NULL;
     }
 }
 
