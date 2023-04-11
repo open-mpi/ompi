@@ -331,7 +331,7 @@ request_free(struct ompi_request_t **ompi_req)
         return OMPI_ERROR;
     }
     coll_handle_free(req);
-    *ompi_req = &ompi_request_empty;
+    *ompi_req = MPI_REQUEST_NULL;
     return OMPI_SUCCESS;
 }
 
