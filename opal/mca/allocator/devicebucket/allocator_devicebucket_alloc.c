@@ -59,7 +59,7 @@ mca_allocator_devicebucket_init(mca_allocator_base_module_t *mem,
         size <<= 1;
         num_buckets++;
     }
-
+    //printf("min_cache_size %zu max_cache_size %zu num_buckets %d\n", min_cache_size, max_cache_size, num_buckets);
     max_devicebucket_idx = num_buckets - 1;
 
     /* initialize the array of buckets */
@@ -102,26 +102,30 @@ void *mca_allocator_devicebucket_alloc(mca_allocator_base_module_t *mem, size_t 
         bucket_size <<= 1;
     }
 
+    //printf("mca_allocator_devicebucket_alloc checking bucket %d of %d for size %d\n", bucket_num, mem_options->num_buckets, bucket_size);
     if (bucket_num >= mem_options->num_buckets) {
         /* allocate directly */
-        return mem_options->get_mem_fn(mem_options->super.alc_context, &bucket_size);
-    }
-
-    /* see if there is already a free chunk */
-    chunk = (mca_allocator_devicebucket_chunk_t *)opal_lifo_pop(&(mem_options->buckets[bucket_num].super));
-    if (NULL == chunk) {
-        /* create a new allocation */
         chunk = OBJ_NEW(mca_allocator_devicebucket_chunk_t);
+        chunk->addr = mem_options->get_mem_fn(mem_options->super.alc_context, &size);
+        chunk->size = size;
+    } else {
+        /* see if there is already a free chunk */
+        chunk = (mca_allocator_devicebucket_chunk_t *)opal_lifo_pop(&(mem_options->buckets[bucket_num].super));
         if (NULL == chunk) {
-            return NULL;
+            /* create a new allocation */
+            chunk = OBJ_NEW(mca_allocator_devicebucket_chunk_t);
+            if (NULL == chunk) {
+                return NULL;
+            }
+            chunk->addr = mem_options->get_mem_fn(mem_options->super.alc_context, &bucket_size);
+            chunk->size = bucket_size;
         }
-        chunk->addr = mem_options->get_mem_fn(mem_options->super.alc_context, &bucket_size);
     }
     /* store the chunk in the hash table so we can find it during free */
     OPAL_THREAD_LOCK(&(mem_options->used_chunks_lock));
     opal_hash_table_set_value_uint64(&(mem_options->used_chunks), (uint64_t)chunk->addr, chunk);
     OPAL_THREAD_UNLOCK(&(mem_options->used_chunks_lock));
-    chunk->size = bucket_size;
+    //printf("Allocated chunk %p for address %p\n", chunk, chunk->addr);
     return chunk->addr;
 }
 
@@ -158,6 +162,11 @@ void mca_allocator_devicebucket_free(mca_allocator_base_module_t *mem, void *ptr
 
     OPAL_THREAD_LOCK(&(mem_options->used_chunks_lock));
     opal_hash_table_get_value_uint64(&(mem_options->used_chunks), (uint64_t)ptr, (void**)&chunk);
+    if (NULL == chunk) {
+        printf("Couldn't find chunk for address %p\n", ptr);
+        OPAL_THREAD_UNLOCK(&(mem_options->used_chunks_lock));
+        return;
+    }
     opal_hash_table_remove_value_uint64(&(mem_options->used_chunks), (uint64_t)ptr);
     OPAL_THREAD_UNLOCK(&(mem_options->used_chunks_lock));
     size_t size = chunk->size;
@@ -168,8 +177,13 @@ void mca_allocator_devicebucket_free(mca_allocator_base_module_t *mem, void *ptr
         bucket_size <<= 1;
     }
 
-    /* push into lifo */
-    opal_lifo_push(&(mem_options->buckets[bucket_num].super), &chunk->super);
+    if (bucket_num > mem_options->num_buckets) {
+        mem_options->free_mem_fn(mem_options->super.alc_context, ptr);
+        OBJ_RELEASE(chunk);
+    } else {
+        /* push into lifo */
+        opal_lifo_push(&(mem_options->buckets[bucket_num].super), &chunk->super);
+    }
 }
 
 /*

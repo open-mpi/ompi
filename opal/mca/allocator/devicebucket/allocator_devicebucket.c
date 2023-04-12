@@ -67,7 +67,7 @@ struct mca_allocator_base_module_t *mca_allocator_devicebucket_module_init(
         return NULL;
     }
     retval = mca_allocator_devicebucket_init((mca_allocator_base_module_t *) allocator,
-                                             mca_allocator_min_cache_size, mca_allocator_min_cache_size,
+                                             mca_allocator_min_cache_size, mca_allocator_max_cache_size,
                                              segment_alloc, segment_free);
     if (NULL == retval) {
         free(allocator);
@@ -115,6 +115,7 @@ int mca_allocator_devicebucket_module_close(void)
 void *mca_allocator_devicebucket_alloc_wrapper(struct mca_allocator_base_module_t *allocator, size_t size,
                                          size_t align)
 {
+    //printf("mca_allocator_devicebucket_alloc_wrapper size %zu align %zu\n", size, align);
     if (0 == align) {
         return mca_allocator_devicebucket_alloc(allocator, size);
     }
