@@ -4,22 +4,25 @@ Supported fault tolerance techniques
 Open MPI is a vehicle for research in fault tolerance and over the years
 provided support for a wide range of resilience techniques:
 
-* Current
+* Currently supported
   
     * User Level Fault Mitigation techniques similar to those defined
       in the context of the MPI Forum (this is the closest match when
       migrating from FT-MPI); :ref:`see its documentation section
       <ulfm-label>`.
 
+* Only for research / non-production usage
+      
+    * Message logging techniques. Similar to those implemented in
+      MPICH-V.
+
 * Deprecated / no longer available
   
     * Coordinated and uncoordinated process checkpoint and
       restart. Similar to those implemented in LAM/MPI and MPICH-V,
       respectively.
-    * |strikethru_start| Message logging techniques. Similar to those
-      implemented in MPICH-V |strikethru_end|
-    * |strikethru_start| Data Reliability and network fault tolerance. Similar
-      to those implemented in LA-MPI |strikethru_end|
+    * Data Reliability and network fault tolerance. Similar to those
+      implemented in LA-MPI.
 
 Current fault tolerance development
 -----------------------------------

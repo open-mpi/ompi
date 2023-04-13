@@ -223,12 +223,5 @@ rst_prolog = f"""
 .. |mpi_standard_major_version| replace:: {mpi_standard_major_version}
 .. |mpi_standard_minor_version| replace:: {mpi_standard_minor_version}
 .. |deprecated_favor| replace:: this routine is deprecated in favor of
-.. |strikethru_start| raw:: html
-
-        <strike>
-
-.. |strikethru_end| raw:: html
-
-        </strike>
 
 """
