@@ -398,8 +398,6 @@ LOC_FUNC_SIG(minloc, long_double_int, <)
  * Max
  *************************************************************************/
 
-#undef current_func
-#define current_func(a, b) ((a) > (b) ? (a) : (b))
 /* C integer */
 FUNC_FUNC_3BUF_SIG(max,   int8_t,   int8_t)
 FUNC_FUNC_3BUF_SIG(max,  uint8_t,  uint8_t)
@@ -464,8 +462,6 @@ FUNC_FUNC_3BUF_SIG(max, fortran_real16, ompi_fortran_real16_t)
  * Min
  *************************************************************************/
 
-#undef current_func
-#define current_func(a, b) ((a) < (b) ? (a) : (b))
 /* C integer */
 FUNC_FUNC_3BUF_SIG(min,   int8_t,   int8_t)
 FUNC_FUNC_3BUF_SIG(min,  uint8_t,  uint8_t)
@@ -677,8 +673,6 @@ OP_FUNC_3BUF_SIG(prod, c_long_double_complex, long double _Complex, *)
  * Logical AND
  *************************************************************************/
 
-#undef current_func
-#define current_func(a, b) ((a) && (b))
 /* C integer */
 FUNC_FUNC_3BUF_SIG(land,   int8_t,   int8_t)
 FUNC_FUNC_3BUF_SIG(land,  uint8_t,  uint8_t)
@@ -702,8 +696,6 @@ FUNC_FUNC_3BUF_SIG(land, bool, bool)
  * Logical OR
  *************************************************************************/
 
-#undef current_func
-#define current_func(a, b) ((a) || (b))
 /* C integer */
 FUNC_FUNC_3BUF_SIG(lor,   int8_t,   int8_t)
 FUNC_FUNC_3BUF_SIG(lor,  uint8_t,  uint8_t)
@@ -727,8 +719,6 @@ FUNC_FUNC_3BUF_SIG(lor, bool, bool)
  * Logical XOR
  *************************************************************************/
 
-#undef current_func
-#define current_func(a, b) ((a ? 1 : 0) ^ (b ? 1: 0))
 /* C integer */
 FUNC_FUNC_3BUF_SIG(lxor,   int8_t,   int8_t)
 FUNC_FUNC_3BUF_SIG(lxor,  uint8_t,  uint8_t)
@@ -752,8 +742,6 @@ FUNC_FUNC_3BUF_SIG(lxor, bool, bool)
  * Bitwise AND
  *************************************************************************/
 
-#undef current_func
-#define current_func(a, b) ((a) & (b))
 /* C integer */
 FUNC_FUNC_3BUF_SIG(band,   int8_t,   int8_t)
 FUNC_FUNC_3BUF_SIG(band,  uint8_t,  uint8_t)
@@ -792,8 +780,6 @@ FUNC_FUNC_3BUF_SIG(band, byte, char)
  * Bitwise OR
  *************************************************************************/
 
-#undef current_func
-#define current_func(a, b) ((a) | (b))
 /* C integer */
 FUNC_FUNC_3BUF_SIG(bor,   int8_t,   int8_t)
 FUNC_FUNC_3BUF_SIG(bor,  uint8_t,  uint8_t)
@@ -832,8 +818,6 @@ FUNC_FUNC_3BUF_SIG(bor, byte, char)
  * Bitwise XOR
  *************************************************************************/
 
-#undef current_func
-#define current_func(a, b) ((a) ^ (b))
 /* C integer */
 FUNC_FUNC_3BUF_SIG(bxor,   int8_t,   int8_t)
 FUNC_FUNC_3BUF_SIG(bxor,  uint8_t,  uint8_t)

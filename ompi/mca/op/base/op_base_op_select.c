@@ -162,6 +162,7 @@ int ompi_op_base_op_select(ompi_op_t *op)
                     if (NULL != op->o_device_op->do_intrinsic.modules[i]) {
                         OBJ_RELEASE(op->o_device_op->do_intrinsic.modules[i]);
                     }
+                    // TODO: function signatures don't match, fix it!
                     op->o_device_op->do_intrinsic.fns[i] = avail->ao_module->opm_fns[i];
                     op->o_device_op->do_intrinsic.modules[i] = avail->ao_module;
                     OBJ_RETAIN(avail->ao_module);

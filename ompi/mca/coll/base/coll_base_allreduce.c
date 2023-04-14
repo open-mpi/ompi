@@ -164,15 +164,22 @@ ompi_coll_base_allreduce_intra_recursivedoubling(const void *sbuf, void *rbuf,
     if (NULL == inplacebuf_free) { ret = -1; line = __LINE__; goto error_hndl; }
     inplacebuf = inplacebuf_free - gap;
 
+    opal_accelerator_stream_t *stream;
+    opal_accelerator.get_default_stream(inplacebuf_dev, &stream);
+
+
     if (MPI_IN_PLACE == sbuf) {
-        ret = ompi_datatype_copy_content_same_ddt(dtype, count, inplacebuf, (char*)rbuf);
+        ret = ompi_datatype_copy_content_same_ddt_stream(dtype, count, inplacebuf, (char*)rbuf, stream);
         if (ret < 0) { line = __LINE__; goto error_hndl; }
+        tmpsend = (char*) inplacebuf;
     } else {
-        ret = ompi_datatype_copy_content_same_ddt(dtype, count, inplacebuf, (char*)sbuf);
+        tmpsend = (char*) sbuf;
+#if 0
+        ret = ompi_datatype_copy_content_same_ddt_stream(dtype, count, inplacebuf, (char*)sbuf, stream);
         if (ret < 0) { line = __LINE__; goto error_hndl; }
+#endif // 0
     }
 
-    tmpsend = (char*) inplacebuf;
     tmprecv = (char*) rbuf;
 
     /* Determine nearest power of two less than or equal to size */
@@ -189,6 +196,8 @@ ompi_coll_base_allreduce_intra_recursivedoubling(const void *sbuf, void *rbuf,
     extra_ranks = size - adjsize;
     if (rank <  (2 * extra_ranks)) {
         if (0 == (rank % 2)) {
+            /* wait for tmpsend to be copied */
+            opal_accelerator.wait_stream(stream);
             ret = MCA_PML_CALL(send(tmpsend, count, dtype, (rank + 1),
                                     MCA_COLL_BASE_TAG_ALLREDUCE,
                                     MCA_PML_BASE_SEND_STANDARD, comm));
@@ -199,8 +208,21 @@ ompi_coll_base_allreduce_intra_recursivedoubling(const void *sbuf, void *rbuf,
                                     MCA_COLL_BASE_TAG_ALLREDUCE, comm,
                                     MPI_STATUS_IGNORE));
             if (MPI_SUCCESS != ret) { line = __LINE__; goto error_hndl; }
+            if (tmpsend == sbuf) {
+                tmpsend = inplacebuf;
+                /* tmpsend = tmprecv (op) sbuf */
+                ompi_3buff_op_reduce_stream(op, sbuf, tmprecv, tmpsend, count, dtype, stream);
+            } else {
+                /* tmpsend = tmprecv (op) tmpsend */
+                ompi_op_reduce_stream(op, tmprecv, tmpsend, count, dtype, stream);
+            }
+#if 0
+            ret = ompi_datatype_copy_content_same_ddt_stream(dtype, count, inplacebuf, (char*)sbuf, stream);
+            if (ret < 0) { line = __LINE__; goto error_hndl; }
+            tmpsend = inplacebuf;
             /* tmpsend = tmprecv (op) tmpsend */
-            ompi_op_reduce(op, tmprecv, tmpsend, count, dtype);
+            ompi_op_reduce_stream(op, tmprecv, tmpsend, count, dtype, stream);
+#endif // 0
             newrank = rank >> 1;
         }
     } else {
@@ -219,6 +241,8 @@ ompi_coll_base_allreduce_intra_recursivedoubling(const void *sbuf, void *rbuf,
         remote = (newremote < extra_ranks)?
             (newremote * 2 + 1):(newremote + extra_ranks);
 
+        /* wait for previous ops to complete to complete */
+        opal_accelerator.wait_stream(stream);
         /* Exchange the data */
         ret = ompi_coll_base_sendrecv_actual(tmpsend, count, dtype, remote,
                                              MCA_COLL_BASE_TAG_ALLREDUCE,
@@ -229,14 +253,41 @@ ompi_coll_base_allreduce_intra_recursivedoubling(const void *sbuf, void *rbuf,
 
         /* Apply operation */
         if (rank < remote) {
-            /* tmprecv = tmpsend (op) tmprecv */
-            ompi_op_reduce(op, tmpsend, tmprecv, count, dtype);
-            tmpswap = tmprecv;
-            tmprecv = tmpsend;
-            tmpsend = tmpswap;
+            /* TODO: use the 3buff variant here to avoid the copy */
+            if (tmpsend == sbuf) {
+                /* tmprecv = sbuf (op) tmprecv */
+                ompi_op_reduce_stream(op, sbuf, tmprecv, count, dtype, stream);
+                /* send the current recv buffer, and use the tmp buffer to receive */
+                tmpsend = tmprecv;
+                tmprecv = inplacebuf;
+#if 0
+                ret = ompi_datatype_copy_content_same_ddt_stream(dtype, count, inplacebuf, (char*)rbuf, stream);
+                if (ret < 0) { line = __LINE__; goto error_hndl; }
+                tmprecv = inplacebuf;
+#endif // 0
+            } else {
+                /* tmprecv = tmpsend (op) tmprecv */
+                ompi_op_reduce_stream(op, tmpsend, tmprecv, count, dtype, stream);
+                /* swap send and receive buffers */
+                tmpswap = tmprecv;
+                tmprecv = tmpsend;
+                tmpsend = tmpswap;
+            }
         } else {
-            /* tmpsend = tmprecv (op) tmpsend */
-            ompi_op_reduce(op, tmprecv, tmpsend, count, dtype);
+            /* use the 3buff variant here to avoid the copy */
+            if (tmpsend == sbuf) {
+                /* tmpsend = tmprecv (op) sbuf */
+                tmpsend = inplacebuf;
+                ompi_3buff_op_reduce_stream(op, tmprecv, sbuf, tmpsend, count, dtype, stream);
+#if 0
+                ret = ompi_datatype_copy_content_same_ddt_stream(dtype, count, inplacebuf, (char*)sbuf, stream);
+                if (ret < 0) { line = __LINE__; goto error_hndl; }
+                tmpsend = inplacebuf;
+#endif // 0
+            } else {
+                /* tmpsend = tmprecv (op) tmpsend */
+                ompi_op_reduce_stream(op, tmprecv, tmpsend, count, dtype, stream);
+            }
         }
     }
 
@@ -253,6 +304,8 @@ ompi_coll_base_allreduce_intra_recursivedoubling(const void *sbuf, void *rbuf,
             if (MPI_SUCCESS != ret) { line = __LINE__; goto error_hndl; }
             tmpsend = (char*)rbuf;
         } else {
+            /* wait for previous ops to complete to complete */
+            opal_accelerator.wait_stream(stream);
             ret = MCA_PML_CALL(send(tmpsend, count, dtype, (rank - 1),
                                     MCA_COLL_BASE_TAG_ALLREDUCE,
                                     MCA_PML_BASE_SEND_STANDARD, comm));
@@ -262,10 +315,12 @@ ompi_coll_base_allreduce_intra_recursivedoubling(const void *sbuf, void *rbuf,
 
     /* Ensure that the final result is in rbuf */
     if (tmpsend != rbuf) {
-        ret = ompi_datatype_copy_content_same_ddt(dtype, count, (char*)rbuf, tmpsend);
+        ret = ompi_datatype_copy_content_same_ddt_stream(dtype, count, (char*)rbuf, tmpsend, stream);
         if (ret < 0) { line = __LINE__; goto error_hndl; }
     }
 
+    /* wait for previous ops to complete to complete */
+    opal_accelerator.wait_stream(stream);
     ompi_coll_base_free_tmpbuf(inplacebuf_free, inplacebuf_dev, module);
     return MPI_SUCCESS;
 

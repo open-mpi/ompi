@@ -72,7 +72,10 @@ OMPI_DECLSPEC extern ompi_op_cuda_component_t
     mca_op_cuda_component;
 
 OMPI_DECLSPEC extern
-ompi_op_base_handler_fn_t ompi_op_cuda_functions[OMPI_OP_BASE_FORTRAN_OP_MAX][OMPI_OP_BASE_TYPE_MAX];
+ompi_op_base_stream_handler_fn_t ompi_op_cuda_functions[OMPI_OP_BASE_FORTRAN_OP_MAX][OMPI_OP_BASE_TYPE_MAX];
+
+OMPI_DECLSPEC extern
+ompi_op_base_3buff_stream_handler_fn_t ompi_op_cuda_3buff_functions[OMPI_OP_BASE_FORTRAN_OP_MAX][OMPI_OP_BASE_TYPE_MAX];
 
 END_C_DECLS
 

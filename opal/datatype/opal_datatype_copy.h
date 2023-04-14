@@ -44,7 +44,7 @@
 static inline void _predefined_data(const dt_elem_desc_t *ELEM, const opal_datatype_t *DATATYPE,
                                     unsigned char *SOURCE_BASE, size_t TOTAL_COUNT, size_t COUNT,
                                     unsigned char *SOURCE, unsigned char *DESTINATION,
-                                    size_t *SPACE)
+                                    size_t *SPACE, opal_accelerator_stream_t *stream)
 {
     const ddt_elem_desc_t *_elem = &((ELEM)->elem);
     unsigned char *_source = (SOURCE) + _elem->disp;
@@ -69,7 +69,7 @@ static inline void _predefined_data(const dt_elem_desc_t *ELEM, const opal_datat
         DO_DEBUG(opal_output(0, "copy %s( %p, %p, %" PRIsize_t " ) => space %" PRIsize_t "\n",
                              STRINGIFY(MEM_OP_NAME), (void *) _destination, (void *) _source,
                              do_now_bytes, *(SPACE) -_i * do_now_bytes););
-        MEM_OP(_destination, _source, do_now_bytes);
+        MEM_OP(_destination, _source, do_now_bytes, stream);
         _destination += _elem->extent;
         _source += _elem->extent;
     }
@@ -79,7 +79,7 @@ static inline void _predefined_data(const dt_elem_desc_t *ELEM, const opal_datat
 static inline void _contiguous_loop(const dt_elem_desc_t *ELEM, const opal_datatype_t *DATATYPE,
                                     unsigned char *SOURCE_BASE, size_t TOTAL_COUNT, size_t COUNT,
                                     unsigned char *SOURCE, unsigned char *DESTINATION,
-                                    size_t *SPACE)
+                                    size_t *SPACE, opal_accelerator_stream_t *stream)
 {
     ddt_loop_desc_t *_loop = (ddt_loop_desc_t *) (ELEM);
     ddt_endloop_desc_t *_end_loop = (ddt_endloop_desc_t *) ((ELEM) + _loop->items);
@@ -91,7 +91,7 @@ static inline void _contiguous_loop(const dt_elem_desc_t *ELEM, const opal_datat
         _copy_loops *= _end_loop->size;
         OPAL_DATATYPE_SAFEGUARD_POINTER(_source, _copy_loops, (SOURCE_BASE), (DATATYPE),
                                         (TOTAL_COUNT));
-        MEM_OP(_destination, _source, _copy_loops);
+        MEM_OP(_destination, _source, _copy_loops, stream);
     } else {
         for (size_t _i = 0; _i < _copy_loops; _i++) {
             OPAL_DATATYPE_SAFEGUARD_POINTER(_source, _end_loop->size, (SOURCE_BASE), (DATATYPE),
@@ -100,7 +100,7 @@ static inline void _contiguous_loop(const dt_elem_desc_t *ELEM, const opal_datat
                                  "copy 3. %s( %p, %p, %" PRIsize_t " ) => space %" PRIsize_t "\n",
                                  STRINGIFY(MEM_OP_NAME), (void *) _destination, (void *) _source,
                                  _end_loop->size, *(SPACE) -_i * _end_loop->size););
-            MEM_OP(_destination, _source, _end_loop->size);
+            MEM_OP(_destination, _source, _end_loop->size, stream);
             _source += _loop->extent;
             _destination += _loop->extent;
         }
@@ -110,7 +110,8 @@ static inline void _contiguous_loop(const dt_elem_desc_t *ELEM, const opal_datat
 }
 
 static inline int32_t _copy_content_same_ddt(const opal_datatype_t *datatype, int32_t count,
-                                             char *destination_base, char *source_base)
+                                             char *destination_base, char *source_base,
+                                             opal_accelerator_stream_t *stream)
 {
     dt_stack_t *pStack;  /* pointer to the position on the stack */
     int32_t stack_pos;   /* index of the stack level */
@@ -148,12 +149,19 @@ static inline int32_t _copy_content_same_ddt(const opal_datatype_t *datatype, in
                 DO_DEBUG(opal_output(0, "copy c1. %s( %p, %p, %lu ) => space %lu\n",
                                      STRINGIFY(MEM_OP_NAME), (void *) destination, (void *) source,
                                      (unsigned long) memop_chunk, (unsigned long) total_length););
-                MEM_OP(destination, source, memop_chunk);
+                MEM_OP(destination, source, memop_chunk, stream);
                 destination += memop_chunk;
                 source += memop_chunk;
                 total_length -= memop_chunk;
             }
             return 0; /* completed */
+        }
+        opal_accelerator_stream_t *actual_stream = stream;
+        bool flush_stream = false;
+        if (NULL == stream) {
+            /* TODO: figure out the stream */
+            opal_accelerator.get_default_stream(0, &actual_stream);
+            flush_stream = true;
         }
         for (pos_desc = 0; (int32_t) pos_desc < count; pos_desc++) {
             OPAL_DATATYPE_SAFEGUARD_POINTER(destination, datatype->size,
@@ -164,9 +172,12 @@ static inline int32_t _copy_content_same_ddt(const opal_datatype_t *datatype, in
                                  STRINGIFY(MEM_OP_NAME), (void *) destination, (void *) source,
                                  (unsigned long) datatype->size,
                                  (unsigned long) (iov_len_local - (pos_desc * datatype->size))););
-            MEM_OP(destination, source, datatype->size);
+            MEM_OP(destination, source, datatype->size, actual_stream);
             destination += extent;
             source += extent;
+        }
+        if (flush_stream) {
+            opal_accelerator.wait_stream(actual_stream);
         }
         return 0; /* completed */
     }
@@ -185,11 +196,18 @@ static inline int32_t _copy_content_same_ddt(const opal_datatype_t *datatype, in
 
     UPDATE_INTERNAL_COUNTERS(description, 0, pElem, count_desc);
 
+    opal_accelerator_stream_t *actual_stream = stream;
+    bool flush_stream = false;
+    if (NULL == stream) {
+        /* TODO: figure out the stream */
+        opal_accelerator.get_default_stream(0, &actual_stream);
+        flush_stream = true;
+    }
     while (1) {
         while (OPAL_LIKELY(pElem->elem.common.flags & OPAL_DATATYPE_FLAG_DATA)) {
             /* now here we have a basic datatype */
             _predefined_data(pElem, datatype, (unsigned char *) source_base, count, count_desc,
-                             source, destination, &iov_len_local);
+                             source, destination, &iov_len_local, stream);
             pos_desc++; /* advance to the next data */
             UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc);
         }
@@ -202,6 +220,9 @@ static inline int32_t _copy_content_same_ddt(const opal_datatype_t *datatype, in
             if (--(pStack->count) == 0) { /* end of loop */
                 if (stack_pos == 0) {
                     assert(iov_len_local == 0);
+                    if (flush_stream) {
+                        opal_accelerator.wait_stream(actual_stream);
+                    }
                     return 0; /* completed */
                 }
                 stack_pos--;
@@ -229,7 +250,7 @@ static inline int32_t _copy_content_same_ddt(const opal_datatype_t *datatype, in
             ptrdiff_t local_disp = (ptrdiff_t) source;
             if (pElem->loop.common.flags & OPAL_DATATYPE_FLAG_CONTIGUOUS) {
                 _contiguous_loop(pElem, datatype, (unsigned char *) source_base, count, count_desc,
-                                 source, destination, &iov_len_local);
+                                 source, destination, &iov_len_local, actual_stream);
                 pos_desc += pElem->loop.items + 1;
                 goto update_loop_description;
             }

@@ -275,8 +275,9 @@ ompi_datatype_set_element_count( const ompi_datatype_t* type, size_t count, size
 }
 
 static inline int32_t
-ompi_datatype_copy_content_same_ddt( const ompi_datatype_t* type, size_t count,
-                                     char* pDestBuf, char* pSrcBuf )
+ompi_datatype_copy_content_same_ddt_stream( const ompi_datatype_t* type, size_t count,
+                                            char* pDestBuf, char* pSrcBuf,
+                                            opal_accelerator_stream_t *stream )
 {
     int32_t length, rc;
     ptrdiff_t extent;
@@ -285,14 +286,21 @@ ompi_datatype_copy_content_same_ddt( const ompi_datatype_t* type, size_t count,
     while( 0 != count ) {
         length = INT_MAX;
         if( ((size_t)length) > count ) length = (int32_t)count;
-        rc = opal_datatype_copy_content_same_ddt( &type->super, length,
-                                                  pDestBuf, pSrcBuf );
+        rc = opal_datatype_copy_content_same_ddt_stream( &type->super, length,
+                                                  pDestBuf, pSrcBuf, stream );
         if( 0 != rc ) return rc;
         pDestBuf += ((ptrdiff_t)length) * extent;
         pSrcBuf  += ((ptrdiff_t)length) * extent;
         count -= (size_t)length;
     }
     return 0;
+}
+
+static inline int32_t
+ompi_datatype_copy_content_same_ddt( const ompi_datatype_t* type, size_t count,
+                                     char* pDestBuf, char* pSrcBuf )
+{
+    return ompi_datatype_copy_content_same_ddt_stream(type, count, pDestBuf, pSrcBuf, NULL);
 }
 
 OMPI_DECLSPEC const ompi_datatype_t* ompi_datatype_match_size( int size, uint16_t datakind, uint16_t datalang );

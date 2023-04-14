@@ -126,8 +126,8 @@ enum ompi_op_type {
 /* device op information */
 struct ompi_device_op_t {
     opal_accelerator_stream_t *do_stream;
-    ompi_op_base_op_fns_t do_intrinsic;
-    ompi_op_base_op_3buff_fns_t do_3buff_intrinsic;
+    ompi_op_base_op_stream_fns_t do_intrinsic;
+    ompi_op_base_op_3buff_stream_fns_t do_3buff_intrinsic;
 };
 typedef struct ompi_device_op_t ompi_device_op_t;
 
@@ -548,9 +548,10 @@ static inline bool ompi_op_supports_device(const ompi_op_t * op, const ompi_data
  * optimization).  If you give it an intrinsic op with a datatype that
  * is not defined to have that operation, it is likely to seg fault.
  */
-static inline void ompi_op_reduce(ompi_op_t * op, void *source,
-                                  void *target, size_t full_count,
-                                  ompi_datatype_t * dtype)
+static inline void ompi_op_reduce_stream(ompi_op_t * op, void *source,
+                                         void *target, size_t full_count,
+                                         ompi_datatype_t * dtype,
+                                         opal_accelerator_stream_t *stream)
 {
     MPI_Fint f_dtype, f_count;
     int count = full_count;
@@ -579,7 +580,7 @@ static inline void ompi_op_reduce(ompi_op_t * op, void *source,
             }
             shift = done_count * ext;
             // Recurse one level in iterations of 'int'
-            ompi_op_reduce(op, (char*)source + shift, (char*)target + shift, iter_count, dtype);
+            ompi_op_reduce_stream(op, (char*)source + shift, (char*)target + shift, iter_count, dtype, stream);
             done_count += iter_count;
         }
         return;
@@ -639,9 +640,18 @@ static inline void ompi_op_reduce(ompi_op_t * op, void *source,
             if (NULL == op->o_device_op) {
                 abort(); // TODO: be more graceful!
             }
+            opal_accelerator_stream_t *actual_stream = stream;
+            bool flush_stream = false;
+            if (NULL == stream) {
+                opal_accelerator.get_default_stream(target_dev_id, &actual_stream);
+                flush_stream = true;
+            }
             op->o_device_op->do_intrinsic.fns[dtype_id](source, target,
-                                                     &count, &dtype,
-                                                     op->o_device_op->do_intrinsic.modules[dtype_id]);
+                                                        &count, &dtype, actual_stream,
+                                                        op->o_device_op->do_intrinsic.modules[dtype_id]);
+            if (flush_stream) {
+                opal_accelerator.wait_stream(actual_stream);
+            }
         } else {
             op->o_func.intrinsic.fns[dtype_id](source, target,
                                                &count, &dtype,
@@ -665,6 +675,13 @@ static inline void ompi_op_reduce(ompi_op_t * op, void *source,
     }
     op->o_func.c_fn(source, target, &count, &dtype);
     return;
+}
+
+static inline void ompi_op_reduce(ompi_op_t * op, void *source,
+                                  void *target, size_t full_count,
+                                  ompi_datatype_t * dtype)
+{
+    ompi_op_reduce_stream(op, source, target, full_count, dtype, NULL);
 }
 
 static inline void ompi_3buff_op_user (ompi_op_t *op, void * restrict source1, void * restrict source2,
@@ -697,6 +714,77 @@ static inline void ompi_3buff_op_user (ompi_op_t *op, void * restrict source1, v
  *
  * Otherwise, this function is the same as ompi_op_reduce.
  */
+static inline void ompi_3buff_op_reduce_stream(ompi_op_t * op, void *source1,
+                                               void *source2, void *target,
+                                               int count, ompi_datatype_t * dtype,
+                                               opal_accelerator_stream_t *stream)
+{
+    void *restrict src1;
+    void *restrict src2;
+    void *restrict tgt;
+    src1 = source1;
+    src2 = source2;
+    tgt = target;
+
+    if (OPAL_UNLIKELY(!ompi_op_is_intrinsic (op))) {
+        /* no 3buff variants for user-defined ops */
+        ompi_3buff_op_user (op, src1, src2, tgt, count, dtype);
+        return;
+    }
+
+    bool use_device_op = false;
+    int source1_dev_id, source2_dev_id, target_dev_id;
+    uint64_t source1_flags, source2_flags, target_flags;
+    int target_check_addr = opal_accelerator.check_addr(target, &target_dev_id, &target_flags);
+    int source1_check_addr = opal_accelerator.check_addr(source1, &source1_dev_id, &source1_flags);
+    int source2_check_addr = opal_accelerator.check_addr(source2, &source2_dev_id, &source2_flags);
+    /* check if either of the buffers is on a device and if so make sure we can
+     * access handle it properly */
+    if (target_check_addr > 0 || source1_check_addr > 0 || source2_check_addr > 0) {
+        if (ompi_datatype_is_predefined(dtype) &&
+            0 != (op->o_flags & OMPI_OP_FLAGS_INTRINSIC) &&
+            NULL != op->o_device_op) {
+            use_device_op = true;
+        } else {
+            /* TODO: can we be more graceful here? */
+            abort();
+        }
+    }
+
+    /* For intrinsics, we also pass the corresponding op module */
+    if (0 != (op->o_flags & OMPI_OP_FLAGS_INTRINSIC)) {
+        int dtype_id;
+        if (!ompi_datatype_is_predefined(dtype)) {
+            ompi_datatype_t *dt = ompi_datatype_get_single_predefined_type_from_args(dtype);
+            dtype_id = ompi_op_ddt_map[dt->id];
+        } else {
+            dtype_id = ompi_op_ddt_map[dtype->id];
+        }
+        if (use_device_op) {
+            if (NULL == op->o_device_op) {
+                abort(); // TODO: be more graceful!
+            }
+            opal_accelerator_stream_t *actual_stream = stream;
+            bool flush_stream = false;
+            if (NULL == stream) {
+                opal_accelerator.get_default_stream(target_dev_id, &actual_stream);
+                flush_stream = true;
+            }
+            op->o_device_op->do_3buff_intrinsic.fns[dtype_id](source1, source2, target,
+                                                              &count, &dtype, actual_stream,
+                                                              op->o_device_op->do_3buff_intrinsic.modules[dtype_id]);
+            if (flush_stream) {
+                opal_accelerator.wait_stream(actual_stream);
+            }
+        } else {
+            op->o_3buff_intrinsic.fns[dtype_id](source1, source2, target,
+                                                &count, &dtype,
+                                                op->o_func.intrinsic.modules[dtype_id]);
+        }
+    }
+}
+
+
 static inline void ompi_3buff_op_reduce(ompi_op_t * op, void *source1,
                                         void *source2, void *target,
                                         int count, ompi_datatype_t * dtype)

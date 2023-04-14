@@ -42,6 +42,7 @@
 #include <stddef.h>
 
 #include "opal/class/opal_object.h"
+#include "opal/mca/accelerator/accelerator.h"
 
 BEGIN_C_DECLS
 
@@ -308,6 +309,10 @@ OPAL_DECLSPEC int32_t opal_datatype_set_element_count(const opal_datatype_t *pDa
 OPAL_DECLSPEC int32_t opal_datatype_copy_content_same_ddt(const opal_datatype_t *pData,
                                                           int32_t count, char *pDestBuf,
                                                           char *pSrcBuf);
+
+OPAL_DECLSPEC int32_t opal_datatype_copy_content_same_ddt_stream(const opal_datatype_t *datatype, int32_t count,
+                                                                 char *destination_base, char *source_base,
+                                                                 opal_accelerator_stream_t *stream);
 
 OPAL_DECLSPEC int opal_datatype_compute_ptypes(opal_datatype_t *datatype);
 

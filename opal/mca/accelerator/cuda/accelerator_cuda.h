@@ -39,7 +39,7 @@ typedef struct opal_accelerator_cuda_event_t opal_accelerator_cuda_event_t;
 OBJ_CLASS_DECLARATION(opal_accelerator_cuda_event_t);
 
 /* Declare extern variables, defined in accelerator_cuda_component.c */
-OPAL_DECLSPEC extern CUstream opal_accelerator_cuda_memcpy_stream;
+OPAL_DECLSPEC extern opal_accelerator_cuda_stream_t opal_accelerator_cuda_memcpy_stream;
 OPAL_DECLSPEC extern CUstream opal_accelerator_cuda_alloc_stream;
 OPAL_DECLSPEC extern opal_accelerator_cuda_stream_t opal_accelerator_cuda_default_stream;
 OPAL_DECLSPEC extern opal_mutex_t opal_accelerator_cuda_stream_lock;

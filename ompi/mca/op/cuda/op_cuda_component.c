@@ -175,7 +175,7 @@ cuda_component_op_query(struct ompi_op_t *op, int *priority)
     module->opm_device_enabled = true;
     for (int i = 0; i < OMPI_OP_BASE_TYPE_MAX; ++i) {
         module->opm_fns[i] = ompi_op_cuda_functions[op->o_f_to_c_index][i];
-        //module->opm_3buff_fns[i] = ompi_op_cuda_3buff_functions[op->o_f_to_c_index][i];
+        module->opm_3buff_fns[i] = ompi_op_cuda_3buff_functions[op->o_f_to_c_index][i];
 
         if( NULL != module->opm_fns[i] ) {
             OBJ_RETAIN(module);

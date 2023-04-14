@@ -138,6 +138,16 @@ typedef struct opal_accelerator_event_t opal_accelerator_mempool_t;
 OBJ_CLASS_DECLARATION(opal_accelerator_mempool_t);
 
 /**
+ * Query the default stream.
+ *
+ * @param[OUT] stream        Set to the default stream.
+ *
+ * @return                   OPAL_SUCCESS or error status on failure
+ */
+typedef int (*opal_accelerator_base_get_default_stream_fn_t)(
+    int dev_id, opal_accelerator_stream_t **stream);
+
+/**
  * Check whether a pointer belongs to an accelerator or not.
  * interfaces
  *
@@ -281,6 +291,29 @@ typedef int (*opal_accelerator_base_module_memmove_fn_t)(
     int dest_dev_id, int src_dev_id, void *dest, const void *src, size_t size,
     opal_accelerator_transfer_type_t type);
 
+/**
+ * Copies memory asynchronously from src to dest. Memory of dest and src
+ * may overlap. Optionally can specify the transfer type to
+ * avoid pointer detection for performance. The operations will be enqueued
+ * into the provided stream but are not guaranteed to be complete upon return.
+ *
+ * @param[IN] dest_dev_id    Associated device to copy to or
+ *                           MCA_ACCELERATOR_NO_DEVICE_ID
+ * @param[IN] src_dev_id     Associated device to copy from or
+ *                           MCA_ACCELERATOR_NO_DEVICE_ID
+ * @param[IN] dest           Destination to copy memory to
+ * @param[IN] src            Source to copy memory from
+ * @param[IN] size           Size of memory to copy
+ * @param[IN] stream         Stream to perform asynchronous move on
+ * @param[IN] type           Transfer type field for performance
+ *                           Can be set to MCA_ACCELERATOR_TRANSFER_UNSPEC
+ *                           if caller is unsure of the transfer direction.
+ *
+ * @return                   OPAL_SUCCESS or error status on failure
+ */
+typedef int (*opal_accelerator_base_module_memmove_async_fn_t)(
+    int dest_dev_id, int src_dev_id, void *dest, const void *src, size_t size,
+    opal_accelerator_stream_t *stream, opal_accelerator_transfer_type_t type);
 /**
  * Allocates size bytes memory from the device and sets ptr to the
  * pointer of the allocated memory. The memory is not initialized.
@@ -456,7 +489,7 @@ typedef int (*opal_accelerator_base_module_get_num_devices_fn_t)(int *num_device
  */
 typedef struct {
     /* default stream pointer */
-    opal_accelerator_stream_t *default_stream;
+    opal_accelerator_base_get_default_stream_fn_t get_default_stream;
     /* accelerator function table */
     opal_accelerator_base_module_check_addr_fn_t check_addr;
 
@@ -467,6 +500,7 @@ typedef struct {
 
     opal_accelerator_base_module_memcpy_async_fn_t mem_copy_async;
     opal_accelerator_base_module_memcpy_fn_t mem_copy;
+    opal_accelerator_base_module_memmove_async_fn_t mem_move_async;
     opal_accelerator_base_module_memmove_fn_t mem_move;
 
     opal_accelerator_base_module_mem_alloc_fn_t mem_alloc;

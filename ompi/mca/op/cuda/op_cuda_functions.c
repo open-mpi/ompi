@@ -29,43 +29,55 @@
 #include "ompi/mca/op/cuda/op_cuda_impl.h"
 
 
-static inline void device_op_pre(const void *orig_source,
+static inline void device_op_pre(const void *orig_source1,
+                                 void **source1,
+                                 int *source1_device,
+                                 const void *orig_source2,
+                                 void **source2,
+                                 int *source2_device,
                                  void *orig_target,
-                                 int count,
-                                 struct ompi_datatype_t *dtype,
-                                 void **source,
-                                 int *source_device,
                                  void **target,
                                  int *target_device,
+                                 int count,
+                                 struct ompi_datatype_t *dtype,
                                  int *threads_per_block,
-                                 int *device)
+                                 int *device,
+                                 opal_accelerator_stream_t *stream)
 {
-    uint64_t target_flags = -1, source_flags = -1;
-    int target_rc, source_rc;
+    uint64_t target_flags = -1, source1_flags = -1, source2_flags = -1;
+    int target_rc, source1_rc, source2_rc = -1;
 
     *target = orig_target;
-    *source = (void*)orig_source;
+    *source1 = (void*)orig_source1;
+    if (NULL != orig_source2) {
+        *source2 = (void*)orig_source2;
+    }
 
     target_rc = opal_accelerator.check_addr(*target, target_device, &target_flags);
-    source_rc = opal_accelerator.check_addr(*source, source_device, &source_flags);
+    source1_rc = opal_accelerator.check_addr(*source1, source1_device, &source1_flags);
     *device = *target_device;
+
+    if (NULL != orig_source2) {
+        source2_rc = opal_accelerator.check_addr(*source2, source2_device, &source2_flags);
+        //printf("device_op_pre: target %p rc %d dev %d, source1 %p rc %d dev %d, source2 %p rc %d dev %d, device %d\n",
+        //       orig_target, target_rc, *target_device, orig_source1, source1_rc, *source1_device, orig_source2, source2_rc, *source2_device, *device);
+    }
 
     //printf("device_op_pre: target rc %d dev %d, source rc %d dev %d, device %d\n",
     //       target_rc, *target_device, source_rc, *source_device, *device);
 
-    if (0 == target_rc && 0 == source_rc) {
+    if (0 == target_rc && 0 == source1_rc && 0 == source2_rc) {
         /* no buffers are on any device, select device 0 */
         *device = 0;
     } else if (*target_device == -1) {
-        *device = *source_device;
+        if (*source1_device == -1 && NULL != orig_source2) {
+            *device = *source2_device;
+        } else {
+            *device = *source1_device;
+        }
     }
 
-#if 0
-    /* swap contexts */
-    CHECK(cuCtxPushCurrent, (mca_op_cuda_component.cu_ctx[*device]));
-#endif // 0
-
-    if (0 == target_rc || 0 == source_rc || *target_device != *source_device) {
+    if (0 == target_rc || 0 == source1_rc || *target_device != *source1_device) {
         size_t nbytes;
         ompi_datatype_type_size(dtype, &nbytes);
         nbytes *= count;
@@ -73,39 +85,61 @@ static inline void device_op_pre(const void *orig_source,
         if (0 == target_rc) {
             // allocate memory on the device for the target buffer
             //printf("copying target from device %d to host\n", *target_device);
-            opal_accelerator.mem_alloc_stream(*device, target, nbytes, opal_accelerator.default_stream);
-            //CHECK(cuMemAllocAsync,   (&dptr, nbytes, (CUstream*)opal_accelerator.default_stream->stream));
-            CHECK(cuMemcpyHtoDAsync, ((CUdeviceptr)*target, orig_target, nbytes, *(CUstream*)opal_accelerator.default_stream->stream));
+            opal_accelerator.mem_alloc_stream(*device, target, nbytes, stream);
+            CHECK(cuMemcpyHtoDAsync, ((CUdeviceptr)*target, orig_target, nbytes, *(CUstream*)stream->stream));
             *target_device = -1; // mark target device as host
         }
 
-        if (0 == source_rc || *device != *source_device) {
+        if (0 == source1_rc || *device != *source1_device) {
             // allocate memory on the device for the source buffer
             //printf("allocating source on device %d\n", *device);
-            opal_accelerator.mem_alloc_stream(*device, source, nbytes, opal_accelerator.default_stream);
-            if (0 == source_rc) {
+            opal_accelerator.mem_alloc_stream(*device, source1, nbytes, stream);
+            if (0 == source1_rc) {
                 /* copy from host to device */
                 //printf("copying source from host to device %d\n", *device);
-                CHECK(cuMemcpyHtoDAsync, ((CUdeviceptr)*source, orig_source, nbytes, *(CUstream*)opal_accelerator.default_stream->stream));
+                CHECK(cuMemcpyHtoDAsync, ((CUdeviceptr)*source1, orig_source1, nbytes, *(CUstream*)stream->stream));
             } else {
                 /* copy from one device to another device */
                 /* TODO: does this actually work? Can we enable P2P? */
                 //printf("attempting cross-device copy for source\n");
-                CHECK(cuMemcpyDtoDAsync, ((CUdeviceptr)*source, (CUdeviceptr)orig_source, nbytes, *(CUstream*)opal_accelerator.default_stream->stream));
+                CHECK(cuMemcpyDtoDAsync, ((CUdeviceptr)*source1, (CUdeviceptr)orig_source1, nbytes, *(CUstream*)stream->stream));
             }
+        }
+
+    }
+    if (NULL != source2_device && *target_device != *source2_device) {
+        // allocate memory on the device for the source buffer
+        //printf("allocating source on device %d\n", *device);
+        size_t nbytes;
+        ompi_datatype_type_size(dtype, &nbytes);
+        nbytes *= count;
+
+        opal_accelerator.mem_alloc_stream(*device, source2, nbytes, stream);
+        if (0 == source2_rc) {
+            /* copy from host to device */
+            //printf("copying source from host to device %d\n", *device);
+            CHECK(cuMemcpyHtoDAsync, ((CUdeviceptr)*source2, orig_source2, nbytes, *(CUstream*)stream->stream));
+        } else {
+            /* copy from one device to another device */
+            /* TODO: does this actually work? Can we enable P2P? */
+            //printf("attempting cross-device copy for source\n");
+            CHECK(cuMemcpyDtoDAsync, ((CUdeviceptr)*source2, (CUdeviceptr)orig_source2, nbytes, *(CUstream*)stream->stream));
         }
     }
     *threads_per_block = mca_op_cuda_component.cu_max_threads_per_block[*device];
 }
 
-static inline void device_op_post(void *orig_target,
-                                  int count,
-                                  struct ompi_datatype_t *dtype,
-                                  void *source,
-                                  int source_device,
+static inline void device_op_post(void *source1,
+                                  int source1_device,
+                                  void *source2,
+                                  int source2_device,
+                                  void *orig_target,
                                   void *target,
                                   int target_device,
-                                  int device)
+                                  int count,
+                                  struct ompi_datatype_t *dtype,
+                                  int device,
+                                  opal_accelerator_stream_t *stream)
 {
     if (-1 == target_device) {
 
@@ -113,38 +147,40 @@ static inline void device_op_post(void *orig_target,
         ompi_datatype_type_size(dtype, &nbytes);
         nbytes *= count;
 
-        CHECK(cuMemcpyDtoHAsync, (orig_target, (CUdeviceptr)target, nbytes, *(CUstream *)opal_accelerator.default_stream->stream));
+        CHECK(cuMemcpyDtoHAsync, (orig_target, (CUdeviceptr)target, nbytes, *(CUstream *)stream->stream));
     }
 
-    /* cuMemFreeAsync is supported from CUDA 11.2.0 upwards */
     if (-1 == target_device) {
-        opal_accelerator.mem_release_stream(device, target, opal_accelerator.default_stream);
+        opal_accelerator.mem_release_stream(device, target, stream);
         //CHECK(cuMemFreeAsync, ((CUdeviceptr)target, mca_op_cuda_component.cu_stream));
     }
-    if (source_device != device) {
-        opal_accelerator.mem_release_stream(device, source, opal_accelerator.default_stream);
+    if (source1_device != device) {
+        opal_accelerator.mem_release_stream(device, source1, stream);
         //CHECK(cuMemFreeAsync, ((CUdeviceptr)source, mca_op_cuda_component.cu_stream));
     }
-
-    /* wait for all scheduled operations to complete */
-    //CHECK(cuStreamSynchronize, (mca_op_cuda_component.cu_stream));
-    opal_accelerator.wait_stream(opal_accelerator.default_stream);
+    if (NULL != source2 && source2_device != device) {
+        opal_accelerator.mem_release_stream(device, source2, stream);
+        //CHECK(cuMemFreeAsync, ((CUdeviceptr)source, mca_op_cuda_component.cu_stream));
+    }
 }
 
-#define FUNC(name, type_name, type)                                 \
-    static \
-    void ompi_op_cuda_2buff_##name##_##type_name(const void *in, void *inout, int *count,  \
-                                                   struct ompi_datatype_t **dtype,           \
-                                                   struct ompi_op_base_module_1_0_0_t *module) { \
-        int threads_per_block; \
-        int source_device, target_device, device; \
-        type *source, *target; \
-        int n = *count; \
-        device_op_pre(in, inout, n, *dtype, (void**)&source, &source_device, (void**)&target, &target_device, \
-                      &threads_per_block, &device); \
-        CUstream *stream = (CUstream*)opal_accelerator.default_stream->stream;                        \
-        ompi_op_cuda_2buff_##name##_##type_name##_submit(source, target, n, threads_per_block, *stream); \
-        device_op_post(inout, n, *dtype, source, source_device, target, target_device, device); \
+#define FUNC(name, type_name, type)                                                                             \
+    static                                                                                                      \
+    void ompi_op_cuda_2buff_##name##_##type_name(const void *in, void *inout, int *count,                       \
+                                                   struct ompi_datatype_t **dtype,                              \
+                                                   opal_accelerator_stream_t *stream,                           \
+                                                   struct ompi_op_base_module_1_0_0_t *module) {                \
+        int threads_per_block;                                                                                  \
+        int source_device, target_device, device;                                                               \
+        type *source, *target;                                                                                  \
+        int n = *count;                                                                                         \
+        device_op_pre(in, (void**)&source, &source_device, NULL, NULL, NULL,                                    \
+                      inout, (void**)&target, &target_device,                                                   \
+                      n, *dtype,                                                                                \
+                      &threads_per_block, &device, stream);                                                     \
+        CUstream *custream = (CUstream*)stream->stream;                                                         \
+        ompi_op_cuda_2buff_##name##_##type_name##_submit(source, target, n, threads_per_block, *custream);      \
+        device_op_post(source, source_device, NULL, -1, inout, target, target_device, n, *dtype, device, stream);\
     }
 
 #define OP_FUNC(name, type_name, type, op, ...) FUNC(name, __VA_ARGS__##type_name, __VA_ARGS__##type)
@@ -162,45 +198,47 @@ static inline void device_op_post(void *orig_target,
 #define LOC_FUNC(name, type_name, op) FUNC(name, type_name, ompi_op_predefined_##type_name##_t)
 
 /* Dispatch Fortran types to C types */
-#define FORT_INT_FUNC(name, type_name, type)                                 \
-    static \
-    void ompi_op_cuda_2buff_##name##_##type_name(const void *in, void *inout, int *count,  \
-                                                   struct ompi_datatype_t **dtype,           \
+#define FORT_INT_FUNC(name, type_name, type)                                                     \
+    static                                                                                       \
+    void ompi_op_cuda_2buff_##name##_##type_name(const void *in, void *inout, int *count,        \
+                                                   struct ompi_datatype_t **dtype,               \
+                                                   opal_accelerator_stream_t *stream,            \
                                                    struct ompi_op_base_module_1_0_0_t *module) { \
                                                                                                  \
         _Static_assert(sizeof(type) >= sizeof(int8_t) && sizeof(type) <= sizeof(int64_t));       \
         switch(sizeof(type)) {  \
             case sizeof(int8_t):  \
-                ompi_op_cuda_2buff_##name##_int8_t(in, inout, count, dtype, module); \
+                ompi_op_cuda_2buff_##name##_int8_t(in, inout, count, dtype, stream, module); \
                 break; \
             case sizeof(int16_t): \
-                ompi_op_cuda_2buff_##name##_int16_t(in, inout, count, dtype, module); \
+                ompi_op_cuda_2buff_##name##_int16_t(in, inout, count, dtype, stream, module); \
                 break; \
             case sizeof(int32_t): \
-                ompi_op_cuda_2buff_##name##_int32_t(in, inout, count, dtype, module); \
+                ompi_op_cuda_2buff_##name##_int32_t(in, inout, count, dtype, stream, module); \
                 break; \
             case sizeof(int64_t): \
-                ompi_op_cuda_2buff_##name##_int64_t(in, inout, count, dtype, module); \
+                ompi_op_cuda_2buff_##name##_int64_t(in, inout, count, dtype, stream, module); \
                 break; \
         } \
     }
 
 /* Dispatch Fortran types to C types */
-#define FORT_FLOAT_FUNC(name, type_name, type)                                 \
-    static \
-    void ompi_op_cuda_2buff_##name##_##type_name(const void *in, void *inout, int *count,  \
-                                                   struct ompi_datatype_t **dtype,           \
-                                                   struct ompi_op_base_module_1_0_0_t *module) { \
+#define FORT_FLOAT_FUNC(name, type_name, type)                                                      \
+    static                                                                                          \
+    void ompi_op_cuda_2buff_##name##_##type_name(const void *in, void *inout, int *count,           \
+                                                   struct ompi_datatype_t **dtype,                  \
+                                                   opal_accelerator_stream_t *stream,               \
+                                                   struct ompi_op_base_module_1_0_0_t *module) {    \
         _Static_assert(sizeof(type) >= sizeof(float) && sizeof(type) <= sizeof(long double));       \
         switch(sizeof(type)) {  \
             case sizeof(float):  \
-                ompi_op_cuda_2buff_##name##_float(in, inout, count, dtype, module);  \
+                ompi_op_cuda_2buff_##name##_float(in, inout, count, dtype, stream, module);  \
                 break;  \
             case sizeof(double): \
-                ompi_op_cuda_2buff_##name##_double(in, inout, count, dtype, module); \
+                ompi_op_cuda_2buff_##name##_double(in, inout, count, dtype, stream, module); \
                 break; \
             case sizeof(long double): \
-                ompi_op_cuda_2buff_##name##_long_double(in, inout, count, dtype, module); \
+                ompi_op_cuda_2buff_##name##_long_double(in, inout, count, dtype, stream, module); \
                 break; \
         } \
     }
@@ -739,57 +777,36 @@ LOC_FUNC(minloc, short_int, <)
 LOC_FUNC(minloc, long_double_int, <)
 
 
-#if 0
+
 /*
  *  This is a three buffer (2 input and 1 output) version of the reduction
  *    routines, needed for some optimizations.
  */
-#define OP_FUNC(name, type_name, type, op)                                 \
-    __device__ void                                                                 \
-    ompi_op_cuda_3buff_##name##_##type_name##_kernel(const type *in1, const type* in2, type *out, int n) {   \
-        int i = blockIdx.x*blockDim.x + threadIdx.x;                                \
-        if (i < n) out[i] = in1[i] op in2[i];                                       \
-    }                                                                               \
-    void ompi_op_cuda_3buff_##name##_##type_name##(const void *in1, const void *in2, void *out, int *count,  \
-                                                   struct ompi_datatype_t **dtype,           \
-                                                   struct ompi_op_base_module_1_0_0_t *module) {     \
-        int threads = THREADS_PER_BLOCK;                                            \
-        int blocks  = *count / THREADS_PER_BLOCK;                                   \
-        type *out_ = (type*)out;                                                    \
-        const type *in1_ = (const type*)in1;                                        \
-        const type *in2_ = (const type*)in2;                                        \
-        int n = *count;                                                             \
-        CUstream *stream = (CUstream*)opal_accelerator.default_stream->stream;     \
-        ompi_op_cuda_3buff_##name##_##type_name##_kernel<<<blocks, threads, *stream>>>(in1_, int2_, out_, n); \
+#define FUNC_3BUF(name, type_name, type)                                                                        \
+    static                                                                                                      \
+    void ompi_op_cuda_3buff_##name##_##type_name(const void *in1, const void *in2, void *out, int *count,      \
+                                                   struct ompi_datatype_t **dtype,                              \
+                                                   opal_accelerator_stream_t *stream,                           \
+                                                   struct ompi_op_base_module_1_0_0_t *module) {                \
+        int threads_per_block;                                                                                  \
+        int source1_device, source2_device, target_device, device;                                              \
+        type *source1, *source2, *target;                                                                       \
+        int n = *count;                                                                                         \
+        device_op_pre(in1, (void**)&source1, &source1_device,                                                   \
+                      in2, (void**)&source2, &source2_device,                                                   \
+                      out, (void**)&target, &target_device,                                                     \
+                      n, *dtype,                                                                                \
+                      &threads_per_block, &device, stream);                                                     \
+        CUstream *custream = (CUstream*)stream->stream;                                                         \
+        ompi_op_cuda_3buff_##name##_##type_name##_submit(source1, source2, target, n, threads_per_block, *custream);\
+        device_op_post(source1, source1_device, source2, source2_device, out, target, target_device, n, *dtype, device, stream);\
     }
 
 
-/*
- * Since all the functions in this file are essentially identical, we
- * use a macro to substitute in names and types.  The core operation
- * in all functions that use this macro is the same.
- *
- * This macro is for (out = op(in1, in2))
- */
-#define FUNC_FUNC(name, type_name, type)                                            \
-    __device__ void                                                                 \
-    ompi_op_cuda_3buff_##name##_##type_name##_kernel(const type *in1, const type *in2, type *out, int n) {   \
-        int i = blockIdx.x*blockDim.x + threadIdx.x;                                \
-        if (i < n) out[i] = current_func(in1[i], in2[i]);                           \
-    }                                                                               \
-    static void                                                                     \
-    ompi_op_cuda_3buff_##name##_##type_name##(const void *in1, const void *in2, void *out, int *count,  \
-                                              struct ompi_datatype_t **dtype,           \
-                                              struct ompi_op_base_module_1_0_0_t *module) { \
-        int threads = THREADS_PER_BLOCK;                                            \
-        int blocks  = *count / THREADS_PER_BLOCK;                                   \
-        type *out_ = (type*)out;                                                    \
-        const type *in1_ = (const type*)in1;                                        \
-        const type *in2_ = (const type*)in2;                                        \
-        int n = *count;                                                             \
-        CUstream *stream = (CUstream*)opal_accelerator.default_stream->stream;     \
-        ompi_op_cuda_3buff_##name##_##type_name##_kernel<<blocks, threads, *stream>>(in1_, in2_, out_, n); \
-    }
+#define OP_FUNC_3BUF(name, type_name, type, op, ...) FUNC_3BUF(name, __VA_ARGS__##type_name, __VA_ARGS__##type)
+
+/* reuse the macro above, no work is actually done so we don't care about the func */
+#define FUNC_FUNC_3BUF(name, type_name, type, ...) FUNC_3BUF(name, __VA_ARGS__##type_name, __VA_ARGS__##type)
 
 /*
  * Since all the functions in this file are essentially identical, we
@@ -798,52 +815,7 @@ LOC_FUNC(minloc, long_double_int, <)
  *
  * This macro is for minloc and maxloc
  */
-/*
-#define LOC_STRUCT(type_name, type1, type2) \
-  typedef struct { \
-      type1 v; \
-      type2 k; \
-  } ompi_op_predefined_##type_name##_t;
-*/
-
-#define LOC_FUNC(name, type_name, op) \
-    __device__ void                   \
-    ompi_op_cuda_3buff_##name##_##type_name##_kernel(const ompi_op_predefined_##type_name##_t *in1, \
-                                                     const ompi_op_predefined_##type_name##_t *in2, \
-                                                     ompi_op_predefined_##type_name##_t *out,       \
-                                                     int n)                                         \
-    {                                                                       \
-        int i = blockIdx.x*blockDim.x + threadIdx.x;                        \
-        if (i < n) {                                                        \
-            const ompi_op_predefined_##type_name##_t *a1 = &in1[i];         \
-            const ompi_op_predefined_##type_name##_t *a2 = &in2[i];         \
-            ompi_op_predefined_##type_name##_t *b = &out[i];                \
-            if (a1->v op a2->v) {                                           \
-                b->v = a1->v;                                               \
-                b->k = a1->k;                                               \
-            } else if (a1->v == a2->v) {                                    \
-                b->v = a1->v;                                               \
-                b->k = (a2->k < a1->k ? a2->k : a1->k);                     \
-            } else {                                                        \
-                b->v = a2->v;                                               \
-                b->k = a2->k;                                               \
-            }                                                               \
-        }                                                                   \
-    }                                                                       \
-    static void                                                             \
-    ompi_op_cuda_3buff_##name##_##type_name(const void *in1, const void *in2, void *out, int *count,\
-                                            struct ompi_datatype_t **dtype,             \
-                                            struct ompi_op_cuda_module_1_0_0_t *module) \
-    {                                                                                   \
-        int i;                                                                          \
-        int threads = THREADS_PER_BLOCK;                                                \
-        int blocks  = *count / THREADS_PER_BLOCK;                                       \
-        const ompi_op_predefined_##type_name##_t *a1 = (const ompi_op_predefined_##type_name##_t*) in1; \
-        const ompi_op_predefined_##type_name##_t *a2 = (const ompi_op_predefined_##type_name##_t*) in2; \
-        ompi_op_predefined_##type_name##_t *b = (ompi_op_predefined_##type_name##_t*) out;            \
-        CUstream *stream = (CUstream*)opal_accelerator.default_stream->stream;                       \
-        ompi_op_cuda_2buff_##name##_##type_name##_kernel<<blocks, threads, *stream>>(a1, a2, b, n); \
-    }
+#define LOC_FUNC_3BUF(name, type_name, op) FUNC_3BUF(name, type_name, ompi_op_predefined_##type_name##_t)
 
 
 /*************************************************************************
@@ -1345,7 +1317,7 @@ LOC_STRUCT_3BUF(long_double_int, long double, int)
 /*************************************************************************
  * Max location
  *************************************************************************/
-
+#if 0
 #if OMPI_HAVE_FORTRAN_REAL
 LOC_FUNC_3BUF(maxloc, 2real, >)
 #endif
@@ -1355,6 +1327,7 @@ LOC_FUNC_3BUF(maxloc, 2double_precision, >)
 #if OMPI_HAVE_FORTRAN_INTEGER
 LOC_FUNC_3BUF(maxloc, 2integer, >)
 #endif
+#endif // 0
 LOC_FUNC_3BUF(maxloc, float_int, >)
 LOC_FUNC_3BUF(maxloc, double_int, >)
 LOC_FUNC_3BUF(maxloc, long_int, >)
@@ -1365,7 +1338,7 @@ LOC_FUNC_3BUF(maxloc, long_double_int, >)
 /*************************************************************************
  * Min location
  *************************************************************************/
-
+#if 0
 #if OMPI_HAVE_FORTRAN_REAL
 LOC_FUNC_3BUF(minloc, 2real, <)
 #endif
@@ -1375,13 +1348,13 @@ LOC_FUNC_3BUF(minloc, 2double_precision, <)
 #if OMPI_HAVE_FORTRAN_INTEGER
 LOC_FUNC_3BUF(minloc, 2integer, <)
 #endif
+#endif // 0
 LOC_FUNC_3BUF(minloc, float_int, <)
 LOC_FUNC_3BUF(minloc, double_int, <)
 LOC_FUNC_3BUF(minloc, long_int, <)
 LOC_FUNC_3BUF(minloc, 2int, <)
 LOC_FUNC_3BUF(minloc, short_int, <)
 LOC_FUNC_3BUF(minloc, long_double_int, <)
-#endif // 0
 
 /*
  * Helpful defines, because there's soooo many names!
@@ -1599,7 +1572,7 @@ LOC_FUNC_3BUF(minloc, long_double_int, <)
     (OMPI_OP_FLAGS_INTRINSIC | OMPI_OP_FLAGS_ASSOC | \
      OMPI_OP_FLAGS_FLOAT_ASSOC | OMPI_OP_FLAGS_COMMUTE)
 
-ompi_op_base_handler_fn_t ompi_op_cuda_functions[OMPI_OP_BASE_FORTRAN_OP_MAX][OMPI_OP_BASE_TYPE_MAX] =
+ompi_op_base_stream_handler_fn_t ompi_op_cuda_functions[OMPI_OP_BASE_FORTRAN_OP_MAX][OMPI_OP_BASE_TYPE_MAX] =
     {
         /* Corresponds to MPI_OP_NULL */
         [OMPI_OP_BASE_FORTRAN_NULL] = {
@@ -1685,8 +1658,7 @@ ompi_op_base_handler_fn_t ompi_op_cuda_functions[OMPI_OP_BASE_FORTRAN_OP_MAX][OM
 
     };
 
-#if 0
-ompi_op_base_3buff_handler_fn_t ompi_op_base_3buff_functions[OMPI_OP_BASE_FORTRAN_OP_MAX][OMPI_OP_BASE_TYPE_MAX] =
+ompi_op_base_3buff_stream_handler_fn_t ompi_op_cuda_3buff_functions[OMPI_OP_BASE_FORTRAN_OP_MAX][OMPI_OP_BASE_TYPE_MAX] =
     {
         /* Corresponds to MPI_OP_NULL */
         [OMPI_OP_BASE_FORTRAN_NULL] = {
@@ -1770,4 +1742,3 @@ ompi_op_base_3buff_handler_fn_t ompi_op_base_3buff_functions[OMPI_OP_BASE_FORTRA
             NULL,
         },
     };
-#endif // 0

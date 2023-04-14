@@ -34,9 +34,9 @@
 #include "opal/sys/atomic.h"
 
 /* Define global variables, used in accelerator_cuda.c */
-CUstream opal_accelerator_cuda_memcpy_stream = NULL;
+opal_accelerator_cuda_stream_t opal_accelerator_cuda_memcpy_stream = {0};
 CUstream opal_accelerator_cuda_alloc_stream = NULL;
-opal_accelerator_cuda_stream_t opal_accelerator_cuda_default_stream;
+opal_accelerator_cuda_stream_t opal_accelerator_cuda_default_stream = {0};
 opal_mutex_t opal_accelerator_cuda_stream_lock = {0};
 int opal_accelerator_cuda_num_devices = 0;
 
@@ -159,12 +159,16 @@ int opal_accelerator_cuda_delayed_init()
     cuDeviceGetCount(&opal_accelerator_cuda_num_devices);
 
     /* Create stream for use in cuMemcpyAsync synchronous copies */
-    result = cuStreamCreate(&opal_accelerator_cuda_memcpy_stream, 0);
+    CUstream memcpy_stream;
+    result = cuStreamCreate(&memcpy_stream, 0);
     if (OPAL_UNLIKELY(result != CUDA_SUCCESS)) {
         opal_show_help("help-accelerator-cuda.txt", "cuStreamCreate failed", true,
                        OPAL_PROC_MY_HOSTNAME, result);
         goto out;
     }
+    OBJ_CONSTRUCT(&opal_accelerator_cuda_memcpy_stream, opal_accelerator_cuda_stream_t);
+    opal_accelerator_cuda_memcpy_stream.base.stream = malloc(sizeof(CUstream));
+    *(CUstream*)opal_accelerator_cuda_memcpy_stream.base.stream = memcpy_stream;
 
     /* Create stream for use in cuMemcpyAsync synchronous copies */
     result = cuStreamCreate(&opal_accelerator_cuda_alloc_stream, 0);
@@ -220,6 +224,9 @@ static opal_accelerator_base_module_t* accelerator_cuda_init(void)
 {
     OBJ_CONSTRUCT(&opal_accelerator_cuda_stream_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&accelerator_cuda_init_lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&opal_accelerator_cuda_default_stream, opal_accelerator_stream_t);
+    OBJ_CONSTRUCT(&opal_accelerator_cuda_memcpy_stream, opal_accelerator_stream_t);
+
     /* First check if the support is enabled.  In the case that the user has
      * turned it off, we do not need to continue with any CUDA specific
      * initialization.  Do this after MCA parameter registration. */
@@ -251,14 +258,14 @@ static void accelerator_cuda_finalize(opal_accelerator_base_module_t* module)
     if (CUDA_SUCCESS != result) {
         ctx_ok = 0;
     }
-    if ((NULL != opal_accelerator_cuda_memcpy_stream) && ctx_ok) {
-        cuStreamDestroy(opal_accelerator_cuda_memcpy_stream);
+    if ((NULL != opal_accelerator_cuda_memcpy_stream.base.stream) && ctx_ok) {
+        OBJ_DESTRUCT(&opal_accelerator_cuda_memcpy_stream);
     }
     if ((NULL != opal_accelerator_cuda_alloc_stream) && ctx_ok) {
         cuStreamDestroy(opal_accelerator_cuda_alloc_stream);
     }
     if ((NULL != opal_accelerator_cuda_default_stream.base.stream) && ctx_ok) {
-        cuStreamDestroy(opal_accelerator_cuda_default_stream.base.stream);
+        OBJ_DESTRUCT(&opal_accelerator_cuda_default_stream);
     }
 
 

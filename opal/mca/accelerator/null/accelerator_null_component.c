@@ -27,6 +27,8 @@
 const char *opal_accelerator_null_component_version_string
     = "OPAL null accelerator MCA component version " OPAL_VERSION;
 
+static opal_accelerator_stream_t default_stream;
+
 /*
  * Component API functions
  */
@@ -37,8 +39,10 @@ static opal_accelerator_base_module_t* accelerator_null_init(void);
 static void accelerator_null_finalize(opal_accelerator_base_module_t* module);
 
 /* Accelerator API's */
+static int accelerator_null_get_default_stream(int dev_id, opal_accelerator_stream_t **stream);
 static int accelerator_null_check_addr(const void *addr, int *dev_id, uint64_t *flags);
 
+static int accelerator_null_get_default_stream(int dev_id, opal_accelerator_stream_t **stream);
 static int accelerator_null_create_stream(int dev_id, opal_accelerator_stream_t **stream);
 static int accelerator_null_create_event(int dev_id, opal_accelerator_event_t **event);
 static int accelerator_null_record_event(int dev_id, opal_accelerator_event_t *event, opal_accelerator_stream_t *stream);
@@ -48,6 +52,8 @@ static int accelerator_null_memcpy_async(int dest_dev_id, int src_dev_id, void *
                                          opal_accelerator_stream_t *stream, opal_accelerator_transfer_type_t type);
 static int accelerator_null_memcpy(int dest_dev_id, int src_dev_id, void *dest, const void *src,
                                    size_t size, opal_accelerator_transfer_type_t type);
+static int accelerator_null_memmove_async(int dest_dev_id, int src_dev_id, void *dest, const void *src, size_t size,
+                                          opal_accelerator_stream_t *stream, opal_accelerator_transfer_type_t type);
 static int accelerator_null_memmove(int dest_dev_id, int src_dev_id, void *dest, const void *src, size_t size,
                                     opal_accelerator_transfer_type_t type);
 
@@ -110,7 +116,7 @@ opal_accelerator_null_component_t mca_accelerator_null_component = {{
 
 opal_accelerator_base_module_t opal_accelerator_null_module =
 {
-    NULL,
+    accelerator_null_get_default_stream,
 
     accelerator_null_check_addr,
 
@@ -122,6 +128,7 @@ opal_accelerator_base_module_t opal_accelerator_null_module =
 
     accelerator_null_memcpy_async,
     accelerator_null_memcpy,
+    accelerator_null_memmove_async,
     accelerator_null_memmove,
     accelerator_null_mem_alloc,
     accelerator_null_mem_release,
@@ -174,6 +181,11 @@ static int accelerator_null_check_addr(const void *addr, int *dev_id, uint64_t *
     return 0;
 }
 
+static int accelerator_null_get_default_stream(int dev_id, opal_accelerator_stream_t **stream)
+{
+    *stream = &default_stream;
+    return OPAL_SUCCESS;
+}
 static int accelerator_null_create_stream(int dev_id, opal_accelerator_stream_t **stream)
 {
     *stream = OBJ_NEW(opal_accelerator_stream_t);
@@ -217,6 +229,12 @@ static int accelerator_null_memmove(int dest_dev_id, int src_dev_id, void *dest,
     return OPAL_SUCCESS;
 }
 
+static int accelerator_null_memmove_async(int dest_dev_id, int src_dev_id, void *dest, const void *src, size_t size,
+                                          opal_accelerator_stream_t *stream, opal_accelerator_transfer_type_t type)
+{
+    memmove(dest, src, size);
+    return OPAL_SUCCESS;
+}
 static int accelerator_null_mem_alloc(int dev_id, void **ptr, size_t size)
 {
     *ptr = malloc(size);
