@@ -393,7 +393,7 @@ static int mca_pml_ob1_recv_request_get_frag_failed (mca_pml_ob1_rdma_frag_t *fr
 
     /* tell peer to fall back on send for this region */
     rc = mca_pml_ob1_recv_request_ack_send(NULL, proc, frag->rdma_hdr.hdr_rget.hdr_rndv.hdr_src_req.lval,
-                                           recvreq, frag->rdma_offset, frag->rdma_length, false);
+                                           recvreq, frag->rdma_offset, frag->rdma_length, true);
     MCA_PML_OB1_RDMA_FRAG_RETURN(frag);
     return rc;
 }

@@ -1266,7 +1266,7 @@ void mca_pml_ob1_recv_frag_callback_cid (mca_btl_base_module_t* btl,
 
     ob1_hdr_ntoh (hdr, hdr->hdr_common.hdr_type);
 
-    /* NTH: this should be ok as as all BTLs create a dummy segment */
+    /* NTH: this should be ok as all BTLs create a dummy segment */
     segments->seg_len -= offsetof (mca_pml_ob1_ext_match_hdr_t, hdr_match);
     segments->seg_addr.pval = (void *) hdr_match;
 

@@ -475,7 +475,7 @@ int mca_pml_ob1_accelerator_need_buffers(void * rreq,
  * best thing, but this may go away if CUDA IPC is supported everywhere in the
  * future. */
 void mca_pml_ob1_accelerator_add_ipc_support(struct mca_btl_base_module_t* btl, int32_t flags,
-                                      ompi_proc_t* errproc, char* btlinfo)
+					     ompi_proc_t* errproc, char* btlinfo)
 {
     mca_bml_base_endpoint_t* ep;
     int btl_verbose_stream = 0;
@@ -502,6 +502,7 @@ void mca_pml_ob1_accelerator_add_ipc_support(struct mca_btl_base_module_t* btl, 
                 free(errhost);
             }
             ep->btl_send.bml_btls[i].btl_flags |= MCA_BTL_FLAGS_ACCELERATOR_GET;
+	    break;
         }
     }
 }
