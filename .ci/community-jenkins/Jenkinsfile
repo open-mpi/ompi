@@ -29,6 +29,13 @@ if (buildNumber > 1) {
 }
 milestone(buildNumber)
 
+// Add build description linking back to PR. This is redundant to the "GitHub"
+// link on the Pull Request page, but the Build page does not have a direct link
+// back to the PR. The "Details" link at the bottom of the GitHub PR page brings
+// you to the Jenkins Build page, so we're adding the link back to the GitHub PR
+// page.
+currentBuild.description = "This is a build of <a href=\"${CHANGE_URL}\"}\">Open MPI PR #${CHANGE_ID}</a>"
+
 check_stages = prepare_check_stages()
 println("Initialized Pipeline")
 
