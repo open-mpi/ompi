@@ -515,7 +515,7 @@ int mca_coll_ucc_req_free(struct ompi_request_t **ompi_req)
 {
     opal_free_list_return (&mca_coll_ucc_component.requests,
                            (opal_free_list_item_t *)(*ompi_req));
-    *ompi_req = &ompi_request_empty;
+    *ompi_req = MPI_REQUEST_NULL;
     return OMPI_SUCCESS;
 }
 
