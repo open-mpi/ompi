@@ -47,7 +47,7 @@ OUTPUT PARAMETERS
 -----------------
 
 * ``name`` : A unique specifier for the actual (as opposed to virtual)
-   node.
+  node.
 * ``resultlen`` : Length (in characters) of result returned in name.
 * ``ierror`` : Fortran only: Error status (integer).
 
