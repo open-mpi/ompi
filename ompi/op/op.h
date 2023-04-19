@@ -820,7 +820,7 @@ static inline void ompi_3buff_op_reduce(ompi_op_t * op, void *source1,
 }
 
 
-#if 0
+//#if 0
 /**
  * Determine where the op can run most efficiently. Uses some heuristic based
  * on information from opal_accelerator to determine whether it would be more
@@ -834,18 +834,55 @@ static inline void ompi_op_select_device(ompi_op_t *op, const void *source,
                                          const void *target, size_t count,
                                          ompi_datatype_t *dtype, int *device)
 {
-    if (OPAL_LIKELY(ompi_op_is_intrinsic (op))) {
-        int source_dev_id = -1, target_dev_id = -1;
-        uint64_t source_flags, target_flags;
-        int target_check_addr = -1;
-        if (target != )opal_accelerator.check_addr(target, &target_dev_id, &target_flags);
-        int source_check_addr = opal_accelerator.check_addr(source, &source_dev_id, &source_flags);
-        if (target_
-    } else {
+    /* default to host */
+    *device = -1;
+    if (!ompi_op_is_intrinsic (op)) {
         *device = -1;
+        return;
     }
+    /* quick check: can we execute on both sides? */
+    int dtype_id = ompi_op_ddt_map[dtype->id];
+    if (NULL == op->o_device_op || NULL == op->o_device_op->do_intrinsic.fns[dtype_id]) {
+        /* not available on the gpu, must select host */
+        return;
+    }
+
+    /* Penalty for accessing unified memory from the host
+     * TODO: how to determine this value? */
+    const double host_unified_memory_penalty = 10;
+
+    double host_startup_cost = 0.0; // host has no startup cost
+    double host_compute_cost = 1.0*count; // host reference 1.0 per element
+    double device_startup_cost = 10000.0; // to be filled below
+    double device_compute_cost = 0.0001*count;
+    double transfer_cost = 0.0; // summed up based on what has to be transferred
+    int source_dev_id = -1, target_dev_id = -1;
+    uint64_t source_flags = 0, target_flags = 0;
+    int target_check_addr = -1;
+    if (target != NULL) target_check_addr = opal_accelerator.check_addr(target, &target_dev_id, &target_flags);
+    int source_check_addr = -1;
+    if (source != NULL) source_check_addr = opal_accelerator.check_addr(source, &source_dev_id, &source_flags);
+    if (op->o_func.intrinsic.fns[dtype_id]) {
+        /* op not available on the host, must select a device */
+        host_compute_cost = 1E12;
+    } else if ((target_flags & MCA_ACCELERATOR_FLAGS_UNIFIED_MEMORY) || (source_flags & MCA_ACCELERATOR_FLAGS_UNIFIED_MEMORY)) {
+        /* at least one buffer is on unified memory */
+        host_compute_cost *= host_unified_memory_penalty; // reduced bandwidth
+    } else if (0 > source_check_addr && 0 > target_check_addr) {
+        /* both buffers are on the device, mark host as unusable */
+        host_compute_cost = 1E12;
+    } else if (0 <= source_check_addr && 0 <= target_check_addr) {
+        /* both buffers are on the host, mark device as unusable */
+        device_compute_cost = 1E12;
+    }
+
+    /* select a device, or remain on the host */
+    if ((host_startup_cost + host_compute_cost) > (device_startup_cost + device_compute_cost)) {
+        *device = (target_dev_id >= 0) ? target_dev_id : source_dev_id;
+    }
+
 }
-#endif // 0
+//#endif // 0
 
 END_C_DECLS
 
