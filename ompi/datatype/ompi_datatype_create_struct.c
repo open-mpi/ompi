@@ -33,8 +33,8 @@ int32_t ompi_datatype_create_struct( int count, const int* pBlockLength, const p
 {
     ptrdiff_t disp = 0, endto, lastExtent, lastDisp;
     ompi_datatype_t *pdt, *lastType;
-    int lastBlock;
     int i, start_from;
+    size_t lastBlock;
 
     /* Find first non-zero length element */
     for( i = 0; (i < count) && (0 == pBlockLength[i]); i++ );
