@@ -819,6 +819,34 @@ static inline void ompi_3buff_op_reduce(ompi_op_t * op, void *source1,
     }
 }
 
+
+#if 0
+/**
+ * Determine where the op can run most efficiently. Uses some heuristic based
+ * on information from opal_accelerator to determine whether it would be more
+ * efficient to run on a device or on the host.
+ *
+ * Either source or target can be NULL, in which case they will be ignored.
+ *
+ * Returns -1 for host, or the device number [0..NUMDEV-1] otherwise.
+ */
+static inline void ompi_op_select_device(ompi_op_t *op, const void *source,
+                                         const void *target, size_t count,
+                                         ompi_datatype_t *dtype, int *device)
+{
+    if (OPAL_LIKELY(ompi_op_is_intrinsic (op))) {
+        int source_dev_id = -1, target_dev_id = -1;
+        uint64_t source_flags, target_flags;
+        int target_check_addr = -1;
+        if (target != )opal_accelerator.check_addr(target, &target_dev_id, &target_flags);
+        int source_check_addr = opal_accelerator.check_addr(source, &source_dev_id, &source_flags);
+        if (target_
+    } else {
+        *device = -1;
+    }
+}
+#endif // 0
+
 END_C_DECLS
 
 #endif /* OMPI_OP_H */
