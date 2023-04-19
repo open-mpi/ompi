@@ -622,8 +622,14 @@ static inline void ompi_op_reduce_stream(ompi_op_t * op, void *source,
             NULL != op->o_device_op) {
             use_device_op = true;
         } else {
-            /* TODO: can we be more graceful here? */
-            abort();
+            /* check whether we can access the memory from the host */
+            if ((target_check_addr == 0 || (target_flags & MCA_ACCELERATOR_FLAGS_UNIFIED_MEMORY)) &&
+                (source_check_addr == 0 || (source_flags & MCA_ACCELERATOR_FLAGS_UNIFIED_MEMORY))) {
+                /* nothing to be done, we won't need device-capable ops */
+            } else {
+                fprintf(stderr, "3buff op: no suitable op module found for device memory!\n");
+                abort();
+            }
         }
     }
 
@@ -742,12 +748,19 @@ static inline void ompi_3buff_op_reduce_stream(ompi_op_t * op, void *source1,
      * access handle it properly */
     if (target_check_addr > 0 || source1_check_addr > 0 || source2_check_addr > 0) {
         if (ompi_datatype_is_predefined(dtype) &&
-            0 != (op->o_flags & OMPI_OP_FLAGS_INTRINSIC) &&
+            op->o_flags & OMPI_OP_FLAGS_INTRINSIC &&
             NULL != op->o_device_op) {
             use_device_op = true;
         } else {
-            /* TODO: can we be more graceful here? */
-            abort();
+            /* check whether we can access the memory from the host */
+            if ((target_check_addr  == 0 || (target_flags  & MCA_ACCELERATOR_FLAGS_UNIFIED_MEMORY)) &&
+                (source1_check_addr == 0 || (source1_flags & MCA_ACCELERATOR_FLAGS_UNIFIED_MEMORY)) &&
+                (source2_check_addr == 0 || (source2_flags & MCA_ACCELERATOR_FLAGS_UNIFIED_MEMORY))) {
+                /* nothing to be done, we won't need device-capable ops */
+            } else {
+                fprintf(stderr, "3buff op: no suitable op module found for device memory!\n");
+                abort();
+            }
         }
     }
 

@@ -50,6 +50,8 @@ static void *opal_convertor_accelerator_memcpy(void *dest, const void *src, size
     int res;
     if (!(convertor->flags & CONVERTOR_ACCELERATOR)) {
         return MEMCPY(dest, src, size);
+    } else if (convertor->flags & CONVERTOR_ACCELERATOR_UNIFIED) {
+        return MEMCPY(dest, src, size);
     }
 
     res = opal_accelerator.mem_copy(MCA_ACCELERATOR_NO_DEVICE_ID, MCA_ACCELERATOR_NO_DEVICE_ID,

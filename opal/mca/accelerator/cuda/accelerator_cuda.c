@@ -444,6 +444,8 @@ static int accelerator_cuda_memcpy(int dest_dev_id, int src_dev_id, void *dest, 
         return OPAL_ERR_BAD_PARAM;
     }
 
+#if 0
+
     /* Async copy then synchronize is the default behavior as some applications
      * cannot utilize synchronous copies. In addition, host memory does not need
      * to be page-locked if an Async memory copy is done (It just makes it synchronous
@@ -459,6 +461,8 @@ static int accelerator_cuda_memcpy(int dest_dev_id, int src_dev_id, void *dest, 
         return OPAL_ERROR;
     }
     result = cuStreamSynchronize(*(CUstream*)opal_accelerator_cuda_memcpy_stream.base.stream);
+#endif 0
+    result = cuMemcpy((CUdeviceptr) dest, (CUdeviceptr) src, size);
     if (OPAL_UNLIKELY(CUDA_SUCCESS != result)) {
         opal_show_help("help-accelerator-cuda.txt", "cuStreamSynchronize failed", true,
                        OPAL_PROC_MY_HOSTNAME, result);
@@ -534,6 +538,14 @@ static int accelerator_cuda_mem_alloc(int dev_id, void **ptr, size_t size)
     if (NULL == ptr || 0 == size) {
         return OPAL_ERR_BAD_PARAM;
     }
+
+    /* prefer managed memory */
+    result = cudaMallocManaged(ptr, size, cudaMemAttachGlobal);
+    if (cudaSuccess == result) {
+        return OPAL_SUCCESS;
+    }
+
+    /* fall-back to discrete memory */
 
 #if CUDA_VERSION >= 11020
     /* Try to allocate the memory from a memory pool, if available */
