@@ -365,8 +365,7 @@ static int32_t opal_datatype_create_struct(int count, const int *pBlockLength,
                                            opal_datatype_t **newType)
 {
     int i;
-    ptrdiff_t disp = 0, endto, lastExtent, lastDisp;
-    int lastBlock;
+    ptrdiff_t disp = 0, endto, lastExtent, lastDisp, lastBlock;
     opal_datatype_t *pdt, *lastType;
 
     if (0 == count) {
