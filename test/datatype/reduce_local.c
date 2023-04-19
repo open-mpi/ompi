@@ -20,6 +20,9 @@
 #include <sys/time.h>
 #include <unistd.h>
 
+// TODO: detect through configure
+#define HAVE_CUDA 1
+
 #include "mpi.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/datatype/ompi_datatype.h"
@@ -123,25 +126,25 @@ static int build_do_ops(char *optarg, int *do_ops)
 }
 
 /* clang-format off */
-#define MPI_OP_TEST(OPNAME, MPIOP, MPITYPE, TYPE, INBUF, INOUT_BUF, CHECK_BUF, COUNT, TYPE_PREFIX) \
+#define MPI_OP_TEST(OPNAME, MPIOP, MPITYPE, TYPE, INIT_INBUF, INBUF, INIT_INOUT_BUF, INOUT_BUF, CHECK_BUF, COUNT, TYPE_PREFIX) \
 do { \
-    const TYPE *_p1 = ((TYPE*)(INBUF)), *_p3 = ((TYPE*)(CHECK_BUF)); \
-    TYPE *_p2 = ((TYPE*)(INOUT_BUF)); \
     skip_op_type = 0; \
+    allocator->memcpy(INBUF, INIT_INBUF, sizeof(TYPE) * (COUNT)); \
     for(int _k = 0; _k < min((COUNT), max_shift); +_k++ ) { \
         duration[_k] = 0.0; \
         for(int _r = repeats; _r > 0; _r--) { \
-            memcpy(_p2, _p3, sizeof(TYPE) * (COUNT)); \
+            allocator->memcpy(INOUT_BUF, INIT_INOUT_BUF, sizeof(TYPE) * (COUNT)); \
             tstart = MPI_Wtime(); \
-            MPI_Reduce_local(_p1+_k, _p2+_k, (COUNT)-_k, (MPITYPE), (MPIOP)); \
+            MPI_Reduce_local(INBUF+_k, INOUT_BUF+_k, (COUNT)-_k, (MPITYPE), (MPIOP)); \
             tend = MPI_Wtime(); \
             duration[_k] += (tend - tstart); \
             if( check ) { \
+                allocator->memcpy(CHECK_BUF, INOUT_BUF, sizeof(TYPE) * (COUNT)); \
                 for( i = 0; i < (COUNT)-_k; i++ ) { \
-                    if(((_p2+_k)[i]) == (((_p1+_k)[i]) OPNAME ((_p3+_k)[i]))) \
+                    if(((CHECK_BUF+_k)[i]) == (((INIT_INBUF+_k)[i]) OPNAME ((INIT_INOUT_BUF+_k)[i]))) \
                         continue; \
                     printf("First error at alignment %d position %d (%" TYPE_PREFIX " %s %" TYPE_PREFIX " != %" TYPE_PREFIX ")\n", \
-                           _k, i, (_p1+_k)[i], (#OPNAME), (_p3+_k)[i], (_p2+_k)[i]); \
+                           _k, i, (INBUF+_k)[i], (#OPNAME), (INIT_INOUT_BUF+_k)[i], (INOUT_BUF+_k)[i]); \
                     correctness = 0; \
                     break; \
                 } \
@@ -151,22 +154,22 @@ do { \
     goto check_and_continue; \
 } while (0)
 
-#define MPI_OP_MINMAX_TEST(OPNAME, MPIOP, MPITYPE, TYPE, INBUF, INOUT_BUF, CHECK_BUF, COUNT, TYPE_PREFIX) \
+#define MPI_OP_MINMAX_TEST(OPNAME, MPIOP, MPITYPE, TYPE, INIT_INBUF, INBUF, INIT_INOUT_BUF, INOUT_BUF, CHECK_BUF, COUNT, TYPE_PREFIX) \
 do { \
-    const TYPE *_p1 = ((TYPE*)(INBUF)), *_p3 = ((TYPE*)(CHECK_BUF)); \
-    TYPE *_p2 = ((TYPE*)(INOUT_BUF)); \
     skip_op_type = 0; \
+    allocator->memcpy(INBUF, INIT_INBUF, sizeof(TYPE) * (COUNT)); \
     for(int _k = 0; _k < min((COUNT), max_shift); +_k++ ) { \
         duration[_k] = 0.0; \
         for(int _r = repeats; _r > 0; _r--) { \
-            memcpy(_p2, _p3, sizeof(TYPE) * (COUNT)); \
+            allocator->memcpy(INOUT_BUF, INIT_INOUT_BUF, sizeof(TYPE) * (COUNT)); \
             tstart = MPI_Wtime(); \
-            MPI_Reduce_local(_p1+_k, _p2+_k, (COUNT)-_k, (MPITYPE), (MPIOP)); \
+            MPI_Reduce_local(INBUF+_k, INOUT_BUF+_k, (COUNT)-_k, (MPITYPE), (MPIOP)); \
             tend = MPI_Wtime(); \
             duration[_k] += (tend - tstart); \
             if( check ) { \
+                allocator->memcpy(CHECK_BUF, INOUT_BUF, sizeof(TYPE) * (COUNT)); \
                 for( i = 0; i < (COUNT); i++ ) { \
-                    TYPE _v1 = *(_p1+_k), _v2 = *(_p2+_k), _v3 = *(_p3+_k); \
+                    TYPE _v1 = *(INIT_INBUF+_k), _v2 = *(CHECK_BUF+_k), _v3 = *(INIT_INOUT_BUF+_k); \
                     if(_v2 == OPNAME(_v1, _v3)) \
                         continue; \
                     printf("First error at alignment %d position %d (%" TYPE_PREFIX " !=  %s(%" TYPE_PREFIX ", %" TYPE_PREFIX ")\n", \
@@ -181,19 +184,100 @@ do { \
 } while (0)
 /* clang-format on */
 
+static
+void *host_allocate(size_t size, size_t align) {
+    void *ptr;
+    posix_memalign(&ptr, align, size);
+    return ptr;
+}
+static void host_free(void *ptr) {
+    free(ptr);
+}
+static void host_init(void) {
+    // nothing to do
+}
+static void host_fini(void) {
+    // nothing to do
+}
+static void* host_memcpy(void *dst, const void *src, size_t size) {
+    return memcpy(dst, src, size);
+}
+
+typedef void*(*allocate_fn_t)(size_t, size_t);
+typedef void*(*memcpy_fn_t)(void*, const void*, size_t);
+typedef void(*free_fn_t)(void*);
+typedef void(*init_fn_t)(void);
+typedef void(*fini_fn_t)(void);
+
+enum ALLOCATOR_FLAGS {
+    ALLOCATOR_DISCRETE = 1,
+};
+
+typedef struct {
+    int           flags;
+    init_fn_t     init;
+    allocate_fn_t allocate;
+    memcpy_fn_t   memcpy;
+    free_fn_t     free;
+    fini_fn_t     fini;
+} allocator_t;
+
+static allocator_t host_allocator = {
+    .flags     = 0,
+    .init     = &host_init,
+    .allocate = &host_allocate,
+    .memcpy   = &host_memcpy,
+    .free     = &host_free,
+    .fini     = &host_fini};
+
+#ifdef HAVE_CUDA
+#include <cuda_runtime.h>
+static void cuda_init() {
+    // nothing to be done
+}
+static void *cuda_allocate(size_t size, size_t align) {
+    (void)align; // ignored
+    void *ptr;
+    int err;
+    if (cudaSuccess != (err = cudaMalloc(&ptr, size))) {
+        fprintf(stderr, "cudaMalloc failed to allocate %zuB: %s", size, cudaGetErrorName(err));
+        return NULL;
+    }
+    return ptr;
+}
+static void* cuda_memcpy(void *dst, const void *src, size_t size) {
+    cudaMemcpy(dst, src, size, cudaMemcpyDefault);
+    return dst;
+}
+static void cuda_free(void *ptr) {
+    cudaFree(ptr);
+}
+static void cuda_fini() {
+    // nothing to be done
+}
+static allocator_t cuda_allocator = {
+    .flags    = ALLOCATOR_DISCRETE,
+    .init     = &cuda_init,
+    .allocate = &cuda_allocate,
+    .memcpy   = &cuda_memcpy,
+    .free     = &cuda_free,
+    .fini     = &cuda_fini};
+#endif
+
 int main(int argc, char **argv)
 {
-    static void *in_buf = NULL, *inout_buf = NULL, *inout_check_buf = NULL;
+    static void *in_buf = NULL, *inout_buf = NULL, *inout_check_buf = NULL, *init_in_buf = NULL, *init_inout_buf = NULL;
     int count, type_size = 8, rank, size, provided, correctness = 1;
     int repeats = 1, i, c, op1_alignment = 0, res_alignment = 0;
     int max_shift = 4;
     double *duration, tstart, tend;
+    allocator_t *allocator = &host_allocator;
     bool check = true;
     char type[5] = "uifd", *op = "sum", *mpi_type;
     int lower = 1, upper = 1000000, skip_op_type;
     MPI_Op mpi_op;
 
-    while (-1 != (c = getopt(argc, argv, "l:u:r:t:o:i:s:n:1:2:vfh"))) {
+    while (-1 != (c = getopt(argc, argv, "l:u:r:t:o:i:s:n:1:2:d:vfh"))) {
         switch (c) {
         case 'l':
             lower = atoi(optarg);
@@ -267,6 +351,21 @@ int main(int argc, char **argv)
                 exit(-1);
             }
             break;
+        case 'd':
+            if (0 == strncmp("host", optarg, 4)) {
+                // default allocator
+                break;
+            } else
+#ifdef HAVE_CUDA
+            if (0 == strncmp("cuda", optarg, 4)) {
+                allocator = &cuda_allocator;
+                break;
+            } else
+#endif
+            {
+                fprintf(stderr, "Unsupported allocator: %s\n", optarg);
+                // fall-through
+            }
         case 'h':
             fprintf(stdout,
                     "%s options are:\n"
@@ -277,6 +376,11 @@ int main(int argc, char **argv)
                     " -r <number> : number of repetitions for each test\n"
                     " -o <op> : comma separated list of operations to execute among\n"
                     "           sum, min, max, prod, bor, bxor, band\n"
+                    " -d <memory-space> : host"
+#ifdef HAVE_CUDA
+                    ", cuda"
+#endif
+                    "\n"
                     " -i <number> : shift on all buffers to check alignment\n"
                     " -1 <number> : (mis)alignment in elements for the first op\n"
                     " -2 <number> : (mis)alignment in elements for the result\n"
@@ -291,12 +395,15 @@ int main(int argc, char **argv)
     if (!do_ops_built) { /* not yet done, take the default */
         build_do_ops("all", do_ops);
     }
-    posix_memalign(&in_buf, 64, (upper + op1_alignment) * sizeof(double));
-    posix_memalign(&inout_buf, 64, (upper + res_alignment) * sizeof(double));
-    posix_memalign(&inout_check_buf, 64, upper * sizeof(double));
-    duration = (double *) malloc(max_shift * sizeof(double));
-
     ompi_mpi_init(argc, argv, MPI_THREAD_SERIALIZED, &provided, false);
+
+    allocator->init();
+    in_buf    = allocator->allocate((upper + op1_alignment) * sizeof(double), 64);
+    inout_buf = allocator->allocate((upper + op1_alignment) * sizeof(double), 64);
+    init_in_buf = malloc((upper + op1_alignment) * sizeof(double));
+    init_inout_buf = malloc((upper + op1_alignment) * sizeof(double));
+    duration = (double *) malloc(max_shift * sizeof(double));
+    inout_check_buf = malloc(upper * sizeof(double));
 
     rank = ompi_comm_rank(MPI_COMM_WORLD);
     (void) rank;
@@ -318,39 +425,55 @@ int main(int argc, char **argv)
                                                       + op1_alignment * sizeof(int8_t)),
                                *inout_int8 = (int8_t *) ((char *) inout_buf
                                                          + res_alignment * sizeof(int8_t)),
-                               *inout_int8_for_check = (int8_t *) inout_check_buf;
+                               *inout_int8_for_check = (int8_t *) inout_check_buf,
+                               *init_inout_int8 = (int8_t *)init_inout_buf,
+                               *init_in_int8 = (int8_t *)init_in_buf;
                         for (i = 0; i < count; i++) {
-                            in_int8[i] = 5;
-                            inout_int8[i] = inout_int8_for_check[i] = -3;
+                            init_in_int8[i] = 5;
+                            init_inout_int8[i] = -3;
                         }
                         mpi_type = "MPI_INT8_T";
 
                         if (0 == strcmp(op, "sum")) {
-                            MPI_OP_TEST(+, mpi_op, MPI_INT8_T, int8_t, in_int8, inout_int8,
+                            MPI_OP_TEST(+, mpi_op, MPI_INT8_T, int8_t,
+                                        init_in_int8, in_int8,
+                                        init_inout_int8, inout_int8,
                                         inout_int8_for_check, count, PRId8);
                         }
                         if (0 == strcmp(op, "bor")) {
-                            MPI_OP_TEST(|, mpi_op, MPI_INT8_T, int8_t, in_int8, inout_int8,
+                            MPI_OP_TEST(|, mpi_op, MPI_INT8_T, int8_t,
+                                        init_in_int8, in_int8,
+                                        init_inout_int8, inout_int8,
                                         inout_int8_for_check, count, PRId8);
                         }
                         if (0 == strcmp(op, "bxor")) {
-                            MPI_OP_TEST(^, mpi_op, MPI_INT8_T, int8_t, in_int8, inout_int8,
+                            MPI_OP_TEST(^, mpi_op, MPI_INT8_T, int8_t,
+                                        init_in_int8, in_int8,
+                                        init_inout_int8, inout_int8,
                                         inout_int8_for_check, count, PRId8);
                         }
                         if (0 == strcmp(op, "prod")) {
-                            MPI_OP_TEST(*, mpi_op, MPI_INT8_T, int8_t, in_int8, inout_int8,
+                            MPI_OP_TEST(*, mpi_op, MPI_INT8_T, int8_t,
+                                        init_in_int8, in_int8,
+                                        init_inout_int8, inout_int8,
                                         inout_int8_for_check, count, PRId8);
                         }
                         if (0 == strcmp(op, "band")) {
-                            MPI_OP_TEST(&, mpi_op, MPI_INT8_T, int8_t, in_int8, inout_int8,
+                            MPI_OP_TEST(&, mpi_op, MPI_INT8_T, int8_t,
+                                        init_in_int8, in_int8,
+                                        init_inout_int8, inout_int8,
                                         inout_int8_for_check, count, PRId8);
                         }
                         if (0 == strcmp(op, "max")) {
-                            MPI_OP_MINMAX_TEST(max, mpi_op, MPI_INT8_T, int8_t, in_int8, inout_int8,
+                            MPI_OP_MINMAX_TEST(max, mpi_op, MPI_INT8_T, int8_t,
+                                               init_in_int8, in_int8,
+                                               init_inout_int8, inout_int8,
                                                inout_int8_for_check, count, PRId8);
                         }
                         if (0 == strcmp(op, "min")) { // intentionally reversed in and out
-                            MPI_OP_MINMAX_TEST(min, mpi_op, MPI_INT8_T, int8_t, in_int8, inout_int8,
+                            MPI_OP_MINMAX_TEST(min, mpi_op, MPI_INT8_T, int8_t,
+                                               init_in_int8, in_int8,
+                                               init_inout_int8, inout_int8,
                                                inout_int8_for_check, count, PRId8);
                         }
                     }
@@ -359,40 +482,56 @@ int main(int argc, char **argv)
                                                          + op1_alignment * sizeof(int16_t)),
                                 *inout_int16 = (int16_t *) ((char *) inout_buf
                                                             + res_alignment * sizeof(int16_t)),
-                                *inout_int16_for_check = (int16_t *) inout_check_buf;
+                                *inout_int16_for_check = (int16_t *) inout_check_buf,
+                                *init_inout_int16 = (int16_t *)init_inout_buf,
+                                *init_in_int16 = (int16_t *)init_in_buf;
                         for (i = 0; i < count; i++) {
-                            in_int16[i] = 5;
-                            inout_int16[i] = inout_int16_for_check[i] = -3;
+                            init_in_int16[i] = 5;
+                            init_inout_int16[i] = -3;
                         }
                         mpi_type = "MPI_INT16_T";
 
                         if (0 == strcmp(op, "sum")) {
-                            MPI_OP_TEST(+, mpi_op, MPI_INT16_T, int16_t, in_int16, inout_int16,
+                            MPI_OP_TEST(+, mpi_op, MPI_INT16_T, int16_t,
+                                        init_in_int16, in_int16,
+                                        init_inout_int16, inout_int16,
                                         inout_int16_for_check, count, PRId16);
                         }
                         if (0 == strcmp(op, "bor")) {
-                            MPI_OP_TEST(|, mpi_op, MPI_INT16_T, int16_t, in_int16, inout_int16,
+                            MPI_OP_TEST(|, mpi_op, MPI_INT16_T, int16_t,
+                                        init_in_int16, in_int16,
+                                        init_inout_int16, inout_int16,
                                         inout_int16_for_check, count, PRId16);
                         }
                         if (0 == strcmp(op, "bxor")) {
-                            MPI_OP_TEST(^, mpi_op, MPI_INT16_T, int16_t, in_int16, inout_int16,
+                            MPI_OP_TEST(^, mpi_op, MPI_INT16_T, int16_t,
+                                        init_in_int16, in_int16,
+                                        init_inout_int16, inout_int16,
                                         inout_int16_for_check, count, PRId16);
                         }
                         if (0 == strcmp(op, "prod")) {
-                            MPI_OP_TEST(*, mpi_op, MPI_INT16_T, int16_t, in_int16, inout_int16,
+                            MPI_OP_TEST(*, mpi_op, MPI_INT16_T, int16_t,
+                                        init_in_int16, in_int16,
+                                        init_inout_int16, inout_int16,
                                         inout_int16_for_check, count, PRId16);
                         }
                         if (0 == strcmp(op, "band")) {
-                            MPI_OP_TEST(&, mpi_op, MPI_INT16_T, int16_t, in_int16, inout_int16,
+                            MPI_OP_TEST(&, mpi_op, MPI_INT16_T, int16_t,
+                                        init_in_int16, in_int16,
+                                        init_inout_int16, inout_int16,
                                         inout_int16_for_check, count, PRId16);
                         }
                         if (0 == strcmp(op, "max")) {
-                            MPI_OP_MINMAX_TEST(max, mpi_op, MPI_INT16_T, int16_t, in_int16,
-                                               inout_int16, inout_int16_for_check, count, PRId16);
+                            MPI_OP_MINMAX_TEST(max, mpi_op, MPI_INT16_T, int16_t,
+                                               init_in_int16, in_int16,
+                                               init_inout_int16, inout_int16,
+                                               inout_int16_for_check, count, PRId16);
                         }
                         if (0 == strcmp(op, "min")) { // intentionally reversed in and out
-                            MPI_OP_MINMAX_TEST(min, mpi_op, MPI_INT16_T, int16_t, in_int16,
-                                               inout_int16, inout_int16_for_check, count, PRId16);
+                            MPI_OP_MINMAX_TEST(min, mpi_op, MPI_INT16_T, int16_t,
+                                               init_in_int16, in_int16,
+                                               init_inout_int16, inout_int16,
+                                               inout_int16_for_check, count, PRId16);
                         }
                     }
                     if (32 == type_size) {
@@ -400,40 +539,56 @@ int main(int argc, char **argv)
                                                          + op1_alignment * sizeof(int32_t)),
                                 *inout_int32 = (int32_t *) ((char *) inout_buf
                                                             + res_alignment * sizeof(int32_t)),
-                                *inout_int32_for_check = (int32_t *) inout_check_buf;
+                                *inout_int32_for_check = (int32_t *) inout_check_buf,
+                                *init_inout_int32 = (int32_t *)init_inout_buf,
+                                *init_in_int32 = (int32_t *)init_in_buf;
                         for (i = 0; i < count; i++) {
-                            in_int32[i] = 5;
-                            inout_int32[i] = inout_int32_for_check[i] = 3;
+                            init_in_int32[i] = 5;
+                            init_inout_int32[i] = inout_int32_for_check[i] = 3;
                         }
                         mpi_type = "MPI_INT32_T";
 
                         if (0 == strcmp(op, "sum")) {
-                            MPI_OP_TEST(+, mpi_op, MPI_INT32_T, int32_t, in_int32, inout_int32,
+                            MPI_OP_TEST(+, mpi_op, MPI_INT32_T, int32_t,
+                                        init_in_int32, in_int32,
+                                        init_inout_int32, inout_int32,
                                         inout_int32_for_check, count, PRId32);
                         }
                         if (0 == strcmp(op, "bor")) {
-                            MPI_OP_TEST(|, mpi_op, MPI_INT32_T, int32_t, in_int32, inout_int32,
+                            MPI_OP_TEST(|, mpi_op, MPI_INT32_T, int32_t,
+                                        init_in_int32, in_int32,
+                                        init_inout_int32, inout_int32,
                                         inout_int32_for_check, count, PRId32);
                         }
                         if (0 == strcmp(op, "bxor")) {
-                            MPI_OP_TEST(^, mpi_op, MPI_INT32_T, int32_t, in_int32, inout_int32,
+                            MPI_OP_TEST(^, mpi_op, MPI_INT32_T, int32_t,
+                                        init_in_int32, in_int32,
+                                        init_inout_int32, inout_int32,
                                         inout_int32_for_check, count, PRId32);
                         }
                         if (0 == strcmp(op, "prod")) {
-                            MPI_OP_TEST(*, mpi_op, MPI_INT32_T, int32_t, in_int32, inout_int32,
+                            MPI_OP_TEST(*, mpi_op, MPI_INT32_T, int32_t,
+                                        init_in_int32, in_int32,
+                                        init_inout_int32, inout_int32,
                                         inout_int32_for_check, count, PRId32);
                         }
                         if (0 == strcmp(op, "band")) {
-                            MPI_OP_TEST(&, mpi_op, MPI_INT32_T, int32_t, in_int32, inout_int32,
+                            MPI_OP_TEST(&, mpi_op, MPI_INT32_T, int32_t,
+                                        init_in_int32, in_int32,
+                                        init_inout_int32, inout_int32,
                                         inout_int32_for_check, count, PRId32);
                         }
                         if (0 == strcmp(op, "max")) {
-                            MPI_OP_MINMAX_TEST(max, mpi_op, MPI_INT32_T, int32_t, in_int32,
-                                               inout_int32, inout_int32_for_check, count, PRId32);
+                            MPI_OP_MINMAX_TEST(max, mpi_op, MPI_INT32_T, int32_t,
+                                               init_in_int32, in_int32,
+                                               init_inout_int32, inout_int32,
+                                               inout_int32_for_check, count, PRId32);
                         }
                         if (0 == strcmp(op, "min")) { // intentionally reversed in and out
-                            MPI_OP_MINMAX_TEST(min, mpi_op, MPI_INT32_T, int32_t, in_int32,
-                                               inout_int32, inout_int32_for_check, count, PRId32);
+                            MPI_OP_MINMAX_TEST(min, mpi_op, MPI_INT32_T, int32_t,
+                                               init_in_int32, in_int32,
+                                               init_inout_int32, inout_int32,
+                                               inout_int32_for_check, count, PRId32);
                         }
                     }
                     if (64 == type_size) {
@@ -441,40 +596,56 @@ int main(int argc, char **argv)
                                                          + op1_alignment * sizeof(int64_t)),
                                 *inout_int64 = (int64_t *) ((char *) inout_buf
                                                             + res_alignment * sizeof(int64_t)),
-                                *inout_int64_for_check = (int64_t *) inout_check_buf;
+                                *inout_int64_for_check = (int64_t *) inout_check_buf,
+                                *init_inout_int64 = (int64_t *)init_inout_buf,
+                                *init_in_int64 = (int64_t *)init_in_buf;
                         for (i = 0; i < count; i++) {
-                            in_int64[i] = 5;
-                            inout_int64[i] = inout_int64_for_check[i] = 3;
+                            init_in_int64[i] = 5;
+                            init_inout_int64[i] = 3;
                         }
                         mpi_type = "MPI_INT64_T";
 
                         if (0 == strcmp(op, "sum")) {
-                            MPI_OP_TEST(+, mpi_op, MPI_INT64_T, int64_t, in_int64, inout_int64,
+                            MPI_OP_TEST(+, mpi_op, MPI_INT64_T, int64_t,
+                                        init_in_int64, in_int64,
+                                        init_inout_int64, inout_int64,
                                         inout_int64_for_check, count, PRId64);
                         }
                         if (0 == strcmp(op, "bor")) {
-                            MPI_OP_TEST(|, mpi_op, MPI_INT64_T, int64_t, in_int64, inout_int64,
+                            MPI_OP_TEST(|, mpi_op, MPI_INT64_T, int64_t,
+                                        init_in_int64, in_int64,
+                                        init_inout_int64, inout_int64,
                                         inout_int64_for_check, count, PRId64);
                         }
                         if (0 == strcmp(op, "bxor")) {
-                            MPI_OP_TEST(^, mpi_op, MPI_INT64_T, int64_t, in_int64, inout_int64,
+                            MPI_OP_TEST(^, mpi_op, MPI_INT64_T, int64_t,
+                                        init_in_int64, in_int64,
+                                        init_inout_int64, inout_int64,
                                         inout_int64_for_check, count, PRId64);
                         }
                         if (0 == strcmp(op, "prod")) {
-                            MPI_OP_TEST(*, mpi_op, MPI_INT64_T, int64_t, in_int64, inout_int64,
+                            MPI_OP_TEST(*, mpi_op, MPI_INT64_T, int64_t,
+                                        init_in_int64, in_int64,
+                                        init_inout_int64, inout_int64,
                                         inout_int64_for_check, count, PRId64);
                         }
                         if (0 == strcmp(op, "band")) {
-                            MPI_OP_TEST(&, mpi_op, MPI_INT64_T, int64_t, in_int64, inout_int64,
+                            MPI_OP_TEST(&, mpi_op, MPI_INT64_T, int64_t,
+                                        init_in_int64, in_int64,
+                                        init_inout_int64, inout_int64,
                                         inout_int64_for_check, count, PRId64);
                         }
                         if (0 == strcmp(op, "max")) {
-                            MPI_OP_MINMAX_TEST(max, mpi_op, MPI_INT64_T, int64_t, in_int64,
-                                               inout_int64, inout_int64_for_check, count, PRId64);
+                            MPI_OP_MINMAX_TEST(max, mpi_op, MPI_INT64_T, int64_t,
+                                               init_in_int64, in_int64,
+                                               init_inout_int64, inout_int64,
+                                               inout_int64_for_check, count, PRId64);
                         }
                         if (0 == strcmp(op, "min")) { // intentionally reversed in and out
-                            MPI_OP_MINMAX_TEST(min, mpi_op, MPI_INT64_T, int64_t, in_int64,
-                                               inout_int64, inout_int64_for_check, count, PRId64);
+                            MPI_OP_MINMAX_TEST(min, mpi_op, MPI_INT64_T, int64_t,
+                                               init_in_int64, in_int64,
+                                               init_inout_int64, inout_int64,
+                                               inout_int64_for_check, count, PRId64);
                         }
                     }
                 }
@@ -485,40 +656,56 @@ int main(int argc, char **argv)
                                                          + op1_alignment * sizeof(uint8_t)),
                                 *inout_uint8 = (uint8_t *) ((char *) inout_buf
                                                             + res_alignment * sizeof(uint8_t)),
-                                *inout_uint8_for_check = (uint8_t *) inout_check_buf;
+                                *inout_uint8_for_check = (uint8_t *) inout_check_buf,
+                                *init_inout_uint8 = (uint8_t *)init_inout_buf,
+                                *init_in_uint8 = (uint8_t *)init_in_buf;
                         for (i = 0; i < count; i++) {
-                            in_uint8[i] = 5;
-                            inout_uint8[i] = inout_uint8_for_check[i] = 2;
+                            init_in_uint8[i] = 5;
+                            init_inout_uint8[i] = 2;
                         }
                         mpi_type = "MPI_UINT8_T";
 
                         if (0 == strcmp(op, "sum")) {
-                            MPI_OP_TEST(+, mpi_op, MPI_UINT8_T, uint8_t, in_uint8, inout_uint8,
+                            MPI_OP_TEST(+, mpi_op, MPI_UINT8_T, uint8_t,
+                                        init_in_uint8, in_uint8,
+                                        init_inout_uint8, inout_uint8,
                                         inout_uint8_for_check, count, PRIu8);
                         }
                         if (0 == strcmp(op, "bor")) {
-                            MPI_OP_TEST(|, mpi_op, MPI_UINT8_T, uint8_t, in_uint8, inout_uint8,
+                            MPI_OP_TEST(|, mpi_op, MPI_UINT8_T, uint8_t,
+                                        init_in_uint8, in_uint8,
+                                        init_inout_uint8, inout_uint8,
                                         inout_uint8_for_check, count, PRIu8);
                         }
                         if (0 == strcmp(op, "bxor")) {
-                            MPI_OP_TEST(^, mpi_op, MPI_UINT8_T, uint8_t, in_uint8, inout_uint8,
+                            MPI_OP_TEST(^, mpi_op, MPI_UINT8_T, uint8_t,
+                                        init_in_uint8, in_uint8,
+                                        init_inout_uint8, inout_uint8,
                                         inout_uint8_for_check, count, PRIu8);
                         }
                         if (0 == strcmp(op, "prod")) {
-                            MPI_OP_TEST(*, mpi_op, MPI_UINT8_T, uint8_t, in_uint8, inout_uint8,
+                            MPI_OP_TEST(*, mpi_op, MPI_UINT8_T, uint8_t,
+                                        init_in_uint8, in_uint8,
+                                        init_inout_uint8, inout_uint8,
                                         inout_uint8_for_check, count, PRIu8);
                         }
                         if (0 == strcmp(op, "band")) {
-                            MPI_OP_TEST(&, mpi_op, MPI_UINT8_T, uint8_t, in_uint8, inout_uint8,
+                            MPI_OP_TEST(&, mpi_op, MPI_UINT8_T, uint8_t,
+                                        init_in_uint8, in_uint8,
+                                        init_inout_uint8, inout_uint8,
                                         inout_uint8_for_check, count, PRIu8);
                         }
                         if (0 == strcmp(op, "max")) {
-                            MPI_OP_MINMAX_TEST(max, mpi_op, MPI_UINT8_T, uint8_t, in_uint8,
-                                               inout_uint8, inout_uint8_for_check, count, PRIu8);
+                            MPI_OP_MINMAX_TEST(max, mpi_op, MPI_UINT8_T, uint8_t,
+                                               init_in_uint8, in_uint8,
+                                               init_inout_uint8, inout_uint8,
+                                               inout_uint8_for_check, count, PRIu8);
                         }
                         if (0 == strcmp(op, "min")) { // intentionally reversed in and out
-                            MPI_OP_MINMAX_TEST(min, mpi_op, MPI_UINT8_T, uint8_t, in_uint8,
-                                               inout_uint8, inout_uint8_for_check, count, PRIu8);
+                            MPI_OP_MINMAX_TEST(min, mpi_op, MPI_UINT8_T, uint8_t,
+                                               init_in_uint8, in_uint8,
+                                               init_inout_uint8, inout_uint8,
+                                               inout_uint8_for_check, count, PRIu8);
                         }
                     }
                     if (16 == type_size) {
@@ -526,40 +713,56 @@ int main(int argc, char **argv)
                                                             + op1_alignment * sizeof(uint16_t)),
                                  *inout_uint16 = (uint16_t *) ((char *) inout_buf
                                                                + res_alignment * sizeof(uint16_t)),
-                                 *inout_uint16_for_check = (uint16_t *) inout_check_buf;
+                                 *inout_uint16_for_check = (uint16_t *) inout_check_buf,
+                                 *init_inout_uint16 = (uint16_t *)init_inout_buf,
+                                 *init_in_uint16 = (uint16_t *)init_in_buf;
                         for (i = 0; i < count; i++) {
-                            in_uint16[i] = 5;
-                            inout_uint16[i] = inout_uint16_for_check[i] = 1234;
+                            init_in_uint16[i] = 5;
+                            init_inout_uint16[i] = 1234;
                         }
                         mpi_type = "MPI_UINT16_T";
 
                         if (0 == strcmp(op, "sum")) {
-                            MPI_OP_TEST(+, mpi_op, MPI_UINT16_T, uint16_t, in_uint16, inout_uint16,
+                            MPI_OP_TEST(+, mpi_op, MPI_UINT16_T, uint16_t,
+                                        init_in_uint16, in_uint16,
+                                        init_inout_uint16, inout_uint16,
                                         inout_uint16_for_check, count, PRIu16);
                         }
                         if (0 == strcmp(op, "bor")) {
-                            MPI_OP_TEST(|, mpi_op, MPI_UINT16_T, uint16_t, in_uint16, inout_uint16,
+                            MPI_OP_TEST(|, mpi_op, MPI_UINT16_T, uint16_t,
+                                        init_in_uint16, in_uint16,
+                                        init_inout_uint16, inout_uint16,
                                         inout_uint16_for_check, count, PRIu16);
                         }
                         if (0 == strcmp(op, "bxor")) {
-                            MPI_OP_TEST(^, mpi_op, MPI_UINT16_T, uint16_t, in_uint16, inout_uint16,
+                            MPI_OP_TEST(^, mpi_op, MPI_UINT16_T, uint16_t,
+                                        init_in_uint16, in_uint16,
+                                        init_inout_uint16, inout_uint16,
                                         inout_uint16_for_check, count, PRIu16);
                         }
                         if (0 == strcmp(op, "prod")) {
-                            MPI_OP_TEST(*, mpi_op, MPI_UINT16_T, uint16_t, in_uint16, inout_uint16,
+                            MPI_OP_TEST(*, mpi_op, MPI_UINT16_T, uint16_t,
+                                        init_in_uint16, in_uint16,
+                                        init_inout_uint16, inout_uint16,
                                         inout_uint16_for_check, count, PRIu16);
                         }
                         if (0 == strcmp(op, "band")) {
-                            MPI_OP_TEST(&, mpi_op, MPI_UINT16_T, uint16_t, in_uint16, inout_uint16,
+                            MPI_OP_TEST(&, mpi_op, MPI_UINT16_T, uint16_t,
+                                        init_in_uint16, in_uint16,
+                                        init_inout_uint16, inout_uint16,
                                         inout_uint16_for_check, count, PRIu16);
                         }
                         if (0 == strcmp(op, "max")) {
-                            MPI_OP_MINMAX_TEST(max, mpi_op, MPI_UINT16_T, uint16_t, in_uint16,
-                                               inout_uint16, inout_uint16_for_check, count, PRIu16);
+                            MPI_OP_MINMAX_TEST(max, mpi_op, MPI_UINT16_T, uint16_t,
+                                               init_in_uint16, in_uint16,
+                                               init_inout_uint16, inout_uint16,
+                                               inout_uint16_for_check, count, PRIu16);
                         }
                         if (0 == strcmp(op, "min")) { // intentionally reversed in and out
-                            MPI_OP_MINMAX_TEST(min, mpi_op, MPI_UINT16_T, uint16_t, in_uint16,
-                                               inout_uint16, inout_uint16_for_check, count, PRIu16);
+                            MPI_OP_MINMAX_TEST(min, mpi_op, MPI_UINT16_T, uint16_t,
+                                               init_in_uint16, in_uint16,
+                                               init_inout_uint16, inout_uint16,
+                                               inout_uint16_for_check, count, PRIu16);
                         }
                     }
                     if (32 == type_size) {
@@ -567,40 +770,56 @@ int main(int argc, char **argv)
                                                             + op1_alignment * sizeof(uint32_t)),
                                  *inout_uint32 = (uint32_t *) ((char *) inout_buf
                                                                + res_alignment * sizeof(uint32_t)),
-                                 *inout_uint32_for_check = (uint32_t *) inout_check_buf;
+                                 *inout_uint32_for_check = (uint32_t *) inout_check_buf,
+                                 *init_inout_uint32 = (uint32_t *)init_inout_buf,
+                                 *init_in_uint32 = (uint32_t *)init_in_buf;
                         for (i = 0; i < count; i++) {
-                            in_uint32[i] = 5;
-                            inout_uint32[i] = inout_uint32_for_check[i] = 3;
+                            init_in_uint32[i] = 5;
+                            init_inout_uint32[i] = 3;
                         }
                         mpi_type = "MPI_UINT32_T";
 
                         if (0 == strcmp(op, "sum")) {
-                            MPI_OP_TEST(+, mpi_op, MPI_UINT32_T, uint32_t, in_uint32, inout_uint32,
+                            MPI_OP_TEST(+, mpi_op, MPI_UINT32_T, uint32_t,
+                                        init_in_uint32, in_uint32,
+                                        init_inout_uint32, inout_uint32,
                                         inout_uint32_for_check, count, PRIu32);
                         }
                         if (0 == strcmp(op, "bor")) {
-                            MPI_OP_TEST(|, mpi_op, MPI_UINT32_T, uint32_t, in_uint32, inout_uint32,
+                            MPI_OP_TEST(|, mpi_op, MPI_UINT32_T, uint32_t,
+                                        init_in_uint32, in_uint32,
+                                        init_inout_uint32, inout_uint32,
                                         inout_uint32_for_check, count, PRIu32);
                         }
                         if (0 == strcmp(op, "bxor")) {
-                            MPI_OP_TEST(^, mpi_op, MPI_UINT32_T, uint32_t, in_uint32, inout_uint32,
+                            MPI_OP_TEST(^, mpi_op, MPI_UINT32_T, uint32_t,
+                                        init_in_uint32, in_uint32,
+                                        init_inout_uint32, inout_uint32,
                                         inout_uint32_for_check, count, PRIu32);
                         }
                         if (0 == strcmp(op, "prod")) {
-                            MPI_OP_TEST(*, mpi_op, MPI_UINT32_T, uint32_t, in_uint32, inout_uint32,
+                            MPI_OP_TEST(*, mpi_op, MPI_UINT32_T, uint32_t,
+                                        init_in_uint32, in_uint32,
+                                        init_inout_uint32, inout_uint32,
                                         inout_uint32_for_check, count, PRIu32);
                         }
                         if (0 == strcmp(op, "band")) {
-                            MPI_OP_TEST(&, mpi_op, MPI_UINT32_T, uint32_t, in_uint32, inout_uint32,
+                            MPI_OP_TEST(&, mpi_op, MPI_UINT32_T, uint32_t,
+                                        init_in_uint32, in_uint32,
+                                        init_inout_uint32, inout_uint32,
                                         inout_uint32_for_check, count, PRIu32);
                         }
                         if (0 == strcmp(op, "max")) {
-                            MPI_OP_MINMAX_TEST(max, mpi_op, MPI_UINT32_T, uint32_t, in_uint32,
-                                               inout_uint32, inout_uint32_for_check, count, PRIu32);
+                            MPI_OP_MINMAX_TEST(max, mpi_op, MPI_UINT32_T, uint32_t,
+                                               init_in_uint32, in_uint32,
+                                               init_inout_uint32, inout_uint32,
+                                               inout_uint32_for_check, count, PRIu32);
                         }
                         if (0 == strcmp(op, "min")) { // intentionally reversed in and out
-                            MPI_OP_MINMAX_TEST(min, mpi_op, MPI_UINT32_T, uint32_t, in_uint32,
-                                               inout_uint32, inout_uint32_for_check, count, PRIu32);
+                            MPI_OP_MINMAX_TEST(min, mpi_op, MPI_UINT32_T, uint32_t,
+                                               init_in_uint32, in_uint32,
+                                               init_inout_uint32, inout_uint32,
+                                               inout_uint32_for_check, count, PRIu32);
                         }
                     }
                     if (64 == type_size) {
@@ -608,40 +827,56 @@ int main(int argc, char **argv)
                                                             + op1_alignment * sizeof(uint64_t)),
                                  *inout_uint64 = (uint64_t *) ((char *) inout_buf
                                                                + res_alignment * sizeof(uint64_t)),
-                                 *inout_uint64_for_check = (uint64_t *) inout_check_buf;
+                                 *inout_uint64_for_check = (uint64_t *) inout_check_buf,
+                                 *init_inout_uint64 = (uint64_t *)init_inout_buf,
+                                 *init_in_uint64 = (uint64_t *)init_in_buf;
                         for (i = 0; i < count; i++) {
-                            in_uint64[i] = 5;
-                            inout_uint64[i] = inout_uint64_for_check[i] = 32433;
+                            init_in_uint64[i] = 5;
+                            init_inout_uint64[i] = 32433;
                         }
                         mpi_type = "MPI_UINT64_T";
 
                         if (0 == strcmp(op, "sum")) {
-                            MPI_OP_TEST(+, mpi_op, MPI_UINT64_T, uint64_t, in_uint64, inout_uint64,
+                            MPI_OP_TEST(+, mpi_op, MPI_UINT64_T, uint64_t,
+                                        init_in_uint64, in_uint64,
+                                        init_inout_uint64, inout_uint64,
                                         inout_uint64_for_check, count, PRIu64);
                         }
                         if (0 == strcmp(op, "bor")) {
-                            MPI_OP_TEST(|, mpi_op, MPI_UINT64_T, uint64_t, in_uint64, inout_uint64,
+                            MPI_OP_TEST(|, mpi_op, MPI_UINT64_T, uint64_t,
+                                        init_in_uint64, in_uint64,
+                                        init_inout_uint64, inout_uint64,
                                         inout_uint64_for_check, count, PRIu64);
                         }
                         if (0 == strcmp(op, "bxor")) {
-                            MPI_OP_TEST(^, mpi_op, MPI_UINT64_T, uint64_t, in_uint64, inout_uint64,
+                            MPI_OP_TEST(^, mpi_op, MPI_UINT64_T, uint64_t,
+                                        init_in_uint64, in_uint64,
+                                        init_inout_uint64, inout_uint64,
                                         inout_uint64_for_check, count, PRIu64);
                         }
                         if (0 == strcmp(op, "prod")) {
-                            MPI_OP_TEST(*, mpi_op, MPI_UINT64_T, uint64_t, in_uint64, inout_uint64,
+                            MPI_OP_TEST(*, mpi_op, MPI_UINT64_T, uint64_t,
+                                        init_in_uint64, in_uint64,
+                                        init_inout_uint64, inout_uint64,
                                         inout_uint64_for_check, count, PRIu64);
                         }
                         if (0 == strcmp(op, "band")) {
-                            MPI_OP_TEST(&, mpi_op, MPI_UINT64_T, uint64_t, in_uint64, inout_uint64,
+                            MPI_OP_TEST(&, mpi_op, MPI_UINT64_T, uint64_t,
+                                        init_in_uint64, in_uint64,
+                                        init_inout_uint64, inout_uint64,
                                         inout_uint64_for_check, count, PRIu64);
                         }
                         if (0 == strcmp(op, "max")) {
-                            MPI_OP_MINMAX_TEST(max, mpi_op, MPI_UINT64_T, uint64_t, in_uint64,
-                                               inout_uint64, inout_uint64_for_check, count, PRIu64);
+                            MPI_OP_MINMAX_TEST(max, mpi_op, MPI_UINT64_T, uint64_t,
+                                               init_in_uint64, in_uint64,
+                                               init_inout_uint64, inout_uint64,
+                                               inout_uint64_for_check, count, PRIu64);
                         }
                         if (0 == strcmp(op, "min")) {
-                            MPI_OP_MINMAX_TEST(min, mpi_op, MPI_UINT64_T, uint64_t, in_uint64,
-                                               inout_uint64, inout_uint64_for_check, count, PRIu64);
+                            MPI_OP_MINMAX_TEST(min, mpi_op, MPI_UINT64_T, uint64_t,
+                                               init_in_uint64, in_uint64,
+                                               init_inout_uint64, inout_uint64,
+                                               inout_uint64_for_check, count, PRIu64);
                         }
                     }
                 }
@@ -650,27 +885,37 @@ int main(int argc, char **argv)
                     float *in_float = (float *) ((char *) in_buf + op1_alignment * sizeof(float)),
                           *inout_float = (float *) ((char *) inout_buf
                                                     + res_alignment * sizeof(float)),
-                          *inout_float_for_check = (float *) inout_check_buf;
+                          *inout_float_for_check = (float *) inout_check_buf,
+                          *init_inout_float = (float *)init_inout_buf,
+                          *init_in_float = (float *)init_in_buf;
                     for (i = 0; i < count; i++) {
-                        in_float[i] = 1000.0 + 1;
-                        inout_float[i] = inout_float_for_check[i] = 100.0 + 2;
+                        init_in_float[i] = 1000.0 + 1;
+                        init_inout_float[i] = 100.0 + 2;
                     }
                     mpi_type = "MPI_FLOAT";
 
                     if (0 == strcmp(op, "sum")) {
-                        MPI_OP_TEST(+, mpi_op, MPI_FLOAT, float, in_float, inout_float,
+                        MPI_OP_TEST(+, mpi_op, MPI_FLOAT, float,
+                                    init_in_float, in_float,
+                                    init_inout_float, inout_float,
                                     inout_float_for_check, count, "f");
                     }
                     if (0 == strcmp(op, "prod")) {
-                        MPI_OP_TEST(*, mpi_op, MPI_FLOAT, float, in_float, inout_float,
+                        MPI_OP_TEST(*, mpi_op, MPI_FLOAT, float,
+                                    init_in_float, in_float,
+                                    init_inout_float, inout_float,
                                     inout_float_for_check, count, "f");
                     }
                     if (0 == strcmp(op, "max")) {
-                        MPI_OP_MINMAX_TEST(max, mpi_op, MPI_FLOAT, float, in_float, inout_float,
+                        MPI_OP_MINMAX_TEST(max, mpi_op, MPI_FLOAT, float,
+                                           init_in_float, in_float,
+                                           init_inout_float, inout_float,
                                            inout_float_for_check, count, "f");
                     }
                     if (0 == strcmp(op, "min")) {
-                        MPI_OP_MINMAX_TEST(min, mpi_op, MPI_FLOAT, float, in_float, inout_float,
+                        MPI_OP_MINMAX_TEST(min, mpi_op, MPI_FLOAT, float,
+                                           init_in_float, in_float,
+                                           init_inout_float, inout_float,
                                            inout_float_for_check, count, "f");
                     }
                 }
@@ -680,27 +925,37 @@ int main(int argc, char **argv)
                                                     + op1_alignment * sizeof(double)),
                            *inout_double = (double *) ((char *) inout_buf
                                                        + res_alignment * sizeof(double)),
-                           *inout_double_for_check = (double *) inout_check_buf;
+                           *inout_double_for_check = (double *) inout_check_buf,
+                           *init_inout_double = (double *)init_inout_buf,
+                           *init_in_double = (double *)init_in_buf;
                     for (i = 0; i < count; i++) {
-                        in_double[i] = 10.0 + 1;
-                        inout_double[i] = inout_double_for_check[i] = 1.0 + 2;
+                        init_in_double[i] = 10.0 + 1;
+                        init_inout_double[i] = 1.0 + 2;
                     }
                     mpi_type = "MPI_DOUBLE";
 
                     if (0 == strcmp(op, "sum")) {
-                        MPI_OP_TEST(+, mpi_op, MPI_DOUBLE, double, in_double, inout_double,
+                        MPI_OP_TEST(+, mpi_op, MPI_DOUBLE, double,
+                                    init_in_double, in_double,
+                                    init_inout_double, inout_double,
                                     inout_double_for_check, count, "g");
                     }
                     if (0 == strcmp(op, "prod")) {
-                        MPI_OP_TEST(*, mpi_op, MPI_DOUBLE, double, in_double, inout_double,
+                        MPI_OP_TEST(*, mpi_op, MPI_DOUBLE, double,
+                                    init_in_double, in_double,
+                                    init_inout_double, inout_double,
                                     inout_double_for_check, count, "f");
                     }
                     if (0 == strcmp(op, "max")) {
-                        MPI_OP_MINMAX_TEST(max, mpi_op, MPI_DOUBLE, double, in_double, inout_double,
+                        MPI_OP_MINMAX_TEST(max, mpi_op, MPI_DOUBLE, double,
+                                           init_in_double, in_double,
+                                           init_inout_double, inout_double,
                                            inout_double_for_check, count, "f");
                     }
                     if (0 == strcmp(op, "min")) {
-                        MPI_OP_MINMAX_TEST(min, mpi_op, MPI_DOUBLE, double, in_double, inout_double,
+                        MPI_OP_MINMAX_TEST(min, mpi_op, MPI_DOUBLE, double,
+                                           init_in_double, in_double,
+                                           init_inout_double, inout_double,
                                            inout_double_for_check, count, "f");
                     }
                 }
@@ -713,11 +968,19 @@ int main(int argc, char **argv)
                 printf("\n");
         }
     }
-    ompi_mpi_finalize();
 
-    free(in_buf);
-    free(inout_buf);
-    free(inout_check_buf);
+    /* clean up allocator */
+    allocator->free(in_buf);
+    allocator->free(inout_buf);
+    allocator->free(inout_check_buf);
+    allocator->fini();
+
+    if (allocator->flags & ALLOCATOR_DISCRETE) {
+        free(init_in_buf);
+        free(init_inout_buf);
+    }
+
+    ompi_mpi_finalize();
 
     return (0 == total_errors) ? 0 : -1;
 }

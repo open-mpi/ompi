@@ -96,8 +96,11 @@ unpack_hetero_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
 unpack_hetero_LDADD = \
         $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
 
+
 reduce_local_SOURCES = reduce_local.c
-reduce_local_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
+reduce_local_CPPFLAGS= $(accelerator_cudart_CPPFLAGS) $(accelerator_cuda_CPPFLAGS)
+reduce_local_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)\
+        $(accelerator_cuda_LDFLAGS) $(accelerator_cudart_LDFLAGS)
 reduce_local_LDADD = \
         $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
         $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
