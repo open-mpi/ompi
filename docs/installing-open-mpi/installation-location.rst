@@ -7,13 +7,18 @@ Installation location
 A common environment to run Open MPI is in a "Beowulf"-class or
 similar cluster (e.g., a bunch of 1U servers in a bunch of racks).
 Simply stated, Open MPI can run on a group of servers or workstations
-connected by a network.
+connected by a network.  As mentioned in the
+:ref:`prerequisites section <running-prerequisites-label>` there are
+several caveats however (for example, you typically must have an
+account on all the machines, you can ``ssh`` between the
+nodes without using a password, etc.).
 
-This raises the question for Open MPI system administrators: where to
-install the Open MPI binaries, header files, etc.?  This discussion
-mainly addresses this question for homogeneous clusters (i.e., where
-all nodes and operating systems are the same), although elements of
-this discussion apply to heterogeneous clusters as well.
+Regardless of whether Open MPI is installed on a shared / networked
+filesystem or independently on each node, it is usually easiest if
+Open MPI is available in the same filesystem path on every node.
+For example, if you install Open MPI to ``/opt/openmpi-|ompi_ver|`` on
+one node, ensure that it is available in ``/opt/openmpi-|ompi_ver|``
+on *all* nodes.
 
 .. important:: For simplicity, the Open MPI team *strongly* recommends
    that you install Open MPI at the same path location on all nodes in
@@ -22,6 +27,12 @@ this discussion apply to heterogeneous clusters as well.
 
    It is *possible* to install Open MPI in unique path locations in
    the different nodes in your cluster, but it is not *advisable*.
+
+This raises the question for Open MPI system administrators: where to
+install the Open MPI binaries, header files, etc.?  This discussion
+mainly addresses this question for homogeneous clusters (i.e., where
+all nodes and operating systems are the same), although elements of
+this discussion apply to heterogeneous clusters as well.
 
 Filesystem types
 ----------------
@@ -127,33 +138,8 @@ may not overwrite all the files from the older version.  Hence, you
 may end up with an incompatible muddle of files from two different
 installations |mdash| which can cause problems.
 
-The Open MPI team recommends one of the following methods for
-upgrading your Open MPI installation:
-
-* Install newer versions of Open MPI into a different directory. For
-  example, install into ``/opt/openmpi-a.b.c`` and
-  ``/opt/openmpi-x.y.z`` for versions a.b.c and x.y.z, respectively.
-* Completely uninstall the old version of Open MPI before installing
-  the new version.  The ``make uninstall`` process from Open MPI a.b.c
-  build tree should completely uninstall that version from the
-  installation tree, making it safe to install a new version (e.g.,
-  version x.y.z) into the same installation tree.
-* Remove the old installation directory entirely and then install the
-  new version.  For example ``rm -rf /opt/openmpi`` *(assuming that
-  there is nothing else of value in this tree!)* The installation of
-  Open MPI x.y.z will safely re-create the ``/opt/openmpi`` tree.
-  This method is preferable if you no longer have the source and build
-  trees to Open MPI a.b.c available from which to ``make
-  uninstall``.
-* Go into the Open MPI a.b.c installation directory and manually
-  remove all old Open MPI files.  Then install Open MPI x.y.z into the
-  same installation directory.  This can be a somewhat painful,
-  annoying, and error-prone process.  *We do not recommend it.*
-  Indeed, if you no longer have access to the original Open MPI a.b.c
-  source and build trees, it may be far simpler to download Open MPI
-  version a.b.c again from the Open MPI web site, configure it with
-  the same installation prefix, and then run ``make uninstall``.  Or
-  use one of the other methods, above.
+See :ref:`updating Open MPI <building-open-mpi-updating-label>` for more
+information about updating or upgrading an installation of Open MPI.
 
 Relocating an Open MPI installation
 -----------------------------------
@@ -239,3 +225,91 @@ default as ``$prefix/bin``.  Hence, overriding the ``$prefix`` (via
 ``$bindir`` (which is how method 1 described above works).
 Alternatively, ``OPAL_BINDIR`` can be set to an absolute value that
 ignores ``$prefix`` altogether.
+
+.. _building-open-mpi-installation-location-multiple-copies-label:
+
+Installing Multiple Copies of Open MPI
+--------------------------------------
+
+Open MPI can handle a variety of different run-time environments
+(e.g., ssh, Slurm, PBS, etc.) and a variety of different
+interconnection networks (e.g., ethernet, InfiniBand, etc.)
+in a single installation.  Specifically: because Open MPI is
+fundamentally powered by a component architecture, plug-ins for all
+these different run-time systems and interconnect networks can be
+installed in a single installation tree.  The relevant plug-ins will
+only be used in the environments where they make sense.
+
+Hence, there is no need to have one MPI installation for InfiniBand, one
+MPI installation for ethernet, one MPI installation for PBS, one MPI
+installation for ``ssh``, etc.  Open MPI can handle all of these in a
+single installation.
+
+However, there are some issues that Open MPI cannot solve.  Binary
+compatibility between different compilers is such an issue and may require
+installation of multiple versions of Open MPI.
+
+Let's examine this on a per-language basis (be sure see the big caveat at
+the end):
+
+* *C:* Most C compilers are fairly compatible, such that if you compile
+  Open MPI with one C library and link it to an application that was
+  compiled with a different C compiler, everything should "just work."
+  As such, a single installation of Open MPI should work for most C MPI
+  applications.
+
+* *C++:* The same is not necessarily true for C++.  While Open MPI does not
+  currently contain any C++ code (the MPI C++ bindings were removed in a prior
+  release), and C++ compilers *should* produce ABI-equivalent code for C
+  symbols, obscure problem can sometimes arise when mixing compilers from
+  different suites.  For example, if you compile Open MPI with the XYZ C/C++
+  compiler, you may need to have the XYC C++ run-time libraries
+  installed everywhere you want to run.
+
+* *Fortran:* There are multiple issues with Fortran.
+
+    #. Fortran compilers do something called "symbol mangling," meaning that the
+       back-end symbols may have slightly different names than their corresponding
+       global variables, subroutines, and functions.  There are 4 common name
+       mangling schemes in use by Fortran compilers.  On many systems (e.g.,
+       Linux), Open MPI will automatically support all 4 schemes.  As such, a
+       single Open MPI installation *should* just work with multiple different
+       Fortran compilers.  However, on some systems, this is not possible (e.g.,
+       OS X), and Open MPI will only support the name mangling scheme of the
+       Fortran compiler that was identified during ``configure``.
+
+    #. That being said, there are two notable exceptions that do *not* work
+       across Fortran compilers that are "different enough":
+
+        #. The C constants ``MPI_F_STATUS_IGNORE`` and ``MPI_F_STATUSES_IGNORE``
+             will only compare properly to Fortran applications that were
+             created with Fortran compilers that that use the same
+             name-mangling scheme as the Fortran compiler with which Open MPI was
+             configured.
+
+        #. Fortran compilers may have different values for the logical
+             ``.TRUE.`` constant.  As such, any MPI function that uses the
+             Fortran ``LOGICAL`` type may only get ``.TRUE.`` values back that
+             correspond to the the ``.TRUE.`` value of the Fortran compiler with which
+             Open MPI was configured.
+
+    #. Similar to C++, linking object files that Fortran language features such
+       as modules and/or polymorphism from different
+       Fortran compilers is not likely to work.  The ``mpi`` and ``mpi_f08`` modules that
+       Open MPI creates will likely only work with the Fortran compiler
+       that was identified during ``configure`` (and used to build Open MPI).
+
+The big caveat to all of this is that Open MPI will only work with
+different compilers *if all the datatype sizes are the same.*  For
+example, even though Open MPI supports all 4 name mangling schemes,
+the size of the Fortran ``LOGICAL`` type may be 1 byte in some compilers
+and 4 bytes in others.  This will likely cause Open MPI to perform
+unpredictably.
+
+The bottom line is that Open MPI can support all manner of run-time
+systems and interconnects in a single installation, but supporting
+multiple compilers "sort of" works (i.e., is subject to trial and
+error) in some cases, and definitely does not work in other cases.
+There's unfortunately little that we can do about this |mdash| it's a
+compiler compatibility issue, and one that compiler authors have
+little incentive to resolve.

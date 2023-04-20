@@ -7,6 +7,7 @@ Building and installing Open MPI
    :maxdepth: 1
 
    quickstart
+   supported-systems
    definitions
    filesystem-requirements
    vpath-builds
@@ -16,4 +17,7 @@ Building and installing Open MPI
    configure-output-summary
    make-targets
    installation-location
+   custom-components
+   updating
    packagers
+   sysadmins
