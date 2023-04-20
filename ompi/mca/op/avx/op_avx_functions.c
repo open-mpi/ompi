@@ -32,16 +32,18 @@
  * to a lesser support (AVX512 -> AVX2, AVX2 -> AVX, AVX -> error out).
  */
 #if defined(GENERATE_AVX512_CODE)
+#  define PREPEND _avx512
 #  if defined(__AVX512BW__) && defined(__AVX512F__) && defined(__AVX512VL__)
-#    define PREPEND _avx512
+/* all good */
 #  else
 #    undef GENERATE_AVX512_CODE
 #  endif  /* defined(__AVX512BW__) && defined(__AVX512F__) && defined(__AVX512VL__) */
 #endif  /* defined(GENERATE_AVX512_CODE) */
 
 #if !defined(PREPEND) && defined(GENERATE_AVX2_CODE)
+#  define PREPEND _avx2
 #  if defined(__AVX2__)
-#    define PREPEND _avx2
+/* all good */
 #  else
 #    undef GENERATE_AVX2_CODE
 #  endif  /* defined(__AVX2__) */
