@@ -28,6 +28,10 @@ int opal_accelerator_rocm_verbose = 0;
 size_t opal_accelerator_rocm_memcpyD2H_limit=1024;
 size_t opal_accelerator_rocm_memcpyH2D_limit=1048576;
 
+/* Initialization lock for lazy rocm initialization */
+static opal_mutex_t accelerator_rocm_init_lock;
+static bool accelerator_rocm_init_complete = false;
+
 hipStream_t opal_accelerator_rocm_MemcpyStream = NULL;
 
 /*
@@ -154,8 +158,42 @@ static int accelerator_rocm_component_register(void)
     return OPAL_SUCCESS;
 }
 
+int opal_accelerator_rocm_lazy_init()
+{
+    int err = OPAL_SUCCESS;
+
+    /* Double checked locking to avoid having to
+     * grab locks post lazy-initialization.  */
+    opal_atomic_rmb();
+    if (true == accelerator_rocm_init_complete) {
+        return OPAL_SUCCESS;
+    }
+    OPAL_THREAD_LOCK(&accelerator_rocm_init_lock);
+
+    /* If already initialized, just exit */
+    if (true == accelerator_rocm_init_complete) {
+        goto out;
+    }
+
+    err = hipStreamCreate(&opal_accelerator_rocm_MemcpyStream);
+    if (hipSuccess != err) {
+        opal_output(0, "Could not create hipStream, err=%d %s\n",
+                err, hipGetErrorString(err));
+        goto out;
+    }
+
+    err = OPAL_SUCCESS;
+    opal_atomic_wmb();
+    accelerator_rocm_init_complete = true;
+out:
+    OPAL_THREAD_UNLOCK(&accelerator_rocm_init_lock);
+    return err;
+}
+
 static opal_accelerator_base_module_t* accelerator_rocm_init(void)
 {
+    OBJ_CONSTRUCT(&accelerator_rocm_init_lock, opal_mutex_t);
+    
     hipError_t err;
 
     if (opal_rocm_runtime_initialized) {
@@ -166,13 +204,6 @@ static opal_accelerator_base_module_t* accelerator_rocm_init(void)
     err = hipGetDeviceCount(&count);
     if (hipSuccess != err || 0 == count) {
         opal_output(0, "No HIP capabale device found. Disabling component.\n");
-        return NULL;
-    }
-
-    err = hipStreamCreate(&opal_accelerator_rocm_MemcpyStream);
-    if (hipSuccess != err) {
-        opal_output(0, "Could not create hipStream, err=%d %s\n",
-                err, hipGetErrorString(err));
         return NULL;
     }
 
@@ -192,5 +223,6 @@ static void accelerator_rocm_finalize(opal_accelerator_base_module_t* module)
         opal_accelerator_rocm_MemcpyStream = NULL;
     }
 
+    OBJ_DESTRUCT(&accelerator_rocm_init_lock);
     return;
 }
