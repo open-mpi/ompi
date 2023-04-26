@@ -8,15 +8,11 @@ General Run-Time Support Notes
   below).
 
 * Open MPI's run-time behavior can be customized via Modular Component
-  Architecture (MCA) parameters (see below for more information on how
-  to get/set MCA parameter values).  Some MCA parameters can be set in
-  a way that renders Open MPI inoperable (see notes about MCA
-  parameters later in this file).  In particular, some parameters have
-  required options that must be included.
-
-  .. error:: TODO Need a link in the above paragraph for how to set MCA
-             params.  This might be in FAQ content that has not yet
-             been converted.
+  Architecture (MCA) parameters (see :ref:`this section
+  <label-running-setting-mca-param-values>`) for more information on
+  how to get/set MCA parameter values).  Some MCA parameters can be
+  set in a way that renders Open MPI inoperable.  In particular, some
+  parameters have required options that must be included:
 
   * If specified, the ``btl`` parameter must include the ``self``
     component, or Open MPI will not be able to deliver messages to the

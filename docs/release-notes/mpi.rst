@@ -1,7 +1,7 @@
 MPI Functionality and Features
 ==============================
 
-.. _mpi-standard-conformance-label:
+.. _release-notes-mpi-standard-conformance-label:
 
 MPI Standard conformance
 ------------------------

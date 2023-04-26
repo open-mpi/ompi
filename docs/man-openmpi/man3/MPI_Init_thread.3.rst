@@ -108,11 +108,11 @@ modifies, interprets, nor distributes them:
 NOTES
 -----
 
-The Fortran version does not have provisions for *argc* and *argv* and
-takes only IERROR.
+The Fortran version does not have provisions for ``argc`` and ``argv`` and
+takes only ``IERROR``.
 
-It is the caller's responsibility to check the value of *provided*, as
-it may be less than what was requested in *required*.
+It is the caller's responsibility to check the value of ``provided``, as
+it may be less than what was requested in ``required``.
 
 The MPI Standard does not say what a program can do before an
 :ref:`MPI_Init_thread` or after an :ref:`MPI_Finalize`. In the Open MPI
@@ -124,9 +124,10 @@ files, reading standard input, or writing to standard output.
 MPI_THREAD_MULTIPLE Support
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-MPI_THREAD_MULTIPLE support is included if the environment in which Open
-MPI was built supports threading. You can check the output of
-**ompi_info**\ (1) to see if Open MPI has MPI_THREAD_MULTIPLE support:
+``MPI_THREAD_MULTIPLE`` support is included if the environment in which
+Open MPI was built supports threading. You can check the output of
+:ref:`ompi_info(1) <man1-ompi_info>` to see if Open MPI has
+``MPI_THREAD_MULTIPLE`` support:
 
 ::
 
@@ -134,12 +135,12 @@ MPI was built supports threading. You can check the output of
              Thread support: posix (MPI_THREAD_MULTIPLE: yes, OPAL support: yes, OMPI progress: no, Event lib: yes)
    shell$
 
-The "MPI_THREAD_MULTIPLE: yes" portion of the above output indicates
-that Open MPI was compiled with MPI_THREAD_MULTIPLE support.
+The ``MPI_THREAD_MULTIPLE: yes`` portion of the above output indicates
+that Open MPI was compiled with ``MPI_THREAD_MULTIPLE`` support.
 
 Note that there is a small performance penalty for using
-MPI_THREAD_MULTIPLE support; latencies for short messages will be higher
-as compared to when using MPI_THREAD_SINGLE, for example.
+``MPI_THREAD_MULTIPLE`` support; latencies for short messages will be higher
+as compared to when using ``MPI_THREAD_SINGLE``, for example.
 
 
 ERRORS

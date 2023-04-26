@@ -14,6 +14,39 @@ following:
 #. Open MPI's libraries must be findable (e.g., in your
    ``LD_LIBRARY_PATH``).
 
+Specifying the hosts for an MPI job
+-----------------------------------
+
+There are three mechanisms for specifying the hosts that an MPI job will run on:
+
+#. The ``--hostfile`` option to :ref:`mpirun(1) <man1-mpirun>`.
+
+   Use this option to specify a list of hosts on which to run.  Note
+   that for compatibility with other MPI implementations,
+   ``--machinefile`` is a synonym for ``--hostfile``.
+   See :ref:`this section <running-scheduling-hostfile-option-label>` for more
+   information about the ``--hostfile`` option.
+
+#. The ``--host`` option to :ref:`mpirun(1) <man1-mpirun>`.
+
+   This option can be used to specify a list of hosts on which to run
+   on the command line.
+   See :ref:`this section <running-scheduling-host-option-label>` for more
+   information about the ``--host`` option.
+
+#. Running in a scheduled environment.
+
+   If you are running in a scheduled environment (e.g., in a Slurm,
+   Torque, or LSF job), Open MPI will automatically get the lists of
+   hosts from the scheduler.  See the next subsections for details about
+   launching MPI jobs in supported scheduled environements.
+
+.. important:: The specification of hosts using any of the above
+               methods has nothing to do with the network interfaces
+               that are used for MPI traffic.  The list of hosts is
+               *only* used for specifying which hosts on which to
+               launch MPI processes.
+
 Non-interactive ``ssh`` logins
 ------------------------------
 
@@ -43,7 +76,8 @@ comfortable with.
    node* in the host list.
 
    It may *not* be sufficient to only setup an SSH key from the node
-   where you are invoking ``mpirun`` to all other nodes.
+   where you are invoking :ref:`mpirun(1) <man1-mpirun>` to all other
+   nodes.
 
 If you have a shared ``$HOME`` filesystem between your nodes, you can
 setup a single SSH key that is used to login to all nodes.
@@ -73,11 +107,11 @@ You can do this in one of two ways.
 Use "prefix" behavior
 ^^^^^^^^^^^^^^^^^^^^^
 
-.. note:: "Prefix" behavior is only available with ``mpirun``; it is
-   not available via resource manager direct launch mechanisms.
-   However, this section is about using ``ssh`` to launch MPI jobs,
-   which means that there is no resource manager, and therefore there
-   is no direct launch mechanism available.
+.. note:: "Prefix" behavior is only available with :ref:`mpirun(1)
+   <man1-mpirun>`; it is not available via resource manager direct
+   launch mechanisms.  However, this section is about using ``ssh`` to
+   launch MPI jobs, which means that there is no resource manager, and
+   therefore there is no direct launch mechanism available.
 
 When "prefix" behavior is enabled, Open MPI will automatically set the
 ``$PATH`` and ``$LD_LIBRARY_PATH`` on remote nodes before executing
@@ -90,17 +124,17 @@ remote commands.
 
 You can enable "prefix" behavior in one of three ways:
 
-#. Use an absolute path name to invoke ``mpirun``.
+#. Use an absolute path name to invoke :ref:`mpirun(1) <man1-mpirun>`.
 
    .. code-block:: sh
 
       shell$ $HOME/my-openmpi/bin/mpirun --hostfile my-hostfile.txt mpi-hello-world
 
-   Simply using the absolute path name to ``mpirun`` tells Open MPI to
-   enable "prefix" mode.
+   Simply using the absolute path name to :ref:`mpirun(1)
+   <man1-mpirun>` tells Open MPI to enable "prefix" mode.
 
 
-#. Use the ``--prefix`` option to ``mpirun``.
+#. Use the ``--prefix`` option to :ref:`mpirun(1) <man1-mpirun>`.
 
   .. code-block:: sh
 
@@ -113,8 +147,8 @@ You can enable "prefix" behavior in one of three ways:
 
 #. Configure Open MPI with ``--enable-mpirun-prefix-by-default``.
 
-   If Open MPI is built this way, ``mpirun`` will always enable
-   "prefix" behavior.
+   If Open MPI is built this way, :ref:`mpirun(1) <man1-mpirun>` will
+   always enable "prefix" behavior.
 
 Set the ``PATH`` and ``LD_LIBRARY_PATH`` in your shell startup files
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
