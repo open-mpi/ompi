@@ -185,7 +185,7 @@ int ompi_coll_base_alltoall_intra_pairwise(const void *sbuf, int scount,
                                             mca_coll_base_module_t *module)
 {
     int line = -1, err = 0, rank, size, step, sendto, recvfrom;
-    void * tmpsend, *tmprecv;
+    char *tmpsend, *tmprecv;
     ptrdiff_t lb, sext, rext;
 
     if (MPI_IN_PLACE == sbuf) {
@@ -274,7 +274,7 @@ int ompi_coll_base_alltoall_intra_bruck(const void *sbuf, int scount,
     tmpbuf = tmpbuf_free - gap;
 
     /* Step 1 - local rotation - shift up by rank */
-    err = ompi_datatype_sndrcv (sbuf + ((ptrdiff_t) rank * scount * sext),
+    err = ompi_datatype_sndrcv ((char*)sbuf + ((ptrdiff_t) rank * scount * sext),
                                 (int32_t) (size - rank) * scount,
                                 sdtype,
                                 tmpbuf,
