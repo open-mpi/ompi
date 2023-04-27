@@ -265,8 +265,6 @@ static int mca_btl_smcuda_component_open(void)
     OBJ_CONSTRUCT(&mca_btl_smcuda_component.sm_frags_user, opal_free_list_t);
     OBJ_CONSTRUCT(&mca_btl_smcuda_component.pending_send_fl, opal_free_list_t);
 
-    opal_finalize_register_cleanup(mca_btl_smcuda_component_fini);
-
     return OPAL_SUCCESS;
 }
 
@@ -282,6 +280,8 @@ static int mca_btl_smcuda_component_close(void)
 static void mca_btl_smcuda_component_fini(void)
 {
     int rc;
+
+    mca_btl_smcuda_accelerator_fini();
 
     OBJ_DESTRUCT(&mca_btl_smcuda_component.sm_lock);
     /**
@@ -891,6 +891,22 @@ mca_btl_smcuda_component_init(int *num_btls, bool enable_progress_threads, bool 
     /* Register a smcuda control function to help setup IPC support */
     mca_btl_base_active_message_trigger[MCA_BTL_TAG_SMCUDA].cbfunc = btl_smcuda_control;
     mca_btl_base_active_message_trigger[MCA_BTL_TAG_SMCUDA].cbdata = NULL;
+
+    /*
+     * add smcuda component fini code to opal's list of cleanup functions.
+     * Cleanups are called before all the MCA frameworks are closed, so by
+     * of the closing of the BTL framework with the accelerator framework, etc. etc.
+     * We add it here because its possible in the btl_init routine as its possible under
+     * certain scenarios that one of the steps above in this routine will fail,
+     * resulting in a NULL return value, and the btl component selector to close
+     * the btl.  This can also happen in normal operation, for instance for singleton
+     * where the smcuda is closed during mpi initialization.  We don't want
+     * to add a cleanup callback if no btls were returned.
+     */
+
+    if (NULL !=  btls) {
+        opal_finalize_register_cleanup(mca_btl_smcuda_component_fini);
+    }
 
     return btls;
 }
