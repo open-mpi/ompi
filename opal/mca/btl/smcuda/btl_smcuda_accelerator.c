@@ -37,7 +37,7 @@ static int accelerator_event_max = 400;
 static int accelerator_event_ipc_most = 0;
 static bool smcuda_accelerator_initialized = false;
 
-static void mca_btl_smcuda_accelerator_fini(void);
+void mca_btl_smcuda_accelerator_fini(void);
 
 int mca_btl_smcuda_accelerator_init(void)
 {
@@ -83,14 +83,6 @@ int mca_btl_smcuda_accelerator_init(void)
         goto cleanup_and_error;
     }
 
-    /*
-     * add smcuda acclerator fini code to opal's list of cleanup functions.
-     * Cleanups are called before all the MCA frameworks are closed, so by
-     * adding this function to the callback list, we avoid issues with ordering
-     * of the closing of the BTL framework with the accelerator framework, etc. etc.
-     */
-    opal_finalize_register_cleanup(mca_btl_smcuda_accelerator_fini);
-
     smcuda_accelerator_initialized = true;
 
 cleanup_and_error:
@@ -115,7 +107,7 @@ cleanup_and_error:
     return rc;
 }
 
-static void mca_btl_smcuda_accelerator_fini(void)
+void mca_btl_smcuda_accelerator_fini(void)
 {
     int i;
 
