@@ -76,7 +76,7 @@ static int coll_tuned_read_alg(const opal_json_t *msg_rule, ompi_coll_msg_rule_t
     } else if (rc_as_int == OPAL_SUCCESS) {
         rc_validation = coll_tuned_alg_to_str( coll_id, int_val, NULL );
         if (rc_validation != OPAL_SUCCESS) {
-            snprintf(int_as_str, 23, "%ld", int_val);
+            snprintf(int_as_str, 23, "%" PRId64, int_val);
             int_as_str[23] = '\0';
             string_buf = int_as_str;
         } else {
@@ -595,7 +595,8 @@ static int ompi_coll_tuned_read_rules_config_file_classic (char *fname, ompi_col
                 msg_p->result_segsize = SEGSIZE;
 
                 /* read the max requests tuning parameter. optional */
-                msg_p->result_max_requests = ompi_coll_tuned_alltoall_max_requests;
+                msg_p->result_max_requests = (ALLTOALLV == COLID) ?
+                    ompi_coll_tuned_alltoallv_max_requests : ompi_coll_tuned_alltoall_max_requests;
                 if( (version > 1) && isnext_digit(fptr) ) {
                     if( (getnext (fptr, &MAXREQ) < 0) || (MAXREQ < 0) ) {
                         opal_output_verbose(1, ompi_coll_tuned_stream,

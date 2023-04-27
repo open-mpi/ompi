@@ -35,6 +35,7 @@ static const mca_base_var_enum_value_t alltoallv_algorithms[] = {
     {0, "ignore"},
     {1, "basic_linear"},
     {2, "pairwise"},
+    {3, "linear_sync"},
     {0, NULL}
 };
 
@@ -73,7 +74,7 @@ int ompi_coll_tuned_alltoallv_intra_check_forced_init(coll_tuned_force_algorithm
                                         "alltoallv_algorithm",
                                         "Which alltoallv algorithm is used. "
                                         "Can be locked down to choice of: 0 ignore, "
-                                        "1 basic linear, 2 pairwise. "
+                                        "1 basic linear, 2 pairwise, 3 linear_sync. "
                                         "Only relevant if coll_tuned_use_dynamic_rules is true.",
                                         MCA_BASE_VAR_TYPE_INT, new_enum, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                         OPAL_INFO_LVL_5,
@@ -83,6 +84,27 @@ int ompi_coll_tuned_alltoallv_intra_check_forced_init(coll_tuned_force_algorithm
     OBJ_RELEASE(new_enum);
     if (mca_param_indices->algorithm_param_index < 0) {
         return mca_param_indices->algorithm_param_index;
+    }
+
+    ompi_coll_tuned_alltoallv_max_requests = 0;
+    mca_param_indices->max_requests_param_index =
+        mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
+                                        "alltoallv_algorithm_max_requests",
+                                        "Maximum number of outstanding send or recv requests. "
+                                        "Only has meaning for synchronized algorithms. 0 means no limit.",
+                                        MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                        OPAL_INFO_LVL_5,
+                                        MCA_BASE_VAR_SCOPE_ALL,
+                                        &ompi_coll_tuned_alltoallv_max_requests);
+    if (mca_param_indices->max_requests_param_index < 0) {
+        return mca_param_indices->max_requests_param_index;
+    }
+
+    if (ompi_coll_tuned_alltoallv_max_requests < 0) {
+        if( 0 == ompi_comm_rank( MPI_COMM_WORLD ) ) {
+            opal_output( 0, "Maximum outstanding requests must be positive number or 0.  Initializing to 0 (no limit).\n" );
+        }
+        ompi_coll_tuned_alltoallv_max_requests = 0;
     }
 
     return (MPI_SUCCESS);
@@ -96,7 +118,7 @@ int ompi_coll_tuned_alltoallv_intra_do_this(const void *sbuf, ompi_count_array_t
                                             struct ompi_datatype_t *rdtype,
                                             struct ompi_communicator_t *comm,
                                             mca_coll_base_module_t *module,
-                                            int algorithm)
+                                            int algorithm, int max_requests)
 {
     OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
                  "coll:tuned:alltoallv_intra_do_this selected algorithm %d ",
@@ -115,9 +137,13 @@ int ompi_coll_tuned_alltoallv_intra_do_this(const void *sbuf, ompi_count_array_t
         return ompi_coll_base_alltoallv_intra_pairwise(sbuf, scounts, sdisps, sdtype,
                                                        rbuf, rcounts, rdisps, rdtype,
                                                        comm, module);
+    case (3):
+        return ompi_coll_base_alltoallv_intra_basic_linear_sync(sbuf, scounts, sdisps, sdtype,
+                                                                rbuf, rcounts, rdisps, rdtype,
+                                                                comm, module, max_requests);
     }  /* switch */
     OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
-                 "coll:tuned:alltoall_intra_do_this attempt to select "
+                 "coll:tuned:alltoallv_intra_do_this attempt to select "
                  "algorithm %d when only 0-%d is valid.",
                  algorithm, ompi_coll_tuned_forced_max_algorithms[ALLTOALLV]));
     return (MPI_ERR_ARG);

@@ -227,6 +227,7 @@ int mca_coll_base_alltoall_intra_basic_inplace(const void *rbuf, size_t rcount,
 /* AlltoAllV */
 int ompi_coll_base_alltoallv_intra_pairwise(ALLTOALLV_ARGS);
 int ompi_coll_base_alltoallv_intra_basic_linear(ALLTOALLV_ARGS);
+int ompi_coll_base_alltoallv_intra_basic_linear_sync(ALLTOALLV_ARGS, int max_requests);
 int mca_coll_base_alltoallv_intra_basic_inplace(const void *rbuf, ompi_count_array_t rcounts, ompi_disp_array_t rdisps,
                                                 struct ompi_datatype_t *rdtype,
                                                 struct ompi_communicator_t *comm,

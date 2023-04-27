@@ -43,6 +43,7 @@ extern int   ompi_coll_tuned_init_tree_fanout;
 extern int   ompi_coll_tuned_init_chain_fanout;
 extern int   ompi_coll_tuned_init_max_requests;
 extern int   ompi_coll_tuned_alltoall_max_requests;
+extern int   ompi_coll_tuned_alltoallv_max_requests;
 extern int   ompi_coll_tuned_scatter_intermediate_msg;
 extern int   ompi_coll_tuned_scatter_large_msg;
 extern int   ompi_coll_tuned_scatter_min_procs;
@@ -127,7 +128,7 @@ int ompi_coll_tuned_alltoall_intra_check_forced_init (coll_tuned_force_algorithm
 /* AlltoAllV */
 int ompi_coll_tuned_alltoallv_intra_dec_fixed(ALLTOALLV_ARGS);
 int ompi_coll_tuned_alltoallv_intra_dec_dynamic(ALLTOALLV_ARGS);
-int ompi_coll_tuned_alltoallv_intra_do_this(ALLTOALLV_ARGS, int algorithm);
+int ompi_coll_tuned_alltoallv_intra_do_this(ALLTOALLV_ARGS, int algorithm, int max_requests);
 int ompi_coll_tuned_alltoallv_intra_check_forced_init(coll_tuned_force_algorithm_mca_param_indices_t *mca_param_indices);
 
 /* Barrier */
