@@ -262,8 +262,7 @@ ompi_coll_base_alltoallv_intra_basic_linear(const void *sbuf, const int *scounts
                                             struct ompi_communicator_t *comm,
                                             mca_coll_base_module_t *module)
 {
-    int i, size, rank, err, nreqs;
-    char *psnd, *prcv;
+    int si, ri, size, rank, err, nreqs, nrreqs, nsreqs, line, allowed_posted_reqs = 2;
     ptrdiff_t sext, rext;
     ompi_request_t **preq, **reqs;
     mca_coll_base_module_t *base_module = (mca_coll_base_module_t*) module;
@@ -277,6 +276,8 @@ ompi_coll_base_alltoallv_intra_basic_linear(const void *sbuf, const int *scounts
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
 
+    allowed_posted_reqs = (allowed_posted_reqs > size ? size : allowed_posted_reqs);
+
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
                  "coll:base:alltoallv_intra_basic_linear rank %d", rank));
 
@@ -284,11 +285,9 @@ ompi_coll_base_alltoallv_intra_basic_linear(const void *sbuf, const int *scounts
     ompi_datatype_type_extent(rdtype, &rext);
 
     /* Simple optimization - handle send to self first */
-    psnd = ((char *) sbuf) + (ptrdiff_t)sdisps[rank] * sext;
-    prcv = ((char *) rbuf) + (ptrdiff_t)rdisps[rank] * rext;
     if (0 != scounts[rank]) {
-        err = ompi_datatype_sndrcv(psnd, scounts[rank], sdtype,
-                              prcv, rcounts[rank], rdtype);
+        err = ompi_datatype_sndrcv(((char *) sbuf) + (ptrdiff_t)sdisps[rank] * sext, scounts[rank], sdtype,
+                                   ((char *) rbuf) + (ptrdiff_t)rdisps[rank] * rext, rcounts[rank], rdtype);
         if (MPI_SUCCESS != err) {
             return err;
         }
@@ -301,57 +300,91 @@ ompi_coll_base_alltoallv_intra_basic_linear(const void *sbuf, const int *scounts
 
     /* Now, initiate all send/recv to/from others. */
     nreqs = 0;
-    reqs = preq = ompi_coll_base_comm_get_reqs(data, 2 * size);
-    if( NULL == reqs ) { err = OMPI_ERR_OUT_OF_RESOURCE; goto err_hndl; }
+    reqs = preq = ompi_coll_base_comm_get_reqs(data, 2 * allowed_posted_reqs);
+    if( NULL == reqs ) { err = OMPI_ERR_OUT_OF_RESOURCE; goto error_hndl; }
 
-    /* Post all receives first */
-    for (i = 0; i < size; ++i) {
-        if (i == rank) {
+    /* Post receives first */
+    for (nreqs = 0, nrreqs = 0, ri = (rank + 1) % size;
+         (nreqs < allowed_posted_reqs) && (nrreqs < size);
+         ri = (ri + 1) % size, ++nrreqs) {
+        if ((0 == rcounts[ri]) || (ri == rank)) {
             continue;
         }
-
-        if (rcounts[i] > 0) {
-            ++nreqs;
-            prcv = ((char *) rbuf) + (ptrdiff_t)rdisps[i] * rext;
-            err = MCA_PML_CALL(irecv_init(prcv, rcounts[i], rdtype,
-                                          i, MCA_COLL_BASE_TAG_ALLTOALLV, comm,
-                                          preq++));
-            if (MPI_SUCCESS != err) { goto err_hndl; }
-        }
+        err = MCA_PML_CALL(irecv
+                           ((char*)rbuf + (ptrdiff_t)rdisps[ri] * rext, rcounts[ri], rdtype, ri,
+                            MCA_COLL_BASE_TAG_ALLTOALLV, comm, &reqs[nreqs]));
+        nreqs++;
+        if (MPI_SUCCESS != err) { line = __LINE__; goto error_hndl; }
     }
-
     /* Now post all sends */
-    for (i = 0; i < size; ++i) {
-        if (i == rank) {
+    for (nsreqs = 0, si =  (rank + size - 1) % size;
+         nreqs < (2 * allowed_posted_reqs) && (nsreqs < size);
+         si = (si + size - 1) % size, ++nsreqs) {
+        if ((0 == scounts[si]) || (si == rank)) {
             continue;
         }
+        err = MCA_PML_CALL(isend
+                           ((char*)sbuf + (ptrdiff_t)sdisps[si] * sext, scounts[si], sdtype, si,
+                            MCA_COLL_BASE_TAG_ALLTOALLV,
+                              MCA_PML_BASE_SEND_STANDARD, comm, &reqs[nreqs]));
+        nreqs++;
+        if (MPI_SUCCESS != err) { line = __LINE__; goto error_hndl; }
+    }
 
-        if (scounts[i] > 0) {
-            ++nreqs;
-            psnd = ((char *) sbuf) + (ptrdiff_t)sdisps[i] * sext;
-            err = MCA_PML_CALL(isend_init(psnd, scounts[i], sdtype,
-                                         i, MCA_COLL_BASE_TAG_ALLTOALLV,
-                                         MCA_PML_BASE_SEND_STANDARD, comm,
-                                         preq++));
-            if (MPI_SUCCESS != err) { goto err_hndl; }
+    /* Wait for requests to complete */
+    if ((nsreqs + nrreqs) == 2 * size) {
+        /* Optimization for the case when all requests have been posted  */
+        err = ompi_request_wait_all(nreqs, reqs, MPI_STATUSES_IGNORE);
+        if (MPI_SUCCESS != err) { line = __LINE__; goto error_hndl; }
+
+    } else {
+        /* As requests complete, replace them with corresponding requests:
+           - wait for any request to complete, mark the request as
+           MPI_REQUEST_NULL
+           - If it was a receive request, replace it with new irecv request
+           (if any)
+           - if it was a send request, replace it with new isend request (if any)
+        */
+        int ncreqs = nsreqs + nsreqs - nreqs;
+        while (ncreqs < (2 * size)) {
+            int completed;
+            err = ompi_request_wait_any(2 * allowed_posted_reqs, reqs, &completed, MPI_STATUS_IGNORE);
+            if (MPI_SUCCESS != err) { line = __LINE__; goto error_hndl; }
+            reqs[completed] = MPI_REQUEST_NULL;
+            ncreqs++;
+            if (completed < allowed_posted_reqs) {
+                if (nrreqs < size) {
+                    if( (0 != rcounts[ri]) && (ri != rank) ) {
+                        err = MCA_PML_CALL(irecv
+                                           ((char*)rbuf + (ptrdiff_t)rdisps[ri] * rext, rcounts[ri], rdtype, ri,
+                                            MCA_COLL_BASE_TAG_ALLTOALLV, comm,
+                                            &reqs[completed]));
+                        if (MPI_SUCCESS != err) { line = __LINE__; goto error_hndl; }
+                    }
+                    ++nrreqs;
+                    ri = (ri + 1) % size;
+                }
+            } else {
+                if (nsreqs < size) {
+                    if( (0 != scounts[si]) && (si != rank) ) {
+                        err = MCA_PML_CALL(isend
+                                           ((char*)sbuf + (ptrdiff_t)sdisps[si] * sext, scounts[si], sdtype, si,
+                                            MCA_COLL_BASE_TAG_ALLTOALLV,
+                                            MCA_PML_BASE_SEND_STANDARD, comm,
+                                            &reqs[completed]));
+                        if (MPI_SUCCESS != err) { line = __LINE__; goto error_hndl; }
+                    }
+                    ++nsreqs;
+                    si = (si + size - 1) % size;
+                }
+            }
         }
     }
 
-    /* Start your engines.  This will never return an error. */
-    MCA_PML_CALL(start(nreqs, reqs));
-
-    /* Wait for them all.  If there's an error, note that we don't care
-     * what the error was -- just that there *was* an error.  The PML
-     * will finish all requests, even if one or more of them fail.
-     * i.e., by the end of this call, all the requests are free-able.
-     * So free them anyway -- even if there was an error, and return the
-     * error after we free everything. */
-    err = ompi_request_wait_all(nreqs, reqs, MPI_STATUSES_IGNORE);
-
- err_hndl:
+ error_hndl:
     /* find a real error code */
     if (MPI_ERR_IN_STATUS == err) {
-        for( i = 0; i < nreqs; i++ ) {
+        for( int i = 0; i < nreqs; i++ ) {
             if (MPI_REQUEST_NULL == reqs[i]) continue;
             if (MPI_ERR_PENDING == reqs[i]->req_status.MPI_ERROR) continue;
             if (reqs[i]->req_status.MPI_ERROR != MPI_SUCCESS) {
@@ -361,7 +394,11 @@ ompi_coll_base_alltoallv_intra_basic_linear(const void *sbuf, const int *scounts
         }
     }
     /* Free the requests in all cases as they are persistent */
-    ompi_coll_base_free_reqs(reqs, nreqs);
+    ompi_coll_base_free_reqs(reqs, 2 * allowed_posted_reqs);
 
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                 "%s:%4d\tError occurred %d, rank %2d", __FILE__, line, err,
+                 rank));
+    (void)line;
     return err;
 }
