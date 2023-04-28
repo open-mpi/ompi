@@ -627,7 +627,7 @@ static inline void ompi_op_reduce_stream(ompi_op_t * op, void *source,
                 (source_check_addr == 0 || (source_flags & MCA_ACCELERATOR_FLAGS_UNIFIED_MEMORY))) {
                 /* nothing to be done, we won't need device-capable ops */
             } else {
-                fprintf(stderr, "3buff op: no suitable op module found for device memory!\n");
+                fprintf(stderr, "op: no suitable op %s module for type %s found for device memory!\n", op->o_name, dtype->name);
                 abort();
             }
         }
@@ -810,15 +810,43 @@ static inline void ompi_3buff_op_reduce(ompi_op_t * op, void *source1,
     tgt = target;
 
     if (OPAL_LIKELY(ompi_op_is_intrinsic (op))) {
+        ompi_3buff_op_reduce_stream(op, source1, source2, target, count, dtype, NULL);
+#if 0
         op->o_3buff_intrinsic.fns[ompi_op_ddt_map[dtype->id]](src1, src2,
                                                               tgt, &count,
                                                               &dtype,
                                                               op->o_3buff_intrinsic.modules[ompi_op_ddt_map[dtype->id]]);
+#endif // 0
     } else {
         ompi_3buff_op_user (op, src1, src2, tgt, count, dtype);
     }
 }
 
+static inline void ompi_op_preferred_device(ompi_op_t *op, int source_dev,
+                                            int target_dev, size_t count,
+                                            ompi_datatype_t *dtype, int *op_device)
+{
+    /* default to host */
+    *op_device = -1;
+    if (!ompi_op_is_intrinsic (op)) {
+        return;
+    }
+    /* quick check: can we execute on both sides? */
+    int dtype_id = ompi_op_ddt_map[dtype->id];
+    if (NULL == op->o_device_op || NULL == op->o_device_op->do_intrinsic.fns[dtype_id]) {
+        /* not available on the gpu, must select host */
+        return;
+    }
+
+    double host_startup_cost = 0.0; // host has no startup cost
+    double host_compute_cost = 1.0*count; // host reference 1.0 per element
+    double device_startup_cost = 10000.0; // to be filled below
+    double device_compute_cost = 0.0001*count;
+
+    if ((host_startup_cost + host_compute_cost) > (device_startup_cost + device_compute_cost)) {
+        *op_device = (target_dev >= 0) ? target_dev : source_dev;
+    }
+}
 
 //#if 0
 /**
@@ -877,6 +905,8 @@ static inline void ompi_op_select_device(ompi_op_t *op, const void *source,
     }
 
     /* select a device, or remain on the host */
+    //printf("ompi_op_select_device: host startup %f host compute %f device startup %f device compute %f\n",
+    //       host_startup_cost, host_compute_cost, device_startup_cost, device_compute_cost);
     if ((host_startup_cost + host_compute_cost) > (device_startup_cost + device_compute_cost)) {
         *device = (target_dev_id >= 0) ? target_dev_id : source_dev_id;
     }

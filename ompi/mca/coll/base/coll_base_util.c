@@ -606,7 +606,7 @@ const char* mca_coll_base_colltype_to_str(int collid)
 
 static void* ompi_coll_base_device_allocate_cb(void *ctx, size_t *size) {
     int dev_id = (intptr_t)ctx;
-    void *ptr;
+    void *ptr = NULL;
     opal_accelerator.mem_alloc(dev_id, &ptr, *size);
     return ptr;
 }
@@ -620,6 +620,10 @@ void *ompi_coll_base_allocate_on_device(int device, size_t size,
                                         mca_coll_base_module_t *module)
 {
     mca_allocator_base_module_t *allocator_module;
+    if (device < 0) {
+        return malloc(size);
+    }
+
     if (NULL == module->base_data->device_allocators) {
         int num_dev;
         opal_accelerator.num_devices(&num_dev);
@@ -643,7 +647,11 @@ void *ompi_coll_base_allocate_on_device(int device, size_t size,
 void ompi_coll_base_free_on_device(int device, void *ptr, mca_coll_base_module_t *module)
 {
     mca_allocator_base_module_t *allocator_module;
-    assert(NULL != module->base_data->device_allocators);
-    allocator_module = module->base_data->device_allocators[device];
-    allocator_module->alc_free(allocator_module, ptr);
+    if (device < 0) {
+        free(ptr);
+    } else {
+        assert(NULL != module->base_data->device_allocators);
+        allocator_module = module->base_data->device_allocators[device];
+        allocator_module->alc_free(allocator_module, ptr);
+    }
 }
