@@ -177,7 +177,7 @@ void mca_allocator_devicebucket_free(mca_allocator_base_module_t *mem, void *ptr
         bucket_size <<= 1;
     }
 
-    if (bucket_num > mem_options->num_buckets) {
+    if (bucket_num >= mem_options->num_buckets) {
         mem_options->free_mem_fn(mem_options->super.alc_context, ptr);
         OBJ_RELEASE(chunk);
     } else {
