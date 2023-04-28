@@ -267,7 +267,7 @@ ompi_mtl_ofi_add_procs(struct mca_mtl_base_module_t *mtl,
     /**
      * Retrieve the processes' EP names from modex.
      */
-    for (i = 0; i < nprocs; ++i) {
+    for (i = 0, count = 0; i < nprocs; ++i, count += size) {
         OFI_COMPAT_MODEX_RECV(ret,
                               &mca_mtl_ofi_component.super.mtl_version,
                               procs[i],
@@ -281,7 +281,13 @@ ompi_mtl_ofi_add_procs(struct mca_mtl_base_module_t *mtl,
             free(errhost);
             goto bail;
         }
-        memcpy(&ep_names[i*namelen], ep_name, namelen);
+
+        if (size > namelen) {
+            size = namelen - 1;
+            ep_name[size + 1] = '\0';
+        }
+
+        memcpy(&ep_names[count], ep_name, size);
     }
 
     /**

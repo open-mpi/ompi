@@ -1096,7 +1096,7 @@ select_prov:
         goto error;
     }
 
-    ompi_mtl_ofi.epnamelen = namelen;
+    ompi_mtl_ofi.epnamelen = FI_NAME_MAX;
     free(ep_name);
 
     /**
@@ -1105,7 +1105,7 @@ select_prov:
     ompi_mtl_ofi.any_addr = FI_ADDR_UNSPEC;
     ompi_mtl_ofi.is_initialized = false;
     ompi_mtl_ofi.has_posted_initial_buffer = false;
-    
+
     ompi_mtl_ofi.base.mtl_flags |= MCA_MTL_BASE_FLAG_SUPPORTS_EXT_CID;
 
     return &ompi_mtl_ofi.base;
