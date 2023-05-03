@@ -36,8 +36,7 @@ static int accelerator_cuda_memcpy_async(int dest_dev_id, int src_dev_id, void *
                                   opal_accelerator_stream_t *stream, opal_accelerator_transfer_type_t type);
 static int accelerator_cuda_memcpy(int dest_dev_id, int src_dev_id, void *dest, const void *src,
                             size_t size, opal_accelerator_transfer_type_t type);
-static int accelerator_cuda_memmove_async(int dest_dev_id, int src_dev_id, void *dest, const void *src, size_t size,
-                                          opal_accelerator_stream_t *stream, opal_accelerator_transfer_type_t type);
+static int accelerator_cuda_memmove_async(int dest_dev_id, int src_dev_id, void *dest, const void *src, size_t size, opal_accelerator_stream_t *stream, opal_accelerator_transfer_type_t type);
 static int accelerator_cuda_memmove(int dest_dev_id, int src_dev_id, void *dest, const void *src, size_t size,
                              opal_accelerator_transfer_type_t type);
 static int accelerator_cuda_mem_alloc(int dev_id, void **ptr, size_t size);
@@ -471,8 +470,7 @@ static int accelerator_cuda_memcpy(int dest_dev_id, int src_dev_id, void *dest, 
     return OPAL_SUCCESS;
 }
 
-static int accelerator_cuda_memmove_async(int dest_dev_id, int src_dev_id, void *dest, const void *src, size_t size,
-                                          opal_accelerator_stream_t *stream, opal_accelerator_transfer_type_t type)
+static int accelerator_cuda_memmove_async(int dest_dev_id, int src_dev_id, void *dest, const void *src, size_t size, opal_accelerator_stream_t *stream, opal_accelerator_transfer_type_t type)
 {
     CUdeviceptr tmp;
     CUresult result;

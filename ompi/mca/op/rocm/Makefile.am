@@ -21,13 +21,16 @@ AM_CPPFLAGS = $(common_rocm_CPPFLAGS)
 
 sources = op_rocm_component.c op_rocm.h op_rocm_functions.c op_rocm_impl.h
 #sources_extended = op_rocm_functions.cu
-rocm_sources = op_rocm_impl.c
+rocm_sources = op_rocm_impl.cu
 
-NVCC = nvcc -allow-unsupported-compiler
+HIPCC = hipcc
+HIPCCFLAGS= -D__HIP_PLATFORM_HCC__= -D__HIP_PLATFORM_AMD__= -fPIC
+#-I/opt/rocm-5.5.0/include -I/opt/rocm-5.5.0/llvm/bin/../lib/clang/16.0.0
+ 
 
-.c.l$(OBJEXT):
+.cu.l$(OBJEXT):
 	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=compile $(NVCC) -prefer-non-pic $(NVCCFLAGS) -Wc,-Xcompiler,-fPIC,-g -c $<
+	$(LIBTOOLFLAGS) --mode=compile $(HIPCC) -prefer-non-pic $(HIPCCFLAGS) -Wc,-Xcompiler,-fPIC,-g -c $<
 
 # -o $($@.o:.lo)
 
@@ -59,14 +62,14 @@ endif
 # The DSO should install itself in $(ompilibdir) (by default,
 # $prefix/lib/openmpi).
 
-#CUDADIR=/nfs/apps/spacks/2023-01-01/opt/spack/linux-centos7-x86_64/gcc-9.5.0/rocm-11.8.0-u2modnncfevx54ibr5dy27sxkirwsf7f
+ROCMDIR=/opt/rocm/lib
 
 mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_op_rocm_la_SOURCES = $(sources)
-mca_op_rocm_la_LIBADD = $(rocm_sources:.c=.lo)
+mca_op_rocm_la_LIBADD = $(rocm_sources:.cu=.lo)
 mca_op_rocm_la_LDFLAGS = -module -avoid-version $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
-		$(accelerator_rocm_LIBS) -L$(CUDADIR)/lib64 -lrocmrt
+		$(accelerator_rocm_LIBS) -L$(ROCMDIR)/lib -lhiprtc
 EXTRA_mca_op_rocm_la_SOURCES = $(rocm_sources)
 
 # Specific information for static builds.
@@ -76,8 +79,8 @@ EXTRA_mca_op_rocm_la_SOURCES = $(rocm_sources)
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_op_rocm_la_SOURCES = $(sources)
-libmca_op_rocm_la_LIBADD = $(rocm_sources:.c=.lo)
+libmca_op_rocm_la_LIBADD = $(rocm_sources:.cu=.lo)
 libmca_op_rocm_la_LDFLAGS = -module -avoid-version\
-		$(accelerator_rocm_LIBS) -L$(CUDADIR)/lib64 -lrocmrt
+		$(accelerator_rocm_LIBS) -L$(ROCMDIR)/lib -lhiprtc
 EXTRA_libmca_op_rocm_la_SOURCES = $(rocm_sources)
 
