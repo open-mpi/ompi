@@ -5,6 +5,7 @@
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2019-2020 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
+ * Copyright (c) 2023      NVIDIA Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -90,8 +91,8 @@ typedef struct opal_common_ucx_module {
     int progress_iterations;
     int registered;
     bool opal_mem_hooks;
-    char *tls;
-    char *devices;
+    char **tls;
+    char **devices;
 } opal_common_ucx_module_t;
 
 typedef struct opal_common_ucx_del_proc {
