@@ -5,7 +5,7 @@
  * Copyright (c) 2020-2022 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2020-2021 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
+ * Copyright (c) 2021-2023 Nanook Consulting.  All rights reserved.
  * Copyright (c) 2021      Amazon.com, Inc. or its affiliates. All rights
  *                         reserved.
  * Copyright (c) 2023      UT-Battelle, LLC.  All rights reserved.
@@ -469,11 +469,11 @@ static int check_provider_attr(struct fi_info *provider_info, struct fi_info *pr
 static int compute_dev_distances(pmix_device_distance_t **distances,
                                   size_t *ndist)
 {
-    int ret = 0;
+    int ret = OPAL_SUCCESS;
     size_t ninfo;
     pmix_info_t *info;
     pmix_cpuset_t cpuset;
-    pmix_topology_t *pmix_topo;
+    pmix_topology_t pmix_topo;
     pmix_device_type_t type = PMIX_DEVTYPE_OPENFABRICS |
       PMIX_DEVTYPE_NETWORK;
 
@@ -482,10 +482,16 @@ static int compute_dev_distances(pmix_device_distance_t **distances,
     if (PMIX_SUCCESS != ret) {
         goto out;
     }
+    /* if we are not bound, then we cannot compute distances */
+    if (hwloc_bitmap_iszero(cpuset.bitmap) ||
+        hwloc_bitmap_isfull(cpuset.bitmap)) {
+        return OPAL_ERR_NOT_BOUND;
+    }
 
-    /* load the PMIX topology */
-    PMIx_Topology_free(pmix_topo, 1);
-    ret = PMIx_Load_topology(pmix_topo);
+    /* load the PMIX topology - this just loads a pointer to
+     * the local topology held in PMIx, so you must not
+     * free it */
+    ret = PMIx_Load_topology(&pmix_topo);
     if (PMIX_SUCCESS != ret) {
         goto out;
     }
@@ -497,7 +503,6 @@ static int compute_dev_distances(pmix_device_distance_t **distances,
                                  ndist);
     PMIx_Info_free(info, ninfo);
 
-    PMIx_Topology_free(pmix_topo, 1);
 out:
     return ret;
 }
@@ -533,8 +538,9 @@ get_nearest_nics(int *num_distances, pmix_value_t **valin)
     PMIx_Info_destruct(&directive);
     if (ret != PMIX_SUCCESS || !val) {
         ret = compute_dev_distances(&distances, &ndist);
-        if (ret)
+        if (ret) {
             goto out;
+        }
         goto find_nearest;
     }
 
@@ -554,8 +560,9 @@ get_nearest_nics(int *num_distances, pmix_value_t **valin)
 
 find_nearest:
     nearest = calloc(sizeof(*distances), ndist);
-    if (!nearest)
+    if (!nearest) {
         goto out;
+    }
 
     for (i = 0; i < ndist; i++) {
         if (distances[i].type != PMIX_DEVTYPE_NETWORK &&
