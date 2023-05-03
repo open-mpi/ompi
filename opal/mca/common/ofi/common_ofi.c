@@ -480,6 +480,8 @@ static int compute_dev_distances(pmix_device_distance_t **distances,
     PMIX_CPUSET_CONSTRUCT(&cpuset);
     ret = PMIx_Get_cpuset(&cpuset, PMIX_CPUBIND_THREAD);
     if (PMIX_SUCCESS != ret) {
+        /* we are not bound */
+        ret = OPAL_ERR_NOT_BOUND;
         goto out;
     }
     /* if we are not bound, then we cannot compute distances */
@@ -499,7 +501,7 @@ static int compute_dev_distances(pmix_device_distance_t **distances,
     ninfo = 1;
     info = PMIx_Info_create(ninfo);
     PMIx_Info_load(&info[0], PMIX_DEVICE_TYPE, &type, PMIX_DEVTYPE);
-    ret = PMIx_Compute_distances(pmix_topo, &cpuset, info, ninfo, distances,
+    ret = PMIx_Compute_distances(&pmix_topo, &cpuset, info, ninfo, distances,
                                  ndist);
     PMIx_Info_free(info, ninfo);
 
@@ -603,6 +605,15 @@ out:
  *           distances array is not provided. False otherwise.
  *
  */
+#if HWLOC_API_VERSION < 0x00020000
+static bool is_near(pmix_device_distance_t *distances,
+                    int num_distances,
+                    hwloc_topology_t topology,
+                    struct fi_pci_attr pci)
+{
+    return true;
+}
+#else
 static bool is_near(pmix_device_distance_t *distances,
                     int num_distances,
                     hwloc_topology_t topology,
@@ -665,6 +676,7 @@ static bool is_near(pmix_device_distance_t *distances,
     return false;
 }
 #endif
+#endif  // OPAL_OFI_PCI_DATA_AVAILABLE
 
 /* Count providers returns the number of providers present in an fi_info list
  *     @param (IN) provider_list    struct fi_info* list of providers available
