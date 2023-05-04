@@ -74,7 +74,6 @@ int ompi_mtl_ofi_progress_no_inline(void);
 
 #if OPAL_HAVE_THREAD_LOCAL
 extern opal_thread_local int ompi_mtl_ofi_per_thread_ctx;
-extern opal_thread_local struct fi_cq_tagged_entry ompi_mtl_ofi_wc[MTL_OFI_MAX_PROG_EVENT_COUNT];
 #endif
 
 #define MCA_MTL_OFI_CID_NOT_EXCHANGED 2
@@ -136,9 +135,7 @@ ompi_mtl_ofi_context_progress(int ctxt_id)
     ompi_mtl_ofi_request_t *ofi_req = NULL;
     struct fi_cq_err_entry error = { 0 };
     ssize_t ret;
-#if !OPAL_HAVE_THREAD_LOCAL
     struct fi_cq_tagged_entry ompi_mtl_ofi_wc[MTL_OFI_MAX_PROG_EVENT_COUNT];
-#endif
 
     /**
      * Read the work completions from the CQ.
