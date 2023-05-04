@@ -39,7 +39,6 @@ static int ofi_tag_mode;
 
 #if OPAL_HAVE_THREAD_LOCAL
     opal_thread_local int ompi_mtl_ofi_per_thread_ctx;
-    opal_thread_local struct fi_cq_tagged_entry ompi_mtl_ofi_wc[MTL_OFI_MAX_PROG_EVENT_COUNT];
 #endif
 
 /*
