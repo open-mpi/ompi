@@ -227,7 +227,6 @@ ompi_mtl_ofi_add_procs(struct mca_mtl_base_module_t *mtl,
     size_t namelen;
     int count = 0;
     char *ep_name = NULL;
-    char *ep_names = NULL;
     fi_addr_t *fi_addrs = NULL;
     mca_mtl_ofi_endpoint_t *endpoint = NULL;
     int num_peers_limit = (1 << ompi_mtl_ofi.num_bits_source_rank) - 1;
@@ -247,15 +246,6 @@ ompi_mtl_ofi_add_procs(struct mca_mtl_base_module_t *mtl,
     }
 
     /**
-     * Create array of EP names.
-     */
-    ep_names = malloc(nprocs * namelen);
-    if (NULL == ep_names) {
-        ret = OMPI_ERROR;
-        goto bail;
-    }
-
-    /**
      * Create array of fi_addrs.
      */
     fi_addrs = malloc(nprocs * sizeof(fi_addr_t));
@@ -264,10 +254,10 @@ ompi_mtl_ofi_add_procs(struct mca_mtl_base_module_t *mtl,
         goto bail;
     }
 
-    /**
-     * Retrieve the processes' EP names from modex.
-     */
     for (i = 0; i < nprocs; ++i) {
+        /**
+         * Retrieve the processes' EP name from modex.
+         */
         OFI_COMPAT_MODEX_RECV(ret,
                               &mca_mtl_ofi_component.super.mtl_version,
                               procs[i],
@@ -281,19 +271,18 @@ ompi_mtl_ofi_add_procs(struct mca_mtl_base_module_t *mtl,
             free(errhost);
             goto bail;
         }
-        memcpy(&ep_names[i*namelen], ep_name, namelen);
-    }
 
-    /**
-     * Map the EP names to fi_addrs.
-     */
-    count = fi_av_insert(ompi_mtl_ofi.av, ep_names, nprocs, fi_addrs, 0, NULL);
-    if ((count < 0) || (nprocs != (size_t)count)) {
-        opal_output_verbose(1, opal_common_ofi.output,
-                            "%s:%d: fi_av_insert failed: %d\n",
-                            __FILE__, __LINE__, count);
-        ret = OMPI_ERROR;
-        goto bail;
+        /**
+         * Map the EP name to fi_addr.
+         */
+        count = fi_av_insert(ompi_mtl_ofi.av, ep_name, 1, &fi_addrs[i], 0, NULL);
+        if ((count < 0) || (1 != (size_t)count)) {
+            opal_output_verbose(1, opal_common_ofi.output,
+                                "%s:%d: fi_av_insert failed for address %s: %d\n",
+                                __FILE__, __LINE__, ep_name, count);
+            ret = OMPI_ERROR;
+            goto bail;
+        }
     }
 
     /**
@@ -325,9 +314,6 @@ ompi_mtl_ofi_add_procs(struct mca_mtl_base_module_t *mtl,
 bail:
     if (fi_addrs)
         free(fi_addrs);
-
-    if (ep_names)
-        free(ep_names);
 
     return ret;
 }
