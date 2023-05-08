@@ -67,6 +67,8 @@ int mca_btl_ofi_get (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoi
     mca_btl_ofi_endpoint_t *btl_endpoint = (mca_btl_ofi_endpoint_t*) endpoint;
     mca_btl_ofi_context_t *ofi_context;
 
+    MCA_BTL_OFI_NUM_RDMA_INC(ofi_btl);
+
     ofi_context = get_ofi_context(ofi_btl);
 
     /* create completion context */
@@ -88,17 +90,18 @@ int mca_btl_ofi_get (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoi
                 &comp->comp_ctx);       /* completion context */
 
     if (-FI_EAGAIN == rc) {
+        MCA_BTL_OFI_NUM_RDMA_DEC(ofi_btl);
         opal_free_list_return(comp->base.my_list, (opal_free_list_item_t*) comp);
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
     if (0 != rc) {
+        MCA_BTL_OFI_NUM_RDMA_DEC(ofi_btl);
         opal_free_list_return(comp->base.my_list, (opal_free_list_item_t*) comp);
         BTL_ERROR(("fi_read failed with %d:%s", rc, fi_strerror(-rc)));
         MCA_BTL_OFI_ABORT();
     }
 
-    MCA_BTL_OFI_NUM_RDMA_INC(ofi_btl);
 
     return OPAL_SUCCESS;
 }
@@ -112,6 +115,8 @@ int mca_btl_ofi_put (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoi
     mca_btl_ofi_module_t *ofi_btl = (mca_btl_ofi_module_t *) btl;
     mca_btl_ofi_endpoint_t *btl_endpoint = (mca_btl_ofi_endpoint_t*) endpoint;
     mca_btl_ofi_context_t *ofi_context;
+
+    MCA_BTL_OFI_NUM_RDMA_INC(ofi_btl);
 
     ofi_context = get_ofi_context(ofi_btl);
 
@@ -135,17 +140,17 @@ int mca_btl_ofi_put (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoi
                   &comp->comp_ctx);       /* completion context */
 
     if (-FI_EAGAIN == rc) {
+        MCA_BTL_OFI_NUM_RDMA_DEC(ofi_btl);
         opal_free_list_return(comp->base.my_list, (opal_free_list_item_t*) comp);
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
     if (0 != rc) {
+        MCA_BTL_OFI_NUM_RDMA_DEC(ofi_btl);
         opal_free_list_return(comp->base.my_list, (opal_free_list_item_t*) comp);
         BTL_ERROR(("fi_write failed with %d:%s", rc, fi_strerror(-rc)));
         MCA_BTL_OFI_ABORT();
     }
-
-    MCA_BTL_OFI_NUM_RDMA_INC(ofi_btl);
 
     return OPAL_SUCCESS;
 
