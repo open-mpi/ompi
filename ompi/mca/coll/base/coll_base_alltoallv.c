@@ -289,12 +289,14 @@ ompi_coll_base_alltoallv_intra_basic_linear(const void *sbuf, const int *scounts
             continue;
         }
 
-        ++nreqs;
-        prcv = ((char *) rbuf) + (ptrdiff_t)rdisps[i] * rext;
-        err = MCA_PML_CALL(irecv_init(prcv, rcounts[i], rdtype,
-                                      i, MCA_COLL_BASE_TAG_ALLTOALLV, comm,
-                                      preq++));
-        if (MPI_SUCCESS != err) { goto err_hndl; }
+        if (rcounts[i] > 0) {
+            ++nreqs;
+            prcv = ((char *) rbuf) + (ptrdiff_t)rdisps[i] * rext;
+            err = MCA_PML_CALL(irecv_init(prcv, rcounts[i], rdtype,
+                                          i, MCA_COLL_BASE_TAG_ALLTOALLV, comm,
+                                          preq++));
+            if (MPI_SUCCESS != err) { goto err_hndl; }
+        }
     }
 
     /* Now post all sends */
@@ -303,13 +305,15 @@ ompi_coll_base_alltoallv_intra_basic_linear(const void *sbuf, const int *scounts
             continue;
         }
 
-        ++nreqs;
-        psnd = ((char *) sbuf) + (ptrdiff_t)sdisps[i] * sext;
-        err = MCA_PML_CALL(isend_init(psnd, scounts[i], sdtype,
-                                      i, MCA_COLL_BASE_TAG_ALLTOALLV,
-                                      MCA_PML_BASE_SEND_STANDARD, comm,
-                                      preq++));
-        if (MPI_SUCCESS != err) { goto err_hndl; }
+        if (scounts[i] > 0) {
+            ++nreqs;
+            psnd = ((char *) sbuf) + (ptrdiff_t)sdisps[i] * sext;
+            err = MCA_PML_CALL(isend_init(psnd, scounts[i], sdtype,
+                                         i, MCA_COLL_BASE_TAG_ALLTOALLV,
+                                         MCA_PML_BASE_SEND_STANDARD, comm,
+                                         preq++));
+            if (MPI_SUCCESS != err) { goto err_hndl; }
+        }
     }
 
     /* Start your engines.  This will never return an error. */
