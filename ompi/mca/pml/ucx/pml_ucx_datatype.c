@@ -163,6 +163,19 @@ static inline int mca_pml_ucx_datatype_is_contig(ompi_datatype_t *datatype)
            (lb == 0);
 }
 
+static unsigned mca_pml_ucx_ilog2_u64(uint64_t n)
+{
+#if OPAL_C_HAVE_BUILTIN_CLZ
+    return (sizeof(n) * 8) - 1 - __builtin_clzll(n);
+#else
+    unsigned i;
+    for (i = 0; n > 1; ++i) {
+        n >>= 1;
+    }
+    return i;
+#endif
+}
+
 #ifdef HAVE_UCP_REQUEST_PARAM_T
 __opal_attribute_always_inline__ static inline
 pml_ucx_datatype_t *mca_pml_ucx_init_nbx_datatype(ompi_datatype_t *datatype,
@@ -188,7 +201,7 @@ pml_ucx_datatype_t *mca_pml_ucx_init_nbx_datatype(ompi_datatype_t *datatype,
     is_contig_pow2 = mca_pml_ucx_datatype_is_contig(datatype) &&
                      (size && !(size & (size - 1))); /* is_pow2(size) */
     if (is_contig_pow2) {
-        pml_datatype->size_shift = (int)(log(size) / log(2.0)); /* log2(size) */
+        pml_datatype->size_shift = mca_pml_ucx_ilog2_u64(size);
     } else {
         pml_datatype->size_shift = 0;
         PML_UCX_DATATYPE_SET_VALUE(pml_datatype, op_attr_mask |= UCP_OP_ATTR_FIELD_DATATYPE);
