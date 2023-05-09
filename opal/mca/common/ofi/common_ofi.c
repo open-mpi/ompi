@@ -633,9 +633,9 @@ static bool is_near(pmix_device_distance_t *distances,
                 ret = sscanf(distances[i].uuid, "fab://%256s::%256s", lnguid, lsguid);
                 if (ret != 2)
                     continue;
-                if (0 == strcasecmp(lnguid, nguid)) {
+                if (nguid && (0 == strcasecmp(lnguid, nguid))) {
                     return true;
-                } else if (0 == strcasecmp(lsguid, sguid)) {
+                } else if (sguid && (0 == strcasecmp(lsguid, sguid))) {
                     return true;
                 }
             }
@@ -772,8 +772,8 @@ struct fi_info *opal_common_ofi_select_provider(struct fi_info *provider_list,
     pmix_value_t *pmix_val;
     struct fi_pci_attr pci;
     int num_distances = 0;
-    bool near;
 #endif
+    bool near = false;
     int ret;
     unsigned int num_provider = 0, provider_limit = 0;
     bool provider_found = false;
