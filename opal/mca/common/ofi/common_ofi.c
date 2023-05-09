@@ -772,7 +772,7 @@ struct fi_info *opal_common_ofi_select_provider(struct fi_info *provider_list,
     pmix_value_t *pmix_val;
     struct fi_pci_attr pci;
     int num_distances = 0;
-    bool near;
+    bool near = false;
 #endif
     int ret;
     unsigned int num_provider = 0, provider_limit = 0;
@@ -809,7 +809,6 @@ struct fi_info *opal_common_ofi_select_provider(struct fi_info *provider_list,
     /* Cycle through remaining fi_info objects, looking for alike providers */
     while (NULL != current_provider) {
         if (!check_provider_attr(provider, current_provider)) {
-            near = false;
 #if OPAL_OFI_PCI_DATA_AVAILABLE
             if (NULL != current_provider->nic
                 && NULL != current_provider->nic->bus_attr
