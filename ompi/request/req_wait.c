@@ -39,6 +39,9 @@ int ompi_request_default_wait(
 
     ompi_request_wait_completion(req);
 
+    /* make sure we get the correct status */
+    opal_atomic_rmb();
+
 #if OPAL_ENABLE_FT_MPI
     /* Special case for MPI_ANY_SOURCE */
     if( MPI_ERR_PROC_FAILED_PENDING == req->req_status.MPI_ERROR ) {
@@ -198,6 +201,8 @@ recheck:
         rc = ompi_grequest_invoke_query(request, &request->req_status);
     }
     if (MPI_STATUS_IGNORE != status) {
+        /* make sure we get the correct status */
+        opal_atomic_rmb();
         OMPI_COPY_STATUS(status, request->req_status, false);
     }
     rc = request->req_status.MPI_ERROR;
@@ -302,6 +307,9 @@ recheck:
  finish:
     rptr = requests;
     if (MPI_STATUSES_IGNORE != statuses) {
+        /* make sure we get the correct status */
+        opal_atomic_rmb();
+
         /* fill out status and free request if required */
         for( i = 0; i < count; i++, rptr++ ) {
             void *_tmp_ptr = &sync;
@@ -573,6 +581,9 @@ int ompi_request_default_wait_some(size_t count,
     }
 
     *outcount = num_requests_done;
+
+    /* make sure we get the correct status */
+    opal_atomic_rmb();
 
     for (size_t i = 0; i < num_requests_done; i++) {
         request = requests[indices[i]];

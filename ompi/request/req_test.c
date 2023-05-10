@@ -37,7 +37,6 @@ int ompi_request_default_test(ompi_request_t ** rptr,
 
 recheck_request_status:
 #endif
-    opal_atomic_mb();
     if( request->req_state == OMPI_REQUEST_INACTIVE ) {
         *completed = true;
         if (MPI_STATUS_IGNORE != status) {
@@ -55,6 +54,8 @@ recheck_request_status:
             ompi_grequest_invoke_query(request, &request->req_status);
         }
         if (MPI_STATUS_IGNORE != status) {
+            /* make sure we get the correct status */
+            opal_atomic_rmb();
             OMPI_COPY_STATUS(status, request->req_status, false);
         }
         if( request->req_persistent ) {
@@ -108,7 +109,6 @@ int ompi_request_default_test_any(
     ompi_request_t **rptr;
     ompi_request_t *request;
 
-    opal_atomic_mb();
     rptr = requests;
     for (i = 0; i < count; i++, rptr++) {
         request = *rptr;
@@ -129,6 +129,8 @@ int ompi_request_default_test_any(
                 ompi_grequest_invoke_query(request, &request->req_status);
             }
             if (MPI_STATUS_IGNORE != status) {
+                /* make sure we get the correct status */
+                opal_atomic_rmb();
                 OMPI_COPY_STATUS(status, request->req_status, false);
             }
 
@@ -186,7 +188,6 @@ int ompi_request_default_test_all(
     ompi_request_t *request;
     int do_it_once = 0;
 
-    opal_atomic_mb();
     for (i = 0; i < count; i++) {
         request = requests[i];
 
@@ -231,6 +232,8 @@ int ompi_request_default_test_all(
 
     rc = MPI_SUCCESS;
     if (MPI_STATUSES_IGNORE != statuses) {
+        /* make sure we get the correct statuses */
+        opal_atomic_rmb();
         /* fill out completion status and free request if required */
         for( i = 0; i < count; i++, rptr++ ) {
             request  = *rptr;
@@ -318,7 +321,6 @@ int ompi_request_default_test_some(
     ompi_request_t **rptr;
     ompi_request_t *request;
 
-    opal_atomic_mb();
     rptr = requests;
     for (i = 0; i < count; i++, rptr++) {
         request = *rptr;
@@ -356,6 +358,9 @@ int ompi_request_default_test_some(
 #endif
         return OMPI_SUCCESS;
     }
+
+    /* make sure we get the correct statuses */
+    opal_atomic_rmb();
 
     /* fill out completion status and free request if required */
     for( i = 0; i < num_requests_done; i++) {

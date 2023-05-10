@@ -527,6 +527,8 @@ static inline int ompi_request_complete(ompi_request_t* request, bool with_signa
 
     if (0 == rc) {
         if (OPAL_LIKELY(with_signal)) {
+            /* make sure everything in the request is visible before we mark it complete */
+            opal_atomic_wmb();
 
             ompi_wait_sync_t *tmp_sync = (ompi_wait_sync_t *) OPAL_ATOMIC_SWAP_PTR(&request->req_complete,
                                                                                     REQUEST_COMPLETED);
