@@ -473,7 +473,7 @@ static int compute_dev_distances(pmix_device_distance_t **distances,
     size_t ninfo;
     pmix_info_t *info;
     pmix_cpuset_t cpuset;
-    pmix_topology_t pmix_topo;
+    pmix_topology_t pmix_topo = PMIX_TOPOLOGY_STATIC_INIT;
     pmix_device_type_t type = PMIX_DEVTYPE_OPENFABRICS |
       PMIX_DEVTYPE_NETWORK;
 
