@@ -18,8 +18,8 @@
  *                         reserved.
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013-2020 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014-2016 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014-2023 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * Copyright (c) 2017      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
@@ -376,8 +376,15 @@ static int ompi_comm_ext_cid_new_block (ompi_communicator_t *newcomm, ompi_commu
         goto fn_exit;
     }
 
-    if (NULL != results) {
-        PMIX_VALUE_GET_NUMBER(rc, &results[0].value, cid_base, size_t);
+    for (size_t i=0; i<nresults; i++) {
+        if (PMIX_CHECK_KEY(&results[i], PMIX_GROUP_CONTEXT_ID)) {
+            PMIX_VALUE_GET_NUMBER(rc, &results[i].value, cid_base, size_t);
+            if(PMIX_SUCCESS != rc) {
+                ret = opal_pmix_convert_status(rc);
+                goto fn_exit;
+            }
+            break;
+        }
     }
 
     rc = PMIx_Group_destruct (tag, NULL, 0);
