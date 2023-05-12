@@ -8,7 +8,7 @@
  *                         reserved.
  * Copyright (c) 2014-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
- * Copyright (c) 2018-2022 Triad National Security, LLC. All rights
+ * Copyright (c) 2018-2023 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2019      Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
@@ -61,6 +61,14 @@
 /* storage to support OMPI */
 opal_process_name_t pmix_name_wildcard = {UINT32_MAX-1, UINT32_MAX-1};
 opal_process_name_t pmix_name_invalid = {UINT32_MAX, UINT32_MAX};
+
+/**
+ * Flag used to indicate whether we setup (and should destroy) our job session
+ * directory. We keep track of this information because we may be using run-time
+ * infrastructure that manages its structure (e.g., OpenPMIx). If we setup this
+ * session directory structure, then we shall cleanup after ourselves.
+ */
+static bool destroy_job_session_dir = false;
 
 static int _setup_top_session_dir(char **sdir);
 static int _setup_job_session_dir(char **sdir);
@@ -974,11 +982,12 @@ int ompi_rte_finalize(void)
 {
 
     /* cleanup the session directory we created */
-    if (NULL != opal_process_info.job_session_dir) {
+    if (NULL != opal_process_info.job_session_dir && destroy_job_session_dir) {
         opal_os_dirpath_destroy(opal_process_info.job_session_dir,
                                 false, check_file);
         free(opal_process_info.job_session_dir);
         opal_process_info.job_session_dir = NULL;
+        destroy_job_session_dir = false;
     }
 
     if (NULL != opal_process_info.top_session_dir) {
@@ -1176,7 +1185,7 @@ static int _setup_job_session_dir(char **sdir)
         opal_process_info.job_session_dir = NULL;
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
-
+    destroy_job_session_dir = true;
     return OPAL_SUCCESS;
 }
 
