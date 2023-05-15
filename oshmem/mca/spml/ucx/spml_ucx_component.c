@@ -244,11 +244,13 @@ void mca_spml_ucx_async_cb(int fd, short event, void *cbdata)
 
 static int mca_spml_ucx_component_open(void)
 {
+    opal_common_ucx_mca_register();
     return OSHMEM_SUCCESS;
 }
 
 static int mca_spml_ucx_component_close(void)
 {
+    opal_common_ucx_mca_deregister();
     return OSHMEM_SUCCESS;
 }
 
@@ -266,8 +268,6 @@ static int spml_ucx_init(void)
     if (UCS_OK != err) {
         return OSHMEM_ERROR;
     }
-
-    opal_common_ucx_mca_register();
 
     memset(&params, 0, sizeof(params));
     params.field_mask        = UCP_PARAM_FIELD_FEATURES          |
