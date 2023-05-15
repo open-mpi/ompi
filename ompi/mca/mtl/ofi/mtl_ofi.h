@@ -4,7 +4,7 @@
  *                         reserved.
  * Copyright (c) 2019-2022 Triad National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2018-2022 Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2018-2023 Amazon.com, Inc. or its affiliates.  All Rights reserved.
  *                         reserved.
  * Copyright (c) 2021      Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2021      The University of Tennessee and The University
@@ -1164,6 +1164,46 @@ ompi_mtl_ofi_isend_generic(struct mca_mtl_base_module_t *mtl,
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ompi_ret)) {
         return ompi_ret;
     }
+
+
+    /** Inject does not currently support device memory
+     *  https://github.com/ofiwg/libfabric/issues/5861
+     */
+    if (!(convertor->flags & CONVERTOR_ACCELERATOR)
+        && (ompi_mtl_ofi.max_inject_size >= length)) {
+        if (ofi_cq_data) {
+            ret = fi_tinjectdata(ompi_mtl_ofi.ofi_ctxt[ctxt_id].tx_ep,
+                    start,
+                    length,
+                    comm->c_my_rank,
+                    sep_peer_fiaddr,
+                    match_bits);
+        } else {
+            ret = fi_tinject(ompi_mtl_ofi.ofi_ctxt[ctxt_id].tx_ep,
+                    start,
+                    length,
+                    sep_peer_fiaddr,
+                    match_bits);
+        }
+
+        if(OPAL_LIKELY(ret == 0)) {
+            ofi_req->event_callback(NULL, ofi_req);
+            return ofi_req->status.MPI_ERROR;
+        } else if(ret != -FI_EAGAIN) {
+            MTL_OFI_LOG_FI_ERR(ret,
+                               ofi_cq_data ? "fi_tinjectdata failed"
+                               : "fi_tinject failed");
+            if (ack_req) {
+                fi_cancel((fid_t)ompi_mtl_ofi.ofi_ctxt[ctxt_id].tx_ep, &ack_req->ctx);
+                free(ack_req);
+            }
+            ofi_req->status.MPI_ERROR = ompi_mtl_ofi_get_error(ret);
+            ofi_req->event_callback(NULL, ofi_req);
+            return ofi_req->status.MPI_ERROR;
+        }
+        /* otherwise fall back to the standard fi_tsend path */
+    }
+
 
     if (ofi_cq_data) {
         MTL_OFI_RETRY_UNTIL_DONE(fi_tsenddata(ompi_mtl_ofi.ofi_ctxt[ctxt_id].tx_ep,
