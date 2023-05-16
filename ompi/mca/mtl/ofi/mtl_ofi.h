@@ -865,11 +865,17 @@ ompi_mtl_ofi_send_generic(struct mca_mtl_base_module_t *mtl,
         if (mtl_comm->c_index_vec[dest].c_index_state == MCA_MTL_OFI_CID_NOT_EXCHANGED) {
             mtl_comm->c_index_vec[dest].c_index_state = MCA_MTL_OFI_CID_EXCHANGING;
             ompi_ret = ompi_mtl_ofi_send_excid(mtl, comm, dest, ofi_cq_data, true);
+            if (OPAL_UNLIKELY(OMPI_SUCCESS != ompi_ret)) {
+                return ompi_ret;
+            }
         }
 
         if (mtl_comm->c_index_vec[dest].c_index_state > MCA_MTL_OFI_CID_EXCHANGED) {
              while (mtl_comm->c_index_vec[dest].c_index_state > MCA_MTL_OFI_CID_EXCHANGED) {
                 ompi_ret = ompi_mtl_ofi_post_recv_excid_buffer(true, comm, dest);
+                if (OPAL_UNLIKELY(OMPI_SUCCESS != ompi_ret)) {
+                    return ompi_ret;
+                }
             }
         }
         c_index_for_tag = mtl_comm->c_index_vec[dest].c_index;
