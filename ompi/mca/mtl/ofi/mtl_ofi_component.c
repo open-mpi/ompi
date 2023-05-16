@@ -576,7 +576,6 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
     struct fi_info *hints, *hints_dup = NULL;
     struct fi_info *providers = NULL;
     struct fi_info *prov = NULL;
-    struct fi_info *prov_cq_data = NULL;
     void *ep_name = NULL;
     size_t namelen = 0;
     int universe_size;
@@ -1136,9 +1135,6 @@ error:
     }
     if (providers) {
         (void) fi_freeinfo(providers);
-    }
-    if (prov_cq_data) {
-        (void) fi_freeinfo(prov_cq_data);
     }
     if (hints) {
         (void) fi_freeinfo(hints);
