@@ -9,7 +9,7 @@
 # $HEADER$
 #
 
-# This component provides support for offloading reduce ops to CUDA devices.
+# This component provides support for offloading reduce ops to ROCM devices.
 #
 # See https://github.com/open-mpi/ompi/wiki/devel-CreateComponent
 # for more details on how to make Open MPI components.
@@ -20,14 +20,13 @@
 AM_CPPFLAGS = $(common_rocm_CPPFLAGS)
 
 sources = op_rocm_component.c op_rocm.h op_rocm_functions.c op_rocm_impl.h
-#sources_extended = op_rocm_functions.cu
-rocm_sources = op_rocm_impl.cu
+rocm_sources = op_rocm_impl.cpp
 
 HIPCC = hipcc
 HIPCCFLAGS= -D__HIP_PLATFORM_HCC__= -D__HIP_PLATFORM_AMD__= -I/opt/rocm-5.5.0/include
  
 
-.cu.l$(OBJEXT):
+.cpp.l$(OBJEXT):
 	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=compile $(HIPCC) -prefer-non-pic $(HIPCCFLAGS) -Wc,-fPIC,-g -c $<
 
@@ -66,7 +65,7 @@ ROCMDIR=/opt/rocm-5.5.0/lib
 mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_op_rocm_la_SOURCES = $(sources)
-mca_op_rocm_la_LIBADD = $(rocm_sources:.cu=.lo)
+mca_op_rocm_la_LIBADD = $(rocm_sources:.cpp=.lo)
 mca_op_rocm_la_LDFLAGS = -module -avoid-version $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
 		$(accelerator_rocm_LIBS) $(HIPCCFLAGS) -L$(ROCMDIR)/lib -lhiprtc
 EXTRA_mca_op_rocm_la_SOURCES = $(rocm_sources)
@@ -78,7 +77,7 @@ EXTRA_mca_op_rocm_la_SOURCES = $(rocm_sources)
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_op_rocm_la_SOURCES = $(sources)
-libmca_op_rocm_la_LIBADD = $(rocm_sources:.cu=.lo)
+libmca_op_rocm_la_LIBADD = $(rocm_sources:.cpp=.lo)
 libmca_op_rocm_la_LDFLAGS = -module -avoid-version\
 		$(accelerator_rocm_LIBS) ${HIPCCFLAGS} -L$(ROCMDIR)/lib -lhiprtc
 EXTRA_libmca_op_rocm_la_SOURCES = $(rocm_sources)

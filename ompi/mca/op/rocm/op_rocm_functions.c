@@ -57,6 +57,8 @@ static inline void device_op_pre(const void *orig_source1,
     source1_rc = opal_accelerator.check_addr(*source1, source1_device, &source1_flags);
     *device = *target_device;
 
+    // TODO
+    printf("OUT - target device & rc %d %d source %d %d\n", *target_device, target_rc, *source1_device, source1_rc);
     if (NULL != orig_source2) {
         source2_rc = opal_accelerator.check_addr(*source2, source2_device, &source2_flags);
         //printf("device_op_pre: target %p rc %d dev %d, source1 %p rc %d dev %d, source2 %p rc %d dev %d, device %d\n",

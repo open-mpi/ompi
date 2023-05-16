@@ -44,7 +44,9 @@
         int blocks  = (count + threads-1) / threads;                                                \
         int n = count;                                                                              \
         hipStream_t s = stream;                                                                        \
-        ompi_op_rocm_2buff_##name##_##type_name##_kernel<<<blocks, threads, 0, s>>>(in, inout, n);  \
+        hipLaunchKernelGGL(ompi_op_rocm_2buff_##name##_##type_name##_kernel, \
+                dim3(blocks), dim3(threads), 0, s,\
+                in, inout, n);  \
     }
 
 
@@ -67,7 +69,9 @@
         int blocks  = (count + threads-1) / threads;                                                \
         int n = count;                                                                              \
         hipStream_t s = stream;                                                                        \
-        ompi_op_rocm_2buff_##name##_##type_name##_kernel<<<blocks, threads, 0, s>>>(in, inout, n);  \
+        hipLaunchKernelGGL(ompi_op_rocm_2buff_##name##_##type_name##_kernel, \
+                dim3(blocks), dim3(threads), 0, s, \
+                in, inout, n);  \
     }
 
 /*
@@ -106,7 +110,9 @@
         int threads = threads_per_block;                                                            \
         int blocks  = (count + threads-1) / threads;                                                \
         hipStream_t s = stream;                                                                        \
-        ompi_op_rocm_2buff_##name##_##type_name##_kernel<<<blocks, threads, 0, s>>>(a, b, count);   \
+        hipLaunchKernelGGL(ompi_op_rocm_2buff_##name##_##type_name##_kernel, \
+                dim3(blocks), dim3(threads), 0, s, \
+                a, b, count);   \
     }
 
 /*************************************************************************
@@ -395,8 +401,9 @@ LOC_FUNC(minloc, long_double_int, <)
                                                           hipStream_t stream) {                        \
         int threads = threads_per_block;                                                            \
         int blocks  = (count+threads-1) / threads;                                                  \
-        ompi_op_rocm_3buff_##name##_##type_name##_kernel<<<blocks, threads,                         \
-                                                           0, stream>>>(in1, in2, out, count);      \
+        hipLaunchKernelGGL(ompi_op_rocm_3buff_##name##_##type_name##_kernel, \
+                dim3(blocks), dim3(threads), 0, stream, \
+                in1, in2, out, count);      \
     }
 
 
@@ -424,8 +431,9 @@ LOC_FUNC(minloc, long_double_int, <)
                                                      hipStream_t stream) {                             \
         int threads = threads_per_block;                                                            \
         int blocks  = (count+threads-1) / threads;                                                  \
-        ompi_op_rocm_3buff_##name##_##type_name##_kernel<<<blocks, threads,                         \
-                                                           0, stream>>>(in1, in2, out, count);      \
+        hipLaunchKernelGGL(ompi_op_rocm_3buff_##name##_##type_name##_kernel, \
+                dim3(blocks), dim3(threads), 0, stream,  \
+                in1, in2, out, count);      \
     }
 
 /*
@@ -478,8 +486,9 @@ LOC_FUNC(minloc, long_double_int, <)
     {                                                                                               \
         int threads = threads_per_block;                                                            \
         int blocks  = (count+threads-1) / threads;                                                  \
-        ompi_op_rocm_3buff_##name##_##type_name##_kernel<<<blocks, threads,                         \
-                                                           0, stream>>>(in1, in2, out, count);      \
+        hipLaunchKernelGGL(ompi_op_rocm_3buff_##name##_##type_name##_kernel,   \
+                dim3(blocks), dim3(threads), 0, stream, \
+                in1, in2, out, count);      \
     }
 
 

@@ -97,6 +97,7 @@ static int rocm_component_close(void)
         mca_op_rocm_component.ro_num_devices = 0;
     }
 
+    printf("op rocm_component_close\n");
     return OMPI_SUCCESS;
 }
 
@@ -108,6 +109,7 @@ rocm_component_register(void)
 {
     /* TODO: add mca paramters */
 
+    printf("op rocm_component_register\n");
     return OMPI_SUCCESS;
 }
 
@@ -148,6 +150,8 @@ rocm_component_init_query(bool enable_progress_threads,
             /* fall-back to value that should work on every device */
             mca_op_rocm_component.ro_max_threads_per_block[i] = 512;
         }
+        //TODO
+        printf("OUTPUT - nthreads: %d\n", mca_op_rocm_component.ro_max_threads_per_block[i]);
     }
 
 #if 0
@@ -185,5 +189,6 @@ rocm_component_op_query(struct ompi_op_t *op, int *priority)
         }
     }
     *priority = 50;
+    printf("op rocm_component_op_query\n");
     return (ompi_op_base_module_1_0_0_t *) module;
 }
