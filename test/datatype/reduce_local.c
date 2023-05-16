@@ -21,7 +21,8 @@
 #include <unistd.h>
 
 // TODO: detect through configure
-#define HAVE_CUDA 1
+//#define HAVE_CUDA 1
+#define HAVE_ROCM 1
 
 #include "mpi.h"
 #include "ompi/communicator/communicator.h"
@@ -230,7 +231,7 @@ static allocator_t host_allocator = {
     .free     = &host_free,
     .fini     = &host_fini};
 
-#ifdef HAVE_CUDA
+#if defined(HAVE_CUDA)
 #include <cuda_runtime.h>
 static void cuda_init() {
     // nothing to be done
@@ -262,6 +263,40 @@ static allocator_t cuda_allocator = {
     .memcpy   = &cuda_memcpy,
     .free     = &cuda_free,
     .fini     = &cuda_fini};
+
+#elif defined(HAVE_ROCM)
+#include <hip/hip_runtime.h>
+static void rocm_init() {
+    // nothing to be done
+}
+static void *rocm_allocate(size_t size, size_t align) {
+    (void)align; // ignored
+    void *ptr;
+    int err;
+    if (hipSuccess != (err = hipMalloc(&ptr, size))) {
+        fprintf(stderr, "hipMalloc failed to allocate %zuB: %s", size, hipGetErrorName(err));
+        return NULL;
+    }
+    return ptr;
+}
+static void* rocm_memcpy(void *dst, const void *src, size_t size) {
+    hipMemcpy(dst, src, size, hipMemcpyDefault);
+    return dst;
+}
+static void rocm_free(void *ptr) {
+    hipFree(ptr);
+}
+static void rocm_fini() {
+    // nothing to be done
+}
+static allocator_t rocm_allocator = {
+    .flags    = ALLOCATOR_DISCRETE,
+    .init     = &rocm_init,
+    .allocate = &rocm_allocate,
+    .memcpy   = &rocm_memcpy,
+    .free     = &rocm_free,
+    .fini     = &rocm_fini};
+
 #endif
 
 int main(int argc, char **argv)
@@ -356,9 +391,14 @@ int main(int argc, char **argv)
                 // default allocator
                 break;
             } else
-#ifdef HAVE_CUDA
+#if defined(HAVE_CUDA)
             if (0 == strncmp("cuda", optarg, 4)) {
                 allocator = &cuda_allocator;
+                break;
+            } else
+#elif defined(HAVE_ROCM)
+            if (0 == strncmp("rocm", optarg, 4)) {
+                allocator = &rocm_allocator;
                 break;
             } else
 #endif
@@ -379,6 +419,9 @@ int main(int argc, char **argv)
                     " -d <memory-space> : host"
 #ifdef HAVE_CUDA
                     ", cuda"
+#endif
+#ifdef HAVE_ROCM
+                    ", rocm"
 #endif
                     "\n"
                     " -i <number> : shift on all buffers to check alignment\n"
