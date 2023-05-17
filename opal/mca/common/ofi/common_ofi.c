@@ -720,8 +720,7 @@ static uint32_t get_package_rank(opal_process_info_t *process_info)
 {
     int i;
     uint16_t relative_locality, *package_rank_ptr;
-    uint16_t current_package_rank = 0;
-    uint16_t package_ranks[process_info->num_local_peers + 1];
+    uint32_t ranks_on_package = 0;
     opal_process_name_t pname;
     pmix_status_t rc;
     char **peers = NULL;
@@ -750,26 +749,24 @@ static uint32_t get_package_rank(opal_process_info_t *process_info)
     // Get the local peers
     OPAL_MODEX_RECV_VALUE(rc, PMIX_LOCAL_PEERS, &pname, &local_peers, PMIX_STRING);
     if (PMIX_SUCCESS != rc || NULL == local_peers) {
-        // We can't find package_rank, fall back to procid
-        opal_show_help("help-common-ofi.txt", "package_rank failed", true);
-        return (uint32_t) process_info->myprocid.rank;
+        goto err;
     }
     peers = opal_argv_split(local_peers, ',');
     free(local_peers);
 
     for (i = 0; NULL != peers[i]; i++) {
         pname.vpid = strtoul(peers[i], NULL, 10);
+
+        if ((uint16_t) pname.vpid == process_info->my_local_rank) {
+            return ranks_on_package;
+        }
+
         locality_string = NULL;
         // Get the LOCALITY_STRING for process[i]
         OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_LOCALITY_STRING, &pname, &locality_string,
                                        PMIX_STRING);
         if (PMIX_SUCCESS != rc || NULL == locality_string) {
-            // If we don't have information about locality, fall back to procid
-            int level = 10;
-            if (opal_output_get_verbosity(opal_common_ofi.output) >= level) {
-                opal_show_help("help-common-ofi.txt", "package_rank failed", true, level);
-            }
-            return (uint32_t) process_info->myprocid.rank;
+            goto err;
         }
 
         // compute relative locality
@@ -783,12 +780,12 @@ static uint32_t get_package_rank(opal_process_info_t *process_info)
         }
 
         if (relative_locality & OPAL_PROC_ON_SOCKET) {
-            package_ranks[i] = current_package_rank;
-            current_package_rank++;
+            ranks_on_package++;
         }
     }
-
-    return (uint32_t) package_ranks[process_info->my_local_rank];
+err:
+    opal_show_help("help-common-ofi.txt", "package_rank failed", true);
+    return (uint32_t) process_info->myprocid.rank;
 }
 
 struct fi_info *opal_common_ofi_select_provider(struct fi_info *provider_list,
