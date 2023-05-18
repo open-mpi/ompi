@@ -504,5 +504,15 @@ static int mca_accelerator_rocm_get_buffer_id(int dev_id, const void *addr, opal
     }
 #endif
 
+#if HIP_VERSION >= 50530201
+    int enable = 1;
+    hipError_t err = hipPointerSetAttribute(&enable, HIP_POINTER_ATTRIBUTE_SYNC_MEMOPS,
+					    (hipDeviceptr_t)addr);
+    if (hipSuccess != err) {
+        opal_output_verbose(10, opal_accelerator_base_framework.framework_output,
+			    "error in hipPointerSetAttribute, could not set SYNC_MEMOPS");
+        return OPAL_ERROR;
+    }
+#endif
     return OPAL_SUCCESS;
 }
