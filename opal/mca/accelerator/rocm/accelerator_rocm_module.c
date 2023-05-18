@@ -87,6 +87,8 @@ static int mca_accelerator_rocm_check_addr (const void *addr, int *dev_id, uint6
             //We might want to set additional flags in a later iteration.
             //*flags |= MCA_ACCELERATOR_FLAGS_HOST_LDSTR;
             //*flags |= MCA_ACCELERATOR_FLAGS_HOST_ATOMICS;
+            /* First access on a device pointer triggers ROCM support lazy initialization. */
+            opal_accelerator_rocm_lazy_init();
             ret = 1;
         } else if (hipMemoryTypeUnified == srcAttr.memoryType) {
             *flags |= MCA_ACCELERATOR_FLAGS_UNIFIED_MEMORY;
