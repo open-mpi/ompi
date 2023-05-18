@@ -4,7 +4,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2017-2022 Amazon.com, Inc. or its affiliates.
+ * Copyright (c)           Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
  * $COPYRIGHT$
  *
@@ -45,6 +45,7 @@ static int accelerator_cuda_host_register(int dev_id, void *ptr, size_t size);
 static int accelerator_cuda_host_unregister(int dev_id, void *ptr);
 
 static int accelerator_cuda_get_device(int *dev_id);
+static int accelerator_cuda_get_device_pci_attr(int dev_id, opal_accelerator_pci_attr_t *pci_attr);
 static int accelerator_cuda_device_can_access_peer( int *access, int dev1, int dev2);
 
 static int accelerator_cuda_get_buffer_id(int dev_id, const void *addr, opal_accelerator_buffer_id_t *buf_id);
@@ -70,6 +71,7 @@ opal_accelerator_base_module_t opal_accelerator_cuda_module =
     accelerator_cuda_host_unregister,
 
     accelerator_cuda_get_device,
+    accelerator_cuda_get_device_pci_attr,
     accelerator_cuda_device_can_access_peer,
 
     accelerator_cuda_get_buffer_id
@@ -576,6 +578,45 @@ static int accelerator_cuda_get_device(int *dev_id)
     }
     *dev_id = cuDev;
     return 0;
+}
+
+static int accelerator_cuda_get_device_pci_attr(int dev_id, opal_accelerator_pci_attr_t *pci_attr)
+{
+    CUresult result;
+    int ret;
+    static const int PCI_BUS_ID_LENGTH = 13;
+    char pci_bus_id[PCI_BUS_ID_LENGTH];
+    char domain_id[5] = {0}, bus_id[3] = {0}, device_id[3] = {0}, function_id[2] = {0};
+
+    if (NULL == pci_attr) {
+        return OPAL_ERR_BAD_PARAM;
+    }
+
+    result = cuDeviceGetPCIBusId(pci_bus_id, PCI_BUS_ID_LENGTH, dev_id);
+
+    if (CUDA_SUCCESS != result) {
+        opal_output_verbose(5, opal_accelerator_base_framework.framework_output,
+                            "CUDA: Failed to get device PCI bus id");
+        return OPAL_ERROR;
+    }
+
+    ret = sscanf(pci_bus_id, "%4s:%2s:%2s.%1s", domain_id, bus_id, device_id, function_id);
+    if (4 > ret) {
+        opal_output_verbose(5, opal_accelerator_base_framework.framework_output,
+                            "CUDA: Failed to parse device PCI bus id");
+        return OPAL_ERROR;
+    }
+
+    errno = 0;
+    pci_attr->domain_id = strtol(domain_id, NULL, 16);
+    pci_attr->bus_id = strtol(bus_id, NULL, 16);
+    pci_attr->device_id = strtol(device_id, NULL, 16);
+    pci_attr->function_id = strtol(function_id, NULL, 16);
+    if (0 != errno) {
+        return OPAL_ERROR;
+    }
+
+    return OPAL_SUCCESS;
 }
 
 static int accelerator_cuda_device_can_access_peer(int *access, int dev1, int dev2)

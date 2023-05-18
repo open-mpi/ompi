@@ -6,7 +6,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2017-2022 Amazon.com, Inc. or its affiliates.
+ * Copyright (c)           Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
  * $COPYRIGHT$
  *
@@ -59,6 +59,7 @@ static int accelerator_null_host_register(int dev_id, void *ptr, size_t size);
 static int accelerator_null_host_unregister(int dev_id, void *ptr);
 
 static int accelerator_null_get_device(int *dev_id);
+static int accelerator_null_get_device_pci_attr(int dev_id, opal_accelerator_pci_attr_t *pci_attr);
 static int accelerator_null_device_can_access_peer(int *access, int dev1, int dev2);
 
 static int accelerator_null_get_buffer_id(int dev_id, const void *addr, opal_accelerator_buffer_id_t *buf_id);
@@ -122,6 +123,7 @@ opal_accelerator_base_module_t opal_accelerator_null_module =
     accelerator_null_host_unregister,
 
     accelerator_null_get_device,
+    accelerator_null_get_device_pci_attr,
     accelerator_null_device_can_access_peer,
 
     accelerator_null_get_buffer_id
@@ -231,6 +233,11 @@ static int accelerator_null_host_unregister(int dev_id, void *ptr)
 }
 
 static int accelerator_null_get_device(int *dev_id)
+{
+    return OPAL_ERR_NOT_IMPLEMENTED;
+}
+
+static int accelerator_null_get_device_pci_attr(int dev_id, opal_accelerator_pci_attr_t *pci_attr)
 {
     return OPAL_ERR_NOT_IMPLEMENTED;
 }
