@@ -2,7 +2,7 @@
  * Copyright (c) 2014-2021 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2017-2022 Amazon.com, Inc. or its affiliates.
+ * Copyright (c)           Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
  * $COPYRIGHT$
  *
@@ -110,6 +110,15 @@ struct opal_accelerator_stream_t {
     void *stream;
 };
 typedef struct opal_accelerator_stream_t opal_accelerator_stream_t;
+
+struct opal_accelerator_pci_attr_t {
+    uint16_t domain_id;
+    uint8_t bus_id;
+    uint8_t device_id;
+    uint8_t function_id;
+};
+typedef struct opal_accelerator_pci_attr_t opal_accelerator_pci_attr_t;
+
 OBJ_CLASS_DECLARATION(opal_accelerator_stream_t);
 
 struct opal_accelerator_event_t {
@@ -347,6 +356,17 @@ typedef int (*opal_accelerator_base_module_get_device_fn_t)(
     int *dev_id);
 
 /**
+ * Retrieves PCI attributes of an accelerator device.
+ *
+ * @param[int] dev_id        Accelerator device id
+ * @param[out] pci_attr      PCI attributes of the requested device
+ *
+ * @return                   OPAL_SUCCESS or error status on failure
+ */
+typedef int (*opal_accelerator_base_module_get_device_pci_attr_fn_t)(
+    int dev_id, opal_accelerator_pci_attr_t *pci_attr);
+
+/**
  * Queries if a device may directly access a peer device's memory.
  *
  * @param[OUT] access        Returns 1 if dev1 can directly access memory on dev2
@@ -398,6 +418,7 @@ typedef struct {
     opal_accelerator_base_module_host_unregister_fn_t host_unregister;
 
     opal_accelerator_base_module_get_device_fn_t get_device;
+    opal_accelerator_base_module_get_device_pci_attr_fn_t get_device_pci_attr;
     opal_accelerator_base_module_device_can_access_peer_fn_t device_can_access_peer;
 
     opal_accelerator_base_module_get_buffer_id_fn_t get_buffer_id;
