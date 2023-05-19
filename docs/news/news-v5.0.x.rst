@@ -4,9 +4,9 @@ Open MPI v5.0.x series
 This file contains all the NEWS updates for the Open MPI v5.0.x
 series, in reverse chronological order.
 
-Open MPI version 5.0.0rc11
+Open MPI version 5.0.0rc12
 --------------------------
-:Date: 6 April 2023
+:Date: 19 May 2023
 
 .. admonition:: MPIR API has been removed
    :class: warning
@@ -40,28 +40,26 @@ Open MPI version 5.0.0rc11
       libraries, rather than linked into the Open MPI core libraries.
 
 
-- Changes since rc10:
-
-  - The ``HAN`` collective is now enabled by default. This replaces ``tuned`` as the
-    default out-of-the-box collective component for Open MPI.
-  - Various fixes to make v5.0 ABI compatible with v4.1 compiled programs.
-  - Fixed support for ``OFI`` on RHEL7 and Libfabric < 1.9.
-  - Added the mca option ``--mca ompi_pml_base_check_pml 0|1`` to skip
-    ``PML`` transport validation across processes. This can speed-up launch
-    times for users who know their cluster will always choose the same
-    ``PML`` transport. Default: verify pml selections.
-  - Use Libfabric 1.18 if available when using the ``OFI`` transport.
-  - Implemented ``ompi_info`` color coding.
-  - Added ``MPI_SESSION_NULL`` to Fortran bindings. Thanks to Jan Fecht for the fix.
-  - Fixed a bug where CUDA-aware MPI is broken when using the ``OB1`` transport.
-  - Many other bug fixes and cleanups.
-  - Many documentation updates.
-    Thanks to Nick Papior for the contributions.
-
+- Changes since rc11:
+  - accelerator/rocm: add SYNC_MEMOPS support
+  - Updated PMIx, PRRTe, and OAC submodule pointers.
+  - Fixe in mca_btl_ofi_flush() in multi threaded environment.
+  - smcuda: fix an edge case when using enable mca dso
+  - Fix MPI_Session_init bug if all previous sessions are finalized..
+  - Fix mpi4py hang in intercomm_create_from_groups.
+  - Fix finalize segfault with OSHMEM 4.1.5
+  - Update FAQ content. 
+  - Improve AVX* detection. Fixes op/avx link failure with nvhpc compiler.
+  - Fix incorrect results with pml/ucx using Intel compiler.
+  - Fix segfault when broadcasting large MPI structs.
+  - Add platform files for Google Cloud HPC.
+  - UCC/HCOLL: Fix waitall for non blokcing collectives.
+  - check for MPI_T.3 (not MPI_T.5). Fix pre-built docs check.
+ 
 - All other notable updates for v5.0.0:
+  - Updated PMIx to the ``v4.2`` branch - current hash: ``1492c0b3``.
+  - Updated PRRTE to the ``v3.0`` branch - current hash: ``4636ea79dc``.
 
-  - Updated PMIx to the ``v4.2`` branch - current hash: ``7d45393``.
-  - Updated PRRTE to the ``v3.0`` branch - current hash: `20ee752`.
 
   - New Features:
 
