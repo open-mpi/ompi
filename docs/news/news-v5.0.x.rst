@@ -17,18 +17,19 @@ Open MPI version 5.0.0rc12
    The new PRRTE based runtime environment supports PMIx-tools API
    instead of the legacy MPIR API for debugging parallel jobs.
 
-   See https://github.com/openpmix/mpir-to-pmix-guide for more
+   See https://github.com/hpc/mpir-to-pmix-guide for more
    information.
 
-.. admonition:: zlib is suggested for better user experience
+.. admonition:: Zlib is suggested for better user experience
    :class: note
 
-   PMIx will optionally use zlib to compress large data streams.
-   This may result in faster startup times and
-   smaller memory footprints (compared to not using compression).
-   The Open MPI community recommends building zlib support with PMIx,
-   regardless of whether you are using an externally-installed PMIx or
-   the PMIx that is installed with Open MPI.
+   PMIx will optionally use `Zlib <https://github.com/madler/zlib>`_
+   to compress large data streams.  This may result in faster startup
+   times and smaller memory footprints (compared to not using
+   compression).  The Open MPI community recommends building Zlib
+   support with PMIx, regardless of whether you are using an
+   externally-installed PMIx or the PMIx that is installed with Open
+   MPI.
 
 .. caution::
    Open MPI no longer builds 3rd-party packages
