@@ -14,7 +14,7 @@
 # Copyright (c) 2011-2014 Los Alamos National Security, LLC. All rights
 #                         reserved.
 # Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
-# Copyright (c) 2014-2021 Research Organization for Information Science
+# Copyright (c) 2014-2023 Research Organization for Information Science
 #                         and Technology (RIST).  All rights reserved.
 # Copyright (c) 2016-2021 IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
@@ -432,7 +432,7 @@ AC_DEFUN([OPAL_CHECK_PMIX],[
            # Final check - if they didn't point us explicitly at an external version
            # but we found one anyway, use the internal version if it is higher
            AS_IF([test "$opal_external_pmix_version" != "internal" && (test -z "$with_pmix" || test "$with_pmix" = "yes")],
-                 [AS_IF([test "$opal_external_pmix_version" != "3x"],
+                 [AS_IF([test $opal_external_pmix_version_major -lt 3],
                         [AC_MSG_WARN([discovered external PMIx version is less than internal version 3.x])
                          AC_MSG_WARN([using internal PMIx])
                          opal_external_pmix_version=internal
