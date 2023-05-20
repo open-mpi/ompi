@@ -107,7 +107,7 @@ Open MPI version 5.0.0rc12
     - Droped unknown/ignored info keys on communicators, files,
       and windows.
     - Initial implementations of ``MPI_COMM_TYPE_HW_GUIDED`` and ``MPI_COMM_TYPE_HW_GUIDED`` added.
-    - ``MPI_Info_get()`` and ``MPI_Infi_get_valuelen()`` are now deprecated.
+    - ``MPI_Info_get()`` and ``MPI_Info_get_valuelen()`` are now deprecated.
     - Issue a deprecation warning when ``MPI_Cancel()`` is called for a non-blocking send request.
 
   - Transport updates and improvements
@@ -133,7 +133,7 @@ Open MPI version 5.0.0rc12
 
       - Improved support for the HPE SS11 network.
       - Added cache bypass mechanism. This fixes conflicts
-        with Libfabric, which has its own registration cache. This addes a bypass
+        with Libfabric, which has its own registration cache. This adds a bypass
         flag which can be used for providers known to have their own registration cache.
 
     - Shared Memory:
