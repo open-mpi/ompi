@@ -38,7 +38,7 @@ operating systems use other suffixes, such as ``.so``):
 
 .. note:: The above is just an example showing dynamic loading.  If
           you want to use MPI in Python, you are much better off using
-          `MPI4Py <https://mpi4py.readthedocs.io/en/stable/>`_.
+          `MPI4Py <https://mpi4py.github.io/>`_.
 
 Other scripting languages should have similar options when dynamically
 loading shared libraries.

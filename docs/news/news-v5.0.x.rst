@@ -75,7 +75,7 @@ Open MPI version 5.0.0rc12
     dynamic shared objects.
   - Fix ``MPI_Session_init()`` bug if all previous sessions are
     finalized.
-  - Fix `mpi4py <https://mpi4py.readthedocs.io/>`_ hang in
+  - Fix `mpi4py <https://mpi4py.github.io/>`_ hang in
     ``MPI_Intercomm_create_from_groups()``.
   - Fix finalization segfault with OSHMEM 4.1.5.
   - Improve AVX detection. Fixes ``op/avx`` link failure with the
