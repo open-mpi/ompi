@@ -713,7 +713,7 @@ static int count_providers(struct fi_info *provider_list)
  */
 static uint32_t get_package_rank(opal_process_info_t *process_info)
 {
-    int i;
+    int i, level = 10;
     uint16_t relative_locality, *package_rank_ptr;
     uint32_t ranks_on_package = 0;
     opal_process_name_t pname;
@@ -774,7 +774,13 @@ static uint32_t get_package_rank(opal_process_info_t *process_info)
         }
     }
 err:
-    opal_show_help("help-common-ofi.txt", "package_rank failed", true);
+    if (opal_output_get_verbosity(opal_common_ofi.output) >= level) {
+        opal_show_help("help-common-ofi.txt", "package_rank failed", true, level);
+    }
+
+    if (locality_string)
+        free(locality_string);
+
     return (uint32_t) process_info->myprocid.rank;
 }
 
