@@ -752,10 +752,6 @@ static uint32_t get_package_rank(opal_process_info_t *process_info)
     for (i = 0; NULL != peers[i]; i++) {
         pname.vpid = strtoul(peers[i], NULL, 10);
 
-        if ((uint16_t) pname.vpid == process_info->my_local_rank) {
-            return ranks_on_package;
-        }
-
         locality_string = NULL;
         // Get the LOCALITY_STRING for process[i]
         OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_LOCALITY_STRING, &pname, &locality_string,
@@ -768,6 +764,10 @@ static uint32_t get_package_rank(opal_process_info_t *process_info)
         relative_locality = opal_hwloc_compute_relative_locality(process_info->locality,
                                                                  locality_string);
         free(locality_string);
+
+        if ((uint16_t) pname.vpid == process_info->my_local_rank) {
+            return ranks_on_package;
+        }
 
         if (relative_locality & OPAL_PROC_ON_SOCKET) {
             ranks_on_package++;
@@ -799,6 +799,7 @@ struct fi_info *opal_common_ofi_select_provider(struct fi_info *provider_list,
     int ret;
     unsigned int num_provider = 0, provider_limit = 0;
     bool provider_found = false;
+    uint32_t package_rank = 0;
 
     /* Initialize opal_hwloc_topology if it is not already */
     ret = opal_hwloc_base_get_topology();
@@ -859,9 +860,9 @@ struct fi_info *opal_common_ofi_select_provider(struct fi_info *provider_list,
     }
 
     /* Select provider from local rank % number of providers */
-    uint32_t package_rank = get_package_rank(process_info);
     if (num_provider >= 2) {
         // If there are multiple NICs "close" to the process, try to calculate package_rank
+        package_rank = get_package_rank(process_info);
         provider = provider_table[package_rank % num_provider];
     } else if (num_provider == 1) {
         provider = provider_table[num_provider - 1];
