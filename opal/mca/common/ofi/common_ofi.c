@@ -783,7 +783,7 @@ struct fi_info *opal_common_ofi_select_provider(struct fi_info *provider_list,
     struct fi_info **provider_table;
 #if OPAL_OFI_PCI_DATA_AVAILABLE
     pmix_device_distance_t *distances = NULL;
-    pmix_value_t *pmix_val;
+    pmix_value_t *pmix_val = NULL;
     struct fi_pci_attr pci;
     int num_distances = 0;
 #endif
@@ -815,7 +815,7 @@ struct fi_info *opal_common_ofi_select_provider(struct fi_info *provider_list,
     /* find all the nearest devices to this thread, then out of these
      * determine which device we should bind to.
      */
-    distances = get_nearest_nics(&num_distances, &pmix_val);
+    distances = process_info->proc_is_bound ? get_nearest_nics(&num_distances, &pmix_val) : NULL;
 #endif
 
     current_provider = provider;
