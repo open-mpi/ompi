@@ -1168,10 +1168,10 @@ end interface
 
 interface
 
-subroutine MPI_Intercomm_merge(intercomm, high, newintercomm, ierror)
+subroutine MPI_Intercomm_merge(intercomm, high, newintracomm, ierror)
   integer, intent(in) :: intercomm
   logical, intent(in) :: high
-  integer, intent(out) :: newintercomm
+  integer, intent(out) :: newintracomm
   integer, intent(out) :: ierror
 end subroutine MPI_Intercomm_merge
 

@@ -9,7 +9,7 @@
 ! Copyright (c) 2012      Inria.  All rights reserved.
 ! Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
 !                         reserved.
-! Copyright (c) 2015-2020 Research Organization for Information Science
+! Copyright (c) 2015-2023 Research Organization for Information Science
 !                         and Technology (RIST).  All rights reserved.
 ! Copyright (c) 2019-2022 Triad National Security, LLC. All rights
 !                         reserved.
@@ -2343,10 +2343,10 @@ end interface
 
 interface
 
-subroutine MPI_Intercomm_merge(intercomm, high, newintercomm, ierror)
+subroutine MPI_Intercomm_merge(intercomm, high, newintracomm, ierror)
   integer, intent(in) :: intercomm
   logical, intent(in) :: high
-  integer, intent(out) :: newintercomm
+  integer, intent(out) :: newintracomm
   integer, intent(out) :: ierror
 end subroutine MPI_Intercomm_merge
 
