@@ -30,6 +30,7 @@
 
 #include "common_ofi.h"
 #include "opal/constants.h"
+#include "opal/mca/accelerator/accelerator.h"
 #include "opal/mca/base/mca_base_framework.h"
 #include "opal/mca/base/mca_base_var.h"
 #include "opal/mca/hwloc/base/base.h"
@@ -38,6 +39,7 @@
 #include "opal/util/argv.h"
 #include "opal/util/show_help.h"
 
+extern opal_accelerator_base_module_t opal_accelerator;
 opal_common_ofi_module_t opal_common_ofi = {.prov_include = NULL,
                                             .prov_exclude = NULL,
                                             .output = -1};
@@ -446,6 +448,18 @@ static int check_provider_attr(struct fi_info *provider_info, struct fi_info *pr
     }
 }
 
+#if OPAL_OFI_PCI_DATA_AVAILABLE
+static int get_provider_nic_pci(struct fi_info *provider, struct fi_pci_attr *pci)
+{
+    if (NULL != provider->nic && NULL != provider->nic->bus_attr
+        && provider->nic->bus_attr->bus_type == FI_BUS_PCI) {
+        *pci = provider->nic->bus_attr->attr.pci;
+        return OPAL_SUCCESS;
+    }
+    return OPAL_ERR_NOT_AVAILABLE;
+}
+#endif /* OPAL_OFI_PCI_DATA_AVAILABLE */
+
 /**
  * Calculate device distances
  *
@@ -784,6 +798,165 @@ err:
     return (uint32_t) process_info->myprocid.rank;
 }
 
+static int get_obj_depth(hwloc_obj_t obj, int *depth)
+{
+    hwloc_obj_t parent = NULL;
+    int depth_from_obj = 0;
+
+    /* For hwloc < 2.0, depth is unsigned type, but it could store a negative value */
+    if (0 <= (int) obj->depth) {
+        *depth = obj->depth;
+        return OPAL_SUCCESS;
+    }
+
+    parent = obj->parent;
+    while (parent) {
+        ++depth_from_obj;
+        if (0 <= (int) parent->depth) {
+            *depth = parent->depth + depth_from_obj;
+            return OPAL_SUCCESS;
+        }
+        parent = obj->parent;
+    }
+
+    return OPAL_ERROR;
+}
+
+#if OPAL_OFI_PCI_DATA_AVAILABLE
+/**
+ * @brief Attempt to find a nearest provider from the accelerator.
+ * Check if opal_accelerator is initialized with a valid PCI device, and find a provider from the
+ * shortest distance.
+ * Special cases:
+ * 1. If not accelerator device is available, returns OPAL_ERR_NOT_AVAILABLE.
+ * 2. If the provider does not have PCI attributers, we do not attempt to make a selection, and
+ *    return OPAL_ERR_NOT_AVAILABLE.
+ * 3. If there are more than 1 providers with the same equal distance, break the tie using a modulo
+ *    i.e. (local rank on the same accelerator) % (number of nearest providers)
+ * @param[in]   provider_list   linked list of providers
+ * @param[in]   num_providers   number of providers
+ * @param[in]   device_rank     local rank on the accelerator
+ * @param[out]  provider        pointer to the selected provider
+ * @return      OPAL_SUCCESS if a provider is successfully selected
+ *              OPAL_ERR_NOT_AVAILABLE if a provider cannot be decided deterministically
+ *              OPAL_ERROR if a fatal error happened
+ */
+static int find_nearest_provider_from_accelerator(struct fi_info *provider_list,
+                                                  size_t num_providers, uint32_t device_rank,
+                                                  struct fi_info **provider)
+{
+    hwloc_obj_t accl_dev = NULL, prov_dev = NULL, common_ancestor = NULL;
+    int ret = -1, accl_id = -1, depth = -1, max_common_ancestor_depth = -1;
+    opal_accelerator_pci_attr_t accl_pci_attr = {0};
+    struct fi_info *current_provider = NULL;
+    struct fi_pci_attr pci = {0};
+    uint32_t near_provider_count = 0, provider_rank = 0;
+    uint32_t distances[num_providers], *distance = distances;
+
+    memset(distances, 0, sizeof(distances));
+
+    ret = opal_accelerator.get_device(&accl_id);
+    if (OPAL_SUCCESS != ret) {
+        opal_output_verbose(1, opal_common_ofi.output, "%s:%d:Accelerator is not available",
+                            __FILE__, __LINE__);
+        return OPAL_ERR_NOT_AVAILABLE;
+    }
+
+    ret = opal_accelerator.get_device_pci_attr(accl_id, &accl_pci_attr);
+    if (OPAL_SUCCESS != ret) {
+        opal_output_verbose(1, opal_common_ofi.output,
+                            "%s:%d:Accelerator PCI info is not available", __FILE__, __LINE__);
+        return OPAL_ERROR;
+    }
+
+    accl_dev = hwloc_get_pcidev_by_busid(opal_hwloc_topology, accl_pci_attr.domain_id,
+                                         accl_pci_attr.bus_id, accl_pci_attr.device_id,
+                                         accl_pci_attr.function_id);
+    if (NULL == accl_dev) {
+        opal_output_verbose(1, opal_common_ofi.output,
+                            "%s:%d:Failed to find accelerator PCI device", __FILE__, __LINE__);
+        return OPAL_ERROR;
+    }
+
+    opal_output_verbose(1, opal_common_ofi.output,
+                        "%s:%d:Found accelerator device %d: %04x:%02x:%02x.%x VID: %x DID: %x",
+                        __FILE__, __LINE__, accl_id, accl_pci_attr.domain_id, accl_pci_attr.bus_id,
+                        accl_pci_attr.device_id, accl_pci_attr.function_id,
+                        accl_dev->attr->pcidev.vendor_id, accl_dev->attr->pcidev.device_id);
+
+    current_provider = provider_list;
+    while (NULL != current_provider) {
+        common_ancestor = NULL;
+        if (0 == check_provider_attr(provider_list, current_provider)
+            && OPAL_SUCCESS == get_provider_nic_pci(current_provider, &pci)) {
+            prov_dev = hwloc_get_pcidev_by_busid(opal_hwloc_topology, pci.domain_id, pci.bus_id,
+                                                 pci.device_id, pci.function_id);
+            if (NULL == prov_dev) {
+                opal_output_verbose(1, opal_common_ofi.output,
+                                    "%s:%d:Failed to find provider PCI device", __FILE__, __LINE__);
+                return OPAL_ERROR;
+            }
+
+            common_ancestor = hwloc_get_common_ancestor_obj(opal_hwloc_topology, accl_dev,
+                                                            prov_dev);
+            if (!common_ancestor) {
+                opal_output_verbose(
+                    1, opal_common_ofi.output,
+                    "%s:%d:Failed to find common ancestor of accelerator and provider PCI device",
+                    __FILE__, __LINE__);
+                /**
+                 * Return error because any 2 PCI devices should share at least one common ancestor,
+                 * i.e. root
+                 */
+                return OPAL_ERROR;
+            }
+
+            ret = get_obj_depth(common_ancestor, &depth);
+            if (OPAL_SUCCESS != ret) {
+                opal_output_verbose(1, opal_common_ofi.output,
+                                    "%s:%d:Failed to get common ancestor depth", __FILE__,
+                                    __LINE__);
+                return OPAL_ERROR;
+            }
+
+            if (max_common_ancestor_depth < depth) {
+                max_common_ancestor_depth = depth;
+                near_provider_count = 1;
+            } else if (max_common_ancestor_depth == depth) {
+                ++near_provider_count;
+            }
+        }
+
+        *(distance++) = !common_ancestor ? 0 : depth;
+        current_provider = current_provider->next;
+    }
+
+    if (0 == near_provider_count || 0 > max_common_ancestor_depth) {
+        opal_output_verbose(1, opal_common_ofi.output, "%s:%d:Provider does not have PCI device",
+                            __FILE__, __LINE__);
+        return OPAL_ERR_NOT_AVAILABLE;
+    }
+
+    provider_rank = device_rank % near_provider_count;
+
+    distance = distances;
+    current_provider = provider_list;
+    while (NULL != current_provider) {
+        if (max_common_ancestor_depth == *(distance++) && provider_rank == --near_provider_count) {
+            *provider = current_provider;
+            return OPAL_SUCCESS;
+        }
+
+        current_provider = current_provider->next;
+    }
+
+    assert(0 == near_provider_count);
+
+    return OPAL_ERROR;
+}
+#endif /* OPAL_OFI_PCI_DATA_AVAILABLE */
+
+
 struct fi_info *opal_common_ofi_select_provider(struct fi_info *provider_list,
                                                     opal_process_info_t *process_info)
 {
@@ -809,7 +982,28 @@ struct fi_info *opal_common_ofi_select_provider(struct fi_info *provider_list,
                             __FILE__, __LINE__);
     }
 
+    /* Current process' local rank on the same package(socket) */
+    package_rank = get_package_rank(process_info);
     provider_limit = count_providers(provider_list);
+
+#if OPAL_OFI_PCI_DATA_AVAILABLE
+    /**
+     * If accelerator is enabled, select the closest provider to the accelerator.
+     * Note: the function expects a local rank on the accelerator to break ties if there are
+     * multiple equidistant providers. package_rank is NOT an accurate measure, but a proxy.
+     */
+    ret = find_nearest_provider_from_accelerator(provider_list, provider_limit, package_rank,
+                                                 &provider);
+    if (!ret)
+        return provider;
+
+    if (OPAL_ERR_NOT_AVAILABLE != ret) {
+        opal_output_verbose(1, opal_common_ofi.output,
+                            "%s:%d:Failed to find a provider close to the accelerator. Error: %d",
+                            __FILE__, __LINE__, ret);
+        return provider_list;
+    }
+#endif /* OPAL_OFI_PCI_DATA_AVAILABLE */
 
     /* Allocate memory for provider table */
     provider_table = calloc(provider_limit, sizeof(struct fi_info *));
@@ -827,20 +1021,15 @@ struct fi_info *opal_common_ofi_select_provider(struct fi_info *provider_list,
     distances = get_nearest_nics(&num_distances, &pmix_val);
 #endif
 
-    current_provider = provider;
+    current_provider = provider_list;
 
     /* Cycle through remaining fi_info objects, looking for alike providers */
     while (NULL != current_provider) {
-        if (!check_provider_attr(provider, current_provider)) {
+        if (!check_provider_attr(provider_list, current_provider)) {
             near = false;
 #if OPAL_OFI_PCI_DATA_AVAILABLE
-            if (NULL != current_provider->nic
-                && NULL != current_provider->nic->bus_attr
-                && current_provider->nic->bus_attr->bus_type == FI_BUS_PCI) {
-                pci = current_provider->nic->bus_attr->attr.pci;
-                near = is_near(distances, num_distances,
-                               opal_hwloc_topology, pci);
-            }
+            if (OPAL_SUCCESS == get_provider_nic_pci(current_provider, &pci))
+                near = is_near(distances, num_distances, opal_hwloc_topology, pci);
 #endif
             /* We could have multiple near providers */
             if (near && !provider_found) {
