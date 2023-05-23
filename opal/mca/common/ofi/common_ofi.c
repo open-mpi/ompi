@@ -472,12 +472,10 @@ static int compute_dev_distances(pmix_device_distance_t **distances,
     int ret = OPAL_SUCCESS;
     size_t ninfo;
     pmix_info_t *info;
-    pmix_cpuset_t cpuset;
+    pmix_cpuset_t cpuset = PMIX_CPUSET_STATIC_INIT;
     pmix_topology_t pmix_topo = PMIX_TOPOLOGY_STATIC_INIT;
-    pmix_device_type_t type = PMIX_DEVTYPE_OPENFABRICS |
-      PMIX_DEVTYPE_NETWORK;
+    pmix_device_type_t type = PMIX_DEVTYPE_OPENFABRICS | PMIX_DEVTYPE_NETWORK;
 
-    PMIX_CPUSET_CONSTRUCT(&cpuset);
     ret = PMIx_Get_cpuset(&cpuset, PMIX_CPUBIND_THREAD);
     if (PMIX_SUCCESS != ret) {
         /* we are not bound */
