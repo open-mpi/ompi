@@ -76,16 +76,30 @@ mca_fs_lustre_file_open (struct ompi_communicator_t *comm,
     perm = mca_fs_base_get_file_perm(fh);
     amode = mca_fs_base_get_file_amode(fh->f_rank, access_mode);
 
-    opal_info_get (info, "stripe_size", MPI_MAX_INFO_VAL, char_stripe, &flag);
+    opal_info_get (info, "striping_unit", MPI_MAX_INFO_VAL, char_stripe, &flag);
     if ( flag ) {
         sscanf ( char_stripe, "%d", &fs_lustre_stripe_size );
     }
-
-    opal_info_get (info, "stripe_width", MPI_MAX_INFO_VAL, char_stripe, &flag);
+    else {
+        //internal info object name used earlier. Kept for backwards compatibility.
+        opal_info_get (info, "stripe_size", MPI_MAX_INFO_VAL, char_stripe, &flag);
+        if ( flag ) {
+            sscanf ( char_stripe, "%d", &fs_lustre_stripe_size );
+        }
+    }
+    
+    opal_info_get (info, "striping_factor", MPI_MAX_INFO_VAL, char_stripe, &flag);
     if ( flag ) {
         sscanf ( char_stripe, "%d", &fs_lustre_stripe_width );
     }
-
+    else {
+        //internal info object name used earlier. Kept for backwards compatibility.        
+        opal_info_get (info, "stripe_width", MPI_MAX_INFO_VAL, char_stripe, &flag);
+        if ( flag ) {
+            sscanf ( char_stripe, "%d", &fs_lustre_stripe_width );
+        }
+    }
+    
     if (fs_lustre_stripe_size < 0) {
         fs_lustre_stripe_size = mca_fs_lustre_stripe_size;
     }   
