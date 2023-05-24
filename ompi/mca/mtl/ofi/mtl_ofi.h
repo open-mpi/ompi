@@ -1021,6 +1021,12 @@ ompi_mtl_ofi_gen_ssend_ack(struct fi_cq_tagged_entry *wc,
      * If a failure occurs the provider will notify the error
      * in the cq_readerr during OFI progress. Once the message has been
      * successfully processed the request is marked as completed.
+     *
+     * Turns out that there is a bug in the argument checking
+     * in the CXI provider (at least the vendor 1.15.2.0 and earlier versions)
+     * fi_tsendmsg method.  So we have to feed a dummy iovec argument
+     * into fi_tsendmsg with a NULL buffer and zero iov_len, hence
+     * the d_iovect, etc.
      */
     int ctxt_id = 0;
     ssize_t ret;
@@ -1028,6 +1034,7 @@ ompi_mtl_ofi_gen_ssend_ack(struct fi_cq_tagged_entry *wc,
     mca_mtl_ofi_endpoint_t *endpoint = NULL;
     int src = mtl_ofi_get_source(wc);
     struct fi_msg_tagged tagged_msg;
+    struct iovec d_iovec = {.iov_base = NULL, .iov_len = 0};
 
     if (ompi_mtl_ofi.total_ctxts_used > 0) {
         ctxt_id = ofi_req->comm->c_contextid.cid_sub.u64 % ompi_mtl_ofi.total_ctxts_used;
@@ -1045,9 +1052,9 @@ ompi_mtl_ofi_gen_ssend_ack(struct fi_cq_tagged_entry *wc,
     endpoint = ompi_mtl_ofi_get_endpoint(ofi_req->mtl, ompi_proc);
     ofi_req->remote_addr = fi_rx_addr(endpoint->peer_fiaddr, ctxt_id, ompi_mtl_ofi.rx_ctx_bits);
 
-    tagged_msg.msg_iov = NULL;
+    tagged_msg.msg_iov = &d_iovec;
     tagged_msg.desc = NULL;
-    tagged_msg.iov_count = 0;
+    tagged_msg.iov_count = 1;
     tagged_msg.addr = ofi_req->remote_addr;
     /**
     * We must continue to use the user's original tag but remove the
