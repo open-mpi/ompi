@@ -4,8 +4,8 @@
  *                         reserved.
  * Copyright (c) 2019-2020 Triad National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2018-2023 Amazon.com, Inc. or its affiliates.  All Rights reserved.
- *                         reserved.
+ * Copyright (c)           Amazon.com, Inc. or its affiliates.
+ *                         All Rights reserved.
  * Copyright (c) 2021      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
@@ -612,17 +612,7 @@ ompi_mtl_ofi_isend_generic(struct mca_mtl_base_module_t *mtl,
             goto free_request_buffer;
     }
 
-    ompi_ret = ompi_mtl_ofi_register_buffer(convertor, ofi_req, start);
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != ompi_ret)) {
-        return ompi_ret;
-    }
-
-
-    /** Inject does not currently support device memory
-     *  https://github.com/ofiwg/libfabric/issues/5861
-     */
-    if (!(convertor->flags & CONVERTOR_ACCELERATOR)
-        && (ompi_mtl_ofi.max_inject_size >= length)) {
+    if (ompi_mtl_ofi.max_inject_size >= length) {
         if (ofi_cq_data) {
             ret = fi_tinjectdata(ompi_mtl_ofi.ofi_ctxt[ctxt_id].tx_ep,
                     start,
