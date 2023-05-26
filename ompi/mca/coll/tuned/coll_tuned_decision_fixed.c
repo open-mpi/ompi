@@ -76,8 +76,12 @@ ompi_coll_tuned_allreduce_intra_dec_fixed(const void *sbuf, void *rbuf, int coun
      *
      * Currently, ring, segmented ring, and rabenseifner do not support
      * non-commutative operations.
+     *
+     * Only nonoverlapping (reduce+bcast) guarantees stability for float values
      */
-    if( !ompi_op_is_commute(op) ) {
+    if ( !ompi_op_is_float_assoc(op) && ompi_datatype_is_float(dtype) ) {
+        alg = 2;
+    } else if( !ompi_op_is_commute(op) ) {
         if (communicator_size < 4) {
             if (total_dsize < 131072) {
                 alg = 3;
@@ -848,9 +852,9 @@ int ompi_coll_tuned_reduce_scatter_intra_dec_fixed( const void *sbuf, void *rbuf
      *  {4, "butterfly"},
      *
      * Non commutative algorithm capability needs re-investigation.
-     * Defaulting to non overlapping for non commutative ops.
+     * Defaulting to non overlapping for non commutative and non-float-associative ops.
      */
-    if (!ompi_op_is_commute(op)) {
+    if (!ompi_op_is_commute(op) || (!ompi_op_is_float_assoc(op) && ompi_datatype_is_float(dtype))) {
         alg = 1;
     } else {
         if (communicator_size < 4) {
@@ -994,9 +998,9 @@ int ompi_coll_tuned_reduce_scatter_block_intra_dec_fixed(const void *sbuf, void 
      *  {4, "butterfly"},
      *
      * Non commutative algorithm capability needs re-investigation.
-     * Defaulting to basic linear for non commutative ops.
+     * Defaulting to basic linear for non commutative and non-float-associative ops.
      */
-    if( !ompi_op_is_commute(op) ) {
+    if( !ompi_op_is_commute(op) || (!ompi_op_is_float_assoc(op) && ompi_datatype_is_float(dtype)) ) {
         alg = 1;
     } else {
         if (communicator_size < 4) {

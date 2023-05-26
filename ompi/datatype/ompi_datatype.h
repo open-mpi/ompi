@@ -167,6 +167,11 @@ ompi_datatype_is_monotonic( ompi_datatype_t * type ) {
 }
 
 static inline int32_t
+ompi_datatype_is_float( ompi_datatype_t * type ) {
+    return !!(type->super.flags & OMPI_DATATYPE_FLAG_DATA_FLOAT);
+}
+
+static inline int32_t
 ompi_datatype_commit( ompi_datatype_t ** type )
 {
     return opal_datatype_commit ( (opal_datatype_t*)*type );
