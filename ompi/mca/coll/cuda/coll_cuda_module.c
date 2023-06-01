@@ -5,6 +5,7 @@
  * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2019      Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
+ * Copyright (c) 2023      Advanced Micro Devices, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -80,6 +81,13 @@ mca_coll_cuda_comm_query(struct ompi_communicator_t *comm,
                          int *priority)
 {
     mca_coll_cuda_module_t *cuda_module;
+
+    if (0 == strcmp(opal_accelerator_base_selected_component.base_version.mca_component_name,
+                    "null")) {
+        opal_output_verbose(10, ompi_coll_base_framework.framework_output,
+                          "coll:cuda:comm_query: accelerator component is null: disqualifying myself");
+        return NULL;
+    }
 
     cuda_module = OBJ_NEW(mca_coll_cuda_module_t);
     if (NULL == cuda_module) {
