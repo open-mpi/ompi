@@ -645,10 +645,14 @@ static bool is_near(pmix_device_distance_t *distances,
                 continue;
 
             for (i = 0; i < num_distances; i++) {
-                char lsguid[256], lnguid[256];
+                char lsguid[20], lnguid[20];
                 int ret;
 
-                ret = sscanf(distances[i].uuid, "fab://%256s::%256s", lnguid, lsguid);
+                if (!distances[i].osname || !osdev->name
+                    || strcmp(distances[i].osname, osdev->name))
+                    continue;
+
+                ret = sscanf(distances[i].uuid, "fab://%19s::%19s", lnguid, lsguid);
                 if (ret != 2)
                     continue;
                 if (nguid && (0 == strcasecmp(lnguid, nguid))) {
