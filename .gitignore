@@ -261,6 +261,9 @@ ompi/mpiext/ftmpi/c/profile/pcomm_iagree.c
 ompi/mpiext/ftmpi/c/profile/pcomm_is_revoked.c
 ompi/mpiext/ftmpi/c/profile/pcomm_revoke.c
 ompi/mpiext/ftmpi/c/profile/pcomm_shrink.c
+ompi/mpiext/ftmpi/c/profile/pcomm_ack_failed.c
+ompi/mpiext/ftmpi/c/profile/pcomm_get_failed.c
+ompi/mpiext/ftmpi/c/profile/pcomm_ishrink.c
 
 ompi/mpiext/example/tests/progress_c
 ompi/mpiext/example/tests/progress_mpifh
