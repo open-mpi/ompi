@@ -765,6 +765,7 @@ static uint32_t get_package_rank(opal_process_info_t *process_info)
         relative_locality = opal_hwloc_compute_relative_locality(process_info->locality,
                                                                  locality_string);
         free(locality_string);
+        locality_string = NULL;
 
         if ((uint16_t) pname.vpid == process_info->myprocid.rank) {
             return ranks_on_package;
