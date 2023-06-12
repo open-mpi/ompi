@@ -91,7 +91,7 @@ OBJECT: while (my $obj_line = <FIND>) {
     # that turns out to be the case, we can try switching to "nm -P", which is
     # supposed to activate the "portable" (yet ugly) format.  It's also unclear
     # at this point how common support for "nm -P" is.
-    open(NM, '-|', "nm '${obj}' 2>/dev/null | egrep '\\s[cC]\\s'");
+    open(NM, '-|', "nm '${obj}' 2>/dev/null | grep -E '\\s[cC]\\s'");
     SYMBOL: while (my $sym_line = <NM>) {
         if (!$all and is_whitelisted($sym_line)) {
             next SYMBOL;
