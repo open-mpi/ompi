@@ -18,7 +18,7 @@ jobs:
         echo 'deb [arch=amd64 signed-by=/etc/apt/trusted.gpg.d/rocm-keyring.gpg]  https://repo.radeon.com/rocm/apt/debian focal main' | sudo tee /etc/apt/sources.list.d/rocm.list
         sudo apt-get update
         sudo apt-get install -y rocm-hip-sdk
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
             submodules: recursive
     - name: Build Open MPI
