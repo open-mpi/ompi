@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Pull Request Commit Checker
-        uses: open-mpi/pr-git-commit-checker@v1.0.0
+        uses: open-mpi/pr-git-commit-checker@v1.0.1
         with:
           token: "${{ secrets.GITHUB_TOKEN}}"
           cherry-pick-required: true
@@ -34,7 +34,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Pull Request Labeler
-        uses: open-mpi/pr-labeler@v1.0.0
+        uses: open-mpi/pr-labeler@v1.0.1
         with:
           token: "${{ secrets.GITHUB_TOKEN }}"
 
@@ -46,6 +46,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Pull Request Milestoner
-        uses: open-mpi/pr-milestoner@v1.0.0
+        uses: open-mpi/pr-milestoner@v1.0.1
         with:
           token: "${{ secrets.GITHUB_TOKEN }}"
