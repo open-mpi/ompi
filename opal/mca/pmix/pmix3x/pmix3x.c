@@ -807,14 +807,17 @@ void pmix3x_info_load(pmix_info_t *i,
             PMIX_INFO_LOAD(i, kv->key, &kv->data.time, PMIX_TIME);
             break;
         case OPAL_STATUS:
+            PMIX_LOAD_KEY(i->key, kv->key);
             i->value.type = PMIX_STATUS;
             i->value.data.status = pmix3x_convert_opalrc(kv->data.status);
             break;
         case OPAL_VPID:
+            PMIX_LOAD_KEY(i->key, kv->key);
             i->value.type = PMIX_PROC_RANK;
             i->value.data.rank = pmix3x_convert_opalrank(kv->data.name.vpid);
             break;
         case OPAL_NAME:
+            PMIX_LOAD_KEY(i->key, kv->key);
             i->value.type = PMIX_PROC;
             /* have to stringify the jobid */
             PMIX_PROC_CREATE(i->value.data.proc, 1);
@@ -833,6 +836,7 @@ void pmix3x_info_load(pmix_info_t *i,
             i->value.data.proc->rank = pmix3x_convert_opalrank(kv->data.name.vpid);
             break;
         case OPAL_BYTE_OBJECT:
+            PMIX_LOAD_KEY(i->key, kv->key);
             i->value.type = PMIX_BYTE_OBJECT;
             if (NULL != kv->data.bo.bytes) {
                 i->value.data.bo.bytes = (char*)malloc(kv->data.bo.size);
@@ -844,18 +848,22 @@ void pmix3x_info_load(pmix_info_t *i,
             }
             break;
         case OPAL_PERSIST:
+            PMIX_LOAD_KEY(i->key, kv->key);
             i->value.type = PMIX_PERSIST;
             i->value.data.persist = pmix3x_convert_opalpersist((opal_pmix_persistence_t)kv->data.uint8);
             break;
         case OPAL_SCOPE:
+            PMIX_LOAD_KEY(i->key, kv->key);
             i->value.type = PMIX_SCOPE;
             i->value.data.scope = pmix3x_convert_opalscope((opal_pmix_scope_t)kv->data.uint8);
             break;
         case OPAL_DATA_RANGE:
+            PMIX_LOAD_KEY(i->key, kv->key);
             i->value.type = PMIX_DATA_RANGE;
             i->value.data.range = pmix3x_convert_opalrange((opal_pmix_data_range_t)kv->data.uint8);
             break;
         case OPAL_PROC_STATE:
+            PMIX_LOAD_KEY(i->key, kv->key);
             i->value.type = PMIX_PROC_STATE;
             /* the OPAL layer doesn't have any concept of proc state,
              * so the ORTE layer is responsible for converting it */
@@ -873,6 +881,7 @@ void pmix3x_info_load(pmix_info_t *i,
              * opal_value_t's that we need to convert to a pmix_data_array
              * of pmix_info_t structures */
             list = (opal_list_t*)kv->data.ptr;
+            PMIX_LOAD_KEY(i->key, kv->key);
             i->value.type = PMIX_DATA_ARRAY;
             i->value.data.darray = (pmix_data_array_t*)malloc(sizeof(pmix_data_array_t));
             i->value.data.darray->type = PMIX_INFO;
@@ -893,6 +902,7 @@ void pmix3x_info_load(pmix_info_t *i,
             }
             break;
         case OPAL_PROC_INFO:
+            PMIX_LOAD_KEY(i->key, kv->key);
             i->value.type = PMIX_PROC_INFO;
             PMIX_PROC_INFO_CREATE(i->value.data.pinfo, 1);
             /* see if this job is in our list of known nspaces */
