@@ -86,7 +86,7 @@ mpi:
 	@ if ompi_info --parsable | grep -q bindings:mpif.h:yes >/dev/null; then \
 	    $(MAKE) hello_mpifh ring_mpifh; \
 	fi
-	@ if ompi_info --parsable | egrep -q bindings:use_mpi:\"\?yes >/dev/null; then \
+	@ if ompi_info --parsable | grep -E -q bindings:use_mpi:\"\?yes >/dev/null; then \
 	    $(MAKE) hello_usempi ring_usempi; \
 	fi
 	@ if ompi_info --parsable | grep -q bindings:use_mpi_f08:yes >/dev/null; then \
