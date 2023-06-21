@@ -91,10 +91,7 @@ EOF
 AC_DEFUN(
     [MCA_ompi_osc_monitoring_CONFIG],
     [AC_CONFIG_FILES([ompi/mca/osc/monitoring/Makefile])
-
-     AS_IF([test "$MCA_BUILD_ompi_common_monitoring_DSO_TRUE" = ''],
-           [$1],
-           [$2])
+    [$1]
 
      MCA_OMPI_OSC_MONITORING_GENERATE_TEMPLATES(
          [ompi/mca/osc/monitoring/osc_monitoring_template_gen.h],

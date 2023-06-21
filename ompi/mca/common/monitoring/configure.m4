@@ -16,13 +16,10 @@
 AC_DEFUN([MCA_ompi_common_monitoring_CONFIG],[
     AC_CONFIG_FILES([ompi/mca/common/monitoring/Makefile])
 
-    m4_ifdef([project_ompi], [
-          m4_ifdef([MCA_BUILD_ompi_common_monitoring_DSO_TRUE],
-                   [AC_CONFIG_LINKS(profile2mat.pl:test/monitoring/profile2mat.pl
-                                    aggregate_profile.pl:test/monitoring/aggregate_profile.pl)])])
+    m4_ifdef([project_ompi],
+             [AC_CONFIG_LINKS(test/monitoring/profile2mat.pl:ompi/mca/common/monitoring/profile2mat.pl
+                              test/monitoring/aggregate_profile.pl:ompi/mca/common/monitoring/aggregate_profile.pl)])
 
 
-    AS_IF([test "$MCA_BUILD_ompi_common_monitoring_DSO_TRUE" = ''],
-          [$1],
-          [$2])
+    [$1]
 ])dnl
