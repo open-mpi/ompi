@@ -114,3 +114,51 @@ where the file ``my_appfile`` contains the following:
 
 This will result in the same behavior as running ``a.out`` and ``b.out``
 from the command line.
+
+Connecting independent MPI applications
+---------------------------------------
+
+In certain environments, Open MPI supports connecting multiple,
+independent MPI applications using mechanism defined in the MPI
+specification such as ``MPI_Comm_connect() / MPI_Comm_accept()`` and
+publishing connection information using ``MPI_Publish_name() /
+MPI_Lookup_name()``. These mechanisms require a centralized service
+to exchange contact information across multiple jobs.
+
+Beginning with Open MPI v5.0.0 this can be achieved by starting an
+instance of the prte server with the ``report-uri`` option to
+display the contact information of the prte server. This information
+can then be used for launching subsequent MPI applications.
+
+The following commands show an example for launching two MPI jobs
+that will connect to each other at runtime using the MPI-2 based
+functionality.
+
+
+Step 1: start the standalone prte server
+
+.. code-block::
+
+   user@myhost:~/ompi-install/bin$ ./prte --report-uri <filename>
+   DVM ready
+
+Step 2: Launch the first MPI application providing the uri of the
+prte server
+
+.. code-block::
+
+   user@myhost:~/app1-dir$ mpiexec --dvm file:<filename> -np 4 ./mpi_app_1
+
+Step 3: Launch the second MPI application providing the uri of the
+prte server again
+
+.. code-block::
+
+   user@myhost:~/app2-dir$ mpiexec --dvm file:<filename> -np 4 ./mpi_app_2
+
+
+In case the prte server has been started as a system server using the
+``--system-server`` argument (e.g. the nodes used by the MPI
+applications are not shared by multiple jobs), the sequence can be
+simplified by using ``mpiexec --dvm system`` or ``mpiexec --dvm
+system-first`` instead of the uri of the prte server.
