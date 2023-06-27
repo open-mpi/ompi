@@ -68,20 +68,31 @@ static int total_errors = 0;
         _a < _b ? _a : _b;      \
     })
 
+static void print_header(int max_shift) {
+    printf("%-10s %-10s %-10s %-10s %-10s", "Op", "Type", "TypeSize", "Check", "Count");
+    if (1 == max_shift) {
+        printf("%-10s", "'Time (seconds)'");
+    } else {
+        for (int i = 0; i < max_shift; ++i) {
+            printf(" %-10s ", "'Shift %d [s]'");
+        }
+    }
+    printf("\n");
+}
+
 static void print_status(char *op, char *type, int type_size, int count, int max_shift,
                          double *duration, int repeats, int correct)
 {
     if (correct) {
-        printf("%-10s %s %-10d%s ", op, type, type_size,
-               (verbose ? " [\033[1;32msuccess\033[0m]" : ""));
+        printf("%-10s %s %-10d success", op, type, type_size);
     } else {
-        printf("%-10s %s [\033[1;31mfail\033[0m]", op, type);
+        printf("%-10s %s %-10d [\033[1;31mfail\033[0m]", op, type, type_size);
         total_errors++;
     }
     if (1 == max_shift) {
-        printf(" count  %-10d  time (seconds) %.8f seconds\n", count, duration[0] / repeats);
+        printf(" %-10d %.8f\n", count, duration[0] / repeats);
     } else {
-        printf(" count  %-10d  time (seconds / shifts) ", count);
+        printf(" %-10d ", count);
         for (int i = 0; i < max_shift; i++) {
             printf("%.8f ", duration[i] / repeats);
         }
@@ -248,6 +259,7 @@ static void *cuda_allocate(size_t size, size_t align) {
 }
 static void* cuda_memcpy(void *dst, const void *src, size_t size) {
     cudaMemcpy(dst, src, size, cudaMemcpyDefault);
+    cudaDeviceSynchronize();
     return dst;
 }
 static void cuda_free(void *ptr) {
@@ -452,6 +464,8 @@ int main(int argc, char **argv)
     (void) rank;
     size = ompi_comm_size(MPI_COMM_WORLD);
     (void) size;
+
+    print_header(max_shift);
 
     for (uint32_t type_idx = 0; type_idx < strlen(type); type_idx++) {
         for (uint32_t op_idx = 0; do_ops[op_idx] >= 0; op_idx++) {
