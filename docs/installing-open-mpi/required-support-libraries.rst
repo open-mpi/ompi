@@ -47,6 +47,35 @@ process.  More on this below.
   .. note:: The versions listed in this table are the *minimum* versions needed.  In general, the Open MPI community recommends using more recent versions of both the :ref:`required support libraries <label-install-required-support-libraries>` and any other optional support libraries.  This is because more recent versions typically tend to include bug fixes, sometimes affecting Open MPI functionality.  As a specific example, there is a known issue with `Hardware Locality <https://www.open-mpi.org/projects/hwloc/>`_ releases older than v2.8.0 on systems with Intel Ponte Vecchio accelerators.  If you run Open MPI on such systems, you need to use Hwloc v2.8.0 or newer, or you will experience undefined behavior.
    This effect is not unique to the Hardware Locality library; this is why the Open MPI community recommends using as recent as possible versions of all support libraries.
 
+  .. danger:: As of |ompi_ver|, Open MPI does not yet support the
+              Hwloc v3.x series (which may not even be available at
+              the time of Open MPI |ompi_ver|'s release).  Hwloc v3.x
+              is anticipated to break API and/or ABI compared to the
+              Hwloc v2.x series.
+
+              Open MPI will refuse to build if it finds an external
+              Hwloc installation that is >= v3.0.0 on the assumption
+              that other HPC applications and/or libraries may be
+              using it.  Such a configuration could lead to obscure
+              and potentially confusing run-time failures of Open MPI
+              applications.
+
+              If Open MPI's ``configure`` script aborts because it
+              finds an Hwloc installation that is >= v3.0.0, you can
+              either ensure that Open MPI finds a < v3.0.0 Hwloc
+              installation (e.g., by changing the order of paths in
+              ``LD_LIBRARY_PATH``), or force the use of Open MPI's
+              bundled Hwloc via:
+
+              .. code::
+
+                 shell$ ./configure --with-hwloc=internal ...
+
+              Regardless, *it is critically important* that if an MPI
+              application |mdash| or any of its dependencies |mdash|
+              uses Hwloc, it uses the *same* Hwloc with which Open MPI
+              was compiled.
+
 Library dependencies
 --------------------
 
