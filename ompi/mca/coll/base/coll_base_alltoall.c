@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2021 The University of Tennessee and The University
+ * Copyright (c) 2004-2023 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -274,7 +274,7 @@ int ompi_coll_base_alltoall_intra_bruck(const void *sbuf, int scount,
     tmpbuf = tmpbuf_free - gap;
 
     /* Step 1 - local rotation - shift up by rank */
-    err = ompi_datatype_sndrcv (sbuf + ((ptrdiff_t) rank * scount * sext),
+    err = ompi_datatype_sndrcv ((char*)sbuf + ((ptrdiff_t) rank * scount * sext),
                                 (int32_t) (size - rank) * scount,
                                 sdtype,
                                 tmpbuf,
@@ -285,7 +285,7 @@ int ompi_coll_base_alltoall_intra_bruck(const void *sbuf, int scount,
     }
 
     if (rank != 0) {
-        err = ompi_datatype_sndrcv (sbuf,
+        err = ompi_datatype_sndrcv ((char*)sbuf,
                                     (int32_t) rank * scount,
                                     sdtype,
                                     tmpbuf + ((ptrdiff_t) (size - rank) * rcount * rext),
