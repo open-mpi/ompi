@@ -537,15 +537,17 @@ static int accelerator_cuda_mem_alloc(int dev_id, void **ptr, size_t size)
         return OPAL_ERR_BAD_PARAM;
     }
 
+#if 0
     /* prefer managed memory */
     result = cudaMallocManaged(ptr, size, cudaMemAttachGlobal);
     if (cudaSuccess == result) {
         return OPAL_SUCCESS;
     }
+#endif // 0
 
     /* fall-back to discrete memory */
 
-#if CUDA_VERSION >= 11020
+#if CUDA_VERSION >= 11020 && 0
     /* Try to allocate the memory from a memory pool, if available */
     /* get the default pool */
     cudaMemPool_t mpool;
@@ -556,6 +558,7 @@ static int accelerator_cuda_mem_alloc(int dev_id, void **ptr, size_t size)
             /* this is a blocking function, so wait for the allocation to happen */
             result = cuStreamSynchronize(opal_accelerator_cuda_alloc_stream);
             if (cudaSuccess == result) {
+                printf("CUDA from mempool %p\n", *ptr);
                 return OPAL_SUCCESS;
             }
         }
@@ -574,6 +577,7 @@ static int accelerator_cuda_mem_alloc(int dev_id, void **ptr, size_t size)
                         OPAL_PROC_MY_HOSTNAME, result);
         return OPAL_ERROR;
     }
+    //printf("CUDA from cuMemAlloc %p\n", *ptr);
     return 0;
 }
 
