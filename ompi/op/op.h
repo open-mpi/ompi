@@ -831,7 +831,7 @@ static inline void ompi_op_preferred_device(ompi_op_t *op, int source_dev,
     if (!ompi_op_is_intrinsic (op)) {
         return;
     }
-    /* quick check: can we execute on both sides? */
+    /* quick check: can we execute on the device? */
     int dtype_id = ompi_op_ddt_map[dtype->id];
     if (NULL == op->o_device_op || NULL == op->o_device_op->do_intrinsic.fns[dtype_id]) {
         /* not available on the gpu, must select host */
