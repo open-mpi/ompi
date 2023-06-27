@@ -437,7 +437,7 @@ static int han_register(void)
         /*
          * Default values
          */
-        for (int topo_lvl = 0 ; topo_lvl < GLOBAL_COMMUNICATOR ; topo_lvl++) {
+        for (topo_lvl = 0 ; topo_lvl < GLOBAL_COMMUNICATOR ; topo_lvl++) {
             cs->mca_sub_components[coll][topo_lvl] = TUNED;
         }
         cs->mca_sub_components[coll][GLOBAL_COMMUNICATOR] = HAN;

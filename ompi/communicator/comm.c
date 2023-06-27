@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2019 The University of Tennessee and The University
+ * Copyright (c) 2004-2023 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2022 High Performance Computing Center Stuttgart,
@@ -2215,10 +2215,10 @@ int ompi_comm_get_rprocs (ompi_communicator_t *local_comm, ompi_communicator_t *
     int rc = OMPI_SUCCESS;
     int local_rank, local_size;
     ompi_proc_t **rprocs=NULL;
-    int32_t size_len;
+    size_t size_len;
     int int_len=0, rlen;
     pmix_data_buffer_t *sbuf=NULL, *rbuf=NULL;
-    void *sendbuf=NULL;
+    char *sendbuf=NULL;
     char *recvbuf;
     ompi_proc_t **proc_list = NULL;
     int i;

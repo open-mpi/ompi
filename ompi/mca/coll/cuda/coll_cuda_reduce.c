@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2015 The University of Tennessee and The University
+ * Copyright (c) 2004-2023 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2014-2015 NVIDIA Corporation.  All rights reserved.
@@ -37,7 +37,6 @@ mca_coll_cuda_reduce(const void *sbuf, void *rbuf, int count,
     int rank = ompi_comm_rank(comm);
     ptrdiff_t gap;
     char *rbuf1 = NULL, *sbuf1 = NULL, *rbuf2 = NULL;
-    const char *sbuf2;
     size_t bufsize;
     int rc;
 
@@ -53,7 +52,6 @@ mca_coll_cuda_reduce(const void *sbuf, void *rbuf, int count,
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
         mca_coll_cuda_memcpy(sbuf1, sbuf, bufsize);
-        sbuf2 = sbuf; /* save away original buffer */
         sbuf = sbuf1 - gap;
     }
 
