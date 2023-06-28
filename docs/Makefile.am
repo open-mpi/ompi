@@ -10,20 +10,24 @@
 
 # We need this Makefile to be executed serially.  Below, we list all
 # the man pages as the targets of the rule that invokes Sphinx for
-# dependency/generation reasons.  But a *single* execution of Sphinx
-# will generate *all* of the man pages and HTML files.  Hence, when
-# "make" determines that none of the man page files exist, it should
-# execute the Sphinx-invocation rule once, and then it will realize
-# that all the man pages files exist.  More specifically: if someone
-# invokes "make -j N", we need make to not execute the
+# dependency/generation reasons.  But a *single* execution of the make
+# target will generate *all* of the man pages and HTML files.  Hence,
+# when "make" determines that none of the man page files exist, it
+# should execute the Sphinx-invocation rule once, and then it will
+# realize that all the man pages files exist.  More specifically: if
+# someone invokes "make -j N", we need make to not execute the
 # Sphinx-invocation rule multiple times simultaneously.  Both GNU Make
 # and BSD Make will honor the .NOTPARALLEL target to disable all
 # parallel invocation in this Makefile[.am].
+#
+# Note that even though we explicitly disable make's parallelism,
+# we'll use Sphinx's internal parallelism via "-j auto" -- see
+# SPHINX_OPTS.
 .NOTPARALLEL:
 
 OUTDIR             = _build
 SPHINX_CONFIG      = conf.py
-SPHINX_OPTS       ?= -W --keep-going
+SPHINX_OPTS       ?= -W --keep-going -j auto
 
 # Note: it is significantly more convenient to list all the source
 # files here using wildcards (vs. listing every single .rst file).
