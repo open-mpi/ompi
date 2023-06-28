@@ -24,11 +24,11 @@ rocm_sources = op_rocm_impl.cpp
 
 HIPCC = hipcc
 HIPCCFLAGS= -D__HIP_PLATFORM_HCC__= -D__HIP_PLATFORM_AMD__= -I/opt/rocm-5.5.0/include
- 
+
 
 .cpp.l$(OBJEXT):
 	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=compile $(HIPCC) -prefer-non-pic $(HIPCCFLAGS) -Wc,-fPIC,-g -c $<
+	$(LIBTOOLFLAGS) --mode=compile $(HIPCC) -O2 -fvectorize -prefer-non-pic $(HIPCCFLAGS) -Wc,-fPIC,-g -c $<
 
 # -o $($@.o:.lo)
 

@@ -41,6 +41,7 @@ static inline void device_op_pre(const void *orig_source1,
                                  int count,
                                  struct ompi_datatype_t *dtype,
                                  int *threads_per_block,
+                                 int *max_blocks,
                                  int *device,
                                  opal_accelerator_stream_t *stream)
 {
@@ -53,82 +54,95 @@ static inline void device_op_pre(const void *orig_source1,
         *source2 = (void*)orig_source2;
     }
 
-    target_rc = opal_accelerator.check_addr(*target, target_device, &target_flags);
-    source1_rc = opal_accelerator.check_addr(*source1, source1_device, &source1_flags);
-    *device = *target_device;
-
-    // TODO
-    printf("OUT - target device & rc %d %d source %d %d\n", *target_device, target_rc, *source1_device, source1_rc);
-    if (NULL != orig_source2) {
-        source2_rc = opal_accelerator.check_addr(*source2, source2_device, &source2_flags);
-        //printf("device_op_pre: target %p rc %d dev %d, source1 %p rc %d dev %d, source2 %p rc %d dev %d, device %d\n",
-        //       orig_target, target_rc, *target_device, orig_source1, source1_rc, *source1_device, orig_source2, source2_rc, *source2_device, *device);
-    }
-
-    //printf("device_op_pre: target rc %d dev %d, source rc %d dev %d, device %d\n",
-    //       target_rc, *target_device, source_rc, *source_device, *device);
-
-    if (0 == target_rc && 0 == source1_rc && 0 == source2_rc) {
-        /* no buffers are on any device, select device 0 */
-        *device = 0;
-    } else if (*target_device == -1) {
-        if (*source1_device == -1 && NULL != orig_source2) {
-            *device = *source2_device;
-        } else {
-            *device = *source1_device;
+    if (*device != MCA_ACCELERATOR_NO_DEVICE_ID) {
+        /* we got the device from the caller, just adjust the output parameters */
+        *target_device = *device;
+        *source1_device = *device;
+        if (NULL != source2_device) {
+            *source2_device = *device;
         }
-    }
+    } else {
 
-    if (0 == target_rc || 0 == source1_rc || *target_device != *source1_device) {
-        size_t nbytes;
-        ompi_datatype_type_size(dtype, &nbytes);
-        nbytes *= count;
+        target_rc = opal_accelerator.check_addr(*target, target_device, &target_flags);
+        source1_rc = opal_accelerator.check_addr(*source1, source1_device, &source1_flags);
+        *device = *target_device;
 
-        if (0 == target_rc) {
-            // allocate memory on the device for the target buffer
-            //printf("copying target from device %d to host\n", *target_device);
-            opal_accelerator.mem_alloc_stream(*device, target, nbytes, stream);
-            CHECK(hipMemcpyHtoDAsync, ((hipDeviceptr_t)*target, orig_target, nbytes, *(hipStream_t*)stream->stream));
-            *target_device = -1; // mark target device as host
+        // TODO
+        //printf("OUT - target device & rc %d %d source %d %d\n", *target_device, target_rc, *source1_device, source1_rc);
+        if (NULL != orig_source2) {
+            source2_rc = opal_accelerator.check_addr(*source2, source2_device, &source2_flags);
+            //printf("device_op_pre: target %p rc %d dev %d, source1 %p rc %d dev %d, source2 %p rc %d dev %d, device %d\n",
+            //       orig_target, target_rc, *target_device, orig_source1, source1_rc, *source1_device, orig_source2, source2_rc, *source2_device, *device);
         }
 
-        if (0 == source1_rc || *device != *source1_device) {
+        //printf("device_op_pre: target rc %d dev %d, source rc %d dev %d, device %d\n",
+        //       target_rc, *target_device, source_rc, *source_device, *device);
+
+        if (0 == target_rc && 0 == source1_rc && 0 == source2_rc) {
+            /* no buffers are on any device, select device 0 */
+            *device = 0;
+        } else if (*target_device == -1) {
+            if (*source1_device == -1 && NULL != orig_source2) {
+                *device = *source2_device;
+            } else {
+                *device = *source1_device;
+            }
+        }
+
+        if (0 == target_rc || 0 == source1_rc || *target_device != *source1_device) {
+            size_t nbytes;
+            ompi_datatype_type_size(dtype, &nbytes);
+            nbytes *= count;
+
+            if (0 == target_rc) {
+                // allocate memory on the device for the target buffer
+                //printf("copying target from device %d to host\n", *target_device);
+                opal_accelerator.mem_alloc_stream(*device, target, nbytes, stream);
+                CHECK(hipMemcpyHtoDAsync, ((hipDeviceptr_t)*target, orig_target, nbytes, *(hipStream_t*)stream->stream));
+                *target_device = -1; // mark target device as host
+            }
+
+            if (0 == source1_rc || *device != *source1_device) {
+                // allocate memory on the device for the source buffer
+                //printf("allocating source on device %d\n", *device);
+                opal_accelerator.mem_alloc_stream(*device, source1, nbytes, stream);
+                if (0 == source1_rc) {
+                    /* copy from host to device */
+                    //printf("copying source from host to device %d\n", *device);
+                    CHECK(hipMemcpyHtoDAsync, ((hipDeviceptr_t)*source1, orig_source1, nbytes, *(hipStream_t*)stream->stream));
+                } else {
+                    /* copy from one device to another device */
+                    /* TODO: does this actually work? Can we enable P2P? */
+                    //printf("attempting cross-device copy for source\n");
+                    CHECK(hipMemcpyDtoDAsync, ((hipDeviceptr_t)*source1, (hipDeviceptr_t)orig_source1, nbytes, *(hipStream_t*)stream->stream));
+                }
+            }
+
+        }
+        if (NULL != source2_device && *target_device != *source2_device) {
             // allocate memory on the device for the source buffer
             //printf("allocating source on device %d\n", *device);
-            opal_accelerator.mem_alloc_stream(*device, source1, nbytes, stream);
-            if (0 == source1_rc) {
+            size_t nbytes;
+            ompi_datatype_type_size(dtype, &nbytes);
+            nbytes *= count;
+
+            opal_accelerator.mem_alloc_stream(*device, source2, nbytes, stream);
+            if (0 == source2_rc) {
                 /* copy from host to device */
                 //printf("copying source from host to device %d\n", *device);
-                CHECK(hipMemcpyHtoDAsync, ((hipDeviceptr_t)*source1, orig_source1, nbytes, *(hipStream_t*)stream->stream));
+                CHECK(hipMemcpyHtoDAsync, ((hipDeviceptr_t)*source2, orig_source2, nbytes, *(hipStream_t*)stream->stream));
             } else {
                 /* copy from one device to another device */
                 /* TODO: does this actually work? Can we enable P2P? */
                 //printf("attempting cross-device copy for source\n");
-                CHECK(hipMemcpyDtoDAsync, ((hipDeviceptr_t)*source1, (hipDeviceptr_t)orig_source1, nbytes, *(hipStream_t*)stream->stream));
+                CHECK(hipMemcpyDtoDAsync, ((hipDeviceptr_t)*source2, (hipDeviceptr_t)orig_source2, nbytes, *(hipStream_t*)stream->stream));
             }
         }
-
     }
-    if (NULL != source2_device && *target_device != *source2_device) {
-        // allocate memory on the device for the source buffer
-        //printf("allocating source on device %d\n", *device);
-        size_t nbytes;
-        ompi_datatype_type_size(dtype, &nbytes);
-        nbytes *= count;
 
-        opal_accelerator.mem_alloc_stream(*device, source2, nbytes, stream);
-        if (0 == source2_rc) {
-            /* copy from host to device */
-            //printf("copying source from host to device %d\n", *device);
-            CHECK(hipMemcpyHtoDAsync, ((hipDeviceptr_t)*source2, orig_source2, nbytes, *(hipStream_t*)stream->stream));
-        } else {
-            /* copy from one device to another device */
-            /* TODO: does this actually work? Can we enable P2P? */
-            //printf("attempting cross-device copy for source\n");
-            CHECK(hipMemcpyDtoDAsync, ((hipDeviceptr_t)*source2, (hipDeviceptr_t)orig_source2, nbytes, *(hipStream_t*)stream->stream));
-        }
-    }
     *threads_per_block = mca_op_rocm_component.ro_max_threads_per_block[*device];
+    *max_blocks        = mca_op_rocm_component.ro_max_blocks[*device];
+
 }
 
 static inline void device_op_post(void *source1,
@@ -143,7 +157,7 @@ static inline void device_op_post(void *source1,
                                   int device,
                                   opal_accelerator_stream_t *stream)
 {
-    if (-1 == target_device) {
+    if (MCA_ACCELERATOR_NO_DEVICE_ID == target_device) {
 
         size_t nbytes;
         ompi_datatype_type_size(dtype, &nbytes);
@@ -152,17 +166,14 @@ static inline void device_op_post(void *source1,
         CHECK(hipMemcpyDtoHAsync, (orig_target, (hipDeviceptr_t)target, nbytes, *(hipStream_t *)stream->stream));
     }
 
-    if (-1 == target_device) {
+    if (MCA_ACCELERATOR_NO_DEVICE_ID == target_device) {
         opal_accelerator.mem_release_stream(device, target, stream);
-        //CHECK(hipFreeAsync, ((hipDeviceptr_t)target, mca_op_rocm_component.ro_stream));
     }
     if (source1_device != device) {
         opal_accelerator.mem_release_stream(device, source1, stream);
-        //CHECK(hipFreeAsync, ((hipDeviceptr_t)source, mca_op_rocm_component.ro_stream));
     }
     if (NULL != source2 && source2_device != device) {
         opal_accelerator.mem_release_stream(device, source2, stream);
-        //CHECK(hipFreeAsync, ((hipDeviceptr_t)source, mca_op_rocm_component.ro_stream));
     }
 }
 
@@ -170,19 +181,20 @@ static inline void device_op_post(void *source1,
     static                                                                                                      \
     void ompi_op_rocm_2buff_##name##_##type_name(const void *in, void *inout, int *count,                       \
                                                    struct ompi_datatype_t **dtype,                              \
+                                                   int device,                                                  \
                                                    opal_accelerator_stream_t *stream,                           \
                                                    struct ompi_op_base_module_1_0_0_t *module) {                \
-        int threads_per_block;                                                                                  \
-        int source_device, target_device, device;                                                               \
+        int threads_per_block, max_blocks;                                                                      \
+        int source_device, target_device;                                                                       \
         type *source, *target;                                                                                  \
         int n = *count;                                                                                         \
         device_op_pre(in, (void**)&source, &source_device, NULL, NULL, NULL,                                    \
                       inout, (void**)&target, &target_device,                                                   \
                       n, *dtype,                                                                                \
-                      &threads_per_block, &device, stream);                                                     \
-        hipStream_t *custream = (hipStream_t*)stream->stream;                                                         \
-        ompi_op_rocm_2buff_##name##_##type_name##_submit(source, target, n, threads_per_block, *custream);      \
-        device_op_post(source, source_device, NULL, -1, inout, target, target_device, n, *dtype, device, stream);\
+                      &threads_per_block, &max_blocks, &device, stream);                                        \
+        hipStream_t *custream = (hipStream_t*)stream->stream;                                                   \
+        ompi_op_rocm_2buff_##name##_##type_name##_submit(source, target, n, threads_per_block, max_blocks, *custream);\
+        device_op_post(source, source_device, NULL, -1, inout, target, target_device, n, *dtype, device, stream); \
     }
 
 #define OP_FUNC(name, type_name, type, op, ...) FUNC(name, __VA_ARGS__##type_name, __VA_ARGS__##type)
@@ -204,22 +216,23 @@ static inline void device_op_post(void *source1,
     static                                                                                       \
     void ompi_op_rocm_2buff_##name##_##type_name(const void *in, void *inout, int *count,        \
                                                    struct ompi_datatype_t **dtype,               \
+                                                   int device,                                   \
                                                    opal_accelerator_stream_t *stream,            \
                                                    struct ompi_op_base_module_1_0_0_t *module) { \
                                                                                                  \
         _Static_assert(sizeof(type) >= sizeof(int8_t) && sizeof(type) <= sizeof(int64_t));       \
         switch(sizeof(type)) {  \
             case sizeof(int8_t):  \
-                ompi_op_rocm_2buff_##name##_int8_t(in, inout, count, dtype, stream, module); \
+                ompi_op_rocm_2buff_##name##_int8_t(in, inout, count, dtype, device, stream, module); \
                 break; \
             case sizeof(int16_t): \
-                ompi_op_rocm_2buff_##name##_int16_t(in, inout, count, dtype, stream, module); \
+                ompi_op_rocm_2buff_##name##_int16_t(in, inout, count, dtype, device, stream, module); \
                 break; \
             case sizeof(int32_t): \
-                ompi_op_rocm_2buff_##name##_int32_t(in, inout, count, dtype, stream, module); \
+                ompi_op_rocm_2buff_##name##_int32_t(in, inout, count, dtype, device, stream, module); \
                 break; \
             case sizeof(int64_t): \
-                ompi_op_rocm_2buff_##name##_int64_t(in, inout, count, dtype, stream, module); \
+                ompi_op_rocm_2buff_##name##_int64_t(in, inout, count, dtype, device, stream, module); \
                 break; \
         } \
     }
@@ -229,18 +242,19 @@ static inline void device_op_post(void *source1,
     static                                                                                          \
     void ompi_op_rocm_2buff_##name##_##type_name(const void *in, void *inout, int *count,           \
                                                    struct ompi_datatype_t **dtype,                  \
+                                                   int device,                                      \
                                                    opal_accelerator_stream_t *stream,               \
                                                    struct ompi_op_base_module_1_0_0_t *module) {    \
         _Static_assert(sizeof(type) >= sizeof(float) && sizeof(type) <= sizeof(long double));       \
         switch(sizeof(type)) {  \
             case sizeof(float):  \
-                ompi_op_rocm_2buff_##name##_float(in, inout, count, dtype, stream, module);  \
+                ompi_op_rocm_2buff_##name##_float(in, inout, count, dtype, device, stream, module);  \
                 break;  \
             case sizeof(double): \
-                ompi_op_rocm_2buff_##name##_double(in, inout, count, dtype, stream, module); \
+                ompi_op_rocm_2buff_##name##_double(in, inout, count, dtype, device, stream, module); \
                 break; \
             case sizeof(long double): \
-                ompi_op_rocm_2buff_##name##_long_double(in, inout, count, dtype, stream, module); \
+                ompi_op_rocm_2buff_##name##_long_double(in, inout, count, dtype, device, stream, module); \
                 break; \
         } \
     }
@@ -786,21 +800,22 @@ LOC_FUNC(minloc, long_double_int, <)
  */
 #define FUNC_3BUF(name, type_name, type)                                                                        \
     static                                                                                                      \
-    void ompi_op_rocm_3buff_##name##_##type_name(const void *in1, const void *in2, void *out, int *count,      \
+    void ompi_op_rocm_3buff_##name##_##type_name(const void *in1, const void *in2, void *out, int *count,       \
                                                    struct ompi_datatype_t **dtype,                              \
+                                                   int device,                                                  \
                                                    opal_accelerator_stream_t *stream,                           \
                                                    struct ompi_op_base_module_1_0_0_t *module) {                \
-        int threads_per_block;                                                                                  \
-        int source1_device, source2_device, target_device, device;                                              \
+        int threads_per_block, max_blocks;                                                                      \
+        int source1_device, source2_device, target_device;                                                      \
         type *source1, *source2, *target;                                                                       \
         int n = *count;                                                                                         \
         device_op_pre(in1, (void**)&source1, &source1_device,                                                   \
                       in2, (void**)&source2, &source2_device,                                                   \
                       out, (void**)&target, &target_device,                                                     \
                       n, *dtype,                                                                                \
-                      &threads_per_block, &device, stream);                                                     \
+                      &threads_per_block, &max_blocks, &device, stream);                                        \
         hipStream_t *custream = (hipStream_t*)stream->stream;                                                         \
-        ompi_op_rocm_3buff_##name##_##type_name##_submit(source1, source2, target, n, threads_per_block, *custream);\
+        ompi_op_rocm_3buff_##name##_##type_name##_submit(source1, source2, target, n, threads_per_block, max_blocks, *custream);\
         device_op_post(source1, source1_device, source2, source2_device, out, target, target_device, n, *dtype, device, stream);\
     }
 
@@ -825,22 +840,23 @@ LOC_FUNC(minloc, long_double_int, <)
     static                                                                                       \
     void ompi_op_rocm_3buff_##name##_##type_name(const void *in1, const void *in2, void *out, int *count,        \
                                                    struct ompi_datatype_t **dtype,               \
+                                                   int device,                                                  \
                                                    opal_accelerator_stream_t *stream,            \
                                                    struct ompi_op_base_module_1_0_0_t *module) { \
                                                                                                  \
         _Static_assert(sizeof(type) >= sizeof(int8_t) && sizeof(type) <= sizeof(int64_t));       \
         switch(sizeof(type)) {  \
             case sizeof(int8_t):  \
-                ompi_op_rocm_3buff_##name##_int8_t(in1, in2, out, count, dtype, stream, module); \
+                ompi_op_rocm_3buff_##name##_int8_t(in1, in2, out, count, dtype, device, stream, module); \
                 break; \
             case sizeof(int16_t): \
-                ompi_op_rocm_3buff_##name##_int16_t(in1, in2, out, count, dtype, stream, module); \
+                ompi_op_rocm_3buff_##name##_int16_t(in1, in2, out, count, dtype, device, stream, module); \
                 break; \
             case sizeof(int32_t): \
-                ompi_op_rocm_3buff_##name##_int32_t(in1, in2, out, count, dtype, stream, module); \
+                ompi_op_rocm_3buff_##name##_int32_t(in1, in2, out, count, dtype, device, stream, module); \
                 break; \
             case sizeof(int64_t): \
-                ompi_op_rocm_3buff_##name##_int64_t(in1, in2, out, count, dtype, stream, module); \
+                ompi_op_rocm_3buff_##name##_int64_t(in1, in2, out, count, dtype, device, stream, module); \
                 break; \
         } \
     }
@@ -850,18 +866,19 @@ LOC_FUNC(minloc, long_double_int, <)
     static                                                                                          \
     void ompi_op_rocm_3buff_##name##_##type_name(const void *in1, const void *in2, void *out, int *count,           \
                                                    struct ompi_datatype_t **dtype,                  \
+                                                   int device,                                                  \
                                                    opal_accelerator_stream_t *stream,               \
                                                    struct ompi_op_base_module_1_0_0_t *module) {    \
         _Static_assert(sizeof(type) >= sizeof(float) && sizeof(type) <= sizeof(long double));       \
         switch(sizeof(type)) {  \
             case sizeof(float):  \
-                ompi_op_rocm_3buff_##name##_float(in1, in2, out, count, dtype, stream, module);  \
+                ompi_op_rocm_3buff_##name##_float(in1, in2, out, count, dtype, device, stream, module);  \
                 break;  \
             case sizeof(double): \
-                ompi_op_rocm_3buff_##name##_double(in1, in2, out, count, dtype, stream, module); \
+                ompi_op_rocm_3buff_##name##_double(in1, in2, out, count, dtype, device, stream, module); \
                 break; \
             case sizeof(long double): \
-                ompi_op_rocm_3buff_##name##_long_double(in1, in2, out, count, dtype, stream, module); \
+                ompi_op_rocm_3buff_##name##_long_double(in1, in2, out, count, dtype, device, stream, module); \
                 break; \
         } \
     }

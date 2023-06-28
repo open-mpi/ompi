@@ -56,6 +56,7 @@ typedef struct {
     hipCtx_t *ro_ctx;
 #endif // 0
     int *ro_max_threads_per_block;
+    int *ro_max_blocks;
     hipDevice_t *ro_devices;
     int ro_num_devices;
 } ompi_op_rocm_component_t;

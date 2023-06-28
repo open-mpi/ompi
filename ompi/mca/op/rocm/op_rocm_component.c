@@ -59,6 +59,7 @@ ompi_op_rocm_component_t mca_op_rocm_component = {
         .opc_op_query = rocm_component_op_query,
     },
     .ro_max_threads_per_block = NULL,
+    .ro_max_blocks = NULL,
     .ro_devices = NULL,
     .ro_num_devices  = 0,
 };
@@ -92,6 +93,8 @@ static int rocm_component_close(void)
         //hipStreamDestroy(mca_op_rocm_component.ro_stream);
         free(mca_op_rocm_component.ro_max_threads_per_block);
         mca_op_rocm_component.ro_max_threads_per_block = NULL;
+        free(mca_op_rocm_component.ro_max_blocks);
+        mca_op_rocm_component.ro_max_blocks = NULL;
         free(mca_op_rocm_component.ro_devices);
         mca_op_rocm_component.ro_devices = NULL;
         mca_op_rocm_component.ro_num_devices = 0;
@@ -129,29 +132,25 @@ rocm_component_init_query(bool enable_progress_threads,
     CHECK(hipGetDeviceCount, (&num_devices));
     mca_op_rocm_component.ro_num_devices = num_devices;
     mca_op_rocm_component.ro_devices = (hipDevice_t*)malloc(num_devices*sizeof(hipDevice_t));
-#if 0
-    mca_op_rocm_component.ro_ctx = (hipCtx_t*)malloc(num_devices*sizeof(hipCtx_t));
-#endif // 0
     mca_op_rocm_component.ro_max_threads_per_block = (int*)malloc(num_devices*sizeof(int));
+    mca_op_rocm_component.ro_max_blocks = (int*)malloc(num_devices*sizeof(int));
     for (int i = 0; i < num_devices; ++i) {
         CHECK(hipDeviceGet, (&mca_op_rocm_component.ro_devices[i], i));
-#if 0
-        rc = hipCtxCreate(&mca_op_rocm_component.ro_ctx[i],
-                         0, mca_op_rocm_component.ro_devices[i]);
-        if (hipSuccess != rc) {
-            CHECK(hipDevicePrimaryCtxRetain,
-                  (&mca_op_rocm_component.ro_ctx[i], mca_op_rocm_component.ro_devices[i]));
-        }
-#endif // 0
         rc = hipDeviceGetAttribute(&mca_op_rocm_component.ro_max_threads_per_block[i],
-                                  hipDeviceAttributeMaxThreadsPerBlock,
+                                  hipDeviceAttributeMaxBlockDimX,
                                   mca_op_rocm_component.ro_devices[i]);
         if (hipSuccess != rc) {
             /* fall-back to value that should work on every device */
             mca_op_rocm_component.ro_max_threads_per_block[i] = 512;
         }
-        //TODO
-        printf("OUTPUT - nthreads: %d\n", mca_op_rocm_component.ro_max_threads_per_block[i]);
+
+        rc = hipDeviceGetAttribute(&mca_op_rocm_component.ro_max_blocks[i],
+                                  hipDeviceAttributeMaxGridDimX,
+                                  mca_op_rocm_component.ro_devices[i]);
+        if (hipSuccess != rc) {
+            /* we'll try to max out the blocks */
+            mca_op_rocm_component.ro_max_blocks[i] = 512;
+        }
     }
 
 #if 0

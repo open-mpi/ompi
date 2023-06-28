@@ -28,18 +28,20 @@
 
 BEGIN_C_DECLS
 
-#define OP_FUNC_SIG(name, type_name, type, op)                                               \
-    void ompi_op_cuda_2buff_##name##_##type_name##_submit(const type *in,                  \
-                                                   type *inout,                     \
-                                                   int count,                      \
-                                                   int threads_per_block,           \
+#define OP_FUNC_SIG(name, type_name, type, op)                              \
+    void ompi_op_cuda_2buff_##name##_##type_name##_submit(const type *in,   \
+                                                   type *inout,             \
+                                                   int count,               \
+                                                   int threads_per_block,   \
+                                                   int max_blocks,          \
                                                    CUstream stream);
 
-#define FUNC_FUNC_SIG(name, type_name, type)                                            \
-    void ompi_op_cuda_2buff_##name##_##type_name##_submit(const type *in,                  \
-                                                   type *inout,                     \
-                                                   int count,                      \
-                                                   int threads_per_block,           \
+#define FUNC_FUNC_SIG(name, type_name, type)                                \
+    void ompi_op_cuda_2buff_##name##_##type_name##_submit(const type *in,   \
+                                                   type *inout,             \
+                                                   int count,               \
+                                                   int threads_per_block,   \
+                                                   int max_blocks,          \
                                                    CUstream stream);
 
 /*
@@ -56,10 +58,11 @@ BEGIN_C_DECLS
   } ompi_op_predefined_##type_name##_t;
 
 #define LOC_FUNC_SIG(name, type_name, op) \
-    void ompi_op_cuda_2buff_##name##_##type_name##_submit(const ompi_op_predefined_##type_name##_t *a, \
-                                            ompi_op_predefined_##type_name##_t *b,    \
-                                            int count,                                   \
-                                            int threads_per_block,                        \
+    void ompi_op_cuda_2buff_##name##_##type_name##_submit(const ompi_op_predefined_##type_name##_t *a,  \
+                                            ompi_op_predefined_##type_name##_t *b,                      \
+                                            int count,                                                  \
+                                            int threads_per_block,                                      \
+                                            int max_blocks,                                             \
                                             CUstream stream);
 
 /*************************************************************************
@@ -369,28 +372,31 @@ LOC_FUNC_SIG(minloc, long_double_int, <)
 
 
 
-#define OP_FUNC_3BUF_SIG(name, type_name, type, op)                                               \
+#define OP_FUNC_3BUF_SIG(name, type_name, type, op)                                         \
     void ompi_op_cuda_3buff_##name##_##type_name##_submit(const type *in1,                  \
                                                           const type *in2,                  \
-                                                          type *inout,                     \
-                                                          int count,                      \
-                                                          int threads_per_block,           \
+                                                          type *inout,                      \
+                                                          int count,                        \
+                                                          int threads_per_block,            \
+                                                          int max_blocks,                   \
                                                           CUstream stream);
 
-#define FUNC_FUNC_3BUF_SIG(name, type_name, type)                                            \
+#define FUNC_FUNC_3BUF_SIG(name, type_name, type)                                           \
     void ompi_op_cuda_3buff_##name##_##type_name##_submit(const type *in1,                  \
                                                           const type *in2,                  \
-                                                          type *inout,                     \
-                                                          int count,                      \
-                                                          int threads_per_block,           \
+                                                          type *inout,                      \
+                                                          int count,                        \
+                                                          int threads_per_block,            \
+                                                          int max_blocks,                   \
                                                           CUstream stream);
 
 #define LOC_FUNC_3BUF_SIG(name, type_name, op) \
     void ompi_op_cuda_3buff_##name##_##type_name##_submit(const ompi_op_predefined_##type_name##_t *a1, \
                                                           const ompi_op_predefined_##type_name##_t *a2, \
-                                                          ompi_op_predefined_##type_name##_t *b,    \
-                                                          int count,                                   \
+                                                          ompi_op_predefined_##type_name##_t *b,        \
+                                                          int count,                                    \
                                                           int threads_per_block,                        \
+                                                          int max_blocks,                               \
                                                           CUstream stream);
 
 

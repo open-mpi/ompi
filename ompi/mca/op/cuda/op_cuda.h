@@ -56,6 +56,7 @@ typedef struct {
     CUcontext *cu_ctx;
 #endif // 0
     int *cu_max_threads_per_block;
+    int *cu_max_blocks;
     CUdevice *cu_devices;
     int cu_num_devices;
 } ompi_op_cuda_component_t;

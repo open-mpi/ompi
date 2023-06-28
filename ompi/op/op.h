@@ -551,6 +551,7 @@ static inline bool ompi_op_supports_device(const ompi_op_t * op, const ompi_data
 static inline void ompi_op_reduce_stream(ompi_op_t * op, void *source,
                                          void *target, size_t full_count,
                                          ompi_datatype_t * dtype,
+                                         int device,
                                          opal_accelerator_stream_t *stream)
 {
     MPI_Fint f_dtype, f_count;
@@ -580,7 +581,7 @@ static inline void ompi_op_reduce_stream(ompi_op_t * op, void *source,
             }
             shift = done_count * ext;
             // Recurse one level in iterations of 'int'
-            ompi_op_reduce_stream(op, (char*)source + shift, (char*)target + shift, iter_count, dtype, stream);
+            ompi_op_reduce_stream(op, (char*)source + shift, (char*)target + shift, iter_count, dtype, device, stream);
             done_count += iter_count;
         }
         return;
@@ -610,17 +611,31 @@ static inline void ompi_op_reduce_stream(ompi_op_t * op, void *source,
      */
 
     bool use_device_op = false;
-    int source_dev_id, target_dev_id;
-    uint64_t source_flags, target_flags;
-    int target_check_addr = opal_accelerator.check_addr(target, &target_dev_id, &target_flags);
-    int source_check_addr = opal_accelerator.check_addr(source, &source_dev_id, &source_flags);
     /* check if either of the buffers is on a device and if so make sure we can
      * access handle it properly */
-    if (target_check_addr > 0 || source_check_addr > 0) {
-        if (ompi_datatype_is_predefined(dtype) &&
+    if (device != MCA_ACCELERATOR_NO_DEVICE_ID &&
+        ompi_datatype_is_predefined(dtype) &&
+        0 != (op->o_flags & OMPI_OP_FLAGS_INTRINSIC) &&
+        NULL != op->o_device_op) {
+        use_device_op = true;
+    }
+
+    if (!use_device_op) {
+        /* query the accelerator for whether we can still execute */
+        int source_dev_id, target_dev_id;
+        uint64_t source_flags, target_flags;
+        int target_check_addr = opal_accelerator.check_addr(target, &target_dev_id, &target_flags);
+        int source_check_addr = opal_accelerator.check_addr(source, &source_dev_id, &source_flags);
+        if (target_check_addr > 0 &&
+            source_check_addr > 0 &&
+            ompi_datatype_is_predefined(dtype) &&
             0 != (op->o_flags & OMPI_OP_FLAGS_INTRINSIC) &&
             NULL != op->o_device_op) {
             use_device_op = true;
+            if (target_dev_id == source_dev_id) {
+                /* both inputs are on the same device; if not the op will take of that */
+                device = target_dev_id;
+            }
         } else {
             /* check whether we can access the memory from the host */
             if ((target_check_addr == 0 || (target_flags & MCA_ACCELERATOR_FLAGS_UNIFIED_MEMORY)) &&
@@ -644,16 +659,17 @@ static inline void ompi_op_reduce_stream(ompi_op_t * op, void *source,
         }
         if (use_device_op) {
             if (NULL == op->o_device_op) {
+                fprintf(stderr, "no suitable device op module found!");
                 abort(); // TODO: be more graceful!
             }
             opal_accelerator_stream_t *actual_stream = stream;
             bool flush_stream = false;
             if (NULL == stream) {
-                opal_accelerator.get_default_stream(target_dev_id, &actual_stream);
+                opal_accelerator.get_default_stream(device, &actual_stream);
                 flush_stream = true;
             }
             op->o_device_op->do_intrinsic.fns[dtype_id](source, target,
-                                                        &count, &dtype, actual_stream,
+                                                        &count, &dtype, device, actual_stream,
                                                         op->o_device_op->do_intrinsic.modules[dtype_id]);
             if (flush_stream) {
                 opal_accelerator.wait_stream(actual_stream);
@@ -687,7 +703,7 @@ static inline void ompi_op_reduce(ompi_op_t * op, void *source,
                                   void *target, size_t full_count,
                                   ompi_datatype_t * dtype)
 {
-    ompi_op_reduce_stream(op, source, target, full_count, dtype, NULL);
+    ompi_op_reduce_stream(op, source, target, full_count, dtype, MCA_ACCELERATOR_NO_DEVICE_ID, NULL);
 }
 
 static inline void ompi_3buff_op_user (ompi_op_t *op, void * restrict source1, void * restrict source2,
@@ -723,11 +739,13 @@ static inline void ompi_3buff_op_user (ompi_op_t *op, void * restrict source1, v
 static inline void ompi_3buff_op_reduce_stream(ompi_op_t * op, void *source1,
                                                void *source2, void *target,
                                                int count, ompi_datatype_t * dtype,
+                                               int device,
                                                opal_accelerator_stream_t *stream)
 {
     void *restrict src1;
     void *restrict src2;
     void *restrict tgt;
+    bool use_device_op = false;
     src1 = source1;
     src2 = source2;
     tgt = target;
@@ -738,28 +756,37 @@ static inline void ompi_3buff_op_reduce_stream(ompi_op_t * op, void *source1,
         return;
     }
 
-    bool use_device_op = false;
-    int source1_dev_id, source2_dev_id, target_dev_id;
-    uint64_t source1_flags, source2_flags, target_flags;
-    int target_check_addr = opal_accelerator.check_addr(target, &target_dev_id, &target_flags);
-    int source1_check_addr = opal_accelerator.check_addr(source1, &source1_dev_id, &source1_flags);
-    int source2_check_addr = opal_accelerator.check_addr(source2, &source2_dev_id, &source2_flags);
-    /* check if either of the buffers is on a device and if so make sure we can
-     * access handle it properly */
-    if (target_check_addr > 0 || source1_check_addr > 0 || source2_check_addr > 0) {
-        if (ompi_datatype_is_predefined(dtype) &&
-            op->o_flags & OMPI_OP_FLAGS_INTRINSIC &&
-            NULL != op->o_device_op) {
-            use_device_op = true;
-        } else {
-            /* check whether we can access the memory from the host */
-            if ((target_check_addr  == 0 || (target_flags  & MCA_ACCELERATOR_FLAGS_UNIFIED_MEMORY)) &&
-                (source1_check_addr == 0 || (source1_flags & MCA_ACCELERATOR_FLAGS_UNIFIED_MEMORY)) &&
-                (source2_check_addr == 0 || (source2_flags & MCA_ACCELERATOR_FLAGS_UNIFIED_MEMORY))) {
-                /* nothing to be done, we won't need device-capable ops */
+    if (device != MCA_ACCELERATOR_NO_DEVICE_ID &&
+        ompi_datatype_is_predefined(dtype) &&
+        op->o_flags & OMPI_OP_FLAGS_INTRINSIC &&
+        NULL != op->o_device_op) {
+        use_device_op = true;
+    }
+
+    if (!use_device_op) {
+        int source1_dev_id, source2_dev_id, target_dev_id;
+        uint64_t source1_flags, source2_flags, target_flags;
+        int target_check_addr = opal_accelerator.check_addr(target, &target_dev_id, &target_flags);
+        int source1_check_addr = opal_accelerator.check_addr(source1, &source1_dev_id, &source1_flags);
+        int source2_check_addr = opal_accelerator.check_addr(source2, &source2_dev_id, &source2_flags);
+        /* check if either of the buffers is on a device and if so make sure we can
+        * access handle it properly */
+        if (target_check_addr > 0 || source1_check_addr > 0 || source2_check_addr > 0) {
+            if (ompi_datatype_is_predefined(dtype) &&
+                op->o_flags & OMPI_OP_FLAGS_INTRINSIC &&
+                NULL != op->o_device_op) {
+                use_device_op = true;
+                device = target_dev_id;
             } else {
-                fprintf(stderr, "3buff op: no suitable op module found for device memory!\n");
-                abort();
+                /* check whether we can access the memory from the host */
+                if ((target_check_addr  == 0 || (target_flags  & MCA_ACCELERATOR_FLAGS_UNIFIED_MEMORY)) &&
+                    (source1_check_addr == 0 || (source1_flags & MCA_ACCELERATOR_FLAGS_UNIFIED_MEMORY)) &&
+                    (source2_check_addr == 0 || (source2_flags & MCA_ACCELERATOR_FLAGS_UNIFIED_MEMORY))) {
+                    /* nothing to be done, we won't need device-capable ops */
+                } else {
+                    fprintf(stderr, "3buff op: no suitable op module found for device memory!\n");
+                    abort();
+                }
             }
         }
     }
@@ -780,11 +807,11 @@ static inline void ompi_3buff_op_reduce_stream(ompi_op_t * op, void *source1,
             opal_accelerator_stream_t *actual_stream = stream;
             bool flush_stream = false;
             if (NULL == stream) {
-                opal_accelerator.get_default_stream(target_dev_id, &actual_stream);
+                opal_accelerator.get_default_stream(device, &actual_stream);
                 flush_stream = true;
             }
             op->o_device_op->do_3buff_intrinsic.fns[dtype_id](source1, source2, target,
-                                                              &count, &dtype, actual_stream,
+                                                              &count, &dtype, device, actual_stream,
                                                               op->o_device_op->do_3buff_intrinsic.modules[dtype_id]);
             if (flush_stream) {
                 opal_accelerator.wait_stream(actual_stream);
@@ -810,7 +837,7 @@ static inline void ompi_3buff_op_reduce(ompi_op_t * op, void *source1,
     tgt = target;
 
     if (OPAL_LIKELY(ompi_op_is_intrinsic (op))) {
-        ompi_3buff_op_reduce_stream(op, source1, source2, target, count, dtype, NULL);
+        ompi_3buff_op_reduce_stream(op, source1, source2, target, count, dtype, MCA_ACCELERATOR_NO_DEVICE_ID, NULL);
 #if 0
         op->o_3buff_intrinsic.fns[ompi_op_ddt_map[dtype->id]](src1, src2,
                                                               tgt, &count,

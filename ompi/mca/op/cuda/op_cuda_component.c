@@ -59,6 +59,7 @@ ompi_op_cuda_component_t mca_op_cuda_component = {
         .opc_op_query = cuda_component_op_query,
     },
     .cu_max_threads_per_block = NULL,
+    .cu_max_blocks = NULL,
     .cu_devices = NULL,
     .cu_num_devices  = 0,
 };
@@ -92,6 +93,8 @@ static int cuda_component_close(void)
         //cuStreamDestroy(mca_op_cuda_component.cu_stream);
         free(mca_op_cuda_component.cu_max_threads_per_block);
         mca_op_cuda_component.cu_max_threads_per_block = NULL;
+        free(mca_op_cuda_component.cu_max_blocks);
+        mca_op_cuda_component.cu_max_blocks = NULL;
         free(mca_op_cuda_component.cu_devices);
         mca_op_cuda_component.cu_devices = NULL;
         mca_op_cuda_component.cu_num_devices = 0;
@@ -127,26 +130,23 @@ cuda_component_init_query(bool enable_progress_threads,
     CHECK(cuDeviceGetCount, (&num_devices));
     mca_op_cuda_component.cu_num_devices = num_devices;
     mca_op_cuda_component.cu_devices = (CUdevice*)malloc(num_devices*sizeof(CUdevice));
-#if 0
-    mca_op_cuda_component.cu_ctx = (CUcontext*)malloc(num_devices*sizeof(CUcontext));
-#endif // 0
     mca_op_cuda_component.cu_max_threads_per_block = (int*)malloc(num_devices*sizeof(int));
+    mca_op_cuda_component.cu_max_blocks = (int*)malloc(num_devices*sizeof(int));
     for (int i = 0; i < num_devices; ++i) {
         CHECK(cuDeviceGet, (&mca_op_cuda_component.cu_devices[i], i));
-#if 0
-        rc = cuCtxCreate(&mca_op_cuda_component.cu_ctx[i],
-                         0, mca_op_cuda_component.cu_devices[i]);
-        if (CUDA_SUCCESS != rc) {
-            CHECK(cuDevicePrimaryCtxRetain,
-                  (&mca_op_cuda_component.cu_ctx[i], mca_op_cuda_component.cu_devices[i]));
-        }
-#endif // 0
         rc = cuDeviceGetAttribute(&mca_op_cuda_component.cu_max_threads_per_block[i],
-                                  CU_DEVICE_ATTRIBUTE_MAX_THREADS_PER_BLOCK,
+                                  CU_DEVICE_ATTRIBUTE_MAX_BLOCK_DIM_X,
                                   mca_op_cuda_component.cu_devices[i]);
         if (CUDA_SUCCESS != rc) {
             /* fall-back to value that should work on every device */
             mca_op_cuda_component.cu_max_threads_per_block[i] = 512;
+        }
+        rc = cuDeviceGetAttribute(&mca_op_cuda_component.cu_max_blocks[i],
+                                  CU_DEVICE_ATTRIBUTE_MAX_GRID_DIM_X,
+                                  mca_op_cuda_component.cu_devices[i]);
+        if (CUDA_SUCCESS != rc) {
+            /* fall-back to value that should work on every device */
+            mca_op_cuda_component.cu_max_blocks[i] = 512;
         }
     }
 

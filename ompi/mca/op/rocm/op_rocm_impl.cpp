@@ -18,6 +18,9 @@
 
 #include "op_rocm_impl.h"
 
+//#define DO_NOT_USE_INTRINSICS 1
+#define USE_VECTORS 1
+
 /* TODO: missing support for
  * - short float (conditional on whether short float is available)
  * - complex
@@ -26,9 +29,13 @@
 
 #define THREADS_PER_BLOCK 512
 
+#define VECLEN 2
+#define VECTYPE(t) t##VECLEN
+
 #define OP_FUNC(name, type_name, type, op)                                                          \
     static __global__ void                                                                          \
-    ompi_op_rocm_2buff_##name##_##type_name##_kernel(const type *in, type *inout, int n) {          \
+    ompi_op_rocm_2buff_##name##_##type_name##_kernel(const type *__restrict__ in,                   \
+                                                     type *__restrict__ inout, int n) {             \
         const int index = blockIdx.x * blockDim.x + threadIdx.x;                                    \
         const int stride = blockDim.x * gridDim.x;                                                  \
         for (int i = index; i < n; i += stride) {                                                   \
@@ -39,20 +46,58 @@
                                                    type *inout,                                     \
                                                    int count,                                       \
                                                    int threads_per_block,                           \
-                                                   hipStream_t stream) {                               \
-        int threads = threads_per_block;                                                            \
-        int blocks  = (count + threads-1) / threads;                                                \
+                                                   int max_blocks,                                  \
+                                                   hipStream_t stream) {                            \
+        int threads = min(threads_per_block, count);                                                \
+        int blocks  = min((count + threads-1) / threads, max_blocks);                               \
         int n = count;                                                                              \
-        hipStream_t s = stream;                                                                        \
-        hipLaunchKernelGGL(ompi_op_rocm_2buff_##name##_##type_name##_kernel, \
-                dim3(blocks), dim3(threads), 0, s,\
-                in, inout, n);  \
+        hipStream_t s = stream;                                                                     \
+        hipLaunchKernelGGL(ompi_op_rocm_2buff_##name##_##type_name##_kernel,                        \
+                dim3(blocks), dim3(threads), 0, s,                                                  \
+                in, inout, n);                                                                      \
     }
+
+#if defined(USE_VECTORS)
+#define OPV_FUNC(name, type_name, type, vtype, vlen, op)                                            \
+    static __global__ void                                                                          \
+    ompi_op_rocm_2buff_##name##_##type_name##_kernel(const type *__restrict__ in,                   \
+                                                     type *__restrict__ inout, int n) {             \
+        const int index = blockIdx.x * blockDim.x + threadIdx.x;                                    \
+        const int stride = blockDim.x * gridDim.x;                                                  \
+        for (int i = index; i < n/vlen; i += stride) {                                              \
+            ((vtype*)inout)[i] = ((vtype*)inout)[i] op ((vtype*)in)[i];                             \
+        }                                                                                           \
+        int remainder = n%vlen;                                                                     \
+        if (index == (n/vlen) && remainder != 0) {                                                  \
+            while(remainder) {                                                                      \
+                int idx = n - remainder--;                                                          \
+                inout[idx] = inout[idx] op in[idx];                                                 \
+            }                                                                                       \
+        }                                                                                           \
+    }                                                                                               \
+    void ompi_op_rocm_2buff_##name##_##type_name##_submit(const type *in,                           \
+                                                   type *inout,                                     \
+                                                   int count,                                       \
+                                                   int threads_per_block,                           \
+                                                   int max_blocks,                                  \
+                                                   hipStream_t stream) {                            \
+        int threads = min(threads_per_block, (count/vlen));                                         \
+        int blocks  = min(((count/vlen) + threads-1) / threads, max_blocks);                        \
+        int n = count;                                                                              \
+        hipStream_t s = stream;                                                                     \
+        hipLaunchKernelGGL(ompi_op_rocm_2buff_##name##_##type_name##_kernel,                        \
+                dim3(blocks), dim3(threads), 0, s,                                                  \
+                in, inout, n);                                                                      \
+    }
+#else // USE_VECTORS
+#define OPV_FUNC(name, type_name, type, vtype, vlen, op) OP_FUNC(name, type_name, type, op)
+#endif // USE_VECTORS
 
 
 #define FUNC_FUNC(name, type_name, type)                                                            \
     static __global__ void                                                                          \
-    ompi_op_rocm_2buff_##name##_##type_name##_kernel(const type *in, type *inout, int n) {          \
+    ompi_op_rocm_2buff_##name##_##type_name##_kernel(const type *__restrict__ in,                   \
+                                                     type *__restrict__ inout, int n) {             \
         const int index = blockIdx.x * blockDim.x + threadIdx.x;                                    \
         const int stride = blockDim.x * gridDim.x;                                                  \
         for (int i = index; i < n; i += stride) {                                                   \
@@ -64,14 +109,15 @@
                                               type *inout,                                          \
                                               int count,                                            \
                                               int threads_per_block,                                \
-                                              hipStream_t stream) {                                    \
-        int threads = threads_per_block;                                                            \
-        int blocks  = (count + threads-1) / threads;                                                \
+                                              int max_blocks,                                       \
+                                              hipStream_t stream) {                                 \
+        int threads = min(threads_per_block, count);                                                \
+        int blocks  = min((count + threads-1) / threads, max_blocks);                               \
         int n = count;                                                                              \
-        hipStream_t s = stream;                                                                        \
-        hipLaunchKernelGGL(ompi_op_rocm_2buff_##name##_##type_name##_kernel, \
-                dim3(blocks), dim3(threads), 0, s, \
-                in, inout, n);  \
+        hipStream_t s = stream;                                                                     \
+        hipLaunchKernelGGL(ompi_op_rocm_2buff_##name##_##type_name##_kernel,                        \
+                dim3(blocks), dim3(threads), 0, s,                                                  \
+                in, inout, n);                                                                      \
     }
 
 /*
@@ -84,8 +130,8 @@
 
 #define LOC_FUNC(name, type_name, op)                                                               \
     static __global__ void                                                                          \
-    ompi_op_rocm_2buff_##name##_##type_name##_kernel(const ompi_op_predefined_##type_name##_t *in,  \
-                                                     ompi_op_predefined_##type_name##_t *inout,     \
+    ompi_op_rocm_2buff_##name##_##type_name##_kernel(const ompi_op_predefined_##type_name##_t *__restrict__ in,  \
+                                                     ompi_op_predefined_##type_name##_t *__restrict__ inout,     \
                                                      int n)                                         \
     {                                                                                               \
         const int index = blockIdx.x * blockDim.x + threadIdx.x;                                    \
@@ -106,13 +152,14 @@
                                             ompi_op_predefined_##type_name##_t *b,                  \
                                             int count,                                              \
                                             int threads_per_block,                                  \
-                                            hipStream_t stream) {                                      \
-        int threads = threads_per_block;                                                            \
-        int blocks  = (count + threads-1) / threads;                                                \
-        hipStream_t s = stream;                                                                        \
-        hipLaunchKernelGGL(ompi_op_rocm_2buff_##name##_##type_name##_kernel, \
-                dim3(blocks), dim3(threads), 0, s, \
-                a, b, count);   \
+                                            int max_blocks,                                         \
+                                            hipStream_t stream) {                                   \
+        int threads = min(threads_per_block, count);                                                \
+        int blocks  = min((count + threads-1) / threads, max_blocks);                               \
+        hipStream_t s = stream;                                                                     \
+        hipLaunchKernelGGL(ompi_op_rocm_2buff_##name##_##type_name##_kernel,                        \
+                dim3(blocks), dim3(threads), 0, s,                                                  \
+                a, b, count);                                                                       \
     }
 
 /*************************************************************************
@@ -120,7 +167,11 @@
  *************************************************************************/
 
 #undef current_func
+#if defined(DO_NOT_USE_INTRINSICS)
 #define current_func(a, b) ((a) > (b) ? (a) : (b))
+#else  // DO_NOT_USE_INTRINSICS
+#define current_func(a, b) max(a, b)
+#endif // DO_NOT_USE_INTRINSICS
 /* C integer */
 FUNC_FUNC(max,   int8_t,   int8_t)
 FUNC_FUNC(max,  uint8_t,  uint8_t)
@@ -133,16 +184,31 @@ FUNC_FUNC(max, uint64_t, uint64_t)
 FUNC_FUNC(max,  long,  long)
 FUNC_FUNC(max,  unsigned_long, unsigned long)
 
+#if !defined(DO_NOT_USE_INTRINSICS)
+#undef current_func
+#define current_func(a, b) fmaxf(a, b)
+#endif // DO_NOT_USE_INTRINSICS
 FUNC_FUNC(max, float, float)
+
+#if !defined(DO_NOT_USE_INTRINSICS)
+#undef current_func
+#define current_func(a, b) fmax(a, b)
+#endif // DO_NOT_USE_INTRINSICS
 FUNC_FUNC(max, double, double)
+
+#undef current_func
+#define current_func(a, b) ((a) > (b) ? (a) : (b))
 FUNC_FUNC(max, long_double, long double)
 
 /*************************************************************************
  * Min
  *************************************************************************/
-
 #undef current_func
+#if defined(DO_NOT_USE_INTRINSICS)
 #define current_func(a, b) ((a) < (b) ? (a) : (b))
+#else  // DO_NOT_USE_INTRINSICS
+#define current_func(a, b) min(a, b)
+#endif // DO_NOT_USE_INTRINSICS
 /* C integer */
 FUNC_FUNC(min,   int8_t,   int8_t)
 FUNC_FUNC(min,  uint8_t,  uint8_t)
@@ -155,30 +221,42 @@ FUNC_FUNC(min, uint64_t, uint64_t)
 FUNC_FUNC(min,  long,  long)
 FUNC_FUNC(min,  unsigned_long, unsigned long)
 
-
+#if !defined(DO_NOT_USE_INTRINSICS)
+#undef current_func
+#define current_func(a, b) fminf(a, b)
+#endif // DO_NOT_USE_INTRINSICS
 FUNC_FUNC(min, float, float)
+
+#if !defined(DO_NOT_USE_INTRINSICS)
+#undef current_func
+#define current_func(a, b) fmin(a, b)
+#endif // DO_NOT_USE_INTRINSICS
 FUNC_FUNC(min, double, double)
+
+#undef current_func
+#define current_func(a, b) ((a) < (b) ? (a) : (b))
 FUNC_FUNC(min, long_double, long double)
+
 
 /*************************************************************************
  * Sum
  *************************************************************************/
 
 /* C integer */
-OP_FUNC(sum,   int8_t,   int8_t, +=)
-OP_FUNC(sum,  uint8_t,  uint8_t, +=)
-OP_FUNC(sum,  int16_t,  int16_t, +=)
-OP_FUNC(sum, uint16_t, uint16_t, +=)
-OP_FUNC(sum,  int32_t,  int32_t, +=)
-OP_FUNC(sum, uint32_t, uint32_t, +=)
-OP_FUNC(sum,  int64_t,  int64_t, +=)
-OP_FUNC(sum, uint64_t, uint64_t, +=)
-OP_FUNC(sum,  long,  long, +=)
-OP_FUNC(sum,  unsigned_long, unsigned long, +=)
+OP_FUNC(sum,   int8_t,   int8_t, +)
+OP_FUNC(sum,  uint8_t,  uint8_t, +)
+OP_FUNC(sum,  int16_t,  int16_t, +)
+OP_FUNC(sum, uint16_t, uint16_t, +)
+OP_FUNC(sum,  int32_t,  int32_t, +)
+OP_FUNC(sum, uint32_t, uint32_t, +)
+OP_FUNC(sum,  int64_t,  int64_t, +)
+OP_FUNC(sum, uint64_t, uint64_t, +)
+OP_FUNC(sum,  long,  long, +)
+OP_FUNC(sum,  unsigned_long, unsigned long, +)
 
-OP_FUNC(sum, float, float, +=)
-OP_FUNC(sum, double, double, +=)
-OP_FUNC(sum, long_double, long double, +=)
+OPV_FUNC(sum, float, float, float4, 4, +)
+OPV_FUNC(sum, double, double, double4, 4, +)
+OP_FUNC(sum, long_double, long double, +)
 
 /* Complex */
 #if 0
@@ -201,20 +279,20 @@ FUNC_FUNC(sum, c_double_complex, hipDoubleComplex)
  *************************************************************************/
 
 /* C integer */
-OP_FUNC(prod,   int8_t,   int8_t, *=)
-OP_FUNC(prod,  uint8_t,  uint8_t, *=)
-OP_FUNC(prod,  int16_t,  int16_t, *=)
-OP_FUNC(prod, uint16_t, uint16_t, *=)
-OP_FUNC(prod,  int32_t,  int32_t, *=)
-OP_FUNC(prod, uint32_t, uint32_t, *=)
-OP_FUNC(prod,  int64_t,  int64_t, *=)
-OP_FUNC(prod, uint64_t, uint64_t, *=)
-OP_FUNC(prod,  long,  long, *=)
-OP_FUNC(prod,  unsigned_long, unsigned long, *=)
+OP_FUNC(prod,   int8_t,   int8_t, *)
+OP_FUNC(prod,  uint8_t,  uint8_t, *)
+OP_FUNC(prod,  int16_t,  int16_t, *)
+OP_FUNC(prod, uint16_t, uint16_t, *)
+OP_FUNC(prod,  int32_t,  int32_t, *)
+OP_FUNC(prod, uint32_t, uint32_t, *)
+OP_FUNC(prod,  int64_t,  int64_t, *)
+OP_FUNC(prod, uint64_t, uint64_t, *)
+OP_FUNC(prod,  long,  long, *)
+OP_FUNC(prod,  unsigned_long, unsigned long, *)
 
-OP_FUNC(prod, float, float, *=)
-OP_FUNC(prod, double, double, *=)
-OP_FUNC(prod, long_double, long double, *=)
+OPV_FUNC(prod, float, float, float4, 4, *)
+OPV_FUNC(prod, double, double, double4, 4, *)
+OP_FUNC(prod, long_double, long double, *)
 
 /* Complex */
 #if 0
@@ -387,8 +465,9 @@ LOC_FUNC(minloc, long_double_int, <)
  */
 #define OP_FUNC_3BUF(name, type_name, type, op)                                                     \
     static __global__ void                                                                          \
-    ompi_op_rocm_3buff_##name##_##type_name##_kernel(const type *in1, const type* in2,              \
-                                                     type *out, int n) {                            \
+    ompi_op_rocm_3buff_##name##_##type_name##_kernel(const type *__restrict__ in1,                  \
+                                                     const type *__restrict__ in2,                  \
+                                                     type *__restrict__ out, int n) {               \
         const int index = blockIdx.x * blockDim.x + threadIdx.x;                                    \
         const int stride = blockDim.x * gridDim.x;                                                  \
         for (int i = index; i < n; i += stride) {                                                   \
@@ -398,12 +477,13 @@ LOC_FUNC(minloc, long_double_int, <)
     void ompi_op_rocm_3buff_##name##_##type_name##_submit(const type *in1, const type *in2,         \
                                                           type *out, int count,                     \
                                                           int threads_per_block,                    \
-                                                          hipStream_t stream) {                        \
-        int threads = threads_per_block;                                                            \
-        int blocks  = (count+threads-1) / threads;                                                  \
-        hipLaunchKernelGGL(ompi_op_rocm_3buff_##name##_##type_name##_kernel, \
-                dim3(blocks), dim3(threads), 0, stream, \
-                in1, in2, out, count);      \
+                                                          int max_blocks,                           \
+                                                          hipStream_t stream) {                     \
+        int threads = min(threads_per_block, count);                                                \
+        int blocks  = min((count + threads-1) / threads, max_blocks);                               \
+        hipLaunchKernelGGL(ompi_op_rocm_3buff_##name##_##type_name##_kernel,                        \
+                dim3(blocks), dim3(threads), 0, stream,                                             \
+                in1, in2, out, count);                                                              \
     }
 
 
@@ -416,8 +496,9 @@ LOC_FUNC(minloc, long_double_int, <)
  */
 #define FUNC_FUNC_3BUF(name, type_name, type)                                                       \
     static __global__ void                                                                          \
-    ompi_op_rocm_3buff_##name##_##type_name##_kernel(const type *in1, const type *in2,              \
-                                                     type *out, int n) {                            \
+    ompi_op_rocm_3buff_##name##_##type_name##_kernel(const type *__restrict__ in1,                  \
+                                                     const type *__restrict__ in2,                  \
+                                                     type *__restrict__ out, int n) {               \
         const int index = blockIdx.x * blockDim.x + threadIdx.x;                                    \
         const int stride = blockDim.x * gridDim.x;                                                  \
         for (int i = index; i < n; i += stride) {                                                   \
@@ -428,12 +509,13 @@ LOC_FUNC(minloc, long_double_int, <)
     ompi_op_rocm_3buff_##name##_##type_name##_submit(const type *in1, const type *in2,              \
                                                      type *out, int count,                          \
                                                      int threads_per_block,                         \
-                                                     hipStream_t stream) {                             \
-        int threads = threads_per_block;                                                            \
-        int blocks  = (count+threads-1) / threads;                                                  \
-        hipLaunchKernelGGL(ompi_op_rocm_3buff_##name##_##type_name##_kernel, \
-                dim3(blocks), dim3(threads), 0, stream,  \
-                in1, in2, out, count);      \
+                                                     int max_blocks,                                \
+                                                     hipStream_t stream) {                          \
+        int threads = min(threads_per_block, count);                                                \
+        int blocks  = min((count + threads-1) / threads, max_blocks);                               \
+        hipLaunchKernelGGL(ompi_op_rocm_3buff_##name##_##type_name##_kernel,                        \
+                dim3(blocks), dim3(threads), 0, stream,                                             \
+                in1, in2, out, count);                                                              \
     }
 
 /*
@@ -453,9 +535,9 @@ LOC_FUNC(minloc, long_double_int, <)
 
 #define LOC_FUNC_3BUF(name, type_name, op)                                                          \
     static __global__ void                                                                          \
-    ompi_op_rocm_3buff_##name##_##type_name##_kernel(const ompi_op_predefined_##type_name##_t *in1, \
-                                                     const ompi_op_predefined_##type_name##_t *in2, \
-                                                     ompi_op_predefined_##type_name##_t *out,       \
+    ompi_op_rocm_3buff_##name##_##type_name##_kernel(const ompi_op_predefined_##type_name##_t *__restrict__ in1, \
+                                                     const ompi_op_predefined_##type_name##_t *__restrict__ in2, \
+                                                     ompi_op_predefined_##type_name##_t *__restrict__ out,       \
                                                      int n)                                         \
     {                                                                                               \
         const int index = blockIdx.x * blockDim.x + threadIdx.x;                                    \
@@ -477,18 +559,19 @@ LOC_FUNC(minloc, long_double_int, <)
         }                                                                                           \
     }                                                                                               \
     void                                                                                            \
-    ompi_op_rocm_3buff_##name##_##type_name##_submit(const ompi_op_predefined_##type_name##_t *in1, \
-                                                     const ompi_op_predefined_##type_name##_t *in2, \
-                                                     ompi_op_predefined_##type_name##_t *out,       \
+    ompi_op_rocm_3buff_##name##_##type_name##_submit(const ompi_op_predefined_##type_name##_t *__restrict__ in1, \
+                                                     const ompi_op_predefined_##type_name##_t *__restrict__ in2, \
+                                                     ompi_op_predefined_##type_name##_t *__restrict__ out,       \
                                                      int count,                                     \
                                                      int threads_per_block,                         \
-                                                     hipStream_t stream)                               \
+                                                     int max_blocks,                                \
+                                                     hipStream_t stream)                            \
     {                                                                                               \
-        int threads = threads_per_block;                                                            \
-        int blocks  = (count+threads-1) / threads;                                                  \
-        hipLaunchKernelGGL(ompi_op_rocm_3buff_##name##_##type_name##_kernel,   \
-                dim3(blocks), dim3(threads), 0, stream, \
-                in1, in2, out, count);      \
+        int threads = min(threads_per_block, count);                                                \
+        int blocks  = min((count + threads-1) / threads, max_blocks);                               \
+        hipLaunchKernelGGL(ompi_op_rocm_3buff_##name##_##type_name##_kernel,                        \
+                dim3(blocks), dim3(threads), 0, stream,                                             \
+                in1, in2, out, count);                                                              \
     }
 
 

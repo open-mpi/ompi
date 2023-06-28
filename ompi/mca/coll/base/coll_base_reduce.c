@@ -114,7 +114,7 @@ int ompi_coll_base_reduce_generic( const void* sendbuf, void* recvbuf, int origi
 
         /* If this is a non-commutative operation we must copy
            sendbuf to the accumbuf, in order to simplify the loops */
-        
+
         if (!ompi_op_is_commute(op) && MPI_IN_PLACE != sendbuf) {
             ompi_datatype_copy_content_same_ddt(datatype, original_count,
                                                 (char*)accumbuf,

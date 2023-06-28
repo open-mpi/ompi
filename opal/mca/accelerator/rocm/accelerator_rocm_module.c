@@ -112,6 +112,7 @@ static int mca_accelerator_rocm_check_addr (const void *addr, int *dev_id, uint6
             //*flags |= MCA_ACCELERATOR_FLAGS_HOST_ATOMICS;
             /* First access on a device pointer triggers ROCM support lazy initialization. */
             opal_accelerator_rocm_lazy_init();
+            *dev_id = srcAttr.device;
             ret = 1;
 #if HIP_VERSION >= 50731921
         } else if (hipMemoryTypeUnified == srcAttr.type) {
@@ -122,6 +123,7 @@ static int mca_accelerator_rocm_check_addr (const void *addr, int *dev_id, uint6
             //*flags |= MCA_ACCELERATOR_FLAGS_HOST_LDSTR;
             //*flags |= MCA_ACCELERATOR_FLAGS_HOST_ATOMICS;
             ret = 1;
+            *dev_id = srcAttr.device;
         }
     }
 

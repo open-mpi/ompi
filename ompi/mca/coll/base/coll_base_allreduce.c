@@ -241,10 +241,10 @@ ompi_coll_base_allreduce_intra_recursivedoubling(const void *sbuf, void *rbuf,
             if (tmpsend == sbuf) {
                 tmpsend = inplacebuf;
                 /* tmpsend = tmprecv (op) sbuf */
-                ompi_3buff_op_reduce_stream(op, sbuf, tmprecv, tmpsend, count, dtype, stream);
+                ompi_3buff_op_reduce_stream(op, sbuf, tmprecv, tmpsend, count, dtype, op_dev, stream);
             } else {
                 /* tmpsend = tmprecv (op) tmpsend */
-                ompi_op_reduce_stream(op, tmprecv, tmpsend, count, dtype, stream);
+                ompi_op_reduce_stream(op, tmprecv, tmpsend, count, dtype, op_dev, stream);
             }
             newrank = rank >> 1;
         }
@@ -283,14 +283,14 @@ ompi_coll_base_allreduce_intra_recursivedoubling(const void *sbuf, void *rbuf,
             if (tmpsend == sbuf) {
                 /* special case: 1st iteration takes one input from the sbuf */
                 /* tmprecv = sbuf (op) tmprecv */
-                ompi_op_reduce_stream(op, sbuf, tmprecv, count, dtype, stream);
+                ompi_op_reduce_stream(op, sbuf, tmprecv, count, dtype, op_dev, stream);
                 /* send the current recv buffer, and use the tmp buffer to receive */
                 tmpsend = tmprecv;
                 tmprecv = inplacebuf;
             } else if (have_next_iter || tmprecv == recvbuf) {
                 /* All iterations, and the last if tmprecv is the recv buffer */
                 /* tmprecv = tmpsend (op) tmprecv */
-                ompi_op_reduce_stream(op, tmpsend, tmprecv, count, dtype, stream);
+                ompi_op_reduce_stream(op, tmpsend, tmprecv, count, dtype, op_dev, stream);
                 /* swap send and receive buffers */
                 tmpswap = tmprecv;
                 tmprecv = tmpsend;
@@ -299,7 +299,7 @@ ompi_coll_base_allreduce_intra_recursivedoubling(const void *sbuf, void *rbuf,
                 /* Last iteration if tmprecv is not the recv buffer, then tmpsend is */
                 /* Make sure we reduce into the receive buffer
                  * tmpsend = tmprecv (op) tmpsend */
-                ompi_op_reduce_stream(op, tmprecv, tmpsend, count, dtype, stream);
+                ompi_op_reduce_stream(op, tmprecv, tmpsend, count, dtype, op_dev, stream);
             }
         } else {
             if (tmpsend == sbuf) {
@@ -307,18 +307,18 @@ ompi_coll_base_allreduce_intra_recursivedoubling(const void *sbuf, void *rbuf,
                 /* tmpsend = tmprecv (op) sbuf */
                 tmpsend = inplacebuf;
                 if (have_next_iter || tmpsend == recvbuf) {
-                    ompi_3buff_op_reduce_stream(op, tmprecv, sbuf, tmpsend, count, dtype, stream);
+                    ompi_3buff_op_reduce_stream(op, tmprecv, sbuf, tmpsend, count, dtype, op_dev, stream);
                 } else {
-                    ompi_op_reduce_stream(op, sbuf, tmprecv, count, dtype, stream);
+                    ompi_op_reduce_stream(op, sbuf, tmprecv, count, dtype, op_dev, stream);
                     tmpsend = tmprecv;
                 }
             } else if (have_next_iter || tmpsend == recvbuf) {
                 /* All other iterations: reduce into tmpsend for next iteration */
                 /* tmpsend = tmprecv (op) tmpsend */
-                ompi_op_reduce_stream(op, tmprecv, tmpsend, count, dtype, stream);
+                ompi_op_reduce_stream(op, tmprecv, tmpsend, count, dtype, op_dev, stream);
             } else {
                 /* Last iteration: reduce into rbuf and set tmpsend to rbuf (needed at the end) */
-                ompi_op_reduce_stream(op, tmpsend, tmprecv, count, dtype, stream);
+                ompi_op_reduce_stream(op, tmpsend, tmprecv, count, dtype, op_dev, stream);
                 tmpsend = tmprecv;
             }
         }
@@ -1255,11 +1255,11 @@ int ompi_coll_base_allreduce_intra_redscat_allgather(
             /* Reduce on the right half of the buffers (result in rbuf) */
             if (MPI_IN_PLACE != sbuf) {
                 /* rbuf = sbuf (op) tmp_buf */
-                ompi_3buff_op_reduce_stream(op, sbuf, tmp_buf, recvbuf, count_lhalf, dtype, stream);
+                ompi_3buff_op_reduce_stream(op, sbuf, tmp_buf, recvbuf, count_lhalf, dtype, op_dev, stream);
 
             } else {
                 /* rbuf = rbuf (op) tmp_buf */
-                ompi_op_reduce_stream(op, tmp_buf, recvbuf, count_lhalf, dtype, stream);
+                ompi_op_reduce_stream(op, tmp_buf, recvbuf, count_lhalf, dtype, op_dev, stream);
             }
 
 

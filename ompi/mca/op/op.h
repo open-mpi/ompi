@@ -268,7 +268,7 @@ typedef void (*ompi_op_base_handler_fn_1_0_0_t)(const void *, void *, int *,
 typedef ompi_op_base_handler_fn_1_0_0_t ompi_op_base_handler_fn_t;
 
 /**
- * Typedef for 2-buffer op functions.
+ * Typedef for 2-buffer op functions on streams/devices.
  *
  * We don't use MPI_User_function because this would create a
  * confusing dependency loop between this file and mpi.h.  So this is
@@ -277,6 +277,7 @@ typedef ompi_op_base_handler_fn_1_0_0_t ompi_op_base_handler_fn_t;
  */
 typedef void (*ompi_op_base_stream_handler_fn_1_0_0_t)(const void *, void *, int *,
                                                        struct ompi_datatype_t **,
+                                                       int device,
                                                        opal_accelerator_stream_t *stream,
                                                        struct ompi_op_base_module_1_0_0_t *);
 
@@ -294,12 +295,13 @@ typedef void (*ompi_op_base_3buff_handler_fn_1_0_0_t)(const void *,
 typedef ompi_op_base_3buff_handler_fn_1_0_0_t ompi_op_base_3buff_handler_fn_t;
 
 /*
- * Typedef for 3-buffer (two input and one output) op functions.
+ * Typedef for 3-buffer (two input and one output) op functions on streams.
  */
 typedef void (*ompi_op_base_3buff_stream_handler_fn_1_0_0_t)(const void *,
                                                              const void *,
                                                              void *, int *,
                                                              struct ompi_datatype_t **,
+                                                             int device,
                                                              opal_accelerator_stream_t*,
                                                              struct ompi_op_base_module_1_0_0_t *);
 
