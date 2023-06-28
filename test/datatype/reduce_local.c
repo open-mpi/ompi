@@ -22,12 +22,14 @@
 
 // TODO: detect through configure
 //#define HAVE_CUDA 1
-#define HAVE_ROCM 1
+//#define HAVE_ROCM 1
 
 #include "mpi.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/runtime/mpiruntime.h"
+
+#include "opal_config.h"
 
 typedef struct op_name_s {
     char *name;
@@ -244,7 +246,7 @@ static allocator_t host_allocator = {
     .free     = &host_free,
     .fini     = &host_fini};
 
-#if defined(HAVE_CUDA)
+#if defined(OPAL_CUDA_SUPPORT)
 #include <cuda_runtime.h>
 static void cuda_init() {
     // nothing to be done
@@ -278,7 +280,7 @@ static allocator_t cuda_allocator = {
     .free     = &cuda_free,
     .fini     = &cuda_fini};
 
-#elif defined(HAVE_ROCM)
+#elif defined(OPAL_ROCM_SUPPORT)
 #include <hip/hip_runtime.h>
 static void rocm_init() {
     hipError_t ret = hipInit(0);
@@ -412,12 +414,12 @@ int main(int argc, char **argv)
                 // default allocator
                 break;
             } else
-#if defined(HAVE_CUDA)
+#if defined(OPAL_CUDA_SUPPORT)
             if (0 == strncmp("cuda", optarg, 4)) {
                 allocator = &cuda_allocator;
                 break;
             } else
-#elif defined(HAVE_ROCM)
+#elif defined(OPAL_ROCM_SUPPORT)
             if (0 == strncmp("rocm", optarg, 4)) {
                 allocator = &rocm_allocator;
                 break;
@@ -438,10 +440,10 @@ int main(int argc, char **argv)
                     " -o <op> : comma separated list of operations to execute among\n"
                     "           sum, min, max, prod, bor, bxor, band\n"
                     " -d <memory-space> : host"
-#ifdef HAVE_CUDA
+#ifdef OPAL_CUDA_SUPPORT
                     ", cuda"
 #endif
-#ifdef HAVE_ROCM
+#ifdef OPAL_ROCM_SUPPORT
                     ", rocm"
 #endif
                     "\n"
