@@ -18,6 +18,8 @@
  * - complex
  */
 
+#define USE_VECTORS 1
+
 #define OP_FUNC(name, type_name, type, op)                                                          \
     static __global__ void                                                                          \
     ompi_op_cuda_2buff_##name##_##type_name##_kernel(const type *__restrict__ in,                   \
@@ -51,7 +53,13 @@
         const int index = blockIdx.x * blockDim.x + threadIdx.x;                                    \
         const int stride = blockDim.x * gridDim.x;                                                  \
         for (int i = index; i < n/vlen; i += stride) {                                              \
-            ((vtype*)inout)[i] = ((vtype*)inout)[i] op ((vtype*)in)[i];                             \
+            vtype vin = ((vtype*)in)[i];                                                            \
+            vtype vinout = ((vtype*)inout)[i];                                                      \
+            vinout.x = vinout.x op vin.x;                                                         \
+            vinout.y = vinout.y op vin.y;                                                         \
+            vinout.z = vinout.z op vin.z;                                                         \
+            vinout.w = vinout.w op vin.w;                                                         \
+            ((vtype*)inout)[i] = vinout;                                                            \
         }                                                                                           \
         int remainder = n%vlen;                                                                     \
         if (index == (n/vlen) && remainder != 0) {                                                  \
