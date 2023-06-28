@@ -23,7 +23,7 @@ sources = op_cuda_component.c op_cuda.h op_cuda_functions.c op_cuda_impl.h
 #sources_extended = op_cuda_functions.cu
 cu_sources = op_cuda_impl.cu
 
-NVCC = nvcc -allow-unsupported-compiler
+NVCC = nvcc -O2
 
 .cu.l$(OBJEXT):
 	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \

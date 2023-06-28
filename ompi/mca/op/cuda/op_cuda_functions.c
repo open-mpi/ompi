@@ -215,22 +215,23 @@ static inline void device_op_post(void *source1,
     static                                                                                       \
     void ompi_op_cuda_2buff_##name##_##type_name(const void *in, void *inout, int *count,        \
                                                    struct ompi_datatype_t **dtype,               \
+                                                   int device,                                   \
                                                    opal_accelerator_stream_t *stream,            \
                                                    struct ompi_op_base_module_1_0_0_t *module) { \
                                                                                                  \
         _Static_assert(sizeof(type) >= sizeof(int8_t) && sizeof(type) <= sizeof(int64_t));       \
         switch(sizeof(type)) {  \
             case sizeof(int8_t):  \
-                ompi_op_cuda_2buff_##name##_int8_t(in, inout, count, dtype, stream, module); \
+                ompi_op_cuda_2buff_##name##_int8_t(in, inout, count, dtype, device, stream, module); \
                 break; \
             case sizeof(int16_t): \
-                ompi_op_cuda_2buff_##name##_int16_t(in, inout, count, dtype, stream, module); \
+                ompi_op_cuda_2buff_##name##_int16_t(in, inout, count, dtype, device, stream, module); \
                 break; \
             case sizeof(int32_t): \
-                ompi_op_cuda_2buff_##name##_int32_t(in, inout, count, dtype, stream, module); \
+                ompi_op_cuda_2buff_##name##_int32_t(in, inout, count, dtype, device, stream, module); \
                 break; \
             case sizeof(int64_t): \
-                ompi_op_cuda_2buff_##name##_int64_t(in, inout, count, dtype, stream, module); \
+                ompi_op_cuda_2buff_##name##_int64_t(in, inout, count, dtype, device, stream, module); \
                 break; \
         } \
     }
@@ -240,18 +241,19 @@ static inline void device_op_post(void *source1,
     static                                                                                          \
     void ompi_op_cuda_2buff_##name##_##type_name(const void *in, void *inout, int *count,           \
                                                    struct ompi_datatype_t **dtype,                  \
+                                                   int device,                                      \
                                                    opal_accelerator_stream_t *stream,               \
                                                    struct ompi_op_base_module_1_0_0_t *module) {    \
         _Static_assert(sizeof(type) >= sizeof(float) && sizeof(type) <= sizeof(long double));       \
         switch(sizeof(type)) {  \
             case sizeof(float):  \
-                ompi_op_cuda_2buff_##name##_float(in, inout, count, dtype, stream, module);  \
+                ompi_op_cuda_2buff_##name##_float(in, inout, count, dtype, device, stream, module);  \
                 break;  \
             case sizeof(double): \
-                ompi_op_cuda_2buff_##name##_double(in, inout, count, dtype, stream, module); \
+                ompi_op_cuda_2buff_##name##_double(in, inout, count, dtype, device, stream, module); \
                 break; \
             case sizeof(long double): \
-                ompi_op_cuda_2buff_##name##_long_double(in, inout, count, dtype, stream, module); \
+                ompi_op_cuda_2buff_##name##_long_double(in, inout, count, dtype, device, stream, module); \
                 break; \
         } \
     }
@@ -837,22 +839,23 @@ LOC_FUNC(minloc, long_double_int, <)
     static                                                                                       \
     void ompi_op_cuda_3buff_##name##_##type_name(const void *in1, const void *in2, void *out, int *count,        \
                                                    struct ompi_datatype_t **dtype,               \
+                                                   int device,                                   \
                                                    opal_accelerator_stream_t *stream,            \
                                                    struct ompi_op_base_module_1_0_0_t *module) { \
                                                                                                  \
         _Static_assert(sizeof(type) >= sizeof(int8_t) && sizeof(type) <= sizeof(int64_t));       \
         switch(sizeof(type)) {  \
             case sizeof(int8_t):  \
-                ompi_op_cuda_3buff_##name##_int8_t(in1, in2, out, count, dtype, stream, module); \
+                ompi_op_cuda_3buff_##name##_int8_t(in1, in2, out, count, dtype, device, stream, module); \
                 break; \
             case sizeof(int16_t): \
-                ompi_op_cuda_3buff_##name##_int16_t(in1, in2, out, count, dtype, stream, module); \
+                ompi_op_cuda_3buff_##name##_int16_t(in1, in2, out, count, dtype, device, stream, module); \
                 break; \
             case sizeof(int32_t): \
-                ompi_op_cuda_3buff_##name##_int32_t(in1, in2, out, count, dtype, stream, module); \
+                ompi_op_cuda_3buff_##name##_int32_t(in1, in2, out, count, dtype, device, stream, module); \
                 break; \
             case sizeof(int64_t): \
-                ompi_op_cuda_3buff_##name##_int64_t(in1, in2, out, count, dtype, stream, module); \
+                ompi_op_cuda_3buff_##name##_int64_t(in1, in2, out, count, dtype, device, stream, module); \
                 break; \
         } \
     }
@@ -862,18 +865,19 @@ LOC_FUNC(minloc, long_double_int, <)
     static                                                                                          \
     void ompi_op_cuda_3buff_##name##_##type_name(const void *in1, const void *in2, void *out, int *count,           \
                                                    struct ompi_datatype_t **dtype,                  \
+                                                   int device,                                      \
                                                    opal_accelerator_stream_t *stream,               \
                                                    struct ompi_op_base_module_1_0_0_t *module) {    \
         _Static_assert(sizeof(type) >= sizeof(float) && sizeof(type) <= sizeof(long double));       \
         switch(sizeof(type)) {  \
             case sizeof(float):  \
-                ompi_op_cuda_3buff_##name##_float(in1, in2, out, count, dtype, stream, module);  \
+                ompi_op_cuda_3buff_##name##_float(in1, in2, out, count, dtype, device, stream, module);  \
                 break;  \
             case sizeof(double): \
-                ompi_op_cuda_3buff_##name##_double(in1, in2, out, count, dtype, stream, module); \
+                ompi_op_cuda_3buff_##name##_double(in1, in2, out, count, dtype, device, stream, module); \
                 break; \
             case sizeof(long double): \
-                ompi_op_cuda_3buff_##name##_long_double(in1, in2, out, count, dtype, stream, module); \
+                ompi_op_cuda_3buff_##name##_long_double(in1, in2, out, count, dtype, device, stream, module); \
                 break; \
         } \
     }

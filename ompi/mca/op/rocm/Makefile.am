@@ -23,7 +23,7 @@ sources = op_rocm_component.c op_rocm.h op_rocm_functions.c op_rocm_impl.h
 rocm_sources = op_rocm_impl.cpp
 
 HIPCC = hipcc
-HIPCCFLAGS= -D__HIP_PLATFORM_HCC__= -D__HIP_PLATFORM_AMD__= -I/opt/rocm-5.5.0/include
+#HIPCCFLAGS= -D__HIP_PLATFORM_HCC__= -D__HIP_PLATFORM_AMD__= -I/opt/rocm-5.5.0/include
 
 
 .cpp.l$(OBJEXT):
@@ -60,14 +60,12 @@ endif
 # The DSO should install itself in $(ompilibdir) (by default,
 # $prefix/lib/openmpi).
 
-ROCMDIR=/opt/rocm-5.5.0/lib
-
 mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_op_rocm_la_SOURCES = $(sources)
 mca_op_rocm_la_LIBADD = $(rocm_sources:.cpp=.lo)
 mca_op_rocm_la_LDFLAGS = -module -avoid-version $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
-		$(accelerator_rocm_LIBS) $(HIPCCFLAGS) -L$(ROCMDIR)/lib -lhiprtc
+		$(accelerator_rocm_LIBS) $(HIPCCFLAGS)
 EXTRA_mca_op_rocm_la_SOURCES = $(rocm_sources)
 
 # Specific information for static builds.
@@ -79,6 +77,6 @@ noinst_LTLIBRARIES = $(component_noinst)
 libmca_op_rocm_la_SOURCES = $(sources)
 libmca_op_rocm_la_LIBADD = $(rocm_sources:.cpp=.lo)
 libmca_op_rocm_la_LDFLAGS = -module -avoid-version\
-		$(accelerator_rocm_LIBS) ${HIPCCFLAGS} -L$(ROCMDIR)/lib -lhiprtc
+		$(accelerator_rocm_LIBS) ${HIPCCFLAGS}
 EXTRA_libmca_op_rocm_la_SOURCES = $(rocm_sources)
 

@@ -81,8 +81,9 @@
                                                    int threads_per_block,                           \
                                                    int max_blocks,                                  \
                                                    hipStream_t stream) {                            \
-        int threads = min(threads_per_block, (count/vlen));                                         \
-        int blocks  = min(((count/vlen) + threads-1) / threads, max_blocks);                        \
+        int vcount  = (count + vlen-1)/vlen;                                                        \
+        int threads = min(threads_per_block, vcount);                                               \
+        int blocks  = min((vcount + threads-1) / threads, max_blocks);                              \
         int n = count;                                                                              \
         hipStream_t s = stream;                                                                     \
         hipLaunchKernelGGL(ompi_op_rocm_2buff_##name##_##type_name##_kernel,                        \

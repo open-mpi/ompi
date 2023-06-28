@@ -11,12 +11,6 @@
  * $HEADER$
  */
 
-#include <sys/types.h>
-
-#include <cuComplex.h>
-
-#include <stdio.h>
-
 #include "op_cuda_impl.h"
 
 /* TODO: missing support for
@@ -73,8 +67,9 @@
                                                    int threads_per_block,                           \
                                                    int max_blocks,                                  \
                                                    CUstream stream) {                               \
-        int threads = min(count/vlen, threads_per_block);                                           \
-        int blocks  = min(((count/vlen) + threads-1) / threads, max_blocks);                        \
+        int vcount  = (count + vlen-1)/vlen;                                                        \
+        int threads = min(threads_per_block, vcount);                                               \
+        int blocks  = min((vcount + threads-1) / threads, max_blocks);                              \
         int n = count;                                                                              \
         CUstream s = stream;                                                                        \
         ompi_op_cuda_2buff_##name##_##type_name##_kernel<<<blocks, threads, 0, s>>>(in, inout, n);  \
