@@ -74,7 +74,9 @@ static void print_header(int max_shift) {
         printf("%-10s", "'Time (seconds)'");
     } else {
         for (int i = 0; i < max_shift; ++i) {
-            printf(" %-10s ", "'Shift %d [s]'");
+            char str[128];
+            snprintf(str, 128, "'Shift %d [s]'", i);
+            printf(" %-10s ", str);
         }
     }
     printf("\n");
@@ -279,7 +281,14 @@ static allocator_t cuda_allocator = {
 #elif defined(HAVE_ROCM)
 #include <hip/hip_runtime.h>
 static void rocm_init() {
-    // nothing to be done
+    hipError_t ret = hipInit(0);
+    assert(hipSuccess == ret);
+    int num_devs = 0;
+    ret = hipGetDeviceCount(&num_devs);
+    assert(hipSuccess == ret);
+    assert(num_devs > 0);
+    ret = hipSetDevice(0);
+    assert(hipSuccess == ret);
 }
 static void *rocm_allocate(size_t size, size_t align) {
     (void)align; // ignored
