@@ -96,7 +96,7 @@ dnl
 dnl only safe to call from OPAL_CONFIG_HWLOC, assumes variables from
 dnl there are set.
 AC_DEFUN([_OPAL_CONFIG_HWLOC_EXTERNAL], [
-    OPAL_VAR_SCOPE_PUSH([opal_hwloc_min_num_version opal_hwloc_min_version opal_hwloc_CPPFLAGS_save opal_hwloc_LDFLAGS_save opal_hwloc_LIBS_save opal_hwloc_external_support])
+    OPAL_VAR_SCOPE_PUSH([opal_hwloc_min_num_version opal_hwloc_min_version opal_hwlox_max_num_version opal_hwloc_CPPFLAGS_save opal_hwloc_LDFLAGS_save opal_hwloc_LIBS_save opal_hwloc_external_support])
 
     OAC_CHECK_PACKAGE([hwloc],
                       [opal_hwloc],
@@ -118,7 +118,7 @@ AC_DEFUN([_OPAL_CONFIG_HWLOC_EXTERNAL], [
     opal_hwloc_min_num_version=OMPI_HWLOC_NUMERIC_MIN_VERSION
     opal_hwloc_min_version=OMPI_HWLOC_NUMERIC_MIN_VERSION
     AS_IF([test "$opal_hwloc_external_support" = "yes"],
-          [AC_MSG_CHECKING([if external hwloc version is OMPI_HWLOC_MIN_VERSION or greater])
+          [AC_MSG_CHECKING([if external hwloc version is version OMPI_HWLOC_MIN_VERSION or greater])
            AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <hwloc.h>
                               ]], [[
 #if HWLOC_API_VERSION < $opal_hwloc_min_num_version
@@ -129,6 +129,31 @@ AC_DEFUN([_OPAL_CONFIG_HWLOC_EXTERNAL], [
                    [AC_MSG_RESULT([no])
                     AC_MSG_WARN([external hwloc version is too old (OMPI_HWLOC_MIN_VERSION or later required)])
                     opal_hwloc_external_support="no"])])
+
+    # Ensure that we are not using Hwloc >= v3.x.  Open MPI does not
+    # (yet) support Hwloc >= v3.x (which will potentially have ABI and
+    # API breakage compared to <= v2.x), and using it would lead to
+    # complicated failure cases.  Hence, we just abort outright if we
+    # find an external Hwloc >= v3.x.
+    AS_IF([test "$opal_hwloc_external_support" = "yes"],
+          [AC_MSG_CHECKING([if external hwloc version is less than version 3.0.0])
+	   opal_hwloc_max_num_version=0x00030000
+           AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <hwloc.h>
+                              ]], [[
+#if HWLOC_API_VERSION >= $opal_hwloc_max_num_version
+#error "hwloc API version is >= $opal_hwloc_max_num_version"
+#endif
+                               ]])],
+                   [AC_MSG_RESULT([yes])],
+                   [AC_MSG_RESULT([no])
+                    AC_MSG_WARN([External hwloc version is too new (less than v3.0.0 is required)])
+		    dnl Yes, the URL below will be wrong for master
+		    dnl builds.  But this is "good enough" -- we're
+		    dnl more concerned about getting the URL correct
+		    dnl for end-user builds of official release Open
+		    dnl MPI distribution tarballs.
+		    AC_MSG_WARN([See https://docs.open-mpi.org/en/v$OMPI_MAJOR_VERSION.$OMPI_MINOR_VERSION.x/installing-open-mpi/required-support-libraries.html for more details])
+		    AC_MSG_ERROR([Cannot continue])])])
 
     AS_IF([test "$opal_hwloc_external_support" = "yes"],
           [AC_CHECK_DECLS([HWLOC_OBJ_OSDEV_COPROC], [], [], [#include <hwloc.h>
