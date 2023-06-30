@@ -695,6 +695,7 @@ ompi_mtl_ofi_recv_callback(struct fi_cq_tagged_entry *wc,
     int src = mtl_ofi_get_source(wc);
     ompi_status_public_t *status = NULL;
     struct fi_msg_tagged tagged_msg;
+    struct iovec d_iovec = {.iov_base = NULL, .iov_len = 0};
 
     ctxt_id = ompi_mtl_ofi_map_comm_to_ctxt(ofi_req->comm->c_contextid);
 
@@ -763,9 +764,9 @@ ompi_mtl_ofi_recv_callback(struct fi_cq_tagged_entry *wc,
             ofi_req->remote_addr = fi_rx_addr(endpoint->peer_fiaddr, ctxt_id, ompi_mtl_ofi.rx_ctx_bits);
         }
 
-        tagged_msg.msg_iov = NULL;
+        tagged_msg.msg_iov = &d_iovec;
         tagged_msg.desc = NULL;
-        tagged_msg.iov_count = 0;
+        tagged_msg.iov_count = 1;
         tagged_msg.addr = ofi_req->remote_addr;
         /**
         * We must continue to use the user's original tag but remove the
