@@ -52,7 +52,7 @@
 #define OPAL_HAVE_ATOMIC_SWAP_64 1
 
 
-#if defined(PLATFORM_ARCH_X86_64) && defined(PLATFORM_COMPILER_GNU) && __GNUC__ < 8
+#if (OPAL_ASSEMBLY_ARCH == OPAL_X86_64) && defined (__GNUC__) && !defined(__llvm) && __GNUC__ < 8
     /* work around a bug in older gcc versions where ACQUIRE seems to get
      * treated as a no-op instead */
 #define OPAL_BUSTED_ATOMIC_MB 1
