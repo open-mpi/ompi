@@ -37,7 +37,7 @@
 ############################################################################
 
 # Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
-# Copyright (c) 2008-2021 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2008-2023 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
@@ -70,7 +70,7 @@ release=6
 # requirement is that it must be entirely printable ASCII characters
 # and have no white space.
 
-greek=a1
+greek=rc1
 
 # If repo_rev is empty, then the repository version number will be
 # obtained during "make dist" via the "git describe --tags --always"
@@ -128,7 +128,7 @@ date="Unreleased developer copy"
 # Version numbers are described in the Libtool current:revision:age
 # format.
 
-libmpi_so_version=70:5:30
+libmpi_so_version=70:6:30
 libmpi_cxx_so_version=70:1:30
 libmpi_mpifh_so_version=70:0:30
 libmpi_usempi_tkr_so_version=70:0:30
