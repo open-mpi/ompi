@@ -123,8 +123,8 @@ OMPI_DECLSPEC extern int ompi_mpi_abort_delay;
 /**
  * Whether we operate in MPI3 compatibility, or MPI4 mode (default).
  *
- * true: use MPI3 compatibility
- * false: use MPI4 compatibility (default)
+ * true: use MPI3 compatibility (default)
+ * false: use MPI4 compatibility
  *
  * Behavioral changes:
  *   - errors in operations without a handle are raised on MPI_COMM_WORLD (MPI-3 behavior) or MPI_COMM_SELF (MPI-4 behavior)
