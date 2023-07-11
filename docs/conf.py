@@ -10,9 +10,7 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
+import os
 
 # -- Project information -----------------------------------------------------
 
@@ -24,8 +22,20 @@ copyright = f'2003-{year}, The Open MPI Community'
 author = 'The Open MPI Community'
 
 # The full version, including alpha/beta/rc tags
-# Read the Open MPI version from the VERSION file
-with open("../VERSION") as fp:
+# Read the Open MPI version from the VERSION file in the source tree
+# The docs/Makefile.am will set the env var OMPI_VERSION_FILE, because
+# we might be doing a VPATH build.
+filename = None
+if 'OMPI_VERSION_FILE' in os.environ:
+    filename = os.environ['OMPI_VERSION_FILE']
+elif os.path.exists("../VERSION"):
+    filename = '../VERSION'
+
+if filename is None:
+    print("ERROR: Could not find Open MPI source tree VERSION file")
+    exit(1)
+
+with open(filename) as fp:
     ompi_lines = fp.readlines()
 
 ompi_data = dict()

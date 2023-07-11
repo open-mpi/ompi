@@ -1,0 +1,24 @@
+.. This file is only used in certain cases.  Hence, the original file
+   in the Open MPI "docs" source tree ends in ".txt", so that Sphinx
+   will not complain if it is not used.  If it *is* used, it is copied
+   to another file (that ends in ".rst") so that it can be properly
+   found / used by Sphinx.
+
+No content
+^^^^^^^^^^
+
+There is no meaningful content in this file because Open MPI was either:
+
+* Built without PRRTE support.
+
+* Built with a PRRTE that was too old to include machine-readable
+  documentation that could be incorporated into Open MPI's
+  documentation.
+
+If you build Open MPI with a newer version of PRRTE (and have the
+Sphinx tool available when you run Open MPI's ``configure`` command),
+you should get more meaningful documentation here.
+
+Hence, there is no documentation for this section.
+
+Sorry!

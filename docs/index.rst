@@ -28,9 +28,13 @@ Documentation for Open MPI can be found in the following locations:
    * - v5.0.0 and later
      - Web: https://docs.open-mpi.org/
 
-       Tarball: ``docs/_build/html/index.html``
+       Included in tarball: ``docs/html/index.html``
 
-       Installed: ``$prefix/share/doc/openmpi/html/index.html``
+       Built in source tree (if Sphinx available): ``docs/_build/html/index.html``
+
+       Installed: ``$docdir/html/index.html``
+
+       (which defaults to: ``$prefix/share/doc/openmpi/html/index.html``)
 
    * - v4.1.x and earlier
      - See the `legacy Open MPI FAQ <https://www.open-mpi.org/faq/>`_

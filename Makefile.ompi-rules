@@ -2,6 +2,7 @@
 # Copyright (c) 2008-2022 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
 # Copyright (c) 2020      Intel, Inc.  All rights reserved.
+# Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -25,6 +26,14 @@ ompi__v_MKDIR_0 = @echo "  MKDIR   " $@;
 OMPI_V_GEN = $(ompi__v_GEN_$V)
 ompi__v_GEN_ = $(ompi__v_GEN_$AM_DEFAULT_VERBOSITY)
 ompi__v_GEN_0 = @echo "  GENERATE" $@;
+
+OMPI_V_COPYALL = $(ompi__v_COPYALL_$V)
+ompi__v_COPYALL_ = $(ompi__v_COPYALL_$AM_DEFAULT_VERBOSITY)
+ompi__v_COPYALL_0 = @echo "  COPY tree $@";
+
+OMPI_V_SPHINX_COPYRST = $(ompi__v_SPHINX_COPYRST_$V)
+ompi__v_SPHINX_COPYRST_ = $(ompi__v_SPHINX_COPYRST_$AM_DEFAULT_VERBOSITY)
+ompi__v_SPHINX_COPYRST_0 = @echo "  COPY RST source files";
 
 OMPI_V_SPHINX_HTML = $(ompi__v_SPHINX_HTML_$V)
 ompi__v_SPHINX_HTML_ = $(ompi__v_SPHINX_HTML_$AM_DEFAULT_VERBOSITY)
