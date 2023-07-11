@@ -71,6 +71,8 @@ int main(int argc, char **argv) {
 #else
     GAP_CHECK("error_handler", test_comm, error_handler, c_f_to_c_index, 1);
 #endif
+    GAP_CHECK("errhandler_type", test_comm, errhandler_type, error_handler, 1);
+    GAP_CHECK("c_pml_comm", test_comm, c_pml_comm, errhandler_type, 1);
     GAP_CHECK("c_coll", test_comm, c_coll, c_pml_comm, 1);
 
     /* Test Predefined group sizes */
@@ -125,7 +127,8 @@ int main(int argc, char **argv) {
     GAP_CHECK("w_keyhash", test_win, w_keyhash, w_flags, 1);
     GAP_CHECK("w_f_to_c_index", test_win, w_f_to_c_index, w_keyhash, 1);
     GAP_CHECK("error_handler", test_win, error_handler, w_f_to_c_index, 1);
-
+    GAP_CHECK("errhandler_type", test_win, errhandler_type, error_handler, 1);
+    GAP_CHECK("w_osc_module", test_win, w_osc_module, errhandler_type, 1);
     /* Test Predefined info sizes */
     printf("=============================================\n");
     printf("ompi_predefined_info_t = %lu bytes\n", sizeof(ompi_predefined_info_t));
@@ -145,6 +148,8 @@ int main(int argc, char **argv) {
     GAP_CHECK("f_flags", test_file, f_flags, f_amode,  1);
     GAP_CHECK("f_f_to_c_index", test_file, f_f_to_c_index, f_flags, 1);
     GAP_CHECK("error_handler", test_file, error_handler, f_f_to_c_index, 1);
+    GAP_CHECK("errhandler_type", test_file, errhandler_type, error_handler, 1);
+    GAP_CHECK("f_io_version", test_file, f_io_version, errhandler_type, 1);
     GAP_CHECK("f_io_selected_component", test_file, f_io_selected_component, f_io_version, 1);
     GAP_CHECK("f_io_selected_module", test_file, f_io_selected_module, f_io_selected_component, 1);
     GAP_CHECK("f_io_selected_data", test_file, f_io_selected_data, f_io_selected_module, 1);
