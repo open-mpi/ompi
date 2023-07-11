@@ -28,6 +28,7 @@
 # Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
 # Copyright (c) 2019      Triad National Security, LLC. All rights
 #                         reserved.
+# Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -1072,7 +1073,7 @@ AS_IF([test -z "$LEX" || \
 
 dnl Note that we have to double escape the URL below
 dnl so that the # it contains doesn't confuse the Autotools
-OAC_SETUP_SPHINX([$srcdir/docs/_build/man/MPI_T.3],
+OAC_SETUP_SPHINX([$srcdir/docs/man/MPI_T.3],
                  [[https://docs.open-mpi.org/en/main/developers/prerequisites.html#sphinx-and-therefore-python]])
 
 #
