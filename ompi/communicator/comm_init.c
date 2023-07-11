@@ -441,7 +441,7 @@ static void ompi_comm_construct(ompi_communicator_t* comm)
     /* A keyhash will be created if/when an attribute is cached on
        this communicator */
     comm->c_keyhash      = NULL;
-
+    comm->errhandler_type = OMPI_ERRHANDLER_TYPE_COMM;
     comm->error_handler  = &ompi_mpi_errors_are_fatal.eh;
 #ifdef OMPI_WANT_PERUSE
     comm->c_peruse_handles = NULL;
