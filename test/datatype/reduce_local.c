@@ -1006,7 +1006,7 @@ int main(int argc, char **argv)
                         MPI_OP_TEST(+, mpi_op, MPI_DOUBLE, double,
                                     init_in_double, in_double,
                                     init_inout_double, inout_double,
-                                    inout_double_for_check, count, "g");
+                                    inout_double_for_check, count, "f");
                     }
                     if (0 == strcmp(op, "prod")) {
                         MPI_OP_TEST(*, mpi_op, MPI_DOUBLE, double,

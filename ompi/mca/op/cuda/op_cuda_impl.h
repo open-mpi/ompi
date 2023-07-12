@@ -15,6 +15,7 @@
 
 #include <cuda.h>
 #include <cuComplex.h>
+#include <cuda_fp16.h>
 
 #ifndef BEGIN_C_DECLS
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -139,6 +140,10 @@ OP_FUNC_SIG(sum, uint64_t, uint64_t, +=)
 OP_FUNC_SIG(sum,  long,  long, +=)
 OP_FUNC_SIG(sum,  unsigned_long, unsigned long, +=)
 
+#if __CUDA_ARCH__ >= 530
+OP_FUNC_SIG(sum, half, half, +=)
+#endif // __CUDA_ARCH__
+
 #if 0
 /* Floating point */
 #if defined(HAVE_SHORT_FLOAT)
@@ -191,6 +196,7 @@ OP_FUNC_SIG(prod, short_float, opal_short_float_t, *=)
 #endif
 #endif // 0
 
+OP_FUNC_SIG(prod, float, float, *=)
 OP_FUNC_SIG(prod, float, float, *=)
 OP_FUNC_SIG(prod, double, double, *=)
 OP_FUNC_SIG(prod, long_double, long double, *=)

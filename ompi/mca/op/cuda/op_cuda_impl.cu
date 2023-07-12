@@ -13,12 +13,59 @@
 
 #include "op_cuda_impl.h"
 
+#include <limits.h>
+
+#include <type_traits>
+
+#define ISSIGNED(x) std::is_signed_v<x>
+
+template<typename T>
+static inline __device__ constexpr T tmax(T a, T b) {
+    return (a > b) ? a : b;
+}
+
+template<typename T>
+static inline __device__ constexpr T tmin(T a, T b) {
+    return (a < b) ? a : b;
+}
+
+template<typename T>
+static inline __device__ constexpr T tsum(T a, T b) {
+    return a+b;
+}
+
+template<typename T>
+static inline __device__ constexpr T tprod(T a, T b) {
+    return a*b;
+}
+
+template<typename T>
+static inline __device__ T vmax(const T& a, const T& b) {
+    return T{tmax(a.x, b.x), tmax(a.y, b.y), tmax(a.z, b.z), tmax(a.w, b.w)};
+}
+
+template<typename T>
+static inline __device__ T vmin(const T& a, const T& b) {
+    return T{tmin(a.x, b.x), tmin(a.y, b.y), tmin(a.z, b.z), tmin(a.w, b.w)};
+}
+
+template<typename T>
+static inline __device__ T vsum(const T& a, const T& b) {
+    return T{tsum(a.x, b.x), tsum(a.y, b.y), tsum(a.z, b.z), tsum(a.w, b.w)};
+}
+
+template<typename T>
+static inline __device__ T vprod(const T& a, const T& b) {
+    return T{(a.x * b.x), (a.y * b.y), (a.z * b.z), (a.w * b.w)};
+}
+
+
 /* TODO: missing support for
  * - short float (conditional on whether short float is available)
  * - complex
  */
 
-#define USE_VECTORS 1
+//#define USE_VECTORS 1
 
 #define OP_FUNC(name, type_name, type, op)                                                          \
     static __global__ void                                                                          \
@@ -86,14 +133,14 @@
 #define OPV_FUNC(name, type_name, type, vtype, vlen, op) OP_FUNC(name, type_name, type, op)
 #endif // USE_VECTORS
 
-#define FUNC_FUNC(name, type_name, type)                                                            \
+#define FUNC_FUNC_FN(name, type_name, type, fn)                                                     \
     static __global__ void                                                                          \
     ompi_op_cuda_2buff_##name##_##type_name##_kernel(const type *__restrict__ in,                   \
                                                      type *__restrict__ inout, int n) {             \
         const int index = blockIdx.x * blockDim.x + threadIdx.x;                                    \
         const int stride = blockDim.x * gridDim.x;                                                  \
         for (int i = index; i < n; i += stride) {                                                   \
-            inout[i] = current_func(inout[i], in[i]);                                               \
+            inout[i] = fn(inout[i], in[i]);                                                         \
         }                                                                                           \
     }                                                                                               \
     void                                                                                            \
@@ -107,9 +154,46 @@
         int blocks  = min((count + threads-1) / threads, max_blocks);                               \
         int n = count;                                                                              \
         CUstream s = stream;                                                                        \
-        blocks = (blocks > 64) ? 64 : blocks;                                                       \
         ompi_op_cuda_2buff_##name##_##type_name##_kernel<<<blocks, threads, 0, s>>>(in, inout, n);  \
     }
+
+#define FUNC_FUNC(name, type_name, type) FUNC_FUNC_FN(name, type_name, type, current_func)
+
+#if defined(USE_VECTORS)
+#define VFUNC_FUNC(name, type_name, type, vtype, vlen, vfn, fn)                                     \
+    static __global__ void                                                                          \
+    ompi_op_cuda_2buff_##name##_##type_name##_kernel(const type *__restrict__ in,                   \
+                                                     type *__restrict__ inout, int n) {             \
+        const int index = blockIdx.x * blockDim.x + threadIdx.x;                                    \
+        const int stride = blockDim.x * gridDim.x;                                                  \
+        for (int i = index; i < n/vlen; i += stride) {                                              \
+            ((vtype*)inout)[i] = vfn(((vtype*)inout)[i], ((vtype*)in)[i]);                          \
+        }                                                                                           \
+        int remainder = n%vlen;                                                                     \
+        if (index == (n/vlen) && remainder != 0) {                                                  \
+            while(remainder) {                                                                      \
+                int idx = n - remainder--;                                                          \
+                inout[idx] = fn(inout[idx], in[idx]);                                               \
+            }                                                                                       \
+        }                                                                                           \
+    }                                                                                               \
+    static void                                                                                     \
+    ompi_op_cuda_2buff_##name##_##type_name##_submit(const type *in,                                \
+                                              type *inout,                                          \
+                                              int count,                                            \
+                                              int threads_per_block,                                \
+                                              int max_blocks,                                       \
+                                              CUstream stream) {                                    \
+        int vcount  = (count + vlen-1)/vlen;                                                        \
+        int threads = min(threads_per_block, vcount);                                               \
+        int blocks  = min((vcount + threads-1) / threads, max_blocks);                              \
+        int n = count;                                                                              \
+        CUstream s = stream;                                                                        \
+        ompi_op_cuda_2buff_##name##_##type_name##_kernel<<<blocks, threads, 0, s>>>(in, inout, n);  \
+    }
+#else
+#define VFUNC_FUNC(name, type_name, type, vtype, vlen, vfn, fn) FUNC_FUNC_FN(name, type_name, type, fn)
+#endif // defined(USE_VECTORS)
 
 /*
  * Since all the functions in this file are essentially identical, we
@@ -151,27 +235,89 @@
         ompi_op_cuda_2buff_##name##_##type_name##_kernel<<<blocks, threads, 0, s>>>(a, b, count);   \
     }
 
+#define OPV_DISPATCH(name, type_name, type)                                                         \
+    void ompi_op_cuda_2buff_##name##_##type_name##_submit(const type *in,                           \
+                                                   type *inout,                                     \
+                                                   int count,                                       \
+                                                   int threads_per_block,                           \
+                                                   int max_blocks,                                  \
+                                                   CUstream stream) {                               \
+        static_assert(sizeof(type_name) <= sizeof(unsigned long long), "Unknown size type");        \
+        if constexpr(!ISSIGNED(type)) {                                                                      \
+            if constexpr(sizeof(type_name) == sizeof(unsigned char)) {                                               \
+                ompi_op_cuda_2buff_##name##_uchar_submit((const unsigned char*)in, (unsigned char*)inout, count,    \
+                                                         threads_per_block,                         \
+                                                         max_blocks, stream);                        \
+            } else if constexpr(sizeof(type_name) == sizeof(unsigned short)) {                                       \
+                ompi_op_cuda_2buff_##name##_ushort_submit((const unsigned short*)in, (unsigned short*)inout, count, \
+                                                          threads_per_block,                        \
+                                                          max_blocks, stream);                       \
+            } else if constexpr(sizeof(type_name) == sizeof(unsigned int)) {                                 \
+                ompi_op_cuda_2buff_##name##_uint_submit((const unsigned int*)in, (unsigned int*)inout, count,         \
+                                                        threads_per_block,                          \
+                                                        max_blocks, stream);                         \
+            } else if constexpr(sizeof(type_name) == sizeof(unsigned long)) {                                \
+                ompi_op_cuda_2buff_##name##_ulong_submit((const unsigned long*)in, (unsigned long*)inout, count, \
+                                                         threads_per_block,                         \
+                                                         max_blocks, stream);                        \
+            } else if constexpr(sizeof(type_name) == sizeof(unsigned long long)) {                           \
+                ompi_op_cuda_2buff_##name##_ulonglong_submit((const unsigned long long*)in, (unsigned long long*)inout, count, \
+                                                             threads_per_block,                     \
+                                                             max_blocks, stream);                    \
+            }                                                                                       \
+        } else {                                                                                    \
+            if constexpr(sizeof(type_name) == sizeof(char)) {                                                \
+                ompi_op_cuda_2buff_##name##_char_submit((const char*)in, (char*)inout, count,       \
+                                                        threads_per_block,                          \
+                                                        max_blocks, stream);                         \
+            } else if constexpr(sizeof(type_name) == sizeof(short)) {                                        \
+                ompi_op_cuda_2buff_##name##_short_submit((const short*)in, (short*)inout, count,    \
+                                                          threads_per_block,                        \
+                                                          max_blocks, stream);                       \
+            } else if constexpr(sizeof(type_name) == sizeof(int)) {                                          \
+                ompi_op_cuda_2buff_##name##_int_submit((const int*)in, (int*)inout, count,          \
+                                                        threads_per_block,                          \
+                                                        max_blocks, stream);                         \
+            } else if constexpr(sizeof(type_name) == sizeof(long)) {                                         \
+                ompi_op_cuda_2buff_##name##_long_submit((const long*)in, (long*)inout, count,       \
+                                                         threads_per_block,                         \
+                                                         max_blocks, stream);                        \
+            } else if constexpr(sizeof(type_name) == sizeof(long long)) {                                    \
+                ompi_op_cuda_2buff_##name##_longlong_submit((const long long*)in, (long long*)inout, count,\
+                                                             threads_per_block,                     \
+                                                             max_blocks, stream);                    \
+            }                                                                                       \
+        }                                                                                           \
+    }
+
 /*************************************************************************
  * Max
  *************************************************************************/
 
-#undef current_func
-#if defined(DO_NOT_USE_INTRINSICS)
-#define current_func(a, b) ((a) > (b) ? (a) : (b))
-#else  // DO_NOT_USE_INTRINSICS
-#define current_func(a, b) max(a, b)
-#endif // DO_NOT_USE_INTRINSICS
 /* C integer */
-FUNC_FUNC(max,   int8_t,   int8_t)
-FUNC_FUNC(max,  uint8_t,  uint8_t)
-FUNC_FUNC(max,  int16_t,  int16_t)
-FUNC_FUNC(max, uint16_t, uint16_t)
-FUNC_FUNC(max,  int32_t,  int32_t)
-FUNC_FUNC(max, uint32_t, uint32_t)
-FUNC_FUNC(max,  int64_t,  int64_t)
-FUNC_FUNC(max, uint64_t, uint64_t)
+VFUNC_FUNC(max, char, char, char4, 4, vmax, max)
+VFUNC_FUNC(max, uchar, unsigned char, uchar4, 4, vmax, max)
+VFUNC_FUNC(max, short, short, short4, 4, vmax, max)
+VFUNC_FUNC(max, ushort, unsigned short, ushort4, 4, vmax, max)
+VFUNC_FUNC(max, int, int, int4, 4, vmax, max)
+VFUNC_FUNC(max, uint, unsigned int, uint4, 4, vmax, max)
+
+#undef current_func
+#define current_func(a, b) max(a, b)
 FUNC_FUNC(max,  long,  long)
-FUNC_FUNC(max,  unsigned_long, unsigned long)
+FUNC_FUNC(max,  ulong, unsigned long)
+FUNC_FUNC(max,  longlong, long long)
+FUNC_FUNC(max,  ulonglong, unsigned long long)
+
+/* dispatch fixed-size types */
+OPV_DISPATCH(max,   int8_t,   int8_t)
+OPV_DISPATCH(max,  uint8_t,  uint8_t)
+OPV_DISPATCH(max,  int16_t,  int16_t)
+OPV_DISPATCH(max, uint16_t, uint16_t)
+OPV_DISPATCH(max,  int32_t,  int32_t)
+OPV_DISPATCH(max, uint32_t, uint32_t)
+OPV_DISPATCH(max,  int64_t,  int64_t)
+OPV_DISPATCH(max, uint64_t, uint64_t)
 
 #undef current_func
 #define current_func(a, b) ((a) > (b) ? (a) : (b))
@@ -189,27 +335,40 @@ FUNC_FUNC(max, float, float)
 #endif // DO_NOT_USE_INTRINSICS
 FUNC_FUNC(max, double, double)
 
+// __CUDA_ARCH__ is only defined when compiling device code
+#if !defined(__CUDA_ARCH__) || __CUDA_ARCH__ >= 530
+#undef current_func
+#define current_func(a, b) __hmax2(a, b)
+VFUNC_FUNC(max, halfx, half, half2, 2, __hmax2, __hmax)
+#endif // __CUDA_ARCH__
+
 /*************************************************************************
  * Min
  *************************************************************************/
 
-#undef current_func
-#if defined(DO_NOT_USE_INTRINSICS)
-#define current_func(a, b) ((a) < (b) ? (a) : (b))
-#else  // DO_NOT_USE_INTRINSICS
-#define current_func(a, b) min(a, b)
-#endif // DO_NOT_USE_INTRINSICS
 /* C integer */
-FUNC_FUNC(min,   int8_t,   int8_t)
-FUNC_FUNC(min,  uint8_t,  uint8_t)
-FUNC_FUNC(min,  int16_t,  int16_t)
-FUNC_FUNC(min, uint16_t, uint16_t)
-FUNC_FUNC(min,  int32_t,  int32_t)
-FUNC_FUNC(min, uint32_t, uint32_t)
-FUNC_FUNC(min,  int64_t,  int64_t)
-FUNC_FUNC(min, uint64_t, uint64_t)
+VFUNC_FUNC(min, char, char, char4, 4, vmin, min)
+VFUNC_FUNC(min, uchar, unsigned char, uchar4, 4, vmin, min)
+VFUNC_FUNC(min, short, short, short4, 4, vmin, min)
+VFUNC_FUNC(min, ushort, unsigned short, ushort4, 4, vmin, min)
+VFUNC_FUNC(min, int, int, int4, 4, vmin, min)
+VFUNC_FUNC(min, uint, unsigned int, uint4, 4, vmin, min)
+
+#undef current_func
+#define current_func(a, b) min(a, b)
 FUNC_FUNC(min,  long,  long)
-FUNC_FUNC(min,  unsigned_long, unsigned long)
+FUNC_FUNC(min,  ulong, unsigned long)
+FUNC_FUNC(min,  longlong, long long)
+FUNC_FUNC(min,  ulonglong, unsigned long long)
+OPV_DISPATCH(min,   int8_t,   int8_t)
+OPV_DISPATCH(min,  uint8_t,  uint8_t)
+OPV_DISPATCH(min,  int16_t,  int16_t)
+OPV_DISPATCH(min, uint16_t, uint16_t)
+OPV_DISPATCH(min,  int32_t,  int32_t)
+OPV_DISPATCH(min, uint32_t, uint32_t)
+OPV_DISPATCH(min,  int64_t,  int64_t)
+OPV_DISPATCH(min, uint64_t, uint64_t)
+
 
 
 #if !defined(DO_NOT_USE_INTRINSICS)
@@ -228,25 +387,51 @@ FUNC_FUNC(min, double, double)
 #define current_func(a, b) ((a) < (b) ? (a) : (b))
 FUNC_FUNC(min, long_double, long double)
 
+// __CUDA_ARCH__ is only defined when compiling device code
+#if !defined(__CUDA_ARCH__) || __CUDA_ARCH__ >= 530
+#undef current_func
+#define current_func(a, b) __hmin2(a, b)
+VFUNC_FUNC(min, half, half, half2, 2, __hmin2, __hmin)
+#endif // __CUDA_ARCH__
+
 /*************************************************************************
  * Sum
  *************************************************************************/
 
 /* C integer */
-OP_FUNC(sum,   int8_t,   int8_t, +)
-OP_FUNC(sum,  uint8_t,  uint8_t, +)
-OP_FUNC(sum,  int16_t,  int16_t, +)
-OP_FUNC(sum, uint16_t, uint16_t, +)
-OP_FUNC(sum,  int32_t,  int32_t, +)
-OP_FUNC(sum, uint32_t, uint32_t, +)
-OP_FUNC(sum,  int64_t,  int64_t, +)
-OP_FUNC(sum, uint64_t, uint64_t, +)
-OP_FUNC(sum,  long,  long, +)
-OP_FUNC(sum,  unsigned_long, unsigned long, +)
+VFUNC_FUNC(sum, char, char, char4, 4, vsum, tsum)
+VFUNC_FUNC(sum, uchar, unsigned char, uchar4, 4, vsum, tsum)
+VFUNC_FUNC(sum, short, short, short4, 4, vsum, tsum)
+VFUNC_FUNC(sum, ushort, unsigned short, ushort4, 4, vsum, tsum)
+VFUNC_FUNC(sum, int, int, int4, 4, vsum, tsum)
+VFUNC_FUNC(sum, uint, unsigned int, uint4, 4, vsum, tsum)
+
+#undef current_func
+#define current_func(a, b) tsum(a, b)
+FUNC_FUNC(sum,  long,  long)
+FUNC_FUNC(sum,  ulong, unsigned long)
+FUNC_FUNC(sum,  longlong, long long)
+FUNC_FUNC(sum,  ulonglong, unsigned long long)
+
+OPV_DISPATCH(sum,   int8_t,   int8_t)
+OPV_DISPATCH(sum,  uint8_t,  uint8_t)
+OPV_DISPATCH(sum,  int16_t,  int16_t)
+OPV_DISPATCH(sum, uint16_t, uint16_t)
+OPV_DISPATCH(sum,  int32_t,  int32_t)
+OPV_DISPATCH(sum, uint32_t, uint32_t)
+OPV_DISPATCH(sum,  int64_t,  int64_t)
+OPV_DISPATCH(sum, uint64_t, uint64_t)
 
 OPV_FUNC(sum, float, float, float4, 4, +)
 OPV_FUNC(sum, double, double, double4, 4, +)
 OP_FUNC(sum, long_double, long double, +)
+
+// __CUDA_ARCH__ is only defined when compiling device code
+#if !defined(__CUDA_ARCH__) || __CUDA_ARCH__ >= 530
+#undef current_func
+#define current_func(a, b) __hadd2(a, b)
+VFUNC_FUNC(sum, half, half, half2, 2, __hadd2, __hadd)
+#endif // __CUDA_ARCH__
 
 /* Complex */
 #if 0
@@ -257,10 +442,10 @@ COMPLEX_SUM_FUNC(c_short_float_complex, opal_short_float_t)
 #endif
 #endif // 0
 #undef current_func
-#define current_func(a, b) (cuCmulf(a,b))
+#define current_func(a, b) (cuCaddf(a,b))
 FUNC_FUNC(sum, c_float_complex, cuFloatComplex)
 #undef current_func
-#define current_func(a, b) (cuCmul(a,b))
+#define current_func(a, b) (cuCadd(a,b))
 FUNC_FUNC(sum, c_double_complex, cuDoubleComplex)
 //OP_FUNC(sum, c_long_double_complex, cuLongDoubleComplex, +=)
 
@@ -269,20 +454,39 @@ FUNC_FUNC(sum, c_double_complex, cuDoubleComplex)
  *************************************************************************/
 
 /* C integer */
-OP_FUNC(prod,   int8_t,   int8_t, *)
-OP_FUNC(prod,  uint8_t,  uint8_t, *)
-OP_FUNC(prod,  int16_t,  int16_t, *)
-OP_FUNC(prod, uint16_t, uint16_t, *)
-OP_FUNC(prod,  int32_t,  int32_t, *)
-OP_FUNC(prod, uint32_t, uint32_t, *)
-OP_FUNC(prod,  int64_t,  int64_t, *)
-OP_FUNC(prod, uint64_t, uint64_t, *)
-OP_FUNC(prod,  long,  long, *)
-OP_FUNC(prod,  unsigned_long, unsigned long, *)
+#undef current_func
+#define current_func(a, b) tprod(a, b)
+FUNC_FUNC(prod, char, char)
+FUNC_FUNC(prod, uchar, unsigned char)
+FUNC_FUNC(prod, short, short)
+FUNC_FUNC(prod, ushort, unsigned short)
+FUNC_FUNC(prod, int, int)
+FUNC_FUNC(prod, uint, unsigned int)
+FUNC_FUNC(prod,  long,  long)
+FUNC_FUNC(prod,  ulong, unsigned long)
+FUNC_FUNC(prod,  longlong, long long)
+FUNC_FUNC(prod,  ulonglong, unsigned long long)
+
+OPV_DISPATCH(prod,   int8_t,   int8_t)
+OPV_DISPATCH(prod,  uint8_t,  uint8_t)
+OPV_DISPATCH(prod,  int16_t,  int16_t)
+OPV_DISPATCH(prod, uint16_t, uint16_t)
+OPV_DISPATCH(prod,  int32_t,  int32_t)
+OPV_DISPATCH(prod, uint32_t, uint32_t)
+OPV_DISPATCH(prod,  int64_t,  int64_t)
+OPV_DISPATCH(prod, uint64_t, uint64_t)
+
 
 OPV_FUNC(prod, float, float, float4, 4, *)
 OPV_FUNC(prod, double, double, double4, 4, *)
 OP_FUNC(prod, long_double, long double, *)
+
+// __CUDA_ARCH__ is only defined when compiling device code
+#if !defined(__CUDA_ARCH__) || __CUDA_ARCH__ >= 530
+#undef current_func
+#define current_func(a, b) __hmul2(a, b)
+VFUNC_FUNC(prod, half, half, half2, 2, __hmul2, __hmul)
+#endif // __CUDA_ARCH__
 
 /* Complex */
 #if 0
@@ -291,10 +495,14 @@ OP_FUNC(prod, c_short_float_complex, short float _Complex, *=)
 #elif defined(HAVE_OPAL_SHORT_FLOAT_COMPLEX_T)
 COMPLEX_PROD_FUNC(c_short_float_complex, opal_short_float_t)
 #endif
-OP_FUNC(prod, c_float_complex, float _Complex, *=)
-OP_FUNC(prod, c_double_complex, double _Complex, *=)
 OP_FUNC(prod, c_long_double_complex, long double _Complex, *=)
 #endif // 0
+#undef current_func
+#define current_func(a, b) (cuCmulf(a,b))
+FUNC_FUNC(prod, c_float_complex, cuFloatComplex)
+#undef current_func
+#define current_func(a, b) (cuCmul(a,b))
+FUNC_FUNC(prod, c_double_complex, cuDoubleComplex)
 
 /*************************************************************************
  * Logical AND
