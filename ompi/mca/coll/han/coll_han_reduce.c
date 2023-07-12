@@ -172,7 +172,10 @@ mca_coll_han_reduce_intra(const void *sbuf,
         mca_coll_task_t *t_next_seg = OBJ_NEW(mca_coll_task_t);
         /* Setup up t_next_seg task arguments */
         t->cur_task = t_next_seg;
-        t->sbuf = (char *) t->sbuf + extent * t->seg_count;
+        if (t->sbuf != MPI_IN_PLACE) {
+            t->sbuf = (char *) t->sbuf + extent * t->seg_count;
+        }
+
         if (up_rank == root_up_rank) {
             t->rbuf = (char *) t->rbuf + extent * t->seg_count;
         }
@@ -242,6 +245,7 @@ int mca_coll_han_reduce_t1_task(void *task_args) {
     if (next_seg <= t->num_segments - 1) {
         int tmp_count = t->seg_count;
         char *tmp_rbuf = NULL;
+        char *tmp_sbuf = NULL;
         if (next_seg == t->num_segments - 1 && t->last_seg_count != t->seg_count) {
             tmp_count = t->last_seg_count;
         }
@@ -250,7 +254,10 @@ int mca_coll_han_reduce_t1_task(void *task_args) {
         } else if (NULL != t->rbuf) {
             tmp_rbuf = (char*)t->rbuf + extent * t->seg_count;
         }
-        t->low_comm->c_coll->coll_reduce((char *) t->sbuf + extent * t->seg_count,
+
+        tmp_sbuf = (t->sbuf == MPI_IN_PLACE) ? MPI_IN_PLACE : (char *)t->sbuf + extent * t->seg_count;
+
+        t->low_comm->c_coll->coll_reduce((char *) tmp_sbuf,
                                          (char *) tmp_rbuf, tmp_count,
                                          t->dtype, t->op, t->root_low_rank, t->low_comm,
                                          t->low_comm->c_coll->coll_reduce_module);
