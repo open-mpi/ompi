@@ -238,7 +238,7 @@ extern opal_atomic_int32_t ompi_instance_count;
 #define OMPI_ERRHANDLER_INVOKE(mpi_object, err_code, message) \
   ompi_errhandler_invoke((mpi_object)->error_handler, \
                          (mpi_object), \
-                         (int)(mpi_object)->error_handler->eh_mpi_object_type, \
+                         (int)(mpi_object)->errhandler_type, \
                          ompi_errcode_get_mpi_code(err_code), \
                          (message));
 
@@ -269,7 +269,7 @@ extern opal_atomic_int32_t ompi_instance_count;
     int __mpi_err_code = ompi_errcode_get_mpi_code(err_code);         \
     ompi_errhandler_invoke((mpi_object)->error_handler, \
                            (mpi_object), \
-                           (int) (mpi_object)->error_handler->eh_mpi_object_type, \
+                           (int) (mpi_object)->errhandler_type, \
                            (__mpi_err_code), \
                            (message)); \
     return (__mpi_err_code); \
@@ -307,7 +307,7 @@ extern opal_atomic_int32_t ompi_instance_count;
     int __mpi_err_code = ompi_errcode_get_mpi_code(err_code);         \
     ompi_errhandler_invoke((mpi_object)->error_handler, \
                            (mpi_object), \
-                           (int)(mpi_object)->error_handler->eh_mpi_object_type, \
+                           (int)(mpi_object)->errhandler_type, \
                            (__mpi_err_code), \
                            (message)); \
     return (__mpi_err_code); \
