@@ -61,6 +61,16 @@ included in the vX.Y.Z section and be denoted as:
 4.1.6 -- February, 2024
 -----------------------
 
+- Update to properly handle PMIx v>=4.2.3.  Thanks to Bruno Chareyre,
+  Github user @sukanka, and Christof Koehler for raising the
+  compatibility issues and helping test the fixes.
+- Fix minor issues and add some minor performance optimizations with
+  OFI support.
+- Support the "striping_factor" and "striping_unit" MPI_Info names
+  recomended by the MPI standard for parallel IO.
+- Fixed some minor issues with UCX support.
+- Minor optimization for 0-byte MPI_Alltoallw (i.e., make it a no-op).
+
 
 4.1.5 -- February, 2023
 -----------------------
