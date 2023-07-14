@@ -419,16 +419,6 @@ int ompi_group_init(void)
         return OMPI_ERROR;
     }
 
-#if OPAL_ENABLE_FT_MPI
-    /* Setup global list of failed processes */
-    ompi_group_all_failed_procs = OBJ_NEW(ompi_group_t);
-    ompi_group_all_failed_procs->grp_proc_count     = 0;
-    ompi_group_all_failed_procs->grp_my_rank        = MPI_UNDEFINED;
-    ompi_group_all_failed_procs->grp_proc_pointers  = NULL;
-    ompi_group_all_failed_procs->grp_flags         |= OMPI_GROUP_DENSE;
-    ompi_group_all_failed_procs->grp_flags         |= OMPI_GROUP_INTRINSIC;
-#endif
-
     /* add MPI_GROUP_NULL to table */
     OBJ_CONSTRUCT(&ompi_mpi_group_null, ompi_group_t);
     ompi_mpi_group_null.group.grp_proc_count        = 0;
@@ -444,6 +434,17 @@ int ompi_group_init(void)
     ompi_mpi_group_empty.group.grp_proc_pointers     = NULL;
     ompi_mpi_group_empty.group.grp_flags            |= OMPI_GROUP_DENSE;
     ompi_mpi_group_empty.group.grp_flags            |= OMPI_GROUP_INTRINSIC;
+
+#if OPAL_ENABLE_FT_MPI
+    /* Setup global list of failed processes */
+    ompi_group_all_failed_procs = OBJ_NEW(ompi_group_t);
+    ompi_group_all_failed_procs->grp_proc_count     = 0;
+    ompi_group_all_failed_procs->grp_my_rank        = MPI_UNDEFINED;
+    ompi_group_all_failed_procs->grp_proc_pointers  = NULL;
+    ompi_group_all_failed_procs->grp_flags         |= OMPI_GROUP_DENSE;
+    ompi_group_all_failed_procs->grp_flags         |= OMPI_GROUP_INTRINSIC;
+#endif
+
 
     ompi_mpi_instance_append_finalize (ompi_group_finalize);
 
