@@ -3,9 +3,6 @@
 Removed MPI constructs
 ======================
 
-.. error:: **TODO This section needs to be renamed/updated for the
-           5.0.0 behavior.**
-
 Starting with v4.0.0, Open MPI |mdash| by default |mdash| removes the
 prototypes from ``mpi.h`` for MPI symbols that were deprecated in 1996
 in the MPI-2.0 standard, and finally removed from the MPI-3.0 standard
@@ -110,18 +107,23 @@ default:
       - MPI-3.0 (2012)
 
 Although these symbols are no longer prototyped in ``mpi.h``, *they are
-still present in the MPI library in Open MPI v4.0.x*. This enables
+still present in the MPI library in Open MPI* |ompi_series|. This enables
 legacy MPI applications to *link and run* successfully with Open MPI
-v4.0.x, even though they will fail to *compile*.
+|ompi_series|, even though they will fail to *compile*.
+
+Furthermore, the MPI C++ interfaces were deprecated in version
+2.2, and then were removed in MPI-3.0.  Starting
+from v5.0.0, Open MPI does not support the C++ interfaces
+any more. Users who would like to continue using the C++ interfaces of
+MPI will need to use an older release of Open MPI.
 
 .. warning:: The Open MPI team **strongly** encourages all
    MPI application developers to stop using these constructs that were
    first deprecated over 20 years ago, and finally removed from the MPI
    specification in MPI-3.0 (in 2012).
 
-The FAQ items in this category
-show how to update your application to stop using these removed
-symbols.
+The FAQ items in this category show how to update your application to
+stop using these removed symbols.
 
 All that being said, if you are unable to immediately update your
 application to stop using these removed MPI-1 symbols, you can
@@ -131,22 +133,24 @@ re-enable them in ``mpi.h`` by configuring Open MPI with the
 .. note:: Future releases of Open MPI may remove these symbols
    altogether.
 
-Why on earth are you breaking the compilation of MPI applications?
+Why is Open MPI breaking the compilation of MPI applications?
 ------------------------------------------------------------------
 
-.. error:: **TODO This section needs to be renamed/updated (or
-           deleted?) for the 5.0.0 behavior.**
-
 The Open MPI developer community decided to take a first step of
-removing the prototypes for these symbols from ``mpi.h`` starting with
-the Open MPI v4.0.x series for the following reasons:
+removing prototypes of deprecated functions from ``mpi.h`` starting
+with the Open MPI v4.0.x series for the following reasons:
 
-#. These symbols have been deprecated since *1996.* It's time to start
-   raising awareness for developers who are inadvertently still using
-   these removed symbols.
-#. The MPI Forum removed these symbols from the MPI-3.0 specification
-   in 2012.  This is a sign that the Forum itself recognizes that
-   these removed symbols are no longer needed.
+#. The first set of symbols have been deprecated since *1996.* It's
+   time to start raising awareness for developers who are
+   inadvertently still using these removed symbols.
+#. The MPI Forum removed a substantial set of symbols from the MPI-3.0
+   specification in 2012. This is a sign that the Forum itself
+   recognizes that these removed symbols are no longer needed.
+#. More functions have been deprecated in MPI 2.2 and MPI 4.0, and
+   additional functions are expected to be deprecated and removed in
+   future MPI versions. It is in the interest of both, developers and
+   end-users, to minimize confusion as much as possible, and stick
+   closely to the MPI specification.
 #. Note that Open MPI *did not fully remove* these removed symbols: we
    just made it slightly more painful to get to them.  This is an
    attempt to raise awareness so that MPI application developers can
@@ -189,7 +193,7 @@ to change:
     MPI_Get_address(buffer, &address);
 
 In Fortran, the type of the parameter changed from ``INTEGER``
-$right_arrow ``INTEGER(KIND=MPI_ADDRESS_KIND)`` so that it can hold
+|rarrow| ``INTEGER(KIND=MPI_ADDRESS_KIND)`` so that it can hold
 larger values (e.g., 64 bit pointers):
 
 .. code-block:: Fortran
@@ -251,7 +255,7 @@ In Fortran, only the subroutine name changed:
     ! Old way
     CALL MPI_ERRHANDLER_CREATE(my_errhandler_function, my_handler, ierror)
 
-    ! Old way
+    ! New way
     CALL MPI_COMM_CREATE_ERRHANDLER(my_errhandler_function, my_handler, ierror)
 
 .. _label-mpi-errhandler-get:

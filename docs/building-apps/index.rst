@@ -10,6 +10,7 @@ Open MPI "wrapper" compilers.
    quickstart
    customizing-wrappers
    extracting-wrapper-flags
+   abi-compatibility
    removed-mpi-constructs
    deprecation-warnings
    building-static-apps
