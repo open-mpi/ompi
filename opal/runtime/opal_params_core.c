@@ -19,7 +19,7 @@
  * Copyright (c) 2014      Hochschule Esslingen.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2015      Mellanox Technologies, Inc.
+ * Copyright (c) 2015-2023 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * Copyright (c) 2018-2022 Amazon.com, Inc. or its affiliates.  All Rights reserved.
@@ -89,7 +89,7 @@ static bool opal_register_util_done = false;
 
 static char *opal_var_dump_color_string = NULL;
 
-static char *opal_var_dump_color_keys[OPAL_VAR_DUMP_COLOR_KEY_COUNT] = {
+static char *opal_var_dump_color_keys[OPAL_VAR_DUMP_COLOR_ARR_SIZE] = {
     [OPAL_VAR_DUMP_COLOR_VAR_NAME] = "name",
     [OPAL_VAR_DUMP_COLOR_VAR_VALUE] = "value",
     [OPAL_VAR_DUMP_COLOR_VALID_VALUES] = "valid_values"

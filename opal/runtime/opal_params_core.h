@@ -16,7 +16,7 @@
  * Copyright (c) 2010-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2014      Hochschule Esslingen.  All rights reserved.
- * Copyright (c) 2015      Mellanox Technologies, Inc.
+ * Copyright (c) 2015-2023 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * Copyright (c) 2022      Advanced Micro Devices, Inc. All rights reserved.
@@ -46,6 +46,7 @@ typedef enum {
     OPAL_VAR_DUMP_COLOR_KEY_COUNT
 } opal_var_dump_color_key_t;
 
+#define OPAL_VAR_DUMP_COLOR_ARR_SIZE (OPAL_VAR_DUMP_COLOR_KEY_COUNT + 1)
 extern char *opal_var_dump_color[OPAL_VAR_DUMP_COLOR_KEY_COUNT];
 
 #    if OPAL_ENABLE_TIMING
