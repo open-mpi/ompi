@@ -17,7 +17,7 @@
  * Copyright (c) 2010-2014 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2014      Hochschule Esslingen.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2023 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015-2023 Mellanox Technologies, Inc.
  *                         All rights reserved.
@@ -92,7 +92,8 @@ static char *opal_var_dump_color_string = NULL;
 static char *opal_var_dump_color_keys[OPAL_VAR_DUMP_COLOR_ARR_SIZE] = {
     [OPAL_VAR_DUMP_COLOR_VAR_NAME] = "name",
     [OPAL_VAR_DUMP_COLOR_VAR_VALUE] = "value",
-    [OPAL_VAR_DUMP_COLOR_VALID_VALUES] = "valid_values"
+    [OPAL_VAR_DUMP_COLOR_VALID_VALUES] = "valid_values",
+    [OPAL_VAR_DUMP_COLOR_KEY_COUNT] = NULL
 };
 
 /**
