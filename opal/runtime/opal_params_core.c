@@ -25,7 +25,7 @@
  * Copyright (c) 2018-2022 Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * Copyright (c) 2022      Advanced Micro Devices, Inc. All rights reserved.
- * Copyright (c) 2022      Computer Architecture and VLSI Systems (CARV)
+ * Copyright (c) 2022-2023 Computer Architecture and VLSI Systems (CARV)
  *                         Laboratory, ICS Forth. All rights reserved.
  * $COPYRIGHT$
  *
@@ -240,9 +240,16 @@ int opal_register_util_params(void)
 
     /* Var-dump color */
 
-    string = opal_argv_join_range(opal_var_dump_color_keys, 0, OPAL_VAR_DUMP_COLOR_KEY_COUNT, ',');
-    if (NULL == string) {
-        return OPAL_ERR_OUT_OF_RESOURCE;
+    string = NULL;
+
+    for (int i = 0; i < OPAL_VAR_DUMP_COLOR_KEY_COUNT; i++) {
+        ret = opal_asprintf(&tmp, "%s%s%s", (i > 0 ? string : ""),
+            (i > 0 ? "," : ""), opal_var_dump_color_keys[i]);
+        free(string);
+        string = tmp;
+        if (0 > ret) {
+            return OPAL_ERR_OUT_OF_RESOURCE;
+        }
     }
 
     ret = opal_asprintf(&tmp, "The colors to use when dumping MCA vars with color "
@@ -474,10 +481,17 @@ static int parse_color_string(char *color_string, char **key_names,
         }
 
         if (!key_found) {
-            char *valid_keys = opal_argv_join_range(key_names, 0, key_count, ',');
-            if (NULL == valid_keys) {
-                return_code = OPAL_ERR_OUT_OF_RESOURCE;
-                goto end;
+            char *tmp, *valid_keys = NULL;
+
+            for (int k = 0; k < key_count; k++) {
+                int ret = opal_asprintf(&tmp, "%s%s%s", (k > 0 ? valid_keys : ""),
+                    (k > 0 ? "," : ""), key_names[k]);
+                free(valid_keys);
+                valid_keys = tmp;
+                if (0 > ret) {
+                    return_code = OPAL_ERR_OUT_OF_RESOURCE;
+                    goto end;
+                }
             }
 
             opal_show_help("help-opal-runtime.txt", "mpi-params:var_dump_color:unknown-key",
