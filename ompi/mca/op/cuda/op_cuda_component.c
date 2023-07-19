@@ -58,6 +58,8 @@ ompi_op_cuda_component_t mca_op_cuda_component = {
         .opc_init_query = cuda_component_init_query,
         .opc_op_query = cuda_component_op_query,
     },
+    .cu_max_num_blocks = -1,
+    .cu_max_num_threads = -1,
     .cu_max_threads_per_block = NULL,
     .cu_max_blocks = NULL,
     .cu_devices = NULL,
@@ -109,7 +111,24 @@ static int cuda_component_close(void)
 static int
 cuda_component_register(void)
 {
-    /* TODO: add mca paramters */
+    mca_base_var_enum_flag_t *new_enum_flag = NULL;
+    (void) mca_base_component_var_register(&mca_op_cuda_component.super.opc_version,
+                                           "max_num_blocks",
+                                           "Maximum number of thread blocks in kernels (-1: device limit)",
+                                           MCA_BASE_VAR_TYPE_INT,
+                                           &(new_enum_flag->super), 0, 0,
+                                           OPAL_INFO_LVL_4,
+                                           MCA_BASE_VAR_SCOPE_LOCAL,
+                                           &mca_op_cuda_component.cu_max_num_blocks);
+
+    (void) mca_base_component_var_register(&mca_op_cuda_component.super.opc_version,
+                                           "max_num_threads",
+                                           "Maximum number of threads per block in kernels (-1: device limit)",
+                                           MCA_BASE_VAR_TYPE_INT,
+                                           &(new_enum_flag->super), 0, 0,
+                                           OPAL_INFO_LVL_4,
+                                           MCA_BASE_VAR_SCOPE_LOCAL,
+                                           &mca_op_cuda_component.cu_max_num_threads);
 
     return OMPI_SUCCESS;
 }
@@ -141,12 +160,30 @@ cuda_component_init_query(bool enable_progress_threads,
             /* fall-back to value that should work on every device */
             mca_op_cuda_component.cu_max_threads_per_block[i] = 512;
         }
+        if (-1 < mca_op_cuda_component.cu_max_num_threads) {
+            if (mca_op_cuda_component.cu_max_threads_per_block[i] >= mca_op_cuda_component.cu_max_num_threads) {
+                mca_op_cuda_component.cu_max_threads_per_block[i] = mca_op_cuda_component.cu_max_num_threads;
+            } else {
+                printf("WARN: CUDA device %d does not support %d threads per block, falling back to %d\n",
+                       i, mca_op_cuda_component.cu_max_num_threads, mca_op_cuda_component.cu_max_threads_per_block[i]);
+            }
+        }
+
         rc = cuDeviceGetAttribute(&mca_op_cuda_component.cu_max_blocks[i],
                                   CU_DEVICE_ATTRIBUTE_MAX_GRID_DIM_X,
                                   mca_op_cuda_component.cu_devices[i]);
         if (CUDA_SUCCESS != rc) {
             /* fall-back to value that should work on every device */
             mca_op_cuda_component.cu_max_blocks[i] = 512;
+        }
+        printf("max threads %d max blocks %d\n", mca_op_cuda_component.cu_max_threads_per_block[i], mca_op_cuda_component.cu_max_blocks[i]);
+        if (-1 < mca_op_cuda_component.cu_max_num_blocks) {
+            if (mca_op_cuda_component.cu_max_blocks[i] >= mca_op_cuda_component.cu_max_num_blocks) {
+                mca_op_cuda_component.cu_max_blocks[i] = mca_op_cuda_component.cu_max_num_blocks;
+            } else {
+                printf("WARN: CUDA device %d does not support %d blocks, falling back to %d\n",
+                       i, mca_op_cuda_component.cu_max_num_blocks, mca_op_cuda_component.cu_max_blocks[i]);
+            }
         }
     }
 

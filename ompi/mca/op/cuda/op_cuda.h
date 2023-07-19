@@ -55,6 +55,8 @@ typedef struct {
     CUstream cu_stream;
     CUcontext *cu_ctx;
 #endif // 0
+    int cu_max_num_blocks;
+    int cu_max_num_threads;
     int *cu_max_threads_per_block;
     int *cu_max_blocks;
     CUdevice *cu_devices;

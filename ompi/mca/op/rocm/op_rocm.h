@@ -55,6 +55,8 @@ typedef struct {
     hipStream_t ro_stream;
     hipCtx_t *ro_ctx;
 #endif // 0
+    int ro_max_num_blocks;
+    int ro_max_num_threads;
     int *ro_max_threads_per_block;
     int *ro_max_blocks;
     hipDevice_t *ro_devices;

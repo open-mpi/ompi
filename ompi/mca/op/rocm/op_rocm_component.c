@@ -58,6 +58,8 @@ ompi_op_rocm_component_t mca_op_rocm_component = {
         .opc_init_query = rocm_component_init_query,
         .opc_op_query = rocm_component_op_query,
     },
+    .ro_max_num_blocks = -1,
+    .ro_max_num_threads = -1,
     .ro_max_threads_per_block = NULL,
     .ro_max_blocks = NULL,
     .ro_devices = NULL,
@@ -112,7 +114,25 @@ rocm_component_register(void)
 {
     /* TODO: add mca paramters */
 
-    printf("op rocm_component_register\n");
+    mca_base_var_enum_flag_t *new_enum_flag = NULL;
+    (void) mca_base_component_var_register(&mca_op_rocm_component.super.opc_version,
+                                           "max_num_blocks",
+                                           "Maximum number of thread blocks in kernels (-1: device limit)",
+                                           MCA_BASE_VAR_TYPE_INT,
+                                           &(new_enum_flag->super), 0, 0,
+                                           OPAL_INFO_LVL_4,
+                                           MCA_BASE_VAR_SCOPE_LOCAL,
+                                           &mca_op_rocm_component.ro_max_num_blocks);
+
+    (void) mca_base_component_var_register(&mca_op_rocm_component.super.opc_version,
+                                           "max_num_threads",
+                                           "Maximum number of threads per block in kernels (-1: device limit)",
+                                           MCA_BASE_VAR_TYPE_INT,
+                                           &(new_enum_flag->super), 0, 0,
+                                           OPAL_INFO_LVL_4,
+                                           MCA_BASE_VAR_SCOPE_LOCAL,
+                                           &mca_op_rocm_component.ro_max_num_threads);
+
     return OMPI_SUCCESS;
 }
 
@@ -143,6 +163,11 @@ rocm_component_init_query(bool enable_progress_threads,
             /* fall-back to value that should work on every device */
             mca_op_rocm_component.ro_max_threads_per_block[i] = 512;
         }
+        if (-1 < mca_op_rocm_component.ro_max_num_threads) {
+            if (mca_op_rocm_component.ro_max_threads_per_block[i] > mca_op_rocm_component.ro_max_num_threads) {
+                mca_op_rocm_component.ro_max_threads_per_block[i] = mca_op_rocm_component.ro_max_num_threads;
+            }
+        }
 
         rc = hipDeviceGetAttribute(&mca_op_rocm_component.ro_max_blocks[i],
                                   hipDeviceAttributeMaxGridDimX,
@@ -150,6 +175,11 @@ rocm_component_init_query(bool enable_progress_threads,
         if (hipSuccess != rc) {
             /* we'll try to max out the blocks */
             mca_op_rocm_component.ro_max_blocks[i] = 512;
+        }
+        if (-1 < mca_op_rocm_component.ro_max_num_blocks) {
+            if (mca_op_rocm_component.ro_max_blocks[i] > mca_op_rocm_component.ro_max_num_blocks) {
+                mca_op_rocm_component.ro_max_blocks[i] = mca_op_rocm_component.ro_max_num_blocks;
+            }
         }
     }
 
@@ -162,7 +192,6 @@ rocm_component_init_query(bool enable_progress_threads,
         mca_op_rocm_component.ro_stream = 0;
     }
 #endif // 0
-    printf("op rocm_component_init_query\n");
     return OMPI_SUCCESS;
 }
 
