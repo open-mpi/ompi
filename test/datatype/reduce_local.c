@@ -246,7 +246,7 @@ static allocator_t host_allocator = {
     .free     = &host_free,
     .fini     = &host_fini};
 
-#if defined(OPAL_CUDA_SUPPORT)
+#if defined(OPAL_CUDA_SUPPORT) && OPAL_CUDA_SUPPORT
 #include <cuda_runtime.h>
 static void cuda_init() {
     // nothing to be done
@@ -280,7 +280,7 @@ static allocator_t cuda_allocator = {
     .free     = &cuda_free,
     .fini     = &cuda_fini};
 
-#elif defined(OPAL_ROCM_SUPPORT)
+#elif defined(OPAL_ROCM_SUPPORT) && OPAL_ROCM_SUPPORT
 #include <hip/hip_runtime.h>
 static void rocm_init() {
     hipError_t ret = hipInit(0);
@@ -414,12 +414,12 @@ int main(int argc, char **argv)
                 // default allocator
                 break;
             } else
-#if defined(OPAL_CUDA_SUPPORT)
+#if defined(OPAL_CUDA_SUPPORT) && OPAL_CUDA_SUPPORT
             if (0 == strncmp("cuda", optarg, 4)) {
                 allocator = &cuda_allocator;
                 break;
             } else
-#elif defined(OPAL_ROCM_SUPPORT)
+#elif defined(OPAL_ROCM_SUPPORT) && OPAL_ROCM_SUPPORT
             if (0 == strncmp("rocm", optarg, 4)) {
                 allocator = &rocm_allocator;
                 break;
@@ -440,10 +440,10 @@ int main(int argc, char **argv)
                     " -o <op> : comma separated list of operations to execute among\n"
                     "           sum, min, max, prod, bor, bxor, band\n"
                     " -d <memory-space> : host"
-#ifdef OPAL_CUDA_SUPPORT
+#if defined(OPAL_CUDA_SUPPORT) && OPAL_CUDA_SUPPORT
                     ", cuda"
 #endif
-#ifdef OPAL_ROCM_SUPPORT
+#if defined(OPAL_ROCM_SUPPORT) && OPAL_ROCM_SUPPORT
                     ", rocm"
 #endif
                     "\n"
