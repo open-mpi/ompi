@@ -519,6 +519,7 @@ struct mca_coll_base_comm_t {
 
     /* pointer to per-device memory cache */
     mca_allocator_base_module_t **device_allocators;
+    int num_device_allocators;
 };
 typedef struct mca_coll_base_comm_t mca_coll_base_comm_t;
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_coll_base_comm_t);

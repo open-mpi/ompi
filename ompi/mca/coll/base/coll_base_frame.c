@@ -72,6 +72,7 @@ coll_base_comm_construct(mca_coll_base_comm_t *data)
 {
     memset ((char *) data + sizeof (data->super), 0, sizeof (*data) - sizeof (data->super));
     data->device_allocators = NULL;
+    data->num_device_allocators = 0;
 }
 
 static void
@@ -112,9 +113,7 @@ coll_base_comm_destruct(mca_coll_base_comm_t *data)
     }
 
     if (NULL != data->device_allocators) {
-        int num_devices;
-        opal_accelerator.num_devices(&num_devices);
-        for (int i = 0; i < num_devices; ++i) {
+        for (int i = 0; i < data->num_device_allocators; ++i) {
             if (NULL != data->device_allocators[i]) {
                 data->device_allocators[i]->alc_finalize(data->device_allocators[i]);
             }
