@@ -783,6 +783,12 @@ static int accelerator_cuda_mem_alloc_stream(
     size_t size,
     opal_accelerator_stream_t *stream)
 {
+
+    int delayed_init = opal_accelerator_cuda_delayed_init();
+    if (OPAL_UNLIKELY(0 != delayed_init)) {
+        return delayed_init;
+    }
+
 #if CUDA_VERSION >= 11020
     cudaError_t result;
 
@@ -867,6 +873,12 @@ static int accelerator_cuda_wait_stream(opal_accelerator_stream_t *stream)
 
 static int accelerator_cuda_get_num_devices(int *num_devices)
 {
+
+    int delayed_init = opal_accelerator_cuda_delayed_init();
+    if (OPAL_UNLIKELY(0 != delayed_init)) {
+        return delayed_init;
+    }
+
     *num_devices = opal_accelerator_cuda_num_devices;
     return OPAL_SUCCESS;
 }
