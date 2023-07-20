@@ -160,7 +160,7 @@ do { \
                     if(((CHECK_BUF+_k)[i]) == (((INIT_INBUF+_k)[i]) OPNAME ((INIT_INOUT_BUF+_k)[i]))) \
                         continue; \
                     printf("First error at alignment %d position %d (%" TYPE_PREFIX " %s %" TYPE_PREFIX " != %" TYPE_PREFIX ")\n", \
-                           _k, i, (INBUF+_k)[i], (#OPNAME), (INIT_INOUT_BUF+_k)[i], (INOUT_BUF+_k)[i]); \
+                           _k, i, (INIT_INBUF+_k)[i], (#OPNAME), (INIT_INOUT_BUF+_k)[i], (INIT_INOUT_BUF+_k)[i]); \
                     correctness = 0; \
                     break; \
                 } \
@@ -189,7 +189,7 @@ do { \
                     if(_v2 == OPNAME(_v1, _v3)) \
                         continue; \
                     printf("First error at alignment %d position %d (%" TYPE_PREFIX " !=  %s(%" TYPE_PREFIX ", %" TYPE_PREFIX ")\n", \
-                           _k, i, _v1, (#OPNAME), _v3, _v2); \
+                           _k, i, _v2, (#OPNAME), _v1, _v2); \
                     correctness = 0; \
                     break; \
                 } \
