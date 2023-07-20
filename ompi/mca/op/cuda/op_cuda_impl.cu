@@ -257,7 +257,7 @@ static inline __device__ T vprod(const T& a, const T& b) {
                                                         threads_per_block,                          \
                                                         max_blocks, stream);                         \
             } else if constexpr(sizeof(type_name) == sizeof(unsigned long)) {                                \
-                ompi_op_cuda_2buff_##name##_unsigned_long_submit((const unsigned long*)in, (unsigned long*)inout, count, \
+                ompi_op_cuda_2buff_##name##_ulong_submit((const unsigned long*)in, (unsigned long*)inout, count, \
                                                          threads_per_block,                         \
                                                          max_blocks, stream);                        \
             } else if constexpr(sizeof(type_name) == sizeof(unsigned long long)) {                           \
@@ -305,7 +305,7 @@ VFUNC_FUNC(max, uint, unsigned int, uint4, 4, vmax, max)
 #undef current_func
 #define current_func(a, b) max(a, b)
 FUNC_FUNC(max,  long,  long)
-FUNC_FUNC(max,  unsigned_long, unsigned long)
+FUNC_FUNC(max,  ulong, unsigned long)
 FUNC_FUNC(max,  longlong, long long)
 FUNC_FUNC(max,  ulonglong, unsigned long long)
 
@@ -357,7 +357,7 @@ VFUNC_FUNC(min, uint, unsigned int, uint4, 4, vmin, min)
 #undef current_func
 #define current_func(a, b) min(a, b)
 FUNC_FUNC(min,  long,  long)
-FUNC_FUNC(min,  unsigned_long, unsigned long)
+FUNC_FUNC(min,  ulong, unsigned long)
 FUNC_FUNC(min,  longlong, long long)
 FUNC_FUNC(min,  ulonglong, unsigned long long)
 OPV_DISPATCH(min,   int8_t,   int8_t)
@@ -409,7 +409,7 @@ VFUNC_FUNC(sum, uint, unsigned int, uint4, 4, vsum, tsum)
 #undef current_func
 #define current_func(a, b) tsum(a, b)
 FUNC_FUNC(sum,  long,  long)
-FUNC_FUNC(sum,  unsigned_long, unsigned long)
+FUNC_FUNC(sum,  ulong, unsigned long)
 FUNC_FUNC(sum,  longlong, long long)
 FUNC_FUNC(sum,  ulonglong, unsigned long long)
 
@@ -463,7 +463,7 @@ FUNC_FUNC(prod, ushort, unsigned short)
 FUNC_FUNC(prod, int, int)
 FUNC_FUNC(prod, uint, unsigned int)
 FUNC_FUNC(prod,  long,  long)
-FUNC_FUNC(prod,  unsigned_long, unsigned long)
+FUNC_FUNC(prod,  ulong, unsigned long)
 FUNC_FUNC(prod,  longlong, long long)
 FUNC_FUNC(prod,  ulonglong, unsigned long long)
 

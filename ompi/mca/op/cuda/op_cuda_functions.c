@@ -1444,7 +1444,7 @@ LOC_FUNC_3BUF(minloc, long_double_int, <)
   [OMPI_OP_BASE_TYPE_UINT32_T] = ompi_op_cuda_##ftype##_##name##_uint32_t, \
   [OMPI_OP_BASE_TYPE_INT64_T] = ompi_op_cuda_##ftype##_##name##_int64_t,   \
   [OMPI_OP_BASE_TYPE_LONG] = ompi_op_cuda_##ftype##_##name##_long,   \
-  [OMPI_OP_BASE_TYPE_UNSIGNED_LONG] = ompi_op_cuda_##ftype##_##name##_long,   \
+  [OMPI_OP_BASE_TYPE_UNSIGNED_LONG] = ompi_op_cuda_##ftype##_##name##_ulong,   \
   [OMPI_OP_BASE_TYPE_UINT64_T] = ompi_op_cuda_##ftype##_##name##_uint64_t
 
 /** All the Fortran integers ********************************************/

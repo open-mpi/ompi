@@ -79,7 +79,7 @@ FUNC_FUNC_SIG(max, uint32_t, uint32_t)
 FUNC_FUNC_SIG(max,  int64_t,  int64_t)
 FUNC_FUNC_SIG(max, uint64_t, uint64_t)
 FUNC_FUNC_SIG(max,  long,  long)
-FUNC_FUNC_SIG(max,  unsigned_long, unsigned long)
+FUNC_FUNC_SIG(max,  ulong, unsigned long)
 
 #if 0
 /* Floating point */
@@ -108,7 +108,7 @@ FUNC_FUNC_SIG(min, uint32_t, uint32_t)
 FUNC_FUNC_SIG(min,  int64_t,  int64_t)
 FUNC_FUNC_SIG(min, uint64_t, uint64_t)
 FUNC_FUNC_SIG(min,  long,  long)
-FUNC_FUNC_SIG(min,  unsigned_long, unsigned long)
+FUNC_FUNC_SIG(min,  ulong, unsigned long)
 
 #if 0
 /* Floating point */
@@ -137,7 +137,7 @@ OP_FUNC_SIG(sum, uint32_t, uint32_t, +=)
 OP_FUNC_SIG(sum,  int64_t,  int64_t, +=)
 OP_FUNC_SIG(sum, uint64_t, uint64_t, +=)
 OP_FUNC_SIG(sum,  long,  long, +=)
-OP_FUNC_SIG(sum,  unsigned_long, unsigned long, +=)
+OP_FUNC_SIG(sum,  ulong, unsigned long, +=)
 
 #if 0
 /* Floating point */
@@ -180,7 +180,7 @@ OP_FUNC_SIG(prod, uint32_t, uint32_t, *=)
 OP_FUNC_SIG(prod,  int64_t,  int64_t, *=)
 OP_FUNC_SIG(prod, uint64_t, uint64_t, *=)
 OP_FUNC_SIG(prod,  long,  long, *=)
-OP_FUNC_SIG(prod,  unsigned_long, unsigned long, *=)
+OP_FUNC_SIG(prod,  ulong, unsigned long, *=)
 
 #if 0
 /* Floating point */
@@ -223,7 +223,7 @@ FUNC_FUNC_SIG(land, uint32_t, uint32_t)
 FUNC_FUNC_SIG(land,  int64_t,  int64_t)
 FUNC_FUNC_SIG(land, uint64_t, uint64_t)
 FUNC_FUNC_SIG(land,  long,  long)
-FUNC_FUNC_SIG(land,  unsigned_long, unsigned long)
+FUNC_FUNC_SIG(land,  ulong, unsigned long)
 
 /* C++ bool */
 FUNC_FUNC_SIG(land, bool, bool)
@@ -244,7 +244,7 @@ FUNC_FUNC_SIG(lor, uint32_t, uint32_t)
 FUNC_FUNC_SIG(lor,  int64_t,  int64_t)
 FUNC_FUNC_SIG(lor, uint64_t, uint64_t)
 FUNC_FUNC_SIG(lor,  long,  long)
-FUNC_FUNC_SIG(lor,  unsigned_long, unsigned long)
+FUNC_FUNC_SIG(lor,  ulong, unsigned long)
 
 /* C++ bool */
 FUNC_FUNC_SIG(lor, bool, bool)
@@ -265,7 +265,7 @@ FUNC_FUNC_SIG(lxor, uint32_t, uint32_t)
 FUNC_FUNC_SIG(lxor,  int64_t,  int64_t)
 FUNC_FUNC_SIG(lxor, uint64_t, uint64_t)
 FUNC_FUNC_SIG(lxor,  long,  long)
-FUNC_FUNC_SIG(lxor,  unsigned_long, unsigned long)
+FUNC_FUNC_SIG(lxor,  ulong, unsigned long)
 
 /* C++ bool */
 FUNC_FUNC_SIG(lxor, bool, bool)
@@ -286,7 +286,7 @@ FUNC_FUNC_SIG(band, uint32_t, uint32_t)
 FUNC_FUNC_SIG(band,  int64_t,  int64_t)
 FUNC_FUNC_SIG(band, uint64_t, uint64_t)
 FUNC_FUNC_SIG(band,  long,  long)
-FUNC_FUNC_SIG(band,  unsigned_long, unsigned long)
+FUNC_FUNC_SIG(band,  ulong, unsigned long)
 
 /* Byte */
 FUNC_FUNC_SIG(band, byte, char)
@@ -307,7 +307,7 @@ FUNC_FUNC_SIG(bor, uint32_t, uint32_t)
 FUNC_FUNC_SIG(bor,  int64_t,  int64_t)
 FUNC_FUNC_SIG(bor, uint64_t, uint64_t)
 FUNC_FUNC_SIG(bor,  long,  long)
-FUNC_FUNC_SIG(bor,  unsigned_long, unsigned long)
+FUNC_FUNC_SIG(bor,  ulong, unsigned long)
 
 /* Byte */
 FUNC_FUNC_SIG(bor, byte, char)
@@ -328,7 +328,7 @@ FUNC_FUNC_SIG(bxor, uint32_t, uint32_t)
 FUNC_FUNC_SIG(bxor,  int64_t,  int64_t)
 FUNC_FUNC_SIG(bxor, uint64_t, uint64_t)
 FUNC_FUNC_SIG(bxor,  long,  long)
-FUNC_FUNC_SIG(bxor,  unsigned_long, unsigned long)
+FUNC_FUNC_SIG(bxor,  ulong, unsigned long)
 
 /* Byte */
 FUNC_FUNC_SIG(bxor, byte, char)
@@ -343,7 +343,7 @@ LOC_STRUCT(long_int, long, int)
 LOC_STRUCT(2int, int, int)
 LOC_STRUCT(short_int, short, int)
 LOC_STRUCT(long_double_int, long double, int)
-LOC_STRUCT(unsigned_long, unsigned long, int)
+LOC_STRUCT(ulong, unsigned long, int)
 /* compat types for Fortran */
 LOC_STRUCT(2real, float, float)
 LOC_STRUCT(2double_precision, double, double)
@@ -414,7 +414,7 @@ FUNC_FUNC_3BUF_SIG(max, uint32_t, uint32_t)
 FUNC_FUNC_3BUF_SIG(max,  int64_t,  int64_t)
 FUNC_FUNC_3BUF_SIG(max, uint64_t, uint64_t)
 FUNC_FUNC_3BUF_SIG(max,  long,  long)
-FUNC_FUNC_3BUF_SIG(max,  unsigned_long, unsigned long)
+FUNC_FUNC_3BUF_SIG(max,  ulong, unsigned long)
 
 /* Fortran integer */
 #if OMPI_HAVE_FORTRAN_INTEGER
@@ -478,7 +478,7 @@ FUNC_FUNC_3BUF_SIG(min, uint32_t, uint32_t)
 FUNC_FUNC_3BUF_SIG(min,  int64_t,  int64_t)
 FUNC_FUNC_3BUF_SIG(min, uint64_t, uint64_t)
 FUNC_FUNC_3BUF_SIG(min,  long,  long)
-FUNC_FUNC_3BUF_SIG(min,  unsigned_long, unsigned long)
+FUNC_FUNC_3BUF_SIG(min,  ulong, unsigned long)
 
 /* Fortran integer */
 #if OMPI_HAVE_FORTRAN_INTEGER
@@ -541,7 +541,7 @@ OP_FUNC_3BUF_SIG(sum, uint32_t, uint32_t, +)
 OP_FUNC_3BUF_SIG(sum,  int64_t,  int64_t, +)
 OP_FUNC_3BUF_SIG(sum, uint64_t, uint64_t, +)
 OP_FUNC_3BUF_SIG(sum,  long,  long, +)
-OP_FUNC_3BUF_SIG(sum,  unsigned_long, unsigned long, +)
+OP_FUNC_3BUF_SIG(sum,  ulong, unsigned long, +)
 
 /* Fortran integer */
 #if OMPI_HAVE_FORTRAN_INTEGER
@@ -615,7 +615,7 @@ OP_FUNC_3BUF_SIG(prod, uint32_t, uint32_t, *)
 OP_FUNC_3BUF_SIG(prod,  int64_t,  int64_t, *)
 OP_FUNC_3BUF_SIG(prod, uint64_t, uint64_t, *)
 OP_FUNC_3BUF_SIG(prod,  long,  long, *)
-OP_FUNC_3BUF_SIG(prod,  unsigned_long, unsigned long, *)
+OP_FUNC_3BUF_SIG(prod,  ulong, unsigned long, *)
 
 /* Fortran integer */
 #if OMPI_HAVE_FORTRAN_INTEGER
@@ -689,7 +689,7 @@ FUNC_FUNC_3BUF_SIG(land, uint32_t, uint32_t)
 FUNC_FUNC_3BUF_SIG(land,  int64_t,  int64_t)
 FUNC_FUNC_3BUF_SIG(land, uint64_t, uint64_t)
 FUNC_FUNC_3BUF_SIG(land,  long,  long)
-FUNC_FUNC_3BUF_SIG(land,  unsigned_long, unsigned long)
+FUNC_FUNC_3BUF_SIG(land,  ulong, unsigned long)
 
 /* Logical */
 #if OMPI_HAVE_FORTRAN_LOGICAL
@@ -712,7 +712,7 @@ FUNC_FUNC_3BUF_SIG(lor, uint32_t, uint32_t)
 FUNC_FUNC_3BUF_SIG(lor,  int64_t,  int64_t)
 FUNC_FUNC_3BUF_SIG(lor, uint64_t, uint64_t)
 FUNC_FUNC_3BUF_SIG(lor,  long,  long)
-FUNC_FUNC_3BUF_SIG(lor,  unsigned_long, unsigned long)
+FUNC_FUNC_3BUF_SIG(lor,  ulong, unsigned long)
 
 /* Logical */
 #if OMPI_HAVE_FORTRAN_LOGICAL
@@ -735,7 +735,7 @@ FUNC_FUNC_3BUF_SIG(lxor, uint32_t, uint32_t)
 FUNC_FUNC_3BUF_SIG(lxor,  int64_t,  int64_t)
 FUNC_FUNC_3BUF_SIG(lxor, uint64_t, uint64_t)
 FUNC_FUNC_3BUF_SIG(lxor,  long,  long)
-FUNC_FUNC_3BUF_SIG(lxor,  unsigned_long, unsigned long)
+FUNC_FUNC_3BUF_SIG(lxor,  ulong, unsigned long)
 
 /* Logical */
 #if OMPI_HAVE_FORTRAN_LOGICAL
@@ -758,7 +758,7 @@ FUNC_FUNC_3BUF_SIG(band, uint32_t, uint32_t)
 FUNC_FUNC_3BUF_SIG(band,  int64_t,  int64_t)
 FUNC_FUNC_3BUF_SIG(band, uint64_t, uint64_t)
 FUNC_FUNC_3BUF_SIG(band,  long,  long)
-FUNC_FUNC_3BUF_SIG(band,  unsigned_long, unsigned long)
+FUNC_FUNC_3BUF_SIG(band,  ulong, unsigned long)
 
 /* Fortran integer */
 #if OMPI_HAVE_FORTRAN_INTEGER
@@ -796,7 +796,7 @@ FUNC_FUNC_3BUF_SIG(bor, uint32_t, uint32_t)
 FUNC_FUNC_3BUF_SIG(bor,  int64_t,  int64_t)
 FUNC_FUNC_3BUF_SIG(bor, uint64_t, uint64_t)
 FUNC_FUNC_3BUF_SIG(bor,  long,  long)
-FUNC_FUNC_3BUF_SIG(bor,  unsigned_long, unsigned long)
+FUNC_FUNC_3BUF_SIG(bor,  ulong, unsigned long)
 
 /* Fortran integer */
 #if OMPI_HAVE_FORTRAN_INTEGER
@@ -834,7 +834,7 @@ FUNC_FUNC_3BUF_SIG(bxor, uint32_t, uint32_t)
 FUNC_FUNC_3BUF_SIG(bxor,  int64_t,  int64_t)
 FUNC_FUNC_3BUF_SIG(bxor, uint64_t, uint64_t)
 FUNC_FUNC_3BUF_SIG(bxor,  long,  long)
-FUNC_FUNC_3BUF_SIG(bxor,  unsigned_long, unsigned long)
+FUNC_FUNC_3BUF_SIG(bxor,  ulong, unsigned long)
 
 /* Fortran integer */
 #if OMPI_HAVE_FORTRAN_INTEGER

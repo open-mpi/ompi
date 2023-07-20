@@ -275,7 +275,7 @@ FUNC_FUNC(max, uint32_t, uint32_t)
 FUNC_FUNC(max,  int64_t,  int64_t)
 FUNC_FUNC(max, uint64_t, uint64_t)
 FUNC_FUNC(max,  long,  long)
-FUNC_FUNC(max,  unsigned_long, unsigned long)
+FUNC_FUNC(max,  ulong, unsigned long)
 
 /* Fortran integer */
 #if OMPI_HAVE_FORTRAN_INTEGER
@@ -344,7 +344,7 @@ FUNC_FUNC(min, uint32_t, uint32_t)
 FUNC_FUNC(min,  int64_t,  int64_t)
 FUNC_FUNC(min, uint64_t, uint64_t)
 FUNC_FUNC(min,  long,  long)
-FUNC_FUNC(min,  unsigned_long, unsigned long)
+FUNC_FUNC(min,  ulong, unsigned long)
 
 /* Fortran integer */
 #if OMPI_HAVE_FORTRAN_INTEGER
@@ -411,7 +411,7 @@ OP_FUNC(sum, uint32_t, uint32_t, +=)
 OP_FUNC(sum,  int64_t,  int64_t, +=)
 OP_FUNC(sum, uint64_t, uint64_t, +=)
 OP_FUNC(sum,  long,  long, +=)
-OP_FUNC(sum,  unsigned_long, unsigned long, +=)
+OP_FUNC(sum,  ulong, unsigned long, +=)
 
 /* Fortran integer */
 #if OMPI_HAVE_FORTRAN_INTEGER
@@ -489,7 +489,7 @@ OP_FUNC(prod, uint32_t, uint32_t, *=)
 OP_FUNC(prod,  int64_t,  int64_t, *=)
 OP_FUNC(prod, uint64_t, uint64_t, *=)
 OP_FUNC(prod,  long,  long, *=)
-OP_FUNC(prod,  unsigned_long, unsigned long, *=)
+OP_FUNC(prod,  ulong, unsigned long, *=)
 
 /* Fortran integer */
 #if OMPI_HAVE_FORTRAN_INTEGER
@@ -569,7 +569,7 @@ FUNC_FUNC(land, uint32_t, uint32_t)
 FUNC_FUNC(land,  int64_t,  int64_t)
 FUNC_FUNC(land, uint64_t, uint64_t)
 FUNC_FUNC(land,  long,  long)
-FUNC_FUNC(land,  unsigned_long, unsigned long)
+FUNC_FUNC(land,  ulong, unsigned long)
 
 /* Logical */
 #if OMPI_HAVE_FORTRAN_LOGICAL
@@ -594,7 +594,7 @@ FUNC_FUNC(lor, uint32_t, uint32_t)
 FUNC_FUNC(lor,  int64_t,  int64_t)
 FUNC_FUNC(lor, uint64_t, uint64_t)
 FUNC_FUNC(lor,  long,  long)
-FUNC_FUNC(lor,  unsigned_long, unsigned long)
+FUNC_FUNC(lor,  ulong, unsigned long)
 
 /* Logical */
 #if OMPI_HAVE_FORTRAN_LOGICAL
@@ -619,7 +619,7 @@ FUNC_FUNC(lxor, uint32_t, uint32_t)
 FUNC_FUNC(lxor,  int64_t,  int64_t)
 FUNC_FUNC(lxor, uint64_t, uint64_t)
 FUNC_FUNC(lxor,  long,  long)
-FUNC_FUNC(lxor,  unsigned_long, unsigned long)
+FUNC_FUNC(lxor,  ulong, unsigned long)
 
 
 /* Logical */
@@ -645,7 +645,7 @@ FUNC_FUNC(band, uint32_t, uint32_t)
 FUNC_FUNC(band,  int64_t,  int64_t)
 FUNC_FUNC(band, uint64_t, uint64_t)
 FUNC_FUNC(band,  long,  long)
-FUNC_FUNC(band,  unsigned_long, unsigned long)
+FUNC_FUNC(band,  ulong, unsigned long)
 
 /* Fortran integer */
 #if OMPI_HAVE_FORTRAN_INTEGER
@@ -685,7 +685,7 @@ FUNC_FUNC(bor, uint32_t, uint32_t)
 FUNC_FUNC(bor,  int64_t,  int64_t)
 FUNC_FUNC(bor, uint64_t, uint64_t)
 FUNC_FUNC(bor,  long,  long)
-FUNC_FUNC(bor,  unsigned_long, unsigned long)
+FUNC_FUNC(bor,  ulong, unsigned long)
 
 /* Fortran integer */
 #if OMPI_HAVE_FORTRAN_INTEGER
@@ -725,7 +725,7 @@ FUNC_FUNC(bxor, uint32_t, uint32_t)
 FUNC_FUNC(bxor,  int64_t,  int64_t)
 FUNC_FUNC(bxor, uint64_t, uint64_t)
 FUNC_FUNC(bxor,  long,  long)
-FUNC_FUNC(bxor,  unsigned_long, unsigned long)
+FUNC_FUNC(bxor,  ulong, unsigned long)
 
 /* Fortran integer */
 #if OMPI_HAVE_FORTRAN_INTEGER
@@ -900,7 +900,7 @@ FUNC_FUNC_3BUF(max, uint32_t, uint32_t)
 FUNC_FUNC_3BUF(max,  int64_t,  int64_t)
 FUNC_FUNC_3BUF(max, uint64_t, uint64_t)
 FUNC_FUNC_3BUF(max,  long,  long)
-FUNC_FUNC_3BUF(max,  unsigned_long, unsigned long)
+FUNC_FUNC_3BUF(max,  ulong, unsigned long)
 
 /* Fortran integer */
 #if OMPI_HAVE_FORTRAN_INTEGER
@@ -965,7 +965,7 @@ FUNC_FUNC_3BUF(min, uint32_t, uint32_t)
 FUNC_FUNC_3BUF(min,  int64_t,  int64_t)
 FUNC_FUNC_3BUF(min, uint64_t, uint64_t)
 FUNC_FUNC_3BUF(min,  long,  long)
-FUNC_FUNC_3BUF(min,  unsigned_long, unsigned long)
+FUNC_FUNC_3BUF(min,  ulong, unsigned long)
 
 /* Fortran integer */
 #if OMPI_HAVE_FORTRAN_INTEGER
@@ -1030,7 +1030,7 @@ OP_FUNC_3BUF(sum, uint32_t, uint32_t, +)
 OP_FUNC_3BUF(sum,  int64_t,  int64_t, +)
 OP_FUNC_3BUF(sum, uint64_t, uint64_t, +)
 OP_FUNC_3BUF(sum,  long,  long, +)
-OP_FUNC_3BUF(sum,  unsigned_long, unsigned long, +)
+OP_FUNC_3BUF(sum,  ulong, unsigned long, +)
 
 /* Fortran integer */
 #if OMPI_HAVE_FORTRAN_INTEGER
@@ -1106,7 +1106,7 @@ OP_FUNC_3BUF(prod, uint32_t, uint32_t, *)
 OP_FUNC_3BUF(prod,  int64_t,  int64_t, *)
 OP_FUNC_3BUF(prod, uint64_t, uint64_t, *)
 OP_FUNC_3BUF(prod,  long,  long, *)
-OP_FUNC_3BUF(prod,  unsigned_long, unsigned long, *)
+OP_FUNC_3BUF(prod,  ulong, unsigned long, *)
 
 /* Fortran integer */
 #if OMPI_HAVE_FORTRAN_INTEGER
@@ -1184,7 +1184,7 @@ FUNC_FUNC_3BUF(land, uint32_t, uint32_t)
 FUNC_FUNC_3BUF(land,  int64_t,  int64_t)
 FUNC_FUNC_3BUF(land, uint64_t, uint64_t)
 FUNC_FUNC_3BUF(land,  long,  long)
-FUNC_FUNC_3BUF(land,  unsigned_long, unsigned long)
+FUNC_FUNC_3BUF(land,  ulong, unsigned long)
 
 /* Logical */
 #if OMPI_HAVE_FORTRAN_LOGICAL
@@ -1209,7 +1209,7 @@ FUNC_FUNC_3BUF(lor, uint32_t, uint32_t)
 FUNC_FUNC_3BUF(lor,  int64_t,  int64_t)
 FUNC_FUNC_3BUF(lor, uint64_t, uint64_t)
 FUNC_FUNC_3BUF(lor,  long,  long)
-FUNC_FUNC_3BUF(lor,  unsigned_long, unsigned long)
+FUNC_FUNC_3BUF(lor,  ulong, unsigned long)
 
 /* Logical */
 #if OMPI_HAVE_FORTRAN_LOGICAL
@@ -1234,7 +1234,7 @@ FUNC_FUNC_3BUF(lxor, uint32_t, uint32_t)
 FUNC_FUNC_3BUF(lxor,  int64_t,  int64_t)
 FUNC_FUNC_3BUF(lxor, uint64_t, uint64_t)
 FUNC_FUNC_3BUF(lxor,  long,  long)
-FUNC_FUNC_3BUF(lxor,  unsigned_long, unsigned long)
+FUNC_FUNC_3BUF(lxor,  ulong, unsigned long)
 
 /* Logical */
 #if OMPI_HAVE_FORTRAN_LOGICAL
@@ -1259,7 +1259,7 @@ FUNC_FUNC_3BUF(band, uint32_t, uint32_t)
 FUNC_FUNC_3BUF(band,  int64_t,  int64_t)
 FUNC_FUNC_3BUF(band, uint64_t, uint64_t)
 FUNC_FUNC_3BUF(band,  long,  long)
-FUNC_FUNC_3BUF(band,  unsigned_long, unsigned long)
+FUNC_FUNC_3BUF(band,  ulong, unsigned long)
 
 /* Fortran integer */
 #if OMPI_HAVE_FORTRAN_INTEGER
@@ -1299,7 +1299,7 @@ FUNC_FUNC_3BUF(bor, uint32_t, uint32_t)
 FUNC_FUNC_3BUF(bor,  int64_t,  int64_t)
 FUNC_FUNC_3BUF(bor, uint64_t, uint64_t)
 FUNC_FUNC_3BUF(bor,  long,  long)
-FUNC_FUNC_3BUF(bor,  unsigned_long, unsigned long)
+FUNC_FUNC_3BUF(bor,  ulong, unsigned long)
 
 /* Fortran integer */
 #if OMPI_HAVE_FORTRAN_INTEGER
@@ -1339,7 +1339,7 @@ FUNC_FUNC_3BUF(bxor, uint32_t, uint32_t)
 FUNC_FUNC_3BUF(bxor,  int64_t,  int64_t)
 FUNC_FUNC_3BUF(bxor, uint64_t, uint64_t)
 FUNC_FUNC_3BUF(bxor,  long,  long)
-FUNC_FUNC_3BUF(bxor,  unsigned_long, unsigned long)
+FUNC_FUNC_3BUF(bxor,  ulong, unsigned long)
 
 /* Fortran integer */
 #if OMPI_HAVE_FORTRAN_INTEGER
@@ -1445,7 +1445,7 @@ LOC_FUNC_3BUF(minloc, long_double_int, <)
   [OMPI_OP_BASE_TYPE_UINT32_T] = ompi_op_rocm_##ftype##_##name##_uint32_t, \
   [OMPI_OP_BASE_TYPE_INT64_T] = ompi_op_rocm_##ftype##_##name##_int64_t,   \
   [OMPI_OP_BASE_TYPE_LONG] = ompi_op_rocm_##ftype##_##name##_long,   \
-  [OMPI_OP_BASE_TYPE_UNSIGNED_LONG] = ompi_op_rocm_##ftype##_##name##_unsigned_long,   \
+  [OMPI_OP_BASE_TYPE_ulong] = ompi_op_rocm_##ftype##_##name##_ulong,   \
   [OMPI_OP_BASE_TYPE_UINT64_T] = ompi_op_rocm_##ftype##_##name##_uint64_t
 
 /** All the Fortran integers ********************************************/
