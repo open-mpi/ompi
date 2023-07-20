@@ -65,7 +65,7 @@ static inline __device__ T vprod(const T& a, const T& b) {
  * - complex
  */
 
-//#define USE_VECTORS 1
+#define USE_VECTORS 1
 
 #define OP_FUNC(name, type_name, type, op)                                                          \
     static __global__ void                                                                          \
