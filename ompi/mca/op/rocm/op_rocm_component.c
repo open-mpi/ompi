@@ -82,7 +82,6 @@ static int rocm_component_open(void)
      * component won't even be shown in ompi_info output (which is
      * probably not what you want).
      */
-    printf("op rocm_component_open\n");
     return OMPI_SUCCESS;
 }
 
@@ -102,7 +101,6 @@ static int rocm_component_close(void)
         mca_op_rocm_component.ro_num_devices = 0;
     }
 
-    printf("op rocm_component_close\n");
     return OMPI_SUCCESS;
 }
 
@@ -217,6 +215,5 @@ rocm_component_op_query(struct ompi_op_t *op, int *priority)
         }
     }
     *priority = 50;
-    printf("op rocm_component_op_query\n");
     return (ompi_op_base_module_1_0_0_t *) module;
 }
