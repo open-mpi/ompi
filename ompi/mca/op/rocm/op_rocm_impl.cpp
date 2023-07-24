@@ -201,6 +201,29 @@ static inline __device__ T vprod(const T& a, const T& b) {
 #define VFUNC_FUNC(name, type_name, type, vtype, vlen, vfn, fn) FUNC_FUNC_FN(name, type_name, type, fn)
 #endif // defined(USE_VECTORS)
 
+#define FUNC_FUNC_FN(name, type_name, type, fn)                                                     \
+    static __global__ void                                                                          \
+    ompi_op_rocm_2buff_##name##_##type_name##_kernel(const type *__restrict__ in,                   \
+                                                     type *__restrict__ inout, int n) {             \
+        const int index = blockIdx.x * blockDim.x + threadIdx.x;                                    \
+        const int stride = blockDim.x * gridDim.x;                                                  \
+        for (int i = index; i < n; i += stride) {                                                   \
+            inout[i] = fn(inout[i], in[i]);                                                         \
+        }                                                                                           \
+    }                                                                                               \
+    void                                                                                            \
+    ompi_op_rocm_2buff_##name##_##type_name##_submit(const type *in,                                \
+                                              type *inout,                                          \
+                                              int count,                                            \
+                                              int threads_per_block,                                \
+                                              int max_blocks,                                       \
+                                              hipStream_t stream) {                                    \
+        int threads = min(count, threads_per_block);                                                \
+        int blocks  = min((count + threads-1) / threads, max_blocks);                               \
+        int n = count;                                                                              \
+        hipStream_t s = stream;                                                                        \
+        ompi_op_rocm_2buff_##name##_##type_name##_kernel<<<blocks, threads, 0, s>>>(in, inout, n);  \
+    }
 
 /*
  * Since all the functions in this file are essentially identical, we
