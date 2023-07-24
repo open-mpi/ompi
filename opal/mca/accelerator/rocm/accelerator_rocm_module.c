@@ -116,6 +116,8 @@ static int mca_accelerator_rocm_check_addr (const void *addr, int *dev_id, uint6
             //*flags |= MCA_ACCELERATOR_FLAGS_HOST_ATOMICS;
             /* First access on a device pointer triggers ROCM support lazy initialization. */
             opal_accelerator_rocm_lazy_init();
+            // on Frontier the host can access any device memory
+            *flags |= MCA_ACCELERATOR_FLAGS_UNIFIED_MEMORY;
             *dev_id = srcAttr.device;
             ret = 1;
 #if HIP_VERSION >= 50731921
