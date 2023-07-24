@@ -51,6 +51,8 @@ static int mca_accelerator_rocm_wait_stream(opal_accelerator_stream_t *stream);
 
 static int mca_accelerator_rocm_get_num_devices(int *num_devices);
 
+static int mca_accelerator_rocm_get_mem_bw(int device, float *bw);
+
 opal_accelerator_base_module_t opal_accelerator_rocm_module =
 {
     mca_accelerator_rocm_get_default_stream, //DONE
@@ -83,7 +85,9 @@ opal_accelerator_base_module_t opal_accelerator_rocm_module =
     mca_accelerator_rocm_get_buffer_id,
 
     mca_accelerator_rocm_wait_stream, //DONE
-    mca_accelerator_rocm_get_num_devices //DONE
+    mca_accelerator_rocm_get_num_devices, //DONE
+
+    mca_accelerator_rocm_get_mem_bw
 };
 
 
@@ -722,5 +726,17 @@ static int mca_accelerator_rocm_wait_stream(opal_accelerator_stream_t *stream)
 static int mca_accelerator_rocm_get_num_devices(int *num_devices)
 {
     *num_devices = opal_accelerator_rocm_num_devices;
+    return OPAL_SUCCESS;
+}
+
+static int mca_accelerator_rocm_get_mem_bw(int device, float *bw)
+{
+    int delayed_init = opal_accelerator_rocm_delayed_init();
+    if (OPAL_UNLIKELY(0 != delayed_init)) {
+        return delayed_init;
+    }
+    assert(opal_accelerator_rocm_mem_bw != NULL);
+
+    *bw = opal_accelerator_rocm_mem_bw[device];
     return OPAL_SUCCESS;
 }

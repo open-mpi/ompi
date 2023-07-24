@@ -44,6 +44,8 @@ int opal_accelerator_cuda_num_devices = 0;
 static opal_mutex_t accelerator_cuda_init_lock;
 static bool accelerator_cuda_init_complete = false;
 
+float *opal_accelerator_cuda_mem_bw = NULL;
+
 
 #define STRINGIFY2(x) #x
 #define STRINGIFY(x)  STRINGIFY2(x)
@@ -125,7 +127,7 @@ static int accelerator_cuda_component_register(void)
 
 int opal_accelerator_cuda_delayed_init()
 {
-    int result = OPAL_SUCCESS;
+    CUresult result = OPAL_SUCCESS;
     int prio_lo, prio_hi;
     CUcontext cuContext;
 
@@ -142,6 +144,8 @@ int opal_accelerator_cuda_delayed_init()
         goto out;
     }
 
+    cuDeviceGetCount(&opal_accelerator_cuda_num_devices);
+
     /* Check to see if this process is running in a CUDA context.  If
      * so, all is good.  If not, then disable registration of memory. */
     result = cuCtxGetCurrent(&cuContext);
@@ -150,13 +154,35 @@ int opal_accelerator_cuda_delayed_init()
         goto out;
     } else if ((CUDA_SUCCESS == result) && (NULL == cuContext)) {
         opal_output_verbose(20, opal_accelerator_base_framework.framework_output, "CUDA: cuCtxGetCurrent returned NULL context");
-        result = OPAL_ERROR;
-        goto out;
+        /* create a context for each device */
+        for (int i = 0; i < opal_accelerator_cuda_num_devices; ++i) {
+            CUdevice dev;
+            result = cuDeviceGet(&dev, i);
+            if (CUDA_SUCCESS != result) {
+                opal_output_verbose(20, opal_accelerator_base_framework.framework_output,
+                                    "CUDA: cuDeviceGet failed");
+                goto out;
+            }
+            result = cuDevicePrimaryCtxRetain(&cuContext, dev);
+            if (CUDA_SUCCESS != result) {
+                opal_output_verbose(20, opal_accelerator_base_framework.framework_output,
+                                    "CUDA: cuDevicePrimaryCtxRetain failed");
+                goto out;
+            }
+            if (0 == i) {
+                result = cuCtxPushCurrent(cuContext);
+                if (CUDA_SUCCESS != result) {
+                    opal_output_verbose(20, opal_accelerator_base_framework.framework_output,
+                                        "CUDA: cuCtxPushCurrent failed");
+                    goto out;
+                }
+            }
+        }
+
     } else {
         opal_output_verbose(20, opal_accelerator_base_framework.framework_output, "CUDA: cuCtxGetCurrent succeeded");
     }
 
-    cuDeviceGetCount(&opal_accelerator_cuda_num_devices);
 
     /* Create stream for use in cuMemcpyAsync synchronous copies */
     CUstream memcpy_stream;
@@ -197,11 +223,6 @@ int opal_accelerator_cuda_delayed_init()
     OBJ_CONSTRUCT(&opal_accelerator_cuda_default_stream, opal_accelerator_cuda_stream_t);
     opal_accelerator_cuda_default_stream.base.stream = default_stream;
 
-    cudaMemPool_t mpool;
-    cuuint64_t threshold =  1*1024*1024;
-    cudaDeviceGetDefaultMemPool(&mpool, 0);
-    cudaMemPoolSetAttribute(mpool, cudaMemPoolAttrReleaseThreshold, &threshold);
-
     result = cuMemHostRegister(&checkmem, sizeof(int), 0);
     if (result != CUDA_SUCCESS) {
         /* If registering the memory fails, print a message and continue.
@@ -212,6 +233,32 @@ int opal_accelerator_cuda_delayed_init()
         opal_output_verbose(20, opal_accelerator_base_framework.framework_output,
                             "CUDA: cuMemHostRegister OK on test region");
     }
+
+    opal_accelerator_cuda_mem_bw = malloc(sizeof(float)*opal_accelerator_cuda_num_devices);
+    for (int i = 0; i < opal_accelerator_cuda_num_devices; ++i) {
+        CUdevice dev;
+        result = cuDeviceGet(&dev, i);
+        if (CUDA_SUCCESS != result) {
+            opal_output_verbose(20, opal_accelerator_base_framework.framework_output,
+                                "CUDA: cuDeviceGet failed");
+            goto out;
+        }
+        int mem_clock_rate; // kHz
+        result = cuDeviceGetAttribute(&mem_clock_rate,
+                                CU_DEVICE_ATTRIBUTE_MEMORY_CLOCK_RATE,
+                                dev);
+        int bus_width; // bit
+        result = cuDeviceGetAttribute(&bus_width,
+                                CU_DEVICE_ATTRIBUTE_GLOBAL_MEMORY_BUS_WIDTH,
+                                dev);
+        /* bw = clock_rate * bus width * 2bit multiplier
+         * See https://forums.developer.nvidia.com/t/memory-clock-rate/107940
+         */
+        float bw = ((float)mem_clock_rate*(float)bus_width*2.0) / 1024 / 1024 / 8;
+        printf("clock rate: %d kHz, bus width: %d bit, bandwidth: %f GB/s\n", mem_clock_rate, bus_width, bw);
+        opal_accelerator_cuda_mem_bw[i] = bw;
+    }
+
     result = OPAL_SUCCESS;
     opal_atomic_wmb();
     accelerator_cuda_init_complete = true;
@@ -267,6 +314,9 @@ static void accelerator_cuda_finalize(opal_accelerator_base_module_t* module)
     if ((NULL != opal_accelerator_cuda_default_stream.base.stream) && ctx_ok) {
         OBJ_DESTRUCT(&opal_accelerator_cuda_default_stream);
     }
+
+    free(opal_accelerator_cuda_mem_bw);
+    opal_accelerator_cuda_mem_bw = NULL;
 
 
     OBJ_DESTRUCT(&opal_accelerator_cuda_stream_lock);

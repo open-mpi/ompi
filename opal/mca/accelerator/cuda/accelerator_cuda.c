@@ -59,6 +59,8 @@ static int accelerator_cuda_wait_stream(opal_accelerator_stream_t *stream);
 
 static int accelerator_cuda_get_num_devices(int *num_devices);
 
+static int accelerator_cuda_get_mem_bw(int device, float *bw);
+
 opal_accelerator_base_module_t opal_accelerator_cuda_module =
 {
     accelerator_cuda_get_default_stream,
@@ -91,7 +93,8 @@ opal_accelerator_base_module_t opal_accelerator_cuda_module =
     accelerator_cuda_get_buffer_id,
 
     accelerator_cuda_wait_stream,
-    accelerator_cuda_get_num_devices
+    accelerator_cuda_get_num_devices,
+    accelerator_cuda_get_mem_bw
 };
 
 static int accelerator_cuda_get_device_id(CUcontext mem_ctx) {
@@ -792,11 +795,6 @@ static int accelerator_cuda_mem_alloc_stream(
 #if CUDA_VERSION >= 11020
     cudaError_t result;
 
-    int delayed_init = opal_accelerator_cuda_delayed_init();
-    if (OPAL_UNLIKELY(0 != delayed_init)) {
-        return delayed_init;
-    }
-
     if (NULL == stream || NULL == addr || 0 == size) {
         return OPAL_ERR_BAD_PARAM;
     }
@@ -880,5 +878,17 @@ static int accelerator_cuda_get_num_devices(int *num_devices)
     }
 
     *num_devices = opal_accelerator_cuda_num_devices;
+    return OPAL_SUCCESS;
+}
+
+static int accelerator_cuda_get_mem_bw(int device, float *bw)
+{
+    int delayed_init = opal_accelerator_cuda_delayed_init();
+    if (OPAL_UNLIKELY(0 != delayed_init)) {
+        return delayed_init;
+    }
+    assert(opal_accelerator_cuda_mem_bw != NULL);
+
+    *bw = opal_accelerator_cuda_mem_bw[device];
     return OPAL_SUCCESS;
 }

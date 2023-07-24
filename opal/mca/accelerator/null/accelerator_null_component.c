@@ -76,6 +76,8 @@ static int accelerator_null_wait_stream(opal_accelerator_stream_t *stream);
 
 static int accelerator_null_get_num_devices(int *num_devices);
 
+static int accelerator_null_get_mem_bw(int device, float *bw);
+
 /*
  * Instantiate the public struct with all of our public information
  * and pointers to our public functions in it
@@ -146,7 +148,8 @@ opal_accelerator_base_module_t opal_accelerator_null_module =
     accelerator_null_get_buffer_id,
 
     accelerator_null_wait_stream,
-    accelerator_null_get_num_devices
+    accelerator_null_get_num_devices,
+    accelerator_null_get_mem_bw
 };
 
 static int accelerator_null_open(void)
@@ -309,5 +312,12 @@ static int accelerator_null_wait_stream(opal_accelerator_stream_t *stream)
 static int accelerator_null_get_num_devices(int *num_devices)
 {
     *num_devices = 0;
+    return OPAL_SUCCESS;
+}
+
+
+static int accelerator_null_get_mem_bw(int device, float *bw)
+{
+    *bw = 1.0; // return something that is not 0
     return OPAL_SUCCESS;
 }

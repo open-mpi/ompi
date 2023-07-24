@@ -865,10 +865,26 @@ static inline void ompi_op_preferred_device(ompi_op_t *op, int source_dev,
         return;
     }
 
-    double host_startup_cost = 0.0; // host has no startup cost
-    double host_compute_cost = 1.0*count; // host reference 1.0 per element
-    double device_startup_cost = 10000.0; // to be filled below
-    double device_compute_cost = 0.0001*count;
+    size_t size_type;
+    ompi_datatype_type_size(dtype, &size_type);
+
+    float device_bw;
+    if (target_dev >= 0) {
+        opal_accelerator.get_mem_bw(target_dev, &device_bw);
+    } else if (source_dev >= 0) {
+        opal_accelerator.get_mem_bw(source_dev, &device_bw);
+    }
+
+    // assume we reach 50% of theoretical peak on the device
+    device_bw /= 2.0;
+
+    // TODO: determine at runtime (?)
+    const float host_bw = 10.0; // 10GB/s
+
+    float host_startup_cost = 0.0; // host has no startup cost
+    float host_compute_cost = (count*size_type) / (host_bw*1024); // assume 10GB/s memory bandwidth on host
+    float device_startup_cost = 10.0; // 10us startup cost on device
+    float device_compute_cost = (count*size_type) / (device_bw*1024);
 
     if ((host_startup_cost + host_compute_cost) > (device_startup_cost + device_compute_cost)) {
         *op_device = (target_dev >= 0) ? target_dev : source_dev;

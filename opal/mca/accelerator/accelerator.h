@@ -484,6 +484,8 @@ typedef int (*opal_accelerator_base_module_wait_stream_fn_t)(opal_accelerator_st
 
 typedef int (*opal_accelerator_base_module_get_num_devices_fn_t)(int *num_devices);
 
+typedef int (*opal_accelerator_base_module_get_mem_bw_fn_t)(int num_devices, float *bw);
+
 /*
  * the standard public API data structure
  */
@@ -521,6 +523,8 @@ typedef struct {
     opal_accelerator_base_module_wait_stream_fn_t wait_stream;
 
     opal_accelerator_base_module_get_num_devices_fn_t num_devices;
+
+    opal_accelerator_base_module_get_mem_bw_fn_t get_mem_bw;
 } opal_accelerator_base_module_t;
 
 /**

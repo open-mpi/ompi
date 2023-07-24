@@ -33,6 +33,7 @@ size_t opal_accelerator_rocm_memcpyH2D_limit=1048576;
 /* Initialization lock for lazy rocm initialization */
 static opal_mutex_t accelerator_rocm_init_lock;
 static bool accelerator_rocm_init_complete = false;
+static int checkmem;
 
 hipStream_t *opal_accelerator_rocm_MemcpyStream = NULL;
 
@@ -49,10 +50,7 @@ opal_accelerator_rocm_stream_t opal_accelerator_rocm_default_stream = {0};
 opal_mutex_t opal_accelerator_rocm_stream_lock = {0};
 int opal_accelerator_rocm_num_devices = 0;
 
-/* Initialization lock for delayed rocm initialization */
-static opal_mutex_t accelerator_rocm_init_lock;
-static bool accelerator_rocm_init_complete = false;
-static int checkmem;
+float *opal_accelerator_rocm_mem_bw = NULL;
 
 #define HIP_CHECK(condition)                                                 \
 {                                                                            \
@@ -228,6 +226,24 @@ int opal_accelerator_rocm_lazy_init()
     OBJ_CONSTRUCT(&opal_accelerator_rocm_default_stream, opal_accelerator_rocm_stream_t);
     opal_accelerator_rocm_default_stream.base.stream = default_stream;
 
+    opal_accelerator_rocm_mem_bw = malloc(sizeof(float)*opal_accelerator_rocm_num_devices);
+    for (int i = 0; i < opal_accelerator_rocm_num_devices; ++i) {
+        int mem_clock_rate; // kHz
+        err = hipDeviceGetAttribute(&mem_clock_rate,
+                                    hipDeviceAttributeMemoryClockRate,
+                                    i);
+        int bus_width; // bit
+        err = hipDeviceGetAttribute(&bus_width,
+                                    hipDeviceAttributeMemoryBusWidth,
+                                    i);
+        /* bw = clock_rate * bus width * 2bit multiplier
+         * See https://forums.developer.nvidia.com/t/memory-clock-rate/107940
+         */
+        float bw = ((float)mem_clock_rate*(float)bus_width*2.0) / 1024 / 1024 / 8;
+        opal_accelerator_rocm_mem_bw[i] = bw;
+    }
+
+    err = OPAL_SUCCESS;
     opal_atomic_wmb();
     accelerator_rocm_init_complete = true;
 out:
@@ -267,6 +283,10 @@ static void accelerator_rocm_finalize(opal_accelerator_base_module_t* module)
         }
         opal_accelerator_rocm_MemcpyStream = NULL;
     }
+
+    free(opal_accelerator_rocm_mem_bw);
+    opal_accelerator_rocm_mem_bw = NULL;
+
 
     OBJ_DESTRUCT(&accelerator_rocm_init_lock);
     return;

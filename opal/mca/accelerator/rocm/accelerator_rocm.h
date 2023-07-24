@@ -67,5 +67,5 @@ OPAL_DECLSPEC extern hipStream_t opal_accelerator_alloc_stream;
 OPAL_DECLSPEC extern opal_accelerator_rocm_stream_t opal_accelerator_rocm_default_stream;
 OPAL_DECLSPEC extern opal_mutex_t opal_accelerator_rocm_stream_lock;
 OPAL_DECLSPEC extern int opal_accelerator_rocm_num_devices;
-
+OPAL_DECLSPEC extern float *opal_accelerator_rocm_mem_bw;
 #endif
