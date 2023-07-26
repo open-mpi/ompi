@@ -24,6 +24,7 @@
 
 #include "opal/constants.h"
 #include "opal/mca/threads/base/base.h"
+#include "opal/mca/threads/threads.h"
 
 #if OPAL_ENABLE_DEBUG
 bool opal_debug_threads = false;
