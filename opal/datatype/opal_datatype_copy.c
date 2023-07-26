@@ -28,6 +28,7 @@
 
 #include <stddef.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "opal/datatype/opal_convertor.h"
 #include "opal/datatype/opal_datatype.h"
@@ -55,11 +56,29 @@
         }                                                                                   \
     } while (0)
 
+
+static opal_accelerator_transfer_type_t get_transfer_type(int src_dev, int dst_dev)
+{
+    if (src_dev == MCA_ACCELERATOR_NO_DEVICE_ID) {
+        if (dst_dev == MCA_ACCELERATOR_NO_DEVICE_ID) {
+            return MCA_ACCELERATOR_TRANSFER_HTOH;
+        } else {
+            return MCA_ACCELERATOR_TRANSFER_HTOD;
+        }
+    } else {
+        if (dst_dev == MCA_ACCELERATOR_NO_DEVICE_ID) {
+            return MCA_ACCELERATOR_TRANSFER_DTOH;
+        } else {
+            return MCA_ACCELERATOR_TRANSFER_DTOD;
+        }
+    }
+}
+
 static void *opal_datatype_accelerator_memcpy(void *dest, const void *src, size_t size,
                                               opal_accelerator_stream_t *stream)
 {
     int res;
-    int dev_id;
+    int src_dev_id = MCA_ACCELERATOR_NO_DEVICE_ID, dst_dev_id = MCA_ACCELERATOR_NO_DEVICE_ID;
     uint64_t flags;
     /* If accelerator check addr returns an error, we can only
      * assume it is a host buffer. If device buffer checking fails,
@@ -68,16 +87,17 @@ static void *opal_datatype_accelerator_memcpy(void *dest, const void *src, size_
      * and retries are also unlikely to succeed. We identify these
      * buffers as host buffers as attempting a memcpy would provide
      * a chance to succeed. */
-    if (0 >= opal_accelerator.check_addr(dest, &dev_id, &flags) &&
-        0 >= opal_accelerator.check_addr(src, &dev_id, &flags)) {
+    if (0 >= opal_accelerator.check_addr(dest, &dst_dev_id, &flags) &&
+        0 >= opal_accelerator.check_addr(src, &src_dev_id, &flags)) {
         return memcpy(dest, src, size);
     }
+    //printf("opal_datatype_accelerator_memcpy: dst %p dev %d src %p dev %d transer_type %d\n", dest, dst_dev_id, src, src_dev_id, get_transfer_type(src_dev_id, dst_dev_id));
     if (NULL != stream) {
-        res = opal_accelerator.mem_copy_async(MCA_ACCELERATOR_NO_DEVICE_ID, MCA_ACCELERATOR_NO_DEVICE_ID,
-                                              dest, src, size, stream, MCA_ACCELERATOR_TRANSFER_UNSPEC);
+        res = opal_accelerator.mem_copy_async(dst_dev_id, src_dev_id,
+                                              dest, src, size, stream, get_transfer_type(src_dev_id, dst_dev_id));
     } else {
-        res = opal_accelerator.mem_copy(MCA_ACCELERATOR_NO_DEVICE_ID, MCA_ACCELERATOR_NO_DEVICE_ID,
-                                        dest, src, size, MCA_ACCELERATOR_TRANSFER_UNSPEC);
+        res = opal_accelerator.mem_copy(dst_dev_id, src_dev_id,
+                                        dest, src, size, get_transfer_type(src_dev_id, dst_dev_id));
     }
     if (OPAL_SUCCESS != res) {
         opal_output(0, "Error in accelerator memcpy");
