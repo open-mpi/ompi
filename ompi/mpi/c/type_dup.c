@@ -41,6 +41,8 @@ static const char FUNC_NAME[] = "MPI_Type_dup";
 int MPI_Type_dup (MPI_Datatype type,
                   MPI_Datatype *newtype)
 {
+   int ret;
+
    MEMCHECKER(
       memchecker_datatype(type);
    );
@@ -54,10 +56,9 @@ int MPI_Type_dup (MPI_Datatype type,
       }
    }
 
-   if (OMPI_SUCCESS != ompi_datatype_duplicate( type, newtype)) {
+   if (OMPI_SUCCESS != (ret = ompi_datatype_duplicate( type, newtype))) {
        ompi_datatype_destroy( newtype );
-       OMPI_ERRHANDLER_RETURN (MPI_ERR_INTERN, MPI_COMM_WORLD,
-                               MPI_ERR_INTERN, FUNC_NAME );
+       OMPI_ERRHANDLER_NOHANDLE_RETURN( ret, ret, FUNC_NAME );
    }
 
    ompi_datatype_set_args( *newtype, 0, NULL, 0, NULL, 1, &type, MPI_COMBINER_DUP );
@@ -69,13 +70,12 @@ int MPI_Type_dup (MPI_Datatype type,
       copy attributes.  Really. */
    if (NULL != type->d_keyhash) {
        ompi_attr_hash_init(&(*newtype)->d_keyhash);
-       if (OMPI_SUCCESS != ompi_attr_copy_all(TYPE_ATTR,
-                                              type, *newtype,
-                                              type->d_keyhash,
-                                              (*newtype)->d_keyhash)) {
+       if (OMPI_SUCCESS != (ret = ompi_attr_copy_all(TYPE_ATTR,
+                                                     type, *newtype,
+                                                     type->d_keyhash,
+                                                     (*newtype)->d_keyhash))) {
            ompi_datatype_destroy(newtype);
-           OMPI_ERRHANDLER_NOHANDLE_RETURN( MPI_ERR_INTERN, 
-                                   MPI_ERR_INTERN, FUNC_NAME );
+           OMPI_ERRHANDLER_NOHANDLE_RETURN( ret, ret, FUNC_NAME );
        }
    }
 
