@@ -132,6 +132,7 @@ static int mca_accelerator_rocm_check_addr (const void *addr, int *dev_id, uint6
             *dev_id = srcAttr.device;
         }
     }
+    //printf("mca_accelerator_rocm_check_addr %p dev %d ret %d\n", addr, *dev_id, ret);
 
     return ret;
 }

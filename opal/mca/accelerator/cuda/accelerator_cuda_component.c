@@ -255,7 +255,7 @@ int opal_accelerator_cuda_delayed_init()
          * See https://forums.developer.nvidia.com/t/memory-clock-rate/107940
          */
         float bw = ((float)mem_clock_rate*(float)bus_width*2.0) / 1024 / 1024 / 8;
-        printf("clock rate: %d kHz, bus width: %d bit, bandwidth: %f GB/s\n", mem_clock_rate, bus_width, bw);
+        //printf("clock rate: %d kHz, bus width: %d bit, bandwidth: %f GB/s\n", mem_clock_rate, bus_width, bw);
         opal_accelerator_cuda_mem_bw[i] = bw;
     }
 
