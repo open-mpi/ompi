@@ -55,7 +55,7 @@ struct opal_accelerator_rocm_event_t {
 typedef struct opal_accelerator_rocm_event_t opal_accelerator_rocm_event_t;
 OBJ_CLASS_DECLARATION(opal_accelerator_rocm_event_t);
 
-OPAL_DECLSPEC extern hipStream_t opal_accelerator_rocm_MemcpyStream;
+OPAL_DECLSPEC extern hipStream_t *opal_accelerator_rocm_MemcpyStream;
 OPAL_DECLSPEC extern int opal_accelerator_rocm_memcpy_async;
 OPAL_DECLSPEC extern int opal_accelerator_rocm_verbose;
 OPAL_DECLSPEC extern size_t opal_accelerator_rocm_memcpyH2D_limit;

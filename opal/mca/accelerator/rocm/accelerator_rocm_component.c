@@ -276,11 +276,12 @@ static opal_accelerator_base_module_t* accelerator_rocm_init(void)
 
 static void accelerator_rocm_finalize(opal_accelerator_base_module_t* module)
 {
-    if (NULL != (void*)opal_accelerator_rocm_MemcpyStream) {
-        hipError_t err = hipStreamDestroy(opal_accelerator_rocm_MemcpyStream);
+    if (NULL != opal_accelerator_rocm_MemcpyStream) {
+        hipError_t err = hipStreamDestroy(*opal_accelerator_rocm_MemcpyStream);
         if (hipSuccess != err) {
             opal_output_verbose(10, 0, "hip_dl_finalize: error while destroying the hipStream\n");
         }
+        free(opal_accelerator_rocm_MemcpyStream);
         opal_accelerator_rocm_MemcpyStream = NULL;
     }
 
