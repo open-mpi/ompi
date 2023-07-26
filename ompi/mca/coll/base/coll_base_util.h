@@ -222,14 +222,15 @@ void ompi_coll_base_select_device(
     struct ompi_datatype_t *dtype,
     int *sendbuf_device,
     int *recvbuf_device,
+    uint64_t *sendbuf_flags,
+    uint64_t *recvbuf_flags,
     int *op_device)
 {
-    uint64_t sendbuf_flags, recvbuf_flags;
     /* TODO: move this into ompi_op_select_device to save the extra lookups? */
-    *recvbuf_device = -1;
-    *sendbuf_device = -1;
-    if (sendbuf != NULL && sendbuf != MPI_IN_PLACE) opal_accelerator.check_addr(sendbuf, sendbuf_device, &sendbuf_flags);
-    if (recvbuf != NULL) opal_accelerator.check_addr(recvbuf, recvbuf_device, &recvbuf_flags);
+    *recvbuf_device = MCA_ACCELERATOR_NO_DEVICE_ID;
+    *sendbuf_device = MCA_ACCELERATOR_NO_DEVICE_ID;
+    if (sendbuf != NULL && sendbuf != MPI_IN_PLACE) opal_accelerator.check_addr(sendbuf, sendbuf_device, sendbuf_flags);
+    if (recvbuf != NULL) opal_accelerator.check_addr(recvbuf, recvbuf_device, recvbuf_flags);
     ompi_op_preferred_device(op, *recvbuf_device, *sendbuf_device, count, dtype, op_device);
 }
 

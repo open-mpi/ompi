@@ -160,7 +160,9 @@ ompi_coll_base_allreduce_intra_recursivedoubling(const void *sbuf, void *rbuf,
 
     /* get the device for sbuf and rbuf and where the op would like to execute */
     int sendbuf_dev, recvbuf_dev, op_dev;
-    ompi_coll_base_select_device(op, sbuf, rbuf, count, dtype, &sendbuf_dev, &recvbuf_dev, &op_dev);
+    uint64_t sendbuf_flags, recvbuf_flags;
+    ompi_coll_base_select_device(op, sbuf, rbuf, count, dtype, &sendbuf_dev, &recvbuf_dev,
+                                 &sendbuf_flags, &recvbuf_flags, &op_dev);
     span = opal_datatype_span(&dtype->super, count, &gap);
     inplacebuf_free = ompi_coll_base_allocate_on_device(op_dev, span, module);
     if (NULL == inplacebuf_free) { ret = -1; line = __LINE__; goto error_hndl; }
@@ -172,16 +174,16 @@ ompi_coll_base_allreduce_intra_recursivedoubling(const void *sbuf, void *rbuf,
         opal_accelerator.get_default_stream(op_dev, &stream);
     }
 
-    /* TODO: These copies are only relevant if buffers are not on the same device.
-     *       Can we figure out whether the op-device can access these remote buffers directly? */
     tmpsend = (char*) sbuf;
     if (op_dev != recvbuf_dev) {
         /* copy data to where the op wants it to be */
         if (MPI_IN_PLACE == sbuf) {
             ret = ompi_datatype_copy_content_same_ddt_stream(dtype, count, inplacebuf, (char*)rbuf, stream);
             if (ret < 0) { line = __LINE__; goto error_hndl; }
-        } else {
-            tmpsend = (char*) sbuf;
+        }
+        /* only copy if op is on the device or we cannot access the sendbuf on the host */
+        else if (op_dev != MCA_ACCELERATOR_NO_DEVICE_ID ||
+                 0 == (sendbuf_flags & MCA_ACCELERATOR_FLAGS_UNIFIED_MEMORY)) {
             ret = ompi_datatype_copy_content_same_ddt_stream(dtype, count, inplacebuf, (char*)sbuf, stream);
             if (ret < 0) { line = __LINE__; goto error_hndl; }
         }
@@ -194,9 +196,12 @@ ompi_coll_base_allreduce_intra_recursivedoubling(const void *sbuf, void *rbuf,
 
     /* Handle MPI_IN_PLACE */
     bool use_sbuf = (MPI_IN_PLACE != sbuf);
-    /* allocate temporary recv buffer if the tmpbuf above is on a different device than the rbuf */
+    /* allocate temporary recv buffer if the tmpbuf above is on a different device than the rbuf
+     * and the op is on the device or we cannot access the recv buffer on the host */
     recvbuf = rbuf;
-    if (op_dev != recvbuf_dev) {
+    if (op_dev != recvbuf_dev &&
+        (op_dev != MCA_ACCELERATOR_NO_DEVICE_ID ||
+         0 == (recvbuf_flags & MCA_ACCELERATOR_FLAGS_UNIFIED_MEMORY))) {
         recvbuf = ompi_coll_base_allocate_on_device(op_dev, span, module);
         if (use_sbuf) {
             /* copy from rbuf */
@@ -505,7 +510,9 @@ ompi_coll_base_allreduce_intra_ring(const void *sbuf, void *rbuf, int count,
 
     /* get the device for sbuf and rbuf and where the op would like to execute */
     int sendbuf_dev, recvbuf_dev, op_dev;
-    ompi_coll_base_select_device(op, sbuf, rbuf, count, dtype, &sendbuf_dev, &recvbuf_dev, &op_dev);
+    uint64_t sendbuf_flags, recvbuf_flags;
+    ompi_coll_base_select_device(op, sbuf, rbuf, count, dtype, &sendbuf_dev, &recvbuf_dev,
+                                 &sendbuf_flags, &recvbuf_flags, &op_dev);
     if (size > 2) {
         inbuf[0] = ompi_coll_base_allocate_on_device(op_dev, 2*max_real_segsize, module);
         if (NULL == inbuf[0]) { ret = -1; line = __LINE__; goto error_hndl; }
@@ -520,7 +527,9 @@ ompi_coll_base_allreduce_intra_ring(const void *sbuf, void *rbuf, int count,
     bool use_sbuf = (MPI_IN_PLACE != sbuf);
     /* allocate temporary recv buffer if the tmpbuf above is on a different device than the rbuf */
     recvbuf = rbuf;
-    if (op_dev != recvbuf_dev) {
+    if (op_dev != recvbuf_dev &&
+        /* only copy if op is on the device or the recvbuffer cannot be accessed on the host */
+        (op_dev != MCA_ACCELERATOR_NO_DEVICE_ID || 0 == (MCA_ACCELERATOR_FLAGS_UNIFIED_MEMORY & recvbuf_flags))) {
         recvbuf = ompi_coll_base_allocate_on_device(op_dev, typelng*count, module);
         if (use_sbuf) {
             /* copy from rbuf */
@@ -823,7 +832,9 @@ ompi_coll_base_allreduce_intra_ring_segmented(const void *sbuf, void *rbuf, int 
      max_real_segsize = opal_datatype_span(&dtype->super, max_segcount, &gap);
 
     int sendbuf_dev, recvbuf_dev, op_dev;
-    ompi_coll_base_select_device(op, sbuf, rbuf, count, dtype, &sendbuf_dev, &recvbuf_dev, &op_dev);
+    uint64_t sendbuf_flags, recvbuf_flags;
+    ompi_coll_base_select_device(op, sbuf, rbuf, count, dtype, &sendbuf_dev, &recvbuf_dev,
+                                 &sendbuf_flags, &recvbuf_flags, &op_dev);
     /* Allocate and initialize temporary buffers */
     inbuf[0] = ompi_coll_base_allocate_on_device(op_dev, max_real_segsize, module);
     if (NULL == inbuf[0]) { ret = -1; line = __LINE__; goto error_hndl; }
@@ -1146,7 +1157,9 @@ int ompi_coll_base_allreduce_intra_redscat_allgather(
 
     /* get the device for sbuf and rbuf and where the op would like to execute */
     int sendbuf_dev, recvbuf_dev, op_dev;
-    ompi_coll_base_select_device(op, sbuf, rbuf, count, dtype, &sendbuf_dev, &recvbuf_dev, &op_dev);
+    uint64_t sendbuf_flags, recvbuf_flags;
+    ompi_coll_base_select_device(op, sbuf, rbuf, count, dtype, &sendbuf_dev, &recvbuf_dev,
+                                 &sendbuf_flags, &recvbuf_flags, &op_dev);
 
     /* Temporary buffer for receiving messages */
     char *tmp_buf = NULL;
@@ -1156,10 +1169,10 @@ int ompi_coll_base_allreduce_intra_redscat_allgather(
     tmp_buf = tmp_buf_raw - gap;
 
     char *recvbuf = rbuf;
-    if (op_dev != recvbuf_dev) {
+    if (op_dev != recvbuf_dev && 0 == (MCA_ACCELERATOR_FLAGS_UNIFIED_MEMORY & recvbuf_flags)) {
         recvbuf = ompi_coll_base_allocate_on_device(op_dev, dsize, module);
     }
-    if (op_dev != sendbuf_dev && sbuf != MPI_IN_PLACE) {
+    if (op_dev != sendbuf_dev && 0 == (MCA_ACCELERATOR_FLAGS_UNIFIED_MEMORY & sendbuf_flags) && sbuf != MPI_IN_PLACE) {
         /* move the data into the recvbuf and set sbuf to MPI_IN_PLACE */
         ompi_datatype_copy_content_same_ddt(dtype, count, (char*)recvbuf, (char*)sbuf);
         sbuf = MPI_IN_PLACE;
