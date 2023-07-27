@@ -58,8 +58,8 @@ included in the vX.Y.Z section and be denoted as:
    (** also appeared: A.B.C)  -- indicating that this item was previously
                                  included in release version vA.B.C.
 
-4.1.6 -- February, 2024
------------------------
+4.1.6 -- August, 2023
+---------------------
 
 - Update to properly handle PMIx v>=4.2.3.  Thanks to Bruno Chareyre,
   Github user @sukanka, and Christof Koehler for raising the
