@@ -13,6 +13,10 @@ build:
   tools:
     python: "3.10"
 
+python:
+  install:
+    - requirements: docs/requirements.txt
+
 # Build documentation in the docs/ directory with Sphinx
 sphinx:
   configuration: docs/conf.py
