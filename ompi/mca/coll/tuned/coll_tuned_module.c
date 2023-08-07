@@ -104,7 +104,7 @@ ompi_coll_tuned_comm_query(struct ompi_communicator_t *comm, int *priority)
     } else {
         tuned_module->super.coll_allgather  = ompi_coll_tuned_allgather_intra_singlenode_dec_fixed;
         tuned_module->super.coll_allreduce  = ompi_coll_tuned_allreduce_intra_singlenode_dec_fixed;
-        tuned_module->super.coll_bcast      = ompi_coll_tuned_bcast_intra_singelnode_dec_fixed;
+        tuned_module->super.coll_bcast      = ompi_coll_tuned_bcast_intra_singlenode_dec_fixed;
         tuned_module->super.coll_reduce     = ompi_coll_tuned_reduce_intra_singlenode_dec_fixed;
     }
     tuned_module->super.coll_allgatherv = ompi_coll_tuned_allgatherv_intra_dec_fixed;
