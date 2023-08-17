@@ -35,7 +35,6 @@ OSHMEM_DECLSPEC extern mca_sshmem_ucx_component_t
 mca_sshmem_ucx_component;
 
 typedef struct mca_sshmem_ucx_segment_context {
-    void                           *dev_mem;
     sshmem_ucx_shadow_allocator_t  *shadow_allocator;
     ucp_mem_h                       ucp_memh;
 } mca_sshmem_ucx_segment_context_t;
