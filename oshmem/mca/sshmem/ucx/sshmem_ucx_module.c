@@ -26,13 +26,6 @@
 
 #include "sshmem_ucx.h"
 
-//#include <ucs/sys/math.h>
-
-#if HAVE_UCX_DEVICE_MEM
-#include <ucp/core/ucp_resource.h>
-#include <uct/ib/base/ib_alloc.h>
-#endif
-
 #define ALLOC_ELEM_SIZE sizeof(uint64_t)
 #define min(a,b) ((a) < (b) ? (a) : (b))
 #define max(a,b) ((a) > (b) ? (a) : (b))
@@ -104,7 +97,7 @@ static segment_allocator_t sshmem_ucx_allocator = {
 
 static int
 segment_create_internal(map_segment_t *ds_buf, void *address, size_t size,
-                        unsigned flags, long hint, void *dev_mem)
+                        unsigned flags, ucs_memory_type_t mem_type, int err_level)
 {
     mca_sshmem_ucx_segment_context_t *ctx;
     int rc = OSHMEM_SUCCESS;
@@ -120,15 +113,19 @@ segment_create_internal(map_segment_t *ds_buf, void *address, size_t size,
 
     mem_map_params.field_mask = UCP_MEM_MAP_PARAM_FIELD_ADDRESS |
                                 UCP_MEM_MAP_PARAM_FIELD_LENGTH |
-                                UCP_MEM_MAP_PARAM_FIELD_FLAGS;
+                                UCP_MEM_MAP_PARAM_FIELD_FLAGS  |
+                                UCP_MEM_MAP_PARAM_FIELD_MEMORY_TYPE;
 
-    mem_map_params.address    = address;
-    mem_map_params.length     = size;
-    mem_map_params.flags      = flags;
+    mem_map_params.address     = address;
+    mem_map_params.length      = size;
+    mem_map_params.flags       = flags;
+    mem_map_params.memory_type = mem_type;
 
     status = ucp_mem_map(spml->ucp_context, &mem_map_params, &mem_h);
     if (UCS_OK != status) {
-        SSHMEM_ERROR("ucp_mem_map() failed: %s\n", ucs_status_string(status));
+        SSHMEM_VERBOSE(err_level, "ucp_mem_map(memory_type=%s) failed: %s\n",
+                       ucs_memory_type_names[mem_type], 
+                       ucs_status_string(status));
         rc = OSHMEM_ERROR;
         goto out;
     }
@@ -161,12 +158,7 @@ segment_create_internal(map_segment_t *ds_buf, void *address, size_t size,
     ds_buf->super.va_end  = (void*)((uintptr_t)ds_buf->super.va_base + ds_buf->seg_size);
     ds_buf->context       = ctx;
     ds_buf->type          = MAP_SEGMENT_ALLOC_UCX;
-    ds_buf->alloc_hints   = hint;
     ctx->ucp_memh         = mem_h;
-    ctx->dev_mem          = dev_mem;
-    if (hint) {
-        ds_buf->allocator = &sshmem_ucx_allocator;
-    }
 
 out:
     OPAL_OUTPUT_VERBOSE(
@@ -181,82 +173,37 @@ out:
     return rc;
 }
 
-#if HAVE_UCX_DEVICE_MEM
-static uct_ib_device_mem_h alloc_device_mem(mca_spml_ucx_t *spml, size_t size,
-                                            void **address_p)
-{
-    uct_ib_device_mem_h dev_mem = NULL;
-    ucs_status_t status;
-    uct_md_h uct_md;
-    void *address;
-    size_t length;
-
-    uct_md = ucp_context_find_tl_md(spml->ucp_context, "mlx5");
-    if (uct_md == NULL) {
-        SSHMEM_VERBOSE(1, "ucp_context_find_tl_md() returned NULL\n");
-        return NULL;
-    }
-
-    /* If found a matching memory domain, allocate device memory on it */
-    length  = size;
-    address = NULL;
-    status = uct_ib_md_alloc_device_mem(uct_md, &length, &address,
-                                        UCT_MD_MEM_ACCESS_ALL, "sshmem_seg",
-                                        &dev_mem);
-    if (status != UCS_OK) {
-        /* If could not allocate device memory - fallback to mmap (since some
-         * PEs in the job may succeed and while others failed */
-        SSHMEM_VERBOSE(1, "uct_ib_md_alloc_dm() failed: %s\n",
-                       ucs_status_string(status));
-        return NULL;
-    }
-
-    SSHMEM_VERBOSE(3, "uct_ib_md_alloc_dm() returned address %p\n", address);
-    *address_p = address;
-    return dev_mem;
-}
-#endif
-
 static int
 segment_create(map_segment_t *ds_buf,
                const char *file_name,
                size_t size, long hint)
 {
     mca_spml_ucx_t *spml = (mca_spml_ucx_t*)mca_spml.self;
-    unsigned flags;
+    unsigned flags       = UCP_MEM_MAP_ALLOCATE;
+    int status;
 
-#if HAVE_UCX_DEVICE_MEM
-    int ret = OSHMEM_ERROR;
     if (hint & SHMEM_HINT_DEVICE_NIC_MEM) {
-        if (size > UINT_MAX) {
-            return OSHMEM_ERR_BAD_PARAM;
+#if HAVE_DECL_UCS_MEMORY_TYPE_RDMA
+        status = segment_create_internal(ds_buf, NULL, size, flags,
+                                         UCS_MEMORY_TYPE_RDMA, 3);
+        if (status == OSHMEM_SUCCESS) {
+            ds_buf->alloc_hints = hint;
+            ds_buf->allocator   = &sshmem_ucx_allocator;
+            return OSHMEM_SUCCESS;
         }
-
-        void *dev_mem_address;
-        uct_ib_device_mem_h dev_mem = alloc_device_mem(spml, size,
-                                                       &dev_mem_address);
-        if (dev_mem != NULL) {
-            int ret;
-            ret = segment_create_internal(ds_buf, dev_mem_address, size, 0,
-                                          hint, dev_mem);
-            if (ret == OSHMEM_SUCCESS) {
-                return OSHMEM_SUCCESS;
-            } else if (dev_mem != NULL) {
-                uct_ib_md_release_device_mem(dev_mem);
-                /* fallback to regular allocation */
-            }
-        }
-    }
+#else 
+       SSHMEM_VERBOSE(3, "DEVICE_NIC_MEM hint ignored since UCX does not "
+                      "support MEMORY_TYPE_RDMA");
 #endif
-
-    flags = UCP_MEM_MAP_ALLOCATE | (spml->heap_reg_nb ? UCP_MEM_MAP_NONBLOCK : 0);
-    if (hint) {
-        return segment_create_internal(ds_buf, NULL, size, flags, hint, NULL);
-    } else {
-        return segment_create_internal(ds_buf, mca_sshmem_base_start_address,
-                                       size, flags | UCP_MEM_MAP_FIXED, hint,
-                                       NULL);
+        return OSHMEM_ERR_NOT_IMPLEMENTED;
     }
+
+    flags |= UCP_MEM_MAP_FIXED;
+    if (spml->heap_reg_nb) {
+        flags |= UCP_MEM_MAP_NONBLOCK;
+    }
+    return segment_create_internal(ds_buf, mca_sshmem_base_start_address, size,
+                                   flags, UCS_MEMORY_TYPE_HOST, 0);
 }
 
 static void *
@@ -302,12 +249,6 @@ segment_unlink(map_segment_t *ds_buf)
     }
 
     ucp_mem_unmap(spml->ucp_context, ctx->ucp_memh);
-
-#if HAVE_UCX_DEVICE_MEM
-    if (ctx->dev_mem) {
-        uct_ib_md_release_device_mem(ctx->dev_mem);
-    }
-#endif
 
     ds_buf->context = NULL;
     free(ctx);
