@@ -21,6 +21,7 @@
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2017-2019 IBM Corporation.  All rights reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -97,6 +98,9 @@
 
 /* Maximum length of processor names (default is 256) */
 #undef OPAL_MAX_PROCESSOR_NAME
+
+/* The number or Fortran INTEGER in MPI Status */
+#undef OMPI_FORTRAN_STATUS_SIZE
 
 /* Whether we have FORTRAN LOGICAL*1 or not */
 #undef OMPI_HAVE_FORTRAN_LOGICAL1
