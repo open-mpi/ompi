@@ -70,7 +70,7 @@ communications initiated by other processes. The call to
 :ref:`MPI_Session_finalize` does not free objects created by MPI calls; these
 objects are freed using MPI_XXX_FREE calls. :ref:`MPI_Session_finalize` may be
 synchronizing on any or all of the groups associated with communicators,
-windows, or  les derived from the session and not disconnected, freed,
+windows, or files derived from the session and not disconnected, freed,
 or closed, respectively, before the call to :ref:`MPI_Session_finalize`
 procedure. :ref:`MPI_Session_finalize` behaves as if all such synchronizations
 occur concurrently. As :ref:`MPI_Comm_free` may mark a communicator for freeing
