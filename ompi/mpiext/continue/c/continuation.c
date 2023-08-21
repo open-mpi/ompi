@@ -567,6 +567,8 @@ recheck:
         }
         if (NULL != cont_req->cont_complete_list) {
             opal_list_append(cont_req->cont_complete_list, &cont->super.super);
+        } else if (cont_req->super.req_state == OMPI_REQUEST_INACTIVE) {
+            opal_list_append(&cont_req->cont_complete_defer_list, &cont->super.super);
         } else {
             /* someone started the request before we took the lock, go back and check again
              * this should be rare so we don't care about taking the lock again */
