@@ -93,7 +93,7 @@ listed :ref:`here <label-removed-mpi-constructs>`.
       - MPI-4.0 (2021)
 
     * - :ref:`MPI_SIZEOF <label-mpi-sizeof>`
-      -  Fortran intrinsics``c_sizeof`` or ``storage_size``
+      - Fortran intrinsics``c_sizeof`` or ``storage_size``
       - MPI-4.0 (2021)
 
 .. _label-mpi-keyval-create:
