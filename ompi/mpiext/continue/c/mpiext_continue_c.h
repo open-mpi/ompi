@@ -59,7 +59,7 @@ typedef int (MPIX_Continue_cb_function)(int rc, void *cb_data);
  * Initialize a continuation request.
  * \param flags 0 or \ref MPIX_CONT_POLL_ONLY
  * \param max_poll the maximum number of continuations to execute when testing
- *                 the continuation request for completion or MPI_UNDEFINED for
+ *                 the continuation request for completion or zero for
  *                 unlimited execution of eligible continuations
  * \param info info object used to further control the behavior of the continuation request.
  *             Currently supported:
