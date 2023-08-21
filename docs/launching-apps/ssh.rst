@@ -203,35 +203,38 @@ shells are picky about the permissions of the startup file, for
 example).  The list below contains some common shells and the startup
 files that they read/execute upon login:
 
-.. error:: TODO This rendering sucks, but I couldn't make it play nice
-           with list-table, either.  :-(
+.. list-table::
+   :header-rows: 1
 
-* ``bash`` or ``zsh``:
+   * - Shell
+     - Non-interactive login
+     - Interactive login
 
-  * **Non-interactive login:** ``$HOME/.bashrc`` if it exists.
-  * **Interactive login**: ``$HOME/.bash_profile`` if it exists, or
-    ``$HOME/.bash_login`` if it exists, or ``$HOME/.profile`` if it
-    exists (in that order). Note that some Linux distributions
-    automatically come with ``$HOME/.bash_profile`` scripts for users
-    that automatically execute ``$HOME/.bashrc`` as well. Consult the
-    bash man page for more information.
+   * - ``bash`` or ``zsh``
+     - ``$HOME/.bashrc`` if it exists.
+     - #. ``$HOME/.bash_profile`` if it exists, or
+       #. ``$HOME/.bash_login`` if it exists, or
+       #. ``$HOME/.profile`` if it exists (in that order).
 
-* ``sh``:
+       Note that some Linux distributions automatically come
+       with ``$HOME/.bash_profile`` scripts for users that
+       automatically execute ``$HOME/.bashrc`` as well. Consult the
+       bash man page for more information.
 
-  * **Non-interactive login:** This shell does not execute any file
-    automatically, so Open MPI will execute the ``$HOME/.profile``
-    script before invoking Open MPI executables on remote nodes
-  * **Interactive login:** ``$HOME/.profile``
+   * - ``sh``
+     - This shell does not execute any file automatically, so Open MPI
+       will execute the ``$HOME/.profile`` script before invoking Open
+       MPI executables on remote nodes
+     - ``$HOME/.profile``
 
-* ``csh``:
+   * - ``csh``
+     - ``$HOME/.cshrc``
+     - ``$HOME/.cshrc`` followed by ``$HOME/.login``
 
-  * **Non-interactive login:** ``$HOME/.cshrc``
-  * **Interactive login:** ``$HOME/.cshrc`` followed by
-    ``$HOME/.login``
+   * - ``tcsh``
+     - #. ``$HOME/.tcshrc`` if it exists, or
+       #. ``$HOME/.cshrc`` if it does not
+     - #. ``$HOME/.tcshrc`` if it exists, or
+       #. ``$HOME/.cshrc`` if it does not
 
-* ``tcsh``:
-
-  * **Non-interactive login:** ``$HOME/.tcshrc`` if it exists,
-    ``$HOME/.cshrc`` if it does not
-  * **Interactive login:** ``$HOME/.tcshrc`` if it exists,
-    ``$HOME/.cshrc`` if it does not, followed by ``$HOME/.login``
+       Afterwards, execute ``$HOME/.login``
