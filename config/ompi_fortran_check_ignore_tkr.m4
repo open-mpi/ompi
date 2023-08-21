@@ -141,7 +141,7 @@ AC_DEFUN([OMPI_FORTRAN_CHECK_IGNORE_TKR_SUB], [
      end subroutine force_assumed_shape
   end interface
 
-  interface
+  interface foo
      subroutine foo(buffer, count)
        $1 buffer
        $2, intent(in) :: buffer
