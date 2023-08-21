@@ -627,42 +627,24 @@ ompi_continuation_t *ompi_continue_cont_create(
     /* signal that the continuation request has a new continuation */
     OBJ_RETAIN(cont_req);
 
-    opal_atomic_lock(&cont_req->cont_lock);
+    if (using_threads) {
+        opal_atomic_lock(&cont_req->cont_lock);
+    }
     int prev_num_active = OPAL_THREAD_ADD_FETCH32(&cont_req->cont_num_active, 1);
 
     /* if the continuation request was completed we mark it pending here */
-    //if (REQUEST_COMPLETE(&cont_req->super)) {
     if (prev_num_active == 1) {
-	//printf("PENDING cont_req %p cont %p\n", cont_req, cont);
-        if (using_threads) {
-	    //opal_atomic_lock(&cont_req->cont_lock);
-	    //if (REQUEST_COMPLETE(&cont_req->super)) {
-                cont_req->super.req_complete = REQUEST_PENDING;
-	        cont_req->super.req_complete_cb = NULL;
-	    //}
-	    /* NOTE: atomic operations not required here, we're protected by the lock */
-            //intptr_t tmp = (intptr_t)REQUEST_COMPLETED;
-            //opal_atomic_compare_exchange_strong_ptr((intptr_t*)&cont_req->super.req_complete, &tmp, (intptr_t)REQUEST_PENDING);
-	    //tmp = (intptr_t)REQUEST_CB_COMPLETED;
-            //opal_atomic_compare_exchange_strong_ptr((intptr_t*)&cont_req->super.req_complete_cb, &tmp, (intptr_t)NULL);
-	    //opal_atomic_unlock(&cont_req->cont_lock);
-        } else {
-            cont_req->super.req_complete = REQUEST_PENDING;
-	    cont_req->super.req_complete_cb = NULL;
-        }
+        cont_req->super.req_complete = REQUEST_PENDING;
+        cont_req->super.req_complete_cb = NULL;
     }
-    opal_atomic_unlock(&cont_req->cont_lock);
 
     /* if we don't have the requests we cannot handle oob errors,
      * so don't bother keeping the continuation around */
     if (!req_volatile) {
-        if (using_threads) {
-            opal_atomic_lock(&cont_req->cont_lock);
-        }
         opal_list_append(&cont_req->cont_incomplete_list, &cont->super.super);
-        if (using_threads) {
-            opal_atomic_unlock(&cont_req->cont_lock);
-        }
+    }
+    if (using_threads) {
+        opal_atomic_unlock(&cont_req->cont_lock);
     }
 
     return cont;
