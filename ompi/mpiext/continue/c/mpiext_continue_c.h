@@ -25,21 +25,16 @@
  */
 #define MPIX_CONT_REQBUF_VOLATILE 1<<0
 
-/**
- * the continuation is persistent (only valid with persistent requests)
- * TODO: not implemented yet
- */
-#define MPIX_CONT_PERSISTENT      1<<1
-
 /*
- * mark the continuation request as poll-only, i.e., only execute continuations
+ * Mark the continuation request as poll-only, i.e., only execute continuations
  * when testing/waiting for the continuation request to complete
  */
 #define MPIX_CONT_POLL_ONLY       1<<2
 
-/* Wwhether the execution of continuations is deferred in MPI_Continue or
+/* Whether the execution of continuations is deferred in MPI_Continue or
  * MPI_Continueall if all operations are complete.
- * By default, continuations eligible for execution are invoked immediately. */
+ * By default, continuations eligible for execution are invoked immediately
+ * if the continuation request is active. */
 #define MPIX_CONT_DEFER_COMPLETE  1<<3
 
 /* whether failed continuations will be invoked and passed the error code
@@ -56,7 +51,11 @@
 typedef int (MPIX_Continue_cb_function)(int rc, void *cb_data);
 
 /**
- * Initialize a continuation request.
+ * Initialize a continuation request. The request can be used when attaching continuation to one or more
+ * operation requests (\sa MPIX_Continue and \sa MPIX_Continueall). The request must be active for
+ * continuation callbacks registered with it to be executed, i.e., the request must be started (e.g., using MPI_Start)
+ * before callbacks are executed.
+ *
  * \param flags 0 or \ref MPIX_CONT_POLL_ONLY
  * \param max_poll the maximum number of continuations to execute when testing
  *                 the continuation request for completion or zero for
@@ -77,7 +76,7 @@ OMPI_DECLSPEC int MPIX_Continue_init(int flags, int max_poll, MPI_Info info, MPI
  * \param request the request representing the the operation to attach a continuation to
  * \param cb the callback to invoke upon completion, with signature \ref MPIX_Continue_cb_function
  * \param cb_data the user-data to pass to the callback
- * \param flags 0 or OR-combination of \ref MPIX_CONT_REQBUF_VOLATILE, \ref MPIX_CONT_PERSISTENT,
+ * \param flags 0 or OR-combination of \ref MPIX_CONT_REQBUF_VOLATILE,
  *              \ref MPIX_CONT_DEFER_COMPLETE, \ref MPIX_CONT_INVOKE_FAILED
  * \param status MPI_STATUS_IGNORE or a pointer to a status object that will be a filled before the callback is invoked
  * \param cont_req a continuation request created through \ref MPIX_Continue_init
@@ -94,7 +93,7 @@ OMPI_DECLSPEC int MPIX_Continue(MPI_Request *request, MPIX_Continue_cb_function 
  * \param requests the requests representing the the operations to attach a continuation to
  * \param cb the callback to invoke upon completion of all operations, with signature \ref MPIX_Continue_cb_function
  * \param cb_data the user-data to pass to the callback
- * \param flags 0 or OR-combination of \ref MPIX_CONT_REQBUF_VOLATILE, \ref MPIX_CONT_PERSISTENT,
+ * \param flags 0 or OR-combination of \ref MPIX_CONT_REQBUF_VOLATILE,
  *              \ref MPIX_CONT_DEFER_COMPLETE, \ref MPIX_CONT_INVOKE_FAILED
  * \param status MPI_STATUS_IGNORE or a pointer to a status object that will be a filled before the callback is invoked
  * \param cont_req a continuation request created through \ref MPIX_Continue_init
