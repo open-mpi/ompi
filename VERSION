@@ -25,8 +25,8 @@ mpi_standard_subversion=1
 
 # OMPI required dependency versions.
 # List in x.y.z format.
-pmix_min_version=4.1.2
-prte_min_version=2.0.2
+pmix_min_version=4.2.0
+prte_min_version=3.0.0
 hwloc_min_version=1.11.0
 event_min_version=2.0.21
 automake_min_version=1.13.4
