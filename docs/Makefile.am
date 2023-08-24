@@ -1031,8 +1031,8 @@ $(ALL_MAN_BUILT):
 	    filename=`basename $$file`; \
 	    cp -pf $(OMPI_PRRTE_RST_CONTENT_DIR)/$$filename "$(builddir)/prrte-rst-content"; \
 	done
-	$(OMPI_V_SPHINX_HTML) OMPI_VERSION_FILE=$(top_srcdir)/VERSION $(SPHINX_BUILD) -M html "$(builddir)" "$(OUTDIR)" $(SPHINX_OPTS)
-	$(OMPI_V_SPHINX_MAN) OMPI_VERSION_FILE=$(top_srcdir)/VERSION $(SPHINX_BUILD) -M man "$(builddir)" "$(OUTDIR)" $(SPHINX_OPTS)
+	$(OMPI_V_SPHINX_HTML) OMPI_TOP_SRCDIR=$(top_srcdir) $(SPHINX_BUILD) -M html "$(builddir)" "$(OUTDIR)" $(SPHINX_OPTS)
+	$(OMPI_V_SPHINX_MAN) OMPI_TOP_SRCDIR=$(top_srcdir) $(SPHINX_BUILD) -M man "$(builddir)" "$(OUTDIR)" $(SPHINX_OPTS)
 
 # A useful rule to invoke manually to ensure that all of the external
 # HTML links we have are valid.  Running this rule requires
