@@ -241,6 +241,16 @@ int ompi_comm_set_nb (ompi_communicator_t **ncomm, ompi_communicator_t *oldcomm,
     newcomm->c_assertions = 0;
 
     /* Set remote group and duplicate the local comm, if applicable */
+    if ((NULL == remote_group) && (NULL != remote_ranks)) {
+        /* determine how the list of local_rank can be stored most
+           efficiently */
+        ret = ompi_group_incl(oldcomm->c_remote_group, remote_size,
+                              remote_ranks, &newcomm->c_remote_group);
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
+            return ret;
+        }
+        remote_group = newcomm->c_remote_group;
+    }
     if ( NULL != remote_group ) {
         ompi_communicator_t *old_localcomm;
 
