@@ -225,3 +225,16 @@ rst_prolog = f"""
 .. |deprecated_favor| replace:: this routine is deprecated in favor of
 
 """
+
+# The sphinx_rtd_theme does not properly handle wrapping long lines in
+# table cells when rendering to HTML due to a CSS issue (see
+# https://github.com/readthedocs/sphinx_rtd_theme/issues/1505).  Until
+# the issue is fixed upstream in sphinx_rtd_theme, we can simply
+# override the CSS here.
+rst_prolog += """
+.. raw:: html
+
+   <style>
+   .wy-table-responsive table td,.wy-table-responsive table th{white-space:normal}
+   </style>
+"""
