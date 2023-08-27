@@ -381,7 +381,7 @@ do {                                                                    \
                                  &max_data );                           \
             opal_convertor_prepare_for_send( &sendreq->req_send.req_base.req_convertor, \
                                              &(ompi_mpi_packed.dt.super),  \
-                                             max_data, sendreq->req_buff ); \
+                                             max_data, sendreq->req_addr ); \
         }                                                               \
     }                                                                   \
  } while(0);
