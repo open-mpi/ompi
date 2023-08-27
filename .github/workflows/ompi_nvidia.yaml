@@ -1,6 +1,5 @@
 name: ompi_NVIDIA CI
-on: [pull_request, push]
-
+on: [pull_request]
 jobs:
   deployment:
     runs-on: [self-hosted, linux, x64, nvidia]
