@@ -25,6 +25,7 @@ Copyright (c) 2018-2022 Amazon.com, Inc. or its affiliates.  All Rights
 Copyright (c) 2019-2021 Triad National Security, LLC. All rights
                         reserved.
 Copyright (c) 2021      Google, LLC. All rights reserved.
+Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
 $COPYRIGHT$
 
 Additional copyrights may follow
@@ -61,6 +62,11 @@ included in the vX.Y.Z section and be denoted as:
 4.1.6 -- August, 2023
 ---------------------
 
+- Add missing MPI_F_STATUS_SIZE to mpi.h.  Thanks to @jprotze for
+  reporting the issue.
+- Update Fortran mpi module configure check to be more correct.
+  Thanks to Sergey Kosukhin for identifying the issue and supplying
+  the fix.
 - Update to properly handle PMIx v>=4.2.3.  Thanks to Bruno Chareyre,
   Github user @sukanka, and Christof Koehler for raising the
   compatibility issues and helping test the fixes.
