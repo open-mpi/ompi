@@ -13,8 +13,8 @@
  * Copyright (c) 2011-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2015      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2023 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2019      Triad National Security, LLC.  All rights reserved.
  *
  * $COPYRIGHT$
@@ -78,6 +78,7 @@ void ompi_session_get_nth_pset_f(MPI_Fint *session, MPI_Fint *info, MPI_Fint *n,
     int c_ierr;
     MPI_Session c_session;
     char c_name[MPI_MAX_PSET_NAME_LEN];
+    OMPI_SINGLE_NAME_DECL(pset_len);
 
     c_session = PMPI_Session_f2c(*session);
 
