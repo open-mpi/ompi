@@ -56,7 +56,6 @@ config.log
 config.status
 configure
 libtool
-doxygen
 bin
 lib
 cscope.*

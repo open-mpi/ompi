@@ -17,6 +17,7 @@
  * Copyright (c) 2020      Google, LLC. All rights reserved.
  * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
+ * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -55,9 +56,7 @@ BEGIN_C_DECLS
 /* If you update this list, you probably also want to update
    opal/mca/timer/linux/configure.m4.  Or not. */
 
-#if defined(DOXYGEN)
-/* don't include system-level gorp when generating doxygen files */
-#elif defined(PLATFORM_ARCH_X86_64) || defined(PLATFORM_ARCH_X86)
+#if defined(PLATFORM_ARCH_X86_64) || defined(PLATFORM_ARCH_X86)
 #    include "opal/sys/x86_64/timer.h"
 #elif defined(PLATFORM_ARCH_ARM) || defined(PLATFORM_ARCH_AARCH64)
 #    include "opal/sys/arm64/timer.h"
@@ -65,16 +64,14 @@ BEGIN_C_DECLS
 #    include "opal/sys/powerpc/timer.h"
 #endif
 
-#ifndef DOXYGEN
-#    ifndef OPAL_HAVE_SYS_TIMER_GET_CYCLES
-#        define OPAL_HAVE_SYS_TIMER_GET_CYCLES 0
+#ifndef OPAL_HAVE_SYS_TIMER_GET_CYCLES
+#    define OPAL_HAVE_SYS_TIMER_GET_CYCLES 0
 
 typedef long opal_timer_t;
-#    endif
+#endif
 
-#    ifndef OPAL_HAVE_SYS_TIMER_GET_FREQ
-#        define OPAL_HAVE_SYS_TIMER_GET_FREQ 0
-#    endif
+#ifndef OPAL_HAVE_SYS_TIMER_GET_FREQ
+#    define OPAL_HAVE_SYS_TIMER_GET_FREQ 0
 #endif
 
 #ifndef OPAL_HAVE_SYS_TIMER_IS_MONOTONIC

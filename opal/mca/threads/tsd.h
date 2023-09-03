@@ -7,6 +7,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2019      Sandia National Laboratories. All rights reserved.
  *
+ * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -40,74 +41,7 @@ BEGIN_C_DECLS
  */
 typedef void (*opal_tsd_destructor_t)(void *value);
 
-#if defined(DOXYGEN)
-
-/**
- * Typedef for thread-specific data key
- */
-typedef void *opal_tsd_key_t;
-
-/**
- * Delete a thread-specific data key
- *
- * Delete a thread-specific data key previously returned by
- * opal_tsd_key_create().  The destructor associated with the key is
- * not fired in any thread and memory cleanup is the responsibility of
- * the caller.
- *
- * @note Unlike pthread_key_delete, this function should not be called
- * from within a destructor.  It can not be universally supported at
- * this time.
- *
- * @param key[in]       The key for accessing thread-specific data
- *
- * @retval OPAL_SUCCESS      Success
- * @retval OPAL_ERROR        Error
- * @retval OPAL_ERR_IN_ERRNO Error
- */
-OPAL_DECLSPEC int opal_tsd_key_delete(opal_tsd_key_t key);
-
-/**
- * Set a thread-specific data value
- *
- * Associates value with key in the current thread.  The value for the
- * key in other threads is not changed.  Different threads may assign
- * different values to the same key.
- *
- * @note This function should not be called within
- * opal_tsd_key_delete().
- *
- * @param key[in]       Thread specific data key to modify
- * @param value[in]     Value to associate with key
- *
- * @retval OPAL_SUCCESS      Success
- * @retval OPAL_ERR          Error
- * @retval OPAL_ERR_IN_ERRNO Error
- */
-OPAL_DECLSPEC int opal_tsd_setspecific(opal_tsd_key_t key, void *value);
-
-/**
- * Get a thread-specific data value
- *
- * Get the data associated with the given key, as set by
- * opal_tsd_setspecific().  If opal_tsd_setspecific() hasn't been
- * called in the current thread with the given key, NULL is returned
- * in valuep.
- *
- * @param key[in]        Thread specific data key to modify
- * @param value[out]     Value to associate with key
- *
- * @retval OPAL_SUCCESS      Success
- * @retval OPAL_ERR          Error
- * @retval OPAL_ERR_IN_ERRNO Error
- */
-OPAL_DECLSPEC int opal_tsd_getspecific(opal_tsd_key_t key, void **valuep);
-
-#else
-
-#    include MCA_threads_tsd_base_include_HEADER
-
-#endif
+#include MCA_threads_tsd_base_include_HEADER
 
 typedef struct opal_tsd_tracked_key_s opal_tsd_tracked_key_t;
 

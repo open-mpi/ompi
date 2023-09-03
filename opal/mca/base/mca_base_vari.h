@@ -16,6 +16,7 @@
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
+ * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -30,10 +31,6 @@
  * This file is internal to the MCA variable system and should not
  * need to be used by any other elements in Open MPI except the
  * special case of the ompi_info command.
- *
- * All the rest of the doxygen documentation in this file is marked as
- * "internal" and won't show up unless you specifically tell doxygen
- * to generate internal documentation (by default, it is skipped).
  */
 
 #ifndef OPAL_MCA_BASE_VAR_INTERNAL_H

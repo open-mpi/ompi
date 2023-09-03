@@ -19,6 +19,7 @@
  * Copyright (c) 2020-2021 Google, LLC. All rights reserved.
  * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
+ * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -360,52 +361,6 @@ static inline int64_t opal_atomic_fetch_max_64(opal_atomic_int64_t *addr, int64_
 static inline size_t opal_atomic_add_fetch_size_t(opal_atomic_size_t *addr, size_t delta);
 static inline size_t opal_atomic_fetch_add_size_t(opal_atomic_size_t *addr, size_t delta);
 
-#ifdef DOXYGEN /* because this isn't a proper C prototype */
-/**
- * Atomically add delta to addr, type independent
- *
- * @param addr   Address of value to update
- * @param delta  Value by which to change the value in addr
- *
- * Generally implemented as a macro (except for when implemented as a
- * compiler built-in), this function provides a type-independent math
- * operator.
- */
-static inline void opal_atomic_add(type *addr, type delta);
-#endif
-
-
-/**********************************************************************
- *
- * Load-linked, Store Conditional
- *
- * Optional.  Check OPAL_HAVE_ATOMIC_LLSC_32,
- * OPAL_HAVE_ATOMIC_LLSC_64, or OPAL_HAVE_ATOMIC_LLSC_PTR before
- * using.  Implemented as macros due to function call behaviors;
- * prototyped here as C++-style functions for readability.
- *
- * C11 and GCC built-in atomics don't provide native LL/SC support, so
- * if there is an architectural implementation, we use it even if
- * we are using the C11 or GCC built-in atomics.
- *
- *********************************************************************/
-
-#ifdef DOXYGEN
-
-static inline void opal_atomic_ll_32(opal_atomic_int32_t *addr, int32_t &ret);
-
-static inline void opal_atomic_sc_32(opal_atomic_int32_t *addr, int32_t newval, int &ret);
-
-static inline void opal_atomic_ll_64(opal_atomic_int64_t *addr, int64_t &ret);
-
-static inline void opal_atomic_sc_64(opal_atomic_int64_t *addr, int64_t newval, int &ret);
-
-static inline void opal_atomic_ll_ptr(opal_atomic_intptr_t *addr, intptr_t &ret);
-
-static inline void opal_atomic_sc_ptr(opal_atomic_intptr_t *addr, intptr_t newval, int &ret);
-
-#endif
-
 
 /**********************************************************************
  *
@@ -414,9 +369,7 @@ static inline void opal_atomic_sc_ptr(opal_atomic_intptr_t *addr, intptr_t newva
  *
  *********************************************************************/
 
-#if defined(DOXYGEN)
-/* don't include system-level gorp when generating doxygen files */
-#elif OPAL_USE_C11_ATOMICS == 1
+#if OPAL_USE_C11_ATOMICS == 1
 #    include "opal/sys/atomic_stdc.h"
 #elif OPAL_USE_GCC_BUILTIN_ATOMICS == 1
 #    include "opal/sys/gcc_builtin/atomic.h"

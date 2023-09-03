@@ -15,6 +15,7 @@
 # Copyright (c) 2017-2022 Amazon.com, Inc. or its affiliates.  All Rights reserved.
 #                         All Rights reserved.
 # Copyright (c) 2020      IBM Corporation.  All rights reserved.
+# Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -27,7 +28,7 @@
 # be required.
 SUBDIRS = config contrib 3rd-party $(MCA_PROJECT_SUBDIRS) test docs
 DIST_SUBDIRS = config contrib 3rd-party $(MCA_PROJECT_DIST_SUBDIRS) test docs
-EXTRA_DIST = README.md VERSION Doxyfile LICENSE autogen.pl AUTHORS
+EXTRA_DIST = README.md VERSION LICENSE autogen.pl AUTHORS
 
 include examples/Makefile.include
 
