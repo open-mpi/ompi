@@ -1,7 +1,9 @@
 name: ompi_NVIDIA CI
 on: [pull_request]
 jobs:
+
   deployment:
+    if: github.repository == 'open-mpi/ompi'
     runs-on: [self-hosted, linux, x64, nvidia]
     steps:
     - name: Checkout
@@ -28,7 +30,11 @@ jobs:
     - name: Running tests
       run: /start test
   clean:
-    if: ${{ always() }}
+# always() should be used to run "clean" even when the workflow was canceled 
+#  ( in case of the right repository name)
+# The second condition doesn't work when the workflow was canceled
+
+    if: always() && (github.repository == 'open-mpi/ompi')
     needs: [deployment, build, test]
     runs-on: [self-hosted, linux, x64, nvidia]
     steps:
