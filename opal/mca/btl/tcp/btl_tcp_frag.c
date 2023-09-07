@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2020 The University of Tennessee and The University
+ * Copyright (c) 2004-2023 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -105,10 +105,22 @@ bool mca_btl_tcp_frag_send(mca_btl_tcp_frag_t *frag, int sd)
 {
     ssize_t cnt;
     size_t i, num_vecs;
+    struct msghdr msg;
+    int msg_flags = MSG_DONTWAIT | MSG_NOSIGNAL;
 
-    /* non-blocking write, but continue if interrupted */
+    msg.msg_name = NULL;
+    msg.msg_namelen = 0;
+    msg.msg_iov = frag->iov_ptr;
+    msg.msg_iovlen = frag->iov_cnt;
+    msg.msg_control = NULL;
+    msg.msg_controllen = 0;
+
+    /* non-blocking write, continue if interrupted */
     do {
-        cnt = writev(sd, frag->iov_ptr, frag->iov_cnt);
+        /* Use sendmsg to avoid issues with SIGPIPE as described in
+         * https://blog.erratasec.com/2018/10/tcpip-sockets-and-sigpipe.html#
+         */
+        cnt = sendmsg(sd, &msg, msg_flags);
         if (cnt < 0) {
             switch (opal_socket_errno) {
             case EINTR:
@@ -116,7 +128,7 @@ bool mca_btl_tcp_frag_send(mca_btl_tcp_frag_t *frag, int sd)
             case EWOULDBLOCK:
                 return false;
             case EFAULT:
-                BTL_ERROR(("mca_btl_tcp_frag_send: writev error (%p, %lu)\n\t%s(%lu)\n",
+                BTL_ERROR(("mca_btl_tcp_frag_send: sendmsg error (%p, %lu)\n\t%s(%lu)\n",
                            frag->iov_ptr[0].iov_base, (unsigned long) frag->iov_ptr[0].iov_len,
                            strerror(opal_socket_errno), (unsigned long) frag->iov_cnt));
                 /* send_lock held by caller */
@@ -125,7 +137,7 @@ bool mca_btl_tcp_frag_send(mca_btl_tcp_frag_t *frag, int sd)
                 return false;
             default:
                 BTL_PEER_ERROR(frag->endpoint->endpoint_proc->proc_opal,
-                               ("mca_btl_tcp_frag_send: writev failed: %s (%d)",
+                               ("mca_btl_tcp_frag_send: sendmsg failed: %s (%d)",
                                 strerror(opal_socket_errno), opal_socket_errno));
                 /* send_lock held by caller */
                 frag->endpoint->endpoint_state = MCA_BTL_TCP_FAILED;

@@ -2,7 +2,7 @@
  Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
                          University Research and Technology
                          Corporation.  All rights reserved.
- Copyright (c) 2004-2005 The University of Tennessee and The University
+ Copyright (c) 2004-2023 The University of Tennessee and The University
                          of Tennessee Research Foundation.  All rights
                          reserved.
  Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -26,12 +26,12 @@
  of code to handle the windows error flags
  */
 
-int writev(int fd, struct iovec *iov, int cnt)
+ssize_t sendmsg(int fd, const struct msghdr *message, int flags)
 {
     int err;
     DWORD sendlen;
 
-    err = WSASend((SOCKET) fd, &(iov->data), cnt, &sendlen, 0, NULL, NULL);
+    err = WSASendMsg((SOCKET) fd, message, flags, &sendlen, NULL, NULL);
 
     if (err < 0) {
         return err;
