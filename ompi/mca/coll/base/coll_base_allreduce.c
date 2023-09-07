@@ -18,6 +18,8 @@
  * Copyright (c) 2018      Siberian State University of Telecommunications
  *                         and Information Science. All rights reserved.
  * Copyright (c) 2022      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c)           Amazon.com, Inc. or its affiliates.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -1242,6 +1244,118 @@ int ompi_coll_base_allreduce_intra_redscat_allgather(
         free(rcount);
     if (NULL != scount)
         free(scount);
+    return err;
+}
+
+/**
+ * A greedy algorithm to exchange data among processes in the communicator via
+ * an allgather pattern, followed by a local reduction on each process. This
+ * avoids the round trip in a rooted communication pattern, e.g. reduce on the
+ * root and then broadcast to peers.
+ *
+ * This algorithm supports both commutative and non-commutative MPI operations.
+ * For non-commutative operations the reduction is applied to the data in the
+ * same rank order, e.g. rank 0, rank 1, ... rank N, on each process.
+ *
+ * This algorithm benefits inter-node allreduce over a high-latency network.
+ * Caution is needed on larger communicators(n) and data sizes(m), which will
+ * result in m*n^2 total traffic and potential network congestion.
+ */
+int ompi_coll_base_allreduce_intra_allgather_reduce(const void *sbuf, void *rbuf, int count,
+                                                    struct ompi_datatype_t *dtype,
+                                                    struct ompi_op_t *op,
+                                                    struct ompi_communicator_t *comm,
+                                                    mca_coll_base_module_t *module)
+{
+    char *send_buf = (void *) sbuf;
+    int comm_size = ompi_comm_size(comm);
+    int err = MPI_SUCCESS;
+    int rank = ompi_comm_rank(comm);
+    bool commutative = ompi_op_is_commute(op);
+    ompi_request_t **reqs;
+
+    if (sbuf == MPI_IN_PLACE) {
+        send_buf = rbuf;
+    }
+
+    /* Allocate a large-enough buffer to receive from everyone else */
+    char *tmp_buf = NULL, *tmp_buf_raw = NULL, *tmp_recv = NULL;
+    ptrdiff_t lb, extent, dsize, gap = 0;
+    ompi_datatype_get_extent(dtype, &lb, &extent);
+    dsize = opal_datatype_span(&dtype->super, count * comm_size, &gap);
+    tmp_buf_raw = (char *) malloc(dsize);
+    if (NULL == tmp_buf_raw) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    if (commutative) {
+        ompi_datatype_copy_content_same_ddt(dtype, count, (char *) rbuf, (char *) send_buf);
+    }
+
+    tmp_buf = tmp_buf_raw - gap;
+
+    /* Requests for send to AND receive from everyone else */
+    int reqs_needed = (comm_size - 1) * 2;
+    reqs = ompi_coll_base_comm_get_reqs(module->base_data, reqs_needed);
+
+    ptrdiff_t incr = extent * count;
+    tmp_recv = (char *) tmp_buf;
+
+    /* Exchange data with peer processes */
+    int req_index = 0, peer_rank = 0;
+    for (int i = 1; i < comm_size; ++i) {
+        peer_rank = (rank + i) % comm_size;
+        tmp_recv = tmp_buf + (peer_rank * incr);
+        err = MCA_PML_CALL(irecv(tmp_recv, count, dtype, peer_rank, MCA_COLL_BASE_TAG_ALLREDUCE,
+                                 comm, &reqs[req_index++]));
+        if (MPI_SUCCESS != err) {
+            goto err_hndl;
+        }
+
+        err = MCA_PML_CALL(isend(send_buf, count, dtype, peer_rank, MCA_COLL_BASE_TAG_ALLREDUCE,
+                                 MCA_PML_BASE_SEND_STANDARD, comm, &reqs[req_index++]));
+        if (MPI_SUCCESS != err) {
+            goto err_hndl;
+        }
+    }
+
+    err = ompi_request_wait_all(req_index, reqs, MPI_STATUSES_IGNORE);
+
+    /* Prepare for local reduction */
+    peer_rank = 0;
+    if (!commutative) {
+        /* For non-commutative operations, ensure the reduction always starts from Rank 0's data */
+        memcpy(rbuf, 0 == rank ? send_buf : tmp_buf, incr);
+        peer_rank = 1;
+    }
+
+    char *inbuf;
+    for (; peer_rank < comm_size; peer_rank++) {
+        inbuf = rank == peer_rank ? send_buf : tmp_buf + (peer_rank * incr);
+        ompi_op_reduce(op, (void *) inbuf, rbuf, count, dtype);
+    }
+
+err_hndl:
+    if (NULL != tmp_buf_raw)
+        free(tmp_buf_raw);
+
+    if (NULL != reqs) {
+        if (MPI_ERR_IN_STATUS == err) {
+            for (int i = 0; i < reqs_needed; i++) {
+                if (MPI_REQUEST_NULL == reqs[i])
+                    continue;
+                if (MPI_ERR_PENDING == reqs[i]->req_status.MPI_ERROR)
+                    continue;
+                if (MPI_SUCCESS != reqs[i]->req_status.MPI_ERROR) {
+                    err = reqs[i]->req_status.MPI_ERROR;
+                    break;
+                }
+            }
+        }
+        ompi_coll_base_free_reqs(reqs, reqs_needed);
+    }
+
+    /* All done */
     return err;
 }
 
