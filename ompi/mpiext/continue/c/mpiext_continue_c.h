@@ -21,26 +21,39 @@
  * Generally, the request buffer should remain accessible until the continuation is invoked
  * and will be set to MPI_REQUEST_NULL before the continuation is invoked.
  * However, if this flag is specified the requests are not accessed after the call to
- * MPI_Continue[all] returns.
+ * MPIX_Continue[all] returns.
+ *
+ * NOTE: this flag is deprecated, use MPIX_CONT_REQUESTS_FREE
  */
-#define MPIX_CONT_REQBUF_VOLATILE 1<<0
+#define MPIX_CONT_REQBUF_VOLATILE (1<<0)
+
+/**
+ * If passed to MPIX_Continue[all], MPI will assume that the memory holding these
+ * requests will be freed after the call and MPI will not attempt to access that memory.
+ * All requests passed to MPI_Continue[all] will be freed before the call returns.
+ */
+#define MPIX_CONT_REQUESTS_FREE   (1<<1)
 
 /*
- * Mark the continuation request as poll-only, i.e., only execute continuations
- * when testing/waiting for the continuation request to complete
+ * If passed to MPIX_Continue_init, marks the continuation request as poll-only,
+ * i.e., only execute continuations when testing/waiting for the continuation
+ * request to complete.
  */
-#define MPIX_CONT_POLL_ONLY       1<<2
+#define MPIX_CONT_POLL_ONLY       (1<<2)
 
-/* Whether the execution of continuations is deferred in MPI_Continue or
- * MPI_Continueall if all operations are complete.
+/* Whether the execution of continuations is deferred in MPIX_Continue or
+ * MPIX_Continueall if all operations are complete.
  * By default, continuations eligible for execution are invoked immediately
  * if the continuation request is active. */
-#define MPIX_CONT_DEFER_COMPLETE  1<<3
+#define MPIX_CONT_DEFER_COMPLETE  (1<<3)
 
-/* whether failed continuations will be invoked and passed the error code
- * TODO: not implemented yet
+/* Whether failed continuations will be invoked and passed the error code.
+ * If passed to MPIX_Continue[all] and an error occurs on any of the
+ * associated operations the callback will be invoked and the error code
+ * of the first failed request passed as the first argument. Error codes
+ * for all other operations are available in the associated status objects.
  */
-#define MPIX_CONT_INVOKE_FAILED   1<<4
+#define MPIX_CONT_INVOKE_FAILED   (1<<4)
 
 /**
  * Completion callback signature:
