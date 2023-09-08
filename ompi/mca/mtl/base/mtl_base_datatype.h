@@ -44,7 +44,7 @@ ompi_mtl_datatype_pack(struct opal_convertor_t *convertor,
 	opal_datatype_is_contiguous_memory_layout(convertor->pDesc,
 						  convertor->count)) {
 	    *freeAfter = false;
-	    *buffer = convertor->pBaseBuf;
+	    *buffer = convertor->pBaseBuf + convertor->bConverted + convertor->pDesc->true_lb;
 	    *buffer_len = convertor->local_size;
 	    return OPAL_SUCCESS;
     }

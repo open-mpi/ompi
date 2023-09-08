@@ -164,30 +164,14 @@ do {                                                                    \
     OMPI_DATATYPE_RETAIN(datatype);                                     \
     (req_send)->req_base.req_comm = comm;                               \
     (req_send)->req_base.req_datatype = datatype;                       \
-    if (opal_datatype_is_contiguous_memory_layout(&datatype->super, count)) { \
-        (req_send)->req_base.req_convertor.remoteArch =                 \
-            ompi_mpi_local_convertor->remoteArch;                       \
-        (req_send)->req_base.req_convertor.flags      =                 \
-            ompi_mpi_local_convertor->flags;                            \
-        (req_send)->req_base.req_convertor.master     =                 \
-            ompi_mpi_local_convertor->master;                           \
-        (req_send)->req_base.req_convertor.local_size =                 \
-            count * datatype->super.size;                               \
-        (req_send)->req_base.req_convertor.pBaseBuf   =                 \
-            (unsigned char*)buf + datatype->super.true_lb;              \
-        (req_send)->req_base.req_convertor.count      = count;          \
-        (req_send)->req_base.req_convertor.pDesc      = &datatype->super; \
-	(req_send)->req_base.req_convertor.use_desc = &(datatype->super.desc); \
-    } else { \
-        MCA_PML_CM_SWITCH_CUDA_CONVERTOR_OFF(flags, datatype, count);       \
-        opal_convertor_copy_and_prepare_for_send(                           \
-            ompi_mpi_local_convertor,                                       \
-            &(datatype->super),                                             \
-            count,                                                          \
-            buf,                                                            \
-            flags,                                                          \
-            &(req_send)->req_base.req_convertor );                          \
-    } \
+    MCA_PML_CM_SWITCH_CUDA_CONVERTOR_OFF(flags, datatype, count);       \
+    opal_convertor_copy_and_prepare_for_send(                           \
+        ompi_mpi_local_convertor,                                       \
+        &(datatype->super),                                             \
+        count,                                                          \
+        buf,                                                            \
+        flags,                                                          \
+        &(req_send)->req_base.req_convertor );                          \
     (req_send)->req_base.req_ompi.req_mpi_object.comm = comm;           \
     (req_send)->req_base.req_ompi.req_status.MPI_SOURCE =               \
         comm->c_my_rank;                                                \
@@ -252,12 +236,14 @@ do {                                                                    \
             ompi_mpi_local_convertor->flags;                            \
         (req_send)->req_base.req_convertor.master     =                 \
             ompi_mpi_local_convertor->master;                           \
-        (req_send)->req_base.req_convertor.local_size =                 \
-            count * datatype->super.size;                               \
-        (req_send)->req_base.req_convertor.pBaseBuf   =                 \
-            (unsigned char*)buf + datatype->super.true_lb;              \
-        (req_send)->req_base.req_convertor.count      = count;          \
-        (req_send)->req_base.req_convertor.pDesc      = &datatype->super; \
+        /* Switches off device buffer  detection if                 \
+         MTL set MCA_MTL_BASE_FLAG_CUDA_INIT_DISABLE during init */     \
+        MCA_PML_CM_SWITCH_CUDA_CONVERTOR_OFF(flags, datatype, count);   \
+        (req_send)->req_base.req_convertor.flags |= flags;              \
+        /* Sets CONVERTOR_CUDA flag if device buffer */                   \
+        opal_convertor_prepare_for_send(                            \
+            &req_send->req_base.req_convertor,                      \
+            &datatype->super, count, (unsigned char*)buf); \
     } else {                                                            \
         MCA_PML_CM_SWITCH_CUDA_CONVERTOR_OFF(flags, datatype, count);   \
         opal_convertor_copy_and_prepare_for_send(                       \

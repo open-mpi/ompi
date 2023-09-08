@@ -375,10 +375,11 @@ mca_pml_cm_send(const void *buf,
 		convertor.flags      = ompi_mpi_local_convertor->flags;
 		convertor.master     = ompi_mpi_local_convertor->master;
 
-		convertor.local_size = count * datatype->super.size;
-		convertor.pBaseBuf   = (unsigned char*)buf + datatype->super.true_lb;
-		convertor.count      = count;
-		convertor.pDesc      = &datatype->super;
+                /* Switches off device detection if
+                   MTL set MCA_MTL_BASE_FLAG_CUDA_INIT_DISABLE during init */
+		convertor.flags |= flags;
+		/* Sets CONVERTOR_CUDA flag if device buffer */
+		opal_convertor_prepare_for_send(&convertor, &datatype->super, count, (unsigned char *)buf);
 	} else
 #endif
 	{
