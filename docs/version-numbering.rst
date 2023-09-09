@@ -50,6 +50,12 @@ Similarly, if using a container technology that internally bundles all
 the libraries from Open MPI vX, attempting to launch that container
 with ``mpirun`` / ``oshrun`` from Open MPI vY is not guaranteed to work.
 
+Open MPI |ompi_series| MCA parameter compatibility
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Several MCA parameters have been deprecated in Open MPI |ompi_series|, please
+see this :ref:`table <label-mca-backward-compat>` for the full list.
+
 Software Version Number
 -----------------------
 
