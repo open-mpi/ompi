@@ -30,11 +30,17 @@
 
 #include "opal/class/opal_pointer_array.h"
 #include "opal/util/argv.h"
+#include "opal/util/opal_environ.h"
+#include "opal/util/os_path.h"
 #include "opal/util/output.h"
+#include "opal/util/printf.h"
 #include "opal/util/proc.h"
 #include "opal_stdint.h"
 
+#include "opal/mca/base/mca_base_vari.h"
 #include "opal/mca/pmix/base/base.h"
+
+#include "src/include/pmix_frameworks.h"
 
 int opal_pmix_base_exchange(pmix_info_t *indat, pmix_pdata_t *outdat, int timeout)
 {
@@ -73,6 +79,150 @@ int opal_pmix_base_exchange(pmix_info_t *indat, pmix_pdata_t *outdat, int timeou
     return opal_pmix_convert_status(rc);
 }
 
+static bool check_pmix_param(char *param)
+{
+    char *p;
+    size_t n;
+    int len;
+
+    p = strchr(param, '_');
+    len = (int)(p - param);
+
+    if (0 == strncmp(param, "pmix", len)) {
+        return true;
+    }
+    for (n=0; NULL != pmix_framework_names[n]; n++) {
+        if (0 == strncmp(param, pmix_framework_names[n], len)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+static bool check_pmix_overlap(char *var, char *value)
+{
+    char *tmp;
+
+    if (0 == strncmp(var, "dl_", 3)) {
+        opal_asprintf(&tmp, "PMIX_MCA_pdl_%s", &var[3]);
+        // set it, but don't overwrite if they already
+        // have a value in our environment
+        setenv(tmp, value, false);
+        free(tmp);
+        return true;
+    } else if (0 == strncmp(var, "oob_", 4)) {
+        opal_asprintf(&tmp, "PMIX_MCA_ptl_%s", &var[4]);
+        // set it, but don't overwrite if they already
+        // have a value in our environment
+        setenv(tmp, value, false);
+        free(tmp);
+        return true;
+    } else if (0 == strncmp(var, "hwloc_", 6)) {
+        opal_asprintf(&tmp, "PMIX_MCA_%s", var);
+        // set it, but don't overwrite if they already
+        // have a value in our environment
+        setenv(tmp, value, false);
+        free(tmp);
+        return true;
+    } else if (0 == strncmp(var, "if_", 3)) {
+        // need to convert if to pif
+        opal_asprintf(&tmp, "PMIX_MCA_pif_%s", &var[3]);
+        // set it, but don't overwrite if they already
+        // have a value in our environment
+        setenv(tmp, value, false);
+        free(tmp);
+        return true;
+    }
+    return false;
+}
+
+// NOTE: This code is fundamentally the same (module PMIX <-> OPAL)
+//      as the translate_params() routine in the PRRTE repo's
+//      src/mca/schizo/ompi/schizo_ompi.c file.  If there are
+//      changes here, there are likely to be changes there.
+static void translate_params(void)
+{
+    char *evar, *tmp, *e2;
+    char *file;
+    const char *home;
+    opal_list_t params;
+    mca_base_var_file_value_t *fv;
+    bool pmix_overlap;
+    int n, len;
+
+    /* Since we are direct launched, we need to check the OMPI default
+     * MCA params to see if there is something relating to PRRTE
+     * in them - this would be "old" references to things from
+     * ORTE, as well as a few OPAL references that also impact us
+     *
+     * NOTE: we do this in the following precedence order. Note
+     * that we do not overwrite at any step - this is so that we
+     * don't overwrite something previously set by the user. So
+     * the order to execution is the opposite of the intended
+     * precedence order.
+     *
+     * 1. check the environmental paramaters for OMPI_MCA values
+     *    that need to be translated
+     *
+     * 2. the user's home directory file as it should
+     *    overwrite the system default file, but not the
+     *    envars
+     *
+     * 3. the system default parameter file
+     */
+    len = strlen("OMPI_MCA_");
+    for (n=0; NULL != environ[n]; n++) {
+        if (0 == strncmp(environ[n], "OMPI_MCA_", len)) {
+            e2 = strdup(environ[n]);
+            evar = strrchr(e2, '=');
+            *evar = '\0';
+            ++evar;
+            pmix_overlap = check_pmix_overlap(&e2[len], evar);
+            if (!pmix_overlap && check_pmix_param(&e2[len])) {
+                opal_asprintf(&tmp, "PMIX_MCA_%s", &e2[len]);
+                // set it, but don't overwrite if they already
+                // have a value in our environment
+                setenv(tmp, evar, false);
+                free(tmp);
+            }
+            free(e2);
+        }
+    }
+
+    /* try to get user's home directory */
+    home = opal_home_directory();
+    if (NULL != home) {
+        file = opal_os_path(false, home, ".openmpi", "mca-params.conf", NULL);
+        OBJ_CONSTRUCT(&params, opal_list_t);
+        mca_base_parse_paramfile(file, &params);
+        free(file);
+        OPAL_LIST_FOREACH (fv, &params, mca_base_var_file_value_t) {
+            pmix_overlap = check_pmix_overlap(&e2[len], evar);
+            if (!pmix_overlap && check_pmix_param(fv->mbvfv_var)) {
+                opal_asprintf(&tmp, "PMIX_MCA_%s", fv->mbvfv_var);
+                // set it, but don't overwrite if they already
+                // have a value in our environment
+                setenv(tmp, fv->mbvfv_value, false);
+                free(tmp);
+            }
+        }
+        OPAL_LIST_DESTRUCT(&params);
+    }
+
+    /* check if the user has set OMPIHOME in their environment */
+    if (NULL != (evar = getenv("OMPIHOME"))) {
+        /* look for the default MCA param file */
+        file = opal_os_path(false, evar, "etc", "openmpi-mca-params.conf", NULL);
+        OBJ_CONSTRUCT(&params, opal_list_t);
+        mca_base_parse_paramfile(file, &params);
+        free(file);
+        OPAL_LIST_FOREACH (fv, &params, mca_base_var_file_value_t) {
+            check_pmix_overlap(fv->mbvfv_var, fv->mbvfv_value);
+        }
+        OPAL_LIST_DESTRUCT(&params);
+    }
+}
+
 typedef struct {
     opal_list_item_t super;
     pmix_nspace_t nspace;
@@ -85,8 +235,13 @@ static opal_list_t localnspaces;
 void opal_pmix_setup_nspace_tracker(void)
 {
     /* check if we were launched by PRRTE */
-    if (NULL != getenv("PRRTE_LAUNCHED")) {
+    if (NULL != getenv("PRTE_LAUNCHED")) {
         opal_process_info.nativelaunch = true;
+    } else {
+        // When direct launched, translate MCA parameters from older releases
+        // into newer versions here, since PRRTE isn't involved.  (When
+        // natively launched, PRRTE will already have translated the params)
+        translate_params();
     }
 
     OBJ_CONSTRUCT(&localnspaces, opal_list_t);
