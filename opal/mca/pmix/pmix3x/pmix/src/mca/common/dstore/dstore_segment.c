@@ -120,7 +120,7 @@ PMIX_EXPORT pmix_dstore_seg_desc_t *pmix_common_dstor_create_new_lock_seg(const 
 
             if (setuid > 0){
                 rc = PMIX_ERR_PERM;
-                if (0 > chown(file_name, (uid_t) uid, (gid_t) -1)){
+                if (0 > lchown(file_name, (uid_t) uid, (gid_t) -1)){  // DO NOT FOLLOW LINKS
                     PMIX_ERROR_LOG(rc);
                     goto err_exit;
                 }
@@ -211,7 +211,7 @@ PMIX_EXPORT pmix_dstore_seg_desc_t *pmix_common_dstor_create_new_segment(pmix_ds
 
         if (setuid > 0){
             rc = PMIX_ERR_PERM;
-            if (0 > chown(file_name, (uid_t) uid, (gid_t) -1)){
+            if (0 > lchown(file_name, (uid_t) uid, (gid_t) -1)){  // DO NOT FOLLOW LINKS
                 PMIX_ERROR_LOG(rc);
                 goto err_exit;
             }

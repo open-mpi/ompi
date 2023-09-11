@@ -267,14 +267,14 @@ static pmix_status_t setup_listener(pmix_info_t info[], size_t ninfo,
     }
     /* chown as required */
     if (lt->owner_given) {
-        if (0 != chown(address->sun_path, lt->owner, -1)) {
+        if (0 != lchown(address->sun_path, lt->owner, -1)) {  // DO NOT FOLLOW LINKS
             pmix_output(0, "CANNOT CHOWN socket %s: %s", address->sun_path, strerror (errno));
             CLOSE_THE_SOCKET(lt->socket);
             goto sockerror;
         }
     }
     if (lt->group_given) {
-        if (0 != chown(address->sun_path, -1, lt->group)) {
+        if (0 != lchown(address->sun_path, -1, lt->group)) {  // DO NOT FOLLOW LINKS
             pmix_output(0, "CANNOT CHOWN socket %s: %s", address->sun_path, strerror (errno));
             CLOSE_THE_SOCKET(lt->socket);
             goto sockerror;
