@@ -655,3 +655,492 @@ presented here so that they can easily be found via internet searches:
      ``^accelerator,btl/uct``, then Open MPI will only warn about the
      failure to load DSOs that are neither in the accelerator
      framework nor are the UCT BTL.
+
+.. _label-mca-backward-compat:
+
+MCA Parameter Changes Between Open MPI 4.x and 5.x
+--------------------------------------------------
+
+When Open MPI :ref:`switched from using ORTE to PRRTE as its run-time
+environment, <label-running-role-of-pmix-and-prte>` some MCA
+parameters were renamed to be more consistent and/or allow more
+flexible behavior.  The deprecated Open MPI MCA parameters listed
+below are currently replaced by a corresponding new PRRTE parameter,
+but may be removed in future releases.
+
+.. note:: In all cases listed below, the deprecated MCA parameter is
+          an Open MPI MCA parameter, meaning that its corresponding
+          environment variable was prefixed with ``OMPI_MCA_`` (e.g.,
+          ``OMPI_MCA_orte_xml_output``).  However, the corresponding
+          new MCA parameter is a PRRTE MCA parameter, meaning that its
+          corresponding environment variable is prefixed with
+          ``PRTE_MCA_`` (e.g., ``PRTE_MCA_output``).
+
+          .. important:: Yes, that's a single ``R`` in the
+                         ``PRTE_MCA_`` environment variable prefix.
+                         `See this explanation
+                         <https://docs.prrte.org/>`_ for the when one
+                         R or two R's are used in the PRRTE name.
+
+
+.. list-table::
+    :header-rows: 1
+
+    * - Behavior
+      - Deprecated MCA parameter
+      - Replaced with
+
+    * - Control buffering of stream output
+      - ``orte_ess_base_stream_buffering``
+
+        Values:  0 | 1 | 2
+
+      - ``ompi_stream_buffering``
+
+        Values: same
+
+    * - Output a brief periodic report on launch progress
+      - ``orte_report_launch_progress``
+
+        Values: boolean
+      - ``state_base_show_launch_progress``
+
+        Values: same
+
+    * - Provide all output in XML format
+      - ``orte_xml_output``
+
+        Values: boolean
+      - ``output``
+
+        Value: ``xml``
+
+    * - Tag all output with [job,rank]
+      - ``orte_tag_output``
+
+        Values: boolean
+      - ``output``
+
+        Value: ``tag``
+
+    * - Timestamp all application process output
+      - ``orte_timestamp_output``
+
+        Values: boolean
+      - ``output``
+
+        Value: ``timestamp``
+
+    * - Redirect output from application processes into filename / job
+        / rank / stdout / stderr / stdddiag.
+      - ``orte_output_filename``
+
+        Value: ``<filenname>``
+      - ``output``
+
+        Value: ``file=<filename>``
+
+    * - Display a detailed process map just before launch
+      - ``rmaps_base_display_devel_map``
+
+        Values: boolean
+      - ``display``
+
+        Value: ``map-devel``
+
+    * - Display the topology as part of the process map just before
+        launch
+      - ``rmaps_base_display_topo_with_map``
+
+        Values: ``<value>``
+      - ``display``
+
+        Value: ``topo=<value>``
+
+    * - Whether to report process bindings to stderr
+      - ``hwloc_base_report_bindings``
+
+        Values: boolean
+      - ``display``
+
+        Value: ``bind``
+
+    * - Display the process map just before launch
+      - ``rmaps_base_display_map``
+
+        Values: boolean
+      - ``display``
+
+        Value: ``map``
+
+    * - Display the allocation being used by this job
+      - ``orte_display_alloc``
+
+        Values: boolean
+      - ``display``
+
+        Value: ``allocation``
+
+    * - Do not run any MPI applications on the local node
+      - ``rmaps_base_no_schedule_local``
+
+        Values: boolean
+      - ``rmaps_default_mapping_policy``
+
+        Value: ``[<mapping>]:nolocal``
+
+    * - Nodes are allowed to be oversubscribed, even on a managed
+        system, and overloading of processing elements
+      - ``rmaps_base_oversubscribe``
+
+        Values: boolean
+      - ``rmaps_default_mapping_policy``
+
+        Value: ``[<mapping>]:oversubscribe``
+
+    * - Nodes are not to be oversubscribed, even if the system
+        supports such operation
+      - ``rmaps_base_no_oversubscribe``
+
+        Values: boolean
+      - ``rmaps_default_mapping_policy``
+
+        Value: ``[<mapping>]:nooversubscribe``
+
+    * - Use hardware threads as independent CPUs
+      - ``hwloc_base_use_hwthreads_as_cpus``
+
+        Values: boolean
+      - ``rmaps_default_mapping_policy``
+
+        Value: ``[<mapping>]:hwtcpus``
+
+    * - Comma-separated list of ranges specifying logical cpus
+        allocated to this job
+      - ``hwloc_base_cpu_set``
+
+        Value: ``<value>``
+      - ``rmaps_default_mapping_policy``
+
+        Value: ``pe-list=<value>``
+
+    * - List of processor IDs to bind processes to
+      - ``hwloc_base_cpu_list``
+
+        Value: ``<value>``
+      - ``rmaps_default_mapping_policy``
+
+        Value: ``pe-list=<value>``
+
+    * - Bind processes to cores
+      - ``hwloc_base_bind_to_core``
+
+        Values: boolean
+      - ``hwloc_default_binding_policy``
+
+        Value: ``core``
+
+    * - Bind processes to sockets
+      - ``hwloc_base_bind_to_socket``
+
+        Values: boolean
+      - ``hwloc_default_binding_policy``
+
+        Value: ``package``
+
+    * - Whether to map and rank processes round-robin by node
+      - ``rmaps_base_bynode``
+
+        Values: boolean
+      - ``rmaps_default_mapping_policy``
+
+        Value: ``node``
+
+    * - Whether to map and rank processes round-robin by core
+      - ``rmaps_base_bycore``
+
+        Values: boolean
+      - ``rmaps_default_mapping_policy``
+
+        Value: ``core``
+
+    * - Whether to map and rank processes round-robin by slot
+      - ``rmaps_base_byslot``
+
+        Values: boolean
+      - ``rmaps_default_mapping_policy``
+
+        Value: ``slot``
+
+    * - Number of cpus to use for each process
+      - ``rmaps_base_cpus_per_rank``
+
+        Value: ``<X>``
+      - ``rmaps_default_mapping_policy``
+
+        Value: ``[<mapping>]:pe=<X>``
+
+    * - Launch n processes per node on all allocated nodes
+      - ``rmaps_ppr_n_pernode``
+
+        Value: ``<X>``
+      - ``rmaps_default_mapping_policy``
+
+        Value: ``ppr:<X>:node``
+
+    * - Launch one process per available node
+      - ``rmaps_ppr_pernode``
+
+        Values: boolean
+      - ``rmaps_default_mapping_policy``
+
+        Value: ``ppr:1:node``
+
+    * - Launch n processes per socket on all allocated nodes
+      - ``rmaps_ppr_n_persocket``
+
+        Value: integer ``<X>``
+      - ``rmaps_default_mapping_policy``
+
+        Value: ``ppr:<X>:package``
+
+    * - Comma-separated list of number of processes on a given
+        resource type
+      - ``rmaps_ppr_pattern``
+
+        Value: ``<value>``
+      - ``rmaps_default_mapping_policy``
+
+        Value: ``ppr:<value>``
+
+    * - Provide a rankfile file
+      - ``orte_rankfile``
+
+        Value: ``<filename>``
+      - ``rmaps_default_mapping_policy``
+
+        Value: ``rankfile:file=<filename>``
+
+Examples
+^^^^^^^^^^^^^^^^^^^
+
+Converting many parameters in the table above are straightforward, where an
+integer or boolean value is involved, but some of the conversions require
+substituting a boolean with a value to the new parameter, or even constructing
+a more complicated composite value for the new parameter.  Examples of all
+of these types of conversions are given below.
+
+Simple values, where only the name of the MCA parameter changed
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+.. code-block:: ini
+
+   # Old environment variable: (integer value)
+   export OMPI_MCA_orte_ess_base_stream_buffering=2
+
+   # New environment variable: (integer value)
+   export PRTE_MCA_ompi_stream_buffering=2
+
+.. code-block:: ini
+
+   # Old environment variable: (boolean value)
+   export OMPI_MCA_orte_report_launch_progress=1
+
+   # New environment variable: (boolean value)
+   export PRTE_MCA_state_base_show_launch_progress=1
+
+Convert from boolean value to parameter for variable
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+.. code-block:: ini
+
+   # Old environment variable: (boolean value)
+   export OMPI_MCA_orte_xml_output=1
+
+   # New environment variable: (parameter value)
+   export PRTE_MCA_output=xml
+
+.. code-block:: ini
+
+   # Old environment variables: (boolean value)
+   export OMPI_MCA_orte_xml_output=1
+   export OMPI_MCA_orte_timestamp_output=1
+
+   # New environment variable: (parameter value)
+   export PRTE_MCA_output=xml,timestamp
+
+.. code-block:: ini
+
+   # Old environment variable: (boolean value)
+   export OMPI_MCA_rmaps_base_display_devel_map=1
+
+   # New environment variable: (parameter value)
+   export PRTE_MCA_display=map-devel
+
+.. code-block:: ini
+
+   # Old environment variables: (boolean value)
+   export OMPI_MCA_rmaps_base_display_devel_map=1
+   export OMPI_MCA_rmaps_base_report_bindings=1
+
+   # New environment variable: (parameter value)
+   export PRTE_MCA_display=map-devel,bind
+
+Convert from string value to parameter for variable
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+.. code-block:: ini
+
+   # Old environment variable: (string value)
+   export OMPI_MCA_orte_output_filename=output.txt
+
+   # New environment variable: (parameter value)
+   export PRTE_MCA_output=file=output.txt
+
+.. code-block:: ini
+
+   # Old environment variables: (boolean value)
+   export OMPI_MCA_orte_xml_output=1
+   export OMPI_MCA_orte_timestamp_output=1
+
+   # Old environment variable: (string value)
+   export OMPI_MCA_orte_output_filename=output.txt
+
+   # New environment variable: (parameter value)
+   export PRTE_MCA_output=xml,timestamp,file=output.txt
+
+.. code-block:: ini
+
+   # Old environment variable: (string value)
+   export OMPI_MCA_rmaps_base_display_topo_with_map=node
+
+   # New environment variable: (parameter value)
+   export PRTE_MCA_display=topo=node
+
+.. code-block:: ini
+
+   # Old environment variables: (boolean value)
+   export OMPI_MCA_rmaps_base_display_devel_map=1
+   export OMPI_MCA_rmaps_base_report_bindings=1
+
+   # Old environment variable: (string value)
+   export OMPI_MCA_rmaps_base_display_topo_with_map=node
+
+   # New environment variable: (parameter value)
+   export PRTE_MCA_display=map-devel,bind,topo=node
+
+Converting mapping parameters
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Mapping parameters were previously prefixed with ``rmaps_base_`` or ``hwloc_base_``
+(and also the ``orte_rankfile`` parameter).  These have been updated
+to the ``rmaps_default_mapping_policy`` and ``hwloc_default_binding_policy``
+parameters to be more consistent and indicate that they are the *default*
+mapping for processes.  Some of the old parameters are now values for a
+new parameter and some are now suffixes, as shown in the examples below.
+
+The examples below show conversions from old boolean parameters to new
+parameter values:
+
+.. code-block:: ini
+
+   # Old environment variable: (boolean value)
+   export OMPI_MCA_rmaps_base_bycore=1
+
+   # New environment variable: (parameter value)
+   export PRTE_MCA_rmaps_default_mapping_policy=core
+
+.. code-block:: ini
+
+   # Old environment variable: (boolean value)
+   export OMPI_MCA_hwloc_base_bind_to_socket=1
+
+   # New environment variable: (parameter value)
+   export PRTE_MCA_hwloc_default_binding_policy=package
+
+
+The examples below show conversions from old parameters that have integer or
+string values to new parameter values with those same values:
+
+.. code-block:: ini
+
+   # Old environment variable: (string value)
+   export OMPI_MCA_hwloc_base_cpu_set=1,3,8
+
+   # New environment variable: (parameter value)
+   export PRTE_MCA_rmaps_default_mapping_policy=pe-list=1,3,8
+
+.. code-block:: ini
+
+   # Old environment variable: (integer value)
+   export OMPI_MCA_rmaps_ppr_n_persocket=4
+
+   # New environment variable: (parameter value)
+   export PRTE_MCA_rmaps_default_mapping_policy=ppr:4:package
+
+.. code-block:: ini
+
+   # Old environment variable: (string value)
+   export OMPI_MCA_orte_rankfile=rankfile.txt
+
+   # New environment variable: (parameter value)
+   export PRTE_MCA_rmaps_default_mapping_policy=rankfile:file=rankfile.txt
+
+The examples below show conversions from old parameters that map to suffixes
+for new parameter values:
+
+.. code-block:: ini
+
+   # Old environment variable: (boolean value)
+   export OMPI_MCA_hwloc_base_use_hwthreads_as_cpus=1
+
+   # New environment variable: (standalone suffix)
+   export PRTE_MCA_rmaps_default_mapping_policy=:hwtcpus
+
+.. code-block:: ini
+
+   # Old environment variable: (boolean value)
+   export OMPI_MCA_rmaps_base_oversubscribe=1
+
+   # New environment variable: (standalone suffix)
+   export PRTE_MCA_rmaps_default_mapping_policy=:oversubscribe
+
+The examples below show conversions from old parameters that map to suffixes
+combined with parameters that have values:
+
+.. code-block:: ini
+
+   # Old environment variable: (string value)
+   export OMPI_MCA_hwloc_base_cpu_set=1,3,8
+
+   # Old environment variable: (boolean value)
+   export OMPI_MCA_rmaps_base_oversubscribe=1
+
+   # New environment variable: (suffix on value)
+   export PRTE_MCA_rmaps_default_mapping_policy=pe-list=1,3,8:oversubscribe
+
+.. code-block:: ini
+
+   # Old environment variable: (integer value)
+   export OMPI_MCA_rmaps_ppr_n_persocket=4
+
+   # Old environment variable: (boolean value)
+   export OMPI_MCA_hwloc_base_use_hwthreads_as_cpus=1
+
+   # New environment variable: (suffix on value)
+   export PRTE_MCA_rmaps_default_mapping_policy=ppr:4:package:hwtcpus
+
+Multiple suffixes may be appended to a mapping value:
+
+.. code-block:: ini
+
+   # Old environment variable: (integer value)
+   export OMPI_MCA_rmaps_ppr_n_persocket=4
+
+   # Old environment variables: (boolean value)
+   export OMPI_MCA_hwloc_base_use_hwthreads_as_cpus=1
+   export OMPI_MCA_rmaps_base_oversubscribe=1
+
+   # New environment variable: (suffix on value)
+   export PRTE_MCA_rmaps_default_mapping_policy=ppr:4:package:hwtcpus:oversubscribe
+
