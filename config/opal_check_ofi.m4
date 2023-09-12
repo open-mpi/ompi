@@ -4,6 +4,8 @@ dnl Copyright (c) 2015-2020 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2016-2017 Los Alamos National Security, LLC. All rights
 dnl                         reserved.
 dnl Copyright (c) 2021-2022 Amazon.com, Inc. or its affiliates.  All Rights reserved.
+dnl Copyright (c) 2023      Triad National Security, LLC. All rights
+dnl                         reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -155,7 +157,16 @@ AC_DEFUN([OPAL_CHECK_OFI],[
 
            AC_DEFINE_UNQUOTED([OPAL_OFI_HAVE_FI_HMEM_ROCR],
                               [${opal_check_fi_hmem_rocr}],
-                              [check if FI_HMEM_ROCR avaiable in fi_hmem_iface])])
+                              [check if FI_HMEM_ROCR avaiable in fi_hmem_iface])
+
+           AC_CHECK_DECL([FI_HMEM_ZE],
+                         [opal_check_fi_hmem_ze=1],
+                         [opal_check_fi_hmem_ze=0],
+                         [#include <rdma/fi_domain.h>])
+
+           AC_DEFINE_UNQUOTED([OPAL_OFI_HAVE_FI_HMEM_ZE],
+                              [${opal_check_fi_hmem_ze}],
+                              [check if FI_HMEM_ZE avaiable in fi_hmem_iface])])
 
     CPPFLAGS=${opal_check_ofi_save_CPPFLAGS}
     LDFLAGS=${opal_check_ofi_save_LDFLAGS}

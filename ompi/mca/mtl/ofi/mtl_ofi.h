@@ -2,7 +2,7 @@
  * Copyright (c) 2013-2018 Intel, Inc. All rights reserved
  * Copyright (c) 2017      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2019-2022 Triad National Security, LLC. All rights
+ * Copyright (c) 2019-2023 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2018-2023 Amazon.com, Inc. or its affiliates.  All Rights reserved.
  *                         reserved.
@@ -327,6 +327,11 @@ int ompi_mtl_ofi_register_buffer(struct opal_convertor_t *convertor,
         } else if (0 == strcmp(opal_accelerator_base_selected_component.base_version.mca_component_name, "rocm")) {
             attr.iface = FI_HMEM_ROCR;
             opal_accelerator.get_device(&attr.device.cuda);
+#endif
+#if OPAL_OFI_HAVE_FI_HMEM_ZE
+        } else if (0 == strcmp(opal_accelerator_base_selected_component.base_version.mca_component_name, "ze")) {
+            attr.iface = FI_HMEM_ZE;
+            opal_accelerator.get_device(&attr.device.ze);
 #endif
         } else {
             return OPAL_ERROR;
