@@ -2,8 +2,8 @@
  * Copyright (c) 2013-2018 Intel, Inc. All rights reserved
  *
  * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2022 Triad National Security, LLC. All rights
- *                    reserved.
+ * Copyright (c) 2022-2023 Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -59,6 +59,7 @@ typedef struct mca_mtl_ofi_module_t {
     int enable_sep;                     /* MCA to enable/disable SEP feature */
     int thread_grouping;                /* MCA for thread grouping feature */
     int num_ofi_contexts;               /* MCA for number of contexts to use */
+    bool disable_hmem;                   /* MCA to enable/disable request for FI_HMEM support from provider */
 
     /** Endpoint name length */
     size_t epnamelen;

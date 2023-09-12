@@ -251,6 +251,15 @@ ompi_mtl_ofi_component_register(void)
                                     MCA_BASE_VAR_SCOPE_READONLY,
                                     &ompi_mtl_ofi.num_ofi_contexts);
 
+    ompi_mtl_ofi.disable_hmem = false;
+    mca_base_component_var_register(&mca_mtl_ofi_component.super.mtl_version,
+                                    "disable_hmem",
+                                    "Disable HMEM usage",
+                                    MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                    OPAL_INFO_LVL_3,
+                                    MCA_BASE_VAR_SCOPE_READONLY,
+                                    &ompi_mtl_ofi.disable_hmem);
+
     return opal_common_ofi_mca_register(&mca_mtl_ofi_component.super.mtl_version);
 }
 
@@ -626,8 +635,10 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
 
     /* Request device transfer capabilities */
 #if defined(FI_HMEM)
-    hints->caps |= FI_HMEM;
-    hints->domain_attr->mr_mode |= FI_MR_HMEM | FI_MR_ALLOCATED;
+    if (false == ompi_mtl_ofi.disable_hmem) {
+        hints->caps |= FI_HMEM;
+        hints->domain_attr->mr_mode |= FI_MR_HMEM | FI_MR_ALLOCATED;
+    }
 #endif
 
 no_hmem:
@@ -791,10 +802,17 @@ select_prov:
 
     *accelerator_support = false;
 #if defined(FI_HMEM)
-    if (!(prov->caps & FI_HMEM)) {
-        opal_output_verbose(50, opal_common_ofi.output,
-                            "%s:%d: Libfabric provider does not support device buffers. Continuing with device to host copies.\n",
-                            __FILE__, __LINE__);
+    if (!(prov->caps & FI_HMEM) || (true == ompi_mtl_ofi.disable_hmem)) {
+        if (!(prov->caps & FI_HMEM) && (false == ompi_mtl_ofi.disable_hmem)) {
+            opal_output_verbose(50, opal_common_ofi.output,
+                                "%s:%d: Libfabric provider does not support device buffers. Continuing with device to host copies.\n",
+                               __FILE__, __LINE__);
+        }
+        if (true == ompi_mtl_ofi.disable_hmem) {
+            opal_output_verbose(50, opal_common_ofi.output,
+                                "%s:%d: Support for device buffers disabled by MCA parameter. Continuing with device to host copies.\n",
+                               __FILE__, __LINE__);
+        }
     } else {
         *accelerator_support = true;
         ompi_mtl_ofi.hmem_needs_reg = true;
