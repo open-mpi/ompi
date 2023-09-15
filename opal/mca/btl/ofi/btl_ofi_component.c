@@ -200,6 +200,16 @@ static int mca_btl_ofi_component_register(void)
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_btl_ofi_component.disable_inject);
 
+    mca_btl_ofi_component.disable_hmem = false;
+    mca_base_component_var_register(&mca_btl_ofi_component.super.btl_version,
+                                    "disable_hmem",
+                                    "Disable HMEM usage",
+                                    MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                    OPAL_INFO_LVL_5,
+                                    MCA_BASE_VAR_SCOPE_READONLY,
+                                    &mca_btl_ofi_component.disable_hmem);
+
+
     /* for now we want this component to lose to the MTL. */
     module->super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_HIGH - 50;
 
@@ -345,8 +355,10 @@ static mca_btl_base_module_t **mca_btl_ofi_component_init(int *num_btl_modules,
 
 #if defined(FI_HMEM)
     /* Request device transfer capabilities, separate from required_caps */
-    hints.caps |= FI_HMEM;
-    hints.domain_attr->mr_mode |= FI_MR_HMEM;
+    if (false == mca_btl_ofi_component.disable_hmem) {
+        hints.caps |= FI_HMEM;
+        hints.domain_attr->mr_mode |= FI_MR_HMEM;
+    }
 no_hmem:
 #endif
 
