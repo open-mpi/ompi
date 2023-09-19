@@ -33,7 +33,6 @@ static ssize_t mca_fbtl_posix_preadv_datasieving (ompio_file_t *fh, struct flock
 static ssize_t mca_fbtl_posix_preadv_generic (ompio_file_t *fh, struct flock *lock, int *lock_counter);
 static ssize_t mca_fbtl_posix_preadv_single (ompio_file_t *fh, struct flock *lock, int *lock_counter);
 
-#define MAX_RETRIES 10
 
 ssize_t mca_fbtl_posix_preadv (ompio_file_t *fh )
 {
@@ -108,7 +107,6 @@ ssize_t mca_fbtl_posix_preadv_single (ompio_file_t *fh, struct flock *lock, int 
         return OMPI_ERROR;
     }
     
-    int retries = 0;
     size_t len = fh->f_io_array[0].length;
     while ( total_bytes < len ) {
         ret_code = pread(fh->fd, (char*)fh->f_io_array[0].memory_address+total_bytes,
@@ -121,13 +119,7 @@ ssize_t mca_fbtl_posix_preadv_single (ompio_file_t *fh, struct flock *lock, int 
         }
         if ( ret_code == 0 ) {
             // end of file
-            retries++;
-            if ( retries == MAX_RETRIES ) {
-                break;
-            }
-            else {
-                continue;
-            }
+	    break;
         }
         total_bytes += ret_code;
     }   
@@ -206,7 +198,6 @@ ssize_t mca_fbtl_posix_preadv_datasieving (ompio_file_t *fh, struct flock *lock,
             return OMPI_ERROR;
         }
         size_t total_bytes = 0;
-        int retries = 0;
         
         while ( total_bytes < len ) {
             ret_code = pread (fh->fd, temp_buf+total_bytes, len-total_bytes, start+total_bytes);
@@ -218,13 +209,7 @@ ssize_t mca_fbtl_posix_preadv_datasieving (ompio_file_t *fh, struct flock *lock,
             }
             if ( ret_code == 0 ) {
                 // end of file
-                retries++;
-                if ( retries == MAX_RETRIES ) {
-                    break;
-                }
-                else {
-                    continue;
-                }
+		break;
             }
             total_bytes += ret_code;
         }
@@ -236,12 +221,12 @@ ssize_t mca_fbtl_posix_preadv_datasieving (ompio_file_t *fh, struct flock *lock,
         size_t start_offset = (size_t) fh->f_io_array[startindex].offset;
         for ( i = startindex ; i < endindex ; i++) {
             pos = (size_t) fh->f_io_array[i].offset - start_offset;
-            if ( (ssize_t) pos > ret_code ) {
+            if ( (ssize_t) pos > total_bytes ) {
                 break;
             }
             num_bytes = fh->f_io_array[i].length;
-            if ( ((ssize_t) pos + (ssize_t)num_bytes) > ret_code ) {
-                num_bytes = ret_code - (ssize_t)pos;
+            if ( ((ssize_t) pos + (ssize_t)num_bytes) > total_bytes ) {
+                num_bytes = total_bytes - (ssize_t)pos;
             }
             
             memcpy (fh->f_io_array[i].memory_address, temp_buf + pos, num_bytes);
