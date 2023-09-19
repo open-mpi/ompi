@@ -153,6 +153,10 @@ static int mca_spml_ucx_component_register(void)
                                      "Enable asynchronous progress thread",
                                      &mca_spml_ucx.async_progress);
 
+    mca_spml_ucx_param_register_int("symmetric_rkey_max_count", 0,
+                                    "Size of the symmetric key store. Non-zero to enable, typical use 5000",
+                                    &mca_spml_ucx.symmetric_rkey_max_count);
+
     mca_spml_ucx_param_register_int("async_tick_usec", 3000,
                                     "Asynchronous progress tick granularity (in usec)",
                                     &mca_spml_ucx.async_tick);
@@ -332,6 +336,8 @@ static int spml_ucx_init(void)
         mca_spml_ucx_ctx_default.ucp_workers++;
     }
 
+    mca_spml_ucx_rkey_store_init(&mca_spml_ucx_ctx_default.rkey_store);
+
     wrk_attr.field_mask = UCP_WORKER_ATTR_FIELD_THREAD_MODE;
     err = ucp_worker_query(mca_spml_ucx_ctx_default.ucp_worker[0], &wrk_attr);
 
@@ -436,10 +442,25 @@ static void _ctx_cleanup(mca_spml_ucx_ctx_t *ctx)
     free(ctx->ucp_peers);
 }
 
+static void mca_spml_ucx_ctx_fini(mca_spml_ucx_ctx_t *ctx)
+{
+    unsigned int i;
+
+    mca_spml_ucx_rkey_store_cleanup(&ctx->rkey_store);
+    for (i = 0; i < ctx->ucp_workers; i++) {
+        ucp_worker_destroy(ctx->ucp_worker[i]);
+    }
+    free(ctx->ucp_worker);
+    if (ctx != &mca_spml_ucx_ctx_default) {
+        free(ctx);
+    }
+}
+
 static int mca_spml_ucx_component_fini(void)
 {
     int fenced = 0, i;
     int ret = OSHMEM_SUCCESS;
+    mca_spml_ucx_ctx_t *ctx;
 
     opal_progress_unregister(spml_ucx_default_progress);
     if (mca_spml_ucx.active_array.ctxs_count) {
@@ -492,36 +513,26 @@ static int mca_spml_ucx_component_fini(void)
         }
     }
 
-    /* delete all workers */
     for (i = 0; i < mca_spml_ucx.active_array.ctxs_count; i++) {
-        ucp_worker_destroy(mca_spml_ucx.active_array.ctxs[i]->ucp_worker[0]);
-        free(mca_spml_ucx.active_array.ctxs[i]->ucp_worker);
-        free(mca_spml_ucx.active_array.ctxs[i]);
+        mca_spml_ucx_ctx_fini(mca_spml_ucx.active_array.ctxs[i]);
     }
 
     for (i = 0; i < mca_spml_ucx.idle_array.ctxs_count; i++) {
-        ucp_worker_destroy(mca_spml_ucx.idle_array.ctxs[i]->ucp_worker[0]);
-        free(mca_spml_ucx.idle_array.ctxs[i]->ucp_worker);
-        free(mca_spml_ucx.idle_array.ctxs[i]);
+        mca_spml_ucx_ctx_fini(mca_spml_ucx.idle_array.ctxs[i]);
     }
 
     if (mca_spml_ucx_ctx_default.ucp_worker) {
-        for (i = 0; i < (signed int)mca_spml_ucx.ucp_workers; i++) {
-            ucp_worker_destroy(mca_spml_ucx_ctx_default.ucp_worker[i]);
-        }
-        free(mca_spml_ucx_ctx_default.ucp_worker);
+        mca_spml_ucx_ctx_fini(&mca_spml_ucx_ctx_default);
     }
 
     if (mca_spml_ucx.aux_ctx != NULL) {
-        ucp_worker_destroy(mca_spml_ucx.aux_ctx->ucp_worker[0]);
-        free(mca_spml_ucx.aux_ctx->ucp_worker);
+        mca_spml_ucx_ctx_fini(mca_spml_ucx.aux_ctx);
     }
 
     mca_spml_ucx.enabled = false;  /* not anymore */
 
     free(mca_spml_ucx.active_array.ctxs);
     free(mca_spml_ucx.idle_array.ctxs);
-    free(mca_spml_ucx.aux_ctx);
 
     SHMEM_MUTEX_DESTROY(mca_spml_ucx.internal_mutex);
     pthread_mutex_destroy(&mca_spml_ucx.ctx_create_mutex);

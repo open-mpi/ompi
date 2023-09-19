@@ -124,7 +124,8 @@ segment_create_internal(map_segment_t *ds_buf, void *address, size_t size,
 
     mem_map_params.address    = address;
     mem_map_params.length     = size;
-    mem_map_params.flags      = flags;
+    mem_map_params.flags      = flags |
+        mca_spml_ucx_mem_map_flags_symmetric_rkey(spml);
 
     status = ucp_mem_map(spml->ucp_context, &mem_map_params, &mem_h);
     if (UCS_OK != status) {

@@ -76,18 +76,31 @@ struct ucp_peer {
     size_t                   mkeys_cnt;
 };
 typedef struct ucp_peer ucp_peer_t;
- 
+
+/* An rkey_store entry */
+typedef struct mca_spml_ucx_rkey {
+    ucp_rkey_h rkey;
+    int        refcnt;
+} mca_spml_ucx_rkey_t;
+
+typedef struct mca_spml_ucx_rkey_store {
+    mca_spml_ucx_rkey_t *array;
+    int                  size;
+    int                  count;
+} mca_spml_ucx_rkey_store_t;
+
 struct mca_spml_ucx_ctx {
-    ucp_worker_h            *ucp_worker;
-    ucp_peer_t              *ucp_peers;
-    long                     options;
-    opal_bitmap_t            put_op_bitmap;
-    unsigned long            nb_progress_cnt;
-    unsigned int             ucp_workers;
-    int                     *put_proc_indexes;
-    unsigned                 put_proc_count;
-    bool                     synchronized_quiet;
-    int                      strong_sync;
+    ucp_worker_h             *ucp_worker;
+    ucp_peer_t               *ucp_peers;
+    long                      options;
+    opal_bitmap_t             put_op_bitmap;
+    unsigned long             nb_progress_cnt;
+    unsigned int              ucp_workers;
+    int                      *put_proc_indexes;
+    unsigned                  put_proc_count;
+    bool                      synchronized_quiet;
+    int                       strong_sync;
+    mca_spml_ucx_rkey_store_t rkey_store;
 };
 typedef struct mca_spml_ucx_ctx mca_spml_ucx_ctx_t;
 
@@ -128,6 +141,7 @@ struct mca_spml_ucx {
     unsigned long            nb_ucp_worker_progress;
     unsigned int             ucp_workers;
     unsigned int             ucp_worker_cnt;
+    int                      symmetric_rkey_max_count;
 };
 typedef struct mca_spml_ucx mca_spml_ucx_t;
 
@@ -280,6 +294,11 @@ extern int mca_spml_ucx_team_fcollect(shmem_team_t team, void
 extern int mca_spml_ucx_team_reduce(shmem_team_t team, void
         *dest, const void *source, size_t nreduce, int operation, int datatype);
 
+extern unsigned
+mca_spml_ucx_mem_map_flags_symmetric_rkey(struct mca_spml_ucx *spml_ucx);
+
+extern void mca_spml_ucx_rkey_store_init(mca_spml_ucx_rkey_store_t *store);
+extern void mca_spml_ucx_rkey_store_cleanup(mca_spml_ucx_rkey_store_t *store);
 
 static inline int
 mca_spml_ucx_peer_mkey_get(ucp_peer_t *ucp_peer, int index, spml_ucx_cached_mkey_t **out_rmkey)
