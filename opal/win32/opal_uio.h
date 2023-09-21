@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2014 The University of Tennessee and The University
+ * Copyright (c) 2004-2023 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -33,14 +33,14 @@ struct iovec {
 #define iov_len  data.len
 
 BEGIN_C_DECLS
+
 /*
- * writev:
-   writev  writes  data  to  file  descriptor  fd,  and  from  the buffers
-   described by iov. The number of buffers is specified by  cnt.  The
-   buffers  are  used  in  the  order specified.  Operates just like write
-   except that data is taken from iov instead of a contiguous buffer.
+ * sendmsg:
+ *     writes data to a file descriptor. This is a convenience function to allow
+ *     the TCP BTL to support Windows. Overall is should behave similarly to the
+ *     POSIX sendmsg function.
  */
-OPAL_DECLSPEC int writev(int fd, struct iovec *iov, int cnt);
+OPAL_DECLSPEC ssize_t sendmsg(int socket, const struct msghdr *message, int flags);
 
 /*
    readv  reads  data  from file descriptor fd, and puts the result in the

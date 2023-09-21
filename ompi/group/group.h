@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2020 The University of Tennessee and The University
+ * Copyright (c) 2004-2023 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -459,19 +459,17 @@ static inline struct ompi_proc_t *ompi_group_peer_lookup_existing (ompi_group_t 
  */
 static inline int ompi_group_proc_lookup_rank (ompi_group_t* group, ompi_proc_t* proc)
 {
-    int i, np, v;
+    int i, np, rank;
+    opal_vpid_t v;
     assert( NULL != proc );
     assert( !ompi_proc_is_sentinel(proc) );
     np = ompi_group_size(group);
     if( 0 == np ) return MPI_PROC_NULL;
     /* heuristic: On comm_world, start the lookup from v=vpid, so that
-     * when working on comm_world, the search is O(1);
-     * Otherwise, wild guess: start from a proportional position
-     * compared to comm_world position. */
+     * when working on comm_world, on average, the search remains O(1). */
     v = proc->super.proc_name.vpid;
-    v = (v<np)? v: v*ompi_proc_world_size()/np;
     for( i = 0; i < np; i++ ) {
-        int rank = (i+v)%np;
+        rank = (i+v)%np;
         /* procs are lazy initialized and may be a sentinel. Handle both cases. */
         ompi_proc_t* p = ompi_group_get_proc_ptr_raw(group, rank);
         if(OPAL_LIKELY(!ompi_proc_is_sentinel(p))) {
