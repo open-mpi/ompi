@@ -811,6 +811,16 @@ static int ompi_comm_activate_complete (ompi_communicator_t **newcomm, ompi_comm
         return ret;
     }
 
+    /**
+     * Use the initialized collective component to determine whether the processes are located on
+     * individual nodes
+     */
+    if (OMPI_SUCCESS != ompi_comm_set_disjointness(*newcomm, comm)) {
+        OBJ_RELEASE(*newcomm);
+        *newcomm = MPI_COMM_NULL;
+        return ret;
+    }
+
     /* For an inter communicator, we have to deal with the potential
      * problem of what is happening if the local_comm that we created
      * has a lower CID than the parent comm. This is not a problem
