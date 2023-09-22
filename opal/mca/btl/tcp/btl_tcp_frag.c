@@ -105,15 +105,10 @@ bool mca_btl_tcp_frag_send(mca_btl_tcp_frag_t *frag, int sd)
 {
     ssize_t cnt;
     size_t i, num_vecs;
-    struct msghdr msg;
+    struct msghdr msg = {
+                     .msg_iov = frag->iov_ptr,
+                     .msg_iovlen = frag->iov_cnt };
     int msg_flags = MSG_DONTWAIT | MSG_NOSIGNAL;
-
-    msg.msg_name = NULL;
-    msg.msg_namelen = 0;
-    msg.msg_iov = frag->iov_ptr;
-    msg.msg_iovlen = frag->iov_cnt;
-    msg.msg_control = NULL;
-    msg.msg_controllen = 0;
 
     /* non-blocking write, continue if interrupted */
     do {
