@@ -127,7 +127,7 @@ pmix_status_t pmix_gds_ds12_lock_init(pmix_common_dstor_lock_ctx_t *ctx, const c
             }
         }
         if (0 != setuid) {
-            if (0 > chown(lock_ctx->lockfile, uid, (gid_t) -1)) {
+            if (0 > lchown(lock_ctx->lockfile, uid, (gid_t) -1)) {
                 rc = PMIX_ERROR;
                 PMIX_ERROR_LOG(rc);
                 goto error;

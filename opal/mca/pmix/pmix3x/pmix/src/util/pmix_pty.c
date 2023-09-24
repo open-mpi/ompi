@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2018      Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2019-2020 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2021-2023 Nanook Consulting.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -248,7 +249,7 @@ static int ptys_open(int fdm, char *pts_name)
         gid = -1;               /* group tty is not in the group file */
     }
     /* following two functions don't work unless we're root */
-    lchown(pts_name, getuid(), gid); // DO NOT FOLLOW LINKS
+    lchown(pts_name, getuid(), gid);  // DO NOT FOLLOW LINKS
     chmod(pts_name, S_IRUSR | S_IWUSR | S_IWGRP);
     fds = open(pts_name, O_RDWR);
     if (fds < 0) {

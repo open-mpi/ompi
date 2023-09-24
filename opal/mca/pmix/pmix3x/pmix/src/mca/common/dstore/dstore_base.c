@@ -528,7 +528,7 @@ static int _esh_session_init(pmix_common_dstore_ctx_t *ds_ctx, size_t idx, ns_ma
             }
         }
         if (s->setjobuid > 0){
-            if (0 > lchown(s->nspace_path, (uid_t) s->jobuid, (gid_t) -1)){  // DO NOT FOLLOW LINKS
+            if (0 > lchown(s->nspace_path, (uid_t) s->jobuid, (gid_t) -1)){
                 rc = PMIX_ERROR;
                 PMIX_ERROR_LOG(rc);
                 return rc;
@@ -1682,7 +1682,7 @@ pmix_common_dstore_ctx_t *pmix_common_dstor_init(const char *ds_name, pmix_info_
             }
         }
         if (ds_ctx->setjobuid > 0) {
-            if (lchown(ds_ctx->base_path, (uid_t) ds_ctx->jobuid, (gid_t) -1) < 0){  // DO NOT FOLLOW LINKS
+            if (lchown(ds_ctx->base_path, (uid_t) ds_ctx->jobuid, (gid_t) -1) < 0){
                 rc = PMIX_ERR_NO_PERMISSIONS;
                 PMIX_ERROR_LOG(rc);
                 goto err_exit;
