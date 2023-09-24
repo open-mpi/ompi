@@ -113,7 +113,7 @@ pmix_status_t pmix_gds_ds12_lock_init(pmix_common_dstor_lock_ctx_t *ctx, const c
         }
         memset(lock_ctx->segment->seg_base_addr, 0, size);
         if (0 != setuid) {
-            if (0 > lchown(lock_ctx->lockfile, (uid_t) uid, (gid_t) -1)){  // DO NOT FOLLOW LINKS
+            if (0 > lchown(lock_ctx->lockfile, (uid_t) uid, (gid_t) -1)){
                 rc = PMIX_ERROR;
                 PMIX_ERROR_LOG(rc);
                 goto error;
