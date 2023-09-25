@@ -1,6 +1,7 @@
 #
 # Copyright (c) 2022 Cisco Systems, Inc.  All rights reserved.
 #
+# Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -26,7 +27,7 @@
 .NOTPARALLEL:
 
 OUTDIR             = _build
-SPHINX_CONFIG      = conf.py
+SPHINX_CONFIG      = $(srcdir)/conf.py
 SPHINX_OPTS       ?= -W --keep-going -j auto
 
 # Note: it is significantly more convenient to list all the source
@@ -58,6 +59,9 @@ RST_SOURCE_FILES   = \
 
 EXTRA_DIST         = \
         requirements.txt \
+        no-prrte-content.rst.txt \
+        html \
+        man \
         $(SPHINX_CONFIG) \
         $(TEXT_SOURCE_FILES) \
         $(IMAGE_SOURCE_FILES) \
@@ -784,27 +788,48 @@ OSHMEM_MAN3 = \
 
 MAN_OUTDIR = $(OUTDIR)/man
 
+# If we're building the docs, then we install from the just-built
+# docs.  Otherwise, we install from the pre-built docs (i.e., the docs
+# included in the tarball).
+#
+# NOTE: If we're in a git clone with a) no pre-built docs and b)
+# Sphinx is not found, then both OPAL_BUILD_DOCS and OPAL_INSTALL_DOCS
+# will be false, and the value of MAN_INSTALL_FROM will not not used.
+if OPAL_BUILD_DOCS
+MAN_INSTALL_FROM = $(MAN_OUTDIR)
+HTML_INSTALL_FROM = $(OUTDIR)/html
+else
+MAN_INSTALL_FROM = man
+HTML_INSTALL_FROM = html
+endif
+
+# For each of the man page macros below:
+#
+# *_RST: the .rst source files
+# *_BUILT: the files in the _build/man directory
+# *_INSTALL_FROM: the files in either the _build/man/ directory (if we
+#   are building the Sphinx docs) or the man/ directory (if we are not
+#   building the Sphinx docs, and are using the pre-built docs that
+#   are included in the tarballl).
 OMPI_MAN1_RST = $(OMPI_MAN1:%.1=man-openmpi/man1/%.1.rst)
 OMPI_MAN1_BUILT = $(OMPI_MAN1:%.1=$(MAN_OUTDIR)/%.1)
+OMPI_MAN1_INSTALL_FROM = $(OMPI_MAN1:%.1=$(MAN_INSTALL_FROM)/%.1)
 
 OMPI_MAN3_RST = $(OMPI_MAN3:%.3=man-openmpi/man3/%.3.rst)
 OMPI_MAN3_BUILT = $(OMPI_MAN3:%.3=$(MAN_OUTDIR)/%.3)
+OMPI_MAN3_INSTALL_FROM = $(OMPI_MAN3:%.3=$(MAN_INSTALL_FROM)/%.3)
 
 OMPI_MAN7_RST = $(OMPI_MAN7:%.7=man-openmpi/man7/%.7.rst)
 OMPI_MAN7_BUILT = $(OMPI_MAN7:%.7=$(MAN_OUTDIR)/%.7)
+OMPI_MAN7_INSTALL_FROM = $(OMPI_MAN7:%.7=$(MAN_INSTALL_FROM)/%.7)
 
 OSHMEM_MAN1_RST = $(OSHMEM_MAN1:%.1=man-oshmem/man1/%.1.rst)
 OSHMEM_MAN1_BUILT = $(OSHMEM_MAN1:%.1=$(MAN_OUTDIR)/%.1)
+OSHMEM_MAN1_INSTALL_FROM = $(OSHMEM_MAN1:%.1=$(MAN_INSTALL_FROM)/%.1)
 
 OSHMEM_MAN3_RST = $(OSHMEM_MAN3:%.3=man-oshmem/man3/%.3.rst)
 OSHMEM_MAN3_BUILT = $(OSHMEM_MAN3:%.3=$(MAN_OUTDIR)/%.3)
-
-EXTRA_DIST += \
-        $(OMPI_MAN1_BUILT) \
-        $(OMPI_MAN3_BUILT) \
-        $(OMPI_MAN7_BUILT) \
-        $(OSHMEM_MAN1_BUILT) \
-        $(OSHMEM_MAN3_BUILT)
+OSHMEM_MAN3_INSTALL_FROM = $(OSHMEM_MAN3:%.3=$(MAN_INSTALL_FROM)/%.3)
 
 ###########################################################################
 
@@ -845,49 +870,202 @@ EXTRA_DIST += \
         $(OSHMEM_MAN1_CXX_REDIRECTS) \
         $(OSHMEM_MAN1_FORTRAN_REDIRECTS)
 
+
+###########################################################################
+
+ALL_MAN_BUILT = \
+        $(OMPI_MAN1_BUILT) $(OMPI_MAN3_BUILT) $(OMPI_MAN7_BUILT) \
+        $(OSHMEM_MAN1_BUILT) $(OSHMEM_MAN_3_BUILT)
+
+# These 2 targets are used in EXTRA_DIST: we make a full copy of the
+# built HTML and man docs into a separate location that is included in
+# the tarball.  This gives users a fully copy of the docs included in
+# distribution tarballs.
+html: $(ALL_MAN_BUILT)
+	$(OMPI_V_COPYALL) rm -rf html; cp -rp $(OUTDIR)/html .
+
+man: $(ALL_MAN_BUILT)
+	$(OMPI_V_COPYALL) rm -rf man; cp -rp $(OUTDIR)/man .
+
+# Remove the copies of the built HTML and man pages to get back to a
+# clean git clone.
+maintainer-clean-local:
+	rm -rf html man
+
+# If we're doing a VPATH build, we may have "html" and "man"
+# directories in the build tree (e.g., if we did "make dist").  Remove
+# these copies so that we can pass distcheck (of course: we never
+# remove these directories from the source tree).
+distclean-local:
+	if test "$(srcdir)" != "$(builddir)"; then \
+	    rm -rf html man; \
+	fi
+
 ###########################################################################
 if OPAL_BUILD_DOCS
 
 include $(top_srcdir)/Makefile.ompi-rules
 
-# Have to not list these targets in EXTRA_DIST outside of the
-# OPAL_BUILD_DOCS conditional because "make dist" will fail due to
-# these missing targets (and therefore not run the "dist-hook" target
-# in the top-level Makefile, which prints a pretty message about why
-# "make dist" failed).
+# Copy over the PRRTE RST files to this build tree.
 #
-# We list the entire directory trees (html and man) to grab all
-# generated files in them.
-EXTRA_DIST += \
-        $(OUTDIR)/html \
-        $(OUTDIR)/man
+# 1. If we're building with PRRTE support:
+#
+#    1a. If we're building the internal/bundled PRRTE, then we'll copy
+#        the internal/bundled PRRTE's RST files to the build tree.
+#    1b. If we're building against an external PRRTE installation that
+#        has RST files in its install tree, then we'll copy that
+#        external PRRTE's RST files to the build tree.
+#    1c. If we're building against an external PRRTE installation that
+#        does NOT have RST files in its install tree, then we'll
+#        create some dummy RST files instead.
+#
+# 2. If we're building without PRRTE support, we'll create some dummy
+# RST files instead.
+#
+# NOTE: We specifically list $(builddir) in the target name, just to
+# ensure that "make" doesn't accidentally find this directory in the
+# VPATH srcdir, and therefore not execute this rule (because Sphinx
+# does not understand VPATH, and will ignore this directory in the
+# VPATH srcdir).  We can have this directory in the srcdir by doing a
+# VPATH build of an official distribution tarball.
 
-ALL_MAN_BUILT = \
-        $(OMPI_MAN1_BUILT) $(OMPI_MAN3_BUILT) $(OMPI_MAN7_BUILT) \
-        $(OSHMEM_MAN1_BUILT) $(OSHMEM_MAN_3_BUILT)
+# Make the 2 directories that we need: schizo-ompi-rst-content and
+# prrte-rst-content.
+$(builddir)/schizo-ompi-rst-content:
+	$(OMPI_V_MKDIR) if test ! -d "$@"; then mkdir "$@"; fi
+$(builddir)/prrte-rst-content:
+	$(OMPI_V_MKDIR) if test ! -d "$@"; then mkdir "$@"; fi
+
+# Get the schizo-ompi-rst-cli.rst file that we need.  CAVEAT: we name
+# it ".in" so that Sphinx doesn't slurp it in via two different
+# locations in the RST docroot (i.e., via
+# /schizo-ompi-rst-content/schizo-ompi-cli.rstxt and via
+# /man-openmpi/man1/mpirun.1.rst).  Sphinx *shouldn't* do this -- it
+# should see the ".. include...." directive in mpirun.1.rst and *only*
+# include the file once.  But somehow it's also seeing it a 2nd time.
+# So -- fine.  We'll name it something other than .rst so that Sphinx
+# doesn't do that.
+#
+# Regardless, either copy this file from the PRRTE install tree or
+# make a bogus one (if we don't have one in the PRRTE install tree).
+#
+# Also, note: the rule to make the $(builddir)/schizo-ompi-rst-content
+# directory must be in the AM_CONDITIONAL here, otherwise Automake
+# complains.  Meaning: we have to have same dependency listed in both
+# the "if" and the "else" blocks.  Grumble.
+if OMPI_HAVE_PRRTE_RST
+$(builddir)/schizo-ompi-rst-content/schizo-ompi-cli.rstxt: $(builddir)/schizo-ompi-rst-content
+$(builddir)/schizo-ompi-rst-content/schizo-ompi-cli.rstxt: $(OMPI_SCHIZO_OMPI_RST_CONTENT_DIR)/*
+	$(OMPI_V_SPHINX_COPYRST) \
+	dir=`dirname $@`; \
+	cp -rpf $(OMPI_SCHIZO_OMPI_RST_CONTENT_DIR)/* "$$dir"
+else
+$(builddir)/schizo-ompi-rst-content/schizo-ompi-cli.rstxt: $(builddir)/schizo-ompi-rst-content
+$(builddir)/schizo-ompi-rst-content/schizo-ompi-cli.rstxt: $(srcdir)/no-prrte-content.rst.txt
+	if test ! -d "$$dir"; then mkdir "$$dir"; fi
+	$(OMPI_V_SPHINX_COPYRST) \
+	dir=`dirname $@`; \
+	cp -pf $(srcdir)/no-prrte-content.rst.txt "$$dir"
+endif
+
+$(ALL_MAN_BUILT): $(builddir)/prrte-rst-content
+$(ALL_MAN_BUILT): $(builddir)/schizo-ompi-rst-content/schizo-ompi-cli.rstxt
 $(ALL_MAN_BUILT): $(RST_SOURCE_FILES) $(IMAGE_SOURCE_FILES)
 $(ALL_MAN_BUILT): $(TEXT_SOURCE_FILES) $(SPHINX_CONFIG)
 
+# Render the RST source into both 1) full HTML docs and 2) nroff man
+# pages.
+#
 # List both commands (HTML and man) in a single rule because they
 # really need to be run in serial.  Specifically, if they were two
 # different rules and someone ran "make -j", then both of them could
 # be writing to $(OUTDIR)/doctrees simultaneously, which would be Bad.
 # Use one of the man pages as a sentinel file to indicate whether all
 # the HTML docs and man pages have been built.
+#
+# It's therefore a little bit of a lie to have the target named
+# $(ALL_MAN_BUILT) *also* generate all the HTML content, but... so be
+# it.
+#
+# Also note that Open MPI's RST includes some conditional RST (from
+# PRRTE -- i.e., whether we get the source RST from the internal
+# PRRTE, an external PRRTE, or whether we create RST files from
+# scratch).  These conditionals mean that we have to make some changes
+# to the input Sphinx RST tree before building it.  But -- by Automake
+# convention -- we can't modify the source tree.  Hence, we have to
+# copy over all the source RST files -- including its internal
+# directory structure -- to the build tree, and then make our desired
+# changes here in the build tree.  This is a bit ugly, but we could
+# not think of anything better to do.
+#
+# NOTE: This is a little gross in that for a VPATH build, we *always*
+# copy from the source tree to the dest tree (if the target does not
+# exist or any of the sources in the source tree -- thanks to
+# make/VPATH handling -- have changed compared to the target).
+# However, we're using "cp -p", so even though we're copying *all the
+# sources* from the source tree to the build tree, the timestamp will
+# reflect what is in the source tree.  Hence, if the source file has
+# not changed, then it won't look like the file in the build tree has
+# changed.  We're going to overwrite any local changes in the build
+# tree, but you shouldn't be editing the build tree, anyway.  So --
+# good enough.
+#
+# Finally, one added wrinkle: only copy the RST source files in
+# prrte-rst-content that are referenced by ".. include::" in the
+# schizo-ompi-cli.rstxt file.  We do this because Sphinx complains if
+# there are .rst files that are not referenced.  :-(
 $(ALL_MAN_BUILT):
-	$(OMPI_V_SPHINX_HTML) $(SPHINX_BUILD) -M html "$(srcdir)" "$(OUTDIR)" $(SPHINX_OPTS)
-	$(OMPI_V_SPHINX_MAN) $(SPHINX_BUILD) -M man "$(srcdir)" "$(OUTDIR)" $(SPHINX_OPTS)
+	$(OMPI_V_SPHINX_COPYRST) if test "$(srcdir)" != "$(builddir)"; then \
+	    len=`echo "$(srcdir)/" | wc -c`; \
+	    for file in $(RST_SOURCE_FILES) $(IMAGE_SOURCE_FILES) $(TEXT_SOURCE_FILES) $(SPHINX_CONFIG); do \
+	        dir=`dirname $$file | cut -c$$len-`; \
+	        if test -z "$$dir"; then \
+	            dir=.; \
+	        fi; \
+	        if test ! -d "$$dir"; then \
+	            mkdir -p "$$dir"; \
+	        fi; \
+	        cp -p "$$file" "$$dir"; \
+	    done; \
+	fi; \
+	for file in `fgrep '.. include::' $(builddir)/schizo-ompi-rst-content/schizo-ompi-cli.rstxt | awk '{ print $$3 }'`; do \
+	    filename=`basename $$file`; \
+	    cp -pf $(OMPI_PRRTE_RST_CONTENT_DIR)/$$filename "$(builddir)/prrte-rst-content"; \
+	done
+	$(OMPI_V_SPHINX_HTML) OMPI_VERSION_FILE=$(top_srcdir)/VERSION $(SPHINX_BUILD) -M html "$(builddir)" "$(OUTDIR)" $(SPHINX_OPTS)
+	$(OMPI_V_SPHINX_MAN) OMPI_VERSION_FILE=$(top_srcdir)/VERSION $(SPHINX_BUILD) -M man "$(builddir)" "$(OUTDIR)" $(SPHINX_OPTS)
 
 # A useful rule to invoke manually to ensure that all of the external
 # HTML links we have are valid.  Running this rule requires
 # connectivity to the general internet.
 linkcheck:
-	$(SPHINX_BUILD) -M linkcheck "$(srcdir)" "$(OUTDIR)" $(SPHINX_OPTS)
+	$(SPHINX_BUILD) -M linkcheck "$(builddir)" "$(OUTDIR)" $(SPHINX_OPTS)
 
 .PHONY: linkcheck
 
-maintainer-clean-local:
-	$(SPHINX_BUILD) -M clean "$(srcdir)" "$(OUTDIR)" $(SPHINX_OPTS)
+# Since we are building the docs, we built $(OUTDIR).  Hence, we need
+# to delete it during "make clean".  Note that we can't add
+# directories to CLEANFILES, because Automake only (effectively) does
+# "rm -f $(CLEANFILES)" (not "rm -rf ...").  So we have to delete
+# directories ourselves.
+#
+# Also, if this is a VPATH build, then we made a copy of a bunch of
+# RST source files to the build tree.  So delete all of those, too.
+clean-local:
+	rm -rf $(OUTDIR)
+	rm -rf prrte-rst-content schizo-ompi-rst-content
+	if test "$(srcdir)" != "$(builddir)"; then \
+	    len=`echo "$(srcdir)/" | wc -c`; \
+	    for file in $(RST_SOURCE_FILES) $(IMAGE_SOURCE_FILES) $(TEXT_SOURCE_FILES) $(SPHINX_CONFIG); do \
+	        dir=`dirname $$file | cut -c$$len-`; \
+	        if test -z "$$dir"; then \
+	            rm -rf `basename $$file`; \
+	        fi; \
+	        if test -n "$$dir" && test -d "$$dir"; then \
+	            rm -rf "$$dir"; \
+	        fi; \
+	    done; \
+	fi
 
 # List all the built man pages here in the Automake BUILT_SOURCES
 # macro.  This hooks into the normal Automake build mechanisms, and
@@ -901,7 +1079,7 @@ endif OPAL_BUILD_DOCS
 if OPAL_INSTALL_DOCS
 
 man1_MANS = \
-        $(OMPI_MAN1_BUILT) \
+        $(OMPI_MAN1_INSTALL_FROM) \
         $(OMPI_MAN1_C_REDIRECTS)
 if OMPI_HAVE_CXX_COMPILER
 man1_MANS += $(OMPI_MAN1_CXX_REDIRECTS)
@@ -913,12 +1091,12 @@ if OMPI_WANT_JAVA_BINDINGS
 man1_MANS += $(OMPI_MAN1_JAVA_REDIRECTS)
 endif
 
-man3_MANS = $(OMPI_MAN3_BUILT)
-man7_MANS = $(OMPI_MAN7_BUILT)
+man3_MANS = $(OMPI_MAN3_INSTALL_FROM)
+man7_MANS = $(OMPI_MAN7_INSTALL_FROM)
 
 if PROJECT_OSHMEM
 man1_MANS += \
-        $(OSHMEM_MAN1_BUILT) \
+        $(OSHMEM_MAN1_INSTALL_FROM) \
         $(OSHMEM_MAN1_C_REDIRECTS)
 # There is no OSHMEM equivalent of this conditional; just use the OMPI
 # conditional.
@@ -929,7 +1107,7 @@ if OSHMEM_BUILD_FORTRAN_BINDINGS
 man1_MANS += $(OSHMEM_MAN1_FORTRAN_REDIRECTS)
 endif
 
-man3_MANS += $(OSHMEM_MAN3_BUILT)
+man3_MANS += $(OSHMEM_MAN3_INSTALL_FROM)
 endif
 
 # We do not know the names of all the generated HTML files: we only
@@ -945,19 +1123,29 @@ endif
 # Automake-provided install macros to set desirable permissions on the
 # target directories and files.
 #
-# Since this might be a VPATH build, first check to see if _build/html
-# exists in the source tree.  If not, do the find+install from the
-# build tree.
+# Check to see if we actually built the docs.  If we did, copy from
+# the _build/html tree in the builddir.  In all other cases, see if
+# there's a _build/html in the source tree (e.g., if this is a build
+# from a tarball that included a _build/html); if that exists, copy
+# from that.
+#
+# NOTE: We can't use the AM_CONDITIONAL OPAL_BUILD_DOCS in the middle
+# of a block that uses the shell continuation character at the end of
+# each line.  Instead, we check if $(SPHINX_BUILD) is non-empty, which
+# is the test used to construct OPAL_BUILD_DOCS.
 install-data-hook:
 	$(MKDIR_P) $(DESTDIR)$(docdir)
-	if test -d $(srcdir)/_build/html; then \
-	    topdir=$(srcdir)/_build; \
-	else \
-	    topdir=_build; \
+	topdir= ; \
+	if test -n "$(SPHINX_BUILD)" && test -d $(builddir)/$(HTML_INSTALL_FROM); then \
+	    topdir="$(builddir)/$(HTML_INSTALL_FROM)"; \
+	elif test -d $(srcdir)/$(HTML_INSTALL_FROM); then \
+	    topdir="$(srcdir)/$(HTML_INSTALL_FROM)"; \
 	fi; \
-	cd $$topdir; \
-	find html -type d -exec $(mkinstalldirs) $(DESTDIR)$(docdir)/{} \; ; \
-	find html -type f -exec $(INSTALL_DATA) {} $(DESTDIR)$(docdir)/{} \;
+	if test -n "$$topdir"; then \
+	    cd $$topdir/..; \
+	    find html -type d -exec $(mkinstalldirs) $(DESTDIR)$(docdir)/{} \; ; \
+	    find html -type f -exec $(INSTALL_DATA) {} $(DESTDIR)$(docdir)/{} \; ; \
+	fi
 
 uninstall-hook:
 	rm -rf $(DESTDIR)$(docdir)

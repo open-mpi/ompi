@@ -399,6 +399,5 @@ Open MPI package should not include Hwloc, Libevent, PMIx, or PRRTE.
 Instead, it should depend on external, independently-built versions of
 these packages.
 
-See the :ref:`Advice for packagers
-<label-install-packagers-do-not-use-internal>` section for more
-details.
+See the :ref:`Advice for packagers <label-install-packagers>` section
+for more details.
