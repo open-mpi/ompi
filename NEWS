@@ -20,7 +20,7 @@ Copyright (c) 2012      Sandia National Laboratories.  All rights reserved.
 Copyright (c) 2012      University of Houston. All rights reserved.
 Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
 Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
-Copyright (c) 2018-2022 Amazon.com, Inc. or its affiliates.  All Rights
+Copyright (c) 2018-2023 Amazon.com, Inc. or its affiliates.  All Rights
                         reserved.
 Copyright (c) 2019-2021 Triad National Security, LLC. All rights
                         reserved.
@@ -59,9 +59,18 @@ included in the vX.Y.Z section and be denoted as:
    (** also appeared: A.B.C)  -- indicating that this item was previously
                                  included in release version vA.B.C.
 
-4.1.6 -- August, 2023
+4.1.6 -- September, 2023
 ---------------------
 
+- Fix configure issue with XCode 15.
+- Update embedded PMIx to 3.2.5.  PMIx 3.2.5 addresses CVE-2023-41915.
+  Note that prior versions of Open MPI (and their associated PMIx
+  implementations) are not impacted by this CVE, because Open MPI
+  never uses escalated privileges on behalf of an unprivileged user.
+  We are backporting this change both because it is low risk and to
+  avoid alarms from CVE scanners.
+- Fix issue with buffered sends and MTL-based interfaces (Libfabric,
+  PSM, Portals).
 - Add missing MPI_F_STATUS_SIZE to mpi.h.  Thanks to @jprotze for
   reporting the issue.
 - Update Fortran mpi module configure check to be more correct.
