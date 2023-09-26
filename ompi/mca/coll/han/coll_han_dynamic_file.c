@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2018-2020 The University of Tennessee and The University
+ * Copyright (c) 2018-2022 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2022      IBM Corporation. All rights reserved
@@ -65,6 +65,7 @@ mca_coll_han_init_dynamic_rules(void)
     int algorithm_id;
     char * coll_name = NULL;
     char * algorithm_name = NULL;
+    char * target_comp_name = NULL;
     collective_rule_t *coll_rules;
 
     /* Topo information */
@@ -135,6 +136,7 @@ mca_coll_han_init_dynamic_rules(void)
         mca_coll_han_component.dynamic_rules.nb_collectives = i+1;
 
         /* Get the collective identifier */
+        free(coll_name);
         if( getnext_string(fptr, &coll_name) < 0 ) {
             opal_output_verbose(5, mca_coll_han_component.han_output,
                                 "coll:han:mca_coll_han_init_dynamic_rules invalid collective at line %d."
@@ -155,9 +157,7 @@ mca_coll_han_init_dynamic_rules(void)
                                     coll_name, fileline, ALLGATHER, COLLCOUNT);
                 goto file_reading_error;
             }
-            if( NULL != coll_name ) {
-                free(coll_name);
-            }
+            free(coll_name);
             coll_name = strdup(mca_coll_base_colltype_to_str(coll_id));
         }
 
@@ -321,7 +321,6 @@ mca_coll_han_init_dynamic_rules(void)
 
                 /* Iterate on message size rules */
                 for( l = 0; l < nb_msg_size; l++ ) {
-                    char* target_comp_name = NULL;
                     conf_rules[k].nb_msg_size = l+1;
 
                     /* Get the message size */
@@ -338,6 +337,7 @@ mca_coll_han_init_dynamic_rules(void)
                     }
 
                     /* Get the component identifier for this message size rule */
+                    free(target_comp_name);
                     if( getnext_string(fptr, &target_comp_name) < 0 ) {
                         opal_output_verbose(5, mca_coll_han_component.han_output,
                                             "coll:han:mca_coll_han_init_dynamic_rules found an error on dynamic rules file %s "
@@ -353,8 +353,6 @@ mca_coll_han_init_dynamic_rules(void)
                                             "reader encountered an unexpected EOF. Collective component id must be at "
                                             "least %d and less than %d\n",
                                             fname, fileline, target_comp_name, SELF, COMPONENTS_COUNT);
-                        free(target_comp_name);
-                        target_comp_name = NULL;
                         goto file_reading_error;
                     }
 
@@ -362,13 +360,13 @@ mca_coll_han_init_dynamic_rules(void)
                     algorithm_id = 0; // default for all collectives
                     if ((component == HAN) && (1 == ompi_coll_base_file_peek_next_char_is(fptr, &fileline, '@')) ) {
 
+                        free(algorithm_name);
+                        algorithm_name = NULL;
                         if( getnext_string(fptr, &algorithm_name) < 0 ) {
                             opal_output_verbose(5, mca_coll_han_component.han_output,
                                                 "coll:han:mca_coll_han_init_dynamic_rules found an error on dynamic rules file %s "
                                                 "at line %d: cannot read the name/id of an algorithm\n",
                                                 fname, fileline);
-                            free(target_comp_name);
-                            target_comp_name = NULL;
                             goto file_reading_error;
                         }
                         algorithm_id = mca_coll_han_algorithm_name_to_id(coll_id, algorithm_name);
@@ -376,15 +374,11 @@ mca_coll_han_init_dynamic_rules(void)
                             char *endp;
                             algorithm_id = (int)strtol(algorithm_name, &endp, 10);
                             char endc = *endp;
-                            free(algorithm_name);
-                            algorithm_name = NULL;
                             if (('\0' != endc ) || !mca_coll_han_algorithm_id_is_valid(coll_id, algorithm_id)) {
                                 opal_output_verbose(5, mca_coll_han_component.han_output,
                                                     "coll:han:mca_coll_han_init_dynamic_rules found an error on dynamic rules file %s "
                                                     "at line %d: unknown algorithm '%s' for %s\n",
                                                     fname, fileline, algorithm_name, coll_name);
-                                free(target_comp_name);
-                                target_comp_name = NULL;
                                 goto file_reading_error;
                             }
                         }
@@ -422,18 +416,12 @@ mca_coll_han_init_dynamic_rules(void)
                                                     "file %s line %d found end of file while reading the optional list "
                                                     "of segment lengths for collective %s component %s\n",
                                                     fname, fileline, coll_name, target_comp_name);
-                                free(target_comp_name);
                                 goto file_reading_error;
                             }
                         }
                     }
-                    free(target_comp_name);
                 }
             }
-        }
-        if( NULL != coll_name ) {
-            free(coll_name);
-            coll_name = NULL;
         }
     }
 
@@ -455,7 +443,9 @@ mca_coll_han_init_dynamic_rules(void)
     fclose(fptr);
 
     check_dynamic_rules();
+    free(coll_name);
     free(algorithm_name);
+    free(target_comp_name);
     return OMPI_SUCCESS;
 
 cannot_allocate:
@@ -465,10 +455,9 @@ cannot_allocate:
     opal_output_verbose(0, mca_coll_han_component.han_output,
                         "coll:han:mca_coll_han_init_dynamic_rules "
                         "cannot allocate dynamic rules\n");
-    if( NULL != coll_name ) {
-        free(coll_name);
-    }
+    free(coll_name);
     free(algorithm_name);
+    free(target_comp_name);
     fclose (fptr);
     /* We disable the module, we don't need to keep the rules */
     mca_coll_han_free_dynamic_rules();
@@ -481,10 +470,9 @@ file_reading_error:
                         "Will use mca parameters defined rules. "
                         "To see error detail, please set "
                         "collective verbosity level over 5\n");
-    if( NULL != coll_name ) {
-        free(coll_name);
-    }
+    free(coll_name);
     free(algorithm_name);
+    free(target_comp_name);
     fclose (fptr);
     /* We disable the module, we don't need to keep the rules */
     mca_coll_han_free_dynamic_rules();
