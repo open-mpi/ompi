@@ -60,15 +60,17 @@ probably want to use a command line of the following form:
 
 This will run ``X`` copies of ``<program>`` in your current run-time
 environment (if running under a supported resource manager, Open MPI's
-mpirun will usually automatically use the corresponding resource
-manager process starter, as opposed to, for example, ``rsh`` or ``ssh``, which
-require the use of a hostfile, or will default to running all ``X`` copies
-on the localhost), scheduling (by default) in a round-robin fashion by
-CPU slot.  See the rest of this page for more details.
+``mpirun`` will usually automatically use the corresponding resource
+manager process starter, as opposed to ``ssh`` (for example), which
+require the use of a hostfile, or will default to running all ``X``
+copies on the localhost), scheduling (by default) in a round-robin
+fashion by CPU slot.  See the rest of this documentation for more
+details.
 
-Please note that mpirun automatically binds processes as of the start
-of the v1.8 series. Three binding patterns are used in the absence of
-any further directives (See :ref:`map/rank/bind defaults <man1-mpirun-map-rank-bind-defaults>` for more details):
+Please note that ``mpirun`` automatically binds processes to hardware
+resources. Three binding patterns are used in the absence of any
+further directives (See :ref:`map/rank/bind defaults
+<man1-mpirun-map-rank-bind-defaults>` for more details):
 
 * **Bind to core**:     when the number of processes is <= 2
 * **Bind to package**:  when the number of processes is > 2
@@ -79,103 +81,43 @@ that you are either not bound at all (by specifying ``--bind-to none``),
 or bound to multiple cores using an appropriate binding level or
 specific number of processing elements per application process.
 
-.. _man1-mpirun-definition-of-slot:
+OPEN MPI'S USE OF PRRTE
+-----------------------
 
-DEFINITION OF 'SLOT'
+Open MPI uses the PMIx Reference Runtime Environment (PRRTE) as the
+main engine for launching, monitoring, and terminating MPI processes.
+
+Much of the documentation below is directly imported from PRRTE.  As
+such, it frequently refers to PRRTE concepts and command line options.
+Except where noted, these concepts and command line argument are all
+applicable to Open MPI as well.  Open MPI extends the available PRRTE
+command line options, and also slightly modifies the PRRTE's default
+behaviors in a few cases.  These will be specifically described in the
+docuemtnation below.
+
+COMMAND LINE OPTIONS
 --------------------
 
-The term "slot" is used extensively in the rest of this manual page.
-A slot is an allocation unit for a process.  The number of slots on a
-node indicate how many processes can potentially execute on that node.
-By default, Open MPI will allow one process per slot.
+The core of Open MPI's ``mpirun`` processing is performed via the
+`PRRTE <https://docs.prrte.org/>`_.  Specifically: ``mpirun`` is
+effectively a wrapper around ``prterun``, but ``mpirun``'s CLI options
+are slightly different than PRRTE's CLI commands.
 
-If Open MPI is not explicitly told how many slots are available on a
-node (e.g., if a hostfile is used and the number of slots is not
-specified for a given node), it will determine a maximum number of
-slots for that node in one of two ways:
+.. include:: /schizo-ompi-rst-content/schizo-ompi-cli.rstxt
 
-#. Default behavior: By default, Open MPI will attempt to discover the
-   number of processor cores on the node, and use that as the number
-   of slots available.
+OPTIONS (OLD / HARD-CODED CONTENT -- TO BE AUDITED
+--------------------------------------------------
 
-#. When ``--use-hwthread-cpus`` is used: If ``--use-hwthread-cpus`` is
-   specified on the ``mpirun`` command line, then Open MPI will attempt to
-   discover the number of hardware threads on the node, and use that
-   as the number of slots available.
+.. admonition:: This is old content
+   :class: error
 
-This default behavior also occurs when specifying the ``--host``
-option with a single host.  Thus, the command:
+   This is the old section of manually hard-coded content.  It should
+   probably be read / audited and see what we want to keep and what we
+   want to discard.
 
-.. code:: sh
-
-   shell$ mpirun --host node1 ./a.out
-
-launches a number of processes equal to the number of cores on node
-``node1``, whereas:
-
-.. code:: sh
-
-   shell$ mpirun --host node1 --use-hwthread-cpus ./a.out
-
-launches a number of processes equal to the number of hardware
-threads on ``node1``.
-
-When Open MPI applications are invoked in an environment managed by a
-resource manager (e.g., inside of a Slurm job), and Open MPI was built
-with appropriate support for that resource manager, then Open MPI will
-be informed of the number of slots for each node by the resource
-manager.  For example:
-
-.. code:: sh
-
-   shell$ mpirun ./a.out
-
-launches one process for every slot (on every node) as dictated by
-the resource manager job specification.
-
-Also note that the one-process-per-slot restriction can be overridden
-in unmanaged environments (e.g., when using hostfiles without a
-resource manager) if oversubscription is enabled (by default, it is
-disabled).  Most MPI applications and HPC environments do not
-oversubscribe; for simplicity, the majority of this documentation
-assumes that oversubscription is not enabled.
-
-Slots are not hardware resources
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Slots are frequently incorrectly conflated with hardware resources.
-It is important to realize that slots are an entirely different metric
-than the number (and type) of hardware resources available.
-
-Here are some examples that may help illustrate the difference:
-
-#. More processor cores than slots: Consider a resource manager job
-   environment that tells Open MPI that there is a single node with 20
-   processor cores and 2 slots available.  By default, Open MPI will
-   only let you run up to 2 processes.
-
-   Meaning: you run out of slots long before you run out of processor
-   cores.
-
-#. More slots than processor cores: Consider a hostfile with a single
-   node listed with a ``slots=50`` qualification.  The node has 20
-   processor cores.  By default, Open MPI will let you run up to 50
-   processes.
-
-   Meaning: you can run many more processes than you have processor
-   cores.
-
-.. _man1-mpirun-definition-of-processor-element:
-
-DEFINITION OF 'PROCESSOR ELEMENT'
----------------------------------
-
-By default, Open MPI defines that a "processing element" is a
-processor core.  However, if ``--use-hwthread-cpus`` is specified on the
-mpirun command line, then a "processing element" is a hardware thread.
-
-OPTIONS
--------
+   Feel free to refer to https://docs.prrte.org/ rather than
+   replicating content here (e.g., for the definition of a slot and
+   other things).
 
 mpirun will send the name of the directory where it was invoked on the
 local node to each of the remote nodes, and attempt to change to that
@@ -251,10 +193,11 @@ processes will be bound to the package.
   context. If no value is provided for the number of copies to execute
   (i.e., neither the ``-n`` nor its synonyms are provided on the
   command line), Open MPI will automatically execute a copy of the
-  program on each process slot (see :ref:`defintion of slot <man1-mpirun-definition-of-slot>` for description of a
-  "process slot"). This feature, however, can only be used in the SPMD
-  model and will return an error (without beginning execution of the
-  application) otherwise.
+  program on each process slot (see PRRTE's `defintion of "slot"
+  <https://docs.prrte.org/en/latest/placement/overview.html#definition-of-slot>`_
+  for description of a "process slot"). This feature, however, can
+  only be used in the SPMD model and will return an error (without
+  beginning execution of the application) otherwise.
 
   .. note:: The ``-n`` option is the preferred option to be used to specify the
             number of copies of the program to be executed, but the alternate
@@ -280,7 +223,7 @@ To map processes:
 * ``--map-by <object>``: Map to the specified object, defaults to
   ``package``. Supported options include ``slot``, ``hwthread``, ``core``,
   ``L1cache``, ``L2cache``, ``L3cache``, ``package``, ``numa``,
-  ``node``, ``seq``, ``rankfile``, ``pe-list=#``, and ``ppr``. 
+  ``node``, ``seq``, ``rankfile``, ``pe-list=#``, and ``ppr``.
   Any object can include modifiers by adding a ``:`` and any combination
   of the following:
 
@@ -561,13 +504,17 @@ There are also other options:
   Note that if a number of slots is not provided to Open MPI (e.g.,
   via the ``slots`` keyword in a hostfile or from a resource manager
   such as Slurm), the use of this option changes the default
-  calculation of number of slots on a node.  See the :ref:`DEFINITION
-  OF 'SLOT' <man1-mpirun-definition-of-slot>` section.
+  calculation of number of slots on a node.  See the PRRTE's
+  `defintion of "slot"
+  <https://docs.prrte.org/en/latest/placement/overview.html#definition-of-slot>`_
+  for more details.
 
   Also note that the use of this option changes the Open MPI's
   definition of a "processor element" from a processor core to a
-  hardware thread.  See the :ref:`DEFINITION OF 'PROCESSOR ELEMENT'
-  <man1-mpirun-definition-of-processor-element>` section.
+  hardware thread.  See
+  PRRTE's `defintion of a "processor element"
+  <https://docs.prrte.org/en/latest/placement/overview.html#definition-of-pe>`_
+  for more details.
 
 The following options are useful for developers; they are not
 generally useful to most Open MPI users:
@@ -601,10 +548,22 @@ There may be other options listed with ``mpirun --help``.
 Environment Variables
 ^^^^^^^^^^^^^^^^^^^^^
 
+.. admonition:: This is old, hard-coded content
+   :class: error
+
+   Is this content still current / accurate?  Should it be updated and
+   retained, or removed?
+
 * ``MPIEXEC_TIMEOUT``: Synonym for the ``--timeout`` command line option.
 
 DESCRIPTION
 -----------
+
+.. admonition:: This is old, hard-coded content
+   :class: error
+
+   Is this content still current / accurate?  Should it be updated and
+   retained, or removed?
 
 One invocation of ``mpirun`` starts an MPI application running under Open
 MPI. If the application is single process multiple data (SPMD), the
@@ -629,6 +588,12 @@ while others are specific to a single program (e.g., ``-n``).
 
 Specifying Host Nodes
 ^^^^^^^^^^^^^^^^^^^^^
+
+.. admonition:: This is old, hard-coded content
+   :class: error
+
+   Is this content still current / accurate?  Should it be updated and
+   retained, or removed?
 
 Host nodes can be identified on the ``mpirun`` command line with the
 ``--host`` option or in a hostfile.
@@ -678,6 +643,12 @@ from the resource manager.
 
 Specifying Number of Processes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. admonition:: This is old, hard-coded content
+   :class: error
+
+   Is this content still current / accurate?  Should it be updated and
+   retained, or removed?
 
 As we have just seen, the number of processes to run can be set using the
 hostfile.  Other mechanisms exist.
@@ -732,6 +703,12 @@ the ``-n`` option indicated that only 6 processes should be launched.
 
 Mapping Processes to Nodes: Using Policies
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. admonition:: This is old, hard-coded content
+   :class: error
+
+   Is this content still current / accurate?  Should it be updated and
+   retained, or removed?
 
 The examples above illustrate the default mapping of process processes
 to nodes.  This mapping can also be controlled with various ``mpirun``
@@ -845,6 +822,12 @@ and 2 each running uptime on nodes ``bb`` and ``cc``, respectively.
 Mapping, Ranking, and Binding: Oh My!
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+.. admonition:: This is old, hard-coded content
+   :class: error
+
+   Is this content still current / accurate?  Should it be updated and
+   retained, or removed?
+
 Open MPI employs a three-phase procedure for assigning process locations
 and ranks:
 
@@ -934,7 +917,7 @@ Alternatively, processes can be mapped and bound to specified cores using
 the ``--map-by pe-list=`` option. For example, ``--map-by pe-list=0,2,5``
 will map three processes all three of which will be bound to logical cores
 ``0,2,5``. If you intend to bind each of the three processes to different
-cores then the ``:ordered`` qualifier can be used like 
+cores then the ``:ordered`` qualifier can be used like
 ``--map-by pe-list=0,2,5:ordered``. In this example, the first process
 on a node will be bound to CPU 0, the second process on the node will
 be bound to CPU 2, and the third process on the node will be bound to
@@ -992,7 +975,7 @@ in ranking when the ``span`` qualifier is used instead of the default.
 In the above case, the output shows us that 2 cores have been bound per
 process.  Specifically, the mapping by ``slot`` with the ``PE=2`` qualifier
 indicated that each slot (i.e., process) should consume two processor
-elements.  By default, Open MPI defines "processor element" as "core", 
+elements.  By default, Open MPI defines "processor element" as "core",
 and therefore the ``--bind-to core`` caused each process to be bound to
 both of the cores to which it was mapped.
 
@@ -1030,16 +1013,16 @@ MCA parameters can be set not only on the mpirun command line, but
 alternatively in a system or user ``mca-params.conf`` file or as
 environment variables, as described in the :ref:`Setting MCA
 Parameters <man1-mpirun-setting-mca-parameters>`. These are MCA parameters for
-the PRRTE runtime so the command line argument ``--PRRTEmca`` must be used to 
+the PRRTE runtime so the command line argument ``--PRRTEmca`` must be used to
 pass the MCA parameter key/value pair. Alternatively, the MCA parameter key/
-value pair may be specific on the command line by prefixing the key with 
+value pair may be specific on the command line by prefixing the key with
 ``PRRTE_MCA_``. Some examples include:
 
 .. list-table::
    :header-rows: 1
 
    * - Option
-     - PRRTE MCA parameter key 
+     - PRRTE MCA parameter key
      - Value
 
    * - ``--map-by core``
@@ -1070,6 +1053,12 @@ value pair may be specific on the command line by prefixing the key with
 
 Defaults for Mapping, Ranking, and Binding
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. admonition:: This is old, hard-coded content
+   :class: error
+
+   Is this content still current / accurate?  Should it be updated and
+   retained, or removed?
 
 If the user does not specify each of ``--map-by``, ``--rank-by``, and ``--bind-to`` option then the default values are as follows:
 
@@ -1167,6 +1156,12 @@ The mapping pattern might be better seen if we change the default ``--rank-by`` 
 Rankfiles
 ^^^^^^^^^
 
+.. admonition:: This is old, hard-coded content
+   :class: error
+
+   Is this content still current / accurate?  Should it be updated and
+   retained, or removed?
+
 Rankfiles are text files that specify detailed information about how
 individual processes should be mapped to nodes, and to which
 processor(s) they should be bound.  Each line of a rankfile specifies
@@ -1226,6 +1221,12 @@ indexes of package and cores.
 Application Context or Executable Program?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+.. admonition:: This is old, hard-coded content
+   :class: error
+
+   Is this content still current / accurate?  Should it be updated and
+   retained, or removed?
+
 To distinguish the two different forms, mpirun looks on the command
 line for ``--app`` option.  If it is specified, then the file named on
 the command line is assumed to be an application context.  If it is
@@ -1233,6 +1234,12 @@ not specified, then the file is assumed to be an executable program.
 
 Locating Files
 ^^^^^^^^^^^^^^
+
+.. admonition:: This is old, hard-coded content
+   :class: error
+
+   Is this content still current / accurate?  Should it be updated and
+   retained, or removed?
 
 If no relative or absolute path is specified for a file, Open MPI will
 first look for files by searching the directories specified by the
@@ -1251,6 +1258,12 @@ current working directory from the invocation of ``mpirun``.
 
 Current Working Directory
 ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. admonition:: This is old, hard-coded content
+   :class: error
+
+   Is this content still current / accurate?  Should it be updated and
+   retained, or removed?
 
 The ``--wdir`` ``mpirun`` option (and its synonym, ``--wd``) allows
 the user to change to an arbitrary directory before the program is
@@ -1278,6 +1291,12 @@ does not wait until :ref:`MPI_INIT(3) <mpi_init>` is called.
 
 Standard I/O
 ^^^^^^^^^^^^
+
+.. admonition:: This is old, hard-coded content
+   :class: error
+
+   Is this content still current / accurate?  Should it be updated and
+   retained, or removed?
 
 Open MPI directs UNIX standard input to ``/dev/null`` on all processes
 except the MPI_COMM_WORLD rank 0 process. The MPI_COMM_WORLD rank 0
@@ -1309,6 +1328,12 @@ will be collected into the ``my_output`` file.
 Signal Propagation
 ^^^^^^^^^^^^^^^^^^
 
+.. admonition:: This is old, hard-coded content
+   :class: error
+
+   Is this content still current / accurate?  Should it be updated and
+   retained, or removed?
+
 When ``mpirun`` receives a SIGTERM and SIGINT, it will attempt to kill
 the entire job by sending all processes in the job a SIGTERM, waiting
 a small number of seconds, then sending all processes in the job a
@@ -1325,6 +1350,12 @@ Other signals are not currently propagated by ``mpirun``.
 
 Process Termination / Signal Handling
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. admonition:: This is old, hard-coded content
+   :class: error
+
+   Is this content still current / accurate?  Should it be updated and
+   retained, or removed?
 
 During the run of an MPI application, if any process dies abnormally
 (either exiting before invoking :ref:`MPI_FINALIZE(3) <mpi_finalize>`,
@@ -1346,6 +1377,12 @@ safest) for the user to only clean up non-MPI state.
 Process Environment
 ^^^^^^^^^^^^^^^^^^^
 
+.. admonition:: This is old, hard-coded content
+   :class: error
+
+   Is this content still current / accurate?  Should it be updated and
+   retained, or removed?
+
 Processes in the MPI application inherit their environment from the
 PRRTE daemon upon the node on which they are running.  The
 environment is typically inherited from the user's shell.  On remote
@@ -1364,6 +1401,12 @@ for more details.
 
 Remote Execution
 ^^^^^^^^^^^^^^^^
+
+.. admonition:: This is old, hard-coded content
+   :class: error
+
+   Is this content still current / accurate?  Should it be updated and
+   retained, or removed?
 
 Open MPI requires that the ``PATH`` environment variable be set to
 find executables on remote nodes (this is typically only necessary in
@@ -1431,6 +1474,12 @@ is equivalent to
 Exported Environment Variables
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+.. admonition:: This is old, hard-coded content
+   :class: error
+
+   Is this content still current / accurate?  Should it be updated and
+   retained, or removed?
+
 All environment variables that are named in the form ``OMPI_*`` will
 automatically be exported to new processes on the local and remote
 nodes.  Environmental parameters can also be set/forwarded to the new
@@ -1447,6 +1496,12 @@ them.
 
 Setting MCA Parameters
 ^^^^^^^^^^^^^^^^^^^^^^
+
+.. admonition:: This is old, hard-coded content
+   :class: error
+
+   Is this content still current / accurate?  Should it be updated and
+   retained, or removed?
 
 The ``--mca`` switch allows the passing of parameters to various MCA
 (Modular Component Architecture) modules.  MCA modules have direct
@@ -1508,6 +1563,12 @@ page for detailed information on this command.
 Setting MCA parameters and environment variables from file
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+.. admonition:: This is old, hard-coded content
+   :class: error
+
+   Is this content still current / accurate?  Should it be updated and
+   retained, or removed?
+
 The ``--tune`` command line option and its synonym ``--mca``
 ``mca_base_envar_file_prefix`` allows a user to set MCA parameters and
 environment variables with the syntax described below.  This option
@@ -1531,6 +1592,12 @@ have higher precedence than variables specified in the file.
 
 Running as root
 ^^^^^^^^^^^^^^^
+
+.. admonition:: This is old, hard-coded content
+   :class: error
+
+   Is this content still current / accurate?  Should it be updated and
+   retained, or removed?
 
 .. warning:: The Open MPI team **strongly** advises against executing
              ``mpirun`` as the root user.  MPI applications should be
@@ -1557,6 +1624,12 @@ against this behavior.
 
 Exit status
 ^^^^^^^^^^^
+
+.. admonition:: This is old, hard-coded content
+   :class: error
+
+   Is this content still current / accurate?  Should it be updated and
+   retained, or removed?
 
 There is no standard definition for what ``mpirun`` should return as
 an exit status. After considerable discussion, we settled on the
@@ -1599,6 +1672,12 @@ bullet points above).
 EXAMPLES
 --------
 
+.. admonition:: This is old, hard-coded content
+   :class: error
+
+   Is this content still current / accurate?  Should it be updated and
+   retained, or removed?
+
 Be sure also to see the examples throughout the sections above.
 
 .. code:: sh
@@ -1612,6 +1691,12 @@ messages.
 
 RETURN VALUE
 ------------
+
+.. admonition:: This is old, hard-coded content
+   :class: error
+
+   Is this content still current / accurate?  Should it be updated and
+   retained, or removed?
 
 ``mpirun`` returns 0 if all processes started by mpirun exit after
 calling :ref:`MPI_FINALIZE(3) <mpi_finalize>`.  A non-zero value is

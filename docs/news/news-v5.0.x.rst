@@ -154,9 +154,10 @@ Open MPI version 5.0.0rc12
 
       - Many MPI one-sided and RDMA emulation fixes for the ``tcp`` BTL.
 
-        - This patch series fixs many issues when running with ``--mca
-          osc rdma --mca btl tcp``, i.e., TCP support for one sided
-          MPI calls.
+        This patch series fixs many issues when running with ``--mca
+        osc rdma --mca btl tcp``, i.e., TCP support for one sided
+        MPI calls.
+
       - Many MPI one-sided fixes for the ``uct`` BTL.
       - Added support for ``acc_single_intrinsic`` to the one-sided
         ``ucx`` component.
