@@ -1,3 +1,5 @@
+.. _label-install-packagers:
+
 Advice for packagers
 ====================
 
@@ -20,8 +22,25 @@ the following:
 
 .. code-block:: sh
 
+   # Install Sphinx so that Open MPI can re-build its docs with the
+   # installed PRRTE's docs
+
+   virtualalenv venv
+   . ./venv/bin/activate
+   pip install docs/requirements.txt
+
    ./configure --with-libevent=external --with-hwloc=external \
        --with-pmix=external --with-prrte=external ...
+
+.. important:: Note the installation of the Sphinx tool so that Open
+               MPI can re-build its documentation with the external
+               PRRTE's documentation.
+
+               Failure to do this will mean Open MPI's documentation
+               will be correct for the version of PRRTE that is
+               bundled in the Open MPI distribution, but may not be
+               entirely correct for the version of PRRTE that you are
+               building against.
 
 The ``external`` keywords will force Open MPI's ``configure`` to
 ignore all the bundled libraries and only look for external versions
@@ -35,6 +54,29 @@ independently-built and installed versions.
 <label-building-ompi-cli-options-required-support-libraries>` for more
 information about the required support library ``--with-FOO`` command
 line options.
+
+Have Sphinx installed
+---------------------
+
+Since you should be (will be) installing Open MPI against an external
+PRRTE and PMIx, you should have `Sphinx
+<https://www.sphinx-doc.org/>`_ installed before running Open MPI's
+``configure`` script.
+
+This will allow Open MPI to (re-)build its documentation according to
+the PMIx and PRRTE that you are building against.
+
+To be clear: the Open MPI distribution tarball comes with pre-built
+documentation |mdash| rendered in HTML and nroff |mdash| that is
+suitable for the versions of PRRTE and PMIx that are bundled in that
+tarball.
+
+However, if you are building Open MPI against not-bundled versions of
+PRRTE / PMIx (as all packagers should be), Open MPI needs to re-build
+its documentation with specific information from those external PRRTE
+/ PMIx installs.  For that, you need to have Sphinx installed before
+running Open MPI's ``configure`` script.
+
 
 .. _label-install-packagers-dso-or-not:
 

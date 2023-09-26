@@ -12,6 +12,11 @@ build:
   os: ubuntu-22.04
   tools:
     python: "3.10"
+  jobs:
+    # RTD doesn't run configure or make.  So we have to manually copy
+    # in the PRRTE RST files to docs/.
+    pre_create_environment:
+      - ./.readthedocs-pre-create-environment.sh
 
 python:
   install:
@@ -21,3 +26,6 @@ python:
 sphinx:
   configuration: docs/conf.py
   fail_on_warning: true
+
+submodules:
+  include: all
