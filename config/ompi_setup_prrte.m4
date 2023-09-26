@@ -19,6 +19,7 @@ dnl Copyright (c) 2019-2020 Intel, Inc.  All rights reserved.
 dnl Copyright (c) 2020-2022 Amazon.com, Inc. or its affiliates.  All Rights reserved.
 dnl Copyright (c) 2021      Nanook Consulting.  All rights reserved.
 dnl Copyright (c) 2021-2022 IBM Corporation.  All rights reserved.
+dnl Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -35,9 +36,24 @@ dnl
 dnl A Makefile conditional OMPI_WANT_PRRTE will be defined based on the
 dnl results of the build.
 AC_DEFUN([OMPI_SETUP_PRRTE],[
-    OPAL_VAR_SCOPE_PUSH([prrte_setup_internal_happy prrte_setup_external_happy])
+    AC_REQUIRE([AC_PROG_LN_S])
+
+OPAL_VAR_SCOPE_PUSH([prrte_setup_internal_happy prrte_setup_external_happy target_rst_dir])
 
     opal_show_subtitle "Configuring PRRTE"
+
+    # We *must* have setup Sphinx before invoking this macro (i.e., it
+    # is a programming error -- not a run-time error -- if Sphinx was
+    # not previously setup).
+    OAC_ASSERT_BEFORE([OAC_SETUP_SPHINX], [OMPI_SETUP_PRRTE])
+
+    # These are sym links to folders with PRRTE's RST files that we'll
+    # slurp into mpirun.1.rst.  We'll remove these links (or even
+    # accidental full copies) now and replace them with new links to
+    # the PRRTE that we find, below.
+    target_rst_dir="$OMPI_TOP_BUILDDIR/docs"
+    rm -rf "$target_rst_dir/prrte-rst-content"
+    rm -rf "$target_rst_dir/schizo-ompi-rst-content"
 
     OPAL_3RDPARTY_WITH([prrte], [prrte], [package_prrte], [1])
 
@@ -101,11 +117,14 @@ AC_DEFUN([OMPI_SETUP_PRRTE],[
                        [$OMPI_USING_INTERNAL_PRRTE],
                        [Whether or not we are using the internal PRRTE])
 
-    OPAL_SUMMARY_ADD([Miscellaneous], [prrte], [], [$opal_prrte_mode])
+    AC_SUBST(OMPI_PRRTE_RST_CONTENT_DIR)
+    AC_SUBST(OMPI_SCHIZO_OMPI_RST_CONTENT_DIR)
+    AM_CONDITIONAL(OMPI_HAVE_PRRTE_RST, [test $OMPI_HAVE_PRRTE_RST -eq 1])
+
+    OPAL_SUMMARY_ADD([Miscellaneous], [PRRTE], [], [$opal_prrte_mode])
 
     OPAL_VAR_SCOPE_POP
 ])
-
 
 dnl _OMPI_SETUP_PRRTE_INTERNAL([action-if-success], [action-if-not-success])
 dnl
@@ -220,7 +239,15 @@ AC_DEFUN([_OMPI_SETUP_PRRTE_INTERNAL], [
           [AC_MSG_ERROR([PRRTE configuration failed.  Cannot continue.])])
 
     AS_IF([test "$internal_prrte_happy" = "yes"],
-          [$1], [$2])
+          [AC_MSG_CHECKING([for internal PRRTE RST files])
+           AS_IF([test -n "$SPHINX_BUILD"],
+                 [OMPI_HAVE_PRRTE_RST=1
+                  OMPI_PRRTE_RST_CONTENT_DIR="$OMPI_TOP_SRCDIR/3rd-party/prrte/src/docs/prrte-rst-content"
+                  OMPI_SCHIZO_OMPI_RST_CONTENT_DIR="$OMPI_TOP_SRCDIR/3rd-party/prrte/src/mca/schizo/ompi"
+                  AC_MSG_RESULT([found])],
+		 [AC_MSG_RESULT([not found])])
+           $1],
+	  [$2])
 
     OPAL_VAR_SCOPE_POP
 ])
@@ -284,9 +311,27 @@ AC_DEFUN([_OMPI_SETUP_PRRTE_EXTERNAL], [
           [AC_DEFINE_UNQUOTED([OMPI_PRTERUN_PATH], ["${prterun_path}"], [Path to prterun])])
 
     AS_IF([test "$setup_prrte_external_happy" = "yes"],
-          [$1], [$2])
+          [ # Determine if this external PRRTE has installed the RST
+            # directories that we care about
+
+           AC_MSG_CHECKING([for external PRRTE RST files])
+           prrte_install_dir=${with_prrte}/share/prte/rst
+           AS_IF([test -n "$SPHINX_BUILD"],
+                 [AS_IF([test -d "$prrte_install_dir/prrte-rst-content" && \
+                         test -d "$prrte_install_dir/schizo-ompi-rst-content"],
+                        [OMPI_HAVE_PRRTE_RST=1
+                         OMPI_PRRTE_RST_CONTENT_DIR="$prrte_install_dir/prrte-rst-content"
+                         OMPI_SCHIZO_OMPI_RST_CONTENT_DIR="$prrte_install_dir/schizo-ompi-rst-content"
+                         AC_MSG_RESULT([found])
+                         ],
+                        [ # This version of PRRTE doesn't have installed RST
+                          # files.
+                          AC_MSG_RESULT([not found])
+                          OMPI_HAVE_PRRTE_RST=0
+                        ])
+                 ])
+           $1],
+	  [$2])
 
     OPAL_VAR_SCOPE_POP
 ])
-
-
