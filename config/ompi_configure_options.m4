@@ -257,4 +257,19 @@ AC_ARG_ENABLE([deprecate-mpif-h],
               [AS_HELP_STRING([--enable-deprecate-mpif-h],
                               [Mark the mpif.h bindings as deprecated (default: enabled)])])
 
+AC_MSG_CHECKING([if want to enable standard ABI library])
+AC_ARG_ENABLE([standard-abi],
+    [AS_HELP_STRING([--enable-standard-abi],
+                    [Enable building the standard ABI library (default: disabled)])])
+if test "$enable_standard_abi" = "yes"; then
+    AC_MSG_RESULT([yes])
+    ompi_standard_abi=1
+else
+    AC_MSG_RESULT([no])
+    ompi_standard_abi=0
+fi
+AC_DEFINE_UNQUOTED([OMPI_STANDARD_ABI],[$ompi_standard_abi],
+                   [Whether we want to build the standard ABI library])
+AM_CONDITIONAL(OMPI_STANDARD_ABI,[test "$enable_standard_abi" = "yes"])
+
 ])dnl
