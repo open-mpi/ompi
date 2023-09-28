@@ -509,6 +509,7 @@ ompi_report_comm_methods(int called_from_location)
         free(p);
     }
 
+#if 0
     MPI_Datatype mydt;
     MPI_Op myop;
     MPI_Type_contiguous(sizeof(comm_method_string_conversion_t), MPI_BYTE, &mydt);
@@ -519,6 +520,7 @@ ompi_report_comm_methods(int called_from_location)
             leader_comm->c_coll->coll_allreduce_module);
     MPI_Op_free(&myop);
     MPI_Type_free(&mydt);
+#endif
 
     // Sort communication method string arrays after reduction
     qsort(&comm_method_string_conversion.str[1],

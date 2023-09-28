@@ -30,17 +30,7 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
 
-#if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Get_processor_name = PMPI_Get_processor_name
-#endif
-#define MPI_Get_processor_name PMPI_Get_processor_name
-#endif
-
-static const char FUNC_NAME[] = "MPI_Get_processor_name";
-
-
-int MPI_Get_processor_name(char *name, int *resultlen)
+PROTOTYPE ERROR_CLASS get_processor_name(STRING_OUT name, INT_OUT resultlen)
 {
     if ( MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);

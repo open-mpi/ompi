@@ -38,21 +38,18 @@
 #include "opal/util/clock_gettime.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Wtime = PMPI_Wtime
-#endif
-#define MPI_Wtime PMPI_Wtime
 /**
  * Have a base time set on the first call to wtime, to improve the range
  * and accuracy of the user visible timer.
  * More info: https://github.com/mpi-forum/mpi-issues/issues/77#issuecomment-369663119
  */
 struct timespec ompi_wtime_time_origin = {.tv_sec = 0};
-#else  /* OMPI_BUILD_MPI_PROFILING */
+#else
 extern struct timespec ompi_wtime_time_origin;
 #endif
 
-double MPI_Wtime(void)
+
+PROTOTYPE DOUBLE wtime()
 {
     double wtime;
 

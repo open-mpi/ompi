@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -19,42 +19,33 @@
  * $HEADER$
  */
 #include "ompi_config.h"
+#include <stdio.h>
 
-#include "opal/util/show_help.h"
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
-#include "ompi/errhandler/errhandler.h"
-#include "ompi/runtime/mpiruntime.h"
-#include "ompi/memchecker.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/errhandler/errhandler.h"
+#include "ompi/memchecker.h"
 
-#if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Abort = PMPI_Abort
-#endif
-#define MPI_Abort PMPI_Abort
-#endif
-
-static const char FUNC_NAME[] = "MPI_Abort";
-
-
-int MPI_Abort(MPI_Comm comm, int errorcode)
+PROTOTYPE ERROR_CLASS comm_rank(COMM comm, INT_OUT rank)
 {
     MEMCHECKER(
         memchecker_comm(comm);
     );
 
-    /* Don't even bother checking comm and errorcode values for
-       errors */
-
-    if (MPI_PARAM_CHECK) {
+    if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+
+        if (ompi_comm_invalid (comm))
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_COMM,
+                                          FUNC_NAME);
+
+        if ( NULL == rank )
+            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG,
+                                          FUNC_NAME);
     }
 
-    opal_show_help("help-mpi-api.txt", "mpi-abort", true,
-                   ompi_comm_rank(comm),
-                   ('\0' != comm->c_name[0]) ? comm->c_name : "<Unknown>",
-                   OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
-                   errorcode);
-    return ompi_mpi_abort(comm, errorcode);
+    *rank = ompi_comm_rank((ompi_communicator_t*)comm);
+    return MPI_SUCCESS;
 }
+

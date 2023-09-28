@@ -12,7 +12,7 @@ headers += \
         patterns/net/netpatterns_knomial_tree.h \
         patterns/net/coll_ops.h
 
-lib@OMPI_LIBMPI_NAME@_la_SOURCES += \
+libopen_mpi_la_SOURCES += \
 		patterns/net/netpatterns_base.c \
 		patterns/net/netpatterns_multinomial_tree.c \
 		patterns/net/netpatterns_nary_tree.c \

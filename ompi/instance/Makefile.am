@@ -23,4 +23,4 @@
 
 headers += instance/instance.h
 
-lib@OMPI_LIBMPI_NAME@_la_SOURCES += instance/instance.c
+libopen_mpi_la_SOURCES += instance/instance.c

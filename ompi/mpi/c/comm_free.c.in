@@ -1,16 +1,14 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -26,34 +24,32 @@
 #include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
-#include "ompi/mpi/fortran/base/fint_2_int.h"
+#include "ompi/memchecker.h"
 
-#if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Comm_f2c = PMPI_Comm_f2c
-#endif
-#define MPI_Comm_f2c PMPI_Comm_f2c
-#endif
-
-static const char FUNC_NAME[] = "MPI_Comm_f2c";
-
-
-MPI_Comm MPI_Comm_f2c(MPI_Fint comm)
+PROTOTYPE ERROR_CLASS comm_free(COMM_OUT comm)
 {
-    int o_index= OMPI_FINT_2_INT(comm);
+    int ret;
+
+    MEMCHECKER(
+        memchecker_comm(*comm);
+    );
 
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+
+        if ( NULL == *comm ||
+             ompi_comm_invalid (*comm)) {
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_COMM,
+                                          FUNC_NAME);
+        } else if (MPI_COMM_WORLD == *comm ||
+                   MPI_COMM_SELF == *comm) {
+            return OMPI_ERRHANDLER_INVOKE(*comm, MPI_ERR_COMM,
+                                          FUNC_NAME);
+        }
     }
 
-    /* Per MPI-2:4.12.4, do not invoke an error handler if we get an
-       invalid fortran handle.  If we get an invalid fortran handle,
-       return an invalid C handle. */
+    ret = ompi_comm_free ( comm );
+    OMPI_ERRHANDLER_CHECK(ret, *comm, ret, FUNC_NAME);
 
-    if ( 0 > o_index ||
-         o_index >= opal_pointer_array_get_size(&ompi_comm_f_to_c_table)) {
-        return NULL;
-    }
-
-    return (MPI_Comm)opal_pointer_array_get_item(&ompi_comm_f_to_c_table, o_index);
+    return MPI_SUCCESS;
 }

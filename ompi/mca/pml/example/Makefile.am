@@ -53,7 +53,7 @@ mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_pml_example_la_SOURCES = $(local_sources)
 mca_pml_example_la_LDFLAGS = -module -avoid-version
-mca_pml_example_la_LIBADD = $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la
+mca_pml_example_la_LIBADD = $(top_builddir)/ompi/libopen-mpi.la
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_pml_example_la_SOURCES = $(local_sources)

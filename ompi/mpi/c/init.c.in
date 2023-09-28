@@ -31,17 +31,7 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/constants.h"
 
-#if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Init = PMPI_Init
-#endif
-#define MPI_Init PMPI_Init
-#endif
-
-static const char FUNC_NAME[] = "MPI_Init";
-
-
-int MPI_Init(int *argc, char ***argv)
+PROTOTYPE INT init(INT_OUT argc, ARGV argv)
 {
     int err;
     int provided;

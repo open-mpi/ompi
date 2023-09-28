@@ -62,7 +62,7 @@ mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_coll_sm_la_SOURCES = $(sources)
 mca_coll_sm_la_LDFLAGS = -module -avoid-version
-mca_coll_sm_la_LIBADD = $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
+mca_coll_sm_la_LIBADD = $(top_builddir)/ompi/libopen-mpi.la \
         $(OMPI_TOP_BUILDDIR)/opal/mca/common/sm/lib@OPAL_LIB_NAME@mca_common_sm.la
 
 noinst_LTLIBRARIES = $(component_noinst)

@@ -23,6 +23,7 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/request/grequest.h"
 #include "ompi/mpi/fortran/base/fint_2_int.h"
+#include "ompi/util/status.h"
 
 
 /*
@@ -236,9 +237,9 @@ int ompi_grequest_invoke_query(ompi_request_t *request,
              */
             MPI_Fint ierr;
             MPI_Fint fstatus[sizeof(MPI_Status) / sizeof(int)];
-            MPI_Status_c2f(status, fstatus);
+            ompi_status_c2f(status, fstatus);
             g->greq_query.f_query((MPI_Aint*)g->greq_state, fstatus, &ierr);
-            MPI_Status_f2c(fstatus, status);
+            ompi_status_f2c(fstatus, status);
             rc = OMPI_FINT_2_INT(ierr);
         }
     }

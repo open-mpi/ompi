@@ -34,18 +34,9 @@
 #include "ompi/datatype/ompi_datatype_internal.h"
 #include "ompi/memchecker.h"
 
-#if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Accumulate = PMPI_Accumulate
-#endif
-#define MPI_Accumulate PMPI_Accumulate
-#endif
-
-static const char FUNC_NAME[] = "MPI_Accumulate";
-
-int MPI_Accumulate(const void *origin_addr, int origin_count, MPI_Datatype origin_datatype,
-                   int target_rank, MPI_Aint target_disp, int target_count,
-                   MPI_Datatype target_datatype, MPI_Op op, MPI_Win win)
+PROTOTYPE ERROR_CLASS accumulate(BUFFER origin_addr, COUNT origin_count, DATATYPE origin_datatype,
+                                 INT target_rank, AINT target_disp, COUNT target_count,
+                                 DATATYPE target_datatype, OP op, WIN win)
 {
     int rc;
     ompi_win_t *ompi_win = (ompi_win_t*) win;

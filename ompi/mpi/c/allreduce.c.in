@@ -34,18 +34,8 @@
 #include "ompi/memchecker.h"
 #include "ompi/runtime/ompi_spc.h"
 
-#if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Allreduce = PMPI_Allreduce
-#endif
-#define MPI_Allreduce PMPI_Allreduce
-#endif
-
-static const char FUNC_NAME[] = "MPI_Allreduce";
-
-
-int MPI_Allreduce(const void *sendbuf, void *recvbuf, int count,
-                  MPI_Datatype datatype, MPI_Op op, MPI_Comm comm)
+PROTOTYPE ERROR_CLASS allreduce(BUFFER sendbuf, BUFFER_OUT recvbuf, COUNT count,
+                                    DATATYPE datatype, OP op, COMM comm)
 {
     int err;
 

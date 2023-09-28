@@ -29,6 +29,7 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/mpi/fortran/base/fint_2_int.h"
 #include "ompi/mpi/fortran/base/constants.h"
+#include "ompi/util/status.h"
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -42,8 +43,6 @@ static const char FUNC_NAME[] = "MPI_Status_f2c";
 
 int MPI_Status_f2c(const MPI_Fint *f_status, MPI_Status *c_status)
 {
-    int i, *c_ints;
-
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
@@ -65,17 +64,5 @@ int MPI_Status_f2c(const MPI_Fint *f_status, MPI_Status *c_status)
         }
     }
 
-    /* ***NOTE*** See huge comment in status_c2f.c (yes, I know
-                  there's a size_t member in the C MPI_Status -- go
-                  read that comment for an explanation why copying
-                  everything as a bunch of int's is ok).
-
-       We can't use OMPI_FINT_2_INT here because of some complications
-       with include files.  :-( So just do the casting manually. */
-    c_ints = (int*)c_status;
-    for( i = 0; i < (int)(sizeof(MPI_Status) / sizeof(int)); i++ ) {
-        c_ints[i] = (int)f_status[i];
-    }
-
-    return MPI_SUCCESS;
+    return ompi_status_f2c(f_status, c_status);
 }

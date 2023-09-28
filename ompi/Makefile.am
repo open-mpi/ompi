@@ -126,36 +126,45 @@ DIST_SUBDIRS = \
         $(MCA_ompi_FRAMEWORKS_SUBDIRS) \
         $(MCA_ompi_FRAMEWORK_COMPONENT_ALL_SUBDIRS)
 
-# Build the main MPI library
+noinst_LTLIBRARIES = libopen-mpi.la
+lib_LTLIBRARIES = lib@OMPI_LIBMPI_NAME@.la libmpi_abi.la
 
-lib_LTLIBRARIES = lib@OMPI_LIBMPI_NAME@.la
-lib@OMPI_LIBMPI_NAME@_la_SOURCES =
-lib@OMPI_LIBMPI_NAME@_la_LIBADD = \
+# Build the Open MPI internal library
+libopen_mpi_la_SOURCES =
+libopen_mpi_la_LIBADD = \
         datatype/libdatatype.la \
         debuggers/libdebuggers.la \
+        $(OMPI_TOP_BUILDDIR)/opal/lib@OPAL_LIB_NAME@.la \
+        $(MCA_ompi_FRAMEWORK_LIBS) \
+        $(OMPI_LIBMPI_EXTRA_LIBS)
+libopen_mpi_la_DEPENDENCIES = $(libopen_mpi_la_LIBADD)
+
+# Build the main MPI library
+lib@OMPI_LIBMPI_NAME@_la_SOURCES =
+lib@OMPI_LIBMPI_NAME@_la_LIBADD = \
+	libopen-mpi.la \
         mpi/c/libmpi_c.la \
         mpi/tool/libmpi_mpit.la \
         $(c_mpi_lib) \
         $(c_pmpi_lib) \
-        $(mpi_fortran_base_lib) \
-        $(MCA_ompi_FRAMEWORK_LIBS) \
         $(OMPI_MPIEXT_C_LIBS) \
-        $(OMPI_LIBMPI_EXTRA_LIBS)
+        $(mpi_fortran_base_lib)
 
-
-lib@OMPI_LIBMPI_NAME@_la_LIBADD += \
-        $(OMPI_TOP_BUILDDIR)/opal/lib@OPAL_LIB_NAME@.la
-lib@OMPI_LIBMPI_NAME@_la_DEPENDENCIES = $(lib@OMPI_LIBMPI_NAME@_la_LIBADD)
 lib@OMPI_LIBMPI_NAME@_la_LDFLAGS = \
        -version-info $(libmpi_so_version) \
         $(OMPI_LIBMPI_EXTRA_LDFLAGS)
 
+# Build the MPI Standard ABI library
+libmpi_abi_la_SOURCES =
+libmpi_abi_la_LIBADD = \
+        libopen-mpi.la \
+	mpi/c/libmpi_c_abi.la
+
 # included subdirectory Makefile.am's and appended-to variables
 headers =
-noinst_LTLIBRARIES =
 include_HEADERS =
 dist_ompidata_DATA =
-lib@OMPI_LIBMPI_NAME@_la_SOURCES += $(headers)
+libopen_mpi_la_SOURCES += $(headers)
 
 # Conditionally install the header files
 

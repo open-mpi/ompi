@@ -46,7 +46,7 @@ AM_CPPFLAGS = $(fbtl_pvfs2_CPPFLAGS)
 mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_fbtl_pvfs2_la_SOURCES = $(fbtl_pvfs2_sources)
-mca_fbtl_pvfs2_la_LIBADD = $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
+mca_fbtl_pvfs2_la_LIBADD = $(top_builddir)/ompi/libopen-mpi.la \
 	$(fbtl_pvfs2_LIBS)
 mca_fbtl_pvfs2_la_LDFLAGS = -module -avoid-version $(fbtl_pvfs2_LDFLAGS)
 

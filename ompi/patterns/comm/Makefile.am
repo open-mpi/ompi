@@ -11,7 +11,7 @@ headers += \
         patterns/comm/coll_ops.h \
         patterns/comm/commpatterns.h
 
-lib@OMPI_LIBMPI_NAME@_la_SOURCES += \
+libopen_mpi_la_SOURCES += \
         patterns/comm/allreduce.c \
         patterns/comm/allgather.c \
         patterns/comm/bcast.c

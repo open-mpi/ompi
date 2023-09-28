@@ -80,7 +80,7 @@ mca_mtl_ofi_la_SOURCES = $(mtl_ofi_sources)
 mca_mtl_ofi_la_LDFLAGS = \
         $(mtl_ofi_LDFLAGS) \
         -module -avoid-version
-mca_mtl_ofi_la_LIBADD = $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
+mca_mtl_ofi_la_LIBADD = $(top_builddir)/ompi/libopen-mpi.la \
         $(OPAL_TOP_BUILDDIR)/opal/mca/common/ofi/lib@OPAL_LIB_NAME@mca_common_ofi.la \
         $(mtl_ofi_LIBS)
 

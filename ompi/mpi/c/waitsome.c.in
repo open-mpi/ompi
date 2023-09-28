@@ -9,7 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
@@ -33,48 +34,40 @@
 #include "ompi/memchecker.h"
 #include "ompi/runtime/ompi_spc.h"
 
-#if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Waitall = PMPI_Waitall
-#endif
-#define MPI_Waitall PMPI_Waitall
-#endif
-
-static const char FUNC_NAME[] = "MPI_Waitall";
-
-
-int MPI_Waitall(int count, MPI_Request requests[], MPI_Status statuses[])
+PROTOTYPE ERROR_CLASS waitsome(INT incount, REQUEST_INOUT requests:incount,
+                               INT_OUT outcount, INT_OUT indices:incount,
+                               STATUS_OUT statuses:incount)
 {
-    SPC_RECORD(OMPI_SPC_WAITALL, 1);
+    SPC_RECORD(OMPI_SPC_WAITSOME, 1);
 
     MEMCHECKER(
         int j;
-        for (j = 0; j < count; j++){
+        for (j = 0; j < incount; j++){
             memchecker_request(&requests[j]);
         }
     );
 
     if ( MPI_PARAM_CHECK ) {
-        int i, rc = MPI_SUCCESS;
+        int indx, rc = MPI_SUCCESS;
         MPI_Request check_req = NULL;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-        if( (NULL == requests) && (0 != count) ) {
+        if ((NULL == requests) && (0 != incount)) {
             rc = MPI_ERR_REQUEST;
         } else {
-            for (i = 0; i < count; i++) {
-                if (NULL == requests[i]) {
+            for (indx = 0; indx < incount; ++indx) {
+                if (NULL == requests[indx]) {
                     rc = MPI_ERR_REQUEST;
                     break;
                 }
-                if (&ompi_request_empty == requests[i]) {
+                if (&ompi_request_empty == requests[indx]) {
                     continue;
-                } else if (NULL == requests[i]->req_mpi_object.comm) {
+                } else if (NULL == requests[indx]->req_mpi_object.comm) {
                     continue;
                 } else if (NULL == check_req) {
-                    check_req = requests[i];
+                    check_req = requests[indx];
                 }
                 else {
-                    if (!ompi_comm_instances_same(requests[i]->req_mpi_object.comm,
+                    if (!ompi_comm_instances_same(requests[indx]->req_mpi_object.comm,
                                                      check_req->req_mpi_object.comm)) {
                         rc = MPI_ERR_REQUEST;
                         break;
@@ -82,22 +75,25 @@ int MPI_Waitall(int count, MPI_Request requests[], MPI_Status statuses[])
                 }
             }
         }
-        if (count < 0) {
+        if (((NULL == outcount || NULL == indices) && incount > 0) ||
+            incount < 0) {
             rc = MPI_ERR_ARG;
         }
         OMPI_ERRHANDLER_NOHANDLE_CHECK(rc, rc, FUNC_NAME);
     }
 
-    if (OPAL_UNLIKELY(0 == count)) {
+    if (OPAL_UNLIKELY(0 == incount)) {
+        *outcount = MPI_UNDEFINED;
         return MPI_SUCCESS;
     }
 
-    if (OMPI_SUCCESS == ompi_request_wait_all(count, requests, statuses)) {
+    if (OMPI_SUCCESS == ompi_request_wait_some( incount, requests,
+                                                outcount, indices, statuses )) {
         return MPI_SUCCESS;
     }
 
     if (MPI_SUCCESS !=
-        ompi_errhandler_request_invoke(count, requests, FUNC_NAME)) {
+        ompi_errhandler_request_invoke(incount, requests, FUNC_NAME)) {
         return MPI_ERR_IN_STATUS;
     }
 

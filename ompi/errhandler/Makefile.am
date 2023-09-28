@@ -29,7 +29,7 @@ headers += \
         errhandler/errhandler.h \
         errhandler/errhandler_predefined.h
 
-lib@OMPI_LIBMPI_NAME@_la_SOURCES += \
+libopen_mpi_la_SOURCES += \
         errhandler/errhandler.c \
         errhandler/errhandler_invoke.c \
         errhandler/errhandler_predefined.c \

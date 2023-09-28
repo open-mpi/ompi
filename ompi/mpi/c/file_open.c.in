@@ -39,18 +39,8 @@
 
 extern opal_mutex_t ompi_mpi_file_bootstrap_mutex;
 
-#if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_File_open = PMPI_File_open
-#endif
-#define MPI_File_open PMPI_File_open
-#endif
-
-static const char FUNC_NAME[] = "MPI_File_open";
-
-
-int MPI_File_open(MPI_Comm comm, const char *filename, int amode,
-                  MPI_Info info, MPI_File *fh)
+PROTOTYPE ERROR_CLASS file_open(COMM comm, STRING filename, INT amode,
+                                INFO info, FILE_OUT fh)
 {
     int rc;
 

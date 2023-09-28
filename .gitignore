@@ -288,6 +288,7 @@ ompi/tools/ompi_info/ompi_info
 
 ompi/tools/wrappers/mpic++-wrapper-data.txt
 ompi/tools/wrappers/mpicc-wrapper-data.txt
+ompi/tools/wrappers/mpicc_abi-wrapper-data.txt
 ompi/tools/wrappers/mpifort-wrapper-data.txt
 ompi/tools/wrappers/ompi_wrapper_script
 ompi/tools/wrappers/ompi.pc
@@ -534,3 +535,9 @@ docs/_templates
 # Common Python virtual environment directory names
 venv
 py??
+
+# Generated C Bindings
+ompi/mpi/c/ompi_*.c
+ompi/mpi/c/standard_*.c
+ompi/mpi/c/abi.h
+ompi/mpi/c/standard_abi

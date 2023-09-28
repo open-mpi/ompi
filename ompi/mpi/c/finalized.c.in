@@ -28,17 +28,7 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/mca/hook/base/base.h"
 
-#if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Finalized = PMPI_Finalized
-#endif
-#define MPI_Finalized PMPI_Finalized
-#endif
-
-static const char FUNC_NAME[] = "MPI_Finalized";
-
-
-int MPI_Finalized(int *flag)
+PROTOTYPE ERROR_CLASS finalized(INT_OUT flag)
 {
     ompi_hook_base_mpi_finalized_top(flag);
 

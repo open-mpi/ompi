@@ -30,7 +30,7 @@ headers += \
 	runtime/ompi_spc.h \
 	runtime/ompi_rte.h
 
-lib@OMPI_LIBMPI_NAME@_la_SOURCES += \
+libopen_mpi_la_SOURCES += \
         runtime/ompi_mpi_init.c \
         runtime/ompi_mpi_abort.c \
         runtime/ompi_mpi_dynamics.c \

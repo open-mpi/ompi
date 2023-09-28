@@ -57,7 +57,7 @@ endif
 mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_mtl_psm2_la_SOURCES = $(mtl_psm2_sources)
-mca_mtl_psm2_la_LIBADD = $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
+mca_mtl_psm2_la_LIBADD = $(top_builddir)/ompi/libopen-mpi.la \
 	$(mtl_psm2_LIBS)
 mca_mtl_psm2_la_LDFLAGS = -module -avoid-version $(mtl_psm2_LDFLAGS)
 

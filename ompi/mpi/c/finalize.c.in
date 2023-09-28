@@ -25,17 +25,7 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/runtime/ompi_spc.h"
 
-#if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Finalize = PMPI_Finalize
-#endif
-#define MPI_Finalize PMPI_Finalize
-#endif
-
-static const char FUNC_NAME[] = "MPI_Finalize";
-
-
-int MPI_Finalize(void)
+PROTOTYPE ERROR_CLASS finalize()
 {
     /* If --with-spc and ompi_mpi_spc_dump_enabled were specified, print
      * all of the final SPC values aggregated across the whole MPI run.

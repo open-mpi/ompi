@@ -28,17 +28,7 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/mca/hook/base/base.h"
 
-#if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Initialized = PMPI_Initialized
-#endif
-#define MPI_Initialized PMPI_Initialized
-#endif
-
-static const char FUNC_NAME[] = "MPI_Initialized";
-
-
-int MPI_Initialized(int *flag)
+PROTOTYPE ERROR_CLASS initialized(INT_OUT flag)
 {
     ompi_hook_base_mpi_initialized_top(flag);
 

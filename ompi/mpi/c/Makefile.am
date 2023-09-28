@@ -34,21 +34,100 @@
 # layer, if weak symbols can't be used to alias the MPI_ namespace
 # into the PMPI_ namespace.
 
-noinst_LTLIBRARIES = libmpi_c.la libmpi_c_profile.la
+noinst_LTLIBRARIES = libmpi_c.la libmpi_c_profile.la libmpi_c_abi.la libmpi_c_abi_profile.la
 if BUILD_MPI_BINDINGS_LAYER
-noinst_LTLIBRARIES += libmpi_c_noprofile.la
+noinst_LTLIBRARIES += libmpi_c_noprofile.la libmpi_c_abi_noprofile.la
 endif
 
 headers = bindings.h
+
+prototype_sources = \
+        abort.c.in \
+        send.c.in \
+        isend.c.in \
+        recv.c.in \
+        irecv.c.in \
+        waitsome.c.in \
+        accumulate.c.in \
+        comm_f2c.c.in \
+        wtime.c.in \
+        file_open.c.in \
+        init.c.in \
+        finalize.c.in \
+        comm_rank.c.in \
+        comm_size.c.in \
+        waitall.c.in \
+        comm_split.c.in \
+        comm_split_type.c.in \
+        comm_free.c.in \
+        finalized.c.in \
+        initialized.c.in \
+        allreduce.c.in \
+        get_library_version.c.in \
+        get_processor_name.c.in \
+        barrier.c.in
+
+# Include script and template files in case someone wants to update the
+# ABI files
+EXTRA_DIST = abi.py $(prototype_sources)
 
 # attr_fn.c contains attribute manipulation functions which do not
 # profiling implications, and so are always built.
 libmpi_c_la_SOURCES = \
         attr_fn.c
+# The MPI_Abi_* functions do not require profiling implementations.
+libmpi_c_la_SOURCES += \
+        abi_details.c \
+        abi_supported.c \
+        abi_version.c
 libmpi_c_la_LIBADD = libmpi_c_profile.la
 if BUILD_MPI_BINDINGS_LAYER
 libmpi_c_la_LIBADD += libmpi_c_noprofile.la
 endif
+
+libmpi_c_abi_la_SOURCES = \
+        abi.h \
+        attr_fn.c \
+        abi_details.c \
+        abi_supported.c \
+        abi_version.c
+libmpi_c_abi_la_CPPFLAGS = -DOMPI_NO_MPI_PROTOTYPES
+libmpi_c_abi_la_LIBADD = libmpi_c_abi_profile.la
+if BUILD_MPI_BINDINGS_LAYER
+libmpi_c_abi_la_LIBADD += libmpi_c_abi_noprofile.la
+endif
+
+abi_interface_profile_sources = \
+        standard_abort.c \
+        standard_init.c \
+        standard_finalize.c \
+        standard_finalized.c \
+        standard_send.c \
+        standard_isend.c \
+        standard_recv.c \
+        standard_irecv.c \
+	standard_waitsome.c \
+        standard_accumulate.c \
+        standard_comm_f2c.c \
+        standard_wtime.c \
+        standard_file_open.c \
+        standard_comm_rank.c \
+        standard_comm_size.c \
+        standard_waitall.c \
+        standard_comm_split.c \
+        standard_comm_split_type.c \
+        standard_comm_free.c \
+        standard_initialized.c \
+        standard_allreduce.c \
+        standard_get_library_version.c \
+        standard_get_processor_name.c \
+        standard_barrier.c
+
+libmpi_c_abi_profile_la_SOURCES = $(abi_interface_profile_sources)
+libmpi_c_abi_profile_la_CPPFLAGS = -DOMPI_NO_MPI_PROTOTYPES -DOMPI_BUILD_MPI_PROFILING=1
+
+libmpi_c_abi_noprofile_la_SOURCES = $(abi_interface_profile_sources)
+libmpi_c_abi_noprofile_la_CPPFLAGS = -DOMPI_NO_MPI_PROTOTYPES -DOMPI_BUILD_MPI_PROFILING=0
 
 # Conditionally install the header files
 if WANT_INSTALL_HEADERS
@@ -60,7 +139,7 @@ endif
 # List of all C files that have profile versions
 #
 interface_profile_sources = \
-        abort.c \
+        ompi_abort.c \
         add_error_class.c \
         add_error_code.c \
         add_error_string.c \
@@ -71,7 +150,7 @@ interface_profile_sources = \
         iallgatherv.c \
         allgatherv_init.c \
         alloc_mem.c \
-        allreduce.c \
+        ompi_allreduce.c \
         iallreduce.c \
         allreduce_init.c \
         alltoall.c \
@@ -86,7 +165,7 @@ interface_profile_sources = \
         attr_delete.c \
         attr_get.c \
         attr_put.c \
-        barrier.c \
+        ompi_barrier.c \
         ibarrier.c \
         barrier_init.c \
         bcast.c \
@@ -122,8 +201,8 @@ interface_profile_sources = \
         comm_dup_with_info.c \
         comm_idup.c \
         comm_idup_with_info.c \
-        comm_f2c.c \
-        comm_free.c \
+        ompi_comm_f2c.c \
+        ompi_comm_free.c \
         comm_free_keyval.c \
         comm_get_attr.c \
         comm_get_errhandler.c \
@@ -132,7 +211,7 @@ interface_profile_sources = \
         comm_get_parent.c \
         comm_group.c \
         comm_join.c \
-        comm_rank.c \
+        ompi_comm_rank.c \
         comm_remote_group.c \
         comm_remote_size.c \
         comm_set_attr.c \
@@ -143,11 +222,11 @@ interface_profile_sources = \
         dist_graph_neighbors_count.c \
         comm_set_errhandler.c \
         comm_set_name.c \
-        comm_size.c \
+        ompi_comm_size.c \
         comm_spawn.c \
         comm_spawn_multiple.c \
-        comm_split.c \
-        comm_split_type.c \
+        ompi_comm_split.c \
+        ompi_comm_split_type.c \
         comm_test_inter.c \
         compare_and_swap.c \
         dims_create.c \
@@ -187,7 +266,7 @@ interface_profile_sources = \
         file_iwrite.c \
         file_iwrite_all.c \
         file_iwrite_shared.c \
-        file_open.c \
+        ompi_file_open.c \
         file_preallocate.c \
         file_read_all_begin.c \
         file_read_all.c \
@@ -221,8 +300,8 @@ interface_profile_sources = \
         file_write_ordered.c \
         file_write_ordered_end.c \
         file_write_shared.c \
-        finalize.c \
-        finalized.c \
+        ompi_finalize.c \
+        ompi_finalized.c \
         free_mem.c \
         gather.c \
         igather.c \
@@ -235,8 +314,8 @@ interface_profile_sources = \
         get_elements.c \
         get_elements_x.c \
         get_accumulate.c \
-        get_library_version.c \
-        get_processor_name.c \
+        ompi_get_library_version.c \
+        ompi_get_processor_name.c \
         get_version.c \
         graph_create.c \
         graph_get.c \
@@ -277,17 +356,17 @@ interface_profile_sources = \
         info_get_string.c \
         info_get_valuelen.c \
         info_set.c \
-        init.c \
+        ompi_init.c \
         init_thread.c \
-        initialized.c \
+        ompi_initialized.c \
         intercomm_create.c \
         intercomm_create_from_groups.c \
         intercomm_merge.c \
         iprobe.c \
-        irecv.c \
+        ompi_irecv.c \
         irsend.c \
         is_thread_main.c \
-        isend.c \
+        ompi_isend.c \
         isendrecv.c \
         isendrecv_replace.c \
         issend.c \
@@ -335,7 +414,7 @@ interface_profile_sources = \
         query_thread.c \
         raccumulate.c \
         recv_init.c \
-        recv.c \
+        ompi_recv.c \
         reduce.c \
         ireduce.c \
         reduce_init.c \
@@ -365,7 +444,6 @@ interface_profile_sources = \
         scatterv.c \
         iscatterv.c \
         scatterv_init.c \
-        send.c \
         send_init.c \
         sendrecv.c \
         sendrecv_replace.c \
@@ -440,12 +518,12 @@ interface_profile_sources = \
         unpack.c \
         unpublish_name.c \
         wait.c \
-        waitall.c \
+        ompi_waitall.c \
         waitany.c \
-        waitsome.c \
-        wtime.c \
+        ompi_waitsome.c \
+        ompi_wtime.c \
         wtick.c \
-        accumulate.c \
+        ompi_accumulate.c \
         get.c \
         put.c \
         win_allocate.c \
@@ -486,6 +564,7 @@ interface_profile_sources = \
         win_test.c \
         win_unlock.c \
         win_unlock_all.c \
+        ompi_send.c \
         win_wait.c
 
 # The following functions were removed from the MPI standard, but are
@@ -509,3 +588,19 @@ libmpi_c_profile_la_CPPFLAGS = -DOMPI_BUILD_MPI_PROFILING=1
 
 libmpi_c_noprofile_la_SOURCES = $(interface_profile_sources)
 libmpi_c_noprofile_la_CPPFLAGS = -DOMPI_BUILD_MPI_PROFILING=0
+
+nobase_include_HEADERS = standard_abi/mpi.h
+
+# ABI generation rules
+if OMPI_ENABLE_ABI_GENERATION
+ompi_%.c: %.c.in abi.py abi.h
+	$(srcdir)/abi.py source ompi $< > $@
+standard_%.c: %.c.in abi.py abi.h
+	$(srcdir)/abi.py source standard $< > $@
+abi.h: abi.py $(prototype_sources)
+	$(srcdir)/abi.py header $(prototype_sources) > $@
+
+standard_abi/mpi.h: abi.py $(prototype_sources)
+	mkdir -p $(srcdir)/standard_abi
+	$(srcdir)/abi.py header --external $(prototype_sources) > $@
+endif

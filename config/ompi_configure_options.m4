@@ -244,5 +244,24 @@ else
 fi
 AM_CONDITIONAL(OMPI_OMPIO_SUPPORT, test "$ompi_want_ompio" = "1")
 
+#
+# Is this a developer copy?
+#
+
+if test -d .git; then
+    OMPI_DEVEL=1
+else
+    OMPI_DEVEL=0
+fi
+
+AC_MSG_CHECKING([if want to generate ABI bindings])
+AC_ARG_ENABLE([abi-generation],
+    [AS_HELP_STRING([--enable-abi-generation],
+                    [generate ABI bindings (requires Python >=3.8)])])
+AS_IF([test "$enable_abi_generation" = "yes" || test "$OMPI_DEVEL" = "1"],
+      [AM_PATH_PYTHON([3.8],,[AC_MSG_ERROR([Open MPI required Python >=3.8. Aborting])])])
+# abi-generation is enabled by default in developer copies
+AM_CONDITIONAL(OMPI_ENABLE_ABI_GENERATION, [test "$enable_abi_generation" = "yes" || test "$OMPI_DEVEL" = "1"])
+
 ])dnl
 

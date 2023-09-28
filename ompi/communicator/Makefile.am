@@ -28,14 +28,14 @@ headers += \
         communicator/communicator.h \
 	communicator/comm_request.h
 
-lib@OMPI_LIBMPI_NAME@_la_SOURCES += \
+libopen_mpi_la_SOURCES += \
         communicator/comm_init.c \
 	communicator/comm.c \
 	communicator/comm_cid.c \
 	communicator/comm_request.c
 
 if WANT_FT_MPI
-lib@OMPI_LIBMPI_NAME@_la_SOURCES += \
+libopen_mpi_la_SOURCES += \
 	communicator/ft/comm_ft.c communicator/ft/comm_ft_reliable_bcast.c communicator/ft/comm_ft_propagator.c communicator/ft/comm_ft_detector.c communicator/ft/comm_ft_revoke.c
 endif # WANT_FT_MPI
 

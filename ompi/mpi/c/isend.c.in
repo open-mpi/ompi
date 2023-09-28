@@ -10,10 +10,11 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2012 Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -21,34 +22,24 @@
  *
  * $HEADER$
  */
+
 #include "ompi_config.h"
-#include <stdio.h>
 
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/mca/pml/pml.h"
-#include "ompi/datatype/ompi_datatype.h"
+#include "ompi/request/request.h"
 #include "ompi/memchecker.h"
 #include "ompi/runtime/ompi_spc.h"
 
-#if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Send = PMPI_Send
-#endif
-#define MPI_Send PMPI_Send
-#endif
-
-static const char FUNC_NAME[] = "MPI_Send";
-
-
-int MPI_Send(const void *buf, int count, MPI_Datatype type, int dest,
-             int tag, MPI_Comm comm)
+PROTOTYPE ERROR_CLASS isend(BUFFER buf, COUNT count, DATATYPE type, INT dest,
+                            INT tag, COMM comm, REQUEST_INOUT request)
 {
     int rc = MPI_SUCCESS;
 
-    SPC_RECORD(OMPI_SPC_SEND, 1);
+    SPC_RECORD(OMPI_SPC_ISEND, 1);
 
     MEMCHECKER(
         memchecker_datatype(type);
@@ -62,11 +53,15 @@ int MPI_Send(const void *buf, int count, MPI_Datatype type, int dest,
             return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_COMM, FUNC_NAME);
         } else if (count < 0) {
             rc = MPI_ERR_COUNT;
+        } else if (MPI_DATATYPE_NULL == type || NULL == type) {
+            rc = MPI_ERR_TYPE;
         } else if (tag < 0 || tag > mca_pml.pml_max_tag) {
             rc = MPI_ERR_TAG;
         } else if (ompi_comm_peer_invalid(comm, dest) &&
                    (MPI_PROC_NULL != dest)) {
             rc = MPI_ERR_RANK;
+        } else if (request == NULL) {
+            rc = MPI_ERR_REQUEST;
         } else {
             OMPI_CHECK_DATATYPE_FOR_SEND(rc, type, count);
             OMPI_CHECK_USER_BUFFER(rc, buf, type, count);
@@ -74,22 +69,28 @@ int MPI_Send(const void *buf, int count, MPI_Datatype type, int dest,
         OMPI_ERRHANDLER_CHECK(rc, comm, rc, FUNC_NAME);
     }
 
-#if OPAL_ENABLE_FT_MPI
-    /*
-     * An early check, so as to return early if we are communicating with
-     * a failed process. This is not absolutely necessary since we will
-     * check for this, and other, error conditions during the completion
-     * call in the PML.
-     */
-    if( OPAL_UNLIKELY(!ompi_comm_iface_p2p_check_proc(comm, dest, &rc)) ) {
-        OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME);
-    }
-#endif
-
     if (MPI_PROC_NULL == dest) {
+        *request = &ompi_request_empty;
         return MPI_SUCCESS;
     }
 
-    rc = MCA_PML_CALL(send(buf, count, type, dest, tag, MCA_PML_BASE_SEND_STANDARD, comm));
+#if OPAL_ENABLE_FT_MPI
+    /*
+     * The request will be checked for process failure errors during the
+     * completion calls. So no need to check here.
+     */
+#endif
+
+    /*
+     * today's MPI standard mandates the send buffer remains accessible during the send operation
+     * hence memchecker cannot mark buf as non accessible, but it might mark buf as read-only in
+     * order to trap end user errors. Unfortunately valgrind does not support marking buffers as read-only,
+     * so there is pretty much nothing we can do here.
+     */
+
+    rc = MCA_PML_CALL(isend(buf, count, type, dest, tag,
+                            MCA_PML_BASE_SEND_STANDARD, comm, request));
     OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME);
 }
+
+
