@@ -24,4 +24,4 @@
 
 headers += op/op.h
 
-lib@OMPI_LIBMPI_NAME@_la_SOURCES += op/op.c
+libopen_mpi_la_SOURCES += op/op.c

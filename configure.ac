@@ -147,6 +147,8 @@ OPAL_SAVE_VERSION([OPAL], [Open Portable Access Layer], [$srcdir/VERSION],
 
 m4_ifdef([project_ompi],
          [AC_SUBST(libmpi_so_version)
+          AC_SUBST(libmpi_abi_so_version)
+          AC_SUBST(libopen_mpi_so_version)
           AC_SUBST(libmpi_mpifh_so_version)
           AC_SUBST(libmpi_usempi_tkr_so_version)
           AC_SUBST(libmpi_usempi_ignore_tkr_so_version)

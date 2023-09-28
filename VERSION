@@ -92,6 +92,17 @@ date="Unreleased developer copy"
 # but they are "public" within the OMPI code base and select 3rd party
 # software packages.
 
+# libmpi_abi is SPECIAL: unlike every other library in this file, its
+# SONAME is deliberately NOT 0:0:0 and is NOT set by the Open MPI release
+# managers.  The MPI Standard ABI (MPI-5.0 chapter 20) intentionally does
+# NOT mandate an SONAME.  Instead, Open MPI, MPICH, and the MPI Forum ABI
+# stubs reference implementation set it by convention: for an application
+# to switch between MPI implementations -- or between Open MPI versions --
+# without recompiling, every implementation of a given ABI version must
+# expose the same SONAME.  By that shared convention the value is 1, so
+# standard ABI version 1 is always libmpi_abi.so.1 everywhere.  It
+# therefore carries its real value on every branch; DO NOT reset to 0:0:0.
+
 # Version numbers are described in the Libtool current:revision:age
 # format.
 
@@ -100,9 +111,11 @@ libmpi_mpifh_so_version=0:0:0
 libmpi_usempi_tkr_so_version=0:0:0
 libmpi_usempi_ignore_tkr_so_version=0:0:0
 libmpi_usempif08_so_version=0:0:0
+libmpi_abi_so_version=1:0:0
 libopen_pal_so_version=0:0:0
 liboshmem_so_version=0:0:0
 libompitrace_so_version=0:0:0
+libopen_mpi_so_version=0:0:0
 
 # "Common" components install standalone libraries that are run-time
 # linked by one or more components.  So they need to be versioned as

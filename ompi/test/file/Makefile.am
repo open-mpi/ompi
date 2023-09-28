@@ -26,8 +26,15 @@ TESTS = $(check_PROGRAMS)
 
 common_headers = ompio_file_info_common.h
 common_ldflags = $(OMPI_PKG_CONFIG_LDFLAGS)
+# These tests use MPI_* APIs (libmpi) but also reference internal OMPI
+# symbols (e.g. predefined datatypes such as ompi_mpi_int, pulled in
+# via MPI_* macro expansion) that live in libopen_mpi.  libopen_mpi is
+# a dependency of libmpi, but the linker does not always pull it in
+# transitively (e.g. in some uninstalled "make check" / distro linker
+# configurations), so link it explicitly.
 common_ldadd = \
         $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
+        $(top_builddir)/ompi/libopen_mpi.la \
         $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
 
 file_info_defaults_SOURCES = file_info_defaults.c $(common_headers)
