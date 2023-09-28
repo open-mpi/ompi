@@ -22,6 +22,6 @@
 headers += \
         attribute/attribute.h
 
-lib@OMPI_LIBMPI_NAME@_la_SOURCES += \
+libopen_mpi_la_SOURCES += \
         attribute/attribute.c \
         attribute/attribute_predefined.c

@@ -325,12 +325,15 @@ ompi/tools/ompi_info/ompi_info
 
 ompi/tools/wrappers/mpic++-wrapper-data.txt
 ompi/tools/wrappers/mpicc-wrapper-data.txt
+ompi/tools/wrappers/mpicc_abi-wrapper-data.txt
 ompi/tools/wrappers/mpifort-wrapper-data.txt
 ompi/tools/wrappers/ompi_wrapper_script
 ompi/tools/wrappers/ompi.pc
 ompi/tools/wrappers/ompi-c.pc
 ompi/tools/wrappers/ompi-cxx.pc
-ompi/tools/wrappers/ompi-fort.pc
+ompi/tools/wrappers/ompi-abi-c.pc
+ompi/tools/wrappers/ompi-abi-cxx.pc
+ompi/tools/wrappers/ompi-abi.pc
 ompi/tools/wrappers/mpicxx-wrapper-data.txt
 ompi/tools/wrappers/mpif77-wrapper-data.txt
 ompi/tools/wrappers/mpif90-wrapper-data.txt
@@ -608,6 +611,9 @@ docs/code-of-conduct.rst
 
 # Generated C Bindings
 ompi/mpi/c/*_generated*.c
+ompi/mpi/c/standard_*.c
+ompi/mpi/c/abi.h
+ompi/mpi/c/standard_abi
 
 # Generated Fortran Bindings
 ompi/mpi/fortran/use-mpi-f08/*_generated.F90

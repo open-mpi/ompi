@@ -17,31 +17,42 @@
 
 # This test requires multiple processes to run. Don't run it as part
 # of 'make check'
+# These programs use MPI_* APIs (libmpi) but also reference internal
+# OMPI symbols -- e.g. predefined datatype objects such as
+# ompi_mpi_int, pulled in via MPI_* macro expansion -- that live in
+# libopen_mpi.  libopen_mpi is a dependency of libmpi, but the linker
+# does not always pull it in transitively (e.g. in some uninstalled
+# "make check" / distro linker configurations), so link it explicitly.
 noinst_PROGRAMS = monitoring_test test_pvar_access test_overhead check_monitoring example_reduce_count
 monitoring_test_SOURCES = monitoring_test.c
 monitoring_test_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
 monitoring_test_LDADD = \
         $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
+        $(top_builddir)/ompi/libopen_mpi.la \
         $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
 test_pvar_access_SOURCES = test_pvar_access.c
 test_pvar_access_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
 test_pvar_access_LDADD = \
         $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
+        $(top_builddir)/ompi/libopen_mpi.la \
         $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
 test_overhead_SOURCES = test_overhead.c
 test_overhead_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
 test_overhead_LDADD = \
         $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
+        $(top_builddir)/ompi/libopen_mpi.la \
         $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
 check_monitoring_SOURCES = check_monitoring.c
 check_monitoring_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
 check_monitoring_LDADD = \
         $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
+        $(top_builddir)/ompi/libopen_mpi.la \
         $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
 example_reduce_count_SOURCES = example_reduce_count.c
 example_reduce_count_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
 example_reduce_count_LDADD = \
         $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
+        $(top_builddir)/ompi/libopen_mpi.la \
         $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
 
 distclean-local:

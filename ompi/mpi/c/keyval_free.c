@@ -28,7 +28,13 @@
 #include "ompi/attribute/attribute.h"
 #include "ompi/communicator/communicator.h"
 
-PROTOTYPE ERROR_CLASS keyval_free(INT_OUT keyval)
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_ALIASES
+#pragma weak MPI_Keyval_free = PMPI_Keyval_free
+#endif
+#define MPI_Keyval_free PMPI_Keyval_free
+#endif
+int MPI_Keyval_free(int *keyval)
 {
     int ret;
 
@@ -36,10 +42,10 @@ PROTOTYPE ERROR_CLASS keyval_free(INT_OUT keyval)
     if (MPI_PARAM_CHECK) {
         if (NULL == keyval) {
             return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_KEYVAL,
-                                          FUNC_NAME);
+                                          "MPI_Keyval_free");
         }
     }
 
     ret = ompi_attr_free_keyval(COMM_ATTR, keyval, 0);
-    OMPI_ERRHANDLER_NOHANDLE_RETURN(ret, MPI_ERR_OTHER, FUNC_NAME);
+    OMPI_ERRHANDLER_NOHANDLE_RETURN(ret, MPI_ERR_OTHER, "MPI_Keyval_free");
 }

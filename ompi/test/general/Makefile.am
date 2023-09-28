@@ -49,10 +49,17 @@ check_PROGRAMS = \
 
 TESTS = $(check_PROGRAMS)
 
-# Common link line for OMPI-level unit tests: libmpi pulls in the OMPI
-# layer, which in turn depends on libopen-pal.
+# Common link line for OMPI-level unit tests.  These tests call MPI_*
+# APIs (libmpi), but they also call internal OMPI routines directly
+# (e.g. ompi_info_get(), ompi_datatype_*()) and reference predefined
+# objects such as ompi_mpi_int that MPI_* macros expand to; all of those
+# live in libopen_mpi.  libopen_mpi is a dependency of libmpi, but the
+# linker does not always pull it in transitively (e.g. in some
+# uninstalled "make check" / distro linker configurations), so link it
+# explicitly.  libopen-pal underlies both.
 ompi_test_ldadd = \
         $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
+        $(top_builddir)/ompi/libopen_mpi.la \
         $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la \
         libompitest_support.a
 
@@ -157,6 +164,7 @@ attr_interlang_mpifh_FCFLAGS = $(attr_interlang_fcflags)
 attr_interlang_mpifh_LDADD = \
 	$(top_builddir)/ompi/mpi/fortran/mpif-h/libmpi_mpifh.la \
 	$(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
+	$(top_builddir)/ompi/libopen_mpi.la \
 	$(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
 attr_interlang_mpifh_DEPENDENCIES = $(attr_interlang_mpifh_LDADD)
 attr_interlang_mpifh.f90: $(srcdir)/attr_interlang_source.F90
@@ -178,6 +186,7 @@ attr_interlang_usempi_LDADD = \
 	$(top_builddir)/ompi/mpi/fortran/use-mpi-ignore-tkr/libmpi_usempi_ignore_tkr.la \
 	$(top_builddir)/ompi/mpi/fortran/mpif-h/libmpi_mpifh.la \
 	$(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
+	$(top_builddir)/ompi/libopen_mpi.la \
 	$(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
 attr_interlang_usempi_DEPENDENCIES = $(attr_interlang_usempi_LDADD)
 attr_interlang_usempi.f90: $(srcdir)/attr_interlang_source.F90
@@ -200,6 +209,7 @@ attr_interlang_usempif08_LDADD = \
 	$(top_builddir)/ompi/mpi/fortran/use-mpi-ignore-tkr/libmpi_usempi_ignore_tkr.la \
 	$(top_builddir)/ompi/mpi/fortran/mpif-h/libmpi_mpifh.la \
 	$(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
+	$(top_builddir)/ompi/libopen_mpi.la \
 	$(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
 attr_interlang_usempif08_DEPENDENCIES = $(attr_interlang_usempif08_LDADD)
 attr_interlang_usempif08.f90: $(srcdir)/attr_interlang_source.F90
