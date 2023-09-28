@@ -34,7 +34,7 @@ mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_fbtl_posix_la_SOURCES = $(sources)
 mca_fbtl_posix_la_LDFLAGS = -module -avoid-version
-mca_fbtl_posix_la_LIBADD = $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
+mca_fbtl_posix_la_LIBADD = $(top_builddir)/ompi/libopen-mpi.la \
     $(OMPI_TOP_BUILDDIR)/ompi/mca/common/ompio/libmca_common_ompio.la
 
 noinst_LTLIBRARIES = $(component_noinst)

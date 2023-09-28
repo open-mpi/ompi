@@ -36,7 +36,7 @@ endif
 mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_osc_portals4_la_SOURCES = $(portals4_sources)
-mca_osc_portals4_la_LIBADD = $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
+mca_osc_portals4_la_LIBADD = $(top_builddir)/ompi/libopen-mpi.la \
 	$(osc_portals4_LIBS)
 mca_osc_portals4_la_LDFLAGS = -module -avoid-version $(osc_portals4_LDFLAGS)
 
