@@ -43,7 +43,7 @@ AM_CPPFLAGS = $(fs_lustre_CPPFLAGS)
 mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_fs_lustre_la_SOURCES = $(fs_lustre_sources)
-mca_fs_lustre_la_LIBADD = $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
+mca_fs_lustre_la_LIBADD = $(top_builddir)/ompi/libopen-mpi.la \
 	$(fs_lustre_LIBS)
 mca_fs_lustre_la_LDFLAGS = -module -avoid-version $(fs_lustre_LDFLAGS)
 

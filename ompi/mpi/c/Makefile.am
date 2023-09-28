@@ -43,8 +43,11 @@ include $(top_srcdir)/Makefile.ompi-rules
 SUFFIXES= _generated.c .c.in
 
 noinst_LTLIBRARIES = libmpi_c.la libmpi_c_profile.la
+if OMPI_STANDARD_ABI
+noinst_LTLIBRARIES += libmpi_c_abi.la libmpi_c_abi_profile.la
+endif
 if BUILD_MPI_BINDINGS_LAYER
-noinst_LTLIBRARIES += libmpi_c_noprofile.la
+noinst_LTLIBRARIES += libmpi_c_noprofile.la libmpi_c_abi_noprofile.la
 endif
 
 headers = bindings.h
@@ -500,17 +503,39 @@ prototype_sources = \
 	win_wait.c.in \
         wtime.c.in
 
-# Include template files in case someone wants to update them
 EXTRA_DIST = $(prototype_sources)
 
 # attr_fn.c contains attribute manipulation functions which do not
 # profiling implications, and so are always built.
 libmpi_c_la_SOURCES = \
         attr_fn.c
+# The MPI_Abi_* functions do not require profiling implementations.
+libmpi_c_la_SOURCES += \
+        abi_details.c \
+        abi_supported.c \
+        abi_version.c
 libmpi_c_la_LIBADD = libmpi_c_profile.la
 if BUILD_MPI_BINDINGS_LAYER
 libmpi_c_la_LIBADD += libmpi_c_noprofile.la
 endif
+
+libmpi_c_abi_la_SOURCES = \
+        abi.h \
+        attr_fn.c \
+        abi_details.c \
+        abi_supported.c \
+        abi_version.c
+libmpi_c_abi_la_CPPFLAGS = -DOMPI_NO_MPI_PROTOTYPES
+libmpi_c_abi_la_LIBADD = libmpi_c_abi_profile.la
+if BUILD_MPI_BINDINGS_LAYER
+libmpi_c_abi_la_LIBADD += libmpi_c_abi_noprofile.la
+endif
+
+libmpi_c_abi_profile_la_SOURCES = $(abi_interface_profile_sources)
+libmpi_c_abi_profile_la_CPPFLAGS = -DOMPI_NO_MPI_PROTOTYPES -DOMPI_BUILD_MPI_PROFILING=1
+
+libmpi_c_abi_noprofile_la_SOURCES = $(abi_interface_profile_sources)
+libmpi_c_abi_noprofile_la_CPPFLAGS = -DOMPI_NO_MPI_PROTOTYPES -DOMPI_BUILD_MPI_PROFILING=0
 
 # Conditionally install the header files
 if WANT_INSTALL_HEADERS
@@ -519,7 +544,7 @@ ompi_HEADERS = $(headers)
 endif
 
 #
-# List of all C files that have profile versions (generated_*.c files were
+# List of all C files that have profile versions (*_generated.c files were
 # generated from prototype_sources above).
 #
 #
@@ -970,6 +995,8 @@ interface_profile_sources = \
 	win_wait_generated.c \
 	wtime_generated.c
 
+abi_interface_profile_sources =${interface_profile_sources:%=standard_%}
+
 # The following are special case functions where we
 # have to deal manually
 #
@@ -1006,6 +1033,7 @@ libmpi_c_noprofile_la_CPPFLAGS = -DOMPI_BUILD_MPI_PROFILING=0
 
 # ABI generation rules
 .c.in_generated.c:
+if OMPI_GENERATE_BINDINGS
 	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
 	    --builddir $(abs_top_builddir) \
 	    --srcdir $(abs_top_srcdir) \
@@ -1015,8 +1043,23 @@ libmpi_c_noprofile_la_CPPFLAGS = -DOMPI_BUILD_MPI_PROFILING=0
 	    ompi \
 	    $<
 
+standard_%_generated.c: %.c.in
+	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
+	    --builddir $(abs_top_builddir) \
+	    --srcdir $(abs_top_srcdir) \
+	    --output $@ \
+	    c \
+	    source \
+	    standard \
+            $<
+abi.h: abi.py $(prototype_sources)
+	$(OMPI_V_GEN) $(PYTHON) $(srcdir)/abi.py header --srcdir=$(srcdir) $(prototype_sources) > $@
+standard_abi/mpi.h: abi.py $(prototype_sources)
+	mkdir -p standard_abi
+	$(OMPI_V_GEN) $(PYTHON) $(srcdir)/abi.py header --srcdir=$(srcdir) --external $(prototype_sources) > $@
+endif
 # Delete generated files on maintainer-clean
-MAINTAINERCLEANFILES = *_generated.c
+MAINTAINERCLEANFILES = *_generated.c abi.h standard_abi/
 if OPAL_DEVEL_BUILD
 CLEANFILES += *_generated.c
 endif
