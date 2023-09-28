@@ -551,7 +551,8 @@ AC_DEFUN([OPAL_SETUP_WRAPPER_FINAL],[
        AC_SUBST([OMPI_WRAPPER_FCFLAGS_PREFIX])
        AC_MSG_RESULT([$OMPI_WRAPPER_FCFLAGS_PREFIX])
 
-       wrapper_finalize_ompi_libs="-l${OMPI_LIBMPI_NAME}"
+       wrapper_finalize_ompi_libs="-l${OMPI_LIBMPI_NAME} -lopen_mpi"
+       wrapper_finalize_ompi_abi_libs="-lmpi_abi"
 
        dnl No matter the configuration (see the 5 cases above), the base
        dnl flags should contain a -L${libdir} and -lmpi, so that those
@@ -624,6 +625,23 @@ AC_DEFUN([OPAL_SETUP_WRAPPER_FINAL],[
        AC_MSG_CHECKING([for OMPI wrapper static LIBS])
        AC_SUBST([OMPI_WRAPPER_LIBS_STATIC])
        AC_MSG_RESULT([$OMPI_WRAPPER_LIBS_STATIC])
+
+       AC_MSG_CHECKING([for OMPI ABI wrapper LIBS])
+       OMPI_WRAPPER_ABI_LIBS="${wrapper_finalize_ompi_abi_libs}"
+       AC_SUBST([OMPI_WRAPPER_ABI_LIBS])
+       AC_MSG_RESULT([$OMPI_WRAPPER_ABI_LIBS])
+
+       dnl For static linking, an application linking libmpi_abi.a needs
+       dnl libmpi_abi's own dependency tree: libopen_mpi plus the same
+       dnl static dependencies computed for the standard wrapper above.
+       dnl Like OMPI_WRAPPER_LIBS_STATIC, this stays empty in shared-only
+       dnl builds.
+       AC_MSG_CHECKING([for OMPI ABI wrapper static LIBS])
+       AS_IF([test -n "${OMPI_WRAPPER_LIBS_STATIC}"],
+             [OMPI_WRAPPER_ABI_LIBS_STATIC="-lopen_mpi ${OMPI_WRAPPER_LIBS_STATIC}"],
+             [OMPI_WRAPPER_ABI_LIBS_STATIC=])
+       AC_SUBST([OMPI_WRAPPER_ABI_LIBS_STATIC])
+       AC_MSG_RESULT([$OMPI_WRAPPER_ABI_LIBS_STATIC])
 
        AC_MSG_CHECKING([for OMPI wrapper Fortran LDFLAGS])
        AC_SUBST([OMPI_WRAPPER_FC_LDFLAGS])
@@ -711,6 +729,35 @@ AC_DEFUN([OPAL_SETUP_WRAPPER_FINAL],[
        OMPI_PC_LIBS_PRIVATE=`echo ${OMPI_PC_LIBS_PRIVATE} | sed -e 's/@{/\${/g'`
        AC_SUBST([OMPI_PC_LIBS_PRIVATE])
        AC_MSG_RESULT([${OMPI_PC_LIBS_PRIVATE}])
+
+       dnl Equivalents for the MPI Forum ABI pkg-config files
+       dnl (ompi-abi*.pc).  The Cflags intentionally omit
+       dnl OMPI_WRAPPER_CPPFLAGS: the ABI pc files set includedir to the
+       dnl standard_abi subdirectory themselves, mirroring what the
+       dnl mpicc_abi wrapper passes.
+       AC_MSG_CHECKING([for OMPI ABI pkg-config Cflags])
+       OMPI_ABI_PC_CFLAGS="${OMPI_WRAPPER_CFLAGS} ${OMPI_WRAPPER_CFLAGS_PREFIX}"
+       OMPI_ABI_PC_CFLAGS=`echo ${OMPI_ABI_PC_CFLAGS} | sed -e 's/@{/\${/g'`
+       AC_SUBST([OMPI_ABI_PC_CFLAGS])
+       AC_MSG_RESULT([${OMPI_ABI_PC_CFLAGS}])
+
+       AC_MSG_CHECKING([for OMPI ABI pkg-config CXXflags])
+       OMPI_ABI_PC_CXXFLAGS="${OMPI_WRAPPER_CXXFLAGS} ${OMPI_WRAPPER_CXXFLAGS_PREFIX}"
+       OMPI_ABI_PC_CXXFLAGS=`echo ${OMPI_ABI_PC_CXXFLAGS} | sed -e 's/@{/\${/g'`
+       AC_SUBST([OMPI_ABI_PC_CXXFLAGS])
+       AC_MSG_RESULT([${OMPI_ABI_PC_CXXFLAGS}])
+
+       AC_MSG_CHECKING([for OMPI ABI pkg-config Libs])
+       OMPI_ABI_PC_LIBS="${OMPI_WRAPPER_LDFLAGS} ${OMPI_WRAPPER_ABI_LIBS}"
+       OMPI_ABI_PC_LIBS=`echo ${OMPI_ABI_PC_LIBS} | sed -e 's/@{/\${/g'`
+       AC_SUBST([OMPI_ABI_PC_LIBS])
+       AC_MSG_RESULT([${OMPI_ABI_PC_LIBS}])
+
+       AC_MSG_CHECKING([for OMPI ABI pkg-config Libs.private])
+       OMPI_ABI_PC_LIBS_PRIVATE="${OMPI_WRAPPER_LDFLAGS_STATIC} ${OMPI_WRAPPER_ABI_LIBS_STATIC}"
+       OMPI_ABI_PC_LIBS_PRIVATE=`echo ${OMPI_ABI_PC_LIBS_PRIVATE} | sed -e 's/@{/\${/g'`
+       AC_SUBST([OMPI_ABI_PC_LIBS_PRIVATE])
+       AC_MSG_RESULT([${OMPI_ABI_PC_LIBS_PRIVATE}])
 
        AC_MSG_CHECKING([for OMPI pkg-config Fortran Cflags])
        OMPI_PC_FC_CFLAGS="${OMPI_WRAPPER_FCFLAGS} ${OMPI_WRAPPER_FCFLAGS_PREFIX}"

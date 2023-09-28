@@ -23,5 +23,5 @@
 headers += \
         win/win.h
 
-lib@OMPI_LIBMPI_NAME@_la_SOURCES += \
+libopen_mpi_la_SOURCES += \
         win/win.c

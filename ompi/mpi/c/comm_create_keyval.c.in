@@ -36,6 +36,7 @@ PROTOTYPE ERROR_CLASS comm_create_keyval(COMM_COPY_ATTR_FUNCTION comm_copy_attr_
                                          INT_OUT comm_keyval, BUFFER_OUT extra_state)
 {
     int ret;
+    int flags = 0;
     ompi_attribute_fn_ptr_union_t copy_fn;
     ompi_attribute_fn_ptr_union_t del_fn;
 
@@ -48,11 +49,16 @@ PROTOTYPE ERROR_CLASS comm_create_keyval(COMM_COPY_ATTR_FUNCTION comm_copy_attr_
         }
     }
 
+#if OMPI_ABI_SRC
+    copy_fn.attr_communicator_copy_fn = ompi_abi_copy_attr_fn;
+    del_fn.attr_communicator_delete_fn = ompi_abi_delete_attr_fn;
+#else
     copy_fn.attr_communicator_copy_fn = comm_copy_attr_fn;
     del_fn.attr_communicator_delete_fn = comm_delete_attr_fn;
+#endif
 
-    ret = ompi_attr_create_keyval(COMM_ATTR, copy_fn,
-                                  del_fn, comm_keyval, extra_state, 0, NULL);
+    ret = ompi_attr_create_keyval(COMM_ATTR, copy_fn, del_fn,
+                                  comm_keyval, extra_state, flags, NULL);
 
     OMPI_ERRHANDLER_NOHANDLE_RETURN(ret, MPI_ERR_OTHER, FUNC_NAME);
 }
