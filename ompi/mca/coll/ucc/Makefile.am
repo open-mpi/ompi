@@ -50,7 +50,7 @@ endif
 mcacomponentdir          = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_coll_ucc_la_SOURCES  = $(coll_ucc_sources)
-mca_coll_ucc_la_LIBADD   = $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
+mca_coll_ucc_la_LIBADD   = $(top_builddir)/ompi/libopen-mpi.la \
 	                     $(coll_ucc_LIBS)
 mca_coll_ucc_la_LDFLAGS  = -module -avoid-version $(coll_ucc_LDFLAGS)
 
