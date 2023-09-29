@@ -17,7 +17,7 @@ jobs:
         curl -fsSL https://repo.radeon.com/rocm/rocm.gpg.key | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/rocm-keyring.gpg
         echo 'deb [arch=amd64 signed-by=/etc/apt/trusted.gpg.d/rocm-keyring.gpg]  https://repo.radeon.com/rocm/apt/debian focal main' | sudo tee /etc/apt/sources.list.d/rocm.list
         sudo apt-get update
-        sudo apt-get install -y rocm-hip-sdk
+        sudo apt-get install -y rocm-hip-runtime
     - uses: actions/checkout@v3
       with:
             submodules: recursive
@@ -26,3 +26,9 @@ jobs:
         ./autogen.pl
         ./configure --prefix=${PWD}/install --with-rocm=/opt/rocm --disable-mpi-fortran
         make -j
+    - name: Clean up
+      run: |
+        ls -la ./
+        rm -rf ./* 
+        rm -rf ./.??*
+        ls -la ./
