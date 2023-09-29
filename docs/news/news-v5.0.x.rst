@@ -4,9 +4,9 @@ Open MPI v5.0.x series
 This file contains all the NEWS updates for the Open MPI v5.0.x
 series, in reverse chronological order.
 
-Open MPI version 5.0.0rc12
+Open MPI version 5.0.0rc13
 --------------------------
-:Date: 19 May 2023
+:Date: 29 September 2023
 
 .. admonition:: The MPIR API has been removed
    :class: warning
@@ -66,30 +66,23 @@ Open MPI version 5.0.0rc12
                 Libevent symbols and then statically pulled the
                 library into ``libmpi.so``.
 
-- Changes since rc11:
+- Changes since rc12:
 
-  - ``accelerator/rocm``: add SYNC_MEMOPS support.
-  - Update PMIx, PRRTe, and OAC submodule pointers.
-  - Fix ``mca_btl_ofi_flush()`` in multithreaded environments..
-  - ``smcuda``: fixed an edge case when building MCA components as
-    dynamic shared objects.
-  - Fix ``MPI_Session_init()`` bug if all previous sessions are
-    finalized.
-  - Fix `mpi4py <https://mpi4py.github.io/>`_ hang in
-    ``MPI_Intercomm_create_from_groups()``.
-  - Fix finalization segfault with OSHMEM 4.1.5.
-  - Improve AVX detection. Fixes ``op/avx`` link failure with the
-    ``nvhpc`` compiler.
-  - Fix incorrect results with ``pml/ucx`` using Intel compiler.
-  - Fix segfault when broadcasting large MPI structs.
-  - Add platform files for Google Cloud HPC.
-  - UCC/HCOLL: Fix ``MPI_Waitall()`` for non blokcing collectives.
-  - Fix pre-built docs check.
+  - Update PMIx to the ``v4.2.6`` release tag. Hash: ``f20e0d5``.
+  - Update PRRTE to the ``v3.0.1`` release tag. Hash: ``63370ca``.
+  - Lots of documentation updates.
+  - Fixed parameter name in ``MPI_Intercomm_merge``. Thanks to Yan Wu for the report.
+  - ``OFI``: Update NIC selection to determine optimal interfaces from the current process.
+  - Fix reordering of received data in ``MPI_Gather``.
+  - Disable builds with ``HWLOC`` versions >= 3.0.0. This is currently not supported.
+  - Fix re-ordering of ranks in ``MPI_Dist_graph_create``.
+  - ``coll/HAN``: Fix bug when using ``MPI_IN_PLACE`` with ``MPI_Reduce``.
+  - Fix ``MPI_Type_Dup`` to propagate errors from inner calls.
+  - Fix the compilation of the monitoring infrastructure.
+  - Various other bug fixes.
 
 - All other notable updates for v5.0.0:
 
-  - Update PMIx to the ``v4.2`` branch - current hash: ``f34a7ce2``.
-  - Update PRRTE to the ``v3.0`` branch - current hash: ``c4925aa5cc``.
   - New Features:
 
     - ULFM Fault Tolerance support has been added. See :ref:`the ULFM
