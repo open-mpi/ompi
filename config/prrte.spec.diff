@@ -1,0 +1,20 @@
+--- 3rd-party/prrte/contrib/dist/linux/prrte.spec	2023-10-03 08:12:43.842625000 -0400
++++ 3rd-party/prrte/contrib/dist/linux/prrte.spec	2023-10-03 08:12:27.849686000 -0400
+@@ -612,7 +612,7 @@
+ %{shell_scripts_path}/%{shell_scripts_basename}.sh
+ %{shell_scripts_path}/%{shell_scripts_basename}.csh
+ %endif
+-%doc README INSTALL LICENSE
++%doc README.md LICENSE
+ 
+ %else
+ 
+@@ -656,7 +656,7 @@
+ %{shell_scripts_path}/%{shell_scripts_basename}.sh
+ %{shell_scripts_path}/%{shell_scripts_basename}.csh
+ %endif
+-%doc README INSTALL LICENSE
++%doc README.md LICENSE
+ %{_pkgdatadir}
+ 
+ %files devel -f devel.files
