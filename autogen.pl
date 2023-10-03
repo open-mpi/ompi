@@ -1643,6 +1643,10 @@ if (list_contains("prrte", @disabled_3rdparty_packages)) {
     if (! -f "3rd-party/prrte/configure.ac") {
         my_die("Could not find pmix files\n");
     }
+
+    verbose "Patching prrte.spec file\n";
+    system("$patch_prog -N -p0 < ./config/prrte.spec.diff > /dev/null 2>&1");
+
     push(@subdirs, "3rd-party/prrte/");
     $m4 .= "m4_define([package_prrte], [1])\n";
 
