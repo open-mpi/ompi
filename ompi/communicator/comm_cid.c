@@ -544,7 +544,7 @@ int ompi_comm_nextcid (ompi_communicator_t *newcomm, ompi_communicator_t *comm,
     }
 
     if (&ompi_request_empty != req) {
-        ompi_request_wait_completion (req);
+        ompi_request_wait_completion (&req);
         rc = req->req_status.MPI_ERROR;
         ompi_comm_request_return ((ompi_comm_request_t *) req);
     }
@@ -909,7 +909,7 @@ int ompi_comm_activate (ompi_communicator_t **newcomm, ompi_communicator_t *comm
     }
 
     if (&ompi_request_empty != req) {
-        ompi_request_wait_completion (req);
+        ompi_request_wait_completion (&req);
         rc = req->req_status.MPI_ERROR;
         ompi_comm_request_return ((ompi_comm_request_t *) req);
     }

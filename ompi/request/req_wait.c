@@ -35,9 +35,9 @@ int ompi_request_default_wait(
     ompi_request_t ** req_ptr,
     ompi_status_public_t * status)
 {
-    ompi_request_t *req = *req_ptr;
+    ompi_request_wait_completion(req_ptr);
 
-    ompi_request_wait_completion(req);
+    ompi_request_t *req = *req_ptr;
 
     /* make sure we get the correct status */
     opal_atomic_rmb();
@@ -78,10 +78,25 @@ int ompi_request_default_wait(
         return req->req_status.MPI_ERROR;
     }
 
+    /* Swap the request with MPI_REQUEST_NULL
+     * Make sure ompi_request_free is called only once
+     */
+    ompi_request_t *old_req = *req_ptr;
+    ompi_request_t *new_req = MPI_REQUEST_NULL;
+
+retry:
+    if (new_req == old_req) {
+        return OMPI_SUCCESS;
+    }
+
+    if (!OPAL_ATOMIC_COMPARE_EXCHANGE_STRONG_PTR(req_ptr, &old_req, new_req)) {
+        goto retry;
+    }
+
     /* If there's an error while freeing the request, assume that the
        request is still there.  Otherwise, Bad Things will happen
        later! */
-    return ompi_request_free(req_ptr);
+    return ompi_request_free(&old_req);
 }
 
 

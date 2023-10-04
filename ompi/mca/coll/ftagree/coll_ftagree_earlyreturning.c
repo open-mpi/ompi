@@ -3200,7 +3200,7 @@ int mca_coll_ftagree_era_intra(void *contrib,
     rc = mca_coll_ftagree_iera_intra(contrib, dt_count, dt, op, group, grp_update, comm, &req, module);
     if(OPAL_UNLIKELY( OMPI_SUCCESS != rc ))
         return rc;
-    ompi_request_wait_completion(req);
+    ompi_request_wait_completion(&req);
     rc = req->req_status.MPI_ERROR;
     ompi_request_free(&req);
     return rc;

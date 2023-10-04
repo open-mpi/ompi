@@ -279,7 +279,7 @@ int mca_pml_ob1_send(const void *buf,
             return rc;
         }
 
-        ompi_request_wait_completion (brequest);
+        ompi_request_wait_completion (&brequest);
         ompi_request_free (&brequest);
         return OMPI_SUCCESS;
     }
@@ -324,7 +324,8 @@ int mca_pml_ob1_send(const void *buf,
 
     MCA_PML_OB1_SEND_REQUEST_START_W_SEQ(sendreq, endpoint, seqn, rc);
     if (OPAL_LIKELY(rc == OMPI_SUCCESS)) {
-        ompi_request_wait_completion(&sendreq->req_send.req_base.req_ompi);
+        ompi_request_t *ompi_req = &sendreq->req_send.req_base.req_ompi;
+        ompi_request_wait_completion(&ompi_req);
 
         rc = sendreq->req_send.req_base.req_ompi.req_status.MPI_ERROR;
     }

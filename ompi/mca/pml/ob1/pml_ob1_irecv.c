@@ -133,7 +133,8 @@ int mca_pml_ob1_recv(void *addr,
                              PERUSE_RECV);
 
     MCA_PML_OB1_RECV_REQUEST_START(recvreq);
-    ompi_request_wait_completion(&recvreq->req_recv.req_base.req_ompi);
+    ompi_request_t *ompi_req = &recvreq->req_recv.req_base.req_ompi;
+    ompi_request_wait_completion(&ompi_req);
 
     if (recvreq->req_recv.req_base.req_pml_complete) {
         /* make buffer defined when the request is completed */
@@ -153,7 +154,8 @@ int mca_pml_ob1_recv(void *addr,
 #if OPAL_ENABLE_FT_MPI
     if( OPAL_UNLIKELY( MPI_ERR_PROC_FAILED_PENDING == rc )) {
         ompi_request_cancel(&recvreq->req_recv.req_base.req_ompi);
-        ompi_request_wait_completion(&recvreq->req_recv.req_base.req_ompi);
+        ompi_request_t *ft_req = &recvreq->req_recv.req_base.req_ompi;
+        ompi_request_wait_completion(&ft_req);
         rc = MPI_ERR_PROC_FAILED;
     }
 #endif
@@ -358,7 +360,8 @@ mca_pml_ob1_mrecv( void *buf,
 
     ompi_message_return(*message);
     *message = MPI_MESSAGE_NULL;
-    ompi_request_wait_completion(&(recvreq->req_recv.req_base.req_ompi));
+    ompi_request_t *ompi_req = &recvreq->req_recv.req_base.req_ompi;
+    ompi_request_wait_completion(&ompi_req);
 
     MCA_PML_OB1_RECV_FRAG_RETURN(frag);
 
@@ -369,7 +372,8 @@ mca_pml_ob1_mrecv( void *buf,
 #if OPAL_ENABLE_FT_MPI
     if( OPAL_UNLIKELY( MPI_ERR_PROC_FAILED_PENDING == rc )) {
         ompi_request_cancel(&recvreq->req_recv.req_base.req_ompi);
-        ompi_request_wait_completion(&recvreq->req_recv.req_base.req_ompi);
+        ompi_request_t *ft_req = &recvreq->req_recv.req_base.req_ompi;
+        ompi_request_wait_completion(&ft_req);
         rc = MPI_ERR_PROC_FAILED;
     }
 #endif

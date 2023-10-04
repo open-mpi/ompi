@@ -204,7 +204,8 @@ mca_pml_cm_recv(void *addr,
         return ret;
     }
 
-    ompi_request_wait_completion(&req.req_ompi);
+    ompi_request_t *ompi_req = &req.req_ompi;
+    ompi_request_wait_completion(&ompi_req);
 
     if (MPI_STATUS_IGNORE != status) {
         OMPI_COPY_STATUS(status, req.req_ompi.req_status, false);
@@ -533,7 +534,8 @@ mca_pml_cm_mrecv(void *buf,
         return ret;
     }
 
-    ompi_request_wait_completion(&recvreq->req_base.req_ompi);
+    ompi_request_t *ompi_req = &recvreq->req_base.req_ompi;
+    ompi_request_wait_completion(&ompi_req);
 
     if (MPI_STATUS_IGNORE != status) {
         OMPI_COPY_STATUS(status, recvreq->req_base.req_ompi.req_status, false);

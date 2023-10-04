@@ -447,17 +447,17 @@ static inline bool ompi_request_tag_is_collective(int tag) {
  * Wait a particular request for completion
  */
 
-static inline void ompi_request_wait_completion(ompi_request_t *req)
+static inline void ompi_request_wait_completion(ompi_request_t **req)
 {
     if (opal_using_threads ()) {
-        if(!REQUEST_COMPLETE(req)) {
+        if(!REQUEST_COMPLETE(*req)) {
             void *_tmp_ptr;
             ompi_wait_sync_t sync;
 
 
 #if OPAL_ENABLE_FT_MPI
     redo:
-            if(OPAL_UNLIKELY( ompi_request_is_failed(req) )) {
+            if(OPAL_UNLIKELY( ompi_request_is_failed(*req) )) {
                 return;
             }
 #endif /* OPAL_ENABLE_FT_MPI */
@@ -465,35 +465,66 @@ static inline void ompi_request_wait_completion(ompi_request_t *req)
 
             WAIT_SYNC_INIT(&sync, 1);
 
-            if (OPAL_ATOMIC_COMPARE_EXCHANGE_STRONG_PTR(&req->req_complete, &_tmp_ptr, &sync)) {
+            /* CAS sync on the req->req_complete field.
+             * - If the request is PENDING, this will let know other waiting
+             *   threads and the ompi_request_complete that we are waiting on it.
+             *
+             * - If the request is already completed, clean sync and exit
+             *
+             * - If another thread is already waiting on this request, stack on it
+             *   We will signal its sync when the request is completed
+             */
+            if (OPAL_ATOMIC_COMPARE_EXCHANGE_STRONG_PTR(&(*req)->req_complete, &_tmp_ptr, &sync)) {
+                /* I'm the first one to wait on this request. */
                 SYNC_WAIT(&sync);
-            } else {
-                /* completed before we had a chance to swap in the sync object */
+            } else if (REQUEST_COMPLETE(*req)) {
+                /* Completed before we had a chance to swap in the sync object
+                 * Clean sync and exit */
                 WAIT_SYNC_SIGNALLED(&sync);
+            } else {
+                /* Another thread is waiting on the request.
+                 * It's sync is stored in _tmp_ptr */
+stack_retry:
+                /* Try to stack our sync on the request */
+                if (OPAL_ATOMIC_COMPARE_EXCHANGE_STRONG_PTR(&(*req)->req_complete, &_tmp_ptr, &sync)) {
+                    /* Successfully stacked on the request */
+                    SYNC_WAIT(&sync);
+
+                    /* Request is completed, continue unstacking */
+                    wait_sync_update((ompi_wait_sync_t*) _tmp_ptr, 1, sync.status);
+                } else if (REQUEST_COMPLETE(*req)) {
+                    /* Completed before I could stack on the request.
+                     * Clean sync and exit */
+                    WAIT_SYNC_SIGNALLED(&sync);
+                } else {
+                    /* Someone else has successfully stacked its sync.
+                     * Retry */
+                    goto stack_retry;
+                }
             }
 
 #if OPAL_ENABLE_FT_MPI
             if (OPAL_UNLIKELY(OMPI_SUCCESS != sync.status)) {
-                OPAL_OUTPUT_VERBOSE((50, ompi_ftmpi_output_handle, "Status %d reported for sync %p rearming req %p", sync.status, (void*)&sync, (void*)req));
+                OPAL_OUTPUT_VERBOSE((50, ompi_ftmpi_output_handle, "Status %d reported for sync %p rearming req %p", sync.status, (void*)&sync, (void*)(*req)));
                 _tmp_ptr = &sync;
-                if (OPAL_ATOMIC_COMPARE_EXCHANGE_STRONG_PTR(&req->req_complete, &_tmp_ptr, REQUEST_PENDING)) {
-                    opal_output_verbose(10, ompi_ftmpi_output_handle, "Status %d reported for sync %p rearmed req %p", sync.status, (void*)&sync, (void*)req);
+                if (OPAL_ATOMIC_COMPARE_EXCHANGE_STRONG_PTR(&(*req)->req_complete, &_tmp_ptr, REQUEST_PENDING)) {
+                    opal_output_verbose(10, ompi_ftmpi_output_handle, "Status %d reported for sync %p rearmed req %p", sync.status, (void*)&sync, (void*)(*req));
                     WAIT_SYNC_RELEASE(&sync);
                     goto redo;
                 }
             }
 #endif /* OPAL_ENABLE_FT_MPI */
-            assert(REQUEST_COMPLETE(req));
+            assert(REQUEST_COMPLETE(*req));
             WAIT_SYNC_RELEASE(&sync);
-     }
-     opal_atomic_rmb();
+        }
+        opal_atomic_rmb();
     } else {
-        while(!REQUEST_COMPLETE(req)) {
+        while(!REQUEST_COMPLETE(*req)) {
             opal_progress();
 #if OPAL_ENABLE_FT_MPI
             /* Check to make sure that process failure did not break the
              * request. */
-            if(OPAL_UNLIKELY( ompi_request_is_failed(req) )) {
+            if(OPAL_UNLIKELY( ompi_request_is_failed(*req) )) {
                 break;
             }
 #endif /* OPAL_ENABLE_FT_MPI */
@@ -530,10 +561,21 @@ static inline int ompi_request_complete(ompi_request_t* request, bool with_signa
             /* make sure everything in the request is visible before we mark it complete */
             opal_atomic_wmb();
 
-            ompi_wait_sync_t *tmp_sync = (ompi_wait_sync_t *) OPAL_ATOMIC_SWAP_PTR(&request->req_complete,
-                                                                                    REQUEST_COMPLETED);
-            if( REQUEST_PENDING != tmp_sync ) {
-                wait_sync_update(tmp_sync, 1, request->req_status.MPI_ERROR);
+            void *_tmp_ptr = REQUEST_PENDING;
+
+            if(!OPAL_ATOMIC_COMPARE_EXCHANGE_STRONG_PTR(&request->req_complete, &_tmp_ptr, REQUEST_COMPLETED)) {
+                /* CAS failled: someone is waiting on this request
+                 * Its sync structure is stored in _tmp_ptr
+                 * Mark the request as completed and store the waiting thread sync.
+                 */
+                while (!OPAL_ATOMIC_COMPARE_EXCHANGE_STRONG_PTR(&request->req_complete, &_tmp_ptr, REQUEST_COMPLETED)) {
+                }
+
+                /* In the case where another thread concurrently changed the request to REQUEST_PENDING or REQUEST_COMPLETED */
+                if( REQUEST_PENDING != _tmp_ptr 
+                    && REQUEST_COMPLETED != _tmp_ptr) {
+                    wait_sync_update((ompi_wait_sync_t*) _tmp_ptr, 1, request->req_status.MPI_ERROR);
+                }
             }
         } else {
             request->req_complete = REQUEST_COMPLETED;
