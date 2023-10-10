@@ -2,7 +2,7 @@
 
 
 PMIX_Psend_init
-==============
+===============
 
 .. include_body
 
