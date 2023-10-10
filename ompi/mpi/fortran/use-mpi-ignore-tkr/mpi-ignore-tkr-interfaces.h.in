@@ -2617,12 +2617,13 @@ end interface
 
 interface
 
-subroutine MPI_Psend_init(buf, partitions, count, datatype, dest, tag, &
+subroutine MPIX_Psend_init(buf, partitions, count, datatype, dest, tag, &
         comm, info, request, ierror)
+  include 'mpif-config.h'
   @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: buf
   integer, intent(in) :: partitions 
-  integer, intent(in) :: count
+  integer(KIND=MPI_COUNT_KIND), intent(in) :: count
   integer, intent(in) :: datatype
   integer, intent(in) :: dest
   integer, intent(in) :: tag
@@ -2630,19 +2631,20 @@ subroutine MPI_Psend_init(buf, partitions, count, datatype, dest, tag, &
   integer, intent(in) :: info
   integer, intent(out) :: request
   integer, intent(out) :: ierror
-end subroutine MPI_Psend_init
+end subroutine MPIX_Psend_init
 
 end interface
 
 
 interface
 
-subroutine MPI_Precv_init(buf, partitions, count, datatype, dest, tag, &
+subroutine MPIX_Precv_init(buf, partitions, count, datatype, dest, tag, &
         comm, info, request, ierror)
+  include 'mpif-config.h'
   @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: buf
   integer, intent(in) :: partitions
-  integer, intent(in) :: count 
+  integer(KIND=MPI_COUNT_KIND), intent(in) :: count
   integer, intent(in) :: datatype
   integer, intent(in) :: dest
   integer, intent(in) :: tag
@@ -2650,7 +2652,7 @@ subroutine MPI_Precv_init(buf, partitions, count, datatype, dest, tag, &
   integer, intent(in) :: info
   integer, intent(out) :: request
   integer, intent(out) :: ierror
-end subroutine MPI_Precv_init
+end subroutine MPIX_Precv_init
 
 end interface
 

@@ -1,12 +1,12 @@
-.. _mpi_precv_init:
+.. _mpi_psend_init:
 
 
-MPI_Precv_init
+PMIX_Psend_init
 ==============
 
 .. include_body
 
-:ref:`MPI_Precv_init` - Initializes a partitioned receive.
+:ref:`PMIX_Psend_init` - Initializes a partitioned send.
 
 
 SYNTAX
@@ -20,7 +20,7 @@ C Syntax
 
    #include <mpi.h>
 
-   int MPI_Precv_init(const void *buf, int partitions, int count, MPI_Datatype datatype, int dest,
+   int PMIX_Psend_init(const void *buf, int partitions, MPI_Count count, MPI_Datatype datatype, int dest,
    	int tag, MPI_Comm comm, MPI_Request *request)
 
 
@@ -31,9 +31,10 @@ Fortran Syntax
 
    USE MPI
    ! or the older form: INCLUDE 'mpif.h'
-   MPI_PRECV_INIT(BUF, PARTITIONS, COUNT, DATATYPE, DEST, TAG, COMM, REQUEST, IERROR)
+   MPIX_PSEND_INIT(BUF, PARTITIONS, COUNT, DATATYPE, DEST, TAG, COMM, REQUEST, IERROR)
    	<type>	BUF(*)
-   	INTEGER	PARTITIONS, COUNT, DATATYPE, DEST, TAG, COMM, REQUEST, IERROR
+   	INTEGER	PARTITIONS, DATATYPE, DEST, TAG, COMM, REQUEST, IERROR
+        INTEGER(KIND=MPI_COUNT_KIND) COUNT
 
 
 Fortran 2008 Syntax
@@ -42,9 +43,10 @@ Fortran 2008 Syntax
 .. code-block:: fortran
 
    USE mpi_f08
-   MPI_Precv_init(buf, partitions, count, datatype, dest, tag, comm, request, ierror)
+   PMIX_Psend_init(buf, partitions, count, datatype, dest, tag, comm, request, ierror)
    	TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: buf
-   	INTEGER, INTENT(IN) :: partitions, count, dest, tag
+   	INTEGER, INTENT(IN) :: partitions, dest, tag
+   	INTEGER(KIND=MPI_COUNT_KIND), INTENT(IN) :: count
    	TYPE(MPI_Datatype), INTENT(IN) :: datatype
    	TYPE(MPI_Comm), INTENT(IN) :: comm
    	TYPE(MPI_Request), INTENT(OUT) :: request
@@ -53,9 +55,9 @@ Fortran 2008 Syntax
 
 INPUT PARAMETERS
 ----------------
-* ``buf``: Initial address of receive buffer (choice).
+* ``buf``: Initial address of send buffer (choice).
 * ``partitions``: Number of partitions (integer).
-* ``count``: Number of elements to be received per partition (integer).
+* ``count``: Number of elements to be sent per partition (MPI_Count).
 * ``datatype``: Datatype of each element (handle).
 * ``dest``: Rank of source (integer).
 * ``tag``: Message tag (integer).
@@ -76,10 +78,12 @@ NOTE
 
 The current implementation is an early prototype and is not fully
 compliant with the MPI-4.0 specification. Specifically this function and
-it's counterpart (MPI_Psend_init) will block until the partitioned
+it's counterpart (MPI_Precv_init) will block until the partitioned
 communication request is initialized on both ends. This behavior will be
 corrected in future versions.
 
+The MPIX prefix is used to denote that this function's API will likely change
+in the MPI-4.1 specification.
 
 .. seealso::
-   * :ref:`MPI_Psend_init`
+   * :ref:`MPIX_Precv_init`

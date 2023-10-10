@@ -286,9 +286,9 @@ MPI API manual pages (section 3)
    MPI_Pready.3.rst
    MPI_Pready_list.3.rst
    MPI_Pready_range.3.rst
-   MPI_Precv_init.3.rst
+   MPIX_Precv_init.3.rst
    MPI_Probe.3.rst
-   MPI_Psend_init.3.rst
+   MPIX_Psend_init.3.rst
    MPI_Publish_name.3.rst
    MPI_Put.3.rst
    MPI_Query_thread.3.rst

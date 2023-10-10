@@ -28,40 +28,40 @@
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak PMPI_PRECV_INIT = ompi_precv_init_f
-#pragma weak pmpi_precv_init = ompi_precv_init_f
-#pragma weak pmpi_precv_init_ = ompi_precv_init_f
-#pragma weak pmpi_precv_init__ = ompi_precv_init_f
+#pragma weak PMPIX_PRECV_INIT = ompi_precv_init_f
+#pragma weak pmpix_precv_init = ompi_precv_init_f
+#pragma weak pmpix_precv_init_ = ompi_precv_init_f
+#pragma weak pmpix_precv_init__ = ompi_precv_init_f
 
-#pragma weak PMPI_Precv_init_f = ompi_precv_init_f
-#pragma weak PMPI_Precv_init_f08 = ompi_precv_init_f
+#pragma weak PMPIX_Precv_init_f = ompi_precv_init_f
+#pragma weak PMPIX_Precv_init_f08 = ompi_precv_init_f
 #else
-OMPI_GENERATE_F77_BINDINGS (PMPI_PRECV_INIT,
-                           pmpi_precv_init,
-                           pmpi_precv_init_,
-                           pmpi_precv_init__,
+OMPI_GENERATE_F77_BINDINGS (PMPIX_PRECV_INIT,
+                           pmpix_precv_init,
+                           pmpix_precv_init_,
+                           pmpix_precv_init__,
                            pompi_precv_init_f,
-                           (char *buf, MPI_Fint *partitions, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *dest, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, MPI_Fint *ierr),
+                           (char *buf, MPI_Fint *partitions, MPI_Count *count, MPI_Fint *datatype, MPI_Fint *dest, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, MPI_Fint *ierr),
                            (buf, partitions, count, datatype, dest, tag, comm, info, request, ierr) )
 #endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_PRECV_INIT = ompi_precv_init_f
-#pragma weak mpi_precv_init = ompi_precv_init_f
-#pragma weak mpi_precv_init_ = ompi_precv_init_f
-#pragma weak mpi_precv_init__ = ompi_precv_init_f
+#pragma weak MPIX_PRECV_INIT = ompi_precv_init_f
+#pragma weak mpix_precv_init = ompi_precv_init_f
+#pragma weak mpix_precv_init_ = ompi_precv_init_f
+#pragma weak mpix_precv_init__ = ompi_precv_init_f
 
-#pragma weak MPI_Precv_init_f = ompi_precv_init_f
-#pragma weak MPI_Precv_init_f08 = ompi_precv_init_f
+#pragma weak MPIX_Precv_init_f = ompi_precv_init_f
+#pragma weak MPIX_Precv_init_f08 = ompi_precv_init_f
 #else
 #if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_PRECV_INIT,
-                           mpi_precv_init,
-                           mpi_precv_init_,
-                           mpi_precv_init__,
+OMPI_GENERATE_F77_BINDINGS (MPIX_PRECV_INIT,
+                           mpix_precv_init,
+                           mpix_precv_init_,
+                           mpix_precv_init__,
                            ompi_precv_init_f,
-                           (char *buf, MPI_Fint *partitions, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *dest, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, MPI_Fint *ierr),
+                           (char *buf, MPI_Fint *partitions, MPI_Count *count, MPI_Fint *datatype, MPI_Fint *dest, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, MPI_Fint *ierr),
                            (buf, partitions, count, datatype, dest, tag, comm, info, request, ierr) )
 #else
 #define ompi_precv_init_f pompi_precv_init_f
@@ -69,7 +69,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_PRECV_INIT,
 #endif
 
 
-void ompi_precv_init_f(char *buf, MPI_Fint *partitions, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *dest, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, MPI_Fint *ierr)
+void ompi_precv_init_f(char *buf, MPI_Fint *partitions, MPI_Count *count, MPI_Fint *datatype, MPI_Fint *dest, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, MPI_Fint *ierr)
 {
    int c_ierr;
    MPI_Info c_info;
@@ -80,9 +80,9 @@ void ompi_precv_init_f(char *buf, MPI_Fint *partitions, MPI_Fint *count, MPI_Fin
    c_info = PMPI_Info_f2c(*info);
    c_comm = PMPI_Comm_f2c (*comm);
 
-   c_ierr = PMPI_Precv_init(OMPI_F2C_BOTTOM(buf), 
+   c_ierr = PMPIX_Precv_init(OMPI_F2C_BOTTOM(buf), 
                       OMPI_FINT_2_INT(*partitions),
-                      OMPI_FINT_2_INT(*count),
+                      *count,
                       c_type, OMPI_FINT_2_INT(*dest),
                       OMPI_FINT_2_INT(*tag),
                       c_comm, c_info, &c_req);

@@ -36,15 +36,15 @@
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Precv_init = PMPI_Precv_init
+#pragma weak MPIX_Precv_init = PMPIX_Precv_init
 #endif
-#define MPI_Precv_init PMPI_Precv_init
+#define MPIX_Precv_init PMPIX_Precv_init
 #endif
 
-static const char FUNC_NAME[] = "MPI_Precv_init";
+static const char FUNC_NAME[] = "MPIX_Precv_init";
 
 
-int MPI_Precv_init(void* buf, int partitions, MPI_Count count, MPI_Datatype datatype, int source, int tag, MPI_Comm comm, MPI_Info info, MPI_Request *request)
+int MPIX_Precv_init(void* buf, int partitions, MPI_Count count, MPI_Datatype datatype, int source, int tag, MPI_Comm comm, MPI_Info info, MPI_Request *request)
 {
     int rc;
 

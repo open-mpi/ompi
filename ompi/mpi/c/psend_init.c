@@ -36,15 +36,15 @@
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Psend_init = PMPI_Psend_init
+#pragma weak MPIX_Psend_init = PMPIX_Psend_init
 #endif
-#define MPI_Psend_init PMPI_Psend_init
+#define MPIX_Psend_init PMPIX_Psend_init
 #endif
 
-static const char FUNC_NAME[] = "MPI_Psend_init";
+static const char FUNC_NAME[] = "MPIX_Psend_init";
 
 
-int MPI_Psend_init(const void* buf, int partitions, MPI_Count count, MPI_Datatype datatype, int dest, int tag, MPI_Comm comm, MPI_Info info, MPI_Request *request)
+int MPIX_Psend_init(const void* buf, int partitions, MPI_Count count, MPI_Datatype datatype, int dest, int tag, MPI_Comm comm, MPI_Info info, MPI_Request *request)
 {
     int rc;
 

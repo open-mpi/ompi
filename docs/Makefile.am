@@ -364,9 +364,9 @@ OMPI_MAN3 = \
         MPI_Pready.3 \
         MPI_Pready_list.3 \
         MPI_Pready_range.3 \
-        MPI_Precv_init.3 \
+        MPIX_Precv_init.3 \
         MPI_Probe.3 \
-        MPI_Psend_init.3 \
+        MPIX_Psend_init.3 \
         MPI_Publish_name.3 \
         MPI_Put.3 \
         MPI_Query_thread.3 \

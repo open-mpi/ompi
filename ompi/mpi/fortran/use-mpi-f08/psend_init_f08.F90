@@ -11,12 +11,13 @@
 
 #include "ompi/mpi/fortran/configure-fortran-output.h"
 
-subroutine MPI_Psend_init_f08(buf,partitions,count,datatype,dest,tag,comm,info,request,ierror)
-   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Info, MPI_Request
+subroutine MPIX_Psend_init_f08(buf,partitions,count,datatype,dest,tag,comm,info,request,ierror)
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Info, MPI_Request, MPI_COUNT_KIND
    use :: ompi_mpifh_bindings, only : ompi_psend_init_f
    implicit none
    OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: buf
-   INTEGER, INTENT(IN) :: partitions,count, dest, tag
+   INTEGER, INTENT(IN) :: partitions, dest, tag
+   INTEGER(KIND=MPI_COUNT_KIND), INTENT(IN) :: count
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    TYPE(MPI_Comm), INTENT(IN) :: comm
    TYPE(MPI_Info), INTENT(IN) :: info
@@ -28,4 +29,4 @@ subroutine MPI_Psend_init_f08(buf,partitions,count,datatype,dest,tag,comm,info,r
                           info%MPI_VAL,request%MPI_VAL,c_ierror)
    if (present(ierror)) ierror = c_ierror
 
-end subroutine MPI_Psend_init_f08
+end subroutine MPIX_Psend_init_f08

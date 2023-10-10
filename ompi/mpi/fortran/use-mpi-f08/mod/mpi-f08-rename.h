@@ -33,10 +33,10 @@
 #define MPI_Isendrecv_replace_f08 PMPI_Isendrecv_replace_f08
 #define MPI_Issend PMPI_Issend
 #define MPI_Issend_f08 PMPI_Issend_f08
-#define MPI_Precv_init PMPI_Precv_init
-#define MPI_Precv_init_f08 PMPI_Precv_init_f08
-#define MPI_Psend_init PMPI_Psend_init
-#define MPI_Psend_init_f08 PMPI_Psend_init_f08
+#define MPIX_Precv_init PMPIX_Precv_init
+#define MPIX_Precv_init_f08 PMPIX_Precv_init_f08
+#define MPIX_Psend_init PMPIX_Psend_init
+#define MPIX_Psend_init_f08 PMPIX_Psend_init_f08
 #define MPI_Pready PMPI_Pready
 #define MPI_Pready_f08 PMPI_Pready_f08
 #define MPI_Pready_list PMPI_Pready_list

@@ -210,9 +210,9 @@
 #define MPI_Pready PMPI_Pready
 #define MPI_Pready_list PMPI_Pready_list
 #define MPI_Pready_range PMPI_Pready_range
-#define MPI_Precv_init PMPI_Precv_init
+#define MPIX_Precv_init PMPIX_Precv_init
 #define MPI_Probe PMPI_Probe
-#define MPI_Psend_init PMPI_Psend_init
+#define MPIX_Psend_init PMPIX_Psend_init
 #define MPI_Publish_name PMPI_Publish_name
 #define MPI_Put PMPI_Put
 #define MPI_Query_thread PMPI_Query_thread
