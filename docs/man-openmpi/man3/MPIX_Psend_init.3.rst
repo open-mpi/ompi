@@ -6,7 +6,7 @@ PMIX_Psend_init
 
 .. include_body
 
-:ref:`PMIX_Psend_init` - Initializes a partitioned send.
+:ref:`MPIX_Psend_init` - Initializes a partitioned send.
 
 
 SYNTAX
