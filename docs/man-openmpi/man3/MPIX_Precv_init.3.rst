@@ -1,4 +1,4 @@
-.. _mpi_precv_init:
+.. _mpix_precv_init:
 
 
 MPIX_Precv_init

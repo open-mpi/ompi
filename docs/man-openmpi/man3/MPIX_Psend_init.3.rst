@@ -1,4 +1,4 @@
-.. _mpi_psend_init:
+.. _mpix_psend_init:
 
 
 PMIX_Psend_init
@@ -78,7 +78,7 @@ NOTE
 
 The current implementation is an early prototype and is not fully
 compliant with the MPI-4.0 specification. Specifically this function and
-it's counterpart (MPI_Precv_init) will block until the partitioned
+it's counterpart (MPIX_Precv_init) will block until the partitioned
 communication request is initialized on both ends. This behavior will be
 corrected in future versions.
 
