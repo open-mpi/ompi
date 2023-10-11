@@ -245,6 +245,10 @@ OPAL_DECLSPEC opal_common_ucx_support_level_t opal_common_ucx_support_level(ucp_
     int ret;
 #endif
 
+    if ((*opal_common_ucx.tls == NULL) || (*opal_common_ucx.devices == NULL)) {
+        opal_common_ucx_mca_var_register(NULL);
+    }
+
     is_any_tl = !strcmp(*opal_common_ucx.tls, "any");
     is_any_device = !strcmp(*opal_common_ucx.devices, "any");
 
