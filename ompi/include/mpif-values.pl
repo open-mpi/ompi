@@ -381,6 +381,7 @@ $constants->{MPI_ERR_RMA_FLAVOR} = 70;
 $constants->{MPI_ERR_RMA_SHARED} = 71;
 $constants->{MPI_T_ERR_INVALID} = 72;
 $constants->{MPI_ERR_SESSION} = 78;
+$constants->{MPI_ERR_VALUE_TOO_LARGE} = 79;
 $constants->{MPI_ERR_LASTCODE} = 92;
 
 $constants->{MPI_IDENT} = 0;
