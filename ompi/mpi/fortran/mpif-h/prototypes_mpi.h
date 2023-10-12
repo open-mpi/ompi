@@ -16,7 +16,7 @@
  *                         reserved.
  * Copyright (c) 2016-2023 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
- * Copyright (c) 2019-2022 Triad National Security, LLC. All rights
+ * Copyright (c) 2019-2023 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2021      Bull S.A.S. All rights reserved.
  * $COPYRIGHT$
@@ -355,8 +355,8 @@ PN2(void, MPI_Pcontrol, mpi_pcontrol, MPI_PCONTROL, (MPI_Fint *level));
 PN2(void, MPI_Pready, mpi_pready, MPI_PREADY, (MPI_Fint *partition, MPI_Fint *request, MPI_Fint *ierr));
 PN2(void, MPI_Pready_list, mpi_pready_list, MPI_PREADY_LIST, (MPI_Fint *length, MPI_Fint *partition, MPI_Fint *request, MPI_Fint *ierr));
 PN2(void, MPI_Pready_range, mpi_pready_range, MPI_PREADY_RANGE, (MPI_Fint *partition_low, MPI_Fint *partition_high, MPI_Fint *request, MPI_Fint *ierr));
-PN2(void, MPI_Precv_init, mpi_precv_init, MPI_PRECV_INIT, (char *buf, MPI_Fint *partitions, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *src, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, MPI_Fint *ierr));
-PN2(void, MPI_Psend_init, mpi_psend_init, MPI_PSEND_INIT, (char *buf, MPI_Fint *partitions, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *dest, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, MPI_Fint *ierr));
+PN2(void, MPI_Precv_init, mpi_precv_init, MPI_PRECV_INIT, (char *buf, MPI_Fint *partitions, MPI_Count *count, MPI_Fint *datatype, MPI_Fint *src, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, MPI_Fint *ierr));
+PN2(void, MPI_Psend_init, mpi_psend_init, MPI_PSEND_INIT, (char *buf, MPI_Fint *partitions, MPI_Count *count, MPI_Fint *datatype, MPI_Fint *dest, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, MPI_Fint *ierr));
 PN2(void, MPI_Probe, mpi_probe, MPI_PROBE, (MPI_Fint *source, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *status, MPI_Fint *ierr));
 PN2(void, MPI_Publish_name, mpi_publish_name, MPI_PUBLISH_NAME, (char *service_name, MPI_Fint *info, char *port_name, MPI_Fint *ierr, int service_name_len, int port_name_len));
 PN2(void, MPI_Put, mpi_put, MPI_PUT, (char *origin_addr, MPI_Fint *origin_count, MPI_Fint *origin_datatype, MPI_Fint *target_rank, MPI_Aint *target_disp, MPI_Fint *target_count, MPI_Fint *target_datatype, MPI_Fint *win, MPI_Fint *ierr));

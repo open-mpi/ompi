@@ -11,7 +11,7 @@
 !                         reserved.
 ! Copyright (c) 2015-2023 Research Organization for Information Science
 !                         and Technology (RIST).  All rights reserved.
-! Copyright (c) 2019-2022 Triad National Security, LLC. All rights
+! Copyright (c) 2019-2023 Triad National Security, LLC. All rights
 !                         reserved.
 ! Copyright (c) 2021      Bull S.A.S. All rights reserved.
 ! Copyright (c) 2021      IBM Corporation.  All rights reserved.
@@ -2619,10 +2619,11 @@ interface
 
 subroutine MPI_Psend_init(buf, partitions, count, datatype, dest, tag, &
         comm, info, request, ierror)
+  include 'mpif-config.h'
   @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: buf
   integer, intent(in) :: partitions 
-  integer, intent(in) :: count
+  integer(KIND=MPI_COUNT_KIND), intent(in) :: count
   integer, intent(in) :: datatype
   integer, intent(in) :: dest
   integer, intent(in) :: tag
@@ -2639,10 +2640,11 @@ interface
 
 subroutine MPI_Precv_init(buf, partitions, count, datatype, dest, tag, &
         comm, info, request, ierror)
+  include 'mpif-config.h'
   @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: buf
   integer, intent(in) :: partitions
-  integer, intent(in) :: count 
+  integer(KIND=MPI_COUNT_KIND), intent(in) :: count
   integer, intent(in) :: datatype
   integer, intent(in) :: dest
   integer, intent(in) :: tag
