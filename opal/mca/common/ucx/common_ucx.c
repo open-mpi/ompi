@@ -90,30 +90,26 @@ OPAL_DECLSPEC void opal_common_ucx_mca_var_register(const mca_base_component_t *
         *opal_common_ucx.tls = strdup(default_tls);
     }
 
-    tls_index = mca_base_component_var_register(
-        component, "tls",
+    tls_index = mca_base_var_register(
+        "opal", "opal_common", "ucx", "tls",
         "List of UCX transports which should be supported on the system, to enable "
         "selecting the UCX component. Special values: any (any available). "
         "A '^' prefix negates the list. "
         "For example, in order to exclude on shared memory and TCP transports, "
         "please set to '^posix,sysv,self,tcp,cma,knem,xpmem'.",
-        MCA_BASE_VAR_TYPE_STRING, NULL, 0,
-        MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_3,
-        MCA_BASE_VAR_SCOPE_LOCAL,
-        opal_common_ucx.tls);
+        MCA_BASE_VAR_TYPE_STRING, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE | MCA_BASE_VAR_FLAG_DWG,
+        OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_LOCAL, opal_common_ucx.tls);
 
     if (NULL == opal_common_ucx.devices) {
-        opal_common_ucx.devices = (char **) malloc(sizeof(char *));
+        opal_common_ucx.devices = (char**) malloc(sizeof(char*));
         *opal_common_ucx.devices = strdup(default_devices);
     }
-    devices_index = mca_base_component_var_register(
-        component, "devices",
+    devices_index = mca_base_var_register(
+        "opal", "opal_common", "ucx", "devices",
         "List of device driver pattern names, which, if supported by UCX, will "
         "bump its priority above ob1. Special values: any (any available)",
-        MCA_BASE_VAR_TYPE_STRING, NULL, 0,
-        MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_3,
-        MCA_BASE_VAR_SCOPE_LOCAL,
-        opal_common_ucx.devices);
+        MCA_BASE_VAR_TYPE_STRING, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE | MCA_BASE_VAR_FLAG_DWG,
+        OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_LOCAL, opal_common_ucx.devices);
 
     if (component) {
         mca_base_var_register_synonym(verbose_index, component->mca_project_name,
