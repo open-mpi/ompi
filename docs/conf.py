@@ -14,45 +14,84 @@ import os
 
 # -- Project information -----------------------------------------------------
 
+import os
+import re
 import datetime
+
 year = datetime.datetime.now().year
 
 project = 'Open MPI'
 copyright = f'2003-{year}, The Open MPI Community'
 author = 'The Open MPI Community'
 
-# The full version, including alpha/beta/rc tags
-# Read the Open MPI version from the VERSION file in the source tree
-# The docs/Makefile.am will set the env var OMPI_VERSION_FILE, because
+# ---------------------------
+
+# The docs/Makefile.am will set the env var OMPI_TOP_SRCDIR, because
 # we might be doing a VPATH build.
-filename = None
-if 'OMPI_VERSION_FILE' in os.environ:
-    filename = os.environ['OMPI_VERSION_FILE']
-elif os.path.exists("../VERSION"):
-    filename = '../VERSION'
+ompi_top_srcdir = '..'
+if 'OMPI_TOP_SRCDIR' in os.environ:
+    ompi_top_srcdir = os.environ['OMPI_TOP_SRCDIR']
 
-if filename is None:
-    print("ERROR: Could not find Open MPI source tree VERSION file")
-    exit(1)
+# Read an Open MPI-style VERSION file
+def read_version_file(path):
+    if not os.path.exists(path):
+        print(f"ERROR: Unable to find file {path}")
+        exit(1)
+        
+    with open(path) as fp:
+        version_lines = fp.readlines()
+    
+    data = dict()
+    for line in version_lines:
+        if '#' in line:
+            parts = line.split("#")
+            line = parts[0]
+        line = line.strip()
 
-with open(filename) as fp:
-    ompi_lines = fp.readlines()
+        if '=' not in line:
+            continue
 
-ompi_data = dict()
-for ompi_line in ompi_lines:
-    if '#' in ompi_line:
-        parts = ompi_line.split("#")
-        ompi_line = parts[0]
-    ompi_line = ompi_line.strip()
+        key, val = line.split("=")
+        data[key.strip()] = val.strip()
 
-    if '=' not in ompi_line:
-        continue
+    return data
 
-    ompi_key, ompi_val = ompi_line.split("=")
-    ompi_data[ompi_key.strip()] = ompi_val.strip()
+# Look for a version string via a regular expresion of a filename in a
+# given directory
+def get_tarball_version(path, expr):
+    if not os.path.exists(path):
+        print(f"ERROR: Unable to find path {path}")
+        exit(1)
+
+    for file in os.listdir(path):
+        m = re.match(expr, file)
+        if not m:
+            continue
+        return m.group(1)
+
+    return ""
+
+# Read all the various versions from the source tree
+
+ompi_data = read_version_file(f"{ompi_top_srcdir}/VERSION")
+pmix_data = read_version_file(f"{ompi_top_srcdir}/3rd-party/openpmix/VERSION")
+prte_data = read_version_file(f"{ompi_top_srcdir}/3rd-party/prrte/VERSION")
+
+hwloc_embedded_version = get_tarball_version(f"{ompi_top_srcdir}/3rd-party/",
+                                             r"hwloc-(.*).tar")
+event_embedded_version = get_tarball_version(f"{ompi_top_srcdir}/3rd-party/",
+                                             r"libevent-(.*)-stable.tar")
+
+# ---------------------------
+
+# Assemble several different combinations of version strings
 
 ompi_series = f"v{ompi_data['major']}.{ompi_data['minor']}.x"
 ompi_ver = f"v{ompi_data['major']}.{ompi_data['minor']}.{ompi_data['release']}{ompi_data['greek']}"
+
+pmix_embedded_version = f"v{pmix_data['major']}.{pmix_data['minor']}.{pmix_data['release']}{pmix_data['greek']}"
+prte_embedded_version = f"v{prte_data['major']}.{prte_data['minor']}.{prte_data['release']}{prte_data['greek']}"
+prte_embedded_series = f"v{prte_data['major']}.{prte_data['minor']}"
 
 pmix_min_version = f"{ompi_data['pmix_min_version']}"
 prte_min_version = f"{ompi_data['prte_min_version']}"
@@ -86,7 +125,6 @@ release = ompi_ver[1:]
 # If we're building in an RTD environment for a tag or external (i.e.,
 # PR), use the RTD version -- not what we just read from the VERSIONS
 # file.
-import os
 key = 'READTHEDOCS'
 if key in os.environ and os.environ[key] == 'True':
     print("OMPI: found ReadTheDocs build environment")
@@ -172,9 +210,6 @@ extlinks = {
 
 # -- Options for MAN output -------------------------------------------------
 
-import os
-import re
-
 # Dynamically find all the man pages and build the appropriate list of
 # tuples so that we don't have to manually maintain it.
 
@@ -222,9 +257,14 @@ rst_prolog = f"""
 .. |ompi_ver| replace:: {ompi_ver}
 .. |ompi_series| replace:: {ompi_series}
 .. |pmix_min_version| replace:: {pmix_min_version}
+.. |pmix_embedded_version| replace:: {pmix_embedded_version}
 .. |prte_min_version| replace:: {prte_min_version}
+.. |prte_embedded_version| replace:: {prte_embedded_version}
+.. |prte_embedded_series| replace:: {prte_embedded_series}
 .. |hwloc_min_version| replace:: {hwloc_min_version}
+.. |hwloc_embedded_version| replace:: {hwloc_embedded_version}
 .. |event_min_version| replace:: {event_min_version}
+.. |event_embedded_version| replace:: {event_embedded_version}
 .. |automake_min_version| replace:: {automake_min_version}
 .. |autoconf_min_version| replace:: {autoconf_min_version}
 .. |libtool_min_version| replace:: {libtool_min_version}
@@ -233,6 +273,10 @@ rst_prolog = f"""
 .. |mpi_standard_major_version| replace:: {mpi_standard_major_version}
 .. |mpi_standard_minor_version| replace:: {mpi_standard_minor_version}
 .. |deprecated_favor| replace:: this routine is deprecated in favor of
+
+.. |br| raw:: html
+
+   <br />
 
 """
 
