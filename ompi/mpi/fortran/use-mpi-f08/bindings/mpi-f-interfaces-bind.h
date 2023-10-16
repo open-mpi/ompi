@@ -310,9 +310,11 @@ end subroutine ompi_issend_f
 
 subroutine ompi_psend_init_f(buf,partitions,count,datatype,dest,tag,comm,info,request,ierror) &
    BIND(C, name="ompi_psend_init_f")
+   use :: mpi_f08_types, only : MPI_COUNT_KIND
    implicit none
    OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: buf
-   INTEGER, INTENT(IN) :: partitions, count, dest, tag
+   INTEGER, INTENT(IN) :: partitions, dest, tag
+   INTEGER(KIND=MPI_COUNT_KIND), INTENT(IN):: count
    INTEGER, INTENT(IN) :: datatype
    INTEGER, INTENT(IN) :: comm
    INTEGER, INTENT(IN) :: info
@@ -322,9 +324,11 @@ end subroutine ompi_psend_init_f
 
 subroutine ompi_precv_init_f(buf,partitions,count,datatype,dest,tag,comm,info,request,ierror) &
    BIND(C, name="ompi_precv_init_f")
+   use :: mpi_f08_types, only : MPI_COUNT_KIND
    implicit none
    OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: buf
-   INTEGER, INTENT(IN) :: partitions, count, dest, tag
+   INTEGER, INTENT(IN) :: partitions, dest, tag
+   INTEGER(KIND=MPI_COUNT_KIND), INTENT(IN):: count
    INTEGER, INTENT(IN) :: datatype
    INTEGER, INTENT(IN) :: comm
    INTEGER, INTENT(IN) :: info
