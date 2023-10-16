@@ -260,6 +260,7 @@ Open MPI version 5.0.0rc13
       - Fangcong Yin
       - Seth Zegelstein
       - Yixin Zhang
+      - William Zhang
 
   - Build updates and fixes:
 
