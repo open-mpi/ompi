@@ -249,6 +249,7 @@ Open MPI version 5.0.0rc13
       - Sophia Fang
       - Rick Gleitz
       - Colton Kammes
+      - Quincey Koziol
       - Robert Langfield
       - Nick Papior
       - Luz Paz
