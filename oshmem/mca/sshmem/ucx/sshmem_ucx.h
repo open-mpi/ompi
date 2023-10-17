@@ -21,6 +21,8 @@ BEGIN_C_DECLS
 
 typedef struct sshmem_ucx_shadow_allocator sshmem_ucx_shadow_allocator_t;
 
+#define sshmem_ucx_min(a, b) ((a) < (b) ? (a) : (b))
+#define sshmem_ucx_max(a, b) ((a) > (b) ? (a) : (b))
 /**
  * globally exported variable to hold the ucx component.
  */
