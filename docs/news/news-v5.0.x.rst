@@ -4,9 +4,9 @@ Open MPI v5.0.x series
 This file contains all the NEWS updates for the Open MPI v5.0.x
 series, in reverse chronological order.
 
-Open MPI version 5.0.0rc13
+Open MPI version 5.0.0rc14
 --------------------------
-:Date: 29 September 2023
+:Date: 17 October 2023
 
 .. admonition:: The MPIR API has been removed
    :class: warning
@@ -66,20 +66,25 @@ Open MPI version 5.0.0rc13
                 Libevent symbols and then statically pulled the
                 library into ``libmpi.so``.
 
-- Changes since rc12:
+- Changes since rc13:
 
-  - Update PMIx to the ``v4.2.6`` release tag. Hash: ``f20e0d5``.
-  - Update PRRTE to the ``v3.0.1`` release tag. Hash: ``63370ca``.
-  - Lots of documentation updates.
-  - Fixed parameter name in ``MPI_Intercomm_merge``. Thanks to Yan Wu for the report.
-  - ``OFI``: Update NIC selection to determine optimal interfaces from the current process.
-  - Fix reordering of received data in ``MPI_Gather``.
-  - Disable builds with ``HWLOC`` versions >= 3.0.0. This is currently not supported.
-  - Fix re-ordering of ranks in ``MPI_Dist_graph_create``.
-  - ``coll/HAN``: Fix bug when using ``MPI_IN_PLACE`` with ``MPI_Reduce``.
-  - Fix ``MPI_Type_Dup`` to propagate errors from inner calls.
-  - Fix the compilation of the monitoring infrastructure.
-  - Various other bug fixes.
+  - Update PMIx to hash: ``f8f578392ec77dd7a1d76ca697da4f15afcb0161``.
+  - Update PRRTE to hash: ``bb4085053a0b268ae2a2e04ed56387f53e4a3e7a``.
+  - Documentation updates
+  - Fix build case with --disable-prrte
+  - Update PRRTe and PMIx pointers to pull in fixes, including spurious log messages, and also
+    RPM fixes.
+  - pcomm: fix fortran interface for precv/psend.
+  - Fix UCX support level check.
+  - Add support for MPI_ERR_VALUE_TOO_LARGE
+  - ofi - add MCA parameters to not use FI_HMEM
+    This commit adds two MCA parameters:
+    mtl_ofi_disable_hmem
+    btl_ofi_disable_hmem
+  - oshmem:
+    Add symmetric remote key handling
+    Fixed DEVICE_NIC_MEM support to use RDMA memory type.
+  - Fix a small issue in properly setting filename when building the empty schizo rst file.
 
 - All other notable updates for v5.0.0:
 
