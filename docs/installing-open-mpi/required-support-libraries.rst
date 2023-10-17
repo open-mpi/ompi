@@ -3,50 +3,28 @@
 Required support libraries
 ==========================
 
-Open MPI requires the following support libraries with the minimum listed versions:
 
-.. list-table::
-   :header-rows: 1
-
-   * - Library
-     - Minimum version
-     - Notes
-   * - `Hardware Locality <https://www.open-mpi.org/projects/hwloc/>`_
-     - |hwloc_min_version|
-     - This library is required; Open MPI will not build without it.
-   * - `Libevent <https://libevent.org/>`_
-     - |event_min_version|
-     - This library is required; Open MPI will not build without it.
-   * - `PMIx <https://pmix.org/>`_
-     - |pmix_min_version|
-     - This library is required; Open MPI will not build without it.
-   * - `PRRTE <https://github.com/openpmix/prrte>`_
-     - |prte_min_version|
-     - This library is optional in some environments. PRRTE provides
-       Open MPI's full-featured ``mpirun`` / ``mpiexec`` MPI
-       application launchers (the two are identical; they are symbolic
-       links to the same executable).
-
-       * If your environment uses another MPI application launcher
-         (e.g., Slurm users can use the ``srun`` launcher to "direct
-         launch" Open MPI applications), then the use of PRRTE is
-         optional.
-       * If your environment has no other MPI application launcher, then
-         you need to install PRRTE and build Open MPI with PRRTE
-         support.
-       * Open MPI can use the copy of PRRTE embedded in its source
-         code tree, or compile/link against an external PRRTE
-         installation.  :ref:`See this section for details about how
-         to specify each method
-         <label-building-ompi-cli-options-required-support-libraries>`.
-
-Since these support libraries are fundamental to Open MPI's operation
-and not universally available in all environments, they are directly
+While Open MPI can be built with support for a wide variety of
+systems, a small set of support libraries are *required* in order to
+build Open MPI in *any* environment.  Several of these packages are
+both fundamental to Open MPI's operation and not universally available
+in all environments.  As such, these "fundamental" packages are both
+embedded in Open MPI's distribution tarballs and also directly
 incorporated into Open MPI's configure, build, and installation
-process.  More on this below.
+process.
 
-  .. note:: The versions listed in this table are the *minimum* versions needed.  In general, the Open MPI community recommends using more recent versions of both the :ref:`required support libraries <label-install-required-support-libraries>` and any other optional support libraries.  This is because more recent versions typically tend to include bug fixes, sometimes affecting Open MPI functionality.  As a specific example, there is a known issue with `Hardware Locality <https://www.open-mpi.org/projects/hwloc/>`_ releases older than v2.8.0 on systems with Intel Ponte Vecchio accelerators.  If you run Open MPI on such systems, you need to use Hwloc v2.8.0 or newer, or you will experience undefined behavior.
-   This effect is not unique to the Hardware Locality library; this is why the Open MPI community recommends using as recent as possible versions of all support libraries.
+:ref:`See below
+<required-support-libraries-configure-discovery-label>` for a
+description of how Open MPI chooses whether to use the embedded
+versions of these packages or versions already installed on your
+system.
+
+* `Hardware Locality <https://www.open-mpi.org/projects/hwloc/>`_
+
+  * This library is required; Open MPI will not build without it.
+  * **Minimum version required:** |hwloc_min_version|
+  * **Version embedded in Open MPI distribution:**
+    |hwloc_embedded_version|
 
   .. danger:: As of |ompi_ver|, Open MPI does not yet support the
               Hwloc v3.x series (which may not even be available at
@@ -76,6 +54,81 @@ process.  More on this below.
               application |mdash| or any of its dependencies |mdash|
               uses Hwloc, it uses the *same* Hwloc with which Open MPI
               was compiled.
+
+* `Libevent <https://libevent.org/>`_
+
+  * This library is required; Open MPI will not build without it.
+  * **Minimum version required:** |event_min_version|
+  * **Version embedded in Open MPI distribution:**
+    |event_embedded_version|
+
+* `PMIx <https://pmix.org/>`_
+
+  * This library is required; Open MPI will not build without it.
+  * **Minimum version required when building without PRRTE:**
+    |pmix_min_version|
+  * **Minimum version required when building with PRRTE:** `See the
+    PRRTE project documentation <https://docs.prrte.org/>`_.
+  * **Version embedded in Open MPI distribution:**
+    |pmix_embedded_version|
+
+* `PRRTE <https://github.com/openpmix/prrte>`_
+
+  * This library is optional in some environments. See below.
+  * **Minimum version required:** |prte_min_version|
+
+    .. note:: While building Open MPI with PRRTE |prte_min_version|
+              *works*, you will not get a fully-populated
+              ``mpirun(1)`` man page.  The Open MPI community
+              recommends that you use PRRTE version 3.0.1 or higher.
+
+  * **Version embedded in Open MPI distribution:**
+    |prte_embedded_version|
+
+  PRRTE provides Open MPI's full-featured ``mpirun`` / ``mpiexec`` MPI
+  application launchers (the two commands are identical; they are
+  symbolic links to the same executable).
+
+  .. warning:: If you are building the PRRTE that is embedded in the
+               Open MPI |ompi_ver| distribution:
+
+               * If you are also building the PMIx that is embedded in
+                 the Open MPI |ompi_ver| distribution, that
+                 combination of packages is supported.
+
+               * If you are building against an external PMIx
+                 installation (i.e., a version of PMIx that is not
+                 embedded in the Open MPI |ompi_ver| distribution),
+                 you should check `the PRRTE project documentation
+                 <https://docs.prrte.org/>`_ to see what minimum
+                 version of PMIx is required.
+
+  * If your environment uses another MPI application launcher (e.g.,
+    Slurm users can use the ``srun`` launcher to "direct launch" Open
+    MPI applications), then the use of PRRTE is optional.
+  * If your environment has no other MPI application launcher, then
+    you need to install PRRTE and build Open MPI with PRRTE support.
+  * Open MPI can use the copy of PRRTE embedded in its source code
+    tree, or compile/link against an external PRRTE installation.
+    :ref:`See this section for details about how to specify each
+    method
+    <label-building-ompi-cli-options-required-support-libraries>`.
+
+.. note:: In general, the Open MPI community recommends using the most
+          recent versions of both the :ref:`required support libraries
+          <label-install-required-support-libraries>` and any other
+          optional support libraries.  This is because more recent
+          versions typically tend to include bug fixes, sometimes
+          affecting Open MPI functionality.  As a specific example,
+          there is a known issue with `Hardware Locality
+          <https://www.open-mpi.org/projects/hwloc/>`_ releases older
+          than v2.8.0 on systems with Intel Ponte Vecchio
+          accelerators.  If you run Open MPI on such systems, you need
+          to use Hwloc v2.8.0 or newer, or you will experience
+          undefined behavior.  This effect is not unique to the
+          Hardware Locality library; this is why the Open MPI
+          community recommends using as recent as possible versions of
+          *all* support libraries.
 
 Library dependencies
 --------------------
@@ -144,6 +197,8 @@ libraries. But even if your package manager installs |mdash| for
 example |mdash| only Libevent and Hwloc, that somewhat simplifies the
 final Open MPI configuration, and therefore avoids some potentially
 erroneous configurations.
+
+.. _required-support-libraries-configure-discovery-label:
 
 How ``configure`` finds the required libraries
 ----------------------------------------------
@@ -264,7 +319,7 @@ on Mac OS because:
    tarballs).
 #. In MacOS, it is common for `Homebrew <https://brew.sh/>`_ or
    `MacPorts <https://www.macports.org/>`_ to install:
-   
+
    * `Hardware Locality <https://www.open-mpi.org/projects/hwloc/>`_
    * `Libevent <https://libevent.org/>`_
 
