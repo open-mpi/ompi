@@ -4,9 +4,9 @@ Open MPI v5.0.x series
 This file contains all the NEWS updates for the Open MPI v5.0.x
 series, in reverse chronological order.
 
-Open MPI version 5.0.0rc14
+Open MPI version 5.0.0rc15
 --------------------------
-:Date: 17 October 2023
+:Date: 19 October 2023
 
 .. admonition:: The MPIR API has been removed
    :class: warning
@@ -66,25 +66,11 @@ Open MPI version 5.0.0rc14
                 Libevent symbols and then statically pulled the
                 library into ``libmpi.so``.
 
-- Changes since rc13:
+- Changes since rc14:
 
-  - Update PMIx to hash: ``f8f578392ec77dd7a1d76ca697da4f15afcb0161``.
-  - Update PRRTE to hash: ``bb4085053a0b268ae2a2e04ed56387f53e4a3e7a``.
-  - Documentation updates
-  - Fix build case with --disable-prrte
-  - Update PRRTe and PMIx pointers to pull in fixes, including spurious log messages, and also
-    RPM fixes.
-  - pcomm: fix fortran interface for precv/psend.
-  - Fix UCX support level check.
-  - Add support for MPI_ERR_VALUE_TOO_LARGE
-  - ofi - add MCA parameters to not use FI_HMEM
-    This commit adds two MCA parameters:
-    mtl_ofi_disable_hmem
-    btl_ofi_disable_hmem
-  - oshmem:
-    Add symmetric remote key handling
-    Fixed DEVICE_NIC_MEM support to use RDMA memory type.
-  - Fix a small issue in properly setting filename when building the empty schizo rst file.
+  - Update PMIx to hash: ``17a7bf1a8886a8ad16dff5bc0791e226b0937106``.
+  - Update PRRTE to hash: ``09c4212bb491c8d2db9b12179379748b6d86520e``.
+    Includes a fix to correctly forward stdin to remote processes.
 
 - All other notable updates for v5.0.0:
 
