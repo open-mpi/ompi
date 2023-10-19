@@ -1244,19 +1244,9 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
             /* check for 'display_map' - a job-level key */
             ompi_info_get_bool(array_of_info[i], "display_map", &local_spawn, &flag);
             if ( flag ) {
-                rc = dpm_convert(&job_info, "display_map", PMIX_DISPLAY_MAP, NULL, "DISPLAY", true);
-                if (OMPI_SUCCESS != rc) {
-                    OPAL_LIST_DESTRUCT(&job_info);
-                    OPAL_LIST_DESTRUCT(&app_info);
-                    PMIX_APP_FREE(apps, scount);
-                    if (NULL != hostfiles) {
-                        opal_argv_free(hostfiles);
-                    }
-                    if (NULL != dash_host) {
-                        opal_argv_free(dash_host);
-                    }
-                    return MPI_ERR_SPAWN;
-                }
+                info = OBJ_NEW(opal_info_item_t);
+                PMIX_INFO_LOAD(&info->info, PMIX_DISPLAY_MAP, &local_spawn, PMIX_BOOL);
+                opal_list_append(&job_info, &info->super);
             }
 
             /* check for 'npernode' and 'ppr' - job-level key */
