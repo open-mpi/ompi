@@ -91,7 +91,7 @@ static inline bool pmix_atomic_compare_exchange_strong_32 (pmix_atomic_int32_t *
     __asm__ __volatile__ ("1:  ldaxr    %w0, [%2]      \n"
                           "    cmp     %w0, %w3        \n"
                           "    bne     2f              \n"
-                          "    stxr    %w1, %w4, [%2]  \n"
+                          "    stlxr   %w1, %w4, [%2]  \n"
                           "    cbnz    %w1, 1b         \n"
                           "2:                          \n"
                           : "=&r" (prev), "=&r" (tmp)
@@ -198,7 +198,7 @@ static inline bool pmix_atomic_compare_exchange_strong_64 (pmix_atomic_int64_t *
     __asm__ __volatile__ ("1:  ldaxr    %0, [%2]       \n"
                           "    cmp     %0, %3          \n"
                           "    bne     2f              \n"
-                          "    stxr    %w1, %4, [%2]   \n"
+                          "    stlxr    %w1, %4, [%2]   \n"
                           "    cbnz    %w1, 1b         \n"
                           "2:                          \n"
                           : "=&r" (prev), "=&r" (tmp)
