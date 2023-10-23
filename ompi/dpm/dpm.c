@@ -24,6 +24,7 @@
  * Copyright (c) 2018-2022 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2022      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -1243,7 +1244,7 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
             /* check for 'display_map' - a job-level key */
             ompi_info_get_bool(array_of_info[i], "display_map", &local_spawn, &flag);
             if ( flag ) {
-                rc = dpm_convert(&job_info, "display_map", PMIX_MAPBY, NULL, "DISPLAY", true);
+                rc = dpm_convert(&job_info, "display_map", PMIX_DISPLAY_MAP, NULL, "DISPLAY", true);
                 if (OMPI_SUCCESS != rc) {
                     OPAL_LIST_DESTRUCT(&job_info);
                     OPAL_LIST_DESTRUCT(&app_info);
