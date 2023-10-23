@@ -62,6 +62,8 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_communicator_t);
 #define OMPI_COMM_DYNAMIC      0x00000008
 #define OMPI_COMM_ISFREED      0x00000010
 #define OMPI_COMM_INVALID      0x00000020
+#define OMPI_COMM_DISJOINT_SET 0x00000040
+#define OMPI_COMM_DISJOINT     0x00000080
 #define OMPI_COMM_CART         0x00000100
 #define OMPI_COMM_GRAPH        0x00000200
 #define OMPI_COMM_DIST_GRAPH   0x00000400
@@ -80,6 +82,8 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_communicator_t);
 #define OMPI_COMM_IS_FREED(comm) ((comm)->c_flags & OMPI_COMM_ISFREED)
 #define OMPI_COMM_IS_DYNAMIC(comm) ((comm)->c_flags & OMPI_COMM_DYNAMIC)
 #define OMPI_COMM_IS_INVALID(comm) ((comm)->c_flags & OMPI_COMM_INVALID)
+#define OMPI_COMM_IS_DISJOINT_SET(comm) ((comm)->c_flags & OMPI_COMM_DISJOINT_SET)
+#define OMPI_COMM_IS_DISJOINT(comm) ((comm)->c_flags & OMPI_COMM_DISJOINT)
 #define OMPI_COMM_IS_PML_ADDED(comm) ((comm)->c_flags & OMPI_COMM_PML_ADDED)
 #define OMPI_COMM_IS_EXTRA_RETAIN(comm) ((comm)->c_flags & OMPI_COMM_EXTRA_RETAIN)
 #define OMPI_COMM_IS_TOPO(comm) (OMPI_COMM_IS_CART((comm)) || \
@@ -896,6 +900,19 @@ OMPI_DECLSPEC int ompi_comm_split_type(ompi_communicator_t *comm,
                                        int split_type, int key,
                                        struct opal_info_t *info,
                                        ompi_communicator_t** newcomm);
+
+/**
+ * Set newcomm's disjoint flags based on oldcomm if provided. In the case where oldcomm
+ * is disjoint, the function will short circuit and set newcomm to be disjoint.
+ * Otherwise, the function will carry out a collective communication on all processes
+ * in newcomm. Therefore this function should only be called **after** the collectives
+ * modules are initialized on newcomm.
+ *
+ * @param newcomm: new communicator
+ * @param oldcomm: parent communictator or NULL
+ *
+ */
+OMPI_DECLSPEC int ompi_comm_set_disjointness(ompi_communicator_t *newcomm, ompi_communicator_t *oldcomm);
 
 /**
  * dup a communicator. Parameter are identical to the MPI-counterpart
