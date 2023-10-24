@@ -66,11 +66,10 @@ Open MPI version 5.0.0rc15
                 Libevent symbols and then statically pulled the
                 library into ``libmpi.so``.
 
-- Changes since rc14:
+- Changes since rc15:
 
-  - Update PMIx to hash: ``17a7bf1a8886a8ad16dff5bc0791e226b0937106``.
-  - Update PRRTE to hash: ``09c4212bb491c8d2db9b12179379748b6d86520e``.
-    Includes a fix to correctly forward stdin to remote processes.
+  - Update PMIx to release tag v4.2.7 hash: ``57c405c52ad76bab0be9f95e29a6df660673081e``.
+  - Update PRRTE to release tag v3.0.2 hash: ``1552e36f0852bbc6d901ec95983369f0a3c283f6``.
 
 - All other notable updates for v5.0.0:
 
