@@ -14,6 +14,8 @@ order to build the best MPI library available.  Open MPI offers
 advantages for system and software vendors, application developers and
 computer science researchers.
 
+WAYSTARS HELLO WORLD
+
 Documentation locations
 =======================
 
