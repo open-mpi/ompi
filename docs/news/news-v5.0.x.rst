@@ -4,9 +4,9 @@ Open MPI v5.0.x series
 This file contains all the NEWS updates for the Open MPI v5.0.x
 series, in reverse chronological order.
 
-Open MPI version 5.0.0rc15
+Open MPI version 5.0.0
 --------------------------
-:Date: 19 October 2023
+:Date: 25 October 2023
 
 .. admonition:: The MPIR API has been removed
    :class: warning
@@ -66,46 +66,12 @@ Open MPI version 5.0.0rc15
                 Libevent symbols and then statically pulled the
                 library into ``libmpi.so``.
 
-- Changes since rc15:
+- Internal PMIx and PRRTe versions:
 
-  - Update PMIx to release tag v4.2.7 hash: ``57c405c52ad76bab0be9f95e29a6df660673081e``.
-  - Update PRRTE to release tag v3.0.2 hash: ``1552e36f0852bbc6d901ec95983369f0a3c283f6``.
+  - PMIx release tag v4.2.7. Commit hash: ``57c405c52ad76bab0be9f95e29a6df660673081e``.
+  - PRRTE release tag v3.0.2. Commit hash: ``1552e36f0852bbc6d901ec95983369f0a3c283f6``.
 
 - All other notable updates for v5.0.0:
-
-  - New Features:
-
-    - ULFM Fault Tolerance support has been added. See :ref:`the ULFM
-      section <ulfm-label>`.
-    - CUDA is now supported in the ``ofi`` MTL.
-    - New MCA parameter ``ompi_display_comm``, enabling a
-      communication report.  When set to ``mpi_init``, display the
-      report when ``MPI_Init()`` is invoked.  When set to
-      ``mpi_finalize``, display the report during ``MPI_Finalize()``.
-    - A threading framework has been added to allow building Open MPI
-      with different threading libraries. It currently supports
-      `Argobots <https://www.argobots.org/>`_, `Qthreads
-      <https://github.com/Qthreads/qthreads>`_, and Pthreads.  See the
-      ``--with-threads`` option in the ``configure`` command.  Thanks
-      to Shintaro Iwasaki and Jan Ciesko for their contributions to
-      this effort.
-    - New Thread Local Storage API: Removes global visibility of TLS
-      structures and allows for dynamic TLS handling.
-    - Added new ``Accelerator`` framework. CUDA-specific code
-      was replaced with a generic framework that standardizes various
-      device features such as copies or pointer type detection. This
-      allows for modularized implementation of various devices such as
-      the newly introduced ROCm Accelerator component. The redesign
-      also allows for Open MPI builds to be shipped with CUDA
-      support enabled without requiring CUDA libraries.
-    - Added load-linked, store-conditional atomics support for
-      AArch64.
-    - Added atomicity support to the ``ompio`` component.
-    - ``osc/rdma``: Added support for MPI minimum alignment key.
-    - Add ability to detect patched memory to
-      ``memory_patcher``. Thanks to Rich Welch for the contribution.
-    - ``coll/ucc``: Added support for the ``MPI_Scatter()`` and
-      ``MPI_Iscatter()`` collectives.
 
   - MPI-4.0 updates and additions:
 
@@ -130,6 +96,44 @@ Open MPI version 5.0.0rc15
       deprecated.
     - Issue a deprecation warning when ``MPI_Cancel()`` is called for
       a non-blocking send request.
+
+  - New Features:
+
+    - ULFM Fault Tolerance support has been added. See :ref:`the ULFM
+      section <ulfm-label>`.
+    - CUDA is now supported in the ``ofi`` MTL.
+    - A threading framework has been added to allow building Open MPI
+      with different threading libraries. It currently supports
+      `Argobots <https://www.argobots.org/>`_, `Qthreads
+      <https://github.com/Qthreads/qthreads>`_, and Pthreads.  See the
+      ``--with-threads`` option in the ``configure`` command.  Thanks
+      to Shintaro Iwasaki and Jan Ciesko for their contributions to
+      this effort.
+    - New Thread Local Storage API: Removes global visibility of TLS
+      structures and allows for dynamic TLS handling.
+    - Added new ``Accelerator`` framework. CUDA-specific code
+      was replaced with a generic framework that standardizes various
+      device features such as copies or pointer type detection. This
+      allows for modularized implementation of various devices such as
+      the newly introduced ROCm Accelerator component. The redesign
+      also allows for Open MPI builds to be shipped with CUDA
+      support enabled without requiring CUDA libraries.
+    - Added load-linked, store-conditional atomics support for
+      AArch64.
+    - Added atomicity support to the ``ompio`` component.
+    - ``osc/rdma``: Added support for MPI minimum alignment key.
+    - Add ability to detect patched memory to
+      ``memory_patcher``. Thanks to Rich Welch for the contribution.
+    - ``coll/ucc``: Added support for the ``MPI_Scatter()`` and
+      ``MPI_Iscatter()`` collectives.
+    - New algorithm for Allgather and Allgatherv has been added, based
+      on the paper *"Sparbit: a new logarithmic-cost and data
+      locality-aware MPI Allgather algorithm"*. Default algorithm
+      selection rules are unchanged; to use these algorithms add:
+      ``--mca coll_tuned_allgather_algorithm sparbit`` and/or ``--mca
+      coll_tuned_allgatherv_algorithm sparbit`` to your ``mpirun``
+      command.  Thanks to Wilton Jaciel Loch and Guilherme Koslovski
+      for their contribution.
 
   - Transport updates and improvements
 
@@ -163,10 +167,6 @@ Open MPI version 5.0.0rc15
 
     - Shared Memory:
 
-      - The legacy ``sm`` (shared memory) BTL has been removed.  The
-        next-generation shared memory BTL ``vader`` replaces it, and
-        has been renamed to be ``sm`` (``vader`` will still work as an
-        alias).
       - Update the new ``sm`` BTL to not use Linux Cross Memory Attach
         (CMA) in user namespaces.
       - Fixed a crash when using the new ``sm`` BTL when compiled with
@@ -177,6 +177,10 @@ Open MPI version 5.0.0rc15
 
   - Deprecations and removals:
 
+    - The legacy ``sm`` (shared memory) BTL has been removed.  The
+      next-generation shared memory BTL ``vader`` replaces it, and
+      has been renamed to be ``sm`` (``vader`` will still work as an
+      alias).
     - ORTE, the underlying Open MPI launcher has been removed, and
       replaced with the `PMIx Reference RunTime Environment
       <https://github.com/openpmix/prrte>`_ (``PRTE``).
@@ -204,18 +208,29 @@ Open MPI version 5.0.0rc15
       environment is no longer supported.  32 bit support is still
       available in the v4.x series.
 
-  - Hardware Locality updates:
+  - Other updates and bug fixes:
 
-    - Open MPI now requires Hardware Locality v1.11.0 or later.
-    - The internally-bundled Hardware Locality shipped with Open MPI
-      has been updated to v2.7.1.
-    - Open MPI builds Hardware Locality with ``--enable-plugins`` when
-      appropriate.
+    - Updated Open MPI to use ``ROMIO`` v3.4.1.
+    - Add missing ``MPI_Status`` conversion subroutines:
+      ``MPI_Status_c2f08()``, ``MPI_Status_f082c()``,
+      ``MPI_Status_f082f()``, ``MPI_Status_f2f08()`` and the
+      ``PMPI_*`` related subroutines.
+    - MPI module: added the ``mpi_f08`` ``TYPE(MPI_*)`` types for
+      Fortran.  Thanks to George Katevenis for the report and their
+      contribution to the patch.
+    - The default atomics have been changed to be GCC, with C11 as a
+      fallback. C11 atomics incurs sequential memory ordering, which
+      in most cases is not desired.
+    - Various datatype bugfixes and performance improvements.
+    - Various pack/unpack bugfixes and performance improvements.
+    - Various OSHMEM bugfixes and performance improvements.
+    - Thanks to Jeff Hammond, Pak Lui, Felix Uhl, Naribayashi Akira, 
+      Julien Emmanuel, and Yaz Saito for their invaluable contributions.
 
   - Documentation updates and improvements:
 
     - Open MPI has consolidated and converted all of its documentation
-      to use `ReStructured Text
+      to use `ReStructured Text.
       <https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html>`_
       and `Sphinx <https://www.sphinx-doc.org/>`_.
 
@@ -252,93 +267,3 @@ Open MPI version 5.0.0rc15
       - Yixin Zhang
       - William Zhang
 
-  - Build updates and fixes:
-
-    - Various changes and cleanup to fix, and better support the
-      static building of Open MPI.
-    - Change the default component build behavior to prefer building
-      components as part of the core Open MPI library instead of
-      individual DSOs.  Currently, this means the Open SHMEM layer
-      will only build if the UCX library is found.
-    - ``autogen.pl`` now supports a ``-j`` option to run
-      multi-threaded.  Users can also use the environment variable
-      ``AUTOMAKE_JOBS``.
-    - Updated ``autogen.pl`` to support macOS Big Sur. Thanks to
-      @fxcoudert for reporting the issue.
-    - Fixed bug where ``autogen.pl`` would not ignore all excluded
-      components when using the ``--exclude`` option.
-    - Fixed a bug the ``-r`` option of ``buildrpm.sh`` which would
-      result in an rpm build failure. Thanks to John K. McIver III for
-      reporting and fixing.
-    - Removed the ``C++`` compiler requirement to build Open MPI.
-    - Updates to improve the handling of the compiler version string
-      in the build system.  This fixes a compiler error with clang and
-      armclang.
-    - Added OpenPMIx binaries to the build, including ``pmix_info``.
-      Thanks to Mamzi Bayatpour for their contribution to this effort.
-    - Open MPI now links to Libevent using ``-levent_core``
-      and ``-levent_pthread`` instead of ``-levent``.
-    - Added support for setting the wrapper C compiler.  This adds a
-      new option: ``--with-wrapper-cc=NAME`` to the ``configure`` command.
-    - Fixed compilation errors when running on IME file systems due to
-      a missing header inclusion. Thanks to Sylvain Didelot for
-      finding and fixing this issue.
-    - Add support for GNU Autoconf v2.7.x.
-
-  - Other updates and bug fixes:
-
-    - Updated Open MPI to use ``ROMIO`` v3.4.1.
-    - ``common/ompio``: implement pipelined read and write operation.
-      This new new code path shows significant performance
-      improvements for reading/writing device buffers compared to the
-      previous implementation, and reduces the memory footprint of
-      Open MPI IO ("OMPIO") by allocating smaller temporary buffers.
-    - Fixed Fortran-8-byte-INTEGER vs. C-4-byte-int issue in the
-      ``mpi_f08`` MPI Fortran bindings module. Thanks to @ahaichen for
-      reporting the bug.
-    - Add missing ``MPI_Status`` conversion subroutines:
-      ``MPI_Status_c2f08()``, ``MPI_Status_f082c()``,
-      ``MPI_Status_f082f()``, ``MPI_Status_f2f08()`` and the
-      ``PMPI_*`` related subroutines.
-    - Fixed Fortran keyword issue when compiling ``oshmem_info``.
-      Thanks to Pak Lui for finding and fixing the bug.
-    - Added check for Fortran ``ISO_FORTRAN_ENV:REAL16``. Thanks to
-      Jeff Hammond for reporting this issue.
-    - Fixed Fortran preprocessor issue with ``CPPFLAGS``.
-      Thanks to Jeff Hammond for reporting this issue.
-    - MPI module: added the ``mpi_f08`` ``TYPE(MPI_*)`` types for
-      Fortran.  Thanks to George Katevenis for the report and their
-      contribution to the patch.
-    - Fixed a typo in an error string when showing the stack
-      frame. Thanks to Naribayashi Akira for finding and fixing the
-      bug.
-    - Fixed output error strings and some comments in the Open MPI
-      code base.  Thanks to Julien Emmanuel for tirelessly finding and
-      fixing these issues.
-    - The ``uct`` BTL transport now supports ``UCX`` v1.9 and higher.
-      There is no longer a maximum supported version.
-    - Updated the UCT BTL defaults to allow NVIDIA/Mellanox HCAs
-      (``mlx4_0``, and ``mlx5_0``) for compatibility with the
-      one-sided ``rdma`` component.
-    - Fixed a crash during CUDA initialization.
-      Thanks to Yaz Saito for finding and fixing the bug.
-    - Singleton ``MPI_Comm_spawn()`` support has been fixed.
-    - PowerPC atomics: Force usage of ppc assembly by default.
-    - The default atomics have been changed to be GCC, with C11 as a
-      fallback. C11 atomics incurs sequential memory ordering, which
-      in most cases is not desired.
-    - Various datatype bugfixes and performance improvements.
-    - Various pack/unpack bugfixes and performance improvements.
-    - Various OSHMEM bugfixes and performance improvements.
-    - New algorithm for Allgather and Allgatherv has been added, based
-      on the paper *"Sparbit: a new logarithmic-cost and data
-      locality-aware MPI Allgather algorithm"*. Default algorithm
-      selection rules are unchanged; to use these algorithms add:
-      ``--mca coll_tuned_allgather_algorithm sparbit`` and/or ``--mca
-      coll_tuned_allgatherv_algorithm sparbit`` to your ``mpirun``
-      command.  Thanks to Wilton Jaciel Loch and Guilherme Koslovski
-      for their contribution.
-    - Updated the usage of ``.gitmodules`` to use relative paths from
-      absolute paths. This allows the submodule cloning to use the
-      same protocol as Open MPI cloning. Thanks to Felix Uhl for the
-      contribution.
