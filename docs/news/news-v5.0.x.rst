@@ -230,7 +230,7 @@ Open MPI version 5.0.0rc16
   - Documentation updates and improvements:
 
     - Open MPI has consolidated and converted all of its documentation
-      to use `ReStructured Text
+      to use `ReStructured Text.
       <https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html>`_
       and `Sphinx <https://www.sphinx-doc.org/>`_.
 
