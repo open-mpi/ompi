@@ -4,9 +4,9 @@ Open MPI v5.0.x series
 This file contains all the NEWS updates for the Open MPI v5.0.x
 series, in reverse chronological order.
 
-Open MPI version 5.0.0rc16
+Open MPI version 5.0.0
 --------------------------
-:Date: 24 October 2023
+:Date: 25 October 2023
 
 .. admonition:: The MPIR API has been removed
    :class: warning
@@ -66,10 +66,10 @@ Open MPI version 5.0.0rc16
                 Libevent symbols and then statically pulled the
                 library into ``libmpi.so``.
 
-- Changes since rc15:
+- Internal PMIx and PRRTe versions:
 
-  - Update PMIx to release tag v4.2.7 hash: ``57c405c52ad76bab0be9f95e29a6df660673081e``.
-  - Update PRRTE to release tag v3.0.2 hash: ``1552e36f0852bbc6d901ec95983369f0a3c283f6``.
+  - PMIx release tag v4.2.7. Commit hash: ``57c405c52ad76bab0be9f95e29a6df660673081e``.
+  - PRRTE release tag v3.0.2. Commit hash: ``1552e36f0852bbc6d901ec95983369f0a3c283f6``.
 
 - All other notable updates for v5.0.0:
 
