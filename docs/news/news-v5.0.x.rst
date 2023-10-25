@@ -4,9 +4,9 @@ Open MPI v5.0.x series
 This file contains all the NEWS updates for the Open MPI v5.0.x
 series, in reverse chronological order.
 
-Open MPI version 5.0.0rc15
+Open MPI version 5.0.0rc16
 --------------------------
-:Date: 19 October 2023
+:Date: 24 October 2023
 
 .. admonition:: The MPIR API has been removed
    :class: warning
