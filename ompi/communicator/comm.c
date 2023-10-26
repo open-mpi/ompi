@@ -458,6 +458,7 @@ int ompi_comm_create_w_info (ompi_communicator_t *comm, ompi_group_t *group, opa
         goto exit;
     }
 
+
     /* Check whether we are part of the new comm.
        If not, we have to free the structure again.
        However, we could not avoid the comm_nextcid step, since
@@ -2687,49 +2688,6 @@ static int ompi_comm_copy_topo(ompi_communicator_t *oldcomm,
     OBJ_RETAIN(newcomm->c_topo);
     newcomm->c_flags |= newcomm->c_topo->type;
     return OMPI_SUCCESS;
-}
-
-int ompi_comm_set_disjointness(ompi_communicator_t *newcomm, ompi_communicator_t *oldcomm)
-{
-    int local_peers = 0, rc = OMPI_ERROR;
-
-    if (OMPI_COMM_IS_DISJOINT_SET(newcomm)) {
-        rc = OMPI_SUCCESS;
-        goto out;
-    }
-
-    if (NULL != oldcomm && OMPI_COMM_IS_DISJOINT(oldcomm)) {
-        /**
-         * A communicator splitted from a disjoint
-         * communicator(1 process per node) is also disjoint
-         */
-        newcomm->c_flags |= (OMPI_COMM_DISJOINT_SET | OMPI_COMM_DISJOINT);
-        rc = OMPI_SUCCESS;
-        goto out;
-    }
-
-    if (!newcomm->c_coll) {
-        rc = OMPI_ERR_NOT_AVAILABLE;
-        goto out;
-    }
-
-    local_peers = ompi_group_count_local_peers(newcomm->c_local_group);
-    rc = newcomm->c_coll->coll_allreduce(MPI_IN_PLACE, &local_peers, 1, MPI_INT, MPI_MAX, newcomm,
-                                         newcomm->c_coll->coll_allreduce_module);
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
-        goto out;
-    }
-
-    if (1 == local_peers) {
-        newcomm->c_flags |= OMPI_COMM_DISJOINT;
-    } else {
-        newcomm->c_flags &= ~OMPI_COMM_DISJOINT;
-    }
-
-    newcomm->c_flags |= OMPI_COMM_DISJOINT_SET;
-
-out:
-    return rc;
 }
 
 char *ompi_comm_print_cid (const ompi_communicator_t *comm)
