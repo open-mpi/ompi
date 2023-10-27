@@ -193,7 +193,10 @@ be used with ``configure``:
   options, but have no impact on the selection logic described below.
   Only affirmative options change the selection process.
 
-  ``LIST`` is a comma-delimited list of Open MPI frameworks and/or
+  If ``LIST`` is not specified (e.g., ``--enable-mca-dso`` with no
+  ``LIST``), or if ``LIST`` is the special value ``yes``, then *all*
+  components will be selected.  If ``LIST`` is specified, it is a
+  comma-delimited list of Open MPI frameworks and/or
   framework+component tuples.  Examples:
 
   * ``btl`` specifies the entire BTL framework
@@ -213,7 +216,7 @@ be used with ``configure``:
   #. Otherwise, ``configure`` uses the global default build behavior.
 
   At each level of the selection process, if the component is
-  specified to be built as both a static and dso component, the static
+  specified to be built as both a static and DSO component, the static
   option will win.
 
   .. note:: As of Open MPI |ompi_ver|, ``configure``'s global default
@@ -233,6 +236,10 @@ be used with ``configure``:
      the Open MPI core libraries -- no DSOs)::
 
         shell$ ./configure
+
+  #. Build all components as DSOs::
+
+        shell$ ./configure --enable-mca-dso
 
   #. Build all components as static, except the TCP BTL, which will be
      built as a DSO::
