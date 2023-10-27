@@ -202,7 +202,7 @@ be used with ``configure``:
   * ``btl`` specifies the entire BTL framework
   * ``btl-tcp`` specifies just the TCP component in the BTL framework
   * ``mtl,btl-tcp`` specifies the entire MTL framework and the TCP
-     component in the BTL framework
+    component in the BTL framework
 
   Open MPI's ``configure`` script uses the values of these two options
   when evaluating each component to determine how it should be built
