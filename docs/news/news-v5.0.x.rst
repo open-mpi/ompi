@@ -242,9 +242,12 @@ Open MPI version 5.0.0
         directory.
 
     - Many, many people from the Open MPI community contributed to the
-      overall documentation effort |mdash| not only those who are
-      listed in the Git commit logs |mdash| including (but not limited
-      to):
+      overall documentation effort |mdash| not just those who are
+      listed in the Git commit logs.  Indeed, many Open MPI core
+      developers contributed their time and effort, as did a fairly
+      large group of non-core developers (e.g., those who participated
+      just to help the documentation revamp), including (but not
+      limited to):
 
       - Lachlan Bell
       - Simon Byrne
@@ -254,7 +257,6 @@ Open MPI version 5.0.0
       - Sophia Fang
       - Rick Gleitz
       - Colton Kammes
-      - Quincey Koziol
       - Robert Langfield
       - Nick Papior
       - Luz Paz
@@ -265,5 +267,3 @@ Open MPI version 5.0.0
       - Fangcong Yin
       - Seth Zegelstein
       - Yixin Zhang
-      - William Zhang
-
