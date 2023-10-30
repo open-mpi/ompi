@@ -98,7 +98,7 @@ struct ompi_comm_cid_context_t {
     int remote_leader;
     int iter;
     /** storage for activate barrier */
-    int ok;
+    int max_local_peers;
     char *port_string;
     bool send_first;
     int pml_tag;
@@ -266,7 +266,7 @@ static ompi_comm_cid_context_t *mca_comm_cid_context_alloc (ompi_communicator_t 
 
     context->send_first = send_first;
     context->iter = 0;
-    context->ok = 1;
+    context->max_local_peers = ompi_group_count_local_peers(newcomm->c_local_group);
 
     return context;
 }
@@ -771,9 +771,33 @@ static int ompi_comm_nextcid_check_flag (ompi_comm_request_t *request)
 /* Non-blocking version of ompi_comm_activate */
 static int ompi_comm_activate_nb_complete (ompi_comm_request_t *request);
 
-static int ompi_comm_activate_complete (ompi_communicator_t **newcomm, ompi_communicator_t *comm)
+/* Callback function to set communicator disjointness flags */
+static inline void ompi_comm_set_disjointness_nb_complete(ompi_comm_cid_context_t *context)
+{
+    if (OMPI_COMM_IS_DISJOINT_SET(*context->newcommp)) {
+        opal_show_help("help-comm.txt", "disjointness-set-again", true);
+        return;
+    }
+
+    if (1 == context->max_local_peers) {
+        (*context->newcommp)->c_flags |= OMPI_COMM_DISJOINT;
+    } else {
+        (*context->newcommp)->c_flags &= ~OMPI_COMM_DISJOINT;
+    }
+    (*context->newcommp)->c_flags |= OMPI_COMM_DISJOINT_SET;
+}
+
+static int ompi_comm_activate_complete (ompi_comm_cid_context_t *context)
 {
     int ret;
+    ompi_communicator_t **newcomm = context->newcommp, *comm = context->comm;
+
+    /**
+     * Determine the new communicator's disjointness based on
+     * context->max_local_peers. It is reduced on the communicator
+     * before ompi_comm_activate_nb_complete is called.
+     */
+    ompi_comm_set_disjointness_nb_complete(context);
 
     /**
      * Check to see if this process is in the new communicator.
@@ -846,7 +870,7 @@ int ompi_comm_activate_nb (ompi_communicator_t **newcomm, ompi_communicator_t *c
     ompi_comm_cid_context_t *context;
     ompi_comm_request_t *request;
     ompi_request_t *subreq;
-    int ret = 0;
+    int ret = 0, local_peers = -1;
 
     /* the caller should not pass NULL for comm (it may be the same as *newcomm) */
     assert (NULL != comm);
@@ -878,10 +902,13 @@ int ompi_comm_activate_nb (ompi_communicator_t **newcomm, ompi_communicator_t *c
         OMPI_COMM_SET_PML_ADDED(*newcomm);
     }
 
-    /* Step 1: the barrier, after which it is allowed to
-     * send messages over the new communicator
+    /**
+     * Dual-purpose barrier:
+     * 1. The communicator's disjointness is inferred from max_local_peers.
+     * 2. After the operation it is allowed to send messages over the new communicator.
      */
-    ret = context->allreduce_fn (&context->ok, &context->ok, 1, MPI_MIN, context,
+    local_peers = context->max_local_peers;
+    ret = context->allreduce_fn (&local_peers, &context->max_local_peers, 1, MPI_MAX, context,
                                  &subreq);
     if (OMPI_SUCCESS != ret) {
         ompi_comm_request_return (request);
@@ -920,7 +947,7 @@ int ompi_comm_activate (ompi_communicator_t **newcomm, ompi_communicator_t *comm
 static int ompi_comm_activate_nb_complete (ompi_comm_request_t *request)
 {
     ompi_comm_cid_context_t *context = (ompi_comm_cid_context_t *) request->context;
-    return ompi_comm_activate_complete (context->newcommp, context->comm);
+    return ompi_comm_activate_complete (context);
 }
 
 /**************************************************************************/

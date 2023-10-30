@@ -62,6 +62,8 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_communicator_t);
 #define OMPI_COMM_DYNAMIC      0x00000008
 #define OMPI_COMM_ISFREED      0x00000010
 #define OMPI_COMM_INVALID      0x00000020
+#define OMPI_COMM_DISJOINT_SET 0x00000040
+#define OMPI_COMM_DISJOINT     0x00000080
 #define OMPI_COMM_CART         0x00000100
 #define OMPI_COMM_GRAPH        0x00000200
 #define OMPI_COMM_DIST_GRAPH   0x00000400
@@ -80,6 +82,8 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_communicator_t);
 #define OMPI_COMM_IS_FREED(comm) ((comm)->c_flags & OMPI_COMM_ISFREED)
 #define OMPI_COMM_IS_DYNAMIC(comm) ((comm)->c_flags & OMPI_COMM_DYNAMIC)
 #define OMPI_COMM_IS_INVALID(comm) ((comm)->c_flags & OMPI_COMM_INVALID)
+#define OMPI_COMM_IS_DISJOINT_SET(comm) ((comm)->c_flags & OMPI_COMM_DISJOINT_SET)
+#define OMPI_COMM_IS_DISJOINT(comm) ((comm)->c_flags & OMPI_COMM_DISJOINT)
 #define OMPI_COMM_IS_PML_ADDED(comm) ((comm)->c_flags & OMPI_COMM_PML_ADDED)
 #define OMPI_COMM_IS_EXTRA_RETAIN(comm) ((comm)->c_flags & OMPI_COMM_EXTRA_RETAIN)
 #define OMPI_COMM_IS_TOPO(comm) (OMPI_COMM_IS_CART((comm)) || \
