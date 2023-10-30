@@ -229,6 +229,12 @@
 #    define __opal_attribute_weak_alias__(a)
 #endif
 
+#if OPAL_HAVE_ATTRIBUTE_CONSTRUCTOR
+#    define __opal_attribute_constructor__ __attribute__((__constructor__))
+#else
+#    define __opal_attribute_constructor__
+#endif
+
 #if OPAL_HAVE_ATTRIBUTE_DESTRUCTOR
 #    define __opal_attribute_destructor__ __attribute__((__destructor__))
 #else
