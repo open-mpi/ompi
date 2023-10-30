@@ -559,6 +559,14 @@ AC_DEFUN([OPAL_CHECK_ATTRIBUTES], [
         [],
         [])
 
+    _OPAL_CHECK_SPECIFIC_ATTRIBUTE([constructor],
+        [
+        void foo(void) __attribute__ ((__constructor__));
+        void foo(void) { return ; }
+        ],
+        [],
+        [])
+
     _OPAL_CHECK_SPECIFIC_ATTRIBUTE([destructor],
         [
         void foo(void) __attribute__ ((__destructor__));
@@ -631,6 +639,8 @@ AC_DEFUN([OPAL_CHECK_ATTRIBUTES], [
                      [Whether your compiler has __attribute__ warn unused result or not])
   AC_DEFINE_UNQUOTED(OPAL_HAVE_ATTRIBUTE_WEAK_ALIAS, [$opal_cv___attribute__weak_alias],
                      [Whether your compiler has __attribute__ weak alias or not])
+  AC_DEFINE_UNQUOTED(OPAL_HAVE_ATTRIBUTE_CONSTRUCTOR, [$opal_cv___attribute__constructor],
+                     [Whether your compiler has __attribute__ constructor or not])
   AC_DEFINE_UNQUOTED(OPAL_HAVE_ATTRIBUTE_DESTRUCTOR, [$opal_cv___attribute__destructor],
                      [Whether your compiler has __attribute__ destructor or not])
   AC_DEFINE_UNQUOTED(OPAL_HAVE_ATTRIBUTE_OPTNONE, [$opal_cv___attribute__optnone],
