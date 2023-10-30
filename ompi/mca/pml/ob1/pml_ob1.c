@@ -26,6 +26,7 @@
  * Copyright (c) 2018-2021 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2022      IBM Corporation. All rights reserved
+ * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -382,11 +383,6 @@ int mca_pml_ob1_add_procs(ompi_proc_t** procs, size_t nprocs)
     if(nprocs == 0)
         return OMPI_SUCCESS;
 
-    OBJ_CONSTRUCT(&reachable, opal_bitmap_t);
-    rc = opal_bitmap_init(&reachable, (int)nprocs);
-    if(OMPI_SUCCESS != rc)
-        return rc;
-
     /* make sure remote procs are using the same PML as us */
     if (OMPI_SUCCESS != (rc = mca_pml_base_pml_check_selected("ob1",
                                                               procs,
@@ -394,14 +390,14 @@ int mca_pml_ob1_add_procs(ompi_proc_t** procs, size_t nprocs)
         return rc;
     }
 
+    if (NULL == mca_bml.bml_add_procs) {
+        return OMPI_ERR_UNREACH;
+    }
+
     OBJ_CONSTRUCT(&reachable, opal_bitmap_t);
     rc = opal_bitmap_init(&reachable, (int)nprocs);
     if (OMPI_SUCCESS != rc) {
         return rc;
-    }
-
-    if (NULL == mca_bml.bml_add_procs) {
-        return OMPI_ERR_UNREACH;
     }
 
     rc = mca_bml.bml_add_procs (nprocs, procs, &reachable);
