@@ -668,6 +668,7 @@ static char **split_and_resolve(char **orig_str, char *name, bool reqd)
                                     "btl: tcp: Using interface: %s ", argv[i]);
                 opal_argv_append(&interface_count, &interfaces, argv[i]);
             }
+            free(argv[i]);
             continue;
         }
 
