@@ -59,7 +59,14 @@
 
 ompi_predefined_instance_t ompi_mpi_instance_null = {{{{0}}}};
 
+#if defined(OPAL_RECURSIVE_MUTEX_STATIC_INIT)
 static opal_recursive_mutex_t instance_lock = OPAL_RECURSIVE_MUTEX_STATIC_INIT;
+#else
+static opal_recursive_mutex_t instance_lock;
+__attribute__((__constructor__)) static void instance_lock_init(void) {
+    OBJ_CONSTRUCT(&instance_lock, opal_recursive_mutex_t);
+}
+#endif  /* defined(OPAL_RECURSIVE_MUTEX_STATIC_INIT) */
 
 /** MPI_Init instance */
 ompi_instance_t *ompi_mpi_instance_default = NULL;
