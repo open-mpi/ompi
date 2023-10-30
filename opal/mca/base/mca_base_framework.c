@@ -7,6 +7,7 @@
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2018      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -246,9 +247,11 @@ int mca_base_framework_close(struct mca_base_framework_t *framework)
 
     /* close the framework and all of its components */
     if (is_open) {
+        ret = OPAL_SUCCESS;
         if (NULL != framework->framework_close) {
             ret = framework->framework_close();
-        } else {
+        }
+        if (OPAL_SUCCESS == ret) {
             ret = mca_base_framework_components_close(framework, NULL);
         }
 
