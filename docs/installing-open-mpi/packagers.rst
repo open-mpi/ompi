@@ -198,22 +198,9 @@ using ``--enable-mca-dso`` to selectively build some components as
 DSOs and leave the others included in their respective Open MPI
 libraries.
 
-.. code:: sh
-
-   # Build all the "accelerator" components as DSOs (all other
-   # components will default to being built in their respective
-   # libraries)
-   shell$ ./configure --enable-mca-dso=accelerator ...
-
-This allows packaging ``$libdir`` as part of the "main" Open MPI
-binary package, but then packaging
-``$libdir/openmpi/mca_accelerator_*.so`` as sub-packages.  These
-sub-packages may inherit dependencies on the CUDA and/or ROCM
-packages, for example.  User can always install the "main" Open MPI
-binary package, and can install the additional "accelerator" Open MPI
-binary sub-package if they actually have accelerator hardware
-installed (which will cause the installation of additional
-dependencies).
+:ref:`See the section on building accelerator support
+<label-install-packagers-building-accelerator-support-as-dsos>` for a
+practical example where this can be useful.
 
 .. _label-install-packagers-gnu-libtool-dependency-flattening:
 
@@ -283,3 +270,49 @@ these flattened dependencies, use either of the following mechanisms:
                 utilizes compiler and linker flags if they are
                 *needed*.  All other flags should be the user's /
                 packager's choice.
+
+.. _label-install-packagers-building-accelerator-support-as-dsos:
+
+Building accelerator support as DSOs
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If you are building a package that includes support for one or more
+accelerators, it may be desirable to build accelerator-related
+components as DSOs (see the :ref:`static or DSO?
+<label-install-packagers-dso-or-not>` section for details).
+
+.. admonition:: Rationale
+   :class: tip
+
+   Accelerator hardware is expensive, and may only be present on some
+   compute nodes in an HPC cluster.  Specifically: there may not be
+   any accelerator hardware on "head" or compile nodes in an HPC
+   cluster.  As such, invoking Open MPI commands on a "head" node with
+   an MPI that was built with static accelerator support but no
+   accelerator hardware may fail to launch because of run-time linker
+   issues (because the accelerator hardware support libraries are
+   likely not present).
+
+   Building Open MPI's accelerator-related components as DSOs allows
+   Open MPI to *try* opening the accelerator components, but proceed
+   if those DSOs fail to open due to the lack of support libraries.
+
+Use the ``--enable-mca-dso`` command line parameter to Open MPI's
+``configure`` command can allow packagers to build all
+accelerator-related components as DSO.  For example:
+
+.. code:: sh
+
+   # Build all the accelerator-related components as DSOs (all other
+   # components will default to being built in their respective
+   # libraries)
+   shell$ ./configure --enable-mca-dso=btl-smcuda,rcache-rgpusm,rcache-gpusm,accelerator
+
+Per the example above, this allows packaging ``$libdir`` as part of
+the "main" Open MPI binary package, but then packaging
+``$libdir/openmpi/mca_accelerator_*.so`` and the other named
+components as sub-packages.  These sub-packages may inherit
+dependencies on the CUDA and/or ROCM packages, for example.  The
+"main" package can be installed on all nodes, and the
+accelerator-specific subpackage can be installed on only the nodes
+with accelerator hardware and support libraries.
