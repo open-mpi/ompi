@@ -221,10 +221,19 @@ Open MPI version 5.0.0
     - The default atomics have been changed to be GCC, with C11 as a
       fallback. C11 atomics incurs sequential memory ordering, which
       in most cases is not desired.
+    - The default build mode has changed from building Open MPI's
+      components as Dynamic Shared Objects (DSOs) to being statically
+      included in their respective libraries.
+
+      .. important:: This has consequences for packagers.  Be sure to
+                     read the :ref:`GNU Libtool dependency flattening
+                     <label-install-packagers-gnu-libtool-dependency-flattening>`
+                     subsection.
+
     - Various datatype bugfixes and performance improvements.
     - Various pack/unpack bugfixes and performance improvements.
     - Various OSHMEM bugfixes and performance improvements.
-    - Thanks to Jeff Hammond, Pak Lui, Felix Uhl, Naribayashi Akira, 
+    - Thanks to Jeff Hammond, Pak Lui, Felix Uhl, Naribayashi Akira,
       Julien Emmanuel, and Yaz Saito for their invaluable contributions.
 
   - Documentation updates and improvements:
