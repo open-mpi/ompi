@@ -9,7 +9,7 @@ Open MPI Wrapper Compilers
 
 .. include_body
 
-mpicc, mpic++, mpicxx, mpifort, mpijavac  -- Open MPI wrapper compilers
+mpicc, mpic++, mpicxx, mpifort, mpijavac |mdash| Open MPI wrapper compilers
 
 SYNTAX
 ------
