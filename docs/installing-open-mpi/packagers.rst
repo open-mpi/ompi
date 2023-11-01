@@ -80,14 +80,77 @@ running Open MPI's ``configure`` script.
 
 .. _label-install-packagers-dso-or-not:
 
-Components ("plugins"): DSO or no?
-----------------------------------
+Components ("plugins"): static or DSO?
+--------------------------------------
 
 Open MPI contains a large number of components (sometimes called
 "plugins") to effect different types of functionality in MPI.  For
 example, some components effect Open MPI's networking functionality:
 they may link against specialized libraries to provide
 highly-optimized network access.
+
+Open MPI can build its components as Dynamic Shared Objects (DSOs) or
+statically included in core libraries (regardless of whether those
+libraries are built as shared or static libraries).
+
+.. note:: As of Open MPI |ompi_ver|, ``configure``'s global default is
+          to build all components as static (i.e., part of the Open
+          MPI core libraries, not as DSOs).  Prior to Open MPI v5.0.0,
+          the global default behavior was to build most components as
+          DSOs.
+
+Why build components as DSOs?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+There are advantages to building components as DSOs:
+
+* Open MPI's core libraries |mdash| and therefore MPI applications
+  |mdash| will have very few dependencies.  For example, if you build
+  Open MPI with support for a specific network stack, the libraries in
+  that network stack will be dependencies of the DSOs, not Open MPI's
+  core libraries (or MPI applications).
+
+* Removing Open MPI functionality that you do not want is as simple as
+  removing a DSO from ``$libdir/open-mpi``.
+
+Why build components as part of Open MPI's core libraries?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The biggest advantage to building the components as part of Open MPI's
+core libraries is when running at (very) large scales when Open MPI is
+installed on a network filesystem (vs. being installed on a local
+filesystem).
+
+For example, consider launching a single MPI process on each of 1,000
+nodes.  In this scenario, the following is accessed from the network
+filesystem:
+
+#. The MPI application
+#. The core Open MPI libraries and their dependencies (e.g.,
+   ``libmpi``)
+
+   * Depending on your configuration, this is probably on the order of
+     10-20 library files.
+
+#. All DSO component files and their dependencies
+
+   * Depending on your configuration, this can be 200+ component
+     files.
+
+If all components are physically located in the libraries, then the
+third step loads zero DSO component files.  When using a networked
+filesystem while launching at scale, this can translate to large
+performance savings.
+
+.. note:: If not using a networked filesystem, or if not launching at
+          scale, loading a large number of DSO files may not consume a
+          noticeable amount of time during MPI process launch.  Put
+          simply: loading DSOs as indvidual files generally only
+          matters when using a networked filesystem while launching at
+          scale.
+
+Direct controls for building components as DSOs or not
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Open MPI |ompi_ver| has two ``configure``-time defaults regarding the
 treatment of components that may be of interest to packagers:
@@ -151,3 +214,72 @@ binary package, and can install the additional "accelerator" Open MPI
 binary sub-package if they actually have accelerator hardware
 installed (which will cause the installation of additional
 dependencies).
+
+.. _label-install-packagers-gnu-libtool-dependency-flattening:
+
+GNU Libtool dependency flattening
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+When compiling Open MPI's components statically as part of Open MPI's
+core libraries, `GNU Libtool <https://www.gnu.org/software/libtool/>`_
+|mdash| which is used as part of Open MPI's build system |mdash| will
+attempt to "flatten" dependencies.
+
+For example, the :ref:`ompi_info(1) <man1-ompi_info>` command links
+against the Open MPI core library ``libopen-pal``.  This library will
+have dependencies on various HPC-class network stack libraries. For
+simplicity, the discussion below assumes that Open MPI was built with
+support for `Libfabric <https://libfabric.org/>`_ and `UCX
+<https://openucx.org/>`_, and therefore ``libopen-pal`` has direct
+dependencies on ``libfabric`` and ``libucx``.
+
+In this scenario, GNU Libtool will automatically attempt to "flatten"
+these dependencies by linking :ref:`ompi_info(1) <man1-ompi_info>`
+directly to ``libfabric`` and ``libucx`` (vs. letting ``libopen-pal``
+pull the dependencies in at run time).
+
+* In some environments (e.g., Ubuntu 22.04), the compiler and/or
+  linker will automatically utilize the linker CLI flag
+  ``-Wl,--as-needed``, which will effectively cause these dependencies
+  to *not* be flattened: :ref:`ompi_info(1) <man1-ompi_info>` will
+  *not* have a direct dependencies on either ``libfabric`` or
+  ``libucx``.
+
+* In other environments (e.g., Fedora 38), the compiler and linker
+  will *not* utilize the ``-Wl,--as-needed`` linker CLI flag.  As
+  such, :ref:`ompi_info(1) <man1-ompi_info>` will show direct
+  dependencies on ``libfabric`` and ``libucx``.
+
+**Just to be clear:** these flattened dependencies *are not a
+problem*.  Open MPI will function correctly with or without the
+flattened dependencies.  There is no performance impact associated
+with having |mdash| or not having |mdash| the flattened dependencies.
+We mention this situation here in the documentation simply because it
+surprised some Open MPI downstream package managers to see that
+:ref:`ompi_info(1) <man1-ompi_info>` in Open MPI |ompi_ver| had more
+shared library dependencies than it did in prior Open MPI releases.
+
+If packagers want :ref:`ompi_info(1) <man1-ompi_info>` to not have
+these flattened dependencies, use either of the following mechanisms:
+
+#. Use ``--enable-mca-dso`` to force all components to be built as
+   DSOs (this was actually the default behavior before Open MPI v5.0.0).
+
+#. Add ``LDFLAGS=-Wl,--as-needed`` to the ``configure`` command line
+   when building Open MPI.
+
+   .. note:: The Open MPI community specifically chose not to
+             automatically utilize this linker flag for the following
+             reasons:
+
+             #. Having the flattened dependencies does not cause any
+                correctness or performance problems.
+             #. There's multiple mechanisms (see above) for users or
+                packagers to change this behavior, if desired.
+             #. Certain environments have chosen to have |mdash| or
+                not have |mdash| this flattened dependency behavior.
+                It is not Open MPI's place to override these choices.
+             #. In general, Open MPI's ``configure`` script only
+                utilizes compiler and linker flags if they are
+                *needed*.  All other flags should be the user's /
+                packager's choice.
