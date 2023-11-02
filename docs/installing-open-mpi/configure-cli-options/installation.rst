@@ -174,6 +174,11 @@ be used with ``configure``:
   These two options, along with ``--enable-mca-no-build``, govern the
   behavior of how Open MPI's frameworks and components are built.
 
+  .. tip::
+
+     :ref:`See this section <label-install-packagers-dso-or-not>` for
+     advice to packagers about these CLI options.
+
   The ``--enable-mca-dso`` option specifies which frameworks and/or
   components are built as Dynamic Shared Objects (DSOs).
   Specifically, DSOs are built as "plugins" outside of the core Open
@@ -222,7 +227,7 @@ be used with ``configure``:
   .. note:: As of Open MPI |ompi_ver|, ``configure``'s global default
             is to build all components as static (i.e., part of the
             Open MPI core libraries, not as DSOs).  Prior to Open MPI
-            5.0.0, the global default behavior was to build
+            v5.0.0, the global default behavior was to build
             most components as DSOs.
 
   .. important:: If the ``--disable-dlopen`` option is specified, then
@@ -266,11 +271,6 @@ be used with ``configure``:
      same level always wins::
 
         shell$ ./configure --enable-mca-dso=btl-tcp --enable-mca-static=btl-tcp
-
-  .. tip::
-
-     :ref:`See this section <label-install-packagers-dso-or-not>` for
-     advice to packagers about this CLI option.
 
 * ``--enable-mca-no-build=LIST``: Comma-separated list of
   ``<framework>-<component>`` pairs that will not be built. For
