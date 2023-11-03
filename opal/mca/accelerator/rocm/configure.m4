@@ -24,4 +24,5 @@ AC_DEFUN([MCA_opal_accelerator_rocm_CONFIG],[
 	  [$2])
     AC_SUBST([opal_rocm_LDFLAGS])
     AC_SUBST([opal_rocm_LIBS])
+    AC_SUBST([opal_rocm_CPPFLAGS])
 ])dnl
