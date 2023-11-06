@@ -74,7 +74,6 @@ struct mca_allocator_base_module_t *mca_allocator_devicebucket_module_init(
         return NULL;
     }
     allocator->super.alc_alloc = mca_allocator_devicebucket_alloc_wrapper;
-    //allocator->super.alc_realloc = mca_allocator_devicebucket_realloc;
     allocator->super.alc_realloc = NULL; // not supported
     allocator->super.alc_free = mca_allocator_devicebucket_free;
     allocator->super.alc_compact = mca_allocator_devicebucket_cleanup;
@@ -86,7 +85,7 @@ struct mca_allocator_base_module_t *mca_allocator_devicebucket_module_init(
 static int mca_allocator_devicebucket_module_register(void)
 {
     mca_allocator_min_cache_size = 4*1024;      // 4K
-    mca_allocator_max_cache_size = 1*1024*1024; // 1M
+    mca_allocator_max_cache_size = 1*1024*1024*1024; // 1G
     (void) mca_base_component_var_register(&mca_allocator_devicebucket_component.allocator_version,
                                            "min_cache_size", "Minimum allocation cache size",
                                            MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0,
@@ -115,7 +114,6 @@ int mca_allocator_devicebucket_module_close(void)
 void *mca_allocator_devicebucket_alloc_wrapper(struct mca_allocator_base_module_t *allocator, size_t size,
                                          size_t align)
 {
-    //printf("mca_allocator_devicebucket_alloc_wrapper size %zu align %zu\n", size, align);
     if (0 == align) {
         return mca_allocator_devicebucket_alloc(allocator, size);
     }
