@@ -24,7 +24,7 @@ sources = op_cuda_component.c op_cuda.h op_cuda_functions.c op_cuda_impl.h
 cu_sources = op_cuda_impl.cu
 
 NVCC = nvcc -g
-NVCCFLAGS= --std c++17 --gpu-architecture=compute_80
+NVCCFLAGS= --std c++17 --gpu-architecture=compute_52
 
 .cu.l$(OBJEXT):
 	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
