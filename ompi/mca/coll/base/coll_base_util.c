@@ -627,15 +627,13 @@ void *ompi_coll_base_allocate_on_device(int device, size_t size,
     if (module->base_data->num_device_allocators <= device) {
         int num_dev;
         opal_accelerator.num_devices(&num_dev);
-	printf("ompi_coll_base_allocate_on_device num_dev %d device %d\n", num_dev, device);
-	if (num_dev < device+1) num_dev = device+1;
+        if (num_dev < device+1) num_dev = device+1;
         module->base_data->device_allocators = realloc(module->base_data->device_allocators, num_dev * sizeof(mca_allocator_base_module_t *));
-	for (int i = module->base_data->num_device_allocators; i < num_dev; ++i) {
-	    module->base_data->device_allocators[i] = NULL;
+        for (int i = module->base_data->num_device_allocators; i < num_dev; ++i) {
+            module->base_data->device_allocators[i] = NULL;
         }
         module->base_data->num_device_allocators = num_dev;
     }
-    //printf("allocators %p module %p\n", module->base_data->device_allocators, module->base_data->device_allocators[device]);
     if (NULL == (allocator_module = module->base_data->device_allocators[device])) {
         mca_allocator_base_component_t *allocator_component;
         allocator_component = mca_allocator_component_lookup("devicebucket");
@@ -646,7 +644,6 @@ void *ompi_coll_base_allocate_on_device(int device, size_t size,
         assert(allocator_module != NULL);
         module->base_data->device_allocators[device] = allocator_module;
     }
-    //printf("allocator_module %p\n", allocator_module);
     return allocator_module->alc_alloc(allocator_module, size, 0);
 }
 

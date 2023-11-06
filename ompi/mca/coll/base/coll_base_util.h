@@ -226,7 +226,6 @@ void ompi_coll_base_select_device(
     uint64_t *recvbuf_flags,
     int *op_device)
 {
-    /* TODO: move this into ompi_op_select_device to save the extra lookups? */
     *recvbuf_device = MCA_ACCELERATOR_NO_DEVICE_ID;
     *sendbuf_device = MCA_ACCELERATOR_NO_DEVICE_ID;
     if (sendbuf != NULL && sendbuf != MPI_IN_PLACE) opal_accelerator.check_addr(sendbuf, sendbuf_device, sendbuf_flags);
@@ -234,71 +233,6 @@ void ompi_coll_base_select_device(
     ompi_op_preferred_device(op, *recvbuf_device, *sendbuf_device, count, dtype, op_device);
 }
 
-/**
- * Returns a pointer to memory in the same memory domain as the receive or send buffer.
- * Device memory is allocated if either the receive buffer or the send buffer are
- * located on the device and if the op supports on-device reductions on the datatype.
- * If memory is allocated on the host, device will be set to -1.
- */
-static inline
-void* ompi_coll_base_allocate_op_tmpbuf(
-    const void *sendbuf, const void *recvbuf, size_t size,
-    struct ompi_op_t *op, size_t count, struct ompi_datatype_t *dtype,
-    int *device, mca_coll_base_module_t *module)
-{
-    void *res = NULL;
-    uint64_t flags;
-    *device = -1;
-
-    ompi_op_select_device(op, sendbuf, recvbuf, count, dtype, device);
-    if (*device > -1) {
-        res = ompi_coll_base_allocate_on_device(*device, size, module);
-        if (NULL == res) {
-            // fallback to host
-            *device = -1;
-        }
-    }
-#if 0
-    if ((NULL == op && NULL == dtype) || ompi_op_supports_device(op, dtype)) {
-        /* if the recvbuf is on the device we take that device */
-        if (NULL != recvbuf && 0 < opal_accelerator.check_addr(recvbuf, device, &flags)) {
-            /* allocate cache on demand */
-            res = ompi_coll_base_allocate_on_device(*device, size, module);
-            if (NULL == res) {
-                // fallback to host
-                *device = -1;
-            }
-        } else if (MPI_IN_PLACE != sendbuf && NULL != sendbuf &&
-                0 < opal_accelerator.check_addr(sendbuf, device, &flags)) {
-            /* send buffer is on a device so try to allocate memory there */
-            res = ompi_coll_base_allocate_on_device(*device, size, module);
-            if (NULL == res) {
-                // fallback to host
-                *device = -1;
-            }
-        }
-    }
-#endif // 0
-
-    if (NULL == res) {
-        res = malloc(size);
-    }
-    return res;
-}
-
-#if 0
-/**
- * Like ompi_coll_base_allocate_op_tmpbuf but without checking op-datatype
- * device compatibility.
- */
-static inline
-void* ompi_coll_base_allocate_tmpbuf(
-    const void *sendbuf, const void *recvbuf,
-    size_t size, int *device, mca_coll_base_module_t *module)
-{
-    return ompi_coll_base_allocate_op_tmpbuf(sendbuf, recvbuf, size, NULL, NULL, device, module);
-}
-#endif // 0
 /**
  * Frees memory allocated through ompi_coll_base_allocate_op_tmpbuf
  * or ompi_coll_base_allocate_tmpbuf.
