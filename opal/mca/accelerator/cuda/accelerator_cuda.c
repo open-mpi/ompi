@@ -466,7 +466,7 @@ static int accelerator_cuda_memcpy(int dest_dev_id, int src_dev_id, void *dest, 
 #endif //0
     result = cuMemcpy((CUdeviceptr) dest, (CUdeviceptr) src, size);
     if (OPAL_UNLIKELY(CUDA_SUCCESS != result)) {
-        opal_show_help("help-accelerator-cuda.txt", "cuStreamSynchronize failed", true,
+        opal_show_help("help-accelerator-cuda.txt", "cuMemcpy failed", true,
                        OPAL_PROC_MY_HOSTNAME, result);
         return OPAL_ERROR;
     }
