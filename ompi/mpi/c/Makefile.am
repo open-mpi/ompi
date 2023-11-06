@@ -598,9 +598,11 @@ ompi_%.c: %.c.in abi.py abi.h
 standard_%.c: %.c.in abi.py abi.h
 	$(srcdir)/abi.py source standard $< > $@
 abi.h: abi.py $(prototype_sources)
-	$(srcdir)/abi.py header $(prototype_sources) > $@
-
+	$(srcdir)/abi.py header --srcdir=$(srcdir) $(prototype_sources) > $@
 standard_abi/mpi.h: abi.py $(prototype_sources)
-	mkdir -p $(srcdir)/standard_abi
-	$(srcdir)/abi.py header --external $(prototype_sources) > $@
+	mkdir -p standard_abi
+	$(srcdir)/abi.py header --srcdir=$(srcdir) --external $(prototype_sources) > $@
+
+distclean-local:
+	-rm -rf ompi_*.c standard_*.c abi.h standard_abi/
 endif

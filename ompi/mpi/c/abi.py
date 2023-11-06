@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-# Copyright (c) 2023    Triad National Security, LLC. All rights reserved.
+# Copyright (c) 2023      Triad National Security, LLC. All rights reserved.
+# Copyright (c) 2023      Research Organization for Information Science
+#                         and Technology (RIST).  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -23,7 +25,7 @@ from abc import ABC, abstractmethod
 import argparse
 import re
 import sys
-import uuid
+import os
 
 # C type: const int
 ERROR_CLASSES = [
@@ -1042,6 +1044,30 @@ class Prototype:
         return any('COUNT' in param.type_ for param in self.params)
 
 
+class TemplateParseError(Exception):
+    """Error raised during parsing."""
+    pass
+
+
+def validate_body(body):
+    """Validate the body of a template."""
+    # Just do a simple bracket balance test determine the bounds of the
+    # function body. All lines after the function body should be blank. There
+    # are cases where this will break, such as if someone puts code all on one
+    # line.
+    bracket_balance = 0
+    line_count = 0
+    for line in body:
+        line = line.strip()
+        if bracket_balance == 0 and line_count > 0 and line:
+            raise TemplateParserError('Extra code found in template; only one function body is allowed')
+
+        update = line.count('{') - line.count('}')
+        bracket_balance += update
+        if bracket_balance != 0:
+            line_count += 1
+
+
 class SourceTemplate:
     """Source template for a single API function."""
 
@@ -1051,8 +1077,10 @@ class SourceTemplate:
         self.body = body
 
     @staticmethod
-    def load(fname):
+    def load(fname, prefix=None):
         """Load a template file and return the SourceTemplate."""
+        if prefix is not None:
+            fname = os.path.join(prefix, fname)
         with open(fname) as fp:
             header = []
             prototype = []
@@ -1061,11 +1089,12 @@ class SourceTemplate:
             for line in fp:
                 line = line.rstrip()
                 if prototype and line.startswith('PROTOTYPE'):
-                    raise RuntimeError('more than one prototype found in template file')
+                    raise TemplateParseError('more than one prototype found in template file')
                 elif ((prototype and not any(')' in s for s in prototype))
                       or line.startswith('PROTOTYPE')):
                     prototype.append(line)
                 elif prototype:
+                    # Validate bracket balance
                     body.append(line)
                 else:
                     header.append(line)
@@ -1082,6 +1111,8 @@ class SourceTemplate:
             params = [param.strip() for param in prototype[i + 1:j].split(',') if param.strip()]
             params = [Parameter(param) for param in params]
             prototype = Prototype(name, return_type, params)
+            # Ensure the body contains only one function
+            validate_body(body)
             return SourceTemplate(prototype, header, body)
 
     def print_header(self, file=sys.stdout):
@@ -1148,7 +1179,7 @@ def standard_abi(base_name, template):
     print(f'#include "{ABI_INTERNAL_HEADER}"')
 
     # Static internal function (add a random component to avoid conflicts)
-    internal_name = f'ompi_{template.prototype.name}_{uuid.uuid4().hex[:10]}'
+    internal_name = f'ompi_abi_{template.prototype.name}'
     internal_sig = template.prototype.signature('ompi', internal_name,
                                                 count_type='MPI_Count')
     print('static inline', internal_sig)
@@ -1190,7 +1221,7 @@ def standard_abi(base_name, template):
 
 def gen_header(args):
     """Generate an ABI header and conversion code."""
-    prototypes = [SourceTemplate.load(file_).prototype for file_ in args.file]
+    prototypes = [SourceTemplate.load(file_, args.srcdir).prototype for file_ in args.file]
 
     builder = ABIHeaderBuilder(prototypes, external=args.external)
     builder.dump_header()
@@ -1219,6 +1250,7 @@ def main():
     parser_header = subparsers.add_parser('header')
     parser_header.add_argument('file', nargs='+', help='list of template source files')
     parser_header.add_argument('--external', action='store_true', help='generate external mpi.h header file')
+    parser_header.add_argument('--srcdir', help='source directory')
     parser_header.set_defaults(func=gen_header)
 
     parser_gen = subparsers.add_parser('source')
