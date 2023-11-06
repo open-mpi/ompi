@@ -199,10 +199,12 @@ ompi_coll_base_allreduce_intra_recursivedoubling(const void *sbuf, void *rbuf,
     /* allocate temporary recv buffer if the tmpbuf above is on a different device than the rbuf
      * and the op is on the device or we cannot access the recv buffer on the host */
     recvbuf = rbuf;
+    bool free_recvbuf = false;
     if (op_dev != recvbuf_dev &&
         (op_dev != MCA_ACCELERATOR_NO_DEVICE_ID ||
          0 == (recvbuf_flags & MCA_ACCELERATOR_FLAGS_UNIFIED_MEMORY))) {
         recvbuf = ompi_coll_base_allocate_on_device(op_dev, span, module);
+        free_recvbuf = true;
         if (use_sbuf) {
             /* copy from rbuf */
             ompi_datatype_copy_content_same_ddt_stream(dtype, count, (char*)recvbuf, (char*)sbuf, stream);
@@ -367,7 +369,7 @@ ompi_coll_base_allreduce_intra_recursivedoubling(const void *sbuf, void *rbuf,
     }
     ompi_coll_base_free_tmpbuf(inplacebuf_free, op_dev, module);
 
-    if (op_dev != recvbuf_dev) {
+    if (free_recvbuf) {
         ompi_coll_base_free_tmpbuf(recvbuf, op_dev, module);
     }
     return MPI_SUCCESS;
