@@ -24,6 +24,7 @@ AC_DEFUN([MCA_ompi_op_cuda_CONFIG],[
     AC_CONFIG_FILES([ompi/mca/op/cuda/Makefile])
 
     OPAL_CHECK_CUDA([op_cuda])
+    OPAL_CHECK_CUDART([op_cudart])
 
     AS_IF([test "x$CUDA_SUPPORT" = "x1"],
           [$1],
@@ -32,5 +33,9 @@ AC_DEFUN([MCA_ompi_op_cuda_CONFIG],[
     AC_SUBST([op_cuda_CPPFLAGS])
     AC_SUBST([op_cuda_LDFLAGS])
     AC_SUBST([op_cuda_LIBS])
+
+    AC_SUBST([op_cudart_CPPFLAGS])
+    AC_SUBST([op_cudart_LDFLAGS])
+    AC_SUBST([op_cudart_LIBS])
 
 ])dnl

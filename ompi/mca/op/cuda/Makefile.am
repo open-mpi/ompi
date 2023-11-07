@@ -17,7 +17,7 @@
 # First, list all .h and .c sources.  It is necessary to list all .h
 # files so that they will be picked up in the distribution tarball.
 
-AM_CPPFLAGS = $(common_cuda_CPPFLAGS)
+AM_CPPFLAGS = $(op_cuda_CPPFLAGS) $(op_cudart_CPPFLAGS)
 
 dist_ompidata_DATA = help-ompi-mca-op-cuda.txt
 
@@ -67,7 +67,7 @@ mcacomponent_LTLIBRARIES = $(component_install)
 mca_op_cuda_la_SOURCES = $(sources)
 mca_op_cuda_la_LIBADD = $(cu_sources:.cu=.lo)
 mca_op_cuda_la_LDFLAGS = -module -avoid-version $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
-		$(accelerator_cuda_LIBS) $(accelerator_cudart_LIBS)
+		$(op_cuda_LIBS) $(op_cudart_LIBS)
 EXTRA_mca_op_cuda_la_SOURCES = $(cu_sources)
 
 # Specific information for static builds.
@@ -79,6 +79,6 @@ noinst_LTLIBRARIES = $(component_noinst)
 libmca_op_cuda_la_SOURCES = $(sources)
 libmca_op_cuda_la_LIBADD = $(cu_sources:.cu=.lo)
 libmca_op_cuda_la_LDFLAGS = -module -avoid-version\
-		$(accelerator_cuda_LIBS) $(accelerator_cudart_LIBS)
+		$(op_cuda_LIBS) $(op_cudart_LIBS)
 EXTRA_libmca_op_cuda_la_SOURCES = $(cu_sources)
 
