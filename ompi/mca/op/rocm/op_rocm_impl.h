@@ -202,10 +202,10 @@ OP_FUNC_SIG(prod, c_short_float_complex, short float _Complex, *=)
 #elif defined(HAVE_OPAL_SHORT_FLOAT_COMPLEX_T)
 COMPLEX_PROD_FUNC(c_short_float_complex, opal_short_float_t)
 #endif
-OP_FUNC_SIG(prod, c_float_complex, float _Complex, *=)
-OP_FUNC_SIG(prod, c_double_complex, double _Complex, *=)
 OP_FUNC_SIG(prod, c_long_double_complex, long double _Complex, *=)
 #endif // 0
+FUNC_FUNC_SIG(prod, c_float_complex, hipFloatComplex)
+FUNC_FUNC_SIG(prod, c_double_complex, hipDoubleComplex)
 
 /*************************************************************************
  * Logical AND
@@ -344,9 +344,6 @@ LOC_STRUCT(2int, int, int)
 LOC_STRUCT(short_int, short, int)
 LOC_STRUCT(long_double_int, long double, int)
 LOC_STRUCT(ulong, unsigned long, int)
-/* compat types for Fortran */
-LOC_STRUCT(2real, float, float)
-LOC_STRUCT(2double_precision, double, double)
 
 /*************************************************************************
  * Max location
@@ -600,6 +597,8 @@ OP_FUNC_3BUF_SIG(sum, c_float_complex, float _Complex, +)
 OP_FUNC_3BUF_SIG(sum, c_double_complex, double _Complex, +)
 OP_FUNC_3BUF_SIG(sum, c_long_double_complex, long double _Complex, +)
 #endif // 0
+FUNC_FUNC_3BUF_SIG(sum, c_float_complex, hipFloatComplex)
+FUNC_FUNC_3BUF_SIG(sum, c_double_complex, hipDoubleComplex)
 
 /*************************************************************************
  * Product
@@ -674,6 +673,8 @@ OP_FUNC_3BUF_SIG(prod, c_float_complex, float _Complex, *)
 OP_FUNC_3BUF_SIG(prod, c_double_complex, double _Complex, *)
 OP_FUNC_3BUF_SIG(prod, c_long_double_complex, long double _Complex, *)
 #endif // 0
+FUNC_FUNC_3BUF_SIG(prod, c_float_complex, hipFloatComplex)
+FUNC_FUNC_3BUF_SIG(prod, c_double_complex, hipDoubleComplex)
 
 /*************************************************************************
  * Logical AND

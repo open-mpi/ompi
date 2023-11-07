@@ -79,6 +79,6 @@ noinst_LTLIBRARIES = $(component_noinst)
 libmca_op_cuda_la_SOURCES = $(sources)
 libmca_op_cuda_la_LIBADD = $(cu_sources:.cu=.lo)
 libmca_op_cuda_la_LDFLAGS = -module -avoid-version\
-		$(accelerator_cuda_LIBS) -L$(CUDADIR)/lib64 -lcudart
+		$(accelerator_cuda_LIBS) $(accelerator_cudart_LIBS)
 EXTRA_libmca_op_cuda_la_SOURCES = $(cu_sources)
 

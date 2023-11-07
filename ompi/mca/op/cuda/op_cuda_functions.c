@@ -69,12 +69,7 @@ static inline void device_op_pre(const void *orig_source1,
 
         if (NULL != orig_source2) {
             source2_rc = opal_accelerator.check_addr(*source2, source2_device, &source2_flags);
-            //printf("device_op_pre: target %p rc %d dev %d, source1 %p rc %d dev %d, source2 %p rc %d dev %d, device %d\n",
-            //       orig_target, target_rc, *target_device, orig_source1, source1_rc, *source1_device, orig_source2, source2_rc, *source2_device, *device);
         }
-
-        //printf("device_op_pre: target rc %d dev %d, source rc %d dev %d, device %d\n",
-        //       target_rc, *target_device, source_rc, *source_device, *device);
 
         if (0 == target_rc && 0 == source1_rc && 0 == source2_rc) {
             /* no buffers are on any device, select device 0 */
@@ -94,7 +89,6 @@ static inline void device_op_pre(const void *orig_source1,
 
             if (0 == target_rc) {
                 // allocate memory on the device for the target buffer
-                //printf("copying target from device %d to host\n", *target_device);
                 opal_accelerator.mem_alloc_stream(*device, target, nbytes, stream);
                 CHECK(cuMemcpyHtoDAsync, ((CUdeviceptr)*target, orig_target, nbytes, *(CUstream*)stream->stream));
                 *target_device = -1; // mark target device as host
@@ -102,16 +96,13 @@ static inline void device_op_pre(const void *orig_source1,
 
             if (0 == source1_rc || *device != *source1_device) {
                 // allocate memory on the device for the source buffer
-                //printf("allocating source on device %d\n", *device);
                 opal_accelerator.mem_alloc_stream(*device, source1, nbytes, stream);
                 if (0 == source1_rc) {
                     /* copy from host to device */
-                    //printf("copying source from host to device %d\n", *device);
                     CHECK(cuMemcpyHtoDAsync, ((CUdeviceptr)*source1, orig_source1, nbytes, *(CUstream*)stream->stream));
                 } else {
                     /* copy from one device to another device */
                     /* TODO: does this actually work? Can we enable P2P? */
-                    //printf("attempting cross-device copy for source\n");
                     CHECK(cuMemcpyDtoDAsync, ((CUdeviceptr)*source1, (CUdeviceptr)orig_source1, nbytes, *(CUstream*)stream->stream));
                 }
             }
@@ -119,7 +110,6 @@ static inline void device_op_pre(const void *orig_source1,
         }
         if (NULL != source2_device && *target_device != *source2_device) {
             // allocate memory on the device for the source buffer
-            //printf("allocating source on device %d\n", *device);
             size_t nbytes;
             ompi_datatype_type_size(dtype, &nbytes);
             nbytes *= count;
@@ -132,7 +122,6 @@ static inline void device_op_pre(const void *orig_source1,
             } else {
                 /* copy from one device to another device */
                 /* TODO: does this actually work? Can we enable P2P? */
-                //printf("attempting cross-device copy for source\n");
                 CHECK(cuMemcpyDtoDAsync, ((CUdeviceptr)*source2, (CUdeviceptr)orig_source2, nbytes, *(CUstream*)stream->stream));
             }
         }
@@ -469,10 +458,11 @@ OP_FUNC(sum, c_short_float_complex, short float _Complex, +=)
 #elif defined(HAVE_OPAL_SHORT_FLOAT_COMPLEX_T)
 COMPLEX_SUM_FUNC(c_short_float_complex, opal_short_float_t)
 #endif
-OP_FUNC(sum, c_float_complex, float _Complex, +=)
-OP_FUNC(sum, c_double_complex, double _Complex, +=)
 OP_FUNC(sum, c_long_double_complex, long double _Complex, +=)
 #endif // 0
+
+FUNC_FUNC(sum, c_float_complex, cuFloatComplex)
+FUNC_FUNC(sum, c_double_complex, cuDoubleComplex)
 
 /*************************************************************************
  * Product
@@ -547,10 +537,11 @@ OP_FUNC(prod, c_short_float_complex, short float _Complex, *=)
 #elif defined(HAVE_OPAL_SHORT_FLOAT_COMPLEX_T)
 COMPLEX_PROD_FUNC(c_short_float_complex, opal_short_float_t)
 #endif
-OP_FUNC(prod, c_float_complex, float _Complex, *=)
-OP_FUNC(prod, c_double_complex, double _Complex, *=)
 OP_FUNC(prod, c_long_double_complex, long double _Complex, *=)
 #endif // 0
+
+FUNC_FUNC(prod, c_float_complex, cuFloatComplex)
+FUNC_FUNC(prod, c_double_complex, cuDoubleComplex)
 
 /*************************************************************************
  * Logical AND
@@ -752,17 +743,6 @@ FUNC_FUNC(bxor, byte, char)
  * Max location
  *************************************************************************/
 
-#if 0
-#if OMPI_HAVE_FORTRAN_REAL
-LOC_FUNC(maxloc, 2real, >)
-#endif
-#if OMPI_HAVE_FORTRAN_DOUBLE_PRECISION
-LOC_FUNC(maxloc, 2double_precision, >)
-#endif
-#if OMPI_HAVE_FORTRAN_INTEGER
-LOC_FUNC(maxloc, 2integer, >)
-#endif
-#endif // 0
 LOC_FUNC(maxloc, float_int, >)
 LOC_FUNC(maxloc, double_int, >)
 LOC_FUNC(maxloc, long_int, >)
@@ -773,17 +753,7 @@ LOC_FUNC(maxloc, long_double_int, >)
 /*************************************************************************
  * Min location
  *************************************************************************/
-#if 0
-#if OMPI_HAVE_FORTRAN_REAL
-LOC_FUNC(minloc, 2real, <)
-#endif
-#if OMPI_HAVE_FORTRAN_DOUBLE_PRECISION
-LOC_FUNC(minloc, 2double_precision, <)
-#endif
-#if OMPI_HAVE_FORTRAN_INTEGER
-LOC_FUNC(minloc, 2integer, <)
-#endif
-#endif // 0
+
 LOC_FUNC(minloc, float_int, <)
 LOC_FUNC(minloc, double_int, <)
 LOC_FUNC(minloc, long_int, <)
@@ -1091,6 +1061,9 @@ OP_FUNC_3BUF(sum, c_double_complex, double _Complex, +)
 OP_FUNC_3BUF(sum, c_long_double_complex, long double _Complex, +)
 #endif // 0
 
+FUNC_FUNC_3BUF(sum, c_float_complex, cuFloatComplex)
+FUNC_FUNC_3BUF(sum, c_double_complex, cuDoubleComplex)
+
 /*************************************************************************
  * Product
  *************************************************************************/
@@ -1162,10 +1135,11 @@ OP_FUNC_3BUF(prod, c_short_float_complex, short float _Complex, *)
 #elif defined(HAVE_OPAL_SHORT_FLOAT_COMPLEX_T)
 COMPLEX_PROD_FUNC_3BUF(c_short_float_complex, opal_short_float_t)
 #endif
-OP_FUNC_3BUF(prod, c_float_complex, float _Complex, *)
-OP_FUNC_3BUF(prod, c_double_complex, double _Complex, *)
 OP_FUNC_3BUF(prod, c_long_double_complex, long double _Complex, *)
 #endif // 0
+
+FUNC_FUNC_3BUF(prod, c_float_complex, cuFloatComplex)
+FUNC_FUNC_3BUF(prod, c_double_complex, cuDoubleComplex)
 
 /*************************************************************************
  * Logical AND
@@ -1363,41 +1337,9 @@ FORT_INT_FUNC_3BUF(bxor, fortran_integer16, ompi_fortran_integer16_t)
 FORT_INT_FUNC_3BUF(bxor, byte, char)
 
 /*************************************************************************
- * Min and max location "pair" datatypes
- *************************************************************************/
-
-/*
-#if OMPI_HAVE_FORTRAN_REAL
-LOC_STRUCT_3BUF(2real, ompi_fortran_real_t, ompi_fortran_real_t)
-#endif
-#if OMPI_HAVE_FORTRAN_DOUBLE_PRECISION
-LOC_STRUCT_3BUF(2double_precision, ompi_fortran_double_precision_t, ompi_fortran_double_precision_t)
-#endif
-#if OMPI_HAVE_FORTRAN_INTEGER
-LOC_STRUCT_3BUF(2integer, ompi_fortran_integer_t, ompi_fortran_integer_t)
-#endif
-LOC_STRUCT_3BUF(float_int, float, int)
-LOC_STRUCT_3BUF(double_int, double, int)
-LOC_STRUCT_3BUF(long_int, long, int)
-LOC_STRUCT_3BUF(2int, int, int)
-LOC_STRUCT_3BUF(short_int, short, int)
-LOC_STRUCT_3BUF(long_double_int, long double, int)
-*/
-
-/*************************************************************************
  * Max location
  *************************************************************************/
-#if 0
-#if OMPI_HAVE_FORTRAN_REAL
-LOC_FUNC_3BUF(maxloc, 2real, >)
-#endif
-#if OMPI_HAVE_FORTRAN_DOUBLE_PRECISION
-LOC_FUNC_3BUF(maxloc, 2double_precision, >)
-#endif
-#if OMPI_HAVE_FORTRAN_INTEGER
-LOC_FUNC_3BUF(maxloc, 2integer, >)
-#endif
-#endif // 0
+
 LOC_FUNC_3BUF(maxloc, float_int, >)
 LOC_FUNC_3BUF(maxloc, double_int, >)
 LOC_FUNC_3BUF(maxloc, long_int, >)
@@ -1408,17 +1350,7 @@ LOC_FUNC_3BUF(maxloc, long_double_int, >)
 /*************************************************************************
  * Min location
  *************************************************************************/
-#if 0
-#if OMPI_HAVE_FORTRAN_REAL
-LOC_FUNC_3BUF(minloc, 2real, <)
-#endif
-#if OMPI_HAVE_FORTRAN_DOUBLE_PRECISION
-LOC_FUNC_3BUF(minloc, 2double_precision, <)
-#endif
-#if OMPI_HAVE_FORTRAN_INTEGER
-LOC_FUNC_3BUF(minloc, 2integer, <)
-#endif
-#endif // 0
+
 LOC_FUNC_3BUF(minloc, float_int, <)
 LOC_FUNC_3BUF(minloc, double_int, <)
 LOC_FUNC_3BUF(minloc, long_int, <)
@@ -1578,21 +1510,19 @@ LOC_FUNC_3BUF(minloc, long_double_int, <)
 #else
 #define SHORT_FLOAT_COMPLEX(name, ftype) NULL
 #endif
-#define FLOAT_COMPLEX(name, ftype) ompi_op_cuda_##ftype##_##name##_c_float_complex
-#define DOUBLE_COMPLEX(name, ftype) ompi_op_cuda_##ftype##_##name##_c_double_complex
 #define LONG_DOUBLE_COMPLEX(name, ftype) ompi_op_cuda_##ftype##_##name##_c_long_double_complex
 #else
 #define SHORT_FLOAT_COMPLEX(name, ftype) NULL
-#define FLOAT_COMPLEX(name, ftype) NULL
-#define DOUBLE_COMPLEX(name, ftype) NULL
 #define LONG_DOUBLE_COMPLEX(name, ftype) NULL
 #endif // 0
+#define FLOAT_COMPLEX(name, ftype) ompi_op_cuda_##ftype##_##name##_c_float_complex
+#define DOUBLE_COMPLEX(name, ftype) ompi_op_cuda_##ftype##_##name##_c_double_complex
 
 #define COMPLEX(name, ftype)                                                  \
-    [OMPI_OP_CUDA_TYPE_C_SHORT_FLOAT_COMPLEX] = SHORT_FLOAT_COMPLEX(name, ftype), \
-    [OMPI_OP_CUDA_TYPE_C_FLOAT_COMPLEX] = FLOAT_COMPLEX(name, ftype),         \
-    [OMPI_OP_CUDA_TYPE_C_DOUBLE_COMPLEX] = DOUBLE_COMPLEX(name, ftype),       \
-    [OMPI_OP_CUDA_TYPE_C_LONG_DOUBLE_COMPLEX] = LONG_DOUBLE_COMPLEX(name, ftype)
+    [OMPI_OP_BASE_TYPE_C_SHORT_FLOAT_COMPLEX] = SHORT_FLOAT_COMPLEX(name, ftype), \
+    [OMPI_OP_BASE_TYPE_C_FLOAT_COMPLEX] = FLOAT_COMPLEX(name, ftype),         \
+    [OMPI_OP_BASE_TYPE_C_DOUBLE_COMPLEX] = DOUBLE_COMPLEX(name, ftype),       \
+    [OMPI_OP_BASE_TYPE_C_LONG_DOUBLE_COMPLEX] = LONG_DOUBLE_COMPLEX(name, ftype)
 
 /** Byte ****************************************************************/
 
@@ -1666,14 +1596,14 @@ ompi_op_base_stream_handler_fn_t ompi_op_cuda_functions[OMPI_OP_BASE_FORTRAN_OP_
             C_INTEGER(sum, 2buff),
             FORTRAN_INTEGER(sum, 2buff),
             FLOATING_POINT(sum, 2buff),
-            NULL,
+            COMPLEX(sum, 2buff),
         },
         /* Corresponds to MPI_PROD */
         [OMPI_OP_BASE_FORTRAN_PROD] = {
             C_INTEGER(prod, 2buff),
             FORTRAN_INTEGER(prod, 2buff),
             FLOATING_POINT(prod, 2buff),
-            NULL,
+            COMPLEX(prod, 2buff),
         },
         /* Corresponds to MPI_LAND */
         [OMPI_OP_BASE_FORTRAN_LAND] = {
@@ -1752,14 +1682,14 @@ ompi_op_base_3buff_stream_handler_fn_t ompi_op_cuda_3buff_functions[OMPI_OP_BASE
             C_INTEGER(sum, 3buff),
             FORTRAN_INTEGER(sum, 3buff),
             FLOATING_POINT(sum, 3buff),
-            NULL,
+            COMPLEX(sum, 3buff),
         },
         /* Corresponds to MPI_PROD */
         [OMPI_OP_BASE_FORTRAN_PROD] = {
             C_INTEGER(prod, 3buff),
             FORTRAN_INTEGER(prod, 3buff),
             FLOATING_POINT(prod, 3buff),
-            NULL,
+            COMPLEX(prod, 3buff),
         },
         /* Corresponds to MPI_LAND */
         [OMPI_OP_BASE_FORTRAN_LAND] ={

@@ -23,7 +23,7 @@ AC_DEFUN([MCA_ompi_op_rocm_CONFIG],[
 
     AC_CONFIG_FILES([ompi/mca/op/rocm/Makefile])
 
-    OPAL_CHECK_CUDA([op_rocm])
+    OPAL_CHECK_ROCM([op_rocm])
 
     AS_IF([test "x$ROCM_SUPPORT" = "x1"],
           [$1],

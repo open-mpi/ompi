@@ -17,7 +17,7 @@
 # First, list all .h and .c sources.  It is necessary to list all .h
 # files so that they will be picked up in the distribution tarball.
 
-AM_CPPFLAGS = $(common_rocm_CPPFLAGS)
+AM_CPPFLAGS = $(op_rocm_CPPFLAGS)
 
 dist_ompidata_DATA = help-ompi-mca-op-rocm.txt
 
@@ -25,12 +25,10 @@ sources = op_rocm_component.c op_rocm.h op_rocm_functions.c op_rocm_impl.h
 rocm_sources = op_rocm_impl.cpp
 
 HIPCC = hipcc
-#HIPCCFLAGS= -D__HIP_PLATFORM_HCC__= -D__HIP_PLATFORM_AMD__= -I/opt/rocm-5.5.0/include
-
 
 .cpp.l$(OBJEXT):
 	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=compile $(HIPCC) -O2 -std=c++17 -fvectorize -prefer-non-pic $(HIPCCFLAGS) -Wc,-fPIC,-g -c $<
+	$(LIBTOOLFLAGS) --mode=compile $(HIPCC) -O2 -std=c++17 -fvectorize -prefer-non-pic -Wc,-fPIC,-g -c $<
 
 # -o $($@.o:.lo)
 
@@ -67,7 +65,7 @@ mcacomponent_LTLIBRARIES = $(component_install)
 mca_op_rocm_la_SOURCES = $(sources)
 mca_op_rocm_la_LIBADD = $(rocm_sources:.cpp=.lo)
 mca_op_rocm_la_LDFLAGS = -module -avoid-version $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
-		$(accelerator_rocm_LIBS) $(HIPCCFLAGS)
+		$(op_rocm_LIBS)
 EXTRA_mca_op_rocm_la_SOURCES = $(rocm_sources)
 
 # Specific information for static builds.
@@ -79,6 +77,6 @@ noinst_LTLIBRARIES = $(component_noinst)
 libmca_op_rocm_la_SOURCES = $(sources)
 libmca_op_rocm_la_LIBADD = $(rocm_sources:.cpp=.lo)
 libmca_op_rocm_la_LDFLAGS = -module -avoid-version\
-		$(accelerator_rocm_LIBS) ${HIPCCFLAGS}
+		$(op_rocm_LIBS)
 EXTRA_libmca_op_rocm_la_SOURCES = $(rocm_sources)
 
