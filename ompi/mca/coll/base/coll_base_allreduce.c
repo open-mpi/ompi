@@ -1221,7 +1221,7 @@ int ompi_coll_base_allreduce_intra_redscat_allgather(
              * Send the left half of the input vector to the left neighbor,
              * Recv the right half of the input vector from the left neighbor
              */
-            err = ompi_coll_base_sendrecv(send_buf, count_lhalf, dtype, rank - 1,
+            err = ompi_coll_base_sendrecv((void*)send_buf, count_lhalf, dtype, rank - 1,
                                           MCA_COLL_BASE_TAG_ALLREDUCE,
                                           (char *)tmp_buf + (ptrdiff_t)count_lhalf * extent,
                                           count_rhalf, dtype, rank - 1,
