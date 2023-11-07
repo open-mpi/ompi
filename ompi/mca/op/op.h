@@ -410,8 +410,14 @@ typedef struct ompi_op_base_module_1_0_0_t {
 
     /** Function pointers for all the different datatypes to be used
         with the MPI_Op that this module is used with */
-    ompi_op_base_handler_fn_1_0_0_t opm_fns[OMPI_OP_BASE_TYPE_MAX];
-    ompi_op_base_3buff_handler_fn_1_0_0_t opm_3buff_fns[OMPI_OP_BASE_TYPE_MAX];
+    union {
+        ompi_op_base_handler_fn_1_0_0_t        opm_fns[OMPI_OP_BASE_TYPE_MAX];
+        ompi_op_base_stream_handler_fn_1_0_0_t opm_stream_fns[OMPI_OP_BASE_TYPE_MAX];
+    };
+    union {
+        ompi_op_base_3buff_handler_fn_1_0_0_t        opm_3buff_fns[OMPI_OP_BASE_TYPE_MAX];
+        ompi_op_base_3buff_stream_handler_fn_1_0_0_t opm_3buff_stream_fns[OMPI_OP_BASE_TYPE_MAX];
+    };
 } ompi_op_base_module_1_0_0_t;
 
 /**

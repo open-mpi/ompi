@@ -49,12 +49,6 @@ BEGIN_C_DECLS
 typedef struct {
     /** The base op component struct */
     ompi_op_base_component_1_0_0_t super;
-
-#if 0
-    /* a stream on which to schedule kernel calls */
-    CUstream cu_stream;
-    CUcontext *cu_ctx;
-#endif // 0
     int cu_max_num_blocks;
     int cu_max_num_threads;
     int *cu_max_threads_per_block;
