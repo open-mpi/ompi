@@ -44,6 +44,7 @@
 
 #include "opal/class/opal_object.h"
 #include "opal/util/printf.h"
+#include "opal/util/show_help.h"
 
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/mpi/fortran/base/fint_2_int.h"

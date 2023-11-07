@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2017 The University of Tennessee and The University
+ * Copyright (c) 2004-2023 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -109,7 +109,7 @@ mca_coll_basic_allreduce_inter(const void *sbuf, void *rbuf, int count,
         }
         dsize = opal_datatype_span(&dtype->super, count, &gap);
         if (opal_accelerator.check_addr(rbuf, &rbuf_dev, NULL) > 0 && rbuf_dev >= 0) {
-            if (OPAL_SUCCESS != opal_accelerator.mem_alloc(rbuf_dev, &tmpbuf, dsize)) {
+            if (OPAL_SUCCESS != opal_accelerator.mem_alloc(rbuf_dev, (void**)&tmpbuf, dsize)) {
                 err = OMPI_ERR_OUT_OF_RESOURCE; line = __LINE__; goto exit;
             }
             rbuf_on_device = true;
