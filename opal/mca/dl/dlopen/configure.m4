@@ -27,7 +27,7 @@ AC_DEFUN([MCA_opal_dl_dlopen_CONFIG],[
     AC_CONFIG_FILES([opal/mca/dl/dlopen/Makefile])
 
     OAC_CHECK_PACKAGE([dlopen],
-              [dl_dlopen],
+              [opal_dl_dlopen],
               [dlfcn.h],
               [dl],
               [dlopen],
@@ -38,5 +38,5 @@ AC_DEFUN([MCA_opal_dl_dlopen_CONFIG],[
           [$1],
           [$2])
 
-    AC_SUBST(dl_dlopen_LIBS)
+    AC_SUBST(opal_dl_dlopen_LIBS)
 ])
