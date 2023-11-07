@@ -71,18 +71,6 @@ ompi_op_cuda_component_t mca_op_cuda_component = {
  */
 static int cuda_component_open(void)
 {
-    /* We checked the flags during register, so if they are set to
-     * zero either the architecture is not suitable or the user disabled
-     * AVX support.
-     *
-     * A first level check to see what level of AVX is available on the
-     * hardware.
-     *
-     * Note that if this function returns non-OMPI_SUCCESS, then this
-     * component won't even be shown in ompi_info output (which is
-     * probably not what you want).
-     */
-    printf("op cuda_component_open\n");
     return OMPI_SUCCESS;
 }
 
@@ -92,7 +80,6 @@ static int cuda_component_open(void)
 static int cuda_component_close(void)
 {
     if (mca_op_cuda_component.cu_num_devices > 0) {
-        //cuStreamDestroy(mca_op_cuda_component.cu_stream);
         free(mca_op_cuda_component.cu_max_threads_per_block);
         mca_op_cuda_component.cu_max_threads_per_block = NULL;
         free(mca_op_cuda_component.cu_max_blocks);
@@ -144,7 +131,7 @@ cuda_component_init_query(bool enable_progress_threads,
     int num_devices;
     int rc;
     int prio_lo, prio_hi;
-    //memset(&mca_op_cuda_component, 0, sizeof(mca_op_cuda_component));
+    // TODO: is this init needed here?
     cuInit(0);
     CHECK(cuDeviceGetCount, (&num_devices));
     mca_op_cuda_component.cu_num_devices = num_devices;
@@ -163,9 +150,6 @@ cuda_component_init_query(bool enable_progress_threads,
         if (-1 < mca_op_cuda_component.cu_max_num_threads) {
             if (mca_op_cuda_component.cu_max_threads_per_block[i] >= mca_op_cuda_component.cu_max_num_threads) {
                 mca_op_cuda_component.cu_max_threads_per_block[i] = mca_op_cuda_component.cu_max_num_threads;
-            } else {
-                printf("WARN: CUDA device %d does not support %d threads per block, falling back to %d\n",
-                       i, mca_op_cuda_component.cu_max_num_threads, mca_op_cuda_component.cu_max_threads_per_block[i]);
             }
         }
 
@@ -176,27 +160,13 @@ cuda_component_init_query(bool enable_progress_threads,
             /* fall-back to value that should work on every device */
             mca_op_cuda_component.cu_max_blocks[i] = 512;
         }
-        printf("max threads %d max blocks %d\n", mca_op_cuda_component.cu_max_threads_per_block[i], mca_op_cuda_component.cu_max_blocks[i]);
         if (-1 < mca_op_cuda_component.cu_max_num_blocks) {
             if (mca_op_cuda_component.cu_max_blocks[i] >= mca_op_cuda_component.cu_max_num_blocks) {
                 mca_op_cuda_component.cu_max_blocks[i] = mca_op_cuda_component.cu_max_num_blocks;
-            } else {
-                printf("WARN: CUDA device %d does not support %d blocks, falling back to %d\n",
-                       i, mca_op_cuda_component.cu_max_num_blocks, mca_op_cuda_component.cu_max_blocks[i]);
             }
         }
     }
 
-#if 0
-    /* try to create a high-priority stream */
-    rc = cuCtxGetStreamPriorityRange(&prio_lo, &prio_hi);
-    if (CUDA_SUCCESS != rc) {
-        cuStreamCreateWithPriority(&mca_op_cuda_component.cu_stream, CU_STREAM_NON_BLOCKING, prio_hi);
-    } else {
-        mca_op_cuda_component.cu_stream = 0;
-    }
-#endif // 0
-    printf("op cuda_component_init_query\n");
     return OMPI_SUCCESS;
 }
 
