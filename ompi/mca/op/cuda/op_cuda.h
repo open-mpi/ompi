@@ -33,9 +33,10 @@ BEGIN_C_DECLS
     do {                                                      \
         cudaError_t err = fn args;                            \
         if (err != cudaSuccess) {                             \
-            fprintf(stderr, "%s:%d: %s failed at line: %s: %s\n", \
-                    __FILE__, __LINE__, str(fn), cudaGetErrorName(err), \
-                    cudaGetErrorString(err));                 \
+            opal_show_help("help-ompi-mca-op-cuda.txt",       \
+                           "CUDA call failed", true,          \
+                           str(fn), cudaGetErrorName(err),    \
+                           cudaGetErrorString(err));          \
             ompi_mpi_abort(MPI_COMM_WORLD, 1);                \
         }                                                     \
     } while (0)

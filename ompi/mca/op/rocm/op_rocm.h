@@ -31,11 +31,12 @@ BEGIN_C_DECLS
 
 #define CHECK(fn, args)                                       \
     do {                                                      \
-        hipError_t err = fn args;                            \
-        if (err != hipSuccess) {                             \
-            fprintf(stderr, "%s:%d: %s failed at line: %s: %s\n", \
-                    __FILE__, __LINE__, str(fn), hipGetErrorName(err), \
-                    hipGetErrorString(err));                 \
+        hipError_t err = fn args;                             \
+        if (err != hipSuccess) {                              \
+            opal_show_help("help-ompi-mca-op-rocm.txt",       \
+                           "HIP call failed", true,          \
+                           str(fn), hipGetErrorName(err),    \
+                           hipGetErrorString(err));          \
             ompi_mpi_abort(MPI_COMM_WORLD, 1);                \
         }                                                     \
     } while (0)

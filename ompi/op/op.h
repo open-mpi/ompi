@@ -482,42 +482,6 @@ static inline bool ompi_op_is_valid(ompi_op_t * op, ompi_datatype_t * ddt,
     return true;
 }
 
-
-
-/**
- * Check to see if an op supports device execution on the given datatype
- *
- * @param op The op to check
- * @param ddt The datatype to check
- *
- * @returns true If the op supports devices on that datatype
- * @returns false If the op does not support devices on that datatype
- *
- */
-static inline bool ompi_op_supports_device(const ompi_op_t * op, const ompi_datatype_t * ddt)
-{
-    /* Check:
-       - non-intrinsic ddt's cannot be invoked on intrinsic op's
-       - if intrinsic ddt invoked on intrinsic op:
-       - ensure the datatype is defined in the op map
-       - ensure we have a function pointer for that combination
-     */
-    if (ompi_op_is_intrinsic(op)) {
-        if (ompi_datatype_is_predefined(ddt)) {
-            /* Intrinsic ddt on intrinsic op */
-            if (NULL == op->o_device_op ||
-                -1   == ompi_op_ddt_map[ddt->id] ||
-                NULL == op->o_device_op->do_intrinsic.fns[ompi_op_ddt_map[ddt->id]]) {
-                return false;
-            }
-        }
-    }
-
-    /* op supports device for the given datatype */
-    return true;
-}
-
-
 /**
  * Perform a reduction operation.
  *
@@ -642,7 +606,7 @@ static inline void ompi_op_reduce_stream(ompi_op_t * op, const void *source,
                 (source_check_addr == 0 || (source_flags & MCA_ACCELERATOR_FLAGS_UNIFIED_MEMORY))) {
                 /* nothing to be done, we won't need device-capable ops */
             } else {
-                fprintf(stderr, "op: no suitable op %s module for type %s found for device memory!\n", op->o_name, dtype->name);
+                opal_show_help("help-ompi-op.txt", "missing implementation", true, op->o_name, dtype->name);
                 abort();
             }
         }

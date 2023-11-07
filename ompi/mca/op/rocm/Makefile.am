@@ -19,6 +19,8 @@
 
 AM_CPPFLAGS = $(common_rocm_CPPFLAGS)
 
+dist_ompidata_DATA = help-ompi-mca-op-rocm.txt
+
 sources = op_rocm_component.c op_rocm.h op_rocm_functions.c op_rocm_impl.h
 rocm_sources = op_rocm_impl.cpp
 

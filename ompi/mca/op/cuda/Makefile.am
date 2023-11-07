@@ -19,6 +19,8 @@
 
 AM_CPPFLAGS = $(common_cuda_CPPFLAGS)
 
+dist_ompidata_DATA = help-ompi-mca-op-cuda.txt
+
 sources = op_cuda_component.c op_cuda.h op_cuda_functions.c op_cuda_impl.h
 #sources_extended = op_cuda_functions.cu
 cu_sources = op_cuda_impl.cu
@@ -60,14 +62,12 @@ endif
 # The DSO should install itself in $(ompilibdir) (by default,
 # $prefix/lib/openmpi).
 
-CUDADIR=/nfs/apps/spacks/2023-01-01/opt/spack/linux-centos7-x86_64/gcc-9.5.0/cuda-11.8.0-u2modnncfevx54ibr5dy27sxkirwsf7f
-
 mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_op_cuda_la_SOURCES = $(sources)
 mca_op_cuda_la_LIBADD = $(cu_sources:.cu=.lo)
 mca_op_cuda_la_LDFLAGS = -module -avoid-version $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
-		$(accelerator_cuda_LIBS) -L$(CUDADIR)/lib64 -lcudart
+		$(accelerator_cuda_LIBS) $(accelerator_cudart_LIBS)
 EXTRA_mca_op_cuda_la_SOURCES = $(cu_sources)
 
 # Specific information for static builds.
