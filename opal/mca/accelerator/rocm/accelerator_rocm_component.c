@@ -33,7 +33,6 @@ size_t opal_accelerator_rocm_memcpyH2D_limit=1048576;
 /* Initialization lock for lazy rocm initialization */
 static opal_mutex_t accelerator_rocm_init_lock;
 static bool accelerator_rocm_init_complete = false;
-static int checkmem;
 
 hipStream_t *opal_accelerator_rocm_MemcpyStream = NULL;
 
@@ -171,6 +170,7 @@ static int accelerator_rocm_component_register(void)
 
 int opal_accelerator_rocm_lazy_init()
 {
+    int prio_hi, prio_lo;
     int err = OPAL_SUCCESS;
 
     /* Double checked locking to avoid having to
@@ -191,7 +191,7 @@ int opal_accelerator_rocm_lazy_init()
     /* Create stream for use in cuMemcpyAsync synchronous copies */
     hipStream_t memcpy_stream;
     err = hipStreamCreate(&memcpy_stream);
-    if (OPAL_UNLIKELY(result != hipSuccess)) {
+    if (OPAL_UNLIKELY(err != hipSuccess)) {
         opal_show_help("help-accelerator-rocm.txt", "hipStreamCreateWithFlags failed", true,
                        OPAL_PROC_MY_HOSTNAME, err);
         goto out;

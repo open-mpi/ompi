@@ -139,11 +139,11 @@ static int mca_accelerator_rocm_check_addr (const void *addr, int *dev_id, uint6
 
 static int mca_accelerator_rocm_get_default_stream(int dev_id, opal_accelerator_stream_t **stream)
 {
-    int delayed_init = opal_accelerator_rocm_delayed_init();
+    int delayed_init = opal_accelerator_rocm_lazy_init();
     if (OPAL_UNLIKELY(0 != delayed_init)) {
         return delayed_init;
     }
-    *stream = &opal_accelerator_rocm_default_stream;
+    *stream = &opal_accelerator_rocm_default_stream.base;
     return OPAL_SUCCESS;
 }
 
@@ -359,7 +359,7 @@ static int mca_accelerator_rocm_memmove_async(int dest_dev_id, int src_dev_id, v
     hipError_t result;
     void *ptr;
 
-    int delayed_init = opal_accelerator_rocm_delayed_init();
+    int delayed_init = opal_accelerator_rocm_lazy_init();
     if (OPAL_UNLIKELY(0 != delayed_init)) {
         return delayed_init;
     }
@@ -649,7 +649,7 @@ static int mca_accelerator_rocm_mem_alloc_stream(
 //#if HIP_VERSION >= ??? //TODO
     hipError_t result;
 
-    int delayed_init = opal_accelerator_rocm_delayed_init();
+    int delayed_init = opal_accelerator_rocm_lazy_init();
     if (OPAL_UNLIKELY(0 != delayed_init)) {
         return delayed_init;
     }
@@ -734,7 +734,7 @@ static int mca_accelerator_rocm_get_num_devices(int *num_devices)
 
 static int mca_accelerator_rocm_get_mem_bw(int device, float *bw)
 {
-    int delayed_init = opal_accelerator_rocm_delayed_init();
+    int delayed_init = opal_accelerator_rocm_lazy_init();
     if (OPAL_UNLIKELY(0 != delayed_init)) {
         return delayed_init;
     }
