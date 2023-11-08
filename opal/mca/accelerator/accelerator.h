@@ -200,7 +200,8 @@ typedef int (*opal_accelerator_base_module_stream_wait_event_fn_t)(
  * Creates an event. An event is a synchronization marker that can be
  * appended to a stream to monitor device progress or synchronize the
  * corresponding stream. This function will allocate memory for the object.
- * To release the memory, call OBJ_RELEASE(*event);
+ * To release the object memory and associated resources
+ * call opal_accelerator_base_module_destroy_event_fn_t
  *
  * @param[IN] dev_id         Associated device for the event or
  *                           MCA_ACCELERATOR_NO_DEVICE_ID
@@ -210,6 +211,18 @@ typedef int (*opal_accelerator_base_module_stream_wait_event_fn_t)(
  */
 typedef int (*opal_accelerator_base_module_create_event_fn_t)(
     int dev_id, opal_accelerator_event_t **event);
+
+/**
+ * Destroys an event and release the object memory.
+ * This function should return immediately, but the event may complete
+ * and associated resources are released later.
+ *
+ * @param[IN] event          Event to destroy
+ *
+ * @return                   OPAL_SUCCESS or error status on failure.
+ */
+typedef int (*opal_accelerator_base_module_destroy_event_fn_t)(
+    opal_accelerator_event_t *event);
 
 /**
  * Records an event on a stream. An event recorded on the stream is
@@ -441,6 +454,7 @@ typedef struct {
     opal_accelerator_base_module_synchronize_stream_fn_t synchronize_stream;
     opal_accelerator_base_module_stream_wait_event_fn_t stream_wait_event;
     opal_accelerator_base_module_create_event_fn_t create_event;
+    opal_accelerator_base_module_destroy_event_fn_t destroy_event;
     opal_accelerator_base_module_record_event_fn_t record_event;
     opal_accelerator_base_module_query_event_fn_t query_event;
 
