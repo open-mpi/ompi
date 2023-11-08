@@ -186,6 +186,17 @@ typedef int (*opal_accelerator_base_module_synchronize_stream_fn_t)(
     opal_accelerator_stream_t *stream);
 
 /**
+ * Make a stream wait on an event
+ *
+ * @param[IN] stream         Stream to wait
+ * @param[IN] event          Event to wait on
+ *
+ * @return                   OPAL_SUCCESS or error status on failure
+ */
+typedef int (*opal_accelerator_base_module_stream_wait_event_fn_t)(
+    opal_accelerator_stream_t *stream, opal_accelerator_event_t *event);
+
+/**
  * Creates an event. An event is a synchronization marker that can be
  * appended to a stream to monitor device progress or synchronize the
  * corresponding stream. This function will allocate memory for the object.
@@ -428,6 +439,7 @@ typedef struct {
     opal_accelerator_base_module_create_stream_fn_t create_stream;
     opal_accelerator_base_module_destroy_stream_fn_t destroy_stream;
     opal_accelerator_base_module_synchronize_stream_fn_t synchronize_stream;
+    opal_accelerator_base_module_stream_wait_event_fn_t stream_wait_event;
     opal_accelerator_base_module_create_event_fn_t create_event;
     opal_accelerator_base_module_record_event_fn_t record_event;
     opal_accelerator_base_module_query_event_fn_t query_event;
