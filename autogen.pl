@@ -923,7 +923,7 @@ sub patch_autotools_output {
                             '# ICC 10 doesn\047t accept -KPIC any more.\n.*\n\s+' .
 	                    "lt_prog_compiler_wl${tag}=";
         my $replace_string = "# Flang compiler
-      *flang)
+      *flang*)
 	lt_prog_compiler_wl${tag}='-Wl,'
 	lt_prog_compiler_pic${tag}='-fPIC -DPIC'
 	lt_prog_compiler_static${tag}='-static'
