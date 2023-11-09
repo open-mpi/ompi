@@ -36,7 +36,7 @@ AC_DEFUN([OPAL_CHECK_ROCM],[
            [ with_rocm="/opt/rocm"] )
 
      rocm_CPPFLAGS="-D__HIP_PLATFORM_AMD__"
-     rocm_LDFLAGS="-L${with_rocm}/lib/hip"
+     rocm_LDFLAGS="-L${with_rocm}/lib/"
 
      AS_IF([ test -n "$with_rocm" && test "$with_rocm" != "no" ],
            [ OPAL_APPEND([CPPFLAGS], [$rocm_CPPFLAGS])
@@ -52,15 +52,11 @@ AC_DEFUN([OPAL_CHECK_ROCM],[
 
      LDFLAGS="$rocm_save_LDFLAGS"
      LIBS="$rocm_save_LIBS"
-     OPAL_APPEND([CPPFLAGS], [${$1_CPPFLAGS}] )
-     OPAL_APPEND([LDFLAGS], [${$1_LDFLAGS}] )
-     OPAL_APPEND([LIBS], [${$1_LIBS}] )
-
-     AS_IF([ test "$opal_check_rocm_happy" = "no" ],
-           [ CPPFLAGS="$rocm_save_CPPFLAGS"])
+     CPPFLAGS="$rocm_save_CPPFLAGS"
 
      AS_IF([ test "$opal_check_rocm_happy" = "yes" ],
-           [ AC_DEFINE_UNQUOTED([OPAL_ROCM_SUPPORT], [1], [Enable ROCm support])
+           [ OPAL_APPEND([$1_CPPFLAGS], [$rocm_CPPFLAGS])
+	     AC_DEFINE_UNQUOTED([OPAL_ROCM_SUPPORT], [1], [Enable ROCm support])
              ROCM_SUPPORT=1 ],
            [ AC_DEFINE_UNQUOTED([OPAL_ROCM_SUPPORT], [0], [Disable ROCm support])
              ROCM_SUPPORT=0 ])

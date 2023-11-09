@@ -13,7 +13,7 @@
 #
 
 
-AM_CPPFLAGS = $(common_rocm_CPPFLAGS)
+AM_CPPFLAGS = $(opal_rocm_CPPFLAGS)
 
 sources = \
         accelerator_rocm.h \
