@@ -6,7 +6,7 @@ opal_wrapper
 
 .. include_body
 
-opal_wrapper - Back-end Open MPI wrapper command
+opal_wrapper |mdash| Back-end Open MPI wrapper command
 
 
 DESCRIPTION

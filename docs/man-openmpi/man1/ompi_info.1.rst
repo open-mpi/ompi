@@ -6,7 +6,7 @@ ompi_info
 
 .. include_body
 
-ompi_info - Display information about the Open MPI installation
+ompi_info |mdash| Display information about the Open MPI installation
 
 
 SYNOPSIS

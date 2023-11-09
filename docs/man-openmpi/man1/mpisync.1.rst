@@ -1,4 +1,4 @@
-.. _mpisync:
+.. _man1-mpisync:
 
 
 mpisync
@@ -6,7 +6,7 @@ mpisync
 
 .. include_body
 
-Open MPI timing tools
+mpisync |mdash| Open MPI timing tools
 
 
 SYNTAX
