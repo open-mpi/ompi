@@ -85,14 +85,22 @@ static int mca_accelerator_rocm_check_addr (const void *addr, int *dev_id, uint6
     *flags = 0;
     err = hipPointerGetAttributes(&srcAttr, addr);
     if (hipSuccess == err) {
+#if HIP_VERSION >= 50731921
+        if (hipMemoryTypeDevice == srcAttr.type) {
+#else
         if (hipMemoryTypeDevice == srcAttr.memoryType) {
+#endif
             //We might want to set additional flags in a later iteration.
             //*flags |= MCA_ACCELERATOR_FLAGS_HOST_LDSTR;
             //*flags |= MCA_ACCELERATOR_FLAGS_HOST_ATOMICS;
             /* First access on a device pointer triggers ROCM support lazy initialization. */
             opal_accelerator_rocm_lazy_init();
             ret = 1;
+#if HIP_VERSION >= 50731921
+        } else if (hipMemoryTypeUnified == srcAttr.type) {
+#else
         } else if (hipMemoryTypeUnified == srcAttr.memoryType) {
+#endif
             *flags |= MCA_ACCELERATOR_FLAGS_UNIFIED_MEMORY;
             //*flags |= MCA_ACCELERATOR_FLAGS_HOST_LDSTR;
             //*flags |= MCA_ACCELERATOR_FLAGS_HOST_ATOMICS;
