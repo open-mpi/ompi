@@ -65,7 +65,7 @@ provided by the receive call that set the status variable. As explained
 in the "Use of General Datatypes in Communication" section of the `MPI
 Standard <https://www.mpi-forum.org/docs/>`_.
 :ref:`MPI_Get_count` may, in certain situations, return the value
-MPI_UNDEFINED.
+``MPI_UNDEFINED``.
 
 The datatype argument is passed to :ref:`MPI_Get_count` to improve performance.
 A message might be received without counting the number of elements it
@@ -78,7 +78,7 @@ NOTES
 If the size of the datatype is zero, this routine will return a count of
 zero. If the amount of data in status is not an exact multiple of the
 size of datatype (so that count would not be integral), a count of
-MPI_UNDEFINED is returned instead.
+``MPI_UNDEFINED`` is returned instead.
 
 ERRORS
 ------
@@ -86,6 +86,6 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 If the value to be returned is larger than can fit into the count
-parameter, an MPI_ERR_TRUNCATE error is raised.
+parameter, an ``MPI_ERR_TRUNCATE`` error is raised.
 
 .. seealso:: :ref:`MPI_Get_elements`
