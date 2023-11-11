@@ -75,6 +75,10 @@ the call returns immediately with the *status* object set to *source* =
 ``MPI_PROC_NULL``, *tag* = ``MPI_ANY_TAG``, and *count* = 0, as if a receive
 from ``MPI_PROC_NULL`` was issued.
 
+If your application does not need to examine the *status* field, you
+can save resources by using the predefined constant
+``MPI_STATUS_IGNORE`` as a special value for the *status* argument.
+
 
 ERRORS
 ------
