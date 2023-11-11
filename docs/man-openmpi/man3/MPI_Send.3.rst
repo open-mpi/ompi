@@ -74,7 +74,7 @@ NOTE
 
 This routine will block until the message is sent to the destination.
 For an in-depth explanation of the semantics of the standard-mode send,
-refer to the MPI-1 Standard.
+refer to the `MPI Standard <https://www.mpi-forum.org/docs/>`_.
 
 
 ERRORS

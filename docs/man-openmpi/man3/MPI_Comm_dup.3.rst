@@ -63,7 +63,10 @@ determines the attribute value associated with this key in the new
 communicator; one particular action that a copy callback may take is to
 delete the attribute from the new communicator. Returns in newcomm a new
 communicator with the same group, any copied cached information, but a
-new context (see Section 5.7.1 of the MPI-1 Standard, "Functionality").
+new context (see the "Functionality" subsection of the "Caching"
+section in the "Groups, Contexts, and Communicators" chapter in the
+`MPI Standard <https://www.mpi-forum.org/docs/>`_).
+
 
 NOTES
 -----
@@ -71,7 +74,8 @@ NOTES
 This operation is used to provide a parallel library call with a
 duplicate communication space that has the same properties as the
 original communicator. This includes any attributes (see below) and
-topologies (see Chapter 6, "Process Topologies," in the MPI-1 Standard).
+topologies (see the "Process Topologies" chapter in the `MPI Standard
+<https://www.mpi-forum.org/docs/>`_).
 This call is valid even if there are pending point-to-point
 communications involving the communicator comm. A typical call might
 involve an :ref:`MPI_Comm_dup` at the beginning of the parallel call, and an

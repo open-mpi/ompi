@@ -61,10 +61,11 @@ DESCRIPTION
 
 Returns the number of entries received. (We count entries, each of type
 datatype, not bytes.) The datatype argument should match the argument
-provided by the receive call that set the status variable. (As explained
-in Section 3.12.5 in the MPI-1 Standard, "Use of General Datatypes in
-Communication," :ref:`MPI_Get_count` may, in certain situations, return the
-value MPI_UNDEFINED.)
+provided by the receive call that set the status variable. As explained
+in the "Use of General Datatypes in Communication" section of the `MPI
+Standard <https://www.mpi-forum.org/docs/>`_.
+:ref:`MPI_Get_count` may, in certain situations, return the value
+MPI_UNDEFINED.
 
 The datatype argument is passed to :ref:`MPI_Get_count` to improve performance.
 A message might be received without counting the number of elements it

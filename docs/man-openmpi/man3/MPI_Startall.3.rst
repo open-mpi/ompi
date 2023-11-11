@@ -70,13 +70,15 @@ A communication started with a call to :ref:`MPI_Start` or :ref:`MPI_Startall` i
 completed by a call to :ref:`MPI_Wait`, :ref:`MPI_Test`, or one of the derived
 functions :ref:`MPI_Waitany`, :ref:`MPI_Testany`, :ref:`MPI_Waitall`, :ref:`MPI_Testall`,
 :ref:`MPI_Waitsome`, :ref:`MPI_Testsome` (these are described in Section 3.7.5 of the
-MPI-1 Standard, "Multiple Completions"). The request becomes inactive
+`MPI Standard <https://www.mpi-forum.org/docs/>`_, "Multiple
+Completions"). The request becomes inactive
 after successful completion by such a call. The request is not
 deallocated, and it can be activated anew by another :ref:`MPI_Start` or
 :ref:`MPI_Startall` call.
 
-A persistent request is deallocated by a call to :ref:`MPI_Request_free` (see
-Section 3.7.3 of the MPI-1 Standard, "Communication Completion").
+A persistent request is deallocated by a call to
+:ref:`MPI_Request_free` (see Section 3.7.3 of the `MPI Standard
+<https://www.mpi-forum.org/docs/>`_, "Communication Completion").
 
 | The call to :ref:`MPI_Request_free` can occur at any point in the program
   after the persistent request was created. However, the request will be

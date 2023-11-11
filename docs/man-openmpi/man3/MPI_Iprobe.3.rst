@@ -81,10 +81,11 @@ returns in status the same value that would have been returned by
 :ref:`MPI_Recv`. Otherwise, the call returns *flag* = false, and leaves status
 undefined.
 
-If :ref:`MPI_Iprobe` returns *flag* = true, then the content of the status object
-can be subsequently accessed as described in Section 3.2.5 of the MPI-1
-Standard, "Return Status," to find the source, tag, and length of the
-probed message.
+If :ref:`MPI_Iprobe` returns *flag* = true, then the content of the
+status object can be subsequently accessed as described in the "Return
+Status" subsection of the "Point-to-Point Communication" chapter in
+the `MPI Standard <https://www.mpi-forum.org/docs/>`_ to find the
+source, tag, and length of the probed message.
 
 A subsequent receive executed with the same context, and the source and
 tag returned in status by :ref:`MPI_Iprobe` will receive the message that was

@@ -61,8 +61,10 @@ handle is set to MPI_COMM_NULL. Any pending operations that use this
 communicator will complete normally; the object is actually deallocated
 only if there are no other active references to it. This call applies to
 intracommunicators and intercommunicators. Upon actual deallocation, the
-delete callback functions for all cached attributes (see Section 5.7 in
-the MPI-1 Standard, "Caching") are called in arbitrary order.
+delete callback functions for all cached attributes (see the "Caching"
+section in the "Groups, Contexts, and Communicators" chapter in the
+`MPI Standard <https://www.mpi-forum.org/docs/>`_) are called in
+arbitrary order.
 
 
 NOTES
