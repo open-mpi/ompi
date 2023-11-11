@@ -74,8 +74,9 @@ after the receive buffer contains the newly received message. A receive
 can complete before the matching send has completed (of course, it can
 complete only after the matching send has started).
 
-The blocking semantics of this call are described in Section 3.4 of the
-MPI-1 Standard, "Communication Modes."
+The blocking semantics of this call are described in the
+"Communication Modes" section of the `MPI Standard
+<https://www.mpi-forum.org/docs/>`_.
 
 The receive buffer contains a number (defined by the value of *count*)
 of consecutive elements. The first element in the set of elements is
@@ -99,10 +100,11 @@ The *count* argument indicates the maximum number of entries of type
 received, use the :ref:`MPI_Get_count` function to determine the actual number
 of entries within that message.
 
-To receive messages of unknown length, use the :ref:`MPI_Probe` function. (For
-more information about :ref:`MPI_Probe` and :ref:`MPI_Cancel`, see their respective
-man pages; also, see Section 3.8 of the MPI-1 Standard, "Probe and
-Cancel.")
+To receive messages of unknown length, use the :ref:`MPI_Probe`
+function.  For more information about :ref:`MPI_Probe` and
+:ref:`MPI_Cancel`, see their respective man pages and the "Probe and
+Cancel" section of the `MPI Standard
+<https://www.mpi-forum.org/docs/>`_.
 
 A message can be received by a receive operation only if it is addressed
 to the receiving process, and if its source, tag, and communicator
@@ -133,8 +135,9 @@ by the receiver).
 Source = destination is allowed, that is, a process can send a message
 to itself. However, it is not recommended for a process to send messages
 to itself using the blocking send and receive operations described
-above, since this may lead to deadlock. See Section 3.5 of the MPI-1
-Standard, "Semantics of Point-to-Point Communication."
+above, since this may lead to deadlock.  See the "Semantics of
+Point-to-Point Communication" of the `MPI Standard
+<https://www.mpi-forum.org/docs/>`_ for more details.
 
 If your application does not need to examine the *status* field, you can
 save resources by using the predefined constant ``MPI_STATUS_IGNORE`` as a
