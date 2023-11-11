@@ -4,8 +4,71 @@ Open MPI v4.1.x series
 This file contains all the NEWS updates for the Open MPI v4.1.x
 series, in reverse chronological order.
 
-4.1.4 |mdash| May, 2022
-------------------
+Open MPI version 4.1.6
+----------------------
+:Date: September, 2023
+
+- Fix configure issue with XCode 15.
+- Update embedded PMIx to 3.2.5.  PMIx 3.2.5 addresses CVE-2023-41915.
+
+  .. note:: Prior versions of Open MPI (and their associated PMIx
+            implementations) are **not** impacted by this CVE, because
+            Open MPI never uses escalated privileges on behalf of an
+            unprivileged user.  We are backporting this change both
+            because it is low risk and to avoid alarms from CVE
+            scanners.
+
+- Fix issue with buffered sends and MTL-based interfaces (Libfabric,
+  PSM, Portals).
+- Add missing ``MPI_F_STATUS_SIZE`` to ``mpi.h``.  Thanks to @jprotze for
+  reporting the issue.
+- Update Fortran ``mpi`` module configure check to be more correct.
+  Thanks to Sergey Kosukhin for identifying the issue and supplying
+  the fix.
+- Update to properly handle PMIx v>=4.2.3.  Thanks to Bruno Chareyre,
+  Github user @sukanka, and Christof Koehler for raising the
+  compatibility issues and helping test the fixes.
+- Fix minor issues and add some minor performance optimizations with
+  OFI support.
+- Support the ``striping_factor`` and ``striping_unit`` MPI_Info names
+  recomended by the MPI standard for parallel IO.
+- Fixed some minor issues with UCX support.
+- Minor optimization for 0-byte MPI_Alltoallw (i.e., make it a no-op).
+
+
+Open MPI version 4.1.5
+----------------------
+:Date: February, 2023
+
+- Fix crash in one-sided applications for certain process layouts.
+- Update embedded OpenPMIx to version 3.2.4
+- Fix issue building with ``ifort`` on MacOS.
+- Backport patches to Libevent for CVE-2016-10195, CVE-2016-10196, and
+  CVE-2016-10197.  Note that Open MPI's internal libevent does not
+  use the impacted portions of the Libevent code base.
+- SHMEM improvements:
+
+  - Fix initializer bugs in SHMEM interface.
+  - Fix unsigned type comparisons generating warnings.
+  - Fix use after clear issue in ``shmem_ds_reset``.
+
+- UCX improvements
+
+  - Fix memory registration bug that could occur when UCX was built
+    but not selected.
+  - Reduce overhead of ``add_procs`` with intercommunicators.
+  - Enable ``multi_send_nb`` by default.
+  - Call ``opal_progress`` while waiting for a UCX fence to complete.
+
+- Fix data corruption bug in osc/rdma component.
+- Fix overflow bug in alltoall collective
+- Fix crash when displaying topology.
+- Add some ``MPI_F_XXX`` constants that were missing from ``mpi.h``.
+- coll/ucc bug fixes.
+
+
+Open MPI version 4.1.4
+----------------------
 :Date: May, 2022
 
 - Fix possible length integer overflow in numerous non-blocking collective
