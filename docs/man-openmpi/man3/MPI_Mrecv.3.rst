@@ -70,7 +70,7 @@ DESCRIPTION
 The functions :ref:`MPI_Mrecv` and :ref:`MPI_Imrecv` receive messages that have been
 previously matched by a matching probe.
 
-If :ref:`MPI_Mrecv` is called with MPI_MESSAGE_NULL as the message argument,
+If :ref:`MPI_Mrecv` is called with ``MPI_MESSAGE_NULL`` as the message argument,
 the call returns immediately with the *status* object set to *source* =
 ``MPI_PROC_NULL``, *tag* = ``MPI_ANY_TAG``, and *count* = 0, as if a receive
 from ``MPI_PROC_NULL`` was issued.

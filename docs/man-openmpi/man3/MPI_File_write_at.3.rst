@@ -81,7 +81,7 @@ specified by the current view. :ref:`MPI_File_write_at` stores the number of
 *datatype* elements actually written in *status.* All other fields of
 *status* are undefined.
 
-It is erroneous to call this function if MPI_MODE_SEQUENTIAL mode was
+It is erroneous to call this function if ``MPI_MODE_SEQUENTIAL`` mode was
 specified when the file was opened.
 
 

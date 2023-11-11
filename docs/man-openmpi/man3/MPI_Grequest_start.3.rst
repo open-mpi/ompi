@@ -188,12 +188,12 @@ then the error code returned by the callback function will be returned
 by the MPI function that invoked the callback function. In the case of a
 ``MPI_{Wait|Test}any`` call that invokes both ``query_fn`` and
 ``free_fn``, the MPI call will return the error code returned by the
-last callback, namely ``free_fn``. If one or more of the ``request``\ s
+last callback, namely ``free_fn``. If one or more of the ``request``s
 in a call to ``MPI_{Wait|Test}{some|all``} has failed, then the MPI call
-will return MPI_ERR_IN_STATUS. In such a case, if the MPI call was
+will return ``MPI_ERR_IN_STATUS``. In such a case, if the MPI call was
 passed an array of statuses, then MPI will return in each of the
 statuses that correspond to a completed generalized ``request`` the
 error code returned by the corresponding invocation of its ``free_fn``
 callback function. However, if the MPI function was passed
-MPI_STATUSES_IGNORE, then the individual error codes returned by
+``MPI_STATUSES_IGNORE``, then the individual error codes returned by
 each callback function will be lost.

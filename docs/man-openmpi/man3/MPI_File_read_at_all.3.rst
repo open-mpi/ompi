@@ -81,7 +81,7 @@ is, holes are not counted when locating an offset. The data is taken out
 of those parts of the file specified by the current view.
 :ref:`MPI_File_read_at_all` stores the number of *datatype* elements actually
 read in *status.* All other fields of *status* are undefined. It is
-erroneous to call this function if MPI_MODE_SEQUENTIAL mode was
+erroneous to call this function if ``MPI_MODE_SEQUENTIAL`` mode was
 specified when the file was opened.
 
 

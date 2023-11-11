@@ -78,7 +78,7 @@ pointer position maintained by the system in which a total number of
 buffer *buf.* The data is taken out of those parts of the file specified
 by the current view. :ref:`MPI_File_iread` stores the number of data-type
 elements actually read in *status.* All other fields of *status* are
-undefined. It is erroneous to call this function if MPI_MODE_SEQUENTIAL
+undefined. It is erroneous to call this function if ``MPI_MODE_SEQUENTIAL``
 mode was specified when the file was opened.
 
 

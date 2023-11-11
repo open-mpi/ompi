@@ -72,16 +72,16 @@ the information returned by status). In particular, the user may
 allocate memory for the receive buffer, according to the length of the
 probed message.
 
-``MPI_Iprobe(source, tag, comm, flag, status)`` returns flag = true if there
+``MPI_Iprobe(source, tag, comm, flag, status)`` returns *flag* = true if there
 is a message that can be received and that matches the pattern specified
 by the arguments source, tag, and comm. The call matches the same
 message that would have been received by a call to ``MPI_Recv(..., source,
 tag, comm, status)`` executed at the same point in the program, and
 returns in status the same value that would have been returned by
-:ref:`MPI_Recv`. Otherwise, the call returns flag = false, and leaves status
+:ref:`MPI_Recv`. Otherwise, the call returns *flag* = false, and leaves status
 undefined.
 
-If :ref:`MPI_Iprobe` returns flag = true, then the content of the status object
+If :ref:`MPI_Iprobe` returns *flag* = true, then the content of the status object
 can be subsequently accessed as described in Section 3.2.5 of the MPI-1
 Standard, "Return Status," to find the source, tag, and length of the
 probed message.
