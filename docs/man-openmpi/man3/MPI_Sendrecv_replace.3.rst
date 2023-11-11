@@ -112,5 +112,15 @@ ERRORS
 
 .. include:: ./ERRORS.rst
 
+Note that per the "Return Status" section in the "Point-to-Point
+Communication" chapter in the `MPI Standard
+<https://www.mpi-forum.org/docs/>`_, MPI errors on messages received
+by :ref:`MPI_Sendrecv_replace` do not set the ``status.MPI_ERROR``
+field in the returned *status*.  The error code is always passed to
+the back-end error handler and may be passed back to the caller
+through the return value of :ref:`MPI_Sendrecv_replace` if the
+back-end error handler returns it.  The pre-defined MPI error handler
+``MPI_ERRORS_RETURN`` exhibits this behavior, for example.
+
 .. seealso::
    * :ref:`MPI_Sendrecv`
