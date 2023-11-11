@@ -81,7 +81,7 @@ MPI_UNDEFINED.
 NOTE
 ----
 
-Use of :ref:`MPI_Type_get_extent` is strongly recommended over the old MPI-1
+Use of :ref:`MPI_Type_get_extent` is strongly recommended over the legacy MPI-1
 functions :ref:`MPI_Type_extent` and :ref:`MPI_Type_lb`.
 
 
