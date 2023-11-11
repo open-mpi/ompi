@@ -5,7 +5,7 @@ MPI_Bsend_init
 
 .. include_body
 
-:ref:`MPI_Bsend_init` - Builds a handle for a buffered send.
+:ref:`MPI_Bsend_init` |mdash| Builds a handle for a buffered send.
 
 SYNTAX
 ------

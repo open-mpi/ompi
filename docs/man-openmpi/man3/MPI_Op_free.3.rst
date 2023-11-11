@@ -6,7 +6,7 @@ MPI_Op_free
 
 .. include_body
 
-:ref:`MPI_Op_free` - Frees a user-defined combination function handle.
+:ref:`MPI_Op_free` |mdash| Frees a user-defined combination function handle.
 
 
 SYNTAX

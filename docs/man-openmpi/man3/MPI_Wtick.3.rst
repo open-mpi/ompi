@@ -6,7 +6,7 @@ MPI_Wtick
 
 .. include_body
 
-:ref:`MPI_Wtick` - Returns the resolution of :ref:`MPI_Wtime`.
+:ref:`MPI_Wtick` |mdash| Returns the resolution of :ref:`MPI_Wtime`.
 
 
 SYNTAX

@@ -5,7 +5,7 @@ MPI_Cart_sub
 
 .. include_body
 
-:ref:`MPI_Cart_sub` - Partitions a communicator into subgroups, which form
+:ref:`MPI_Cart_sub` |mdash| Partitions a communicator into subgroups, which form
 lower-dimensional Cartesian subgrids.
 
 SYNTAX

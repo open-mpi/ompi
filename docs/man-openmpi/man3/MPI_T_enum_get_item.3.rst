@@ -6,7 +6,7 @@ MPI_T_enum_get_item
 
 .. include_body
 
-:ref:`MPI_T_enum_get_item` - Query information about an enumerator
+:ref:`MPI_T_enum_get_item` |mdash| Query information about an enumerator
 
 
 SYNTAX

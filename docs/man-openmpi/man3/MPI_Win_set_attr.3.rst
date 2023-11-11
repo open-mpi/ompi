@@ -6,7 +6,7 @@ MPI_Win_set_attr
 
 .. include_body
 
-:ref:`MPI_Win_set_attr` - Sets the value of a window attribute.
+:ref:`MPI_Win_set_attr` |mdash| Sets the value of a window attribute.
 
 
 SYNTAX

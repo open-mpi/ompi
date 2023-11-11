@@ -6,7 +6,7 @@ MPI_Register_datarep
 
 .. include_body
 
-:ref:`MPI_Register_datarep` - Defines data representation.
+:ref:`MPI_Register_datarep` |mdash| Defines data representation.
 
 
 SYNTAX

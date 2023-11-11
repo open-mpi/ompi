@@ -6,7 +6,7 @@ MPI_File_set_view
 
 .. include_body
 
-:ref:`MPI_File_set_view` - Changes process's view of data in file
+:ref:`MPI_File_set_view` |mdash| Changes process's view of data in file
 (collective).
 
 

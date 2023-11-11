@@ -6,7 +6,7 @@ MPI_Test
 
 .. include_body
 
-:ref:`MPI_Test` - Tests for the completion of a specific send or receive.
+:ref:`MPI_Test` |mdash| Tests for the completion of a specific send or receive.
 
 
 SYNTAX

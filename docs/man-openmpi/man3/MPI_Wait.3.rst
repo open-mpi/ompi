@@ -6,7 +6,7 @@ MPI_Wait
 
 .. include_body
 
-:ref:`MPI_Wait` - Waits for an MPI send or receive to complete.
+:ref:`MPI_Wait` |mdash| Waits for an MPI send or receive to complete.
 
 
 SYNTAX

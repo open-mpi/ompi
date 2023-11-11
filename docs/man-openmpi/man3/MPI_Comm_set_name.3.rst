@@ -6,7 +6,7 @@ MPI_Comm_set_name
 
 .. include_body
 
-:ref:`MPI_Comm_set_name` - Associates a name with a communicator.
+:ref:`MPI_Comm_set_name` |mdash| Associates a name with a communicator.
 
 
 SYNTAX

@@ -6,7 +6,7 @@ MPI_Group_range_incl
 
 .. include_body
 
-:ref:`MPI_Group_range_incl` - Creates a new group from ranges of ranks in
+:ref:`MPI_Group_range_incl` |mdash| Creates a new group from ranges of ranks in
 an existing group.
 
 

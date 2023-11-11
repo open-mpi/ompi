@@ -6,7 +6,7 @@ MPI_Probe
 
 .. include_body
 
-:ref:`MPI_Probe` - Blocking test for a message.
+:ref:`MPI_Probe` |mdash| Blocking test for a message.
 
 
 SYNTAX

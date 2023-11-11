@@ -6,7 +6,7 @@ MPI_File_get_byte_offset
 
 .. include_body
 
-:ref:`MPI_File_get_byte_offset` - Converts a view-relative offset into an
+:ref:`MPI_File_get_byte_offset` |mdash| Converts a view-relative offset into an
 absolute byte position.
 
 

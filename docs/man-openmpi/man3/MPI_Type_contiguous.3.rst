@@ -6,7 +6,7 @@ MPI_Type_contiguous
 
 .. include_body
 
-:ref:`MPI_Type_contiguous` - Creates a contiguous datatype.
+:ref:`MPI_Type_contiguous` |mdash| Creates a contiguous datatype.
 
 
 SYNTAX

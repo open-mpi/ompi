@@ -6,7 +6,7 @@ MPI_File_get_amode
 
 .. include_body
 
-:ref:`MPI_File_get_amode` - Returns access mode associated with an open
+:ref:`MPI_File_get_amode` |mdash| Returns access mode associated with an open
 file.
 
 

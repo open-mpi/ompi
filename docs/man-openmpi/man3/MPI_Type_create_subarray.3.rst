@@ -6,7 +6,7 @@ MPI_Type_create_subarray
 
 .. include_body
 
-:ref:`MPI_Type_create_subarray` - Creates a data type describing an
+:ref:`MPI_Type_create_subarray` |mdash| Creates a data type describing an
 *n*-dimensional subarray of an *n*-dimensional array.
 
 

@@ -6,7 +6,7 @@ MPI_File_sync
 
 .. include_body
 
-:ref:`MPI_File_sync` - Makes semantics consistent for data-access
+:ref:`MPI_File_sync` |mdash| Makes semantics consistent for data-access
 operations (collective).
 
 

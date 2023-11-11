@@ -5,7 +5,7 @@ MPI_File_write_ordered_end
 
 .. include_body
 
-:ref:`MPI_File_write_ordered_end` - Writes a file at a location specified
+:ref:`MPI_File_write_ordered_end` |mdash| Writes a file at a location specified
 by a shared file pointer; ending part of a split collective routine
 (blocking).
 

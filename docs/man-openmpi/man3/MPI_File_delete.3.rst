@@ -6,7 +6,7 @@ MPI_File_delete
 
 .. include_body
 
-:ref:`MPI_File_delete` - Deletes a file.
+:ref:`MPI_File_delete` |mdash| Deletes a file.
 
 
 SYNTAX

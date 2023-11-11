@@ -5,7 +5,7 @@ MPI_Cart_rank
 
 .. include_body
 
-:ref:`MPI_Cart_rank` - Determines process rank in communicator given Cartesian
+:ref:`MPI_Cart_rank` |mdash| Determines process rank in communicator given Cartesian
 location.
 
 SYNTAX

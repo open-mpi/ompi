@@ -6,7 +6,7 @@ MPI_Abort
 
 .. include_body
 
-:ref:`MPI_Abort` - Terminates MPI execution environment.
+:ref:`MPI_Abort` |mdash| Terminates MPI execution environment.
 
 
 SYNTAX

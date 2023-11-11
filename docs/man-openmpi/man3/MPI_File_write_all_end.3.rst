@@ -6,7 +6,7 @@ MPI_File_write_all_end
 
 .. include_body
 
-:ref:`MPI_File_write_all_end` - Writes a file starting at the locations
+:ref:`MPI_File_write_all_end` |mdash| Writes a file starting at the locations
 specified by individual file pointers; ending part of a split collective
 routine (blocking).
 

@@ -5,7 +5,7 @@ MPI_Group_difference
 
 .. include_body
 
-:ref:`MPI_Group_difference` - Makes a group from the difference of two groups.
+:ref:`MPI_Group_difference` |mdash| Makes a group from the difference of two groups.
 
 SYNTAX
 ------

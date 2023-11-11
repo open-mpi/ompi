@@ -6,7 +6,7 @@ MPI_File_read_at
 
 .. include_body
 
-:ref:`MPI_File_read_at` - Reads a file at an explicitly specified offset
+:ref:`MPI_File_read_at` |mdash| Reads a file at an explicitly specified offset
 (blocking, noncollective).
 
 

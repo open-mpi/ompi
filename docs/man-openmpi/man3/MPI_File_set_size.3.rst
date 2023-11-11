@@ -6,7 +6,7 @@ MPI_File_set_size
 
 .. include_body
 
-:ref:`MPI_File_set_size` - Resizes a file (collective).
+:ref:`MPI_File_set_size` |mdash| Resizes a file (collective).
 
 
 SYNTAX

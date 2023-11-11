@@ -6,7 +6,7 @@ MPI_Win_create_errhandler
 
 .. include_body
 
-:ref:`MPI_Win_create_errhandler` - Creates an error handler for a window.
+:ref:`MPI_Win_create_errhandler` |mdash| Creates an error handler for a window.
 
 
 SYNTAX

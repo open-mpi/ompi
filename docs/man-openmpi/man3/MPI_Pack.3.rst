@@ -6,7 +6,7 @@ MPI_Pack
 
 .. include_body
 
-:ref:`MPI_Pack` - Packs data of a given datatype into contiguous memory.
+:ref:`MPI_Pack` |mdash| Packs data of a given datatype into contiguous memory.
 
 
 SYNTAX

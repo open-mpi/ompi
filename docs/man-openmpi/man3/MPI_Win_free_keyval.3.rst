@@ -6,7 +6,7 @@ MPI_Win_free_keyval
 
 .. include_body
 
-:ref:`MPI_Win_free_keyval` - Frees a window keyval.
+:ref:`MPI_Win_free_keyval` |mdash| Frees a window keyval.
 
 
 SYNTAX

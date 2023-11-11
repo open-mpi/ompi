@@ -6,7 +6,7 @@ MPI_Type_delete_attr
 
 .. include_body
 
-:ref:`MPI_Type_delete_attr` - Deletes a datatype-caching attribute value
+:ref:`MPI_Type_delete_attr` |mdash| Deletes a datatype-caching attribute value
 associated with a key.
 
 

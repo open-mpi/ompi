@@ -5,7 +5,7 @@ MPI_Comm_create_keyval
 
 .. include_body
 
-:ref:`MPI_Comm_create_keyval` - Generates a new attribute key.
+:ref:`MPI_Comm_create_keyval` |mdash| Generates a new attribute key.
 
 SYNTAX
 ------

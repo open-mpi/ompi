@@ -5,7 +5,7 @@ MPI_Type_create_hindexed
 
 .. include_body
 
-:ref:`MPI_Type_create_hindexed` - Creates an indexed datatype with offsets in bytes.
+:ref:`MPI_Type_create_hindexed` |mdash| Creates an indexed datatype with offsets in bytes.
 
 
 SYNTAX

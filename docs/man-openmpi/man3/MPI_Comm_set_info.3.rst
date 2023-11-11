@@ -6,7 +6,7 @@ MPI_Comm_set_info
 
 .. include_body
 
-:ref:`MPI_Comm_set_info` - Set communicator info hints
+:ref:`MPI_Comm_set_info` |mdash| Set communicator info hints
 
 
 SYNTAX

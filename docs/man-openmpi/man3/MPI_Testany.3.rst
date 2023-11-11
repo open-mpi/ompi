@@ -6,7 +6,7 @@ MPI_Testany
 
 .. include_body
 
-:ref:`MPI_Testany` - Tests for completion of any one previously initiated
+:ref:`MPI_Testany` |mdash| Tests for completion of any one previously initiated
 communication in a list.
 
 

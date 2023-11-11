@@ -5,7 +5,7 @@ MPI_Session_get_nth_pset
 
 .. include_body
 
-:ref:`MPI_Session_get_nth_pset` - Query runtime for name of the nth process set
+:ref:`MPI_Session_get_nth_pset` |mdash| Query runtime for name of the nth process set
 
 SYNTAX
 ------

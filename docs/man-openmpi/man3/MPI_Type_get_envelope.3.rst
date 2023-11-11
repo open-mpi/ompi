@@ -6,7 +6,7 @@ MPI_Type_get_envelope
 
 .. include_body
 
-:ref:`MPI_Type_get_envelope` - Returns information about input arguments
+:ref:`MPI_Type_get_envelope` |mdash| Returns information about input arguments
 associated with a data type.
 
 

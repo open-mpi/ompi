@@ -6,7 +6,7 @@ MPI_Win_create
 
 .. include_body
 
-:ref:`MPI_Win_create` - One-sided MPI call that returns a window object for
+:ref:`MPI_Win_create` |mdash| One-sided MPI call that returns a window object for
 RMA operations.
 
 

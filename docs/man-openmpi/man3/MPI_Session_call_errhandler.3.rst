@@ -5,7 +5,7 @@ MPI_Session_call_errhandler
 
 .. include_body
 
-:ref:`MPI_Session_call_errhandler` - Passes the supplied error code to the error
+:ref:`MPI_Session_call_errhandler` |mdash| Passes the supplied error code to the error
 handler assigned to a session
 
 SYNTAX

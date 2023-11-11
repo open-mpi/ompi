@@ -6,7 +6,7 @@ MPI_T_pvar_get_num
 
 .. include_body
 
-:ref:`MPI_T_pvar_get_num` - Query the number of performance variables
+:ref:`MPI_T_pvar_get_num` |mdash| Query the number of performance variables
 
 
 SYNTAX

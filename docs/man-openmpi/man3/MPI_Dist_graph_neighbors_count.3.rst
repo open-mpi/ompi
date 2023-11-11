@@ -6,7 +6,7 @@ MPI_Dist_graph_neighbors_count
 
 .. include_body
 
-:ref:`MPI_Dist_graph_neighbors_count` - Returns the number of in and out
+:ref:`MPI_Dist_graph_neighbors_count` |mdash| Returns the number of in and out
 edges for the calling processes in a distributed graph topology and a
 flag indicating whether the distributed graph is weighted.
 

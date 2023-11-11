@@ -6,7 +6,7 @@ MPI_File_read_ordered
 
 .. include_body
 
-:ref:`MPI_File_read_ordered` - Reads a file at a location specified by a
+:ref:`MPI_File_read_ordered` |mdash| Reads a file at a location specified by a
 shared file pointer (blocking, collective).
 
 

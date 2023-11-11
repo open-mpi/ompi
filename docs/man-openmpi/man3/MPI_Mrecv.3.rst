@@ -6,7 +6,7 @@ MPI_Mrecv
 
 .. include_body
 
-:ref:`MPI_Mrecv` - Blocking receive for a matched message
+:ref:`MPI_Mrecv` |mdash| Blocking receive for a matched message
 
 
 SYNTAX

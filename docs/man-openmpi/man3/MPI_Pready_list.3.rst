@@ -6,7 +6,7 @@ MPI_Pready_list
 
 .. include_body
 
-:ref:`MPI_Pready_list` - Indicates that a list given send-side partitions
+:ref:`MPI_Pready_list` |mdash| Indicates that a list given send-side partitions
 are ready to be transferred.
 
 

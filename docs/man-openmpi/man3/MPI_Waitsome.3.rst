@@ -6,7 +6,7 @@ MPI_Waitsome
 
 .. include_body
 
-:ref:`MPI_Waitsome` - Waits for some given communications to complete.
+:ref:`MPI_Waitsome` |mdash| Waits for some given communications to complete.
 
 
 SYNTAX

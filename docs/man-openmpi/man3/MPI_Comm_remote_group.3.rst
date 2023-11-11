@@ -6,7 +6,7 @@ MPI_Comm_remote_group
 
 .. include_body
 
-:ref:`MPI_Comm_remote_group` - Accesses the remote group associated with an
+:ref:`MPI_Comm_remote_group` |mdash| Accesses the remote group associated with an
 intercommunicator.
 
 

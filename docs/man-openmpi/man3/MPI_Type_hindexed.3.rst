@@ -6,7 +6,7 @@ MPI_Type_hindexed
 
 .. include_body
 
-:ref:`MPI_Type_hindexed` - Creates an indexed datatype with offsets in bytes -- |deprecated_favor| :ref:`MPI_Type_create_hindexed`.
+:ref:`MPI_Type_hindexed` |mdash| Creates an indexed datatype with offsets in bytes -- |deprecated_favor| :ref:`MPI_Type_create_hindexed`.
 
 
 SYNTAX

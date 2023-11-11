@@ -6,7 +6,7 @@ MPI_Type_get_contents
 
 .. include_body
 
-:ref:`MPI_Type_get_contents` - Returns information about arguments used in
+:ref:`MPI_Type_get_contents` |mdash| Returns information about arguments used in
 creation of a data type.
 
 

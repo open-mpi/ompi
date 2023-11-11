@@ -5,7 +5,7 @@ MPI_Graph_create
 
 .. include_body
 
-:ref:`MPI_Graph_create` - Makes a new communicator to which topology
+:ref:`MPI_Graph_create` |mdash| Makes a new communicator to which topology
 information has been attached.
 
 SYNTAX

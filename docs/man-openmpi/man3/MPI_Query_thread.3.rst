@@ -6,7 +6,7 @@ MPI_Query_thread
 
 .. include_body
 
-:ref:`MPI_Query_thread` - Returns the current level of thread support
+:ref:`MPI_Query_thread` |mdash| Returns the current level of thread support
 
 
 SYNTAX

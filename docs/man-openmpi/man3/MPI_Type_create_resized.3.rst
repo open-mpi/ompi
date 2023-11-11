@@ -6,7 +6,7 @@ MPI_Type_create_resized
 
 .. include_body
 
-:ref:`MPI_Type_create_resized` - Returns a new data type with new extent
+:ref:`MPI_Type_create_resized` |mdash| Returns a new data type with new extent
 and upper and lower bounds.
 
 

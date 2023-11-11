@@ -6,7 +6,7 @@ MPI_Info_free
 
 .. include_body
 
-:ref:`MPI_Info_free` - Frees an info object.
+:ref:`MPI_Info_free` |mdash| Frees an info object.
 
 
 SYNTAX

@@ -6,7 +6,7 @@ MPI_Win_complete
 
 .. include_body
 
-:ref:`MPI_Win_complete` - Completes an RMA access epoch on *win* started by
+:ref:`MPI_Win_complete` |mdash| Completes an RMA access epoch on *win* started by
 a call to :ref:`MPI_Win_start`
 
 

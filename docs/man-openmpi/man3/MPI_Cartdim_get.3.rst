@@ -5,7 +5,7 @@ MPI_Cartdim_get
 
 .. include_body
 
-:ref:`MPI_Cartdim_get` - Retrieves Cartesian topology information associated
+:ref:`MPI_Cartdim_get` |mdash| Retrieves Cartesian topology information associated
 with a communicator.
 
 SYNTAX

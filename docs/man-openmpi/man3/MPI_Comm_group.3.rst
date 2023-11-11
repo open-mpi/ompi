@@ -6,7 +6,7 @@ MPI_Comm_group
 
 .. include_body
 
-:ref:`MPI_Comm_group` - Returns the group associated with a communicator.
+:ref:`MPI_Comm_group` |mdash| Returns the group associated with a communicator.
 
 
 SYNTAX

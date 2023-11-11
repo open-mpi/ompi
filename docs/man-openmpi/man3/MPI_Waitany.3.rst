@@ -6,7 +6,7 @@ MPI_Waitany
 
 .. include_body
 
-:ref:`MPI_Waitany` - Waits for any specified send or receive to complete.
+:ref:`MPI_Waitany` |mdash| Waits for any specified send or receive to complete.
 
 
 SYNTAX

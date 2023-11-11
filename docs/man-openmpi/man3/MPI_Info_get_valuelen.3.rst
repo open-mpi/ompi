@@ -6,7 +6,7 @@ MPI_Info_get_valuelen
 
 .. include_body
 
-:ref:`MPI_Info_get_valuelen` - Retrieves the length of the key value
+:ref:`MPI_Info_get_valuelen` |mdash| Retrieves the length of the key value
 associated with an info object.
 
 

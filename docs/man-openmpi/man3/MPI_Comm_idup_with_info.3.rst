@@ -6,7 +6,7 @@ MPI_Comm_idup_with_info
 
 .. include_body
 
-:ref:`MPI_Comm_idup_with_info` - Start the nonblocking duplication of an
+:ref:`MPI_Comm_idup_with_info` |mdash| Start the nonblocking duplication of an
 existing communicator with all its cached information.
 
 

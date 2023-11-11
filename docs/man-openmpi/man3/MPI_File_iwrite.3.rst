@@ -6,7 +6,7 @@ MPI_File_iwrite
 
 .. include_body
 
-:ref:`MPI_File_iwrite` - Writes a file starting at the location specified
+:ref:`MPI_File_iwrite` |mdash| Writes a file starting at the location specified
 by the individual file pointer (nonblocking, noncollective).
 
 

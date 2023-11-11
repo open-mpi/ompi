@@ -6,7 +6,7 @@ MPI_Win_fence
 
 .. include_body
 
-:ref:`MPI_Win_fence` - Synchronizes RMA calls on a window.
+:ref:`MPI_Win_fence` |mdash| Synchronizes RMA calls on a window.
 
 
 SYNTAX

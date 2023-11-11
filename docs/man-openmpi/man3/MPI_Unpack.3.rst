@@ -6,7 +6,7 @@ MPI_Unpack
 
 .. include_body
 
-:ref:`MPI_Unpack` - Unpacks a datatype into contiguous memory.
+:ref:`MPI_Unpack` |mdash| Unpacks a datatype into contiguous memory.
 
 
 SYNTAX

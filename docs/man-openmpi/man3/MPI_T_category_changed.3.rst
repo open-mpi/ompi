@@ -6,7 +6,7 @@ MPI_T_category_changed
 
 .. include_body
 
-:ref:`MPI_T_category_changed` - Get a timestamp for the categories
+:ref:`MPI_T_category_changed` |mdash| Get a timestamp for the categories
 
 
 SYNTAX

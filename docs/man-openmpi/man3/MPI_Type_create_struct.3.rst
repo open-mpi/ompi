@@ -6,7 +6,7 @@ MPI_Type_create_struct
 
 .. include_body
 
-:ref:`MPI_Type_create_struct` - Creates a structured data type.
+:ref:`MPI_Type_create_struct` |mdash| Creates a structured data type.
 
 
 SYNTAX

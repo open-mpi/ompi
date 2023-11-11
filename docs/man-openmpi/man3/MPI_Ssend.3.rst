@@ -6,7 +6,7 @@ MPI_Ssend
 
 .. include_body
 
-:ref:`MPI_Ssend` - Standard synchronous send.
+:ref:`MPI_Ssend` |mdash| Standard synchronous send.
 
 
 SYNTAX

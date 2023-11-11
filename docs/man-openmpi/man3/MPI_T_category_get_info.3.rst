@@ -6,7 +6,7 @@ MPI_T_category_get_info
 
 .. include_body
 
-:ref:`MPI_T_category_get_info` - Query information from a category
+:ref:`MPI_T_category_get_info` |mdash| Query information from a category
 
 
 SYNTAX

@@ -6,7 +6,7 @@ MPI_Dims_create
 
 .. include_body
 
-:ref:`MPI_Dims_create` - Creates a division of processors in a Cartesian
+:ref:`MPI_Dims_create` |mdash| Creates a division of processors in a Cartesian
 grid.
 
 

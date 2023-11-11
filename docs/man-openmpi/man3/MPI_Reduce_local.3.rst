@@ -6,7 +6,7 @@ MPI_Reduce_local
 
 .. include_body
 
-:ref:`MPI_Reduce_local` - Perform a local reduction
+:ref:`MPI_Reduce_local` |mdash| Perform a local reduction
 
 
 SYNTAX

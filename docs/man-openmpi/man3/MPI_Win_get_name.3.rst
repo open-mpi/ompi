@@ -6,7 +6,7 @@ MPI_Win_get_name
 
 .. include_body
 
-:ref:`MPI_Win_get_name` - Obtains the name of a window.
+:ref:`MPI_Win_get_name` |mdash| Obtains the name of a window.
 
 
 SYNTAX

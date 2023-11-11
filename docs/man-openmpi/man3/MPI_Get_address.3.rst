@@ -5,7 +5,7 @@ MPI_Get_address
 
 .. include_body
 
-:ref:`MPI_Get_address` - Gets the address of a location in memory.
+:ref:`MPI_Get_address` |mdash| Gets the address of a location in memory.
 
 SYNTAX
 ------

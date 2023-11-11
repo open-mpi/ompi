@@ -6,7 +6,7 @@ MPI_T_finalize
 
 .. include_body
 
-:ref:`MPI_T_finalize` - Finalize the MPI tool information interface
+:ref:`MPI_T_finalize` |mdash| Finalize the MPI tool information interface
 
 
 SYNTAX

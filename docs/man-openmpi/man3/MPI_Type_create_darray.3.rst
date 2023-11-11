@@ -6,7 +6,7 @@ MPI_Type_create_darray
 
 .. include_body
 
-:ref:`MPI_Type_create_darray` - Creates a distributed array datatype;
+:ref:`MPI_Type_create_darray` |mdash| Creates a distributed array datatype;
 
 
 SYNTAX

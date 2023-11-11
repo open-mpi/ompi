@@ -6,7 +6,7 @@ MPI_Win_post
 
 .. include_body
 
-:ref:`MPI_Win_post` - Starts an RMA exposure epoch for the local window
+:ref:`MPI_Win_post` |mdash| Starts an RMA exposure epoch for the local window
 associated with *win*
 
 

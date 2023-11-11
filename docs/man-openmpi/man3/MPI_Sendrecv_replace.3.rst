@@ -6,7 +6,7 @@ MPI_Sendrecv_replace
 
 .. include_body
 
-:ref:`MPI_Sendrecv_replace` - Sends and receives a message using a single
+:ref:`MPI_Sendrecv_replace` |mdash| Sends and receives a message using a single
 buffer.
 
 

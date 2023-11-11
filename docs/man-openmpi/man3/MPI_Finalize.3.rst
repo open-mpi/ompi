@@ -5,7 +5,7 @@ MPI_Finalize
 
 .. include_body
 
-:ref:`MPI_Finalize` - Terminates MPI execution environment.
+:ref:`MPI_Finalize` |mdash| Terminates MPI execution environment.
 
 SYNTAX
 ------

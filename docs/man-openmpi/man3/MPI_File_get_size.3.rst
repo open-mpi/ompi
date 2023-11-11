@@ -6,7 +6,7 @@ MPI_File_get_size
 
 .. include_body
 
-:ref:`MPI_File_get_size` - Returns the current size of the file.
+:ref:`MPI_File_get_size` |mdash| Returns the current size of the file.
 
 
 SYNTAX

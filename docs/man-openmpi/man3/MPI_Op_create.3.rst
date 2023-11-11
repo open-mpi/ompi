@@ -6,7 +6,7 @@ MPI_Op_create
 
 .. include_body
 
-:ref:`MPI_Op_create` - Creates a user-defined combination function handle.
+:ref:`MPI_Op_create` |mdash| Creates a user-defined combination function handle.
 
 
 SYNTAX

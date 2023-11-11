@@ -7,7 +7,7 @@ MPI_Neighbor_allgatherv
 .. include_body
 
 :ref:`MPI_Neighbor_allgatherv`, :ref:`MPI_Ineighbor_allgatherv`,
-:ref:`MPI_Neighbor_allgatherv_init` - Gathers and distributes data from and
+:ref:`MPI_Neighbor_allgatherv_init` |mdash| Gathers and distributes data from and
 to all neighbors. Each process may contribute a different amount of
 data.
 

@@ -5,7 +5,7 @@ MPI_Comm_disconnect
 
 .. include_body
 
-:ref:`MPI_Comm_disconnect` - Deallocates communicator object and sets handle to
+:ref:`MPI_Comm_disconnect` |mdash| Deallocates communicator object and sets handle to
 MPI_COMM_NULL.
 
 SYNTAX

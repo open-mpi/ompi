@@ -6,7 +6,7 @@ MPI_Intercomm_merge
 
 .. include_body
 
-:ref:`MPI_Intercomm_merge` - Creates an intracommunicator from an
+:ref:`MPI_Intercomm_merge` |mdash| Creates an intracommunicator from an
 intercommunicator.
 
 

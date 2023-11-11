@@ -6,7 +6,7 @@ MPI_Info_set
 
 .. include_body
 
-:ref:`MPI_Info_set` - Adds a key/value pair to *info*.
+:ref:`MPI_Info_set` |mdash| Adds a key/value pair to *info*.
 
 
 SYNTAX

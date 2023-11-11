@@ -6,7 +6,7 @@ MPI_Info_delete
 
 .. include_body
 
-:ref:`MPI_Info_delete` - Deletes a key/value pair from *info*.
+:ref:`MPI_Info_delete` |mdash| Deletes a key/value pair from *info*.
 
 
 SYNTAX

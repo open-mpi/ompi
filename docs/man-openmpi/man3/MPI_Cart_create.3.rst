@@ -5,7 +5,7 @@ MPI_Cart_create
 
 .. include_body
 
-:ref:`MPI_Cart_create` - Makes a new communicator to which Cartesian
+:ref:`MPI_Cart_create` |mdash| Makes a new communicator to which Cartesian
 topology information has been attached.
 
 SYNTAX

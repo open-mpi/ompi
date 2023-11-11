@@ -5,7 +5,7 @@ MPI_Comm_dup_with_info
 
 .. include_body
 
-:ref:`MPI_Comm_dup_with_info` - Duplicates an existing communicator using
+:ref:`MPI_Comm_dup_with_info` |mdash| Duplicates an existing communicator using
 provided info.
 
 SYNTAX

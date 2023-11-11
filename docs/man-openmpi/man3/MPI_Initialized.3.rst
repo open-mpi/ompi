@@ -6,7 +6,7 @@ MPI_Initialized
 
 .. include_body
 
-:ref:`MPI_Initialized` - Checks whether MPI has been initialized
+:ref:`MPI_Initialized` |mdash| Checks whether MPI has been initialized
 
 
 SYNTAX

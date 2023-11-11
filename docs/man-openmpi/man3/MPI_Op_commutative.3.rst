@@ -6,7 +6,7 @@ MPI_Op_commutative
 
 .. include_body
 
-:ref:`MPI_Op_commutative` - Query of commutativity of reduction operation.
+:ref:`MPI_Op_commutative` |mdash| Query of commutativity of reduction operation.
 
 
 SYNTAX

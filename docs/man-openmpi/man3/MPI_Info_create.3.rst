@@ -6,7 +6,7 @@ MPI_Info_create
 
 .. include_body
 
-:ref:`MPI_Info_create` - Creates a new info object.
+:ref:`MPI_Info_create` |mdash| Creates a new info object.
 
 
 SYNTAX

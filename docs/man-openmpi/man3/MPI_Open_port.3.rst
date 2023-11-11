@@ -6,7 +6,7 @@ MPI_Open_port
 
 .. include_body
 
-:ref:`MPI_Open_port` - Establishes a network address for a server to accept
+:ref:`MPI_Open_port` |mdash| Establishes a network address for a server to accept
 connections from clients.
 
 

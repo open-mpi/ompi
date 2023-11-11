@@ -6,7 +6,7 @@ MPI_Info_env
 
 .. include_body
 
-:ref:`MPI_INFO_ENV` - Static MPI_Info object containing info about the
+:ref:`MPI_INFO_ENV` |mdash| Static MPI_Info object containing info about the
 application
 
 

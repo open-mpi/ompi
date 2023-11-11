@@ -6,7 +6,7 @@ MPI_File_seek_shared
 
 .. include_body
 
-:ref:`MPI_File_seek_shared` - Updates the global shared file pointer
+:ref:`MPI_File_seek_shared` |mdash| Updates the global shared file pointer
 (collective).
 
 
