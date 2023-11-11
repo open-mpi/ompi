@@ -6,7 +6,7 @@ MPI_Type_extent
 
 .. include_body
 
-:ref:`MPI_Type_extent` |mdash| Returns the extent of a data type -- |deprecated_favor| :ref:`MPI_Type_get_extent`.
+:ref:`MPI_Type_extent` |mdash| Returns the extent of a data type |mdash| |deprecated_favor| :ref:`MPI_Type_get_extent`.
 
 
 SYNTAX

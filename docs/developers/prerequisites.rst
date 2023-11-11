@@ -96,8 +96,8 @@ generate both the HTML version of the documentation (that you are
 reading right now) and the nroff man pages.
 
 Official Open MPI distribution tarballs contain pre-built HTML
-documentation and man pages.  This means that -- similar to the GNU
-Autotools -- end users do not need to have Sphinx installed, but will
+documentation and man pages.  This means that |mdash| similar to the GNU
+Autotools |mdash| end users do not need to have Sphinx installed, but will
 still have both the HTML documentation and man pages installed as part
 of the normal configure / build / install process.
 

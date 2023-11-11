@@ -28,7 +28,7 @@ helpful:
   of a specific component can be displayed by using an appropriate
   FRAMEWORK and/or COMPONENT name.
 * ``--level LEVEL``:
-  By default, ``ompi_info`` only shows "Level 1" MCA parameters --
+  By default, ``ompi_info`` only shows "Level 1" MCA parameters |mdash|
   parameters that can affect whether MPI processes can run
   successfully or not (e.g., determining which network interfaces to
   use).  The ``--level`` option will display all MCA parameters from

@@ -137,7 +137,7 @@ link MPI applications that use any/all of the MPI Fortran bindings:
 Open MPI was installed with support for each of these Fortran
 bindings). Specifically: it is no longer necessary to use different
 wrapper compilers for applications that use ``mpif.h``
-vs. applications that use the ``mpi`` module -- just use ``mpifort``
+vs. applications that use the ``mpi`` module |mdash| just use ``mpifort``
 for all Fortran MPI applications.
 
 Note, however, that the Fortran compiler may require additional

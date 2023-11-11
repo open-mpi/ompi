@@ -6,7 +6,7 @@ MPI_Attr_get
 
 .. include_body
 
-:ref:`MPI_Attr_get` |mdash| Retrieves attribute value by key -- |deprecated_favor| :ref:`MPI_Comm_get_attr`.
+:ref:`MPI_Attr_get` |mdash| Retrieves attribute value by key |mdash| |deprecated_favor| :ref:`MPI_Comm_get_attr`.
 
 
 SYNTAX

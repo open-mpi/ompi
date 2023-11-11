@@ -76,7 +76,7 @@ Creates a persistent communication request for a receive operation. The
 argument *buf* is marked as OUT because the user gives permission to
 write on the receive buffer by passing the argument to :ref:`MPI_Recv_init`.
 
-A persistent communication request is inactive after it is created -- no
+A persistent communication request is inactive after it is created |mdash| no
 active communication is attached to the request.
 
 A communication (send or receive) that uses a persistent request is

@@ -6,7 +6,7 @@ MPI_Type_hindexed
 
 .. include_body
 
-:ref:`MPI_Type_hindexed` |mdash| Creates an indexed datatype with offsets in bytes -- |deprecated_favor| :ref:`MPI_Type_create_hindexed`.
+:ref:`MPI_Type_hindexed` |mdash| Creates an indexed datatype with offsets in bytes |mdash| |deprecated_favor| :ref:`MPI_Type_create_hindexed`.
 
 
 SYNTAX
@@ -42,7 +42,7 @@ Fortran Syntax
 
 INPUT PARAMETERS
 ----------------
-* ``count``: Number of blocks -- also number of entries in array_of_displacements and array_of_blocklengths (integer).
+* ``count``: Number of blocks |mdash| also number of entries in array_of_displacements and array_of_blocklengths (integer).
 * ``array_of_blocklengths``: Number of elements in each block (array of nonnegative integers).
 * ``array_of_displacements``: Byte displacement of each block (C: array of *MPI_Aint*, Fortran: array of integer).
 * ``oldtype``: Old datatype (handle).
