@@ -90,6 +90,10 @@ canceling the matched message receive would violate MPI message ordering
 rules (e.g., if another message matching the same message signature has
 matched |mdash| and possibly received |mdash| before this :ref:`MPI_Imrecv` is canceled).
 
+If your application does not need to examine the *status* field, you
+can save resources by using the predefined constant
+``MPI_STATUS_IGNORE`` as a special value for the *status* argument.
+
 
 ERRORS
 ------
