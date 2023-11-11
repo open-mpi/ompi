@@ -93,7 +93,7 @@ For a call to :ref:`MPI_Type_create_darray` to be correct, the equation
 
 must be satisfied. The ordering of processes in the process grid is
 assumed to be row-major, as in the case of virtual Cartesian process
-topologies in MPI-1.
+topologies in the `MPI Standard <https://www.mpi-forum.org/docs/>`_.
 
 Each dimension of the array can be distributed in one of three ways:
 

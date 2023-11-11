@@ -92,8 +92,9 @@ example, even processes send, then receive; odd processes receive first,
 then send) in order to prevent cyclic dependencies that may lead to
 deadlock. When a send-receive operation is used, the communication
 subsystem takes care of these issues. The send-receive operation can be
-used in conjunction with the functions described in Chapter 6 of the
-MPI-1 Standard, "Process Topologies," in order to perform shifts on
+used in conjunction with the functions described in the "Process
+Topologies" chapter in the `MPI Standard
+<https://www.mpi-forum.org/docs/>`_ in order to perform shifts on
 various logical topologies. Also, a send-receive operation is useful for
 implementing remote procedure calls.
 

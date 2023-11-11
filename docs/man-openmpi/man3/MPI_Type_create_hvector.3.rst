@@ -73,8 +73,9 @@ in bytes. This routine replaces :ref:`MPI_Type_hvector`, which is deprecated.
 
 The function :ref:`MPI_Type_create_hvector` is identical to :ref:`MPI_Type_vector`, except
 that stride is given in bytes, rather than in elements. The use for both
-types of vector constructors is illustrated in the examples in Section
-3.12.7 of the MPI-1 Standard.
+types of vector constructors is illustrated in the examples in the
+Datatype chapter of the `MPI Standard
+<https://www.mpi-forum.org/docs/>`_.
 
 Assume that oldtype has type map
 

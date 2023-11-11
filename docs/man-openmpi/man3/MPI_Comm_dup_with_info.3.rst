@@ -71,7 +71,8 @@ NOTES
 This operation is used to provide a parallel library call with a
 duplicate communication space that has the same properties as the
 original communicator. This includes any attributes (see below) and
-topologies (see Chapter 6, "Process Topologies," in the MPI-1 Standard).
+topologies (see the "Process Topologies" chapter in the `MPI Standard
+<https://www.mpi-forum.org/docs/>`_.
 This call is valid even if there are pending point-to-point
 communications involving the communicator comm. A typical call might
 involve an :ref:`MPI_Comm_dup_with_info` at the beginning of the parallel call,

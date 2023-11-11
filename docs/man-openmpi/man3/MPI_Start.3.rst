@@ -72,7 +72,8 @@ until after the operation completes, the communication buffer should not
 be accessed.
 
 The call is local, with semantics similar to the nonblocking
-communication operations (see Section 3.7 in the MPI-1 Standard,
+communication operations (see Section 3.7 in the `MPI Standard
+<https://www.mpi-forum.org/docs/>`_,
 "Nonblocking Communication.") That is, a call to :ref:`MPI_Start` with a
 request created by :ref:`MPI_Send_init` starts a communication in the same
 manner as a call to :ref:`MPI_Isend`; a call to :ref:`MPI_Start` with a request

@@ -96,8 +96,8 @@ defined by:
        disp(n-1) + ex), ...,(type(0), disp(0) + ex * (count - 1)),
        ...,(type(n-1), disp(n-1) + ex * (count - 1))}.
 
-For more information about derived datatypes, see Section 3.12 of the
-MPI-1 Standard.
+For more information about derived datatypes, see the Datatypes
+chapter in the `MPI Standard <https://www.mpi-forum.org/docs/>`_.
 
 
 ERRORS

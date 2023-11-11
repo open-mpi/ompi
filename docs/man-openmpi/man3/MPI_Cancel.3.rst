@@ -74,7 +74,7 @@ loop for a canceled communication, then :ref:`MPI_Test` will eventually be
 successful.
 
 :ref:`MPI_Cancel` can be used to cancel a communication that uses a persistent
-request (see Section 3.9 in the MPI-1 Standard, "Persistent
+request (see Section 3.9 in the `MPI Standard <https://www.mpi-forum.org/docs/>`_, "Persistent
 Communication Requests") in the same way it is used for nonpersistent
 requests. A successful cancellation cancels the active communication,
 but not the request itself. After the call to :ref:`MPI_Cancel` and the

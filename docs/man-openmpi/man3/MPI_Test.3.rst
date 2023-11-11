@@ -70,10 +70,12 @@ false, otherwise. In this case, the value of the status object is
 undefined. :ref:`MPI_Test` is a local operation.
 
 The return status object for a receive operation carries information
-that can be accessed as described in Section 3.2.5 of the MPI-1
-Standard, "Return Status." The status object for a send operation
-carries information that can be accessed by a call to :ref:`MPI_Test_cancelled`
-(see Section 3.8 of the MPI-1 Standard, "Probe and Cancel").
+that can be accessed as described in the "Return Status" subsection of
+the "Point-to-Point Communication" chapter in the `MPI Standard
+<https://www.mpi-forum.org/docs/>`_. The status object for a send
+operation carries information that can be accessed by a call to
+:ref:`MPI_Test_cancelled` (see the "Probe and Cancel" section of the
+`MPI Standard <https://www.mpi-forum.org/docs/>`_).
 
 If your application does not need to examine the *status* field, you can
 save resources by using the predefined constant ``MPI_STATUS_IGNORE`` as a
