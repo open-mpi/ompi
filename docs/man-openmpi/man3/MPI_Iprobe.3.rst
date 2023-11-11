@@ -109,8 +109,9 @@ it is received.
 NOTE
 ----
 
-Users of libmpi-mt should remember that two threads may do an :ref:`MPI_Iprobe`
-that actually returns true for the same message for both threads.
+Multi-threaded application developers should remember that two threads
+calling :ref:`MPI_Iprobe` may return true for the same message in both
+threads.
 
 
 ERRORS
