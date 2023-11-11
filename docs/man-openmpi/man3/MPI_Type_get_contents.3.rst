@@ -118,7 +118,7 @@ arguments are of type ``INTEGER(KIND=MPI_ADDRESS_KIND)``. The call
 ``INTEGER(KIND=MPI_ADDRESS_KIND)``. This is true even if the old MPI-1 calls
 were used. Thus, the location of values returned can be thought of as
 being returned by the C bindings. It can also be determined by examining
-the new MPI-2 calls for data-type constructors for the deprecated MPI-1
+the current MPI calls for datatype constructors for the deprecated MPI-1
 calls that involve addresses.
 
 
