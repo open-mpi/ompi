@@ -6,7 +6,7 @@ MPI_Pack_external_size
 
 .. include_body
 
-:ref:`MPI_Pack_external_size` - Calculates upper bound on space needed to
+:ref:`MPI_Pack_external_size` |mdash| Calculates upper bound on space needed to
 write to a portable format
 
 

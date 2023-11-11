@@ -6,7 +6,7 @@ MPI_T_pvar_get_info
 
 .. include_body
 
-:ref:`MPI_T_pvar_get_info` - Query information from a performance variable
+:ref:`MPI_T_pvar_get_info` |mdash| Query information from a performance variable
 
 
 SYNTAX

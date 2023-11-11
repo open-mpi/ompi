@@ -5,7 +5,7 @@ MPI_Buffer_detach
 
 .. include_body
 
-:ref:`MPI_Buffer_detach` - Removes an existing buffer (for use in in :ref:`MPI_Bsend`,
+:ref:`MPI_Buffer_detach` |mdash| Removes an existing buffer (for use in in :ref:`MPI_Bsend`,
 etc.)
 
 SYNTAX

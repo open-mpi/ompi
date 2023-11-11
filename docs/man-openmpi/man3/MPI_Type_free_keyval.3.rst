@@ -6,7 +6,7 @@ MPI_Type_free_keyval
 
 .. include_body
 
-:ref:`MPI_Type_free_keyval` - Frees a previously created type key value.
+:ref:`MPI_Type_free_keyval` |mdash| Frees a previously created type key value.
 
 
 SYNTAX

@@ -6,7 +6,7 @@ MPI_File_open
 
 .. include_body
 
-:ref:`MPI_File_open` - Opens a file (collective).
+:ref:`MPI_File_open` |mdash| Opens a file (collective).
 
 
 SYNTAX

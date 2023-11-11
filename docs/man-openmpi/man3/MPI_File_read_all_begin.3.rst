@@ -6,7 +6,7 @@ MPI_File_read_all_begin
 
 .. include_body
 
-:ref:`MPI_File_read_all_begin` - Reads a file starting at the locations
+:ref:`MPI_File_read_all_begin` |mdash| Reads a file starting at the locations
 specified by individual file pointers; beginning part of a split
 collective routine (nonblocking).
 

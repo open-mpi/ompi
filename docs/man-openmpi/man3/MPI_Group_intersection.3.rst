@@ -5,7 +5,7 @@ MPI_Group_intersection
 
 .. include_body
 
-:ref:`MPI_Group_intersection` - Produces a group at the intersection of two
+:ref:`MPI_Group_intersection` |mdash| Produces a group at the intersection of two
 existing groups.
 
 SYNTAX

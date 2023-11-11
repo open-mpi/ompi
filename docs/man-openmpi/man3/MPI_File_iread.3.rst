@@ -6,7 +6,7 @@ MPI_File_iread
 
 .. include_body
 
-:ref:`MPI_File_iread` - Reads a file starting at the location specified by
+:ref:`MPI_File_iread` |mdash| Reads a file starting at the location specified by
 the individual file pointer (nonblocking, noncollective).
 
 

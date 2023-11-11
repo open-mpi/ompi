@@ -6,7 +6,7 @@ MPI_T_category_get_cvars
 
 .. include_body
 
-:ref:`MPI_T_category_get_cvars` - Query which control variables are in a
+:ref:`MPI_T_category_get_cvars` |mdash| Query which control variables are in a
 category
 
 

@@ -6,7 +6,7 @@ MPI_Comm_get_parent
 
 .. include_body
 
-:ref:`MPI_Comm_get_parent` - Returns the parent intercommunicator of
+:ref:`MPI_Comm_get_parent` |mdash| Returns the parent intercommunicator of
 current spawned process.
 
 

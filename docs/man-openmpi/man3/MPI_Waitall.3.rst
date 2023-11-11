@@ -6,7 +6,7 @@ MPI_Waitall
 
 .. include_body
 
-:ref:`MPI_Waitall` - Waits for all given communications to complete.
+:ref:`MPI_Waitall` |mdash| Waits for all given communications to complete.
 
 
 SYNTAX

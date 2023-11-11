@@ -5,7 +5,7 @@ MPI_Cart_get
 
 .. include_body
 
-:ref:`MPI_Cart_get` - Retrieves Cartesian topology information associated with
+:ref:`MPI_Cart_get` |mdash| Retrieves Cartesian topology information associated with
 a communicator.
 
 SYNTAX

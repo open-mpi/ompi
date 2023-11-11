@@ -5,7 +5,7 @@ MPI_Graphdims_get
 
 .. include_body
 
-:ref:`MPI_Graphdims_get` - Retrieves graph topology information associated with
+:ref:`MPI_Graphdims_get` |mdash| Retrieves graph topology information associated with
 a communicator.
 
 SYNTAX

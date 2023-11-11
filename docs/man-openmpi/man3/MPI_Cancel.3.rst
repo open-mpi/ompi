@@ -5,7 +5,7 @@ MPI_Cancel
 
 .. include_body
 
-:ref:`MPI_Cancel` - Cancels a communication request.
+:ref:`MPI_Cancel` |mdash| Cancels a communication request.
 
 SYNTAX
 ------

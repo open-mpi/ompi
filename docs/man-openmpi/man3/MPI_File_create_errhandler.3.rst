@@ -6,7 +6,7 @@ MPI_File_create_errhandler
 
 .. include_body
 
-:ref:`MPI_File_create_errhandler` - Creates an MPI-style error handler that
+:ref:`MPI_File_create_errhandler` |mdash| Creates an MPI-style error handler that
 can be attached to a file.
 
 

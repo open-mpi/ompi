@@ -5,7 +5,7 @@ MPI_Session_init
 
 .. include_body
 
-:ref:`MPI_Session_init` - Creates a new session handle
+:ref:`MPI_Session_init` |mdash| Creates a new session handle
 
 SYNTAX
 ------

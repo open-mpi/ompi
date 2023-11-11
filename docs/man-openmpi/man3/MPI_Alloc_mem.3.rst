@@ -6,7 +6,7 @@ MPI_Alloc_mem
 
 .. include_body
 
-:ref:`MPI_Alloc_mem` - Allocates a specified memory segment.
+:ref:`MPI_Alloc_mem` |mdash| Allocates a specified memory segment.
 
 
 SYNTAX

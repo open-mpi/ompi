@@ -6,7 +6,7 @@ MPI_Startall
 
 .. include_body
 
-:ref:`MPI_Startall` - Starts a collection of requests.
+:ref:`MPI_Startall` |mdash| Starts a collection of requests.
 
 
 SYNTAX

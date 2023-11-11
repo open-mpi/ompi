@@ -5,7 +5,7 @@ MPI_Comm_accept
 
 .. include_body
 
-:ref:`MPI_Comm_accept` - Establishes communication with a client.
+:ref:`MPI_Comm_accept` |mdash| Establishes communication with a client.
 
 SYNTAX
 ------

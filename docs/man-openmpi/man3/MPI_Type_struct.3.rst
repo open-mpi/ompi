@@ -6,7 +6,7 @@ MPI_Type_struct
 
 .. include_body
 
-:ref:`MPI_Type_struct` - Creates a *struct* data type -- |deprecated_favor| :ref:`MPI_Type_create_struct`.
+:ref:`MPI_Type_struct` |mdash| Creates a *struct* data type -- |deprecated_favor| :ref:`MPI_Type_create_struct`.
 
 
 SYNTAX

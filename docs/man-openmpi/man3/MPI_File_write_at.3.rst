@@ -6,7 +6,7 @@ MPI_File_write_at
 
 .. include_body
 
-:ref:`MPI_File_write_at` - Writes a file at an explicitly specified offset
+:ref:`MPI_File_write_at` |mdash| Writes a file at an explicitly specified offset
 (blocking, noncollective).
 
 

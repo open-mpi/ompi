@@ -6,7 +6,7 @@ MPI_Group_union
 
 .. include_body
 
-:ref:`MPI_Group_union` - Produces a group by combining two groups.
+:ref:`MPI_Group_union` |mdash| Produces a group by combining two groups.
 
 
 SYNTAX

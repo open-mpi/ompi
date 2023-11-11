@@ -6,7 +6,7 @@ MPI_Info_get_string
 
 .. include_body
 
-:ref:`MPI_Info_get_string` - Retrieves the value associated with a key in
+:ref:`MPI_Info_get_string` |mdash| Retrieves the value associated with a key in
 an info object.
 
 

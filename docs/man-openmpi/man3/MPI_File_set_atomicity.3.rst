@@ -6,7 +6,7 @@ MPI_File_set_atomicity
 
 .. include_body
 
-:ref:`MPI_File_set_atomicity` - Sets consistency semantics for data-access
+:ref:`MPI_File_set_atomicity` |mdash| Sets consistency semantics for data-access
 operations (collective).
 
 

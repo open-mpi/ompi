@@ -6,7 +6,7 @@ MPI_Type_commit
 
 .. include_body
 
-:ref:`MPI_Type_commit` - Commits a data type.
+:ref:`MPI_Type_commit` |mdash| Commits a data type.
 
 
 SYNTAX

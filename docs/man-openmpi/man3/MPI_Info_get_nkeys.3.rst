@@ -6,7 +6,7 @@ MPI_Info_get_nkeys
 
 .. include_body
 
-:ref:`MPI_Info_get_nkeys` - Gets the number of keys currently defined in an
+:ref:`MPI_Info_get_nkeys` |mdash| Gets the number of keys currently defined in an
 info object.
 
 

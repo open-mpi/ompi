@@ -6,7 +6,7 @@ MPI_Win_allocate
 
 .. include_body
 
-:ref:`MPI_Win_allocate` - One-sided MPI call that allocates memory and
+:ref:`MPI_Win_allocate` |mdash| One-sided MPI call that allocates memory and
 returns a window object for RMA operations.
 
 

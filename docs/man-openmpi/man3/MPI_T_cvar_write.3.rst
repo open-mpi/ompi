@@ -6,7 +6,7 @@ MPI_T_cvar_write
 
 .. include_body
 
-:ref:`MPI_T_cvar_write` - Write the value of a bound control variable
+:ref:`MPI_T_cvar_write` |mdash| Write the value of a bound control variable
 
 
 SYNTAX

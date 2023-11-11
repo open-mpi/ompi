@@ -5,7 +5,7 @@ MPI_Get_count
 
 .. include_body
 
-:ref:`MPI_Get_count` - Gets the number of top-level elements received.
+:ref:`MPI_Get_count` |mdash| Gets the number of top-level elements received.
 
 SYNTAX
 ------

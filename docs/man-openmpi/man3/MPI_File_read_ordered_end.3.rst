@@ -6,7 +6,7 @@ MPI_File_read_ordered_end
 
 .. include_body
 
-:ref:`MPI_File_read_ordered_end` - Reads a file at a location specified by
+:ref:`MPI_File_read_ordered_end` |mdash| Reads a file at a location specified by
 a shared file pointer; ending part of a split collective routine
 (blocking).
 

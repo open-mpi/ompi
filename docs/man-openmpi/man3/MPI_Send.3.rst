@@ -6,7 +6,7 @@ MPI_Send
 
 .. include_body
 
-:ref:`MPI_Send` - Performs a standard-mode blocking send.
+:ref:`MPI_Send` |mdash| Performs a standard-mode blocking send.
 
 
 SYNTAX

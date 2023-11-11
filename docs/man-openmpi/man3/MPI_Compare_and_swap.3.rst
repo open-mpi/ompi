@@ -6,7 +6,7 @@ MPI_Compare_and_swap
 
 .. include_body
 
-:ref:`MPI_Compare_and_swap` - Perform RMA compare-and-swap
+:ref:`MPI_Compare_and_swap` |mdash| Perform RMA compare-and-swap
 
 
 SYNTAX

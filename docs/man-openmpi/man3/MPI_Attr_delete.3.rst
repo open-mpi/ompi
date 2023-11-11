@@ -6,7 +6,7 @@ MPI_Attr_delete
 
 .. include_body
 
-:ref:`MPI_Attr_delete` - Deletes attribute value associated with a key -- |deprecated_favor| :ref:`MPI_Comm_delete_attr`.
+:ref:`MPI_Attr_delete` |mdash| Deletes attribute value associated with a key -- |deprecated_favor| :ref:`MPI_Comm_delete_attr`.
 
 
 SYNTAX

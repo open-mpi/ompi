@@ -5,7 +5,7 @@ MPI_Session_finalize
 
 .. include_body
 
-:ref:`MPI_Session_finalize` - releases all MPI state associated with a session
+:ref:`MPI_Session_finalize` |mdash| releases all MPI state associated with a session
 
 SYNTAX
 ------

@@ -6,7 +6,7 @@ MPI_Test_cancelled
 
 .. include_body
 
-:ref:`MPI_Test_cancelled` - Tests whether a request was canceled.
+:ref:`MPI_Test_cancelled` |mdash| Tests whether a request was canceled.
 
 
 SYNTAX

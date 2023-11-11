@@ -6,7 +6,7 @@ MPI_Iprobe
 
 .. include_body
 
-:ref:`MPI_Iprobe` - Nonblocking test for a message.
+:ref:`MPI_Iprobe` |mdash| Nonblocking test for a message.
 
 
 SYNTAX

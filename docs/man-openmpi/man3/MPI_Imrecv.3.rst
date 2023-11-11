@@ -6,7 +6,7 @@ MPI_Imrecv
 
 .. include_body
 
-:ref:`MPI_Imrecv` - Non-blocking receive for a matched message
+:ref:`MPI_Imrecv` |mdash| Non-blocking receive for a matched message
 
 
 SYNTAX

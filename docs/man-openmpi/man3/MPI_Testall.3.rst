@@ -6,7 +6,7 @@ MPI_Testall
 
 .. include_body
 
-:ref:`MPI_Testall` - Tests for the completion of all previously initiated
+:ref:`MPI_Testall` |mdash| Tests for the completion of all previously initiated
 communications in a list.
 
 

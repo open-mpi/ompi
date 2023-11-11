@@ -5,7 +5,7 @@ MPI_Graph_map
 
 .. include_body
 
-:ref:`MPI_Graph_map` - Maps process to graph topology information.
+:ref:`MPI_Graph_map` |mdash| Maps process to graph topology information.
 
 SYNTAX
 ------

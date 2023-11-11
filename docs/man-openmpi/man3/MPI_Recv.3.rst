@@ -6,7 +6,7 @@ MPI_Recv
 
 .. include_body
 
-:ref:`MPI_Recv` - Performs a standard-mode blocking receive.
+:ref:`MPI_Recv` |mdash| Performs a standard-mode blocking receive.
 
 
 SYNTAX

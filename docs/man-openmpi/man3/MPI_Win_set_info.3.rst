@@ -6,7 +6,7 @@ MPI_Win_set_info
 
 .. include_body
 
-:ref:`MPI_Win_set_info` - Set window info hints
+:ref:`MPI_Win_set_info` |mdash| Set window info hints
 
 
 SYNTAX

@@ -6,7 +6,7 @@ MPI_Comm_free
 
 .. include_body
 
-:ref:`MPI_Comm_free` - Mark a communicator object for deallocation.
+:ref:`MPI_Comm_free` |mdash| Mark a communicator object for deallocation.
 
 
 SYNTAX

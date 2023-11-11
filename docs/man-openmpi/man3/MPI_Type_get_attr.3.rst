@@ -6,7 +6,7 @@ MPI_Type_get_attr
 
 .. include_body
 
-:ref:`MPI_Type_get_attr` - Returns the attribute associated with a data
+:ref:`MPI_Type_get_attr` |mdash| Returns the attribute associated with a data
 type.
 
 

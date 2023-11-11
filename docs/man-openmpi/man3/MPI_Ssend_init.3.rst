@@ -6,7 +6,7 @@ MPI_Ssend_init
 
 .. include_body
 
-:ref:`MPI_Ssend_init` - Builds a handle for a synchronous send.
+:ref:`MPI_Ssend_init` |mdash| Builds a handle for a synchronous send.
 
 
 SYNTAX

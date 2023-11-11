@@ -6,7 +6,7 @@ MPI_Is_thread_main
 
 .. include_body
 
-:ref:`MPI_Is_thread_main` - Determines if thread called :ref:`MPI_Init`
+:ref:`MPI_Is_thread_main` |mdash| Determines if thread called :ref:`MPI_Init`
 
 
 SYNTAX

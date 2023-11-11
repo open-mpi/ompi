@@ -6,7 +6,7 @@ MPI_File_iwrite_at_all
 
 .. include_body
 
-:ref:`MPI_File_iwrite_at_all` - Writes a file at an explicitly specified
+:ref:`MPI_File_iwrite_at_all` |mdash| Writes a file at an explicitly specified
 offset (nonblocking, collective).
 
 

@@ -5,7 +5,7 @@ MPI_Session_get_num_psets
 
 .. include_body
 
-:ref:`MPI_Session_get_num_psets` - Query runtime for number of available
+:ref:`MPI_Session_get_num_psets` |mdash| Query runtime for number of available
 process sets
 
 SYNTAX

@@ -6,7 +6,7 @@ MPI_Type_vector
 
 .. include_body
 
-:ref:`MPI_Type_vector` - Creates a vector (strided) datatype.
+:ref:`MPI_Type_vector` |mdash| Creates a vector (strided) datatype.
 
 
 SYNTAX

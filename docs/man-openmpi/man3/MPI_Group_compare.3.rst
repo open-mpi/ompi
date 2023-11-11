@@ -5,7 +5,7 @@ MPI_Group_compare
 
 .. include_body
 
-:ref:`MPI_Group_compare` - Compares two groups.
+:ref:`MPI_Group_compare` |mdash| Compares two groups.
 
 SYNTAX
 ------

@@ -5,7 +5,7 @@ MPI_Graph_get
 
 .. include_body
 
-:ref:`MPI_Graph_get` - Retrieves graph topology information associated with a
+:ref:`MPI_Graph_get` |mdash| Retrieves graph topology information associated with a
 communicator.
 
 SYNTAX

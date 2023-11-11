@@ -6,7 +6,7 @@ MPI_Session_get_errhandler
 
 .. include_body
 
-:ref:`MPI_Session_get_errhandler` - Retrieves error handler associated with a
+:ref:`MPI_Session_get_errhandler` |mdash| Retrieves error handler associated with a
 session.
 
 

@@ -6,7 +6,7 @@ MPI_Group_rank
 
 .. include_body
 
-:ref:`MPI_Group_rank` - Returns the rank of the calling process in the
+:ref:`MPI_Group_rank` |mdash| Returns the rank of the calling process in the
 given group.
 
 

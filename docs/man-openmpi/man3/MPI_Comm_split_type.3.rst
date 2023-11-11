@@ -6,7 +6,7 @@ MPI_Comm_split_type
 
 .. include_body
 
-:ref:`MPI_Comm_split_type` - Creates new communicators based on colors and
+:ref:`MPI_Comm_split_type` |mdash| Creates new communicators based on colors and
 keys.
 
 

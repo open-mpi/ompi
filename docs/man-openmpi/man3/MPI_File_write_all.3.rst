@@ -6,7 +6,7 @@ MPI_File_write_all
 
 .. include_body
 
-:ref:`MPI_File_write_all` - Writes a file starting at the locations
+:ref:`MPI_File_write_all` |mdash| Writes a file starting at the locations
 specified by individual file pointers (blocking, collective).
 
 

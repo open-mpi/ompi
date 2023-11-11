@@ -6,7 +6,7 @@ MPI_Improbe
 
 .. include_body
 
-:ref:`MPI_Improbe` - Non-blocking matched probe for a message.
+:ref:`MPI_Improbe` |mdash| Non-blocking matched probe for a message.
 
 
 SYNTAX

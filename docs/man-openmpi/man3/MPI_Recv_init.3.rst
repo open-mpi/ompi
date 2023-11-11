@@ -6,7 +6,7 @@ MPI_Recv_init
 
 .. include_body
 
-:ref:`MPI_Recv_init` - Builds a handle for a receive.
+:ref:`MPI_Recv_init` |mdash| Builds a handle for a receive.
 
 
 SYNTAX

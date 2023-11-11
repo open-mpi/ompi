@@ -6,7 +6,7 @@ MPI_File_get_group
 
 .. include_body
 
-:ref:`MPI_File_get_group` - Returns a duplicate of the process group of a
+:ref:`MPI_File_get_group` |mdash| Returns a duplicate of the process group of a
 file.
 
 

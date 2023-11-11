@@ -6,7 +6,7 @@ MPI_File_preallocate
 
 .. include_body
 
-:ref:`MPI_File_preallocate` - Preallocates a specified amount of storage
+:ref:`MPI_File_preallocate` |mdash| Preallocates a specified amount of storage
 space at the beginning of a file (collective).
 
 

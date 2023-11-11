@@ -6,7 +6,7 @@ MPI_T_pvar_readreset
 
 .. include_body
 
-:ref:`MPI_T_pvar_readreset` - Atomically read and reset the value of a
+:ref:`MPI_T_pvar_readreset` |mdash| Atomically read and reset the value of a
 performance variable
 
 

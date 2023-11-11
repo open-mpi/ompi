@@ -6,7 +6,7 @@ MPI_Win_test
 
 .. include_body
 
-:ref:`MPI_Win_test` - Attempts to complete an RMA exposure epoch; a
+:ref:`MPI_Win_test` |mdash| Attempts to complete an RMA exposure epoch; a
 nonblocking version of :ref:`MPI_Win_wait`
 
 

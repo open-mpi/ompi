@@ -6,7 +6,7 @@ MPI_Comm_free_keyval
 
 .. include_body
 
-:ref:`MPI_Comm_free_keyval` - Frees attribute key for communicator cache
+:ref:`MPI_Comm_free_keyval` |mdash| Frees attribute key for communicator cache
 attribute.
 
 

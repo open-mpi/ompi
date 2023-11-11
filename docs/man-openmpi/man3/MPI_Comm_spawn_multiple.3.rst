@@ -6,7 +6,7 @@ MPI_Comm_spawn_multiple
 
 .. include_body
 
-:ref:`MPI_Comm_spawn_multiple` - Spawns multiple binaries, or the same
+:ref:`MPI_Comm_spawn_multiple` |mdash| Spawns multiple binaries, or the same
 binary with multiple sets of arguments.
 
 

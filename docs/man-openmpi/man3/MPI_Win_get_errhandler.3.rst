@@ -6,7 +6,7 @@ MPI_Win_get_errhandler
 
 .. include_body
 
-:ref:`MPI_Win_get_errhandler` - Retrieves the error handler currently
+:ref:`MPI_Win_get_errhandler` |mdash| Retrieves the error handler currently
 associated with a window.
 
 

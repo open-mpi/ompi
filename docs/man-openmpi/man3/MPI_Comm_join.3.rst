@@ -6,7 +6,7 @@ MPI_Comm_join
 
 .. include_body
 
-:ref:`MPI_Comm_join` - Establishes communication between MPI jobs
+:ref:`MPI_Comm_join` |mdash| Establishes communication between MPI jobs
 
 
 SYNTAX

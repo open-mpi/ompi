@@ -6,7 +6,7 @@ MPI_Rsend_init
 
 .. include_body
 
-:ref:`MPI_Rsend_init` - Builds a handle for a ready send.
+:ref:`MPI_Rsend_init` |mdash| Builds a handle for a ready send.
 
 
 SYNTAX

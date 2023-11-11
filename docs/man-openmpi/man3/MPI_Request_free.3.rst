@@ -6,7 +6,7 @@ MPI_Request_free
 
 .. include_body
 
-:ref:`MPI_Request_free` - Frees a communication request object.
+:ref:`MPI_Request_free` |mdash| Frees a communication request object.
 
 
 SYNTAX

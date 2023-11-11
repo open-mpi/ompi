@@ -6,7 +6,7 @@ MPI_Start
 
 .. include_body
 
-:ref:`MPI_Start` - Initiates a communication using a persistent request
+:ref:`MPI_Start` |mdash| Initiates a communication using a persistent request
 handle.
 
 

@@ -6,7 +6,7 @@ MPI_File_read_at_all_end
 
 .. include_body
 
-:ref:`MPI_File_read_at_all_end` - Reads a file at explicitly specified
+:ref:`MPI_File_read_at_all_end` |mdash| Reads a file at explicitly specified
 offsets; ending part of a split collective routine (blocking).
 
 

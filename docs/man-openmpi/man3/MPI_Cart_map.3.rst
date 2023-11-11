@@ -5,7 +5,7 @@ MPI_Cart_map
 
 .. include_body
 
-:ref:`MPI_Cart_map` - Maps process to Cartesian topology information.
+:ref:`MPI_Cart_map` |mdash| Maps process to Cartesian topology information.
 
 SYNTAX
 ------

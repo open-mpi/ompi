@@ -6,7 +6,7 @@ MPI_File_get_type_extent
 
 .. include_body
 
-:ref:`MPI_File_get_type_extent` - Returns the extent of the data type in a
+:ref:`MPI_File_get_type_extent` |mdash| Returns the extent of the data type in a
 file.
 
 

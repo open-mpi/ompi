@@ -5,7 +5,7 @@ MPI_Comm_create_from_group
 
 .. include_body
 
-:ref:`MPI_Comm_create_from_group` - Creates a new communicator from a group and
+:ref:`MPI_Comm_create_from_group` |mdash| Creates a new communicator from a group and
 stringtag
 
 SYNTAX

@@ -6,7 +6,7 @@ MPI_Type_ub
 
 .. include_body
 
-:ref:`MPI_Type_ub` - Returns the upper bound of a datatype -- |deprecated_favor| :ref:`MPI_Type_get_extent`.
+:ref:`MPI_Type_ub` |mdash| Returns the upper bound of a datatype -- |deprecated_favor| :ref:`MPI_Type_get_extent`.
 
 
 SYNTAX

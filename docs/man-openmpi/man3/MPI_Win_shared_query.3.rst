@@ -6,7 +6,7 @@ MPI_Win_shared_query
 
 .. include_body
 
-:ref:`MPI_Win_shared_query` - Query a shared memory window
+:ref:`MPI_Win_shared_query` |mdash| Query a shared memory window
 
 
 SYNTAX
