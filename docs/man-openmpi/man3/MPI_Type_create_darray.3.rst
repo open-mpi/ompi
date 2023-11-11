@@ -150,10 +150,10 @@ NOTES
 
 For both Fortran and C arrays, the ordering of processes in the process
 grid is assumed to be row-major. This is consistent with the ordering
-used in virtual Cartesian process topologies in MPI-1. To create such
+used in virtual Cartesian process topologies in MPI. To create such
 virtual process topologies, or to find the coordinates of a process in
 the process grid, etc., users may use the corresponding functions
-provided in MPI-1.
+provided in MPI.
 
 
 ERRORS
