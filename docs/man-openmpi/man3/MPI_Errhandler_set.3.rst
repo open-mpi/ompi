@@ -6,7 +6,7 @@ MPI_Errhandler_set
 
 .. include_body
 
-:ref:`MPI_Errhandler_set` |mdash| Sets the error handler for a communicator -- |deprecated_favor| :ref:`MPI_Comm_set_errhandler`.
+:ref:`MPI_Errhandler_set` |mdash| Sets the error handler for a communicator |mdash| |deprecated_favor| :ref:`MPI_Comm_set_errhandler`.
 
 
 SYNTAX

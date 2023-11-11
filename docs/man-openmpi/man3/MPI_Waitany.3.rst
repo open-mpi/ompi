@@ -93,7 +93,7 @@ special value for the *status* argument.
               CALL MPI_ISEND(a, n, MPI_REAL, 0, tag, comm, request, ierr)
               CALL MPI_WAIT(request, status, ierr)
            END DO
-       ELSE         ! rank=0 -- server code
+       ELSE         ! rank=0: server code
               DO i=1, size-1
                  CALL MPI_IRECV(a(1,i), n, MPI_REAL, i tag, &
                           comm, request_list(i), ierr)

@@ -29,7 +29,7 @@ above categories that can be used with ``configure``:
   with different endian representations).  Heterogeneous support is
   disabled by default because it imposes a minor performance penalty.
 
-  .. danger:: The heterogeneous functionality is currently broken --
+  .. danger:: The heterogeneous functionality is currently broken |mdash|
               do not use.
 
 .. _install-wrapper-flags-label:
@@ -40,7 +40,7 @@ above categories that can be used with ``configure``:
 * ``--with-wrapper-ldflags=LDFLAGS``
 * ``--with-wrapper-libs=LIBS``:
   Add the specified flags to the default flags that are used in Open
-  MPI's "wrapper" compilers (e.g., ``mpicc`` -- see below for more
+  MPI's "wrapper" compilers (e.g., ``mpicc`` |mdash| see below for more
   information about Open MPI's wrapper compilers).  By default, Open
   MPI's wrapper compilers use the same compilers used to build Open
   MPI and specify a minimum set of additional flags that are necessary

@@ -63,7 +63,7 @@ Fortran 2008 Syntax
 
 INPUT PARAMETERS
 ----------------
-* ``count``: Number of commands (positive integer, significant to MPI only at *root* -- see NOTES).
+* ``count``: Number of commands (positive integer, significant to MPI only at *root* |mdash| see NOTES).
 * ``array_of_commands``: Programs to be executed (array of strings, significant only at *root*).
 * ``array_of_argv``: Arguments for *commands* (array of array of strings, significant only at *root*).
 * ``array_of_maxprocs``: Maximum number of processes to start for each command (array of integers, significant only at *root*).

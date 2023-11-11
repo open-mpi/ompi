@@ -68,13 +68,13 @@ Once a request is freed by a call to :ref:`MPI_Request_free`, it is not
 possible to check for the successful completion of the associated
 communication with calls to :ref:`MPI_Wait` or :ref:`MPI_Test`. Also, if an error
 occurs subsequently during the communication, an error code cannot be
-returned to the user -- such an error must be treated as fatal.
+returned to the user |mdash| such an error must be treated as fatal.
 Questions arise as to how one knows when the operations have completed
 when using :ref:`MPI_Request_free`. Depending on the program logic, there may
 be other ways in which the program knows that certain operations have
 completed and this makes usage of :ref:`MPI_Request_free` practical. For
 example, an active send request could be freed when the logic of the
-program is such that the receiver sends a reply to the message sent --
+program is such that the receiver sends a reply to the message sent |mdash|
 the arrival of the reply informs the sender that the send has completed
 and the send buffer can be reused. An active receive request should
 never be freed, as the receiver will have no way to verify that the

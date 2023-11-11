@@ -6,7 +6,7 @@ MPI_Errhandler_get
 
 .. include_body
 
-:ref:`MPI_Errhandler_get` |mdash| Gets the error handler for a communicator -- |deprecated_favor| :ref:`MPI_Comm_get_errhandler`.
+:ref:`MPI_Errhandler_get` |mdash| Gets the error handler for a communicator |mdash| |deprecated_favor| :ref:`MPI_Comm_get_errhandler`.
 
 
 SYNTAX

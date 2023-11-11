@@ -76,7 +76,7 @@ DESCRIPTION
 -----------
 
 The :ref:`MPI_File_set_view` routine changes the process's view of the data in
-the file -- the beginning of the data accessible in the file through
+the file |mdash| the beginning of the data accessible in the file through
 that view is set to *disp;* the type of data is set to *etype;* and the
 distribution of data to processes is set to *filetype.* In addition,
 :ref:`MPI_File_set_view` resets the independent file pointers and the shared

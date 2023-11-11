@@ -6,7 +6,7 @@ Open MPI Java bindings
 Open MPI |ompi_ver| provides support for Java-based MPI applications.
 
 .. warning:: The Open MPI Java bindings are provided on a
-   "provisional" basis -- i.e., they are not part of the current or
+   "provisional" basis |mdash| i.e., they are not part of the current or
    proposed MPI standards.  Thus, inclusion of Java support is not
    required by the standard.  Continued inclusion of the Java bindings
    is contingent upon active user interest and continued developer

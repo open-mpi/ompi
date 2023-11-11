@@ -4,7 +4,7 @@ Open MPI v4.1.x series
 This file contains all the NEWS updates for the Open MPI v4.1.x
 series, in reverse chronological order.
 
-4.1.4 -- May, 2022
+4.1.4 |mdash| May, 2022
 ------------------
 :Date: May, 2022
 

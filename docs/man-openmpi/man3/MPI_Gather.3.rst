@@ -175,7 +175,7 @@ Example 1: Gather 100 ints from every process in group to root.
 
    MPI_Gather( sendarray, 100, MPI_INT, rbuf, 100, MPI_INT, root, comm);
 
-Example 2: Previous example modified -- only the root allocates memory
+Example 2: Previous example modified |mdash| only the root allocates memory
 for the receive buffer.
 
 .. code-block:: c

@@ -8,7 +8,7 @@ compatibility for the C MPI bindings to the last major Open MPI release. Specifi
 application compiled with Open MPI v4.x can be executed with Open MPI
 |ompi_series| without having to recompile the application.
 
-.. important:: ABI is maintained for *most* of the Fortran MPI bindings, too -- see below for additional information.
+.. important:: ABI is maintained for *most* of the Fortran MPI bindings, too |mdash| see below for additional information.
 
 There are however a few scenarios where an application compiled with
 Open MPI v4.x might not execute correctly with Open MPI 5.0.

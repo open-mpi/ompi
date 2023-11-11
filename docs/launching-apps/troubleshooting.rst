@@ -22,7 +22,7 @@ why this can happen.
 
   .. code-block:: c
 
-     /* This is a Linux example -- the issue is similar/the same on other
+     /* This is a Linux example |mdash| the issue is similar/the same on other
         operating systems */
      handle = dlopen("libmpi.so", RTLD_NOW | RTLD_LOCAL);
 

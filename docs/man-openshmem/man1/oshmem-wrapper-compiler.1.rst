@@ -13,7 +13,7 @@ OpenSHMEM Wrapper Compilers
 
 .. include_body
 
-oshcc, oshcxx, oshc++, oshfort, shmemcc, shmemcxx, shmemc++, shmemfort -- OpenSHMEM wrapper compilers
+oshcc, oshcxx, oshc++, oshfort, shmemcc, shmemcxx, shmemc++, shmemfort |mdash| OpenSHMEM wrapper compilers
 
 
 SYNTAX
