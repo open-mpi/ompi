@@ -75,13 +75,13 @@ deprecated. The C binding is identical. The Fortran binding differs in
 that ``extra_state`` is an address-sized integer. Also, the copy and
 delete callback functions have Fortran bindings that are consistent with
 address-sized attributes. The argument ``comm_copy_attr_fn`` may be
-specified as MPI_COMM_NULL_COPY_FN or MPI_COMM_DUP_FN from C or
-Fortran. MPI_COMM_NULL_COPY_FN is a function that does nothing more
-than returning ``flag = 0`` and MPI_SUCCESS. MPI_COMM_DUP_FN is
+specified as ``MPI_COMM_NULL_COPY_FN`` or ``MPI_COMM_DUP_FN`` from C or
+Fortran. ``MPI_COMM_NULL_COPY_FN`` is a function that does nothing more
+than returning ``flag = 0`` and ``MPI_SUCCESS``. ``MPI_COMM_DUP_FN`` is
 a simple-minded copy function that sets ``flag = 1``, returns the value
 of ``attribute_val_in`` in ``attribute_val_out``, and returns
-MPI_SUCCESS. These replace the MPI-1 predefined callbacks
-MPI_NULL_COPY_FN and MPI_DUP_FN, the use of which is deprecated.
+``MPI_SUCCESS``. These replace the MPI-1 predefined callbacks
+``MPI_NULL_COPY_FN`` and ``MPI_DUP_FN``, the use of which is deprecated.
 The two C callback functions are:
 
 .. code-block:: c
