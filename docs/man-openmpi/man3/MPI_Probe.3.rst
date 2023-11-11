@@ -81,7 +81,7 @@ will return, unless the message is received by another concurrent
 receive operation (that is executed by another thread at the probing
 process). Similarly, if a process busy waits with :ref:`MPI_Iprobe` and a
 matching message has been issued, then the call to :ref:`MPI_Iprobe` will
-eventually return flag = true unless the message is received by another
+eventually return *flag* = true unless the message is received by another
 concurrent receive operation.
 
 **Example 1:** Use blocking probe to wait for an incoming message.

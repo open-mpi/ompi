@@ -78,7 +78,7 @@ file size is unchanged.
 
 The treatment of file pointers, pending nonblocking accesses, and file
 consistency is the same as with :ref:`MPI_File_set_size`. If
-MPI_MODE_SEQUENTIAL mode was specified when the file was opened, it is
+``MPI_MODE_SEQUENTIAL`` mode was specified when the file was opened, it is
 erroneous to call this routine.
 
 

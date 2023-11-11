@@ -77,7 +77,7 @@ shared file pointer.
 Note that the actual amount of storage space cannot be allocated by
 :ref:`MPI_File_set_size`. Use :ref:`MPI_File_preallocate` to accomplish this.
 
-It is erroneous to call this function if MPI_MODE_SEQUENTIAL mode was
+It is erroneous to call this function if ``MPI_MODE_SEQUENTIAL`` mode was
 specified when the file was opened.
 
 

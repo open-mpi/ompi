@@ -72,7 +72,7 @@ previously matched by a matching probe.
 The *request* returned from :ref:`MPI_Imrecv` can be used with any of the
 :ref:`MPI_Test` and :ref:`MPI_Wait` variants, like any non-blocking receive request.
 
-If :ref:`MPI_Imrecv` is called with MPI_MESSAGE_NULL as the message argument, a
+If :ref:`MPI_Imrecv` is called with ``MPI_MESSAGE_NULL`` as the message argument, a
 call to one of the :ref:`MPI_Test` or :ref:`MPI_Wait` variants will return immediately
 with the *status* object set to *source* = ``MPI_PROC_NULL``, *tag* =
 ``MPI_ANY_TAG``, and *count* = 0, as if a receive from ``MPI_PROC_NULL`` was
@@ -81,14 +81,14 @@ issued.
 If reception of a matched message is started with :ref:`MPI_Imrecv`, then it is
 possible to cancel the returned request with :ref:`MPI_Cancel`. If :ref:`MPI_Cancel`
 succeeds, the matched message must be found by a subsequent message
-probe (:ref:`MPI_Probe`, :ref:`MPI_Iprobe`, :ref:`MPI_Mprobe`, or MPI_Improbe), received by a
+probe (:ref:`MPI_Probe`, :ref:`MPI_Iprobe`, :ref:`MPI_Mprobe`, or :ref:`MPI_Improbe`), received by a
 subsequent receive operation or canceled by the sender.
 
 Note, however, that is it possible for the cancellation of operations
 initiated with :ref:`MPI_Imrecv` to fail. An example of a failing case is when
 canceling the matched message receive would violate MPI message ordering
 rules (e.g., if another message matching the same message signature has
-matched -- and possible received -- before this :ref:`MPI_Imrecv` is canceled).
+matched |mdash| and possibly received |mdash| before this :ref:`MPI_Imrecv` is canceled).
 
 
 ERRORS

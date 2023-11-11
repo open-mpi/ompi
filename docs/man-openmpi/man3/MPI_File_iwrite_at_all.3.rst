@@ -86,7 +86,7 @@ other fields of *status* are undefined. The request structure can be
 passed to :ref:`MPI_Wait` or :ref:`MPI_Test`, which will return a status with the
 number of bytes actually accessed.
 
-It is erroneous to call this function if MPI_MODE_SEQUENTIAL mode was
+It is erroneous to call this function if ``MPI_MODE_SEQUENTIAL`` mode was
 specified when the file was open.
 
 
