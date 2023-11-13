@@ -17,6 +17,7 @@
  *                         reserved.
  * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
+ * Copyright (c) 2023      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -526,11 +527,12 @@ int ompi_attr_create_predefined_keyvals(void);
 /**
  * \internal
  *
- * Cache predefined attribute keys used in the World Model
+ * Cache and release the predefined attribute keys used in the World Model
  *
  * @returns OMPI_SUCCESS
  */
 int ompi_attr_set_predefined_keyvals_for_wm(void);
+void ompi_attr_delete_predefined_keyvals_for_wm(void);
 
 /**
  * \internal

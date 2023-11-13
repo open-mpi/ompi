@@ -26,6 +26,7 @@
  * Copyright (c) 2018-2022 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2023      Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (c) 2023      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -311,18 +312,11 @@ static int ompi_comm_finalize (void)
 
     if (ompi_comm_intrinsic_init) {
         /* tear down MPI-3 predefined communicators (not initialized unless using MPI_Init) */
-        /* Free the attributes on comm world. This is not done in the
-         * destructor as we delete attributes in ompi_comm_free (which
-         * is not called for comm world) */
-        if (NULL != ompi_mpi_comm_world.comm.c_keyhash) {
-            /* Ignore errors when deleting attributes on comm_world */
-            (void) ompi_attr_delete_all(COMM_ATTR, &ompi_mpi_comm_world.comm, ompi_mpi_comm_world.comm.c_keyhash);
-            OBJ_RELEASE(ompi_mpi_comm_world.comm.c_keyhash);
-        }
-
-        /* Shut down MPI_COMM_SELF */
         OBJ_DESTRUCT( &ompi_mpi_comm_self );
-        /* Shut down MPI_COMM_WORLD */
+        ompi_attr_delete_predefined_keyvals_for_wm();
+        /* Destroy the keyhash even is user defined attributes are still attached. */
+        OBJ_DESTRUCT(ompi_mpi_comm_world.comm.c_keyhash);
+        ompi_mpi_comm_world.comm.c_keyhash = NULL;
         OBJ_DESTRUCT( &ompi_mpi_comm_world );
 
         ompi_comm_intrinsic_init = false;
