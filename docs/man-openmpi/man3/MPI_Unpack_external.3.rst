@@ -6,7 +6,7 @@ MPI_Unpack_external
 
 .. include_body
 
-:ref:`MPI_Unpack_external` - Reads data from a portable format
+:ref:`MPI_Unpack_external` |mdash| Reads data from a portable format
 
 
 SYNTAX

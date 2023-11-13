@@ -6,7 +6,7 @@ MPI_Psend_init
 
 .. include_body
 
-:ref:`MPI_Psend_init` - Initializes a partitioned send.
+:ref:`MPI_Psend_init` |mdash| Initializes a partitioned send.
 
 
 SYNTAX

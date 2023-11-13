@@ -339,7 +339,7 @@ script deciding the following:
 * The Fortran compiler is ``gfortran`` (which is the
   Homebrew-installed Fortran compiler).
 * There is a suitable system-installed hwloc in ``/usr/local``, which
-  can be found -- by the C compiler/linker -- without specifying any
+  can be found |mdash| by the C compiler/linker |mdash| without specifying any
   additional linker search paths.
 
 The careful reader will realize that the C and Fortran compilers are
@@ -354,8 +354,8 @@ library search paths are different:
 Hence, since the majority of Open MPI's source code base is in C, it
 compiles/links against hwloc successfully.  But when Open MPI's
 Fortran code for the ``mpi_f08`` module is compiled and linked, the
-Homebrew-installed ``gfortran`` -- which does not search
-``/usr/local/lib`` by default -- cannot find ``libhwloc``, and the link
+Homebrew-installed ``gfortran`` |mdash| which does not search
+``/usr/local/lib`` by default |mdash| cannot find ``libhwloc``, and the link
 fails.
 
 There are a few different possible solutions to this issue:

@@ -7,7 +7,7 @@ MPI_Neighbor_alltoallv
 .. include_body
 
 :ref:`MPI_Neighbor_alltoallv`, :ref:`MPI_Ineighbor_alltoallv`,
-:ref:`MPI_Neighbor_alltoallv_init` - All processes send different amounts of
+:ref:`MPI_Neighbor_alltoallv_init` |mdash| All processes send different amounts of
 data to, and receive different amounts of data from, all neighbors
 
 

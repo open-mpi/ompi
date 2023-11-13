@@ -6,7 +6,7 @@ MPI_Pcontrol
 
 .. include_body
 
-:ref:`MPI_Pcontrol` - Controls profiling.
+:ref:`MPI_Pcontrol` |mdash| Controls profiling.
 
 
 SYNTAX

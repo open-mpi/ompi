@@ -6,7 +6,7 @@ MPI_Ibsend
 
 .. include_body
 
-:ref:`MPI_Ibsend` - Starts a nonblocking buffered send.
+:ref:`MPI_Ibsend` |mdash| Starts a nonblocking buffered send.
 
 
 SYNTAX

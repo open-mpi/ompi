@@ -6,7 +6,7 @@ MPI_Type_free
 
 .. include_body
 
-:ref:`MPI_Type_free` - Frees a data type.
+:ref:`MPI_Type_free` |mdash| Frees a data type.
 
 
 SYNTAX

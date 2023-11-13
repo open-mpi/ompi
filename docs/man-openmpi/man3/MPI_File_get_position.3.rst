@@ -6,7 +6,7 @@ MPI_File_get_position
 
 .. include_body
 
-:ref:`MPI_File_get_position` - Returns the current position of the
+:ref:`MPI_File_get_position` |mdash| Returns the current position of the
 individual file pointer.
 
 

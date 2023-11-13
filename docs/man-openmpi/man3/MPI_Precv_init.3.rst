@@ -6,7 +6,7 @@ MPI_Precv_init
 
 .. include_body
 
-:ref:`MPI_Precv_init` - Initializes a partitioned receive.
+:ref:`MPI_Precv_init` |mdash| Initializes a partitioned receive.
 
 
 SYNTAX

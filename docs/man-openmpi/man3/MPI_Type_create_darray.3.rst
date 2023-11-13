@@ -6,7 +6,7 @@ MPI_Type_create_darray
 
 .. include_body
 
-:ref:`MPI_Type_create_darray` - Creates a distributed array datatype;
+:ref:`MPI_Type_create_darray` |mdash| Creates a distributed array datatype;
 
 
 SYNTAX
@@ -93,7 +93,7 @@ For a call to :ref:`MPI_Type_create_darray` to be correct, the equation
 
 must be satisfied. The ordering of processes in the process grid is
 assumed to be row-major, as in the case of virtual Cartesian process
-topologies in MPI-1.
+topologies in the `MPI Standard <https://www.mpi-forum.org/docs/>`_.
 
 Each dimension of the array can be distributed in one of three ways:
 
@@ -150,10 +150,10 @@ NOTES
 
 For both Fortran and C arrays, the ordering of processes in the process
 grid is assumed to be row-major. This is consistent with the ordering
-used in virtual Cartesian process topologies in MPI-1. To create such
+used in virtual Cartesian process topologies in MPI. To create such
 virtual process topologies, or to find the coordinates of a process in
 the process grid, etc., users may use the corresponding functions
-provided in MPI-1.
+provided in MPI.
 
 
 ERRORS

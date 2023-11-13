@@ -6,7 +6,7 @@ MPI_Wait
 
 .. include_body
 
-:ref:`MPI_Wait` - Waits for an MPI send or receive to complete.
+:ref:`MPI_Wait` |mdash| Waits for an MPI send or receive to complete.
 
 
 SYNTAX
@@ -64,12 +64,14 @@ created by a nonblocking send or receive call, then the object is
 deallocated by the call to :ref:`MPI_Wait` and the request handle is set to
 ``MPI_REQUEST_NULL``.
 
-The call returns, in status, information on the completed operation. The
-content of the status object for a receive operation can be accessed as
-described in Section 3.2.5 of the MPI-1 Standard, "Return Status." The
-status object for a send operation may be queried by a call to
-:ref:`MPI_Test_cancelled` (see Section 3.8 of the MPI-1 Standard, "Probe and
-Cancel").
+The call returns, in status, information on the completed
+operation. The content of the status object for a receive operation
+can be accessed as described in the "Return Status" subsection of the
+"Point-to-Point Communication" chapter in the `MPI Standard
+<https://www.mpi-forum.org/docs/>`_.  The status object for a send
+operation may be queried by a call to :ref:`MPI_Test_cancelled` (see
+the "Probe and Cancel" section in the `MPI Standard
+<https://www.mpi-forum.org/docs/>`_).
 
 If your application does not need to examine the *status* field, you can
 save resources by using the predefined constant ``MPI_STATUS_IGNORE`` as a
@@ -86,8 +88,9 @@ NOTES
 Successful return of :ref:`MPI_Wait` after an :ref:`MPI_Ibsend` implies that the user
 send buffer can be reused i.e., data has been sent out or copied into a
 buffer attached with :ref:`MPI_Buffer_attach`. Note that, at this point, we can
-no longer cancel the send (for more information, see Section 3.8 of the
-MPI-1 Standard, "Probe and Cancel"). If a matching receive is never
+no longer cancel the send (for more information, see the "Probe and
+Cancel" section in the `MPI Standard
+<https://www.mpi-forum.org/docs/>`_).  If a matching receive is never
 posted, then the buffer cannot be freed. This runs somewhat counter to
 the stated goal of :ref:`MPI_Cancel` (always being able to free program space
 that was committed to the communication subsystem).
@@ -113,12 +116,15 @@ ERRORS
 
 .. include:: ./ERRORS.rst 
 
-Note that per MPI-1 section 3.2.5, MPI errors on requests passed to
-:ref:`MPI_WAIT` do not set the ``status.MPI_ERROR`` field in the returned status.
-The error code is passed to the back-end error handler and may be passed
-back to the caller through the return value of :ref:`MPI_WAIT` if the back-end
-error handler returns it. The pre-defined MPI error handler
-``MPI_ERRORS_RETURN`` exhibits this behavior, for example.
+Note that per the "Return Status" section in the "Point-to-Point
+Communication" chapter in the `MPI Standard
+<https://www.mpi-forum.org/docs/>`_, MPI errors on requests passed to
+:ref:`MPI_WAIT` do not set the ``status.MPI_ERROR`` field in the
+returned *status*.  The error code is always passed to the back-end
+error handler and may be passed back to the caller through the return
+value of :ref:`MPI_WAIT` if the back-end error handler returns it.  The
+pre-defined MPI error handler ``MPI_ERRORS_RETURN`` exhibits this
+behavior, for example.
 
 
 .. seealso::

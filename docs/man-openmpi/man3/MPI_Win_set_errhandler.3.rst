@@ -6,7 +6,7 @@ MPI_Win_set_errhandler
 
 .. include_body
 
-:ref:`MPI_Win_set_errhandler` - Attaches a new error handler to a window.
+:ref:`MPI_Win_set_errhandler` |mdash| Attaches a new error handler to a window.
 
 
 SYNTAX

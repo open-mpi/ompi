@@ -6,7 +6,7 @@ MPI_Comm_test_inter
 
 .. include_body
 
-:ref:`MPI_Comm_test_inter` - Tests to see if a comm is an
+:ref:`MPI_Comm_test_inter` |mdash| Tests to see if a comm is an
 intercommunicator.
 
 

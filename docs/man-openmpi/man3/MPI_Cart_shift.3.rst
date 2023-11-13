@@ -5,7 +5,7 @@ MPI_Cart_shift
 
 .. include_body
 
-:ref:`MPI_Cart_shift` - Returns the shifted source and destination ranks,
+:ref:`MPI_Cart_shift` |mdash| Returns the shifted source and destination ranks,
 given a shift direction and amount.
 
 SYNTAX

@@ -6,7 +6,7 @@ MPI_Win_wait
 
 .. include_body
 
-:ref:`MPI_Win_wait` - Completes an RMA exposure epoch started by a call to
+:ref:`MPI_Win_wait` |mdash| Completes an RMA exposure epoch started by a call to
 :ref:`MPI_Win_post` on *win*
 
 

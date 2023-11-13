@@ -6,7 +6,7 @@ MPI_File_seek
 
 .. include_body
 
-:ref:`MPI_File_seek` - Updates individual file pointers (noncollective).
+:ref:`MPI_File_seek` |mdash| Updates individual file pointers (noncollective).
 
 
 SYNTAX

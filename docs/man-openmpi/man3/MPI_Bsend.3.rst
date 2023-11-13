@@ -5,7 +5,7 @@ MPI_Bsend
 
 .. include_body
 
-:ref:`MPI_Bsend` - Basic send with user-specified buffering.
+:ref:`MPI_Bsend` |mdash| Basic send with user-specified buffering.
 
 SYNTAX
 ------

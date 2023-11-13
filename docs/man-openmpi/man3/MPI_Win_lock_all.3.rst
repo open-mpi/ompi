@@ -6,7 +6,7 @@ MPI_Win_lock_all
 
 .. include_body
 
-:ref:`MPI_Win_lock_all` - Starts an RMA access epoch locking access to all
+:ref:`MPI_Win_lock_all` |mdash| Starts an RMA access epoch locking access to all
 processes in the window
 
 

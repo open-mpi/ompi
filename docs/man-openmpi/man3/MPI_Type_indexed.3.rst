@@ -78,7 +78,7 @@ Fortran 2008 Syntax
 
 INPUT PARAMETERS
 ----------------
-* ``count``: Number of blocks -- also number of entries in array_of_displacements and array_of_blocklengths (nonnegative integer).
+* ``count``: Number of blocks |mdash| also number of entries in array_of_displacements and array_of_blocklengths (nonnegative integer).
 * ``array_of_blocklengths``: Number of elements per block (array of nonnegative integers).
 * ``array_of_displacements``: Displacement for each block, in multiples of oldtype extent for MPI_Type_indexed and bytes for MPI_Type_create_hindexed (array of integer for **MPI_TYPE_INDEXED**, array of *MPI_Aint* for **MPI_TYPE_CREATE_HINDEXED**).
 * ``oldtype``: Old datatype (handle).

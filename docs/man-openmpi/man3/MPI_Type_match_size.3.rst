@@ -6,7 +6,7 @@ MPI_Type_match_size
 
 .. include_body
 
-:ref:`MPI_Type_match_size` - Returns an MPI datatype of a given type and
+:ref:`MPI_Type_match_size` |mdash| Returns an MPI datatype of a given type and
 size
 
 

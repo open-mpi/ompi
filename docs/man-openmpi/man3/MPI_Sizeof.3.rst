@@ -6,7 +6,7 @@ MPI_Sizeof
 
 .. include_body
 
-:ref:`MPI_Sizeof` - Returns the size, in bytes, of the given type
+:ref:`MPI_Sizeof` |mdash| Returns the size, in bytes, of the given type
 
 
 SYNTAX

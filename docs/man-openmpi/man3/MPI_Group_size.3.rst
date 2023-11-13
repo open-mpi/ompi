@@ -6,7 +6,7 @@ MPI_Group_size
 
 .. include_body
 
-:ref:`MPI_Group_size` - Returns the size of a group.
+:ref:`MPI_Group_size` |mdash| Returns the size of a group.
 
 
 SYNTAX

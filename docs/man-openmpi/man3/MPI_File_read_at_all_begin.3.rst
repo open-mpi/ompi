@@ -6,7 +6,7 @@ MPI_File_read_at_all_begin
 
 .. include_body
 
-:ref:`MPI_File_read_at_all_begin` - Reads a file at explicitly specified
+:ref:`MPI_File_read_at_all_begin` |mdash| Reads a file at explicitly specified
 offsets; beginning part of a split collective routine (nonblocking).
 
 

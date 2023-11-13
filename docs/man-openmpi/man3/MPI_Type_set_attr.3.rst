@@ -6,7 +6,7 @@ MPI_Type_set_attr
 
 .. include_body
 
-:ref:`MPI_Type_set_attr` - Sets a key value/attribute pair to a data type.
+:ref:`MPI_Type_set_attr` |mdash| Sets a key value/attribute pair to a data type.
 
 
 SYNTAX

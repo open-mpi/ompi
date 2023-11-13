@@ -6,7 +6,7 @@ MPI_Test
 
 .. include_body
 
-:ref:`MPI_Test` - Tests for the completion of a specific send or receive.
+:ref:`MPI_Test` |mdash| Tests for the completion of a specific send or receive.
 
 
 SYNTAX
@@ -70,10 +70,12 @@ false, otherwise. In this case, the value of the status object is
 undefined. :ref:`MPI_Test` is a local operation.
 
 The return status object for a receive operation carries information
-that can be accessed as described in Section 3.2.5 of the MPI-1
-Standard, "Return Status." The status object for a send operation
-carries information that can be accessed by a call to :ref:`MPI_Test_cancelled`
-(see Section 3.8 of the MPI-1 Standard, "Probe and Cancel").
+that can be accessed as described in the "Return Status" subsection of
+the "Point-to-Point Communication" chapter in the `MPI Standard
+<https://www.mpi-forum.org/docs/>`_. The status object for a send
+operation carries information that can be accessed by a call to
+:ref:`MPI_Test_cancelled` (see the "Probe and Cancel" section of the
+`MPI Standard <https://www.mpi-forum.org/docs/>`_).
 
 If your application does not need to examine the *status* field, you can
 save resources by using the predefined constant ``MPI_STATUS_IGNORE`` as a
@@ -101,12 +103,15 @@ ERRORS
 
 .. include:: ./ERRORS.rst
 
-Note that per MPI-1 section 3.2.5, MPI errors on requests passed to
-:ref:`MPI_TEST` do not set the status.MPI_ERROR field in the returned status.
-The error code is passed to the back-end error handler and may be passed
-back to the caller through the return value of :ref:`MPI_TEST` if the back-end
-error handler returns it. The pre-defined MPI error handler
-MPI_ERRORS_RETURN exhibits this behavior, for example.
+Note that per the "Return Status" section in the "Point-to-Point
+Communication" chapter in the `MPI Standard
+<https://www.mpi-forum.org/docs/>`_, MPI errors on requests passed to
+:ref:`MPI_TEST` do not set the ``status.MPI_ERROR`` field in the
+returned *status*.  The error code is always passed to the back-end
+error handler and may be passed back to the caller through the return
+value of :ref:`MPI_TEST` if the back-end error handler returns it.
+The pre-defined MPI error handler ``MPI_ERRORS_RETURN`` exhibits this
+behavior, for example.
 
 
 .. seealso::

@@ -5,7 +5,7 @@ MPI_Group_incl
 
 .. include_body
 
-:ref:`MPI_Group_incl` - Produces a group by reordering an existing group and
+:ref:`MPI_Group_incl` |mdash| Produces a group by reordering an existing group and
 taking only listed members.
 
 SYNTAX

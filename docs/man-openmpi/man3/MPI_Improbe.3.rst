@@ -6,7 +6,7 @@ MPI_Improbe
 
 .. include_body
 
-:ref:`MPI_Improbe` - Non-blocking matched probe for a message.
+:ref:`MPI_Improbe` |mdash| Non-blocking matched probe for a message.
 
 
 SYNTAX
@@ -79,7 +79,7 @@ receive buffer according to the length of the probed message.
 
 A matching probe with ``MPI_PROC_NULL`` as *source* returns *flag* = true,
 
-*message* =`` MPI_MESSAGE_NO_PROC``, and the *status* object returns source
+*message* = ``MPI_MESSAGE_NO_PROC``, and the *status* object returns source
 ^ ``MPI_PROC_NULL``, tag ^ ``MPI_ANY_TAG``, and count ^ 0.
 
 :ref:`MPI_Iprobe` returns a true value in *flag* if a message has been matched

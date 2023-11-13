@@ -5,7 +5,7 @@ MPI_Group_excl
 
 .. include_body
 
-:ref:`MPI_Group_excl` - Produces a group by reordering an existing group and
+:ref:`MPI_Group_excl` |mdash| Produces a group by reordering an existing group and
 taking only unlisted members.
 
 SYNTAX

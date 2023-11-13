@@ -6,7 +6,7 @@ MPI_Win_lock
 
 .. include_body
 
-:ref:`MPI_Win_lock` - Starts an RMA access epoch locking access to a
+:ref:`MPI_Win_lock` |mdash| Starts an RMA access epoch locking access to a
 particular rank.
 
 

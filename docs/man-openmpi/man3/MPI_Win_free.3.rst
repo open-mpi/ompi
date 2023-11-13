@@ -6,7 +6,7 @@ MPI_Win_free
 
 .. include_body
 
-:ref:`MPI_Win_free` - Frees the window object and returns a null handle.
+:ref:`MPI_Win_free` |mdash| Frees the window object and returns a null handle.
 
 
 SYNTAX

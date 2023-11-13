@@ -28,7 +28,7 @@ this writing:
   may not include support for all the devices (etc.) that you expect,
   especially if their support headers / libraries are installed in
   non-standard locations.  Network interconnects are an easy example
-  to discuss -- Libfabric and OpenFabrics networks, for example, both
+  to discuss |mdash| Libfabric and OpenFabrics networks, for example, both
   have supplemental headers and libraries that must be found before
   Open MPI can build support for them.  You must specify where these
   files are with the appropriate options to configure.  See the

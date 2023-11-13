@@ -6,7 +6,7 @@ MPI_Request_get_status
 
 .. include_body
 
-:ref:`MPI_Request_get_status` - Access information associated with a
+:ref:`MPI_Request_get_status` |mdash| Access information associated with a
 request without freeing the request.
 
 

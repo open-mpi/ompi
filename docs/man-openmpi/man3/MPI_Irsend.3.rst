@@ -6,7 +6,7 @@ MPI_Irsend
 
 .. include_body
 
-:ref:`MPI_Irsend` - Starts a ready-mode nonblocking send.
+:ref:`MPI_Irsend` |mdash| Starts a ready-mode nonblocking send.
 
 
 SYNTAX

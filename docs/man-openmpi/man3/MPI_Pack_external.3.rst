@@ -6,7 +6,7 @@ MPI_Pack_external
 
 .. include_body
 
-:ref:`MPI_Pack_external` - Writes data to a portable format
+:ref:`MPI_Pack_external` |mdash| Writes data to a portable format
 
 
 SYNTAX

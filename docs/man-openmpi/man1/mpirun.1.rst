@@ -105,8 +105,8 @@ are slightly different than PRRTE's CLI commands.
 
 .. include:: /schizo-ompi-rst-content/schizo-ompi-cli.rstxt
 
-OPTIONS (OLD / HARD-CODED CONTENT -- TO BE AUDITED
---------------------------------------------------
+OPTIONS (OLD / HARD-CODED CONTENT |mdash| TO BE AUDITED
+-------------------------------------------------------
 
 .. admonition:: This is old content
    :class: error
@@ -1548,7 +1548,7 @@ variables.  The ``--mca`` settings similarly override MCA parameters
 set in the ``$OPAL_PREFIX/etc/openmpi-mca-params.conf`` or
 ``$HOME/.openmpi/mca-params.conf`` file.
 
-Unknown ``<key>`` arguments are still set as environment variable --
+Unknown ``<key>`` arguments are still set as environment variable |mdash|
 they are not checked (by mpirun) for correctness.  Illegal or
 incorrect ``<value>`` arguments may or may not be reported |mdash| it
 depends on the specific MCA module.

@@ -5,7 +5,7 @@ MPI_Finalized
 
 .. include_body
 
-:ref:`MPI_Finalized` - Checks whether MPI has been finalized
+:ref:`MPI_Finalized` |mdash| Checks whether MPI has been finalized
 
 SYNTAX
 ------

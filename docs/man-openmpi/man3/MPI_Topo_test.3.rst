@@ -6,7 +6,7 @@ MPI_Topo_test
 
 .. include_body
 
-:ref:`MPI_Topo_test` - Determines the type of topology (if any) associated
+:ref:`MPI_Topo_test` |mdash| Determines the type of topology (if any) associated
 with a communicator.
 
 

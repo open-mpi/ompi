@@ -6,7 +6,7 @@ MPI_Win_allocate_shared
 
 .. include_body
 
-:ref:`MPI_Win_allocate_shared` - One-sided MPI call that allocates shared
+:ref:`MPI_Win_allocate_shared` |mdash| One-sided MPI call that allocates shared
 memory and returns a window object for RMA operations.
 
 

@@ -6,7 +6,7 @@ MPI_File_iread_at_all
 
 .. include_body
 
-:ref:`MPI_File_iread_at_all` - Reads a file at an explicitly specified
+:ref:`MPI_File_iread_at_all` |mdash| Reads a file at an explicitly specified
 offset (nonblocking, collective).
 
 

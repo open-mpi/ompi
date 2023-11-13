@@ -5,7 +5,7 @@ MPI_Free_mem
 
 .. include_body
 
-:ref:`MPI_Free_mem` - Frees memory that has been allocated using :ref:`MPI_Alloc_mem`.
+:ref:`MPI_Free_mem` |mdash| Frees memory that has been allocated using :ref:`MPI_Alloc_mem`.
 
 SYNTAX
 ------

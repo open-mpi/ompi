@@ -54,7 +54,7 @@ C / C++
   * C99-style mixing declarations are allow allowable (and preferred).
 
 * **ALWAYS** include ``<level>_config.h`` as your first #include file,
-  where ``<level>`` is one of ``ompi``, ``oshmem``, or ``opal`` -- the
+  where ``<level>`` is one of ``ompi``, ``oshmem``, or ``opal`` |mdash| the
   level that you're writing in.  There are very, very few cases where
   this is not true (E.g., some bizarre Windows scenarios).  But in
   99.9999% of cases, this file should be included **first** so that it
@@ -77,7 +77,7 @@ C / C++
   * The GNU Way is to ``#define`` a macro when it is "true" and to
     ``#undef`` it when it is "false".
   * In Open MPI, we **always** ``#define`` a logical macro to be
-    either 0 or 1 -- we never ``#undef`` it.
+    either 0 or 1 |mdash| we never ``#undef`` it.
   * The reason for this is defensive programming: if you are only
     checking if a preprocessor macro is defined (via ``#ifdef FOO`` or
     ``#if defined(FOO)``), you will get no warning when compiling if

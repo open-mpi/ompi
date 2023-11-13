@@ -6,7 +6,7 @@ MPI_Win_delete_attr
 
 .. include_body
 
-:ref:`MPI_Win_delete_attr` - Deletes an attribute from a window.
+:ref:`MPI_Win_delete_attr` |mdash| Deletes an attribute from a window.
 
 
 SYNTAX

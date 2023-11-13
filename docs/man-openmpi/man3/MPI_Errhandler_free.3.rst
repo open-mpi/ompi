@@ -6,7 +6,7 @@ MPI_Errhandler_free
 
 .. include_body
 
-:ref:`MPI_Errhandler_free` - Frees an MPI-style error handler.
+:ref:`MPI_Errhandler_free` |mdash| Frees an MPI-style error handler.
 
 
 SYNTAX

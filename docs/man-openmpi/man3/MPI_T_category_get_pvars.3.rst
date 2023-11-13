@@ -6,7 +6,7 @@ MPI_T_category_get_pvars
 
 .. include_body
 
-:ref:`MPI_T_category_get_pvars` - Query which performance variables are in
+:ref:`MPI_T_category_get_pvars` |mdash| Query which performance variables are in
 a category
 
 

@@ -5,7 +5,7 @@ MPI_Grequest_complete
 
 .. include_body
 
-:ref:`MPI_Grequest_complete` - Reports that a generalized request is
+:ref:`MPI_Grequest_complete` |mdash| Reports that a generalized request is
 complete.
 
 SYNTAX

@@ -6,7 +6,7 @@ MPI_Comm_get_name
 
 .. include_body
 
-:ref:`MPI_Comm_get_name` - Returns the name that was most recently
+:ref:`MPI_Comm_get_name` |mdash| Returns the name that was most recently
 associated with a communicator.
 
 

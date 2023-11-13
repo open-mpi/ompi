@@ -6,7 +6,7 @@ MPI_Comm_size
 
 .. include_body
 
-:ref:`MPI_Comm_size` - Returns the size of the group associated with a
+:ref:`MPI_Comm_size` |mdash| Returns the size of the group associated with a
 communicator.
 
 

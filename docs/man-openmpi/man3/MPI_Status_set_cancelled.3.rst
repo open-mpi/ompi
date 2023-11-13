@@ -6,7 +6,7 @@ MPI_Status_set_cancelled
 
 .. include_body
 
-:ref:`MPI_Status_set_cancelled` - Sets *status* to indicate a request has
+:ref:`MPI_Status_set_cancelled` |mdash| Sets *status* to indicate a request has
 been canceled.
 
 

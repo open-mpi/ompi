@@ -6,7 +6,7 @@ MPI_Type_get_name
 
 .. include_body
 
-:ref:`MPI_Type_get_name` - Gets the name of a data type.
+:ref:`MPI_Type_get_name` |mdash| Gets the name of a data type.
 
 
 SYNTAX

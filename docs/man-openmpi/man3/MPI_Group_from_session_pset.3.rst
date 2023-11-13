@@ -5,7 +5,7 @@ MPI_Group_from_session_pset
 
 .. include_body
 
-:ref:`MPI_Group_from_session_pset` - Creates a group using a provided session
+:ref:`MPI_Group_from_session_pset` |mdash| Creates a group using a provided session
 handle and process set.
 
 SYNTAX

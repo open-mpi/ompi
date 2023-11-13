@@ -6,7 +6,7 @@ MPI_File_set_info
 
 .. include_body
 
-:ref:`MPI_File_set_info` - Sets new values for hints (collective).
+:ref:`MPI_File_set_info` |mdash| Sets new values for hints (collective).
 
 
 SYNTAX

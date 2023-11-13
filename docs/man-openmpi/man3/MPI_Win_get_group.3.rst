@@ -6,7 +6,7 @@ MPI_Win_get_group
 
 .. include_body
 
-:ref:`MPI_Win_get_group` - Returns a duplicate of the group of the
+:ref:`MPI_Win_get_group` |mdash| Returns a duplicate of the group of the
 communicator used to create the window.
 
 

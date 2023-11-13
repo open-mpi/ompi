@@ -6,7 +6,7 @@ MPI_T_cvar_read
 
 .. include_body
 
-:ref:`MPI_T_cvar_read` - Read the value of a control variable
+:ref:`MPI_T_cvar_read` |mdash| Read the value of a control variable
 
 
 SYNTAX

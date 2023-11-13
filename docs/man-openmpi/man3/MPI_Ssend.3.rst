@@ -6,7 +6,7 @@ MPI_Ssend
 
 .. include_body
 
-:ref:`MPI_Ssend` - Standard synchronous send.
+:ref:`MPI_Ssend` |mdash| Standard synchronous send.
 
 
 SYNTAX
@@ -66,8 +66,9 @@ OUTPUT PARAMETER
 DESCRIPTION
 -----------
 
-:ref:`MPI_Ssend` performs a synchronous-mode, blocking send. See the MPI-1
-Standard for more detailed information about such sends.
+:ref:`MPI_Ssend` performs a synchronous-mode, blocking send. See the
+`MPI Standard <https://www.mpi-forum.org/docs/>`_ for
+more detailed information about such sends.
 
 
 ERRORS

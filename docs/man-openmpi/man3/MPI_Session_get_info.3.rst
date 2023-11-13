@@ -5,7 +5,7 @@ MPI_Session_get_info
 
 .. include_body
 
-:ref:`MPI_Session_get_info` - Returns an info object containing the hints of an
+:ref:`MPI_Session_get_info` |mdash| Returns an info object containing the hints of an
 MPI Session
 
 SYNTAX

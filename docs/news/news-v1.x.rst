@@ -30,7 +30,7 @@ Open MPI version 1.10.7
 - Fix Fortran compilation errors by removing MPI_SIZEOF in the Fortran
   interfaces when the compiler does not support it
 - Fixes for the pre-ignore-TKR "mpi" Fortran module implementation
-  (i.e., for older Fortran compilers -- these problems did not exist
+  (i.e., for older Fortran compilers |mdash| these problems did not exist
   in the "mpi" module implementation for modern Fortran compilers):
   - Add ``PMPI_*`` interfaces
   - Fix typo in MPI_FILE_WRITE_AT_ALL_BEGIN interface name
@@ -1544,7 +1544,7 @@ Open MPI version 1.5.2
 :Date: 9 Mar 2011
 
 - Replaced all custom topology / affinity code with initial support
-  for hwloc v1.1.1 (PLPA has been removed -- long live hwloc!).  Note
+  for hwloc v1.1.1 (PLPA has been removed |mdash| long live hwloc!).  Note
   that hwloc is bundled with Open MPI, but an external hwloc can be
   used, if desired.  See README for more details.
 - Many CMake updates for Windows builds.
@@ -2084,7 +2084,7 @@ Open MPI version 1.3.3
   tracking down the issues.
 - Change the behavior of the EXTRA_STATE parameter that is passed to
   Fortran attribute callback functions: this value is now stored
-  internally in MPI -- it no longer references the original value
+  internally in MPI |mdash| it no longer references the original value
   passed by ``MPI_*_CREATE_KEYVAL``.
 - Allow the overriding RFC1918 and RFC3330 for the specification of
   "private" networks, thereby influencing Open MPI's TCP

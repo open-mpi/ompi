@@ -6,7 +6,7 @@ MPI_Win_create_keyval
 
 .. include_body
 
-:ref:`MPI_Win_create_keyval` - Creates a keyval for a window.
+:ref:`MPI_Win_create_keyval` |mdash| Creates a keyval for a window.
 
 
 SYNTAX

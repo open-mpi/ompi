@@ -6,7 +6,7 @@ MPI_Comm_get_attr
 
 .. include_body
 
-:ref:`MPI_Comm_get_attr` - Retrieves attribute value by key.
+:ref:`MPI_Comm_get_attr` |mdash| Retrieves attribute value by key.
 
 
 SYNTAX

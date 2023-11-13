@@ -6,7 +6,7 @@ MPI_Group_translate_ranks
 
 .. include_body
 
-:ref:`MPI_Group_translate_ranks` - Translates the ranks of processes in one
+:ref:`MPI_Group_translate_ranks` |mdash| Translates the ranks of processes in one
 group to those in another group.
 
 

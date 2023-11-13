@@ -7,7 +7,7 @@ MPI_Reduce_scatter_block
 .. include_body
 
 :ref:`MPI_Reduce_scatter_block`, :ref:`MPI_Ireduce_scatter_block`,
-:ref:`MPI_Reduce_scatter_block_init` - Combines values and scatters the
+:ref:`MPI_Reduce_scatter_block_init` |mdash| Combines values and scatters the
 results in blocks.
 
 

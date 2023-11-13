@@ -6,7 +6,7 @@ MPI_File_write_at_all_begin
 
 .. include_body
 
-:ref:`MPI_File_write_at_all_begin` - Writes a file at explicitly specified
+:ref:`MPI_File_write_at_all_begin` |mdash| Writes a file at explicitly specified
 offsets; beginning part of a split collective routine (nonblocking).
 
 
@@ -85,7 +85,7 @@ NOTES
 -----
 
 All the nonblocking collective routines for data access are "split" into
-two routines, each with \_begin or \_end as a suffix. These split
+two routines, each with ``_begin`` or ``_end`` as a suffix. These split
 collective routines are subject to the semantic rules described in
 Section 9.4.5 of the MPI-2 standard.
 

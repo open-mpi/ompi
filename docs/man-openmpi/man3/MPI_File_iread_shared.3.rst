@@ -6,7 +6,7 @@ MPI_File_iread_shared
 
 .. include_body
 
-:ref:`MPI_File_iread_shared` - Reads a file using the shared file pointer
+:ref:`MPI_File_iread_shared` |mdash| Reads a file using the shared file pointer
 (nonblocking, noncollective).
 
 

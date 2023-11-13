@@ -5,7 +5,7 @@ MPI_Get_processor_name
 
 .. include_body
 
-:ref:`MPI_Get_processor_name` - Gets the name of the processor.
+:ref:`MPI_Get_processor_name` |mdash| Gets the name of the processor.
 
 SYNTAX
 ------

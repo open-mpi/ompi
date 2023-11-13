@@ -6,7 +6,7 @@ MPI_Fetch_and_op
 
 .. include_body
 
-:ref:`MPI_Fetch_and_op` - Combines the contents of the origin buffer with
+:ref:`MPI_Fetch_and_op` |mdash| Combines the contents of the origin buffer with
 that of a target buffer and returns the target buffer value.
 
 

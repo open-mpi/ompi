@@ -6,7 +6,7 @@ MPI_File_read_at
 
 .. include_body
 
-:ref:`MPI_File_read_at` - Reads a file at an explicitly specified offset
+:ref:`MPI_File_read_at` |mdash| Reads a file at an explicitly specified offset
 (blocking, noncollective).
 
 
@@ -81,7 +81,7 @@ locating an offset. The data is taken out of those parts of the file
 specified by the current view. :ref:`MPI_File_read_at` stores the number of
 *datatype* elements actually read in *status.* All other fields of
 *status* are undefined. It is erroneous to call this function if
-MPI_MODE_SEQUENTIAL mode was specified when the file was opened.
+``MPI_MODE_SEQUENTIAL`` mode was specified when the file was opened.
 
 
 ERRORS

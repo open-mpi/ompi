@@ -238,7 +238,7 @@ be used with ``configure``:
   Some examples:
 
   #. Default to building all components as static (i.e., as part of
-     the Open MPI core libraries -- no DSOs)::
+     the Open MPI core libraries |mdash| no DSOs)::
 
         shell$ ./configure
 
@@ -304,7 +304,7 @@ be used with ``configure``:
   their Open MPI package, both of which require support libraries
   (``libFOO.so`` and ``libBAR.so``).  If an end user only has BAR
   hardware, they likely only have ``libBAR.so`` available on their
-  systems -- not ``libFOO.so``.  Disabling load errors by default will
+  systems |mdash| not ``libFOO.so``.  Disabling load errors by default will
   prevent the user from seeing potentially confusing warnings about
   the FOO components failing to load because ``libFOO.so`` is not
   available on their systems.

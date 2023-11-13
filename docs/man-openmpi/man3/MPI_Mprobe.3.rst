@@ -6,7 +6,7 @@ MPI_Mprobe
 
 .. include_body
 
-:ref:`MPI_Mprobe` - Blocking matched probe for a message.
+:ref:`MPI_Mprobe` |mdash| Blocking matched probe for a message.
 
 
 SYNTAX

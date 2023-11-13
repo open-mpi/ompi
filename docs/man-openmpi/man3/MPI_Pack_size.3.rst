@@ -6,7 +6,7 @@ MPI_Pack_size
 
 .. include_body
 
-:ref:`MPI_Pack_size` - Returns the upper bound on the amount of space
+:ref:`MPI_Pack_size` |mdash| Returns the upper bound on the amount of space
 needed to pack a message.
 
 

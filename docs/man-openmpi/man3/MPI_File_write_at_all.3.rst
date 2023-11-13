@@ -6,7 +6,7 @@ MPI_File_write_at_all
 
 .. include_body
 
-:ref:`MPI_File_write_at_all` - Writes a file at explicitly specified
+:ref:`MPI_File_write_at_all` |mdash| Writes a file at explicitly specified
 offsets (blocking, collective).
 
 
@@ -81,7 +81,7 @@ written into those parts of the file specified by the current view.
 :ref:`MPI_File_write_at_all` stores the number of *datatype* elements actually
 written in *status.* All other fields of *status* are undefined.
 
-It is erroneous to call this function if MPI_MODE_SEQUENTIAL mode was
+It is erroneous to call this function if ``MPI_MODE_SEQUENTIAL`` mode was
 specified when the file was opened.
 
 
