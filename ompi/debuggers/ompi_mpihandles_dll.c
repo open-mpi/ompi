@@ -7,7 +7,9 @@
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2017 IBM Corp.  All rights reserved.
+ * Copyright (c) 2017      IBM Corp.  All rights reserved.
+ * Copyright (c) 2023      NVIDIA Corporation. All rights reserved.
+ * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -458,8 +460,21 @@ int mpidbg_comm_query(mqs_image *image, mqs_image_info *image_info,
     (*info)->comm_c_handle = c_comm;
 
     printf("mpidbg_comm_query: %p\n", (void*) c_comm);
-    mqs_fetch_data(process, c_comm + i_info->ompi_communicator_t.offset.c_name,
+    mqs_taddr_t name_addr = ompi_fetch_pointer( process,
+                                                c_comm + i_info->ompi_communicator_t.offset.c_name,
+                                                p_info );
+    mqs_fetch_data(process, name_addr,
                    MPIDBG_MAX_OBJECT_NAME, (*info)->comm_name);
+    (*info)->comm_name[MPIDBG_MAX_OBJECT_NAME-1] = '\0';
+    /* Defensively zero anything beyond the actual name.
+
+       We know that MPIDBG_MAX_OBJECT_NAME == MPI_MAX_OBJECT_NAME (per
+       mpihandles_interface.h), and OMPI *guarantees* that
+       (*info)->comm_name will be both \0-terminated, and have a
+       maximum of (MPI_MAX_OBJECT_NAME-1) non-NULL characters.  So the
+       memset length expression below is guaranted be >=0. */
+    memset((*info)->comm_name + strlen((*info)->comm_name), 0,
+           MPIDBG_MAX_OBJECT_NAME - 1 - strlen((*info)->comm_name));
 
     /* Get this process' rank in the comm */
     (*info)->comm_rank = ompi_fetch_int(process,
