@@ -18,6 +18,7 @@
  *                         All Rights reserved.
  * Copyright (c) 2022      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2023      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -109,6 +110,7 @@ static int create_win(int target_keyval);
 static int free_win(int keyval);
 
 static int set_f(int keyval, MPI_Fint value);
+static int unset_f(int keyval);
 
 /*
  * We do not need a lock here as this function is invoked when the 
@@ -188,6 +190,17 @@ int ompi_attr_set_predefined_keyvals_for_wm(void)
     return ret;
 }
 
+void ompi_attr_delete_predefined_keyvals_for_wm(void)
+{
+    unset_f(MPI_TAG_UB);
+    unset_f(MPI_HOST);
+    unset_f(MPI_IO);
+    unset_f(MPI_WTIME_IS_GLOBAL);
+    unset_f(MPI_FT);
+    unset_f(MPI_LASTUSEDCODE);
+    unset_f(MPI_UNIVERSE_SIZE);
+    unset_f(MPI_APPNUM);
+}
 
 /*
  * We do not need a lock here as this function is invoked when the 
@@ -291,4 +304,11 @@ static int set_f(int keyval, MPI_Fint value)
                               &MPI_COMM_WORLD->c_keyhash,
                               keyval, value,
                               true);
+}
+
+static int unset_f(int keyval)
+{
+    return ompi_attr_delete(COMM_ATTR, MPI_COMM_WORLD,
+                            MPI_COMM_WORLD->c_keyhash,
+                            keyval, true);
 }
