@@ -454,12 +454,11 @@ int mpidbg_comm_query(mqs_image *image, mqs_image_info *image_info,
     if (NULL == *info) {
         return MPIDBG_ERR_NO_MEM;
     }
-    /* JMS temporarily zero everything out.  Remove this when we fill
-       in all the fields */
+    /* Zero everything out.  Remove this when we fill in all the
+       fields */
     memset(*info, 0, sizeof(struct mpidbg_comm_info_t));
     (*info)->comm_c_handle = c_comm;
 
-    printf("mpidbg_comm_query: %p\n", (void*) c_comm);
     mqs_taddr_t name_addr = ompi_fetch_pointer( process,
                                                 c_comm + i_info->ompi_communicator_t.offset.c_name,
                                                 p_info );
