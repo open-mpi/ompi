@@ -6,7 +6,7 @@ MPI_Comm_spawn
 
 .. include_body
 
-:ref:`MPI_Comm_spawn` - Spawns a number of identical binaries.
+:ref:`MPI_Comm_spawn` |mdash| Spawns a number of identical binaries.
 
 
 SYNTAX

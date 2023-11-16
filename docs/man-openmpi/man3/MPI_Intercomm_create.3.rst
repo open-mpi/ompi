@@ -6,7 +6,7 @@ MPI_Intercomm_create
 
 .. include_body
 
-:ref:`MPI_Intercomm_create` - Creates an intercommunicator from two
+:ref:`MPI_Intercomm_create` |mdash| Creates an intercommunicator from two
 intracommunicators.
 
 

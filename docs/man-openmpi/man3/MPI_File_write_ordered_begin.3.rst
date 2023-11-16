@@ -5,7 +5,7 @@ MPI_File_write_ordered_begin
 
 .. include_body
 
-:ref:`MPI_File_write_ordered_begin` - Writes a file at a location specified
+:ref:`MPI_File_write_ordered_begin` |mdash| Writes a file at a location specified
 by a shared file pointer; beginning part of a split collective routine
 (nonblocking).
 
@@ -85,7 +85,7 @@ NOTES
 -----
 
 All the nonblocking collective routines for data access are "split" into
-two routines, each with \_begin or \_end as a suffix. These split
+two routines, each with ``_begin`` or ``_end`` as a suffix. These split
 collective routines are subject to the semantic rules described in
 Section 9.4.5 of the MPI-2 standard.
 

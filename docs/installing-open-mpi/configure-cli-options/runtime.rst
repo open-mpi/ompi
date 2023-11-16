@@ -13,7 +13,7 @@ can be used with ``configure``:
   prevents most ``rsh``/``ssh``-based users from needing to modify their
   shell startup files to set the ``PATH`` and/or ``LD_LIBRARY_PATH`` for
   Open MPI on remote nodes.  Note, however, that such users may still
-  desire to set ``PATH`` -- perhaps even in their shell startup files --
+  desire to set ``PATH`` |mdash| perhaps even in their shell startup files |mdash|
   so that executables such as ``mpicc`` and ``mpirun`` can be found
   without needing to type long path names.
 

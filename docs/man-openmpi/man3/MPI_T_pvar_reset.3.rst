@@ -6,7 +6,7 @@ MPI_T_pvar_reset
 
 .. include_body
 
-:ref:`MPI_T_pvar_reset` - Reset the value of a performance variable
+:ref:`MPI_T_pvar_reset` |mdash| Reset the value of a performance variable
 
 
 SYNTAX

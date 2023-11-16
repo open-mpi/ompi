@@ -6,7 +6,7 @@ MPI_Comm_rank
 
 .. include_body
 
-:ref:`MPI_Comm_rank` - Determines the rank of the calling process in the
+:ref:`MPI_Comm_rank` |mdash| Determines the rank of the calling process in the
 communicator.
 
 

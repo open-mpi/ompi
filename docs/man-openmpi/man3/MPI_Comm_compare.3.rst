@@ -5,7 +5,7 @@ MPI_Comm_compare
 
 .. include_body
 
-:ref:`MPI_Comm_compare` - Compares two communicators.
+:ref:`MPI_Comm_compare` |mdash| Compares two communicators.
 
 SYNTAX
 ------

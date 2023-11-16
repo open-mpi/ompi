@@ -6,7 +6,7 @@ MPI_Rsend
 
 .. include_body
 
-:ref:`MPI_Rsend` - Ready send.
+:ref:`MPI_Rsend` |mdash| Ready send.
 
 
 SYNTAX

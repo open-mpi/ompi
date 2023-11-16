@@ -6,7 +6,7 @@ MPI_Pready_range
 
 .. include_body
 
-:ref:`MPI_Pready_range` - Indicates that a given range os send-side
+:ref:`MPI_Pready_range` |mdash| Indicates that a given range os send-side
 partitions are ready to be transferred.
 
 

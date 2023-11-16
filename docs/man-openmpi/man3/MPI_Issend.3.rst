@@ -6,7 +6,7 @@ MPI_Issend
 
 .. include_body
 
-:ref:`MPI_Issend` - Starts a nonblocking synchronous send.
+:ref:`MPI_Issend` |mdash| Starts a nonblocking synchronous send.
 
 
 SYNTAX

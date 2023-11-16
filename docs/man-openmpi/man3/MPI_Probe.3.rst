@@ -6,7 +6,7 @@ MPI_Probe
 
 .. include_body
 
-:ref:`MPI_Probe` - Blocking test for a message.
+:ref:`MPI_Probe` |mdash| Blocking test for a message.
 
 
 SYNTAX
@@ -81,7 +81,7 @@ will return, unless the message is received by another concurrent
 receive operation (that is executed by another thread at the probing
 process). Similarly, if a process busy waits with :ref:`MPI_Iprobe` and a
 matching message has been issued, then the call to :ref:`MPI_Iprobe` will
-eventually return flag = true unless the message is received by another
+eventually return *flag* = true unless the message is received by another
 concurrent receive operation.
 
 **Example 1:** Use blocking probe to wait for an incoming message.
@@ -142,6 +142,16 @@ ERRORS
 ------
 
 .. include:: ./ERRORS.rst
+
+Note that per the "Return Status" section in the "Point-to-Point
+Communication" chapter in the `MPI Standard
+<https://www.mpi-forum.org/docs/>`_, MPI errors on messages queried
+by :ref:`MPI_Probe` do not set the ``status.MPI_ERROR`` field in the
+returned *status*.  The error code is always passed to the back-end
+error handler and may be passed back to the caller through the return
+value of :ref:`MPI_Probe` if the back-end error handler returns it.
+The pre-defined MPI error handler ``MPI_ERRORS_RETURN`` exhibits this
+behavior, for example.
 
 .. seealso::
    * :ref:`MPI_Iprobe`

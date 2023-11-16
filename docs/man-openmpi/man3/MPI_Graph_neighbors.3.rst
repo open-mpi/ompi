@@ -6,7 +6,7 @@ MPI_Graph_neighbors
 
 .. include_body
 
-:ref:`MPI_Graph_neighbors` - Returns the neighbors of a node associated
+:ref:`MPI_Graph_neighbors` |mdash| Returns the neighbors of a node associated
 with a graph topology.
 
 

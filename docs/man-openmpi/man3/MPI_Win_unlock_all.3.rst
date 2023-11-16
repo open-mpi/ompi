@@ -6,7 +6,7 @@ MPI_Win_unlock_all
 
 .. include_body
 
-:ref:`MPI_Win_unlock_all` - Completes an RMA access epoch started by a call
+:ref:`MPI_Win_unlock_all` |mdash| Completes an RMA access epoch started by a call
 to :ref:`MPI_Win_lock_all`.
 
 

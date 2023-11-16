@@ -6,7 +6,7 @@ MPI_Dist_graph_create
 
 .. include_body
 
-:ref:`MPI_Dist_graph_create` - Makes a new communicator to which topology
+:ref:`MPI_Dist_graph_create` |mdash| Makes a new communicator to which topology
 information has been attached.
 
 

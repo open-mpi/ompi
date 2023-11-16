@@ -6,7 +6,7 @@ MPI_Irecv
 
 .. include_body
 
-:ref:`MPI_Irecv` - Starts a standard-mode, nonblocking receive.
+:ref:`MPI_Irecv` |mdash| Starts a standard-mode, nonblocking receive.
 
 
 SYNTAX

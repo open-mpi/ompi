@@ -6,7 +6,7 @@ MPI_Comm_get_info
 
 .. include_body
 
-:ref:`MPI_Comm_get_info` - Retrieves active communicator info hints
+:ref:`MPI_Comm_get_info` |mdash| Retrieves active communicator info hints
 
 
 SYNTAX

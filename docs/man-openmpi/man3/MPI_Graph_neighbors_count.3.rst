@@ -5,7 +5,7 @@ MPI_Graph_neighbors_count
 
 .. include_body
 
-:ref:`MPI_Graph_neighbors_count` - Returns the number of neighbors of a node
+:ref:`MPI_Graph_neighbors_count` |mdash| Returns the number of neighbors of a node
 associated with a graph topology.
 
 SYNTAX

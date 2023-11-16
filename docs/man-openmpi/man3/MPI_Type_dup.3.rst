@@ -6,7 +6,7 @@ MPI_Type_dup
 
 .. include_body
 
-:ref:`MPI_Type_dup` - Duplicates a data type with associated key values.
+:ref:`MPI_Type_dup` |mdash| Duplicates a data type with associated key values.
 
 
 SYNTAX

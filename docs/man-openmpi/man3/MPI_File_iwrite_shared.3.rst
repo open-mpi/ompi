@@ -6,7 +6,7 @@ MPI_File_iwrite_shared
 
 .. include_body
 
-:ref:`MPI_File_iwrite_shared` - Writes a file using the shared file pointer
+:ref:`MPI_File_iwrite_shared` |mdash| Writes a file using the shared file pointer
 (nonblocking, noncollective).
 
 

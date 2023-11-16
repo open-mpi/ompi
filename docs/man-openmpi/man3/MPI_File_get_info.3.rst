@@ -6,7 +6,7 @@ MPI_File_get_info
 
 .. include_body
 
-:ref:`MPI_File_get_info` - Returns a new info object containing values for
+:ref:`MPI_File_get_info` |mdash| Returns a new info object containing values for
 current hints associated with a file.
 
 

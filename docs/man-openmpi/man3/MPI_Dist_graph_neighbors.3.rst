@@ -6,7 +6,7 @@ MPI_Dist_graph_neighbors
 
 .. include_body
 
-:ref:`MPI_Dist_graph_neighbors` - Returns the neighbors of the calling
+:ref:`MPI_Dist_graph_neighbors` |mdash| Returns the neighbors of the calling
 process in a distributed graph topology.
 
 

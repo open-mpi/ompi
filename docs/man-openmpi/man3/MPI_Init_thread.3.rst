@@ -6,7 +6,7 @@ MPI_Init_thread
 
 .. include_body
 
-:ref:`MPI_Init_thread` - Initializes the MPI execution environment
+:ref:`MPI_Init_thread` |mdash| Initializes the MPI execution environment
 
 
 SYNTAX

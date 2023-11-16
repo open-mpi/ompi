@@ -5,7 +5,7 @@ MPI_Session_create_errhandler
 
 .. include_body
 
-:ref:`MPI_Session_create_errhandler` - Creates an error handler that can be
+:ref:`MPI_Session_create_errhandler` |mdash| Creates an error handler that can be
 attached to sessions
 
 SYNTAX

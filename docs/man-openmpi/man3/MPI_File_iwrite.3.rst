@@ -6,7 +6,7 @@ MPI_File_iwrite
 
 .. include_body
 
-:ref:`MPI_File_iwrite` - Writes a file starting at the location specified
+:ref:`MPI_File_iwrite` |mdash| Writes a file starting at the location specified
 by the individual file pointer (nonblocking, noncollective).
 
 
@@ -80,7 +80,7 @@ specified by the current view. :ref:`MPI_File_iwrite` stores the number of
 *datatype* elements actually written in *status.* All other fields of
 *status* are undefined.
 
-It is erroneous to call this function if MPI_MODE_SEQUENTIAL mode was
+It is erroneous to call this function if ``MPI_MODE_SEQUENTIAL`` mode was
 specified when the file was open.
 
 

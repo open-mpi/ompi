@@ -6,7 +6,7 @@ MPI_Comm_set_attr
 
 .. include_body
 
-:ref:`MPI_Comm_set_attr` - Stores attribute value associated with a key.
+:ref:`MPI_Comm_set_attr` |mdash| Stores attribute value associated with a key.
 
 
 SYNTAX

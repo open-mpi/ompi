@@ -5,7 +5,7 @@ MPI_Session_get_pset_info
 
 .. include_body
 
-:ref:`MPI_Session_get_pset_info` - Returns an info object containing properties
+:ref:`MPI_Session_get_pset_info` |mdash| Returns an info object containing properties
 of a specific process set
 
 SYNTAX

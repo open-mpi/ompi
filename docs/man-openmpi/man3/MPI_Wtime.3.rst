@@ -6,7 +6,7 @@ MPI_Wtime
 
 .. include_body
 
-:ref:`MPI_Wtime` - Returns an elapsed time on the calling processor.
+:ref:`MPI_Wtime` |mdash| Returns an elapsed time on the calling processor.
 
 
 SYNTAX

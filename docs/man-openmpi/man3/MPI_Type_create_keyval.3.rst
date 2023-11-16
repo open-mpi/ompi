@@ -6,7 +6,7 @@ MPI_Type_create_keyval
 
 .. include_body
 
-:ref:`MPI_Type_create_keyval` - Generates a new attribute key for caching
+:ref:`MPI_Type_create_keyval` |mdash| Generates a new attribute key for caching
 on data types.
 
 

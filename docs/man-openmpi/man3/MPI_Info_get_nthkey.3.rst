@@ -6,7 +6,7 @@ MPI_Info_get_nthkey
 
 .. include_body
 
-:ref:`MPI_Info_get_nthkey` - Returns the *n*\ th defined key in *info*.
+:ref:`MPI_Info_get_nthkey` |mdash| Returns the *n*\ th defined key in *info*.
 
 
 SYNTAX

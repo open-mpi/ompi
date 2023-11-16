@@ -6,7 +6,7 @@ MPI_Dist_graph_create_adjacent
 
 .. include_body
 
-:ref:`MPI_Dist_graph_create_adjacent` - Makes a new communicator to which
+:ref:`MPI_Dist_graph_create_adjacent` |mdash| Makes a new communicator to which
 topology information has been attached.
 
 

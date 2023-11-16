@@ -337,7 +337,7 @@ Open MPI version 2.1.0
   bindings.  Thanks to Alastair McKinstry for the bug report.
 - Add support for ARM v8.
 - Several MCA parameters now directly support MPI_T enumerator
-  semantics (i.e., they accept a limited set of values -- e.g., MCA
+  semantics (i.e., they accept a limited set of values |mdash| e.g., MCA
   parameters that accept boolean values).
 - Added ``--with-libmpi-name=<STRING>`` configure option for vendor
   releases of Open MPI.  See the README for more detail.

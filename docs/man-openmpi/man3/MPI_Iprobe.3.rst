@@ -6,7 +6,7 @@ MPI_Iprobe
 
 .. include_body
 
-:ref:`MPI_Iprobe` - Nonblocking test for a message.
+:ref:`MPI_Iprobe` |mdash| Nonblocking test for a message.
 
 
 SYNTAX
@@ -72,19 +72,20 @@ the information returned by status). In particular, the user may
 allocate memory for the receive buffer, according to the length of the
 probed message.
 
-``MPI_Iprobe(source, tag, comm, flag, status)`` returns flag = true if there
+``MPI_Iprobe(source, tag, comm, flag, status)`` returns *flag* = true if there
 is a message that can be received and that matches the pattern specified
 by the arguments source, tag, and comm. The call matches the same
 message that would have been received by a call to ``MPI_Recv(..., source,
 tag, comm, status)`` executed at the same point in the program, and
 returns in status the same value that would have been returned by
-:ref:`MPI_Recv`. Otherwise, the call returns flag = false, and leaves status
+:ref:`MPI_Recv`. Otherwise, the call returns *flag* = false, and leaves status
 undefined.
 
-If :ref:`MPI_Iprobe` returns flag = true, then the content of the status object
-can be subsequently accessed as described in Section 3.2.5 of the MPI-1
-Standard, "Return Status," to find the source, tag, and length of the
-probed message.
+If :ref:`MPI_Iprobe` returns *flag* = true, then the content of the
+status object can be subsequently accessed as described in the "Return
+Status" subsection of the "Point-to-Point Communication" chapter in
+the `MPI Standard <https://www.mpi-forum.org/docs/>`_ to find the
+source, tag, and length of the probed message.
 
 A subsequent receive executed with the same context, and the source and
 tag returned in status by :ref:`MPI_Iprobe` will receive the message that was
@@ -109,14 +110,25 @@ it is received.
 NOTE
 ----
 
-Users of libmpi-mt should remember that two threads may do an :ref:`MPI_Iprobe`
-that actually returns true for the same message for both threads.
+Multi-threaded application developers should remember that two threads
+calling :ref:`MPI_Iprobe` may return true for the same message in both
+threads.
 
 
 ERRORS
 ------
 
 .. include:: ./ERRORS.rst
+
+Note that per the "Return Status" section in the "Point-to-Point
+Communication" chapter in the `MPI Standard
+<https://www.mpi-forum.org/docs/>`_, MPI errors on messages queried
+by :ref:`MPI_Iprobe` do not set the ``status.MPI_ERROR`` field in the
+returned *status*.  The error code is always passed to the back-end
+error handler and may be passed back to the caller through the return
+value of :ref:`MPI_Iprobe` if the back-end error handler returns it.
+The pre-defined MPI error handler ``MPI_ERRORS_RETURN`` exhibits this
+behavior, for example.
 
 .. seealso::
    * :ref:`MPI_Probe`

@@ -6,7 +6,7 @@ MPI_T_category_get_categories
 
 .. include_body
 
-:ref:`MPI_T_category_get_categories` - Query which categories are in a
+:ref:`MPI_T_category_get_categories` |mdash| Query which categories are in a
 category
 
 

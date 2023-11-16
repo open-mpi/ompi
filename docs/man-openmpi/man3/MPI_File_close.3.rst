@@ -6,7 +6,7 @@ MPI_File_close
 
 .. include_body
 
-:ref:`MPI_File_close` - Closes a file (collective).
+:ref:`MPI_File_close` |mdash| Closes a file (collective).
 
 
 SYNTAX

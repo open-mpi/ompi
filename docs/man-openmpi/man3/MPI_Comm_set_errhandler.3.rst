@@ -6,7 +6,7 @@ MPI_Comm_set_errhandler
 
 .. include_body
 
-:ref:`MPI_Comm_set_errhandler` - Attaches a new error handler to a
+:ref:`MPI_Comm_set_errhandler` |mdash| Attaches a new error handler to a
 communicator.
 
 

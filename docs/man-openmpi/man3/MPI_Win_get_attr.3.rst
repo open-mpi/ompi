@@ -6,7 +6,7 @@ MPI_Win_get_attr
 
 .. include_body
 
-:ref:`MPI_Win_get_attr` - Obtains the value of a window attribute.
+:ref:`MPI_Win_get_attr` |mdash| Obtains the value of a window attribute.
 
 
 SYNTAX

@@ -6,7 +6,7 @@ MPI_File_set_errhandler
 
 .. include_body
 
-:ref:`MPI_File_set_errhandler` - Sets the error handler for a file.
+:ref:`MPI_File_set_errhandler` |mdash| Sets the error handler for a file.
 
 
 SYNTAX

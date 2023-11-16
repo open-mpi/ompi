@@ -6,7 +6,7 @@ MPI_T_pvar_read
 
 .. include_body
 
-:ref:`MPI_T_pvar_read` - Read the value of a performance variable
+:ref:`MPI_T_pvar_read` |mdash| Read the value of a performance variable
 
 
 SYNTAX

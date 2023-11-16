@@ -6,7 +6,7 @@ MPI_Win_create_dynamic
 
 .. include_body
 
-:ref:`MPI_Win_create_dynamic` - One-sided MPI call that returns a window
+:ref:`MPI_Win_create_dynamic` |mdash| One-sided MPI call that returns a window
 object for RMA operations.
 
 

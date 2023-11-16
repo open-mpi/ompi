@@ -6,7 +6,7 @@ MPI_Errhandler_create
 
 .. include_body
 
-:ref:`MPI_Errhandler_create` - Creates an MPI-style error handler -- |deprecated_favor| :ref:`MPI_Comm_create_errhandler`.
+:ref:`MPI_Errhandler_create` |mdash| Creates an MPI-style error handler |mdash| |deprecated_favor| :ref:`MPI_Comm_create_errhandler`.
 
 
 
@@ -78,10 +78,11 @@ may be written in Fortran.
 NOTE
 ----
 
-The MPI-1 Standard states that an implementation may make the output
+The `MPI Standard <https://www.mpi-forum.org/docs/>`_ states that an
+implementation may make the output
 value (errhandler) simply the address of the function. However, the
 action of :ref:`MPI_Errhandler_free` makes this impossible, since it is
-required to set the value of the argument to MPI_ERRHANDLER_NULL. In
+required to set the value of the argument to ``MPI_ERRHANDLER_NULL``. In
 addition, the actual error handler must remain until all communicators
 that use it are freed.
 

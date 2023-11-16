@@ -6,7 +6,7 @@ MPI_Comm_remote_size
 
 .. include_body
 
-:ref:`MPI_Comm_remote_size` - Determines the size of the remote group
+:ref:`MPI_Comm_remote_size` |mdash| Determines the size of the remote group
 associated with an intercommunicator.
 
 

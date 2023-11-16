@@ -6,7 +6,7 @@ MPI_Error_class
 
 .. include_body
 
-:ref:`MPI_Error_class` - Converts an error code into an error class.
+:ref:`MPI_Error_class` |mdash| Converts an error code into an error class.
 
 
 SYNTAX

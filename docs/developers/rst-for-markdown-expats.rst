@@ -228,7 +228,7 @@ Comments
         will not be included in the rendered output.
 
         Your comment can even include blank lines.  You terminate a
-        comment -- just like most other things in RST -- by a blank
+        comment |mdash| just like most other things in RST |mdash| by a blank
         line and then outdenting back out to the same column as the
         first ".".
 

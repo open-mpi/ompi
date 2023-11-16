@@ -5,7 +5,7 @@ MPI_Buffer_attach
 
 .. include_body
 
-:ref:`MPI_Buffer_attach` - Attaches a user-defined buffer for sending.
+:ref:`MPI_Buffer_attach` |mdash| Attaches a user-defined buffer for sending.
 
 SYNTAX
 ------

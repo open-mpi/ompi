@@ -6,7 +6,7 @@ MPI_Waitsome
 
 .. include_body
 
-:ref:`MPI_Waitsome` - Waits for some given communications to complete.
+:ref:`MPI_Waitsome` |mdash| Waits for some given communications to complete.
 
 
 SYNTAX
@@ -113,7 +113,7 @@ using :ref:`MPI_Waitsome`.
               CALL MPI_ISEND(a, n, MPI_REAL, 0, tag, comm, request, ierr)
               CALL MPI_WAIT(request, status, ierr)
            END DO
-       ELSE         ! rank=0 -- server code
+       ELSE         ! rank=0: server code
            DO i=1, size-1
               CALL MPI_IRECV(a(1,i), n, MPI_REAL, i, tag, &
                              comm, requests(i), ierr)
@@ -142,17 +142,17 @@ ERRORS
 
 .. include:: ./ERRORS.rst
 
-For each invocation of :ref:`MPI_Waitsome`, if one or more requests generate an
-MPI error, only the *first* MPI request that caused an error will be
-passed to its corresponding error handler. No other error handlers will
-be invoked (even if multiple requests generated errors). However, *all*
-requests that generate an error will have a relevant error code set in
-the corresponding status.MPI_ERROR field (unless MPI_STATUSES_IGNORE was
-used).
+For each invocation of :ref:`MPI_Waitsome`, if one or more requests
+generate an MPI error, only the *first* MPI request that caused an
+error will be passed to its corresponding error handler. No other
+error handlers will be invoked (even if multiple requests generated
+errors). However, *all* requests that generate an error will have a
+relevant error code set in the corresponding ``status.MPI_ERROR``
+field (unless ``MPI_STATUSES_IGNORE`` was used).
 
-If the invoked error handler allows :ref:`MPI_Waitsome` to return to the
-caller, the value MPI_ERR_IN_STATUS will be returned in the C and
-Fortran bindings.
+If the invoked error handler allows :ref:`MPI_Waitsome` to return to
+the caller, the value ``MPI_ERR_IN_STATUS`` will be returned in the C
+and Fortran bindings.
 
 
 .. seealso::

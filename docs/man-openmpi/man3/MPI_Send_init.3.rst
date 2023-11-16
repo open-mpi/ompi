@@ -6,7 +6,7 @@ MPI_Send_init
 
 .. include_body
 
-:ref:`MPI_Send_init` - Builds a handle for a standard send.
+:ref:`MPI_Send_init` |mdash| Builds a handle for a standard send.
 
 
 SYNTAX

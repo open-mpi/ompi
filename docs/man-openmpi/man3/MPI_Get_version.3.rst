@@ -5,7 +5,7 @@ MPI_Get_version
 
 .. include_body
 
-:ref:`MPI_Get_version` - Returns the version of the standard corresponding
+:ref:`MPI_Get_version` |mdash| Returns the version of the standard corresponding
 to the current implementation.
 
 SYNTAX

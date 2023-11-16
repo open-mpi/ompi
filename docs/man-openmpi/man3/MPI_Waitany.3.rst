@@ -6,7 +6,7 @@ MPI_Waitany
 
 .. include_body
 
-:ref:`MPI_Waitany` - Waits for any specified send or receive to complete.
+:ref:`MPI_Waitany` |mdash| Waits for any specified send or receive to complete.
 
 
 SYNTAX
@@ -93,7 +93,7 @@ special value for the *status* argument.
               CALL MPI_ISEND(a, n, MPI_REAL, 0, tag, comm, request, ierr)
               CALL MPI_WAIT(request, status, ierr)
            END DO
-       ELSE         ! rank=0 -- server code
+       ELSE         ! rank=0: server code
               DO i=1, size-1
                  CALL MPI_IRECV(a(1,i), n, MPI_REAL, i tag, &
                           comm, request_list(i), ierr)
@@ -112,12 +112,15 @@ ERRORS
 
 .. include:: ./ERRORS.rst
 
-Note that per MPI-1 section 3.2.5, MPI errors on requests passed to
-:ref:`MPI_WAITANY` do not set the ``status.MPI_ERROR`` field in the returned
-status. The error code is passed to the back-end error handler and may
-be passed back to the caller through the return value of :ref:`MPI_WAITANY` if
-the back-end error handler returns it. The pre-defined MPI error handler
-``MPI_ERRORS_RETURN`` exhibits this behavior, for example.
+Note that per the "Return Status" section in the "Point-to-Point
+Communication" chapter in the `MPI Standard
+<https://www.mpi-forum.org/docs/>`_, MPI errors on requests passed to
+:ref:`MPI_WAITANY` do not set the ``status.MPI_ERROR`` field in the
+returned *status*.  The error code is always passed to the back-end
+error handler and may be passed back to the caller through the return
+value of :ref:`MPI_WAITANY` if the back-end error handler returns it.
+The pre-defined MPI error handler ``MPI_ERRORS_RETURN`` exhibits this
+behavior, for example.
 
 
 .. seealso::

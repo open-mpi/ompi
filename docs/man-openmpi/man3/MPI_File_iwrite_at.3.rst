@@ -6,7 +6,7 @@ MPI_File_iwrite_at
 
 .. include_body
 
-:ref:`MPI_File_iwrite_at` - Writes a file at an explicitly specified offset
+:ref:`MPI_File_iwrite_at` |mdash| Writes a file at an explicitly specified offset
 (nonblocking, noncollective).
 
 
@@ -85,7 +85,7 @@ elements actually written in *status.* All other fields of *status* are
 undefined. The request structure can be passed to :ref:`MPI_Wait` or :ref:`MPI_Test`,
 which will return a status with the number of bytes actually accessed.
 
-It is erroneous to call this function if MPI_MODE_SEQUENTIAL mode was
+It is erroneous to call this function if ``MPI_MODE_SEQUENTIAL`` mode was
 specified when the file was open.
 
 

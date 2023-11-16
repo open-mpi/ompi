@@ -96,7 +96,7 @@ while there are still processes to be scheduled, Open MPI will trigger
 an oversubscription condition.
 
 If ``:OVERSUBSCRIBE`` is added as a modifier to the ``--map-by``
-option (e.g., ``mpirun --map-by node:OVERSUBSCRIBE ...`` -- :ref:`see
+option (e.g., ``mpirun --map-by node:OVERSUBSCRIBE ...`` |mdash| :ref:`see
 this section <running-mpi-apps-oversubscribing-label>` for more
 details), Open MPI will continue to loop through the list of nodes
 again and try to schedule one more process to each node until all

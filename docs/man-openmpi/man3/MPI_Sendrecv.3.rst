@@ -6,7 +6,7 @@ MPI_Sendrecv
 
 .. include_body
 
-:ref:`MPI_Sendrecv` - Sends and receives a message.
+:ref:`MPI_Sendrecv` |mdash| Sends and receives a message.
 
 
 SYNTAX
@@ -92,8 +92,9 @@ example, even processes send, then receive; odd processes receive first,
 then send) in order to prevent cyclic dependencies that may lead to
 deadlock. When a send-receive operation is used, the communication
 subsystem takes care of these issues. The send-receive operation can be
-used in conjunction with the functions described in Chapter 6 of the
-MPI-1 Standard, "Process Topologies," in order to perform shifts on
+used in conjunction with the functions described in the "Process
+Topologies" chapter in the `MPI Standard
+<https://www.mpi-forum.org/docs/>`_ in order to perform shifts on
 various logical topologies. Also, a send-receive operation is useful for
 implementing remote procedure calls.
 
@@ -115,6 +116,16 @@ ERRORS
 ------
 
 .. include:: ./ERRORS.rst
+
+Note that per the "Return Status" section in the "Point-to-Point
+Communication" chapter in the `MPI Standard
+<https://www.mpi-forum.org/docs/>`_, MPI errors on messages received
+by :ref:`MPI_Sendrecv` do not set the ``status.MPI_ERROR`` field in
+the returned *status*.  The error code is always passed to the
+back-end error handler and may be passed back to the caller through
+the return value of :ref:`MPI_Sendrecv` if the back-end error handler
+returns it.  The pre-defined MPI error handler ``MPI_ERRORS_RETURN``
+exhibits this behavior, for example.
 
 .. seealso::
    * :ref:`MPI_Sendrecv_replace`

@@ -6,7 +6,7 @@ MPI_Info_dup
 
 .. include_body
 
-:ref:`MPI_Info_dup` - Duplicates an info object.
+:ref:`MPI_Info_dup` |mdash| Duplicates an info object.
 
 
 SYNTAX

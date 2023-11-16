@@ -6,7 +6,7 @@ MPI_Group_range_excl
 
 .. include_body
 
-:ref:`MPI_Group_range_excl` - Produces a group by excluding ranges of
+:ref:`MPI_Group_range_excl` |mdash| Produces a group by excluding ranges of
 processes from an existing group.
 
 

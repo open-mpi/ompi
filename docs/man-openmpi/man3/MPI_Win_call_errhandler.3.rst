@@ -6,7 +6,7 @@ MPI_Win_call_errhandler
 
 .. include_body
 
-:ref:`MPI_Win_call_errhandler` - Passes the supplied error code to the
+:ref:`MPI_Win_call_errhandler` |mdash| Passes the supplied error code to the
 error handler assigned to a window
 
 

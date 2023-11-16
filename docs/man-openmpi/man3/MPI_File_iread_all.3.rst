@@ -6,7 +6,7 @@ MPI_File_iread_all
 
 .. include_body
 
-:ref:`MPI_File_iread_all` - Reads a file starting at the location specified
+:ref:`MPI_File_iread_all` |mdash| Reads a file starting at the location specified
 by the individual file pointer (nonblocking, collective).
 
 
@@ -79,7 +79,7 @@ the user's buffer *buf.* The data is taken out of those parts of the
 file specified by the current view. :ref:`MPI_File_iread_all` stores the number
 of data-type elements actually read in *status.* All other fields of
 *status* are undefined. It is erroneous to call this function if
-MPI_MODE_SEQUENTIAL mode was specified when the file was opened.
+``MPI_MODE_SEQUENTIAL`` mode was specified when the file was opened.
 
 
 ERRORS

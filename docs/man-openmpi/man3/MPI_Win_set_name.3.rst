@@ -6,7 +6,7 @@ MPI_Win_set_name
 
 .. include_body
 
-:ref:`MPI_Win_set_name` - Sets the name of a window.
+:ref:`MPI_Win_set_name` |mdash| Sets the name of a window.
 
 
 SYNTAX

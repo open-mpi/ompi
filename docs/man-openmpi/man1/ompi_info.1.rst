@@ -123,7 +123,7 @@ The three categories are:
    used to tweak MPI application performance. This even includes
    parameters that control resource exhaustion levels (e.g., number of
    free list entries, size of buffers, etc.), and could be considered
-   "correctness" parameters if they're set too low. But, really --
+   "correctness" parameters if they're set too low. But, really |mdash|
    they're tuning parameters.
 
 #. **Open MPI developer**: Parameters in this category either don't
@@ -133,7 +133,7 @@ The three categories are:
 And within each category, there are three sub-categories:
 
 #. **Basic**: This sub-category is for parameters that everyone in
-   this category will want to see -- even less-advanced end users,
+   this category will want to see |mdash| even less-advanced end users,
    application tuners, and new OMPI developers.
 
 #. **Detailed**: This sub-category is for parameters that are

@@ -6,7 +6,7 @@ MPI_Error_string
 
 .. include_body
 
-:ref:`MPI_Error_string` - Returns a string for a given error code.
+:ref:`MPI_Error_string` |mdash| Returns a string for a given error code.
 
 
 SYNTAX

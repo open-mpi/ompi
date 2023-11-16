@@ -6,7 +6,7 @@ MPI_Info_create_env
 
 .. include_body
 
-:ref:`MPI_Info_create_env` - Creates a new info object with the same construction as :ref:`MPI_INFO_ENV` as created during :ref:`MPI_Init`  or :ref:`MPI_Init_thread` when the same arguments
+:ref:`MPI_Info_create_env` |mdash| Creates a new info object with the same construction as :ref:`MPI_INFO_ENV` as created during :ref:`MPI_Init`  or :ref:`MPI_Init_thread` when the same arguments
 are used.
 
 

@@ -6,7 +6,7 @@ MPI_Win_get_info
 
 .. include_body
 
-:ref:`MPI_Win_get_info` - Retrieves active window info hints
+:ref:`MPI_Win_get_info` |mdash| Retrieves active window info hints
 
 
 SYNTAX

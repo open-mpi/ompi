@@ -6,7 +6,7 @@ MPI_Type_set_name
 
 .. include_body
 
-:ref:`MPI_Type_set_name` - Sets the name of a data type.
+:ref:`MPI_Type_set_name` |mdash| Sets the name of a data type.
 
 
 SYNTAX

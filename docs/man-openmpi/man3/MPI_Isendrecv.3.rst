@@ -6,7 +6,7 @@ MPI_Isendrecv
 
 .. include_body
 
-:ref:`MPI_Isendrecv` - Sends and receives a message.
+:ref:`MPI_Isendrecv` |mdash| Sends and receives a message.
 
 
 SYNTAX

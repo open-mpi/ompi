@@ -5,7 +5,7 @@ MPI_Get_library_version
 
 .. include_body
 
-:ref:`MPI_Get_library_version` - Returns a string of the current Open MPI
+:ref:`MPI_Get_library_version` |mdash| Returns a string of the current Open MPI
 version
 
 SYNTAX

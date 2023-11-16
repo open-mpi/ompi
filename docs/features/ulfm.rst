@@ -573,7 +573,7 @@ sign up on the user's mailing list: ulfm+subscribe@googlegroups.com
 
 Because of spam, only subscribers are allowed to post to these lists
 (ensure that you subscribe with and post from exactly the same e-mail
-address -- joe@example.com is considered different than
+address |mdash| joe@example.com is considered different than
 joe@mycomputer.example.com!).  Visit these pages to subscribe to the
 lists: https://groups.google.com/forum/#!forum/ulfm
 

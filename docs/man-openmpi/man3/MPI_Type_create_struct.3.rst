@@ -6,7 +6,7 @@ MPI_Type_create_struct
 
 .. include_body
 
-:ref:`MPI_Type_create_struct` - Creates a structured data type.
+:ref:`MPI_Type_create_struct` |mdash| Creates a structured data type.
 
 
 SYNTAX
@@ -57,7 +57,7 @@ Fortran 2008 Syntax
 
 INPUT PARAMETERS
 ----------------
-* ``count``: Number of blocks (integer) -- also number of entries in arrays *array_of_types*, *array_of_displacements*, and *array_of_blocklengths*.
+* ``count``: Number of blocks (integer) |mdash| also number of entries in arrays *array_of_types*, *array_of_displacements*, and *array_of_blocklengths*.
 * ``array_of_blocklengths``: Number of elements in each block (array of integers).
 * ``array_of_displacements``: Byte displacement of each block (array of integers).
 * ``array_of_types``: Type of elements in each block (array of handles to data-type objects).

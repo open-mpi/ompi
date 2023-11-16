@@ -5,7 +5,7 @@ MPI_Intercomm_create_from_groups
 
 .. include_body
 
-:ref:`MPI_Intercomm_create_from_groups` - Creates a new inter-communicator from
+:ref:`MPI_Intercomm_create_from_groups` |mdash| Creates a new inter-communicator from
 a local and remote group and stringtag
 
 SYNTAX

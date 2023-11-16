@@ -5,7 +5,7 @@ MPI_Comm_connect
 
 .. include_body
 
-:ref:`MPI_Comm_connect` - Establishes communication with a server.
+:ref:`MPI_Comm_connect` |mdash| Establishes communication with a server.
 
 SYNTAX
 ------

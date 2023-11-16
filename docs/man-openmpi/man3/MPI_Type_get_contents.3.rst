@@ -6,7 +6,7 @@ MPI_Type_get_contents
 
 .. include_body
 
-:ref:`MPI_Type_get_contents` - Returns information about arguments used in
+:ref:`MPI_Type_get_contents` |mdash| Returns information about arguments used in
 creation of a data type.
 
 
@@ -107,17 +107,18 @@ of attributes of returned data types is undefined.
 Note that :ref:`MPI_Type_get_contents` can be invoked with a data-type argument
 that was constructed using :ref:`MPI_Type_create_f90_real`,
 :ref:`MPI_Type_create_f90_integer`, or :ref:`MPI_Type_create_f90_complex` (an unnamed
-predefined data type). In such a case, an empty *array_of_datatypes is
-returned.*
+predefined data type). In such a case, an empty *array_of_datatypes* is
+returned.
 
-In the MPI-1 data-type constructor calls, the address arguments in
-Fortran are of type INTEGER. In the new MPI-2 calls, the address
-arguments are of type INTEGER(KIND=MPI_ADDRESS_KIND). The call
+In the legacy MPI-1 datatype constructor calls, the address arguments in
+Fortran are of type ``INTEGER``. In subsequent versions of the `MPI
+Standard <https://www.mpi-forum.org/docs/>`_, the address
+arguments are of type ``INTEGER(KIND=MPI_ADDRESS_KIND)``. The call
 :ref:`MPI_Type_get_contents` returns all addresses in an argument of type
-INTEGER(KIND=MPI_ADDRESS_KIND). This is true even if the old MPI-1 calls
+``INTEGER(KIND=MPI_ADDRESS_KIND)``. This is true even if the old MPI-1 calls
 were used. Thus, the location of values returned can be thought of as
 being returned by the C bindings. It can also be determined by examining
-the new MPI-2 calls for data-type constructors for the deprecated MPI-1
+the current MPI calls for datatype constructors for the deprecated MPI-1
 calls that involve addresses.
 
 

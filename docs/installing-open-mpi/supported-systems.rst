@@ -59,7 +59,7 @@ interconnects at the time of its release.
 This, unfortunately, does mean that Open MPI removes support for
 networks that are no longer commonly-used in HPC environments.  If you
 still have one of these older interconnects, not all new version of
-Open MPI may support your interconnect -- sorry!  This simply reflects
+Open MPI may support your interconnect |mdash| sorry!  This simply reflects
 the reality of limited development, testing, and maintenance
 resources.
 

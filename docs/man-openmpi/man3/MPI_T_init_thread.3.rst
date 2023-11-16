@@ -5,7 +5,7 @@ MPI_T_init_thread
 
 .. include_body
 
-:ref:`MPI_T_init_thread` - Initializes the MPI Tool information interface
+:ref:`MPI_T_init_thread` |mdash| Initializes the MPI Tool information interface
 
 SYNTAX
 ------

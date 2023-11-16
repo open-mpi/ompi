@@ -6,7 +6,7 @@ MPI_File_get_errhandler
 
 .. include_body
 
-:ref:`MPI_File_get_errhandler` - Gets the error handler for a file.
+:ref:`MPI_File_get_errhandler` |mdash| Gets the error handler for a file.
 
 
 SYNTAX
