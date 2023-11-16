@@ -46,11 +46,11 @@ endif
 mcacomponentdir = $(opallibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_rcache_rgpusm_la_SOURCES = $(sources)
-mca_rcache_rgpusm_la_LDFLAGS = -module -avoid-version
+mca_rcache_rgpusm_la_LDFLAGS = -module -avoid-version $(rcache_rgpusm_LDFLAGS)
 mca_rcache_rgpusm_la_LIBADD = $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la \
 	$(rcache_rgpusm_LIBS)
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_rcache_rgpusm_la_SOURCES = $(sources)
-libmca_rcache_rgpusm_la_LDFLAGS = -module -avoid-version
+libmca_rcache_rgpusm_la_LDFLAGS = -module -avoid-version $(rcache_rgpusm_LDFLAGS)
 libmca_rcache_rgpusm_la_LIBADD = $(rcache_rgpusm_LIBS)
