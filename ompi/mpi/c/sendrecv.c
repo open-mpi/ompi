@@ -16,6 +16,7 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
+ * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -121,6 +122,12 @@ int MPI_Sendrecv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
     } else {
         if (MPI_STATUS_IGNORE != status) {
             OMPI_COPY_STATUS(status, ompi_request_empty.req_status, false);
+            /*
+             * Per MPI-1, the MPI_ERROR field is not defined for single-completion calls
+             */
+            MEMCHECKER(
+                opal_memchecker_base_mem_undefined(&status->MPI_ERROR, sizeof(int));
+            );
         }
         rc = MPI_SUCCESS;
     }
