@@ -17,6 +17,7 @@
  * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -475,7 +476,12 @@ static int setup_launch(int *argcptr, char ***argvptr,
          */
 
         value = opal_basename(opal_install_dirs.bindir);
-        asprintf(&bin_base, "%s/%s", prefix_dir, value);
+        /* Ensure that we don't have a prefix that ends in "/" */
+        if ('/' == prefix_dir[strlen(prefix_dir) - 1]) {
+            asprintf(&bin_base, "%s%s", prefix_dir, value);
+        } else {
+            asprintf(&bin_base, "%s/%s", prefix_dir, value);
+        }
         free(value);
 
         if (NULL != orted_cmd) {

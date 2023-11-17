@@ -13,6 +13,7 @@
 # Copyright (c) 2007-2016 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
 # Copyright (c) 2017      Intel, Inc. All rights reserved.
+# Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -173,11 +174,6 @@ prefix provided for the first app_context:
 Only one should be specified to avoid potential version
 confusion. Operation will continue, but the application's prefix
 option will be ignored.
-#
-[orterun:empty-prefix]
-A prefix was supplied to %s that only contained slashes.
-
-This is a fatal error; %s will now abort.  No processes were launched.
 #
 [debugger-mca-param-not-found]
 Internal error -- the orte_base_user_debugger MCA parameter was not able to
