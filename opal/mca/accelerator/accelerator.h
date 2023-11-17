@@ -150,9 +150,7 @@ typedef int (*opal_accelerator_base_module_check_addr_fn_t)(
 
 /**
  * Creates a stream for asynchonous operations. This function will allocate
- * memory for the object.
- * To release the memory and associated resources,
- * call opal_accelerator_base_module_create_stream_fn_t
+ * memory for the object. To release the memory, call OBJ_RELEASE(*stream);
  *
  * @param[IN] dev_id         Associated device for the stream or
  *                           MCA_ACCELERATOR_NO_DEVICE_ID
@@ -162,18 +160,6 @@ typedef int (*opal_accelerator_base_module_check_addr_fn_t)(
  */
 typedef int (*opal_accelerator_base_module_create_stream_fn_t)(
     int dev_id, opal_accelerator_stream_t **stream);
-
-/**
- * Destroys a stream and release the object memory.
- * This function should return immediately, but resources associated with
- * the stream may be released later.
- *
- * @param[IN] stream         Stream to destroy
- *
- * @return                   OPAL_SUCCESS or error status on failure
- */
-typedef int (*opal_accelerator_base_module_destroy_stream_fn_t)(
-    opal_accelerator_stream_t *stream);
 
 /**
  * Creates an event. An event is a synchronization marker that can be
@@ -416,7 +402,6 @@ typedef struct {
     opal_accelerator_base_module_check_addr_fn_t check_addr;
 
     opal_accelerator_base_module_create_stream_fn_t create_stream;
-    opal_accelerator_base_module_destroy_stream_fn_t destroy_stream;
     opal_accelerator_base_module_create_event_fn_t create_event;
     opal_accelerator_base_module_record_event_fn_t record_event;
     opal_accelerator_base_module_query_event_fn_t query_event;
