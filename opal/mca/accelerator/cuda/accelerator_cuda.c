@@ -25,8 +25,13 @@
 /* Accelerator API's */
 static int accelerator_cuda_check_addr(const void *addr, int *dev_id, uint64_t *flags);
 static int accelerator_cuda_create_stream(int dev_id, opal_accelerator_stream_t **stream);
+static int accelerator_cuda_destroy_stream(opal_accelerator_stream_t *stream);
+static int accelerator_cuda_synchronize_stream(opal_accelerator_stream_t *stream);
+static int accelerator_cuda_stream_wait_event(opal_accelerator_stream_t *stream,
+                                              opal_accelerator_event_t *event);
 
 static int accelerator_cuda_create_event(int dev_id, opal_accelerator_event_t **event);
+static int accelerator_cuda_destroy_event(opal_accelerator_event_t *event);
 static int accelerator_cuda_record_event(int dev_id, opal_accelerator_event_t *event, opal_accelerator_stream_t *stream);
 static int accelerator_cuda_query_event(int dev_id, opal_accelerator_event_t *event);
 
@@ -40,6 +45,17 @@ static int accelerator_cuda_mem_alloc(int dev_id, void **ptr, size_t size);
 static int accelerator_cuda_mem_release(int dev_id, void *ptr);
 static int accelerator_cuda_get_address_range(int dev_id, const void *ptr, void **base,
                                               size_t *size);
+
+static bool accelerator_cuda_is_ipc_enabled(void);
+static int accelerator_cuda_get_ipc_handle(int dev_id, void *dev_ptr,
+                                           opal_accelerator_ipc_handle_t *handle);
+static int accelerator_cuda_open_ipc_handle(int dev_id, opal_accelerator_ipc_handle_t *handle,
+                                            void **dev_ptr);
+static int accelerator_cuda_get_ipc_event_handle(opal_accelerator_event_t *event,
+                                                 opal_accelerator_ipc_event_handle_t *handle);
+static int accelerator_cuda_open_ipc_event_handle(opal_accelerator_ipc_event_handle_t *handle,
+                                                  opal_accelerator_event_t *event);
+static int accelerator_cuda_close_ipc_handle(int dev_id, void *dev_ptr);
 
 static int accelerator_cuda_host_register(int dev_id, void *ptr, size_t size);
 static int accelerator_cuda_host_unregister(int dev_id, void *ptr);
@@ -55,8 +71,12 @@ opal_accelerator_base_module_t opal_accelerator_cuda_module =
     accelerator_cuda_check_addr,
 
     accelerator_cuda_create_stream,
+    accelerator_cuda_destroy_stream,
+    accelerator_cuda_synchronize_stream,
+    accelerator_cuda_stream_wait_event,
 
     accelerator_cuda_create_event,
+    accelerator_cuda_destroy_event,
     accelerator_cuda_record_event,
     accelerator_cuda_query_event,
 
@@ -66,6 +86,13 @@ opal_accelerator_base_module_t opal_accelerator_cuda_module =
     accelerator_cuda_mem_alloc,
     accelerator_cuda_mem_release,
     accelerator_cuda_get_address_range,
+
+    accelerator_cuda_is_ipc_enabled,
+    accelerator_cuda_get_ipc_handle,
+    accelerator_cuda_open_ipc_handle,
+    accelerator_cuda_get_ipc_event_handle,
+    accelerator_cuda_open_ipc_event_handle,
+    accelerator_cuda_close_ipc_handle,
 
     accelerator_cuda_host_register,
     accelerator_cuda_host_unregister,
@@ -254,6 +281,23 @@ static void opal_accelerator_cuda_stream_destruct(opal_accelerator_cuda_stream_t
     }
 }
 
+static int accelerator_cuda_destroy_stream(opal_accelerator_stream_t *stream)
+{
+    opal_accelerator_cuda_stream_destruct(stream);
+    return OPAL_SUCCESS;
+}
+
+static int accelerator_cuda_synchronize_stream(opal_accelerator_stream_t *stream)
+{
+    return OPAL_ERR_NOT_IMPLEMENTED;
+}
+
+static int accelerator_cuda_stream_wait_event(opal_accelerator_stream_t *stream,
+                                              opal_accelerator_event_t *event)
+{
+    return OPAL_ERR_NOT_IMPLEMENTED;
+}
+
 OBJ_CLASS_INSTANCE(
     opal_accelerator_cuda_stream_t,
     opal_accelerator_stream_t,
@@ -300,6 +344,12 @@ static void opal_accelerator_cuda_event_destruct(opal_accelerator_cuda_event_t *
         }
         free(event->base.event);
     }
+}
+
+static int accelerator_cuda_destroy_event(opal_accelerator_event_t *event)
+{
+    opal_accelerator_cuda_event_destruct(event);
+    return OPAL_SUCCESS;
 }
 
 OBJ_CLASS_INSTANCE(
@@ -518,6 +568,40 @@ static int accelerator_cuda_get_address_range(int dev_id, const void *ptr, void 
                             ptr, *(char **) base, *size);
     }
     return 0;
+}
+
+static bool accelerator_null_is_ipc_enabled(void)
+{
+    return false;
+}
+
+static int accelerator_cuda_get_ipc_handle(int dev_id, void *dev_ptr,
+                                           opal_accelerator_ipc_handle_t *handle)
+{
+    return OPAL_ERR_NOT_IMPLEMENTED;
+}
+
+static int accelerator_cuda_open_ipc_handle(int dev_id, opal_accelerator_ipc_handle_t *handle,
+                                            void **dev_ptr)
+{
+    return OPAL_ERR_NOT_IMPLEMENTED;
+}
+
+static int accelerator_cuda_get_ipc_event_handle(opal_accelerator_event_t *event,
+                                                 opal_accelerator_ipc_event_handle_t *handle)
+{
+    return OPAL_ERR_NOT_IMPLEMENTED;
+}
+
+static int accelerator_cuda_open_ipc_event_handle(opal_accelerator_ipc_event_handle_t *handle,
+                                                  opal_accelerator_event_t *event)
+{
+    return OPAL_ERR_NOT_IMPLEMENTED;
+}
+
+static int accelerator_cuda_close_ipc_handle(int dev_id, void *dev_ptr)
+{
+    return OPAL_ERR_NOT_IMPLEMENTED;
 }
 
 static int accelerator_cuda_host_register(int dev_id, void *ptr, size_t size)

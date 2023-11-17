@@ -40,7 +40,12 @@ static void accelerator_null_finalize(opal_accelerator_base_module_t* module);
 static int accelerator_null_check_addr(const void *addr, int *dev_id, uint64_t *flags);
 
 static int accelerator_null_create_stream(int dev_id, opal_accelerator_stream_t **stream);
+static int accelerator_null_destroy_stream(opal_accelerator_stream_t *stream);
+static int accelerator_null_synchronize_stream(opal_accelerator_stream_t *stream);
+static int accelerator_null_stream_wait_event(opal_accelerator_stream_t *stream,
+                                              opal_accelerator_event_t *event);
 static int accelerator_null_create_event(int dev_id, opal_accelerator_event_t **event);
+static int accelerator_null_destroy_event(opal_accelerator_event_t *event);
 static int accelerator_null_record_event(int dev_id, opal_accelerator_event_t *event, opal_accelerator_stream_t *stream);
 static int accelerator_null_query_event(int dev_id, opal_accelerator_event_t *event);
 
@@ -54,6 +59,17 @@ static int accelerator_null_memmove(int dest_dev_id, int src_dev_id, void *dest,
 static int accelerator_null_mem_alloc(int dev_id, void **ptr, size_t size);
 static int accelerator_null_mem_release(int dev_id, void *ptr);
 static int accelerator_null_get_address_range(int dev_id, const void *ptr, void **base, size_t *size);
+
+static bool accelerator_null_is_ipc_enabled(void);
+static int accelerator_null_get_ipc_handle(int dev_id, void *dev_ptr,
+                                           opal_accelerator_ipc_handle_t *handle);
+static int accelerator_null_open_ipc_handle(int dev_id, opal_accelerator_ipc_handle_t *handle,
+                                            void **dev_ptr);
+static int accelerator_null_get_ipc_event_handle(opal_accelerator_event_t *event,
+                                                 opal_accelerator_ipc_event_handle_t *handle);
+static int accelerator_null_open_ipc_event_handle(opal_accelerator_ipc_event_handle_t *handle,
+                                                  opal_accelerator_event_t *event);
+static int accelerator_null_close_ipc_handle(int dev_id, void *dev_ptr);
 
 static int accelerator_null_host_register(int dev_id, void *ptr, size_t size);
 static int accelerator_null_host_unregister(int dev_id, void *ptr);
@@ -107,8 +123,12 @@ opal_accelerator_base_module_t opal_accelerator_null_module =
     accelerator_null_check_addr,
 
     accelerator_null_create_stream,
+    accelerator_null_destroy_stream,
+    accelerator_null_synchronize_stream,
+    accelerator_null_stream_wait_event,
 
     accelerator_null_create_event,
+    accelerator_null_destroy_event,
     accelerator_null_record_event,
     accelerator_null_query_event,
 
@@ -118,6 +138,13 @@ opal_accelerator_base_module_t opal_accelerator_null_module =
     accelerator_null_mem_alloc,
     accelerator_null_mem_release,
     accelerator_null_get_address_range,
+
+    accelerator_null_is_ipc_enabled,
+    accelerator_null_get_ipc_handle,
+    accelerator_null_open_ipc_handle,
+    accelerator_null_get_ipc_event_handle,
+    accelerator_null_open_ipc_event_handle,
+    accelerator_null_close_ipc_handle,
 
     accelerator_null_host_register,
     accelerator_null_host_unregister,
@@ -167,9 +194,32 @@ static int accelerator_null_create_stream(int dev_id, opal_accelerator_stream_t 
     return OPAL_SUCCESS;
 }
 
+static int accelerator_null_destroy_stream(opal_accelerator_stream_t *stream)
+{
+    OBJ_RELEASE(stream);
+    return OPAL_SUCCESS;
+}
+
+static int accelerator_null_synchronize_stream(opal_accelerator_stream_t *stream)
+{
+    return OPAL_SUCCESS;
+}
+
+static int accelerator_null_stream_wait_event(opal_accelerator_stream_t *stream,
+                                              opal_accelerator_event_t *event)
+{
+    return OPAL_SUCCESS;
+}
+
 static int accelerator_null_create_event(int dev_id, opal_accelerator_event_t **event)
 {
     *event = OBJ_NEW(opal_accelerator_event_t);
+    return OPAL_SUCCESS;
+}
+
+static int accelerator_null_destroy_event(opal_accelerator_event_t *event)
+{
+    OBJ_RELEASE(event);
     return OPAL_SUCCESS;
 }
 
@@ -218,6 +268,40 @@ static int accelerator_null_mem_release(int dev_id, void *ptr)
 
 static int accelerator_null_get_address_range(int dev_id, const void *ptr, void **base,
                                               size_t *size)
+{
+    return OPAL_ERR_NOT_IMPLEMENTED;
+}
+
+static bool accelerator_null_is_ipc_enabled(void)
+{
+    return false;
+}
+
+static int accelerator_null_get_ipc_handle(int dev_id, void *dev_ptr,
+                                           opal_accelerator_ipc_handle_t *handle)
+{
+    return OPAL_ERR_NOT_IMPLEMENTED;
+}
+
+static int accelerator_null_open_ipc_handle(int dev_id, opal_accelerator_ipc_handle_t *handle,
+                                            void **dev_ptr)
+{
+    return OPAL_ERR_NOT_IMPLEMENTED;
+}
+
+static int accelerator_null_get_ipc_event_handle(opal_accelerator_event_t *event,
+                                                 opal_accelerator_ipc_event_handle_t *handle)
+{
+    return OPAL_ERR_NOT_IMPLEMENTED;
+}
+
+static int accelerator_null_open_ipc_event_handle(opal_accelerator_ipc_event_handle_t *handle,
+                                                  opal_accelerator_event_t *event)
+{
+    return OPAL_ERR_NOT_IMPLEMENTED;
+}
+
+static int accelerator_null_close_ipc_handle(int dev_id, void *dev_ptr)
 {
     return OPAL_ERR_NOT_IMPLEMENTED;
 }
