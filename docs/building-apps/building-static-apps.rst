@@ -83,15 +83,14 @@ sub-optimal:
 
    In other words: *using dynamic linking saves memory.*
 
-#. If you disable Open MPI's ``dlopen`` functionality (which is
-   necessary to create *fully*-static MPI applications), you lose the
-   following:
+#. *Fully*-static applications are not linked to the dynamic linking library,
+   e.g. ``libdl`` on Linux, which provides ``dlopen(3)``, ``dlsym(3)``, etc.
+   This will break Open MPI functionalities that depend on such interfaces.
 
-   * CUDA, because |mdash| among other reasons |mdash| the CUDA
-     library is dynamically loaded at run-time via ``dlopen(3)``.
-
-   * Memory manager functionality, which is important for OS-bypass
-     networks such as InfiniBand.
+   .. warning:: Open MPI's memory management functionality, which provides
+                important performance optimizations on OS-bypass networks
+                such as InfiniBand, requires the ``dlsym(3)`` interface,
+                and therefore does not work with fully-static applications.
 
 Are you convinced yet?  *Please try to avoid building fully-static MPI
 applications if at all possible.*
