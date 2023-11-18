@@ -365,11 +365,6 @@ opal_show_title "Compiler and preprocessor tests"
 
 OPAL_SETUP_CC
 
-# If we build on a windows environment with the windows compiler and linker
-# then we need some translation functions from the opal/win32 directory.
-AM_CONDITIONAL(OMPI_NEED_WINDOWS_REPLACEMENTS,
-               test "$opal_cv_c_compiler_vendor" = "microsoft" )
-
 # Do all Interix detections if necessary
 OMPI_INTERIX
 
