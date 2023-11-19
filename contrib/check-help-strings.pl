@@ -1,6 +1,7 @@
 #!/usr/bin/env perl
 #
 # Copyright (c) 2014-2022 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
 #
 # Simple script to check all the opal_show_help (and orte_show_help)
@@ -94,6 +95,7 @@ sub match_files {
     # Don't recurse down "special" directories
     if (-d $_ &&
         ((/^\.deps$/) || (/^\.libs$/) ||
+         (/3rd-party/) ||
          (/^\.svn$/) || (/^\.hg$/) || (/^\.git$/))) {
         $File::Find::prune = 1;
         return;
