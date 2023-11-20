@@ -3997,57 +3997,58 @@ end subroutine ompi_neighbor_alltoallw_init_f
 subroutine ompi_session_get_info_f(session, info, ierror) &
    BIND(C, name="ompi_session_get_info_f")
    implicit none
-   integer, intent(in) :: session
-   integer, intent(out) :: info
-   integer, intent(out) :: ierror
+   INTEGER, INTENT(IN) :: session
+   INTEGER, INTENT(out) :: info
+   INTEGER, INTENT(out) :: ierror
 end subroutine ompi_session_get_info_f
 
-subroutine ompi_session_get_nth_pset_f(session, info, n, pset_len, pset_name, ierror) &
+subroutine ompi_session_get_nth_pset_f(session, info, n, pset_len, pset_name, ierror, pset_name_len) &
    BIND(C, name="ompi_session_get_nth_pset_f")
-   use, intrinsic :: ISO_C_BINDING, only : C_CHAR
+   use, intrinsic :: ISO_C_BINDING, only : C_CHAR, C_INT
    implicit none
-   integer, intent(in) :: session
-   integer, intent(in) :: info
-   integer, intent(in) :: n
-   integer, intent(inout) :: pset_len
+   INTEGER, INTENT(IN) :: session
+   INTEGER, INTENT(IN) :: info
+   INTEGER, INTENT(IN) :: n
+   INTEGER(KIND=C_INT), VALUE, INTENT(IN) :: pset_name_len
+   INTEGER, INTENT(INOUT) :: pset_len
    CHARACTER(KIND=C_CHAR), DIMENSION(*), INTENT(OUT) :: pset_name
-   integer, intent(out) :: ierror
+   INTEGER, INTENT(out) :: ierror
 end subroutine ompi_session_get_nth_pset_f
 
 subroutine ompi_session_get_num_psets_f(session, info, npset_names, ierror) &
    BIND(C, name="ompi_session_get_num_psets_f")
-  implicit none
-  integer, intent(in) :: session
-  integer, intent(in) :: info
-  integer, intent(out) :: npset_names
-  integer, intent(out) :: ierror
+   implicit none
+   INTEGER, INTENT(IN) :: session
+   INTEGER, INTENT(IN) :: info
+   INTEGER, INTENT(out) :: npset_names
+   INTEGER, INTENT(out) :: ierror
 end subroutine ompi_session_get_num_psets_f
 
 subroutine ompi_session_get_pset_info_f(session, pset_name, info, ierror, name_len) &
    BIND(C, name="ompi_session_get_pset_info_f")
    use, intrinsic :: ISO_C_BINDING, only : C_CHAR
    implicit none
-   integer, intent(in) :: session
+   INTEGER, INTENT(IN) :: session
    CHARACTER(KIND=C_CHAR), DIMENSION(*), INTENT(IN) :: pset_name
    INTEGER, VALUE, INTENT(IN) :: name_len
-   integer, intent(out) :: info
-   integer, intent(out) :: ierror
+   INTEGER, INTENT(out) :: info
+   INTEGER, INTENT(out) :: ierror
 end subroutine ompi_session_get_pset_info_f
 
 subroutine ompi_session_init_f(info, errhandler, session, ierror) &
    BIND(C, name="ompi_session_init_f")
-  implicit none
-  integer, intent(in) :: info
-  integer, intent(in) :: errhandler
-  integer, intent(out) :: session
-  integer, intent(out) :: ierror
+   implicit none
+   INTEGER, INTENT(IN) :: info
+   INTEGER, INTENT(IN) :: errhandler
+   INTEGER, INTENT(out) :: session
+   INTEGER, INTENT(out) :: ierror
 end subroutine ompi_session_init_f
 
 subroutine ompi_session_finalize_f(session, ierror) &
-   BIND(C, name="ompi_session_finalize_f")
+  BIND(C, name="ompi_session_finalize_f")
   implicit none
-  integer, intent(out) :: session
-  integer, intent(out) :: ierror
+  INTEGER, INTENT(out) :: session
+  INTEGER, INTENT(out) :: ierror
 end subroutine ompi_session_finalize_f
 
 subroutine ompi_session_call_errhandler_f(session,errorcode,ierror) &

@@ -23,7 +23,8 @@ subroutine MPI_Session_get_nth_pset_f08(session, info, n, pset_len, pset_name, i
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
    integer :: c_ierror
 
-   call ompi_session_get_nth_pset_f(session%MPI_VAL, MPI_INFO_NULL%MPI_VAL, n, pset_len, pset_name, c_ierror)
+   call ompi_session_get_nth_pset_f(session%MPI_VAL, MPI_INFO_NULL%MPI_VAL, n,     &
+                                    pset_len, pset_name, c_ierror, len(pset_name))
    if (present(ierror)) ierror = c_ierror
 
 end subroutine MPI_Session_get_nth_pset_f08
