@@ -34,11 +34,11 @@ mcacomponentdir = $(opallibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 
 mca_accelerator_cuda_la_SOURCES = $(sources)
-mca_accelerator_cuda_la_LDFLAGS = -module -avoid-version
+mca_accelerator_cuda_la_LDFLAGS = -module -avoid-version $(accelerator_cuda_LDFLAGS)
 mca_accelerator_cuda_la_LIBADD = $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la \
         $(accelerator_cuda_LIBS)
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_accelerator_cuda_la_SOURCES =$(sources)
-libmca_accelerator_cuda_la_LDFLAGS = -module -avoid-version
+libmca_accelerator_cuda_la_LDFLAGS = -module -avoid-version $(accelerator_cuda_LDFLAGS)
 libmca_accelerator_cuda_la_LIBADD = $(accelerator_cuda_LIBS)
