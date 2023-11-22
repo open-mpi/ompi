@@ -12,6 +12,7 @@
  * Copyright (c) 2008-2021 University of Houston. All rights reserved.
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2023      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -25,8 +26,10 @@
 
 #include "mpi.h"
 #include <unistd.h>
-#include <sys/uio.h>
 #include <limits.h>
+#ifdef HAVE_SYSLIMITS_H
+#include <syslimits.h>
+#endif  /* HAVE_SYSLIMITS_H */
 #include "ompi/constants.h"
 #include "ompi/mca/fbtl/fbtl.h"
 
