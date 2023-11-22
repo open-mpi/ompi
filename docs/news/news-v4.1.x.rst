@@ -44,8 +44,11 @@ Open MPI version 4.1.5
 - Update embedded OpenPMIx to version 3.2.4
 - Fix issue building with ``ifort`` on MacOS.
 - Backport patches to Libevent for CVE-2016-10195, CVE-2016-10196, and
-  CVE-2016-10197.  Note that Open MPI's internal libevent does not
-  use the impacted portions of the Libevent code base.
+  CVE-2016-10197.
+
+  .. note:: Open MPI's internal libevent does not use the impacted
+            portions of the Libevent code base.
+
 - SHMEM improvements:
 
   - Fix initializer bugs in SHMEM interface.
