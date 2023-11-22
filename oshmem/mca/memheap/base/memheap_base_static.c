@@ -2,6 +2,7 @@
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2023      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -165,8 +166,8 @@ static int _check_pathname(uint64_t inode, const char *pathname)
 {
     static const char *proc_self_exe = "/proc/self/exe";
     static int warned = 0;
-    char exe_path[PATH_MAX];
-    char module_path[PATH_MAX];
+    char exe_path[OPAL_PATH_MAX];
+    char module_path[OPAL_PATH_MAX];
     char *path;
 
     if (0 == inode) {
