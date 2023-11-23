@@ -20,17 +20,9 @@ PRRTE_RST_SRC_DIR=3rd-party/prrte/src/docs/prrte-rst-content
 PRRTE_RST_TARGET_DIR=docs/prrte-rst-content
 
 # Copy the OMPI schizo file from PRRTE
+#
+# See lengthy comment in docs/Makefile.am about copying in RST files
+# from PRRTE for a longer explanation of what is happening here.
 
 cp -rp $SCHIZO_SRC_DIR $SCHIZO_TARGET_DIR
-
-# Only copy the PRRTE RST source files in prrte-rst-content that are
-# referenced by ".. include::" in the schizo-ompi-cli.rst file.  We do
-# this because Sphinx complains if there are .rst files that are not
-# referenced.  :-(
-
-mkdir -p $PRRTE_RST_TARGET_DIR
-files=`fgrep '.. include::' $SCHIZO_TARGET_DIR/schizo-ompi-cli.rstxt | awk '{ print $3 }'`
-for file in $files; do
-    filename=`basename $file`
-    cp -pf $PRRTE_RST_SRC_DIR/$filename $PRRTE_RST_TARGET_DIR
-done
+cp -rp $PRRTE_RST_SRC_DIR $PRRTE_RST_TARGET_DIR
