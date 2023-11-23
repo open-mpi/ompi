@@ -6,6 +6,7 @@
  * Copyright (c) 2022      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -67,7 +68,7 @@ __opal_attribute_constructor__ static void instance_lock_init(void) {
     OBJ_CONSTRUCT(&instance_lock, opal_recursive_mutex_t);
 }
 #else
-#error "No support for recursive mutexes available on this platform.
+#error "No support for recursive mutexes available on this platform."
 #endif  /* defined(OPAL_RECURSIVE_MUTEX_STATIC_INIT) */
 
 /** MPI_Init instance */
