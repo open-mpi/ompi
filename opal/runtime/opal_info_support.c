@@ -20,6 +20,7 @@
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * Copyright (c) 2022      Computer Architecture and VLSI Systems (CARV)
  *                         Laboratory, ICS Forth. All rights reserved.
+ * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -842,12 +843,12 @@ void opal_info_show_mca_params(const char *type, const char *component,
     }
 }
 
-void opal_info_do_arch()
+void opal_info_do_arch(void)
 {
     opal_info_out("Configured architecture", "config:arch", OPAL_ARCH);
 }
 
-void opal_info_do_hostname()
+void opal_info_do_hostname(void)
 {
     opal_info_out("Configure host", "config:host", OPAL_CONFIGURE_HOST);
 }

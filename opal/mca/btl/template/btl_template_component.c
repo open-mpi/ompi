@@ -14,6 +14,7 @@
  *                         reserved.
  * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
+ * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -143,7 +144,7 @@ mca_btl_base_module_t **mca_btl_template_component_init(int *num_btl_modules,
  *  TEMPLATE component progress.
  */
 
-int mca_btl_template_component_progress()
+int mca_btl_template_component_progress(void)
 {
     return 0;
 }
