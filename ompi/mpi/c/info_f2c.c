@@ -15,6 +15,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018-2022 Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -37,7 +38,7 @@
 #define MPI_Info_f2c PMPI_Info_f2c
 #endif
 
-static const char FUNC_NAME[] = "MPI_Info_f2c";
+static const char FUNC_NAME[] __opal_attribute_unused__ = "MPI_Info_f2c";
 
 
 /**

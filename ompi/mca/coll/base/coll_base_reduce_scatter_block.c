@@ -18,6 +18,7 @@
  * Copyright (c) 2018      Siberian State University of Telecommunications
  *                         and Information Sciences. All rights reserved.
  * Copyright (c) 2022      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -245,7 +246,6 @@ ompi_coll_base_reduce_scatter_block_intra_recursivedoubling(
     int is_commutative = ompi_op_is_commute(op);
 
     /* Recursive distance doubling */
-    int rdoubling_step = 0;
     for (int mask = 1; mask < comm_size; mask <<= 1) {
         int remote = rank ^ mask;
         int cur_tree_root = ompi_rounddown(rank, mask);
@@ -350,7 +350,6 @@ ompi_coll_base_reduce_scatter_block_intra_recursivedoubling(
                 if (MPI_SUCCESS != err) { goto cleanup_and_return; }
             }
         }
-        rdoubling_step++;
         err = ompi_datatype_destroy(&dtypesend);
         if (MPI_SUCCESS != err) { goto cleanup_and_return; }
         err = ompi_datatype_destroy(&dtyperecv);

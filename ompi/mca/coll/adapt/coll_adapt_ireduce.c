@@ -4,6 +4,7 @@
  *                         reserved.
  * Copyright (c) 2020      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2022      IBM Corporation. All rights reserved
+ * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -663,7 +664,6 @@ int ompi_coll_adapt_ireduce_generic(const void *sbuf, void *rbuf, int count,
             con->next_recv_segs[i] = min - 1;
         }
 
-        int num_recvs = 0;
         for (int32_t seg_index = 0; seg_index < min; seg_index++)
         {
             /* For each child */
@@ -711,8 +711,6 @@ int ompi_coll_adapt_ireduce_generic(const void *sbuf, void *rbuf, int count,
                 }
                 /* Set the recv callback */
                 ompi_request_set_callback(recv_req, recv_cb, context);
-
-                ++num_recvs;
             }
         }
     }
