@@ -49,7 +49,8 @@ mca_coll_inter_allreduce_inter(const void *sbuf, void *rbuf, int count,
                                mca_coll_base_module_t *module)
 {
     int err, rank, root = 0;
-    char *tmpbuf = NULL, *pml_buffer = NULL, *source;
+    char *tmpbuf = NULL, *pml_buffer = NULL;
+    const char *source;
     ptrdiff_t gap, span;
 
     rank = ompi_comm_rank(comm);
