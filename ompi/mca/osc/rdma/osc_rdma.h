@@ -18,6 +18,7 @@
  * Copyright (c) 2020-2021 Google, LLC. All rights reserved.
  * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
+ * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -753,7 +754,7 @@ static inline int osc_rdma_accelerator_mem_move(void *dest, const void *src, siz
  * @retval >0                 The buffer belongs to a managed buffer in
  *                            device memory.
  */
-static inline int osc_rdma_is_accel(void *buf)
+static inline int osc_rdma_is_accel(const void *buf)
 {
     int dev_id;
     uint64_t flags;
