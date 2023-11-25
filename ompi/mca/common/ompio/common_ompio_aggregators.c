@@ -16,6 +16,7 @@
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
+ * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -195,16 +196,13 @@ int  mca_common_ompio_forced_grouping ( ompio_file_t *fh,
     int rest = fh->f_size % num_groups;
     int flag = OMPI_COMM_IS_MAPBY_NODE (&ompi_mpi_comm_world.comm);
     int k=0, p=0, g=0;
-    int total_procs = 0; 
 
     for ( k=0, p=0; p<num_groups; p++ ) {
         if ( p < rest ) {
             contg_groups[p].procs_per_contg_group = group_size+1;
-            total_procs +=(group_size+1);
         }
         else {
             contg_groups[p].procs_per_contg_group = group_size;
-            total_procs +=group_size;
         }
 
         if ( flag ) {
@@ -1269,9 +1267,6 @@ int mca_common_ompio_prepare_to_group(ompio_file_t *fh,
     int i = 0;
     int j = 0;
     int k = 0;
-    int merge_count = 0;
-    int split_count = 0; //not req?
-    int retain_as_is_count = 0; //not req?
     int ret=OMPI_SUCCESS;
 
     //Store start offset and length in an array //also add bytes per process
@@ -1367,16 +1362,13 @@ int mca_common_ompio_prepare_to_group(ompio_file_t *fh,
        if((size_t)(aggr_bytes_per_group_tmp[i])>
           (size_t)OMPIO_MCA_GET(fh, bytes_per_agg)){
           decision_list_tmp[i] = OMPIO_SPLIT;
-          split_count++;
        }
        else if((size_t)(aggr_bytes_per_group_tmp[i])<
                (size_t)OMPIO_MCA_GET(fh, bytes_per_agg)){
             decision_list_tmp[i] = OMPIO_MERGE;
-            merge_count++;
        }
        else{
 	   decision_list_tmp[i] = OMPIO_RETAIN;
-	   retain_as_is_count++;
 	   }
     }
 

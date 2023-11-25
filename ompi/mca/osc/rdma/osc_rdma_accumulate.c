@@ -12,6 +12,7 @@
  * Copyright (c) 2022      Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
+ * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -544,7 +545,6 @@ static inline int ompi_osc_rdma_gacc_master (ompi_osc_rdma_sync_t *sync, const v
     /* needed for opal_convertor_raw but not used */
     size_t source_size, target_size;
     ompi_osc_rdma_request_t *subreq;
-    size_t result_position;
     ptrdiff_t lb, extent;
     int ret, acc_len;
     bool done;
@@ -667,7 +667,6 @@ static inline int ompi_osc_rdma_gacc_master (ompi_osc_rdma_sync_t *sync, const v
     target_iov_index = 0;
     target_iov_count = 0;
     source_iov_index = 0;
-    result_position = 0;
     subreq = NULL;
 
     do {
@@ -729,8 +728,6 @@ static inline int ompi_osc_rdma_gacc_master (ompi_osc_rdma_sync_t *sync, const v
             target_iovec[target_iov_index].iov_len -= acc_len;
             target_iovec[target_iov_index].iov_base = (void *)((intptr_t) target_iovec[target_iov_index].iov_base + acc_len);
             target_iov_index += (0 == target_iovec[target_iov_index].iov_len);
-
-            result_position += acc_len;
 
             if (source_datatype) {
                 source_iov_index += (0 == source_iovec[source_iov_index].iov_len);

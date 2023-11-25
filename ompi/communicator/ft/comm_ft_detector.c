@@ -6,6 +6,7 @@
  * Copyright (c) 2021      Triad National Security, LLC. All rights
  *                         reserved.
  *
+ * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -579,7 +580,7 @@ static void fd_event_cb(int fd, short flags, void* pdetector)
 }
 
 void* fd_progress(opal_object_t* obj) {
-    int ret;
+    int __opal_attribute_unused__ ret;
     MPI_Request req;
     if( OMPI_SUCCESS != ompi_comm_start_detector(&ompi_mpi_comm_world.comm)) {
         OPAL_THREAD_ADD_FETCH32(&fd_thread_active, -1);

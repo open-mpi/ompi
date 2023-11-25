@@ -6,6 +6,7 @@
  *                         reserved.
  *
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
+ * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -728,8 +729,6 @@ static int ompi_comm_ishrink_check_cid(ompi_comm_request_t *request) {
 }
 
 static int ompi_comm_ishrink_check_activate(ompi_comm_request_t *request) {
-    ompi_comm_ishrink_context_t *context =
-        (ompi_comm_ishrink_context_t *)request->context;
     int rc;
 #if OPAL_ENABLE_DEBUG
     double stop;
@@ -740,6 +739,8 @@ static int ompi_comm_ishrink_check_activate(ompi_comm_request_t *request) {
         return rc;
     }
 #if OPAL_ENABLE_DEBUG
+    ompi_comm_ishrink_context_t *context =
+        (ompi_comm_ishrink_context_t *)request->context;
     stop = MPI_Wtime();
     OPAL_OUTPUT_VERBOSE((10, ompi_ftmpi_output_handle,
                          "%s ompi: comm_ishrink: COLL SELECT: %g seconds\n",
@@ -780,10 +781,13 @@ bool ompi_comm_is_proc_active(ompi_communicator_t *comm, int peer_id, bool remot
 
 int ompi_comm_set_rank_failed(ompi_communicator_t *comm, int peer_id, bool remote)
 {
-    /* populate the proc in the comm's group array so that it is not a sentinel and can be read as failed */
+#if OPAL_ENABLE_DEBUG
+    /* populate the proc in the comm's group array so that it is not a
+       sentinel and can be read as failed */
     ompi_proc_t *ompi_proc = ompi_group_get_proc_ptr((remote ? comm->c_remote_group : comm->c_local_group),
                                                      peer_id, true);
     assert(NULL != ompi_proc);
+#endif
 
     /* Disable ANY_SOURCE */
     comm->any_source_enabled = false;
