@@ -24,6 +24,7 @@
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * Copyright (c) 2022      Computer Architecture and VLSI Systems (CARV)
  *                         Laboratory, ICS Forth. All rights reserved.
+ * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -1547,7 +1548,7 @@ int mca_base_var_register(const char *project_name, const char *framework_name,
     }
 
     OPAL_LIST_FOREACH_DECL(alias_item, &alias->component_aliases, mca_base_alias_item_t) {
-        mca_base_var_syn_flag_t flags_derived = flags;
+        mca_base_var_syn_flag_t flags_derived = 0;
         if (alias_item->alias_flags & MCA_BASE_ALIAS_FLAG_DEPRECATED) {
             flags_derived = MCA_BASE_VAR_SYN_FLAG_DEPRECATED;
         }
