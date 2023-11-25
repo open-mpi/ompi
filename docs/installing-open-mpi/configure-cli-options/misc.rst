@@ -13,8 +13,10 @@ above categories that can be used with ``configure``:
   is not *necessary* for OpenFabrics networks, but some performance
   loss may be observed without it).
 
-  However, it may be necessary to disable the memory manager in order
-  to build Open MPI statically.
+  .. warning:: Open MPI's memory management functionality, which provides
+               important performance optimizations on OS-bypass networks
+               such as InfiniBand, requires the ``dlsym(3)`` interface,
+               and therefore does not work with fully-static applications.
 
 * ``--with-ft=TYPE``:
   Specify the type of fault tolerance to enable.  The only allowed
