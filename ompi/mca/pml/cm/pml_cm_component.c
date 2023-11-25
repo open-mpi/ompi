@@ -15,6 +15,7 @@
  * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
  * Copyright (c) 2022      IBM Corporation. All rights reserved
+ * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -63,18 +64,6 @@ mca_pml_base_component_2_1_0_t mca_pml_cm_component = {
     .pmlm_init = mca_pml_cm_component_init,
     .pmlm_finalize = mca_pml_cm_component_fini,
 };
-
-/* Array of send completion callback - one per send type
- * These are called internally by the library when the send
- * is completed from its perspective.
- */
-static void (*send_completion_callbacks[MCA_PML_BASE_SEND_SIZE])
-    (struct mca_mtl_request_t *mtl_request) =
-  { mca_pml_cm_send_request_completion,
-    mca_pml_cm_send_request_completion,
-    mca_pml_cm_send_request_completion,
-    mca_pml_cm_send_request_completion,
-    mca_pml_cm_send_request_completion } ;
 
 static int
 mca_pml_cm_component_register(void)
