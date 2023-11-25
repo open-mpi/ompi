@@ -294,11 +294,11 @@ static int ompi_osc_rdma_fetch_and_op_cas (ompi_osc_rdma_sync_t *sync, const voi
                 return ret;
             }
 	} else if (&ompi_mpi_op_no_op.op != op) {
-            ret = osc_rdma_is_accel(origin_addr + dt->super.true_lb);
+            ret = osc_rdma_is_accel(((const char*) origin_addr) + dt->super.true_lb);
             if (0 < ret) {
                 tmp_origin = malloc(dt->super.size);
                 ret = opal_accelerator.mem_copy(MCA_ACCELERATOR_NO_DEVICE_ID, MCA_ACCELERATOR_NO_DEVICE_ID,
-                                                tmp_origin, origin_addr + dt->super.true_lb, dt->super.size, MCA_ACCELERATOR_TRANSFER_DTOH);
+                                                tmp_origin, ((const char*) origin_addr) + dt->super.true_lb, dt->super.size, MCA_ACCELERATOR_TRANSFER_DTOH);
                 ompi_op_reduce (op, (void *) tmp_origin, (void*)((ptrdiff_t) &new_value + offset), 1, dt);
                 free(tmp_origin);
             } else if (0 == ret) {
