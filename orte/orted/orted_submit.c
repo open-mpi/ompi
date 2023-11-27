@@ -18,6 +18,7 @@
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017-2021 IBM Corporation.  All rights reserved.
+ * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -487,10 +488,13 @@ int orte_submit_init(int argc, char *argv[],
                     param[param_len-1] = '\0';
                     param_len--;
                     if (0 == param_len) {
-                        orte_show_help("help-orterun.txt", "orterun:empty-prefix",
-                                       true, orte_basename, orte_basename);
-                        free(param);
-                        return ORTE_ERR_FATAL;
+                        /* We get here if we removed all PATH_SEP's
+                           and end up with an empty string.  In this
+                           case, the prefix is just a single
+                           PATH_SEP. */
+                        param[0] = '\\';
+                        param[1] = '\0';
+                        break;
                     }
                 }
 
@@ -1583,10 +1587,13 @@ static int create_app(int argc, char* argv[],
                     param[param_len-1] = '\0';
                     param_len--;
                     if (0 == param_len) {
-                        orte_show_help("help-orterun.txt", "orterun:empty-prefix",
-                                       true, orte_basename, orte_basename);
-                        free(param);
-                        return ORTE_ERR_FATAL;
+                        /* We get here if we removed all PATH_SEP's
+                           and end up with an empty string.  In this
+                           case, the prefix is just a single
+                           PATH_SEP. */
+                        param[0] = '\\';
+                        param[1] = '\0';
+                        break;
                     }
                 }
                 orte_set_attribute(&app->attributes, ORTE_APP_PREFIX_DIR, ORTE_ATTR_GLOBAL, param, OPAL_STRING);
