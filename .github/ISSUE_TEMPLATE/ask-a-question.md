@@ -7,15 +7,11 @@ assignees: ''
 
 ---
 
-Please submit all the information below so that we can understand the
-working environment that is the context for your question.
+Please submit all the information below so that we can understand the working environment that is the context for your question.
 
-* If you have a problem building or installing Open MPI, [be sure to
-  read this](https://docs.open-mpi.org/en/main/getting-help.html#for-problems-building-or-installing-open-mpi).
-* If you have a problem launching MPI or OpenSHMEM applications, [be
-  sure to read this](https://docs.open-mpi.org/en/main/getting-help.html#for-problems-launching-mpi-or-openshmem-applications).
-* If you have a problem running MPI or OpenSHMEM applications (i.e.,
-  after launching them), [be sure to read this](https://docs.open-mpi.org/en/main/getting-help.html#for-problems-running-mpi-or-openshmem-applications).
+* If you have a problem building or installing Open MPI, [be sure to read this](https://docs.open-mpi.org/en/main/getting-help.html#for-problems-building-or-installing-open-mpi).
+* If you have a problem launching MPI or OpenSHMEM applications, [be sure to read this](https://docs.open-mpi.org/en/main/getting-help.html#for-problems-launching-mpi-or-openshmem-applications).
+* If you have a problem running MPI or OpenSHMEM applications (i.e., after launching them), [be sure to read this](https://docs.open-mpi.org/en/main/getting-help.html#for-problems-running-mpi-or-openshmem-applications).
 
 ## Background information
 
