@@ -13,6 +13,7 @@
  * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -48,7 +49,8 @@ mca_coll_inter_allreduce_inter(const void *sbuf, void *rbuf, int count,
                                mca_coll_base_module_t *module)
 {
     int err, rank, root = 0;
-    char *tmpbuf = NULL, *pml_buffer = NULL, *source;
+    char *tmpbuf = NULL, *pml_buffer = NULL;
+    const char *source;
     ptrdiff_t gap, span;
 
     rank = ompi_comm_rank(comm);

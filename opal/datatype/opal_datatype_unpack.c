@@ -16,6 +16,7 @@
  * Copyright (c) 2017-2018 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2022      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -72,7 +73,8 @@ int32_t opal_unpack_homogeneous_contig_function(opal_convertor_t *pConv, struct 
 {
     const opal_datatype_t *pData = pConv->pDesc;
     unsigned char *user_memory, *packed_buffer;
-    uint32_t iov_idx, i;
+    uint32_t iov_idx;
+    uint32_t __opal_attribute_unused__ i;
     size_t remaining, initial_bytes_converted = pConv->bConverted;
     dt_stack_t *stack = pConv->pStack;
     ptrdiff_t extent = pData->ub - pData->lb;

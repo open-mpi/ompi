@@ -5,6 +5,7 @@
  * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
+ * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -37,7 +38,7 @@ int ompi_netpatterns_setup_narray_tree(int tree_order, int my_rank, int num_node
         netpatterns_tree_node_t *my_node)
 {
     /* local variables */
-    int n_levels, result;
+    int result;
     int my_level_in_tree, cnt;
     int lvl,cum_cnt, my_rank_in_my_level,n_lvls_in_tree;
     int start_index,end_index;
@@ -51,11 +52,9 @@ int ompi_netpatterns_setup_narray_tree(int tree_order, int my_rank, int num_node
     my_node->tree_size=num_nodes;
 
     /* figure out number of levels in tree */
-    n_levels=0;
     result=num_nodes-1;
     while (0 < result ) {
         result/=tree_order;
-        n_levels++;
     };
 
     /* figure out who my children and parents are */
@@ -177,7 +176,7 @@ int ompi_netpatterns_setup_narray_knomial_tree(
         netpatterns_narray_knomial_tree_node_t *my_node)
 {
     /* local variables */
-    int n_levels, result;
+    int result;
     int my_level_in_tree, cnt ;
     int lvl,cum_cnt, my_rank_in_my_level,n_lvls_in_tree;
     int start_index,end_index;
@@ -192,11 +191,9 @@ int ompi_netpatterns_setup_narray_knomial_tree(
     my_node->tree_size=num_nodes;
 
     /* figure out number of levels in tree */
-    n_levels=0;
     result=num_nodes-1;
     while (0 < result ) {
         result/=tree_order;
-        n_levels++;
     };
 
     /* figure out who my children and parents are */

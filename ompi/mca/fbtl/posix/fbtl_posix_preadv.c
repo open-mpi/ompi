@@ -12,6 +12,7 @@
  * Copyright (c) 2008-2021 University of Houston. All rights reserved.
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -221,11 +222,11 @@ ssize_t mca_fbtl_posix_preadv_datasieving (ompio_file_t *fh, struct flock *lock,
         size_t start_offset = (size_t) fh->f_io_array[startindex].offset;
         for ( i = startindex ; i < endindex ; i++) {
             pos = (size_t) fh->f_io_array[i].offset - start_offset;
-            if ( (ssize_t) pos > total_bytes ) {
+            if ( pos > total_bytes ) {
                 break;
             }
             num_bytes = fh->f_io_array[i].length;
-            if ( ((ssize_t) pos + (ssize_t)num_bytes) > total_bytes ) {
+            if ( (pos + (size_t)num_bytes) > total_bytes ) {
                 num_bytes = total_bytes - (ssize_t)pos;
             }
             

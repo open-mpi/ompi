@@ -12,6 +12,7 @@
  * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2023      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -57,8 +58,6 @@ static int opal_timer_base_open(mca_base_open_flag_t flags)
 
 static int opal_timer_base_close(void)
 {
-    int ret;
-
     OPAL_TIMING_DISABLE_NATIVE_TIMERS;
 
     return OPAL_SUCCESS;
