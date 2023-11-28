@@ -46,8 +46,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_SESSION_GET_NTH_PSET,
                             pmpi_session_get_nth_pset_,
                             pmpi_session_get_nth_pset__,
                             pompi_session_get_nth_pset_f,
-                            (MPI_Fint *session, MPI_Fint *info, MPI_Fint *n, MPI_Fint *pset_len, char *pset_name, MPI_Fint *ierr),
-                            (session, info, n, pset_len, pset_name, ierr))
+                            (MPI_Fint *session, MPI_Fint *info, MPI_Fint *n, MPI_Fint *pset_len, char *pset_name, MPI_Fint *ierr, int pset_name_len),
+                            (session, info, n, pset_len, pset_name, ierr, pset_name_len))
 #endif
 #endif
 
@@ -66,14 +66,15 @@ OMPI_GENERATE_F77_BINDINGS (MPI_SESSION_GET_NTH_PSET,
                             mpi_session_get_nth_pset_,
                             mpi_session_get_nth_pset__,
                             ompi_session_get_nth_pset_f,
-                            (MPI_Fint *session, MPI_Fint *info, MPI_Fint *n, MPI_Fint *pset_len, char *pset_name, MPI_Fint *ierr),
-                            (session, info, n, pset_len, pset_name, ierr))
+                            (MPI_Fint *session, MPI_Fint *info, MPI_Fint *n, MPI_Fint *pset_len, char *pset_name, MPI_Fint *ierr, int pset_name_len),
+                            (session, info, n, pset_len, pset_name, ierr, pset_name_len))
 #else
 #define ompi_session_get_nth_pset_f pompi_session_get_nth_pset_f
 #endif
 #endif
 
-void ompi_session_get_nth_pset_f(MPI_Fint *session, MPI_Fint *info, MPI_Fint *n, MPI_Fint *pset_len, char *pset_name, MPI_Fint *ierr)
+void ompi_session_get_nth_pset_f(MPI_Fint *session, MPI_Fint *info, MPI_Fint *n, MPI_Fint *pset_len, char *pset_name, MPI_Fint *ierr,
+                                 int pset_name_len)
 {
     int c_ierr;
     MPI_Session c_session;
@@ -94,8 +95,12 @@ void ompi_session_get_nth_pset_f(MPI_Fint *session, MPI_Fint *info, MPI_Fint *n,
         c_ierr = PMPI_Session_get_nth_pset(c_session, MPI_INFO_NULL, *n,
                                            OMPI_SINGLE_NAME_CONVERT(pset_len),
                                            c_name);
+        /*
+         * use pset_name_len as that is the length of the supplied pset_name 
+         * otherwise there may be gibberish characters past *pset_len
+         */
         if (MPI_SUCCESS == c_ierr) {
-            ompi_fortran_string_c2f(c_name, pset_name, *pset_len);
+            ompi_fortran_string_c2f(c_name, pset_name, pset_name_len);
         }
     }
 
