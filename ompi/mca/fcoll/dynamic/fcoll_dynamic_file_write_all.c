@@ -13,6 +13,7 @@
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
+ * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -86,8 +87,9 @@ mca_fcoll_dynamic_file_write_all (struct ompio_file_t *fh,
     int current_index = 0, temp_index=0;
 
     char *global_buf = NULL;
+#if DEBUG_ON
     MPI_Aint global_count = 0;
-
+#endif
 
     /* array that contains the sorted indices of the global_iov */
     int *sorted = NULL, *sorted_file_offsets=NULL;
@@ -713,7 +715,9 @@ mca_fcoll_dynamic_file_write_all (struct ompio_file_t *fh,
             }
 
             /*Now update the displacements array  with memory offsets*/
+#if DEBUG_ON
             global_count = 0;
+#endif
             for (i=0;i<entries_per_aggregator;i++){
                 temp_pindex =
                     file_offsets_for_agg[sorted_file_offsets[i]].process_id;
@@ -726,8 +730,10 @@ mca_fcoll_dynamic_file_write_all (struct ompio_file_t *fh,
                            temp_pindex, temp_disp_index[temp_pindex],
                            temp_pindex, disp_index[temp_pindex]);
                 }
+#if DEBUG_ON
                 global_count +=
                     file_offsets_for_agg[sorted_file_offsets[i]].length;
+#endif
             }
 
             if (NULL != temp_disp_index){

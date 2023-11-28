@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -69,8 +70,10 @@ int ompi_coll_tuned_read_rules_config_file (char *fname, ompi_coll_alg_rule_t** 
 
     /* stats info */
     int total_alg_count = 0;
+#if OPAL_ENABLE_DEBUG
     int total_com_count = 0;
     int total_msg_count = 0;
+#endif
 
     if (!fname) {
         OPAL_OUTPUT((ompi_coll_tuned_stream,"Gave NULL as rule table configuration file for tuned collectives... ignoring!\n"));
@@ -203,11 +206,15 @@ int ompi_coll_tuned_read_rules_config_file (char *fname, ompi_coll_alg_rule_t** 
                     goto on_file_error;
                 }
 
+#if OPAL_ENABLE_DEBUG
                 total_msg_count++;
+#endif
 
             } /* msg size */
 
+#if OPAL_ENABLE_DEBUG
             total_com_count++;
+#endif
 
         } /* comm size */
 

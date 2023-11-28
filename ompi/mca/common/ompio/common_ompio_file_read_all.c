@@ -12,6 +12,7 @@
  * Copyright (c) 2008-2022 University of Houston. All rights reserved.
  * Copyright (c) 2017-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -85,7 +86,6 @@ mca_common_ompio_base_file_read_all (struct ompio_file_t *fh,
     int **blocklen_per_process=NULL;
     MPI_Aint **displs_per_process=NULL;
     char *global_buf = NULL;
-    MPI_Aint global_count = 0;
     mca_io_ompio_local_io_array *file_offsets_for_agg=NULL;
 
     /* array that contains the sorted indices of the global_iov */
@@ -607,13 +607,11 @@ mca_common_ompio_base_file_read_all (struct ompio_file_t *fh,
                 }
                 /*Moving file offsets to an IO array!*/
                 temp_index = 0;
-                global_count = 0;
                 for (i=0;i<fh->f_procs_per_group; i++){
                     for(j=0;j<disp_index[i];j++){
                         if (blocklen_per_process[i][j] > 0){
                             file_offsets_for_agg[temp_index].length =
                                 blocklen_per_process[i][j];
-                            global_count += blocklen_per_process[i][j];
                             file_offsets_for_agg[temp_index].process_id = i;
                             file_offsets_for_agg[temp_index].offset =
                                 displs_per_process[i][j];

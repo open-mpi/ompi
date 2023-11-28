@@ -53,30 +53,6 @@ static hb_node *node_max __P((hb_node *node));
 static hb_node *node_next __P((hb_node *node));
 static hb_node *node_prev __P((hb_node *node));
 
-static dict *hb_dict_new __P((dict_cmp_func key_cmp, dict_del_func key_del,
-                                                  dict_del_func dat_del));
-static dict_itor *hb_dict_itor_new __P((hb_tree *tree));
-static void hb_itor_invalidate __P((hb_itor *itor));
-static int hb_itor_first __P((hb_itor *itor));
-static void *hb_itor_data __P((hb_itor *itor));
-static const void *hb_itor_cdata __P((const hb_itor *itor));
-static int hb_itor_last __P((hb_itor *itor));
-static int hb_itor_nextn __P((hb_itor *itor, unsigned count));
-static int hb_itor_prev __P((hb_itor *itor));
-static int hb_itor_prevn __P((hb_itor *itor, unsigned count));
-static int hb_itor_search __P((hb_itor *itor, const void *key));
-static int hb_itor_set_data __P((hb_itor *itor, void *dat, int del));
-static unsigned hb_tree_count __P((const hb_tree *tree));
-static void hb_tree_destroy __P((hb_tree *tree, int del));
-static void hb_tree_empty __P((hb_tree *tree, int del));
-static unsigned hb_tree_height __P((const hb_tree *tree));
-static const void *hb_tree_max __P((const hb_tree *tree));
-static unsigned hb_tree_mheight __P((const hb_tree *tree));
-static const void *hb_tree_min __P((const hb_tree *tree));
-static unsigned hb_tree_pathlen __P((const hb_tree *tree));
-static int hb_tree_probe __P((hb_tree *tree, void *key, void **dat));
-static void hb_tree_walk __P((hb_tree *tree, dict_vis_func visit));
-
 hb_tree *
 ompi_coll_libnbc_hb_tree_new(dict_cmp_func key_cmp, dict_del_func key_del,
 			dict_del_func dat_del)

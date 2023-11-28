@@ -9,6 +9,7 @@
  *                         reserved.
  * Copyright (c) 2015-2019 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
+ * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -72,7 +73,8 @@ void ompi_dist_graph_create_f(MPI_Fint *comm_old, MPI_Fint *n, MPI_Fint *sources
                               MPI_Fint *ierr)
 {
     MPI_Comm c_comm_old, c_comm_graph;
-    int count = 0, i;
+    int __opal_attribute_unused__ count = 0;
+    int i;
     MPI_Info c_info;
     int *c_weights;
     int c_ierr;

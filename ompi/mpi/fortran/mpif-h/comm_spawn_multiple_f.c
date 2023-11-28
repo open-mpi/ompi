@@ -14,6 +14,7 @@
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -86,7 +87,7 @@ void ompi_comm_spawn_multiple_f(MPI_Fint *count, char *array_commands,
     int *c_errs;
     char **c_array_commands;
     char ***c_array_argv;
-    int maxprocs;
+    int __opal_attribute_unused__ maxprocs;
     OMPI_ARRAY_NAME_DECL(array_maxprocs);
     OMPI_ARRAY_NAME_DECL(array_errcds);
 

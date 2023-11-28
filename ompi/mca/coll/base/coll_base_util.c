@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2014-2020 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
+ * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -398,7 +399,7 @@ int ompi_coll_base_file_getnext_long(FILE *fptr, int *fileline, long* val)
 
 int ompi_coll_base_file_getnext_string(FILE *fptr, int *fileline, char** val)
 {
-    char trash, token[32];
+    char trash, token[33];
     int rc;
 
     *val = NULL;  /* security in case we fail */

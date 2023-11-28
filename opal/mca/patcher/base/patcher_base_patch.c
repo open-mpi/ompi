@@ -6,6 +6,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
+ * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -84,7 +85,7 @@ static int PatchLoadImm(uintptr_t addr, unsigned int reg, size_t value)
 
 #endif
 
-#if !HAVE___CLEAR_CACHE
+#if !defined(HAVE___CLEAR_CACHE)
 static void flush_and_invalidate_cache(unsigned long a)
 {
 #    if defined(PLATFORM_ARCH_X86)
@@ -149,7 +150,7 @@ static inline void apply_patch(unsigned char *patch_data, uintptr_t address, siz
 {
     ModifyMemoryProtection(address, data_size, PROT_EXEC | PROT_READ | PROT_WRITE);
     memcpy((void *) address, patch_data, data_size);
-#if HAVE___CLEAR_CACHE
+#if defined(HAVE___CLEAR_CACHE)
     /* do not allow global declaration of compiler intrinsic */
     void __clear_cache(void *beg, void *end);
 

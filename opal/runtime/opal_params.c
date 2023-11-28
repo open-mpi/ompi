@@ -25,6 +25,7 @@
  * Copyright (c) 2018-2022 Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * Copyright (c) 2022      Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -60,8 +61,6 @@ static void opal_deregister_params(void)
 
 int opal_register_params(void)
 {
-    int ret;
-
     if (opal_register_done) {
         return OPAL_SUCCESS;
     }
@@ -70,15 +69,20 @@ int opal_register_params(void)
 
 #if defined(HAVE_SCHED_YIELD)
     opal_progress_yield_when_idle = false;
-    ret = mca_base_var_register("opal", "opal", "progress", "yield_when_idle",
+    int ret1;
+    ret1 = mca_base_var_register("opal", "opal", "progress", "yield_when_idle",
                                 "Yield the processor when waiting on progress",
                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                 OPAL_INFO_LVL_8, MCA_BASE_VAR_SCOPE_LOCAL,
                                 &opal_progress_yield_when_idle);
+    if (ret1 < 0) {
+        return ret1;
+    }
 #endif
 
 #if OPAL_ENABLE_DEBUG
     opal_progress_debug = false;
+    int ret;
     ret = mca_base_var_register("opal", "opal", "progress", "debug",
                                 "Set to non-zero to debug progress engine features",
                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
