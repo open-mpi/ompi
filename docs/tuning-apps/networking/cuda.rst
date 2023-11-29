@@ -4,24 +4,121 @@ CUDA
 .. error:: TODO This section needs to be converted from FAQ Q&A style
            to regular documentation style.
 
+What is CUDA-aware support?
+---------------------------
+
+CUDA-aware support means that the MPI library can use GPU application
+buffers directly where host memory can be used. CUDA support is being
+continuously updated so different levels of support exist in different
+versions. We recommend you use the latest version of Open MPI for best
+support.
+
+.. attention:: Support for operations on GPU buffers varies between
+    components/modules. We highly recommend CUDA-aware MPI application
+    authors continue to read, and understand the capabilities of the
+    Open MPI build on their platforms.
+
+/////////////////////////////////////////////////////////////////////////
+
+What kind of CUDA support exists in Open MPI?
+---------------------------------------------
+
+Open MPI depends on various features of CUDA 4.0, so one needs to have
+at least the CUDA 4.0 driver and toolkit.  The new features of
+interest are the Unified Virtual Addressing (UVA) so that all pointers
+within a program have unique addresses.  In addition, there is a new
+API that allows one to determine if a pointer is a CUDA device pointer
+or host memory pointer.  This API is used by the library to decide
+what needs to be done with each buffer.  In addition, CUDA 4.1 also
+provides the ability to register host memory with the CUDA driver,
+which can improve performance.  CUDA 4.1 also added CUDA IPC support
+for fast communication between GPUs on the same node.
+
+.. error:: CUDA 4.0 is SUPER OLD!  End users dont care about the
+   differences between cuda-aware, cuda-ipc, gpu-direct, and gpu-direct-rdma
+
+Note that derived datatypes |mdash| both contiguous and non-contiguous
+|mdash| are supported.  However, the non-contiguous datatypes
+currently have high overhead because of the many calls to the CUDA
+function ``cuMemcpy()`` to copy all the pieces of the buffer into the
+intermediate buffer.
+
+CUDA-aware support is available in:
+
+* The UCX (``ucx``) PML
+* The PSM2 (``psm2``) MTL with the CM (``cm``) PML.
+* The OFI (``ofi``) MTL with the CM (``cm``) PML.
+* Both CUDA-ized shared memory (``smcuda``) and TCP (``tcp``) BTLs
+  with the OB1 (``ob1``) PML.
+* The HCOLL (``hcoll``) COLL
+
+See :ref:`this FAQ entry <faq-cuda-mpi-apis-cuda-label>`
+for more details on which commnication APIs are CUDA-aware.
+
+OFI support for CUDA
+^^^^^^^^^^^^^^^^^^^^
+
+When running CUDA-aware Open MPI over Libfabric, the OFI MTL will
+check if there are any providers capable of handling GPU (or other
+accelerator) memory through the ``hmem``-related flags. If a
+CUDA-capable provider is available, the OFI MTL will directly send
+GPU buffers through Libfabric's API after registering the memory.
+If there are no CUDA-capable providers available, the buffers will
+automatically be copied to host buffers before being transferred
+through Libfabric's API.
+
+PSM2 support for CUDA
+^^^^^^^^^^^^^^^^^^^^^
+
+When running CUDA-aware Open MPI on Intel Omni-path, the PSM2 MTL will
+automatically set ``PSM2_CUDA`` environment variable which enables
+PSM2 to handle GPU buffers.  If the user wants to use host buffers
+with a CUDA-aware Open MPI, it is recommended to set ``PSM2_CUDA``
+to ``0`` in the execution environment. PSM2 also has support for the
+NVIDIA GPUDirect support feature. To enable this, users will need to
+set ``PSM2_GPUDIRECT`` to ``1`` in the execution environment.
+
+Note: The PSM2 library and ``hfi1`` driver with CUDA support are
+requirements to use GPUDirect support on Intel Omni-Path. The minimum
+PSM2 build version required is `PSM2 10.2.175
+<https://github.com/01org/opa-psm2/releases/tag/PSM2_10.2-175>`_.
+
+For more information refer to the `Intel Omni-Path documentation
+<https://www.intel.com/content/www/us/en/support/articles/000016242/network-and-i-o/fabric-products.html>`_.
+
+/////////////////////////////////////////////////////////////////////////
+
 How do I build Open MPI with CUDA-aware support?
 ------------------------------------------------
 
-CUDA-aware support means that the MPI library can send and receive GPU
-buffers directly.  CUDA support is being continuously updated so
-different levels of support exist in different versions.  We recommend
-you use the latest version of Open MPI for best support.
+Open MPI should be configured using the ``--with-cuda=<path-to-cuda>``
+and ``--with-cuda-libdir=<path-to-libcuda.so>`` configure options to
+build CUDA support.
 
-Open MPI offers two flavors of CUDA support:
+Open MPI supports building with CUDA libraries and running on systems
+without CUDA libraries or hardware. In order to take advantage of
+this functionality, when compiling, you have to specify the CUDA
+dependent components to be built as DSOs using the
+``--enable-mca-dso=<comma-delimited-list-of-cuda-components.``
+configure option.
 
-#. Via `UCX <https://openucx.org/>`_.
+This affects the ``smcuda`` shared memory and ``uct`` BTLs, as well
+as the ``rgpusm`` and ``gpusm`` rcache components.
 
-   This is the preferred mechanism.  Since UCX will be providing the
-   CUDA support, it is important to ensure that UCX itself is built
-   with CUDA support.
+An example configure command would look like the following:
 
-   To see if your ucx was built with CUDA support run the following
-   command:
+   .. code-block:: sh
+
+      # Configure Open MPI this way
+      shell$ ./configure --with-cuda=/usr/local/cuda --with-cuda-libdir=/usr/local/cuda/lib64/stubs \
+             --enable-mca-dso=btl-smcuda,rcache-rgpusm,rcache-gpusm,accelerator-cuda <other configure params>
+
+Build with `UCX <https://openucx.org/>`_
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If you want to build Open MPI with UCX , it is important to ensure
+that UCX itself is built with CUDA support, which can be verified
+with the following command:
 
    .. code-block:: sh
 
@@ -43,56 +140,8 @@ Open MPI offers two flavors of CUDA support:
       # Configure Open MPI this way
       shell$ ./configure --with-cuda=/usr/local/cuda --with-cuda-libdir=/usr/local/cuda/lib64/stubs/ --with-ucx=/path/to/ucx-cuda-install <other configure params>
 
-#. Via internal Open MPI CUDA support
-
-Regardless of which flavor of CUDA support (or both) you plan to use,
-Open MPI should be configured using the ``--with-cuda=<path-to-cuda>``
-and ``--with-cuda-libdir=<path-to-libcuda.so>`` configure options to
-build CUDA support into Open MPI.
-
-Open MPI supports building with CUDA libraries and running on systems
-without CUDA libraries or hardware. In order to take advantage of
-this functionality, when compiling, you have to specify the CUDA
-dependent components to be built as DSOs using the
-``--enable-mca-dso=<comma-delimited-list-of-cuda-components.``
-configure option.
-
-This affects the ``smcuda`` shared memory and ``uct`` BTLs, as well
-as the ``rgpusm`` and ``gpusm`` rcache components.
-
-An example configure command would look like the following:
-
-   .. code-block:: sh
-
-      # Configure Open MPI this way
-      shell$ ./configure --with-cuda=/usr/local/cuda --with-cuda-libdir=/usr/local/cuda/lib64/stubs \
-             --enable-mca-dso=btl-smcuda,rcache-rgpusm,rcache-gpusm,accelerator-cuda <other configure params>
-
-/////////////////////////////////////////////////////////////////////////
-
-How do I verify that Open MPI has been built with CUDA support?
----------------------------------------------------------------
-
-Verify that Open MPI has been built with cuda using ``ompi_info``
-
-.. code-block:: sh
-
-   # Use ompi_info to verify cuda support in Open MPI
-   shell$ ./ompi_info |grep "MPI extensions"
-          MPI extensions: affinity, cuda, pcollreq
-
-/////////////////////////////////////////////////////////////////////////
-
-How do I run Open MPI with applications that pass CUDA buffers to MPI?
-----------------------------------------------------------------------
-
-Open MPI will detect and enable CUDA enabled components at runtime with
-no additional mpirun parameters.
-
-/////////////////////////////////////////////////////////////////////////
-
-How do I build Open MPI with CUDA-aware support using PGI?
-----------------------------------------------------------
+Build with PGI
+^^^^^^^^^^^^^^
 
 With CUDA 6.5, you can build all versions of CUDA-aware Open MPI
 without doing anything special.  However, with CUDA 7.0 and CUDA 7.5,
@@ -109,88 +158,8 @@ correctly.  Add the following to your configure line.
 
 /////////////////////////////////////////////////////////////////////////
 
-What kind of CUDA support exists in Open MPI?
----------------------------------------------
-
-CUDA-aware support is defined as Open MPI automatically detecting that
-the argument pointer being passed to an MPI routine is a CUDA device
-memory pointer.
-
-See :ref:`this FAQ entry <faq-cuda-mpi-apis-cuda-label>`
-for more details on which APIs are CUDA-aware.
-
-
-.. error:: CUDA 4.0 is SUPER OLD!  End users dont care about the
-   differences between cuda-aware, cuda-ipc, gpu-direct, and gpu-direct-rdma
-
-Open MPI depends on various features of CUDA 4.0, so one needs to have
-at least the CUDA 4.0 driver and toolkit.  The new features of
-interest are the Unified Virtual Addressing (UVA) so that all pointers
-within a program have unique addresses.  In addition, there is a new
-API that allows one to determine if a pointer is a CUDA device pointer
-or host memory pointer.  This API is used by the library to decide
-what needs to be done with each buffer.  In addition, CUDA 4.1 also
-provides the ability to register host memory with the CUDA driver,
-which can improve performance.  CUDA 4.1 also added CUDA IPC support
-for fast communication between GPUs on the same node.
-
-Note that derived datatypes |mdash| both contiguous and non-contiguous
-|mdash| are supported.  However, the non-contiguous datatypes
-currently have high overhead because of the many calls to the CUDA
-function ``cuMemcpy()`` to copy all the pieces of the buffer into the
-intermediate buffer.
-
-CUDA-aware support is available in:
-
-* The UCX (``ucx``) PML
-* The PSM2 (``psm2``) MTL with the CM (``cm``) PML.
-* The OFI (``ofi``) MTL with the CM (``cm``) PML.
-* Both CUDA-ized shared memory (``smcuda``) and TCP (``tcp``) BTLs
-  with the OB1 (``ob1``) PML.
-* The HCOLL (``hcoll``) COLL
-
-/////////////////////////////////////////////////////////////////////////
-
-PSM2 support for CUDA
----------------------
-
-CUDA-aware support is present in PSM2 MTL.  When running CUDA-aware
-Open MPI on Intel Omni-path, the PSM2 MTL will automatically set
-``PSM2_CUDA`` environment variable which enables PSM2 to handle GPU
-buffers.  If the user wants to use host buffers with a CUDA-aware Open
-MPI, it is recommended to set ``PSM2_CUDA`` to ``0`` in the execution
-environment. PSM2 also has support for the NVIDIA GPUDirect support
-feature. To enable this, users will need to set ``PSM2_GPUDIRECT``
-to ``1`` in the execution environment.
-
-Note: The PSM2 library and ``hfi1`` driver with CUDA support are
-requirements to use GPUDirect support on Intel Omni-Path. The minimum
-PSM2 build version required is `PSM2 10.2.175
-<https://github.com/01org/opa-psm2/releases/tag/PSM2_10.2-175>`_.
-
-For more information refer to the `Intel Omni-Path documentation
-<https://www.intel.com/content/www/us/en/support/articles/000016242/network-and-i-o/fabric-products.html>`_.
-
-/////////////////////////////////////////////////////////////////////////
-
-OFI support for CUDA
----------------------
-
-CUDA-aware support is present in OFI MTL.  When running CUDA-aware
-Open MPI over Libfabric, the OFI MTL will check if there are any
-providers capable of handling GPU (or other accelerator) memory
-through the ``hmem``-related flags. If a CUDA-capable provider is
-available, the OFI MTL will directly send GPU buffers through
-Libfabric's API after registering the memory. If there are no
-CUDA-capable providers available, the buffers will automatically
-be copied to host buffers before being transferred through
-Libfabric's API.
-
-/////////////////////////////////////////////////////////////////////////
-
-
-How can I tell if Open MPI was built with CUDA support?
--------------------------------------------------------
+How do I verify that Open MPI has been built with CUDA support?
+---------------------------------------------------------------
 
 Use the ``ompi_info`` command:
 
@@ -199,12 +168,49 @@ Use the ``ompi_info`` command:
    shell$ ompi_info --parsable --all | grep mpi_built_with_cuda_support:value
    mca:mpi:base:param:mpi_built_with_cuda_support:value:true
 
+See :ref:`this FAQ entry <cuda-support-runtime-check-label>`
+for more details on verifying CUDA support at run time.
+
 /////////////////////////////////////////////////////////////////////////
 
-Can I get additional CUDA debug-level information at run-time?
---------------------------------------------------------------
+How do I run Open MPI with CUDA applications?
+---------------------------------------------
 
-Yes, by enabling some vebosity flags.
+Open MPI will detect and enable CUDA enabled components at runtime with
+no additional mpirun parameters.
+
+How do I use CUDA-aware UCX for Open MPI?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Example of running ``osu_latency`` from the `OSU benchmarks
+<https://mvapich.cse.ohio-state.edu/benchmarks>`_ with CUDA buffers
+using Open MPI and UCX CUDA support:
+
+.. code-block::
+
+   shell$ mpirun -n 2 --mca pml ucx \
+       -x UCX_TLS=rc,sm,cuda_copy,gdr_copy,cuda_ipc ./osu_latency D D
+
+How do I enable CUDA-aware support in HCOLL collective component?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To enable CUDA GPU buffer support in HCOLL collectives pass the following
+environment variables via mpirun:
+
+.. code-block::
+
+   shell$ mpirun -x HCOLL_GPU_ENABLE=1 -x HCOLL_ENABLE_NBC=1 ..
+
+See `nVidia HCOLL documentation <https://docs.nvidia.com/networking/display/HPCXv29/HCOLL>`_
+for more information.
+
+/////////////////////////////////////////////////////////////////////////
+
+
+Get additional CUDA debug-level information
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+More debug information can be obtained by enabling verbosity flags.
 
 * The ``opal_cuda_verbose`` parameter has only one level of verbosity:
 
@@ -253,136 +259,6 @@ Yes, by enabling some vebosity flags.
 
 /////////////////////////////////////////////////////////////////////////
 
-.. _faq-cuda-mpi-cuda-numa-issues-label:
-
-NUMA Node Issues
-----------------
-
-When running on a node that has multiple GPUs, you may want to select
-the GPU that is closest to the NUMA node on which your process is
-running.  One way to do this is to make use of the ``hwloc`` library.
-The following is a C code snippet that can be used in your application
-to select a GPU that is close.  It will determine on which CPU it is
-running and then look for the closest GPU.  There could be multiple
-GPUs that are the same distance away.  This is dependent on having
-``hwloc`` somewhere on your system.
-
-.. code-block:: c
-
-   /**
-    * Test program to show the use of hwloc to select the GPU closest to the CPU
-    * that the MPI program is running on.  Note that this works even without
-    * any libpciaccess or libpci support as it keys off the NVIDIA vendor ID.
-    * There may be other ways to implement this but this is one way.
-    * January 10, 2014
-    */
-   #include <assert.h>
-   #include <stdio.h>
-   #include "cuda.h"
-   #include "mpi.h"
-   #include "hwloc.h"
-
-   #define ABORT_ON_ERROR(func) \
-     { CUresult res; \
-       res = func; \
-       if (CUDA_SUCCESS != res) { \
-           printf("%s returned error=%d\n", #func, res); \
-           abort(); \
-       } \
-     }
-   static hwloc_topology_t topology = NULL;
-   static int gpuIndex = 0;
-   static hwloc_obj_t gpus[16] = {0};
-
-   /**
-    * This function searches for all the GPUs that are hanging off a NUMA
-    * node.  It walks through each of the PCI devices and looks for ones
-    * with the NVIDIA vendor ID.  It then stores them into an array.
-    * Note that there can be more than one GPU on the NUMA node.
-    */
-   static void find_gpus(hwloc_topology_t topology, hwloc_obj_t parent, hwloc_obj_t child) {
-       hwloc_obj_t pcidev;
-       pcidev = hwloc_get_next_child(topology, parent, child);
-       if (NULL == pcidev) {
-           return;
-       } else if (0 != pcidev->arity) {
-           /* This device has children so need to look recursively at them */
-           find_gpus(topology, pcidev, NULL);
-           find_gpus(topology, parent, pcidev);
-       } else {
-           if (pcidev->attr->pcidev.vendor_id == 0x10de) {
-               gpus[gpuIndex++] = pcidev;
-           }
-           find_gpus(topology, parent, pcidev);
-       }
-   }
-
-   int main(int argc, char *argv[])
-   {
-       int rank, retval, length;
-       char procname[MPI_MAX_PROCESSOR_NAME+1];
-       const unsigned long flags = HWLOC_TOPOLOGY_FLAG_IO_DEVICES | HWLOC_TOPOLOGY_FLAG_IO_BRIDGES;
-       hwloc_cpuset_t newset;
-       hwloc_obj_t node, bridge;
-       char pciBusId[16];
-       CUdevice dev;
-       char devName[256];
-
-       MPI_Init(&argc, &argv);
-       MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-       if (MPI_SUCCESS != MPI_Get_processor_name(procname, &length)) {
-           strcpy(procname, "unknown");
-       }
-
-       /* Now decide which GPU to pick.  This requires hwloc to work properly.
-        * We first see which CPU we are bound to, then try and find a GPU nearby.
-        */
-       retval = hwloc_topology_init(&topology);
-       assert(retval == 0);
-       retval = hwloc_topology_set_flags(topology, flags);
-       assert(retval == 0);
-       retval = hwloc_topology_load(topology);
-       assert(retval == 0);
-       newset = hwloc_bitmap_alloc();
-       retval = hwloc_get_last_cpu_location(topology, newset, 0);
-       assert(retval == 0);
-
-       /* Get the object that contains the cpuset */
-       node = hwloc_get_first_largest_obj_inside_cpuset(topology, newset);
-
-       /* Climb up from that object until we find the HWLOC_OBJ_NODE */
-       while (node->type != HWLOC_OBJ_NODE) {
-           node = node->parent;
-       }
-
-       /* Now look for the HWLOC_OBJ_BRIDGE.  All PCI busses hanging off the
-        * node will have one of these */
-       bridge = hwloc_get_next_child(topology, node, NULL);
-       while (bridge->type != HWLOC_OBJ_BRIDGE) {
-           bridge = hwloc_get_next_child(topology, node, bridge);
-       }
-
-       /* Now find all the GPUs on this NUMA node and put them into an array */
-       find_gpus(topology, bridge, NULL);
-
-       ABORT_ON_ERROR(cuInit(0));
-       /* Now select the first GPU that we find */
-       if (gpus[0] == 0) {
-           printf("No GPU found\n");
-       } else {
-           sprintf(pciBusId, "%.2x:%.2x:%.2x.%x", gpus[0]->attr->pcidev.domain, gpus[0]->attr->pcidev.bus,
-           gpus[0]->attr->pcidev.dev, gpus[0]->attr->pcidev.func);
-           ABORT_ON_ERROR(cuDeviceGetByPCIBusId(&dev, pciBusId));
-           ABORT_ON_ERROR(cuDeviceGetName(devName, 256, dev));
-           printf("rank=%d (%s): Selected GPU=%s, name=%s\n", rank, procname, pciBusId, devName);
-       }
-
-       MPI_Finalize();
-       return 0;
-   }
-
-/////////////////////////////////////////////////////////////////////////
-
 How do I develop CUDA-aware Open MPI applications?
 --------------------------------------------------
 
@@ -410,135 +286,75 @@ example of how to write CUDA-aware MPI applications.
 
 .. _faq-cuda-mpi-apis-cuda-label:
 
-Which MPI APIs work with CUDA-aware?
-------------------------------------
+CUDA-aware support of communication APIs
+----------------------------------------
 
-* MPI_Allgather
-* MPI_Allgatherv
+The level of CUDA-aware support depends on the Open MPI build and the system
+that it runs atop, and varies between components/modules. This section
+provides general advice to applications looking to use GPU buffers.
+
+.. hint::
+
+    As CUDA-aware support evolves in newer Open MPI versions, this section
+    should be updated to reflect the latest status. If you find inaccuracies,
+    please submit a bug report, or update the document at the minimum.
+    The following information was last updated in November 2023.
+
+APIs with CUDA-aware support
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Point-to-Point commnication APIs support sending from and receive on
+GPU buffers, including both blocking and non-blocking variants.
+
+Most blocking collective communication APIs support GPU send/receive
+buffers, with the **exception** of the reductive versions:
+
 * MPI_Allreduce
-* MPI_Alltoall
-* MPI_Alltoallv
-* MPI_Alltoallw
-* MPI_Bcast
-* MPI_Bsend
-* MPI_Bsend_init
-* MPI_Exscan
-* MPI_Ibsend
-* MPI_Irecv
-* MPI_Isend
-* MPI_Irsend
-* MPI_Issend
-* MPI_Gather
-* MPI_Gatherv
-* MPI_Get
-* MPI_Put
-* MPI_Rsend
-* MPI_Rsend_init
-* MPI_Recv
-* MPI_Recv_init
 * MPI_Reduce
 * MPI_Reduce_scatter
 * MPI_Reduce_scatter_block
-* MPI_Scan
-* MPI_Scatter
-* MPI_Scatterv
-* MPI_Send
-* MPI_Send_init
-* MPI_Sendrecv
-* MPI_Ssend
-* MPI_Ssend_init
-* MPI_Win_create
 
-.. FIXME: We need to verify the above list.
+.. attention::
 
-/////////////////////////////////////////////////////////////////////////
+    Some blocking collective algorithms are implemented with non-blocking APIs,
+    and therefore lack CUDA-aware support. In such cases, the application can
+    unselect the algorithm or component with corresponding MCA parameters.
 
-Which MPI APIs do NOT work with CUDA-aware?
--------------------------------------------
+One-sided communication APIs currently have limited CUDA-aware support. Only
+``MPI_Get`` and ``MPI_Put`` support GPU buffers.
+
+APIs without CUDA-aware support
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Non-blocking collective communication APIs generally do not have CUDA-aware
+support, plus reductive blocking APIs:
+
+* MPI_Allreduce
+* MPI_Reduce
+* MPI_Reduce_scatter
+* MPI_Reduce_scatter_block
+
+One-sided commnication APIs other than ``MPI_Get`` and ``MPI_Put`` do not fully
+support GPU buffers, including:
 
 * MPI_Accumulate
 * MPI_Compare_and_swap
 * MPI_Fetch_and_op
 * MPI_Get_Accumulate
-* MPI_Iallgather
-* MPI_Iallgatherv
-* MPI_Iallreduce
-* MPI_Ialltoall
-* MPI_Ialltoallv
-* MPI_Ialltoallw
-* MPI_Ibcast
-* MPI_Iexscan
 * MPI_Rget
 * MPI_Rput
 
-.. FIXME: We need to verify the above list.
+UCX and UCC
+^^^^^^^^^^^
 
-/////////////////////////////////////////////////////////////////////////
+UCX and UCC supports CUDA-aware blocking reduction collective APIs:
 
-How do I use CUDA-aware UCX for Open MPI?
------------------------------------------
-
-Example of running ``osu_latency`` from the `OSU benchmarks
-<https://mvapich.cse.ohio-state.edu/benchmarks>`_ with CUDA buffers
-using Open MPI and UCX CUDA support:
-
-.. code-block::
-
-   shell$ mpirun -n 2 --mca pml ucx \
-       -x UCX_TLS=rc,sm,cuda_copy,gdr_copy,cuda_ipc ./osu_latency D D
-
-/////////////////////////////////////////////////////////////////////////
-
-Which MPI APIs work with CUDA-aware UCX?
-----------------------------------------
-
-* MPI_Send
-* MPI_Bsend
-* MPI_Ssend
-* MPI_Rsend
-* MPI_Isend
-* MPI_Ibsend
-* MPI_Issend
-* MPI_Irsend
-* MPI_Send_init
-* MPI_Bsend_init
-* MPI_Ssend_init
-* MPI_Rsend_init
-* MPI_Recv
-* MPI_Irecv
-* MPI_Recv_init
-* MPI_Sendrecv
-* MPI_Bcast
-* MPI_Gather
-* MPI_Gatherv
-* MPI_Allgather
+* MPI_Allreduce
 * MPI_Reduce
 * MPI_Reduce_scatter
 * MPI_Reduce_scatter_block
-* MPI_Allreduce
-* MPI_Scan
-* MPI_Exscan
-* MPI_Allgatherv
-* MPI_Alltoall
-* MPI_Alltoallv
-* MPI_Alltoallw
-* MPI_Scatter
-* MPI_Scatterv
-* MPI_Iallgather
-* MPI_Iallgatherv
-* MPI_Ialltoall
-* MPI_Iialltoallv
-* MPI_Ialltoallw
-* MPI_Ibcast
-* MPI_Iexscan
 
-.. FIXME: We need to verify the above list.  These _SHOULD_ be the same
-   as above.
-
-/////////////////////////////////////////////////////////////////////////
-
-Which MPI APIs do NOT work with CUDA-aware UCX?
------------------------------------------------
+However, the following APIs do not support GPU buffers:
 
 * All one-sided operations such as MPI_Put, MPI_Get, MPI_Accumulate,
   MPI_Rget, MPI_Rput, MPI_Get_Accumulate, MPI_Fetch_and_op,
@@ -550,9 +366,23 @@ Which MPI APIs do NOT work with CUDA-aware UCX?
 .. FIXME: Checking with nVidia.  This may be more of an issue of OSC_UCX
    not supporting CUDA, though perhaps it's just performance.
 
+HCOLL collective component
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+HCOLL collective component offers CUDA-aware support for the following APIs
+in addition to the above:
+
+* MPI_Allreduce
+* MPI_Ibarrier
+* MPI_Ibcast
+* MPI_Iallgather
+* MPI_Iallreduce
+
 /////////////////////////////////////////////////////////////////////////
 
-Can I tell at compile time or runtime whether I have CUDA-aware support?
+.. _cuda-support-runtime-check-label:
+
+How do I verify CUDA-aware support at compile or run time?
 ------------------------------------------------------------------------
 
 There is both a compile time check and a run-time check available.
@@ -699,29 +529,132 @@ those to select a GPU, e.g. using
 MPI internal CUDA resources are released during MPI_Finalize. Thus it is an
 application error to call cudaDeviceReset before MPI_Finalize is called.
 
-
 /////////////////////////////////////////////////////////////////////////
 
-How do I enable CUDA support in HCOLL collective component
-----------------------------------------------------------
+.. _faq-cuda-mpi-cuda-numa-issues-label:
 
-HCOLL component supports CUDA GPU buffers for the following
-collectives:
+NUMA Node Issues
+----------------
 
-MPI_Allreduce
-MPI_Bcast
-MPI_Allgather
-MPI_Ibarrier
-MPI_Ibcast
-MPI_Iallgather
-MPI_Iallreduce
+When running on a node that has multiple GPUs, you may want to select
+the GPU that is closest to the NUMA node on which your process is
+running.  One way to do this is to make use of the ``hwloc`` library.
+The following is a C code snippet that can be used in your application
+to select a GPU that is close.  It will determine on which CPU it is
+running and then look for the closest GPU.  There could be multiple
+GPUs that are the same distance away.  This is dependent on having
+``hwloc`` somewhere on your system.
 
-To enable CUDA GPU buffer support in these collectives pass the
-following environment variables via mpirun:
+.. code-block:: c
 
-.. code-block::
+   /**
+    * Test program to show the use of hwloc to select the GPU closest to the CPU
+    * that the MPI program is running on.  Note that this works even without
+    * any libpciaccess or libpci support as it keys off the NVIDIA vendor ID.
+    * There may be other ways to implement this but this is one way.
+    * January 10, 2014
+    */
+   #include <assert.h>
+   #include <stdio.h>
+   #include "cuda.h"
+   #include "mpi.h"
+   #include "hwloc.h"
 
-   shell$ mpirun -x HCOLL_GPU_ENABLE=1 -x HCOLL_ENABLE_NBC=1 ..
+   #define ABORT_ON_ERROR(func) \
+     { CUresult res; \
+       res = func; \
+       if (CUDA_SUCCESS != res) { \
+           printf("%s returned error=%d\n", #func, res); \
+           abort(); \
+       } \
+     }
+   static hwloc_topology_t topology = NULL;
+   static int gpuIndex = 0;
+   static hwloc_obj_t gpus[16] = {0};
 
-See `nVidia HCOLL documentation <https://docs.nvidia.com/networking/display/HPCXv29/HCOLL>`_
-for more information.
+   /**
+    * This function searches for all the GPUs that are hanging off a NUMA
+    * node.  It walks through each of the PCI devices and looks for ones
+    * with the NVIDIA vendor ID.  It then stores them into an array.
+    * Note that there can be more than one GPU on the NUMA node.
+    */
+   static void find_gpus(hwloc_topology_t topology, hwloc_obj_t parent, hwloc_obj_t child) {
+       hwloc_obj_t pcidev;
+       pcidev = hwloc_get_next_child(topology, parent, child);
+       if (NULL == pcidev) {
+           return;
+       } else if (0 != pcidev->arity) {
+           /* This device has children so need to look recursively at them */
+           find_gpus(topology, pcidev, NULL);
+           find_gpus(topology, parent, pcidev);
+       } else {
+           if (pcidev->attr->pcidev.vendor_id == 0x10de) {
+               gpus[gpuIndex++] = pcidev;
+           }
+           find_gpus(topology, parent, pcidev);
+       }
+   }
+
+   int main(int argc, char *argv[])
+   {
+       int rank, retval, length;
+       char procname[MPI_MAX_PROCESSOR_NAME+1];
+       const unsigned long flags = HWLOC_TOPOLOGY_FLAG_IO_DEVICES | HWLOC_TOPOLOGY_FLAG_IO_BRIDGES;
+       hwloc_cpuset_t newset;
+       hwloc_obj_t node, bridge;
+       char pciBusId[16];
+       CUdevice dev;
+       char devName[256];
+
+       MPI_Init(&argc, &argv);
+       MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+       if (MPI_SUCCESS != MPI_Get_processor_name(procname, &length)) {
+           strcpy(procname, "unknown");
+       }
+
+       /* Now decide which GPU to pick.  This requires hwloc to work properly.
+        * We first see which CPU we are bound to, then try and find a GPU nearby.
+        */
+       retval = hwloc_topology_init(&topology);
+       assert(retval == 0);
+       retval = hwloc_topology_set_flags(topology, flags);
+       assert(retval == 0);
+       retval = hwloc_topology_load(topology);
+       assert(retval == 0);
+       newset = hwloc_bitmap_alloc();
+       retval = hwloc_get_last_cpu_location(topology, newset, 0);
+       assert(retval == 0);
+
+       /* Get the object that contains the cpuset */
+       node = hwloc_get_first_largest_obj_inside_cpuset(topology, newset);
+
+       /* Climb up from that object until we find the HWLOC_OBJ_NODE */
+       while (node->type != HWLOC_OBJ_NODE) {
+           node = node->parent;
+       }
+
+       /* Now look for the HWLOC_OBJ_BRIDGE.  All PCI busses hanging off the
+        * node will have one of these */
+       bridge = hwloc_get_next_child(topology, node, NULL);
+       while (bridge->type != HWLOC_OBJ_BRIDGE) {
+           bridge = hwloc_get_next_child(topology, node, bridge);
+       }
+
+       /* Now find all the GPUs on this NUMA node and put them into an array */
+       find_gpus(topology, bridge, NULL);
+
+       ABORT_ON_ERROR(cuInit(0));
+       /* Now select the first GPU that we find */
+       if (gpus[0] == 0) {
+           printf("No GPU found\n");
+       } else {
+           sprintf(pciBusId, "%.2x:%.2x:%.2x.%x", gpus[0]->attr->pcidev.domain, gpus[0]->attr->pcidev.bus,
+           gpus[0]->attr->pcidev.dev, gpus[0]->attr->pcidev.func);
+           ABORT_ON_ERROR(cuDeviceGetByPCIBusId(&dev, pciBusId));
+           ABORT_ON_ERROR(cuDeviceGetName(devName, 256, dev));
+           printf("rank=%d (%s): Selected GPU=%s, name=%s\n", rank, procname, pciBusId, devName);
+       }
+
+       MPI_Finalize();
+       return 0;
+   }
