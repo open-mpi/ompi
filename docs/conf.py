@@ -176,7 +176,31 @@ templates_path = ['_templates']
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', 'venv', 'py*/**']
+#
+# Note that we exclude the entire prrte-rst-content/ directory.
+# Here's why:
+#
+# * By default, Sphinx will warn about any .rst file that it finds in
+#   the doc tree that is not referenced via either the "include"
+#   directive or via a TOC.
+# * The prrte-rst-content/ directory contains files that we *do* use
+#   here in the OMPI docs, but it also contains files that we do
+#   *not* use here in the OMPI docs.
+# * Consequently, we explicitly ".. include:: <filename>" the specific
+#   files that we want from the prrte-rst-content/ directory.  And we
+#   specifically do *not* include at least some files in the
+#   prrte-rst-content directory.
+# * Listing files/patterns in exclude_patterns:
+#   * Will prevent Sphinx from searching for/finding new .rst files
+#     that match those patterns.
+#   * Will not prevent explicitly ".. include:"'ing a file with a name
+#     that matches a pattern in exclude_patterns.
+#
+# Hence, listing prrte-rst-content in exclude_patterns means that
+# Sphinx won't complain about the .rst files in that tree that we are
+# not referencing from here in the OMPI docs.
+exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', 'venv', 'py*/**',
+                    'prrte-rst-content' ]
 
 
 # Clarify the language for verbatim blocks (::)
