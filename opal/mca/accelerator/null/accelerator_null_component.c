@@ -55,6 +55,16 @@ static int accelerator_null_mem_alloc(int dev_id, void **ptr, size_t size);
 static int accelerator_null_mem_release(int dev_id, void *ptr);
 static int accelerator_null_get_address_range(int dev_id, const void *ptr, void **base, size_t *size);
 
+static bool accelerator_null_is_ipc_enabled(void);
+static int accelerator_null_get_ipc_handle(int dev_id, void *dev_ptr,
+                                           opal_accelerator_ipc_handle_t *handle);
+static int accelerator_null_open_ipc_handle(int dev_id, opal_accelerator_ipc_handle_t *handle,
+                                            void **dev_ptr);
+static int accelerator_null_get_ipc_event_handle(opal_accelerator_event_t *event,
+                                                 opal_accelerator_ipc_event_handle_t *handle);
+static int accelerator_null_open_ipc_event_handle(opal_accelerator_ipc_event_handle_t *handle,
+                                                  opal_accelerator_event_t *event);
+
 static int accelerator_null_host_register(int dev_id, void *ptr, size_t size);
 static int accelerator_null_host_unregister(int dev_id, void *ptr);
 
@@ -118,6 +128,12 @@ opal_accelerator_base_module_t opal_accelerator_null_module =
     accelerator_null_mem_alloc,
     accelerator_null_mem_release,
     accelerator_null_get_address_range,
+
+    accelerator_null_is_ipc_enabled,
+    accelerator_null_get_ipc_handle,
+    accelerator_null_open_ipc_handle,
+    accelerator_null_get_ipc_event_handle,
+    accelerator_null_open_ipc_event_handle,
 
     accelerator_null_host_register,
     accelerator_null_host_unregister,
@@ -218,6 +234,35 @@ static int accelerator_null_mem_release(int dev_id, void *ptr)
 
 static int accelerator_null_get_address_range(int dev_id, const void *ptr, void **base,
                                               size_t *size)
+{
+    return OPAL_ERR_NOT_IMPLEMENTED;
+}
+
+static bool accelerator_null_is_ipc_enabled(void)
+{
+    return false;
+}
+
+static int accelerator_null_get_ipc_handle(int dev_id, void *dev_ptr,
+                                           opal_accelerator_ipc_handle_t *handle)
+{
+    return OPAL_ERR_NOT_IMPLEMENTED;
+}
+
+static int accelerator_null_open_ipc_handle(int dev_id, opal_accelerator_ipc_handle_t *handle,
+                                            void **dev_ptr)
+{
+    return OPAL_ERR_NOT_IMPLEMENTED;
+}
+
+static int accelerator_null_get_ipc_event_handle(opal_accelerator_event_t *event,
+                                                 opal_accelerator_ipc_event_handle_t *handle)
+{
+    return OPAL_ERR_NOT_IMPLEMENTED;
+}
+
+static int accelerator_null_open_ipc_event_handle(opal_accelerator_ipc_event_handle_t *handle,
+                                                  opal_accelerator_event_t *event)
 {
     return OPAL_ERR_NOT_IMPLEMENTED;
 }

@@ -38,6 +38,16 @@ static int mca_accelerator_ze_mem_release(int dev_id, void *ptr);
 static int mca_accelerator_ze_get_address_range(int dev_id, const void *ptr, void **base,
                                                   size_t *size);
 
+static bool mca_accelerator_ze_is_ipc_enabled(void);
+static int mca_accelerator_ze_get_ipc_handle(int dev_id, void *dev_ptr,
+                                             opal_accelerator_ipc_handle_t *handle);
+static int mca_accelerator_ze_open_ipc_handle(int dev_id, opal_accelerator_ipc_handle_t *handle,
+                                              void **dev_ptr);
+static int mca_accelerator_ze_get_ipc_event_handle(opal_accelerator_event_t *event,
+                                                   opal_accelerator_ipc_event_handle_t *handle);
+static int mca_accelerator_ze_open_ipc_event_handle(opal_accelerator_ipc_event_handle_t *handle,
+                                                    opal_accelerator_event_t *event);
+
 static int mca_accelerator_ze_host_register(int dev_id, void *ptr, size_t size);
 static int mca_accelerator_ze_host_unregister(int dev_id, void *ptr);
 
@@ -64,6 +74,12 @@ opal_accelerator_base_module_t opal_accelerator_ze_module =
     .mem_alloc = mca_accelerator_ze_mem_alloc,
     .mem_release = mca_accelerator_ze_mem_release,
     .get_address_range = mca_accelerator_ze_get_address_range,
+
+    .is_ipc_enabled = mca_accelerator_ze_is_ipc_enabled,
+    .get_ipc_handle = mca_accelerator_ze_get_ipc_handle,
+    .open_ipc_handle = mca_accelerator_ze_open_ipc_handle,
+    .get_ipc_event_handle = mca_accelerator_ze_get_ipc_event_handle,
+    .open_ipc_event_handle = mca_accelerator_ze_open_ipc_event_handle,
 
     .host_register = mca_accelerator_ze_host_register,
     .host_unregister = mca_accelerator_ze_host_unregister,
@@ -569,6 +585,35 @@ static int mca_accelerator_ze_get_address_range(int dev_id, const void *ptr, voi
     *base = (char *) pBase;
 
     return OPAL_SUCCESS;
+}
+
+static bool mca_accelerator_ze_is_ipc_enabled(void)
+{
+    return false;
+}
+
+static int mca_accelerator_ze_get_ipc_handle(int dev_id, void *dev_ptr,
+                                             opal_accelerator_ipc_handle_t *handle)
+{
+    return OPAL_ERR_NOT_IMPLEMENTED;
+}
+
+static int mca_accelerator_ze_open_ipc_handle(int dev_id, opal_accelerator_ipc_handle_t *handle,
+                                              void **dev_ptr)
+{
+    return OPAL_ERR_NOT_IMPLEMENTED;
+}
+
+static int mca_accelerator_ze_get_ipc_event_handle(opal_accelerator_event_t *event,
+                                                   opal_accelerator_ipc_event_handle_t *handle)
+{
+    return OPAL_ERR_NOT_IMPLEMENTED;
+}
+
+static int mca_accelerator_ze_open_ipc_event_handle(opal_accelerator_ipc_event_handle_t *handle,
+                                                    opal_accelerator_event_t *event)
+{
+    return OPAL_ERR_NOT_IMPLEMENTED;
 }
 
 /*

@@ -111,6 +111,19 @@ struct opal_accelerator_stream_t {
 };
 typedef struct opal_accelerator_stream_t opal_accelerator_stream_t;
 
+#define IPC_MAX_HANDLE_SIZE 64
+struct opal_accelerator_ipc_handle_t {
+    size_t size;
+    uint8_t handle[IPC_MAX_HANDLE_SIZE];
+};
+typedef struct opal_accelerator_ipc_handle_t opal_accelerator_ipc_handle_t;
+
+struct opal_accelerator_ipc_event_handle_t {
+    size_t size;
+    uint8_t handle[IPC_MAX_HANDLE_SIZE];
+};
+typedef struct opal_accelerator_ipc_event_handle_t opal_accelerator_ipc_event_handle_t;
+
 struct opal_accelerator_pci_attr_t {
     uint16_t domain_id;
     uint8_t bus_id;
@@ -318,6 +331,78 @@ typedef int (*opal_accelerator_base_module_mem_release_fn_t)(
 typedef int (*opal_accelerator_base_module_get_address_range_fn_t)(
     int dev_id, const void *ptr, void **base, size_t *size);
 
+/*********************************************************/
+/****   Inter Process Communication (IPC) Functions   ****/
+/*********************************************************/
+
+/**
+ * Queries whether the device supports IPC or not.
+ *
+ * If true, the functions:
+ *
+ * opal_accelerator_base_module_get_ipc_handle_fn_t()
+ * opal_accelerator_base_module_open_ipc_handle_fn_t()
+ * opal_accelerator_base_module_get_ipc_event_handle_fn_t()
+ * opal_accelerator_base_module_open_ipc_event_handle_fn_t()
+ *
+ * must be implemented.
+ *
+ * @return true              IPC supported
+ * @return false             IPC not supported
+ */
+typedef bool (*opal_accelerator_base_module_is_ipc_enabled_fn_t)(void);
+
+/**
+ * Gets an IPC memory handle for an existing device memory allocation.
+ *
+ * @param[IN]  dev_id        Associated device for the IPC memory handle or
+ *                           MCA_ACCELERATOR_NO_DEVICE_ID
+ * @param[IN]  dev_ptr       Device memory address
+ * @param[OUT] handle        Pointer to IPC handle object
+ *
+ * @return                   OPAL_SUCCESS or error status on failure
+ *
+ */
+typedef int (*opal_accelerator_base_module_get_ipc_handle_fn_t)(
+    int dev_id, void *dev_ptr, opal_accelerator_ipc_handle_t *handle);
+
+/**
+ * Opens an IPC memory handle from another process and returns
+ * a device pointer usable in the local process.
+ *
+ * @param[IN]  dev_id        Associated device for the IPC memory handle or
+ *                           MCA_ACCELERATOR_NO_DEVICE_ID
+ * @param[IN]  handle        IPC handle object from another process
+ * @param[OUT] dev_ptr       Returned device pointer
+ *
+ * @return                   OPAL_SUCCESS or error status on failure
+ */
+typedef int (*opal_accelerator_base_module_open_ipc_handle_fn_t)(
+    int dev_id, opal_accelerator_ipc_handle_t *handle, void **dev_ptr);
+
+/**
+ * Gets an IPC event handle for an event created by opal_accelerator_base_module_create_event_fn_t.
+ *
+ * @param[IN]  event         Event created previously
+ * @param[OUT] handle        Pointer to IPC event handle object
+ *
+ * @return                   OPAL_SUCCESS or error status on failure
+ */
+typedef int (*opal_accelerator_base_module_get_ipc_event_handle_fn_t)(
+    opal_accelerator_event_t *event, opal_accelerator_ipc_event_handle_t *handle);
+
+/**
+ * Opens an IPC event handle from another process opened by
+ * opal_accelerator_base_module_get_ipc_event_handle_fn_t.
+ *
+ * @param[IN]  handle        IPC event handle from another process
+ * @param[OUT] event         Pointer to store the opened event
+ *
+ * @return                   OPAL_SUCCESS or error status on failure
+ */
+typedef int (*opal_accelerator_base_module_open_ipc_event_handle_fn_t)(
+    opal_accelerator_ipc_event_handle_t *handle, opal_accelerator_event_t *event);
+
 /**
  * Page-locks the memory range specified by ptr and size
  *
@@ -413,6 +498,12 @@ typedef struct {
     opal_accelerator_base_module_mem_alloc_fn_t mem_alloc;
     opal_accelerator_base_module_mem_release_fn_t mem_release;
     opal_accelerator_base_module_get_address_range_fn_t get_address_range;
+
+    opal_accelerator_base_module_is_ipc_enabled_fn_t is_ipc_enabled;
+    opal_accelerator_base_module_get_ipc_handle_fn_t get_ipc_handle;
+    opal_accelerator_base_module_open_ipc_handle_fn_t open_ipc_handle;
+    opal_accelerator_base_module_get_ipc_event_handle_fn_t get_ipc_event_handle;
+    opal_accelerator_base_module_open_ipc_event_handle_fn_t open_ipc_event_handle;
 
     opal_accelerator_base_module_host_register_fn_t host_register;
     opal_accelerator_base_module_host_unregister_fn_t host_unregister;

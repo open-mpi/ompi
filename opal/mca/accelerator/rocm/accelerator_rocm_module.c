@@ -33,6 +33,16 @@ static int mca_accelerator_rocm_mem_release(int dev_id, void *ptr);
 static int mca_accelerator_rocm_get_address_range(int dev_id, const void *ptr, void **base,
                                                   size_t *size);
 
+static bool mca_accelerator_rocm_is_ipc_enabled(void);
+static int mca_accelerator_rocm_get_ipc_handle(int dev_id, void *dev_ptr,
+                                               opal_accelerator_ipc_handle_t *handle);
+static int mca_accelerator_rocm_open_ipc_handle(int dev_id, opal_accelerator_ipc_handle_t *handle,
+                                                void **dev_ptr);
+static int mca_accelerator_rocm_get_ipc_event_handle(opal_accelerator_event_t *event,
+                                                     opal_accelerator_ipc_event_handle_t *handle);
+static int mca_accelerator_rocm_open_ipc_event_handle(opal_accelerator_ipc_event_handle_t *handle,
+                                                      opal_accelerator_event_t *event);
+
 static int mca_accelerator_rocm_host_register(int dev_id, void *ptr, size_t size);
 static int mca_accelerator_rocm_host_unregister(int dev_id, void *ptr);
 
@@ -58,6 +68,12 @@ opal_accelerator_base_module_t opal_accelerator_rocm_module =
     mca_accelerator_rocm_mem_alloc,
     mca_accelerator_rocm_mem_release,
     mca_accelerator_rocm_get_address_range,
+
+    mca_accelerator_rocm_is_ipc_enabled,
+    mca_accelerator_rocm_get_ipc_handle,
+    mca_accelerator_rocm_open_ipc_handle,
+    mca_accelerator_rocm_get_ipc_event_handle,
+    mca_accelerator_rocm_open_ipc_event_handle,
 
     mca_accelerator_rocm_host_register,
     mca_accelerator_rocm_host_unregister,
@@ -436,6 +452,35 @@ static int mca_accelerator_rocm_get_address_range(int dev_id, const void *ptr, v
     *base = (char *) tBase;
 
     return OPAL_SUCCESS;
+}
+
+static bool mca_accelerator_rocm_is_ipc_enabled(void)
+{
+    return false;
+}
+
+static int mca_accelerator_rocm_get_ipc_handle(int dev_id, void *dev_ptr,
+                                               opal_accelerator_ipc_handle_t *handle)
+{
+    return OPAL_ERR_NOT_IMPLEMENTED;
+}
+
+static int mca_accelerator_rocm_open_ipc_handle(int dev_id, opal_accelerator_ipc_handle_t *handle,
+                                                void **dev_ptr)
+{
+    return OPAL_ERR_NOT_IMPLEMENTED;
+}
+
+static int mca_accelerator_rocm_get_ipc_event_handle(opal_accelerator_event_t *event,
+                                                     opal_accelerator_ipc_event_handle_t *handle)
+{
+    return OPAL_ERR_NOT_IMPLEMENTED;
+}
+
+static int mca_accelerator_rocm_open_ipc_event_handle(opal_accelerator_ipc_event_handle_t *handle,
+                                                      opal_accelerator_event_t *event)
+{
+    return OPAL_ERR_NOT_IMPLEMENTED;
 }
 
 static int mca_accelerator_rocm_host_register(int dev_id, void *ptr, size_t size)
