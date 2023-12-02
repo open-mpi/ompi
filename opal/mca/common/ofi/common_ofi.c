@@ -623,10 +623,10 @@ static int get_provider_distance(struct fi_info *provider, hwloc_topology_t topo
 /**
  * @brief Get the nearest device to the current thread
  *
- * Use the PMIx server or calculate the device distances, then out of the set of
- * returned distances find the subset of the nearest devices. This can be
- * 0 or more.
- * If there are multiple equidistant devices, break the tie using the rank.
+ * Compute the distances from the current thread to each NIC in provider_list,
+ * and select the NIC with the shortest distance.
+ * If there are multiple equidistant devices, break the tie using local rank
+ * to balance NIC utilization.
  *
  * @param[in]   topoloy          hwloc topology
  * @param[in]   provider_list    List of providers to select from
@@ -898,6 +898,10 @@ struct fi_info *opal_common_ofi_select_provider(struct fi_info *provider_list,
     package_rank = get_package_rank(process_info);
 
 #if OPAL_OFI_PCI_DATA_AVAILABLE
+    /**
+     * If provider PCI BDF information is available, we calculate its physical distance
+     * to the current process, and select the provider with the shortest distance.
+     */
     ret = get_nearest_nic(opal_hwloc_topology, provider_list, num_providers, package_rank,
                           &provider);
     if (OPAL_SUCCESS == ret) {
