@@ -724,16 +724,46 @@ out:
     return ret;
 }
 
-static struct fi_info *select_provider_round_robin(struct fi_info *provider_list, uint32_t rank,
-                                                   size_t num_providers)
+/**
+ * @brief Selects a provider from the list in a round-robin fashion
+ *
+ * This function implements a round-robin algorithm to select a provider from
+ * the provided list based on a rank. Only providers of the same type as the
+ * first provider are eligible for selection.
+ *
+ * @param[in]   provider_list   A list of providers to select from.
+ * @param[out]  rank            A rank metric for the current process, such as
+ *                              the rank on the same node or CPU package.
+ * @return      Pointer to the selected provider
+ */
+static struct fi_info *select_provider_round_robin(struct fi_info *provider_list, uint32_t rank)
 {
-    uint32_t provider_rank = rank % num_providers;
-    struct fi_info *current_provider = provider_list;
+    uint32_t provider_rank = 0, current_rank = 0;
+    size_t num_providers = 0;
+    struct fi_info *current_provider = NULL;
 
-    for (uint32_t i = 0; i < provider_rank; ++i) {
+    for (current_provider = provider_list; NULL != current_provider;) {
+        if (OPAL_SUCCESS == check_provider_attr(provider_list, current_provider)) {
+            ++num_providers;
+        }
         current_provider = current_provider->next;
     }
 
+    current_provider = provider_list;
+    if (2 > num_providers) {
+        goto out;
+    }
+
+    provider_rank = rank % num_providers;
+
+    while (NULL != current_provider) {
+        if (OPAL_SUCCESS == check_provider_attr(provider_list, current_provider)
+            && provider_rank == current_rank++) {
+            break;
+        }
+        current_provider = current_provider->next;
+    }
+out:
     return current_provider;
 }
 
@@ -850,7 +880,7 @@ struct fi_info *opal_common_ofi_select_provider(struct fi_info *provider_list,
 {
     int ret, num_providers = 0;
     struct fi_info *provider = NULL;
-    uint32_t package_rank = 0;
+    uint32_t package_rank = process_info->my_local_rank;
 
     num_providers = count_providers(provider_list);
     if (!process_info->proc_is_bound || 2 > num_providers) {
@@ -876,7 +906,12 @@ struct fi_info *opal_common_ofi_select_provider(struct fi_info *provider_list,
 #endif /* OPAL_OFI_PCI_DATA_AVAILABLE */
 
 round_robin:
-    provider = select_provider_round_robin(provider_list, package_rank, num_providers);
+    if (!process_info->proc_is_bound && 1 < num_providers
+        && opal_output_get_verbosity(opal_common_ofi.output) >= 1) {
+        opal_show_help("help-common-ofi.txt", "unbound_process", true, 1);
+    }
+
+    provider = select_provider_round_robin(provider_list, package_rank);
 out:
 #if OPAL_ENABLE_DEBUG
     opal_output_verbose(1, opal_common_ofi.output, "package rank: %d device: %s", package_rank,
@@ -950,5 +985,3 @@ error:
     }
     return ret;
 }
-
-
