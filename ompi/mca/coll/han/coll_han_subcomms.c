@@ -282,6 +282,7 @@ int mca_coll_han_comm_create(struct ompi_communicator_t *comm,
     opal_info_set(&comm_info, "ompi_comm_coll_preference", "tuned,^han");
     ompi_comm_split_type(comm, MPI_COMM_TYPE_SHARED, 0,
                          &comm_info, &(low_comms[0]));
+    assert(OMPI_COMM_IS_DISJOINT_SET(low_comms[0]) && !OMPI_COMM_IS_DISJOINT(low_comms[0]));
 
     /*
      * Get my local rank and the local size
@@ -296,6 +297,7 @@ int mca_coll_han_comm_create(struct ompi_communicator_t *comm,
     opal_info_set(&comm_info, "ompi_comm_coll_preference", "sm,^han");
     ompi_comm_split_type(comm, MPI_COMM_TYPE_SHARED, 0,
                          &comm_info, &(low_comms[1]));
+    assert(OMPI_COMM_IS_DISJOINT_SET(low_comms[1]) && !OMPI_COMM_IS_DISJOINT(low_comms[1]));
 
     /*
      * Upgrade libnbc module priority to set up up_comms[0] with libnbc module
@@ -304,8 +306,8 @@ int mca_coll_han_comm_create(struct ompi_communicator_t *comm,
      */
     opal_info_set(&comm_info, "ompi_comm_coll_preference", "libnbc,^han");
     ompi_comm_split_with_info(comm, low_rank, w_rank, &comm_info, &(up_comms[0]), false);
-
     up_rank = ompi_comm_rank(up_comms[0]);
+    assert(OMPI_COMM_IS_DISJOINT_SET(up_comms[0]) && OMPI_COMM_IS_DISJOINT(up_comms[0]));
 
     /*
      * Upgrade adapt module priority to set up up_comms[0] with adapt module
@@ -313,6 +315,7 @@ int mca_coll_han_comm_create(struct ompi_communicator_t *comm,
      */
     opal_info_set(&comm_info, "ompi_comm_coll_preference", "adapt,^han");
     ompi_comm_split_with_info(comm, low_rank, w_rank, &comm_info, &(up_comms[1]), false);
+    assert(OMPI_COMM_IS_DISJOINT_SET(up_comms[1]) && OMPI_COMM_IS_DISJOINT(up_comms[1]));
 
     /*
      * Set my virtual rank number.
@@ -350,5 +353,3 @@ int mca_coll_han_comm_create(struct ompi_communicator_t *comm,
     OBJ_DESTRUCT(&comm_info);
     return OMPI_SUCCESS;
 }
-
-

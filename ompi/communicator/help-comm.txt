@@ -34,3 +34,6 @@ in a call to MPI_Comm_split_type between peers in the communicator.
 [unexpected-split-type]
 Detected an unexpected split type in a call to MPI_Comm_split_type.
   split_type:  %s (%d)
+[disjointness-set-again]
+Communicator disjointness should only be set once at initialization.
+Attempts to modify the state are illegal and shall be ignored.
