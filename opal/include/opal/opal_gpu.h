@@ -15,36 +15,33 @@
  *                         reserved.
  * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
+ * Copyright (c) 2023      Advanced Micro Devices, Inc. 
+ *                         All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
  *
  * $HEADER$
  *
- * This file is intended only to carry shared types. If actual cuda
- * symbols are required, they need to be added to a new common cuda
- * component.
  */
 
-#ifndef OPAL_CUDA_H
-#define OPAL_CUDA_H
+#ifndef OPAL_GPU_H
+#define OPAL_GPU_H
 #include "opal/mca/rcache/rcache.h"
+#include "opal/mca/accelerator/accelerator.h"
 
-#define MEMHANDLE_SIZE 8
-#define EVTHANDLE_SIZE 8
-
-struct mca_opal_cuda_reg_data_t {
-    uint64_t memHandle[MEMHANDLE_SIZE];
-    uint64_t evtHandle[EVTHANDLE_SIZE];
-    uint64_t event;
-    opal_ptr_t memh_seg_addr;
-    size_t memh_seg_len;
+struct mca_opal_gpu_reg_data_t {
+    opal_accelerator_ipc_handle_t       ipcHandle;
+    opal_accelerator_ipc_event_handle_t ipcEventHandle;
+    opal_accelerator_event_t            *event;
+    opal_ptr_t                          memh_seg_addr;
+    size_t                              memh_seg_len;
 };
-typedef struct mca_opal_cuda_reg_data_t mca_opal_cuda_reg_data_t;
+typedef struct mca_opal_gpu_reg_data_t mca_opal_gpu_reg_data_t;
 
-struct mca_opal_cuda_reg_t {
+struct mca_opal_gpu_reg_t {
     mca_rcache_base_registration_t base;
-    mca_opal_cuda_reg_data_t data;
+    mca_opal_gpu_reg_data_t data;
 };
-typedef struct mca_opal_cuda_reg_t mca_opal_cuda_reg_t;
-#endif /* OPAL_CUDA_H */
+typedef struct mca_opal_gpu_reg_t mca_opal_gpu_reg_t;
+#endif /* OPAL_GPU_H */
