@@ -34,7 +34,10 @@
 # layer, if weak symbols can't be used to alias the MPI_ namespace
 # into the PMPI_ namespace.
 
-noinst_LTLIBRARIES = libmpi_c.la libmpi_c_profile.la libmpi_c_abi.la libmpi_c_abi_profile.la
+noinst_LTLIBRARIES = libmpi_c.la libmpi_c_profile.la
+if OMPI_STANDARD_ABI
+noinst_LTLIBRARIES += libmpi_c_abi.la libmpi_c_abi_profile.la
+endif
 if BUILD_MPI_BINDINGS_LAYER
 noinst_LTLIBRARIES += libmpi_c_noprofile.la libmpi_c_abi_noprofile.la
 endif
@@ -592,16 +595,16 @@ libmpi_c_noprofile_la_CPPFLAGS = -DOMPI_BUILD_MPI_PROFILING=0
 nobase_include_HEADERS = standard_abi/mpi.h
 
 # ABI generation rules
-if OMPI_ENABLE_ABI_GENERATION
+if OMPI_GENERATE_C_INTERFACE_FILES
 ompi_%.c: %.c.in abi.py abi.h
-	$(srcdir)/abi.py source ompi $< > $@
+	$(PYTHON) $(srcdir)/abi.py source ompi $< > $@
 standard_%.c: %.c.in abi.py abi.h
-	$(srcdir)/abi.py source standard $< > $@
+	$(PYTHON) $(srcdir)/abi.py source standard $< > $@
 abi.h: abi.py $(prototype_sources)
-	$(srcdir)/abi.py header --srcdir=$(srcdir) $(prototype_sources) > $@
+	$(PYTHON) $(srcdir)/abi.py header --srcdir=$(srcdir) $(prototype_sources) > $@
 standard_abi/mpi.h: abi.py $(prototype_sources)
 	mkdir -p standard_abi
-	$(srcdir)/abi.py header --srcdir=$(srcdir) --external $(prototype_sources) > $@
+	$(PYTHON) $(srcdir)/abi.py header --srcdir=$(srcdir) --external $(prototype_sources) > $@
 
 distclean-local:
 	-rm -rf ompi_*.c standard_*.c abi.h standard_abi/

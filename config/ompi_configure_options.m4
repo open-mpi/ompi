@@ -244,24 +244,27 @@ else
 fi
 AM_CONDITIONAL(OMPI_OMPIO_SUPPORT, test "$ompi_want_ompio" = "1")
 
-#
-# Is this a developer copy?
-#
+# If the ABI source files don't exist, then we need Python to generate them
+AM_PATH_PYTHON([3.6],,[:])
+abi_file="${srcdir}/ompi/mpi/c/ompi_send.c"
+AS_IF([! test -e "$abi_file" && test "$PYTHON" = ":"],
+      [AC_MSG_ERROR([Open MPI requires Python >=3.6 for generating the C ABI files. Aborting])])
+AM_CONDITIONAL(OMPI_GENERATE_C_INTERFACE_FILES,[test "$PYTHON" != ":"])
 
-if test -d .git; then
-    OMPI_DEVEL=1
+AC_MSG_CHECKING([if want to enable standard ABI library])
+AC_ARG_ENABLE([standard-abi],
+    [AS_HELP_STRING([--enable-standard-abi],
+                    [Enable building the standard ABI library (default: disabled)])])
+if test "$enable_standard_abi" = "yes"; then
+    AC_MSG_RESULT([yes])
+    ompi_standard_abi=1
 else
-    OMPI_DEVEL=0
+    AC_MSG_RESULT([no])
+    ompi_standard_abi=0
 fi
-
-AC_MSG_CHECKING([if want to generate ABI bindings])
-AC_ARG_ENABLE([abi-generation],
-    [AS_HELP_STRING([--enable-abi-generation],
-                    [generate ABI bindings (requires Python >=3.6)])])
-AS_IF([test "$enable_abi_generation" = "yes" || test "$OMPI_DEVEL" = "1"],
-      [AM_PATH_PYTHON([3.6],,[AC_MSG_ERROR([Open MPI required Python >=3.6. Aborting])])])
-# abi-generation is enabled by default in developer copies
-AM_CONDITIONAL(OMPI_ENABLE_ABI_GENERATION, [test "$enable_abi_generation" = "yes" || test "$OMPI_DEVEL" = "1"])
+AC_DEFINE_UNQUOTED([OMPI_STANDARD_ABI],[$ompi_standard_abi],
+                   [Whether we want to build the standard ABI library])
+AM_CONDITIONAL(OMPI_STANDARD_ABI,[test "$enable_standard_abi" = "yes"])
 
 ])dnl
 

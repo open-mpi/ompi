@@ -127,7 +127,10 @@ DIST_SUBDIRS = \
         $(MCA_ompi_FRAMEWORK_COMPONENT_ALL_SUBDIRS)
 
 noinst_LTLIBRARIES = libopen-mpi.la
-lib_LTLIBRARIES = lib@OMPI_LIBMPI_NAME@.la libmpi_abi.la
+lib_LTLIBRARIES = lib@OMPI_LIBMPI_NAME@.la
+if OMPI_STANDARD_ABI
+lib_LTLIBRARIES += libmpi_abi.la
+endif
 
 # Build the Open MPI internal library
 libopen_mpi_la_SOURCES =
@@ -154,7 +157,7 @@ lib@OMPI_LIBMPI_NAME@_la_LDFLAGS = \
        -version-info $(libmpi_so_version) \
         $(OMPI_LIBMPI_EXTRA_LDFLAGS)
 
-# Build the MPI Standard ABI library
+# The MPI Standard ABI library
 libmpi_abi_la_SOURCES =
 libmpi_abi_la_LIBADD = \
         libopen-mpi.la \
