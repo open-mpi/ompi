@@ -223,7 +223,7 @@ int mca_pml_ob1_accelerator_init(void)
 
     /* Create the events since they can be reused. */
     for (i = 0; i < accelerator_event_max; i++) {
-        result = opal_accelerator.create_event(MCA_ACCELERATOR_NO_DEVICE_ID, &accelerator_event_dtoh_array[i]);
+        result = opal_accelerator.create_event(MCA_ACCELERATOR_NO_DEVICE_ID, &accelerator_event_dtoh_array[i], false);
         if (OPAL_SUCCESS != result) {
             opal_output_verbose(1, mca_pml_ob1_output, "Accelerator create event failed.");
             rc = OPAL_ERROR;
@@ -256,7 +256,7 @@ int mca_pml_ob1_accelerator_init(void)
 
     /* Create the events since they can be reused. */
     for (i = 0; i < accelerator_event_max; i++) {
-        result = opal_accelerator.create_event(MCA_ACCELERATOR_NO_DEVICE_ID, &accelerator_event_htod_array[i]);
+        result = opal_accelerator.create_event(MCA_ACCELERATOR_NO_DEVICE_ID, &accelerator_event_htod_array[i], false);
         if (OPAL_SUCCESS != result) {
             opal_output_verbose(1, mca_pml_ob1_output, "Accelerator create event failed.");
             rc = OPAL_ERROR;
