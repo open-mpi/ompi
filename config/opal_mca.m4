@@ -184,21 +184,19 @@ of type-component pairs.  For example, --enable-mca-no-build=pml-ob1])
         DSO_all=1
         msg=all
     else
-        msg=
+       msg=
        if test -z "$enable_mca_dso"; then
            enable_mca_dso="accelerator-cuda,accelerator-rocm,accelerator-ze,btl-smcuda,rcache-gpusm,rcache-rgpusm"
            msg="(default)"
        fi
-        DSO_all=0
-        ifs_save="$IFS"
-        IFS="${IFS}$PATH_SEPARATOR,"
-        msg=
-        for item in $enable_mca_dso; do
-            str="`echo DSO_$item=1 | sed s/-/_/g`"
-            eval $str
-            msg="$item $msg"
-        done
-        IFS="$ifs_save"
+       DSO_all=0
+       ifs_save="$IFS"
+       IFS="${IFS}$PATH_SEPARATOR,"
+       for item in $enable_mca_dso; do
+           AS_VAR_SET([AS_TR_SH([DSO_$item])], [1])
+           msg="$item $msg"
+       done
+       IFS="$ifs_save"
     fi
     AC_MSG_RESULT([$msg])
     unset msg
