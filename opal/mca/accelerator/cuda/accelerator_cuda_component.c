@@ -188,15 +188,7 @@ static opal_accelerator_base_module_t* accelerator_cuda_init(void)
     if (!opal_cuda_support) {
         return NULL;
     }
-    int count = 0;
-    /* If cuInit fails or there are no cuda capable devices, return NULL. */
-    if (cuInit(0)) {
-        return NULL;
-    }
-    CUresult ret = cuDeviceGetCount(&count);
-    if (ret || count == 0) {
-        return NULL;
-    }
+
     opal_accelerator_cuda_delayed_init();
     return &opal_accelerator_cuda_module;
 }
