@@ -41,7 +41,6 @@ static int gpusm_open(void);
 static int gpusm_close(void);
 static int gpusm_register(void);
 static mca_rcache_base_module_t *gpusm_init(struct mca_rcache_base_resources_t *resources);
-int mca_rcache_gpusm_use_sync_memops=1;
 
 mca_rcache_gpusm_component_t mca_rcache_gpusm_component = {{
     /* First, the mca_base_component_t struct containing meta
@@ -76,14 +75,6 @@ static int gpusm_open(void)
 
 static int gpusm_register(void)
 {
-    /* Whether to set sync_memops attribute ure use events for ensuring memory updates */
-    mca_rcache_gpusm_use_sync_memops = 1;
-    (void) mca_base_component_var_register(&mca_rcache_gpusm_component.super.rcache_version,
-                                           "use_sync_memops", "Use sync_memops to ensure memory updates vs. events (default: yes)",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY, &mca_rcache_gpusm_use_sync_memops);
-
     return OPAL_SUCCESS;
 }
 

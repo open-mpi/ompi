@@ -78,6 +78,8 @@ bool opal_rocm_runtime_initialized = false;
 bool opal_built_with_ze_support = OPAL_INT_TO_BOOL(OPAL_ZE_SUPPORT);
 bool opal_ze_runtime_initialized = false;
 
+bool opal_accelerator_use_sync_memops = true;
+
 /**
  * Globals imported from the OMPI layer.
  */
@@ -413,6 +415,15 @@ int opal_register_util_params(void)
                                  "Number of thread allowed in opal_progress. Default: 1",
                                  MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_8,
                                  MCA_BASE_VAR_SCOPE_READONLY, &opal_max_thread_in_progress);
+
+    /* Use sync_memops functionality with accelerator codes or deploy
+       alternative path using IPC events to ensure consistency */
+    opal_accelerator_use_sync_memops = true;
+    (void) mca_base_var_register("ompi", "mpi", NULL, "accelerator_use_sync_memops",
+                                 "whether to use synchronized accelerator memory based logical path for"
+                                 " GPU memory or use alternative path using IPC events",
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY, &opal_accelerator_use_sync_memops);
 
     opal_finalize_register_cleanup(opal_deregister_util_params);
 

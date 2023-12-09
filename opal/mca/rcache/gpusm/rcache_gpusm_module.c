@@ -144,7 +144,7 @@ static int mca_rcache_gpusm_get_mem_handle(void *base, size_t size, mca_rcache_b
     gpu_reg->data.memh_seg_len = psize;
 
     // converting the ifdef into a mca runtime parameter
-    if (mca_rcache_gpusm_use_sync_memops) {
+    if (opal_accelerator_use_sync_memops) {
         // need to revisit. This function also sets sync_memops
         // we might want to separate that out into a separate function
         result = opal_accelerator.get_buffer_id(dev_id, base, &buffer_id);
@@ -158,7 +158,7 @@ static int mca_rcache_gpusm_get_mem_handle(void *base, size_t size, mca_rcache_b
             return OPAL_ERROR;
         }
     }
-    
+
     return OPAL_SUCCESS;
 }
 

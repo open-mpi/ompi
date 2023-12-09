@@ -23,6 +23,7 @@
  * Copyright (c) 2022      IBM Corporation. All rights reserved
  * Copyright (c) 2023      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2023      Advanced Micro Devices, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -71,8 +72,7 @@
 #include "btl_smcuda_frag.h"
 #include "btl_smcuda_accelerator.h"
 
-
-#include "opal/include/opal/opal_cuda.h"
+#include "opal/include/opal/opal_gpu.h"
 
 static struct mca_btl_base_registration_handle_t *
 mca_btl_smcuda_register_mem(struct mca_btl_base_module_t *btl,
@@ -354,15 +354,15 @@ static int smcuda_btl_first_time_init(mca_btl_smcuda_t *smcuda_btl, int32_t my_s
      * local process to know which parts of the memory are being utilized by a
      * remote process. */
     opal_output_verbose(10, opal_btl_base_framework.framework_output,
-                        "btl:smcuda: CUDA cuMemHostRegister address=%p, size=%d",
+                        "btl:smcuda: host_register address=%p, size=%d",
                         mca_btl_smcuda_component.sm_mpool_base, (int) res->size);
-    if (0 == strcmp(opal_accelerator_base_selected_component.base_version.mca_component_name, "cuda")) {
+    if (0 != strcmp(opal_accelerator_base_selected_component.base_version.mca_component_name, "null")) {
         rc = opal_accelerator.host_register(MCA_ACCELERATOR_NO_DEVICE_ID, mca_btl_smcuda_component.sm_mpool_base, res->size); 
         if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
             /* If registering the memory fails, print a message and continue.
              * This is not a fatal error. */
             opal_output_verbose(10, opal_btl_base_framework.framework_output,
-                                "btl:smcuda: CUDA cuMemHostRegister failed");
+                                "btl:smcuda: host_register failed");
         }
     }
 
@@ -877,7 +877,7 @@ int mca_btl_smcuda_sendi(struct mca_btl_base_module_t *btl,
     }
     /* Initiate setting up CUDA IPC support. */
 
-    if (0 == strcmp(opal_accelerator_base_selected_component.base_version.mca_component_name, "cuda") && (IPC_INIT == endpoint->ipcstate)
+    if (0 != strcmp(opal_accelerator_base_selected_component.base_version.mca_component_name, "null") && (IPC_INIT == endpoint->ipcstate)
         && mca_btl_smcuda_component.use_cuda_ipc) {
         mca_btl_smcuda_send_cuda_ipc_request(btl, endpoint);
     }
@@ -967,7 +967,7 @@ int mca_btl_smcuda_send(struct mca_btl_base_module_t *btl, struct mca_btl_base_e
         mca_btl_smcuda_component_progress();
     }
     /* Initiate setting up CUDA IPC support */
-    if (0 == strcmp(opal_accelerator_base_selected_component.base_version.mca_component_name, "cuda") && (IPC_INIT == endpoint->ipcstate)
+    if (0 != strcmp(opal_accelerator_base_selected_component.base_version.mca_component_name, "null") && (IPC_INIT == endpoint->ipcstate)
         && mca_btl_smcuda_component.use_cuda_ipc) {
         mca_btl_smcuda_send_cuda_ipc_request(btl, endpoint);
     }
@@ -1004,7 +1004,7 @@ mca_btl_smcuda_register_mem(struct mca_btl_base_module_t *btl,
                             uint32_t flags)
 {
     mca_btl_smcuda_t *smcuda_module = (mca_btl_smcuda_t *) btl;
-    mca_opal_cuda_reg_t *reg;
+    mca_opal_gpu_reg_t *reg;
     int access_flags = flags & MCA_BTL_REG_FLAG_ACCESS_ANY;
     int rcache_flags = 0;
 
@@ -1013,7 +1013,6 @@ mca_btl_smcuda_register_mem(struct mca_btl_base_module_t *btl,
         rcache_flags |= MCA_RCACHE_FLAGS_ACCELERATOR_MEM;
     }
 #endif
-
     smcuda_module->rcache->rcache_register(smcuda_module->rcache, base, size, rcache_flags,
                                            access_flags, (mca_rcache_base_registration_t **) &reg);
     if (OPAL_UNLIKELY(NULL == reg)) {
@@ -1027,9 +1026,8 @@ static int mca_btl_smcuda_deregister_mem(struct mca_btl_base_module_t *btl,
                                          struct mca_btl_base_registration_handle_t *handle)
 {
     mca_btl_smcuda_t *smcuda_module = (mca_btl_smcuda_t *) btl;
-    mca_opal_cuda_reg_t *reg = (mca_opal_cuda_reg_t
-                                             *) ((intptr_t) handle
-                                                 - offsetof(mca_opal_cuda_reg_t, data));
+    mca_opal_gpu_reg_t *reg = (mca_opal_gpu_reg_t *) ((intptr_t) handle
+                                                      - offsetof(mca_opal_gpu_reg_t, data));
 
     smcuda_module->rcache->rcache_deregister(smcuda_module->rcache, &reg->base);
 
@@ -1040,49 +1038,57 @@ static int mca_btl_smcuda_deregister_mem(struct mca_btl_base_module_t *btl,
  * Put remote event on stream to ensure that the the start of the
  * copy does not start until the completion of the event.
  */
-static void mca_btl_smcuda_wait_stream_synchronize(mca_opal_cuda_reg_t *rget_reg)
+static void mca_btl_smcuda_wait_stream_synchronize(mca_opal_gpu_reg_t *rget_reg)
 {
-#if OPAL_CUDA_SYNC_MEMOPS
-    /* No need for any of this with SYNC_MEMOPS feature */
-    return;
-#else /* OPAL_CUDA_SYNC_MEMOPS */
-    CUipcEventHandle evtHandle;
-    CUevent event;
-    CUresult result;
+    opal_accelerator_ipc_event_handle_t evtHandle;
+    opal_accelerator_event_t event;
+    int result;
 
-    memcpy(&evtHandle, rget_reg->data.evtHandle, sizeof(evtHandle));
-
-    result = cuIpcOpenEventHandle(&event, evtHandle);
-    if (OPAL_UNLIKELY(CUDA_SUCCESS != result)) {
-        opal_output_verbose(10, mca_btl_smcuda_component.cuda_ipc_output,
-                            "cuIpcOpenEventHandle failed");
+    if (opal_accelerator_use_sync_memops) {
+        /* No need for any of this with SYNC_MEMOPS feature */
+        return;
     }
 
-    /* BEGIN of Workaround - There is a bug in CUDA 4.1 RC2 and earlier
-     * versions.  Need to record an event on the stream, even though
+    result = opal_accelerator.import_ipc_event_handle(rget_reg->data.ipcEventHandle.handle, &evtHandle);
+    if (OPAL_UNLIKELY(OPAL_SUCCESS != result)) {
+        opal_output_verbose(10, mca_btl_smcuda_component.cuda_ipc_output,
+                            "import_ipc_event_handle failed");
+        return;
+    }
+
+    result = opal_accelerator.open_ipc_event_handle(&evtHandle, &event);
+    if (OPAL_UNLIKELY(OPAL_SUCCESS != result)) {
+        opal_output_verbose(10, mca_btl_smcuda_component.cuda_ipc_output,
+                            "open_ipc_event_handle failed");
+        return;
+    }
+
+#if 0
+    /* BEGIN of Workaround to deal with a bug in an early CUDA releases  (4.1. an older)
+     * Need to record an event on the stream, even though
      * it is not used, to make sure we do not short circuit our way
      * out of the cuStreamWaitEvent test.
      */
-    result = cuEventRecord(event, 0);
-    if (OPAL_UNLIKELY(CUDA_SUCCESS != result)) {
+    result = opal_accelerator.record_event(MCA_ACCELERATOR_NO_DEVICE_ID, &event, MCA_ACCELERATOR_STREAM_DEFAULT);
+    if (OPAL_UNLIKELY(OPAL_SUCCESS != result)) {
         opal_output_verbose(10, mca_btl_smcuda_component.cuda_ipc_output,
-                            "cuEventRecord failed");
+                            "record_event failed");
+        return;
     }
     /* END of Workaround */
+#endif
 
-    result = cuStreamWaitEvent(0, event, 0);
-    if (OPAL_UNLIKELY(CUDA_SUCCESS != result)) {
+    result = opal_accelerator.wait_event(MCA_ACCELERATOR_NO_DEVICE_ID, &event, MCA_ACCELERATOR_STREAM_DEFAULT);
+    if (OPAL_UNLIKELY(OPAL_SUCCESS != result)) {
         opal_output_verbose(10, mca_btl_smcuda_component.cuda_ipc_output,
-                            "cuStreamWaitEvent failed");
+                            "wait_event failed");
+        return;
     }
 
-    /* All done with this event. */
-    result = cuEventDestroy(event);
-    if (OPAL_UNLIKELY(CUDA_SUCCESS != result)) {
-        opal_output_verbose(10, mca_btl_smcuda_component.cuda_ipc_output,
-                            "cuStreamWaitEvent failed");
-    }
-#endif /* OPAL_CUDA_SYNC_MEMOPS */
+    // ipc event are assumed to be static, hence no OBJ_RELEASE
+    // but OBJ_DESTRUCT here.
+    OBJ_DESTRUCT(&event);
+    return;
 }
 
 int mca_btl_smcuda_get_cuda(struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *ep,
@@ -1092,9 +1098,9 @@ int mca_btl_smcuda_get_cuda(struct mca_btl_base_module_t *btl, struct mca_btl_ba
                             int flags, int order, mca_btl_base_rdma_completion_fn_t cbfunc,
                             void *cbcontext, void *cbdata)
 {
-    mca_opal_cuda_reg_t rget_reg;
-    mca_opal_cuda_reg_t *reg_ptr = &rget_reg;
-    int rc, done;
+    mca_opal_gpu_reg_t rget_reg;
+    mca_opal_gpu_reg_t *reg_ptr = &rget_reg;
+    int rc;
     void *remote_memory_address;
     size_t offset;
     mca_btl_smcuda_frag_t *frag;
@@ -1121,13 +1127,14 @@ int mca_btl_smcuda_get_cuda(struct mca_btl_base_module_t *btl, struct mca_btl_ba
      * garbage in the debugger.  */
 
     memset(&rget_reg, 0, sizeof(rget_reg));
-    memcpy(&rget_reg.data.memHandle, remote_handle->reg_data.memHandle,
-           sizeof(remote_handle->reg_data.memHandle));
-#    if !OPAL_CUDA_SYNC_MEMOPS
-    /* Only need the remote event handle when syncing with remote events */
-    memcpy(&rget_reg.data.evtHandle, remote_handle->reg_data.evtHandle,
-           sizeof(remote_handle->reg_data.evtHandle));
-#    endif
+    memcpy(&rget_reg.data.ipcHandle.handle, remote_handle->reg_data.ipcHandle.handle,
+           sizeof(remote_handle->reg_data.ipcHandle.handle));
+
+    if (!opal_accelerator_use_sync_memops) {
+        /* Only need the remote event handle when syncing with remote events */
+        memcpy(&rget_reg.data.ipcEventHandle.handle, remote_handle->reg_data.ipcEventHandle.handle,
+               sizeof(remote_handle->reg_data.ipcEventHandle.handle));
+    }
 
     /* Open the memory handle to the remote memory.  If it is cached, then
      * we just retrieve it from cache and avoid a call to open the handle.  That
@@ -1248,7 +1255,7 @@ static void mca_btl_smcuda_send_cuda_ipc_request(struct mca_btl_base_module_t *b
      */
     OPAL_THREAD_ADD_FETCH32(&mca_btl_smcuda_component.num_outstanding_frags, +1);
     opal_output_verbose(10, mca_btl_smcuda_component.cuda_ipc_output,
-                        "Sending CUDA IPC REQ (try=%d): myrank=%d, mydev=%d, peerrank=%d",
+                        "Sending IPC REQ (try=%d): myrank=%d, mydev=%d, peerrank=%d",
                         endpoint->ipctries, mca_btl_smcuda_component.my_smp_rank, mydevnum,
                         endpoint->peer_smp_rank);
 

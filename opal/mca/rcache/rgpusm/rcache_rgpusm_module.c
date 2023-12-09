@@ -106,18 +106,25 @@ static int mca_rcache_rgpusm_open_mem_handle(void *base, size_t size, mca_rcache
     // Note: It is expected that the ipc_handle object was created previously in the smcuda component
     result = opal_accelerator.open_ipc_handle(MCA_ACCELERATOR_NO_DEVICE_ID, &gpu_newreg->data.ipcHandle,
                                               (void**)&newreg->alloc_base);
-    // TODO: deal with ERROR_ALREADY_MAPPED
+    if (OPAL_ERR_WOULD_BLOCK == result) {
+        // ERROR_ALREADY_MAPPED
+        opal_output_verbose(10, mca_rcache_rgpusm_component.output,
+                            "open_ipc_mem_handle returned OPAL_ERR_WOULD_BLOCK for "
+                            "p=%p,size=%d: notify memory pool\n",
+                            base, (int) size);
+        return result;
+    }
     if (OPAL_UNLIKELY(OPAL_SUCCESS != result)) {
         opal_output_verbose(10, mca_rcache_rgpusm_component.output,
                             "open_ipc_handle failed: base=%p (remote base=%p,size=%d)",
                             newreg->alloc_base, base, (int) size);
         /* Currently, this is a non-recoverable error */
         return OPAL_ERROR;
-    } else {
-        opal_output_verbose(10, mca_rcache_rgpusm_component.output,
-                            "open_ipc_handle passed: base=%p (remote base=%p,size=%d)",
-                            newreg->alloc_base, base, (int) size);
     }
+
+    opal_output_verbose(10, mca_rcache_rgpusm_component.output,
+                        "open_ipc_handle passed: base=%p (remote base=%p,size=%d)",
+                        newreg->alloc_base, base, (int) size);
 
     return OPAL_SUCCESS;
 }
