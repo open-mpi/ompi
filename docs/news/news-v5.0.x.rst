@@ -4,6 +4,40 @@ Open MPI v5.0.x series
 This file contains all the NEWS updates for the Open MPI v5.0.x
 series, in reverse chronological order.
 
+Open MPI version v5.0.1rc1
+--------------------------
+:Date: 11 December 2023
+
+- Internal PMIx and PRRTe versions:
+
+  - PMIx (v4.2.8rc1-1-g0e09e062). Commit hash: ``0e09e062e8cefe0feb18ea37d768ded213053d68``.
+  - PRRTE (v3.0.3rc1-2-g33aa50909f). Commit hash: ``33aa50909fe2c223f9f515fae120cd6a21d04653``.
+ 
+- Bugfixes and changes (in chronological order)
+    
+  - Various documentation related updates and changes
+  - Fix a bunch of compiler warnings
+  - Sessions: fix a problem with fortran MPI_Session_get_nth_pset interface
+  - Correctly access the communicator name is MSGQ
+  - accelerator/cuda: fix bug in makefile.am preventing correct linkage
+    in non-standard location
+  - btlsmcuda: fix problem with makefile
+  - Fix rcache/gpusm and rcache/rgpsum
+  - Correctly handle attributes on MPI_COMM_WORLD.
+  - Minor memory leak fixes in:
+    btl/tcp, mca_base_framework, ob1
+  - Fix static initialization of recursive mutexes
+  - Spack: fix for dlopen missing symbol problem
+  - opal/mca/accelerator: ROCm 6.0 incompatibility fix
+  - opal_var_dump_color_keys: fix an array overflow
+  - SHMEM_LOCKS: MCS implementation of SHMEM LOCKS
+  - configury: support flang-new
+  - Update processing of "display_map" info key
+  - dpm: update PMIX attribute
+
+- Many thanks to Open MPI community including:
+  Tony Curtis, David Edwards Linaro, Niv Shpak for their contribution.
+
 Open MPI version 5.0.0
 --------------------------
 :Date: 25 October 2023
