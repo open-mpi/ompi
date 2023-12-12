@@ -133,8 +133,9 @@ static inline int ompi_osc_rdma_cas_local (const void *source_addr, const void *
                                            ompi_osc_rdma_module_t *module, bool lock_acquired)
 {
     int ret, result_is_accel, target_is_accel, compare_is_accel;
-    void *compare_copy;
-    void *result_copy;
+    const void *compare_copy;
+    void *compare_to_free = NULL;
+    void *result_copy = NULL;
     bool compare_copied = false;
     bool result_copied = false;
 
@@ -168,13 +169,13 @@ static inline int ompi_osc_rdma_cas_local (const void *source_addr, const void *
     }
 
     if (compare_is_accel) {
-        compare_copy = malloc(datatype->super.size);
+        compare_copy = compare_to_free = malloc(datatype->super.size);
         ret = opal_accelerator.mem_copy(MCA_ACCELERATOR_NO_DEVICE_ID, MCA_ACCELERATOR_NO_DEVICE_ID,
-                                        compare_copy, compare_addr, datatype->super.size, MCA_ACCELERATOR_TRANSFER_DTOH);
+                                        compare_to_free, compare_addr, datatype->super.size, MCA_ACCELERATOR_TRANSFER_DTOH);
         compare_copied = true;
         if (OPAL_SUCCESS != ret) {
             goto out;
-	}
+        }
     } else {
         compare_copy = compare_addr;
     }
@@ -192,7 +193,7 @@ static inline int ompi_osc_rdma_cas_local (const void *source_addr, const void *
 
 out:
     if (compare_copied) {
-        free(compare_copy);
+        free(compare_to_free);
     }
     if (result_copied) {
         free(result_copy);
@@ -828,6 +829,7 @@ static inline int cas_rdma (ompi_osc_rdma_sync_t *sync, const void *source_addr,
     volatile bool complete = false;
     void *result_copy;
     const void *compare_copy;
+    void *compare_to_free = NULL;
     bool result_copied = false;
     bool compare_copied = false;
     int mem_compare;
@@ -860,9 +862,9 @@ static inline int cas_rdma (ompi_osc_rdma_sync_t *sync, const void *source_addr,
     }
     ret = osc_rdma_is_accel(compare_addr);
     if (0 < ret) {
-        compare_copy = malloc(len);
+        compare_copy = compare_to_free = malloc(len);
         ret = opal_accelerator.mem_copy(MCA_ACCELERATOR_NO_DEVICE_ID, MCA_ACCELERATOR_NO_DEVICE_ID,
-                                        compare_copy, compare_addr, len, MCA_ACCELERATOR_TRANSFER_DTOH);
+                                        compare_to_free, compare_addr, len, MCA_ACCELERATOR_TRANSFER_DTOH);
         compare_copied = true;
     } else if (0 == ret) {
         compare_copy = compare_addr;
@@ -875,7 +877,7 @@ static inline int cas_rdma (ompi_osc_rdma_sync_t *sync, const void *source_addr,
 
     mem_compare = memcmp(result_copy, compare_copy, len);
     if (compare_copied) {
-        free(compare_copy);
+        free(compare_to_free);
     }
     if (result_copied) {
         free(result_copy);
