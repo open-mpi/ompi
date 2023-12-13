@@ -70,7 +70,7 @@ mca_fs_lustre_file_open (struct ompi_communicator_t *comm,
     int fs_lustre_stripe_size = -1;
     int fs_lustre_stripe_width = -1;
     char char_stripe[MPI_MAX_INFO_KEY];
-
+    char *rfilename = (char *)filename;
     struct lov_user_md *lump=NULL;
 
     perm = mca_fs_base_get_file_perm(fh);
@@ -108,6 +108,16 @@ mca_fs_lustre_file_open (struct ompi_communicator_t *comm,
         fs_lustre_stripe_width = mca_fs_lustre_stripe_width;
     }
 
+    /* Check for soft links and replace filename by the actual
+       file used in case it is a soft link */
+    if (mca_fs_base_is_link(filename)) {
+        mca_fs_base_get_real_filename(filename, &rfilename);
+        /* make sure the real file is also on a Lustre file system */
+        if (LUSTRE != mca_fs_base_get_fstype(rfilename)) {
+            opal_output(1, "cannot use a soft-link between a LUSTRE and non-LUSTRE file system\n");
+            return OPAL_ERROR;
+        }
+    }
     
     /* Reset errno */
     errno = 0;
@@ -115,6 +125,8 @@ mca_fs_lustre_file_open (struct ompi_communicator_t *comm,
         if ( (fs_lustre_stripe_size>0 || fs_lustre_stripe_width>0) &&
              ( amode&O_CREAT)                                      && 
              ( (amode&O_RDWR)|| amode&O_WRONLY) ) {
+            /* this cannot be a soft-link since we are creating the file.
+               Not using rfilename here */
             llapi_file_create(filename,
                               fs_lustre_stripe_size,
                               -1, /* MSC need to change that */
@@ -132,7 +144,7 @@ mca_fs_lustre_file_open (struct ompi_communicator_t *comm,
         }
     }
 
-   comm->c_coll->coll_bcast ( &ret, 1, MPI_INT, 0, comm, comm->c_coll->coll_bcast_module);
+    comm->c_coll->coll_bcast ( &ret, 1, MPI_INT, 0, comm, comm->c_coll->coll_bcast_module);
     if ( OMPI_SUCCESS != ret ) {
         fh->fd = -1;
         return ret;
@@ -150,7 +162,7 @@ mca_fs_lustre_file_open (struct ompi_communicator_t *comm,
         fprintf(stderr,"Cannot allocate memory for extracting stripe size\n");
         return OMPI_ERROR;
     }
-    rc = llapi_file_get_stripe(filename, lump);
+    rc = llapi_file_get_stripe(rfilename, lump);
     if (rc != 0) {
         opal_output(1, "get_stripe failed: %d (%s)\n", errno, strerror(errno));
         free(lump);
