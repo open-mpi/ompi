@@ -8,6 +8,9 @@ stages:
   - test
 
 build:intel:
+  id_tokens:
+    SITE_ID_TOKEN:
+      aud: https://re-git.lanl.gov
   stage: build
   tags: [darwin-slurm-shared]
   script:
@@ -31,6 +34,9 @@ build:intel:
     expire_in: 1 week
 
 build:amd:
+  id_tokens:
+    SITE_ID_TOKEN:
+      aud: https://re-git.lanl.gov
   stage: build
   tags: [darwin-slurm-shared]
   variables:
@@ -56,6 +62,9 @@ build:amd:
     expire_in: 1 week
 
 build:gnu:
+  id_tokens:
+    SITE_ID_TOKEN:
+      aud: https://re-git.lanl.gov
   stage: build
   tags: [darwin-slurm-shared]
   script:
@@ -79,6 +88,9 @@ build:gnu:
     expire_in: 1 week
 
 test:intel:
+  id_tokens:
+    SITE_ID_TOKEN:
+      aud: https://re-git.lanl.gov
   stage: test
   tags: [darwin-slurm-shared]
   dependencies:
@@ -106,6 +118,9 @@ test:intel:
     expire_in: 1 week
 
 test:amd:
+  id_tokens:
+    SITE_ID_TOKEN:
+      aud: https://re-git.lanl.gov
   stage: test
   tags: [darwin-slurm-shared]
   variables:
@@ -136,6 +151,9 @@ test:amd:
     expire_in: 1 week
 
 test:gnu:
+  id_tokens:
+    SITE_ID_TOKEN:
+      aud: https://re-git.lanl.gov
   stage: test
   tags: [darwin-slurm-shared]
   dependencies:
