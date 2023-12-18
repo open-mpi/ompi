@@ -153,9 +153,10 @@ ompi_mtl_ofi_context_progress(int ctxt_id)
                 assert(ofi_req);
                 ret = ofi_req->event_callback(&ompi_mtl_ofi_wc[i], ofi_req);
                 if (OMPI_SUCCESS != ret) {
-                    opal_output(0, "%s:%d: Error returned by request event callback: %zd.\n"
-                                   "*** The Open MPI OFI MTL is aborting the MPI job (via exit(3)).\n",
-                                   __FILE__, __LINE__, ret);
+                    opal_output(0,
+                                "%s:%d: Error returned by request (type: %d) event callback: %zd.\n"
+                                "*** The Open MPI OFI MTL is aborting the MPI job (via exit(3)).\n",
+                                __FILE__, __LINE__, ofi_req->type, ret);
                     fflush(stderr);
                     exit(1);
                 }
@@ -671,6 +672,7 @@ ompi_mtl_ofi_ssend_recv(ompi_mtl_ofi_request_t *ack_req,
     assert(ack_req);
 
     ack_req->parent = ofi_req;
+    ack_req->type = OMPI_MTL_OFI_ACK;
     ack_req->event_callback = ompi_mtl_ofi_send_ack_callback;
     ack_req->error_callback = ompi_mtl_ofi_send_ack_error_callback;
 
@@ -882,6 +884,7 @@ ompi_mtl_ofi_send_generic(struct mca_mtl_base_module_t *mtl,
     /**
      * Create a send request, start it and wait until it completes.
      */
+    ofi_req.type = OMPI_MTL_OFI_SEND;
     ofi_req.event_callback = ompi_mtl_ofi_send_callback;
     ofi_req.error_callback = ompi_mtl_ofi_send_error_callback;
 
@@ -1130,6 +1133,7 @@ ompi_mtl_ofi_isend_generic(struct mca_mtl_base_module_t *mtl,
     }
     set_thread_context(ctxt_id);
 
+    ofi_req->type = OMPI_MTL_OFI_SEND;
     ofi_req->event_callback = ompi_mtl_ofi_isend_callback;
     ofi_req->error_callback = ompi_mtl_ofi_send_error_callback;
 
@@ -1142,7 +1146,6 @@ ompi_mtl_ofi_isend_generic(struct mca_mtl_base_module_t *mtl,
     ompi_ret = ompi_mtl_datatype_pack(convertor, &start, &length, &free_after);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ompi_ret)) return ompi_ret;
 
-    ofi_req->type = OMPI_MTL_OFI_SEND;
     ofi_req->buffer = (free_after) ? start : NULL;
     ofi_req->length = length;
     ofi_req->status.MPI_ERROR = OMPI_SUCCESS;
