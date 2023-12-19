@@ -36,10 +36,9 @@ opal_show_subtitle "General configuration options"
 
 
 #
-# Is this a developer copy?
+# Is this a developer copy? Check for a known OMPI git hash
 #
-
-if test -d .git; then
+if git describe 43a3f4282055c7116ca618c17a9f27247f4923d2 &> /dev/null ; then
     OPAL_DEVEL=1
 else
     OPAL_DEVEL=0
