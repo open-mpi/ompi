@@ -395,11 +395,6 @@ static int mca_accelerator_ze_query_event(int dev_id, opal_accelerator_event_t *
     return OPAL_SUCCESS;
 }
 
-static int mca_accelerator_ze_query_event(int dev_id, opal_accelerator_event_t *event, opal_accelerator_stream_t *stream)
-{
-    return OPAL_ERR_NOT_IMPLEMENTED;
-}
-
 static int mca_accelerator_ze_memcpy_async(int dest_dev_id, int src_dev_id, void *dest, const void *src,
                                              size_t size, opal_accelerator_stream_t *stream,
                                              opal_accelerator_transfer_type_t type)
