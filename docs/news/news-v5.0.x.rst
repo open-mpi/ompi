@@ -10,11 +10,11 @@ Open MPI version v5.0.1rc1
 
 - Internal PMIx and PRRTe versions:
 
-  - PMIx (v4.2.8rc1-1-g0e09e062). Commit hash: ``0e09e062e8cefe0feb18ea37d768ded213053d68``.
-  - PRRTE (v3.0.3rc1-2-g33aa50909f). Commit hash: ``33aa50909fe2c223f9f515fae120cd6a21d04653``.
- 
+  - PMIx (v4.2.8). Commit hash: ``d1c1ed0c2e64f19ad49291241a43630ea7fdce28``.
+  - PRRTE (v3.0.3). Commit hash: ``e383f5ad70c2633420d3425e9fb67e69b6bfd9c4``.
+
 - Bugfixes and changes (in chronological order)
-    
+
   - Various documentation related updates and changes
   - Fix a bunch of compiler warnings
   - Sessions: fix a problem with fortran MPI_Session_get_nth_pset interface
