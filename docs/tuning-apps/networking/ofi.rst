@@ -79,9 +79,10 @@ list. For example:
    shell$ ompi_info --param mtl ofi --level 9
 
 .. important:: When using the HPE CXI provider and ``mpirun`` as the job launcher,
-          the PRTE ``ras_base_launch_orted_on_hn`` MCA parameter must be set to 1.
+          it is recommended that the PRTE ``ras_base_launch_orted_on_hn`` MCA parameter be set to 1.
           This can be done by adding ``--prtemca ras_base_launch_orted_on_hn 1`` to the job launch
-          command line.
+          command line.  This ensures that MPI processes launched on the first node of
+          an allocation are able to use the CXI provider.
           
 For more information refer to the `Libfabric web site
 <https://libfabric.org/>`_.
