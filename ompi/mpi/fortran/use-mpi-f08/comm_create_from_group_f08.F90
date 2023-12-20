@@ -9,6 +9,8 @@
 !                         reserved.
 ! $COPYRIGHT$
 
+#include "mpi-f08-rename.h"
+
 subroutine MPI_Comm_create_from_group_f08(group, stringtag, info, errhandler, newcomm, ierror)
    use :: mpi_f08_types, only : MPI_Comm, MPI_Group, MPI_Errhandler, MPI_Info
    use :: ompi_mpifh_bindings, only : ompi_comm_create_from_group_f

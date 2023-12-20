@@ -9,6 +9,8 @@
 !                         reserved.
 ! $COPYRIGHT$
 
+#include "mpi-f08-rename.h"
+
 subroutine MPI_Intercomm_create_from_groups_f08(local_group, local_leader, remote_group, &
                                                 remote_leader, stringtag, info, errhandler, &
                                                 newintercomm, ierror)
