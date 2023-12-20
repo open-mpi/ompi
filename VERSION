@@ -41,7 +41,7 @@ flex_min_version=2.5.4
 # requirement is that it must be entirely printable ASCII characters
 # and have no white space.
 
-greek=rc1
+greek=rc2
 
 # If repo_rev is empty, then the repository version number will be
 # obtained during "make dist" via the "git describe --tags --always"
@@ -94,14 +94,14 @@ date="Unreleased developer copy"
 # Version numbers are described in the Libtool current:revision:age
 # format.
 
-libmpi_so_version=80:0:40
+libmpi_so_version=80:1:40
 libmpi_mpifh_so_version=80:0:40
 libmpi_usempi_tkr_so_version=80:0:40
 libmpi_usempi_ignore_tkr_so_version=80:0:40
 libmpi_usempif08_so_version=80:0:40
-libopen_pal_so_version=80:0:0
+libopen_pal_so_version=80:1:0
 libmpi_java_so_version=80:0:40
-liboshmem_so_version=80:0:40
+liboshmem_so_version=80:1:40
 libompitrace_so_version=80:0:40
 
 # "Common" components install standalone libraries that are run-time
@@ -110,7 +110,7 @@ libompitrace_so_version=80:0:40
 # components-don't-affect-the-build-system abstraction.
 
 # OMPI layer
-libmca_ompi_common_ompio_so_version=80:0:0
+libmca_ompi_common_ompio_so_version=80:1:0
 libmca_ompi_common_monitoring_so_version=80:0:0
 
 # OPAL layer
