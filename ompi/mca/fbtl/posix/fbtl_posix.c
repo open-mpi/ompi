@@ -36,7 +36,7 @@
 #include <aio.h>
 #endif
 
-int ompi_fbtl_posix_max_aio_active_reqs=2048;
+int ompi_fbtl_posix_max_prd_active_reqs=2048;
 
 #include "ompi/mca/fbtl/fbtl.h"
 #include "ompi/mca/fbtl/posix/fbtl_posix.h"
@@ -106,7 +106,7 @@ int mca_fbtl_posix_module_init (ompio_file_t *file) {
 #if defined (FBTL_POSIX_HAVE_AIO)
     long val = sysconf(_SC_AIO_MAX);
     if ( -1 != val ) {
-	ompi_fbtl_posix_max_aio_active_reqs = (int)val;
+        ompi_fbtl_posix_max_prd_active_reqs = (int)val;
     }
 #endif
     return OMPI_SUCCESS;
@@ -125,147 +125,148 @@ bool mca_fbtl_posix_progress ( mca_ompio_request_t *req)
     mca_fbtl_posix_request_data_t *data=(mca_fbtl_posix_request_data_t *)req->req_data;
     off_t start_offset, end_offset, total_length;
 
-    for (i=data->aio_first_active_req; i < data->aio_last_active_req; i++ ) {
-	if ( EINPROGRESS == data->aio_req_status[i] ) {
-	    data->aio_req_status[i] = aio_error ( &data->aio_reqs[i]);
-	    if ( 0 == data->aio_req_status[i]){
-		/* assuming right now that aio_return will return
-		** the number of bytes written/read and not an error code,
-		** since aio_error should have returned an error in that
-		** case and not 0 ( which means request is complete)
-		*/
-                ssize_t ret2 = aio_return (&data->aio_reqs[i]);
-		data->aio_total_len += ret2;
-                if ( data->aio_reqs[i].aio_nbytes != (size_t)ret2 ) {
+    for (i=data->prd_first_active_req; i < data->prd_last_active_req; i++ ) {
+        if ( EINPROGRESS == data->prd_aio.aio_req_status[i] ) {
+            data->prd_aio.aio_req_status[i] = aio_error ( &data->prd_aio.aio_reqs[i]);
+            if ( 0 == data->prd_aio.aio_req_status[i]){
+                /* assuming right now that aio_return will return
+                ** the number of bytes written/read and not an error code,
+                ** since aio_error should have returned an error in that
+                ** case and not 0 ( which means request is complete)
+                */
+                ssize_t ret2 = aio_return (&data->prd_aio.aio_reqs[i]);
+                data->prd_total_len += ret2;
+                if ( data->prd_aio.aio_reqs[i].aio_nbytes != (size_t)ret2 ) {
                     /* Partial completion */
-                    data->aio_reqs[i].aio_offset += ret2;
-                    data->aio_reqs[i].aio_buf    = (char*)data->aio_reqs[i].aio_buf + ret2;
-                    data->aio_reqs[i].aio_nbytes -= ret2;
-                    data->aio_reqs[i].aio_reqprio = 0;
-                    data->aio_reqs[i].aio_sigevent.sigev_notify = SIGEV_NONE;
-                    data->aio_req_status[i]        = EINPROGRESS;
-                    start_offset = data->aio_reqs[i].aio_offset;
-                    total_length = data->aio_reqs[i].aio_nbytes;
+                    data->prd_aio.aio_reqs[i].aio_offset += ret2;
+                    data->prd_aio.aio_reqs[i].aio_buf    = (char*)data->prd_aio.aio_reqs[i].aio_buf + ret2;
+                    data->prd_aio.aio_reqs[i].aio_nbytes -= ret2;
+                    data->prd_aio.aio_reqs[i].aio_reqprio = 0;
+                    data->prd_aio.aio_reqs[i].aio_sigevent.sigev_notify = SIGEV_NONE;
+                    data->prd_aio.aio_req_status[i]        = EINPROGRESS;
+                    start_offset = data->prd_aio.aio_reqs[i].aio_offset;
+                    total_length = data->prd_aio.aio_reqs[i].aio_nbytes;
                     /* release previous lock */
-                    mca_fbtl_posix_unlock ( &data->aio_lock, data->aio_fh, &data->aio_lock_counter );
+                    mca_fbtl_posix_unlock ( &data->prd_lock, data->prd_fh, &data->prd_lock_counter );
                     
-                    if ( data->aio_req_type == FBTL_POSIX_WRITE ) {
-                        ret_code = mca_fbtl_posix_lock( &data->aio_lock, data->aio_fh, F_WRLCK, start_offset, total_length,
-                                                        OMPIO_LOCK_ENTIRE_REGION, &data->aio_lock_counter );
+                    if ( data->prd_req_type == FBTL_POSIX_AIO_WRITE ) {
+                        ret_code = mca_fbtl_posix_lock( &data->prd_lock, data->prd_fh, F_WRLCK, start_offset, total_length,
+                                                        OMPIO_LOCK_ENTIRE_REGION, &data->prd_lock_counter );
                         if ( 0 < ret_code ) {
                             opal_output(1, "mca_fbtl_posix_progress: error in mca_fbtl_posix_lock() %d", ret_code);
                             /* Just in case some part of the lock actually succeeded. */
-                            mca_fbtl_posix_unlock ( &data->aio_lock, data->aio_fh, &data->aio_lock_counter );
-                            return OMPI_ERROR;
+                            mca_fbtl_posix_unlock ( &data->prd_lock, data->prd_fh, &data->prd_lock_counter );
+                            return false;
                         }
-                        if (-1 == aio_write(&data->aio_reqs[i])) {
+                        if (-1 == aio_write(&data->prd_aio.aio_reqs[i])) {
                             opal_output(1, "mca_fbtl_posix_progress: error in aio_write()");
-                            mca_fbtl_posix_unlock ( &data->aio_lock, data->aio_fh, &data->aio_lock_counter );
-                            return OMPI_ERROR;
-                        }                        
+                            mca_fbtl_posix_unlock ( &data->prd_lock, data->prd_fh, &data->prd_lock_counter );
+                            return false;
+                        }
                     }
-                    else if (  data->aio_req_type == FBTL_POSIX_READ ) {
-                        ret_code = mca_fbtl_posix_lock( &data->aio_lock, data->aio_fh, F_RDLCK, start_offset, total_length,
-                                                        OMPIO_LOCK_ENTIRE_REGION, &data->aio_lock_counter );
+                    else if (  data->prd_req_type == FBTL_POSIX_AIO_READ ) {
+                        ret_code = mca_fbtl_posix_lock( &data->prd_lock, data->prd_fh, F_RDLCK, start_offset, total_length,
+                                                        OMPIO_LOCK_ENTIRE_REGION, &data->prd_lock_counter );
                         if ( 0 < ret_code ) {
                             opal_output(1, "mca_fbtl_posix_progress: error in mca_fbtl_posix_lock() %d", ret_code);
                             /* Just in case some part of the lock actually succeeded. */
-                            mca_fbtl_posix_unlock ( &data->aio_lock, data->aio_fh, &data->aio_lock_counter );
-                            return OMPI_ERROR;
+                            mca_fbtl_posix_unlock ( &data->prd_lock, data->prd_fh, &data->prd_lock_counter );
+                            return false;
                         }
-                        if (-1 == aio_read(&data->aio_reqs[i])) {
+                        if (-1 == aio_read(&data->prd_aio.aio_reqs[i])) {
                             opal_output(1, "mca_fbtl_posix_progress: error in aio_read()");
-                            mca_fbtl_posix_unlock ( &data->aio_lock, data->aio_fh, &data->aio_lock_counter );
-                            return OMPI_ERROR;
+                            mca_fbtl_posix_unlock ( &data->prd_lock, data->prd_fh, &data->prd_lock_counter );
+                            return false;
                         }
                     }
                 }
-		else {
-                    data->aio_open_reqs--;
+                else {
+                    data->prd_open_reqs--;
                     lcount++;
                 }
-	    }
-	    else if ( EINPROGRESS == data->aio_req_status[i]){
-		/* not yet done */
-		continue;
-	    }
-	    else {
-		/* an error occurred. Mark the request done, but
-		   set an error code in the status */
-		req->req_ompi.req_status.MPI_ERROR = OMPI_ERROR;
-		req->req_ompi.req_status._ucount = data->aio_total_len;
-		ret = true;
-		break;
-	    }
-	}
-	else {
-	    lcount++;
-	}
+            }
+            else if ( EINPROGRESS == data->prd_aio.aio_req_status[i]){
+                /* not yet done */
+                continue;
+            }
+            else {
+                /* an error occurred. Mark the request done, but
+                   set an error code in the status */
+                req->req_ompi.req_status.MPI_ERROR = OMPI_ERROR;
+                req->req_ompi.req_status._ucount = data->prd_total_len;
+                ret = true;
+                break;
+            }
+        }
+        else {
+            lcount++;
+        }
     }
 #if 0
-    printf("lcount=%d open_reqs=%d\n", lcount, data->aio_open_reqs );
+    printf("lcount=%d open_reqs=%d\n", lcount, data->prd_open_reqs );
 #endif
-    if ( (lcount == data->aio_req_chunks) && (0 != data->aio_open_reqs )) {
+    if ( (lcount == data->prd_req_chunks) && (0 != data->prd_open_reqs )) {
         /* release the lock of the previous operations */
-        mca_fbtl_posix_unlock ( &data->aio_lock, data->aio_fh, &data->aio_lock_counter );
+        mca_fbtl_posix_unlock ( &data->prd_lock, data->prd_fh, &data->prd_lock_counter );
         
-	/* post the next batch of operations */
-	data->aio_first_active_req = data->aio_last_active_req;
-	if ( (data->aio_req_count-data->aio_last_active_req) > data->aio_req_chunks ) {
-	    data->aio_last_active_req += data->aio_req_chunks;
-	}
-	else {
-	    data->aio_last_active_req = data->aio_req_count;
-	}
+        /* post the next batch of operations */
+        data->prd_first_active_req = data->prd_last_active_req;
+        if ( (data->prd_req_count-data->prd_last_active_req) > data->prd_req_chunks ) {
+            data->prd_last_active_req += data->prd_req_chunks;
+        }
+        else {
+            data->prd_last_active_req = data->prd_req_count;
+        }
 
-        start_offset = data->aio_reqs[data->aio_first_active_req].aio_offset;
-        end_offset   = data->aio_reqs[data->aio_last_active_req-1].aio_offset + data->aio_reqs[data->aio_last_active_req-1].aio_nbytes;
+        start_offset = data->prd_aio.aio_reqs[data->prd_first_active_req].aio_offset;
+        end_offset   = data->prd_aio.aio_reqs[data->prd_last_active_req-1].aio_offset +
+                       data->prd_aio.aio_reqs[data->prd_last_active_req-1].aio_nbytes;
         total_length = (end_offset - start_offset);
 
-        if ( FBTL_POSIX_READ == data->aio_req_type ) {
-            ret_code = mca_fbtl_posix_lock( &data->aio_lock, data->aio_fh, F_RDLCK, start_offset, total_length,
-                                            OMPIO_LOCK_ENTIRE_REGION, &data->aio_lock_counter );
+        if ( FBTL_POSIX_AIO_READ == data->prd_req_type ) {
+            ret_code = mca_fbtl_posix_lock( &data->prd_lock, data->prd_fh, F_RDLCK, start_offset, total_length,
+                                            OMPIO_LOCK_ENTIRE_REGION, &data->prd_lock_counter );
         }
-        else if ( FBTL_POSIX_WRITE == data->aio_req_type ) {
-            ret_code = mca_fbtl_posix_lock( &data->aio_lock, data->aio_fh, F_WRLCK, start_offset, total_length,
-                                            OMPIO_LOCK_ENTIRE_REGION, &data->aio_lock_counter );
+        else if ( FBTL_POSIX_AIO_WRITE == data->prd_req_type ) {
+            ret_code = mca_fbtl_posix_lock( &data->prd_lock, data->prd_fh, F_WRLCK, start_offset, total_length,
+                                            OMPIO_LOCK_ENTIRE_REGION, &data->prd_lock_counter );
         }
         if ( 0 < ret_code ) {
             opal_output(1, "mca_fbtl_posix_progress: error in mca_fbtl_posix_lock() %d", ret_code);
             /* Just in case some part of the lock actually succeeded. */
-            mca_fbtl_posix_unlock ( &data->aio_lock, data->aio_fh, &data->aio_lock_counter );
-            return OMPI_ERROR;
+            mca_fbtl_posix_unlock ( &data->prd_lock, data->prd_fh, &data->prd_lock_counter );
+            return false;
         }
         
-	for ( i=data->aio_first_active_req; i< data->aio_last_active_req; i++ ) {
-	    if ( FBTL_POSIX_READ == data->aio_req_type ) {
-		if (-1 == aio_read(&data->aio_reqs[i])) {
-		    opal_output(1, "mca_fbtl_posix_progress: error in aio_read()");
-                    mca_fbtl_posix_unlock ( &data->aio_lock, data->aio_fh, &data->aio_lock_counter );
-		    return OMPI_ERROR;
-		}
-	    }
-	    else if ( FBTL_POSIX_WRITE == data->aio_req_type ) {
-		if (-1 == aio_write(&data->aio_reqs[i])) {
-		    opal_output(1, "mca_fbtl_posix_progress: error in aio_write()");
-                    mca_fbtl_posix_unlock ( &data->aio_lock, data->aio_fh, &data->aio_lock_counter );
-		    return OMPI_ERROR;
-		}
-	    }
-	}
+        for ( i=data->prd_first_active_req; i< data->prd_last_active_req; i++ ) {
+            if ( FBTL_POSIX_AIO_READ == data->prd_req_type ) {
+                if (-1 == aio_read(&data->prd_aio.aio_reqs[i])) {
+                    opal_output(1, "mca_fbtl_posix_progress: error in aio_read()");
+                    mca_fbtl_posix_unlock ( &data->prd_lock, data->prd_fh, &data->prd_lock_counter );
+                    return false;
+                }
+            }
+            else if ( FBTL_POSIX_AIO_WRITE == data->prd_req_type ) {
+                if (-1 == aio_write(&data->prd_aio.aio_reqs[i])) {
+                    opal_output(1, "mca_fbtl_posix_progress: error in aio_write()");
+                    mca_fbtl_posix_unlock ( &data->prd_lock, data->prd_fh, &data->prd_lock_counter );
+                    return false;
+                }
+            }
+        }
 #if 0
-	printf("posting new batch: first=%d last=%d\n", data->aio_first_active_req, data->aio_last_active_req );
+        printf("posting new batch: first=%d last=%d\n", data->prd_first_active_req, data->prd_last_active_req );
 #endif
     }
 
-    if ( 0 == data->aio_open_reqs ) {
-	/* all pending operations are finished for this request */
-	req->req_ompi.req_status.MPI_ERROR = OMPI_SUCCESS;
-	req->req_ompi.req_status._ucount = data->aio_total_len;
-        mca_fbtl_posix_unlock ( &data->aio_lock, data->aio_fh, &data->aio_lock_counter );
+    if ( 0 == data->prd_open_reqs ) {
+        /* all pending operations are finished for this request */
+        req->req_ompi.req_status.MPI_ERROR = OMPI_SUCCESS;
+        req->req_ompi.req_status._ucount = data->prd_total_len;
+        mca_fbtl_posix_unlock ( &data->prd_lock, data->prd_fh, &data->prd_lock_counter );
 
-        if ( data->aio_fh->f_atomicity ) {
-            mca_fbtl_posix_unlock ( &data->aio_lock, data->aio_fh, &data->aio_lock_counter );
+        if ( data->prd_fh->f_atomicity ) {
+            mca_fbtl_posix_unlock ( &data->prd_lock, data->prd_fh, &data->prd_lock_counter );
         }
 
         ret = true;
@@ -281,14 +282,14 @@ void mca_fbtl_posix_request_free ( mca_ompio_request_t *req)
     mca_fbtl_posix_request_data_t *data=(mca_fbtl_posix_request_data_t *)req->req_data;
     if (NULL != data ) {
             
-        if ( NULL != data->aio_reqs ) {
-	    free ( data->aio_reqs);
-	}
-	if ( NULL != data->aio_req_status ) {
-	    free ( data->aio_req_status );
-	}
-	free ( data );
-	req->req_data = NULL;
+        if ( NULL != data->prd_aio.aio_reqs ) {
+            free ( data->prd_aio.aio_reqs);
+        }
+        if ( NULL != data->prd_aio.aio_req_status ) {
+            free ( data->prd_aio.aio_req_status );
+        }
+        free (data);
+        req->req_data = NULL;
     }
 #endif
   return;

@@ -47,7 +47,7 @@ int mca_fbtl_posix_component_file_unquery (ompio_file_t *file);
 int mca_fbtl_posix_module_init (ompio_file_t *file);
 int mca_fbtl_posix_module_finalize (ompio_file_t *file);
 
-extern int ompi_fbtl_posix_max_aio_active_reqs;
+extern int ompi_fbtl_posix_max_prd_active_reqs;
 
 OMPI_DECLSPEC extern mca_fbtl_base_component_2_0_0_t mca_fbtl_posix_component;
 /*
@@ -72,29 +72,36 @@ int mca_fbtl_posix_lock ( struct flock *lock, ompio_file_t *fh, int op,
                           int *lock_counter);
 void  mca_fbtl_posix_unlock ( struct flock *lock, ompio_file_t *fh, int *lock_counter );
 
-
-struct mca_fbtl_posix_request_data_t {
-    int            aio_req_count;       /* total number of aio reqs */
-    int            aio_open_reqs;       /* number of unfinished reqs */
-    int            aio_req_type;        /* read or write */
-    int            aio_req_chunks;      /* max. no. of aio reqs that can be posted at once*/
-    int            aio_first_active_req; /* first active posted req */
-    int            aio_last_active_req;  /* last currently active poted req */
-    struct aiocb       *aio_reqs;       /* pointer array of req structures */
-    int           *aio_req_status;       /* array of statuses */
-    ssize_t        aio_total_len;       /* total amount of data written */
-    struct flock   aio_lock;            /* lock used for certain file systems */
-    int            aio_lock_counter;    /* to keep track of no. of lock calls */
-    ompio_file_t  *aio_fh;       /* pointer back to the mca_io_ompio_fh structure */
-};
-typedef struct mca_fbtl_posix_request_data_t mca_fbtl_posix_request_data_t;
-
 /* Right now statically defined, will become a configure check */
 #define FBTL_POSIX_HAVE_AIO 1
 
+struct mca_fbtl_posix_request_data_t {
+    int            prd_req_count;        /* total number of sub reqs */
+    int            prd_open_reqs;        /* number of unfinished reqs */
+    int            prd_req_type;         /* read or write */
+    int            prd_req_chunks;       /* max. no. of sub reqs that can be posted at once*/
+    int            prd_first_active_req; /* first active posted req */
+    int            prd_last_active_req;  /* last currently active poted req */
+    ssize_t        prd_total_len;        /* total amount of data written */
+    struct flock   prd_lock;             /* lock used for certain file systems */
+    int            prd_lock_counter;     /* to keep track of no. of lock calls */
+    ompio_file_t  *prd_fh;               /* pointer to the ompio_fh structure */
+    union {
+#if defined (FBTL_POSIX_HAVE_AIO)
+        struct {
+          struct aiocb  *aio_reqs;            /* pointer array of req structures */
+          int           *aio_req_status;      /* array of statuses */
+      } prd_aio;
+#endif
+    };
+
+};
+typedef struct mca_fbtl_posix_request_data_t mca_fbtl_posix_request_data_t;
+
+
 /* define constants for AIO requests */
-#define FBTL_POSIX_READ 1
-#define FBTL_POSIX_WRITE 2
+#define FBTL_POSIX_AIO_READ   1
+#define FBTL_POSIX_AIO_WRITE  2
 
 #define OMPIO_SET_ATOMICITY_LOCK(_fh, _lock, _lock_counter, _op) {     \
      int32_t _orig_flags = _fh->f_flags;                               \
