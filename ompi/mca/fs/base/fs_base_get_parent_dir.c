@@ -31,6 +31,14 @@
 #include "ompi/mca/fs/base/base.h"
 #include "ompi/mca/common/ompio/common_ompio.h"
 
+/*
+ * Be careful moving this include.
+ * It's easy to hit problems similar to that reported in
+ * https://github.com/systemd/systemd/issues/8507
+ */
+#ifdef HAVE_SYS_MOUNT_H
+#include <sys/mount.h>
+#endif
 
 void mca_fs_base_get_parent_dir ( char *filename, char **dirnamep)
 {
