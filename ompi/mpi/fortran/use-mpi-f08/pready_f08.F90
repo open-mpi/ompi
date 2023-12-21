@@ -8,6 +8,7 @@
 ! Copyright (c) 2020      Sandia National Laboratories. All rights reserved.
 ! $COPYRIGHT$
 
+#include "mpi-f08-rename.h"
 #include "ompi/mpi/fortran/configure-fortran-output.h"
 
 subroutine MPI_Pready_f08(partition,request,ierror)
