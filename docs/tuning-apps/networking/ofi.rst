@@ -18,6 +18,7 @@ including (but not limited to):
 * Cisco usNIC
 * Cray uGNI
 * Cornelius Networks Omni-Path
+* HPE Slingshot 11
 
 In general, the OFI-based components in Open MPI will auto-select
 themselves as appropriate at run time.
@@ -43,8 +44,9 @@ communications:
   ``FI_EP_RDM`` endpoints, ``FI_TAGGED`` capabilities, and
   ``FI_ORDER_SAS`` ordering).
 
-#. ``ofi`` BTL: Available since Open MPI v4.0.0, this component is
-   used for one-sided MPI communications (e.g., ``MPI_PUT``). The
+#. ``ofi`` BTL: Available since Open MPI v4.0.0, this component is primarily
+   intended for one-sided MPI communications (e.g., ``MPI_PUT``). It
+   can also support BTL send/recv operations.
    ``ofi`` BTL requires that the Libfabric provider support reliable
    datagrams, RMA and atomic operations, and remote atomic completion
    notifications (specifically: ``FI_EP_RDM`` endpoints, ``FI_RMA``
@@ -76,6 +78,12 @@ list. For example:
 
    shell$ ompi_info --param mtl ofi --level 9
 
+.. important:: When using the HPE CXI provider and ``mpirun`` as the job launcher,
+          it is recommended that the PRTE ``ras_base_launch_orted_on_hn`` MCA parameter be set to 1.
+          This can be done by adding ``--prtemca ras_base_launch_orted_on_hn 1`` to the job launch
+          command line.  This ensures that MPI processes launched on the first node of
+          an allocation are able to use the CXI provider.
+          
 For more information refer to the `Libfabric web site
 <https://libfabric.org/>`_.
 
