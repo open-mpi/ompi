@@ -37,6 +37,22 @@
 #include "ompi/mca/fs/fs.h"
 
 
+#ifdef HAVE_SYS_STATFS_H
+#include <sys/statfs.h> /* or <sys/vfs.h> */
+#endif
+#ifdef HAVE_SYS_PARAM_H
+#include <sys/param.h>
+#endif
+#ifdef HAVE_SYS_MOUNT_H
+#include <sys/mount.h>
+#endif
+#ifdef HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
 BEGIN_C_DECLS
 
 OMPI_DECLSPEC int mca_fs_base_file_select(struct ompio_file_t *file,
@@ -61,6 +77,42 @@ OMPI_DECLSPEC int mca_fs_base_file_sync (ompio_file_t *fh);
 OMPI_DECLSPEC int mca_fs_base_file_get_size (ompio_file_t *fh, OMPI_MPI_OFFSET_TYPE *size);
 OMPI_DECLSPEC int mca_fs_base_file_set_size (ompio_file_t *fh, OMPI_MPI_OFFSET_TYPE size);
 OMPI_DECLSPEC int mca_fs_base_file_close (ompio_file_t *fh);
+
+
+static inline bool mca_fs_base_is_link (const char *filename)
+{
+    int err;
+    bool ret = true;
+    struct stat statbuf;
+
+    err = lstat(filename, &statbuf);
+
+    if (err || (!S_ISLNK(statbuf.st_mode))) {
+        ret = false;
+    }
+
+    return ret;
+}
+
+static inline void mca_fs_base_get_real_filename (const char *filename, char **rfilename)
+{
+    int namelen;
+    char linkbuf[PATH_MAX+1];
+
+    namelen = readlink(filename, linkbuf, PATH_MAX);
+    if (namelen == -1) {
+        /* something strange has happened between the time that
+         * we determined that this was a link and the time that
+         * we attempted to read it; punt and use the old name.
+         */
+        *rfilename = strdup(filename);
+    }
+    else {
+        /* successfully read the link */
+        linkbuf[namelen] = '\0'; /* readlink doesn't null terminate */
+        *rfilename = strdup(linkbuf);
+    }
+}
 
 /*
  * Globals
