@@ -59,7 +59,7 @@ int MPI_Startall(int count, MPI_Request requests[])
     if ( MPI_PARAM_CHECK ) {
         int rc = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-        if (NULL == requests) {
+        if ((NULL == requests) && (0 != count)) {
             rc = MPI_ERR_REQUEST;
         } else if (count < 0) {
             rc = MPI_ERR_ARG;
