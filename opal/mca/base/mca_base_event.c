@@ -503,7 +503,7 @@ int mca_base_event_dump(int index, char ***out, mca_base_var_dump_type_t output_
         if (NULL != event->event_enumerator) {
             char *values;
 
-            ret = event->event_enumerator->dump(event->event_enumerator, &values);
+            ret = event->event_enumerator->dump(event->event_enumerator, &values, MCA_BASE_VAR_ENUM_DUMP_READABLE);
             if (OPAL_SUCCESS == ret) {
                 (void)asprintf (out[0] + line++, "Elements: %s", values);
                 free (values);
