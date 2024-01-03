@@ -11,17 +11,18 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
+# Copyright (c) 2024      Triad National Security, LLC. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
 #
 # $HEADER$
 #
-# This is the US/English general help file for Open MPI's CUDA
+# This is the US/English general help file for Open MPI's accelerator 
 # collective reduction component.
 #
 [missing collective]
-There was a problem while initializing support for the CUDA reduction operations.
+There was a problem while initializing support for the accelerator reduction operations.
 hostname:   %s
 priority:   %d
 collective: %s

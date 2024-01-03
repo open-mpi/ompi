@@ -15,6 +15,7 @@
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
+ * Copyright (c) 2024      Triad National Security, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -30,8 +31,7 @@
 #include "ompi/mca/mca.h"
 #include "opal/util/output.h"
 #include "opal/mca/base/base.h"
-
-
+#include "opal/mca/base/mca_base_alias.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/base.h"
 #include "ompi/mca/coll/base/coll_base_functions.h"
@@ -130,5 +130,12 @@ ompi_request_t** ompi_coll_base_comm_get_reqs(mca_coll_base_comm_t* data, int nr
     return data->mcct_reqs;
 }
 
-MCA_BASE_FRAMEWORK_DECLARE(ompi, coll, "Collectives", NULL, NULL, NULL,
+static int mca_coll_base_register(mca_base_register_flag_t flags)
+{
+    (void) mca_base_alias_register("ompi", "coll", "accelerator", "cuda", MCA_BASE_ALIAS_FLAG_DEPRECATED);
+    return OMPI_SUCCESS;
+}
+
+
+MCA_BASE_FRAMEWORK_DECLARE(ompi, coll, "Collectives", mca_coll_base_register, NULL, NULL,
                            mca_coll_base_static_components, 0);
