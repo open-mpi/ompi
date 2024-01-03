@@ -18,10 +18,6 @@
 #ifndef PML_CM_H
 #define PML_CM_H
 
-#ifdef HAVE_ALLOCA_H
-#include <alloca.h>
-#endif
-
 #include "ompi_config.h"
 #include "ompi/request/request.h"
 #include "ompi/mca/pml/pml.h"
@@ -144,73 +140,42 @@ mca_pml_cm_recv(void *addr,
 {
     int ret;
     uint32_t flags = 0;
-#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
-    ompi_proc_t *ompi_proc;
-#endif
-    opal_convertor_t convertor;
-    mca_pml_cm_request_t req;
-    mca_mtl_request_t *req_mtl =
-            alloca(sizeof(mca_mtl_request_t) + ompi_mtl->mtl_request_size);
+    mca_pml_cm_thin_recv_request_t *recvreq;
 
-    OBJ_CONSTRUCT(&convertor, opal_convertor_t);
-    req_mtl->ompi_req = &req.req_ompi;
-    req_mtl->completion_callback = mca_pml_cm_recv_fast_completion;
-
-    req.req_pml_type = MCA_PML_CM_REQUEST_RECV_THIN;
-    req.req_free_called = false;
-    req.req_ompi.req_complete = false;
-    req.req_ompi.req_complete_cb = NULL;
-    req.req_ompi.req_state = OMPI_REQUEST_ACTIVE;
-    req.req_ompi.req_status.MPI_TAG = OMPI_ANY_TAG;
-    req.req_ompi.req_status.MPI_ERROR = OMPI_SUCCESS;
-    req.req_ompi.req_status._cancelled = 0;
+    MCA_PML_CM_THIN_RECV_REQUEST_ALLOC(recvreq);
+    if (OPAL_UNLIKELY(NULL == recvreq))
+        return OMPI_ERR_OUT_OF_RESOURCE;
 
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
-    if( MPI_ANY_SOURCE == src ) {
-        ompi_proc = ompi_proc_local_proc;
-    } else {
-        ompi_proc = ompi_comm_peer_lookup( comm, src );
-    }
-
-    MCA_PML_CM_SWITCH_ACCELERATOR_CONVERTOR_OFF(flags, datatype, count);
-
-    opal_convertor_copy_and_prepare_for_recv(
-	ompi_proc->super.proc_convertor,
-		&(datatype->super),
-		count,
-		addr,
-                flags,
-		&convertor );
-#else
-    MCA_PML_CM_SWITCH_ACCELERATOR_CONVERTOR_OFF(flags, datatype, count);
-
-    opal_convertor_copy_and_prepare_for_recv(
-	ompi_mpi_local_convertor,
-		&(datatype->super),
-		count,
-		addr,
-                flags,
-		&convertor );
+    ompi_proc_t *ompi_proc = NULL;
 #endif
 
-    ret = OMPI_MTL_CALL(irecv(ompi_mtl,
-                              comm,
-                              src,
-                              tag,
-                              &convertor,
-                              req_mtl));
-    if( OPAL_UNLIKELY(OMPI_SUCCESS != ret) ) {
-	OBJ_DESTRUCT(&convertor);
+    MCA_PML_CM_THIN_RECV_REQUEST_INIT(recvreq,
+                                      ompi_proc,
+                                      comm,
+                                      src,
+                                      datatype,
+                                      addr,
+                                      count,
+                                      flags);
+
+    recvreq->req_mtl.completion_callback = mca_pml_cm_recv_fast_completion;
+    assert(NULL == recvreq->req_base.req_ompi.req_complete_cb);
+
+    MCA_PML_CM_THIN_RECV_REQUEST_START(recvreq, comm, tag, src, ret);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
+        MCA_PML_CM_THIN_RECV_REQUEST_RETURN(recvreq);
         return ret;
     }
 
-    ompi_request_wait_completion(&req.req_ompi);
+    ompi_request_wait_completion(&recvreq->req_base.req_ompi);
 
     if (MPI_STATUS_IGNORE != status) {
-        OMPI_COPY_STATUS(status, req.req_ompi.req_status, false);
+        OMPI_COPY_STATUS(status, recvreq->req_base.req_ompi.req_status, false);
     }
-    ret = req.req_ompi.req_status.MPI_ERROR;
-    OBJ_DESTRUCT(&convertor);
+
+    ret = recvreq->req_base.req_ompi.req_status.MPI_ERROR;
+    ompi_request_free((ompi_request_t **) &recvreq);
     return ret;
 }
 
