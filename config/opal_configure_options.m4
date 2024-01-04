@@ -3,7 +3,7 @@ dnl
 dnl Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
 dnl                         University Research and Technology
 dnl                         Corporation.  All rights reserved.
-dnl Copyright (c) 2004-2005 The University of Tennessee and The University
+dnl Copyright (c) 2004-2024 The University of Tennessee and The University
 dnl                         of Tennessee Research Foundation.  All rights
 dnl                         reserved.
 dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -39,7 +39,7 @@ opal_show_subtitle "General configuration options"
 # Is this a developer copy?
 #
 
-if test -d .git; then
+if test -d ${OPAL_TOP_SRCDIR}/.git; then
     OPAL_DEVEL=1
 else
     OPAL_DEVEL=0
