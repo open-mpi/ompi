@@ -3,6 +3,7 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2014-2015 NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2024      Triad National Security, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -10,8 +11,8 @@
  * $HEADER$
  */
 
-#ifndef MCA_COLL_CUDA_EXPORT_H
-#define MCA_COLL_CUDA_EXPORT_H
+#ifndef MCA_COLL_ACCELERATOR_EXPORT_H
+#define MCA_COLL_ACCELERATOR_EXPORT_H
 
 #include "ompi_config.h"
 
@@ -31,43 +32,43 @@ BEGIN_C_DECLS
 
 /* API functions */
 
-int mca_coll_cuda_init_query(bool enable_progress_threads,
+int mca_coll_accelerator_init_query(bool enable_progress_threads,
                              bool enable_mpi_threads);
 mca_coll_base_module_t
-*mca_coll_cuda_comm_query(struct ompi_communicator_t *comm,
+*mca_coll_accelerator_comm_query(struct ompi_communicator_t *comm,
                           int *priority);
 
-int mca_coll_cuda_module_enable(mca_coll_base_module_t *module,
+int mca_coll_accelerator_module_enable(mca_coll_base_module_t *module,
                                 struct ompi_communicator_t *comm);
 
 int
-mca_coll_cuda_allreduce(const void *sbuf, void *rbuf, int count,
+mca_coll_accelerator_allreduce(const void *sbuf, void *rbuf, int count,
                         struct ompi_datatype_t *dtype,
                         struct ompi_op_t *op,
                         struct ompi_communicator_t *comm,
                         mca_coll_base_module_t *module);
 
-int mca_coll_cuda_reduce(const void *sbuf, void *rbuf, int count,
+int mca_coll_accelerator_reduce(const void *sbuf, void *rbuf, int count,
                          struct ompi_datatype_t *dtype,
                          struct ompi_op_t *op,
                          int root,
                          struct ompi_communicator_t *comm,
                          mca_coll_base_module_t *module);
 
-int mca_coll_cuda_exscan(const void *sbuf, void *rbuf, int count,
+int mca_coll_accelerator_exscan(const void *sbuf, void *rbuf, int count,
                          struct ompi_datatype_t *dtype,
                          struct ompi_op_t *op,
                          struct ompi_communicator_t *comm,
                          mca_coll_base_module_t *module);
 
-int mca_coll_cuda_scan(const void *sbuf, void *rbuf, int count,
+int mca_coll_accelerator_scan(const void *sbuf, void *rbuf, int count,
                        struct ompi_datatype_t *dtype,
                        struct ompi_op_t *op,
                        struct ompi_communicator_t *comm,
                        mca_coll_base_module_t *module);
 
 int
-mca_coll_cuda_reduce_scatter_block(const void *sbuf, void *rbuf, int rcount,
+mca_coll_accelerator_reduce_scatter_block(const void *sbuf, void *rbuf, int rcount,
                                    struct ompi_datatype_t *dtype,
                                    struct ompi_op_t *op,
                                    struct ompi_communicator_t *comm,
@@ -83,7 +84,7 @@ mca_coll_cuda_reduce_scatter_block(const void *sbuf, void *rbuf, int rcount,
  * @retval >0                The buffer belongs to a managed buffer in
  *                           device memory.
  */
-static inline int mca_coll_cuda_check_buf(void *addr)
+static inline int mca_coll_accelerator_check_buf(void *addr)
 {
     uint64_t flags;
     int dev_id;
@@ -94,13 +95,13 @@ static inline int mca_coll_cuda_check_buf(void *addr)
     }
 }
 
-static inline void *mca_coll_cuda_memcpy(void *dest, const void *src, size_t size)
+static inline void *mca_coll_accelerator_memcpy(void *dest, const void *src, size_t size)
 {
     int res;
     res = opal_accelerator.mem_copy(MCA_ACCELERATOR_NO_DEVICE_ID, MCA_ACCELERATOR_NO_DEVICE_ID,
                                     dest, src, size, MCA_ACCELERATOR_TRANSFER_UNSPEC);
     if (res != 0) {
-        opal_output(0, "CUDA: Error in cuMemcpy: res=%d, dest=%p, src=%p, size=%d", res, dest, src,
+        opal_output(0, "coll/accelerator: Error in mem_copy: res=%d, dest=%p, src=%p, size=%d", res, dest, src,
                     (int) size);
         abort();
     } else {
@@ -111,28 +112,28 @@ static inline void *mca_coll_cuda_memcpy(void *dest, const void *src, size_t siz
 /* Types */
 /* Module */
 
-typedef struct mca_coll_cuda_module_t {
+typedef struct mca_coll_accelerator_module_t {
     mca_coll_base_module_t super;
 
     /* Pointers to all the "real" collective functions */
     mca_coll_base_comm_coll_t c_coll;
-} mca_coll_cuda_module_t;
+} mca_coll_accelerator_module_t;
 
-OBJ_CLASS_DECLARATION(mca_coll_cuda_module_t);
+OBJ_CLASS_DECLARATION(mca_coll_accelerator_module_t);
 
 /* Component */
 
-typedef struct mca_coll_cuda_component_t {
+typedef struct mca_coll_accelerator_component_t {
     mca_coll_base_component_2_4_0_t super;
 
     int priority; /* Priority of this component */
-    int disable_cuda_coll;  /* Force disable of the CUDA collective component */
-} mca_coll_cuda_component_t;
+    int disable_accelerator_coll;  /* Force disable of the accelerator collective component */
+} mca_coll_accelerator_component_t;
 
 /* Globally exported variables */
 
-OMPI_DECLSPEC extern mca_coll_cuda_component_t mca_coll_cuda_component;
+OMPI_DECLSPEC extern mca_coll_accelerator_component_t mca_coll_accelerator_component;
 
 END_C_DECLS
 
-#endif /* MCA_COLL_CUDA_EXPORT_H */
+#endif /* MCA_COLL_ACCELERATOR_EXPORT_H */

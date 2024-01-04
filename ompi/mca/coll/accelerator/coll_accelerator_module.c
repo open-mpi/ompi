@@ -6,6 +6,7 @@
  * Copyright (c) 2019      Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2023      Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (c) 2024      Triad National Security, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -18,7 +19,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "coll_cuda.h"
+#include "coll_accelerator.h"
 
 #include "mpi.h"
 
@@ -29,15 +30,15 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/base.h"
-#include "coll_cuda.h"
+#include "coll_accelerator.h"
 
 
-static void mca_coll_cuda_module_construct(mca_coll_cuda_module_t *module)
+static void mca_coll_accelerator_module_construct(mca_coll_accelerator_module_t *module)
 {
     memset(&(module->c_coll), 0, sizeof(module->c_coll));
 }
 
-static void mca_coll_cuda_module_destruct(mca_coll_cuda_module_t *module)
+static void mca_coll_accelerator_module_destruct(mca_coll_accelerator_module_t *module)
 {
     OBJ_RELEASE(module->c_coll.coll_allreduce_module);
     OBJ_RELEASE(module->c_coll.coll_reduce_module);
@@ -52,9 +53,9 @@ static void mca_coll_cuda_module_destruct(mca_coll_cuda_module_t *module)
     }
 }
 
-OBJ_CLASS_INSTANCE(mca_coll_cuda_module_t, mca_coll_base_module_t,
-                   mca_coll_cuda_module_construct,
-                   mca_coll_cuda_module_destruct);
+OBJ_CLASS_INSTANCE(mca_coll_accelerator_module_t, mca_coll_base_module_t,
+                   mca_coll_accelerator_module_construct,
+                   mca_coll_accelerator_module_destruct);
 
 
 /*
@@ -62,7 +63,7 @@ OBJ_CLASS_INSTANCE(mca_coll_cuda_module_t, mca_coll_base_module_t,
  * this component to disqualify itself if it doesn't support the
  * required level of thread support.
  */
-int mca_coll_cuda_init_query(bool enable_progress_threads,
+int mca_coll_accelerator_init_query(bool enable_progress_threads,
                              bool enable_mpi_threads)
 {
     /* Nothing to do */
@@ -77,59 +78,59 @@ int mca_coll_cuda_init_query(bool enable_progress_threads,
  * priority we want to return.
  */
 mca_coll_base_module_t *
-mca_coll_cuda_comm_query(struct ompi_communicator_t *comm,
+mca_coll_accelerator_comm_query(struct ompi_communicator_t *comm,
                          int *priority)
 {
-    mca_coll_cuda_module_t *cuda_module;
+    mca_coll_accelerator_module_t *accelerator_module;
 
     if (0 == strcmp(opal_accelerator_base_selected_component.base_version.mca_component_name,
                     "null")) {
         opal_output_verbose(10, ompi_coll_base_framework.framework_output,
-                          "coll:cuda:comm_query: accelerator component is null: disqualifying myself");
+                          "coll:accelerator:comm_query: accelerator component is null: disqualifying myself");
         return NULL;
     }
 
-    cuda_module = OBJ_NEW(mca_coll_cuda_module_t);
-    if (NULL == cuda_module) {
+    accelerator_module = OBJ_NEW(mca_coll_accelerator_module_t);
+    if (NULL == accelerator_module) {
         return NULL;
     }
 
-    *priority = mca_coll_cuda_component.priority;
+    *priority = mca_coll_accelerator_component.priority;
 
     /* Choose whether to use [intra|inter] */
-    cuda_module->super.coll_module_enable = mca_coll_cuda_module_enable;
+    accelerator_module->super.coll_module_enable = mca_coll_accelerator_module_enable;
 
-    cuda_module->super.coll_allgather  = NULL;
-    cuda_module->super.coll_allgatherv = NULL;
-    cuda_module->super.coll_allreduce  = mca_coll_cuda_allreduce;
-    cuda_module->super.coll_alltoall   = NULL;
-    cuda_module->super.coll_alltoallv  = NULL;
-    cuda_module->super.coll_alltoallw  = NULL;
-    cuda_module->super.coll_barrier    = NULL;
-    cuda_module->super.coll_bcast      = NULL;
-    cuda_module->super.coll_exscan     = mca_coll_cuda_exscan;
-    cuda_module->super.coll_gather     = NULL;
-    cuda_module->super.coll_gatherv    = NULL;
-    cuda_module->super.coll_reduce     = mca_coll_cuda_reduce;
-    cuda_module->super.coll_reduce_scatter = NULL;
-    cuda_module->super.coll_reduce_scatter_block = mca_coll_cuda_reduce_scatter_block;
-    cuda_module->super.coll_scan       = mca_coll_cuda_scan;
-    cuda_module->super.coll_scatter    = NULL;
-    cuda_module->super.coll_scatterv   = NULL;
+    accelerator_module->super.coll_allgather  = NULL;
+    accelerator_module->super.coll_allgatherv = NULL;
+    accelerator_module->super.coll_allreduce  = mca_coll_accelerator_allreduce;
+    accelerator_module->super.coll_alltoall   = NULL;
+    accelerator_module->super.coll_alltoallv  = NULL;
+    accelerator_module->super.coll_alltoallw  = NULL;
+    accelerator_module->super.coll_barrier    = NULL;
+    accelerator_module->super.coll_bcast      = NULL;
+    accelerator_module->super.coll_exscan     = mca_coll_accelerator_exscan;
+    accelerator_module->super.coll_gather     = NULL;
+    accelerator_module->super.coll_gatherv    = NULL;
+    accelerator_module->super.coll_reduce     = mca_coll_accelerator_reduce;
+    accelerator_module->super.coll_reduce_scatter = NULL;
+    accelerator_module->super.coll_reduce_scatter_block = mca_coll_accelerator_reduce_scatter_block;
+    accelerator_module->super.coll_scan       = mca_coll_accelerator_scan;
+    accelerator_module->super.coll_scatter    = NULL;
+    accelerator_module->super.coll_scatterv   = NULL;
 
-    return &(cuda_module->super);
+    return &(accelerator_module->super);
 }
 
 
 /*
  * Init module on the communicator
  */
-int mca_coll_cuda_module_enable(mca_coll_base_module_t *module,
+int mca_coll_accelerator_module_enable(mca_coll_base_module_t *module,
                                 struct ompi_communicator_t *comm)
 {
     bool good = true;
     char *msg = NULL;
-    mca_coll_cuda_module_t *s = (mca_coll_cuda_module_t*) module;
+    mca_coll_accelerator_module_t *s = (mca_coll_accelerator_module_t*) module;
 
 #define CHECK_AND_RETAIN(src, dst, name)                                                   \
     if (NULL == (src)->c_coll->coll_ ## name ## _module) {                                 \
@@ -155,9 +156,9 @@ int mca_coll_cuda_module_enable(mca_coll_base_module_t *module,
     if (good) {
         return OMPI_SUCCESS;
     }
-    opal_show_help("help-mpi-coll-cuda.txt", "missing collective", true,
+    opal_show_help("help-mpi-coll-accelerator.txt", "missing collective", true,
                    ompi_process_info.nodename,
-                   mca_coll_cuda_component.priority, msg);
+                   mca_coll_accelerator_component.priority, msg);
     return OMPI_ERR_NOT_FOUND;
 }
 
