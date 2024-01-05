@@ -97,6 +97,7 @@ pmpi_api_files = \
         pcomm_call_errhandler_f08.F90 \
         pcomm_compare_f08.F90 \
         pcomm_connect_f08.F90 \
+        pcomm_create_from_group_f08.F90 \
         pcomm_create_errhandler_f08.F90 \
         pcomm_create_f08.F90 \
         pcomm_create_group_f08.F90 \
@@ -271,6 +272,7 @@ pmpi_api_files = \
         pinitialized_f08.F90 \
         pinit_thread_f08.F90 \
         pintercomm_create_f08.F90 \
+        pintercomm_create_from_groups_f08.F90 \
         pintercomm_merge_f08.F90 \
         piprobe_f08.F90 \
         pirecv_f08.F90 \
@@ -307,8 +309,13 @@ pmpi_api_files = \
         ppack_external_size_f08.F90 \
         ppack_f08.F90 \
         ppack_size_f08.F90 \
+        pparrived_f08.F90 \
         ppcontrol_f08.F90 \
+        ppready_f08.F90 \
+        ppready_list_f08.F90 \
+        ppready_range_f08.F90 \
         pprobe_f08.F90 \
+        ppsend_init_f08.F90 \
         ppublish_name_f08.F90 \
         pput_f08.F90 \
         pquery_thread_f08.F90 \
