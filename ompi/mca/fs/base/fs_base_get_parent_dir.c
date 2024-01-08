@@ -31,31 +31,25 @@
 #include "ompi/mca/fs/base/base.h"
 #include "ompi/mca/common/ompio/common_ompio.h"
 
-#ifdef HAVE_SYS_STATFS_H
-#include <sys/statfs.h> /* or <sys/vfs.h> */
-#endif
-#ifdef HAVE_SYS_PARAM_H
-#include <sys/param.h>
-#endif
+/*
+ * Be careful moving this include.
+ * It's easy to hit problems similar to that reported in
+ * https://github.com/systemd/systemd/issues/8507
+ */
 #ifdef HAVE_SYS_MOUNT_H
 #include <sys/mount.h>
-#endif
-#ifdef HAVE_SYS_STAT_H
-#include <sys/stat.h>
-#endif
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
 #endif
 
 void mca_fs_base_get_parent_dir ( char *filename, char **dirnamep)
 {
-    int err;
     char *dir = NULL, *slash;
-    struct stat statbuf;
 
-    err = lstat(filename, &statbuf);
+    if (strlen(filename) < 1) {
+        asprintf(dirnamep, ".%s", OPAL_PATH_SEP);
+        return;
+    }
 
-    if (err || (!S_ISLNK(statbuf.st_mode))) {
+    if (!mca_fs_base_is_link(filename)) {
 	/* no such file, or file is not a link; these are the "normal"
 	 * cases where we can just return the parent directory.
 	 */
@@ -67,22 +61,7 @@ void mca_fs_base_get_parent_dir ( char *filename, char **dirnamep)
 	 * but this code doesn't care if the target is really there
 	 * or not.
 	 */
-	int namelen;
-	char linkbuf[PATH_MAX+1];
-
-	namelen = readlink(filename, linkbuf, PATH_MAX);
-	if (namelen == -1) {
-	    /* something strange has happened between the time that
-	     * we determined that this was a link and the time that
-	     * we attempted to read it; punt and use the old name.
-	     */
-	    dir = strdup(filename);
-	}
-	else {
-	    /* successfully read the link */
-	    linkbuf[namelen] = '\0'; /* readlink doesn't null terminate */
-	    dir = strdup(linkbuf);
-	}
+        mca_fs_base_get_real_filename(filename, &dir);
     }
 
     slash = strrchr(dir, '/');
