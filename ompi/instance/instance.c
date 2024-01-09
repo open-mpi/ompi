@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2018-2022 Triad National Security, LLC. All rights
+ * Copyright (c) 2018-2024 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2022      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2022      The University of Tennessee and The University
@@ -991,16 +991,18 @@ static void ompi_instance_get_num_psets_complete (pmix_status_t status,
     size_t n;
     pmix_status_t rc;
     size_t sz;
-    size_t num_pmix_psets = 0;
+    size_t num_pmix_psets = 0, *num_pmix_psets_ptr;
     char *pset_names = NULL;
 
     opal_pmix_lock_t *lock = (opal_pmix_lock_t *) cbdata;
+
+    num_pmix_psets_ptr = &num_pmix_psets;
 
     for (n=0; n < ninfo; n++) {
         if (0 == strcmp(info[n].key,PMIX_QUERY_NUM_PSETS)) {
             PMIX_VALUE_UNLOAD(rc,
                               &info[n].value,
-                              (void **)&num_pmix_psets,
+                              (void **)&num_pmix_psets_ptr,
                               &sz);
             if (rc != PMIX_SUCCESS) {
                 opal_argv_free (ompi_mpi_instance_pmix_psets);
