@@ -774,6 +774,11 @@ static int ompi_comm_activate_nb_complete (ompi_comm_request_t *request);
 /* Callback function to set communicator disjointness flags */
 static inline void ompi_comm_set_disjointness_nb_complete(ompi_comm_cid_context_t *context)
 {
+    /* Only set the disjoint flags when it is intra-communicator */
+    if (OMPI_COMM_IS_INTER(*context->newcommp)) {
+        return;
+    }
+
     if (OMPI_COMM_IS_DISJOINT_SET(*context->newcommp)) {
         opal_show_help("help-comm.txt", "disjointness-set-again", true);
         return;
@@ -870,7 +875,7 @@ int ompi_comm_activate_nb (ompi_communicator_t **newcomm, ompi_communicator_t *c
     ompi_comm_cid_context_t *context;
     ompi_comm_request_t *request;
     ompi_request_t *subreq;
-    int ret = 0, local_peers = -1;
+    int ret = 0;
 
     /* the caller should not pass NULL for comm (it may be the same as *newcomm) */
     assert (NULL != comm);
@@ -902,20 +907,19 @@ int ompi_comm_activate_nb (ompi_communicator_t **newcomm, ompi_communicator_t *c
         OMPI_COMM_SET_PML_ADDED(*newcomm);
     }
 
-    /**
-     * Dual-purpose barrier:
-     * 1. The communicator's disjointness is inferred from max_local_peers.
-     * 2. After the operation it is allowed to send messages over the new communicator.
-     */
-    local_peers = context->max_local_peers;
-    ret = context->iallreduce_fn (&local_peers, &context->max_local_peers, 1, MPI_MAX, context,
-                                 &subreq);
-    if (OMPI_SUCCESS != ret) {
-        ompi_comm_request_return (request);
-        return ret;
+    if (OMPI_COMM_IS_INTRA(*newcomm)) {
+        /* The communicator's disjointness is inferred from max_local_peers. */
+        ret = context->iallreduce_fn (MPI_IN_PLACE, &context->max_local_peers, 1, MPI_MAX, context,
+                                      &subreq);
+        if (OMPI_SUCCESS != ret) {
+            ompi_comm_request_return (request);
+            return ret;
+        }
+        ompi_comm_request_schedule_append (request, ompi_comm_activate_nb_complete, &subreq, 1);
+    } else {
+        ompi_comm_request_schedule_append (request, ompi_comm_activate_nb_complete, NULL, 0);
     }
-
-    ompi_comm_request_schedule_append (request, ompi_comm_activate_nb_complete, &subreq, 1);
+    
     ompi_comm_request_start (request);
 
     *req = &request->super;
