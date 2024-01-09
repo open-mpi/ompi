@@ -11,7 +11,7 @@ Thank you for taking the time to submit an issue!
 
 ## Background information
 
-### What version of Open MPI are you using? (e.g., v3.0.5, v4.0.2, git branch name and hash, etc.)
+### What version of Open MPI are you using? (e.g., v4.1.6, v5.0.1, git branch name and hash, etc.)
 
 
 
