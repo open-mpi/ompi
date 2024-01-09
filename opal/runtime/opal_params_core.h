@@ -85,6 +85,13 @@ OPAL_DECLSPEC extern bool opal_ze_runtime_initialized;
  *   */
 OPAL_DECLSPEC extern bool opal_warn_on_missing_libcuda;
 
+
+/**
+ *  *whether we want to use sync_memops feature with accelerators
+ *   or deploy alternative logic with IPC events 
+ * */
+OPAL_DECLSPEC extern bool opal_accelerator_use_sync_memops;
+
 /**
  * Whether to use the "leave pinned" protocol or not (0 = no, 1 = yes,
  * -1 = determine at runtime).

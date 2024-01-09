@@ -160,7 +160,7 @@ static int smcuda_register(void)
                                       &mca_btl_smcuda_component.sm_max_procs);
     /* there is no practical use for the mpool name parameter since mpool resources differ
        between components */
-    mca_btl_smcuda_component.sm_mpool_name = "sm";
+    mca_btl_smcuda_component.sm_mpool_name = "smgpu";
     mca_btl_smcuda_param_register_uint("fifo_size", 4096, OPAL_INFO_LVL_4,
                                        &mca_btl_smcuda_component.fifo_size);
     mca_btl_smcuda_param_register_int("num_fifos", 1, OPAL_INFO_LVL_4,
@@ -180,7 +180,7 @@ static int smcuda_register(void)
         NULL, 0, 0, OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_LOCAL, &mca_btl_smcuda_component.allocator);
 
     /* Lower priority when CUDA support is not requested */
-    if (0 == strcmp(opal_accelerator_base_selected_component.base_version.mca_component_name, "cuda")) {
+    if (0 != strcmp(opal_accelerator_base_selected_component.base_version.mca_component_name, "null")) {
 
         mca_btl_smcuda.super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_HIGH + 1;
     } else {
@@ -701,7 +701,7 @@ static void btl_smcuda_control(mca_btl_base_module_t *btl,
                 } else {
                     opal_output_verbose(
                         10, mca_btl_smcuda_component.cuda_ipc_output,
-                        "Analyzed CUDA IPC request: myrank=%d, mydev=%d, peerrank=%d, "
+                        "Analyzed GPU IPC request: myrank=%d, mydev=%d, peerrank=%d, "
                         "peerdev=%d --> Access is disabled by btl_smcuda_use_cuda_ipc_same_gpu",
                         endpoint->my_smp_rank, mydevnum, endpoint->peer_smp_rank, ctrlhdr.cudev);
                     endpoint->ipcstate = IPC_BAD;
@@ -712,7 +712,7 @@ static void btl_smcuda_control(mca_btl_base_module_t *btl,
                 if (0 != res) {
                     opal_output_verbose(
                         10, mca_btl_smcuda_component.cuda_ipc_output,
-                        "Analyzed CUDA IPC request: myrank=%d, mydev=%d, peerrank=%d, "
+                        "Analyzed GPU IPC request: myrank=%d, mydev=%d, peerrank=%d, "
                         "peerdev=%d --> Access is disabled because peer check failed with err=%d",
                         endpoint->my_smp_rank, mydevnum, endpoint->peer_smp_rank, ctrlhdr.cudev,
                         res);
@@ -722,7 +722,7 @@ static void btl_smcuda_control(mca_btl_base_module_t *btl,
             }
 
             opal_output_verbose(10, mca_btl_smcuda_component.cuda_ipc_output,
-                                "Analyzed CUDA IPC request: myrank=%d, mydev=%d, peerrank=%d, "
+                                "Analyzed GPU IPC request: myrank=%d, mydev=%d, peerrank=%d, "
                                 "peerdev=%d --> ACCESS=%d",
                                 endpoint->my_smp_rank, mydevnum, endpoint->peer_smp_rank,
                                 ctrlhdr.cudev, ipcaccess);
@@ -730,7 +730,7 @@ static void btl_smcuda_control(mca_btl_base_module_t *btl,
             if (0 == ipcaccess) {
                 /* No CUDA IPC support */
                 opal_output_verbose(10, mca_btl_smcuda_component.cuda_ipc_output,
-                                    "Not sending CUDA IPC ACK, no P2P support");
+                                    "Not sending GPU IPC ACK, no P2P support");
                 endpoint->ipcstate = IPC_BAD;
             } else {
                 /* CUDA IPC works */
@@ -738,20 +738,20 @@ static void btl_smcuda_control(mca_btl_base_module_t *btl,
                                      (char *) &mca_btl_smcuda_component.cuda_ipc_output);
                 opal_output_verbose(
                     10, mca_btl_smcuda_component.cuda_ipc_output,
-                    "Sending CUDA IPC ACK:  myrank=%d, mydev=%d, peerrank=%d, peerdev=%d",
+                    "Sending GPU IPC ACK:  myrank=%d, mydev=%d, peerrank=%d, peerdev=%d",
                     endpoint->my_smp_rank, mydevnum, endpoint->peer_smp_rank, ctrlhdr.cudev);
                 mca_btl_smcuda_send_cuda_ipc_ack(btl, endpoint, 1);
             }
         } else {
             OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
             opal_output_verbose(10, mca_btl_smcuda_component.cuda_ipc_output,
-                                "Not sending CUDA IPC ACK because request already initiated");
+                                "Not sending GPU IPC ACK because request already initiated");
         }
         break;
 
     case IPC_ACK:
         opal_output_verbose(10, mca_btl_smcuda_component.cuda_ipc_output,
-                            "Received CUDA IPC ACK, notifying PML: myrank=%d, peerrank=%d",
+                            "Received GPU IPC ACK, notifying PML: myrank=%d, peerrank=%d",
                             endpoint->my_smp_rank, endpoint->peer_smp_rank);
 
         smcuda_btl->error_cb(&smcuda_btl->super, MCA_BTL_ERROR_FLAGS_ADD_ACCELERATOR_IPC, ep_proc,
@@ -764,7 +764,7 @@ static void btl_smcuda_control(mca_btl_base_module_t *btl,
         /* The remote side is not ready.  Reset state to initialized so next
          * send call will try again to set up connection. */
         opal_output_verbose(10, mca_btl_smcuda_component.cuda_ipc_output,
-                            "Received CUDA IPC NOTREADY, reset state to allow another attempt: "
+                            "Received GPU IPC NOTREADY, reset state to allow another attempt: "
                             "myrank=%d, peerrank=%d",
                             endpoint->my_smp_rank, endpoint->peer_smp_rank);
         OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
@@ -775,7 +775,7 @@ static void btl_smcuda_control(mca_btl_base_module_t *btl,
         break;
 
     default:
-        opal_output(0, "Received UNKNOWN CUDA IPC control message. This should not happen.");
+        opal_output(0, "Received UNKNOWN GPU IPC control message. This should not happen.");
     }
 }
 

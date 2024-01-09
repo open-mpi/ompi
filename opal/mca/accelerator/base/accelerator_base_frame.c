@@ -57,6 +57,19 @@ OBJ_CLASS_INSTANCE(
     NULL,
     NULL);
 
+OBJ_CLASS_INSTANCE(
+    opal_accelerator_ipc_handle_t,
+    opal_object_t,
+    NULL,
+    NULL);
+
+OBJ_CLASS_INSTANCE(
+    opal_accelerator_ipc_event_handle_t,
+    opal_object_t,
+    NULL,
+    NULL);
+
+
 MCA_BASE_FRAMEWORK_DECLARE(opal, accelerator, "OPAL Accelerator Framework",
                            opal_accelerator_base_frame_register, opal_accelerator_base_frame_open,
                            opal_accelerator_base_frame_close, mca_accelerator_base_static_components,

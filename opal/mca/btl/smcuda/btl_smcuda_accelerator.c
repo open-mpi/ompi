@@ -65,7 +65,7 @@ int mca_btl_smcuda_accelerator_init(void)
     }
     /* Create the events since they can be reused. */
     for (i = 0; i < accelerator_event_max; i++) {
-        rc = opal_accelerator.create_event(MCA_ACCELERATOR_NO_DEVICE_ID, &accelerator_event_ipc_array[i]);
+        rc = opal_accelerator.create_event(MCA_ACCELERATOR_NO_DEVICE_ID, &accelerator_event_ipc_array[i], true);
         if (OPAL_SUCCESS != rc) {
             opal_output_verbose(1, mca_btl_smcuda_component.cuda_ipc_output, "Accelerator create event failed.");
             rc = OPAL_ERROR;
@@ -223,7 +223,7 @@ int mca_btl_smcuda_memcpy(void *dst, void *src, size_t amount, char *msg,
         return OPAL_ERROR;
     } else {
         opal_output_verbose(20, mca_btl_smcuda_component.cuda_ipc_output,
-                            "smcuda: cuMemcpyAsync passed: dst=%p, src=%p, size=%d", dst, src,
+                            "smcuda: mem_copy_async passed: dst=%p, src=%p, size=%d", dst, src,
                             (int) amount);
     }
 

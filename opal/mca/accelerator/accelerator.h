@@ -4,6 +4,8 @@
  *                         reserved.
  * Copyright (c)           Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
+ * Copyright (c) 2023      Advanced Micro Devices, Inc. All Rights reserved.
+ *
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -110,19 +112,28 @@ struct opal_accelerator_stream_t {
     void *stream;
 };
 typedef struct opal_accelerator_stream_t opal_accelerator_stream_t;
+OBJ_CLASS_DECLARATION(opal_accelerator_stream_t);
+
+/* Constant indicating the default/zero stream */
+#define MCA_ACCELERATOR_STREAM_DEFAULT (opal_accelerator_stream_t *)0x00000002
 
 #define IPC_MAX_HANDLE_SIZE 64
 struct opal_accelerator_ipc_handle_t {
+    opal_object_t super;
     size_t size;
     uint8_t handle[IPC_MAX_HANDLE_SIZE];
+    void* dev_ptr;
 };
 typedef struct opal_accelerator_ipc_handle_t opal_accelerator_ipc_handle_t;
+OBJ_CLASS_DECLARATION(opal_accelerator_ipc_handle_t);
 
 struct opal_accelerator_ipc_event_handle_t {
+    opal_object_t super;
     size_t size;
     uint8_t handle[IPC_MAX_HANDLE_SIZE];
 };
 typedef struct opal_accelerator_ipc_event_handle_t opal_accelerator_ipc_event_handle_t;
+OBJ_CLASS_DECLARATION(opal_accelerator_ipc_event_handle_t);
 
 struct opal_accelerator_pci_attr_t {
     uint16_t domain_id;
@@ -132,7 +143,6 @@ struct opal_accelerator_pci_attr_t {
 };
 typedef struct opal_accelerator_pci_attr_t opal_accelerator_pci_attr_t;
 
-OBJ_CLASS_DECLARATION(opal_accelerator_stream_t);
 
 struct opal_accelerator_event_t {
     opal_object_t super;
@@ -180,14 +190,15 @@ typedef int (*opal_accelerator_base_module_create_stream_fn_t)(
  * corresponding stream. This function will allocate memory for the object.
  * To release the memory, call OBJ_RELEASE(*event);
  *
- * @param[IN] dev_id         Associated device for the event or
+ * @param[IN]  dev_id        Associated device for the event or
  *                           MCA_ACCELERATOR_NO_DEVICE_ID
- * @param[IN] event          Event to create
+ * @param[OUT] event         Event to create
+ * @param[IN]  enable_ipc    support inter-process tracking of the event 
  *
  * @return                   OPAL_SUCCESS or error status on failure.
  */
 typedef int (*opal_accelerator_base_module_create_event_fn_t)(
-    int dev_id, opal_accelerator_event_t **event);
+      int dev_id, opal_accelerator_event_t **event, bool enable_ipc);
 
 /**
  * Records an event on a stream. An event recorded on the stream is
@@ -218,6 +229,19 @@ typedef int (*opal_accelerator_base_module_record_event_fn_t)(
  */
 typedef int (*opal_accelerator_base_module_query_event_fn_t)(
     int dev_id, opal_accelerator_event_t *event);
+
+/**
+ * Make a stream wait on an event
+ *
+ * @param[IN] dev_id         Associated device for the event or
+ *                           MCA_ACCELERATOR_NO_DEVICE_ID
+ * @param[IN] event          Event to wait on
+ * @param[IN] stream         Stream to wait
+ *
+ * @return                   OPAL_SUCCESS or error status on failure
+ */
+typedef int (*opal_accelerator_base_module_wait_event_fn_t)(
+   int dev_id, opal_accelerator_event_t *event,  opal_accelerator_stream_t *stream);
 
 /**
  * Copies memory asynchronously from src to dest. Memory of dest and src
@@ -342,8 +366,10 @@ typedef int (*opal_accelerator_base_module_get_address_range_fn_t)(
  *
  * opal_accelerator_base_module_get_ipc_handle_fn_t()
  * opal_accelerator_base_module_open_ipc_handle_fn_t()
+ * opal_accelerator_base_module_import_ipc_event_handle_fn_t()
  * opal_accelerator_base_module_get_ipc_event_handle_fn_t()
  * opal_accelerator_base_module_open_ipc_event_handle_fn_t()
+ * opal_accelerator_base_module_import_ipc_event_handle_fn_t()
  *
  * must be implemented.
  *
@@ -354,6 +380,8 @@ typedef bool (*opal_accelerator_base_module_is_ipc_enabled_fn_t)(void);
 
 /**
  * Gets an IPC memory handle for an existing device memory allocation.
+ * This interface assumes that the object has been declared statically,
+ * hence one has to call OBJ_DESTRUCT(handle) on it.
  *
  * @param[IN]  dev_id        Associated device for the IPC memory handle or
  *                           MCA_ACCELERATOR_NO_DEVICE_ID
@@ -367,29 +395,65 @@ typedef int (*opal_accelerator_base_module_get_ipc_handle_fn_t)(
     int dev_id, void *dev_ptr, opal_accelerator_ipc_handle_t *handle);
 
 /**
+ * Creates an opal_accelerator_ipc_handle object given the 64byte IPC handle,
+ * which was created using module_get_ipc_handle_fn on another process.
+ * This interface assumes that the object has been declared statically,
+ * hence one has to call OBJ_DESTRUCT(handle) on it.
+ *
+ * @param[IN]  dev_id        Associated device for the IPC memory handle or
+ *                           MCA_ACCELERATOR_NO_DEVICE_ID
+ * @param[IN]  ipc_handle    64 byte IPC handle transfered from another process
+ * @param[OUT] handle        Pointer to IPC handle object
+ *
+ * @return                   OPAL_SUCCESS or error status on failure
+ *
+ */
+typedef int (*opal_accelerator_base_module_import_ipc_handle_fn_t)(
+    int dev_id, uint8_t ipc_handle[IPC_MAX_HANDLE_SIZE], opal_accelerator_ipc_handle_t *handle);
+
+/**
  * Opens an IPC memory handle from another process and returns
  * a device pointer usable in the local process.
  *
  * @param[IN]  dev_id        Associated device for the IPC memory handle or
  *                           MCA_ACCELERATOR_NO_DEVICE_ID
- * @param[IN]  handle        IPC handle object from another process
+ * @param[IN]  handle        IPC handle created using the module_create_ipc_handle_fn
  * @param[OUT] dev_ptr       Returned device pointer
  *
- * @return                   OPAL_SUCCESS or error status on failure
+ * @return                   OPAL_SUCCESS on success,
+ *                           OPAL_ERR_WOULD_BLOCK if the memory region is already mapped
+ *                           or error status on other failures
  */
 typedef int (*opal_accelerator_base_module_open_ipc_handle_fn_t)(
     int dev_id, opal_accelerator_ipc_handle_t *handle, void **dev_ptr);
 
 /**
  * Gets an IPC event handle for an event created by opal_accelerator_base_module_create_event_fn_t.
+ * This interface assumes that the object has been declared statically,
+ * hence one has to call OBJ_DESTRUCT(handle) on it.
  *
- * @param[IN]  event         Event created previously
- * @param[OUT] handle        Pointer to IPC event handle object
+ * @param[IN] event          Event created previously
+ * @param[IN] handle         Pointer to IPC event handle object
  *
  * @return                   OPAL_SUCCESS or error status on failure
  */
 typedef int (*opal_accelerator_base_module_get_ipc_event_handle_fn_t)(
     opal_accelerator_event_t *event, opal_accelerator_ipc_event_handle_t *handle);
+
+/**
+ * Creates an opal_accelerator_ipc_event_handle object using the 64 byte IPC event handle
+ * which was created using module_get_ipc_event_handle_fn on another process.
+ * This interface assumes that the object has been declared statically,
+ * hence one has to call OBJ_DESTRUCT(handle) on it.
+ *
+ * @param[IN] event          Event created previously
+ * @param[IN] ipc_handle     64 byte IPC handle object
+ * @param[OUT] handle        Pointer to IPC event handle object
+ *
+ * @return                   OPAL_SUCCESS or error status on failure
+ */
+typedef int (*opal_accelerator_base_module_import_ipc_event_handle_fn_t)(
+     uint8_t ipc_handle[IPC_MAX_HANDLE_SIZE], opal_accelerator_ipc_event_handle_t *handle);
 
 /**
  * Opens an IPC event handle from another process opened by
@@ -490,6 +554,7 @@ typedef struct {
     opal_accelerator_base_module_create_event_fn_t create_event;
     opal_accelerator_base_module_record_event_fn_t record_event;
     opal_accelerator_base_module_query_event_fn_t query_event;
+    opal_accelerator_base_module_wait_event_fn_t wait_event;
 
     opal_accelerator_base_module_memcpy_async_fn_t mem_copy_async;
     opal_accelerator_base_module_memcpy_fn_t mem_copy;
@@ -501,8 +566,10 @@ typedef struct {
 
     opal_accelerator_base_module_is_ipc_enabled_fn_t is_ipc_enabled;
     opal_accelerator_base_module_get_ipc_handle_fn_t get_ipc_handle;
+    opal_accelerator_base_module_import_ipc_handle_fn_t import_ipc_handle;
     opal_accelerator_base_module_open_ipc_handle_fn_t open_ipc_handle;
     opal_accelerator_base_module_get_ipc_event_handle_fn_t get_ipc_event_handle;
+    opal_accelerator_base_module_import_ipc_event_handle_fn_t import_ipc_event_handle;
     opal_accelerator_base_module_open_ipc_event_handle_fn_t open_ipc_event_handle;
 
     opal_accelerator_base_module_host_register_fn_t host_register;

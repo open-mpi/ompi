@@ -19,6 +19,7 @@
  *                         reserved.
  *
  * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2023      Advanced Micro Devices, Inc. All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -41,8 +42,8 @@
 #include "opal_config.h"
 #include "opal/mca/rcache/base/base.h"
 #include "opal/mca/rcache/gpusm/rcache_gpusm.h"
-#include "opal/include/opal/opal_cuda.h"
-#include <cuda.h>
+#include "opal/include/opal/opal_gpu.h"
+#include "opal/mca/accelerator/base/base.h"
 
 /**
  * Called when the registration free list is created.  An event is created
@@ -50,19 +51,16 @@
  */
 static void mca_rcache_gpusm_registration_constructor(mca_rcache_gpusm_registration_t *item)
 {
-    uintptr_t *event = &item->event;
-    void *handle = (void *) &item->evtHandle;
-    CUresult result;
+    int result;
 
-    result = cuEventCreate((CUevent *) event,
-                                  CU_EVENT_INTERPROCESS | CU_EVENT_DISABLE_TIMING);
-    if (OPAL_UNLIKELY(CUDA_SUCCESS != result)) {
-        opal_output(0, "cuEventCreate failed\n");
+    result = opal_accelerator.create_event(MCA_ACCELERATOR_NO_DEVICE_ID, &item->event, true);
+    if (OPAL_UNLIKELY(OPAL_SUCCESS != result)) {
+        opal_output(0, "create_ipc_event failed\n");
     }
 
-    result = cuIpcGetEventHandle((CUipcEventHandle *) handle, (CUevent) *event);
-    if (OPAL_UNLIKELY(CUDA_SUCCESS != result)) {
-        opal_output(0, "cuIpcGetEventHandle failed\n");
+    result = opal_accelerator.get_ipc_event_handle(item->event, &item->evtHandle);
+    if (OPAL_UNLIKELY(OPAL_SUCCESS != result)) {
+        opal_output(0, "get_ipc_event_handle failed\n");
     }
 }
 
@@ -71,13 +69,7 @@ static void mca_rcache_gpusm_registration_constructor(mca_rcache_gpusm_registrat
  */
 static void mca_rcache_gpusm_registration_destructor(mca_rcache_gpusm_registration_t *item)
 {
-    uintptr_t event = item->event;
-    CUresult result;
-
-    result = cuEventDestroy((CUevent) event);
-    if (OPAL_UNLIKELY(CUDA_SUCCESS != result)) {
-        opal_output(0, "cuEventDestroy failed");
-    }
+    OBJ_RELEASE(item->event);
 }
 
 OBJ_CLASS_INSTANCE(mca_rcache_gpusm_registration_t, mca_rcache_base_registration_t,
@@ -100,7 +92,7 @@ void mca_rcache_gpusm_module_init(mca_rcache_gpusm_module_t *rcache)
     /* Start with 0 entries in the free list since CUDA may not have
      * been initialized when this free list is created and there is
      * some CUDA specific activities that need to be done. */
-    opal_free_list_init(&rcache->reg_list, sizeof(struct mca_opal_cuda_reg_t),
+    opal_free_list_init(&rcache->reg_list, sizeof(struct mca_opal_gpu_reg_t),
                         opal_cache_line_size, OBJ_CLASS(mca_rcache_gpusm_registration_t), 0,
                         opal_cache_line_size, 0, -1, 64, NULL, 0, NULL, NULL, NULL);
 }
@@ -122,66 +114,50 @@ int mca_rcache_gpusm_find(mca_rcache_base_module_t *rcache, void *addr, size_t s
  */
 static int mca_rcache_gpusm_get_mem_handle(void *base, size_t size, mca_rcache_base_registration_t *newreg)
 {
-    CUmemorytype memType;
-    CUresult result;
-    CUipcMemHandle *memHandle;
-    CUdeviceptr pbase;
-    size_t psize;
+    mca_opal_gpu_reg_t *gpu_reg = (mca_opal_gpu_reg_t *) newreg;
+    opal_accelerator_buffer_id_t buffer_id;
+    uint64_t flags;
+    int      dev_id;
+    int      result;
+    void*    pbase;
+    size_t   psize;
 
-    mca_opal_cuda_reg_t *cuda_reg = (mca_opal_cuda_reg_t *) newreg;
-    memHandle = (CUipcMemHandle *) cuda_reg->data.memHandle;
-
-    /* We should only be there if this is a CUDA device pointer */
-    result = cuPointerGetAttribute(&memType, CU_POINTER_ATTRIBUTE_MEMORY_TYPE,
-                                          (CUdeviceptr) base);
-    assert(CUDA_SUCCESS == result);
-    assert(CU_MEMORYTYPE_DEVICE == memType);
-
-    /* Get the memory handle so we can send it to the remote process. */
-    result = cuIpcGetMemHandle(memHandle, (CUdeviceptr) base);
-
-    if (CUDA_SUCCESS != result) {
+    result = opal_accelerator.check_addr(base, &dev_id, &flags);
+    if (0 >= result) {
+        // This is either an error or host memory. In either case we do not continue
         return OPAL_ERROR;
     }
 
-    /* Need to get the real base and size of the memory handle.  This is
-     * how the remote side saves the handles in a cache. */
-    result = cuMemGetAddressRange(&pbase, &psize, (CUdeviceptr) base);
-    if (CUDA_SUCCESS != result) {
+    result = opal_accelerator.get_ipc_handle(dev_id, base, &gpu_reg->data.ipcHandle);
+    if (OPAL_UNLIKELY(OPAL_SUCCESS != result)) {
+        return OPAL_ERROR;
+    }
+    result = opal_accelerator.get_address_range (dev_id, base, &pbase, &psize);
+    if (OPAL_UNLIKELY(OPAL_SUCCESS != result)) {
         return OPAL_ERROR;
     }
 
     /* Store all the information in the registration */
-    cuda_reg->base.base = (void *) pbase;
-    cuda_reg->base.bound = (unsigned char *) pbase + psize - 1;
-    cuda_reg->data.memh_seg_addr.pval = (void *) pbase;
-    cuda_reg->data.memh_seg_len = psize;
+    gpu_reg->base.base  = pbase;
+    gpu_reg->base.bound = (unsigned char *) pbase + psize - 1;
+    gpu_reg->data.memh_seg_addr.pval = (void *) pbase;
+    gpu_reg->data.memh_seg_len = psize;
 
-#if OPAL_CUDA_SYNC_MEMOPS
-    /* With CUDA 6.0, we can set an attribute on the memory pointer that will
-     * ensure any synchronous copies are completed prior to any other access
-     * of the memory region.  This means we do not need to record an event
-     * and send to the remote side.
-     */
-    memType = 1; /* Just use this variable since we already have it */
-    result = cuPointerSetAttribute(&memType, CU_POINTER_ATTRIBUTE_SYNC_MEMOPS,
-                                          (CUdeviceptr) base);
-    if (OPAL_UNLIKELY(CUDA_SUCCESS != result)) {
-        return OPAL_ERROR;
+    // converting the ifdef into a mca runtime parameter
+    if (opal_accelerator_use_sync_memops) {
+        // need to revisit. This function also sets sync_memops
+        // we might want to separate that out into a separate function
+        result = opal_accelerator.get_buffer_id(dev_id, base, &buffer_id);
+        if (OPAL_UNLIKELY(OPAL_SUCCESS != result)) {
+            return OPAL_ERROR;
+        }
     }
-#else
-    /* Need to record the event to ensure that any memcopies into the
-     * device memory have completed.  The event handle associated with
-     * this event is sent to the remote process so that it will wait
-     * on this event prior to copying data out of the device memory.
-     * Note that this needs to be the NULL stream to make since it is
-     * unknown what stream any copies into the device memory were done
-     * with. */
-    result = cuEventRecord((CUevent) cuda_reg->data.event, 0);
-    if (OPAL_UNLIKELY(CUDA_SUCCESS != result)) {
-        return OPAL_ERROR;
+    else {
+        result = opal_accelerator.record_event(dev_id, gpu_reg->data.event, 0);
+        if (OPAL_UNLIKELY(OPAL_SUCCESS != result)) {
+            return OPAL_ERROR;
+        }
     }
-#endif /* OPAL_CUDA_SYNC_MEMOPS */
 
     return OPAL_SUCCESS;
 }
@@ -225,7 +201,7 @@ int mca_rcache_gpusm_register(mca_rcache_base_module_t *rcache, void *addr, size
 
     rc = mca_rcache_gpusm_get_mem_handle(base, size, gpusm_reg);
 
-    if (rc != OPAL_SUCCESS) {
+    if (OPAL_SUCCESS != rc) {
         opal_free_list_return(&rcache_gpusm->reg_list, item);
         return rc;
     }
@@ -241,7 +217,6 @@ int mca_rcache_gpusm_register(mca_rcache_base_module_t *rcache, void *addr, size
 int mca_rcache_gpusm_deregister(struct mca_rcache_base_module_t *rcache,
                                 mca_rcache_base_registration_t *reg)
 {
-    int rc;
     mca_rcache_gpusm_module_t *rcache_gpusm = (mca_rcache_gpusm_module_t *) rcache;
 
     opal_free_list_return(&rcache_gpusm->reg_list, (opal_free_list_item_t *) reg);

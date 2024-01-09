@@ -55,6 +55,18 @@ struct opal_accelerator_rocm_event_t {
 typedef struct opal_accelerator_rocm_event_t opal_accelerator_rocm_event_t;
 OBJ_CLASS_DECLARATION(opal_accelerator_rocm_event_t);
 
+struct opal_accelerator_rocm_ipc_handle_t {
+    opal_accelerator_ipc_handle_t base;
+};
+typedef struct opal_accelerator_rocm_ipc_handle_t opal_accelerator_rocm_ipc_handle_t;
+OBJ_CLASS_DECLARATION(opal_accelerator_rocm_ipc_handle_t);
+
+struct opal_accelerator_rocm_ipc_event_handle_t {
+    opal_accelerator_ipc_event_handle_t base;
+};
+typedef struct opal_accelerator_rocm_ipc_event_handle_t opal_accelerator_rocm_ipc_event_handle_t;
+OBJ_CLASS_DECLARATION(opal_accelerator_rocm_ipc_event_handle_t);
+
 OPAL_DECLSPEC extern hipStream_t opal_accelerator_rocm_MemcpyStream;
 OPAL_DECLSPEC extern int opal_accelerator_rocm_memcpy_async;
 OPAL_DECLSPEC extern int opal_accelerator_rocm_verbose;

@@ -31,7 +31,7 @@
 #include "opal_config.h"
 #include "btl_smcuda.h"
 
-#include "opal/include/opal/opal_cuda.h"
+#include "opal/include/opal/opal_gpu.h"
 
 #define MCA_BTL_SMCUDA_FRAG_TYPE_MASK ((uintptr_t) 0x3)
 #define MCA_BTL_SMCUDA_FRAG_SEND      ((uintptr_t) 0x0)
@@ -52,7 +52,7 @@ struct mca_btl_smcuda_hdr_t {
 typedef struct mca_btl_smcuda_hdr_t mca_btl_smcuda_hdr_t;
 
 struct mca_btl_base_registration_handle_t {
-    mca_opal_cuda_reg_data_t reg_data;
+    mca_opal_gpu_reg_data_t reg_data;
 };
 
 struct mca_btl_smcuda_segment_t {
