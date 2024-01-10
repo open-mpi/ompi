@@ -185,7 +185,7 @@ int ompi_coll_base_alltoall_intra_pairwise(const void *sbuf, int scount,
                                             mca_coll_base_module_t *module)
 {
     int line = -1, err = 0, rank, size, step, sendto, recvfrom;
-    void * tmpsend, *tmprecv;
+    char *tmpsend, *tmprecv;
     ptrdiff_t lb, sext, rext;
 
     if (MPI_IN_PLACE == sbuf) {
