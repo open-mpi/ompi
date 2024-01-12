@@ -254,8 +254,11 @@ static int mca_accelerator_rocm_memcpy_async(int dest_dev_id, int src_dev_id, vo
                                              opal_accelerator_transfer_type_t type)
 {
     if (NULL == stream || NULL == src ||
-        NULL == dest   || size <= 0) {
+        NULL == dest   || size < 0) {
         return OPAL_ERR_BAD_PARAM;
+    }
+    if (0 == size) {
+        return OPAL_SUCCESS;
     }
 
     hipError_t err = hipMemcpyAsync(dest, src, size, hipMemcpyDefault,
@@ -275,8 +278,11 @@ static int mca_accelerator_rocm_memcpy(int dest_dev_id, int src_dev_id, void *de
 {
     hipError_t err;
 
-    if (NULL == src || NULL == dest || size <=0) {
+    if (NULL == src || NULL == dest || size < 0) {
         return OPAL_ERR_BAD_PARAM;
+    }
+    if (0 == size) {
+        return OPAL_SUCCESS;
     }
 
     if (type == MCA_ACCELERATOR_TRANSFER_DTOH && size <= opal_accelerator_rocm_memcpyD2H_limit) {

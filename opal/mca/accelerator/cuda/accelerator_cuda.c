@@ -364,8 +364,11 @@ static int accelerator_cuda_memcpy_async(int dest_dev_id, int src_dev_id, void *
         return delayed_init;
     }
 
-    if (NULL == stream || NULL == dest || NULL == src || size <= 0) {
+    if (NULL == stream || NULL == dest || NULL == src || size < 0) {
         return OPAL_ERR_BAD_PARAM;
+    }
+    if (0 == size) {
+        return OPAL_SUCCESS;
     }
 
     result = cuMemcpyAsync((CUdeviceptr) dest, (CUdeviceptr) src, size, *(CUstream *)stream->stream);
@@ -387,8 +390,11 @@ static int accelerator_cuda_memcpy(int dest_dev_id, int src_dev_id, void *dest, 
         return delayed_init;
     }
 
-    if (NULL == dest || NULL == src || size <= 0) {
+    if (NULL == dest || NULL == src || size < 0) {
         return OPAL_ERR_BAD_PARAM;
+    }
+    if (0 == size) {
+        return OPAL_SUCCESS;
     }
 
     /* Async copy then synchronize is the default behavior as some applications
