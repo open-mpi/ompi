@@ -403,11 +403,14 @@ static int mca_accelerator_ze_memcpy_async(int dest_dev_id, int src_dev_id, void
    opal_accelerator_ze_stream_t *ze_stream = NULL;
 
    if (NULL == stream || NULL == src ||
-        NULL == dest   || size <= 0) {
+        NULL == dest   || size < 0) {
         return OPAL_ERR_BAD_PARAM;
     }
+   if (0 == size) {
+       return OPAL_SUCCESS;
+   }
 
-    ze_stream = (opal_accelerator_ze_stream_t  *)stream->stream;
+   ze_stream = (opal_accelerator_ze_stream_t  *)stream->stream;
     assert(NULL != ze_stream);
 
     zret = zeCommandListAppendMemoryCopy(ze_stream->hCommandList,
@@ -435,9 +438,12 @@ static int mca_accelerator_ze_memcpy(int dest_dev_id, int src_dev_id, void *dest
 
     opal_accelerator_ze_stream_t *ze_stream = NULL;
 
-    if (NULL == src || NULL == dest || size <=0) {
+    if (NULL == src || NULL == dest || size <0) {
         return OPAL_ERR_BAD_PARAM;
     }                           
+    if (0 == size) {
+        return OPAL_SUCCESS;
+    }
 
     if (MCA_ACCELERATOR_NO_DEVICE_ID == src_dev_id) {
         dev_id = 0;
