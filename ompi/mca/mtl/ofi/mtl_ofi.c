@@ -224,14 +224,11 @@ ompi_mtl_ofi_add_procs(struct mca_mtl_base_module_t *mtl,
     int ret = OMPI_SUCCESS;
     size_t i;
     size_t size;
-    size_t namelen;
     int count = 0;
     char *ep_name = NULL;
     fi_addr_t *fi_addrs = NULL;
     mca_mtl_ofi_endpoint_t *endpoint = NULL;
     int num_peers_limit = (1 << ompi_mtl_ofi.num_bits_source_rank) - 1;
-
-    namelen = ompi_mtl_ofi.epnamelen;
 
     /* We cannot add more ranks than available tag bits */
     if ((false == ompi_mtl_ofi.fi_cq_data) &&
