@@ -236,16 +236,18 @@ static int component_finalize(void) {
 
     if (mca_osc_ucx_component.ucp_worker != NULL) {
         ucp_worker_destroy(mca_osc_ucx_component.ucp_worker);
+        mca_osc_ucx_component.ucp_worker = NULL;
     }
 
     assert(mca_osc_ucx_component.num_incomplete_req_ops == 0);
     if (mca_osc_ucx_component.env_initialized == true) {
         OBJ_DESTRUCT(&mca_osc_ucx_component.requests);
-        if (NULL != mca_osc_ucx_component.ucp_context) {
-            ucp_cleanup(mca_osc_ucx_component.ucp_context);
-            mca_osc_ucx_component.ucp_context = NULL;
-        }
         mca_osc_ucx_component.env_initialized = false;
+    }
+
+    if (NULL != mca_osc_ucx_component.ucp_context) {
+        ucp_cleanup(mca_osc_ucx_component.ucp_context);
+        mca_osc_ucx_component.ucp_context = NULL;
     }
 
     return OMPI_SUCCESS;
@@ -776,8 +778,13 @@ select_unlock:
 error_nomem:
     if (env_initialized == true) {
         OBJ_DESTRUCT(&mca_osc_ucx_component.requests);
+
         ucp_worker_destroy(mca_osc_ucx_component.ucp_worker);
+        mca_osc_ucx_component.ucp_worker = NULL;
+
         ucp_cleanup(mca_osc_ucx_component.ucp_context);
+        mca_osc_ucx_component.ucp_context = NULL;
+
         mca_osc_ucx_component.env_initialized = false;
     }
     return ret;
