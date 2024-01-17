@@ -142,7 +142,7 @@ static bool check_pmix_overlap(char *var, char *value)
 //      changes here, there are likely to be changes there.
 static void translate_params(void)
 {
-    char *evar, *tmp, *e2;
+    char *evar = NULL, *tmp, *e2 = NULL;
     char *file;
     const char *home;
     opal_list_t params;
@@ -193,20 +193,22 @@ static void translate_params(void)
     home = opal_home_directory();
     if (NULL != home) {
         file = opal_os_path(false, home, ".openmpi", "mca-params.conf", NULL);
-        OBJ_CONSTRUCT(&params, opal_list_t);
-        mca_base_parse_paramfile(file, &params);
-        free(file);
-        OPAL_LIST_FOREACH (fv, &params, mca_base_var_file_value_t) {
-            pmix_overlap = check_pmix_overlap(&e2[len], evar);
-            if (!pmix_overlap && check_pmix_param(fv->mbvfv_var)) {
-                opal_asprintf(&tmp, "PMIX_MCA_%s", fv->mbvfv_var);
-                // set it, but don't overwrite if they already
-                // have a value in our environment
-                setenv(tmp, fv->mbvfv_value, false);
-                free(tmp);
+        if (NULL != file) {
+            OBJ_CONSTRUCT(&params, opal_list_t);
+            mca_base_parse_paramfile(file, &params);
+            free(file);
+            OPAL_LIST_FOREACH (fv, &params, mca_base_var_file_value_t) {
+               pmix_overlap = check_pmix_overlap(fv->mbvfv_var, fv->mbvfv_value);
+               if (!pmix_overlap && check_pmix_param(fv->mbvfv_var)) {
+                   opal_asprintf(&tmp, "PMIX_MCA_%s", fv->mbvfv_var);
+                   // set it, but don't overwrite if they already
+                   // have a value in our environment
+                   setenv(tmp, fv->mbvfv_value, false);
+                   free(tmp);
+               }
             }
+            OPAL_LIST_DESTRUCT(&params);
         }
-        OPAL_LIST_DESTRUCT(&params);
     }
 
     /* check if the user has set OMPIHOME in their environment */
