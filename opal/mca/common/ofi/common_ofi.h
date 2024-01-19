@@ -101,6 +101,38 @@ OPAL_DECLSPEC int opal_common_ofi_export_memory_monitor(void);
 OPAL_DECLSPEC int opal_common_ofi_is_in_list(char **list, char *item);
 
 /**
+ * Get the number of providers whose names are included in a list
+ *
+ * This function takes a list of providers and a list of name strings
+ * as inputs, and return the number of providers whose names are included
+ * in the name strings.
+ *
+ * @param provider_list (IN)    List of providers
+ * @param list          (IN)    List of name string
+ *
+ * @return                      Number of matched providers
+ *
+ */
+OPAL_DECLSPEC int opal_common_ofi_count_providers_in_list(struct fi_info *provider_list,
+                                                          char **list);
+
+/**
+ * Determine whether all providers are included in a list
+ *
+ * This function takes a list of providers and a list of name strings
+ * as inputs, and return whether all provider names are included in the name strings.
+ *
+ * @param provider_list (IN)    List of providers
+ * @param list          (IN)    List of name string
+ *
+ * @return  0                   At least one provider's name is not included in the name strings.
+ * @return  1                   All provider names are included in the name strings.
+ *
+ */
+OPAL_DECLSPEC int opal_common_ofi_providers_subset_of_list(struct fi_info *provider_list,
+                                                           char **list);
+
+/**
  * Selects NIC (provider) based on hardware locality
  *
  * The selection is based on the following priority:
