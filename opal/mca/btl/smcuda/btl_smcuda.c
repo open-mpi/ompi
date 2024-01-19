@@ -1261,6 +1261,7 @@ static void mca_btl_smcuda_send_cuda_ipc_request(struct mca_btl_base_module_t *b
 
     MCA_BTL_SMCUDA_FIFO_WRITE(endpoint, endpoint->my_smp_rank, endpoint->peer_smp_rank,
                               (void *) VIRTUAL2RELATIVE(frag->hdr), false, true, rc);
+    (void)rc;
     return;
 }
 
