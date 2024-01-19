@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2013 The University of Tennessee and The University
+ * Copyright (c) 2004-2024 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -69,6 +69,8 @@ OBJ_CLASS_INSTANCE(mca_rcache_gpusm_registration_t, mca_rcache_base_registration
  */
 void mca_rcache_gpusm_module_init(mca_rcache_gpusm_module_t* rcache)
 {
+    mca_rcache_base_module_init(&rcache->super);
+
     rcache->super.rcache_component = &mca_rcache_gpusm_component.super;
     rcache->super.rcache_register = mca_rcache_gpusm_register;
     rcache->super.rcache_find = mca_rcache_gpusm_find;
@@ -179,5 +181,8 @@ void mca_rcache_gpusm_finalize(struct mca_rcache_base_module_t *rcache)
     }
 
     OBJ_DESTRUCT(&rcache_gpusm->reg_list);
+
+    mca_rcache_base_module_fini(rcache);
+
     return;
 }

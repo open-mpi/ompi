@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2013 The University of Tennessee and The University
+ * Copyright (c) 2004-2024 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -67,6 +67,8 @@ int mca_rcache_udreg_module_init (mca_rcache_udreg_module_t *rcache)
     struct udreg_cache_attr cache_attr;
     int urc;
 
+    mca_rcache_base_module_init(&rcache->super);
+
     rcache->super.rcache_component = &mca_rcache_udreg_component.super;
     rcache->super.rcache_register = mca_rcache_udreg_register;
     rcache->super.rcache_find = mca_rcache_udreg_find;
@@ -89,8 +91,6 @@ int mca_rcache_udreg_module_init (mca_rcache_udreg_module_t *rcache)
     if (mca_rcache_udreg_component.leave_pinned) {
         cache_attr.modes |= UDREG_CC_MODE_USE_LAZY_DEREG;
     }
-
-    OBJ_CONSTRUCT(&rcache->lock, opal_mutex_t);
 
     strncpy (cache_attr.cache_name, rcache->resources.base.cache_name, UDREG_MAX_CACHENAME_LEN);
     cache_attr.max_entries         = rcache->resources.max_entries;
@@ -357,4 +357,5 @@ static void mca_rcache_udreg_finalize (mca_rcache_base_module_t *rcache)
     UDREG_CacheRelease (rcache_udreg->udreg_handle);
     OBJ_DESTRUCT(&rcache_udreg->reg_list);
     OBJ_DESTRUCT(&rcache_udreg->lock);
+    mca_rcache_base_module_fini(rcache);
 }
