@@ -14,7 +14,7 @@
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2012-2015 NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2012-2023 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -471,7 +471,7 @@ static struct mca_btl_base_endpoint_t *create_sm_endpoint(int local_proc, struct
     struct mca_btl_base_endpoint_t *ep;
 
 #if OPAL_ENABLE_PROGRESS_THREADS == 1
-    char path[PATH_MAX];
+    char path[OPAL_PATH_MAX];
 #endif
 
     ep = (struct mca_btl_base_endpoint_t *) malloc(sizeof(struct mca_btl_base_endpoint_t));
