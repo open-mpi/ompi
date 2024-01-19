@@ -98,6 +98,7 @@ struct ompi_comm_cid_context_t {
     int remote_leader;
     int iter;
     /** storage for activate barrier */
+    int local_peers;
     int max_local_peers;
     char *port_string;
     bool send_first;
@@ -266,7 +267,8 @@ static ompi_comm_cid_context_t *mca_comm_cid_context_alloc (ompi_communicator_t 
 
     context->send_first = send_first;
     context->iter = 0;
-    context->max_local_peers = ompi_group_count_local_peers(newcomm->c_local_group);
+    context->local_peers = ompi_group_count_local_peers(newcomm->c_local_group);
+    context->max_local_peers = -1;
 
     return context;
 }
@@ -908,8 +910,12 @@ int ompi_comm_activate_nb (ompi_communicator_t **newcomm, ompi_communicator_t *c
     }
 
     if (OMPI_COMM_IS_INTRA(*newcomm)) {
-        /* The communicator's disjointness is inferred from max_local_peers. */
-        ret = context->iallreduce_fn (MPI_IN_PLACE, &context->max_local_peers, 1, MPI_MAX, context,
+        /**
+         * The communicator's disjointness is inferred from max_local_peers.
+         * Note: MPI_IN_PLACE cannot be used here because the parent could be an
+         * inter-communicator
+         */
+        ret = context->iallreduce_fn (&context->local_peers, &context->max_local_peers, 1, MPI_MAX, context,
                                       &subreq);
         if (OMPI_SUCCESS != ret) {
             ompi_comm_request_return (request);
@@ -919,7 +925,7 @@ int ompi_comm_activate_nb (ompi_communicator_t **newcomm, ompi_communicator_t *c
     } else {
         ompi_comm_request_schedule_append (request, ompi_comm_activate_nb_complete, NULL, 0);
     }
-    
+
     ompi_comm_request_start (request);
 
     *req = &request->super;
