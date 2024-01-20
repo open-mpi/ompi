@@ -1268,10 +1268,9 @@ int ompi_coll_base_allreduce_intra_allgather_reduce(const void *sbuf, void *rbuf
                                                     mca_coll_base_module_t *module)
 {
     char *send_buf = (void *) sbuf;
-    int comm_size = ompi_comm_size(comm);
+    const int comm_size = ompi_comm_size(comm);
+    const int rank = ompi_comm_rank(comm);
     int err = MPI_SUCCESS;
-    int rank = ompi_comm_rank(comm);
-    bool commutative = ompi_op_is_commute(op);
     ompi_request_t **reqs;
 
     if (sbuf == MPI_IN_PLACE) {
@@ -1288,24 +1287,30 @@ int ompi_coll_base_allreduce_intra_allgather_reduce(const void *sbuf, void *rbuf
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    if (commutative) {
-        ompi_datatype_copy_content_same_ddt(dtype, count, (char *) rbuf, (char *) send_buf);
-    }
-
     tmp_buf = tmp_buf_raw - gap;
 
     /* Requests for send to AND receive from everyone else */
     int reqs_needed = (comm_size - 1) * 2;
     reqs = ompi_coll_base_comm_get_reqs(module->base_data, reqs_needed);
 
-    ptrdiff_t incr = extent * count;
-    tmp_recv = (char *) tmp_buf;
+    const ptrdiff_t incr = extent * count;
 
-    /* Exchange data with peer processes */
+    /* Exchange data with peer processes, excluding self */
     int req_index = 0, peer_rank = 0;
     for (int i = 1; i < comm_size; ++i) {
+        /* Start at the next rank */
         peer_rank = (rank + i) % comm_size;
-        tmp_recv = tmp_buf + (peer_rank * incr);
+
+        /* Prepare for the next receive buffer */
+        if (0 == peer_rank && rbuf != send_buf) {
+            /* Optimization for Rank 0 - its data will always be placed at the beginning of local
+             * reduce output buffer.
+             */
+            tmp_recv = rbuf;
+        } else {
+            tmp_recv = tmp_buf + (peer_rank * incr);
+        }
+
         err = MCA_PML_CALL(irecv(tmp_recv, count, dtype, peer_rank, MCA_COLL_BASE_TAG_ALLREDUCE,
                                  comm, &reqs[req_index++]));
         if (MPI_SUCCESS != err) {
@@ -1321,17 +1326,29 @@ int ompi_coll_base_allreduce_intra_allgather_reduce(const void *sbuf, void *rbuf
 
     err = ompi_request_wait_all(req_index, reqs, MPI_STATUSES_IGNORE);
 
-    /* Prepare for local reduction */
-    peer_rank = 0;
-    if (!commutative) {
-        /* For non-commutative operations, ensure the reduction always starts from Rank 0's data */
-        memcpy(rbuf, 0 == rank ? send_buf : tmp_buf, incr);
-        peer_rank = 1;
+    /**
+     * Prepare for local reduction by moving Rank 0's data to rbuf.
+     * Previously we tried to receive Rank 0's data in rbuf, but we need to handle
+     * the following special cases.
+     */
+    if (0 != rank && rbuf == send_buf) {
+        /* For inplace reduction copy out the send_buf before moving Rank 0's data */
+        ompi_datatype_copy_content_same_ddt(dtype, count, (char *) tmp_buf + (rank * incr),
+                                            send_buf);
+        ompi_datatype_copy_content_same_ddt(dtype, count, (char *) rbuf, (char *) tmp_buf);
+    } else if (0 == rank && rbuf != send_buf) {
+        /* For Rank 0 we need to copy the send_buf to rbuf manually */
+        ompi_datatype_copy_content_same_ddt(dtype, count, (char *) rbuf, (char *) send_buf);
     }
 
-    char *inbuf;
-    for (; peer_rank < comm_size; peer_rank++) {
-        inbuf = rank == peer_rank ? send_buf : tmp_buf + (peer_rank * incr);
+    /* Now do local reduction - Rank 0's data is already in rbuf so start from Rank 1 */
+    char *inbuf = NULL;
+    for (peer_rank = 1; peer_rank < comm_size; peer_rank++) {
+        if (rank == peer_rank && rbuf != send_buf) {
+            inbuf = send_buf;
+        } else {
+            inbuf = tmp_buf + (peer_rank * incr);
+        }
         ompi_op_reduce(op, (void *) inbuf, rbuf, count, dtype);
     }
 
