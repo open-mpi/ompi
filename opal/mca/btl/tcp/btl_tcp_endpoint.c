@@ -17,6 +17,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018-2020 Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2020      Google, LLC. All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -725,11 +726,13 @@ void mca_btl_tcp_set_socket_options(int sd)
  */
 static int mca_btl_tcp_endpoint_start_connect(mca_btl_base_endpoint_t *btl_endpoint)
 {
-    int rc, flags;
+    int rc, flags, local_port;
     struct sockaddr_storage endpoint_addr;
     /* By default consider a IPv4 connection */
     uint16_t af_family = AF_INET;
     opal_socklen_t addrlen = sizeof(struct sockaddr_in);
+    /* used for printing the IP and port of the local socket */
+    char local_ip[OPAL_ENABLE_IPV6 ? INET6_ADDRSTRLEN : INET_ADDRSTRLEN];
 
 #if OPAL_ENABLE_IPV6
     if (AF_INET6 == btl_endpoint->endpoint_addr->addr_family) {
@@ -792,6 +795,10 @@ static int mca_btl_tcp_endpoint_start_connect(mca_btl_base_endpoint_t *btl_endpo
             CLOSE_THE_SOCKET(btl_endpoint->endpoint_sd);
             return OPAL_ERROR;
         }
+        inet_ntop(AF_INET,
+                  &((struct sockaddr_in *) &btl_endpoint->endpoint_btl->tcp_ifaddr)->sin_addr,
+                  local_ip, sizeof(local_ip));
+        local_port = htons(((struct sockaddr_in *) &btl_endpoint->endpoint_btl->tcp_ifaddr)->sin_port);
     }
 #if OPAL_ENABLE_IPV6
     if (endpoint_addr.ss_family == AF_INET6) {
@@ -810,13 +817,19 @@ static int mca_btl_tcp_endpoint_start_connect(mca_btl_base_endpoint_t *btl_endpo
             CLOSE_THE_SOCKET(btl_endpoint->endpoint_sd);
             return OPAL_ERROR;
         }
+        inet_ntop(AF_INET6,
+                  &((struct sockaddr_in6 *) &btl_endpoint->endpoint_btl->tcp_ifaddr)->sin6_addr,
+                  local_ip, sizeof(local_ip));
+        local_port = htons(((struct sockaddr_in6 *) &btl_endpoint->endpoint_btl->tcp_ifaddr)->sin6_port);
     }
 #endif
     opal_output_verbose(10, opal_btl_base_framework.framework_output,
-                        "btl: tcp: attempting to connect() to %s address %s on port %d",
+                        "btl: tcp: %s attempting to connect() to %s address %s on port %d using %s:%d",
+                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
                         OPAL_NAME_PRINT(btl_endpoint->endpoint_proc->proc_opal->proc_name),
                         opal_net_get_hostname((struct sockaddr *) &endpoint_addr),
-                        ntohs(btl_endpoint->endpoint_addr->addr_port));
+                        ntohs(btl_endpoint->endpoint_addr->addr_port),
+                        local_ip, local_port);
 
     if (0 == connect(btl_endpoint->endpoint_sd, (struct sockaddr *) &endpoint_addr, addrlen)) {
         opal_output_verbose(10, opal_btl_base_framework.framework_output,
@@ -829,7 +842,7 @@ static int mca_btl_tcp_endpoint_start_connect(mca_btl_base_endpoint_t *btl_endpo
             MCA_BTL_TCP_ENDPOINT_DUMP(10, btl_endpoint, true, "event_add(recv) [start_connect]");
             opal_event_add(&btl_endpoint->endpoint_recv_event, 0);
             if (mca_btl_tcp_event_base == opal_sync_event_base) {
-                /* If no progress thread then raise the awarness of the default progress engine */
+                /* If no progress thread then raise the awareness of the default progress engine */
                 opal_progress_event_users_increment();
             }
             return OPAL_SUCCESS;
