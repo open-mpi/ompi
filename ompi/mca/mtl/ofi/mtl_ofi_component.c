@@ -764,12 +764,20 @@ no_hmem:
                         "%s:%d: fi_getinfo(): %s\n",
                         __FILE__, __LINE__, fi_strerror(-ret));
 
-    if (FI_ENODATA == -ret) {
+    if ((FI_ENODATA == -ret)
+        || (0 == ret && include_list
+            && 0 == opal_common_ofi_count_providers_in_list(providers, include_list))
+        || (0 == ret && !include_list && exclude_list
+            && opal_common_ofi_providers_subset_of_list(providers, exclude_list))) {
 #if defined(FI_HMEM)
         /* Attempt selecting a provider without FI_HMEM hints */
         if (hints->caps & FI_HMEM) {
             hints->caps &= ~FI_HMEM;
             hints->domain_attr->mr_mode &= ~FI_MR_HMEM;
+            if (providers) {
+                (void) fi_freeinfo(providers);
+                providers = NULL;
+            }
             goto no_hmem;
         }
 #endif

@@ -260,7 +260,7 @@ static mca_btl_base_module_t **mca_btl_ofi_component_init(int *num_btl_modules,
     int rc;
     uint64_t progress_mode;
     unsigned resource_count = 0;
-    struct mca_btl_base_module_t **base_modules;
+    struct mca_btl_base_module_t **base_modules = NULL;
     char **include_list = NULL, **exclude_list = NULL;
 
     BTL_VERBOSE(("initializing ofi btl"));
@@ -275,7 +275,7 @@ static mca_btl_base_module_t **mca_btl_ofi_component_init(int *num_btl_modules,
         return NULL;
     }
 
-    struct fi_info *info, *info_list, *selected_info;
+    struct fi_info *info, *info_list = NULL, *selected_info = NULL;
     struct fi_info hints = {0};
     struct fi_ep_attr ep_attr = {0};
     struct fi_rx_attr rx_attr = {0};
@@ -366,22 +366,31 @@ no_hmem:
      * The earliest version the explictly allow provider to call CUDA API is 1.18  */
     rc = fi_getinfo(FI_VERSION(1, 18), NULL, NULL, 0, &hints, &info_list);
     if (FI_ENOSYS == -rc) {
-	rc = fi_getinfo(FI_VERSION(1, 9), NULL, NULL, 0, &hints, &info_list);
+        rc = fi_getinfo(FI_VERSION(1, 9), NULL, NULL, 0, &hints, &info_list);
     }
-    if (0 != rc) {
+
+    if ((FI_ENODATA == -rc)
+        || (0 == rc && include_list
+            && 0 == opal_common_ofi_count_providers_in_list(info_list, include_list))
+        || (0 == rc && !include_list && exclude_list
+            && opal_common_ofi_providers_subset_of_list(info_list, exclude_list))) {
 #if defined(FI_HMEM)
+        /* Attempt selecting a provider without FI_HMEM hints */
         if (hints.caps & FI_HMEM) {
-            /* Try again without FI_HMEM hints */
             hints.caps &= ~FI_HMEM;
             hints.domain_attr->mr_mode &= ~FI_MR_HMEM;
+            if (info_list) {
+                (void) fi_freeinfo(info_list);
+                info_list = NULL;
+            }
             goto no_hmem;
         }
 #endif
+        /* It is not an error if no information is returned. */
+        goto out;
+    } else if (0 != rc) {
         BTL_VERBOSE(("fi_getinfo failed with code %d: %s", rc, fi_strerror(-rc)));
-        if (NULL != include_list) {
-            opal_argv_free(include_list);
-        }
-        return NULL;
+        goto out;
     }
 
 #if defined(FI_HMEM)
@@ -441,16 +450,15 @@ no_hmem:
         info = info->next;
     }
 
-    /* We are done with the returned info. */
-    fi_freeinfo(info_list);
-    if (NULL != include_list) {
-        opal_argv_free(include_list);
+    if (NULL == info) {
+        BTL_VERBOSE(("No provider is selected"));
+        goto out;
     }
 
     /* pass module array back to caller */
     base_modules = calloc(mca_btl_ofi_component.module_count, sizeof(*base_modules));
     if (NULL == base_modules) {
-        return NULL;
+        goto out;
     }
 
     memcpy(base_modules, mca_btl_ofi_component.modules,
@@ -460,6 +468,17 @@ no_hmem:
                  mca_btl_ofi_component.module_count));
 
     *num_btl_modules = mca_btl_ofi_component.module_count;
+
+out:
+    if (include_list) {
+        opal_argv_free(include_list);
+    }
+    if (exclude_list) {
+        opal_argv_free(exclude_list);
+    }
+    if (info_list) {
+        (void) fi_freeinfo(info_list);
+    }
 
     return base_modules;
 }

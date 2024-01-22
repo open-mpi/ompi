@@ -49,6 +49,15 @@ static int opal_common_ofi_init_ref_cnt = 0;
 static bool opal_common_ofi_installed_memory_monitor = false;
 #endif
 
+/* Count providers returns the number of providers present in an fi_info list
+ *     @param (IN) provider_list    struct fi_info* list of providers available
+ *
+ *     @param (OUT)                 int number of providers present in the list
+ *
+ *     returns 0 if the list is NULL
+ */
+static int count_providers(struct fi_info *provider_list);
+
 #ifdef HAVE_STRUCT_FI_OPS_MEM_MONITOR
 
 /*
@@ -270,6 +279,44 @@ int opal_common_ofi_is_in_list(char **list, char *item)
     }
 
     return 0;
+}
+
+int opal_common_ofi_count_providers_in_list(struct fi_info *provider_list, char **list)
+{
+    int count = 0, matched = 0;
+    struct fi_info *prov = provider_list, *prev_prov = NULL;
+    char *name;
+
+    while (prov) {
+        name = prov->fabric_attr->prov_name;
+        if (prev_prov && !strncasecmp(prev_prov->fabric_attr->prov_name, name, strlen(name))) {
+            /**
+             * Providers are usually sorted by name. We can reuse the previous matching result and
+             * avoid the potentially expensive list traversal.
+             */
+            count += matched;
+        } else if (opal_common_ofi_is_in_list(list, prov->fabric_attr->prov_name)) {
+            matched = 1;
+            ++count;
+        } else {
+            matched = 0;
+        }
+        prev_prov = prov;
+        prov = prov->next;
+    }
+
+    return count;
+}
+
+int opal_common_ofi_providers_subset_of_list(struct fi_info *provider_list, char **list)
+{
+    int num_prov = count_providers(provider_list);
+
+    if (!num_prov) {
+        return 1;
+    }
+
+    return num_prov == opal_common_ofi_count_providers_in_list(provider_list, list);
 }
 
 int opal_common_ofi_mca_register(const mca_base_component_t *component)
@@ -682,13 +729,6 @@ static bool is_near(pmix_device_distance_t *distances,
 #endif
 #endif  // OPAL_OFI_PCI_DATA_AVAILABLE
 
-/* Count providers returns the number of providers present in an fi_info list
- *     @param (IN) provider_list    struct fi_info* list of providers available
- *
- *     @param (OUT)                 int number of providers present in the list
- *
- *     returns 0 if the list is NULL
- */
 static int count_providers(struct fi_info *provider_list)
 {
     struct fi_info *dev = provider_list;
