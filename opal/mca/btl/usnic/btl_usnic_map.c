@@ -2,6 +2,7 @@
  * Copyright (c) 2013-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2023      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -245,7 +246,7 @@ void opal_btl_usnic_connectivity_map(void)
 
     fp = fopen(filename, "w");
     if (NULL == fp) {
-        char dirname[PATH_MAX];
+        char dirname[OPAL_PATH_MAX];
         getcwd(dirname, sizeof(dirname));
         dirname[sizeof(dirname) - 1] = '\0';
         opal_show_help("help-mpi-btl-usnic.txt", "cannot write to map file", true,

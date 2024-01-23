@@ -8,6 +8,7 @@
  *                         reserved.
  * Copyright (c) 2022      Google, LLC. All rights reserved.
  * Copyright (c) 2022      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2023      NVIDIA Corporation.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -182,8 +183,8 @@ OPAL_DECLSPEC void opal_common_ucx_mca_deregister(void)
 #if HAVE_DECL_OPEN_MEMSTREAM
 static bool opal_common_ucx_check_device(const char *device_name, char **device_list)
 {
-    char sysfs_driver_link[PATH_MAX];
-    char driver_path[PATH_MAX];
+    char sysfs_driver_link[OPAL_PATH_MAX];
+    char driver_path[OPAL_PATH_MAX];
     char ib_device_name[NAME_MAX];
     char *driver_name;
     char **list_item;
