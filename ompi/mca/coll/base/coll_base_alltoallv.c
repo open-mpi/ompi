@@ -202,6 +202,7 @@ ompi_coll_base_alltoallv_intra_pairwise(const void *sbuf, const int *scounts, co
     size_t sdtype_size, rdtype_size;
     void *psnd, *prcv;
     ptrdiff_t sext, rext;
+    ompi_request_t *req;
 
     if (MPI_IN_PLACE == sbuf) {
         return mca_coll_base_alltoallv_intra_basic_inplace (rbuf, rcounts, rdisps,
@@ -227,6 +228,7 @@ ompi_coll_base_alltoallv_intra_pairwise(const void *sbuf, const int *scounts, co
 
    /* Perform pairwise exchange starting from 1 since local exchange is done */
     for (step = 0; step < size; step++) {
+        req = MPI_REQUEST_NULL;
 
         /* Determine sender and receiver for this step. */
         sendto  = (rank + step) % size;
@@ -236,13 +238,31 @@ ompi_coll_base_alltoallv_intra_pairwise(const void *sbuf, const int *scounts, co
         psnd = (char*)sbuf + (ptrdiff_t)sdisps[sendto] * sext;
         prcv = (char*)rbuf + (ptrdiff_t)rdisps[recvfrom] * rext;
 
-        /* send and receive */
-        err = ompi_coll_base_sendrecv( psnd, scounts[sendto], sdtype, sendto,
-                                        MCA_COLL_BASE_TAG_ALLTOALLV,
-                                        prcv, rcounts[recvfrom], rdtype, recvfrom,
-                                        MCA_COLL_BASE_TAG_ALLTOALLV,
-                                        comm, MPI_STATUS_IGNORE, rank);
-        if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl;  }
+        if (0 < rcounts[recvfrom]) {
+            err = MCA_PML_CALL(irecv(prcv, rcounts[recvfrom], rdtype, recvfrom,
+                                     MCA_COLL_BASE_TAG_ALLTOALLV, comm, &req));
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto err_hndl;
+            }
+        }
+
+        if (0 < scounts[sendto]) {
+            err = MCA_PML_CALL(send(psnd, scounts[sendto], sdtype, sendto,
+                                    MCA_COLL_BASE_TAG_ALLTOALLV, MCA_PML_BASE_SEND_STANDARD, comm));
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto err_hndl;
+            }
+        }
+
+        if (MPI_REQUEST_NULL != req) {
+            err = ompi_request_wait(&req, MPI_STATUS_IGNORE);
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto err_hndl;
+            }
+        }
     }
 
     return MPI_SUCCESS;
