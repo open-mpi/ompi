@@ -4,6 +4,29 @@ Open MPI v5.0.x series
 This file contains all the NEWS updates for the Open MPI v5.0.x
 series, in reverse chronological order.
 
+Open MPI version v5.0.2rc1
+--------------------------
+:Date: 24 January 2024
+
+- Internal PMIx and PRRTe versions:
+
+  - PMIx (v4.2.8-3-ge68bdfcf). Commit hash: ``e68bdfcf4133cb4c1af31c591bb1d26ed63fe911``.
+  - PRRTE (v3.0.3-5-g8bd181af08). Commit hash: ``8bd181af0836375e66c741c1c94364d8a44918e5``.
+
+- Bugfixes and changes (in chronological order)
+
+  - Fix the fs/lustre component build
+  - Fix a mtl/ofi multi-threaded race condition bug
+  - Add missing fortran profiling interfaces according to MPI 4.0 standard
+  - Allow 0-size data copy in opal/accelerator
+  - Fix a btl/ofi and mtl/ofi provider selection bug
+  - Properly initialize mca_rcache_base_module_t members
+  - Fix a singleton launch segfault
+  - Add GCC13 support with MacOS compatibility
+
+- Many thanks to Open MPI community including:
+  Erik Schnetter 
+
 Open MPI version v5.0.1
 --------------------------
 :Date: 20 December 2023
