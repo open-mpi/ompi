@@ -634,6 +634,7 @@ static void mca_btl_smcuda_send_cuda_ipc_ack(struct mca_btl_base_module_t *btl,
 
     MCA_BTL_SMCUDA_FIFO_WRITE(endpoint, endpoint->my_smp_rank, endpoint->peer_smp_rank,
                               (void *) VIRTUAL2RELATIVE(frag->hdr), false, true, rc);
+    (void)rc;
 
     /* Set state now that we have sent message */
     if (ready) {
@@ -1040,6 +1041,7 @@ int mca_btl_smcuda_component_progress(void)
             /* return the fragment */
             MCA_BTL_SMCUDA_FIFO_WRITE(mca_btl_smcuda_component.sm_peers[peer_smp_rank], my_smp_rank,
                                       peer_smp_rank, hdr->frag, false, true, rc);
+            (void)rc;
             break;
         }
         case MCA_BTL_SMCUDA_FRAG_ACK: {
@@ -1086,6 +1088,7 @@ int mca_btl_smcuda_component_progress(void)
                                             | MCA_BTL_SMCUDA_FRAG_STATUS_MASK);
             MCA_BTL_SMCUDA_FIFO_WRITE(mca_btl_smcuda_component.sm_peers[peer_smp_rank], my_smp_rank,
                                       peer_smp_rank, hdr, false, true, rc);
+            (void)rc;
             break;
         }
     }

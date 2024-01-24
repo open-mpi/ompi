@@ -117,14 +117,14 @@ static int mca_rcache_rgpusm_open_mem_handle(void *base, size_t size, mca_rcache
     if (OPAL_UNLIKELY(OPAL_SUCCESS != result)) {
         opal_output_verbose(10, mca_rcache_rgpusm_component.output,
                             "open_ipc_handle failed: base=%p (remote base=%p,size=%d)",
-                            newreg->alloc_base, base, (int) size);
+                            (void*)newreg->alloc_base, base, (int) size);
         /* Currently, this is a non-recoverable error */
         return OPAL_ERROR;
     }
 
     opal_output_verbose(10, mca_rcache_rgpusm_component.output,
                         "open_ipc_handle passed: base=%p (remote base=%p,size=%d)",
-                        newreg->alloc_base, base, (int) size);
+                        (void*)newreg->alloc_base, base, (int) size);
 
     return OPAL_SUCCESS;
 }
@@ -172,7 +172,7 @@ static inline bool mca_rcache_rgpusm_deregister_lru(mca_rcache_base_module_t *rc
     if (OPAL_SUCCESS != rc) {
         opal_output_verbose(10, mca_rcache_rgpusm_component.output,
                             "RGPUSM: Failed to deregister the memory addr=%p, size=%d",
-                            old_reg->base, (int) (old_reg->bound - old_reg->base + 1));
+                            (void*)old_reg->base, (int) (old_reg->bound - old_reg->base + 1));
         return false;
     }
 
@@ -292,7 +292,7 @@ int mca_rcache_rgpusm_register(mca_rcache_base_module_t *rcache, void *addr, siz
         rcache_rgpusm->stat_cache_hit++;
         opal_output_verbose(10, mca_rcache_rgpusm_component.output,
                             "RGPUSM: Found addr=%p,size=%d (base=%p,size=%d) in cache", addr,
-                            (int) size, (*reg)->base, (int) ((*reg)->bound - (*reg)->base));
+                            (int) size, (void*)(*reg)->base, (int) ((*reg)->bound - (*reg)->base));
 
         if (0 ==
             memcmp(((mca_opal_gpu_reg_t *)*reg)->data.ipcHandle.handle, rget_reg->data.ipcHandle.handle,
@@ -304,7 +304,7 @@ int mca_rcache_rgpusm_register(mca_rcache_base_module_t *rcache, void *addr, siz
             opal_output_verbose(10, mca_rcache_rgpusm_component.output,
                                 "RGPUSM: Mismatched Handle: Evicting/unregistering "
                                 "addr=%p,size=%d (base=%p,size=%d) from cache",
-                                addr, (int) size, (*reg)->base,
+                                addr, (int) size, (void*)(*reg)->base,
                                 (int) ((*reg)->bound - (*reg)->base));
 
             /* The ref_count has to be zero as this memory cannot possibly
@@ -508,10 +508,6 @@ int mca_rcache_rgpusm_find(struct mca_rcache_base_module_t *rcache, void *addr, 
 {
     mca_rcache_rgpusm_module_t *rcache_rgpusm = (mca_rcache_rgpusm_module_t *) rcache;
     int rc;
-    unsigned char *base, *bound;
-
-    base = addr;
-    bound = base + size - 1; /* To keep cache hits working correctly */
 
     OPAL_THREAD_LOCK(&rcache->lock);
     opal_output(-1, "Looking for addr=%p, size=%d", addr, (int) size);
@@ -555,7 +551,7 @@ int mca_rcache_rgpusm_deregister(struct mca_rcache_base_module_t *rcache,
         opal_output_verbose(20, mca_rcache_rgpusm_component.output,
                             "RGPUSM: Deregister: addr=%p, size=%d: cacheable and pinned, leave in "
                             "cache, PUSH IN LRU",
-                            reg->base, (int) (reg->bound - reg->base + 1));
+                            (void*)reg->base, (int) (reg->bound - reg->base + 1));
         opal_list_prepend(&rcache_rgpusm->lru_list, (opal_list_item_t *) reg);
     } else {
         /* Remove from rcache first */
