@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2024 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -71,6 +71,10 @@ extern int mca_rcache_base_used_mem_hooks;
  * Globals
  */
 OPAL_DECLSPEC extern opal_list_t mca_rcache_base_modules;
+
+OPAL_DECLSPEC void mca_rcache_base_module_init(mca_rcache_base_module_t *rcache);
+
+OPAL_DECLSPEC void mca_rcache_base_module_fini(mca_rcache_base_module_t *rcache);
 
 END_C_DECLS
 

@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2013 The University of Tennessee and The University
+ * Copyright (c) 2004-2024 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -141,6 +141,7 @@ static inline bool mca_rcache_rgpusm_deregister_lru (mca_rcache_base_module_t *r
  */
 void mca_rcache_rgpusm_module_init(mca_rcache_rgpusm_module_t* rcache)
 {
+    mca_rcache_base_module_init(&rcache->super);
     rcache->super.rcache_component = &mca_rcache_rgpusm_component.super;
     rcache->super.rcache_register = mca_rcache_rgpusm_register;
     rcache->super.rcache_find = mca_rcache_rgpusm_find;
@@ -618,4 +619,5 @@ void mca_rcache_rgpusm_finalize(struct mca_rcache_base_module_t *rcache)
     OBJ_DESTRUCT(&rcache_rgpusm->lru_list);
     OBJ_DESTRUCT(&rcache_rgpusm->reg_list);
     OPAL_THREAD_UNLOCK(&rcache->lock);
+    mca_rcache_base_module_fini(rcache);
 }
