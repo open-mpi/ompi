@@ -138,6 +138,12 @@ mca_coll_han_module_destruct(mca_coll_han_module_t * module)
         free(module->cached_topo);
         module->cached_topo = NULL;
     }
+    // if (module->local_smsc_eps != NULL) {
+    //     int low_size = ompi_comm_size(module->sub_comm[0]);
+    //     for (i=0; i<low_size; i++) {
+    //         mca_smsc->return_endpoint( module->local_smsc_eps[i] );
+    //     }
+    // }
     for(i=0 ; i<NB_TOPO_LVL ; i++) {
         if(NULL != module->sub_comm[i]) {
             ompi_comm_free(&(module->sub_comm[i]));

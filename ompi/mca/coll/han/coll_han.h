@@ -41,6 +41,7 @@
 #include "coll_han_trigger.h"
 #include "ompi/mca/coll/han/coll_han_dynamic.h"
 #include "coll_han_algorithms.h"
+#include "opal/mca/smsc/smsc.h"
 
 /*
  * Today;
@@ -341,6 +342,7 @@ typedef struct mca_coll_han_module_t {
 
     /* Sub-communicator */
     struct ompi_communicator_t *sub_comm[NB_TOPO_LVL];
+    mca_smsc_endpoint_t **local_smsc_eps;
 } mca_coll_han_module_t;
 OBJ_CLASS_DECLARATION(mca_coll_han_module_t);
 

@@ -25,6 +25,7 @@
 #include "mpi.h"
 #include "coll_han.h"
 #include "coll_han_dynamic.h"
+#include "opal/mca/smsc/smsc.h"
 
 #define HAN_SUBCOM_SAVE_COLLECTIVE(FALLBACKS, COMM, HANM, COLL)                  \
     do {                                                                         \
@@ -182,6 +183,20 @@ int mca_coll_han_comm_create_new(struct ompi_communicator_t *comm,
     HAN_SUBCOM_LOAD_COLLECTIVE(fallbacks, comm, han_module, reduce);
     HAN_SUBCOM_LOAD_COLLECTIVE(fallbacks, comm, han_module, gather);
     HAN_SUBCOM_LOAD_COLLECTIVE(fallbacks, comm, han_module, scatter);
+
+    if (mca_smsc) {
+        han_module->local_smsc_eps = malloc( sizeof(*han_module->local_smsc_eps) * low_size);
+        for (int jlow=0; jlow<low_size; jlow++) {
+            struct ompi_proc_t* ompi_proc = ompi_comm_peer_lookup(*low_comm, jlow);
+            han_module->local_smsc_eps[jlow] = mca_smsc->get_endpoint(&ompi_proc->super);
+        }
+        OPAL_OUTPUT_VERBOSE((30, mca_coll_han_component.han_output,
+                             "Han created SMSC endpoints for low_comm\n"));
+    } else {
+        han_module->local_smsc_eps = NULL;
+        OPAL_OUTPUT_VERBOSE((30, mca_coll_han_component.han_output,
+                             "Han did not find any SMSC components\n"));
+    }
 
     OBJ_DESTRUCT(&comm_info);
     return OMPI_SUCCESS;
@@ -349,6 +364,20 @@ int mca_coll_han_comm_create(struct ompi_communicator_t *comm,
     HAN_SUBCOM_LOAD_COLLECTIVE(fallbacks, comm, han_module, reduce);
     HAN_SUBCOM_LOAD_COLLECTIVE(fallbacks, comm, han_module, gather);
     HAN_SUBCOM_LOAD_COLLECTIVE(fallbacks, comm, han_module, scatter);
+
+    if (mca_smsc) {
+        han_module->local_smsc_eps = malloc( sizeof(*han_module->local_smsc_eps) * low_size);
+        for (int jlow=0; jlow<low_size; jlow++) {
+            struct ompi_proc_t* ompi_proc = ompi_comm_peer_lookup(low_comms[1], jlow);
+            han_module->local_smsc_eps[jlow] = mca_smsc->get_endpoint(&ompi_proc->super);
+        }
+        OPAL_OUTPUT_VERBOSE((30, mca_coll_han_component.han_output,
+                             "Han created SMSC endpoints for low_comm\n"));
+    } else {
+        han_module->local_smsc_eps = NULL;
+        OPAL_OUTPUT_VERBOSE((30, mca_coll_han_component.han_output,
+                             "Han did not find any SMSC components\n"));
+    }
 
     OBJ_DESTRUCT(&comm_info);
     return OMPI_SUCCESS;
