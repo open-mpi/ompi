@@ -334,6 +334,9 @@ opal/tools/wrappers/opal.pc
 opal/util/show_help_lex.c
 opal/util/keyval/keyval_lex.c
 
+test/monitoring/aggregate_profile.pl
+test/monitoring/profile2mat.pl
+
 test/simple/abort
 test/simple/accept
 test/simple/attach
