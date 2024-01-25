@@ -6,6 +6,7 @@
  * Copyright (c) 2020-2022 Bull S.A.S. All rights reserved.
  * Copyright (c) 2023      Computer Architecture and VLSI Systems (CARV)
  *                         Laboratory, ICS Forth. All rights reserved.
+ * Copyright (c) 2024      Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -397,6 +398,18 @@ static int han_register(void)
                                               "low level module for scatterv, 0 basic",
                                               OPAL_INFO_LVL_9, &cs->han_scatterv_low_module,
                                               &cs->han_op_module_name.scatterv.han_op_low_module_name);
+    cs->han_alltoall_low_module = 0;
+    (void) mca_coll_han_query_module_from_mca(c, "alltoall_lower_module",
+                                              "low level module for alltoall, 0 tuned, 1 sm ",
+                                              OPAL_INFO_LVL_9, &cs->han_alltoall_low_module,
+                                              &cs->han_op_module_name.alltoall.han_op_low_module_name);
+    cs->han_alltoall_pstages = 0;
+    (void) mca_base_component_var_register(c, "alltoall_pstages",
+                                              "Parallel Stages for alltoall.  Higher numbers require more memory, "
+                                              "and performs more communication in parallel.  0 chooses pstages based on message size.",
+                                              MCA_BASE_VAR_TYPE_INT32_T, NULL, 0, 0,
+                                              OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+                                              &cs->han_alltoall_pstages);
 
     cs->han_reproducible = 0;
     (void) mca_base_component_var_register(c, "reproducible",

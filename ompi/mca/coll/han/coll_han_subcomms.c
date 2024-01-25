@@ -5,6 +5,7 @@
  * Copyright (c) 2020      Bull S.A.S. All rights reserved.
  * Copyright (c) 2023      Computer Architecture and VLSI Systems (CARV)
  *                         Laboratory, ICS Forth. All rights reserved.
+ * Copyright (c) 2024      Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
  * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
@@ -77,6 +78,7 @@ int mca_coll_han_comm_create_new(struct ompi_communicator_t *comm,
      * Reduce + Bcast may be called by the allreduce implementation
      * Gather + Bcast may be called by the allgather implementation
      */
+    HAN_SUBCOM_SAVE_COLLECTIVE(fallbacks, comm, han_module, alltoall);
     HAN_SUBCOM_SAVE_COLLECTIVE(fallbacks, comm, han_module, allgatherv);
     HAN_SUBCOM_SAVE_COLLECTIVE(fallbacks, comm, han_module, allgather);
     HAN_SUBCOM_SAVE_COLLECTIVE(fallbacks, comm, han_module, allreduce);
@@ -108,6 +110,7 @@ int mca_coll_han_comm_create_new(struct ompi_communicator_t *comm,
     if( local_procs == 1 ) {
         han_module->enabled = false;  /* entire module set to pass-through from now on */
         /* restore saved collectives */
+        HAN_SUBCOM_RESTORE_COLLECTIVE(fallbacks, comm, han_module, alltoall);
         HAN_SUBCOM_RESTORE_COLLECTIVE(fallbacks, comm, han_module, allgatherv);
         HAN_SUBCOM_RESTORE_COLLECTIVE(fallbacks, comm, han_module, allgather);
         HAN_SUBCOM_RESTORE_COLLECTIVE(fallbacks, comm, han_module, allreduce);
@@ -185,6 +188,7 @@ int mca_coll_han_comm_create_new(struct ompi_communicator_t *comm,
     han_module->cached_vranks = vranks;
 
     /* Restore the saved collectives */
+    HAN_SUBCOM_RESTORE_COLLECTIVE(fallbacks, comm, han_module, alltoall);
     HAN_SUBCOM_RESTORE_COLLECTIVE(fallbacks, comm, han_module, allgatherv);
     HAN_SUBCOM_RESTORE_COLLECTIVE(fallbacks, comm, han_module, allgather);
     HAN_SUBCOM_RESTORE_COLLECTIVE(fallbacks, comm, han_module, allreduce);
@@ -243,6 +247,7 @@ int mca_coll_han_comm_create(struct ompi_communicator_t *comm,
      * Reduce + Bcast may be called by the allreduce implementation
      * Gather + Bcast may be called by the allgather implementation
      */
+    HAN_SUBCOM_SAVE_COLLECTIVE(fallbacks, comm, han_module, alltoall);
     HAN_SUBCOM_SAVE_COLLECTIVE(fallbacks, comm, han_module, allgatherv);
     HAN_SUBCOM_SAVE_COLLECTIVE(fallbacks, comm, han_module, allgather);
     HAN_SUBCOM_SAVE_COLLECTIVE(fallbacks, comm, han_module, allreduce);
@@ -269,6 +274,7 @@ int mca_coll_han_comm_create(struct ompi_communicator_t *comm,
                                  comm->c_coll->coll_allreduce_module);
     if( local_procs == 1 ) {
         /* restore saved collectives */
+        HAN_SUBCOM_RESTORE_COLLECTIVE(fallbacks, comm, han_module, alltoall);
         HAN_SUBCOM_RESTORE_COLLECTIVE(fallbacks, comm, han_module, allgatherv);
         HAN_SUBCOM_RESTORE_COLLECTIVE(fallbacks, comm, han_module, allgather);
         HAN_SUBCOM_RESTORE_COLLECTIVE(fallbacks, comm, han_module, allreduce);
@@ -363,6 +369,7 @@ int mca_coll_han_comm_create(struct ompi_communicator_t *comm,
     han_module->cached_vranks = vranks;
 
     /* Reset the saved collectives to point back to HAN */
+    HAN_SUBCOM_RESTORE_COLLECTIVE(fallbacks, comm, han_module, alltoall);
     HAN_SUBCOM_RESTORE_COLLECTIVE(fallbacks, comm, han_module, allgatherv);
     HAN_SUBCOM_RESTORE_COLLECTIVE(fallbacks, comm, han_module, allgather);
     HAN_SUBCOM_RESTORE_COLLECTIVE(fallbacks, comm, han_module, allreduce);
