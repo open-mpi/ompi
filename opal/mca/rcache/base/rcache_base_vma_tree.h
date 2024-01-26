@@ -25,7 +25,7 @@
  */
 /**
  * @file
- * Registation cache VMA tree implementation
+ * Registration cache VMA tree implementation
  */
 #ifndef MCA_RCACHE_BASE_VMA_TREE_H
 #define MCA_RCACHE_BASE_VMA_TREE_H
