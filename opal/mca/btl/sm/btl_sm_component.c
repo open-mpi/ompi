@@ -346,7 +346,7 @@ mca_btl_sm_component_init(int *num_btls, bool enable_progress_threads, bool enab
             mca_btl_sm.super.btl_max_send_size = mca_btl_sm.super.btl_eager_limit;
             mca_btl_sm.super.btl_min_rdma_pipeline_size = INT_MAX;
         }
-        if (mca_smsc_base_has_feature(MCA_SMSC_FEATURE_REQUIRE_REGISTATION)) {
+        if (mca_smsc_base_has_feature(MCA_SMSC_FEATURE_REQUIRE_REGISTRATION)) {
             ssize_t handle_size = mca_smsc_base_registration_data_size();
             if (handle_size > 0) {
                 mca_btl_sm.super.btl_registration_handle_size = (size_t) handle_size;

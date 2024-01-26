@@ -133,7 +133,7 @@ enum {
     /** Module requires the local registration of any region that will be used for single-copy
      * operations. It is theresponsibility of the caller to pass this data with the pointer to the
      * peer. */
-    MCA_SMSC_FEATURE_REQUIRE_REGISTATION = 1,
+    MCA_SMSC_FEATURE_REQUIRE_REGISTRATION = 1,
     /** Module can map peer memory into the local processes' address space. */
     MCA_SMSC_FEATURE_CAN_MAP = 2,
 };
@@ -239,7 +239,7 @@ static inline bool mca_smsc_base_has_feature(uint64_t feature)
 
 static inline ssize_t mca_smsc_base_registration_data_size(void)
 {
-    if (NULL == mca_smsc || !mca_smsc_base_has_feature(MCA_SMSC_FEATURE_REQUIRE_REGISTATION)) {
+    if (NULL == mca_smsc || !mca_smsc_base_has_feature(MCA_SMSC_FEATURE_REQUIRE_REGISTRATION)) {
         return OPAL_ERR_NOT_AVAILABLE;
     }
 
