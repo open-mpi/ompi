@@ -41,6 +41,10 @@
 #include "coll_base_util.h"
 #include "opal/util/minmax.h"
 
+/* When 0, ranks which don't have any data to provide will skip the send,
+   allowing early exit. */
+#define SEND_0BYTES_ANYWAYS 0
+
 /*
  * We want to minimize the amount of temporary memory needed while allowing as many ranks
  * to exchange data simultaneously. We use a variation of the ring algorithm, where in a
@@ -77,7 +81,7 @@ mca_coll_base_alltoallv_intra_basic_inplace(const void *rbuf, const int *rcounts
     }
 
     /* Easy way out */
-    if ((1 == size) || (0 == max_size) ) {
+    if ((1 == size) || (0 == max_size && !SEND_0BYTES_ANYWAYS) ) {
         return MPI_SUCCESS;
     }
 
@@ -108,10 +112,13 @@ mca_coll_base_alltoallv_intra_basic_inplace(const void *rbuf, const int *rcounts
         struct iovec iov = {.iov_base = tmp_buffer, .iov_len = max_size};
         uint32_t iov_count = 1;
 
-        right = (rank + i) % size;
-        left  = (rank + size - i) % size;
+        /* this sequence must be compatible with the non-inplace version,
+           since do not know if other ranks are in-place or not. */
+        left  = (rank + i) % size;
+        right = (rank + size - i) % size;
 
-        if( 0 != rcounts[right] ) {  /* nothing to exchange with the peer on the right */
+        /* exchange with the peer on the right (recv) */
+        if( 0 != rcounts[right] * type_size || SEND_0BYTES_ANYWAYS ) {
             ompi_proc_t *right_proc = ompi_comm_peer_lookup(comm, right);
             opal_convertor_clone(right_proc->super.proc_convertor, &convertor, 0);
             opal_convertor_prepare_for_send(&convertor, &rdtype->super, rcounts[right],
@@ -132,7 +139,7 @@ mca_coll_base_alltoallv_intra_basic_inplace(const void *rbuf, const int *rcounts
             }
         }
 
-        if( (left != right) && (0 != rcounts[left]) ) {
+        if( (left != right) && (0 != rcounts[left] * type_size  || SEND_0BYTES_ANYWAYS) ) {
             /* Send data to the left */
             err = MCA_PML_CALL(send ((char *) rbuf + rdisps[left] * extent, rcounts[left], rdtype,
                                      left, MCA_COLL_BASE_TAG_ALLTOALLV, MCA_PML_BASE_SEND_STANDARD,
@@ -157,7 +164,8 @@ mca_coll_base_alltoallv_intra_basic_inplace(const void *rbuf, const int *rcounts
             }
         }
 
-        if( 0 != rcounts[right] ) {  /* nothing to exchange with the peer on the right */
+        /* exchange with the peer on the right (send) */
+        if( 0 != rcounts[right] * type_size || SEND_0BYTES_ANYWAYS) {
             /* Send data to the right */
             err = MCA_PML_CALL(send ((char *) tmp_buffer,  packed_size, MPI_PACKED,
                                      right, MCA_COLL_BASE_TAG_ALLTOALLV, MCA_PML_BASE_SEND_STANDARD,
@@ -198,10 +206,12 @@ ompi_coll_base_alltoallv_intra_pairwise(const void *sbuf, const int *scounts, co
                                          struct ompi_communicator_t *comm,
                                          mca_coll_base_module_t *module)
 {
-    int line = -1, err = 0, rank, size, step = 0, sendto, recvfrom;
+    int line = -1, err = 0, rank, size, step = 0, left, right;
     size_t sdtype_size, rdtype_size;
-    void *psnd, *prcv;
+    void *psnd_left, *prcv_left;
+    void *psnd_right, *prcv_right;
     ptrdiff_t sext, rext;
+    ompi_request_t *req = MPI_REQUEST_NULL;
 
     if (MPI_IN_PLACE == sbuf) {
         return mca_coll_base_alltoallv_intra_basic_inplace (rbuf, rcounts, rdisps,
@@ -217,7 +227,7 @@ ompi_coll_base_alltoallv_intra_pairwise(const void *sbuf, const int *scounts, co
     ompi_datatype_type_size(sdtype, &sdtype_size);
     ompi_datatype_type_size(rdtype, &rdtype_size);
 
-    if (0 == sdtype_size || 0 == rdtype_size) {
+    if ((0 == sdtype_size || 0 == rdtype_size) && !SEND_0BYTES_ANYWAYS) {
         /* Nothing to exchange */
         return MPI_SUCCESS;
     }
@@ -225,24 +235,64 @@ ompi_coll_base_alltoallv_intra_pairwise(const void *sbuf, const int *scounts, co
     ompi_datatype_type_extent(sdtype, &sext);
     ompi_datatype_type_extent(rdtype, &rext);
 
-   /* Perform pairwise exchange starting from 1 since local exchange is done */
-    for (step = 0; step < size; step++) {
+    /* Simple optimization - handle send to self first */
+    psnd_left = ((char *) sbuf) + (ptrdiff_t)sdisps[rank] * sext;
+    prcv_left = ((char *) rbuf) + (ptrdiff_t)rdisps[rank] * rext;
+    if (0 < scounts[rank]) {
+        err = ompi_datatype_sndrcv(psnd_left, scounts[rank], sdtype,
+                                   prcv_left, rcounts[rank], rdtype);
+        if (MPI_SUCCESS != err) {line = __LINE__; goto err_hndl;}
+    }
 
-        /* Determine sender and receiver for this step. */
-        sendto  = (rank + step) % size;
-        recvfrom = (rank + size - step) % size;
+      /* Perform pairwise exchange starting from 1 since local exchange is done */
+    for (step = 1; step <= (size >> 1); step++) {
+
+        /* this sequence must be compatible with the inplace version,
+           since do not know if other ranks are in-place or not. */
+        left = (rank + step) % size; /* (sendrecv) */
+        right  = (rank + size - step) % size; /* (recv, then send) */
 
         /* Determine sending and receiving locations */
-        psnd = (char*)sbuf + (ptrdiff_t)sdisps[sendto] * sext;
-        prcv = (char*)rbuf + (ptrdiff_t)rdisps[recvfrom] * rext;
+        psnd_left = (char*)sbuf + (ptrdiff_t)sdisps[left] * sext;
+        prcv_left = (char*)rbuf + (ptrdiff_t)rdisps[left] * rext;
+        psnd_right = (char*)sbuf + (ptrdiff_t)sdisps[right] * sext;
+        prcv_right = (char*)rbuf + (ptrdiff_t)rdisps[right] * rext;
 
-        /* send and receive */
-        err = ompi_coll_base_sendrecv( psnd, scounts[sendto], sdtype, sendto,
-                                        MCA_COLL_BASE_TAG_ALLTOALLV,
-                                        prcv, rcounts[recvfrom], rdtype, recvfrom,
-                                        MCA_COLL_BASE_TAG_ALLTOALLV,
-                                        comm, MPI_STATUS_IGNORE, rank);
-        if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl;  }
+        if (0 != rcounts[right]*rdtype_size || SEND_0BYTES_ANYWAYS) {
+            err = MCA_PML_CALL(irecv(prcv_right, rcounts[right], rdtype, right,
+                                     MCA_COLL_BASE_TAG_ALLTOALLV, comm, &req));
+            if (MPI_SUCCESS != err) {line = __LINE__; goto err_hndl;}
+        }
+
+        if (left != right) {
+            if (0 != scounts[left]*sdtype_size || SEND_0BYTES_ANYWAYS) {
+                err = MCA_PML_CALL(send(psnd_left, scounts[left], sdtype, left,
+                                        MCA_COLL_BASE_TAG_ALLTOALLV, MCA_PML_BASE_SEND_STANDARD, comm));
+                if (MPI_SUCCESS != err) {line = __LINE__; goto err_hndl;}
+            }
+            if (MPI_REQUEST_NULL != req) {
+                err = ompi_request_wait (&req, MPI_STATUSES_IGNORE);
+                if (MPI_SUCCESS != err) {line = __LINE__; goto err_hndl;}
+                req = MPI_REQUEST_NULL;
+            }
+
+            if (0 != rcounts[left]*rdtype_size || SEND_0BYTES_ANYWAYS) {
+                err = MCA_PML_CALL(irecv(prcv_left, rcounts[left], rdtype, left,
+                                        MCA_COLL_BASE_TAG_ALLTOALLV, comm, &req));
+                if (MPI_SUCCESS != err) {line = __LINE__; goto err_hndl;}
+            }
+        }
+
+        if (0 != scounts[right]*sdtype_size || SEND_0BYTES_ANYWAYS) {
+            err = MCA_PML_CALL(send(psnd_right, scounts[right], sdtype, right,
+                                    MCA_COLL_BASE_TAG_ALLTOALLV, MCA_PML_BASE_SEND_STANDARD, comm));
+            if (MPI_SUCCESS != err) {line = __LINE__; goto err_hndl;}
+        }
+
+        if (MPI_REQUEST_NULL != req) {
+            err = ompi_request_wait(&req, MPI_STATUS_IGNORE);
+            if (MPI_SUCCESS != err) {line = __LINE__; goto err_hndl;}
+        }
     }
 
     return MPI_SUCCESS;
@@ -279,6 +329,8 @@ ompi_coll_base_alltoallv_intra_basic_linear(const void *sbuf, const int *scounts
     mca_coll_base_module_t *base_module = (mca_coll_base_module_t*) module;
     mca_coll_base_comm_t *data = base_module->base_data;
 
+    /* this algorithm will not deadlock when some ranks are in-place,
+       because it submits all send and recv requests together*/
     if (MPI_IN_PLACE == sbuf) {
         return  mca_coll_base_alltoallv_intra_basic_inplace (rbuf, rcounts, rdisps,
                                                               rdtype, comm, module);
@@ -293,7 +345,7 @@ ompi_coll_base_alltoallv_intra_basic_linear(const void *sbuf, const int *scounts
     ompi_datatype_type_size(rdtype, &rdtype_size);
     ompi_datatype_type_size(sdtype, &sdtype_size);
 
-    if (0 == rdtype_size || 0 == sdtype_size) {
+    if ((0 == rdtype_size || 0 == sdtype_size) && !SEND_0BYTES_ANYWAYS) {
         /* Nothing to exchange */
         return MPI_SUCCESS;
     }
@@ -328,7 +380,7 @@ ompi_coll_base_alltoallv_intra_basic_linear(const void *sbuf, const int *scounts
             continue;
         }
 
-        if (0 < rcounts[i]) {
+        if (0 < rcounts[i] * rdtype_size || SEND_0BYTES_ANYWAYS ) {
             ++nreqs;
             prcv = ((char *) rbuf) + (ptrdiff_t)rdisps[i] * rext;
             err = MCA_PML_CALL(irecv_init(prcv, rcounts[i], rdtype,
@@ -344,7 +396,7 @@ ompi_coll_base_alltoallv_intra_basic_linear(const void *sbuf, const int *scounts
             continue;
         }
 
-        if (0 < scounts[i]) {
+        if (0 < scounts[i] * sdtype_size || SEND_0BYTES_ANYWAYS ) {
             ++nreqs;
             psnd = ((char *) sbuf) + (ptrdiff_t)sdisps[i] * sext;
             err = MCA_PML_CALL(isend_init(psnd, scounts[i], sdtype,
