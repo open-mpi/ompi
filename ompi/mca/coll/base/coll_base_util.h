@@ -111,8 +111,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_coll_base_avail_coll_t);
 
 /**
  * A MPI_like function doing a send and a receive simultaneously.
- * If one of the communications results in a zero-byte message the
- * communication is ignored, and no message will cross to the peer.
+ * Posts a irecv, does a send, then gets irecv completion.
  */
 int ompi_coll_base_sendrecv_actual( const void* sendbuf, size_t scount,
                                     ompi_datatype_t* sdatatype,
@@ -125,10 +124,8 @@ int ompi_coll_base_sendrecv_actual( const void* sendbuf, size_t scount,
 
 
 /**
- * Similar to the function above this implementation of send-receive
- * do not generate communications for zero-bytes messages. Thus, it is
- * improper to use in the context of some algorithms for collective
- * communications.
+ * A wrapper around ompi_coll_base_sendrecv_actual, with an optimized
+ * path for self-directed send/recv.
  */
 static inline int
 ompi_coll_base_sendrecv( void* sendbuf, size_t scount, ompi_datatype_t* sdatatype,
