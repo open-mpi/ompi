@@ -81,8 +81,9 @@ type of component, it may support multiple components of that type.
 Some of the more common frameworks that users may want or need to
 customize include the following:
 
-* ``btl``: Byte Transport Layer; these components are exclusively used
-  as the underlying transports for the ``ob1`` PML component.
+* ``btl``: Byte Transport Layer; these components are used as the
+  underlying transports for the ``ob1`` PML component and ``rdma``
+  OSC component.
 * ``coll``: MPI collective algorithms
 * ``io``: MPI I/O
 * ``mtl``: MPI Matching Transport Layer (MTL); these components are
