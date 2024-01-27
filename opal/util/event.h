@@ -45,8 +45,6 @@ BEGIN_C_DECLS
 
 typedef event_callback_fn opal_event_cbfunc_t;
 
-BEGIN_C_DECLS
-
 typedef struct event_base opal_event_base_t;
 typedef struct event opal_event_t;
 
