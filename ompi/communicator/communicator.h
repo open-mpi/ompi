@@ -559,7 +559,7 @@ static inline ompi_communicator_t *ompi_comm_lookup (const uint32_t c_index)
 static inline ompi_communicator_t *ompi_comm_lookup_cid (const ompi_comm_extended_cid_t cid)
 {
     ompi_communicator_t *comm = NULL;
-    (void) opal_hash_table_get_value_ptr (&ompi_comm_hash, &cid, sizeof (cid), (void *) &comm);
+    (void) opal_hash_table_get_value_ptr (&ompi_comm_hash, &cid, sizeof (cid), (void **) &comm);
     return comm;
 }
 
