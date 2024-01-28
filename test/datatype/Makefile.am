@@ -4,7 +4,7 @@
 #                         reserved.
 # Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
-# Copyright (c) 2014-2019 Research Organization for Information Science
+# Copyright (c) 2014-2024 Research Organization for Information Science
 #                         and Technology (RIST).  All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
@@ -19,6 +19,7 @@ if PROJECT_OMPI
     MPI_CHECKS = to_self reduce_local
 endif
 TESTS = opal_datatype_test unpack_hetero $(MPI_TESTS)
+TESTS_ENVIRONMENT = $(ENV) OMPI_MCA_mca_component_path=
 
 check_PROGRAMS = $(TESTS) $(MPI_CHECKS)
 
