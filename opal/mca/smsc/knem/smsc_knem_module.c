@@ -146,7 +146,7 @@ void mca_smsc_knem_unmap_peer_region(void *ctx)
 
 mca_smsc_knem_module_t mca_smsc_knem_module = {
     .super = {
-        .features = MCA_SMSC_FEATURE_REQUIRE_REGISTATION,
+        .features = MCA_SMSC_FEATURE_REQUIRE_REGISTRATION,
         .registration_data_size = sizeof(mca_smsc_knem_registration_data_t),
         .get_endpoint = mca_smsc_knem_get_endpoint,
         .return_endpoint = mca_smsc_knem_return_endpoint,

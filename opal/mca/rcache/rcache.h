@@ -39,7 +39,7 @@ enum {
     MCA_RCACHE_FLAGS_CACHE_BYPASS = 0x0001,
     /** persistent registration */
     MCA_RCACHE_FLAGS_PERSIST = 0x0002,
-    /** registation requires strong ordering (disables relaxed ordering) */
+    /** registration requires strong ordering (disables relaxed ordering) */
     MCA_RCACHE_FLAGS_SO_MEM = 0x0004,
     /** address range is accelerator buffer */
     MCA_RCACHE_FLAGS_ACCELERATOR_MEM = 0x0008,
