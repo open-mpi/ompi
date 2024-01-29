@@ -33,6 +33,7 @@ jobs:
               --disable-mpi-fortran
               --disable-oshmem
               --enable-debug
+              --enable-mem-debug
               LDFLAGS=-Wl,-rpath,/usr/local/lib
       working-directory: mpi-build
 
