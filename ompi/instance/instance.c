@@ -1250,7 +1250,6 @@ static int ompi_instance_group_pmix_pset (ompi_instance_t *instance, const char 
      * First try finding in the local PMIx cache, if not found, try a refresh
      */
 fn_try_again:
-    rc = PMIx_Query_info(&query, 1, &info, &ninfo);
     if (PMIX_SUCCESS != (rc = PMIx_Query_info(&query, 1, &info, &ninfo)) || 0 == ninfo) {
         if ((PMIX_ERR_NOT_FOUND == rc) && (false == try_again)) {
             try_again = true;
@@ -1260,9 +1259,39 @@ fn_try_again:
             PMIX_INFO_CREATE(query.qualifiers, 2);
             PMIX_INFO_LOAD(&query.qualifiers[0], PMIX_PSET_NAME, pset_name, PMIX_STRING);
             PMIX_INFO_LOAD(&query.qualifiers[1], PMIX_QUERY_REFRESH_CACHE, &refresh, PMIX_BOOL);
+            query.nqual = 2;
             goto fn_try_again;
         }	    
-        ret = opal_pmix_convert_status(rc);
+    }
+
+    if (PMIX_SUCCESS != rc) {
+        char msg_string[1024];
+        switch (rc) {
+        case PMIX_ERR_NOT_FOUND:
+            ret = MPI_ERR_ARG; /* pset_name not valid */
+            break;
+        case PMIX_ERR_UNREACH:
+            sprintf(msg_string,"PMIx server unreachable");
+            opal_show_help("help-comm.txt",
+                           "MPI function not supported",
+                           true,
+                           "MPI_Group_from_session_pset",
+                           msg_string);
+            ret = MPI_ERR_UNSUPPORTED_OPERATION;
+            break;
+        case PMIX_ERR_NOT_SUPPORTED:
+            sprintf(msg_string,"PMIx server does not support PMIX_QUERY_PSET_MEMBERSHIP operation");
+            opal_show_help("help-comm.txt",
+                           "MPI function not supported",
+                           true,
+                           "MPI_Group_from_session_pset",
+                           msg_string);
+            ret = MPI_ERR_UNSUPPORTED_OPERATION;
+            break;
+        default:
+            ret = opal_pmix_convert_status(rc);
+            break;
+        }
         ompi_instance_print_error ("PMIx_Query_info() failed", ret);
         goto fn_w_query;
     }
