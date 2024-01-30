@@ -831,7 +831,8 @@ select_prov:
          * have a problem here since it uses fi_mr_regattr only within the context of an rcache, and manages the
          * requested_key field in this way.
          */
-         if (!strncasecmp(prov->fabric_attr->prov_name, "cxi", 3)) {
+         if ((NULL != strstr(prov->fabric_attr->prov_name, "cxi")) ||
+             (NULL != strstr(prov->fabric_attr->prov_name, "CXI")) ) {
              ompi_mtl_ofi.hmem_needs_reg = false;
          }
 
