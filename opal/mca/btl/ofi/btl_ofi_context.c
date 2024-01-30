@@ -144,6 +144,9 @@ mca_btl_ofi_context_t *mca_btl_ofi_context_alloc_scalable(struct fi_info *info,
     mca_btl_ofi_context_t *contexts;
     tx_attr.op_flags = FI_DELIVERY_COMPLETE;
 
+    /* Add RMA/ATOMIC for one-sided to work */
+    tx_attr.caps = (FI_RMA | FI_ATOMIC);
+
     contexts = (mca_btl_ofi_context_t *) calloc(num_contexts, sizeof(*contexts));
     if (NULL == contexts) {
         BTL_VERBOSE(("cannot allocate communication contexts."));
