@@ -201,6 +201,7 @@ ompi_coll_base_alltoallv_intra_pairwise(const void *sbuf, const int *scounts, co
     int line = -1, err = 0, rank, size, step = 0, sendto, recvfrom;
     size_t sdtype_size, rdtype_size;
     void *psnd, *prcv;
+    ompi_request_t *req;
     ptrdiff_t sext, rext;
 
     if (MPI_IN_PLACE == sbuf) {
@@ -217,16 +218,12 @@ ompi_coll_base_alltoallv_intra_pairwise(const void *sbuf, const int *scounts, co
     ompi_datatype_type_size(sdtype, &sdtype_size);
     ompi_datatype_type_size(rdtype, &rdtype_size);
 
-    if (0 == sdtype_size || 0 == rdtype_size) {
-        /* Nothing to exchange */
-        return MPI_SUCCESS;
-    }
-
     ompi_datatype_type_extent(sdtype, &sext);
     ompi_datatype_type_extent(rdtype, &rext);
 
    /* Perform pairwise exchange starting from 1 since local exchange is done */
     for (step = 0; step < size; step++) {
+        req = MPI_REQUEST_NULL;
 
         /* Determine sender and receiver for this step. */
         sendto  = (rank + step) % size;
@@ -237,12 +234,31 @@ ompi_coll_base_alltoallv_intra_pairwise(const void *sbuf, const int *scounts, co
         prcv = (char*)rbuf + (ptrdiff_t)rdisps[recvfrom] * rext;
 
         /* send and receive */
-        err = ompi_coll_base_sendrecv( psnd, scounts[sendto], sdtype, sendto,
-                                        MCA_COLL_BASE_TAG_ALLTOALLV,
-                                        prcv, rcounts[recvfrom], rdtype, recvfrom,
-                                        MCA_COLL_BASE_TAG_ALLTOALLV,
-                                        comm, MPI_STATUS_IGNORE, rank);
-        if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl;  }
+        if (0 < rcounts[recvfrom] && 0 < rdtype_size) {
+            err = MCA_PML_CALL(irecv(prcv, rcounts[recvfrom], rdtype, recvfrom,
+                                     MCA_COLL_BASE_TAG_ALLTOALLV, comm, &req));
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto err_hndl;
+            }
+        }
+
+        if (0 < scounts[sendto] && 0 < sdtype_size) {
+            err = MCA_PML_CALL(send(psnd, scounts[sendto], sdtype, sendto,
+                                    MCA_COLL_BASE_TAG_ALLTOALLV, MCA_PML_BASE_SEND_STANDARD, comm));
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto err_hndl;
+            }
+        }
+
+        if (MPI_REQUEST_NULL != req) {
+            err = ompi_request_wait(&req, MPI_STATUS_IGNORE);
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto err_hndl;
+            }
+        }
     }
 
     return MPI_SUCCESS;
@@ -293,18 +309,13 @@ ompi_coll_base_alltoallv_intra_basic_linear(const void *sbuf, const int *scounts
     ompi_datatype_type_size(rdtype, &rdtype_size);
     ompi_datatype_type_size(sdtype, &sdtype_size);
 
-    if (0 == rdtype_size || 0 == sdtype_size) {
-        /* Nothing to exchange */
-        return MPI_SUCCESS;
-    }
-
     ompi_datatype_type_extent(sdtype, &sext);
     ompi_datatype_type_extent(rdtype, &rext);
 
     /* Simple optimization - handle send to self first */
     psnd = ((char *) sbuf) + (ptrdiff_t)sdisps[rank] * sext;
     prcv = ((char *) rbuf) + (ptrdiff_t)rdisps[rank] * rext;
-    if (0 < scounts[rank]) {
+    if (0 < scounts[rank] && 0 < sdtype_size) {
         err = ompi_datatype_sndrcv(psnd, scounts[rank], sdtype,
                               prcv, rcounts[rank], rdtype);
         if (MPI_SUCCESS != err) {
@@ -328,7 +339,7 @@ ompi_coll_base_alltoallv_intra_basic_linear(const void *sbuf, const int *scounts
             continue;
         }
 
-        if (0 < rcounts[i]) {
+        if (0 < rcounts[i] && 0 < rdtype_size) {
             ++nreqs;
             prcv = ((char *) rbuf) + (ptrdiff_t)rdisps[i] * rext;
             err = MCA_PML_CALL(irecv_init(prcv, rcounts[i], rdtype,
@@ -344,7 +355,7 @@ ompi_coll_base_alltoallv_intra_basic_linear(const void *sbuf, const int *scounts
             continue;
         }
 
-        if (0 < scounts[i]) {
+        if (0 < scounts[i] && 0 < sdtype_size) {
             ++nreqs;
             psnd = ((char *) sbuf) + (ptrdiff_t)sdisps[i] * sext;
             err = MCA_PML_CALL(isend_init(psnd, scounts[i], sdtype,
