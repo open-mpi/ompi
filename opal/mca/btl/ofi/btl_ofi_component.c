@@ -44,7 +44,7 @@
 #define MCA_BTL_OFI_ONE_SIDED_REQUIRED_CAPS (FI_RMA | FI_ATOMIC)
 #define MCA_BTL_OFI_TWO_SIDED_REQUIRED_CAPS (FI_MSG)
 
-#define MCA_BTL_OFI_REQUESTED_MR_MODE (FI_MR_ALLOCATED | FI_MR_PROV_KEY | FI_MR_VIRT_ADDR | FI_MR_ENDPOINT)
+#define MCA_BTL_OFI_REQUESTED_MR_MODE (FI_MR_ALLOCATED | FI_MR_VIRT_ADDR | FI_MR_ENDPOINT)
 
 static char *ofi_progress_mode;
 static bool disable_sep;
@@ -107,9 +107,9 @@ static int validate_info(struct fi_info *info, uint64_t required_caps, char **in
 
     if (!(mr_mode == FI_MR_BASIC || mr_mode == FI_MR_SCALABLE
 #if defined(FI_MR_HMEM)
-          || (mr_mode & ~(FI_MR_VIRT_ADDR | FI_MR_ALLOCATED | FI_MR_PROV_KEY | FI_MR_ENDPOINT | FI_MR_HMEM)) == 0)) {
+          || (mr_mode & ~(FI_MR_VIRT_ADDR | FI_MR_ALLOCATED | FI_MR_ENDPOINT | FI_MR_HMEM)) == 0)) {
 #else
-          || (mr_mode & ~(FI_MR_VIRT_ADDR | FI_MR_ALLOCATED | FI_MR_PROV_KEY | FI_MR_ENDPOINT)) == 0)) {
+          || (mr_mode & ~(FI_MR_VIRT_ADDR | FI_MR_ALLOCATED | FI_MR_ENDPOINT)) == 0)) {
 #endif
         BTL_VERBOSE(("unsupported MR mode"));
         return OPAL_ERROR;
