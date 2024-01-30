@@ -24,6 +24,8 @@
  * Copyright (c) 2019-2021 Google, Inc. All rights reserved.
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * Copyright (c) 2022      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2022      Computer Architecture and VLSI Systems (CARV)
+ *                         Laboratory, ICS Forth. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -437,9 +439,9 @@ void mca_btl_sm_poll_handle_frag(mca_btl_sm_hdr_t *hdr, struct mca_btl_base_endp
                                               .cbdata = reg->cbdata};
 
     if (hdr->flags & MCA_BTL_SM_FLAG_SINGLE_COPY) {
-        void *ctx = MCA_SMSC_CALL(map_peer_region, endpoint->smsc_endpoint, /*flags=*/0,
-                                  hdr->sc_iov.iov_base, hdr->sc_iov.iov_len,
-                                  &segments[1].seg_addr.pval);
+        void *ctx = MCA_SMSC_CALL(map_peer_region, endpoint->smsc_endpoint,
+                                  MCA_RCACHE_FLAGS_PERSIST, hdr->sc_iov.iov_base,
+                                  hdr->sc_iov.iov_len, &segments[1].seg_addr.pval);
         assert(NULL != ctx);
 
         segments[1].seg_len = hdr->sc_iov.iov_len;
