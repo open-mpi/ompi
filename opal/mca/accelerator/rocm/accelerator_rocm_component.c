@@ -6,7 +6,7 @@
  *                         reserved.
  * Copyright (c) 2017-2022 Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
- * Copyright (c) 2022      Advanced Micro Devices, Inc. All Rights reserved.
+ * Copyright (c) 2022-2024 Advanced Micro Devices, Inc. All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -17,13 +17,12 @@
 #include "opal_config.h"
 
 #include <stdio.h>
-#include <dlfcn.h>
 
 #include "opal/mca/dl/base/base.h"
 #include "opal/runtime/opal_params.h"
 #include "accelerator_rocm.h"
 
-int opal_accelerator_rocm_memcpy_async = 1;
+int opal_accelerator_rocm_memcpy_async = 0;
 int opal_accelerator_rocm_verbose = 0;
 size_t opal_accelerator_rocm_memcpyD2H_limit=1024;
 size_t opal_accelerator_rocm_memcpyH2D_limit=1048576;
@@ -149,9 +148,9 @@ static int accelerator_rocm_component_register(void)
                                  &opal_accelerator_rocm_memcpyH2D_limit);
 
     /* Use this flag to test async vs sync copies */
-    opal_accelerator_rocm_memcpy_async = 1;
+    opal_accelerator_rocm_memcpy_async = 0;
     (void) mca_base_var_register("ompi", "mpi", "accelerator_rocm", "memcpy_async",
-                                 "Set to 0 to force using hipMemcpy instead of hipMemcpyAsync",
+                                 "Set to 1 to force using hipMemcpyAsync instead of hipMemcpy",
                                  MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY, &opal_accelerator_rocm_memcpy_async);
 
