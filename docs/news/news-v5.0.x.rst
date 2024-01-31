@@ -4,14 +4,40 @@ Open MPI v5.0.x series
 This file contains all the NEWS updates for the Open MPI v5.0.x
 series, in reverse chronological order.
 
-Open MPI version v5.0.2rc1
+Open MPI version v5.0.2rc2
 --------------------------
-:Date: 24 January 2024
+:Date: 31 January 2024
 
 - Internal PMIx and PRRTe versions:
 
-  - PMIx (v4.2.8-3-ge68bdfcf). Commit hash: ``e68bdfcf4133cb4c1af31c591bb1d26ed63fe911``.
-  - PRRTE (v3.0.3-5-g8bd181af08). Commit hash: ``8bd181af0836375e66c741c1c94364d8a44918e5``.
+  - PMIx (v4.2.8). Commit hash: ``d1c1ed0c2e64f19ad49291241a43630ea7fdce28``.
+  - PRRTE (v3.0.3). Commit hash: ``e383f5ad70c2633420d3425e9fb67e69b6bfd9c4``.
+
+  .. note:: Due to the timing of Open MPI v5.0.2 release, the PMIx and PRRTE versions
+            that are internally bundled in the Open MPI distribution are the same
+            versions as in the Open MPI v5.0.1 release: PMIx v4.2.8 and PRRTE v3.0.3.
+            As a result, changes and bug fixes in newer PMIx and PRRTE releases are
+            not included in Open MPI v5.0.2, notably:
+
+            PRRTE
+
+            - Fix the map-by pe-list option
+            - Use pmix_path_nfs to detect shared file systems
+            - psets: fix some problems with PMIX_QUERY_PSET_MEMBERSHIP query.
+              PMIX_QUERY_PSET_MEMBERSHIP query bugfixes.
+
+            PMIx
+
+            - Restore default to enable-devel-check in Git repos
+            - Protect against empty envar definition for mca_base_param_files
+            - PMIx_Query_info: removed duplicated PMIX_RELEASE
+            - Do not add no-unused-parameter for non-devel-check builds
+            - Cast a few parameters when translating macros to functions
+            - Fix one more spot for "get" from rank undefined
+            - Fix "get" of key with undefined rank
+            - Resolve problem of stack variables and realloc
+            - Restore support for detecting shared file systems
+            - Fix broken link in README
 
 - Bugfixes and changes (in chronological order)
 
