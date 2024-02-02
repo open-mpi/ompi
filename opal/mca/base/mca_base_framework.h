@@ -5,6 +5,8 @@
  * Copyright (c) 2017 IBM Corporation.  All rights reserved.
  * Copyright (c) 2018      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2024      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -120,6 +122,8 @@ typedef enum {
     MCA_BASE_FRAMEWORK_FLAG_NO_DSO = 4,
     /** Internal. Don't set outside mca_base_framework.h */
     MCA_BASE_FRAMEWORK_FLAG_OPEN = 8,
+    /** Do not register components */
+    MCA_BASE_FRAMEWORK_FLAG_NOCOMPONENT = 16,
     /**
      * The upper 16 bits are reserved for project specific flags.
      */
