@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2022      Advanced Micro Devices, Inc. All Rights reserved.
- * Copyright (c) 2023      Triad National Security, LLC. All rights reserved.
+ * Copyright (c) 2023-2024 Triad National Security, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -370,6 +370,32 @@ static int mca_accelerator_ze_record_event(int dev_id, opal_accelerator_event_t 
     return OPAL_SUCCESS;
 }
 
+static int mca_accelerator_ze_wait_event(int __opal_attribute_unused__ dev_id,
+                                         opal_accelerator_event_t *event,
+                                         opal_accelerator_stream_t * __opal_attribute_unused__ stream)
+{
+    ze_result_t zret;
+
+    zret = zeEventHostSynchronize(*((ze_event_handle_t *)event->event),
+                                  UINT64_MAX);
+    switch (zret) {
+        case ZE_RESULT_SUCCESS:
+            return OPAL_SUCCESS;
+            break;
+        case ZE_RESULT_NOT_READY:
+            return OPAL_ERR_RESOURCE_BUSY;
+            break;
+        default:
+            opal_output_verbose(10, opal_accelerator_base_framework.framework_output,
+                                "zeEventHostSynchronize returned %d", zret);
+            return OPAL_ERROR;
+    }
+
+    return OPAL_SUCCESS;
+}
+
+
+
 static int mca_accelerator_ze_query_event(int dev_id, opal_accelerator_event_t *event)
 {
     ze_result_t zret;
@@ -411,7 +437,7 @@ static int mca_accelerator_ze_memcpy_async(int dest_dev_id, int src_dev_id, void
    }
 
    ze_stream = (opal_accelerator_ze_stream_t  *)stream->stream;
-    assert(NULL != ze_stream);
+   assert(NULL != ze_stream);
 
     zret = zeCommandListAppendMemoryCopy(ze_stream->hCommandList,
                                          dest,
