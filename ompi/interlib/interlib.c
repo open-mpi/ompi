@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2008-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2024 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <string.h>
 
-#include "opal/mca/pmix/pmix-internal.h"
+#include "opal/pmix/pmix-internal.h"
 #include "opal/util/proc.h"
 #include "ompi/runtime/ompi_rte.h"
 #include "ompi/interlib/interlib.h"

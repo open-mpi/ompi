@@ -14,7 +14,7 @@
  * Copyright (c) 2013-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2016      Research Organization for Information Science
+ * Copyright (c) 2016-2024 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  *
@@ -27,7 +27,7 @@
 
 #include "ompi_config.h"
 
-#include "opal/mca/pmix/pmix-internal.h"
+#include "opal/pmix/pmix-internal.h"
 #include "ompi/mca/mtl/mtl.h"
 #include "ompi/mca/mtl/base/mtl_base_datatype.h"
 #include "opal/util/show_help.h"

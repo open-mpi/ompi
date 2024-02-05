@@ -16,7 +16,7 @@
  *                         reserved.
  * Copyright (c) 2012-2023 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
- * Copyright (c) 2014-2017 Research Organization for Information Science
+ * Copyright (c) 2014-2024 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
@@ -51,7 +51,6 @@
 #include "opal/datatype/opal_convertor.h"
 #include "opal/mca/btl/btl.h"
 #include "opal/mca/hwloc/base/base.h"
-#include "opal/mca/pmix/base/base.h"
 #include "opal/mca/shmem/base/base.h"
 #include "opal/mca/shmem/shmem.h"
 #include "opal/sys/atomic.h"

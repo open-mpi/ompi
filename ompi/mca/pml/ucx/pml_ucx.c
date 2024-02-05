@@ -3,7 +3,7 @@
  * Copyright (c) 2016-2021 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2018-2019 Research Organization for Information Science
+ * Copyright (c) 2018-2024 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2018-2022 IBM Corporation.  All rights reserved.
  * Copyright (c) 2019      Intel, Inc.  All rights reserved.
@@ -19,7 +19,7 @@
 #include "pml_ucx.h"
 
 #include "opal/runtime/opal.h"
-#include "opal/mca/pmix/pmix-internal.h"
+#include "opal/pmix/pmix-internal.h"
 #include "ompi/attribute/attribute.h"
 #include "ompi/message/message.h"
 #include "ompi/runtime/ompi_spc.h"

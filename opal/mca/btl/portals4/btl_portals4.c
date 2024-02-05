@@ -15,6 +15,8 @@
  *                         reserved.
  * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Bull SAS.  All rights reserved.
+ * Copyright (c) 2024      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -33,7 +35,7 @@
 #include "opal/constants.h"
 #include "opal/datatype/opal_convertor.h"
 #include "opal/mca/btl/btl.h"
-#include "opal/mca/pmix/pmix-internal.h"
+#include "opal/pmix/pmix-internal.h"
 #include "opal/util/proc.h"
 
 #include "btl_portals4.h"

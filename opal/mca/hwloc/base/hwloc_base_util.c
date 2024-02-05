@@ -14,7 +14,7 @@
  * Copyright (c) 2012-2017 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2013-2020 Intel, Inc.  All rights reserved.
- * Copyright (c) 2015-2017 Research Organization for Information Science
+ * Copyright (c) 2015-2024 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (C) 2018      Mellanox Technologies, Ltd.
  *                         All rights reserved.
@@ -50,7 +50,7 @@
 #endif
 
 #include "opal/constants.h"
-#include "opal/mca/pmix/pmix-internal.h"
+#include "opal/pmix/pmix-internal.h"
 #include "opal/mca/threads/tsd.h"
 #include "opal/runtime/opal.h"
 #include "opal/util/argv.h"

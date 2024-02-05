@@ -13,7 +13,7 @@
  * Copyright (c) 2008-2020 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2010-2012 Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2024 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
@@ -35,7 +35,7 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/errhandler/errhandler_predefined.h"
 #include "opal/class/opal_pointer_array.h"
-#include "opal/mca/pmix/pmix-internal.h"
+#include "opal/pmix/pmix-internal.h"
 #include "opal/util/string_copy.h"
 #include "opal/mca/backtrace/backtrace.h"
 #include "ompi/runtime/mpiruntime.h"

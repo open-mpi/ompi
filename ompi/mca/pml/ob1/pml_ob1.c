@@ -27,6 +27,8 @@
  *                         reserved.
  * Copyright (c) 2022      IBM Corporation. All rights reserved
  * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
+ * Copyright (c) 2024      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -51,7 +53,7 @@
 #include "ompi/mca/pml/base/base.h"
 #include "ompi/mca/bml/base/base.h"
 #include "ompi/errhandler/errhandler.h"
-#include "opal/mca/pmix/pmix-internal.h"
+#include "opal/pmix/pmix-internal.h"
 #include "ompi/runtime/ompi_spc.h"
 
 #include "pml_ob1.h"

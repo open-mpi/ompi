@@ -18,6 +18,8 @@
  * Copyright (c) 2020      Google, LLC. All rights reserved.
  * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
+ * Copyright (c) 2024      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -30,7 +32,7 @@
 #include "opal/mca/btl/base/base.h"
 #include "opal/mca/btl/btl.h"
 #include "opal/mca/mpool/base/base.h"
-#include "opal/mca/pmix/pmix-internal.h"
+#include "opal/pmix/pmix-internal.h"
 #include "opal/util/event.h"
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"

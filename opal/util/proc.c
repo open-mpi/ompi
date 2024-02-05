@@ -5,7 +5,7 @@
  *                         reserved.
  * Copyright (c) 2013      Inria.  All rights reserved.
  * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014-2017 Research Organization for Information Science
+ * Copyright (c) 2014-2024 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
@@ -22,7 +22,7 @@
 
 #include "opal_config.h"
 
-#include "opal/mca/pmix/pmix-internal.h"
+#include "opal/pmix/pmix-internal.h"
 #include "opal/util/arch.h"
 #include "opal/util/proc.h"
 #include "opal/util/string_copy.h"

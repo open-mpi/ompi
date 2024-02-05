@@ -3,12 +3,15 @@
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014-2017 Research Organization for Information Science
+ * Copyright (c) 2014-2024 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2016-2022 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
+ * Copyright (c) 2022      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -38,8 +41,7 @@
 #include "opal_stdint.h"
 
 #include "opal/mca/base/mca_base_vari.h"
-#include "opal/mca/pmix/base/base.h"
-
+#include "opal/pmix/pmix-internal.h"
 #include "src/include/pmix_frameworks.h"
 
 int opal_pmix_base_exchange(pmix_info_t *indat, pmix_pdata_t *outdat, int timeout)
@@ -703,3 +705,50 @@ static void infoitdecon(opal_info_item_t *p)
 OBJ_CLASS_INSTANCE(opal_info_item_t, opal_list_item_t, infoitmcon, infoitdecon);
 
 OBJ_CLASS_INSTANCE(opal_proclist_t, opal_list_item_t, NULL, NULL);
+
+/*
+ * The following file was created by configure.  It contains extern
+ * components and the definition of an array of pointers to each
+ * module's public mca_base_module_t struct.
+ */
+
+bool opal_pmix_collect_all_data = true;
+int opal_pmix_verbose_output = -1;
+bool opal_pmix_base_async_modex = false;
+opal_pmix_base_t opal_pmix_base = {.evbase = NULL,
+                                   .timeout = 0,
+                                   .initialized = 0,
+                                   .lock = {.mutex = OPAL_MUTEX_STATIC_INIT,
+                                            .cond = OPAL_PMIX_CONDITION_STATIC_INIT,
+                                            .active = false}};
+
+static char*
+opal_get_proc_hostname_using_pmix(const opal_proc_t *proc)
+{
+    int ret;
+    char *hostname;
+
+    /* if the proc is NULL, then we can't know */
+    if (NULL == proc) {
+        return strdup("unknown");
+    }
+
+    /* if it is my own hostname we are after, then just hand back
+     * the value in opal_process_info */
+    if (proc == opal_proc_local_get()) {
+        return strdup(opal_process_info.nodename);
+    }
+    /* if we don't already have it, then try to get it */
+    OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, PMIX_HOSTNAME, &proc->proc_name, (char **) &hostname,
+                                   PMIX_STRING);
+    if (OPAL_SUCCESS != ret) {
+        return strdup("unknown"); // return something so the caller doesn't segfault
+    }
+    /* user is not allowed to release the data */
+    return hostname;
+}
+
+MCA_BASE_FRAMEWORK_DECLARE(opal, pmix, "OPAL PMI Client Framework", NULL,
+                           NULL, NULL,
+                           {NULL}, 0);
+

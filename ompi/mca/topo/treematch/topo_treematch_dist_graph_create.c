@@ -6,7 +6,7 @@
  * Copyright (c) 2011-2018 Inria.  All rights reserved.
  * Copyright (c) 2011-2018 Bordeaux Polytechnic Institute
  * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
- * Copyright (c) 2015-2017 Research Organization for Information Science
+ * Copyright (c) 2015-2024 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
  *                         reserved.
@@ -34,7 +34,7 @@
 
 #include "ompi/mca/pml/pml.h"
 
-#include "opal/mca/pmix/pmix-internal.h"
+#include "opal/pmix/pmix-internal.h"
 
 /* #define __DEBUG__ 1  */
 

@@ -17,7 +17,7 @@
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2011-2020 Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
- * Copyright (c) 2016      Research Organization for Information Science
+ * Copyright (c) 2016-2024 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * Copyright (c) 2019-2022 Triad National Security, LLC. All rights
@@ -58,7 +58,7 @@
 #include "opal/mca/mpool/base/mpool_base_tree.h"
 #include "opal/mca/rcache/base/base.h"
 #include "opal/mca/allocator/base/base.h"
-#include "opal/mca/pmix/pmix-internal.h"
+#include "opal/pmix/pmix-internal.h"
 #include "opal/util/timings.h"
 #include "mpi.h"
 #include "ompi/constants.h"

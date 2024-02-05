@@ -18,7 +18,7 @@
  * Copyright (c) 2011-2020 Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
  * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014-2021 Research Organization for Information Science
+ * Copyright (c) 2014-2024 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2016-2018 Mellanox Technologies Ltd. All rights reserved.
  *
@@ -65,7 +65,6 @@
 #include "opal/mca/rcache/rcache.h"
 #include "opal/mca/mpool/base/base.h"
 #include "opal/mca/btl/base/base.h"
-#include "opal/mca/pmix/base/base.h"
 #include "opal/util/opal_environ.h"
 
 #include "ompi/constants.h"

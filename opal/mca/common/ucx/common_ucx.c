@@ -2,7 +2,7 @@
 /*
  * Copyright (C) Mellanox Technologies Ltd. 2018. ALL RIGHTS RESERVED.
  * Copyright (c) 2019      Intel, Inc.  All rights reserved.
- * Copyright (c) 2019      Research Organization for Information Science
+ * Copyright (c) 2019-2024 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2021      Triad National Security, LLC. All rights
  *                         reserved.
@@ -22,7 +22,7 @@
 #include "common_ucx.h"
 #include "opal/mca/base/mca_base_framework.h"
 #include "opal/mca/base/mca_base_var.h"
-#include "opal/mca/pmix/pmix-internal.h"
+#include "opal/pmix/pmix-internal.h"
 #include "opal/memoryhooks/memory.h"
 #include "opal/util/argv.h"
 #include "opal/util/printf.h"

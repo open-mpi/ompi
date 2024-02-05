@@ -10,7 +10,7 @@
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2018-2023 Triad National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2019      Research Organization for Information Science
+ * Copyright (c) 2019-2024 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.  All Rights
  *                         reserved.
@@ -48,7 +48,6 @@
 #include "opal/util/show_help.h"
 #include "opal/util/string_copy.h"
 #include "opal/mca/hwloc/base/base.h"
-#include "opal/mca/pmix/base/base.h"
 #include "opal/mca/threads/tsd.h"
 #include "opal/class/opal_list.h"
 

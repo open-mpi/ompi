@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2010-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2014-2018 Research Organization for Information Science
+ * Copyright (c) 2014-2024 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2020      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
@@ -17,7 +17,7 @@
  */
 #include "opal_config.h"
 
-#include "opal/mca/pmix/pmix-internal.h"
+#include "opal/pmix/pmix-internal.h"
 #include "opal/mca/smsc/base/base.h"
 #include "opal/mca/smsc/cma/smsc_cma_internal.h"
 

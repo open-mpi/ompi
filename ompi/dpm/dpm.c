@@ -17,7 +17,7 @@
  *                         reserved.
  * Copyright (c) 2013-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
- * Copyright (c) 2014-2020 Research Organization for Information Science
+ * Copyright (c) 2014-2024 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2021-2022 Nanook Consulting.  All rights reserved.
@@ -53,7 +53,6 @@
 #include "opal/util/show_help.h"
 #include "opal/util/printf.h"
 #include "opal/mca/hwloc/base/base.h"
-#include "opal/mca/pmix/base/base.h"
 
 #include "ompi/communicator/communicator.h"
 #include "ompi/group/group.h"

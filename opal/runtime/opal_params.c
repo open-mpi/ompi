@@ -17,7 +17,7 @@
  * Copyright (c) 2010-2014 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2014      Hochschule Esslingen.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2024 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies, Inc.
  *                         All rights reserved.
@@ -91,6 +91,23 @@ int opal_register_params(void)
         return ret;
     }
 #endif
+
+    opal_pmix_base_async_modex = false;
+    (void) mca_base_var_register("opal", "pmix", "base", "async_modex",
+                                 "Use asynchronous modex mode", MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+                                 &opal_pmix_base_async_modex);
+    opal_pmix_collect_all_data = true;
+    (void) mca_base_var_register("opal", "pmix", "base", "collect_data",
+                                 "Collect all data during modex", MCA_BASE_VAR_TYPE_BOOL, NULL, 0,
+                                 0, OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+                                 &opal_pmix_collect_all_data);
+
+    opal_pmix_base.timeout = -1;
+    (void) mca_base_var_register("opal", "pmix", "base", "exchange_timeout",
+                                 "Time (in seconds) to wait for a data exchange to complete",
+                                 MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_3,
+                                 MCA_BASE_VAR_SCOPE_READONLY, &opal_pmix_base.timeout);
 
     opal_finalize_register_cleanup(opal_deregister_params);
 

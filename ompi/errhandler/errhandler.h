@@ -15,7 +15,7 @@
  * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2016      Research Organization for Information Science
+ * Copyright (c) 2016-2024 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018-2021 Triad National Security, LLC. All rights
  *                         reserved.
@@ -37,7 +37,7 @@
 #include "opal/prefetch.h"
 #include "opal/class/opal_object.h"
 #include "opal/class/opal_pointer_array.h"
-#include "opal/mca/pmix/pmix-internal.h"
+#include "opal/pmix/pmix-internal.h"
 
 #include "ompi/runtime/mpiruntime.h"
 #include "ompi/runtime/params.h"

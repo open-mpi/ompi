@@ -15,6 +15,8 @@
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
  * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2020      Sandia National Laboratories. All rights reserved.
+ * Copyright (c) 2024      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -33,7 +35,7 @@
 #include "ompi/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/runtime/opal.h"
-#include "opal/mca/pmix/pmix-internal.h"
+#include "opal/pmix/pmix-internal.h"
 
 #include "ompi/constants.h"
 #include "ompi/mca/part/part.h"

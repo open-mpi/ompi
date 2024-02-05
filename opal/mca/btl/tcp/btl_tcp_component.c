@@ -17,7 +17,7 @@
  *                         reserved.
  * Copyright (c) 2013-2015 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014-2017 Research Organization for Information Science
+ * Copyright (c) 2014-2024 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018-2022 Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
@@ -65,7 +65,7 @@
 #include "opal/mca/btl/base/btl_base_error.h"
 #include "opal/mca/btl/btl.h"
 #include "opal/mca/mpool/base/base.h"
-#include "opal/mca/pmix/pmix-internal.h"
+#include "opal/pmix/pmix-internal.h"
 #include "opal/mca/reachable/base/base.h"
 #include "opal/mca/threads/threads.h"
 #include "opal/util/argv.h"

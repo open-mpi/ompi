@@ -18,7 +18,7 @@
  * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2016-2021 Research Organization for Information Science
+ * Copyright (c) 2016-2024 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2018-2021 Triad National Security, LLC. All rights
  *                         reserved.
@@ -42,7 +42,6 @@
 #include "ompi/runtime/params.h"
 #include "ompi/runtime/ompi_rte.h"
 
-#include "opal/mca/pmix/base/base.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"

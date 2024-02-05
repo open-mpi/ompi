@@ -11,8 +11,8 @@
 #                         All rights reserved.
 # Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2015-2016 Intel, Inc. All rights reserved.
-# Copyright (c) 2016      Research Organization for Information Science
-#                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2016-2024 Research Organization for Information Science
+#                         and Technology (RIST).  All rights reserved.
 # Copyright (c) 2020-2022 Amazon.com, Inc. or its affiliates.  All Rights reserved.
 # Copyright (c) 2022      Advanced Micro Devices, Inc. All rights reserved.
 # $COPYRIGHT$
@@ -84,3 +84,4 @@ include memoryhooks/Makefile.am
 include runtime/Makefile.am
 include mca/Makefile.am
 include tools/Makefile.am
+include pmix/Makefile.am
