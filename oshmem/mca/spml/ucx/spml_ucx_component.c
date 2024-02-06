@@ -458,7 +458,8 @@ static void mca_spml_ucx_ctx_fini(mca_spml_ucx_ctx_t *ctx)
 
 static int mca_spml_ucx_component_fini(void)
 {
-    int fenced = 0, i;
+    volatile int fenced = 0;
+    int i;
     int ret = OSHMEM_SUCCESS;
     mca_spml_ucx_ctx_t *ctx;
 
@@ -491,8 +492,10 @@ static int mca_spml_ucx_component_fini(void)
 
 
     ret = opal_common_ucx_mca_pmix_fence_nb(&fenced);
-    if (OPAL_SUCCESS != ret) {
-        return ret;
+    if (ret != PMIX_SUCCESS) {
+        SPML_UCX_WARN("pmix fence failed: %s", PMIx_Error_string(ret));
+        /* In case of pmix fence failure just continue cleanup */
+        fenced = 1;
     }
 
     while (!fenced) {
