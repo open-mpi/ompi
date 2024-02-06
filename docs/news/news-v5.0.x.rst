@@ -4,9 +4,9 @@ Open MPI v5.0.x series
 This file contains all the NEWS updates for the Open MPI v5.0.x
 series, in reverse chronological order.
 
-Open MPI version v5.0.2rc2
+Open MPI version v5.0.2
 --------------------------
-:Date: 31 January 2024
+:Date: 6 February 2024
 
 - Internal PMIx and PRRTe versions:
 
