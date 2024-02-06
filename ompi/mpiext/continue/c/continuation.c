@@ -576,6 +576,10 @@ recheck:
         } else {
             /* someone started the request before we took the lock, go back and check again
              * this should be rare so we don't care about taking the lock again */
+            if (!req_volatile) {
+                /* put it back into the list of incomplete ops */
+                opal_list_append(&cont_req->cont_incomplete_list, &cont->super.super);
+            }
             if (using_threads) { opal_atomic_unlock(&cont_req->cont_lock); }
             goto recheck;
         }
