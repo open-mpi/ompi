@@ -26,6 +26,15 @@
 BEGIN_C_DECLS
 
 
+/* Topologic levels */
+typedef enum TOPO_LVL {
+    DEFAULT = -1,
+    SINGLE_NODE,
+    DISJOINT,
+    NB_TOPO_LVL
+} TOPO_LVL_T;
+
+
 typedef struct msg_rule_s {
     /* paranoid / debug */
     int mpi_comsize;  /* which MPI comm size is this for */
@@ -37,6 +46,7 @@ typedef struct msg_rule_s {
 
     /* RULE */
     size_t msg_size; /* message size */
+    TOPO_LVL_T topologic_level; /* single node or disjoint */
 
     /* RESULT */
     int result_alg;              /* result algorithm to use */
@@ -94,10 +104,13 @@ int ompi_coll_tuned_free_all_rules (ompi_coll_alg_rule_t* alg_p, int n_algs);
 
 ompi_coll_com_rule_t* ompi_coll_tuned_get_com_rule_ptr (ompi_coll_alg_rule_t* rules, int alg_id, int mpi_comsize);
 
-int ompi_coll_tuned_get_target_method_params (ompi_coll_com_rule_t* base_com_rule, size_t mpi_msgsize,
+int ompi_coll_tuned_get_target_method_params (ompi_coll_com_rule_t* base_com_rule, const size_t mpi_msgsize, 
+                                              const struct ompi_communicator_t *comm,
                                               int* result_topo_faninout, int* result_segsize,
                                               int* max_requests);
 
+/* Miscellaneous function */
+int mca_coll_tuned_topo_name_to_id(const char *topo_level_name);
 
 END_C_DECLS
 #endif /* MCA_COLL_TUNED_DYNAMIC_RULES_H_HAS_BEEN_INCLUDED */

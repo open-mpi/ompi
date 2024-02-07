@@ -42,6 +42,7 @@
 static int fileline=0; /* used for verbose error messages */
 
 #define getnext(fptr, pval)        ompi_coll_base_file_getnext_long(fptr, &fileline, pval)
+#define getnext_string(fptr, pval) ompi_coll_base_file_getnext_string(fptr, &fileline, pval)
 
 /*
  * Reads a rule file called fname
@@ -59,7 +60,7 @@ int ompi_coll_tuned_read_rules_config_file (char *fname, ompi_coll_alg_rule_t** 
 {
     long CI, NCS, CS, ALG, NMS, FANINOUT, X, MS, SS;
     FILE *fptr = (FILE*) NULL;
-    int x, ncs, nms;
+    int x, ncs, nms, topo_lvl;
 
     ompi_coll_alg_rule_t *alg_rules = (ompi_coll_alg_rule_t*) NULL;   /* complete table of rules */
 
@@ -176,11 +177,46 @@ int ompi_coll_tuned_read_rules_config_file (char *fname, ompi_coll_alg_rule_t** 
 
                 msg_p = &(com_p->msg_rules[nms]);
 
-                if( (getnext (fptr, &MS) < 0) || (MS < 0) ) {
+                char *msg_topo = NULL;
+                if( getnext_string(fptr, &msg_topo) < 0 ) {
+                    OPAL_OUTPUT((ompi_coll_tuned_stream,"Could not read message size/name of a topo level for collective ID %ld com rule %d msg rule %d at around line %d\n", 
+                                 CI, ncs, nms, fileline));
+                    goto on_file_error;
+                }
+                
+                char *temp_str = strdup(msg_topo);
+                const char *delimiter = "@";
+                char *msg_size_str = strtok(temp_str, delimiter);
+                if (NULL == msg_size_str) {
                     OPAL_OUTPUT((ompi_coll_tuned_stream,"Could not read message size for collective ID %ld com rule %d msg rule %d at around line %d\n", CI, ncs, nms, fileline));
                     goto on_file_error;
                 }
+
+                char *endptr;
+                errno = 0;
+                MS = strtol(msg_size_str, &endptr, 10);
+                if (errno != 0 || (endptr == msg_size_str) || ('\0' != *endptr ) || MS < 0) {
+                    OPAL_OUTPUT((ompi_coll_tuned_stream,"Invalid message size for collective ID %ld com rule %d msg rule %d at around line %d\n", CI, ncs, nms, fileline));
+                    goto on_file_error;
+                }
                 msg_p->msg_size = (size_t)MS;
+                
+                char *topo_lvl_name = strtok(NULL, delimiter);
+                if (NULL == topo_lvl_name) {
+                    msg_p->topologic_level = DEFAULT;
+                } else {
+                    topo_lvl = mca_coll_tuned_topo_name_to_id(topo_lvl_name);
+                    if (topo_lvl < 0) {
+                        char *endp;
+                        topo_lvl = (int)strtol(topo_lvl_name, &endp, 10);
+                        if (('\0' != *endp ) || (topo_lvl < DEFAULT) || (topo_lvl >= NB_TOPO_LVL)) {
+                            OPAL_OUTPUT((ompi_coll_tuned_stream,"Found an error at line %d: unknown topo level '%s'\n", fileline, topo_lvl_name));
+                            goto on_file_error;
+                        }
+                    }
+                    msg_p->topologic_level = (TOPO_LVL_T)topo_lvl;
+                }
+                free (temp_str);
 
                 if( (getnext (fptr, &ALG) < 0) || (ALG < 0) ) {
                     OPAL_OUTPUT((ompi_coll_tuned_stream,"Could not read target algorithm method for collective ID %ld com rule %d msg rule %d at around line %d\n", CI, ncs, nms, fileline));
