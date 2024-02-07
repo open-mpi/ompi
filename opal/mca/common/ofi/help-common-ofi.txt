@@ -7,6 +7,12 @@
 #
 # $HEADER$
 #
+[unbound_process]
+Open MPI's OFI driver detected multiple NICs on the system but cannot select an
+optimal device because the current process is not bound. This may negatively
+impact performance. This can be resolved by specifying "--bind-to ..." on
+command line.
+
 [package_rank failed]
 Open MPI's OFI driver detected multiple equidistant NICs from the current process,
 but had insufficient information to ensure MPI processes fairly pick a NIC for use.
