@@ -145,7 +145,7 @@ int ompi_osc_rdma_new_peer (struct ompi_osc_rdma_module_t *module, int peer_id, 
  *
  * This function reads the registration handle and state pointer from the peer that holds that data. If necessary
  * it will then ready information about the peer from its state data structure. This information includes the
- * displacement unit, base pointer, window size, and registation handle (if applicable).
+ * displacement unit, base pointer, window size, and registration handle (if applicable).
  */
 static int ompi_osc_rdma_peer_setup (ompi_osc_rdma_module_t *module, ompi_osc_rdma_peer_t *peer)
 {
