@@ -132,6 +132,28 @@ if OMPI_STANDARD_ABI
 lib_LTLIBRARIES += libmpi_abi.la
 endif
 
+#
+# ABI Refactor
+#
+# As required by the standard ABI, ompi must now provide libmpi_abi.la for
+# ABI-specific code. Since we also want to avoid breaking the existing ompi
+# ABI, the libraries in this directory are now organized as follows:
+#
+# +----------------------+----------------------+
+# |     libmpi_abi.la    |        libmpi.la     |
+# +----------------------+----------------------+
+# |              libopen-mpi.la                 |
+# +----------------------+----------------------+
+#
+# This includes a new library, libopen-mpi.la, that links in all backend code
+# built in this directory or SUBDIRs of this directory. Previously everything
+# was just linked directly into libmpi.la (lib@OMPI_LIBMPI_NAME@.la).
+#
+# libmpi_abi.la and libmpi.la both now link in libopen-mpi.la, the only
+# difference between them being that one includes the standard ABI functions
+# and the other the ompi-specific versions of those.
+#
+
 # Build the Open MPI internal library
 libopen_mpi_la_SOURCES =
 libopen_mpi_la_LIBADD = \
