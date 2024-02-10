@@ -80,6 +80,5 @@ Table of contents
    contributing
    license/index
    history
-   news/index
    man-openmpi/index
    man-openshmem/index
