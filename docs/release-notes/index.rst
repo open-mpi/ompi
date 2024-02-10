@@ -4,6 +4,7 @@ Release notes
 .. toctree::
    :maxdepth: 1
 
+   changelog/index
    general
    platform
    compilers

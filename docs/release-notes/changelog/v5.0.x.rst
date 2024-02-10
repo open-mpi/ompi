@@ -4,6 +4,89 @@ Open MPI v5.0.x series
 This file contains all the NEWS updates for the Open MPI v5.0.x
 series, in reverse chronological order.
 
+Open MPI version v5.0.2
+--------------------------
+:Date: 6 February 2024
+
+- Internal PMIx and PRRTe versions:
+
+  - PMIx (v4.2.8). Commit hash: ``d1c1ed0c2e64f19ad49291241a43630ea7fdce28``.
+  - PRRTE (v3.0.3). Commit hash: ``e383f5ad70c2633420d3425e9fb67e69b6bfd9c4``.
+
+  .. note:: Due to the timing of Open MPI v5.0.2 release, the PMIx and PRRTE versions
+            that are internally bundled in the Open MPI distribution are the same
+            versions as in the Open MPI v5.0.1 release: PMIx v4.2.8 and PRRTE v3.0.3.
+            As a result, changes and bug fixes in newer PMIx and PRRTE releases are
+            not included in Open MPI v5.0.2, notably:
+
+            PRRTE
+
+            - Fix the map-by pe-list option
+            - Use pmix_path_nfs to detect shared file systems
+            - psets: fix some problems with PMIX_QUERY_PSET_MEMBERSHIP query.
+              PMIX_QUERY_PSET_MEMBERSHIP query bugfixes.
+
+            PMIx
+
+            - Restore default to enable-devel-check in Git repos
+            - Protect against empty envar definition for mca_base_param_files
+            - PMIx_Query_info: removed duplicated PMIX_RELEASE
+            - Do not add no-unused-parameter for non-devel-check builds
+            - Cast a few parameters when translating macros to functions
+            - Fix one more spot for "get" from rank undefined
+            - Fix "get" of key with undefined rank
+            - Resolve problem of stack variables and realloc
+            - Restore support for detecting shared file systems
+            - Fix broken link in README
+
+- Bugfixes and changes (in chronological order)
+
+  - Fix the fs/lustre component build
+  - Fix a mtl/ofi multi-threaded race condition bug
+  - Add missing fortran profiling interfaces according to MPI 4.0 standard
+  - Allow 0-size data copy in opal/accelerator
+  - Fix a btl/ofi and mtl/ofi provider selection bug
+  - Properly initialize mca_rcache_base_module_t members
+  - Fix a singleton launch segfault
+  - Add GCC13 support with MacOS compatibility
+
+- Many thanks to Open MPI community including:
+  Erik Schnetter
+
+Open MPI version v5.0.1
+--------------------------
+:Date: 20 December 2023
+
+- Internal PMIx and PRRTe versions:
+
+  - PMIx (v4.2.8). Commit hash: ``d1c1ed0c2e64f19ad49291241a43630ea7fdce28``.
+  - PRRTE (v3.0.3). Commit hash: ``e383f5ad70c2633420d3425e9fb67e69b6bfd9c4``.
+
+- Bugfixes and changes (in chronological order)
+
+  - Various documentation related updates and changes
+  - Fix a bunch of compiler warnings
+  - Sessions: fix a problem with fortran MPI_Session_get_nth_pset interface
+  - Correctly access the communicator name is MSGQ
+  - accelerator/cuda: fix bug in makefile.am preventing correct linkage
+    in non-standard location
+  - btlsmcuda: fix problem with makefile
+  - Fix rcache/gpusm and rcache/rgpsum
+  - Correctly handle attributes on MPI_COMM_WORLD.
+  - Minor memory leak fixes in:
+    btl/tcp, mca_base_framework, ob1
+  - Fix static initialization of recursive mutexes
+  - Spack: fix for dlopen missing symbol problem
+  - opal/mca/accelerator: ROCm 6.0 incompatibility fix
+  - opal_var_dump_color_keys: fix an array overflow
+  - SHMEM_LOCKS: MCS implementation of SHMEM LOCKS
+  - configury: support flang-new
+  - Update processing of "display_map" info key
+  - dpm: update PMIX attribute
+
+- Many thanks to Open MPI community including:
+  Tony Curtis, David Edwards Linaro, Niv Shpak for their contribution.
+
 Open MPI version 5.0.0
 --------------------------
 :Date: 25 October 2023
