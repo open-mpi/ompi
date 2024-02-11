@@ -1376,4 +1376,74 @@ err_hndl:
     return err;
 }
 
+int ompi_coll_base_allreduce_intra_k_bruck(const void *sbuf, void *rbuf, int count,
+                                           struct ompi_datatype_t *dtype,
+                                           struct ompi_op_t *op,
+                                           struct ompi_communicator_t *comm,
+                                           mca_coll_base_module_t *module)
+{
+    int line = -1;
+    char *partial_buf = NULL;
+    char *partial_buf_start = NULL;
+    char *sendtmpbuf = NULL;
+    char *buffer1 = NULL;
+    char *buffer1_start = NULL;
+    int err = OMPI_SUCCESS;
+
+    ptrdiff_t extent, lb;
+    ompi_datatype_get_extent(dtype, &lb, &extent);
+
+    int rank = ompi_comm_rank(comm);
+    int size = ompi_comm_size(comm);
+
+    sendtmpbuf = (char*) sbuf;
+    if( sbuf == MPI_IN_PLACE ) {
+        sendtmpbuf = (char *)rbuf;
+    }
+    ptrdiff_t buf_size, gap = 0;
+    buf_size = opal_datatype_span(&dtype->super, (int64_t)count * size, &gap);
+    partial_buf = (char *) malloc(buf_size);
+    partial_buf_start = partial_buf - gap;
+    buf_size = opal_datatype_span(&dtype->super, (int64_t)count, &gap);
+    buffer1 = (char *) malloc(buf_size);
+    buffer1_start = buffer1 - gap;
+
+    err = ompi_datatype_copy_content_same_ddt(dtype, count,
+                                              (char*)buffer1_start,
+                                              (char*)sendtmpbuf);
+    if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
+
+    /* Local roots perform a allreduce on the upper comm */
+    err = comm->c_coll->coll_allgather(buffer1_start, count, dtype,
+                                       partial_buf_start, count, dtype,
+                                       comm, comm->c_coll->coll_allgather_module);
+    if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
+
+    for(int target = 1; target < size; target++)
+    {
+        ompi_op_reduce(op,
+                       partial_buf_start + (ptrdiff_t)target * count * extent,
+                       partial_buf_start,
+                       count,
+                       dtype);
+    }
+
+    // move data to rbuf
+    err = ompi_datatype_copy_content_same_ddt(dtype, count,
+                                              (char*)rbuf,
+                                              (char*)partial_buf_start);
+    if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
+
+err_hndl:
+    if (NULL != partial_buf) {
+        free(partial_buf);
+        partial_buf = NULL;
+        partial_buf_start = NULL;
+    }
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,  "%s:%4d\tError occurred %d, rank %2d",
+                 __FILE__, line, err, rank));
+    (void)line;  // silence compiler warning
+    return err;
+
+}
 /* copied function (with appropriate renaming) ends here */

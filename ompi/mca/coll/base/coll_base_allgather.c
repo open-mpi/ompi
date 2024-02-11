@@ -866,4 +866,214 @@ ompi_coll_base_allgather_intra_basic_linear(const void *sbuf, int scount,
     return err;
 }
 
+/*
+ * ompi_coll_base_allgather_intra_k_bruck
+ *
+ * Function:     allgather using O(logk(N)) steps.
+ * Accepts:      Same arguments as MPI_Allgather
+ * Returns:      MPI_SUCCESS or error code
+ *
+ * Description:  This method extend ompi_coll_base_allgather_intra_bruck to handle any
+ *               radix k; use non-blocking communication to take advantage of multiple ports
+ *               The algorithm detail is described in Bruck et al. (1997),
+ *               "Efficient Algorithms for All-to-all Communications
+ *                in Multiport Message-Passing Systems"
+ * Memory requirements:  non-zero ranks require temporary buffer to perform final
+ *               step in the algorithm.
+ *
+ * Example on 10 nodes with k=3:
+ *   Initialization: everyone has its own buffer at location 0 in rbuf
+ *                   This means if user specified MPI_IN_PLACE for sendbuf
+ *                   we must copy our block from recvbuf to beginning!
+ *    #     0      1      2      3      4      5      6      7      8      9
+ *         [0]    [1]    [2]    [3]    [4]    [5]    [6]    [7]    [8]    [9]
+ *   Step 0: send message to (rank - k^0 * i), receive message from (rank + k^0 * i)
+ *           message size is k^0 * block size and i is between [1, k-1]
+ *    #     0      1      2      3      4      5      6      7      8      9
+ *         [0]    [1]    [2]    [3]    [4]    [5]    [6]    [7]    [8]    [9]
+ *         [1]    [2]    [3]    [4]    [5]    [6]    [7]    [8]    [9]    [0]
+ *         [2]    [3]    [4]    [5]    [6]    [7]    [8]    [9]    [0]    [1]
+ *   Step 1: send message to (rank - k^1 * i), receive message from (rank + k^1 * i)
+ *           message size is k^1 * block size
+ *    #     0      1      2      3      4      5      6      7      8      9
+ *         [0]    [1]    [2]    [3]    [4]    [5]    [6]    [7]    [8]    [9]
+ *         [1]    [2]    [3]    [4]    [5]    [6]    [7]    [8]    [9]    [0]
+ *         [2]    [3]    [4]    [5]    [6]    [7]    [8]    [9]    [0]    [1]
+ *         [3]    [4]    [5]    [6]    [7]    [8]    [9]    [0]    [1]    [2]
+ *         [4]    [5]    [6]    [7]    [8]    [9]    [0]    [1]    [2]    [3]
+ *         [5]    [6]    [7]    [8]    [9]    [0]    [1]    [2]    [3]    [4]
+ *         [6]    [7]    [8]    [9]    [0]    [1]    [2]    [3]    [4]    [5]
+ *         [7]    [8]    [9]    [0]    [1]    [2]    [3]    [4]    [5]    [6]
+ *         [8]    [9]    [0]    [1]    [2]    [3]    [4]    [5]    [6]    [7]
+ *   Step 2: send message to (rank - k^2 * i), receive message from (rank + k^2 * i)
+ *           message size is k^2 * block size or "all remaining blocks" for each exchange
+ *    #     0      1      2      3      4      5      6      7      8      9
+ *         [0]    [1]    [2]    [3]    [4]    [5]    [6]    [7]    [8]    [9]
+ *         [1]    [2]    [3]    [4]    [5]    [6]    [7]    [8]    [9]    [0]
+ *         [2]    [3]    [4]    [5]    [6]    [7]    [8]    [9]    [0]    [1]
+ *         [3]    [4]    [5]    [6]    [7]    [8]    [9]    [0]    [1]    [2]
+ *         [4]    [5]    [6]    [7]    [8]    [9]    [0]    [1]    [2]    [3]
+ *         [5]    [6]    [7]    [8]    [9]    [0]    [1]    [2]    [3]    [4]
+ *         [6]    [7]    [8]    [9]    [0]    [1]    [2]    [3]    [4]    [5]
+ *         [7]    [8]    [9]    [0]    [1]    [2]    [3]    [4]    [5]    [6]
+ *         [8]    [9]    [0]    [1]    [2]    [3]    [4]    [5]    [6]    [7]
+ *         [9]    [0]    [1]    [2]    [3]    [4]    [5]    [6]    [7]    [8]
+ *    Finalization: Do a local shift (except rank 0) to get data in correct place
+ *    #     0      1      2      3      4      5      6      7      8      9
+ *         [0]    [1]    [2]    [3]    [4]    [5]    [6]    [7]    [8]    [9]
+ *         [0]    [1]    [2]    [3]    [4]    [5]    [6]    [7]    [8]    [9]
+ *         [0]    [1]    [2]    [3]    [4]    [5]    [6]    [7]    [8]    [9]
+ *         [0]    [1]    [2]    [3]    [4]    [5]    [6]    [7]    [8]    [9]
+ *         [0]    [1]    [2]    [3]    [4]    [5]    [6]    [7]    [8]    [9]
+ *         [0]    [1]    [2]    [3]    [4]    [5]    [6]    [7]    [8]    [9]
+ *         [0]    [1]    [2]    [3]    [4]    [5]    [6]    [7]    [8]    [9]
+ *         [0]    [1]    [2]    [3]    [4]    [5]    [6]    [7]    [8]    [9]
+ *         [0]    [1]    [2]    [3]    [4]    [5]    [6]    [7]    [8]    [9]
+ *         [0]    [1]    [2]    [3]    [4]    [5]    [6]    [7]    [8]    [9]
+ */
+int ompi_coll_base_allgather_intra_k_bruck(const void *sbuf, int scount,
+                                          struct ompi_datatype_t *sdtype,
+                                          void* rbuf, int rcount,
+                                          struct ompi_datatype_t *rdtype,
+                                          struct ompi_communicator_t *comm,
+                                          mca_coll_base_module_t *module)
+{
+    int line = -1, rank, size, dst, src, dist, err = MPI_SUCCESS;
+    int recvcount, distance;
+    int k = 8;
+    ptrdiff_t rlb, rextent;
+    ptrdiff_t rsize, rgap = 0;
+    ompi_request_t **reqs;
+    int num_reqs, max_reqs = 0;
+
+    char *tmpsend = NULL;
+    char *tmprecv = NULL;
+    char *tmp_buf = NULL;
+    char *tmp_buf_start = NULL;
+
+    rank = ompi_comm_rank(comm);
+    size = ompi_comm_size(comm);
+
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                 "coll:base:allgather_intra_k_bruck radix %d rank %d", k, rank));
+    err = ompi_datatype_get_extent (rdtype, &rlb, &rextent);
+    if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
+
+    if (0 != rank) {
+        /* Compute the temporary buffer size, including datatypes empty gaps */
+        rsize = opal_datatype_span(&rdtype->super, (int64_t)rcount * (size - rank), &rgap);
+        tmp_buf = (char *) malloc(rsize);
+        tmp_buf_start = tmp_buf - rgap;
+    }
+
+    // tmprecv points to the data initially on this rank, handle mpi_in_place case
+    tmprecv = (char*) rbuf;
+    if (MPI_IN_PLACE != sbuf) {
+        tmpsend = (char*) sbuf;
+        err = ompi_datatype_sndrcv(tmpsend, scount, sdtype, tmprecv, rcount, rdtype);
+        if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
+    } else if (0 != rank) {
+        // root data placement is at the correct poistion
+        tmpsend = ((char*)rbuf) + (ptrdiff_t)rank * (ptrdiff_t)rcount * rextent;
+        err = ompi_datatype_copy_content_same_ddt(rdtype, rcount, tmprecv, tmpsend);
+        if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
+    }
+    /*
+       Maximum number of communication phases logk(n)
+       For each phase i, rank r:
+       - increase the distance and recvcount by k times
+       - sends (k - 1) messages which starts at beginning of rbuf and has size
+       (recvcount) to rank (r - distance * j)
+       - receives (k - 1) messages of size recvcount from rank (r + distance * j)
+       at location (rbuf + distance * j * rcount * rext)
+       - calculate the remaining data for each of the (k - 1) messages in the last
+       phase to complete all transactions
+    */
+    max_reqs = 2 * (k - 1);
+    reqs = ompi_coll_base_comm_get_reqs(module->base_data, max_reqs);
+    recvcount = 1;
+    tmpsend = (char*) rbuf;
+    for (distance = 1; distance < size; distance *= k) {
+        num_reqs = 0;
+        for (int j = 1; j < k; j++)
+        {
+            if (distance * j >= size) {
+                break;
+            }
+            src = (rank + distance * j) % size;
+            dst = (rank - distance * j + size) % size;
+
+            tmprecv = tmpsend + (ptrdiff_t)distance * j * rcount * rextent;
+
+            if (distance <= (size / k)) {
+                recvcount = distance;
+            } else {
+                recvcount = (distance < (size - distance * j)?
+                            distance:(size - distance * j));
+            }
+
+            err = MCA_PML_CALL(irecv(tmprecv,
+                                     recvcount * rcount,
+                                     rdtype,
+                                     src,
+                                     MCA_COLL_BASE_TAG_ALLGATHER,
+                                     comm,
+                                     &reqs[num_reqs++]));
+            if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
+            err = MCA_PML_CALL(isend(tmpsend,
+                                     recvcount * rcount,
+                                     rdtype,
+                                     dst,
+                                     MCA_COLL_BASE_TAG_ALLGATHER,
+                                     MCA_PML_BASE_SEND_STANDARD,
+                                     comm,
+                                     &reqs[num_reqs++]));
+            if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
+        }
+        err = ompi_request_wait_all(num_reqs, reqs, MPI_STATUSES_IGNORE);
+        if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
+    }
+
+    // Finalization step:        On all ranks except 0, data needs to be shifted locally
+    if (0 != rank) {
+        err = ompi_datatype_copy_content_same_ddt(rdtype,
+                                                  ((ptrdiff_t)(size - rank) * rcount),
+                                                  tmp_buf_start,
+                                                  rbuf);
+        if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
+
+        tmpsend = (char*) rbuf + (ptrdiff_t)(size - rank) * rcount * rextent;
+        err = ompi_datatype_copy_content_same_ddt(rdtype,
+                                                  (ptrdiff_t)rank * rcount,
+                                                  rbuf,
+                                                  tmpsend);
+        if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
+
+        tmprecv = (char*) rbuf + (ptrdiff_t)rank * rcount * rextent;
+        err = ompi_datatype_copy_content_same_ddt(rdtype,
+                                                  (ptrdiff_t)(size - rank) * rcount,
+                                                  tmprecv,
+                                                  tmp_buf_start);
+        if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
+    }
+
+    if(tmp_buf != NULL) {
+        free(tmp_buf);
+        tmp_buf = NULL;
+        tmp_buf_start = NULL;
+    }
+
+    return OMPI_SUCCESS;
+
+ err_hndl:
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,  "%s:%4d\tError occurred %d, rank %2d",
+                 __FILE__, line, err, rank));
+    if(tmp_buf != NULL) {
+        free(tmp_buf);
+        tmp_buf = NULL;
+        tmp_buf_start = NULL;
+    }
+    (void)line;  // silence compiler warning
+    return err;
+}
 /* copied function (with appropriate renaming) ends here */
