@@ -808,9 +808,10 @@ int ompi_coll_tuned_reduce_intra_dec_fixed( const void *sendbuf, void *recvbuf,
         }
     }
 
+    int faninout = 2;
     return  ompi_coll_tuned_reduce_intra_do_this (sendbuf, recvbuf, count, datatype,
                                                   op, root, comm, module,
-                                                  alg, 0, 0, 0);
+                                                  alg, faninout, 0, 0);
 }
 
 /*
