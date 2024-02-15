@@ -334,7 +334,9 @@ static int mca_accelerator_rocm_memcpy(int dest_dev_id, int src_dev_id, void *de
         return OPAL_SUCCESS;
     }
 
-    if (type == MCA_ACCELERATOR_TRANSFER_DTOH && size <= opal_accelerator_rocm_memcpyD2H_limit) {
+    if ((type == MCA_ACCELERATOR_TRANSFER_DTOH ||
+	 type == MCA_ACCELERATOR_TRANSFER_UNSPEC) &&
+	size <= opal_accelerator_rocm_memcpyD2H_limit) {
         memcpy(dest, src, size);
         return OPAL_SUCCESS;
     }
