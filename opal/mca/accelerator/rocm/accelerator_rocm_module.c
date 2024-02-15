@@ -120,11 +120,8 @@ static int mca_accelerator_rocm_check_addr (const void *addr, int *dev_id, uint6
 #else
         if (hipMemoryTypeDevice == srcAttr.memoryType) {
 #endif
-            //We might want to set additional flags in a later iteration.
-            //*flags |= MCA_ACCELERATOR_FLAGS_HOST_LDSTR;
-            //*flags |= MCA_ACCELERATOR_FLAGS_HOST_ATOMICS;
-            /* First access on a device pointer triggers ROCM support lazy initialization. */
             opal_accelerator_rocm_lazy_init();
+            *dev_id = srcAttr.device;
             ret = 1;
 #if HIP_VERSION >= 50731921
         } else if (hipMemoryTypeUnified == srcAttr.type) {
@@ -132,8 +129,8 @@ static int mca_accelerator_rocm_check_addr (const void *addr, int *dev_id, uint6
         } else if (hipMemoryTypeUnified == srcAttr.memoryType) {
 #endif
             *flags |= MCA_ACCELERATOR_FLAGS_UNIFIED_MEMORY;
-            //*flags |= MCA_ACCELERATOR_FLAGS_HOST_LDSTR;
-            //*flags |= MCA_ACCELERATOR_FLAGS_HOST_ATOMICS;
+            opal_accelerator_rocm_lazy_init();
+            *dev_id = srcAttr.device;
             ret = 1;
         }
     }
@@ -530,6 +527,7 @@ static int mca_accelerator_rocm_get_ipc_handle(int dev_id, void *dev_ptr,
     OBJ_CONSTRUCT(rocm_handle, opal_accelerator_rocm_ipc_handle_t);
     rocm_handle->base.dev_ptr = NULL;
 
+    memset(rocm_ipc_handle.reserved, 0, HIP_IPC_HANDLE_SIZE);
     hipError_t err = hipIpcGetMemHandle(&rocm_ipc_handle,
                                         (hipDeviceptr_t)dev_ptr);
     if (hipSuccess != err) {
@@ -620,6 +618,7 @@ static int mca_accelerator_rocm_get_ipc_event_handle(opal_accelerator_event_t *e
     opal_accelerator_rocm_ipc_event_handle_t *rocm_handle = (opal_accelerator_rocm_ipc_event_handle_t *) handle;
     OBJ_CONSTRUCT(rocm_handle, opal_accelerator_rocm_ipc_event_handle_t);
     
+    memset(rocm_ipc_handle.reserved, 0, HIP_IPC_HANDLE_SIZE);
     hipError_t err = hipIpcGetEventHandle(&rocm_ipc_handle,
                                           *((hipEvent_t *)event->event));
     if (hipSuccess != err) {
@@ -762,6 +761,11 @@ static int mca_accelerator_rocm_device_can_access_peer(int *access, int dev1, in
         return OPAL_ERR_BAD_PARAM;
     }
 
+    if (dev1 == dev2) {
+        *access = 1;
+        return OPAL_SUCCESS;
+    }
+
     hipError_t err = hipDeviceCanAccessPeer(access, dev1, dev2);
     if (hipSuccess != err) {
         opal_output_verbose(10, opal_accelerator_base_framework.framework_output,
@@ -777,7 +781,7 @@ static int mca_accelerator_rocm_get_buffer_id(int dev_id, const void *addr, opal
     *buf_id = 0;
 
 #if HIP_VERSION >= 50120531
-    hipError_t result = hipPointerGetAttribute((unsigned long long *)&buf_id, HIP_POINTER_ATTRIBUTE_BUFFER_ID,
+    hipError_t result = hipPointerGetAttribute((unsigned long long *)buf_id, HIP_POINTER_ATTRIBUTE_BUFFER_ID,
                                                (hipDeviceptr_t)addr);
     if (hipSuccess != result) {
         opal_output_verbose(10, opal_accelerator_base_framework.framework_output,
