@@ -248,7 +248,6 @@ int mca_rcache_rgpusm_register(mca_rcache_base_module_t *rcache, void *addr, siz
         rgpusm_reg->base.rcache = rcache;
         rgpusm_reg->base.base = addr;
         rgpusm_reg->base.bound = (unsigned char *) addr + size - 1;
-        ;
         rgpusm_reg->base.flags = flags;
 
         /* The rget_reg registration is holding the memory handle needed
@@ -294,9 +293,8 @@ int mca_rcache_rgpusm_register(mca_rcache_base_module_t *rcache, void *addr, siz
                             "RGPUSM: Found addr=%p,size=%d (base=%p,size=%d) in cache", addr,
                             (int) size, (void*)(*reg)->base, (int) ((*reg)->bound - (*reg)->base));
 
-        if (0 ==
-            memcmp(((mca_opal_gpu_reg_t *)*reg)->data.ipcHandle.handle, rget_reg->data.ipcHandle.handle,
-                  sizeof(((mca_opal_gpu_reg_t *)*reg)->data.ipcHandle.handle))) {
+        if (0 == opal_accelerator.compare_ipc_handles(((mca_opal_gpu_reg_t *)*reg)->data.ipcHandle.handle,
+                                                      rget_reg->data.ipcHandle.handle)) {
             /* Registration matches what was requested.  All is good. */
             rcache_rgpusm->stat_cache_valid++;
         } else {

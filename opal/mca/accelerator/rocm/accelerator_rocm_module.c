@@ -41,6 +41,8 @@ static int mca_accelerator_rocm_import_ipc_handle(int dev_id, uint8_t ipc_handle
                                                   opal_accelerator_ipc_handle_t *handle);
 static int mca_accelerator_rocm_open_ipc_handle(int dev_id, opal_accelerator_ipc_handle_t *handle,
                                                 void **dev_ptr);
+static int mca_accelerator_rocm_compare_ipc_handles(uint8_t handle_1[IPC_MAX_HANDLE_SIZE],
+                                                    uint8_t handle_2[IPC_MAX_HANDLE_SIZE]);
 static int mca_accelerator_rocm_get_ipc_event_handle(opal_accelerator_event_t *event,
                                                      opal_accelerator_ipc_event_handle_t *handle);
 static int mca_accelerator_rocm_import_ipc_event_handle(uint8_t ipc_handle[IPC_MAX_HANDLE_SIZE],
@@ -82,6 +84,7 @@ opal_accelerator_base_module_t opal_accelerator_rocm_module =
     mca_accelerator_rocm_get_ipc_handle,
     mca_accelerator_rocm_import_ipc_handle,
     mca_accelerator_rocm_open_ipc_handle,
+    mca_accelerator_rocm_compare_ipc_handles,
     mca_accelerator_rocm_get_ipc_event_handle,
     mca_accelerator_rocm_import_ipc_event_handle,
     mca_accelerator_rocm_open_ipc_event_handle,
@@ -571,6 +574,27 @@ static int mca_accelerator_rocm_open_ipc_handle(int dev_id, opal_accelerator_ipc
     *dev_ptr = handle->dev_ptr;
 
     return OPAL_SUCCESS;
+}
+
+static int mca_accelerator_rocm_compare_ipc_handles(uint8_t handle_1[IPC_MAX_HANDLE_SIZE],
+                                                    uint8_t handle_2[IPC_MAX_HANDLE_SIZE])
+{
+    /*
+     * The HIP IPC handles consists of multiple elements.
+     * We will only use the ROCr IPC handle (32 bytes, starting at pos 0)
+     * and the process ID for comparison.
+     * We definitily need to exclude the offset component in the comparison.
+     */
+    static const int rocr_ipc_handle_size = 32;
+    static const int pos = rocr_ipc_handle_size + 2*sizeof(size_t);
+    int *pid_1 = (int *)&handle_1[pos];
+    int *pid_2 = (int *)&handle_2[pos];
+
+    if (*pid_1 != *pid_2) {
+        return 1;
+    }
+
+    return memcmp(handle_1, handle_2, rocr_ipc_handle_size);
 }
 
 static void mca_accelerator_rocm_ipc_event_handle_destruct(opal_accelerator_rocm_ipc_handle_t *handle)

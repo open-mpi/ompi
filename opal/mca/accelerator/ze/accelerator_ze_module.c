@@ -46,6 +46,8 @@ static int mca_accelerator_ze_import_ipc_handle(int dev_id, uint8_t ipc_handle[I
                                                 opal_accelerator_ipc_handle_t *handle);
 static int mca_accelerator_ze_open_ipc_handle(int dev_id, opal_accelerator_ipc_handle_t *handle,
                                               void **dev_ptr);
+static int accelerator_ze_compare_ipc_handles(uint8_t handle_1[IPC_MAX_HANDLE_SIZE],
+                                             uint8_t handle_2[IPC_MAX_HANDLE_SIZE]);
 static int mca_accelerator_ze_get_ipc_event_handle(opal_accelerator_event_t *event,
                                                    opal_accelerator_ipc_event_handle_t *handle);
 static int mca_accelerator_ze_import_ipc_event_handle(uint8_t ipc_handle[IPC_MAX_HANDLE_SIZE],
@@ -85,6 +87,7 @@ opal_accelerator_base_module_t opal_accelerator_ze_module =
     .get_ipc_handle = mca_accelerator_ze_get_ipc_handle,
     .import_ipc_handle = mca_accelerator_ze_import_ipc_handle,
     .open_ipc_handle = mca_accelerator_ze_open_ipc_handle,
+    .compare_ipc_handles = mca_accelerator_ze_compare_ipc_handles,
     .get_ipc_event_handle = mca_accelerator_ze_get_ipc_event_handle,
     .import_ipc_event_handle = mca_accelerator_ze_import_ipc_event_handle,
     .open_ipc_event_handle = mca_accelerator_ze_open_ipc_event_handle,
@@ -648,6 +651,12 @@ static int mca_accelerator_ze_open_ipc_handle(int dev_id, opal_accelerator_ipc_h
                                               void **dev_ptr)
 {
     return OPAL_ERR_NOT_IMPLEMENTED;
+}
+
+static int accelerator_ze_compare_ipc_handles(uint8_t handle_1[IPC_MAX_HANDLE_SIZE],
+                                              uint8_t handle_2[IPC_MAX_HANDLE_SIZE])
+{
+    return memcmp(handle_1, handle_2, IPC_MAX_HANDLE_SIZE);
 }
 
 static int mca_accelerator_ze_get_ipc_event_handle(opal_accelerator_event_t *event,
