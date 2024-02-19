@@ -16,7 +16,7 @@ subroutine MPI_Mprobe_f08(source,tag,comm,message,status,ierror)
    INTEGER, INTENT(IN) :: source, tag
    TYPE(MPI_Comm), INTENT(IN) :: comm
    TYPE(MPI_Message), INTENT(OUT) :: message
-   TYPE(MPI_Status), INTENT(OUT) :: status
+   TYPE(MPI_Status) :: status
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
    integer :: c_ierror
 
