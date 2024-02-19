@@ -28,13 +28,12 @@
 
 #include "ompi/datatype/ompi_datatype.h"
 
-int32_t ompi_datatype_create_struct( int count, const int* pBlockLength, const ptrdiff_t* pDisp,
+int32_t ompi_datatype_create_struct( size_t count, const int* pBlockLength, const ptrdiff_t* pDisp,
                                      ompi_datatype_t* const * pTypes, ompi_datatype_t** newType )
 {
     ptrdiff_t disp = 0, endto, lastExtent, lastDisp;
     ompi_datatype_t *pdt, *lastType;
-    int i, start_from;
-    size_t lastBlock;
+    size_t i, start_from, lastBlock;
 
     /* Find first non-zero length element */
     for( i = 0; (i < count) && (0 == pBlockLength[i]); i++ );
