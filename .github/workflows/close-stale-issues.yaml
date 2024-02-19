@@ -53,7 +53,7 @@ jobs:
           days-before-pr-close: -1
 
           # We only close issues with this label
-          only-labels: "State: Awaiting user information"
+          only-labels: State-Awaiting user information
           close-issue-label: Closed due to no reply
 
           # Messages that we put in comments on issues
