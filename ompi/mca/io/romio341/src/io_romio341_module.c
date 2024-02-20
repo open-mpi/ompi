@@ -14,6 +14,8 @@
  * Copyright (c) 2017-2019 IBM Corporation. All rights reserved.
  * Copyright (c) 2017-2021 Research Organization for Information Science
  *                         and Technology  (RIST).  All rights reserved.
+ * Copyright (c) 2024      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -40,7 +42,7 @@ void ADIOI_Datatype_iscontig(MPI_Datatype datatype, int *flag);
 /*
  * The ROMIO module operations
  */
-mca_io_base_module_2_0_0_t mca_io_romio341_module = {
+mca_io_base_module_3_0_0_t mca_io_romio341_module = {
     /* Back end to MPI API calls (pretty much a 1-to-1 mapping) */
 
     mca_io_romio341_file_open,

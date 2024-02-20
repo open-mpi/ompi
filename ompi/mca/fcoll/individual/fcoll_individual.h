@@ -12,6 +12,8 @@
  * Copyright (c) 2008-2016 University of Houston. All rights reserved.
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2024      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -52,14 +54,14 @@ int mca_fcoll_individual_module_finalize (ompio_file_t *file);
 
 int mca_fcoll_individual_file_read_all (ompio_file_t *fh,
                                      void *buf,
-                                     int count,
+                                     size_t count,
                                      struct ompi_datatype_t *datatype,
                                      ompi_status_public_t * status);
 
 
 int mca_fcoll_individual_file_write_all (ompio_file_t *fh,
                                       const void *buf,
-                                      int count,
+                                      size_t count,
                                       struct ompi_datatype_t *datatype,
                                       ompi_status_public_t * status);
 

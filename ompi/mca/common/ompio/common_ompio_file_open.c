@@ -15,6 +15,8 @@
  * Copyright (c) 2016      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * Copyright (c) 2018      DataDirect Networks. All rights reserved.
+ * Copyright (c) 2024      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -591,7 +593,7 @@ int mca_common_ompio_create_incomplete_file_handle (const char *filename,
 
 int mca_common_ompio_decode_datatype (struct ompio_file_t *fh,
                                       ompi_datatype_t *datatype,
-                                      int count,
+                                      size_t count,
                                       const void *buf,
                                       size_t *max_data,
                                       opal_convertor_t *conv,

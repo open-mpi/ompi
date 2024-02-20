@@ -16,7 +16,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      University of Houston. All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
- * Copyright (c) 2018      Triad National Security, LLC. All rights
+ * Copyright (c) 2024      Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -289,8 +289,8 @@ static void file_destructor(ompi_file_t *file)
     /* Finalize the module */
 
     switch (file->f_io_version) {
-    case MCA_IO_BASE_V_2_0_0:
-        file->f_io_selected_module.v2_0_0.io_module_file_close(file);
+    case MCA_IO_BASE_V_3_0_0:
+        file->f_io_selected_module.v3_0_0.io_module_file_close(file);
         break;
     default:
         /* Should never get here */

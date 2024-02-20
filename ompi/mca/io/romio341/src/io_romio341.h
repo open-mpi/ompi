@@ -13,6 +13,8 @@
  * Copyright (c) 2015-2021 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2016-2019 IBM Corporation. All rights reserved.
+ * Copyright (c) 2024      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -34,14 +36,14 @@
 
 BEGIN_C_DECLS
 
-OMPI_DECLSPEC extern mca_io_base_component_2_0_0_t mca_io_romio341_component;
+OMPI_DECLSPEC extern mca_io_base_component_3_0_0_t mca_io_romio341_component;
 
 /*
  * global variables, instantiated in module.c
  */
 extern opal_mutex_t mca_io_romio341_mutex;
-extern mca_io_base_module_2_0_0_t mca_io_romio341_module;
-OMPI_DECLSPEC extern mca_io_base_component_2_0_0_t mca_io_romio341_component;
+extern mca_io_base_module_3_0_0_t mca_io_romio341_module;
+OMPI_DECLSPEC extern mca_io_base_component_3_0_0_t mca_io_romio341_component;
 
 /*
  * Private data for ROMIO modules
@@ -51,6 +53,12 @@ struct mca_io_romio341_data_t {
 };
 typedef struct mca_io_romio341_data_t mca_io_romio341_data_t;
 
+#define OMPI_CHECK_MPI_COUNT_INT_CONVERSION_OVERFLOW(x) \
+    do { \
+        if ((x) > INT_MAX) { \
+            return OMPI_ERROR; \
+        } \
+    } while (0)
 
 /*
  * Module functions
@@ -102,91 +110,91 @@ int mca_io_romio341_file_get_view (struct ompi_file_t *fh,
 int mca_io_romio341_file_read_at (struct ompi_file_t *fh,
                                MPI_Offset offset,
                                void *buf,
-                               int count,
+                               size_t count,
                                struct ompi_datatype_t *datatype,
                                ompi_status_public_t * status);
 int mca_io_romio341_file_read_at_all (struct ompi_file_t *fh,
                                    MPI_Offset offset,
                                    void *buf,
-                                   int count,
+                                   size_t count,
                                    struct ompi_datatype_t *datatype,
                                    ompi_status_public_t * status);
 int mca_io_romio341_file_write_at (struct ompi_file_t *fh,
                                 MPI_Offset offset,
                                 const void *buf,
-                                int count,
+                                size_t count,
                                 struct ompi_datatype_t *datatype,
                                 ompi_status_public_t * status);
 int mca_io_romio341_file_write_at_all (struct ompi_file_t *fh,
                                     MPI_Offset offset,
                                     const void *buf,
-                                    int count,
+                                    size_t count,
                                     struct ompi_datatype_t *datatype,
                                     ompi_status_public_t * status);
 int mca_io_romio341_file_iread_at (struct ompi_file_t *fh,
                                 MPI_Offset offset,
                                 void *buf,
-                                int count,
+                                size_t count,
                                 struct ompi_datatype_t *datatype,
                                 ompi_request_t **request);
 int mca_io_romio341_file_iread_at_all (struct ompi_file_t *fh,
                                        MPI_Offset offset,
                                        void *buf,
-                                       int count,
+                                       size_t count,
                                        struct ompi_datatype_t *datatype,
                                        ompi_request_t **request);
 int mca_io_romio341_file_iwrite_at (struct ompi_file_t *fh,
                                  MPI_Offset offset,
                                  const void *buf,
-                                 int count,
+                                 size_t count,
                                  struct ompi_datatype_t *datatype,
                                  ompi_request_t **request);
 int mca_io_romio341_file_iwrite_at_all (struct ompi_file_t *fh,
                                         MPI_Offset offset,
                                         const void *buf,
-                                        int count,
+                                        size_t count,
                                         struct ompi_datatype_t *datatype,
                                         ompi_request_t **request);
 
 /* Section 9.4.3 */
 int mca_io_romio341_file_read (struct ompi_file_t *fh,
                             void *buf,
-                            int count,
+                            size_t count,
                             struct ompi_datatype_t *datatype,
                             ompi_status_public_t * status);
 int mca_io_romio341_file_read_all (struct ompi_file_t *fh,
                                 void *buf,
-                                int count,
+                                size_t count,
                                 struct ompi_datatype_t *datatype,
                                 ompi_status_public_t * status);
 int mca_io_romio341_file_write (struct ompi_file_t *fh,
                              const void *buf,
-                             int count,
+                             size_t count,
                              struct ompi_datatype_t *datatype,
                              ompi_status_public_t * status);
 int mca_io_romio341_file_write_all (struct ompi_file_t *fh,
                                  const void *buf,
-                                 int count,
+                                 size_t count,
                                  struct ompi_datatype_t *datatype,
                                  ompi_status_public_t * status);
 int mca_io_romio341_file_iread (struct ompi_file_t *fh,
                              void *buf,
-                             int count,
+                             size_t count,
                              struct ompi_datatype_t *datatype,
                              ompi_request_t **request);
 int mca_io_romio341_file_iread_all (struct ompi_file_t *fh,
                                     void *buf,
-                                    int count,
+                                    size_t count,
                                     struct ompi_datatype_t *datatype,
                                     ompi_request_t **request);
 int mca_io_romio341_file_iwrite (struct ompi_file_t *fh,
                               const void *buf,
-                              int count,
+                              size_t count,
                               struct ompi_datatype_t *datatype,
                               ompi_request_t **request);
 int mca_io_romio341_file_iwrite_all (struct ompi_file_t *fh,
                                      const void *buf,
-                                     int count,
+                                     size_t count,
                                      struct ompi_datatype_t *datatype,
                                      ompi_request_t **request);
 int mca_io_romio341_file_seek (struct ompi_file_t *fh,
@@ -201,32 +209,32 @@ int mca_io_romio341_file_get_byte_offset (struct ompi_file_t *fh,
 /* Section 9.4.4 */
 int mca_io_romio341_file_read_shared (struct ompi_file_t *fh,
                                    void *buf,
-                                   int count,
+                                   size_t count,
                                    struct ompi_datatype_t *datatype,
                                    ompi_status_public_t * status);
 int mca_io_romio341_file_write_shared (struct ompi_file_t *fh,
                                     const void *buf,
-                                    int count,
+                                    size_t count,
                                     struct ompi_datatype_t *datatype,
                                     ompi_status_public_t * status);
 int mca_io_romio341_file_iread_shared (struct ompi_file_t *fh,
                                     void *buf,
-                                    int count,
+                                    size_t count,
                                     struct ompi_datatype_t *datatype,
                                     ompi_request_t **request);
 int mca_io_romio341_file_iwrite_shared (struct ompi_file_t *fh,
                                      const void *buf,
-                                     int count,
+                                     size_t count,
                                      struct ompi_datatype_t *datatype,
                                      ompi_request_t **request);
 int mca_io_romio341_file_read_ordered (struct ompi_file_t *fh,
                                     void *buf,
-                                    int count,
+                                    size_t count,
                                     struct ompi_datatype_t *datatype,
                                     ompi_status_public_t * status);
 int mca_io_romio341_file_write_ordered (struct ompi_file_t *fh,
                                      const void *buf,
-                                     int count,
+                                     size_t count,
                                      struct ompi_datatype_t *datatype,
                                      ompi_status_public_t * status);
 int mca_io_romio341_file_seek_shared (struct ompi_file_t *fh,
@@ -239,7 +247,7 @@ int mca_io_romio341_file_get_position_shared (struct ompi_file_t *fh,
 int mca_io_romio341_file_read_at_all_begin (struct ompi_file_t *fh,
                                          MPI_Offset offset,
                                          void *buf,
-                                         int count,
+                                         size_t count,
                                          struct ompi_datatype_t *datatype);
 int mca_io_romio341_file_read_at_all_end (struct ompi_file_t *fh,
                                        void *buf,
@@ -247,35 +255,35 @@ int mca_io_romio341_file_read_at_all_end (struct ompi_file_t *fh,
 int mca_io_romio341_file_write_at_all_begin (struct ompi_file_t *fh,
                                           MPI_Offset offset,
                                           const void *buf,
-                                          int count,
+                                          size_t count,
                                           struct ompi_datatype_t *datatype);
 int mca_io_romio341_file_write_at_all_end (struct ompi_file_t *fh,
                                         const void *buf,
                                         ompi_status_public_t * status);
 int mca_io_romio341_file_read_all_begin (struct ompi_file_t *fh,
                                       void *buf,
-                                      int count,
+                                      size_t count,
                                       struct ompi_datatype_t *datatype);
 int mca_io_romio341_file_read_all_end (struct ompi_file_t *fh,
                                     void *buf,
                                     ompi_status_public_t * status);
 int mca_io_romio341_file_write_all_begin (struct ompi_file_t *fh,
                                        const void *buf,
-                                       int count,
+                                       size_t count,
                                        struct ompi_datatype_t *datatype);
 int mca_io_romio341_file_write_all_end (struct ompi_file_t *fh,
                                      const void *buf,
                                      ompi_status_public_t * status);
 int mca_io_romio341_file_read_ordered_begin (struct ompi_file_t *fh,
                                           void *buf,
-                                          int count,
+                                          size_t count,
                                           struct ompi_datatype_t *datatype);
 int mca_io_romio341_file_read_ordered_end (struct ompi_file_t *fh,
                                         void *buf,
                                         ompi_status_public_t * status);
 int mca_io_romio341_file_write_ordered_begin (struct ompi_file_t *fh,
                                            const void *buf,
-                                           int count,
+                                           size_t count,
                                            struct ompi_datatype_t *datatype);
 int mca_io_romio341_file_write_ordered_end (struct ompi_file_t *fh,
                                          const void *buf,

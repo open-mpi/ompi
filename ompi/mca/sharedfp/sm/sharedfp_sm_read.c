@@ -12,6 +12,8 @@
  * Copyright (c) 2013-2018 University of Houston. All rights reserved.
  * Copyright (c) 2018      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2024      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,11 +31,11 @@
 #include "ompi/mca/sharedfp/base/base.h"
 
 int mca_sharedfp_sm_read ( ompio_file_t *fh,
-                           void *buf, int count, MPI_Datatype datatype, MPI_Status *status)
+                           void *buf, size_t count, MPI_Datatype datatype, MPI_Status *status)
 {
     int ret = OMPI_SUCCESS;
     OMPI_MPI_OFFSET_TYPE offset = 0;
-    long bytesRequested = 0;
+    long long bytesRequested = 0;
     size_t numofBytes;
 
     if( NULL == fh->f_sharedfp_data){
@@ -48,7 +50,7 @@ int mca_sharedfp_sm_read ( ompio_file_t *fh,
 
     if ( mca_sharedfp_sm_verbose ) {
         opal_output(ompi_sharedfp_base_framework.framework_output,
-                    "sharedfp_sm_read: Bytes Requested is %ld\n",bytesRequested);
+                    "sharedfp_sm_read: Bytes Requested is %lld\n",bytesRequested);
     }
 
     /*Request the offset to write bytesRequested bytes*/
@@ -70,7 +72,7 @@ int mca_sharedfp_sm_read ( ompio_file_t *fh,
 
 int mca_sharedfp_sm_read_ordered (ompio_file_t *fh,
                                   void *buf,
-                                  int count,
+                                  size_t count,
                                   struct ompi_datatype_t *datatype,
                                   ompi_status_public_t *status)
 {
@@ -80,7 +82,7 @@ int mca_sharedfp_sm_read_ordered (ompio_file_t *fh,
     long *buff=NULL;
     long offsetBuff;
     OMPI_MPI_OFFSET_TYPE offsetReceived = 0;
-    long bytesRequested = 0;
+    long long bytesRequested = 0;
     int recvcnt = 1, sendcnt = 1;
     size_t numofBytes;
     int i;
@@ -122,7 +124,7 @@ int mca_sharedfp_sm_read_ordered (ompio_file_t *fh,
             bytesRequested += buff[i];
             if ( mca_sharedfp_sm_verbose ) {
                 opal_output(ompi_sharedfp_base_framework.framework_output,
-                            "mca_sharedfp_sm_read_ordered: Bytes requested are %ld\n",bytesRequested);
+                            "mca_sharedfp_sm_read_ordered: Bytes requested are %lld\n",bytesRequested);
             }
         }
 

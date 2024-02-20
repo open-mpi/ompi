@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2008-2011 University of Houston. All rights reserved.
  * Copyright (c) 2016-2019 IBM Corporation. All rights reserved.
+ * Copyright (c) 2024      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,7 +29,7 @@
 /*
  * The OMPIO module operations
  */
-mca_io_base_module_2_0_0_t mca_io_ompio_module = {
+mca_io_base_module_3_0_0_t mca_io_ompio_module = {
 
     mca_io_ompio_file_open,
     mca_io_ompio_file_close,

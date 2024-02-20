@@ -14,6 +14,8 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
+ * Copyright (c) 2024      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -54,7 +56,7 @@ static int local_heap_sort (mca_io_ompio_local_io_array *io_array,
 int
 mca_fcoll_dynamic_file_write_all (struct ompio_file_t *fh,
                                   const void *buf,
-                                  int count,
+                                  size_t count,
                                   struct ompi_datatype_t *datatype,
                                   ompi_status_public_t *status)
 {

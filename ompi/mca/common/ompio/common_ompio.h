@@ -15,6 +15,8 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018      DataDirect Networks. All rights reserved.
  * Copyright (c) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (c) 2024      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -249,34 +251,34 @@ typedef struct mca_common_ompio_data_t mca_common_ompio_data_t;
 #include "common_ompio_print_queue.h"
 #include "common_ompio_aggregators.h"
 
-OMPI_DECLSPEC int mca_common_ompio_file_write (ompio_file_t *fh, const void *buf,  int count,
+OMPI_DECLSPEC int mca_common_ompio_file_write (ompio_file_t *fh, const void *buf, size_t count,
                                                struct ompi_datatype_t *datatype, 
                                                ompi_status_public_t *status);
 
 OMPI_DECLSPEC int mca_common_ompio_file_write_at (ompio_file_t *fh, OMPI_MPI_OFFSET_TYPE offset,  const void *buf,
-                                                  int count,  struct ompi_datatype_t *datatype, 
+                                                  size_t count, struct ompi_datatype_t *datatype,
                                                   ompi_status_public_t *status);
 
-OMPI_DECLSPEC int mca_common_ompio_file_iwrite (ompio_file_t *fh, const void *buf, int count,
+OMPI_DECLSPEC int mca_common_ompio_file_iwrite (ompio_file_t *fh, const void *buf, size_t count,
                                                 struct ompi_datatype_t *datatype, ompi_request_t **request);
 
 OMPI_DECLSPEC int mca_common_ompio_file_iwrite_at (ompio_file_t *fh,  OMPI_MPI_OFFSET_TYPE offset,
-                                                   const void *buf,  int count,  struct ompi_datatype_t *datatype,
+                                                   const void *buf,  size_t count,  struct ompi_datatype_t *datatype,
                                                    ompi_request_t **request);
 
 OMPI_DECLSPEC int mca_common_ompio_file_write_all (ompio_file_t *fh, const void *buf,
-                                                   int count, struct ompi_datatype_t *datatype, 
+                                                   size_t count, struct ompi_datatype_t *datatype,
                                                    ompi_status_public_t *status);
 
 OMPI_DECLSPEC int mca_common_ompio_file_write_at_all (ompio_file_t *fh, OMPI_MPI_OFFSET_TYPE offset, const void *buf,
-                                                      int count, struct ompi_datatype_t *datatype, 
+                                                      size_t count, struct ompi_datatype_t *datatype,
                                                       ompi_status_public_t *status);
 
 OMPI_DECLSPEC int mca_common_ompio_file_iwrite_all (ompio_file_t *fp, const void *buf,
-                                                    int count, struct ompi_datatype_t *datatype, ompi_request_t **request);
+                                                    size_t count, struct ompi_datatype_t *datatype, ompi_request_t **request);
 
 OMPI_DECLSPEC int mca_common_ompio_file_iwrite_at_all (ompio_file_t *fp, OMPI_MPI_OFFSET_TYPE offset, const void *buf,
-                                                       int count, struct ompi_datatype_t *datatype, ompi_request_t **request);
+                                                       size_t count, struct ompi_datatype_t *datatype, ompi_request_t **request);
 
 OMPI_DECLSPEC int mca_common_ompio_build_io_array ( ompio_fview_t *fview, int index, int cycles,
                                                     size_t bytes_per_cycle, size_t max_data, uint32_t iov_count,
@@ -285,32 +287,32 @@ OMPI_DECLSPEC int mca_common_ompio_build_io_array ( ompio_fview_t *fview, int in
                                                     int *num_io_entries );
 
 
-OMPI_DECLSPEC int mca_common_ompio_file_read (ompio_file_t *fh,  void *buf,  int count,
+OMPI_DECLSPEC int mca_common_ompio_file_read (ompio_file_t *fh,  void *buf,  size_t count,
                                               struct ompi_datatype_t *datatype, ompi_status_public_t *status);
 
 OMPI_DECLSPEC int mca_common_ompio_file_read_at (ompio_file_t *fh, OMPI_MPI_OFFSET_TYPE offset,  void *buf,
-                                                 int count, struct ompi_datatype_t *datatype, 
+                                                 size_t count, struct ompi_datatype_t *datatype,
                                                  ompi_status_public_t * status);
 
-OMPI_DECLSPEC int mca_common_ompio_file_iread (ompio_file_t *fh, void *buf, int count,
+OMPI_DECLSPEC int mca_common_ompio_file_iread (ompio_file_t *fh, void *buf, size_t count,
                                                struct ompi_datatype_t *datatype, ompi_request_t **request);
 
 OMPI_DECLSPEC int mca_common_ompio_file_iread_at (ompio_file_t *fh, OMPI_MPI_OFFSET_TYPE offset,
-                                                  void *buf, int count, struct ompi_datatype_t *datatype,
+                                                  void *buf, size_t count, struct ompi_datatype_t *datatype,
                                                   ompi_request_t **request);
 
-OMPI_DECLSPEC int mca_common_ompio_file_read_all (ompio_file_t *fh, void *buf, int count, struct ompi_datatype_t *datatype,
+OMPI_DECLSPEC int mca_common_ompio_file_read_all (ompio_file_t *fh, void *buf, size_t count, struct ompi_datatype_t *datatype,
                                                   ompi_status_public_t * status);
 
 OMPI_DECLSPEC int mca_common_ompio_file_read_at_all (ompio_file_t *fh, OMPI_MPI_OFFSET_TYPE offset,
-                                                     void *buf, int count, struct ompi_datatype_t *datatype,
+                                                     void *buf, size_t count, struct ompi_datatype_t *datatype,
                                                      ompi_status_public_t * status);
 
-OMPI_DECLSPEC int mca_common_ompio_file_iread_all (ompio_file_t *fp, void *buf, int count, struct ompi_datatype_t *datatype,
+OMPI_DECLSPEC int mca_common_ompio_file_iread_all (ompio_file_t *fp, void *buf, size_t count, struct ompi_datatype_t *datatype,
                                                    ompi_request_t **request);
 
 OMPI_DECLSPEC int mca_common_ompio_file_iread_at_all (ompio_file_t *fp, OMPI_MPI_OFFSET_TYPE offset,
-                                                      void *buf, int count, struct ompi_datatype_t *datatype,
+                                                      void *buf, size_t count, struct ompi_datatype_t *datatype,
                                                       ompi_request_t **request);
 
 OMPI_DECLSPEC int mca_common_ompio_file_open (ompi_communicator_t *comm, const char *filename,
@@ -330,7 +332,7 @@ OMPI_DECLSPEC int mca_common_ompio_set_file_defaults (ompio_file_t *fh);
 OMPI_DECLSPEC int mca_common_ompio_set_view (ompio_file_t *fh,  OMPI_MPI_OFFSET_TYPE disp,
                                              ompi_datatype_t *etype,  ompi_datatype_t *filetype, const char *datarep,
                                              opal_info_t *info);
-OMPI_DECLSPEC int mca_common_ompio_base_file_read_all (struct ompio_file_t *fh, void *buf, int count,
+OMPI_DECLSPEC int mca_common_ompio_base_file_read_all (struct ompio_file_t *fh, void *buf, size_t count,
                                                        struct ompi_datatype_t *datatype, ompi_status_public_t *status);
 
  
@@ -341,7 +343,7 @@ OMPI_DECLSPEC int mca_common_ompio_base_file_read_all (struct ompio_file_t *fh, 
  */
 OMPI_DECLSPEC int mca_common_ompio_decode_datatype (struct ompio_file_t *fh,
                                                     struct ompi_datatype_t *datatype,
-                                                    int count,
+                                                    size_t count,
                                                     const void *buf,
                                                     size_t *max_data,
                                                     opal_convertor_t *convertor,

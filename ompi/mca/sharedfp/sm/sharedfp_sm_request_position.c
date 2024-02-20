@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2013-2015 University of Houston. All rights reserved.
  * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2024      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -31,7 +33,7 @@
 #include <semaphore.h>
 
 int mca_sharedfp_sm_request_position(ompio_file_t *fh, 
-                                     int bytes_requested,
+                                     long long bytes_requested,
                                      OMPI_MPI_OFFSET_TYPE *offset)
 {
     int ret = OMPI_SUCCESS;
@@ -70,7 +72,7 @@ int mca_sharedfp_sm_request_position(ompio_file_t *fh,
     position = old_offset + bytes_requested;
     if ( mca_sharedfp_sm_verbose ) {
         opal_output(ompi_sharedfp_base_framework.framework_output,
-                    "old_offset=%lld, bytes_requested=%d, new offset=%lld!\n",old_offset,bytes_requested,position);
+                    "old_offset=%lld, bytes_requested=%lld, new offset=%lld!\n",old_offset,bytes_requested,position);
     }
     sm_offset_ptr->offset=position;
 
