@@ -20,7 +20,7 @@
  * Copyright (c) 2014-2020 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
- * Copyright (c) 2021-2022 Nanook Consulting.  All rights reserved.
+ * Copyright (c) 2021-2024 Nanook Consulting  All rights reserved.
  * Copyright (c) 2018-2022 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2022      IBM Corporation.  All rights reserved.
@@ -65,6 +65,7 @@
 #include "ompi/dpm/dpm.h"
 
 static opal_rng_buff_t rnd;
+static bool new_method = true;
 
 typedef struct {
     ompi_communicator_t       *comm;
@@ -96,6 +97,14 @@ int ompi_dpm_init(void)
     if (!opal_srand(&rnd, now)) {
         return OMPI_ERROR;
     }
+
+    // register an MCA param to select connect/accept method
+    (void) mca_base_var_register ("ompi", "dpm", "enable", "new_method",
+                                  "Enable new method for performing connect/accept",
+                                  MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                  OPAL_INFO_LVL_4, MCA_BASE_VAR_SCOPE_READONLY,
+                                  &new_method);
+
     return OMPI_SUCCESS;
 }
 
@@ -111,9 +120,9 @@ static int compare_pmix_proc(const void *a, const void *b)
     return proc_a->rank - proc_b->rank;
 }
 
-int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
-                            const char *port_string, bool send_first,
-                            ompi_communicator_t **newcomm)
+static int connect_accept_old(ompi_communicator_t *comm, int root,
+                              const char *port_string, bool send_first,
+                              ompi_communicator_t **newcomm)
 {
     int k, size, rsize, rank, rc, rportlen=0;
     char **members = NULL, *nstring, *rport=NULL, *key, *pkey;
@@ -547,6 +556,14 @@ bcast_rportlen:
         goto exit;
     }
 
+opal_output(0, "NEW LOCAL GROUP: MY RANK %d", newcomp->c_my_rank);
+for (i=0; i < newcomp->c_local_group->grp_proc_count; i++) {
+    opal_output(0, "\t%s", OMPI_NAME_PRINT(&newcomp->c_local_group->grp_proc_pointers[i]->super.proc_name));
+}
+opal_output(0, "NEW REMOTE GROUP");
+for (i=0; i < newcomp->c_remote_group->grp_proc_count; i++) {
+    opal_output(0, "\t%s", OMPI_NAME_PRINT(&newcomp->c_remote_group->grp_proc_pointers[i]->super.proc_name));
+}
     /* activate comm and init coll-component */
     rc = ompi_comm_activate ( &newcomp,                  /* new communicator */
                               comm,                      /* old communicator */
@@ -574,6 +591,547 @@ bcast_rportlen:
 
     *newcomm = newcomp;
     return rc;
+}
+
+
+static int connect_accept_new(ompi_communicator_t *comm, int root,
+                              const char *port_string, bool send_first,
+                              ompi_communicator_t **newcomm)
+{
+    int k, size, rsize, rank, rc;
+    char *key;
+    bool dense, isnew;
+    opal_process_name_t pname;
+    opal_list_t ilist, rlist;
+    pmix_info_t info, *iptr, *results;
+    pmix_value_t pval;
+    pmix_proc_t *procs, pxproc, *parray;
+    size_t nprocs, n, m, nsize;
+    opal_proclist_t *plt;
+    char *pstring = NULL;
+    size_t ninfo, nresults, cid, psize;
+    bool found;
+    pmix_value_t *val;
+    void *infolist;
+    pmix_data_array_t darray;
+
+    ompi_communicator_t *newcomp=MPI_COMM_NULL;
+    ompi_proc_t *proc;
+    ompi_group_t *group=comm->c_local_group;
+    ompi_proc_t **proc_list=NULL, **new_proc_list = NULL;
+    int32_t i;
+    uint32_t ui;
+    int leader_rank;
+    ompi_group_t *new_group_pointer;
+    ompi_dpm_proct_caddy_t *cd;
+    int rportlen;
+
+    /* set default error return */
+    *newcomm = MPI_COMM_NULL;
+
+    size = ompi_comm_size ( comm );
+    rank = ompi_comm_rank ( comm );
+
+    /* each process will call PMIx_Group_construct. Since the processes
+     * on each side of connect/accept only know all of the processes on
+     * their own side, the group operation is called with just the known
+     * processes. PMIx will "stitch" the complete array of participants
+     * together during the PMIx_Group_construct operation. Once the construct
+     * operation completes, the members from the other side of the operation
+     * are used to complete construction of the intercommunicator. */
+
+    /* If there was an error during the COMM_SPAWN stage, the port string will
+     * be set (in mpi/c/comm_spawn.c) with a special value that contains the error
+     * code. If we see this error code, then we will set a quick timeout on the
+     * PMIx_Group_construct operation so the applications don't hang.
+     */
+    if (NULL != port_string) {
+        pstring = strdup(port_string);
+
+        if (NULL != (key = strstr(pstring, ":error="))) {
+            char *value = strrchr(pstring, '=');
+            assert(NULL != value);
+            rportlen = atoi(++value);
+            if (0 < rportlen) {
+                rportlen *= -1;
+            }
+        } else {
+            rportlen = strlen(pstring) + 1;
+        }
+    }
+
+    /* root rank on each side is responsible for ensuring that
+     * all of their participants has the port string as this
+     * will be our PMIx group ID */
+
+    /* bcast the list-length to all processes in the local comm */
+    rc = comm->c_coll->coll_bcast(&rportlen, 1, MPI_INT, root, comm,
+                                 comm->c_coll->coll_bcast_module);
+    if (OMPI_SUCCESS != rc) {
+        OMPI_ERROR_LOG(rc);
+        if (NULL != pstring) {
+            free(pstring);
+        }
+        goto exit;
+    }
+
+    /* This is the comm_spawn error case: the root couldn't do the pmix spawn
+     * and is now propagating to the local group that this operation has to
+     * fail. */
+    if (0 >= rportlen) {
+        rc = rportlen;
+        OMPI_ERROR_LOG(rc);
+        if (NULL != pstring) {
+            free(pstring);
+        }
+        goto exit;
+    }
+
+    if (rank != root) {
+        if (NULL != pstring) {
+            free(pstring); // ensure we all have the same port string
+        }
+        /* non root processes need to allocate the buffer manually */
+        pstring = (char*)malloc(rportlen);
+        if (NULL == pstring) {
+            rc = OMPI_ERR_OUT_OF_RESOURCE;
+        OMPI_ERROR_LOG(rc);
+            goto exit;
+        }
+    }
+
+    // now share the port string itself
+    rc = comm->c_coll->coll_bcast(pstring, rportlen, MPI_BYTE, root, comm,
+                                 comm->c_coll->coll_bcast_module);
+    if (OMPI_SUCCESS != rc) {
+        OMPI_ERROR_LOG(rc);
+        if (NULL != pstring) {
+            free(pstring);
+        }
+        goto exit;
+    }
+
+    // everyone needs the list of members on our side
+    OBJ_CONSTRUCT(&ilist, opal_list_t);
+    if (MPI_COMM_WORLD == comm) {
+        plt = OBJ_NEW(opal_proclist_t);
+        PMIX_LOAD_PROCID(&plt->procid, ompi_process_info.myprocid.nspace, PMIX_RANK_WILDCARD);
+        opal_list_append(&ilist, &plt->super);
+
+    } else {
+        if (OMPI_GROUP_IS_DENSE(group)) {
+            proc_list = group->grp_proc_pointers;
+            dense = true;
+        } else {
+            proc_list = (ompi_proc_t**)calloc(group->grp_proc_count,
+                                              sizeof(ompi_proc_t *));
+            for (i=0 ; i<group->grp_proc_count ; i++) {
+                if (NULL == (proc_list[i] = ompi_group_peer_lookup(group,i))) {
+                    OMPI_ERROR_LOG(OMPI_ERR_NOT_FOUND);
+                    rc = OMPI_ERR_NOT_FOUND;
+                    free(proc_list);
+                    free(pstring);
+                    goto exit;
+                }
+            }
+            dense = false;
+        }
+        for (i=0; i < size; i++) {
+            opal_process_name_t proc_name;
+            if (ompi_proc_is_sentinel (proc_list[i])) {
+                proc_name = ompi_proc_sentinel_to_name ((uintptr_t) proc_list[i]);
+            } else {
+                proc_name = proc_list[i]->super.proc_name;
+            }
+            plt = OBJ_NEW(opal_proclist_t);
+            OPAL_PMIX_CONVERT_NAME(&plt->procid, &proc_name);
+            opal_list_append(&ilist, &plt->super);
+        }
+        if (!dense) {
+            free(proc_list);
+            proc_list = NULL;
+        }
+    }
+
+    // convert the list to an array of pmix_proc_t
+    nprocs = opal_list_get_size(&ilist);
+    PMIX_PROC_CREATE(procs, nprocs);
+    n = 0;
+    OPAL_LIST_FOREACH(plt, &ilist, opal_proclist_t) {
+        memcpy(&procs[n], &plt->procid, sizeof(pmix_proc_t));
+        ++n;
+    }
+    OPAL_LIST_DESTRUCT(&ilist);
+
+    /* root processes call PMIx_Group_construct with themselves as the sole
+     * proc member, and with the other members of their communicator as
+     * "add-members" */
+    if (rank == root) {
+        // setup to construct pmix_info_t array of attributes
+        PMIX_INFO_LIST_START(infolist);
+
+        // flag the group operation as a "bootstrap"
+        n = 2;
+        PMIX_INFO_LIST_ADD(rc, infolist, PMIX_GROUP_BOOTSTRAP, &n, PMIX_SIZE);
+        if (PMIX_SUCCESS != rc) {
+            PMIX_ERROR_LOG(rc);
+            PMIX_PROC_FREE(procs, nprocs);
+            goto exit;
+        }
+
+        // request a context ID for the new communicator
+        PMIX_INFO_LIST_ADD(rc, infolist, PMIX_GROUP_ASSIGN_CONTEXT_ID, NULL, PMIX_BOOL);
+        if (PMIX_SUCCESS != rc) {
+            PMIX_ERROR_LOG(rc);
+            PMIX_PROC_FREE(procs, nprocs);
+            goto exit;
+        }
+
+        // add the "add-members" attribute
+        darray.type = PMIX_PROC;
+        darray.array = procs;
+        darray.size = nprocs;
+        PMIX_INFO_LIST_ADD(rc, infolist, PMIX_GROUP_ADD_MEMBERS, &darray, PMIX_DATA_ARRAY);
+        if (PMIX_SUCCESS != rc) {
+            PMIX_ERROR_LOG(rc);
+            PMIX_PROC_FREE(procs, nprocs);
+            goto exit;
+        }
+
+        // convert the info list to an array of pmix_info_t
+        PMIX_INFO_LIST_CONVERT(rc, infolist, &darray);
+        if (PMIX_ERR_EMPTY == rc) {
+            iptr = NULL;
+            ninfo = 0;
+        } else if (PMIX_SUCCESS != rc) {
+            PMIX_ERROR_LOG(rc);
+            goto exit;
+        } else {
+            iptr = (pmix_info_t *) darray.array;
+            ninfo = darray.size;
+        }
+        PMIX_INFO_LIST_RELEASE(infolist);
+
+        // call construct
+        rc = PMIx_Group_construct(pstring, &ompi_process_info.myprocid, 1, iptr, ninfo, &results, &nresults);
+        PMIX_INFO_FREE(iptr, ninfo);
+
+    } else {
+        // non-root members simply call group construct with a NULL proc entry
+        rc = PMIx_Group_construct(pstring, NULL, 0, NULL, 0, &results, &nresults);
+
+    }
+
+    // if the construct operation returned an error, then we are done
+    if (PMIX_SUCCESS != rc) {
+        PMIX_ERROR_LOG(rc);
+        PMIX_PROC_FREE(procs, nprocs);
+        goto exit;
+    }
+
+    /* group construct returns an array of pmix_info_t that contains the
+     * assigned context ID and the complete group membership. In addition,
+     * it returns a complete copy of the modex information from all
+     * participants - that info will have been loaded into the PMIx server
+     * library's storage for our retrieval */
+
+    for (n=0; n < nresults; n++) {
+        if (PMIX_CHECK_KEY(&results[n], PMIX_GROUP_CONTEXT_ID)) {
+            PMIX_VALUE_GET_NUMBER(rc, &results[n].value, cid, size_t);
+
+        } else if (PMIX_CHECK_KEY(&results[n], PMIX_GROUP_MEMBERSHIP)) {
+            parray = (pmix_proc_t*)results[n].value.data.darray->array;
+            psize = results[n].value.data.darray->size;
+        }
+    }
+
+    // if we weren't given a final group membership, then that's an error
+    if (NULL == parray) {
+        rc = OMPI_ERR_NOT_FOUND;
+        PMIX_PROC_FREE(procs, nprocs);
+        PMIX_INFO_FREE(results, nresults);
+        goto exit;
+    }
+
+    /* find the procs that were not included in our local array. Since
+     * the "parray" contains _all_ the procs in the group, we don't
+     * need to construct a list of them, but track procs that are
+     * added to our ompi_proc_t array */
+    OBJ_CONSTRUCT(&ilist, opal_list_t);
+    OBJ_CONSTRUCT(&rlist, opal_list_t);
+    for (n=0; n < psize; n++) {
+        found = false;
+        for (m=0; m < nprocs && !found; m++) {
+            if (PMIX_CHECK_PROCID(&parray[n], &procs[m])) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            // if the rank is wildcard, then we need to find
+            // the number of procs in that job
+            if (PMIX_RANK_WILDCARD == parray[n].rank) {
+                PMIX_LOAD_PROCID(&pxproc, parray[n].nspace, PMIX_RANK_WILDCARD);
+                PMIX_INFO_LOAD(&info, PMIX_IMMEDIATE, NULL, PMIX_BOOL);
+                rc = PMIx_Get(&pxproc, PMIX_JOB_SIZE, &info, 1, &val);
+                if (PMIX_SUCCESS != rc) {
+                    PMIX_PROC_FREE(procs, nprocs);
+                    PMIX_INFO_FREE(results, nresults);
+                    OPAL_LIST_DESTRUCT(&rlist);
+                    goto exit;
+                }
+                PMIX_VALUE_GET_NUMBER(rc, val, rsize, uint32_t);
+                PMIX_VALUE_RELEASE(val);
+                if (PMIX_SUCCESS != rc) {
+                    PMIX_PROC_FREE(procs, nprocs);
+                    PMIX_INFO_FREE(results, nresults);
+                    OPAL_LIST_DESTRUCT(&rlist);
+                    goto exit;
+                }
+                PMIX_LOAD_NSPACE(pxproc.nspace, parray[n].nspace);
+                for (k=0; k < rsize; k++) {
+                    pxproc.rank = k;
+                    OPAL_PMIX_CONVERT_PROCT(rc, &pname, &pxproc);
+                    if (OPAL_SUCCESS != rc) {
+                        OMPI_ERROR_LOG(rc);
+                        PMIX_PROC_FREE(procs, nprocs);
+                        PMIX_INFO_FREE(results, nresults);
+                        OPAL_LIST_DESTRUCT(&rlist);
+                        goto exit;
+                    }
+                    /* see if this needs to be added to our ompi_proc_t array */
+                    proc = ompi_proc_find_and_add(&pname, &isnew);
+                    if (isnew) {
+                        cd = OBJ_NEW(ompi_dpm_proct_caddy_t);
+                        cd->p = proc;
+                        opal_list_append(&ilist, &cd->super);
+                    }
+                    /* either way, add to the remote list */
+                    cd = OBJ_NEW(ompi_dpm_proct_caddy_t);
+                    cd->p = proc;
+                    opal_list_append(&rlist, &cd->super);
+                }
+            } else {
+                OPAL_PMIX_CONVERT_PROCT(rc, &pname, &parray[n]);
+                if (OPAL_SUCCESS != rc) {
+                    OMPI_ERROR_LOG(rc);
+                    PMIX_PROC_FREE(procs, nprocs);
+                    PMIX_INFO_FREE(results, nresults);
+                    OPAL_LIST_DESTRUCT(&rlist);
+                    goto exit;
+                }
+                /* see if this needs to be added to our ompi_proc_t array */
+                proc = ompi_proc_find_and_add(&pname, &isnew);
+                if (isnew) {
+                    cd = OBJ_NEW(ompi_dpm_proct_caddy_t);
+                    cd->p = proc;
+                    opal_list_append(&ilist, &cd->super);
+                }
+                /* either way, add to the remote list */
+                cd = OBJ_NEW(ompi_dpm_proct_caddy_t);
+                cd->p = proc;
+                opal_list_append(&rlist, &cd->super);
+            }
+        }
+    }
+
+    // deal with any new procs we found
+    if (!opal_list_is_empty(&ilist)) {
+        int prn, nprn = 0;
+        char *sval;
+        opal_process_name_t wildcard_rank;
+        i = 0;  /* start from the begining */
+
+        /* convert the list of new procs to a ompi_proc_t array - we'll need it later */
+        nsize = opal_list_get_size(&ilist);
+        new_proc_list = (ompi_proc_t**)calloc(nsize, sizeof(ompi_proc_t *));
+        /* Extract the modex info for the first proc on the ilist, and then
+         * remove all processess in the same jobid from the list by getting
+         * their connection information and moving them into the proc array.
+         */
+        do {
+            uint32_t *local_ranks_in_jobid = NULL;
+            ompi_dpm_proct_caddy_t* next = NULL;
+            cd = (ompi_dpm_proct_caddy_t*)opal_list_get_first(&ilist);
+            proc = cd->p;
+            wildcard_rank.jobid = proc->super.proc_name.jobid;
+            wildcard_rank.vpid = OMPI_NAME_WILDCARD->vpid;
+            /* retrieve the local peers for the specified jobid */
+            OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_LOCAL_PEERS,
+                                           &wildcard_rank, &sval, PMIX_STRING);
+            if (OPAL_SUCCESS == rc && NULL != sval) {
+                char **peers = opal_argv_split(sval, ',');
+                free(sval);
+                nprn = opal_argv_count(peers);
+                local_ranks_in_jobid = (uint32_t*)calloc(nprn, sizeof(uint32_t));
+                for (prn = 0; NULL != peers[prn]; prn++) {
+                    local_ranks_in_jobid[prn] = strtoul(peers[prn], NULL, 10);
+                }
+                opal_argv_free(peers);
+            }
+
+            OPAL_LIST_FOREACH_SAFE(cd, next, &ilist, ompi_dpm_proct_caddy_t) {
+                proc = cd->p;
+                if (proc->super.proc_name.jobid != wildcard_rank.jobid) {
+                    continue;  /* not a proc from this jobid */
+                }
+
+                new_proc_list[i] = proc;
+                opal_list_remove_item(&ilist, (opal_list_item_t*)cd);
+                OBJ_RELEASE(cd);
+                /* ompi_proc_complete_init_single() initializes and optionally retrieves
+                 * OPAL_PMIX_LOCALITY and OPAL_PMIX_HOSTNAME. since we can live without
+                 * them, we are just fine */
+                ompi_proc_complete_init_single(proc);
+                /* if this proc is local, then get its locality */
+                if (NULL != local_ranks_in_jobid) {
+                    uint16_t u16;
+                    for (prn=0; prn < nprn; prn++) {
+                        if (local_ranks_in_jobid[prn] == proc->super.proc_name.vpid) {
+                            /* get their locality string */
+                            sval = NULL;
+                            OPAL_MODEX_RECV_VALUE_IMMEDIATE(rc, PMIX_LOCALITY_STRING,
+                                                           &proc->super.proc_name, &sval, PMIX_STRING);
+                            if (OPAL_SUCCESS == rc && NULL != ompi_process_info.locality) {
+                                u16 = opal_hwloc_compute_relative_locality(ompi_process_info.locality, sval);
+                                free(sval);
+                            } else {
+                                /* all we can say is that it shares our node */
+                                u16 = OPAL_PROC_ON_CLUSTER | OPAL_PROC_ON_CU | OPAL_PROC_ON_NODE;
+                            }
+                            proc->super.proc_flags = u16;
+                            /* save the locality for later */
+                            OPAL_PMIX_CONVERT_NAME(&pxproc, &proc->super.proc_name);
+                            pval.type = PMIX_UINT16;
+                            pval.data.uint16 = proc->super.proc_flags;
+                            PMIx_Store_internal(&pxproc, PMIX_LOCALITY, &pval);
+                            break;
+                        }
+                    }
+                }
+                ++i;
+            }
+            if (NULL != local_ranks_in_jobid) {
+                free(local_ranks_in_jobid);
+            }
+        } while (!opal_list_is_empty(&ilist));
+
+        /* call add_procs on the new ones */
+        rc = MCA_PML_CALL(add_procs(new_proc_list, nsize));
+        free(new_proc_list);
+        new_proc_list = NULL;
+        if (OMPI_SUCCESS != rc) {
+            OMPI_ERROR_LOG(rc);
+            OPAL_LIST_DESTRUCT(&ilist);
+            goto exit;
+        }
+    }
+    OPAL_LIST_DESTRUCT(&ilist);
+
+    /* now deal with the remote group */
+    rsize = opal_list_get_size(&rlist);
+    new_group_pointer=ompi_group_allocate(NULL, rsize);
+    if (NULL == new_group_pointer) {
+        rc = OMPI_ERR_OUT_OF_RESOURCE;
+        OPAL_LIST_DESTRUCT(&rlist);
+        goto exit;
+    }
+    /* assign group elements */
+    i=0;
+    OPAL_LIST_FOREACH(cd, &rlist, ompi_dpm_proct_caddy_t) {
+        new_group_pointer->grp_proc_pointers[i++] = cd->p;
+        /* retain the proc */
+        OBJ_RETAIN(cd->p);
+    }
+    OPAL_LIST_DESTRUCT(&rlist);
+
+    /* set up communicator structure */
+    rc = ompi_comm_set ( &newcomp,                 /* new comm */
+                         comm,                     /* old comm */
+                         group->grp_proc_count,    /* local_size */
+                         NULL,                     /* local_procs */
+                         rsize,                    /* remote_size */
+                         NULL  ,                   /* remote_procs */
+                         NULL,                     /* attrs */
+                         comm->error_handler,      /* error handler */
+                         group,                    /* local group */
+                         new_group_pointer,        /* remote group */
+                         0);                       /* flags */
+    if (OMPI_SUCCESS != rc) {
+        goto exit;
+    }
+
+    OBJ_RELEASE(new_group_pointer);
+    new_group_pointer = MPI_GROUP_NULL;
+
+    /* we received the new context ID from PMIx_Group_construct */
+    ompi_group_translate_ranks (newcomp->c_local_group, 1, &(int){0},
+                                comm->c_local_group, &leader_rank);
+    ompi_comm_extended_cid_block_initialize (&newcomp->c_contextidb, cid, 0, 0);
+    for (ui = ompi_mpi_communicators.lowest_free ; ui < mca_pml.pml_max_contextid ; ++ui) {
+        bool flag = opal_pointer_array_test_and_set_item (&ompi_mpi_communicators, ui, newcomp);
+        if (true == flag) {
+            newcomp->c_index = ui;
+            break;
+        }
+    }
+    newcomp->c_contextid = newcomp->c_contextidb.block_cid;
+
+    opal_hash_table_set_value_ptr (&ompi_comm_hash, &newcomp->c_contextid,
+                                   sizeof (newcomp->c_contextid), (void *) newcomp);
+
+    opal_pointer_array_set_item (&ompi_mpi_communicators, cid, newcomm);
+
+opal_output(0, "NEW LOCAL GROUP: MY RANK %d", newcomp->c_my_rank);
+for (i=0; i < newcomp->c_local_group->grp_proc_count; i++) {
+    opal_output(0, "\t%s", OMPI_NAME_PRINT(&newcomp->c_local_group->grp_proc_pointers[i]->super.proc_name));
+}
+opal_output(0, "NEW REMOTE GROUP");
+for (i=0; i < newcomp->c_remote_group->grp_proc_count; i++) {
+    opal_output(0, "\t%s", OMPI_NAME_PRINT(&newcomp->c_remote_group->grp_proc_pointers[i]->super.proc_name));
+}
+    /* activate comm and init coll-component */
+    rc = ompi_comm_activate ( &newcomp,                  /* new communicator */
+                              comm,                      /* old communicator */
+                              NULL,                      /* bridge comm */
+                              &root,                     /* local leader */
+                              (void*)pstring,            /* rendezvous point */
+                              send_first,                /* send or recv first */
+                              OMPI_COMM_CID_INTRA_PMIX); /* mode */
+    if (OMPI_SUCCESS != rc) {
+        goto exit;
+    }
+
+    /* Question: do we have to re-start some low level stuff
+       to enable the usage of fast communication devices
+       between the two worlds ?
+    */
+
+ exit:
+    if (OMPI_SUCCESS != rc) {
+        if (MPI_COMM_NULL != newcomp && NULL != newcomp) {
+            OBJ_RELEASE(newcomp);
+            newcomp = MPI_COMM_NULL;
+        }
+    }
+    if (NULL != pstring) {
+        free(pstring);
+    }
+
+    *newcomm = newcomp;
+    return rc;
+}
+
+
+int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
+                            const char *port_string, bool send_first,
+                            ompi_communicator_t **newcomm)
+{
+    if (new_method) {
+        return connect_accept_new(comm, root, port_string, send_first, newcomm);
+    } else {
+        return connect_accept_old(comm, root, port_string, send_first, newcomm);
+    }
 }
 
 static int construct_peers(ompi_group_t *group, opal_list_t *peers)
