@@ -43,6 +43,7 @@ int main(int argc, char *argv[])
             printf("Parent sending message to child\n");
             MPI_Send(&msg, 1, MPI_INT, 0, 1, child);
         }
+        printf("Parent disconnecting\n");
         MPI_Comm_disconnect(&child);
         printf("Parent disconnected\n");
     }
@@ -56,6 +57,7 @@ int main(int argc, char *argv[])
             MPI_Recv(&msg, 1, MPI_INT, 0, 1, parent, MPI_STATUS_IGNORE);
             printf("Child %d received msg: %d\n", rank, msg);
         }
+        printf("Rank %d disconnecting\n", rank);
         MPI_Comm_disconnect(&parent);
         printf("Child %d disconnected\n", rank);
     }
