@@ -86,6 +86,8 @@ add_pending(struct mca_btl_base_endpoint_t *ep, void *data, bool resend)
 #define MCA_BTL_SMCUDA_FIFO_WRITE(endpoint_peer, my_smp_rank,               \
                               peer_smp_rank, hdr, resend, retry_pending_sends, rc)        \
 do {                                                                    \
+    /* memory barrier: ensure writes to the hdr have completed */       \
+    opal_atomic_wmb();                                                  \
     sm_fifo_t* fifo = &(mca_btl_smcuda_component.fifo[peer_smp_rank][FIFO_MAP(my_smp_rank)]); \
                                                                         \
     if ( retry_pending_sends ) {                                        \
