@@ -64,6 +64,8 @@ static int accelerator_null_import_ipc_handle(int dev_id, uint8_t ipc_handle[IPC
                                               opal_accelerator_ipc_handle_t *handle);
 static int accelerator_null_open_ipc_handle(int dev_id, opal_accelerator_ipc_handle_t *handle,
                                             void **dev_ptr);
+static int accelerator_null_compare_ipc_handles(uint8_t handle_1[IPC_MAX_HANDLE_SIZE],
+                                                uint8_t handle_2[IPC_MAX_HANDLE_SIZE]);
 static int accelerator_null_get_ipc_event_handle(opal_accelerator_event_t *event,
                                                  opal_accelerator_ipc_event_handle_t *handle);
 static int accelerator_null_import_ipc_event_handle(uint8_t ipc_handle[IPC_MAX_HANDLE_SIZE],
@@ -140,6 +142,7 @@ opal_accelerator_base_module_t opal_accelerator_null_module =
     accelerator_null_get_ipc_handle,
     accelerator_null_import_ipc_handle,
     accelerator_null_open_ipc_handle,
+    accelerator_null_compare_ipc_handles,
     accelerator_null_get_ipc_event_handle,
     accelerator_null_import_ipc_event_handle,
     accelerator_null_open_ipc_event_handle,
@@ -271,6 +274,12 @@ static int accelerator_null_import_ipc_handle(int dev_id, uint8_t ipc_handle[IPC
 
 static int accelerator_null_open_ipc_handle(int dev_id, opal_accelerator_ipc_handle_t *handle,
                                             void **dev_ptr)
+{
+    return OPAL_ERR_NOT_IMPLEMENTED;
+}
+
+static int accelerator_null_compare_ipc_handles(uint8_t handle_1[IPC_MAX_HANDLE_SIZE],
+						uint8_t handle_2[IPC_MAX_HANDLE_SIZE])
 {
     return OPAL_ERR_NOT_IMPLEMENTED;
 }

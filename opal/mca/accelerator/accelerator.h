@@ -366,7 +366,8 @@ typedef int (*opal_accelerator_base_module_get_address_range_fn_t)(
  *
  * opal_accelerator_base_module_get_ipc_handle_fn_t()
  * opal_accelerator_base_module_open_ipc_handle_fn_t()
- * opal_accelerator_base_module_import_ipc_event_handle_fn_t()
+ * opal_accelerator_base_module_import_ipc_handle_fn_t()
+ * opal_accelerator_base_module_compare_ipc_handles_fn_t()
  * opal_accelerator_base_module_get_ipc_event_handle_fn_t()
  * opal_accelerator_base_module_open_ipc_event_handle_fn_t()
  * opal_accelerator_base_module_import_ipc_event_handle_fn_t()
@@ -426,6 +427,19 @@ typedef int (*opal_accelerator_base_module_import_ipc_handle_fn_t)(
  */
 typedef int (*opal_accelerator_base_module_open_ipc_handle_fn_t)(
     int dev_id, opal_accelerator_ipc_handle_t *handle, void **dev_ptr);
+
+/**
+ * Compare two IPC handles
+ *
+ * @param[IN] handle_1       First IPC handle
+ * @param[IN] handle_2       Second IPC handle
+ *
+ * @return                   zero if IPC handles are identical
+ *                           non-zero value otherwise
+ */
+
+typedef int (*opal_accelerator_base_module_compare_ipc_handles_fn_t)(
+    uint8_t handle_1[IPC_MAX_HANDLE_SIZE], uint8_t handle_2[IPC_MAX_HANDLE_SIZE]);
 
 /**
  * Gets an IPC event handle for an event created by opal_accelerator_base_module_create_event_fn_t.
@@ -568,6 +582,7 @@ typedef struct {
     opal_accelerator_base_module_get_ipc_handle_fn_t get_ipc_handle;
     opal_accelerator_base_module_import_ipc_handle_fn_t import_ipc_handle;
     opal_accelerator_base_module_open_ipc_handle_fn_t open_ipc_handle;
+    opal_accelerator_base_module_compare_ipc_handles_fn_t compare_ipc_handles;
     opal_accelerator_base_module_get_ipc_event_handle_fn_t get_ipc_event_handle;
     opal_accelerator_base_module_import_ipc_event_handle_fn_t import_ipc_event_handle;
     opal_accelerator_base_module_open_ipc_event_handle_fn_t open_ipc_event_handle;
