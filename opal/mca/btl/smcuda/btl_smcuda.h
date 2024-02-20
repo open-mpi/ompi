@@ -15,6 +15,7 @@
  * Copyright (c) 2010-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2012-2023 NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2024      Advanced Micro Devices, Inc. All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -203,6 +204,9 @@ struct mca_btl_smcuda_component_t {
     int cuda_ipc_output;
     int use_cuda_ipc;
     int use_cuda_ipc_same_gpu;
+
+    int accelerator_delayed_ipc_init;
+    int accelerator_max_ipc_events;
 
     unsigned long mpool_min_size;
     char *allocator;
