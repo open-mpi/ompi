@@ -78,7 +78,7 @@ struct ompi_osc_sm_module_t {
 
     size_t *sizes;
     void **bases;
-    int *disp_units;
+    ptrdiff_t *disp_units;
 
     ompi_group_t *start_group;
     ompi_group_t *post_group;
@@ -98,7 +98,7 @@ struct ompi_osc_sm_module_t {
 };
 typedef struct ompi_osc_sm_module_t ompi_osc_sm_module_t;
 
-int ompi_osc_sm_shared_query(struct ompi_win_t *win, int rank, size_t *size, int *disp_unit, void *baseptr);
+int ompi_osc_sm_shared_query(struct ompi_win_t *win, int rank, size_t *size, ptrdiff_t *disp_unit, void *baseptr);
 
 int ompi_osc_sm_attach(struct ompi_win_t *win, void *base, size_t len);
 int ompi_osc_sm_detach(struct ompi_win_t *win, const void *base);
@@ -106,29 +106,29 @@ int ompi_osc_sm_detach(struct ompi_win_t *win, const void *base);
 int ompi_osc_sm_free(struct ompi_win_t *win);
 
 int ompi_osc_sm_put(const void *origin_addr,
-                          int origin_count,
+                          size_t origin_count,
                           struct ompi_datatype_t *origin_dt,
                           int target,
                           ptrdiff_t target_disp,
-                          int target_count,
+                          size_t target_count,
                           struct ompi_datatype_t *target_dt,
                           struct ompi_win_t *win);
 
 int ompi_osc_sm_get(void *origin_addr,
-                          int origin_count,
+                          size_t origin_count,
                           struct ompi_datatype_t *origin_dt,
                           int target,
                           ptrdiff_t target_disp,
-                          int target_count,
+                          size_t target_count,
                           struct ompi_datatype_t *target_dt,
                           struct ompi_win_t *win);
 
 int ompi_osc_sm_accumulate(const void *origin_addr,
-                                 int origin_count,
+                                 size_t origin_count,
                                  struct ompi_datatype_t *origin_dt,
                                  int target,
                                  ptrdiff_t target_disp,
-                                 int target_count,
+                                 size_t target_count,
                                  struct ompi_datatype_t *target_dt,
                                  struct ompi_op_t *op,
                                  struct ompi_win_t *win);
@@ -150,58 +150,58 @@ int ompi_osc_sm_fetch_and_op(const void *origin_addr,
                                    struct ompi_win_t *win);
 
 int ompi_osc_sm_get_accumulate(const void *origin_addr,
-                                     int origin_count,
+                                     size_t origin_count,
                                      struct ompi_datatype_t *origin_datatype,
                                      void *result_addr,
-                                     int result_count,
+                                     size_t result_count,
                                      struct ompi_datatype_t *result_datatype,
                                      int target_rank,
                                      MPI_Aint target_disp,
-                                     int target_count,
+                                     size_t target_count,
                                      struct ompi_datatype_t *target_datatype,
                                      struct ompi_op_t *op,
                                      struct ompi_win_t *win);
 
 int ompi_osc_sm_rput(const void *origin_addr,
-                           int origin_count,
+                           size_t origin_count,
                            struct ompi_datatype_t *origin_dt,
                            int target,
                            ptrdiff_t target_disp,
-                           int target_count,
+                           size_t target_count,
                            struct ompi_datatype_t *target_dt,
                            struct ompi_win_t *win,
                            struct ompi_request_t **request);
 
 int ompi_osc_sm_rget(void *origin_addr,
-                           int origin_count,
+                           size_t origin_count,
                            struct ompi_datatype_t *origin_dt,
                            int target,
                            ptrdiff_t target_disp,
-                           int target_count,
+                           size_t target_count,
                            struct ompi_datatype_t *target_dt,
                            struct ompi_win_t *win,
                            struct ompi_request_t **request);
 
 int ompi_osc_sm_raccumulate(const void *origin_addr,
-                                  int origin_count,
+                                  size_t origin_count,
                                   struct ompi_datatype_t *origin_dt,
                                   int target,
                                   ptrdiff_t target_disp,
-                                  int target_count,
+                                  size_t target_count,
                                   struct ompi_datatype_t *target_dt,
                                   struct ompi_op_t *op,
                                   struct ompi_win_t *win,
                                   struct ompi_request_t **request);
 
 int ompi_osc_sm_rget_accumulate(const void *origin_addr,
-                                      int origin_count,
+                                      size_t origin_count,
                                       struct ompi_datatype_t *origin_datatype,
                                       void *result_addr,
-                                      int result_count,
+                                      size_t result_count,
                                       struct ompi_datatype_t *result_datatype,
                                       int target_rank,
                                       MPI_Aint target_disp,
-                                      int target_count,
+                                      size_t target_count,
                                       struct ompi_datatype_t *target_datatype,
                                       struct ompi_op_t *op,
                                       struct ompi_win_t *win,

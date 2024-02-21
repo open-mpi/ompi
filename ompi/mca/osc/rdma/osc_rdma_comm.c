@@ -188,9 +188,9 @@ typedef int (*ompi_osc_rdma_fn_t) (ompi_osc_rdma_sync_t *sync, ompi_osc_rdma_pee
  * This function does the work of breaking a non-contiguous rdma transfer into contiguous components. It will
  * continue to submit rdma transfers until the entire region is transferred or a fatal error occurs.
  */
-static int ompi_osc_rdma_master_noncontig (ompi_osc_rdma_sync_t *sync, void *local_address, int local_count, ompi_datatype_t *local_datatype,
+static int ompi_osc_rdma_master_noncontig (ompi_osc_rdma_sync_t *sync, void *local_address, size_t local_count, ompi_datatype_t *local_datatype,
                                            ompi_osc_rdma_peer_t *peer, uint64_t remote_address,
-                                           mca_btl_base_registration_handle_t *remote_handle, int remote_count,
+                                           mca_btl_base_registration_handle_t *remote_handle, size_t remote_count,
                                            ompi_datatype_t *remote_datatype, ompi_osc_rdma_request_t *request, const size_t max_rdma_len,
                                            const ompi_osc_rdma_fn_t rdma_fn, const bool alloc_reqs)
 {
@@ -323,10 +323,10 @@ static int ompi_osc_rdma_master_noncontig (ompi_osc_rdma_sync_t *sync, void *loc
     return OMPI_SUCCESS;
 }
 
-static inline int ompi_osc_rdma_master (ompi_osc_rdma_sync_t *sync, void *local_address, int local_count,
+static inline int ompi_osc_rdma_master (ompi_osc_rdma_sync_t *sync, void *local_address, size_t local_count,
                                         ompi_datatype_t *local_datatype, ompi_osc_rdma_peer_t *peer,
                                         uint64_t remote_address, mca_btl_base_registration_handle_t *remote_handle,
-                                        int remote_count, ompi_datatype_t *remote_datatype,
+                                        size_t remote_count, ompi_datatype_t *remote_datatype,
                                         ompi_osc_rdma_request_t *request, const size_t max_rdma_len,
                                         const ompi_osc_rdma_fn_t rdma_fn, const bool alloc_reqs)
 {
@@ -373,8 +373,8 @@ static inline int ompi_osc_rdma_master (ompi_osc_rdma_sync_t *sync, void *local_
                                            max_rdma_len, rdma_fn, alloc_reqs);
 }
 
-static int ompi_osc_rdma_copy_local (const void *source, int source_count, ompi_datatype_t *source_datatype,
-                                     void *target, int target_count, ompi_datatype_t *target_datatype,
+static int ompi_osc_rdma_copy_local (const void *source, size_t source_count, ompi_datatype_t *source_datatype,
+                                     void *target, size_t target_count, ompi_datatype_t *target_datatype,
                                      ompi_osc_rdma_request_t *request)
 {
     int ret;
@@ -796,8 +796,8 @@ static inline int ompi_osc_rdma_put_w_req (ompi_osc_rdma_sync_t *sync, const voi
                                  module->put_limit, ompi_osc_rdma_put_contig, false);
 }
 
-static inline int ompi_osc_rdma_get_w_req (ompi_osc_rdma_sync_t *sync, void *origin_addr, int origin_count, ompi_datatype_t *origin_datatype,
-                                           ompi_osc_rdma_peer_t *peer, ptrdiff_t source_disp, int source_count,
+static inline int ompi_osc_rdma_get_w_req (ompi_osc_rdma_sync_t *sync, void *origin_addr, size_t origin_count, ompi_datatype_t *origin_datatype,
+                                           ompi_osc_rdma_peer_t *peer, ptrdiff_t source_disp, size_t source_count,
                                            ompi_datatype_t *source_datatype, ompi_osc_rdma_request_t *request)
 {
     ompi_osc_rdma_module_t *module = sync->module;
@@ -835,15 +835,15 @@ static inline int ompi_osc_rdma_get_w_req (ompi_osc_rdma_sync_t *sync, void *ori
                                  source_handle, source_count, source_datatype, request,
                                  module->get_limit, ompi_osc_rdma_get_contig, true);
 }
-int ompi_osc_rdma_put (const void *origin_addr, int origin_count, ompi_datatype_t *origin_datatype,
-                       int target_rank, ptrdiff_t target_disp, int target_count,
+int ompi_osc_rdma_put (const void *origin_addr, size_t origin_count, ompi_datatype_t *origin_datatype,
+                       int target_rank, ptrdiff_t target_disp, size_t target_count,
                        ompi_datatype_t *target_datatype, ompi_win_t *win)
 {
     ompi_osc_rdma_module_t *module = GET_MODULE(win);
     ompi_osc_rdma_peer_t *peer;
     ompi_osc_rdma_sync_t *sync;
 
-    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "put: 0x%lx, %d, %s, %d, %d, %d, %s, %s", (unsigned long) origin_addr,
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "put: 0x%lx, %zu, %s, %d, %d, %zu, %s, %s", (unsigned long) origin_addr,
                      origin_count, origin_datatype->name, target_rank, (int) target_disp, target_count,
                      target_datatype->name, win->w_name);
 
@@ -856,8 +856,8 @@ int ompi_osc_rdma_put (const void *origin_addr, int origin_count, ompi_datatype_
                                     target_count, target_datatype, NULL);
 }
 
-int ompi_osc_rdma_rput (const void *origin_addr, int origin_count, ompi_datatype_t *origin_datatype,
-                        int target_rank, ptrdiff_t target_disp, int target_count,
+int ompi_osc_rdma_rput (const void *origin_addr, size_t origin_count, ompi_datatype_t *origin_datatype,
+                        int target_rank, ptrdiff_t target_disp, size_t target_count,
                         ompi_datatype_t *target_datatype, ompi_win_t *win,
                         ompi_request_t **request)
 {
@@ -867,7 +867,7 @@ int ompi_osc_rdma_rput (const void *origin_addr, int origin_count, ompi_datatype
     ompi_osc_rdma_sync_t *sync;
     int ret;
 
-    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "rput: 0x%lx, %d, %s, %d, %d, %d, %s, %s", (unsigned long) origin_addr, origin_count,
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "rput: 0x%lx, %zu, %s, %d, %d, %zu, %s, %s", (unsigned long) origin_addr, origin_count,
                      origin_datatype->name, target_rank, (int) target_disp, target_count, target_datatype->name, win->w_name);
 
     sync = ompi_osc_rdma_module_sync_lookup (module, target_rank, &peer);
@@ -891,15 +891,15 @@ int ompi_osc_rdma_rput (const void *origin_addr, int origin_count, ompi_datatype
     return OMPI_SUCCESS;
 }
 
-int ompi_osc_rdma_get (void *origin_addr, int origin_count, ompi_datatype_t *origin_datatype,
-                       int source_rank, ptrdiff_t source_disp, int source_count,
+int ompi_osc_rdma_get (void *origin_addr, size_t origin_count, ompi_datatype_t *origin_datatype,
+                       int source_rank, ptrdiff_t source_disp, size_t source_count,
                        ompi_datatype_t *source_datatype, ompi_win_t *win)
 {
     ompi_osc_rdma_module_t *module = GET_MODULE(win);
     ompi_osc_rdma_peer_t *peer;
     ompi_osc_rdma_sync_t *sync;
 
-    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "get: 0x%lx, %d, %s, %d, %d, %d, %s, %s", (unsigned long) origin_addr,
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "get: 0x%lx, %zu, %s, %d, %d, %zu, %s, %s", (unsigned long) origin_addr,
                      origin_count, origin_datatype->name, source_rank, (int) source_disp, source_count,
                      source_datatype->name, win->w_name);
 
@@ -912,8 +912,8 @@ int ompi_osc_rdma_get (void *origin_addr, int origin_count, ompi_datatype_t *ori
                                     source_disp, source_count, source_datatype, NULL);
 }
 
-int ompi_osc_rdma_rget (void *origin_addr, int origin_count, ompi_datatype_t *origin_datatype,
-                        int source_rank, ptrdiff_t source_disp, int source_count,
+int ompi_osc_rdma_rget (void *origin_addr, size_t origin_count, ompi_datatype_t *origin_datatype,
+                        int source_rank, ptrdiff_t source_disp, size_t source_count,
                         ompi_datatype_t *source_datatype, ompi_win_t *win,
                         ompi_request_t **request)
 {
@@ -923,7 +923,7 @@ int ompi_osc_rdma_rget (void *origin_addr, int origin_count, ompi_datatype_t *or
     ompi_osc_rdma_sync_t *sync;
     int ret;
 
-    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "rget: 0x%lx, %d, %s, %d, %d, %d, %s, %s", (unsigned long) origin_addr,
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "rget: 0x%lx, %zu, %s, %d, %d, %zu, %s, %s", (unsigned long) origin_addr,
                      origin_count, origin_datatype->name, source_rank, (int) source_disp, source_count,
                      source_datatype->name, win->w_name);
 

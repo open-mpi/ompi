@@ -64,10 +64,10 @@ struct ompi_osc_rdma_event_t {
 
 typedef struct ompi_osc_rdma_event_t ompi_osc_rdma_event_t;
 
-static int ompi_osc_rdma_gacc_local (const void *source_buffer, int source_count, ompi_datatype_t *source_datatype,
-                                     void *result_buffer, int result_count, ompi_datatype_t *result_datatype,
+static int ompi_osc_rdma_gacc_local (const void *source_buffer, size_t source_count, ompi_datatype_t *source_datatype,
+                                     void *result_buffer, size_t result_count, ompi_datatype_t *result_datatype,
                                      ompi_osc_rdma_peer_t *peer, uint64_t target_address,
-                                     mca_btl_base_registration_handle_t *target_handle, int target_count,
+                                     mca_btl_base_registration_handle_t *target_handle, size_t target_count,
                                      ompi_datatype_t *target_datatype, ompi_op_t *op, ompi_osc_rdma_module_t *module,
                                      ompi_osc_rdma_request_t *request, bool lock_acquired)
 {
@@ -358,9 +358,9 @@ static int ompi_osc_rdma_acc_single_atomic (ompi_osc_rdma_sync_t *sync, const vo
 }
 
 static inline int ompi_osc_rdma_gacc_amo (ompi_osc_rdma_module_t *module, ompi_osc_rdma_sync_t *sync, const void *source, void *result,
-                                          int result_count, ompi_datatype_t *result_datatype, opal_convertor_t *result_convertor,
+                                          size_t result_count, ompi_datatype_t *result_datatype, opal_convertor_t *result_convertor,
                                           ompi_osc_rdma_peer_t *peer, uint64_t target_address,
-                                          mca_btl_base_registration_handle_t *target_handle, int count,
+                                          mca_btl_base_registration_handle_t *target_handle, size_t count,
                                           ompi_datatype_t *datatype, ompi_op_t *op, ompi_osc_rdma_request_t *request)
 {
     const bool use_amo = module->acc_use_amo;
@@ -378,7 +378,7 @@ static inline int ompi_osc_rdma_gacc_amo (ompi_osc_rdma_module_t *module, ompi_o
        }
     }
 
-    for (int i = 0 ; i < count ; ) {
+    for (size_t i = 0 ; i < count ; ) {
         if (use_amo) {
             if (NULL == result) {
                 ret = ompi_osc_rdma_acc_single_atomic (sync, source, datatype, dt_size, peer, target_address, target_handle, op, request);
@@ -426,11 +426,11 @@ static inline int ompi_osc_rdma_gacc_amo (ompi_osc_rdma_module_t *module, ompi_o
     return OMPI_SUCCESS;
 }
 
-static inline int ompi_osc_rdma_gacc_contig (ompi_osc_rdma_sync_t *sync, const void *source, int source_count,
-                                             ompi_datatype_t *source_datatype, void *result, int result_count,
+static inline int ompi_osc_rdma_gacc_contig (ompi_osc_rdma_sync_t *sync, const void *source, size_t source_count,
+                                             ompi_datatype_t *source_datatype, void *result, size_t result_count,
                                              ompi_datatype_t *result_datatype, opal_convertor_t *result_convertor,
                                              ompi_osc_rdma_peer_t *peer, uint64_t target_address,
-                                             mca_btl_base_registration_handle_t *target_handle, int target_count,
+                                             mca_btl_base_registration_handle_t *target_handle, size_t target_count,
                                              ompi_datatype_t *target_datatype, ompi_op_t *op, ompi_osc_rdma_request_t *request)
 {
     ompi_osc_rdma_module_t *module = sync->module;
@@ -529,10 +529,10 @@ static void ompi_osc_rdma_gacc_master_cleanup (ompi_osc_rdma_request_t *request)
     ompi_osc_rdma_peer_accumulate_cleanup (request->module, request->peer, !ompi_osc_rdma_peer_is_exclusive (request->peer));
 }
 
-static inline int ompi_osc_rdma_gacc_master (ompi_osc_rdma_sync_t *sync, const void *source_addr, int source_count,
-                                             ompi_datatype_t *source_datatype, void *result_addr, int result_count,
+static inline int ompi_osc_rdma_gacc_master (ompi_osc_rdma_sync_t *sync, const void *source_addr, size_t source_count,
+                                             ompi_datatype_t *source_datatype, void *result_addr, size_t result_count,
                                              ompi_datatype_t *result_datatype, ompi_osc_rdma_peer_t *peer, uint64_t target_address,
-                                             mca_btl_base_registration_handle_t *target_handle, int target_count,
+                                             mca_btl_base_registration_handle_t *target_handle, size_t target_count,
                                              ompi_datatype_t *target_datatype, ompi_op_t *op, ompi_osc_rdma_request_t *request)
 {
     ompi_osc_rdma_module_t *module = sync->module;
@@ -1034,10 +1034,10 @@ int ompi_osc_rdma_compare_and_swap (const void *origin_addr, const void *compare
 
 
 static inline
-int ompi_osc_rdma_rget_accumulate_internal (ompi_win_t *win, const void *origin_addr, int origin_count,
-                                            ompi_datatype_t *origin_datatype, void *result_addr, int result_count,
+int ompi_osc_rdma_rget_accumulate_internal (ompi_win_t *win, const void *origin_addr, size_t origin_count,
+                                            ompi_datatype_t *origin_datatype, void *result_addr, size_t result_count,
                                             ompi_datatype_t *result_datatype,  int target_rank, MPI_Aint target_disp,
-                                            int target_count, ompi_datatype_t *target_datatype, ompi_op_t *op,
+                                            size_t target_count, ompi_datatype_t *target_datatype, ompi_op_t *op,
                                             ompi_request_t **request_out)
 {
     ompi_osc_rdma_module_t *module = GET_MODULE(win);
@@ -1119,12 +1119,12 @@ int ompi_osc_rdma_rget_accumulate_internal (ompi_win_t *win, const void *origin_
     return ret;
 }
 
-int ompi_osc_rdma_get_accumulate (const void *origin_addr, int origin_count, ompi_datatype_t *origin_datatype,
-                                  void *result_addr, int result_count, ompi_datatype_t *result_datatype,
-                                  int target_rank, MPI_Aint target_disp, int target_count, ompi_datatype_t *target_datatype,
+int ompi_osc_rdma_get_accumulate (const void *origin_addr, size_t origin_count, ompi_datatype_t *origin_datatype,
+                                  void *result_addr, size_t result_count, ompi_datatype_t *result_datatype,
+                                  int target_rank, MPI_Aint target_disp, size_t target_count, ompi_datatype_t *target_datatype,
                                   ompi_op_t *op, ompi_win_t *win)
 {
-    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "get_acc: 0x%lx, %d, %s, 0x%lx, %d, %s, %d, 0x%lx, %d, %s, %s, %s",
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "get_acc: 0x%lx, %zu, %s, 0x%lx, %zu, %s, %d, 0x%lx, %zu, %s, %s, %s",
                      (unsigned long) origin_addr, origin_count, origin_datatype->name,
                      (unsigned long) result_addr, result_count, result_datatype->name, target_rank,
                      (unsigned long) target_disp, target_count, target_datatype->name, op->o_name,
@@ -1137,12 +1137,12 @@ int ompi_osc_rdma_get_accumulate (const void *origin_addr, int origin_count, omp
 }
 
 
-int ompi_osc_rdma_rget_accumulate (const void *origin_addr, int origin_count, ompi_datatype_t *origin_datatype,
-                                   void *result_addr, int result_count, ompi_datatype_t *result_datatype,
-                                   int target_rank, MPI_Aint target_disp, int target_count, ompi_datatype_t *target_datatype,
+int ompi_osc_rdma_rget_accumulate (const void *origin_addr, size_t origin_count, ompi_datatype_t *origin_datatype,
+                                   void *result_addr, size_t result_count, ompi_datatype_t *result_datatype,
+                                   int target_rank, MPI_Aint target_disp, size_t target_count, ompi_datatype_t *target_datatype,
                                    ompi_op_t *op, ompi_win_t *win, ompi_request_t **request)
 {
-    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "rget_acc: 0x%lx, %d, %s, 0x%lx, %d, %s, %d, 0x%lx, %d, %s, %s, %s",
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "rget_acc: 0x%lx, %zu, %s, 0x%lx, %zu, %s, %d, 0x%lx, %zu, %s, %s, %s",
                      (unsigned long) origin_addr, origin_count, origin_datatype->name,
                      (unsigned long) result_addr, result_count, result_datatype->name, target_rank,
                      (unsigned long) target_disp, target_count, target_datatype->name, op->o_name,
@@ -1153,11 +1153,11 @@ int ompi_osc_rdma_rget_accumulate (const void *origin_addr, int origin_count, om
                                                    target_count, target_datatype, op, request);
 }
 
-int ompi_osc_rdma_raccumulate (const void *origin_addr, int origin_count, ompi_datatype_t *origin_datatype, int target_rank,
-                               ptrdiff_t target_disp, int target_count, ompi_datatype_t *target_datatype, ompi_op_t *op,
+int ompi_osc_rdma_raccumulate (const void *origin_addr, size_t origin_count, ompi_datatype_t *origin_datatype, int target_rank,
+                               ptrdiff_t target_disp, size_t target_count, ompi_datatype_t *target_datatype, ompi_op_t *op,
                                ompi_win_t *win, ompi_request_t **request)
 {
-    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "racc: 0x%lx, %d, %s, %d, 0x%lx, %d, %s, %s, %s",
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "racc: 0x%lx, %zu, %s, %d, 0x%lx, %zu, %s, %s, %s",
                      (unsigned long) origin_addr, origin_count, origin_datatype->name, target_rank,
                      (unsigned long) target_disp, target_count, target_datatype->name, op->o_name, win->w_name);
 
@@ -1166,11 +1166,11 @@ int ompi_osc_rdma_raccumulate (const void *origin_addr, int origin_count, ompi_d
                                                    op, request);
 }
 
-int ompi_osc_rdma_accumulate (const void *origin_addr, int origin_count, ompi_datatype_t *origin_datatype, int target_rank,
-                              ptrdiff_t target_disp, int target_count, ompi_datatype_t *target_datatype, ompi_op_t *op,
+int ompi_osc_rdma_accumulate (const void *origin_addr, size_t origin_count, ompi_datatype_t *origin_datatype, int target_rank,
+                              ptrdiff_t target_disp, size_t target_count, ompi_datatype_t *target_datatype, ompi_op_t *op,
                               ompi_win_t *win)
 {
-    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "acc: 0x%lx, %d, %s, %d, 0x%lx, %d, %s, %s, %s",
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "acc: 0x%lx, %zu, %s, %d, 0x%lx, %zu, %s, %s, %s",
                      (unsigned long) origin_addr, origin_count, origin_datatype->name, target_rank,
                      (unsigned long) target_disp, target_count, target_datatype->name, op->o_name, win->w_name);
 

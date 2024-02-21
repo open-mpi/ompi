@@ -72,10 +72,10 @@
 static int ompi_osc_rdma_component_register (void);
 static int ompi_osc_rdma_component_init (bool enable_progress_threads, bool enable_mpi_threads);
 static int ompi_osc_rdma_component_finalize (void);
-static int ompi_osc_rdma_component_query (struct ompi_win_t *win, void **base, size_t size, int disp_unit,
+static int ompi_osc_rdma_component_query (struct ompi_win_t *win, void **base, size_t size, ptrdiff_t disp_unit,
                                           struct ompi_communicator_t *comm, struct opal_info_t *info,
                                           int flavor);
-static int ompi_osc_rdma_component_select (struct ompi_win_t *win, void **base, size_t size, int disp_unit,
+static int ompi_osc_rdma_component_select (struct ompi_win_t *win, void **base, size_t size, ptrdiff_t disp_unit,
                                            struct ompi_communicator_t *comm, struct opal_info_t *info,
                                            int flavor, int *model);
 static int ompi_osc_rdma_query_accelerated_btls (ompi_communicator_t *comm, ompi_osc_rdma_module_t *module);
@@ -94,7 +94,7 @@ static const mca_base_var_enum_value_t ompi_osc_rdma_locking_modes[] = {
 ompi_osc_rdma_component_t mca_osc_rdma_component = {
     .super = {
         .osc_version = {
-            OMPI_OSC_BASE_VERSION_3_0_0,
+            OMPI_OSC_BASE_VERSION_4_0_0,
             .mca_component_name = "rdma",
             MCA_BASE_MAKE_VERSION(component, OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION,
                                   OMPI_RELEASE_VERSION),
@@ -368,7 +368,7 @@ int ompi_osc_rdma_component_finalize (void)
 }
 
 
-static int ompi_osc_rdma_component_query (struct ompi_win_t *win, void **base, size_t size, int disp_unit,
+static int ompi_osc_rdma_component_query (struct ompi_win_t *win, void **base, size_t size, ptrdiff_t disp_unit,
                                           struct ompi_communicator_t *comm, struct opal_info_t *info,
                                           int flavor)
 {
@@ -1315,7 +1315,7 @@ static int ompi_osc_rdma_create_groups (ompi_osc_rdma_module_t *module)
  * This function checks if all ranks have the same displacement unit or size and sets the appropriate
  * flags on the module.
  */
-static int ompi_osc_rdma_check_parameters (ompi_osc_rdma_module_t *module, int disp_unit, size_t size)
+static int ompi_osc_rdma_check_parameters (ompi_osc_rdma_module_t *module, ptrdiff_t disp_unit, size_t size)
 {
     long values[4];
     int ret;
@@ -1351,7 +1351,7 @@ static int ompi_osc_rdma_check_parameters (ompi_osc_rdma_module_t *module, int d
 }
 
 
-static int ompi_osc_rdma_component_select (struct ompi_win_t *win, void **base, size_t size, int disp_unit,
+static int ompi_osc_rdma_component_select (struct ompi_win_t *win, void **base, size_t size, ptrdiff_t disp_unit,
                                            struct ompi_communicator_t *comm, struct opal_info_t *info,
                                            int flavor, int *model)
 {

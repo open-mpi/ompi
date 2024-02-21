@@ -22,11 +22,11 @@
 
 int
 ompi_osc_sm_rput(const void *origin_addr,
-                 int origin_count,
+                 size_t origin_count,
                  struct ompi_datatype_t *origin_dt,
                  int target,
                  ptrdiff_t target_disp,
-                 int target_count,
+                 size_t target_count,
                  struct ompi_datatype_t *target_dt,
                  struct ompi_win_t *win,
                  struct ompi_request_t **ompi_req)
@@ -37,7 +37,7 @@ ompi_osc_sm_rput(const void *origin_addr,
     void *remote_address;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                         "rput: 0x%lx, %d, %s, %d, %d, %d, %s, 0x%lx",
+                         "rput: 0x%lx, %zu, %s, %d, %d, %zu, %s, 0x%lx",
                          (unsigned long) origin_addr, origin_count,
                          origin_dt->name, target, (int) target_disp,
                          target_count, target_dt->name,
@@ -62,11 +62,11 @@ ompi_osc_sm_rput(const void *origin_addr,
 
 int
 ompi_osc_sm_rget(void *origin_addr,
-                 int origin_count,
+                 size_t origin_count,
                  struct ompi_datatype_t *origin_dt,
                  int target,
                  ptrdiff_t target_disp,
-                 int target_count,
+                 size_t target_count,
                  struct ompi_datatype_t *target_dt,
                  struct ompi_win_t *win,
                  struct ompi_request_t **ompi_req)
@@ -77,7 +77,7 @@ ompi_osc_sm_rget(void *origin_addr,
     void *remote_address;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                         "rget: 0x%lx, %d, %s, %d, %d, %d, %s, 0x%lx",
+                         "rget: 0x%lx, %zu, %s, %d, %d, %zu, %s, 0x%lx",
                          (unsigned long) origin_addr, origin_count,
                          origin_dt->name, target, (int) target_disp,
                          target_count, target_dt->name,
@@ -102,11 +102,11 @@ ompi_osc_sm_rget(void *origin_addr,
 
 int
 ompi_osc_sm_raccumulate(const void *origin_addr,
-                        int origin_count,
+                        size_t origin_count,
                         struct ompi_datatype_t *origin_dt,
                         int target,
                         ptrdiff_t target_disp,
-                        int target_count,
+                        size_t target_count,
                         struct ompi_datatype_t *target_dt,
                         struct ompi_op_t *op,
                         struct ompi_win_t *win,
@@ -118,7 +118,7 @@ ompi_osc_sm_raccumulate(const void *origin_addr,
     void *remote_address;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                         "raccumulate: 0x%lx, %d, %s, %d, %d, %d, %s, %s, 0x%lx",
+                         "raccumulate: 0x%lx, %zu, %s, %d, %d, %zu, %s, %s, 0x%lx",
                          (unsigned long) origin_addr, origin_count,
                          origin_dt->name, target, (int) target_disp,
                          target_count, target_dt->name,
@@ -150,14 +150,14 @@ ompi_osc_sm_raccumulate(const void *origin_addr,
 
 int
 ompi_osc_sm_rget_accumulate(const void *origin_addr,
-                                  int origin_count,
+                                  size_t origin_count,
                                   struct ompi_datatype_t *origin_dt,
                                   void *result_addr,
-                                  int result_count,
+                                  size_t result_count,
                                   struct ompi_datatype_t *result_dt,
                                   int target,
                                   MPI_Aint target_disp,
-                                  int target_count,
+                                  size_t target_count,
                                   struct ompi_datatype_t *target_dt,
                                   struct ompi_op_t *op,
                                   struct ompi_win_t *win,
@@ -169,7 +169,7 @@ ompi_osc_sm_rget_accumulate(const void *origin_addr,
     void *remote_address;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                         "rget_accumulate: 0x%lx, %d, %s, %d, %d, %d, %s, %s, 0x%lx",
+                         "rget_accumulate: 0x%lx, %zu, %s, %d, %d, %zu, %s, %s, 0x%lx",
                          (unsigned long) origin_addr, origin_count,
                          origin_dt->name, target, (int) target_disp,
                          target_count, target_dt->name,
@@ -207,11 +207,11 @@ ompi_osc_sm_rget_accumulate(const void *origin_addr,
 
 int
 ompi_osc_sm_put(const void *origin_addr,
-                      int origin_count,
+                      size_t origin_count,
                       struct ompi_datatype_t *origin_dt,
                       int target,
                       ptrdiff_t target_disp,
-                      int target_count,
+                      size_t target_count,
                       struct ompi_datatype_t *target_dt,
                       struct ompi_win_t *win)
 {
@@ -221,7 +221,7 @@ ompi_osc_sm_put(const void *origin_addr,
     void *remote_address;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                         "put: 0x%lx, %d, %s, %d, %d, %d, %s, 0x%lx",
+                         "put: 0x%lx, %zu, %s, %d, %d, %zu, %s, 0x%lx",
                          (unsigned long) origin_addr, origin_count,
                          origin_dt->name, target, (int) target_disp,
                          target_count, target_dt->name,
@@ -238,11 +238,11 @@ ompi_osc_sm_put(const void *origin_addr,
 
 int
 ompi_osc_sm_get(void *origin_addr,
-                      int origin_count,
+                      size_t origin_count,
                       struct ompi_datatype_t *origin_dt,
                       int target,
                       ptrdiff_t target_disp,
-                      int target_count,
+                      size_t target_count,
                       struct ompi_datatype_t *target_dt,
                       struct ompi_win_t *win)
 {
@@ -252,7 +252,7 @@ ompi_osc_sm_get(void *origin_addr,
     void *remote_address;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                         "get: 0x%lx, %d, %s, %d, %d, %d, %s, 0x%lx",
+                         "get: 0x%lx, %zu, %s, %d, %d, %zu, %s, 0x%lx",
                          (unsigned long) origin_addr, origin_count,
                          origin_dt->name, target, (int) target_disp,
                          target_count, target_dt->name,
@@ -269,11 +269,11 @@ ompi_osc_sm_get(void *origin_addr,
 
 int
 ompi_osc_sm_accumulate(const void *origin_addr,
-                       int origin_count,
+                       size_t origin_count,
                        struct ompi_datatype_t *origin_dt,
                        int target,
                        ptrdiff_t target_disp,
-                       int target_count,
+                       size_t target_count,
                        struct ompi_datatype_t *target_dt,
                        struct ompi_op_t *op,
                        struct ompi_win_t *win)
@@ -284,7 +284,7 @@ ompi_osc_sm_accumulate(const void *origin_addr,
     void *remote_address;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                         "accumulate: 0x%lx, %d, %s, %d, %d, %d, %s, %s, 0x%lx",
+                         "accumulate: 0x%lx, %zu, %s, %d, %d, %zu, %s, %s, 0x%lx",
                          (unsigned long) origin_addr, origin_count,
                          origin_dt->name, target, (int) target_disp,
                          target_count, target_dt->name,
@@ -310,14 +310,14 @@ ompi_osc_sm_accumulate(const void *origin_addr,
 
 int
 ompi_osc_sm_get_accumulate(const void *origin_addr,
-                           int origin_count,
+                           size_t origin_count,
                            struct ompi_datatype_t *origin_dt,
                            void *result_addr,
-                           int result_count,
+                           size_t result_count,
                            struct ompi_datatype_t *result_dt,
                            int target,
                            MPI_Aint target_disp,
-                           int target_count,
+                           size_t target_count,
                            struct ompi_datatype_t *target_dt,
                            struct ompi_op_t *op,
                            struct ompi_win_t *win)
@@ -328,7 +328,7 @@ ompi_osc_sm_get_accumulate(const void *origin_addr,
     void *remote_address;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                         "get_accumulate: 0x%lx, %d, %s, %d, %d, %d, %s, %s, 0x%lx",
+                         "get_accumulate: 0x%lx, %zu, %s, %d, %d, %zu, %s, %s, 0x%lx",
                          (unsigned long) origin_addr, origin_count,
                          origin_dt->name, target, (int) target_disp,
                          target_count, target_dt->name,

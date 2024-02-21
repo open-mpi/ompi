@@ -168,7 +168,7 @@ struct ompi_osc_rdma_module_t {
     size_t size;
 
     /** Local displacement unit. */
-    int disp_unit;
+    ptrdiff_t disp_unit;
 
     /** maximum count for network AMO usage */
     unsigned long network_amo_max_count;
@@ -402,7 +402,7 @@ static inline int _ompi_osc_rdma_register (ompi_osc_rdma_module_t *module, struc
 {
     if (module->use_memory_registration) {
         assert(module->use_accelerated_btl);
-        OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "registering segment with btl. range: %p - %p (%lu bytes)",
+        OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "registering segment with btl. range: %p - %p (%zu bytes)",
                          ptr, (void*)((char *) ptr + size), size);
 
         *handle = module->accelerated_btl->btl_register_mem(module->accelerated_btl, endpoint, ptr, size, flags);
