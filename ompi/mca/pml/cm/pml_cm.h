@@ -121,14 +121,6 @@ mca_pml_cm_irecv(void *addr,
     return ret;
 }
 
-__opal_attribute_always_inline__ static inline void
-mca_pml_cm_recv_fast_completion(struct mca_mtl_request_t *mtl_request)
-{
-    // Do nothing!
-    ompi_request_complete(mtl_request->ompi_req, true);
-    return;
-}
-
 __opal_attribute_always_inline__ static inline int
 mca_pml_cm_recv(void *addr,
                 size_t count,
@@ -159,7 +151,6 @@ mca_pml_cm_recv(void *addr,
                                       count,
                                       flags);
 
-    recvreq->req_mtl.completion_callback = mca_pml_cm_recv_fast_completion;
     assert(NULL == recvreq->req_base.req_ompi.req_complete_cb);
 
     MCA_PML_CM_THIN_RECV_REQUEST_START(recvreq, comm, tag, src, ret);
