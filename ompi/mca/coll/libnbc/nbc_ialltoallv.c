@@ -23,19 +23,19 @@
 
 static inline int a2av_sched_linear(int rank, int p, NBC_Schedule *schedule,
                                     const void *sendbuf, const int *sendcounts,
-                                    const int *sdispls, MPI_Aint sndext, MPI_Datatype sendtype,
+                                    const int *sdispls, MPI_Aint sndext, MPI_Datatype sendtype, const size_t sdtype_size,
                                     void *recvbuf, const int *recvcounts,
-                                    const int *rdispls, MPI_Aint rcvext, MPI_Datatype recvtype);
+                                    const int *rdispls, MPI_Aint rcvext, MPI_Datatype recvtype, const size_t rdtype_size);
 
 static inline int a2av_sched_pairwise(int rank, int p, NBC_Schedule *schedule,
                                       const void *sendbuf, const int *sendcounts, const int *sdispls,
-                                      MPI_Aint sndext, MPI_Datatype sendtype,
+                                      MPI_Aint sndext, MPI_Datatype sendtype, const size_t sdtype_size,
                                       void *recvbuf, const int *recvcounts, const int *rdispls,
-                                      MPI_Aint rcvext, MPI_Datatype recvtype);
+                                      MPI_Aint rcvext, MPI_Datatype recvtype, const size_t rdtype_size);
 
 static inline int a2av_sched_inplace(int rank, int p, NBC_Schedule *schedule,
                                     void *buf, const int *counts, const int *displs,
-                                    MPI_Aint ext, MPI_Datatype type, ptrdiff_t gap);
+                                    MPI_Aint ext, MPI_Datatype type, const size_t dtype_size, ptrdiff_t gap);
 
 /* an alltoallv schedule can not be cached easily because the contents
  * of the recvcounts array may change, so a comparison of the address
@@ -48,6 +48,7 @@ static int nbc_alltoallv_init(const void* sendbuf, const int *sendcounts, const 
                               mca_coll_base_module_t *module, bool persistent)
 {
   int rank, p, res;
+  size_t sdtype_size, rdtype_size;
   MPI_Aint sndext, rcvext;
   NBC_Schedule *schedule;
   char *rbuf, *sbuf, inplace;
@@ -60,6 +61,7 @@ static int nbc_alltoallv_init(const void* sendbuf, const int *sendcounts, const 
   rank = ompi_comm_rank (comm);
   p = ompi_comm_size (comm);
 
+  ompi_datatype_type_size(recvtype, &rdtype_size);
   res = ompi_datatype_type_extent (recvtype, &rcvext);
   if (MPI_SUCCESS != res) {
     NBC_Error("MPI Error in ompi_datatype_type_extent() (%i)", res);
@@ -92,7 +94,9 @@ static int nbc_alltoallv_init(const void* sendbuf, const int *sendcounts, const 
     sendcounts = recvcounts;
     sdispls = rdispls;
     sndext = rcvext;
+    sdtype_size = rdtype_size;
   } else {
+    ompi_datatype_type_size(sendtype, &sdtype_size);
     res = ompi_datatype_type_extent (sendtype, &sndext);
     if (MPI_SUCCESS != res) {
       NBC_Error("MPI Error in ompi_datatype_type_extent() (%i)", res);
@@ -106,8 +110,7 @@ static int nbc_alltoallv_init(const void* sendbuf, const int *sendcounts, const 
     return OMPI_ERR_OUT_OF_RESOURCE;
   }
 
-
-  if (!inplace && sendcounts[rank] != 0) {
+  if (!inplace && 0 < sendcounts[rank] && 0 < sdtype_size) {
     rbuf = (char *) recvbuf + rdispls[rank] * rcvext;
     sbuf = (char *) sendbuf + sdispls[rank] * sndext;
     res = NBC_Sched_copy (sbuf, false, sendcounts[rank], sendtype,
@@ -119,12 +122,12 @@ static int nbc_alltoallv_init(const void* sendbuf, const int *sendcounts, const 
   }
 
   if (inplace) {
-    res = a2av_sched_inplace(rank, p, schedule, recvbuf, recvcounts,
-                                 rdispls, rcvext, recvtype, gap);
+    res = a2av_sched_inplace(rank, p, schedule, recvbuf, recvcounts, rdispls, rcvext, recvtype,
+                             rdtype_size, gap);
   } else {
     res = a2av_sched_linear(rank, p, schedule,
-                            sendbuf, sendcounts, sdispls, sndext, sendtype,
-                            recvbuf, recvcounts, rdispls, rcvext, recvtype);
+                            sendbuf, sendcounts, sdispls, sndext, sendtype, sdtype_size,
+                            recvbuf, recvcounts, rdispls, rcvext, recvtype, rdtype_size);
   }
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
     OBJ_RELEASE(schedule);
@@ -177,10 +180,13 @@ static int nbc_alltoallv_inter_init (const void* sendbuf, const int *sendcounts,
                                      mca_coll_base_module_t *module, bool persistent)
 {
   int res, rsize;
+  size_t sdtype_size, rdtype_size;
   MPI_Aint sndext, rcvext;
   NBC_Schedule *schedule;
   ompi_coll_libnbc_module_t *libnbc_module = (ompi_coll_libnbc_module_t*) module;
 
+  ompi_datatype_type_size(sendtype, &sdtype_size);
+  ompi_datatype_type_size(recvtype, &rdtype_size);
 
   res = ompi_datatype_type_extent(sendtype, &sndext);
   if (MPI_SUCCESS != res) {
@@ -203,7 +209,7 @@ static int nbc_alltoallv_inter_init (const void* sendbuf, const int *sendcounts,
 
   for (int i = 0; i < rsize; i++) {
     /* post all sends */
-    if (sendcounts[i] != 0) {
+    if (0 < sendcounts[i] && 0 < sdtype_size) {
       char *sbuf = (char *) sendbuf + sdispls[i] * sndext;
       res = NBC_Sched_send (sbuf, false, sendcounts[i], sendtype, i, schedule, false);
       if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
@@ -212,7 +218,7 @@ static int nbc_alltoallv_inter_init (const void* sendbuf, const int *sendcounts,
       }
     }
     /* post all receives */
-    if (recvcounts[i] != 0) {
+    if (0 < recvcounts[i] && 0 < rdtype_size) {
       char *rbuf = (char *) recvbuf + rdispls[i] * rcvext;
       res = NBC_Sched_recv (rbuf, false, recvcounts[i], recvtype, i, schedule, false);
       if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
@@ -261,9 +267,9 @@ int ompi_coll_libnbc_ialltoallv_inter (const void* sendbuf, const int *sendcount
 __opal_attribute_unused__
 static inline int a2av_sched_linear(int rank, int p, NBC_Schedule *schedule,
                                     const void *sendbuf, const int *sendcounts, const int *sdispls,
-                                    MPI_Aint sndext, MPI_Datatype sendtype,
+                                    MPI_Aint sndext, MPI_Datatype sendtype, const size_t sdtype_size,
                                     void *recvbuf, const int *recvcounts, const int *rdispls,
-                                    MPI_Aint rcvext, MPI_Datatype recvtype) {
+                                    MPI_Aint rcvext, MPI_Datatype recvtype, const size_t rdtype_size) {
   int res;
 
   for (int i = 0 ; i < p ; ++i) {
@@ -272,7 +278,7 @@ static inline int a2av_sched_linear(int rank, int p, NBC_Schedule *schedule,
     }
 
     /* post send */
-    if (sendcounts[i] != 0) {
+    if (0 < sendcounts[i] && 0 < sdtype_size) {
       char *sbuf = ((char *) sendbuf) + (sdispls[i] * sndext);
       res = NBC_Sched_send(sbuf, false, sendcounts[i], sendtype, i, schedule, false);
       if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
@@ -281,7 +287,7 @@ static inline int a2av_sched_linear(int rank, int p, NBC_Schedule *schedule,
     }
 
     /* post receive */
-    if (recvcounts[i] != 0) {
+    if (0 < recvcounts[i] && 0 < rdtype_size) {
       char *rbuf = ((char *) recvbuf) + (rdispls[i] * rcvext);
       res = NBC_Sched_recv(rbuf, false, recvcounts[i], recvtype, i, schedule, false);
       if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
@@ -296,9 +302,9 @@ static inline int a2av_sched_linear(int rank, int p, NBC_Schedule *schedule,
 __opal_attribute_unused__
 static inline int a2av_sched_pairwise(int rank, int p, NBC_Schedule *schedule,
                                       const void *sendbuf, const int *sendcounts, const int *sdispls,
-                                      MPI_Aint sndext, MPI_Datatype sendtype,
+                                      MPI_Aint sndext, MPI_Datatype sendtype, const size_t sdtype_size,
                                       void *recvbuf, const int *recvcounts, const int *rdispls,
-                                      MPI_Aint rcvext, MPI_Datatype recvtype) {
+                                      MPI_Aint rcvext, MPI_Datatype recvtype, const size_t rdtype_size) {
   int res;
 
   for (int i = 1 ; i < p ; ++i) {
@@ -306,7 +312,7 @@ static inline int a2av_sched_pairwise(int rank, int p, NBC_Schedule *schedule,
     int rcvpeer = (rank + p - i) %p;
 
     /* post send */
-    if (sendcounts[sndpeer] != 0) {
+    if (0 < sendcounts[sndpeer] && 0 < sdtype_size) {
       char *sbuf = ((char *) sendbuf) + (sdispls[sndpeer] * sndext);
       res = NBC_Sched_send(sbuf, false, sendcounts[sndpeer], sendtype, sndpeer, schedule, false);
       if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
@@ -315,7 +321,7 @@ static inline int a2av_sched_pairwise(int rank, int p, NBC_Schedule *schedule,
     }
 
     /* post receive */
-    if (recvcounts[rcvpeer] != 0) {
+    if (0 < recvcounts[rcvpeer] && 0 < rdtype_size) {
       char *rbuf = ((char *) recvbuf) + (rdispls[rcvpeer] * rcvext);
       res = NBC_Sched_recv(rbuf, false, recvcounts[rcvpeer], recvtype, rcvpeer, schedule, true);
       if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
@@ -329,7 +335,7 @@ static inline int a2av_sched_pairwise(int rank, int p, NBC_Schedule *schedule,
 
 static inline int a2av_sched_inplace(int rank, int p, NBC_Schedule *schedule,
                                     void *buf, const int *counts, const int *displs,
-                                    MPI_Aint ext, MPI_Datatype type, ptrdiff_t gap) {
+                                    MPI_Aint ext, MPI_Datatype type, const size_t dtype_size, ptrdiff_t gap) {
   int res;
 
   for (int i = 1; i < (p+1)/2; i++) {
@@ -338,7 +344,12 @@ static inline int a2av_sched_inplace(int rank, int p, NBC_Schedule *schedule,
     char *sbuf = (char *) buf + displs[speer] * ext;
     char *rbuf = (char *) buf + displs[rpeer] * ext;
 
-    if (0 != counts[rpeer]) {
+    if (0 == dtype_size) {
+      /* Nothing to exchange */
+      return OMPI_SUCCESS;
+    }
+
+    if (0 < counts[rpeer]) {
       res = NBC_Sched_copy (rbuf, false, counts[rpeer], type,
                             (void *)(-gap), true, counts[rpeer], type,
                             schedule, true);
@@ -346,26 +357,26 @@ static inline int a2av_sched_inplace(int rank, int p, NBC_Schedule *schedule,
         return res;
       }
     }
-    if (0 != counts[speer]) {
+    if (0 < counts[speer]) {
       res = NBC_Sched_send (sbuf, false , counts[speer], type, speer, schedule, false);
       if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
         return res;
       }
     }
-    if (0 != counts[rpeer]) {
+    if (0 < counts[rpeer]) {
       res = NBC_Sched_recv (rbuf, false , counts[rpeer], type, rpeer, schedule, true);
       if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
         return res;
       }
     }
 
-    if (0 != counts[rpeer]) {
+    if (0 < counts[rpeer]) {
       res = NBC_Sched_send ((void *)(-gap), true, counts[rpeer], type, rpeer, schedule, false);
       if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
         return res;
       }
     }
-    if (0 != counts[speer]) {
+    if (0 < counts[speer]) {
       res = NBC_Sched_recv (sbuf, false, counts[speer], type, speer, schedule, true);
       if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
         return res;
@@ -374,15 +385,17 @@ static inline int a2av_sched_inplace(int rank, int p, NBC_Schedule *schedule,
   }
   if (0 == (p%2)) {
     int peer = (rank + p/2) % p;
-
     char *tbuf = (char *) buf + displs[peer] * ext;
-    res = NBC_Sched_copy (tbuf, false, counts[peer], type,
-                          (void *)(-gap), true, counts[peer], type,
-                          schedule, true);
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
-      return res;
+
+    if (0 < counts[peer]) {
+        res = NBC_Sched_copy(tbuf, false, counts[peer], type, (void *) (-gap), true, counts[peer],
+                             type, schedule, true);
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+            return res;
+        }
     }
-    if (0 != counts[peer]) {
+
+    if (0 < counts[peer]) {
       res = NBC_Sched_send ((void *)(-gap), true , counts[peer], type, peer, schedule, false);
       if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
         return res;
