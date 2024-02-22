@@ -17,6 +17,7 @@
 #include "oshmem/runtime/runtime.h"
 
 #include "oshmem/mca/scoll/scoll.h"
+#include "oshmem/mca/spml/spml.h"
 
 #include "oshmem/proc/proc.h"
 
