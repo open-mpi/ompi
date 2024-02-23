@@ -14,7 +14,7 @@
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.  All Rights
  *                         reserved.
- * Copyright (c) 2021-2022 Nanook Consulting.  All rights reserved.
+ * Copyright (c) 2021-2024 Nanook Consulting  All rights reserved.
  * Copyright (c) 2021-2022 IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  */
@@ -62,18 +62,6 @@
 opal_process_name_t pmix_name_wildcard = {UINT32_MAX-1, UINT32_MAX-1};
 opal_process_name_t pmix_name_invalid = {UINT32_MAX, UINT32_MAX};
 
-/**
- * Flag used to indicate whether we setup (and should destroy) our job session
- * directory. We keep track of this information because we may be using run-time
- * infrastructure that manages its structure (e.g., OpenPMIx). If we setup this
- * session directory structure, then we shall cleanup after ourselves.
- */
-static bool destroy_job_session_dir = false;
-
-static int _setup_top_session_dir(char **sdir);
-static int _setup_job_session_dir(char **sdir);
-static int _setup_proc_session_dir(char **sdir);
-
 #define OPAL_SCHEMA_DELIMITER_CHAR      '.'
 #define OPAL_SCHEMA_WILDCARD_CHAR       '*'
 #define OPAL_SCHEMA_WILDCARD_STRING     "*"
@@ -86,6 +74,7 @@ static int _setup_proc_session_dir(char **sdir);
 static bool fns_init=false;
 static opal_tsd_tracked_key_t print_args_tsd_key;
 static char* opal_print_args_null = "NULL";
+
 typedef struct {
     char *buffers[OPAL_PRINT_NAME_ARG_NUM_BUFS];
     int cntr;
@@ -798,13 +787,6 @@ int ompi_rte_init(int *pargc, char ***pargv)
     if (OPAL_SUCCESS == rc && NULL != val) {
         opal_process_info.top_session_dir = val;
         val = NULL;  // protect the string
-    } else {
-        /* we need to create something */
-        rc = _setup_top_session_dir(&opal_process_info.top_session_dir);
-        if (OPAL_SUCCESS != rc) {
-            error = "top session directory";
-            goto error;
-        }
     }
 
     /* retrieve job-session directory info */
@@ -813,13 +795,6 @@ int ompi_rte_init(int *pargc, char ***pargv)
     if (PMIX_SUCCESS == rc && NULL != val) {
         opal_process_info.job_session_dir = val;
         val = NULL;  // protect the string
-    } else {
-        /* we need to create something */
-        rc = _setup_job_session_dir(&opal_process_info.job_session_dir);
-        if (OPAL_SUCCESS != rc) {
-            error = "job session directory";
-            goto error;
-        }
     }
 
     /* retrieve proc-session directory info */
@@ -828,13 +803,6 @@ int ompi_rte_init(int *pargc, char ***pargv)
     if (OPAL_SUCCESS == rc && NULL != val) {
         opal_process_info.proc_session_dir = val;
         val = NULL;  // protect the string
-    } else {
-        /* we need to create something */
-        rc = _setup_proc_session_dir(&opal_process_info.proc_session_dir);
-        if (OPAL_SUCCESS != rc) {
-            error = "proc session directory";
-            goto error;
-        }
     }
 
     /* get our initial working directory - defaults to getting the value
@@ -981,13 +949,9 @@ static bool check_file(const char *root, const char *path)
 int ompi_rte_finalize(void)
 {
 
-    /* cleanup the session directory we created */
-    if (NULL != opal_process_info.job_session_dir && destroy_job_session_dir) {
-        opal_os_dirpath_destroy(opal_process_info.job_session_dir,
-                                false, check_file);
+    if (NULL != opal_process_info.job_session_dir) {
         free(opal_process_info.job_session_dir);
         opal_process_info.job_session_dir = NULL;
-        destroy_job_session_dir = false;
     }
 
     if (NULL != opal_process_info.top_session_dir) {
@@ -1157,46 +1121,4 @@ void ompi_rte_wait_for_debugger(void)
 
     /* check for the "mpi-init" breakpoint */
     ompi_rte_breakpoint("mpi-init");
-}
-
-static int _setup_top_session_dir(char **sdir)
-{
-    char *tmpdir;
-
-    if( NULL == (tmpdir = getenv("TMPDIR")) )
-        if( NULL == (tmpdir = getenv("TEMP")) )
-            if( NULL == (tmpdir = getenv("TMP")) )
-                tmpdir = "/tmp";
-
-    *sdir = strdup(tmpdir);
-    return OPAL_SUCCESS;
-}
-
-static int _setup_job_session_dir(char **sdir)
-{
-    /* get the effective uid */
-    uid_t uid = geteuid();
-
-    if (0 > opal_asprintf(sdir, "%s/ompi.%s.%lu/jf.0/%u",
-                          opal_process_info.top_session_dir,
-                          opal_process_info.nodename,
-                          (unsigned long)uid,
-                          opal_process_info.my_name.jobid)) {
-        opal_process_info.job_session_dir = NULL;
-        return OPAL_ERR_OUT_OF_RESOURCE;
-    }
-    destroy_job_session_dir = true;
-    return OPAL_SUCCESS;
-}
-
-static int _setup_proc_session_dir(char **sdir)
-{
-    if (0 > opal_asprintf(sdir,  "%s/%d",
-                          opal_process_info.job_session_dir,
-                          opal_process_info.my_name.vpid)) {
-        opal_process_info.proc_session_dir = NULL;
-        return OPAL_ERR_OUT_OF_RESOURCE;
-    }
-
-    return OPAL_SUCCESS;
 }
