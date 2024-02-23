@@ -160,6 +160,8 @@ static int usnic_component_open(void)
 
     /* initialize objects */
     OBJ_CONSTRUCT(&mca_btl_usnic_component.usnic_procs, opal_list_t);
+    OBJ_CONSTRUCT(&btl_usnic_lock, opal_recursive_mutex_t);
+
 
     /* Sanity check: if_include and if_exclude need to be mutually
        exclusive */
@@ -586,8 +588,6 @@ usnic_component_init(int *num_btl_modules, bool want_progress_threads, bool want
             return NULL;
         }
     }
-
-    OBJ_CONSTRUCT(&btl_usnic_lock, opal_recursive_mutex_t);
 
     /* There are multiple dimensions to consider when requesting an
        API version number from libfabric:
