@@ -40,6 +40,10 @@
 #include "opal/mca/backtrace/backtrace.h"
 #include "ompi/runtime/mpiruntime.h"
 
+#if OMPI_HAVE_MPI_EXT_CONTINUE
+#include "ompi/mpiext/continue/c/continuation.h"
+#endif /* OMPI_HAVE_MPI_EXT_CONTINUE */
+
 /*
  * Table for Fortran <-> C errhandler handle conversion
  */
@@ -414,6 +418,13 @@ int ompi_errhandler_proc_failed_internal(ompi_proc_t* ompi_proc, int status, boo
      * signal it so it will check again.
      */
     wait_sync_global_wakeup(PMIX_ERR_PROC_ABORTED == status? MPI_ERR_PROC_ABORTED: MPI_ERR_PROC_FAILED);
+
+#ifdef OMPI_HAVE_MPI_EXT_CONTINUE
+    /* Continuations:
+     * Release continuations and mark them as failed.
+     */
+    ompi_continue_global_wakeup(MPI_ERR_PROC_FAILED);
+#endif // OMPI_HAVE_MPI_EXT_CONTINUE
 
     /* Collectives:
      * Propagate the error (this has been selected rather than the "roll
