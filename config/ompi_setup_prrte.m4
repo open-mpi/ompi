@@ -19,7 +19,7 @@ dnl Copyright (c) 2019-2020 Intel, Inc.  All rights reserved.
 dnl Copyright (c) 2020-2022 Amazon.com, Inc. or its affiliates.  All Rights reserved.
 dnl Copyright (c) 2021      Nanook Consulting.  All rights reserved.
 dnl Copyright (c) 2021-2022 IBM Corporation.  All rights reserved.
-dnl Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
+dnl Copyright (c) 2023-2024 Jeffrey M. Squyres.  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -238,6 +238,7 @@ AC_DEFUN([_OMPI_SETUP_PRRTE_INTERNAL], [
     AS_IF([test "$internal_prrte_happy" = "no" -a "$enable_internal_rte" != "no"],
           [AC_MSG_ERROR([PRRTE configuration failed.  Cannot continue.])])
 
+    OMPI_HAVE_PRRTE_RST=0
     AS_IF([test "$internal_prrte_happy" = "yes"],
           [AC_MSG_CHECKING([for internal PRRTE RST files])
            AS_IF([test -n "$SPHINX_BUILD"],
@@ -310,6 +311,7 @@ AC_DEFUN([_OMPI_SETUP_PRRTE_EXTERNAL], [
     AS_IF([test -n "${prterun_path}"],
           [AC_DEFINE_UNQUOTED([OMPI_PRTERUN_PATH], ["${prterun_path}"], [Path to prterun])])
 
+    OMPI_HAVE_PRRTE_RST=0
     AS_IF([test "$setup_prrte_external_happy" = "yes"],
           [ # Determine if this external PRRTE has installed the RST
             # directories that we care about
@@ -327,7 +329,6 @@ AC_DEFUN([_OMPI_SETUP_PRRTE_EXTERNAL], [
                         [ # This version of PRRTE doesn't have installed RST
                           # files.
                           AC_MSG_RESULT([not found])
-                          OMPI_HAVE_PRRTE_RST=0
                         ])
                  ])
            $1],
