@@ -1,4 +1,4 @@
-name: GitHub Action CI
+name: mpi4py
 
 on: [pull_request]
 
