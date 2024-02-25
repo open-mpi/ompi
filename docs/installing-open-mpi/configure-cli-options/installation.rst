@@ -289,15 +289,13 @@ be used with ``configure``:
             you do not have support for Libfabric and will
             automatically skip the ``ofi`` CM component.
 
-* ``--disable-show-load-errors-by-default``:
+* ``--with-show-load-errors=VALUE``:
   Set the default value of the ``mca_base_component_show_load_errors``
-  MCA variable: the ``--enable`` form of this option sets the MCA
-  variable to true, the ``--disable`` form sets the MCA variable to
-  false.  The MCA ``mca_base_component_show_load_errors`` variable can
-  still be overridden at run time via the usual MCA-variable-setting
+  MCA variable.  The MCA ``mca_base_component_show_load_errors`` variable
+  can still be overridden at run time via the usual MCA-variable-setting
   mechanisms; this configure option simply sets the default value.
 
-  The ``--disable`` form of this option is intended for Open MPI
+  The ``no``/``none`` value of this option is intended for Open MPI
   packagers who tend to enable support for many different types of
   networks and systems in their packages.  For example, consider a
   packager who includes support for both the FOO and BAR networks in
@@ -309,13 +307,18 @@ be used with ``configure``:
   the FOO components failing to load because ``libFOO.so`` is not
   available on their systems.
 
-  Conversely, system administrators tend to build an Open MPI that is
+  Conversely, the ``yes``/``all`` value of this option is intended for
+  system administrators who tend to build an Open MPI that is
   targeted at their specific environment, and contains few (if any)
   components that are not needed.  In such cases, they might want
   their users to be warned that the FOO network components failed to
   load (e.g., if ``libFOO.so`` was mistakenly unavailable), because Open
   MPI may otherwise silently failover to a slower network path for MPI
   traffic.
+
+  .. note:: See the section on :ref:`common MCA parameters
+            <label-mca-common-parameters>` for details related to the
+            ``mca_base_component_show_load_errors`` MCA variable.
 
 * ``--with-platform=FILE``:
   Load configure options for the build from ``FILE``.  Options on the
