@@ -1,4 +1,4 @@
-name: GitHub Action CI
+name: ROCM
 
 on: [pull_request]
 
