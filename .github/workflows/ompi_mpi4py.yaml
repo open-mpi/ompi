@@ -6,15 +6,18 @@ jobs:
   mpi4py:
     runs-on: ubuntu-latest
     timeout-minutes: 60
+
     steps:
+
     - name: Configure hostname
       run:  echo 127.0.0.1 `hostname` | sudo tee -a /etc/hosts > /dev/null
       if:   ${{ runner.os == 'Linux' || runner.os == 'macOS' }}
-        
+
     - name: Install depencencies
       run:  sudo apt-get install -y -q
               libnuma-dev
-      
+      if:   ${{ runner.os == 'Linux' }}
+
     - name: Checkout Open MPI
       uses: actions/checkout@v4
       with:
@@ -26,19 +29,18 @@ jobs:
       working-directory: mpi-build
 
     - name: Configure Open MPI
-      run: ./configure
+      run:  ./configure
               --disable-dependency-tracking
-              --disable-sphinx
-              --disable-man-pages
-              --disable-mpi-fortran
-              --disable-oshmem
               --enable-debug
               --enable-mem-debug
+              --disable-sphinx
+              --disable-mpi-fortran
+              --disable-oshmem
               LDFLAGS=-Wl,-rpath,/usr/local/lib
       working-directory: mpi-build
 
     - name: Build MPI
-      run:  make -j 2
+      run:  make -j $(nproc)
       working-directory: mpi-build
 
     - name: Install MPI
@@ -90,27 +92,29 @@ jobs:
     - name: Test mpi4py (singleton)
       run:  python test/main.py -v
       if:   ${{ true }}
+      timeout-minutes: 10
     - name: Test mpi4py (np=1)
       run:  mpiexec -n 1 python test/main.py -v
-#
-#   unfortunately these multi-rank tests aren't reliable enough to
-#   run in github actions right now.  
-#
-#   - name: Test mpi4py (np=2)
-#     run:  mpiexec -n 2 python test/main.py -v -f
-#   - name: Test mpi4py (np=3)
-#     run:  mpiexec -n 3 python test/main.py -v -f
-#     if:   ${{ true }}
-#     timeout-minutes: 20
-#   - name: Test mpi4py (np=4)
-#     run:  mpiexec -n 4 python test/main.py -v -f
-#     if:   ${{ true }}
-#     timeout-minutes: 20
-#   - name: Test mpi4py (np=5)
-#     run:  mpiexec -n 5 python test/main.py -v -f
-#     if:   ${{ true }}
-#     timeout-minutes: 20
+      if:   ${{ true }}
+      timeout-minutes: 10
+    - name: Test mpi4py (np=2)
+      run:  mpiexec -n 2 python test/main.py -v -f
+      if:   ${{ true }}
+      timeout-minutes: 10
+    - name: Test mpi4py (np=3)
+      run:  mpiexec -n 3 python test/main.py -v -f
+      if:   ${{ true }}
+      timeout-minutes: 10
+    - name: Test mpi4py (np=4)
+      run:  mpiexec -n 4 python test/main.py -v -f
+      if:   ${{ true }}
+      timeout-minutes: 10
+    - name: Test mpi4py (np=5)
+      run:  mpiexec -n 5 python test/main.py -v -f
+      if:   ${{ true }}
+      timeout-minutes: 10
+
     - name: Test mpi4py.run
       run:  python demo/test-run/test_run.py -v
       if:   ${{ true }}
-      timeout-minutes: 20
+      timeout-minutes: 10
