@@ -191,6 +191,7 @@ typedef struct mca_coll_han_op_module_name_t {
     mca_coll_han_op_up_low_module_name_t allreduce;
     mca_coll_han_op_up_low_module_name_t allgather;
     mca_coll_han_op_up_low_module_name_t gather;
+    mca_coll_han_op_up_low_module_name_t gatherv;
     mca_coll_han_op_up_low_module_name_t scatter;
 } mca_coll_han_op_module_name_t;
 
@@ -235,6 +236,10 @@ typedef struct mca_coll_han_component_t {
     uint32_t han_gather_up_module;
     /* low level module for gather */
     uint32_t han_gather_low_module;
+    /* up level module for gatherv */
+    uint32_t han_gatherv_up_module;
+    /* low level module for gatherv */
+    uint32_t han_gatherv_low_module;
     /* up level module for scatter */
     uint32_t han_scatter_up_module;
     /* low level module for scatter */
@@ -279,6 +284,7 @@ typedef struct mca_coll_han_single_collective_fallback_s {
         mca_coll_base_module_barrier_fn_t barrier;
         mca_coll_base_module_bcast_fn_t bcast;
         mca_coll_base_module_gather_fn_t gather;
+        mca_coll_base_module_gatherv_fn_t gatherv;
         mca_coll_base_module_reduce_fn_t reduce;
         mca_coll_base_module_scatter_fn_t scatter;
     } module_fn;
@@ -298,6 +304,7 @@ typedef struct mca_coll_han_collectives_fallback_s {
     mca_coll_han_single_collective_fallback_t bcast;
     mca_coll_han_single_collective_fallback_t reduce;
     mca_coll_han_single_collective_fallback_t gather;
+    mca_coll_han_single_collective_fallback_t gatherv;
     mca_coll_han_single_collective_fallback_t scatter;
 } mca_coll_han_collectives_fallback_t;
 
@@ -371,6 +378,9 @@ OBJ_CLASS_DECLARATION(mca_coll_han_module_t);
 #define previous_gather             fallback.gather.module_fn.gather
 #define previous_gather_module      fallback.gather.module
 
+#define previous_gatherv            fallback.gatherv.module_fn.gatherv
+#define previous_gatherv_module     fallback.gatherv.module
+
 #define previous_scatter            fallback.scatter.module_fn.scatter
 #define previous_scatter_module     fallback.scatter.module
 
@@ -394,6 +404,7 @@ OBJ_CLASS_DECLARATION(mca_coll_han_module_t);
         HAN_LOAD_FALLBACK_COLLECTIVE(HANM, COMM, bcast);                     \
         HAN_LOAD_FALLBACK_COLLECTIVE(HANM, COMM, scatter);                   \
         HAN_LOAD_FALLBACK_COLLECTIVE(HANM, COMM, gather);                    \
+        HAN_LOAD_FALLBACK_COLLECTIVE(HANM, COMM, gatherv);                    \
         HAN_LOAD_FALLBACK_COLLECTIVE(HANM, COMM, reduce);                    \
         HAN_LOAD_FALLBACK_COLLECTIVE(HANM, COMM, allreduce);                 \
         HAN_LOAD_FALLBACK_COLLECTIVE(HANM, COMM, allgather);                 \
@@ -476,6 +487,9 @@ int
 mca_coll_han_gather_intra_dynamic(GATHER_BASE_ARGS,
                                   mca_coll_base_module_t *module);
 int
+mca_coll_han_gatherv_intra_dynamic(GATHERV_BASE_ARGS,
+                                   mca_coll_base_module_t *module);
+int
 mca_coll_han_reduce_intra_dynamic(REDUCE_BASE_ARGS,
                                   mca_coll_base_module_t *module);
 int
@@ -493,4 +507,10 @@ ompi_coll_han_reorder_gather(const void *sbuf,
                              struct ompi_communicator_t *comm,
                              int * topo);
 
+size_t
+coll_han_utils_gcd(const size_t *numerators, const size_t size);
+
+int
+coll_han_utils_create_contiguous_datatype(size_t count, const ompi_datatype_t *oldType,
+                                          ompi_datatype_t **newType);
 #endif                          /* MCA_COLL_HAN_EXPORT_H */

@@ -176,6 +176,13 @@ mca_coll_han_gather_intra_simple(const void *sbuf, int scount,
                                  struct ompi_communicator_t *comm,
                                  mca_coll_base_module_t *module);
 
+/* Gatherv */
+int
+mca_coll_han_gatherv_intra(const void *sbuf, int scount, struct ompi_datatype_t *sdtype,
+                           void *rbuf, const int *rcounts, const int *displs,
+                           struct ompi_datatype_t *rdtype, int root,
+                           struct ompi_communicator_t *comm, mca_coll_base_module_t *module);
+
 /* Allgather */
 int
 mca_coll_han_allgather_intra(const void *sbuf, int scount,

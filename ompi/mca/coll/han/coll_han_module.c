@@ -52,6 +52,7 @@ static void han_module_clear(mca_coll_han_module_t *han_module)
     CLEAN_PREV_COLL(han_module, bcast);
     CLEAN_PREV_COLL(han_module, reduce);
     CLEAN_PREV_COLL(han_module, gather);
+    CLEAN_PREV_COLL(han_module, gatherv);
     CLEAN_PREV_COLL(han_module, scatter);
 
     han_module->reproducible_reduce = NULL;
@@ -148,6 +149,7 @@ mca_coll_han_module_destruct(mca_coll_han_module_t * module)
     OBJ_RELEASE_IF_NOT_NULL(module->previous_allreduce_module);
     OBJ_RELEASE_IF_NOT_NULL(module->previous_bcast_module);
     OBJ_RELEASE_IF_NOT_NULL(module->previous_gather_module);
+    OBJ_RELEASE_IF_NOT_NULL(module->previous_gatherv_module);
     OBJ_RELEASE_IF_NOT_NULL(module->previous_reduce_module);
     OBJ_RELEASE_IF_NOT_NULL(module->previous_scatter_module);
 
@@ -250,7 +252,6 @@ mca_coll_han_comm_query(struct ompi_communicator_t * comm, int *priority)
     han_module->super.coll_alltoallv  = NULL;
     han_module->super.coll_alltoallw  = NULL;
     han_module->super.coll_exscan     = NULL;
-    han_module->super.coll_gatherv    = NULL;
     han_module->super.coll_reduce_scatter = NULL;
     han_module->super.coll_scan       = NULL;
     han_module->super.coll_scatterv   = NULL;
@@ -258,6 +259,7 @@ mca_coll_han_comm_query(struct ompi_communicator_t * comm, int *priority)
     han_module->super.coll_scatter    = mca_coll_han_scatter_intra_dynamic;
     han_module->super.coll_reduce     = mca_coll_han_reduce_intra_dynamic;
     han_module->super.coll_gather     = mca_coll_han_gather_intra_dynamic;
+    han_module->super.coll_gatherv    = mca_coll_han_gatherv_intra_dynamic;
     han_module->super.coll_bcast      = mca_coll_han_bcast_intra_dynamic;
     han_module->super.coll_allreduce  = mca_coll_han_allreduce_intra_dynamic;
     han_module->super.coll_allgather  = mca_coll_han_allgather_intra_dynamic;
@@ -311,6 +313,7 @@ han_module_enable(mca_coll_base_module_t * module,
     HAN_SAVE_PREV_COLL_API(barrier);
     HAN_SAVE_PREV_COLL_API(bcast);
     HAN_SAVE_PREV_COLL_API(gather);
+    HAN_SAVE_PREV_COLL_API(gatherv);
     HAN_SAVE_PREV_COLL_API(reduce);
     HAN_SAVE_PREV_COLL_API(scatter);
 
@@ -326,6 +329,7 @@ handle_error:
     OBJ_RELEASE_IF_NOT_NULL(han_module->previous_allreduce_module);
     OBJ_RELEASE_IF_NOT_NULL(han_module->previous_bcast_module);
     OBJ_RELEASE_IF_NOT_NULL(han_module->previous_gather_module);
+    OBJ_RELEASE_IF_NOT_NULL(han_module->previous_gatherv_module);
     OBJ_RELEASE_IF_NOT_NULL(han_module->previous_reduce_module);
     OBJ_RELEASE_IF_NOT_NULL(han_module->previous_scatter_module);
 
@@ -347,6 +351,7 @@ mca_coll_han_module_disable(mca_coll_base_module_t * module,
     OBJ_RELEASE_IF_NOT_NULL(han_module->previous_barrier_module);
     OBJ_RELEASE_IF_NOT_NULL(han_module->previous_bcast_module);
     OBJ_RELEASE_IF_NOT_NULL(han_module->previous_gather_module);
+    OBJ_RELEASE_IF_NOT_NULL(han_module->previous_gatherv_module);
     OBJ_RELEASE_IF_NOT_NULL(han_module->previous_reduce_module);
     OBJ_RELEASE_IF_NOT_NULL(han_module->previous_scatter_module);
 

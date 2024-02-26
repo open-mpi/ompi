@@ -146,6 +146,11 @@ static int han_close(void)
     free(mca_coll_han_component.han_op_module_name.gather.han_op_low_module_name);
     mca_coll_han_component.han_op_module_name.gather.han_op_low_module_name = NULL;
 
+    free(mca_coll_han_component.han_op_module_name.gatherv.han_op_up_module_name);
+    mca_coll_han_component.han_op_module_name.gatherv.han_op_up_module_name = NULL;
+    free(mca_coll_han_component.han_op_module_name.gatherv.han_op_low_module_name);
+    mca_coll_han_component.han_op_module_name.gatherv.han_op_low_module_name = NULL;
+
     free(mca_coll_han_component.han_op_module_name.scatter.han_op_up_module_name);
     mca_coll_han_component.han_op_module_name.scatter.han_op_up_module_name = NULL;
     free(mca_coll_han_component.han_op_module_name.scatter.han_op_low_module_name);
@@ -343,6 +348,18 @@ static int han_register(void)
                                               "low level module for gather, 0 tuned, 1 sm",
                                               OPAL_INFO_LVL_9, &cs->han_gather_low_module,
                                               &cs->han_op_module_name.gather.han_op_low_module_name);
+
+    cs->han_gatherv_up_module = 0;
+    (void) mca_coll_han_query_module_from_mca(c, "gatherv_up_module",
+                                              "up level module for gatherv, 0 basic",
+                                              OPAL_INFO_LVL_9, &cs->han_gatherv_up_module,
+                                              &cs->han_op_module_name.gatherv.han_op_up_module_name);
+
+    cs->han_gatherv_low_module = 0;
+    (void) mca_coll_han_query_module_from_mca(c, "gatherv_low_module",
+                                              "low level module for gatherv, 0 basic",
+                                              OPAL_INFO_LVL_9, &cs->han_gatherv_low_module,
+                                              &cs->han_op_module_name.gatherv.han_op_low_module_name);
 
     cs->han_scatter_up_module = 0;
     (void) mca_coll_han_query_module_from_mca(c, "scatter_up_module",
