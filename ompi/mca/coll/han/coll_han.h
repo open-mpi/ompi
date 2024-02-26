@@ -4,6 +4,8 @@
  *                         reserved.
  * Copyright (c) 2022      IBM Corporation. All rights reserved
  * Copyright (c) 2020-2022 Bull S.A.S. All rights reserved.
+ * Copyright (c)           Amazon.com, Inc. or its affiliates.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -432,11 +434,16 @@ int *mca_coll_han_topo_init(struct ompi_communicator_t *comm, mca_coll_han_modul
 
 /* Utils */
 static inline void
-mca_coll_han_get_ranks(int *vranks, int root, int low_size,
-                       int *root_low_rank, int *root_up_rank)
+mca_coll_han_get_ranks(int *vranks, int w_rank, int low_size,
+                       int *low_rank, int *up_rank)
 {
-    *root_up_rank = vranks[root] / low_size;
-    *root_low_rank = vranks[root] % low_size;
+    if (up_rank) {
+        *up_rank = vranks[w_rank] / low_size;
+    }
+
+    if (low_rank) {
+        *low_rank = vranks[w_rank] % low_size;
+    }
 }
 
 const char* mca_coll_han_topo_lvl_to_str(TOPO_LVL_T topo_lvl);
