@@ -50,6 +50,11 @@ ompi_coll_han_components ompi_coll_han_available_components[COMPONENTS_COUNT] = 
 };
 
 /*
+ * Thread lock for han
+ */
+opal_mutex_t mca_coll_han_lock = OPAL_MUTEX_STATIC_INIT;
+
+/*
  * Local functions
  */
 static int han_open(void);

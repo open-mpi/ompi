@@ -42,6 +42,7 @@
 #include "mpi.h"
 #include "ompi/mca/mca.h"
 #include "opal/util/output.h"
+#include "opal/mca/smsc/smsc.h"
 #include "ompi/mca/coll/base/coll_base_functions.h"
 #include "coll_han_trigger.h"
 #include "ompi/mca/coll/han/coll_han_dynamic.h"
@@ -532,4 +533,20 @@ coll_han_utils_gcd(const uint64_t *numerators, const size_t size);
 int
 coll_han_utils_create_contiguous_datatype(size_t count, const ompi_datatype_t *oldType,
                                           ompi_datatype_t **newType);
+
+static inline struct mca_smsc_endpoint_t *mca_coll_han_get_smsc_endpoint (struct ompi_proc_t *proc) {
+    extern opal_mutex_t mca_coll_han_lock;
+    if (NULL == proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_SMSC]) {
+        if (NULL == proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_SMSC]) {
+            OPAL_THREAD_LOCK(&mca_coll_han_lock);
+            if (NULL == proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_SMSC]) {
+                proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_SMSC] = mca_smsc->get_endpoint(&proc->super);
+            }
+            OPAL_THREAD_UNLOCK(&mca_coll_han_lock);
+        }
+    }
+
+    return (struct mca_smsc_endpoint_t *) proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_SMSC];
+}
+
 #endif                          /* MCA_COLL_HAN_EXPORT_H */
