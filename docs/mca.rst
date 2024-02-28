@@ -520,6 +520,8 @@ clearly contradict each other.
 
 /////////////////////////////////////////////////////////////////////////
 
+.. _label-mca-common-parameters:
+
 Common MCA parameters
 ---------------------
 
@@ -592,7 +594,7 @@ presented here so that they can easily be found via internet searches:
   .. important:: You can only use the "include" *or* the "exclude"
                  parameter |mdash| they are mutually exclusive from each
                  other.
-* ``opal_mca_base_component_show_load_errors``: By default, Open MPI
+* ``mca_base_component_show_load_errors``: By default, Open MPI
   emits a warning message if it fails to open a DSO component at run
   time.  This typically happens when a shared library that the DSO
   requires is not available.
