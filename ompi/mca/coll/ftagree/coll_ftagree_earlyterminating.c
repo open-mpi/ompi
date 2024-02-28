@@ -62,7 +62,7 @@ typedef struct {
 
 int
 mca_coll_ftagree_eta_intra(void *contrib,
-                           int dt_count,
+                           size_t dt_count,
                            ompi_datatype_t *dt,
                            ompi_op_t *op,
                            ompi_group_t **group, bool update_grp,

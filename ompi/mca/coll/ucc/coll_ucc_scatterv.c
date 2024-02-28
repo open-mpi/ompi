@@ -10,9 +10,9 @@
 #include "coll_ucc_common.h"
 
 static inline
-ucc_status_t mca_coll_ucc_scatterv_init(const void *sbuf, const int *scounts,
-                                        const int *disps, struct ompi_datatype_t *sdtype,
-                                        void *rbuf, int rcount,
+ucc_status_t mca_coll_ucc_scatterv_init(const void *sbuf, const size_t *scounts,
+                                        const ptrdiff_t *disps, struct ompi_datatype_t *sdtype,
+                                        void *rbuf, size_t rcount,
                                         struct ompi_datatype_t *rdtype, int root,
                                         mca_coll_ucc_module_t *ucc_module,
                                         ucc_coll_req_h *req,
@@ -70,9 +70,9 @@ fallback:
     return UCC_ERR_NOT_SUPPORTED;
 }
 
-int mca_coll_ucc_scatterv(const void *sbuf, const int *scounts,
-                          const int *disps, struct ompi_datatype_t *sdtype,
-                          void *rbuf, int rcount,
+int mca_coll_ucc_scatterv(const void *sbuf, const size_t *scounts,
+                          const ptrdiff_t *disps, struct ompi_datatype_t *sdtype,
+                          void *rbuf, size_t rcount,
                           struct ompi_datatype_t *rdtype, int root,
                           struct ompi_communicator_t *comm,
                           mca_coll_base_module_t *module)
@@ -94,9 +94,9 @@ fallback:
                                          ucc_module->previous_scatterv_module);
 }
 
-int mca_coll_ucc_iscatterv(const void *sbuf, const int *scounts,
-                           const int *disps, struct ompi_datatype_t *sdtype,
-                           void *rbuf, int rcount,
+int mca_coll_ucc_iscatterv(const void *sbuf, const size_t *scounts,
+                           const ptrdiff_t *disps, struct ompi_datatype_t *sdtype,
+                           void *rbuf, size_t rcount,
                            struct ompi_datatype_t *rdtype, int root,
                            struct ompi_communicator_t *comm,
                            ompi_request_t** request,

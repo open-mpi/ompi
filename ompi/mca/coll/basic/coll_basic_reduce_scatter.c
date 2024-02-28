@@ -64,15 +64,16 @@
  * so this should be investigated further.
  */
 int
-mca_coll_basic_reduce_scatter_intra(const void *sbuf, void *rbuf, const int *rcounts,
+mca_coll_basic_reduce_scatter_intra(const void *sbuf, void *rbuf, const size_t *rcounts,
                                     struct ompi_datatype_t *dtype,
                                     struct ompi_op_t *op,
                                     struct ompi_communicator_t *comm,
                                     mca_coll_base_module_t *module)
 {
-    int i, rank, size, count, err = OMPI_SUCCESS;
+    int i, rank, size, err = OMPI_SUCCESS;
+    size_t count;
     ptrdiff_t extent, buf_size, gap;
-    int *disps = NULL;
+    ptrdiff_t *disps = NULL;
     char *recv_buf = NULL, *recv_buf_free = NULL;
     char *result_buf = NULL, *result_buf_free = NULL;
     /* Initialize */
@@ -80,7 +81,7 @@ mca_coll_basic_reduce_scatter_intra(const void *sbuf, void *rbuf, const int *rco
     size = ompi_comm_size(comm);
 
     /* Find displacements and the like */
-    disps = (int*) malloc(sizeof(int) * size);
+    disps = malloc(sizeof(ptrdiff_t) * size);
     if (NULL == disps) return OMPI_ERR_OUT_OF_RESOURCE;
 
     disps[0] = 0;
@@ -359,17 +360,18 @@ mca_coll_basic_reduce_scatter_intra(const void *sbuf, void *rbuf, const int *rco
  *	Returns:	- MPI_SUCCESS or error code
  */
 int
-mca_coll_basic_reduce_scatter_inter(const void *sbuf, void *rbuf, const int *rcounts,
+mca_coll_basic_reduce_scatter_inter(const void *sbuf, void *rbuf, const size_t *rcounts,
                                     struct ompi_datatype_t *dtype,
                                     struct ompi_op_t *op,
                                     struct ompi_communicator_t *comm,
                                     mca_coll_base_module_t *module)
 {
-    int err, i, rank, root = 0, rsize, lsize, totalcounts;
+    int err, i, rank, root = 0, rsize, lsize;
+    size_t totalcounts;
     char *tmpbuf = NULL, *tmpbuf2 = NULL, *lbuf = NULL, *buf;
     ptrdiff_t gap, span;
     ompi_request_t *req;
-    int *disps = NULL;
+    ptrdiff_t *disps = NULL;
 
     rank = ompi_comm_rank(comm);
     rsize = ompi_comm_remote_size(comm);
@@ -401,7 +403,7 @@ mca_coll_basic_reduce_scatter_inter(const void *sbuf, void *rbuf, const int *rco
         span = opal_datatype_span(&dtype->super, totalcounts, &gap);
 
         /* Generate displacements for the scatterv part */
-        disps = (int*) malloc(sizeof(int) * lsize);
+        disps = malloc(sizeof(ptrdiff_t) * lsize);
         if (NULL == disps) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }

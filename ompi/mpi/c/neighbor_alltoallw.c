@@ -53,35 +53,35 @@ int MPI_Neighbor_alltoallw(const void *sendbuf, const int sendcounts[], const MP
 {
     int i, err;
     int indegree, outdegree;
+    OMPI_TEMP_ARRAYS_DECL(sendcounts, sdispls);
+    OMPI_TEMP_ARRAYS_DECL(recvcounts, rdispls);
 
     SPC_RECORD(OMPI_SPC_NEIGHBOR_ALLTOALLW, 1);
 
+    mca_topo_base_neighbor_count (comm, &indegree, &outdegree);
     MEMCHECKER(
         ptrdiff_t recv_ext;
         ptrdiff_t send_ext;
 
         memchecker_comm(comm);
 
-        err = mca_topo_base_neighbor_count (comm, &indegree, &outdegree);
-        if (MPI_SUCCESS == err) {
-            if (MPI_IN_PLACE != sendbuf) {
-                for ( i = 0; i < outdegree; i++ ) {
-                    memchecker_datatype(sendtypes[i]);
+        if (MPI_IN_PLACE != sendbuf) {
+            for ( i = 0; i < outdegree; i++ ) {
+                memchecker_datatype(sendtypes[i]);
 
-                    ompi_datatype_type_extent(sendtypes[i], &send_ext);
+                ompi_datatype_type_extent(sendtypes[i], &send_ext);
 
-                    memchecker_call(&opal_memchecker_base_isdefined,
-                                    (char *)(sendbuf)+sdispls[i]*send_ext,
-                                    sendcounts[i], sendtypes[i]);
-                }
+                memchecker_call(&opal_memchecker_base_isdefined,
+                                (char *)(sendbuf)+sdispls[i]*send_ext,
+                                sendcounts[i], sendtypes[i]);
             }
-            for ( i = 0; i < indegree; i++ ) {
-                memchecker_datatype(recvtypes[i]);
-                ompi_datatype_type_extent(recvtypes[i], &recv_ext);
-                memchecker_call(&opal_memchecker_base_isaddressable,
-                                (char *)(recvbuf)+sdispls[i]*recv_ext,
-                                recvcounts[i], recvtypes[i]);
-            }
+        }
+        for ( i = 0; i < indegree; i++ ) {
+            memchecker_datatype(recvtypes[i]);
+            ompi_datatype_type_extent(recvtypes[i], &recv_ext);
+            memchecker_call(&opal_memchecker_base_isaddressable,
+                            (char *)(recvbuf)+sdispls[i]*recv_ext,
+                            recvcounts[i], recvtypes[i]);
         }
     );
 
@@ -150,9 +150,15 @@ int MPI_Neighbor_alltoallw(const void *sendbuf, const int sendcounts[], const MP
 #endif
 
     /* Invoke the coll component to perform the back-end operation */
-    err = comm->c_coll->coll_neighbor_alltoallw(sendbuf, sendcounts, sdispls, sendtypes,
-                                               recvbuf, recvcounts, rdispls, recvtypes,
+    OMPI_TEMP_ARRAYS_PREPARE(sendcounts, sdispls, i, outdegree);
+    OMPI_TEMP_ARRAYS_PREPARE(recvcounts, rdispls, i, indegree);
+    err = comm->c_coll->coll_neighbor_alltoallw(sendbuf, OMPI_TEMP_ARRAY_NAME_CONVERT(sendcounts),
+                                               OMPI_TEMP_ARRAY_NAME_CONVERT(sdispls), sendtypes,
+                                               recvbuf, OMPI_TEMP_ARRAY_NAME_CONVERT(recvcounts),
+                                               OMPI_TEMP_ARRAY_NAME_CONVERT(rdispls), recvtypes,
                                                comm, comm->c_coll->coll_neighbor_alltoallw_module);
+    OMPI_TEMP_ARRAYS_CLEANUP(sendcounts, sdispls);
+    OMPI_TEMP_ARRAYS_CLEANUP(recvcounts, rdispls);
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }
 

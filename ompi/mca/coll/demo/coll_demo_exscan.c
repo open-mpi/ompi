@@ -33,7 +33,7 @@
  *	Accepts:	- same arguments as MPI_Exscan()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int mca_coll_demo_exscan_intra(void *sbuf, void *rbuf, int count,
+int mca_coll_demo_exscan_intra(void *sbuf, void *rbuf, size_t count,
                                struct ompi_datatype_t *dtype,
                                struct ompi_op_t *op,
                                struct ompi_communicator_t *comm,

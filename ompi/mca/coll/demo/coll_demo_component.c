@@ -55,7 +55,7 @@ static int demo_register(void);
  * and pointers to our public functions in it
  */
 
-const mca_coll_base_component_2_4_0_t mca_coll_demo_component = {
+const mca_coll_base_component_3_0_0_t mca_coll_demo_component = {
 
     /* First, the mca_component_t struct containing meta information
        about the component itself */

@@ -33,9 +33,9 @@
  *	Accepts:	- same arguments as MPI_Scatterv()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int mca_coll_demo_scatterv_intra(void *sbuf, int *scounts,
-                                 int *disps, struct ompi_datatype_t *sdtype,
-                                 void *rbuf, int rcount,
+int mca_coll_demo_scatterv_intra(void *sbuf, size_t *scounts,
+                                 ptrdiff_t *disps, struct ompi_datatype_t *sdtype,
+                                 void *rbuf, size_t rcount,
                                  struct ompi_datatype_t *rdtype, int root,
                                  struct ompi_communicator_t *comm,
                                  mca_coll_base_module_t *module)
@@ -56,9 +56,9 @@ int mca_coll_demo_scatterv_intra(void *sbuf, int *scounts,
  *	Accepts:	- same arguments as MPI_Scatterv()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int mca_coll_demo_scatterv_inter(void *sbuf, int *scounts,
-                                 int *disps, struct ompi_datatype_t *sdtype,
-                                 void *rbuf, int rcount,
+int mca_coll_demo_scatterv_inter(void *sbuf, size_t *scounts,
+                                 ptrdiff_t *disps, struct ompi_datatype_t *sdtype,
+                                 void *rbuf, size_t rcount,
                                  struct ompi_datatype_t *rdtype, int root,
                                  struct ompi_communicator_t *comm,
                                  mca_coll_base_module_t *module)

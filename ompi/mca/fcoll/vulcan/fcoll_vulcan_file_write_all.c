@@ -120,6 +120,7 @@ static int mca_fcoll_vulcan_minmax ( ompio_file_t *fh, struct iovec *iov, int io
                                      long *new_stripe_size);
 
 
+
 int mca_fcoll_vulcan_file_write_all (struct ompio_file_t *fh,
                                       const void *buf,
                                       size_t count,
@@ -153,7 +154,8 @@ int mca_fcoll_vulcan_file_write_all (struct ompio_file_t *fh,
     int write_synch_type = 2;
     int write_chunksize, *result_counts=NULL;
 
-    int *temp_displs = NULL, *temp_counts = NULL;
+    ptrdiff_t *temp_displs = NULL;
+    size_t *temp_counts = NULL;
     
 #if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
     double write_time = 0.0, start_write_time = 0.0, end_write_time = 0.0;
@@ -421,7 +423,7 @@ int mca_fcoll_vulcan_file_write_all (struct ompio_file_t *fh,
         if ( 1 == mca_fcoll_vulcan_num_groups ) {
             /* TODO:BIGCOUNT: Remove temporary variables when coll framework is
              * udpated to use size_t/ptrdiff_t */
-            temp_counts = (int *)malloc (2 * fh->f_procs_per_group * sizeof(int));
+            temp_counts = (size_t *)malloc (2 * fh->f_procs_per_group * sizeof(size_t));
             if (NULL == temp_counts) {
                 opal_output (1, "OUT OF MEMORY\n");
                 ret = OMPI_ERR_OUT_OF_RESOURCE;

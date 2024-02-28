@@ -24,12 +24,12 @@
 #include "nbc_internal.h"
 
 static inline int exscan_sched_linear(
-    int rank, int comm_size, const void *sendbuf, void *recvbuf, int count,
+    int rank, int comm_size, const void *sendbuf, void *recvbuf, size_t count,
     MPI_Datatype datatype,  MPI_Op op, char inplace, NBC_Schedule *schedule,
     void *tmpbuf);
 static inline int exscan_sched_recursivedoubling(
     int rank, int comm_size, const void *sendbuf, void *recvbuf,
-    int count, MPI_Datatype datatype,  MPI_Op op, char inplace,
+    size_t count, MPI_Datatype datatype,  MPI_Op op, char inplace,
     NBC_Schedule *schedule, void *tmpbuf1, void *tmpbuf2);
 
 #ifdef NBC_CACHE_SCHEDULE
@@ -51,7 +51,7 @@ int NBC_Scan_args_compare(NBC_Scan_args *a, NBC_Scan_args *b, void *param) {
 }
 #endif
 
-static int nbc_exscan_init(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
+static int nbc_exscan_init(const void* sendbuf, void* recvbuf, size_t count, MPI_Datatype datatype, MPI_Op op,
                            struct ompi_communicator_t *comm, ompi_request_t ** request,
                            mca_coll_base_module_t *module, bool persistent) {
     int rank, p, res;
@@ -165,7 +165,7 @@ static int nbc_exscan_init(const void* sendbuf, void* recvbuf, int count, MPI_Da
     return OMPI_SUCCESS;
 }
 
-int ompi_coll_libnbc_iexscan(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
+int ompi_coll_libnbc_iexscan(const void* sendbuf, void* recvbuf, size_t count, MPI_Datatype datatype, MPI_Op op,
                              struct ompi_communicator_t *comm, ompi_request_t ** request,
                              mca_coll_base_module_t *module) {
     int res = nbc_exscan_init(sendbuf, recvbuf, count, datatype, op,
@@ -184,7 +184,7 @@ int ompi_coll_libnbc_iexscan(const void* sendbuf, void* recvbuf, int count, MPI_
     return OMPI_SUCCESS;
 }
 
-int ompi_coll_libnbc_exscan_init(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
+int ompi_coll_libnbc_exscan_init(const void* sendbuf, void* recvbuf, size_t count, MPI_Datatype datatype, MPI_Op op,
                                  struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                                  mca_coll_base_module_t *module) {
     int res = nbc_exscan_init(sendbuf, recvbuf, count, datatype, op,
@@ -211,7 +211,7 @@ int ompi_coll_libnbc_exscan_init(const void* sendbuf, void* recvbuf, int count, 
  * Schedule length: O(1)
  */
 static inline int exscan_sched_linear(
-    int rank, int comm_size, const void *sendbuf, void *recvbuf, int count,
+    int rank, int comm_size, const void *sendbuf, void *recvbuf, size_t count,
     MPI_Datatype datatype,  MPI_Op op, char inplace, NBC_Schedule *schedule,
     void *tmpbuf)
 {
@@ -293,7 +293,7 @@ cleanup_and_return:
  * Schedule length: O(log(p))
  */
 static inline int exscan_sched_recursivedoubling(
-    int rank, int comm_size, const void *sendbuf, void *recvbuf, int count,
+    int rank, int comm_size, const void *sendbuf, void *recvbuf, size_t count,
     MPI_Datatype datatype, MPI_Op op, char inplace,
     NBC_Schedule *schedule, void *tmpbuf1, void *tmpbuf2)
 {

@@ -39,18 +39,20 @@
  *	Returns:	- MPI_SUCCESS or error code
  */
 int
-mca_coll_inter_scatterv_inter(const void *sbuf, const int *scounts,
-                              const int *disps, struct ompi_datatype_t *sdtype,
-                              void *rbuf, int rcount,
+mca_coll_inter_scatterv_inter(const void *sbuf, const size_t *scounts,
+                              const ptrdiff_t *disps, struct ompi_datatype_t *sdtype,
+                              void *rbuf, size_t rcount,
                               struct ompi_datatype_t *rdtype, int root,
                               struct ompi_communicator_t *comm,
                               mca_coll_base_module_t *module)
 {
     int i, rank, size, err, size_local;
     size_t total = 0;
-    int *counts=NULL,*displace=NULL;
+    size_t *counts=NULL;
+    ptrdiff_t *displace=NULL;
     char *ptmp_free=NULL, *ptmp=NULL;
     ompi_datatype_t *ndtype;
+    int *tmp_scounts = NULL, *tmp_disps = NULL;
 
     /* Initialize */
 
@@ -64,8 +66,8 @@ mca_coll_inter_scatterv_inter(const void *sbuf, const int *scounts,
     } else if (MPI_ROOT != root) {
 	if(0 == rank) {
 	    /* local root receives the counts from the root */
-	    counts = (int *)malloc(sizeof(int) * size_local);
-	    err = MCA_PML_CALL(recv(counts, size_local, MPI_INT,
+	    counts = (size_t *)malloc(sizeof(size_t) * size_local);
+	    err = MCA_PML_CALL(recv(counts, size_local * sizeof(*counts), MPI_BYTE,
 				    root, MCA_COLL_BASE_TAG_SCATTERV,
 				    comm, MPI_STATUS_IGNORE));
 	    if (OMPI_SUCCESS != err) {
@@ -91,7 +93,7 @@ mca_coll_inter_scatterv_inter(const void *sbuf, const int *scounts,
 		return err;
 	    }
 	    /* set the local displacement i.e. no displacements here */
-	    displace = (int *)malloc(sizeof(int) * size_local);
+	    displace = (ptrdiff_t *)malloc(sizeof(ptrdiff_t) * size_local);
 	    displace[0] = 0;
 	    for (i = 1; i < size_local; i++) {
 		displace[i] = displace[i-1] + counts[i-1];
@@ -117,14 +119,26 @@ mca_coll_inter_scatterv_inter(const void *sbuf, const int *scounts,
 	}
 
     } else {
-	err = MCA_PML_CALL(send(scounts, size, MPI_INT, 0,
+	err = MCA_PML_CALL(send(scounts, size * sizeof(*scounts), MPI_BYTE, 0,
 				MCA_COLL_BASE_TAG_SCATTERV,
 				MCA_PML_BASE_SEND_STANDARD, comm));
 	if (OMPI_SUCCESS != err) {
 	    return err;
 	}
 
-	ompi_datatype_create_indexed(size,scounts,disps,sdtype,&ndtype);
+    /* TODO:BIGCOUNT: Remove these temporaries when the ompi_datatype interface
+     * is updated with size_t/ptrdiff_t
+     */
+    tmp_scounts = (int *)malloc(2 * size * sizeof(int));
+    if (NULL == tmp_scounts)
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    tmp_disps = tmp_scounts + size;
+    for (i = 0; i < size; i++) {
+        tmp_scounts[i] = (int)scounts[i];
+        tmp_disps[i] = (int)disps[i];
+    }
+    ompi_datatype_create_indexed(size,tmp_scounts,tmp_disps,sdtype,&ndtype);
+    free(tmp_scounts);
 	ompi_datatype_commit(&ndtype);
 
 	err = MCA_PML_CALL(send(sbuf, 1, ndtype, 0,

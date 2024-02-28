@@ -37,7 +37,7 @@
  *	Returns:	- MPI_SUCCESS or error code
  */
 int
-mca_coll_inter_bcast_inter(void *buff, int count,
+mca_coll_inter_bcast_inter(void *buff, size_t count,
                            struct ompi_datatype_t *datatype, int root,
                            struct ompi_communicator_t *comm,
                            mca_coll_base_module_t *module)

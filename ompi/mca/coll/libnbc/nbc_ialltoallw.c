@@ -21,19 +21,19 @@
 #include "nbc_internal.h"
 
 static inline int a2aw_sched_linear(int rank, int p, NBC_Schedule *schedule,
-                                    const void *sendbuf, const int *sendcounts, const int *sdispls,
+                                    const void *sendbuf, const size_t *sendcounts, const ptrdiff_t *sdispls,
                                     struct ompi_datatype_t * const * sendtypes,
-                                    void *recvbuf, const int *recvcounts, const int *rdispls,
+                                    void *recvbuf, const size_t *recvcounts, const ptrdiff_t *rdispls,
                                     struct ompi_datatype_t * const * recvtypes);
 
 static inline int a2aw_sched_pairwise(int rank, int p, NBC_Schedule *schedule,
-                                      const void *sendbuf, const int *sendcounts, const int *sdispls,
+                                      const void *sendbuf, const size_t *sendcounts, const ptrdiff_t *sdispls,
                                       struct ompi_datatype_t * const * sendtypes,
-                                      void *recvbuf, const int *recvcounts, const int *rdispls,
+                                      void *recvbuf, const size_t *recvcounts, const ptrdiff_t *rdispls,
                                       struct ompi_datatype_t * const * recvtypes);
 
 static inline int a2aw_sched_inplace(int rank, int p, NBC_Schedule *schedule,
-                                    void *buf, const int *counts, const int *displs,
+                                    void *buf, const size_t *counts, const ptrdiff_t *displs,
                                     struct ompi_datatype_t * const * types);
 
 /* an alltoallw schedule can not be cached easily because the contents
@@ -41,8 +41,8 @@ static inline int a2aw_sched_inplace(int rank, int p, NBC_Schedule *schedule,
  * would not be sufficient ... we simply do not cache it */
 
 /* simple linear Alltoallw */
-static int nbc_alltoallw_init(const void* sendbuf, const int *sendcounts, const int *sdispls,
-                              struct ompi_datatype_t * const *sendtypes, void* recvbuf, const int *recvcounts, const int *rdispls,
+static int nbc_alltoallw_init(const void* sendbuf, const size_t *sendcounts, const ptrdiff_t *sdispls,
+                              struct ompi_datatype_t * const *sendtypes, void* recvbuf, const size_t *recvcounts, const ptrdiff_t *rdispls,
                               struct ompi_datatype_t * const *recvtypes, struct ompi_communicator_t *comm, ompi_request_t ** request,
                               mca_coll_base_module_t *module, bool persistent)
 {
@@ -132,8 +132,8 @@ static int nbc_alltoallw_init(const void* sendbuf, const int *sendcounts, const 
   return OMPI_SUCCESS;
 } 
 
-int ompi_coll_libnbc_ialltoallw(const void* sendbuf, const int *sendcounts, const int *sdispls,
-                                struct ompi_datatype_t * const *sendtypes, void* recvbuf, const int *recvcounts, const int *rdispls,
+int ompi_coll_libnbc_ialltoallw(const void* sendbuf, const size_t *sendcounts, const ptrdiff_t *sdispls,
+                                struct ompi_datatype_t * const *sendtypes, void* recvbuf, const size_t *recvcounts, const ptrdiff_t *rdispls,
                                 struct ompi_datatype_t * const *recvtypes, struct ompi_communicator_t *comm, ompi_request_t ** request,
 				mca_coll_base_module_t *module) {
     int res = nbc_alltoallw_init(sendbuf, sendcounts, sdispls, sendtypes,
@@ -154,8 +154,8 @@ int ompi_coll_libnbc_ialltoallw(const void* sendbuf, const int *sendcounts, cons
 }
 
 /* simple linear Alltoallw */
-static int nbc_alltoallw_inter_init (const void* sendbuf, const int *sendcounts, const int *sdispls,
-                                     struct ompi_datatype_t * const *sendtypes, void* recvbuf, const int *recvcounts, const int *rdispls,
+static int nbc_alltoallw_inter_init (const void* sendbuf, const size_t *sendcounts, const ptrdiff_t *sdispls,
+                                     struct ompi_datatype_t * const *sendtypes, void* recvbuf, const size_t *recvcounts, const ptrdiff_t *rdispls,
                                      struct ompi_datatype_t * const *recvtypes, struct ompi_communicator_t *comm, ompi_request_t ** request,
                                      mca_coll_base_module_t *module, bool persistent)
 {
@@ -207,8 +207,8 @@ static int nbc_alltoallw_inter_init (const void* sendbuf, const int *sendcounts,
   return OMPI_SUCCESS;
 }
 
-int ompi_coll_libnbc_ialltoallw_inter(const void* sendbuf, const int *sendcounts, const int *sdispls,
-                                      struct ompi_datatype_t * const *sendtypes, void* recvbuf, const int *recvcounts, const int *rdispls,
+int ompi_coll_libnbc_ialltoallw_inter(const void* sendbuf, const size_t *sendcounts, const ptrdiff_t *sdispls,
+                                      struct ompi_datatype_t * const *sendtypes, void* recvbuf, const size_t *recvcounts, const ptrdiff_t *rdispls,
                                       struct ompi_datatype_t * const *recvtypes, struct ompi_communicator_t *comm, ompi_request_t ** request,
 				      mca_coll_base_module_t *module) {
     int res = nbc_alltoallw_inter_init(sendbuf, sendcounts, sdispls, sendtypes,
@@ -229,9 +229,9 @@ int ompi_coll_libnbc_ialltoallw_inter(const void* sendbuf, const int *sendcounts
 }
 
 static inline int a2aw_sched_linear(int rank, int p, NBC_Schedule *schedule,
-                                    const void *sendbuf, const int *sendcounts, const int *sdispls,
+                                    const void *sendbuf, const size_t *sendcounts, const ptrdiff_t *sdispls,
                                     struct ompi_datatype_t * const * sendtypes,
-                                    void *recvbuf, const int *recvcounts, const int *rdispls,
+                                    void *recvbuf, const size_t *recvcounts, const ptrdiff_t *rdispls,
                                     struct ompi_datatype_t * const * recvtypes) {
   int res;
 
@@ -266,9 +266,9 @@ static inline int a2aw_sched_linear(int rank, int p, NBC_Schedule *schedule,
 
 __opal_attribute_unused__
 static inline int a2aw_sched_pairwise(int rank, int p, NBC_Schedule *schedule,
-                                      const void *sendbuf, const int *sendcounts, const int *sdispls,
+                                      const void *sendbuf, const size_t *sendcounts, const ptrdiff_t *sdispls,
                                       struct ompi_datatype_t * const * sendtypes,
-                                      void *recvbuf, const int *recvcounts, const int *rdispls,
+                                      void *recvbuf, const size_t *recvcounts, const ptrdiff_t *rdispls,
                                       struct ompi_datatype_t * const * recvtypes) {
   int res;
 
@@ -298,7 +298,7 @@ static inline int a2aw_sched_pairwise(int rank, int p, NBC_Schedule *schedule,
 }
 
 static inline int a2aw_sched_inplace(int rank, int p, NBC_Schedule *schedule,
-                                     void *buf, const int *counts, const int *displs,
+                                     void *buf, const size_t *counts, const ptrdiff_t *displs,
                                      struct ompi_datatype_t * const * types) {
   ptrdiff_t gap = 0;
   int res;
@@ -368,8 +368,8 @@ static inline int a2aw_sched_inplace(int rank, int p, NBC_Schedule *schedule,
   return OMPI_SUCCESS;
 }
 
-int ompi_coll_libnbc_alltoallw_init(const void* sendbuf, const int *sendcounts, const int *sdispls,
-                                    struct ompi_datatype_t * const *sendtypes, void* recvbuf, const int *recvcounts, const int *rdispls,
+int ompi_coll_libnbc_alltoallw_init(const void* sendbuf, const size_t *sendcounts, const ptrdiff_t *sdispls,
+                                    struct ompi_datatype_t * const *sendtypes, void* recvbuf, const size_t *recvcounts, const ptrdiff_t *rdispls,
                                     struct ompi_datatype_t * const *recvtypes, struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                                     mca_coll_base_module_t *module) {
     int res = nbc_alltoallw_init(sendbuf, sendcounts, sdispls, sendtypes, recvbuf, recvcounts, rdispls, recvtypes,
@@ -381,8 +381,8 @@ int ompi_coll_libnbc_alltoallw_init(const void* sendbuf, const int *sendcounts, 
     return OMPI_SUCCESS;
 }
 
-int ompi_coll_libnbc_alltoallw_inter_init(const void* sendbuf, const int *sendcounts, const int *sdispls,
-                                          struct ompi_datatype_t * const *sendtypes, void* recvbuf, const int *recvcounts, const int *rdispls,
+int ompi_coll_libnbc_alltoallw_inter_init(const void* sendbuf, const size_t *sendcounts, const ptrdiff_t *sdispls,
+                                          struct ompi_datatype_t * const *sendtypes, void* recvbuf, const size_t *recvcounts, const ptrdiff_t *rdispls,
                                           struct ompi_datatype_t * const *recvtypes, struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                                           mca_coll_base_module_t *module) {
     int res = nbc_alltoallw_inter_init(sendbuf, sendcounts, sdispls, sendtypes, recvbuf, recvcounts, rdispls, recvtypes,

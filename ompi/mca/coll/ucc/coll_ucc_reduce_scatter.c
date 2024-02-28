@@ -10,7 +10,7 @@
 #include "coll_ucc_common.h"
 
 static inline
-ucc_status_t mca_coll_ucc_reduce_scatter_init(const void *sbuf, void *rbuf, const int *rcounts,
+ucc_status_t mca_coll_ucc_reduce_scatter_init(const void *sbuf, void *rbuf, const size_t *rcounts,
                                               struct ompi_datatype_t *dtype,
                                               struct ompi_op_t *op, mca_coll_ucc_module_t *ucc_module,
                                               ucc_coll_req_h *req,
@@ -69,7 +69,7 @@ fallback:
     return UCC_ERR_NOT_SUPPORTED;
 }
 
-int mca_coll_ucc_reduce_scatter(const void *sbuf, void *rbuf, const int *rcounts,
+int mca_coll_ucc_reduce_scatter(const void *sbuf, void *rbuf, const size_t *rcounts,
                                 struct ompi_datatype_t *dtype,
                                 struct ompi_op_t *op,
                                 struct ompi_communicator_t *comm,
@@ -91,7 +91,7 @@ fallback:
                                                ucc_module->previous_reduce_scatter_module);
 }
 
-int mca_coll_ucc_ireduce_scatter(const void *sbuf, void *rbuf, const int *rcounts,
+int mca_coll_ucc_ireduce_scatter(const void *sbuf, void *rbuf, const size_t *rcounts,
                                  struct ompi_datatype_t *dtype,
                                  struct ompi_op_t *op,
                                  struct ompi_communicator_t *comm,

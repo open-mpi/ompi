@@ -50,9 +50,12 @@ int MPI_Alltoallw_init(const void *sendbuf, const int sendcounts[], const int sd
                        MPI_Info info, MPI_Request *request)
 {
     int i, size, err;
+    OMPI_TEMP_ARRAYS_DECL(sendcounts, sdispls);
+    OMPI_TEMP_ARRAYS_DECL(recvcounts, rdispls);
 
     SPC_RECORD(OMPI_SPC_ALLTOALLW_INIT, 1);
 
+    size = OMPI_COMM_IS_INTER(comm)?ompi_comm_remote_size(comm):ompi_comm_size(comm);
     MEMCHECKER(
         ptrdiff_t recv_ext;
         ptrdiff_t send_ext;
@@ -60,7 +63,6 @@ int MPI_Alltoallw_init(const void *sendbuf, const int sendcounts[], const int sd
 
         memchecker_comm(comm);
 
-        size = OMPI_COMM_IS_INTER(comm)?ompi_comm_remote_size(comm):ompi_comm_size(comm);
         for ( i = 0; i < size; i++ ) {
             if (MPI_IN_PLACE != sendbuf) {
                 memchecker_datatype(sendtypes[i]);
@@ -102,7 +104,6 @@ int MPI_Alltoallw_init(const void *sendbuf, const int sendcounts[], const int sd
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
         }
 
-        size = OMPI_COMM_IS_INTER(comm)?ompi_comm_remote_size(comm):ompi_comm_size(comm);
         for (i = 0; i < size; ++i) {
             OMPI_CHECK_DATATYPE_FOR_SEND(err, sendtypes[i], sendcounts[i]);
             OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
@@ -122,10 +123,15 @@ int MPI_Alltoallw_init(const void *sendbuf, const int sendcounts[], const int sd
     }
 
     /* Invoke the coll component to perform the back-end operation */
-    err = comm->c_coll->coll_alltoallw_init(sendbuf, sendcounts, sdispls,
-                                            sendtypes, recvbuf, recvcounts,
-                                            rdispls, recvtypes, comm, info, request,
-                                            comm->c_coll->coll_alltoallw_init_module);
+    OMPI_TEMP_ARRAYS_PREPARE(sendcounts, sdispls, i, size);
+    OMPI_TEMP_ARRAYS_PREPARE(recvcounts, rdispls, i, size);
+    err = comm->c_coll->coll_alltoallw_init(sendbuf, OMPI_TEMP_ARRAY_NAME_CONVERT(sendcounts),
+                                            OMPI_TEMP_ARRAY_NAME_CONVERT(sdispls),
+                                            sendtypes, recvbuf, OMPI_TEMP_ARRAY_NAME_CONVERT(recvcounts),
+                                            OMPI_TEMP_ARRAY_NAME_CONVERT(rdispls), recvtypes, comm,
+                                            info, request, comm->c_coll->coll_alltoallw_init_module);
+    OMPI_TEMP_ARRAYS_CLEANUP(sendcounts, sdispls);
+    OMPI_TEMP_ARRAYS_CLEANUP(recvcounts, rdispls);
     if (OPAL_LIKELY(OMPI_SUCCESS == err)) {
         ompi_coll_base_retain_datatypes_w(*request, (MPI_IN_PLACE==sendbuf)?NULL:sendtypes, recvtypes, false);
     }

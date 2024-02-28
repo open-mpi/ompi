@@ -68,7 +68,7 @@ mca_coll_han_set_reduce_args(mca_coll_han_reduce_args_t * args, mca_coll_task_t 
 int
 mca_coll_han_reduce_intra(const void *sbuf,
                           void *rbuf,
-                          int count,
+                          size_t count,
                           struct ompi_datatype_t *dtype,
                           ompi_op_t* op,
                           int root,
@@ -126,13 +126,12 @@ mca_coll_han_reduce_intra(const void *sbuf,
 
     int num_segments = (count + seg_count - 1) / seg_count;
     OPAL_OUTPUT_VERBOSE((20, mca_coll_han_component.han_output,
-                         "In HAN seg_count %d count %d num_seg %d\n",
+                         "In HAN seg_count %d count %zu num_seg %d\n",
                          seg_count, count, num_segments));
 
     int *vranks = han_module->cached_vranks;
     int low_rank = ompi_comm_rank(low_comm);
     int low_size = ompi_comm_size(low_comm);
-    int up_rank  = ompi_comm_rank(up_comm);
 
     int root_low_rank;
     int root_up_rank;
@@ -284,7 +283,7 @@ int mca_coll_han_reduce_t1_task(void *task_args) {
 int
 mca_coll_han_reduce_intra_simple(const void *sbuf,
                                  void* rbuf,
-                                 int count,
+                                 size_t count,
                                  struct ompi_datatype_t *dtype,
                                  ompi_op_t *op,
                                  int root,
@@ -451,7 +450,7 @@ mca_coll_han_reduce_reproducible_decision(struct ompi_communicator_t *comm,
 int
 mca_coll_han_reduce_reproducible(const void *sbuf,
                                  void *rbuf,
-                                  int count,
+                                  size_t count,
                                   struct ompi_datatype_t *dtype,
                                   struct ompi_op_t *op,
                                   int root,

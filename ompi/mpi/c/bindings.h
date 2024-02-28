@@ -104,6 +104,74 @@ BEGIN_C_DECLS
         }                                                               \
     } while (0)
 
+/*
+ * The following OMPI_TEMP_ARRAY* functions are designed to convert count and
+ * displacement arrays of type 'int *' to 'size_t *' and 'ptrdiff_t *'
+ * respectively, since the backend interface is designed for size_t/ptrdiff_t
+ * arrays only. In the case of bigcount (or largecount) *_c functions, these
+ * macros will just copy the pointer from the input and skip the allocation.
+ */
+#define OMPI_TEMP_ARRAY_NAME_CONVERT(name) tmp_ ## name
+#define OMPI_TEMP_ARRAYS_DECL(counts, displs) \
+    size_t *OMPI_TEMP_ARRAY_NAME_CONVERT(counts) = NULL; \
+    ptrdiff_t *OMPI_TEMP_ARRAY_NAME_CONVERT(displs) = NULL
+#define OMPI_TEMP_ARRAY_DECL(counts) \
+    size_t *OMPI_TEMP_ARRAY_NAME_CONVERT(counts) = NULL
+/*
+ * Prepare temporary count/displ array by allocating and copying values, if necessary
+ */
+#define OMPI_TEMP_ARRAYS_PREPARE(counts, displs, i, size) \
+    do { \
+        if (sizeof(*counts) == sizeof(*OMPI_TEMP_ARRAY_NAME_CONVERT(counts))) { \
+            OMPI_TEMP_ARRAY_NAME_CONVERT(counts) = (void *) counts; \
+            OMPI_TEMP_ARRAY_NAME_CONVERT(displs) = (void *) displs; \
+        } else { \
+            OMPI_TEMP_ARRAY_NAME_CONVERT(counts) = malloc(sizeof(*OMPI_TEMP_ARRAY_NAME_CONVERT(counts)) * size); \
+            if (NULL == OMPI_TEMP_ARRAY_NAME_CONVERT(counts)) { \
+                return OMPI_ERR_OUT_OF_RESOURCE; \
+            } \
+            OMPI_TEMP_ARRAY_NAME_CONVERT(displs) = malloc(sizeof(*OMPI_TEMP_ARRAY_NAME_CONVERT(displs)) * size); \
+            if (NULL == OMPI_TEMP_ARRAY_NAME_CONVERT(displs)) { \
+                return OMPI_ERR_OUT_OF_RESOURCE; \
+            } \
+            for (i = 0; i < size; i++) { \
+                OMPI_TEMP_ARRAY_NAME_CONVERT(counts)[i] = counts[i]; \
+                OMPI_TEMP_ARRAY_NAME_CONVERT(displs)[i] = displs[i]; \
+            } \
+        } \
+    } while (0)
+#define OMPI_TEMP_ARRAY_PREPARE(counts, i, size) \
+    do { \
+        if (sizeof(*counts) == sizeof(*OMPI_TEMP_ARRAY_NAME_CONVERT(counts))) { \
+            OMPI_TEMP_ARRAY_NAME_CONVERT(counts) = (void *) counts; \
+        } else { \
+            OMPI_TEMP_ARRAY_NAME_CONVERT(counts) = malloc(sizeof(*OMPI_TEMP_ARRAY_NAME_CONVERT(counts)) * size); \
+            if (NULL == OMPI_TEMP_ARRAY_NAME_CONVERT(counts)) { \
+                return OMPI_ERR_OUT_OF_RESOURCE; \
+            } \
+            for (i = 0; i < size; i++) { \
+                OMPI_TEMP_ARRAY_NAME_CONVERT(counts)[i] = counts[i]; \
+            } \
+        } \
+    } while (0)
+/*
+ * Free temporary allocations for counts/displs, if necessary
+ */
+#define OMPI_TEMP_ARRAYS_CLEANUP(counts, displs) \
+    do { \
+        if ((void *) OMPI_TEMP_ARRAY_NAME_CONVERT(counts) != (void *) counts) { \
+            free(OMPI_TEMP_ARRAY_NAME_CONVERT(counts)); \
+            free(OMPI_TEMP_ARRAY_NAME_CONVERT(displs)); \
+        } \
+    } while (0)
+#define OMPI_TEMP_ARRAY_CLEANUP(counts) \
+    do { \
+        if ((void *) OMPI_TEMP_ARRAY_NAME_CONVERT(counts) != (void *) counts) { \
+            free(OMPI_TEMP_ARRAY_NAME_CONVERT(counts)); \
+        } \
+    } while (0)
+
+
 END_C_DECLS
 
 #endif /* OMPI_C_BINDINGS_H */

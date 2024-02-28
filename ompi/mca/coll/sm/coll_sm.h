@@ -55,7 +55,7 @@ BEGIN_C_DECLS
      */
     typedef struct mca_coll_sm_component_t {
         /** Base coll component */
-        mca_coll_base_component_2_4_0_t super;
+        mca_coll_base_component_3_0_0_t super;
 
         /** MCA parameter: Priority of this component */
         int sm_priority;
@@ -217,101 +217,101 @@ BEGIN_C_DECLS
     int ompi_coll_sm_lazy_enable(mca_coll_base_module_t *module,
                                  struct ompi_communicator_t *comm);
 
-    int mca_coll_sm_allgather_intra(const void *sbuf, int scount,
+    int mca_coll_sm_allgather_intra(const void *sbuf, size_t scount,
 				    struct ompi_datatype_t *sdtype,
-				    void *rbuf, int rcount,
+				    void *rbuf, size_t rcount,
 				    struct ompi_datatype_t *rdtype,
 				    struct ompi_communicator_t *comm,
 				    mca_coll_base_module_t *module);
 
-    int mca_coll_sm_allgatherv_intra(const void *sbuf, int scount,
+    int mca_coll_sm_allgatherv_intra(const void *sbuf, size_t scount,
 				     struct ompi_datatype_t *sdtype,
-				     void * rbuf, const int *rcounts, const int *disps,
+				     void * rbuf, const size_t *rcounts, const ptrdiff_t *disps,
 				     struct ompi_datatype_t *rdtype,
 				     struct ompi_communicator_t *comm,
 				     mca_coll_base_module_t *module);
-    int mca_coll_sm_allreduce_intra(const void *sbuf, void *rbuf, int count,
+    int mca_coll_sm_allreduce_intra(const void *sbuf, void *rbuf, size_t count,
 				    struct ompi_datatype_t *dtype,
 				    struct ompi_op_t *op,
 				    struct ompi_communicator_t *comm,
 				    mca_coll_base_module_t *module);
-    int mca_coll_sm_alltoall_intra(const void *sbuf, int scount,
+    int mca_coll_sm_alltoall_intra(const void *sbuf, size_t scount,
 				   struct ompi_datatype_t *sdtype,
-				   void* rbuf, int rcount,
+				   void* rbuf, size_t rcount,
 				   struct ompi_datatype_t *rdtype,
 				   struct ompi_communicator_t *comm,
 				   mca_coll_base_module_t *module);
-    int mca_coll_sm_alltoallv_intra(const void *sbuf, const int *scounts, const int *sdisps,
+    int mca_coll_sm_alltoallv_intra(const void *sbuf, const size_t *scounts, const ptrdiff_t *sdisps,
 				    struct ompi_datatype_t *sdtype,
-				    void *rbuf, const int *rcounts, const int *rdisps,
+				    void *rbuf, const size_t *rcounts, const ptrdiff_t *rdisps,
 				    struct ompi_datatype_t *rdtype,
 				    struct ompi_communicator_t *comm,
 				    mca_coll_base_module_t *module);
-    int mca_coll_sm_alltoallw_intra(const void *sbuf, const int *scounts, const int *sdisps,
+    int mca_coll_sm_alltoallw_intra(const void *sbuf, const size_t *scounts, const ptrdiff_t *sdisps,
 				    struct ompi_datatype_t * const *sdtypes,
-				    void *rbuf, const int *rcounts, const int *rdisps,
+				    void *rbuf, const size_t *rcounts, const ptrdiff_t *rdisps,
 				    struct ompi_datatype_t * const *rdtypes,
 				    struct ompi_communicator_t *comm,
 				    mca_coll_base_module_t *module);
     int mca_coll_sm_barrier_intra(struct ompi_communicator_t *comm,
 				  mca_coll_base_module_t *module);
-    int mca_coll_sm_bcast_intra(void *buff, int count,
+    int mca_coll_sm_bcast_intra(void *buff, size_t count,
 				struct ompi_datatype_t *datatype,
 				int root,
 				struct ompi_communicator_t *comm,
 				mca_coll_base_module_t *module);
-    int mca_coll_sm_bcast_log_intra(void *buff, int count,
+    int mca_coll_sm_bcast_log_intra(void *buff, size_t count,
 				    struct ompi_datatype_t *datatype,
 				    int root,
 				    struct ompi_communicator_t *comm,
 				    mca_coll_base_module_t *module);
-    int mca_coll_sm_exscan_intra(const void *sbuf, void *rbuf, int count,
+    int mca_coll_sm_exscan_intra(const void *sbuf, void *rbuf, size_t count,
 				 struct ompi_datatype_t *dtype,
 				 struct ompi_op_t *op,
 				 struct ompi_communicator_t *comm,
 				 mca_coll_base_module_t *module);
-    int mca_coll_sm_gather_intra(void *sbuf, int scount,
+    int mca_coll_sm_gather_intra(void *sbuf, size_t scount,
 				 struct ompi_datatype_t *sdtype, void *rbuf,
-				 int rcount, struct ompi_datatype_t *rdtype,
+				 size_t rcount, struct ompi_datatype_t *rdtype,
 				 int root, struct ompi_communicator_t *comm,
 				 mca_coll_base_module_t *module);
-    int mca_coll_sm_gatherv_intra(void *sbuf, int scount,
+    int mca_coll_sm_gatherv_intra(void *sbuf, size_t scount,
 				  struct ompi_datatype_t *sdtype, void *rbuf,
-				  int *rcounts, int *disps,
+				  size_t *rcounts, ptrdiff_t *disps,
 				  struct ompi_datatype_t *rdtype, int root,
 				  struct ompi_communicator_t *comm,
 				  mca_coll_base_module_t *module);
-    int mca_coll_sm_reduce_intra(const void *sbuf, void* rbuf, int count,
+    int mca_coll_sm_reduce_intra(const void *sbuf, void* rbuf, size_t count,
 				 struct ompi_datatype_t *dtype,
 				 struct ompi_op_t *op,
 				 int root,
 				 struct ompi_communicator_t *comm,
 				 mca_coll_base_module_t *module);
-    int mca_coll_sm_reduce_log_intra(const void *sbuf, void* rbuf, int count,
+    int mca_coll_sm_reduce_log_intra(const void *sbuf, void* rbuf, size_t count,
 				     struct ompi_datatype_t *dtype,
 				     struct ompi_op_t *op,
 				     int root,
 				     struct ompi_communicator_t *comm,
 				     mca_coll_base_module_t *module);
     int mca_coll_sm_reduce_scatter_intra(const void *sbuf, void *rbuf,
-					 int *rcounts,
+					 size_t *rcounts,
 					 struct ompi_datatype_t *dtype,
 					 struct ompi_op_t *op,
 					 struct ompi_communicator_t *comm,
 					 mca_coll_base_module_t *module);
-    int mca_coll_sm_scan_intra(const void *sbuf, void *rbuf, int count,
+    int mca_coll_sm_scan_intra(const void *sbuf, void *rbuf, size_t count,
 			       struct ompi_datatype_t *dtype,
 			       struct ompi_op_t *op,
 			       struct ompi_communicator_t *comm,
 			       mca_coll_base_module_t *module);
-    int mca_coll_sm_scatter_intra(const void *sbuf, int scount,
+    int mca_coll_sm_scatter_intra(const void *sbuf, size_t scount,
 				  struct ompi_datatype_t *sdtype, void *rbuf,
-				  int rcount, struct ompi_datatype_t *rdtype,
+				  size_t rcount, struct ompi_datatype_t *rdtype,
 				  int root, struct ompi_communicator_t *comm,
 				  mca_coll_base_module_t *module);
-    int mca_coll_sm_scatterv_intra(const void *sbuf, const int *scounts, const int *disps,
+    int mca_coll_sm_scatterv_intra(const void *sbuf, const size_t *scounts, const ptrdiff_t *disps,
 				   struct ompi_datatype_t *sdtype,
-				   void* rbuf, int rcount,
+				   void* rbuf, size_t rcount,
 				   struct ompi_datatype_t *rdtype, int root,
 				   struct ompi_communicator_t *comm,
 				   mca_coll_base_module_t *module);

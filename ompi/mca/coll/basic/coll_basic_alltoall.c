@@ -41,9 +41,9 @@
  *	Returns:	- MPI_SUCCESS or an MPI error code
  */
 int
-mca_coll_basic_alltoall_inter(const void *sbuf, int scount,
+mca_coll_basic_alltoall_inter(const void *sbuf, size_t scount,
                               struct ompi_datatype_t *sdtype,
-                              void *rbuf, int rcount,
+                              void *rbuf, size_t rcount,
                               struct ompi_datatype_t *rdtype,
                               struct ompi_communicator_t *comm,
                               mca_coll_base_module_t *module)

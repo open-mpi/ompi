@@ -48,13 +48,14 @@ int MPI_Reduce_scatter(const void *sendbuf, void *recvbuf, const int recvcounts[
                        MPI_Datatype datatype, MPI_Op op, MPI_Comm comm)
 {
     int i, err, size, count;
+    OMPI_TEMP_ARRAY_DECL(recvcounts);
 
+    size = ompi_comm_size(comm);
     SPC_RECORD(OMPI_SPC_REDUCE_SCATTER, 1);
 
     MEMCHECKER(
         int rank;
 
-        size = ompi_comm_size(comm);
         rank = ompi_comm_rank(comm);
         for (count = i = 0; i < size; ++i) {
             if (0 == recvcounts[i]) {
@@ -140,10 +141,13 @@ int MPI_Reduce_scatter(const void *sendbuf, void *recvbuf, const int recvcounts[
 
     /* Invoke the coll component to perform the back-end operation */
 
+    OMPI_TEMP_ARRAY_PREPARE(recvcounts, i, size);
     OBJ_RETAIN(op);
-    err = comm->c_coll->coll_reduce_scatter(sendbuf, recvbuf, recvcounts,
+    err = comm->c_coll->coll_reduce_scatter(sendbuf, recvbuf, OMPI_TEMP_ARRAY_NAME_CONVERT(recvcounts),
                                            datatype, op, comm,
                                            comm->c_coll->coll_reduce_scatter_module);
     OBJ_RELEASE(op);
+    OMPI_TEMP_ARRAY_CLEANUP(recvcounts);
+
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }

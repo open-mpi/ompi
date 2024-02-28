@@ -15,9 +15,9 @@
 #include "ompi/communicator/communicator.h"
 #include "coll_monitoring.h"
 
-int mca_coll_monitoring_scatterv(const void *sbuf, const int *scounts, const int *disps,
+int mca_coll_monitoring_scatterv(const void *sbuf, const size_t *scounts, const ptrdiff_t *disps,
                                  struct ompi_datatype_t *sdtype,
-                                 void* rbuf, int rcount, struct ompi_datatype_t *rdtype,
+                                 void* rbuf, size_t rcount, struct ompi_datatype_t *rdtype,
                                  int root, struct ompi_communicator_t *comm,
                                  mca_coll_base_module_t *module)
 {
@@ -44,9 +44,9 @@ int mca_coll_monitoring_scatterv(const void *sbuf, const int *scounts, const int
     return monitoring_module->real.coll_scatterv(sbuf, scounts, disps, sdtype, rbuf, rcount, rdtype, root, comm, monitoring_module->real.coll_scatterv_module);
 }
 
-int mca_coll_monitoring_iscatterv(const void *sbuf, const int *scounts, const int *disps,
+int mca_coll_monitoring_iscatterv(const void *sbuf, const size_t *scounts, const ptrdiff_t *disps,
                                   struct ompi_datatype_t *sdtype,
-                                  void *rbuf, int rcount, struct ompi_datatype_t *rdtype,
+                                  void *rbuf, size_t rcount, struct ompi_datatype_t *rdtype,
                                   int root, struct ompi_communicator_t *comm,
                                   ompi_request_t ** request,
                                   mca_coll_base_module_t *module)

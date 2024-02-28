@@ -50,16 +50,17 @@ int MPI_Allgatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtyp
                         MPI_Datatype recvtype, MPI_Comm comm,
                         MPI_Info info, MPI_Request *request)
 {
-    int i, size, err;
+    int i, size, rsize, err;
+    OMPI_TEMP_ARRAYS_DECL(recvcounts, displs);
 
     SPC_RECORD(OMPI_SPC_ALLGATHERV_INIT, 1);
 
+    size = ompi_comm_size(comm);
     MEMCHECKER(
         int rank;
         ptrdiff_t ext;
 
         rank = ompi_comm_rank(comm);
-        size = ompi_comm_size(comm);
         ompi_datatype_type_extent(recvtype, &ext);
 
         memchecker_datatype(recvtype);
@@ -109,8 +110,8 @@ int MPI_Allgatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtyp
          get the size of the remote group here for both intra- and
          intercommunicators */
 
-        size = ompi_comm_remote_size(comm);
-        for (i = 0; i < size; ++i) {
+        rsize = ompi_comm_remote_size(comm);
+        for (i = 0; i < rsize; ++i) {
           if (recvcounts[i] < 0) {
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COUNT, FUNC_NAME);
           }
@@ -122,10 +123,13 @@ int MPI_Allgatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtyp
     }
 
     /* Invoke the coll component to perform the back-end operation */
+    OMPI_TEMP_ARRAYS_PREPARE(recvcounts, displs, i, size);
     err = comm->c_coll->coll_allgatherv_init(sendbuf, sendcount, sendtype,
-                                             recvbuf, recvcounts, displs,
+                                             recvbuf, OMPI_TEMP_ARRAY_NAME_CONVERT(recvcounts),
+                                             OMPI_TEMP_ARRAY_NAME_CONVERT(displs),
                                              recvtype, comm, info, request,
                                              comm->c_coll->coll_allgatherv_init_module);
+    OMPI_TEMP_ARRAYS_CLEANUP(recvcounts, displs);
     if (OPAL_LIKELY(OMPI_SUCCESS == err)) {
         ompi_coll_base_retain_datatypes(*request, (MPI_IN_PLACE==sendbuf)?NULL:sendtype, recvtype);
     }

@@ -42,33 +42,33 @@ int mca_coll_accelerator_module_enable(mca_coll_base_module_t *module,
                                 struct ompi_communicator_t *comm);
 
 int
-mca_coll_accelerator_allreduce(const void *sbuf, void *rbuf, int count,
+mca_coll_accelerator_allreduce(const void *sbuf, void *rbuf, size_t count,
                         struct ompi_datatype_t *dtype,
                         struct ompi_op_t *op,
                         struct ompi_communicator_t *comm,
                         mca_coll_base_module_t *module);
 
-int mca_coll_accelerator_reduce(const void *sbuf, void *rbuf, int count,
+int mca_coll_accelerator_reduce(const void *sbuf, void *rbuf, size_t count,
                          struct ompi_datatype_t *dtype,
                          struct ompi_op_t *op,
                          int root,
                          struct ompi_communicator_t *comm,
                          mca_coll_base_module_t *module);
 
-int mca_coll_accelerator_exscan(const void *sbuf, void *rbuf, int count,
+int mca_coll_accelerator_exscan(const void *sbuf, void *rbuf, size_t count,
                          struct ompi_datatype_t *dtype,
                          struct ompi_op_t *op,
                          struct ompi_communicator_t *comm,
                          mca_coll_base_module_t *module);
 
-int mca_coll_accelerator_scan(const void *sbuf, void *rbuf, int count,
+int mca_coll_accelerator_scan(const void *sbuf, void *rbuf, size_t count,
                        struct ompi_datatype_t *dtype,
                        struct ompi_op_t *op,
                        struct ompi_communicator_t *comm,
                        mca_coll_base_module_t *module);
 
 int
-mca_coll_accelerator_reduce_scatter_block(const void *sbuf, void *rbuf, int rcount,
+mca_coll_accelerator_reduce_scatter_block(const void *sbuf, void *rbuf, size_t rcount,
                                    struct ompi_datatype_t *dtype,
                                    struct ompi_op_t *op,
                                    struct ompi_communicator_t *comm,
@@ -124,7 +124,7 @@ OBJ_CLASS_DECLARATION(mca_coll_accelerator_module_t);
 /* Component */
 
 typedef struct mca_coll_accelerator_component_t {
-    mca_coll_base_component_2_4_0_t super;
+    mca_coll_base_component_3_0_0_t super;
 
     int priority; /* Priority of this component */
     int disable_accelerator_coll;  /* Force disable of the accelerator collective component */

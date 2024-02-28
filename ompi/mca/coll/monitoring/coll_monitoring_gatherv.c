@@ -15,9 +15,9 @@
 #include "ompi/communicator/communicator.h"
 #include "coll_monitoring.h"
 
-int mca_coll_monitoring_gatherv(const void *sbuf, int scount,
+int mca_coll_monitoring_gatherv(const void *sbuf, size_t scount,
                                 struct ompi_datatype_t *sdtype,
-                                void *rbuf, const int *rcounts, const int *disps,
+                                void *rbuf, const size_t *rcounts, const ptrdiff_t *disps,
                                 struct ompi_datatype_t *rdtype,
                                 int root,
                                 struct ompi_communicator_t *comm,
@@ -46,9 +46,9 @@ int mca_coll_monitoring_gatherv(const void *sbuf, int scount,
     return monitoring_module->real.coll_gatherv(sbuf, scount, sdtype, rbuf, rcounts, disps, rdtype, root, comm, monitoring_module->real.coll_gatherv_module);
 }
 
-int mca_coll_monitoring_igatherv(const void *sbuf, int scount,
+int mca_coll_monitoring_igatherv(const void *sbuf, size_t scount,
                                  struct ompi_datatype_t *sdtype,
-                                 void *rbuf, const int *rcounts, const int *disps,
+                                 void *rbuf, const size_t *rcounts, const ptrdiff_t *disps,
                                  struct ompi_datatype_t *rdtype,
                                  int root,
                                  struct ompi_communicator_t *comm,

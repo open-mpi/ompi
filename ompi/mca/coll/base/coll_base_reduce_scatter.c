@@ -45,13 +45,15 @@
  * appropriate scatterv call.
  */
 int ompi_coll_base_reduce_scatter_intra_nonoverlapping(const void *sbuf, void *rbuf,
-                                                        const int *rcounts,
+                                                        const size_t *rcounts,
                                                         struct ompi_datatype_t *dtype,
                                                         struct ompi_op_t *op,
                                                         struct ompi_communicator_t *comm,
                                                         mca_coll_base_module_t *module)
 {
-    int err, i, rank, size, total_count, *displs = NULL;
+    int err, i, rank, size;
+    size_t total_count;
+    ptrdiff_t *displs = NULL;
     const int root = 0;
     char *tmprbuf = NULL, *tmprbuf_free = NULL;
 
@@ -91,7 +93,7 @@ int ompi_coll_base_reduce_scatter_intra_nonoverlapping(const void *sbuf, void *r
         return err;
     }
 
-    displs = (int*) malloc(size * sizeof(int));
+    displs = malloc(size * sizeof(ptrdiff_t));
     displs[0] = 0;
     for (i = 1; i < size; i++) {
         displs[i] = displs[i-1] + rcounts[i-1];
@@ -131,15 +133,16 @@ int ompi_coll_base_reduce_scatter_intra_nonoverlapping(const void *sbuf, void *r
 int
 ompi_coll_base_reduce_scatter_intra_basic_recursivehalving( const void *sbuf,
                                                             void *rbuf,
-                                                            const int *rcounts,
+                                                            const size_t *rcounts,
                                                             struct ompi_datatype_t *dtype,
                                                             struct ompi_op_t *op,
                                                             struct ompi_communicator_t *comm,
                                                             mca_coll_base_module_t *module)
 {
-    int i, rank, size, count, err = OMPI_SUCCESS;
-    int tmp_size, remain = 0, tmp_rank, *disps = NULL;
-    ptrdiff_t extent, buf_size, gap = 0;
+    int i, rank, size, err = OMPI_SUCCESS;
+    int tmp_size, remain = 0, tmp_rank;
+    size_t count;
+    ptrdiff_t extent, buf_size, gap = 0, *disps = NULL;
     char *recv_buf = NULL, *recv_buf_free = NULL;
     char *result_buf = NULL, *result_buf_free = NULL;
 
@@ -150,7 +153,7 @@ ompi_coll_base_reduce_scatter_intra_basic_recursivehalving( const void *sbuf,
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output,"coll:base:reduce_scatter_intra_basic_recursivehalving, rank %d", rank));
 
     /* Find displacements and the like */
-    disps = (int*) malloc(sizeof(int) * size);
+    disps = malloc(sizeof(ptrdiff_t) * size);
     if (NULL == disps) return OMPI_ERR_OUT_OF_RESOURCE;
 
     disps[0] = 0;
@@ -453,14 +456,16 @@ ompi_coll_base_reduce_scatter_intra_basic_recursivehalving( const void *sbuf,
  *
  */
 int
-ompi_coll_base_reduce_scatter_intra_ring( const void *sbuf, void *rbuf, const int *rcounts,
+ompi_coll_base_reduce_scatter_intra_ring( const void *sbuf, void *rbuf, const size_t *rcounts,
                                           struct ompi_datatype_t *dtype,
                                           struct ompi_op_t *op,
                                           struct ompi_communicator_t *comm,
                                           mca_coll_base_module_t *module)
 {
-    int ret, line, rank, size, i, k, recv_from, send_to, total_count, max_block_count;
-    int inbi, *displs = NULL;
+    int ret, line, rank, size, i, k, recv_from, send_to;
+    int inbi;
+    size_t total_count, max_block_count;
+    ptrdiff_t *displs = NULL;
     char *tmpsend = NULL, *tmprecv = NULL, *accumbuf = NULL, *accumbuf_free = NULL;
     char *inbuf_free[2] = {NULL, NULL}, *inbuf[2] = {NULL, NULL};
     ptrdiff_t extent, max_real_segsize, dsize, gap = 0;
@@ -476,7 +481,7 @@ ompi_coll_base_reduce_scatter_intra_ring( const void *sbuf, void *rbuf, const in
     /* Determine the maximum number of elements per node,
        corresponding block size, and displacements array.
     */
-    displs = (int*) malloc(size * sizeof(int));
+    displs = malloc(size * sizeof(ptrdiff_t));
     if (NULL == displs) { ret = -1; line = __LINE__; goto error_hndl; }
     displs[0] = 0;
     total_count = rcounts[0];
@@ -557,7 +562,7 @@ ompi_coll_base_reduce_scatter_intra_ring( const void *sbuf, void *rbuf, const in
                              MCA_COLL_BASE_TAG_REDUCE_SCATTER, comm,
                              &reqs[inbi]));
     if (MPI_SUCCESS != ret) { line = __LINE__; goto error_hndl; }
-    tmpsend = accumbuf + (ptrdiff_t)displs[recv_from] * extent;
+    tmpsend = accumbuf + displs[recv_from] * extent;
     ret = MCA_PML_CALL(send(tmpsend, rcounts[recv_from], dtype, send_to,
                             MCA_COLL_BASE_TAG_REDUCE_SCATTER,
                             MCA_PML_BASE_SEND_STANDARD, comm));
@@ -581,7 +586,7 @@ ompi_coll_base_reduce_scatter_intra_ring( const void *sbuf, void *rbuf, const in
         /* Apply operation on previous block: result goes to rbuf
            rbuf[prevblock] = inbuf[inbi ^ 0x1] (op) rbuf[prevblock]
         */
-        tmprecv = accumbuf + (ptrdiff_t)displs[prevblock] * extent;
+        tmprecv = accumbuf + displs[prevblock] * extent;
         ompi_op_reduce(op, inbuf[inbi ^ 0x1], tmprecv, rcounts[prevblock], dtype);
 
         /* send previous block to send_to */
@@ -597,7 +602,7 @@ ompi_coll_base_reduce_scatter_intra_ring( const void *sbuf, void *rbuf, const in
 
     /* Apply operation on the last block (my block)
        rbuf[rank] = inbuf[inbi] (op) rbuf[rank] */
-    tmprecv = accumbuf + (ptrdiff_t)displs[rank] * extent;
+    tmprecv = accumbuf + displs[rank] * extent;
     ompi_op_reduce(op, inbuf[inbi], tmprecv, rcounts[rank], dtype);
 
     /* Copy result from tmprecv to rbuf */
@@ -626,7 +631,7 @@ ompi_coll_base_reduce_scatter_intra_ring( const void *sbuf, void *rbuf, const in
  * ompi_sum_counts: Returns sum of counts [lo, hi]
  *                  lo, hi in {0, 1, ..., nprocs_pof2 - 1}
  */
-static int ompi_sum_counts(const int *counts, int *displs, int nprocs_rem, int lo, int hi)
+static int ompi_sum_counts(const size_t *counts, ptrdiff_t *displs, int nprocs_rem, int lo, int hi)
 {
     /* Adjust lo and hi for taking into account blocks of excluded processes */
     lo = (lo < nprocs_rem) ? lo * 2 : lo + nprocs_rem;
@@ -689,13 +694,14 @@ static int ompi_sum_counts(const int *counts, int *displs, int nprocs_rem, int l
  */
 int
 ompi_coll_base_reduce_scatter_intra_butterfly(
-    const void *sbuf, void *rbuf, const int *rcounts, struct ompi_datatype_t *dtype,
+    const void *sbuf, void *rbuf, const size_t *rcounts, struct ompi_datatype_t *dtype,
     struct ompi_op_t *op, struct ompi_communicator_t *comm,
     mca_coll_base_module_t *module)
 {
     char *tmpbuf[2] = {NULL, NULL}, *psend, *precv;
-    int *displs = NULL, index;
-    ptrdiff_t span, gap, totalcount, extent;
+    ptrdiff_t *displs = NULL, index;
+    ptrdiff_t span, gap, extent;
+    size_t totalcount;
     int err = MPI_SUCCESS;
     int comm_size = ompi_comm_size(comm);
     int rank = ompi_comm_rank(comm);

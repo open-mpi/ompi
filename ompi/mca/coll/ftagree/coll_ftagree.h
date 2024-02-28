@@ -32,7 +32,7 @@ BEGIN_C_DECLS
 
 /* Globally exported variables */
 
-OMPI_DECLSPEC extern const mca_coll_base_component_2_4_0_t
+OMPI_DECLSPEC extern const mca_coll_base_component_3_0_0_t
 mca_coll_ftagree_component;
 extern int mca_coll_ftagree_priority;
 
@@ -108,7 +108,7 @@ int mca_coll_ftagree_module_enable(mca_coll_base_module_t *module,
 /* Early termination algorithm */
 int
 mca_coll_ftagree_eta_intra(     void* contrib,
-                                int dt_count,
+                                size_t dt_count,
                                 ompi_datatype_t *dt,
                                 ompi_op_t *op,
                                 ompi_group_t **group, bool grp_update,
@@ -117,14 +117,14 @@ mca_coll_ftagree_eta_intra(     void* contrib,
 /* Early returning algorithm */
 int
 mca_coll_ftagree_era_intra(     void* contrib,
-                                int dt_count,
+                                size_t dt_count,
                                 ompi_datatype_t *dt,
                                 ompi_op_t *op,
                                 ompi_group_t **group, bool grp_update,
                                 ompi_communicator_t* comm,
                                 mca_coll_base_module_t *module);
 int mca_coll_ftagree_iera_intra(void* contrib,
-                                int dt_count,
+                                size_t dt_count,
                                 ompi_datatype_t *dt,
                                 ompi_op_t *op,
                                 ompi_group_t **group, bool grp_update,
@@ -132,7 +132,7 @@ int mca_coll_ftagree_iera_intra(void* contrib,
                                 ompi_request_t **request,
                                 mca_coll_base_module_t *module);
 int mca_coll_ftagree_era_inter( void* contrib,
-                                int dt_count,
+                                size_t dt_count,
                                 ompi_datatype_t *dt,
                                 ompi_op_t *op,
                                 ompi_group_t **group, bool grp_update,

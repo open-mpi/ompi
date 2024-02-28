@@ -16,9 +16,9 @@
 #include "ompi/mca/topo/base/base.h"
 #include "coll_monitoring.h"
 
-int mca_coll_monitoring_neighbor_alltoallv(const void *sbuf, const int *scounts,
-                                           const int *sdisps, struct ompi_datatype_t *sdtype,
-                                           void *rbuf, const int *rcounts, const int *rdisps,
+int mca_coll_monitoring_neighbor_alltoallv(const void *sbuf, const size_t *scounts,
+                                           const ptrdiff_t *sdisps, struct ompi_datatype_t *sdtype,
+                                           void *rbuf, const size_t *rcounts, const ptrdiff_t *rdisps,
                                            struct ompi_datatype_t *rdtype,
                                            struct ompi_communicator_t *comm,
                                            mca_coll_base_module_t *module)
@@ -72,11 +72,11 @@ int mca_coll_monitoring_neighbor_alltoallv(const void *sbuf, const int *scounts,
     return monitoring_module->real.coll_neighbor_alltoallv(sbuf, scounts, sdisps, sdtype, rbuf, rcounts, rdisps, rdtype, comm, monitoring_module->real.coll_neighbor_alltoallv_module);
 }
 
-int mca_coll_monitoring_ineighbor_alltoallv(const void *sbuf, const int *scounts,
-                                            const int *sdisps,
+int mca_coll_monitoring_ineighbor_alltoallv(const void *sbuf, const size_t *scounts,
+                                            const ptrdiff_t *sdisps,
                                             struct ompi_datatype_t *sdtype,
-                                            void *rbuf, const int *rcounts,
-                                            const int *rdisps,
+                                            void *rbuf, const size_t *rcounts,
+                                            const ptrdiff_t *rdisps,
                                             struct ompi_datatype_t *rdtype,
                                             struct ompi_communicator_t *comm,
                                             ompi_request_t ** request,

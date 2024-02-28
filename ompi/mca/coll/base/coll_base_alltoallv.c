@@ -50,7 +50,7 @@
  * and count) to send the data to the other.
  */
 int
-mca_coll_base_alltoallv_intra_basic_inplace(const void *rbuf, const int *rcounts, const int *rdisps,
+mca_coll_base_alltoallv_intra_basic_inplace(const void *rbuf, const size_t *rcounts, const ptrdiff_t *rdisps,
                                             struct ompi_datatype_t *rdtype,
                                             struct ompi_communicator_t *comm,
                                             mca_coll_base_module_t *module)
@@ -191,9 +191,9 @@ mca_coll_base_alltoallv_intra_basic_inplace(const void *rbuf, const int *rcounts
 }
 
 int
-ompi_coll_base_alltoallv_intra_pairwise(const void *sbuf, const int *scounts, const int *sdisps,
+ompi_coll_base_alltoallv_intra_pairwise(const void *sbuf, const size_t *scounts, const ptrdiff_t *sdisps,
                                          struct ompi_datatype_t *sdtype,
-                                         void* rbuf, const int *rcounts, const int *rdisps,
+                                         void* rbuf, const size_t *rcounts, const ptrdiff_t *rdisps,
                                          struct ompi_datatype_t *rdtype,
                                          struct ompi_communicator_t *comm,
                                          mca_coll_base_module_t *module)
@@ -280,9 +280,9 @@ ompi_coll_base_alltoallv_intra_pairwise(const void *sbuf, const int *scounts, co
  * differently and so will not have to duplicate code.
  */
 int
-ompi_coll_base_alltoallv_intra_basic_linear(const void *sbuf, const int *scounts, const int *sdisps,
+ompi_coll_base_alltoallv_intra_basic_linear(const void *sbuf, const size_t *scounts, const ptrdiff_t *sdisps,
                                             struct ompi_datatype_t *sdtype,
-                                            void *rbuf, const int *rcounts, const int *rdisps,
+                                            void *rbuf, const size_t *rcounts, const ptrdiff_t *rdisps,
                                             struct ompi_datatype_t *rdtype,
                                             struct ompi_communicator_t *comm,
                                             mca_coll_base_module_t *module)

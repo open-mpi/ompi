@@ -122,8 +122,8 @@ struct mca_coll_han_scatter_args_s {
     void *rbuf;
     ompi_datatype_t *sdtype;
     ompi_datatype_t *rdtype;
-    int scount;
-    int rcount;
+    size_t scount;
+    size_t rcount;
     int root;
     int root_up_rank;
     int root_low_rank;
@@ -163,8 +163,8 @@ struct mca_coll_han_allgather_s {
     void *rbuf;
     ompi_datatype_t *sdtype;
     ompi_datatype_t *rdtype;
-    int scount;
-    int rcount;
+    size_t scount;
+    size_t rcount;
     int root_low_rank;
     int w_rank;
     bool noop;
@@ -204,7 +204,7 @@ typedef struct mca_coll_han_op_module_name_t {
  */
 typedef struct mca_coll_han_component_t {
     /** Base coll component */
-    mca_coll_base_component_2_4_0_t super;
+    mca_coll_base_component_3_0_0_t super;
 
     /** MCA parameter: Priority of this component */
     int han_priority;
@@ -516,7 +516,7 @@ int mca_coll_han_barrier_intra_simple(struct ompi_communicator_t *comm,
 /* reordering after gather, for unordered ranks */
 void
 ompi_coll_han_reorder_gather(const void *sbuf,
-                             void *rbuf, int rcount,
+                             void *rbuf, size_t rcount,
                              struct ompi_datatype_t *rdtype,
                              struct ompi_communicator_t *comm,
                              int * topo);

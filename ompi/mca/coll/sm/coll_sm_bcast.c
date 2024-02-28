@@ -53,7 +53,7 @@
  * have children, they copy the data directly from the parent's shared
  * data segment into the user's output buffer.
  */
-int mca_coll_sm_bcast_intra(void *buff, int count,
+int mca_coll_sm_bcast_intra(void *buff, size_t count,
                             struct ompi_datatype_t *datatype, int root,
                             struct ompi_communicator_t *comm,
                             mca_coll_base_module_t *module)

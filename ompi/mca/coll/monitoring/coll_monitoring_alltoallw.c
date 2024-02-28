@@ -15,11 +15,11 @@
 #include "ompi/communicator/communicator.h"
 #include "coll_monitoring.h"
 
-int mca_coll_monitoring_alltoallw(const void *sbuf, const int *scounts,
-                                  const int *sdisps,
+int mca_coll_monitoring_alltoallw(const void *sbuf, const size_t *scounts,
+                                  const ptrdiff_t *sdisps,
                                   struct ompi_datatype_t * const *sdtypes,
-                                  void *rbuf, const int *rcounts,
-                                  const int *rdisps,
+                                  void *rbuf, const size_t *rcounts,
+                                  const ptrdiff_t *rdisps,
                                   struct ompi_datatype_t * const *rdtypes,
                                   struct ompi_communicator_t *comm,
                                   mca_coll_base_module_t *module)
@@ -46,11 +46,11 @@ int mca_coll_monitoring_alltoallw(const void *sbuf, const int *scounts,
     return monitoring_module->real.coll_alltoallw(sbuf, scounts, sdisps, sdtypes, rbuf, rcounts, rdisps, rdtypes, comm, monitoring_module->real.coll_alltoallw_module);
 }
 
-int mca_coll_monitoring_ialltoallw(const void *sbuf, const int *scounts,
-                                   const int *sdisps,
+int mca_coll_monitoring_ialltoallw(const void *sbuf, const size_t *scounts,
+                                   const ptrdiff_t *sdisps,
                                    struct ompi_datatype_t * const *sdtypes,
-                                   void *rbuf, const int *rcounts,
-                                   const int *rdisps,
+                                   void *rbuf, const size_t *rcounts,
+                                   const ptrdiff_t *rdisps,
                                    struct ompi_datatype_t * const *rdtypes,
                                    struct ompi_communicator_t *comm,
                                    ompi_request_t ** request,

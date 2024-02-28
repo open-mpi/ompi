@@ -16,10 +16,10 @@
 #include "ompi/mca/topo/base/base.h"
 #include "coll_monitoring.h"
 
-int mca_coll_monitoring_neighbor_alltoallw(const void *sbuf, const int *scounts,
+int mca_coll_monitoring_neighbor_alltoallw(const void *sbuf, const size_t *scounts,
                                            const MPI_Aint *sdisps,
                                            struct ompi_datatype_t * const *sdtypes,
-                                           void *rbuf, const int *rcounts,
+                                           void *rbuf, const size_t *rcounts,
                                            const MPI_Aint *rdisps,
                                            struct ompi_datatype_t * const *rdtypes,
                                            struct ompi_communicator_t *comm,
@@ -74,10 +74,10 @@ int mca_coll_monitoring_neighbor_alltoallw(const void *sbuf, const int *scounts,
     return monitoring_module->real.coll_neighbor_alltoallw(sbuf, scounts, sdisps, sdtypes, rbuf, rcounts, rdisps, rdtypes, comm, monitoring_module->real.coll_neighbor_alltoallw_module);
 }
 
-int mca_coll_monitoring_ineighbor_alltoallw(const void *sbuf, const int *scounts,
+int mca_coll_monitoring_ineighbor_alltoallw(const void *sbuf, const size_t *scounts,
                                             const MPI_Aint *sdisps,
                                             struct ompi_datatype_t * const *sdtypes,
-                                            void *rbuf, const int *rcounts,
+                                            void *rbuf, const size_t *rcounts,
                                             const MPI_Aint *rdisps,
                                             struct ompi_datatype_t * const *rdtypes,
                                             struct ompi_communicator_t *comm,

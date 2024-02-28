@@ -35,10 +35,10 @@ mca_coll_han_set_gather_args(mca_coll_han_gather_args_t * args,
                              mca_coll_task_t * cur_task,
                              void *sbuf,
                              void *sbuf_inter_free,
-                             int scount,
+                             size_t scount,
                              struct ompi_datatype_t *sdtype,
                              void *rbuf,
-                             int rcount,
+                             size_t rcount,
                              struct ompi_datatype_t *rdtype,
                              int root,
                              int root_up_rank,
@@ -71,9 +71,9 @@ mca_coll_han_set_gather_args(mca_coll_han_gather_args_t * args,
  * Main function for taskified gather: calls lg task, a gather on low comm
  */
 int
-mca_coll_han_gather_intra(const void *sbuf, int scount,
+mca_coll_han_gather_intra(const void *sbuf, size_t scount,
                           struct ompi_datatype_t *sdtype,
-                          void *rbuf, int rcount,
+                          void *rbuf, size_t rcount,
                           struct ompi_datatype_t *rdtype,
                           int root,
                           struct ompi_communicator_t *comm,
@@ -302,9 +302,9 @@ int mca_coll_han_gather_ug_task(void *task_args)
 
 /* only work with regular situation (each node has equal number of processes) */
 int
-mca_coll_han_gather_intra_simple(const void *sbuf, int scount,
+mca_coll_han_gather_intra_simple(const void *sbuf, size_t scount,
                                  struct ompi_datatype_t *sdtype,
-                                 void *rbuf, int rcount,
+                                 void *rbuf, size_t rcount,
                                  struct ompi_datatype_t *rdtype,
                                  int root,
                                  struct ompi_communicator_t *comm,
@@ -452,7 +452,7 @@ mca_coll_han_gather_intra_simple(const void *sbuf, int scount,
  */
 void
 ompi_coll_han_reorder_gather(const void *sbuf,
-                             void *rbuf, int count,
+                             void *rbuf, size_t count,
                              struct ompi_datatype_t *dtype,
                              struct ompi_communicator_t *comm,
                              int * topo)

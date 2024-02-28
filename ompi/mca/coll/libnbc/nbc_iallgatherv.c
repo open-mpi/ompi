@@ -34,7 +34,7 @@
  * second round:
  *   each node sends to node (rank+2)%p sendcount elements
  *   each node receives from node (rank-2)%p recvcounts[(rank+2)%p] elements */
-static int nbc_allgatherv_init(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, const int *recvcounts, const int *displs,
+static int nbc_allgatherv_init(const void* sendbuf, size_t sendcount, MPI_Datatype sendtype, void* recvbuf, const size_t *recvcounts, const ptrdiff_t *displs,
                                MPI_Datatype recvtype, struct ompi_communicator_t *comm, ompi_request_t ** request,
                                mca_coll_base_module_t *module, bool persistent)
 {
@@ -119,7 +119,7 @@ static int nbc_allgatherv_init(const void* sendbuf, int sendcount, MPI_Datatype 
   return OMPI_SUCCESS;
 }
 
-int ompi_coll_libnbc_iallgatherv(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, const int *recvcounts, const int *displs,
+int ompi_coll_libnbc_iallgatherv(const void* sendbuf, size_t sendcount, MPI_Datatype sendtype, void* recvbuf, const size_t *recvcounts, const ptrdiff_t *displs,
                                  MPI_Datatype recvtype, struct ompi_communicator_t *comm, ompi_request_t ** request,
                                  mca_coll_base_module_t *module) {
     int res = nbc_allgatherv_init(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype,
@@ -138,7 +138,7 @@ int ompi_coll_libnbc_iallgatherv(const void* sendbuf, int sendcount, MPI_Datatyp
     return OMPI_SUCCESS;
 }
 
-static int nbc_allgatherv_inter_init(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, const int *recvcounts, const int *displs,
+static int nbc_allgatherv_inter_init(const void* sendbuf, size_t sendcount, MPI_Datatype sendtype, void* recvbuf, const size_t *recvcounts, const ptrdiff_t *displs,
                                      MPI_Datatype recvtype, struct ompi_communicator_t *comm, ompi_request_t ** request,
                                      mca_coll_base_module_t *module, bool persistent)
 {
@@ -198,7 +198,7 @@ static int nbc_allgatherv_inter_init(const void* sendbuf, int sendcount, MPI_Dat
   return OMPI_SUCCESS;
 }
 
-int ompi_coll_libnbc_iallgatherv_inter(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, const int *recvcounts, const int *displs,
+int ompi_coll_libnbc_iallgatherv_inter(const void* sendbuf, size_t sendcount, MPI_Datatype sendtype, void* recvbuf, const size_t *recvcounts, const ptrdiff_t *displs,
                                        MPI_Datatype recvtype, struct ompi_communicator_t *comm, ompi_request_t ** request,
                                        mca_coll_base_module_t *module) {
     int res = nbc_allgatherv_inter_init(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype,
@@ -217,7 +217,7 @@ int ompi_coll_libnbc_iallgatherv_inter(const void* sendbuf, int sendcount, MPI_D
     return OMPI_SUCCESS;
 }
 
-int ompi_coll_libnbc_allgatherv_init(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, const int *recvcounts, const int *displs,
+int ompi_coll_libnbc_allgatherv_init(const void* sendbuf, size_t sendcount, MPI_Datatype sendtype, void* recvbuf, const size_t *recvcounts, const ptrdiff_t *displs,
                                      MPI_Datatype recvtype, struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                                      mca_coll_base_module_t *module) {
     int res = nbc_allgatherv_init(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype,
@@ -229,7 +229,7 @@ int ompi_coll_libnbc_allgatherv_init(const void* sendbuf, int sendcount, MPI_Dat
     return OMPI_SUCCESS;
 }
 
-int ompi_coll_libnbc_allgatherv_inter_init(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, const int *recvcounts, const int *displs,
+int ompi_coll_libnbc_allgatherv_inter_init(const void* sendbuf, size_t sendcount, MPI_Datatype sendtype, void* recvbuf, const size_t *recvcounts, const ptrdiff_t *displs,
                                            MPI_Datatype recvtype, struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                                            mca_coll_base_module_t *module) {
     int res = nbc_allgatherv_inter_init(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype,

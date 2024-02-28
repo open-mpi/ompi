@@ -49,14 +49,15 @@ int MPI_Ireduce_scatter(const void *sendbuf, void *recvbuf, const int recvcounts
                         MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request)
 {
     int i, err, size, count;
+    OMPI_TEMP_ARRAY_DECL(recvcounts);
 
     SPC_RECORD(OMPI_SPC_IREDUCE_SCATTER, 1);
 
+    size = ompi_comm_size(comm);
     MEMCHECKER(
         int rank;
         int count;
 
-        size = ompi_comm_size(comm);
         rank = ompi_comm_rank(comm);
         for (count = i = 0; i < size; ++i) {
             if (0 == recvcounts[i]) {
@@ -132,9 +133,11 @@ int MPI_Ireduce_scatter(const void *sendbuf, void *recvbuf, const int recvcounts
 
     /* Invoke the coll component to perform the back-end operation */
 
-    err = comm->c_coll->coll_ireduce_scatter(sendbuf, recvbuf, recvcounts,
+    OMPI_TEMP_ARRAY_PREPARE(recvcounts, i, size);
+    err = comm->c_coll->coll_ireduce_scatter(sendbuf, recvbuf, OMPI_TEMP_ARRAY_NAME_CONVERT(recvcounts),
                                             datatype, op, comm, request,
                                             comm->c_coll->coll_ireduce_scatter_module);
+    OMPI_TEMP_ARRAY_CLEANUP(recvcounts);
     if (OPAL_LIKELY(OMPI_SUCCESS == err)) {
         ompi_coll_base_retain_op(*request, op, datatype);
     }

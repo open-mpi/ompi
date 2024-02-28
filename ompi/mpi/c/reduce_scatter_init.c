@@ -50,6 +50,7 @@ int MPI_Reduce_scatter_init(const void *sendbuf, void *recvbuf, const int recvco
                             MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Info info, MPI_Request *request)
 {
     int i, err, size, count;
+    OMPI_TEMP_ARRAY_DECL(recvcounts);
 
     SPC_RECORD(OMPI_SPC_REDUCE_SCATTER_INIT, 1);
 
@@ -133,9 +134,11 @@ int MPI_Reduce_scatter_init(const void *sendbuf, void *recvbuf, const int recvco
 
     /* Invoke the coll component to perform the back-end operation */
 
-    err = comm->c_coll->coll_reduce_scatter_init(sendbuf, recvbuf, recvcounts,
+    OMPI_TEMP_ARRAY_PREPARE(recvcounts, i, size);
+    err = comm->c_coll->coll_reduce_scatter_init(sendbuf, recvbuf, OMPI_TEMP_ARRAY_NAME_CONVERT(recvcounts),
                                                  datatype, op, comm, info, request,
                                                  comm->c_coll->coll_reduce_scatter_init_module);
+    OMPI_TEMP_ARRAY_CLEANUP(recvcounts);
     if (OPAL_LIKELY(OMPI_SUCCESS == err)) {
         ompi_coll_base_retain_op(*request, op, datatype);
     }

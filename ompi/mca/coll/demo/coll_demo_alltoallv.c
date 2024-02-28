@@ -34,9 +34,9 @@
  *	Returns:	- MPI_SUCCESS or an MPI error code
  */
 int
-mca_coll_demo_alltoallv_intra(void *sbuf, int *scounts, int *sdisps,
+mca_coll_demo_alltoallv_intra(void *sbuf, size_t *scounts, ptrdiff_t *sdisps,
                               struct ompi_datatype_t *sdtype,
-                              void *rbuf, int *rcounts, int *rdisps,
+                              void *rbuf, size_t *rcounts, ptrdiff_t *rdisps,
                               struct ompi_datatype_t *rdtype,
                               struct ompi_communicator_t *comm,
                               mca_coll_base_module_t *module)
@@ -58,9 +58,9 @@ mca_coll_demo_alltoallv_intra(void *sbuf, int *scounts, int *sdisps,
  *	Returns:	- MPI_SUCCESS or an MPI error code
  */
 int
-mca_coll_demo_alltoallv_inter(void *sbuf, int *scounts, int *sdisps,
+mca_coll_demo_alltoallv_inter(void *sbuf, size_t *scounts, ptrdiff_t *sdisps,
                               struct ompi_datatype_t *sdtype, void *rbuf,
-                              int *rcounts, int *rdisps,
+                              size_t *rcounts, ptrdiff_t *rdisps,
                               struct ompi_datatype_t *rdtype,
                               struct ompi_communicator_t *comm,
                               mca_coll_base_module_t *module)

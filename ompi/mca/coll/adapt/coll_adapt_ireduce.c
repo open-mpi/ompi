@@ -476,7 +476,7 @@ static int recv_cb(ompi_request_t * req)
     return 1;
 }
 
-int ompi_coll_adapt_ireduce(const void *sbuf, void *rbuf, int count, struct ompi_datatype_t *dtype,
+int ompi_coll_adapt_ireduce(const void *sbuf, void *rbuf, size_t count, struct ompi_datatype_t *dtype,
                            struct ompi_op_t *op, int root, struct ompi_communicator_t *comm,
                            ompi_request_t ** request, mca_coll_base_module_t * module)
 {
@@ -513,7 +513,7 @@ int ompi_coll_adapt_ireduce(const void *sbuf, void *rbuf, int count, struct ompi
 }
 
 
-int ompi_coll_adapt_ireduce_generic(const void *sbuf, void *rbuf, int count,
+int ompi_coll_adapt_ireduce_generic(const void *sbuf, void *rbuf, size_t count,
                                     struct ompi_datatype_t *dtype, struct ompi_op_t *op, int root,
                                     struct ompi_communicator_t *comm, ompi_request_t ** request,
                                     mca_coll_base_module_t * module, ompi_coll_tree_t * tree,
@@ -523,7 +523,8 @@ int ompi_coll_adapt_ireduce_generic(const void *sbuf, void *rbuf, int count,
     ptrdiff_t extent, lower_bound, segment_increment;
     ptrdiff_t true_lower_bound, true_extent, real_seg_size;
     size_t typelng;
-    int seg_count = count, num_segs, rank, recv_count, send_count, err, min;
+    size_t seg_count = count, recv_count, send_count;
+    int num_segs, rank, err, min;
     /* Used to store the accumuate result, pointer to every segment */
     char **accumbuf = NULL;
     opal_mutex_t *mutex_op_list;

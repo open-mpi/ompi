@@ -28,8 +28,8 @@
  * would not be sufficient ... we simply do not cache it */
 
 /* simple linear MPI_Iscatterv */
-static int nbc_scatterv_init(const void* sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype,
-                             void* recvbuf, int recvcount, MPI_Datatype recvtype, int root,
+static int nbc_scatterv_init(const void* sendbuf, const size_t *sendcounts, const ptrdiff_t *displs, MPI_Datatype sendtype,
+                             void* recvbuf, size_t recvcount, MPI_Datatype recvtype, int root,
                              struct ompi_communicator_t *comm, ompi_request_t ** request,
                              mca_coll_base_module_t *module, bool persistent) {
   int rank, p, res;
@@ -103,8 +103,8 @@ static int nbc_scatterv_init(const void* sendbuf, const int *sendcounts, const i
   return OMPI_SUCCESS;
 }
 
-int ompi_coll_libnbc_iscatterv(const void* sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype,
-                               void* recvbuf, int recvcount, MPI_Datatype recvtype, int root,
+int ompi_coll_libnbc_iscatterv(const void* sendbuf, const size_t *sendcounts, const ptrdiff_t *displs, MPI_Datatype sendtype,
+                               void* recvbuf, size_t recvcount, MPI_Datatype recvtype, int root,
                                struct ompi_communicator_t *comm, ompi_request_t ** request,
                                mca_coll_base_module_t *module) {
     int res = nbc_scatterv_init(sendbuf, sendcounts, displs, sendtype, recvbuf, recvcount, recvtype, root,
@@ -122,8 +122,8 @@ int ompi_coll_libnbc_iscatterv(const void* sendbuf, const int *sendcounts, const
     return OMPI_SUCCESS;
 }
 
-static int nbc_scatterv_inter_init (const void* sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype,
-                                    void* recvbuf, int recvcount, MPI_Datatype recvtype, int root,
+static int nbc_scatterv_inter_init (const void* sendbuf, const size_t *sendcounts, const ptrdiff_t *displs, MPI_Datatype sendtype,
+                                    void* recvbuf, size_t recvcount, MPI_Datatype recvtype, int root,
                                     struct ompi_communicator_t *comm, ompi_request_t ** request,
                                     mca_coll_base_module_t *module, bool persistent) {
     int res, rsize;
@@ -181,8 +181,8 @@ static int nbc_scatterv_inter_init (const void* sendbuf, const int *sendcounts, 
     return OMPI_SUCCESS;
 }
 
-int ompi_coll_libnbc_iscatterv_inter(const void* sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype,
-                                     void* recvbuf, int recvcount, MPI_Datatype recvtype, int root,
+int ompi_coll_libnbc_iscatterv_inter(const void* sendbuf, const size_t *sendcounts, const ptrdiff_t *displs, MPI_Datatype sendtype,
+                                     void* recvbuf, size_t recvcount, MPI_Datatype recvtype, int root,
                                      struct ompi_communicator_t *comm, ompi_request_t ** request,
                                      mca_coll_base_module_t *module) {
     int res = nbc_scatterv_inter_init(sendbuf, sendcounts, displs, sendtype, recvbuf, recvcount, recvtype, root,
@@ -200,8 +200,8 @@ int ompi_coll_libnbc_iscatterv_inter(const void* sendbuf, const int *sendcounts,
     return OMPI_SUCCESS;
 }
 
-int ompi_coll_libnbc_scatterv_init(const void* sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype,
-                                   void* recvbuf, int recvcount, MPI_Datatype recvtype, int root,
+int ompi_coll_libnbc_scatterv_init(const void* sendbuf, const size_t *sendcounts, const ptrdiff_t *displs, MPI_Datatype sendtype,
+                                   void* recvbuf, size_t recvcount, MPI_Datatype recvtype, int root,
                                    struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                                    mca_coll_base_module_t *module) {
     int res = nbc_scatterv_init(sendbuf, sendcounts, displs, sendtype, recvbuf, recvcount, recvtype, root,
@@ -213,8 +213,8 @@ int ompi_coll_libnbc_scatterv_init(const void* sendbuf, const int *sendcounts, c
     return OMPI_SUCCESS;
 }
 
-int ompi_coll_libnbc_scatterv_inter_init(const void* sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype,
-                                         void* recvbuf, int recvcount, MPI_Datatype recvtype, int root,
+int ompi_coll_libnbc_scatterv_inter_init(const void* sendbuf, const size_t *sendcounts, const ptrdiff_t *displs, MPI_Datatype sendtype,
+                                         void* recvbuf, size_t recvcount, MPI_Datatype recvtype, int root,
                                          struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                                          mca_coll_base_module_t *module) {
     int res = nbc_scatterv_inter_init(sendbuf, sendcounts, displs, sendtype, recvbuf, recvcount, recvtype, root,

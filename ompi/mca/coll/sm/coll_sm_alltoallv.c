@@ -31,9 +31,9 @@
  *	Accepts:	- same as MPI_Alltoallv()
  *	Returns:	- MPI_SUCCESS or an MPI error code
  */
-int mca_coll_sm_alltoallv_intra(const void *sbuf, const int *scounts, const int *sdisps,
+int mca_coll_sm_alltoallv_intra(const void *sbuf, const size_t *scounts, const ptrdiff_t *sdisps,
                                 struct ompi_datatype_t *sdtype,
-                                void *rbuf, const int *rcounts, const int *rdisps,
+                                void *rbuf, const size_t *rcounts, const ptrdiff_t *rdisps,
                                 struct ompi_datatype_t *rdtype,
                                 struct ompi_communicator_t *comm,
                                 mca_coll_base_module_t *module)

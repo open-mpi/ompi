@@ -16,9 +16,9 @@
 #include "ompi/mca/topo/base/base.h"
 #include "coll_monitoring.h"
 
-int mca_coll_monitoring_neighbor_allgather(const void *sbuf, int scount,
+int mca_coll_monitoring_neighbor_allgather(const void *sbuf, size_t scount,
                                            struct ompi_datatype_t *sdtype, void *rbuf,
-                                           int rcount, struct ompi_datatype_t *rdtype,
+                                           size_t rcount, struct ompi_datatype_t *rdtype,
                                            struct ompi_communicator_t *comm,
                                            mca_coll_base_module_t *module)
 {
@@ -68,9 +68,9 @@ int mca_coll_monitoring_neighbor_allgather(const void *sbuf, int scount,
     return monitoring_module->real.coll_neighbor_allgather(sbuf, scount, sdtype, rbuf, rcount, rdtype, comm, monitoring_module->real.coll_neighbor_allgather_module);
 }
 
-int mca_coll_monitoring_ineighbor_allgather(const void *sbuf, int scount,
+int mca_coll_monitoring_ineighbor_allgather(const void *sbuf, size_t scount,
                                             struct ompi_datatype_t *sdtype, void *rbuf,
-                                            int rcount, struct ompi_datatype_t *rdtype,
+                                            size_t rcount, struct ompi_datatype_t *rdtype,
                                             struct ompi_communicator_t *comm,
                                             ompi_request_t ** request,
                                             mca_coll_base_module_t *module)

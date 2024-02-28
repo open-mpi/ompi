@@ -50,9 +50,12 @@ int MPI_Ialltoallv(const void *sendbuf, const int sendcounts[], const int sdispl
                    MPI_Request *request)
 {
     int i, size, err;
+    OMPI_TEMP_ARRAYS_DECL(sendcounts, sdispls);
+    OMPI_TEMP_ARRAYS_DECL(recvcounts, rdispls);
 
     SPC_RECORD(OMPI_SPC_IALLTOALLV, 1);
 
+    size = OMPI_COMM_IS_INTER(comm)?ompi_comm_remote_size(comm):ompi_comm_size(comm);
     MEMCHECKER(
         ptrdiff_t recv_ext;
         ptrdiff_t send_ext;
@@ -67,7 +70,6 @@ int MPI_Ialltoallv(const void *sendbuf, const int sendcounts[], const int sdispl
         memchecker_datatype(recvtype);
         ompi_datatype_type_extent(recvtype, &recv_ext);
 
-        size = OMPI_COMM_IS_INTER(comm)?ompi_comm_remote_size(comm):ompi_comm_size(comm);
         for ( i = 0; i < size; i++ ) {
             if (MPI_IN_PLACE != sendbuf) {
                 /* check if send chunks are defined. */
@@ -126,9 +128,15 @@ int MPI_Ialltoallv(const void *sendbuf, const int sendcounts[], const int sdispl
     }
 
     /* Invoke the coll component to perform the back-end operation */
-    err = comm->c_coll->coll_ialltoallv(sendbuf, sendcounts, sdispls,
-                                       sendtype, recvbuf, recvcounts, rdispls,
+    OMPI_TEMP_ARRAYS_PREPARE(sendcounts, sdispls, i, size);
+    OMPI_TEMP_ARRAYS_PREPARE(recvcounts, rdispls, i, size);
+    err = comm->c_coll->coll_ialltoallv(sendbuf, OMPI_TEMP_ARRAY_NAME_CONVERT(sendcounts),
+                                       OMPI_TEMP_ARRAY_NAME_CONVERT(sdispls),
+                                       sendtype, recvbuf, OMPI_TEMP_ARRAY_NAME_CONVERT(recvcounts),
+                                       OMPI_TEMP_ARRAY_NAME_CONVERT(rdispls),
                                        recvtype, comm, request, comm->c_coll->coll_ialltoallv_module);
+    OMPI_TEMP_ARRAYS_CLEANUP(sendcounts, sdispls);
+    OMPI_TEMP_ARRAYS_CLEANUP(recvcounts, rdispls);
     if (OPAL_LIKELY(OMPI_SUCCESS == err)) {
         ompi_coll_base_retain_datatypes(*request, (MPI_IN_PLACE==sendbuf)?NULL:sendtype, recvtype);
     }

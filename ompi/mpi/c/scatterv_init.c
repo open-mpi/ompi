@@ -48,13 +48,14 @@ int MPI_Scatterv_init(const void *sendbuf, const int sendcounts[], const int dis
                       MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Info info, MPI_Request *request)
 {
     int i, size, err;
+    OMPI_TEMP_ARRAYS_DECL(sendcounts, displs);
 
     SPC_RECORD(OMPI_SPC_SCATTERV_INIT, 1);
 
+    size = ompi_comm_remote_size(comm);
     MEMCHECKER(
         ptrdiff_t ext;
 
-        size = ompi_comm_remote_size(comm);
         ompi_datatype_type_extent(recvtype, &ext);
 
         memchecker_comm(comm);
@@ -202,9 +203,12 @@ int MPI_Scatterv_init(const void *sendbuf, const int sendcounts[], const int dis
     }
 
     /* Invoke the coll component to perform the back-end operation */
-    err = comm->c_coll->coll_scatterv_init(updated_sendbuf, sendcounts, displs,
+    OMPI_TEMP_ARRAYS_PREPARE(sendcounts, displs, i, size);
+    err = comm->c_coll->coll_scatterv_init(updated_sendbuf, OMPI_TEMP_ARRAY_NAME_CONVERT(sendcounts),
+                                           OMPI_TEMP_ARRAY_NAME_CONVERT(displs),
                                            sendtype, updated_recvbuf, recvcount, recvtype, root, comm,
                                            info, request, comm->c_coll->coll_scatterv_init_module);
+    OMPI_TEMP_ARRAYS_CLEANUP(sendcounts, displs);
     if (OPAL_LIKELY(OMPI_SUCCESS == err)) {
         if (OMPI_COMM_IS_INTRA(comm)) {
             if (MPI_IN_PLACE == recvbuf) {

@@ -32,10 +32,10 @@ mca_coll_han_set_allgather_args(mca_coll_han_allgather_t * args,
                                 mca_coll_task_t * cur_task,
                                 void *sbuf,
                                 void *sbuf_inter_free,
-                                int scount,
+                                size_t scount,
                                 struct ompi_datatype_t *sdtype,
                                 void *rbuf,
-                                int rcount,
+                                size_t rcount,
                                 struct ompi_datatype_t *rdtype,
                                 int root_low_rank,
                                 struct ompi_communicator_t *up_comm,
@@ -69,9 +69,9 @@ mca_coll_han_set_allgather_args(mca_coll_han_allgather_t * args,
  * Main function for taskified allgather: calls lg task, a gather on low comm
  */
 int
-mca_coll_han_allgather_intra(const void *sbuf, int scount,
+mca_coll_han_allgather_intra(const void *sbuf, size_t scount,
                              struct ompi_datatype_t *sdtype,
-                             void *rbuf, int rcount,
+                             void *rbuf, size_t rcount,
                              struct ompi_datatype_t *rdtype,
                              struct ompi_communicator_t *comm,
                              mca_coll_base_module_t * module)
@@ -292,9 +292,9 @@ int mca_coll_han_allgather_lb_task(void *task_args)
  * communications without tasks.
  */
 int
-mca_coll_han_allgather_intra_simple(const void *sbuf, int scount,
+mca_coll_han_allgather_intra_simple(const void *sbuf, size_t scount,
                                     struct ompi_datatype_t *sdtype,
-                                    void* rbuf, int rcount,
+                                    void* rbuf, size_t rcount,
                                     struct ompi_datatype_t *rdtype,
                                     struct ompi_communicator_t *comm,
                                     mca_coll_base_module_t *module){

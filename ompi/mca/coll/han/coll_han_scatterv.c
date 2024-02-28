@@ -62,8 +62,8 @@
  * packed form of MPI_BYTE type. This works for Gatherv but NOT for Scatterv provided that the Root
  * has a different architecture, e.g. endianness, integer representation, etc.
  */
-int mca_coll_han_scatterv_intra(const void *sbuf, const int *scounts, const int *displs,
-                                struct ompi_datatype_t *sdtype, void *rbuf, int rcount,
+int mca_coll_han_scatterv_intra(const void *sbuf, const size_t *scounts, const ptrdiff_t *displs,
+                                struct ompi_datatype_t *sdtype, void *rbuf, size_t rcount,
                                 struct ompi_datatype_t *rdtype, int root,
                                 struct ompi_communicator_t *comm, mca_coll_base_module_t *module)
 {
@@ -71,7 +71,8 @@ int mca_coll_han_scatterv_intra(const void *sbuf, const int *scounts, const int 
     int w_rank, w_size;              /* information about the global communicator */
     int root_low_rank, root_up_rank; /* root ranks for both sub-communicators */
     int err, *vranks, low_rank, low_size, up_rank, up_size, *topo;
-    int *low_scounts = NULL, *low_displs = NULL;
+    size_t *low_scounts = NULL;
+    ptrdiff_t *low_displs = NULL;
     ompi_request_t *iscatterv_req = NULL;
 
     /* Create the subcommunicators */
@@ -136,12 +137,13 @@ int mca_coll_han_scatterv_intra(const void *sbuf, const int *scounts, const int 
     /* #################### Root ########################### */
     if (root == w_rank) {
         int low_peer, up_peer, w_peer;
-        int need_bounce_buf = 0, total_up_scounts = 0, *up_displs = NULL, *up_scounts = NULL,
-            *up_peer_lb = NULL, *up_peer_ub = NULL;
+        int need_bounce_buf = 0, total_up_scounts = 0;
+        ptrdiff_t *up_displs = NULL;
+        size_t *up_scounts = NULL, *up_peer_lb = NULL, *up_peer_ub = NULL;
         char *reorder_sbuf = (char *) sbuf, *bounce_buf = NULL;
 
-        low_scounts = malloc(low_size * sizeof(int));
-        low_displs = malloc(low_size * sizeof(int));
+        low_scounts = malloc(low_size * sizeof(size_t));
+        low_displs = malloc(low_size * sizeof(ptrdiff_t));
         if (!low_scounts || !low_displs) {
             err = OMPI_ERR_OUT_OF_RESOURCE;
             goto root_out;
@@ -157,16 +159,16 @@ int mca_coll_han_scatterv_intra(const void *sbuf, const int *scounts, const int 
             low_scounts[low_peer] = scounts[w_peer];
         }
 
-        up_scounts = calloc(up_size, sizeof(int));
-        up_displs = malloc(up_size * sizeof(int));
-        up_peer_ub = calloc(up_size, sizeof(int));
+        up_scounts = calloc(up_size, sizeof(size_t));
+        up_displs = malloc(up_size * sizeof(ptrdiff_t));
+        up_peer_ub = calloc(up_size, sizeof(size_t));
         if (!up_scounts || !up_displs || !up_peer_ub) {
             err = OMPI_ERR_OUT_OF_RESOURCE;
             goto root_out;
         }
 
         for (up_peer = 0; up_peer < up_size; ++up_peer) {
-            up_displs[up_peer] = INT_MAX;
+            up_displs[up_peer] = SIZE_MAX;
         }
 
         /* Calculate send counts for the inter-node scatterv */

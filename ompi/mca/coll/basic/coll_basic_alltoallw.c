@@ -45,7 +45,7 @@
  * and count) to send the data to the other.
  */
 static int
-mca_coll_basic_alltoallw_intra_inplace(const void *rbuf, const int *rcounts, const int *rdisps,
+mca_coll_basic_alltoallw_intra_inplace(const void *rbuf, const size_t *rcounts, const ptrdiff_t *rdisps,
                                        struct ompi_datatype_t * const *rdtypes,
                                        struct ompi_communicator_t *comm,
                                        mca_coll_base_module_t *module)
@@ -163,9 +163,9 @@ mca_coll_basic_alltoallw_intra_inplace(const void *rbuf, const int *rcounts, con
  *	Returns:	- MPI_SUCCESS or an MPI error code
  */
 int
-mca_coll_basic_alltoallw_intra(const void *sbuf, const int *scounts, const int *sdisps,
+mca_coll_basic_alltoallw_intra(const void *sbuf, const size_t *scounts, const ptrdiff_t *sdisps,
                                struct ompi_datatype_t * const *sdtypes,
-                               void *rbuf, const int *rcounts, const int *rdisps,
+                               void *rbuf, const size_t *rcounts, const ptrdiff_t *rdisps,
                                struct ompi_datatype_t * const *rdtypes,
                                struct ompi_communicator_t *comm,
                                mca_coll_base_module_t *module)
@@ -277,9 +277,9 @@ mca_coll_basic_alltoallw_intra(const void *sbuf, const int *scounts, const int *
  *	Returns:	- MPI_SUCCESS or an MPI error code
  */
 int
-mca_coll_basic_alltoallw_inter(const void *sbuf, const int *scounts, const int *sdisps,
+mca_coll_basic_alltoallw_inter(const void *sbuf, const size_t *scounts, const ptrdiff_t *sdisps,
                                struct ompi_datatype_t * const *sdtypes,
-                               void *rbuf, const int *rcounts, const int *rdisps,
+                               void *rbuf, const size_t *rcounts, const ptrdiff_t *rdisps,
                                struct ompi_datatype_t * const *rdtypes,
                                struct ompi_communicator_t *comm,
                                mca_coll_base_module_t *module)

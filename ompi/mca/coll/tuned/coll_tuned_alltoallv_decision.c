@@ -88,9 +88,9 @@ int ompi_coll_tuned_alltoallv_intra_check_forced_init(coll_tuned_force_algorithm
 
 /* If the user selects dynamic rules and specifies the algorithm to
  * use, then this function is called.  */
-int ompi_coll_tuned_alltoallv_intra_do_this(const void *sbuf, const int *scounts, const int *sdisps,
+int ompi_coll_tuned_alltoallv_intra_do_this(const void *sbuf, const size_t *scounts, const ptrdiff_t *sdisps,
                                             struct ompi_datatype_t *sdtype,
-                                            void* rbuf, const int *rcounts, const int *rdisps,
+                                            void* rbuf, const size_t *rcounts, const ptrdiff_t *rdisps,
                                             struct ompi_datatype_t *rdtype,
                                             struct ompi_communicator_t *comm,
                                             mca_coll_base_module_t *module,

@@ -52,7 +52,7 @@
  *  Returns:    - MPI_SUCCESS or error code
  */
 int
-ompi_coll_tuned_allreduce_intra_dec_dynamic (const void *sbuf, void *rbuf, int count,
+ompi_coll_tuned_allreduce_intra_dec_dynamic (const void *sbuf, void *rbuf, size_t count,
                                              struct ompi_datatype_t *dtype,
                                              struct ompi_op_t *op,
                                              struct ompi_communicator_t *comm,
@@ -102,9 +102,9 @@ ompi_coll_tuned_allreduce_intra_dec_dynamic (const void *sbuf, void *rbuf, int c
  *    Returns:    - MPI_SUCCESS or error code (passed from the alltoall implementation)
  */
 
-int ompi_coll_tuned_alltoall_intra_dec_dynamic(const void *sbuf, int scount,
+int ompi_coll_tuned_alltoall_intra_dec_dynamic(const void *sbuf, size_t scount,
                                                struct ompi_datatype_t *sdtype,
-                                               void* rbuf, int rcount,
+                                               void* rbuf, size_t rcount,
                                                struct ompi_datatype_t *rdtype,
                                                struct ompi_communicator_t *comm,
                                                mca_coll_base_module_t *module)
@@ -158,9 +158,9 @@ int ompi_coll_tuned_alltoall_intra_dec_dynamic(const void *sbuf, int scount,
  *    Returns:    - MPI_SUCCESS or error code
  */
 
-int ompi_coll_tuned_alltoallv_intra_dec_dynamic(const void *sbuf, const int *scounts, const int *sdisps,
+int ompi_coll_tuned_alltoallv_intra_dec_dynamic(const void *sbuf, const size_t *scounts, const ptrdiff_t *sdisps,
                                                 struct ompi_datatype_t *sdtype,
-                                                void* rbuf, const int *rcounts, const int *rdisps,
+                                                void* rbuf, const size_t *rcounts, const ptrdiff_t *rdisps,
                                                 struct ompi_datatype_t *rdtype,
                                                 struct ompi_communicator_t *comm,
                                                 mca_coll_base_module_t *module)
@@ -250,7 +250,7 @@ int ompi_coll_tuned_barrier_intra_dec_dynamic(struct ompi_communicator_t *comm,
  *   Accepts:   - same arguments as MPI_Bcast()
  *   Returns:   - MPI_SUCCESS or error code (passed from the bcast implementation)
  */
-int ompi_coll_tuned_bcast_intra_dec_dynamic(void *buf, int count,
+int ompi_coll_tuned_bcast_intra_dec_dynamic(void *buf, size_t count,
                                             struct ompi_datatype_t *dtype, int root,
                                             struct ompi_communicator_t *comm,
                                             mca_coll_base_module_t *module)
@@ -302,7 +302,7 @@ int ompi_coll_tuned_bcast_intra_dec_dynamic(void *buf, int count,
  *
  */
 int ompi_coll_tuned_reduce_intra_dec_dynamic( const void *sbuf, void *rbuf,
-                                              int count, struct ompi_datatype_t* dtype,
+                                              size_t count, struct ompi_datatype_t* dtype,
                                               struct ompi_op_t* op, int root,
                                               struct ompi_communicator_t* comm,
                                               mca_coll_base_module_t *module)
@@ -357,7 +357,7 @@ int ompi_coll_tuned_reduce_intra_dec_dynamic( const void *sbuf, void *rbuf,
  *
  */
 int ompi_coll_tuned_reduce_scatter_intra_dec_dynamic(const void *sbuf, void *rbuf,
-                                                     const int *rcounts,
+                                                     const size_t *rcounts,
                                                      struct ompi_datatype_t *dtype,
                                                      struct ompi_op_t *op,
                                                      struct ompi_communicator_t *comm,
@@ -412,7 +412,7 @@ int ompi_coll_tuned_reduce_scatter_intra_dec_dynamic(const void *sbuf, void *rbu
  *
  */
 int ompi_coll_tuned_reduce_scatter_block_intra_dec_dynamic(const void *sbuf, void *rbuf,
-                                                           int rcount,
+                                                           size_t rcount,
                                                            struct ompi_datatype_t *dtype,
                                                            struct ompi_op_t *op,
                                                            struct ompi_communicator_t *comm,
@@ -465,9 +465,9 @@ int ompi_coll_tuned_reduce_scatter_block_intra_dec_dynamic(const void *sbuf, voi
  *                        allgather function).
  */
 
-int ompi_coll_tuned_allgather_intra_dec_dynamic(const void *sbuf, int scount,
+int ompi_coll_tuned_allgather_intra_dec_dynamic(const void *sbuf, size_t scount,
                                                 struct ompi_datatype_t *sdtype,
-                                                void* rbuf, int rcount,
+                                                void* rbuf, size_t rcount,
                                                 struct ompi_datatype_t *rdtype,
                                                 struct ompi_communicator_t *comm,
                                                 mca_coll_base_module_t *module)
@@ -526,10 +526,10 @@ int ompi_coll_tuned_allgather_intra_dec_dynamic(const void *sbuf, int scount,
  *                        allgatherv function).
  */
 
-int ompi_coll_tuned_allgatherv_intra_dec_dynamic(const void *sbuf, int scount,
+int ompi_coll_tuned_allgatherv_intra_dec_dynamic(const void *sbuf, size_t scount,
                                                  struct ompi_datatype_t *sdtype,
-                                                 void* rbuf, const int *rcounts,
-                                                 const int *rdispls,
+                                                 void* rbuf, const size_t *rcounts,
+                                                 const ptrdiff_t *rdispls,
                                                  struct ompi_datatype_t *rdtype,
                                                  struct ompi_communicator_t *comm,
                                                  mca_coll_base_module_t *module)
@@ -583,9 +583,9 @@ int ompi_coll_tuned_allgatherv_intra_dec_dynamic(const void *sbuf, int scount,
                                                        comm, module);
 }
 
-int ompi_coll_tuned_gather_intra_dec_dynamic(const void *sbuf, int scount,
+int ompi_coll_tuned_gather_intra_dec_dynamic(const void *sbuf, size_t scount,
                                              struct ompi_datatype_t *sdtype,
-                                             void* rbuf, int rcount,
+                                             void* rbuf, size_t rcount,
                                              struct ompi_datatype_t *rdtype,
                                              int root,
                                              struct ompi_communicator_t *comm,
@@ -634,9 +634,9 @@ int ompi_coll_tuned_gather_intra_dec_dynamic(const void *sbuf, int scount,
                                                    root, comm, module);
 }
 
-int ompi_coll_tuned_scatter_intra_dec_dynamic(const void *sbuf, int scount,
+int ompi_coll_tuned_scatter_intra_dec_dynamic(const void *sbuf, size_t scount,
                                               struct ompi_datatype_t *sdtype,
-                                              void* rbuf, int rcount,
+                                              void* rbuf, size_t rcount,
                                               struct ompi_datatype_t *rdtype,
                                               int root, struct ompi_communicator_t *comm,
                                               mca_coll_base_module_t *module)
@@ -684,7 +684,7 @@ int ompi_coll_tuned_scatter_intra_dec_dynamic(const void *sbuf, int scount,
                                                     root, comm, module);
 }
 
-int ompi_coll_tuned_exscan_intra_dec_dynamic(const void *sbuf, void* rbuf, int count,
+int ompi_coll_tuned_exscan_intra_dec_dynamic(const void *sbuf, void* rbuf, size_t count,
                                               struct ompi_datatype_t *dtype,
                                               struct ompi_op_t *op,
                                               struct ompi_communicator_t *comm,
@@ -728,7 +728,7 @@ int ompi_coll_tuned_exscan_intra_dec_dynamic(const void *sbuf, void* rbuf, int c
                                               op, comm, module);
 }
 
-int ompi_coll_tuned_scan_intra_dec_dynamic(const void *sbuf, void* rbuf, int count,
+int ompi_coll_tuned_scan_intra_dec_dynamic(const void *sbuf, void* rbuf, size_t count,
                                            struct ompi_datatype_t *dtype,
                                            struct ompi_op_t *op,
                                            struct ompi_communicator_t *comm,

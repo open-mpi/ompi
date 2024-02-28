@@ -41,7 +41,7 @@
  *	Returns:	- MPI_SUCCESS or error code
  */
 int
-mca_coll_basic_bcast_log_intra(void *buff, int count,
+mca_coll_basic_bcast_log_intra(void *buff, size_t count,
                                struct ompi_datatype_t *datatype, int root,
                                struct ompi_communicator_t *comm,
                                mca_coll_base_module_t *module)
@@ -136,7 +136,7 @@ mca_coll_basic_bcast_log_intra(void *buff, int count,
  *	Returns:	- MPI_SUCCESS or error code
  */
 int
-mca_coll_basic_bcast_lin_inter(void *buff, int count,
+mca_coll_basic_bcast_lin_inter(void *buff, size_t count,
                                struct ompi_datatype_t *datatype, int root,
                                struct ompi_communicator_t *comm,
                                mca_coll_base_module_t *module)
@@ -191,7 +191,7 @@ mca_coll_basic_bcast_lin_inter(void *buff, int count,
  *	Returns:	- MPI_SUCCESS or error code
  */
 int
-mca_coll_basic_bcast_log_inter(void *buff, int count,
+mca_coll_basic_bcast_log_inter(void *buff, size_t count,
                                struct ompi_datatype_t *datatype, int root,
                                struct ompi_communicator_t *comm,
                                mca_coll_base_module_t *module)

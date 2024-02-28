@@ -33,7 +33,7 @@
  * For the moment, all we're doing is a reduce to root==0 and then a
  * broadcast.  It is possible that we'll do something better someday.
  */
-int mca_coll_sm_allreduce_intra(const void *sbuf, void *rbuf, int count,
+int mca_coll_sm_allreduce_intra(const void *sbuf, void *rbuf, size_t count,
                                 struct ompi_datatype_t *dtype,
                                 struct ompi_op_t *op,
                                 struct ompi_communicator_t *comm,

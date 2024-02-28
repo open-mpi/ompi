@@ -33,7 +33,7 @@
  *	Accepts:	- same arguments as MPI_Bcast()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int mca_coll_demo_bcast_intra(void *buff, int count,
+int mca_coll_demo_bcast_intra(void *buff, size_t count,
                               struct ompi_datatype_t *datatype, int root,
                               struct ompi_communicator_t *comm,
                               mca_coll_base_module_t *module)
@@ -53,7 +53,7 @@ int mca_coll_demo_bcast_intra(void *buff, int count,
  *	Accepts:	- same arguments as MPI_Bcast()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int mca_coll_demo_bcast_inter(void *buff, int count,
+int mca_coll_demo_bcast_inter(void *buff, size_t count,
                               struct ompi_datatype_t *datatype, int root,
                               struct ompi_communicator_t *comm,
                               mca_coll_base_module_t *module)

@@ -123,9 +123,9 @@ ompi_coll_tuned_allgather_intra_check_forced_init(coll_tuned_force_algorithm_mca
     return (MPI_SUCCESS);
 }
 
-int ompi_coll_tuned_allgather_intra_do_this(const void *sbuf, int scount,
+int ompi_coll_tuned_allgather_intra_do_this(const void *sbuf, size_t scount,
                                             struct ompi_datatype_t *sdtype,
-                                            void* rbuf, int rcount,
+                                            void* rbuf, size_t rcount,
                                             struct ompi_datatype_t *rdtype,
                                             struct ompi_communicator_t *comm,
                                             mca_coll_base_module_t *module,

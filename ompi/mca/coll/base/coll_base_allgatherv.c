@@ -92,16 +92,19 @@
  *         [5]    [5]    [5]    [5]    [5]    [5]    [5]
  *         [6]    [6]    [6]    [6]    [6]    [6]    [6]
  */
-int ompi_coll_base_allgatherv_intra_bruck(const void *sbuf, int scount,
+int ompi_coll_base_allgatherv_intra_bruck(const void *sbuf, size_t scount,
                                            struct ompi_datatype_t *sdtype,
-                                           void *rbuf, const int *rcounts,
-                                           const int *rdispls,
+                                           void *rbuf, const size_t *rcounts,
+                                           const ptrdiff_t *rdispls,
                                            struct ompi_datatype_t *rdtype,
                                            struct ompi_communicator_t *comm,
                                            mca_coll_base_module_t *module)
 {
     int line = -1, err = 0, rank, size, sendto, recvfrom, distance, blockcount, i;
-    int *new_rcounts = NULL, *new_rdispls = NULL, *new_scounts = NULL, *new_sdispls = NULL;
+    size_t *new_rcounts = NULL, *new_scounts = NULL;
+    ptrdiff_t *new_rdispls = NULL, *new_sdispls = NULL;
+    int *tmp_new_scounts = NULL, *tmp_new_sdispls = NULL;
+    int *tmp_new_rcounts = NULL, *tmp_new_rdispls = NULL;
     ptrdiff_t rlb, rext;
     char *tmpsend = NULL, *tmprecv = NULL;
     struct ompi_datatype_t *new_rdtype, *new_sdtype;
@@ -142,11 +145,14 @@ int ompi_coll_base_allgatherv_intra_bruck(const void *sbuf, int scount,
     blockcount = 1;
     tmpsend = (char*) rbuf;
 
-    new_rcounts = (int*) calloc(4*size, sizeof(int));
+    new_rcounts = calloc(size, sizeof(size_t));
     if (NULL == new_rcounts) { err = -1; line = __LINE__; goto err_hndl; }
-    new_rdispls = new_rcounts + size;
-    new_scounts = new_rdispls + size;
-    new_sdispls = new_scounts + size;
+    new_scounts = calloc(size, sizeof(size_t));
+    if (NULL == new_scounts) { err = -1; line = __LINE__; goto err_hndl; }
+    new_rdispls = calloc(size, sizeof(ptrdiff_t));
+    if (NULL == new_rdispls) { err = -1; line = __LINE__; goto err_hndl; }
+    new_sdispls = calloc(size, sizeof(ptrdiff_t));
+    if (NULL == new_sdispls) { err = -1; line = __LINE__; goto err_hndl; }
 
     for (distance = 1; distance < size; distance<<=1) {
 
@@ -168,11 +174,33 @@ int ompi_coll_base_allgatherv_intra_bruck(const void *sbuf, int scount,
             new_rcounts[i] = rcounts[tmp_rrank];
             new_rdispls[i] = rdispls[tmp_rrank];
         }
-        err = ompi_datatype_create_indexed(blockcount, new_scounts, new_sdispls,
+        /* TODO:BIGCOUNT: Remove temporaries once ompi_datatype interface is updated */
+        tmp_new_scounts = calloc(size, sizeof(int));
+        if (NULL == tmp_new_scounts) { err = -1; line = __LINE__; goto err_hndl; }
+        tmp_new_sdispls = calloc(size, sizeof(int));
+        if (NULL == tmp_new_sdispls) { err = -1; line = __LINE__; goto err_hndl; }
+        for (i = 0; i < blockcount; i++) {
+            tmp_new_scounts[i] = (int) new_scounts[i];
+            tmp_new_sdispls[i] = (int) new_sdispls[i];
+        }
+        err = ompi_datatype_create_indexed(blockcount, tmp_new_scounts, tmp_new_sdispls,
                                            rdtype, &new_sdtype);
+        free(tmp_new_scounts);
+        free(tmp_new_sdispls);
         if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
-        err = ompi_datatype_create_indexed(blockcount, new_rcounts, new_rdispls,
+        /* TODO:BIGCOUNT: Remove temporaries once ompi_datatype interface is updated */
+        tmp_new_rcounts = calloc(size, sizeof(int));
+        if (NULL == tmp_new_rcounts) { err = -1; line = __LINE__; goto err_hndl; }
+        tmp_new_rdispls = calloc(size, sizeof(int));
+        if (NULL == tmp_new_rdispls) { err = -1; line = __LINE__; goto err_hndl; }
+        for (i = 0; i < blockcount; i++) {
+            tmp_new_rcounts[i] = (int) new_rcounts[i];
+            tmp_new_rdispls[i] = (int) new_rdispls[i];
+        }
+        err = ompi_datatype_create_indexed(blockcount, tmp_new_rcounts, tmp_new_rdispls,
                                            rdtype, &new_rdtype);
+        free(tmp_new_rcounts);
+        free(tmp_new_rdispls);
 
         err = ompi_datatype_commit(&new_sdtype);
         if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
@@ -256,10 +284,10 @@ int ompi_coll_base_allgatherv_intra_bruck(const void *sbuf, int scount,
  *         [5]    [5]    [5]    [5]    [5]    [5]
  */
 
-int ompi_coll_base_allgatherv_intra_sparbit(const void *sbuf, int scount,
+int ompi_coll_base_allgatherv_intra_sparbit(const void *sbuf, size_t scount,
                                            struct ompi_datatype_t *sdtype,
-                                           void* rbuf, const int *rcounts,
-                                           const int *rdispls,
+                                           void* rbuf, const size_t *rcounts,
+                                           const ptrdiff_t *rdispls,
                                            struct ompi_datatype_t *rdtype,
                                            struct ompi_communicator_t *comm,
                                            mca_coll_base_module_t *module)
@@ -269,7 +297,8 @@ int ompi_coll_base_allgatherv_intra_sparbit(const void *sbuf, int scount,
     /* list of variable declaration */
     int rank = 0, comm_size = 0, comm_log = 0, exclusion = 0; 
     int data_expected = 1, transfer_count = 0, step_requests = 0;
-    int sendto, recvfrom, send_disp, recv_disp;
+    int sendto, recvfrom;
+    ptrdiff_t send_disp, recv_disp;
     uint32_t last_ignore, ignore_steps, distance = 1;
 
     int err = 0;
@@ -368,9 +397,9 @@ err_hndl:
  *               No additional memory requirements.
  *
  */
-int ompi_coll_base_allgatherv_intra_ring(const void *sbuf, int scount,
+int ompi_coll_base_allgatherv_intra_ring(const void *sbuf, size_t scount,
                                           struct ompi_datatype_t *sdtype,
-                                          void* rbuf, const int *rcounts, const int *rdisps,
+                                          void* rbuf, const size_t *rcounts, const ptrdiff_t *rdisps,
                                           struct ompi_datatype_t *rdtype,
                                           struct ompi_communicator_t *comm,
                                           mca_coll_base_module_t *module)
@@ -495,16 +524,19 @@ int ompi_coll_base_allgatherv_intra_ring(const void *sbuf, int scount,
  *         [5]    [5]    [5]    [5]    [5]    [5]
  */
 int
-ompi_coll_base_allgatherv_intra_neighborexchange(const void *sbuf, int scount,
+ompi_coll_base_allgatherv_intra_neighborexchange(const void *sbuf, size_t scount,
                                                   struct ompi_datatype_t *sdtype,
-                                                  void* rbuf, const int *rcounts, const int *rdispls,
+                                                  void* rbuf, const size_t *rcounts, const ptrdiff_t *rdispls,
                                                   struct ompi_datatype_t *rdtype,
                                                   struct ompi_communicator_t *comm,
                                                   mca_coll_base_module_t *module)
 {
     int line = -1, rank, size, i, even_rank, err = 0;
     int neighbor[2], offset_at_step[2], recv_data_from[2], send_data_from;
-    int new_scounts[2], new_sdispls[2], new_rcounts[2], new_rdispls[2];
+    size_t new_scounts[2], new_rcounts[2];
+    ptrdiff_t new_sdispls[2], new_rdispls[2];
+    int tmp_new_scounts[2], tmp_new_rcounts[2];
+    int tmp_new_sdispls[2], tmp_new_rdispls[2];
     ptrdiff_t rlb, rext;
     char *tmpsend = NULL, *tmprecv = NULL;
     struct ompi_datatype_t  *new_rdtype, *new_sdtype;
@@ -597,7 +629,12 @@ ompi_coll_base_allgatherv_intra_neighborexchange(const void *sbuf, int scount,
         new_scounts[1] = rcounts[(send_data_from + 1)];
         new_sdispls[0] = rdispls[send_data_from];
         new_sdispls[1] = rdispls[(send_data_from + 1)];
-        err = ompi_datatype_create_indexed(2, new_scounts, new_sdispls, rdtype,
+        /* TODO:BIGCOUNT: Remove temporaries once ompi_datatype interface is updated */
+        tmp_new_scounts[0] = new_scounts[0];
+        tmp_new_scounts[1] = new_scounts[1];
+        tmp_new_sdispls[0] = new_sdispls[0];
+        tmp_new_sdispls[1] = new_sdispls[1];
+        err = ompi_datatype_create_indexed(2, tmp_new_scounts, tmp_new_sdispls, rdtype,
                                            &new_sdtype);
         if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
         err = ompi_datatype_commit(&new_sdtype);
@@ -607,7 +644,12 @@ ompi_coll_base_allgatherv_intra_neighborexchange(const void *sbuf, int scount,
         new_rcounts[1] = rcounts[(recv_data_from[i_parity] + 1)];
         new_rdispls[0] = rdispls[recv_data_from[i_parity]];
         new_rdispls[1] = rdispls[(recv_data_from[i_parity] + 1)];
-        err = ompi_datatype_create_indexed(2, new_rcounts, new_rdispls, rdtype,
+        /* TODO:BIGCOUNT: Remove temporaries once ompi_datatype interface is updated */
+        tmp_new_rcounts[0] = new_rcounts[0];
+        tmp_new_rcounts[1] = new_rcounts[1];
+        tmp_new_rdispls[0] = new_rdispls[0];
+        tmp_new_rdispls[1] = new_rdispls[1];
+        err = ompi_datatype_create_indexed(2, tmp_new_rcounts, tmp_new_rdispls, rdtype,
                                            &new_rdtype);
         if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
         err = ompi_datatype_commit(&new_rdtype);
@@ -640,10 +682,10 @@ ompi_coll_base_allgatherv_intra_neighborexchange(const void *sbuf, int scount,
 }
 
 
-int ompi_coll_base_allgatherv_intra_two_procs(const void *sbuf, int scount,
+int ompi_coll_base_allgatherv_intra_two_procs(const void *sbuf, size_t scount,
                                                struct ompi_datatype_t *sdtype,
-                                               void* rbuf, const int *rcounts,
-                                               const int *rdispls,
+                                               void* rbuf, const size_t *rcounts,
+                                               const ptrdiff_t *rdispls,
                                                struct ompi_datatype_t *rdtype,
                                                struct ompi_communicator_t *comm,
                                                mca_coll_base_module_t *module)
@@ -726,10 +768,10 @@ int ompi_coll_base_allgatherv_intra_two_procs(const void *sbuf, int scount,
  *	Returns:	- MPI_SUCCESS or error code
  */
 int
-ompi_coll_base_allgatherv_intra_basic_default(const void *sbuf, int scount,
+ompi_coll_base_allgatherv_intra_basic_default(const void *sbuf, size_t scount,
                                               struct ompi_datatype_t *sdtype,
-                                              void *rbuf, const int *rcounts,
-                                              const int *disps,
+                                              void *rbuf, const size_t *rcounts,
+                                              const ptrdiff_t *disps,
                                               struct ompi_datatype_t *rdtype,
                                               struct ompi_communicator_t *comm,
                                               mca_coll_base_module_t *module)
@@ -738,6 +780,7 @@ ompi_coll_base_allgatherv_intra_basic_default(const void *sbuf, int scount,
     MPI_Aint extent, lb;
     char *send_buf = NULL;
     struct ompi_datatype_t *newtype, *send_type;
+    int *tmp_rcounts = NULL, *tmp_disps = NULL;
 
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
@@ -781,7 +824,22 @@ ompi_coll_base_allgatherv_intra_basic_default(const void *sbuf, int scount,
      * datatype.
      */
 
-    err = ompi_datatype_create_indexed(size,rcounts,disps,rdtype,&newtype);
+    /* TODO:BIGCOUNT: Remove temporaries once ompi_datatype interface is updated */
+    tmp_rcounts = malloc(size * sizeof(int));
+    if (NULL == tmp_rcounts) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+    tmp_disps = malloc(size * sizeof(int));
+    if (NULL == tmp_disps) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+    for (int i = 0; i < size; i++) {
+        tmp_rcounts[i] = rcounts[i];
+        tmp_disps[i] = disps[i];
+    }
+    err = ompi_datatype_create_indexed(size,tmp_rcounts,tmp_disps,rdtype,&newtype);
+    free(tmp_rcounts);
+    free(tmp_disps);
     if (MPI_SUCCESS != err) {
         return err;
     }

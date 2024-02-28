@@ -17,7 +17,7 @@
 #include "coll_monitoring.h"
 
 int mca_coll_monitoring_reduce_scatter(const void *sbuf, void *rbuf,
-                                       const int *rcounts,
+                                       const size_t *rcounts,
                                        struct ompi_datatype_t *dtype,
                                        struct ompi_op_t *op,
                                        struct ompi_communicator_t *comm,
@@ -46,7 +46,7 @@ int mca_coll_monitoring_reduce_scatter(const void *sbuf, void *rbuf,
 }
 
 int mca_coll_monitoring_ireduce_scatter(const void *sbuf, void *rbuf,
-                                        const int *rcounts,
+                                        const size_t *rcounts,
                                         struct ompi_datatype_t *dtype,
                                         struct ompi_op_t *op,
                                         struct ompi_communicator_t *comm,

@@ -43,8 +43,8 @@ int NBC_Ineighbor_alltoallw_args_compare(NBC_Ineighbor_alltoallw_args *a, NBC_In
 }
 #endif
 
-static int nbc_neighbor_alltoallw_init(const void *sbuf, const int *scounts, const MPI_Aint *sdisps, struct ompi_datatype_t * const *stypes,
-                                       void *rbuf, const int *rcounts, const MPI_Aint *rdisps, struct ompi_datatype_t * const *rtypes,
+static int nbc_neighbor_alltoallw_init(const void *sbuf, const size_t *scounts, const MPI_Aint *sdisps, struct ompi_datatype_t * const *stypes,
+                                       void *rbuf, const size_t *rcounts, const MPI_Aint *rdisps, struct ompi_datatype_t * const *rtypes,
                                        struct ompi_communicator_t *comm, ompi_request_t ** request,
                                        mca_coll_base_module_t *module, bool persistent) {
   int res, indegree, outdegree, *srcs, *dsts;
@@ -156,8 +156,8 @@ static int nbc_neighbor_alltoallw_init(const void *sbuf, const int *scounts, con
   return OMPI_SUCCESS;
 }
 
-int ompi_coll_libnbc_ineighbor_alltoallw(const void *sbuf, const int *scounts, const MPI_Aint *sdisps, struct ompi_datatype_t * const *stypes,
-                                         void *rbuf, const int *rcounts, const MPI_Aint *rdisps, struct ompi_datatype_t * const *rtypes,
+int ompi_coll_libnbc_ineighbor_alltoallw(const void *sbuf, const size_t *scounts, const MPI_Aint *sdisps, struct ompi_datatype_t * const *stypes,
+                                         void *rbuf, const size_t *rcounts, const MPI_Aint *rdisps, struct ompi_datatype_t * const *rtypes,
                                          struct ompi_communicator_t *comm, ompi_request_t ** request,
                                          mca_coll_base_module_t *module) {
     int res = nbc_neighbor_alltoallw_init(sbuf, scounts, sdisps, stypes, rbuf, rcounts, rdisps, rtypes,
@@ -175,8 +175,8 @@ int ompi_coll_libnbc_ineighbor_alltoallw(const void *sbuf, const int *scounts, c
     return OMPI_SUCCESS;
 }
 
-int ompi_coll_libnbc_neighbor_alltoallw_init(const void *sbuf, const int *scounts, const MPI_Aint *sdisps, struct ompi_datatype_t * const *stypes,
-                                             void *rbuf, const int *rcounts, const MPI_Aint *rdisps, struct ompi_datatype_t * const *rtypes,
+int ompi_coll_libnbc_neighbor_alltoallw_init(const void *sbuf, const size_t *scounts, const MPI_Aint *sdisps, struct ompi_datatype_t * const *stypes,
+                                             void *rbuf, const size_t *rcounts, const MPI_Aint *rdisps, struct ompi_datatype_t * const *rtypes,
                                              struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                                              mca_coll_base_module_t *module) {
     int res = nbc_neighbor_alltoallw_init(sbuf, scounts, sdisps, stypes, rbuf, rcounts, rdisps, rtypes,

@@ -53,7 +53,7 @@
  *     up at some point)
  */
 int
-mca_coll_basic_reduce_scatter_block_intra(const void *sbuf, void *rbuf, int rcount,
+mca_coll_basic_reduce_scatter_block_intra(const void *sbuf, void *rbuf, size_t rcount,
                                           struct ompi_datatype_t *dtype,
                                           struct ompi_op_t *op,
                                           struct ompi_communicator_t *comm,
@@ -70,14 +70,14 @@ mca_coll_basic_reduce_scatter_block_intra(const void *sbuf, void *rbuf, int rcou
  *	Returns:	- MPI_SUCCESS or error code
  */
 int
-mca_coll_basic_reduce_scatter_block_inter(const void *sbuf, void *rbuf, int rcount,
+mca_coll_basic_reduce_scatter_block_inter(const void *sbuf, void *rbuf, size_t rcount,
                                           struct ompi_datatype_t *dtype,
                                           struct ompi_op_t *op,
                                           struct ompi_communicator_t *comm,
                                           mca_coll_base_module_t *module)
 {
     int err, i, rank, root = 0, rsize, lsize;
-    int totalcounts;
+    size_t totalcounts;
     ptrdiff_t gap, span;
     char *tmpbuf = NULL, *tmpbuf2 = NULL;
     char *lbuf = NULL, *buf;

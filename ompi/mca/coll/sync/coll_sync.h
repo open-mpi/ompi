@@ -49,35 +49,35 @@ int mca_coll_sync_module_enable(mca_coll_base_module_t *module,
 int mca_coll_sync_barrier(struct ompi_communicator_t *comm,
                           mca_coll_base_module_t *module);
 
-int mca_coll_sync_bcast(void *buff, int count,
+int mca_coll_sync_bcast(void *buff, size_t count,
                         struct ompi_datatype_t *datatype,
                         int root,
                         struct ompi_communicator_t *comm,
                         mca_coll_base_module_t *module);
 
-int mca_coll_sync_exscan(const void *sbuf, void *rbuf, int count,
+int mca_coll_sync_exscan(const void *sbuf, void *rbuf, size_t count,
                          struct ompi_datatype_t *dtype,
                          struct ompi_op_t *op,
                          struct ompi_communicator_t *comm,
                          mca_coll_base_module_t *module);
 
-int mca_coll_sync_gather(const void *sbuf, int scount,
+int mca_coll_sync_gather(const void *sbuf, size_t scount,
                          struct ompi_datatype_t *sdtype,
-                         void *rbuf, int rcount,
+                         void *rbuf, size_t rcount,
                          struct ompi_datatype_t *rdtype,
                          int root,
                          struct ompi_communicator_t *comm,
                          mca_coll_base_module_t *module);
 
-int mca_coll_sync_gatherv(const void *sbuf, int scount,
+int mca_coll_sync_gatherv(const void *sbuf, size_t scount,
                           struct ompi_datatype_t *sdtype,
-                          void *rbuf, const int *rcounts, const int *disps,
+                          void *rbuf, const size_t *rcounts, const ptrdiff_t *disps,
                           struct ompi_datatype_t *rdtype,
                           int root,
                           struct ompi_communicator_t *comm,
                           mca_coll_base_module_t *module);
 
-int mca_coll_sync_reduce(const void *sbuf, void *rbuf, int count,
+int mca_coll_sync_reduce(const void *sbuf, void *rbuf, size_t count,
                          struct ompi_datatype_t *dtype,
                          struct ompi_op_t *op,
                          int root,
@@ -85,29 +85,29 @@ int mca_coll_sync_reduce(const void *sbuf, void *rbuf, int count,
                          mca_coll_base_module_t *module);
 
 int mca_coll_sync_reduce_scatter(const void *sbuf, void *rbuf,
-                                 const int *rcounts,
+                                 const size_t *rcounts,
                                  struct ompi_datatype_t *dtype,
                                  struct ompi_op_t *op,
                                  struct ompi_communicator_t *comm,
                                  mca_coll_base_module_t *module);
 
-int mca_coll_sync_scan(const void *sbuf, void *rbuf, int count,
+int mca_coll_sync_scan(const void *sbuf, void *rbuf, size_t count,
                        struct ompi_datatype_t *dtype,
                        struct ompi_op_t *op,
                        struct ompi_communicator_t *comm,
                        mca_coll_base_module_t *module);
 
-int mca_coll_sync_scatter(const void *sbuf, int scount,
+int mca_coll_sync_scatter(const void *sbuf, size_t scount,
                           struct ompi_datatype_t *sdtype,
-                          void *rbuf, int rcount,
+                          void *rbuf, size_t rcount,
                           struct ompi_datatype_t *rdtype,
                           int root,
                           struct ompi_communicator_t *comm,
                           mca_coll_base_module_t *module);
 
-int mca_coll_sync_scatterv(const void *sbuf, const int *scounts, const int *disps,
+int mca_coll_sync_scatterv(const void *sbuf, const size_t *scounts, const ptrdiff_t *disps,
                            struct ompi_datatype_t *sdtype,
-                           void *rbuf, int rcount,
+                           void *rbuf, size_t rcount,
                            struct ompi_datatype_t *rdtype,
                            int root,
                            struct ompi_communicator_t *comm,
@@ -137,7 +137,7 @@ OBJ_CLASS_DECLARATION(mca_coll_sync_module_t);
 /* Component */
 
 typedef struct mca_coll_sync_component_t {
-    mca_coll_base_component_2_4_0_t super;
+    mca_coll_base_component_3_0_0_t super;
 
     /* Priority of this component */
     int priority;

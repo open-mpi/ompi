@@ -9,9 +9,9 @@
 
 #include "coll_ucc_common.h"
 
-static inline ucc_status_t mca_coll_ucc_alltoallv_init(const void *sbuf, const int *scounts,
-                                                       const int *sdisps, struct ompi_datatype_t *sdtype,
-                                                       void* rbuf, const int *rcounts, const int *rdisps,
+static inline ucc_status_t mca_coll_ucc_alltoallv_init(const void *sbuf, const size_t *scounts,
+                                                       const ptrdiff_t *sdisps, struct ompi_datatype_t *sdtype,
+                                                       void* rbuf, const size_t *rcounts, const ptrdiff_t *rdisps,
                                                        struct ompi_datatype_t *rdtype,
                                                        mca_coll_ucc_module_t *ucc_module,
                                                        ucc_coll_req_h *req,
@@ -58,9 +58,9 @@ fallback:
     return UCC_ERR_NOT_SUPPORTED;
 }
 
-int mca_coll_ucc_alltoallv(const void *sbuf, const int *scounts,
-                           const int *sdisps, struct ompi_datatype_t *sdtype,
-                           void* rbuf, const int *rcounts, const int *rdisps,
+int mca_coll_ucc_alltoallv(const void *sbuf, const size_t *scounts,
+                           const ptrdiff_t *sdisps, struct ompi_datatype_t *sdtype,
+                           void* rbuf, const size_t *rcounts, const ptrdiff_t *rdisps,
                            struct ompi_datatype_t *rdtype,
                            struct ompi_communicator_t *comm,
                            mca_coll_base_module_t *module)
@@ -83,9 +83,9 @@ fallback:
                                           comm, ucc_module->previous_alltoallv_module);
 }
 
-int mca_coll_ucc_ialltoallv(const void *sbuf, const int *scounts,
-                            const int *sdisps, struct ompi_datatype_t *sdtype,
-                            void* rbuf, const int *rcounts, const int *rdisps,
+int mca_coll_ucc_ialltoallv(const void *sbuf, const size_t *scounts,
+                            const ptrdiff_t *sdisps, struct ompi_datatype_t *sdtype,
+                            void* rbuf, const size_t *rcounts, const ptrdiff_t *rdisps,
                             struct ompi_datatype_t *rdtype,
                             struct ompi_communicator_t *comm,
                             ompi_request_t** request,

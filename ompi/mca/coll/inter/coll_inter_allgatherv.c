@@ -41,35 +41,37 @@
  *	Returns:	- MPI_SUCCESS or error code
  */
 int
-mca_coll_inter_allgatherv_inter(const void *sbuf, int scount,
+mca_coll_inter_allgatherv_inter(const void *sbuf, size_t scount,
                                 struct ompi_datatype_t *sdtype,
-                                void *rbuf, const int *rcounts, const int *disps,
+                                void *rbuf, const size_t *rcounts, const ptrdiff_t *disps,
                                 struct ompi_datatype_t *rdtype,
                                 struct ompi_communicator_t *comm,
                                mca_coll_base_module_t *module)
 {
     int i, rank, size, size_local, err;
     size_t total = 0;
-    int *count=NULL,*displace=NULL;
+    size_t *count=NULL;
+    ptrdiff_t *displace=NULL;
     char *ptmp_free=NULL, *ptmp=NULL;
     ompi_datatype_t *ndtype = NULL;
+    int *tmp_rcounts = NULL, *tmp_disps = NULL;
 
     rank = ompi_comm_rank(comm);
     size_local = ompi_comm_size(comm->c_local_comm);
     size = ompi_comm_remote_size(comm);
 
     if (0 == rank) {
-	count = (int *)malloc(sizeof(int) * size_local);
-	displace = (int *)malloc(sizeof(int) * size_local);
+	count = (size_t *)malloc(sizeof(size_t) * size_local);
+	displace = (ptrdiff_t *)malloc(sizeof(ptrdiff_t) * size_local);
 	if ((NULL == count) || (NULL == displace)) {
             err = OMPI_ERR_OUT_OF_RESOURCE;
             goto exit;
 	}
     }
     /* Local gather to get the scount of each process */
-    err = comm->c_local_comm->c_coll->coll_gather(&scount, 1, MPI_INT,
-						 count, 1, MPI_INT,
-						 0, comm->c_local_comm,
+    err = comm->c_local_comm->c_coll->coll_gather(&scount, sizeof(scount), MPI_BYTE,
+                                                 count, sizeof(*count), MPI_BYTE,
+                                                 0, comm->c_local_comm,
                                                  comm->c_local_comm->c_coll->coll_gather_module);
     if (OMPI_SUCCESS != err) {
         goto exit;
@@ -102,7 +104,20 @@ mca_coll_inter_allgatherv_inter(const void *sbuf, int scount,
         goto exit;
     }
 
-    ompi_datatype_create_indexed(size,rcounts,disps,rdtype,&ndtype);
+    /* TODO:BIGCOUNT: Remove these temporaries when the ompi_datatype interface
+     * is updated with size_t/ptrdiff_t
+     */
+    tmp_rcounts = (int *)malloc(2 * size * sizeof(int));
+    if (NULL == tmp_rcounts) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+    tmp_disps = tmp_rcounts + size;
+    for (i = 0; i < size; i++) {
+        tmp_rcounts[i] = (int)rcounts[i];
+        tmp_disps[i] = (int)disps[i];
+    }
+    ompi_datatype_create_indexed(size,tmp_rcounts,tmp_disps,rdtype,&ndtype);
+    free(tmp_rcounts);
     ompi_datatype_commit(&ndtype);
 
     if (0 == rank) {

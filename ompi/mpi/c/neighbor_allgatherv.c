@@ -52,20 +52,20 @@ int MPI_Neighbor_allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sen
                             void *recvbuf, const int recvcounts[], const int displs[],
                             MPI_Datatype recvtype, MPI_Comm comm)
 {
-    int in_size, out_size, err;
+    int i, in_size, out_size, err;
+    OMPI_TEMP_ARRAYS_DECL(recvcounts, displs);
 
     SPC_RECORD(OMPI_SPC_NEIGHBOR_ALLGATHERV, 1);
 
     MEMCHECKER(
         ptrdiff_t ext;
 
-        mca_topo_base_neighbor_count (comm, &in_size, &out_size);
         ompi_datatype_type_extent(recvtype, &ext);
 
         memchecker_datatype(recvtype);
         memchecker_comm (comm);
         /* check whether the receive buffer is addressable. */
-        for (int i = 0; i < in_size; ++i) {
+        for (i = 0; i < in_size; ++i) {
             memchecker_call(&opal_memchecker_base_isaddressable,
                             (char *)(recvbuf)+displs[i]*ext,
                             recvcounts[i], recvtype);
@@ -106,7 +106,7 @@ int MPI_Neighbor_allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sen
          intercommunicators */
 
         mca_topo_base_neighbor_count (comm, &in_size, &out_size);
-        for (int i = 0; i < in_size; ++i) {
+        for (i = 0; i < in_size; ++i) {
           if (recvcounts[i] < 0) {
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COUNT, FUNC_NAME);
           }
@@ -139,6 +139,8 @@ int MPI_Neighbor_allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sen
         }
     }
 
+    mca_topo_base_neighbor_count (comm, &in_size, &out_size);
+
 #if OPAL_ENABLE_FT_MPI
     /*
      * An early check, so as to return early if we are using a broken
@@ -151,8 +153,11 @@ int MPI_Neighbor_allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sen
 #endif
 
     /* Invoke the coll component to perform the back-end operation */
+    OMPI_TEMP_ARRAYS_PREPARE(recvcounts, displs, i, in_size);
     err = comm->c_coll->coll_neighbor_allgatherv(sendbuf, sendcount, sendtype,
-                                                recvbuf, recvcounts, displs,
+                                                recvbuf, OMPI_TEMP_ARRAY_NAME_CONVERT(recvcounts),
+                                                OMPI_TEMP_ARRAY_NAME_CONVERT(displs),
                                                 recvtype, comm, comm->c_coll->coll_neighbor_allgatherv_module);
+    OMPI_TEMP_ARRAYS_CLEANUP(recvcounts, displs);
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }

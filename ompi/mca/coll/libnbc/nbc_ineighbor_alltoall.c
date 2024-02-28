@@ -41,8 +41,8 @@ int NBC_Ineighbor_alltoall_args_compare(NBC_Ineighbor_alltoall_args *a, NBC_Inei
 }
 #endif
 
-static int nbc_neighbor_alltoall_init(const void *sbuf, int scount, MPI_Datatype stype, void *rbuf,
-                                      int rcount, MPI_Datatype rtype, struct ompi_communicator_t *comm,
+static int nbc_neighbor_alltoall_init(const void *sbuf, size_t scount, MPI_Datatype stype, void *rbuf,
+                                      size_t rcount, MPI_Datatype rtype, struct ompi_communicator_t *comm,
                                       ompi_request_t ** request,
                                       mca_coll_base_module_t *module, bool persistent) {
   int res, indegree, outdegree, *srcs, *dsts;
@@ -167,8 +167,8 @@ static int nbc_neighbor_alltoall_init(const void *sbuf, int scount, MPI_Datatype
   return OMPI_SUCCESS;
 }
 
-int ompi_coll_libnbc_ineighbor_alltoall(const void *sbuf, int scount, MPI_Datatype stype, void *rbuf,
-                                        int rcount, MPI_Datatype rtype, struct ompi_communicator_t *comm,
+int ompi_coll_libnbc_ineighbor_alltoall(const void *sbuf, size_t scount, MPI_Datatype stype, void *rbuf,
+                                        size_t rcount, MPI_Datatype rtype, struct ompi_communicator_t *comm,
                                         ompi_request_t ** request, mca_coll_base_module_t *module) {
     int res = nbc_neighbor_alltoall_init(sbuf, scount, stype, rbuf, rcount, rtype,
                                          comm, request, module, false);
@@ -185,8 +185,8 @@ int ompi_coll_libnbc_ineighbor_alltoall(const void *sbuf, int scount, MPI_Dataty
     return OMPI_SUCCESS;
 }
 
-int ompi_coll_libnbc_neighbor_alltoall_init(const void *sbuf, int scount, MPI_Datatype stype, void *rbuf,
-                                            int rcount, MPI_Datatype rtype, struct ompi_communicator_t *comm, MPI_Info info,
+int ompi_coll_libnbc_neighbor_alltoall_init(const void *sbuf, size_t scount, MPI_Datatype stype, void *rbuf,
+                                            size_t rcount, MPI_Datatype rtype, struct ompi_communicator_t *comm, MPI_Info info,
                                             ompi_request_t ** request, mca_coll_base_module_t *module) {
     int res = nbc_neighbor_alltoall_init(sbuf, scount, stype, rbuf, rcount, rtype,
                                          comm, request, module, true);

@@ -33,10 +33,10 @@ mca_coll_han_set_scatter_args(mca_coll_han_scatter_args_t * args,
                               void *sbuf,
                               void *sbuf_inter_free,
                               void *sbuf_reorder_free,
-                              int scount,
+                              size_t scount,
                               struct ompi_datatype_t *sdtype,
                               void *rbuf,
-                              int rcount,
+                              size_t rcount,
                               struct ompi_datatype_t *rdtype,
                               int root,
                               int root_up_rank,
@@ -69,9 +69,9 @@ mca_coll_han_set_scatter_args(mca_coll_han_scatter_args_t * args,
  * after data reordring, calls us task, a scatter on up communicator
  */
 int
-mca_coll_han_scatter_intra(const void *sbuf, int scount,
+mca_coll_han_scatter_intra(const void *sbuf, size_t scount,
                            struct ompi_datatype_t *sdtype,
-                           void *rbuf, int rcount,
+                           void *rbuf, size_t rcount,
                            struct ompi_datatype_t *rdtype,
                            int root,
                            struct ompi_communicator_t *comm, mca_coll_base_module_t * module)
@@ -262,9 +262,9 @@ int mca_coll_han_scatter_ls_task(void *task_args)
 
 
 int
-mca_coll_han_scatter_intra_simple(const void *sbuf, int scount,
+mca_coll_han_scatter_intra_simple(const void *sbuf, size_t scount,
                                   struct ompi_datatype_t *sdtype,
-                                  void *rbuf, int rcount,
+                                  void *rbuf, size_t rcount,
                                   struct ompi_datatype_t *rdtype,
                                   int root,
                                   struct ompi_communicator_t *comm,

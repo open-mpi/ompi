@@ -37,9 +37,9 @@
 #include "ompi/mca/topo/base/base.h"
 
 static int
-mca_coll_basic_neighbor_alltoallv_cart(const void *sbuf, const int scounts[], const int sdisps[],
-                                       struct ompi_datatype_t *sdtype, void *rbuf, const int rcounts[],
-                                       const int rdisps[], struct ompi_datatype_t *rdtype,
+mca_coll_basic_neighbor_alltoallv_cart(const void *sbuf, const size_t scounts[], const ptrdiff_t sdisps[],
+                                       struct ompi_datatype_t *sdtype, void *rbuf, const size_t rcounts[],
+                                       const ptrdiff_t rdisps[], struct ompi_datatype_t *rdtype,
                                        struct ompi_communicator_t *comm, mca_coll_base_module_t *module)
 {
     const mca_topo_base_comm_cart_2_2_0_t *cart = comm->c_topo->mtc.cart;
@@ -123,9 +123,9 @@ mca_coll_basic_neighbor_alltoallv_cart(const void *sbuf, const int scounts[], co
 }
 
 static int
-mca_coll_basic_neighbor_alltoallv_graph(const void *sbuf, const int scounts[], const int sdisps[],
-                                        struct ompi_datatype_t *sdtype, void *rbuf, const int rcounts[],
-                                        const int rdisps[], struct ompi_datatype_t *rdtype,
+mca_coll_basic_neighbor_alltoallv_graph(const void *sbuf, const size_t scounts[], const ptrdiff_t sdisps[],
+                                        struct ompi_datatype_t *sdtype, void *rbuf, const size_t rcounts[],
+                                        const ptrdiff_t rdisps[], struct ompi_datatype_t *rdtype,
                                         struct ompi_communicator_t *comm, mca_coll_base_module_t *module)
 {
     const mca_topo_base_comm_graph_2_2_0_t *graph = comm->c_topo->mtc.graph;
@@ -181,9 +181,9 @@ mca_coll_basic_neighbor_alltoallv_graph(const void *sbuf, const int scounts[], c
 }
 
 static int
-mca_coll_basic_neighbor_alltoallv_dist_graph(const void *sbuf, const int scounts[], const int sdisps[],
-                                             struct ompi_datatype_t *sdtype, void *rbuf, const int rcounts[],
-                                             const int rdisps[], struct ompi_datatype_t *rdtype,
+mca_coll_basic_neighbor_alltoallv_dist_graph(const void *sbuf, const size_t scounts[], const ptrdiff_t sdisps[],
+                                             struct ompi_datatype_t *sdtype, void *rbuf, const size_t rcounts[],
+                                             const ptrdiff_t rdisps[], struct ompi_datatype_t *rdtype,
                                              struct ompi_communicator_t *comm, mca_coll_base_module_t *module)
 {
     const mca_topo_base_comm_dist_graph_2_2_0_t *dist_graph = comm->c_topo->mtc.dist_graph;
@@ -237,9 +237,9 @@ mca_coll_basic_neighbor_alltoallv_dist_graph(const void *sbuf, const int scounts
     return rc;
 }
 
-int mca_coll_basic_neighbor_alltoallv(const void *sbuf, const int scounts[], const int sdisps[],
-                                      struct ompi_datatype_t *sdtype, void *rbuf, const int rcounts[],
-                                      const int rdisps[], struct ompi_datatype_t *rdtype,
+int mca_coll_basic_neighbor_alltoallv(const void *sbuf, const size_t scounts[], const ptrdiff_t sdisps[],
+                                      struct ompi_datatype_t *sdtype, void *rbuf, const size_t rcounts[],
+                                      const ptrdiff_t rdisps[], struct ompi_datatype_t *rdtype,
                                       struct ompi_communicator_t *comm, mca_coll_base_module_t *module)
 {
     if (OMPI_COMM_IS_INTER(comm)) {

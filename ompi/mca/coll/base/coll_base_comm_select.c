@@ -66,7 +66,7 @@ static int query(const mca_base_component_t * component,
                  ompi_communicator_t * comm, int *priority,
                  mca_coll_base_module_t ** module);
 
-static int query_2_4_0(const mca_coll_base_component_2_4_0_t *
+static int query_3_0_0(const mca_coll_base_component_3_0_0_t *
                        coll_component, ompi_communicator_t * comm,
                        int *priority,
                        mca_coll_base_module_t ** module);
@@ -520,11 +520,11 @@ static int query(const mca_base_component_t * component,
                  int *priority, mca_coll_base_module_t ** module)
 {
     *module = NULL;
-    if (2 == component->mca_type_major_version &&
-        4 == component->mca_type_minor_version &&
+    if (3 == component->mca_type_major_version &&
+        0 == component->mca_type_minor_version &&
         0 == component->mca_type_release_version) {
 
-        return query_2_4_0((const mca_coll_base_component_2_4_0_t *)component, comm, priority, module);
+        return query_3_0_0((const mca_coll_base_component_3_0_0_t *)component, comm, priority, module);
     }
 
     /* Unknown coll API version -- return error */
@@ -533,7 +533,7 @@ static int query(const mca_base_component_t * component,
 }
 
 
-static int query_2_4_0(const mca_coll_base_component_2_4_0_t * component,
+static int query_3_0_0(const mca_coll_base_component_3_0_0_t * component,
                        ompi_communicator_t * comm, int *priority,
                        mca_coll_base_module_t ** module)
 {

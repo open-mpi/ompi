@@ -47,14 +47,15 @@ int MPI_Igatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
                  void *recvbuf, const int recvcounts[], const int displs[],
                  MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Request *request)
 {
-    int i, size, err;
+    int i, size, tmp_size, err;
+    OMPI_TEMP_ARRAYS_DECL(recvcounts, displs);
 
     SPC_RECORD(OMPI_SPC_IGATHERV, 1);
 
+    size = OMPI_COMM_IS_INTER(comm) ? ompi_comm_remote_size(comm) : ompi_comm_size(comm);
     MEMCHECKER(
         ptrdiff_t ext;
 
-        size = ompi_comm_remote_size(comm);
         ompi_datatype_type_extent(recvtype, &ext);
 
         memchecker_comm(comm);
@@ -140,8 +141,8 @@ int MPI_Igatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
                     return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COUNT, FUNC_NAME);
                 }
 
-                size = ompi_comm_size(comm);
-                for (i = 0; i < size; ++i) {
+                tmp_size = ompi_comm_size(comm);
+                for (i = 0; i < tmp_size; ++i) {
                     if (recvcounts[i] < 0) {
                         return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COUNT, FUNC_NAME);
                     } else if (MPI_DATATYPE_NULL == recvtype || NULL == recvtype) {
@@ -179,8 +180,8 @@ int MPI_Igatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
                     return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COUNT, FUNC_NAME);
                 }
 
-                size = ompi_comm_remote_size(comm);
-                for (i = 0; i < size; ++i) {
+                tmp_size = ompi_comm_remote_size(comm);
+                for (i = 0; i < tmp_size; ++i) {
                     if (recvcounts[i] < 0) {
                         return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COUNT, FUNC_NAME);
                     } else if (MPI_DATATYPE_NULL == recvtype || NULL == recvtype) {
@@ -199,9 +200,16 @@ int MPI_Igatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
     }
 
     /* Invoke the coll component to perform the back-end operation */
+    if (NULL != recvcounts) {
+        OMPI_TEMP_ARRAYS_PREPARE(recvcounts, displs, i, size);
+    }
     err = comm->c_coll->coll_igatherv(sendbuf, sendcount, sendtype, updated_recvbuf,
-                                     recvcounts, displs, recvtype,
+                                     OMPI_TEMP_ARRAY_NAME_CONVERT(recvcounts),
+                                     OMPI_TEMP_ARRAY_NAME_CONVERT(displs), recvtype,
                                      root, comm, request, comm->c_coll->coll_igatherv_module);
+    if (NULL != recvcounts) {
+        OMPI_TEMP_ARRAYS_CLEANUP(recvcounts, displs);
+    }
     if (OPAL_LIKELY(OMPI_SUCCESS == err)) {
         if (OMPI_COMM_IS_INTRA(comm)) {
             if (MPI_IN_PLACE == sendbuf) {

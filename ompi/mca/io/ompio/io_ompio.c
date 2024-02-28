@@ -119,7 +119,7 @@ int ompi_io_ompio_generate_current_file_view (struct ompio_file_t *fh,
 
     if (mca_io_ompio_record_offset_info){
 
-	int tot_entries=0, *recvcounts=NULL, *displs=NULL;
+	int tot_entries=0;
 	mca_io_ompio_offlen_array_t *per_process=NULL;
 	mca_io_ompio_offlen_array_t  *all_process=NULL;
 	int *sorted=NULL, *column_list=NULL, *values=NULL;
@@ -131,13 +131,15 @@ int ompi_io_ompio_generate_current_file_view (struct ompio_file_t *fh,
 	ompi_datatype_t *io_array_type=MPI_DATATYPE_NULL;
 	int **adj_matrix=NULL;
 	FILE *fp;
+	size_t *recvcounts=NULL;
+	ptrdiff_t *displs=NULL;
 
 
-        recvcounts = (int *) malloc (fh->f_size * sizeof(int));
+        recvcounts = malloc (fh->f_size * sizeof(size_t));
         if (NULL == recvcounts){
             return OMPI_ERR_OUT_OF_RESOURCE;
 	}
-        displs = (int *) malloc (fh->f_size * sizeof(int));
+        displs = malloc (fh->f_size * sizeof(ptrdiff_t));
         if (NULL == displs){
             free(recvcounts);
             return OMPI_ERR_OUT_OF_RESOURCE;

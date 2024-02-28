@@ -42,8 +42,8 @@
  * 512 dimensions.
  */
 static int
-mca_coll_basic_neighbor_alltoall_cart(const void *sbuf, int scount, struct ompi_datatype_t *sdtype, void *rbuf,
-                                      int rcount, struct ompi_datatype_t *rdtype, struct ompi_communicator_t *comm,
+mca_coll_basic_neighbor_alltoall_cart(const void *sbuf, size_t scount, struct ompi_datatype_t *sdtype, void *rbuf,
+                                      size_t rcount, struct ompi_datatype_t *rdtype, struct ompi_communicator_t *comm,
                                       mca_coll_base_module_t *module)
 {
     const mca_topo_base_comm_cart_2_2_0_t *cart = comm->c_topo->mtc.cart;
@@ -142,8 +142,8 @@ mca_coll_basic_neighbor_alltoall_cart(const void *sbuf, int scount, struct ompi_
 }
 
 static int
-mca_coll_basic_neighbor_alltoall_graph(const void *sbuf, int scount, struct ompi_datatype_t *sdtype, void *rbuf,
-                                       int rcount, struct ompi_datatype_t *rdtype, struct ompi_communicator_t *comm,
+mca_coll_basic_neighbor_alltoall_graph(const void *sbuf, size_t scount, struct ompi_datatype_t *sdtype, void *rbuf,
+                                       size_t rcount, struct ompi_datatype_t *rdtype, struct ompi_communicator_t *comm,
                                        mca_coll_base_module_t *module)
 {
     const mca_topo_base_comm_graph_2_2_0_t *graph = comm->c_topo->mtc.graph;
@@ -201,8 +201,8 @@ mca_coll_basic_neighbor_alltoall_graph(const void *sbuf, int scount, struct ompi
 }
 
 static int
-mca_coll_basic_neighbor_alltoall_dist_graph(const void *sbuf, int scount,struct ompi_datatype_t *sdtype, void *rbuf,
-                                            int rcount, struct ompi_datatype_t *rdtype, struct ompi_communicator_t *comm,
+mca_coll_basic_neighbor_alltoall_dist_graph(const void *sbuf, size_t scount, struct ompi_datatype_t *sdtype, void *rbuf,
+                                            size_t rcount, struct ompi_datatype_t *rdtype, struct ompi_communicator_t *comm,
                                             mca_coll_base_module_t *module)
 {
     const mca_topo_base_comm_dist_graph_2_2_0_t *dist_graph = comm->c_topo->mtc.dist_graph;
@@ -259,8 +259,8 @@ mca_coll_basic_neighbor_alltoall_dist_graph(const void *sbuf, int scount,struct 
     return rc;
 }
 
-int mca_coll_basic_neighbor_alltoall(const void *sbuf, int scount, struct ompi_datatype_t *sdtype, void *rbuf,
-                                     int rcount, struct ompi_datatype_t *rdtype, struct ompi_communicator_t *comm,
+int mca_coll_basic_neighbor_alltoall(const void *sbuf, size_t scount, struct ompi_datatype_t *sdtype, void *rbuf,
+                                     size_t rcount, struct ompi_datatype_t *rdtype, struct ompi_communicator_t *comm,
                                      mca_coll_base_module_t *module)
 {
     if (OMPI_COMM_IS_INTER(comm)) {

@@ -319,7 +319,7 @@ static int recv_cb(ompi_request_t * req)
     return 1;
 }
 
-int ompi_coll_adapt_ibcast(void *buff, int count, struct ompi_datatype_t *datatype, int root,
+int ompi_coll_adapt_ibcast(void *buff, size_t count, struct ompi_datatype_t *datatype, int root,
                           struct ompi_communicator_t *comm, ompi_request_t ** request,
                           mca_coll_base_module_t * module)
 {
@@ -341,7 +341,7 @@ int ompi_coll_adapt_ibcast(void *buff, int count, struct ompi_datatype_t *dataty
 }
 
 
-int ompi_coll_adapt_ibcast_generic(void *buff, int count, struct ompi_datatype_t *datatype, int root,
+int ompi_coll_adapt_ibcast_generic(void *buff, size_t count, struct ompi_datatype_t *datatype, int root,
                                    struct ompi_communicator_t *comm, ompi_request_t ** request,
                                    mca_coll_base_module_t * module, ompi_coll_tree_t * tree,
                                    size_t seg_size)
@@ -351,7 +351,7 @@ int ompi_coll_adapt_ibcast_generic(void *buff, int count, struct ompi_datatype_t
     int min;
 
     /* Number of datatype in a segment */
-    int seg_count = count;
+    size_t seg_count = count;
     /* Size of a datatype */
     size_t type_size;
     /* Real size of a segment */

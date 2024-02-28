@@ -119,7 +119,7 @@ typedef struct {
                                               *   min over all ranks. */
     int      operand;                        /**< operand applied on bytes.
                                               *   One of OMPI_OP_BASE_FORTRAN_* values in mca/op/op.h */
-    int      dt_count;                       /**< The number of datatypes in bytes */
+    size_t   dt_count;                       /**< The number of datatypes in bytes */
     int      datatype;                       /**< Fortran index of predefined basic datatype in bytes */
     int      nb_new_dead;                    /**< Number of newly discovered dead */
 } era_value_header_t;
@@ -3018,7 +3018,7 @@ static int mca_coll_ftagree_era_prepare_agreement(ompi_communicator_t* comm,
                                                             ompi_group_t *group,
                                                             ompi_op_t *op,
                                                             ompi_datatype_t *dt,
-                                                            int dt_count,
+                                                            size_t dt_count,
                                                             void *contrib,
                                                             mca_coll_base_module_t *module,
                                                             era_identifier_t *paid,
@@ -3187,7 +3187,7 @@ static int mca_coll_ftagree_era_complete_agreement(era_identifier_t agreement_id
  * Returns:	- MPI_SUCCESS or an MPI error code
  */
 int mca_coll_ftagree_era_intra(void *contrib,
-                                         int dt_count,
+                                         size_t dt_count,
                                          ompi_datatype_t *dt,
                                          ompi_op_t *op,
                                          ompi_group_t **group, bool grp_update,
@@ -3214,7 +3214,7 @@ int mca_coll_ftagree_era_intra(void *contrib,
  * Returns:	- MPI_SUCCESS or an MPI error code
  */
 int mca_coll_ftagree_era_inter(void *contrib,
-                                         int dt_count,
+                                         size_t dt_count,
                                          ompi_datatype_t *dt,
                                          ompi_op_t *op,
                                          ompi_group_t **group, bool grp_update,
@@ -3310,7 +3310,7 @@ static int era_iagree_req_complete_cb(struct ompi_request_t* request)
 }
 
 int mca_coll_ftagree_iera_intra(void *contrib,
-                                          int dt_count,
+                                          size_t dt_count,
                                           ompi_datatype_t *dt,
                                           ompi_op_t *op,
                                           ompi_group_t **group, bool grp_update,

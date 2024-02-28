@@ -58,8 +58,8 @@
  * 2. No **gap** exists between data from the same node, other than the root's node, in the output
  *    buffer - it is ok if data from different nodes has gap.
  */
-int mca_coll_han_gatherv_intra(const void *sbuf, int scount, struct ompi_datatype_t *sdtype,
-                               void *rbuf, const int *rcounts, const int *displs,
+int mca_coll_han_gatherv_intra(const void *sbuf, size_t scount, struct ompi_datatype_t *sdtype,
+                               void *rbuf, const size_t *rcounts, const ptrdiff_t *displs,
                                struct ompi_datatype_t *rdtype, int root,
                                struct ompi_communicator_t *comm, mca_coll_base_module_t *module)
 {
@@ -67,7 +67,8 @@ int mca_coll_han_gatherv_intra(const void *sbuf, int scount, struct ompi_datatyp
     int w_rank, w_size;              /* information about the global communicator */
     int root_low_rank, root_up_rank; /* root ranks for both sub-communicators */
     int err, *vranks, low_rank, low_size, up_rank, up_size, *topo;
-    int *low_rcounts = NULL, *low_displs = NULL;
+    size_t *low_rcounts = NULL;
+    ptrdiff_t *low_displs = NULL;
 
     /* Create the subcommunicators */
     err = mca_coll_han_comm_create(comm, han_module);
@@ -122,12 +123,13 @@ int mca_coll_han_gatherv_intra(const void *sbuf, int scount, struct ompi_datatyp
     err = OMPI_SUCCESS;
     /* #################### Root ########################### */
     if (root == w_rank) {
-        int need_bounce_buf = 0, total_up_rcounts = 0, *up_displs = NULL, *up_rcounts = NULL,
-            *up_peer_lb = NULL, *up_peer_ub = NULL;
+        int need_bounce_buf = 0, total_up_rcounts = 0;
+        ptrdiff_t *up_displs = NULL;
+        size_t *up_rcounts = NULL, *up_peer_lb = NULL, *up_peer_ub = NULL;
         char *bounce_buf = NULL;
 
-        low_rcounts = malloc(low_size * sizeof(int));
-        low_displs = malloc(low_size * sizeof(int));
+        low_rcounts = malloc(low_size * sizeof(size_t));
+        low_displs = malloc(low_size * sizeof(ptrdiff_t));
         if (!low_rcounts || !low_displs) {
             err = OMPI_ERR_OUT_OF_RESOURCE;
             goto root_out;
@@ -151,16 +153,16 @@ int mca_coll_han_gatherv_intra(const void *sbuf, int scount, struct ompi_datatyp
 
         char *tmp_rbuf = rbuf;
 
-        up_rcounts = calloc(up_size, sizeof(int));
-        up_displs = malloc(up_size * sizeof(int));
-        up_peer_ub = calloc(up_size, sizeof(int));
+        up_rcounts = calloc(up_size, sizeof(size_t));
+        up_displs = malloc(up_size * sizeof(size_t));
+        up_peer_ub = calloc(up_size, sizeof(size_t));
         if (!up_rcounts || !up_displs || !up_peer_ub) {
             err = OMPI_ERR_OUT_OF_RESOURCE;
             goto root_out;
         }
 
         for (up_peer = 0; up_peer < up_size; ++up_peer) {
-            up_displs[up_peer] = INT_MAX;
+            up_displs[up_peer] = PTRDIFF_MAX;
         }
 
         /* Calculate recv counts for the inter-node gatherv - no need to gather
@@ -335,8 +337,8 @@ int mca_coll_han_gatherv_intra(const void *sbuf, int scount, struct ompi_datatyp
         datatype_size = coll_han_utils_gcd(low_data_size, low_size);
     }
 
-    low_rcounts = malloc(low_size * sizeof(int));
-    low_displs = malloc(low_size * sizeof(int));
+    low_rcounts = malloc(low_size * sizeof(size_t));
+    low_displs = malloc(low_size * sizeof(ptrdiff_t));
     tmp_buf = (char *) malloc(rsize); /* tmp_buf is still valid if rsize is 0 */
     if (!tmp_buf || !low_rcounts || !low_displs) {
         err = OMPI_ERR_OUT_OF_RESOURCE;

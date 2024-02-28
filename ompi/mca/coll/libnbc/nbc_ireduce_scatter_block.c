@@ -40,7 +40,7 @@
  *
  */
 
-static int nbc_reduce_scatter_block_init(const void* sendbuf, void* recvbuf, int recvcount, MPI_Datatype datatype,
+static int nbc_reduce_scatter_block_init(const void* sendbuf, void* recvbuf, size_t recvcount, MPI_Datatype datatype,
                                          MPI_Op op, struct ompi_communicator_t *comm, ompi_request_t ** request,
                                          mca_coll_base_module_t *module, bool persistent) {
   int peer, rank, maxr, p, res;
@@ -209,7 +209,7 @@ static int nbc_reduce_scatter_block_init(const void* sendbuf, void* recvbuf, int
   return OMPI_SUCCESS;
 }
 
-int ompi_coll_libnbc_ireduce_scatter_block(const void* sendbuf, void* recvbuf, int recvcount, MPI_Datatype datatype,
+int ompi_coll_libnbc_ireduce_scatter_block(const void* sendbuf, void* recvbuf, size_t recvcount, MPI_Datatype datatype,
                                            MPI_Op op, struct ompi_communicator_t *comm, ompi_request_t ** request,
                                            mca_coll_base_module_t *module) {
     int res = nbc_reduce_scatter_block_init(sendbuf, recvbuf, recvcount, datatype, op,
@@ -227,7 +227,7 @@ int ompi_coll_libnbc_ireduce_scatter_block(const void* sendbuf, void* recvbuf, i
     return OMPI_SUCCESS;
 }
 
-static int nbc_reduce_scatter_block_inter_init(const void *sendbuf, void *recvbuf, int rcount, struct ompi_datatype_t *dtype,
+static int nbc_reduce_scatter_block_inter_init(const void *sendbuf, void *recvbuf, size_t rcount, struct ompi_datatype_t *dtype,
                                                struct ompi_op_t *op, struct ompi_communicator_t *comm, ompi_request_t **request,
                                                mca_coll_base_module_t *module, bool persistent) {
   int rank, res, lsize, rsize;
@@ -349,7 +349,7 @@ static int nbc_reduce_scatter_block_inter_init(const void *sendbuf, void *recvbu
   return OMPI_SUCCESS;
 }
 
-int ompi_coll_libnbc_ireduce_scatter_block_inter(const void* sendbuf, void* recvbuf, int recvcount, MPI_Datatype datatype,
+int ompi_coll_libnbc_ireduce_scatter_block_inter(const void* sendbuf, void* recvbuf, size_t recvcount, MPI_Datatype datatype,
                                                  MPI_Op op, struct ompi_communicator_t *comm, ompi_request_t ** request,
                                                  mca_coll_base_module_t *module) {
     int res = nbc_reduce_scatter_block_inter_init(sendbuf, recvbuf, recvcount, datatype, op,
@@ -367,7 +367,7 @@ int ompi_coll_libnbc_ireduce_scatter_block_inter(const void* sendbuf, void* recv
     return OMPI_SUCCESS;
 }
 
-int ompi_coll_libnbc_reduce_scatter_block_init(const void* sendbuf, void* recvbuf, int recvcount, MPI_Datatype datatype,
+int ompi_coll_libnbc_reduce_scatter_block_init(const void* sendbuf, void* recvbuf, size_t recvcount, MPI_Datatype datatype,
                                                MPI_Op op, struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                                                mca_coll_base_module_t *module) {
     int res = nbc_reduce_scatter_block_init(sendbuf, recvbuf, recvcount, datatype, op,
@@ -379,7 +379,7 @@ int ompi_coll_libnbc_reduce_scatter_block_init(const void* sendbuf, void* recvbu
     return OMPI_SUCCESS;
 }
 
-int ompi_coll_libnbc_reduce_scatter_block_inter_init(const void* sendbuf, void* recvbuf, int recvcount, MPI_Datatype datatype,
+int ompi_coll_libnbc_reduce_scatter_block_inter_init(const void* sendbuf, void* recvbuf, size_t recvcount, MPI_Datatype datatype,
                                                      MPI_Op op, struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                                                      mca_coll_base_module_t *module) {
     int res = nbc_reduce_scatter_block_inter_init(sendbuf, recvbuf, recvcount, datatype, op,

@@ -15,7 +15,7 @@
 #include "ompi/communicator/communicator.h"
 #include "coll_monitoring.h"
 
-int mca_coll_monitoring_bcast(void *buff, int count,
+int mca_coll_monitoring_bcast(void *buff, size_t count,
                               struct ompi_datatype_t *datatype,
                               int root,
                               struct ompi_communicator_t *comm,
@@ -43,7 +43,7 @@ int mca_coll_monitoring_bcast(void *buff, int count,
     return monitoring_module->real.coll_bcast(buff, count, datatype, root, comm, monitoring_module->real.coll_bcast_module);
 }
 
-int mca_coll_monitoring_ibcast(void *buff, int count,
+int mca_coll_monitoring_ibcast(void *buff, size_t count,
                                struct ompi_datatype_t *datatype,
                                int root,
                                struct ompi_communicator_t *comm,

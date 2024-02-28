@@ -120,9 +120,9 @@ ompi_coll_tuned_gather_intra_check_forced_init(coll_tuned_force_algorithm_mca_pa
 }
 
 int
-ompi_coll_tuned_gather_intra_do_this(const void *sbuf, int scount,
+ompi_coll_tuned_gather_intra_do_this(const void *sbuf, size_t scount,
                                      struct ompi_datatype_t *sdtype,
-                                     void* rbuf, int rcount,
+                                     void* rbuf, size_t rcount,
                                      struct ompi_datatype_t *rdtype,
                                      int root,
                                      struct ompi_communicator_t *comm,

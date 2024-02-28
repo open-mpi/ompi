@@ -41,7 +41,7 @@ mca_coll_adapt_component_t mca_coll_adapt_component = {
         /* First, the mca_component_t struct containing meta
            information about the component itself */
         .collm_version = {
-            MCA_COLL_BASE_VERSION_2_4_0,
+            MCA_COLL_BASE_VERSION_3_0_0,
 
             /* Component name and version */
             .mca_component_name = "adapt",
