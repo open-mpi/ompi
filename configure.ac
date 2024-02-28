@@ -1069,7 +1069,8 @@ AS_IF([test -z "$LEX" || \
 dnl Note that we have to double escape the URL below
 dnl so that the # it contains doesn't confuse the Autotools
 OAC_SETUP_SPHINX([$srcdir/docs/man/MPI_T.3],
-                 [[https://docs.open-mpi.org/en/main/developers/prerequisites.html#sphinx-and-therefore-python]])
+                 [[https://docs.open-mpi.org/en/main/developers/prerequisites.html#sphinx-and-therefore-python]],
+                 [$srcdir/docs/requirements.txt])
 
 #
 # File system case sensitivity
