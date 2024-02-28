@@ -80,6 +80,7 @@ int mca_coll_han_comm_create_new(struct ompi_communicator_t *comm,
     HAN_SUBCOM_SAVE_COLLECTIVE(fallbacks, comm, han_module, gather);
     HAN_SUBCOM_SAVE_COLLECTIVE(fallbacks, comm, han_module, gatherv);
     HAN_SUBCOM_SAVE_COLLECTIVE(fallbacks, comm, han_module, scatter);
+    HAN_SUBCOM_SAVE_COLLECTIVE(fallbacks, comm, han_module, scatterv);
 
     /**
      * HAN is not yet optimized for a single process per node case, we should
@@ -108,6 +109,7 @@ int mca_coll_han_comm_create_new(struct ompi_communicator_t *comm,
         HAN_SUBCOM_LOAD_COLLECTIVE(fallbacks, comm, han_module, gather);
         HAN_SUBCOM_LOAD_COLLECTIVE(fallbacks, comm, han_module, gatherv);
         HAN_SUBCOM_LOAD_COLLECTIVE(fallbacks, comm, han_module, scatter);
+        HAN_SUBCOM_LOAD_COLLECTIVE(fallbacks, comm, han_module, scatterv);
         han_module->enabled = false;  /* entire module set to pass-through from now on */
         return OMPI_ERR_NOT_SUPPORTED;
     }
@@ -185,6 +187,7 @@ int mca_coll_han_comm_create_new(struct ompi_communicator_t *comm,
     HAN_SUBCOM_LOAD_COLLECTIVE(fallbacks, comm, han_module, gather);
     HAN_SUBCOM_LOAD_COLLECTIVE(fallbacks, comm, han_module, gatherv);
     HAN_SUBCOM_LOAD_COLLECTIVE(fallbacks, comm, han_module, scatter);
+    HAN_SUBCOM_LOAD_COLLECTIVE(fallbacks, comm, han_module, scatterv);
 
     OBJ_DESTRUCT(&comm_info);
     return OMPI_SUCCESS;
@@ -241,6 +244,7 @@ int mca_coll_han_comm_create(struct ompi_communicator_t *comm,
     HAN_SUBCOM_SAVE_COLLECTIVE(fallbacks, comm, han_module, gather);
     HAN_SUBCOM_SAVE_COLLECTIVE(fallbacks, comm, han_module, gatherv);
     HAN_SUBCOM_SAVE_COLLECTIVE(fallbacks, comm, han_module, scatter);
+    HAN_SUBCOM_SAVE_COLLECTIVE(fallbacks, comm, han_module, scatterv);
 
     /**
      * HAN is not yet optimized for a single process per node case, we should
@@ -266,6 +270,7 @@ int mca_coll_han_comm_create(struct ompi_communicator_t *comm,
         HAN_SUBCOM_LOAD_COLLECTIVE(fallbacks, comm, han_module, gather);
         HAN_SUBCOM_LOAD_COLLECTIVE(fallbacks, comm, han_module, gatherv);
         HAN_SUBCOM_LOAD_COLLECTIVE(fallbacks, comm, han_module, scatter);
+        HAN_SUBCOM_LOAD_COLLECTIVE(fallbacks, comm, han_module, scatterv);
         han_module->enabled = false;  /* entire module set to pass-through from now on */
         return OMPI_ERR_NOT_SUPPORTED;
     }
@@ -355,6 +360,7 @@ int mca_coll_han_comm_create(struct ompi_communicator_t *comm,
     HAN_SUBCOM_LOAD_COLLECTIVE(fallbacks, comm, han_module, gather);
     HAN_SUBCOM_LOAD_COLLECTIVE(fallbacks, comm, han_module, gatherv);
     HAN_SUBCOM_LOAD_COLLECTIVE(fallbacks, comm, han_module, scatter);
+    HAN_SUBCOM_LOAD_COLLECTIVE(fallbacks, comm, han_module, scatterv);
 
     OBJ_DESTRUCT(&comm_info);
     return OMPI_SUCCESS;

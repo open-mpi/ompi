@@ -59,6 +59,10 @@ mca_coll_han_algorithm_value_t*  mca_coll_han_available_algorithms[COLLCOUNT] = 
         {"simple", (fnptr_t) &mca_coll_han_scatter_intra_simple}, // 2-level
         { 0 }
     },
+    [SCATTERV] = (mca_coll_han_algorithm_value_t[]){
+        {"intra", (fnptr_t) &mca_coll_han_scatterv_intra}, // 2-level
+        { 0 }
+    },
     [GATHER] = (mca_coll_han_algorithm_value_t[]){
         {"intra", (fnptr_t) &mca_coll_han_gather_intra}, // 2-level
         {"simple", (fnptr_t) &mca_coll_han_gather_intra_simple}, // 2-level

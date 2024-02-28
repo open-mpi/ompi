@@ -159,6 +159,16 @@ mca_coll_han_scatter_intra_simple(const void *sbuf, int scount,
                                   struct ompi_communicator_t *comm,
                                   mca_coll_base_module_t * module);
 
+/* Scatterv */
+int
+mca_coll_han_scatterv_intra(const void *sbuf, const int *scounts,
+                            const int *displs, struct ompi_datatype_t *sdtype,
+                            void *rbuf, int rcount,
+                            struct ompi_datatype_t *rdtype, 
+                            int root,
+                            struct ompi_communicator_t *comm,
+                            mca_coll_base_module_t *module);
+
 /* Gather */
 int
 mca_coll_han_gather_intra(const void *sbuf, int scount,

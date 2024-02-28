@@ -156,6 +156,11 @@ static int han_close(void)
     free(mca_coll_han_component.han_op_module_name.scatter.han_op_low_module_name);
     mca_coll_han_component.han_op_module_name.scatter.han_op_low_module_name = NULL;
 
+    free(mca_coll_han_component.han_op_module_name.scatterv.han_op_up_module_name);
+    mca_coll_han_component.han_op_module_name.scatterv.han_op_up_module_name = NULL;
+    free(mca_coll_han_component.han_op_module_name.scatterv.han_op_low_module_name);
+    mca_coll_han_component.han_op_module_name.scatterv.han_op_low_module_name = NULL;
+
     return OMPI_SUCCESS;
 }
 
@@ -372,6 +377,18 @@ static int han_register(void)
                                               "low level module for scatter, 0 tuned, 1 sm",
                                               OPAL_INFO_LVL_9, &cs->han_scatter_low_module,
                                               &cs->han_op_module_name.scatter.han_op_low_module_name);
+
+    cs->han_scatterv_up_module = 0;
+    (void) mca_coll_han_query_module_from_mca(c, "scatterv_up_module",
+                                              "up level module for scatterv, 0 basic",
+                                              OPAL_INFO_LVL_9, &cs->han_scatterv_up_module,
+                                              &cs->han_op_module_name.scatterv.han_op_up_module_name);
+
+    cs->han_scatterv_low_module = 0;
+    (void) mca_coll_han_query_module_from_mca(c, "scatterv_low_module",
+                                              "low level module for scatterv, 0 basic",
+                                              OPAL_INFO_LVL_9, &cs->han_scatterv_low_module,
+                                              &cs->han_op_module_name.scatterv.han_op_low_module_name);
 
     cs->han_reproducible = 0;
     (void) mca_base_component_var_register(c, "reproducible",

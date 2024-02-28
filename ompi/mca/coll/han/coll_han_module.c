@@ -54,6 +54,7 @@ static void han_module_clear(mca_coll_han_module_t *han_module)
     CLEAN_PREV_COLL(han_module, gather);
     CLEAN_PREV_COLL(han_module, gatherv);
     CLEAN_PREV_COLL(han_module, scatter);
+    CLEAN_PREV_COLL(han_module, scatterv);
 
     han_module->reproducible_reduce = NULL;
     han_module->reproducible_reduce_module = NULL;
@@ -152,6 +153,7 @@ mca_coll_han_module_destruct(mca_coll_han_module_t * module)
     OBJ_RELEASE_IF_NOT_NULL(module->previous_gatherv_module);
     OBJ_RELEASE_IF_NOT_NULL(module->previous_reduce_module);
     OBJ_RELEASE_IF_NOT_NULL(module->previous_scatter_module);
+    OBJ_RELEASE_IF_NOT_NULL(module->previous_scatterv_module);
 
     han_module_clear(module);
 }
@@ -254,7 +256,7 @@ mca_coll_han_comm_query(struct ompi_communicator_t * comm, int *priority)
     han_module->super.coll_exscan     = NULL;
     han_module->super.coll_reduce_scatter = NULL;
     han_module->super.coll_scan       = NULL;
-    han_module->super.coll_scatterv   = NULL;
+    han_module->super.coll_scatterv   = mca_coll_han_scatterv_intra_dynamic;
     han_module->super.coll_barrier    = mca_coll_han_barrier_intra_dynamic;
     han_module->super.coll_scatter    = mca_coll_han_scatter_intra_dynamic;
     han_module->super.coll_reduce     = mca_coll_han_reduce_intra_dynamic;
@@ -316,6 +318,7 @@ han_module_enable(mca_coll_base_module_t * module,
     HAN_SAVE_PREV_COLL_API(gatherv);
     HAN_SAVE_PREV_COLL_API(reduce);
     HAN_SAVE_PREV_COLL_API(scatter);
+    HAN_SAVE_PREV_COLL_API(scatterv);
 
     /* set reproducible algos */
     mca_coll_han_reduce_reproducible_decision(comm, module);
@@ -332,6 +335,7 @@ handle_error:
     OBJ_RELEASE_IF_NOT_NULL(han_module->previous_gatherv_module);
     OBJ_RELEASE_IF_NOT_NULL(han_module->previous_reduce_module);
     OBJ_RELEASE_IF_NOT_NULL(han_module->previous_scatter_module);
+    OBJ_RELEASE_IF_NOT_NULL(han_module->previous_scatterv_module);
 
     return OMPI_ERROR;
 }
@@ -354,6 +358,7 @@ mca_coll_han_module_disable(mca_coll_base_module_t * module,
     OBJ_RELEASE_IF_NOT_NULL(han_module->previous_gatherv_module);
     OBJ_RELEASE_IF_NOT_NULL(han_module->previous_reduce_module);
     OBJ_RELEASE_IF_NOT_NULL(han_module->previous_scatter_module);
+    OBJ_RELEASE_IF_NOT_NULL(han_module->previous_scatterv_module);
 
     han_module_clear(han_module);
 
