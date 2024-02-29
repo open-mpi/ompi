@@ -36,7 +36,7 @@ BEGIN_C_DECLS
 
 int mca_sharedfp_sm_component_init_query(bool enable_progress_threads,
                                                  bool enable_mpi_threads);
-struct mca_sharedfp_base_module_1_0_0_t *
+struct mca_sharedfp_base_module_2_0_0_t *
         mca_sharedfp_sm_component_file_query (ompio_file_t *file, int *priority);
 int mca_sharedfp_sm_component_file_unquery (ompio_file_t *file);
 
@@ -46,7 +46,7 @@ int mca_sharedfp_sm_module_finalize (ompio_file_t *file);
 extern int mca_sharedfp_sm_priority;
 extern int mca_sharedfp_sm_verbose;
 
-OMPI_DECLSPEC extern mca_sharedfp_base_component_2_0_0_t mca_sharedfp_sm_component;
+OMPI_DECLSPEC extern mca_sharedfp_base_component_3_0_0_t mca_sharedfp_sm_component;
 /*
  * ******************************************************************
  * ********* functions which are implemented in this module *********

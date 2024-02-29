@@ -14,6 +14,8 @@
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * Copyright (c) 2018      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2024      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -55,7 +57,7 @@ OMPI_DECLSPEC int ompi_fcoll_base_sort_iovec (struct iovec *iov, int num_entries
 
 OMPI_DECLSPEC mca_fcoll_base_component_t* mca_fcoll_base_component_lookup(const char* name);
 
-OMPI_DECLSPEC int mca_fcoll_base_file_read_all (ompio_file_t *fh, void *buf, int count,
+OMPI_DECLSPEC int mca_fcoll_base_file_read_all (ompio_file_t *fh, void *buf, size_t count,
                                                 struct ompi_datatype_t *datatype,
                                                 ompi_status_public_t *status);
 

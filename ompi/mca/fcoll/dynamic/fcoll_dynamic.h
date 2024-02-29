@@ -38,13 +38,13 @@ BEGIN_C_DECLS
 
 extern int mca_fcoll_dynamic_priority;
 
-OMPI_DECLSPEC extern mca_fcoll_base_component_2_0_0_t mca_fcoll_dynamic_component;
+OMPI_DECLSPEC extern mca_fcoll_base_component_3_0_0_t mca_fcoll_dynamic_component;
 
 /* API functions */
 
 int mca_fcoll_dynamic_component_init_query(bool enable_progress_threads,
                                            bool enable_mpi_threads);
-struct mca_fcoll_base_module_1_0_0_t *
+struct mca_fcoll_base_module_2_0_0_t *
 mca_fcoll_dynamic_component_file_query (ompio_file_t *fh, int *priority);
 
 int mca_fcoll_dynamic_component_file_unquery (ompio_file_t *file);

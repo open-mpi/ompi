@@ -17,6 +17,8 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
+ * Copyright (c) 2024      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -1048,11 +1050,11 @@ int mca_common_ompio_merge_groups(ompio_file_t *fh,
 			          int num_merge_aggrs)
 {
     int i = 0;
-    int *sizes_old_group;
+    size_t *sizes_old_group;
     int ret;
-    int *displs = NULL;
+    ptrdiff_t *displs = NULL;
 
-    sizes_old_group = (int*)malloc(num_merge_aggrs * sizeof(int));
+    sizes_old_group = (size_t *)malloc(num_merge_aggrs * sizeof(size_t));
     if (NULL == sizes_old_group) {
         opal_output (1, "OUT OF MEMORY\n");
         ret = OMPI_ERR_OUT_OF_RESOURCE;
@@ -1060,7 +1062,7 @@ int mca_common_ompio_merge_groups(ompio_file_t *fh,
     }
 
 
-    displs = (int*)malloc(num_merge_aggrs * sizeof(int));
+    displs = (ptrdiff_t *)malloc(num_merge_aggrs * sizeof(ptrdiff_t));
     if (NULL == displs) {
         opal_output (1, "OUT OF MEMORY\n");
         ret = OMPI_ERR_OUT_OF_RESOURCE;

@@ -12,6 +12,8 @@
  * Copyright (c) 2013      University of Houston. All rights reserved.
  * Copyright (c) 2018      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2024      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -42,7 +44,7 @@
  * *******************************************************************
  */
  /* IMPORTANT: Update here when adding sharedfp component interface functions*/
-static mca_sharedfp_base_module_1_0_0_t lockedfile =  {
+static mca_sharedfp_base_module_2_0_0_t lockedfile =  {
     mca_sharedfp_lockedfile_module_init, /* initialise after being selected */
     mca_sharedfp_lockedfile_module_finalize, /* close a module on a communicator */
     mca_sharedfp_lockedfile_seek,
@@ -74,7 +76,7 @@ int mca_sharedfp_lockedfile_component_init_query(bool enable_progress_threads,
     return OMPI_SUCCESS;
 }
 
-struct mca_sharedfp_base_module_1_0_0_t * mca_sharedfp_lockedfile_component_file_query(ompio_file_t *fh, int *priority) {
+struct mca_sharedfp_base_module_2_0_0_t * mca_sharedfp_lockedfile_component_file_query(ompio_file_t *fh, int *priority) {
     struct flock lock;
     int fd, err;
     /*char *filename;*/
