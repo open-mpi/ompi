@@ -354,7 +354,7 @@ get_algorithm(COLLTYPE_T coll_id,
         }
     }
     if ( 0 == rank ) {
-        opal_output_verbose(1, mca_coll_han_component.han_output,
+        opal_output_verbose(30, mca_coll_han_component.han_output,
                             "coll:han:get_algorithm %s size:%ld algorithm:%d %s",
                             mca_coll_base_colltype_to_str(coll_id),
                             msg_size,
