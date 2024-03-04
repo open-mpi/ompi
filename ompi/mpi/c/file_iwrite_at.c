@@ -15,6 +15,8 @@
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2024      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -72,8 +74,8 @@ int MPI_File_iwrite_at(MPI_File fh, MPI_Offset offset, const void *buf,
 
     /* Call the back-end io component function */
     switch (fh->f_io_version) {
-    case MCA_IO_BASE_V_2_0_0:
-        rc = fh->f_io_selected_module.v2_0_0.
+    case MCA_IO_BASE_V_3_0_0:
+        rc = fh->f_io_selected_module.v3_0_0.
             io_module_file_iwrite_at(fh, offset, buf, count, datatype,
                                      request);
         break;

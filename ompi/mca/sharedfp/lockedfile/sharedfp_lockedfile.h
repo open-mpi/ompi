@@ -13,6 +13,8 @@
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
+ * Copyright (c) 2024      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -33,7 +35,7 @@ BEGIN_C_DECLS
 
 int mca_sharedfp_lockedfile_component_init_query(bool enable_progress_threads,
                                                  bool enable_mpi_threads);
-struct mca_sharedfp_base_module_1_0_0_t *
+struct mca_sharedfp_base_module_2_0_0_t *
         mca_sharedfp_lockedfile_component_file_query (ompio_file_t *file, int *priority);
 int mca_sharedfp_lockedfile_component_file_unquery (ompio_file_t *file);
 
@@ -43,7 +45,7 @@ int mca_sharedfp_lockedfile_module_finalize (ompio_file_t *file);
 extern int mca_sharedfp_lockedfile_priority;
 extern int mca_sharedfp_lockedfile_verbose;
 
-OMPI_DECLSPEC extern mca_sharedfp_base_component_2_0_0_t mca_sharedfp_lockedfile_component;
+OMPI_DECLSPEC extern mca_sharedfp_base_component_3_0_0_t mca_sharedfp_lockedfile_component;
 /*
  * ******************************************************************
  * ********* functions which are implemented in this module *********
@@ -62,43 +64,43 @@ int mca_sharedfp_lockedfile_file_open (struct ompi_communicator_t *comm,
                                        ompio_file_t *fh);
 int mca_sharedfp_lockedfile_file_close (ompio_file_t *fh);
 int mca_sharedfp_lockedfile_read (ompio_file_t *fh,
-                                  void *buf, int count, MPI_Datatype datatype, MPI_Status *status);
+                                  void *buf, size_t count, MPI_Datatype datatype, MPI_Status *status);
 int mca_sharedfp_lockedfile_read_ordered (ompio_file_t *fh,
-                                          void *buf, int count, struct ompi_datatype_t *datatype,
+                                          void *buf, size_t count, struct ompi_datatype_t *datatype,
                                           ompi_status_public_t *status
                                           );
 int mca_sharedfp_lockedfile_read_ordered_begin (ompio_file_t *fh,
                                                  void *buf,
-                                                 int count,
+                                                 size_t count,
                                                  struct ompi_datatype_t *datatype);
 int mca_sharedfp_lockedfile_read_ordered_end (ompio_file_t *fh,
                                                void *buf,
                                                ompi_status_public_t *status);
 int mca_sharedfp_lockedfile_iread (ompio_file_t *fh,
                                     void *buf,
-                                    int count,
+                                    size_t count,
                                     struct ompi_datatype_t *datatype,
                                     ompi_request_t **request);
 int mca_sharedfp_lockedfile_write (ompio_file_t *fh,
                                    const void *buf,
-                                   int count,
+                                   size_t count,
                                    struct ompi_datatype_t *datatype,
                                    ompi_status_public_t *status);
 int mca_sharedfp_lockedfile_write_ordered (ompio_file_t *fh,
                                            const void *buf,
-                                           int count,
+                                           size_t count,
                                            struct ompi_datatype_t *datatype,
                                            ompi_status_public_t *status);
 int mca_sharedfp_lockedfile_write_ordered_begin (ompio_file_t *fh,
                                                  const void *buf,
-                                                 int count,
+                                                 size_t count,
                                                  struct ompi_datatype_t *datatype);
 int mca_sharedfp_lockedfile_write_ordered_end (ompio_file_t *fh,
                                                const void *buf,
                                                ompi_status_public_t *status);
 int mca_sharedfp_lockedfile_iwrite (ompio_file_t *fh,
                                     const void *buf,
-                                    int count,
+                                    size_t count,
                                     struct ompi_datatype_t *datatype,
                                     ompi_request_t **request);
 

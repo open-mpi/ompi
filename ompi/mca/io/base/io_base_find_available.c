@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2024      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -39,7 +41,7 @@
 static int init_query(const mca_base_component_t *ls,
                       bool enable_progress_threads,
                       bool enable_mpi_threads);
-static int init_query_2_0_0(const mca_base_component_t *ls,
+static int init_query_3_0_0(const mca_base_component_t *ls,
                             bool enable_progress_threads,
                             bool enable_mpi_threads);
 
@@ -106,10 +108,10 @@ static int init_query(const mca_base_component_t *m,
     /* This component has already been successfully opened.  So now
        query it. */
 
-    if (2 == m->mca_type_major_version &&
+    if (3 == m->mca_type_major_version &&
         0 == m->mca_type_minor_version &&
         0 == m->mca_type_release_version) {
-        ret = init_query_2_0_0(m, enable_progress_threads,
+        ret = init_query_3_0_0(m, enable_progress_threads,
                                enable_mpi_threads);
     } else {
         /* Unrecognized io API version */
@@ -142,14 +144,14 @@ static int init_query(const mca_base_component_t *m,
 
 
 /*
- * Query a specific component, io v2.0.0
+ * Query a specific component, io v3.0.0
  */
-static int init_query_2_0_0(const mca_base_component_t *component,
+static int init_query_3_0_0(const mca_base_component_t *component,
                             bool enable_progress_threads,
                             bool enable_mpi_threads)
 {
-    mca_io_base_component_2_0_0_t *io =
-	(mca_io_base_component_2_0_0_t *) component;
+    mca_io_base_component_3_0_0_t *io =
+	(mca_io_base_component_3_0_0_t *) component;
 
     return io->io_init_query(enable_progress_threads,
                              enable_mpi_threads);

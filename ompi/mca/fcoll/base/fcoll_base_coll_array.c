@@ -36,11 +36,11 @@
 
 
 int ompi_fcoll_base_coll_allgatherv_array (void *sbuf,
-                                      int scount,
+                                      size_t scount,
                                       ompi_datatype_t *sdtype,
                                       void *rbuf,
-                                      int *rcounts,
-                                      int *disps,
+                                      size_t *rcounts,
+                                      ptrdiff_t *disps,
                                       ompi_datatype_t *rdtype,
                                       int root_index,
                                       int *procs_in_group,
@@ -50,6 +50,7 @@ int ompi_fcoll_base_coll_allgatherv_array (void *sbuf,
     int err = OMPI_SUCCESS;
     ptrdiff_t extent, lb;
     int i, rank, j;
+    int *tmp_rcounts = NULL, *tmp_disps = NULL;
     char *send_buf = NULL;
     struct ompi_datatype_t *newtype, *send_type;
 
@@ -92,11 +93,24 @@ int ompi_fcoll_base_coll_allgatherv_array (void *sbuf,
         return err;
     }
 
+    /* TODO:BIGCOUNT: remove tmp_rcounts and tmp_disps once the ompi_datatype
+     * interface is udpated to use size_t/ptrdiff_t
+     */
+    tmp_rcounts = (int *)malloc(2 * procs_per_group * sizeof(int));
+    if (NULL == tmp_rcounts) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+    tmp_disps = tmp_rcounts + procs_per_group;
+    for (i = 0; i < procs_per_group; i++) {
+        tmp_rcounts[i] = (int) rcounts[i];
+        tmp_disps[i] = (int) disps[i];
+    }
     err = ompi_datatype_create_indexed (procs_per_group,
-                                        rcounts,
-                                        disps,
+                                        tmp_rcounts,
+                                        tmp_disps,
                                         rdtype,
                                         &newtype);
+    free(tmp_rcounts);
     if (MPI_SUCCESS != err) {
         return err;
     }
@@ -119,11 +133,11 @@ int ompi_fcoll_base_coll_allgatherv_array (void *sbuf,
 }
 
 int ompi_fcoll_base_coll_gatherv_array (void *sbuf,
-                                   int scount,
+                                   size_t scount,
                                    ompi_datatype_t *sdtype,
                                    void *rbuf,
-                                   int *rcounts,
-                                   int *disps,
+                                   size_t *rcounts,
+                                   ptrdiff_t *disps,
                                    ompi_datatype_t *rdtype,
                                    int root_index,
                                    int *procs_in_group,
@@ -208,11 +222,11 @@ int ompi_fcoll_base_coll_gatherv_array (void *sbuf,
 }
 
 int ompi_fcoll_base_coll_scatterv_array (void *sbuf,
-                                    int *scounts,
-                                    int *disps,
+                                    size_t *scounts,
+                                    ptrdiff_t *disps,
                                     ompi_datatype_t *sdtype,
                                     void *rbuf,
-                                    int rcount,
+                                    size_t rcount,
                                     ompi_datatype_t *rdtype,
                                     int root_index,
                                     int *procs_in_group,
@@ -298,10 +312,10 @@ int ompi_fcoll_base_coll_scatterv_array (void *sbuf,
 }
 
 int ompi_fcoll_base_coll_allgather_array (void *sbuf,
-                                     int scount,
+                                     size_t scount,
                                      ompi_datatype_t *sdtype,
                                      void *rbuf,
-                                     int rcount,
+                                     size_t rcount,
                                      ompi_datatype_t *rdtype,
                                      int root_index,
                                      int *procs_in_group,
@@ -351,10 +365,10 @@ int ompi_fcoll_base_coll_allgather_array (void *sbuf,
 }
 
 int ompi_fcoll_base_coll_gather_array (void *sbuf,
-                                  int scount,
+                                  size_t scount,
                                   ompi_datatype_t *sdtype,
                                   void *rbuf,
-                                  int rcount,
+                                  size_t rcount,
                                   ompi_datatype_t *rdtype,
                                   int root_index,
                                   int *procs_in_group,
@@ -441,7 +455,7 @@ int ompi_fcoll_base_coll_gather_array (void *sbuf,
 }
 
 int ompi_fcoll_base_coll_bcast_array (void *buff,
-                                 int count,
+                                 size_t count,
                                  ompi_datatype_t *datatype,
                                  int root_index,
                                  int *procs_in_group,

@@ -13,6 +13,8 @@
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (c) 2024      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -37,16 +39,16 @@
 #include <math.h>
 
 static int mca_common_ompio_file_write_pipelined (ompio_file_t *fh, const void *buf,
-                                                  int count, struct ompi_datatype_t *datatype,
+                                                  size_t count, struct ompi_datatype_t *datatype,
                                                   ompi_status_public_t *status);
 
 static int mca_common_ompio_file_write_default (ompio_file_t *fh, const void *buf,
-                                                int count, struct ompi_datatype_t *datatype,
+                                                size_t count, struct ompi_datatype_t *datatype,
                                                 ompi_status_public_t *status);
 
 int mca_common_ompio_file_write (ompio_file_t *fh,
                                const void *buf,
-                               int count,
+                               size_t count,
                                struct ompi_datatype_t *datatype,
                                ompi_status_public_t *status)
 {
@@ -93,7 +95,7 @@ int mca_common_ompio_file_write (ompio_file_t *fh,
 
 int mca_common_ompio_file_write_default (ompio_file_t *fh,
                                          const void *buf,
-                                         int count,
+                                         size_t count,
                                          struct ompi_datatype_t *datatype,
                                          ompi_status_public_t *status)
 {
@@ -152,7 +154,7 @@ int mca_common_ompio_file_write_default (ompio_file_t *fh,
 
 int mca_common_ompio_file_write_pipelined (ompio_file_t *fh,
                                            const void *buf,
-                                           int count,
+                                           size_t count,
                                            struct ompi_datatype_t *datatype,
                                            ompi_status_public_t *status)
 {
@@ -289,7 +291,7 @@ int mca_common_ompio_file_write_pipelined (ompio_file_t *fh,
 int mca_common_ompio_file_write_at (ompio_file_t *fh,
 				  OMPI_MPI_OFFSET_TYPE offset,
 				  const void *buf,
-				  int count,
+				  size_t count,
 				  struct ompi_datatype_t *datatype,
 				  ompi_status_public_t *status)
 {
@@ -345,7 +347,7 @@ static void mca_common_ompio_post_next_write_subreq(struct mca_ompio_request_t *
 
 int mca_common_ompio_file_iwrite (ompio_file_t *fh,
                                 const void *buf,
-                                int count,
+                                size_t count,
                                 struct ompi_datatype_t *datatype,
                                 ompi_request_t **request)
 {
@@ -473,7 +475,7 @@ int mca_common_ompio_file_iwrite (ompio_file_t *fh,
 int mca_common_ompio_file_iwrite_at (ompio_file_t *fh,
 				   OMPI_MPI_OFFSET_TYPE offset,
 				   const void *buf,
-				   int count,
+				   size_t count,
 				   struct ompi_datatype_t *datatype,
 				   ompi_request_t **request)
 {
@@ -505,7 +507,7 @@ int mca_common_ompio_file_iwrite_at (ompio_file_t *fh,
 /******************************************************************/
 int mca_common_ompio_file_write_all (ompio_file_t *fh,
                                      const void *buf,
-                                     int count,
+                                     size_t count,
                                      struct ompi_datatype_t *datatype,
                                      ompi_status_public_t *status)
 {
@@ -560,7 +562,7 @@ int mca_common_ompio_file_write_all (ompio_file_t *fh,
 int mca_common_ompio_file_write_at_all (ompio_file_t *fh,
 				      OMPI_MPI_OFFSET_TYPE offset,
 				      const void *buf,
-				      int count,
+				      size_t count,
 				      struct ompi_datatype_t *datatype,
 				      ompi_status_public_t *status)
 {
@@ -581,7 +583,7 @@ int mca_common_ompio_file_write_at_all (ompio_file_t *fh,
 
 int mca_common_ompio_file_iwrite_all (ompio_file_t *fp,
                                       const void *buf,
-                                      int count,
+                                      size_t count,
                                       struct ompi_datatype_t *datatype,
                                       ompi_request_t **request)
 {
@@ -608,7 +610,7 @@ int mca_common_ompio_file_iwrite_all (ompio_file_t *fp,
 int mca_common_ompio_file_iwrite_at_all (ompio_file_t *fp,
 				       OMPI_MPI_OFFSET_TYPE offset,
 				       const void *buf,
-				       int count,
+				       size_t count,
 				       struct ompi_datatype_t *datatype,
 				       ompi_request_t **request)
 {

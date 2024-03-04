@@ -14,6 +14,8 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
+ * Copyright (c) 2024      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -54,7 +56,7 @@ static int local_heap_sort (mca_io_ompio_local_io_array *io_array,
 int
 mca_fcoll_dynamic_file_write_all (struct ompio_file_t *fh,
                                   const void *buf,
-                                  int count,
+                                  size_t count,
                                   struct ompi_datatype_t *datatype,
                                   ompi_status_public_t *status)
 {
@@ -82,8 +84,10 @@ mca_fcoll_dynamic_file_write_all (struct ompio_file_t *fh,
     /* global iovec at the writers that contain the iovecs created from
        file_set_view */
     uint32_t total_fview_count = 0;
-    int local_count = 0, temp_pindex;
-    int *fview_count = NULL, *disp_index=NULL, *temp_disp_index=NULL;
+    size_t local_count = 0, temp_pindex;
+    int temp_local_count;
+    size_t *fview_count = NULL;
+    ptrdiff_t *disp_index=NULL, *temp_disp_index=NULL;
     int current_index = 0, temp_index=0;
 
     char *global_buf = NULL;
@@ -93,7 +97,7 @@ mca_fcoll_dynamic_file_write_all (struct ompio_file_t *fh,
 
     /* array that contains the sorted indices of the global_iov */
     int *sorted = NULL, *sorted_file_offsets=NULL;
-    int *displs = NULL;
+    ptrdiff_t *displs = NULL;
     int dynamic_num_io_procs;
     size_t max_data = 0, datatype_size = 0;
     int **blocklen_per_process=NULL;
@@ -211,10 +215,11 @@ mca_fcoll_dynamic_file_write_all (struct ompio_file_t *fh,
     ret = fh->f_generate_current_file_view( (struct ompio_file_t *) fh,
 					    max_data,
 					    &local_iov_array,
-					    &local_count);
+					    &temp_local_count);
     if (ret != OMPI_SUCCESS){
 	goto exit;
     }
+    local_count = temp_local_count;
 
 #if DEBUG_ON
     for (i=0 ; i<local_count ; i++) {
@@ -230,7 +235,7 @@ mca_fcoll_dynamic_file_write_all (struct ompio_file_t *fh,
     /*************************************************************
      *** 4. Allgather the offset/lengths array from all processes
      *************************************************************/
-    fview_count = (int *) malloc (fh->f_procs_per_group * sizeof (int));
+    fview_count = (size_t *)malloc (fh->f_procs_per_group * sizeof (size_t));
     if (NULL == fview_count) {
         opal_output (1, "OUT OF MEMORY\n");
         ret = OMPI_ERR_OUT_OF_RESOURCE;
@@ -240,11 +245,11 @@ mca_fcoll_dynamic_file_write_all (struct ompio_file_t *fh,
     start_comm_time = MPI_Wtime();
 #endif
     ret = ompi_fcoll_base_coll_allgather_array (&local_count,
-                                           1,
-                                           MPI_INT,
+                                           sizeof(size_t),
+                                           MPI_BYTE,
                                            fview_count,
-                                           1,
-                                           MPI_INT,
+                                           sizeof(size_t),
+                                           MPI_BYTE,
                                            0,
                                            fh->f_procs_in_group,
                                            fh->f_procs_per_group,
@@ -258,7 +263,7 @@ mca_fcoll_dynamic_file_write_all (struct ompio_file_t *fh,
     comm_time += (end_comm_time - start_comm_time);
 #endif
 
-    displs = (int*) malloc (fh->f_procs_per_group * sizeof (int));
+    displs = (ptrdiff_t *)malloc (fh->f_procs_per_group * sizeof (ptrdiff_t));
     if (NULL == displs) {
         opal_output (1, "OUT OF MEMORY\n");
         ret = OMPI_ERR_OUT_OF_RESOURCE;
@@ -276,11 +281,11 @@ mca_fcoll_dynamic_file_write_all (struct ompio_file_t *fh,
     printf("total_fview_count : %d\n", total_fview_count);
     if (my_aggregator == fh->f_rank) {
         for (i=0 ; i<fh->f_procs_per_group ; i++) {
-            printf ("%d: PROCESS: %d  ELEMENTS: %d  DISPLS: %d\n",
+            printf ("%d: PROCESS: %d  ELEMENTS: %zu  DISPLS: %ld\n",
                     fh->f_rank,
                     i,
                     fview_count[i],
-                    displs[i]);
+                    (long) displs[i]);
         }
     }
 #endif
@@ -368,7 +373,7 @@ mca_fcoll_dynamic_file_write_all (struct ompio_file_t *fh,
     cycles = ceil((double)total_bytes/bytes_per_cycle);
 
     if (my_aggregator == fh->f_rank) {
-        disp_index = (int *)malloc (fh->f_procs_per_group * sizeof (int));
+        disp_index = (ptrdiff_t *)malloc (fh->f_procs_per_group * sizeof (ptrdiff_t));
         if (NULL == disp_index) {
             opal_output (1, "OUT OF MEMORY\n");
             ret = OMPI_ERR_OUT_OF_RESOURCE;
@@ -707,7 +712,7 @@ mca_fcoll_dynamic_file_write_all (struct ompio_file_t *fh,
                     file_offsets_for_agg[sorted_file_offsets[i-1]].length;
             }
 
-            temp_disp_index = (int *)calloc (1, fh->f_procs_per_group * sizeof (int));
+            temp_disp_index = (ptrdiff_t *)calloc (1, fh->f_procs_per_group * sizeof (ptrdiff_t));
             if (NULL == temp_disp_index) {
                 opal_output (1, "OUT OF MEMORY\n");
                 ret = OMPI_ERR_OUT_OF_RESOURCE;
@@ -726,9 +731,9 @@ mca_fcoll_dynamic_file_write_all (struct ompio_file_t *fh,
                 if (temp_disp_index[temp_pindex] < disp_index[temp_pindex])
                     temp_disp_index[temp_pindex] += 1;
                 else{
-                    printf("temp_disp_index[%d]: %d is greater than disp_index[%d]: %d\n",
-                           temp_pindex, temp_disp_index[temp_pindex],
-                           temp_pindex, disp_index[temp_pindex]);
+                    printf("temp_disp_index[%zu]: %ld is greater than disp_index[%zu]: %ld\n",
+                           temp_pindex, (long) temp_disp_index[temp_pindex],
+                           temp_pindex, (long) disp_index[temp_pindex]);
                 }
 #if DEBUG_ON
                 global_count +=

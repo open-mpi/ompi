@@ -13,6 +13,8 @@
  *  Copyright (c) 2018      Research Organization for Information Science
  *                          and Technology (RIST). All rights reserved.
  *  Copyright (c) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+ *  Copyright (c) 2024      Triad National Security, LLC. All rights
+ *                          reserved.
  *  $COPYRIGHT$
  *
  *  Additional copyrights may follow
@@ -55,16 +57,16 @@
 */
 
 static int mca_common_ompio_file_read_default (ompio_file_t *fh, void *buf,
-                                               int count, struct ompi_datatype_t *datatype,
+                                               size_t count, struct ompi_datatype_t *datatype,
                                                ompi_status_public_t *status);
 
 static int mca_common_ompio_file_read_pipelined (ompio_file_t *fh, void *buf,
-                                                 int count, struct ompi_datatype_t *datatype,
+                                                 size_t count, struct ompi_datatype_t *datatype,
                                                  ompi_status_public_t *status);
 
 int mca_common_ompio_file_read (ompio_file_t *fh,
                               void *buf,
-                              int count,
+                              size_t count,
                               struct ompi_datatype_t *datatype,
                               ompi_status_public_t *status)
 {
@@ -109,7 +111,7 @@ int mca_common_ompio_file_read (ompio_file_t *fh,
 }
 
 int mca_common_ompio_file_read_default (ompio_file_t *fh, void *buf,
-                                        int count, struct ompi_datatype_t *datatype,
+                                        size_t count, struct ompi_datatype_t *datatype,
                                         ompi_status_public_t *status)
 {
     size_t total_bytes_read = 0;       /* total bytes that have been read*/
@@ -171,7 +173,7 @@ int mca_common_ompio_file_read_default (ompio_file_t *fh, void *buf,
 }
 
 int mca_common_ompio_file_read_pipelined (ompio_file_t *fh, void *buf,
-                                          int count, struct ompi_datatype_t *datatype,
+                                          size_t count, struct ompi_datatype_t *datatype,
                                           ompi_status_public_t *status)
 {
     size_t tbr = 0;               /* total bytes that have been read*/
@@ -322,7 +324,7 @@ int mca_common_ompio_file_read_pipelined (ompio_file_t *fh, void *buf,
 int mca_common_ompio_file_read_at (ompio_file_t *fh,
 				 OMPI_MPI_OFFSET_TYPE offset,
 				 void *buf,
-				 int count,
+				 size_t count,
 				 struct ompi_datatype_t *datatype,
 				 ompi_status_public_t * status)
 {
@@ -403,7 +405,7 @@ static void mca_common_ompio_post_next_read_subreq(struct mca_ompio_request_t *r
 
 int mca_common_ompio_file_iread (ompio_file_t *fh,
                                void *buf,
-                               int count,
+                               size_t count,
                                struct ompi_datatype_t *datatype,
                                ompi_request_t **request)
 {
@@ -531,7 +533,7 @@ int mca_common_ompio_file_iread (ompio_file_t *fh,
 int mca_common_ompio_file_iread_at (ompio_file_t *fh,
 				  OMPI_MPI_OFFSET_TYPE offset,
 				  void *buf,
-				  int count,
+				  size_t count,
 				  struct ompi_datatype_t *datatype,
 				  ompi_request_t **request)
 {
@@ -563,7 +565,7 @@ int mca_common_ompio_file_iread_at (ompio_file_t *fh,
 /* Infrastructure for collective operations  */
 int mca_common_ompio_file_read_all (ompio_file_t *fh,
                                     void *buf,
-                                    int count,
+                                    size_t count,
                                     struct ompi_datatype_t *datatype,
                                     ompi_status_public_t * status)
 {
@@ -617,7 +619,7 @@ int mca_common_ompio_file_read_all (ompio_file_t *fh,
 int mca_common_ompio_file_read_at_all (ompio_file_t *fh,
 				     OMPI_MPI_OFFSET_TYPE offset,
 				     void *buf,
-				     int count,
+				     size_t count,
 				     struct ompi_datatype_t *datatype,
 				     ompi_status_public_t * status)
 {
@@ -638,7 +640,7 @@ int mca_common_ompio_file_read_at_all (ompio_file_t *fh,
 
 int mca_common_ompio_file_iread_all (ompio_file_t *fp,
                                      void *buf,
-                                     int count,
+                                     size_t count,
                                      struct ompi_datatype_t *datatype,
                                      ompi_request_t **request)
 {
@@ -664,7 +666,7 @@ int mca_common_ompio_file_iread_all (ompio_file_t *fp,
 int mca_common_ompio_file_iread_at_all (ompio_file_t *fp,
 				      OMPI_MPI_OFFSET_TYPE offset,
 				      void *buf,
-				      int count,
+				      size_t count,
 				      struct ompi_datatype_t *datatype,
 				      ompi_request_t **request)
 {

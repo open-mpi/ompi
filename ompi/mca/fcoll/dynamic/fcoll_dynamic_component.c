@@ -14,6 +14,8 @@
  * Copyright (c) 2008-2014 University of Houston. All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2024      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -51,13 +53,13 @@ static int dynamic_register(void);
  * Instantiate the public struct with all of our public information
  * and pointers to our public functions in it
  */
-mca_fcoll_base_component_2_0_0_t mca_fcoll_dynamic_component = {
+mca_fcoll_base_component_3_0_0_t mca_fcoll_dynamic_component = {
 
     /* First, the mca_component_t struct containing meta information
      * about the component itself */
 
     .fcollm_version = {
-        MCA_FCOLL_BASE_VERSION_2_0_0,
+        MCA_FCOLL_BASE_VERSION_3_0_0,
 
         /* Component name and version */
         .mca_component_name = "dynamic",

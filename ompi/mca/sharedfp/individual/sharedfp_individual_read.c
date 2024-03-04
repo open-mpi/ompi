@@ -12,6 +12,8 @@
  * Copyright (c) 2008      University of Houston. All rights reserved.
  * Copyright (c) 2018      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2024      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,14 +31,14 @@
 #include "ompi/mca/sharedfp/base/base.h"
 
 int mca_sharedfp_individual_read ( ompio_file_t *fh,
-				   void *buf, int count, MPI_Datatype datatype, MPI_Status *status)
+				   void *buf, size_t count, MPI_Datatype datatype, MPI_Status *status)
 {
     opal_output(0,"mca_sharedfp_individual_read: NOT SUPPORTED by this component\n");
     return OMPI_ERROR;
 }
 
 int mca_sharedfp_individual_read_ordered ( ompio_file_t *fh,
-                                   void *buf, int count, MPI_Datatype datatype, MPI_Status *status)
+                                   void *buf, size_t count, MPI_Datatype datatype, MPI_Status *status)
 {
     opal_output(0,"mca_sharedfp_individual_read_ordered: NOT SUPPORTED by this component\n");
     return OMPI_ERROR;
@@ -44,7 +46,7 @@ int mca_sharedfp_individual_read_ordered ( ompio_file_t *fh,
 
 int mca_sharedfp_individual_iread(ompio_file_t *fh,
                                    void *buf,
-                                   int count,
+                                   size_t count,
                                    ompi_datatype_t *datatype,
                                    MPI_Request * request)
 {
@@ -54,7 +56,7 @@ int mca_sharedfp_individual_iread(ompio_file_t *fh,
 
 int mca_sharedfp_individual_read_ordered_begin(ompio_file_t *fh,
                                                 void *buf,
-                                                int count,
+                                                size_t count,
                                                 struct ompi_datatype_t *datatype)
 {
     opal_output(0,"mca_sharedfp_individual_read_ordered_begin: NOT SUPPORTED by this component\n");

@@ -12,6 +12,8 @@
  * Copyright (c) 2008-2017 University of Houston. All rights reserved.
  * Copyright (c) 2018      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2024      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -34,7 +36,7 @@
  * ************************ actions structure ************************
  * *******************************************************************
  */
-static mca_fcoll_base_module_1_0_0_t vulcan =  {
+static mca_fcoll_base_module_2_0_0_t vulcan =  {
     mca_fcoll_vulcan_module_init,
     mca_fcoll_vulcan_module_finalize,
     mca_fcoll_vulcan_file_read_all,
@@ -54,7 +56,7 @@ mca_fcoll_vulcan_component_init_query(bool enable_progress_threads,
     return OMPI_SUCCESS;
 }
 
-mca_fcoll_base_module_1_0_0_t *
+mca_fcoll_base_module_2_0_0_t *
 mca_fcoll_vulcan_component_file_query (ompio_file_t *fh, int *priority)
 {
     *priority = mca_fcoll_vulcan_priority;

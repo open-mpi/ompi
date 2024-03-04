@@ -13,6 +13,8 @@
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
+ * Copyright (c) 2024      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -31,7 +33,7 @@
 int
 mca_fcoll_dynamic_file_read_all (struct ompio_file_t *fh,
                                  void *buf,
-                                 int count,
+                                 size_t count,
                                  struct ompi_datatype_t *datatype,
                                  ompi_status_public_t *status)
 {

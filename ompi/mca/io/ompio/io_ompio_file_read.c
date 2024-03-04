@@ -12,6 +12,8 @@
  * Copyright (c) 2008-2019 University of Houston. All rights reserved.
  * Copyright (c) 2017-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2024      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -53,7 +55,7 @@
 
 int mca_io_ompio_file_read (ompi_file_t *fp,
 			    void *buf,
-			    int count,
+			    size_t count,
 			    struct ompi_datatype_t *datatype,
 			    ompi_status_public_t *status)
 {
@@ -71,7 +73,7 @@ int mca_io_ompio_file_read (ompi_file_t *fp,
 int mca_io_ompio_file_read_at (ompi_file_t *fh,
 			       OMPI_MPI_OFFSET_TYPE offset,
 			       void *buf,
-			       int count,
+			       size_t count,
 			       struct ompi_datatype_t *datatype,
 			       ompi_status_public_t * status)
 {
@@ -88,7 +90,7 @@ int mca_io_ompio_file_read_at (ompi_file_t *fh,
 
 int mca_io_ompio_file_iread (ompi_file_t *fh,
 			     void *buf,
-			     int count,
+			     size_t count,
 			     struct ompi_datatype_t *datatype,
 			     ompi_request_t **request)
 {
@@ -107,7 +109,7 @@ int mca_io_ompio_file_iread (ompi_file_t *fh,
 int mca_io_ompio_file_iread_at (ompi_file_t *fh,
 				OMPI_MPI_OFFSET_TYPE offset,
 				void *buf,
-				int count,
+				size_t count,
 				struct ompi_datatype_t *datatype,
 				ompi_request_t **request)
 {
@@ -127,7 +129,7 @@ int mca_io_ompio_file_iread_at (ompi_file_t *fh,
 /******************************************************/
 int mca_io_ompio_file_read_all (ompi_file_t *fh,
 				void *buf,
-				int count,
+				size_t count,
 				struct ompi_datatype_t *datatype,
 				ompi_status_public_t * status)
 {
@@ -155,7 +157,7 @@ int mca_io_ompio_file_read_all (ompi_file_t *fh,
 
 int mca_io_ompio_file_iread_all (ompi_file_t *fh,
 				void *buf,
-				int count,
+				size_t count,
 				struct ompi_datatype_t *datatype,
 				ompi_request_t **request)
 {
@@ -179,7 +181,7 @@ int mca_io_ompio_file_iread_all (ompi_file_t *fh,
 int mca_io_ompio_file_read_at_all (ompi_file_t *fh,
 				   OMPI_MPI_OFFSET_TYPE offset,
 				   void *buf,
-				   int count,
+				   size_t count,
 				   struct ompi_datatype_t *datatype,
 				   ompi_status_public_t * status)
 {
@@ -197,7 +199,7 @@ int mca_io_ompio_file_read_at_all (ompi_file_t *fh,
 int mca_io_ompio_file_iread_at_all (ompi_file_t *fh,
 				    OMPI_MPI_OFFSET_TYPE offset,
 				    void *buf,
-				    int count,
+				    size_t count,
 				    struct ompi_datatype_t *datatype,
 				    ompi_request_t **request)
 {
@@ -217,7 +219,7 @@ int mca_io_ompio_file_iread_at_all (ompi_file_t *fh,
 /******************************************************/
 int mca_io_ompio_file_read_shared (ompi_file_t *fp,
 				   void *buf,
-				   int count,
+				   size_t count,
 				   struct ompi_datatype_t *datatype,
 				   ompi_status_public_t * status)
 {
@@ -244,7 +246,7 @@ int mca_io_ompio_file_read_shared (ompi_file_t *fp,
 
 int mca_io_ompio_file_iread_shared (ompi_file_t *fh,
 				    void *buf,
-				    int count,
+				    size_t count,
 				    struct ompi_datatype_t *datatype,
 				    ompi_request_t **request)
 {
@@ -271,7 +273,7 @@ int mca_io_ompio_file_iread_shared (ompi_file_t *fh,
 
 int mca_io_ompio_file_read_ordered (ompi_file_t *fh,
 				    void *buf,
-				    int count,
+				    size_t count,
 				    struct ompi_datatype_t *datatype,
 				    ompi_status_public_t * status)
 {
@@ -297,7 +299,7 @@ int mca_io_ompio_file_read_ordered (ompi_file_t *fh,
 
 int mca_io_ompio_file_read_ordered_begin (ompi_file_t *fh,
 					  void *buf,
-					  int count,
+					  size_t count,
 					  struct ompi_datatype_t *datatype)
 {
     int ret = OMPI_SUCCESS;
@@ -351,7 +353,7 @@ int mca_io_ompio_file_read_ordered_end (ompi_file_t *fh,
 /**********************************************************************/
 int mca_io_ompio_file_read_all_begin (ompi_file_t *fh,
 				      void *buf,
-				      int count,
+				      size_t count,
 				      struct ompi_datatype_t *datatype)
 {
     int ret = OMPI_SUCCESS;
@@ -391,7 +393,7 @@ int mca_io_ompio_file_read_all_end (ompi_file_t *fh,
 int mca_io_ompio_file_read_at_all_begin (ompi_file_t *fh,
 					 OMPI_MPI_OFFSET_TYPE offset,
 					 void *buf,
-					 int count,
+					 size_t count,
 					 struct ompi_datatype_t *datatype)
 {
     int ret = OMPI_SUCCESS;

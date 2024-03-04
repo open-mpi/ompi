@@ -14,6 +14,8 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
+ * Copyright (c) 2024      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -76,7 +78,7 @@ static avail_io_t *check_one_component(ompi_file_t *file,
 
 static avail_io_t *query(const mca_base_component_t *component,
                          ompi_file_t *file);
-static avail_io_t *query_2_0_0(const mca_io_base_component_2_0_0_t *io_component,
+static avail_io_t *query_2_0_0(const mca_io_base_component_3_0_0_t *io_component,
                                ompi_file_t *file);
 
 static void unquery(avail_io_t *avail, ompi_file_t *file);
@@ -195,7 +197,7 @@ int mca_io_base_file_select(ompi_file_t *file,
 
     OBJ_RELEASE(selectable);
 
-    if (!strcmp (selected.ai_component.v2_0_0.io_version.mca_component_name,
+    if (!strcmp (selected.ai_component.v3_0_0.io_version.mca_component_name,
                  "ompio")) {
         int ret;
 
@@ -254,15 +256,15 @@ int mca_io_base_file_select(ompi_file_t *file,
 
     opal_output_verbose(10, ompi_io_base_framework.framework_output,
                         "io:base:file_select: Selected io module %s",
-                        selected.ai_component.v2_0_0.io_version.mca_component_name);
+                        selected.ai_component.v3_0_0.io_version.mca_component_name);
 
 #if OPAL_ENABLE_FT_MPI
     if(ompi_ftmpi_enabled) {
         /* check if module is tested for FT, warn if not. */
         const char* ft_whitelist="";
         opal_show_help("help-mpi-ft.txt", "module:untested:failundef", true,
-            selected.ai_component.v2_0_0.io_version.mca_type_name,
-            selected.ai_component.v2_0_0.io_version.mca_component_name,
+            selected.ai_component.v3_0_0.io_version.mca_type_name,
+            selected.ai_component.v3_0_0.io_version.mca_component_name,
             ft_whitelist);
     }
 #endif /* OPAL_ENABLE_FT_MPI */
@@ -396,16 +398,16 @@ static avail_io_t *check_one_component(ompi_file_t *file,
 static avail_io_t *query(const mca_base_component_t *component,
                          ompi_file_t *file)
 {
-    const mca_io_base_component_2_0_0_t *ioc_200;
+    const mca_io_base_component_3_0_0_t *ioc_300;
 
     /* MCA version check */
 
     if (MCA_BASE_VERSION_MAJOR == component->mca_major_version &&
         MCA_BASE_VERSION_MINOR == component->mca_minor_version &&
         MCA_BASE_VERSION_RELEASE == component->mca_release_version) {
-        ioc_200 = (mca_io_base_component_2_0_0_t *) component;
+        ioc_300 = (mca_io_base_component_3_0_0_t *) component;
 
-        return query_2_0_0(ioc_200, file);
+        return query_2_0_0(ioc_300, file);
     }
 
     /* Unknown io API version -- return error */
@@ -414,12 +416,12 @@ static avail_io_t *query(const mca_base_component_t *component,
 }
 
 
-static avail_io_t *query_2_0_0(const mca_io_base_component_2_0_0_t *component,
+static avail_io_t *query_2_0_0(const mca_io_base_component_3_0_0_t *component,
                                ompi_file_t *file)
 {
     int priority;
     avail_io_t *avail;
-    const mca_io_base_module_2_0_0_t *module;
+    const mca_io_base_module_3_0_0_t *module;
     struct mca_io_base_file_t *module_data;
 
     /* Query v2.0.0 */
@@ -429,10 +431,10 @@ static avail_io_t *query_2_0_0(const mca_io_base_component_2_0_0_t *component,
     module = component->io_file_query(file, &module_data, &priority);
     if (NULL != module) {
         avail = OBJ_NEW(avail_io_t);
-        avail->ai_version = MCA_IO_BASE_V_2_0_0;
+        avail->ai_version = MCA_IO_BASE_V_3_0_0;
         avail->ai_priority = priority;
-        avail->ai_component.v2_0_0 = *component;
-        avail->ai_module.v2_0_0 = *module;
+        avail->ai_component.v3_0_0 = *component;
+        avail->ai_module.v3_0_0 = *module;
         avail->ai_module_data = module_data;
     }
 
@@ -446,12 +448,12 @@ static avail_io_t *query_2_0_0(const mca_io_base_component_2_0_0_t *component,
 
 static void unquery(avail_io_t *avail, ompi_file_t *file)
 {
-    const mca_io_base_component_2_0_0_t *ioc_200;
+    const mca_io_base_component_3_0_0_t *ioc_300;
 
     switch(avail->ai_version) {
-    case MCA_IO_BASE_V_2_0_0:
-        ioc_200 = &(avail->ai_component.v2_0_0);
-        ioc_200->io_file_unquery(file, avail->ai_module_data);
+    case MCA_IO_BASE_V_3_0_0:
+        ioc_300 = &(avail->ai_component.v3_0_0);
+        ioc_300->io_file_unquery(file, avail->ai_module_data);
         break;
 
     default:
@@ -469,12 +471,12 @@ static void unquery(avail_io_t *avail, ompi_file_t *file)
  */
 static int module_init(ompi_file_t *file)
 {
-    const mca_io_base_module_2_0_0_t *iom_200;
+    const mca_io_base_module_3_0_0_t *iom_300;
 
     switch(file->f_io_version) {
-    case MCA_IO_BASE_V_2_0_0:
-        iom_200 = &(file->f_io_selected_module.v2_0_0);
-        return iom_200->io_module_file_open(file->f_comm, file->f_filename,
+    case MCA_IO_BASE_V_3_0_0:
+        iom_300 = &(file->f_io_selected_module.v3_0_0);
+        return iom_300->io_module_file_open(file->f_comm, file->f_filename,
                                             file->f_amode, file->super.s_info,
                                             file);
         break;

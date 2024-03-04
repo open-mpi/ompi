@@ -12,6 +12,8 @@
  * Copyright (c) 2008-2016 University of Houston. All rights reserved.
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2024      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -36,13 +38,13 @@ BEGIN_C_DECLS
 
 extern int mca_fcoll_individual_priority;
 
-OMPI_DECLSPEC extern mca_fcoll_base_component_2_0_0_t mca_fcoll_individual_component;
+OMPI_DECLSPEC extern mca_fcoll_base_component_3_0_0_t mca_fcoll_individual_component;
 
 /* API functions */
 
 int mca_fcoll_individual_component_init_query(bool enable_progress_threads,
                                            bool enable_mpi_threads);
-struct mca_fcoll_base_module_1_0_0_t *
+struct mca_fcoll_base_module_2_0_0_t *
 mca_fcoll_individual_component_file_query (ompio_file_t *fh, int *priority);
 
 int mca_fcoll_individual_component_file_unquery (ompio_file_t *file);
@@ -52,14 +54,14 @@ int mca_fcoll_individual_module_finalize (ompio_file_t *file);
 
 int mca_fcoll_individual_file_read_all (ompio_file_t *fh,
                                      void *buf,
-                                     int count,
+                                     size_t count,
                                      struct ompi_datatype_t *datatype,
                                      ompi_status_public_t * status);
 
 
 int mca_fcoll_individual_file_write_all (ompio_file_t *fh,
                                       const void *buf,
-                                      int count,
+                                      size_t count,
                                       struct ompi_datatype_t *datatype,
                                       ompi_status_public_t * status);
 

@@ -14,6 +14,8 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * Copyright (c) 2008-2018 University of Houston. All rights reserved.
+ * Copyright (c) 2024      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -64,7 +66,7 @@ static avail_io_t *check_one_component(const mca_base_component_t *component,
 
 static avail_io_t *query(const mca_base_component_t *component,
                          const char *filename, struct opal_info_t *info);
-static avail_io_t *query_2_0_0(const mca_io_base_component_2_0_0_t *io_component,
+static avail_io_t *query_3_0_0(const mca_io_base_component_3_0_0_t *io_component,
                                const char *filename, struct opal_info_t *info);
 
 static void unquery(avail_io_t *avail, const char *filename, struct opal_info_t *info);
@@ -147,7 +149,7 @@ int mca_io_base_delete(const char *filename, struct opal_info_t *info)
     }
     OBJ_RELEASE(selectable);
 
-    if (!strcmp (selected.ai_component.v2_0_0.io_version.mca_component_name,
+    if (!strcmp (selected.ai_component.v3_0_0.io_version.mca_component_name,
                  "ompio")) {
         int ret;
 
@@ -174,7 +176,7 @@ int mca_io_base_delete(const char *filename, struct opal_info_t *info)
 
     opal_output_verbose(10, ompi_io_base_framework.framework_output,
                         "io:base:delete: Selected io component %s",
-                        selected.ai_component.v2_0_0.io_version.mca_component_name);
+                        selected.ai_component.v3_0_0.io_version.mca_component_name);
 
     return OMPI_SUCCESS;
 }
@@ -308,16 +310,16 @@ static avail_io_t *check_one_component(const mca_base_component_t *component,
 static avail_io_t *query(const mca_base_component_t *component,
                          const char *filename, struct opal_info_t *info)
 {
-    const mca_io_base_component_2_0_0_t *ioc_200;
+    const mca_io_base_component_3_0_0_t *ioc_300;
 
-    /* io v2.0.0 */
+    /* io v3.0.0 */
 
     if (MCA_BASE_VERSION_MAJOR == component->mca_major_version &&
         MCA_BASE_VERSION_MINOR == component->mca_minor_version &&
         MCA_BASE_VERSION_RELEASE == component->mca_release_version) {
-        ioc_200 = (mca_io_base_component_2_0_0_t *) component;
+        ioc_300 = (mca_io_base_component_3_0_0_t *) component;
 
-        return query_2_0_0(ioc_200, filename, info);
+        return query_3_0_0(ioc_300, filename, info);
     }
 
     /* Unknown io API version -- return error */
@@ -326,7 +328,7 @@ static avail_io_t *query(const mca_base_component_t *component,
 }
 
 
-static avail_io_t *query_2_0_0(const mca_io_base_component_2_0_0_t *component,
+static avail_io_t *query_3_0_0(const mca_io_base_component_3_0_0_t *component,
                                const char *filename, struct opal_info_t *info)
 {
     bool usable;
@@ -334,7 +336,7 @@ static avail_io_t *query_2_0_0(const mca_io_base_component_2_0_0_t *component,
     avail_io_t *avail;
     struct mca_io_base_delete_t *private_data;
 
-    /* Query v2.0.0 */
+    /* Query v3.0.0 */
 
     avail = NULL;
     private_data = NULL;
@@ -343,9 +345,9 @@ static avail_io_t *query_2_0_0(const mca_io_base_component_2_0_0_t *component,
                                      &priority);
     if (OMPI_SUCCESS == ret && usable) {
         avail = OBJ_NEW(avail_io_t);
-        avail->ai_version = MCA_IO_BASE_V_2_0_0;
+        avail->ai_version = MCA_IO_BASE_V_3_0_0;
         avail->ai_priority = priority;
-        avail->ai_component.v2_0_0 = *component;
+        avail->ai_component.v3_0_0 = *component;
         avail->ai_private_data = private_data;
     }
 
@@ -359,13 +361,13 @@ static avail_io_t *query_2_0_0(const mca_io_base_component_2_0_0_t *component,
 
 static void unquery(avail_io_t *avail, const char *filename, struct opal_info_t *info)
 {
-    const mca_io_base_component_2_0_0_t *ioc_200;
+    const mca_io_base_component_3_0_0_t *ioc_300;
 
     switch(avail->ai_version) {
-    case MCA_IO_BASE_V_2_0_0:
-        ioc_200 = &(avail->ai_component.v2_0_0);
-        if (NULL != ioc_200->io_delete_unquery) {
-            ioc_200->io_delete_unquery(filename, info, avail->ai_private_data);
+    case MCA_IO_BASE_V_3_0_0:
+        ioc_300 = &(avail->ai_component.v3_0_0);
+        if (NULL != ioc_300->io_delete_unquery) {
+            ioc_300->io_delete_unquery(filename, info, avail->ai_private_data);
         }
         break;
 
@@ -384,12 +386,12 @@ static void unquery(avail_io_t *avail, const char *filename, struct opal_info_t 
  */
 static int delete_file(avail_io_t *avail, const char *filename, struct opal_info_t *info)
 {
-    const mca_io_base_component_2_0_0_t *ioc_200;
+    const mca_io_base_component_3_0_0_t *ioc_300;
 
     switch(avail->ai_version) {
-    case MCA_IO_BASE_V_2_0_0:
-        ioc_200 = &(avail->ai_component.v2_0_0);
-        return ioc_200->io_delete_select(filename, info,
+    case MCA_IO_BASE_V_3_0_0:
+        ioc_300 = &(avail->ai_component.v3_0_0);
+        return ioc_300->io_delete_select(filename, info,
                                          avail->ai_private_data);
         break;
 
