@@ -41,14 +41,16 @@ Open MPI offers two flavors of CUDA support:
       shell$ ./configure --prefix=/path/to/ucx-cuda-install --with-cuda=/usr/local/cuda --with-gdrcopy=/usr
 
       # Configure Open MPI this way
-      shell$ ./configure --with-cuda=/usr/local/cuda --with-cuda-libdir=/usr/local/cuda/lib64/stubs/ --with-ucx=/path/to/ucx-cuda-install <other configure params>
+      shell$ ./configure --with-cuda=/usr/local/cuda --with-ucx=/path/to/ucx-cuda-install <other configure params>
 
 #. Via internal Open MPI CUDA support
 
 Regardless of which flavor of CUDA support (or both) you plan to use,
 Open MPI should be configured using the ``--with-cuda=<path-to-cuda>``
-and ``--with-cuda-libdir=<path-to-libcuda.so>`` configure options to
-build CUDA support into Open MPI.
+configure option to build CUDA support into Open MPI. The configure
+script will automatically search the path given for ``libcuda.so``. If it cannot
+be found, please also pass ``--with-cuda-libdir``. For example:
+``--with-cuda=<path-to-cuda> --with-cuda-libdir=/usr/local/cuda/lib64/stubs``.
 
 Open MPI supports building with CUDA libraries and running on systems
 without CUDA libraries or hardware. In order to take advantage of
@@ -65,7 +67,7 @@ An example configure command would look like the following:
    .. code-block:: sh
 
       # Configure Open MPI this way
-      shell$ ./configure --with-cuda=/usr/local/cuda --with-cuda-libdir=/usr/local/cuda/lib64/stubs \
+      shell$ ./configure --with-cuda=/usr/local/cuda \
              --enable-mca-dso=btl-smcuda,rcache-rgpusm,rcache-gpusm,accelerator-cuda <other configure params>
 
 /////////////////////////////////////////////////////////////////////////
