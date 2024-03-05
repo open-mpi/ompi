@@ -50,9 +50,18 @@ AC_ARG_WITH([cuda],
             [AS_HELP_STRING([--with-cuda(=DIR)],
             [Build cuda support, optionally adding DIR/include])])
 AC_MSG_CHECKING([if --with-cuda is set])
+
+# Search for libcuda.so in $with_cuda if the user didn't pass --with-cuda-libdir
+# Otherwise check for cuda in the default path, /usr/local/cuda. If the default
+# path doesn't exist, set with_cuda_libdir to empty.
 AC_ARG_WITH([cuda-libdir],
             [AS_HELP_STRING([--with-cuda-libdir=DIR],
-                            [Search for CUDA libraries in DIR])])
+                            [Search for CUDA libraries in DIR])],
+            [],
+            [AS_IF([test -d "$with_cuda"],
+             [with_cuda_libdir=$(dirname $(find $with_cuda -name libcuda.so 2> /dev/null) 2> /dev/null)],
+             [with_cuda_libdir=$(dirname $(find /usr/local/cuda -name libcuda.so 2> /dev/null) 2> /dev/null)])
+            ])
 
 # Note that CUDA support is off by default.  To turn it on, the user has to
 # request it.  The user can just ask for --with-cuda and it that case we
