@@ -14,7 +14,7 @@
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2012-2023 NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2012-2024 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -216,15 +216,14 @@ static int smcuda_btl_first_time_init(mca_btl_smcuda_t *smcuda_btl, int32_t my_s
 {
     size_t length, length_payload;
     sm_fifo_t *my_fifos;
-    int my_mem_node, num_mem_nodes, i, rc;
     mca_common_sm_mpool_resources_t *res = NULL;
-    mca_btl_smcuda_component_t *m = &mca_btl_smcuda_component;
     char *loc, *mynuma;
     opal_process_name_t wildcard_rank;
+    int rc;
 
     /* Assume we don't have hwloc support and fill in dummy info */
-    mca_btl_smcuda_component.mem_node = my_mem_node = 0;
-    mca_btl_smcuda_component.num_mem_nodes = num_mem_nodes = 1;
+    mca_btl_smcuda_component.mem_node = -1;
+    mca_btl_smcuda_component.num_mem_nodes = 1;
 
     /* see if we were given a topology signature */
     wildcard_rank.jobid = OPAL_PROC_MY_NAME.jobid;
@@ -232,14 +231,14 @@ static int smcuda_btl_first_time_init(mca_btl_smcuda_t *smcuda_btl, int32_t my_s
     OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_TOPOLOGY_SIGNATURE, &wildcard_rank, &loc, PMIX_STRING);
     if (OPAL_SUCCESS == rc) {
         /* the number of NUMA nodes is right at the front */
-        mca_btl_smcuda_component.num_mem_nodes = num_mem_nodes = strtoul(loc, NULL, 10);
+        mca_btl_smcuda_component.num_mem_nodes = strtoul(loc, NULL, 10);
         free(loc);
     } else {
         /* If we have hwloc support, then get accurate information */
         loc = NULL;
         if (OPAL_SUCCESS == opal_hwloc_base_get_topology()) {
-            i = opal_hwloc_base_get_nbobjs_by_type(opal_hwloc_topology, HWLOC_OBJ_NODE, 0,
-                                                   OPAL_HWLOC_AVAILABLE);
+            rc = opal_hwloc_base_get_nbobjs_by_type(opal_hwloc_topology, HWLOC_OBJ_NODE, 0,
+                                                    OPAL_HWLOC_AVAILABLE);
 
             /* JMS This tells me how many numa nodes are *available*,
                but it's not how many are being used *by this job*.
@@ -247,25 +246,22 @@ static int smcuda_btl_first_time_init(mca_btl_smcuda_t *smcuda_btl, int32_t my_s
                the previous carto-based implementation), but it really
                should be improved to be how many NUMA nodes are being
                used *in this job*. */
-            mca_btl_smcuda_component.num_mem_nodes = num_mem_nodes = i;
+            mca_btl_smcuda_component.num_mem_nodes = rc;
         }
     }
     /* see if we were given our location */
     OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_LOCALITY_STRING, &OPAL_PROC_MY_NAME, &loc, PMIX_STRING);
     if (OPAL_SUCCESS == rc) {
-        if (NULL == loc) {
-            mca_btl_smcuda_component.mem_node = my_mem_node = -1;
-        } else {
+        if (NULL != loc) {
             /* get our NUMA location */
             mynuma = opal_hwloc_base_get_location(loc, HWLOC_OBJ_NODE, 0);
             if (NULL == mynuma || NULL != strchr(mynuma, ',') || NULL != strchr(mynuma, '-')) {
                 /* we either have no idea what NUMA we are on, or we
                  * are on multiple NUMA nodes */
-                mca_btl_smcuda_component.mem_node = my_mem_node = -1;
+                mca_btl_smcuda_component.mem_node = -1;
             } else {
                 /* we are bound to a single NUMA node */
-                my_mem_node = strtoul(mynuma, NULL, 10);
-                mca_btl_smcuda_component.mem_node = my_mem_node;
+                mca_btl_smcuda_component.mem_node = strtoul(mynuma, NULL, 10);
             }
             if (NULL != mynuma) {
                 free(mynuma);
@@ -274,14 +270,14 @@ static int smcuda_btl_first_time_init(mca_btl_smcuda_t *smcuda_btl, int32_t my_s
         }
     } else {
         /* If we have hwloc support, then get accurate information */
-        if (OPAL_SUCCESS == opal_hwloc_base_get_topology() && num_mem_nodes > 0
+        if (OPAL_SUCCESS == opal_hwloc_base_get_topology() && mca_btl_smcuda_component.num_mem_nodes > 0
             && NULL != opal_process_info.cpuset) {
             int numa = 0, w;
             unsigned n_bound = 0;
             hwloc_obj_t obj;
 
             /* count the number of NUMA nodes to which we are bound */
-            for (w = 0; w < i; w++) {
+            for (w = 0; w < mca_btl_smcuda_component.num_mem_nodes; w++) {
                 if (NULL
                     == (obj = opal_hwloc_base_get_obj_by_type(opal_hwloc_topology, HWLOC_OBJ_NODE,
                                                               0, w, OPAL_HWLOC_AVAILABLE))) {
@@ -297,11 +293,19 @@ static int smcuda_btl_first_time_init(mca_btl_smcuda_t *smcuda_btl, int32_t my_s
              * a NUMA we are on, then not much we can do
              */
             if (1 == n_bound) {
-                mca_btl_smcuda_component.mem_node = my_mem_node = numa;
-            } else {
-                mca_btl_smcuda_component.mem_node = my_mem_node = -1;
+                mca_btl_smcuda_component.mem_node = numa;
             }
         }
+    }
+    /* sanity check: do we have the NUMA node info ? */
+    if( mca_btl_smcuda_component.mem_node < 0 ||
+        mca_btl_smcuda_component.num_mem_nodes < 1) {
+        opal_output_verbose(10, opal_btl_base_framework.framework_output,
+                            "btl:smcuda: %s unable to find topological information mem_node=%d, num_mem_nodes=%d",
+                            OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
+                            mca_btl_smcuda_component.mem_node, mca_btl_smcuda_component.num_mem_nodes);
+        mca_btl_smcuda_component.mem_node = 0;
+        mca_btl_smcuda_component.num_mem_nodes = 1;
     }
 
     if (NULL == (res = calloc(1, sizeof(*res)))) {
@@ -310,14 +314,14 @@ static int smcuda_btl_first_time_init(mca_btl_smcuda_t *smcuda_btl, int32_t my_s
 
     /* lookup shared memory pool */
     mca_btl_smcuda_component.sm_mpools = (mca_mpool_base_module_t **)
-        calloc(num_mem_nodes, sizeof(mca_mpool_base_module_t *));
+        calloc(mca_btl_smcuda_component.num_mem_nodes, sizeof(mca_mpool_base_module_t *));
 
     /* Disable memory binding, because each MPI process will claim pages in the
      * mpool for their local NUMA node */
     res->mem_node = -1;
     res->allocator = mca_btl_smcuda_component.allocator;
 
-    if (OPAL_SUCCESS != (rc = setup_mpool_base_resources(m, res))) {
+    if (OPAL_SUCCESS != (rc = setup_mpool_base_resources(&mca_btl_smcuda_component, res))) {
         free(res);
         return rc;
     }
@@ -344,7 +348,7 @@ static int smcuda_btl_first_time_init(mca_btl_smcuda_t *smcuda_btl, int32_t my_s
 
     /* remember that node rank zero is already attached */
     if (0 != my_smp_rank) {
-        if (OPAL_SUCCESS != (rc = sm_segment_attach(m))) {
+        if (OPAL_SUCCESS != (rc = sm_segment_attach(&mca_btl_smcuda_component))) {
             free(res);
             return rc;
         }
@@ -357,7 +361,7 @@ static int smcuda_btl_first_time_init(mca_btl_smcuda_t *smcuda_btl, int32_t my_s
                         "btl:smcuda: host_register address=%p, size=%d",
                         mca_btl_smcuda_component.sm_mpool_base, (int) res->size);
     if (0 != strcmp(opal_accelerator_base_selected_component.base_version.mca_component_name, "null")) {
-        rc = opal_accelerator.host_register(MCA_ACCELERATOR_NO_DEVICE_ID, mca_btl_smcuda_component.sm_mpool_base, res->size); 
+        rc = opal_accelerator.host_register(MCA_ACCELERATOR_NO_DEVICE_ID, mca_btl_smcuda_component.sm_mpool_base, res->size);
         if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
             /* If registering the memory fails, print a message and continue.
              * This is not a fatal error. */
@@ -394,7 +398,7 @@ static int smcuda_btl_first_time_init(mca_btl_smcuda_t *smcuda_btl, int32_t my_s
     mca_btl_smcuda_component.shm_bases[mca_btl_smcuda_component.my_smp_rank]
         = (char *) mca_btl_smcuda_component.sm_mpool_base;
     mca_btl_smcuda_component.shm_mem_nodes[mca_btl_smcuda_component.my_smp_rank] = (uint16_t)
-        my_mem_node;
+        mca_btl_smcuda_component.mem_node;
 
     /* initialize the array of fifo's "owned" by this process */
     if (NULL == (my_fifos = (sm_fifo_t *) mpool_calloc(FIFO_MAP_NUM(n), sizeof(sm_fifo_t))))
@@ -420,45 +424,45 @@ static int smcuda_btl_first_time_init(mca_btl_smcuda_t *smcuda_btl, int32_t my_s
     /* allocation will be for the fragment descriptor and payload buffer */
     length = sizeof(mca_btl_smcuda_frag1_t);
     length_payload = sizeof(mca_btl_smcuda_hdr_t) + mca_btl_smcuda_component.eager_limit;
-    i = opal_free_list_init(&mca_btl_smcuda_component.sm_frags_eager, length, opal_cache_line_size,
-                            OBJ_CLASS(mca_btl_smcuda_frag1_t), length_payload, opal_cache_line_size,
-                            mca_btl_smcuda_component.sm_free_list_num,
-                            mca_btl_smcuda_component.sm_free_list_max,
-                            mca_btl_smcuda_component.sm_free_list_inc,
-                            mca_btl_smcuda_component.sm_mpool, 0, NULL, NULL, NULL);
-    if (OPAL_SUCCESS != i)
-        return i;
+    rc = opal_free_list_init(&mca_btl_smcuda_component.sm_frags_eager, length, opal_cache_line_size,
+                             OBJ_CLASS(mca_btl_smcuda_frag1_t), length_payload, opal_cache_line_size,
+                             mca_btl_smcuda_component.sm_free_list_num,
+                             mca_btl_smcuda_component.sm_free_list_max,
+                             mca_btl_smcuda_component.sm_free_list_inc,
+                             mca_btl_smcuda_component.sm_mpool, 0, NULL, NULL, NULL);
+    if (OPAL_SUCCESS != rc)
+        return rc;
 
     length = sizeof(mca_btl_smcuda_frag2_t);
     length_payload = sizeof(mca_btl_smcuda_hdr_t) + mca_btl_smcuda_component.max_frag_size;
-    i = opal_free_list_init(&mca_btl_smcuda_component.sm_frags_max, length, opal_cache_line_size,
-                            OBJ_CLASS(mca_btl_smcuda_frag2_t), length_payload, opal_cache_line_size,
-                            mca_btl_smcuda_component.sm_free_list_num,
-                            mca_btl_smcuda_component.sm_free_list_max,
-                            mca_btl_smcuda_component.sm_free_list_inc,
-                            mca_btl_smcuda_component.sm_mpool, 0, NULL, NULL, NULL);
-    if (OPAL_SUCCESS != i)
-        return i;
+    rc = opal_free_list_init(&mca_btl_smcuda_component.sm_frags_max, length, opal_cache_line_size,
+                             OBJ_CLASS(mca_btl_smcuda_frag2_t), length_payload, opal_cache_line_size,
+                             mca_btl_smcuda_component.sm_free_list_num,
+                             mca_btl_smcuda_component.sm_free_list_max,
+                             mca_btl_smcuda_component.sm_free_list_inc,
+                             mca_btl_smcuda_component.sm_mpool, 0, NULL, NULL, NULL);
+    if (OPAL_SUCCESS != rc)
+        return rc;
 
-    i = opal_free_list_init(&mca_btl_smcuda_component.sm_frags_user, sizeof(mca_btl_smcuda_user_t),
-                            opal_cache_line_size, OBJ_CLASS(mca_btl_smcuda_user_t),
-                            sizeof(mca_btl_smcuda_hdr_t), opal_cache_line_size,
-                            mca_btl_smcuda_component.sm_free_list_num,
-                            mca_btl_smcuda_component.sm_free_list_max,
-                            mca_btl_smcuda_component.sm_free_list_inc,
-                            mca_btl_smcuda_component.sm_mpool, 0, NULL, NULL, NULL);
-    if (OPAL_SUCCESS != i)
-        return i;
+    rc = opal_free_list_init(&mca_btl_smcuda_component.sm_frags_user, sizeof(mca_btl_smcuda_user_t),
+                             opal_cache_line_size, OBJ_CLASS(mca_btl_smcuda_user_t),
+                             sizeof(mca_btl_smcuda_hdr_t), opal_cache_line_size,
+                             mca_btl_smcuda_component.sm_free_list_num,
+                             mca_btl_smcuda_component.sm_free_list_max,
+                             mca_btl_smcuda_component.sm_free_list_inc,
+                             mca_btl_smcuda_component.sm_mpool, 0, NULL, NULL, NULL);
+    if (OPAL_SUCCESS != rc)
+        return rc;
 
     mca_btl_smcuda_component.num_outstanding_frags = 0;
 
     mca_btl_smcuda_component.num_pending_sends = 0;
-    i = opal_free_list_init(&mca_btl_smcuda_component.pending_send_fl,
-                            sizeof(btl_smcuda_pending_send_item_t), 8,
-                            OBJ_CLASS(opal_free_list_item_t), 0, 0, 16, -1, 32, NULL, 0, NULL, NULL,
-                            NULL);
-    if (OPAL_SUCCESS != i)
-        return i;
+    rc = opal_free_list_init(&mca_btl_smcuda_component.pending_send_fl,
+                             sizeof(btl_smcuda_pending_send_item_t), 8,
+                             OBJ_CLASS(opal_free_list_item_t), 0, 0, 16, -1, 32, NULL, 0, NULL, NULL,
+                             NULL);
+    if (OPAL_SUCCESS != rc)
+        return rc;
 
     /* set flag indicating btl has been inited */
     smcuda_btl->btl_inited = true;
