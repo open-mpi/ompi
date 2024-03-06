@@ -125,8 +125,7 @@ ompi_mtl_ofi_context_progress(int ctxt_id)
                         opal_output(0, "%s:%d: Error returned by request event callback: %zd.\n"
                                        "*** The Open MPI OFI MTL is aborting the MPI job (via exit(3)).\n",
                                        __FILE__, __LINE__, ret);
-                        fflush(stderr);
-                        exit(1);
+                        goto bail;
                     }
                 }
             }
@@ -148,16 +147,23 @@ ompi_mtl_ofi_context_progress(int ctxt_id)
                  * thread fetches the entry while others get -FI_EAGAIN
                  * indicating an empty queue, which is not erroneous.
                  */
-                if (ret == -FI_EAGAIN)
+                if (ret == -FI_EAGAIN) {
                     return count;
+                }
                 opal_output(0, "%s:%d: Error returned from fi_cq_readerr: %s(%zd).\n"
                                "*** The Open MPI OFI MTL is aborting the MPI job (via exit(3)).\n",
                                __FILE__, __LINE__, fi_strerror(-ret), ret);
-                fflush(stderr);
-                exit(1);
+                goto bail;
             }
 
-            assert(error.op_context);
+            if (!error.op_context) {
+                opal_output(0, "%s:%d: Error returned from fi_cq_readerr with null context. "
+                               "Completion flags: %016lx\n"
+                               "*** The Open MPI OFI MTL is aborting the MPI job (via exit(3)).\n",
+                            __FILE__, __LINE__, error.flags);
+                goto bail;
+            }
+
             ofi_req = TO_OFI_REQ(error.op_context);
             assert(ofi_req);
             ret = ofi_req->error_callback(&error, ofi_req);
@@ -165,8 +171,7 @@ ompi_mtl_ofi_context_progress(int ctxt_id)
                     opal_output(0, "%s:%d: Error returned by request error callback: %zd.\n"
                                    "*** The Open MPI OFI MTL is aborting the MPI job (via exit(3)).\n",
                                    __FILE__, __LINE__, ret);
-                fflush(stderr);
-                exit(1);
+                goto bail;
             }
         } else {
             if (ret == -FI_EAGAIN || ret == -EINTR) {
@@ -175,13 +180,16 @@ ompi_mtl_ofi_context_progress(int ctxt_id)
                 opal_output(0, "%s:%d: Error returned from fi_cq_read: %s(%zd).\n"
                                "*** The Open MPI OFI MTL is aborting the MPI job (via exit(3)).\n",
                                __FILE__, __LINE__, fi_strerror(-ret), ret);
-                fflush(stderr);
-                exit(1);
+                goto bail;
             }
         }
     }
 
     return count;
+
+bail:
+    fflush(stderr);
+    exit(1);
 }
 
 __opal_attribute_always_inline__ static inline int
