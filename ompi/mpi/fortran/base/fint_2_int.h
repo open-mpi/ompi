@@ -13,6 +13,7 @@
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2014-2019 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
+ * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -32,17 +33,17 @@
  */
 
 #if OMPI_SIZEOF_FORTRAN_INTEGER == SIZEOF_INT
-  #define OMPI_ARRAY_NAME_DECL(a)
-  #define OMPI_2_DIM_ARRAY_NAME_DECL(a, dim2)
+  #define OMPI_ARRAY_NAME_DECL(a) int *c_##a
+  #define OMPI_2_DIM_ARRAY_NAME_DECL(a, dim2) int (*c_##a)[dim2]
   #define OMPI_SINGLE_NAME_DECL(a)
-  #define OMPI_ARRAY_NAME_CONVERT(a) a
+  #define OMPI_ARRAY_NAME_CONVERT(a) c_##a
   #define OMPI_SINGLE_NAME_CONVERT(a) a
   #define OMPI_INT_2_FINT(a) a
   #define OMPI_FINT_2_INT(a) a
   #define OMPI_PFINT_2_PINT(a) a
-  #define OMPI_ARRAY_FINT_2_INT_ALLOC(in, n)
-  #define OMPI_ARRAY_FINT_2_INT(in, n)
-  #define OMPI_2_DIM_ARRAY_FINT_2_INT(in, n, dim2)
+  #define OMPI_ARRAY_FINT_2_INT_ALLOC(in, n) { OMPI_ARRAY_NAME_CONVERT(in) = in; }
+  #define OMPI_ARRAY_FINT_2_INT(in, n) { OMPI_ARRAY_NAME_CONVERT(in) = in; }
+  #define OMPI_2_DIM_ARRAY_FINT_2_INT(in, n, dim2) { OMPI_ARRAY_NAME_CONVERT(in) = in; }
   #define OMPI_ARRAY_FINT_2_INT_CLEANUP(in)
   #define OMPI_SINGLE_FINT_2_INT(in)
   #define OMPI_SINGLE_INT_2_FINT(in)
