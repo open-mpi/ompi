@@ -462,7 +462,9 @@ static int han_register(void)
             /*
              * Exhaustive description:
              * 0 = self; 1 = basic; 2 = libnbc; ...
-             * FIXME: Do not print component not providing this collective
+             * This function being mostly useful when call in ompi_info, we need to print
+             * all available collective frameworks, disregarding if they support this particular
+             * collective and/or setup.
              */
             for(component = 0 ; component < COMPONENTS_COUNT ; component++) {
                 if(HAN == component && GLOBAL_COMMUNICATOR != topo_lvl) {
@@ -514,8 +516,7 @@ static int han_register(void)
     if((cs->dump_dynamic_rules || NULL != cs->dynamic_rules_filename)
        && !cs->use_dynamic_file_rules) {
         opal_output_verbose(0, cs->han_output,
-                            "HAN: dynamic rules for collectives are hot activated."
-                            "Check coll_han_use_dynamic_file_rules MCA parameter");
+                            "HAN: dynamic rules for collectives are activated.");
     }
 
     cs->max_dynamic_errors = 10;

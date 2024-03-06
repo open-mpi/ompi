@@ -78,7 +78,7 @@ mca_coll_han_get_all_coll_modules(struct ompi_communicator_t *comm,
     int nb_modules = 0;
     mca_coll_base_avail_coll_t *item;
 
-    /* If the modules are get yet, return success */
+    /* If HAN module already initialized in this communicator */
     if(han_module->storage_initialized) {
         return OMPI_SUCCESS;
     }
@@ -123,7 +123,7 @@ mca_coll_han_get_all_coll_modules(struct ompi_communicator_t *comm,
 
     assert(0 != nb_modules);
 
-    /* The modules are get */
+    /* HAN module ready to rock */
     han_module->storage_initialized = true;
     return OMPI_SUCCESS;
 }

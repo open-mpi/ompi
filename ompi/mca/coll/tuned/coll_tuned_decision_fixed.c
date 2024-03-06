@@ -217,6 +217,119 @@ ompi_coll_tuned_allreduce_intra_dec_fixed(const void *sbuf, void *rbuf, int coun
                                                     comm, module, alg, 0, 0);
 }
 
+
+/*
+ *  allreduce_intra for single node communicators
+ *
+ *  Function:   - allreduce using other MPI collectives
+ *  Accepts:    - same as MPI_Allreduce()
+ *  Returns:    - MPI_SUCCESS or error code
+ */
+int
+ompi_coll_tuned_allreduce_intra_singlenode_dec_fixed(const void *sbuf, void *rbuf, int count,
+                                                     struct ompi_datatype_t *dtype,
+                                                     struct ompi_op_t *op,
+                                                     struct ompi_communicator_t *comm,
+                                                     mca_coll_base_module_t *module)
+{
+    size_t dsize, total_dsize;
+    int communicator_size, alg;
+    communicator_size = ompi_comm_size(comm);
+    OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_allreduce_intra_singlenode_dec_fixed"));
+
+    ompi_datatype_type_size(dtype, &dsize);
+    total_dsize = dsize * (ptrdiff_t)count;
+
+    /** Algorithms:
+     *  {1, "basic_linear"},
+     *  {2, "nonoverlapping"},
+     *  {3, "recursive_doubling"},
+     *  {4, "ring"},
+     *  {5, "segmented_ring"},
+     *  {6, "rabenseifner"
+     *
+     * Currently, ring, segmented ring, and rabenseifner do not support
+     * non-commutative operations.
+     */
+    if( !ompi_op_is_commute(op) ) {
+        if (communicator_size < 4) {
+            alg = 1;
+        } else if (communicator_size < 8) {
+            if (total_dsize < 128) {
+                alg = 1;
+            } else if (total_dsize < 16384) {
+                alg = 3;
+            } else if (total_dsize < 262144) {
+                alg = 2;
+            } else {
+                alg = 1;
+            }
+        } else if (communicator_size < 16) {
+            if (total_dsize < 128) {
+                alg = 1;
+            } else if (total_dsize < 4096) {
+                alg = 3;
+            } else if (total_dsize < 262144) {
+                alg = 2;
+            } else {
+                alg = 1;
+            }
+        } else {
+            if (total_dsize < 4096) {
+                alg = 3;
+            } else {
+                alg = 2;
+            }
+        }
+    } else {
+        if (communicator_size < 4) {
+            if (total_dsize < 16384) {
+                alg = 1;
+            } else {
+                alg = 6;
+            }
+        } else if (communicator_size < 8) {
+            if (total_dsize < 2048) {
+                alg = 1;
+            } else {
+                alg = 6;
+            }
+        } else if (communicator_size < 16) {
+            if (total_dsize < 2048) {
+                alg = 3;
+            } else {
+                alg = 6;
+            }
+        } else if (communicator_size < 64) {
+            if (total_dsize < 4096) {
+                alg = 3;
+            } else {
+                alg = 6;
+            }
+        } else if (communicator_size < 128) {
+            if (total_dsize < 2048) {
+                alg = 3;
+            } else if (total_dsize < 262144) {
+                alg = 6;
+            } else {
+                alg = 4;
+            }
+        } else {
+            if (total_dsize < 2048) {
+                alg = 3;
+            } else if (total_dsize < 524288) {
+                alg = 6;
+            } else {
+                alg = 4;
+            }
+        }
+    }
+
+    return ompi_coll_tuned_allreduce_intra_do_this (sbuf, rbuf, count, dtype, op,
+                                                    comm, module, alg, 0, 0);
+}
+
+
 /*
  *	alltoall_intra_dec
  *
@@ -651,6 +764,76 @@ int ompi_coll_tuned_bcast_intra_dec_fixed(void *buff, int count,
                                                 alg, 0, 0);
 }
 
+
+/*
+ *	bcast_intra_dec for single node communicators
+ *
+ *	Function:	- selects broadcast algorithm to use
+ *	Accepts:	- same arguments as MPI_Bcast()
+ *	Returns:	- MPI_SUCCESS or error code (passed from the bcast implementation)
+ */
+int ompi_coll_tuned_bcast_intra_singlenode_dec_fixed(void *buff, int count,
+                                                     struct ompi_datatype_t *datatype, int root,
+                                                     struct ompi_communicator_t *comm,
+                                                     mca_coll_base_module_t *module)
+{
+    size_t total_dsize, dsize;
+    int communicator_size, alg;
+	communicator_size = ompi_comm_size(comm);
+
+    ompi_datatype_type_size(datatype, &dsize);
+    total_dsize = dsize * (unsigned long)count;
+
+    OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_bcast_intra_singlenode_dec_fixed"
+                 " root %d rank %d com_size %d",
+                 root, ompi_comm_rank(comm), communicator_size));
+
+    /** Algorithms:
+     *  {1, "basic_linear"},
+     *  {2, "chain"},
+     *  {3, "pipeline"},
+     *  {4, "split_binary_tree"},
+     *  {5, "binary_tree"},
+     *  {6, "binomial"},
+     *  {7, "knomial"},
+     *  {8, "scatter_allgather"},
+     *  {9, "scatter_allgather_ring"},
+     */
+    if (communicator_size < 4) {
+        alg = 1;
+    } else if (communicator_size < 8) {
+        if (total_dsize < 256) {
+            alg = 1;
+        } else if (total_dsize < 16384) {
+            alg = 7;
+        } else {
+            alg = 1;
+        }
+    } else if (communicator_size < 16) {
+        if (total_dsize < 32768) {
+            alg = 7;
+        } else {
+            alg = 1;
+        }
+    } else if (communicator_size < 32) {
+        if (total_dsize < 16384) {
+            alg = 7;
+        } else {
+            alg = 1;
+        }
+    } else {
+        if (total_dsize < 131072) {
+            alg = 7;
+        } else {
+            alg = 1;
+        }
+    }
+
+    return ompi_coll_tuned_bcast_intra_do_this (buff, count, datatype, root,
+                                                comm, module,
+                                                alg, 0, 0);
+}
+
 /*
  *	reduce_intra_dec
  *
@@ -812,6 +995,125 @@ int ompi_coll_tuned_reduce_intra_dec_fixed( const void *sendbuf, void *recvbuf,
                                                   op, root, comm, module,
                                                   alg, 0, 0, 0);
 }
+
+/*
+ *	reduce_intra_dec for single node communicators
+ *
+ *	Function:	- selects reduce algorithm to use
+ *	Accepts:	- same arguments as MPI_reduce()
+ *	Returns:	- MPI_SUCCESS or error code (passed from the reduce implementation)
+ *
+ */
+int ompi_coll_tuned_reduce_intra_singlenode_dec_fixed( const void *sendbuf, void *recvbuf,
+                                                       int count, struct ompi_datatype_t* datatype,
+                                                       struct ompi_op_t* op, int root,
+                                                       struct ompi_communicator_t* comm,
+                                                       mca_coll_base_module_t *module)
+{
+    int communicator_size, alg;
+    size_t total_dsize, dsize;
+
+    communicator_size = ompi_comm_size(comm);
+
+    OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_reduce_intra_singlenode_dec_fixed "
+                 "root %d rank %d com_size %d", root, ompi_comm_rank(comm), communicator_size));
+
+    ompi_datatype_type_size(datatype, &dsize);
+    total_dsize = dsize * (ptrdiff_t)count;   /* needed for decision */
+
+    /** Algorithms:
+     *  {1, "linear"},
+     *  {2, "chain"},
+     *  {3, "pipeline"},
+     *  {4, "binary"},
+     *  {5, "binomial"},
+     *  {6, "in-order_binary"},
+     *  {7, "rabenseifner"},
+     *
+     * Currently, only linear and in-order binary tree algorithms are
+     * capable of non commutative ops.
+     */
+    if( !ompi_op_is_commute(op) ) {
+        if (communicator_size < 4) {
+            alg = 1;
+        } else if (communicator_size < 16) {
+            if (total_dsize < 4096) {
+                alg = 1;
+            } else if (total_dsize < 262144) {
+                alg = 6;
+            } else {
+                alg = 1;
+            }
+        } else if (communicator_size < 32) {
+            if (total_dsize < 512) {
+                alg = 1;
+            } else {
+                alg = 6;
+            }
+        } else {
+            alg = 6;
+        }
+    } else {
+        if (communicator_size < 8) {
+            alg = 1;
+        } else if (communicator_size < 8) {
+            if (total_dsize < 8192) {
+                alg = 1;
+            } else if (total_dsize < 262144) {
+                alg = 7;
+            } else {
+                alg = 1;
+            }
+        } else if (communicator_size < 16) {
+            if (total_dsize < 4096) {
+                alg = 1;
+            } else if (total_dsize < 262144) {
+                alg = 7;
+            } else {
+                alg = 1;
+            }
+        } else if (communicator_size < 32) {
+            if (total_dsize < 256) {
+                alg = 1;
+            } else if (total_dsize < 4096) {
+                alg = 4;
+            } else if (total_dsize < 131072) {
+                alg = 7;
+            } else {
+                alg = 5;
+            }
+        } else if (communicator_size < 64) {
+            if (total_dsize < 8192) {
+                alg = 5;
+            } else if (total_dsize < 524288) {
+                alg = 7;
+            } else {
+                alg = 6;
+            }
+        } else if (communicator_size < 128) {
+            if (total_dsize < 16384) {
+                alg = 5;
+            } else if (total_dsize < 524288) {
+                alg = 7;
+            } else {
+                alg = 5;
+            }
+        } else {
+            if (total_dsize < 16384) {
+                alg = 5;
+            } else if (total_dsize < 524288) {
+                alg = 7;
+            } else {
+                alg = 6;
+            }
+        }
+    }
+
+    return  ompi_coll_tuned_reduce_intra_do_this (sendbuf, recvbuf, count, datatype,
+                                                  op, root, comm, module,
+                                                  alg, 0, 0, 0);
+}
+
 
 /*
  *	reduce_scatter_intra_dec
@@ -1226,6 +1528,81 @@ int ompi_coll_tuned_allgather_intra_dec_fixed(const void *sbuf, int scount,
                                                    rbuf, rcount, rdtype,
                                                    comm, module, alg, 0, 0);
 }
+
+
+/*
+ *	allgather_intra_dec for single-node communicators
+ *
+ *	Function:	- selects allgather algorithm to use
+ *	Accepts:	- same arguments as MPI_Allgather()
+ *	Returns:	- MPI_SUCCESS or error code, passed from corresponding
+ *                        internal allgather function.
+ */
+
+int ompi_coll_tuned_allgather_intra_singlenode_dec_fixed(const void *sbuf, int scount,
+                                                         struct ompi_datatype_t *sdtype,
+                                                         void* rbuf, int rcount,
+                                                         struct ompi_datatype_t *rdtype,
+                                                         struct ompi_communicator_t *comm,
+                                                         mca_coll_base_module_t *module)
+{
+    int communicator_size, alg;
+    size_t dsize, total_dsize;
+    if (MPI_IN_PLACE != sbuf) {
+        ompi_datatype_type_size(sdtype, &dsize);
+    } else {
+        ompi_datatype_type_size(rdtype, &dsize);
+    }
+    total_dsize = dsize * (ptrdiff_t)scount;
+
+    communicator_size = ompi_comm_size(comm);
+    /** Algorithms:
+     *  {1, "linear"},
+     *  {2, "bruck"},
+     *  {3, "recursive_doubling"},
+     *  {4, "ring"},
+     *  {5, "neighbor"},
+     *  {6, "two_proc"}
+     */
+    if (communicator_size == 2) {
+        alg = 6;
+    } else if (communicator_size < 4) {
+        alg = 3;
+    } else if (communicator_size < 8) {
+        if (total_dsize < 2048) {
+            alg = 3;
+        } else if (total_dsize < 65536) {
+            alg = 5;
+        } else {
+            alg = 4;
+        }
+    } else if (communicator_size <= 64) {
+        if (total_dsize < 512) {
+            alg = 3;
+        } else if (total_dsize < 65536) {
+            alg = 5;
+        } else {
+            alg = 4;
+        }
+    } else {
+        if (total_dsize < 128) {
+            alg = 3;
+        } else if (total_dsize < 65536) {
+            alg = 5;
+        } else {
+            alg = 4;
+        }
+    }
+
+    OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_allgather_intra_singlenode_dec_fixed"
+                 " rank %d com_size %d", ompi_comm_rank(comm), communicator_size));
+
+    return ompi_coll_tuned_allgather_intra_do_this(sbuf, scount, sdtype,
+                                                   rbuf, rcount, rdtype,
+                                                   comm, module, alg, 0, 0);
+}
+
+
 
 /*
  *	allgatherv_intra_dec

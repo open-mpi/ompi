@@ -450,7 +450,7 @@ static opal_list_t *check_components(opal_list_t * components,
     /* Put this list in priority order */
     opal_list_sort(selectable, avail_coll_compare);
 
-    /* For all valid component reorder them not on their provided priorities but on
+    /* Reorder valid components not on their provided priorities but on
      * the order requested in the info key. As at this point the coll_include is
      * already ordered backward we can simply append the components.
      * Note that the last element in selectable will have the highest priority.
@@ -461,6 +461,9 @@ static opal_list_t *check_components(opal_list_t * components,
             if (0 == strcmp(item->ac_component_name, coll_include[idx])) {
                 opal_list_remove_item(selectable, &item->super);
                 opal_list_append(selectable, &item->super);
+                opal_output_verbose(10, ompi_coll_base_framework.framework_output,
+                                    "coll:base:comm_select: component %s reordered based on info key (these messages appear in the reverse order)",
+                                    component->mca_component_name);
                 break;
             }
         }
