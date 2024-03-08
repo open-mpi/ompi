@@ -556,14 +556,6 @@ bcast_rportlen:
         goto exit;
     }
 
-opal_output(0, "NEW LOCAL GROUP: MY RANK %d", newcomp->c_my_rank);
-for (i=0; i < newcomp->c_local_group->grp_proc_count; i++) {
-    opal_output(0, "\t%s", OMPI_NAME_PRINT(&newcomp->c_local_group->grp_proc_pointers[i]->super.proc_name));
-}
-opal_output(0, "NEW REMOTE GROUP");
-for (i=0; i < newcomp->c_remote_group->grp_proc_count; i++) {
-    opal_output(0, "\t%s", OMPI_NAME_PRINT(&newcomp->c_remote_group->grp_proc_pointers[i]->super.proc_name));
-}
     /* activate comm and init coll-component */
     rc = ompi_comm_activate ( &newcomp,                  /* new communicator */
                               comm,                      /* old communicator */
@@ -1077,19 +1069,14 @@ static int connect_accept_new(ompi_communicator_t *comm, int root,
     }
     newcomp->c_contextid = newcomp->c_contextidb.block_cid;
 
+    // save the group ID
+    snprintf(newcomp->c_name, MPI_MAX_OBJECT_NAME, pstring);
+
     opal_hash_table_set_value_ptr (&ompi_comm_hash, &newcomp->c_contextid,
                                    sizeof (newcomp->c_contextid), (void *) newcomp);
 
     opal_pointer_array_set_item (&ompi_mpi_communicators, cid, newcomm);
 
-opal_output(0, "NEW LOCAL GROUP: MY RANK %d", newcomp->c_my_rank);
-for (i=0; i < newcomp->c_local_group->grp_proc_count; i++) {
-    opal_output(0, "\t%s", OMPI_NAME_PRINT(&newcomp->c_local_group->grp_proc_pointers[i]->super.proc_name));
-}
-opal_output(0, "NEW REMOTE GROUP");
-for (i=0; i < newcomp->c_remote_group->grp_proc_count; i++) {
-    opal_output(0, "\t%s", OMPI_NAME_PRINT(&newcomp->c_remote_group->grp_proc_pointers[i]->super.proc_name));
-}
     /* activate comm and init coll-component */
     rc = ompi_comm_activate ( &newcomp,                  /* new communicator */
                               comm,                      /* old communicator */
@@ -1177,7 +1164,7 @@ static int construct_peers(ompi_group_t *group, opal_list_t *peers)
     return OMPI_SUCCESS;
 }
 
-int ompi_dpm_disconnect(ompi_communicator_t *comm)
+static int dpm_disconnect_old(ompi_communicator_t *comm)
 {
     int ret;
     pmix_status_t rc;
@@ -1229,6 +1216,28 @@ int ompi_dpm_disconnect(ompi_communicator_t *comm)
     PMIX_PROC_FREE(procs, nprocs);
 
     return ret;
+}
+
+static int dpm_disconnect_new(ompi_communicator_t *comm)
+{
+    int ret;
+    pmix_status_t rc;
+
+    // use PMIx_Group_destruct to act as a barrier and
+    // allow the host and PMIx library to cleanup
+    // the group bookkeeping
+    rc = PMIx_Group_destruct(comm->c_name, NULL, 0);
+    ret = opal_pmix_convert_status(rc);
+    return ret;
+}
+
+int ompi_dpm_disconnect(ompi_communicator_t *comm)
+{
+    if (new_method) {
+        return dpm_disconnect_new(comm);
+    } else {
+        return dpm_disconnect_old(comm);
+    }
 }
 
 typedef struct {
@@ -2290,8 +2299,7 @@ int ompi_dpm_dyn_init(void)
     /* Set the parent communicator */
     ompi_mpi_comm_parent = newcomm;
 
-    /* Set name for debugging purposes */
-    snprintf(newcomm->c_name, MPI_MAX_OBJECT_NAME, "MPI_COMM_PARENT");
+    /* Set flags */
     newcomm->c_flags |= OMPI_COMM_NAMEISSET;
 
     return OMPI_SUCCESS;
