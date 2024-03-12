@@ -47,7 +47,7 @@ void ompi_osc_base_set_memory_alignment(struct opal_info_t *info,
 int ompi_osc_base_select(ompi_win_t *win,
                          void **base,
                          size_t size,
-                         int disp_unit,
+                         ptrdiff_t disp_unit,
                          ompi_communicator_t *comm,
                          int flavor,
                          int *model);

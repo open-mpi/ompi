@@ -88,8 +88,8 @@ struct ompi_osc_portals4_module_t {
     ompi_osc_base_module_t super;
     void *free_after; /* if non-null, this pointer should be free()ed when window destroyed */
     struct ompi_communicator_t *comm; /* communicator which backs this window (unique to this window) */
-    int disp_unit; /* if -1, have to look at disp_units */
-    int *disp_units; /* array (possibly NULL!) of displacement units, per peer */
+    ptrdiff_t disp_unit; /* if -1, have to look at disp_units */
+    ptrdiff_t *disp_units; /* array (possibly NULL!) of displacement units, per peer */
     ptl_handle_ni_t ni_h; /* network interface used by this window */
     ptl_pt_index_t pt_idx; /* portal table index used by this window (this will be same across window) */
     ptl_handle_ct_t ct_h; /* Counting event handle used for completion in this window */
@@ -144,29 +144,29 @@ int ompi_osc_portals4_detach(struct ompi_win_t *win, const void *base);
 int ompi_osc_portals4_free(struct ompi_win_t *win);
 
 int ompi_osc_portals4_put(const void *origin_addr,
-                          int origin_count,
+                          size_t origin_count,
                           struct ompi_datatype_t *origin_dt,
                           int target,
                           ptrdiff_t target_disp,
-                          int target_count,
+                          size_t target_count,
                           struct ompi_datatype_t *target_dt,
                           struct ompi_win_t *win);
 
 int ompi_osc_portals4_get(void *origin_addr,
-                          int origin_count,
+                          size_t origin_count,
                           struct ompi_datatype_t *origin_dt,
                           int target,
                           ptrdiff_t target_disp,
-                          int target_count,
+                          size_t target_count,
                           struct ompi_datatype_t *target_dt,
                           struct ompi_win_t *win);
 
 int ompi_osc_portals4_accumulate(const void *origin_addr,
-                                 int origin_count,
+                                 size_t origin_count,
                                  struct ompi_datatype_t *origin_dt,
                                  int target,
                                  ptrdiff_t target_disp,
-                                 int target_count,
+                                 size_t target_count,
                                  struct ompi_datatype_t *target_dt,
                                  struct ompi_op_t *op,
                                  struct ompi_win_t *win);
@@ -188,58 +188,58 @@ int ompi_osc_portals4_fetch_and_op(const void *origin_addr,
                                    struct ompi_win_t *win);
 
 int ompi_osc_portals4_get_accumulate(const void *origin_addr,
-                                     int origin_count,
+                                     size_t origin_count,
                                      struct ompi_datatype_t *origin_datatype,
                                      void *result_addr,
-                                     int result_count,
+                                     size_t result_count,
                                      struct ompi_datatype_t *result_datatype,
                                      int target_rank,
                                      ptrdiff_t target_disp,
-                                     int target_count,
+                                     size_t target_count,
                                      struct ompi_datatype_t *target_datatype,
                                      struct ompi_op_t *op,
                                      struct ompi_win_t *win);
 
 int ompi_osc_portals4_rput(const void *origin_addr,
-                           int origin_count,
+                           size_t origin_count,
                            struct ompi_datatype_t *origin_dt,
                            int target,
                            ptrdiff_t target_disp,
-                           int target_count,
+                           size_t target_count,
                            struct ompi_datatype_t *target_dt,
                            struct ompi_win_t *win,
                            struct ompi_request_t **request);
 
 int ompi_osc_portals4_rget(void *origin_addr,
-                           int origin_count,
+                           size_t origin_count,
                            struct ompi_datatype_t *origin_dt,
                            int target,
                            ptrdiff_t target_disp,
-                           int target_count,
+                           size_t target_count,
                            struct ompi_datatype_t *target_dt,
                            struct ompi_win_t *win,
                            struct ompi_request_t **request);
 
 int ompi_osc_portals4_raccumulate(const void *origin_addr,
-                                  int origin_count,
+                                  size_t origin_count,
                                   struct ompi_datatype_t *origin_dt,
                                   int target,
                                   ptrdiff_t target_disp,
-                                  int target_count,
+                                  size_t target_count,
                                   struct ompi_datatype_t *target_dt,
                                   struct ompi_op_t *op,
                                   struct ompi_win_t *win,
                                   struct ompi_request_t **request);
 
 int ompi_osc_portals4_rget_accumulate(const void *origin_addr,
-                                      int origin_count,
+                                      size_t origin_count,
                                       struct ompi_datatype_t *origin_datatype,
                                       void *result_addr,
-                                      int result_count,
+                                      size_t result_count,
                                       struct ompi_datatype_t *result_datatype,
                                       int target_rank,
                                       ptrdiff_t target_disp,
-                                      int target_count,
+                                      size_t target_count,
                                       struct ompi_datatype_t *target_datatype,
                                       struct ompi_op_t *op,
                                       struct ompi_win_t *win,

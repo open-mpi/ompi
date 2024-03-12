@@ -50,9 +50,9 @@ static int component_close(void);
 static int component_register(void);
 static int component_init(bool enable_progress_threads, bool enable_mpi_threads);
 static int component_finalize(void);
-static int component_query(struct ompi_win_t *win, void **base, size_t size, int disp_unit,
+static int component_query(struct ompi_win_t *win, void **base, size_t size, ptrdiff_t disp_unit,
                            struct ompi_communicator_t *comm, struct opal_info_t *info, int flavor);
-static int component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit,
+static int component_select(struct ompi_win_t *win, void **base, size_t size, ptrdiff_t disp_unit,
                             struct ompi_communicator_t *comm, struct opal_info_t *info,
                             int flavor, int *model);
 static void ompi_osc_ucx_unregister_progress(void);
@@ -60,7 +60,7 @@ static void ompi_osc_ucx_unregister_progress(void);
 ompi_osc_ucx_component_t mca_osc_ucx_component = {
     { /* ompi_osc_base_component_t */
         .osc_version = {
-            OMPI_OSC_BASE_VERSION_3_0_0,
+            OMPI_OSC_BASE_VERSION_4_0_0,
             .mca_component_name = "ucx",
             MCA_BASE_MAKE_VERSION(component, OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION,
                                   OMPI_RELEASE_VERSION),
@@ -360,7 +360,7 @@ static int component_finalize(void) {
     return OMPI_SUCCESS;
 }
 
-static int component_query(struct ompi_win_t *win, void **base, size_t size, int disp_unit,
+static int component_query(struct ompi_win_t *win, void **base, size_t size, ptrdiff_t disp_unit,
                            struct ompi_communicator_t *comm, struct opal_info_t *info, int flavor) {
     int ret;
     if (mca_osc_ucx_component.priority_is_set == false) {
@@ -462,7 +462,7 @@ static const char* ompi_osc_ucx_set_no_lock_info(opal_infosubscriber_t *obj, con
 }
 
 int ompi_osc_ucx_shared_query(struct ompi_win_t *win, int rank, size_t *size,
-        int *disp_unit, void *baseptr)
+        ptrdiff_t *disp_unit, void *baseptr)
 {
     ompi_osc_ucx_module_t *module =
         (ompi_osc_ucx_module_t*) win->w_osc_module;
@@ -502,7 +502,7 @@ int ompi_osc_ucx_shared_query(struct ompi_win_t *win, int rank, size_t *size,
     return OMPI_SUCCESS;
 }
 
-static int component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit,
+static int component_select(struct ompi_win_t *win, void **base, size_t size, ptrdiff_t disp_unit,
                             struct ompi_communicator_t *comm, struct opal_info_t *info,
                             int flavor, int *model) {
     ompi_osc_ucx_module_t *module = NULL;
@@ -648,14 +648,14 @@ select_unlock:
         module->disp_unit = disp_unit;
     } else { /* different disp_unit sizes, allocate O(p) space to store them */
         module->disp_unit = -1;
-        module->disp_units = calloc(comm_size, sizeof(int));
+        module->disp_units = calloc(comm_size, sizeof(ptrdiff_t));
         if (module->disp_units == NULL) {
             ret = OMPI_ERR_TEMP_OUT_OF_RESOURCE;
             goto error;
         }
 
-        ret = module->comm->c_coll->coll_allgather(&disp_unit, 1, MPI_INT,
-                                                   module->disp_units, 1, MPI_INT,
+        ret = module->comm->c_coll->coll_allgather(&disp_unit, sizeof(ptrdiff_t), MPI_BYTE,
+                                                   module->disp_units, sizeof(ptrdiff_t), MPI_BYTE,
                                                    module->comm,
                                                    module->comm->c_coll->coll_allgather_module);
         if (OMPI_SUCCESS != ret) {

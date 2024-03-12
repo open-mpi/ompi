@@ -133,11 +133,11 @@ static inline int create_iov_list(const void *addr, int count, ompi_datatype_t *
 }
 
 static inline int ddt_put_get(ompi_osc_ucx_module_t *module,
-                              const void *origin_addr, int origin_count,
+                              const void *origin_addr, size_t origin_count,
                               struct ompi_datatype_t *origin_dt,
                               bool is_origin_contig, ptrdiff_t origin_lb,
                               int target, uint64_t remote_addr,
-                              int target_count, struct ompi_datatype_t *target_dt,
+                              size_t target_count, struct ompi_datatype_t *target_dt,
                               bool is_target_contig, ptrdiff_t target_lb, bool is_get) {
     ucp_ep_h *ep;
     OSC_UCX_GET_DEFAULT_EP(ep, module, target);
@@ -410,8 +410,8 @@ bool use_atomic_op(
     uint64_t                remote_addr,
     struct ompi_datatype_t *origin_dt,
     struct ompi_datatype_t *target_dt,
-    int                     origin_count,
-    int                     target_count)
+    size_t                  origin_count,
+    size_t                  target_count)
 {
     size_t origin_dt_bytes;
 
@@ -499,8 +499,8 @@ static int do_atomic_op_intrinsic(
     return ret;
 }
 
-int ompi_osc_ucx_put(const void *origin_addr, int origin_count, struct ompi_datatype_t *origin_dt,
-                     int target, ptrdiff_t target_disp, int target_count,
+int ompi_osc_ucx_put(const void *origin_addr, size_t origin_count, struct ompi_datatype_t *origin_dt,
+                     int target, ptrdiff_t target_disp, size_t target_count,
                      struct ompi_datatype_t *target_dt, struct ompi_win_t *win) {
     ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t*) win->w_osc_module;
     opal_common_ucx_wpmem_t *mem = module->mem;
@@ -550,9 +550,9 @@ int ompi_osc_ucx_put(const void *origin_addr, int origin_count, struct ompi_data
     }
 }
 
-int ompi_osc_ucx_get(void *origin_addr, int origin_count,
+int ompi_osc_ucx_get(void *origin_addr, size_t origin_count,
                      struct ompi_datatype_t *origin_dt,
-                     int target, ptrdiff_t target_disp, int target_count,
+                     int target, ptrdiff_t target_disp, size_t target_count,
                      struct ompi_datatype_t *target_dt, struct ompi_win_t *win) {
     ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t*) win->w_osc_module;
     opal_common_ucx_wpmem_t *mem = module->mem;
@@ -683,9 +683,9 @@ static inline int ompi_osc_ucx_acc_unlock(ompi_osc_ucx_module_t *module, int tar
 }
 
 static
-int accumulate_req(const void *origin_addr, int origin_count,
+int accumulate_req(const void *origin_addr, size_t origin_count,
                    struct ompi_datatype_t *origin_dt,
-                   int target, ptrdiff_t target_disp, int target_count,
+                   int target, ptrdiff_t target_disp, size_t target_count,
                    struct ompi_datatype_t *target_dt,
                    struct ompi_op_t *op, struct ompi_win_t *win,
                    ompi_osc_ucx_accumulate_request_t *ucx_req) {
@@ -830,9 +830,9 @@ int accumulate_req(const void *origin_addr, int origin_count,
     return ompi_osc_ucx_acc_unlock(module, target, lock_acquired, free_ptr);
 }
 
-int ompi_osc_ucx_accumulate(const void *origin_addr, int origin_count,
+int ompi_osc_ucx_accumulate(const void *origin_addr, size_t origin_count,
                             struct ompi_datatype_t *origin_dt,
-                            int target, ptrdiff_t target_disp, int target_count,
+                            int target, ptrdiff_t target_disp, size_t target_count,
                             struct ompi_datatype_t *target_dt,
                             struct ompi_op_t *op, struct ompi_win_t *win) {
 
@@ -840,11 +840,11 @@ int ompi_osc_ucx_accumulate(const void *origin_addr, int origin_count,
                     target_disp, target_count, target_dt, op, win, NULL);
 }
 
-static inline int ompi_osc_ucx_acc_rputget(void *stage_addr, int stage_count,
+static inline int ompi_osc_ucx_acc_rputget(void *stage_addr, size_t stage_count,
                     struct ompi_datatype_t *stage_dt, int target, ptrdiff_t target_disp,
-                    int target_count, struct ompi_datatype_t *target_dt, struct ompi_op_t
+                    size_t target_count, struct ompi_datatype_t *target_dt, struct ompi_op_t
                     *op, struct ompi_win_t *win, bool lock_acquired, const void
-                    *origin_addr, int origin_count, struct ompi_datatype_t *origin_dt, bool is_put,
+                    *origin_addr, size_t origin_count, struct ompi_datatype_t *origin_dt, bool is_put,
                     int phase, int acc_type) {
     ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t*) win->w_osc_module;
     ucp_ep_h *ep;
@@ -935,7 +935,7 @@ static inline int ompi_osc_ucx_acc_rputget(void *stage_addr, int stage_count,
 }
 
 static inline int ompi_osc_ucx_check_ops_and_flush (ompi_osc_ucx_module_t *module,
-        int target, ptrdiff_t target_disp, int target_count, struct
+        int target, ptrdiff_t target_disp, size_t target_count, struct
         ompi_datatype_t *target_dt, bool lock_acquired) {
     ptrdiff_t target_lb, target_extent;
     uint64_t base_tmp, tail_tmp;
@@ -1040,10 +1040,10 @@ static inline int ompi_osc_ucx_check_ops_and_flush (ompi_osc_ucx_module_t *modul
 
 /* Nonblocking variant of accumulate. reduce+put happens inside completion call back
  * of rget */
-static int ompi_osc_ucx_get_accumulate_nonblocking(const void *origin_addr, int origin_count,
-                    struct ompi_datatype_t *origin_dt, void *result_addr, int result_count,
+static int ompi_osc_ucx_get_accumulate_nonblocking(const void *origin_addr, size_t origin_count,
+                    struct ompi_datatype_t *origin_dt, void *result_addr, size_t result_count,
                     struct ompi_datatype_t *result_dt, int target, ptrdiff_t target_disp,
-                    int target_count, struct ompi_datatype_t *target_dt, struct ompi_op_t
+                    size_t target_count, struct ompi_datatype_t *target_dt, struct ompi_op_t
                     *op, struct ompi_win_t *win, int acc_type) {
     ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t*) win->w_osc_module;
     int ret = OMPI_SUCCESS;
@@ -1139,9 +1139,9 @@ static int ompi_osc_ucx_get_accumulate_nonblocking(const void *origin_addr, int 
     return ret;
 }
 
-int ompi_osc_ucx_accumulate_nb(const void *origin_addr, int origin_count,
+int ompi_osc_ucx_accumulate_nb(const void *origin_addr, size_t origin_count,
                             struct ompi_datatype_t *origin_dt,
-                            int target, ptrdiff_t target_disp, int target_count,
+                            int target, ptrdiff_t target_disp, size_t target_count,
                             struct ompi_datatype_t *target_dt,
                             struct ompi_op_t *op, struct ompi_win_t *win) {
 
@@ -1308,12 +1308,12 @@ int ompi_osc_ucx_fetch_and_op(const void *origin_addr, void *result_addr,
 }
 
 static
-int get_accumulate_req(const void *origin_addr, int origin_count,
+int get_accumulate_req(const void *origin_addr, size_t origin_count,
                        struct ompi_datatype_t *origin_dt,
-                       void *result_addr, int result_count,
+                       void *result_addr, size_t result_count,
                        struct ompi_datatype_t *result_dt,
                        int target, ptrdiff_t target_disp,
-                       int target_count, struct ompi_datatype_t *target_dt,
+                       size_t target_count, struct ompi_datatype_t *target_dt,
                        struct ompi_op_t *op, struct ompi_win_t *win,
                        ompi_osc_ucx_accumulate_request_t *ucx_req) {
     ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t*) win->w_osc_module;
@@ -1461,12 +1461,12 @@ int get_accumulate_req(const void *origin_addr, int origin_count,
     return ompi_osc_ucx_acc_unlock(module, target, lock_acquired, free_addr);
 }
 
-int ompi_osc_ucx_get_accumulate(const void *origin_addr, int origin_count,
+int ompi_osc_ucx_get_accumulate(const void *origin_addr, size_t origin_count,
                                 struct ompi_datatype_t *origin_dt,
-                                void *result_addr, int result_count,
+                                void *result_addr, size_t result_count,
                                 struct ompi_datatype_t *result_dt,
                                 int target, ptrdiff_t target_disp,
-                                int target_count, struct ompi_datatype_t *target_dt,
+                                size_t target_count, struct ompi_datatype_t *target_dt,
                                 struct ompi_op_t *op, struct ompi_win_t *win) {
 
     return get_accumulate_req(origin_addr, origin_count, origin_dt, result_addr,
@@ -1474,12 +1474,12 @@ int ompi_osc_ucx_get_accumulate(const void *origin_addr, int origin_count,
                               target_count, target_dt, op, win, NULL);
 }
 
-int ompi_osc_ucx_get_accumulate_nb(const void *origin_addr, int origin_count,
+int ompi_osc_ucx_get_accumulate_nb(const void *origin_addr, size_t origin_count,
                                 struct ompi_datatype_t *origin_dt,
-                                void *result_addr, int result_count,
+                                void *result_addr, size_t result_count,
                                 struct ompi_datatype_t *result_dt,
                                 int target, ptrdiff_t target_disp,
-                                int target_count, struct ompi_datatype_t *target_dt,
+                                size_t target_count, struct ompi_datatype_t *target_dt,
                                 struct ompi_op_t *op, struct ompi_win_t *win) {
 
     return ompi_osc_ucx_get_accumulate_nonblocking(origin_addr, origin_count, origin_dt,
@@ -1487,9 +1487,9 @@ int ompi_osc_ucx_get_accumulate_nb(const void *origin_addr, int origin_count,
                             target_count, target_dt, op, win, GET_ACCUMULATE);
 }
 
-int ompi_osc_ucx_rput(const void *origin_addr, int origin_count,
+int ompi_osc_ucx_rput(const void *origin_addr, size_t origin_count,
                       struct ompi_datatype_t *origin_dt,
-                      int target, ptrdiff_t target_disp, int target_count,
+                      int target, ptrdiff_t target_disp, size_t target_count,
                       struct ompi_datatype_t *target_dt,
                       struct ompi_win_t *win, struct ompi_request_t **request) {
     ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t*) win->w_osc_module;
@@ -1541,9 +1541,9 @@ int ompi_osc_ucx_rput(const void *origin_addr, int origin_count,
     return ret;
 }
 
-int ompi_osc_ucx_rget(void *origin_addr, int origin_count,
+int ompi_osc_ucx_rget(void *origin_addr, size_t origin_count,
                       struct ompi_datatype_t *origin_dt,
-                      int target, ptrdiff_t target_disp, int target_count,
+                      int target, ptrdiff_t target_disp, size_t target_count,
                       struct ompi_datatype_t *target_dt, struct ompi_win_t *win,
                       struct ompi_request_t **request) {
     ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t*) win->w_osc_module;
@@ -1595,9 +1595,9 @@ int ompi_osc_ucx_rget(void *origin_addr, int origin_count,
     return ret;
 }
 
-int ompi_osc_ucx_raccumulate(const void *origin_addr, int origin_count,
+int ompi_osc_ucx_raccumulate(const void *origin_addr, size_t origin_count,
                              struct ompi_datatype_t *origin_dt,
-                             int target, ptrdiff_t target_disp, int target_count,
+                             int target, ptrdiff_t target_disp, size_t target_count,
                              struct ompi_datatype_t *target_dt, struct ompi_op_t *op,
                              struct ompi_win_t *win, struct ompi_request_t **request) {
     ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t*) win->w_osc_module;
@@ -1625,11 +1625,11 @@ int ompi_osc_ucx_raccumulate(const void *origin_addr, int origin_count,
     return ret;
 }
 
-int ompi_osc_ucx_rget_accumulate(const void *origin_addr, int origin_count,
+int ompi_osc_ucx_rget_accumulate(const void *origin_addr, size_t origin_count,
                                  struct ompi_datatype_t *origin_datatype,
-                                 void *result_addr, int result_count,
+                                 void *result_addr, size_t result_count,
                                  struct ompi_datatype_t *result_datatype,
-                                 int target, ptrdiff_t target_disp, int target_count,
+                                 int target, ptrdiff_t target_disp, size_t target_count,
                                  struct ompi_datatype_t *target_datatype,
                                  struct ompi_op_t *op, struct ompi_win_t *win,
                                  struct ompi_request_t **request) {

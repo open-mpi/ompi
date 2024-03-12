@@ -59,7 +59,7 @@ static inline int osc_rdma_get_remote_segment (ompi_osc_rdma_module_t *module, o
         *remote_handle = (mca_btl_base_registration_handle_t *) region->btl_handle_data;
     } else {
         ompi_osc_rdma_peer_extended_t *ex_peer = (ompi_osc_rdma_peer_extended_t *) peer;
-        int disp_unit = (module->same_disp_unit) ? module->disp_unit : ex_peer->disp_unit;
+        ptrdiff_t disp_unit = (module->same_disp_unit) ? module->disp_unit : ex_peer->disp_unit;
         size_t size = (module->same_size) ? module->size : (size_t) ex_peer->size;
 
         *remote_address = ex_peer->super.base + disp_unit * target_disp;
@@ -81,21 +81,21 @@ static inline int osc_rdma_get_remote_segment (ompi_osc_rdma_module_t *module, o
 
 /* prototypes for implementations of MPI RMA window functions. these will be called from the
  * mpi interface (ompi/mpi/c) */
-int ompi_osc_rdma_put (const void *origin_addr, int origin_count, ompi_datatype_t *origin_dt,
-                       int target, ptrdiff_t target_disp, int target_count,
+int ompi_osc_rdma_put (const void *origin_addr, size_t origin_count, ompi_datatype_t *origin_dt,
+                       int target, ptrdiff_t target_disp, size_t target_count,
                        ompi_datatype_t *target_dt, ompi_win_t *win);
 
-int ompi_osc_rdma_get (void *origin_addr, int origin_count, ompi_datatype_t *origin_dt,
-                       int target, ptrdiff_t target_disp, int target_count,
+int ompi_osc_rdma_get (void *origin_addr, size_t origin_count, ompi_datatype_t *origin_dt,
+                       int target, ptrdiff_t target_disp, size_t target_count,
                        ompi_datatype_t *target_dt, ompi_win_t *win);
 
-int ompi_osc_rdma_rput (const void *origin_addr, int origin_count, ompi_datatype_t *origin_dt,
-                        int target, ptrdiff_t target_disp, int target_count,
+int ompi_osc_rdma_rput (const void *origin_addr, size_t origin_count, ompi_datatype_t *origin_dt,
+                        int target, ptrdiff_t target_disp, size_t target_count,
                         ompi_datatype_t *target_dt, ompi_win_t *win,
                         ompi_request_t **request);
 
-int ompi_osc_rdma_rget (void *origin_addr, int origin_count, ompi_datatype_t *origin_dt,
-                        int target, ptrdiff_t target_disp, int target_count,
+int ompi_osc_rdma_rget (void *origin_addr, size_t origin_count, ompi_datatype_t *origin_dt,
+                        int target, ptrdiff_t target_disp, size_t target_count,
                         ompi_datatype_t *target_dt, ompi_win_t *win,
                         ompi_request_t **request);
 

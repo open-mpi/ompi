@@ -42,14 +42,14 @@
     }                                                                   \
                                                                         \
     static int ompi_osc_monitoring_## template ##_get_accumulate (const void *origin_addr, \
-                                                                  int origin_count, \
+                                                                  size_t origin_count, \
                                                                   ompi_datatype_t*origin_datatype, \
                                                                   void *result_addr, \
-                                                                  int result_count, \
+                                                                  size_t result_count, \
                                                                   ompi_datatype_t*result_datatype, \
                                                                   int target_rank, \
                                                                   MPI_Aint target_disp, \
-                                                                  int target_count, \
+                                                                  size_t target_count, \
                                                                   ompi_datatype_t*target_datatype, \
                                                                   ompi_op_t *op, ompi_win_t*win) \
     {                                                                   \
@@ -72,14 +72,14 @@
     }                                                                   \
                                                                         \
     static int ompi_osc_monitoring_## template ##_rget_accumulate (const void *origin_addr, \
-                                                                   int origin_count, \
+                                                                   size_t origin_count, \
                                                                    ompi_datatype_t *origin_datatype, \
                                                                    void *result_addr, \
-                                                                   int result_count, \
+                                                                   size_t result_count, \
                                                                    ompi_datatype_t *result_datatype, \
                                                                    int target_rank, \
                                                                    MPI_Aint target_disp, \
-                                                                   int target_count, \
+                                                                   size_t target_count, \
                                                                    ompi_datatype_t*target_datatype, \
                                                                    ompi_op_t *op, \
                                                                    ompi_win_t *win, \
@@ -104,11 +104,11 @@
     }                                                                   \
                                                                         \
     static int ompi_osc_monitoring_## template ##_raccumulate (const void *origin_addr, \
-                                                               int origin_count, \
+                                                               size_t origin_count, \
                                                                ompi_datatype_t *origin_datatype, \
                                                                int target_rank, \
                                                                ptrdiff_t target_disp, \
-                                                               int target_count, \
+                                                               size_t target_count, \
                                                                ompi_datatype_t *target_datatype, \
                                                                ompi_op_t *op, ompi_win_t *win, \
                                                                ompi_request_t **request) \
@@ -129,11 +129,11 @@
     }                                                                   \
                                                                         \
     static int ompi_osc_monitoring_## template ##_accumulate (const void *origin_addr, \
-                                                              int origin_count, \
+                                                              size_t origin_count, \
                                                               ompi_datatype_t *origin_datatype, \
                                                               int target_rank, \
                                                               ptrdiff_t target_disp, \
-                                                              int target_count, \
+                                                              size_t target_count, \
                                                               ompi_datatype_t *target_datatype, \
                                                               ompi_op_t *op, ompi_win_t *win) \
     {                                                                   \
