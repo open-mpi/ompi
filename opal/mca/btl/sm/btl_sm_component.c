@@ -340,6 +340,10 @@ mca_btl_sm_component_init(int *num_btls, bool enable_progress_threads, bool enab
         mca_btl_sm.super.btl_get = mca_btl_sm_get;
         mca_btl_sm.super.btl_put = mca_btl_sm_put;
 
+        if (mca_smsc_base_has_feature(MCA_SMSC_FEATURE_ACCELERATOR)) {
+            mca_btl_sm.super.btl_flags |= MCA_BTL_FLAGS_ACCELERATOR_GET;
+        }
+
         mca_btl_sm.super.btl_bandwidth = 40000; /* Mbs */
 
         if (mca_smsc_base_has_feature(MCA_SMSC_FEATURE_CAN_MAP)) {
