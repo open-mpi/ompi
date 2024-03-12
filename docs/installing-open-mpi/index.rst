@@ -7,6 +7,7 @@ Building and installing Open MPI
    :maxdepth: 1
 
    quickstart
+   downloading
    supported-systems
    definitions
    filesystem-requirements
