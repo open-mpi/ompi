@@ -37,3 +37,12 @@ Detected an unexpected split type in a call to MPI_Comm_split_type.
 [disjointness-set-again]
 Communicator disjointness should only be set once at initialization.
 Attempts to modify the state are illegal and shall be ignored.
+[cid-base-not-set]
+An internal error has occurred when creating a new communicator.  This
+should probably never happen:
+
+* cid_base is not set.  Either nresults
+  is zero or no returned info matches PMIX_GROUP_CONTEXT_ID.
+
+Please contact the Open MPI developer community with this message and
+a small example code that reproduces the issue.
