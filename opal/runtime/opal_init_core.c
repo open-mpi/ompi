@@ -16,7 +16,7 @@
  * Copyright (c) 2010-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
- * Copyright (c) 2015-2017 Research Organization for Information Science
+ * Copyright (c) 2015-2024 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017-2022 Amazon.com, Inc. or its affiliates.  All Rights reserved.
  *                         All Rights reserved.
@@ -49,7 +49,6 @@
 #include "opal/mca/memcpy/base/base.h"
 #include "opal/mca/memory/base/base.h"
 #include "opal/mca/patcher/base/base.h"
-#include "opal/mca/pmix/base/base.h"
 #include "opal/mca/reachable/base/base.h"
 #include "opal/mca/shmem/base/base.h"
 #include "opal/mca/smsc/base/base.h"

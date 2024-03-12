@@ -7,6 +7,8 @@
  *                         reserved.
  * Copyright (c) 2020-2021 Google, LLC. All rights reserved.
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
+ * Copyright (c) 2024      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -18,7 +20,7 @@
 
 #include "opal/include/opal/align.h"
 #include "opal/mca/memchecker/base/base.h"
-#include "opal/mca/pmix/pmix-internal.h"
+#include "opal/pmix/pmix-internal.h"
 #include "opal/mca/rcache/rcache.h"
 #include "opal/mca/smsc/base/base.h"
 #include "opal/mca/smsc/knem/smsc_knem_internal.h"

@@ -17,6 +17,8 @@
  *                         All Rights reserved.
  * Copyright (c) 2022      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2024      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -38,7 +40,7 @@
 #include "opal/mca/btl/base/btl_base_error.h"
 #include "opal/mca/btl/btl.h"
 #include "opal/mca/mpool/mpool.h"
-#include "opal/mca/pmix/pmix-internal.h"
+#include "opal/pmix/pmix-internal.h"
 #include "opal/mca/rcache/base/base.h"
 #include "opal/util/event.h"
 

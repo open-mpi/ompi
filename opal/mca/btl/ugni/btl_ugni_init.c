@@ -4,7 +4,7 @@
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
  * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2024 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * Copyright (c) 2021      Triad National Security, LLC. All rights
@@ -22,7 +22,7 @@
 
 #include "opal/class/opal_list.h"
 #include "opal/mca/hwloc/base/base.h"
-#include "opal/mca/pmix/pmix-internal.h"
+#include "opal/pmix/pmix-internal.h"
 #include "opal/util/bit_ops.h"
 
 static inline int get_ptag(uint8_t *out_ptag)

@@ -18,7 +18,7 @@
  *                         reserved.
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013-2020 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014-2023 Research Organization for Information Science
+ * Copyright (c) 2014-2024 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * Copyright (c) 2017      Mellanox Technologies. All rights reserved.
@@ -36,8 +36,7 @@
 
 #include "ompi_config.h"
 
-#include "opal/mca/pmix/base/base.h"
-#include "opal/mca/pmix/pmix-internal.h"
+#include "opal/pmix/pmix-internal.h"
 #include "opal/util/printf.h"
 #include "opal/util/show_help.h"
 

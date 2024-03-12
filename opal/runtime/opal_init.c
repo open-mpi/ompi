@@ -16,8 +16,8 @@
  * Copyright (c) 2010-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
- * Copyright (c) 2015-2017 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2024 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2017-2022 Amazon.com, Inc. or its affiliates.  All Rights reserved.
  *                         All Rights reserved.
  * Copyright (c) 2018      Mellanox Technologies, Inc.
@@ -53,7 +53,6 @@
 #include "opal/mca/memcpy/base/base.h"
 #include "opal/mca/memory/base/base.h"
 #include "opal/mca/patcher/base/base.h"
-#include "opal/mca/pmix/base/base.h"
 #include "opal/mca/reachable/base/base.h"
 #include "opal/mca/shmem/base/base.h"
 #include "opal/mca/smsc/base/base.h"
@@ -130,7 +129,6 @@ static mca_base_framework_t *opal_init_frameworks[] = {
     &opal_memcpy_base_framework, &opal_memchecker_base_framework,
     &opal_backtrace_base_framework, &opal_timer_base_framework,
     &opal_shmem_base_framework, &opal_reachable_base_framework,
-    &opal_pmix_base_framework,
     NULL,
 };
 

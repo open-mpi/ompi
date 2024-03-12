@@ -4,7 +4,7 @@
  *                         reserved.
  * Copyright (c) 2013      Inria.  All rights reserved.
  * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014-2016 Research Organization for Information Science
+ * Copyright (c) 2014-2024 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.  All Rights
@@ -25,7 +25,7 @@
 #include "opal_config.h"
 #include "opal/class/opal_list.h"
 #include "opal/mca/hwloc/hwloc-internal.h"
-#include "opal/mca/pmix/pmix-internal.h"
+#include "opal/pmix/pmix-internal.h"
 #include "opal/types.h"
 
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT

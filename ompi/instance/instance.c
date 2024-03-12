@@ -7,6 +7,8 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
+ * Copyright (c) 2024      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -51,12 +53,11 @@
 #include "ompi/mca/part/base/base.h"
 #include "ompi/mca/io/base/base.h"
 #include "ompi/mca/topo/base/base.h"
-#include "opal/mca/pmix/base/base.h"
 
 #include "opal/mca/mpool/base/mpool_base_tree.h"
 #include "ompi/mca/pml/base/pml_base_bsend.h"
 #include "ompi/util/timings.h"
-#include "opal/mca/pmix/pmix-internal.h"
+#include "opal/pmix/pmix-internal.h"
 
 ompi_predefined_instance_t ompi_mpi_instance_null = {{{{0}}}};
 

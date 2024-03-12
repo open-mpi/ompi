@@ -4,7 +4,7 @@
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
- * Copyright (c) 2019      Research Organization for Information Science
+ * Copyright (c) 2019-2024 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2020-2022  Triad National Security, LLC. All rights
  *                         reserved.
@@ -177,7 +177,7 @@ struct opal_proc_t;
 #include "opal/mca/threads/threads.h"
 #include "opal/util/proc.h"
 #include "opal/mca/hwloc/hwloc-internal.h"
-#include "opal/mca/pmix/pmix-internal.h"
+#include "opal/pmix/pmix-internal.h"
 
 struct ompi_proc_t;
 struct ompi_communicator_t;

@@ -20,6 +20,8 @@
  * Copyright (c) 2020      Google, LLC. All rights reserved.
  *
  * Copyright (c) 2019-2020 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2024      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -59,7 +61,7 @@
 #include "opal/sys/atomic.h"
 #include "opal/util/proc.h"
 
-#include "opal/mca/pmix/pmix-internal.h"
+#include "opal/pmix/pmix-internal.h"
 
 BEGIN_C_DECLS
 

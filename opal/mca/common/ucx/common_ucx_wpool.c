@@ -1,3 +1,14 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
+/*
+ * Copyright (c) 2024      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
 #include "opal_config.h"
 
 #include "common_ucx.h"
@@ -5,7 +16,7 @@
 #include "common_ucx_wpool_int.h"
 #include "opal/mca/base/mca_base_framework.h"
 #include "opal/mca/base/mca_base_var.h"
-#include "opal/mca/pmix/pmix-internal.h"
+#include "opal/pmix/pmix-internal.h"
 #include "opal/memoryhooks/memory.h"
 #include "opal/util/proc.h"
 #include "opal/util/sys_limits.h"

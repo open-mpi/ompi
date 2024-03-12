@@ -43,6 +43,7 @@
 #include "opal/mca/threads/threads.h"
 #include "opal/util/error.h"
 #include "opal/util/event.h"
+#include "opal/mca/threads/threads.h"
 
 #include <pmix.h>
 
@@ -715,26 +716,20 @@ OPAL_DECLSPEC int opal_pmix_register_cleanup(char *path, bool directory, bool ig
 #    endif
 #endif
 
-/**
- * Structure for pmix components.
- */
-struct opal_pmix_base_component_2_0_0_t {
-    /** MCA base component */
-    mca_base_component_t base_version;
-    /** MCA base data */
-    mca_base_component_data_t base_data;
-};
+OPAL_DECLSPEC extern bool opal_pmix_base_allow_delayed_server;
 
-/**
- * Convenience typedef
- */
-typedef struct opal_pmix_base_component_2_0_0_t opal_pmix_base_component_2_0_0_t;
-typedef struct opal_pmix_base_component_2_0_0_t opal_pmix_component_t;
+OPAL_DECLSPEC int opal_pmix_base_exchange(pmix_info_t *info, pmix_pdata_t *pdat, int timeout);
 
-/**
- * Macro for use in components that are of type hwloc
- */
-#define OPAL_PMIX_BASE_VERSION_2_0_0 OPAL_MCA_BASE_VERSION_2_1_0("pmix", 2, 0, 0)
+typedef struct {
+    opal_event_base_t *evbase;
+    int timeout;
+    int initialized;
+    opal_pmix_lock_t lock;
+} opal_pmix_base_t;
+
+extern opal_pmix_base_t opal_pmix_base;
+
+#define OPAL_PMIX_CONDITION_STATIC_INIT OPAL_CONDITION_STATIC_INIT
 
 END_C_DECLS
 

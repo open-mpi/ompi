@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2013-2015 Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2015-2019 Research Organization for Information Science
+ * Copyright (c) 2015-2024 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
@@ -28,7 +28,7 @@
 #include "oshmem/mca/memheap/base/base.h"
 #include "oshmem/mca/spml/spml.h"
 #include "opal/util/timings.h"
-#include "opal/mca/pmix/pmix-internal.h"
+#include "opal/pmix/pmix-internal.h"
 
 /* Turn ON/OFF debug output from build (default 0) */
 #ifndef MEMHEAP_BASE_DEBUG
