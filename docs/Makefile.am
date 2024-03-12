@@ -962,8 +962,8 @@ $(builddir)/schizo-ompi-rst-content/schizo-ompi-cli.rstxt: $(OMPI_SCHIZO_OMPI_RS
 else
 $(builddir)/schizo-ompi-rst-content/schizo-ompi-cli.rstxt: $(builddir)/schizo-ompi-rst-content
 $(builddir)/schizo-ompi-rst-content/schizo-ompi-cli.rstxt: $(srcdir)/no-prrte-content.rst.txt
-	dir=`dirname $@`; if test ! -d "$$dir"; then mkdir "$$dir"; fi
 	$(OMPI_V_SPHINX_COPYRST) \
+	dir=`dirname $@`; if test ! -d "$$dir"; then mkdir "$$dir"; fi; \
 	cp -pf $(srcdir)/no-prrte-content.rst.txt "$@"
 endif
 
