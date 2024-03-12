@@ -313,7 +313,8 @@ static int ompi_comm_ext_cid_new_block (ompi_communicator_t *newcomm, ompi_commu
     opal_process_name_t *name_array = NULL;
     char *tag = NULL;
     size_t proc_count;
-    size_t cid_base;
+    size_t cid_base = 0;
+    bool cid_base_set = false;
     int rc, leader_rank;
     int ret = OMPI_SUCCESS;
     pmix_proc_t *procs = NULL;
@@ -383,6 +384,7 @@ static int ompi_comm_ext_cid_new_block (ompi_communicator_t *newcomm, ompi_commu
                 ret = opal_pmix_convert_status(rc);
                 goto fn_exit;
             }
+            cid_base_set = true;
             break;
         }
     }
@@ -390,6 +392,12 @@ static int ompi_comm_ext_cid_new_block (ompi_communicator_t *newcomm, ompi_commu
     rc = PMIx_Group_destruct (tag, NULL, 0);
     if(PMIX_SUCCESS != rc) {
         ret = opal_pmix_convert_status(rc);
+        goto fn_exit;
+    }
+
+    if (!cid_base_set) {
+        opal_show_help("help-comm.txt", "cid-base-not-set", true);
+        ret = OMPI_ERROR;
         goto fn_exit;
     }
 
