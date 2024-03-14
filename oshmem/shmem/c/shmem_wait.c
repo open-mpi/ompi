@@ -68,21 +68,23 @@
 #pragma weak shmemx_int32_wait_until = pshmemx_int32_wait_until
 #pragma weak shmemx_int64_wait_until = pshmemx_int64_wait_until
 
-#pragma weak shmem_short_test = pshmem_short_test
-#pragma weak shmem_int_test = pshmem_int_test
-#pragma weak shmem_long_test = pshmem_long_test
-#pragma weak shmem_longlong_test = pshmem_longlong_test
-#pragma weak shmem_ushort_test = pshmem_ushort_test
-#pragma weak shmem_uint_test = pshmem_uint_test
-#pragma weak shmem_ulong_test = pshmem_ulong_test
-#pragma weak shmem_ulonglong_test = pshmem_ulonglong_test
-#pragma weak shmem_int32_test = pshmem_int32_test
-#pragma weak shmem_int64_test = pshmem_int64_test
-#pragma weak shmem_uint32_test = pshmem_uint32_test
-#pragma weak shmem_uint64_test = pshmem_uint64_test
-#pragma weak shmem_size_test = pshmem_size_test
-#pragma weak shmem_ptrdiff_test = pshmem_ptrdiff_test
-#include "oshmem/shmem/c/profile/defines.h"
+#pragma weak shmem_short_test             = pshmem_short_test
+#pragma weak shmem_int_test               = pshmem_int_test
+#pragma weak shmem_long_test              = pshmem_long_test
+#pragma weak shmem_longlong_test          = pshmem_longlong_test
+#pragma weak shmem_ushort_test            = pshmem_ushort_test
+#pragma weak shmem_uint_test              = pshmem_uint_test
+#pragma weak shmem_ulong_test             = pshmem_ulong_test
+#pragma weak shmem_ulonglong_test         = pshmem_ulonglong_test
+#pragma weak shmem_int32_test             = pshmem_int32_test
+#pragma weak shmem_int64_test             = pshmem_int64_test
+#pragma weak shmem_uint32_test            = pshmem_uint32_test
+#pragma weak shmem_uint64_test            = pshmem_uint64_test
+#pragma weak shmem_size_test              = pshmem_size_test
+#pragma weak shmem_ptrdiff_test           = pshmem_ptrdiff_test
+
+
+#include "oshmem/shmem/c/profile-defines.h"
 #endif
 
 SHMEM_TYPE_WAIT(, volatile long, SHMEM_LONG, shmem)
@@ -114,16 +116,16 @@ SHMEM_TYPE_WAIT_UNTIL(_short, volatile short, SHMEM_SHORT, shmem)
 SHMEM_TYPE_WAIT_UNTIL(_int, volatile int, SHMEM_INT, shmem)
 SHMEM_TYPE_WAIT_UNTIL(_long, volatile long, SHMEM_LONG, shmem)
 SHMEM_TYPE_WAIT_UNTIL(_longlong, volatile long long, SHMEM_LLONG, shmem)
-SHMEM_TYPE_WAIT_UNTIL(_ushort, volatile unsigned short, SHMEM_SHORT, shmem)
-SHMEM_TYPE_WAIT_UNTIL(_uint, volatile unsigned int, SHMEM_INT, shmem)
-SHMEM_TYPE_WAIT_UNTIL(_ulong, volatile unsigned long, SHMEM_LONG, shmem)
-SHMEM_TYPE_WAIT_UNTIL(_ulonglong, volatile unsigned long long, SHMEM_LLONG, shmem)
+SHMEM_TYPE_WAIT_UNTIL(_ushort, volatile unsigned short, SHMEM_USHORT, shmem)
+SHMEM_TYPE_WAIT_UNTIL(_uint, volatile unsigned int, SHMEM_UINT, shmem)
+SHMEM_TYPE_WAIT_UNTIL(_ulong, volatile unsigned long, SHMEM_ULONG, shmem)
+SHMEM_TYPE_WAIT_UNTIL(_ulonglong, volatile unsigned long long, SHMEM_ULLONG, shmem)
 SHMEM_TYPE_WAIT_UNTIL(_int32, volatile int32_t, SHMEM_INT32_T, shmem)
 SHMEM_TYPE_WAIT_UNTIL(_int64, volatile int64_t, SHMEM_INT64_T, shmem)
-SHMEM_TYPE_WAIT_UNTIL(_uint32, volatile uint32_t, SHMEM_INT32_T, shmem)
-SHMEM_TYPE_WAIT_UNTIL(_uint64, volatile uint64_t, SHMEM_INT64_T, shmem)
-SHMEM_TYPE_WAIT_UNTIL(_size, volatile size_t, SHMEM_LLONG, shmem)
-SHMEM_TYPE_WAIT_UNTIL(_ptrdiff, volatile ptrdiff_t, SHMEM_LLONG, shmem)
+SHMEM_TYPE_WAIT_UNTIL(_uint32, volatile uint32_t, SHMEM_UINT32_T, shmem)
+SHMEM_TYPE_WAIT_UNTIL(_uint64, volatile uint64_t, SHMEM_UINT64_T, shmem)
+SHMEM_TYPE_WAIT_UNTIL(_size, volatile size_t, SHMEM_SIZE_T, shmem)
+SHMEM_TYPE_WAIT_UNTIL(_ptrdiff, volatile ptrdiff_t, SHMEM_PTRDIFF_T, shmem)
 
 SHMEM_TYPE_WAIT_UNTIL(_int32, int32_t, SHMEM_INT32_T, shmemx)
 SHMEM_TYPE_WAIT_UNTIL(_int64, int64_t, SHMEM_INT64_T, shmemx)
@@ -150,13 +152,13 @@ SHMEM_TYPE_TEST(_short, volatile short, SHMEM_SHORT, shmem)
 SHMEM_TYPE_TEST(_int, volatile int, SHMEM_INT, shmem)
 SHMEM_TYPE_TEST(_long, volatile long, SHMEM_LONG, shmem)
 SHMEM_TYPE_TEST(_longlong, volatile long long, SHMEM_LLONG, shmem)
-SHMEM_TYPE_TEST(_ushort, volatile unsigned short, SHMEM_SHORT, shmem)
-SHMEM_TYPE_TEST(_uint, volatile unsigned int, SHMEM_INT, shmem)
-SHMEM_TYPE_TEST(_ulong, volatile unsigned long, SHMEM_LONG, shmem)
-SHMEM_TYPE_TEST(_ulonglong, volatile unsigned long long, SHMEM_LLONG, shmem)
+SHMEM_TYPE_TEST(_ushort, volatile unsigned short, SHMEM_USHORT, shmem)
+SHMEM_TYPE_TEST(_uint, volatile unsigned int, SHMEM_UINT, shmem)
+SHMEM_TYPE_TEST(_ulong, volatile unsigned long, SHMEM_ULONG, shmem)
+SHMEM_TYPE_TEST(_ulonglong, volatile unsigned long long, SHMEM_ULLONG, shmem)
 SHMEM_TYPE_TEST(_int32, volatile int32_t, SHMEM_INT32_T, shmem)
 SHMEM_TYPE_TEST(_int64, volatile int64_t, SHMEM_INT64_T, shmem)
-SHMEM_TYPE_TEST(_uint32, volatile uint32_t, SHMEM_INT32_T, shmem)
-SHMEM_TYPE_TEST(_uint64, volatile uint64_t, SHMEM_INT64_T, shmem)
-SHMEM_TYPE_TEST(_size, volatile size_t, SHMEM_LLONG, shmem)
-SHMEM_TYPE_TEST(_ptrdiff, volatile ptrdiff_t, SHMEM_LLONG, shmem)
+SHMEM_TYPE_TEST(_uint32, volatile uint32_t, SHMEM_UINT32_T, shmem)
+SHMEM_TYPE_TEST(_uint64, volatile uint64_t, SHMEM_UINT64_T, shmem)
+SHMEM_TYPE_TEST(_size, volatile size_t, SHMEM_SIZE_T, shmem)
+SHMEM_TYPE_TEST(_ptrdiff, volatile ptrdiff_t, SHMEM_PTRDIFF_T, shmem)

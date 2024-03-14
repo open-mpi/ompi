@@ -17,6 +17,8 @@
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
+ * Copyright (c) 2018-2019 Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -52,13 +54,13 @@ ompi_predefined_win_t *ompi_mpi_win_null_addr = &ompi_mpi_win_null;
 mca_base_var_enum_t *ompi_win_accumulate_ops = NULL;
 mca_base_var_enum_flag_t *ompi_win_accumulate_order = NULL;
 
-static mca_base_var_enum_value_t accumulate_ops_values[] = {
+static const mca_base_var_enum_value_t accumulate_ops_values[] = {
     {.value = OMPI_WIN_ACCUMULATE_OPS_SAME_OP_NO_OP, .string = "same_op_no_op",},
     {.value = OMPI_WIN_ACCUMULATE_OPS_SAME_OP, .string = "same_op",},
     {.value = -1, .string = NULL},
 };
 
-static mca_base_var_enum_value_flag_t accumulate_order_flags[] = {
+static const mca_base_var_enum_value_flag_t accumulate_order_flags[] = {
     {.flag = OMPI_WIN_ACC_ORDER_NONE, .string = "none", .conflicting_flag = OMPI_WIN_ACC_ORDER_RAR |
      OMPI_WIN_ACC_ORDER_WAR | OMPI_WIN_ACC_ORDER_RAW | OMPI_WIN_ACC_ORDER_WAW},
     {.flag = OMPI_WIN_ACC_ORDER_RAR, .string = "rar", .conflicting_flag = OMPI_WIN_ACC_ORDER_NONE},
@@ -74,8 +76,40 @@ static void ompi_win_destruct(ompi_win_t *win);
 OBJ_CLASS_INSTANCE(ompi_win_t, opal_infosubscriber_t,
                    ompi_win_construct, ompi_win_destruct);
 
-int
-ompi_win_init(void)
+
+static void ompi_win_dump (ompi_win_t *win)
+{
+    opal_output(0, "Dumping information for window: %s\n", win->w_name);
+    opal_output(0,"  Fortran window handle: %d, window size: %d\n",
+                win->w_f_to_c_index, ompi_group_size (win->w_group));
+}
+
+static int ompi_win_finalize(void)
+{
+    size_t size = opal_pointer_array_get_size (&ompi_mpi_windows);
+    /* start at 1 to skip win null */
+    for (size_t i = 1 ; i < size ; ++i) {
+        ompi_win_t *win =
+            (ompi_win_t *) opal_pointer_array_get_item (&ompi_mpi_windows, i);
+        if (NULL != win) {
+            if (ompi_debug_show_handle_leaks && !ompi_win_invalid(win)){
+                opal_output(0,"WARNING: MPI_Win still allocated in MPI_Finalize\n");
+                ompi_win_dump (win);
+            }
+            ompi_win_free (win);
+        }
+    }
+
+    OBJ_DESTRUCT(&ompi_mpi_win_null.win);
+    OBJ_DESTRUCT(&ompi_mpi_windows);
+    OBJ_RELEASE(ompi_win_accumulate_ops);
+    OBJ_RELEASE(ompi_win_accumulate_order);
+
+    /* release a reference to the attributes subsys */
+    return ompi_attr_put_ref();
+}
+
+int ompi_win_init (void)
 {
     int ret;
 
@@ -106,36 +140,12 @@ ompi_win_init(void)
         return ret;
     }
 
-    return OMPI_SUCCESS;
-}
-
-static void ompi_win_dump (ompi_win_t *win)
-{
-    opal_output(0, "Dumping information for window: %s\n", win->w_name);
-    opal_output(0,"  Fortran window handle: %d, window size: %d\n",
-                win->w_f_to_c_index, ompi_group_size (win->w_group));
-}
-
-int ompi_win_finalize(void)
-{
-    size_t size = opal_pointer_array_get_size (&ompi_mpi_windows);
-    /* start at 1 to skip win null */
-    for (size_t i = 1 ; i < size ; ++i) {
-        ompi_win_t *win =
-            (ompi_win_t *) opal_pointer_array_get_item (&ompi_mpi_windows, i);
-        if (NULL != win) {
-            if (ompi_debug_show_handle_leaks && !ompi_win_invalid(win)){
-                opal_output(0,"WARNING: MPI_Win still allocated in MPI_Finalize\n");
-                ompi_win_dump (win);
-            }
-            ompi_win_free (win);
-        }
+    ret = ompi_attr_get_ref();
+    if (OMPI_SUCCESS != ret) {
+        return ret;
     }
 
-    OBJ_DESTRUCT(&ompi_mpi_win_null.win);
-    OBJ_DESTRUCT(&ompi_mpi_windows);
-    OBJ_RELEASE(ompi_win_accumulate_ops);
-    OBJ_RELEASE(ompi_win_accumulate_order);
+    ompi_mpi_instance_append_finalize (ompi_win_finalize);
 
     return OMPI_SUCCESS;
 }
@@ -152,7 +162,14 @@ static int alloc_window(struct ompi_communicator_t *comm, opal_info_t *info, int
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    ret = opal_info_get_value_enum (info, "accumulate_ops", &acc_ops,
+    /* Copy the info for the info layer */
+    win->super.s_info = OBJ_NEW(opal_info_t);
+    if (info) {
+        opal_info_dup(info, &(win->super.s_info));
+    }
+
+
+    ret = opal_info_get_value_enum (win->super.s_info, "accumulate_ops", &acc_ops,
                                     OMPI_WIN_ACCUMULATE_OPS_SAME_OP_NO_OP,
                                     ompi_win_accumulate_ops, &flag);
     if (OMPI_SUCCESS != ret) {
@@ -162,7 +179,7 @@ static int alloc_window(struct ompi_communicator_t *comm, opal_info_t *info, int
 
     win->w_acc_ops = (ompi_win_accumulate_ops_t)acc_ops;
 
-    ret = opal_info_get_value_enum (info, "accumulate_order", &acc_order,
+    ret = opal_info_get_value_enum (win->super.s_info, "accumulate_order", &acc_order,
                                     OMPI_WIN_ACC_ORDER_RAR | OMPI_WIN_ACC_ORDER_WAR |
                                     OMPI_WIN_ACC_ORDER_RAW | OMPI_WIN_ACC_ORDER_WAW,
                                     &(ompi_win_accumulate_order->super), &flag);
@@ -179,12 +196,6 @@ static int alloc_window(struct ompi_communicator_t *comm, opal_info_t *info, int
     group = comm->c_local_group;
     OBJ_RETAIN(group);
     win->w_group = group;
-
-    /* Copy the info for the info layer */
-    win->super.s_info = OBJ_NEW(opal_info_t);
-    if (info) {
-        opal_info_dup(info, &(win->super.s_info));
-    }
 
     *win_out = win;
 
@@ -243,7 +254,7 @@ ompi_win_create(void *base, size_t size,
         return ret;
     }
 
-    ret = ompi_osc_base_select(win, &base, size, disp_unit, comm, info, MPI_WIN_FLAVOR_CREATE, &model);
+    ret = ompi_osc_base_select(win, &base, size, disp_unit, comm, MPI_WIN_FLAVOR_CREATE, &model);
     if (OMPI_SUCCESS != ret) {
         OBJ_RELEASE(win);
         return ret;
@@ -255,11 +266,13 @@ ompi_win_create(void *base, size_t size,
         return ret;
     }
 
+    /* MPI-4 §12.2.7 requires us to remove all unknown keys from the info object */
+    opal_info_remove_unreferenced(win->super.s_info);
+
     *newwin = win;
 
     return OMPI_SUCCESS;
 }
-
 
 int
 ompi_win_allocate(size_t size, int disp_unit, opal_info_t *info,
@@ -275,7 +288,7 @@ ompi_win_allocate(size_t size, int disp_unit, opal_info_t *info,
         return ret;
     }
 
-    ret = ompi_osc_base_select(win, &base, size, disp_unit, comm, info, MPI_WIN_FLAVOR_ALLOCATE, &model);
+    ret = ompi_osc_base_select(win, &base, size, disp_unit, comm, MPI_WIN_FLAVOR_ALLOCATE, &model);
     if (OMPI_SUCCESS != ret) {
         OBJ_RELEASE(win);
         return ret;
@@ -287,12 +300,14 @@ ompi_win_allocate(size_t size, int disp_unit, opal_info_t *info,
         return ret;
     }
 
+    /* MPI-4 §12.2.7 requires us to remove all unknown keys from the info object */
+    opal_info_remove_unreferenced(win->super.s_info);
+
     *((void**) baseptr) = base;
     *newwin = win;
 
     return OMPI_SUCCESS;
 }
-
 
 int
 ompi_win_allocate_shared(size_t size, int disp_unit, opal_info_t *info,
@@ -308,7 +323,7 @@ ompi_win_allocate_shared(size_t size, int disp_unit, opal_info_t *info,
         return ret;
     }
 
-    ret = ompi_osc_base_select(win, &base, size, disp_unit, comm, info, MPI_WIN_FLAVOR_SHARED, &model);
+    ret = ompi_osc_base_select(win, &base, size, disp_unit, comm, MPI_WIN_FLAVOR_SHARED, &model);
     if (OMPI_SUCCESS != ret) {
         OBJ_RELEASE(win);
         return ret;
@@ -320,12 +335,14 @@ ompi_win_allocate_shared(size_t size, int disp_unit, opal_info_t *info,
         return ret;
     }
 
+    /* MPI-4 §12.2.7 requires us to remove all unknown keys from the info object */
+    opal_info_remove_unreferenced(win->super.s_info);
+
     *((void**) baseptr) = base;
     *newwin = win;
 
     return OMPI_SUCCESS;
 }
-
 
 int
 ompi_win_create_dynamic(opal_info_t *info, ompi_communicator_t *comm, ompi_win_t **newwin)
@@ -339,7 +356,7 @@ ompi_win_create_dynamic(opal_info_t *info, ompi_communicator_t *comm, ompi_win_t
         return ret;
     }
 
-    ret = ompi_osc_base_select(win, MPI_BOTTOM, 0, 1, comm, info, MPI_WIN_FLAVOR_DYNAMIC, &model);
+    ret = ompi_osc_base_select(win, MPI_BOTTOM, 0, 1, comm, MPI_WIN_FLAVOR_DYNAMIC, &model);
     if (OMPI_SUCCESS != ret) {
         OBJ_RELEASE(win);
         return ret;
@@ -351,11 +368,13 @@ ompi_win_create_dynamic(opal_info_t *info, ompi_communicator_t *comm, ompi_win_t
         return ret;
     }
 
+    /* MPI-4 §12.2.7 requires us to remove all unknown keys from the info object */
+    opal_info_remove_unreferenced(win->super.s_info);
+
     *newwin = win;
 
     return OMPI_SUCCESS;
 }
-
 
 int
 ompi_win_free(ompi_win_t *win)

@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+ * Copyright (c) 2004-2020 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -62,13 +62,26 @@ void *mca_mpool_base_alloc(size_t size, opal_info_t *info, const char *hints)
     mca_mpool_base_tree_item_t *mpool_tree_item = NULL;
     mca_mpool_base_module_t *mpool;
     void *mem = NULL;
-#if defined(TODO_BTL_GB)
-    int flag = 0;
-#endif /* defined(TODO_BTL_GB) */
+    opal_cstring_t *align_info_str;
+    long long memory_alignment = OPAL_ALIGN_MIN;
 
     mpool_tree_item = mca_mpool_base_tree_item_get();
     if (!mpool_tree_item) {
         return NULL;
+    }
+
+    if (NULL != info) {
+        int flag;
+        opal_info_get(info, "mpi_minimum_memory_alignment",
+                      &align_info_str, &flag);
+
+        if (flag) {
+            long long tmp_align = atoll(align_info_str->string);
+            OBJ_RELEASE(align_info_str);
+            if (tmp_align > memory_alignment) {
+                memory_alignment = tmp_align;
+            }
+        }
     }
 
     mpool_tree_item->num_bytes = size;
@@ -76,12 +89,13 @@ void *mca_mpool_base_alloc(size_t size, opal_info_t *info, const char *hints)
 
     mpool = mca_mpool_base_module_lookup(hints);
     if (NULL != mpool) {
-        mem = mpool->mpool_alloc(mpool, size, OPAL_ALIGN_MIN, 0);
+        mem = mpool->mpool_alloc (mpool, size, memory_alignment, 0);
     }
 
     if (NULL == mem) {
-        /* fall back on malloc */
-        mem = malloc(size);
+        /* fall back to default mpool */
+        mem = mca_mpool_base_default_module->mpool_alloc(mca_mpool_base_default_module,
+                                                         size, memory_alignment, 0);
 
         mca_mpool_base_tree_item_put(mpool_tree_item);
     } else {
@@ -114,7 +128,7 @@ int mca_mpool_base_free(void *base)
 
     if (!mpool_tree_item) {
         /* nothing in the tree this was just plain old malloc'd memory */
-        free(base);
+        mca_mpool_base_default_module->mpool_free(mca_mpool_base_default_module, base);
         return OPAL_SUCCESS;
     }
 

@@ -13,7 +13,7 @@ subroutine MPI_Win_attach_f08(win,base,size,ierror)
    use :: mpi_f08_types, only : MPI_Win, MPI_ADDRESS_KIND
    use :: ompi_mpifh_bindings, only : ompi_win_attach_f
    implicit none
-   OMPI_FORTRAN_IGNORE_TKR_TYPE :: base
+   OMPI_FORTRAN_IGNORE_TKR_TYPE OMPI_ASYNCHRONOUS :: base
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: size
    TYPE(MPI_Win), INTENT(IN) :: win
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror

@@ -8,14 +8,14 @@
  *                         reserved.
  * Copyright (c) 2014-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
- * Copyright (c) 2018-2020 Triad National Security, LLC. All rights
+ * Copyright (c) 2018-2023 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2019      Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.  All Rights
  *                         reserved.
- * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
- * Copyright (c) 2021      IBM Corporation. All rights reserved.
+ * Copyright (c) 2021-2022 Nanook Consulting.  All rights reserved.
+ * Copyright (c) 2021-2022 IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  */
 #include "ompi_config.h"
@@ -61,7 +61,14 @@
 /* storage to support OMPI */
 opal_process_name_t pmix_name_wildcard = {UINT32_MAX-1, UINT32_MAX-1};
 opal_process_name_t pmix_name_invalid = {UINT32_MAX, UINT32_MAX};
-bool ompi_singleton = false;
+
+/**
+ * Flag used to indicate whether we setup (and should destroy) our job session
+ * directory. We keep track of this information because we may be using run-time
+ * infrastructure that manages its structure (e.g., OpenPMIx). If we setup this
+ * session directory structure, then we shall cleanup after ourselves.
+ */
+static bool destroy_job_session_dir = false;
 
 static int _setup_top_session_dir(char **sdir);
 static int _setup_job_session_dir(char **sdir);
@@ -97,6 +104,7 @@ buffer_cleanup(void *value)
         }
         free (ptr);
     }
+    fns_init = false;
 }
 
 static opal_print_args_buffers_t*
@@ -540,6 +548,10 @@ int ompi_rte_init(int *pargc, char ***pargv)
     pmix_value_t pval;
     pmix_status_t rc;
     char **tmp;
+    bool singleton = false;
+    const static char *pmi_sentinels[] = {"PMI_FD", /* SLURM PMI1,2 */
+                                          "PMI_CONTROL_PORT", /* Cray Shasta */
+                                          NULL};
 
     u32ptr = &u32;
     u16ptr = &u16;
@@ -560,6 +572,68 @@ int ompi_rte_init(int *pargc, char ***pargv)
         goto error;
     }
 
+    /* setup our internal nspace hack */
+    opal_pmix_setup_nspace_tracker();
+
+    /* initialize the selected module */
+    if (!PMIx_Initialized() && (PMIX_SUCCESS != (ret = PMIx_Init(&opal_process_info.myprocid, NULL, 0)))) {
+        /* if we get PMIX_ERR_UNREACH indicating that we cannot reach the
+         * server, then we assume we are operating as a singleton */
+        if (PMIX_ERR_UNREACH == ret) {
+            bool found_a_pmi = false;
+            int n = 0;
+            /* if we are in a PMI environment with two tasks or more,
+             * we probably do not want to start singletons */
+            while (pmi_sentinels[n] != NULL) {
+                if (NULL != getenv(pmi_sentinels[n])) {
+                    found_a_pmi = true;
+                    break;
+                }
+                n++;
+            }
+            if (found_a_pmi) {
+                char *size_str = getenv("PMI_SIZE");
+                if (NULL == size_str) {
+                    size_str = getenv("SLURM_NPROCS");
+                }
+                int size = (NULL != size_str)?atoi(size_str):1;
+                if (1 < size) {
+                    char *rank_str = getenv("PMI_RANK");
+                    if (NULL == rank_str) {
+                        rank_str = getenv("SLURM_PROCID");
+                    }
+                    int rank = (NULL != rank_str)?atoi(rank_str):0;
+                    if (0 == rank) {
+                        opal_show_help("help-mpi-runtime.txt", "no-pmix-but", false, size);
+                    }
+                }
+            }
+            singleton = true;
+        } else {
+            /* we cannot run - this could be due to being direct launched
+             * without the required PMI support being built, so print
+             * out a help message indicating it */
+            opal_show_help("help-mpi-runtime.txt", "no-pmi", true, PMIx_Error_string(ret));
+            return OPAL_ERR_SILENT;
+        }
+    }
+
+    /* setup the process name fields - also registers the new nspace */
+    OPAL_PMIX_CONVERT_PROCT(rc, &pname, &opal_process_info.myprocid);
+    if (OPAL_SUCCESS != rc) {
+        return rc;
+    }
+    OPAL_PROC_MY_NAME.jobid = pname.jobid;
+    OPAL_PROC_MY_NAME.vpid = pname.vpid;
+    opal_process_info.my_name.jobid = OPAL_PROC_MY_NAME.jobid;
+    opal_process_info.my_name.vpid = OPAL_PROC_MY_NAME.vpid;
+    if (singleton) {
+        opal_process_info.is_singleton = true;
+    } else {
+        opal_process_info.is_singleton = false;
+    }
+
+
     /* set our hostname */
     ev1 = NULL;
     OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, PMIX_HOSTNAME, &OPAL_PROC_MY_NAME,
@@ -576,7 +650,7 @@ int ompi_rte_init(int *pargc, char ***pargv)
     OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_LOCAL_RANK,
                                    &opal_process_info.my_name, &u16ptr, PMIX_UINT16);
     if (PMIX_SUCCESS != rc) {
-        if (ompi_singleton) {
+        if (opal_process_info.is_singleton) {
             /* just assume 0 */
             u16 = 0;
         } else {
@@ -591,7 +665,7 @@ int ompi_rte_init(int *pargc, char ***pargv)
     OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_NODE_RANK,
                                    &opal_process_info.my_name, &u16ptr, PMIX_UINT16);
     if (PMIX_SUCCESS != rc) {
-        if (ompi_singleton) {
+        if (opal_process_info.is_singleton) {
             /* just assume 0 */
             u16 = 0;
         } else {
@@ -610,7 +684,7 @@ int ompi_rte_init(int *pargc, char ***pargv)
     OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_JOB_SIZE,
                                    &pname, &u32ptr, PMIX_UINT32);
     if (PMIX_SUCCESS != rc) {
-        if (ompi_singleton) {
+        if ( opal_process_info.is_singleton) {
             /* just assume 1 */
             u32 = 1;
         } else {
@@ -625,7 +699,7 @@ int ompi_rte_init(int *pargc, char ***pargv)
     OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_UNIV_SIZE,
                                    &pname, &u32ptr, PMIX_UINT32);
     if (PMIX_SUCCESS != rc) {
-        if (ompi_singleton) {
+        if (opal_process_info.is_singleton) {
             /* just assume 1 */
             u32 = 1;
         } else {
@@ -771,6 +845,11 @@ int ompi_rte_init(int *pargc, char ***pargv)
         opal_process_info.initial_wdir = val;
         val = NULL;  // protect the string
     }
+    else {
+        // Probably singleton case. Just assume cwd.
+        opal_process_info.initial_wdir = calloc(1, OPAL_PATH_MAX + 1);
+        opal_getcwd(opal_process_info.initial_wdir, OPAL_PATH_MAX);
+    }
 
     /* identify our location */
     val = NULL;
@@ -796,19 +875,21 @@ int ompi_rte_init(int *pargc, char ***pargv)
 
     /* retrieve the local peers - defaults to local node */
     val = NULL;
-    OPAL_MODEX_RECV_VALUE(rc, PMIX_LOCAL_PEERS,
-                          &pname, &val, PMIX_STRING);
+    OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_LOCAL_PEERS,
+                                   &pname, &val, PMIX_STRING);
     if (PMIX_SUCCESS == rc && NULL != val) {
         peers = opal_argv_split(val, ',');
         free(val);
     } else {
-        ret = opal_pmix_convert_status(rc);
-        error = "local peers";
-        goto error;
+        peers = NULL;
     }
     /* if we were unable to retrieve the #local peers, set it here */
     if (0 == opal_process_info.num_local_peers) {
-        opal_process_info.num_local_peers = opal_argv_count(peers) - 1;
+        if (NULL != peers) {
+            opal_process_info.num_local_peers = opal_argv_count(peers) - 1;
+        } else {
+            opal_process_info.num_local_peers = 1;
+        }
     }
     /* if my local rank if too high, then that's an error */
     if (opal_process_info.num_local_peers < opal_process_info.my_local_rank) {
@@ -849,26 +930,6 @@ int ompi_rte_init(int *pargc, char ***pargv)
             }
         }
         opal_argv_free(peers);
-    }
-
-    /*
-     * stdout/stderr buffering
-     * If the user requested to override the default setting then do
-     * as they wish.
-     */
-    OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, "OMPI_STREAM_BUFFERING",
-                                   &opal_process_info.my_name, &u16ptr, PMIX_UINT16);
-    if (PMIX_SUCCESS == rc) {
-        if (0 == u16) {
-            setvbuf(stdout, NULL, _IONBF, 0);
-            setvbuf(stderr, NULL, _IONBF, 0);
-        } else if (1 == u16) {
-            setvbuf(stdout, NULL, _IOLBF, 0);
-            setvbuf(stderr, NULL, _IOLBF, 0);
-        } else if (2 == u16 ) {
-            setvbuf(stdout, NULL, _IOFBF, 0);
-            setvbuf(stderr, NULL, _IOFBF, 0);
-        }
     }
 
 #ifdef PMIX_NODE_OVERSUBSCRIBED
@@ -919,15 +980,14 @@ static bool check_file(const char *root, const char *path)
 
 int ompi_rte_finalize(void)
 {
-    /* shutdown pmix */
-    PMIx_Finalize(NULL, 0);
 
     /* cleanup the session directory we created */
-    if (NULL != opal_process_info.job_session_dir) {
+    if (NULL != opal_process_info.job_session_dir && destroy_job_session_dir) {
         opal_os_dirpath_destroy(opal_process_info.job_session_dir,
                                 false, check_file);
         free(opal_process_info.job_session_dir);
         opal_process_info.job_session_dir = NULL;
+        destroy_job_session_dir = false;
     }
 
     if (NULL != opal_process_info.top_session_dir) {
@@ -977,6 +1037,11 @@ int ompi_rte_finalize(void)
     /* cleanup our internal nspace hack */
     opal_pmix_finalize_nspace_tracker();
 
+
+    opal_finalize ();
+
+    /* shutdown pmix */
+    PMIx_Finalize(NULL, 0);
 
     return OMPI_SUCCESS;
 }
@@ -1038,7 +1103,6 @@ void ompi_rte_breakpoint(char *name)
     char *evar;
     int rc, code = PMIX_DEBUGGER_RELEASE;
     pmix_info_t info[2];
-    uint32_t u32, *u32ptr;
     opal_process_name_t pname;
 
     if (NULL != name
@@ -1049,18 +1113,12 @@ void ompi_rte_breakpoint(char *name)
     }
 
     /* check PMIx to see if we are under a debugger */
-    u32ptr = &u32;
     pname.jobid = opal_process_info.my_name.jobid;
     pname.vpid = OPAL_VPID_WILDCARD;
-    OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, "PMIX_DEBUG_STOP_IN_APP",
-                                   &pname, &u32ptr, PMIX_PROC_RANK);
+    OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_DEBUG_STOP_IN_APP,
+                                   &pname, NULL, PMIX_BOOL);
     if (PMIX_SUCCESS != rc) {
         /* if not, just return */
-        return;
-    }
-    /* are we included? */
-    if (!PMIX_CHECK_RANK(u32, opal_process_info.myprocid.rank)) {
-        /* no - ignore it */
         return;
     }
 
@@ -1069,7 +1127,7 @@ void ompi_rte_breakpoint(char *name)
     PMIx_Register_event_handler(&code, 1, &directive, 1, _release_fn, NULL, NULL);
     PMIX_INFO_DESTRUCT(&directive);
 
-    /* notify the host that we are waiting */
+    /* notify the host that we are waiting in MPI_Init */
     PMIX_INFO_LOAD(&info[0], PMIX_EVENT_NON_DEFAULT, NULL, PMIX_BOOL);
     PMIX_INFO_LOAD(&info[1], PMIX_BREAKPOINT, "mpi-init", PMIX_STRING);
     PMIx_Notify_event(PMIX_READY_FOR_DEBUG,
@@ -1127,7 +1185,7 @@ static int _setup_job_session_dir(char **sdir)
         opal_process_info.job_session_dir = NULL;
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
-
+    destroy_job_session_dir = true;
     return OPAL_SUCCESS;
 }
 

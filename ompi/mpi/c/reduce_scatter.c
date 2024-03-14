@@ -65,7 +65,7 @@ int MPI_Reduce_scatter(const void *sendbuf, void *recvbuf, const int recvcounts[
         memchecker_comm(comm);
         memchecker_datatype(datatype);
 
-        /* check receive buffer of current proccess, whether it's addressable. */
+        /* check receive buffer of current process, whether it's addressable. */
         memchecker_call(&opal_memchecker_base_isaddressable, recvbuf,
                         recvcounts[rank], datatype);
 

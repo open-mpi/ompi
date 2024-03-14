@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University.
  *                         All rights reserved.
@@ -9,6 +10,8 @@
  *                         All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -22,7 +25,7 @@
 #include "ompi/mca/mca.h"
 #include "opal/util/output.h"
 #include "opal/mca/base/base.h"
-
+#include "opal/include/opal/align.h"
 
 #include "ompi/mca/osc/osc.h"
 #include "ompi/mca/osc/base/base.h"
@@ -35,6 +38,39 @@
  */
 
 #include "ompi/mca/osc/base/static-components.h"
+
+void
+ompi_osc_base_set_memory_alignment(struct opal_info_t *info,
+                                   size_t *memory_alignment)
+{
+    int flag;
+    opal_cstring_t *align_info_str;
+
+    opal_info_get(info, "mpi_minimum_memory_alignment", &align_info_str, &flag);
+    if (flag) {
+        long long tmp_align = atoll(align_info_str->string);
+        OBJ_RELEASE(align_info_str);
+        if ((long long) OPAL_ALIGN_MIN < tmp_align) {
+            *memory_alignment = tmp_align;
+        }
+    }
+}
+
+static int ompi_osc_base_finalize(void)
+{
+    opal_list_item_t* item;
+
+    /* Finalize all available modules */
+    while (NULL !=
+           (item = opal_list_remove_first(&ompi_osc_base_framework.framework_components))) {
+        ompi_osc_base_component_t *component = (ompi_osc_base_component_t*)
+            ((mca_base_component_list_item_t*) item)->cli_component;
+        component->osc_finalize();
+        OBJ_RELEASE(item);
+    }
+    return OMPI_SUCCESS;
+}
+
 
 int
 ompi_osc_base_find_available(bool enable_progress_threads,
@@ -56,22 +92,9 @@ ompi_osc_base_find_available(bool enable_progress_threads,
             OBJ_RELEASE(cli);
         }
     }
-    return OMPI_SUCCESS;
-}
 
-int
-ompi_osc_base_finalize(void)
-{
-    opal_list_item_t* item;
+    ompi_mpi_instance_append_finalize (ompi_osc_base_finalize);
 
-    /* Finalize all available modules */
-    while (NULL !=
-           (item = opal_list_remove_first(&ompi_osc_base_framework.framework_components))) {
-        ompi_osc_base_component_t *component = (ompi_osc_base_component_t*)
-            ((mca_base_component_list_item_t*) item)->cli_component;
-        component->osc_finalize();
-        OBJ_RELEASE(item);
-    }
     return OMPI_SUCCESS;
 }
 

@@ -43,12 +43,12 @@ static inline int32_t opal_arch_isbigendian(void)
 /* we must find which representation of long double is used
  * intel or sparc. Both of them represent the long doubles using a close to
  * IEEE representation (seeeeeee..emmm...m) where the mantissa look like
- * 1.????. For the intel representaion the 1 is explicit, and for the sparc
+ * 1.????. For the intel representation the 1 is explicit, and for the sparc
  * the first one is implicit. If we take the number 2.0 the exponent is 1
  * and the mantissa is 1.0 (the sign of course should be 0). So if we check
  * for the first one in the binary representation of the number, we will
- * find the bit from the exponent, so the next one should be the begining
- * of the mantissa. If it's 1 then we have an intel representaion, if not
+ * find the bit from the exponent, so the next one should be the beginning
+ * of the mantissa. If it's 1 then we have an intel representation, if not
  * we have a sparc one. QED
  */
 static inline int32_t opal_arch_ldisintel(void)

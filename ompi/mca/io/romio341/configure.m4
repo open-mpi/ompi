@@ -11,7 +11,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2015-2021 Research Organization for Information Science
+# Copyright (c) 2015-2022 Research Organization for Information Science
 #                         and Technology (RIST).  All rights reserved.
 # $COPYRIGHT$
 #
@@ -99,14 +99,22 @@ AC_DEFUN([MCA_ompi_io_romio341_CONFIG],[
                           . 3rd-party/romio341/localdefs
                           io_romio341_LIBS="$LIBS"
                           LIBS="$io_romio341_save_LIBS"
-                          OPAL_3RDPARTY_SUBDIRS="$OPAL_3RDPARTY_SUBDIRS romio341"
                           OPAL_3RDPARTY_DIST_SUBDIRS="$OPAL_3RDPARTY_DIST_SUBDIRS romio341"
 
-                          echo "ROMIO distribution configured successfully"
-                          $1],
+                          AC_MSG_NOTICE([ROMIO distribution configured successfully])],
                          [AS_IF([test "$enable_io_romio" = "yes"],
                                 [AC_MSG_ERROR([ROMIO distribution did not configure successfully])],
-                                [AC_MSG_WARN([ROMIO distribution did not configure successfully])])
-                          $2])])])
+                                [AC_MSG_WARN([ROMIO distribution did not configure successfully])])])
+
+                   AS_IF([test "$io_romio341_happy" = "1"],
+                         [AC_CHECK_HEADERS([stdatomic.h],
+                                           [OPAL_3RDPARTY_SUBDIRS="$OPAL_3RDPARTY_SUBDIRS romio341"],
+                                           [AC_MSG_WARN([3rd party ROMIO cannot be built, disqualifying the io/romio341 component])
+                                            io_romio341_happy=0])])
+
+                   AS_IF([test "$io_romio341_happy" = "1"],
+                         [$1],
+                         [OPAL_MAKEDIST_DISABLE="$OPAL_MAKEDIST_DISABLE ROMIO"
+			  $2])])])
     OPAL_VAR_SCOPE_POP
 ])

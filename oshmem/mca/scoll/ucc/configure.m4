@@ -4,6 +4,7 @@
 # Copyright (c) 2021      Mellanox Technologies. All rights reserved.
 # Copyright (c) 2015      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -30,7 +31,6 @@ AC_DEFUN([MCA_oshmem_scoll_ucc_CONFIG],[
           [$2])
 
     # substitute in the things needed to build ucc
-    AC_SUBST([scoll_ucc_CFLAGS])
     AC_SUBST([scoll_ucc_CPPFLAGS])
     AC_SUBST([scoll_ucc_LDFLAGS])
     AC_SUBST([scoll_ucc_LIBS])

@@ -85,5 +85,9 @@ shmem_ds_reset(map_segment_t *ds_buf)
     ds_buf->super.va_end = 0;
     ds_buf->seg_size = 0;
     ds_buf->type = MAP_SEGMENT_UNKNOWN;
+    ds_buf->mkeys_cache = NULL;
+    ds_buf->mkeys = NULL;
+    ds_buf->alloc_hints = 0;
+    ds_buf->allocator = NULL;
 }
 

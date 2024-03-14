@@ -46,7 +46,7 @@ struct mca_mtl_portals4_module_t {
     /* add_procs() can get called multiple times.  this prevents multiple calls to portals4_init_interface(). */
     int32_t need_init;
 
-    /* Use the logical to physical table to accelerate portals4 adressing: 1 (true) : 0 (false) */
+    /* Use the logical to physical table to accelerate portals4 addressing: 1 (true) : 0 (false) */
     int32_t use_logical;
 
     /* Process_id */

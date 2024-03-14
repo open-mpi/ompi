@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2013 The University of Tennessee and The University
+ * Copyright (c) 2004-2022 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -151,7 +151,7 @@ static struct mca_btl_base_descriptor_t *mca_btl_self_prepare_src(
     struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint,
     struct opal_convertor_t *convertor, uint8_t order, size_t reserve, size_t *size, uint32_t flags)
 {
-    bool inline_send = !opal_convertor_need_buffers(convertor);
+    bool inline_send = !(opal_convertor_need_buffers(convertor) || opal_convertor_on_device(convertor));
     size_t buffer_len = reserve + (inline_send ? 0 : *size);
     mca_btl_self_frag_t *frag;
 
@@ -160,7 +160,7 @@ static struct mca_btl_base_descriptor_t *mca_btl_self_prepare_src(
         return NULL;
     }
 
-    /* non-contigous data */
+    /* non-contiguous data */
     if (OPAL_UNLIKELY(!inline_send)) {
         struct iovec iov = {.iov_len = *size,
                             .iov_base = (IOVBASE_TYPE *) ((uintptr_t) frag->data + reserve)};
@@ -229,7 +229,9 @@ static int mca_btl_self_sendi(struct mca_btl_base_module_t *btl,
 {
     mca_btl_base_descriptor_t *frag;
 
-    if (!payload_size || !opal_convertor_need_buffers(convertor)) {
+    if (!payload_size ||
+        !(opal_convertor_need_buffers(convertor) ||
+          opal_convertor_on_device(convertor))) {
         void *data_ptr = NULL;
         if (payload_size) {
             opal_convertor_get_current_pointer(convertor, &data_ptr);
@@ -248,7 +250,9 @@ static int mca_btl_self_sendi(struct mca_btl_base_module_t *btl,
     frag = mca_btl_self_prepare_src(btl, endpoint, convertor, order, header_size, &payload_size,
                                     flags | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
     if (NULL == frag) {
-        *descriptor = NULL;
+        if( NULL != descriptor ) {
+            *descriptor = NULL;
+        }
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 

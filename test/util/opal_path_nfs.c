@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2010      Oak Ridge National Laboratory.
  *                         All rights reserved.
- * Copyright (c) 2010-2017 Cisco Systems, Inc.  All rights reserved
+ * Copyright (c) 2010-2022 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
  *                         reserved.
@@ -204,7 +204,7 @@ void get_mounts(int *num_dirs, char **dirs[], bool *nfs[])
         }
 
         /* If we get an fs type of "none", skip it (e.g.,
-           http://www.open-mpi.org/community/lists/devel/2012/09/11493.php) */
+           https://www.open-mpi.org/community/lists/devel/2012/09/11493.php) */
         if (0 == strcasecmp(fs, "none")) {
             continue;
         }

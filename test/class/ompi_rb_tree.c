@@ -353,7 +353,7 @@ void test2(void)
 
 #if 0
     i = (end.tv_sec - start.tv_sec) * 1000000 + (end.tv_usec - start.tv_usec);
-    printf("In a %d node tree, %d lookups took %f microseonds each\n",
+    printf("In a %d node tree, %d lookups took %f microseconds each\n",
             NUM_ALLOCATIONS, NUM_ALLOCATIONS * 2,
             (float) i / (float) (NUM_ALLOCATIONS * 2));
 #endif

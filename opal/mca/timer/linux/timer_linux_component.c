@@ -16,6 +16,8 @@
  *                         reserved.
  * Copyright (c) 2015-2017 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2016 Broadcom Limited. All rights reserved.
+ * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
+ *                         All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -132,7 +134,7 @@ static int opal_timer_linux_find_freq(void)
         }
     }
 
-#if ((OPAL_ASSEMBLY_ARCH == OPAL_IA32) || (OPAL_ASSEMBLY_ARCH == OPAL_X86_64))
+#if defined(PLATFORM_ARCH_X86) || defined(PLATFORM_ARCH_X86_64)
     if (0 == opal_timer_linux_freq && opal_sys_timer_is_monotonic()) {
         /* tsc is exposed through bogomips ~> loops_per_jiffy ~> tsc_khz */
         loc = find_info(fp, "bogomips", buf, 1024);

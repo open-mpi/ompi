@@ -469,6 +469,7 @@ static int btl_ugni_component_register(void)
     mca_btl_ugni_module.super.btl_flags = MCA_BTL_FLAGS_SEND | MCA_BTL_FLAGS_RDMA
                                           | MCA_BTL_FLAGS_SEND_INPLACE | MCA_BTL_FLAGS_ATOMIC_OPS
                                           | MCA_BTL_FLAGS_ATOMIC_FOPS;
+    mca_btl_ugni_module.super.btl_flags |= MCA_BTL_FLAGS_RDMA_REMOTE_COMPLETION;
     mca_btl_ugni_module.super.btl_atomic_flags = MCA_BTL_ATOMIC_SUPPORTS_ADD
                                                  | MCA_BTL_ATOMIC_SUPPORTS_AND
                                                  | MCA_BTL_ATOMIC_SUPPORTS_OR

@@ -14,6 +14,8 @@
  *                         reserved.
  * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
+ * Copyright (c) 2022      IBM Corporation. All rights reserved
+ * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -62,18 +64,6 @@ mca_pml_base_component_2_1_0_t mca_pml_cm_component = {
     .pmlm_init = mca_pml_cm_component_init,
     .pmlm_finalize = mca_pml_cm_component_fini,
 };
-
-/* Array of send completion callback - one per send type
- * These are called internally by the library when the send
- * is completed from its perspective.
- */
-void (*send_completion_callbacks[MCA_PML_BASE_SEND_SIZE])
-    (struct mca_mtl_request_t *mtl_request) =
-  { mca_pml_cm_send_request_completion,
-    mca_pml_cm_send_request_completion,
-    mca_pml_cm_send_request_completion,
-    mca_pml_cm_send_request_completion,
-    mca_pml_cm_send_request_completion } ;
 
 static int
 mca_pml_cm_component_register(void)
@@ -141,7 +131,7 @@ mca_pml_cm_component_init(int* priority,
 
     opal_output_verbose( 10, 0,
                          "in cm pml priority is %d\n", *priority);
-    /* find a useable MTL */
+    /* find a usable MTL */
     ret = ompi_mtl_base_select(enable_progress_threads, enable_mpi_threads, priority);
     if (OMPI_SUCCESS != ret) {
         return NULL;
@@ -151,8 +141,10 @@ mca_pml_cm_component_init(int* priority,
         ompi_pml_cm.super.pml_flags |= MCA_PML_BASE_FLAG_REQUIRE_WORLD;
     }
 
-    /* update our tag / context id max values based on MTL
-       information */
+    if (ompi_mtl->mtl_flags & MCA_MTL_BASE_FLAG_SUPPORTS_EXT_CID) {
+        ompi_pml_cm.super.pml_flags |= MCA_PML_BASE_FLAG_SUPPORTS_EXT_CID;
+    }
+
     ompi_pml_cm.super.pml_max_contextid = ompi_mtl->mtl_max_contextid;
     ompi_pml_cm.super.pml_max_tag = ompi_mtl->mtl_max_tag;
 

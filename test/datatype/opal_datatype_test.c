@@ -570,7 +570,7 @@ int main(int argc, char *argv[])
     opal_datatype_t *pdt, *pdt1, *pdt2, *pdt3;
     int rc, length = 500;
 
-    opal_init_util(NULL, NULL);
+    opal_init(NULL, NULL);
 
     /**
      * By default simulate homogeneous architectures.

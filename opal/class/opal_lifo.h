@@ -13,7 +13,7 @@
  * Copyright (c) 2007      Voltaire All rights reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * Copyright (c) 2014-2018 Los Alamos National Security, LLC. All rights
- *                         reseved.
+ *                         reserved.
  * Copyright (c) 2016-2018 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2021      Triad National Security, LLC. All rights reserved.
@@ -223,7 +223,7 @@ static inline opal_list_item_t *opal_lifo_pop_atomic(opal_lifo_t *lifo)
 
     do {
         if (++attempt == 5) {
-            /* deliberatly suspend this thread to allow other threads to run. this should
+            /* deliberately suspend this thread to allow other threads to run. this should
              * only occur during periods of contention on the lifo. */
             _opal_lifo_release_cpu();
             attempt = 0;

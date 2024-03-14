@@ -70,7 +70,7 @@ int main(int argc, char *argv[])
     while (_dbg)
         poll(NULL, 0, 1);
 
-    opal_init_util(NULL, NULL);
+    opal_init(NULL, NULL);
     ompi_datatype_init();
 
     /**
@@ -500,7 +500,6 @@ int main(int argc, char *argv[])
     ompi_datatype_destroy(&dup_type);
 
 cleanup:
-    ompi_datatype_finalize();
     opal_finalize_util();
 
     return ret;

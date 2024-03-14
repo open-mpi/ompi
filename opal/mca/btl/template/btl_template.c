@@ -259,7 +259,7 @@ mca_btl_base_descriptor_t *mca_btl_template_prepare_src(struct mca_btl_base_modu
  *
  * @param btl (IN)         BTL module
  * @param endpoint (IN)    BTL addressing information
- * @param descriptor (IN)  Description of the data to be transfered
+ * @param descriptor (IN)  Description of the data to be transferred
  * @param tag (IN)         The tag value used to notify the peer.
  */
 

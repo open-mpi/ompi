@@ -17,6 +17,8 @@
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * Copyright (c) 2018      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2022      Computer Architecture and VLSI Systems (CARV)
+ *                         Laboratory, ICS Forth. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -55,7 +57,7 @@
  * - If nothing else was found, use the variable's default value.
  *
  * Note that there is a second header file (mca_base_vari.h)
- * that contains several internal type delcarations for the variable
+ * that contains several internal type declarations for the variable
  * system.  The internal file is only used within the variable system
  * itself; it should not be required by any other Open MPI entities.
  */
@@ -136,7 +138,7 @@ typedef enum {
  * MCA variable scopes
  *
  * Equivalent to MPI_T scopes with the same base name (e.g.,
- * MCA_BASE_VAR_SCOPE_CONSTANT corresponts to MPI_T_SCOPE_CONSTANT).
+ * MCA_BASE_VAR_SCOPE_CONSTANT corresponds to MPI_T_SCOPE_CONSTANT).
  */
 typedef enum {
     /** The value of this variable will not change after it is
@@ -321,7 +323,7 @@ typedef struct mca_base_var_t mca_base_var_t;
 BEGIN_C_DECLS
 
 /**
- * Object declarayion for mca_base_var_t
+ * Object declaration for mca_base_var_t
  */
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(mca_base_var_t);
 
@@ -330,7 +332,7 @@ OPAL_DECLSPEC OBJ_CLASS_DECLARATION(mca_base_var_t);
  *
  * @retval OPAL_SUCCESS
  *
- * This function initalizes the MCA variable system.  It is
+ * This function initializes the MCA variable system.  It is
  * invoked internally (by mca_base_open()) and is only documented
  * here for completeness.
  */
@@ -480,7 +482,7 @@ OPAL_DECLSPEC int mca_base_framework_var_register(
  * creates a new name that by which the same variable value is
  * accessible.
  *
- * Note that the original variable name has precendence over all
+ * Note that the original variable name has precedence over all
  * synonyms.  For example, consider the case if variable is
  * originally registered under the name "A" and is later
  * registered with synonyms "B" and "C".  If the user sets values
@@ -503,7 +505,7 @@ OPAL_DECLSPEC int mca_base_var_register_synonym(int synonym_for, const char *pro
  * @param vari Index returned from mca_base_var_register() or
  * mca_base_var_register_synonym().
  *
- * Deregistering a variable does not free the variable or any memory assoicated
+ * Deregistering a variable does not free the variable or any memory associated
  * with it. All memory will be freed and the variable index released when
  * mca_base_var_finalize() is called.
  *
@@ -675,7 +677,7 @@ OPAL_DECLSPEC int mca_base_var_get(int vari, const mca_base_var_t **var);
 OPAL_DECLSPEC int mca_base_var_get_count(void);
 
 /**
- * Obtain a list of enironment variables describing the all
+ * Obtain a list of environment variables describing the all
  * valid (non-default) MCA variables and their sources.
  *
  * @param[out] env A pointer to an argv-style array of key=value
@@ -699,7 +701,9 @@ typedef enum {
     /* Dump easily parsable strings */
     MCA_BASE_VAR_DUMP_PARSABLE = 1,
     /* Dump simple name=value string */
-    MCA_BASE_VAR_DUMP_SIMPLE = 2
+    MCA_BASE_VAR_DUMP_SIMPLE = 2,
+    /* Dump human-readable strings, with color where supported */
+    MCA_BASE_VAR_DUMP_READABLE_COLOR = 3
 } mca_base_var_dump_type_t;
 
 /**

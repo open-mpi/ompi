@@ -2,6 +2,8 @@
  * Copyright (C) 2014      Artem Polyakov <artpol84@gmail.com>
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * Copyright (c) 2017      Mellanox Technologies Ltd. All rights reserved.
+ * Copyright (c) 2023      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -41,6 +43,8 @@
 
 #include MCA_timer_IMPLEMENTATION_HEADER
 
+static bool opal_timer_native_timers_avail = false;
+
 static double get_ts_gettimeofday(void)
 {
     double ret;
@@ -66,6 +70,17 @@ static double get_ts_usec(void)
 }
 #endif
 
+void opal_timing_enable_native_timers(void)
+{
+    opal_timer_native_timers_avail = true;
+}
+
+void opal_timing_disable_native_timers(void)
+{
+    opal_timer_native_timers_avail = false;
+}
+
+
 opal_timing_ts_func_t opal_timing_ts_func(opal_timer_type_t type)
 {
     switch (type) {
@@ -85,7 +100,7 @@ opal_timing_ts_func_t opal_timing_ts_func(opal_timer_type_t type)
         return NULL;
 #endif // OPAL_TIMER_USEC_NATIVE
     default:
-        if (!opal_initialized) {
+        if( false == opal_timer_native_timers_avail ){
             return get_ts_gettimeofday;
         }
 #if OPAL_TIMER_CYCLE_NATIVE

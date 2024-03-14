@@ -123,7 +123,7 @@ void mca_common_monitoring_coll_release(mca_monitoring_coll_data_t*data)
 {
 #if OPAL_ENABLE_DEBUG
     if( NULL == data ) {
-        OPAL_MONITORING_PRINT_ERR("coll: release: data structure empty or already desallocated");
+        OPAL_MONITORING_PRINT_ERR("coll: release: data structure empty or already deallocated");
         return;
     }
 #endif /* OPAL_ENABLE_DEBUG */
@@ -137,7 +137,7 @@ static void mca_common_monitoring_coll_cond_release(mca_monitoring_coll_data_t*d
 {
 #if OPAL_ENABLE_DEBUG
     if( NULL == data ) {
-        OPAL_MONITORING_PRINT_ERR("coll: release: data structure empty or already desallocated");
+        OPAL_MONITORING_PRINT_ERR("coll: release: data structure empty or already deallocated");
         return;
     }
 #endif /* OPAL_ENABLE_DEBUG */

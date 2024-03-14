@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2022 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
@@ -211,6 +211,9 @@ int mca_base_component_repository_add(const char *path)
     path_to_use = strdup(path);
 
     dir = strtok_r(path_to_use, sep, &ctx);
+    if (NULL == dir) {
+        goto done;
+    }
     do {
         if ((0 == strcmp(dir, "USER_DEFAULT") || 0 == strcmp(dir, "USR_DEFAULT"))
             && NULL != mca_base_user_default_path) {
@@ -224,6 +227,7 @@ int mca_base_component_repository_add(const char *path)
         }
     } while (NULL != (dir = strtok_r(NULL, sep, &ctx)));
 
+ done:
     free(path_to_use);
 
 #endif /* OPAL_HAVE_DL_SUPPORT */
@@ -372,7 +376,8 @@ int mca_base_component_repository_open(mca_base_framework_t *framework,
                         "%s MCA component \"%s\" at path %s",
                         ri->ri_type, ri->ri_name, ri->ri_path);
 
-    vl = mca_base_component_show_load_errors ? MCA_BASE_VERBOSE_ERROR : MCA_BASE_VERBOSE_INFO;
+    vl = mca_base_show_load_errors(ri->ri_type,
+                                   ri->ri_name) ? MCA_BASE_VERBOSE_ERROR : MCA_BASE_VERBOSE_INFO;
 
     /* Ensure that this component is not already loaded (should only happen
        if it was statically loaded).  It's an error if it's already

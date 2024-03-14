@@ -85,7 +85,9 @@ static void add_pending(struct mca_btl_base_endpoint_t *ep, void *data, bool res
 #define MCA_BTL_SMCUDA_FIFO_WRITE(endpoint_peer, my_smp_rank, peer_smp_rank, hdr, resend,         \
                                   retry_pending_sends, rc)                                        \
     do {                                                                                          \
-        sm_fifo_t *fifo = &(mca_btl_smcuda_component.fifo[peer_smp_rank][FIFO_MAP(my_smp_rank)]); \
+        /* memory barrier: ensure writes to the hdr have completed */                             \
+        opal_atomic_wmb();                                                                        \
+        sm_fifo_t *_fifo = &(mca_btl_smcuda_component.fifo[peer_smp_rank][FIFO_MAP(my_smp_rank)]);\
                                                                                                   \
         if (retry_pending_sends) {                                                                \
             if (0 < opal_list_get_size(&endpoint_peer->pending_sends)) {                          \
@@ -93,16 +95,16 @@ static void add_pending(struct mca_btl_base_endpoint_t *ep, void *data, bool res
             }                                                                                     \
         }                                                                                         \
                                                                                                   \
-        opal_atomic_lock(&(fifo->head_lock));                                                     \
+        opal_atomic_lock(&(_fifo->head_lock));                                                    \
         /* post fragment */                                                                       \
-        if (sm_fifo_write(hdr, fifo) != OPAL_SUCCESS) {                                           \
+        if (sm_fifo_write(hdr, _fifo) != OPAL_SUCCESS) {                                          \
             add_pending(endpoint_peer, hdr, resend);                                              \
             rc = OPAL_ERR_RESOURCE_BUSY;                                                          \
         } else {                                                                                  \
             MCA_BTL_SMCUDA_SIGNAL_PEER(endpoint_peer);                                            \
             rc = OPAL_SUCCESS;                                                                    \
         }                                                                                         \
-        opal_atomic_unlock(&(fifo->head_lock));                                                   \
+        opal_atomic_unlock(&(_fifo->head_lock));                                                  \
     } while (0)
 
 #endif

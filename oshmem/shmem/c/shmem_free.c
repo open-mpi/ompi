@@ -24,7 +24,7 @@
 #include "oshmem/include/pshmem.h"
 #pragma weak shmem_free = pshmem_free
 #pragma weak shfree = pshfree
-#include "oshmem/shmem/c/profile/defines.h"
+#include "oshmem/shmem/c/profile-defines.h"
 #endif
 
 static inline void _shfree(void* ptr);

@@ -355,7 +355,7 @@ OMPI_DECLSPEC int ompi_proc_unpack(pmix_data_buffer_t *buf,
  *
  * Refresh the Open MPI process subsystem. This function will update
  * the list of proc instances in the current MPI_COMM_WORLD with
- * data from the run-time environemnt.
+ * data from the run-time environment.
  *
  * @note This is primarily used when restarting a process and thus
  * need to update the jobid and node name.
@@ -471,6 +471,7 @@ static inline void ompi_proc_mark_as_failed(ompi_proc_t *proc) {
         abort();
     }
     proc->proc_active = false;
+    opal_atomic_wmb(); /* non-locked update needs a memory barrier to propagate */
 }
 #endif /* OPAL_ENABLE_FT_MPI */
 

@@ -19,8 +19,8 @@
  * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2018-2020 Amazon.com, Inc. or its affiliates.  All Rights
- *                         reserved.
+ * Copyright (c) 2018-2022 Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -89,9 +89,6 @@
 #include "opal/mca/btl/base/base.h"
 #include "opal/mca/btl/base/btl_base_error.h"
 #include "opal/mca/btl/btl.h"
-#if OPAL_CUDA_SUPPORT
-#    include "opal/mca/common/cuda/common_cuda.h"
-#endif /* OPAL_CUDA_SUPPORT */
 
 #define MCA_BTL_TCP_BTL_BANDWIDTH 100
 #define MCA_BTL_TCP_BTL_LATENCY   100
@@ -476,11 +473,7 @@ static int mca_btl_tcp_component_close(void)
     OBJ_DESTRUCT(&mca_btl_tcp_component.tcp_frag_max);
     OBJ_DESTRUCT(&mca_btl_tcp_component.tcp_frag_user);
     OBJ_DESTRUCT(&mca_btl_tcp_component.tcp_lock);
-    OBJ_DESTRUCT(&mca_btl_tcp_component.local_ifs);
-
-#if OPAL_CUDA_SUPPORT
-    mca_common_cuda_fini();
-#endif /* OPAL_CUDA_SUPPORT */
+    OPAL_LIST_DESTRUCT(&mca_btl_tcp_component.local_ifs);
 
     return OPAL_SUCCESS;
 }
@@ -509,7 +502,7 @@ static int mca_btl_tcp_create(const int if_kindex, const char *if_name)
      * split_and_resolve and pass the address used to select the
      * device into mca_btl_tcp_create().  This is a cleanup of the
      * logic that's been in use for years, but the case it doesn't
-     * cover is (say) only specifing mca_btl_if_include 10.0.0.0/16
+     * cover is (say) only specifying mca_btl_if_include 10.0.0.0/16
      * when the interface has addresses of both 10.0.0.1 and 10.1.0.1;
      * there's absolutely nothing that keeps this code from picking
      * 10.1.0.1 as the one that is published in the modex and used for
@@ -644,8 +637,8 @@ static int mca_btl_tcp_create(const int if_kindex, const char *if_name)
  */
 static char **split_and_resolve(char **orig_str, char *name, bool reqd)
 {
-    int i, ret, save, if_index;
-    char **argv, *str, *tmp;
+    int i, n, ret, if_index, match_count, interface_count;
+    char **argv, **interfaces, *str, *tmp;
     char if_name[OPAL_IF_NAMESIZE];
     struct sockaddr_storage argv_inaddr, if_inaddr;
     uint32_t argv_prefix;
@@ -659,9 +652,23 @@ static char **split_and_resolve(char **orig_str, char *name, bool reqd)
     if (NULL == argv) {
         return NULL;
     }
-    for (save = i = 0; NULL != argv[i]; ++i) {
+    interface_count = 0;
+    interfaces = NULL;
+    for (i = 0; NULL != argv[i]; ++i) {
         if (isalpha(argv[i][0])) {
-            argv[save++] = argv[i];
+            /* This is an interface name. If not already in the interfaces array, add it */
+            for (n = 0; n < interface_count; n++) {
+                if (0 == strcmp(argv[i], interfaces[n])) {
+                    break;
+                }
+            }
+            if (n == interface_count) {
+                opal_output_verbose(20,
+                                    opal_btl_base_framework.framework_output,
+                                    "btl: tcp: Using interface: %s ", argv[i]);
+                opal_argv_append(&interface_count, &interfaces, argv[i]);
+            }
+            free(argv[i]);
             continue;
         }
 
@@ -698,16 +705,37 @@ static char **split_and_resolve(char **orig_str, char *name, bool reqd)
                             opal_net_get_hostname((struct sockaddr *) &argv_inaddr), argv_prefix);
 
         /* Go through all interfaces and see if we can find a match */
-        for (if_index = opal_ifbegin(); if_index >= 0; if_index = opal_ifnext(if_index)) {
-            opal_ifindextoaddr(if_index, (struct sockaddr *) &if_inaddr, sizeof(if_inaddr));
-            if (opal_net_samenetwork((struct sockaddr *) &argv_inaddr,
-                                     (struct sockaddr *) &if_inaddr, argv_prefix)) {
-                break;
+        match_count = 0;
+        for (if_index = opal_ifbegin(); if_index >= 0;
+             if_index = opal_ifnext(if_index)) {
+            opal_ifindextoaddr(if_index,
+                               (struct sockaddr*) &if_inaddr,
+                               sizeof(if_inaddr));
+            if (opal_net_samenetwork((struct sockaddr*) &argv_inaddr,
+                                     (struct sockaddr*) &if_inaddr,
+                                     argv_prefix)) {
+                /* We found a match. If it's not already in the interfaces array,
+                   add it. If it's already in the array, treat it as a match */
+                match_count = match_count + 1;
+                opal_ifindextoname(if_index, if_name, sizeof(if_name));
+                for (n = 0; n < interface_count; n++) {
+                    if (0 == strcmp(if_name, interfaces[n])) {
+                        break;
+                    }
+                }
+                if (n == interface_count) {
+                    opal_output_verbose(20,
+                                        opal_btl_base_framework.framework_output,
+                                        "btl: tcp: Found match: %s (%s)",
+                                        opal_net_get_hostname((struct sockaddr*) &if_inaddr),
+                                        if_name);
+                    opal_argv_append(&interface_count, &interfaces, if_name);
+                }
             }
         }
 
         /* If we didn't find a match, keep trying */
-        if (if_index < 0) {
+        if (0 == match_count) {
             if (reqd || mca_btl_tcp_component.report_all_unfound_interfaces) {
                 opal_show_help("help-mpi-btl-tcp.txt", "invalid if_inexclude", true, name,
                                opal_process_info.nodename, tmp,
@@ -717,22 +745,17 @@ static char **split_and_resolve(char **orig_str, char *name, bool reqd)
             continue;
         }
 
-        /* We found a match; get the name and replace it in the
-           argv */
-        opal_ifindextoname(if_index, if_name, sizeof(if_name));
-        opal_output_verbose(20, opal_btl_base_framework.framework_output,
-                            "btl: tcp: Found match: %s (%s)",
-                            opal_net_get_hostname((struct sockaddr *) &if_inaddr), if_name);
-        argv[save++] = strdup(if_name);
         free(tmp);
     }
 
-    /* The list may have been compressed if there were invalid
-       entries, so ensure we end it with a NULL entry */
-    argv[save] = NULL;
+    /* Mark the end of the interface name array with NULL */
+    if (NULL != interfaces) {
+        interfaces[interface_count] = NULL;
+    }
+    free(argv);
     free(*orig_str);
-    *orig_str = opal_argv_join(argv, ',');
-    return argv;
+    *orig_str = opal_argv_join(interfaces, ',');
+    return interfaces;
 }
 
 /*
@@ -1020,7 +1043,7 @@ static int mca_btl_tcp_component_create_listen(uint16_t af_family)
         return OPAL_ERROR;
     }
 socket_binded:
-    /* resolve system assignend port */
+    /* resolve system assigned port */
     if (getsockname(sd, (struct sockaddr *) &inaddr, &addrlen) < 0) {
         BTL_ERROR(
             ("getsockname() failed: %s (%d)", strerror(opal_socket_errno), opal_socket_errno));
@@ -1293,7 +1316,7 @@ mca_btl_base_module_t **mca_btl_tcp_component_init(int *num_btl_modules,
         }
     }
 
-    /* Avoid a race in wire-up when using threads (progess or user)
+    /* Avoid a race in wire-up when using threads (progress or user)
        and multiple BTL modules.  The details of the race are in
        https://github.com/open-mpi/ompi/issues/3035#issuecomment-429500032,
        but the summary is that the lookup code in
@@ -1310,10 +1333,6 @@ mca_btl_base_module_t **mca_btl_tcp_component_init(int *num_btl_modules,
             mca_btl_tcp_component.tcp_btls[i]->super.btl_flags |= MCA_BTL_FLAGS_SINGLE_ADD_PROCS;
         }
     }
-
-#if OPAL_CUDA_SUPPORT
-    mca_common_cuda_stage_one_init();
-#endif /* OPAL_CUDA_SUPPORT */
 
     memcpy(btls, mca_btl_tcp_component.tcp_btls,
            mca_btl_tcp_component.tcp_num_btls * sizeof(mca_btl_tcp_module_t *));
@@ -1379,7 +1398,7 @@ static void mca_btl_tcp_component_recv_handler(int sd, short flags, void *user)
     struct timeval save, tv;
     socklen_t rcvtimeo_save_len = sizeof(save);
 
-    /* Note, Socket will be in blocking mode during intial handshake
+    /* Note, Socket will be in blocking mode during initial handshake
      * hence setting SO_RCVTIMEO to say 2 seconds here to avoid waiting
      * forever when connecting to older versions (that reply to the
      * handshake with only the guid) or when the remote side isn't OMPI

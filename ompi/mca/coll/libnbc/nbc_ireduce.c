@@ -29,7 +29,7 @@
 static inline int red_sched_binomial (int rank, int p, int root, const void *sendbuf, void *redbuf, char tmpredbuf, int count, MPI_Datatype datatype,
                                       MPI_Op op, char inplace, NBC_Schedule *schedule, void *tmpbuf);
 static inline int red_sched_chain (int rank, int p, int root, const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
-                                   MPI_Op op, int ext, size_t size, NBC_Schedule *schedule, void *tmpbuf, int fragsize);
+                                   MPI_Op op, MPI_Aint ext, size_t size, NBC_Schedule *schedule, void *tmpbuf, int fragsize);
 
 static inline int red_sched_linear (int rank, int rsize, int root, const void *sendbuf, void *recvbuf, void *tmpbuf, int count, MPI_Datatype datatype,
                                     MPI_Op op, NBC_Schedule *schedule);
@@ -367,7 +367,7 @@ static inline int red_sched_binomial (int rank, int p, int root, const void *sen
     vroot = 0;
   }
   RANK2VRANK(rank, vrank, vroot);
-  maxr = (int)ceil((log((double)p)/LOG2));
+  maxr = ceil_of_log2(p);
 
   if (rank != root) {
     inplace = 0;
@@ -459,7 +459,7 @@ static inline int red_sched_binomial (int rank, int p, int root, const void *sen
 
 /* chain send ... */
 static inline int red_sched_chain (int rank, int p, int root, const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
-                                   MPI_Op op, int ext, size_t size, NBC_Schedule *schedule, void *tmpbuf, int fragsize) {
+                                   MPI_Op op, MPI_Aint ext, size_t size, NBC_Schedule *schedule, void *tmpbuf, int fragsize) {
   int res, vrank, rpeer, speer, numfrag, fragcount, thiscount;
   long offset;
 
@@ -479,11 +479,11 @@ static inline int red_sched_chain (int rank, int p, int root, const void *sendbu
   fragcount = count / numfrag;
 
   for (int fragnum = 0 ; fragnum < numfrag ; ++fragnum) {
-    offset = fragnum * fragcount * ext;
+    offset = (MPI_Aint) ext * fragnum * fragcount;
     thiscount = fragcount;
     if(fragnum == numfrag - 1) {
       /* last fragment may not be full */
-      thiscount = count - fragcount * fragnum;
+      thiscount = count - (size_t)fragcount * fragnum;
     }
 
     /* last node does not recv */
@@ -781,7 +781,7 @@ static inline int red_sched_redscat_gather(
 
         for (int mask = 1; mask < nprocs_pof2; mask <<= 1) {
             /*
-             * On each iteration: rindex[step] = sindex[step] -- begining of the
+             * On each iteration: rindex[step] = sindex[step] -- beginning of the
              * current window. Length of the current window is storded in wsize.
              */
             int vdest = vrank ^ mask;

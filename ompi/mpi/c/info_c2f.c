@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -12,6 +13,8 @@
  * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -34,14 +37,12 @@
 #define MPI_Info_c2f PMPI_Info_c2f
 #endif
 
-static const char FUNC_NAME[] = "MPI_Info_c2f";
+/* static const char FUNC_NAME[] = "MPI_Info_c2f"; */
 
 
 MPI_Fint MPI_Info_c2f(MPI_Info info)
 {
     if (MPI_PARAM_CHECK) {
-        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-
         if (NULL == info || ompi_info_is_freed(info)) {
             return OMPI_INT_2_FINT(-1);
         }

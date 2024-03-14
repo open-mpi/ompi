@@ -24,7 +24,7 @@
 #include "oshmem/include/pshmem.h"
 #pragma weak shmem_barrier = pshmem_barrier
 #pragma weak shmem_barrier_all = pshmem_barrier_all
-#include "oshmem/shmem/c/profile/defines.h"
+#include "oshmem/shmem/c/profile-defines.h"
 #endif
 
 void shmem_barrier(int PE_start, int logPE_stride, int PE_size, long *pSync)

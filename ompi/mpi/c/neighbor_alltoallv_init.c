@@ -13,7 +13,7 @@
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2017 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2014-2019 Research Organization for Information Science
+ * Copyright (c) 2014-2023 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
@@ -102,14 +102,15 @@ int MPI_Neighbor_alltoallv_init(const void *sendbuf, const int sendcounts[], con
         } else if (! OMPI_COMM_IS_TOPO(comm)) {
             return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_TOPOLOGY,
                                           FUNC_NAME);
-        } else if ((NULL == sendcounts) || (NULL == sdispls) ||
-            (NULL == recvcounts) || (NULL == rdispls) ||
-            MPI_IN_PLACE == sendbuf || MPI_IN_PLACE == recvbuf) {
-            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
         }
 
         err = mca_topo_base_neighbor_count (comm, &indegree, &outdegree);
         OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
+        if (((0 < outdegree) && ((NULL == sendcounts) || (NULL == sdispls))) ||
+            ((0 < indegree) && ((NULL == recvcounts) || (NULL == rdispls))) ||
+            MPI_IN_PLACE == sendbuf || MPI_IN_PLACE == recvbuf) {
+            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
+        }
         for (i = 0; i < outdegree; ++i) {
             OMPI_CHECK_DATATYPE_FOR_SEND(err, sendtype, sendcounts[i]);
             OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);

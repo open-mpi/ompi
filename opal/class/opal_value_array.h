@@ -96,7 +96,7 @@ static inline int opal_value_array_reserve(opal_value_array_t *array, size_t siz
 }
 
 /**
- *  Retreives the number of elements in the array.
+ *  Retrieves the number of elements in the array.
  *
  *  @param   array   The input array (IN).
  *  @return  The number of elements currently in use.

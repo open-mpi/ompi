@@ -156,7 +156,7 @@ struct mca_btl_uct_component_t {
 };
 typedef struct mca_btl_uct_component_t mca_btl_uct_component_t;
 
-OPAL_MODULE_DECLSPEC extern mca_btl_uct_component_t mca_btl_uct_component;
+OPAL_DECLSPEC extern mca_btl_uct_component_t mca_btl_uct_component;
 
 struct mca_btl_base_registration_handle_t {
     /** The packed memory handle. The size of this field is defined by UCT. */

@@ -37,7 +37,7 @@ int mca_fs_ime_module_finalize (ompio_file_t *file);
 
 int mca_fs_ime_native_fini(void);
 
-OMPI_MODULE_DECLSPEC extern mca_fs_base_component_2_0_0_t mca_fs_ime_component;
+OMPI_DECLSPEC extern mca_fs_base_component_2_0_0_t mca_fs_ime_component;
 /*
  * ******************************************************************
  * ********* functions which are implemented in this module *********

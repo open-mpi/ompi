@@ -49,7 +49,7 @@
  * appropriate help message to display.  It looks for the message name
  * in the file, reads in the message, and displays it.  printf()-like
  * substitutions are performed (e.g., %d, %s, etc.) --
- * opal_show_help() takes a variable legnth argument list that are
+ * opal_show_help() takes a variable length argument list that are
  * used for these substitutions.
  *
  * The format of the help file is simplistic:
@@ -163,7 +163,7 @@ OPAL_DECLSPEC char *opal_show_help_vstring(const char *filename, const char *top
  * of the show_help functionality. OMPI defines the show_help directory
  * based on where OMPI was installed. However, if the library wants to
  * use show_help to provide error output specific to itself, then it
- * nees to tell show_help how to find its own show_help files.
+ * needs to tell show_help how to find its own show_help files.
  */
 OPAL_DECLSPEC int opal_show_help_add_dir(const char *directory);
 

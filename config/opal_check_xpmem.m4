@@ -16,6 +16,7 @@
 # Copyright (c) 2014      Intel, Inc. All rights reserved.
 # Copyright (c) 2014-2015 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -58,7 +59,7 @@ AC_DEFUN([OPAL_CHECK_CRAY_XPMEM],[
           [$1_LDFLAGS="[$]$1_LDFLAGS $CRAY_XPMEM_LIBS"
            $1_CPPFLAGS="[$]$1_CPPFLAGS $CRAY_XPMEM_CFLAGS"
            $1_LIBS="[$]$1_LIBS $CRAY_XPMEM_LIBS"
-           AC_DEFINE_UNQUOTED([HAVE_XPMEM_H], [1],[is xpmem.h available])
+           AC_DEFINE_UNQUOTED([HAVE_XPMEM_H], [1], [is xpmem.h available])
            $2], [$3])
 ])
 
@@ -68,45 +69,45 @@ AC_DEFUN([OPAL_CHECK_CRAY_XPMEM],[
 # LDFLAGS, LIBS} as needed and runs action-if-found if there is
 # support, otherwise executes action-if-not-found
 AC_DEFUN([OPAL_CHECK_XPMEM], [
-    if test -z "$opal_check_xpmem_happy" ; then
-	# check for a cray installed xpmem first
-	OPAL_CHECK_CRAY_XPMEM([opal_check_xpmem],[opal_check_xpmem_happy=yes],[opal_check_xpmem_happy=no])
+    OPAL_VAR_SCOPE_PUSH([opal_check_xpmem_happy])
 
-	if test "$opal_check_xpmem_happy" = no ; then
-	    AC_ARG_WITH([xpmem],
-			[AS_HELP_STRING([--with-xpmem(=DIR)],
-					[Build with XPMEM kernel module support, searching for headers in DIR])])
-	    OPAL_CHECK_WITHDIR([xpmem], [$with_xpmem], [include/xpmem.h])
+    # check for a cray installed xpmem first
+    OPAL_CHECK_CRAY_XPMEM([$1], [opal_check_xpmem_happy=yes], [opal_check_xpmem_happy=no])
+    AS_IF([test "${opal_check_xpmem_happy}" = "no"],
+          [OPAL_CHECK_BASE_XPMEM([$1], [opal_check_xpmem_happy=yes], [opal_check_xpmem_happy=no])])
 
-	    AC_ARG_WITH([xpmem-libdir],
-			[AS_HELP_STRING([--with-xpmem-libdir=DIR],
-					[Search for XPMEM library in DIR])])
-	    OPAL_CHECK_WITHDIR([xpmem-libdir], [$with_xpmem_libdir], [libxpmem.*])
+    OPAL_SUMMARY_ADD([Transports], [Shared memory/XPMEM], [], [$opal_check_xpmem_happy])
 
-	    if test ! "$with_xpmem" = "no" ; then
-		if test ! -z "$with_xpmem" && test "$with_xpmem" != "yes" ; then
-		    opal_check_xpmem_dir="$with_xpmem"
-		fi
+    AS_IF([test "${opal_check_xpmem_happy}" = "yes"], [$2], [$3])
 
-		if test ! -z "$with_xpmem_libdir" && test "$with_xpmem_libdir" != "yes" ; then
-		    opal_check_xpmem_libdir="$with_xpmem_libdir"
-		fi
+    OPAL_VAR_SCOPE_POP
+])dnl
 
-		OPAL_CHECK_PACKAGE([opal_check_xpmem],[xpmem.h],[xpmem],[xpmem_make],[],
-				   [$opal_check_xpmem_dir],[$opal_check_xpmem_libdir], [opal_check_xpmem_happy="yes"], [])
 
-		if test "$opal_check_xpmem_happy" = "no" && test -n "$with_xpmem" && test "$with_xpmem" != "yes" ; then
-		    AC_MSG_ERROR([XPMEM support requested but not found.  Aborting])
-		fi
-	    fi
-	fi
+AC_DEFUN([OPAL_CHECK_BASE_XPMEM], [
+    OPAL_VAR_SCOPE_PUSH([opal_check_xpmem_base_happy])
 
-	OPAL_SUMMARY_ADD([[Transports]],[[Shared memory/XPMEM]],[$1],[$opal_check_xpmem_happy])
-    fi
+    AC_ARG_WITH([xpmem],
+                [AS_HELP_STRING([--with-xpmem(=DIR)],
+                                [Build with XPMEM kernel module support, searching for headers in DIR])])
+    AC_ARG_WITH([xpmem-libdir],
+                [AS_HELP_STRING([--with-xpmem-libdir=DIR],
+                                [Search for XPMEM library in DIR])])
 
-    AS_IF([test "$opal_check_xpmem_happy" = "yes"], [
-	      $1_CPPFLAGS="[$]$1_CPPFLAGS $opal_check_xpmem_CPPFLAGS"
-	      $1_LDFLAGS="[$]$1_LDFLAGS $opal_check_xpmem_LDFLAGS"
-	      $1_LIBS="[$]$1_LIBS $opal_check_xpmem_LIBS"
-	      $2], [$3])
+    OAC_CHECK_PACKAGE([xpmem],
+                      [$1],
+                      [xpmem.h],
+                      [xpmem],
+                      [xpmem_make],
+                      [opal_check_xpmem_base_happy="yes"],
+                      [opal_check_xpmem_base_happy="no"])
+
+     AS_IF([test "${opal_check_xpmem_base_happy}" = "yes"],
+           [AC_DEFINE_UNQUOTED([HAVE_XPMEM_H], [1], [is xpmem.h available])
+            $2],
+           [AS_IF([test -n "${with_xpmem}" -a "${with_xpmem}" != "no"],
+                  [AC_MSG_ERROR([XPMEM support requested but not found.  Aborting])])
+            $3])
+
+    OPAL_VAR_SCOPE_POP
 ])dnl

@@ -3,6 +3,7 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2022      IBM Corporation. All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -80,7 +81,7 @@ static void sb_mmap_free(void)
                      (void *) sb.sb_addr, strerror(errno));
 }
 
-int vprotocol_pessimist_sender_based_init(const char *mmapfile, size_t size)
+int ompi_vprotocol_pessimist_sender_based_init(const char *mmapfile, size_t size)
 {
     char *path;
 #ifdef SB_USE_CONVERTOR_METHOD
@@ -107,7 +108,7 @@ int vprotocol_pessimist_sender_based_init(const char *mmapfile, size_t size)
     return OMPI_SUCCESS;
 }
 
-void vprotocol_pessimist_sender_based_finalize(void)
+void ompi_vprotocol_pessimist_sender_based_finalize(void)
 {
     if(((uintptr_t) NULL) != sb.sb_addr)
         sb_mmap_free();
@@ -118,7 +119,7 @@ void vprotocol_pessimist_sender_based_finalize(void)
 /** Manage mmap floating window, allocating enough memory for the message to be
   * asynchronously copied to disk.
   */
-void vprotocol_pessimist_sender_based_alloc(size_t len)
+void ompi_vprotocol_pessimist_sender_based_alloc(size_t len)
 {
     if(((uintptr_t) NULL) != sb.sb_addr)
         sb_mmap_free();
@@ -127,7 +128,7 @@ void vprotocol_pessimist_sender_based_alloc(size_t len)
         ompi_comm_dup(MPI_COMM_SELF, &sb.sb_comm, 1);
 #endif
 
-    /* Take care of alignement of sb_offset                             */
+    /* Take care of alignment of sb_offset                             */
     sb.sb_offset += sb.sb_cursor - sb.sb_addr;
     sb.sb_cursor = sb.sb_offset % sb.sb_pagesize;
     sb.sb_offset -= sb.sb_cursor;

@@ -169,6 +169,10 @@ OPAL_DECLSPEC int opal_progress_register_lp(opal_progress_callback_t cb);
  */
 OPAL_DECLSPEC int opal_progress_unregister(opal_progress_callback_t cb);
 
+#if OPAL_ENABLE_DEBUG
+OPAL_DECLSPEC extern bool opal_progress_debug;
+#endif
+
 OPAL_DECLSPEC extern int opal_progress_spin_count;
 
 /* do we want to call sched_yield() if nothing happened */

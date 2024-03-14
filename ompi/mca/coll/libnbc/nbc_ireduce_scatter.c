@@ -12,7 +12,7 @@
  * Copyright (c) 2015      The University of Tennessee and The University
  *                         of Tennessee Research Foundation. All rights
  *                         reserved.
- * Copyright (c) 2017      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2017-2021 IBM Corporation.  All rights reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -26,7 +26,7 @@
 #include "nbc_internal.h"
 
 /* an reduce_csttare schedule can not be cached easily because the contents
- * ot the recvcounts array may change, so a comparison of the address
+ * of the recvcounts array may change, so a comparison of the address
  * would not be sufficient ... we simply do not cache it */
 
 /* binomial reduce to rank 0 followed by a linear scatter ...
@@ -45,7 +45,8 @@
 static int nbc_reduce_scatter_init(const void* sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype,
                                    MPI_Op op, struct ompi_communicator_t *comm, ompi_request_t ** request,
                                    mca_coll_base_module_t *module, bool persistent) {
-  int peer, rank, maxr, p, res, count;
+  int peer, rank, maxr, p, res;
+  size_t count;
   MPI_Aint ext;
   ptrdiff_t gap, span, span_align;
   char *sbuf, inplace;
@@ -82,7 +83,7 @@ static int nbc_reduce_scatter_init(const void* sendbuf, void* recvbuf, const int
     return nbc_get_noop_request(persistent, request);
   }
 
-  maxr = (int) ceil ((log((double) p) / LOG2));
+  maxr = ceil_of_log2(p);
 
   span = opal_datatype_span(&datatype->super, count, &gap);
   span_align = OPAL_ALIGN(span, datatype->super.align, ptrdiff_t);
@@ -161,7 +162,8 @@ static int nbc_reduce_scatter_init(const void* sendbuf, void* recvbuf, const int
 
   /* rank 0 is root and sends - all others receive */
   if (rank == 0) {
-    for (long int r = 1, offset = 0 ; r < p ; ++r) {
+    size_t offset = 0;
+    for (long int r = 1 ; r < p ; ++r) {
       offset += recvcounts[r-1];
       sbuf = lbuf + (offset*ext);
       /* root sends the right buffer to the right receiver */
@@ -229,7 +231,8 @@ int ompi_coll_libnbc_ireduce_scatter (const void* sendbuf, void* recvbuf, const 
 static int nbc_reduce_scatter_inter_init (const void* sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype,
                                           MPI_Op op, struct ompi_communicator_t *comm, ompi_request_t ** request,
                                           mca_coll_base_module_t *module, bool persistent) {
-  int rank, res, count, lsize, rsize;
+  int rank, res, lsize, rsize;
+  size_t count;
   MPI_Aint ext;
   ptrdiff_t gap, span, span_align;
   NBC_Schedule *schedule;
@@ -313,7 +316,8 @@ static int nbc_reduce_scatter_inter_init (const void* sendbuf, void* recvbuf, co
       free(tmpbuf);
       return res;
     }
-    for (int peer = 1, offset = recvcounts[0] * ext; peer < lsize ; ++peer) {
+    size_t offset = recvcounts[0] * ext;
+    for (int peer = 1; peer < lsize ; ++peer) {
       res = NBC_Sched_local_send (lbuf + offset, true, recvcounts[peer], datatype, peer, schedule,
                                   false);
       if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {

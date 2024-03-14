@@ -18,7 +18,7 @@
 #
 
 if (scalar(@ARGV) != 2) {
-    print "Usage: #find_occurence <string> <source-path>\n";
+    print "Usage: #find_occurrence <string> <source-path>\n";
     exit(3);
 }
 
@@ -28,7 +28,7 @@ $source_path = @ARGV[1];
 open (SOURCE_FILES, "find $source_path -name *.c |") || print "could not open the pipe\n";
 while (<SOURCE_FILES>) {
 
-    #open the file and delete the occurence
+    #open the file and delete the occurrence
 
     $file_name = $_;
 

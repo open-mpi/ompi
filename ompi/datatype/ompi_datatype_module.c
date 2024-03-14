@@ -18,6 +18,8 @@
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2018 FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2018-2021 Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -34,10 +36,15 @@
 #include "opal/util/output.h"
 #include "opal/util/string_copy.h"
 #include "opal/class/opal_pointer_array.h"
+#include "ompi/attribute/attribute.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/datatype/ompi_datatype_internal.h"
+#include "ompi/instance/instance.h"
+#include "ompi/attribute/attribute.h"
 
 #include "mpi.h"
+
+static int ompi_datatype_finalize (void);
 
 /**
  * This is the number of predefined datatypes. It is different than the MAX_PREDEFINED
@@ -367,7 +374,7 @@ const ompi_datatype_t* ompi_datatype_basicDatatypes[OMPI_DATATYPE_MPI_MAX_PREDEF
     [OMPI_DATATYPE_MPI_UB] = &ompi_mpi_ub.dt,
 
     [OMPI_DATATYPE_MPI_LONG] = &ompi_mpi_long.dt,
-    [OMPI_DATATYPE_MPI_UNSIGNED_LONG] = &ompi_mpi_long.dt,
+    [OMPI_DATATYPE_MPI_UNSIGNED_LONG] = &ompi_mpi_unsigned_long.dt,
     /* MPI 3.0 types */
     [OMPI_DATATYPE_MPI_COUNT] = &ompi_mpi_count.dt,
 
@@ -472,6 +479,7 @@ opal_pointer_array_t ompi_datatype_f_to_c_table = {{0}};
 int32_t ompi_datatype_init( void )
 {
     int32_t i;
+    int ret = OMPI_SUCCESS;
 
     opal_datatype_init();
 
@@ -669,24 +677,26 @@ int32_t ompi_datatype_init( void )
             datatype->flags &= ~OPAL_DATATYPE_FLAG_NO_GAPS;
         }
     }
+
+    /* get a reference to the attributes subsys */
+    ret = ompi_attr_get_ref();
+    if (OMPI_SUCCESS != ret) {
+        return ret;
+    }
+
     ompi_datatype_default_convertors_init();
+
+    ompi_mpi_instance_append_finalize (ompi_datatype_finalize);
     return OMPI_SUCCESS;
 }
 
 
-int32_t ompi_datatype_finalize( void )
+static int ompi_datatype_finalize (void)
 {
     /* As the synonyms are just copies of the internal data we should not free them.
      * Anyway they are over the limit of OMPI_DATATYPE_MPI_MAX_PREDEFINED so they will never get freed.
      */
 
-    /* As they are statically allocated they cannot be released.
-     * But we can call OBJ_DESTRUCT, just to free all internally allocated ressources.
-     */
-    for( int i = 0; i < ompi_datatype_number_of_predefined_data; i++ ) {
-        opal_datatype_t* datatype = (opal_datatype_t*)opal_pointer_array_get_item(&ompi_datatype_f_to_c_table, i );
-        OBJ_DESTRUCT(datatype);
-    }
 
     /* Get rid of the Fortran2C translation table */
     OBJ_DESTRUCT(&ompi_datatype_f_to_c_table);
@@ -697,7 +707,8 @@ int32_t ompi_datatype_finalize( void )
     /* don't call opal_datatype_finalize () as it no longer exists. the function will be called
      * opal_finalize_util (). */
 
-    return OMPI_SUCCESS;
+    /* release a reference to the attributes subsys */
+    return ompi_attr_put_ref();
 }
 
 

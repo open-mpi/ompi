@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -24,6 +25,46 @@
 #include "ompi/mca/topo/base/base.h"
 #include "ompi/mca/topo/topo.h"
 
+static int mca_topo_base_graph_allocate (ompi_group_t *group, int nnodes, const int *index, const int *edges,
+                                         int *num_procs, mca_topo_base_comm_graph_2_2_0_t **graph_out)
+{
+    mca_topo_base_comm_graph_2_2_0_t *graph;
+
+    *num_procs = group->grp_proc_count;
+
+    if (*num_procs < nnodes) {
+        return MPI_ERR_DIMS;
+    }
+
+    if (*num_procs > nnodes) {
+        *num_procs = nnodes;
+    }
+
+    if (group->grp_my_rank > (nnodes - 1) || MPI_UNDEFINED == group->grp_my_rank) {
+        *graph_out = NULL;
+        return OMPI_SUCCESS;
+    }
+
+    graph = OBJ_NEW(mca_topo_base_comm_graph_2_2_0_t);
+    if( NULL == graph ) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+    graph->nnodes = nnodes;
+    graph->index = (int *) malloc (sizeof (int) * nnodes);
+    graph->edges = (int *) malloc (sizeof (int) * index[nnodes-1]);
+    if (OPAL_UNLIKELY(NULL == graph->index || NULL == graph->edges)) {
+        OBJ_RELEASE(graph);
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    memcpy(graph->index, index, nnodes * sizeof(int));
+    memcpy(graph->edges, edges, index[nnodes-1] * sizeof(int));
+
+    *graph_out = graph;
+
+    return OMPI_SUCCESS;
+}
+
 /*
  *
  * function - makes a new communicator to which topology information
@@ -40,111 +81,41 @@
  * @retval MPI_ERR_OUT_OF_RESOURCE
  */
 
-int mca_topo_base_graph_create(mca_topo_base_module_t *topo,
-                               ompi_communicator_t* old_comm,
-                               int nnodes,
-                               const int *index,
-                               const int *edges,
-                               bool reorder,
-                               ompi_communicator_t** comm_topo)
+int mca_topo_base_graph_create (mca_topo_base_module_t *topo, ompi_communicator_t *old_comm,
+                                int nnodes, const int *index, const int *edges, bool reorder,
+                                ompi_communicator_t **comm_topo)
 {
-    ompi_communicator_t *new_comm;
-    int new_rank, num_procs, ret, i;
-    ompi_proc_t **topo_procs = NULL;
-    mca_topo_base_comm_graph_2_2_0_t* graph;
+    mca_topo_base_comm_graph_2_2_0_t *graph;
+    ompi_group_t *c_local_group;
+    int num_procs, ret;
 
-    num_procs = old_comm->c_local_group->grp_proc_count;
-    new_rank = old_comm->c_local_group->grp_my_rank;
     assert(topo->type == OMPI_COMM_GRAPH);
 
-    if( num_procs < nnodes ) {
-        return MPI_ERR_DIMS;
-    }
-    if( num_procs > nnodes ) {
-        num_procs = nnodes;
-    }
-    if( new_rank > (nnodes - 1) ) {
-        new_rank = MPI_UNDEFINED;
-        num_procs = 0;
-        nnodes = 0;
-    }
+    *comm_topo = MPI_COMM_NULL;
 
-    graph = OBJ_NEW(mca_topo_base_comm_graph_2_2_0_t);
-    if( NULL == graph ) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-    graph->nnodes = nnodes;
-
-    /* Don't do any of the other initialization if we're not supposed
-       to be part of the new communicator (because nnodes has been
-       reset to 0, making things like index[nnodes-1] be junk).
-
-       JMS: This should really be refactored to use
-       comm_create_group(), because ompi_comm_allocate() still
-       complains about 0-byte mallocs in debug builds for 0-member
-       groups. */
-    if (MPI_UNDEFINED != new_rank) {
-        graph->index = (int*)malloc(sizeof(int) * nnodes);
-        if (NULL == graph->index) {
-            OBJ_RELEASE(graph);
-            return OMPI_ERR_OUT_OF_RESOURCE;
-        }
-        memcpy(graph->index, index, nnodes * sizeof(int));
-
-        /* Graph communicator; copy the right data to the common information */
-        graph->edges = (int*)malloc(sizeof(int) * index[nnodes-1]);
-        if (NULL == graph->edges) {
-            OBJ_RELEASE(graph);
-            return OMPI_ERR_OUT_OF_RESOURCE;
-        }
-        memcpy(graph->edges, edges, index[nnodes-1] * sizeof(int));
-
-        topo_procs = (ompi_proc_t**)malloc(num_procs * sizeof(ompi_proc_t *));
-        if (NULL == topo_procs) {
-           OBJ_RELEASE(graph);
-           return OMPI_ERR_OUT_OF_RESOURCE;
-        }
-        if(OMPI_GROUP_IS_DENSE(old_comm->c_local_group)) {
-            memcpy(topo_procs,
-                   old_comm->c_local_group->grp_proc_pointers,
-                   num_procs * sizeof(ompi_proc_t *));
-        } else {
-            for(i = 0 ; i < num_procs; i++) {
-                topo_procs[i] = ompi_group_peer_lookup(old_comm->c_local_group,i);
-            }
-        }
-    }
-
-    /* allocate a new communicator */
-    new_comm = ompi_comm_allocate(nnodes, 0);
-    if (NULL == new_comm) {
-        free(topo_procs);
-        OBJ_RELEASE(graph);
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-
-    ret = ompi_comm_enable(old_comm, new_comm,
-                           new_rank, num_procs, topo_procs);
-    if (OMPI_SUCCESS != ret) {
-        free(topo_procs);
-        OBJ_RELEASE(graph);
-        if (MPI_COMM_NULL != new_comm) {
-            new_comm->c_topo            = NULL;
-            new_comm->c_flags          &= ~OMPI_COMM_GRAPH;
-            ompi_comm_free (&new_comm);
-        }
+    ret = mca_topo_base_graph_allocate (old_comm->c_local_group, nnodes, index, edges, &num_procs,
+                                        &graph);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
         return ret;
     }
-    
-    new_comm->c_topo            = topo;
-    new_comm->c_topo->mtc.graph = graph;
-    new_comm->c_flags          |= OMPI_COMM_GRAPH;
-    new_comm->c_topo->reorder   = reorder;
-    *comm_topo = new_comm;
 
-    if( MPI_UNDEFINED == new_rank ) {
-        ompi_comm_free(&new_comm);
-        *comm_topo = MPI_COMM_NULL;
+    c_local_group = ompi_group_flatten (old_comm->c_local_group, nnodes);
+    if (OPAL_UNLIKELY(NULL == c_local_group)) {
+        OBJ_RELEASE(graph);
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    ret = ompi_comm_create (old_comm, c_local_group, comm_topo);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
+        OBJ_RELEASE(graph);
+        return ret;
+    }
+
+    if (MPI_COMM_NULL != *comm_topo) {
+        (*comm_topo)->c_topo            = topo;
+        (*comm_topo)->c_topo->mtc.graph = graph;
+        (*comm_topo)->c_flags          |= OMPI_COMM_GRAPH;
+        (*comm_topo)->c_topo->reorder   = reorder;
     }
 
     return OMPI_SUCCESS;

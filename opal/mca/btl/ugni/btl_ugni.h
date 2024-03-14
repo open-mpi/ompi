@@ -298,8 +298,8 @@ typedef struct mca_btl_ugni_component_t {
 
 /* Global structures */
 
-OPAL_MODULE_DECLSPEC extern mca_btl_ugni_component_t mca_btl_ugni_component;
-OPAL_MODULE_DECLSPEC extern mca_btl_ugni_module_t mca_btl_ugni_module;
+OPAL_DECLSPEC extern mca_btl_ugni_component_t mca_btl_ugni_component;
+OPAL_DECLSPEC extern mca_btl_ugni_module_t mca_btl_ugni_module;
 
 static inline uint32_t mca_btl_ugni_ep_get_device_index(mca_btl_ugni_module_t *ugni_module)
 {
@@ -380,7 +380,7 @@ struct mca_btl_base_endpoint_t *mca_btl_ugni_get_ep(struct mca_btl_base_module_t
  *
  * @param btl (IN)         BTL module
  * @param endpoint (IN)    BTL addressing information
- * @param descriptor (IN)  Description of the data to be transfered
+ * @param descriptor (IN)  Description of the data to be transferred
  * @param tag (IN)         The tag value used to notify the peer.
  */
 int mca_btl_ugni_send(struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *btl_peer,
@@ -470,7 +470,7 @@ int mca_btl_ugni_fini(void);
 int mca_btl_ugni_module_init(mca_btl_ugni_module_t *ugni_module);
 
 /**
- * Intialize a virtual device for device index 0.
+ * Initialize a virtual device for device index 0.
  *
  * @param[inout] device         Device to initialize
  * @param[in] virtual_device_id Virtual device identified (up to max handles)

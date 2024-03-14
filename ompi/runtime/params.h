@@ -16,7 +16,7 @@
  * Copyright (c) 2010-2012 Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2013      Intel, Inc. All rights reserved
- * Copyright (c) 2021      Triad National Security, LLC. All rights
+ * Copyright (c) 2018-2021 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * $COPYRIGHT$
@@ -30,6 +30,8 @@
 #define OMPI_RUNTIME_PARAMS_H
 
 #include "ompi_config.h"
+
+#include "ompi/runtime/mpiruntime.h"
 
 BEGIN_C_DECLS
 
@@ -61,7 +63,7 @@ OMPI_DECLSPEC extern bool ompi_mpi_param_check;
  * handles that are still allocated during MPI_FINALIZE.
  *
  * This is good debugging for user applications to find out if they
- * are inadvertantly orphaning MPI handles.
+ * are inadvertently orphaning MPI handles.
  */
 OMPI_DECLSPEC extern bool ompi_debug_show_handle_leaks;
 
@@ -71,7 +73,7 @@ OMPI_DECLSPEC extern bool ompi_debug_show_handle_leaks;
  * freed via MPI_FREE_MEM will be displayed during MPI_FINALIZE.
  *
  * This is good debugging for user applications to find out if they
- * are inadvertantly orphaning MPI "special" memory.
+ * are inadvertently orphaning MPI "special" memory.
  */
 OMPI_DECLSPEC extern int ompi_debug_show_mpi_alloc_mem_leaks;
 
@@ -82,7 +84,7 @@ OMPI_DECLSPEC extern int ompi_debug_show_mpi_alloc_mem_leaks;
  * attempt to use them will result in an MPI error.
  *
  * This is good debugging for user applications to find out if they
- * are inadvertantly using MPI handles after they have been freed.
+ * are inadvertently using MPI handles after they have been freed.
  */
 OMPI_DECLSPEC extern bool ompi_debug_no_free_handles;
 
@@ -121,8 +123,8 @@ OMPI_DECLSPEC extern int ompi_mpi_abort_delay;
 /**
  * Whether we operate in MPI3 compatibility, or MPI4 mode (default).
  *
- * true: use MPI3 compatibility
- * false: use MPI4 compatibility (default)
+ * true: use MPI3 compatibility (default)
+ * false: use MPI4 compatibility
  *
  * Behavioral changes:
  *   - errors in operations without a handle are raised on MPI_COMM_WORLD (MPI-3 behavior) or MPI_COMM_SELF (MPI-4 behavior)
@@ -176,9 +178,18 @@ OMPI_DECLSPEC extern char * ompi_mpi_spc_attach_string;
 OMPI_DECLSPEC extern bool ompi_mpi_spc_dump_enabled;
 
 /**
- * Timeout for calls to PMIx_Connect(defaut 0, no timeout)
+ * Timeout for calls to PMIx_Connect(default 0, no timeout)
  */
 OMPI_DECLSPEC extern uint32_t ompi_pmix_connect_timeout;
+
+ /**
+ * A boolean value that determines whether or not to enable runtime timing of
+ * init and finalize.
+ */
+OMPI_DECLSPEC extern bool ompi_enable_timing;
+
+OMPI_DECLSPEC extern int ompi_mpi_event_tick_rate;
+OMPI_DECLSPEC extern bool ompi_mpi_yield_when_idle;
 
 /**
  * Register MCA parameters used by the MPI layer.
@@ -189,6 +200,7 @@ OMPI_DECLSPEC extern uint32_t ompi_pmix_connect_timeout;
  * global variables to the values obtained from the MCA system.
  */
 OMPI_DECLSPEC int ompi_mpi_register_params(void);
+
 
 /**
  * Display all MCA parameters used

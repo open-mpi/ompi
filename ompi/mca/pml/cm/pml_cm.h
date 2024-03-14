@@ -7,6 +7,7 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      Intel, Inc. All rights reserved
+ * Copyright (c) 2022      IBM Corporation. All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -16,10 +17,6 @@
 
 #ifndef PML_CM_H
 #define PML_CM_H
-
-#ifdef HAVE_ALLOCA_H
-#include <alloca.h>
-#endif
 
 #include "ompi_config.h"
 #include "ompi/request/request.h"
@@ -42,13 +39,6 @@
 BEGIN_C_DECLS
 
 struct mca_mtl_request_t;
-
-/* Array of send completion callback - one per send type
- * These are called internally by the library when the send
- * is completed from its perspective.
- */
-extern void (*send_completion_callbacks[])
-    (struct mca_mtl_request_t *mtl_request);
 
 struct ompi_pml_cm_t {
     mca_pml_base_module_t super;
@@ -131,14 +121,6 @@ mca_pml_cm_irecv(void *addr,
     return ret;
 }
 
-__opal_attribute_always_inline__ static inline void
-mca_pml_cm_recv_fast_completion(struct mca_mtl_request_t *mtl_request)
-{
-    // Do nothing!
-    ompi_request_complete(mtl_request->ompi_req, true);
-    return;
-}
-
 __opal_attribute_always_inline__ static inline int
 mca_pml_cm_recv(void *addr,
                 size_t count,
@@ -150,73 +132,41 @@ mca_pml_cm_recv(void *addr,
 {
     int ret;
     uint32_t flags = 0;
-#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
-    ompi_proc_t *ompi_proc;
-#endif
-    opal_convertor_t convertor;
-    mca_pml_cm_request_t req;
-    mca_mtl_request_t *req_mtl =
-            alloca(sizeof(mca_mtl_request_t) + ompi_mtl->mtl_request_size);
+    mca_pml_cm_thin_recv_request_t *recvreq;
 
-    OBJ_CONSTRUCT(&convertor, opal_convertor_t);
-    req_mtl->ompi_req = &req.req_ompi;
-    req_mtl->completion_callback = mca_pml_cm_recv_fast_completion;
-
-    req.req_pml_type = MCA_PML_CM_REQUEST_RECV_THIN;
-    req.req_free_called = false;
-    req.req_ompi.req_complete = false;
-    req.req_ompi.req_complete_cb = NULL;
-    req.req_ompi.req_state = OMPI_REQUEST_ACTIVE;
-    req.req_ompi.req_status.MPI_TAG = OMPI_ANY_TAG;
-    req.req_ompi.req_status.MPI_ERROR = OMPI_SUCCESS;
-    req.req_ompi.req_status._cancelled = 0;
+    MCA_PML_CM_THIN_RECV_REQUEST_ALLOC(recvreq);
+    if (OPAL_UNLIKELY(NULL == recvreq))
+        return OMPI_ERR_OUT_OF_RESOURCE;
 
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
-    if( MPI_ANY_SOURCE == src ) {
-        ompi_proc = ompi_proc_local_proc;
-    } else {
-        ompi_proc = ompi_comm_peer_lookup( comm, src );
-    }
-
-    MCA_PML_CM_SWITCH_CUDA_CONVERTOR_OFF(flags, datatype, count);
-
-    opal_convertor_copy_and_prepare_for_recv(
-	ompi_proc->super.proc_convertor,
-		&(datatype->super),
-		count,
-		addr,
-                flags,
-		&convertor );
-#else
-    MCA_PML_CM_SWITCH_CUDA_CONVERTOR_OFF(flags, datatype, count);
-
-    opal_convertor_copy_and_prepare_for_recv(
-	ompi_mpi_local_convertor,
-		&(datatype->super),
-		count,
-		addr,
-                flags,
-		&convertor );
+    ompi_proc_t *ompi_proc = NULL;
 #endif
 
-    ret = OMPI_MTL_CALL(irecv(ompi_mtl,
-                              comm,
-                              src,
-                              tag,
-                              &convertor,
-                              req_mtl));
-    if( OPAL_UNLIKELY(OMPI_SUCCESS != ret) ) {
-	OBJ_DESTRUCT(&convertor);
+    MCA_PML_CM_THIN_RECV_REQUEST_INIT(recvreq,
+                                      ompi_proc,
+                                      comm,
+                                      src,
+                                      datatype,
+                                      addr,
+                                      count,
+                                      flags);
+
+    assert(NULL == recvreq->req_base.req_ompi.req_complete_cb);
+
+    MCA_PML_CM_THIN_RECV_REQUEST_START(recvreq, comm, tag, src, ret);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
+        MCA_PML_CM_THIN_RECV_REQUEST_RETURN(recvreq);
         return ret;
     }
 
-    ompi_request_wait_completion(&req.req_ompi);
+    ompi_request_wait_completion(&recvreq->req_base.req_ompi);
 
     if (MPI_STATUS_IGNORE != status) {
-        OMPI_COPY_STATUS(status, req.req_ompi.req_status, false);
+        OMPI_COPY_STATUS(status, recvreq->req_base.req_ompi.req_status, false);
     }
-    ret = req.req_ompi.req_status.MPI_ERROR;
-    OBJ_DESTRUCT(&convertor);
+
+    ret = recvreq->req_base.req_ompi.req_status.MPI_ERROR;
+    ompi_request_free((ompi_request_t **) &recvreq);
     return ret;
 }
 
@@ -243,8 +193,8 @@ mca_pml_cm_isend_init(const void* buf,
                                      datatype, sendmode, true, false, buf, count, flags);
 
     /* Work around a leak in start by marking this request as complete. The
-     * problem occured because we do not have a way to differentiate an
-     * inital request and an incomplete pml request in start. This line
+     * problem occurred because we do not have a way to differentiate an
+     * initial request and an incomplete pml request in start. This line
      * allows us to detect this state. */
     sendreq->req_send.req_base.req_pml_complete = true;
 
@@ -375,25 +325,18 @@ mca_pml_cm_send(const void *buf,
 		convertor.flags      = ompi_mpi_local_convertor->flags;
 		convertor.master     = ompi_mpi_local_convertor->master;
 
-		convertor.local_size = count * datatype->super.size;
-		convertor.pBaseBuf   = (unsigned char*)buf + datatype->super.true_lb;
-		convertor.count      = count;
-		convertor.pDesc      = &datatype->super;
-
-#if OPAL_CUDA_SUPPORT
-        /* Switches off CUDA detection if
-           MTL set MCA_MTL_BASE_FLAG_CUDA_INIT_DISABLE during init */
-        MCA_PML_CM_SWITCH_CUDA_CONVERTOR_OFF(flags, datatype, count);
-        convertor.flags      |= flags;
-        /* Sets CONVERTOR_CUDA flag if CUDA buffer */
-        opal_convertor_prepare_for_send( &convertor, &datatype->super, count, buf );
-#endif
+                /* Switches off device detection if
+                   MTL set MCA_MTL_BASE_FLAG_ACCELERATOR_INIT_DISABLE during init */
+                MCA_PML_CM_SWITCH_ACCELERATOR_CONVERTOR_OFF(flags, datatype, count);
+                convertor.flags      |= flags;
+                /* Sets CONVERTOR_ACCELERATOR flag if device buffer */
+                opal_convertor_prepare_for_send(&convertor, &datatype->super, count, (unsigned char *)buf);
     } else
 #endif
 	{
 		ompi_proc = ompi_comm_peer_lookup(comm, dst);
 
-                MCA_PML_CM_SWITCH_CUDA_CONVERTOR_OFF(flags, datatype, count);
+                MCA_PML_CM_SWITCH_ACCELERATOR_CONVERTOR_OFF(flags, datatype, count);
 
 		opal_convertor_copy_and_prepare_for_send(
 		ompi_proc->super.proc_convertor,

@@ -211,7 +211,7 @@ char *opal_path_findv(char *fname, int mode, char **envv, char *wrkdir)
 }
 
 /**
- *  Forms a complete pathname and checks it for existance and
+ *  Forms a complete pathname and checks it for existence and
  *  permissions
  *
  *  Accepts:
@@ -393,9 +393,14 @@ char *opal_find_absolute_path(char *app_name)
 
     if (NULL != abs_app_name) {
         char *resolved_path = (char *) malloc(OPAL_PATH_MAX);
-        realpath(abs_app_name, resolved_path);
+        char *ret;
+        ret = realpath(abs_app_name, resolved_path);
         if (abs_app_name != app_name) {
             free(abs_app_name);
+        }
+        if (NULL == ret) {
+            free(resolved_path);
+            resolved_path = NULL;
         }
         return resolved_path;
     }
@@ -483,7 +488,7 @@ static char *opal_check_mtab(char *dev_path)
 #    define PAN_KERNEL_FS_CLIENT_SUPER_MAGIC 0xAAD7AAEA /* Panasas FS */
 #endif
 #ifndef GPFS_SUPER_MAGIC
-#    define GPFS_SUPER_MAGIC 0x47504653 /* Thats GPFS in ASCII */
+#    define GPFS_SUPER_MAGIC 0x47504653 /* That's GPFS in ASCII */
 #endif
 #ifndef AUTOFS_SUPER_MAGIC
 #    define AUTOFS_SUPER_MAGIC 0x0187

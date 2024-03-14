@@ -14,7 +14,7 @@
 # Copyright (c) 2015      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2019      Sandia National Laboratories.  All rights reserved.
-# Copyright (c) 2019      Triad National Security, LLC. All rights
+# Copyright (c) 2019-2022 Triad National Security, LLC. All rights
 #                         Reserved.
 # Copyright (c) 2021      Argonne National Laboratory.  All rights reserved.
 # $COPYRIGHT$
@@ -40,31 +40,14 @@ AC_DEFUN([OPAL_CONFIG_ARGOBOTS_THREADS],[
 
     opal_argo_happy=yes
     opal_argo11_happy=yes
-    AS_IF([test "$with_argo" = "no"],
-          [opal_argo_happy=no])
 
-    AS_IF([test $opal_argo_happy = yes],
-          [AC_MSG_CHECKING([looking for argobots in])
-           AS_IF([test "$with_argobots" != "yes"],
-                 [opal_argo_dir=$with_argobots
-                  AC_MSG_RESULT([($opal_argo_dir)])],
-                 [AC_MSG_RESULT([(default search paths)])])
-           AS_IF([test ! -z "$with_argobots_libdir" && \
-                         test "$with_argobots_libdir" != "yes"],
-                 [opal_argo_libdir=$with_argobots_libdir])
-          ])
-
-    AS_IF([test $opal_argo_happy = yes],
-          [OPAL_CHECK_PACKAGE([opal_argo],
-                              [abt.h],
-                              [abt],
-                              [ABT_init],
-                              [],
-                              [$opal_argo_dir],
-                              [$opal_argo_libdir],
-                              [],
-                              [opal_argo_happy=no])])
-
+    OAC_CHECK_PACKAGE([argobots],
+                      [opal_argo],
+                      [abt.h],
+                      [abt],
+                      [ABT_init],
+                      [opal_argo_happy=yes],
+                      [opal_argo_happy=no])
 
     # ABT_unit_get_thread() is a new Argobots 1.1 API.
     # It was introduced after static mutex/cond initializers.
@@ -73,14 +56,9 @@ AC_DEFUN([OPAL_CONFIG_ARGOBOTS_THREADS],[
 
     AS_IF([test $opal_argo_happy = yes && test $opal_argo11_happy = no],
           [AC_MSG_ERROR([Open MPI requires Argobots 1.1 or newer.])])
-    AS_IF([test $opal_argo_happy = yes && test $opal_argo11_happy = yes && test -n "$opal_argo_dir"],
-          [OPAL_ARGO_INCLUDE_PATH="$opal_argo_dir/include/"],
-          [OPAL_ARGO_INCLUDE_PATH=""])
 
     AS_IF([test $opal_argo_happy = yes],
-          [AC_CONFIG_FILES([opal/mca/threads/argobots/threads_argobots.h])
-           AC_SUBST([OPAL_ARGO_INCLUDE_PATH])
-           AC_SUBST([opal_argo_CPPFLAGS])
+          [ AC_SUBST([opal_argo_CPPFLAGS])
            AC_SUBST([opal_argo_LDFLAGS])
            AC_SUBST([opal_argo_LIBS])
            TPKG_CFLAGS="$opal_argo_CPPFLAGS"
@@ -91,7 +69,7 @@ AC_DEFUN([OPAL_CONFIG_ARGOBOTS_THREADS],[
            TPKG_LDFLAGS="$opal_argo_LDFLAGS"
            TPKG_LIBS="$opal_argo_LIBS"])
 
-    CPPFLAGS=$opal_check_argo_save_CPPFLAGS
+    CPPFLAGS="${opal_check_argo_save_CPPFLAGS} ${opal_argo_CPPFLAGS}"
     LDFLAGS=$opal_check_argo_save_LDFLAGS
     LIBS=$opal_check_argo_save_LIBS
 

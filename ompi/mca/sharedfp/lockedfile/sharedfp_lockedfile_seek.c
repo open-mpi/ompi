@@ -28,6 +28,8 @@
 #include "ompi/mca/sharedfp/sharedfp.h"
 #include "ompi/mca/sharedfp/base/base.h"
 
+#include "opal/util/fd.h"
+
 /*Use fcntl to lock the file which stores the current position*/
 #include <fcntl.h>
 
@@ -50,7 +52,7 @@ mca_sharedfp_lockedfile_seek (ompio_file_t *fh,
     }
 
     sh = fh->f_sharedfp_data;
-    offset = off * fh->f_etype_size;
+    offset = off * fh->f_fview.f_etype_size;
 
     if( 0 == fh->f_rank ){
         if ( MPI_SEEK_SET == whence ){
@@ -94,7 +96,7 @@ mca_sharedfp_lockedfile_seek (ompio_file_t *fh,
         fd_lockedfilehandle = lockedfile_data->handle;
 
 	opal_output(ompi_sharedfp_base_framework.framework_output,
-		    "sharedfp_lockedfile_seek: Aquiring lock...");
+		    "sharedfp_lockedfile_seek: Acquiring lock...");
 
         /* set up the flock structure */
         fl.l_type   = F_WRLCK;
@@ -103,9 +105,9 @@ mca_sharedfp_lockedfile_seek (ompio_file_t *fh,
         fl.l_len    = 0;
         fl.l_pid    = getpid();
 
-        /* Aquire an exclusive lock */
+        /* Acquire an exclusive lock */
         if ( fcntl(fd_lockedfilehandle, F_SETLKW, &fl) == -1) {
-            opal_output(0, "Erorr acquiring lock: fcntl(%d,F_SETLKW,&fl)\n",fd_lockedfilehandle);
+            opal_output(0, "Error acquiring lock: fcntl(%d,F_SETLKW,&fl)\n",fd_lockedfilehandle);
             opal_output(0,"error(%i): %s", errno, strerror(errno));
             return OMPI_ERROR;
         }
@@ -119,7 +121,7 @@ mca_sharedfp_lockedfile_seek (ompio_file_t *fh,
 	 *--------------------
 	 */
 	lseek ( fd_lockedfilehandle, 0, SEEK_SET);
-        write ( fd_lockedfilehandle, &offset, sizeof(OMPI_MPI_OFFSET_TYPE));
+        opal_fd_write ( fd_lockedfilehandle, sizeof(OMPI_MPI_OFFSET_TYPE), &offset);
 
         /*-------------------
 	 * unlock the file

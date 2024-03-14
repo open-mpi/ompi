@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2022 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * Copyright (c) 2017      FUJITSU LIMITED.  All rights reserved.
  * Copyright (c) 2019      Triad National Security, LLC. All rights
@@ -146,7 +146,7 @@ static void show_stackframe(int signo, siginfo_t *info, void *p)
     memset(print_buffer, 0, sizeof(print_buffer));
     ret = snprintf(print_buffer, sizeof(print_buffer),
                    HOSTFORMAT "*** Process received signal ***\n", stacktrace_hostname, getpid());
-    write(opal_stacktrace_output_fileno, print_buffer, ret);
+    opal_best_effort_write(opal_stacktrace_output_fileno, print_buffer, ret);
 
     memset(print_buffer, 0, sizeof(print_buffer));
 
@@ -266,7 +266,7 @@ static void show_stackframe(int signo, siginfo_t *info, void *p)
 #    endif
 #    ifdef BUS_ADRERR
             case BUS_ADRERR:
-                si_code_str = "Non-existant physical address";
+                si_code_str = "Non-existent physical address";
                 break;
 #    endif
 #    ifdef BUS_OBJERR
@@ -467,13 +467,14 @@ static void show_stackframe(int signo, siginfo_t *info, void *p)
     }
 
     /* write out the signal information generated above */
-    write(opal_stacktrace_output_fileno, print_buffer, sizeof(print_buffer) - size);
+    opal_best_effort_write(opal_stacktrace_output_fileno, print_buffer, sizeof(print_buffer) - size);
 
     /* print out the stack trace */
     snprintf(print_buffer, sizeof(print_buffer), HOSTFORMAT, stacktrace_hostname, getpid());
     ret = opal_backtrace_print(NULL, print_buffer, 2);
     if (OPAL_SUCCESS != ret) {
-        write(opal_stacktrace_output_fileno, unable_to_print_msg, strlen(unable_to_print_msg));
+        opal_best_effort_write(opal_stacktrace_output_fileno, unable_to_print_msg,
+                               strlen(unable_to_print_msg));
     }
 
     /* write out the footer information */
@@ -481,9 +482,10 @@ static void show_stackframe(int signo, siginfo_t *info, void *p)
     ret = snprintf(print_buffer, sizeof(print_buffer), HOSTFORMAT "*** End of error message ***\n",
                    stacktrace_hostname, getpid());
     if (ret > 0) {
-        write(opal_stacktrace_output_fileno, print_buffer, ret);
+        opal_best_effort_write(opal_stacktrace_output_fileno, print_buffer, ret);
     } else {
-        write(opal_stacktrace_output_fileno, unable_to_print_msg, strlen(unable_to_print_msg));
+        opal_best_effort_write(opal_stacktrace_output_fileno, unable_to_print_msg,
+                               strlen(unable_to_print_msg));
     }
 
     if (fileno(stdout) != opal_stacktrace_output_fileno
@@ -640,7 +642,6 @@ int opal_util_register_stackhandlers(void)
         set_stacktrace_filename();
         opal_stacktrace_output_fileno = -1;
     } else if (0 == strncasecmp(opal_stacktrace_output_filename, "file:", 5)) {
-        char *filename_cpy = NULL;
         next = strchr(opal_stacktrace_output_filename, ':');
         next++; // move past the ':' to the filename specified
 
@@ -654,8 +655,6 @@ int opal_util_register_stackhandlers(void)
             sizeof(char) * opal_stacktrace_output_filename_max_len);
         set_stacktrace_filename();
         opal_stacktrace_output_fileno = -1;
-
-        free(filename_cpy);
     } else {
         opal_stacktrace_output_fileno = fileno(stderr);
     }

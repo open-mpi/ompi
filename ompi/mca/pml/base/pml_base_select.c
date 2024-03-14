@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -14,7 +14,8 @@
  *                         reserved.
  * Copyright (c) 2013-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015-2020 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.  All Rights
+ * Copyright (c) 2020-2022 Amazon.com, Inc. or its affiliates.  All Rights
+ * Copyright (c) 2018-2020 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -37,6 +38,7 @@
 #include "opal/mca/pmix/pmix-internal.h"
 
 #include "ompi/constants.h"
+#include "ompi/instance/instance.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/base.h"
 #include "ompi/proc/proc.h"
@@ -45,6 +47,15 @@ typedef struct opened_component_t {
   opal_list_item_t super;
   mca_pml_base_component_t *om_component;
 } opened_component_t;
+
+
+static int mca_pml_base_finalize (void) {
+  if (NULL != mca_pml_base_selected_component.pmlm_finalize) {
+      return mca_pml_base_selected_component.pmlm_finalize();
+  }
+
+  return OMPI_SUCCESS;
+}
 
 /**
  * Function for selecting one component from all those that are
@@ -59,7 +70,7 @@ typedef struct opened_component_t {
 int mca_pml_base_select(bool enable_progress_threads,
                         bool enable_mpi_threads)
 {
-    int i, priority = 0, best_priority = 0, num_pml = 0, ret = 0;
+    int i, priority = 0, best_priority = -1, ret = 0;
     opal_list_item_t *item = NULL;
     mca_base_component_list_item_t *cli = NULL;
     mca_pml_base_component_t *component = NULL, *best_component = NULL;
@@ -71,9 +82,6 @@ int mca_pml_base_select(bool enable_progress_threads,
     /* Traverse the list of available components; call their init
        functions. */
 
-    best_priority = -1;
-    best_component = NULL;
-    module = NULL;
     OBJ_CONSTRUCT(&opened, opal_list_t);
     OPAL_LIST_FOREACH(cli, &ompi_pml_base_framework.framework_components, mca_base_component_list_item_t) {
         component = (mca_pml_base_component_t *) cli->cli_component;
@@ -109,9 +117,6 @@ int mca_pml_base_select(bool enable_progress_threads,
                                  component->pmlm_version.mca_component_name );
             continue;
         }
-
-        /* this is a pml that could be considered */
-        num_pml++;
 
         /* Init component to get its priority */
         opal_output_verbose( 10, ompi_pml_base_framework.framework_output,
@@ -189,7 +194,7 @@ int mca_pml_base_select(bool enable_progress_threads,
 
             if (NULL != om->om_component->pmlm_finalize) {
 
-                /* Blatently ignore the return code (what would we do to
+                /* Blatantly ignore the return code (what would we do to
                    recover, anyway?  This component is going away, so errors
                    don't matter anymore) */
 
@@ -229,6 +234,7 @@ int mca_pml_base_select(bool enable_progress_threads,
     ret = mca_pml_base_pml_selected(best_component->pmlm_version.mca_component_name);
 
     /* All done */
+    ompi_mpi_instance_append_finalize (mca_pml_base_finalize);
 
     return ret;
 }
@@ -339,6 +345,10 @@ mca_pml_base_pml_check_selected(const char *my_pml,
 {
     int ret = 0;
     size_t i;
+
+    if (!ompi_pml_base_check_pml) {
+        return OMPI_SUCCESS;
+    }
 
     if (!opal_pmix_collect_all_data) {
         /*

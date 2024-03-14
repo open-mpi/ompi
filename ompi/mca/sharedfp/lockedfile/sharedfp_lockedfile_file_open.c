@@ -37,6 +37,11 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+#include "opal/util/output.h"
+#include "opal/util/opal_getcwd.h"
+#include "opal/util/path.h"
+#include "opal/util/os_path.h"
+
 int mca_sharedfp_lockedfile_file_open (struct ompi_communicator_t *comm,
 				       const char* filename,
 				       int amode,
@@ -110,8 +115,26 @@ int mca_sharedfp_lockedfile_file_open (struct ompi_communicator_t *comm,
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
     snprintf(lockedfilename, filenamelen, "%s-%u-%d%s",filename,masterjobid,int_pid,".lock");
-    module_data->filename = lockedfilename;
-    
+    if (opal_path_is_absolute(lockedfilename) ) {
+        module_data->filename = lockedfilename;
+    } else {
+        char path[OPAL_PATH_MAX];
+        err = opal_getcwd(path, OPAL_PATH_MAX);
+        if (OPAL_SUCCESS != err) {
+            free (sh);
+            free (module_data);
+            free (lockedfilename);
+            return err;
+        }
+        module_data->filename = opal_os_path(0, path, lockedfilename, NULL);
+        if (NULL == module_data->filename){
+            free (sh);
+            free (module_data);
+            free (lockedfilename);
+            return OMPI_ERROR;
+        }
+    }
+
     /*-------------------------------------------------*/
     /*Open the lockedfile without shared file pointer  */
     /*-------------------------------------------------*/
@@ -125,12 +148,19 @@ int mca_sharedfp_lockedfile_file_open (struct ompi_communicator_t *comm,
             opal_output(0, "[%d]mca_sharedfp_lockedfile_file_open: Error during file open\n", 
                         fh->f_rank);
             free (sh);
-            free(module_data);
+            free (module_data);
             free (lockedfilename);
             return OMPI_ERROR;
         }
-	write ( handle, &position, sizeof(OMPI_MPI_OFFSET_TYPE) );
-	close ( handle );
+	err = opal_best_effort_write (handle, &position, sizeof(OMPI_MPI_OFFSET_TYPE));
+        if (OPAL_SUCCESS != err)  {
+            free (sh);
+            free (module_data);
+            free (lockedfilename);
+            close (handle);
+            return err;
+        }
+	close (handle);
     }
     err = comm->c_coll->coll_barrier ( comm, comm->c_coll->coll_barrier_module );
     if ( OMPI_SUCCESS != err ) {

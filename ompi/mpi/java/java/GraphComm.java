@@ -12,6 +12,7 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2022      Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -28,7 +29,7 @@
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
@@ -135,7 +136,7 @@ public final class GraphComm extends Intracomm
 	 * <p>The number of nodes and number of edges can be extracted
 	 * from the sizes of the {@code index} and {@code edges} fields
 	 * of the returned object.
-	 * @return object defining node degress and edges of graph
+	 * @return object defining node degrees and edges of graph
 	 * @throws MPIException Signals that an MPI error of some sort has occurred.
 	 */
 	public GraphParms getDims() throws MPIException

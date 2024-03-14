@@ -12,6 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2018      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2022      Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -127,7 +128,7 @@ OPAL_DECLSPEC void *opal_realloc(void *ptr, size_t size, const char *file, int l
  * to configure (or by default if you're building in a SVN
  * checkout).
  */
-OPAL_DECLSPEC void opal_free(void *addr, const char *file, int line) __opal_attribute_nonnull__(1);
+OPAL_DECLSPEC void opal_free(void *addr, const char *file, int line);
 
 /**
  * Used to set the debug level for malloc debug.

@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2022 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
@@ -69,7 +69,7 @@ OPAL_DECLSPEC OBJ_CLASS_DECLARATION(mca_base_component_priority_list_item_t);
  * Public variables
  */
 OPAL_DECLSPEC extern char *mca_base_component_path;
-OPAL_DECLSPEC extern bool mca_base_component_show_load_errors;
+OPAL_DECLSPEC extern char *mca_base_component_show_load_errors;
 OPAL_DECLSPEC extern bool mca_base_component_track_load_errors;
 OPAL_DECLSPEC extern bool mca_base_component_disable_dlopen;
 OPAL_DECLSPEC extern char *mca_base_system_default_path;
@@ -126,7 +126,7 @@ OPAL_DECLSPEC int mca_base_open(void);
  * @return OPAL_ERROR Upon failure
  *
  * This function closes down the entire MCA.  It clears all MCA
- * parameters and closes down the MCA component respository.
+ * parameters and closes down the MCA component repository.
  *
  * It must be the last MCA function invoked.  It is normally invoked
  * during the finalize stage.
@@ -214,6 +214,10 @@ OPAL_DECLSPEC int mca_base_framework_components_register(struct mca_base_framewo
                                                          mca_base_register_flag_t flags);
 
 /* mca_base_components_open.c */
+OPAL_DECLSPEC int mca_base_show_load_errors_init(void);
+OPAL_DECLSPEC int mca_base_show_load_errors_finalize(void);
+OPAL_DECLSPEC bool mca_base_show_load_errors(const char *framework_name,
+                                             const char *component_name);
 OPAL_DECLSPEC int mca_base_framework_components_open(struct mca_base_framework_t *framework,
                                                      mca_base_open_flag_t flags);
 

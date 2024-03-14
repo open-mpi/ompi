@@ -132,7 +132,7 @@ As such, `ompi/mpiext/EXTENSION_NAME/Makefile.am` is not traversed
 during a normal top-level `make all` target.  This `Makefile.am`
 exists for two reasons, however:
 
-1. For the conveneince of the developer, so that you can issue normal
+1. For the convenience of the developer, so that you can issue normal
    `make` commands at the top of your extension tree (e.g., `make all`
    will still build all bindings in an extension).
 1. During a top-level `make dist`, extension directories *are*

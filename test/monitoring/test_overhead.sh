@@ -18,7 +18,7 @@
 # results in order to create heatmaps. To work properly, this scripts
 # needs sqlite3, sed, awk and gnuplot. It also needs the rights to
 # write/create directories in the working path. Temporary files can be
-# found in $resdir/.tmp. They are cleaned between two executions fo
+# found in $resdir/.tmp. They are cleaned between two executions for
 # this script.
 #
 # This file create as an output one heatmap per operation

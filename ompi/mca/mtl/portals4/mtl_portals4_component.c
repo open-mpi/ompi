@@ -43,9 +43,10 @@ static int ompi_mtl_portals4_component_close(void);
 static int ompi_mtl_portals4_component_query(mca_base_module_t **module, int *priority);
 static mca_mtl_base_module_t*
 ompi_mtl_portals4_component_init(bool enable_progress_threads,
-                                 bool enable_mpi_threads);
+                                 bool enable_mpi_threads,
+                                 bool *accelerator_support);
 
-OMPI_MODULE_DECLSPEC extern mca_mtl_base_component_2_0_0_t mca_mtl_portals4_component;
+OMPI_DECLSPEC extern mca_mtl_base_component_2_0_0_t mca_mtl_portals4_component;
 
 mca_mtl_base_component_2_0_0_t mca_mtl_portals4_component = {
 
@@ -90,7 +91,7 @@ ompi_mtl_portals4_component_register(void)
     ompi_mtl_portals4.use_logical = 0;
     (void) mca_base_component_var_register(&mca_mtl_portals4_component.mtl_version,
                                            "use_logical",
-                                           "Use the logical to physical table to accelerate portals4 adressing: 1 (true) : 0 (false)",
+                                           "Use the logical to physical table to accelerate portals4 addressing: 1 (true) : 0 (false)",
                                            MCA_BASE_VAR_TYPE_INT,
                                            NULL,
                                            0,
@@ -322,7 +323,8 @@ ompi_mtl_portals4_component_close(void)
 
 static mca_mtl_base_module_t*
 ompi_mtl_portals4_component_init(bool enable_progress_threads,
-                                 bool enable_mpi_threads)
+                                 bool enable_mpi_threads,
+                                 bool *accelerator_support)
 {
     int ret;
     ptl_process_t id;
@@ -424,10 +426,8 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
 
     ompi_mtl_portals4.base.mtl_max_tag = MTL_PORTALS4_MAX_TAG;
 
-    /* Disable opal from checking if buffer being sent is cuda */
-#if OPAL_CUDA_SUPPORT
-    ompi_mtl_portals4.base.mtl_flags |= MCA_MTL_BASE_FLAG_CUDA_INIT_DISABLE;
-#endif /* OPAL_CUDA_SUPPORT */
+    /* Disable opal from checking if buffer being sent is device */
+    ompi_mtl_portals4.base.mtl_flags |= MCA_MTL_BASE_FLAG_ACCELERATOR_INIT_DISABLE;
 
     return &ompi_mtl_portals4.base;
 

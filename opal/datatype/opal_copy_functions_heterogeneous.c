@@ -7,6 +7,7 @@
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2021      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -62,6 +63,36 @@ static inline void opal_dt_swap_bytes(void *to_p, const void *from_p, const size
         count--;
         for (i = 0, back_i = size - 1; i < size; i++, back_i--) {
             to[back_i] = from[i];
+        }
+    }
+}
+
+static inline void opal_dt_swap_bytes_inplace(void *buf_p, const size_t size,
+                                      size_t count)
+{
+    size_t i;
+    size_t back_i = size - 1;
+    uint8_t *buf = (uint8_t *) buf_p;
+    uint8_t copy[32];
+
+    assert(size <= 32);
+
+    /* Do the first element */
+    for (i = 0; i < size; i++) {
+        copy[i] = buf[i];
+    }
+    for (i = 0; i < size; i++, back_i--) {
+        buf[back_i] = copy[i];
+    }
+    /* Do all the others if any */
+    while (count > 1) {
+        buf += size;
+        count--;
+        for (i = 0; i < size; i++) {
+            copy[i] = buf[i];
+        }
+        for (i = 0, back_i = size - 1; i < size; i++, back_i--) {
+            buf[back_i] = copy[i];
         }
     }
 }
@@ -133,56 +164,580 @@ static inline void opal_dt_swap_long_double(void *to_p, const void *from_p, cons
 #    define opal_dt_swap_long_double(to_p, from_p, size, count, remoteArch)
 #endif
 
+union fp_float64
+{
+  double value;
+  struct {
+#if defined(WORDS_BIGENDIAN)
+    unsigned sign  :  1;
+    unsigned exp   : 11;
+    unsigned frac1 : 20;
+    unsigned frac0 : 32;
+#else
+    unsigned frac0 : 32;
+    unsigned frac1 : 20;
+    unsigned exp   : 11;
+    unsigned sign  :  1;
+#endif
+  } bits;
+  char bytes[sizeof(double)];
+};
+
+union fp_float80
+{
+  long double value;
+  struct {
+#if defined(WORDS_BIGENDIAN)
+    unsigned sign  :  1;
+    unsigned exp   : 15;
+    unsigned pad   : 16;
+    unsigned frac1 : 32;
+    unsigned frac0 : 32;
+#else
+    unsigned frac0 : 32;
+    unsigned frac1 : 32;
+    unsigned exp   : 15;
+    unsigned sign  :  1;
+    unsigned pad   : 16;
+#endif
+  } bits;
+  char bytes[sizeof(long double)];
+};
+
+union fp_float128
+{
+  /*__float128 value;*/
+  struct {
+#if defined(WORDS_BIGENDIAN)
+    unsigned sign  :  1;
+    unsigned exp   : 15;
+    unsigned frac3 : 16;
+    unsigned frac2 : 32;
+    unsigned frac1 : 32;
+    unsigned frac0 : 32;
+#else
+    unsigned frac0 : 32;
+    unsigned frac1 : 32;
+    unsigned frac2 : 32;
+    unsigned frac3 : 16;
+    unsigned exp   : 15;
+    unsigned sign  :  1;
+#endif
+  } bits;
+  char bytes[16];
+};
+
+// f64_to_f128 (copies a float64(local_endian) to a float128(local_endian))
+static inline
+void
+f64_to_f128(unsigned char *f128_buf_to, const unsigned char *f64_buf_from, ssize_t count, ptrdiff_t from_extent)
+{
+    unsigned s,e,f[4],f0,f1;
+    union fp_float64 ud;
+    union fp_float128 uq;
+    int f64_is_aligned;
+
+    f64_is_aligned = 1;
+    if ((uintptr_t)f64_buf_from & 0x7) {
+        f64_is_aligned = 0;
+    }
+    if ((uintptr_t)from_extent & 0x7) {
+        f64_is_aligned = 0;
+    }
+
+    do {
+        /* input */
+        if (f64_is_aligned) {
+            ud.value = *(double*)f64_buf_from;
+        } else {
+            memcpy(&ud.value, f64_buf_from, sizeof(ud));
+        }
+
+        /* unpack */
+        s = ud.bits.sign;
+        e = ud.bits.exp;
+        f0 = ud.bits.frac0;
+        f1 = ud.bits.frac1;
+
+        /* bias */
+        if (e) e += 16383 - 1023;
+
+        /* extend */
+        f[3] = (f1 >> 4);
+        f[2] = (f1 << 28) | (f0 >> 4);
+        f[1] = (f0 << 28);
+        f[0] = 0;
+
+        /* pack */
+        uq.bits.sign  = s;
+        uq.bits.exp   = e;
+        uq.bits.frac0 = f[0];
+        uq.bits.frac1 = f[1];
+        uq.bits.frac2 = f[2];
+        uq.bits.frac3 = f[3];
+
+        /* output */
+        memcpy(f128_buf_to,uq.bytes,sizeof(uq));
+
+        f64_buf_from += from_extent;
+        f128_buf_to += sizeof(uq);
+        count--;
+   } while (count > 0);
+}
+
+// f80_to_f128 (copies an intel80(local_endian) to a float128(local_endian))
+static inline
+void
+f80_to_f128(unsigned char *f128_buf_to, const unsigned char *f80_buf_from, ssize_t count, ptrdiff_t from_extent)
+{
+    unsigned s,e,f[4],f0,f1;
+    union fp_float80 ul;
+    union fp_float128 uq;
+    int f80_is_aligned;
+
+    f80_is_aligned = 1;
+    if ((uintptr_t)f80_buf_from & 0xF) {
+        f80_is_aligned = 0;
+    }
+    if ((uintptr_t)from_extent & 0xF) {
+        f80_is_aligned = 0;
+    }
+
+    do {
+        /* input */
+        if (f80_is_aligned) {
+            ul.value = *(long double*)f80_buf_from;
+        } else {
+            memcpy(&ul.value, f80_buf_from, sizeof(ul));
+        }
+
+        /* unpack */
+        s = ul.bits.sign;
+        e = ul.bits.exp;
+        f0 = ul.bits.frac0;
+        f1 = ul.bits.frac1;
+
+        /* implicit bit */
+        f1 &= ~(1 << 31);
+
+        /* extend */
+        f[3] = (f1 >> 15);
+        f[2] = (f1 << 17) | (f0 >> 15);
+        f[1] = (f0 << 17);
+        f[0] = 0;
+
+        /* pack */
+        uq.bits.sign  = s;
+        uq.bits.exp   = e;
+        uq.bits.frac0 = f[0];
+        uq.bits.frac1 = f[1];
+        uq.bits.frac2 = f[2];
+        uq.bits.frac3 = f[3];
+
+        /* output */
+        memcpy(f128_buf_to,uq.bytes,sizeof(uq));
+
+        f80_buf_from += from_extent;
+        f128_buf_to += sizeof(uq);
+        count--;
+   } while (count > 0);
+}
+
+// f128_to_f64 (copies a float128(local_endian) to a float64(local_endian))
+static inline
+void
+f128_to_f64(unsigned char *f64_buf_to, const unsigned char *f128_buf_from, ssize_t count, ptrdiff_t to_extent)
+{
+    unsigned s,e,f[4],f0,f1;
+    union fp_float64 ud;
+    union fp_float128 uq;
+    int f64_is_aligned;
+
+    f64_is_aligned = 1;
+    if ((uintptr_t)f64_buf_to & 0x7) {
+        f64_is_aligned = 0;
+    }
+    if ((uintptr_t)to_extent & 0x7) {
+        f64_is_aligned = 0;
+    }
+
+    do {
+        /* input */
+        memcpy(uq.bytes,f128_buf_from,sizeof(uq));
+
+        /* unpack */
+        s = uq.bits.sign;
+        e = uq.bits.exp;
+        f[0] = uq.bits.frac0;
+        f[1] = uq.bits.frac1;
+        f[2] = uq.bits.frac2;
+        f[3] = uq.bits.frac3;
+
+        /* bias */
+        if (e) e -= 16383 - 1023;
+
+        /* truncate */
+        f1 = (f[3] << 4) | (f[2] >> 28);
+        f0 = (f[2] << 4) | (f[1] >> 28);
+
+        /* pack */
+        ud.bits.sign  = s;
+        ud.bits.exp   = e;
+        ud.bits.frac0 = f0;
+        ud.bits.frac1 = f1;
+
+        /* output */
+        if (f64_is_aligned) {
+            *(double*)f64_buf_to = ud.value;
+        } else {
+            memcpy(f64_buf_to, &ud.value, sizeof(ud));
+        }
+
+        f64_buf_to += to_extent;
+        f128_buf_from += sizeof(uq);
+        count--;
+    } while (count > 0);
+}
+
+// f128_to_f80 (copies a float128(local_endian) to an intel80(local_endian))
+static inline
+void
+f128_to_f80(unsigned char *f80_buf_to, const unsigned char *f128_buf_from, ssize_t count, ptrdiff_t to_extent)
+{
+    unsigned s,e,f[4],f0,f1;
+    union fp_float80 ul;
+    union fp_float128 uq;
+    int f80_is_aligned;
+
+    f80_is_aligned = 1;
+    if ((uintptr_t)f80_buf_to & 0xF) {
+        f80_is_aligned = 0;
+    }
+    if ((uintptr_t)to_extent & 0xF) {
+        f80_is_aligned = 0;
+    }
+
+    do {
+        /* input */
+        memcpy(uq.bytes,f128_buf_from,sizeof(uq));
+
+        /* unpack */
+        s = uq.bits.sign;
+        e = uq.bits.exp;
+        f[0] = uq.bits.frac0;
+        f[1] = uq.bits.frac1;
+        f[2] = uq.bits.frac2;
+        f[3] = uq.bits.frac3;
+
+        /* truncate */
+        f1 = (f[3] << 15) | (f[2] >> 17);
+        f0 = (f[2] << 15) | (f[1] >> 17);
+
+        /* implicit bit */
+        if (e)
+            f1 |= (1 << 31);
+        else
+            f1 &= ~(1 << 31);
+
+        /* pack */
+        ul.bits.sign  = s;
+        ul.bits.exp   = e;
+        ul.bits.frac0 = f0;
+        ul.bits.frac1 = f1;
+
+        /* output */
+        /* this started as *f80_buf_to = ul.value;
+           but I'm reluctant to assume alignment */
+        if (f80_is_aligned) {
+            *(long double*)f80_buf_to = ul.value;
+        } else {
+            memcpy(f80_buf_to, &ul.value, sizeof(ul));
+        }
+
+        f80_buf_to += to_extent;
+        f128_buf_from += sizeof(uq);
+        count--;
+    } while (count > 0);
+}
+
+#define LDBL_IS_F64(arch) \
+  (                                                                        \
+    (((arch) & OPAL_ARCH_LDMANTDIGISxx) == OPAL_ARCH_LDMANTDIGIS53)        \
+    &&                                                                     \
+    (((arch) & OPAL_ARCH_LDEXPSIZEISxx) == OPAL_ARCH_LDEXPSIZEIS11)        \
+  )
+#define LDBL_IS_F80(arch) \
+  (                                                                        \
+    (((arch) & OPAL_ARCH_LDMANTDIGISxx) == OPAL_ARCH_LDMANTDIGIS64)        \
+    &&                                                                     \
+    (((arch) & OPAL_ARCH_LDEXPSIZEISxx) == OPAL_ARCH_LDEXPSIZEIS15)        \
+  )
+#define LDBL_IS_F128(arch) \
+  (                                                                        \
+    (((arch) & OPAL_ARCH_LDMANTDIGISxx) == OPAL_ARCH_LDMANTDIGIS113)       \
+    &&                                                                     \
+    (((arch) & OPAL_ARCH_LDEXPSIZEISxx) == OPAL_ARCH_LDEXPSIZEIS15)        \
+  )
+#define LDBL_INFO_MASK (OPAL_ARCH_LDMANTDIGISxx | OPAL_ARCH_LDEXPSIZEISxx)
+
+#ifdef HAVE___FLOAT128
+/*
+ *  I'm not sure about the portability of alignof() so I'm handling things
+ *  like the possibility of sizeof(long double) == 12 in a slower way.  The
+ *  alignment requirement in that case would be 4 (largest power of 2 that
+ *  divides into the sizeof).
+ *
+ *  And saving it static to just compute it once without running a loop
+ *  every call.
+ */
+static inline
+size_t
+alignment_of_long_double() {
+    static size_t val = 0;
+
+    if (val == 0) {
+        val = 1;
+        while (sizeof(long double) % (val*2) == 0) {
+            val *= 2;
+        }
+    }
+    return val;
+}
+#endif
+
+// ldbl_to_f128 (copies a long double(from_arch format) to a float128(local_endian))
+static inline
+void
+ldbl_to_f128(unsigned char *f128_buf_to, const unsigned char *ldbl_buf_from, ssize_t count, int from_arch, ptrdiff_t from_extent)
+{
+#ifdef HAVE___FLOAT128
+    int ldbl_is_aligned;
+
+    ldbl_is_aligned = 1;
+    int alignment_mask = alignment_of_long_double() - 1;
+    if ((uintptr_t)ldbl_buf_from & alignment_mask) {
+        ldbl_is_aligned = 0;
+    }
+    if ((uintptr_t)from_extent & alignment_mask) {
+        ldbl_is_aligned = 0;
+    }
+
+    int f128_is_aligned;
+    f128_is_aligned = 1;
+    if ((uintptr_t)f128_buf_to & 0xF) {
+        f128_is_aligned = 0;
+    }
+
+    do {
+        if (ldbl_is_aligned && f128_is_aligned) {
+            *(__float128*)f128_buf_to = *(long double*)ldbl_buf_from;
+        } else {
+            __float128 f128;
+            long double ldbl;
+            memcpy(&ldbl, ldbl_buf_from, sizeof(ldbl));
+            f128 = ldbl;
+            memcpy(f128_buf_to, &f128, sizeof(f128));
+        }
+
+        ldbl_buf_from += from_extent;
+        f128_buf_to += sizeof(__float128);
+        count--;
+    } while (count > 0);
+#else
+    if (LDBL_IS_F64(from_arch)) {
+        f64_to_f128(f128_buf_to, ldbl_buf_from, count, from_extent);
+    } else if (LDBL_IS_F80(from_arch)) {
+        f80_to_f128(f128_buf_to, ldbl_buf_from, count, from_extent);
+    } else {
+/*
+ *  This could be an error condition, eg we're trying to process a
+ *  long double from a format that isn't f128 (or doesn't appear to be)
+ *  into f128.  But I think the reason not to error out is confidence
+ *  in the detection.  I wouldn't want to produce a false failure.
+ */
+        do {
+            memcpy(f128_buf_to, ldbl_buf_from, from_extent);
+
+            ldbl_buf_from += from_extent;
+            f128_buf_to += 16;
+            count--;
+        } while (count > 0);
+    }
+#endif
+}
+
+// f128_to_ldbl (copies a float128(local_endian) to a long double(to_arch format))
+static inline
+void
+f128_to_ldbl(unsigned char *ldbl_buf_to, const unsigned char *f128_buf_from, ssize_t count, int to_arch, ptrdiff_t to_extent)
+{
+#ifdef HAVE___FLOAT128
+    int ldbl_is_aligned;
+
+    ldbl_is_aligned = 1;
+    int alignment_mask = alignment_of_long_double() - 1;
+    if ((uintptr_t)ldbl_buf_to & alignment_mask) {
+        ldbl_is_aligned = 0;
+    }
+    if ((uintptr_t)to_extent & alignment_mask) {
+        ldbl_is_aligned = 0;
+    }
+
+    int f128_is_aligned;
+    f128_is_aligned = 1;
+    if ((uintptr_t)f128_buf_from & 0xF) {
+        f128_is_aligned = 0;
+    }
+
+    do {
+        if (ldbl_is_aligned && f128_is_aligned) {
+            *(long double*)ldbl_buf_to = *(__float128*)f128_buf_from;
+        } else {
+            __float128 f128;
+            long double ldbl;
+            memcpy(&f128, f128_buf_from, sizeof(f128));
+            ldbl = f128;
+            memcpy(ldbl_buf_to, &ldbl, sizeof(ldbl));
+        }
+
+        ldbl_buf_to += to_extent;
+        f128_buf_from += sizeof(__float128);
+        count--;
+    } while (count > 0);
+#else
+    if (LDBL_IS_F64(to_arch)) {
+        f128_to_f64(ldbl_buf_to, f128_buf_from, count, to_extent);
+    } else if (LDBL_IS_F80(to_arch)) {
+        f128_to_f80(ldbl_buf_to, f128_buf_from, count, to_extent);
+    } else {
+/*
+ *  This could be an error condition, eg we're trying to process an
+ *  f128 into a long double of a format that isn't f128 (or doesn't
+ *  appear to be).  But I think the reason not to error out is confidence
+ *  in the detection.  I wouldn't want to produce a false failure.
+ */
+        do {
+            memcpy(ldbl_buf_to, f128_buf_from, to_extent);
+
+            ldbl_buf_to += to_extent;
+            f128_buf_from += 16;
+            count--;
+        } while (count > 0);
+    }
+#endif
+}
+
 /**
  * BEWARE: Do not use the following macro with composed types such as
  * complex. As the swap is done using the entire type sizeof, the
- * wrong endianess translation will be done.  Instead, use the
+ * wrong endianness translation will be done.  Instead, use the
  * COPY_2SAMETYPE_HETEROGENEOUS.
  */
 #define COPY_TYPE_HETEROGENEOUS(TYPENAME, TYPE) COPY_TYPE_HETEROGENEOUS_INTERNAL(TYPENAME, TYPE, 0)
+
+/*
+ *  Summaryizing the logic of the pFunc copy functions
+ *  with regard to long doubles:
+ *
+ *  For terminology I'll use
+ *  f64 : float64 which some architectures use as their long double
+ *  f80 : x86 double extended format that uses 80 bytes, commonly used for long double
+ *  f128 : ieee quad precision, sometimes available as __float128
+ *
+ *    if !LONG_DOUBLE or both architecture have the same long double format:
+ *      byte swap based on local/remote endianness differing
+ *    else:
+ *      if from_arch is not local endianness: byte swap to local endianness
+ *      if from_arch isn't f128 : ldbl_to_f128
+ *        if we have __float128         : convert to __float128
+ *        else if from_arch LDBL is f80 : f80_to_f128
+ *        else if from_arch LDBL is f64 : f64_to_f128
+ *      if to_arch isn't f128 : f128_to_ldbl
+ *        if we have __float128         : convert from __float128 to
+ *        if to_arch LDBL is f80   : f128_to_f80
+ *        if to_arch LDBL is f64   : f128_to_f64
+ *      if to_arch is not local endianness : byte swap
+ *
+ *  And for all the above conversions the logic for handling size difference
+ *  between the from/to type is the same:
+ *    if (to_extent == from_extent == sizeof(TYPE))
+ *      opal_dt_swap_bytes(to, from, sizeof(TYPE), count);
+ *    else
+ *      loop i=0..count-1
+ *        opal_dt_swap_bytes(to, from, sizeof(TYPE), 1);
+ *        to += to_extent;
+ *        from += from_extent;
+ *  so that's handled by a do while as an outer loop.
+ */
 
 #define COPY_TYPE_HETEROGENEOUS_INTERNAL(TYPENAME, TYPE, LONG_DOUBLE)                              \
     static int32_t copy_##TYPENAME##_heterogeneous(opal_convertor_t *pConvertor, size_t count,     \
                                                    const char *from, size_t from_len,              \
                                                    ptrdiff_t from_extent, char *to,                \
                                                    size_t to_length, ptrdiff_t to_extent,          \
-                                                   ptrdiff_t *advance)                             \
+                                                   ptrdiff_t *advance)                            \
     {                                                                                              \
-        size_t i;                                                                                  \
-                                                                                                   \
+        size_t countperblock, nblocksleft;                                                         \
+        int from_arch, to_arch ;                                        \
+        if (pConvertor->flags & CONVERTOR_SEND_CONVERSION) { /* pack */ \
+            from_arch = opal_local_arch;                                \
+            to_arch = pConvertor->remoteArch;                           \
+        } else { /* unpack */                                           \
+            from_arch = pConvertor->remoteArch;                         \
+            to_arch = opal_local_arch;                                  \
+        }                                                               \
         datatype_check(#TYPE, sizeof(TYPE), sizeof(TYPE), &count, from, from_len, from_extent, to, \
                        to_length, to_extent);                                                      \
-                                                                                                   \
-        if ((pConvertor->remoteArch & OPAL_ARCH_ISBIGENDIAN)                                       \
-            != (opal_local_arch & OPAL_ARCH_ISBIGENDIAN)) {                                        \
-            if ((to_extent == from_extent) && (to_extent == sizeof(TYPE))) {                       \
-                opal_dt_swap_bytes(to, from, sizeof(TYPE), count);                                 \
-                if (LONG_DOUBLE) {                                                                 \
-                    opal_dt_swap_long_double(to, from, sizeof(TYPE), count,                        \
-                                             pConvertor->remoteArch);                              \
+        if ((to_extent == from_extent) && (to_extent == sizeof(TYPE))) {                           \
+            countperblock = count;                                                                 \
+            nblocksleft = 1;                                                                       \
+        } else {                                                                                   \
+            countperblock = 1;                                                                     \
+            nblocksleft = count;                                                                   \
+        }                                                                                          \
+        do {                                                                                       \
+            if (!(LONG_DOUBLE) || ((from_arch & LDBL_INFO_MASK) == (to_arch & LDBL_INFO_MASK))) {  \
+                if ((from_arch & OPAL_ARCH_ISBIGENDIAN)                                            \
+                    != (to_arch & OPAL_ARCH_ISBIGENDIAN))                                          \
+                {                                                                                  \
+                    opal_dt_swap_bytes(to, from, sizeof(TYPE), countperblock);                     \
+                } else {                                                                           \
+                    MEMCPY(to, from, countperblock * sizeof(TYPE));                                \
                 }                                                                                  \
             } else {                                                                               \
-                for (i = 0; i < count; i++) {                                                      \
-                    opal_dt_swap_bytes(to, from, sizeof(TYPE), 1);                                 \
-                    if (LONG_DOUBLE) {                                                             \
-                        opal_dt_swap_long_double(to, from, sizeof(TYPE), 1,                        \
-                                                 pConvertor->remoteArch);                          \
+                const char *tmp_from = from;                                                       \
+                if ((from_arch & OPAL_ARCH_ISBIGENDIAN)                                            \
+                    != (opal_local_arch & OPAL_ARCH_ISBIGENDIAN))                                  \
+                {                                                                                  \
+                    opal_dt_swap_bytes(to, tmp_from, sizeof(TYPE), countperblock);                 \
+                    tmp_from = to;                                                                 \
+                }                                                                                  \
+                if (!LDBL_IS_F128(from_arch)) {                                                    \
+                    ldbl_to_f128((unsigned char*)to, (const unsigned char*)tmp_from,               \
+                        countperblock, from_arch, from_extent);                                    \
+                    tmp_from = to;                                                                 \
+                }                                                                                  \
+                if (!LDBL_IS_F128(to_arch)) {                                                      \
+                    f128_to_ldbl((unsigned char*)to, (const unsigned char*)tmp_from,               \
+                        countperblock, to_arch, to_extent);                                        \
+                    tmp_from = to;                                                                 \
+                }                                                                                  \
+                if ((to_arch & OPAL_ARCH_ISBIGENDIAN)                                              \
+                    != (opal_local_arch & OPAL_ARCH_ISBIGENDIAN))                                  \
+                {                                                                                  \
+                    if (tmp_from == from) {                                                        \
+                        opal_dt_swap_bytes(to, from, sizeof(TYPE), countperblock);                 \
+                    } else {                                                                       \
+                        opal_dt_swap_bytes_inplace(to, sizeof(TYPE), countperblock);               \
                     }                                                                              \
-                    to += to_extent;                                                               \
-                    from += from_extent;                                                           \
                 }                                                                                  \
             }                                                                                      \
-        } else if ((ptrdiff_t) sizeof(TYPE) == to_extent                                           \
-                   && (ptrdiff_t) sizeof(TYPE) == from_extent) {                                   \
-            MEMCPY(to, from, count * sizeof(TYPE));                                                \
-        } else {                                                                                   \
-            /* source or destination are non-contiguous */                                         \
-            for (i = 0; i < count; i++) {                                                          \
-                MEMCPY(to, from, sizeof(TYPE));                                                    \
-                to += to_extent;                                                                   \
-                from += from_extent;                                                               \
-            }                                                                                      \
-        }                                                                                          \
+                                                                                                   \
+            to += to_extent;                                                                       \
+            from += from_extent;                                                                   \
+            nblocksleft--;                                                                         \
+        } while (nblocksleft > 0);                                                                 \
+                                                                                                   \
         *advance = count * from_extent;                                                            \
         return count;                                                                              \
     }
@@ -197,41 +752,68 @@ static inline void opal_dt_swap_long_double(void *to_p, const void *from_p, cons
                                                    size_t to_length, ptrdiff_t to_extent,          \
                                                    ptrdiff_t *advance)                             \
     {                                                                                              \
-        size_t i;                                                                                  \
-                                                                                                   \
+        size_t countperblock, nblocksleft;                                                         \
+        int from_arch, to_arch ;                                        \
+        if (pConvertor->flags & CONVERTOR_SEND_CONVERSION) { /* pack */ \
+            from_arch = opal_local_arch;                                \
+            to_arch = pConvertor->remoteArch;                           \
+        } else { /* unpack */                                           \
+            from_arch = pConvertor->remoteArch;                         \
+            to_arch = opal_local_arch;                                  \
+        }                                                               \
         datatype_check(#TYPE, sizeof(TYPE), sizeof(TYPE), &count, from, from_len, from_extent, to, \
                        to_length, to_extent);                                                      \
+        if ((to_extent == from_extent) && (to_extent == 2 * sizeof(TYPE))) {                       \
+            countperblock = count * 2;                                                             \
+            nblocksleft = 1;                                                                       \
+        } else {                                                                                   \
+            countperblock = 2;                                                                     \
+            nblocksleft = count;                                                                   \
+        }                                                                                          \
+        do {                                                                                       \
                                                                                                    \
-        if ((pConvertor->remoteArch & OPAL_ARCH_ISBIGENDIAN)                                       \
-            != (opal_local_arch & OPAL_ARCH_ISBIGENDIAN)) {                                        \
-            if ((to_extent == from_extent) && (to_extent == (2 * sizeof(TYPE)))) {                 \
-                opal_dt_swap_bytes(to, from, sizeof(TYPE), 2 * count);                             \
-                if (LONG_DOUBLE) {                                                                 \
-                    opal_dt_swap_long_double(to, from, sizeof(TYPE), 2 * count,                    \
-                                             pConvertor->remoteArch);                              \
+            if (!(LONG_DOUBLE) || ((from_arch & LDBL_INFO_MASK) == (to_arch & LDBL_INFO_MASK))) {  \
+                if ((from_arch & OPAL_ARCH_ISBIGENDIAN)                                            \
+                    != (to_arch & OPAL_ARCH_ISBIGENDIAN))                                          \
+                {                                                                                  \
+                    opal_dt_swap_bytes(to, from, sizeof(TYPE), countperblock);                     \
+                } else {                                                                           \
+                    MEMCPY(to, from, countperblock * sizeof(TYPE));                                \
                 }                                                                                  \
             } else {                                                                               \
-                for (i = 0; i < count; i++) {                                                      \
-                    opal_dt_swap_bytes(to, from, sizeof(TYPE), 2);                                 \
-                    if (LONG_DOUBLE) {                                                             \
-                        opal_dt_swap_long_double(to, from, sizeof(TYPE), 2,                        \
-                                                 pConvertor->remoteArch);                          \
+                const char *tmp_from = from;                                                       \
+                if ((from_arch & OPAL_ARCH_ISBIGENDIAN)                                            \
+                    != (opal_local_arch & OPAL_ARCH_ISBIGENDIAN))                                  \
+                {                                                                                  \
+                    opal_dt_swap_bytes(to, tmp_from, sizeof(TYPE), countperblock);                 \
+                    tmp_from = to;                                                                 \
+                }                                                                                  \
+                if (!LDBL_IS_F128(from_arch)) {                                                    \
+                    ldbl_to_f128((unsigned char*)to, (const unsigned char*)tmp_from,               \
+                        countperblock, from_arch, from_extent/2);                                  \
+                    tmp_from = to;                                                                 \
+                }                                                                                  \
+                if (!LDBL_IS_F128(to_arch)) {                                                      \
+                    f128_to_ldbl((unsigned char*)to, (const unsigned char*)tmp_from,               \
+                        countperblock, to_arch, to_extent/2);                                      \
+                    tmp_from = to;                                                                 \
+                }                                                                                  \
+                if ((to_arch & OPAL_ARCH_ISBIGENDIAN)                                              \
+                    != (opal_local_arch & OPAL_ARCH_ISBIGENDIAN))                                  \
+                {                                                                                  \
+                    if (tmp_from == from) {                                                        \
+                        opal_dt_swap_bytes(to, from, sizeof(TYPE), countperblock);                 \
+                    } else {                                                                       \
+                        opal_dt_swap_bytes_inplace(to, sizeof(TYPE), countperblock);               \
                     }                                                                              \
-                    to += to_extent;                                                               \
-                    from += from_extent;                                                           \
                 }                                                                                  \
             }                                                                                      \
-        } else if ((ptrdiff_t) sizeof(TYPE) == to_extent                                           \
-                   && (ptrdiff_t) sizeof(TYPE) == from_extent) {                                   \
-            MEMCPY(to, from, count * sizeof(TYPE));                                                \
-        } else {                                                                                   \
-            /* source or destination are non-contiguous */                                          \
-            for (i = 0; i < count; i++) {                                                          \
-                MEMCPY(to, from, sizeof(TYPE));                                                    \
-                to += to_extent;                                                                   \
-                from += from_extent;                                                               \
-            }                                                                                      \
-        }                                                                                          \
+                                                                                                   \
+            to += to_extent;                                                                       \
+            from += from_extent;                                                                   \
+            nblocksleft--;                                                                         \
+        } while (nblocksleft > 0);                                                                 \
+                                                                                                   \
         *advance = count * from_extent;                                                            \
         return count;                                                                              \
     }
@@ -244,7 +826,14 @@ static inline void opal_dt_swap_long_double(void *to_p, const void *from_p, cons
                                                    ptrdiff_t *advance)                          \
     {                                                                                           \
         size_t i;                                                                               \
-                                                                                                \
+        int from_arch, to_arch ;                                        \
+        if (pConvertor->flags & CONVERTOR_SEND_CONVERSION) { /* pack */ \
+            from_arch = opal_local_arch;                                \
+            to_arch = pConvertor->remoteArch;                           \
+        } else { /* unpack */                                           \
+            from_arch = pConvertor->remoteArch;                         \
+            to_arch = opal_local_arch;                                  \
+        }                                                               \
         datatype_check(#TYPENAME, sizeof(TYPE1) + sizeof(TYPE2), sizeof(TYPE1) + sizeof(TYPE2), \
                        &count, from, from_len, from_extent, to, to_length, to_extent);          \
                                                                                                 \
@@ -469,7 +1058,7 @@ copy_long_heterogeneous(opal_convertor_t *pConvertor, size_t count,
     datatype_check("long", sizeof(long), pConvertor->master->remote_sizes[OPAL_DATATYPE_LONG], &count, from, from_len, from_extent, to,
                    to_length, to_extent);
     if (!((pConvertor->remoteArch ^ opal_local_arch) & OPAL_ARCH_LONGIS64)) {  /* same sizeof(long) */
-        if ((pConvertor->remoteArch ^ opal_local_arch) & OPAL_ARCH_ISBIGENDIAN) {  /* different endianess */
+        if ((pConvertor->remoteArch ^ opal_local_arch) & OPAL_ARCH_ISBIGENDIAN) {  /* different endianness */
             for (i = 0; i < count; i++) {
                 opal_dt_swap_bytes(to, from, sizeof(long), 1);
                 to += to_extent;
@@ -505,7 +1094,7 @@ copy_long_heterogeneous(opal_convertor_t *pConvertor, size_t count,
                         from += from_extent;
                     }
                 }
-            } else {  /* both have the same endianess */
+            } else {  /* both have the same endianness */
                 if (opal_local_arch & OPAL_ARCH_LONGIS64) {
                     for (i = 0; i < count; i++) { /* from 8 to 4 bytes */
                         long val = *(long*)from;
@@ -542,7 +1131,7 @@ copy_long_heterogeneous(opal_convertor_t *pConvertor, size_t count,
                         from += from_extent;
                     }
                 }
-            } else {  /* both have the same endianess */
+            } else {  /* both have the same endianness */
                 if (opal_local_arch & OPAL_ARCH_LONGIS64) {
                     for (i = 0; i < count; i++) { /* from 8 to 4 bytes */
                         int32_t val = *(int32_t*)from;
@@ -576,7 +1165,7 @@ copy_unsigned_long_heterogeneous(opal_convertor_t *pConvertor, size_t count,
     datatype_check("unsigned long", sizeof(unsigned long), pConvertor->master->remote_sizes[OPAL_DATATYPE_UNSIGNED_LONG],
                    &count, from, from_len, from_extent, to, to_length, to_extent);
     if (!((pConvertor->remoteArch ^ opal_local_arch) & OPAL_ARCH_LONGIS64)) {  /* same sizeof(long) */
-        if ((pConvertor->remoteArch ^ opal_local_arch) & OPAL_ARCH_ISBIGENDIAN) {  /* different endianess */
+        if ((pConvertor->remoteArch ^ opal_local_arch) & OPAL_ARCH_ISBIGENDIAN) {  /* different endianness */
             for (i = 0; i < count; i++) {
                 opal_dt_swap_bytes(to, from, sizeof(unsigned long), 1);
                 to += to_extent;
@@ -612,7 +1201,7 @@ copy_unsigned_long_heterogeneous(opal_convertor_t *pConvertor, size_t count,
                         from += from_extent;
                     }
                 }
-            } else {  /* both have the same endianess */
+            } else {  /* both have the same endianness */
                 if (opal_local_arch & OPAL_ARCH_LONGIS64) {
                     for (i = 0; i < count; i++) { /* from 8 to 4 bytes */
                         unsigned long val = *(unsigned long*)from;
@@ -649,7 +1238,7 @@ copy_unsigned_long_heterogeneous(opal_convertor_t *pConvertor, size_t count,
                         from += from_extent;
                     }
                 }
-            } else {  /* both have the same endianess */
+            } else {  /* both have the same endianness */
                 if (opal_local_arch & OPAL_ARCH_LONGIS64) {
                     for (i = 0; i < count; i++) { /* from 8 to 4 bytes */
                         uint32_t val = *(uint32_t*)from;

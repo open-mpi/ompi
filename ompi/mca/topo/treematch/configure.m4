@@ -9,7 +9,7 @@
 # Copyright (c) 2015      Intel, Inc. All rights reserved.
 # Copyright (c) 2019      Research Organization for Information Science
 #                         and Technology (RIST).  All rights reserved.
-# Copyright (c) 2020      Amazon.com, Inc. or its affiliates.
+# Copyright (c) 2020-2022 Amazon.com, Inc. or its affiliates.  All Rights reserved.
 #                         All Rights reserved.
 # $COPYRIGHT$
 #
@@ -25,7 +25,6 @@ AC_DEFUN([MCA_ompi_topo_treematch_CONFIG], [
     OPAL_CONFIG_TREEMATCH([topo_treematch], [$1], [$2])
     AC_CONFIG_FILES([ompi/mca/topo/treematch/Makefile])
 
-    AC_SUBST([topo_treematch_CFLAGS])
     AC_SUBST([topo_treematch_CPPFLAGS])
     AC_SUBST([topo_treematch_LDFLAGS])
     AC_SUBST([topo_treematch_LIBS])

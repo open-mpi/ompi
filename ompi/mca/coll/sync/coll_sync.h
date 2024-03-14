@@ -151,7 +151,7 @@ typedef struct mca_coll_sync_component_t {
 
 /* Globally exported variables */
 
-OMPI_MODULE_DECLSPEC extern mca_coll_sync_component_t mca_coll_sync_component;
+OMPI_DECLSPEC extern mca_coll_sync_component_t mca_coll_sync_component;
 
 /* Macro used in most of the collectives */
 

@@ -59,7 +59,7 @@ typedef void (ompi_mpi2_fortran_datarep_extent_fn_t)
 
 /**
  * Macro for declaring each of the 5 back-end Fortran functions for
- * MPI_CONVERSION_FN_NULL.  We need the 4 fortran compiler convetions
+ * MPI_CONVERSION_FN_NULL.  We need the 4 fortran compiler conversions
  * and 1 for the "real" back-end function (even though these functions
  * are never invoked -- they're only used as sentinel values -- it's
  * simpler to use the same kind of code structure that we use for the

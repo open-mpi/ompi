@@ -8,6 +8,7 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2021      Google, Inc. All rights reserved.
+ * Copyright (c) 2022      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -19,6 +20,13 @@
 #include "opal/mca/pmix/pmix-internal.h"
 #include "opal/mca/smsc/base/base.h"
 #include "opal/mca/smsc/cma/smsc_cma_internal.h"
+
+#if HAVE_LINUX_KCMP_H
+#    include <linux/kcmp.h>       /* kcmp: Definition of KCMP_* constants */
+#endif /* HAVE_LINUX_KCMP_H */
+#if HAVE_SYS_SYSCALL_H
+#    include <sys/syscall.h>      /* kcmp: Definition of SYS_* constants */
+#endif /* HAVE_SYS_SYSCALL_H */
 
 #if OPAL_CMA_NEED_SYSCALL_DEFS
 #    include "opal/sys/cma.h"
@@ -57,6 +65,26 @@ mca_smsc_endpoint_t *mca_smsc_cma_get_endpoint(opal_proc_t *peer_proc)
         free(modex);
         return NULL;
     }
+
+#if OPAL_CMA_KCMP_AVAIL
+    /* Check if CAP_SYS_PTRACE capability is allowed between these two processes
+     * Calling process_vm_readv/writev requires CAP_SYS_PTRACE. We can use kcmp
+     * to check if these two processes share a kernel resource. Since kcmp
+     * also requires CAP_SYS_PTRACE it is a good proxy for process_vm_readv/writev.
+     */
+    rc = syscall(SYS_kcmp, getpid(), modex->pid, KCMP_VM, 0, 0);
+    if(rc < 0) {
+        opal_output_verbose(MCA_BASE_VERBOSE_ERROR, opal_smsc_base_framework.framework_output,
+                            "mca_smsc_cma_module_get_endpoint: can not proceed. processes do not have "
+                            "the necessary permissions (i.e., CAP_SYS_PTRACE). "
+                            "PID %d <-> %d (rc = %d) (errno: %d: %s)",
+                            getpid(), modex->pid, rc, errno, strerror(errno));
+        /* can't use CMA with this peer */
+        OBJ_RELEASE(endpoint);
+        free(modex);
+        return NULL;
+    }
+#endif /* OPAL_CMA_KCMP_AVAIL */
 
     endpoint->pid = modex->pid;
     return &endpoint->super;

@@ -39,7 +39,7 @@
 #include "opal/util/arch.h"
 #include "opal/util/output.h"
 
-/* by default the debuging is turned off */
+/* by default the debugging is turned off */
 int opal_datatype_dfd = -1;
 bool opal_ddt_unpack_debug = false;
 bool opal_ddt_pack_debug = false;
@@ -48,9 +48,7 @@ bool opal_ddt_copy_debug = false;
 bool opal_ddt_raw_debug = false;
 int opal_ddt_verbose = -1; /* Has the datatype verbose it's own output stream */
 
-extern int opal_cuda_verbose;
-
-/* Using this macro implies that at this point _all_ informations needed
+/* Using this macro implies that at this point _all_ information needed
  * to fill up the datatype are known.
  * We fill all the static information, the pointer to desc.desc is setup
  * into an array, which is initialized at runtime.
@@ -226,16 +224,6 @@ int opal_datatype_register_params(void)
     if (0 > ret) {
         return ret;
     }
-#    if OPAL_CUDA_SUPPORT
-    /* Set different levels of verbosity in the cuda related code. */
-    ret = mca_base_var_register("opal", "opal", NULL, "cuda_verbose",
-                                "Set level of opal cuda verbosity", MCA_BASE_VAR_TYPE_INT, NULL, 0,
-                                MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_8,
-                                MCA_BASE_VAR_SCOPE_LOCAL, &opal_cuda_verbose);
-    if (0 > ret) {
-        return ret;
-    }
-#    endif
 
 #endif /* OPAL_ENABLE_DEBUG */
 
@@ -249,7 +237,7 @@ static void opal_datatype_finalize(void)
      */
 
     /* As they are statically allocated they cannot be released. But we
-     * can call OBJ_DESTRUCT, just to free all internally allocated ressources.
+     * can call OBJ_DESTRUCT, just to free all internally allocated resources.
      */
     /* clear all master convertors */
     opal_convertor_destroy_masters();

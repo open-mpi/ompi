@@ -50,6 +50,8 @@
 
 #include "tm_mt.h"
 
+#include "ompi_config.h"
+
 /* Period parameters */
 #define N 624
 #define M 397
@@ -59,6 +61,13 @@
 
 static unsigned long x[N];      /* the array for the state vector  */
 static unsigned long *p0, *p1, *pm;
+
+OMPI_HIDDEN long tm_genrand_int31(void);
+OMPI_HIDDEN double tm_genrand_real1(void);
+OMPI_HIDDEN double tm_genrand_real2(void);
+OMPI_HIDDEN double tm_genrand_real3(void);
+OMPI_HIDDEN double tm_genrand_res53(void);
+OMPI_HIDDEN void init_by_array(unsigned long init_key[], int key_length);
 
 /*
    initialize with a seed
@@ -71,7 +80,7 @@ static unsigned long *p0, *p1, *pm;
    2002-01-09 modified by Makoto Matsumoto
 */
 void
-init_genrand(unsigned long s)
+tm_init_genrand(unsigned long s)
 {
   int i;
 
@@ -99,7 +108,7 @@ init_by_array(unsigned long init_key[], int key_length)
 {
   int i, j, k;
 
-  init_genrand(19650218UL);
+  tm_init_genrand(19650218UL);
   i = 1;
   j = 0;
   for (k = (N > key_length ? N : key_length); k; --k) {
@@ -128,13 +137,13 @@ init_by_array(unsigned long init_key[], int key_length)
 
 /* generates a random number on the interval [0,0xffffffff] */
 unsigned long
-genrand_int32(void)
+tm_genrand_int32(void)
 {
   unsigned long y;
 
   if (!p0) {
     /* Default seed */
-    init_genrand(5489UL);
+    tm_init_genrand(5489UL);
   }
   /* Twisted feedback */
   y = *p0 = *pm++ ^ (((*p0 & UPPER_MASK) | (*p1 & LOWER_MASK)) >> 1)
@@ -156,40 +165,40 @@ genrand_int32(void)
 
 /* generates a random number on the interval [0,0x7fffffff] */
 long
-genrand_int31(void)
+tm_genrand_int31(void)
 {
-  return (long) (genrand_int32() >> 1);
+  return (long) (tm_genrand_int32() >> 1);
 }
 
 /* generates a random number on the real interval [0,1] */
 double
-genrand_real1(void)
+tm_genrand_real1(void)
 {
-  return genrand_int32() * (1.0 / 4294967295.0);
+  return tm_genrand_int32() * (1.0 / 4294967295.0);
   /* divided by 2^32-1 */
 }
 
 /* generates a random number on the real interval [0,1) */
 double
-genrand_real2(void)
+tm_genrand_real2(void)
 {
-  return genrand_int32() * (1.0 / 4294967296.0);
+  return tm_genrand_int32() * (1.0 / 4294967296.0);
   /* divided by 2^32 */
 }
 
 /* generates a random number on the real interval (0,1) */
 double
-genrand_real3(void)
+tm_genrand_real3(void)
 {
-  return (((double) genrand_int32()) + 0.5) * (1.0 / 4294967296.0);
+  return (((double) tm_genrand_int32()) + 0.5) * (1.0 / 4294967296.0);
   /* divided by 2^32 */
 }
 
 /* generates a 53-bit random number on the real interval [0,1) */
 double
-genrand_res53(void)
+tm_genrand_res53(void)
 {
-  unsigned long a = genrand_int32() >> 5, b = genrand_int32() >> 6;
+  unsigned long a = tm_genrand_int32() >> 5, b = tm_genrand_int32() >> 6;
 
   return (a * 67108864.0 + b) * (1.0 / 9007199254740992.0);
 }

@@ -151,7 +151,7 @@ int mca_coll_sm_reduce_intra(const void *sbuf, void* rbuf, int count,
  *
  * 1. loop over all fragments (which must be done in units of an
  * integer number of datatypes -- remember that if this function is
- * called, we know that the datattype is smaller than the max size of
+ * called, we know that the datatype is smaller than the max size of
  * a fragment, so this is definitely possible)
  *
  * 2. loop over all the processes -- 0 to (comm_size-1).
@@ -160,7 +160,7 @@ int mca_coll_sm_reduce_intra(const void *sbuf, void* rbuf, int count,
  *   fragment by fragment -- might as well copy the entire thing) the
  *   first time through the algorithm, and no-op every other time
  * - else, copy from the shmem fragment to the out buffer
- * For all other proceses:
+ * For all other processes:
  * - if root==i, combine the relevant fragment from the sbuf to the
  *   relevant fragment on the rbuf
  * - else, if the datatype is friendly, combine relevant fragment from
@@ -448,7 +448,7 @@ static int reduce_inorder(const void *sbuf, void* rbuf, int count,
                                            dtype);
                         }
                     } /* whether this process was me or not */
-                } /* loop over all proceses */
+                } /* loop over all processes */
 
                 /* We've iterated through all the processes -- now we
                    move on to the next segment */

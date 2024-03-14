@@ -27,7 +27,7 @@
 #include "oshmem/include/pshmem.h"
 #pragma weak shmem_ctx_create = pshmem_ctx_create
 #pragma weak shmem_ctx_destroy = pshmem_ctx_destroy
-#include "oshmem/shmem/c/profile/defines.h"
+#include "oshmem/shmem/c/profile-defines.h"
 #endif
 
 int shmem_ctx_create(long options, shmem_ctx_t *ctx)

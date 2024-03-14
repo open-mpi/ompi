@@ -6,6 +6,7 @@ dnl Copyright (c) 2009-2012 Oak Ridge National Labs.  All rights reserved.
 dnl Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
 dnl Copyright (c) 2015      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
+dnl Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -20,8 +21,8 @@ dnl
 #    - LAM (synonym for 'cr' currently)
 #    - cr
 #  /* General FT sections */
-#  #if OPAL_ENABLE_FT == 0 /* FT Disabled globaly */
-#  #if OPAL_ENABLE_FT == 1 /* FT Enabled globaly */
+#  #if OPAL_ENABLE_FT == 0 /* FT Disabled globally */
+#  #if OPAL_ENABLE_FT == 1 /* FT Enabled globally */
 #  /* ULFM Specific sections */
 #  #if OPAL_ENABLE_FT_MPI == 0 /* FT ULFM Disabled */
 #  #if OPAL_ENABLE_FT_MPI == 1 /* FT ULFM Enabled */
@@ -138,5 +139,5 @@ AC_DEFUN([OPAL_SETUP_FT],[
         fi
     fi
 
-    OPAL_SUMMARY_ADD([[Miscellaneous]],[[Fault Tolerance support]],[unnecessary], [$opal_want_ft_type])
+    OPAL_SUMMARY_ADD([Miscellaneous], [Fault Tolerance support], [], [$opal_want_ft_type])
 ])

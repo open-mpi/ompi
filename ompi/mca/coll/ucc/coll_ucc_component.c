@@ -1,6 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2021 Mellanox Technologies. All rights reserved.
+ * Copyright (c) 2022 NVIDIA Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -45,11 +46,11 @@ mca_coll_ucc_component_t mca_coll_ucc_component = {
         .collm_init_query = mca_coll_ucc_init_query,
         .collm_comm_query = mca_coll_ucc_comm_query,
     },
-    10,               /* ucc_priority                */
+    10,                /* ucc_priority                */
     0,                 /* ucc_verbose                 */
     0,                 /* ucc_enable                  */
     2,                 /* ucc_np                      */
-    "basic",           /* cls                         */
+    "",                /* cls                         */
     COLL_UCC_CTS_STR,  /* requested coll_types string */
     UCC_VERSION_STRING /* ucc version                 */
 };
@@ -90,11 +91,13 @@ static int mca_coll_ucc_register(void)
                                     OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_READONLY,
                                     &cm->runtime_version);
 
+    cm->cls = "";
     mca_base_component_var_register(c, "cls",
                                     "Comma separated list of UCC CLS to be used for team creation",
                                     MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
                                     OPAL_INFO_LVL_6, MCA_BASE_VAR_SCOPE_READONLY, &cm->cls);
 
+    cm->cts = COLL_UCC_CTS_STR;
     mca_base_component_var_register(c, "cts",
                                     "Comma separated list of UCC coll types to be enabled",
                                     MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
@@ -120,6 +123,18 @@ static ucc_coll_type_t mca_coll_ucc_str_to_type(const char *str)
         return UCC_COLL_TYPE_ALLGATHERV;
     } else if (0 == strcasecmp(str, "reduce")) {
         return UCC_COLL_TYPE_REDUCE;
+    } else if (0 == strcasecmp(str, "gather")) {
+        return UCC_COLL_TYPE_GATHER;
+    } else if (0 == strcasecmp(str, "gatherv")) {
+        return UCC_COLL_TYPE_GATHERV;
+    } else if (0 == strcasecmp(str, "reduce_scatter_block")) {
+        return UCC_COLL_TYPE_REDUCE_SCATTER;
+    } else if (0 == strcasecmp(str, "reduce_scatter")) {
+        return UCC_COLL_TYPE_REDUCE_SCATTERV;
+    } else if (0 == strcasecmp(str, "scatterv")) {
+        return UCC_COLL_TYPE_SCATTERV;
+    } else if (0 == strcasecmp(str, "scatter")) {
+        return UCC_COLL_TYPE_SCATTER;
     }
     UCC_ERROR("incorrect value for cts: %s, allowed: %s",
               str, COLL_UCC_CTS_STR);

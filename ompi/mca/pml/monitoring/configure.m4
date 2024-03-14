@@ -15,10 +15,7 @@
 # ------------------------------------------------
 AC_DEFUN([MCA_ompi_pml_monitoring_CONFIG],[
     AC_CONFIG_FILES([ompi/mca/pml/monitoring/Makefile])
-
-    AS_IF([test "$MCA_BUILD_ompi_common_monitoring_DSO_TRUE" = ''],
-          [$1],
-          [$2])
+    [$1]
 ])dnl
 
 

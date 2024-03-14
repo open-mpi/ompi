@@ -99,7 +99,7 @@ static int opal_memory_malloc_query(int *priority)
 }
 
 /*
- * Three ways to call munmap.  Prefered is to call __munmap, which
+ * Three ways to call munmap.  Preferred is to call __munmap, which
  * will exist if munmap is a weak symbol.  If not available next try
  * the syscall, and if that doesn't work, try looking in the dynamic
  * libc.

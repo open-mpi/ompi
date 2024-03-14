@@ -1271,7 +1271,7 @@ void ompi_java_releasePtrArray(JNIEnv *env, jlongArray array,
  * code execution returns to Java code, an exception is immediately
  * thrown.  Since an exception has occurred somewhere in the C code,
  * the object that is returned from C may not be valid.  This is not
- * an issue, however, as the assignment opperation will not be
+ * an issue, however, as the assignment operation will not be
  * executed.  The results of this method need not be checked if the
  * only following code cleans up memory and then returns to Java.
  * If existing objects are changed after a call to this method, the

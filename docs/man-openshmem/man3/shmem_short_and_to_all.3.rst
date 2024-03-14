@@ -1,0 +1,219 @@
+.. _shmem_short_and_to_all:
+
+
+shmem_short_and_to_all
+======================
+
+.. include_body
+
+:ref:`shmem_int_and_to_all`\ (3), shmem_int4_and_to_all\ (3),
+shmem_int8_and_to_all\ (3), :ref:`shmem_long_and_to_all`\ (3),
+:ref:`shmem_longlong_and_to_all`\ (3), :ref:`shmem_short_and_to_all`\ (3) -
+Performs a bitwise AND operation on symmetric arrays over the active set
+of PEs.
+
+
+SYNOPSIS
+--------
+
+C or C++:
+
+.. code-block:: c++
+
+   #include <mpp/shmem.h>
+
+   void shmem_int_and_to_all(int *target, const int *source,
+     int nreduce, int PE_start, int logPE_stride, int PE_size,
+     int *pWrk, long *pSync)
+
+   void shmem_long_and_to_all(long *target, const long *source,
+     int nreduce, int PE_start, int  logPE_stride, int PE_size,
+     long *pWrk, long *pSync)
+
+   void shmem_longlong_and_to_all(long long *target,
+     const long long *source, int nreduce, int PE_start, int logPE_stride,
+     int PE_size, long long *pWrk, long *pSync)
+
+   void shmem_short_and_to_all(short *target, const short *source,
+     int nreduce, int PE_start, int logPE_stride, int PE_size,
+     short *pWrk, long *pSync)
+
+Fortran:
+
+.. code-block:: fortran
+
+   INCLUDE "mpp/shmem.fh"
+
+   INTEGER pSync(SHMEM_REDUCE_SYNC_SIZE)
+   INTEGER nreduce, PE_start, logPE_stride, PE_size
+
+   CALL SHMEM_INT4_AND_TO_ALL(target, source, nreduce,
+   & PE_start, logPE_stride, PE_size, pWrk, pSync)
+
+   CALL SHMEM_INT8_AND_TO_ALL(target, source, nreduce,
+   & PE_start, logPE_stride, PE_size, pWrk, pSync)
+
+
+DESCRIPTION
+-----------
+
+The shared memory (SHMEM) reduction routines compute one or more
+reductions across symmetric arrays on multiple virtual PEs. A reduction
+performs an associative binary operation across a set of values. For a
+list of other SHMEM reduction routines, see *intro_shmem*\ (3).
+
+The nreduce argument determines the number of separate reductions to
+perform. The source array on all PEs in the active set provides one
+element for each reduction. The results of the reductions are placed in
+the target array on all PEs in the active set. The active set is defined
+by the PE_start, logPE_stride, PE_size triplet.
+
+The source and target arrays may be the same array, but they may not be
+overlapping arrays. As with all SHMEM collective routines, each of these
+routines assumes that only PEs in the active set call the routine. If a
+PE not in the active set calls a SHMEM collective routine, undefined
+behavior results.
+
+The arguments are as follows:
+
+target
+   A symmetric array, of length nreduce elements, to receive the result
+   of the reduction operations. The data type of target varies with the
+   version of the reduction routine being called. When calling from
+   C/C++, refer to the SYNOPSIS section for data type information. When
+   calling from Fortran, the target data types are as follows:
+
+   shmem_int8_and_to_all: Integer, with an element size of 8 bytes
+
+   shmem_int4_and_to_all: Integer, with an element size of 4 bytes
+
+source
+   A symmetric array, of length nreduce elements, that contains one
+   element for each separate reduction operation. The source argument
+   must have the same data type as target.
+
+nreduce
+   The number of elements in the target and source arrays. nreduce must
+   be of type integer. If you are using Fortran, it must be a default
+   integer value.
+
+PE_start
+   The lowest virtual PE number of the active set of PEs. PE_start must
+   be of type integer. If you are using Fortran, it must be a default
+   integer value.
+
+logPE_stride
+   The log (base 2) of the stride between consecutive virtual PE numbers
+   in the active set. logPE_stride must be of type integer. If you are
+   using Fortran, it must be a default integer value.
+
+PE_size
+   The number of PEs in the active set. PE_size must be of type integer.
+   If you are using Fortran, it must be a default integer value.
+
+pWrk
+   A symmetric work array. The pWrk argument must have the same data
+   type as target. In C/C++, this contains max(nreduce/2 + 1,
+   \_SHMEM_REDUCE_MIN_WRKDATA_SIZE) elements. In Fortran, this contains
+   max(nreduce/2 + 1, SHMEM_REDUCE_MIN_WRKDATA_SIZE) elements.
+
+pSync
+   A symmetric work array. In C/C++, pSync must be of type long and size
+   \_SHMEM_REDUCE_SYNC_SIZE. In Fortran, pSync must be of type integer
+   and size SHMEM_REDUCE_SYNC_SIZE. If you are using Fortran, it must be
+   a default integer value. Every element of this array must be
+   initialized with the value \_SHMEM_SYNC_VALUE (in C/C++) or
+   SHMEM_SYNC_VALUE (in Fortran) before any of the PEs in the active set
+   enter the reduction routine.
+
+The values of arguments nreduce, PE_start, logPE_stride, and PE_size
+must be equal on all PEs in the active set. The same target and source
+arrays, and the same pWrk and pSync work arrays, must be passed to all
+PEs in the active set.
+
+Before any PE calls a reduction routine, you must ensure that the
+following conditions exist (synchronization via a barrier or some other
+method is often needed to ensure this): The pWrk and pSync arrays on all
+PEs in the active set are not still in use from a prior call to a
+collective SHMEM routine. The target array on all PEs in the active set
+is ready to accept the results of the reduction.
+
+Upon return from a reduction routine, the following are true for the
+local PE: The target array is updated. The values in the pSync array are
+restored to the original values.
+
+
+NOTES
+-----
+
+The terms collective, symmetric, and cache aligned are defined in
+*intro_shmem*\ (3). All SHMEM reduction routines reset the values in
+pSync before they return, so a particular pSync buffer need only be
+initialized the first time it is used.
+
+You must ensure that the pSync array is not being updated on any PE in
+the active set while any of the PEs participate in processing of a SHMEM
+reduction routine. Be careful to avoid the following situations: If the
+pSync array is initialized at run time, some type of synchronization is
+needed to ensure that all PEs in the working set have initialized pSync
+before any of them enter a SHMEM routine called with the pSync
+synchronization array. A pSync or pWrk array can be reused in a
+subsequent reduction routine call only if none of the PEs in the active
+set are still processing a prior reduction routine call that used the
+same pSync or pWrk arrays. In general, this can be assured only by doing
+some type of synchronization. However, in the special case of reduction
+routines being called with the same active set, you can allocate two
+pSync and pWrk arrays and alternate between them on successive calls.
+
+
+EXAMPLES
+--------
+
+**Example 1**: This Fortran example statically initializes the pSync
+array and finds the logical AND of the integer variable FOO across all
+even PEs.
+
+::
+
+   INCLUDE "mpp/shmem.fh"
+
+   INTEGER PSYNC(SHMEM_REDUCE_SYNC_SIZE)
+   DATA PSYNC /SHMEM_REDUCE_SYNC_SIZE*SHMEM_SYNC_VALUE/
+   PARAMETER (NR=1)
+   REAL PWRK(MAX(NR/2+1, SHMEM_REDUCE_MIN_WRKDATA_SIZE))
+   INTEGER FOO, FOOAND
+   COMMON /COM/ FOO, FOOAND, PWRK
+   INTRINSIC MY_PE
+
+   IF ( MOD(MY_PE(),2) .EQ. 0) THEN
+     CALL SHMEM_INT8_AND_TO_ALL(FOOAND, FOO, NR, 0, 1, N$PES/2,
+     & PWRK, PSYNC)
+     PRINT *, 'Result on PE ', MY_PE(), ' is ', FOOAND
+   ENDIF
+
+**Example 2**: Consider the following C call:
+
+.. code-block:: c
+
+   shmem_int_and_to_all( target, source, 3, 0, 0, 8, pwrk, psync );
+
+The preceding call is more efficient, but semantically equivalent to,
+the combination of the following calls:
+
+::
+
+   shmem_int_and_to_all(&(target[0]), &(source[0]), 1, 0, 0, 8,
+     pwrk1, psync1);
+
+   shmem_int_and_to_all(&(target[1]), &(source[1]), 1, 0, 0, 8,
+     pwrk2, psync2);
+
+   shmem_int_and_to_all(&(target[2]), &(source[2]), 1, 0, 0, 8,
+     pwrk1, psync1);
+
+Note that two sets of pWrk and pSync arrays are used alternately because
+no synchronization is done between calls.
+
+
+.. seealso::
+   *f90*\ (1) *intro_shmem*\ (3)

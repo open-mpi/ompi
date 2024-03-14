@@ -26,7 +26,7 @@ BEGIN_C_DECLS
 /*
  * PART module functions.
  */
-OMPI_MODULE_DECLSPEC extern mca_part_base_component_4_0_0_t mca_part_rma_component;
+OMPI_DECLSPEC extern mca_part_base_component_4_0_0_t mca_part_rma_component;
 
 END_C_DECLS
 

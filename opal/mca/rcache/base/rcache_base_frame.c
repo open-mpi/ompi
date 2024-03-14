@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2024 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -85,7 +85,7 @@ static int mca_rcache_base_close(void)
     while (NULL != (item = opal_list_remove_first(&mca_rcache_base_modules))) {
         sm = (mca_rcache_base_selected_module_t *) item;
 
-        /* Blatently ignore the return code (what would we do to recover,
+        /* Blatantly ignore the return code (what would we do to recover,
            anyway?  This component is going away, so errors don't matter
            anymore).  Note that it's legal for the module to have NULL for
            the finalize function. */
@@ -136,3 +136,12 @@ static int mca_rcache_base_register_mca_variables(mca_base_register_flag_t flags
 MCA_BASE_FRAMEWORK_DECLARE(opal, rcache, "OPAL Registration Cache",
                            mca_rcache_base_register_mca_variables, mca_rcache_base_open,
                            mca_rcache_base_close, mca_rcache_base_static_components, 0);
+
+
+void mca_rcache_base_module_init(mca_rcache_base_module_t *rcache) {
+    OBJ_CONSTRUCT(&rcache->lock, opal_mutex_t);
+}
+
+void mca_rcache_base_module_fini(mca_rcache_base_module_t *rcache) {
+    OBJ_DESTRUCT(&rcache->lock);
+}

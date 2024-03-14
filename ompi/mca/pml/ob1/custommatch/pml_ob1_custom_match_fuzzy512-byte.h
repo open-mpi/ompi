@@ -464,7 +464,7 @@ static inline void custom_match_umq_append(custom_match_umq* list, int tag, int 
 {
     int8_t key = source ^ tag;
 #if CUSTOM_MATCH_DEBUG
-    ((int8_t*)&key)[3] = (int8_t) tag; // MGFD TODO verify this set higer order bits...
+    ((int8_t*)&key)[3] = (int8_t) tag; // MGFD TODO verify this set higher order bits...
     mca_pml_ob1_recv_frag_t *req = (mca_pml_ob1_recv_frag_t *)payload;
     printf("custom_match_umq_append list: %x key: %x payload: %x tag: %d src: %d\n", list, key, payload, req->hdr.hdr_match.hdr_tag, req->hdr.hdr_match.hdr_src);
 #endif

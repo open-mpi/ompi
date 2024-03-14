@@ -1,6 +1,6 @@
 ! -*- f90 -*-
 !
-! Copyright (c) 2009-2018 Cisco Systems, Inc.  All rights reserved
+! Copyright (c) 2009-2022 Cisco Systems, Inc.  All rights reserved
 ! Copyright (c) 2009-2015 Los Alamos National Security, LLC.
 !                         All rights reserved.
 ! Copyright (c) 2012      The University of Tennessee and The University
@@ -10,6 +10,8 @@
 ! Copyright (c) 2015-2020 Research Organization for Information Science
 !                         and Technology (RIST). All rights reserved.
 ! Copyright (c) 2017-2018 FUJITSU LIMITED.  All rights reserved.
+! Copyright (c) 2021-2023 Triad National Security, LLC. All rights
+!                         reserved.
 ! $COPYRIGHT$
 !
 ! This file provides the interface specifications for the MPI Fortran
@@ -35,7 +37,7 @@ subroutine MPI_Bsend_init_f08(buf,count,datatype,dest,tag,comm,request,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: buf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) OMPI_ASYNCHRONOUS :: buf
    INTEGER, INTENT(IN) :: count, dest, tag
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    TYPE(MPI_Comm), INTENT(IN) :: comm
@@ -48,7 +50,7 @@ interface  MPI_Buffer_attach
 subroutine MPI_Buffer_attach_f08(buffer,size,ierror)
    implicit none
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buffer
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: buffer
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ OMPI_ASYNCHRONOUS :: buffer
    INTEGER, INTENT(IN) :: size
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine MPI_Buffer_attach_f08
@@ -89,7 +91,7 @@ subroutine MPI_Ibsend_f08(buf,count,datatype,dest,tag,comm,request,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) :: buf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) OMPI_ASYNCHRONOUS :: buf
    INTEGER, INTENT(IN) :: count, dest, tag
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    TYPE(MPI_Comm), INTENT(IN) :: comm
@@ -105,7 +107,7 @@ subroutine MPI_Iprobe_f08(source,tag,comm,flag,status,ierror)
    INTEGER, INTENT(IN) :: source, tag
    TYPE(MPI_Comm), INTENT(IN) :: comm
    LOGICAL, INTENT(OUT) :: flag
-   TYPE(MPI_Status), INTENT(OUT) :: status
+   TYPE(MPI_Status) :: status
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine MPI_Iprobe_f08
 end interface  MPI_Iprobe
@@ -115,7 +117,7 @@ subroutine MPI_Irecv_f08(buf,count,datatype,source,tag,comm,request,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: buf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ OMPI_ASYNCHRONOUS :: buf
    INTEGER, INTENT(IN) :: count, source, tag
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    TYPE(MPI_Comm), INTENT(IN) :: comm
@@ -129,7 +131,7 @@ subroutine MPI_Irsend_f08(buf,count,datatype,dest,tag,comm,request,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) :: buf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) OMPI_ASYNCHRONOUS :: buf
    INTEGER, INTENT(IN) :: count, dest, tag
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    TYPE(MPI_Comm), INTENT(IN) :: comm
@@ -143,7 +145,7 @@ subroutine MPI_Isend_f08(buf,count,datatype,dest,tag,comm,request,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) :: buf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) OMPI_ASYNCHRONOUS :: buf
    INTEGER, INTENT(IN) :: count, dest, tag
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    TYPE(MPI_Comm), INTENT(IN) :: comm
@@ -152,12 +154,43 @@ subroutine MPI_Isend_f08(buf,count,datatype,dest,tag,comm,request,ierror)
 end subroutine MPI_Isend_f08
 end interface  MPI_Isend
 
+interface  MPI_Isendrecv
+subroutine MPI_Isendrecv_f08(sendbuf,sendcount,sendtype,dest,sendtag,recvbuf, &
+                            recvcount,recvtype,source,recvtag,comm,request,ierror)
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
+   implicit none
+   @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf, recvbuf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) :: sendbuf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: recvbuf
+   INTEGER, INTENT(IN) :: sendcount, dest, sendtag, recvcount, source, recvtag
+   TYPE(MPI_Datatype), INTENT(IN) :: sendtype, recvtype
+   TYPE(MPI_Comm), INTENT(IN) :: comm
+   TYPE(MPI_Request), INTENT(OUT) :: request
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine MPI_Isendrecv_f08
+end interface  MPI_Isendrecv
+
+interface  MPI_Isendrecv_replace
+subroutine MPI_Isendrecv_replace_f08(buf,count,datatype,dest,sendtag,source,recvtag, &
+                                    comm,request,ierror)
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
+   implicit none
+   @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: buf
+   INTEGER, INTENT(IN) :: count, dest, sendtag, source, recvtag
+   TYPE(MPI_Datatype), INTENT(IN) :: datatype
+   TYPE(MPI_Comm), INTENT(IN) :: comm
+   TYPE(MPI_Request), INTENT(OUT) :: request
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine MPI_Isendrecv_replace_f08
+end interface  MPI_Isendrecv_replace
+
 interface  MPI_Issend
 subroutine MPI_Issend_f08(buf,count,datatype,dest,tag,comm,request,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) :: buf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) OMPI_ASYNCHRONOUS :: buf
    INTEGER, INTENT(IN) :: count, dest, tag
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    TYPE(MPI_Comm), INTENT(IN) :: comm
@@ -168,7 +201,7 @@ end interface  MPI_Issend
 
 interface  MPI_Precv_init
 subroutine MPI_Precv_init_f08(buf,partitions,count,datatype,dest,tag,comm,request,ierror)
-   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request, MPI_COUNT_KIND
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !GCC$ ATTRIBUTES NO_ARG_CHECK :: buf
@@ -176,7 +209,8 @@ subroutine MPI_Precv_init_f08(buf,partitions,count,datatype,dest,tag,comm,reques
    !DIR$ IGNORE_TKR buf
    !IBM* IGNORE_TKR buf
    OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: buf
-   INTEGER, INTENT(IN) :: partitions, count, dest, tag
+   INTEGER, INTENT(IN) :: partitions, dest, tag
+   INTEGER(MPI_COUNT_KIND), INTENT(IN) :: count
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    TYPE(MPI_Comm), INTENT(IN) :: comm
    TYPE(MPI_Request), INTENT(OUT) :: request
@@ -186,7 +220,7 @@ end interface  MPI_Precv_init
 
 interface  MPI_Psend_init
 subroutine MPI_Psend_init_f08(buf,partitions,count,datatype,dest,tag,comm,request,ierror)
-   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request, MPI_COUNT_KIND
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !GCC$ ATTRIBUTES NO_ARG_CHECK :: buf
@@ -194,7 +228,8 @@ subroutine MPI_Psend_init_f08(buf,partitions,count,datatype,dest,tag,comm,reques
    !DIR$ IGNORE_TKR buf
    !IBM* IGNORE_TKR buf
    OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: buf
-   INTEGER, INTENT(IN) :: partitions, count, dest, tag
+   INTEGER, INTENT(IN) :: partitions, dest, tag
+   INTEGER(MPI_COUNT_KIND), INTENT(IN) :: count
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    TYPE(MPI_Comm), INTENT(IN) :: comm
    TYPE(MPI_Request), INTENT(OUT) :: request
@@ -250,7 +285,7 @@ subroutine MPI_Probe_f08(source,tag,comm,status,ierror)
    implicit none
    INTEGER, INTENT(IN) :: source, tag
    TYPE(MPI_Comm), INTENT(IN) :: comm
-   TYPE(MPI_Status), INTENT(OUT) :: status
+   TYPE(MPI_Status) :: status
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine MPI_Probe_f08
 end interface  MPI_Probe
@@ -274,7 +309,7 @@ subroutine MPI_Recv_init_f08(buf,count,datatype,source,tag,comm,request,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: buf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ OMPI_ASYNCHRONOUS :: buf
    INTEGER, INTENT(IN) :: count, source, tag
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    TYPE(MPI_Comm), INTENT(IN) :: comm
@@ -321,7 +356,7 @@ subroutine MPI_Rsend_init_f08(buf,count,datatype,dest,tag,comm,request,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: buf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) OMPI_ASYNCHRONOUS :: buf
    INTEGER, INTENT(IN) :: count, dest, tag
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    TYPE(MPI_Comm), INTENT(IN) :: comm
@@ -379,7 +414,7 @@ subroutine MPI_Send_init_f08(buf,count,datatype,dest,tag,comm,request,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: buf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) OMPI_ASYNCHRONOUS :: buf
    INTEGER, INTENT(IN) :: count, dest, tag
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    TYPE(MPI_Comm), INTENT(IN) :: comm
@@ -387,6 +422,112 @@ subroutine MPI_Send_init_f08(buf,count,datatype,dest,tag,comm,request,ierror)
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine MPI_Send_init_f08
 end interface  MPI_Send_init
+
+interface MPI_Session_call_errhandler
+subroutine MPI_Session_call_errhandler_f08(session,errorcode,ierror)
+   use :: mpi_f08_types, only : MPI_Session
+   implicit none
+   TYPE(MPI_Session), INTENT(IN) :: session
+   INTEGER, INTENT(IN) :: errorcode
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine MPI_Session_call_errhandler_f08
+end interface MPI_Session_call_errhandler
+
+interface  MPI_Session_create_errhandler
+subroutine MPI_Session_create_errhandler_f08(session_errhandler_fn,errhandler,ierror)
+   use :: mpi_f08_types, only : MPI_Errhandler
+   use :: mpi_f08_interfaces_callbacks, only : MPI_Session_errhandler_function
+   implicit none
+   PROCEDURE(MPI_Session_errhandler_function) :: session_errhandler_fn
+   TYPE(MPI_Errhandler), INTENT(OUT) :: errhandler
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine MPI_Session_create_errhandler_f08
+end interface  MPI_Session_create_errhandler
+
+interface MPI_Session_get_errhandler
+subroutine MPI_Session_get_errhandler_f08(session,errhandler,ierror)
+   use :: mpi_f08_types, only : MPI_Session, MPI_Errhandler
+   implicit none
+   TYPE(MPI_Session), INTENT(IN) :: session
+   TYPE(MPI_Errhandler), INTENT(OUT) :: errhandler
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine MPI_Session_get_errhandler_f08
+end interface MPI_Session_get_errhandler
+
+interface MPI_Session_get_info
+subroutine MPI_Session_get_info_f08(session, info, ierror)
+   use :: mpi_f08_types, only : MPI_Session, MPI_Info
+   implicit none
+   TYPE(MPI_Session), INTENT(IN) :: session
+   TYPE(MPI_Info), INTENT(OUT) :: info
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine MPI_Session_get_info_f08
+end interface MPI_Session_get_info
+
+interface MPI_Session_get_nth_pset
+subroutine MPI_Session_get_nth_pset_f08(session, info, n, pset_len, pset_name, ierror)
+   use :: mpi_f08_types, only : MPI_Session, MPI_Info
+   implicit none
+   TYPE(MPI_Session), INTENT(IN) :: session
+   TYPE(MPI_Info), INTENT(IN) :: info
+   INTEGER, INTENT(IN) :: n
+   INTEGER, INTENT(INOUT) :: pset_len
+   CHARACTER(LEN=*), INTENT(OUT) :: pset_name
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine MPI_Session_get_nth_pset_f08
+end interface MPI_Session_get_nth_pset
+
+interface MPI_Session_get_num_psets
+subroutine MPI_Session_get_num_psets_f08(session, info, npset_names, ierror)
+   use :: mpi_f08_types, only : MPI_Session, MPI_Info
+   implicit none
+   TYPE(MPI_Session), INTENT(IN) :: session
+   TYPE(MPI_Info), INTENT(IN) :: info
+   INTEGER, INTENT(OUT) :: npset_names
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine MPI_Session_get_num_psets_f08
+end interface  MPI_Session_get_num_psets
+
+interface MPI_Session_get_pset_info
+subroutine MPI_Session_get_pset_info_f08(session, pset_name, info, ierror)
+   use :: mpi_f08_types, only : MPI_Session, MPI_Info
+   implicit none
+   TYPE(MPI_Session), INTENT(IN) :: session
+   CHARACTER(LEN=*), INTENT(IN) :: pset_name
+   TYPE(MPI_Info), INTENT(OUT) :: info
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine MPI_Session_get_pset_info_f08
+end interface MPI_Session_get_pset_info
+
+interface  MPI_Session_init
+subroutine MPI_Session_init_f08(info,errhandler,session,ierror)
+   use :: mpi_f08_types, only : MPI_Session, MPI_Info, MPI_Errhandler
+   implicit none
+   TYPE(MPI_Info), INTENT(IN) :: info
+   TYPE(MPI_Errhandler), INTENT(IN) :: errhandler
+   TYPE(MPI_Session), INTENT(OUT) :: session
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine MPI_Session_init_f08
+end interface  MPI_Session_init
+
+interface  MPI_Session_finalize
+subroutine MPI_Session_finalize_f08(session,ierror)
+   use :: mpi_f08_types, only : MPI_Session
+   implicit none
+   TYPE(MPI_Session), INTENT(INOUT) :: session
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine MPI_Session_finalize_f08
+end interface  MPI_Session_finalize
+
+interface MPI_Session_set_errhandler
+subroutine MPI_Session_set_errhandler_f08(session,errhandler,ierror)
+   use :: mpi_f08_types, only : MPI_Session, MPI_Errhandler
+   implicit none
+   TYPE(MPI_Session), INTENT(IN) :: session
+   TYPE(MPI_Errhandler), INTENT(IN) :: errhandler
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine MPI_Session_set_errhandler_f08
+end interface MPI_Session_set_errhandler
 
 interface  MPI_Ssend
 subroutine MPI_Ssend_f08(buf,count,datatype,dest,tag,comm,ierror)
@@ -406,7 +547,7 @@ subroutine MPI_Ssend_init_f08(buf,count,datatype,dest,tag,comm,request,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: buf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) OMPI_ASYNCHRONOUS :: buf
    INTEGER, INTENT(IN) :: count, dest, tag
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    TYPE(MPI_Comm), INTENT(IN) :: comm
@@ -544,7 +685,7 @@ subroutine MPI_Get_address_f08(location,address,ierror)
    use :: mpi_f08_types, only : MPI_ADDRESS_KIND
    implicit none
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ location
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: location
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ OMPI_ASYNCHRONOUS :: location
    INTEGER(MPI_ADDRESS_KIND), INTENT(OUT) :: address
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine MPI_Get_address_f08
@@ -939,8 +1080,8 @@ subroutine MPI_Iallgather_f08(sendbuf,sendcount,sendtype,recvbuf,recvcount,recvt
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf, recvbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN), ASYNCHRONOUS :: sendbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, ASYNCHRONOUS :: recvbuf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) OMPI_ASYNCHRONOUS :: sendbuf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ OMPI_ASYNCHRONOUS :: recvbuf
    INTEGER, INTENT(IN) :: sendcount, recvcount
    TYPE(MPI_Datatype), INTENT(IN) :: sendtype, recvtype
    TYPE(MPI_Comm), INTENT(IN) :: comm
@@ -955,8 +1096,8 @@ subroutine MPI_Allgather_init_f08(sendbuf,sendcount,sendtype,recvbuf,recvcount,r
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Info, MPI_Request
    implicit none
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf, recvbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN), ASYNCHRONOUS :: sendbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, ASYNCHRONOUS :: recvbuf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) OMPI_ASYNCHRONOUS :: sendbuf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ OMPI_ASYNCHRONOUS :: recvbuf
    INTEGER, INTENT(IN) :: sendcount, recvcount
    TYPE(MPI_Datatype), INTENT(IN) :: sendtype, recvtype
    TYPE(MPI_Comm), INTENT(IN) :: comm
@@ -988,10 +1129,10 @@ subroutine MPI_Iallgatherv_f08(sendbuf,sendcount,sendtype,recvbuf,recvcounts,dis
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf, recvbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN), ASYNCHRONOUS :: sendbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, ASYNCHRONOUS :: recvbuf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) OMPI_ASYNCHRONOUS :: sendbuf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ OMPI_ASYNCHRONOUS :: recvbuf
    INTEGER, INTENT(IN) :: sendcount
-   INTEGER, INTENT(IN), ASYNCHRONOUS :: recvcounts(*), displs(*)
+   INTEGER, INTENT(IN) OMPI_ASYNCHRONOUS :: recvcounts(*), displs(*)
    TYPE(MPI_Datatype), INTENT(IN) :: sendtype, recvtype
    TYPE(MPI_Comm), INTENT(IN) :: comm
    TYPE(MPI_Request), INTENT(OUT) :: request
@@ -1005,10 +1146,10 @@ subroutine MPI_Allgatherv_init_f08(sendbuf,sendcount,sendtype,recvbuf,recvcounts
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Info, MPI_Request
    implicit none
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf, recvbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN), ASYNCHRONOUS :: sendbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, ASYNCHRONOUS :: recvbuf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) OMPI_ASYNCHRONOUS :: sendbuf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ OMPI_ASYNCHRONOUS :: recvbuf
    INTEGER, INTENT(IN) :: sendcount
-   INTEGER, INTENT(IN), ASYNCHRONOUS :: recvcounts(*), displs(*)
+   INTEGER, INTENT(IN) OMPI_ASYNCHRONOUS :: recvcounts(*), displs(*)
    TYPE(MPI_Datatype), INTENT(IN) :: sendtype, recvtype
    TYPE(MPI_Comm), INTENT(IN) :: comm
    TYPE(MPI_Info), INTENT(IN) :: info
@@ -1037,8 +1178,8 @@ subroutine MPI_Iallreduce_f08(sendbuf,recvbuf,count,datatype,op,comm,request,ier
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Op, MPI_Comm, MPI_Request
    implicit none
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf, recvbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN), ASYNCHRONOUS :: sendbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, ASYNCHRONOUS :: recvbuf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) OMPI_ASYNCHRONOUS :: sendbuf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ OMPI_ASYNCHRONOUS :: recvbuf
    INTEGER, INTENT(IN) :: count
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    TYPE(MPI_Op), INTENT(IN) :: op
@@ -1053,8 +1194,8 @@ subroutine MPI_Allreduce_init_f08(sendbuf,recvbuf,count,datatype,op,comm,info,re
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Op, MPI_Comm, MPI_Info, MPI_Request
    implicit none
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf, recvbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN), ASYNCHRONOUS :: sendbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, ASYNCHRONOUS :: recvbuf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) OMPI_ASYNCHRONOUS :: sendbuf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ OMPI_ASYNCHRONOUS :: recvbuf
    INTEGER, INTENT(IN) :: count
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    TYPE(MPI_Op), INTENT(IN) :: op
@@ -1086,9 +1227,9 @@ subroutine MPI_Ialltoall_f08(sendbuf,sendcount,sendtype,recvbuf,recvcount,recvty
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf, recvbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN), ASYNCHRONOUS :: sendbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, ASYNCHRONOUS :: recvbuf
-   INTEGER, INTENT(IN), ASYNCHRONOUS :: sendcount, recvcount
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) OMPI_ASYNCHRONOUS :: sendbuf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ OMPI_ASYNCHRONOUS :: recvbuf
+   INTEGER, INTENT(IN) :: sendcount, recvcount
    TYPE(MPI_Datatype), INTENT(IN) :: sendtype, recvtype
    TYPE(MPI_Comm), INTENT(IN) :: comm
    TYPE(MPI_Request), INTENT(OUT) :: request
@@ -1102,9 +1243,9 @@ subroutine MPI_Alltoall_init_f08(sendbuf,sendcount,sendtype,recvbuf,recvcount,re
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Info, MPI_Request
    implicit none
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf, recvbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN), ASYNCHRONOUS :: sendbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, ASYNCHRONOUS :: recvbuf
-   INTEGER, INTENT(IN), ASYNCHRONOUS :: sendcount, recvcount
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) OMPI_ASYNCHRONOUS :: sendbuf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ OMPI_ASYNCHRONOUS :: recvbuf
+   INTEGER, INTENT(IN) OMPI_ASYNCHRONOUS :: sendcount, recvcount
    TYPE(MPI_Datatype), INTENT(IN) :: sendtype, recvtype
    TYPE(MPI_Comm), INTENT(IN) :: comm
    TYPE(MPI_Info), INTENT(IN) :: info
@@ -1134,9 +1275,9 @@ subroutine MPI_Ialltoallv_f08(sendbuf,sendcounts,sdispls,sendtype,recvbuf,recvco
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf, recvbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN), ASYNCHRONOUS :: sendbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, ASYNCHRONOUS :: recvbuf
-   INTEGER, INTENT(IN), ASYNCHRONOUS :: sendcounts(*), sdispls(*), recvcounts(*), rdispls(*)
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) OMPI_ASYNCHRONOUS :: sendbuf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ OMPI_ASYNCHRONOUS :: recvbuf
+   INTEGER, INTENT(IN) OMPI_ASYNCHRONOUS :: sendcounts(*), sdispls(*), recvcounts(*), rdispls(*)
    TYPE(MPI_Datatype), INTENT(IN) :: sendtype, recvtype
    TYPE(MPI_Comm), INTENT(IN) :: comm
    TYPE(MPI_Request), INTENT(OUT) :: request
@@ -1150,9 +1291,9 @@ subroutine MPI_Alltoallv_init_f08(sendbuf,sendcounts,sdispls,sendtype,recvbuf,re
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Info, MPI_Request
    implicit none
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf, recvbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN), ASYNCHRONOUS :: sendbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, ASYNCHRONOUS :: recvbuf
-   INTEGER, INTENT(IN), ASYNCHRONOUS :: sendcounts(*), sdispls(*), recvcounts(*), rdispls(*)
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) OMPI_ASYNCHRONOUS :: sendbuf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ OMPI_ASYNCHRONOUS :: recvbuf
+   INTEGER, INTENT(IN) OMPI_ASYNCHRONOUS :: sendcounts(*), sdispls(*), recvcounts(*), rdispls(*)
    TYPE(MPI_Datatype), INTENT(IN) :: sendtype, recvtype
    TYPE(MPI_Comm), INTENT(IN) :: comm
    TYPE(MPI_Info), INTENT(IN) :: info
@@ -1182,10 +1323,10 @@ subroutine MPI_Ialltoallw_f08(sendbuf,sendcounts,sdispls,sendtypes,recvbuf,recvc
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf, recvbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN), ASYNCHRONOUS :: sendbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, ASYNCHRONOUS :: recvbuf
-   INTEGER, INTENT(IN), ASYNCHRONOUS :: sendcounts(*), sdispls(*), recvcounts(*), rdispls(*)
-   TYPE(MPI_Datatype), INTENT(IN), ASYNCHRONOUS :: sendtypes(*), recvtypes(*)
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) OMPI_ASYNCHRONOUS :: sendbuf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ OMPI_ASYNCHRONOUS :: recvbuf
+   INTEGER, INTENT(IN) OMPI_ASYNCHRONOUS :: sendcounts(*), sdispls(*), recvcounts(*), rdispls(*)
+   TYPE(MPI_Datatype), INTENT(IN) OMPI_ASYNCHRONOUS :: sendtypes(*), recvtypes(*)
    TYPE(MPI_Comm), INTENT(IN) :: comm
    TYPE(MPI_Request), INTENT(OUT) :: request
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
@@ -1198,10 +1339,10 @@ subroutine MPI_Alltoallw_init_f08(sendbuf,sendcounts,sdispls,sendtypes,recvbuf,r
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Info, MPI_Request
    implicit none
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf, recvbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN), ASYNCHRONOUS :: sendbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, ASYNCHRONOUS :: recvbuf
-   INTEGER, INTENT(IN), ASYNCHRONOUS :: sendcounts(*), sdispls(*), recvcounts(*), rdispls(*)
-   TYPE(MPI_Datatype), INTENT(IN), ASYNCHRONOUS :: sendtypes(*), recvtypes(*)
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) OMPI_ASYNCHRONOUS :: sendbuf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ OMPI_ASYNCHRONOUS :: recvbuf
+   INTEGER, INTENT(IN) OMPI_ASYNCHRONOUS :: sendcounts(*), sdispls(*), recvcounts(*), rdispls(*)
+   TYPE(MPI_Datatype), INTENT(IN) OMPI_ASYNCHRONOUS :: sendtypes(*), recvtypes(*)
    TYPE(MPI_Comm), INTENT(IN) :: comm
    TYPE(MPI_Info), INTENT(IN) :: info
    TYPE(MPI_Request), INTENT(OUT) :: request
@@ -1257,7 +1398,7 @@ subroutine MPI_Ibcast_f08(buffer,count,datatype,root,comm,request,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buffer
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, ASYNCHRONOUS :: buffer
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ OMPI_ASYNCHRONOUS :: buffer
    INTEGER, INTENT(IN) :: count, root
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    TYPE(MPI_Comm), INTENT(IN) :: comm
@@ -1271,7 +1412,7 @@ subroutine MPI_Bcast_init_f08(buffer,count,datatype,root,comm,info,request,ierro
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Info, MPI_Request
    implicit none
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buffer
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, ASYNCHRONOUS :: buffer
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ OMPI_ASYNCHRONOUS :: buffer
    INTEGER, INTENT(IN) :: count, root
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    TYPE(MPI_Comm), INTENT(IN) :: comm
@@ -1301,8 +1442,8 @@ subroutine MPI_Iexscan_f08(sendbuf,recvbuf,count,datatype,op,comm,request,ierror
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Op, MPI_Comm, MPI_Request
    implicit none
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf, recvbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN), ASYNCHRONOUS :: sendbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, ASYNCHRONOUS :: recvbuf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) OMPI_ASYNCHRONOUS :: sendbuf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ OMPI_ASYNCHRONOUS :: recvbuf
    INTEGER, INTENT(IN) :: count
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    TYPE(MPI_Op), INTENT(IN) :: op
@@ -1317,8 +1458,8 @@ subroutine MPI_Exscan_init_f08(sendbuf,recvbuf,count,datatype,op,comm,info,reque
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Op, MPI_Comm, MPI_Info, MPI_Request
    implicit none
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf, recvbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN), ASYNCHRONOUS :: sendbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, ASYNCHRONOUS :: recvbuf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) OMPI_ASYNCHRONOUS :: sendbuf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ OMPI_ASYNCHRONOUS :: recvbuf
    INTEGER, INTENT(IN) :: count
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    TYPE(MPI_Op), INTENT(IN) :: op
@@ -1350,8 +1491,8 @@ subroutine MPI_Igather_f08(sendbuf,sendcount,sendtype,recvbuf,recvcount,recvtype
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf, recvbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN), ASYNCHRONOUS :: sendbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, ASYNCHRONOUS :: recvbuf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) OMPI_ASYNCHRONOUS :: sendbuf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ OMPI_ASYNCHRONOUS :: recvbuf
    INTEGER, INTENT(IN) :: sendcount, recvcount, root
    TYPE(MPI_Datatype), INTENT(IN) :: sendtype, recvtype
    TYPE(MPI_Comm), INTENT(IN) :: comm
@@ -1366,8 +1507,8 @@ subroutine MPI_Gather_init_f08(sendbuf,sendcount,sendtype,recvbuf,recvcount,recv
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Info, MPI_Request
    implicit none
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf, recvbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN), ASYNCHRONOUS :: sendbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, ASYNCHRONOUS :: recvbuf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) OMPI_ASYNCHRONOUS :: sendbuf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ OMPI_ASYNCHRONOUS :: recvbuf
    INTEGER, INTENT(IN) :: sendcount, recvcount, root
    TYPE(MPI_Datatype), INTENT(IN) :: sendtype, recvtype
    TYPE(MPI_Comm), INTENT(IN) :: comm
@@ -1399,10 +1540,10 @@ subroutine MPI_Igatherv_f08(sendbuf,sendcount,sendtype,recvbuf,recvcounts,displs
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf, recvbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN), ASYNCHRONOUS :: sendbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, ASYNCHRONOUS :: recvbuf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) OMPI_ASYNCHRONOUS :: sendbuf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ OMPI_ASYNCHRONOUS :: recvbuf
    INTEGER, INTENT(IN) :: sendcount, root
-   INTEGER, INTENT(IN), ASYNCHRONOUS :: recvcounts(*), displs(*)
+   INTEGER, INTENT(IN) OMPI_ASYNCHRONOUS :: recvcounts(*), displs(*)
    TYPE(MPI_Datatype), INTENT(IN) :: sendtype, recvtype
    TYPE(MPI_Comm), INTENT(IN) :: comm
    TYPE(MPI_Request), INTENT(OUT) :: request
@@ -1416,10 +1557,10 @@ subroutine MPI_Gatherv_init_f08(sendbuf,sendcount,sendtype,recvbuf,recvcounts,di
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Info, MPI_Request
    implicit none
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf, recvbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN), ASYNCHRONOUS :: sendbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, ASYNCHRONOUS :: recvbuf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) OMPI_ASYNCHRONOUS :: sendbuf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ OMPI_ASYNCHRONOUS :: recvbuf
    INTEGER, INTENT(IN) :: sendcount, root
-   INTEGER, INTENT(IN), ASYNCHRONOUS :: recvcounts(*), displs(*)
+   INTEGER, INTENT(IN) OMPI_ASYNCHRONOUS :: recvcounts(*), displs(*)
    TYPE(MPI_Datatype), INTENT(IN) :: sendtype, recvtype
    TYPE(MPI_Comm), INTENT(IN) :: comm
    TYPE(MPI_Info), INTENT(IN) :: info
@@ -1479,8 +1620,8 @@ subroutine MPI_Ireduce_f08(sendbuf,recvbuf,count,datatype,op,root,comm,request,i
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Op, MPI_Comm, MPI_Request
    implicit none
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf, recvbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN), ASYNCHRONOUS :: sendbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, ASYNCHRONOUS :: recvbuf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) OMPI_ASYNCHRONOUS :: sendbuf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ OMPI_ASYNCHRONOUS :: recvbuf
    INTEGER, INTENT(IN) :: count, root
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    TYPE(MPI_Op), INTENT(IN) :: op
@@ -1495,8 +1636,8 @@ subroutine MPI_Reduce_init_f08(sendbuf,recvbuf,count,datatype,op,root,comm,info,
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Op, MPI_Comm, MPI_Info, MPI_Request
    implicit none
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf, recvbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN), ASYNCHRONOUS :: sendbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, ASYNCHRONOUS :: recvbuf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) OMPI_ASYNCHRONOUS :: sendbuf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ OMPI_ASYNCHRONOUS :: recvbuf
    INTEGER, INTENT(IN) :: count, root
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    TYPE(MPI_Op), INTENT(IN) :: op
@@ -1543,9 +1684,9 @@ subroutine MPI_Ireduce_scatter_f08(sendbuf,recvbuf,recvcounts,datatype,op,comm, 
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Op, MPI_Comm, MPI_Request
    implicit none
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf, recvbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN), ASYNCHRONOUS :: sendbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, ASYNCHRONOUS :: recvbuf
-   INTEGER, INTENT(IN), ASYNCHRONOUS :: recvcounts(*)
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) OMPI_ASYNCHRONOUS :: sendbuf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ OMPI_ASYNCHRONOUS :: recvbuf
+   INTEGER, INTENT(IN) OMPI_ASYNCHRONOUS :: recvcounts(*)
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    TYPE(MPI_Op), INTENT(IN) :: op
    TYPE(MPI_Comm), INTENT(IN) :: comm
@@ -1560,9 +1701,9 @@ subroutine MPI_Reduce_scatter_init_f08(sendbuf,recvbuf,recvcounts,datatype,op,co
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Op, MPI_Comm, MPI_Info, MPI_Request
    implicit none
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf, recvbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN), ASYNCHRONOUS :: sendbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, ASYNCHRONOUS :: recvbuf
-   INTEGER, INTENT(IN), ASYNCHRONOUS :: recvcounts(*)
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) OMPI_ASYNCHRONOUS :: sendbuf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ OMPI_ASYNCHRONOUS :: recvbuf
+   INTEGER, INTENT(IN) OMPI_ASYNCHRONOUS :: recvcounts(*)
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    TYPE(MPI_Op), INTENT(IN) :: op
    TYPE(MPI_Comm), INTENT(IN) :: comm
@@ -1594,8 +1735,8 @@ subroutine MPI_Ireduce_scatter_block_f08(sendbuf,recvbuf,recvcount,datatype,op,c
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Op, MPI_Comm, MPI_Request
    implicit none
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf, recvbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN), ASYNCHRONOUS :: sendbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, ASYNCHRONOUS :: recvbuf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) OMPI_ASYNCHRONOUS :: sendbuf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ OMPI_ASYNCHRONOUS :: recvbuf
    INTEGER, INTENT(IN) :: recvcount
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    TYPE(MPI_Op), INTENT(IN) :: op
@@ -1611,8 +1752,8 @@ subroutine MPI_Reduce_scatter_block_init_f08(sendbuf,recvbuf,recvcount,datatype,
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Op, MPI_Comm, MPI_Info, MPI_Request
    implicit none
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf, recvbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN), ASYNCHRONOUS :: sendbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, ASYNCHRONOUS :: recvbuf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) OMPI_ASYNCHRONOUS :: sendbuf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ OMPI_ASYNCHRONOUS :: recvbuf
    INTEGER, INTENT(IN) :: recvcount
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    TYPE(MPI_Op), INTENT(IN) :: op
@@ -1643,8 +1784,8 @@ subroutine MPI_Iscan_f08(sendbuf,recvbuf,count,datatype,op,comm,request,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Op, MPI_Comm, MPI_Request
    implicit none
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf, recvbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN), ASYNCHRONOUS :: sendbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, ASYNCHRONOUS :: recvbuf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) OMPI_ASYNCHRONOUS :: sendbuf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ OMPI_ASYNCHRONOUS :: recvbuf
    INTEGER, INTENT(IN) :: count
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    TYPE(MPI_Op), INTENT(IN) :: op
@@ -1659,8 +1800,8 @@ subroutine MPI_Scan_init_f08(sendbuf,recvbuf,count,datatype,op,comm,info,request
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Op, MPI_Comm, MPI_Info, MPI_Request
    implicit none
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf, recvbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN), ASYNCHRONOUS :: sendbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, ASYNCHRONOUS :: recvbuf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) OMPI_ASYNCHRONOUS :: sendbuf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ OMPI_ASYNCHRONOUS :: recvbuf
    INTEGER, INTENT(IN) :: count
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    TYPE(MPI_Op), INTENT(IN) :: op
@@ -1692,8 +1833,8 @@ subroutine MPI_Iscatter_f08(sendbuf,sendcount,sendtype,recvbuf,recvcount,recvtyp
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf, recvbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN), ASYNCHRONOUS :: sendbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, ASYNCHRONOUS :: recvbuf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) OMPI_ASYNCHRONOUS :: sendbuf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ OMPI_ASYNCHRONOUS :: recvbuf
    INTEGER, INTENT(IN) :: sendcount, recvcount, root
    TYPE(MPI_Datatype), INTENT(IN) :: sendtype, recvtype
    TYPE(MPI_Comm), INTENT(IN) :: comm
@@ -1708,8 +1849,8 @@ subroutine MPI_Scatter_init_f08(sendbuf,sendcount,sendtype,recvbuf,recvcount,rec
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Info, MPI_Request
    implicit none
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf, recvbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN), ASYNCHRONOUS :: sendbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, ASYNCHRONOUS :: recvbuf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) OMPI_ASYNCHRONOUS :: sendbuf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ OMPI_ASYNCHRONOUS :: recvbuf
    INTEGER, INTENT(IN) :: sendcount, recvcount, root
    TYPE(MPI_Datatype), INTENT(IN) :: sendtype, recvtype
    TYPE(MPI_Comm), INTENT(IN) :: comm
@@ -1741,10 +1882,10 @@ subroutine MPI_Iscatterv_f08(sendbuf,sendcounts,displs,sendtype,recvbuf,recvcoun
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf, recvbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN), ASYNCHRONOUS :: sendbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, ASYNCHRONOUS :: recvbuf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) OMPI_ASYNCHRONOUS :: sendbuf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ OMPI_ASYNCHRONOUS :: recvbuf
    INTEGER, INTENT(IN) :: recvcount, root
-   INTEGER, INTENT(IN), ASYNCHRONOUS :: sendcounts(*), displs(*)
+   INTEGER, INTENT(IN) OMPI_ASYNCHRONOUS :: sendcounts(*), displs(*)
    TYPE(MPI_Datatype), INTENT(IN) :: sendtype, recvtype
    TYPE(MPI_Comm), INTENT(IN) :: comm
    TYPE(MPI_Request), INTENT(OUT) :: request
@@ -1758,10 +1899,10 @@ subroutine MPI_Scatterv_init_f08(sendbuf,sendcounts,displs,sendtype,recvbuf,recv
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Info, MPI_Request
    implicit none
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf, recvbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN), ASYNCHRONOUS :: sendbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, ASYNCHRONOUS :: recvbuf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) OMPI_ASYNCHRONOUS :: sendbuf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ OMPI_ASYNCHRONOUS :: recvbuf
    INTEGER, INTENT(IN) :: recvcount, root
-   INTEGER, INTENT(IN), ASYNCHRONOUS :: sendcounts(*), displs(*)
+   INTEGER, INTENT(IN) OMPI_ASYNCHRONOUS :: sendcounts(*), displs(*)
    TYPE(MPI_Datatype), INTENT(IN) :: sendtype, recvtype
    TYPE(MPI_Comm), INTENT(IN) :: comm
    TYPE(MPI_Info), INTENT(IN) :: info
@@ -1791,6 +1932,20 @@ subroutine MPI_Comm_create_f08(comm,group,newcomm,ierror)
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine MPI_Comm_create_f08
 end interface  MPI_Comm_create
+
+interface  MPI_Comm_create_from_group
+subroutine MPI_Comm_create_from_group_f08(group, stringtag, info, errhandler, newcomm, ierror)
+   use :: mpi_f08_types, only : MPI_Comm, MPI_Group, MPI_Info, MPI_Errhandler
+   implicit none
+   TYPE(MPI_Group), INTENT(IN) :: group
+   CHARACTER(LEN=*), INTENT(IN) :: stringtag
+   TYPE(MPI_Info), INTENT(IN) :: info
+   TYPE(MPI_Errhandler), INTENT(IN) :: errhandler
+   TYPE(MPI_Comm), INTENT(OUT) :: newcomm
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+
+end subroutine MPI_Comm_create_from_group_f08
+end interface  MPI_Comm_create_from_group
 
 interface  MPI_Comm_create_group
 subroutine MPI_Comm_create_group_f08(comm,group,tag,newcomm,ierror)
@@ -1855,11 +2010,24 @@ subroutine MPI_Comm_idup_f08(comm,newcomm,request,ierror)
    use :: mpi_f08_types, only : MPI_Comm, MPI_Request
    implicit none
    TYPE(MPI_Comm), INTENT(IN) :: comm
-   TYPE(MPI_Comm), INTENT(OUT) :: newcomm
+   TYPE(MPI_Comm), INTENT(OUT) OMPI_ASYNCHRONOUS :: newcomm
    TYPE(MPI_Request), INTENT(OUT) :: request
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine MPI_Comm_idup_f08
 end interface  MPI_Comm_idup
+
+interface  MPI_Comm_idup_with_info
+subroutine MPI_Comm_idup_with_info_f08(comm,info,newcomm,request,ierror)
+   use :: mpi_f08_types, only : MPI_Comm, MPI_Request, MPI_info
+   implicit none
+   TYPE(MPI_Comm), INTENT(IN) :: comm
+   TYPE(MPI_Info), INTENT(IN) :: info
+   TYPE(MPI_Comm), INTENT(OUT) :: newcomm
+   TYPE(MPI_Request), INTENT(OUT) :: request
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine MPI_Comm_idup_with_info_f08
+end interface  MPI_Comm_idup_with_info
+
 
 interface  MPI_Comm_free
 subroutine MPI_Comm_free_f08(comm,ierror)
@@ -2052,6 +2220,17 @@ subroutine MPI_Group_free_f08(group,ierror)
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine MPI_Group_free_f08
 end interface  MPI_Group_free
+
+interface MPI_Group_from_session_pset
+subroutine MPI_Group_from_session_pset_f08(session, pset_name, newgroup, ierror)
+   use :: mpi_f08_types, only : MPI_Session, MPI_Group
+   implicit none
+   TYPE(MPI_Session), INTENT(IN) :: session
+   CHARACTER(LEN=*), INTENT(IN) :: pset_name
+   TYPE(MPI_Group), INTENT(OUT) :: newgroup
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine MPI_Group_from_session_pset_f08
+end interface MPI_Group_from_session_pset
 
 interface  MPI_Group_incl
 subroutine MPI_Group_incl_f08(group,n,ranks,newgroup,ierror)
@@ -2314,11 +2493,11 @@ end subroutine MPI_Win_get_attr_f08
 end interface  MPI_Win_get_attr
 
 interface  MPI_Win_get_info
-subroutine MPI_Win_get_info_f08(win,info,ierror)
+subroutine MPI_Win_get_info_f08(win,info_used,ierror)
    use :: mpi_f08_types, only : MPI_Win, MPI_Info
    implicit none
    TYPE(MPI_Win), INTENT(IN) :: win
-   TYPE(MPI_Info), INTENT(OUT) :: info
+   TYPE(MPI_Info), INTENT(OUT) :: info_used
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine MPI_Win_get_info_f08
 end interface  MPI_Win_get_info
@@ -2596,11 +2775,11 @@ end subroutine MPI_Topo_test_f08
 end interface  MPI_Topo_test
 
 interface MPI_Aint_add
-function  MPI_Aint_add_f08(base,diff)
+function  MPI_Aint_add_f08(base,disp)
    use :: mpi_f08_types, only : MPI_ADDRESS_KIND
    implicit none
-   INTEGER(MPI_ADDRESS_KIND) :: base
-   INTEGER(MPI_ADDRESS_KIND) :: diff
+   INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: base
+   INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: disp
    INTEGER(MPI_ADDRESS_KIND) :: MPI_Aint_add_f08
 end function  MPI_Aint_add_f08
 end interface MPI_Aint_add
@@ -2609,8 +2788,8 @@ interface MPI_Aint_diff
 function  MPI_Aint_diff_f08(addr1,addr2)
    use :: mpi_f08_types, only : MPI_ADDRESS_KIND
    implicit none
-   INTEGER(MPI_ADDRESS_KIND) :: addr1
-   INTEGER(MPI_ADDRESS_KIND) :: addr2
+   INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: addr1
+   INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: addr2
    INTEGER(MPI_ADDRESS_KIND) :: MPI_Aint_diff_f08
 end function  MPI_Aint_diff_f08
 end interface MPI_Aint_diff
@@ -2884,6 +3063,15 @@ subroutine MPI_Info_create_f08(info,ierror)
 end subroutine MPI_Info_create_f08
 end interface  MPI_Info_create
 
+interface  MPI_Info_create_env
+subroutine MPI_Info_create_env_f08(info,ierror)
+   use :: mpi_f08_types, only : MPI_Info
+   implicit none
+   TYPE(MPI_Info), INTENT(OUT) :: info
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine MPI_Info_create_env_f08
+end interface  MPI_Info_create_env
+
 interface  MPI_Info_delete
 subroutine MPI_Info_delete_f08(info,key,ierror)
    use :: mpi_f08_types, only : MPI_Info
@@ -2968,6 +3156,19 @@ subroutine MPI_Info_set_f08(info,key,value,ierror)
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine MPI_Info_set_f08
 end interface  MPI_Info_set
+
+interface  MPI_Info_get_string
+subroutine MPI_Info_get_string_f08(info,key,buflen,value,flag,ierror)
+   use :: mpi_f08_types, only : MPI_Info
+   implicit none
+   TYPE(MPI_Info), INTENT(IN) :: info
+   CHARACTER(LEN=*), INTENT(IN) :: key
+   INTEGER, INTENT(INOUT) :: buflen
+   CHARACTER(LEN=*), INTENT(OUT) :: value
+   LOGICAL, INTENT(OUT) :: flag
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine MPI_Info_get_string_f08
+end interface  MPI_Info_get_string
 
 interface  MPI_Close_port
 subroutine MPI_Close_port_f08(port_name,ierror)
@@ -3109,7 +3310,7 @@ subroutine MPI_Accumulate_f08(origin_addr,origin_count,origin_datatype,target_ra
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Op, MPI_Win, MPI_ADDRESS_KIND
    implicit none
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ origin_addr
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) :: origin_addr
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) OMPI_ASYNCHRONOUS :: origin_addr
    INTEGER, INTENT(IN) :: origin_count, target_rank, target_count
    TYPE(MPI_Datatype), INTENT(IN) :: origin_datatype
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: target_disp
@@ -3127,7 +3328,7 @@ subroutine MPI_Raccumulate_f08(origin_addr,origin_count,origin_datatype,target_r
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Op, MPI_Win, MPI_Request, MPI_ADDRESS_KIND
    implicit none
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ origin_addr
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) :: origin_addr
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) OMPI_ASYNCHRONOUS :: origin_addr
    INTEGER, INTENT(IN) :: origin_count, target_rank, target_count
    TYPE(MPI_Datatype), INTENT(IN) :: origin_datatype
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: target_disp
@@ -3145,7 +3346,7 @@ subroutine MPI_Get_f08(origin_addr,origin_count,origin_datatype,target_rank, &
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Win, MPI_ADDRESS_KIND
    implicit none
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ origin_addr
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: origin_addr
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ OMPI_ASYNCHRONOUS :: origin_addr
    INTEGER, INTENT(IN) :: origin_count, target_rank, target_count
    TYPE(MPI_Datatype), INTENT(IN) :: origin_datatype
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: target_disp
@@ -3161,7 +3362,7 @@ subroutine MPI_Rget_f08(origin_addr,origin_count,origin_datatype,target_rank, &
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Request, MPI_Win, MPI_ADDRESS_KIND
    implicit none
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ origin_addr
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: origin_addr
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ OMPI_ASYNCHRONOUS :: origin_addr
    INTEGER, INTENT(IN) :: origin_count, target_rank, target_count
    TYPE(MPI_Datatype), INTENT(IN) :: origin_datatype
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: target_disp
@@ -3179,10 +3380,10 @@ subroutine MPI_Get_accumulate_f08(origin_addr,origin_count,origin_datatype,resul
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Op, MPI_Win, MPI_ADDRESS_KIND
    implicit none
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ origin_addr,result_addr
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: origin_addr
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) OMPI_ASYNCHRONOUS :: origin_addr
    INTEGER, INTENT(IN) :: origin_count, result_count, target_rank, target_count
    TYPE(MPI_Datatype), INTENT(IN) :: origin_datatype
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: result_addr
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ OMPI_ASYNCHRONOUS :: result_addr
    TYPE(MPI_Datatype), INTENT(IN) :: result_datatype
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: target_disp
    TYPE(MPI_Datatype), INTENT(IN) :: target_datatype
@@ -3199,10 +3400,10 @@ subroutine MPI_Rget_accumulate_f08(origin_addr,origin_count,origin_datatype,resu
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Op, MPI_Request, MPI_Win, MPI_ADDRESS_KIND
    implicit none
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ origin_addr,result_addr
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: origin_addr
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) OMPI_ASYNCHRONOUS :: origin_addr
    INTEGER, INTENT(IN) :: origin_count, result_count, target_rank, target_count
    TYPE(MPI_Datatype), INTENT(IN) :: origin_datatype
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: result_addr
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ OMPI_ASYNCHRONOUS :: result_addr
    TYPE(MPI_Datatype), INTENT(IN) :: result_datatype
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: target_disp
    TYPE(MPI_Datatype), INTENT(IN) :: target_datatype
@@ -3219,7 +3420,7 @@ subroutine MPI_Put_f08(origin_addr,origin_count,origin_datatype,target_rank, &
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Win, MPI_ADDRESS_KIND
    implicit none
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ origin_addr
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) :: origin_addr
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) OMPI_ASYNCHRONOUS :: origin_addr
    INTEGER, INTENT(IN) :: origin_count, target_rank, target_count
    TYPE(MPI_Datatype), INTENT(IN) :: origin_datatype
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: target_disp
@@ -3235,7 +3436,7 @@ subroutine MPI_Rput_f08(origin_addr,origin_count,origin_datatype,target_rank, &
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Win, MPI_Request, MPI_ADDRESS_KIND
    implicit none
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ origin_addr
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) :: origin_addr
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) OMPI_ASYNCHRONOUS :: origin_addr
    INTEGER, INTENT(IN) :: origin_count, target_rank, target_count
    TYPE(MPI_Datatype), INTENT(IN) :: origin_datatype
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: target_disp
@@ -3252,8 +3453,8 @@ subroutine MPI_Fetch_and_op_f08(origin_addr,result_addr,datatype,target_rank, &
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Op, MPI_Win, MPI_ADDRESS_KIND
    implicit none
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ origin_addr,result_addr
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) :: origin_addr
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: result_addr
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) OMPI_ASYNCHRONOUS :: origin_addr
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ OMPI_ASYNCHRONOUS :: result_addr
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    INTEGER, INTENT(IN) :: target_rank
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: target_disp
@@ -3269,8 +3470,8 @@ subroutine MPI_Compare_and_swap_f08(origin_addr,compare_addr,result_addr,datatyp
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Win, MPI_ADDRESS_KIND
    implicit none
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ origin_addr,compare_addr,result_addr
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) :: origin_addr,compare_addr
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: result_addr
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) OMPI_ASYNCHRONOUS :: origin_addr,compare_addr
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ OMPI_ASYNCHRONOUS :: result_addr
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    INTEGER, INTENT(IN) :: target_rank
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: target_disp
@@ -3293,7 +3494,7 @@ subroutine MPI_Win_create_f08(base,size,disp_unit,info,comm,win,ierror)
    use :: mpi_f08_types, only : MPI_Info, MPI_Comm, MPI_Win, MPI_ADDRESS_KIND
    implicit none
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ base
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: base
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ OMPI_ASYNCHRONOUS :: base
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: size
    INTEGER, INTENT(IN) :: disp_unit
    TYPE(MPI_Info), INTENT(IN) :: info
@@ -3319,7 +3520,7 @@ subroutine MPI_Win_attach_f08(win,base,size,ierror)
    use :: mpi_f08_types, only : MPI_Win, MPI_ADDRESS_KIND
    implicit none
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ base
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: base
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ OMPI_ASYNCHRONOUS :: base
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: size
    TYPE(MPI_Win), INTENT(IN) :: win
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
@@ -3331,7 +3532,7 @@ subroutine MPI_Win_detach_f08(win,base,ierror)
    use :: mpi_f08_types, only : MPI_Win, MPI_ADDRESS_KIND
    implicit none
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ base
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: base
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ OMPI_ASYNCHRONOUS :: base
    TYPE(MPI_Win), INTENT(IN) :: win
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine MPI_Win_detach_f08
@@ -3720,7 +3921,7 @@ subroutine MPI_File_iread_f08(fh,buf,count,datatype,request,ierror)
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: buf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ OMPI_ASYNCHRONOUS :: buf
    INTEGER, INTENT(IN) :: count
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    TYPE(MPI_Request), INTENT(OUT) :: request
@@ -3735,7 +3936,7 @@ subroutine MPI_File_iread_at_f08(fh,offset,buf,count,datatype,request,ierror)
    TYPE(MPI_File), INTENT(IN) :: fh
    INTEGER(MPI_OFFSET_KIND), INTENT(IN) :: offset
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: buf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ OMPI_ASYNCHRONOUS :: buf
    INTEGER, INTENT(IN) :: count
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    TYPE(MPI_Request), INTENT(OUT) :: request
@@ -3749,7 +3950,7 @@ subroutine MPI_File_iread_all_f08(fh,buf,count,datatype,request,ierror)
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: buf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ OMPI_ASYNCHRONOUS :: buf
    INTEGER, INTENT(IN) :: count
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    TYPE(MPI_Request), INTENT(OUT) :: request
@@ -3764,7 +3965,7 @@ subroutine MPI_File_iread_at_all_f08(fh,offset,buf,count,datatype,request,ierror
    TYPE(MPI_File), INTENT(IN) :: fh
    INTEGER(MPI_OFFSET_KIND), INTENT(IN) :: offset
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: buf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ OMPI_ASYNCHRONOUS :: buf
    INTEGER, INTENT(IN) :: count
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    TYPE(MPI_Request), INTENT(OUT) :: request
@@ -3778,7 +3979,7 @@ subroutine MPI_File_iread_shared_f08(fh,buf,count,datatype,request,ierror)
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: buf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ OMPI_ASYNCHRONOUS :: buf
    INTEGER, INTENT(IN) :: count
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    TYPE(MPI_Request), INTENT(OUT) :: request
@@ -3792,7 +3993,7 @@ subroutine MPI_File_iwrite_f08(fh,buf,count,datatype,request,ierror)
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) :: buf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) OMPI_ASYNCHRONOUS :: buf
    INTEGER, INTENT(IN) :: count
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    TYPE(MPI_Request), INTENT(OUT) :: request
@@ -3807,7 +4008,7 @@ subroutine MPI_File_iwrite_at_f08(fh,offset,buf,count,datatype,request,ierror)
    TYPE(MPI_File), INTENT(IN) :: fh
    INTEGER(MPI_OFFSET_KIND), INTENT(IN) :: offset
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) :: buf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) OMPI_ASYNCHRONOUS :: buf
    INTEGER, INTENT(IN) :: count
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    TYPE(MPI_Request), INTENT(OUT) :: request
@@ -3821,7 +4022,7 @@ subroutine MPI_File_iwrite_all_f08(fh,buf,count,datatype,request,ierror)
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) :: buf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) OMPI_ASYNCHRONOUS :: buf
    INTEGER, INTENT(IN) :: count
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    TYPE(MPI_Request), INTENT(OUT) :: request
@@ -3836,7 +4037,7 @@ subroutine MPI_File_iwrite_at_all_f08(fh,offset,buf,count,datatype,request,ierro
    TYPE(MPI_File), INTENT(IN) :: fh
    INTEGER(MPI_OFFSET_KIND), INTENT(IN) :: offset
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) :: buf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) OMPI_ASYNCHRONOUS :: buf
    INTEGER, INTENT(IN) :: count
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    TYPE(MPI_Request), INTENT(OUT) :: request
@@ -3849,7 +4050,7 @@ subroutine MPI_File_iwrite_shared_f08(fh,buf,count,datatype,request,ierror)
    use :: mpi_f08_types, only : MPI_File, MPI_Datatype, MPI_Request
    implicit none
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) :: buf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) OMPI_ASYNCHRONOUS :: buf
    TYPE(MPI_File), INTENT(IN) :: fh
    INTEGER, INTENT(IN) :: count
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
@@ -3915,7 +4116,7 @@ subroutine MPI_File_read_all_begin_f08(fh,buf,count,datatype,ierror)
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: buf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ OMPI_ASYNCHRONOUS :: buf
    INTEGER, INTENT(IN) :: count
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
@@ -3928,7 +4129,7 @@ subroutine MPI_File_read_all_end_f08(fh,buf,status,ierror)
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: buf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ OMPI_ASYNCHRONOUS :: buf
    TYPE(MPI_Status) :: status
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine MPI_File_read_all_end_f08
@@ -3971,7 +4172,7 @@ subroutine MPI_File_read_at_all_begin_f08(fh,offset,buf,count,datatype,ierror)
    TYPE(MPI_File), INTENT(IN) :: fh
    INTEGER(MPI_OFFSET_KIND), INTENT(IN) :: offset
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: buf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ OMPI_ASYNCHRONOUS :: buf
    INTEGER, INTENT(IN) :: count
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
@@ -3984,7 +4185,7 @@ subroutine MPI_File_read_at_all_end_f08(fh,buf,status,ierror)
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: buf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ OMPI_ASYNCHRONOUS :: buf
    TYPE(MPI_Status) :: status
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine MPI_File_read_at_all_end_f08
@@ -4010,7 +4211,7 @@ subroutine MPI_File_read_ordered_begin_f08(fh,buf,count,datatype,ierror)
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: buf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ OMPI_ASYNCHRONOUS :: buf
    INTEGER, INTENT(IN) :: count
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
@@ -4023,7 +4224,7 @@ subroutine MPI_File_read_ordered_end_f08(fh,buf,status,ierror)
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: buf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ OMPI_ASYNCHRONOUS :: buf
    TYPE(MPI_Status) :: status
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine MPI_File_read_ordered_end_f08
@@ -4152,7 +4353,7 @@ subroutine MPI_File_write_all_begin_f08(fh,buf,count,datatype,ierror)
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) :: buf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) OMPI_ASYNCHRONOUS :: buf
    INTEGER, INTENT(IN) :: count
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
@@ -4165,7 +4366,7 @@ subroutine MPI_File_write_all_end_f08(fh,buf,status,ierror)
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) :: buf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) OMPI_ASYNCHRONOUS :: buf
    TYPE(MPI_Status) :: status
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine MPI_File_write_all_end_f08
@@ -4193,7 +4394,7 @@ subroutine MPI_File_write_at_all_f08(fh,offset,buf,count,datatype,status,ierror)
    TYPE(MPI_File), INTENT(IN) :: fh
    INTEGER(MPI_OFFSET_KIND), INTENT(IN) :: offset
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: buf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) :: buf
    INTEGER, INTENT(IN) :: count
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    TYPE(MPI_Status) :: status
@@ -4208,7 +4409,7 @@ subroutine MPI_File_write_at_all_begin_f08(fh,offset,buf,count,datatype,ierror)
    TYPE(MPI_File), INTENT(IN) :: fh
    INTEGER(MPI_OFFSET_KIND), INTENT(IN) :: offset
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) :: buf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) OMPI_ASYNCHRONOUS :: buf
    INTEGER, INTENT(IN) :: count
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
@@ -4221,7 +4422,7 @@ subroutine MPI_File_write_at_all_end_f08(fh,buf,status,ierror)
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) :: buf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) OMPI_ASYNCHRONOUS :: buf
    TYPE(MPI_Status) :: status
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine MPI_File_write_at_all_end_f08
@@ -4247,7 +4448,7 @@ subroutine MPI_File_write_ordered_begin_f08(fh,buf,count,datatype,ierror)
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) :: buf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) OMPI_ASYNCHRONOUS :: buf
    INTEGER, INTENT(IN) :: count
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
@@ -4260,7 +4461,7 @@ subroutine MPI_File_write_ordered_end_f08(fh,buf,status,ierror)
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) :: buf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) OMPI_ASYNCHRONOUS :: buf
    TYPE(MPI_Status) :: status
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine MPI_File_write_ordered_end_f08
@@ -4378,7 +4579,7 @@ interface  MPI_F_sync_reg
 subroutine MPI_F_sync_reg_f08(buf)
    implicit none
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: buf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ OMPI_ASYNCHRONOUS :: buf
 end subroutine MPI_F_sync_reg_f08
 end interface  MPI_F_sync_reg
 
@@ -4399,7 +4600,7 @@ subroutine MPI_Mprobe_f08(source,tag,comm,message,status,ierror)
    INTEGER, INTENT(IN) :: source, tag
    TYPE(MPI_Comm), INTENT(IN) :: comm
    TYPE(MPI_Message), INTENT(OUT) :: message
-   TYPE(MPI_Status), INTENT(OUT) :: status
+   TYPE(MPI_Status) :: status
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine MPI_Mprobe_f08
 end interface  MPI_Mprobe
@@ -4412,7 +4613,7 @@ subroutine MPI_Improbe_f08(source,tag,comm,flag,message,status,ierror)
    TYPE(MPI_Comm), INTENT(IN) :: comm
    LOGICAL, INTENT(OUT) :: flag
    TYPE(MPI_Message), INTENT(OUT) :: message
-   TYPE(MPI_Status), INTENT(OUT) :: status
+   TYPE(MPI_Status) :: status
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine MPI_Improbe_f08
 end interface  MPI_Improbe
@@ -4422,7 +4623,7 @@ subroutine MPI_Imrecv_f08(buf,count,datatype,message,request,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Message, MPI_Request
    implicit none
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: buf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ OMPI_ASYNCHRONOUS :: buf
    INTEGER, INTENT(IN) :: count
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    TYPE(MPI_Message), INTENT(INOUT) :: message
@@ -4466,8 +4667,8 @@ subroutine MPI_Ineighbor_allgather_f08(sendbuf,sendcount,sendtype,recvbuf,recvco
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf, recvbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) :: sendbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: recvbuf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) OMPI_ASYNCHRONOUS :: sendbuf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ OMPI_ASYNCHRONOUS :: recvbuf
    INTEGER, INTENT(IN) :: sendcount, recvcount
    TYPE(MPI_Datatype), INTENT(IN) :: sendtype, recvtype
    TYPE(MPI_Comm), INTENT(IN) :: comm
@@ -4515,10 +4716,10 @@ subroutine MPI_Ineighbor_allgatherv_f08(sendbuf,sendcount,sendtype,recvbuf,recvc
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf, recvbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) :: sendbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: recvbuf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) OMPI_ASYNCHRONOUS :: sendbuf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ OMPI_ASYNCHRONOUS :: recvbuf
    INTEGER, INTENT(IN) :: sendcount
-   INTEGER, INTENT(IN) :: recvcounts(*), displs(*)
+   INTEGER, INTENT(IN) OMPI_ASYNCHRONOUS :: recvcounts(*), displs(*)
    TYPE(MPI_Datatype), INTENT(IN) :: sendtype, recvtype
    TYPE(MPI_Comm), INTENT(IN) :: comm
    TYPE(MPI_Request), INTENT(OUT) :: request
@@ -4565,8 +4766,8 @@ subroutine MPI_Ineighbor_alltoall_f08(sendbuf,sendcount,sendtype,recvbuf,recvcou
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf, recvbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) :: sendbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: recvbuf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) OMPI_ASYNCHRONOUS :: sendbuf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ OMPI_ASYNCHRONOUS :: recvbuf
    INTEGER, INTENT(IN) :: sendcount, recvcount
    TYPE(MPI_Datatype), INTENT(IN) :: sendtype, recvtype
    TYPE(MPI_Comm), INTENT(IN) :: comm
@@ -4613,9 +4814,9 @@ subroutine MPI_Ineighbor_alltoallv_f08(sendbuf,sendcounts,sdispls,sendtype,recvb
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf, recvbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) :: sendbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: recvbuf
-   INTEGER, INTENT(IN) :: sendcounts(*), sdispls(*), recvcounts(*), rdispls(*)
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) OMPI_ASYNCHRONOUS :: sendbuf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ OMPI_ASYNCHRONOUS :: recvbuf
+   INTEGER, INTENT(IN) OMPI_ASYNCHRONOUS :: sendcounts(*), sdispls(*), recvcounts(*), rdispls(*)
    TYPE(MPI_Datatype), INTENT(IN) :: sendtype, recvtype
    TYPE(MPI_Comm), INTENT(IN) :: comm
    TYPE(MPI_Request), INTENT(OUT) :: request
@@ -4662,11 +4863,11 @@ subroutine MPI_Ineighbor_alltoallw_f08(sendbuf,sendcounts,sdispls,sendtypes,recv
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request, MPI_ADDRESS_KIND
    implicit none
    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf, recvbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) :: sendbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: recvbuf
-   INTEGER, INTENT(IN) :: sendcounts(*), recvcounts(*)
-   INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: sdispls(*), rdispls(*)
-   TYPE(MPI_Datatype), INTENT(IN) :: sendtypes(*), recvtypes(*)
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) OMPI_ASYNCHRONOUS :: sendbuf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ OMPI_ASYNCHRONOUS :: recvbuf
+   INTEGER, INTENT(IN) OMPI_ASYNCHRONOUS :: sendcounts(*), recvcounts(*)
+   INTEGER(MPI_ADDRESS_KIND), INTENT(IN) OMPI_ASYNCHRONOUS :: sdispls(*), rdispls(*)
+   TYPE(MPI_Datatype), INTENT(IN) OMPI_ASYNCHRONOUS :: sendtypes(*), recvtypes(*)
    TYPE(MPI_Comm), INTENT(IN) :: comm
    TYPE(MPI_Request), INTENT(OUT) :: request
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
@@ -4690,3 +4891,23 @@ subroutine MPI_Neighbor_alltoallw_init_f08(sendbuf,sendcounts,sdispls,sendtypes,
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine MPI_Neighbor_alltoallw_init_f08
 end interface  MPI_Neighbor_alltoallw_init
+
+interface MPI_Status_f2f08
+subroutine MPI_Status_f2f08_f08(f_status,f08_status,ierror)
+   use :: mpi_f08_types, only : MPI_Status, MPI_STATUS_SIZE
+   implicit none
+   INTEGER, INTENT(IN) :: f_status(MPI_STATUS_SIZE)
+   TYPE(MPI_Status), INTENT(OUT) :: f08_status
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine MPI_Status_f2f08_f08
+end interface MPI_Status_f2f08
+
+interface MPI_Status_f082f
+subroutine MPI_Status_f082f_f08(f08_status,f_status,ierror)
+   use :: mpi_f08_types, only : MPI_Status, MPI_STATUS_SIZE
+   implicit none
+   TYPE(MPI_Status), INTENT(IN) :: f08_status
+   INTEGER, INTENT(OUT) :: f_status(MPI_STATUS_SIZE)
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine MPI_Status_f082f_f08
+end interface MPI_Status_f082f

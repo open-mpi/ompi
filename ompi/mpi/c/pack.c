@@ -103,7 +103,7 @@ int MPI_Pack(const void *inbuf, int incount, MPI_Datatype datatype,
         return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TRUNCATE, FUNC_NAME);
     }
 
-    /* Prepare the iovec with all informations */
+    /* Prepare the iovec with all information */
     invec.iov_base = (char*) outbuf + (*position);
     invec.iov_len = size;
 

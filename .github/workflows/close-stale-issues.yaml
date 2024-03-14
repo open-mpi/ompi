@@ -1,0 +1,65 @@
+# The idea behind this Action is to prevent the situation where a user
+# files a Github Issue, someone asks for clarification / more
+# information, but the original poster never provides the information.
+# The issue then becomes forgotten and abondoned.
+#
+# Instead of that scenario, Open MPI community members can assign a
+# label to Github Issues indicating that we're waiting for the user to
+# reply.  If too much time elapses with no reply, mark the Issue as
+# stale and emit a warning that we'll close the issue if we continue
+# to receive no reply.  If we timeout again with no reply after the
+# warning, close the Issue and emit a comment explaining why.
+#
+# If the user *does* reply, the label is removed, and this bot won't
+# touch the Issue.  Specifically: this bot will never mark stale /
+# close an Issue that doesn't have the specified label.
+#
+# Additionally, we are *only* marking stale / auto-closing Github
+# Issues -- not Pull Requests.
+#
+# This is a cron-based Action that runs a few times a day, just so
+# that we don't mark stale / close a bunch of issues all at once.
+#
+# While the actions/stale bot Action used here is capable of removing
+# the label when a user replies to the Issue, we actually use a 2nd
+# Action (removing-awaiting-user-info-label.yaml) to remove the label.
+# We do this because that 2nd Action runs whenever a comment is
+# created -- not via cron.  Hence, the 2nd Action will remove the
+# label effectively immediately when the user replies (vs. up to
+# several hours later).
+
+name: Close stale issues
+on:
+  schedule:
+    # Run it a few times a day so as not to necessarily mark stale /
+    # close a bunch of issues at once.
+    - cron: '0 1,5,9,13,17,21 * * *'
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    steps:
+      # https://github.com/marketplace/actions/close-stale-issues
+      - uses: actions/stale@v9
+        with:
+          # If there are no replies for 14 days, mark the issue as
+          # "stale" (and emit a warning).
+          days-before-stale: 14
+          # If there are no replies for 14 days after becoming stale,
+          # then close the issue (and emit a message explaining why).
+          days-before-close: 14
+
+          # Never close PRs
+          days-before-pr-close: -1
+
+          # We only close issues with this label
+          only-labels: State-Awaiting user information
+          close-issue-label: Closed due to no reply
+
+          # Messages that we put in comments on issues
+          stale-issue-message: |
+            It looks like this issue is expecting a response, but hasn't gotten one yet.  If there are no responses in the next 2 weeks, we'll assume that the issue has been abandoned and will close it.
+          close-issue-message: |
+            Per the above comment, it has been a month with no reply on this issue.  It looks like this issue has been abandoned.
+
+            I'm going to close this issue.  If I'm wrong and this issue is *not* abandoned, please feel free to re-open it.  Thank you!

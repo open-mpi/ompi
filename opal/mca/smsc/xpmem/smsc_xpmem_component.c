@@ -1,6 +1,8 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2021      Google, Inc. All rights reserved.
+ * Copyright (c) 2022      Computer Architecture and VLSI Systems (CARV)
+ *                         Laboratory, ICS Forth. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -76,10 +78,7 @@ static int mca_smsc_xpmem_component_open(void)
 
 static int mca_smsc_xpmem_component_close(void)
 {
-    if (mca_smsc_xpmem_module.vma_module) {
-        OBJ_RELEASE(mca_smsc_xpmem_module.vma_module);
-    }
-
+    /* nothing to do */
     return OPAL_SUCCESS;
 }
 
@@ -119,7 +118,7 @@ static int mca_smsc_xpmem_component_query(void)
     while (fgets(buffer, sizeof(buffer), fh)) {
         uintptr_t low, high;
         char *tmp;
-        /* each line of /proc/self/maps starts with low-high in hexidecimal (without a 0x) */
+        /* each line of /proc/self/maps starts with low-high in hexadecimal (without a 0x) */
         low = strtoul(buffer, &tmp, 16);
         high = strtoul(tmp + 1, NULL, 16);
         if (address_max < high) {
@@ -135,7 +134,7 @@ static int mca_smsc_xpmem_component_query(void)
         return OPAL_ERR_NOT_AVAILABLE;
     }
 
-    /* save the calcuated maximum */
+    /* save the calculated maximum */
     mca_smsc_xpmem_component.my_address_max = address_max - 1;
 
     /* it is safe to use XPMEM_MAXADDR_SIZE here (which is always (size_t)-1 even though
@@ -160,8 +159,6 @@ static mca_smsc_module_t *mca_smsc_xpmem_component_enable(void)
     /* limit segment alignment to be between 4k and 16M */
     mca_smsc_xpmem_component.log_attach_align
         = opal_min(opal_max(mca_smsc_xpmem_component.log_attach_align, 12), 25);
-
-    mca_smsc_xpmem_module.vma_module = mca_rcache_base_vma_module_alloc();
 
     return &mca_smsc_xpmem_module.super;
 }

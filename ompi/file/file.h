@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -16,6 +16,8 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      University of Houston. All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -99,7 +101,7 @@ struct ompi_file_t {
 typedef struct ompi_file_t ompi_file_t;
 
 /**
- * Padded struct to maintain back compatibiltiy.
+ * Padded struct to maintain back compatibility.
  * See ompi/communicator/communicator.h comments with struct ompi_communicator_t
  * for full explanation why we chose the following padding construct for predefines.
  */
@@ -134,7 +136,7 @@ int ompi_file_init(void);
 
 /**
  * Back-end to MPI_FILE_OPEN: create a file handle, select an io
- * component to use, and have that componet open the file.
+ * component to use, and have that component open the file.
  *
  * @param comm Communicator
  * @param filename String filename
@@ -155,7 +157,7 @@ int ompi_file_open(struct ompi_communicator_t *comm, const char *filename,
                    ompi_file_t **fh);
 
 /**
- * Atomicly set a name on a file handle.
+ * Atomically set a name on a file handle.
  *
  * @param file MPI_File handle to set the name on
  * @param name NULL-terminated string to use
@@ -184,15 +186,6 @@ int ompi_file_set_name(ompi_file_t *file, char *name);
  * also does some additional handling for error checking, etc.
  */
 int ompi_file_close(ompi_file_t **file);
-
-/**
- * Tear down MPI_File handling.
- *
- * @retval OMPI_SUCCESS Always.
- *
- * Invoked during ompi_mpi_finalize().
- */
-int ompi_file_finalize(void);
 
 /**
  * Check to see if an MPI_File handle is valid.

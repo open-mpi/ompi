@@ -1,13 +1,13 @@
 #!/usr/bin/env perl
 #
-# Copyright (c) 2009-2021 Cisco Systems, Inc.  All rights reserved
+# Copyright (c) 2009-2022 Cisco Systems, Inc.  All rights reserved
 # Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
 # Copyright (c) 2013-2020 Intel, Inc.  All rights reserved.
 # Copyright (c) 2015-2021 Research Organization for Information Science
 #                         and Technology (RIST).  All rights reserved.
-# Copyright (c) 2015-2021 IBM Corporation.  All rights reserved.
+# Copyright (c) 2015-2022 IBM Corporation.  All rights reserved.
 # Copyright (c) 2020      Amazon.com, Inc. or its affiliates.
 #                         All Rights reserved.
 #
@@ -43,14 +43,9 @@ my $dnl_line = "dnl ------------------------------------------------------------
 # Data structures to fill up with all the stuff we find
 my $mca_found;
 my $mpiext_found;
-my $mpicontrib_found;
 my @subdirs;
 
 # Command line parameters
-my $no_ompi_arg = 0;
-my $no_orte_arg = 0;
-my $no_prrte_arg = 0;
-my $no_oshmem_arg = 0;
 my $no_3rdparty_arg = "";
 my $quiet_arg = 0;
 my $debug_arg = 0;
@@ -66,9 +61,9 @@ my $include_list;
 my $exclude_list;
 
 # Minimum versions
-my $ompi_automake_version = "1.13.4";
-my $ompi_autoconf_version = "2.69";
-my $ompi_libtool_version = "2.4.2";
+my $ompi_automake_version;
+my $ompi_autoconf_version;
+my $ompi_libtool_version;
 
 # Search paths
 my $ompi_autoconf_search = "autoconf";
@@ -77,7 +72,7 @@ my $ompi_libtoolize_search = "libtoolize;glibtoolize";
 
 # version of packages we ship as tarballs
 my $libevent_version="2.1.12-stable";
-my $hwloc_version="2.4.0";
+my $hwloc_version="2.7.1";
 
 # One-time setup
 my $username;
@@ -130,6 +125,18 @@ sub debug_dump {
     my $d = new Data::Dumper([@_]);
     $d->Purity(1)->Indent(1);
     debug $d->Dump;
+}
+
+##############################################################################
+
+sub list_contains {
+    my $searched_string = shift;
+    foreach my $str (@_) {
+	if ($searched_string eq $str) {
+	    return 1;
+	}
+    }
+    return 0;
 }
 
 ##############################################################################
@@ -231,7 +238,7 @@ sub process_autogen_subdirs {
                 # Note: there's no real technical reason to defer
                 # processing the subdirs.  It's more of an aesthetic
                 # reason -- don't interrupt the current flow of
-                # finding mca / ext / contribs (which is a nice, fast
+                # finding mca / ext (which is a nice, fast
                 # process).  Then process the subdirs (which is a slow
                 # process) all at once.
                 push(@subdirs, "$dir/$_");
@@ -704,93 +711,6 @@ m4_define([ompi_mpiext_list], [$m4_config_ext_list])\n";
 }
 
 ##############################################################################
-
-sub mpicontrib_process {
-    my ($topdir, $contrib_prefix, $contribdir) = @_;
-
-    my $cdir = "$topdir/$contrib_prefix/$contribdir";
-    return
-        if (! -d $cdir);
-
-    # Process this directory (pretty much the same treatment as for
-    # MCA components, so it's in a sub).
-    my $found_contrib;
-
-    $found_contrib->{"name"} = $contribdir;
-
-    # Push the results onto the hash array
-    push(@{$mpicontrib_found}, $found_contrib);
-
-    # Is there an autogen.subdirs in here?
-    process_autogen_subdirs($cdir);
-}
-
-##############################################################################
-
-sub mpicontrib_run_global {
-    my ($contrib_prefix) = @_;
-
-    my $topdir = Cwd::cwd();
-
-    my $dir = "$topdir/$contrib_prefix";
-    opendir(DIR, $dir) ||
-        my_die "Can't open $dir directory";
-    foreach my $d (sort(readdir(DIR))) {
-        # Skip any non-directory, "base", or any dir that begins with "."
-        next
-            if (! -d "$dir/$d" || $d eq "base" || substr($d, 0, 1) eq ".");
-
-        # If this directory has a configure.m4, then it's an
-        # contrib.
-        if (-f "$dir/$d/configure.m4") {
-            verbose "=== Found $d MPI contrib";
-
-            # Check ignore status
-            if (ignored("$dir/$d")) {
-                verbose " (ignored)\n";
-            } else {
-                verbose "\n";
-                mpicontrib_process($topdir, $contrib_prefix, $d);
-            }
-        }
-    }
-    closedir(DIR);
-    debug_dump($mpicontrib_found);
-
-    #-----------------------------------------------------------------------
-
-    $m4 .= "\n$dnl_line
-$dnl_line
-$dnl_line
-
-dnl Open MPI contrib information
-$dnl_line\n\n";
-
-    # Array for all the m4_includes that we'll need to pick up the
-    # configure.m4's.
-    my @includes;
-    my $m4_config_contrib_list;
-
-    # Troll through each of the found contribs
-    foreach my $contrib (@{$mpicontrib_found}) {
-        my $c = $contrib->{name};
-        push(@includes, "$contrib_prefix/$c/configure.m4");
-        $m4_config_contrib_list .= ", $c";
-    }
-
-    $m4_config_contrib_list =~ s/^, //;
-
-    # List the M4 and no configure contribs
-    $m4 .= "dnl List of all MPI contribs
-m4_define([ompi_mpicontrib_list], [$m4_config_contrib_list])\n";
-    # List out all the m4_include
-    $m4 .= "\ndnl List of configure.m4 files to include\n";
-    foreach my $i (@includes) {
-        $m4 .= "m4_include([$i])\n";
-    }
-}
-
-##############################################################################
 # Find and remove stale files
 
 sub find_and_delete {
@@ -1003,7 +923,7 @@ sub patch_autotools_output {
                             '# ICC 10 doesn\047t accept -KPIC any more.\n.*\n\s+' .
 	                    "lt_prog_compiler_wl${tag}=";
         my $replace_string = "# Flang compiler
-      *flang)
+      *flang*)
 	lt_prog_compiler_wl${tag}='-Wl,'
 	lt_prog_compiler_pic${tag}='-fPIC -DPIC'
 	lt_prog_compiler_static${tag}='-static'
@@ -1060,7 +980,7 @@ sub patch_autotools_output {
         $c =~ s/$search_string/$replace_string/;
 
         # Newer versions of Libtool have the previous patch already. Therefore,
-        # we add the support for convenience libraries separetly
+        # we add the support for convenience libraries separately
         my $search_string = "whole_archive_flag_spec${tag}=" . '\n\s+' .
             "tmp_sharedflag='--shared' ;;" . '\n\s+' .
             'nagfor\052.*# NAGFOR 5.3\n\s+' .
@@ -1141,6 +1061,30 @@ sub patch_autotools_output {
       *)';
     $c =~ s/$search_string/$replace_string/g;
 
+    # Fix ifort support on OSX
+    # see https://ntq1982.github.io/files/20200621.html
+    $search_string = 'case \$cc_basename in
+      nagfor\*\)
+        # NAG Fortran compiler
+        lt_prog_compiler_wl_FC=\'-Wl,-Wl,,\'
+        lt_prog_compiler_pic_FC=\'-PIC\'
+        lt_prog_compiler_static_FC=\'-Bstatic\'
+        ;;';
+    $replace_string = "case \$cc_basename in
+      icc* | ifort*)
+        #Intel Fortran compiler
+        lt_prog_compiler_wl_FC='-Wl,'
+        lt_prog_compiler_pic_FC='-fno-common -PIC'
+        lt_prog_compiler_static_FC=''
+        ;;
+      nagfor*)
+        # NAG Fortran compiler
+        lt_prog_compiler_wl_FC='-Wl,-Wl,,'
+        lt_prog_compiler_pic_FC='-PIC'
+        lt_prog_compiler_static_FC='-Bstatic'
+        ;;";
+    $c =~ s/$search_string/$replace_string/g;
+
     # Only write out verbose statements and a new configure if the
     # configure content actually changed
     return
@@ -1155,6 +1099,76 @@ sub patch_autotools_output {
     # Use cp so that we preserve permissions on configure
     safe_system("cp configure.patched configure");
     unlink("configure.patched");
+}
+
+sub export_version {
+    my ($name,$version) = @_;
+    $version =~ s/[^a-zA-Z0-9,.]//g;
+    my @version_splits = split(/\./,$version);
+    my $hex = sprintf("0x%04x%02x%02x", $version_splits[0], $version_splits[1], $version_splits[2]);
+    $m4 .= "m4_define([OMPI_${name}_MIN_VERSION], [$version])\n";
+    $m4 .= "m4_define([OMPI_${name}_NUMERIC_MIN_VERSION], [$hex])\n";
+}
+
+sub export_mpi_version {
+    my ($name,$version) = @_;
+    $version =~ s/[^a-zA-Z0-9,.]//g;
+    $m4 .= "m4_define([$name], [$version])\n";
+}
+
+sub get_and_define_min_versions() {
+
+    open(IN, "VERSION") || my_die "Can't open VERSION";
+    while (<IN>) {
+          my $line = $_;
+          my @fields = split(/=/,$line);
+          if ($fields[0] eq "automake_min_version") {
+              if ($fields[1] ne "\n") {
+                  $ompi_automake_version = $fields[1];
+              }
+          }
+          elsif($fields[0] eq "autoconf_min_version") {
+              if ($fields[1] ne "\n") {
+                  $ompi_autoconf_version = $fields[1];
+              }
+          }
+          elsif($fields[0] eq "libtool_min_version") {
+              if ($fields[1] ne "\n") {
+                  $ompi_libtool_version = $fields[1];
+              }
+          }
+          elsif($fields[0] eq "pmix_min_version") {
+              if ($fields[1] ne "\n") {
+                  export_version("PMIX", $fields[1]);
+              }
+          }
+          elsif($fields[0] eq "prte_min_version") {
+              if ($fields[1] ne "\n") {
+                  export_version("PRTE", $fields[1]);
+              }
+          }
+          elsif($fields[0] eq "hwloc_min_version") {
+              if ($fields[1] ne "\n") {
+                  export_version("HWLOC", $fields[1]);
+              }
+          }
+          elsif($fields[0] eq "event_min_version") {
+              if ($fields[1] ne "\n") {
+                  export_version("EVENT", $fields[1]);
+              }
+          }
+          elsif($fields[0] eq "mpi_standard_version") {
+              if ($fields[1] ne "\n") {
+                  export_mpi_version("MPI_VERSION_NUM", $fields[1]);
+              }
+          }
+          elsif($fields[0] eq "mpi_standard_subversion") {
+              if ($fields[1] ne "\n") {
+                  export_mpi_version("MPI_SUBVERSION_NUM", $fields[1]);
+              }
+          }
+    }
+    close(IN);
 }
 
 sub in_tarball {
@@ -1279,11 +1293,7 @@ sub replace_config_sub_guess {
 
 # Command line parameters
 
-my $ok = Getopt::Long::GetOptions("no-ompi" => \$no_ompi_arg,
-                                  "no-orte" => \$no_orte_arg,
-                                  "no-prrte" => \$no_prrte_arg,
-                                  "no-oshmem" => \$no_oshmem_arg,
-                                  "no-3rdparty=s" => \$no_3rdparty_arg,
+my $ok = Getopt::Long::GetOptions("no-3rdparty=s" => \$no_3rdparty_arg,
                                   "quiet|q" => \$quiet_arg,
                                   "debug|d" => \$debug_arg,
                                   "help|h" => \$help_arg,
@@ -1298,10 +1308,6 @@ if (!$ok || $help_arg) {
     print "Invalid command line argument.\n\n"
         if (!$ok);
     print "Options:
-  --no-ompi | -no-ompi          Do not build the Open MPI layer
-  --no-orte | -no-orte          Do not build Open MPI's runtime support (alias for --no-prrte)
-  --no-prrte | -no-prrte        Do not build Open MPI's runtime support
-  --no-oshmem | -no-oshmem      Do not build the OSHMEM layer
   --no-3rdparty <package>       Do not build the listed 3rd-party package (comma separtated list)
   --quiet | -q                  Do not display normal verbose output
   --debug | -d                  Output lots of debug information
@@ -1326,24 +1332,6 @@ if (!$ok || $help_arg) {
 my $project_name_long = "Open MPI";
 my $project_name_short = "openmpi";
 
-if (! -e "ompi") {
-    $no_ompi_arg = 1;
-    debug "No ompi subdirectory found - will not build MPI layer\n";
-}
-if (! -e "oshmem") {
-    $no_oshmem_arg = 1;
-    debug "No oshmem subdirectory found - will not build OSHMEM\n";
-}
-# alias --no-orte to --no-prrte
-if ($no_orte_arg == 1) {
-    $no_prrte_arg = 1;
-}
-
-if ($no_ompi_arg == 1) {
-    $project_name_long = "Open Portability Access Layer";
-    $project_name_short = "open-pal";
-}
-
 my_die "Invalid value for --jobs $automake_jobs. Must be greater than 0."
     if (defined $automake_jobs && $automake_jobs <= 0);
 
@@ -1366,10 +1354,10 @@ $dnl_line\n\n";
 
 #---------------------------------------------------------------------------
 
-# Verify that we're in the OMPI root directorty by checking for a token file.
+# Verify that we're in the OMPI root directory by checking for a token file.
 
 my_die "Not at the root directory of an OMPI source tree"
-    if (! -f "config/opal_try_assemble.m4");
+    if (! -f "config/opal_mca.m4");
 
 my_die "autogen.pl has been invoked in the source tree of an Open MPI distribution tarball; aborting...
 You likely do not need to invoke \"autogen.pl\" -- you can probably run \"configure\" directly.
@@ -1387,6 +1375,8 @@ verbose "Open MPI autogen (buckle up!)
 
 $step. Checking tool versions\n\n";
 
+get_and_define_min_versions();
+
 # Check the autotools revision levels
 &find_and_check("autoconf", $ompi_autoconf_search, $ompi_autoconf_version);
 &find_and_check("libtool", $ompi_libtoolize_search, $ompi_libtool_version);
@@ -1397,20 +1387,32 @@ $step. Checking tool versions\n\n";
 ++$step;
 verbose "\n$step. Checking for git submodules\n\n";
 
+my @enabled_3rdparty_packages = ();
+my @disabled_3rdparty_packages = split(/,/, $no_3rdparty_arg);
+# Alias: 'openpmix' -> 'pmix'
+if (list_contains("openpmix", @disabled_3rdparty_packages)) {
+    push(@disabled_3rdparty_packages, "pmix");
+}
+
 # Make sure we got a submodule-full clone.  If not, abort and let a
 # human figure it out.
 if (-f ".gitmodules") {
     open(IN, "git submodule status|")
         || die "Can't run \"git submodule status\"";
     while (<IN>) {
-        chomp;
-        $_ =~ m/^(.)(.{40}) ([^ ]+) *\(*([^\(\)]*)\)*$/;
-        my $status     = $1;
-        my $local_hash = $2;
-        my $path       = $3;
-        my $extra      = $4;
+        $_ =~ m/^(.)[0-9a-f]{40}\s+(\S+)/;
+        my $status = $1;
+        my $path   = $2;
 
         print("=== Submodule: $path\n");
+        if (index($path, "pmix") != -1 and list_contains("pmix", @disabled_3rdparty_packages)) {
+          print("Disabled - skipping openpmix");
+          next;
+        }
+        if (index($path, "prrte") != -1 and list_contains("prrte", @disabled_3rdparty_packages)) {
+          print("Disabled - skipping prrte");
+          next;
+        }
 
         # Make sure the submodule is there
         if ($status eq "-") {
@@ -1423,19 +1425,14 @@ Perhaps you forgot to \"git clone --recursive ...\", or you need to
             exit(1);
         }
 
-        # See if the submodule is at the expected git hash
-        # (it may be ok if it's not -- just warn the user)
-        $extra =~ m/-g(.+)/;
-        my $remote_hash = $1;
-        if ($remote_hash) {
-            my $abbrev_local_hash = substr($local_hash, 0, length($remote_hash));
-            if ($remote_hash ne $abbrev_local_hash) {
+        # See if the commit in the submodule is not the same as the
+        # commit that the git submodule thinks it should be.
+        elsif ($status eq "+") {
                 print("    ==> WARNING: Submodule hash is different than upstream.
          If this is not intentional, you may want to run:
          \"git submodule update --init --recursive\"\n");
-            } else {
-                print("    Local hash == remote hash (good!)\n");
-            }
+        } else {
+            print("    Local hash is what is expected by the submodule (good!)\n");
         }
     }
 }
@@ -1553,10 +1550,8 @@ if (! (-f "VERSION" && -f "configure.ac" && -f $topdir_file)) {
 # Top-level projects to examine
 my $projects;
 push(@{$projects}, { name => "opal", dir => "opal", need_base => 1 });
-push(@{$projects}, { name => "ompi", dir => "ompi", need_base => 1 })
-    if (!$no_ompi_arg);
-push(@{$projects}, { name => "oshmem", dir => "oshmem", need_base => 1 })
-    if (!$no_ompi_arg && !$no_oshmem_arg);
+push(@{$projects}, { name => "ompi", dir => "ompi", need_base => 1 });
+push(@{$projects}, { name => "oshmem", dir => "oshmem", need_base => 1 });
 
 $m4 .= "dnl Separate m4 define for each project\n";
 foreach my $p (@$projects) {
@@ -1576,12 +1571,6 @@ mca_run_global($projects);
 ++$step;
 verbose "\n$step. Setup for 3rd-party packages\n";
 
-my @enabled_3rdparty_packages = ();
-my @disabled_3rdparty_packages = split(/,/, $no_3rdparty_arg);
-if ($no_prrte_arg) {
-    push(@disabled_3rdparty_packages, "prrte");
-}
-
 $m4 .= "\n$dnl_line
 $dnl_line
 $dnl_line
@@ -1589,7 +1578,8 @@ $dnl_line
 dnl 3rd-party package information\n";
 
 # Extract the OMPI options to exclude them when processing PMIx and PRRTE
-if ( ! ("pmix" ~~ @disabled_3rdparty_packages && "prrte" ~~ @disabled_3rdparty_packages) ) {
+if ( ! (list_contains("pmix", @disabled_3rdparty_packages) &&
+	list_contains("prrte", @disabled_3rdparty_packages))) {
     safe_system("./config/extract-3rd-party-configure.pl -p . -n \"OMPI\" -l > config/auto-generated-ompi-exclude.ini");
 }
 
@@ -1597,7 +1587,7 @@ if ( ! ("pmix" ~~ @disabled_3rdparty_packages && "prrte" ~~ @disabled_3rdparty_p
 # generic. Sorry :).
 
 verbose "=== Libevent\n";
-if ("libevent" ~~ @disabled_3rdparty_packages) {
+if (list_contains("libevent", @disabled_3rdparty_packages)) {
     verbose "--- Libevent disabled\n";
 } else {
     my $libevent_directory = "libevent-" . $libevent_version;
@@ -1612,7 +1602,7 @@ if ("libevent" ~~ @disabled_3rdparty_packages) {
 }
 
 verbose "=== hwloc\n";
-if ("hwloc" ~~ @disabled_3rdparty_packages) {
+if (list_contains("hwloc", @disabled_3rdparty_packages)) {
     verbose "--- hwloc disabled\n";
 } else {
     my $hwloc_directory = "hwloc-" . $hwloc_version;
@@ -1623,11 +1613,11 @@ if ("hwloc" ~~ @disabled_3rdparty_packages) {
     $m4 .= "m4_define([package_hwloc], [1])\n";
     $m4 .= "m4_define([hwloc_tarball], [" . $hwloc_tarball . "])\n";
     $m4 .= "m4_define([hwloc_directory], [" . $hwloc_directory . "])\n";
-    verbose "--- hwloc enabled\n";
+    verbose "--- hwloc enabled (" . $hwloc_version . ")\n";
 }
 
 verbose "=== PMIx\n";
-if ("pmix" ~~ @disabled_3rdparty_packages) {
+if (list_contains("pmix", @disabled_3rdparty_packages)) {
     verbose "--- PMIx disabled\n";
 } else {
     # sanity check pmix files exist
@@ -1646,7 +1636,7 @@ if ("pmix" ~~ @disabled_3rdparty_packages) {
 }
 
 verbose "=== PRRTE\n";
-if ("prrte" ~~ @disabled_3rdparty_packages) {
+if (list_contains("prrte", @disabled_3rdparty_packages)) {
     verbose "--- PRRTE disabled\n";
 } else {
     # sanity check prrte files exist
@@ -1668,16 +1658,10 @@ process_autogen_subdirs("3rd-party");
 
 #---------------------------------------------------------------------------
 
-# Find MPI extensions and contribs
-if (!$no_ompi_arg) {
-    ++$step;
-    verbose "\n$step. Searching for Open MPI extensions\n\n";
-    mpiext_run_global("ompi/mpiext");
-
-    ++$step;
-    verbose "\n$step. Searching for Open MPI contribs\n\n";
-    mpicontrib_run_global("ompi/contrib");
-}
+# Find MPI extensions
+++$step;
+verbose "\n$step. Searching for Open MPI extensions\n\n";
+mpiext_run_global("ompi/mpiext");
 
 #---------------------------------------------------------------------------
 
@@ -1720,7 +1704,7 @@ safe_system("autom4te --language=m4sh opal_get_version.m4sh -o opal_get_version.
 # Run autoreconf
 verbose "==> Running autoreconf\n";
 chdir("..");
-my $cmd = "autoreconf -ivf --warnings=all,no-obsolete,no-override -I config";
+my $cmd = "autoreconf -ivf --warnings=all,no-obsolete,no-override -I config -I config/oac";
 foreach my $project (@{$projects}) {
     $cmd .= " -I $project->{dir}/config"
         if (-d "$project->{dir}/config");

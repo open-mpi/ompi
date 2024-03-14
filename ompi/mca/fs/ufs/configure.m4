@@ -12,6 +12,7 @@
 #                         All rights reserved.
 # Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2008-2018 University of Houston. All rights reserved.
+# Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -25,5 +26,5 @@
 AC_DEFUN([MCA_ompi_fs_ufs_CONFIG],[
     AC_CONFIG_FILES([ompi/mca/fs/ufs/Makefile])
 
-    OPAL_SUMMARY_ADD([[OMPIO File Systems]],[[Generic Unix FS]],[$1],[yes])
+    OPAL_SUMMARY_ADD([OMPIO File Systems], [Generic Unix FS], [], [yes])
 ])dnl

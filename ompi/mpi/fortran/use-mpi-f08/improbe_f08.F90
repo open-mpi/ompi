@@ -17,7 +17,7 @@ subroutine MPI_Improbe_f08(source,tag,comm,flag,message,status,ierror)
    TYPE(MPI_Comm), INTENT(IN) :: comm
    LOGICAL, INTENT(OUT) :: flag
    TYPE(MPI_Message), INTENT(OUT) :: message
-   TYPE(MPI_Status), INTENT(OUT) :: status
+   TYPE(MPI_Status) :: status
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
    integer :: c_ierror
 

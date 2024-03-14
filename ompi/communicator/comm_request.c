@@ -1,13 +1,15 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2013-2018 Los Alamos National Security, LLC.  All rights
- *                         reseved.
+ *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2004-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2021      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -30,6 +32,7 @@ typedef struct ompi_comm_request_item_t {
     opal_list_item_t super;
     ompi_comm_request_callback_fn_t callback;
     ompi_request_t *subreqs[OMPI_COMM_REQUEST_MAX_SUBREQ];
+    uint32_t flags;
     int subreq_count;
 } ompi_comm_request_item_t;
 OBJ_CLASS_DECLARATION(ompi_comm_request_item_t);
@@ -71,6 +74,12 @@ void ompi_comm_request_fini (void)
 int ompi_comm_request_schedule_append (ompi_comm_request_t *request, ompi_comm_request_callback_fn_t callback,
                             ompi_request_t *subreqs[], int subreq_count)
 {
+    return ompi_comm_request_schedule_append_w_flags(request, callback, subreqs, subreq_count, 0);
+}
+
+int ompi_comm_request_schedule_append_w_flags(ompi_comm_request_t *request, ompi_comm_request_callback_fn_t callback,
+                            ompi_request_t *subreqs[], int subreq_count, uint32_t flags)
+{
     ompi_comm_request_item_t *request_item;
     int i;
 
@@ -84,6 +93,7 @@ int ompi_comm_request_schedule_append (ompi_comm_request_t *request, ompi_comm_r
     }
 
     request_item->callback = callback;
+    request_item->flags = flags;
 
     for (i = 0 ; i < subreq_count ; ++i) {
         request_item->subreqs[i] = subreqs[i];
@@ -125,7 +135,9 @@ static int ompi_comm_request_progress (void)
                          * that it does some subreqs cleanup */
                         request->super.req_status.MPI_ERROR = subreq->req_status.MPI_ERROR;
                     }
-                    ompi_request_free (&subreq);
+                    if (!(request_item->flags & OMPI_COMM_REQ_FLAG_RETAIN_SUBREQ)) {
+                        ompi_request_free (&subreq);
+                    }
                     request_item->subreq_count--;
                     completed++;
                 } else {
@@ -269,6 +281,10 @@ ompi_comm_request_t *ompi_comm_request_get (void)
 
 void ompi_comm_request_return (ompi_comm_request_t *request)
 {
+    if ((void *) &ompi_request_empty == (void *) request) {
+        return;
+    }
+
     if (request->context) {
         OBJ_RELEASE (request->context);
         request->context = NULL;

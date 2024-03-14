@@ -10,7 +10,7 @@
 #include "tm_mt.h"
 
 
-#define MIN(a,b) ((a)<(b)?(a):(b))
+#define TM_MIN(a,b) ((a)<(b)?(a):(b))
 
 #define EXTRA_BYTE 100
 
@@ -102,10 +102,10 @@ void init_extra_data(void){
   if(done)
     return;
 
-  init_genrand(0);
+  tm_init_genrand(0);
 
   for( i = 0 ; i < EXTRA_BYTE; i++)
-    extra_data[i] = (char) genrand_int32() % 256;
+    extra_data[i] = (char) tm_genrand_int32() % 256;
 
   done = 1;
 }
@@ -182,7 +182,7 @@ void *tm_realloc(void *old_ptr, size_t size, char *file, int line){
     byte *original_ptr = ((byte *)old_ptr) - EXTRA_BYTE;
     size_t old_ptr_size = retreive_size(original_ptr);
 
-    memcpy(ptr + EXTRA_BYTE, old_ptr, MIN(old_ptr_size - 2 * EXTRA_BYTE, size));
+    memcpy(ptr + EXTRA_BYTE, old_ptr, TM_MIN(old_ptr_size - 2 * EXTRA_BYTE, size));
 
     if((bcmp(original_ptr ,extra_data, EXTRA_BYTE)) && ((tm_get_verbose_level()>=ERROR))){
       fprintf(stderr,"Realloc: cannot find special string ***before*** %p!\n", (void *)original_ptr);

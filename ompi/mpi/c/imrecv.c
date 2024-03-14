@@ -69,7 +69,7 @@ int MPI_Imrecv(void *buf, int count, MPI_Datatype type,
 #if OPAL_ENABLE_FT_MPI
     /*
      * The message and associated request will be checked by the PML, and
-     * handled approprately. So no need to check here.
+     * handled appropriately. So no need to check here.
      */
 #endif
 

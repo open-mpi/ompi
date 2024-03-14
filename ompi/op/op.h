@@ -20,6 +20,7 @@
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2018      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2021      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -58,20 +59,20 @@ BEGIN_C_DECLS
  * repeated code, but it's better this way (and this typedef will
  * never change, so there's not much of a maintenance worry).
  */
-typedef void (ompi_op_c_handler_fn_t)(void *, void *, int *,
+typedef void (ompi_op_c_handler_fn_t)(const void *, void *, int *,
                                       struct ompi_datatype_t **);
 
 /**
  * Typedef for fortran user-defined MPI_Ops.
  */
-typedef void (ompi_op_fortran_handler_fn_t)(void *, void *,
+typedef void (ompi_op_fortran_handler_fn_t)(const void *, void *,
                                             MPI_Fint *, MPI_Fint *);
 
 /**
  * Typedef for Java op functions intercept (used for user-defined
  * MPI.Ops).
  */
-typedef void (ompi_op_java_handler_fn_t)(void *, void *, int *,
+typedef void (ompi_op_java_handler_fn_t)(const void *, void *, int *,
                                          struct ompi_datatype_t **,
                                          int baseType,
                                          void *jnienv, void *object);
@@ -175,7 +176,7 @@ typedef struct ompi_op_t ompi_op_t;
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_op_t);
 
 /**
- * Padded struct to maintain back compatibiltiy.
+ * Padded struct to maintain back compatibility.
  * See ompi/communicator/communicator.h comments with struct ompi_communicator_t
  * for full explanation why we chose the following padding construct for predefines.
  */
@@ -327,16 +328,6 @@ extern struct opal_pointer_array_t *ompi_op_f_to_c_table;
 int ompi_op_init(void);
 
 /**
- * Finalize the op interface.
- *
- * @returns OMPI_SUCCESS Always
- *
- * Invokes from ompi_mpi_finalize(); tears down the op interface, and
- * destroys the F2C translation table.
- */
-int ompi_op_finalize(void);
-
-/**
  * Create a ompi_op_t with a user-defined callback (vs. creating an
  * intrinsic ompi_op_t).
  *
@@ -367,7 +358,7 @@ ompi_op_t *ompi_op_create_user(bool commute,
                                ompi_op_fortran_handler_fn_t func);
 
 /**
- * Mark an MPI_Op as holding a Java calback function, and cache that
+ * Mark an MPI_Op as holding a Java callback function, and cache that
  * function in the MPI_Op.
  */
 OMPI_DECLSPEC void ompi_op_set_java_callback(ompi_op_t *op,  void *jnienv,
@@ -509,11 +500,42 @@ static inline bool ompi_op_is_valid(ompi_op_t * op, ompi_datatype_t * ddt,
  * optimization).  If you give it an intrinsic op with a datatype that
  * is not defined to have that operation, it is likely to seg fault.
  */
-static inline void ompi_op_reduce(ompi_op_t * op, void *source,
-                                  void *target, int count,
+static inline void ompi_op_reduce(ompi_op_t * op, const void *source,
+                                  void *target, size_t full_count,
                                   ompi_datatype_t * dtype)
 {
     MPI_Fint f_dtype, f_count;
+    int count = full_count;
+
+    /*
+     * If the full_count is > INT_MAX then we need to call the reduction op
+     * in iterations of counts <= INT_MAX since it has an `int *len`
+     * parameter.
+     *
+     * Note: When we add BigCount support then we can distinguish between
+     * a reduction operation with `int *len` and `MPI_Count *len`. At which
+     * point we can avoid this loop.
+     */
+    if( OPAL_UNLIKELY(full_count > INT_MAX) ) {
+        size_t done_count = 0, shift;
+        int iter_count;
+        ptrdiff_t ext, lb;
+
+        ompi_datatype_get_extent(dtype, &lb, &ext);
+
+        while(done_count < full_count) {
+            if(done_count + INT_MAX > full_count) {
+                iter_count = full_count - done_count;
+            } else {
+                iter_count = INT_MAX;
+            }
+            shift = done_count * ext;
+            // Recurse one level in iterations of 'int'
+            ompi_op_reduce(op, (const char*)source + shift, (char*)target + shift, iter_count, dtype);
+            done_count += iter_count;
+        }
+        return;
+    }
 
     /*
      * Call the reduction function.  Two dimensions: a) if both the op
@@ -573,7 +595,7 @@ static inline void ompi_op_reduce(ompi_op_t * op, void *source,
 static inline void ompi_3buff_op_user (ompi_op_t *op, void * restrict source1, void * restrict source2,
                                        void * restrict result, int count, struct ompi_datatype_t *dtype)
 {
-    ompi_datatype_copy_content_same_ddt (dtype, count, result, source1);
+    ompi_datatype_copy_content_same_ddt (dtype, count, (char*)result, (char*)source1);
     op->o_func.c_fn (source2, result, &count, &dtype);
 }
 

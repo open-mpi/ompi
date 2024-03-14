@@ -4,6 +4,8 @@
  *                         reserved.
  * Copyright (c) 2014-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
+ * Copyright (c) 2021      Amazon.com, Inc. or its affiliates.  All Rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -11,6 +13,7 @@
  * $HEADER$
  */
 
+#include "ompi_config.h"
 
 #include "ompi/mpi/tool/mpit-internal.h"
 
@@ -18,14 +21,12 @@
 #include "opal/include/opal/sys/atomic.h"
 #include "opal/runtime/opal.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_T_finalize = PMPI_T_finalize
 #endif
-
-#if OMPI_PROFILING_DEFINES
-#include "ompi/mpi/tool/profile/defines.h"
+#define MPI_T_finalize PMPI_T_finalize
 #endif
-
 
 int MPI_T_finalize (void)
 {

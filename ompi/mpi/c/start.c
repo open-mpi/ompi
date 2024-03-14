@@ -62,7 +62,7 @@ int MPI_Start(MPI_Request *request)
      * Per definition of the handling of persistent request in the
      * MPI standard 3.1 page 78 line 19: we must have the following
      * sequence CREATE (START COMPLETE)* FREE. The upper level is
-     * responsible for handling any concurency. The PML must handle
+     * responsible for handling any concurrency. The PML must handle
      * this case, as it is the only one knowing if the request can
      * be reused or not (it is PML completed or not?).
      */
@@ -78,13 +78,14 @@ int MPI_Start(MPI_Request *request)
     case OMPI_REQUEST_PML:
     case OMPI_REQUEST_COLL:
     case OMPI_REQUEST_PART:
-        if ( MPI_PARAM_CHECK && !(*request)->req_persistent) {
+        if ( MPI_PARAM_CHECK && !((*request)->req_persistent &&
+                                  OMPI_REQUEST_INACTIVE == (*request)->req_state)) {
             return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_REQUEST, FUNC_NAME);
         }
 
         ret = (*request)->req_start(1, request);
 
-        return ret;
+        OMPI_ERRHANDLER_NOHANDLE_RETURN(ret, ret, FUNC_NAME);
 
     case OMPI_REQUEST_NOOP:
         /**

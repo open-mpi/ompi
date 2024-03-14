@@ -127,7 +127,7 @@
 #pragma weak shmem_ctx_put64_nbi = pshmem_ctx_put64_nbi
 #pragma weak shmem_ctx_put128_nbi = pshmem_ctx_put128_nbi
 #pragma weak shmem_ctx_putmem_nbi = pshmem_ctx_putmem_nbi
-#include "oshmem/shmem/c/profile/defines.h"
+#include "oshmem/shmem/c/profile-defines.h"
 #endif
 
 SHMEM_CTX_TYPE_PUT_NB(_char, char)

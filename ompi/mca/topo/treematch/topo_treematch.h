@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2011-2015 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
@@ -22,7 +23,7 @@
 
 /*
  * ******************************************************************
- * ******** functions which provide MCA interface comppliance *******
+ * ******** functions which provide MCA interface compliance ********
  * ******************************************************************
  * These functions are:
  *       - mca_topo_treematch_module_open
@@ -44,7 +45,7 @@ typedef struct mca_topo_treematch_component_2_2_0_t {
     int reorder_mode;
 } mca_topo_treematch_component_2_2_0_t;
 
-OMPI_MODULE_DECLSPEC extern mca_topo_treematch_component_2_2_0_t
+OMPI_DECLSPEC extern mca_topo_treematch_component_2_2_0_t
     mca_topo_treematch_component;
 
 /*

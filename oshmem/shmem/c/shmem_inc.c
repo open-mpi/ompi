@@ -66,12 +66,24 @@
 #pragma weak shmem_ctx_uint_atomic_inc = pshmem_ctx_uint_atomic_inc
 #pragma weak shmem_ctx_ulong_atomic_inc = pshmem_ctx_ulong_atomic_inc
 #pragma weak shmem_ctx_ulonglong_atomic_inc = pshmem_ctx_ulonglong_atomic_inc
+#pragma weak shmem_ctx_int32_atomic_inc = pshmem_ctx_int32_atomic_inc
+#pragma weak shmem_ctx_int64_atomic_inc = pshmem_ctx_int64_atomic_inc
+#pragma weak shmem_ctx_uint32_atomic_inc = pshmem_ctx_uint32_atomic_inc
+#pragma weak shmem_ctx_uint64_atomic_inc = pshmem_ctx_uint64_atomic_inc
+#pragma weak shmem_ctx_size_atomic_inc = pshmem_ctx_size_atomic_inc
+#pragma weak shmem_ctx_ptrdiff_atomic_inc = pshmem_ctx_ptrdiff_atomic_inc
 
 #pragma weak shmem_int_atomic_inc = pshmem_int_atomic_inc
 #pragma weak shmem_long_atomic_inc = pshmem_long_atomic_inc
 #pragma weak shmem_longlong_atomic_inc = pshmem_longlong_atomic_inc
 #pragma weak shmem_uint_atomic_inc = pshmem_uint_atomic_inc
 #pragma weak shmem_ulong_atomic_inc = pshmem_ulong_atomic_inc
+#pragma weak shmem_int32_atomic_inc = pshmem_int32_atomic_inc
+#pragma weak shmem_int64_atomic_inc = pshmem_int64_atomic_inc
+#pragma weak shmem_uint32_atomic_inc = pshmem_uint32_atomic_inc
+#pragma weak shmem_uint64_atomic_inc = pshmem_uint64_atomic_inc
+#pragma weak shmem_size_atomic_inc = pshmem_size_atomic_inc
+#pragma weak shmem_ptrdiff_atomic_inc = pshmem_ptrdiff_atomic_inc
 #pragma weak shmem_ulonglong_atomic_inc = pshmem_ulonglong_atomic_inc
 
 #pragma weak shmem_int_inc = pshmem_int_inc
@@ -80,7 +92,7 @@
 
 #pragma weak shmemx_int32_inc = pshmemx_int32_inc
 #pragma weak shmemx_int64_inc = pshmemx_int64_inc
-#include "oshmem/shmem/c/profile/defines.h"
+#include "oshmem/shmem/c/profile-defines.h"
 #endif
 
 SHMEM_CTX_TYPE_ATOMIC_INC(_int, int, shmem)
@@ -89,12 +101,24 @@ SHMEM_CTX_TYPE_ATOMIC_INC(_longlong, long long, shmem)
 SHMEM_CTX_TYPE_ATOMIC_INC(_uint, unsigned int, shmem)
 SHMEM_CTX_TYPE_ATOMIC_INC(_ulong, unsigned long, shmem)
 SHMEM_CTX_TYPE_ATOMIC_INC(_ulonglong, unsigned long long, shmem)
+SHMEM_CTX_TYPE_ATOMIC_INC(_int32, int32_t, shmem)
+SHMEM_CTX_TYPE_ATOMIC_INC(_int64, int64_t, shmem)
+SHMEM_CTX_TYPE_ATOMIC_INC(_uint32, uint32_t, shmem)
+SHMEM_CTX_TYPE_ATOMIC_INC(_uint64, uint64_t, shmem)
+SHMEM_CTX_TYPE_ATOMIC_INC(_size, size_t, shmem)
+SHMEM_CTX_TYPE_ATOMIC_INC(_ptrdiff, ptrdiff_t, shmem)
 SHMEM_TYPE_ATOMIC_INC(_int, int, shmem)
 SHMEM_TYPE_ATOMIC_INC(_long, long, shmem)
 SHMEM_TYPE_ATOMIC_INC(_longlong, long long, shmem)
 SHMEM_TYPE_ATOMIC_INC(_uint, unsigned int, shmem)
 SHMEM_TYPE_ATOMIC_INC(_ulong, unsigned long, shmem)
 SHMEM_TYPE_ATOMIC_INC(_ulonglong, unsigned long long, shmem)
+SHMEM_TYPE_ATOMIC_INC(_int32, int32_t, shmem)
+SHMEM_TYPE_ATOMIC_INC(_int64, int64_t, shmem)
+SHMEM_TYPE_ATOMIC_INC(_uint32, uint32_t, shmem)
+SHMEM_TYPE_ATOMIC_INC(_uint64, uint64_t, shmem)
+SHMEM_TYPE_ATOMIC_INC(_size, size_t, shmem)
+SHMEM_TYPE_ATOMIC_INC(_ptrdiff, ptrdiff_t, shmem)
 
 #define SHMEM_TYPE_INC(type_name, type, prefix)                     \
     void prefix##type_name##_inc(type *target, int pe)              \

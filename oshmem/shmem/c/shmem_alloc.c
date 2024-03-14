@@ -24,8 +24,9 @@
 #pragma weak shmem_malloc            = pshmem_malloc
 #pragma weak shmem_calloc            = pshmem_calloc
 #pragma weak shmalloc                = pshmalloc
-#pragma weak shmemx_malloc_with_hint = pshmemx_malloc_with_hint
-#include "oshmem/shmem/c/profile/defines.h"
+#pragma weak shmem_malloc_with_hints = pshmem_malloc_with_hints
+
+#include "oshmem/shmem/c/profile-defines.h"
 #endif
 
 static inline void* _shmalloc(size_t size);
@@ -38,6 +39,7 @@ void* shmem_malloc(size_t size)
 void* shmem_calloc(size_t count, size_t size)
 {
     size_t req_sz = count * size;
+    if (!req_sz) return NULL;
     void *ptr = _shmalloc(req_sz);
     if (ptr) {
         memset(ptr, 0, req_sz);
@@ -76,7 +78,7 @@ static inline void* _shmalloc(size_t size)
     return pBuff;
 }
 
-void* shmemx_malloc_with_hint(size_t size, long hint)
+void* shmem_malloc_with_hints(size_t size, long hint)
 {
     int rc;
     void* pBuff = NULL;
@@ -105,3 +107,5 @@ void* shmemx_malloc_with_hint(size_t size, long hint)
 #endif
     return pBuff;
 }
+
+

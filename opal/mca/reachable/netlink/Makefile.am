@@ -3,6 +3,7 @@
 # Copyright (c) 2016      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2017      IBM Corporation.  All rights reserved.
+# Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -31,17 +32,17 @@ component_install =
 endif
 
 AM_CPPFLAGS = \
-        $(opal_reachable_netlink_CPPFLAGS) \
+        $(reachable_netlink_CPPFLAGS) \
         -DOPAL_HAVE_LIBNL3=$(OPAL_HAVE_LIBNL3)
 
 mcacomponentdir = $(opallibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_reachable_netlink_la_SOURCES = $(sources)
-mca_reachable_netlink_la_LDFLAGS = -module -avoid-version
+mca_reachable_netlink_la_LDFLAGS = -module -avoid-version $(reachable_netlink_LDFLAGS)
 mca_reachable_netlink_la_LIBADD = $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la \
-	$(opal_reachable_netlink_LIBS)
+	$(reachable_netlink_LIBS)
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_reachable_netlink_la_SOURCES =$(sources)
-libmca_reachable_netlink_la_LDFLAGS = -module -avoid-version
-libmca_reachable_netlink_la_LIBADD = $(opal_reachable_netlink_LIBS)
+libmca_reachable_netlink_la_LDFLAGS = -module -avoid-version $(reachable_netlink_LDFLAGS)
+libmca_reachable_netlink_la_LIBADD = $(reachable_netlink_LIBS)

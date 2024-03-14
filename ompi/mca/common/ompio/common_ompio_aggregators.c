@@ -16,6 +16,9 @@
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
+ * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
+ * Copyright (c) 2024      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -42,7 +45,7 @@
 #include "common_ompio.h"
 
 /*
-** This file contains all the functionality related to determing the number of aggregators
+** This file contains all the functionality related to determining the number of aggregators
 ** and the list of aggregators.
 **
 ** The first group functions determines the number of aggregators based on various characteristics
@@ -195,16 +198,13 @@ int  mca_common_ompio_forced_grouping ( ompio_file_t *fh,
     int rest = fh->f_size % num_groups;
     int flag = OMPI_COMM_IS_MAPBY_NODE (&ompi_mpi_comm_world.comm);
     int k=0, p=0, g=0;
-    int total_procs = 0; 
 
     for ( k=0, p=0; p<num_groups; p++ ) {
         if ( p < rest ) {
             contg_groups[p].procs_per_contg_group = group_size+1;
-            total_procs +=(group_size+1);
         }
         else {
             contg_groups[p].procs_per_contg_group = group_size;
-            total_procs +=group_size;
         }
 
         if ( flag ) {
@@ -239,13 +239,13 @@ int mca_common_ompio_fview_based_grouping(ompio_file_t *fh,
     OMPI_MPI_OFFSET_TYPE *start_offsets_lens = NULL;
 
     //Store start offset,length and corresponding rank in an array
-    if(NULL == fh->f_decoded_iov){
+    if(NULL == fh->f_fview.f_decoded_iov){
       start_offset_len[0] = 0;
       start_offset_len[1] = 0;
     }
     else{
-       start_offset_len[0] = (OMPI_MPI_OFFSET_TYPE) fh->f_decoded_iov[0].iov_base;
-       start_offset_len[1] = fh->f_decoded_iov[0].iov_len;
+       start_offset_len[0] = (OMPI_MPI_OFFSET_TYPE) fh->f_fview.f_decoded_iov[0].iov_base;
+       start_offset_len[1] = fh->f_fview.f_decoded_iov[0].iov_len;
     }
     start_offset_len[2] = fh->f_rank;
 
@@ -1050,11 +1050,11 @@ int mca_common_ompio_merge_groups(ompio_file_t *fh,
 			          int num_merge_aggrs)
 {
     int i = 0;
-    int *sizes_old_group;
+    size_t *sizes_old_group;
     int ret;
-    int *displs = NULL;
+    ptrdiff_t *displs = NULL;
 
-    sizes_old_group = (int*)malloc(num_merge_aggrs * sizeof(int));
+    sizes_old_group = (size_t *)malloc(num_merge_aggrs * sizeof(size_t));
     if (NULL == sizes_old_group) {
         opal_output (1, "OUT OF MEMORY\n");
         ret = OMPI_ERR_OUT_OF_RESOURCE;
@@ -1062,7 +1062,7 @@ int mca_common_ompio_merge_groups(ompio_file_t *fh,
     }
 
 
-    displs = (int*)malloc(num_merge_aggrs * sizeof(int));
+    displs = (ptrdiff_t *)malloc(num_merge_aggrs * sizeof(ptrdiff_t));
     if (NULL == displs) {
         opal_output (1, "OUT OF MEMORY\n");
         ret = OMPI_ERR_OUT_OF_RESOURCE;
@@ -1269,19 +1269,16 @@ int mca_common_ompio_prepare_to_group(ompio_file_t *fh,
     int i = 0;
     int j = 0;
     int k = 0;
-    int merge_count = 0;
-    int split_count = 0; //not req?
-    int retain_as_is_count = 0; //not req?
     int ret=OMPI_SUCCESS;
 
     //Store start offset and length in an array //also add bytes per process
-    if(NULL == fh->f_decoded_iov){
+    if(NULL == fh->f_fview.f_decoded_iov){
          start_offset_len[0] = 0;
          start_offset_len[1] = 0;
     }
     else{
-         start_offset_len[0] = (OMPI_MPI_OFFSET_TYPE) fh->f_decoded_iov[0].iov_base;
-         start_offset_len[1] = fh->f_decoded_iov[0].iov_len;
+         start_offset_len[0] = (OMPI_MPI_OFFSET_TYPE) fh->f_fview.f_decoded_iov[0].iov_base;
+         start_offset_len[1] = fh->f_fview.f_decoded_iov[0].iov_len;
     }
     start_offset_len[2] = bytes_per_proc;
     start_offsets_lens_tmp = (OMPI_MPI_OFFSET_TYPE* )malloc (3 * fh->f_init_procs_per_group * sizeof(OMPI_MPI_OFFSET_TYPE));
@@ -1367,16 +1364,13 @@ int mca_common_ompio_prepare_to_group(ompio_file_t *fh,
        if((size_t)(aggr_bytes_per_group_tmp[i])>
           (size_t)OMPIO_MCA_GET(fh, bytes_per_agg)){
           decision_list_tmp[i] = OMPIO_SPLIT;
-          split_count++;
        }
        else if((size_t)(aggr_bytes_per_group_tmp[i])<
                (size_t)OMPIO_MCA_GET(fh, bytes_per_agg)){
             decision_list_tmp[i] = OMPIO_MERGE;
-            merge_count++;
        }
        else{
 	   decision_list_tmp[i] = OMPIO_RETAIN;
-	   retain_as_is_count++;
 	   }
     }
 
@@ -1418,7 +1412,7 @@ int mca_common_ompio_prepare_to_group(ompio_file_t *fh,
     }
 
     //print decision list of aggregators
-    /*printf("RANK%d  : Printing decsion list   : \n",fh->f_rank);
+    /*printf("RANK%d  : Printing decision list   : \n",fh->f_rank);
     for( i = 0; i < fh->f_init_num_aggrs; i++){
         if(decision_list_tmp[i] == OMPIO_MERGE)
             printf("MERGE,");
@@ -1459,8 +1453,8 @@ exit:
 */
 static double cost_calc (int P, int P_a, size_t d_p, size_t b_c, int dim )
 {
-    float  n_as=1.0, m_s=1.0, n_s=1.0;
-    float  n_ar=1.0;
+    double  n_as=1.0, m_s=1.0, n_s=1.0;
+    double  n_ar=1.0;
     double t_send, t_recv, t_tot;
 
     /* LogGP parameters based on DDR InfiniBand values */
@@ -1470,7 +1464,7 @@ static double cost_calc (int P, int P_a, size_t d_p, size_t b_c, int dim )
     double G=.00000000067;
     
     long file_domain = (P * d_p) / P_a;
-    float n_r = (float)file_domain/(float) b_c;
+    double n_r = (double)file_domain/(double) b_c;
     
     switch (dim) {
 	case DIM1:
@@ -1480,10 +1474,10 @@ static double cost_calc (int P, int P_a, size_t d_p, size_t b_c, int dim )
 		n_ar = 1;
 		n_as = 1;
 		m_s = b_c;
-		n_s = (float)d_p/(float)b_c;
+		n_s = (double)d_p/(double)b_c;
 	    }
 	    else {
-		n_ar = (float)b_c/(float)d_p;
+		n_ar = (double)b_c/(double)d_p;
 		n_as = 1;
 		m_s = d_p;
 		n_s = 1;
@@ -1495,14 +1489,14 @@ static double cost_calc (int P, int P_a, size_t d_p, size_t b_c, int dim )
 	    int P_x, P_y;
 	    
 	    P_x = P_y = (int) sqrt(P);
-	    n_as = (float) P_a / (float)P_x;
+	    n_as = (double) P_a / (double)P_x;
 	    
-	    n_ar = (float) P_y;
+	    n_ar = (double) P_y;
 	    if ( d_p > (P_a*b_c/P )) {
-		m_s = fmin(b_c / P_y, d_p);
+		m_s = fmin((double) b_c / (double)P_y, (double)d_p);
 	    }
 	    else {
-		m_s = fmin(d_p * P_x / P_a, d_p);
+		m_s = fmin((double) (d_p * P_x) / (double)P_a, (double)d_p);
 	    }
 	    break;	  
 	}
@@ -1511,7 +1505,7 @@ static double cost_calc (int P, int P_a, size_t d_p, size_t b_c, int dim )
 	    break;
     } 
     
-    n_s = (float) d_p / (float)(n_as * m_s);
+    n_s = (double) d_p / (double)(n_as * m_s);
     
     if( m_s < 33554432) {
 	g = .00000108;

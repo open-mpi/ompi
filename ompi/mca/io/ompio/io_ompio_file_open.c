@@ -55,7 +55,7 @@ int mca_io_ompio_file_open (ompi_communicator_t *comm,
 
     /* No locking required for file_open according to my understanding
        There is virtually no way on how to reach this point from multiple
-       threads simultaniously 
+       threads simultaneously 
     */
     data = (mca_common_ompio_data_t *) fh->f_io_selected_data;
     if ( NULL == data ) {
@@ -411,25 +411,25 @@ static void mca_io_ompio_file_get_eof_offset (ompio_file_t *fh,
     size_t k=0, blocklen=0;
     size_t index_in_file_view=0;
 
-    in_offset -= fh->f_disp;
-    if ( fh->f_view_size  > 0 ) {
+    in_offset -= fh->f_fview.f_disp;
+    if ( fh->f_fview.f_view_size  > 0 ) {
         /* starting offset of the current copy of the filew view */
-        start_offset = in_offset / fh->f_view_extent;
+        start_offset = in_offset / fh->f_fview.f_view_extent;
         
         index_in_file_view = 0;
         /* determine block id that the offset is located in and
            the starting offset of that block */
-        while ( offset <= in_offset && index_in_file_view < fh->f_iov_count) {
+        while ( offset <= in_offset && index_in_file_view < fh->f_fview.f_iov_count) {
             prev_offset = offset;
-            offset = start_offset + (OMPI_MPI_OFFSET_TYPE)(intptr_t) fh->f_decoded_iov[index_in_file_view++].iov_base;
+            offset = start_offset + (OMPI_MPI_OFFSET_TYPE)(intptr_t) fh->f_fview.f_decoded_iov[index_in_file_view++].iov_base;
         }
         
         offset = prev_offset;
-        blocklen = fh->f_decoded_iov[index_in_file_view-1].iov_len;
+        blocklen = fh->f_fview.f_decoded_iov[index_in_file_view-1].iov_len;
         while (  offset <= in_offset && k <= blocklen )  {
             prev_offset = offset;
-            offset += fh->f_etype_size;
-            k += fh->f_etype_size;
+            offset += fh->f_fview.f_etype_size;
+            k += fh->f_fview.f_etype_size;
         }
 
         *out_offset = prev_offset;
@@ -443,12 +443,13 @@ int mca_io_ompio_file_seek (ompi_file_t *fh,
 {
     int ret = OMPI_SUCCESS;
     mca_common_ompio_data_t *data;
-    OMPI_MPI_OFFSET_TYPE offset, temp_offset, temp_offset2;
+    OMPI_MPI_OFFSET_TYPE offset, temp_offset2;
+    OMPI_MPI_OFFSET_TYPE temp_offset = 0;
 
     data = (mca_common_ompio_data_t *) fh->f_io_selected_data;
 
     OPAL_THREAD_LOCK(&fh->f_lock);
-    offset = off * data->ompio_fh.f_etype_size;
+    offset = off * data->ompio_fh.f_fview.f_etype_size;
 
     switch(whence) {
     case MPI_SEEK_SET:
@@ -460,7 +461,7 @@ int mca_io_ompio_file_seek (ompi_file_t *fh,
     case MPI_SEEK_CUR:
         ret = mca_common_ompio_file_get_position (&data->ompio_fh,
                                                   &temp_offset);
-        offset += temp_offset * data->ompio_fh.f_etype_size;
+        offset += temp_offset * data->ompio_fh.f_fview.f_etype_size;
         if (offset < 0) {
             OPAL_THREAD_UNLOCK(&fh->f_lock);
             return OMPI_ERROR;
@@ -483,7 +484,7 @@ int mca_io_ompio_file_seek (ompi_file_t *fh,
     }
 
     ret = mca_common_ompio_set_explicit_offset (&data->ompio_fh,
-                                             offset/data->ompio_fh.f_etype_size);
+                                             offset/data->ompio_fh.f_fview.f_etype_size);
     OPAL_THREAD_UNLOCK(&fh->f_lock);
 
     return ret;
@@ -519,24 +520,24 @@ int mca_io_ompio_file_get_byte_offset (ompi_file_t *fh,
     data = (mca_common_ompio_data_t *) fh->f_io_selected_data;
 
     OPAL_THREAD_LOCK(&fh->f_lock);
-    if ( data->ompio_fh.f_view_size == 0 ) {
+    if ( data->ompio_fh.f_fview.f_view_size == 0 ) {
         *disp = 0;
         OPAL_THREAD_UNLOCK(&fh->f_lock);
         return OMPI_SUCCESS;
     }
-    temp_offset = (long) data->ompio_fh.f_view_extent *
-        (offset*data->ompio_fh.f_etype_size / data->ompio_fh.f_view_size);
+    temp_offset = (long) data->ompio_fh.f_fview.f_view_extent *
+        (offset*data->ompio_fh.f_fview.f_etype_size / data->ompio_fh.f_fview.f_view_size);
     if ( 0 > temp_offset ) {
         OPAL_THREAD_UNLOCK(&fh->f_lock);
         return MPI_ERR_ARG;
     }
     
-    i = (offset*data->ompio_fh.f_etype_size) % data->ompio_fh.f_view_size;
+    i = (offset*data->ompio_fh.f_fview.f_etype_size) % data->ompio_fh.f_fview.f_view_size;
     index = 0;
     k = 0;
 
     while (1) {
-        k = data->ompio_fh.f_decoded_iov[index].iov_len;
+        k = data->ompio_fh.f_fview.f_decoded_iov[index].iov_len;
         if (i >= k) {
             i -= k;
             index++;
@@ -551,8 +552,8 @@ int mca_io_ompio_file_get_byte_offset (ompi_file_t *fh,
         }
     }
 
-    *disp = data->ompio_fh.f_disp + temp_offset +
-        (OMPI_MPI_OFFSET_TYPE)(intptr_t)data->ompio_fh.f_decoded_iov[index].iov_base + k;
+    *disp = data->ompio_fh.f_fview.f_disp + temp_offset +
+        (OMPI_MPI_OFFSET_TYPE)(intptr_t)data->ompio_fh.f_fview.f_decoded_iov[index].iov_base + k;
     OPAL_THREAD_UNLOCK(&fh->f_lock);
 
     return OMPI_SUCCESS;
@@ -604,7 +605,7 @@ int mca_io_ompio_file_get_position_shared (ompi_file_t *fp,
     }
     OPAL_THREAD_LOCK(&fp->f_lock);
     ret = shared_fp_base_module->sharedfp_get_position(fh,offset);
-    *offset = *offset / fh->f_etype_size;
+    *offset = *offset / fh->f_fview.f_etype_size;
     OPAL_THREAD_UNLOCK(&fp->f_lock);
 
     return ret;

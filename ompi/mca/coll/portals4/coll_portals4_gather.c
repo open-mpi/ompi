@@ -360,7 +360,7 @@ setup_gather_handles(struct ompi_communicator_t   *comm,
     /**********************************/
     /* Setup Gather Handles           */
     /**********************************/
-    COLL_PORTALS4_SET_BITS(request->u.gather.gather_match_bits, ompi_comm_get_cid(comm),
+    COLL_PORTALS4_SET_BITS(request->u.gather.gather_match_bits, ompi_comm_get_local_cid(comm),
             0, 0, COLL_PORTALS4_GATHER, 0, request->u.gather.coll_count);
 
     ret = PtlCTAlloc(mca_coll_portals4_component.ni_h,
@@ -413,7 +413,7 @@ setup_sync_handles(struct ompi_communicator_t   *comm,
     /**********************************/
     /* Setup Sync Handles             */
     /**********************************/
-    COLL_PORTALS4_SET_BITS(request->u.gather.sync_match_bits, ompi_comm_get_cid(comm),
+    COLL_PORTALS4_SET_BITS(request->u.gather.sync_match_bits, ompi_comm_get_local_cid(comm),
             0, 1, COLL_PORTALS4_GATHER, 0, request->u.gather.coll_count);
 
     ret = PtlCTAlloc(mca_coll_portals4_component.ni_h,

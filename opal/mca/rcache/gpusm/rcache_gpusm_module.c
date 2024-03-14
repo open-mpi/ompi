@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2013 The University of Tennessee and The University
+ * Copyright (c) 2004-2024 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -18,6 +18,8 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  *
+ * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2023      Advanced Micro Devices, Inc. All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -38,9 +40,10 @@
  */
 
 #include "opal_config.h"
-#include "opal/mca/common/cuda/common_cuda.h"
 #include "opal/mca/rcache/base/base.h"
 #include "opal/mca/rcache/gpusm/rcache_gpusm.h"
+#include "opal/include/opal/opal_gpu.h"
+#include "opal/mca/accelerator/base/base.h"
 
 /**
  * Called when the registration free list is created.  An event is created
@@ -48,7 +51,17 @@
  */
 static void mca_rcache_gpusm_registration_constructor(mca_rcache_gpusm_registration_t *item)
 {
-    mca_common_cuda_construct_event_and_handle(&item->event, (void *) &item->evtHandle);
+    int result;
+
+    result = opal_accelerator.create_event(MCA_ACCELERATOR_NO_DEVICE_ID, &item->event, true);
+    if (OPAL_UNLIKELY(OPAL_SUCCESS != result)) {
+        opal_output(0, "create_ipc_event failed\n");
+    }
+
+    result = opal_accelerator.get_ipc_event_handle(item->event, &item->evtHandle);
+    if (OPAL_UNLIKELY(OPAL_SUCCESS != result)) {
+        opal_output(0, "get_ipc_event_handle failed\n");
+    }
 }
 
 /**
@@ -56,7 +69,7 @@ static void mca_rcache_gpusm_registration_constructor(mca_rcache_gpusm_registrat
  */
 static void mca_rcache_gpusm_registration_destructor(mca_rcache_gpusm_registration_t *item)
 {
-    mca_common_cuda_destruct_event(item->event);
+    OBJ_RELEASE(item->event);
 }
 
 OBJ_CLASS_INSTANCE(mca_rcache_gpusm_registration_t, mca_rcache_base_registration_t,
@@ -68,6 +81,8 @@ OBJ_CLASS_INSTANCE(mca_rcache_gpusm_registration_t, mca_rcache_base_registration
  */
 void mca_rcache_gpusm_module_init(mca_rcache_gpusm_module_t *rcache)
 {
+    mca_rcache_base_module_init(&rcache->super);
+
     rcache->super.rcache_component = &mca_rcache_gpusm_component.super;
     rcache->super.rcache_register = mca_rcache_gpusm_register;
     rcache->super.rcache_find = mca_rcache_gpusm_find;
@@ -79,7 +94,7 @@ void mca_rcache_gpusm_module_init(mca_rcache_gpusm_module_t *rcache)
     /* Start with 0 entries in the free list since CUDA may not have
      * been initialized when this free list is created and there is
      * some CUDA specific activities that need to be done. */
-    opal_free_list_init(&rcache->reg_list, sizeof(struct mca_rcache_common_cuda_reg_t),
+    opal_free_list_init(&rcache->reg_list, sizeof(struct mca_opal_gpu_reg_t),
                         opal_cache_line_size, OBJ_CLASS(mca_rcache_gpusm_registration_t), 0,
                         opal_cache_line_size, 0, -1, 64, NULL, 0, NULL, NULL, NULL);
 }
@@ -92,6 +107,61 @@ int mca_rcache_gpusm_find(mca_rcache_base_module_t *rcache, void *addr, size_t s
                           mca_rcache_base_registration_t **reg)
 {
     return mca_rcache_gpusm_register(rcache, addr, size, 0, 0, reg);
+}
+
+/*
+ * Get the memory handle of a local section of memory that can be sent
+ * to the remote size so it can access the memory.  This is the
+ * registration function for the sending side of a message transfer.
+ */
+static int mca_rcache_gpusm_get_mem_handle(void *base, size_t size, mca_rcache_base_registration_t *newreg)
+{
+    mca_opal_gpu_reg_t *gpu_reg = (mca_opal_gpu_reg_t *) newreg;
+    opal_accelerator_buffer_id_t buffer_id;
+    uint64_t flags;
+    int      dev_id;
+    int      result;
+    void*    pbase;
+    size_t   psize;
+
+    result = opal_accelerator.check_addr(base, &dev_id, &flags);
+    if (0 >= result) {
+        // This is either an error or host memory. In either case we do not continue
+        return OPAL_ERROR;
+    }
+
+    result = opal_accelerator.get_ipc_handle(dev_id, base, &gpu_reg->data.ipcHandle);
+    if (OPAL_UNLIKELY(OPAL_SUCCESS != result)) {
+        return OPAL_ERROR;
+    }
+    result = opal_accelerator.get_address_range (dev_id, base, &pbase, &psize);
+    if (OPAL_UNLIKELY(OPAL_SUCCESS != result)) {
+        return OPAL_ERROR;
+    }
+
+    /* Store all the information in the registration */
+    gpu_reg->base.base  = pbase;
+    gpu_reg->base.bound = (unsigned char *) pbase + psize - 1;
+    gpu_reg->data.memh_seg_addr.pval = (void *) pbase;
+    gpu_reg->data.memh_seg_len = psize;
+
+    // converting the ifdef into a mca runtime parameter
+    if (opal_accelerator_use_sync_memops) {
+        // need to revisit. This function also sets sync_memops
+        // we might want to separate that out into a separate function
+        result = opal_accelerator.get_buffer_id(dev_id, base, &buffer_id);
+        if (OPAL_UNLIKELY(OPAL_SUCCESS != result)) {
+            return OPAL_ERROR;
+        }
+    }
+    else {
+        result = opal_accelerator.record_event(dev_id, gpu_reg->data.event, 0);
+        if (OPAL_UNLIKELY(OPAL_SUCCESS != result)) {
+            return OPAL_ERROR;
+        }
+    }
+
+    return OPAL_SUCCESS;
 }
 
 /*
@@ -131,9 +201,9 @@ int mca_rcache_gpusm_register(mca_rcache_base_module_t *rcache, void *addr, size
     gpusm_reg->flags = flags;
     gpusm_reg->access_flags = access_flags;
 
-    rc = cuda_getmemhandle(base, size, gpusm_reg, NULL);
+    rc = mca_rcache_gpusm_get_mem_handle(base, size, gpusm_reg);
 
-    if (rc != OPAL_SUCCESS) {
+    if (OPAL_SUCCESS != rc) {
         opal_free_list_return(&rcache_gpusm->reg_list, item);
         return rc;
     }
@@ -149,10 +219,8 @@ int mca_rcache_gpusm_register(mca_rcache_base_module_t *rcache, void *addr, size
 int mca_rcache_gpusm_deregister(struct mca_rcache_base_module_t *rcache,
                                 mca_rcache_base_registration_t *reg)
 {
-    int rc;
     mca_rcache_gpusm_module_t *rcache_gpusm = (mca_rcache_gpusm_module_t *) rcache;
 
-    rc = cuda_ungetmemhandle(NULL, reg);
     opal_free_list_return(&rcache_gpusm->reg_list, (opal_free_list_item_t *) reg);
     return OPAL_SUCCESS;
 }
@@ -174,5 +242,8 @@ void mca_rcache_gpusm_finalize(struct mca_rcache_base_module_t *rcache)
     }
 
     OBJ_DESTRUCT(&rcache_gpusm->reg_list);
+
+    mca_rcache_base_module_fini(rcache);
+
     return;
 }

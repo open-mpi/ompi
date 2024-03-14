@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -13,6 +13,9 @@
  * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018-2022 Triad National Security, LLC. All rights
+ *                         reserved.
+ * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -35,7 +38,7 @@
 #define MPI_Info_f2c PMPI_Info_f2c
 #endif
 
-static const char FUNC_NAME[] = "MPI_Info_f2c";
+static const char FUNC_NAME[] __opal_attribute_unused__ = "MPI_Info_f2c";
 
 
 /**
@@ -48,15 +51,27 @@ MPI_Info MPI_Info_f2c(MPI_Fint info)
 {
     int info_index = OMPI_FINT_2_INT(info);
 
-    /* check the arguments */
-
-    if (MPI_PARAM_CHECK) {
-        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-    }
-
     /* Per MPI-2:4.12.4, do not invoke an error handler if we get an
        invalid fortran handle.  If we get an invalid fortran handle,
        return an invalid C handle. */
+    /*
+     * Deal with special pre-defined cases for MPI 4.0
+     */
+
+    if (info_index == 0) {
+        return MPI_INFO_NULL;
+    }
+
+    if (info_index == 1) {
+        return MPI_INFO_ENV;
+    }
+
+    /* 
+     * if the application has not created an info object yet
+     * then the size of the ompi_info_f_to_c_table is zero
+     * so this check can be done even if an info object has not
+     * previously been created.
+     */
 
     if (info_index < 0 ||
         info_index >=
@@ -64,5 +79,10 @@ MPI_Info MPI_Info_f2c(MPI_Fint info)
         return NULL;
     }
 
+    /*
+     * if we get here, then the info support infrastructure has been initialized
+     * either via a prior call to MPI_Info_create or one of the MPI initialization
+     * methods.
+     */
     return (MPI_Info)opal_pointer_array_get_item(&ompi_info_f_to_c_table, info_index);
 }

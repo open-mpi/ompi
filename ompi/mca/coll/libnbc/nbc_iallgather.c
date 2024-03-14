@@ -92,7 +92,7 @@ static int nbc_allgather_init(const void* sendbuf, int sendcount, MPI_Datatype s
     sendcount = recvcount;
   } else if (!persistent) { /* for persistent, the copy must be scheduled */
     /* copy my data to receive buffer */
-    rbuf = (char *) recvbuf + rank * recvcount * rcvext;
+    rbuf = (char *) recvbuf + (MPI_Aint)rcvext * rank * recvcount;
     res = NBC_Copy (sendbuf, sendcount, sendtype, rbuf, recvcount, recvtype, comm);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
       return res;
@@ -121,7 +121,7 @@ static int nbc_allgather_init(const void* sendbuf, int sendcount, MPI_Datatype s
     if (persistent && !inplace) {
       /* for nonblocking, data has been copied already */
       /* copy my data to receive buffer (= send buffer of NBC_Sched_send) */
-      rbuf = (char *)recvbuf + rank * recvcount * rcvext;
+      rbuf = (char *)recvbuf + (MPI_Aint) rcvext * rank * recvcount;
       res = NBC_Sched_copy((void *)sendbuf, false, sendcount, sendtype,
                             rbuf, false, recvcount, recvtype, schedule, true);
       if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
@@ -237,7 +237,7 @@ static int nbc_allgather_inter_init(const void* sendbuf, int sendcount, MPI_Data
   /* do rsize - 1 rounds */
   for (int r = 0 ; r < rsize ; ++r) {
     /* recv from rank r */
-    rbuf = (char *) recvbuf + r * recvcount * rcvext;
+    rbuf = (char *) recvbuf + (MPI_Aint) rcvext * r * recvcount;
     res = NBC_Sched_recv (rbuf, false, recvcount, recvtype, r, schedule, false);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
       OBJ_RELEASE(schedule);
@@ -303,12 +303,12 @@ static inline int allgather_sched_linear(
     ptrdiff_t rlb, rext;
 
     res = ompi_datatype_get_extent(rdtype, &rlb, &rext);
-    char *sbuf = (char *)recvbuf + rank * rcount * rext;
+    char *sbuf = (char *)recvbuf + (MPI_Aint) rext * rank * rcount;
 
     for (int remote = 0; remote < comm_size ; ++remote) {
         if (remote != rank) {
             /* Recv from rank remote */
-            char *rbuf = (char *)recvbuf + remote * rcount * rext;
+            char *rbuf = (char *)recvbuf + (MPI_Aint) rext * remote * rcount;
             res = NBC_Sched_recv(rbuf, false, rcount, rdtype, remote, schedule, false);
             if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) { goto cleanup_and_return; }
 

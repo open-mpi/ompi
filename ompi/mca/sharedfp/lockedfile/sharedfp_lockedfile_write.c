@@ -12,6 +12,8 @@
  * Copyright (c) 2013-2018 University of Houston. All rights reserved.
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2024      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -30,7 +32,7 @@
 
 int mca_sharedfp_lockedfile_write (ompio_file_t *fh,
                                    const void *buf,
-                                   int count,
+                                   size_t count,
                                    struct ompi_datatype_t *datatype,
                                    ompi_status_public_t *status)
 {
@@ -59,7 +61,7 @@ int mca_sharedfp_lockedfile_write (ompio_file_t *fh,
 
     /* Request the offset to write bytesRequested bytes */
     ret = mca_sharedfp_lockedfile_request_position ( sh, bytesRequested, &offset);
-    offset /= fh->f_etype_size;
+    offset /= fh->f_fview.f_etype_size;
 
     if (-1 != ret )  {
 	if ( mca_sharedfp_lockedfile_verbose ) {
@@ -75,7 +77,7 @@ int mca_sharedfp_lockedfile_write (ompio_file_t *fh,
 
 int mca_sharedfp_lockedfile_write_ordered (ompio_file_t *fh,
                                            const void *buf,
-                                           int count,
+                                           size_t count,
                                            struct ompi_datatype_t *datatype,
                                            ompi_status_public_t *status)
 {
@@ -177,7 +179,7 @@ int mca_sharedfp_lockedfile_write_ordered (ompio_file_t *fh,
 
     /*Each process now has its own individual offset*/
     offset = offsetBuff - sendBuff;
-    offset /= fh->f_etype_size;
+    offset /= fh->f_fview.f_etype_size;
 
     if ( mca_sharedfp_lockedfile_verbose ) {
         opal_output(ompi_sharedfp_base_framework.framework_output,

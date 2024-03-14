@@ -473,7 +473,7 @@ static void left_rotate(opal_rb_tree_t *tree, opal_rb_tree_node_t *x)
         y->left->parent = x;
     }
 
-    /* normlly we would have to check to see if we are at the root.
+    /* normally we would have to check to see if we are at the root.
      * however, the root sentinal takes care of it for us */
     if (x == x->parent->left) {
         x->parent->left = y;

@@ -14,6 +14,7 @@
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * Copyright (c) 2010-2011 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2022      IBM Corporation. All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -42,7 +43,7 @@ BEGIN_C_DECLS
  * successful shm_open.  otherwise, -1 is returned and the contents of
  * posix_file_name_buff are undefined.
  */
-OPAL_DECLSPEC extern int shmem_posix_shm_open(char *posix_file_name_buff, size_t size);
+OPAL_DECLSPEC extern int opal_shmem_posix_shm_open(char *posix_file_name_buff, size_t size);
 
 END_C_DECLS
 

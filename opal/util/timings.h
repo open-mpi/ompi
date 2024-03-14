@@ -2,6 +2,8 @@
  * Copyright (C) 2014      Artem Polyakov <artpol84@gmail.com>
  * Copyright (c) 2014-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2017-2018 Mellanox Technologies Ltd. All rights reserved.
+ * Copyright (c) 2023      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -39,6 +41,11 @@ typedef struct {
 } opal_timing_env_t;
 
 opal_timing_ts_func_t opal_timing_ts_func(opal_timer_type_t type);
+void opal_timing_enable_native_timers(void);
+void opal_timing_disable_native_timers(void);
+
+#    define OPAL_TIMING_ENABLE_NATIVE_TIMERS  opal_timing_enable_native_timers()
+#    define OPAL_TIMING_DISABLE_NATIVE_TIMERS  opal_timing_disable_native_timers()
 
 #    define OPAL_TIMING_ENV_START_TYPE(func, _nm, type, prefix)                   \
         do {                                                                      \
@@ -199,6 +206,9 @@ opal_timing_ts_func_t opal_timing_ts_func(opal_timer_type_t type);
         OPAL_TIMING_ENV_GETDESC_PREFIX("", file, func, index, desc)
 
 #else
+
+#    define OPAL_TIMING_ENABLE_NATIVE_TIMERS
+#    define OPAL_TIMING_DISABLE_NATIVE_TIMERS
 
 #    define OPAL_TIMING_ENV_START_TYPE(func, type, prefix)
 

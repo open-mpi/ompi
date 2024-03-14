@@ -13,10 +13,12 @@
  * Copyright (c) 2006      University of Houston. All rights reserved.
  * Copyright (c) 2010-2012 Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013-2018 Cisco Systems, Inc.  All rights reserved
- * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2013-2018 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2022      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -35,6 +37,7 @@
 
 #include "ompi/errhandler/errcode.h"
 #include "ompi/constants.h"
+#include "ompi/instance/instance.h"
 
 /* Table holding all error codes */
 opal_pointer_array_t ompi_mpi_errcodes = {{0}};
@@ -122,6 +125,8 @@ static ompi_mpi_errcode_t ompi_err_proc_fail_stop;
 static ompi_mpi_errcode_t ompi_err_proc_fail_pending;
 static ompi_mpi_errcode_t ompi_err_revoked;
 #endif
+static ompi_mpi_errcode_t ompi_err_session;
+static ompi_mpi_errcode_t ompi_err_value_too_large;
 
 static void ompi_mpi_errcode_construct(ompi_mpi_errcode_t* errcode);
 static void ompi_mpi_errcode_destruct(ompi_mpi_errcode_t* errcode);
@@ -137,14 +142,14 @@ do {                                                                      \
     opal_pointer_array_set_item(&ompi_mpi_errcodes, (ERRCODE), &(VAR));   \
 } while (0)
 
-static opal_mutex_t errcode_init_lock = OPAL_MUTEX_STATIC_INIT;
+static opal_mutex_t errcode_lock = OPAL_MUTEX_STATIC_INIT;
 
 int ompi_mpi_errcode_init (void)
 {
-    opal_mutex_lock(&errcode_init_lock);
+    opal_mutex_lock(&errcode_lock);
     if ( 0 != ompi_mpi_errcode_lastpredefined ) {
         /* Already initialized (presumably by an API call before MPI_init */
-        opal_mutex_unlock(&errcode_init_lock);
+        opal_mutex_unlock(&errcode_lock);
         return OMPI_SUCCESS;
     }
 
@@ -186,7 +191,7 @@ int ompi_mpi_errcode_init (void)
     CONSTRUCT_ERRCODE( ompi_err_conversion, MPI_ERR_CONVERSION, "MPI_ERR_CONVERSION: error in data conversion" );
     CONSTRUCT_ERRCODE( ompi_err_disp, MPI_ERR_DISP, "MPI_ERR_DISP: invalid displacement" );
     CONSTRUCT_ERRCODE( ompi_err_dup_datarep, MPI_ERR_DUP_DATAREP, "MPI_ERR_DUP_DATAREP: error duplicating data representation" );
-    CONSTRUCT_ERRCODE( ompi_err_file_exists, MPI_ERR_FILE_EXISTS, "MPI_ERR_FILE_EXISTS: file exists alreay" );
+    CONSTRUCT_ERRCODE( ompi_err_file_exists, MPI_ERR_FILE_EXISTS, "MPI_ERR_FILE_EXISTS: file exists already" );
     CONSTRUCT_ERRCODE( ompi_err_file_in_use, MPI_ERR_FILE_IN_USE, "MPI_ERR_FILE_IN_USE: file already in use" );
     CONSTRUCT_ERRCODE( ompi_err_file, MPI_ERR_FILE, "MPI_ERR_FILE: invalid file" );
     CONSTRUCT_ERRCODE( ompi_err_info_key, MPI_ERR_INFO_KEY, "MPI_ERR_INFO_KEY: invalid key argument for info object" );
@@ -238,21 +243,34 @@ int ompi_mpi_errcode_init (void)
     CONSTRUCT_ERRCODE( ompi_err_proc_fail_pending,  MPI_ERR_PROC_FAILED_PENDING,  "MPI_ERR_PROC_FAILED_PENDING: Process Failure during an MPI_ANY_SOURCE non-blocking receive, request is still active" );
     CONSTRUCT_ERRCODE( ompi_err_revoked,  MPI_ERR_REVOKED,  "MPI_ERR_REVOKED: Communication Object Revoked" );
 #endif
+    CONSTRUCT_ERRCODE( ompi_err_session,  MPI_ERR_SESSION,  "MPI_ERR_SESSION: Invalid session handle" );
+    CONSTRUCT_ERRCODE( ompi_err_value_too_large,  MPI_ERR_VALUE_TOO_LARGE,  "MPI_ERR_VALUE_TOO_LARGE: Value is too large to store" );
 
     /* Per MPI-3 p353:27-32, MPI_LASTUSEDCODE must be >=
        MPI_ERR_LASTCODE.  So just start it as == MPI_ERR_LASTCODE. */
     ompi_mpi_errcode_lastused = MPI_ERR_LASTCODE;
     ompi_mpi_errcode_lastpredefined = MPI_ERR_LASTCODE;
-    opal_mutex_unlock(&errcode_init_lock);
+
+    opal_mutex_unlock(&errcode_lock);
+
+    ompi_mpi_instance_append_finalize (ompi_mpi_errcode_finalize);
+
     return OMPI_SUCCESS;
 }
 
-int ompi_mpi_errcode_finalize(void)
+/**
+ * Finalize the error codes.
+ *
+ * @returns OMPI_SUCCESS Always
+ *
+ * Invoked from instance teardown if ompi_mpi_errcode_init() was called; tears down the error code array.
+ */
+int ompi_mpi_errcode_finalize (void)
 {
     int i;
     ompi_mpi_errcode_t *errc;
 
-    opal_mutex_lock(&errcode_init_lock);
+    opal_mutex_lock(&errcode_lock);
     for (i=ompi_mpi_errcode_lastpredefined+1; i<=ompi_mpi_errcode_lastused; i++) {
         /*
          * there are some user defined error-codes, which
@@ -342,10 +360,11 @@ int ompi_mpi_errcode_finalize(void)
     OBJ_DESTRUCT(&ompi_err_proc_fail_pending);
     OBJ_DESTRUCT(&ompi_err_revoked);
 #endif
-
+    OBJ_DESTRUCT(&ompi_err_session);
+    OBJ_DESTRUCT(&ompi_err_value_too_large);
     OBJ_DESTRUCT(&ompi_mpi_errcodes);
     ompi_mpi_errcode_lastpredefined = 0;
-    opal_mutex_unlock(&errcode_init_lock);
+    opal_mutex_unlock(&errcode_lock);
     return OMPI_SUCCESS;
 }
 
@@ -354,11 +373,14 @@ int ompi_mpi_errcode_add(int errclass )
     ompi_mpi_errcode_t *newerrcode;
 
     newerrcode = OBJ_NEW(ompi_mpi_errcode_t);
+
+    opal_mutex_lock(&errcode_lock);
     newerrcode->code = (ompi_mpi_errcode_lastused+1);
     newerrcode->cls = errclass;
     opal_pointer_array_set_item(&ompi_mpi_errcodes, newerrcode->code, newerrcode);
-
     ompi_mpi_errcode_lastused++;
+    opal_mutex_unlock(&errcode_lock);
+
     return newerrcode->code;
 }
 
@@ -367,10 +389,13 @@ int ompi_mpi_errclass_add(void)
     ompi_mpi_errcode_t *newerrcode;
 
     newerrcode = OBJ_NEW(ompi_mpi_errcode_t);
+
+    opal_mutex_lock(&errcode_lock);
     newerrcode->cls = ( ompi_mpi_errcode_lastused+1);
     opal_pointer_array_set_item(&ompi_mpi_errcodes, newerrcode->cls, newerrcode);
-
     ompi_mpi_errcode_lastused++;
+    opal_mutex_unlock(&errcode_lock);
+
     return newerrcode->cls;
 }
 

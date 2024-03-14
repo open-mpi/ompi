@@ -77,33 +77,6 @@ OBJ_CLASS_INSTANCE(ompi_osc_rdma_pending_op_t, opal_list_item_t,
                    ompi_osc_rdma_pending_op_construct,
                    ompi_osc_rdma_pending_op_destruct);
 
-/**
- * Dummy completion function for atomic operations
- */
-void ompi_osc_rdma_atomic_complete (mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint,
-                                    void *local_address, mca_btl_base_registration_handle_t *local_handle,
-                                    void *context, void *data, int status)
-{
-    ompi_osc_rdma_pending_op_t *pending_op = (ompi_osc_rdma_pending_op_t *) context;
-
-    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "pending atomic %p complete with status %d", (void*)pending_op, status);
-
-    if (pending_op->op_result) {
-        memmove (pending_op->op_result, pending_op->op_buffer, pending_op->op_size);
-    }
-
-    if (NULL != pending_op->cbfunc) {
-        pending_op->cbfunc (pending_op->cbdata, pending_op->cbcontext, status);
-    }
-
-    if (NULL != pending_op->op_frag) {
-        ompi_osc_rdma_frag_complete (pending_op->op_frag);
-        pending_op->op_frag = NULL;
-    }
-
-    pending_op->op_complete = true;
-    OBJ_RELEASE(pending_op);
-}
 
 /**
  * compare_ranks:
@@ -380,7 +353,7 @@ int ompi_osc_rdma_start_atomic (ompi_group_t *group, int mpi_assert, ompi_win_t 
     sync->num_peers = ompi_group_size (group);
     sync->sync.pscw.group = group;
 
-    /* haven't processed any post messaes yet */
+    /* haven't processed any post messages yet */
     state->num_post_msgs = 0;
 
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "start group size %d", sync->num_peers);
@@ -456,6 +429,11 @@ int ompi_osc_rdma_complete_atomic (ompi_win_t *win)
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "complete: %s", win->w_name);
 
     OPAL_THREAD_LOCK(&module->lock);
+    if (0 == sync->num_peers) {
+        OPAL_THREAD_UNLOCK(&module->lock);
+        return OMPI_SUCCESS;
+    }
+
     if (OMPI_OSC_RDMA_SYNC_TYPE_PSCW != sync->type) {
         OPAL_THREAD_UNLOCK(&module->lock);
         return OMPI_ERR_RMA_SYNC;
@@ -599,7 +577,7 @@ int ompi_osc_rdma_fence_atomic (int mpi_assert, ompi_win_t *win)
     }
 
     /* NTH: locking here isn't really needed per-se but it may make user synchronization errors more
-     * predicable. if the user is using RMA correctly then there will be no contention on this lock. */
+     * predictable. if the user is using RMA correctly then there will be no contention on this lock. */
     OPAL_THREAD_LOCK(&module->lock);
 
     /* active sends are now active (we will close the epoch if NOSUCCEED is specified) */

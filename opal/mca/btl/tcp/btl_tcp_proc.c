@@ -347,14 +347,12 @@ static int mca_btl_tcp_proc_handle_modex_addresses(mca_btl_tcp_proc_t *btl_proc,
 
     rc = mca_btl_tcp_proc_store_matched_interfaces(btl_proc, local_proc_is_left, graph, num_matched,
                                                    matched_edges);
-    if (rc) {
-        goto cleanup;
-    }
 
 cleanup:
     if (NULL != graph) {
         opal_bp_graph_free(graph);
     }
+    free(matched_edges);
     return rc;
 }
 
@@ -643,7 +641,7 @@ void mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t *btl_proc, struct sockaddr *addr
         default:;
         }
 
-        /* Set state to CONNECTING to ensure that subsequent conenctions do not attempt to re-use
+        /* Set state to CONNECTING to ensure that subsequent connections do not attempt to re-use
          * endpoint in the num_links > 1 case*/
         btl_endpoint->endpoint_state = MCA_BTL_TCP_CONNECTING;
         (void) mca_btl_tcp_endpoint_accept(btl_endpoint, addr, sd);

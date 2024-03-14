@@ -3,9 +3,9 @@
 #include <stdlib.h>
 #include "treematch.h"
 
-void update_val(tm_affinity_mat_t *aff_mat,tm_tree_t *parent);
-void display_tab(double **tab,int N);
-void set_node(tm_tree_t *node,tm_tree_t ** child, int arity,tm_tree_t *parent,
+OMPI_HIDDEN void tm_update_val(tm_affinity_mat_t *aff_mat,tm_tree_t *parent);
+OMPI_HIDDEN void tm_display_tab(double **tab,int N);
+OMPI_HIDDEN void tm_set_node(tm_tree_t *node,tm_tree_t ** child, int arity,tm_tree_t *parent,
 	      int id,double val,tm_tree_t *tab_child,int depth);
 
 

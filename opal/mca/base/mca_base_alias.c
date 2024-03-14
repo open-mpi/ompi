@@ -149,6 +149,7 @@ int mca_base_alias_register(const char *project, const char *framework, const ch
     if (NULL == alias) {
         alias = OBJ_NEW(mca_base_alias_t);
         if (NULL == alias) {
+            free(name);
             return OPAL_ERR_OUT_OF_RESOURCE;
         }
 
@@ -159,9 +160,7 @@ int mca_base_alias_register(const char *project, const char *framework, const ch
 
     mca_base_alias_item_t *alias_item = OBJ_NEW(mca_base_alias_item_t);
     if (NULL == alias_item) {
-        if (NULL != name) {
-            free(name);
-        }
+        free(name);
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
@@ -170,6 +169,7 @@ int mca_base_alias_register(const char *project, const char *framework, const ch
 
     opal_list_append(&alias->component_aliases, &alias_item->super);
 
+    free(name);
     return OPAL_SUCCESS;
 }
 

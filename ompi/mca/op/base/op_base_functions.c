@@ -45,7 +45,7 @@
       int i;                                                             \
       type *a = (type *) in;                                             \
       type *b = (type *) out;                                            \
-      for (i = 0; i < *count; ++i) {                                     \
+      for (i = *count; i > 0; i--) {                                     \
           *(b++) op *(a++);                                              \
       }                                                                  \
   }
@@ -65,7 +65,7 @@
       int i;                                                             \
       type *a = (type *) in;                                             \
       type *b = (type *) out;                                            \
-      for (i = 0; i < *count; ++i) {                                     \
+      for (i = *count; i > 0; i--) {                                     \
           *(b) = current_func(*(b), *(a));                               \
           ++b;                                                           \
           ++a;                                                           \
@@ -93,7 +93,7 @@
         int i;                                                          \
         ompi_op_predefined_##type_name##_t *a = (ompi_op_predefined_##type_name##_t*) in; \
         ompi_op_predefined_##type_name##_t *b = (ompi_op_predefined_##type_name##_t*) out; \
-        for (i = 0; i < *count; ++i, ++a, ++b) {                        \
+        for (i = *count; i > 0; i--, ++a, ++b) {                        \
             if (a->v op b->v) {                                         \
                 b->v = a->v;                                            \
                 b->k = a->k;                                            \
@@ -117,7 +117,7 @@
       int i;                                                             \
       type (*a)[2] = (type (*)[2]) in;                                   \
       type (*b)[2] = (type (*)[2]) out;                                  \
-      for (i = 0; i < *count; ++i, ++a, ++b) {                           \
+      for (i = *count; i > 0; i--, ++a, ++b) {                           \
           (*b)[0] += (*a)[0];                                            \
           (*b)[1] += (*a)[1];                                            \
       }                                                                  \
@@ -138,7 +138,7 @@
       type (*a)[2] = (type (*)[2]) in;                                   \
       type (*b)[2] = (type (*)[2]) out;                                  \
       type c[2];                                                         \
-      for (i = 0; i < *count; ++i, ++a, ++b) {                           \
+      for (i = *count; i > 0; i--, ++a, ++b) {                           \
           c[0] = (*a)[0] * (*b)[0] - (*a)[1] * (*b)[1];                  \
           c[1] = (*a)[0] * (*b)[1] + (*a)[1] * (*b)[0];                  \
           (*b)[0] = c[0];                                                \
@@ -162,7 +162,7 @@ FUNC_FUNC(max, uint32_t, uint32_t)
 FUNC_FUNC(max,  int64_t,  int64_t)
 FUNC_FUNC(max, uint64_t, uint64_t)
 FUNC_FUNC(max,  long,  long)
-FUNC_FUNC(max,  unsigned_long,  long)
+FUNC_FUNC(max,  unsigned_long, unsigned long)
 
 /* Fortran integer */
 #if OMPI_HAVE_FORTRAN_INTEGER
@@ -228,7 +228,7 @@ FUNC_FUNC(min, uint32_t, uint32_t)
 FUNC_FUNC(min,  int64_t,  int64_t)
 FUNC_FUNC(min, uint64_t, uint64_t)
 FUNC_FUNC(min,  long,  long)
-FUNC_FUNC(min,  unsigned_long,  long)
+FUNC_FUNC(min,  unsigned_long, unsigned long)
 
 /* Fortran integer */
 #if OMPI_HAVE_FORTRAN_INTEGER
@@ -291,7 +291,7 @@ OP_FUNC(sum, uint32_t, uint32_t, +=)
 OP_FUNC(sum,  int64_t,  int64_t, +=)
 OP_FUNC(sum, uint64_t, uint64_t, +=)
 OP_FUNC(sum,  long,  long, +=)
-OP_FUNC(sum,  unsigned_long,  long, +=)
+OP_FUNC(sum,  unsigned_long, unsigned long, +=)
 
 /* Fortran integer */
 #if OMPI_HAVE_FORTRAN_INTEGER
@@ -363,7 +363,7 @@ OP_FUNC(prod, uint32_t, uint32_t, *=)
 OP_FUNC(prod,  int64_t,  int64_t, *=)
 OP_FUNC(prod, uint64_t, uint64_t, *=)
 OP_FUNC(prod,  long,  long, *=)
-OP_FUNC(prod,  unsigned_long,  long, *=)
+OP_FUNC(prod,  unsigned_long, unsigned long, *=)
 
 /* Fortran integer */
 #if OMPI_HAVE_FORTRAN_INTEGER
@@ -437,7 +437,7 @@ FUNC_FUNC(land, uint32_t, uint32_t)
 FUNC_FUNC(land,  int64_t,  int64_t)
 FUNC_FUNC(land, uint64_t, uint64_t)
 FUNC_FUNC(land,  long,  long)
-FUNC_FUNC(land,  unsigned_long,  long)
+FUNC_FUNC(land,  unsigned_long, unsigned long)
 
 /* Logical */
 #if OMPI_HAVE_FORTRAN_LOGICAL
@@ -462,7 +462,7 @@ FUNC_FUNC(lor, uint32_t, uint32_t)
 FUNC_FUNC(lor,  int64_t,  int64_t)
 FUNC_FUNC(lor, uint64_t, uint64_t)
 FUNC_FUNC(lor,  long,  long)
-FUNC_FUNC(lor,  unsigned_long,  long)
+FUNC_FUNC(lor,  unsigned_long, unsigned long)
 
 /* Logical */
 #if OMPI_HAVE_FORTRAN_LOGICAL
@@ -487,7 +487,7 @@ FUNC_FUNC(lxor, uint32_t, uint32_t)
 FUNC_FUNC(lxor,  int64_t,  int64_t)
 FUNC_FUNC(lxor, uint64_t, uint64_t)
 FUNC_FUNC(lxor,  long,  long)
-FUNC_FUNC(lxor,  unsigned_long,  long)
+FUNC_FUNC(lxor,  unsigned_long, unsigned long)
 
 
 /* Logical */
@@ -513,7 +513,7 @@ FUNC_FUNC(band, uint32_t, uint32_t)
 FUNC_FUNC(band,  int64_t,  int64_t)
 FUNC_FUNC(band, uint64_t, uint64_t)
 FUNC_FUNC(band,  long,  long)
-FUNC_FUNC(band,  unsigned_long,  long)
+FUNC_FUNC(band,  unsigned_long, unsigned long)
 
 /* Fortran integer */
 #if OMPI_HAVE_FORTRAN_INTEGER
@@ -553,7 +553,7 @@ FUNC_FUNC(bor, uint32_t, uint32_t)
 FUNC_FUNC(bor,  int64_t,  int64_t)
 FUNC_FUNC(bor, uint64_t, uint64_t)
 FUNC_FUNC(bor,  long,  long)
-FUNC_FUNC(bor,  unsigned_long,  long)
+FUNC_FUNC(bor,  unsigned_long, unsigned long)
 
 /* Fortran integer */
 #if OMPI_HAVE_FORTRAN_INTEGER
@@ -593,7 +593,7 @@ FUNC_FUNC(bxor, uint32_t, uint32_t)
 FUNC_FUNC(bxor,  int64_t,  int64_t)
 FUNC_FUNC(bxor, uint64_t, uint64_t)
 FUNC_FUNC(bxor,  long,  long)
-FUNC_FUNC(bxor,  unsigned_long,  long)
+FUNC_FUNC(bxor,  unsigned_long, unsigned long)
 
 /* Fortran integer */
 #if OMPI_HAVE_FORTRAN_INTEGER
@@ -693,7 +693,7 @@ LOC_FUNC(minloc, long_double_int, <)
         type *a1 = (type *) in1;                                        \
         type *a2 = (type *) in2;                                        \
         type *b = (type *) out;                                         \
-        for (i = 0; i < *count; ++i) {                                  \
+        for (i = *count; i > 0; i--) {                                  \
             *(b++) =  *(a1++) op *(a2++);                               \
         }                                                               \
     }
@@ -715,7 +715,7 @@ LOC_FUNC(minloc, long_double_int, <)
         type *a1 = (type *) in1;                                        \
         type *a2 = (type *) in2;                                        \
         type *b = (type *) out;                                         \
-        for (i = 0; i < *count; ++i) {                                  \
+        for (i = *count; i > 0; i--) {                                  \
             *(b) = current_func(*(a1), *(a2));                          \
             ++b;                                                        \
             ++a1;                                                       \
@@ -748,7 +748,7 @@ LOC_FUNC(minloc, long_double_int, <)
       ompi_op_predefined_##type_name##_t *a1 = (ompi_op_predefined_##type_name##_t*) in1; \
       ompi_op_predefined_##type_name##_t *a2 = (ompi_op_predefined_##type_name##_t*) in2; \
       ompi_op_predefined_##type_name##_t *b = (ompi_op_predefined_##type_name##_t*) out; \
-      for (i = 0; i < *count; ++i, ++a1, ++a2, ++b ) {                  \
+      for (i = *count; i > 0; i--, ++a1, ++a2, ++b ) {                  \
           if (a1->v op a2->v) {                                         \
               b->v = a1->v;                                             \
               b->k = a1->k;                                             \
@@ -778,7 +778,7 @@ LOC_FUNC(minloc, long_double_int, <)
       type (*a1)[2] = (type (*)[2]) in1;                                 \
       type (*a2)[2] = (type (*)[2]) in2;                                 \
       type (*b)[2] = (type (*)[2]) out;                                  \
-      for (i = 0; i < *count; ++i, ++a1, ++a2, ++b) {                    \
+      for (i = *count; i > 0; i--, ++a1, ++a2, ++b) {                    \
           (*b)[0] = (*a1)[0] + (*a2)[0];                                 \
           (*b)[1] = (*a1)[1] + (*a2)[1];                                 \
       }                                                                  \
@@ -800,7 +800,7 @@ LOC_FUNC(minloc, long_double_int, <)
       type (*a1)[2] = (type (*)[2]) in1;                                 \
       type (*a2)[2] = (type (*)[2]) in2;                                 \
       type (*b)[2] = (type (*)[2]) out;                                  \
-      for (i = 0; i < *count; ++i, ++a1, ++a2, ++b) {                    \
+      for (i = *count; i > 0; i--, ++a1, ++a2, ++b) {                    \
           (*b)[0] = (*a1)[0] * (*a2)[0] - (*a1)[1] * (*a2)[1];           \
           (*b)[1] = (*a1)[0] * (*a2)[1] + (*a1)[1] * (*a2)[0];           \
       }                                                                  \
@@ -822,7 +822,7 @@ FUNC_FUNC_3BUF(max, uint32_t, uint32_t)
 FUNC_FUNC_3BUF(max,  int64_t,  int64_t)
 FUNC_FUNC_3BUF(max, uint64_t, uint64_t)
 FUNC_FUNC_3BUF(max,  long,  long)
-FUNC_FUNC_3BUF(max,  unsigned_long,  long)
+FUNC_FUNC_3BUF(max,  unsigned_long, unsigned long)
 
 /* Fortran integer */
 #if OMPI_HAVE_FORTRAN_INTEGER
@@ -888,7 +888,7 @@ FUNC_FUNC_3BUF(min, uint32_t, uint32_t)
 FUNC_FUNC_3BUF(min,  int64_t,  int64_t)
 FUNC_FUNC_3BUF(min, uint64_t, uint64_t)
 FUNC_FUNC_3BUF(min,  long,  long)
-FUNC_FUNC_3BUF(min,  unsigned_long,  long)
+FUNC_FUNC_3BUF(min,  unsigned_long, unsigned long)
 
 /* Fortran integer */
 #if OMPI_HAVE_FORTRAN_INTEGER
@@ -951,7 +951,7 @@ OP_FUNC_3BUF(sum, uint32_t, uint32_t, +)
 OP_FUNC_3BUF(sum,  int64_t,  int64_t, +)
 OP_FUNC_3BUF(sum, uint64_t, uint64_t, +)
 OP_FUNC_3BUF(sum,  long,  long, +)
-OP_FUNC_3BUF(sum,  unsigned_long,  long, +)
+OP_FUNC_3BUF(sum,  unsigned_long, unsigned long, +)
 
 /* Fortran integer */
 #if OMPI_HAVE_FORTRAN_INTEGER
@@ -1023,7 +1023,7 @@ OP_FUNC_3BUF(prod, uint32_t, uint32_t, *)
 OP_FUNC_3BUF(prod,  int64_t,  int64_t, *)
 OP_FUNC_3BUF(prod, uint64_t, uint64_t, *)
 OP_FUNC_3BUF(prod,  long,  long, *)
-OP_FUNC_3BUF(prod,  unsigned_long,  long, *)
+OP_FUNC_3BUF(prod,  unsigned_long, unsigned long, *)
 
 /* Fortran integer */
 #if OMPI_HAVE_FORTRAN_INTEGER
@@ -1097,7 +1097,7 @@ FUNC_FUNC_3BUF(land, uint32_t, uint32_t)
 FUNC_FUNC_3BUF(land,  int64_t,  int64_t)
 FUNC_FUNC_3BUF(land, uint64_t, uint64_t)
 FUNC_FUNC_3BUF(land,  long,  long)
-FUNC_FUNC_3BUF(land,  unsigned_long,  long)
+FUNC_FUNC_3BUF(land,  unsigned_long, unsigned long)
 
 /* Logical */
 #if OMPI_HAVE_FORTRAN_LOGICAL
@@ -1122,7 +1122,7 @@ FUNC_FUNC_3BUF(lor, uint32_t, uint32_t)
 FUNC_FUNC_3BUF(lor,  int64_t,  int64_t)
 FUNC_FUNC_3BUF(lor, uint64_t, uint64_t)
 FUNC_FUNC_3BUF(lor,  long,  long)
-FUNC_FUNC_3BUF(lor,  unsigned_long,  long)
+FUNC_FUNC_3BUF(lor,  unsigned_long, unsigned long)
 
 /* Logical */
 #if OMPI_HAVE_FORTRAN_LOGICAL
@@ -1147,7 +1147,7 @@ FUNC_FUNC_3BUF(lxor, uint32_t, uint32_t)
 FUNC_FUNC_3BUF(lxor,  int64_t,  int64_t)
 FUNC_FUNC_3BUF(lxor, uint64_t, uint64_t)
 FUNC_FUNC_3BUF(lxor,  long,  long)
-FUNC_FUNC_3BUF(lxor,  unsigned_long,  long)
+FUNC_FUNC_3BUF(lxor,  unsigned_long, unsigned long)
 
 /* Logical */
 #if OMPI_HAVE_FORTRAN_LOGICAL
@@ -1172,7 +1172,7 @@ FUNC_FUNC_3BUF(band, uint32_t, uint32_t)
 FUNC_FUNC_3BUF(band,  int64_t,  int64_t)
 FUNC_FUNC_3BUF(band, uint64_t, uint64_t)
 FUNC_FUNC_3BUF(band,  long,  long)
-FUNC_FUNC_3BUF(band,  unsigned_long,  long)
+FUNC_FUNC_3BUF(band,  unsigned_long, unsigned long)
 
 /* Fortran integer */
 #if OMPI_HAVE_FORTRAN_INTEGER
@@ -1212,7 +1212,7 @@ FUNC_FUNC_3BUF(bor, uint32_t, uint32_t)
 FUNC_FUNC_3BUF(bor,  int64_t,  int64_t)
 FUNC_FUNC_3BUF(bor, uint64_t, uint64_t)
 FUNC_FUNC_3BUF(bor,  long,  long)
-FUNC_FUNC_3BUF(bor,  unsigned_long,  long)
+FUNC_FUNC_3BUF(bor,  unsigned_long, unsigned long)
 
 /* Fortran integer */
 #if OMPI_HAVE_FORTRAN_INTEGER
@@ -1252,7 +1252,7 @@ FUNC_FUNC_3BUF(bxor, uint32_t, uint32_t)
 FUNC_FUNC_3BUF(bxor,  int64_t,  int64_t)
 FUNC_FUNC_3BUF(bxor, uint64_t, uint64_t)
 FUNC_FUNC_3BUF(bxor,  long,  long)
-FUNC_FUNC_3BUF(bxor,  unsigned_long,  long)
+FUNC_FUNC_3BUF(bxor,  unsigned_long, unsigned long)
 
 /* Fortran integer */
 #if OMPI_HAVE_FORTRAN_INTEGER
@@ -1343,11 +1343,11 @@ LOC_FUNC_3BUF(minloc, long_double_int, <)
  *
  * **NOTE** These #define's used to be strictly ordered but the use of
  * designated initializers removed this restrictions. When adding new
- * operators ALWAYS use a designated initalizer!
+ * operators ALWAYS use a designated initializer!
  */
 
 /** C integer ***********************************************************/
-#define C_INTEGER(name, ftype)                                              \
+#define C_INTEGER(name, ftype)                                             \
   [OMPI_OP_BASE_TYPE_INT8_T] = ompi_op_base_##ftype##_##name##_int8_t,     \
   [OMPI_OP_BASE_TYPE_UINT8_T] = ompi_op_base_##ftype##_##name##_uint8_t,   \
   [OMPI_OP_BASE_TYPE_INT16_T] = ompi_op_base_##ftype##_##name##_int16_t,   \
@@ -1624,7 +1624,7 @@ ompi_op_base_handler_fn_t ompi_op_base_functions[OMPI_OP_BASE_FORTRAN_OP_MAX][OM
         [OMPI_OP_BASE_FORTRAN_REPLACE] = {
             /* (MPI_ACCUMULATE is handled differently than the other
                reductions, so just zero out its function
-               impementations here to ensure that users don't invoke
+               implementations here to ensure that users don't invoke
                MPI_REPLACE with any reduction operations other than
                ACCUMULATE) */
             NULL,
@@ -1711,7 +1711,7 @@ ompi_op_base_3buff_handler_fn_t ompi_op_base_3buff_functions[OMPI_OP_BASE_FORTRA
         [OMPI_OP_BASE_FORTRAN_REPLACE] = {
             /* MPI_ACCUMULATE is handled differently than the other
                reductions, so just zero out its function
-               impementations here to ensure that users don't invoke
+               implementations here to ensure that users don't invoke
                MPI_REPLACE with any reduction operations other than
                ACCUMULATE */
             NULL,

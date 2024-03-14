@@ -1,7 +1,8 @@
 /*
- * Copyright (c) 2018-2020 The University of Tennessee and The University
+ * Copyright (c) 2018-2023 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2022      IBM Corporation. All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -86,8 +87,8 @@ mca_coll_han_scatter_intra(const void *sbuf, int scount,
                              "han cannot handle scatter with this communicator. Fall back on another component\n"));
         /* HAN cannot work with this communicator so fallback on all collectives */
         HAN_LOAD_FALLBACK_COLLECTIVES(han_module, comm);
-        return comm->c_coll->coll_scatter(sbuf, scount, sdtype, rbuf, rcount, rdtype, root,
-                                          comm, comm->c_coll->coll_scatter_module);
+        return han_module->previous_scatter(sbuf, scount, sdtype, rbuf, rcount, rdtype, root,
+                                            comm, han_module->previous_scatter_module);
     }
 
     /* Topo must be initialized to know rank distribution which then is used to
@@ -100,8 +101,8 @@ mca_coll_han_scatter_intra(const void *sbuf, int scount,
          * future calls will then be automatically redirected.
          */
         HAN_LOAD_FALLBACK_COLLECTIVE(han_module, comm, scatter);
-        return comm->c_coll->coll_scatter(sbuf, scount, sdtype, rbuf, rcount, rdtype, root,
-                                          comm, comm->c_coll->coll_scatter_module);
+        return han_module->previous_scatter(sbuf, scount, sdtype, rbuf, rcount, rdtype, root,
+                                            comm, han_module->previous_scatter_module);
     }
 
     ompi_communicator_t *low_comm =
@@ -117,7 +118,7 @@ mca_coll_han_scatter_intra(const void *sbuf, int scount,
     ompi_request_t *temp_request = OBJ_NEW(ompi_request_t);
     temp_request->req_state = OMPI_REQUEST_ACTIVE;
     temp_request->req_type = OMPI_REQUEST_COLL;
-    temp_request->req_free = han_request_free;
+    temp_request->req_free = ompi_coll_han_request_free;
     temp_request->req_status = (ompi_status_public_t){0};
     temp_request->req_complete = REQUEST_PENDING;
 
@@ -282,7 +283,7 @@ mca_coll_han_scatter_intra_simple(const void *sbuf, int scount,
                              " Fall back on another component\n"));
         /* HAN cannot work with this communicator so fallback on all collectives */
         HAN_LOAD_FALLBACK_COLLECTIVES(han_module, comm);
-        return comm->c_coll->coll_scatter(sbuf, scount, sdtype, rbuf, rcount, rdtype, root,
+        return han_module->previous_scatter(sbuf, scount, sdtype, rbuf, rcount, rdtype, root,
                                             comm, han_module->previous_scatter_module);
     }
     /* Topo must be initialized to know rank distribution which then is used to
@@ -292,7 +293,7 @@ mca_coll_han_scatter_intra_simple(const void *sbuf, int scount,
         OPAL_OUTPUT_VERBOSE((30, mca_coll_han_component.han_output,
                              "han cannot handle scatter with this communicator. It needs to fall back on another component\n"));
         HAN_LOAD_FALLBACK_COLLECTIVES(han_module, comm);
-        return comm->c_coll->coll_scatter(sbuf, scount, sdtype, rbuf, rcount, rdtype, root,
+        return han_module->previous_scatter(sbuf, scount, sdtype, rbuf, rcount, rdtype, root,
                                             comm, han_module->previous_scatter_module);
     }
     ompi_communicator_t *low_comm = han_module->sub_comm[INTRA_NODE];
@@ -379,10 +380,6 @@ mca_coll_han_scatter_intra_simple(const void *sbuf, int scount,
                     root_up_rank,
                     up_comm,
                     up_comm->c_coll->coll_scatter_module);
-        if(reorder_buf != sbuf){
-            free(reorder_buf);
-            reorder_buf = NULL;
-        }
     }
 
     /* 2. low scatter on nodes leaders */
@@ -399,6 +396,9 @@ mca_coll_han_scatter_intra_simple(const void *sbuf, int scount,
     if (low_rank == root_low_rank) {
         free(tmp_buf);
         tmp_buf = NULL;
+    }
+    if (reorder_buf != sbuf) {
+        free(reorder_buf);
     }
 
     return OMPI_SUCCESS;

@@ -317,7 +317,7 @@ int main(int argc, char *argv[])
 {
     int rc;
 
-    opal_init_util(&argc, &argv);
+    opal_init(&argc, &argv);
     ompi_datatype_init();
     /**
      * By default simulate homogeneous architectures.

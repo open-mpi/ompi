@@ -12,6 +12,8 @@
  * Copyright (c) 2013      University of Houston. All rights reserved.
  * Copyright (c) 2018      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2024      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -42,8 +44,8 @@
  * *******************************************************************
  */
  /* IMPORTANT: Update here when adding sharedfp component interface functions*/
-static mca_sharedfp_base_module_1_0_0_t lockedfile =  {
-    mca_sharedfp_lockedfile_module_init, /* initalise after being selected */
+static mca_sharedfp_base_module_2_0_0_t lockedfile =  {
+    mca_sharedfp_lockedfile_module_init, /* initialise after being selected */
     mca_sharedfp_lockedfile_module_finalize, /* close a module on a communicator */
     mca_sharedfp_lockedfile_seek,
     mca_sharedfp_lockedfile_get_position,
@@ -74,7 +76,7 @@ int mca_sharedfp_lockedfile_component_init_query(bool enable_progress_threads,
     return OMPI_SUCCESS;
 }
 
-struct mca_sharedfp_base_module_1_0_0_t * mca_sharedfp_lockedfile_component_file_query(ompio_file_t *fh, int *priority) {
+struct mca_sharedfp_base_module_2_0_0_t * mca_sharedfp_lockedfile_component_file_query(ompio_file_t *fh, int *priority) {
     struct flock lock;
     int fd, err;
     /*char *filename;*/
@@ -126,30 +128,30 @@ struct mca_sharedfp_base_module_1_0_0_t * mca_sharedfp_lockedfile_component_file
     fd = open(filename, O_RDWR | O_CREAT, 0644);
 
     if ( -1 == fd ){
-        opal_output(ompi_sharedfp_base_framework.framework_output,
+        opal_output_verbose(10, ompi_sharedfp_base_framework.framework_output,
 		    "mca_sharedfp_lockedfile_component_file_query: error opening file %s %s", filename, strerror(errno));
         has_file_lock_support=false;
     }
     else{
         err = fcntl(fd, F_SETLKW, &lock);
-	opal_output(ompi_sharedfp_base_framework.framework_output,
+        opal_output_verbose(10, ompi_sharedfp_base_framework.framework_output,
 		    "mca_sharedfp_lockedfile_component_file_query: returned err=%d, for fd=%d\n",err,fd);
 
         if (err) {
-            opal_output(ompi_sharedfp_base_framework.framework_output,
+            opal_output_verbose(10, ompi_sharedfp_base_framework.framework_output,
 			"mca_sharedfp_lockedfile_component_file_query: Failed to set a file lock on %s %s\n", filename, strerror(errno) );
-            opal_output(ompi_sharedfp_base_framework.framework_output,
+            opal_output_verbose(10, ompi_sharedfp_base_framework.framework_output,
 			"err=%d, errno=%d, EOPNOTSUPP=%d, EINVAL=%d, ENOSYS=%d, EACCES=%d, EAGAIN=%d, EBADF=%d\n",
                         err, errno, EOPNOTSUPP, EINVAL, ENOSYS, EACCES, EAGAIN, EBADF);
 
             if (errno == EACCES || errno == EAGAIN) {
-                opal_output(ompi_sharedfp_base_framework.framework_output,
+                opal_output_verbose(10, ompi_sharedfp_base_framework.framework_output,
 			    "errno=EACCES || EAGAIN, Already locked by another process\n");
             }
 
         }
         else {
-	    opal_output(ompi_sharedfp_base_framework.framework_output,
+            opal_output_verbose(10, ompi_sharedfp_base_framework.framework_output,
 			"mca_sharedfp_lockedfile_component_file_query: fcntl claims success in setting a file lock on %s\n", filename );
 
             has_file_lock_support=true;
@@ -166,7 +168,7 @@ struct mca_sharedfp_base_module_1_0_0_t * mca_sharedfp_lockedfile_component_file
     *priority = 0;
     /*module can not run!, return NULL to indicate that we are unable to run*/
 
-    opal_output(ompi_sharedfp_base_framework.framework_output,
+    opal_output_verbose(10, ompi_sharedfp_base_framework.framework_output,
 		"mca_sharedfp_lockedfile_component_file_query: Can not run!, file locking not supported\n");
     return NULL;
 }

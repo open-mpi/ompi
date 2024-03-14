@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2022      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -40,7 +41,7 @@ uint32_t remote_arch = 0xffffffff;
  */
 int main(int argc, char *argv[])
 {
-    opal_init_util(NULL, NULL);
+    opal_init(NULL, NULL);
 
     /**
      * By default simulate homogeneous architectures.
@@ -96,7 +97,7 @@ int main(int argc, char *argv[])
     OBJ_RELEASE(pConv);
 
     /* clean-ups all data allocations */
-    opal_finalize_util();
+    opal_finalize();
 
     return OPAL_SUCCESS;
 }

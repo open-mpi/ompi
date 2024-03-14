@@ -369,7 +369,7 @@ static inline opal_list_item_t *opal_list_get_last(opal_list_t *list)
  * Similar to the STL, this is a special invalid list item -- it
  * should \em not be used for storage.  It is only suitable for
  * comparison to other items in the list to see if they are valid or
- * not; it's ususally used when iterating through the items in a list.
+ * not; it's usually used when iterating through the items in a list.
  *
  * This is an inlined function in compilers that support inlining, so
  * it's usually a cheap operation.
@@ -391,7 +391,7 @@ static inline opal_list_item_t *opal_list_get_begin(opal_list_t *list)
  * Similar to the STL, this is a special invalid list item -- it
  * should \em not be used for storage.  It is only suitable for
  * comparison to other items in the list to see if they are valid or
- * not; it's ususally used when iterating through the items in a list.
+ * not; it's usually used when iterating through the items in a list.
  *
  * This is an inlined function in compilers that support inlining, so
  * it's usually a cheap operation.
@@ -602,7 +602,7 @@ static inline void opal_list_prepend(opal_list_t *list, opal_list_item_t *item)
     /* reset item's previous pointer */
     item->opal_list_prev = sentinel;
 
-    /* reset previous first element's previous poiner */
+    /* reset previous first element's previous pointer */
     sentinel->opal_list_next->opal_list_prev = item;
 
     /* reset head's next pointer */
@@ -784,26 +784,6 @@ static inline void opal_list_insert_pos(opal_list_t *list, opal_list_item_t *pos
 }
 
 /**
- * Add an item to the list at a specific index location in the list.
- *
- * @param list The list container
- * @param item The item to insert
- * @param index Location to add the item
- *
- * @returns true if insertion succeeded; otherwise false
- *
- * This is potentially an O(N) operation to traverse down to the
- * correct location in the list and add an item.
- *
- * Example: if idx = 2 and list = item1->item2->item3->item4, then
- * after insert, list = item1->item2->item->item3->item4.
- *
- * If index is greater than the length of the list, no action is
- * performed and false is returned.
- */
-OPAL_DECLSPEC bool opal_list_insert(opal_list_t *list, opal_list_item_t *item, long long idx);
-
-/**
  * Join a list into another list
  *
  * @param thislist List container for list being operated on
@@ -838,7 +818,7 @@ OPAL_DECLSPEC void opal_list_join(opal_list_t *thislist, opal_list_item_t *pos, 
  * last) elements of \c xlist are moved into \c thislist,
  * inserting them before \c pos.  \c pos must be a valid iterator
  * in \c thislist and \c [first, last) must be a valid range in \c
- * xlist.  \c postition must not be in the range \c [first, last).
+ * xlist.  \c position must not be in the range \c [first, last).
  * It is, however, valid for \c xlist and \c thislist to be the
  * same list.
  *

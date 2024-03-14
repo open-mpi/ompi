@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 IBM Corporation. All rights reserved.
+ * Copyright (c) 2016-2022 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -18,14 +18,14 @@
 
 BEGIN_C_DECLS
 
-OMPI_MODULE_DECLSPEC extern const ompi_hook_base_component_1_0_0_t mca_hook_comm_method_component;
+OMPI_DECLSPEC extern ompi_hook_base_component_1_0_0_t mca_hook_comm_method_component;
 
 extern int mca_hook_comm_method_verbose;
 extern int mca_hook_comm_method_output;
 extern bool mca_hook_comm_method_enable_mpi_init;
 extern bool mca_hook_comm_method_enable_mpi_finalize;
 extern int mca_hook_comm_method_max;
-extern int mca_hook_comm_method_brief;
+extern bool mca_hook_comm_method_brief;
 extern char *mca_hook_comm_method_fakefile;
 
 void ompi_hook_comm_method_mpi_init_bottom(int argc, char **argv, int requested, int *provided);

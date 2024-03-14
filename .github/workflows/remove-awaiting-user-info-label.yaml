@@ -1,0 +1,30 @@
+# This Action is run in conjunction with close-stale-issues.yaml.  See
+# that file for a more complete description of how they work together.
+
+name: 'Remove "State: Awaiting user information" label when there has been a reply'
+on:
+  issue_comment:
+    types:
+      - created
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    # From
+    # https://github.com/marketplace/actions/close-issues-after-no-reply:
+    # only remove the label if someone replies to an issue who is not
+    # an owner or collaborator on the repo.
+    if: |
+      github.event.comment.author_association != 'OWNER' &&
+      github.event.comment.author_association != 'COLLABORATOR'
+    steps:
+      - name: 'Remove "State: Awaiting user information" label'
+        uses: octokit/request-action@v2.x
+        continue-on-error: true
+        with:
+          route: DELETE /repos/:repository/issues/:issue/labels/:label
+          repository: ${{ github.repository }}
+          issue: ${{ github.event.issue.number }}
+          label: State-Awaiting user information
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

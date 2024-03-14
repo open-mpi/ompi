@@ -11,12 +11,16 @@ dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
 dnl
 dnl $HEADER$
 dnl
+
+dnl need in the core library
+AC_DEFUN([MCA_opal_timer_CORE_LIB], [1])
 
 dnl we only want one :)
 m4_define(MCA_opal_timer_CONFIGURE_MODE, STOP_AT_FIRST)

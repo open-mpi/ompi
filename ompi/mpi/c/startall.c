@@ -59,7 +59,7 @@ int MPI_Startall(int count, MPI_Request requests[])
     if ( MPI_PARAM_CHECK ) {
         int rc = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-        if (NULL == requests) {
+        if ((NULL == requests) && (0 != count)) {
             rc = MPI_ERR_REQUEST;
         } else if (count < 0) {
             rc = MPI_ERR_ARG;
@@ -69,6 +69,7 @@ int MPI_Startall(int count, MPI_Request requests[])
                     ! requests[i]->req_persistent ||
                     (OMPI_REQUEST_PML  != requests[i]->req_type &&
                      OMPI_REQUEST_COLL != requests[i]->req_type &&
+                     OMPI_REQUEST_PART != requests[i]->req_type &&
                      OMPI_REQUEST_NOOP != requests[i]->req_type)) {
                     rc = MPI_ERR_REQUEST;
                     break;

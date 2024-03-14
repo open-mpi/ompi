@@ -1,10 +1,12 @@
 /**
  * Copyright (c) 2011 Mellanox Technologies. All rights reserved.
- * Copyright (c) 2016      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2016-2022 IBM Corporation.  All rights reserved.
  * Copyright (c) 2017      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2018      Cisco Systems, Inc.  All rights reserved
+ * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
+ *                         All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -15,8 +17,6 @@
 #include "ompi_config.h"
 #include "coll_hcoll.h"
 #include "coll_hcoll_dtypes.h"
-
-static int use_safety_valve = 0;
 
 int hcoll_comm_attr_keyval;
 int hcoll_type_attr_keyval;
@@ -29,7 +29,7 @@ int mca_coll_hcoll_init_query(bool enable_progress_threads, bool enable_mpi_thre
 {
 #if HCOLL_API < HCOLL_VERSION(3,2)
     if (enable_mpi_threads) {
-        HCOL_VERBOSE(1, "MPI_THREAD_MULTIPLE not suppported; skipping hcoll component");
+        HCOL_VERBOSE(1, "MPI_THREAD_MULTIPLE not supported; skipping hcoll component");
         return OMPI_ERROR;
     }
 #endif
@@ -287,7 +287,7 @@ mca_coll_hcoll_comm_query(struct ompi_communicator_t *comm, int *priority)
 
     if (!cm->libhcoll_initialized)
     {
-        /* libhcoll should be initialized here since current implmentation of
+        /* libhcoll should be initialized here since current implementation of
            mxm bcol in libhcoll needs world_group fully functional during init
            world_group, i.e. ompi_comm_world, is not ready at hcoll component open
            call */
@@ -329,13 +329,12 @@ mca_coll_hcoll_comm_query(struct ompi_communicator_t *comm, int *priority)
                     cm->using_mem_hooks = 1;
                     opal_mem_hooks_register_release(mca_coll_hcoll_mem_release_cb, NULL);
                     setenv("MXM_HCOLL_MEM_ON_DEMAND_MAP", "y", 0);
-                    use_safety_valve = 1;
                 }
             }
         } else {
             cm->using_mem_hooks = 0;
         }
-        copy_fn.attr_communicator_copy_fn = (MPI_Comm_internal_copy_attr_function*) MPI_COMM_NULL_COPY_FN;
+        copy_fn.attr_communicator_copy_fn = MPI_COMM_NULL_COPY_FN;
         del_fn.attr_communicator_delete_fn = hcoll_comm_attr_del_fn;
         err = ompi_attr_create_keyval(COMM_ATTR, copy_fn, del_fn, &hcoll_comm_attr_keyval, NULL ,0, NULL);
         if (OMPI_SUCCESS != err) {
@@ -348,7 +347,7 @@ mca_coll_hcoll_comm_query(struct ompi_communicator_t *comm, int *priority)
 
         if (mca_coll_hcoll_component.derived_types_support_enabled) {
             zero_dte_mapping.type = DTE_ZERO;
-            copy_fn.attr_datatype_copy_fn = (MPI_Type_internal_copy_attr_function *) MPI_TYPE_NULL_COPY_FN;
+            copy_fn.attr_datatype_copy_fn = MPI_TYPE_NULL_COPY_FN;
             del_fn.attr_datatype_delete_fn = hcoll_type_attr_del_fn;
             err = ompi_attr_create_keyval(TYPE_ATTR, copy_fn, del_fn, &hcoll_type_attr_keyval, NULL ,0, NULL);
             if (OMPI_SUCCESS != err) {
@@ -379,7 +378,7 @@ mca_coll_hcoll_comm_query(struct ompi_communicator_t *comm, int *priority)
     hcoll_module->comm = comm;
 
     HCOL_VERBOSE(10,"Creating hcoll_context for comm %p, comm_id %d, comm_size %d",
-                 (void*)comm,comm->c_contextid,ompi_comm_size(comm));
+                 (void*)comm,comm->c_index,ompi_comm_size(comm));
 
     hcoll_module->hcoll_context =
         hcoll_create_context((rte_grp_handle_t)comm);
@@ -450,9 +449,7 @@ OBJ_CLASS_INSTANCE(mca_coll_hcoll_module_t,
         mca_coll_hcoll_module_construct,
         mca_coll_hcoll_module_destruct);
 
-static void safety_valve(void) __attribute__((destructor));
+static void safety_valve(void) __opal_attribute_destructor__;
 void safety_valve(void) {
-    if (use_safety_valve) {
-        opal_mem_hooks_unregister_release(mca_coll_hcoll_mem_release_cb);
-    }
+    opal_mem_hooks_unregister_release(mca_coll_hcoll_mem_release_cb);
 }

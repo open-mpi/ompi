@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2013 The University of Tennessee and The University
+ * Copyright (c) 2004-2024 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -17,7 +17,8 @@
  * Copyright (c) 2012-2015 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
- *
+ * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2023      Advanced Micro Devices, Inc. All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -86,10 +87,59 @@
 #ifdef HAVE_MALLOC_H
 #    include <malloc.h>
 #endif
-#include "opal/mca/common/cuda/common_cuda.h"
+#include "opal/include/opal/opal_gpu.h"
 #include "opal/mca/rcache/base/base.h"
 #include "opal/mca/rcache/rcache.h"
 #include "opal/util/proc.h"
+
+/*
+ * Open a memory handle that refers to remote memory so we can get an address
+ * that works on the local side.  This is the registration function for the
+ * remote side of a transfer.  newreg contains the new handle.  hddrreg contains
+ * the memory handle that was received from the remote side.
+ */
+static int mca_rcache_rgpusm_open_mem_handle(void *base, size_t size, mca_rcache_base_registration_t *newreg)
+{
+    int result;
+    mca_opal_gpu_reg_t *gpu_newreg = (mca_opal_gpu_reg_t *) newreg;
+
+    // Note: It is expected that the ipc_handle object was created previously in the smcuda component
+    result = opal_accelerator.open_ipc_handle(MCA_ACCELERATOR_NO_DEVICE_ID, &gpu_newreg->data.ipcHandle,
+                                              (void**)&newreg->alloc_base);
+    if (OPAL_ERR_WOULD_BLOCK == result) {
+        // ERROR_ALREADY_MAPPED
+        opal_output_verbose(10, mca_rcache_rgpusm_component.output,
+                            "open_ipc_mem_handle returned OPAL_ERR_WOULD_BLOCK for "
+                            "p=%p,size=%d: notify memory pool\n",
+                            base, (int) size);
+        return result;
+    }
+    if (OPAL_UNLIKELY(OPAL_SUCCESS != result)) {
+        opal_output_verbose(10, mca_rcache_rgpusm_component.output,
+                            "open_ipc_handle failed: base=%p (remote base=%p,size=%d)",
+                            (void*)newreg->alloc_base, base, (int) size);
+        /* Currently, this is a non-recoverable error */
+        return OPAL_ERROR;
+    }
+
+    opal_output_verbose(10, mca_rcache_rgpusm_component.output,
+                        "open_ipc_handle passed: base=%p (remote base=%p,size=%d)",
+                        (void*)newreg->alloc_base, base, (int) size);
+
+    return OPAL_SUCCESS;
+}
+
+/*
+ * Close a memory handle that refers to remote memory.
+ */
+static int mca_rcache_rgpusm_close_mem_handle(void *reg_data, mca_rcache_base_registration_t *reg)
+{
+    mca_opal_gpu_reg_t *gpu_reg = (mca_opal_gpu_reg_t *) reg;
+
+    OBJ_DESTRUCT(&gpu_reg->data.ipcHandle);
+    
+    return OPAL_SUCCESS;
+}
 
 static int mca_rcache_rgpusm_deregister_no_lock(struct mca_rcache_base_module_t *,
                                                 mca_rcache_base_registration_t *);
@@ -113,7 +163,7 @@ static inline bool mca_rcache_rgpusm_deregister_lru(mca_rcache_base_module_t *rc
     /* Drop the rcache lock while we deregister the memory */
     OPAL_THREAD_UNLOCK(&rcache->lock);
     assert(old_reg->ref_count == 0);
-    rc = cuda_closememhandle(NULL, old_reg);
+    rc = mca_rcache_rgpusm_close_mem_handle(NULL, old_reg);
     OPAL_THREAD_LOCK(&rcache->lock);
 
     /* This introduces a potential leak of registrations if
@@ -122,7 +172,7 @@ static inline bool mca_rcache_rgpusm_deregister_lru(mca_rcache_base_module_t *rc
     if (OPAL_SUCCESS != rc) {
         opal_output_verbose(10, mca_rcache_rgpusm_component.output,
                             "RGPUSM: Failed to deregister the memory addr=%p, size=%d",
-                            old_reg->base, (int) (old_reg->bound - old_reg->base + 1));
+                            (void*)old_reg->base, (int) (old_reg->bound - old_reg->base + 1));
         return false;
     }
 
@@ -137,6 +187,7 @@ static inline bool mca_rcache_rgpusm_deregister_lru(mca_rcache_base_module_t *rc
  */
 void mca_rcache_rgpusm_module_init(mca_rcache_rgpusm_module_t *rcache)
 {
+    mca_rcache_base_module_init(&rcache->super);
     rcache->super.rcache_component = &mca_rcache_rgpusm_component.super;
     rcache->super.rcache_register = mca_rcache_rgpusm_register;
     rcache->super.rcache_find = mca_rcache_rgpusm_find;
@@ -145,7 +196,7 @@ void mca_rcache_rgpusm_module_init(mca_rcache_rgpusm_module_t *rcache)
     rcache->vma_module = mca_rcache_base_vma_module_alloc();
 
     OBJ_CONSTRUCT(&rcache->reg_list, opal_free_list_t);
-    opal_free_list_init(&rcache->reg_list, sizeof(struct mca_rcache_common_cuda_reg_t),
+    opal_free_list_init(&rcache->reg_list, sizeof(struct mca_opal_gpu_reg_t),
                         opal_cache_line_size, OBJ_CLASS(mca_rcache_base_registration_t), 0,
                         opal_cache_line_size, 0, -1, 32, NULL, 0, NULL, NULL, NULL);
     OBJ_CONSTRUCT(&rcache->lru_list, opal_list_t);
@@ -164,8 +215,8 @@ int mca_rcache_rgpusm_register(mca_rcache_base_module_t *rcache, void *addr, siz
                                mca_rcache_base_registration_t **reg)
 {
     mca_rcache_rgpusm_module_t *rcache_rgpusm = (mca_rcache_rgpusm_module_t *) rcache;
-    mca_rcache_common_cuda_reg_t *rgpusm_reg;
-    mca_rcache_common_cuda_reg_t *rget_reg;
+    mca_opal_gpu_reg_t *rgpusm_reg;
+    mca_opal_gpu_reg_t *rget_reg;
     opal_free_list_item_t *item;
     int rc;
     int mypeer; /* just for debugging */
@@ -174,7 +225,7 @@ int mca_rcache_rgpusm_register(mca_rcache_base_module_t *rcache, void *addr, siz
      * function, we are using the **reg variable to not only get back the
      * registration information, but to hand in the memory handle received
      * from the remote side. */
-    rget_reg = (mca_rcache_common_cuda_reg_t *) *reg;
+    rget_reg = (mca_opal_gpu_reg_t *) *reg;
 
     mypeer = flags;
     flags = 0;
@@ -184,7 +235,7 @@ int mca_rcache_rgpusm_register(mca_rcache_base_module_t *rcache, void *addr, siz
     /* This chunk of code handles the case where leave pinned is not
      * set and we do not use the cache.  This is not typically how we
      * will be running.  This means that one can have an unlimited
-     * number of registrations occuring at the same time.  Since we
+     * number of registrations occurring at the same time.  Since we
      * are not leaving the registrations pinned, the number of
      * registrations is unlimited and there is no need for a cache. */
     if (!mca_rcache_rgpusm_component.leave_pinned
@@ -193,22 +244,25 @@ int mca_rcache_rgpusm_register(mca_rcache_base_module_t *rcache, void *addr, siz
         if (NULL == item) {
             return OPAL_ERR_OUT_OF_RESOURCE;
         }
-        rgpusm_reg = (mca_rcache_common_cuda_reg_t *) item;
+        rgpusm_reg = (mca_opal_gpu_reg_t *) item;
         rgpusm_reg->base.rcache = rcache;
         rgpusm_reg->base.base = addr;
         rgpusm_reg->base.bound = (unsigned char *) addr + size - 1;
-        ;
         rgpusm_reg->base.flags = flags;
-
-        /* Copy the memory handle received into the registration */
-        memcpy(rgpusm_reg->data.memHandle, rget_reg->data.memHandle,
-               sizeof(rget_reg->data.memHandle));
 
         /* The rget_reg registration is holding the memory handle needed
          * to register the remote memory.  This was received from the remote
          * process.  A pointer to the memory is returned in the alloc_base field. */
-        rc = cuda_openmemhandle(addr, size, (mca_rcache_base_registration_t *) rgpusm_reg,
-                                (mca_rcache_base_registration_t *) rget_reg);
+        rc = opal_accelerator.import_ipc_handle(MCA_ACCELERATOR_NO_DEVICE_ID, rget_reg->data.ipcHandle.handle,
+                                                &rgpusm_reg->data.ipcHandle);
+        if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
+            opal_output_verbose(10, mca_rcache_rgpusm_component.output,
+                                "import_ipc_handle failed: addr=%p size=%lu",
+                                addr, size);
+            /* Currently, this is a non-recoverable error */
+            return OPAL_ERROR;
+        }
+        rc = mca_rcache_rgpusm_open_mem_handle(addr, size, (mca_rcache_base_registration_t *) rgpusm_reg);
 
         /* This error should not happen with no cache in use. */
         assert(OPAL_ERR_WOULD_BLOCK != rc);
@@ -237,9 +291,10 @@ int mca_rcache_rgpusm_register(mca_rcache_base_module_t *rcache, void *addr, siz
         rcache_rgpusm->stat_cache_hit++;
         opal_output_verbose(10, mca_rcache_rgpusm_component.output,
                             "RGPUSM: Found addr=%p,size=%d (base=%p,size=%d) in cache", addr,
-                            (int) size, (*reg)->base, (int) ((*reg)->bound - (*reg)->base));
+                            (int) size, (void*)(*reg)->base, (int) ((*reg)->bound - (*reg)->base));
 
-        if (mca_common_cuda_memhandle_matches((mca_rcache_common_cuda_reg_t *) *reg, rget_reg)) {
+        if (0 == opal_accelerator.compare_ipc_handles(((mca_opal_gpu_reg_t *)*reg)->data.ipcHandle.handle,
+                                                      rget_reg->data.ipcHandle.handle)) {
             /* Registration matches what was requested.  All is good. */
             rcache_rgpusm->stat_cache_valid++;
         } else {
@@ -247,7 +302,7 @@ int mca_rcache_rgpusm_register(mca_rcache_base_module_t *rcache, void *addr, siz
             opal_output_verbose(10, mca_rcache_rgpusm_component.output,
                                 "RGPUSM: Mismatched Handle: Evicting/unregistering "
                                 "addr=%p,size=%d (base=%p,size=%d) from cache",
-                                addr, (int) size, (*reg)->base,
+                                addr, (int) size, (void*)(*reg)->base,
                                 (int) ((*reg)->bound - (*reg)->base));
 
             /* The ref_count has to be zero as this memory cannot possibly
@@ -304,7 +359,7 @@ int mca_rcache_rgpusm_register(mca_rcache_base_module_t *rcache, void *addr, siz
         OPAL_THREAD_UNLOCK(&rcache->lock);
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
-    rgpusm_reg = (mca_rcache_common_cuda_reg_t *) item;
+    rgpusm_reg = (mca_opal_gpu_reg_t *) item;
 
     rgpusm_reg->base.rcache = rcache;
     rgpusm_reg->base.base = addr;
@@ -312,15 +367,22 @@ int mca_rcache_rgpusm_register(mca_rcache_base_module_t *rcache, void *addr, siz
     rgpusm_reg->base.flags = flags;
 
     /* Need the memory handle saved in the registration */
-    memcpy(rgpusm_reg->data.memHandle, rget_reg->data.memHandle, sizeof(rget_reg->data.memHandle));
+    rc = opal_accelerator.import_ipc_handle(MCA_ACCELERATOR_NO_DEVICE_ID, rget_reg->data.ipcHandle.handle,
+                                            &rgpusm_reg->data.ipcHandle);
+    if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
+        opal_output_verbose(10, mca_rcache_rgpusm_component.output,
+                            "import_ipc_handle failed: addr=%p size=%lu",
+                            addr, size);
+        /* Currently, this is a non-recoverable error */
+        return OPAL_ERROR;
+    }
 
     /* Actually register the memory, which opens the memory handle.
      * Need to do this prior to putting in the cache as the base and
      * bound values may be changed by the registration.  The memory
      * associated with the handle comes back in the alloc_base
      * value. */
-    rc = cuda_openmemhandle(addr, size, (mca_rcache_base_registration_t *) rgpusm_reg,
-                            (mca_rcache_base_registration_t *) rget_reg);
+    rc = mca_rcache_rgpusm_open_mem_handle(addr, size, (mca_rcache_base_registration_t *) rgpusm_reg);
     /* There is a chance we can get the OPAL_ERR_WOULD_BLOCK from the
      * CUDA codes attempt to register the memory.  The case that this
      * can happen is as follows.  A block of memory is registered.
@@ -358,8 +420,7 @@ int mca_rcache_rgpusm_register(mca_rcache_base_module_t *rcache, void *addr, siz
             rcache_rgpusm->stat_evicted++;
 
             /* And try again.  This one usually works. */
-            rc = cuda_openmemhandle(addr, size, (mca_rcache_base_registration_t *) rgpusm_reg,
-                                    (mca_rcache_base_registration_t *) rget_reg);
+            rc = mca_rcache_rgpusm_open_mem_handle(addr, size, (mca_rcache_base_registration_t *) rgpusm_reg);
         }
 
         /* There is a chance that another registration is blocking our
@@ -371,8 +432,7 @@ int mca_rcache_rgpusm_register(mca_rcache_base_module_t *rcache, void *addr, siz
                 break;
             }
             /* Clear out one registration. */
-            rc = cuda_openmemhandle(addr, size, (mca_rcache_base_registration_t *) rgpusm_reg,
-                                    (mca_rcache_base_registration_t *) rget_reg);
+            rc = mca_rcache_rgpusm_open_mem_handle(addr, size, (mca_rcache_base_registration_t *) rgpusm_reg);
         }
     }
 
@@ -446,10 +506,6 @@ int mca_rcache_rgpusm_find(struct mca_rcache_base_module_t *rcache, void *addr, 
 {
     mca_rcache_rgpusm_module_t *rcache_rgpusm = (mca_rcache_rgpusm_module_t *) rcache;
     int rc;
-    unsigned char *base, *bound;
-
-    base = addr;
-    bound = base + size - 1; /* To keep cache hits working correctly */
 
     OPAL_THREAD_LOCK(&rcache->lock);
     opal_output(-1, "Looking for addr=%p, size=%d", addr, (int) size);
@@ -493,7 +549,7 @@ int mca_rcache_rgpusm_deregister(struct mca_rcache_base_module_t *rcache,
         opal_output_verbose(20, mca_rcache_rgpusm_component.output,
                             "RGPUSM: Deregister: addr=%p, size=%d: cacheable and pinned, leave in "
                             "cache, PUSH IN LRU",
-                            reg->base, (int) (reg->bound - reg->base + 1));
+                            (void*)reg->base, (int) (reg->bound - reg->base + 1));
         opal_list_prepend(&rcache_rgpusm->lru_list, (opal_list_item_t *) reg);
     } else {
         /* Remove from rcache first */
@@ -505,7 +561,7 @@ int mca_rcache_rgpusm_deregister(struct mca_rcache_base_module_t *rcache,
 
         {
             assert(reg->ref_count == 0);
-            rc = cuda_closememhandle(NULL, reg);
+            rc = mca_rcache_rgpusm_close_mem_handle(NULL, reg);
         }
 
         OPAL_THREAD_LOCK(&rcache->lock);
@@ -541,7 +597,7 @@ int mca_rcache_rgpusm_deregister_no_lock(struct mca_rcache_base_module_t *rcache
             mca_rcache_base_vma_delete(rcache_rgpusm->vma_module, reg);
 
         assert(reg->ref_count == 0);
-        rc = cuda_closememhandle(NULL, reg);
+        rc = mca_rcache_rgpusm_close_mem_handle(NULL, reg);
 
         if (OPAL_SUCCESS == rc) {
             opal_free_list_return(&rcache_rgpusm->reg_list, (opal_free_list_item_t *) reg);
@@ -592,7 +648,7 @@ void mca_rcache_rgpusm_finalize(struct mca_rcache_base_module_t *rcache)
             /* Drop lock before deregistering memory */
             OPAL_THREAD_UNLOCK(&rcache->lock);
             assert(reg->ref_count == 0);
-            rc = cuda_closememhandle(NULL, reg);
+            rc = mca_rcache_rgpusm_close_mem_handle(NULL, reg);
             OPAL_THREAD_LOCK(&rcache->lock);
 
             if (rc != OPAL_SUCCESS) {
@@ -608,4 +664,5 @@ void mca_rcache_rgpusm_finalize(struct mca_rcache_base_module_t *rcache)
     OBJ_DESTRUCT(&rcache_rgpusm->lru_list);
     OBJ_DESTRUCT(&rcache_rgpusm->reg_list);
     OPAL_THREAD_UNLOCK(&rcache->lock);
+    mca_rcache_base_module_fini(rcache);
 }

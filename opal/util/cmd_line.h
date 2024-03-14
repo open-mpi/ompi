@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2012      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012-2022 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2015-2016 Intel, Inc. All rights reserved.
  * Copyright (c) 2016-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
@@ -182,7 +182,10 @@ typedef enum opal_cmd_line_type_t opal_cmd_line_type_t;
  * mpirun --help output.
  */
 enum opal_cmd_line_otype_t {
-    OPAL_CMD_LINE_OTYPE_GENERAL,
+    OPAL_CMD_LINE_OTYPE_GENERAL, /* This type is shown via --help by
+                                    default (i.e., if no arg is
+                                    specified to narrow the help
+                                    scope) */
     OPAL_CMD_LINE_OTYPE_DEBUG,
     OPAL_CMD_LINE_OTYPE_OUTPUT,
     OPAL_CMD_LINE_OTYPE_INPUT,
@@ -251,7 +254,7 @@ typedef struct opal_cmd_line_init_t opal_cmd_line_init_t;
  *
  * This handle is used for accessing all command line functionality
  * (i.e., all opal_cmd_line*() functions).  Multiple handles can be
- * created and simultaneously processed; each handle is independant
+ * created and simultaneously processed; each handle is independent
  * from others.
  *
  * The opal_cmd_line_t handles are [simplisticly] thread safe;

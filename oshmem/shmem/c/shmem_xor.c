@@ -51,7 +51,7 @@
 #pragma weak shmemx_int64_atomic_xor    = pshmemx_int64_atomic_xor
 #pragma weak shmemx_uint32_atomic_xor   = pshmemx_uint32_atomic_xor
 #pragma weak shmemx_uint64_atomic_xor   = pshmemx_uint64_atomic_xor
-#include "oshmem/shmem/c/profile/defines.h"
+#include "oshmem/shmem/c/profile-defines.h"
 #endif
 
 OSHMEM_TYPE_OP(int, int, shmem, xor)

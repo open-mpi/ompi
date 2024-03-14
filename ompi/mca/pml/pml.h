@@ -99,6 +99,29 @@ typedef struct mca_pml_base_module_2_1_0_t * (*mca_pml_base_component_init_fn_t)
     bool enable_progress_threads,
     bool enable_mpi_threads);
 
+/**
+ * @brief A transport name and device name pair used by an endpoint.
+ * @ref mca_pml.pml_get_transports
+ */
+typedef struct mca_pml_transport_entry_t {
+    // The name of a transport layer used by this endpoint.
+    const char *transport_name;
+    // The name of the device used with this transport by this endpoint.
+    const char *device_name;
+} mca_pml_transport_entry_t;
+
+/**
+ * @brief  Structure containing an array of transport layers and device names
+ * used by a PML.
+ * @ref mca_pml.pml_get_transports
+ */
+typedef struct mca_pml_transports_t {
+    // Number of transport/device name pairs.
+    unsigned int count;
+    // Pointer to array of transport/device name pairs used by this endpoint.
+    mca_pml_transport_entry_t *entries;
+} mca_pml_transports_t;
+
 typedef int (*mca_pml_base_component_finalize_fn_t)(void);
 
 /**
@@ -167,6 +190,16 @@ typedef int (*mca_pml_base_module_enable_fn_t)(
  *                   to progress.
 */
 typedef int (*mca_pml_base_module_progress_fn_t)(void);
+
+/**
+ * Get the set of transports and devices used to communicate with specified rank
+ *
+ * @param comm Communicator
+ * @param rank Task rank of other task
+ * @return Pointer to structure containing set of transports and device names or NULL
+ */
+typedef mca_pml_transports_t *(*mca_pml_base_module_get_transports_t)(struct ompi_communicator_t *comm,
+                                                                      int rank);
 
 /**
  * MPI Interface Functions
@@ -489,7 +522,12 @@ typedef int (*mca_pml_base_module_dump_fn_t)(
  */
 /** PML requires requires all procs in the job on the first call to
  * add_procs */
-#define MCA_PML_BASE_FLAG_REQUIRE_WORLD 0x00000001
+#define MCA_PML_BASE_FLAG_REQUIRE_WORLD    0x00000001
+
+/**
+ * PML supports the extended CID space (doesn't need a global communicator index)
+ */
+#define MCA_PML_BASE_FLAG_SUPPORTS_EXT_CID 0x00000002
 
 /**
  *  PML instance.
@@ -528,6 +566,8 @@ struct mca_pml_base_module_2_1_0_t {
     uint32_t                              pml_max_contextid;
     int                                   pml_max_tag;
     int                                   pml_flags;
+
+    mca_pml_base_module_get_transports_t pml_get_transports;
 };
 typedef struct mca_pml_base_module_2_1_0_t mca_pml_base_module_2_1_0_t;
 typedef mca_pml_base_module_2_1_0_t mca_pml_base_module_t;
@@ -558,6 +598,11 @@ OMPI_DECLSPEC extern mca_pml_base_module_t mca_pml;
 static inline bool mca_pml_base_requires_world (void)
 {
     return !!(mca_pml.pml_flags & MCA_PML_BASE_FLAG_REQUIRE_WORLD);
+}
+
+static inline bool mca_pml_base_supports_extended_cid (void)
+{
+    return !!(mca_pml.pml_flags & MCA_PML_BASE_FLAG_SUPPORTS_EXT_CID);
 }
 
 END_C_DECLS

@@ -88,7 +88,7 @@ typedef struct mca_memheap_base_component_2_0_0_t mca_memheap_base_component_t;
  * memheap module descriptor
  */
 struct mca_memheap_base_module_t {
-    mca_memheap_base_component_t                   *memheap_component;  /** Memory Heap Management Componenet */
+    mca_memheap_base_component_t                   *memheap_component;  /** Memory Heap Management Component */
     mca_memheap_base_module_finalize_fn_t           memheap_finalize;
     mca_memheap_base_module_alloc_fn_t              memheap_alloc;
     mca_memheap_base_module_memalign_fn_t           memheap_memalign;

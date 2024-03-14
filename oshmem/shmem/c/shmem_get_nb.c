@@ -120,7 +120,7 @@
 #pragma weak shmem_get64_nbi = pshmem_get64_nbi
 #pragma weak shmem_get128_nbi = pshmem_get128_nbi
 #pragma weak shmem_getmem_nbi = pshmem_getmem_nbi
-#include "oshmem/shmem/c/profile/defines.h"
+#include "oshmem/shmem/c/profile-defines.h"
 #endif
 
 SHMEM_CTX_TYPE_GET_NB(_char, char)

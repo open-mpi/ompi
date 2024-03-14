@@ -62,9 +62,8 @@ typedef struct mca_mtl_request_t mca_mtl_request_t;
  * MTL module flags
  */
 #define MCA_MTL_BASE_FLAG_REQUIRE_WORLD 0x00000001
-#if OPAL_CUDA_SUPPORT
-#define MCA_MTL_BASE_FLAG_CUDA_INIT_DISABLE 0x00000002
-#endif
+#define MCA_MTL_BASE_FLAG_ACCELERATOR_INIT_DISABLE 0x00000002
+#define MCA_MTL_BASE_FLAG_SUPPORTS_EXT_CID 0x00000004
 
 /**
  * Initialization routine for MTL component
@@ -78,7 +77,7 @@ typedef struct mca_mtl_request_t mca_mtl_request_t;
  *
  * @param enable_progress_threads (IN) Progress threads have been
  *                  enabled by the user and the component must be
- *                  capable of making asycnhronous progress (either
+ *                  capable of making asynchronous progress (either
  *                  with its own thread, with the kernel, or with
  *                  the event library.
  * @param enable_mpi_threads (IN) MPI threads have been enabled by the
@@ -92,19 +91,23 @@ typedef struct mca_mtl_request_t mca_mtl_request_t;
  *                  support MPI_THREAD_MULTIPLE.  This variable only
  *                  needs to be set if enable_mpi_threads is true.
  *                  Otherwise, the return value will be ignored.
+ * @param accelerator_support (OUT) Component does / does not support
+ *                  direct transfers with an accelerator buffer.
  *
  * @retval NULL     component can not operate on the current machine
  * @retval non-NULL component interface function
  */
 typedef struct mca_mtl_base_module_t*
 (*mca_mtl_base_component_init_fn_t)(bool enable_progress_threads,
-                                    bool enable_mpi_threads);
+                                    bool enable_mpi_threads,
+                                    bool *accelerator_support);
 
 
 struct mca_mtl_base_component_2_0_0_t {
   mca_base_component_t mtl_version;
   mca_base_component_data_t mtl_data;
   mca_mtl_base_component_init_fn_t mtl_init;
+  bool accelerator_support;
 };
 typedef struct mca_mtl_base_component_2_0_0_t mca_mtl_base_component_2_0_0_t;
 typedef struct mca_mtl_base_component_2_0_0_t mca_mtl_base_component_t;
@@ -114,7 +117,7 @@ typedef struct mca_mtl_base_component_2_0_0_t mca_mtl_base_component_t;
  * MCA->MTL Clean up any resources held by MTL module
  *
  * Opposite of module_init.  Called when communication will no longer
- * be necessary.  ussually this is during MPI_FINALIZE, but it can be
+ * be necessary.  Usually this is during MPI_FINALIZE, but it can be
  * earlier if the component was not selected to run.  Assuming
  * module_init was called, finalize will always be called before the
  * component_close function is called.
@@ -204,7 +207,7 @@ typedef int (*mca_mtl_base_module_del_procs_fn_t)(
  * \note Open MPI is built around non-blocking operations.  This
  * function is provided for networks where progressing events outside
  * of point-to-point (for example, collectives, I/O, one-sided) can
- * occur without a progress function regularily being triggered.
+ * occur without a progress function regularly being triggered.
  *
  * \note While MPI does not allow users to specify negative tags, they
  * are used internally in Open MPI to provide a unique channel for
@@ -232,7 +235,7 @@ typedef int (*mca_mtl_base_module_send_fn_t)(
  * bytes requested in the module structure available for the MTL
  * directly after the ompi_request_t structure.  The PML will handle
  * proper destruction of the request once it can safely be destructed
- * (it has been completed and freeed by a call to REQUEST_FReE or
+ * (it has been completed and freed by a call to REQUEST_FReE or
  * TEST/WAIT).  The MTL should remove all resources associated with
  * the request when it is marked as completed.
  *
@@ -277,7 +280,7 @@ typedef int (*mca_mtl_base_module_isend_fn_t)(
  * MPI_Irecv must be implemented by this call.
  *
  * The PML will handle creation of the request, leaving the number of
- * bytes requested in teh module structure available for the MTL,
+ * bytes requested in the module structure available for the MTL,
  * directly after the ompi_request_t structure.  The PML will handle
  * proper destruction of the request once it can safely be destroyed
  * (it has been completed and free'ed by a call to REQUEST_FREE or

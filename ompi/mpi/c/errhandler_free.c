@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2022      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -32,7 +34,7 @@
 #define MPI_Errhandler_free PMPI_Errhandler_free
 #endif
 
-static const char FUNC_NAME[] = "MPI_Errhandler_free";
+static const char FUNC_NAME[] __opal_attribute_unused__ = "MPI_Errhandler_free";
 
 
 int MPI_Errhandler_free(MPI_Errhandler *errhandler)
@@ -40,8 +42,7 @@ int MPI_Errhandler_free(MPI_Errhandler *errhandler)
   /* Error checking */
 
   if (MPI_PARAM_CHECK) {
-    OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-    /* Raise an MPI error if we got NULL or if we got an intrinsic
+    /* Raise an MPI exception if we got NULL or if we got an intrinsic
        *and* the reference count is 1 (meaning that this FREE would
        actually free the underlying intrinsic object).  This is ugly
        but necessary -- see below. */
@@ -69,7 +70,7 @@ int MPI_Errhandler_free(MPI_Errhandler *errhandler)
 
      So decrease the refcount here. */
 
-  OBJ_RELEASE(*errhandler);
+  ompi_errhandler_free (*errhandler);
   *errhandler = MPI_ERRHANDLER_NULL;
 
   /* All done */

@@ -111,7 +111,7 @@
 #pragma weak shmemx_int16_g = pshmemx_int16_g
 #pragma weak shmemx_int32_g = pshmemx_int32_g
 #pragma weak shmemx_int64_g = pshmemx_int64_g
-#include "oshmem/shmem/c/profile/defines.h"
+#include "oshmem/shmem/c/profile-defines.h"
 #endif
 
 SHMEM_CTX_TYPE_G(_char, char, shmem)

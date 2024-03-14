@@ -19,6 +19,19 @@ static inline ucc_status_t mca_scoll_ucc_barrier_init(mca_scoll_ucc_module_t * u
         .mask = 0,
         .coll_type = UCC_COLL_TYPE_BARRIER
     };
+
+    if (NULL == mca_scoll_ucc_component.ucc_context) {
+        if (OSHMEM_ERROR == mca_scoll_ucc_init_ctx(ucc_module->group)) {
+            return OSHMEM_ERROR;
+        }
+    }
+
+    if (NULL == ucc_module->ucc_team) {
+        if (OSHMEM_ERROR == mca_scoll_ucc_team_create(ucc_module, ucc_module->group)) {
+            return OSHMEM_ERROR;
+        }
+    }
+
     SCOLL_UCC_REQ_INIT(req, coll, ucc_module);
     return UCC_OK;
 fallback:
@@ -29,6 +42,7 @@ int mca_scoll_ucc_barrier(struct oshmem_group_t *group, long *pSync, int alg)
 {
     mca_scoll_ucc_module_t *ucc_module;
     ucc_coll_req_h req;
+    int            rc;
 
     UCC_VERBOSE(3, "running ucc barrier");
     ucc_module = (mca_scoll_ucc_module_t *) group->g_scoll.scoll_barrier_module;
@@ -39,6 +53,7 @@ int mca_scoll_ucc_barrier(struct oshmem_group_t *group, long *pSync, int alg)
     return OSHMEM_SUCCESS;
 fallback:
     UCC_VERBOSE(3, "running fallback barrier");
-    return ucc_module->previous_barrier(group, pSync, alg);
+    PREVIOUS_SCOLL_FN(ucc_module, barrier, group,
+                      pSync, alg);
+    return rc;
 }
-

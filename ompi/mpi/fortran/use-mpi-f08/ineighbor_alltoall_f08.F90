@@ -1,6 +1,6 @@
 ! -*- f90 -*-
 !
-! Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
+! Copyright (c) 2009-2022 Cisco Systems, Inc.  All rights reserved
 ! Copyright (c) 2009-2013 Los Alamos National Security, LLC.
 !                         All rights reserved.
 ! Copyright (c) 2018-2020 Research Organization for Information Science
@@ -17,8 +17,8 @@ subroutine MPI_Ineighbor_alltoall_f08(sendbuf,sendcount,sendtype,recvbuf,&
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    use :: ompi_mpifh_bindings, only : ompi_ineighbor_alltoall_f
    implicit none
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf
-   OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) OMPI_ASYNCHRONOUS :: sendbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE OMPI_ASYNCHRONOUS :: recvbuf
    INTEGER, INTENT(IN) :: sendcount, recvcount
    TYPE(MPI_Datatype), INTENT(IN) :: sendtype
    TYPE(MPI_Datatype), INTENT(IN) :: recvtype

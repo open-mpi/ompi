@@ -12,6 +12,7 @@
  * Copyright (c) 2006-2008 University of Houston. All rights reserved.
  * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2022      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -69,7 +70,7 @@ mca_coll_inter_scatter_inter(const void *sbuf, int scount,
 	    }
             ptmp = ptmp_free - gap;
 
-	    err = MCA_PML_CALL(recv(ptmp, rcount*size_local, rdtype,
+	    err = MCA_PML_CALL(recv(ptmp, rcount*(size_t)size_local, rdtype,
 				    root, MCA_COLL_BASE_TAG_SCATTER,
 				    comm, MPI_STATUS_IGNORE));
 	    if (OMPI_SUCCESS != err) {
@@ -86,7 +87,7 @@ mca_coll_inter_scatter_inter(const void *sbuf, int scount,
 	}
     } else {
 	/* Root sends data to the first process in the remote group */
-	err = MCA_PML_CALL(send(sbuf, scount*size, sdtype, 0,
+	err = MCA_PML_CALL(send(sbuf, scount*(size_t)size, sdtype, 0,
 				MCA_COLL_BASE_TAG_SCATTER,
 				MCA_PML_BASE_SEND_STANDARD, comm));
 	if (OMPI_SUCCESS != err) {

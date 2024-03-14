@@ -97,7 +97,7 @@ static inline void* custom_match_prq_find_verify(custom_match_prq* list, int tag
     custom_match_prq_node* elem = list->head;
     int i;
     int32_t key = peer;
-    ((int8_t*)&key)[3] = (int8_t) tag; // MGFD TODO verify this set higer order bits...
+    ((int8_t*)&key)[3] = (int8_t) tag; // MGFD TODO verify this set higher order bits...
     __m512i search = _mm512_set1_epi32(key);
     while(elem)
     {
@@ -134,7 +134,7 @@ static inline void* custom_match_prq_find_dequeue_verify(custom_match_prq* list,
     custom_match_prq_node* elem = list->head;
     int i;
     int32_t key = peer;
-    ((int8_t*)&key)[3] = (int8_t) tag; // MGFD TODO verify this set higer order bits...
+    ((int8_t*)&key)[3] = (int8_t) tag; // MGFD TODO verify this set higher order bits...
     __m512i search = _mm512_set1_epi32(key);
     while(elem)
     {
@@ -384,7 +384,7 @@ static inline void* custom_match_umq_find_verify_hold(custom_match_umq* list, in
     custom_match_umq_node* elem = list->head;
     int i;
     int32_t key = peer;
-    ((int8_t*)&key)[3] = (int8_t) tag; // MGFD TODO verify this set higer order bits...
+    ((int8_t*)&key)[3] = (int8_t) tag; // MGFD TODO verify this set higher order bits...
     __m512i search = _mm512_set1_epi32(key);
 
     int32_t mask = ~0;
@@ -472,7 +472,7 @@ static inline void custom_match_umq_remove_hold(custom_match_umq* list, custom_m
 static inline void custom_match_umq_append(custom_match_umq* list, int tag, int source, void* payload)
 {
     int32_t key = source;
-    ((int8_t*)&key)[3] = (int8_t) tag; // MGFD TODO verify this set higer order bits...
+    ((int8_t*)&key)[3] = (int8_t) tag; // MGFD TODO verify this set higher order bits...
 #if CUSTOM_MATCH_DEBUG_VERBOSE
     mca_pml_ob1_recv_frag_t *req = (mca_pml_ob1_recv_frag_t *)payload;
     printf("custom_match_umq_append list: %x key: %x payload: %x tag: %d src: %d\n", list, key, payload, req->hdr.hdr_match.hdr_tag, req->hdr.hdr_match.hdr_src);

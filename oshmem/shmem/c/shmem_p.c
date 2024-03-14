@@ -112,7 +112,8 @@
 #pragma weak shmemx_int16_p = pshmemx_int16_p
 #pragma weak shmemx_int32_p = pshmemx_int32_p
 #pragma weak shmemx_int64_p = pshmemx_int64_p
-#include "oshmem/shmem/c/profile/defines.h"
+
+#include "oshmem/shmem/c/profile-defines.h"
 #endif
 
 SHMEM_CTX_TYPE_P(_char, char, shmem)

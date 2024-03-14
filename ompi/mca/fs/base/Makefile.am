@@ -22,12 +22,16 @@ headers += \
 
 libmca_fs_la_SOURCES += \
         base/fs_base_frame.c \
+        base/fs_base_find_available.c
+
+if OMPI_OMPIO_SUPPORT
+libmca_fs_la_SOURCES += \
         base/fs_base_file_select.c \
         base/fs_base_file_unselect.c \
-        base/fs_base_find_available.c \
         base/fs_base_get_parent_dir.c \
         base/fs_base_file_close.c \
         base/fs_base_file_sync.c \
         base/fs_base_file_delete.c \
         base/fs_base_file_set_size.c \
         base/fs_base_file_get_size.c
+endif

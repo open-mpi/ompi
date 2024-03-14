@@ -192,7 +192,7 @@ int ompi_op_base_op_select(ompi_op_t *op)
             /* Oops -- we found a mismatch.  This shouldn't happen; so
                go release everything and return an error (yes, re-use
                the "i" index because we're going to return without
-               completing the outter loop). */
+               completing the outer loop). */
             for (i = 0; i < OMPI_OP_BASE_TYPE_MAX; ++i) {
                 OBJ_RELEASE(op->o_func.intrinsic.modules[i]);
                 op->o_func.intrinsic.modules[i] = NULL;

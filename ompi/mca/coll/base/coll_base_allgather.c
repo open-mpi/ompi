@@ -52,7 +52,7 @@
  * Example on 6 nodes:
  *   Initialization: everyone has its own buffer at location 0 in rbuf
  *                   This means if user specified MPI_IN_PLACE for sendbuf
- *                   we must copy our block from recvbuf to begining!
+ *                   we must copy our block from recvbuf to beginning!
  *    #     0      1      2      3      4      5
  *         [0]    [1]    [2]    [3]    [4]    [5]
  *   Step 0: send message to (rank - 2^0), receive message from (rank + 2^0)
@@ -124,7 +124,7 @@ int ompi_coll_base_allgather_intra_bruck(const void *sbuf, int scount,
     /* Communication step:
        At every step i, rank r:
        - doubles the distance
-       - sends message which starts at begining of rbuf and has size
+       - sends message which starts at beginning of rbuf and has size
        (blockcount * rcount) to rank (r - distance)
        - receives message of size blockcount * rcount from rank (r + distance)
        at location (rbuf + distance * rcount * rext)
@@ -159,10 +159,10 @@ int ompi_coll_base_allgather_intra_bruck(const void *sbuf, int scount,
     /* Finalization step:
        On all nodes except 0, data needs to be shifted locally:
        - create temporary shift buffer,
-       see discussion in coll_basic_reduce.c about the size and begining
+       see discussion in coll_basic_reduce.c about the size and beginning
        of temporary buffer.
        - copy blocks [0 .. (size - rank - 1)] from rbuf to shift buffer
-       - move blocks [(size - rank) .. size] from rbuf to begining of rbuf
+       - move blocks [(size - rank) .. size] from rbuf to beginning of rbuf
        - copy blocks from shift buffer starting at block [rank] in rbuf.
     */
     if (0 != rank) {
@@ -182,7 +182,7 @@ int ompi_coll_base_allgather_intra_bruck(const void *sbuf, int scount,
                                                   shift_buf, rbuf);
         if (err < 0) { line = __LINE__; free(free_buf); goto err_hndl;  }
 
-        /* 2. move blocks [(size - rank) .. size] from rbuf to the begining of rbuf */
+        /* 2. move blocks [(size - rank) .. size] from rbuf to the beginning of rbuf */
         tmpsend = (char*) rbuf + (ptrdiff_t)(size - rank) * (ptrdiff_t)rcount * rext;
         err = ompi_datatype_copy_content_same_ddt(rdtype, (ptrdiff_t)rank * (ptrdiff_t)rcount,
                                                   rbuf, tmpsend);
@@ -532,7 +532,7 @@ int ompi_coll_base_allgather_intra_ring(const void *sbuf, int scount,
        [(r - i - 1 + size) % size]
        - sends message to rank [(r + 1) % size] containing data from rank
        [(r - i + size) % size]
-       - sends message which starts at begining of rbuf and has size
+       - sends message which starts at beginning of rbuf and has size
     */
     sendto = (rank + 1) % size;
     recvfrom  = (rank - 1 + size) % size;
@@ -685,7 +685,7 @@ ompi_coll_base_allgather_intra_neighborexchange(const void *sbuf, int scount,
        - Rest of the steps:
        update recv_data_from according to offset, and
        exchange two blocks with appropriate neighbor.
-       the send location becomes previous receve location.
+       the send location becomes previous receive location.
     */
     tmprecv = (char*)rbuf + (ptrdiff_t)neighbor[0] * (ptrdiff_t)rcount * rext;
     tmpsend = (char*)rbuf + (ptrdiff_t)rank * (ptrdiff_t)rcount * rext;

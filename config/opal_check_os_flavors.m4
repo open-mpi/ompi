@@ -22,7 +22,7 @@ AC_DEFUN([OPAL_CHECK_OS_FLAVOR_SPECIFIC],
     AC_MSG_CHECKING([$1])
     AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
      [[#ifndef $1
-      error: this is not $1
+      #this is not $1, error
       #endif
      ]])],
                       [opal_found_$2=yes],

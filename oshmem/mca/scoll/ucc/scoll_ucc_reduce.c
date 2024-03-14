@@ -33,7 +33,7 @@ static inline ucc_status_t mca_scoll_ucc_reduce_init(const void *sbuf, void *rbu
     }
 
     ucc_coll_args_t coll = {
-        .mask = UCC_COLL_ARGS_FIELD_PREDEFINED_REDUCTIONS,
+        .mask = 0,
         .coll_type = UCC_COLL_TYPE_ALLREDUCE,
         .src.info = {
             .buffer = (void *)sbuf,
@@ -43,11 +43,11 @@ static inline ucc_status_t mca_scoll_ucc_reduce_init(const void *sbuf, void *rbu
         },
         .dst.info = {
             .buffer = rbuf,
+            .count = count,
+            .datatype = ucc_dt,
             .mem_type = UCC_MEMORY_TYPE_UNKNOWN
         },
-        .reduce = {
-            .predefined_op = ucc_op,
-        },
+        .op = ucc_op,
     };
 
     if (sbuf == rbuf) {
@@ -55,6 +55,17 @@ static inline ucc_status_t mca_scoll_ucc_reduce_init(const void *sbuf, void *rbu
         coll.flags = UCC_COLL_ARGS_FLAG_IN_PLACE;
     }
 
+    if (NULL == mca_scoll_ucc_component.ucc_context) {
+        if (OSHMEM_ERROR == mca_scoll_ucc_init_ctx(ucc_module->group)) {
+            return OSHMEM_ERROR;
+        }
+    }
+
+    if (NULL == ucc_module->ucc_team) {
+        if (OSHMEM_ERROR == mca_scoll_ucc_team_create(ucc_module, ucc_module->group)) {
+            return OSHMEM_ERROR;
+        }
+    }
     SCOLL_UCC_REQ_INIT(req, coll, ucc_module);
     return UCC_OK;
 fallback:
@@ -73,6 +84,7 @@ int mca_scoll_ucc_reduce(struct oshmem_group_t *group,
     mca_scoll_ucc_module_t *ucc_module;
     size_t count;
     ucc_coll_req_h req;
+    int rc;
 
     UCC_VERBOSE(3, "running ucc reduce");
     ucc_module = (mca_scoll_ucc_module_t *) group->g_scoll.scoll_reduce_module;
@@ -89,6 +101,7 @@ int mca_scoll_ucc_reduce(struct oshmem_group_t *group,
     return OSHMEM_SUCCESS;
 fallback:
     UCC_VERBOSE(3, "running fallback reduction");
-    return ucc_module->previous_reduce(group, op, target, source, nlong, pSync,
-                                       pWrk, alg);
+    PREVIOUS_SCOLL_FN(ucc_module, reduce, group, op, target,
+                      source, nlong, pSync, pWrk, alg);
+    return rc;
 }

@@ -46,6 +46,7 @@ typedef enum {
 struct mca_pml_ob1_send_request_t {
     mca_pml_base_send_request_t req_send;
     mca_bml_base_endpoint_t* req_endpoint;
+    mca_pml_ob1_comm_proc_t *ob1_proc;
     opal_ptr_t req_recv;
     opal_atomic_int32_t  req_state;
     opal_atomic_int32_t  req_lock;
@@ -143,7 +144,8 @@ get_request_from_send_pending(mca_pml_ob1_send_pending_t *type)
                                        tag,                             \
                                        comm,                            \
                                        sendmode,                        \
-                                       persistent)                      \
+                                       persistent,                      \
+                                       ob1_proc)                        \
     {                                                                   \
         MCA_PML_BASE_SEND_REQUEST_INIT(&(sendreq)->req_send,            \
                                        buf,                             \
@@ -156,10 +158,13 @@ get_request_from_send_pending(mca_pml_ob1_send_pending_t *type)
                                        persistent,                      \
                                        0); /* convertor_flags */        \
         (sendreq)->req_recv.pval = NULL;                                \
+        (sendreq)->ob1_proc = ob1_proc;                                 \
     }
 
 #define MCA_PML_OB1_SEND_REQUEST_RESET(sendreq)                         \
     MCA_PML_BASE_SEND_REQUEST_RESET(&(sendreq)->req_send)
+
+#define MCA_PML_OB1_SEND_REQUEST_REQUIRES_EXT_MATCH(sendreq) (-1 == sendreq->ob1_proc->comm_index)
 
 static inline void mca_pml_ob1_free_rdma_resources (mca_pml_ob1_send_request_t* sendreq)
 {
@@ -346,12 +351,10 @@ mca_pml_ob1_send_request_schedule(mca_pml_ob1_send_request_t* sendreq)
     mca_pml_ob1_send_request_schedule_exclusive(sendreq);
 }
 
-#if OPAL_CUDA_SUPPORT
-int mca_pml_ob1_send_request_start_cuda(
+int mca_pml_ob1_send_request_start_accelerator(
     mca_pml_ob1_send_request_t* sendreq,
     mca_bml_base_btl_t* bml_btl,
     size_t size);
-#endif /* OPAL_CUDA_SUPPORT */
 
 /**
  *  Start the specified request
@@ -393,8 +396,8 @@ mca_pml_ob1_send_request_start_btl( mca_pml_ob1_send_request_t* sendreq,
     int rc;
 
 #if OPAL_CUDA_GDR_SUPPORT
-    if (btl->btl_cuda_eager_limit && (sendreq->req_send.req_base.req_convertor.flags & CONVERTOR_CUDA)) {
-        eager_limit = btl->btl_cuda_eager_limit - sizeof(mca_pml_ob1_hdr_t);
+    if (btl->btl_accelerator_eager_limit && (sendreq->req_send.req_base.req_convertor.flags & CONVERTOR_ACCELERATOR)) {
+        eager_limit = btl->btl_accelerator_eager_limit - sizeof(mca_pml_ob1_hdr_t);
     }
 #endif /* OPAL_CUDA_GDR_SUPPORT */
 
@@ -424,7 +427,9 @@ mca_pml_ob1_send_request_start_btl( mca_pml_ob1_send_request_t* sendreq,
         if(sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED) {
             rc = mca_pml_ob1_send_request_start_buffered(sendreq, bml_btl, size);
         } else if
-                (opal_convertor_need_buffers(&sendreq->req_send.req_base.req_convertor) == false) {
+                (opal_convertor_need_buffers(&sendreq->req_send.req_base.req_convertor) == false &&
+                !(sendreq->req_send.req_base.req_convertor.flags & CONVERTOR_ACCELERATOR) &&
+                !(sendreq->req_send.req_base.req_convertor.flags & CONVERTOR_ACCELERATOR_UNIFIED)) {
             unsigned char *base;
             opal_convertor_get_current_pointer( &sendreq->req_send.req_base.req_convertor, (void**)&base );
 
@@ -443,11 +448,9 @@ mca_pml_ob1_send_request_start_btl( mca_pml_ob1_send_request_t* sendreq,
                                                          MCA_PML_OB1_HDR_FLAGS_CONTIG);
             }
         } else {
-#if OPAL_CUDA_SUPPORT
-            if (sendreq->req_send.req_base.req_convertor.flags & CONVERTOR_CUDA) {
-                return mca_pml_ob1_send_request_start_cuda(sendreq, bml_btl, size);
+            if (sendreq->req_send.req_base.req_convertor.flags & CONVERTOR_ACCELERATOR) {
+                return mca_pml_ob1_send_request_start_accelerator(sendreq, bml_btl, size);
             }
-#endif /* OPAL_CUDA_SUPPORT */
             rc = mca_pml_ob1_send_request_start_rndv(sendreq, bml_btl, size, 0);
         }
     }

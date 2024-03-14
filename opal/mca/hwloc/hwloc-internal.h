@@ -188,59 +188,9 @@ typedef struct {
 } opal_hwloc_topo_data_t;
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_hwloc_topo_data_t);
 
-/* define binding policies */
-typedef uint16_t opal_binding_policy_t;
-#define OPAL_BINDING_POLICY OPAL_UINT16
-
-/* binding directives */
-#define OPAL_BIND_IF_SUPPORTED 0x1000
-/* allow assignment of multiple procs to
- * same cpu */
-#define OPAL_BIND_ALLOW_OVERLOAD 0x2000
-/* the binding policy was specified by the user */
-#define OPAL_BIND_GIVEN 0x4000
-/* bind each rank to the cpu in the given
- * cpu list based on its node-local-rank */
-#define OPAL_BIND_ORDERED 0x8000
-
-/*
- * binding policies
- */
-#define OPAL_BIND_TO_NONE            1
-#define OPAL_BIND_TO_BOARD           2
-#define OPAL_BIND_TO_NUMA            3
-#define OPAL_BIND_TO_SOCKET          4
-#define OPAL_BIND_TO_L3CACHE         5
-#define OPAL_BIND_TO_L2CACHE         6
-#define OPAL_BIND_TO_L1CACHE         7
-#define OPAL_BIND_TO_CORE            8
-#define OPAL_BIND_TO_HWTHREAD        9
-#define OPAL_BIND_TO_CPUSET          10
-#define OPAL_GET_BINDING_POLICY(pol) ((pol) &0x0fff)
-#define OPAL_SET_BINDING_POLICY(target, pol) \
-    (target) = (pol) | (((target) &0xf000) | OPAL_BIND_GIVEN)
-#define OPAL_SET_DEFAULT_BINDING_POLICY(target, pol)                          \
-    do {                                                                      \
-        if (!OPAL_BINDING_POLICY_IS_SET((target))) {                          \
-            (target) = (pol) | (((target) &0xf000) | OPAL_BIND_IF_SUPPORTED); \
-        }                                                                     \
-    } while (0);
-
-/* check if policy is set */
-#define OPAL_BINDING_POLICY_IS_SET(pol) ((pol) &0x4000)
-/* macro to detect if binding was qualified */
-#define OPAL_BINDING_REQUIRED(n) (!(OPAL_BIND_IF_SUPPORTED & (n)))
-/* macro to detect if binding is forced */
-#define OPAL_BIND_OVERLOAD_ALLOWED(n)  (OPAL_BIND_ALLOW_OVERLOAD & (n))
-#define OPAL_BIND_ORDERED_REQUESTED(n) (OPAL_BIND_ORDERED & (n))
-
 /* some global values */
 OPAL_DECLSPEC extern hwloc_topology_t opal_hwloc_topology;
-OPAL_DECLSPEC extern opal_binding_policy_t opal_hwloc_binding_policy;
 OPAL_DECLSPEC extern hwloc_cpuset_t opal_hwloc_my_cpuset;
-OPAL_DECLSPEC extern bool opal_hwloc_report_bindings;
-OPAL_DECLSPEC extern hwloc_obj_type_t opal_hwloc_levels[];
-OPAL_DECLSPEC extern bool opal_hwloc_use_hwthreads_as_cpus;
 
 END_C_DECLS
 

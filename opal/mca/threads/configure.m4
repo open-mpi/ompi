@@ -14,13 +14,16 @@ dnl Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2019      Sandia National Laboratories.  All rights reserved.
 dnl Copyright (c) 2019      Triad National Security, LLC. All rights
 dnl                         reserved.
-dnl
+dnl Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
 dnl
 dnl $HEADER$
 dnl
+
+dnl need in the core library
+AC_DEFUN([MCA_opal_threads_CORE_LIB], [1])
 
 dnl we only want one :)
 m4_define(MCA_opal_threads_CONFIGURE_MODE, STOP_AT_FIRST)
@@ -63,5 +66,5 @@ AC_SUBST(THREAD_CPPFLAGS)
 AC_SUBST(THREAD_LDFLAGS)
 AC_SUBST(THREAD_LIBS)
 
-OPAL_SUMMARY_ADD([[Miscellaneous]],[[Threading Package]],[], [$opal_thread_type_found])
+OPAL_SUMMARY_ADD([Miscellaneous], [Threading Package], [], [$opal_thread_type_found])
 ])dnl

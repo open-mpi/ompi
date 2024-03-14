@@ -105,6 +105,42 @@ BEGIN_C_DECLS
                            target, value, pe);                             \
     }
 
+#define DO_OSHMEM_TYPE_FOP_NBI(ctx, type_name, type, op, fetch, target, value, pe) do {        \
+        int rc = OSHMEM_SUCCESS;                                                    \
+        size_t size = 0;                                                            \
+        type out_value;                                                             \
+                                                                                    \
+        RUNTIME_CHECK_INIT();                                                       \
+        RUNTIME_CHECK_PE(pe);                                                       \
+        RUNTIME_CHECK_ADDR(target);                                                 \
+                                                                                    \
+        size = sizeof(out_value);                                                   \
+        rc = MCA_ATOMIC_CALL(f##op##_nb(                                            \
+            ctx,                                                                    \
+            fetch,                                                                  \
+            (void*)target,                                                          \
+            (void*)&out_value,                                                      \
+            value,                                                                  \
+            size,                                                                   \
+            pe));                                                                   \
+        RUNTIME_CHECK_RC(rc);                                                       \
+                                                                                    \
+        return ;                                                           	     \
+    } while (0)
+
+#define OSHMEM_TYPE_FOP_NBI(type_name, type, prefix, op)                                \
+    void prefix##_##type_name##_atomic_fetch_##op##_nbi(type *fetch, type *target, type value, int pe) \
+    {                                                                                   \
+        DO_OSHMEM_TYPE_FOP_NBI(oshmem_ctx_default, type_name, type, op,                 \
+                           fetch, target, value, pe);                                   \
+    }
+
+#define OSHMEM_CTX_TYPE_FOP_NBI(type_name, type, prefix, op)                            \
+    void prefix##_ctx_##type_name##_atomic_fetch_##op##_nbi(shmem_ctx_t ctx, type *fetch, type *target, type value, int pe) \
+    {                                                                                   \
+        DO_OSHMEM_TYPE_FOP_NBI(ctx, type_name, type, op,                                \
+                           fetch, target, value, pe);                                   \
+    }
 /* ******************************************************************** */
 
 struct oshmem_op_t;
@@ -144,9 +180,9 @@ struct mca_atomic_base_component_1_0_0_t {
 };
 typedef struct mca_atomic_base_component_1_0_0_t mca_atomic_base_component_1_0_0_t;
 
-/** Per guidence in mca.h, use the unversioned struct name if you just
+/** Per guidance in mca.h, use the unversioned struct name if you just
  want to always keep up with the most recent version of the
- interace. */
+ interface. */
 typedef struct mca_atomic_base_component_1_0_0_t mca_atomic_base_component_t;
 
 /**
@@ -216,12 +252,56 @@ struct mca_atomic_base_module_1_0_0_t {
                         uint64_t value,
                         size_t size,
                         int pe);
+    int (*atomic_fadd_nb)(shmem_ctx_t ctx,
+                       void *fetch,
+                       void *target,
+                       void *prev,
+                       uint64_t value,
+                       size_t size,
+                       int pe);
+    int (*atomic_cswap_nb)(shmem_ctx_t ctx,
+                        void *fetch,
+                        void *target,
+                        uint64_t *prev, /* prev is used internally by wrapper, we may
+                                           always use 64-bit value */
+                        uint64_t cond,
+                        uint64_t value,
+                        size_t size,
+                        int pe);
+    int (*atomic_swap_nb)(shmem_ctx_t ctx,
+                       void *fetch,
+                       void *target,
+                       void *prev,
+                       uint64_t value,
+                       size_t size,
+                       int pe);
+    int (*atomic_fand_nb)(shmem_ctx_t ctx,
+                       void *fetch,
+                       void *target,
+                       void *prev,
+                       uint64_t value,
+                       size_t size,
+                       int pe);
+    int (*atomic_for_nb)(shmem_ctx_t ctx,
+                       void *fetch,
+                      void *target,
+                      void *prev,
+                      uint64_t value,
+                      size_t size,
+                      int pe);
+    int (*atomic_fxor_nb)(shmem_ctx_t ctx,
+                       void *fetch,
+                       void *target,
+                       void *prev,
+                       uint64_t value,
+                       size_t size,
+                       int pe);
 };
 typedef struct mca_atomic_base_module_1_0_0_t mca_atomic_base_module_1_0_0_t;
 
-/** Per guidence in mca.h, use the unversioned struct name if you just
+/** Per guidance in mca.h, use the unversioned struct name if you just
  want to always keep up with the most recent version of the
- interace. */
+ interface. */
 typedef struct mca_atomic_base_module_1_0_0_t mca_atomic_base_module_t;
 OSHMEM_DECLSPEC OBJ_CLASS_DECLARATION(mca_atomic_base_module_t);
 

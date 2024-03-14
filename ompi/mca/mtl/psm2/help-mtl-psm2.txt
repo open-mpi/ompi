@@ -2,6 +2,7 @@
 #
 # Copyright (C) 2009. QLogic Corporation.  All rights reserved.
 # Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
+# Copyright (c) 2022      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -10,11 +11,6 @@
 #
 [psm2 init]
 Initialization of PSM2 library failed.
-
-  Error: %s
-#
-[debug level]
-Unable to set PSM2 debug level.
 
   Error: %s
 #
@@ -39,9 +35,6 @@ Unable to post application receive buffer (psm2_mq_irecv or psm2_mq_imrecv).
   Error:      %s
   Buffer:     %p
   Length:     %llu
-#
-[path query mechanism unknown]
-Unknown path record query mechanism %s. Supported mechanisms are %s.
 #
 [message too big]
 Message size %llu bigger than supported by PSM2 API. Max = %llu

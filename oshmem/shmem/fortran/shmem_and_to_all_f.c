@@ -18,11 +18,11 @@
 #include "oshmem/op/op.h"
 
 #if OSHMEM_PROFILING
-#include "oshmem/shmem/fortran/profile/pbindings.h"
+#include "oshmem/shmem/fortran/pbindings.h"
 SHMEM_GENERATE_WEAK_BINDINGS(SHMEM_INT2_AND_TO_ALL, shmem_int2_and_to_all)
 SHMEM_GENERATE_WEAK_BINDINGS(SHMEM_INT4_AND_TO_ALL, shmem_int4_and_to_all)
 SHMEM_GENERATE_WEAK_BINDINGS(SHMEM_INT8_AND_TO_ALL, shmem_int8_and_to_all)
-#include "oshmem/shmem/fortran/profile/defines.h"
+#include "oshmem/shmem/fortran/profile-defines.h"
 #endif
 
 SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,

@@ -16,6 +16,9 @@
  *                         reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * Copyright (c) 2020      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2020      Triad National Security, LLC. All rights
+ *                         reserved.
+ *
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -52,7 +55,7 @@ struct ompi_info_t {
 typedef struct ompi_info_t ompi_info_t;
 
 /**
- * Padded struct to maintain back compatibiltiy.
+ * Padded struct to maintain back compatibility.
  * See ompi/communicator/communicator.h comments with struct ompi_communicator_t
  * for full explanation why we chose the following padding construct for predefines.
  */
@@ -83,10 +86,16 @@ OMPI_DECLSPEC extern ompi_predefined_info_t *ompi_mpi_info_null_addr;
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_info_t);
 
 /**
- * This function is invoked during ompi_mpi_init() and sets up
+ * This function is invoked during ompi_instance_retain() and sets up
  * MPI_Info handling.
  */
 int ompi_mpiinfo_init(void);
+
+/**
+ * Fill in an info object with ENV info.  Used for setting
+ * MPI_INFO_ENV and by invocation of MPI_Info_create_env.
+ */
+int ompi_mpiinfo_init_env(int argc, char *argv[], ompi_info_t *info);
 
 /**
  * This function is used to free a ompi level info
@@ -154,6 +163,15 @@ OMPI_DECLSPEC int ompi_info_value_to_bool(char *value, bool *interp);
  */
 OMPI_DECLSPEC int ompi_info_get_nkeys(ompi_info_t *info, int *nkeys);
 
+
+/**
+ * @brief Allocate a new info object
+ *
+ * This helper function ensures that the minimum infrastructure is initialized
+ * for creation/modification/destruction of an info object. Do not call
+ * OBJ_NEW(opal_info_t) directly.
+ */
+OMPI_DECLSPEC ompi_info_t *ompi_info_allocate (void);
 
 END_C_DECLS
 

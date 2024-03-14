@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
- * Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2022 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2018 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
@@ -23,6 +23,9 @@
  *                         reserved.
  * Copyright (c) 2019-2021 Google, Inc. All rights reserved.
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
+ * Copyright (c) 2022      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2022      Computer Architecture and VLSI Systems (CARV)
+ *                         Laboratory, ICS Forth. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -35,13 +38,11 @@
 #include "opal/mca/threads/mutex.h"
 #include "opal/util/output.h"
 #include "opal/util/printf.h"
-#include "opal/util/show_help.h"
 
 #include "opal/mca/btl/sm/btl_sm.h"
 #include "opal/mca/btl/sm/btl_sm_fbox.h"
 #include "opal/mca/btl/sm/btl_sm_fifo.h"
 #include "opal/mca/btl/sm/btl_sm_frag.h"
-#include "opal/mca/smsc/base/base.h"
 #include "opal/mca/smsc/smsc.h"
 
 #ifdef HAVE_SYS_STAT_H
@@ -125,7 +126,7 @@ static int mca_btl_sm_component_register(void)
     mca_btl_sm_component.memcpy_limit = 524288;
     (void) mca_base_component_var_register(&mca_btl_sm_component.super.btl_version, "memcpy_limit",
                                            "Message size to switch from using "
-                                           "memove to memcpy. The relative speed of these two "
+                                           "memmove to memcpy. The relative speed of these two "
                                            "routines can vary by size.",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0,
                                            MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_5,
@@ -254,11 +255,6 @@ static int mca_btl_sm_component_close(void)
     OBJ_DESTRUCT(&mca_btl_sm_component.pending_endpoints);
     OBJ_DESTRUCT(&mca_btl_sm_component.pending_fragments);
 
-    if (mca_smsc_base_has_feature(MCA_SMSC_FEATURE_CAN_MAP)
-        && NULL != mca_btl_sm_component.my_segment) {
-        munmap(mca_btl_sm_component.my_segment, mca_btl_sm_component.segment_size);
-    }
-
     mca_btl_sm_component.my_segment = NULL;
 
     if (mca_btl_sm_component.mpool) {
@@ -276,14 +272,9 @@ static int mca_btl_base_sm_modex_send(void)
 
     modex_size = sizeof(modex) - sizeof(modex.seg_ds);
 
-    if (!mca_smsc_base_has_feature(MCA_SMSC_FEATURE_CAN_MAP)) {
         modex.seg_ds_size = opal_shmem_sizeof_shmem_ds(&mca_btl_sm_component.seg_ds);
         memmove(&modex.seg_ds, &mca_btl_sm_component.seg_ds, modex.seg_ds_size);
         modex_size += modex.seg_ds_size;
-    } else {
-        modex.segment_base = (uintptr_t) mca_btl_sm_component.my_segment;
-        modex.seg_ds_size = 0;
-    }
 
     int rc;
     OPAL_MODEX_SEND(rc, PMIX_LOCAL, &mca_btl_sm_component.super.btl_version, &modex, modex_size);
@@ -343,8 +334,8 @@ mca_btl_sm_component_init(int *num_btls, bool enable_progress_threads, bool enab
     /* no fast boxes allocated initially */
     component->num_fbox_in_endpoints = 0;
 
-    rc = mca_smsc_base_select();
-    if (OPAL_SUCCESS == rc) {
+    bool have_smsc = (NULL != mca_smsc);
+    if (have_smsc) {
         mca_btl_sm.super.btl_flags |= MCA_BTL_FLAGS_RDMA;
         mca_btl_sm.super.btl_get = mca_btl_sm_get;
         mca_btl_sm.super.btl_put = mca_btl_sm_put;
@@ -357,7 +348,7 @@ mca_btl_sm_component_init(int *num_btls, bool enable_progress_threads, bool enab
             mca_btl_sm.super.btl_max_send_size = mca_btl_sm.super.btl_eager_limit;
             mca_btl_sm.super.btl_min_rdma_pipeline_size = INT_MAX;
         }
-        if (mca_smsc_base_has_feature(MCA_SMSC_FEATURE_REQUIRE_REGISTATION)) {
+        if (mca_smsc_base_has_feature(MCA_SMSC_FEATURE_REQUIRE_REGISTRATION)) {
             ssize_t handle_size = mca_smsc_base_registration_data_size();
             if (handle_size > 0) {
                 mca_btl_sm.super.btl_registration_handle_size = (size_t) handle_size;
@@ -366,51 +357,41 @@ mca_btl_sm_component_init(int *num_btls, bool enable_progress_threads, bool enab
             } else {
                 BTL_ERROR(("single-copy component requires registration but could not provide the "
                            "registration handle size"));
-                rc = (int) handle_size;
+                have_smsc = false;
             }
         }
     }
-    if (OPAL_SUCCESS != rc) {
+    if (!have_smsc) {
         mca_btl_sm.super.btl_flags &= ~MCA_BTL_FLAGS_RDMA;
         mca_btl_sm.super.btl_get = NULL;
         mca_btl_sm.super.btl_put = NULL;
     }
 
-    if (!mca_smsc_base_has_feature(MCA_SMSC_FEATURE_CAN_MAP)) {
-        char *sm_file;
+    char *sm_file;
 
-        rc = opal_asprintf(&sm_file, "%s" OPAL_PATH_SEP "sm_segment.%s.%u.%x.%d",
-                           mca_btl_sm_component.backing_directory, opal_process_info.nodename,
-                           geteuid(), OPAL_PROC_MY_NAME.jobid, MCA_BTL_SM_LOCAL_RANK);
-        if (0 > rc) {
-            free(btls);
-            return NULL;
-        }
-        opal_pmix_register_cleanup(sm_file, false, false, false);
+    // Note: Use the node_rank not the local_rank for the backing file.
+    // This makes the file unique even when recovering from failures.
+    rc = opal_asprintf(&sm_file, "%s" OPAL_PATH_SEP "sm_segment.%s.%u.%x.%d",
+                       mca_btl_sm_component.backing_directory, opal_process_info.nodename,
+                       geteuid(), OPAL_PROC_MY_NAME.jobid, opal_process_info.my_node_rank);
+    if (0 > rc) {
+        free(btls);
+        return NULL;
+    }
+    opal_pmix_register_cleanup(sm_file, false, false, false);
 
-        rc = opal_shmem_segment_create(&component->seg_ds, sm_file, component->segment_size);
-        free(sm_file);
-        if (OPAL_SUCCESS != rc) {
-            BTL_VERBOSE(("Could not create shared memory segment"));
-            free(btls);
-            return NULL;
-        }
+    rc = opal_shmem_segment_create(&component->seg_ds, sm_file, component->segment_size);
+    free(sm_file);
+    if (OPAL_SUCCESS != rc) {
+        BTL_VERBOSE(("Could not create shared memory segment"));
+        free(btls);
+        return NULL;
+    }
 
-        component->my_segment = opal_shmem_segment_attach(&component->seg_ds);
-        if (NULL == component->my_segment) {
-            BTL_VERBOSE(("Could not attach to just created shared memory segment"));
-            goto failed;
-        }
-    } else {
-        /* if the shared-memory single-copy component can map memory (XPMEM) an anonymous segment
-         * can be used instead */
-        component->my_segment = mmap(NULL, component->segment_size, PROT_READ | PROT_WRITE,
-                                     MAP_ANONYMOUS | MAP_SHARED, -1, 0);
-        if ((void *) -1 == component->my_segment) {
-            BTL_VERBOSE(("Could not create anonymous memory segment"));
-            free(btls);
-            return NULL;
-        }
+    component->my_segment = opal_shmem_segment_attach(&component->seg_ds);
+    if (NULL == component->my_segment) {
+        BTL_VERBOSE(("Could not attach to just created shared memory segment"));
+        goto failed;
     }
 
     /* initialize my fifo */
@@ -432,11 +413,7 @@ mca_btl_sm_component_init(int *num_btls, bool enable_progress_threads, bool enab
 
     return btls;
 failed:
-    if (mca_smsc_base_has_feature(MCA_SMSC_FEATURE_CAN_MAP)) {
-        munmap(component->my_segment, component->segment_size);
-    } else {
-        opal_shmem_unlink(&component->seg_ds);
-    }
+    opal_shmem_unlink(&component->seg_ds);
 
     if (btls) {
         free(btls);
@@ -462,9 +439,9 @@ void mca_btl_sm_poll_handle_frag(mca_btl_sm_hdr_t *hdr, struct mca_btl_base_endp
                                               .cbdata = reg->cbdata};
 
     if (hdr->flags & MCA_BTL_SM_FLAG_SINGLE_COPY) {
-        void *ctx = MCA_SMSC_CALL(map_peer_region, endpoint->smsc_endpoint, /*flags=*/0,
-                                  hdr->sc_iov.iov_base, hdr->sc_iov.iov_len,
-                                  &segments[1].seg_addr.pval);
+        void *ctx = MCA_SMSC_CALL(map_peer_region, endpoint->smsc_endpoint,
+                                  MCA_RCACHE_FLAGS_PERSIST, hdr->sc_iov.iov_base,
+                                  hdr->sc_iov.iov_len, &segments[1].seg_addr.pval);
         assert(NULL != ctx);
 
         segments[1].seg_len = hdr->sc_iov.iov_len;
@@ -511,7 +488,7 @@ static int mca_btl_sm_poll_fifo(void)
  * @param ep (IN)       Sm BTL endpoint
  *
  * This is called with the component lock held so the component lock does
- * not need to be aquired before modifying the pending_endpoints list.
+ * not need to be acquired before modifying the pending_endpoints list.
  */
 static void mca_btl_sm_progress_waiting(mca_btl_base_endpoint_t *ep)
 {

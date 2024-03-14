@@ -53,7 +53,7 @@ int MPI_File_close(MPI_File *fh)
     }
 
     /* Release the MPI_File; the destructor releases the component,
-       zeroes out fiels, etc. */
+       zeroes out fields, etc. */
 
     rc = ompi_file_close(fh);
     OMPI_ERRHANDLER_RETURN(rc, *fh, rc, FUNC_NAME);

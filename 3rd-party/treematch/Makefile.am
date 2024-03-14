@@ -1,3 +1,12 @@
+#
+# Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+
 sources = tm_bucket.h \
     tm_mapping.h \
     tm_timings.h tm_tree.h \
@@ -21,7 +30,7 @@ EXTRA_DIST = COPYING LICENSE
 
 noinst_LTLIBRARIES = libtreematch.la
 libtreematch_la_SOURCES = $(sources)
-libtreematch_la_LDFLAGS = -static
+libtreematch_la_LDFLAGS =
 
 distclean-local:
 	rm config.h

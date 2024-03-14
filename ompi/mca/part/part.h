@@ -15,6 +15,7 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2011-2020 Sandia National Laboratories. All rights reserved.
+ * Copyright (c) 2021      Bull S.A.S. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -141,6 +142,7 @@ typedef int (*mca_part_base_module_precv_init_fn_t)(
     int src,
     int tag,
     struct ompi_communicator_t* comm,
+    struct ompi_info_t * info,
     struct ompi_request_t **request
 );
 
@@ -166,6 +168,7 @@ typedef int (*mca_part_base_module_psend_init_fn_t)(
     int dst,
     int tag,
     struct ompi_communicator_t* comm,
+    struct ompi_info_t * info,
     struct ompi_request_t **request
 );
 

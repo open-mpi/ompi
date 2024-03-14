@@ -2,6 +2,8 @@
  * Copyright (c) 2018-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2023      High Performance Computing Center Stuttgart,
+ *                         University of Stuttgart.  All rights reserved.
  *
  * Simple example usage of SPCs through MPI_T.
  */
@@ -20,7 +22,6 @@ void message_exchange(int num_messages, int message_size)
     int i, rank;
     /* Use calloc to initialize data to 0's */
     char *data = (char *) calloc(message_size, sizeof(char));
-    MPI_Status status;
 
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
@@ -29,7 +30,7 @@ void message_exchange(int num_messages, int message_size)
             MPI_Send(data, message_size, MPI_BYTE, 1, 123, MPI_COMM_WORLD);
     } else if (rank == 1) {
         for (i = 0; i < num_messages; i++)
-            MPI_Recv(data, message_size, MPI_BYTE, 0, 123, MPI_COMM_WORLD, &status);
+            MPI_Recv(data, message_size, MPI_BYTE, 0, 123, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     }
 
     free(data);
@@ -40,7 +41,7 @@ int main(int argc, char **argv)
     int num_messages, message_size, rc;
 
     if (argc < 3) {
-        printf("Usage: mpirun -np 2 --mca mpi_spc_attach all --mca mpi_spc_dump_enabled true "
+        printf("Usage: mpirun -n 2 --mca mpi_spc_attach all --mca mpi_spc_dump_enabled true "
                "./spc_example [num_messages] [message_size]\n");
         return -1;
     } else {
@@ -70,7 +71,7 @@ int main(int argc, char **argv)
         MPI_Abort(MPI_COMM_WORLD, -1);
     }
 
-    /* Determine the MPI_T pvar indices for the OMPI_BYTES_SENT/RECIEVED_USER SPCs */
+    /* Determine the MPI_T pvar indices for the OMPI_BYTES_SENT/RECEIVED_USER SPCs */
     index = -1;
     MPI_T_pvar_get_num(&num);
     for (i = 0; i < num; i++) {
@@ -91,19 +92,18 @@ int main(int argc, char **argv)
         MPI_Abort(MPI_COMM_WORLD, -1);
     }
 
-    int ret;
     long long value;
 
     MPI_T_pvar_session session;
     MPI_T_pvar_handle handle;
     /* Create the MPI_T sessions/handles for the counters and start the counters */
-    ret = MPI_T_pvar_session_create(&session);
-    ret = MPI_T_pvar_handle_alloc(session, index, NULL, &handle, &count);
-    ret = MPI_T_pvar_start(session, handle);
+    MPI_T_pvar_session_create(&session);
+    MPI_T_pvar_handle_alloc(session, index, NULL, &handle, &count);
+    MPI_T_pvar_start(session, handle);
 
     message_exchange(num_messages, message_size);
 
-    ret = MPI_T_pvar_read(session, handle, &value);
+    MPI_T_pvar_read(session, handle, &value);
     /* Print the counter values in order by rank */
     for (i = 0; i < 2; i++) {
         if (i == rank) {
@@ -113,9 +113,9 @@ int main(int argc, char **argv)
         MPI_Barrier(MPI_COMM_WORLD);
     }
     /* Stop the MPI_T session, free the handle, and then free the session */
-    ret = MPI_T_pvar_stop(session, handle);
-    ret = MPI_T_pvar_handle_free(session, &handle);
-    ret = MPI_T_pvar_session_free(&session);
+    MPI_T_pvar_stop(session, handle);
+    MPI_T_pvar_handle_free(session, &handle);
+    MPI_T_pvar_session_free(&session);
 
     MPI_T_finalize();
     MPI_Finalize();

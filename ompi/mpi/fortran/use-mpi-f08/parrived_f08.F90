@@ -8,9 +8,12 @@
 ! Copyright (c) 2020      Sandia National Laboratories. All rights reserved.
 ! $COPYRIGHT$
 
+#include "mpi-f08-rename.h"
 #include "ompi/mpi/fortran/configure-fortran-output.h"
 
 subroutine MPI_Parrived_f08(request,partition,flag,ierror)
+   ! See note in mpi-f-interfaces-bind.h for why we "use mpi" here and
+   ! call a PMPI_* subroutine below.
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    use :: mpi, only : PMPI_Parrived
    implicit none

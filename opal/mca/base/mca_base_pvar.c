@@ -575,7 +575,7 @@ int mca_base_pvar_handle_update(mca_base_pvar_handle_t *handle)
 
         if (mca_base_pvar_is_sum(handle->pvar)) {
             for (i = 0; i < handle->count; ++i) {
-                /* the instance started at 0. need to subract the initial value off the
+                /* the instance started at 0. need to subtract the initial value off the
                    result. */
                 switch (handle->pvar->type) {
                 case MCA_BASE_VAR_TYPE_UNSIGNED_INT:
@@ -802,7 +802,7 @@ int mca_base_pvar_handle_reset(mca_base_pvar_handle_t *handle)
         return OPAL_ERR_NOT_BOUND;
     }
 
-    /* reset this handle to a state analagous to when it was created */
+    /* reset this handle to a state analogous to when it was created */
     if (mca_base_pvar_is_sum(handle->pvar)) {
         /* reset the running sum to 0 */
         memset(handle->current_value, 0, handle->count * ompi_var_type_sizes[handle->pvar->type]);
@@ -812,7 +812,7 @@ int mca_base_pvar_handle_reset(mca_base_pvar_handle_t *handle)
         }
     } else if (mca_base_pvar_handle_is_running(handle)
                && mca_base_pvar_is_watermark(handle->pvar)) {
-        /* watermarks should get set to the current value if runnning. */
+        /* watermarks should get set to the current value if running. */
 
         ret = handle->pvar->get_value(handle->pvar, handle->current_value, handle->obj_handle);
     } else if (mca_base_pvar_is_readonly(handle->pvar)) {
@@ -908,7 +908,8 @@ int mca_base_pvar_dump(int index, char ***out, mca_base_var_dump_type_t output_t
         if (NULL != pvar->enumerator) {
             char *values;
 
-            ret = pvar->enumerator->dump(pvar->enumerator, &values);
+            ret = pvar->enumerator->dump(pvar->enumerator, &values,
+                MCA_BASE_VAR_DUMP_TYPE_TO_ENUM_DUMP_TYPE(output_type));
             if (OPAL_SUCCESS == ret) {
                 (void) opal_asprintf(out[0] + line++, "Values: %s", values);
                 free(values);

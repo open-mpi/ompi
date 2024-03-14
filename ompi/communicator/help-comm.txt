@@ -1,0 +1,48 @@
+# -*- text -*-
+#
+# Copyright (c) 2006      High Performance Computing Center Stuttgart,
+#                         University of Stuttgart.  All rights reserved.
+# Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2018 IBM Corporation. All rights reserved.
+# Copyright (c) 2020      The University of Tennessee and The University
+#                         of Tennessee Research Foundation.  All rights
+#                         reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+# This is the US/English general help file for Open MPI.
+#
+[MPI function not supported]
+Your application has invoked an MPI function that is not supported in
+this environment.
+
+  MPI function: %s
+  Reason:       %s
+[info-set-with-reserved-prefix]
+Comments
+MPI_Info_set warning, key is using a reserved prefix.
+  Key:             %s
+  Reserved prefix: %s
+[mismatched-split_type-values]
+Detected mismatched split_type and/or info "mpi_hw_resource_type" values
+in a call to MPI_Comm_split_type between peers in the communicator.
+  split_type:  %s (%d)
+  info:        %s
+[unexpected-split-type]
+Detected an unexpected split type in a call to MPI_Comm_split_type.
+  split_type:  %s (%d)
+[disjointness-set-again]
+Communicator disjointness should only be set once at initialization.
+Attempts to modify the state are illegal and shall be ignored.
+[cid-base-not-set]
+An internal error has occurred when creating a new communicator.  This
+should probably never happen:
+
+* cid_base is not set.  Either nresults
+  is zero or no returned info matches PMIX_GROUP_CONTEXT_ID.
+
+Please contact the Open MPI developer community with this message and
+a small example code that reproduces the issue.

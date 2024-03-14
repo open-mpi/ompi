@@ -106,7 +106,7 @@ static bool test1(void)
     /* Test basic functionality.  Start with a NULL argv and add the
        contents of the a array.
 
-       Set argc to be an initiall bogus number -- opal_argv_add() should
+       Set argc to be an initial bogus number -- opal_argv_add() should
        reset it back to zero after the first iteration.
 
        After adding the a[i], ensure that argv[0 - (i-1)] are the same

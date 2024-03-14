@@ -3,6 +3,7 @@
  *
  * Interface for generic access to dictionary library.
  * Copyright (C) 2001-2004 Farooq Mela.
+ * Copyright (c) 2022      IBM Corporation.  All rights reserved.
  *
  * $Id: dict.h,v 1.6 2001/11/14 05:21:10 farooq Exp farooq $
  */
@@ -46,9 +47,6 @@ BEGIN_DECL
 typedef void *(*dict_malloc_func)(size_t);
 typedef void  (*dict_free_func)(void *);
 
-dict_malloc_func	dict_set_malloc		__P((dict_malloc_func func));
-dict_free_func		dict_set_free		__P((dict_free_func func));
-
 typedef int			(*dict_cmp_func)	__P((const void *, const void *));
 typedef void		(*dict_del_func)	__P((void *));
 typedef int			(*dict_vis_func)	__P((const void *, void *));
@@ -78,7 +76,6 @@ struct dict {
 #define dict_walk(dct,f)		(dct)->_walk((dct)->_object, (f))
 #define dict_count(dct)			(dct)->_count((dct)->_object)
 #define dict_empty(dct,d)		(dct)->_empty((dct)->_object, (d))
-void dict_destroy __P((dict *dct, int del));
 #define dict_itor_new(dct)		(dct)->_inew((dct)->_object)
 
 struct dict_itor {
@@ -116,14 +113,14 @@ struct dict_itor {
 #define dict_itor_cdata(i)			(i)->_cdata((i)->_itor)
 #define dict_itor_set_data(i,dat,d)	(i)->_setdata((i)->_itor, (dat), (d))
 #define dict_itor_remove(i)			(i)->_remove((i)->_itor)
-void dict_itor_destroy __P((dict_itor *itor));
 
-int		dict_int_cmp __P((const void *k1, const void *k2));
-int		dict_uint_cmp __P((const void *k1, const void *k2));
-int		dict_long_cmp __P((const void *k1, const void *k2));
-int		dict_ulong_cmp __P((const void *k1, const void *k2));
-int		dict_ptr_cmp __P((const void *k1, const void *k2));
-int		dict_str_cmp __P((const void *k1, const void *k2));
+int ompi_coll_libnbc_dict_ptr_cmp __P((const void *k1, const void *k2));
+void ompi_coll_libnbc_dict_destroy __P((dict *dct, int del));
+void ompi_coll_libnbc_dict_itor_destroy __P((dict_itor *itor));
+int  ompi_coll_libnbc_dict_uint_cmp __P((const void *k1, const void *k2));
+int  ompi_coll_libnbc_dict_long_cmp __P((const void *k1, const void *k2));
+int  ompi_coll_libnbc_dict_ulong_cmp __P((const void *k1, const void *k2));
+int  ompi_coll_libnbc_dict_str_cmp __P((const void *k1, const void *k2));
 
 END_DECL
 

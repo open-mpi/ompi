@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2020 The University of Tennessee and The University
+ * Copyright (c) 2004-2022 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart,
@@ -35,6 +35,13 @@
 BEGIN_C_DECLS
 
 /**
+ * The largest array we need to track collective temporary memory. Right now
+ * the record is for ialltoallw, for the array of send and receive types,
+ * count and displacements.
+ */
+#define OMPI_REQ_NB_RELEASE_ARRAYS 7
+
+/**
  * Request structure to be returned by non-blocking
  * collective operations.
  */
@@ -45,22 +52,27 @@ struct ompi_coll_base_nbc_request_t {
         ompi_request_free_fn_t req_free;
     } cb;
     void *req_complete_cb_data;
-    union {
-        struct {
-            ompi_op_t *op;
-            ompi_datatype_t *datatype;
-        } op;
-        struct {
-            ompi_datatype_t *stype;
-            ompi_datatype_t *rtype;
-        } types;
-        struct {
-            opal_object_t *objs[2];
-        } objs;
-        struct {
-            ompi_datatype_t * const *stypes;
-            ompi_datatype_t * const *rtypes;
-        } vecs;
+    struct {
+        union {
+            struct {
+                ompi_op_t *op;
+                ompi_datatype_t *datatype;
+            } op;
+            struct {
+                ompi_datatype_t *stype;
+                ompi_datatype_t *rtype;
+            } types;
+            struct {
+                opal_object_t *objs[2];
+            } objs;
+            struct {
+                ompi_datatype_t * const *stypes;
+                ompi_datatype_t * const *rtypes;
+                int scount;
+                int rcount;
+            } vecs;
+        } refcounted;
+        void* release_arrays[OMPI_REQ_NB_RELEASE_ARRAYS];
     } data;
 };
 
@@ -99,8 +111,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_coll_base_avail_coll_t);
 
 /**
  * A MPI_like function doing a send and a receive simultaneously.
- * If one of the communications results in a zero-byte message the
- * communication is ignored, and no message will cross to the peer.
+ * Posts a irecv, does a send, then gets irecv completion.
  */
 int ompi_coll_base_sendrecv_actual( const void* sendbuf, size_t scount,
                                     ompi_datatype_t* sdatatype,
@@ -113,10 +124,8 @@ int ompi_coll_base_sendrecv_actual( const void* sendbuf, size_t scount,
 
 
 /**
- * Similar to the function above this implementation of send-receive
- * do not generate communications for zero-bytes messages. Thus, it is
- * improper to use in the context of some algorithms for collective
- * communications.
+ * A wrapper around ompi_coll_base_sendrecv_actual, with an optimized
+ * path for self-directed send/recv.
  */
 static inline int
 ompi_coll_base_sendrecv( void* sendbuf, size_t scount, ompi_datatype_t* sdatatype,
@@ -165,7 +174,7 @@ int ompi_coll_base_retain_op( ompi_request_t *request,
  * (will be cast internally).
  */
 int ompi_coll_base_retain_datatypes( ompi_request_t *request,
-                                      ompi_datatype_t *stype,
+                                     ompi_datatype_t *stype,
                                      ompi_datatype_t *rtype);
 
 /**
@@ -175,7 +184,8 @@ int ompi_coll_base_retain_datatypes( ompi_request_t *request,
  */
 int ompi_coll_base_retain_datatypes_w( ompi_request_t *request,
                                        ompi_datatype_t * const stypes[],
-                                       ompi_datatype_t * const rtypes[]);
+                                       ompi_datatype_t * const rtypes[],
+                                       bool use_topo);
 
 /* File reading function */
 int ompi_coll_base_file_getnext_long(FILE *fptr, int *fileline, long* val);
@@ -186,7 +196,7 @@ int ompi_coll_base_file_getnext_string(FILE *fptr, int *fileline, char** val);
  */
 int ompi_coll_base_file_peek_next_char_is(FILE *fptr, int *fileline, int expected);
 
-/* Miscelaneous function */
+/* Miscellaneous function */
 const char* mca_coll_base_colltype_to_str(int collid);
 int mca_coll_base_name_to_colltype(const char* name);
 

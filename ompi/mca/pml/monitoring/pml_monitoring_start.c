@@ -16,7 +16,7 @@
 #include "pml_monitoring.h"
 #include "ompi/mca/pml/base/pml_base_request.h"
 
-/* manage persistant requests*/
+/* manage persistent requests*/
 int mca_pml_monitoring_start(size_t count,
                              ompi_request_t** requests)
 {

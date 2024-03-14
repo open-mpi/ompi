@@ -369,7 +369,7 @@ ompi_coll_base_bcast_intra_split_bintree ( void* buffer,
     int err=0, line, rank, size, segindex, i, lr, pair;
     uint32_t counts[2];
     int segcount[2];       /* Number of elements sent with each segment */
-    int num_segments[2];   /* Number of segmenets */
+    int num_segments[2];   /* Number of segments */
     int sendcount[2];      /* the same like segcount, except for the last segment */
     size_t realsegsize[2], type_size;
     char *tmpbuf[2];
@@ -507,7 +507,7 @@ ompi_coll_base_bcast_intra_split_bintree ( void* buffer,
                 if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
             } /* end of for each child */
 
-            /* upate the base request */
+            /* update the base request */
             base_req = new_req;
             /* go to the next buffer (ie. the one corresponding to the next recv) */
             tmpbuf[lr] += realsegsize[lr];

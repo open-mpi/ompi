@@ -12,6 +12,8 @@
  * Copyright (c) 2013-2018 University of Houston. All rights reserved.
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2024      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -30,13 +32,13 @@
 
 int mca_sharedfp_sm_write (ompio_file_t *fh,
                            const void *buf,
-                           int count,
+                           size_t count,
                            struct ompi_datatype_t *datatype,
                            ompi_status_public_t *status)
 {
     int ret = OMPI_SUCCESS;
     OMPI_MPI_OFFSET_TYPE offset = 0;
-    long bytesRequested = 0;
+    long long bytesRequested = 0;
     size_t numofBytes;
 
     if( NULL == fh->f_sharedfp_data ){
@@ -53,12 +55,12 @@ int mca_sharedfp_sm_write (ompio_file_t *fh,
 
     if ( mca_sharedfp_sm_verbose ) {
         opal_output(ompi_sharedfp_base_framework.framework_output,
-                    "sharedfp_sm_write: Requested is %ld\n",bytesRequested);
+                    "sharedfp_sm_write: Requested is %lld\n",bytesRequested);
     }
 
     /*Request the offset to write bytesRequested bytes*/
     ret = mca_sharedfp_sm_request_position(fh, bytesRequested,&offset);
-    offset /= fh->f_etype_size;
+    offset /= fh->f_fview.f_etype_size;
     if ( -1 != ret ) {
         if ( mca_sharedfp_sm_verbose ) {
             opal_output(ompi_sharedfp_base_framework.framework_output,
@@ -74,7 +76,7 @@ int mca_sharedfp_sm_write (ompio_file_t *fh,
 
 int mca_sharedfp_sm_write_ordered (ompio_file_t *fh,
                                    const void *buf,
-                                   int count,
+                                   size_t count,
                                    struct ompi_datatype_t *datatype,
                                    ompi_status_public_t *status)
 {
@@ -84,14 +86,14 @@ int mca_sharedfp_sm_write_ordered (ompio_file_t *fh,
     long *buff=NULL;
     long offsetBuff;
     OMPI_MPI_OFFSET_TYPE offsetReceived = 0;
-    long bytesRequested = 0;
+    long long bytesRequested = 0;
     int recvcnt = 1, sendcnt = 1;
     size_t numofBytes;
     int i;
 
     if( NULL == fh->f_sharedfp_data){
         opal_output(ompi_sharedfp_base_framework.framework_output,
-                    "sharedfp_sm_write_ordered: module not initialzed \n");
+                    "sharedfp_sm_write_ordered: module not initialized \n");
         return OMPI_ERROR;
     }
 
@@ -120,7 +122,7 @@ int mca_sharedfp_sm_write_ordered (ompio_file_t *fh,
             bytesRequested += buff[i];
             if ( mca_sharedfp_sm_verbose ) {
                 opal_output(ompi_sharedfp_base_framework.framework_output,
-                            "sharedfp_sm_write_ordered: Bytes requested are %ld\n",bytesRequested);
+                            "sharedfp_sm_write_ordered: Bytes requested are %lld\n",bytesRequested);
             }
         }
 
@@ -156,7 +158,7 @@ int mca_sharedfp_sm_write_ordered (ompio_file_t *fh,
 
     /* Each process now has its own individual offset */
     offset = offsetBuff - sendBuff;
-    offset /= fh->f_etype_size;
+    offset /= fh->f_fview.f_etype_size;
 
     if ( mca_sharedfp_sm_verbose ) {
         opal_output(ompi_sharedfp_base_framework.framework_output,

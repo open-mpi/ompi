@@ -43,7 +43,6 @@
 #ifndef OPAL_STRING_H
 #define OPAL_STRING_H
 
-#include "opal_config.h"
 #include "opal/class/opal_object.h"
 #include "opal/mca/base/mca_base_var_enum.h"
 
@@ -61,7 +60,7 @@
  * The string is eventually free'd by calling \c OBJ_RELEASE on it.
  *
  * If allocated using \c OBJ_NEW the object will contain an empty string.
- * The member field \c _ignored is used to force the existance of padding bytes
+ * The member field \c _ignored is used to force the existence of padding bytes
  * that can be used to write the null-terminator even if no additional memory
  * was allocated succeeding the object itself and is ignored.
  */
@@ -138,7 +137,7 @@ int opal_cstring_to_int(opal_cstring_t *string, int *interp);
  * @retval OPAL_SUCCESS string was successfully interpreted
  * @retval OPAL_ERR_BAD_PARAM string was not able to be interpreted
  *
- *   The string value will be cast to the boolen output in
+ *   The string value will be cast to the boolean output in
  *   the following manner:
  *
  *   - If the string value is digits, the return value is "(bool)

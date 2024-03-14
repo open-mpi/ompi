@@ -73,6 +73,12 @@
 #pragma weak shmem_ctx_ulonglong_atomic_fetch = pshmem_ctx_ulonglong_atomic_fetch
 #pragma weak shmem_ctx_double_atomic_fetch = pshmem_ctx_double_atomic_fetch
 #pragma weak shmem_ctx_float_atomic_fetch = pshmem_ctx_float_atomic_fetch
+#pragma weak shmem_ctx_int32_atomic_fetch    	= pshmem_ctx_int32_atomic_fetch
+#pragma weak shmem_ctx_int64_atomic_fetch    	= pshmem_ctx_int64_atomic_fetch
+#pragma weak shmem_ctx_uint32_atomic_fetch    	= pshmem_ctx_uint32_atomic_fetch
+#pragma weak shmem_ctx_uint64_atomic_fetch    	= pshmem_ctx_uint64_atomic_fetch
+#pragma weak shmem_ctx_size_atomic_fetch    	= pshmem_ctx_size_atomic_fetch
+#pragma weak shmem_ctx_ptrdiff_atomic_fetch   	= pshmem_ctx_ptrdiff_atomic_fetch
 
 #pragma weak shmem_int_atomic_fetch = pshmem_int_atomic_fetch
 #pragma weak shmem_long_atomic_fetch = pshmem_long_atomic_fetch
@@ -82,6 +88,12 @@
 #pragma weak shmem_ulonglong_atomic_fetch = pshmem_ulonglong_atomic_fetch
 #pragma weak shmem_double_atomic_fetch = pshmem_double_atomic_fetch
 #pragma weak shmem_float_atomic_fetch = pshmem_float_atomic_fetch
+#pragma weak shmem_int32_atomic_fetch    	= pshmem_int32_atomic_fetch
+#pragma weak shmem_int64_atomic_fetch    	= pshmem_int64_atomic_fetch
+#pragma weak shmem_uint32_atomic_fetch    	= pshmem_uint32_atomic_fetch
+#pragma weak shmem_uint64_atomic_fetch    	= pshmem_uint64_atomic_fetch
+#pragma weak shmem_size_atomic_fetch    	= pshmem_size_atomic_fetch
+#pragma weak shmem_ptrdiff_atomic_fetch    	= pshmem_ptrdiff_atomic_fetch
 
 #pragma weak shmem_int_fetch = pshmem_int_fetch
 #pragma weak shmem_long_fetch = pshmem_long_fetch
@@ -91,7 +103,12 @@
 
 #pragma weak shmemx_int32_fetch = pshmemx_int32_fetch
 #pragma weak shmemx_int64_fetch = pshmemx_int64_fetch
-#include "oshmem/shmem/c/profile/defines.h"
+
+#include "oshmem/shmem/c/profile-defines.h"
+
+
+
+
 #endif
 
 SHMEM_CTX_TYPE_ATOMIC_FETCH(_int, int, shmem)
@@ -102,6 +119,12 @@ SHMEM_CTX_TYPE_ATOMIC_FETCH(_ulong, unsigned long, shmem)
 SHMEM_CTX_TYPE_ATOMIC_FETCH(_ulonglong, unsigned long long, shmem)
 SHMEM_CTX_TYPE_ATOMIC_FETCH(_double, double, shmem)
 SHMEM_CTX_TYPE_ATOMIC_FETCH(_float, float, shmem)
+SHMEM_CTX_TYPE_ATOMIC_FETCH(_int32, int32_t, shmem)
+SHMEM_CTX_TYPE_ATOMIC_FETCH(_int64, int64_t, shmem)
+SHMEM_CTX_TYPE_ATOMIC_FETCH(_uint32, uint32_t, shmem)
+SHMEM_CTX_TYPE_ATOMIC_FETCH(_uint64, uint64_t, shmem)
+SHMEM_CTX_TYPE_ATOMIC_FETCH(_size, size_t, shmem)
+SHMEM_CTX_TYPE_ATOMIC_FETCH(_ptrdiff, ptrdiff_t, shmem)
 SHMEM_TYPE_ATOMIC_FETCH(_int, int, shmem)
 SHMEM_TYPE_ATOMIC_FETCH(_long, long, shmem)
 SHMEM_TYPE_ATOMIC_FETCH(_longlong, long long, shmem)
@@ -110,6 +133,12 @@ SHMEM_TYPE_ATOMIC_FETCH(_ulong, unsigned long, shmem)
 SHMEM_TYPE_ATOMIC_FETCH(_ulonglong, unsigned long long, shmem)
 SHMEM_TYPE_ATOMIC_FETCH(_double, double, shmem)
 SHMEM_TYPE_ATOMIC_FETCH(_float, float, shmem)
+SHMEM_TYPE_ATOMIC_FETCH(_int32, int32_t, shmem)
+SHMEM_TYPE_ATOMIC_FETCH(_int64, int64_t, shmem)
+SHMEM_TYPE_ATOMIC_FETCH(_uint32, uint32_t, shmem)
+SHMEM_TYPE_ATOMIC_FETCH(_uint64, uint64_t, shmem)
+SHMEM_TYPE_ATOMIC_FETCH(_size, size_t, shmem)
+SHMEM_TYPE_ATOMIC_FETCH(_ptrdiff, ptrdiff_t, shmem)
 
 /* deprecated APIs */
 #define SHMEM_TYPE_FETCH(type_name, type, prefix)                   \

@@ -17,8 +17,10 @@ dnl                         reserved.
 dnl Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
 dnl Copyright (c) 2014-2021 Research Organization for Information Science
 dnl                         and Technology (RIST).  All rights reserved.
-dnl Copyright (c) 2016      IBM Corporation.  All rights reserved.
+dnl Copyright (c) 2016-2022 IBM Corporation.  All rights reserved.
 dnl Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
+dnl Copyright (c) 2022      Triad National Security, LLC. All rights
+dnl                         reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -299,11 +301,43 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
     #
     # ...and you can't have a "use..." statement before that (to get
     # the Fortran/C interop C_INTxx_T KIND values).  So figure out
-    # those KIND values here and just substitue them in via
+    # those KIND values here and just substitute them in via
     # AC_DEFINE's.  Kinda gross, but there you are.  :-\
     OMPI_FORTRAN_GET_KIND_VALUE([C_INT16_T], 4, [OMPI_FORTRAN_C_INT16_T_KIND])
     OMPI_FORTRAN_GET_KIND_VALUE([C_INT32_T], 9, [OMPI_FORTRAN_C_INT32_T_KIND])
     OMPI_FORTRAN_GET_KIND_VALUE([C_INT64_T], 18, [OMPI_FORTRAN_C_INT64_T_KIND])
+
+    #
+    # See if "attributes deprecated" is supported
+    # - False positives were seen with compilers like XL which will ignore
+    #   this option by default, but if the user specifies some options to
+    #   the wrapper compiler later it will fail to recognize the option.
+    # - For now just limit this check to compilers that we know will work
+    # This directive is only recognized, and works, for gfortran 11.0 and
+    # later. As a result, this directive is generated only if the
+    # Fortran compiler building Open MPI is gfortran 11.0 or later.
+    OMPI_FORTRAN_HAVE_ATTR_DEPRECATED=0
+    AS_IF([test $ompi_fortran_happy -eq 1],
+          [AC_MSG_CHECKING([if Fortran compiler supports the deprecated attribute])
+           AS_IF([test "$opal_cv_c_compiler_vendor" = "gnu"],
+                 [AC_LANG_PUSH([Fortran])
+                  AC_COMPILE_IFELSE([AC_LANG_SOURCE([[program check_for_attr_deprecated
+!GCC$ ATTRIBUTES DEPRECATED :: x
+  real*4 x
+  x = 123.4
+  print *,x
+end program]])],
+                                    [OMPI_FORTRAN_HAVE_ATTR_DEPRECATED=1
+                                     AC_MSG_RESULT([Yes])],
+                                    [AC_MSG_RESULT([No])])
+                  AC_LANG_POP([Fortran])],
+                 [AC_MSG_RESULT([Unknown])])
+          ])
+    AC_SUBST(OMPI_FORTRAN_HAVE_ATTR_DEPRECATED)
+    AC_DEFINE_UNQUOTED(OMPI_FORTRAN_HAVE_ATTR_DEPRECATED,
+                       $OMPI_FORTRAN_HAVE_ATTR_DEPRECATED,
+                       [Whether the compiler supports Fortran ATTRIBUTES DEPRECATED or not])
+
 
     #--------------------------------------------------------
     # Fortran mpif.h MPI bindings
@@ -587,6 +621,15 @@ end type test_mpi_handle],
                      ])
           ])
 
+    OMPI_FORTRAN_HAVE_ELEMENTAL=0
+    AS_IF([test $OMPI_TRY_FORTRAN_BINDINGS -ge $OMPI_FORTRAN_USEMPIF08_BINDINGS && \
+           test $OMPI_BUILD_FORTRAN_BINDINGS -ge $OMPI_FORTRAN_USEMPIF08_BINDINGS],
+          [ # Does the compiler support "elemental"
+           OMPI_FORTRAN_CHECK_ELEMENTAL(
+               [OMPI_FORTRAN_ELEMENTAL_TYPE="ELEMENTAL"],
+               [OMPI_FORTRAN_ELEMENTAL_TYPE=])])
+    AC_SUBST(OMPI_FORTRAN_ELEMENTAL_TYPE)
+
     # Note: the current implementation *only* has wrappers;
     # there is no optimized implementation for a "good"
     # compiler.  I'm leaving the above logic in place for
@@ -633,7 +676,7 @@ end type test_mpi_handle],
     AC_SUBST(OMPI_FC_ABSOLUTE)
     AC_DEFINE_UNQUOTED(OMPI_FC, ["$OMPI_FC"], [Underlying Fortran compiler])
     AC_DEFINE_UNQUOTED(OMPI_FC_ABSOLUTE, ["$OMPI_FC_ABSOLUTE"],
-                       [Absolutey path to the underlying Fortran compiler found by configure])
+                       [Absolute path to the underlying Fortran compiler found by configure])
 
     # These go into ompi/info/param.c
     AC_DEFINE_UNQUOTED([OMPI_FORTRAN_BUILD_SIZEOF],
@@ -844,4 +887,9 @@ end type test_mpi_handle],
     AC_DEFINE_UNQUOTED(OMPI_BUILD_FORTRAN_BINDINGS,
                        $OMPI_BUILD_FORTRAN_BINDINGS,
                        [The level of fortran bindings to be built])
+
+    # This is an overall "are we building any Fortran MPI bindings"
+    # conditional
+    AM_CONDITIONAL([OMPI_BUILD_ANY_FORTRAN_BINDINGS],
+                   [test $OMPI_BUILD_FORTRAN_BINDINGS -gt 0])
 ])

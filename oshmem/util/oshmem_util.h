@@ -30,7 +30,7 @@ void oshmem_output_verbose(int level, int output_id, const char* prefix,
     const char* file, int line, const char* function, const char* format, ...);
 
 /*
- * Temporary wrapper which ingores output verbosity level
+ * Temporary wrapper which ignores output verbosity level
  * to ensure error messages are seeing by user
  */
 void oshmem_output(int output_id, const char* prefix, const char* file,

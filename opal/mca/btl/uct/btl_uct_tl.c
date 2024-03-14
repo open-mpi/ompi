@@ -78,7 +78,7 @@ static void mca_btl_uct_module_set_atomic_flags(mca_btl_uct_module_t *module, mc
     uint64_t atomic_flags32 = MCA_BTL_UCT_TL_ATTR(tl, 0).cap.atomic32.fop_flags;
     uint64_t atomic_flags64 = MCA_BTL_UCT_TL_ATTR(tl, 0).cap.atomic64.fop_flags;
 
-    /* NTH: don't really have a way to seperate 32-bit and 64-bit right now */
+    /* NTH: don't really have a way to separate 32-bit and 64-bit right now */
     uint64_t all_flags = atomic_flags32 & atomic_flags64;
 
     module->super.btl_atomic_flags = 0;

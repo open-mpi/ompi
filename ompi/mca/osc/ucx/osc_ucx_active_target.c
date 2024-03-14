@@ -74,7 +74,7 @@ int ompi_osc_ucx_fence(int mpi_assert, struct ompi_win_t *win) {
     }
 
     if (!(mpi_assert & MPI_MODE_NOPRECEDE)) {
-        ret = opal_common_ucx_wpmem_flush(module->mem, OPAL_COMMON_UCX_SCOPE_WORKER, 0/*ignore*/);
+        ret = opal_common_ucx_ctx_flush(module->ctx, OPAL_COMMON_UCX_SCOPE_WORKER, 0/*ignore*/);
         if (ret != OMPI_SUCCESS) {
             return ret;
         }
@@ -165,31 +165,33 @@ int ompi_osc_ucx_complete(struct ompi_win_t *win) {
     ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t*) win->w_osc_module;
     int i, size;
     int ret = OMPI_SUCCESS;
+    ucp_ep_h *ep;
 
     if (module->epoch_type.access != START_COMPLETE_EPOCH) {
         return OMPI_ERR_RMA_SYNC;
     }
 
-    module->epoch_type.access = NONE_EPOCH;
-
-    ret = opal_common_ucx_wpmem_flush(module->mem, OPAL_COMMON_UCX_SCOPE_WORKER, 0/*ignore*/);
+    ret = opal_common_ucx_ctx_flush(module->ctx, OPAL_COMMON_UCX_SCOPE_WORKER, 0/*ignore*/);
     if (ret != OMPI_SUCCESS) {
         return ret;
     }
+
+    module->epoch_type.access = NONE_EPOCH;
 
     size = ompi_group_size(module->start_group);
     for (i = 0; i < size; i++) {
         uint64_t remote_addr = module->state_addrs[module->start_grp_ranks[i]] + OSC_UCX_STATE_COMPLETE_COUNT_OFFSET; // write to state.complete_count on remote side
 
-        ret = opal_common_ucx_wpmem_post(module->mem, UCP_ATOMIC_POST_OP_ADD,
+        OSC_UCX_GET_DEFAULT_EP(ep, module, module->start_grp_ranks[i]);
+
+        ret = opal_common_ucx_wpmem_post(module->state_mem, UCP_ATOMIC_POST_OP_ADD,
                                        1, module->start_grp_ranks[i], sizeof(uint64_t),
-                                       remote_addr);
+                                       remote_addr, ep);
         if (ret != OMPI_SUCCESS) {
             OSC_UCX_VERBOSE(1, "opal_common_ucx_mem_post failed: %d", ret);
         }
 
-        ret = opal_common_ucx_wpmem_flush(module->mem, OPAL_COMMON_UCX_SCOPE_EP,
-                                        module->start_grp_ranks[i]);
+        ret = opal_common_ucx_ctx_flush(module->ctx, OPAL_COMMON_UCX_SCOPE_EP, module->start_grp_ranks[i]);
         if (ret != OMPI_SUCCESS) {
             return ret;
         }
@@ -204,6 +206,7 @@ int ompi_osc_ucx_complete(struct ompi_win_t *win) {
 
 int ompi_osc_ucx_post(struct ompi_group_t *group, int mpi_assert, struct ompi_win_t *win) {
     ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t*) win->w_osc_module;
+    ucp_ep_h *ep;
     int ret = OMPI_SUCCESS;
 
     if (module->epoch_type.exposure != NONE_EPOCH) {
@@ -243,10 +246,13 @@ int ompi_osc_ucx_post(struct ompi_group_t *group, int mpi_assert, struct ompi_wi
             uint64_t remote_addr = module->state_addrs[ranks_in_win_grp[i]] + OSC_UCX_STATE_POST_INDEX_OFFSET; // write to state.post_index on remote side
             uint64_t curr_idx = 0, result = 0;
 
+            OSC_UCX_GET_DEFAULT_EP(ep, module, ranks_in_win_grp[i]);
+
             /* do fop first to get an post index */
-            ret = opal_common_ucx_wpmem_fetch(module->mem, UCP_ATOMIC_FETCH_OP_FADD,
+            ret = opal_common_ucx_wpmem_fetch(module->state_mem, UCP_ATOMIC_FETCH_OP_FADD,
                                             1, ranks_in_win_grp[i], &result,
-                                            sizeof(result), remote_addr);
+                                            sizeof(result), remote_addr, ep);
+
             if (ret != OMPI_SUCCESS) {
                 ret = OMPI_ERROR;
                 goto cleanup;
@@ -258,9 +264,12 @@ int ompi_osc_ucx_post(struct ompi_group_t *group, int mpi_assert, struct ompi_wi
 
             /* do cas to send post message */
             do {
-                ret = opal_common_ucx_wpmem_cmpswp(module->mem, 0, result,
-                                                 myrank + 1, &result, sizeof(result),
-                                                 remote_addr);
+
+                result =  myrank + 1;
+                ret = opal_common_ucx_wpmem_cmpswp(module->state_mem, 0, result,
+                                                 ranks_in_win_grp[i], &result, sizeof(result),
+                                                 remote_addr, ep);
+
                 if (ret != OMPI_SUCCESS) {
                     ret = OMPI_ERROR;
                     goto cleanup;

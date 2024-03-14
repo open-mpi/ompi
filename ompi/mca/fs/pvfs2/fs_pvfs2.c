@@ -52,7 +52,7 @@
  * *******************************************************************
  */
 static mca_fs_base_module_1_0_0_t pvfs2 =  {
-    mca_fs_pvfs2_module_init, /* initalise after being selected */
+    mca_fs_pvfs2_module_init, /* initialise after being selected */
     mca_fs_pvfs2_module_finalize, /* close a module on a communicator */
     mca_fs_pvfs2_file_open,
     mca_fs_pvfs2_file_close,

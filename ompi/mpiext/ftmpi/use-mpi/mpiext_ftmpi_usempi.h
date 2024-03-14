@@ -1,6 +1,6 @@
 ! -*- fortran -*-
 ! Copyright (c) 2010-2012 Oak Ridge National Labs.  All rights reserved.
-! Copyright (c) 2010-2020 The University of Tennessee and the University
+! Copyright (c) 2010-2022 The University of Tennessee and the University
 !                         of Tennessee research foundation.  All rights
 !                         reserved.
 ! $COPYRIGHT$
@@ -60,6 +60,50 @@ interface pmpix_comm_shrink
       integer, intent(OUT) :: newcomm, ierr
     end subroutine pmpix_comm_shrink
 end interface pmpix_comm_shrink
+
+interface mpix_comm_ishrink
+    subroutine mpix_comm_ishrink(comm, newcomm, request, ierr)
+      integer, intent(IN) :: comm
+      integer, intent(OUT) :: newcomm, ierr
+      integer, intent(OUT) :: request
+    end subroutine mpix_comm_ishrink
+end interface mpix_comm_ishrink
+
+interface pmpix_comm_ishrink
+    subroutine pmpix_comm_ishrink(comm, newcomm, request, ierr)
+      integer, intent(IN) :: comm
+      integer, intent(OUT) :: newcomm, ierr
+      integer, intent(OUT) :: request
+    end subroutine pmpix_comm_ishrink
+end interface pmpix_comm_ishrink
+
+interface mpix_comm_get_failed
+    subroutine mpix_comm_get_failed(comm, failedgrp, ierr)
+        integer, intent(IN) :: comm
+        integer, intent(OUT) :: failedgrp, ierr
+    end subroutine mpix_comm_get_failed
+end interface mpix_comm_get_failed
+
+interface pmpix_comm_get_failed
+    subroutine pmpix_comm_get_failed(comm, failedgrp, ierr)
+        integer, intent(IN) :: comm
+        integer, intent(OUT) :: failedgrp, ierr
+    end subroutine pmpix_comm_get_failed
+end interface pmpix_comm_get_failed
+
+interface mpix_comm_ack_failed
+    subroutine mpix_comm_ack_failed(comm, num_to_ack, num_acked, ierr)
+        integer, intent(IN) :: comm, num_to_ack
+        integer, intent(OUT) :: num_acked, ierr
+    end subroutine mpix_comm_ack_failed
+end interface mpix_comm_ack_failed
+
+interface pmpix_comm_ack_failed
+    subroutine pmpix_comm_ack_failed(comm, num_to_ack, num_acked, ierr)
+        integer, intent(IN) :: comm, num_to_ack
+        integer, intent(OUT) :: num_acked, ierr
+    end subroutine pmpix_comm_ack_failed
+end interface pmpix_comm_ack_failed
 
 interface mpix_comm_failure_ack
     subroutine mpix_comm_failure_ack(comm, ierr)

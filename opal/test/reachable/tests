@@ -8,5 +8,5 @@
 # $HEADER$
 #
 
-mpirun -np 1 --mca reachable netlink reachable_netlink 
-mpirun -np 1 --mca reachable weighted reachable_weighted 
+mpirun -n 1 --mca reachable netlink reachable_netlink
+mpirun -n 1 --mca reachable weighted reachable_weighted

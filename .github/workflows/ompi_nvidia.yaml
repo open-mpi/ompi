@@ -1,0 +1,42 @@
+name: ompi_NVIDIA CI
+on: [pull_request]
+jobs:
+
+  deployment:
+    if: github.repository == 'open-mpi/ompi'
+    runs-on: [self-hosted, linux, x64, nvidia]
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        submodules: recursive
+    - name: Checkout CI scripts
+      uses: actions/checkout@v3
+      with:
+        repository: Mellanox/jenkins_scripts
+        path: ompi_ci
+    - name: Deployment infrastructure
+      run: /start deploy
+  build:
+    needs: [deployment]
+    runs-on: [self-hosted, linux, x64, nvidia]
+    steps:
+    - name: Building OMPI,UCX and tests
+      run: /start build
+  test:
+    needs: [deployment, build]
+    runs-on: [self-hosted, linux, x64, nvidia]
+    steps:
+    - name: Running tests
+      run: /start test
+  clean:
+# always() should be used to run "clean" even when the workflow was canceled 
+#  ( in case of the right repository name)
+# The second condition doesn't work when the workflow was canceled
+
+    if: always() && (github.repository == 'open-mpi/ompi')
+    needs: [deployment, build, test]
+    runs-on: [self-hosted, linux, x64, nvidia]
+    steps:
+    - name: Cleaning
+      run: /start clean

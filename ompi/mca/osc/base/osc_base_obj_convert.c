@@ -213,7 +213,7 @@ int ompi_osc_base_sndrcv_op (const void *origin, int32_t origin_count,
 
         done = opal_convertor_raw (&origin_convertor, origin_iovec, &origin_iov_count, &origin_size);
 
-        /* loop on the target segments until we have exhaused the decoded source data */
+        /* loop on the target segments until we have exhausted the decoded source data */
         while (origin_iov_index != origin_iov_count) {
             if (target_iov_index == target_iov_count) {
                 /* decode segments of the target buffer */

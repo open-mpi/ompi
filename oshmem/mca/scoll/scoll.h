@@ -67,9 +67,9 @@ struct mca_scoll_base_component_1_0_0_t {
 };
 typedef struct mca_scoll_base_component_1_0_0_t mca_scoll_base_component_1_0_0_t;
 
-/** Per guidence in mca.h, use the unversioned struct name if you just
+/** Per guidance in mca.h, use the unversioned struct name if you just
  want to always keep up with the most recent version of the
- interace. */
+ interface. */
 typedef struct mca_scoll_base_component_1_0_0_t mca_scoll_base_component_t;
 
 /**

@@ -201,7 +201,7 @@ BEGIN_C_DECLS
     /**
      * Global component instance
      */
-    OMPI_MODULE_DECLSPEC extern mca_coll_sm_component_t mca_coll_sm_component;
+    OMPI_DECLSPEC extern mca_coll_sm_component_t mca_coll_sm_component;
 
     /*
      * coll module functions
@@ -408,7 +408,7 @@ extern uint32_t mca_coll_sm_one;
     } while (0)
 
 /**
- * Macro for childen to wait for parent notification (use real rank).
+ * Macro for children to wait for parent notification (use real rank).
  * Save the value passed and then reset it when done.  Used in fan out
  * operations.
  */

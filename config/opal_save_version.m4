@@ -11,6 +11,7 @@ dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2022-2023 IBM Corporation.  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -55,10 +56,27 @@ AC_DEFUN([OPAL_SAVE_VERSION], [
         [The repository version ]$2)
     AC_DEFINE_UNQUOTED($1[_TARBALL_VERSION], ["$]$1[_TARBALL_VERSION"],
         [Tarball filename version string of ]$2)
-    AC_DEFINE_UNQUOTED($1[_VERSION], ["$]$1[_RELEASE_VERSION"],
+    AC_DEFINE_UNQUOTED($1[_VERSION], ["$]$1[_VERSION"],
         [Complete release number of ]$2)
     AC_DEFINE_UNQUOTED($1[_RELEASE_DATE], ["$]$1[_RELEASE_DATE"],
         [Release date of ]$2)
 
     AC_CONFIG_FILES([$4])
+])dnl
+
+# OPAL_SAVE_MPI_STANDARD_VERSION(version_file)
+# ----------------------------------------------
+# Export MPI versions.
+AC_DEFUN([OPAL_SAVE_MPI_STANDARD_VERSION], [
+
+    AC_DEFINE_UNQUOTED([MPI_VERSION], [MPI_VERSION_NUM],
+                       [MPI Standard Major version number])
+    AC_DEFINE_UNQUOTED([MPI_SUBVERSION], [MPI_SUBVERSION_NUM],
+                       [MPI Standard Minor version number])
+
+    AC_SUBST([MPI_VERSION], [MPI_VERSION_NUM])
+    AC_SUBST([MPI_SUBVERSION], [MPI_SUBVERSION_NUM])
+
+    AC_MSG_CHECKING([MPI Standard version])
+    AC_MSG_RESULT([MPI_VERSION_NUM.MPI_SUBVERSION_NUM])
 ])dnl

@@ -20,6 +20,8 @@
 #include "opal_config.h"
 #include "opal/mca/allocator/bucket/allocator_bucket_alloc.h"
 #include "opal/constants.h"
+#include "opal/util/show_help.h"
+
 /**
  * The define controls the size in bytes of the 1st bucket and hence every one
  * afterwards.
@@ -30,6 +32,8 @@
  * bytes in the initial memory buckets
  */
 #define MCA_ALLOCATOR_BUCKET_1_BITSHIFTS 3
+
+static int max_bucket_idx;
 
 /*
  * Initializes the mca_allocator_bucket_options_t data structure for the passed
@@ -47,6 +51,9 @@ mca_allocator_bucket_init(mca_allocator_base_module_t *mem, int num_buckets,
     if (num_buckets <= 0) {
         num_buckets = 30;
     }
+
+    max_bucket_idx = num_buckets - 1;
+
     /* initialize the array of buckets */
     size = sizeof(mca_allocator_bucket_bucket_t) * num_buckets;
     mem_options->buckets = (mca_allocator_bucket_bucket_t *) malloc(size);
@@ -87,6 +94,13 @@ void *mca_allocator_bucket_alloc(mca_allocator_base_module_t *mem, size_t size)
     while (size > bucket_size) {
         bucket_num++;
         bucket_size <<= 1;
+    }
+
+    if( bucket_num > max_bucket_idx ) {
+        size_t sz_bucket = MCA_ALLOCATOR_BUCKET_1_SIZE;
+        opal_show_help ("help-mca-allocator-bucket.txt", "buffer too large", 1, size, sz_bucket << max_bucket_idx,
+                        "allocator_bucket_num_buckets", bucket_num + 1);
+        return (NULL);
     }
 
     /* now that we know what bucket it will come from, we must get the lock */
@@ -191,6 +205,14 @@ void *mca_allocator_bucket_alloc_align(mca_allocator_base_module_t *mem, size_t 
         bucket_size >>= 1;
         bucket_num++;
     }
+
+    if( bucket_num > max_bucket_idx ) {
+        size_t sz_bucket = MCA_ALLOCATOR_BUCKET_1_SIZE;
+        opal_show_help ("help-mca-allocator-bucket.txt", "aligned buffer too large", 1, allocated_size, sz_bucket << max_bucket_idx,
+                        "allocator_bucket_num_buckets", bucket_num + 1);
+        return (NULL);
+    }
+
     bucket_size = 1;
     bucket_size <<= MCA_ALLOCATOR_BUCKET_1_BITSHIFTS + bucket_num;
 
@@ -375,7 +397,7 @@ int mca_allocator_bucket_cleanup(mca_allocator_base_module_t *mem)
                 }
             }
         }
-        /* relese the lock on the bucket */
+        /* release the lock on the bucket */
         OPAL_THREAD_UNLOCK(&(mem_options->buckets[i].lock));
     }
     return (OPAL_SUCCESS);

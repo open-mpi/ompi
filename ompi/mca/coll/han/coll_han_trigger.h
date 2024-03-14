@@ -14,7 +14,7 @@
  * @file
  *
  * This file defines the API for tasks: a collective operation may be
- * splitted in tasks to balance compute load on all the resources.
+ * split in tasks to balance compute load on all the resources.
  * This solution provide some noise resiliency.
  */
 

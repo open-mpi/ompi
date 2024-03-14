@@ -91,7 +91,7 @@ prepare_src_small(struct opal_btl_usnic_module_t *module, struct mca_btl_base_en
      * we might still use INLINE for the send, and in that case we do not want
      * to copy the data at all.
      */
-    if (OPAL_UNLIKELY(opal_convertor_need_buffers(convertor))) {
+    if (OPAL_UNLIKELY(opal_convertor_need_buffers(convertor) || opal_convertor_on_device(convertor))) {
         /* put user data just after end of 1st seg (upper layer header) */
         assert(payload_len <= module->max_frag_payload);
         usnic_convertor_pack_simple(convertor,
@@ -227,7 +227,7 @@ static opal_btl_usnic_send_frag_t *prepare_src_large(struct opal_btl_usnic_modul
     /* make sure upper header small enough */
     assert(reserve <= sizeof(lfrag->lsf_ompi_header));
 
-    if (OPAL_UNLIKELY(opal_convertor_need_buffers(convertor))) {
+    if (OPAL_UNLIKELY(opal_convertor_need_buffers(convertor) || opal_convertor_on_device(convertor))) {
         /* threshold == -1 means always pack eagerly */
         if (mca_btl_usnic_component.pack_lazy_threshold >= 0
             && *size >= (size_t) mca_btl_usnic_component.pack_lazy_threshold) {

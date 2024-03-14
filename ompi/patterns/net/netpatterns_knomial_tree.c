@@ -76,7 +76,7 @@ OMPI_DECLSPEC int ompi_netpatterns_setup_recursive_knomial_allgather_tree_node(
         cnt *= tree_order;
         n_levels++;
     }
-    /* this is the actual number of recusive k-ing steps
+    /* this is the actual number of recursive k-ing steps
      * we will perform, the last step may not be a full
      * step depending on the outcome of the next conditional
      */
@@ -214,7 +214,7 @@ OMPI_DECLSPEC int ompi_netpatterns_setup_recursive_knomial_allgather_tree_node(
         }
 
     }
-    /* intialize the payload array
+    /* initialize the payload array
        This is the money struct, just need to initialize this with
        the subgroup information */
     /*
@@ -324,7 +324,7 @@ OMPI_DECLSPEC int ompi_netpatterns_setup_recursive_knomial_allgather_tree_node(
                             /* how much I am to send to this peer on this level */
                             exchange_node->payload_info[i][j].s_len = prev_data[node_rank];
                             /*fprintf(stderr,"exchange_node->payload_info[%d][%d].s_len %d\n",i,j,prev_data[node_rank]);*/
-                            /*fprintf(stderr,"I am rank %d receiveing %d bytes from rank %d at level %d\n",node_rank,
+                            /*fprintf(stderr,"I am rank %d receiving %d bytes from rank %d at level %d\n",node_rank,
                                                                         prev_data[exchange_node->reindex_map[peer]],
                                                                         exchange_node->reindex_map[peer], i+1);*/
                             /*fprintf(stderr,"I am rank %d sending %d bytes to rank %d at level %d\n",node_rank,prev_data[myid],
@@ -548,6 +548,10 @@ OMPI_DECLSPEC int ompi_netpatterns_setup_recursive_knomial_tree_node(
 
     assert(num_nodes > 1);
     assert(tree_order > 1);
+    /* Also validate in release build where asserts are compiled out */
+    if ((num_nodes <= 1) || (tree_order <= 1)) {
+        goto Error;
+    }
     if (tree_order > num_nodes) {
         tree_order = num_nodes;
     }
@@ -791,7 +795,7 @@ OMPI_DECLSPEC int ompi_netpatterns_setup_recursive_doubling_n_tree_node(int num_
         NETPATTERNS_VERBOSE(("extra_source#%d = %d", 0, node_rank & (cnt - 1)));
     }
 
-    /* Ishai: To be compatable with the old structure - should be remoived later */
+    /* Ishai: To be compatible with the old structure - should be removed later */
     if (1 == exchange_node->n_extra_sources) {
         exchange_node->rank_extra_source = exchange_node->rank_extra_sources_array[0];
     } else {

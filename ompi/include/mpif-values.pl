@@ -7,6 +7,7 @@
 # Copyright (c) 2020      The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
+# Copyright (c) 2022      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -70,6 +71,30 @@ sub write_file {
 
 #----------------------------------------------------------------------------
 
+# Read a value for a specified key from the file specified.
+
+sub read_value_from_file {
+    my ($filename, $key) = @_;
+    my $value;
+
+    open(FILE_IN, $filename) || die "Couldn't open $filename";
+    while(my $line = <FILE_IN>) {
+        if( $line =~ /^$key=(.+)/ ) {
+            $value = $1;
+            last;
+        }
+    }
+    close(FILE_IN);
+
+    if(!defined($value)) {
+        die "Did not find the string \"$key\" in the file $filename"
+    }
+
+    return $value;
+}
+
+#----------------------------------------------------------------------------
+
 print "creating Fortran header files (with common constants)...\n";
 
 # Find the OMPI topdir.  It is likely the pwd.
@@ -123,6 +148,7 @@ $handles->{MPI_OP_NULL} = 0;
 $handles->{MPI_REQUEST_NULL} = 0;
 $handles->{MPI_WIN_NULL} = 0;
 $handles->{MPI_MESSAGE_NULL} = 0;
+$handles->{MPI_SESSION_NULL} = 0;
 
 $handles->{MPI_BYTE} =  1;
 $handles->{MPI_PACKED} =  2;
@@ -215,8 +241,8 @@ $io_handles->{MPI_FILE_NULL} = 0;
 
 my $constants;
 
-$constants->{MPI_VERSION} = 3;
-$constants->{MPI_SUBVERSION} = 1;
+$constants->{MPI_VERSION} = read_value_from_file("$topdir/VERSION", "mpi_standard_version");
+$constants->{MPI_SUBVERSION} = read_value_from_file("$topdir/VERSION", "mpi_standard_subversion");
 
 $constants->{MPI_ANY_SOURCE} = -1;
 $constants->{MPI_ANY_TAG} = -1;
@@ -354,6 +380,8 @@ $constants->{MPI_ERR_RMA_ATTACH} = 69;
 $constants->{MPI_ERR_RMA_FLAVOR} = 70;
 $constants->{MPI_ERR_RMA_SHARED} = 71;
 $constants->{MPI_T_ERR_INVALID} = 72;
+$constants->{MPI_ERR_SESSION} = 78;
+$constants->{MPI_ERR_VALUE_TOO_LARGE} = 79;
 $constants->{MPI_ERR_LASTCODE} = 92;
 
 $constants->{MPI_IDENT} = 0;
@@ -394,6 +422,8 @@ $constants->{OMPI_COMM_TYPE_BOARD} = 8;
 $constants->{OMPI_COMM_TYPE_HOST} = 9;
 $constants->{OMPI_COMM_TYPE_CU} = 10;
 $constants->{OMPI_COMM_TYPE_CLUSTER} = 11;
+$constants->{MPI_COMM_TYPE_HW_UNGUIDED} = 12;
+$constants->{MPI_COMM_TYPE_HW_GUIDED} = 13;
 
 #----------------------------------------------------------------------------
 

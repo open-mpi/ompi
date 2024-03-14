@@ -15,7 +15,7 @@
 subroutine MPI_F_sync_reg_f08(buf)
    use :: ompi_mpifh_bindings, only : ompi_f_sync_reg_f
    implicit none
-   OMPI_FORTRAN_IGNORE_TKR_TYPE :: buf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE OMPI_ASYNCHRONOUS:: buf
 
    call ompi_f_sync_reg_f(buf)
 

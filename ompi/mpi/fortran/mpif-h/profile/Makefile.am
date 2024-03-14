@@ -18,6 +18,8 @@
 # Copyright (c) 2015-2021 Research Organization for Information Science
 #                         and Technology (RIST).  All rights reserved.
 # Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
+# Copyright (c) 2019-2022 Triad National Security, LLC. All rights
+#                         reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -88,6 +90,7 @@ linked_files = \
         pcomm_connect_f.c \
         pcomm_create_errhandler_f.c \
         pcomm_create_f.c \
+        pcomm_create_from_group_f.c \
         pcomm_create_group_f.c \
         pcomm_create_keyval_f.c \
         pcomm_delete_attr_f.c \
@@ -95,6 +98,7 @@ linked_files = \
         pcomm_dup_f.c \
         pcomm_dup_with_info_f.c \
         pcomm_idup_f.c \
+        pcomm_idup_with_info_f.c \
         pcomm_free_f.c \
         pcomm_free_keyval_f.c \
         pcomm_get_attr_f.c \
@@ -213,6 +217,7 @@ linked_files = \
         pgroup_difference_f.c \
         pgroup_excl_f.c \
         pgroup_free_f.c \
+        pgroup_from_session_pset_f.c \
         pgroup_incl_f.c \
         pgroup_intersection_f.c \
         pgroup_range_excl_f.c \
@@ -241,18 +246,21 @@ linked_files = \
         pineighbor_alltoallv_f.c \
         pineighbor_alltoallw_f.c \
         pinfo_create_f.c \
+        pinfo_create_env_f.c \
         pinfo_delete_f.c \
         pinfo_dup_f.c \
         pinfo_free_f.c \
         pinfo_get_f.c \
         pinfo_get_nkeys_f.c \
         pinfo_get_nthkey_f.c \
+        pinfo_get_string_f.c \
         pinfo_get_valuelen_f.c \
         pinfo_set_f.c \
         pinit_f.c \
         pinitialized_f.c \
         pinit_thread_f.c \
         pintercomm_create_f.c \
+        pintercomm_create_from_groups_f.c \
         pintercomm_merge_f.c \
         piprobe_f.c \
         pirecv_f.c \
@@ -264,6 +272,8 @@ linked_files = \
         piscatter_f.c \
         piscatterv_f.c \
         pisend_f.c \
+        pisendrecv_f.c \
+        pisendrecv_replace_f.c \
         pissend_f.c \
         pis_thread_main_f.c \
         pkeyval_create_f.c \
@@ -322,6 +332,16 @@ linked_files = \
         psend_init_f.c \
         psendrecv_f.c \
         psendrecv_replace_f.c \
+        psession_call_errhandler_f.c \
+        psession_create_errhandler_f.c \
+        psession_get_errhandler_f.c \
+        psession_get_info_f.c \
+        psession_get_nth_pset_f.c \
+        psession_get_num_psets_f.c \
+        psession_get_pset_info_f.c \
+        psession_init_f.c \
+        psession_finalize_f.c \
+        psession_set_errhandler_f.c \
         pssend_f.c \
         pssend_init_f.c \
         pstartall_f.c \
@@ -428,7 +448,10 @@ linked_files = \
         pwin_flush_local_f.c \
         pwin_flush_local_all_f.c
 
-if OMPI_ENABLE_MPI1_COMPAT
+# The following functions were removed from the MPI standard, but are
+# retained for ABI compliance reasons.  They are listed independently
+# of the other MPI functions in case we one day change behavior around
+# ABI compliance.
 linked_files += \
         paddress_f.c \
         perrhandler_create_f.c \
@@ -440,7 +463,6 @@ linked_files += \
         ptype_lb_f.c \
         ptype_struct_f.c \
         ptype_ub_f.c
-endif
 
 #
 # Sym link in the sources from the real MPI directory

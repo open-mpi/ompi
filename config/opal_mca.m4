@@ -12,9 +12,8 @@ dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2010-2021 Cisco Systems, Inc.  All rights reserved
 dnl Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
-dnl Copyright (c) 2018-2021 Amazon.com, Inc. or its affiliates.
-dnl                         All Rights reserved.
-dnl Copyright (c) 2021      Triad National Security, LLC. All rights
+dnl Copyright (c) 2018-2022 Amazon.com, Inc. or its affiliates.  All Rights reserved.
+dnl Copyright (c) 2021-2023 Triad National Security, LLC. All rights
 dnl                         reserved.
 dnl $COPYRIGHT$
 dnl
@@ -81,7 +80,7 @@ AC_DEFUN([OPAL_MCA],[
                         supported) is to build all components as DSOs.
                         Enabling a component as static disables it
                         building as a DSO.  The default is to build all
-                        components staticly.])])
+                        components statically.])])
     AC_ARG_ENABLE([mca-direct],
         [AS_HELP_STRING([--enable-mca-direct=LIST],
                        [Comma-separated list of type-component pairs that
@@ -153,7 +152,7 @@ of type-component pairs.  For example, --enable-mca-no-build=pml-ob1])
             AS_VAR_COPY([var_value], [$var_name])
 
             if test -n "$var_value" ; then
-                AC_MSG_ERROR([enable-mca-direct can only enable a single component per framwork: specified both ${type}-${var_value} and ${type}-${comp}.])
+                AC_MSG_ERROR([enable-mca-direct can only enable a single component per framework: specified both ${type}-${var_value} and ${type}-${comp}.])
             fi
 
             AS_VAR_SET([$var_name], AS_TR_SH([${comp}]))
@@ -168,6 +167,9 @@ of type-component pairs.  For example, --enable-mca-no-build=pml-ob1])
     # Second, set the DSO_all and STATIC_all variables.  conflict
     # resolution (prefer static) is done in the big loop below
     #
+    # Exception here is the components of the accelerator framework,
+    # which by default are built to be dynamic, except for null.
+    #
     AC_MSG_CHECKING([which components should be run-time loadable])
     if test "$enable_static" != "no"; then
         DSO_all=0
@@ -175,9 +177,6 @@ of type-component pairs.  For example, --enable-mca-no-build=pml-ob1])
     elif test "$OPAL_ENABLE_DLOPEN_SUPPORT" = 0; then
         DSO_all=0
         msg="none (dlopen disabled)"
-    elif test -z "$enable_mca_dso"; then
-        DSO_all=0
-        msg=default
     elif test "$enable_mca_dso" = "no"; then
         DSO_all=0
         msg=none
@@ -185,15 +184,19 @@ of type-component pairs.  For example, --enable-mca-no-build=pml-ob1])
         DSO_all=1
         msg=all
     else
-        DSO_all=0
-        ifs_save="$IFS"
-        IFS="${IFS}$PATH_SEPARATOR,"
-        msg=
-        for item in $enable_mca_dso; do
-            AS_VAR_SET([AS_TR_SH([DSO_$item])], [1])
-            msg="$item $msg"
-        done
-        IFS="$ifs_save"
+       msg=
+       if test -z "$enable_mca_dso"; then
+           enable_mca_dso="accelerator-cuda,accelerator-rocm,accelerator-ze,btl-smcuda,rcache-gpusm,rcache-rgpusm"
+           msg="(default)"
+       fi
+       DSO_all=0
+       ifs_save="$IFS"
+       IFS="${IFS}$PATH_SEPARATOR,"
+       for item in $enable_mca_dso; do
+           AS_VAR_SET([AS_TR_SH([DSO_$item])], [1])
+           msg="$item $msg"
+       done
+       IFS="$ifs_save"
     fi
     AC_MSG_RESULT([$msg])
     unset msg
@@ -266,6 +269,9 @@ AC_DEFUN([MCA_CONFIGURE_PROJECT],[
     # can't use a variable rename here because these need to be evaled
     # at auto* time.
 
+    AS_LITERAL_IF([$1], [],
+                  [m4_fatal([MCA_CONFIGURE_PROJECT argument must be a literal])])
+
     opal_show_subtitle "Configuring MCA for $1"
 
     AC_MSG_CHECKING([for frameworks for $1])
@@ -292,6 +298,7 @@ AC_DEFUN([MCA_CONFIGURE_PROJECT],[
     MCA_$1_FRAMEWORK_COMPONENT_DSO_SUBDIRS=
     MCA_$1_FRAMEWORK_COMPONENT_STATIC_SUBDIRS=
     MCA_$1_FRAMEWORK_LIBS=
+    MCA_$1_FRAMEWORK_CORE_LIBS=
 
     m4_foreach(mca_framework, [mca_$1_framework_list],
                [m4_ifval(mca_framework,
@@ -302,14 +309,17 @@ AC_DEFUN([MCA_CONFIGURE_PROJECT],[
                                  MCA_$1_FRAMEWORK_COMPONENT_ALL_SUBDIRS="[\$(MCA_]$1[_]mca_framework[_ALL_SUBDIRS)] $MCA_$1_FRAMEWORK_COMPONENT_ALL_SUBDIRS"
                                  MCA_$1_FRAMEWORK_COMPONENT_DSO_SUBDIRS="[\$(MCA_]$1[_]mca_framework[_DSO_SUBDIRS)] $MCA_$1_FRAMEWORK_COMPONENT_DSO_SUBDIRS"
                                  MCA_$1_FRAMEWORK_COMPONENT_STATIC_SUBDIRS="[\$(MCA_]$1[_]mca_framework[_STATIC_SUBDIRS)] $MCA_$1_FRAMEWORK_COMPONENT_STATIC_SUBDIRS"
+                                 mca_$1_framework_base_lib=
                                 ], [
                                  MCA_$1_FRAMEWORKS="$MCA_$1_FRAMEWORKS mca_framework"
                                  MCA_$1_FRAMEWORKS_SUBDIRS="$MCA_$1_FRAMEWORKS_SUBDIRS [mca/]mca_framework"
                                  MCA_$1_FRAMEWORK_COMPONENT_ALL_SUBDIRS="$MCA_$1_FRAMEWORK_COMPONENT_ALL_SUBDIRS [\$(MCA_]$1[_]mca_framework[_ALL_SUBDIRS)]"
                                  MCA_$1_FRAMEWORK_COMPONENT_DSO_SUBDIRS="$MCA_$1_FRAMEWORK_COMPONENT_DSO_SUBDIRS [\$(MCA_]$1[_]mca_framework[_DSO_SUBDIRS)]"
                                  MCA_$1_FRAMEWORK_COMPONENT_STATIC_SUBDIRS="$MCA_$1_FRAMEWORK_COMPONENT_STATIC_SUBDIRS [\$(MCA_]$1[_]mca_framework[_STATIC_SUBDIRS)]"
-                                 MCA_$1_FRAMEWORK_LIBS="$MCA_$1_FRAMEWORK_LIBS [mca/]mca_framework[/libmca_]mca_framework[.la]"])
-                          MCA_$1_FRAMEWORK_LIBS="$MCA_$1_FRAMEWORK_LIBS [\$(MCA_]$1[_]mca_framework[_STATIC_LTLIBS)]"
+                                 mca_$1_framework_base_lib="[mca/]mca_framework[/libmca_]mca_framework[.la]"])
+                          m4_ifdef([MCA_]$1[_]mca_framework[_CORE_LIB],
+                                   [MCA_$1_FRAMEWORK_CORE_LIBS="$MCA_$1_FRAMEWORK_CORE_LIBS ${mca_$1_framework_base_lib} [\$(MCA_]$1[_]mca_framework[_STATIC_LTLIBS)]"],
+                                   [MCA_$1_FRAMEWORK_LIBS="$MCA_$1_FRAMEWORK_LIBS ${mca_$1_framework_base_lib} [\$(MCA_]$1[_]mca_framework[_STATIC_LTLIBS)]"])
                           m4_ifdef([MCA_]$1[_]mca_framework[_CONFIG],
                                    [MCA_]$1[_]mca_framework[_CONFIG]($1, mca_framework),
                                    [MCA_CONFIGURE_FRAMEWORK($1, mca_framework, 1)])])])
@@ -325,6 +335,7 @@ AC_DEFUN([MCA_CONFIGURE_PROJECT],[
     AC_SUBST(MCA_$1_FRAMEWORK_COMPONENT_DSO_SUBDIRS)
     AC_SUBST(MCA_$1_FRAMEWORK_COMPONENT_STATIC_SUBDIRS)
     AC_SUBST(MCA_$1_FRAMEWORK_LIBS)
+    AC_SUBST(MCA_$1_FRAMEWORK_CORE_LIBS)
 ])
 
 # MCA_ORDER_COMPONENT_LIST(project_name, framework_name)
@@ -447,18 +458,6 @@ AC_DEFUN([MCA_CONFIGURE_FRAMEWORK],[
                    m4_if(OPAL_EVAL_ARG([MCA_$1_$2_CONFIGURE_MODE]), [STOP_AT_FIRST_PRIORITY],
                          [AS_IF([test $components_last_result -eq 1], [best_mca_component_priority=]OPAL_EVAL_ARG([MCA_$1_$2_]mca_component[_PRIORITY]))])
                    ])])
-
-    # configure components that provide their own configure script.
-    # It would be really hard to run these for "find first that
-    # works", so we don't :)
-    m4_if(OPAL_EVAL_ARG([MCA_$1_]$2[_CONFIGURE_MODE]), [STOP_AT_FIRST], [],
-        [m4_if(OPAL_EVAL_ARG([MCA_$1_]$2[_CONFIGURE_MODE]), [STOP_AT_FIRST_PRIORITY], [],
-             [m4_if(OPAL_EVAL_ARG([MCA_$1_]$2[_CONFIGURE_MODE]), [PRIORITY], [],
-                 [MCA_CHECK_IGNORED_PRIORITY($1, $2)
-                  AS_IF([test "$3" != "0"],
-                        [MCA_CONFIGURE_ALL_CONFIG_COMPONENTS($1, $2, [all_components],
-                                               [static_components], [dso_components],
-                                               [static_ltlibs])])])])])
 
     AS_VAR_SET_IF([OPAL_EVAL_ARG([DIRECT_$2])], [
                       AC_MSG_CHECKING([if direct-selection component exists for $2 framework])
@@ -604,9 +603,7 @@ AC_DEFUN([MCA_CONFIGURE_M4_CONFIG_COMPONENT],[
     MCA_COMPONENT_BUILD_CHECK($1, $2, $3, [should_build=$8], [should_build=0])
     # Allow the component to override the build mode if it really wants to.
     # It is, of course, free to end up calling MCA_COMPONENT_COMPILE_MODE
-    m4_ifdef([MCA_$1_$2_$3_COMPILE_MODE],
-             [MCA_$1_$2_$3_COMPILE_MODE($1, $2, $3, compile_mode)],
-             [MCA_COMPONENT_COMPILE_MODE($1, $2, $3, compile_mode)])
+    MCA_COMPONENT_COMPILE_MODE([$1], [$2], [$3], [compile_mode])
 
     # try to configure the component
     m4_ifdef([MCA_$1_$2_$3_CONFIG],
@@ -635,112 +632,87 @@ AC_DEFUN([MCA_CONFIGURE_M4_CONFIG_COMPONENT],[
     unset compile_mode
 ])
 
-
-######################################################################
-#
-# MCA_CONFIGURE_ALL_CONFIG_COMPONENTS
-#
-# configure all components in the given framework that have configure
-# scripts and should be configured according to the usual rules...
-#
-# USAGE:
-#   MCA_CONFIGURE_ALL_CONFIG_COMPONENTS(project_name,
-#                         framework_name,
-#                         all_components_variable,
-#                         static_components_variable,
-#                         dso_components_variable,
-#                         static_ltlibs_variable)
-#
-######################################################################
-AC_DEFUN([MCA_CONFIGURE_ALL_CONFIG_COMPONENTS],[
-    for component_path in $srcdir/$1/mca/$2/* ; do
-        component="`basename $component_path`"
-        if test -d $component_path && test -x $component_path/configure ; then
-            opal_show_subsubsubtitle "MCA component $2:$component (need to configure)"
-
-            opal_show_verbose "OPAL_MCA_ALL_CONFIG_COMPONENTS: before, should_build=$8"
-            MCA_COMPONENT_BUILD_CHECK($1, $2, $component,
-                                      [should_build=1], [should_build=0])
-            MCA_COMPONENT_COMPILE_MODE($1, $2, $component, compile_mode)
-            opal_show_verbose "OPAL_MCA_ALL_CONFIG_COMPONENTS: after, should_build=$should_build"
-
-            if test "$should_build" = "1" ; then
-                OPAL_CONFIG_SUBDIR([$1/mca/$2/$component],
-                                   [$opal_subdir_args],
-                                   [should_build=1], [should_build=0])
-                opal_show_verbose "OPAL_MCA_ALL_CONFIG_COMPONENTS: after subdir, should_build=$should_build"
-            fi
-
-            if test "$should_build" = "1" ; then
-                # do some extra work to pass flags back from the
-                # top-level configure, the way a configure.m4
-                # component would.
-                infile="$srcdir/$1/mca/$2/$3/post_configure.sh"
-                if test -f $infile; then
-
-                    # First check for the ABORT tag
-                    line="`$GREP ABORT= $infile | cut -d= -f2-`"
-                    if test -n "$line" && test "$line" != "no"; then
-                        AC_MSG_WARN([MCA component configure script told me to abort])
-                        AC_MSG_ERROR([cannot continue])
-                    fi
-
-                    m4_foreach(flags, [LDFLAGS, LIBS],
-                        [[line="`$GREP WRAPPER_EXTRA_]flags[= $infile | cut -d= -f2-`"]
-                            eval "line=$line"
-                            if test -n "$line"; then
-                                $2[_]$3[_WRAPPER_EXTRA_]flags[="$line"]
-                            fi
-                        ])dnl
-                fi
-
-                MCA_PROCESS_COMPONENT($1, $2, $component, $3, $4, $5, $6, $compile_mode)
-            else
-                MCA_PROCESS_DEAD_COMPONENT($1, $2, $component)
-            fi
-        fi
-    done
-])
-
-
 # MCA_COMPONENT_COMPILE_MODE(project_name (1), framework_name (2),
 #                            component_name (3), compile_mode_variable (4))
 # -------------------------------------------------------------------------
-# set compile_mode_variable to the compile mode for the given component
+# set compile_mode_variable to the compile mode for the given component.
+# this macro will only evaluate the build mode once per configure, returning
+# the cached value for subsequent tests.  The string is not stored in a cache
+# variable (ie .*_cv_.*) because cache variables would not be invalidated
+# based on changes to --enable-mca-dso or --enable-mca-static.
+AC_DEFUN([MCA_COMPONENT_COMPILE_MODE],[
+    OAC_ASSERT_LITERAL([$1], [1])dnl
+    OAC_ASSERT_LITERAL([$2], [2])dnl
+    OAC_ASSERT_LITERAL([$3], [3])dnl
+
+    AS_VAR_PUSHDEF([compile_mode_cv], [$1_$2_$3_compile_mode])dnl
+    AS_VAR_SET_IF([compile_mode_cv],
+        [],
+	[m4_ifdef([MCA_$1_$2_$3_COMPILE_MODE],
+                  [dnl We introduced caching of this check after setting the compile
+                   dnl mode by the substitute macro was common, and there was not a
+                   dnl polymorphic variable assumption in all those macros, so we use
+                   dnl a temporary with a fixed name.
+                   OPAL_VAR_SCOPE_PUSH([component_compile_mode_tmp])
+                   MCA_$1_$2_$3_COMPILE_MODE([$1], [$2], [$3], [component_compile_mode_tmp])
+                   AS_VAR_COPY([compile_mode_cv], [$component_compile_mode_tmp])
+                   OPAL_VAR_SCOPE_POP],
+                  [MCA_COMPONENT_COMPILE_MODE_INTERNAL([$1], [$2], [$3], [compile_mode_cv])])])
+    AS_VAR_COPY([$4], [compile_mode_cv])
+    AS_VAR_POPDEF([compile_mode_cv])dnl
+])
+
+# MCA_COMPONENT_COMPILE_MODE_INTERNAL(project_name (1), framework_name (2),
+#                            component_name (3), compile_mode_variable (4))
+# -------------------------------------------------------------------------
+# Determine compile mode of the given component.  Prefer a static
+# build by default.  Users can customize build mode by influencing the
+# component, framework, or all-up build flags.  This function starts
+# at the most specific (component) and works its way out, looking for
+# a set option.
+#
+# Components can avoid calling this function by defining a macro
+# MCA_<project>_<framework>_<component>_COMPILE_MODE.
 #
 #   NOTE: component_name may not be determined until runtime....
-AC_DEFUN([MCA_COMPONENT_COMPILE_MODE],[
+AC_DEFUN([MCA_COMPONENT_COMPILE_MODE_INTERNAL], [
+    OPAL_VAR_SCOPE_PUSH([compile_mode_internal_tmp SHARED_FRAMEWORK SHARED_COMPONENT STATIC_FRAMEWORK STATIC_COMPONENT])
+
     SHARED_FRAMEWORK="$DSO_$2"
-    AS_VAR_COPY([SHARED_COMPONENT], [DSO_$2_$3])
+    SHARED_COMPONENT="$DSO_$2_$3"
 
     STATIC_FRAMEWORK="$STATIC_$2"
-    AS_VAR_COPY([STATIC_COMPONENT], [STATIC_$2_$3])
+    STATIC_COMPONENT="$STATIC_$2_$3"
 
     # Look for the most specific specifier between static/dso.  If
     # there is a tie (either neither or both specified), prefer
     # static.
     if test "$STATIC_COMPONENT" = "1"; then
-        $4=static
+        compile_mode_internal_tmp=static
     elif test "$SHARED_COMPONENT" = "1"; then
-        $4=dso
+        compile_mode_internal_tmp=dso
     elif test "$STATIC_FRAMEWORK" = "1"; then
-        $4=static
+        compile_mode_internal_tmp=static
     elif test "$SHARED_FRAMEWORK" = "1"; then
-        $4=dso
+        compile_mode_internal_tmp=dso
     elif test "$STATIC_all" = "1"; then
-        $4=static
+        compile_mode_internal_tmp=static
     elif test "$DSO_all" = "1"; then
-        $4=dso
+        compile_mode_internal_tmp=dso
     else
-        $4=static
+        compile_mode_internal_tmp=static
     fi
+
+    AS_VAR_SET([$4], [$compile_mode_internal_tmp])
 
     AC_MSG_CHECKING([for MCA component $2:$3 compile mode])
     if test "$DIRECT_$2" = "$3" ; then
-        AC_MSG_RESULT([$$4 - direct])
+        AC_MSG_RESULT([$compile_mode_internal_tmp - direct])
     else
-        AC_MSG_RESULT([$$4])
+        AC_MSG_RESULT([$compile_mode_internal_tmp])
     fi
+
+    OPAL_VAR_SCOPE_POP
 ])
 
 # OPAL_MCA_STRIP_LAFILES(output_variable(1),
@@ -753,7 +725,7 @@ AC_DEFUN([OPAL_MCA_STRIP_LAFILES], [
     OPAL_VAR_SCOPE_PUSH([opal_tmp])
 
     for arg in $2; do
-	opal_tmp=`echo $arg | awk '{print substr([$][1], length([$][1])-2) }'`
+        opal_tmp=`echo $arg | awk '{print substr([$][1], length([$][1])-2) }'`
         AS_IF([test "$opal_tmp" != ".la"],
               [AS_IF([test -z "$$1"], [$1=$arg], [$1="$$1 $arg"])])
     done
@@ -768,8 +740,6 @@ AC_DEFUN([OPAL_MCA_STRIP_LAFILES], [
 #---------------------------------------------------------------------
 # Final setup work for a given component.  It should be known before
 # calling that this component can build properly (and exists)
-#
-#   NOTE: component_name may not be determined until runtime....
 AC_DEFUN([MCA_PROCESS_COMPONENT],[
     AC_REQUIRE([AC_PROG_GREP])
 
@@ -836,46 +806,44 @@ AC_MSG_ERROR([*** $2 component $3 was supposed to be direct-called, but
     # provide them for the final link of the application.  Components
     # can explicitly set <framework>_<component>_WRAPPER_EXTRA_<flag>
     # for either LDFLAGS or LIBS, for cases where the component wants
-    # to explicitly manage that behavior.  If the full variable is not
-    # defined, this macro will copy <framework>_<component>_<flag>
-    # into the wrapper flags.
+    # to explicitly manage which flags are passed to the wrapper
+    # compiler.  If the <framework>_<component>_WRAPPER_EXTRA_<flag>
+    # variable is not set, then it is assumed that the component
+    # wishes all LDFLAGS and LIBS to be provided as wrapper flags.
     AS_IF([test "$8" = "static"],
-          [m4_foreach(flags, [LDFLAGS, LIBS],
-                      [m4_if(flags, [LIBS],
-                             [OPAL_MCA_STRIP_LAFILES([tmp_]flags, [$$2_$3_]flags)],
-                             [tmp_]flags[=$$2_$3_]flags)
-                       AS_VAR_SET_IF([$2_$3_WRAPPER_EXTRA_]flags,
-                                     [OPAL_FLAGS_APPEND_UNIQ([mca_wrapper_extra_]m4_tolower(flags), [$$2_$3_WRAPPER_EXTRA_]flags)],
-                                     [OPAL_FLAGS_APPEND_UNIQ([mca_wrapper_extra_]m4_tolower(flags), [$tmp_]flags)])
-                       dnl yes, this is weird indenting, but the
-                       dnl combination of m4_foreach and AS_VAR_SET_IF
-                       dnl will result in the closing of one if and the
-                       dnl start of the next on the same line, resulting
-		       dnl in parse errors, if this is not here.
-		       ])])
+          [AS_VAR_SET_IF([$2_$3_WRAPPER_EXTRA_LDFLAGS],
+              [tmp_flags=${$2_$3_WRAPPER_EXTRA_LDFLAGS}],
+              [tmp_flags=${$2_$3_LDFLAGS}])
+           OPAL_FLAGS_APPEND_UNIQ([mca_wrapper_extra_ldflags], [$tmp_flags])
 
+           AS_VAR_SET_IF([$2_$3_WRAPPER_EXTRA_LIBS],
+              [tmp_flags=${$2_$3_WRAPPER_EXTRA_LIBS}],
+              [tmp_all_flags=${$2_$3_LIBS}
+               OPAL_MCA_STRIP_LAFILES([tmp_flags], [$tmp_all_flags])])
+           OPAL_FLAGS_APPEND_MOVE([mca_wrapper_extra_libs], [$tmp_flags])])
 
-    # if needed, copy over WRAPPER_EXTRA_CPPFLAGS.  Since a configure script
-    # component can never be used in a STOP_AT_FIRST framework, we
-    # don't have to implement the else clause in the literal check...
-    AS_LITERAL_IF([$3],
-        [AS_IF([test "$$2_$3_WRAPPER_EXTRA_CPPFLAGS" != ""],
-           [m4_if(OPAL_EVAL_ARG([MCA_$1_$2_CONFIGURE_MODE]), [STOP_AT_FIRST], [stop_at_first=1], [stop_at_first=0])
-            AS_IF([test "$8" = "static" && test "$stop_at_first" = "1"],
-              [AS_IF([test "$with_devel_headers" = "yes"],
-                     [OPAL_FLAGS_APPEND_UNIQ([mca_wrapper_extra_cppflags], [$$2_$3_WRAPPER_EXTRA_CPPFLAGS])])],
-              [AC_MSG_WARN([ignoring $2_$3_WRAPPER_EXTRA_CPPFLAGS ($$2_$3_WRAPPER_EXTRA_CPPFLAGS): component conditions not met])])])])
+    # WRAPPER_EXTRA_CPPFLAGS are only needed for STOP_AT_FIRST
+    # components, as all other components are not allowed to leak
+    # headers or compile-time flags into the top-level library or
+    # wrapper compilers.  If needed, copy over WRAPPER_EXTRA_CPPFLAGS.
+    # Since a configure script component can never be used in a
+    # STOP_AT_FIRST framework, we don't have to implement the else
+    # clause in the literal check.
+    AS_IF([test "$$2_$3_WRAPPER_EXTRA_CPPFLAGS" != ""],
+          [m4_if(OPAL_EVAL_ARG([MCA_$1_$2_CONFIGURE_MODE]), [STOP_AT_FIRST], [stop_at_first=1], [stop_at_first=0])
+           AS_IF([test "$8" = "static" && test "$stop_at_first" = "1"],
+                 [AS_IF([test "$with_devel_headers" = "yes"],
+                        [OPAL_FLAGS_APPEND_UNIQ([mca_wrapper_extra_cppflags], [$$2_$3_WRAPPER_EXTRA_CPPFLAGS])])],
+                 [AC_MSG_WARN([ignoring $2_$3_WRAPPER_EXTRA_CPPFLAGS ($$2_$3_WRAPPER_EXTRA_CPPFLAGS): component conditions not met])])])
 ])
 
 
 # MCA_PROCESS_DEAD_COMPONENT(project_name (1), framework_name (2),
 #                            component_name (3))
 # ----------------------------------------------------------------
-# Finall setup work for a component that can not be built.  Do the
+# Final setup work for a component that can not be built.  Do the
 # last minute checks to make sure the user isn't doing something
 # stupid.
-#
-#   NOTE: component_name may not be determined until runtime....
 AC_DEFUN([MCA_PROCESS_DEAD_COMPONENT],[
     AC_MSG_CHECKING([if MCA component $2:$3 can compile])
     AC_MSG_RESULT([no])
@@ -952,7 +920,7 @@ AC_DEFUN([MCA_COMPONENT_BUILD_CHECK],[
 
     # if we were explicitly disabled, don't build :)
     AS_IF([test "$DISABLE_$2" = "1"], [want_component=0])
-    AS_VAR_IF([DISABLE_$2_$3], [1], [want_component=0])
+    AS_IF([test "${DISABLE_$2_$3}" = "1"], [want_component=0])
 
     AS_IF([test "$want_component" = "1"], [$4], [$5])
 ])
@@ -988,4 +956,30 @@ AC_DEFUN([OPAL_MCA_MAKE_DIR_LIST],[
        $1="$$1 mca/$2/$item"
     done
     AC_SUBST($1)
+])
+
+
+# OPAL_MCA_CHECK_DEPENDENCY(check project, check framework, check component,
+#                           dependent project, dependent framework, dependent component)
+# --------------------------------------------------------------------------
+# Enforce that the check component does not introduce a dependency from its
+# project library (ie libmpi.so or libopen-pal.so) to another component
+# (ie, a common_*.so).  This can happen if the check component is set to
+# build static and the common library is set to build dso.  If this situation
+# is detected, print an error and abort configure.
+AC_DEFUN([OPAL_MCA_CHECK_DEPENDENCY],
+[
+    OPAL_VAR_SCOPE_PUSH([component_compile_mode dependency_compile_mode])
+
+    MCA_COMPONENT_COMPILE_MODE([$1], [$2], [$3], [component_compile_mode])
+    MCA_COMPONENT_COMPILE_MODE([$4], [$5], [$6], [dependency_compile_mode])
+
+    AS_IF([test "${component_compile_mode}" = "static" -a "${dependency_compile_mode}" = "dso"],
+         [AC_MSG_ERROR([Component $2:$3 is set to build as a
+static component, but its dependency $5:$6 is set to build as
+a dynamic component.  This configuration is not supported.  Please
+either build $5:$6 as a static component or build $2:$3 as a dynamic
+component.])])
+
+    OPAL_VAR_SCOPE_POP
 ])

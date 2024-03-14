@@ -47,7 +47,7 @@ static mca_btl_base_module_t **mca_btl_portals4_component_init(int *num_btls,
                                                                bool enable_mpi_threads);
 int mca_btl_portals4_component_progress(void);
 
-OPAL_MODULE_DECLSPEC extern mca_btl_portals4_component_t mca_btl_portals4_component;
+OPAL_DECLSPEC extern mca_btl_portals4_component_t mca_btl_portals4_component;
 
 mca_btl_portals4_component_t mca_btl_portals4_component = {{
     /* First, the mca_base_module_t struct containing meta
@@ -72,7 +72,7 @@ static int mca_btl_portals4_component_register(void)
     mca_btl_portals4_component.use_logical = 0;
     (void) mca_base_component_var_register(
         &mca_btl_portals4_component.super.btl_version, "use_logical",
-        "Use the logical to physical table to accelerate portals4 adressing: 1 (true) : 0 (false)",
+        "Use the logical to physical table to accelerate portals4 addressing: 1 (true) : 0 (false)",
         MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_READONLY,
         &mca_btl_portals4_component.use_logical);
 

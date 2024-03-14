@@ -69,7 +69,7 @@ struct ompi_osc_rdma_sync_t {
 
             /** assert specified at lock acquire time. at this time Open MPI
              * only uses 5-bits for asserts. if this number goes over 16 this
-             * will need to be changed to accomodate. */
+             * will need to be changed to accommodate. */
             int16_t mpi_assert;
         } lock;
 

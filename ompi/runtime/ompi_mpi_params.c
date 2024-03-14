@@ -20,9 +20,10 @@
  *                         All rights reserved.
  * Copyright (c) 2016-2021 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
- * Copyright (c) 2021      Triad National Security, LLC. All rights
+ * Copyright (c) 2018-2021 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
+ * Copyright (c) 2022      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -54,7 +55,7 @@
  *
  * As a deviation from the norm, ompi_mpi_param_check is also
  * extern'ed in src/mpi/interface/c/bindings.h because it is already
- * included in all MPI function imlementation files
+ * included in all MPI function implementation files
  *
  * The values below are the default values.
  */
@@ -82,11 +83,13 @@ bool ompi_async_mpi_finalize = false;
 uint32_t ompi_add_procs_cutoff = OMPI_ADD_PROCS_CUTOFF_DEFAULT;
 bool ompi_mpi_dynamics_enabled = true;
 
-bool ompi_mpi_compat_mpi3 = false;
+bool ompi_mpi_compat_mpi3 = true;
 
 char *ompi_mpi_spc_attach_string = NULL;
 bool ompi_mpi_spc_dump_enabled = false;
 uint32_t ompi_pmix_connect_timeout = 0;
+
+bool ompi_enable_timing = false;
 
 static bool show_default_mca_params = false;
 static bool show_file_mca_params = false;
@@ -99,6 +102,8 @@ int ompi_ftmpi_output_handle = 0;
 bool ompi_ftmpi_enabled = false;
 #include "ompi/communicator/communicator.h"
 #endif /* OPAL_ENABLE_FT_MPI */
+
+static int ompi_stream_buffering_mode = -1;
 
 int ompi_mpi_register_params(void)
 {
@@ -204,7 +209,7 @@ int ompi_mpi_register_params(void)
     /* Whether or not to print all MCA parameters in MPI_INIT */
     ompi_mpi_show_mca_params_string = NULL;
     (void) mca_base_var_register("ompi", "mpi", NULL, "show_mca_params",
-                                 "Whether to show all MCA parameter values during MPI_INIT or not (good for reproducability of MPI jobs "
+                                 "Whether to show all MCA parameter values during MPI_INIT or not (good for reproducibility of MPI jobs "
                                  "for debug purposes). Accepted values are all, default, file, api, and enviro - or a comma "
                                  "delimited combination of them",
                                  MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
@@ -247,7 +252,7 @@ int ompi_mpi_register_params(void)
     /* File to use when dumping the parameters */
     (void) mca_base_var_register("ompi", "mpi", NULL, "show_mca_params_file",
                                  "If mpi_show_mca_params is true, setting this string to a valid filename tells "
-                                 OMPI_IDENT_STRING " to dump all the MCA parameter values into a file suitable for reading via the mca_param_files parameter (good for reproducability of MPI jobs)",
+                                 OMPI_IDENT_STRING " to dump all the MCA parameter values into a file suitable for reading via the mca_param_files parameter (good for reproducibility of MPI jobs)",
                                  MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
                                  OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY,
@@ -357,7 +362,7 @@ int ompi_mpi_register_params(void)
                                       MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
     }
 
-    ompi_mpi_compat_mpi3 = false;
+    ompi_mpi_compat_mpi3 = true;
     (void) mca_base_var_register("ompi", "mpi", NULL, "compat_mpi3",
                                  "A boolean value for whether Open MPI operates in MPI-3 compatibility mode; this changes the following behavior: in operations without a handle, errors are raised on (true) MPI_COMM_WORLD (MPI-3 behavior) or (false) MPI_COMM_SELF (MPI-4 behavior).",
                                  MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
@@ -389,6 +394,57 @@ int ompi_mpi_register_params(void)
                                   MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL,
                                   0, 0, OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_LOCAL,
                                   &ompi_pmix_connect_timeout);
+
+    /* check to see if we want timing information */
+    /* TODO: enable OMPI init and OMPI finalize timings if
+     * this variable was set to 1!
+     */
+    ompi_enable_timing = false;
+    (void) mca_base_var_register("ompi", "ompi", NULL, "timing",
+                                 "Request that critical timing loops be measured",
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &ompi_enable_timing);
+
+    /*
+     * stdout/stderr buffering
+     * If the user requested to override the default setting then do
+     * as they wish.
+     */
+    (void) mca_base_var_register("ompi", "ompi", NULL, "stream_buffering",
+                                 "Adjust buffering for stdout/stderr. "
+                                 "(0) unbuffered, (1) line buffered, (2) fully buffered.",
+                                 MCA_BASE_VAR_TYPE_INT,
+                                 NULL, 0, 0,
+                                 OPAL_INFO_LVL_3,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &ompi_stream_buffering_mode);
+    if(0 == ompi_stream_buffering_mode) {
+        setvbuf(stdout, NULL, _IONBF, 0);
+        setvbuf(stderr, NULL, _IONBF, 0);
+    }
+    else if(1 == ompi_stream_buffering_mode) {
+        setvbuf(stdout, NULL, _IOLBF, 0);
+        setvbuf(stderr, NULL, _IOLBF, 0);
+    }
+    else if(2 == ompi_stream_buffering_mode) {
+        setvbuf(stdout, NULL, _IOFBF, 0);
+        setvbuf(stderr, NULL, _IOFBF, 0);
+    }
+
+
+#if OPAL_ENABLE_FT_MPI
+    /* Before loading any other part of the MPI library, we need to load
+     * the ft-mpi tune file to override default component selection when
+     * FT is desired ON; this does override openmpi-params.conf, but not
+     * command line or env.
+     */
+    if( ompi_ftmpi_enabled ) {
+        mca_base_var_load_extra_files("ft-mpi", false);
+    }
+#endif /* OPAL_ENABLE_FT_MPI */
+
 
     return OMPI_SUCCESS;
 }

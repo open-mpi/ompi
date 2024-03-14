@@ -36,6 +36,7 @@ int mca_memheap_base_key_exchange = 1;
 opal_list_t mca_memheap_base_components_opened = {{0}};
 int mca_memheap_base_already_opened = 0;
 mca_memheap_map_t mca_memheap_base_map = {{{{0}}}};
+int mca_memheap_num_segments_warn = 32;
 
 static int mca_memheap_base_register(mca_base_register_flag_t flags)
 {
@@ -58,6 +59,14 @@ static int mca_memheap_base_register(mca_base_register_flag_t flags)
                           MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_3,
                           MCA_BASE_VAR_SCOPE_LOCAL,
                           &mca_memheap_base_config.device_nic_mem_seg_size);
+
+    mca_base_var_register("oshmem", "memheap", "base", "max_segments",
+                          "Display a warning if the number of segments of the "
+                          "shared memheap exceeds this value",
+                          MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                          MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_3,
+                          MCA_BASE_VAR_SCOPE_LOCAL,
+                          &mca_memheap_num_segments_warn);
 
     return OSHMEM_SUCCESS;
 }

@@ -6,3 +6,6 @@
 	path = 3rd-party/openpmix
 	url = ../../openpmix/openpmix.git
 	branch = master
+[submodule "oac"]
+	path = config/oac
+	url = ../../open-mpi/oac

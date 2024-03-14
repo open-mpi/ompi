@@ -4,7 +4,7 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+ * Copyright (c) 2004-2020 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -21,6 +21,8 @@
  *
  * $HEADER$
  */
+
+#include "opal/mca/mpool/base/base.h"
 
 #include "osc_rdma.h"
 #include "osc_rdma_lock.h"
@@ -58,8 +60,8 @@ int ompi_osc_rdma_free(ompi_win_t *win)
 
     if (NULL != module->comm) {
         opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                            "rdma component destroying window with id %d",
-                            ompi_comm_get_cid(module->comm));
+                            "rdma component destroying window with id %s",
+                            ompi_comm_print_cid(module->comm));
 
         /* finish with a barrier */
         if (ompi_group_size(win->w_group) > 1) {
@@ -70,7 +72,7 @@ int ompi_osc_rdma_free(ompi_win_t *win)
         /* remove from component information */
         OPAL_THREAD_LOCK(&mca_osc_rdma_component.lock);
         opal_hash_table_remove_value_uint32(&mca_osc_rdma_component.modules,
-                                            ompi_comm_get_cid(module->comm));
+                                            ompi_comm_get_local_cid(module->comm));
         OPAL_THREAD_UNLOCK(&mca_osc_rdma_component.lock);
     }
 
@@ -140,8 +142,14 @@ int ompi_osc_rdma_free(ompi_win_t *win)
 
     free (module->peer_array);
     free (module->outstanding_lock_array);
-    free (module->free_after);
-    free (module->selected_btls);
+    mca_mpool_base_default_module->mpool_free(mca_mpool_base_default_module,
+                                              module->free_after);
+    if (!module->use_accelerated_btl) {
+        for (int i = 0 ; i < module->alternate_btl_count ; ++i) {
+            OBJ_RELEASE(module->alternate_am_rdmas[i]);
+        }
+        free(module->alternate_am_rdmas);
+    }
     free (module);
 
     return OMPI_SUCCESS;

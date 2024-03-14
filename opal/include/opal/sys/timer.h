@@ -15,6 +15,8 @@
  *                         reserved.
  * Copyright (c) 2020      Intel, Inc.  All rights reserved.
  * Copyright (c) 2020      Google, LLC. All rights reserved.
+ * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
+ *                         All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -31,29 +33,12 @@
 #ifndef OPAL_SYS_TIMER_H
 #define OPAL_SYS_TIMER_H 1
 
-#include "opal_config.h"
-
-#include "opal/sys/architecture.h"
+#include "opal/opal_portable_platform.h"
 
 #ifdef HAVE_SYS_TYPES_H
 #    include <sys/types.h>
 #endif
 
-/* do some quick #define cleanup in cases where we are doing
-   testing... */
-#ifdef OPAL_DISABLE_INLINE_ASM
-#    undef OPAL_C_GCC_INLINE_ASSEMBLY
-#    define OPAL_C_GCC_INLINE_ASSEMBLY 0
-#endif
-
-/* define OPAL_{GCC,DEC,XLC}_INLINE_ASSEMBLY based on the
-   OPAL_{C,CXX}_{GCC,DEC,XLC}_INLINE_ASSEMBLY defines and whether we
-   are in C or C++ */
-#if defined(c_plusplus) || defined(__cplusplus)
-#    define OPAL_GCC_INLINE_ASSEMBLY OPAL_CXX_GCC_INLINE_ASSEMBLY
-#else
-#    define OPAL_GCC_INLINE_ASSEMBLY OPAL_C_GCC_INLINE_ASSEMBLY
-#endif
 
 /**********************************************************************
  *
@@ -72,11 +57,11 @@ BEGIN_C_DECLS
 
 #if defined(DOXYGEN)
 /* don't include system-level gorp when generating doxygen files */
-#elif OPAL_ASSEMBLY_ARCH == OPAL_X86_64 || OPAL_ASSEMBLY_ARCH == OPAL_IA32
+#elif defined(PLATFORM_ARCH_X86_64) || defined(PLATFORM_ARCH_X86)
 #    include "opal/sys/x86_64/timer.h"
-#elif OPAL_ASSEMBLY_ARCH == OPAL_ARM64 || OPAL_ASSEMBLY_ARCH == OPAL_ARM
+#elif defined(PLATFORM_ARCH_ARM) || defined(PLATFORM_ARCH_AARCH64)
 #    include "opal/sys/arm64/timer.h"
-#elif OPAL_ASSEMBLY_ARCH == OPAL_POWERPC64 || OPAL_ASSEMBLY_ARCH == OPAL_POWERPC32
+#elif defined(PLATFORM_ARCH_POWERPC)
 #    include "opal/sys/powerpc/timer.h"
 #endif
 

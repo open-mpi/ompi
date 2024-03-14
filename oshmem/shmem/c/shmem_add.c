@@ -66,6 +66,12 @@
 #pragma weak shmem_ctx_uint_atomic_add = pshmem_ctx_uint_atomic_add
 #pragma weak shmem_ctx_ulong_atomic_add = pshmem_ctx_ulong_atomic_add
 #pragma weak shmem_ctx_ulonglong_atomic_add = pshmem_ctx_ulonglong_atomic_add
+#pragma weak shmem_ctx_int32_atomic_add = pshmem_ctx_int32_atomic_add
+#pragma weak shmem_ctx_int64_atomic_add = pshmem_ctx_int64_atomic_add
+#pragma weak shmem_ctx_uint32_atomic_add = pshmem_ctx_uint32_atomic_add
+#pragma weak shmem_ctx_uint64_atomic_add = pshmem_ctx_uint64_atomic_add
+#pragma weak shmem_ctx_size_atomic_add = pshmem_ctx_size_atomic_add
+#pragma weak shmem_ctx_ptrdiff_atomic_add = pshmem_ctx_ptrdiff_atomic_add
 
 #pragma weak shmem_int_atomic_add = pshmem_int_atomic_add
 #pragma weak shmem_long_atomic_add = pshmem_long_atomic_add
@@ -73,6 +79,12 @@
 #pragma weak shmem_uint_atomic_add = pshmem_uint_atomic_add
 #pragma weak shmem_ulong_atomic_add = pshmem_ulong_atomic_add
 #pragma weak shmem_ulonglong_atomic_add = pshmem_ulonglong_atomic_add
+#pragma weak shmem_int32_atomic_add = pshmem_int32_atomic_add
+#pragma weak shmem_int64_atomic_add = pshmem_int64_atomic_add
+#pragma weak shmem_uint32_atomic_add = pshmem_uint32_atomic_add
+#pragma weak shmem_uint64_atomic_add = pshmem_uint64_atomic_add
+#pragma weak shmem_size_atomic_add = pshmem_size_atomic_add
+#pragma weak shmem_ptrdiff_atomic_add = pshmem_ptrdiff_atomic_add
 
 #pragma weak shmem_int_add = pshmem_int_add
 #pragma weak shmem_long_add = pshmem_long_add
@@ -80,7 +92,7 @@
 
 #pragma weak shmemx_int32_add = pshmemx_int32_add
 #pragma weak shmemx_int64_add = pshmemx_int64_add
-#include "oshmem/shmem/c/profile/defines.h"
+#include "oshmem/shmem/c/profile-defines.h"
 #endif
 
 SHMEM_CTX_TYPE_ATOMIC_ADD(_uint, unsigned int, shmem)
@@ -89,12 +101,24 @@ SHMEM_CTX_TYPE_ATOMIC_ADD(_ulonglong, unsigned long long, shmem)
 SHMEM_CTX_TYPE_ATOMIC_ADD(_int, int, shmem)
 SHMEM_CTX_TYPE_ATOMIC_ADD(_long, long, shmem)
 SHMEM_CTX_TYPE_ATOMIC_ADD(_longlong, long long, shmem)
+SHMEM_CTX_TYPE_ATOMIC_ADD(_int32, int32_t, shmem)
+SHMEM_CTX_TYPE_ATOMIC_ADD(_int64, int64_t, shmem)
+SHMEM_CTX_TYPE_ATOMIC_ADD(_uint32, uint32_t, shmem)
+SHMEM_CTX_TYPE_ATOMIC_ADD(_uint64, uint64_t, shmem)
+SHMEM_CTX_TYPE_ATOMIC_ADD(_size, size_t, shmem)
+SHMEM_CTX_TYPE_ATOMIC_ADD(_ptrdiff, ptrdiff_t, shmem)
 SHMEM_TYPE_ATOMIC_ADD(_int, int, shmem)
 SHMEM_TYPE_ATOMIC_ADD(_long, long, shmem)
 SHMEM_TYPE_ATOMIC_ADD(_longlong, long long, shmem)
 SHMEM_TYPE_ATOMIC_ADD(_uint, unsigned int, shmem)
 SHMEM_TYPE_ATOMIC_ADD(_ulong, unsigned long, shmem)
 SHMEM_TYPE_ATOMIC_ADD(_ulonglong, unsigned long long, shmem)
+SHMEM_TYPE_ATOMIC_ADD(_int32, int32_t, shmem)
+SHMEM_TYPE_ATOMIC_ADD(_int64, int64_t, shmem)
+SHMEM_TYPE_ATOMIC_ADD(_uint32, uint32_t, shmem)
+SHMEM_TYPE_ATOMIC_ADD(_uint64, uint64_t, shmem)
+SHMEM_TYPE_ATOMIC_ADD(_size, size_t, shmem)
+SHMEM_TYPE_ATOMIC_ADD(_ptrdiff, ptrdiff_t, shmem)
 
 /* deprecated APIs */
 #define SHMEM_TYPE_ADD(type_name, type, prefix)                     \

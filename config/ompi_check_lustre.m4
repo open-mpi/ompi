@@ -29,28 +29,26 @@ dnl
 # LDFLAGS, LIBS} as needed and runs action-if-found if there is
 # support, otherwise executes action-if-not-found
 AC_DEFUN([OMPI_CHECK_LUSTRE],[
-
-    OPAL_VAR_SCOPE_PUSH([ompi_check_lustre_happy ompi_check_lustre_dir])
+    OPAL_VAR_SCOPE_PUSH([ompi_check_lustre_happy])
 
     # Get some configuration information
     AC_ARG_WITH([lustre],
         [AS_HELP_STRING([--with-lustre(=DIR)],
              [Build Lustre support, optionally adding DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries])])
-    OPAL_CHECK_WITHDIR([lustre], [$with_lustre], [include/lustre/lustreapi.h])
 
-    AS_IF([test "$with_lustre" = "no"],
-          [ompi_check_lustre_happy="no"],
-          [AS_IF([test -n "$with_lustre" && test "$with_lustre" != "yes"],
-                 [ompi_check_lustre_dir=$with_lustre])
-
-           OPAL_CHECK_PACKAGE([$1], [lustre/lustreapi.h], [lustreapi], [llapi_file_create],
-                              [], [$ompi_check_lustre_dir], [],
-                              [ompi_check_lustre_happy="yes"],
-                              [ompi_check_lustre_happy="no"])])
+     OAC_CHECK_PACKAGE([lustre],
+                       [$1],
+                       [lustre/lustreapi.h],
+                       [lustreapi],
+                       [llapi_file_create],
+                       [ompi_check_lustre_happy="yes"],
+                       [ompi_check_lustre_happy="no"])
 
     AS_IF([test "$ompi_check_lustre_happy" = "yes"],
-          [AC_MSG_CHECKING([for required lustre data structures])
-           cat > conftest.c <<EOF
+          [AC_CACHE_CHECK([for required lustre data structures],
+              [ompi_check_lustre_cv_ost_data_v1],
+              [ompi_check_lustre_cv_ost_data_v1=yes
+               cat > conftest.c <<EOF
 #include "lustre/lustreapi.h"
 void alloc_lum()
 {
@@ -61,12 +59,15 @@ void alloc_lum()
     LOV_MAX_STRIPE_COUNT * sizeof(struct lov_user_ost_data_v1);
 }
 EOF
+               # Try the compile
+               OPAL_LOG_COMMAND([$CC $CFLAGS ${$1_CPPFLAGS} -c conftest.c],
+                                [], [ompi_check_lustre_cv_ost_data_v1=no])
+               rm -f conftest.c conftest.o])
+           AS_IF([test "${ompi_check_lustre_cv_ost_data_v1}" = "no"],
+                 [ompi_check_lustre_happy=no
+                  fs_lustre_SUMMARY="no"])])
 
-           # Try the compile
-           OPAL_LOG_COMMAND([$CC $CFLAGS $$1_CPPFLAGS -c conftest.c],
-                            [], [ompi_check_lustre_happy="no"])
-           rm -f conftest.c conftest.o
-           AC_MSG_RESULT([$ompi_check_lustre_happy])])
+    OPAL_SUMMARY_ADD([OMPIO File Systems], [Lustre], [], [${$1_SUMMARY}])
 
     AS_IF([test "$ompi_check_lustre_happy" = "yes"],
           [$2],

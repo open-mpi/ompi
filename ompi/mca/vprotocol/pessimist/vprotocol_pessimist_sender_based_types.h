@@ -46,7 +46,7 @@ typedef struct vprotocol_pessimist_sender_based_header_t
     size_t size;
     int dst;
     int tag;
-    uint32_t contextid;
+    ompi_comm_extended_cid_t contextid;
     vprotocol_pessimist_clock_t sequence;
 } vprotocol_pessimist_sender_based_header_t;
 

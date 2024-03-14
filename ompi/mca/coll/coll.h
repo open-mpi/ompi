@@ -50,7 +50,7 @@
  * is associated with.
  *
  * The module destructors are called for each module used by the
- * communicator, at communicator desctruction time.
+ * communicator, at communicator destruction time.
  *
  * This can result in up to N different components being used for a
  * single communicator, one per needed collective function.
@@ -96,7 +96,7 @@ struct ompi_group_t;
  * once during MPI_INIT.
  *
  * @note The component framework is not lazily opened, so attempts
- * should be made to minimze the amount of memory allocated during
+ * should be made to minimize the amount of memory allocated during
  * this function.
  *
  * @param[in] enable_progress_threads True if the component needs to
@@ -492,14 +492,14 @@ struct mca_coll_base_component_2_4_0_t {
 
     /** Component initialization function */
     mca_coll_base_component_init_query_fn_t collm_init_query;
-    /** Query whether component is useable for given communicator */
+    /** Query whether component is usable for given communicator */
     mca_coll_base_component_comm_query_2_4_0_fn_t collm_comm_query;
 };
 typedef struct mca_coll_base_component_2_4_0_t mca_coll_base_component_2_4_0_t;
 
-/** Per guidence in mca.h, use the unversioned struct name if you just
+/** Per guidance in mca.h, use the unversioned struct name if you just
     want to always keep up with the most recent version of the
-    interace. */
+    interface. */
 typedef struct mca_coll_base_component_2_4_0_t mca_coll_base_component_t;
 
 
@@ -621,9 +621,9 @@ struct mca_coll_base_module_2_4_0_t {
 };
 typedef struct mca_coll_base_module_2_4_0_t mca_coll_base_module_2_4_0_t;
 
-/** Per guidence in mca.h, use the unversioned struct name if you just
+/** Per guidance in mca.h, use the unversioned struct name if you just
     want to always keep up with the most recent version of the
-    interace. */
+    interface. */
 typedef struct mca_coll_base_module_2_4_0_t mca_coll_base_module_t;
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_coll_base_module_t);
 

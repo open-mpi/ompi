@@ -106,7 +106,7 @@ AC_DEFUN([OPAL_PROG_CC_C11],[
             for flag in $(echo $opal_prog_cc_c11_flags | tr ' ' '\n') ; do
                 OPAL_PROG_CC_C11_HELPER([$flag],[opal_cv_c11_flag=$flag],[])
                 if test "x$opal_cv_c11_flag" != "x" ; then
-                    CFLAGS="$CFLAGS $opal_cv_c11_flag"
+                    OPAL_FLAGS_APPEND_UNIQ([CFLAGS], ["$opal_cv_c11_flag"])
                     AC_MSG_NOTICE([using $flag to enable C11 support])
                     opal_cv_c11_supported=yes
                     break
@@ -135,12 +135,27 @@ AC_DEFUN([OPAL_CHECK_CC_IQUOTE],[
     CFLAGS="${CFLAGS} -iquote ."
     AC_MSG_CHECKING([for $CC option to add a directory only to the search path for the quote form of include])
     AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]],[])],
-		      [opal_cc_iquote="-iquote"],
-		      [opal_cc_iquote="-I"])
+                      [opal_cc_iquote="-iquote"],
+                      [opal_cc_iquote="-I"])
     CFLAGS=${opal_check_cc_iquote_CFLAGS_save}
     OPAL_VAR_SCOPE_POP
     AC_MSG_RESULT([$opal_cc_iquote])
 ])
+
+
+# OPAL_SETUP_CC_WERROR_HANDLER()
+# ------------------------------
+# Runs right before config.status, to possibly
+# add -Werror to CFLAGS.  Can't do this earlier
+# in configure, as many built-in tests generate
+# harmless warnings which would cause the wrong
+# answer.
+AC_DEFUN([OPAL_SETUP_CC_WERROR_HANDLER], [
+    AS_IF([test "$enable_werror" = "yes"],
+          [AC_MSG_NOTICE([Adding -Werror to CFLAGS])
+           CFLAGS="$CFLAGS -Werror"])
+])
+
 
 # OPAL_SETUP_CC()
 # ---------------
@@ -168,7 +183,7 @@ AC_DEFUN([OPAL_SETUP_CC],[
         # following lines and update the warning when we require a C11 compiler.
         # AC_MSG_WARNING([Open MPI requires a C11 (or newer) compiler])
         # AC_MSG_ERROR([Aborting.])
-        # From Open MPI 1.7 on we require a C99 compiant compiler
+        # From Open MPI 1.7 on we require a C99 compliant compiler
         dnl with autoconf 2.70 AC_PROG_CC makes AC_PROG_CC_C99 obsolete
         m4_version_prereq([2.70],
             [],
@@ -253,7 +268,7 @@ AC_DEFUN([OPAL_SETUP_CC],[
         # compiling and linking to circumvent trouble with
         # libgcov.
         LDFLAGS_orig="$LDFLAGS"
-        LDFLAGS="$LDFLAGS_orig --coverage"
+        OPAL_FLAGS_APPEND_UNIQ([LDFLAGS], ["--coverage"])
         OPAL_COVERAGE_FLAGS=
 
         _OPAL_CHECK_SPECIFIC_CFLAGS(--coverage, coverage)
@@ -272,19 +287,8 @@ AC_DEFUN([OPAL_SETUP_CC],[
             CLEANFILES="*.bb *.bbg ${CLEANFILES}"
             OPAL_COVERAGE_FLAGS="-ftest-coverage -fprofile-arcs"
         fi
-        OPAL_FLAGS_UNIQ(CFLAGS)
-        OPAL_FLAGS_UNIQ(LDFLAGS)
         WANT_DEBUG=1
    fi
-    
-
-    # Do we want debugging?
-    if test "$WANT_DEBUG" = "1" && test "$enable_debug_symbols" != "no" ; then
-        CFLAGS="$CFLAGS -g"
-
-        OPAL_FLAGS_UNIQ(CFLAGS)
-        AC_MSG_WARN([-g has been added to CFLAGS (--enable-debug)])
-    fi
 
     # These flags are generally gcc-specific; even the
     # gcc-impersonating compilers won't accept them.
@@ -320,6 +324,11 @@ AC_DEFUN([OPAL_SETUP_CC],[
     # the xlc warning looks like this:
     # warning: "-qinline" is not compatible with "-g". "-qnoinline" is being set.
     _OPAL_CHECK_SPECIFIC_CFLAGS(-finline-functions, finline_functions)
+
+    AC_ARG_ENABLE([werror],
+         [AS_HELP_STRING([--enable-werror],
+                         [Enable -Werror to convert warnings to errors.  Note that 3rd-party packages will not be built with -Werror (unless they also support the --enable-werror configure option)])])
+    AC_CONFIG_COMMANDS_PRE([OPAL_SETUP_CC_WERROR_HANDLER])
 
     # Try to enable restrict keyword
     RESTRICT_CFLAGS=
@@ -408,7 +417,6 @@ AC_DEFUN([OPAL_SETUP_CC],[
     OPAL_ENSURE_CONTAINS_OPTFLAGS(["$CFLAGS"])
     AC_MSG_RESULT([$co_result])
     CFLAGS="$co_result"
-    OPAL_FLAGS_UNIQ([CFLAGS])
     AC_MSG_RESULT(CFLAGS result: $CFLAGS)
     OPAL_VAR_SCOPE_POP
 ])
@@ -420,7 +428,7 @@ AC_DEFUN([_OPAL_START_SETUP_CC],[
 
 
 AC_DEFUN([_OPAL_PROG_CC],[
-    dnl It is really easy to accidently call AC_PROG_CC implicitly through
+    dnl It is really easy to accidentally call AC_PROG_CC implicitly through
     dnl some other test run before OPAL_SETUP_CC.  Try to make that harder.
     m4_provide_if([AC_PROG_CC],
                   [m4_fatal([AC_PROG_CC called before OPAL_SETUP_CC])])
@@ -428,20 +436,12 @@ AC_DEFUN([_OPAL_PROG_CC],[
     #
     # Check for the compiler
     #
-    OPAL_VAR_SCOPE_PUSH([opal_cflags_save dummy opal_cc_arvgv0])
+    OPAL_VAR_SCOPE_PUSH([dummy opal_cc_arvgv0])
 
-    # AC_USE_SYSTEM_EXTENSIONS alters CFLAGS (e.g., adds -g -O2)
-    opal_cflags_save="$CFLAGS"
     AC_USE_SYSTEM_EXTENSIONS
-    # AC_USE_SYSTEM_EXTENSIONS will modify CFLAGS if nothing was in there
-    # beforehand.  We don't want that.  So if there was nothing in
-    # CFLAGS, put nothing back in there.
-    AS_IF([test -z "$opal_cflags_save"], [CFLAGS=])
 
-    opal_cflags_save="$CFLAGS"
     AC_PROG_CC
     BASECC="`basename $CC`"
-    CFLAGS="$opal_cflags_save"
     OPAL_CC="$CC"
     AC_DEFINE_UNQUOTED(OPAL_CC, "$OPAL_CC", [OMPI underlying C compiler])
     set dummy $CC

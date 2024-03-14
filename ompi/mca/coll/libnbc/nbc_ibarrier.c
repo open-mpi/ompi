@@ -45,7 +45,7 @@ static int nbc_barrier_init(struct ompi_communicator_t *comm, ompi_request_t ** 
       return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    maxround = (int)ceil((log((double)p)/LOG2)-1);
+    maxround = ceil_of_log2(p) -1;
 
     for (int round = 0 ; round <= maxround ; ++round) {
       sendpeer = (rank + (1 << round)) % p;

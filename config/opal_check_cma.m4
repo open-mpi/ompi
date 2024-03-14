@@ -4,9 +4,10 @@
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
 # Copyright (c) 2009-2016 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2010-2012 IBM Corporation.  All rights reserved.
+# Copyright (c) 2010-2022 IBM Corporation.  All rights reserved.
 # Copyright (c) 2013-2016 Los Alamos National Security, LLC. All rights
 #                         reserved.
+# Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -114,23 +115,42 @@ static void do_check (pid_t pid, int *in, int *out)
     /* all good */
     return 0;
 ]])],
-		      [AC_MSG_RESULT([yes])
-		       opal_check_cma_happy=1],
-		      [AC_MSG_RESULT([no])
-		       opal_check_cma_happy=0],
-		      [AC_MSG_RESULT([no (cross-compiling)])
-		       opal_check_cma_happy=0])
-	CFLAGS=$opal_check_cma_CFLAGS
+                      [AC_MSG_RESULT([yes])
+                       opal_check_cma_happy=1],
+                      [AC_MSG_RESULT([no])
+                       opal_check_cma_happy=0],
+                      [AC_MSG_RESULT([no (cross-compiling)])
+                       opal_check_cma_happy=0])
+        CFLAGS=$opal_check_cma_CFLAGS
     else
         # If we didn't need the defs, then we have process_vm_readv(),
         # and CMA is happy.
-	opal_check_cma_happy=1
+        opal_check_cma_happy=1
     fi
 
     OPAL_VAR_SCOPE_POP
 
+    # Testing CAP_SYS_PTRACE between two processes with kcmp
+    AC_CHECK_HEADERS([linux/kcmp.h])
+    AC_CHECK_HEADERS([sys/syscall.h])
+    AC_MSG_CHECKING([if kcmp works])
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+#include <linux/kcmp.h>
+#include <sys/syscall.h>
+#include <unistd.h>
+                                       ]], [[
+syscall(SYS_kcmp, 123, 456, KCMP_VM, 0, 0);
+                                           ]])],
+                      [AC_MSG_RESULT([yes])
+                       opal_check_cma_kcmp_happy=1],
+                      [AC_MSG_RESULT([no])
+                       opal_check_cma_kcmp_happy=0])
+    AC_DEFINE_UNQUOTED([OPAL_CMA_KCMP_AVAIL],
+                       [$opal_check_cma_kcmp_happy],
+                       [If kcmp is available])
+
     AS_IF([test $opal_check_cma_happy -eq 1],
           [opal_check_cma_msg=yes],
           [opal_check_cma_msg=no])
-    OPAL_SUMMARY_ADD([[Transports]],[[Shared memory/Linux CMA]],[$1],[$opal_check_cma_msg])
+    OPAL_SUMMARY_ADD([Transports], [Shared memory/Linux CMA], [], [$opal_check_cma_msg])
 ])

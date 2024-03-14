@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2022 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2013-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
@@ -43,11 +43,11 @@
 static const char FUNC_NAME[] = "MPI_Parrived";
 
 
-int MPI_Parrived(MPI_Request request, MPI_Count partition,  int *flag)
+int MPI_Parrived(MPI_Request request, int partition,  int *flag)
 {
     int rc;
 
-    SPC_RECORD(OMPI_SPC_ARRIVED, 1);
+    SPC_RECORD(OMPI_SPC_PARRIVED, 1);
 
     if (MPI_PARAM_CHECK) {
         rc = OMPI_SUCCESS;

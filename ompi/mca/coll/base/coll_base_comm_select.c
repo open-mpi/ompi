@@ -102,8 +102,8 @@ int mca_coll_base_comm_select(ompi_communicator_t * comm)
 
     /* Announce */
     opal_output_verbose(9, ompi_coll_base_framework.framework_output,
-                        "coll:base:comm_select: new communicator: %s (cid %d)",
-                        comm->c_name, comm->c_contextid);
+                        "coll:base:comm_select: new communicator: %s (cid %s)",
+                        comm->c_name, ompi_comm_print_cid (comm));
 
     /* Initialize all the relevant pointers, since they're used as
      * sentinel values */
@@ -453,7 +453,7 @@ static opal_list_t *check_components(opal_list_t * components,
     /* For all valid component reorder them not on their provided priorities but on
      * the order requested in the info key. As at this point the coll_include is
      * already ordered backward we can simply append the components.
-     * Note that the last element in selectable will have the highest priorty.
+     * Note that the last element in selectable will have the highest priority.
      */
     for (int idx = count_include-1; idx >= 0; --idx) {
         mca_coll_base_avail_coll_t *item;

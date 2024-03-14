@@ -11,6 +11,7 @@
  *                         reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2019      Triad National Security, LLC. All rights reserved.
+ * Copyright (c) 2022      IBM Corporation. All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -55,7 +56,7 @@ static opal_output_stream_t mca_common_monitoring_output_stream_obj = {
 };
 
 /*** MCA params to mark the monitoring as enabled. ***/
-/* This signals that the monitoring will highjack the PML, OSC and COLL */
+/* This signals that the monitoring will hijack the PML, OSC and COLL */
 int mca_common_monitoring_enabled = 0;
 int mca_common_monitoring_current_state = 0;
 /* Signals there will be an output of the monitored data at component close */
@@ -64,7 +65,7 @@ static int mca_common_monitoring_output_enabled = 0;
 static char* mca_common_monitoring_initial_filename = "";
 static char* mca_common_monitoring_current_filename = NULL;
 
-/* array for stroring monitoring data*/
+/* array for storing monitoring data*/
 static opal_atomic_size_t* pml_data = NULL;
 static opal_atomic_size_t* pml_count = NULL;
 static opal_atomic_size_t* filtered_pml_data = NULL;
@@ -83,7 +84,7 @@ static double log10_2 = 0.;
 static int rank_world = -1;
 static int nprocs_world = 0;
 
-opal_hash_table_t *common_monitoring_translation_ht = NULL;
+opal_hash_table_t *ompi_common_monitoring_translation_ht = NULL;
 
 /* Reset all the monitoring arrays */
 static void mca_common_monitoring_reset ( void );
@@ -91,35 +92,35 @@ static void mca_common_monitoring_reset ( void );
 /* Flushes the monitored data and reset the values */
 static int mca_common_monitoring_flush (int fd, char* filename);
 
-/* Retreive the PML recorded count of messages sent */
+/* Retrieve the PML recorded count of messages sent */
 static int mca_common_monitoring_get_pml_count (const struct mca_base_pvar_t *pvar,
                                                 void *value, void *obj_handle);
 
-/* Retreive the PML recorded amount of data sent */
+/* Retrieve the PML recorded amount of data sent */
 static int mca_common_monitoring_get_pml_size (const struct mca_base_pvar_t *pvar,
                                                void *value, void *obj_handle);
 
-/* Retreive the OSC recorded count of messages sent */
+/* Retrieve the OSC recorded count of messages sent */
 static int mca_common_monitoring_get_osc_sent_count (const struct mca_base_pvar_t *pvar,
                                                      void *value, void *obj_handle);
 
-/* Retreive the OSC recorded amount of data sent */
+/* Retrieve the OSC recorded amount of data sent */
 static int mca_common_monitoring_get_osc_sent_size (const struct mca_base_pvar_t *pvar,
                                                     void *value, void *obj_handle);
 
-/* Retreive the OSC recorded count of messages received */
+/* Retrieve the OSC recorded count of messages received */
 static int mca_common_monitoring_get_osc_recv_count (const struct mca_base_pvar_t *pvar,
                                                      void *value, void *obj_handle);
 
-/* Retreive the OSC recorded amount of data received */
+/* Retrieve the OSC recorded amount of data received */
 static int mca_common_monitoring_get_osc_recv_size (const struct mca_base_pvar_t *pvar,
                                                     void *value, void *obj_handle);
 
-/* Retreive the COLL recorded count of messages sent */
+/* Retrieve the COLL recorded count of messages sent */
 static int mca_common_monitoring_get_coll_count (const struct mca_base_pvar_t *pvar,
                                                  void *value, void *obj_handle);
 
-/* Retreive the COLL recorded amount of data sent */
+/* Retrieve the COLL recorded amount of data sent */
 static int mca_common_monitoring_get_coll_size (const struct mca_base_pvar_t *pvar,
                                                 void *value, void *obj_handle);
 
@@ -225,8 +226,8 @@ int mca_common_monitoring_init( void )
     mca_common_monitoring_output_stream_id =
         opal_output_open(&mca_common_monitoring_output_stream_obj);
     /* Initialize proc translation hashtable */
-    common_monitoring_translation_ht = OBJ_NEW(opal_hash_table_t);
-    opal_hash_table_init(common_monitoring_translation_ht, 2048);
+    ompi_common_monitoring_translation_ht = OBJ_NEW(opal_hash_table_t);
+    opal_hash_table_init(ompi_common_monitoring_translation_ht, 2048);
     return OMPI_SUCCESS;
 }
 
@@ -236,7 +237,7 @@ void mca_common_monitoring_finalize( void )
         0 < opal_atomic_sub_fetch_32(&mca_common_monitoring_hold, 1) ) return;
 
     OPAL_MONITORING_PRINT_INFO("common_component_finish");
-    /* Dump monitoring informations */
+    /* Dump monitoring information */
     mca_common_monitoring_flush(mca_common_monitoring_output_enabled,
                                 mca_common_monitoring_current_filename);
     /* Disable all monitoring */
@@ -246,8 +247,8 @@ void mca_common_monitoring_finalize( void )
     free(mca_common_monitoring_output_stream_obj.lds_prefix);
     /* Free internal data structure */
     free((void *) pml_data);  /* a single allocation */
-    opal_hash_table_remove_all( common_monitoring_translation_ht );
-    OBJ_RELEASE(common_monitoring_translation_ht);
+    opal_hash_table_remove_all( ompi_common_monitoring_translation_ht );
+    OBJ_RELEASE(ompi_common_monitoring_translation_ht);
     mca_common_monitoring_coll_finalize();
     if( NULL != mca_common_monitoring_current_filename ) {
         free(mca_common_monitoring_current_filename);
@@ -484,7 +485,7 @@ int mca_common_monitoring_add_procs(struct ompi_proc_t **procs,
 
             key = *((uint64_t*)&tmp);
             /* save the rank of the process in MPI_COMM_WORLD in the hash using the proc_name as the key */
-            if( OPAL_SUCCESS != opal_hash_table_set_value_uint64(common_monitoring_translation_ht,
+            if( OPAL_SUCCESS != opal_hash_table_set_value_uint64(ompi_common_monitoring_translation_ht,
                                                                  key, (void*)(uintptr_t)peer_rank) ) {
                 return OMPI_ERR_OUT_OF_RESOURCE;  /* failed to allocate memory or growing the hash table */
             }

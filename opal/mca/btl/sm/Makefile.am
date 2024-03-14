@@ -9,11 +9,12 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2022 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2011-2014 Los Alamos National Security, LLC. All rights
 #                         reserved.
 # Copyright (c) 2017      IBM Corporation.  All rights reserved.
 # Copyright (c) 2020-2021 Google, LLC. All rights reserved.
+# Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -21,15 +22,10 @@
 # $HEADER$
 #
 
-AM_CPPFLAGS = $(btl_sm_CPPFLAGS)
-
-dist_opaldata_DATA = help-btl-sm.txt
-
 libmca_btl_sm_la_sources = \
     btl_sm_module.c \
     btl_sm.h \
     btl_sm_component.c \
-    btl_sm_endpoint.h \
     btl_sm_fifo.h \
     btl_sm_frag.c \
     btl_sm_frag.h \
@@ -57,11 +53,10 @@ endif
 mcacomponentdir = $(opallibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_btl_sm_la_SOURCES = $(libmca_btl_sm_la_sources)
-mca_btl_sm_la_LDFLAGS = -module -avoid-version $(btl_sm_LDFLAGS)
-mca_btl_sm_la_LIBADD = $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la \
-	$(btl_sm_LIBS)
+mca_btl_sm_la_LDFLAGS = -module -avoid-version
+mca_btl_sm_la_LIBADD = $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_btl_sm_la_SOURCES = $(libmca_btl_sm_la_sources)
-libmca_btl_sm_la_LIBADD = $(btl_sm_LIBS)
-libmca_btl_sm_la_LDFLAGS = -module -avoid-version $(btl_sm_LDFLAGS)
+libmca_btl_sm_la_LIBADD =
+libmca_btl_sm_la_LDFLAGS = -module -avoid-version

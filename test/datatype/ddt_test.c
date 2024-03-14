@@ -362,7 +362,7 @@ int main(int argc, char *argv[])
     ompi_datatype_t *pdt, *pdt1, *pdt2, *pdt3;
     int rc, length = 500;
 
-    opal_init_util(&argc, &argv);
+    opal_init(&argc, &argv);
     ompi_datatype_init();
 
     /**
@@ -579,7 +579,7 @@ int main(int argc, char *argv[])
     assert(pdt2 == NULL);
 
     /* clean-ups all data allocations */
-    ompi_datatype_finalize();
+    opal_finalize_util();
 
     return OMPI_SUCCESS;
 }

@@ -13,7 +13,7 @@
 # Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2015      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
-# Copyright (c) 2019      Triad National Security, LLC. All rights
+# Copyright (c) 2019-2022 Triad National Security, LLC. All rights
 #                         reserved.
 #
 # $COPYRIGHT$
@@ -37,35 +37,13 @@ AC_DEFUN([OPAL_CONFIG_QTHREADS],[
     opal_check_qthreads_save_LDFLAGS=$LDFLAGS
     opal_check_qthreads_save_LIBS=$LIBS
 
-    opal_qthreads_happy=yes
-    AS_IF([test "$with_qthreads" = "no"],
-          [opal_qthreads_happy=no])
-
-    AS_IF([test $opal_qthreads_happy = yes],
-          [AC_MSG_CHECKING([looking for qthreads in])
-           AS_IF([test "$with_qthreads" != "yes"],
-                 [opal_qthreads_dir=$with_qthreads
-                  AC_MSG_RESULT([($opal_qthreads_dir)])],
-                 [AC_MSG_RESULT([(default search paths)])])
-           AS_IF([test ! -z "$with_qthreads_libdir" && \
-                         test "$with_qthreads_libdir" != "yes"],
-                 [opal_qthreads_libdir=$with_qthreads_libdir])
-          ])
-
-    AS_IF([test $opal_qthreads_happy = yes],
-          [OPAL_CHECK_PACKAGE([opal_qthreads],
-                              [qthread.h],
-                              [qthread],
-                              [qthread_initialize],
-                              [],
-                              [$opal_qthreads_dir],
-                              [$opal_qthreads_libdir],
-                              [],
-                              [opal_qthreads_happy=no])])
-
-    AS_IF([test $opal_qthreads_happy = yes && test -n "$opal_qthreads_dir"],
-          [OPAL_QTHREADS_INCLUDE_PATH="$opal_qthreads_dir/include/"],
-          [OPAL_QTHREADS_INCLUDE_PATH=""])
+    OAC_CHECK_PACKAGE([qthreads],
+                      [opal_qthreads],
+                      [qthread.h],
+                      [qthread],
+                      [qthread_initialize],
+                      [opal_qthreads_happy=yes],
+                      [opal_qthreads_happy=no])
 
     AS_IF([test $opal_qthreads_happy = yes],
           [TPKG_CFLAGS="$opal_qthreads_CPPFLAGS"
@@ -76,13 +54,11 @@ AC_DEFUN([OPAL_CONFIG_QTHREADS],[
            TPKG_LDFLAGS="$opal_qthreads_LDFLAGS"
            TPKG_LIBS="$opal_qthreads_LIBS"])
 
-    AC_CONFIG_FILES([opal/mca/threads/qthreads/threads_qthreads.h])
-    AC_SUBST([OPAL_QTHREADS_INCLUDE_PATH])
     AC_SUBST([opal_qthreads_CPPFLAGS])
     AC_SUBST([opal_qthreads_LDFLAGS])
     AC_SUBST([opal_qthreads_LIBS])
 
-    CPPFLAGS=$opal_check_qthreads_save_CPPFLAGS
+    CPPFLAGS="${opal_check_argo_save_CPPFLAGS} ${opal_qthreads_CPPFLAGS}"
     LDFLAGS=$opal_check_qthreads_save_LDFLAGS
     LIBS=$opal_check_qthreads_save_LIBS
 

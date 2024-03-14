@@ -12,6 +12,8 @@
  * Copyright (c) 2015-2021 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2024      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,12 +31,14 @@ int
 mca_io_romio341_file_write_at (ompi_file_t *fh,
                             MPI_Offset offset,
                             const void *buf,
-                            int count,
+                            size_t count,
                             struct ompi_datatype_t *datatype,
                             ompi_status_public_t * status)
 {
     int         ret;
     mca_io_romio341_data_t *data;
+
+    OMPI_CHECK_MPI_COUNT_INT_CONVERSION_OVERFLOW(count);
 
     data = (mca_io_romio341_data_t *) fh->f_io_selected_data;
     OPAL_THREAD_LOCK (&mca_io_romio341_mutex);
@@ -52,12 +56,14 @@ int
 mca_io_romio341_file_write_at_all (ompi_file_t *fh,
                                 MPI_Offset offset,
                                 const void *buf,
-                                int count,
+                                size_t count,
                                 struct ompi_datatype_t *datatype,
                                 ompi_status_public_t * status)
 {
     int         ret;
     mca_io_romio341_data_t *data;
+
+    OMPI_CHECK_MPI_COUNT_INT_CONVERSION_OVERFLOW(count);
 
     data = (mca_io_romio341_data_t *) fh->f_io_selected_data;
     OPAL_THREAD_LOCK (&mca_io_romio341_mutex);
@@ -75,12 +81,14 @@ int
 mca_io_romio341_file_iwrite_at (ompi_file_t *fh,
                              MPI_Offset offset,
                              const void *buf,
-                             int count,
+                             size_t count,
                              struct ompi_datatype_t *datatype,
                              ompi_request_t **request)
 {
     int ret;
     mca_io_romio341_data_t *data;
+
+    OMPI_CHECK_MPI_COUNT_INT_CONVERSION_OVERFLOW(count);
 
     data = (mca_io_romio341_data_t *) fh->f_io_selected_data;
     OPAL_THREAD_LOCK (&mca_io_romio341_mutex);
@@ -97,12 +105,14 @@ int
 mca_io_romio341_file_iwrite_at_all (ompi_file_t *fh,
                                     MPI_Offset offset,
                                     const void *buf,
-                                    int count,
+                                    size_t count,
                                     struct ompi_datatype_t *datatype,
                                     ompi_request_t **request)
 {
     int         ret;
     mca_io_romio341_data_t *data;
+
+    OMPI_CHECK_MPI_COUNT_INT_CONVERSION_OVERFLOW(count);
 
     data = (mca_io_romio341_data_t *) fh->f_io_selected_data;
     OPAL_THREAD_LOCK (&mca_io_romio341_mutex);
@@ -125,12 +135,14 @@ mca_io_romio341_file_iwrite_at_all (ompi_file_t *fh,
 int
 mca_io_romio341_file_write (ompi_file_t *fh,
                          const void *buf,
-                         int count,
+                         size_t count,
                          struct ompi_datatype_t *datatype,
                          ompi_status_public_t * status)
 {
     int         ret;
     mca_io_romio341_data_t *data;
+
+    OMPI_CHECK_MPI_COUNT_INT_CONVERSION_OVERFLOW(count);
 
     data = (mca_io_romio341_data_t *) fh->f_io_selected_data;
     OPAL_THREAD_LOCK (&mca_io_romio341_mutex);
@@ -145,12 +157,14 @@ mca_io_romio341_file_write (ompi_file_t *fh,
 int
 mca_io_romio341_file_write_all (ompi_file_t *fh,
                              const void *buf,
-                             int count,
+                             size_t count,
                              struct ompi_datatype_t *datatype,
                              ompi_status_public_t * status)
 {
     int         ret;
     mca_io_romio341_data_t *data;
+
+    OMPI_CHECK_MPI_COUNT_INT_CONVERSION_OVERFLOW(count);
 
     data = (mca_io_romio341_data_t *) fh->f_io_selected_data;
     OPAL_THREAD_LOCK (&mca_io_romio341_mutex);
@@ -165,12 +179,14 @@ mca_io_romio341_file_write_all (ompi_file_t *fh,
 int
 mca_io_romio341_file_iwrite (ompi_file_t *fh,
                           const void *buf,
-                          int count,
+                          size_t count,
                           struct ompi_datatype_t *datatype,
                           ompi_request_t **request)
 {
     int ret;
     mca_io_romio341_data_t *data;
+
+    OMPI_CHECK_MPI_COUNT_INT_CONVERSION_OVERFLOW(count);
 
     data = (mca_io_romio341_data_t *) fh->f_io_selected_data;
     OPAL_THREAD_LOCK (&mca_io_romio341_mutex);
@@ -185,12 +201,14 @@ mca_io_romio341_file_iwrite (ompi_file_t *fh,
 int
 mca_io_romio341_file_iwrite_all (ompi_file_t *fh,
                                 const void *buf,
-                                 int count,
+                                 size_t count,
                                  struct ompi_datatype_t *datatype,
                                  ompi_request_t **request)
 {
     int         ret;
     mca_io_romio341_data_t *data;
+
+    OMPI_CHECK_MPI_COUNT_INT_CONVERSION_OVERFLOW(count);
 
     data = (mca_io_romio341_data_t *) fh->f_io_selected_data;
     OPAL_THREAD_LOCK (&mca_io_romio341_mutex);
@@ -212,12 +230,14 @@ mca_io_romio341_file_iwrite_all (ompi_file_t *fh,
 int
 mca_io_romio341_file_write_shared (ompi_file_t *fh,
                                 const void *buf,
-                                int count,
+                                size_t count,
                                 struct ompi_datatype_t *datatype,
                                 ompi_status_public_t * status)
 {
     int         ret;
     mca_io_romio341_data_t *data;
+
+    OMPI_CHECK_MPI_COUNT_INT_CONVERSION_OVERFLOW(count);
 
     data = (mca_io_romio341_data_t *) fh->f_io_selected_data;
     OPAL_THREAD_LOCK (&mca_io_romio341_mutex);
@@ -232,12 +252,14 @@ mca_io_romio341_file_write_shared (ompi_file_t *fh,
 int
 mca_io_romio341_file_iwrite_shared (ompi_file_t *fh,
                                  const void *buf,
-                                 int count,
+                                 size_t count,
                                  struct ompi_datatype_t *datatype,
                                  ompi_request_t **request)
 {
     int ret;
     mca_io_romio341_data_t *data;
+
+    OMPI_CHECK_MPI_COUNT_INT_CONVERSION_OVERFLOW(count);
 
     data = (mca_io_romio341_data_t *) fh->f_io_selected_data;
     OPAL_THREAD_LOCK (&mca_io_romio341_mutex);
@@ -252,12 +274,14 @@ mca_io_romio341_file_iwrite_shared (ompi_file_t *fh,
 int
 mca_io_romio341_file_write_ordered (ompi_file_t *fh,
                                  const void *buf,
-                                 int count,
+                                 size_t count,
                                  struct ompi_datatype_t *datatype,
                                  ompi_status_public_t * status)
 {
     int         ret;
     mca_io_romio341_data_t *data;
+
+    OMPI_CHECK_MPI_COUNT_INT_CONVERSION_OVERFLOW(count);
 
     data = (mca_io_romio341_data_t *) fh->f_io_selected_data;
     OPAL_THREAD_LOCK (&mca_io_romio341_mutex);
@@ -273,11 +297,13 @@ int
 mca_io_romio341_file_write_at_all_begin (ompi_file_t *fh,
                                       MPI_Offset offset,
                                       const void *buf,
-                                      int count,
+                                      size_t count,
                                       struct ompi_datatype_t *datatype)
 {
     int         ret;
     mca_io_romio341_data_t *data;
+
+    OMPI_CHECK_MPI_COUNT_INT_CONVERSION_OVERFLOW(count);
 
     data = (mca_io_romio341_data_t *) fh->f_io_selected_data;
     OPAL_THREAD_LOCK (&mca_io_romio341_mutex);
@@ -308,11 +334,13 @@ mca_io_romio341_file_write_at_all_end (ompi_file_t *fh,
 int
 mca_io_romio341_file_write_all_begin (ompi_file_t *fh,
                                    const void *buf,
-                                   int count,
+                                   size_t count,
                                    struct ompi_datatype_t *datatype)
 {
     int         ret;
     mca_io_romio341_data_t *data;
+
+    OMPI_CHECK_MPI_COUNT_INT_CONVERSION_OVERFLOW(count);
 
     data = (mca_io_romio341_data_t *) fh->f_io_selected_data;
     OPAL_THREAD_LOCK (&mca_io_romio341_mutex);
@@ -342,11 +370,13 @@ mca_io_romio341_file_write_all_end (ompi_file_t *fh,
 int
 mca_io_romio341_file_write_ordered_begin (ompi_file_t *fh,
                                        const void *buf,
-                                       int count,
+                                       size_t count,
                                        struct ompi_datatype_t *datatype)
 {
     int         ret;
     mca_io_romio341_data_t *data;
+
+    OMPI_CHECK_MPI_COUNT_INT_CONVERSION_OVERFLOW(count);
 
     data = (mca_io_romio341_data_t *) fh->f_io_selected_data;
     OPAL_THREAD_LOCK (&mca_io_romio341_mutex);

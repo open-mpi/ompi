@@ -19,7 +19,7 @@
 
 BEGIN_C_DECLS
 
-OMPI_MODULE_DECLSPEC extern mca_pml_base_component_2_1_0_t mca_pml_v_component;
+OMPI_DECLSPEC extern mca_pml_base_component_2_1_0_t mca_pml_v_component;
 
 END_C_DECLS
 

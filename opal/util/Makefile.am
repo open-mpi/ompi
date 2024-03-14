@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2007-2015 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2007-2022 Cisco Systems, Inc.  All rights reserved
 # Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
 # Copyright (c) 2013      Intel, Inc. All rights reserved
 # Copyright (c) 2016      Los Alamos National Security, LLC. All rights
@@ -34,7 +34,7 @@ dist_opaldata_DATA = help-opal-util.txt
 AM_LFLAGS = -Popal_show_help_yy
 LEX_OUTPUT_ROOT = lex.opal_show_help_yy
 
-noinst_LTLIBRARIES = libopalutil.la
+noinst_LTLIBRARIES = libopalutil.la libopalutil_core.la
 
 AM_CPPFLAGS = $(LTDLINCL)
 
@@ -48,9 +48,9 @@ headers = \
 	bipartite_graph.h \
 	bipartite_graph_internal.h \
         bit_ops.h \
+        clock_gettime.h \
         cmd_line.h \
         crc.h \
-        daemon_init.h \
 	ethtool.h \
         error.h \
 	event.h \
@@ -63,7 +63,6 @@ headers = \
         numtostr.h \
         opal_environ.h \
         opal_getcwd.h \
-        opal_pty.h \
         os_dirpath.h \
         os_path.h \
         output.h \
@@ -80,10 +79,19 @@ headers = \
         uri.h \
         info_subscriber.h \
 	info.h \
-	minmax.h
+	minmax.h \
+	sha256.h
 
 libopalutil_la_SOURCES = \
         $(headers) \
+	ethtool.c \
+	event.c \
+        if.c \
+        net.c \
+        info_subscriber.c \
+        info.c
+
+libopalutil_core_la_SOURCES = \
         alfg.c \
         arch.c \
         argv.c \
@@ -91,20 +99,14 @@ libopalutil_la_SOURCES = \
 	bipartite_graph.c \
         cmd_line.c \
         crc.c \
-        daemon_init.c \
-	ethtool.c \
         error.c \
-	event.c \
         fd.c \
         few.c \
-        if.c \
         keyval_parse.c \
         malloc.c \
-        net.c \
         numtostr.c \
         opal_environ.c \
         opal_getcwd.c \
-        opal_pty.c \
         os_dirpath.c \
         os_path.c \
         output.c \
@@ -112,22 +114,21 @@ libopalutil_la_SOURCES = \
         printf.c \
         proc.c \
         qsort.c \
+        sha256.c \
         show_help.c \
         show_help_lex.l \
         stacktrace.c \
         string_copy.c \
         sys_limits.c \
-        uri.c \
-        info_subscriber.c \
-        info.c
+        uri.c
 
 if OPAL_COMPILE_TIMING
-libopalutil_la_SOURCES += timings.c
+libopalutil_core_la_SOURCES += timings.c
 endif
 
-libopalutil_la_LIBADD = \
+libopalutil_core_la_LIBADD = \
         keyval/libopalutilkeyval.la
-libopalutil_la_DEPENDENCIES = \
+libopalutil_core_la_DEPENDENCIES = \
         keyval/libopalutilkeyval.la
 
 # Conditionally install the header files

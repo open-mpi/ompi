@@ -198,6 +198,8 @@ typedef struct
         struct {
             int c_name;
             int c_contextid;
+            int c_contextidb;
+            int c_index;
             int c_my_rank;
             int c_local_group;
             int c_remote_group;

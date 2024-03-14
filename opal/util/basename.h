@@ -19,7 +19,7 @@
 /**
  * @file
  *
- * Returns an OS-independant basename() of a given filename.
+ * Returns an OS-independent basename() of a given filename.
  */
 
 #ifndef OPAL_BASENAME_H

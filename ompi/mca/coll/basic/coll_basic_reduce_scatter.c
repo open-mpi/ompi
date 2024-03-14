@@ -57,7 +57,7 @@
  *
  * NOTE: that the recursive halving algorithm should be faster than
  * the reduce/scatter for all message sizes.  However, the memory
- * usage for the recusive halving is msg_size + 2 * comm_size greater
+ * usage for the recursive halving is msg_size + 2 * comm_size greater
  * for the recursive halving, so I've limited where the recursive
  * halving is used to be nice to the app memory wise.  There are much
  * better algorithms for large messages with commutative operations,

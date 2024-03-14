@@ -1,7 +1,7 @@
 # -*- shell-script -*-
 #
 # Copyright (c) 2020      Intel, Inc.  All rights reserved.
-# Copyright (c) 2020      Cisco Systems, Inc.  All rights reserved
+# Copyright (c) 2020-2021 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -10,7 +10,7 @@
 #
 
 AC_DEFUN([OMPI_CHECK_DELETED_OPTIONS],[
-    OPAL_VAR_SCOPE_PUSH([with_pmi_given with_pmi_libdir_given cxx])
+    OPAL_VAR_SCOPE_PUSH([with_pmi_given with_pmi_libdir_given ompi_cxx_warn ompi_cxx_error])
 
     # --with-pmi options were removed in v5.0
     AC_ARG_WITH([pmi],
@@ -41,38 +41,55 @@ AC_DEFUN([OMPI_CHECK_DELETED_OPTIONS],[
         AC_MSG_ERROR([Build cannot continue.])
     fi
 
-    # Open MPI C++ bindings were removed in v5.0
-    cxx=0
-    cxxseek=0
-    cxxex=0
+    # Note that we always *warn* if someone used a CLI option for a
+    # feature that has been deleted.  If, however, they are disabling
+    # the deleted feature (e.g., --disable-mpi-cxx), then emitting a
+    # warning is good enough -- allow configure to continue.  If,
+    # however, the user asked to enable a deleted feature, then
+    # configure needs to error out.
+    ompi_cxx_warn=0
+    ompi_cxx_error=0
     AC_ARG_ENABLE([mpi-cxx],
                   [AS_HELP_STRING([--enable-mpi-cxx],
                                   [*DELETED* Build the MPI C++ bindings])],
-                  [cxx=1])
+                  [ompi_cxx_warn=1
+                   AS_IF([test "$enable_mpi_cxx" != "no"],
+                         [ompi_cxx_error=1])
+                  ])
     AC_ARG_ENABLE([mpi-cxx-seek],
                   [AS_HELP_STRING([--enable-mpi-cxx-seek],
                                   [*DELETED* Build support for MPI::SEEK])],
-                  [cxxseek=1])
+                  [ompi_cxx_warn=1
+                   AS_IF([test "$enable_mpi_cxx_seek" != "no"],
+                         [ompi_cxx_error=1])
+                  ])
     AC_ARG_ENABLE([cxx-exceptions],
                   [AS_HELP_STRING([--enable-cxx-exceptions],
                                   [*DELETED* Build support for C++ exceptions in the MPI C++ bindings])],
-                  [cxxex=1])
+                  [ompi_cxx_warn=1
+                   AS_IF([test "$enable_cxx_exceptions" != "no"],
+                         [ompi_cxx_error=1])
+                  ])
 
-    AS_IF([test "$enable_mpi_cxx" = "no" ],
-          [cxx=0])
-
-    AS_IF([test "$enable_mpi_cxx_seek" = "no" ],
-          [cxxseek=0])
-
-    AS_IF([test "$enable_cxx_exceptions" = "no" ],
-          [cxxex=0])
-
-    AS_IF([test $cxx -eq 1 || test $cxxseek -eq 1 || test $cxxex -eq 1],
-          [AC_MSG_WARN([The MPI C++ bindings have been removed from Open MPI.])
+    AS_IF([test $ompi_cxx_warn -eq 1],
+          [AC_MSG_WARN([An MPI C++ bindings-related command line option])
+           AC_MSG_WARN([was given to "configure".])
+           AC_MSG_WARN([ ])
+           AC_MSG_WARN([This command line option will be removed in a future])
+           AC_MSG_WARN([version of Open MPI; you should discontinue using it.])
+           AC_MSG_WARN([You have been warned!])
+           AC_MSG_WARN([ ])
+           AC_MSG_WARN([The MPI C++ bindings were deprecated in the MPI-2.2])
+           AC_MSG_WARN([standard in 2009, and removed from the MPI-3.0])
+           AC_MSG_WARN([standard in 2012.  The MPI C++ bindings were then])
+           AC_MSG_WARN([removed from Open MPI v5.0.0 in 2022.])
+           AC_MSG_WARN([ ])
            AC_MSG_WARN([If you need support for the MPI C++ bindings, you])
            AC_MSG_WARN([will need to use an older version of Open MPI.])
-           AC_MSG_ERROR([Build cannot continue.])
           ])
+
+    AS_IF([test $ompi_cxx_error -eq 1],
+          [AC_MSG_ERROR([Build cannot continue.])])
 
     OPAL_VAR_SCOPE_POP
 ])

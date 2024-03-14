@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011-2017 The University of Tennessee and The University
+ * Copyright (c) 2011-2023 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2011-2018 Inria.  All rights reserved.
@@ -705,7 +705,6 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
         if (OMPI_SUCCESS != (err = ompi_comm_split(comm_old, 0, newrank, newcomm, false))) {
             goto release_and_return;
         }
-        /* end of TODO */
 
         /* Attach the dist_graph to the newly created communicator */
         (*newcomm)->c_flags        |= OMPI_COMM_DIST_GRAPH;
@@ -945,7 +944,6 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
             free(grank_to_lrank);
             goto release_and_return;
         }
-        /* end of TODO */
 
         /* Attach the dist_graph to the newly created communicator */
         (*newcomm)->c_flags        |= OMPI_COMM_DIST_GRAPH;
@@ -956,6 +954,17 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
         free(lrank_to_grank);
     } /* distributed reordering end */
 
+    /* Translate the ranks provided by the user to account for the reordered communicator.
+     * Note that this operation is safe to be done in place, directly into the in/out arrays.
+     */
+    ompi_group_translate_ranks(comm_old->c_remote_group, topo->indegree,
+                               topo->in,
+                               (*newcomm)->c_remote_group,
+                               topo->in);
+    ompi_group_translate_ranks(comm_old->c_remote_group, topo->outdegree,
+                               topo->out,
+                               (*newcomm)->c_remote_group,
+                               topo->out);
   release_and_return:
     if (NULL != reqs ) free(reqs);
     if (NULL != tracker) free(tracker);

@@ -35,7 +35,7 @@ BEGIN_C_DECLS
 /**
  * Create datatype based on packed payload
  *
- * Create a useable MPI datatype based on it's packed description.
+ * Create a usable MPI datatype based on its packed description.
  * The datatype is owned by the calling process and must be
  * OBJ_RELEASEd when no longer in use.
  *
@@ -44,7 +44,7 @@ BEGIN_C_DECLS
  *                    pointer to the payload will be moved past the
  *                    datatype information upon successful return.
  *
- * @retval NULL       A failure occrred
+ * @retval NULL       A failure occurred
  * @retval non-NULL   A fully operational datatype
  */
 static inline
@@ -61,14 +61,14 @@ ompi_osc_base_datatype_create(ompi_proc_t *remote_proc,  void **payload)
 /**
  * Create operation based on Fortran Index
  *
- * Create a useable MPI operation based on it's Fortran index, which is
+ * Create a usable MPI operation based on its Fortran index, which is
  * globally the same for predefined operations.  The op handle is
  * owned by the calling process and must be OBJ_RELEASEd when no
  * longer in use.
  *
- * @param op_id       The fortran index for the operaton
+ * @param op_id       The fortran index for the operation
  *
- * @retval NULL       A failure occrred
+ * @retval NULL       A failure occurred
  * @retval non-NULL   An op handle
  */
 static inline
@@ -102,7 +102,7 @@ OMPI_DECLSPEC int ompi_osc_base_get_primitive_type_info(ompi_datatype_t *datatyp
 
 
 /**
- * Apply the operation specified from inbuf to outbut
+ * Apply the operation specified from inbuf to outbuf
  *
  * Apply the specified reduction operation from inbuf to outbuf.
  * inbuf must contain count instances of datatype, in the local

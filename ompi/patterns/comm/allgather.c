@@ -49,7 +49,7 @@ OMPI_DECLSPEC int ompi_comm_allgather_pml(void *src_buf, void *dest_buf, int cou
     ompi_request_t *requests[4];
 
     /* get size of data needed - same layout as user data, so that
-     *   we can apply the reudction routines directly on these buffers
+     *   we can apply the reduction routines directly on these buffers
      */
     rc = ompi_datatype_type_size(dtype, &dt_size);
     if( OMPI_SUCCESS != rc ) {
@@ -165,7 +165,7 @@ OMPI_DECLSPEC int ompi_comm_allgather_pml(void *src_buf, void *dest_buf, int cou
                  */
                 extra_end=n_extra_nodes-1;
             }
-            /* get the number of ranks whos data is to be grabbed */
+            /* get the number of ranks whose data is to be grabbed */
             n_extra=extra_end-extra_start+1;
 
             recv_iov[1].iov_base=(char *)dest_buf+
@@ -210,7 +210,7 @@ OMPI_DECLSPEC int ompi_comm_allgather_pml(void *src_buf, void *dest_buf, int cou
                  */
                 extra_end=n_extra_nodes-1;
             }
-            /* get the number of ranks whos data is to be grabbed */
+            /* get the number of ranks whose data is to be grabbed */
             n_extra=extra_end-extra_start+1;
 
             send_iov[1].iov_base=(char *)dest_buf+

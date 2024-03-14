@@ -15,6 +15,8 @@
  * Copyright (c) 2018-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
+ * Copyright (c) 2022      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -124,6 +126,7 @@ struct mca_btl_ofi_module_t {
     bool initialized;
     bool use_virt_addr;
     bool is_scalable_ep;
+    bool use_fi_mr_bind;
 
     opal_atomic_int64_t outstanding_rdma;
     opal_atomic_int64_t outstanding_send;
@@ -137,6 +140,9 @@ struct mca_btl_ofi_module_t {
 
     /** registration cache */
     mca_rcache_base_module_t *rcache;
+    /* If the underlying OFI provider has its own cache, we want to bypass
+     * rcache registration */
+    bool bypass_cache;
 };
 typedef struct mca_btl_ofi_module_t mca_btl_ofi_module_t;
 
@@ -159,12 +165,18 @@ struct mca_btl_ofi_component_t {
 
     size_t namelen;
 
+    /** Maximum inject size */
+    size_t max_inject_size;
+    bool disable_inject;
+
+    bool disable_hmem;
+
     /** All BTL OFI modules (1 per tl) */
     mca_btl_ofi_module_t *modules[MCA_BTL_OFI_MAX_MODULES];
 };
 typedef struct mca_btl_ofi_component_t mca_btl_ofi_component_t;
 
-OPAL_MODULE_DECLSPEC extern mca_btl_ofi_component_t mca_btl_ofi_component;
+OPAL_DECLSPEC extern mca_btl_ofi_component_t mca_btl_ofi_component;
 
 struct mca_btl_base_registration_handle_t {
     uint64_t rkey;

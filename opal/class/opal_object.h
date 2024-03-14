@@ -196,8 +196,8 @@ struct opal_object_t {
     opal_atomic_int32_t obj_reference_count; /**< reference count */
 #if OPAL_ENABLE_DEBUG
     const char
-        *cls_init_file_name; /**< In debug mode store the file where the object get contructed */
-    int cls_init_lineno; /**< In debug mode store the line number where the object get contructed */
+        *cls_init_file_name; /**< In debug mode store the file where the object get constructed */
+    int cls_init_lineno; /**< In debug mode store the line number where the object get constructed */
 #endif /* OPAL_ENABLE_DEBUG */
 };
 

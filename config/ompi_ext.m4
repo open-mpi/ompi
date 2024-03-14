@@ -34,6 +34,9 @@ AC_DEFUN([OMPI_EXT],[
     dnl for OPAL_CONFIGURE_USER env variable
     AC_REQUIRE([OPAL_CONFIGURE_SETUP])
 
+    m4_ifdef([ompi_mpiext_list], [],
+             [m4_fatal([Could not find MPI Extensions list.  Aborting.])])
+
     # Note that we do not build DSO's here -- we *only* build convenience
     # libraries that get slurped into higher-level libraries
     #
@@ -42,7 +45,7 @@ AC_DEFUN([OMPI_EXT],[
     #
     AC_ARG_ENABLE([mpi-ext],
         [AS_HELP_STRING([--enable-mpi-ext[=LIST]],
-                       [Comma-separated list of extensions that should be built.  Possible values: ompi_mpiext_list.  Example: "--enable-mpi-ext=foo,bar" will enable building the MPI extensions "foo" and "bar".  If LIST is empty or the special value "all", then all available MPI extensions will be built (default: all).])])
+                       [Comma-separated list of extensions that should be built.  Possible values: ]m4_quote(ompi_mpiext_list)[.  Example: "--enable-mpi-ext=foo,bar" will enable building the MPI extensions "foo" and "bar".  If LIST is empty or the special value "all", then all available MPI extensions will be built (default: all).])])
 
     # print some nice messages about what we're about to do...
     AC_MSG_CHECKING([for available MPI Extensions])
@@ -73,9 +76,6 @@ AC_DEFUN([OMPI_EXT],[
     fi
     AC_MSG_RESULT([$msg])
     unset msg
-
-    m4_ifdef([ompi_mpiext_list], [],
-             [m4_fatal([Could not find MPI Extensions list.  Aborting.])])
 
     EXT_CONFIGURE
 ])
@@ -390,6 +390,9 @@ AC_DEFUN([EXT_CONFIGURE_M4_CONFIG_COMPONENT],[
     AS_IF([test $should_build -eq 1],
           [EXT_PROCESS_COMPONENT([$1], [$2], [$3], [$4], [$5], [$6], [$7])],
           [EXT_PROCESS_DEAD_COMPONENT([$1], [$2])])
+
+    m4_ifdef([OMPI_MPIEXT_$1_POST_CONFIG],
+             [OMPI_MPIEXT_$1_POST_CONFIG($should_build)])
 ])
 
 ######################################################################

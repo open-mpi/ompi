@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2010-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010-2022 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2014-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2015-2016 Research Organization for Information Science
@@ -148,7 +148,7 @@ int opal_ifindextokindex(int if_index)
 }
 
 /*
- *  Attempt to resolve the adddress (given as either IPv4/IPv6 string
+ *  Attempt to resolve the address (given as either IPv4/IPv6 string
  *  or hostname) and lookup corresponding interface.
  */
 
@@ -538,7 +538,7 @@ int opal_iftupletoaddr(const char *inaddr, uint32_t *net, uint32_t *mask)
                 rc = parse_ipv4_dots(ptr, mask, &dots);
             } else {
                 /* no - must be an int telling us how much of the addr to use: e.g., /16
-                 * For more information please read http://en.wikipedia.org/wiki/Subnetwork.
+                 * For more information please read https://en.wikipedia.org/wiki/Subnetwork.
                  */
                 pval = strtol(ptr, NULL, 10);
                 if ((pval > 31) || (pval < 1)) {

@@ -1,6 +1,6 @@
 ! -*- fortran -*-
 !
-! Copyright (c) 2020      Research Organization for Information Science
+! Copyright (c) 2020-2022 Research Organization for Information Science
 !                         and Technology (RIST).  All rights reserved.
 ! $COPYRIGHT$
 !
@@ -31,8 +31,8 @@
 #define MPI_Alltoallw_init PMPI_Alltoallw_init
 #define MPI_Barrier PMPI_Barrier
 #define MPI_Barrier_init PMPI_Barrier_init
-#define MPI_Bcast PPMPI_Bcast
-#define MPI_Bcast_init PPMPI_Bcast_init
+#define MPI_Bcast PMPI_Bcast
+#define MPI_Bcast_init PMPI_Bcast_init
 #define MPI_Bsend PMPI_Bsend
 #define MPI_Bsend_init PMPI_Bsend_init
 #define MPI_Buffer_attach PMPI_Buffer_attach
@@ -53,6 +53,7 @@
 #define MPI_Comm_connect PMPI_Comm_connect
 #define MPI_Comm_create PMPI_Comm_create
 #define MPI_Comm_create_errhandler PMPI_Comm_create_errhandler
+#define MPI_Comm_create_from_group PMPI_Comm_create_from_group
 #define MPI_Comm_create_group PMPI_Comm_create_group
 #define MPI_Comm_create_keyval PMPI_Comm_create_keyval
 #define MPI_Comm_delete_attr PMPI_Comm_delete_attr
@@ -68,6 +69,7 @@
 #define MPI_Comm_get_parent PMPI_Comm_get_parent
 #define MPI_Comm_group PMPI_Comm_group
 #define MPI_Comm_idup PMPI_Comm_idup
+#define MPI_Comm_idup_with_info PMPI_Comm_idup_with_info
 #define MPI_Comm_join PMPI_Comm_join
 #define MPI_Comm_rank PMPI_Comm_rank
 #define MPI_Comm_remote_group PMPI_Comm_remote_group
@@ -122,6 +124,7 @@
 #define MPI_Group_compare PMPI_Group_compare
 #define MPI_Group_difference PMPI_Group_difference
 #define MPI_Group_excl PMPI_Group_excl
+#define MPI_Group_from_session_pset PMPI_Group_from_session_pset
 #define MPI_Group_free PMPI_Group_free
 #define MPI_Group_incl PMPI_Group_incl
 #define MPI_Group_intersection PMPI_Group_intersection
@@ -151,18 +154,21 @@
 #define MPI_Ineighbor_alltoallv PMPI_Ineighbor_alltoallv
 #define MPI_Ineighbor_alltoallw PMPI_Ineighbor_alltoallw
 #define MPI_Info_create PMPI_Info_create
+#define MPI_Info_create_env PMPI_Info_create_env
 #define MPI_Info_delete PMPI_Info_delete
 #define MPI_Info_dup PMPI_Info_dup
 #define MPI_Info_free PMPI_Info_free
 #define MPI_Info_get PMPI_Info_get
 #define MPI_Info_get_nkeys PMPI_Info_get_nkeys
 #define MPI_Info_get_nthkey PMPI_Info_get_nthkey
+#define MPI_Info_get_string PMPI_Info_get_string
 #define MPI_Info_get_valuelen PMPI_Info_get_valuelen
 #define MPI_Info_set PMPI_Info_set
 #define MPI_Init PMPI_Init
 #define MPI_Init_thread PMPI_Init_thread
 #define MPI_Initialized PMPI_Initialized
 #define MPI_Intercomm_create PMPI_Intercomm_create
+#define MPI_Intercomm_create_from_groups PMPI_Intercomm_create_from_groups
 #define MPI_Intercomm_merge PMPI_Intercomm_merge
 #define MPI_Iprobe PMPI_Iprobe
 #define MPI_Irecv PMPI_Irecv
@@ -175,6 +181,8 @@
 #define MPI_Iscatter PMPI_Iscatter
 #define MPI_Iscatterv PMPI_Iscatterv
 #define MPI_Isend PMPI_Isend
+#define MPI_Isendrecv PMPI_Isendrecv
+#define MPI_Isendrecv_replace PMPI_Isendrecv_replace
 #define MPI_Issend PMPI_Issend
 #define MPI_Lookup_name PMPI_Lookup_name
 #define MPI_Mprobe PMPI_Mprobe
@@ -236,6 +244,16 @@
 #define MPI_Send_init PMPI_Send_init
 #define MPI_Sendrecv PMPI_Sendrecv
 #define MPI_Sendrecv_replace PMPI_Sendrecv_replace
+#define MPI_Session_call_errhandler PMPI_Session_call_errhandler
+#define MPI_Session_create_errhandler PMPI_Session_create_errhandler
+#define MPI_Session_get_errhandler PMPI_Session_get_errhandler
+#define MPI_Session_get_info PMPI_Session_get_info
+#define MPI_Session_get_nth_pset PMPI_Session_get_nth_pset
+#define MPI_Session_get_nth_psetlen PMPI_Session_get_nth_psetlen
+#define MPI_Session_get_pset_info PMPI_Session_get_pset_info
+#define MPI_Session_init PMPI_Session_init
+#define MPI_Session_finalize PMPI_Session_finalize
+#define MPI_Session_set_errhandler PMPI_Session_set_errhandler
 #define MPI_Ssend PMPI_Ssend
 #define MPI_Ssend_init PMPI_Ssend_init
 #define MPI_Start PMPI_Start

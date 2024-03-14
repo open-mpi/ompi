@@ -40,7 +40,7 @@ AC_DEFUN([MCA_ompi_mtl_portals4_CONFIG],[
           [$1],
           [$2])
 
-    # need to propogate CPPFLAGS to all of OMPI
+    # need to propagate CPPFLAGS to all of OMPI
     AS_IF([test "$DIRECT_mtl" = "portals4"],
           [mtl_portals4_WRAPPER_EXTRA_CPPFLAGS="$mtl_portals4_CPPFLAGS"
            CPPFLAGS="$CPPFLAGS $mtl_portals4_CPPFLAGS"])

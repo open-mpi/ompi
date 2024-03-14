@@ -3,6 +3,7 @@
 # Copyright (c) 2014-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2015-2021 Research Organization for Information Science
 #                         and Technology (RIST).  All rights reserved.
+# Copyright (c) 2022      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Script to generate the overloaded MPI_SIZEOF interfaces and
@@ -39,6 +40,8 @@ my $mpi_complex4;
 my $mpi_complex32;
 my $pmpi_arg;
 my $help_arg = 0;
+my $request_deprecate = 0;
+my $mpi_version = 0;
 
 &Getopt::Long::Configure("bundling");
 my $ok = Getopt::Long::GetOptions("complex32=i" => \$mpi_complex32,
@@ -53,6 +56,8 @@ my $ok = Getopt::Long::GetOptions("complex32=i" => \$mpi_complex32,
                                   "real16=i" => \$mpi_real16,
                                   "real2=i" => \$mpi_real2,
                                   "iso_real16=i" => \$mpi_iso_real16,
+                                  "request_deprecate=i" => \$request_deprecate,
+                                  "mpi_version=i" => \$mpi_version,
                                   "help|h" => \$help_arg);
 
 die "Must specify header and/or impl filenames to output"
@@ -106,7 +111,13 @@ ${indent}  INTEGER$optional_ierror_param, INTENT(OUT) :: ierror";
     $subr->{start} = $start;
     $subr->{middle} = "${indent}  size = storage_size(x) / 8
 ${indent}  ${optional_ierror_statement}ierror = 0";
-    $subr->{end} = "${indent}END SUBROUTINE ^PREFIX^$sub_name^RANK^";
+    if (($mpi_version >= 4) && ($request_deprecate == 1)) {
+        $subr->{end} = "!GCC\$ ATTRIBUTES DEPRECATED :: ^PREFIX^$sub_name^RANK^\n";
+    }
+    else {
+        $subr->{end} = "";
+    }
+    $subr->{end} .= "${indent}END SUBROUTINE ^PREFIX^$sub_name^RANK^";
 
     # Save it in the overall hash
     $subs->{$sub_name} = $subr;
@@ -233,7 +244,7 @@ sub output_file {
 ! Specifically: we need support for the INTERFACE keyword,
 ! ISO_FORTRAN_ENV, and the STORAGE_SIZE() intrinsic on all types.
 ! Apparently, this compiler does not support both of those things, so
-! this file will be (effecitvely) blank (i.e., we didn't bother
+! this file will be (effectively) blank (i.e., we didn't bother
 ! generating the necessary stuff for MPI_SIZEOF because the compiler
 ! doesn't support
 ! it).

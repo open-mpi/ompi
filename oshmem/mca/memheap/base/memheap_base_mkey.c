@@ -227,11 +227,12 @@ static void do_recv(int source_pe, pmix_data_buffer_t* buffer)
         PMIx_Data_pack(NULL, msg, &msg_type, 1, PMIX_UINT8);
 
         if (OSHMEM_SUCCESS != pack_local_mkeys(msg, source_pe, seg)) {
-            OBJ_RELEASE(msg);
+            PMIX_DATA_BUFFER_RELEASE(msg);
             goto send_fail;
         }
 
         rc = send_buffer(source_pe, msg);
+        PMIX_DATA_BUFFER_RELEASE(msg);
         if (MPI_SUCCESS != rc) {
             MEMHEAP_ERROR("FAILED to send rml message %d", rc);
             OMPI_ERROR_LOG(rc);
@@ -271,6 +272,7 @@ static void do_recv(int source_pe, pmix_data_buffer_t* buffer)
     PMIx_Data_pack(NULL, msg, &msg_type, 1, PMIX_UINT8);
 
     rc = send_buffer(source_pe, msg);
+    PMIX_DATA_BUFFER_RELEASE(msg);
     if (MPI_SUCCESS != rc) {
         MEMHEAP_ERROR("FAILED to send rml message %d", rc);
         OMPI_ERROR_LOG(rc);
@@ -280,7 +282,7 @@ static void do_recv(int source_pe, pmix_data_buffer_t* buffer)
 
 /**
  * simple/fast version of MPI_Test that
- * - only works with persistant request
+ * - only works with persistent request
  * - does not do any progress
  * - can be safely called from within opal_progress()
  */
@@ -443,15 +445,14 @@ void memheap_oob_destruct(void)
 static int send_buffer(int pe, pmix_data_buffer_t *msg)
 {
     void *buffer;
-    int32_t size;
+    size_t size;
     int rc;
 
     PMIX_DATA_BUFFER_UNLOAD(msg, buffer, size);
     rc = PMPI_Send(buffer, size, MPI_BYTE, pe, 0, oshmem_comm_world);
     free(buffer);
-    PMIX_DATA_BUFFER_RELEASE(msg);
 
-    MEMHEAP_VERBOSE(5, "message sent: dst=%d, rc=%d, %d bytes!", pe, rc, size);
+    MEMHEAP_VERBOSE(5, "message sent: dst=%d, rc=%d, %" PRIsize_t " bytes!", pe, rc, size);
     return rc;
 }
 
@@ -492,6 +493,7 @@ static int memheap_oob_get_mkeys(shmem_ctx_t ctx, int pe, uint32_t seg, sshmem_m
     PMIx_Data_pack(NULL, msg, &seg, 1, PMIX_UINT32);
 
     rc = send_buffer(pe, msg);
+    PMIX_DATA_BUFFER_RELEASE(msg);
     if (MPI_SUCCESS != rc) {
         OPAL_THREAD_UNLOCK(&memheap_oob.lck);
         MEMHEAP_ERROR("FAILED to send rml message %d", rc);
@@ -521,7 +523,7 @@ void mca_memheap_modex_recv_all(void)
     pmix_data_buffer_t *msg = NULL;
     void *send_buffer = NULL;
     char *rcv_buffer = NULL;
-    int size;
+    size_t size;
     int *rcv_size = NULL;
     int *rcv_n_transports = NULL;
     int *rcv_offsets = NULL;
@@ -582,7 +584,7 @@ void mca_memheap_modex_recv_all(void)
 
     /* Do allgather */
     PMIX_DATA_BUFFER_UNLOAD(msg, send_buffer, size);
-    MEMHEAP_VERBOSE(1, "local keys packed into %d bytes, %d segments", size, memheap_map->n_segments);
+    MEMHEAP_VERBOSE(1, "local keys packed into %d bytes, %" PRIsize_t " segments", size, memheap_map->n_segments);
 
     OPAL_TIMING_ENV_NEXT(recv_all, "serialize data");
 
@@ -618,7 +620,7 @@ void mca_memheap_modex_recv_all(void)
 
     rcv_buffer = malloc (buffer_size);
     if (NULL == rcv_buffer) {
-        MEMHEAP_ERROR("failed to allocate recieve buffer");
+        MEMHEAP_ERROR("failed to allocate receive buffer");
         rc = OSHMEM_ERR_OUT_OF_RESOURCE;
         goto exit_fatal;
     }
@@ -765,10 +767,6 @@ int mca_memheap_base_detect_addr_type(void* va)
 void mkey_segment_init(mkey_segment_t *seg, sshmem_mkey_t *mkey, uint32_t segno)
 {
     map_segment_t *s;
-
-    if (segno >= MCA_MEMHEAP_MAX_SEGMENTS) {
-        return;
-    }
 
     s = memheap_find_seg(segno);
     assert(NULL != s);

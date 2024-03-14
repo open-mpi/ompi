@@ -19,18 +19,18 @@
 #define OSC_MONITORING_GENERATE_TEMPLATE_COMM(template)                 \
                                                                         \
     static int ompi_osc_monitoring_## template ##_put (const void *origin_addr, \
-                                                       int origin_count, \
+                                                       size_t origin_count, \
                                                        ompi_datatype_t *origin_datatype, \
                                                        int target_rank, \
                                                        ptrdiff_t target_disp, \
-                                                       int target_count, \
+                                                       size_t target_count, \
                                                        ompi_datatype_t *target_datatype, \
                                                        ompi_win_t *win) \
     {                                                                   \
         int world_rank;                                                 \
         /**                                                             \
          * If this fails the destination is not part of my MPI_COM_WORLD \
-         * Lookup its name in the rank hastable to get its MPI_COMM_WORLD rank \
+         * Lookup its name in the rank hashtable to get its MPI_COMM_WORLD rank \
          */                                                             \
         if(OPAL_SUCCESS == mca_common_monitoring_get_world_rank(target_rank, win->w_group, &world_rank)) { \
             size_t type_size, data_size;                                \
@@ -43,11 +43,11 @@
     }                                                                   \
                                                                         \
     static int ompi_osc_monitoring_## template ##_rput (const void *origin_addr, \
-                                                        int origin_count, \
+                                                        size_t origin_count, \
                                                         ompi_datatype_t *origin_datatype, \
                                                         int target_rank, \
                                                         ptrdiff_t target_disp, \
-                                                        int target_count, \
+                                                        size_t target_count, \
                                                         ompi_datatype_t *target_datatype, \
                                                         ompi_win_t *win, \
                                                         ompi_request_t **request) \
@@ -55,7 +55,7 @@
         int world_rank;                                                 \
         /**                                                             \
          * If this fails the destination is not part of my MPI_COM_WORLD \
-         * Lookup its name in the rank hastable to get its MPI_COMM_WORLD rank \
+         * Lookup its name in the rank hashtable to get its MPI_COMM_WORLD rank \
          */                                                             \
         if(OPAL_SUCCESS == mca_common_monitoring_get_world_rank(target_rank, win->w_group, &world_rank)) { \
             size_t type_size, data_size;                                \
@@ -67,18 +67,18 @@
         return OMPI_OSC_MONITORING_MODULE_VARIABLE(template).osc_rput(origin_addr, origin_count, origin_datatype, target_rank, target_disp, target_count, target_datatype, win, request); \
     }                                                                   \
                                                                         \
-    static int ompi_osc_monitoring_## template ##_get (void *origin_addr, int origin_count, \
+    static int ompi_osc_monitoring_## template ##_get (void *origin_addr, size_t origin_count, \
                                                        ompi_datatype_t *origin_datatype, \
                                                        int source_rank, \
                                                        ptrdiff_t source_disp, \
-                                                       int source_count, \
+                                                       size_t source_count, \
                                                        ompi_datatype_t *source_datatype, \
                                                        ompi_win_t *win) \
     {                                                                   \
         int world_rank;                                                 \
         /**                                                             \
          * If this fails the destination is not part of my MPI_COM_WORLD \
-         * Lookup its name in the rank hastable to get its MPI_COMM_WORLD rank \
+         * Lookup its name in the rank hashtable to get its MPI_COMM_WORLD rank \
          */                                                             \
         if(OPAL_SUCCESS == mca_common_monitoring_get_world_rank(source_rank, win->w_group, &world_rank)) { \
             size_t type_size, data_size;                                \
@@ -91,11 +91,11 @@
         return OMPI_OSC_MONITORING_MODULE_VARIABLE(template).osc_get(origin_addr, origin_count, origin_datatype, source_rank, source_disp, source_count, source_datatype, win); \
     }                                                                   \
                                                                         \
-    static int ompi_osc_monitoring_## template ##_rget (void *origin_addr, int origin_count, \
+    static int ompi_osc_monitoring_## template ##_rget (void *origin_addr, size_t origin_count, \
                                                         ompi_datatype_t *origin_datatype, \
                                                         int source_rank, \
                                                         ptrdiff_t source_disp, \
-                                                        int source_count, \
+                                                        size_t source_count, \
                                                         ompi_datatype_t *source_datatype, \
                                                         ompi_win_t *win, \
                                                         ompi_request_t **request) \
@@ -103,7 +103,7 @@
         int world_rank;                                                 \
         /**                                                             \
          * If this fails the destination is not part of my MPI_COM_WORLD \
-         * Lookup its name in the rank hastable to get its MPI_COMM_WORLD rank \
+         * Lookup its name in the rank hashtable to get its MPI_COMM_WORLD rank \
          */                                                             \
         if(OPAL_SUCCESS == mca_common_monitoring_get_world_rank(source_rank, win->w_group, &world_rank)) { \
             size_t type_size, data_size;                                \

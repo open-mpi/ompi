@@ -83,7 +83,7 @@ OPAL_DECLSPEC int opal_bitmap_init(opal_bitmap_t *bm, int size);
 
 /**
  * Set a bit of the bitmap. If the bit asked for is beyond the current
- * size of the bitmap, then the bitmap is extended to accomodate the
+ * size of the bitmap, then the bitmap is extended to accommodate the
  * bit
  *
  * @param  bitmap The input bitmap (IN)

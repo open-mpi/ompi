@@ -35,7 +35,7 @@ BEGIN_C_DECLS
  * Globally exported variable
  */
 
-OMPI_MODULE_DECLSPEC extern const mca_coll_base_component_2_4_0_t mca_coll_self_component;
+OMPI_DECLSPEC extern const mca_coll_base_component_2_4_0_t mca_coll_self_component;
 extern int ompi_coll_self_priority;
 
 /*

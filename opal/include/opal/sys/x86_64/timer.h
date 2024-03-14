@@ -12,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2016      Los Alamos National Security, LLC. ALl rights
  *                         reserved.
+ * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
+ *                         All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -28,9 +30,9 @@ typedef uint64_t opal_timer_t;
 #undef OPAL_TIMER_MONOTONIC
 #define OPAL_TIMER_MONOTONIC 0
 
-#if OPAL_GCC_INLINE_ASSEMBLY
+#if OPAL_C_GCC_INLINE_ASSEMBLY
 
-#    if OPAL_ASSEMBLY_ARCH == OPAL_X86_64
+#    if defined(PLATFORM_ARCH_X86_64)
 
 /* TODO: add AMD mfence version and dispatch at init */
 static inline opal_timer_t opal_sys_timer_get_cycles(void)
@@ -85,6 +87,6 @@ static inline opal_timer_t opal_sys_timer_get_cycles(void)
 
 #    define OPAL_HAVE_SYS_TIMER_GET_CYCLES 0
 
-#endif /* OPAL_GCC_INLINE_ASSEMBLY */
+#endif /* OPAL_C_GCC_INLINE_ASSEMBLY */
 
 #endif /* ! OPAL_SYS_ARCH_TIMER_H */

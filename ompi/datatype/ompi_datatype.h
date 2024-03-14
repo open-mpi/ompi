@@ -91,7 +91,7 @@ typedef struct ompi_datatype_t ompi_datatype_t;
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_datatype_t);
 
 /**
- * Padded struct to maintain back compatibiltiy.
+ * Padded struct to maintain back compatibility.
  * See opal/communicator/communicator.h comments with struct opal_communicator_t
  * for full explanation why we chose the following padding construct for predefines.
  */
@@ -118,7 +118,6 @@ OMPI_DECLSPEC extern opal_convertor_t* ompi_mpi_local_convertor;
 extern struct opal_pointer_array_t ompi_datatype_f_to_c_table;
 
 OMPI_DECLSPEC int32_t ompi_datatype_init( void );
-OMPI_DECLSPEC int32_t ompi_datatype_finalize( void );
 
 OMPI_DECLSPEC int32_t ompi_datatype_default_convertors_init( void );
 OMPI_DECLSPEC int32_t ompi_datatype_default_convertors_fini( void );
@@ -424,7 +423,7 @@ OMPI_DECLSPEC int ompi_datatype_pack_external_size( const char datarep[], int in
  * converted to (1,larger_datatype).  This comes up in pack/unpack if
  * the datatype is [int4b,empty4b] for example.  With that datatype the
  * (count,datatype) path has to loop over the count processing each
- * occurrance of the datatype, but a larger type created via
+ * occurrence of the datatype, but a larger type created via
  * MPI_Type_contiguous(count,datatype,) will have a single description
  * entry describing the whole vector and go through pack/unpack much
  * faster.

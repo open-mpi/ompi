@@ -243,9 +243,9 @@ int main(int argc, char *argv[])
 
     if (rank == 0) {
         mbs = sum_avg_mbs / sum_xfers;
-        printf("\n     average tranfer rate for %d transfers: %9.1f mbs\n", sum_xfers, mbs);
-        printf("     minimum tranfer rate for %d transfers: %9.1f mbs\n", sum_xfers, r_min_mbs);
-        printf("     maximum tranfer rate for %d transfers: %9.1f mbs\n", sum_xfers, r_max_mbs);
+        printf("\n     average transfer rate for %d transfers: %9.1f mbs\n", sum_xfers, mbs);
+        printf("     minimum transfer rate for %d transfers: %9.1f mbs\n", sum_xfers, r_min_mbs);
+        printf("     maximum transfer rate for %d transfers: %9.1f mbs\n", sum_xfers, r_max_mbs);
         fflush(stdout);
     }
 

@@ -39,7 +39,7 @@ AC_DEFUN([OMPI_FORTRAN_CHECK_F08_ASSUMED_RANK], [
 ###################################
 
 AC_DEFUN([_OMPI_FORTRAN_CHECK_F08_ASSUMED_RANK], [
-    OPAL_VAR_SCOPE_PUSH([happy])
+    OPAL_VAR_SCOPE_PUSH([f08_assumed_rank_happy])
 
     # If we were called here, it means that the value was not cached,
     # so we need to check several different things.  Since CACHE_CHECK
@@ -50,9 +50,9 @@ AC_DEFUN([_OMPI_FORTRAN_CHECK_F08_ASSUMED_RANK], [
     # Check for the F08 type(*),dimension(..) syntax
     OMPI_FORTRAN_CHECK_IGNORE_TKR_SUB([!], [TYPE(*), DIMENSION(..)],
                                       [TYPE(*), DIMENSION(..)],
-                                      [happy=yes], [happy=no])
+                                      [f08_assumed_rank_happy=yes], [f08_assumed_rank_happy=no])
 
-    AS_VAR_SET(fortran_f08_assumed_rank, [$happy]);
+    AS_VAR_SET(fortran_f08_assumed_rank, [$f08_assumed_rank_happy]);
 
     # Now put the original CACHE_CHECK MSG_CHECKING back so that it can
     # output the MSG_RESULT.

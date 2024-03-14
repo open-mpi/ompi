@@ -89,7 +89,7 @@ static int nbc_neighbor_alltoall_init(const void *sbuf, int scount, MPI_Datatype
 
     for (int i = 0 ; i < indegree ; ++i) {
       if (MPI_PROC_NULL != srcs[i]) {
-        res = NBC_Sched_recv ((char *) rbuf + i * rcount * rcvext, true, rcount, rtype, srcs[i], schedule, false);
+        res = NBC_Sched_recv ((char *) rbuf + (MPI_Aint) rcvext * i * rcount, true, rcount, rtype, srcs[i], schedule, false);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
           break;
         }
@@ -106,7 +106,7 @@ static int nbc_neighbor_alltoall_init(const void *sbuf, int scount, MPI_Datatype
 
     for (int i = 0 ; i < outdegree ; ++i) {
       if (MPI_PROC_NULL != dsts[i]) {
-        res = NBC_Sched_send ((char *) sbuf + i * scount * sndext, false, scount, stype, dsts[i], schedule, false);
+        res = NBC_Sched_send ((char *) sbuf + (MPI_Aint) sndext * i * scount, false, scount, stype, dsts[i], schedule, false);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
           break;
         }

@@ -3,14 +3,14 @@ dnl
 dnl Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
 dnl                         University Research and Technology
 dnl                         Corporation.  All rights reserved.
-dnl Copyright (c) 2004-2005 The University of Tennessee and The University
+dnl Copyright (c) 2004-2024 The University of Tennessee and The University
 dnl                         of Tennessee Research Foundation.  All rights
 dnl                         reserved.
 dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
-dnl Copyright (c) 2006-2020 Cisco Systems, Inc.  All rights reserved
+dnl Copyright (c) 2006-2022 Cisco Systems, Inc.  All rights reserved
 dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2009      IBM Corporation.  All rights reserved.
 dnl Copyright (c) 2009      Los Alamos National Security, LLC.  All rights
@@ -20,6 +20,9 @@ dnl Copyright (c) 2011-2013 NVIDIA Corporation.  All rights reserved.
 dnl Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
 dnl Copyright (c) 2015      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
+dnl Copyright (c) 2020      Amazon.com, Inc. or its affiliates.  All Rights
+dnl Copyright (c) 2019-2021 Triad National Security, LLC. All rights
+dnl                         reserved.
 dnl
 dnl $COPYRIGHT$
 dnl
@@ -29,14 +32,14 @@ dnl $HEADER$
 dnl
 
 AC_DEFUN([OPAL_CONFIGURE_OPTIONS],[
-opal_show_subtitle "OPAL Configuration options"
+opal_show_subtitle "General configuration options"
 
 
 #
 # Is this a developer copy?
 #
 
-if test -d .git; then
+if test -d ${OPAL_TOP_SRCDIR}/.git; then
     OPAL_DEVEL=1
 else
     OPAL_DEVEL=0
@@ -84,13 +87,6 @@ else
     WANT_BRANCH_PROBABILITIES=0
 fi
 
-AC_ARG_ENABLE([builtin-atomics-for-ppc],[AS_HELP_STRING([--enable-builtin-atomics-for-ppc],
-                  [POWER architectures only: Force use of builtin atomics if available. This could either be gcc builtins or C11 atomics, depending on what is available on your system. Enabling this is known to cause poor performance in atomic operations on Power machines. (default: disabled)])])
-if test "x$enable_builtin_atomics_for_ppc" = "xyes" ; then
-force_gcc_atomics_ppc=1
-else
-force_gcc_atomics_ppc=0
-fi
 
 #
 # Memory debugging
@@ -185,10 +181,47 @@ AC_DEFINE_UNQUOTED(OPAL_ENABLE_TIMING, $WANT_TIMING,
 AM_CONDITIONAL([OPAL_COMPILE_TIMING], [test "$WANT_TIMING" = "1"])
 AM_CONDITIONAL([OPAL_INSTALL_TIMING_BINARIES], [test "$WANT_TIMING" = "1" && test "$enable_binaries" != "no"])
 
+# Later calls to AC_PROG_CC/CXX/FC can
+# inject things like -O2 into compile flags if they are
+# not defined, which we don't want. Make sure these flags
+# are at least set to an empty string now.
+#
+# Complicating matters is that autogen can re-order
+# these calls toward the top of configure. This block should
+# be at/near the top, so do it now.
+#
 if test "$WANT_DEBUG" = "0"; then
     CFLAGS="-DNDEBUG $CFLAGS"
     CXXFLAGS="-DNDEBUG $CXXFLAGS"
+
+    # NDEBUG doesn't exist in fortran, so just make sure it's defined.
+    if [ test -z "$FCFLAGS" ]; then
+      FCFLAGS=""
+    fi
+else
+    # Do we want debugging symbols?
+    if test "$enable_debug_symbols" != "no" ; then
+        CFLAGS="$CFLAGS -g"
+        CXXFLAGS="$CXXFLAGS -g"
+        FCFLAGS="$FCFLAGS -g"
+        AC_MSG_WARN([-g has been added to compiler (--enable-debug)])
+    else
+        # If not set, define compile flags to an empty string
+        # to prevent AC_PROG_CC/FC/CXX from modifying compiler flags.
+        # See: https://www.gnu.org/software/autoconf/manual/autoconf-2.69/html_node/C-Compiler.html
+        # for more info.
+        if [ test -z "$CFLAGS" ]; then
+            CFLAGS=""
+        fi
+        if [ test -z "$CXXFLAGS" ]; then
+            CXXFLAGS=""
+        fi
+        if [ test -z "$FCFLAGS" ]; then
+            FCFLAGS=""
+        fi
+    fi
 fi
+
 AC_DEFINE_UNQUOTED(OPAL_ENABLE_DEBUG, $WANT_DEBUG,
     [Whether we want developer-level debugging code or not])
 
@@ -212,23 +245,6 @@ else
     WANT_INSTALL_HEADERS=0
 fi
 AM_CONDITIONAL(WANT_INSTALL_HEADERS, test "$WANT_INSTALL_HEADERS" = 1)
-
-#
-# If there's no pkg-config available, allow users to pass in -l/-L flags manually.
-#
-AC_MSG_CHECKING([if want extra libs for static builds])
-AC_ARG_WITH([extra-libs],[AS_HELP_STRING([--with-extra-libs],
-                  [A comma seperated list of extra libraries to link in for static builds (example: -lbar,-lbat) (default: None.). This should be used if pkg-config is not available.])])
-    OPAL_EXTRA_LIBS=""
-if test -n "x$with_extra_libs"; then
-    # Iterate over the list, removing the commas.
-    for i in $(echo $with_extra_libs | sed "s/,/ /g"); do
-      OPAL_FLAGS_APPEND_UNIQ([OPAL_EXTRA_LIBS], [$i])
-    done
-    AC_MSG_RESULT($OPAL_EXTRA_LIBS)
-else
-    AC_MSG_RESULT(default)
-fi
 
 #
 # Do we want the pretty-print stack trace feature?
@@ -304,8 +320,6 @@ else
     OPAL_ENABLE_DLOPEN_SUPPORT=1
     AC_MSG_RESULT([yes])
 fi
-AC_DEFINE_UNQUOTED(OPAL_ENABLE_DLOPEN_SUPPORT, $OPAL_ENABLE_DLOPEN_SUPPORT,
-    [Whether we want to enable dlopen support])
 
 
 #
@@ -313,25 +327,24 @@ AC_DEFINE_UNQUOTED(OPAL_ENABLE_DLOPEN_SUPPORT, $OPAL_ENABLE_DLOPEN_SUPPORT,
 #
 
 AC_MSG_CHECKING([for default value of mca_base_component_show_load_errors])
-AC_ARG_ENABLE([show-load-errors-by-default],
-    [AS_HELP_STRING([--enable-show-load-errors-by-default],
-                    [Set the default value for the MCA parameter
-                     mca_base_component_show_load_errors (but can be
-                     overridden at run time by the usual
-                     MCA-variable-setting mechansism).  This MCA variable
-                     controls whether warnings are displayed when an MCA
-                     component fails to load at run time due to an error.
-                     (default: enabled, meaning that
-                      mca_base_component_show_load_errors is enabled
-                      by default])])
-if test "$enable_show_load_errors_by_default" = "no" ; then
-    OPAL_SHOW_LOAD_ERRORS_DEFAULT=0
-    AC_MSG_RESULT([disabled by default])
-else
-    OPAL_SHOW_LOAD_ERRORS_DEFAULT=1
-    AC_MSG_RESULT([enabled by default])
-fi
-AC_DEFINE_UNQUOTED(OPAL_SHOW_LOAD_ERRORS_DEFAULT, $OPAL_SHOW_LOAD_ERRORS_DEFAULT,
+AC_ARG_WITH([show-load-errors],
+            [AS_HELP_STRING([--with-show-load-errors],
+                            [Set the default value for the MCA
+                            parameter
+                            mca_base_component_show_load_errors (but
+                            can be overridden at run time by the usual
+                            MCA-variable-setting mechansism).
+                            (default: "all")])])
+
+AS_IF([test -z "$with_show_load_errors" -o "$with_show_load_errors" = "yes"],
+      [with_show_load_errors=all
+       AC_MSG_RESULT([enabled for all])],
+      [AS_IF([test "$with_show_load_errors" = "no"],
+             [with_show_load_errors=none
+              AC_MSG_RESULT([disabled for all])],
+             [AC_MSG_RESULT([$with_show_load_errors])])])
+
+AC_DEFINE_UNQUOTED(OPAL_SHOW_LOAD_ERRORS_DEFAULT, ["$with_show_load_errors"],
                    [Default value for mca_base_component_show_load_errors MCA variable])
 
 
@@ -398,6 +411,7 @@ AM_CONDITIONAL([OPAL_WANT_SCRIPT_WRAPPER_COMPILERS], [test "$enable_script_wrapp
 #
 # Support per-user config files?
 #
+OPAL_VAR_SCOPE_PUSH([result])
 AC_ARG_ENABLE([per-user-config-files],
    [AS_HELP_STRING([--enable-per-user-config-files],
       [Disable per-user configuration files, to save disk accesses during job start-up.  This is likely desirable for large jobs.  Note that this can also be achieved by environment variables at run-time.  (default: enabled)])])
@@ -408,6 +422,7 @@ else
 fi
 AC_DEFINE_UNQUOTED([OPAL_WANT_HOME_CONFIG_FILES], [$result],
      [Enable per-user config files])
+OPAL_VAR_SCOPE_POP
 
 #
 # Do we want to enable IPv6 support?
@@ -507,8 +522,12 @@ OPAL_WITH_OPTION_MIN_MAX_VALUE(info_val,        256,  32, 1024)
 # Min length according to _POSIX_HOST_NAME_MAX=255 (4*HOST_NAME_MAX)
 OPAL_WITH_OPTION_MIN_MAX_VALUE(port_name,      1024, 255, 2048)
 
-# Min length accroding to MPI-2.1, p. 418
+# Min length according to MPI-2.1, p. 418
 OPAL_WITH_OPTION_MIN_MAX_VALUE(datarep_string,  128,  64,  256)
+
+OPAL_WITH_OPTION_MIN_MAX_VALUE(pset_name_len,  512,  512, 4096)
+
+OPAL_WITH_OPTION_MIN_MAX_VALUE(stringtag_len,     1024, 256, 2048)
 
 # some systems don't want/like getpwuid
 AC_MSG_CHECKING([if want getpwuid support])

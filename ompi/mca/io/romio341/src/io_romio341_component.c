@@ -16,6 +16,8 @@
  * Copyright (c) 2015-2021 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
+ * Copyright (c) 2024      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -42,7 +44,7 @@ static int open_component(void);
 static int close_component(void);
 static int init_query(bool enable_progress_threads,
                       bool enable_mpi_threads);
-static const struct mca_io_base_module_2_0_0_t *
+static const struct mca_io_base_module_3_0_0_t *
   file_query(struct ompi_file_t *file,
              struct mca_io_base_file_t **private_data,
              int *priority);
@@ -81,12 +83,12 @@ const char *mca_io_romio341_component_version_string =
 "OMPI/MPI ROMIO io MCA component version " OMPI_VERSION ", " ROMIO_VERSION_STRING;
 
 
-mca_io_base_component_2_0_0_t mca_io_romio341_component = {
+mca_io_base_component_3_0_0_t mca_io_romio341_component = {
     /* First, the mca_base_component_t struct containing meta information
        about the component itself */
 
     .io_version = {
-        MCA_IO_BASE_VERSION_2_0_0,
+        MCA_IO_BASE_VERSION_3_0_0,
         .mca_component_name = "romio341",
         MCA_BASE_MAKE_VERSION(component, OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION,
                               OMPI_RELEASE_VERSION),
@@ -113,9 +115,9 @@ mca_io_base_component_2_0_0_t mca_io_romio341_component = {
     .io_register_datarep = register_datarep,
 };
 
-static char *ompi_io_romio341_version = ROMIO_VERSION_STRING;
-static char *ompi_io_romio341_user_configure_params = MCA_io_romio341_USER_CONFIGURE_FLAGS;
-static char *ompi_io_romio341_complete_configure_params = MCA_io_romio341_COMPLETE_CONFIGURE_FLAGS;
+static char *ompi_io_romio341_version = NULL;
+static char *ompi_io_romio341_user_configure_params = NULL;
+static char *ompi_io_romio341_complete_configure_params = NULL;
 
 static int register_component(void)
 {
@@ -132,11 +134,13 @@ static int register_component(void)
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY, &delete_priority_param);
+    ompi_io_romio341_version = ROMIO_VERSION_STRING;
     (void) mca_base_component_var_register(&mca_io_romio341_component.io_version,
                                            "version", "Version of ROMIO", MCA_BASE_VAR_TYPE_STRING,
                                            NULL, 0, MCA_BASE_VAR_FLAG_DEFAULT_ONLY,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY, &ompi_io_romio341_version);
+    ompi_io_romio341_user_configure_params = MCA_io_romio341_USER_CONFIGURE_FLAGS;
     (void) mca_base_component_var_register(&mca_io_romio341_component.io_version,
                                            "user_configure_params",
                                            "User-specified command line parameters passed to ROMIO's configure script",
@@ -144,6 +148,7 @@ static int register_component(void)
                                            MCA_BASE_VAR_FLAG_DEFAULT_ONLY,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY, &ompi_io_romio341_user_configure_params);
+    ompi_io_romio341_complete_configure_params = MCA_io_romio341_COMPLETE_CONFIGURE_FLAGS;
     (void) mca_base_component_var_register(&mca_io_romio341_component.io_version,
                                            "complete_configure_params",
                                            "Complete set of command line parameters passed to ROMIO's configure script",
@@ -184,7 +189,7 @@ static int init_query(bool enable_progress_threads,
 }
 
 
-static const struct mca_io_base_module_2_0_0_t *
+static const struct mca_io_base_module_3_0_0_t *
 file_query(struct ompi_file_t *file,
            struct mca_io_base_file_t **private_data,
            int *priority)
@@ -243,17 +248,16 @@ static int delete_select(const char *filename, struct opal_info_t *info,
 // An opal_info_t isn't a full ompi_info_t. so if we're using an MPI call
 // below with an MPI_Info, we need to create an equivalent MPI_Info. This
 // isn't ideal but it only happens a few places.
-    ompi_info_t *ompi_info;
-    ompi_info = OBJ_NEW(ompi_info_t);
-    if (!ompi_info) { return(MPI_ERR_NO_MEM); }
-    opal_info_t *opal_info = &(ompi_info->super);
+    ompi_info_t ompi_info;
+    OBJ_CONSTRUCT(&ompi_info, ompi_info_t);
+    opal_info_t *opal_info = &(ompi_info.super);
     opal_info_dup (info, &opal_info);
 
     OPAL_THREAD_LOCK (&mca_io_romio341_mutex);
-    ret = ROMIO_PREFIX(MPI_File_delete)(filename, ompi_info);
+    ret = ROMIO_PREFIX(MPI_File_delete)(filename, &ompi_info);
     OPAL_THREAD_UNLOCK (&mca_io_romio341_mutex);
 
-    ompi_info_free(&ompi_info);
+    OBJ_DESTRUCT(&ompi_info);
     return ret;
 }
 

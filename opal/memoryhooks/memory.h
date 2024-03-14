@@ -69,7 +69,7 @@ OPAL_DECLSPEC int opal_mem_hooks_init(void);
  * support is provided or a bit-wise OR of the available return values
  * if support is provided.
  *
- * @retval OPAL_MEMORY_FREE_SUPPORT   Memory hooks subsytem can trigger
+ * @retval OPAL_MEMORY_FREE_SUPPORT   Memory hooks subsystem can trigger
  *                                    callback events when memory is going
  *                                    to be released by the process, either
  *                                    by the user calling an allocator
@@ -96,7 +96,7 @@ OPAL_DECLSPEC int opal_mem_hooks_support_level(void);
  * opal_mem_hooks_register_release().
  *
  * @param buf     Pointer to the start of the allocation
- * @param lentgh  Length of the allocation
+ * @param length  Length of the allocation
  * @param cbdata  Data passed to memory hooks when callback
  *                was registered
  * @param from_alloc True if the callback is caused by a call to the

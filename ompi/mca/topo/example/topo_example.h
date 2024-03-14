@@ -26,7 +26,7 @@
 
 /*
  * ******************************************************************
- * ******** functions which provide MCA interface comppliance *******
+ * ******** functions which provide MCA interface compliance ********
  * ******************************************************************
  * These functions are:
  *       - mca_topo_example_module_open
@@ -42,7 +42,7 @@ BEGIN_C_DECLS
 /*
  * Public component instance
  */
-OMPI_MODULE_DECLSPEC extern mca_topo_base_component_2_2_0_t
+OMPI_DECLSPEC extern mca_topo_base_component_2_2_0_t
     mca_topo_example_component;
 
 /*

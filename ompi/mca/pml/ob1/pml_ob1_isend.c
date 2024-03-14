@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2018 The University of Tennessee and The University
+ * Copyright (c) 2004-2022 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -15,6 +15,7 @@
  * Copyright (c) 2014-2021 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2022      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,6 +30,9 @@
 #include "pml_ob1_recvreq.h"
 #include "ompi/peruse/peruse-internal.h"
 #include "ompi/runtime/ompi_spc.h"
+#if MPI_VERSION >= 4
+#include "ompi/mca/pml/base/pml_base_sendreq.h"
+#endif
 
 /**
  * Single usage request. As we allow recursive calls (as an
@@ -48,25 +52,22 @@ int mca_pml_ob1_isend_init(const void *buf,
                            ompi_communicator_t * comm,
                            ompi_request_t ** request)
 {
+    mca_pml_ob1_comm_proc_t *ob1_proc = mca_pml_ob1_peer_lookup (comm, dst);
     mca_pml_ob1_send_request_t *sendreq = NULL;
     MCA_PML_OB1_SEND_REQUEST_ALLOC(comm, dst, sendreq);
     if (NULL == sendreq)
         return OMPI_ERR_OUT_OF_RESOURCE;
 
-    MCA_PML_OB1_SEND_REQUEST_INIT(sendreq,
-                                  buf,
-                                  count,
-                                  datatype,
-                                  dst, tag,
-                                  comm, sendmode, true);
+    MCA_PML_OB1_SEND_REQUEST_INIT(sendreq, buf, count, datatype, dst, tag,
+                                  comm, sendmode, true, ob1_proc);
 
     PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_ACTIVATE,
                              &(sendreq)->req_send.req_base,
                              PERUSE_SEND);
 
     /* Work around a leak in start by marking this request as complete. The
-     * problem occured because we do not have a way to differentiate an
-     * inital request and an incomplete pml request in start. This line
+     * problem occurred because we do not have a way to differentiate an
+     * initial request and an incomplete pml request in start. This line
      * allows us to detect this state. */
     sendreq->req_send.req_base.req_pml_complete = true;
 
@@ -78,7 +79,8 @@ int mca_pml_ob1_isend_init(const void *buf,
 static inline int mca_pml_ob1_send_inline (const void *buf, size_t count,
                                            ompi_datatype_t * datatype,
                                            int dst, int tag, int16_t seqn,
-                                           ompi_proc_t *dst_proc, mca_bml_base_endpoint_t* endpoint,
+                                           ompi_proc_t *dst_proc, mca_pml_ob1_comm_proc_t *ob1_proc,
+                                           mca_bml_base_endpoint_t* endpoint,
                                            ompi_communicator_t * comm)
 {
     mca_pml_ob1_match_hdr_t match;
@@ -88,11 +90,14 @@ static inline int mca_pml_ob1_send_inline (const void *buf, size_t count,
     int rc;
 
     bml_btl = mca_bml_base_btl_array_get_next(&endpoint->btl_eager);
-    if( NULL == bml_btl->btl->btl_sendi)
+    if( NULL == bml_btl || NULL == bml_btl->btl->btl_sendi)
         return OMPI_ERR_NOT_AVAILABLE;
 
     ompi_datatype_type_size (datatype, &size);
-    if ((size * count) > 256) {  /* some random number */
+
+    /* the size used here was picked based on performance on a Cray XE-6. it should probably
+     * be provided by the btl module */
+    if ((size * count) > 256 || -1 == ob1_proc->comm_index) {
         return OMPI_ERR_NOT_AVAILABLE;
     }
 
@@ -111,7 +116,7 @@ static inline int mca_pml_ob1_send_inline (const void *buf, size_t count,
     }
 
     mca_pml_ob1_match_hdr_prepare (&match, MCA_PML_OB1_HDR_TYPE_MATCH, 0,
-                                   comm->c_contextid, comm->c_my_rank,
+                                   ob1_proc->comm_index, comm->c_my_rank,
                                    tag, seqn);
 
     ob1_hdr_hton(&match, MCA_PML_OB1_HDR_TYPE_MATCH, dst_proc);
@@ -169,17 +174,23 @@ int mca_pml_ob1_isend(const void *buf,
         return OMPI_ERR_UNREACH;
     }
 
-    if (!OMPI_COMM_CHECK_ASSERT_ALLOW_OVERTAKE(comm)) {
+    if (!OMPI_COMM_CHECK_ASSERT_ALLOW_OVERTAKE(comm) || 0 > tag) {
         seqn = (uint16_t) OPAL_THREAD_ADD_FETCH32(&ob1_proc->send_sequence, 1);
     }
 
     if (MCA_PML_BASE_SEND_SYNCHRONOUS != sendmode) {
-        rc = mca_pml_ob1_send_inline (buf, count, datatype, dst, tag, seqn, dst_proc,
+        rc = mca_pml_ob1_send_inline (buf, count, datatype, dst, tag, seqn, dst_proc, ob1_proc,
                                       endpoint, comm);
         if (OPAL_LIKELY(0 <= rc)) {
             /* NTH: it is legal to return ompi_request_empty since the only valid
              * field in a send completion status is whether or not the send was
              * cancelled (which it can't be at this point anyway). */
+#if MPI_VERSION >= 4
+            if (OPAL_UNLIKELY(OMPI_PML_BASE_WARN_DEP_CANCEL_SEND_NEVER != ompi_pml_base_warn_dep_cancel_send_level)) {
+                *request = &ompi_request_empty_send;
+                return OMPI_SUCCESS;
+            }
+#endif
             *request = &ompi_request_empty;
             return OMPI_SUCCESS;
         }
@@ -194,7 +205,7 @@ int mca_pml_ob1_isend(const void *buf,
                                   count,
                                   datatype,
                                   dst, tag,
-                                  comm, sendmode, false);
+                                  comm, sendmode, false, ob1_proc);
 
     PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_ACTIVATE,
                              &(sendreq)->req_send.req_base,
@@ -215,7 +226,7 @@ alloc_ft_req:
                                   count,
                                   datatype,
                                   dst, tag,
-                                  comm, sendmode, false);
+                                  comm, sendmode, false, ob1_proc);
 
     PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_ACTIVATE,
                              &(sendreq)->req_send.req_base,
@@ -273,7 +284,7 @@ int mca_pml_ob1_send(const void *buf,
         return OMPI_SUCCESS;
     }
 
-    if (!OMPI_COMM_CHECK_ASSERT_ALLOW_OVERTAKE(comm)) {
+    if (!OMPI_COMM_CHECK_ASSERT_ALLOW_OVERTAKE(comm) || 0 > tag) {
         seqn = (uint16_t) OPAL_THREAD_ADD_FETCH32(&ob1_proc->send_sequence, 1);
     }
 
@@ -284,7 +295,7 @@ int mca_pml_ob1_send(const void *buf,
      */
     if (MCA_PML_BASE_SEND_SYNCHRONOUS != sendmode) {
         rc = mca_pml_ob1_send_inline (buf, count, datatype, dst, tag, seqn, dst_proc,
-                                      endpoint, comm);
+                                      ob1_proc, endpoint, comm);
         if (OPAL_LIKELY(0 <= rc)) {
             return OMPI_SUCCESS;
         }
@@ -304,12 +315,8 @@ int mca_pml_ob1_send(const void *buf,
     sendreq->req_send.req_base.req_proc = dst_proc;
     sendreq->rdma_frag = NULL;
 
-    MCA_PML_OB1_SEND_REQUEST_INIT(sendreq,
-                                  buf,
-                                  count,
-                                  datatype,
-                                  dst, tag,
-                                  comm, sendmode, false);
+    MCA_PML_OB1_SEND_REQUEST_INIT(sendreq, buf, count, datatype, dst, tag,
+                                  comm, sendmode, false, ob1_proc);
 
     PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_ACTIVATE,
                              &sendreq->req_send.req_base,

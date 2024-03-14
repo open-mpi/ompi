@@ -406,7 +406,7 @@ int ompi_coll_base_allgatherv_intra_ring(const void *sbuf, int scount,
        [(r - i - 1 + size) % size]
        - sends message to rank [(r + 1) % size] containing data from rank
        [(r - i + size) % size]
-       - sends message which starts at begining of rbuf and has size
+       - sends message which starts at beginning of rbuf and has size
     */
     sendto = (rank + 1) % size;
     recvfrom  = (rank - 1 + size) % size;
@@ -563,7 +563,7 @@ ompi_coll_base_allgatherv_intra_neighborexchange(const void *sbuf, int scount,
        - Rest of the steps:
        update recv_data_from according to offset, and
        exchange two blocks with appropriate neighbor.
-       the send location becomes previous receve location.
+       the send location becomes previous receive location.
        Note, we need to create indexed datatype to send and receive these
        blocks properly.
     */

@@ -17,7 +17,7 @@ dnl That is, if a precious variable (say CPPFLAGS) was set on the
 dnl configure command line or in the environment at the start of
 dnl configure, it will be reset to that stored value.  Otherwise, it
 dnl will be unset.  The current state is recorded so that it can be
-dnl restored with OPAL_SUBDIR_ENV_RESTORE.  Useful for wrapping calles
+dnl restored with OPAL_SUBDIR_ENV_RESTORE.  Useful for wrapping calls
 dnl to subconfigure scripts.
 AC_DEFUN([OPAL_SUBDIR_ENV_CLEAN], [
     for temp_var in $ac_precious_vars; do
@@ -36,8 +36,8 @@ AC_DEFUN([OPAL_SUBDIR_ENV_CLEAN], [
         fi
         unset tmp_var_set
 
-	# restore the variables that were set at the start of
-	# configure and unset the ones that were not.
+        # restore the variables that were set at the start of
+        # configure and unset the ones that were not.
         eval temp_var_orig_set=\$ac_env_${temp_var}_set
         if test "$temp_var_set" = "set" ; then
              eval ${temp_var}=\$ac_env_${temp_var}_value

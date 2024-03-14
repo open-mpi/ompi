@@ -15,6 +15,8 @@
  *                         reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2022      Computer Architecture and VLSI Systems (CARV)
+ *                         Laboratory, ICS Forth. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,6 +31,21 @@
 
 #    include "opal/class/opal_object.h"
 #    include "opal/constants.h"
+#    include "opal/runtime/opal_params_core.h"
+
+/* Output mode for dumping var enumerators.
+ * Caution: Not 1:1 with mca_base_var_dump_type_t, appropriate
+ * conversion is required, see MCA_BASE_VAR_DUMP_TYPE_TO_ENUM_DUMP_TYPE() */
+typedef enum {
+    /* Dump human-readable strings */
+    MCA_BASE_VAR_ENUM_DUMP_READABLE = 0,
+    /* Dump human-readable strings, with color where supported */
+    MCA_BASE_VAR_ENUM_DUMP_READABLE_COLOR = 1
+} mca_base_var_enum_dump_type_t;
+
+#define MCA_BASE_VAR_DUMP_TYPE_TO_ENUM_DUMP_TYPE(var_dump_type) \
+    (MCA_BASE_VAR_DUMP_READABLE_COLOR == (var_dump_type) ? \
+    MCA_BASE_VAR_ENUM_DUMP_READABLE_COLOR : MCA_BASE_VAR_ENUM_DUMP_READABLE)
 
 typedef struct mca_base_var_enum_t mca_base_var_enum_t;
 
@@ -69,11 +86,13 @@ typedef int (*mca_base_var_enum_vfs_fn_t)(mca_base_var_enum_t *self, const char 
  *
  * @param[in] self the enumerator
  * @param[out] out the string representation
+ * @param[in] output_type the type of output desired
  *
  * @retval OPAL_SUCCESS on success
  * @retval opal error on error
  */
-typedef int (*mca_base_var_enum_dump_fn_t)(mca_base_var_enum_t *self, char **out);
+typedef int (*mca_base_var_enum_dump_fn_t)(mca_base_var_enum_t *self, char **out,
+                                           mca_base_var_enum_dump_type_t output_type);
 
 /**
  * Get the string representation for an enumerator value
@@ -85,7 +104,7 @@ typedef int (*mca_base_var_enum_dump_fn_t)(mca_base_var_enum_t *self, char **out
  * @retval OPAL_SUCCESS on success
  * @retval OPAL_ERR_VALUE_OUT_OF_BOUNDS if not found
  *
- * @long This function returns the string value for a given interger value in the
+ * @long This function returns the string value for a given integer value in the
  * {string_value} parameter. The {string_value} parameter may be NULL in which case
  * no string is returned. If a string is returned in {string_value} the caller
  * must free the string with free().

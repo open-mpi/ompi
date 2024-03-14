@@ -4,6 +4,8 @@
 # Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2014      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2021      Amazon.com, Inc. or its affiliates.
+#                         All Rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -11,30 +13,28 @@
 # $HEADER$
 #
 
-# This is guaranteed to be false if we're not building OSHMEM at all
-#
 if OSHMEM_BUILD_FORTRAN_BINDINGS
-if OSHMEM_PROFILING
-    SUBDIRS = profile
-endif
-endif
-
-if OSHMEM_BUILD_FORTRAN_BINDINGS
-oshmem_fortran_lib       = liboshmem_fortran.la
+# note that liboshmem_fortran_profile.la is built regardless of
+# whether or not the profiling layer is built.  It holds all the api
+# functions that might have a profiling version.
+oshmem_fortran_libs       = liboshmem_fortran.la liboshmem_fortran_profile.la
 else
-oshmem_fortran_lib       =
+oshmem_fortran_libs       =
 endif
 
-noinst_LTLIBRARIES = $(oshmem_fortran_lib)
+noinst_LTLIBRARIES = $(oshmem_fortran_libs)
 
 headers = prototypes_shmem.h \
+          prototypes_pshmem.h \
           bindings.h \
+          pbindings.h \
+          profile-defines.h \
           shmem_fortran_pointer.h
 
 liboshmem_fortran_la_SOURCES = shmem_finalize_f.c
+liboshmem_fortran_la_LIBADD = liboshmem_fortran_profile.la
 
-if ! OSHMEM_PROFILING
-liboshmem_fortran_la_SOURCES += \
+liboshmem_fortran_profile_la_SOURCES = \
                     shmem_init_f.c \
                     shmem_global_exit_f.c \
                     shmem_n_pes_f.c \
@@ -138,7 +138,10 @@ liboshmem_fortran_la_SOURCES += \
                     shmem_fence_f.c \
                     shmem_info_f.c
 
-AM_CPPFLAGS     = -DOSHMEM_PROFILING=0
+if OSHMEM_PROFILING
+liboshmem_fortran_profile_la_CPPFLAGS = -DOSHMEM_PROFILING=1
+else
+liboshmem_fortran_profile_la_CPPFLAGS = -DOSHMEM_PROFILING=0
 endif
 
 if PROJECT_OSHMEM

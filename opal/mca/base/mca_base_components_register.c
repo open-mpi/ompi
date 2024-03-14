@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2022 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2011-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
@@ -115,7 +115,8 @@ static int register_components(mca_base_framework_t *framework)
                    display the error in the stream where it was
                    expected. */
 
-                if (mca_base_component_show_load_errors) {
+                if (mca_base_show_load_errors(component->mca_type_name,
+                                              component->mca_component_name)) {
                     opal_output_verbose(MCA_BASE_VERBOSE_ERROR, output_id,
                                         "mca: base: components_register: component %s "
                                         "/ %s register function failed",

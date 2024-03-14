@@ -11,7 +11,7 @@
 /**
  * @file pather_overwrite.h
  *
- * This component works by overwritting the first couple instructions in
+ * This component works by overwriting the first couple instructions in
  * the target function with a jump instruction to the hook function. The
  * hook function will be expected to implement the functionality of the
  * hooked function when using this module.

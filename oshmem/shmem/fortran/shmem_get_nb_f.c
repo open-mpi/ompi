@@ -18,7 +18,7 @@
 #include "stdio.h"
 
 #if OSHMEM_PROFILING
-#include "oshmem/shmem/fortran/profile/pbindings.h"
+#include "oshmem/shmem/fortran/pbindings.h"
 
 SHMEM_GENERATE_WEAK_BINDINGS(SHMEM_GETMEM_NBI, shmem_getmem_nbi)
 
@@ -35,7 +35,7 @@ SHMEM_GENERATE_WEAK_BINDINGS(SHMEM_GET32_NBI, shmem_get32_nbi)
 SHMEM_GENERATE_WEAK_BINDINGS(SHMEM_GET64_NBI, shmem_get64_nbi)
 SHMEM_GENERATE_WEAK_BINDINGS(SHMEM_GET128_NBI, shmem_get128_nbi)
 
-#include "oshmem/shmem/fortran/profile/defines.h"
+#include "oshmem/shmem/fortran/profile-defines.h"
 #endif
 
 SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,

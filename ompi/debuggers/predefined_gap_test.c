@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2009      Sun Microsystems, Inc  All rights reserved.
  * Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012-2013 The University of Tennessee and The University
+ * Copyright (c) 2012-2023 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
@@ -59,8 +59,6 @@ int main(int argc, char **argv) {
     GAP_CHECK("c_contextid", test_comm, c_contextid, c_name, 1);
     GAP_CHECK("c_my_rank", test_comm, c_my_rank, c_contextid, 1);
     GAP_CHECK("c_flags", test_comm, c_flags, c_my_rank, 1);
-    GAP_CHECK("c_id_available", test_comm, c_id_available, c_flags, 1);
-    GAP_CHECK("c_id_start_index", test_comm, c_id_start_index, c_id_available,  1);
     GAP_CHECK("c_remote_group", test_comm, c_remote_group, c_local_group, 1);
     GAP_CHECK("c_local_comm", test_comm, c_local_comm,  c_remote_group,  1);
     GAP_CHECK("c_keyhash", test_comm, c_keyhash, c_local_comm,  1);
@@ -131,7 +129,6 @@ int main(int argc, char **argv) {
     GAP_CHECK("error_handler", test_win, error_handler, w_f_to_c_index, 1);
     GAP_CHECK("errhandler_type", test_win, errhandler_type, error_handler, 1);
     GAP_CHECK("w_osc_module", test_win, w_osc_module, errhandler_type, 1);
-
     /* Test Predefined info sizes */
     printf("=============================================\n");
     printf("ompi_predefined_info_t = %lu bytes\n", sizeof(ompi_predefined_info_t));

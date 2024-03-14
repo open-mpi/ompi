@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2008-2019 Cisco Systems, Inc.  All rights reserved
+# Copyright (c) 2008-2022 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
 # Copyright (c) 2010-2011 Sandia National Laboratories. All rights reserved.
 # Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
@@ -19,21 +19,14 @@
 #                         and Technology (RIST).  All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
+# Copyright (c) 2021      Amazon.com, Inc. or its affiliates.  All Rights
+#                         reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
 #
 # $HEADER$
 #
-
-# We always have C bindings, but do we have profiling?
-
-if BUILD_MPI_BINDINGS_LAYER
-c_mpi_lib = mpi/c/libmpi_c_mpi.la mpi/tool/libmpi_mpit.la
-else
-c_mpi_lib =
-endif
-c_pmpi_lib = mpi/c/profile/libmpi_c_pmpi.la mpi/tool/profile/libmpi_pmpit.la
 
 # See if we have Fortran mpif.h MPI bindings
 
@@ -98,10 +91,7 @@ SUBDIRS = \
         $(OMPI_MPIEXT_USEMPIF08_DIRS) \
         mpi/fortran/use-mpi-f08 \
         mpi/fortran/mpiext-use-mpi-f08 \
-        $(MCA_ompi_FRAMEWORK_COMPONENT_DSO_SUBDIRS) \
-        $(OMPI_CONTRIB_SUBDIRS) \
-        mpi/man/man3 \
-        mpi/man/man5
+        $(MCA_ompi_FRAMEWORK_COMPONENT_DSO_SUBDIRS)
 
 if OMPI_WANT_JAVA_BINDINGS
 SUBDIRS += \
@@ -134,10 +124,7 @@ DIST_SUBDIRS = \
         mpi/java \
         $(OMPI_MPIEXT_ALL_SUBDIRS) \
         $(MCA_ompi_FRAMEWORKS_SUBDIRS) \
-        $(MCA_ompi_FRAMEWORK_COMPONENT_ALL_SUBDIRS) \
-        $(OMPI_CONTRIB_DIST_SUBDIRS) \
-        mpi/man/man3 \
-        mpi/man/man5
+        $(MCA_ompi_FRAMEWORK_COMPONENT_ALL_SUBDIRS)
 
 # Build the main MPI library
 
@@ -147,7 +134,7 @@ lib@OMPI_LIBMPI_NAME@_la_LIBADD = \
         datatype/libdatatype.la \
         debuggers/libdebuggers.la \
         mpi/c/libmpi_c.la \
-        mpi/tool/libmpi_mpit_common.la \
+        mpi/tool/libmpi_mpit.la \
         $(c_mpi_lib) \
         $(c_pmpi_lib) \
         $(mpi_fortran_base_lib) \
@@ -200,6 +187,7 @@ include patterns/net/Makefile.am
 include patterns/comm/Makefile.am
 include mca/Makefile.am
 include util/Makefile.am
+include instance/Makefile.am
 
 distclean-local:
 	rm -f mpiext/static-components.h

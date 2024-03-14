@@ -65,7 +65,7 @@ OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_ring_buffer_t);
  * @param ring Pointer to a ring buffer (IN/OUT)
  * @param size The number of elements in the ring (IN)
  *
- * @return OPAL_SUCCESS if all initializations were succesful. Otherwise,
+ * @return OPAL_SUCCESS if all initializations were successful. Otherwise,
  *  the error indicate what went wrong in the function.
  */
 OPAL_DECLSPEC int opal_ring_buffer_init(opal_ring_buffer_t *ring, int size);

@@ -41,7 +41,7 @@ int main(int argc, char *argv[])
     struct iovec iov[2];
     opal_convertor_t *convertor;
 
-    opal_init_util(NULL, NULL);
+    opal_init(NULL, NULL);
     ompi_datatype_init();
     srandom((int) time(NULL));
     /*srandomdev();*/
@@ -151,7 +151,6 @@ int main(int argc, char *argv[])
     free(packed);
 
     /* clean-ups all data allocations */
-    ompi_datatype_finalize();
     opal_finalize_util();
 
     return 0;

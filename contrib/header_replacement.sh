@@ -12,7 +12,7 @@
 #                         All rights reserved.
 # Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
 #
-# orte_show_help_replacement.sh Script to detect occurences of
+# orte_show_help_replacement.sh Script to detect occurrences of
 # #include "orte/util/show_help.h", where actually either
 #  1. #include "opal/util/output.h"
 #  2. #include "orte/mca/rml/rml_types.h"
@@ -50,7 +50,7 @@ function add_header()
 {
     file=$1                               # File to add header to
     header=$2                             # E.g. opal/util/output.h for #include "opal/util/output.h"
-    after_header_pattern=$3               # Add after occurences of pattern, e.g. opal/util
+    after_header_pattern=$3               # Add after occurrences of pattern, e.g. opal/util
     line=`grep -n "#include \"$after_header_pattern" $file | cut -f1 -d':' | head -n1`
     if [ $# -gt 3 -a "x$line" = "x" ] ; then
         after_header_pattern=$4           # If above pattern is not found, try more generic, e.g. opal/

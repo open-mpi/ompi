@@ -2,7 +2,7 @@ C
 C Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
 C                         University Research and Technology
 C                         Corporation.  All rights reserved.
-C Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
+C Copyright (c) 2006-2022 Cisco Systems, Inc.  All rights reserved
 C $COPYRIGHT$
 C
 C Simple ring test program using the mpif.h Fortran bindings.
@@ -26,7 +26,7 @@ C     zero.
       next = mod((rank + 1), size)
       from = mod((rank + size - 1), size)
 
-C     If we are the "master" process (i.e., MPI_COMM_WORLD rank 0), put
+C     If we are the "manager" process (i.e., MPI_COMM_WORLD rank 0), put
 C     the number of times to go around the ring in the message.
 
       if (rank .eq. 0) then

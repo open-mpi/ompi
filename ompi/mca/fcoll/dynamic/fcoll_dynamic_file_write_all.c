@@ -13,6 +13,9 @@
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
+ * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
+ * Copyright (c) 2024      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -51,9 +54,9 @@ static int local_heap_sort (mca_io_ompio_local_io_array *io_array,
 
 
 int
-mca_fcoll_dynamic_file_write_all (ompio_file_t *fh,
+mca_fcoll_dynamic_file_write_all (struct ompio_file_t *fh,
                                   const void *buf,
-                                  int count,
+                                  size_t count,
                                   struct ompi_datatype_t *datatype,
                                   ompi_status_public_t *status)
 {
@@ -81,17 +84,20 @@ mca_fcoll_dynamic_file_write_all (ompio_file_t *fh,
     /* global iovec at the writers that contain the iovecs created from
        file_set_view */
     uint32_t total_fview_count = 0;
-    int local_count = 0, temp_pindex;
-    int *fview_count = NULL, *disp_index=NULL, *temp_disp_index=NULL;
+    size_t local_count = 0, temp_pindex;
+    int temp_local_count;
+    size_t *fview_count = NULL;
+    ptrdiff_t *disp_index=NULL, *temp_disp_index=NULL;
     int current_index = 0, temp_index=0;
 
     char *global_buf = NULL;
+#if DEBUG_ON
     MPI_Aint global_count = 0;
-
+#endif
 
     /* array that contains the sorted indices of the global_iov */
     int *sorted = NULL, *sorted_file_offsets=NULL;
-    int *displs = NULL;
+    ptrdiff_t *displs = NULL;
     int dynamic_num_io_procs;
     size_t max_data = 0, datatype_size = 0;
     int **blocklen_per_process=NULL;
@@ -116,7 +122,7 @@ mca_fcoll_dynamic_file_write_all (ompio_file_t *fh,
     opal_datatype_get_extent ( &datatype->super, &lb, &ftype_extent );
 
     /**************************************************************************
-     ** 1.  In case the data is not contigous in memory, decode it into an iovec
+     ** 1.  In case the data is not contiguous in memory, decode it into an iovec
      **************************************************************************/
     if ( ( ftype_extent == (ptrdiff_t) ftype_size)             &&
          opal_datatype_is_contiguous_memory_layout(&datatype->super,1) &&
@@ -209,10 +215,11 @@ mca_fcoll_dynamic_file_write_all (ompio_file_t *fh,
     ret = fh->f_generate_current_file_view( (struct ompio_file_t *) fh,
 					    max_data,
 					    &local_iov_array,
-					    &local_count);
+					    &temp_local_count);
     if (ret != OMPI_SUCCESS){
 	goto exit;
     }
+    local_count = temp_local_count;
 
 #if DEBUG_ON
     for (i=0 ; i<local_count ; i++) {
@@ -228,7 +235,7 @@ mca_fcoll_dynamic_file_write_all (ompio_file_t *fh,
     /*************************************************************
      *** 4. Allgather the offset/lengths array from all processes
      *************************************************************/
-    fview_count = (int *) malloc (fh->f_procs_per_group * sizeof (int));
+    fview_count = (size_t *)malloc (fh->f_procs_per_group * sizeof (size_t));
     if (NULL == fview_count) {
         opal_output (1, "OUT OF MEMORY\n");
         ret = OMPI_ERR_OUT_OF_RESOURCE;
@@ -238,11 +245,11 @@ mca_fcoll_dynamic_file_write_all (ompio_file_t *fh,
     start_comm_time = MPI_Wtime();
 #endif
     ret = ompi_fcoll_base_coll_allgather_array (&local_count,
-                                           1,
-                                           MPI_INT,
+                                           sizeof(size_t),
+                                           MPI_BYTE,
                                            fview_count,
-                                           1,
-                                           MPI_INT,
+                                           sizeof(size_t),
+                                           MPI_BYTE,
                                            0,
                                            fh->f_procs_in_group,
                                            fh->f_procs_per_group,
@@ -256,7 +263,7 @@ mca_fcoll_dynamic_file_write_all (ompio_file_t *fh,
     comm_time += (end_comm_time - start_comm_time);
 #endif
 
-    displs = (int*) malloc (fh->f_procs_per_group * sizeof (int));
+    displs = (ptrdiff_t *)malloc (fh->f_procs_per_group * sizeof (ptrdiff_t));
     if (NULL == displs) {
         opal_output (1, "OUT OF MEMORY\n");
         ret = OMPI_ERR_OUT_OF_RESOURCE;
@@ -274,11 +281,11 @@ mca_fcoll_dynamic_file_write_all (ompio_file_t *fh,
     printf("total_fview_count : %d\n", total_fview_count);
     if (my_aggregator == fh->f_rank) {
         for (i=0 ; i<fh->f_procs_per_group ; i++) {
-            printf ("%d: PROCESS: %d  ELEMENTS: %d  DISPLS: %d\n",
+            printf ("%d: PROCESS: %d  ELEMENTS: %zu  DISPLS: %ld\n",
                     fh->f_rank,
                     i,
                     fview_count[i],
-                    displs[i]);
+                    (long) displs[i]);
         }
     }
 #endif
@@ -366,7 +373,7 @@ mca_fcoll_dynamic_file_write_all (ompio_file_t *fh,
     cycles = ceil((double)total_bytes/bytes_per_cycle);
 
     if (my_aggregator == fh->f_rank) {
-        disp_index = (int *)malloc (fh->f_procs_per_group * sizeof (int));
+        disp_index = (ptrdiff_t *)malloc (fh->f_procs_per_group * sizeof (ptrdiff_t));
         if (NULL == disp_index) {
             opal_output (1, "OUT OF MEMORY\n");
             ret = OMPI_ERR_OUT_OF_RESOURCE;
@@ -622,7 +629,7 @@ mca_fcoll_dynamic_file_write_all (ompio_file_t *fh,
 
         /*************************************************************************
 	 *** 7d. Calculate the displacement on where to put the data and allocate
-         ***     the recieve buffer (global_buf)
+         ***     the receive buffer (global_buf)
 	 *************************************************************************/
         if (my_aggregator == fh->f_rank) {
             entries_per_aggregator=0;
@@ -705,7 +712,7 @@ mca_fcoll_dynamic_file_write_all (ompio_file_t *fh,
                     file_offsets_for_agg[sorted_file_offsets[i-1]].length;
             }
 
-            temp_disp_index = (int *)calloc (1, fh->f_procs_per_group * sizeof (int));
+            temp_disp_index = (ptrdiff_t *)calloc (1, fh->f_procs_per_group * sizeof (ptrdiff_t));
             if (NULL == temp_disp_index) {
                 opal_output (1, "OUT OF MEMORY\n");
                 ret = OMPI_ERR_OUT_OF_RESOURCE;
@@ -713,7 +720,9 @@ mca_fcoll_dynamic_file_write_all (ompio_file_t *fh,
             }
 
             /*Now update the displacements array  with memory offsets*/
+#if DEBUG_ON
             global_count = 0;
+#endif
             for (i=0;i<entries_per_aggregator;i++){
                 temp_pindex =
                     file_offsets_for_agg[sorted_file_offsets[i]].process_id;
@@ -722,12 +731,14 @@ mca_fcoll_dynamic_file_write_all (ompio_file_t *fh,
                 if (temp_disp_index[temp_pindex] < disp_index[temp_pindex])
                     temp_disp_index[temp_pindex] += 1;
                 else{
-                    printf("temp_disp_index[%d]: %d is greater than disp_index[%d]: %d\n",
-                           temp_pindex, temp_disp_index[temp_pindex],
-                           temp_pindex, disp_index[temp_pindex]);
+                    printf("temp_disp_index[%zu]: %ld is greater than disp_index[%zu]: %ld\n",
+                           temp_pindex, (long) temp_disp_index[temp_pindex],
+                           temp_pindex, (long) disp_index[temp_pindex]);
                 }
+#if DEBUG_ON
                 global_count +=
                     file_offsets_for_agg[sorted_file_offsets[i]].length;
+#endif
             }
 
             if (NULL != temp_disp_index){
@@ -802,7 +813,7 @@ mca_fcoll_dynamic_file_write_all (ompio_file_t *fh,
         }
         else if (bytes_sent) {
             /* allocate a send buffer and copy the data that needs
-               to be sent into it in case the data is non-contigous
+               to be sent into it in case the data is non-contiguous
                in memory */
             ptrdiff_t mem_address;
             size_t remaining = 0;
@@ -844,7 +855,7 @@ mca_fcoll_dynamic_file_write_all (ompio_file_t *fh,
 	}
 	total_bytes_written += bytes_sent;
 
-	/* Gather the sendbuf from each process in appropritate locations in
+	/* Gather the sendbuf from each process in appropriate locations in
            aggregators*/
 
 	if (bytes_sent){
@@ -927,7 +938,7 @@ mca_fcoll_dynamic_file_write_all (ompio_file_t *fh,
             fh->f_num_of_io_entries++;
 
             for (i=1;i<entries_per_aggregator;i++){
-                /* If the enrties are contiguous merge them,
+                /* If the entries are contiguous merge them,
                    else make a new entry */
                 if (file_offsets_for_agg[sorted_file_offsets[i-1]].offset +
                     file_offsets_for_agg[sorted_file_offsets[i-1]].length ==

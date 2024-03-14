@@ -10,7 +10,7 @@
  *                         reserved.
  * Copyright (c) 2014-2018 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
- * Copyright (c) 2017      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2017-2021 IBM Corporation.  All rights reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -24,7 +24,7 @@
 #include "nbc_internal.h"
 
 /* an reduce_csttare schedule can not be cached easily because the contents
- * ot the recvcount value may change, so a comparison of the address
+ * of the recvcount value may change, so a comparison of the address
  * would not be sufficient ... we simply do not cache it */
 
 /* binomial reduce to rank 0 followed by a linear scatter ...
@@ -43,7 +43,8 @@
 static int nbc_reduce_scatter_block_init(const void* sendbuf, void* recvbuf, int recvcount, MPI_Datatype datatype,
                                          MPI_Op op, struct ompi_communicator_t *comm, ompi_request_t ** request,
                                          mca_coll_base_module_t *module, bool persistent) {
-  int peer, rank, maxr, p, res, count;
+  int peer, rank, maxr, p, res;
+  size_t count;
   MPI_Aint ext;
   ptrdiff_t gap, span;
   char *redbuf, *sbuf, inplace;
@@ -67,9 +68,9 @@ static int nbc_reduce_scatter_block_init(const void* sendbuf, void* recvbuf, int
     return OMPI_ERR_OUT_OF_RESOURCE;
   }
 
-  maxr = (int)ceil((log((double)p)/LOG2));
+  maxr = ceil_of_log2(p);
 
-  count = p * recvcount;
+  count = (size_t) p * recvcount;
 
   if (0 < count) {
     char *rbuf, *lbuf, *buf;
@@ -166,7 +167,8 @@ static int nbc_reduce_scatter_block_init(const void* sendbuf, void* recvbuf, int
         return res;
       }
     } else {
-      for (int r = 1, offset = 0 ; r < p ; ++r) {
+      size_t offset = 0;
+      for (int r = 1 ; r < p ; ++r) {
         offset += recvcount;
         sbuf = lbuf + (offset*ext);
         /* root sends the right buffer to the right receiver */
@@ -228,7 +230,8 @@ int ompi_coll_libnbc_ireduce_scatter_block(const void* sendbuf, void* recvbuf, i
 static int nbc_reduce_scatter_block_inter_init(const void *sendbuf, void *recvbuf, int rcount, struct ompi_datatype_t *dtype,
                                                struct ompi_op_t *op, struct ompi_communicator_t *comm, ompi_request_t **request,
                                                mca_coll_base_module_t *module, bool persistent) {
-  int rank, res, count, lsize, rsize;
+  int rank, res, lsize, rsize;
+  size_t count;
   MPI_Aint ext;
   ptrdiff_t gap, span, span_align;
   NBC_Schedule *schedule;
@@ -245,7 +248,7 @@ static int nbc_reduce_scatter_block_inter_init(const void *sendbuf, void *recvbu
     return res;
   }
 
-  count = rcount * lsize;
+  count = (size_t)rcount * lsize;
 
   span = opal_datatype_span(&dtype->super, count, &gap);
   span_align = OPAL_ALIGN(span, dtype->super.align, ptrdiff_t);

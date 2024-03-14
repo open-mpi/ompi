@@ -123,7 +123,7 @@
 #pragma weak shmem_put32 = pshmem_put32
 #pragma weak shmem_put64 = pshmem_put64
 #pragma weak shmem_put128 = pshmem_put128
-#include "oshmem/shmem/c/profile/defines.h"
+#include "oshmem/shmem/c/profile-defines.h"
 #endif
 
 SHMEM_CTX_TYPE_PUT(_char, char)

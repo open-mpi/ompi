@@ -4,6 +4,7 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -59,7 +60,7 @@ ssize_t opal_datatype_get_element_count(const opal_datatype_t *datatype, size_t 
                 }
                 pos_desc++; /* advance to the next element after the end loop */
             } else {
-                pos_desc = pStack->index + 1; /* go back to the begining of the loop */
+                pos_desc = pStack->index + 1; /* go back to the beginning of the loop */
             }
             continue;
         }
@@ -129,7 +130,7 @@ int32_t opal_datatype_set_element_count(const opal_datatype_t *datatype, size_t 
                 }
                 pos_desc++; /* advance to the next element after the end loop */
             } else {
-                pos_desc = pStack->index + 1; /* go back to the begining of the loop */
+                pos_desc = pStack->index + 1; /* go back to the beginning of the loop */
             }
             continue;
         }
@@ -168,7 +169,10 @@ int opal_datatype_compute_ptypes(opal_datatype_t *datatype)
 {
     dt_stack_t *pStack; /* pointer to the position on the stack */
     uint32_t pos_desc;  /* actual position in the description of the derived datatype */
-    ssize_t nbElems = 0, stack_pos = 0;
+    ssize_t stack_pos = 0;
+#if defined(VERBOSE)
+    ssize_t nbElems = 0;
+#endif
     dt_elem_desc_t *pElems;
 
     if (NULL != datatype->ptypes) {
@@ -195,7 +199,7 @@ int opal_datatype_compute_ptypes(opal_datatype_t *datatype)
                 }
                 pos_desc++; /* advance to the next element after the end loop */
             } else {
-                pos_desc = pStack->index + 1; /* go back to the begining of the loop */
+                pos_desc = pStack->index + 1; /* go back to the beginning of the loop */
             }
             continue;
         }
@@ -213,12 +217,14 @@ int opal_datatype_compute_ptypes(opal_datatype_t *datatype)
             datatype->ptypes[pElems[pos_desc].elem.common.type] += (size_t) pElems[pos_desc]
                                                                        .elem.count
                                                                    * pElems[pos_desc].elem.blocklen;
+#if defined(VERBOSE)
             nbElems += (size_t) pElems[pos_desc].elem.count * pElems[pos_desc].elem.blocklen;
 
             DUMP("  compute_ptypes-add: type %d count %" PRIsize_t " (total type %u total %lld)\n",
                  pElems[pos_desc].elem.common.type,
                  datatype->ptypes[pElems[pos_desc].elem.common.type], pElems[pos_desc].elem.count,
                  nbElems);
+#endif
             pos_desc++; /* advance to the next data */
         }
     }

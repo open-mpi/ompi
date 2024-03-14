@@ -45,12 +45,11 @@ typedef int (*mca_topo_base_component_init_query_2_2_0_fn_t)
      bool enable_mpi_threads);
 
 /*
- * Communicator query, called during cart and graph communicator
- * creation.
+ * Communicator/group query, called during cart and graph communicator creation.
  */
 typedef struct mca_topo_base_module_t*
-(*mca_topo_base_component_comm_query_2_2_0_fn_t)
-    (const ompi_communicator_t *comm, int *priority, uint32_t type);
+(*mca_topo_base_component_query_2_2_0_fn_t)
+    (const ompi_communicator_t *comm, const ompi_group_t *group, int *priority, uint32_t type);
 
 /*
  * Structure for topo v2.1.0 components.This is chained to MCA v2.0.0
@@ -60,7 +59,7 @@ typedef struct mca_topo_base_component_2_2_0_t {
     mca_base_component_data_t topoc_data;
 
     mca_topo_base_component_init_query_2_2_0_fn_t topoc_init_query;
-    mca_topo_base_component_comm_query_2_2_0_fn_t topoc_comm_query;
+    mca_topo_base_component_query_2_2_0_fn_t topoc_query;
 } mca_topo_base_component_2_2_0_t;
 typedef mca_topo_base_component_2_2_0_t mca_topo_base_component_t;
 
@@ -344,7 +343,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_topo_base_module_t);
 
 /*
  * ******************************************************************
- * ********** Use in components that are of type topo v2.2.0 ********
+ * ********** Use in components that are of type topo v2.3.0 ********
  * ******************************************************************
  */
 #define MCA_TOPO_BASE_VERSION_2_2_0 \

@@ -65,12 +65,6 @@
 #include <sys/mman.h>
 #endif
 
-#if OPAL_CC_USE_PRAGMA_IDENT
-#pragma ident OMPI_IDENT_STRING
-#elif OPAL_CC_USE_IDENT
-#ident OSHMEM_IDENT_STRING
-#endif
-
 /*
  * WHAT: add thread for invoking opal_progress() function
  * WHY:  SHMEM based on current ompi/trunk (by the time of integrating into Open MPI)
@@ -101,6 +95,9 @@ shmem_internal_mutex_t shmem_internal_mutex_alloc = {{0}};
 
 shmem_ctx_t oshmem_ctx_default = NULL;
 
+shmem_team_t oshmem_team_shared = NULL;
+shmem_team_t oshmem_team_world  = NULL;
+
 static int _shmem_init(int argc, char **argv, int requested, int *provided);
 
 #if OSHMEM_OPAL_THREAD_ENABLE
@@ -108,8 +105,8 @@ static void* shmem_opal_thread(void* argc)
 {
 /*
  * WHAT: sleep() invocation
- * WHY:  there occures a segfault sometimes and sleep()
- *       reduces it's possibility
+ * WHY:  there occurs a segfault sometimes and sleep()
+ *       reduces its possibility
  */
     sleep(1);
     while(oshmem_shmem_initialized)

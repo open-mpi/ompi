@@ -32,7 +32,7 @@ struct ompi_coll_adapt_constant_bcast_context_s {
     opal_mutex_t *mutex;
     int *recv_array;
     int *send_array;
-    /* Length of the fragment array, which is the number of recevied segments */
+    /* Length of the fragment array, which is the number of received segments */
     int num_recv_segs;
     /* Number of segments that is finishing recving */
     int num_recv_fini;
@@ -81,7 +81,7 @@ struct ompi_coll_adapt_constant_reduce_context_s {
     int ireduce_tag;
     /* How many sends are posted but not finished */
     int32_t ongoing_send;
-    /* Length of the fragment array, which is the number of recevied segments */
+    /* Length of the fragment array, which is the number of received segments */
     int32_t num_recv_segs;
     /* Number of sent segments */
     int32_t num_sent_segs;

@@ -28,7 +28,7 @@
 /*
  * This function implemented in this file is only called from Fortran,
  * so we never bothered to put a prototype for it in any C header
- * file.  To avoid compiler warnings about no protoype, we prototype
+ * file.  To avoid compiler warnings about no prototype, we prototype
  * it here.
  */
 OMPI_DECLSPEC void ompi_buffer_detach_f08(char *buffer, MPI_Fint *size,

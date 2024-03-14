@@ -97,7 +97,7 @@ int main(int argc, char *argv[])
     MPI_Datatype ddt, stype, rtype;
     size_t length, packed;
 
-    opal_init_util(&argc, &argv);
+    opal_init(&argc, &argv);
     ompi_datatype_init();
 
     ompi_datatype_create_contiguous(per_type, MPI_FLOAT, &ddt);

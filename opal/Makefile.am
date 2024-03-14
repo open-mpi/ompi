@@ -2,7 +2,7 @@
 # Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
-# Copyright (c) 2004-2009 The University of Tennessee and The University
+# Copyright (c) 2004-2022 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
 # Copyright (c) 2004-2009 High Performance Computing Center Stuttgart,
@@ -13,8 +13,8 @@
 # Copyright (c) 2015-2016 Intel, Inc. All rights reserved.
 # Copyright (c) 2016      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
-# Copyright (c) 2020      Amazon.com, Inc. or its affiliates.
-#                         All Rights reserved.
+# Copyright (c) 2020-2022 Amazon.com, Inc. or its affiliates.  All Rights reserved.
+# Copyright (c) 2022      Advanced Micro Devices, Inc. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -22,31 +22,6 @@
 # $HEADER$
 #
 
-if OPAL_cuda_support
-SUBDIRS = \
-	include \
-        mca/common/cuda \
-        datatype \
-        etc \
-        util \
-	mca/base \
-	$(MCA_opal_FRAMEWORKS_SUBDIRS) \
-	$(MCA_opal_FRAMEWORK_COMPONENT_STATIC_SUBDIRS) \
-        . \
-	$(MCA_opal_FRAMEWORK_COMPONENT_DSO_SUBDIRS)
-# libltdl is included by variable because if --disable-dlopen was
-# used, there will be no generated Makefile in that directory (and
-# therefore make distclean will fail).
-DIST_SUBDIRS = \
-	include \
-        mca/common/cuda \
-        datatype \
-        etc \
-	util \
-	mca/base \
-	$(MCA_opal_FRAMEWORKS_SUBDIRS) \
-	$(MCA_opal_FRAMEWORK_COMPONENT_ALL_SUBDIRS)
-else
 SUBDIRS = \
 	include \
         datatype \
@@ -57,9 +32,6 @@ SUBDIRS = \
 	$(MCA_opal_FRAMEWORK_COMPONENT_STATIC_SUBDIRS) \
         . \
 	$(MCA_opal_FRAMEWORK_COMPONENT_DSO_SUBDIRS)
-# libltdl is included by variable because if --disable-dlopen was
-# used, there will be no generated Makefile in that directory (and
-# therefore make distclean will fail).
 DIST_SUBDIRS = \
 	include \
         datatype \
@@ -68,32 +40,35 @@ DIST_SUBDIRS = \
 	mca/base \
 	$(MCA_opal_FRAMEWORKS_SUBDIRS) \
 	$(MCA_opal_FRAMEWORK_COMPONENT_ALL_SUBDIRS)
-endif
 
-# Build the main OPAL library
+noinst_LTLIBRARIES = libopen-pal_core.la
 lib_LTLIBRARIES = lib@OPAL_LIB_NAME@.la
+
+libopen_pal_core_la_SOURCES =
+libopen_pal_core_la_LIBADD = \
+        mca/base/libmca_base.la \
+        util/libopalutil_core.la \
+	$(MCA_opal_FRAMEWORK_CORE_LIBS)
+libopen_pal_core_la_DEPENDENCIES = \
+        mca/base/libmca_base.la \
+        util/libopalutil_core.la \
+	$(MCA_opal_FRAMEWORK_CORE_LIBS)
+
 lib@OPAL_LIB_NAME@_la_SOURCES =
 lib@OPAL_LIB_NAME@_la_LIBADD = \
+	libopen-pal_core.la \
         datatype/libdatatype.la \
-        mca/base/libmca_base.la \
         util/libopalutil.la \
-	$(MCA_opal_FRAMEWORK_LIBS) \
-	$(opal_libevent_LIBS) \
-	$(opal_hwloc_LIBS) \
-	$(opal_pmix_LIBS)
+	$(MCA_opal_FRAMEWORK_LIBS)
 lib@OPAL_LIB_NAME@_la_DEPENDENCIES = \
+	libopen-pal_core.la \
         datatype/libdatatype.la \
-        mca/base/libmca_base.la \
         util/libopalutil.la \
         $(MCA_opal_FRAMEWORK_LIBS)
-lib@OPAL_LIB_NAME@_la_LDFLAGS = -version-info @libopen_pal_so_version@ \
-	$(opal_libevent_LDFLAGS) \
-	$(opal_hwloc_LDFLAGS) \
-	$(opal_pmix_LDFLAGS)
+lib@OPAL_LIB_NAME@_la_LDFLAGS = -version-info @libopen_pal_so_version@
 
 # included subdirectory Makefile.am's and appended-to variables
 headers =
-noinst_LTLIBRARIES =
 dist_opaldata_DATA =
 lib@OPAL_LIB_NAME@_la_SOURCES += $(headers)
 

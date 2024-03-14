@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2010      Sandia National Laboratories.  All rights reserved.
+ * Copyright (c) 2010-2022 Sandia National Laboratories.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -114,7 +114,7 @@ ompi_mtl_portals4_callback(ptl_event_t *ev,
                          ptl_request->opcount, ev->type));
 
     /* First put achieved successfully (In the Priority List), so it may be necessary to decrement the number of pending get
-     * If the protocol is eager, just decrement pending_get 
+     * If the protocol is eager, just decrement pending_get
      * Else (the protocol is rndv), decrement pending_get only if length % max_msg_size <= eager_limit
      * (This is the case where the eager part allows to save one get)
      */
@@ -146,7 +146,7 @@ ompi_mtl_portals4_callback(ptl_event_t *ev,
         (!PtlHandleIsEqual(ptl_request->me_h, PTL_INVALID_HANDLE))) {
         /* long expected messages with the eager protocol
            (and also with the rndv protocol if the length
-           is less or egal to eager_limit) won't see a
+           is less or equal to eager_limit) won't see a
            get event to complete the message.  Give them an extra
            count to cause the message to complete with just the SEND
            and ACK events and remove the ME. (we wait for the counter
@@ -229,7 +229,7 @@ ompi_mtl_portals4_isend_callback(ptl_event_t *ev,
 
 static inline int
 ompi_mtl_portals4_short_isend(mca_pml_base_send_mode_t mode,
-                              void *start, int length, int contextid, int tag,
+                              void *start, int length, uint32_t contextid, int tag,
                               int localrank,
                               ptl_process_t ptl_proc,
                               ompi_mtl_portals4_isend_request_t *ptl_request)
@@ -239,7 +239,9 @@ ompi_mtl_portals4_short_isend(mca_pml_base_send_mode_t mode,
     ptl_me_t me;
     ptl_hdr_data_t hdr_data;
 
-    MTL_PORTALS4_SET_SEND_BITS(match_bits, contextid, localrank, tag,
+    MTL_PORTALS4_SET_SEND_BITS(match_bits,
+                               contextid,
+                               localrank, tag,
                                MTL_PORTALS4_SHORT_MSG);
 
     MTL_PORTALS4_SET_HDR_DATA(hdr_data, ptl_request->opcount, length,
@@ -316,7 +318,7 @@ ompi_mtl_portals4_short_isend(mca_pml_base_send_mode_t mode,
 }
 
 static inline int
-ompi_mtl_portals4_long_isend(void *start, size_t length, int contextid, int tag,
+ompi_mtl_portals4_long_isend(void *start, size_t length, uint32_t contextid, int tag,
                              int localrank,
                              ptl_process_t ptl_proc,
                              ompi_mtl_portals4_isend_request_t *ptl_request)
@@ -327,7 +329,9 @@ ompi_mtl_portals4_long_isend(void *start, size_t length, int contextid, int tag,
     ptl_hdr_data_t hdr_data;
     ptl_size_t put_length;
 
-    MTL_PORTALS4_SET_SEND_BITS(match_bits, contextid, localrank, tag,
+    MTL_PORTALS4_SET_SEND_BITS(match_bits,
+                               contextid,
+                               localrank, tag,
                                MTL_PORTALS4_LONG_MSG);
 
     MTL_PORTALS4_SET_HDR_DATA(hdr_data, ptl_request->opcount, length, 0);
@@ -381,7 +385,7 @@ ompi_mtl_portals4_long_isend(void *start, size_t length, int contextid, int tag,
     }
 
     /* We have to wait for some GET events.
-       If the first put falls in overflow list, the number of GET event is egal to:
+       If the first put falls in overflow list, the number of GET event is equal to:
            (length - 1) / ompi_mtl_portals4.max_msg_size_mtl + 1
        else we will re-calculate this number when we received the first ACK event (with remote overflow list)
      */
@@ -513,7 +517,7 @@ ompi_mtl_portals4_send_start(struct mca_mtl_base_module_t* mtl,
     pending->mode = mode;
     pending->start = start;
     pending->length = length;
-    pending->contextid = comm->c_contextid;
+    pending->contextid = ompi_comm_get_local_cid(comm);
     pending->tag = tag;
     pending->my_rank = comm->c_my_rank;
     pending->fc_notified = 0;
@@ -546,7 +550,7 @@ ompi_mtl_portals4_send_start(struct mca_mtl_base_module_t* mtl,
         ret = ompi_mtl_portals4_short_isend(mode,
                                             start,
                                             length,
-                                            comm->c_contextid,
+                                            ompi_comm_get_local_cid(comm),
                                             tag,
                                             comm->c_my_rank,
                                             ptl_proc,
@@ -554,7 +558,7 @@ ompi_mtl_portals4_send_start(struct mca_mtl_base_module_t* mtl,
     } else {
         ret = ompi_mtl_portals4_long_isend(start,
                                            length,
-                                           comm->c_contextid,
+                                           ompi_comm_get_local_cid(comm),
                                            tag,
                                            comm->c_my_rank,
                                            ptl_proc,

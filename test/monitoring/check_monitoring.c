@@ -15,7 +15,7 @@
 
   To be run as:
 
-  mpirun -np 4 --mca pml_monitoring_enable 2 ./check_monitoring
+  mpirun -n 4 --mca pml_monitoring_enable 2 ./check_monitoring
 */
 
 #include <mpi.h>
@@ -158,7 +158,7 @@ static inline void pvar_all_init(MPI_T_pvar_session *session, int world_size)
     int MPIT_result, provided;
     MPIT_result = MPI_T_init_thread(MPI_THREAD_SINGLE, &provided);
     if (MPIT_result != MPI_SUCCESS) {
-        fprintf(stderr, "Failed to initialiaze MPI_Tools sub-system.\n");
+        fprintf(stderr, "Failed to initialize MPI_Tools sub-system.\n");
         MPI_Abort(MPI_COMM_WORLD, MPIT_result);
     }
     MPIT_result = MPI_T_pvar_session_create(session);

@@ -19,7 +19,7 @@ filename pointing to an Open MPI tarball (may be either `.gz` or
    * `openmpi-devel`
    * `openmpi-docs`
 
-The folowing arguments could be used to affect script behaviour.
+The following arguments could be used to affect script behaviour.
 Please, do NOT set the same settings with parameters and config vars.
 
 * `-b`:
@@ -32,7 +32,7 @@ Please, do NOT set the same settings with parameters and config vars.
    This option will change the name of the produced RPM to the "name".
    It is useful to use with "-o" and "-m" options if you want to have
    multiple Open MPI versions installed simultaneously in the same
-   enviroment. Requires use of option `-b`.
+   environment. Requires use of option `-b`.
 
 * `-o`:
    With this option the install path of the binary RPM will be changed
@@ -61,6 +61,13 @@ Please, do NOT set the same settings with parameters and config vars.
 * `-c parameter`:
    Add custom configure parameter.
 
+   **NOTE:** As of Open MPI v5.0.x, there are default configure
+   options for `--with-FOO=external` for all the 3rd party packages
+   (libevent, hwloc, pmix, prrte).  This makes a pure Open MPI RPM,
+   not an RPM that includes those 3rd party packages.  If you specify
+   `-c`, if you want to preserve the default options, you will need to
+   include those in the parameter value.
+
 * `-r parameter`:
    Add custom RPM build parameter.
 
@@ -70,7 +77,7 @@ Please, do NOT set the same settings with parameters and config vars.
    the script will look for the specfile in the current directory.
 
 * `-R directory`:
-   Specifies the top level RPM build direcotry.
+   Specifies the top level RPM build directory.
 
 * `-h`:
    Prints script usage information.

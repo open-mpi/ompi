@@ -168,7 +168,7 @@ return_error_code:
 
 int main(int argc, char *argv[])
 {
-    opal_init_util(&argc, &argv);
+    opal_init(&argc, &argv);
     ompi_datatype_init();
 
     /* Simple contiguous data: MPI_INT32_T */
@@ -260,7 +260,7 @@ int main(int argc, char *argv[])
         }
     }
 
-    ompi_datatype_finalize();
+    opal_finalize_util();
 
     return 0;
 }

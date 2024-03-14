@@ -14,6 +14,8 @@
  * Copyright (c) 2007      Cisco Systems, Inc. All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2022      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -117,7 +119,7 @@ int ompi_group_incl_strided(ompi_group_t* group, int n, const int *ranks,
     }
 
     stride = check_stride(ranks,n);
-    new_group_pointer = ompi_group_allocate_strided();
+    new_group_pointer = ompi_group_allocate_strided(group);
     if( NULL == new_group_pointer ) {
         return MPI_ERR_GROUP;
     }

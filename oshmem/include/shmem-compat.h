@@ -1,4 +1,4 @@
-/* oshmem/include/shmem-compat.h. This file contains OpenSHMEM lagacy API  */
+/* oshmem/include/shmem-compat.h. This file contains OpenSHMEM legacy API  */
 /*
  * Copyright (c) 2014-2017 Mellanox Technologies, Inc.
  *                         All rights reserved.

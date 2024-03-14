@@ -12,6 +12,8 @@
  * Copyright (c) 2008-2021 University of Houston. All rights reserved.
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
+ * Copyright (c) 2023      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -25,6 +27,9 @@
 #include "mpi.h"
 #include <unistd.h>
 #include <limits.h>
+#ifdef HAVE_SYSLIMITS_H
+#include <syslimits.h>
+#endif  /* HAVE_SYSLIMITS_H */
 #include "ompi/constants.h"
 #include "ompi/mca/fbtl/fbtl.h"
 
@@ -33,7 +38,6 @@ static ssize_t mca_fbtl_posix_preadv_datasieving (ompio_file_t *fh, struct flock
 static ssize_t mca_fbtl_posix_preadv_generic (ompio_file_t *fh, struct flock *lock, int *lock_counter);
 static ssize_t mca_fbtl_posix_preadv_single (ompio_file_t *fh, struct flock *lock, int *lock_counter);
 
-#define MAX_RETRIES 10
 
 ssize_t mca_fbtl_posix_preadv (ompio_file_t *fh )
 {
@@ -108,7 +112,6 @@ ssize_t mca_fbtl_posix_preadv_single (ompio_file_t *fh, struct flock *lock, int 
         return OMPI_ERROR;
     }
     
-    int retries = 0;
     size_t len = fh->f_io_array[0].length;
     while ( total_bytes < len ) {
         ret_code = pread(fh->fd, (char*)fh->f_io_array[0].memory_address+total_bytes,
@@ -121,13 +124,7 @@ ssize_t mca_fbtl_posix_preadv_single (ompio_file_t *fh, struct flock *lock, int 
         }
         if ( ret_code == 0 ) {
             // end of file
-            retries++;
-            if ( retries == MAX_RETRIES ) {
-                break;
-            }
-            else {
-                continue;
-            }
+	    break;
         }
         total_bytes += ret_code;
     }   
@@ -160,7 +157,8 @@ ssize_t mca_fbtl_posix_preadv_datasieving (ompio_file_t *fh, struct flock *lock,
         }
         
         size_t sstart = (size_t)fh->f_io_array[startindex].offset;
-        size_t slen=0;
+        size_t slen=0, maxlen=0;
+        int maxindex = startindex;
 
         for ( j = startindex; j < fh->f_num_of_io_entries; j++ ) {
             endindex = j;
@@ -169,15 +167,19 @@ ssize_t mca_fbtl_posix_preadv_datasieving (ompio_file_t *fh, struct flock *lock,
                 endindex = j-1;
                 break;
             }
+            if (slen > maxlen) {
+                maxlen   = slen;
+                maxindex = endindex;
+            }
         }
         // Need to increment the value of endindex
         // by one for the loop syntax to work correctly.
         endindex++;
         
         start = (size_t)fh->f_io_array[startindex].offset;
-        end   = (size_t)fh->f_io_array[endindex-1].offset + fh->f_io_array[endindex-1].length;
+        end   = (size_t)fh->f_io_array[maxindex].offset + fh->f_io_array[maxindex].length;
         len   = end - start;
-        
+
         if ( len > bufsize ) {
             if ( NULL != temp_buf ) {
                 free ( temp_buf);
@@ -201,7 +203,6 @@ ssize_t mca_fbtl_posix_preadv_datasieving (ompio_file_t *fh, struct flock *lock,
             return OMPI_ERROR;
         }
         size_t total_bytes = 0;
-        int retries = 0;
         
         while ( total_bytes < len ) {
             ret_code = pread (fh->fd, temp_buf+total_bytes, len-total_bytes, start+total_bytes);
@@ -213,13 +214,7 @@ ssize_t mca_fbtl_posix_preadv_datasieving (ompio_file_t *fh, struct flock *lock,
             }
             if ( ret_code == 0 ) {
                 // end of file
-                retries++;
-                if ( retries == MAX_RETRIES ) {
-                    break;
-                }
-                else {
-                    continue;
-                }
+		break;
             }
             total_bytes += ret_code;
         }
@@ -231,12 +226,12 @@ ssize_t mca_fbtl_posix_preadv_datasieving (ompio_file_t *fh, struct flock *lock,
         size_t start_offset = (size_t) fh->f_io_array[startindex].offset;
         for ( i = startindex ; i < endindex ; i++) {
             pos = (size_t) fh->f_io_array[i].offset - start_offset;
-            if ( (ssize_t) pos > ret_code ) {
+            if ( pos > total_bytes ) {
                 break;
             }
             num_bytes = fh->f_io_array[i].length;
-            if ( ((ssize_t) pos + (ssize_t)num_bytes) > ret_code ) {
-                num_bytes = ret_code - (ssize_t)pos;
+            if ( (pos + (size_t)num_bytes) > total_bytes ) {
+                num_bytes = total_bytes - (ssize_t)pos;
             }
             
             memcpy (fh->f_io_array[i].memory_address, temp_buf + pos, num_bytes);

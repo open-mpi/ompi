@@ -37,6 +37,13 @@ OSHMEM_DECLSPEC extern int oshmem_shmem_api_verbose;
  */
 OSHMEM_DECLSPEC extern int oshmem_preconnect_all;
 
+
+/**
+ * Whether to force SHMEM processes to use MCS locking
+ * for shmem_locks
+ */
+OSHMEM_DECLSPEC extern int oshmem_shmem_enable_mcs_locks;
+
 END_C_DECLS
 
 #endif /* OSHMEM_RUNTIME_PARAMS_H */

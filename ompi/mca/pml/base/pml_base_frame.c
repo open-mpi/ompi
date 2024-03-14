@@ -15,7 +15,7 @@
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2018 IBM Corporation. All rights reserved.
+ * Copyright (c) 2018-2022 IBM Corporation.  All rights reserved.
  * Copyright (c) 2020      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -42,6 +42,9 @@
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/base.h"
 #include "ompi/mca/pml/base/pml_base_request.h"
+#if MPI_VERSION >= 4
+#include "ompi/mca/pml/base/pml_base_sendreq.h"
+#endif
 
 /*
  * The following file was created by configure.  It contains extern
@@ -88,21 +91,39 @@ mca_pml_base_module_t mca_pml = {
     NULL,                    /* pml_dump */
     0,                       /* pml_max_contextid */
     0,                       /* pml_max_tag */
-    0                        /* pml_flags */
+    0,                       /* pml_flags */
+    NULL                     /* pml_get_transports */
 };
 
 mca_pml_base_component_t mca_pml_base_selected_component = {{0}};
 opal_pointer_array_t mca_pml_base_pml = {{0}};
 char *ompi_pml_base_bsend_allocator_name = NULL;
+bool ompi_pml_base_check_pml = true;
 
 #if !MCA_ompi_pml_DIRECT_CALL
 static char *ompi_pml_base_wrapper = NULL;
+#endif
+
+#if MPI_VERSION >= 4
+#define OMPI_PML_BASE_WARN_DEP_CANCEL_SEND_DEFAULT OMPI_PML_BASE_WARN_DEP_CANCEL_SEND_ONCE
+int ompi_pml_base_warn_dep_cancel_send_level = OMPI_PML_BASE_WARN_DEP_CANCEL_SEND_DEFAULT;
+mca_base_var_enum_value_t ompi_pml_base_warn_dep_cancel_send_values[] = {
+    {.value = OMPI_PML_BASE_WARN_DEP_CANCEL_SEND_ALWAYS, .string = "always"},
+    {.value = OMPI_PML_BASE_WARN_DEP_CANCEL_SEND_ONCE,   .string = "once"},
+    {.value = OMPI_PML_BASE_WARN_DEP_CANCEL_SEND_NEVER,  .string = "never"},
+    {0, NULL}
+};
 #endif
 
 static int mca_pml_base_register(mca_base_register_flag_t flags)
 {
 #if !MCA_ompi_pml_DIRECT_CALL
     int var_id;
+#endif
+
+#if MPI_VERSION >= 4
+    mca_base_var_enum_t *ompi_pml_base_warn_dep_cancel_send_enum = NULL;
+    int rc;
 #endif
 
     ompi_pml_base_bsend_allocator_name = "basic";
@@ -123,16 +144,32 @@ static int mca_pml_base_register(mca_base_register_flag_t flags)
     (void) mca_base_var_register_synonym(var_id, "ompi", "pml", NULL, "wrapper", 0);
 #endif
 
+#if MPI_VERSION >= 4
+    mca_base_var_enum_create("pml_base_deprecate_warnings", ompi_pml_base_warn_dep_cancel_send_values,
+                             &ompi_pml_base_warn_dep_cancel_send_enum);
+    rc = mca_base_var_register("ompi", "pml", "base", "warn_dep_cancel_send",
+                               "How often to issue warnings for deprecated cancellation of send requests",
+                               MCA_BASE_VAR_TYPE_INT, ompi_pml_base_warn_dep_cancel_send_enum, 0, 0,
+                               OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+                               &ompi_pml_base_warn_dep_cancel_send_level);
+    OBJ_RELEASE(ompi_pml_base_warn_dep_cancel_send_enum);
+    if (OPAL_ERR_VALUE_OUT_OF_BOUNDS == rc) {
+        ompi_pml_base_warn_dep_cancel_send_level = OMPI_PML_BASE_WARN_DEP_CANCEL_SEND_DEFAULT;
+        opal_output(0, "pml:base:register: Warning invalid deprecation warning value specified. Using default: %d",
+                    ompi_pml_base_warn_dep_cancel_send_level);
+    }
+#endif
+
+    ompi_pml_base_check_pml = true;
+    (void) mca_base_var_register("ompi", "pml", "base", "check_pml",
+                                 "Whether to check the pml selections to ensure they all match",
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &ompi_pml_base_check_pml);
+
     return OMPI_SUCCESS;
 }
-
-int mca_pml_base_finalize(void) {
-  if (NULL != mca_pml_base_selected_component.pmlm_finalize) {
-    return mca_pml_base_selected_component.pmlm_finalize();
-  }
-  return OMPI_SUCCESS;
-}
-
 
 static int mca_pml_base_close(void)
 {
@@ -143,7 +180,7 @@ static int mca_pml_base_close(void)
         opal_progress_unregister(mca_pml.pml_progress);
     }
 
-    /* Blatently ignore the return code (what would we do to recover,
+    /* Blatantly ignore the return code (what would we do to recover,
        anyway?  This module is going away, so errors don't matter
        anymore) */
 

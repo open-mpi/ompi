@@ -133,7 +133,7 @@ struct mca_coll_adapt_module_t {
 OBJ_CLASS_DECLARATION(mca_coll_adapt_module_t);
 
 /* Global component instance */
-OMPI_MODULE_DECLSPEC extern mca_coll_adapt_component_t mca_coll_adapt_component;
+OMPI_DECLSPEC extern mca_coll_adapt_component_t mca_coll_adapt_component;
 
 /* ADAPT module functions */
 int ompi_coll_adapt_init_query(bool enable_progress_threads, bool enable_mpi_threads);

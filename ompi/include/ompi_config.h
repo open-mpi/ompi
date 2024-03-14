@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2022 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -44,16 +44,17 @@
 #    ifndef OMPI_DECLSPEC
 #      define OMPI_DECLSPEC            __opal_attribute_visibility__("default")
 #    endif
-#    ifndef OMPI_MODULE_DECLSPEC
-#      define OMPI_MODULE_DECLSPEC     __opal_attribute_visibility__("default")
+#    ifndef OMPI_HIDDEN
+#      define OMPI_HIDDEN              __opal_attribute_visibility__("hidden")
 #    endif
 #  else
 #    ifndef OMPI_DECLSPEC
 #      define OMPI_DECLSPEC
 #    endif
-#    ifndef OMPI_MODULE_DECLSPEC
-#      define OMPI_MODULE_DECLSPEC
+#    ifndef OMPI_HIDDEN
+#      define OMPI_HIDDEN
 #    endif
 #  endif
+
 
 #endif

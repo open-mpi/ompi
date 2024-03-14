@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2021 The University of Tennessee and The University
+ * Copyright (c) 2004-2023 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -14,7 +14,10 @@
  *                         reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2017      IBM Corporation. All rights reserved.
+ * Copyright (c) 2017-2022 IBM Corporation. All rights reserved.
+ * Copyright (c) 2021      Amazon.com, Inc. or its affiliates.  All Rights
+ *                         reserved.
+ * Copyright (c) 2022      BULL S.A.S. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,6 +30,7 @@
 #include "mpi.h"
 #include "ompi/constants.h"
 #include "ompi/datatype/ompi_datatype.h"
+#include "opal/datatype/opal_convertor_internal.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/coll_tags.h"
@@ -101,40 +105,61 @@ mca_coll_base_alltoall_intra_basic_inplace(const void *rbuf, int rcount,
         ompi_proc_t *right_proc = ompi_comm_peer_lookup(comm, right);
         opal_convertor_clone(right_proc->super.proc_convertor, &convertor, 0);
         opal_convertor_prepare_for_send(&convertor, &rdtype->super, rcount,
-                                        (char *) rbuf + right * extent);
+                                        (char *) rbuf + (MPI_Aint) right * rcount * extent);
         packed_size = max_size;
         err = opal_convertor_pack(&convertor, &iov, &iov_count, &packed_size);
-        if (1 != err) { goto error_hndl; }
+        if (1 != err) {
+            line = __LINE__;
+            goto error_hndl;
+        }
 
         /* Receive data from the right */
-        err = MCA_PML_CALL(irecv ((char *) rbuf + right * extent, rcount, rdtype,
-                                  right, MCA_COLL_BASE_TAG_ALLTOALLW, comm, &req));
-        if (MPI_SUCCESS != err) { goto error_hndl; }
+        err = MCA_PML_CALL(irecv ((char *) rbuf + (MPI_Aint) right * rcount * extent, rcount, rdtype,
+                                  right, MCA_COLL_BASE_TAG_ALLTOALL, comm, &req));
+        if (MPI_SUCCESS != err) {
+            line = __LINE__;
+            goto error_hndl;
+        }
 
         if( left != right ) {
             /* Send data to the left */
-            err = MCA_PML_CALL(send ((char *) rbuf + left * extent, rcount, rdtype,
-                                     left, MCA_COLL_BASE_TAG_ALLTOALLW, MCA_PML_BASE_SEND_STANDARD,
+            err = MCA_PML_CALL(send ((char *) rbuf + (MPI_Aint) left * rcount * extent, rcount, rdtype,
+                                     left, MCA_COLL_BASE_TAG_ALLTOALL, MCA_PML_BASE_SEND_STANDARD,
                                      comm));
-            if (MPI_SUCCESS != err) { goto error_hndl; }
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto error_hndl;
+            }
 
             err = ompi_request_wait (&req, MPI_STATUSES_IGNORE);
-            if (MPI_SUCCESS != err) { goto error_hndl; }
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto error_hndl;
+            }
 
             /* Receive data from the left */
-            err = MCA_PML_CALL(irecv ((char *) rbuf + left * extent, rcount, rdtype,
-                                      left, MCA_COLL_BASE_TAG_ALLTOALLW, comm, &req));
-            if (MPI_SUCCESS != err) { goto error_hndl; }
+            err = MCA_PML_CALL(irecv ((char *) rbuf + (MPI_Aint) left * rcount * extent, rcount, rdtype,
+                                      left, MCA_COLL_BASE_TAG_ALLTOALL, comm, &req));
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto error_hndl;
+            }
         }
 
         /* Send data to the right */
         err = MCA_PML_CALL(send ((char *) tmp_buffer,  packed_size, MPI_PACKED,
-                                 right, MCA_COLL_BASE_TAG_ALLTOALLW, MCA_PML_BASE_SEND_STANDARD,
+                                 right, MCA_COLL_BASE_TAG_ALLTOALL, MCA_PML_BASE_SEND_STANDARD,
                                  comm));
-        if (MPI_SUCCESS != err) { goto error_hndl; }
+        if (MPI_SUCCESS != err) {
+            line = __LINE__;
+            goto error_hndl;
+        }
 
         err = ompi_request_wait (&req, MPI_STATUSES_IGNORE);
-        if (MPI_SUCCESS != err) { goto error_hndl; }
+        if (MPI_SUCCESS != err) {
+            line = __LINE__;
+            goto error_hndl;
+        }
     }
 
  error_hndl:
@@ -144,8 +169,7 @@ mca_coll_base_alltoall_intra_basic_inplace(const void *rbuf, int rcount,
 
     if( MPI_SUCCESS != err ) {
         OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
-                     "%s:%4d\tError occurred %d, rank %2d", __FILE__, line, err,
-                     rank));
+                     "%s:%4d\tError occurred %d, rank %2d", __FILE__, line, err, rank));
         (void)line;  // silence compiler warning
     }
 
@@ -219,8 +243,8 @@ int ompi_coll_base_alltoall_intra_bruck(const void *sbuf, int scount,
                                          struct ompi_communicator_t *comm,
                                          mca_coll_base_module_t *module)
 {
-    int i, k, line = -1, rank, size, err = 0;
-    int sendto, recvfrom, distance, *displs = NULL, *blen = NULL;
+    int i, line = -1, rank, size, err = 0;
+    int sendto, recvfrom, distance, *displs = NULL;
     char *tmpbuf = NULL, *tmpbuf_free = NULL;
     ptrdiff_t sext, rext, span, gap = 0;
     struct ompi_datatype_t *new_ddt;
@@ -242,12 +266,7 @@ int ompi_coll_base_alltoall_intra_bruck(const void *sbuf, int scount,
     err = ompi_datatype_type_extent (rdtype, &rext);
     if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl; }
 
-    span = opal_datatype_span(&sdtype->super, (int64_t)size * scount, &gap);
-
-    displs = (int *) malloc(size * sizeof(int));
-    if (displs == NULL) { line = __LINE__; err = -1; goto err_hndl; }
-    blen = (int *) malloc(size * sizeof(int));
-    if (blen == NULL) { line = __LINE__; err = -1; goto err_hndl; }
+    span = opal_datatype_span(&rdtype->super, (int64_t)size * rcount, &gap);
 
     /* tmp buffer allocation for message data */
     tmpbuf_free = (char *)malloc(span);
@@ -255,18 +274,23 @@ int ompi_coll_base_alltoall_intra_bruck(const void *sbuf, int scount,
     tmpbuf = tmpbuf_free - gap;
 
     /* Step 1 - local rotation - shift up by rank */
-    err = ompi_datatype_copy_content_same_ddt (sdtype,
-                                               (int32_t) ((ptrdiff_t)(size - rank) * (ptrdiff_t)scount),
-                                               tmpbuf,
-                                               ((char*) sbuf) + (ptrdiff_t)rank * (ptrdiff_t)scount * sext);
+    err = ompi_datatype_sndrcv ((char*)sbuf + ((ptrdiff_t) rank * scount * sext),
+                                (int32_t) (size - rank) * scount,
+                                sdtype,
+                                tmpbuf,
+                                (int32_t) (size - rank) * rcount,
+                                rdtype);
     if (err<0) {
         line = __LINE__; err = -1; goto err_hndl;
     }
 
     if (rank != 0) {
-        err = ompi_datatype_copy_content_same_ddt (sdtype, (ptrdiff_t)rank * (ptrdiff_t)scount,
-                                                   tmpbuf + (ptrdiff_t)(size - rank) * (ptrdiff_t)scount* sext,
-                                                   (char*) sbuf);
+        err = ompi_datatype_sndrcv ((char*)sbuf,
+                                    (int32_t) rank * scount,
+                                    sdtype,
+                                    tmpbuf + ((ptrdiff_t) (size - rank) * rcount * rext),
+                                    (int32_t) rank * rcount,
+                                    rdtype);
         if (err<0) {
             line = __LINE__; err = -1; goto err_hndl;
         }
@@ -277,19 +301,19 @@ int ompi_coll_base_alltoall_intra_bruck(const void *sbuf, int scount,
 
         sendto = (rank + distance) % size;
         recvfrom = (rank - distance + size) % size;
-        k = 0;
 
-        /* create indexed datatype */
-        for (i = 1; i < size; i++) {
-            if (( i & distance) == distance) {
-                displs[k] = (ptrdiff_t)i * (ptrdiff_t)scount;
-                blen[k] = scount;
-                k++;
+        new_ddt = ompi_datatype_create((1 + size/distance) * (2 + rdtype->super.desc.used));
+
+        /* Create datatype describing data sent/received */
+        for (i = distance; i < size; i += 2*distance) {
+            int nblocks = distance;
+            if (i + distance >= size) {
+                nblocks = size - i;
             }
+            ompi_datatype_add(new_ddt, rdtype, rcount * nblocks,
+                              i * rcount * rext, rext);
         }
-        /* Set indexes and displacements */
-        err = ompi_datatype_create_indexed(k, blen, displs, sdtype, &new_ddt);
-        if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl;  }
+
         /* Commit the new datatype */
         err = ompi_datatype_commit(&new_ddt);
         if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl;  }
@@ -321,9 +345,7 @@ int ompi_coll_base_alltoall_intra_bruck(const void *sbuf, int scount,
     }
 
     /* Step 4 - clean up */
-    if (tmpbuf != NULL) free(tmpbuf_free);
-    if (displs != NULL) free(displs);
-    if (blen != NULL) free(blen);
+    if (tmpbuf_free != NULL) free(tmpbuf_free);
     return OMPI_SUCCESS;
 
  err_hndl:
@@ -331,9 +353,8 @@ int ompi_coll_base_alltoall_intra_bruck(const void *sbuf, int scount,
                  "%s:%4d\tError occurred %d, rank %2d", __FILE__, line, err,
                  rank));
     (void)line;  // silence compiler warning
-    if (tmpbuf != NULL) free(tmpbuf_free);
+    if (tmpbuf_free != NULL) free(tmpbuf_free);
     if (displs != NULL) free(displs);
-    if (blen != NULL) free(blen);
     return err;
 }
 

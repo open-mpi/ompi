@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011-2017 Sandia National Laboratories.  All rights reserved.
+ * Copyright (c) 2011-2022 Sandia National Laboratories.  All rights reserved.
  * Copyright (c) 2015-2018 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
@@ -9,7 +9,9 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
- * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2018-2022 Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2020      High Performance Computing Center Stuttgart,
+ *                         University of Stuttgart.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -20,6 +22,9 @@
 #include "ompi_config.h"
 
 #include "opal/util/printf.h"
+#include "opal/include/opal/align.h"
+#include "opal/mca/mpool/base/base.h"
+#include "opal/opal_portable_platform.h"
 
 #include "ompi/mca/osc/base/base.h"
 #include "ompi/mca/osc/base/osc_base_obj_convert.h"
@@ -33,10 +38,10 @@ static int component_open(void);
 static int component_register(void);
 static int component_init(bool enable_progress_threads, bool enable_mpi_threads);
 static int component_finalize(void);
-static int component_query(struct ompi_win_t *win, void **base, size_t size, int disp_unit,
+static int component_query(struct ompi_win_t *win, void **base, size_t size, ptrdiff_t disp_unit,
                            struct ompi_communicator_t *comm, struct opal_info_t *info,
                            int flavor);
-static int component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit,
+static int component_select(struct ompi_win_t *win, void **base, size_t size, ptrdiff_t disp_unit,
                             struct ompi_communicator_t *comm, struct opal_info_t *info,
                             int flavor, int *model);
 
@@ -44,7 +49,7 @@ static int component_select(struct ompi_win_t *win, void **base, size_t size, in
 ompi_osc_portals4_component_t mca_osc_portals4_component = {
     { /* ompi_osc_base_component_t */
         .osc_version = {
-            OMPI_OSC_BASE_VERSION_3_0_0,
+            OMPI_OSC_BASE_VERSION_4_0_0,
             .mca_component_name = "portals4",
             MCA_BASE_MAKE_VERSION(component, OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION,
                                   OMPI_RELEASE_VERSION),
@@ -357,7 +362,7 @@ component_finalize(void)
 
 
 static int
-component_query(struct ompi_win_t *win, void **base, size_t size, int disp_unit,
+component_query(struct ompi_win_t *win, void **base, size_t size, ptrdiff_t disp_unit,
                 struct ompi_communicator_t *comm, struct opal_info_t *info,
                 int flavor)
 {
@@ -378,18 +383,32 @@ component_query(struct ompi_win_t *win, void **base, size_t size, int disp_unit,
 
 
 static int
-component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit,
+component_select(struct ompi_win_t *win, void **base, size_t size, ptrdiff_t disp_unit,
                  struct ompi_communicator_t *comm, struct opal_info_t *info,
                  int flavor, int *model)
 {
     ompi_osc_portals4_module_t *module = NULL;
     int ret = OMPI_ERROR;
-    int tmp;
+    int tmp, flag;
     ptl_md_t md;
     ptl_me_t me;
     char *name;
+    size_t memory_alignment = OPAL_ALIGN_MIN;
 
     if (MPI_WIN_FLAVOR_SHARED == flavor) return OMPI_ERR_NOT_SUPPORTED;
+
+    if (NULL != info) {
+        opal_cstring_t *align_info_str;
+        opal_info_get(info, "mpi_minimum_memory_alignment",
+                      &align_info_str, &flag);
+        if (flag) {
+            size_t tmp_align = atoll(align_info_str->string);
+            OBJ_RELEASE(align_info_str);
+            if (OPAL_ALIGN_MIN < tmp_align) {
+                memory_alignment = tmp_align;
+            }
+        }
+    }
 
     /* create module structure */
     module = (ompi_osc_portals4_module_t*)
@@ -402,8 +421,10 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
 
     /* fill in our part */
     if (MPI_WIN_FLAVOR_ALLOCATE == flavor) {
-        module->free_after = *base = malloc(size);
+        *base = mca_mpool_base_default_module->mpool_alloc(mca_mpool_base_default_module, size,
+                                                           memory_alignment, 0);
         if (NULL == *base) goto error;
+        module->free_after = *base;
     } else {
         module->free_after = NULL;
     }
@@ -413,9 +434,9 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
 
     opal_output_verbose(1, ompi_osc_base_framework.framework_output,
                         "portals4 component creating window with id %d",
-                        ompi_comm_get_cid(module->comm));
+                        ompi_comm_get_local_cid(module->comm));
 
-    opal_asprintf(&name, "portals4 window %d", ompi_comm_get_cid(module->comm));
+    opal_asprintf(&name, "portals4 window %d", ompi_comm_get_local_cid(module->comm));
     ompi_win_set_name(win, name);
     free(name);
 
@@ -440,9 +461,9 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
         module->disp_units = NULL;
     } else {
         module->disp_unit = -1;
-        module->disp_units = malloc(sizeof(int) * ompi_comm_size(module->comm));
-        ret = module->comm->c_coll->coll_allgather(&disp_unit, 1, MPI_INT,
-                                                  module->disp_units, 1, MPI_INT,
+        module->disp_units = malloc(sizeof(ptrdiff_t) * ompi_comm_size(module->comm));
+        ret = module->comm->c_coll->coll_allgather(&disp_unit, sizeof(ptrdiff_t), MPI_BYTE,
+                                                  module->disp_units, sizeof(ptrdiff_t), MPI_BYTE,
                                                   module->comm,
                                                   module->comm->c_coll->coll_allgather_module);
         if (OMPI_SUCCESS != ret) goto error;
@@ -502,7 +523,7 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
     me.options = PTL_ME_OP_PUT | PTL_ME_OP_GET | PTL_ME_NO_TRUNCATE | PTL_ME_EVENT_SUCCESS_DISABLE;
     me.match_id.phys.nid = PTL_NID_ANY;
     me.match_id.phys.pid = PTL_PID_ANY;
-    me.match_bits = module->comm->c_contextid;
+    me.match_bits = ompi_comm_get_local_cid(module->comm);
     me.ignore_bits = 0;
 
     ret = PtlMEAppend(module->ni_h,
@@ -525,7 +546,7 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
     me.options = PTL_ME_OP_PUT | PTL_ME_OP_GET | PTL_ME_NO_TRUNCATE | PTL_ME_EVENT_SUCCESS_DISABLE;
     me.match_id.phys.nid = PTL_NID_ANY;
     me.match_id.phys.pid = PTL_PID_ANY;
-    me.match_bits = module->comm->c_contextid | OSC_PORTALS4_MB_CONTROL;
+    me.match_bits = ompi_comm_get_local_cid(module->comm) | OSC_PORTALS4_MB_CONTROL;
     me.ignore_bits = 0;
 
     ret = PtlMEAppend(module->ni_h,
@@ -542,7 +563,7 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
     }
 
     module->opcount = 0;
-    module->match_bits = module->comm->c_contextid;
+    module->match_bits = ompi_comm_get_local_cid(module->comm);
     module->atomic_max = (check_config_value_equal("accumulate_ordering", info, "none")) ?
         mca_osc_portals4_component.matching_atomic_max :
         MIN(mca_osc_portals4_component.matching_atomic_max,
@@ -569,7 +590,7 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
 
     module->passive_target_access_epoch = false;
 
-#if OPAL_ASSEMBLY_ARCH == OPAL_X86_64 || OPAL_ASSEMBLY_ARCH == OPAL_IA32
+#if defined(PLATFORM_ARCH_X86) || defined(PLATFORM_ARCH_X86_64)
     *model = MPI_WIN_UNIFIED;
 #else
     *model = MPI_WIN_SEPARATE;
@@ -646,7 +667,8 @@ ompi_osc_portals4_free(struct ompi_win_t *win)
     PtlCTFree(module->ct_h);
     if (NULL != module->disp_units) free(module->disp_units);
     ompi_comm_free(&module->comm);
-    if (NULL != module->free_after) free(module->free_after);
+    mca_mpool_base_default_module->mpool_free(mca_mpool_base_default_module,
+                                              module->free_after);
 
     if (!opal_list_is_empty(&module->outstanding_locks)) {
         ret = OMPI_ERR_RMA_SYNC;

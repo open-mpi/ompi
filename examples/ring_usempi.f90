@@ -2,7 +2,7 @@
 ! Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
 !                         University Research and Technology
 !                         Corporation.  All rights reserved.
-! Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
+! Copyright (c) 2006-2022 Cisco Systems, Inc.  All rights reserved
 ! $COPYRIGHT$
 !
 ! Simple ring test program using the Fortran mpi module bindings.
@@ -25,7 +25,7 @@ program ring
   next = mod((rank + 1), size)
   from = mod((rank + size - 1), size)
 
-! If we are the "master" process (i.e., MPI_COMM_WORLD rank 0), put
+! If we are the "manager" process (i.e., MPI_COMM_WORLD rank 0), put
 ! the number of times to go around the ring in the message.
 
   if (rank .eq. 0) then

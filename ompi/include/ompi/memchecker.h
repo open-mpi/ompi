@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
- * Copyright (c) 2010-2017 The University of Tennessee and The University
+ * Copyright (c) 2010-2023 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
@@ -55,7 +55,7 @@ static inline int memchecker_convertor_call (int (*f)(void *, size_t), opal_conv
         /*  We have a contiguous type. */
         f( (void *)pConvertor->pBaseBuf , pConvertor->local_size);
     } else {
-        /* Now we got a noncontigous data. */
+        /* Now we got a non-contiguous data. */
         uint32_t elem_pos = 0, i;
         ptrdiff_t  stack_disp  = 0;
         dt_elem_desc_t*  description = pConvertor->use_desc->desc;
@@ -109,7 +109,7 @@ static inline int memchecker_call (int (*f)(void *, size_t), const void * addr,
         /*  We have a contiguous type. */
         f( (void*)((char *)addr+datatype->super.true_lb), datatype->super.size * count );
     } else {
-        /* Now we got a noncontigous type. */
+        /* Now we got a non-contiguous type. */
         uint32_t         elem_pos = 0, i;
         ptrdiff_t        stack_disp  = 0;
         dt_elem_desc_t*  description = datatype->super.opt_desc.desc;
@@ -220,8 +220,6 @@ static inline int memchecker_comm(MPI_Comm comm)
     opal_memchecker_base_isdefined (&comm->c_name, MPI_MAX_OBJECT_NAME);
     opal_memchecker_base_isdefined (&comm->c_my_rank, sizeof(int));
     opal_memchecker_base_isdefined (&comm->c_flags, sizeof(uint32_t));
-    opal_memchecker_base_isdefined (&comm->c_id_available, sizeof(int));
-    opal_memchecker_base_isdefined (&comm->c_id_start_index, sizeof(int));
     opal_memchecker_base_isdefined (&comm->c_local_group, sizeof(ompi_group_t *));
     opal_memchecker_base_isdefined (&comm->c_remote_group, sizeof(ompi_group_t *));
     opal_memchecker_base_isdefined (&comm->c_keyhash, sizeof(struct opal_hash_table_t *));
@@ -308,7 +306,7 @@ static inline int memchecker_request(MPI_Request *request)
     opal_memchecker_base_isdefined (&(*request)->req_status._ucount, sizeof(size_t));
 #endif
 
-    opal_memchecker_base_isdefined ((void*)&(*request)->req_complete, sizeof(volatile _Bool));
+    opal_memchecker_base_isdefined ((void*)&(*request)->req_complete, sizeof(volatile void*));
     opal_memchecker_base_isdefined ((void*)&(*request)->req_state, sizeof(volatile ompi_request_state_t));
     opal_memchecker_base_isdefined (&(*request)->req_persistent, sizeof(_Bool));
     opal_memchecker_base_isdefined (&(*request)->req_f_to_c_index, sizeof(int));

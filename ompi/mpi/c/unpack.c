@@ -107,7 +107,7 @@ int MPI_Unpack(const void *inbuf, int insize, int *position,
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TRUNCATE, FUNC_NAME);
         }
 
-        /* Prepare the iovec with all informations */
+        /* Prepare the iovec with all information */
         outvec.iov_base = (char*) inbuf + (*position);
         outvec.iov_len = size;
 

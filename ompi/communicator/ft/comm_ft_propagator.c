@@ -2,7 +2,8 @@
  * Copyright (c) 2011-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- *
+ * Copyright (c) 2021      Triad National Security, LLC. All rights
+ *                         reserved.
  *
  * $COPYRIGHT$
  *
@@ -68,12 +69,12 @@ int ompi_comm_failure_propagate(ompi_communicator_t* comm, ompi_proc_t* proc, in
     if( -1 == comm_failure_propagator_cb_type ) return OMPI_SUCCESS;
 
     OPAL_OUTPUT_VERBOSE((2, ompi_ftmpi_output_handle,
-                         "%s %s: Initiate a propagation for failure of %s (state %d) on communicator %3d:%d",
-                         OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), __func__, OMPI_NAME_PRINT(&proc->super.proc_name), state, comm->c_contextid, comm->c_epoch ));
+                         "%s %s: Initiate a propagation for failure of %s (state %d) on communicator %s:%d",
+                         OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), __func__, OMPI_NAME_PRINT(&proc->super.proc_name), state, ompi_comm_print_cid(comm), comm->c_epoch ));
 
     ompi_comm_failure_propagator_message_t msg;
     /* Broadcast the 'failure_propagator' signal to all other processes. */
-    msg.rbcast_msg.cid   = comm->c_contextid;
+    msg.rbcast_msg.cid   = ompi_comm_get_local_cid(comm);
     msg.rbcast_msg.epoch = comm->c_epoch;
     msg.rbcast_msg.type  = comm_failure_propagator_cb_type;
     msg.proc_name        = proc->super.proc_name;
@@ -90,13 +91,13 @@ static int ompi_comm_failure_propagator_local(ompi_communicator_t* comm, ompi_co
     ompi_proc_t* proc = (ompi_proc_t*)ompi_proc_for_name(msg->proc_name);
     if( !ompi_proc_is_active(proc) ) {
         OPAL_OUTPUT_VERBOSE((9, ompi_ftmpi_output_handle,
-                "%s %s: failure of %s has already been propagated on comm %3d:%d",
-                OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), __func__, OMPI_NAME_PRINT(&msg->proc_name), comm->c_contextid, comm->c_epoch));
+                "%s %s: failure of %s has already been propagated on comm %s:%d",
+                OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), __func__, OMPI_NAME_PRINT(&msg->proc_name), ompi_comm_print_cid(comm), comm->c_epoch));
         return false; /* already propagated, done. */
     }
     OPAL_OUTPUT_VERBOSE((9, ompi_ftmpi_output_handle,
-            "%s %s: failure of %s needs to be propagated on comm %3d:%d",
-            OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), __func__, OMPI_NAME_PRINT(&msg->proc_name), comm->c_contextid, comm->c_epoch));
+            "%s %s: failure of %s needs to be propagated on comm %s:%d",
+            OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), __func__, OMPI_NAME_PRINT(&msg->proc_name), ompi_comm_print_cid(comm), comm->c_epoch));
     ompi_errhandler_proc_failed_internal(proc, msg->proc_state, false);
     return true;
 }

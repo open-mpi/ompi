@@ -18,6 +18,9 @@
 #                         and Technology (RIST).  All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
+# Copyright (c) 2021-2022 Triad National Security, LLC. All rights
+#                         reserved.
+#
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -175,6 +178,7 @@ lib@OMPI_LIBMPI_NAME@_mpifh_la_SOURCES += \
         comm_connect_f.c \
         comm_create_errhandler_f.c \
         comm_create_f.c \
+        comm_create_from_group_f.c \
         comm_create_group_f.c \
         comm_create_keyval_f.c \
         comm_delete_attr_f.c \
@@ -182,6 +186,7 @@ lib@OMPI_LIBMPI_NAME@_mpifh_la_SOURCES += \
         comm_dup_f.c \
         comm_dup_with_info_f.c \
         comm_idup_f.c \
+        comm_idup_with_info_f.c \
         comm_free_f.c \
         comm_free_keyval_f.c \
         comm_get_attr_f.c \
@@ -299,6 +304,7 @@ lib@OMPI_LIBMPI_NAME@_mpifh_la_SOURCES += \
         group_compare_f.c \
         group_difference_f.c \
         group_excl_f.c \
+        group_from_session_pset_f.c \
         group_free_f.c \
         group_incl_f.c \
         group_intersection_f.c \
@@ -328,18 +334,21 @@ lib@OMPI_LIBMPI_NAME@_mpifh_la_SOURCES += \
         ineighbor_alltoallv_f.c \
         ineighbor_alltoallw_f.c \
         info_create_f.c \
+        info_create_env_f.c \
         info_delete_f.c \
         info_dup_f.c \
         info_free_f.c \
         info_get_f.c \
         info_get_nkeys_f.c \
         info_get_nthkey_f.c \
+        info_get_string_f.c \
         info_get_valuelen_f.c \
         info_set_f.c \
         init_f.c \
         initialized_f.c \
         init_thread_f.c \
         intercomm_create_f.c \
+        intercomm_create_from_groups_f.c \
         intercomm_merge_f.c \
         iprobe_f.c \
         irecv_f.c \
@@ -348,6 +357,8 @@ lib@OMPI_LIBMPI_NAME@_mpifh_la_SOURCES += \
         ireduce_scatter_block_f.c \
         irsend_f.c \
         isend_f.c \
+        isendrecv_f.c \
+        isendrecv_replace_f.c \
         iscan_f.c \
         iscatter_f.c \
         iscatterv_f.c \
@@ -410,6 +421,16 @@ lib@OMPI_LIBMPI_NAME@_mpifh_la_SOURCES += \
         send_init_f.c \
         sendrecv_f.c \
         sendrecv_replace_f.c \
+        session_call_errhandler_f.c \
+        session_create_errhandler_f.c \
+        session_get_errhandler_f.c \
+        session_get_info_f.c \
+        session_get_nth_pset_f.c \
+        session_get_num_psets_f.c \
+        session_get_pset_info_f.c \
+        session_init_f.c \
+        session_finalize_f.c \
+        session_set_errhandler_f.c \
         ssend_f.c \
         ssend_init_f.c \
         startall_f.c \
@@ -515,8 +536,10 @@ lib@OMPI_LIBMPI_NAME@_mpifh_la_SOURCES += \
         win_flush_local_f.c \
         win_flush_local_all_f.c
 
-
-if OMPI_ENABLE_MPI1_COMPAT
+# The following functions were removed from the MPI standard, but are
+# retained for ABI compliance reasons.  They are listed independently
+# of the other MPI functions in case we one day change behavior around
+# ABI compliance.
 lib@OMPI_LIBMPI_NAME@_mpifh_la_SOURCES += \
         address_f.c \
         errhandler_create_f.c \
@@ -528,7 +551,6 @@ lib@OMPI_LIBMPI_NAME@_mpifh_la_SOURCES += \
         type_lb_f.c \
         type_struct_f.c \
         type_ub_f.c
-endif
 endif
 
 #

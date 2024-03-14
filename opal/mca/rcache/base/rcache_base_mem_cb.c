@@ -30,6 +30,7 @@
 #endif
 
 #include "opal/runtime/opal_params.h"
+#include "opal/util/output.h"
 #include "opal/util/proc.h"
 #include "opal/util/show_help.h"
 
@@ -72,7 +73,7 @@ void mca_rcache_base_mem_cb(void *base, size_t size, void *cbdata, bool from_all
                         "will now abort.\n",
                         opal_process_info.nodename, getpid(), base, (unsigned long) size);
                     msg[sizeof(msg) - 1] = '\0';
-                    write(2, msg, len);
+                    opal_best_effort_write(2, msg, len);
                 } else {
                     opal_show_help("help-rcache-base.txt", "cannot deregister in-use memory", true,
                                    current->rcache_component->rcache_version.mca_component_name,

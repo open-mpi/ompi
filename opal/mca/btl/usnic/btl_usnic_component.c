@@ -83,7 +83,7 @@
 #define OPAL_BTL_USNIC_NUM_COMPLETIONS 500
 
 /* MPI_THREAD_MULTIPLE_SUPPORT */
-opal_recursive_mutex_t btl_usnic_lock = OPAL_RECURSIVE_MUTEX_STATIC_INIT;
+opal_recursive_mutex_t btl_usnic_lock;  /* recursive mutexes must be dynamically initialized */
 
 /* RNG buffer definition */
 opal_rng_buff_t opal_btl_usnic_rand_buff = {{0}};
@@ -160,6 +160,8 @@ static int usnic_component_open(void)
 
     /* initialize objects */
     OBJ_CONSTRUCT(&mca_btl_usnic_component.usnic_procs, opal_list_t);
+    OBJ_CONSTRUCT(&btl_usnic_lock, opal_recursive_mutex_t);
+
 
     /* Sanity check: if_include and if_exclude need to be mutually
        exclusive */
@@ -258,7 +260,7 @@ static int usnic_modex_send(void)
 
 /*
  * See if our memlock limit is >64K.  64K is the RHEL default memlock
- * limit; this check is a first-line-of-defense hueristic to see if
+ * limit; this check is a first-line-of-defense heuristic to see if
  * the user has set the memlock limit to *something*.
  *
  * We have other checks elsewhere (e.g., to ensure that QPs are able
@@ -290,7 +292,7 @@ static int check_reg_mem_basics(void)
     return OPAL_ERR_OUT_OF_RESOURCE;
 #else
     /* If we don't have RLIMIT_MEMLOCK, then just bypass this
-       safety/hueristic check. */
+       safety/heuristic check. */
     return OPAL_SUCCESS;
 #endif
 }
@@ -586,8 +588,6 @@ usnic_component_init(int *num_btl_modules, bool want_progress_threads, bool want
             return NULL;
         }
     }
-
-    OBJ_CONSTRUCT(&btl_usnic_lock, opal_recursive_mutex_t);
 
     /* There are multiple dimensions to consider when requesting an
        API version number from libfabric:
@@ -944,7 +944,7 @@ usnic_component_init(int *num_btl_modules, bool want_progress_threads, bool want
         opal_output_verbose(5, USNIC_OUT, "btl:usnic: %s eager rndv limit = %" PRIsize_t, devname,
                             module->super.btl_rndv_eager_limit);
         opal_output_verbose(5, USNIC_OUT,
-                            "btl:usnic: %s max send size= %" PRIsize_t " (not overrideable)",
+                            "btl:usnic: %s max send size= %" PRIsize_t " (not overridable)",
                             devname, module->super.btl_max_send_size);
         opal_output_verbose(5, USNIC_OUT, "btl:usnic: %s exclusivity = %d", devname,
                             module->super.btl_exclusivity);

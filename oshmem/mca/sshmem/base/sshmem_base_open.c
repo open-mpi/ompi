@@ -32,7 +32,7 @@
  */
 
 /**
- * if 32 bit we set sshmem_base_start_adress to 0
+ * if 32 bit we set sshmem_base_start_address to 0
  * to let OS allocate segment automatically
  */
 #if UINTPTR_MAX == 0xFFFFFFFF

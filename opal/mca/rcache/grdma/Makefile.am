@@ -13,6 +13,7 @@
 # Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
 #                         reserved.
 # Copyright (c) 2017      IBM Corporation.  All rights reserved.
+# Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -49,10 +50,6 @@ mca_rcache_grdma_la_SOURCES = $(sources)
 mca_rcache_grdma_la_LDFLAGS = -module -avoid-version
 mca_rcache_grdma_la_LIBADD = $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la \
 	$(rcache_grdma_LIBS)
-if OPAL_cuda_support
-mca_rcache_grdma_la_LIBADD += \
-    $(OPAL_TOP_BUILDDIR)/opal/mca/common/cuda/lib@OPAL_LIB_NAME@mca_common_cuda.la
-endif
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_rcache_grdma_la_SOURCES = $(sources)

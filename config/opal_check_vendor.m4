@@ -62,7 +62,7 @@ AC_DEFUN([OPAL_CXX_COMPILER_VENDOR], [
 
 # workaround to avoid syntax error with Autoconf < 2.68:
 m4_ifndef([AC_LANG_DEFINES_PROVIDED],
-	  [m4_define([AC_LANG_DEFINES_PROVIDED])])
+          [m4_define([AC_LANG_DEFINES_PROVIDED])])
 
 # OPAL_IFDEF_IFELSE(symbol, [action-if-defined],
 #                   [action-if-not-defined])

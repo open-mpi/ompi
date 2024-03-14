@@ -54,7 +54,7 @@ install-data-local:
 
 # Only remove if exactly the same as what in our tree
 # NOTE TO READER: Bourne shell if ... fi evaluates the body if
-#    the return of the evaluted command is 0 (as opposed to non-zero
+#    the return of the evaluated command is 0 (as opposed to non-zero
 #    as used by everyone else)
 uninstall-local:
 	@ p="$(opal_config_files)"; \

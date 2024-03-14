@@ -153,7 +153,7 @@ static int opal_reachable_netlink_sk_alloc(struct opal_reachable_netlink_sk **p_
 
     err = nl_connect(nlh, protocol);
     if (err < 0) {
-        opal_output(0, "Failed to connnect netlink route socket error: %s\n", NL_GETERROR(err));
+        opal_output(0, "Failed to connect netlink route socket error: %s\n", NL_GETERROR(err));
         err = EINVAL;
         goto err_free_nlh;
     }
@@ -317,7 +317,7 @@ int opal_reachable_netlink_rt_lookup(uint32_t src_addr, uint32_t dst_addr, int o
         goto out;
     }
 
-    /* recieve results */
+    /* receive results */
     NL_RECVMSGS(unlsk->nlh, arg, EHOSTUNREACH, err, out);
 
     /* check whether a route was found */

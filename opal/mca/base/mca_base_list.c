@@ -39,7 +39,7 @@ OBJ_CLASS_INSTANCE(mca_base_component_priority_list_item_t, mca_base_component_l
                    cpl_constructor, NULL);
 
 /*
- * Just do basic sentinel intialization
+ * Just do basic sentinel initialization
  */
 static void cl_constructor(opal_object_t *obj)
 {
@@ -48,7 +48,7 @@ static void cl_constructor(opal_object_t *obj)
 }
 
 /*
- * Just do basic sentinel intialization
+ * Just do basic sentinel initialization
  */
 static void cpl_constructor(opal_object_t *obj)
 {

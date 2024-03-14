@@ -19,6 +19,8 @@
 #                         reserved.
 # Copyright (c) 2015-2021 Research Organization for Information Science
 #                         and Technology (RIST).  All rights reserved.
+# Copyright (c) 2022      Triad National Security, LLC. All rights
+#                         reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -27,6 +29,13 @@
 #
 
 include $(top_srcdir)/Makefile.ompi-rules
+
+# Note that Automake's Fortran-buidling rules uses CPPFLAGS and
+# AM_CPPFLAGS.  This can cause weirdness (e.g.,
+# https://github.com/open-mpi/ompi/issues/7253).  Let's just zero
+# those out and rely on AM_FCFLAGS.
+CPPFLAGS =
+AM_CPPFLAGS =
 
 # This Makefile is only relevant if we're building the "use mpi_f08"
 # MPI bindings.
@@ -88,6 +97,7 @@ pmpi_api_files = \
         pcomm_call_errhandler_f08.F90 \
         pcomm_compare_f08.F90 \
         pcomm_connect_f08.F90 \
+        pcomm_create_from_group_f08.F90 \
         pcomm_create_errhandler_f08.F90 \
         pcomm_create_f08.F90 \
         pcomm_create_group_f08.F90 \
@@ -97,6 +107,7 @@ pmpi_api_files = \
         pcomm_dup_f08.F90 \
         pcomm_dup_with_info_f08.F90 \
         pcomm_idup_f08.F90 \
+        pcomm_idup_with_info_f08.F90 \
         pcomm_free_f08.F90 \
         pcomm_free_keyval_f08.F90 \
         pcomm_get_attr_f08.F90 \
@@ -247,18 +258,21 @@ pmpi_api_files = \
         pineighbor_alltoallv_f08.F90 \
         pineighbor_alltoallw_f08.F90 \
         pinfo_create_f08.F90 \
+        pinfo_create_env_f08.F90 \
         pinfo_delete_f08.F90 \
         pinfo_dup_f08.F90 \
         pinfo_free_f08.F90 \
         pinfo_get_f08.F90 \
         pinfo_get_nkeys_f08.F90 \
         pinfo_get_nthkey_f08.F90 \
+        pinfo_get_string_f08.F90 \
         pinfo_get_valuelen_f08.F90 \
         pinfo_set_f08.F90 \
         pinit_f08.F90 \
         pinitialized_f08.F90 \
         pinit_thread_f08.F90 \
         pintercomm_create_f08.F90 \
+        pintercomm_create_from_groups_f08.F90 \
         pintercomm_merge_f08.F90 \
         piprobe_f08.F90 \
         pirecv_f08.F90 \
@@ -270,6 +284,8 @@ pmpi_api_files = \
         piscatter_f08.F90 \
         piscatterv_f08.F90 \
         pisend_f08.F90 \
+        pisendrecv_f08.F90 \
+        pisendrecv_replace_f08.F90 \
         pissend_f08.F90 \
         pis_thread_main_f08.F90 \
         plookup_name_f08.F90 \
@@ -293,8 +309,13 @@ pmpi_api_files = \
         ppack_external_size_f08.F90 \
         ppack_f08.F90 \
         ppack_size_f08.F90 \
+        pparrived_f08.F90 \
         ppcontrol_f08.F90 \
+        ppready_f08.F90 \
+        ppready_list_f08.F90 \
+        ppready_range_f08.F90 \
         pprobe_f08.F90 \
+        ppsend_init_f08.F90 \
         ppublish_name_f08.F90 \
         pput_f08.F90 \
         pquery_thread_f08.F90 \
@@ -326,6 +347,15 @@ pmpi_api_files = \
         psend_init_f08.F90 \
         psendrecv_f08.F90 \
         psendrecv_replace_f08.F90 \
+        psession_create_errhandler_f08.F90\
+        psession_get_errhandler_f08.F90\
+        psession_get_info_f08.F90 \
+        psession_get_nth_pset_f08.F90 \
+        psession_get_num_psets_f08.F90 \
+        psession_get_pset_info_f08.F90 \
+        psession_init_f08.F90 \
+        psession_finalize_f08.F90 \
+        psession_set_errhandler_f08.F90\
         pssend_f08.F90 \
         pssend_init_f08.F90 \
         pstartall_f08.F90 \

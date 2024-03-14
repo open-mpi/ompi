@@ -15,8 +15,7 @@ dnl Copyright (c) 2015-2018 Research Organization for Information Science
 dnl                         and Technology (RIST).  All rights reserved.
 dnl Copyright (c) 2014-2018 Los Alamos National Security, LLC. All rights
 dnl                         reserved.
-dnl Copyright (c) 2017      Amazon.com, Inc. or its affiliates.  All Rights
-dnl                         reserved.
+dnl Copyright (c) 2017-2022 Amazon.com, Inc. or its affiliates.  All Rights reserved.
 dnl Copyright (c) 2020      Google, LLC. All rights reserved.
 dnl Copyright (c) 2020      Intel, Inc.  All rights reserved.
 dnl Copyright (c) 2021      IBM Corporation.  All rights reserved.
@@ -343,40 +342,41 @@ __atomic_compare_exchange_n(&tmp, &old, 1, 0, __ATOMIC_RELAXED, __ATOMIC_RELAXED
 __atomic_add_fetch(&tmp, 1, __ATOMIC_RELAXED);
 __atomic_compare_exchange_n(&tmp64, &old64, 1, 0, __ATOMIC_RELAXED, __ATOMIC_RELAXED);
 __atomic_add_fetch(&tmp64, 1, __ATOMIC_RELAXED);])],
-		[opal_cv_have___atomic=yes],
-		[opal_cv_have___atomic=no])
+                [opal_cv_have___atomic=yes],
+                [opal_cv_have___atomic=no])
 
     AC_MSG_RESULT([$opal_cv_have___atomic])
 
     if test $opal_cv_have___atomic = "yes" ; then
-	AC_MSG_CHECKING([for 64-bit GCC built-in atomics])
+        AC_MSG_CHECKING([for 64-bit GCC built-in atomics])
 
-	AC_LINK_IFELSE([AC_LANG_PROGRAM([
+        AC_LINK_IFELSE([AC_LANG_PROGRAM([
 #include <stdint.h>
 uint64_t tmp64, old64 = 0;], [
 __atomic_compare_exchange_n(&tmp64, &old64, 1, 0, __ATOMIC_RELAXED, __ATOMIC_RELAXED);
 __atomic_add_fetch(&tmp64, 1, __ATOMIC_RELAXED);])],
-		    [opal_cv_have___atomic_64=yes],
-		    [opal_cv_have___atomic_64=no])
+                    [opal_cv_have___atomic_64=yes],
+                    [opal_cv_have___atomic_64=no])
 
-	AC_MSG_RESULT([$opal_cv_have___atomic_64])
+        AC_MSG_RESULT([$opal_cv_have___atomic_64])
 
-	if test $opal_cv_have___atomic_64 = "yes" ; then
-	    AC_MSG_CHECKING([if 64-bit GCC built-in atomics are lock-free])
-	    AC_RUN_IFELSE([AC_LANG_PROGRAM([], [if (!__atomic_is_lock_free (8, 0)) { return 1; }])],
-			  [AC_MSG_RESULT([yes])],
-			  [AC_MSG_RESULT([no])
-			   opal_cv_have___atomic_64=no],
-			  [AC_MSG_RESULT([cannot test -- assume yes (cross compiling)])])
-	fi
+        if test $opal_cv_have___atomic_64 = "yes" ; then
+            AC_MSG_CHECKING([if 64-bit GCC built-in atomics are lock-free])
+            AC_RUN_IFELSE([AC_LANG_PROGRAM([], [if (!__atomic_is_lock_free (8, 0)) { return 1; }])],
+                          [AC_MSG_RESULT([yes])],
+                          [AC_MSG_RESULT([no])
+                           opal_cv_have___atomic_64=no],
+                          [AC_MSG_RESULT([cannot test -- assume yes (cross compiling)])])
+        fi
     else
-	opal_cv_have___atomic_64=no
+        opal_cv_have___atomic_64=no
     fi
 
     # Check for 128-bit support
     OPAL_CHECK_GCC_BUILTIN_CSWAP_INT128
   fi
 ])
+
 
 AC_DEFUN([OPAL_CHECK_C11_CSWAP_INT128], [
   OPAL_VAR_SCOPE_PUSH([atomic_compare_exchange_result atomic_compare_exchange_CFLAGS_save atomic_compare_exchange_LIBS_save])
@@ -422,463 +422,6 @@ AC_DEFUN([OPAL_CHECK_C11_CSWAP_INT128], [
   OPAL_VAR_SCOPE_POP
 ])
 
-dnl #################################################################
-dnl
-dnl OPAL_CHECK_ASM_TEXT
-dnl
-dnl Determine how to set current mode as text.
-dnl
-dnl #################################################################
-AC_DEFUN([OPAL_CHECK_ASM_TEXT],[
-    AC_MSG_CHECKING([directive for setting text section])
-    opal_cv_asm_text=""
-    if test "$opal_cv_c_compiler_vendor" = "microsoft" ; then
-        # text section will be brought in with the rest of
-        # header for MS - leave blank for now
-        opal_cv_asm_text=""
-    else
-        case $host in
-            *-aix*)
-                opal_cv_asm_text=[".csect .text[PR]"]
-            ;;
-            *)
-                opal_cv_asm_text=".text"
-            ;;
-        esac
-    fi
-    AC_MSG_RESULT([$opal_cv_asm_text])
-    AC_DEFINE_UNQUOTED([OPAL_ASM_TEXT], ["$opal_cv_asm_text"],
-                       [Assembly directive for setting text section])
-    OPAL_ASM_TEXT="$opal_cv_asm_text"
-    AC_SUBST(OPAL_ASM_TEXT)
-])dnl
-
-
-dnl #################################################################
-dnl
-dnl OPAL_CHECK_ASM_GLOBAL
-dnl
-dnl Sets OPAL_ASM_GLOBAL to the value to prefix global values
-dnl
-dnl I'm sure if I don't have a test for this, there will be some
-dnl dumb platform that uses something else
-dnl
-dnl #################################################################
-AC_DEFUN([OPAL_CHECK_ASM_GLOBAL],[
-    AC_MSG_CHECKING([directive for exporting symbols])
-    opal_cv_asm_global=""
-    if test "$opal_cv_c_compiler_vendor" = "microsoft" ; then
-        opal_cv_asm_global="PUBLIC"
-    else
-        case $host in
-            *)
-                opal_cv_asm_global=".globl"
-            ;;
-        esac
-    fi
-    AC_MSG_RESULT([$opal_cv_asm_global])
-    AC_DEFINE_UNQUOTED([OPAL_ASM_GLOBAL], ["$opal_cv_asm_global"],
-                       [Assembly directive for exporting symbols])
-    OPAL_ASM_GLOBAL="$opal_cv_asm_global"
-    AC_SUBST(OPAL_AS_GLOBAL)
-])dnl
-
-
-dnl #################################################################
-dnl
-dnl OPAL_CHECK_ASM_LSYM
-dnl
-dnl Sets OPAL_ASM_LSYM to the prefix value on a symbol to make it
-dnl an internal label (jump target and whatnot)
-dnl
-dnl We look for L .L $ L$ (in that order) for something that both
-dnl assembles and does not leave a label in the output of nm.  Fall
-dnl back to L if nothing else seems to work :/
-dnl
-dnl #################################################################
-
-# _OPAL_CHECK_ASM_LSYM([variable-to-set])
-# ---------------------------------------
-AC_DEFUN([_OPAL_CHECK_ASM_LSYM],[
-    AC_REQUIRE([AC_PROG_GREP])
-
-    $1="L"
-
-    for sym in L .L $ L$ ; do
-        asm_result=0
-        echo "configure: trying $sym" >&AS_MESSAGE_LOG_FD
-        OPAL_TRY_ASSEMBLE([foobar$opal_cv_asm_label_suffix
-${sym}mytestlabel$opal_cv_asm_label_suffix],
-            [# ok, we succeeded at assembling.  see if we can nm,
-             # throwing the results in a file
-            if $NM conftest.$OBJEXT > conftest.out 2>&AS_MESSAGE_LOG_FD ; then
-                if test "`$GREP mytestlabel conftest.out`" = "" ; then
-                    # there was no symbol...  looks promising to me
-                    $1="$sym"
-                    asm_result=1
-                elif test ["`$GREP ' [Nt] .*mytestlabel' conftest.out`"] = "" ; then
-                    # see if we have a non-global-ish symbol
-                    # but we should see if we can do better.
-                    $1="$sym"
-                fi
-            else
-                # not so much on the NM goodness :/
-                echo "$NM failed.  Output from NM was:" >&AS_MESSAGE_LOG_FD
-                cat conftest.out >&AS_MESSAGE_LOG_FD
-                AC_MSG_WARN([$NM could not read object file])
-            fi
-            ])
-        if test "$asm_result" = "1" ; then
-            break
-        fi
-    done
-    rm -f conftest.out
-    unset asm_result sym
-])
-
-# OPAL_CHECK_ASM_LSYM()
-# ---------------------
-AC_DEFUN([OPAL_CHECK_ASM_LSYM],[
-    AC_REQUIRE([LT_PATH_NM])
-
-    AC_CACHE_CHECK([prefix for lsym labels],
-                   [opal_cv_asm_lsym],
-                   [_OPAL_CHECK_ASM_LSYM([opal_cv_asm_lsym])])
-    AC_DEFINE_UNQUOTED([OPAL_ASM_LSYM], ["$opal_cv_asm_lsym"],
-                       [Assembly prefix for lsym labels])
-    OPAL_ASM_LSYM="$opal_cv_asm_lsym"
-    AC_SUBST(OPAL_ASM_LSYM)
-])dnl
-
-dnl #################################################################
-dnl
-dnl OPAL_CHECK_ASM_PROC
-dnl
-dnl Sets a cv-flag, if the compiler needs a proc/endp-definition to
-dnl link with C.
-dnl
-dnl #################################################################
-AC_DEFUN([OPAL_CHECK_ASM_PROC],[
-    AC_CACHE_CHECK([if .proc/endp is needed],
-                   [opal_cv_asm_need_proc],
-                   [opal_cv_asm_need_proc="no"
-                    OPAL_TRY_ASSEMBLE([
-     .proc mysym
-mysym:
-     .endp mysym],
-                          [opal_cv_asm_need_proc="yes"])
-                    rm -f conftest.out])
-
-    if test "$opal_cv_asm_need_proc" = "yes" ; then
-       opal_cv_asm_proc=".proc"
-       opal_cv_asm_endproc=".endp"
-    else
-       opal_cv_asm_proc="#"
-       opal_cv_asm_endproc="#"
-    fi
-])dnl
-
-
-dnl #################################################################
-dnl
-dnl OPAL_CHECK_ASM_GSYM
-dnl
-dnl Sets OPAL_ASM_GSYM to the prefix value on a symbol to make it
-dnl a global linkable from C.  Basically, an _ or not.
-dnl
-dnl #################################################################
-AC_DEFUN([OPAL_CHECK_ASM_GSYM],[
-    AC_CACHE_CHECK([prefix for global symbol labels],
-                   [opal_cv_asm_gsym],
-                   [_OPAL_CHECK_ASM_GSYM])
-
-    if test "$opal_cv_asm_gsym" = "none" ; then
-       AC_MSG_ERROR([Could not determine global symbol label prefix])
-    fi
-
-    AC_DEFINE_UNQUOTED([OPAL_ASM_GSYM], ["$opal_cv_asm_gsym"],
-                       [Assembly prefix for gsym labels])
-    OPAL_ASM_GSYM="$opal_cv_asm_gsym"
-    AC_SUBST(OPAL_ASM_GSYM)
-
-])
-
-AC_DEFUN([_OPAL_CHECK_ASM_GSYM],[
-    opal_cv_asm_gsym="none"
-
-    for sym in "_" "" "." ; do
-        asm_result=0
-        echo "configure: trying $sym" >&AS_MESSAGE_LOG_FD
-cat > conftest_c.c <<EOF
-#ifdef __cplusplus
-extern "C" {
-#endif
-void gsym_test_func(void);
-#ifdef __cplusplus
-}
-#endif
-int
-main()
-{
-    gsym_test_func();
-    return 0;
-}
-EOF
-        OPAL_TRY_ASSEMBLE([
-$opal_cv_asm_text
-$opal_cv_asm_proc ${sym}gsym_test_func
-$opal_cv_asm_global ${sym}gsym_test_func
-${sym}gsym_test_func${opal_cv_asm_label_suffix}
-$opal_cv_asm_endproc ${sym}gsym_test_func
-            ],
-            [opal_compile="$CC $CFLAGS -I. conftest_c.c -c > conftest.cmpl 2>&1"
-             if AC_TRY_EVAL(opal_compile) ; then
-                # save the warnings
-                 cat conftest.cmpl >&AS_MESSAGE_LOG_FD
-                 opal_link="$CC $CFLAGS conftest_c.$OBJEXT conftest.$OBJEXT -o conftest  $LDFLAGS $LIBS > conftest.link 2>&1"
-                 if AC_TRY_EVAL(opal_link) ; then
-                     # save the warnings
-                     cat conftest.link >&AS_MESSAGE_LOG_FD
-                     asm_result=1
-                 else
-                     cat conftest.link >&AS_MESSAGE_LOG_FD
-                     echo "configure: failed C program was: " >&AS_MESSAGE_LOG_FD
-                     cat conftest_c.c >&AS_MESSAGE_LOG_FD
-                     echo "configure: failed ASM program was: " >&AS_MESSAGE_LOG_FD
-                     cat conftest.s >&AS_MESSAGE_LOG_FD
-                     asm_result=0
-                 fi
-             else
-                # save output and failed program
-                 cat conftest.cmpl >&AS_MESSAGE_LOG_FD
-                 echo "configure: failed C program was: " >&AS_MESSAGE_LOG_FD
-                 cat conftest.c >&AS_MESSAGE_LOG_FD
-                 asm_result=0
-             fi],
-            [asm_result=0])
-        if test "$asm_result" = "1" ; then
-            opal_cv_asm_gsym="$sym"
-            break
-        fi
-    done
-    rm -rf conftest.*
-])dnl
-
-
-dnl #################################################################
-dnl
-dnl OPAL_CHECK_ASM_LABEL_SUFFIX
-dnl
-dnl Sets OPAL_ASM_LABEL_SUFFIX to the value to suffix for labels
-dnl
-dnl I'm sure if I don't have a test for this, there will be some
-dnl dumb platform that uses something else
-dnl
-dnl #################################################################
-AC_DEFUN([OPAL_CHECK_ASM_LABEL_SUFFIX],[
-    AC_MSG_CHECKING([suffix for labels])
-    opal_cv_asm_label_suffix=""
-    case $host in
-        *)
-                opal_cv_asm_label_suffix=":"
-        ;;
-    esac
-    AC_MSG_RESULT([$opal_cv_asm_label_suffix])
-    AC_DEFINE_UNQUOTED([OPAL_ASM_LABEL_SUFFIX], ["$opal_cv_asm_label_suffix"],
-                       [Assembly suffix for labels])
-    OPAL_ASM_LABEL_SUFFIX="$opal_cv_asm_label_suffix"
-    AC_SUBST(OPAL_AS_LABEL_SUFFIX)
-])dnl
-
-
-dnl #################################################################
-dnl
-dnl OPAL_CHECK_ASM_ALIGN_LOG
-dnl
-dnl Sets OPAL_ASM_ALIGN_LOG to 1 if align is specified
-dnl logarithmically, 0 otherwise
-dnl
-dnl #################################################################
-AC_DEFUN([OPAL_CHECK_ASM_ALIGN_LOG],[
-    AC_REQUIRE([LT_PATH_NM])
-    AC_REQUIRE([AC_PROG_GREP])
-
-    AC_CACHE_CHECK([if .align directive takes logarithmic value],
-                   [opal_cv_asm_align_log],
-                   [ OPAL_TRY_ASSEMBLE([        $opal_cv_asm_text
-        .align 4
-        $opal_cv_asm_global foo
-        .byte 1
-        .align 4
-foo$opal_cv_asm_label_suffix
-        .byte 2],
-        [opal_asm_addr=[`$NM conftest.$OBJEXT | $GREP foo | sed -e 's/.*\([0-9a-fA-F][0-9a-fA-F]\).*foo.*/\1/'`]],
-        [opal_asm_addr=""])
-    # test for both 16 and 10 (decimal and hex notations)
-    echo "configure: .align test address offset is $opal_asm_addr" >&AS_MESSAGE_LOG_FD
-    if test "$opal_asm_addr" = "16" || test "$opal_asm_addr" = "10" ; then
-       opal_cv_asm_align_log="yes"
-    else
-        opal_cv_asm_align_log="no"
-    fi])
-
-    if test "$opal_cv_asm_align_log" = "yes" || test "$opal_cv_asm_align_log" = "1" ; then
-        opal_asm_align_log_result=1
-    else
-        opal_asm_align_log_result=0
-    fi
-
-    AC_DEFINE_UNQUOTED([OPAL_ASM_ALIGN_LOG],
-                       [$asm_align_log_result],
-                       [Assembly align directive expects logarithmic value])
-
-    unset omp_asm_addr asm_result
-])dnl
-
-
-dnl #################################################################
-dnl
-dnl OPAL_CHECK_ASM_TYPE
-dnl
-dnl Sets OPAL_ASM_TYPE to the prefix for the function type to
-dnl set a symbol's type as function (needed on ELF for shared
-dnl libraries).  If no .type directive is needed, sets OPAL_ASM_TYPE
-dnl to an empty string
-dnl
-dnl We look for @ \# %
-dnl
-dnl #################################################################
-AC_DEFUN([OPAL_CHECK_ASM_TYPE],[
-        AC_CACHE_CHECK([prefix for function in .type],
-                       [opal_cv_asm_type],
-                       [_OPAL_CHECK_ASM_TYPE])
-
-    AC_DEFINE_UNQUOTED([OPAL_ASM_TYPE], ["$opal_cv_asm_type"],
-                       [How to set function type in .type directive])
-    OPAL_ASM_TYPE="$opal_cv_asm_type"
-    AC_SUBST(OPAL_ASM_TYPE)
-])
-
-AC_DEFUN([_OPAL_CHECK_ASM_TYPE],[
-    opal_cv_asm_type=""
-
-    case "${host}" in
-    *-sun-solaris*)
-        # GCC on solaris seems to accept just about anything, not
-        # that what it defines actually works...  So just hardwire
-        # to the right answer
-        opal_cv_asm_type="#"
-    ;;
-    *)
-        for type  in @ \# % ; do
-            asm_result=0
-            echo "configure: trying $type" >&AS_MESSAGE_LOG_FD
-            OPAL_TRY_ASSEMBLE([     .type mysym, ${type}function
-mysym:],
-                 [opal_cv_asm_type="${type}"
-                    asm_result=1])
-            if test "$asm_result" = "1" ; then
-                break
-            fi
-        done
-    ;;
-    esac
-    rm -f conftest.out
-
-    unset asm_result type
-])dnl
-
-
-dnl #################################################################
-dnl
-dnl OPAL_CHECK_ASM_SIZE
-dnl
-dnl Sets OPAL_ASM_SIZE to 1 if we should set .size directives for
-dnl each function, 0 otherwise.
-dnl
-dnl #################################################################
-AC_DEFUN([OPAL_CHECK_ASM_SIZE],[
-    AC_CACHE_CHECK([if .size is needed],
-                   [opal_cv_asm_need_size],
-                   [opal_cv_asm_need_size="no"
-                    OPAL_TRY_ASSEMBLE([     .size mysym, 1],
-                          [opal_cv_asm_need_size="yes"])
-                    rm -f conftest.out])
-
-    if test "$opal_cv_asm_need_size" = "yes" ; then
-       opal_asm_size=1
-    else
-       opal_asm_size=0
-    fi
-
-    AC_DEFINE_UNQUOTED([OPAL_ASM_SIZE], ["$opal_asm_size"],
-                       [Do we need to give a .size directive])
-    OPAL_ASM_SIZE="$opal_asm_size"
-    AC_SUBST(OPAL_ASM_TYPE)
-    unset asm_result
-])dnl
-
-
-# OPAL_CHECK_ASM_GNU_STACKEXEC(var)
-# ----------------------------------
-# sets shell variable var to the things necessary to
-# disable execable stacks with GAS
-AC_DEFUN([OPAL_CHECK_ASM_GNU_STACKEXEC], [
-    AC_REQUIRE([AC_PROG_GREP])
-
-    AC_CHECK_PROG([OBJDUMP], [objdump], [objdump])
-    AC_CACHE_CHECK([if .note.GNU-stack is needed],
-        [opal_cv_asm_gnu_stack_result],
-        [AS_IF([test "$OBJDUMP" != ""],
-            [ # first, see if a simple C program has it set
-             cat >conftest.c <<EOF
-int testfunc() {return 0; }
-EOF
-             OPAL_LOG_COMMAND([$CC $CFLAGS -c conftest.c -o conftest.$OBJEXT],
-                 [$OBJDUMP -x conftest.$OBJEXT 2>&1 | $GREP '\.note\.GNU-stack' &> /dev/null && opal_cv_asm_gnu_stack_result=yes],
-                 [OPAL_LOG_MSG([the failed program was:], 1)
-                  OPAL_LOG_FILE([conftest.c])
-                  opal_cv_asm_gnu_stack_result=no])
-             if test "$opal_cv_asm_gnu_stack_result" != "yes" ; then
-                 opal_cv_asm_gnu_stack_result="no"
-             fi
-             rm -rf conftest.*],
-            [opal_cv_asm_gnu_stack_result="no"])])
-    if test "$opal_cv_asm_gnu_stack_result" = "yes" ; then
-        opal_cv_asm_gnu_stack=1
-    else
-        opal_cv_asm_gnu_stack=0
-    fi
-])dnl
-
-
-dnl #################################################################
-dnl
-dnl OPAL_CHECK_POWERPC_REG
-dnl
-dnl See if the notation for specifying registers is X (most everyone)
-dnl or rX (OS X)
-dnl
-dnl #################################################################
-AC_DEFUN([OPAL_CHECK_POWERPC_REG],[
-    AC_MSG_CHECKING([if PowerPC registers have r prefix])
-    OPAL_TRY_ASSEMBLE([$opal_cv_asm_text
-        addi 1,1,0],
-        [opal_cv_asm_powerpc_r_reg=0],
-        [OPAL_TRY_ASSEMBLE([$opal_cv_asm_text
-        addi r1,r1,0],
-            [opal_cv_asm_powerpc_r_reg=1],
-            [AC_MSG_ERROR([Can not determine how to use PPC registers])])])
-    if test "$opal_cv_asm_powerpc_r_reg" = "1" ; then
-        AC_MSG_RESULT([yes])
-    else
-        AC_MSG_RESULT([no])
-    fi
-
-    AC_DEFINE_UNQUOTED([OPAL_POWERPC_R_REGISTERS],
-                       [$opal_cv_asm_powerpc_r_reg],
-                       [Whether r notation is used for ppc registers])
-])dnl
 
 dnl #################################################################
 dnl
@@ -955,20 +498,16 @@ AC_DEFUN([OPAL_CHECK_CMPXCHG16B],[
     OPAL_VAR_SCOPE_POP
 ])dnl
 
+
 dnl #################################################################
 dnl
-dnl OPAL_CHECK_INLINE_GCC
+dnl OPAL_CHECK_INLINE_GCC([action-if-found], [action-if-not-found])
 dnl
 dnl Check if the compiler is capable of doing GCC-style inline
 dnl assembly.  Some compilers emit a warning and ignore the inline
 dnl assembly (xlc on OS X) and compile without error.  Therefore,
 dnl the test attempts to run the emitted code to check that the
-dnl assembly is actually run.  To run this test, one argument to
-dnl the macro must be an assembly instruction in gcc format to move
-dnl the value 0 into the register containing the variable ret.
-dnl For PowerPC, this would be:
-dnl
-dnl   "li %0,0" : "=&r"(ret)
+dnl assembly is actually run.
 dnl
 dnl For testing ia32 assembly, the assembly instruction xaddl is
 dnl tested.  The xaddl instruction is used by some of the atomic
@@ -977,272 +516,195 @@ dnl some compilers (i.e. earlier versions of Sun Studio 12) do not
 dnl necessarily handle xaddl properly, so that needs to be detected
 dnl during configure time.
 dnl
-dnl DEFINE OPAL_GCC_INLINE_ASSEMBLY to 0 or 1 depending on GCC
+dnl DEFINE OPAL_C_GCC_INLINE_ASSEMBLY to 0 or 1 depending on GCC
 dnl                support
 dnl
 dnl #################################################################
 AC_DEFUN([OPAL_CHECK_INLINE_C_GCC],[
-    assembly="$1"
-    asm_result="unknown"
+    AC_CACHE_CHECK([if $CC supports GCC inline assembly],
+       [opal_cv_asm_gcc_inline_assembly],
+       [OPAL_VAR_SCOPE_PUSH([asm_result opal_gcc_inline_assign OPAL_C_GCC_INLINE_ASSEMBLY])
 
-    AC_MSG_CHECKING([if $CC supports GCC inline assembly])
+        asm_result="unknown"
 
-    if test ! "$assembly" = "" ; then
-        AC_RUN_IFELSE([AC_LANG_PROGRAM([AC_INCLUDES_DEFAULT],[[
+        opal_gcc_inline_assign=""
+        case "${host}" in
+            x86_64-*x32|i?86-*|x86_64*|amd64*)
+                opal_gcc_inline_assign='"xaddl %1,%0" : "=m"(ret), "+r"(negone) : "m"(ret)'
+                ;;
+            aarch64*)
+                opal_gcc_inline_assign='"mov %0, #0" : "=&r"(ret)'
+                ;;
+            powerpc-*|powerpc64-*|powerpcle-*|powerpc64le-*|rs6000-*|ppc-*)
+                opal_gcc_inline_assign='"1: li %0,0" : "=&r"(ret)'
+                ;;
+        esac
+
+        AS_IF([test  "$opal_gcc_inline_assign" != ""],
+            [AC_RUN_IFELSE([AC_LANG_PROGRAM([AC_INCLUDES_DEFAULT],[[
 int ret = 1;
 int negone = -1;
-__asm__ __volatile__ ($assembly);
+__asm__ __volatile__ ($opal_gcc_inline_assign);
 return ret;
-                                                             ]])],
-                      [asm_result="yes"], [asm_result="no"],
-                      [asm_result="unknown"])
-    else
-        assembly="test skipped - assuming no"
-    fi
+                ]])],
+               [asm_result="yes"], [asm_result="no"],
+               [asm_result="unknown"])],
+            [asm_result="no - architecture not supported"])
 
-    # if we're cross compiling, just try to compile and figure good enough
-    if test "$asm_result" = "unknown" ; then
-        AC_LINK_IFELSE([AC_LANG_PROGRAM([AC_INCLUDES_DEFAULT],[[
+        # if we're cross compiling, just try to compile and figure good enough
+        AS_IF([test "$asm_result" = "unknown"],
+            [AC_LINK_IFELSE([AC_LANG_PROGRAM([AC_INCLUDES_DEFAULT],[[
 int ret = 1;
 int negone = -1;
-__asm__ __volatile__ ($assembly);
+__asm__ __volatile__ ($opal_gcc_inline_assign);
 return ret;
-                                                              ]])],
-                       [asm_result="yes"], [asm_result="no"])
-    fi
+                ]])],
+            [asm_result="yes"], [asm_result="no"])])
+    opal_cv_asm_gcc_inline_assembly="$asm_result"
+    OPAL_VAR_SCOPE_POP])
 
-    AC_MSG_RESULT([$asm_result])
-
-    if test "$asm_result" = "yes" ; then
-        OPAL_C_GCC_INLINE_ASSEMBLY=1
-        opal_cv_asm_inline_supported="yes"
-    else
-        OPAL_C_GCC_INLINE_ASSEMBLY=0
-    fi
+    AS_IF([test "$opal_cv_asm_gcc_inline_assembly" = "yes"],
+          [OPAL_C_GCC_INLINE_ASSEMBLY=1
+           $1],
+          [OPAL_C_GCC_INLINE_ASSEMBLY=0
+           $2])
 
     AC_DEFINE_UNQUOTED([OPAL_C_GCC_INLINE_ASSEMBLY],
                        [$OPAL_C_GCC_INLINE_ASSEMBLY],
                        [Whether C compiler supports GCC style inline assembly])
-
-    unset OPAL_C_GCC_INLINE_ASSEMBLY assembly asm_result
 ])dnl
+
 
 dnl #################################################################
 dnl
 dnl OPAL_CONFIG_ASM
 dnl
-dnl DEFINE OPAL_ASSEMBLY_ARCH to something in sys/architecture.h
-dnl DEFINE OPAL_ASSEMBLY_FORMAT to string containing correct
-dnl                             format for assembly (not user friendly)
-dnl SUBST OPAL_ASSEMBLY_FORMAT to string containing correct
-dnl                             format for assembly (not user friendly)
+dnl Configure assembly support.  AC_DEFINES the following:
+dnl   - OPAL_C_GCC_INLINE_ASSEMBLY - 1 if C compiler supports
+dnl         GCC-style inline assembly
+dnl   - OPAL_USE_C11_ATOMICS - 1 if atomics implementation should
+dnl         use C11-style atomics
+dnl   - OPAL_USE_GCC_BUILTIN_ATOMICS - 1 if atomics implementation
+dnl         should use GCC built-in style atomics
+dnl   - OPAL_USE_ASM_ATOMICS - 1 if atomics implementation should
+dnl         use inline assembly (using GCC-style inline assembly)
+dnl        for atomics implementation
 dnl
 dnl #################################################################
 AC_DEFUN([OPAL_CONFIG_ASM],[
     AC_REQUIRE([OPAL_SETUP_CC])
-    AC_REQUIRE([AM_PROG_AS])
 
-    AC_ARG_ENABLE([c11-atomics],[AS_HELP_STRING([--enable-c11-atomics],
-                  [Enable use of C11 atomics if available (default: enabled)])])
+    OPAL_VAR_SCOPE_PUSH([atomics_found want_c11_atomics want_gcc_builtin_atomics want_asm_atomics])
+
+    # only assembly style we support today is gcc-style inline
+    # assembly, find out if it works.  We need this even for C11/GCC
+    # builtin atomics cases, because we use inline assembly for
+    # timers, LLSC, and 16 byte compare and swap routines.
+    OPAL_CHECK_INLINE_C_GCC([gcc_inline=1], [gcc_inline=0])
+
+    atomics_found=no
+    want_c11_atomics=0
+    want_gcc_builtin_atomics=0
+    want_asm_atomics=0
+
+    AC_ARG_ENABLE([c11-atomics],
+        [AS_HELP_STRING([--enable-c11-atomics],
+             [Enable use of C11 atomics if available. Note: GCC builtin atomics are currently preferred over C11 atomics. (default: use if available, disabled by default on 64-bit PowerPC)])])
 
     AC_ARG_ENABLE([builtin-atomics],
-      [AS_HELP_STRING([--enable-builtin-atomics],
-         [Enable use of GCC built-in atomics (default: autodetect)])])
+        [AS_HELP_STRING([--enable-builtin-atomics],
+             [Enable use of GCC built-in atomics. Currently preferred over C11 atomics. (default: use if available, disabled by default on 64-bit PowerPC)])])
 
-    OPAL_CHECK_C11_CSWAP_INT128
-    opal_cv_asm_builtin="BUILTIN_NO"
-    OPAL_CHECK_GCC_ATOMIC_BUILTINS
+    AC_ARG_ENABLE([builtin-atomics-for-ppc],
+        [AS_HELP_STRING([--enable-builtin-atomics-for-ppc],
+             [For performance reasons, 64-bit POWER architectures will not use C11 or GCC built-in atomics, even if --enable-c11-atomics is passed to configure.  Enabling this option will re-enable support for both C11 and GCC built-in atomics.])])
 
-    if test "x$enable_c11_atomics" != "xno" && test "$opal_cv_c11_supported" = "yes" ; then
-        opal_cv_asm_builtin="BUILTIN_C11"
-        OPAL_CHECK_C11_CSWAP_INT128
-    elif test "x$enable_c11_atomics" = "xyes"; then
-        AC_MSG_WARN([C11 atomics were requested but are not supported])
-        AC_MSG_ERROR([Cannot continue])
-    elif test "$enable_builtin_atomics" = "yes" ; then
-	if test $opal_cv_have___atomic = "yes" ; then
-	    opal_cv_asm_builtin="BUILTIN_GCC"
-	else
-	    AC_MSG_WARN([GCC built-in atomics requested but not found.])
-	    AC_MSG_ERROR([Cannot continue])
-	fi
-    fi
+    # See the following github PR and some performance numbers/discussion:
+    # https://github.com/open-mpi/ompi/pull/8649
+    #
+    # This logic is a bit convoluted, but matches existing logic in v4.x.
+    case "${host}" in
+    powerpc-*|powerpc64-*|powerpcle-*|powerpc64le-*|rs6000-*|ppc-*)
+          AS_IF([test "$ac_cv_sizeof_long" = "8" -a "$enable_builtin_atomics_for_ppc" != "yes"],
+                [AS_IF([test "$enable_c11_atomics" != "no" -a "$enable_builtin_atomics" != "no"],
+                       [AC_MSG_NOTICE([Disabling built-in and C11 atomics due to known performance issues on Powerpc])])
+                 AS_IF([test "$enable_c11_atomics" = "yes" -o "$enable_builtin_atomics" = "yes"],
+                       [AC_MSG_WARN([Ignoring --enable-c11-atomics and --enable-builtin-atomics options on POWER.  Set
+--enable-builtin-atomics-for-ppc to re-enable.])])
+                 enable_c11_atomics="no"
+                 enable_builtin_atomics="no"])
+    ;;
+    esac
 
-        OPAL_CHECK_ASM_PROC
-        OPAL_CHECK_ASM_TEXT
-        OPAL_CHECK_ASM_GLOBAL
-        OPAL_CHECK_ASM_GNU_STACKEXEC
-        OPAL_CHECK_ASM_LABEL_SUFFIX
-        OPAL_CHECK_ASM_GSYM
-        OPAL_CHECK_ASM_LSYM
-        OPAL_CHECK_ASM_TYPE
-        OPAL_CHECK_ASM_SIZE
-        OPAL_CHECK_ASM_ALIGN_LOG
+    # Option 1 for atomics: GCC-style Builtin
+    #
+    # We prefer builtin atomics over C11 atomics because our use of C11 atomics
+    # at this point is broken as it either incurs undue overheads or
+    # requires casts to _Atomic where there should be no casts.
+    AS_IF([test "$atomics_found" = "no" -a "$enable_builtin_atomics" != "no"],
+          [OPAL_CHECK_GCC_ATOMIC_BUILTINS
+           AS_IF([test $opal_cv_have___atomic = "yes"],
+                 [AC_MSG_NOTICE([Using GCC built-in style atomics])
+                  atomics_found="GCC built-in style atomics"
+                  want_gcc_builtin_atomics=1],
+                 [test "$enable_builtin_atomics" = "yes"],
+                 [AC_MSG_WARN([GCC built-in atomics requested but not found.])
+                  AC_MSG_ERROR([Cannot continue])])])
 
-        # find our architecture for purposes of assembly stuff
-        opal_cv_asm_arch="UNSUPPORTED"
-        OPAL_GCC_INLINE_ASSIGN=""
+    # Option 2 for atomics: C11
+    #
+    # We currently always disable C11 atomics with the Intel compilers.
+    # We know builds older than 20200310 are broken with respect to
+    # C11 atomics, but have not apparently found a build we are happy
+    # with.  In the future, this should be changed to a check for a
+    # particular Intel version.
+    AS_IF([test "$atomics_found" = "no" -a "$enable_c11_atomics" != "no" -a "$opal_cv_c11_supported" = "yes" -a "$opal_cv_c_compiler_vendor" != "intel"],
+          [AC_MSG_NOTICE([Using C11 atomics])
+           OPAL_CHECK_C11_CSWAP_INT128
+           want_c11_atomics=1
+           atomics_found="C11 atomics"],
+          [test "$enable_c11_atomics" = "yes"],
+          [AC_MSG_WARN([C11 atomics were requested but are not supported])
+           AC_MSG_ERROR([Cannot continue])])
 
-        case "${host}" in
-        x86_64-*x32|i?86-*|x86_64*|amd64*)
-            if test "$ac_cv_sizeof_long" = "4" ; then
-		if test $opal_cv_asm_builtin = BUILTIN_NO ; then
-		    AC_MSG_ERROR([IA32 atomics are no longer supported. Use a C11 compiler])
-		fi
-		opal_cv_asm_arch="IA32"
-	    else
-		opal_cv_asm_arch="X86_64"
-		OPAL_CHECK_CMPXCHG16B
-	    fi
-            OPAL_GCC_INLINE_ASSIGN='"xaddl %1,%0" : "=m"(ret), "+r"(negone) : "m"(ret)'
+    # Option 3 for atomics: inline assembly
+    AS_IF([test "$atomics_found" = "no" -a "$gcc_inline" = "1"],
+          [case "${host}" in
+           x86_64-*x32|i?86-*|x86_64*|amd64*)
+               AS_IF([test "$ac_cv_sizeof_long" = "8"],
+                     [OPAL_CHECK_CMPXCHG16B
+                      atomics_found="x86_64 assembly"])
             ;;
 
-        aarch64*)
-            opal_cv_asm_arch="ARM64"
-            OPAL_GCC_INLINE_ASSIGN='"mov %0, #0" : "=&r"(ret)'
+            aarch64*)
+                atomics_found="aarch64 assembly"
             ;;
 
-        armv7*|arm-*-linux-gnueabihf|armv6*)
-            if test $opal_cv_asm_builtin = BUILTIN_NO ; then
-		AC_MSG_ERROR([32-bit ARM atomics are no longer supported. Use a C11 compiler])
-	    fi
-
-            opal_cv_asm_arch="ARM"
-            OPAL_GCC_INLINE_ASSIGN='"mov %0, #0" : "=&r"(ret)'
+            powerpc-*|powerpc64-*|powerpcle-*|powerpc64le-*|rs6000-*|ppc-*)
+                AS_IF([test "$ac_cv_sizeof_long" = "8"],
+                      [atomics_found="PowerPC assembly"])
             ;;
+            esac
 
-        powerpc-*|powerpc64-*|powerpcle-*|powerpc64le-*|rs6000-*|ppc-*)
-            OPAL_CHECK_POWERPC_REG
-            if test "$ac_cv_sizeof_long" = "4" ; then
-		if test $opal_cv_asm_builtin = BUILTIN_NO ; then
-		    AC_MSG_ERROR([PowerPC 32-bit atomics are no longer supported. Use a C11 compiler])
-		fi
-		opal_cv_asm_arch="POWERPC32"
-	    elif test "$ac_cv_sizeof_long" = "8" ; then
-                opal_cv_asm_arch="POWERPC64"
-            else
-                AC_MSG_ERROR([Could not determine PowerPC word size: $ac_cv_sizeof_long])
-            fi
-            OPAL_GCC_INLINE_ASSIGN='"1: li %0,0" : "=&r"(ret)'
+            AS_IF([test "$atomics_found" != "no"],
+                  [want_asm_atomics=1])
+            AC_MSG_CHECKING([for inline assembly atomics])
+            AC_MSG_RESULT([$atomics_found])])
 
-            # See the following github PR and some performance numbers/discussion:
-            # https://github.com/open-mpi/ompi/pull/8649
-            AC_MSG_CHECKING([$opal_cv_asm_arch: Checking if force gcc atomics requested])
-            if test $force_gcc_atomics_ppc = 0 ; then
-                AC_MSG_RESULT([no])
-                opal_cv_asm_builtin="BUILTIN_NO"
-            else
-                AC_MSG_RESULT([Yes])
-                AC_MSG_WARN([$opal_cv_asm_arch: gcc atomics have been known to perform poorly on powerpc.])
-            fi
+    AS_IF([test "$atomics_found" = "no"],
+          [AC_MSG_ERROR([No usable atomics implementation found.  Cannot continue.])])
 
-            ;;
-        *)
-	    if test $opal_cv_have___atomic = "yes" ; then
-		opal_cv_asm_builtin="BUILTIN_GCC"
-	    else
-		AC_MSG_ERROR([No atomic primitives available for $host])
-	    fi
-	    ;;
-        esac
+    AC_DEFINE_UNQUOTED([OPAL_USE_C11_ATOMICS],
+        [$want_c11_atomics],
+        [Whether to use C11 atomics for atomics implementation])
+    AC_DEFINE_UNQUOTED([OPAL_USE_GCC_BUILTIN_ATOMICS],
+        [$want_gcc_builtin_atomics],
+        [Whether to use GCC-style built-in atomics for atomics implementation])
+    AC_DEFINE_UNQUOTED([OPAL_USE_ASM_ATOMICS],
+        [$want_asm_atomics],
+        [Whether to use assembly-coded atomics for atomics implementation])
 
-	if test "$opal_cv_asm_builtin" = "BUILTIN_GCC" ; then
-         AC_DEFINE([OPAL_C_GCC_INLINE_ASSEMBLY], [1],
-		   [Whether C compiler supports GCC style inline assembly])
-	else
-         opal_cv_asm_inline_supported="no"
-         # now that we know our architecture, try to inline assemble
-         OPAL_CHECK_INLINE_C_GCC([$OPAL_GCC_INLINE_ASSIGN])
+    OPAL_SUMMARY_ADD([Miscellaneous], [Atomics], [], [$atomics_found])
 
-         # format:
-         #   config_file-text-global-label_suffix-gsym-lsym-type-size-align_log-ppc_r_reg-64_bit-gnu_stack
-         asm_format="default"
-         asm_format="${asm_format}-${opal_cv_asm_text}-${opal_cv_asm_global}"
-         asm_format="${asm_format}-${opal_cv_asm_label_suffix}-${opal_cv_asm_gsym}"
-         asm_format="${asm_format}-${opal_cv_asm_lsym}"
-         asm_format="${asm_format}-${opal_cv_asm_type}-${opal_asm_size}"
-         asm_format="${asm_format}-${opal_asm_align_log_result}"
-         if test "$opal_cv_asm_arch" = "POWERPC64" ; then
-             asm_format="${asm_format}-${opal_cv_asm_powerpc_r_reg}"
-         else
-             asm_format="${asm_format}-1"
-         fi
-         asm_format="${asm_format}-1"
-         opal_cv_asm_format="${asm_format}-${opal_cv_asm_gnu_stack}"
-         # For the Makefile, need to escape the $ as $$.  Don't display
-         # this version, but make sure the Makefile gives the right thing
-         # when regenerating the files because the base has been touched.
-         OPAL_ASSEMBLY_FORMAT=`echo "$opal_cv_asm_format" | sed -e 's/\\\$/\\\$\\\$/'`
-
-        AC_MSG_CHECKING([for assembly format])
-        AC_MSG_RESULT([$opal_cv_asm_format])
-        AC_DEFINE_UNQUOTED([OPAL_ASSEMBLY_FORMAT], ["$OPAL_ASSEMBLY_FORMAT"],
-                           [Format of assembly file])
-        AC_SUBST([OPAL_ASSEMBLY_FORMAT])
-    fi # if opal_cv_asm_builtin = BUILTIN_GCC
-
-    result="OPAL_$opal_cv_asm_arch"
-    OPAL_ASSEMBLY_ARCH="$opal_cv_asm_arch"
-    AC_MSG_CHECKING([for assembly architecture])
-    AC_MSG_RESULT([$opal_cv_asm_arch])
-    AC_DEFINE_UNQUOTED([OPAL_ASSEMBLY_ARCH], [$result],
-        [Architecture type of assembly to use for atomic operations and CMA])
-    AC_SUBST([OPAL_ASSEMBLY_ARCH])
-
-    # Check for RDTSCP support
-    result=0
-    AS_IF([test "$opal_cv_asm_arch" = "X86_64" || test "$opal_cv_asm_arch" = "IA32"],
-          [AC_MSG_CHECKING([for RDTSCP assembly support])
-           AC_LANG_PUSH([C])
-           AC_RUN_IFELSE([AC_LANG_PROGRAM([[
-int main(int argc, char* argv[])
-{
-  unsigned int rax, rdx;
-  __asm__ __volatile__ ("rdtscp\n": "=a" (rax), "=d" (rdx):: "%rax", "%rdx");
-  return 0;
-}
-           ]])],
-           [result=1
-            AC_MSG_RESULT([yes])],
-           [AC_MSG_RESULT([no])],
-           [#cross compile not supported
-            AC_MSG_RESULT(["no (cross compiling)"])])
-           AC_LANG_POP([C])])
-    AC_DEFINE_UNQUOTED([OPAL_ASSEMBLY_SUPPORTS_RDTSCP], [$result],
-                       [Whether we have support for RDTSCP instruction])
-
-    result="OPAL_$opal_cv_asm_builtin"
-    OPAL_ASSEMBLY_BUILTIN="$opal_cv_asm_builtin"
-    AC_MSG_CHECKING([for builtin atomics])
-    AC_MSG_RESULT([$opal_cv_asm_builtin])
-    AC_DEFINE_UNQUOTED([OPAL_ASSEMBLY_BUILTIN], [$result],
-        [Whether to use builtin atomics])
-    AC_SUBST([OPAL_ASSEMBLY_BUILTIN])
-
-    OPAL_SUMMARY_ADD([[Atomics]],[[OMPI]],[],[$opal_cv_asm_builtin])
-
-    OPAL_ASM_FIND_FILE
-
-    unset result asm_format
-])dnl
-
-
-dnl #################################################################
-dnl
-dnl OPAL_ASM_FIND_FILE
-dnl
-dnl
-dnl do all the evil mojo to provide a working assembly file
-dnl
-dnl #################################################################
-AC_DEFUN([OPAL_ASM_FIND_FILE], [
-    AC_REQUIRE([AC_PROG_GREP])
-    AC_REQUIRE([AC_PROG_FGREP])
-
-if test "$opal_cv_asm_arch" != "WINDOWS" && test "$opal_cv_asm_builtin" != "BUILTIN_GCC" && test "$opal_cv_asm_builtin" != "BUILTIN_OSX"  && test "$opal_cv_asm_inline_arch" = "no" ; then
-    AC_MSG_ERROR([no atomic support available. exiting])
-else
-    # On windows with VC++, atomics are done with compiler primitives
-    opal_cv_asm_file=""
-fi
+    OPAL_VAR_SCOPE_POP
 ])dnl

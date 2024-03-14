@@ -1,5 +1,6 @@
 #
 # Copyright (c) 2018      Mellanox Technologies.  All rights reserved.
+# Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -53,8 +54,6 @@ endif
 
 lib@OPAL_LIB_NAME@mca_common_ucx_la_SOURCES = \
         $(headers) $(sources)
-lib@OPAL_LIB_NAME@mca_common_ucx_la_CFLAGS = \
-		$(common_ucx_CFLAGS)
 lib@OPAL_LIB_NAME@mca_common_ucx_la_CPPFLAGS = \
 		$(common_ucx_CPPFLAGS)
 lib@OPAL_LIB_NAME@mca_common_ucx_la_LDFLAGS = \
@@ -66,8 +65,6 @@ lib@OPAL_LIB_NAME@mca_common_ucx_la_LIBADD = \
 		$(OMPI_TOP_BUILDDIR)/opal/mca/memory/libmca_memory.la
 lib@OPAL_LIB_NAME@mca_common_ucx_noinst_la_SOURCES = \
         $(headers) $(sources)
-lib@OPAL_LIB_NAME@mca_common_ucx_noinst_la_CFLAGS = \
-		$(common_ucx_CFLAGS)
 lib@OPAL_LIB_NAME@mca_common_ucx_noinst_la_CPPFLAGS = \
 		$(common_ucx_CPPFLAGS)
 lib@OPAL_LIB_NAME@mca_common_ucx_noinst_la_LDFLAGS = \

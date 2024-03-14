@@ -133,7 +133,7 @@ struct ddt_elem_desc {
 typedef struct ddt_elem_desc ddt_elem_desc_t;
 
 /**
- * The loop description, with it's two markers: one for the begining and one for
+ * The loop description, with it's two markers: one for the beginning and one for
  * the end. The initial marker contains the number of repetitions, the number of
  * elements in the loop, and the extent of each loop. The end marker contains in
  * addition to the number of elements (so that we can easily pair together the

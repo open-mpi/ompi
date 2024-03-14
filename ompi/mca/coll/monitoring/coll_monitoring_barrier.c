@@ -25,7 +25,7 @@ int mca_coll_monitoring_barrier(struct ompi_communicator_t *comm,
 	if( my_rank == i ) continue; /* No communication for self */
 	/**
 	 * If this fails the destination is not part of my MPI_COM_WORLD
-	 * Lookup its name in the rank hastable to get its MPI_COMM_WORLD rank
+	 * Lookup its name in the rank hashtable to get its MPI_COMM_WORLD rank
 	 */
 	if( OPAL_SUCCESS == mca_common_monitoring_get_world_rank(i, comm->c_remote_group, &rank) ) {
 	    mca_common_monitoring_record_coll(rank, 0);
@@ -47,7 +47,7 @@ int mca_coll_monitoring_ibarrier(struct ompi_communicator_t *comm,
 	if( my_rank == i ) continue; /* No communication for self */
 	/**
 	 * If this fails the destination is not part of my MPI_COM_WORLD
-	 * Lookup its name in the rank hastable to get its MPI_COMM_WORLD rank
+	 * Lookup its name in the rank hashtable to get its MPI_COMM_WORLD rank
 	 */
 	if( OPAL_SUCCESS == mca_common_monitoring_get_world_rank(i, comm->c_remote_group, &rank) ) {
 	    mca_common_monitoring_record_coll(rank, 0);

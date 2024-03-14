@@ -9,9 +9,9 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2017      IBM Corporation. All rights reserved.
+ * Copyright (c) 2015-2021 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
+ * Copyright (c) 2017-2022 IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -49,6 +49,7 @@ mca_coll_basic_scatterv_intra(const void *sbuf, const int *scounts,
     int i, rank, size, err;
     char *ptmp;
     ptrdiff_t lb, extent;
+    size_t sdsize;
 
     /* Initialize */
 
@@ -58,12 +59,20 @@ mca_coll_basic_scatterv_intra(const void *sbuf, const int *scounts,
     /* If not root, receive data. */
 
     if (rank != root) {
+        size_t rdsize;
+        ompi_datatype_type_size(rdtype, &rdsize);
         /* Only receive if there is something to receive */
-        if (rcount > 0) {
+        if (rcount > 0 && rdsize > 0) {
             return MCA_PML_CALL(recv(rbuf, rcount, rdtype,
                                      root, MCA_COLL_BASE_TAG_SCATTERV,
                                      comm, MPI_STATUS_IGNORE));
         }
+        return MPI_SUCCESS;
+    }
+
+    ompi_datatype_type_size(sdtype, &sdsize);
+    if (OPAL_UNLIKELY(0 == sdsize)) {
+        /* bozzo case */
         return MPI_SUCCESS;
     }
 
@@ -84,6 +93,9 @@ mca_coll_basic_scatterv_intra(const void *sbuf, const int *scounts,
             if (scounts[i] > 0 && MPI_IN_PLACE != rbuf) {
                 err = ompi_datatype_sndrcv(ptmp, scounts[i], sdtype, rbuf, rcount,
                                       rdtype);
+                if (MPI_SUCCESS != err) {
+                    return err;
+                }
             }
         } else {
             /* Only send if there is something to send */

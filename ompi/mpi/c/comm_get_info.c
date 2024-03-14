@@ -53,11 +53,12 @@ int MPI_Comm_get_info(MPI_Comm comm, MPI_Info *info_used)
     }
 
 
-    (*info_used) = OBJ_NEW(ompi_info_t);
+    *info_used = ompi_info_allocate ();
     if (NULL == (*info_used)) {
        return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_NO_MEM,
                                       FUNC_NAME);
     }
+
     opal_info_t *opal_info_used = &(*info_used)->super;
 
     opal_info_dup(comm->super.s_info, &opal_info_used);

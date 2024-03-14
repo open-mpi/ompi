@@ -12,6 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2017      Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2022      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -55,6 +56,7 @@ static int hooks_support = 0;
 static opal_list_t release_cb_list;
 static opal_atomic_lock_t release_lock;
 static int release_run_callbacks;
+static int is_initialized = false;
 
 /**
  * Finalize the memory hooks subsystem
@@ -77,7 +79,7 @@ static void opal_mem_hooks_finalize(void)
     release_run_callbacks = false;
     opal_atomic_mb();
 
-    /* aquire the lock, just to make sure no one is currently
+    /* acquire the lock, just to make sure no one is currently
        twiddling with the list.  We know this won't last long, since
        no new calls will come in after we set run_callbacks to false */
     opal_atomic_lock(&release_lock);
@@ -93,6 +95,7 @@ int opal_mem_hooks_init(void)
     OBJ_CONSTRUCT(&release_cb_list, opal_list_t);
 
     opal_atomic_lock_init(&release_lock, OPAL_ATOMIC_LOCK_UNLOCKED);
+    is_initialized = true;
 
     /* delay running callbacks until there is something in the
        registration */
@@ -196,11 +199,40 @@ int opal_mem_hooks_unregister_release(opal_mem_hooks_callback_fn_t *func)
     callback_list_item_t *cbitem, *found_item = NULL;
     int ret = OPAL_ERR_NOT_FOUND;
 
+// I've added "is_initialized" to allow this call to be safe even if
+// a memory hooks .so was merely loaded but never used so this file's
+// init function was never called.  I'll give more context, first
+// describing a bug hit in open-shmem:
+//
+// Ordinarily the expected behavior of memhook users is they'd register a
+// callback and then deregister it in a nice matched pair.  And I think
+// most OMPI code does, but the open-shmem code isn't as clear and it
+// was loading a callback and just leaving it loaded after open-shmem was
+// unloaded.  This was a problem because upon every malloc/free/etc we're
+// going to keep trying to call their callback, and the function pointer
+// itself became illegal as soon as the open-shmem shared lib was unloaded.
+// So I figured the best solution was to add a "safety valve" to the callback
+// users where they would have a library-level destructor that un-conditionally
+// adds an extra unregister call regardless of whether the code is already
+// matched or not.
+//
+// With that happening, it's necessary to make sure
+// opal_mem_hooks_unregister_release() is safe when the system isn't
+// initialized and/or if it was initialized but the specified callback
+// is already removed.
+//
+// Note also, the reason for checking "cbitem" before looking at cbitem->cbfunc
+// is when the list is empty the OPAL_LIST_FOREACH() empirically still iterates
+// once and gives a null cbitem.  I'm not sure I like that, but that's what
+// it did so I needed to make that case safe too.
+    if (!is_initialized) {
+        return 0;
+    }
     opal_atomic_lock(&release_lock);
 
     /* make sure the callback isn't already in the list */
     OPAL_LIST_FOREACH (cbitem, &release_cb_list, callback_list_item_t) {
-        if (cbitem->cbfunc == func) {
+        if (cbitem && cbitem->cbfunc == func) {
             opal_list_remove_item(&release_cb_list, (opal_list_item_t *) cbitem);
             found_item = cbitem;
             ret = OPAL_SUCCESS;

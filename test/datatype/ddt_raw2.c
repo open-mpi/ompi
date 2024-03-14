@@ -198,7 +198,7 @@ int main(int argc, char *argv[])
         {.elem = {{310, 9}, 1, 16, 1, 218216}},     {.elem = {{310, 9}, 1, 8, 1, 218280}},
         {.end_loop = {{0, 1}, 184, -1, 31684, 4}},
     };
-    opal_init_util(NULL, NULL);
+    opal_init(NULL, NULL);
     ompi_datatype_init();
 
     ompi_datatype_t *datatype = OBJ_NEW(ompi_datatype_t);

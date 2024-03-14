@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2020 The University of Tennessee and The University
+ * Copyright (c) 2004-2023 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -16,6 +16,8 @@
  *                         reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2023      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -40,6 +42,7 @@ int ompi_errhandler_invoke(ompi_errhandler_t *errhandler, void *mpi_object,
     ompi_communicator_t *comm;
     ompi_win_t *win;
     ompi_file_t *file;
+    ompi_instance_t *instance;
 
     /* If we got no errorhandler, then route the error to the appropriate
      * predefined error handler */
@@ -121,6 +124,22 @@ int ompi_errhandler_invoke(ompi_errhandler_t *errhandler, void *mpi_object,
             break;
         }
         break;
+
+    case OMPI_ERRHANDLER_TYPE_INSTANCE:
+        instance = (ompi_instance_t *) mpi_object;
+        switch (errhandler->eh_lang) {
+        case OMPI_ERRHANDLER_LANG_C:
+            errhandler->eh_instance_fn(&instance, &err_code, message, NULL);
+            break;
+
+        case OMPI_ERRHANDLER_LANG_FORTRAN:
+            fortran_handle = OMPI_INT_2_FINT(instance->i_f_to_c_index);
+            errhandler->eh_fort_fn(&fortran_handle, &fortran_err_code);
+            err_code = OMPI_FINT_2_INT(fortran_err_code);
+            break;
+        }
+        break;
+
     }
 
     /* All done */
@@ -200,9 +219,9 @@ int ompi_errhandler_request_invoke(int count,
         break;
     default:
         /* Covers REQUEST_GEN, REQUEST_NULL, REQUEST_MAX */
-        return ompi_errhandler_invoke(MPI_COMM_WORLD->error_handler,
-                                      MPI_COMM_WORLD,
-                                      MPI_COMM_WORLD->errhandler_type,
+        return ompi_errhandler_invoke(NULL,
+                                      NULL,
+                                      0,
                                       ec, message);
         break;
     }

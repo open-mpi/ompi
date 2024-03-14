@@ -15,6 +15,8 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2020      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,6 +31,7 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/memchecker.h"
+#include "ompi/instance/instance.h"
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -43,6 +46,8 @@ static const char FUNC_NAME[] = "MPI_Comm_get_errhandler";
 
 int MPI_Comm_get_errhandler(MPI_Comm comm, MPI_Errhandler *errhandler)
 {
+    int ret = MPI_SUCCESS;
+
     /* Error checking */
     MEMCHECKER(
         memchecker_comm(comm);
@@ -68,7 +73,10 @@ int MPI_Comm_get_errhandler(MPI_Comm comm, MPI_Errhandler *errhandler)
     *errhandler = comm->error_handler;
     OPAL_THREAD_UNLOCK(&(comm->c_lock));
 
+   /* make sure the infrastructure is initialized */
+    ret = ompi_mpi_instance_retain ();
+
     /* All done */
 
-    return MPI_SUCCESS;
+    return ret;
 }

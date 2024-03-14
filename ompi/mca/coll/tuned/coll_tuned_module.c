@@ -129,7 +129,7 @@ ompi_coll_tuned_forced_getvalues( enum COLLTYPE type,
 
     /**
      * Set the selected algorithm to 0 by default. Later on we can check this against 0
-     * to see if it was setted explicitly (if we suppose that setting it to 0 enable the
+     * to see if it was set explicitly (if we suppose that setting it to 0 enable the
      * default behavior) or not.
      */
     mca_base_var_get_value(mca_params->algorithm_param_index, &tmp, NULL, NULL);

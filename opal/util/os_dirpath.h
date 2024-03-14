@@ -108,7 +108,7 @@ typedef bool (*opal_os_dirpath_destroy_callback_fn_t)(const char *root, const ch
  * @retval OPAL_SUCCESS If the directory was successfully removed or removed to the
  *                      specification of the user (i.e., obeyed the callback function).
  * @retval OPAL_ERR_NOT_FOUND If directory does not exist.
- * @retval OPAL_ERROR If the directory cannnot be removed, accessed properly, or contains
+ * @retval OPAL_ERROR If the directory cannot be removed, accessed properly, or contains
  *                    directories that could not be removed..
  */
 OPAL_DECLSPEC int opal_os_dirpath_destroy(const char *path, bool recursive,

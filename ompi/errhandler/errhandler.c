@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2020 The University of Tennessee and The University
+ * Copyright (c) 2004-2023 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -17,6 +17,8 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
+ * Copyright (c) 2018-2021 Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -36,7 +38,7 @@
 #include "opal/mca/pmix/pmix-internal.h"
 #include "opal/util/string_copy.h"
 #include "opal/mca/backtrace/backtrace.h"
-
+#include "ompi/runtime/mpiruntime.h"
 
 /*
  * Table for Fortran <-> C errhandler handle conversion
@@ -137,56 +139,60 @@ int ompi_initial_errhandler_init(void) {
     return OMPI_SUCCESS;
 }
 
+static int ompi_errhandler_finalize (void);
+
 /*
  * Initialize OMPI errhandler infrastructure
  */
 int ompi_errhandler_init(void)
 {
-  /* initialize ompi_errhandler_f_to_c_table */
+    OBJ_CONSTRUCT( &ompi_errhandler_f_to_c_table, opal_pointer_array_t);
+    if( OPAL_SUCCESS != opal_pointer_array_init(&ompi_errhandler_f_to_c_table, 8,
+                                                OMPI_FORTRAN_HANDLE_MAX, 16) ) {
+        return OMPI_ERROR;
+    }
 
-  OBJ_CONSTRUCT( &ompi_errhandler_f_to_c_table, opal_pointer_array_t);
-  if( OPAL_SUCCESS != opal_pointer_array_init(&ompi_errhandler_f_to_c_table, 8,
-                                              OMPI_FORTRAN_HANDLE_MAX, 16) ) {
-    return OMPI_ERROR;
-  }
+    /* Initialize the predefined error handlers */
+    OBJ_CONSTRUCT( &ompi_mpi_errhandler_null.eh, ompi_errhandler_t );
+    if( ompi_mpi_errhandler_null.eh.eh_f_to_c_index != OMPI_ERRHANDLER_NULL_FORTRAN ) {
+        return OMPI_ERROR;
+    }
 
-  /* Initialize the predefined error handlers */
-  OBJ_CONSTRUCT( &ompi_mpi_errhandler_null.eh, ompi_errhandler_t );
-  if( ompi_mpi_errhandler_null.eh.eh_f_to_c_index != OMPI_ERRHANDLER_NULL_FORTRAN )
-      return OMPI_ERROR;
-  ompi_mpi_errhandler_null.eh.eh_mpi_object_type = OMPI_ERRHANDLER_TYPE_PREDEFINED;
-  ompi_mpi_errhandler_null.eh.eh_lang = OMPI_ERRHANDLER_LANG_C;
-  ompi_mpi_errhandler_null.eh.eh_comm_fn = NULL;
-  ompi_mpi_errhandler_null.eh.eh_file_fn = NULL;
-  ompi_mpi_errhandler_null.eh.eh_win_fn  = NULL ;
-  ompi_mpi_errhandler_null.eh.eh_fort_fn = NULL;
-  opal_string_copy(ompi_mpi_errhandler_null.eh.eh_name, "MPI_ERRHANDLER_NULL",
-                   sizeof(ompi_mpi_errhandler_null.eh.eh_name));
+    ompi_mpi_errhandler_null.eh.eh_mpi_object_type = OMPI_ERRHANDLER_TYPE_PREDEFINED;
+    ompi_mpi_errhandler_null.eh.eh_lang = OMPI_ERRHANDLER_LANG_C;
+    ompi_mpi_errhandler_null.eh.eh_comm_fn = NULL;
+    ompi_mpi_errhandler_null.eh.eh_file_fn = NULL;
+    ompi_mpi_errhandler_null.eh.eh_win_fn  = NULL ;
+    ompi_mpi_errhandler_null.eh.eh_fort_fn = NULL;
+    opal_string_copy (ompi_mpi_errhandler_null.eh.eh_name, "MPI_ERRHANDLER_NULL",
+                      sizeof(ompi_mpi_errhandler_null.eh.eh_name));
 
-  OBJ_CONSTRUCT( &ompi_mpi_errors_are_fatal.eh, ompi_errhandler_t );
-  if( ompi_mpi_errors_are_fatal.eh.eh_f_to_c_index != OMPI_ERRORS_ARE_FATAL_FORTRAN )
-      return OMPI_ERROR;
-  ompi_mpi_errors_are_fatal.eh.eh_mpi_object_type = OMPI_ERRHANDLER_TYPE_PREDEFINED;
-  ompi_mpi_errors_are_fatal.eh.eh_lang = OMPI_ERRHANDLER_LANG_C;
-  ompi_mpi_errors_are_fatal.eh.eh_comm_fn = ompi_mpi_errors_are_fatal_comm_handler;
-  ompi_mpi_errors_are_fatal.eh.eh_file_fn = ompi_mpi_errors_are_fatal_file_handler;
-  ompi_mpi_errors_are_fatal.eh.eh_win_fn  = ompi_mpi_errors_are_fatal_win_handler ;
-  ompi_mpi_errors_are_fatal.eh.eh_fort_fn = NULL;
-  opal_string_copy(ompi_mpi_errors_are_fatal.eh.eh_name,
-                   "MPI_ERRORS_ARE_FATAL",
-                   sizeof(ompi_mpi_errors_are_fatal.eh.eh_name));
+    OBJ_CONSTRUCT( &ompi_mpi_errors_are_fatal.eh, ompi_errhandler_t );
+    if( ompi_mpi_errors_are_fatal.eh.eh_f_to_c_index != OMPI_ERRORS_ARE_FATAL_FORTRAN )
+        return OMPI_ERROR;
+    ompi_mpi_errors_are_fatal.eh.eh_mpi_object_type = OMPI_ERRHANDLER_TYPE_PREDEFINED;
+    ompi_mpi_errors_are_fatal.eh.eh_lang = OMPI_ERRHANDLER_LANG_C;
+    ompi_mpi_errors_are_fatal.eh.eh_comm_fn = ompi_mpi_errors_are_fatal_comm_handler;
+    ompi_mpi_errors_are_fatal.eh.eh_file_fn = ompi_mpi_errors_are_fatal_file_handler;
+    ompi_mpi_errors_are_fatal.eh.eh_win_fn  = ompi_mpi_errors_are_fatal_win_handler;
+    ompi_mpi_errors_are_fatal.eh.eh_instance_fn = ompi_mpi_errors_are_fatal_instance_handler;
+    ompi_mpi_errors_are_fatal.eh.eh_fort_fn = NULL;
+    opal_string_copy(ompi_mpi_errors_are_fatal.eh.eh_name,
+                     "MPI_ERRORS_ARE_FATAL",
+                     sizeof(ompi_mpi_errors_are_fatal.eh.eh_name));
 
-  OBJ_CONSTRUCT( &ompi_mpi_errors_return.eh, ompi_errhandler_t );
-  if( ompi_mpi_errors_return.eh.eh_f_to_c_index != OMPI_ERRORS_RETURN_FORTRAN )
-      return OMPI_ERROR;
-  ompi_mpi_errors_return.eh.eh_mpi_object_type  = OMPI_ERRHANDLER_TYPE_PREDEFINED;
-  ompi_mpi_errors_return.eh.eh_lang = OMPI_ERRHANDLER_LANG_C;
-  ompi_mpi_errors_return.eh.eh_comm_fn = ompi_mpi_errors_return_comm_handler;
-  ompi_mpi_errors_return.eh.eh_file_fn = ompi_mpi_errors_return_file_handler;
-  ompi_mpi_errors_return.eh.eh_win_fn  = ompi_mpi_errors_return_win_handler;
-  ompi_mpi_errors_return.eh.eh_fort_fn = NULL;
-  opal_string_copy(ompi_mpi_errors_return.eh.eh_name, "MPI_ERRORS_RETURN",
-                   sizeof(ompi_mpi_errors_return.eh.eh_name));
+    OBJ_CONSTRUCT( &ompi_mpi_errors_return.eh, ompi_errhandler_t );
+    if( ompi_mpi_errors_return.eh.eh_f_to_c_index != OMPI_ERRORS_RETURN_FORTRAN )
+        return OMPI_ERROR;
+    ompi_mpi_errors_return.eh.eh_mpi_object_type  = OMPI_ERRHANDLER_TYPE_PREDEFINED;
+    ompi_mpi_errors_return.eh.eh_lang = OMPI_ERRHANDLER_LANG_C;
+    ompi_mpi_errors_return.eh.eh_comm_fn = ompi_mpi_errors_return_comm_handler;
+    ompi_mpi_errors_return.eh.eh_file_fn = ompi_mpi_errors_return_file_handler;
+    ompi_mpi_errors_return.eh.eh_win_fn  = ompi_mpi_errors_return_win_handler;
+    ompi_mpi_errors_return.eh.eh_instance_fn = ompi_mpi_errors_return_instance_handler;
+    ompi_mpi_errors_return.eh.eh_fort_fn = NULL;
+    opal_string_copy(ompi_mpi_errors_return.eh.eh_name, "MPI_ERRORS_RETURN",
+                     sizeof(ompi_mpi_errors_return.eh.eh_name));
 
   OBJ_CONSTRUCT( &ompi_mpi_errors_abort.eh, ompi_errhandler_t );
   if( ompi_mpi_errors_abort.eh.eh_f_to_c_index != OMPI_ERRORS_ABORT_FORTRAN )
@@ -206,14 +212,23 @@ int ompi_errhandler_init(void)
   if( NULL != env ) {
     ompi_process_info.initial_errhandler = strndup(env, MPI_MAX_INFO_VAL);
   }
-  return ompi_initial_errhandler_init();
+
+  ompi_initial_errhandler_init();
+  ompi_mpi_instance_append_finalize (ompi_errhandler_finalize);
+
+  return OMPI_SUCCESS;
 }
 
 
-/*
- * Clean up the errorhandler resources
+/**
+ * Finalize the error handler interface.
+ *
+ * @returns OMPI_SUCCESS Always
+ *
+ * Invoked on instance teardown if ompi_errhandler_init() was called; tears down the error handler
+ * interface, and destroys the F2C translation table.
  */
-int ompi_errhandler_finalize(void)
+static int ompi_errhandler_finalize (void)
 {
     OBJ_DESTRUCT(&ompi_mpi_errhandler_null.eh);
     OBJ_DESTRUCT(&ompi_mpi_errors_return.eh);
@@ -232,46 +247,64 @@ int ompi_errhandler_finalize(void)
     return OMPI_SUCCESS;
 }
 
+void ompi_errhandler_free (ompi_errhandler_t *errhandler)
+{
+    OBJ_RELEASE(errhandler);
+    ompi_mpi_instance_release ();
+}
 
 ompi_errhandler_t *ompi_errhandler_create(ompi_errhandler_type_t object_type,
-					                      ompi_errhandler_generic_handler_fn_t *func,
+                                          ompi_errhandler_generic_handler_fn_t *func,
                                           ompi_errhandler_lang_t lang)
 {
-  ompi_errhandler_t *new_errhandler;
+    ompi_errhandler_t *new_errhandler;
+    int ret;
 
-  /* Create a new object and ensure that it's valid */
-
-  new_errhandler = OBJ_NEW(ompi_errhandler_t);
-  if (NULL != new_errhandler) {
-    if (0 > new_errhandler->eh_f_to_c_index) {
-      OBJ_RELEASE(new_errhandler);
-      new_errhandler = NULL;
-    } else {
-
-      /* We cast the user's callback function to any one of the
-         function pointer types in the union; it doesn't matter which.
-         It only matters that we dereference/use the right member when
-         invoking the callback. */
-
-      new_errhandler->eh_mpi_object_type = object_type;
-      new_errhandler->eh_lang = lang;
-      switch (object_type ) {
-	  case (OMPI_ERRHANDLER_TYPE_COMM):
-	      new_errhandler->eh_comm_fn = (MPI_Comm_errhandler_function *)func;
-	      break;
-	  case (OMPI_ERRHANDLER_TYPE_FILE):
-	      new_errhandler->eh_file_fn = (ompi_file_errhandler_function *)func;
-	      break;
-	  case (OMPI_ERRHANDLER_TYPE_WIN):
-	      new_errhandler->eh_win_fn = (MPI_Win_errhandler_function *)func;
-	      break;
-	  default:
-	      break;
-      }
-
-      new_errhandler->eh_fort_fn = (ompi_errhandler_fortran_handler_fn_t *)func;
+    /* make sure the infrastructure is initialized */
+    ret = ompi_mpi_instance_retain ();
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
+        return NULL;
     }
-  }
+
+    /* Create a new object and ensure that it's valid */
+
+    new_errhandler = OBJ_NEW(ompi_errhandler_t);
+    if (NULL != new_errhandler) {
+        if (0 > new_errhandler->eh_f_to_c_index) {
+            OBJ_RELEASE(new_errhandler);
+            new_errhandler = NULL;
+        } else {
+
+        /* We cast the user's callback function to any one of the
+           function pointer types in the union; it doesn't matter which.
+           It only matters that we dereference/use the right member when
+           invoking the callback. */
+
+            new_errhandler->eh_mpi_object_type = object_type;
+            new_errhandler->eh_lang = lang;
+            switch (object_type ) {
+            case OMPI_ERRHANDLER_TYPE_COMM:
+                new_errhandler->eh_comm_fn = (MPI_Comm_errhandler_function *)func;
+                break;
+            case OMPI_ERRHANDLER_TYPE_FILE:
+                new_errhandler->eh_file_fn = (ompi_file_errhandler_function *)func;
+                break;
+            case OMPI_ERRHANDLER_TYPE_WIN:
+                new_errhandler->eh_win_fn = (MPI_Win_errhandler_function *)func;
+                break;
+            case OMPI_ERRHANDLER_TYPE_INSTANCE:
+                new_errhandler->eh_instance_fn = (MPI_Session_errhandler_function *)func;
+                break;
+            default:
+                break;
+            }
+        }
+
+        if (NULL != new_errhandler) {
+            new_errhandler->eh_fort_fn = (ompi_errhandler_fortran_handler_fn_t *)func;
+        }
+
+    }
 
   /* All done */
 
@@ -310,10 +343,10 @@ int ompi_errhandler_proc_failed_internal(ompi_proc_t* ompi_proc, int status, boo
     opal_mutex_unlock(&errhandler_ftmpi_lock);
 
     opal_output_verbose(1, ompi_ftmpi_output_handle,
-                        "%s ompi: Process %s failed (state = %d).",
+                        "%s ompi: Process %s failed (state = %d %s).",
                         OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
                         OMPI_NAME_PRINT(&ompi_proc->super.proc_name),
-                        status );
+                        status, PMIx_Error_string(status) );
 
     if(90 < opal_output_get_verbosity(ompi_ftmpi_output_handle)) {
         /* how did we get there? */
@@ -350,10 +383,10 @@ int ompi_errhandler_proc_failed_internal(ompi_proc_t* ompi_proc, int status, boo
             if(OPAL_UNLIKELY( OMPI_SUCCESS != rc )) goto cleanup;
         }
         OPAL_OUTPUT_VERBOSE((10, ompi_ftmpi_output_handle,
-                             "%s ompi: Process %s is in comm (%d) with rank %d. [%s]",
+                             "%s ompi: Process %s is in comm (%s) with rank %d. [%s]",
                              OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
                              OMPI_NAME_PRINT(&ompi_proc->super.proc_name),
-                             comm->c_contextid,
+                             ompi_comm_print_cid(comm),
                              proc_rank,
                              (OMPI_ERRHANDLER_TYPE_PREDEFINED == comm->errhandler_type ? "P" :
                               (OMPI_ERRHANDLER_TYPE_COMM == comm->errhandler_type ? "C" :
@@ -380,14 +413,14 @@ int ompi_errhandler_proc_failed_internal(ompi_proc_t* ompi_proc, int status, boo
      * The wait function has a check, so all we need to do here is
      * signal it so it will check again.
      */
-    wait_sync_global_wakeup(MPI_ERR_PROC_FAILED);
+    wait_sync_global_wakeup(PMIX_ERR_PROC_ABORTED == status? MPI_ERR_PROC_ABORTED: MPI_ERR_PROC_FAILED);
 
     /* Collectives:
      * Propagate the error (this has been selected rather than the "roll
      * forward through errors in collectives" as this is less intrusive to the
      * code base.) */
     if( forward ) {
-        /* TODO: this to become redundand when pmix has rbcast */
+        /* TODO: this to become redundant when pmix has rbcast */
         ompi_comm_failure_propagate(&ompi_mpi_comm_world.comm, ompi_proc, status);
         /* Let pmix know: flush modex information, propagate to connect/accept
          * jobs; we will tell our local daemon, and it will do the proper thing */
@@ -397,12 +430,11 @@ int ompi_errhandler_proc_failed_internal(ompi_proc_t* ompi_proc, int status, boo
         pmix_info_t pmix_info[1];
         pmix_status_t prc;
 
-        assert(OPAL_ERR_PROC_ABORTED == status);
         OPAL_PMIX_CONVERT_NAME(&pmix_source, OMPI_PROC_MY_NAME);
         OPAL_PMIX_CONVERT_NAME(&pmix_proc, &ompi_proc->super.proc_name);
         PMIX_INFO_CONSTRUCT(&pmix_info[0]);
         PMIX_INFO_LOAD(&pmix_info[0], PMIX_EVENT_AFFECTED_PROC, &pmix_proc, PMIX_PROC);
-        prc = PMIx_Notify_event(PMIX_ERR_PROC_ABORTED, &pmix_source, PMIX_RANGE_LOCAL,
+        prc = PMIx_Notify_event(PMIX_ERR_PROC_TERM_WO_SYNC, &pmix_source, PMIX_RANGE_LOCAL,
                                 pmix_info, 1, NULL, &active);
         if( PMIX_SUCCESS != prc &&
             PMIX_OPERATION_SUCCEEDED != prc ) {
@@ -435,36 +467,54 @@ static void *ompi_errhandler_event_cb(int fd, int flags, void *context) {
     opal_process_name_t prc;
     int rc;
 #if OPAL_ENABLE_FT_MPI
-    if( PMIX_ERR_PROC_ABORTED == status ) {
-        int i;
-        for(i = 0; i < event->nvalue; i++) {
-            if (PMIX_PROC != event->info[i].value.type) {
+    switch( status ) {
+    case PMIX_ERR_PROC_TERM_WO_SYNC:
+    case PMIX_ERR_PROC_ABORTED_BY_SIG:
+    case PMIX_ERR_PROC_ABORTED: /* that is, proc aborted by pmix_abort */
+        for(int i = 0; i < event->nvalue; i++) {
+            if (strcmp(PMIX_EVENT_AFFECTED_PROC, event->info[i].key)) {
+                OPAL_OUTPUT_VERBOSE((70, ompi_ftmpi_output_handle,
+                    "%s ompi: ignoring the following key for a PMIx fault event: %s",
+                    OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
+                    event->info[i].key));
                 continue;
             }
+            assert(event->info[i].value.type == PMIX_PROC);
             OPAL_PMIX_CONVERT_PROCT(rc, &prc, event->info[i].value.data.proc);
             if (OPAL_SUCCESS != rc) {
                 OPAL_ERROR_LOG(rc);
                 break;
             }
+            OPAL_OUTPUT_VERBOSE((5, ompi_ftmpi_output_handle,
+                "%s ompi: proc %s reported dead by PMIx event handler (found at %s): %s",
+                OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
+                OPAL_NAME_PRINT(prc), OPAL_NAME_PRINT(source),
+                PMIx_Error_string(status)));
             ompi_proc_t *proc = (ompi_proc_t*)ompi_proc_for_name(prc);
             if( NULL == proc ) {
                 continue; /* we are not 'MPI connected' with this proc. */
             }
             assert( !ompi_proc_is_sentinel(proc) );
-            ompi_errhandler_proc_failed_internal(proc, OPAL_ERR_PROC_ABORTED, false);
+            ompi_errhandler_proc_failed_internal(proc, status, false);
         }
         opal_event_del(&event->super);
         free(event);
         return NULL;
+    case PMIX_ERR_LOST_CONNECTION:
+        opal_output_verbose(1, ompi_ftmpi_output_handle,
+            "%s ompi: Error event PMIX_ERR_LOST_CONNECTION reported, that usually means that my daemon died thus I need to go away.",
+            OMPI_NAME_PRINT(OMPI_PROC_MY_NAME));
+        break;
+    default:
+        /* An unmanaged type of failure, let it do its thing. */
+        opal_output_verbose(1, ompi_ftmpi_output_handle,
+            "%s ompi: Error event reported through PMIx from %s (state = %s). "
+            "This error type is not handled by the fault tolerant layer "
+            "and the application will now presumably abort.",
+            OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
+            OPAL_NAME_PRINT(source),
+            PMIx_Error_string(status));
     }
-    /* An unmanaged type of failure, let it do its thing. */
-    opal_output_verbose(1, ompi_ftmpi_output_handle,
-        "%s ompi: Error event reported through PMIx from %s (state = %d). "
-        "This error type is not handled by the fault tolerant layer "
-        "and the application will now presumably abort.",
-        OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
-        OPAL_NAME_PRINT(source),
-        status );
 #endif /* OPAL_ENABLE_FT_MPI */
     opal_event_del(&event->super);
     free(event);

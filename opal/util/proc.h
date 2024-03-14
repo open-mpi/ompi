@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013      The University of Tennessee and The University
+ * Copyright (c) 2013-2022 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2013      Inria.  All rights reserved.
@@ -10,6 +10,8 @@
  * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.  All Rights
  *                         reserved.
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
+ * Copyright (c) 2022      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -115,8 +117,9 @@ typedef struct opal_process_info_t {
     uint32_t num_local_peers; /**< number of procs from my job that share my node with me */
     uint16_t my_local_rank;   /**< local rank on this node within my job */
     uint16_t my_node_rank;
-    char *cpuset;   /**< String-representation of bitmap where we are bound */
-    char *locality; /**< String-representation of process locality */
+    uint16_t my_numa_rank;              /**< rank on this processes NUMA node. A value of UINT16_MAX indicates unavailable numa_rank */
+    char *cpuset;                       /**< String-representation of bitmap where we are bound */
+    char *locality;                     /**< String-representation of process locality */
     pid_t pid;
     uint32_t num_procs;
     uint32_t app_num;
@@ -129,6 +132,7 @@ typedef struct opal_process_info_t {
     uint32_t reincarnation;
     bool proc_is_bound;
     char *initial_errhandler;
+    bool is_singleton;         /**<note this value can transition from false to true in some cases */
 } opal_process_info_t;
 OPAL_DECLSPEC extern opal_process_info_t opal_process_info;
 
@@ -171,6 +175,6 @@ OPAL_DECLSPEC extern struct opal_proc_t *(*opal_proc_for_name)(const opal_proces
  * our own. This is to be used by all BTLs so we don't retrieve hostnames
  * unless needed. The returned value MUST NOT be free'd as it is
  * owned by the proc_t */
-OPAL_DECLSPEC char *opal_get_proc_hostname(const opal_proc_t *proc);
+OPAL_DECLSPEC extern char *(*opal_get_proc_hostname)(const opal_proc_t *proc);
 
 #endif /* OPAL_PROC_H */

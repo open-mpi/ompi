@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2021 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -23,6 +23,7 @@
 
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpi/fortran/base/constants.h"
+#include "ompi/mca/coll/base/coll_base_util.h"
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -72,12 +73,11 @@ void ompi_ireduce_scatter_f(char *sendbuf, char *recvbuf,
                             MPI_Fint *op, MPI_Fint *comm, MPI_Fint *request,
                             MPI_Fint *ierr)
 {
-    int c_ierr;
+    int c_ierr, size;
     MPI_Comm c_comm;
     MPI_Datatype c_type;
     MPI_Request c_request;
     MPI_Op c_op;
-    int size;
     OMPI_ARRAY_NAME_DECL(recvcounts);
 
     c_comm = PMPI_Comm_f2c(*comm);
@@ -96,4 +96,12 @@ void ompi_ireduce_scatter_f(char *sendbuf, char *recvbuf,
                                  c_type, c_op, c_comm, &c_request);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
     if (MPI_SUCCESS == c_ierr) *request = PMPI_Request_c2f(c_request);
+
+    if ( REQUEST_COMPLETE(c_request)) {
+        OMPI_ARRAY_FINT_2_INT_CLEANUP(recvcounts);
+    } else {
+        ompi_coll_base_nbc_request_t* nb_request = (ompi_coll_base_nbc_request_t*)c_request;
+        nb_request->data.release_arrays[0] = recvcounts;
+        nb_request->data.release_arrays[1] = NULL;
+    }
 }

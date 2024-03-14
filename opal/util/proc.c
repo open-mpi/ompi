@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2013      The University of Tennessee and The University
+ * Copyright (c) 2013-2022 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2013      Inria.  All rights reserved.
@@ -10,6 +10,8 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.  All Rights
+ *                         reserved.
+ * Copyright (c) 2022      Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -54,6 +56,7 @@ opal_process_info_t opal_process_info = {
     .reincarnation = 0,
     .proc_is_bound = false,
     .initial_errhandler = NULL,
+    .is_singleton = false,
 };
 
 static opal_proc_t opal_local_proc = {{.opal_list_next = NULL, .opal_list_prev = NULL},
@@ -185,6 +188,28 @@ static struct opal_proc_t *opal_proc_for_name_should_never_be_called(opal_proces
     return NULL;
 }
 
+/**
+ * Return the hostname of the target proc. The default implementation
+ * only support the current proc. Once a RTE is initialized it must replace
+ * the default function with one that can handle multiple, potentially
+ * distributed, processes.
+ */
+static char*
+opal_get_proc_hostname_local_only(const opal_proc_t *proc)
+{
+    /* if the proc is NULL, then we can't know */
+    if (NULL == proc) {
+        return strdup("unknown");
+    }
+
+    /* if it is my own hostname we are after, then just hand back
+     * the value in opal_process_info */
+    if (proc == opal_proc_my_name) {
+        return strdup(opal_process_info.nodename);
+    }
+    return strdup("unknown");
+}
+
 char *(*opal_process_name_print)(const opal_process_name_t)
     = opal_process_name_print_should_never_be_called;
 char *(*opal_vpid_print)(const opal_vpid_t) = opal_vpid_print_should_never_be_called;
@@ -199,30 +224,6 @@ int (*opal_convert_string_to_jobid)(opal_jobid_t *jobid, const char *jobid_strin
     = opal_convert_string_to_jobid_should_never_be_called;
 struct opal_proc_t *(*opal_proc_for_name)(const opal_process_name_t name)
     = opal_proc_for_name_should_never_be_called;
+char *(*opal_get_proc_hostname)(const opal_proc_t *proc)
+    = opal_get_proc_hostname_local_only;
 
-char *opal_get_proc_hostname(const opal_proc_t *proc)
-{
-    int ret;
-    char *hostname;
-
-    /* if the proc is NULL, then we can't know */
-    if (NULL == proc) {
-        return strdup("unknown");
-    }
-
-    /* if it is my own hostname we are after, then just hand back
-     * the value in opal_process_info */
-    if (proc == opal_proc_my_name) {
-        return strdup(opal_process_info.nodename);
-    }
-
-    /* if we don't already have it, then try to get it */
-    OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, PMIX_HOSTNAME, &proc->proc_name, (char **) &hostname,
-                                   PMIX_STRING);
-    if (OPAL_SUCCESS != ret) {
-        return strdup("unknown"); // return something so the caller doesn't segfault
-    }
-
-    /* user is not allowed to release the data */
-    return hostname;
-}

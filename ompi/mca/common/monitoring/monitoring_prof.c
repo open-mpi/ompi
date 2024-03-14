@@ -27,7 +27,7 @@ Contact the authors for questions.
 
 To be run as:
 
-mpirun -np 4 \
+mpirun -n 4 \
     --mca pml_monitoring_enable 1 \
     -x LD_PRELOAD=ompi_install_dir/lib/ompi_monitoring_prof.so \
     ./my_app
@@ -112,7 +112,7 @@ int MPI_Init(int* argc, char*** argv)
 
     MPIT_result = MPI_T_init_thread(MPI_THREAD_SINGLE, &provided);
     if (MPIT_result != MPI_SUCCESS) {
-        fprintf(stderr, "ERROR : failed to intialize MPI_T interface, preventing to get monitoring results: check your OpenMPI installation\n");
+        fprintf(stderr, "ERROR : failed to initialize MPI_T interface, preventing to get monitoring results: check your OpenMPI installation\n");
         PMPI_Abort(MPI_COMM_WORLD, MPIT_result);
     }
 

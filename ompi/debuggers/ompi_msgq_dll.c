@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2007-2018 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2022 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2004-2010 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
@@ -10,6 +10,8 @@
  * Copyright (c) 2016      Intel, Inc. All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2023      NVIDIA Corporation. All rights reserved.
+ * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -79,7 +81,7 @@
 
 /* Notice to developers!!!!
  * The following include files with _dbg.h suffixes contains definitions
- * that are shared between the debuggger plugins and the OMPI code base.
+ * that are shared between the debugger plugins and the OMPI code base.
  * This is done instead of including the non-_dbg suffixed files because
  * of the different way compilers may handle extern definitions. The
  * particular case that is causing problems is when there is an extern
@@ -650,11 +652,13 @@ static int rebuild_communicator_list (mqs_process *proc)
         if( 0 == comm_ptr ) continue;
         commcount++;
         /* Now let's grab the data we want from inside */
+        /* NTH:  XXXXXXXXXXXXX FIXME!!!!!!!!!!!!!! c_index is local but MSGQ needs a global identifier
+         * that is sizeof (void *) or smaller. */
         DEBUG(VERBOSE_GENERAL, ("Retrieve context_id from 0x%llx and local_rank from 0x%llx\n",
-                                (long long)(comm_ptr + i_info->ompi_communicator_t.offset.c_contextid),
+                                (long long)(comm_ptr + i_info->ompi_communicator_t.offset.c_index),
                                 (long long)(comm_ptr + i_info->ompi_communicator_t.offset.c_my_rank)));
         context_id = ompi_fetch_int( proc,
-                                     comm_ptr + i_info->ompi_communicator_t.offset.c_contextid,
+                                     comm_ptr + i_info->ompi_communicator_t.offset.c_index,
                                      p_info );
         /* Do we already have this communicator ? */
         old = find_communicator(p_info, context_id);
@@ -680,8 +684,18 @@ static int rebuild_communicator_list (mqs_process *proc)
                                     p_info );
             old->group = find_or_create_group( proc, group_base );
         }
-        mqs_fetch_data( proc, comm_ptr + i_info->ompi_communicator_t.offset.c_name,
-                        64, old->comm_info.name );
+        mqs_taddr_t name_addr = ompi_fetch_pointer( proc,
+                                                    comm_ptr + i_info->ompi_communicator_t.offset.c_name,
+                                                    p_info );
+        /* c_name can be up to MPI_MAX_OBJECT_NAME bytes, but we only
+         * copy the first (sizeof(old->comm_info.name)-1) here.  Make
+         * sure the string is correctly terminated. */
+        size_t target_size = sizeof(old->comm_info.name);
+        mqs_fetch_data( proc, name_addr, target_size, old->comm_info.name );
+        old->comm_info.name[target_size - 1] = '\0';
+        /* Defensively zero anything beyond the actual name */
+        size_t src_strlen = strlen(old->comm_info.name);
+        memset(old->comm_info.name + src_strlen, 0, target_size - 1 - src_strlen);
 
         if( NULL != old->group ) {
             old->comm_info.size = old->group->entries;
@@ -1154,8 +1168,9 @@ static int fetch_request( mqs_process *proc, mpi_process_info *p_info,
                                ompi_datatype + i_info->ompi_datatype_t.offset.size,
                                p_info );
         /* Be user friendly, show the datatype name */
+        size_t data_name_size = sizeof(data_name);
         mqs_fetch_data( proc, ompi_datatype + i_info->ompi_datatype_t.offset.name,
-                        64, data_name );
+                        data_name_size, data_name );
         if( '\0' != data_name[0] ) {
             // res->extra_text[x] is only 64 chars long -- same as
             // data_name.  If you try to snprintf it into
@@ -1165,10 +1180,15 @@ static int fetch_request( mqs_process *proc, mpi_process_info *p_info,
             // data_name in res->extra_text[2] (vs. extra_text[1]),
             // where it is guaranteed to fit.
             data_name[4] = '\0';
-            snprintf( (char*)res->extra_text[1], 64, "Data: %d",
+            snprintf( (char*)res->extra_text[1], 64, "Data: %d instances of MPI datatype",
                       (int)res->desired_length);
             snprintf( (char*)res->extra_text[2], 64, "%s",
                       data_name );
+        } else {
+            data_name[data_name_size - 1] = '\0';
+            /* Be nice and zero anything beyond the actual name */
+            size_t data_name_strlen = strlen(data_name);
+            memset(data_name + data_name_strlen, 0, data_name_size - 1 - data_name_strlen);
         }
         /* And now compute the real length as specified by the user */
         res->desired_length *=

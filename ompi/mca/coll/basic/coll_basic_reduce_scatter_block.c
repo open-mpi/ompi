@@ -14,6 +14,8 @@
  * Copyright (c) 2012      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2014-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2022      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2022      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -104,11 +106,12 @@ mca_coll_basic_reduce_scatter_block_inter(const void *sbuf, void *rbuf, int rcou
     if (rank == root) {
         span = opal_datatype_span(&dtype->super, totalcounts, &gap);
 
-        tmpbuf = (char *) malloc(span);
-        tmpbuf2 = (char *) malloc(span);
-        if (NULL == tmpbuf || NULL == tmpbuf2) {
+        tmpbuf = (char *) malloc(2*span);
+        if (NULL == tmpbuf) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
+        tmpbuf2 = tmpbuf + span;
+
         lbuf = tmpbuf - gap;
         buf = tmpbuf2 - gap;
 
@@ -170,10 +173,6 @@ mca_coll_basic_reduce_scatter_block_inter(const void *sbuf, void *rbuf, int rcou
   exit:
     if (NULL != tmpbuf) {
         free(tmpbuf);
-    }
-
-    if (NULL != tmpbuf2) {
-        free(tmpbuf2);
     }
 
     return err;

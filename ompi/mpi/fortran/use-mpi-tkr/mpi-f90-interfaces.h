@@ -13,6 +13,11 @@
 ! Copyright (c) 2006-2021 Cisco Systems, Inc.  All rights reserved
 ! Copyright (c) 2016-2018 Research Organization for Information Science
 !                         and Technology (RIST).  All rights reserved.
+! Copyright (c) 2019-2022 Triad National Security, LLC. All rights
+!                         reserved.
+! Copyright (c) 2021      Sandia National Laboratories. All rights reserved.
+! Copyright (c) 2021      IBM Corporation.  All rights reserved.
+!
 ! $COPYRIGHT$
 !
 ! Additional copyrights may follow
@@ -277,6 +282,19 @@ end subroutine MPI_Comm_create
 
 end interface
 
+interface  MPI_Comm_create_from_group
+
+subroutine MPI_Comm_create_from_group(group, stringtag, info, errhandler, newcomm, ierror)
+   implicit none
+   integer, intent(in) :: group
+   character(len=*), intent(in) :: stringtag
+   integer, intent(in) :: info
+   integer, intent(in) :: errhandler
+   integer, intent(out) :: newcomm
+   integer, intent(out) :: ierror
+end subroutine MPI_Comm_create_from_group
+
+end interface
 
 interface
 
@@ -361,6 +379,17 @@ end subroutine MPI_Comm_idup
 
 end interface
 
+interface
+
+subroutine MPI_Comm_idup_with_info(comm, info, newcomm, request, ierror)
+  integer, intent(in) :: comm
+  integer, intent(in) :: info
+  integer, intent(out) :: newcomm
+  integer, intent(out) :: request
+  integer, intent(out) :: ierror
+end subroutine MPI_Comm_idup_with_info
+
+end interface
 
 interface
 
@@ -837,6 +866,16 @@ end subroutine MPI_Group_free
 
 end interface
 
+interface MPI_Group_from_session_pset
+subroutine MPI_Group_from_session_pset(session, pset_name, newgroup, ierror)
+   implicit none
+   integer, intent(in) :: session
+   character(len=*), intent(in) :: pset_name
+   integer, intent(out) :: newgroup
+   integer, intent(out) :: ierror
+end subroutine MPI_Group_from_session_pset
+end interface
+
 
 interface
 
@@ -961,6 +1000,15 @@ end interface
 
 interface
 
+subroutine MPI_Info_create_env(info, ierror)
+  integer, intent(out) :: info
+  integer, intent(out) :: ierror
+end subroutine MPI_Info_create_env
+
+end interface
+
+interface
+
 subroutine MPI_Info_dup(info, newinfo, ierror)
   integer, intent(in) :: info
   integer, intent(out) :: newinfo
@@ -1017,6 +1065,19 @@ end subroutine MPI_Info_get_nthkey
 
 end interface
 
+
+interface
+
+subroutine MPI_Info_get_string(info, key, buflen, value, flag, ierror)
+  integer, intent(in) :: info
+  character(len=*), intent(in) :: key
+  integer, intent(inout) :: buflen
+  character(len=*), intent(out) :: value
+  logical, intent(out) :: flag
+  integer, intent(out) :: ierror
+end subroutine MPI_Info_get_string
+
+end interface
 
 interface
 
@@ -1088,13 +1149,29 @@ end subroutine MPI_Intercomm_create
 
 end interface
 
+interface MPI_Intercomm_create_from_groups
+
+subroutine MPI_Intercomm_create_from_groups(local_group, local_leader, remote_group, remote_leader, &
+                                          stringtag, info, errhandler, newintercomm, ierror)
+   implicit none
+   integer, intent(in) :: local_group, remote_group
+   integer, intent(in):: local_leader, remote_leader
+   character(len=*), intent(in) :: stringtag
+   integer, intent(in) :: info
+   integer, intent(in) :: errhandler
+   integer, intent(out) :: newintercomm
+   integer, intent(out) :: ierror
+end subroutine MPI_Intercomm_create_from_groups
+
+end interface
+
 
 interface
 
-subroutine MPI_Intercomm_merge(intercomm, high, newintercomm, ierror)
+subroutine MPI_Intercomm_merge(intercomm, high, newintracomm, ierror)
   integer, intent(in) :: intercomm
   logical, intent(in) :: high
-  integer, intent(out) :: newintercomm
+  integer, intent(out) :: newintracomm
   integer, intent(out) :: ierror
 end subroutine MPI_Intercomm_merge
 
@@ -1213,6 +1290,53 @@ end interface
 
 interface
 
+subroutine MPI_Parrived(request, partition, flag, ierror)
+  integer, intent(in) :: request
+  integer, intent(in) :: partition
+  logical, intent(out) :: flag
+  integer, intent(out) :: ierror
+end subroutine MPI_Parrived
+
+end interface
+
+
+interface
+
+subroutine MPI_Pready(partition, request, ierror)
+  integer, intent(in) :: partition
+  integer, intent(in) :: request
+  integer, intent(out) :: ierror
+end subroutine MPI_Pready
+
+end interface
+
+
+interface
+
+subroutine MPI_Pready_list(length, array_of_partitions, request, ierror)
+  integer, intent(in) :: length
+  integer, dimension(*), intent(in) :: array_of_partitions
+  integer, intent(in) :: request
+  integer, intent(out) :: ierror
+end subroutine MPI_Pready_list
+
+end interface
+
+
+interface
+
+subroutine MPI_Pready_range(partition_low, partition_high, request, ierror)
+  integer, intent(in) :: partition_low
+  integer, intent(in) :: partition_high
+  integer, intent(in) :: request
+  integer, intent(out) :: ierror
+end subroutine MPI_Pready_range
+
+end interface
+
+
+interface
+
 subroutine MPI_Query_thread(provided, ierror)
   integer, intent(out) :: provided
   integer, intent(out) :: ierror
@@ -1259,6 +1383,113 @@ end subroutine MPI_Request_get_status
 
 end interface
 
+interface
+
+subroutine MPI_Session_call_errhandler(session, errorcode, ierror)
+  integer, intent(in) :: session
+  integer, intent(in) :: errorcode
+  integer, intent(out) :: ierror
+end subroutine MPI_Session_call_errhandler
+
+end interface
+
+interface
+
+subroutine MPI_Session_create_errhandler(function, errhandler, ierror)
+  external :: function
+  integer, intent(out) :: errhandler
+  integer, intent(out) :: ierror
+end subroutine MPI_Session_create_errhandler
+
+end interface
+
+
+interface 
+
+subroutine MPI_Session_get_errhandler(session, erhandler, ierror)
+  integer, intent(in) :: session
+  integer, intent(out) :: erhandler
+  integer, intent(out) :: ierror
+end subroutine MPI_Session_get_errhandler
+
+end interface
+
+interface 
+
+subroutine MPI_Session_get_info(session, info, ierror)
+   implicit none
+   integer, intent(in) :: session
+   integer, intent(out) :: info
+   integer, intent(out) :: ierror
+end subroutine MPI_Session_get_info
+
+end interface
+
+interface 
+subroutine MPI_Session_get_nth_pset(session, info, n, pset_len, pset_name, ierror)
+   implicit none
+   integer, intent(in) :: session
+   integer, intent(in) :: info
+   integer, intent(in) :: n
+   integer, intent(inout) :: pset_len
+   character(len=*), intent(out) :: pset_name
+   integer, intent(out) :: ierror
+end subroutine MPI_Session_get_nth_pset
+end interface
+
+
+interface
+subroutine MPI_Session_get_num_psets(session, info, npset_names, ierror)
+   implicit none
+   integer, intent(in) :: session
+   integer, intent(in) :: info
+   integer, intent(out) :: npset_names
+   integer, intent(out) :: ierror
+end subroutine MPI_Session_get_num_psets
+end interface
+
+interface
+subroutine MPI_Session_get_pset_info(session, pset_name, info, ierror)
+   implicit none
+   integer, intent(in) :: session
+   character(len=*), intent(in) :: pset_name
+   integer, intent(out) :: info
+   integer, intent(out) :: ierror
+end subroutine MPI_Session_get_pset_info
+end interface
+
+
+interface  MPI_Session_init
+
+subroutine MPI_Session_init(info,errhandler,session,ierror)
+   implicit none
+   integer, intent(in) :: info
+   integer, intent(in) :: errhandler
+   integer, intent(out) :: session
+   integer, intent(out) :: ierror
+end subroutine MPI_Session_init
+
+end interface  MPI_Session_init
+
+interface  MPI_Session_finalize
+
+subroutine MPI_Session_finalize(session,ierror)
+   implicit none
+   integer, intent(inout) :: session
+   integer, intent(out) :: ierror
+end subroutine MPI_Session_finalize
+
+end interface  MPI_Session_finalize
+
+interface
+
+subroutine MPI_Session_set_errhandler(session, errhandler, ierror)
+  integer, intent(in) :: session
+  integer, intent(in) :: errhandler
+  integer, intent(out) :: ierror
+end subroutine MPI_Session_set_errhandler
+
+end interface
 
 interface
 
@@ -1336,9 +1567,9 @@ interface
 subroutine MPI_Testall(count, array_of_requests, flag, array_of_statuses, ierror)
   include 'mpif-config.h'
   integer, intent(in) :: count
-  integer, dimension(count), intent(inout) :: array_of_requests
+  integer, dimension(*), intent(inout) :: array_of_requests
   logical, intent(out) :: flag
-  integer, dimension(MPI_STATUS_SIZE, count), intent(out) :: array_of_statuses
+  integer, dimension(MPI_STATUS_SIZE, *), intent(out) :: array_of_statuses
   integer, intent(out) :: ierror
 end subroutine MPI_Testall
 
@@ -1351,7 +1582,7 @@ subroutine MPI_Testany(count, array_of_requests, index, flag, status&
         , ierror)
   include 'mpif-config.h'
   integer, intent(in) :: count
-  integer, dimension(count), intent(inout) :: array_of_requests
+  integer, dimension(*), intent(inout) :: array_of_requests
   integer, intent(out) :: index
   logical, intent(out) :: flag
   integer, dimension(MPI_STATUS_SIZE), intent(out) :: status
@@ -1367,7 +1598,7 @@ subroutine MPI_Testsome(incount, array_of_requests, outcount, array_of_indices, 
         , ierror)
   include 'mpif-config.h'
   integer, intent(in) :: incount
-  integer, dimension(incount), intent(inout) :: array_of_requests
+  integer, dimension(*), intent(inout) :: array_of_requests
   integer, intent(out) :: outcount
   integer, dimension(*), intent(out) :: array_of_indices
   integer, dimension(MPI_STATUS_SIZE, *), intent(out) :: array_of_statuses
@@ -1830,7 +2061,7 @@ interface
 subroutine MPI_Waitall(count, array_of_requests, array_of_statuses, ierror)
   include 'mpif-config.h'
   integer, intent(in) :: count
-  integer, dimension(count), intent(inout) :: array_of_requests
+  integer, dimension(*), intent(inout) :: array_of_requests
   integer, dimension(MPI_STATUS_SIZE, *), intent(out) :: array_of_statuses
   integer, intent(out) :: ierror
 end subroutine MPI_Waitall
@@ -1843,7 +2074,7 @@ interface
 subroutine MPI_Waitany(count, array_of_requests, index, status, ierror)
   include 'mpif-config.h'
   integer, intent(in) :: count
-  integer, dimension(count), intent(inout) :: array_of_requests
+  integer, dimension(*), intent(inout) :: array_of_requests
   integer, intent(out) :: index
   integer, dimension(MPI_STATUS_SIZE), intent(out) :: status
   integer, intent(out) :: ierror
@@ -1858,7 +2089,7 @@ subroutine MPI_Waitsome(incount, array_of_requests, outcount, array_of_indices, 
         , ierror)
   include 'mpif-config.h'
   integer, intent(in) :: incount
-  integer, dimension(incount), intent(inout) :: array_of_requests
+  integer, dimension(*), intent(inout) :: array_of_requests
   integer, intent(out) :: outcount
   integer, dimension(*), intent(out) :: array_of_indices
   integer, dimension(MPI_STATUS_SIZE, *), intent(out) :: array_of_statuses

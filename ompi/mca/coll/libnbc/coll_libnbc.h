@@ -50,7 +50,7 @@ BEGIN_C_DECLS
 #undef NBC_CACHE_SCHEDULE
 #endif
 #define NBC_SCHED_DICT_UPPER 1024 /* max. number of dict entries */
-#define NBC_SCHED_DICT_LOWER 512  /* nuber of dict entries after wipe, if SCHED_DICT_UPPER is reached */
+#define NBC_SCHED_DICT_LOWER 512  /* number of dict entries after wipe, if SCHED_DICT_UPPER is reached */
 
 /********************* end of LibNBC tuning parameters ************************/
 
@@ -88,7 +88,7 @@ struct ompi_coll_libnbc_component_t {
 typedef struct ompi_coll_libnbc_component_t ompi_coll_libnbc_component_t;
 
 /* Globally exported variables */
-OMPI_MODULE_DECLSPEC extern ompi_coll_libnbc_component_t mca_coll_libnbc_component;
+OMPI_DECLSPEC extern ompi_coll_libnbc_component_t mca_coll_libnbc_component;
 
 struct ompi_coll_libnbc_module_t {
     mca_coll_base_module_t super;

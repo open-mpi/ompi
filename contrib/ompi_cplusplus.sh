@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Change all occurences of #if defined(c_plusplus) and variations
+# Change all occurrences of #if defined(c_plusplus) and variations
 # to BEGIN_C_DECLS and END_C_DECLS using sed.
 #
 # List of files grepped are in XXX, sed script is in XXX

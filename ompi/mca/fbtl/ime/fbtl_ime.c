@@ -20,7 +20,7 @@
  * *******************************************************************
  */
 static mca_fbtl_base_module_1_0_0_t ime =  {
-    mca_fbtl_ime_module_init,     /* initalise after being selected */
+    mca_fbtl_ime_module_init,     /* initialise after being selected */
     mca_fbtl_ime_module_finalize, /* close a module on a communicator */
     mca_fbtl_ime_preadv,          /* blocking read */
     mca_fbtl_ime_ipreadv,         /* non-blocking read*/
@@ -99,7 +99,7 @@ bool mca_fbtl_ime_progress ( mca_ompio_request_t *req)
             data->aio_req_status[i] = FBTL_IME_REQ_CLOSED;
         }
         else if ( data->aio_req_status[i] == FBTL_IME_REQ_ERROR ) {
-            /* an error occured. */
+            /* an error occurred. */
             data->aio_open_reqs--;
             lcount++;
             data->aio_req_fail_count++;

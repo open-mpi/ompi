@@ -2,6 +2,8 @@
 # Copyright (c) 2018-2020 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
+# Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+# Copyright (c) 2022      BULL S.A.S. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -12,6 +14,7 @@
 sources = \
 coll_han.h \
 coll_han_trigger.h \
+coll_han_algorithms.h \
 coll_han_dynamic.h \
 coll_han_dynamic_file.h \
 coll_han_barrier.c \
@@ -24,6 +27,7 @@ coll_han_allgather.c \
 coll_han_component.c \
 coll_han_module.c \
 coll_han_trigger.c \
+coll_han_algorithms.c \
 coll_han_dynamic.c \
 coll_han_dynamic_file.c \
 coll_han_topo.c \
@@ -40,9 +44,6 @@ component_install += mca_coll_han.la
 else
 component_noinst += libmca_coll_han.la
 endif
-
-# See ompi/mca/btl/sm/Makefile.am for an explanation of
-# libmca_common_sm.la.
 
 mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)

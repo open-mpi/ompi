@@ -39,6 +39,9 @@ int ompi_request_default_wait(
 
     ompi_request_wait_completion(req);
 
+    /* make sure we get the correct status */
+    opal_atomic_rmb();
+
 #if OPAL_ENABLE_FT_MPI
     /* Special case for MPI_ANY_SOURCE */
     if( MPI_ERR_PROC_FAILED_PENDING == req->req_status.MPI_ERROR ) {
@@ -50,7 +53,7 @@ int ompi_request_default_wait(
 #endif /* OPAL_ENABLE_FT_MPI */
 
     /* return status.  If it's a generalized request, we *have* to
-       invoke the query_fn, even if the user procided STATUS_IGNORE.
+       invoke the query_fn, even if the user provided STATUS_IGNORE.
        MPI-2:8.2. */
     if (OMPI_REQUEST_GEN == req->req_type) {
         ompi_grequest_invoke_query(req, &req->req_status);
@@ -198,6 +201,8 @@ recheck:
         rc = ompi_grequest_invoke_query(request, &request->req_status);
     }
     if (MPI_STATUS_IGNORE != status) {
+        /* make sure we get the correct status */
+        opal_atomic_rmb();
         OMPI_COPY_STATUS(status, request->req_status, false);
     }
     rc = request->req_status.MPI_ERROR;
@@ -302,6 +307,9 @@ recheck:
  finish:
     rptr = requests;
     if (MPI_STATUSES_IGNORE != statuses) {
+        /* make sure we get the correct status */
+        opal_atomic_rmb();
+
         /* fill out status and free request if required */
         for( i = 0; i < count; i++, rptr++ ) {
             void *_tmp_ptr = &sync;
@@ -316,7 +324,7 @@ recheck:
             if( OPAL_UNLIKELY(0 < failed) ) {
                 /* if we have failed requests we skipped the waiting on the sync. Thus,
                  * some of the requests might not be properly completed, in which case
-                 * we must detach all requests from the sync. However, if we can succesfully
+                 * we must detach all requests from the sync. However, if we can successfully
                  * mark the request as pending then it is neither failed nor complete, and
                  * we must stop altering it.
                  */
@@ -501,7 +509,7 @@ int ompi_request_default_wait_some(size_t count,
 
     if(num_requests_null_inactive == count) {
         *outcount = MPI_UNDEFINED;
-        /* nobody will signall us */
+        /* nobody will signal us */
         WAIT_SYNC_RELEASE_NOWAIT(&sync);
         return rc;
     }
@@ -573,6 +581,9 @@ int ompi_request_default_wait_some(size_t count,
     }
 
     *outcount = num_requests_done;
+
+    /* make sure we get the correct status */
+    opal_atomic_rmb();
 
     for (size_t i = 0; i < num_requests_done; i++) {
         request = requests[indices[i]];

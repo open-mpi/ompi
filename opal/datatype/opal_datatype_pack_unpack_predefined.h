@@ -2,6 +2,7 @@
  * Copyright (c) 2020-2021 IBM Corporation. All rights reserved.
  * Copyright (c) 2002      University of Chicago
  * Copyright (c) 2001      Argonne National Laboratory
+ * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -54,7 +55,6 @@
 #define OPAL_DATATYPE_PACK_UNPACK_PREDEFINED_H_HAS_BEEN_INCLUDED
 
 #include "opal_config.h"
-#include "opal/mca/common/cuda/common_cuda.h"
 #include <stdint.h>
 
 /*  Improve predefined pack/unpack performance using mpich methods.
@@ -179,11 +179,17 @@
         }                                             \
     }
 
-#define OPAL_DATATYPE_PACK_PREDEFINED_ELEMENT(src_base, dest_base, count, stride, blocklen, type) \
+#define OPAL_DATATYPE_PACK_PREDEFINED_ELEMENT(src_base, dest_base, count, blocklen, type, align)  \
     {                                                                                             \
+        register unsigned long i = count;                                                         \
+        if (((uintptr_t) src_base)  % (align) ||                                                  \
+            ((uintptr_t) dest_base) % (align) ||                                                  \
+            (elem->extent % (align) && cando_count > blocklen)) {                                 \
+            return OPAL_ERROR;                                                                    \
+        }                                                                                         \
         type *_src = (type *) src_base;                                                           \
         type *_dest = (type *) dest_base;                                                         \
-        register unsigned long i = count;                                                         \
+        size_t stride = elem->extent / sizeof(type);                                              \
         if (blocklen == 1) {                                                                      \
             OPAL_DATATYPE_PACK_PREDEFINED_BLOCKLEN_ONE(stride, blocklen);                         \
         } else if (blocklen == 2) {                                                               \
@@ -206,11 +212,18 @@
         dest_base = (unsigned char *) _dest;                                                      \
     }
 
-#define OPAL_DATATYPE_UNPACK_PREDEFINED_ELEMENT(src_base, dest_base, count, stride, blocklen, \
-                                                type)                                         \
+#define OPAL_DATATYPE_UNPACK_PREDEFINED_ELEMENT(src_base, dest_base, count, blocklen,         \
+                                                type, align)                                  \
     {                                                                                         \
+        if (((uintptr_t) src_base)  % (align)  ||                                             \
+            ((uintptr_t) dest_base) % (align) ||                                              \
+            (elem->extent % (align) && cando_count > blocklen)) {                             \
+            return OPAL_ERROR;                                                                \
+        }                                                                                     \
         type *_src = (type *) src_base;                                                       \
         type *_dest = (type *) dest_base;                                                     \
+        /* elem's extent but in terms of count rather than bytes */                           \
+        size_t stride = elem->extent / sizeof(type);                                          \
         register unsigned long i = count;                                                     \
         /* (reversing the meanings of blocklen and stride and using the "PACK" macro) */      \
         if (blocklen == 1) {                                                                  \
@@ -240,23 +253,14 @@ static inline int opal_datatype_unpack_predefined_element(unsigned char **rtn_sr
                                                           size_t cando_count,
                                                           const ddt_elem_desc_t *elem)
 {
-    size_t stride; // elem's extent but in terms of count rather than bytes
     size_t blocklen;
     int id;
-    int align;
 
     id = elem->common.type;
     blocklen = elem->blocklen;
-    stride = elem->extent / opal_datatype_basicDatatypes[id]->size;
-    align = opal_datatype_basicDatatypes[id]->align;
 
     unsigned char *src = *rtn_src;
     unsigned char *dest = *rtn_dest;
-
-    if ((uintptr_t) src % align || (uintptr_t) dest % align
-        || (elem->extent % align && cando_count > blocklen)) {
-        return OPAL_ERROR;
-    }
 
 /*
  *  Here as an example of how we want to call our macro, if the incoming id
@@ -279,9 +283,9 @@ static inline int opal_datatype_unpack_predefined_element(unsigned char **rtn_sr
                                     OPAL_DATATYPE_MYUNPACK_NOTAVAIL, 0); \
     } while (0)
 
-#define OPAL_DATATYPE_MYUNPACK_AVAILABLE(TYPE, unused_ALIGN, NAME, unused)                       \
+#define OPAL_DATATYPE_MYUNPACK_AVAILABLE(TYPE, ALIGN, NAME, unused)                              \
     do {                                                                                         \
-        OPAL_DATATYPE_UNPACK_PREDEFINED_ELEMENT(src, dest, cando_count, stride, blocklen, TYPE); \
+        OPAL_DATATYPE_UNPACK_PREDEFINED_ELEMENT(src, dest, cando_count, blocklen, TYPE, ALIGN);  \
         success = true;                                                                          \
     } while (0)
 
@@ -375,23 +379,14 @@ static inline int opal_datatype_pack_predefined_element(unsigned char **rtn_src,
                                                         size_t cando_count,
                                                         const ddt_elem_desc_t *elem)
 {
-    size_t stride; // elem's extent but in terms of count rather than bytes
     size_t blocklen;
     int id;
-    int align;
 
     id = elem->common.type;
     blocklen = elem->blocklen;
-    stride = elem->extent / opal_datatype_basicDatatypes[id]->size;
-    align = opal_datatype_basicDatatypes[id]->align;
 
     unsigned char *src = *rtn_src;
     unsigned char *dest = *rtn_dest;
-
-    if ((uintptr_t) src % align || (uintptr_t) dest % align
-        || (elem->extent % align && cando_count > blocklen)) {
-        return OPAL_ERROR;
-    }
 
 #define OPAL_DATATYPE_MYPACK(NAME)                                                                 \
     do {                                                                                           \
@@ -399,10 +394,10 @@ static inline int opal_datatype_pack_predefined_element(unsigned char **rtn_src,
                                     0);                                                            \
     } while (0)
 
-#define OPAL_DATATYPE_MYPACK_AVAILABLE(TYPE, unused_ALIGN, NAME, unused)                       \
-    do {                                                                                       \
-        OPAL_DATATYPE_PACK_PREDEFINED_ELEMENT(src, dest, cando_count, stride, blocklen, TYPE); \
-        success = true;                                                                        \
+#define OPAL_DATATYPE_MYPACK_AVAILABLE(TYPE, ALIGN, NAME, unused)                             \
+    do {                                                                                      \
+        OPAL_DATATYPE_PACK_PREDEFINED_ELEMENT(src, dest, cando_count, blocklen, TYPE, ALIGN); \
+        success = true;                                                                       \
     } while (0)
 
 #define OPAL_DATATYPE_MYPACK_NOTAVAIL(NAME, unused) \

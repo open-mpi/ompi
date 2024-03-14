@@ -115,7 +115,7 @@ static inline int IMAX(int a, int b)
  * displacement.
  */
 
-/* we have 3 differents structures to update:
+/* we have 3 different structures to update:
  * - the first is the real representation of the datatype
  * - the second is the internal representation using extents
  * - the last is the representation used for send operations
@@ -188,8 +188,8 @@ int32_t opal_datatype_add(opal_datatype_t *pdtBase, const opal_datatype_t *pdtAd
     OPAL_DATATYPE_LB_UB_CONT(count, disp, pdtAdd->lb, pdtAdd->ub, extent, lb, ub);
 
     /* Compute the true_lb and true_ub for the datatype to be added, taking
-     * in account the number of repetions. These values do not include the
-     * potential gaps at the begining and at the end of the datatype.
+     * in account the number of repetitions. These values do not include the
+     * potential gaps at the beginning and at the end of the datatype.
      */
     true_lb = lb - (pdtAdd->lb - pdtAdd->true_lb);
     true_ub = ub - (pdtAdd->ub - pdtAdd->true_ub);
@@ -226,7 +226,7 @@ int32_t opal_datatype_add(opal_datatype_t *pdtBase, const opal_datatype_t *pdtAd
 
     /* the same apply for the upper bound except for the case where
      * either of them has the flag UB, in which case we should
-     * compute the UB including the natural alignement of the data.
+     * compute the UB including the natural alignment of the data.
      */
     if ((pdtBase->flags ^ pdtAdd->flags) & OPAL_DATATYPE_FLAG_USER_UB) {
         if (pdtBase->flags & OPAL_DATATYPE_FLAG_USER_UB) {
@@ -235,7 +235,7 @@ int32_t opal_datatype_add(opal_datatype_t *pdtBase, const opal_datatype_t *pdtAd
         pdtBase->flags |= OPAL_DATATYPE_FLAG_USER_UB;
     } else {
         /* both of them have the UB flag or both of them dont have it */
-        /* we should compute the extent depending on the alignement */
+        /* we should compute the extent depending on the alignment */
         ub = LMAX(pdtBase->ub, ub);
     }
     /* While the true_lb and true_ub have to be ordered to have the true_lb lower
@@ -245,12 +245,12 @@ int32_t opal_datatype_add(opal_datatype_t *pdtBase, const opal_datatype_t *pdtAd
     pdtBase->lb = lb;
     pdtBase->ub = ub;
 
-    /* compute the new memory alignement */
+    /* compute the new memory alignment */
     pdtBase->align = IMAX(pdtBase->align, pdtAdd->align);
 
     /* Now that we have the new ub and the alignment we should update the ub to match
-     * the new alignement. We have to add an epsilon that is the least nonnegative
-     * increment needed to roung the extent to the next multiple of the alignment.
+     * the new alignment. We have to add an epsilon that is the least nonnegative
+     * increment needed to round the extent to the next multiple of the alignment.
      * This rule apply only if there is user specified upper bound as stated in the
      * MPI standard MPI 1.2 page 71.
      */

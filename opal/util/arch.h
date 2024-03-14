@@ -86,7 +86,7 @@
 **   real
 **   double precision
 **
-**   Unfortunatly, here we have to take care, whether float and real,
+**   Unfortunately, here we have to take care, whether float and real,
 **   respectively double and double precision do match...
 **
 **  a) fr32 (float and real are 32 bits) (e.g. SGI n32 and 64, SUN, NEC SX5,...)
@@ -126,7 +126,7 @@
 **                (128                 106       10) (special flags required).
 **  SX5:           128                 105       22
 **
-** We will not implement all of these routiens, but we consider them
+** We will not implement all of these routines, but we consider them
 ** now when defining the header-settings
 **
 ***********************************************************************/
@@ -162,7 +162,7 @@
 ** To store this in a 32 bit integer, we use the following definition:
 **
 **     1        2        3        4
-** 12345678 12345678 12345678 12345678
+** 87654321 87654321 87654321 87654321
 **
 ** 1. Byte:
 **   bits 1 & 2: 00 (header) (to recognize the correct end)
@@ -171,14 +171,14 @@
 **   bits 7 & 8: reserved for later use. currently set to 00
 ** 2. Byte:
 **   bits 1 & 2: length of long: 00 = 32, 01 = 64
-**   bits 3 & 4: lenght of long long (not used currently, set to 00).
+**   bits 3 & 4: length of long long (not used currently, set to 00).
 **   bits 5 & 6: length of C/C++ bool (00 = 8, 01 = 16, 10 = 32)
 **   bits 7 & 8: length of Fortran Logical (00 = 8, 01 = 16, 10 = 32)
 ** 3. Byte:
 **   bits 1 & 2: length of long double: 00=64, 01=96,10 = 128
 **   bits 3 & 4: no. of rel. bits in the exponent: 00 = 10, 01 = 14)
-**   bits 5 - 7: no. of bits of mantisse ( 000 = 53,  001 = 64, 010 = 105,
-**                                         011 = 106, 100 = 107,101 = 113 )
+**   bits 5 - 7: no. of bits of mantisse ( 000 = 53,  001 = 64,  010 = 105,
+**                                         011 = 106, 100 = 107, 101 = 113 )
 **   bit      8: intel or sparc representation of mantisse (0 = sparc,
 **                                         1 = intel )
 ** 4. Byte:
@@ -198,8 +198,9 @@
 #define OPAL_ARCH_ISBIGENDIAN 0x00000008
 
 /* BYTE 2 */
-#define OPAL_ARCH_LONGISxx     0x0000c000 /* mask for sizeof long */
-#define OPAL_ARCH_LONGIS64     0x00001000
+#define OPAL_ARCH_LONGISxx     0x00004000 /* mask for sizeof long */
+#define OPAL_ARCH_LONGIS32     0x00000000
+#define OPAL_ARCH_LONGIS64     0x00004000
 #define OPAL_ARCH_LONGLONGISxx 0x00003000 /* mask for sizeof long long */
 
 #define OPAL_ARCH_BOOLISxx 0x00000c00 /* mask for sizeof bool */
@@ -213,15 +214,22 @@
 #define OPAL_ARCH_LOGICALIS32 0x00000200 /* logical is 32 bits */
 
 /* BYTE 3 */
-#define OPAL_ARCH_LONGDOUBLEIS96  0x00020000
-#define OPAL_ARCH_LONGDOUBLEIS128 0x00010000
+#define OPAL_ARCH_LONGDOUBLEISxx  0x00030000
+#define OPAL_ARCH_LONGDOUBLEIS64  0x00000000
+#define OPAL_ARCH_LONGDOUBLEIS96  0x00010000
+#define OPAL_ARCH_LONGDOUBLEIS128 0x00020000
 
+#define OPAL_ARCH_LDEXPSIZEISxx 0x000c0000
+#define OPAL_ARCH_LDEXPSIZEIS11 0x00000000
 #define OPAL_ARCH_LDEXPSIZEIS15 0x00080000
 
-#define OPAL_ARCH_LDMANTDIGIS64  0x00400000
+#define OPAL_ARCH_LDMANTDIGISxx  0x00700000 /* b 0111 0000 */
+/* 53:b000 64:b001 105:b010 106:b011 107:b100 113:b101 */
+#define OPAL_ARCH_LDMANTDIGIS53  0x00000000
+#define OPAL_ARCH_LDMANTDIGIS64  0x00100000
 #define OPAL_ARCH_LDMANTDIGIS105 0x00200000
-#define OPAL_ARCH_LDMANTDIGIS106 0x00600000
-#define OPAL_ARCH_LDMANTDIGIS107 0x00100000
+#define OPAL_ARCH_LDMANTDIGIS106 0x00300000
+#define OPAL_ARCH_LDMANTDIGIS107 0x00400000
 #define OPAL_ARCH_LDMANTDIGIS113 0x00500000
 
 #define OPAL_ARCH_LDISINTEL 0x00800000

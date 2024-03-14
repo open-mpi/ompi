@@ -8,7 +8,7 @@
 
 #
 # External script parameters
-# The folowing parameters could be used to affect script behaviour.
+# The following parameters could be used to affect script behaviour.
 # Please, do NOT set the same settings with parameters and config vars.
 #
 # -b
@@ -21,7 +21,7 @@
 #    This option will change the name of the produced RPM to the "name".
 #    It is useful to use with "-o" and "-m" options if you want to have
 #    multiple Open MPI versions installed simultaneously in the same
-#    enviroment. Requires use of option "-b".
+#    environment. Requires use of option "-b".
 #
 # -o
 #    With this option the install path of the binary RPM will be changed
@@ -59,7 +59,7 @@
 #    the script will look for the specfile in the current directory.
 #
 # -R directory
-#    Specifies the top level RPM build direcotry.
+#    Specifies the top level RPM build directory.
 #
 # -h
 #    Prints script usage information.
@@ -85,7 +85,6 @@ unpack_spec=0
 # "normal" names.
 #export CC=gcc
 #export CXX=g++
-#export F77=f77
 #export FC=
 
 # Note that this script can build one or all of the following RPMs:
@@ -150,7 +149,7 @@ usage="Usage: $0 [-b][-o][-m][-d][-u][-s][-h] [-n name][-f lf_location][-t tm_lo
              add custom RPM build parameter
 
   -R directory
-             Specifies the top level RPM build direcotry.
+             Specifies the top level RPM build directory.
 
   -h         print this message and exit
 
@@ -353,7 +352,6 @@ cat <<EOF
 --> Hard-wired for compilers:
     CC = $CC
     CXX = $CXX
-    F77 = $F77
     FC = $FC
 EOF
 
@@ -390,9 +388,6 @@ if test "$CC" != ""; then
 fi
 if test "$CXX" != ""; then
     configure_options="$configure_options CXX=$CXX"
-fi
-if test "$F77" != ""; then
-    configure_options="$configure_options F77=$F77"
 fi
 if test "$FC" != ""; then
     configure_options="$configure_options FC=$FC"
@@ -471,7 +466,7 @@ cat <<EOF
 ====                FINISHED BUILDING Open MPI RPM                        ====
 ------------------------------------------------------------------------------
 A copy of the tarball is located in: $rpmtopdir/SOURCES/
-The completed rpms are located in:   $rpmtopdir/RPMS/i<something>86/
+The completed rpms are located in:   $rpmtopdir/RPMS/
 The sources rpms are located in:     $rpmtopdir/SRPMS/
 The spec files are located in:       $rpmtopdir/SPECS/
 ------------------------------------------------------------------------------

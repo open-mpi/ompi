@@ -264,7 +264,9 @@ void mca_btl_ofi_context_finalize(mca_btl_ofi_context_t *context, bool scalable_
     }
 
     /* Can we destruct the object that hasn't been constructed? */
-    OBJ_DESTRUCT(&context->rdma_comp_list);
+    if (context->rdma_comp_list.fl_num_allocated != 0){
+        OBJ_DESTRUCT(&context->rdma_comp_list);
+    }
 
     if (TWO_SIDED_ENABLED) {
         OBJ_DESTRUCT(&context->frag_comp_list);
@@ -384,7 +386,7 @@ int mca_btl_ofi_context_progress(mca_btl_ofi_context_t *context)
         MCA_BTL_OFI_ABORT();
     }
 #ifdef FI_EINTR
-    /* sometimes, sockets provider complain about interupt. We do nothing. */
+    /* sometimes, sockets provider complain about interrupt. We do nothing. */
     else if (OPAL_UNLIKELY(ret == -FI_EINTR)) {
 
     }

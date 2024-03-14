@@ -194,12 +194,12 @@ is a receive on the priority queue, then it is handled by a routine
 called `opal_btl_usnic_recv_fast()` which does nothing but validates
 that the packet is OK to be received (sequence number OK and not a
 DUP) and then delivers it to the PML.  This packet is recorded in the
-channel structure, and all bookeeping for the packet is deferred until
+channel structure, and all bookkeeping for the packet is deferred until
 the next time `component_progress` is called again.
 
 This fast path cannot be taken every time we pass through
 `component_progress` because there will be other completions that need
-processing, and the receive bookeeping for one fast receive must be
+processing, and the receive bookkeeping for one fast receive must be
 complete before allowing another fast receive to occur, as only one
 recv segment can be saved for deferred processing at a time.  This is
 handled by maintaining a variable in `opal_btl_usnic_recv_fast()`

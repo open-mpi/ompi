@@ -19,7 +19,7 @@
 #if OSHMEM_PROFILING
 #include "oshmem/include/pshmem.h"
 #pragma weak shmem_addr_accessible = pshmem_addr_accessible
-#include "oshmem/shmem/c/profile/defines.h"
+#include "oshmem/shmem/c/profile-defines.h"
 #endif
 
 int shmem_addr_accessible(const void *addr, int pe)

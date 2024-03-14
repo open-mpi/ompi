@@ -38,7 +38,13 @@ AC_DEFUN([MCA_ompi_op_avx_CONFIG],[
 
     OPAL_VAR_SCOPE_PUSH([op_avx_cflags_save])
 
-    AS_IF([test "$opal_cv_asm_arch" = "X86_64"],
+    case "${host}" in
+        x86_64-*x32|i?86-*|x86_64*|amd64*)
+            check_avx="yes";;
+        *)
+            check_avx="no";;
+    esac
+    AS_IF([test "$check_avx" = "yes"],
           [AC_LANG_PUSH([C])
 
            #
@@ -117,6 +123,28 @@ AC_DEFUN([MCA_ompi_op_avx_CONFIG],[
 #endif
     __m512i vA, vB;
     _mm512_mullo_epi64(vA, vB)
+                                      ]])],
+                             [AC_MSG_RESULT([yes])],
+                             [op_avx512_support=0
+                              MCA_BUILD_OP_AVX512_FLAGS=""
+                              AC_MSG_RESULT([no])])
+                         CFLAGS="$op_avx_cflags_save"
+                        ])
+                  #
+                  # Check for combination of AVX512F + AVX512VL
+                  #
+                  AS_IF([test $op_avx512_support -eq 1],
+                        [AC_MSG_CHECKING([if _mm_max_epi64 generates code that can be compiled])
+                         op_avx_cflags_save="$CFLAGS"
+                         CFLAGS="$CFLAGS_WITHOUT_OPTFLAGS -O0 $MCA_BUILD_OP_AVX512_FLAGS"
+                         AC_LINK_IFELSE(
+                             [AC_LANG_PROGRAM([[#include <immintrin.h>]],
+                                      [[
+#if !defined(__AVX512F__) || !defined(__AVX512VL__) || !defined(__AVX512BW__)
+#error "icc needs the -m flags to provide the AVX* detection macros"
+#endif
+    __m128i vA, vB;
+    _mm_max_epi64(vA, vB)
                                       ]])],
                              [AC_MSG_RESULT([yes])],
                              [op_avx512_support=0
@@ -315,15 +343,15 @@ AC_DEFUN([MCA_ompi_op_avx_CONFIG],[
                        [$op_sse3_support],
                        [SSE3 supported in the current build])
     AM_CONDITIONAL([MCA_BUILD_ompi_op_has_avx512_support],
-                   [test "$op_avx512_support" == "1"])
+                   [test "$op_avx512_support" = "1"])
     AM_CONDITIONAL([MCA_BUILD_ompi_op_has_avx2_support],
-                   [test "$op_avx2_support" == "1"])
+                   [test "$op_avx2_support" = "1"])
     AM_CONDITIONAL([MCA_BUILD_ompi_op_has_avx_support],
-                   [test "$op_avx_support" == "1"])
+                   [test "$op_avx_support" = "1"])
     AM_CONDITIONAL([MCA_BUILD_ompi_op_has_sse41_support],
-                   [test "$op_sse41_support" == "1"])
+                   [test "$op_sse41_support" = "1"])
     AM_CONDITIONAL([MCA_BUILD_ompi_op_has_sse3_support],
-                   [test "$op_sse3_support" == "1"])
+                   [test "$op_sse3_support" = "1"])
     AC_SUBST(MCA_BUILD_OP_AVX512_FLAGS)
     AC_SUBST(MCA_BUILD_OP_AVX2_FLAGS)
     AC_SUBST(MCA_BUILD_OP_AVX_FLAGS)

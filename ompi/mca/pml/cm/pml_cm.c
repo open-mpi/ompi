@@ -93,7 +93,7 @@ int
 mca_pml_cm_add_comm(ompi_communicator_t* comm)
 {
     /* should never happen, but it was, so check */
-    if (comm->c_contextid > ompi_pml_cm.super.pml_max_contextid) {
+    if (comm->c_index > ompi_pml_cm.super.pml_max_contextid) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 

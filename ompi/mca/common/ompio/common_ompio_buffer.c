@@ -10,6 +10,7 @@
  *  Copyright (c) 2004-2005 The Regents of the University of California.
  *                          All rights reserved.
  *  Copyright (c) 2008-2019 University of Houston. All rights reserved.
+ *  Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  *  $COPYRIGHT$
  *
  *  Additional copyrights may follow
@@ -20,7 +21,7 @@
 #include "ompi_config.h"
 
 #include "opal/datatype/opal_convertor.h"
-#include "opal/mca/common/cuda/common_cuda.h"
+#include "opal/mca/accelerator/accelerator.h"
 #include "opal/util/sys_limits.h"
 
 #include "opal/mca/allocator/allocator.h"
@@ -38,51 +39,54 @@ static int32_t  mca_common_ompio_pagesize=4096;
 static void* mca_common_ompio_buffer_alloc_seg ( void *ctx, size_t *size );
 static void mca_common_ompio_buffer_free_seg ( void *ctx, void *buf );
 
-#if OPAL_CUDA_SUPPORT
 void mca_common_ompio_check_gpu_buf ( ompio_file_t *fh, const void *buf, int *is_gpu, 
 				      int *is_managed)
 {
-    opal_convertor_t    convertor;  
-    
+    uint64_t flags = 0;
+    int dev_id;
+
     *is_gpu=0;
     *is_managed=0;
     
-    convertor.flags=0;
-    if ( opal_cuda_check_one_buf ( (char *)buf, &convertor ) ) {
+    if (0 < opal_accelerator.check_addr(buf, &dev_id, &flags)) {
         *is_gpu = 1;
-        if ( convertor.flags & CONVERTOR_CUDA_UNIFIED ){
-            *is_managed =1;
+        if (flags & MCA_ACCELERATOR_FLAGS_UNIFIED_MEMORY) {
+            *is_managed = 1;
         }
-    } 
-    
+    }
+
     return;
 }
-#endif
 
 static void* mca_common_ompio_buffer_alloc_seg ( void*ctx, size_t *size )
 {
     char *buf=NULL;
     size_t realsize, numpages;
+    uint64_t flags = 0;
+    int dev_id;
 
     numpages = (*size + mca_common_ompio_pagesize -1 )/mca_common_ompio_pagesize;
     realsize = numpages * mca_common_ompio_pagesize;
 
     buf = malloc ( realsize);
-#if OPAL_CUDA_SUPPORT
-    if ( NULL != buf ) {
-        mca_common_cuda_register ( ( char *)buf, realsize, NULL  );
+
+    if (NULL != buf && 0 == opal_accelerator.check_addr(buf, &dev_id, &flags)) {
+        opal_accelerator.host_register(dev_id, (void *)buf, realsize);
     }
-#endif
+
     *size = realsize;
     return buf;
 }
 
 static void mca_common_ompio_buffer_free_seg ( void *ctx, void *buf )
 {
+    uint64_t flags = 0;
+    int dev_id;
+
     if ( NULL != buf ) {
-#if OPAL_CUDA_SUPPORT
-        mca_common_cuda_unregister ( (char *) buf, NULL );
-#endif
+        if (0 == opal_accelerator.check_addr(buf, &dev_id, &flags)) {
+            opal_accelerator.host_unregister(dev_id, (void *)buf);
+        }
         free ( buf );
     }
     return;

@@ -15,6 +15,8 @@
  * Copyright (c) 2013-2018 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2017      Intel, Inc. All rights reserved
+ * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2022      Advanced Micro Devices, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -38,11 +40,27 @@
 #include "opal/datatype/opal_datatype_checksum.h"
 #include "opal/datatype/opal_datatype_internal.h"
 #include "opal/datatype/opal_datatype_prototypes.h"
-#if OPAL_CUDA_SUPPORT
-#    include "opal/mca/common/cuda/common_cuda.h"
-#    define MEMCPY_CUDA(DST, SRC, BLENGTH, CONVERTOR) \
-        CONVERTOR->cbmemcpy((DST), (SRC), (BLENGTH), (CONVERTOR))
-#endif
+#include "opal/mca/accelerator/accelerator.h"
+
+#define MEMCPY_ACCELERATOR(DST, SRC, BLENGTH, CONVERTOR) \
+    CONVERTOR->cbmemcpy((DST), (SRC), (BLENGTH), (CONVERTOR))
+
+static void *opal_convertor_accelerator_memcpy(void *dest, const void *src, size_t size, opal_convertor_t *convertor)
+{
+    int res;
+    if (!(convertor->flags & CONVERTOR_ACCELERATOR)) {
+        return MEMCPY(dest, src, size);
+    }
+
+    res = opal_accelerator.mem_copy(MCA_ACCELERATOR_NO_DEVICE_ID, MCA_ACCELERATOR_NO_DEVICE_ID,
+                                  dest, src, size, MCA_ACCELERATOR_TRANSFER_UNSPEC);
+    if (OPAL_SUCCESS != res) {
+        opal_output(0, "Error in accelerator memcpy");
+        abort();
+    } else {
+        return dest;
+    }
+}
 
 static void opal_convertor_construct(opal_convertor_t *convertor)
 {
@@ -51,9 +69,7 @@ static void opal_convertor_construct(opal_convertor_t *convertor)
     convertor->partial_length = 0;
     convertor->remoteArch = opal_local_arch;
     convertor->flags = OPAL_DATATYPE_FLAG_NO_GAPS | CONVERTOR_COMPLETED;
-#if OPAL_CUDA_SUPPORT
-    convertor->cbmemcpy = &opal_cuda_memcpy;
-#endif
+    convertor->cbmemcpy = &opal_convertor_accelerator_memcpy;
 }
 
 static void opal_convertor_destruct(opal_convertor_t *convertor)
@@ -152,7 +168,7 @@ opal_convertor_master_t *opal_convertor_find_or_create_master(uint32_t remote_ar
     /**
      * Now we can compute the conversion mask. For all sizes where the remote
      * and local architecture differ a conversion is needed. Moreover, if the
-     * 2 architectures don't have the same endianess all data with a length
+     * 2 architectures don't have the same endianness all data with a length
      * over 2 bytes (with the exception of logicals) have to be byte-swapped.
      */
     for (i = OPAL_DATATYPE_FIRST_TYPE; i < OPAL_DATATYPE_MAX_PREDEFINED; i++) {
@@ -186,7 +202,7 @@ opal_convertor_master_t *opal_convertor_find_or_create_master(uint32_t remote_ar
         }
     }
 
-    /* We're done so far, return the mater convertor */
+    /* We're done so far, return the master convertor */
     return master;
 }
 
@@ -223,7 +239,7 @@ opal_convertor_t *opal_convertor_create(int32_t remote_arch, int32_t mode)
 /**
  * Return 0 if everything went OK and if there is still room before the complete
  *          conversion of the data (need additional call with others input buffers )
- *        1 if everything went fine and the data was completly converted
+ *        1 if everything went fine and the data was completely converted
  *       -1 something wrong occurs.
  */
 int32_t opal_convertor_pack(opal_convertor_t *pConv, struct iovec *iov, uint32_t *out_size,
@@ -251,11 +267,7 @@ int32_t opal_convertor_pack(opal_convertor_t *pConv, struct iovec *iov, uint32_t
             if (OPAL_LIKELY(NULL == iov[i].iov_base)) {
                 iov[i].iov_base = (IOVBASE_TYPE *) base_pointer;
             } else {
-#if OPAL_CUDA_SUPPORT
-                MEMCPY_CUDA(iov[i].iov_base, base_pointer, iov[i].iov_len, pConv);
-#else
-                MEMCPY(iov[i].iov_base, base_pointer, iov[i].iov_len);
-#endif
+                MEMCPY_ACCELERATOR(iov[i].iov_base, base_pointer, iov[i].iov_len, pConv);
             }
             pending_length -= iov[i].iov_len;
             base_pointer += iov[i].iov_len;
@@ -269,11 +281,7 @@ int32_t opal_convertor_pack(opal_convertor_t *pConv, struct iovec *iov, uint32_t
         if (OPAL_LIKELY(NULL == iov[i].iov_base)) {
             iov[i].iov_base = (IOVBASE_TYPE *) base_pointer;
         } else {
-#if OPAL_CUDA_SUPPORT
-            MEMCPY_CUDA(iov[i].iov_base, base_pointer, iov[i].iov_len, pConv);
-#else
-            MEMCPY(iov[i].iov_base, base_pointer, iov[i].iov_len);
-#endif
+            MEMCPY_ACCELERATOR(iov[i].iov_base, base_pointer, iov[i].iov_len, pConv);
         }
         pConv->bConverted = pConv->local_size;
         *out_size = i + 1;
@@ -292,7 +300,7 @@ int32_t opal_convertor_unpack(opal_convertor_t *pConv, struct iovec *iov, uint32
     if (OPAL_LIKELY(pConv->flags & CONVERTOR_NO_OP)) {
         /**
          * We are doing conversion on a contiguous datatype on a homogeneous
-         * environment. The convertor contain minimal informations, we only
+         * environment. The convertor contain minimal information, we only
          * use the bConverted to manage the conversion.
          */
         uint32_t i;
@@ -306,11 +314,8 @@ int32_t opal_convertor_unpack(opal_convertor_t *pConv, struct iovec *iov, uint32
             if (iov[i].iov_len >= pending_length) {
                 goto complete_contiguous_data_unpack;
             }
-#if OPAL_CUDA_SUPPORT
-            MEMCPY_CUDA(base_pointer, iov[i].iov_base, iov[i].iov_len, pConv);
-#else
-            MEMCPY(base_pointer, iov[i].iov_base, iov[i].iov_len);
-#endif
+            MEMCPY_ACCELERATOR(base_pointer, iov[i].iov_base, iov[i].iov_len, pConv);
+
             pending_length -= iov[i].iov_len;
             base_pointer += iov[i].iov_len;
         }
@@ -320,11 +325,7 @@ int32_t opal_convertor_unpack(opal_convertor_t *pConv, struct iovec *iov, uint32
 
     complete_contiguous_data_unpack:
         iov[i].iov_len = pending_length;
-#if OPAL_CUDA_SUPPORT
-        MEMCPY_CUDA(base_pointer, iov[i].iov_base, iov[i].iov_len, pConv);
-#else
-        MEMCPY(base_pointer, iov[i].iov_base, iov[i].iov_len);
-#endif
+        MEMCPY_ACCELERATOR(base_pointer, iov[i].iov_base, iov[i].iov_len, pConv);
         pConv->bConverted = pConv->local_size;
         *out_size = i + 1;
         pConv->flags |= CONVERTOR_COMPLETED;
@@ -362,7 +363,7 @@ static inline int opal_convertor_create_stack_with_pos_contig(opal_convertor_t *
     /* now compute the number of pending bytes */
     count = starting_point % pData->size;
     /**
-     * We save the current displacement starting from the begining
+     * We save the current displacement starting from the beginning
      * of this data.
      */
     if (OPAL_LIKELY(0 == count)) {
@@ -548,6 +549,23 @@ size_t opal_convertor_compute_remote_size(opal_convertor_t *pConvertor)
         opal_convertor_create_stack_at_begining(convertor, opal_datatype_local_sizes);          \
     }
 
+static void opal_convertor_accelerator_init(opal_convertor_t *convertor, const void *addr)
+{
+    uint64_t flags = 0;
+    int dev_id;
+    /* This is needed to handle case where convertor is not fully initialized
+     * like when trying to do a sendi with convertor on the stack */
+    convertor->cbmemcpy = &opal_convertor_accelerator_memcpy;
+
+    if (opal_accelerator.check_addr(addr, &dev_id, &flags) > 0) {
+        convertor->flags |= CONVERTOR_ACCELERATOR;
+    }
+    if (flags & MCA_ACCELERATOR_FLAGS_UNIFIED_MEMORY) {
+        convertor->flags |= CONVERTOR_ACCELERATOR_UNIFIED;
+    }
+    return;
+}
+
 int32_t opal_convertor_prepare_for_recv(opal_convertor_t *convertor,
                                         const struct opal_datatype_t *datatype, size_t count,
                                         const void *pUserBuf)
@@ -555,11 +573,9 @@ int32_t opal_convertor_prepare_for_recv(opal_convertor_t *convertor,
     /* Here I should check that the data is not overlapping */
 
     convertor->flags |= CONVERTOR_RECV;
-#if OPAL_CUDA_SUPPORT
-    if (!(convertor->flags & CONVERTOR_SKIP_CUDA_INIT)) {
-        mca_cuda_convertor_init(convertor, pUserBuf);
+    if (!(convertor->flags & CONVERTOR_SKIP_ACCELERATOR_INIT)) {
+        opal_convertor_accelerator_init(convertor, pUserBuf);
     }
-#endif
 
     assert(!(convertor->flags & CONVERTOR_SEND));
     OPAL_CONVERTOR_PREPARE(convertor, datatype, count, pUserBuf);
@@ -597,11 +613,9 @@ int32_t opal_convertor_prepare_for_send(opal_convertor_t *convertor,
                                         const void *pUserBuf)
 {
     convertor->flags |= CONVERTOR_SEND;
-#if OPAL_CUDA_SUPPORT
-    if (!(convertor->flags & CONVERTOR_SKIP_CUDA_INIT)) {
-        mca_cuda_convertor_init(convertor, pUserBuf);
+    if (!(convertor->flags & CONVERTOR_SKIP_ACCELERATOR_INIT)) {
+        opal_convertor_accelerator_init(convertor, pUserBuf);
     }
-#endif
 
     OPAL_CONVERTOR_PREPARE(convertor, datatype, count, pUserBuf);
 
@@ -685,9 +699,9 @@ int opal_convertor_clone(const opal_convertor_t *source, opal_convertor_t *desti
         destination->bConverted = source->bConverted;
         destination->stack_pos = source->stack_pos;
     }
-#if OPAL_CUDA_SUPPORT
+
     destination->cbmemcpy = source->cbmemcpy;
-#endif
+
     return OPAL_SUCCESS;
 }
 
@@ -722,11 +736,11 @@ void opal_convertor_dump(opal_convertor_t *convertor)
     if (convertor->flags & CONVERTOR_WITH_CHECKSUM) {
         opal_output(0, "checksum ");
     }
-    if (convertor->flags & CONVERTOR_CUDA) {
-        opal_output(0, "CUDA ");
+    if (convertor->flags & CONVERTOR_ACCELERATOR) {
+        opal_output(0, "ACCELERATOR ");
     }
-    if (convertor->flags & CONVERTOR_CUDA_ASYNC) {
-        opal_output(0, "CUDA Async ");
+    if (convertor->flags & CONVERTOR_ACCELERATOR_ASYNC) {
+        opal_output(0, "ACCELERATOR Async ");
     }
     if (convertor->flags & CONVERTOR_COMPLETED) {
         opal_output(0, "COMPLETED ");

@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,6 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,6 +27,7 @@
 struct ompi_communicator_t;
 struct ompi_file_t;
 struct ompi_win_t;
+struct ompi_instance_t;
 
 /**
  * Handler function for MPI_ERRORS_ARE_FATAL
@@ -33,6 +37,8 @@ OMPI_DECLSPEC void ompi_mpi_errors_are_fatal_comm_handler(struct ompi_communicat
 OMPI_DECLSPEC void ompi_mpi_errors_are_fatal_file_handler(struct ompi_file_t **file,
 					    int *error_code, ...);
 OMPI_DECLSPEC void ompi_mpi_errors_are_fatal_win_handler(struct ompi_win_t **win,
+					    int *error_code, ...);
+OMPI_DECLSPEC void ompi_mpi_errors_are_fatal_instance_handler(struct ompi_instance_t **win,
 					    int *error_code, ...);
 
 /**
@@ -53,6 +59,8 @@ OMPI_DECLSPEC void ompi_mpi_errors_return_comm_handler(struct ompi_communicator_
 OMPI_DECLSPEC void ompi_mpi_errors_return_file_handler(struct ompi_file_t **file,
                                    int *error_code, ...);
 OMPI_DECLSPEC void ompi_mpi_errors_return_win_handler(struct ompi_win_t **win,
+                                   int *error_code, ...);
+OMPI_DECLSPEC void ompi_mpi_errors_return_instance_handler(struct ompi_instance_t **win,
                                    int *error_code, ...);
 
 

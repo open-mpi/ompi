@@ -1,0 +1,31 @@
+name: ROCM
+
+on: [pull_request]
+
+env:
+  ROCM_VER: 5-4
+jobs:
+  compile-rocm:
+    runs-on: ubuntu-22.04
+    steps:
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y --no-install-recommends wget lsb-core software-properties-common gpg curl
+    - name: Install extra dependencies
+      run: |
+        sudo mkdir --parents --mode=0755 /etc/apt/keyrings
+        wget https://repo.radeon.com/rocm/rocm.gpg.key -O - | gpg --dearmor | sudo tee /etc/apt/keyrings/rocm.gpg > /dev/null
+        echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/rocm.gpg] https://repo.radeon.com/amdgpu/5.7.1/ubuntu jammy main" | sudo tee /etc/apt/sources.list.d/amdgpu.list
+        echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/rocm.gpg] https://repo.radeon.com/rocm/apt/5.7.1 jammy main" | sudo tee --append /etc/apt/sources.list.d/rocm.list
+        echo -e 'Package: *\nPin: release o=repo.radeon.com\nPin-Priority: 600' | sudo tee /etc/apt/preferences.d/rocm-pin-600
+        sudo apt update
+        sudo apt install -y rocm-hip-runtime
+    - uses: actions/checkout@v3
+      with:
+            submodules: recursive
+    - name: Build Open MPI
+      run: |
+        ./autogen.pl
+        ./configure --prefix=${PWD}/install --with-rocm=/opt/rocm --disable-mpi-fortran
+        LD_LIBRARY_PATH=/opt/rocm/lib make -j

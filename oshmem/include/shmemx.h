@@ -37,11 +37,6 @@ enum {
  */
 
 /*
- * Symmetric heap routines
- */
-OSHMEM_DECLSPEC  void* shmemx_malloc_with_hint(size_t size, long hint);
-
-/*
  * Elemental put routines
  */
 OSHMEM_DECLSPEC  void shmemx_int16_p(int16_t* addr, int16_t value, int pe);

@@ -10,7 +10,7 @@
 #
 # This script automates the tedious task of updating copyright notices
 # in the tops of OMPI/ORTE/OPAL source files before committing back to
-# the respository.  Set the environment variable
+# the repository.  Set the environment variable
 # OMPI_COPYRIGHT_SEARCH_NAME to a short (case-insensitive) name that
 # indicates your copyright line (e.g., "cisco"), and set the env
 # variable OMPI_COPYRIGHT_FORMAL_NAME with your organization's formal
@@ -54,7 +54,7 @@ use Getopt::Long;
 # Will exit with status 111 if there are out of date copyrights which this
 # script can correct.
 my $CHECK_ONLY = 0;
-# used by $CHECK_ONLY logic for bookeeping
+# used by $CHECK_ONLY logic for bookkeeping
 my $would_replace = 0;
 
 # Set to true to suppress most informational messages.  Only out of date files

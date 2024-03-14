@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2008-2022 Cisco Systems, Inc.  All rights reserved
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -59,3 +59,23 @@ all components *except* a and b", while "c,d" specifies the inclusive
 behavior and means "use *only* components c and d."
 
 You cannot mix inclusive and exclusive behavior.
+#
+[internal error during init]
+An internal error has occurred during the startup of Open MPI.  This
+is highly unusual and shouldn't happen.  Open MPI will now abort your
+job.
+
+The following message may provide additional insight into the error:
+
+  Failure at:      %s (%s:%d)
+  Error:           %d (%s)
+#
+[show_load_errors: too many /]
+The opal_mca_base_component_show_load_errors MCA variable cannot
+contain a token that has more than one "/" character in it.
+
+The opal_mca_base_component_show_load_errors MCA variable can only
+contain the values: all, none, or a comma-delimited list of tokens in
+the form of "framework" or "framework/component".
+
+  Erroneous value: %s

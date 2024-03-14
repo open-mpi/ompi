@@ -23,7 +23,7 @@
 #pragma weak shmem_query_thread = pshmem_query_thread
 #pragma weak _num_pes = p_num_pes
 #pragma weak _my_pe = p_my_pe
-#include "oshmem/shmem/c/profile/defines.h"
+#include "oshmem/shmem/c/profile-defines.h"
 #endif
 
 int _num_pes(void)

@@ -59,10 +59,10 @@ typedef int			 (*icompare_func)	__P((void *, void *itor2));
 # define ASSERT(expr)
 #endif
 
-extern dict_malloc_func _dict_malloc;
-extern dict_free_func _dict_free;
-#define MALLOC(n)	(*_dict_malloc)(n)
-#define FREE(p)		(*_dict_free)(p)
+extern dict_malloc_func ompi_coll_libnbc_dict_malloc;
+extern dict_free_func ompi_coll_libnbc_dict_free;
+#define MALLOC(n)	(*ompi_coll_libnbc_dict_malloc)(n)
+#define FREE(p)		(*ompi_coll_libnbc_dict_free)(p)
 
 #define ABS(a)		((a) < 0 ? -(a) : +(a))
 #define MIN(a,b)	((a) < (b) ? (a) : (b))

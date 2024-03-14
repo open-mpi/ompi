@@ -15,15 +15,15 @@
 #
 # Author Emmanuel Jeannot <emmanuel.jeannot@inria.fr>
 #
-# Take a profile file and aggregates all the recorded communicaton into matrices.
-# It generated a matrices for teh number of messages, (msg),
+# Take a profile file and aggregates all the recorded communication into matrices.
+# It generated a matrices for the number of messages, (msg),
 # for the total bytes transmitted (size) and
 # the average nulber of bytes per messages (avg)
 #
-# The output matix is symetric
+# The output matrix is symmetric
 #
 # If possible it creates file with "internal" tags (collexctive and eta data),
-# "external" tags (point to point messages)  and "all" (every messgaes).
+# "external" tags (point to point messages)  and "all" (every messages).
 #
 # ensure that this script as the executable right: chmod +x ...
 #

@@ -15,6 +15,7 @@
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2020      Google, LLC. All rights reserved.
+ * Copyright (c) 2022      IBM Corporation. All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -160,15 +161,29 @@ extern void mca_pml_ob1_recv_frag_callback_fin (mca_btl_base_module_t *btl,
                                                 const mca_btl_base_receive_descriptor_t *descriptor);
 
 /**
+ * Callback from BTL on receipt of an extended CID header
+ */
+extern void mca_pml_ob1_recv_frag_callback_cid( mca_btl_base_module_t *btl,
+                                                const mca_btl_base_receive_descriptor_t* descriptor);
+
+/**
  * Extract the next fragment from the cant_match ordered list. This fragment
  * will be the next in sequence.
  */
 extern mca_pml_ob1_recv_frag_t*
-check_cantmatch_for_match(mca_pml_ob1_comm_proc_t *proc);
+ompi_pml_ob1_check_cantmatch_for_match(mca_pml_ob1_comm_proc_t *proc);
 
-void append_frag_to_ordered_list(mca_pml_ob1_recv_frag_t** queue,
-                                 mca_pml_ob1_recv_frag_t* frag,
-                                 uint16_t seq);
+/**
+ * Move for all peers all pending cant_match fragments into the matching queues. This
+ * function is necessary when allow_overtake info key is transition to set.
+ */
+int mca_pml_ob1_merge_cant_match( ompi_communicator_t * ompi_comm );
+
+void ompi_pml_ob1_append_frag_to_ordered_list(mca_pml_ob1_recv_frag_t** queue,
+                                                  mca_pml_ob1_recv_frag_t* frag,
+                                                  uint16_t seq);
+
+void mca_pml_ob1_handle_cid (ompi_communicator_t *comm, int src, mca_pml_ob1_cid_hdr_t *hdr_cid);
 
 extern void mca_pml_ob1_dump_cant_match(mca_pml_ob1_recv_frag_t* queue);
 END_C_DECLS

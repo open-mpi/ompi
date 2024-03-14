@@ -20,7 +20,7 @@ Contact the authors for questions.
 
 To be run as:
 
-mpirun -np 4 --mca pml_monitoring_enable 2 ./test_pvar_access
+mpirun -n 4 --mca pml_monitoring_enable 2 ./test_pvar_access
 
 Then, the output should be:
 Flushing phase 1:

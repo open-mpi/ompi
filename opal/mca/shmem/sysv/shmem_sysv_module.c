@@ -171,7 +171,7 @@ static int segment_create(opal_shmem_ds_t *ds_buf, const char *file_name, size_t
         rc = OPAL_ERROR;
         goto out;
     }
-    /* attach to the sement */
+    /* attach to the segment */
     else if ((void *) -1 == (segment = shmat(ds_buf->seg_id, NULL, 0))) {
         int err = errno;
         const char *hn;
@@ -220,7 +220,7 @@ static int segment_create(opal_shmem_ds_t *ds_buf, const char *file_name, size_t
     }
 
 out:
-    /* an error occured, so invalidate the shmem object and release any
+    /* an error occurred, so invalidate the shmem object and release any
      * allocated resources.
      */
     if (OPAL_SUCCESS != rc) {
@@ -315,7 +315,7 @@ static int segment_unlink(opal_shmem_ds_t *ds_buf)
      * across unlinks. other information stored in flags will remain untouched.
      */
     ds_buf->seg_id = OPAL_SHMEM_DS_ID_INVALID;
-    /* note: this is only chaning the valid bit to 0. */
+    /* note: this is only changing the valid bit to 0. */
     OPAL_SHMEM_DS_INVALIDATE(ds_buf);
     return OPAL_SUCCESS;
 }

@@ -15,6 +15,8 @@
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
+ * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -49,9 +51,7 @@ int MPI_Sendrecv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 {
     ompi_request_t* req;
     int rc = MPI_SUCCESS;
-#if OPAL_ENABLE_FT_MPI
     int rcs = MPI_SUCCESS;
-#endif
 
     SPC_RECORD(OMPI_SPC_SENDRECV, 1);
 
@@ -98,7 +98,7 @@ int MPI_Sendrecv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
             /* If this is a PROC_FAILED error, we still need to proceed with
              * the receive, so that we do not propagate errors to the sender in
              * the case src != dst, and only dst is dead. In this case the 
-             * recv is garanteed to complete (either in error if the source is 
+             * recv is guaranteed to complete (either in error if the source is 
              * dead, or successfully if the source is live). */
             if (OPAL_UNLIKELY(MPI_ERR_PROC_FAILED != rc))
             /* if intentionally spills outside ifdef */
@@ -122,6 +122,12 @@ int MPI_Sendrecv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
     } else {
         if (MPI_STATUS_IGNORE != status) {
             OMPI_COPY_STATUS(status, ompi_request_empty.req_status, false);
+            /*
+             * Per MPI-1, the MPI_ERROR field is not defined for single-completion calls
+             */
+            MEMCHECKER(
+                opal_memchecker_base_mem_undefined(&status->MPI_ERROR, sizeof(int));
+            );
         }
         rc = MPI_SUCCESS;
     }

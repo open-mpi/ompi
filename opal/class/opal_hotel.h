@@ -154,7 +154,7 @@ OBJ_CLASS_DECLARATION(opal_hotel_t);
  * already been ("forcibly") checked out *before* the
  * eviction_callback_fn is invoked.
  *
- * @return OPAL_SUCCESS if all initializations were succesful. Otherwise,
+ * @return OPAL_SUCCESS if all initializations were successful. Otherwise,
  *  the error indicate what went wrong in the function.
  */
 OPAL_DECLSPEC int opal_hotel_init(opal_hotel_t *hotel, int num_rooms, opal_event_base_t *evbase,

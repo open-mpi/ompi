@@ -16,24 +16,20 @@ dnl
 # LDFLAGS, LIBS} as needed and runs action-if-found if there is
 # support, otherwise executes action-if-not-found
 AC_DEFUN([OMPI_CHECK_IME],[
-
-    OPAL_VAR_SCOPE_PUSH([ompi_check_ime_happy ompi_check_ime_dir])
+    OPAL_VAR_SCOPE_PUSH([ompi_check_ime_happy])
 
     # Get some configuration information
     AC_ARG_WITH([ime],
         [AS_HELP_STRING([--with-ime(=DIR)],
              [Build IME support, optionally adding DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries])])
-    OPAL_CHECK_WITHDIR([ime], [$with_ime], [include/ime_native.h])
 
-    AS_IF([test "$with_ime" = "no"],
-          [ompi_check_ime_happy="no"],
-          [AS_IF([test -n "$with_ime" && test "$with_ime" != "yes"],
-                 [ompi_check_ime_dir=$with_ime])
-
-           OPAL_CHECK_PACKAGE([$1], [ime_native.h], [im_client], [ime_client_native2_init],
-                              [], [$ompi_check_ime_dir], [],
-                              [ompi_check_ime_happy="yes"],
-                              [ompi_check_ime_happy="no"])])
+    OAC_CHECK_PACKAGE([ime],
+                      [$1],
+                      [ime_native.h],
+                      [im_client],
+                      [ime_client_native2_init],
+                      [ompi_check_ime_happy="yes"],
+                      [ompi_check_ime_happy="no"])
 
     AS_IF([test "$ompi_check_ime_happy" = "yes"],
           [$2],

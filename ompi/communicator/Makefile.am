@@ -39,3 +39,4 @@ lib@OMPI_LIBMPI_NAME@_la_SOURCES += \
 	communicator/ft/comm_ft.c communicator/ft/comm_ft_reliable_bcast.c communicator/ft/comm_ft_propagator.c communicator/ft/comm_ft_detector.c communicator/ft/comm_ft_revoke.c
 endif # WANT_FT_MPI
 
+dist_ompidata_DATA += communicator/help-comm.txt

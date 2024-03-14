@@ -7,6 +7,8 @@
 !                         and Technology (RIST).  All rights reserved.
 ! $COPYRIGHT$
 
+#include "ompi/mpi/fortran/configure-fortran-output.h"
+
 #include "mpi-f08-rename.h"
 
 subroutine MPI_Comm_idup_f08(comm,newcomm,request,ierror)
@@ -14,7 +16,7 @@ subroutine MPI_Comm_idup_f08(comm,newcomm,request,ierror)
    use :: ompi_mpifh_bindings, only : ompi_comm_idup_f
    implicit none
    TYPE(MPI_Comm), INTENT(IN) :: comm
-   TYPE(MPI_Comm), INTENT(OUT) :: newcomm
+   TYPE(MPI_Comm), INTENT(OUT) OMPI_ASYNCHRONOUS :: newcomm
    TYPE(MPI_Request), INTENT(OUT) :: request
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
    integer :: c_ierror

@@ -21,7 +21,6 @@
 #include "ompi_config.h"
 
 #include "opal/util/printf.h"
-#include "ompi/include/mpi_portable_platform.h"
 
 #include "ompi/constants.h"
 #include "ompi/op/op.h"

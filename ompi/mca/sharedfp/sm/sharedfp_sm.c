@@ -9,9 +9,12 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2013  University of Houston. All rights reserved.
+ * Copyright (c) 2008-2021 University of Houston. All rights reserved.
  * Copyright (c) 2018      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2021      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2024      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -26,10 +29,18 @@
  */
 
 #include "ompi_config.h"
+
+#if HAVE_SYS_STAT_H
+#    include <sys/stat.h>
+#endif /* HAVE_SYS_STAT_H */
+
 #include "mpi.h"
+#include "opal/util/printf.h"
 #include "ompi/mca/sharedfp/sharedfp.h"
 #include "ompi/mca/sharedfp/base/base.h"
 #include "ompi/mca/sharedfp/sm/sharedfp_sm.h"
+
+#include "opal/util/basename.h"
 
 /*
  * *******************************************************************
@@ -37,8 +48,8 @@
  * *******************************************************************
  */
  /* IMPORTANT: Update here when adding sharedfp component interface functions*/
-static mca_sharedfp_base_module_1_0_0_t sm =  {
-    mca_sharedfp_sm_module_init, /* initalise after being selected */
+static mca_sharedfp_base_module_2_0_0_t sm =  {
+    mca_sharedfp_sm_module_init, /* initialise after being selected */
     mca_sharedfp_sm_module_finalize, /* close a module on a communicator */
     mca_sharedfp_sm_seek,
     mca_sharedfp_sm_get_position,
@@ -69,7 +80,7 @@ int mca_sharedfp_sm_component_init_query(bool enable_progress_threads,
    return OMPI_SUCCESS;
 }
 
-struct mca_sharedfp_base_module_1_0_0_t * mca_sharedfp_sm_component_file_query(ompio_file_t *fh, int *priority)
+struct mca_sharedfp_base_module_2_0_0_t * mca_sharedfp_sm_component_file_query(ompio_file_t *fh, int *priority)
 {
     int i;
     ompi_proc_t *proc;
@@ -87,13 +98,39 @@ struct mca_sharedfp_base_module_1_0_0_t * mca_sharedfp_sm_component_file_query(o
     for (i = 0; i < size; ++i) {
         proc = ompi_group_peer_lookup(group,i);
         if (!OPAL_PROC_ON_LOCAL_NODE(proc->super.proc_flags)){
-            opal_output(ompi_sharedfp_base_framework.framework_output,
-                        "mca_sharedfp_sm_component_file_query: Disqualifying myself: (%d/%s) "
+            opal_output_verbose(10, ompi_sharedfp_base_framework.framework_output,
+                        "mca_sharedfp_sm_component_file_query: Disqualifying myself: (%s/%s) "
                         "not all processes are on the same node.",
-                        comm->c_contextid, comm->c_name);
+                        ompi_comm_print_cid (comm), comm->c_name);
             return NULL;
         }
     }
+
+
+    /* Check that we can actually open the required file */
+    char *filename_basename = opal_basename((char*)fh->f_filename);
+    char *sm_filename;
+    int comm_cid = -1;
+    int pid = ompi_comm_rank (comm);
+    
+    opal_asprintf(&sm_filename, "%s/%s_cid-%d-%d.sm", ompi_process_info.job_session_dir,
+             filename_basename, comm_cid, pid);
+    free(filename_basename);
+
+    int sm_fd = open(sm_filename, O_RDWR | O_CREAT,
+                     S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+    if ( sm_fd == -1){
+        /*error opening file*/
+        opal_output_verbose(10, ompi_sharedfp_base_framework.framework_output,
+		    "mca_sharedfp_sm_component_file_query: Error, unable to open file "
+		    "for mmap: %s\n",sm_filename);
+        free(sm_filename);
+        return NULL;
+    }
+    close (sm_fd);
+    unlink(sm_filename);
+    free (sm_filename);
+    
     /* This module can run */
     *priority = mca_sharedfp_sm_priority;
     return &sm;

@@ -83,7 +83,7 @@ OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_pointer_array_t);
  * @param max_size The maximum size of the array (IN)
  * @param block_size The size for all subsequent grows of the array (IN).
  *
- * @return OPAL_SUCCESS if all initializations were succesfull. Otherwise,
+ * @return OPAL_SUCCESS if all initializations were successful. Otherwise,
  *  the error indicate what went wrong in the function.
  */
 OPAL_DECLSPEC int opal_pointer_array_init(opal_pointer_array_t *array, int initial_allocation,

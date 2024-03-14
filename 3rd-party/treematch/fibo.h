@@ -28,6 +28,7 @@
 ** 
 ** The fact that you are presently reading this means that you have had
 ** knowledge of the CeCILL-B license and that you accept its terms.
+** 
 */
 /************************************************************/
 /**                                                        **/
@@ -55,6 +56,8 @@
 /**                  implementations do.                   **/
 /**                                                        **/
 /************************************************************/
+
+#include "ompi_config.h"
 
 /*
 **  The type and structure definitions.
@@ -184,19 +187,18 @@ typedef struct FiboTree_ {
 #define static
 #endif
 
-int                         fiboTreeInit        (FiboTree * const, int (*) (const FiboNode * const, const FiboNode * const));
-void                        fiboTreeExit        (FiboTree * const);
-void                        fiboTreeFree        (FiboTree * const);
-FiboNode *                  fiboTreeConsolidate (FiboTree * const);
+OMPI_HIDDEN int             tm_fiboTreeInit        (FiboTree * const, int (*) (const FiboNode * const, const FiboNode * const));
+OMPI_HIDDEN void            tm_fiboTreeExit        (FiboTree * const);
+OMPI_HIDDEN void            tm_fiboTreeFree        (FiboTree * const);
 #ifndef fiboTreeAdd
 void                        fiboTreeAdd         (FiboTree * const, FiboNode * const);
 #endif /* fiboTreeAdd */
 #ifndef fiboTreeDel
-void                        fiboTreeDel         (FiboTree * const, FiboNode * const);
+OMPI_HIDDEN void            tm_fiboTreeDel (FiboTree * const, FiboNode * const);
 #endif /* fiboTreeDel */
-#ifndef fiboTreeMin
-FiboNode *                  fiboTreeMin         (FiboTree * const);
-#endif /* fiboTreeMin */
+#ifndef treematch_fiboTreeMin
+OMPI_HIDDEN FiboNode *      tm_fiboTreeMin         (FiboTree * const);
+#endif /* treematch_fiboTreeMin */
 #ifdef FIBO_DEBUG
 int                         fiboTreeCheck       (const FiboTree * const);
 static int                  fiboTreeCheck2      (const FiboNode * const);

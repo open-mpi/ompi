@@ -5,6 +5,8 @@
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2020      Google, LLC. All rights reserved.
+ * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
+ *                         All Rights reserved.
  * $COPYRIGHT$
  */
 
@@ -19,12 +21,7 @@
 #ifndef OPAL_SYS_CMA_H
 #define OPAL_SYS_CMA_H 1
 
-#if !defined(OPAL_ASSEMBLY_ARCH)
-/* need opal_config.h for the assembly architecture */
-#    include "opal_config.h"
-#endif
-
-#include "opal/sys/architecture.h"
+#include "opal/opal_portable_platform.h"
 
 #ifdef HAVE_SYS_TYPES_H
 #    include <sys/types.h>
@@ -34,28 +31,28 @@
 #    include <sys/unistd.h>
 #endif
 
-#ifdef __linux__
+#ifdef PLATFORM_OS_LINUX
 
 /* Cross Memory Attach is so far only supported under linux */
 
-#    if OPAL_ASSEMBLY_ARCH == OPAL_X86_64
+#    if defined(PLATFORM_ARCH_x86_64)
 #        define __NR_process_vm_readv  310
 #        define __NR_process_vm_writev 311
-#    elif OPAL_ASSEMBLY_ARCH == OPAL_IA32
+#    elif defined(PLATFORM_ARCH_X86)
 #        define __NR_process_vm_readv  347
 #        define __NR_process_vm_writev 348
-#    elif OPAL_ASSEMBLY_ARCH == OPAL_POWERPC32
+#    elif defined(PLATFORM_ARCH_POWERPC) && defined(PLATFORM_ARCH_32)
 #        define __NR_process_vm_readv  351
 #        define __NR_process_vm_writev 352
-#    elif OPAL_ASSEMBLY_ARCH == OPAL_POWERPC64
+#    elif defined(PLATFORM_ARCH_POWERPC) && defined(PLATFORM_ARCH_64)
 #        define __NR_process_vm_readv  351
 #        define __NR_process_vm_writev 352
-#    elif OPAL_ASSEMBLY_ARCH == OPAL_ARM
+#    elif defined(PLATFORM_ARCH_ARM)
 
 #        define __NR_process_vm_readv  376
 #        define __NR_process_vm_writev 377
 
-#    elif OPAL_ASSEMBLY_ARCH == OPAL_ARM64
+#    elif defined(PLATFORM_ARCH_AARCH64)
 
 /* ARM64 uses the asm-generic syscall numbers */
 

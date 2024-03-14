@@ -32,7 +32,7 @@ mca_btl_uct_device_context_t *mca_btl_uct_context_create(mca_btl_uct_module_t *m
  *
  * @param[in] context   btl uct device context
  *
- * This call frees a device context and all assoicated resources. It is not
+ * This call frees a device context and all associated resources. It is not
  * valid to use the device context after this returns.
  */
 void mca_btl_uct_context_destroy(mca_btl_uct_device_context_t *context);

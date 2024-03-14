@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2011 University of Houston. All rights reserved.
+ * Copyright (c) 2024      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -31,7 +33,7 @@
 static int init_query(const mca_base_component_t *m,
                       bool enable_progress_threads,
                       bool enable_mpi_threads);
-static int init_query_2_0_0(const mca_base_component_t *component,
+static int init_query_3_0_0(const mca_base_component_t *component,
                             bool enable_progress_threads,
                             bool enable_mpi_threads);
 
@@ -83,10 +85,10 @@ static int init_query(const mca_base_component_t *m,
                         m->mca_component_name);
 
     /* This component has been successfully opened, now try to query it */
-    if (2 == m->mca_type_major_version &&
+    if (3 == m->mca_type_major_version &&
         0 == m->mca_type_minor_version &&
         0 == m->mca_type_release_version) {
-        ret = init_query_2_0_0(m, enable_progress_threads,
+        ret = init_query_3_0_0(m, enable_progress_threads,
                                enable_mpi_threads);
     } else {
         /* unrecognised API version */
@@ -114,12 +116,12 @@ static int init_query(const mca_base_component_t *m,
 }
 
 
-static int init_query_2_0_0(const mca_base_component_t *component,
+static int init_query_3_0_0(const mca_base_component_t *component,
                             bool enable_progress_threads,
                             bool enable_mpi_threads)
 {
-    mca_fcoll_base_component_2_0_0_t *fcoll =
-        (mca_fcoll_base_component_2_0_0_t *) component;
+    mca_fcoll_base_component_3_0_0_t *fcoll =
+        (mca_fcoll_base_component_3_0_0_t *) component;
 
     return fcoll->fcollm_init_query(enable_progress_threads,
                               enable_mpi_threads);

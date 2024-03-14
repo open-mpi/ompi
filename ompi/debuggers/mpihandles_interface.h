@@ -153,7 +153,7 @@ struct mpidbg_process_t {
     int mpi_comm_world_rank;
 };
 /* ==> JMS Should we just use mqs_process_location instead?  George
-   thinks that this is unncessary -- perhaps due to the fact that we
+   thinks that this is unnecessary -- perhaps due to the fact that we
    could use mqs_process_location...?  Need to get some feedback from
    others on this one.  Need to check Euro PVM/MPI '06 paper... */
 
@@ -503,8 +503,8 @@ extern char mpidbg_dll_is_big_endian;
    the DLL. */
 extern char mpidbg_dll_bitness;
 
-/* Global variable *in the DLL* describing the DLL's capabilties with
-   regards to communicators.  This value is valid after a successfull
+/* Global variable *in the DLL* describing the DLL's capabilities with
+   regards to communicators.  This value is valid after a successful
    call to mpidbg_init_per_process(). */
 extern enum mpidbg_comm_capabilities_t mpidbg_comm_capabilities;
 
@@ -515,12 +515,12 @@ extern enum mpidbg_comm_capabilities_t mpidbg_comm_capabilities;
    be able to map this name to a valid handle.  MPI implementations
    not requiring this mapping can either have a NULL value for this
    variable or have a single entry that has a NULL string value.  This
-   variable is not valid until after a successfull call to
+   variable is not valid until after a successful call to
    mpidbg_init_per_process().  */
 extern struct mpidbg_name_map_t *mpidbg_comm_name_map;
 
-/* Global variable *in the DLL* describing the DLL's capabilties with
-   regards to error handlers.  This value is valid after a successfull
+/* Global variable *in the DLL* describing the DLL's capabilities with
+   regards to error handlers.  This value is valid after a successful
    call to mpidbg_init_per_process(). */
 extern enum mpidbg_errhandler_capabilities_t mpidbg_errhandler_capabilities;
 

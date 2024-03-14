@@ -1,6 +1,6 @@
 ! -*- f90 -*-
 !
-! Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
+! Copyright (c) 2009-2022 Cisco Systems, Inc.  All rights reserved
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !                         All rights reserved.
 ! Copyright (c) 2018-2021 Research Organization for Information Science
@@ -16,7 +16,7 @@ subroutine MPI_Bcast_init_f08(buffer,count,datatype,root,comm,info,request,ierro
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Info, MPI_Request
    use :: ompi_mpifh_bindings, only : ompi_bcast_init_f
    implicit none
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, ASYNCHRONOUS :: buffer
+   OMPI_FORTRAN_IGNORE_TKR_TYPE OMPI_ASYNCHRONOUS :: buffer
    INTEGER, INTENT(IN) :: count, root
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    TYPE(MPI_Comm), INTENT(IN) :: comm

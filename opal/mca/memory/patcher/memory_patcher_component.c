@@ -607,7 +607,7 @@ static int patcher_open(void)
     rc = opal_patcher->patch_symbol("mmap", (uintptr_t) intercept_mmap,
                                     (uintptr_t *) &original_mmap);
     if (OPAL_SUCCESS != rc) {
-        return rc;
+        goto err_patching;
     }
 #endif
 
@@ -615,7 +615,7 @@ static int patcher_open(void)
     rc = opal_patcher->patch_symbol("munmap", (uintptr_t) intercept_munmap,
                                     (uintptr_t *) &original_munmap);
     if (OPAL_SUCCESS != rc) {
-        return rc;
+        goto err_patching;
     }
 #endif
 
@@ -623,7 +623,7 @@ static int patcher_open(void)
     rc = opal_patcher->patch_symbol("mremap", (uintptr_t) intercept_mremap,
                                     (uintptr_t *) &original_mremap);
     if (OPAL_SUCCESS != rc) {
-        return rc;
+        goto err_patching;
     }
 #endif
 
@@ -631,7 +631,7 @@ static int patcher_open(void)
     rc = opal_patcher->patch_symbol("madvise", (uintptr_t) intercept_madvise,
                                     (uintptr_t *) &original_madvise);
     if (OPAL_SUCCESS != rc) {
-        return rc;
+        goto err_patching;
     }
 #endif
 
@@ -640,7 +640,7 @@ static int patcher_open(void)
     rc = opal_patcher->patch_symbol("shmat", (uintptr_t) intercept_shmat,
                                     (uintptr_t *) &original_shmat);
     if (OPAL_SUCCESS != rc) {
-        return rc;
+        goto err_patching;
     }
 #    endif
 #endif
@@ -650,7 +650,7 @@ static int patcher_open(void)
     rc = opal_patcher->patch_symbol("shmdt", (uintptr_t) intercept_shmdt,
                                     (uintptr_t *) &original_shmdt);
     if (OPAL_SUCCESS != rc) {
-        return rc;
+        goto err_patching;
     }
 #    endif
 #endif
@@ -658,6 +658,18 @@ static int patcher_open(void)
 #if defined(SYS_brk)
     rc = opal_patcher->patch_symbol("brk", (uintptr_t) intercept_brk, (uintptr_t *) &original_brk);
 #endif
+
+    if (OPAL_SUCCESS != rc) {
+        goto err_patching;
+    }
+
+    return OPAL_SUCCESS;
+
+err_patching:
+    /* In the case we had a problem patching, set this flag to 0 so we do not
+       directly return OPAL_SUCCESS if we call patcher_open() again. */
+    was_executed_already = 0;
+    opal_patcher_base_restore_all();
 
     return rc;
 }

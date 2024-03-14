@@ -103,7 +103,7 @@ static int nbc_gather_init(const void* sendbuf, int sendcount, MPI_Datatype send
       }
     } else {
       for (int i = 0 ; i < p ; ++i) {
-        rbuf = (char *)recvbuf + i * recvcount * rcvext;
+        rbuf = (char *)recvbuf + (MPI_Aint) rcvext * i * recvcount;
         if (i == root) {
           if (!inplace) {
             /* if I am the root - just copy the message */
@@ -228,7 +228,7 @@ static int nbc_gather_inter_init (const void* sendbuf, int sendcount, MPI_Dataty
         }
     } else if (MPI_ROOT == root) {
         for (int i = 0 ; i < rsize ; ++i) {
-            rbuf = ((char *)recvbuf) + (i * recvcount * rcvext);
+            rbuf = ((char *)recvbuf) + ((MPI_Aint) rcvext * i * recvcount);
             /* root receives message to the right buffer */
             res = NBC_Sched_recv (rbuf, false, recvcount, recvtype, i, schedule, false);
             if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {

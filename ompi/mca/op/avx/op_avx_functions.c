@@ -32,16 +32,18 @@
  * to a lesser support (AVX512 -> AVX2, AVX2 -> AVX, AVX -> error out).
  */
 #if defined(GENERATE_AVX512_CODE)
+#  define PREPEND _avx512
 #  if defined(__AVX512BW__) && defined(__AVX512F__) && defined(__AVX512VL__)
-#    define PREPEND _avx512
+/* all good */
 #  else
 #    undef GENERATE_AVX512_CODE
 #  endif  /* defined(__AVX512BW__) && defined(__AVX512F__) && defined(__AVX512VL__) */
 #endif  /* defined(GENERATE_AVX512_CODE) */
 
 #if !defined(PREPEND) && defined(GENERATE_AVX2_CODE)
+#  define PREPEND _avx2
 #  if defined(__AVX2__)
-#    define PREPEND _avx2
+/* all good */
 #  else
 #    undef GENERATE_AVX2_CODE
 #  endif  /* defined(__AVX2__) */
@@ -302,7 +304,7 @@ static void OP_CONCAT(ompi_op_avx_2buff_##name##_##type,PREPEND)(const void *_in
 #endif  /* defined(OMPI_MCA_OP_HAVE_AVX512) && (1 == OMPI_MCA_OP_HAVE_AVX512) */
 /**
  * There is no support for 16 to 8 conversion without AVX512BW and AVX512VL, so
- * there is no AVX-only optimized function posible for OP_AVX_AVX2_MUL.
+ * there is no AVX-only optimized function possible for OP_AVX_AVX2_MUL.
  */
 
 /* special case for int8 mul */
@@ -879,7 +881,7 @@ static void OP_CONCAT(ompi_op_avx_3buff_##name##_##type,PREPEND)(const void * re
 #endif  /* defined(OMPI_MCA_OP_HAVE_AVX512) && (1 == OMPI_MCA_OP_HAVE_AVX512) */
 /**
  * There is no support for 16 to 8 conversion without AVX512BW and AVX512VL, so
- * there is no AVX-only optimized function posible for OP_AVX_AVX2_MUL.
+ * there is no AVX-only optimized function possible for OP_AVX_AVX2_MUL.
  */
 
 /* special case for int8 mul */

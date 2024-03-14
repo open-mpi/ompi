@@ -1,6 +1,6 @@
 #
 # Copyright (c) 2010-2012 Oak Ridge National Labs.  All rights reserved.
-# Copyright (c) 2016-2020 The University of Tennessee and The University
+# Copyright (c) 2016-2022 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
 # $COPYRIGHT$
@@ -24,6 +24,9 @@ f77_sources = \
     comm_revoke_f.c \
     comm_is_revoked_f.c \
     comm_shrink_f.c \
+    comm_ishrink_f.c \
+    comm_get_failed_f.c \
+    comm_ack_failed_f.c \
     comm_failure_ack_f.c \
     comm_failure_get_acked_f.c \
     comm_agree_f.c \

@@ -12,6 +12,8 @@
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2024      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -59,8 +61,8 @@ int MPI_File_get_view(MPI_File fh, MPI_Offset *disp,
     /* Call the back-end io component function */
 
     switch (fh->f_io_version) {
-    case MCA_IO_BASE_V_2_0_0:
-        rc = fh->f_io_selected_module.v2_0_0.
+    case MCA_IO_BASE_V_3_0_0:
+        rc = fh->f_io_selected_module.v3_0_0.
             io_module_file_get_view(fh, disp, etype, filetype, datarep);
         break;
 

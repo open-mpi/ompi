@@ -97,7 +97,7 @@ extern opal_rng_buff_t opal_btl_usnic_rand_buff;
 /* Set to >0 to randomly drop received frags.  The higher the number,
    the more frequent the drops. */
 #define WANT_RECV_DROPS 0
-/* Set to >0 to randomly fail to send an ACK, mimicing a lost ACK.
+/* Set to >0 to randomly fail to send an ACK, mimicking a lost ACK.
    The higher the number, the more frequent the failed-to-send-ACK. */
 #define WANT_FAIL_TO_SEND_ACK 0
 /* Set to >0 to randomly fail to resend a frag (causing it to be
@@ -180,7 +180,7 @@ typedef struct opal_btl_usnic_component_t {
     /** max receive descriptors per module */
     int32_t rd_num;
 
-    /** max send/receive desriptors for priority channel */
+    /** max send/receive descriptors for priority channel */
     int32_t prio_sd_num;
     int32_t prio_rd_num;
 
@@ -241,7 +241,7 @@ typedef struct opal_btl_usnic_component_t {
     opal_event_base_t *opal_evbase;
 } opal_btl_usnic_component_t;
 
-OPAL_MODULE_DECLSPEC extern opal_btl_usnic_component_t mca_btl_usnic_component;
+OPAL_DECLSPEC extern opal_btl_usnic_component_t mca_btl_usnic_component;
 
 typedef mca_btl_base_recv_reg_t opal_btl_usnic_recv_reg_t;
 

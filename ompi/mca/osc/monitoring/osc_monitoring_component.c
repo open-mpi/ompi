@@ -47,7 +47,7 @@ static int mca_osc_monitoring_component_register(void)
     return OMPI_SUCCESS;
 }
 
-static int mca_osc_monitoring_component_query(struct ompi_win_t *win, void **base, size_t size, int disp_unit,
+static int mca_osc_monitoring_component_query(struct ompi_win_t *win, void **base, size_t size, ptrdiff_t disp_unit,
                                               struct ompi_communicator_t *comm, struct opal_info_t *info,
                                               int flavor)
 {
@@ -69,7 +69,7 @@ ompi_mca_osc_monitoring_set_template(ompi_osc_base_component_t *best_component,
     return OMPI_ERR_NOT_SUPPORTED;
 }
 
-static int mca_osc_monitoring_component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit,
+static int mca_osc_monitoring_component_select(struct ompi_win_t *win, void **base, size_t size, ptrdiff_t disp_unit,
                                                struct ompi_communicator_t *comm, struct opal_info_t *info,
                                                int flavor, int *model)
 {
@@ -90,10 +90,6 @@ static int mca_osc_monitoring_component_select(struct ompi_win_t *win, void **ba
         
         priority = component->osc_query(win, base, size, disp_unit, comm, info, flavor);
         if (priority < 0) {
-            if (MPI_WIN_FLAVOR_SHARED == flavor && OMPI_ERR_RMA_SHARED == priority) {
-                /* NTH: quick fix to return OMPI_ERR_RMA_SHARED */
-                return OMPI_ERR_RMA_SHARED;
-            }
             continue;
         }
 
@@ -123,7 +119,7 @@ ompi_osc_monitoring_component_t mca_osc_monitoring_component = {
         /* First, the mca_base_component_t struct containing meta
            information about the component itself */
         .osc_version = {
-            OMPI_OSC_BASE_VERSION_3_0_0,
+            OMPI_OSC_BASE_VERSION_4_0_0,
 
             .mca_component_name = "monitoring", /* MCA component name */
             MCA_MONITORING_MAKE_VERSION,

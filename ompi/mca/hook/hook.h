@@ -18,7 +18,7 @@
  *
  * Why not a PMPI library?
  *  - The desire is to allow a component to be built statically into the library
- *    for licensing and disgnostic purposes. As such we need the ability for
+ *    for licensing and diagnostic purposes. As such we need the ability for
  *    the component to be statically linked into the libmpi library.
  *
  * Why is there not a hook for location XYZ?
@@ -202,7 +202,7 @@ typedef struct ompi_hook_base_component_1_0_0_t ompi_hook_base_component_1_0_0_t
 typedef ompi_hook_base_component_1_0_0_t ompi_hook_base_component_t;
 /* 
  * Note: We do -not- expose a component object for this framework.
- * All interation with the component should go through the base/base.h interfaces.
+ * All interaction with the component should go through the base/base.h interfaces.
  * See that header for more information on calling functions.
  */
 

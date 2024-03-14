@@ -3,6 +3,8 @@
  * Copyright (c) 2011-2018 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2021      Triad National Security, LLC. All rights
+ *                         reserved.
  *
  *
  * $COPYRIGHT$
@@ -49,14 +51,14 @@ int ompi_comm_revoke_internal(ompi_communicator_t* comm)
     int ret = OMPI_SUCCESS;;
 
     OPAL_OUTPUT_VERBOSE((1, ompi_ftmpi_output_handle,
-                         "%s %s: Initiate a revoke on communicator %3d:%d",
-                         OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), __func__, comm->c_contextid, comm->c_epoch ));
+                         "%s %s: Initiate a revoke on communicator %s:%d",
+                         OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), __func__, ompi_comm_print_cid(comm), comm->c_epoch ));
 
     /* Mark locally revoked */
     if( ompi_comm_revoke_local(comm, NULL) ) {
         /* Broadcast the 'revoke' signal to all other processes. */
         ompi_comm_rbcast_message_t msg;
-        msg.cid   = comm->c_contextid;
+        msg.cid   = ompi_comm_get_local_cid(comm);
         msg.epoch = comm->c_epoch;
         msg.type  = comm_revoke_cb_type;
         ret = ompi_comm_rbcast(comm, &msg, sizeof(msg));
@@ -71,13 +73,13 @@ static int ompi_comm_revoke_local(ompi_communicator_t* comm, ompi_comm_rbcast_me
 {
     if( comm->comm_revoked ) {
         OPAL_OUTPUT_VERBOSE((9, ompi_ftmpi_output_handle,
-                             "%s %s: comm %3d:%d is already revoked, nothing to do",
-                             OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), __func__, comm->c_contextid, comm->c_epoch));
+                             "%s %s: comm %s:%d is already revoked, nothing to do",
+                             OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), __func__, ompi_comm_print_cid(comm), comm->c_epoch));
         return false;
     }
     OPAL_OUTPUT_VERBOSE((9, ompi_ftmpi_output_handle,
-                         "%s %s: comm %3d:%d is marked revoked locally",
-                         OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), __func__, comm->c_contextid, comm->c_epoch));
+                         "%s %s: comm %s:%d is marked revoked locally",
+                         OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), __func__, ompi_comm_print_cid(comm), comm->c_epoch));
     /*
      * Locally revoke the communicator
      *

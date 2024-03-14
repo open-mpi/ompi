@@ -30,7 +30,7 @@ typedef struct mca_sshmem_sysv_component_t {
     int use_hp;
 } mca_sshmem_sysv_component_t;
 
-OSHMEM_MODULE_DECLSPEC extern mca_sshmem_sysv_component_t
+OSHMEM_DECLSPEC extern mca_sshmem_sysv_component_t
 mca_sshmem_sysv_component;
 
 typedef struct mca_sshmem_sysv_module_t {
@@ -38,7 +38,7 @@ typedef struct mca_sshmem_sysv_module_t {
 } mca_sshmem_sysv_module_t;
 extern mca_sshmem_sysv_module_t mca_sshmem_sysv_module;
 
-OSHMEM_MODULE_DECLSPEC extern size_t sshmem_sysv_gethugepagesize(void);
+OSHMEM_DECLSPEC extern size_t sshmem_sysv_gethugepagesize(void);
 
 END_C_DECLS
 

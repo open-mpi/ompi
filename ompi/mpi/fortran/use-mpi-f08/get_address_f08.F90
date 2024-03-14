@@ -15,7 +15,7 @@ subroutine MPI_Get_address_f08(location,address,ierror)
    use :: mpi_f08_types, only : MPI_ADDRESS_KIND
    use :: ompi_mpifh_bindings, only : ompi_get_address_f
    implicit none
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: location
+   OMPI_FORTRAN_IGNORE_TKR_TYPE OMPI_ASYNCHRONOUS :: location
    INTEGER(MPI_ADDRESS_KIND), INTENT(OUT) :: address
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
    integer :: c_ierror

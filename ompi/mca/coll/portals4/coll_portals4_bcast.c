@@ -200,13 +200,13 @@ bcast_kary_tree_top(void *buff, int count,
     }
 
     /* Compute match bits */
-    COLL_PORTALS4_SET_BITS(match_bits_ack, ompi_comm_get_cid(comm), 1, 0,
+    COLL_PORTALS4_SET_BITS(match_bits_ack, ompi_comm_get_local_cid(comm), 1, 0,
             COLL_PORTALS4_BCAST, 0, internal_count);
 
-    COLL_PORTALS4_SET_BITS(match_bits_rtr, ompi_comm_get_cid(comm), 0, 1,
+    COLL_PORTALS4_SET_BITS(match_bits_rtr, ompi_comm_get_local_cid(comm), 0, 1,
             COLL_PORTALS4_BCAST, 0, internal_count);
 
-    COLL_PORTALS4_SET_BITS(match_bits, ompi_comm_get_cid(comm), 0, 0,
+    COLL_PORTALS4_SET_BITS(match_bits, ompi_comm_get_local_cid(comm), 0, 0,
             COLL_PORTALS4_BCAST, 0, internal_count);
 
     /* The data will be cut in segment_nb segments.
@@ -531,13 +531,13 @@ bcast_pipeline_top(void *buff, int count,
     }
 
     /* Compute match bits */
-    COLL_PORTALS4_SET_BITS(match_bits_ack, ompi_comm_get_cid(comm), 1, 0,
+    COLL_PORTALS4_SET_BITS(match_bits_ack, ompi_comm_get_local_cid(comm), 1, 0,
             COLL_PORTALS4_BCAST, 0, internal_count);
 
-    COLL_PORTALS4_SET_BITS(match_bits_rtr, ompi_comm_get_cid(comm), 0, 1,
+    COLL_PORTALS4_SET_BITS(match_bits_rtr, ompi_comm_get_local_cid(comm), 0, 1,
             COLL_PORTALS4_BCAST, 0, internal_count);
 
-    COLL_PORTALS4_SET_BITS(match_bits, ompi_comm_get_cid(comm), 0, 0,
+    COLL_PORTALS4_SET_BITS(match_bits, ompi_comm_get_local_cid(comm), 0, 0,
             COLL_PORTALS4_BCAST, 0, internal_count);
     /* The data will be cut in segment_nb segments.
      * nb_long segments will have a size of (seg_size + 1)

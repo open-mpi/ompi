@@ -40,7 +40,7 @@ int mca_pml_monitoring_isend(const void *buf,
     int world_rank;
     /**
      * If this fails the destination is not part of my MPI_COM_WORLD
-     * Lookup its name in the rank hastable to get its MPI_COMM_WORLD rank
+     * Lookup its name in the rank hashtable to get its MPI_COMM_WORLD rank
      */
     if(OPAL_SUCCESS == mca_common_monitoring_get_world_rank(dst, comm->c_remote_group, &world_rank)) {
         size_t type_size, data_size;

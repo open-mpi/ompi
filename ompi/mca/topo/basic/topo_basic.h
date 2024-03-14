@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2011-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
@@ -23,7 +24,7 @@ BEGIN_C_DECLS
 
 typedef mca_topo_base_component_2_2_0_t mca_topo_basic_component_t;
 /* Public component instance */
-OMPI_MODULE_DECLSPEC extern mca_topo_basic_component_t
+OMPI_DECLSPEC extern mca_topo_basic_component_t
     mca_topo_basic_component;
 
 END_C_DECLS

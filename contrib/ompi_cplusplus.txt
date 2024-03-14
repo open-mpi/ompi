@@ -132,7 +132,6 @@
 ./opal/util/few.h: defined(c_plusplus)  defined(__cplusplus)
 ./opal/util/keyval_parse.h: defined(c_plusplus)  defined(__cplusplus)
 ./opal/util/malloc.h: defined(c_plusplus)  defined(__cplusplus)
-./opal/util/opal_pty.h: defined(c_plusplus)  defined(__cplusplus)
 ./opal/util/os_path.h: defined(c_plusplus)  defined(__cplusplus)
 ./opal/util/qsort.h: defined(c_plusplus)  defined(__cplusplus)
 ./opal/util/show_help_lex.h: defined(c_plusplus)  defined(__cplusplus)

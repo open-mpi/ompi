@@ -46,10 +46,10 @@ mca_base_var_enum_value_flag_t mca_btl_base_flag_enum_flags[]
        {MCA_BTL_FLAGS_ATOMIC_OPS, "atomics", MCA_BTL_FLAGS_ATOMIC_AM_FOP},
        {MCA_BTL_FLAGS_ATOMIC_FOPS, "fetching-atomics", MCA_BTL_FLAGS_ATOMIC_AM_FOP},
        {MCA_BTL_FLAGS_SINGLE_ADD_PROCS, "static", 0},
-       {MCA_BTL_FLAGS_CUDA_PUT, "cuda-put", 0},
-       {MCA_BTL_FLAGS_CUDA_GET, "cuda-get", 0},
-       {MCA_BTL_FLAGS_CUDA_COPY_ASYNC_SEND, "cuda-async-send", 0},
-       {MCA_BTL_FLAGS_CUDA_COPY_ASYNC_RECV, "cuda-async-recv", 0},
+       {MCA_BTL_FLAGS_ACCELERATOR_PUT, "accelerator-put", 0},
+       {MCA_BTL_FLAGS_ACCELERATOR_GET, "accelerator-get", 0},
+       {MCA_BTL_FLAGS_ACCELERATOR_COPY_ASYNC_SEND, "accelerator-async-send", 0},
+       {MCA_BTL_FLAGS_ACCELERATOR_COPY_ASYNC_RECV, "accelerator-async-recv", 0},
        {MCA_BTL_FLAGS_FAILOVER_SUPPORT, "failover", 0},
        {MCA_BTL_FLAGS_NEED_ACK, "need-ack", 0},
        {MCA_BTL_FLAGS_NEED_CSUM, "need-csum", 0},
@@ -219,7 +219,7 @@ static int mca_btl_base_close(void)
 
     OPAL_LIST_FOREACH_SAFE (sm, next, &mca_btl_base_modules_initialized,
                             mca_btl_base_selected_module_t) {
-        /* Blatently ignore the return code (what would we do to recover,
+        /* Blatantly ignore the return code (what would we do to recover,
            anyway?  This component is going away, so errors don't matter
            anymore) */
 

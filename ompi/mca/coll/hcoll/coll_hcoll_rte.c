@@ -320,7 +320,7 @@ static uint32_t jobid(void){
 }
 
 static int group_id(rte_grp_handle_t group){
-    return ((ompi_communicator_t *)group)->c_contextid;
+    return ((ompi_communicator_t *)group)->c_index;
 }
 
 static int
@@ -331,7 +331,7 @@ request_free(struct ompi_request_t **ompi_req)
         return OMPI_ERROR;
     }
     coll_handle_free(req);
-    *ompi_req = &ompi_request_empty;
+    *ompi_req = MPI_REQUEST_NULL;
     return OMPI_SUCCESS;
 }
 
@@ -352,8 +352,8 @@ static void* get_coll_handle(void)
     ompi_req->super.req_state            = OMPI_REQUEST_ACTIVE;
     ompi_req->super.req_free             = request_free;
     ompi_req->super.req_type             = OMPI_REQUEST_COLL;
-    ompi_req->data.objs.objs[0]          = NULL;
-    ompi_req->data.objs.objs[1]          = NULL;
+    ompi_req->data.refcounted.objs.objs[0]          = NULL;
+    ompi_req->data.refcounted.objs.objs[1]          = NULL;
     return (void *)ompi_req;
 }
 

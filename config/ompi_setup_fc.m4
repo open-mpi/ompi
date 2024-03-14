@@ -72,12 +72,6 @@ AC_DEFUN([OMPI_SETUP_FC],[
            ompi_fc_happy=0],
           [ompi_fc_happy=1])
 
-    AS_IF([test $ompi_fc_happy -eq 1 && test "$WANT_DEBUG" = "1" && test "$enable_debug_symbols" != "no"],
-          [FCFLAGS="$FCFLAGS -g"
-           OPAL_FLAGS_UNIQ(FCFLAGS)
-           AC_MSG_WARN([-g has been added to FCFLAGS (--enable-debug)])
-          ])
-
     # Make sure the compiler actually works, if not cross-compiling.
     # Don't just use the AC macro so that we can have a pretty
     # message.
@@ -87,7 +81,7 @@ AC_DEFUN([OMPI_SETUP_FC],[
 
     # OS X before 10.3 (deployment target) does not allow undefined common
     # symbols in shared libraries.  Because we can't figure out how to
-    # implement MPI_STATUSES_IGNORE and friends wihtout common symbols, on
+    # implement MPI_STATUSES_IGNORE and friends without common symbols, on
     # OS X we can't build the F90 bindings as a shared library.
     OMPI_FORTRAN_EXTRA_SHARED_LIBRARY_FLAGS=
     AS_IF([test $ompi_fc_happy -eq 1],

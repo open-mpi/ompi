@@ -10,13 +10,14 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2022 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2021      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2023      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -129,7 +130,7 @@
 #    define __opal_attribute_format__(a, b, c)
 #endif
 
-/* Use this __atribute__ on function-ptr declarations, only */
+/* Use this __attribute__ on function-ptr declarations, only */
 #if OPAL_HAVE_ATTRIBUTE_FORMAT_FUNCPTR
 #    define __opal_attribute_format_funcptr__(a, b, c) __attribute__((__format__(a, b, c)))
 #else
@@ -180,7 +181,7 @@
 #    define __opal_attribute_noreturn__
 #endif
 
-/* Use this __atribute__ on function-ptr declarations, only */
+/* Use this __attribute__ on function-ptr declarations, only */
 #if OPAL_HAVE_ATTRIBUTE_NORETURN_FUNCPTR
 #    define __opal_attribute_noreturn_funcptr__ __attribute__((__noreturn__))
 #else
@@ -229,6 +230,12 @@
 #    define __opal_attribute_weak_alias__(a)
 #endif
 
+#if OPAL_HAVE_ATTRIBUTE_CONSTRUCTOR
+#    define __opal_attribute_constructor__ __attribute__((__constructor__))
+#else
+#    define __opal_attribute_constructor__
+#endif
+
 #if OPAL_HAVE_ATTRIBUTE_DESTRUCTOR
 #    define __opal_attribute_destructor__ __attribute__((__destructor__))
 #else
@@ -249,10 +256,8 @@
 
 #if OPAL_C_HAVE_VISIBILITY
 #    define OPAL_DECLSPEC        __opal_attribute_visibility__("default")
-#    define OPAL_MODULE_DECLSPEC __opal_attribute_visibility__("default")
 #else
 #    define OPAL_DECLSPEC
-#    define OPAL_MODULE_DECLSPEC
 #endif
 
 #if !defined(__STDC_LIMIT_MACROS) && (defined(c_plusplus) || defined(__cplusplus))
@@ -404,7 +409,7 @@
 #    endif
 
 /*
- * On some homogenous big-iron machines (Sandia's Red Storm), there
+ * On some homogeneous big-iron machines (Sandia's Red Storm), there
  * are no htonl and friends.  If that's the case, provide stubs.  I
  * would hope we never find a platform that doesn't have these macros
  * and would want to talk to the outside world... On other platforms
@@ -494,7 +499,7 @@ static inline uint16_t ntohs(uint16_t netvar)
 /* Prior to Mac OS X 10.3, the length modifier "ll" wasn't
    supported, but "q" was for long long.  This isn't ANSI
    C and causes a warning when using PRI?64 macros.  We
-   don't support versions prior to OS X 10.3, so we dont'
+   don't support versions prior to OS X 10.3, so we don't
    need such backward compatibility.  Instead, redefine
    the macros to be "ll", which is ANSI C and doesn't
    cause a compiler warning. */
@@ -563,6 +568,17 @@ typedef struct {
     opal_short_float_t imag;
 } opal_short_float_complex_t;
 #    endif
+
+/* gcc 13 does not define SSIZE_MAX as required by the POSIX standard.
+ * As a workaround we define ours.
+ */
+#ifndef SSIZE_MAX
+#  if SIZEOF_SSIZE_T == SIZEOF_LONG
+#    define SSIZE_MAX LONG_MAX
+#  elif SIZEOF_SSIZE_T == SIZEOF_LONG_LONG
+#    define SSIZE_MAX LONG_LONG_MAX
+#  endif
+#endif
 
 #else
 

@@ -627,7 +627,7 @@ uint32_t opal_graph_dijkstra(opal_graph_t *graph, opal_graph_vertex_t *vertex,
     /* run on all the vertices of the graph */
     i = 0;
     OPAL_LIST_FOREACH (adj_list, graph->adjacency_list, opal_adjacency_list_t) {
-        /* insert the vertices pointes to the working queue */
+        /* insert the vertices points to the working queue */
         Q[i].vertex = adj_list->vertex;
         /**
          * assign an infinity distance to all the vertices in the queue
@@ -677,7 +677,7 @@ uint32_t opal_graph_dijkstra(opal_graph_t *graph, opal_graph_vertex_t *vertex,
 
 /**
  * This graph API duplicates a graph. Note that this API does
- * not copy the graph but builds a new graph while coping just
+ * not copy the graph but builds a new graph while copying just
  * the vertex data.
  *
  * @param dest The new created graph.

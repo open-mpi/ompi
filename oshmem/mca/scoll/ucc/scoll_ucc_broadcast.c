@@ -28,6 +28,18 @@ static inline ucc_status_t mca_scoll_ucc_broadcast_init(void * buf, int count,
             .mem_type = UCC_MEMORY_TYPE_UNKNOWN
         }
     };
+
+    if (NULL == mca_scoll_ucc_component.ucc_context) {
+        if (OSHMEM_ERROR == mca_scoll_ucc_init_ctx(ucc_module->group)) {
+            return OSHMEM_ERROR;
+        }
+    }
+
+    if (NULL == ucc_module->ucc_team) {
+        if (OSHMEM_ERROR == mca_scoll_ucc_team_create(ucc_module, ucc_module->group)) {
+            return OSHMEM_ERROR;
+        }
+    }
     SCOLL_UCC_REQ_INIT(req, coll, ucc_module);
     return UCC_OK;
 fallback:
@@ -47,6 +59,7 @@ int mca_scoll_ucc_broadcast(struct oshmem_group_t *group,
     mca_scoll_ucc_module_t * ucc_module;
     void * buf;
     ucc_coll_req_h req;
+    int rc;
 
     UCC_VERBOSE(3, "running ucc bcast");
     ucc_module = (mca_scoll_ucc_module_t *) group->g_scoll.scoll_broadcast_module;
@@ -67,6 +80,7 @@ int mca_scoll_ucc_broadcast(struct oshmem_group_t *group,
     return OSHMEM_SUCCESS;
 fallback:
     UCC_VERBOSE(3, "running fallback bcast");
-    return ucc_module->previous_broadcast(group, PE_root, target, source, 
-                                          nlong, pSync, nlong_type, alg);
+    PREVIOUS_SCOLL_FN(ucc_module, broadcast, group, PE_root, target, source,
+                      nlong, pSync, nlong_type, alg);
+    return rc;
 }

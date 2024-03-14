@@ -324,6 +324,10 @@ int ompi_fill_in_type_info(mqs_image *image, char **message)
                           qh_type, ompi_communicator_t, c_name);
         ompi_field_offset(i_info->ompi_communicator_t.offset.c_contextid,
                           qh_type, ompi_communicator_t, c_contextid);
+        ompi_field_offset(i_info->ompi_communicator_t.offset.c_contextidb,
+                          qh_type, ompi_communicator_t, c_contextidb);
+        ompi_field_offset(i_info->ompi_communicator_t.offset.c_index,
+                          qh_type, ompi_communicator_t, c_index);
         ompi_field_offset(i_info->ompi_communicator_t.offset.c_my_rank,
                           qh_type, ompi_communicator_t, c_my_rank);
         ompi_field_offset(i_info->ompi_communicator_t.offset.c_local_group,
@@ -501,7 +505,7 @@ int ompi_fill_in_type_info(mqs_image *image, char **message)
         }
     }
 
-    /* All the types are here. Let's succesfully return. */
+    /* All the types are here. Let's successfully return. */
     *message = NULL;
     return mqs_ok;
 

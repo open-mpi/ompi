@@ -11,8 +11,10 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
- * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2018-2022 Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2020      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2020      High Performance Computing Center Stuttgart,
+ *                         University of Stuttgart.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,30 +29,27 @@
 #include "ompi/mca/osc/base/osc_base_obj_convert.h"
 #include "ompi/request/request.h"
 #include "opal/util/sys_limits.h"
-#include "opal/include/opal/align.h"
-#include "opal/util/info_subscriber.h"
+#include "opal/align.h"
 #include "opal/util/printf.h"
+#include "opal/mca/mpool/base/base.h"
 
 #include "osc_sm.h"
 
 static int component_open(void);
 static int component_init(bool enable_progress_threads, bool enable_mpi_threads);
 static int component_finalize(void);
-static int component_query(struct ompi_win_t *win, void **base, size_t size, int disp_unit,
+static int component_query(struct ompi_win_t *win, void **base, size_t size, ptrdiff_t disp_unit,
                            struct ompi_communicator_t *comm, struct opal_info_t *info,
                            int flavor);
 static int component_register (void);
-static int component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit,
+static int component_select(struct ompi_win_t *win, void **base, size_t size, ptrdiff_t disp_unit,
                             struct ompi_communicator_t *comm, struct opal_info_t *info,
                             int flavor, int *model);
-static const char* component_set_blocking_fence_info(opal_infosubscriber_t *obj, const char *key, const char *val);
-static const char* component_set_alloc_shared_noncontig_info(opal_infosubscriber_t *obj, const char *key, const char *val);
-
 
 ompi_osc_sm_component_t mca_osc_sm_component = {
     { /* ompi_osc_base_component_t */
         .osc_version = {
-            OMPI_OSC_BASE_VERSION_3_0_0,
+            OMPI_OSC_BASE_VERSION_4_0_0,
             .mca_component_name = "sm",
             MCA_BASE_MAKE_VERSION(component, OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION,
                                   OMPI_RELEASE_VERSION),
@@ -112,6 +111,8 @@ ompi_osc_sm_module_t ompi_osc_sm_module_template = {
 
 static int component_register (void)
 {
+    char *description_str;
+
     if (0 == access ("/dev/shm", W_OK)) {
         mca_osc_sm_component.backing_directory = "/dev/shm";
     } else {
@@ -124,6 +125,16 @@ static int component_register (void)
                                             "/dev/shm (default: (linux) /dev/shm, (others) session directory)",
                                             MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_3,
                                             MCA_BASE_VAR_SCOPE_READONLY, &mca_osc_sm_component.backing_directory);
+
+    mca_osc_sm_component.priority = 100;
+    opal_asprintf(&description_str, "Priority of the osc/sm component (default: %d)",
+                  mca_osc_sm_component.priority);
+    (void)mca_base_component_var_register(&mca_osc_sm_component.super.osc_version,
+                                          "priority", description_str,
+                                          MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, 0, 0,
+                                          OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_GROUP,
+                                          &mca_osc_sm_component.priority);
+    free(description_str);
 
     return OPAL_SUCCESS;
 }
@@ -152,40 +163,34 @@ component_finalize(void)
 
 
 static int
-check_win_ok(ompi_communicator_t *comm, int flavor)
-{
-    if (! (MPI_WIN_FLAVOR_SHARED == flavor
-           || MPI_WIN_FLAVOR_ALLOCATE == flavor) ) {
-        return OMPI_ERR_NOT_SUPPORTED;
-    }
-
-    if (ompi_group_have_remote_peers (comm->c_local_group)) {
-        return OMPI_ERR_RMA_SHARED;
-    }
-
-    return OMPI_SUCCESS;
-}
-
-
-static int
-component_query(struct ompi_win_t *win, void **base, size_t size, int disp_unit,
+component_query(struct ompi_win_t *win, void **base, size_t size, ptrdiff_t disp_unit,
                 struct ompi_communicator_t *comm, struct opal_info_t *info,
                 int flavor)
 {
-    int ret;
-    if (OMPI_SUCCESS != (ret = check_win_ok(comm, flavor))) {
-        if (OMPI_ERR_NOT_SUPPORTED == ret) {
-            return -1;
-        }
-        return ret;
+    /* component only supports shared or allocate flavors */
+    if (! (MPI_WIN_FLAVOR_SHARED == flavor ||
+           MPI_WIN_FLAVOR_ALLOCATE == flavor)) {
+        return -1;
     }
 
-    return 100;
+    /* If flavor is win_allocate, we can't run if there are remote
+     * peers in the group.  The same check for flavor_shared happens
+     * in select(), so that we can return an error to the user (since
+     * we should be able to run for all flavor_shared use cases.
+     * There's no way to return an error from component_query to the
+     * user, hence the delayed check.  */
+    if (MPI_WIN_FLAVOR_ALLOCATE == flavor) {
+        if (ompi_group_have_remote_peers(comm->c_local_group)) {
+            return -1;
+        }
+    }
+
+    return mca_osc_sm_component.priority;
 }
 
 
 static int
-component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit,
+component_select(struct ompi_win_t *win, void **base, size_t size, ptrdiff_t disp_unit,
                  struct ompi_communicator_t *comm, struct opal_info_t *info,
                  int flavor, int *model)
 {
@@ -193,9 +198,12 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
     int comm_size = ompi_comm_size (comm);
     bool unlink_needed = false;
     int ret = OMPI_ERROR;
+    size_t memory_alignment = OPAL_ALIGN_MIN;
 
-    if (OMPI_SUCCESS != (ret = check_win_ok(comm, flavor))) {
-        return ret;
+    assert(MPI_WIN_FLAVOR_SHARED == flavor || MPI_WIN_FLAVOR_ALLOCATE == flavor);
+
+    if (ompi_group_have_remote_peers(comm->c_local_group)) {
+        return OMPI_ERR_RMA_SHARED;
     }
 
     /* create module structure */
@@ -207,9 +215,9 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
 
     OBJ_CONSTRUCT(&module->lock, opal_mutex_t);
 
-    ret = opal_infosubscribe_subscribe(&(win->super), "alloc_shared_noncontig", "false", component_set_alloc_shared_noncontig_info);
-
-    if (OPAL_SUCCESS != ret) goto error;
+    if (NULL != info) {
+        ompi_osc_base_set_memory_alignment(info, &memory_alignment);
+    }
 
     /* fill in the function pointer part */
     memcpy(module, &ompi_osc_sm_module_template,
@@ -230,7 +238,8 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
         if (NULL == module->bases) return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
 
         module->sizes[0] = size;
-        module->bases[0] = malloc(size);
+        module->bases[0] = mca_mpool_base_default_module->mpool_alloc(mca_mpool_base_default_module, size,
+                                                                      memory_alignment, 0);
         if (NULL == module->bases[0]) return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
 
         module->global_state = malloc(sizeof(ompi_osc_sm_global_state_t));
@@ -246,9 +255,10 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
         size_t pagesize;
         size_t state_size;
         size_t posts_size, post_size = (comm_size + OSC_SM_POST_MASK) / (OSC_SM_POST_MASK + 1);
+        size_t data_base_size;
 
-        OPAL_OUTPUT_VERBOSE((1, ompi_osc_base_framework.framework_output,
-                             "allocating shared memory region of size %ld\n", (long) size));
+        opal_output_verbose(MCA_BASE_VERBOSE_DEBUG, ompi_osc_base_framework.framework_output,
+                            "allocating shared memory region of size %ld\n", (long) size);
 
         /* get the pagesize */
         pagesize = opal_getpagesize();
@@ -256,22 +266,36 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
         rbuf = malloc(sizeof(unsigned long) * comm_size);
         if (NULL == rbuf) return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
 
+        /* Note that the alloc_shared_noncontig info key only has
+         * meaning during window creation.  Once the window is
+         * created, we can't move memory around without making
+         * everything miserable.  So we intentionally do not subscribe
+         * to updates on the info key, because there's no useful
+         * update to occur. */
         module->noncontig = false;
         if (OMPI_SUCCESS != opal_info_get_bool(info, "alloc_shared_noncontig",
                                                &module->noncontig, &flag)) {
+            free(rbuf);
             goto error;
         }
 
         if (module->noncontig) {
+            opal_output_verbose(MCA_BASE_VERBOSE_DEBUG, ompi_osc_base_framework.framework_output,
+                                "allocating window using non-contiguous strategy");
             total = ((size - 1) / pagesize + 1) * pagesize;
         } else {
+            opal_output_verbose(MCA_BASE_VERBOSE_DEBUG, ompi_osc_base_framework.framework_output,
+                                "allocating window using contiguous strategy");
             total = size;
         }
         ret = module->comm->c_coll->coll_allgather(&total, 1, MPI_UNSIGNED_LONG,
                                                   rbuf, 1, MPI_UNSIGNED_LONG,
                                                   module->comm,
                                                   module->comm->c_coll->coll_allgather_module);
-        if (OMPI_SUCCESS != ret) return ret;
+        if (OMPI_SUCCESS != ret) {
+            free(rbuf);
+            goto error;
+        }
 
         total = 0;
         for (i = 0 ; i < comm_size ; ++i) {
@@ -283,17 +307,21 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
         state_size += OPAL_ALIGN_PAD_AMOUNT(state_size, 64);
         posts_size = comm_size * post_size * sizeof (module->posts[0][0]);
         posts_size += OPAL_ALIGN_PAD_AMOUNT(posts_size, 64);
+        data_base_size = state_size + posts_size;
+        data_base_size += OPAL_ALIGN_PAD_AMOUNT(data_base_size, pagesize);
         if (0 == ompi_comm_rank (module->comm)) {
             char *data_file;
-            ret = opal_asprintf (&data_file, "%s" OPAL_PATH_SEP "osc_sm.%s.%x.%d.%d",
-                            mca_osc_sm_component.backing_directory, ompi_process_info.nodename,
-                            OMPI_PROC_MY_NAME->jobid, (int) OMPI_PROC_MY_NAME->vpid, ompi_comm_get_cid(module->comm));
+            ret = opal_asprintf (&data_file, "%s" OPAL_PATH_SEP "osc_sm.%s.%x.%d.%s",
+                                 mca_osc_sm_component.backing_directory, ompi_process_info.nodename,
+                                 OMPI_PROC_MY_NAME->jobid, (int) OMPI_PROC_MY_NAME->vpid,
+                                 ompi_comm_print_cid(module->comm));
             if (ret < 0) {
                 free(rbuf);
-                return OMPI_ERR_OUT_OF_RESOURCE;
+                ret = OMPI_ERR_OUT_OF_RESOURCE;
+                goto error;
             }
 
-            ret = opal_shmem_segment_create (&module->seg_ds, data_file, total + pagesize + state_size + posts_size);
+            ret = opal_shmem_segment_create (&module->seg_ds, data_file, total + data_base_size);
             free(data_file);
             if (OPAL_SUCCESS != ret) {
                 free(rbuf);
@@ -340,7 +368,7 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
         module->global_state = (ompi_osc_sm_global_state_t *) (module->posts[0] + comm_size * post_size);
         module->node_states = (ompi_osc_sm_node_state_t *) (module->global_state + 1);
 
-        for (i = 0, total = state_size + posts_size ; i < comm_size ; ++i) {
+        for (i = 0, total = data_base_size ; i < comm_size ; ++i) {
             if (i > 0) {
                 module->posts[i] = module->posts[i - 1] + post_size;
             }
@@ -366,9 +394,9 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
     opal_atomic_lock_init(&module->my_node_state->accumulate_lock, OPAL_ATOMIC_LOCK_UNLOCKED);
 
     /* share everyone's displacement units. */
-    module->disp_units = malloc(sizeof(int) * comm_size);
-    ret = module->comm->c_coll->coll_allgather(&disp_unit, 1, MPI_INT,
-                                              module->disp_units, 1, MPI_INT,
+    module->disp_units = malloc(sizeof(ptrdiff_t) * comm_size);
+    ret = module->comm->c_coll->coll_allgather(&disp_unit, sizeof(ptrdiff_t), MPI_BYTE,
+                                              module->disp_units, sizeof(ptrdiff_t), MPI_BYTE,
                                               module->comm,
                                               module->comm->c_coll->coll_allgather_module);
     if (OMPI_SUCCESS != ret) goto error;
@@ -426,11 +454,6 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
 #endif
     }
 
-    ret = opal_infosubscribe_subscribe(&(win->super), "blocking_fence", module->global_state->use_barrier_for_fence ? "true" : "false",
-        component_set_blocking_fence_info);
-
-    if (OPAL_SUCCESS != ret) goto error;
-
     ret = module->comm->c_coll->coll_barrier(module->comm,
                                             module->comm->c_coll->coll_barrier_module);
     if (OMPI_SUCCESS != ret) goto error;
@@ -452,7 +475,7 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
 
 
 int
-ompi_osc_sm_shared_query(struct ompi_win_t *win, int rank, size_t *size, int *disp_unit, void *baseptr)
+ompi_osc_sm_shared_query(struct ompi_win_t *win, int rank, size_t *size, ptrdiff_t *disp_unit, void *baseptr)
 {
     ompi_osc_sm_module_t *module =
         (ompi_osc_sm_module_t*) win->w_osc_module;
@@ -523,12 +546,13 @@ ompi_osc_sm_free(struct ompi_win_t *win)
         module->comm->c_coll->coll_barrier(module->comm,
                                           module->comm->c_coll->coll_barrier_module);
 
-	opal_shmem_segment_detach (&module->seg_ds);
+        opal_shmem_segment_detach (&module->seg_ds);
     } else {
         free(module->node_states);
         free(module->global_state);
         if (NULL != module->bases) {
-            free(module->bases[0]);
+            mca_mpool_base_default_module->mpool_free(mca_mpool_base_default_module,
+                                                      module->bases[0]);
         }
     }
     free(module->disp_units);
@@ -558,29 +582,6 @@ ompi_osc_sm_set_info(struct ompi_win_t *win, struct opal_info_t *info)
     /* enforce collectiveness... */
     return module->comm->c_coll->coll_barrier(module->comm,
                                              module->comm->c_coll->coll_barrier_module);
-}
-
-
-static const char*
-component_set_blocking_fence_info(opal_infosubscriber_t *obj, const char *key, const char *val)
-{
-    ompi_osc_sm_module_t *module = (ompi_osc_sm_module_t*) ((struct ompi_win_t*) obj)->w_osc_module;
-/*
- * Assuming that you can't change the default.  
- */
-    return module->global_state->use_barrier_for_fence ? "true" : "false";
-}
-
-
-static const char*
-component_set_alloc_shared_noncontig_info(opal_infosubscriber_t *obj, const char *key, const char *val)
-{
-
-    ompi_osc_sm_module_t *module = (ompi_osc_sm_module_t*) ((struct ompi_win_t*) obj)->w_osc_module;
-/*
- * Assuming that you can't change the default.  
- */
-    return module->noncontig ? "true" : "false";
 }
 
 

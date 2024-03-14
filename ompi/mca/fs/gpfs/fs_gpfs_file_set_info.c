@@ -461,7 +461,7 @@ int mca_fs_gpfs_io_selection(ompio_file_t *fh,
                 siox_attribute_array[i], fh->f_filename);
     i++;
 
-//CN: Code duplication en mass (9 times same code block wich changing key!)
+//CN: Code duplication en mass (9 times same code block with changing key!)
 //CN: do this with a loop over a list of sioxHintsKeys
     //START setting the siox activity attributes
     strcpy(sioxHintsKey, "sioxAccessRange");

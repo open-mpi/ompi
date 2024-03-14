@@ -54,16 +54,34 @@ int opal_patcher_base_select(void)
     return OPAL_SUCCESS;
 }
 
+int opal_patcher_base_restore_all(void)
+{
+    mca_patcher_base_patch_t *patch, *patch_next;
+
+    if (opal_patcher == &empty_module) {
+        return OPAL_SUCCESS;
+    }
+
+    opal_mutex_lock(&opal_patcher->patch_list_mutex);
+
+    OPAL_LIST_FOREACH_SAFE_REV(patch, patch_next, &opal_patcher->patch_list, mca_patcher_base_patch_t) {
+        patch->patch_restore (patch);
+        opal_list_remove_item(&opal_patcher->patch_list, &patch->super);
+        OBJ_RELEASE(patch);
+    }
+
+    opal_mutex_unlock(&opal_patcher->patch_list_mutex);
+
+    return OPAL_SUCCESS;
+}
+
 static int opal_patcher_base_close(void)
 {
     if (opal_patcher == &empty_module) {
         return OPAL_SUCCESS;
     }
 
-    mca_patcher_base_patch_t *patch;
-    OPAL_LIST_FOREACH_REV (patch, &opal_patcher->patch_list, mca_patcher_base_patch_t) {
-        patch->patch_restore(patch);
-    }
+    opal_patcher_base_restore_all();
 
     OPAL_LIST_DESTRUCT(&opal_patcher->patch_list);
     OBJ_DESTRUCT(&opal_patcher->patch_list_mutex);

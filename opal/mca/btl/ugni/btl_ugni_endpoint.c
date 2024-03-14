@@ -223,7 +223,7 @@ static inline int mca_btl_ugni_ep_connect_start(mca_btl_base_endpoint_t *ep)
                  ep->ep_rem_addr, ep->ep_rem_id, (void *) ep->peer_proc));
 
     /* bind endpoint to remote address */
-    /* we bind two endpoints to seperate out local smsg completion and local fma completion */
+    /* we bind two endpoints to separate out local smsg completion and local fma completion */
     mca_btl_ugni_device_lock(device);
     rc = mca_btl_ugni_ep_handle_init(ep, device->dev_smsg_local_cq.gni_handle, device,
                                      &ep->smsg_ep_handle);

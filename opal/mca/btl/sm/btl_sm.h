@@ -66,13 +66,13 @@ BEGIN_C_DECLS
 #define min(a, b) ((a) < (b) ? (a) : (b))
 
 /*
- * Shared Memory resource managment
+ * Shared Memory resource management
  */
 
 struct sm_fifo_t;
 
-OPAL_MODULE_DECLSPEC extern mca_btl_sm_component_t mca_btl_sm_component;
-OPAL_MODULE_DECLSPEC extern mca_btl_sm_t mca_btl_sm;
+OPAL_DECLSPEC extern mca_btl_sm_component_t mca_btl_sm_component;
+OPAL_DECLSPEC extern mca_btl_sm_t mca_btl_sm;
 
 /* number of peers on the node (not including self) */
 #define MCA_BTL_SM_NUM_LOCAL_PEERS opal_process_info.num_local_peers
@@ -156,6 +156,10 @@ mca_btl_base_descriptor_t *mca_btl_sm_alloc(struct mca_btl_base_module_t *btl,
  * @param segment (IN)  Allocated segment.
  */
 int mca_btl_sm_free(struct mca_btl_base_module_t *btl, mca_btl_base_descriptor_t *des);
+
+static inline bool mca_btl_is_self_endpoint(mca_btl_base_endpoint_t *endpoint) {
+    return endpoint->peer_smp_rank == MCA_BTL_SM_LOCAL_RANK;
+}
 
 END_C_DECLS
 

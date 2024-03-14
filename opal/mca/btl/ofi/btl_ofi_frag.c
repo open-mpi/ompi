@@ -89,6 +89,7 @@ int mca_btl_ofi_send(mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoi
                      mca_btl_base_descriptor_t *descriptor, mca_btl_base_tag_t tag)
 {
     int rc = 0;
+    size_t msg_sz;
     mca_btl_ofi_context_t *context;
     mca_btl_ofi_module_t *ofi_btl = (mca_btl_ofi_module_t *) btl;
     mca_btl_ofi_endpoint_t *ofi_ep = (mca_btl_ofi_endpoint_t *) endpoint;
@@ -100,9 +101,35 @@ int mca_btl_ofi_send(mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoi
     /* This tag is the active message tag for the remote side */
     frag->hdr.tag = tag;
 
-    /* create completion context */
     context = get_ofi_context(ofi_btl);
-    comp = mca_btl_ofi_frag_completion_alloc(btl, context, frag, MCA_BTL_OFI_TYPE_SEND);
+    msg_sz = sizeof(mca_btl_ofi_header_t) + frag->hdr.len;
+
+    /*
+     * If supported by the provider and not disabled by
+     * the btl_ofi_disable_inject  MCA parameter,
+     * try to use the inject path for short messages.
+     * fi_inject can return -FI_EAGAIN if the provider is
+     * unable to buffer the message, so one needs to fall
+     * back to the fi_send path when that error code is
+     * returned. 
+     */
+    if (msg_sz <= mca_btl_ofi_component.max_inject_size &&
+        false == mca_btl_ofi_component.disable_inject) {
+        rc = fi_inject(context->tx_ctx, &frag->hdr, msg_sz, ofi_ep->peer_addr);
+        if (FI_SUCCESS == rc) {
+            mca_btl_ofi_frag_complete(frag, OPAL_SUCCESS);
+            return OPAL_SUCCESS;
+        }
+        /*
+         * -FI_EAGAIN is okay but any other error is a problem
+         */
+        if (-FI_EAGAIN != rc) {
+            return OPAL_ERROR;
+        }
+    }
+
+    /* create completion context */
+     comp = mca_btl_ofi_frag_completion_alloc(btl, context, frag, MCA_BTL_OFI_TYPE_SEND);
 
     /* send the frag. Note that we start sending from BTL header + payload
      * because we need the other side to have this header information. */

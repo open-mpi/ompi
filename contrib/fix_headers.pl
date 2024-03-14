@@ -78,7 +78,7 @@ while (<HEADERS>) {
                 while (<C_FILE>) {
                     if (/$header_string/) {
                         print TEMP $string_to_replace;
-                        print "Replacing defintion ---- $c_file";
+                        print "Replacing definition ---- $c_file";
                         if ($written_to_file == 0) {
                             print MOD_FILES $c_file;
                             $written_to_file = 1;
@@ -121,7 +121,7 @@ while (<HEADERS>) {
                 while (<H_FILE>) {
                     if (/$header_string/) {
                         print TEMP $string_to_replace;
-                        print "Replacing defintion ---- $h_file";
+                        print "Replacing definition ---- $h_file";
                         if ($written_to_file == 0) {
                             print MOD_FILES $h_file;
                             $written_to_file = 1;

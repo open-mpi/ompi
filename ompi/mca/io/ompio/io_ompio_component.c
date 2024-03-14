@@ -17,6 +17,9 @@
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * Copyright (c) 2018      DataDirect Networks. All rights reserved.
+ * Copyright (c) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (c) 2024      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -37,6 +40,7 @@
 #include "ompi/mca/common/ompio/common_ompio_buffer.h"
 
 int mca_io_ompio_cycle_buffer_size = OMPIO_DEFAULT_CYCLE_BUF_SIZE;
+int mca_io_ompio_pipeline_buffer_size = OMPIO_DEFAULT_PIPELINE_BUF_SIZE;
 int mca_io_ompio_bytes_per_agg = OMPIO_PREALLOC_MAX_BUF_SIZE;
 int mca_io_ompio_num_aggregators = -1;
 int mca_io_ompio_record_offset_info = 0;
@@ -56,7 +60,7 @@ static int open_component(void);
 static int close_component(void);
 static int init_query(bool enable_progress_threads,
                       bool enable_mpi_threads);
-static const struct mca_io_base_module_2_0_0_t *
+static const struct mca_io_base_module_3_0_0_t *
 file_query (struct ompi_file_t *file,
             struct mca_io_base_file_t **private_data,
             int *priority);
@@ -86,13 +90,7 @@ static int io_progress(void);
 static int priority_param = 30;
 static int delete_priority_param = 30;
 
-
-/*
- * Global, component-wide OMPIO mutex because OMPIO is not thread safe
- */
-opal_mutex_t mca_io_ompio_mutex = {{0}};
-
-
+static opal_mutex_t mca_io_ompio_mutex = OPAL_MUTEX_STATIC_INIT;
 
 /*
  * Public string showing this component's version number
@@ -101,12 +99,12 @@ const char *mca_io_ompio_component_version_string =
 "OMPI/MPI OMPIO io MCA component version " OMPI_VERSION;
 
 
-mca_io_base_component_2_0_0_t mca_io_ompio_component = {
+mca_io_base_component_3_0_0_t mca_io_ompio_component = {
     /* First, the mca_base_component_t struct containing meta information
        about the component itself */
 
     .io_version = {
-        MCA_IO_BASE_VERSION_2_0_0,
+        MCA_IO_BASE_VERSION_3_0_0,
         .mca_component_name = "ompio",
         MCA_BASE_MAKE_VERSION(component, OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION,
                               OMPI_RELEASE_VERSION),
@@ -177,6 +175,16 @@ static int register_component(void)
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_io_ompio_cycle_buffer_size);
 
+    mca_io_ompio_pipeline_buffer_size = OMPIO_DEFAULT_PIPELINE_BUF_SIZE;
+    (void) mca_base_component_var_register(&mca_io_ompio_component.io_version,
+                                           "pipeline_buffer_size",
+                                           "Size of temporary buffer used by individual reads/writes "
+                                           "in the pipeline protocol",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_io_ompio_pipeline_buffer_size);
+
     mca_io_ompio_bytes_per_agg = OMPIO_PREALLOC_MAX_BUF_SIZE;
     (void) mca_base_component_var_register(&mca_io_ompio_component.io_version,
                                            "bytes_per_agg",
@@ -224,7 +232,7 @@ static int register_component(void)
     mca_io_ompio_aggregators_cutoff_threshold=3;
     (void) mca_base_component_var_register(&mca_io_ompio_component.io_version,
                                            "aggregators_cutoff_threshold",
-                                           "Relativ cutoff threshold for incrementing the number of aggregators "
+                                           "Relative cutoff threshold for incrementing the number of aggregators "
                                            "in the simple aggregator selection algorithm (5). Lower value "
                                            "for this parameter will lead to higher no. of aggregators.",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
@@ -260,9 +268,6 @@ static int register_component(void)
 
 static int open_component(void)
 {
-    /* Create the mutex */
-    OBJ_CONSTRUCT(&mca_io_ompio_mutex, opal_mutex_t);
-
     mca_common_ompio_request_init ();
 
     return mca_common_ompio_set_callbacks(ompi_io_ompio_generate_current_file_view,
@@ -274,7 +279,6 @@ static int close_component(void)
 {
     mca_common_ompio_request_fini ();
     mca_common_ompio_buffer_alloc_fini();
-    OBJ_DESTRUCT(&mca_io_ompio_mutex);
 
     return OMPI_SUCCESS;
 }
@@ -287,7 +291,7 @@ static int init_query(bool enable_progress_threads,
 }
 
 
-static const struct mca_io_base_module_2_0_0_t *
+static const struct mca_io_base_module_3_0_0_t *
 file_query(struct ompi_file_t *file,
            struct mca_io_base_file_t **private_data,
            int *priority)

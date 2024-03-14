@@ -17,6 +17,8 @@
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      Intel, Inc. All rights reserved.
+ * Copyright (c) 2022      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -61,38 +63,6 @@ static int ompi_group_dense_overlap (ompi_group_t *group1, ompi_group_t *group2,
     return overlap_count;
 }
 
-static struct ompi_proc_t *ompi_group_dense_lookup_raw (ompi_group_t *group, const int peer_id)
-{
-    if (OPAL_UNLIKELY(ompi_proc_is_sentinel (group->grp_proc_pointers[peer_id]))) {
-        ompi_proc_t *proc =
-            (ompi_proc_t *) ompi_proc_lookup (ompi_proc_sentinel_to_name ((uintptr_t) group->grp_proc_pointers[peer_id]));
-        if (NULL != proc) {
-            /* replace sentinel value with an actual ompi_proc_t */
-            group->grp_proc_pointers[peer_id] = proc;
-            /* retain the proc */
-            OBJ_RETAIN(group->grp_proc_pointers[peer_id]);
-        }
-    }
-
-    return group->grp_proc_pointers[peer_id];
-}
-
-ompi_proc_t *ompi_group_get_proc_ptr_raw (ompi_group_t *group, int rank)
-{
-#if OMPI_GROUP_SPARSE
-    do {
-        if (OMPI_GROUP_IS_DENSE(group)) {
-            return ompi_group_dense_lookup_raw (group, rank);
-        }
-        int ranks1 = rank;
-        ompi_group_translate_ranks (group, 1, &ranks1, group->grp_parent_group_ptr, &rank);
-        group = group->grp_parent_group_ptr;
-    } while (1);
-#else
-    return ompi_group_dense_lookup_raw (group, rank);
-#endif
-}
-
 int ompi_group_calc_plist ( int n , const int *ranks ) {
     return sizeof(char *) * n ;
 }
@@ -113,7 +83,7 @@ int ompi_group_incl_plist(ompi_group_t* group, int n, const int *ranks,
     }
 
     /* get new group struct */
-    new_group_pointer=ompi_group_allocate(n);
+    new_group_pointer=ompi_group_allocate(group,n);
     if( NULL == new_group_pointer ) {
         return MPI_ERR_GROUP;
     }
@@ -134,6 +104,8 @@ int ompi_group_incl_plist(ompi_group_t* group, int n, const int *ranks,
     } else {
         new_group_pointer->grp_my_rank = MPI_UNDEFINED;
     }
+
+    new_group_pointer->grp_instance = group->grp_instance;
 
     *new_group = (MPI_Group)new_group_pointer;
 
@@ -180,7 +152,7 @@ int ompi_group_union (ompi_group_t* group1, ompi_group_t* group2,
     }
 
     /* get new group struct */
-    new_group_pointer = ompi_group_allocate(new_group_size);
+    new_group_pointer = ompi_group_allocate(group1, new_group_size);
     if (NULL == new_group_pointer) {
         OBJ_DESTRUCT(&bitmap);
         return MPI_ERR_GROUP;
@@ -229,7 +201,7 @@ int ompi_group_union (ompi_group_t* group1, ompi_group_t* group2,
 int ompi_group_difference(ompi_group_t* group1, ompi_group_t* group2,
                           ompi_group_t **new_group) {
 
-    /* local varibles */
+    /* local variables */
     int new_group_size, overlap_count, rc;
     ompi_group_t *new_group_pointer;
     ompi_proc_t *proc1_pointer;
@@ -262,7 +234,7 @@ int ompi_group_difference(ompi_group_t* group1, ompi_group_t* group2,
     }
 
     /* allocate a new ompi_group_t structure */
-    new_group_pointer = ompi_group_allocate(new_group_size);
+    new_group_pointer = ompi_group_allocate(group1, new_group_size);
     if( NULL == new_group_pointer ) {
         OBJ_DESTRUCT(&bitmap);
         return MPI_ERR_GROUP;

@@ -122,7 +122,7 @@ sub parse_header_files {
     close(HEADER);
     close(TEMP);
 
-    #remove duplicate occurences of the file
+    #remove duplicate occurrences of the file
     system("sort temp.txt | uniq > $test_file");
 
     return 0;

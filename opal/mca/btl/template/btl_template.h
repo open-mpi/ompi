@@ -77,7 +77,7 @@ struct mca_btl_template_component_t {
 };
 typedef struct mca_btl_template_component_t mca_btl_template_component_t;
 
-OPAL_MODULE_DECLSPEC extern mca_btl_template_component_t mca_btl_template_component;
+OPAL_DECLSPEC extern mca_btl_template_component_t mca_btl_template_component;
 
 /**
  * BTL Module Interface
@@ -104,8 +104,8 @@ extern mca_btl_template_module_t mca_btl_template_module;
  * TEMPLATE component initialization.
  *
  * @param num_btl_modules (OUT)           Number of BTLs returned in BTL array.
- * @param allow_multi_user_threads (OUT)  Flag indicating wether BTL supports user threads (TRUE)
- * @param have_hidden_threads (OUT)       Flag indicating wether BTL uses threads (TRUE)
+ * @param allow_multi_user_threads (OUT)  Flag indicating whether BTL supports user threads (TRUE)
+ * @param have_hidden_threads (OUT)       Flag indicating whether BTL uses threads (TRUE)
  */
 extern mca_btl_base_module_t **mca_btl_template_component_init(int *num_btl_modules,
                                                                bool allow_multi_user_threads,
@@ -162,7 +162,7 @@ extern int mca_btl_template_del_procs(struct mca_btl_base_module_t *btl, size_t 
  *
  * @param btl (IN)         BTL module
  * @param endpoint (IN)    BTL addressing information
- * @param descriptor (IN)  Description of the data to be transfered
+ * @param descriptor (IN)  Description of the data to be transferred
  * @param tag (IN)         The tag value used to notify the peer.
  */
 
@@ -323,7 +323,7 @@ extern int mca_btl_template_free(struct mca_btl_base_module_t *btl, mca_btl_base
 
 /**
  * Prepare a descriptor for send/rdma using the supplied
- * convertor. If the convertor references data that is contigous,
+ * convertor. If the convertor references data that is contiguous,
  * the descriptor may simply point to the user buffer. Otherwise,
  * this routine is responsible for allocating buffer space and
  * packing if required.

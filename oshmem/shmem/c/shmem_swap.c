@@ -70,6 +70,12 @@
 #pragma weak shmem_ctx_ulonglong_atomic_swap = pshmem_ctx_ulonglong_atomic_swap
 #pragma weak shmem_ctx_float_atomic_swap = pshmem_ctx_float_atomic_swap
 #pragma weak shmem_ctx_double_atomic_swap = pshmem_ctx_double_atomic_swap
+#pragma weak shmem_ctx_int32_atomic_swap = pshmem_ctx_int32_atomic_swap
+#pragma weak shmem_ctx_int64_atomic_swap = pshmem_ctx_int64_atomic_swap
+#pragma weak shmem_ctx_uint32_atomic_swap = pshmem_ctx_uint32_atomic_swap
+#pragma weak shmem_ctx_uint64_atomic_swap = pshmem_ctx_uint64_atomic_swap
+#pragma weak shmem_ctx_size_atomic_swap = pshmem_ctx_size_atomic_swap
+#pragma weak shmem_ctx_ptrdiff_atomic_swap = pshmem_ctx_ptrdiff_atomic_swap
 
 #pragma weak shmem_int_atomic_swap = pshmem_int_atomic_swap
 #pragma weak shmem_long_atomic_swap = pshmem_long_atomic_swap
@@ -79,6 +85,12 @@
 #pragma weak shmem_ulonglong_atomic_swap = pshmem_ulonglong_atomic_swap
 #pragma weak shmem_float_atomic_swap = pshmem_float_atomic_swap
 #pragma weak shmem_double_atomic_swap = pshmem_double_atomic_swap
+#pragma weak shmem_int32_atomic_swap = pshmem_int32_atomic_swap
+#pragma weak shmem_int64_atomic_swap = pshmem_int64_atomic_swap
+#pragma weak shmem_uint32_atomic_swap = pshmem_uint32_atomic_swap
+#pragma weak shmem_uint64_atomic_swap = pshmem_uint64_atomic_swap
+#pragma weak shmem_size_atomic_swap = pshmem_size_atomic_swap
+#pragma weak shmem_ptrdiff_atomic_swap = pshmem_ptrdiff_atomic_swap
 
 #pragma weak shmem_int_swap = pshmem_int_swap
 #pragma weak shmem_long_swap = pshmem_long_swap
@@ -88,7 +100,8 @@
 
 #pragma weak shmemx_int32_swap = pshmemx_int32_swap
 #pragma weak shmemx_int64_swap = pshmemx_int64_swap
-#include "oshmem/shmem/c/profile/defines.h"
+
+#include "oshmem/shmem/c/profile-defines.h"
 #endif
 
 SHMEM_CTX_TYPE_ATOMIC_SWAP(_int, int, shmem)
@@ -99,6 +112,12 @@ SHMEM_CTX_TYPE_ATOMIC_SWAP(_ulong, unsigned long, shmem)
 SHMEM_CTX_TYPE_ATOMIC_SWAP(_ulonglong, unsigned long long, shmem)
 SHMEM_CTX_TYPE_ATOMIC_SWAP(_float, float, shmem)
 SHMEM_CTX_TYPE_ATOMIC_SWAP(_double, double, shmem)
+SHMEM_CTX_TYPE_ATOMIC_SWAP(_int32, int32_t, shmem)
+SHMEM_CTX_TYPE_ATOMIC_SWAP(_int64, int64_t, shmem)
+SHMEM_CTX_TYPE_ATOMIC_SWAP(_uint32, uint32_t, shmem)
+SHMEM_CTX_TYPE_ATOMIC_SWAP(_uint64, uint64_t, shmem)
+SHMEM_CTX_TYPE_ATOMIC_SWAP(_size, size_t, shmem)
+SHMEM_CTX_TYPE_ATOMIC_SWAP(_ptrdiff, ptrdiff_t, shmem)
 SHMEM_TYPE_ATOMIC_SWAP(_int, int, shmem)
 SHMEM_TYPE_ATOMIC_SWAP(_long, long, shmem)
 SHMEM_TYPE_ATOMIC_SWAP(_longlong, long long, shmem)
@@ -107,6 +126,12 @@ SHMEM_TYPE_ATOMIC_SWAP(_ulong, unsigned long, shmem)
 SHMEM_TYPE_ATOMIC_SWAP(_ulonglong, unsigned long long, shmem)
 SHMEM_TYPE_ATOMIC_SWAP(_float, float, shmem)
 SHMEM_TYPE_ATOMIC_SWAP(_double, double, shmem)
+SHMEM_TYPE_ATOMIC_SWAP(_int32, int32_t, shmem)
+SHMEM_TYPE_ATOMIC_SWAP(_int64, int64_t, shmem)
+SHMEM_TYPE_ATOMIC_SWAP(_uint32, uint32_t, shmem)
+SHMEM_TYPE_ATOMIC_SWAP(_uint64, uint64_t, shmem)
+SHMEM_TYPE_ATOMIC_SWAP(_size, size_t, shmem)
+SHMEM_TYPE_ATOMIC_SWAP(_ptrdiff, ptrdiff_t, shmem)
 
 /* deprecated APIs */
 #define SHMEM_TYPE_SWAP(type_name, type, prefix)                    \

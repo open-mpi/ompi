@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 IBM Corporation. All rights reserved.
+ * Copyright (c) 2016-2022 IBM Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -22,23 +22,13 @@
 #include "ompi/mca/bml/base/base.h"
 #include "ompi/mca/mtl/base/base.h"
 
-// In regular strncpy up to n bytes are copied, so if the 'to' buffer
-// was char string[16] and you called strncpy(string, , 16) you could
-// get 16 bytes of chars without a null.  My preferred API is to let
-// n be the size of the buffer, and to let n-1 chars be copied, and
-// to guarantee null termination.
-static void
-mystrncpy(char *to, const char *from, int n) {
-    strncpy(to, from, n-1);
-    to[n-1] = 0;
-}
-
 // For converting comm_method strings to comm_method id# and back.
 // This starts as our local set of strings, but gets Allreduced into
 // a global mapping so all the strings at all the ranks are represented.
-// If an MCA's name is more than 15 chars it gets truncated.
-#define COMM_METHOD_STRING_SIZE 16
-#define MAX_COMM_METHODS 50
+#define COMM_METHOD_STRING_SIZE 200
+#define MAX_COMM_METHODS 1000
+#define UCX_TAG "ucx="
+
 typedef struct {
     int n;
     char str[MAX_COMM_METHODS][COMM_METHOD_STRING_SIZE];
@@ -49,6 +39,9 @@ static comm_method_string_conversion_t comm_method_string_conversion;
 #define MODE_IS_PML 1
 #define MODE_IS_MTL 2
 #define MODE_IS_BTL 3
+
+#define CALLED_FROM_MPI_INIT 1
+#define CALLED_FROM_MPI_FINALIZE 2
 
 // ----------------------------------------------------------------------------
 
@@ -70,6 +63,10 @@ static char*
 lookup_btl_name_for_send(ompi_communicator_t* comm, int rank) {
     ompi_proc_t *dst_proc = ompi_group_peer_lookup_existing(comm->c_remote_group, rank);
 
+    if (NULL == dst_proc) {
+        return NULL;
+    }
+
     mca_bml_base_endpoint_t* endpoint = mca_bml_base_get_endpoint(dst_proc);
     if (endpoint &&
         endpoint->btl_send.bml_btls &&
@@ -90,22 +87,71 @@ lookup_btl_name_for_send(ompi_communicator_t* comm, int rank) {
 // that the caller has to free.
 static char *
 comm_method_string(MPI_Comm comm, int rank, int *comm_mode) {
-    char *p;
-    char *string = malloc(COMM_METHOD_STRING_SIZE);
-
-    if (!string) { return NULL; }
-
-    p = lookup_pml_name();
-    if (p && 0==strncmp("ob1", p, 4)) {      // BTL
-        if (comm_mode) { *comm_mode = MODE_IS_BTL; }
-        mystrncpy(string, lookup_btl_name_for_send(comm, rank), COMM_METHOD_STRING_SIZE);
+    char *p, *btl;
+    char *string, *comma_delim = "";
+    mca_pml_transports_t *transports = NULL;
+    int name_length;
+    unsigned int i;
+    if (NULL != mca_pml.pml_get_transports) {
+        transports = mca_pml.pml_get_transports(comm, rank);
     }
-    else if (p && 0==strncmp("cm", p, 3)) {  // MTL
-        if (comm_mode) { *comm_mode = MODE_IS_MTL; }
-        mystrncpy(string, lookup_mtl_name(), COMM_METHOD_STRING_SIZE);
-    } else {                        // PML
-        if (comm_mode) { *comm_mode = MODE_IS_PML; }
-        mystrncpy(string, p, COMM_METHOD_STRING_SIZE);
+    if (NULL == transports) {
+        string = malloc(COMM_METHOD_STRING_SIZE);
+        if (!string) {
+            return NULL;
+        }
+        p = lookup_pml_name();
+        if (p && 0==strncmp("ob1", p, 4)) {      // BTL
+            if (comm_mode) { *comm_mode = MODE_IS_BTL; }
+            btl = lookup_btl_name_for_send(comm, rank);
+            if (NULL == btl) {
+                strncpy(string, "n/a", COMM_METHOD_STRING_SIZE);
+            } else {
+                strncpy(string, btl, COMM_METHOD_STRING_SIZE);
+            }
+        }
+        else if (p && 0==strncmp("cm", p, 3)) {  // MTL
+            if (comm_mode) { *comm_mode = MODE_IS_MTL; }
+            strncpy(string, lookup_mtl_name(), COMM_METHOD_STRING_SIZE);
+        } else {                        // PML
+            if (comm_mode) { *comm_mode = MODE_IS_PML; }
+            if (p) {
+                strncpy(string, p, COMM_METHOD_STRING_SIZE);
+            }
+            else {
+                strncpy(string, "n/a", COMM_METHOD_STRING_SIZE);
+            }
+        }
+    }
+    else {
+        /* Determine how much memory is needed to store UCX transport info */
+        char *s = UCX_TAG;
+        /* Allocate storage to store UCX transport info, accounting for
+         * trailing '\0' in UCX_TAG and ',' and ';' delimiting each transport string
+         * then build the info string */
+        name_length = strlen(s) + 1;
+        for (i = 0; i < transports->count; i++) {
+            name_length = name_length + strlen(transports->entries[i].transport_name) +
+                                        strlen(transports->entries[i].device_name) + 2;
+        }
+        string = malloc(name_length);
+        if (!string) {
+            return NULL;
+        }
+        strcpy(string, s);
+        for (i = 0; i < transports->count; i++) {
+            strcat(string, comma_delim);
+            comma_delim = ",";
+            strcat(string, transports->entries[i].transport_name);
+            strcat(string, ";");
+            strcat(string, transports->entries[i].device_name);
+        }
+        free(transports->entries);
+        free(transports);
+    }
+    if (comm_mode) {
+        // UCX is used for PML mode only
+        *comm_mode = MODE_IS_PML;
     }
     return string;
 }
@@ -134,7 +180,7 @@ lookup_string_in_conversion_struct(comm_method_string_conversion_t *data, char *
 {
     int i;
     for (i=0; i<data->n; ++i) {
-        if (0==strncmp(data->str[i], string, COMM_METHOD_STRING_SIZE)) {
+        if (0==strcmp(data->str[i], string)) {
             return i;
         }
     }
@@ -150,16 +196,16 @@ static void
 add_string_to_conversion_struct(comm_method_string_conversion_t *data, char *string)
 {
     int i;
-    if (0 == strcmp(string, "n/a")) { return; }
+    if (NULL == string || 0 == strcmp(string, "n/a")) { return; }
 
     i = lookup_string_in_conversion_struct(data, string);
     if (i == 0) { // didn't find string in list, so add it
         if (data->n < MAX_COMM_METHODS) {
-            mystrncpy(data->str[data->n], string, COMM_METHOD_STRING_SIZE);
+            strncpy(data->str[data->n], string, COMM_METHOD_STRING_SIZE);
+            data->str[data->n][COMM_METHOD_STRING_SIZE - 1] = '\0';
             ++(data->n);
         }
     }
-    qsort(&data->str[1], data->n - 1, COMM_METHOD_STRING_SIZE, &mycompar);
 }
 
 // For MPI_Allreduce of a comm_method_string_conversion_t
@@ -173,7 +219,6 @@ static void myfn(void* invec, void* inoutvec, int *len, MPI_Datatype *dt) {
         for (j=0; j<b->n; ++j) { // for each entry j in 'b', add it to 'a'
             add_string_to_conversion_struct(a, b->str[j]);
         }
-        qsort(&a->str[1], a->n - 1, COMM_METHOD_STRING_SIZE, &mycompar);
     }
 }
 
@@ -220,14 +265,14 @@ static void ompi_report_comm_methods(int called_from_location);
 void ompi_hook_comm_method_mpi_init_bottom(int argc, char **argv, int requested, int *provided)
 {
     if( mca_hook_comm_method_enable_mpi_init ) {
-        ompi_report_comm_methods( 1 );
+        ompi_report_comm_methods( CALLED_FROM_MPI_INIT );
     }
 }
 
 void ompi_hook_comm_method_mpi_finalize_top(void)
 {
     if( mca_hook_comm_method_enable_mpi_finalize ) {
-        ompi_report_comm_methods( 2 );
+        ompi_report_comm_methods( CALLED_FROM_MPI_FINALIZE );
     }
 }
 
@@ -318,9 +363,9 @@ abbreviate_list_into_string(char *str, int max, int *list, int nlist)
 // When activated from init: we establish connections before printing.
 // When activated from finalize: we just print whatever info is available.
 static void
-ompi_report_comm_methods(int called_from_location) // 1 = from init, 2 = from finalize
+ompi_report_comm_methods(int called_from_location)
 {
-    int numhosts, i, j, k;
+    int numhosts, i, j, k, n;
     int max2Dprottable = 12;
     int max2D1Cprottable = 36;
     int hpmp_myrank;
@@ -328,6 +373,7 @@ ompi_report_comm_methods(int called_from_location) // 1 = from init, 2 = from fi
     int ret;
     ompi_communicator_t *local_comm, *leader_comm;
     int *method;
+    unsigned char *methods_used;
     char *hoststring;
     char **allhoststrings;
     int comm_mode; // MODE_IS_BTL / MTL / PML
@@ -423,6 +469,8 @@ ompi_report_comm_methods(int called_from_location) // 1 = from init, 2 = from fi
 // If we're running during init, establish connections between all peers
 // (in leader_comm, which is all the ranks that are here at this point)
     if (called_from_location == 1) {
+        int speer = (myleaderrank + 1) % nleaderranks;
+        int rpeer = (myleaderrank - 1 + nleaderranks) % nleaderranks;
         for (i=0; i<=nleaderranks/2; ++i) {
 // (Examples to show why the loop is i<=nleaderranks/2)
 // np4 : 0 1 2 3    i=0 0c0  i=1 0c0&1&3  i=2 0c0&1&3&2
@@ -430,9 +478,6 @@ ompi_report_comm_methods(int called_from_location) // 1 = from init, 2 = from fi
             MPI_Request sreq, rreq;
             MPI_Status status;
             int sbuf, rbuf;
-            int speer = (myleaderrank + 1) % nleaderranks;
-            int rpeer = (myleaderrank - 1 + nleaderranks) % nleaderranks;
-
             sbuf = rbuf = 0;
             MCA_PML_CALL(isend(&sbuf, 1, MPI_INT, speer, 99,
                     MCA_PML_BASE_SEND_STANDARD,
@@ -441,6 +486,11 @@ ompi_report_comm_methods(int called_from_location) // 1 = from init, 2 = from fi
                     leader_comm, &rreq));
             ompi_request_wait(&sreq, &status);
             ompi_request_wait(&rreq, &status);
+            speer = (speer + 1) % nleaderranks;
+            rpeer = (rpeer - 1) % nleaderranks;
+            if (rpeer < 0) {
+                rpeer = nleaderranks - 1;
+            }
         }
     }
 
@@ -470,6 +520,10 @@ ompi_report_comm_methods(int called_from_location) // 1 = from init, 2 = from fi
     MPI_Op_free(&myop);
     MPI_Type_free(&mydt);
 
+    // Sort communication method string arrays after reduction
+    qsort(&comm_method_string_conversion.str[1],
+          comm_method_string_conversion.n - 1, COMM_METHOD_STRING_SIZE, &mycompar);
+
 // Each host leader fills in a "numhosts" sized array method[] of
 // how it communicates with each peer.
     for (i=0; i<nleaderranks; ++i) {
@@ -479,10 +533,8 @@ ompi_report_comm_methods(int called_from_location) // 1 = from init, 2 = from fi
 // unless there's only one rank and "self" is the best answer. So if
 // there's more than one rank on our host, we get our local-host's
 // communication method for a neighbor on this host.
-        if (i == myleaderrank) {
-            if (nlocalranks > 1) {
-                method[i] = comm_method(local_comm, 1);
-            }
+        if ((i == myleaderrank) && (nlocalranks > 1)) {
+            method[i] = comm_method(local_comm, 1);
         }
     }
 
@@ -492,6 +544,8 @@ ompi_report_comm_methods(int called_from_location) // 1 = from init, 2 = from fi
     {
         int len, *lens, *disps;
 
+        // First get the array of host strings (host names and task lists) 
+        // for all nodes.
         len = strlen(hoststring) + 1;
         if (myleaderrank == 0) {
             lens = malloc(nleaderranks * sizeof(int));
@@ -532,7 +586,9 @@ ompi_report_comm_methods(int called_from_location) // 1 = from init, 2 = from fi
             free(lens);
             free(disps);
         }
-// and a simpler gather for the methods
+
+        // and a simpler gather for the arrays of communication method indices
+        // for all nodes.
         leader_comm->c_coll->coll_gather(
             method, nleaderranks, MPI_INT,
             method, nleaderranks, MPI_INT,
@@ -551,13 +607,17 @@ ompi_report_comm_methods(int called_from_location) // 1 = from init, 2 = from fi
             fp = fopen(mca_hook_comm_method_fakefile, "r");
             for (i=0; i<nleaderranks; ++i) {
                 for (k=0; k<nleaderranks; ++k) {
-                    fscanf(fp, "%d", &setting);
+                    if (fscanf(fp, "%d", &setting) != 1) {
+                        break;
+                    }
                     // let -1 mean "use existing (real) setting"
                     if (setting != -1) {
                         method[i * nleaderranks + k] = setting;
                     }
                 }
-                fscanf(fp, "\n");
+                if (fscanf(fp, "\n") != 0) {
+                    break;
+                }
             }
             fclose(fp);
         }
@@ -576,14 +636,22 @@ ompi_report_comm_methods(int called_from_location) // 1 = from init, 2 = from fi
 // 2: 2d table
         if (nleaderranks <= max2Dprottable) {
             char *str, *p;
-            int tmp, per;
+            int tmp, per, has_ucx_transport;
             int strlens[NUM_COMM_METHODS];
 
             // characters per entry in the 2d table, must be large enough
             // for the digits needed for host numbers, and for whatever is
             // the longest string used in the table, plus a space.
             for (i=0; i<NUM_COMM_METHODS; ++i) {
-                strlens[i] = strlen(comm_method_to_string(i));
+                p = comm_method_to_string(i);
+                if (0 == strncmp(p, UCX_TAG, strlen(UCX_TAG))) {
+                    // Assume no more than 1000 UCX transport strings
+                    // See PML_UCX_MAX_TRANSPORT_ENTRIES in pml_ucx.c
+                    strlens[i] = strlen("ucx[000]");
+                }
+                else {
+                    strlens[i] = strlen(p);
+                }
             }
             per = 2;
             tmp = nleaderranks;
@@ -605,6 +673,10 @@ ompi_report_comm_methods(int called_from_location) // 1 = from init, 2 = from fi
                 p[j] = 0;
                 p += j;
             }
+            // Use a bitmap to trace which UCX transport strings are used.
+            n = (nleaderranks + 7) / 8;
+            methods_used = malloc(n * sizeof(unsigned char));
+            memset(methods_used, 0, n);
             tmp = (int)strlen(str);
             --p;
             while (p>=str && ((*p)==' ')) { *(p--)=0; }
@@ -612,12 +684,27 @@ ompi_report_comm_methods(int called_from_location) // 1 = from init, 2 = from fi
             memset(str, (int)'=', tmp);
             str[tmp] = 0;
             printf("======|=%s\n", str);
+            has_ucx_transport = 0;
 
             for (i=0; i<nleaderranks; ++i) {
                 str[0] = 0;
                 p = str;
                 for (k=0; k<nleaderranks; ++k) {
-                    strcat(p, comm_method_to_string(method[i * nleaderranks + k]));
+                    char *method_string;
+                    char ucx_label[10];
+                    
+                    method_string = comm_method_to_string(method[i * nleaderranks + k]);
+                    if (0 == strncmp(method_string, UCX_TAG, strlen(UCX_TAG))) {
+                        n = lookup_string_in_conversion_struct(&comm_method_string_conversion,
+                                                               method_string);
+                        sprintf(ucx_label, "ucx[%3d]", n);
+                        strcat(p, ucx_label);
+                        methods_used[n / 8] |= (1 << (n % 8));
+                        has_ucx_transport = 1;
+                    }
+                    else {
+                        strcat(p, method_string);
+                    }
                     for (j=(int)strlen(p); j<per; ++j) {
                         p[j] = ' ';
                     }
@@ -630,6 +717,35 @@ ompi_report_comm_methods(int called_from_location) // 1 = from init, 2 = from fi
             }
             printf("\n");
             free(str);
+            if (has_ucx_transport) {
+                printf("UCX Transport/Device\n");
+                for (i = 0; i < comm_method_string_conversion.n; i++) {
+                    // Check bitmap to check if method was used
+                    if (methods_used[i / 8] & (1 << (i % 8))) {
+                        p = comm_method_to_string(i);
+                        if (0 == strncmp(p, UCX_TAG, strlen(UCX_TAG))) {
+                            char *temp_str, *token;
+                            n = lookup_string_in_conversion_struct(&comm_method_string_conversion, p);
+                            printf("ucx[%3d]:\n", n);
+                            temp_str = strdup(p + 4);
+                            token = strtok(temp_str, ",");
+                            while (NULL != token) {
+                                p = strchr(token, ';');
+                                if (NULL == p) {
+                                    printf("    %-16s\n", token);
+                                }
+                                else {
+                                    *p = '\0';
+                                    printf("    %-16s %-16s\n", token, p + 1);
+                                }
+                                token = strtok(NULL, ",");
+                            }
+                            free(temp_str);
+                        }
+                    }
+                }
+            }
+            free(methods_used);
         }
         else if (nleaderranks <= max2D1Cprottable) {
             char *str, *p;

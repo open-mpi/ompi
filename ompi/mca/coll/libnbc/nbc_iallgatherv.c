@@ -23,7 +23,7 @@
 #include "nbc_internal.h"
 
 /* an allgatherv schedule can not be cached easily because the contents
- * ot the recvcounts array may change, so a comparison of the address
+ * of the recvcounts array may change, so a comparison of the address
  * would not be sufficient ... we simply do not cache it */
 
 /* simple linear MPI_Iallgatherv

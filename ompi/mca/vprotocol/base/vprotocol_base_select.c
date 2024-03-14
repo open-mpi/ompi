@@ -114,7 +114,7 @@ int mca_vprotocol_base_select(bool enable_progress_threads,
             /* Finalize */
             V_OUTPUT_VERBOSE(500, "vprotocol select: component %s not selected / finalized", om->om_component->pmlm_version.mca_component_name);
             if (NULL != om->om_component->pmlm_finalize) {
-                /* Blatently ignore the return code (what would we do to
+                /* Blatantly ignore the return code (what would we do to
                 recover, anyway?  This component is going away, so errors
                 don't matter anymore) */
                 om->om_component->pmlm_finalize();

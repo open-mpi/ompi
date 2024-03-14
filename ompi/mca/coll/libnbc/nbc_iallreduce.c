@@ -9,7 +9,7 @@
  *                         reserved.
  * Copyright (c) 2014-2018 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
- * Copyright (c) 2017      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2017-2022 IBM Corporation.  All rights reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -366,7 +366,7 @@ static inline int allred_sched_diss(int rank, int p, int count, MPI_Datatype dat
 
   root = 0; /* this makes the code for ireduce and iallreduce nearly identical - could be changed to improve performance */
   RANK2VRANK(rank, vrank, root);
-  maxr = (int)ceil((log((double)p)/LOG2));
+  maxr = ceil_of_log2(p);
   /* ensure the result ends up in recvbuf on vrank 0 */
   if (0 == (maxr%2)) {
     rbuf = (void *)(-gap);
@@ -768,9 +768,9 @@ allred_sched_ring(int r, int p,
   /* first p-1 rounds are reductions */
   for (int round = 0 ; round < p - 1 ; ++round) {
     int selement = (r+1-round + 2*p /*2*p avoids negative mod*/)%p; /* the element I am sending */
-    int soffset = segoffsets[selement]*ext;
+    size_t soffset = segoffsets[selement]*(size_t)ext;
     int relement = (r-round + 2*p /*2*p avoids negative mod*/)%p; /* the element that I receive from my neighbor */
-    int roffset = segoffsets[relement]*ext;
+    size_t roffset = segoffsets[relement]*(size_t)ext;
 
     /* first message come out of sendbuf */
     if (round == 0) {
@@ -807,9 +807,9 @@ allred_sched_ring(int r, int p,
   }
   for (int round = p - 1 ; round < 2 * p - 2 ; ++round) {
     int selement = (r+1-round + 2*p /*2*p avoids negative mod*/)%p; /* the element I am sending */
-    int soffset = segoffsets[selement]*ext;
+    size_t soffset = segoffsets[selement]*(size_t)ext;
     int relement = (r-round + 2*p /*2*p avoids negative mod*/)%p; /* the element that I receive from my neighbor */
-    int roffset = segoffsets[relement]*ext;
+    size_t roffset = segoffsets[relement]*(size_t)ext;
 
     res = NBC_Sched_send ((char *) recvbuf + soffset, false, segsizes[selement], datatype, speer,
                           schedule, false);
@@ -1079,7 +1079,7 @@ static inline int allred_sched_redscat_allgather(
         sindex[0] = rindex[0] = 0;
          for (int mask = 1; mask < nprocs_pof2; mask <<= 1) {
             /*
-             * On each iteration: rindex[step] = sindex[step] -- begining of the
+             * On each iteration: rindex[step] = sindex[step] -- beginning of the
              * current window. Length of the current window is storded in wsize.
              */
             int vdest = vrank ^ mask;

@@ -110,7 +110,7 @@ do {                                                                    \
     } else {                                                            \
         ompi_proc = ompi_comm_peer_lookup( comm, src );                 \
     }                                                                   \
-    MCA_PML_CM_SWITCH_CUDA_CONVERTOR_OFF(flags, datatype, count);       \
+    MCA_PML_CM_SWITCH_ACCELERATOR_CONVERTOR_OFF(flags, datatype, count);       \
     opal_convertor_copy_and_prepare_for_recv(                           \
                                   ompi_proc->super.proc_convertor,      \
                                   &(datatype->super),                   \
@@ -138,7 +138,7 @@ do {                                                                    \
     OBJ_RETAIN(comm);                                                   \
     OMPI_DATATYPE_RETAIN(datatype);                                     \
                                                                         \
-    MCA_PML_CM_SWITCH_CUDA_CONVERTOR_OFF(flags, datatype, count);       \
+    MCA_PML_CM_SWITCH_ACCELERATOR_CONVERTOR_OFF(flags, datatype, count);       \
     opal_convertor_copy_and_prepare_for_recv(                           \
         ompi_mpi_local_convertor,                                       \
         &(datatype->super),                                             \
@@ -179,7 +179,7 @@ do {                                                                    \
     } else {                                                            \
         ompi_proc = ompi_comm_peer_lookup( comm, src );                 \
     }                                                                   \
-    MCA_PML_CM_SWITCH_CUDA_CONVERTOR_OFF(flags, datatype, count);       \
+    MCA_PML_CM_SWITCH_ACCELERATOR_CONVERTOR_OFF(flags, datatype, count);       \
     opal_convertor_copy_and_prepare_for_recv(                           \
                                   ompi_proc->super.proc_convertor,      \
                                   &(datatype->super),                   \
@@ -213,7 +213,7 @@ do {                                                                    \
     OBJ_RETAIN(comm);                                                   \
     OMPI_DATATYPE_RETAIN(datatype);                                     \
                                                                         \
-    MCA_PML_CM_SWITCH_CUDA_CONVERTOR_OFF(flags, datatype, count);       \
+    MCA_PML_CM_SWITCH_ACCELERATOR_CONVERTOR_OFF(flags, datatype, count);       \
     opal_convertor_copy_and_prepare_for_recv(                           \
         ompi_mpi_local_convertor,                                       \
         &(datatype->super),                                             \

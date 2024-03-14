@@ -21,7 +21,7 @@
 #include "oshmem/include/pshmem.h"
 #pragma weak shmem_align = pshmem_align
 #pragma weak shmemalign = pshmemalign
-#include "oshmem/shmem/c/profile/defines.h"
+#include "oshmem/shmem/c/profile-defines.h"
 #endif
 
 static inline void* _shmemalign(size_t align, size_t size);

@@ -3,6 +3,8 @@
 # Copyright (c) 2014      Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # Copyright (c) 2020      Intel, Inc.  All rights reserved.
+# Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
+#                         All Rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -44,6 +46,8 @@ AC_DEFUN([OMPI_SET_LIB_NAME],[
     AS_IF([test "$with_libmpi_name" = "" || test "$with_libmpi_name" = "yes"],
         [with_libmpi_name="mpi"])
 
-    AC_MSG_RESULT([$with_libmpi_name])
-    AC_SUBST(OMPI_LIBMPI_NAME, $with_libmpi_name)
+    OMPI_LIBMPI_NAME=${with_libmpi_name}
+
+    AC_MSG_RESULT([$OMPI_LIBMPI_NAME])
+    AC_SUBST(OMPI_LIBMPI_NAME)
 ])dnl

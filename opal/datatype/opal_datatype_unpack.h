@@ -8,6 +8,7 @@
  * Copyright (c) 2017-2018 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2020-2021 IBM Corporation. All rights reserved.
+ * Copyright (c) 2022      Advanced Micro Devices, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -21,8 +22,8 @@
 #include "opal_config.h"
 #include "opal/datatype/opal_datatype_pack_unpack_predefined.h"
 
-#if !defined(CHECKSUM) && OPAL_CUDA_SUPPORT
-/* Make use of existing macro to do CUDA style memcpy */
+#if !defined(CHECKSUM)
+/* Make use of existing macro to do device style memcpy */
 #    undef MEMCPY_CSUM
 #    define MEMCPY_CSUM(DST, SRC, BLENGTH, CONVERTOR) \
         CONVERTOR->cbmemcpy((DST), (SRC), (BLENGTH), (CONVERTOR))
@@ -102,7 +103,7 @@ static inline void unpack_predefined_data(opal_convertor_t *CONVERTOR, const dt_
     *(COUNT) -= cando_count;
 
     if (_elem->blocklen < 9) {
-        if ((!(CONVERTOR->flags & CONVERTOR_CUDA))
+        if (!(CONVERTOR->flags & CONVERTOR_ACCELERATOR)
             && OPAL_LIKELY(OPAL_SUCCESS
                            == opal_datatype_unpack_predefined_element(&_packed, &_memory,
                                                                       cando_count, _elem))) {

@@ -15,6 +15,7 @@
 # Copyright (c) 2010-2020 Cisco Systems, Inc.  All rights reserved
 # Copyright (c) 2017      Los Alamos National Security, LLC.  All rights
 #                         reserved.
+# Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -97,7 +98,7 @@ AC_DEFUN([_OPAL_BTL_USNIC_DO_CONFIG],[
 
     AS_IF([test "$opal_btl_usnic_happy" = "yes"],
           [ # The usnic BTL requires OFI libfabric support
-           OPAL_CHECK_OFI
+           OPAL_CHECK_OFI([btl_usnic])
            opal_btl_usnic_happy=$opal_ofi_happy])
 
     # The usnic BTL requires at least OFI libfabric v1.3.
@@ -109,12 +110,16 @@ AC_DEFUN([_OPAL_BTL_USNIC_DO_CONFIG],[
     # Make sure we can find the OFI libfabric usnic extensions header
     AS_IF([test "$opal_btl_usnic_happy" = "yes" ],
           [opal_btl_usnic_CPPFLAGS_save=$CPPFLAGS
-           CPPFLAGS="$opal_ofi_CPPFLAGS $CPPFLAGS"
+           CPPFLAGS="$btl_usnic_CPPFLAGS $CPPFLAGS"
            AC_CHECK_HEADER([rdma/fi_ext_usnic.h],
                             [],
                             [opal_btl_usnic_happy=no])
            CPPFLAGS=$opal_btl_usnic_CPPFLAGS_save
           ])
+
+    AC_SUBST([btl_usnic_CPPFLAGS])
+    AC_SUBST([btl_usnic_LDFLAGS])
+    AC_SUBST([btl_usnic_LIBS])
 
     # All done
     AS_IF([test "$opal_btl_usnic_happy" = "yes"],
@@ -125,6 +130,6 @@ AC_DEFUN([_OPAL_BTL_USNIC_DO_CONFIG],[
                  [$2])
           ])
 
-    OPAL_SUMMARY_ADD([[Transports]],[[Cisco usNIC]],[[btl_usnic]],[$opal_btl_usnic_happy])
+    OPAL_SUMMARY_ADD([Transports], [Cisco usNIC], [], [$opal_btl_usnic_happy])
     OPAL_VAR_SCOPE_POP
 ])dnl

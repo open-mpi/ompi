@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2021 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2021      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
@@ -24,6 +24,32 @@
 #include "ompi/request/grequest.h"
 #include "ompi/mpi/fortran/base/fint_2_int.h"
 
+/**
+ * Internal function to specialize the call to the user provided free_fn
+ * for generalized requests.
+ * @return The return value of the user specified callback or MPI_SUCCESS.
+ */
+static inline int ompi_grequest_internal_free(ompi_grequest_t* greq)
+{
+    int rc = MPI_SUCCESS;
+    if (NULL != greq->greq_free.c_free) {
+        /* We were already putting query_fn()'s return value into
+         * status.MPI_ERROR but for MPI_{Wait,Test}*.  If there's a
+         * free callback to invoke, the standard says to use the
+         * return value from free_fn() callback, too.
+         */
+        if (greq->greq_funcs_are_c) {
+            greq->greq_base.req_status.MPI_ERROR =
+                greq->greq_free.c_free(greq->greq_state);
+        } else {
+            MPI_Fint ierr;
+            greq->greq_free.f_free((MPI_Aint*)greq->greq_state, &ierr);
+            greq->greq_base.req_status.MPI_ERROR = OMPI_FINT_2_INT(ierr);
+        }
+        rc = greq->greq_base.req_status.MPI_ERROR;
+    }
+    return rc;
+ }
 
 /*
  * See the comment in the grequest destructor for the weird semantics
@@ -37,9 +63,21 @@
  */
 static int ompi_grequest_free(ompi_request_t** req)
 {
-    OBJ_RELEASE(*req);
-    *req = MPI_REQUEST_NULL;
-    return OMPI_SUCCESS;
+    ompi_grequest_t* greq = (ompi_grequest_t*)*req;
+    int rc = OMPI_SUCCESS;
+
+    if( greq->greq_user_freed ) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+    greq->greq_user_freed = true;
+    if( REQUEST_COMPLETE(*req) ) {
+        rc = ompi_grequest_internal_free(greq);
+    }
+    if (OMPI_SUCCESS == rc ) {
+        OBJ_RELEASE(*req);
+        *req = MPI_REQUEST_NULL;
+    }
+    return rc;
 }
 
 static int ompi_grequest_cancel(ompi_request_t* req, int flag)
@@ -72,6 +110,7 @@ static void ompi_grequest_construct(ompi_grequest_t* greq)
        override this value if the gen request was created from
        Fortran */
     greq->greq_funcs_are_c = true;
+    greq->greq_user_freed = false;
 }
 
 /*
@@ -86,7 +125,7 @@ static void ompi_grequest_construct(ompi_grequest_t* greq)
  *
  * 1. Call to MPI_GREQUEST_COMPLETE and then a corresponding call to
  * some flavor of MPI_TEST* or MPI_WAIT*.  This will both complete the
- * requests and destroy the coresponding MPI generalized request
+ * requests and destroy the corresponding MPI generalized request
  * object.
  *
  * 2. Call MPI_REQUEST_FREE and then (!) -- with some other
@@ -111,7 +150,7 @@ static void ompi_grequest_construct(ompi_grequest_t* greq)
  * TEST* / WAIT* notified the user as such, and this function is also
  * invoked by REQUEST_FREE).  Hence, these two functions will *always*
  * be invoked, but the order in which they are invoked is up to the
- * user.  So this is a perfect opprotunity for the OBJ_* reference
+ * user.  So this is a perfect opportunity for the OBJ_* reference
  * count system.  When we create an ompi_grequest_t in
  * ompi_grequest_start(), we both OBJ_NEW and OBJ_RETAIN it so that
  * its reference count goes to 0.  Then in ompi_grequest_complete()
@@ -122,24 +161,6 @@ static void ompi_grequest_construct(ompi_grequest_t* greq)
  */
 static void ompi_grequest_destruct(ompi_grequest_t* greq)
 {
-    int rc;
-    MPI_Fint ierr;
-
-    if (greq->greq_free.c_free != NULL) {
-        if (greq->greq_funcs_are_c) {
-            rc = greq->greq_free.c_free(greq->greq_state);
-        } else {
-            greq->greq_free.f_free((MPI_Aint*)greq->greq_state, &ierr);
-            rc = OMPI_FINT_2_INT(ierr);
-        }
-    }
-
-    /* We were already putting query_fn()'s return value into
-     * status.MPI_ERROR but for MPI_{Wait,Test}* the standard
-     * says use the free_fn() callback too.
-     */
-    greq->greq_base.req_status.MPI_ERROR = rc;
-
     OMPI_REQUEST_FINI(&greq->greq_base);
 }
 
@@ -189,9 +210,13 @@ int ompi_grequest_start(
  */
 int ompi_grequest_complete(ompi_request_t *req)
 {
+    ompi_grequest_t* greq = (ompi_grequest_t*)req;
     int rc;
 
     rc = ompi_request_complete(req, true);
+    if( greq->greq_user_freed ) {
+        rc = ompi_grequest_internal_free(greq);
+    }
     OBJ_RELEASE(req);
     return rc;
 }

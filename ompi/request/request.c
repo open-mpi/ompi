@@ -18,6 +18,9 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
+ * Copyright (c) 2022      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -32,11 +35,17 @@
 #include "ompi/request/request.h"
 #include "ompi/request/request_default.h"
 #include "ompi/constants.h"
+#if MPI_VERSION >= 4
+#include "ompi/mca/pml/base/pml_base_sendreq.h"
+#endif
 
 opal_pointer_array_t             ompi_request_f_to_c_table = {{0}};
 ompi_predefined_request_t        ompi_request_null = {{{{{0}}}}};
 ompi_predefined_request_t        *ompi_request_null_addr = &ompi_request_null;
 ompi_request_t                   ompi_request_empty = {{{{0}}}};
+#if MPI_VERSION >= 4
+ompi_request_t                   ompi_request_empty_send = {{{{0}}}};
+#endif
 ompi_status_public_t             ompi_status_empty = {0};
 ompi_request_fns_t               ompi_request_functions = {
     ompi_request_default_test,
@@ -104,6 +113,16 @@ OBJ_CLASS_INSTANCE(
     ompi_request_destruct);
 
 
+static int ompi_request_finalize (void)
+{
+    OMPI_REQUEST_FINI( &ompi_request_null.request );
+    OBJ_DESTRUCT( &ompi_request_null.request );
+    OMPI_REQUEST_FINI( &ompi_request_empty );
+    OBJ_DESTRUCT( &ompi_request_empty );
+    OBJ_DESTRUCT( &ompi_request_f_to_c_table );
+    return OMPI_SUCCESS;
+}
+
 int ompi_request_init(void)
 {
 
@@ -167,26 +186,46 @@ int ompi_request_init(void)
         return OMPI_ERR_REQUEST;
     }
 
+#if MPI_VERSION >= 4
+    /*
+     * This is a copy of the ompi_request_empty object where the only difference
+     * is that the req_cancel callback is set to a callback which issues a
+     * message that calling MPI_Cancel on a non-blocking send request is
+     * deprecated.
+     */
+    OBJ_CONSTRUCT(&ompi_request_empty_send, ompi_request_t);
+    ompi_request_empty_send.req_type = OMPI_REQUEST_NULL;
+    ompi_request_empty_send.req_status.MPI_SOURCE = MPI_PROC_NULL;
+    ompi_request_empty_send.req_status.MPI_TAG = MPI_ANY_TAG;
+    ompi_request_empty_send.req_status.MPI_ERROR = MPI_SUCCESS;
+    ompi_request_empty_send.req_status._ucount = 0;
+    ompi_request_empty_send.req_status._cancelled = 0;
+
+    ompi_request_empty_send.req_complete = REQUEST_COMPLETED;
+    ompi_request_empty_send.req_state = OMPI_REQUEST_ACTIVE;
+    ompi_request_empty_send.req_persistent = false;
+    ompi_request_empty_send.req_f_to_c_index =
+        opal_pointer_array_add(&ompi_request_f_to_c_table, &ompi_request_empty_send);
+    ompi_request_empty_send.req_start = NULL; /* should not be called */
+    ompi_request_empty_send.req_free = ompi_request_empty_free;
+    ompi_request_empty_send.req_cancel = mca_pml_cancel_send_callback;
+    ompi_request_empty_send.req_mpi_object.comm = &ompi_mpi_comm_world.comm;
+
+    if (2 != ompi_request_empty_send.req_f_to_c_index) {
+        return OMPI_ERR_REQUEST;
+    }
+#endif
+
     ompi_status_empty.MPI_SOURCE = MPI_ANY_SOURCE;
     ompi_status_empty.MPI_TAG = MPI_ANY_TAG;
     ompi_status_empty.MPI_ERROR = MPI_SUCCESS;
     ompi_status_empty._ucount = 0;
     ompi_status_empty._cancelled = 0;
 
+    ompi_mpi_instance_append_finalize (ompi_request_finalize);
+
     return OMPI_SUCCESS;
 }
-
-
-int ompi_request_finalize(void)
-{
-    OMPI_REQUEST_FINI( &ompi_request_null.request );
-    OBJ_DESTRUCT( &ompi_request_null.request );
-    OMPI_REQUEST_FINI( &ompi_request_empty );
-    OBJ_DESTRUCT( &ompi_request_empty );
-    OBJ_DESTRUCT( &ompi_request_f_to_c_table );
-    return OMPI_SUCCESS;
-}
-
 
 int ompi_request_persistent_noop_create(ompi_request_t** request)
 {

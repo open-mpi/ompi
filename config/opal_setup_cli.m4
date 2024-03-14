@@ -26,7 +26,7 @@ AC_DEFUN([OPAL_CAPTURE_CONFIGURE_CLI],[
         sed_quote_subst='s/\(@<:@`"\\@:>@\)/\\\1/g'
         case "$arg" in
           *@<:@\\\`\"\$[]@:>@*)
-	    quoted_arg=\'`echo "$arg" | sed $sed_quote_subst`\' ;;
+            quoted_arg=\'`echo "$arg" | sed $sed_quote_subst`\' ;;
           *)
             quoted_arg="\'$arg\'" ;;
         esac

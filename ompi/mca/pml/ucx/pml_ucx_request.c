@@ -3,6 +3,7 @@
  * Copyright (c) 2016      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2022      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -14,6 +15,7 @@
 #include "ompi/mca/pml/base/pml_base_bsend.h"
 #include "ompi/message/message.h"
 #include "ompi/runtime/ompi_spc.h"
+#include "ompi/request/request.h"
 #include <inttypes.h>
 
 
@@ -29,11 +31,19 @@ static int mca_pml_ucx_request_free(ompi_request_t **rptr)
     return OMPI_SUCCESS;
 }
 
-static int mca_pml_ucx_request_cancel(ompi_request_t *req, int flag)
+int mca_pml_ucx_request_cancel(ompi_request_t *req, int flag)
 {
     ucp_request_cancel(ompi_pml_ucx.ucp_worker, req);
     return OMPI_SUCCESS;
 }
+
+#if MPI_VERSION >= 4
+int mca_pml_ucx_request_cancel_send(ompi_request_t *req, int flag)
+{
+    mca_pml_cancel_send_callback(req, flag);
+    return mca_pml_ucx_request_cancel(req, flag);
+}
+#endif
 
 __opal_attribute_always_inline__ static inline void
 mca_pml_ucx_send_completion_internal(void *request, ucs_status_t status)
@@ -83,6 +93,11 @@ mca_pml_ucx_recv_completion_internal(void *request, ucs_status_t status,
 void mca_pml_ucx_send_completion(void *request, ucs_status_t status)
 {
     mca_pml_ucx_send_completion_internal(request, status);
+}
+
+void mca_pml_ucx_send_completion_empty(void *request, ucs_status_t status)
+{
+    /* empty */
 }
 
 void mca_pml_ucx_bsend_completion(void *request, ucs_status_t status)
@@ -181,10 +196,10 @@ static void mca_pml_ucx_request_init_common(ompi_request_t* ompi_req,
     ompi_req->req_start            = mca_pml_ucx_start;
     ompi_req->req_free             = req_free;
     ompi_req->req_cancel           = req_cancel;
-    /* This field is used to attach persistant request to a temporary req.
+    /* This field is used to attach persistent request to a temporary req.
      * Receive (ucp_tag_recv_nb) may call completion callback
      * before the field is set. If the field is not NULL then mca_pml_ucx_preq_completion() 
-     * will try to complete bogus persistant request.
+     * will try to complete bogus persistent request.
      */ 
     ompi_req->req_complete_cb_data = NULL;
 }

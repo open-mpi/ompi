@@ -36,7 +36,7 @@
 
 /*
  * Merge two environ-like char arrays, ensuring that there are no
- * duplicate entires
+ * duplicate entries
  */
 char **opal_environ_merge(char **minor, char **major)
 {

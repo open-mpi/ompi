@@ -365,8 +365,8 @@ int32_t ompi_datatype_copy_args( const ompi_datatype_t* source_data,
 {
     ompi_datatype_args_t* pArgs = (ompi_datatype_args_t*)source_data->args;
 
-    /* Increase the reference count of the datatype enveloppe. This
-     * prevent us from making extra copies for the enveloppe (which is mostly
+    /* Increase the reference count of the datatype envelope. This
+     * prevent us from making extra copies for the envelope (which is mostly
      * a read only memory).
      */
     if( NULL != pArgs ) {
@@ -391,7 +391,7 @@ int32_t ompi_datatype_release_args( ompi_datatype_t* pData )
     OPAL_THREAD_ADD_FETCH32(&pArgs->ref_count, -1);
     if( 0 == pArgs->ref_count ) {
         /* There are some duplicated datatypes around that have a pointer to this
-         * args. We will release them only when the last datatype will dissapear.
+         * args. We will release them only when the last datatype will disappear.
          */
         for( i = 0; i < pArgs->cd; i++ ) {
             if( !(ompi_datatype_is_predefined(pArgs->d[i])) ) {
@@ -448,7 +448,7 @@ static inline int __ompi_datatype_pack_description( ompi_datatype_t* datatype,
     position = (int*)next_packed;
     next_packed += sizeof(int) * args->cd;
 
-    /* copy the aray of counts (32 bits aligned) */
+    /* copy the array of counts (32 bits aligned) */
     memcpy( next_packed, args->i, sizeof(int) * args->ci );
     next_packed += args->ci * sizeof(int);
 
@@ -831,9 +831,7 @@ ompi_datatype_t* ompi_datatype_get_single_predefined_type_from_args( ompi_dataty
                 return NULL;
             }
         }
-#if OMPI_ENABLE_MPI1_COMPAT
         if (current_predef != MPI_LB && current_predef != MPI_UB) {
-#endif
             if( NULL == predef ) {  /* This is the first iteration */
                 predef = current_predef;
             } else {
@@ -847,9 +845,7 @@ ompi_datatype_t* ompi_datatype_get_single_predefined_type_from_args( ompi_dataty
                     return NULL;
                 }
             }
-#if OMPI_ENABLE_MPI1_COMPAT
         }
-#endif
     }
     return predef;
 }

@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2021 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2022 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2012      Los Alamos National Security, LLC.  All rights reserved.
 # Copyright (c) 2013      Intel, Inc. All rights reserved.
 # Copyright (c) 2014      Research Organization for Information Science
@@ -21,26 +21,6 @@
 #
 # $HEADER$
 #
-
-include $(top_srcdir)/Makefile.ompi-rules
-
-generated_man_pages = mpicc.1
-
-if OMPI_HAVE_CXX_COMPILER
-generated_man_pages += mpic++.1 mpicxx.1
-endif
-
-if OMPI_HAVE_FORTRAN_COMPILER
-generated_man_pages += mpifort.1 mpif77.1 mpif90.1
-endif
-
-if OMPI_WANT_JAVA_BINDINGS
-generated_man_pages += mpijavac.1
-endif
-
-man_pages = $(generated_man_pages)
-
-EXTRA_DIST = mpif77.1in mpijavac.1in mpijavac.pl.in
 
 if OPAL_WANT_SCRIPT_WRAPPER_COMPILERS
 
@@ -105,8 +85,6 @@ if OMPI_WANT_JAVA_BINDINGS
 bin_SCRIPTS = mpijavac.pl
 endif
 
-man_MANS = $(man_pages)
-
 nodist_ompidata_DATA = mpicc-wrapper-data.txt
 
 if OMPI_HAVE_CXX_COMPILER
@@ -167,11 +145,9 @@ install-exec-hook: install-exec-hook-always
 
 install-data-hook: install-data-hook-always
 	(cd $(DESTDIR)$(pkgdatadir); rm -f mpiCC-wrapper-data.txt; $(LN_S) mpic++-wrapper-data.txt mpiCC-wrapper-data.txt)
-	(cd $(DESTDIR)$(mandir)/man1; rm -f mpiCC.1; $(LN_S) mpic++.1 mpiCC.1)
 
 uninstall-local: uninstall-local-always
 	rm -f $(DESTDIR)$(bindir)/mpiCC$(EXEEXT) \
-	$(DESTDIR)$(mandir)/man1/mpiCC.1 \
 	$(DESTDIR)$(pkgdatadir)/mpiCC-wrapper-data.txt
 
 else # CASE_SENSITIVE_FS
@@ -184,51 +160,3 @@ endif # CASE_SENSITIVE_FS
 endif # OPAL_INSTALL_BINARIES
 
 endif # OPAL_WANT_SCRIPT_WRAPPER_COMPILERS
-
-
-########################################################
-#
-# Man page generation / handling
-#
-########################################################
-distclean-local:
-	rm -f $(generated_man_pages)
-
-$(top_builddir)/opal/tools/wrappers/generic_wrapper.1:
-	(cd $(top_builddir)/opal/tools/wrappers && $(MAKE) $(AM_MAKEFLAGS) generic_wrapper.1)
-
-mpicc.1: $(top_builddir)/opal/tools/wrappers/generic_wrapper.1
-	rm -f mpicc.1
-	sed -e 's/#COMMAND#/mpicc/g' -e 's/#PROJECT#/Open MPI/g' -e 's/#PROJECT_SHORT#/OMPI/g' -e 's/#LANGUAGE#/C/g' < $(top_builddir)/opal/tools/wrappers/generic_wrapper.1 > mpicc.1
-
-if OMPI_HAVE_CXX_COMPILER
-mpic++.1: $(top_builddir)/opal/tools/wrappers/generic_wrapper.1
-	rm -f mpic++.1
-	sed -e 's/#COMMAND#/mpic++/g' -e 's/#PROJECT#/Open MPI/g' -e 's/#PROJECT_SHORT#/OMPI/g' -e 's/#LANGUAGE#/C++/g' < $(top_builddir)/opal/tools/wrappers/generic_wrapper.1 > mpic++.1
-
-mpicxx.1: $(top_builddir)/opal/tools/wrappers/generic_wrapper.1
-	rm -f mpicxx.1
-	sed -e 's/#COMMAND#/mpicxx/g' -e 's/#PROJECT#/Open MPI/g' -e 's/#PROJECT_SHORT#/OMPI/g' -e 's/#LANGUAGE#/C++/g' < $(top_builddir)/opal/tools/wrappers/generic_wrapper.1 > mpicxx.1
-endif
-
-if OMPI_HAVE_FORTRAN_COMPILER
-mpifort.1: $(top_builddir)/opal/tools/wrappers/generic_wrapper.1
-	rm -f mpifort.1
-	sed -e 's/#COMMAND#/mpifort/g' -e 's/#PROJECT#/Open MPI/g' -e 's/#PROJECT_SHORT#/OMPI/g' -e 's/#LANGUAGE#/Fortran/g' < $(top_builddir)/opal/tools/wrappers/generic_wrapper.1 > mpifort.1
-
-# Deprecated
-mpif77.1: mpif77.1in
-	rm -f mpif77.1
-	sed -e 's/#PROJECT#/Open MPI/g' \
-	    -e 's/#PROJECT_SHORT#/OMPI/g' \
-	    -e 's/#LANGUAGE#/Fortran/g' \
-	    -e 's/#PACKAGE_NAME#/@PACKAGE_NAME@/g' \
-	    -e 's/#PACKAGE_VERSION#/@PACKAGE_VERSION@/g' \
-	    -e 's/#OMPI_DATE#/@OMPI_RELEASE_DATE@/g' \
-	    < $(top_srcdir)/ompi/tools/wrappers/mpif77.1in > mpif77.1
-
-# Deprecated
-mpif90.1: mpif77.1
-	@ rm -f mpif90.1
-	$(OMPI_V_LN_S) $(LN_S) mpif77.1 mpif90.1
-endif

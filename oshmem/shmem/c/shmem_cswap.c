@@ -71,6 +71,12 @@
 #pragma weak shmem_ctx_int_atomic_compare_swap = pshmem_ctx_int_atomic_compare_swap
 #pragma weak shmem_ctx_long_atomic_compare_swap = pshmem_ctx_long_atomic_compare_swap
 #pragma weak shmem_ctx_longlong_atomic_compare_swap = pshmem_ctx_longlong_atomic_compare_swap
+#pragma weak shmem_ctx_int32_atomic_compare_swap   	= pshmem_ctx_int32_atomic_compare_swap
+#pragma weak shmem_ctx_int64_atomic_compare_swap   	= pshmem_ctx_int64_atomic_compare_swap
+#pragma weak shmem_ctx_uint32_atomic_compare_swap   	= pshmem_ctx_uint32_atomic_compare_swap
+#pragma weak shmem_ctx_uint64_atomic_compare_swap   	= pshmem_ctx_uint64_atomic_compare_swap
+#pragma weak shmem_ctx_size_atomic_compare_swap   	= pshmem_ctx_size_atomic_compare_swap
+#pragma weak shmem_ctx_ptrdiff_atomic_compare_swap   	= pshmem_ctx_ptrdiff_atomic_compare_swap
 
 #pragma weak shmem_int_atomic_compare_swap = pshmem_int_atomic_compare_swap
 #pragma weak shmem_long_atomic_compare_swap = pshmem_long_atomic_compare_swap
@@ -78,6 +84,12 @@
 #pragma weak shmem_uint_atomic_compare_swap = pshmem_uint_atomic_compare_swap
 #pragma weak shmem_ulong_atomic_compare_swap = pshmem_ulong_atomic_compare_swap
 #pragma weak shmem_ulonglong_atomic_compare_swap = pshmem_ulonglong_atomic_compare_swap
+#pragma weak shmem_int32_atomic_compare_swap   	= pshmem_int32_atomic_compare_swap
+#pragma weak shmem_int64_atomic_compare_swap   	= pshmem_int64_atomic_compare_swap
+#pragma weak shmem_uint32_atomic_compare_swap   	= pshmem_uint32_atomic_compare_swap
+#pragma weak shmem_uint64_atomic_compare_swap   	= pshmem_uint64_atomic_compare_swap
+#pragma weak shmem_size_atomic_compare_swap    	= pshmem_size_atomic_compare_swap
+#pragma weak shmem_ptrdiff_atomic_compare_swap   	= pshmem_ptrdiff_atomic_compare_swap
 
 #pragma weak shmem_int_cswap = pshmem_int_cswap
 #pragma weak shmem_long_cswap = pshmem_long_cswap
@@ -85,7 +97,8 @@
 
 #pragma weak shmemx_int32_cswap = pshmemx_int32_cswap
 #pragma weak shmemx_int64_cswap = pshmemx_int64_cswap
-#include "oshmem/shmem/c/profile/defines.h"
+
+#include "oshmem/shmem/c/profile-defines.h"
 #endif
 
 SHMEM_CTX_TYPE_ATOMIC_COMPARE_SWAP(_int, int, shmem)
@@ -94,12 +107,24 @@ SHMEM_CTX_TYPE_ATOMIC_COMPARE_SWAP(_longlong, long long, shmem)
 SHMEM_CTX_TYPE_ATOMIC_COMPARE_SWAP(_uint, unsigned int, shmem)
 SHMEM_CTX_TYPE_ATOMIC_COMPARE_SWAP(_ulong, unsigned long, shmem)
 SHMEM_CTX_TYPE_ATOMIC_COMPARE_SWAP(_ulonglong, unsigned long long, shmem)
+SHMEM_CTX_TYPE_ATOMIC_COMPARE_SWAP(_int32, int32_t, shmem)
+SHMEM_CTX_TYPE_ATOMIC_COMPARE_SWAP(_int64, int64_t, shmem)
+SHMEM_CTX_TYPE_ATOMIC_COMPARE_SWAP(_uint32, uint32_t, shmem)
+SHMEM_CTX_TYPE_ATOMIC_COMPARE_SWAP(_uint64, uint64_t, shmem)
+SHMEM_CTX_TYPE_ATOMIC_COMPARE_SWAP(_size, size_t, shmem)
+SHMEM_CTX_TYPE_ATOMIC_COMPARE_SWAP(_ptrdiff, ptrdiff_t, shmem)
 SHMEM_TYPE_ATOMIC_COMPARE_SWAP(_int, int, shmem)
 SHMEM_TYPE_ATOMIC_COMPARE_SWAP(_long, long, shmem)
 SHMEM_TYPE_ATOMIC_COMPARE_SWAP(_longlong, long long, shmem)
 SHMEM_TYPE_ATOMIC_COMPARE_SWAP(_uint, unsigned int, shmem)
 SHMEM_TYPE_ATOMIC_COMPARE_SWAP(_ulong, unsigned long, shmem)
 SHMEM_TYPE_ATOMIC_COMPARE_SWAP(_ulonglong, unsigned long long, shmem)
+SHMEM_TYPE_ATOMIC_COMPARE_SWAP(_int32, int32_t, shmem)
+SHMEM_TYPE_ATOMIC_COMPARE_SWAP(_int64, int64_t, shmem)
+SHMEM_TYPE_ATOMIC_COMPARE_SWAP(_uint32, uint32_t, shmem)
+SHMEM_TYPE_ATOMIC_COMPARE_SWAP(_uint64, uint64_t, shmem)
+SHMEM_TYPE_ATOMIC_COMPARE_SWAP(_size, size_t, shmem)
+SHMEM_TYPE_ATOMIC_COMPARE_SWAP(_ptrdiff, ptrdiff_t, shmem)
 
 /* deprecated APIs */
 #define SHMEM_TYPE_CSWAP(type_name, type, prefix)                   \

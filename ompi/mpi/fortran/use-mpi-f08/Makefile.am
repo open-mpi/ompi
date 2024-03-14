@@ -11,9 +11,10 @@
 #                         and Technology (RIST).  All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # Copyright (c) 2017-2018 FUJITSU LIMITED.  All rights reserved.
-# Copyright (c) 2019      Triad National Security, LLC. All rights
+# Copyright (c) 2019-2022 Triad National Security, LLC. All rights
 #                         reserved.
 # Copyright (c) 2020      Sandia National Laboratories. All rights reserved.
+# Copyright (c) 2022      IBM Corporation.  All rights reserved.
 #
 # $COPYRIGHT$
 #
@@ -79,7 +80,9 @@ sizeof_f08.h:
 	    --iso_real16=$(OMPI_FORTRAN_HAVE_ISO_FORTRAN_ENV_REAL16) \
 	    --real16=$(OMPI_HAVE_FORTRAN_REAL16) \
 	    --complex4=$(OMPI_HAVE_FORTRAN_COMPLEX4) \
-	    --complex32=$(OMPI_HAVE_FORTRAN_COMPLEX32)
+	    --complex32=$(OMPI_HAVE_FORTRAN_COMPLEX32) \
+	    --mpi_version=$(MPI_VERSION) \
+	    --request_deprecate=$(OMPI_FORTRAN_HAVE_ATTR_DEPRECATED)
 
 sizeof_f08.f90: $(top_builddir)/config.status
 sizeof_f08.f90: $(sizeof_pl)
@@ -154,6 +157,7 @@ mpi_api_files = \
         comm_connect_f08.F90 \
         comm_create_errhandler_f08.F90 \
         comm_create_f08.F90 \
+        comm_create_from_group_f08.F90 \
         comm_create_group_f08.F90 \
         comm_create_keyval_f08.F90 \
         comm_delete_attr_f08.F90 \
@@ -161,6 +165,7 @@ mpi_api_files = \
         comm_dup_f08.F90 \
         comm_dup_with_info_f08.F90 \
         comm_idup_f08.F90 \
+        comm_idup_with_info_f08.F90 \
         comm_free_f08.F90 \
         comm_free_keyval_f08.F90 \
         comm_get_attr_f08.F90 \
@@ -283,6 +288,7 @@ mpi_api_files = \
         group_difference_f08.F90 \
         group_excl_f08.F90 \
         group_free_f08.F90 \
+        group_from_session_pset_f08.F90 \
         group_incl_f08.F90 \
         group_intersection_f08.F90 \
         group_range_excl_f08.F90 \
@@ -311,6 +317,7 @@ mpi_api_files = \
         ineighbor_alltoallv_f08.F90 \
         ineighbor_alltoallw_f08.F90 \
         info_create_f08.F90 \
+        info_create_env_f08.F90 \
         info_delete_f08.F90 \
         info_dup_f08.F90 \
         info_free_f08.F90 \
@@ -318,11 +325,13 @@ mpi_api_files = \
         info_get_nkeys_f08.F90 \
         info_get_nthkey_f08.F90 \
         info_get_valuelen_f08.F90 \
+        info_get_string_f08.F90 \
         info_set_f08.F90 \
         init_f08.F90 \
         initialized_f08.F90 \
         init_thread_f08.F90 \
         intercomm_create_f08.F90 \
+        intercomm_create_from_groups_f08.F90 \
         intercomm_merge_f08.F90 \
         iprobe_f08.F90 \
         irecv_f08.F90 \
@@ -334,6 +343,8 @@ mpi_api_files = \
         iscatter_f08.F90 \
         iscatterv_f08.F90 \
         isend_f08.F90 \
+        isendrecv_f08.F90 \
+        isendrecv_replace_f08.F90 \
         issend_f08.F90 \
         is_thread_main_f08.F90 \
         lookup_name_f08.F90 \
@@ -396,6 +407,16 @@ mpi_api_files = \
         send_init_f08.F90 \
         sendrecv_f08.F90 \
         sendrecv_replace_f08.F90 \
+        session_call_errhandler_f08.F90\
+        session_create_errhandler_f08.F90\
+        session_get_errhandler_f08.F90\
+	session_get_info_f08.F90 \
+	session_get_nth_pset_f08.F90 \
+	session_get_num_psets_f08.F90 \
+	session_get_pset_info_f08.F90 \
+	session_init_f08.F90 \
+	session_finalize_f08.F90 \
+        session_set_errhandler_f08.F90\
         ssend_f08.F90 \
         ssend_init_f08.F90 \
         startall_f08.F90 \

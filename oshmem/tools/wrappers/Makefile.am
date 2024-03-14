@@ -12,10 +12,7 @@
 
 include $(top_srcdir)/Makefile.ompi-rules
 
-man_pages = oshcc.1 shmemcc.1 oshc++.1 shmemc++.1 oshcxx.1 shmemcxx.1 oshfort.1 shmemfort.1
-
 if PROJECT_OSHMEM
-man_MANS = $(man_pages)
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = oshmem.pc oshmem-c.pc oshmem-cxx.pc oshmem-fort.pc
@@ -84,23 +81,11 @@ install-data-cs: mk_pkgdatadir
 
 uninstall-local-cs:
 	rm -f $(DESTDIR)$(bindir)/shmemCC$(EXEEXT) \
-	$(DESTDIR)$(mandir)/man1/shmemCC.1 \
 	$(DESTDIR)$(pkgdatadir)/shmemCC-wrapper-data.txt
 	rm -f $(DESTDIR)$(bindir)/oshCC$(EXEEXT) \
-	$(DESTDIR)$(mandir)/man1/oshCC.1 \
 	$(DESTDIR)$(pkgdatadir)/oshCC-wrapper-data.txt
 
-oshCC.1: $(top_builddir)/opal/tools/wrappers/generic_wrapper.1
-	rm -f oshCC.1
-	sed -e 's/#COMMAND#/oshCC/g' -e 's/#PROJECT#/Open SHMEM/g' -e 's/#PROJECT_SHORT#/OSHMEM/g' -e 's/#LANGUAGE#/C++/g' < $(top_builddir)/opal/tools/wrappers/generic_wrapper.1 > oshCC.1
-
-shmemCC.1: $(top_builddir)/opal/tools/wrappers/generic_wrapper.1
-	rm -f shmemCC.1
-	sed -e 's/#COMMAND#/shmemCC/g' -e 's/#PROJECT#/Open SHMEM/g' -e 's/#PROJECT_SHORT#/OSHMEM/g' -e 's/#LANGUAGE#/C++/g' < $(top_builddir)/opal/tools/wrappers/generic_wrapper.1 > shmemCC.1
-
 if CASE_SENSITIVE_FS
-man_MANS += oshCC.1 shmemCC.1
-
 targets_install_exec += install-exec-cs
 
 targets_install_data += install-data-cs
@@ -111,49 +96,5 @@ endif # CASE_SENSITIVE_FS
 install-exec-hook: $(targets_install_exec)
 install-data-hook: $(targets_install_data)
 uninstall-local: $(targets_uninstall_local)
-
-
-########################################################
-#
-# Man page generation / handling
-#
-########################################################
-distclean-local:
-	rm -f $(man_MANS)
-
-$(top_builddir)/opal/tools/wrappers/generic_wrapper.1:
-	(cd $(top_builddir)/opal/tools/wrappers && $(MAKE) $(AM_MAKEFLAGS) generic_wrapper.1)
-
-oshcc.1: $(top_builddir)/opal/tools/wrappers/generic_wrapper.1
-	rm -f oshcc.1
-	sed -e 's/#COMMAND#/oshcc/g' -e 's/#PROJECT#/Open SHMEM/g' -e 's/#PROJECT_SHORT#/OSHMEM/g' -e 's/#LANGUAGE#/C/g' < $(top_builddir)/opal/tools/wrappers/generic_wrapper.1 > oshcc.1
-
-shmemcc.1: $(top_builddir)/opal/tools/wrappers/generic_wrapper.1
-	rm -f shmemcc.1
-	sed -e 's/#COMMAND#/shmemcc/g' -e 's/#PROJECT#/Open SHMEM/g' -e 's/#PROJECT_SHORT#/OSHMEM/g' -e 's/#LANGUAGE#/C/g' < $(top_builddir)/opal/tools/wrappers/generic_wrapper.1 > shmemcc.1
-
-oshc++.1: $(top_builddir)/opal/tools/wrappers/generic_wrapper.1
-	rm -f oshc++.1
-	sed -e 's/#COMMAND#/oshc++/g' -e 's/#PROJECT#/Open SHMEM/g' -e 's/#PROJECT_SHORT#/OSHMEM/g' -e 's/#LANGUAGE#/C++/g' < $(top_builddir)/opal/tools/wrappers/generic_wrapper.1 > oshc++.1
-
-shmemc++.1: $(top_builddir)/opal/tools/wrappers/generic_wrapper.1
-	rm -f shmemc++.1
-	sed -e 's/#COMMAND#/shmemc++/g' -e 's/#PROJECT#/Open SHMEM/g' -e 's/#PROJECT_SHORT#/OSHMEM/g' -e 's/#LANGUAGE#/C++/g' < $(top_builddir)/opal/tools/wrappers/generic_wrapper.1 > shmemc++.1
-
-oshcxx.1: $(top_builddir)/opal/tools/wrappers/generic_wrapper.1
-	rm -f oshcxx.1
-	sed -e 's/#COMMAND#/oshcxx/g' -e 's/#PROJECT#/Open SHMEM/g' -e 's/#PROJECT_SHORT#/OSHMEM/g' -e 's/#LANGUAGE#/C++/g' < $(top_builddir)/opal/tools/wrappers/generic_wrapper.1 > oshcxx.1
-
-shmemcxx.1: $(top_builddir)/opal/tools/wrappers/generic_wrapper.1
-	rm -f shmemcxx.1
-	sed -e 's/#COMMAND#/shmemcxx/g' -e 's/#PROJECT#/Open SHMEM/g' -e 's/#PROJECT_SHORT#/OSHMEM/g' -e 's/#LANGUAGE#/C++/g' < $(top_builddir)/opal/tools/wrappers/generic_wrapper.1 > shmemcxx.1
-
-oshfort.1: $(top_builddir)/opal/tools/wrappers/generic_wrapper.1
-	rm -f oshfort.1
-	sed -e 's/#COMMAND#/oshfort/g' -e 's/#PROJECT#/Open SHMEM/g' -e 's/#PROJECT_SHORT#/OSHMEM/g' -e 's/#LANGUAGE#/Fortran/g' < $(top_builddir)/opal/tools/wrappers/generic_wrapper.1 > oshfort.1
-
-shmemfort.1: $(top_builddir)/opal/tools/wrappers/generic_wrapper.1
-	rm -f shmemfort.1
-	sed -e 's/#COMMAND#/shmemfort/g' -e 's/#PROJECT#/Open SHMEM/g' -e 's/#PROJECT_SHORT#/OSHMEM/g' -e 's/#LANGUAGE#/Fortran/g' < $(top_builddir)/opal/tools/wrappers/generic_wrapper.1 > shmemfort.1
 
 endif # PROJECT_OSHMEM

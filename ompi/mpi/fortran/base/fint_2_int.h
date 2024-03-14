@@ -13,6 +13,7 @@
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2014-2019 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
+ * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -32,17 +33,17 @@
  */
 
 #if OMPI_SIZEOF_FORTRAN_INTEGER == SIZEOF_INT
-  #define OMPI_ARRAY_NAME_DECL(a)
-  #define OMPI_2_DIM_ARRAY_NAME_DECL(a, dim2)
+  #define OMPI_ARRAY_NAME_DECL(a) int *c_##a
+  #define OMPI_2_DIM_ARRAY_NAME_DECL(a, dim2) int (*c_##a)[dim2]
   #define OMPI_SINGLE_NAME_DECL(a)
-  #define OMPI_ARRAY_NAME_CONVERT(a) a
+  #define OMPI_ARRAY_NAME_CONVERT(a) c_##a
   #define OMPI_SINGLE_NAME_CONVERT(a) a
   #define OMPI_INT_2_FINT(a) a
   #define OMPI_FINT_2_INT(a) a
   #define OMPI_PFINT_2_PINT(a) a
-  #define OMPI_ARRAY_FINT_2_INT_ALLOC(in, n)
-  #define OMPI_ARRAY_FINT_2_INT(in, n)
-  #define OMPI_2_DIM_ARRAY_FINT_2_INT(in, n, dim2)
+  #define OMPI_ARRAY_FINT_2_INT_ALLOC(in, n) { OMPI_ARRAY_NAME_CONVERT(in) = in; }
+  #define OMPI_ARRAY_FINT_2_INT(in, n) { OMPI_ARRAY_NAME_CONVERT(in) = in; }
+  #define OMPI_2_DIM_ARRAY_FINT_2_INT(in, n, dim2) { OMPI_ARRAY_NAME_CONVERT(in) = in; }
   #define OMPI_ARRAY_FINT_2_INT_CLEANUP(in)
   #define OMPI_SINGLE_FINT_2_INT(in)
   #define OMPI_SINGLE_INT_2_FINT(in)
@@ -60,7 +61,7 @@
 
   /* This is for OUT parameters. Does only alloc */
   #define OMPI_ARRAY_FINT_2_INT_ALLOC(in, n) \
-    OMPI_ARRAY_NAME_CONVERT(in) = malloc(n * sizeof(int))
+    OMPI_ARRAY_NAME_CONVERT(in) = malloc((n) * sizeof(int))
 
   /* This is for IN/IN-OUT parameters. Does alloc and assignment */
   #define OMPI_ARRAY_FINT_2_INT(in, n) \
@@ -96,7 +97,7 @@
   #define OMPI_SINGLE_INT_2_FINT(in) \
     *(in) = OMPI_ARRAY_NAME_CONVERT(in)
 
-  /* This is for OUT/IN-OUT parametes. Does back assignment and free */
+  /* This is for OUT/IN-OUT parameters. Does back assignment and free */
   #define OMPI_ARRAY_INT_2_FINT(in, n) \
     do { \
       int converted_n = (int)(n); \
@@ -117,7 +118,7 @@
 
   /* This is for OUT parameters. Does only alloc */
   #define OMPI_ARRAY_FINT_2_INT_ALLOC(in, n) \
-    OMPI_ARRAY_NAME_CONVERT(in) = malloc(n * sizeof(int))
+    OMPI_ARRAY_NAME_CONVERT(in) = malloc((n) * sizeof(int))
 
   #define OMPI_ARRAY_FINT_2_INT(in, n) \
     do { \
@@ -204,7 +205,7 @@
 #  define OMPI_LOGICAL_ARRAY_NAME_DECL(in)     int * c_##in
 #  define OMPI_LOGICAL_ARRAY_NAME_CONVERT(in)  c_##in
 #  define OMPI_ARRAY_LOGICAL_2_INT_ALLOC(in,n) \
-      OMPI_LOGICAL_ARRAY_NAME_CONVERT(in) = malloc(n * sizeof(int))
+      OMPI_LOGICAL_ARRAY_NAME_CONVERT(in) = malloc((n) * sizeof(int))
 #  define OMPI_ARRAY_LOGICAL_2_INT_CLEANUP(in) \
       free(OMPI_LOGICAL_ARRAY_NAME_CONVERT(in))
 

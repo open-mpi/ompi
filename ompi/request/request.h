@@ -16,6 +16,9 @@
  * Copyright (c) 2015-2017 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
+ * Copyright (c) 2022      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -127,7 +130,7 @@ struct ompi_request_t {
     opal_free_list_item_t super;                /**< Base type */
     ompi_request_type_t req_type;               /**< Enum indicating the type of the request */
     ompi_status_public_t req_status;            /**< Completion status */
-    volatile void *req_complete;                /**< Flag indicating wether request has completed */
+    volatile void *req_complete;                /**< Flag indicating whether request has completed */
     volatile ompi_request_state_t req_state;    /**< enum indicate state of the request */
     bool req_persistent;                        /**< flag indicating if the this is a persistent request */
     int req_f_to_c_index;                       /**< Index in Fortran <-> C translation array */
@@ -146,7 +149,7 @@ typedef struct ompi_request_t ompi_request_t;
 
 
 /**
- * Padded struct to maintain back compatibiltiy.
+ * Padded struct to maintain back compatibility.
  * See ompi/communicator/communicator.h comments with struct ompi_communicator_t
  * for full explanation why we chose the following padding construct for predefines.
  */
@@ -193,7 +196,7 @@ typedef struct ompi_predefined_request_t ompi_predefined_request_t;
  * This function should be called only from the MPI layer. It should
  * never be called from the PML. It take care of the upper level clean-up.
  * When the user call MPI_Request_free we should release all MPI level
- * ressources, so we have to call this function too.
+ * resources, so we have to call this function too.
  */
 #define OMPI_REQUEST_FINI(request)                                      \
 do {                                                                    \
@@ -264,7 +267,7 @@ typedef int (*ompi_request_test_any_fn_t)(size_t count,
  *
  * @param count (IN)      Number of requests
  * @param requests (IN)   Array of requests
- * @param completed (OUT) Flag indicating wether all requests completed.
+ * @param completed (OUT) Flag indicating whether all requests completed.
  * @param statuses (OUT)  Array of completion statuses.
  * @return                OMPI_SUCCESS or failure status.
  *
@@ -381,16 +384,14 @@ OMPI_DECLSPEC extern ompi_predefined_request_t        *ompi_request_null_addr;
 OMPI_DECLSPEC extern ompi_request_t         ompi_request_empty;
 OMPI_DECLSPEC extern ompi_status_public_t   ompi_status_empty;
 OMPI_DECLSPEC extern ompi_request_fns_t     ompi_request_functions;
+#if MPI_VERSION >= 4
+OMPI_DECLSPEC extern ompi_request_t         ompi_request_empty_send;
+#endif
 
 /**
  * Initialize the MPI_Request subsystem; invoked during MPI_INIT.
  */
 int ompi_request_init(void);
-
-/**
- * Shut down the MPI_Request subsystem; invoked during MPI_FINALIZE.
- */
-int ompi_request_finalize(void);
 
 /**
  * Create a persistent request that does nothing (e.g., to MPI_PROC_NULL).
@@ -525,18 +526,18 @@ static inline int ompi_request_complete(ompi_request_t* request, bool with_signa
     }
 
     if (0 == rc) {
-        if( OPAL_LIKELY(with_signal) ) {
-            void *_tmp_ptr = REQUEST_PENDING;
+        if (OPAL_LIKELY(with_signal)) {
+            /* make sure everything in the request is visible before we mark it complete */
+            opal_atomic_wmb();
 
-            if(!OPAL_ATOMIC_COMPARE_EXCHANGE_STRONG_PTR(&request->req_complete, &_tmp_ptr, REQUEST_COMPLETED)) {
-                ompi_wait_sync_t *tmp_sync = (ompi_wait_sync_t *) OPAL_ATOMIC_SWAP_PTR(&request->req_complete,
-                                                                                       REQUEST_COMPLETED);
-                /* In the case where another thread concurrently changed the request to REQUEST_PENDING */
-                if( REQUEST_PENDING != tmp_sync )
-                    wait_sync_update(tmp_sync, 1, request->req_status.MPI_ERROR);
+            ompi_wait_sync_t *tmp_sync = (ompi_wait_sync_t *) OPAL_ATOMIC_SWAP_PTR(&request->req_complete,
+                                                                                    REQUEST_COMPLETED);
+            if( REQUEST_PENDING != tmp_sync ) {
+                wait_sync_update(tmp_sync, 1, request->req_status.MPI_ERROR);
             }
-        } else
+        } else {
             request->req_complete = REQUEST_COMPLETED;
+        }
     }
 
     return OMPI_SUCCESS;

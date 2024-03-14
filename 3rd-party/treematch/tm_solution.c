@@ -11,24 +11,25 @@ typedef struct {
 
 
 
-void tm_free_solution(tm_solution_t *sol);
-int distance(tm_topology_t *topology,int i, int j);
-double display_sol_sum_com(tm_topology_t *topology, tm_affinity_mat_t *aff_mat, int *sigma);
-  double display_sol(tm_topology_t *topology, tm_affinity_mat_t *aff_mat, int *sigma, tm_metric_t metric);
-double tm_display_solution(tm_topology_t *topology, tm_affinity_mat_t *aff_mat, tm_solution_t *sol,
+OMPI_HIDDEN void tm_free_solution(tm_solution_t *sol);
+static int distance(tm_topology_t *topology,int i, int j);
+static double display_sol_sum_com(tm_topology_t *topology, tm_affinity_mat_t *aff_mat, int *sigma);
+static double display_sol(tm_topology_t *topology, tm_affinity_mat_t *aff_mat, int *sigma, tm_metric_t metric);
+OMPI_HIDDEN double tm_display_solution(tm_topology_t *topology, tm_affinity_mat_t *aff_mat, tm_solution_t *sol,
 			   tm_metric_t metric);
-void tm_display_other_heuristics(tm_topology_t *topology, tm_affinity_mat_t *aff_mat, tm_metric_t metric);
-int in_tab(int *tab, int n, int val);
-void map_Packed(tm_topology_t *topology, int N, int *sigma);
-void map_RR(tm_topology_t * topology, int N, int *sigma);
-int hash_asc(const void* x1,const void* x2);
-int *generate_random_sol(tm_topology_t *topology,int N, int seed);
-double eval_sol(int *sol,int N,double **comm, double **arch);
-void exchange(int *sol,int i,int j);
-double gain_exchange(int *sol,int l,int m,double eval1,int N,double **comm, double **arch);
-void select_max(int *l,int *m,double **gain,int N,int *state);
-void compute_gain(int *sol,int N,double **gain,double **comm, double **arch);
-void map_MPIPP(tm_topology_t *topology,int nb_seed,int N,int *sigma,double **comm, double **arch);
+OMPI_HIDDEN void tm_display_other_heuristics(tm_topology_t *topology, tm_affinity_mat_t *aff_mat, tm_metric_t metric);
+OMPI_HIDDEN int tm_in_tab(int *tab, int n, int val);
+OMPI_HIDDEN void tm_map_Packed(tm_topology_t *topology, int N, int *sigma);
+OMPI_HIDDEN void tm_map_RR(tm_topology_t * topology, int N, int *sigma);
+static int hash_asc(const void* x1,const void* x2);
+static int *generate_random_sol(tm_topology_t *topology,int N, int seed);
+static double eval_sol(int *sol,int N,double **comm, double **arch);
+static void exchange(int *sol,int i,int j);
+static double gain_exchange(int *sol,int l,int m,double eval1,int N,double **comm, double **arch);
+static void select_max(int *l,int *m,double **gain,int N,int *state);
+static void compute_gain(int *sol,int N,double **gain,double **comm, double **arch);
+OMPI_HIDDEN void tm_map_MPIPP(tm_topology_t *topology,int nb_seed,int N,int *sigma,double **comm, double **arch);
+static void compute_gain(int *sol,int N,double **gain,double **comm, double **arch);
 
 
 void tm_free_solution(tm_solution_t *sol){
@@ -54,7 +55,7 @@ void tm_free_solution(tm_solution_t *sol){
    for which node i and j are still in the same subtree. This is done
    by iteratively dividing their numbering by the arity of the levels
 */
-int distance(tm_topology_t *topology,int i, int j)
+static int distance(tm_topology_t *topology,int i, int j)
 {
   int level = 0;
   int arity;
@@ -84,7 +85,7 @@ int distance(tm_topology_t *topology,int i, int j)
   return level;
 }
 
-double display_sol_sum_com(tm_topology_t *topology, tm_affinity_mat_t *aff_mat, int *sigma)
+static double display_sol_sum_com(tm_topology_t *topology, tm_affinity_mat_t *aff_mat, int *sigma)
 {
   double a,c,sol;
   int i,j;
@@ -186,7 +187,7 @@ static double display_sol_hop_byte(tm_topology_t *topology, tm_affinity_mat_t *a
 
 
 
-double display_sol(tm_topology_t *topology, tm_affinity_mat_t *aff_mat, int *sigma, tm_metric_t metric){
+static double display_sol(tm_topology_t *topology, tm_affinity_mat_t *aff_mat, int *sigma, tm_metric_t metric){
   switch (metric){
   case TM_METRIC_SUM_COM:
     return display_sol_sum_com(topology, aff_mat, sigma);
@@ -212,7 +213,7 @@ double tm_display_solution(tm_topology_t *topology, tm_affinity_mat_t *aff_mat, 
 
   if(tm_get_verbose_level() >= DEBUG){
     printf("k: \n");
-    for( i = 0 ; i < nb_processing_units(topology) ; i++ ){
+    for( i = 0 ; i < tm_nb_processing_units(topology) ; i++ ){
       if(k[i][0] != -1){
 	printf("\tProcessing unit %d: ",i);
 	for (j = 0 ; j<topology->oversub_fact; j++){
@@ -236,11 +237,11 @@ void tm_display_other_heuristics(tm_topology_t *topology, tm_affinity_mat_t *aff
 
   sigma = (int*)MALLOC(sizeof(int)*N);
 
-  map_Packed(topology, N, sigma);
+  tm_map_Packed(topology, N, sigma);
   printf("Packed: ");
   display_sol(topology, aff_mat, sigma, metric);
 
-  map_RR(topology, N, sigma);
+  tm_map_RR(topology, N, sigma);
   printf("RR: ");
   display_sol(topology, aff_mat, sigma, metric);
 
@@ -272,7 +273,7 @@ void tm_display_other_heuristics(tm_topology_t *topology, tm_affinity_mat_t *aff
 }
 
 
-int in_tab(int *tab, int n, int val){
+int tm_in_tab(int *tab, int n, int val){
   int i;
   for( i = 0; i < n ; i++)
     if(tab[i] == val)
@@ -281,7 +282,7 @@ int in_tab(int *tab, int n, int val){
   return 0;
 }
 
-void map_Packed(tm_topology_t *topology, int N, int *sigma)
+void tm_map_Packed(tm_topology_t *topology, int N, int *sigma)
 {
   size_t i;
   int j = 0,depth;
@@ -291,7 +292,7 @@ void map_Packed(tm_topology_t *topology, int N, int *sigma)
 
   for( i = 0 ; i < topology->nb_nodes[depth] ; i++){
     /* printf ("%d -> %d\n",objs[i]->os_index,i); */
-    if((!topology->constraints) || (in_tab(topology->constraints, topology->nb_constraints, topology->node_id[i]))){
+    if((!topology->constraints) || (tm_in_tab(topology->constraints, topology->nb_constraints, topology->node_id[i]))){
       if(vl >= DEBUG)
 	printf ("%lu: %d -> %d\n", i, j, topology->node_id[i]);
       sigma[j++]=topology->node_id[i];
@@ -301,7 +302,7 @@ void map_Packed(tm_topology_t *topology, int N, int *sigma)
   }
 }
 
-void map_RR(tm_topology_t *topology, int N,int *sigma)
+void tm_map_RR(tm_topology_t *topology, int N,int *sigma)
 {
   int i;
   int vl = tm_get_verbose_level();
@@ -316,7 +317,7 @@ void map_RR(tm_topology_t *topology, int N,int *sigma)
   }
 }
 
-int hash_asc(const void* x1,const void* x2)
+static int hash_asc(const void* x1,const void* x2)
 {
   hash_t *e1 = NULL,*e2 = NULL;
 
@@ -327,7 +328,7 @@ int hash_asc(const void* x1,const void* x2)
 }
 
 
-int *generate_random_sol(tm_topology_t *topology,int N, int seed)
+static int *generate_random_sol(tm_topology_t *topology,int N, int seed)
 {
   hash_t *hash_tab = NULL;
   int *sol = NULL;
@@ -339,11 +340,11 @@ int *generate_random_sol(tm_topology_t *topology,int N, int seed)
   hash_tab = (hash_t*)MALLOC(sizeof(hash_t)*N);
   sol = (int*)MALLOC(sizeof(int)*N);
 
-  init_genrand(seed);
+  tm_init_genrand(seed);
 
   for( i = 0 ; i < N ; i++ ){
     hash_tab[i].val = nodes_id[i];
-    hash_tab[i].key = genrand_int32();
+    hash_tab[i].key = tm_genrand_int32();
   }
 
   qsort(hash_tab,N,sizeof(hash_t),hash_asc);
@@ -355,7 +356,7 @@ int *generate_random_sol(tm_topology_t *topology,int N, int seed)
 }
 
 
-double eval_sol(int *sol,int N,double **comm, double **arch)
+static double eval_sol(int *sol,int N,double **comm, double **arch)
 {
   double a,c,res;
   int i,j;
@@ -371,7 +372,7 @@ double eval_sol(int *sol,int N,double **comm, double **arch)
   return res;
 }
 
-void exchange(int *sol,int i,int j)
+static void exchange(int *sol,int i,int j)
 {
   int tmp;
   tmp = sol[i];
@@ -379,7 +380,7 @@ void exchange(int *sol,int i,int j)
   sol[j] = tmp;
 }
 
-double gain_exchange(int *sol,int l,int m,double eval1,int N,double **comm, double **arch)
+static double gain_exchange(int *sol,int l,int m,double eval1,int N,double **comm, double **arch)
 {
   double eval2;
   if( l == m )
@@ -391,7 +392,7 @@ double gain_exchange(int *sol,int l,int m,double eval1,int N,double **comm, doub
   return eval1-eval2;
 }
 
-void select_max(int *l,int *m,double **gain,int N,int *state)
+static void select_max(int *l,int *m,double **gain,int N,int *state)
 {
   double max;
   int i,j;
@@ -411,7 +412,7 @@ void select_max(int *l,int *m,double **gain,int N,int *state)
 }
 
 
-void compute_gain(int *sol,int N,double **gain,double **comm, double **arch)
+static void compute_gain(int *sol,int N,double **gain,double **comm, double **arch)
 {
   double eval1;
   int i,j;
@@ -429,7 +430,7 @@ parallel process placement toolset for smp clusters and multiclusters. In
 Gregory K. Egan and Yoichi Muraoka, editors, ICS, pages 353-360. ACM, 2006.
  */
 
-void map_MPIPP(tm_topology_t *topology,int nb_seed,int N,int *sigma,double **comm, double **arch)
+void tm_map_MPIPP(tm_topology_t *topology,int nb_seed,int N,int *sigma,double **comm, double **arch)
 {
   int *sol = NULL;
   int *state = NULL;

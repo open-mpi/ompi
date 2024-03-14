@@ -30,16 +30,16 @@
 #include "opal_config.h"
 #include "opal/class/opal_list.h"
 #include "opal/mca/rcache/rcache.h"
+#include "opal/mca/accelerator/accelerator.h"
 
 BEGIN_C_DECLS
+extern int mca_rcache_gpusm_use_sync_memops;
 
-#define MEMHANDLE_SIZE 8
-#define EVTHANDLE_SIZE 8
 struct mca_rcache_gpusm_registration_t {
-    mca_rcache_base_registration_t base;
-    uint64_t memHandle[MEMHANDLE_SIZE]; /* CUipcMemHandle */
-    uint64_t evtHandle[EVTHANDLE_SIZE]; /* CUipcEventHandle */
-    uintptr_t event;                    /* CUevent */
+    mca_rcache_base_registration_t      base;
+    opal_accelerator_ipc_handle_t       memHandle;
+    opal_accelerator_ipc_event_handle_t evtHandle;
+    opal_accelerator_event_t            *event;
 };
 typedef struct mca_rcache_gpusm_registration_t mca_rcache_gpusm_registration_t;
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(mca_rcache_gpusm_registration_t);

@@ -32,7 +32,7 @@ dnl
 # - alignment
 # - associated C type
 #
-# types to search is a comma-seperated list of values
+# types to search is a comma-separated list of values
 AC_DEFUN([OMPI_FORTRAN_CHECK], [
     OPAL_VAR_SCOPE_PUSH([ofc_have_type ofc_type_size ofc_type_alignment ofc_c_type ofc_expected_size])
 
@@ -117,7 +117,7 @@ AC_DEFUN([OMPI_FORTRAN_CHECK], [
 
             AC_MSG_CHECKING([for corresponding KIND value of $1])
             case "$ofc_c_type" in
-            char)     	          ofc_type_kind=C_SIGNED_CHAR         ;;
+            char)                 ofc_type_kind=C_SIGNED_CHAR         ;;
             double)               ofc_type_kind=C_DOUBLE              ;;
             float)                ofc_type_kind=C_FLOAT               ;;
             int)                  ofc_type_kind=C_INT                 ;;

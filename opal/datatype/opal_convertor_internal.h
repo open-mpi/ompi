@@ -37,7 +37,7 @@ typedef struct opal_convertor_master_t {
 
 /*
  * Find or create a new master convertor based on a specific architecture. The master
- * convertor hold all informations related to a defined architecture, such as the sizes
+ * convertor hold all information related to a defined architecture, such as the sizes
  * of the predefined data-types, the conversion functions, ...
  */
 opal_convertor_master_t *opal_convertor_find_or_create_master(uint32_t remote_arch);

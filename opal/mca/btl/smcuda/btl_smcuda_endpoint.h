@@ -34,12 +34,10 @@
 
 struct mca_btl_base_endpoint_t {
     int my_smp_rank;   /**< My SMP process rank.  Used for accessing
-                        *   SMP specfic data structures. */
+                        *   SMP specific data structures. */
     int peer_smp_rank; /**< My peer's SMP process rank.  Used for accessing
-                        *   SMP specfic data structures. */
-#if OPAL_CUDA_SUPPORT
+                        *   SMP specific data structures. */
     mca_rcache_base_module_t *rcache; /**< rcache for remotely registered memory */
-#endif                                /* OPAL_CUDA_SUPPORT */
 #if OPAL_ENABLE_PROGRESS_THREADS == 1
     int fifo_fd; /**< pipe/fifo used to signal endpoint that data is queued */
 #endif
@@ -48,11 +46,9 @@ struct mca_btl_base_endpoint_t {
     /** lock for concurrent access to endpoint state */
     opal_mutex_t endpoint_lock;
 
-#if OPAL_CUDA_SUPPORT
     opal_proc_t *proc_opal; /**< Needed for adding CUDA IPC support dynamically */
     enum ipcState ipcstate; /**< CUDA IPC connection status */
     int ipctries;           /**< Number of times CUDA IPC connect was sent */
-#endif                      /* OPAL_CUDA_SUPPORT */
 };
 
 void btl_smcuda_process_pending_sends(struct mca_btl_base_endpoint_t *ep);

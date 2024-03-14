@@ -16,6 +16,8 @@
  *
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2020      Google, LLC. All rights reserved.
+ * Copyright (c) 2022-2023 Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -26,6 +28,8 @@
 #include "opal_config.h"
 #include "opal/class/opal_bitmap.h"
 #include "opal/datatype/opal_convertor.h"
+#include "opal/mca/accelerator/accelerator.h"
+#include "opal/mca/accelerator/base/base.h"
 #include "opal/mca/btl/btl.h"
 #include "opal/mca/mpool/base/base.h"
 #include "opal/mca/mpool/mpool.h"
@@ -192,8 +196,12 @@ mca_btl_ofi_register_mem(struct mca_btl_base_module_t *btl,
     mca_btl_ofi_reg_t *reg;
     int access_flags = flags & MCA_BTL_REG_FLAG_ACCESS_ANY;
     int rc;
+    uint32_t cache_flags = 0;
+    if (ofi_module->bypass_cache) {
+	   cache_flags |= MCA_RCACHE_FLAGS_CACHE_BYPASS;
+    }
 
-    rc = ofi_module->rcache->rcache_register(ofi_module->rcache, base, size, 0, access_flags,
+    rc = ofi_module->rcache->rcache_register(ofi_module->rcache, base, size, cache_flags, access_flags,
                                              (mca_rcache_base_registration_t **) &reg);
     if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
         return NULL;
@@ -228,15 +236,66 @@ static int mca_btl_ofi_deregister_mem(mca_btl_base_module_t *btl,
 int mca_btl_ofi_reg_mem(void *reg_data, void *base, size_t size,
                         mca_rcache_base_registration_t *reg)
 {
-    int rc;
+    int rc, dev_id;
+    uint64_t flags;
     static uint64_t access_flags = FI_REMOTE_WRITE | FI_REMOTE_READ | FI_READ | FI_WRITE;
+    struct fi_mr_attr attr = {0};
+    struct iovec iov = {0};
 
     mca_btl_ofi_module_t *btl = (mca_btl_ofi_module_t *) reg_data;
     mca_btl_ofi_reg_t *ur = (mca_btl_ofi_reg_t *) reg;
 
-    rc = fi_mr_reg(btl->domain, base, size, access_flags, 0, (uint64_t) reg, 0, &ur->ur_mr, NULL);
+    iov.iov_base = base;
+    iov.iov_len = size;
+    attr.mr_iov = &iov;
+    attr.iov_count = 1;
+    attr.access = access_flags;
+    attr.offset = 0;
+    attr.context = NULL;
+    attr.requested_key = (uint64_t) reg;
+
+#if  OPAL_OFI_HAVE_FI_MR_IFACE
+    if (OPAL_LIKELY(NULL != base)) {
+        rc = opal_accelerator.check_addr(base, &dev_id, &flags);
+        if (rc < 0) {
+            return rc;
+        } else if (rc > 0 ) {
+            if (0 == strcmp(opal_accelerator_base_selected_component.base_version.mca_component_name, "cuda")) {
+                attr.iface = FI_HMEM_CUDA;
+                opal_accelerator.get_device(&attr.device.cuda);
+#if OPAL_OFI_HAVE_FI_HMEM_ROCR
+	    } else if (0 == strcmp(opal_accelerator_base_selected_component.base_version.mca_component_name, "rocm")) {
+                attr.iface = FI_HMEM_ROCR;
+                opal_accelerator.get_device(&attr.device.cuda);
+#endif
+#if OPAL_OFI_HAVE_FI_HMEM_ZE
+            } else if (0 == strcmp(opal_accelerator_base_selected_component.base_version.mca_component_name, "ze")) {
+                attr.iface = FI_HMEM_ZE;
+                opal_accelerator.get_device(&attr.device.ze);
+#endif
+            } else {
+                return OPAL_ERROR;
+            }
+        }
+    }
+#endif
+
+    rc = fi_mr_regattr(btl->domain, &attr, 0, &ur->ur_mr);
     if (0 != rc) {
+        ur->ur_mr = NULL;
         return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+
+    if (btl->use_fi_mr_bind) {
+        BTL_VERBOSE(("binding mr to endpoint"));
+        rc = fi_mr_bind(ur->ur_mr, &btl->ofi_endpoint->fid, 0ULL);
+        if (FI_SUCCESS != rc) {
+            return OPAL_ERR_OUT_OF_RESOURCE;
+        }
+        rc = fi_mr_enable(ur->ur_mr);
+        if (FI_SUCCESS != rc) {
+            return OPAL_ERR_OUT_OF_RESOURCE;
+        }
     }
 
     ur->handle.rkey = fi_mr_key(ur->ur_mr);
@@ -390,8 +449,10 @@ mca_btl_ofi_module_t *mca_btl_ofi_module_alloc(int mode)
         module->super.btl_register_mem = mca_btl_ofi_register_mem;
         module->super.btl_deregister_mem = mca_btl_ofi_deregister_mem;
 
+        /* btl/ofi support remote completion because it required FI_DELIVERY_COMPLETE capability
+         */
         module->super.btl_flags |= MCA_BTL_FLAGS_ATOMIC_FOPS | MCA_BTL_FLAGS_ATOMIC_OPS
-                                   | MCA_BTL_FLAGS_RDMA;
+                                   | MCA_BTL_FLAGS_RDMA | MCA_BTL_FLAGS_RDMA_REMOTE_COMPLETION;
 
         module->super.btl_atomic_flags = MCA_BTL_ATOMIC_SUPPORTS_ADD | MCA_BTL_ATOMIC_SUPPORTS_SWAP
                                          | MCA_BTL_ATOMIC_SUPPORTS_CSWAP

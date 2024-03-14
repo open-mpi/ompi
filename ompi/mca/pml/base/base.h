@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,6 +11,9 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
+
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -60,8 +63,6 @@ OMPI_DECLSPEC int mca_pml_base_pml_check_selected(const char *my_pml,
                                                   struct ompi_proc_t **procs,
                                                   size_t nprocs);
 
-OMPI_DECLSPEC int mca_pml_base_finalize(void);
-
 /* not #if conditional on OPAL_ENABLE_FT_MPI for ABI */
 OMPI_DECLSPEC int mca_pml_base_revoke_comm(struct ompi_communicator_t *comm, bool coll_only);
 
@@ -71,6 +72,7 @@ OMPI_DECLSPEC int mca_pml_base_revoke_comm(struct ompi_communicator_t *comm, boo
 OMPI_DECLSPEC extern mca_pml_base_component_t mca_pml_base_selected_component;
 OMPI_DECLSPEC extern mca_pml_base_module_t mca_pml;
 OMPI_DECLSPEC extern opal_pointer_array_t mca_pml_base_pml;
+OMPI_DECLSPEC extern bool ompi_pml_base_check_pml;
 
 END_C_DECLS
 

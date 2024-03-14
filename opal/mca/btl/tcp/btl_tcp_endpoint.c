@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2008 Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2013-2018 Cisco Systems, Inc.  All rights reserved
+ * Copyright (c) 2013-2022 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014      Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -133,7 +133,7 @@ static void mca_btl_tcp_endpoint_send_handler(int sd, short flags, void *user);
  * The lack of protection in the mca_btl_tcp_endpoint_dump function is voluntary
  * so that it can be called regardless of the state of the mutexes. As a result,
  * when multiple threads work on the same endpoint not only the information
- * displayed might be inacurate, but when we manipulate the pending fragments we
+ * displayed might be inaccurate, but when we manipulate the pending fragments we
  * might access freed memory. Thus, the caller should lock the endpoint prior
  * to the call.
  */
@@ -630,7 +630,6 @@ static void mca_btl_tcp_endpoint_connected(mca_btl_base_endpoint_t *btl_endpoint
 static int mca_btl_tcp_endpoint_recv_connect_ack(mca_btl_base_endpoint_t *btl_endpoint)
 {
     size_t retval, len = strlen(mca_btl_tcp_magic_id_string);
-    ;
     mca_btl_tcp_proc_t *btl_proc = btl_endpoint->endpoint_proc;
     opal_process_name_t guid;
 
@@ -965,7 +964,7 @@ static void mca_btl_tcp_endpoint_recv_handler(int sd, short flags, void *user)
      * event_base lock (while holding the endpoint_recv lock).
      *
      * If we can't lock this mutex, it is OK to cancel the receive operation, it
-     * will be eventually triggered again shorthly.
+     * will be eventually triggered again shortly.
      */
     if (OPAL_THREAD_TRYLOCK(&btl_endpoint->endpoint_recv_lock)) {
         return;
@@ -986,7 +985,7 @@ static void mca_btl_tcp_endpoint_recv_handler(int sd, short flags, void *user)
                the magic string ID failed). recv_connect_ack already cleaned
                up the socket. */
             /* If we get OPAL_ERROR, the other end closed the connection
-             * because it has initiated a symetrical connexion on its end.
+             * because it has initiated a symmetrical connexion on its end.
              * recv_connect_ack already cleaned up the socket. */
         } else {
             /* Otherwise, it probably *was* an OMPI peer process on
@@ -1047,7 +1046,7 @@ static void mca_btl_tcp_endpoint_recv_handler(int sd, short flags, void *user)
 #if MCA_BTL_TCP_ENDPOINT_CACHE
             if (0 != btl_endpoint->endpoint_cache_length) {
                 /* If the cache still contain some data we can reuse the same fragment
-                 * until we flush it completly.
+                 * until we flush it completely.
                  */
                 MCA_BTL_TCP_FRAG_INIT_DST(frag, btl_endpoint);
                 goto data_still_pending_on_endpoint;

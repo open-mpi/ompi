@@ -143,7 +143,7 @@ static int mca_smsc_knem_dereg(void *reg_data, mca_rcache_base_registration_t *r
 {
     mca_smsc_knem_registration_handle_t *knem_reg = (mca_smsc_knem_registration_handle_t *) reg;
 
-    /* NTH: explicity ignore the return code. Don't care about this cookie anymore anyway. */
+    /* NTH: explicitly ignore the return code. Don't care about this cookie anymore anyway. */
     (void) ioctl(mca_smsc_knem_component.knem_fd, KNEM_CMD_DESTROY_REGION, &knem_reg->data.cookie);
 
     return OPAL_SUCCESS;

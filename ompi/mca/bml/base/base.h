@@ -61,6 +61,7 @@ OMPI_DECLSPEC extern mca_bml_base_component_t mca_bml_component;
 OMPI_DECLSPEC extern mca_bml_base_module_t mca_bml;
 OMPI_DECLSPEC extern mca_base_framework_t ompi_bml_base_framework;
 OMPI_DECLSPEC extern opal_mutex_t mca_bml_lock;
+OMPI_DECLSPEC extern bool mca_bml_component_init_called;
 
 static inline struct mca_bml_base_endpoint_t *mca_bml_base_get_endpoint (struct ompi_proc_t *proc) {
     if (OPAL_UNLIKELY(NULL == proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML])) {

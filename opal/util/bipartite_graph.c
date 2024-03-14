@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014-2022 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2017-2019 Amazon.com, Inc. or its affiliates.  All Rights
  *                         reserved.
  * $COPYRIGHT$
@@ -469,7 +469,7 @@ static int bottleneck_path(opal_bp_graph_t *gx, int n, int *pred)
 /**
  * This routine implements the Bellman-Ford shortest paths algorithm, slightly
  * specialized for our forumlation of flow networks:
- * http://en.wikipedia.org/wiki/Bellman%E2%80%93Ford_algorithm
+ * https://en.wikipedia.org/wiki/Bellman%E2%80%93Ford_algorithm
  *
  * Specifically, it attempts to find the shortest path from "source" to
  * "target".  It returns true if such a path was found, false otherwise.  Any

@@ -161,6 +161,15 @@ END SUBROUTINE
 END INTERFACE
 
 OMPI_ABSTRACT INTERFACE
+SUBROUTINE MPI_Session_errhandler_function(session,error_code)
+   USE mpi_f08_types
+   IMPLICIT NONE
+   TYPE(MPI_Session) :: session
+   INTEGER :: error_code
+END SUBROUTINE
+END INTERFACE
+
+OMPI_ABSTRACT INTERFACE
 SUBROUTINE MPI_Grequest_query_function(extra_state,status,ierror)
    USE mpi_f08_types
    IMPLICIT NONE

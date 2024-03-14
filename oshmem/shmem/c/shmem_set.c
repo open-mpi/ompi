@@ -68,6 +68,12 @@
 #pragma weak shmem_ctx_ulonglong_atomic_set = pshmem_ctx_ulonglong_atomic_set
 #pragma weak shmem_ctx_float_atomic_set = pshmem_ctx_float_atomic_set
 #pragma weak shmem_ctx_double_atomic_set = pshmem_ctx_double_atomic_set
+#pragma weak shmem_ctx_int32_atomic_set  	= pshmem_ctx_int32_atomic_set
+#pragma weak shmem_ctx_int64_atomic_set  	= pshmem_ctx_int64_atomic_set
+#pragma weak shmem_ctx_uint32_atomic_set  	= pshmem_ctx_uint32_atomic_set
+#pragma weak shmem_ctx_uint64_atomic_set  	= pshmem_ctx_uint64_atomic_set
+#pragma weak shmem_ctx_size_atomic_set  	= pshmem_ctx_size_atomic_set
+#pragma weak shmem_ctx_ptrdiff_atomic_set  	= pshmem_ctx_ptrdiff_atomic_set
 
 #pragma weak shmem_int_atomic_set = pshmem_int_atomic_set
 #pragma weak shmem_long_atomic_set = pshmem_long_atomic_set
@@ -77,6 +83,12 @@
 #pragma weak shmem_ulonglong_atomic_set = pshmem_ulonglong_atomic_set
 #pragma weak shmem_float_atomic_set = pshmem_float_atomic_set
 #pragma weak shmem_double_atomic_set = pshmem_double_atomic_set
+#pragma weak shmem_int32_atomic_set      	= pshmem_int32_atomic_set
+#pragma weak shmem_int64_atomic_set      	= pshmem_int64_atomic_set
+#pragma weak shmem_uint32_atomic_set     	= pshmem_uint32_atomic_set
+#pragma weak shmem_uint64_atomic_set     	= pshmem_uint64_atomic_set
+#pragma weak shmem_size_atomic_set       	= pshmem_size_atomic_set
+#pragma weak shmem_ptrdiff_atomic_set    	= pshmem_ptrdiff_atomic_set
 
 #pragma weak shmem_int_set = pshmem_int_set
 #pragma weak shmem_long_set = pshmem_long_set
@@ -86,7 +98,7 @@
 
 #pragma weak shmemx_int32_set = pshmemx_int32_set
 #pragma weak shmemx_int64_set = pshmemx_int64_set
-#include "oshmem/shmem/c/profile/defines.h"
+#include "oshmem/shmem/c/profile-defines.h"
 #endif
 
 SHMEM_CTX_TYPE_ATOMIC_SET(_int, int, shmem)
@@ -97,6 +109,12 @@ SHMEM_CTX_TYPE_ATOMIC_SET(_ulong, unsigned long, shmem)
 SHMEM_CTX_TYPE_ATOMIC_SET(_ulonglong, unsigned long long, shmem)
 SHMEM_CTX_TYPE_ATOMIC_SET(_float, float, shmem)
 SHMEM_CTX_TYPE_ATOMIC_SET(_double, double, shmem)
+SHMEM_CTX_TYPE_ATOMIC_SET(_int32, int32_t, shmem)
+SHMEM_CTX_TYPE_ATOMIC_SET(_int64, int64_t, shmem)
+SHMEM_CTX_TYPE_ATOMIC_SET(_uint32, uint32_t, shmem)
+SHMEM_CTX_TYPE_ATOMIC_SET(_uint64, uint64_t, shmem)
+SHMEM_CTX_TYPE_ATOMIC_SET(_size, size_t, shmem)
+SHMEM_CTX_TYPE_ATOMIC_SET(_ptrdiff, ptrdiff_t, shmem)
 SHMEM_TYPE_ATOMIC_SET(_int, int, shmem)
 SHMEM_TYPE_ATOMIC_SET(_long, long, shmem)
 SHMEM_TYPE_ATOMIC_SET(_longlong, long long, shmem)
@@ -105,6 +123,12 @@ SHMEM_TYPE_ATOMIC_SET(_ulong, unsigned long, shmem)
 SHMEM_TYPE_ATOMIC_SET(_ulonglong, unsigned long long, shmem)
 SHMEM_TYPE_ATOMIC_SET(_float, float, shmem)
 SHMEM_TYPE_ATOMIC_SET(_double, double, shmem)
+SHMEM_TYPE_ATOMIC_SET(_int32, int32_t, shmem)
+SHMEM_TYPE_ATOMIC_SET(_int64, int64_t, shmem)
+SHMEM_TYPE_ATOMIC_SET(_uint32, uint32_t, shmem)
+SHMEM_TYPE_ATOMIC_SET(_uint64, uint64_t, shmem)
+SHMEM_TYPE_ATOMIC_SET(_size, size_t, shmem)
+SHMEM_TYPE_ATOMIC_SET(_ptrdiff, ptrdiff_t, shmem)
 
 /* deprecated APIs */
 #define SHMEM_TYPE_SET(type_name, type, prefix)                     \

@@ -5,6 +5,8 @@
 # Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2017-2018 Research Organization for Information Science
 #                         and Technology (RIST).  All rights reserved.
+# Copyright (c) 2021      Amazon.com, Inc. or its affiliates.
+#                         All Rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -17,10 +19,8 @@ AC_DEFUN([OSHMEM_CONFIG_FILES],[
     oshmem/Makefile
     oshmem/include/Makefile
     oshmem/shmem/c/Makefile
-    oshmem/shmem/c/profile/Makefile
 
     oshmem/shmem/fortran/Makefile
-    oshmem/shmem/fortran/profile/Makefile
 
     oshmem/tools/oshmem_info/Makefile
     oshmem/tools/wrappers/Makefile

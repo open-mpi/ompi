@@ -13,6 +13,7 @@
 # Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2012      NVIDIA Corporation.  All rights reserved.
 # Copyright (c) 2017      IBM Corporation.  All rights reserved.
+# Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -48,6 +49,8 @@ ob1_sources  = \
 	pml_ob1_sendreq.c \
 	pml_ob1_sendreq.h \
 	pml_ob1_start.c \
+	pml_ob1_accelerator.h \
+	pml_ob1_accelerator.c \
 	custommatch/pml_ob1_custom_match.h \
 	custommatch/pml_ob1_custom_match_arrays.h \
 	custommatch/pml_ob1_custom_match_vectors.h \
@@ -55,12 +58,6 @@ ob1_sources  = \
 	custommatch/pml_ob1_custom_match_fuzzy512-byte.h \
 	custommatch/pml_ob1_custom_match_fuzzy512-short.h \
 	custommatch/pml_ob1_custom_match_fuzzy512-word.h
-
-# If we have CUDA support requested, build the CUDA file also
-if OPAL_cuda_support
-ob1_sources += \
-    pml_ob1_cuda.c
-endif
 
 if MCA_BUILD_ompi_pml_ob1_DSO
 component_noinst =
@@ -75,10 +72,7 @@ mcacomponent_LTLIBRARIES = $(component_install)
 mca_pml_ob1_la_SOURCES = $(ob1_sources)
 mca_pml_ob1_la_LDFLAGS = -module -avoid-version
 
-if OPAL_cuda_support
-mca_pml_ob1_la_LIBADD = $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
-    $(OMPI_TOP_BUILDDIR)/opal/mca/common/cuda/lib@OPAL_LIB_NAME@mca_common_cuda.la
-endif
+mca_pml_ob1_la_LIBADD = $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_pml_ob1_la_SOURCES = $(ob1_sources)

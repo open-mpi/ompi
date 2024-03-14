@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University.
  *                         All rights reserved.
@@ -8,6 +9,9 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2016-2021 IBM Corporation. All rights reserved.
+ * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
+ * Copyright (c) 2018      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -37,16 +41,16 @@ BEGIN_C_DECLS
 int ompi_osc_base_find_available(bool enable_progress_threads,
                                  bool enable_mpi_threads);
 
+void ompi_osc_base_set_memory_alignment(struct opal_info_t *info,
+                                        size_t *memory_alignment);
+
 int ompi_osc_base_select(ompi_win_t *win,
                          void **base,
                          size_t size,
-                         int disp_unit,
+                         ptrdiff_t disp_unit,
                          ompi_communicator_t *comm,
-                         opal_info_t *info,
                          int flavor,
                          int *model);
-
-int ompi_osc_base_finalize(void);
 
 OMPI_DECLSPEC extern mca_base_framework_t ompi_osc_base_framework;
 

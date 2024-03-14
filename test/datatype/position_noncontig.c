@@ -193,7 +193,7 @@ int main(int argc, char *argv[])
         recv_buffer[i] = 0xdeadbeef;
     }
 
-    opal_init_util(NULL, NULL);
+    opal_init(NULL, NULL);
     ompi_datatype_init();
 
     ompi_datatype_create_vector(NELT / 2, 1, 2, MPI_INT, &datatype);
@@ -235,7 +235,6 @@ int main(int argc, char *argv[])
     }
     free(segments);
 
-    ompi_datatype_finalize();
     opal_finalize_util();
 
     return (0 == errors ? 0 : -1);

@@ -1,0 +1,13 @@
+# (c) 2023 Google, LLC. All rights reserved.
+
+enable_mem_debug=no
+enable_mem_profile=no
+enable_debug_symbols=yes
+enable_picky=no
+enable_debug=yes
+with_valgrind=no
+enable_memchecker=no
+
+# For now ensure that ob1 is used. It gives better performance than UCX at this
+# time.
+enable_pml_direct=ob1

@@ -22,12 +22,12 @@
 
 #if OSHMEM_PROFILING
 #include "oshmem/include/pshmem.h"
-#pragma weak shmem_sync = pshmem_sync
 #pragma weak shmem_sync_all = pshmem_sync_all
-#include "oshmem/shmem/c/profile/defines.h"
+#pragma weak shmem_sync_deprecated = pshmem_sync_deprecated
+#include "oshmem/shmem/c/profile-defines.h"
 #endif
 
-void shmem_sync(int PE_start, int logPE_stride, int PE_size, long *pSync)
+void shmem_sync_deprecated(int PE_start, int logPE_stride, int PE_size, long *pSync)
 {
     int rc;
     oshmem_group_t* group;

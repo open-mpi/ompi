@@ -101,7 +101,7 @@ struct ompi_osc_rdma_peer_extended_t {
     osc_rdma_size_t size;
 
     /** displacement unit */
-    int disp_unit;
+    ptrdiff_t disp_unit;
 };
 
 typedef struct ompi_osc_rdma_peer_extended_t ompi_osc_rdma_peer_extended_t;

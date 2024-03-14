@@ -48,6 +48,7 @@ static const char *dash_line
     = "--------------------------------------------------------------------------\n";
 static int output_stream = -1;
 static char **search_dirs = NULL;
+static bool opal_help_want_aggregate = true;
 
 /*
  * Local functions
@@ -58,12 +59,27 @@ static int opal_show_help_internal(const char *filename, const char *topic, int 
                                    ...);
 static void opal_show_help_finalize(void);
 
+typedef struct {
+    pmix_info_t *info;
+    pmix_info_t *dirs;
+    char *msg;
+} opal_log_info_t;
+
 opal_show_help_fn_t opal_show_help = opal_show_help_internal;
 opal_show_vhelp_fn_t opal_show_vhelp = opal_show_vhelp_internal;
 
 int opal_show_help_init(void)
 {
     opal_output_stream_t lds;
+
+    opal_help_want_aggregate = true;
+    mca_base_var_register("opal", NULL, "base", "help_aggregate",
+                            "If opal_base_help_aggregate is true, duplicate help messages will be aggregated rather "
+                            "than displayed individually.  This can be helpful for parallel jobs that experience "
+                            "multiple identical failures; rather than print out the same help/failure message N times, "
+                            "display it once with a count of how many processes sent the same message. Default: true.",
+                            MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_9,
+                            MCA_BASE_VAR_SCOPE_LOCAL, &opal_help_want_aggregate);
 
     OBJ_CONSTRUCT(&lds, opal_output_stream_t);
     lds.lds_want_stderr = true;
@@ -86,6 +102,86 @@ static void opal_show_help_finalize(void)
         opal_argv_free(search_dirs);
         search_dirs = NULL;
     }
+}
+
+static void opal_show_help_output(const char *msg) {
+
+    if(-1 < output_stream) {
+        opal_output(output_stream, "%s", msg);
+    }
+    else {
+        // opal_show_help() was not initialized yet, but we should still be
+        // able to print to stderr.
+        fprintf(stderr, "%s", msg);
+    }
+}
+
+static void opal_show_help_cbfunc(pmix_status_t status, void *cbdata)
+{
+    opal_log_info_t *info = (opal_log_info_t *) cbdata;
+    if(PMIX_SUCCESS != status && PMIX_OPERATION_SUCCEEDED != status) {
+        // Aggregation/de-duplication functionality is *probably* lost,
+        // but let's print the error anyway since duplicate error messages
+        // is better than hiding it.
+        opal_show_help_output(info->msg);
+    }
+    PMIX_INFO_DESTRUCT(info->info);
+    if(info->dirs) {
+        PMIX_INFO_DESTRUCT(info->dirs);
+    }
+    free(info->msg);
+    free(info);
+}
+
+static void local_delivery(const char *file, const char *topic, char *msg) {
+    pmix_info_t *info, *dirs = NULL;
+    int ninfo = 0, ndirs = 0;
+    PMIX_INFO_CREATE(info, 1);
+    PMIX_INFO_LOAD(&info[ninfo++], PMIX_LOG_STDERR, msg, PMIX_STRING);
+
+    opal_log_info_t *cbdata = calloc(1, sizeof(opal_log_info_t));
+    if(opal_help_want_aggregate) {
+// Not available in PMIx releases of v4.1.2 and earlier.
+// This should be available in future v4.1 and v4.2 releases,
+// as well as future major releases.
+// Disabling the aggregate behavior here, but still log it, as
+// seeing duplicate messages is better than not seeing anything at all.
+#ifdef PMIX_LOG_AGG
+        PMIX_INFO_CREATE(dirs, 3);
+        PMIX_INFO_LOAD(&dirs[ndirs++], PMIX_LOG_AGG, &opal_help_want_aggregate, PMIX_BOOL);
+        PMIX_INFO_LOAD(&dirs[ndirs++], PMIX_LOG_KEY, file, PMIX_STRING);
+        PMIX_INFO_LOAD(&dirs[ndirs++], PMIX_LOG_VAL, topic, PMIX_STRING);
+        cbdata->dirs = dirs;
+#endif
+    }
+
+    cbdata->info = info;
+    cbdata->msg  = msg;
+
+    // PMIx and the runtime will aggregate, de-duplicate, and print this
+    // message to stderr.
+    pmix_status_t rc = PMIx_Log_nb(info, ninfo, dirs, ndirs, opal_show_help_cbfunc, cbdata);
+    if(PMIX_SUCCESS != rc) {
+        // Aggregation/de-duplication functionality is *definitely* lost,
+        // but let's print the error anyway since duplicate error messages
+        // is better than hiding it.
+        opal_show_help_output(msg);
+        PMIX_INFO_DESTRUCT(info);
+        if(opal_help_want_aggregate) {
+            PMIX_INFO_DESTRUCT(dirs);
+        }
+        free(msg);
+        free(cbdata);
+    }
+}
+
+static void opal_show_help_error(const char *file, const char *topic) {
+    char *msg;
+    opal_asprintf(&msg,
+                   "%sSorry!  You were supposed to get help about:\n    %s\nfrom the file:\n  "
+                   "  %s\nBut I couldn't find that topic in the file.  Sorry!\n%s",
+                    dash_line, topic ? topic : "(Not specified)", file ? file : "(Not specified)", dash_line);
+    local_delivery(topic, file, msg);
 }
 
 /*
@@ -141,13 +237,11 @@ static int array2string(char **outstring, int want_error_header, char **lines)
  */
 static int open_file(const char *base, const char *topic)
 {
-    char *filename;
-    char *err_msg = NULL;
+    char *filename = NULL, *err_msg = NULL;
     size_t base_len;
-    int i;
+    int i, rc = OPAL_SUCCESS;
 
     /* If no filename was supplied, use the default */
-
     if (NULL == base) {
         base = default_filename;
     }
@@ -161,44 +255,54 @@ static int open_file(const char *base, const char *topic)
          */
         for (i = 0; NULL != search_dirs[i]; i++) {
             filename = opal_os_path(false, search_dirs[i], base, NULL);
-            opal_show_help_yyin = fopen(filename, "r");
-            if (NULL == opal_show_help_yyin) {
-                opal_asprintf(&err_msg, "%s: %s", filename, strerror(errno));
-                base_len = strlen(base);
-                if (4 > base_len || 0 != strcmp(base + base_len - 4, ".txt")) {
-                    free(filename);
-                    opal_asprintf(&filename, "%s%s%s.txt", search_dirs[i], OPAL_PATH_SEP, base);
-                    opal_show_help_yyin = fopen(filename, "r");
+            if(filename) {
+                opal_show_help_yyin = fopen(filename, "r");
+                if (NULL == opal_show_help_yyin) {
+                    opal_asprintf(&err_msg, "%s: %s", filename, strerror(errno));
+                    base_len = strlen(base);
+                    if (4 > base_len || 0 != strcmp(base + base_len - 4, ".txt")) {
+                        free(filename);
+                        opal_asprintf(&filename, "%s%s%s.txt", search_dirs[i], OPAL_PATH_SEP, base);
+                        opal_show_help_yyin = fopen(filename, "r");
+                    }
                 }
-            }
-            free(filename);
-            if (NULL != opal_show_help_yyin) {
-                break;
+                if (NULL != opal_show_help_yyin) {
+                    break;
+                }
             }
         }
     }
 
     /* If we still couldn't open it, then something is wrong */
     if (NULL == opal_show_help_yyin) {
-        opal_output(output_stream,
-                    "%sSorry!  You were supposed to get help about:\n    %s\nBut I couldn't open "
-                    "the help file:\n    %s.  Sorry!\n%s",
-                    dash_line, topic, err_msg, dash_line);
-        free(err_msg);
-        return OPAL_ERR_NOT_FOUND;
-    }
-
-    if (NULL != err_msg) {
-        free(err_msg);
+        const char *file_ptr = NULL;
+        if(err_msg) {
+            file_ptr = err_msg;
+        }
+        else if(filename) {
+            file_ptr = filename;
+        }
+        else {
+            file_ptr = base;
+        }
+        opal_show_help_error(file_ptr, topic);
+        rc = OPAL_ERR_NOT_FOUND;
+        goto cleanup;
     }
 
     /* Set the buffer */
-
     opal_show_help_init_buffer(opal_show_help_yyin);
 
-    /* Happiness */
+cleanup:
 
-    return OPAL_SUCCESS;
+    if(filename) {
+        free(filename);
+    }
+    if(err_msg) {
+        free(err_msg);
+    }
+
+    return rc;
 }
 
 /*
@@ -231,14 +335,10 @@ static int find_topic(const char *base, const char *topic)
         case OPAL_SHOW_HELP_PARSE_MESSAGE:
             break;
 
-        case OPAL_SHOW_HELP_PARSE_DONE:
-            opal_output(output_stream,
-                        "%sSorry!  You were supposed to get help about:\n    %s\nfrom the file:\n  "
-                        "  %s\nBut I couldn't find that topic in the file.  Sorry!\n%s",
-                        dash_line, topic, base, dash_line);
-            return OPAL_ERR_NOT_FOUND;
-            break;
-
+        case OPAL_SHOW_HELP_PARSE_DONE: {
+           opal_show_help_error(topic, base);
+           return OPAL_ERR_NOT_FOUND;
+        }
         default:
             break;
         }
@@ -344,8 +444,7 @@ static int opal_show_vhelp_internal(const char *filename, const char *topic, int
 
     /* If we got a single string, output it with formatting */
     if (NULL != output) {
-        opal_output(output_stream, "%s", output);
-        free(output);
+        local_delivery(filename, topic, output);
     }
 
     return (NULL == output) ? OPAL_ERROR : OPAL_SUCCESS;

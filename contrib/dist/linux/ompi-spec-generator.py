@@ -209,7 +209,7 @@ proc ModulesHelp { } {
    puts stderr \"This module adds Open MPI v%(ompi_version)s to various paths\"
 }
 
-module-whatis   \"Sets up Open MPI v%(ompi_version)s in your enviornment\"
+module-whatis   \"Sets up Open MPI v%(ompi_version)s in your environment\"
 
 append-path PATH \"%%{_prefix}/bin/\"
 append-path LD_LIBRARY_PATH %%{_libdir}
@@ -628,7 +628,7 @@ def write_specfile(build_packages):
     global params
     # create output file
     print "--> Create output file"
-    verbose("     Open outout file : %(filename)s" % {"filename":params.output})
+    verbose("     Open output file : %(filename)s" % {"filename":params.output})
     specfile = open(params.output, 'w')
     verbose("     Write copyright header")
     specfile.write(copyright_template)
@@ -705,7 +705,7 @@ def write_specfile(build_packages):
 #
 ######################################################################
 def main():
-    # parse comand line parameters
+    # parse command line parameters
     global params
     param_parser = optparse.OptionParser()
     param_parser.add_option("-r", "--root", action="store", dest="root", default="../../../",help="Specify the top root directory of the Open MPI Sources.")

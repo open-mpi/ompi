@@ -54,7 +54,7 @@ EOF
         cd ..
 
         #
-        # Now try to compile a simple program usinng that module, iterating
+        # Now try to compile a simple program using that module, iterating
         # through the possible flags that the compiler might use
         #
 

@@ -153,6 +153,10 @@ static int mca_spml_ucx_component_register(void)
                                      "Enable asynchronous progress thread",
                                      &mca_spml_ucx.async_progress);
 
+    mca_spml_ucx_param_register_int("symmetric_rkey_max_count", 0,
+                                    "Size of the symmetric key store. Non-zero to enable, typical use 5000",
+                                    &mca_spml_ucx.symmetric_rkey_max_count);
+
     mca_spml_ucx_param_register_int("async_tick_usec", 3000,
                                     "Asynchronous progress tick granularity (in usec)",
                                     &mca_spml_ucx.async_tick);
@@ -160,6 +164,11 @@ static int mca_spml_ucx_component_register(void)
     mca_spml_ucx_param_register_bool("synchronized_quiet", 0,
                                      "Use synchronized quiet on shmem_quiet or shmem_barrier_all operations",
                                      &mca_spml_ucx_ctx_default.synchronized_quiet);
+
+    mca_spml_ucx_param_register_int("strong_sync", 0,
+                                    "Use strong synchronization on shmem_quiet, shmem_fence or shmem_barrier_all operations: "
+                                    "0 - don't do strong synchronization, 1 - use non blocking get, 2 - use blocking get, 3 - use flush operation",
+                                    &mca_spml_ucx_ctx_default.strong_sync);
 
     mca_spml_ucx_param_register_ulong("nb_progress_thresh_global", 0,
                                     "Number of nb_put or nb_get operations before ucx progress is triggered. Disabled by default (0). Setting this value will override nb_put/get_progress_thresh.",
@@ -239,11 +248,13 @@ void mca_spml_ucx_async_cb(int fd, short event, void *cbdata)
 
 static int mca_spml_ucx_component_open(void)
 {
+    opal_common_ucx_mca_register();
     return OSHMEM_SUCCESS;
 }
 
 static int mca_spml_ucx_component_close(void)
 {
+    opal_common_ucx_mca_deregister();
     return OSHMEM_SUCCESS;
 }
 
@@ -261,8 +272,6 @@ static int spml_ucx_init(void)
     if (UCS_OK != err) {
         return OSHMEM_ERROR;
     }
-
-    opal_common_ucx_mca_register();
 
     memset(&params, 0, sizeof(params));
     params.field_mask        = UCP_PARAM_FIELD_FEATURES          |
@@ -327,6 +336,8 @@ static int spml_ucx_init(void)
         mca_spml_ucx_ctx_default.ucp_workers++;
     }
 
+    mca_spml_ucx_rkey_store_init(&mca_spml_ucx_ctx_default.rkey_store);
+
     wrk_attr.field_mask = UCP_WORKER_ATTR_FIELD_THREAD_MODE;
     err = ucp_worker_query(mca_spml_ucx_ctx_default.ucp_worker[0], &wrk_attr);
 
@@ -383,7 +394,14 @@ mca_spml_ucx_component_init(int* priority,
     if (OSHMEM_SUCCESS != spml_ucx_init())
         return NULL ;
 
+    if ((mca_spml_ucx_ctx_default.strong_sync < SPML_UCX_STRONG_ORDERING_NONE) ||
+        (mca_spml_ucx_ctx_default.strong_sync > SPML_UCX_STRONG_ORDERING_FLUSH)) {
+        SPML_UCX_ERROR("incorrect value of strong_sync parameter: %d",
+                       mca_spml_ucx_ctx_default.strong_sync);
+    }
+
     SPML_UCX_VERBOSE(50, "*** ucx initialized ****");
+
     return &mca_spml_ucx.super;
 }
 
@@ -424,10 +442,26 @@ static void _ctx_cleanup(mca_spml_ucx_ctx_t *ctx)
     free(ctx->ucp_peers);
 }
 
+static void mca_spml_ucx_ctx_fini(mca_spml_ucx_ctx_t *ctx)
+{
+    unsigned int i;
+
+    mca_spml_ucx_rkey_store_cleanup(&ctx->rkey_store);
+    for (i = 0; i < ctx->ucp_workers; i++) {
+        ucp_worker_destroy(ctx->ucp_worker[i]);
+    }
+    free(ctx->ucp_worker);
+    if (ctx != &mca_spml_ucx_ctx_default) {
+        free(ctx);
+    }
+}
+
 static int mca_spml_ucx_component_fini(void)
 {
-    int fenced = 0, i;
+    volatile int fenced = 0;
+    int i;
     int ret = OSHMEM_SUCCESS;
+    mca_spml_ucx_ctx_t *ctx;
 
     opal_progress_unregister(spml_ucx_default_progress);
     if (mca_spml_ucx.active_array.ctxs_count) {
@@ -458,8 +492,10 @@ static int mca_spml_ucx_component_fini(void)
 
 
     ret = opal_common_ucx_mca_pmix_fence_nb(&fenced);
-    if (OPAL_SUCCESS != ret) {
-        return ret;
+    if (ret != PMIX_SUCCESS) {
+        SPML_UCX_WARN("pmix fence failed: %s", PMIx_Error_string(ret));
+        /* In case of pmix fence failure just continue cleanup */
+        fenced = 1;
     }
 
     while (!fenced) {
@@ -480,36 +516,26 @@ static int mca_spml_ucx_component_fini(void)
         }
     }
 
-    /* delete all workers */
     for (i = 0; i < mca_spml_ucx.active_array.ctxs_count; i++) {
-        ucp_worker_destroy(mca_spml_ucx.active_array.ctxs[i]->ucp_worker[0]);
-        free(mca_spml_ucx.active_array.ctxs[i]->ucp_worker);
-        free(mca_spml_ucx.active_array.ctxs[i]);
+        mca_spml_ucx_ctx_fini(mca_spml_ucx.active_array.ctxs[i]);
     }
 
     for (i = 0; i < mca_spml_ucx.idle_array.ctxs_count; i++) {
-        ucp_worker_destroy(mca_spml_ucx.idle_array.ctxs[i]->ucp_worker[0]);
-        free(mca_spml_ucx.idle_array.ctxs[i]->ucp_worker);
-        free(mca_spml_ucx.idle_array.ctxs[i]);
+        mca_spml_ucx_ctx_fini(mca_spml_ucx.idle_array.ctxs[i]);
     }
 
     if (mca_spml_ucx_ctx_default.ucp_worker) {
-        for (i = 0; i < (signed int)mca_spml_ucx.ucp_workers; i++) {
-            ucp_worker_destroy(mca_spml_ucx_ctx_default.ucp_worker[i]);
-        }
-        free(mca_spml_ucx_ctx_default.ucp_worker);
+        mca_spml_ucx_ctx_fini(&mca_spml_ucx_ctx_default);
     }
 
     if (mca_spml_ucx.aux_ctx != NULL) {
-        ucp_worker_destroy(mca_spml_ucx.aux_ctx->ucp_worker[0]);
-        free(mca_spml_ucx.aux_ctx->ucp_worker);
+        mca_spml_ucx_ctx_fini(mca_spml_ucx.aux_ctx);
     }
 
     mca_spml_ucx.enabled = false;  /* not anymore */
 
     free(mca_spml_ucx.active_array.ctxs);
     free(mca_spml_ucx.idle_array.ctxs);
-    free(mca_spml_ucx.aux_ctx);
 
     SHMEM_MUTEX_DESTROY(mca_spml_ucx.internal_mutex);
     pthread_mutex_destroy(&mca_spml_ucx.ctx_create_mutex);

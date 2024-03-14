@@ -37,7 +37,7 @@ static inline int a2aw_sched_inplace(int rank, int p, NBC_Schedule *schedule,
                                     struct ompi_datatype_t * const * types);
 
 /* an alltoallw schedule can not be cached easily because the contents
- * ot the recvcounts array may change, so a comparison of the address
+ * of the recvcounts array may change, so a comparison of the address
  * would not be sufficient ... we simply do not cache it */
 
 /* simple linear Alltoallw */
@@ -69,8 +69,8 @@ static int nbc_alltoallw_init(const void* sendbuf, const int *sendcounts, const 
     }
     /**
      * If this process has no data to send or receive it can bail out early,
-     * but it needs to increase the nonblocking tag to stay in sycn with the
-     * rest of the processses.
+     * but it needs to increase the nonblocking tag to stay in sync with the
+     * rest of the processes.
      */
     if (OPAL_UNLIKELY(0 == span)) {
       ompi_coll_base_nbc_reserve_tags(comm, 1);

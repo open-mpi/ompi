@@ -132,7 +132,7 @@ int mca_btl_ugni_device_init(mca_btl_ugni_device_t *device, int virtual_device_i
 
     device->dev_index = virtual_device_id;
 
-    /* Create a NIC Adress */
+    /* Create a NIC Address */
     OPAL_OUTPUT((-1, "Got NIC Addr: 0x%08x, CPU ID: %d", mca_btl_ugni_component.dev_addr, 0));
 
     /* Attach device to the communication domain */

@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2020 The University of Tennessee and The University
+ * Copyright (c) 2004-2023 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -14,10 +14,12 @@
  * Copyright (c) 2007-2017 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2017 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2013-2018 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2018-2022 Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -39,6 +41,7 @@
 #include "opal/class/opal_pointer_array.h"
 #include "opal/mca/threads/threads.h"
 #include "opal/util/output.h"
+#include "ompi/instance/instance.h"
 
 BEGIN_C_DECLS
 
@@ -98,13 +101,15 @@ struct ompi_group_t {
         struct ompi_group_strided_data_t  grp_strided;
         struct ompi_group_bitmap_data_t   grp_bitmap;
     } sparse_data;
+
+    ompi_instance_t *grp_instance; /**< instance this group was allocated within */
 };
 
 typedef struct ompi_group_t ompi_group_t;
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_group_t);
 
 /**
- * Padded struct to maintain back compatibiltiy.
+ * Padded struct to maintain back compatibility.
  * See ompi/communicator/communicator.h comments with struct ompi_communicator_t
  * for full explanation why we chose the following padding construct for predefines.
  */
@@ -158,15 +163,29 @@ OMPI_DECLSPEC extern struct opal_mutex_t ompi_group_afp_mutex;
 /**
  * Allocate a new group structure.
  *
+ * @param orig_group Original group 
  * @param group_size Number of MPI processes in the group
  *
  * @return Pointer to new group structure
  */
-OMPI_DECLSPEC ompi_group_t *ompi_group_allocate(int group_size);
-ompi_group_t *ompi_group_allocate_plist_w_procs (ompi_proc_t **procs, int group_size);
-ompi_group_t *ompi_group_allocate_sporadic(int group_size);
-ompi_group_t *ompi_group_allocate_strided(void);
-ompi_group_t *ompi_group_allocate_bmap(int orig_group_size, int group_size);
+OMPI_DECLSPEC ompi_group_t *ompi_group_allocate(ompi_group_t *orig_group, int group_size);
+ompi_group_t *ompi_group_allocate_plist_w_procs (ompi_group_t *orig_group, ompi_proc_t **procs, int group_size);
+ompi_group_t *ompi_group_allocate_sporadic(ompi_group_t *orig_group, int group_size);
+ompi_group_t *ompi_group_allocate_strided(ompi_group_t *orig_group);
+ompi_group_t *ompi_group_allocate_bmap(ompi_group_t *orig_group, int group_size);
+
+/**
+ * @brief Allocate a dense group from a group
+ *
+ * @param[in] group   group
+ *
+ * @returns new group pointer on success
+ * @returns NULL on error
+ *
+ * This function duplicates a group. The new group will have a dense process
+ * table.
+ */
+ompi_group_t *ompi_group_flatten (ompi_group_t *group, int max_procs);
 
 /**
  * Increment the reference count of the proc structures.
@@ -191,14 +210,6 @@ OMPI_DECLSPEC void ompi_group_decrement_proc_count(ompi_group_t *group);
  * @return Error code
  */
 int ompi_group_init(void);
-
-
-/**
- * Clean up OMPI group infrastructure.
- *
- * @return Error code
- */
-int ompi_group_finalize(void);
 
 
 /**
@@ -334,7 +345,7 @@ int ompi_group_calc_bmap ( int n, int orig_size , const int *ranks );
 int ompi_group_minloc (int list[], int length);
 
 /**
- * @brief Helper function for retreiving the proc of a group member in a dense group
+ * @brief Helper function for retrieving the proc of a group member in a dense group
  *
  * This function exists to handle the translation of sentinel group members to real
  * ompi_proc_t's. If a sentinel value is found and allocate is true then this function
@@ -384,15 +395,15 @@ static inline ompi_proc_t *ompi_group_get_proc_ptr (ompi_group_t *group, int ran
 #if OMPI_GROUP_SPARSE
     do {
         if (OMPI_GROUP_IS_DENSE(group)) {
-            return ompi_group_dense_lookup (group, rank, allocate);
+            break;
         }
         int ranks1 = rank;
         ompi_group_translate_ranks (group, 1, &ranks1, group->grp_parent_group_ptr, &rank);
         group = group->grp_parent_group_ptr;
     } while (1);
-#else
-    return ompi_group_dense_lookup (group, rank, allocate);
 #endif
+
+    return ompi_group_dense_lookup (group, rank, allocate);
 }
 
 /**
@@ -402,9 +413,23 @@ static inline ompi_proc_t *ompi_group_get_proc_ptr (ompi_group_t *group, int ran
  * or cached in the proc hash table) or a sentinel value representing the proc. This
  * differs from ompi_group_get_proc_ptr() which returns the ompi_proc_t or NULL.
  */
-ompi_proc_t *ompi_group_get_proc_ptr_raw (ompi_group_t *group, int rank);
+static inline ompi_proc_t *ompi_group_get_proc_ptr_raw (const ompi_group_t *group, int rank)
+{
+#if OMPI_GROUP_SPARSE
+    do {
+        if (OMPI_GROUP_IS_DENSE(group)) {
+            break;
+        }
+        int ranks1 = rank;
+        ompi_group_translate_ranks (group, 1, &ranks1, group->grp_parent_group_ptr, &rank);
+        group = group->grp_parent_group_ptr;
+    } while (1);
+#endif
 
-static inline opal_process_name_t ompi_group_get_proc_name (ompi_group_t *group, int rank)
+    return group->grp_proc_pointers[rank];
+}
+
+static inline opal_process_name_t ompi_group_get_proc_name (const ompi_group_t *group, int rank)
 {
     ompi_proc_t *proc = ompi_group_get_proc_ptr_raw (group, rank);
     if (ompi_proc_is_sentinel (proc)) {
@@ -434,19 +459,17 @@ static inline struct ompi_proc_t *ompi_group_peer_lookup_existing (ompi_group_t 
  */
 static inline int ompi_group_proc_lookup_rank (ompi_group_t* group, ompi_proc_t* proc)
 {
-    int i, np, v;
+    int i, np, rank;
+    opal_vpid_t v;
     assert( NULL != proc );
     assert( !ompi_proc_is_sentinel(proc) );
     np = ompi_group_size(group);
     if( 0 == np ) return MPI_PROC_NULL;
     /* heuristic: On comm_world, start the lookup from v=vpid, so that
-     * when working on comm_world, the search is O(1);
-     * Otherwise, wild guess: start from a proportional position
-     * compared to comm_world position. */
+     * when working on comm_world, on average, the search remains O(1). */
     v = proc->super.proc_name.vpid;
-    v = (v<np)? v: v*ompi_proc_world_size()/np;
     for( i = 0; i < np; i++ ) {
-        int rank = (i+v)%np;
+        rank = (i+v)%np;
         /* procs are lazy initialized and may be a sentinel. Handle both cases. */
         ompi_proc_t* p = ompi_group_get_proc_ptr_raw(group, rank);
         if(OPAL_LIKELY(!ompi_proc_is_sentinel(p))) {
@@ -473,6 +496,17 @@ bool ompi_group_have_remote_peers (ompi_group_t *group);
 int ompi_group_count_local_peers (ompi_group_t *group);
 
 /**
+ * @brief Check if groups overlap
+ *
+ * @param[in] group1    ompi group
+ * @param[in] group2    ompi group
+ *
+ * @returns true if any proc in group1 is also in group2
+ * @returns false otherwise
+ */
+bool ompi_group_overlap (const ompi_group_t *group1, const ompi_group_t *group2);
+
+/**
  *  Function to print the group info
  */
 int ompi_group_dump (ompi_group_t* group);
@@ -481,6 +515,20 @@ int ompi_group_dump (ompi_group_t* group);
  * Ceil Function so not to include the math.h lib
  */
 int ompi_group_div_ceil (int num, int den);
+
+/**
+ * Create a process name array from a group
+ */
+int ompi_group_to_proc_name_array (ompi_group_t *group, opal_process_name_t **name_array, size_t *name_array_size);
+
+/**
+ * Return instance from a group
+ */
+
+static inline ompi_instance_t *ompi_group_get_instance(ompi_group_t *group)
+{
+    return group->grp_instance;
+}
 
 END_C_DECLS
 #endif /* OMPI_GROUP_H */

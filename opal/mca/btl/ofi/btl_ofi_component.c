@@ -15,7 +15,7 @@
  * Copyright (c) 2018-2019 Intel, Inc.  All rights reserved.
  *
  * Copyright (c) 2018-2021 Amazon.com, Inc. or its affiliates.  All Rights reserved.
- * Copyright (c) 2020      Triad National Security, LLC. All rights
+ * Copyright (c) 2020-2023 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -44,7 +44,7 @@
 #define MCA_BTL_OFI_ONE_SIDED_REQUIRED_CAPS (FI_RMA | FI_ATOMIC)
 #define MCA_BTL_OFI_TWO_SIDED_REQUIRED_CAPS (FI_MSG)
 
-#define MCA_BTL_OFI_REQUESTED_MR_MODE (FI_MR_ALLOCATED | FI_MR_PROV_KEY | FI_MR_VIRT_ADDR)
+#define MCA_BTL_OFI_REQUESTED_MR_MODE (FI_MR_ALLOCATED | FI_MR_PROV_KEY | FI_MR_VIRT_ADDR | FI_MR_ENDPOINT)
 
 static char *ofi_progress_mode;
 static bool disable_sep;
@@ -106,7 +106,11 @@ static int validate_info(struct fi_info *info, uint64_t required_caps, char **in
     mr_mode = info->domain_attr->mr_mode;
 
     if (!(mr_mode == FI_MR_BASIC || mr_mode == FI_MR_SCALABLE
-          || (mr_mode & ~(FI_MR_VIRT_ADDR | FI_MR_ALLOCATED | FI_MR_PROV_KEY)) == 0)) {
+#if defined(FI_MR_HMEM)
+          || (mr_mode & ~(FI_MR_VIRT_ADDR | FI_MR_ALLOCATED | FI_MR_PROV_KEY | FI_MR_ENDPOINT | FI_MR_HMEM)) == 0)) {
+#else
+          || (mr_mode & ~(FI_MR_VIRT_ADDR | FI_MR_ALLOCATED | FI_MR_PROV_KEY | FI_MR_ENDPOINT)) == 0)) {
+#endif
         BTL_VERBOSE(("unsupported MR mode"));
         return OPAL_ERROR;
     }
@@ -189,6 +193,23 @@ static int mca_btl_ofi_component_register(void)
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_btl_ofi_component.rd_num);
 
+    mca_btl_ofi_component.disable_inject = false;
+    (void) mca_base_component_var_register(&mca_btl_ofi_component.super.btl_version, "disable_inject",
+                                           "disable use of fi_inject for short messages.",
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_5,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_btl_ofi_component.disable_inject);
+
+    mca_btl_ofi_component.disable_hmem = false;
+    mca_base_component_var_register(&mca_btl_ofi_component.super.btl_version,
+                                    "disable_hmem",
+                                    "Disable HMEM usage",
+                                    MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                    OPAL_INFO_LVL_5,
+                                    MCA_BASE_VAR_SCOPE_READONLY,
+                                    &mca_btl_ofi_component.disable_hmem);
+
+
     /* for now we want this component to lose to the MTL. */
     module->super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_HIGH - 50;
 
@@ -239,7 +260,7 @@ static mca_btl_base_module_t **mca_btl_ofi_component_init(int *num_btl_modules,
     int rc;
     uint64_t progress_mode;
     unsigned resource_count = 0;
-    struct mca_btl_base_module_t **base_modules;
+    struct mca_btl_base_module_t **base_modules = NULL;
     char **include_list = NULL, **exclude_list = NULL;
 
     BTL_VERBOSE(("initializing ofi btl"));
@@ -249,12 +270,12 @@ static mca_btl_base_module_t **mca_btl_ofi_component_init(int *num_btl_modules,
     libfabric_api = fi_version();
 
     /* bail if OFI version is less than 1.5. */
-    if (libfabric_api < FI_VERSION(1, 5)) {
-        BTL_VERBOSE(("ofi btl disqualified because OFI version < 1.5."));
+    if (libfabric_api < FI_VERSION(1, 9)) {
+        BTL_VERBOSE(("ofi btl disqualified because OFI version < 1.9."));
         return NULL;
     }
 
-    struct fi_info *info, *info_list, *selected_info;
+    struct fi_info *info, *info_list = NULL, *selected_info = NULL;
     struct fi_info hints = {0};
     struct fi_ep_attr ep_attr = {0};
     struct fi_rx_attr rx_attr = {0};
@@ -332,15 +353,63 @@ static mca_btl_base_module_t **mca_btl_ofi_component_init(int *num_btl_modules,
 
     mca_btl_ofi_component.module_count = 0;
 
-    /* do the query. */
-    rc = fi_getinfo(FI_VERSION(1, 5), NULL, NULL, 0, &hints, &info_list);
-    if (0 != rc) {
-        BTL_VERBOSE(("fi_getinfo failed with code %d: %s", rc, fi_strerror(-rc)));
-        if (NULL != include_list) {
-            opal_argv_free(include_list);
-        }
-        return NULL;
+#if defined(FI_HMEM)
+    /* Request device transfer capabilities, separate from required_caps */
+    if (false == mca_btl_ofi_component.disable_hmem) {
+        hints.caps |= FI_HMEM;
+        hints.domain_attr->mr_mode |= FI_MR_HMEM;
     }
+no_hmem:
+#endif
+
+    /* Do the query. The earliest version that supports FI_HMEM hints is 1.9.
+     * The earliest version the explictly allow provider to call CUDA API is 1.18  */
+    rc = fi_getinfo(FI_VERSION(1, 18), NULL, NULL, 0, &hints, &info_list);
+    if (FI_ENOSYS == -rc) {
+        rc = fi_getinfo(FI_VERSION(1, 9), NULL, NULL, 0, &hints, &info_list);
+    }
+
+    if ((FI_ENODATA == -rc)
+        || (0 == rc && include_list
+            && 0 == opal_common_ofi_count_providers_in_list(info_list, include_list))
+        || (0 == rc && !include_list && exclude_list
+            && opal_common_ofi_providers_subset_of_list(info_list, exclude_list))) {
+#if defined(FI_HMEM)
+        /* Attempt selecting a provider without FI_HMEM hints */
+        if (hints.caps & FI_HMEM) {
+            hints.caps &= ~FI_HMEM;
+            hints.domain_attr->mr_mode &= ~FI_MR_HMEM;
+            if (info_list) {
+                (void) fi_freeinfo(info_list);
+                info_list = NULL;
+            }
+            goto no_hmem;
+        }
+#endif
+        /* It is not an error if no information is returned. */
+        goto out;
+    } else if (0 != rc) {
+        BTL_VERBOSE(("fi_getinfo failed with code %d: %s", rc, fi_strerror(-rc)));
+        goto out;
+    }
+
+#if defined(FI_HMEM)
+    /* If we get to this point with FI_HMEM hint set, we want it to be a
+     * required capability
+     */
+    if (hints.caps & FI_HMEM) {
+        /* The EFA provider has a bug where it incorrectly advertises FI_HMEM +
+         * FI_ATOMIC capability without being able to provide that support in
+         * versions before libfabric 1.18.0
+         */
+        if (libfabric_api < FI_VERSION(1, 18) && !strncasecmp(info_list->fabric_attr->prov_name, "efa", 3)) {
+            hints.caps &= ~FI_HMEM;
+            hints.domain_attr->mr_mode &= ~FI_MR_HMEM;
+            goto no_hmem;
+        }
+        required_caps |= FI_HMEM;
+    }
+#endif
 
     /* count the number of resources/ */
     info = info_list;
@@ -369,9 +438,9 @@ static mca_btl_base_module_t **mca_btl_ofi_component_init(int *num_btl_modules,
              * however some may have multiple info objects with different
              * attributes for the same NIC. The initial provider attributes
              * are used to ensure that all NICs we return provide the same
-             * capabilities as the inital one.
+             * capabilities as the initial one.
              */
-            selected_info = opal_mca_common_ofi_select_provider(info, &opal_process_info);
+            selected_info = opal_common_ofi_select_provider(info, &opal_process_info);
             rc = mca_btl_ofi_init_device(selected_info);
             if (OPAL_SUCCESS == rc) {
                 info = selected_info;
@@ -381,16 +450,15 @@ static mca_btl_base_module_t **mca_btl_ofi_component_init(int *num_btl_modules,
         info = info->next;
     }
 
-    /* We are done with the returned info. */
-    fi_freeinfo(info_list);
-    if (NULL != include_list) {
-        opal_argv_free(include_list);
+    if (NULL == info) {
+        BTL_VERBOSE(("No provider is selected"));
+        goto out;
     }
 
     /* pass module array back to caller */
     base_modules = calloc(mca_btl_ofi_component.module_count, sizeof(*base_modules));
     if (NULL == base_modules) {
-        return NULL;
+        goto out;
     }
 
     memcpy(base_modules, mca_btl_ofi_component.modules,
@@ -400,6 +468,17 @@ static mca_btl_base_module_t **mca_btl_ofi_component_init(int *num_btl_modules,
                  mca_btl_ofi_component.module_count));
 
     *num_btl_modules = mca_btl_ofi_component.module_count;
+
+out:
+    if (include_list) {
+        opal_argv_free(include_list);
+    }
+    if (exclude_list) {
+        opal_argv_free(exclude_list);
+    }
+    if (info_list) {
+        (void) fi_freeinfo(info_list);
+    }
 
     return base_modules;
 }
@@ -412,7 +491,7 @@ static int mca_btl_ofi_init_device(struct fi_info *info)
     size_t num_contexts_to_create;
 
     char *linux_device_name;
-    char ep_name[FI_NAME_MAX];
+    void *ep_name = NULL;
 
     struct fi_info *ofi_info;
     struct fi_ep_attr *ep_attr;
@@ -452,7 +531,7 @@ static int mca_btl_ofi_init_device(struct fi_info *info)
      * domain open.  Silently ignore not-supported errors, as they
      * are not critical to program correctness, but only indicate
      * that LIbfabric will have to pick a different, possibly less
-     * optimial, monitor. */
+     * optimal, monitor. */
     rc = opal_common_ofi_export_memory_monitor();
     if (0 != rc && -FI_ENOSYS != rc) {
         BTL_VERBOSE(("Failed to inject Libfabric memory monitor: %s",
@@ -476,6 +555,11 @@ static int mca_btl_ofi_init_device(struct fi_info *info)
         BTL_VERBOSE(("%s failed fi_domain with err=%s", linux_device_name, fi_strerror(-rc)));
         goto fail;
     }
+
+    /**
+     * Save the maximum sizes.
+     */
+    mca_btl_ofi_component.max_inject_size = ofi_info->tx_attr->inject_size;
 
     /* AV */
     av_attr.type = FI_AV_MAP;
@@ -562,10 +646,29 @@ static int mca_btl_ofi_init_device(struct fi_info *info)
     module->linux_device_name = linux_device_name;
     module->outstanding_rdma = 0;
     module->use_virt_addr = false;
+    module->use_fi_mr_bind = false;
+    module->bypass_cache = false;
+
+#if defined(FI_HMEM)
+    if (ofi_info->caps & FI_HMEM) {
+        module->super.btl_flags |= MCA_BTL_FLAGS_ACCELERATOR_RDMA;
+    }
+#endif
 
     if (ofi_info->domain_attr->mr_mode == FI_MR_BASIC
         || ofi_info->domain_attr->mr_mode & FI_MR_VIRT_ADDR) {
         module->use_virt_addr = true;
+    }
+
+    if (ofi_info->domain_attr->mr_mode & FI_MR_ENDPOINT) {
+        module->use_fi_mr_bind = true;
+    }
+
+    /* Currently there is no API to query whether the libfabric provider
+     * uses an underlying registration cache. For now, just check for known
+     * providers that use registration caching. */
+    if (!strncasecmp(info->fabric_attr->prov_name, "efa", 3)) {
+        module->bypass_cache = true;
     }
 
     /* create endpoint list */
@@ -579,15 +682,14 @@ static int mca_btl_ofi_init_device(struct fi_info *info)
         goto fail;
     }
 
-    /* create and send the modex for this device */
-    namelen = sizeof(ep_name);
-    rc = fi_getname((fid_t) ep, &ep_name[0], &namelen);
-    if (0 != rc) {
-        BTL_VERBOSE(("%s failed fi_getname with err=%s", linux_device_name, fi_strerror(-rc)));
+    rc = opal_common_ofi_fi_getname((fid_t)ep,
+                                     &ep_name,
+                                     &namelen);
+    if (OPAL_SUCCESS != rc) {
+        BTL_VERBOSE(("%s failed opal_common_ofi_fi_getname  with err=%d", linux_device_name, rc));
         goto fail;
     }
 
-    /* If we have two-sided support. */
     if (TWO_SIDED_ENABLED) {
 
         /* post wildcard recvs */
@@ -601,8 +703,9 @@ static int mca_btl_ofi_init_device(struct fi_info *info)
     }
 
     /* post our endpoint name so peer can use it to connect to us */
-    OPAL_MODEX_SEND(rc, PMIX_GLOBAL, &mca_btl_ofi_component.super.btl_version, &ep_name, namelen);
+    OPAL_MODEX_SEND(rc, PMIX_GLOBAL, &mca_btl_ofi_component.super.btl_version, ep_name, namelen);
     mca_btl_ofi_component.namelen = namelen;
+    free(ep_name);
 
     /* add this module to the list */
     mca_btl_ofi_component.modules[(*module_count)++] = module;
@@ -620,8 +723,10 @@ fail:
 
     /* if the contexts have not been initiated, num_contexts should
      * be zero and we skip this. */
-    for (int i = 0; i < module->num_contexts; i++) {
-        mca_btl_ofi_context_finalize(&module->contexts[i], module->is_scalable_ep);
+    if (NULL != module->contexts) {
+        for (int i = 0; i < module->num_contexts; i++) {
+            mca_btl_ofi_context_finalize(&module->contexts[i], module->is_scalable_ep);
+        }
     }
     free(module->contexts);
 
@@ -644,6 +749,10 @@ fail:
     }
     free(module);
 
+    if (NULL != ep_name) {
+        free(ep_name);
+    }
+
     /* not really a failure. just skip this device. */
     return OPAL_ERR_OUT_OF_RESOURCE;
 }
@@ -651,7 +760,7 @@ fail:
 /**
  * @brief OFI BTL progress function
  *
- * This function explictly progresses all workers.
+ * This function explicitly progresses all workers.
  */
 static int mca_btl_ofi_component_progress(void)
 {

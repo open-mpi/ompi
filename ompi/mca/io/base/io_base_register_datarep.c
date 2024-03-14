@@ -12,6 +12,8 @@
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2024      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -37,7 +39,7 @@ mca_io_base_register_datarep(const char *datarep,
 {
     mca_base_component_list_item_t *cli;
     const mca_base_component_t *component;
-    const mca_io_base_component_2_0_0_t *v200;
+    const mca_io_base_component_3_0_0_t *v200;
     int tmp, ret = OMPI_SUCCESS;
 
     /* Find the maximum additional number of bytes required by all io
@@ -50,7 +52,7 @@ mca_io_base_register_datarep(const char *datarep,
         if (component->mca_type_major_version == 2 &&
             component->mca_type_minor_version == 0 &&
             component->mca_type_release_version == 0) {
-            v200 = (mca_io_base_component_2_0_0_t *) component;
+            v200 = (mca_io_base_component_3_0_0_t *) component;
 
             /* return first non-good error-code */
             tmp = v200->io_register_datarep(datarep, read_fn, write_fn,

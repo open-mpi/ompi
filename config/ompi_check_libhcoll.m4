@@ -17,49 +17,35 @@ dnl
 # LDFLAGS, LIBS} as needed and runs action-if-found if there is
 # support, otherwise executes action-if-not-found
 AC_DEFUN([OMPI_CHECK_HCOLL],[
-    OPAL_VAR_SCOPE_PUSH([ompi_check_hcoll_dir ompi_check_hcoll_libs ompi_check_hcoll_happy CPPFLAGS_save LDFLAGS_save LIBS_save])
+    OPAL_VAR_SCOPE_PUSH([ompi_check_hcoll_happy CPPFLAGS_save LDFLAGS_save LIBS_save])
 
     AC_ARG_WITH([hcoll],
         [AS_HELP_STRING([--with-hcoll(=DIR)],
              [Build hcoll (Mellanox Hierarchical Collectives) support, optionally adding
               DIR/include and DIR/lib or DIR/lib64 to the search path for headers and libraries])])
 
-    AS_IF([test "$with_hcoll" != "no"],
-          [ompi_check_hcoll_libs=hcoll
-           AS_IF([test ! -z "$with_hcoll" && test "$with_hcoll" != "yes"],
-                 [ompi_check_hcoll_dir=$with_hcoll])
+    OAC_CHECK_PACKAGE([hcoll],
+                      [$1],
+                      [hcoll/api/hcoll_api.h],
+                      [hcoll],
+                      [hcoll_get_version],
+                      [ompi_check_hcoll_happy="yes"],
+                      [ompi_check_hcoll_happy="no"])
 
-           CPPFLAGS_save=$CPPFLAGS
+    AS_IF([test "$ompi_check_hcoll_happy" = "yes"],
+          [CPPFLAGS_save=$CPPFLAGS
            LDFLAGS_save=$LDFLAGS
            LIBS_save=$LIBS
 
-           OPAL_LOG_MSG([$1_CPPFLAGS : $$1_CPPFLAGS], 1)
-           OPAL_LOG_MSG([$1_LDFLAGS  : $$1_LDFLAGS], 1)
-           OPAL_LOG_MSG([$1_LIBS     : $$1_LIBS], 1)
+           CPPFLAGS="${$1_CPPFLAGS} ${CPPFLAGS}"
+           LDFLAGS="${$1_LDFLAGS} ${LDFLAGS}"
+           LIBS="${$1_LIBS} ${LIBS}"
 
-           OPAL_CHECK_PACKAGE([$1],
-                              [hcoll/api/hcoll_api.h],
-                              [$ompi_check_hcoll_libs],
-                              [hcoll_get_version],
-                              [],
-                              [$ompi_check_hcoll_dir],
-                              [],
-                              [ompi_check_hcoll_happy="yes"],
-                              [ompi_check_hcoll_happy="no"])
-
-           AS_IF([test "$ompi_check_hcoll_happy" = "yes"],
-                 [
-                     CPPFLAGS=$coll_hcoll_CPPFLAGS
-                     LDFLAGS=$coll_hcoll_LDFLAGS
-                     LIBS=$coll_hcoll_LIBS
-                     AC_CHECK_FUNCS(hcoll_context_free, [], [])
-                 ],
-                 [])
+           AC_CHECK_FUNCS(hcoll_context_free, [], [])
 
            CPPFLAGS=$CPPFLAGS_save
            LDFLAGS=$LDFLAGS_save
-           LIBS=$LIBS_save],
-          [ompi_check_hcoll_happy=no])
+           LIBS=$LIBS_save])
 
     AS_IF([test "$ompi_check_hcoll_happy" = "yes" && test "$enable_progress_threads" = "yes"],
           [AC_MSG_WARN([hcoll driver does not currently support progress threads.  Disabling HCOLL.])
