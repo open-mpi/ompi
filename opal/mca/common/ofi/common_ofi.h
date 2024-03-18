@@ -3,7 +3,7 @@
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * Copyright (c) 2017      Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2020-2022 Triad National Security, LLC. All rights
+ * Copyright (c) 2020-2024 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2021      Amazon.com, Inc. or its affiliates. All rights
  *                         reserved.
@@ -31,6 +31,26 @@ typedef struct opal_common_ofi_module {
     char **prov_exclude;
     int output;
 } opal_common_ofi_module_t;
+
+/**
+ * When attempting to execute an OFI operation we need to handle
+ * resource overrun cases. When a call to an OFI OP fails with -FI_EAGAIN
+ * the OFI mtl/btl will attempt to progress any pending Completion Queue
+ * events that may prevent additional operations to be enqueued.
+ * If the call to ofi progress is successful, then the function call
+ * will be retried.
+ */
+#define OFI_RETRY_UNTIL_DONE(FUNC, RETURN)             \
+    do {                                               \
+        do {                                           \
+            RETURN = FUNC;                             \
+            if (OPAL_LIKELY(0 == RETURN)) {break;}     \
+            if (OPAL_LIKELY(RETURN == -FI_EAGAIN)) {   \
+                opal_progress();                       \
+            }                                          \
+        } while (OPAL_LIKELY(-FI_EAGAIN == RETURN));   \
+    } while (0);
+
 
 extern opal_common_ofi_module_t opal_common_ofi;
 
