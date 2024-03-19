@@ -131,9 +131,6 @@ int ompi_file_open(struct ompi_communicator_t *comm, const char *filename,
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    /* Create the mutex */
-    OBJ_CONSTRUCT(&file->f_lock, opal_mutex_t);
-
     /* Select a module and actually open the file */
 
     if (OMPI_SUCCESS != (ret = mca_io_base_file_select(file, NULL))) {
@@ -156,9 +153,6 @@ int ompi_file_open(struct ompi_communicator_t *comm, const char *filename,
  */
 int ompi_file_close(ompi_file_t **file)
 {
-
-    OBJ_DESTRUCT(&(*file)->f_lock);
-
     (*file)->f_flags |= OMPI_FILE_ISCLOSED;
     OBJ_RELEASE(*file);
     *file = &ompi_mpi_file_null.file;
@@ -241,6 +235,7 @@ static void file_constructor(ompi_file_t *file)
     file->f_comm = NULL;
     file->f_filename = NULL;
     file->f_amode = 0;
+    OBJ_CONSTRUCT(&file->f_lock, opal_mutex_t);
 
     /* Initialize flags */
 
@@ -335,4 +330,6 @@ static void file_destructor(ompi_file_t *file)
         opal_pointer_array_set_item(&ompi_file_f_to_c_table,
                                     file->f_f_to_c_index, NULL);
     }
+
+    OBJ_DESTRUCT(&(file->f_lock));
 }
