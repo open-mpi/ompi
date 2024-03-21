@@ -14,6 +14,7 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2015      Bull SAS.  All rights reserved.
+ * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -127,20 +128,37 @@ ptl_datatype_t ompi_coll_portals4_atomic_datatype [OMPI_DATATYPE_MPI_MAX_PREDEFI
 
 };
 
+#define PORTALS4_INSTALL_COLL_API(__module, __comm, __api)                                                                \
+    do                                                                                                                    \
+    {                                                                                                                     \
+        if (!comm->c_coll->coll_##__api || !comm->c_coll->coll_##__api##_module)                                          \
+        {                                                                                                                 \
+            opal_output_verbose(1, ompi_coll_base_framework.framework_output,                                             \
+                                "(%d/%s): no underlying " #__api "; disqualifying myself",                                \
+                                __comm->c_contextid, __comm->c_name);                                                     \
+            __module->previous_##__api = NULL;                                                                            \
+            __module->previous_##__api##_module = NULL;                                                                   \
+        }                                                                                                                 \
+        else                                                                                                              \
+        {                                                                                                                 \
+            /* save the current selected collective */                                                                    \
+            MCA_COLL_SAVE_API(__comm, __api, __module->previous_##__api, __module->previous_##__api##_module, "portals"); \
+            /* install our own */                                                                                         \
+            MCA_COLL_INSTALL_API(__comm, __api, __module->super.coll##__api, &__module->super, "portals");                \
+        }                                                                                                                 \
+    } while (0)
 
-#define PORTALS4_SAVE_PREV_COLL_API(__module, __comm, __api)                                \
-    do {                                                                                    \
-        __module->previous_ ## __api            = __comm->c_coll->coll_ ## __api;            \
-        __module->previous_ ## __api ## _module = __comm->c_coll->coll_ ## __api ## _module; \
-        if (!comm->c_coll->coll_ ## __api || !comm->c_coll->coll_ ## __api ## _module) {      \
-            opal_output_verbose(1, ompi_coll_base_framework.framework_output,               \
-                    "(%d/%s): no underlying " # __api"; disqualifying myself",              \
-                    ompi_comm_get_local_cid(__comm), __comm->c_name);                          \
-                    return OMPI_ERROR;                                                      \
-        }                                                                                   \
-        OBJ_RETAIN(__module->previous_ ## __api ## _module);                                \
-    } while(0)
-
+#define PORTALS4_UNINSTALL_COLL_API(__module, __comm, __api)                                                                 \
+    do                                                                                                                       \
+    {                                                                                                                        \
+        if ((&__module->super == comm->c_coll->coll_##__api##_module) &&                                                     \
+            (NULL != __module->previous_##__api##_module))                                                                   \
+        {                                                                                                                    \
+            MCA_COLL_INSTALL_API(__comm, __api, __module->previous_##__api, __module->previous_##__api##_module, "portals"); \
+            __module->previous_##__api = NULL;                                                                               \
+            __module->previous_##__api##_module = NULL;                                                                      \
+        }                                                                                                                    \
+    } while (0)
 
 const char *mca_coll_portals4_component_version_string =
         "Open MPI Portals 4 collective MCA component version " OMPI_VERSION;
@@ -157,6 +175,8 @@ static int portals4_init_query(bool enable_progress_threads,
 static mca_coll_base_module_t* portals4_comm_query(struct ompi_communicator_t *comm,
         int *priority);
 static int portals4_module_enable(mca_coll_base_module_t *module,
+        struct ompi_communicator_t *comm);
+static int portals4_module_disable(mca_coll_base_module_t *module,
         struct ompi_communicator_t *comm);
 static int portals4_progress(void);
 
@@ -618,6 +638,7 @@ portals4_comm_query(struct ompi_communicator_t *comm,
     *priority = mca_coll_portals4_priority;
     portals4_module->coll_count = 0;
     portals4_module->super.coll_module_enable = portals4_module_enable;
+    portals4_module->super.coll_module_disable = portals4_module_disable;
 
     portals4_module->super.coll_barrier = ompi_coll_portals4_barrier_intra;
     portals4_module->super.coll_ibarrier = ompi_coll_portals4_ibarrier_intra;
@@ -653,14 +674,45 @@ portals4_module_enable(mca_coll_base_module_t *module,
 {
     mca_coll_portals4_module_t *portals4_module = (mca_coll_portals4_module_t*) module;
 
-    PORTALS4_SAVE_PREV_COLL_API(portals4_module, comm, allreduce);
-    PORTALS4_SAVE_PREV_COLL_API(portals4_module, comm, iallreduce);
-    PORTALS4_SAVE_PREV_COLL_API(portals4_module, comm, reduce);
-    PORTALS4_SAVE_PREV_COLL_API(portals4_module, comm, ireduce);
+    PORTALS4_INSTALL_COLL_API(portals4_module, comm, iallreduce);
+    PORTALS4_INSTALL_COLL_API(portals4_module, comm, allreduce);
+    PORTALS4_INSTALL_COLL_API(portals4_module, comm, ireduce);
+    PORTALS4_INSTALL_COLL_API(portals4_module, comm, reduce);
+
+    PORTALS4_INSTALL_COLL_API(portals4_module, comm, barrier);
+    PORTALS4_INSTALL_COLL_API(portals4_module, comm, ibarrier);
+    PORTALS4_INSTALL_COLL_API(portals4_module, comm, gather);
+    PORTALS4_INSTALL_COLL_API(portals4_module, comm, igather);
+    PORTALS4_INSTALL_COLL_API(portals4_module, comm, scatter);
+    PORTALS4_INSTALL_COLL_API(portals4_module, comm, iscatter);
+    PORTALS4_INSTALL_COLL_API(portals4_module, comm, bcast);
+    PORTALS4_INSTALL_COLL_API(portals4_module, comm, ibcast);
 
     return OMPI_SUCCESS;
 }
 
+static int
+portals4_module_disable(mca_coll_base_module_t *module,
+                        struct ompi_communicator_t *comm)
+{
+    mca_coll_portals4_module_t *portals4_module = (mca_coll_portals4_module_t *)module;
+
+    PORTALS4_UNINSTALL_COLL_API(portals4_module, comm, allreduce);
+    PORTALS4_UNINSTALL_COLL_API(portals4_module, comm, iallreduce);
+    PORTALS4_UNINSTALL_COLL_API(portals4_module, comm, reduce);
+    PORTALS4_UNINSTALL_COLL_API(portals4_module, comm, ireduce);
+
+    PORTALS4_UNINSTALL_COLL_API(portals4_module, comm, barrier);
+    PORTALS4_UNINSTALL_COLL_API(portals4_module, comm, ibarrier);
+    PORTALS4_UNINSTALL_COLL_API(portals4_module, comm, gather);
+    PORTALS4_UNINSTALL_COLL_API(portals4_module, comm, igather);
+    PORTALS4_UNINSTALL_COLL_API(portals4_module, comm, scatter);
+    PORTALS4_UNINSTALL_COLL_API(portals4_module, comm, iscatter);
+    PORTALS4_UNINSTALL_COLL_API(portals4_module, comm, bcast);
+    PORTALS4_UNINSTALL_COLL_API(portals4_module, comm, ibcast);
+
+    return OMPI_SUCCESS;
+}
 #if OPAL_ENABLE_DEBUG
 /* These string maps are only used for debugging output.
  * They will be compiled-out when OPAL is configured

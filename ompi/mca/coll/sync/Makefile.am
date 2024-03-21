@@ -12,14 +12,13 @@
 # Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2016      Intel, Inc. All rights reserved
 # Copyright (c) 2017      IBM Corporation.  All rights reserved.
+# Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
 #
 # $HEADER$
 #
-
-dist_ompidata_DATA = help-coll-sync.txt
 
 sources = \
         coll_sync.h \

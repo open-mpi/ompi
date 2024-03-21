@@ -6,6 +6,7 @@
  * Copyright (c) 2022      IBM Corporation. All rights reserved
  * Copyright (c) 2024      Computer Architecture and VLSI Systems (CARV)
  *                         Laboratory, ICS Forth. All rights reserved.
+ * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -92,7 +93,7 @@ mca_coll_han_reduce_intra(const void *sbuf,
         OPAL_OUTPUT_VERBOSE((30, mca_coll_han_component.han_output,
                              "han cannot handle reduce with this communicator. Drop HAN support in this communicator and fall back on another component\n"));
         /* HAN cannot work with this communicator so fallback on all modules */
-        HAN_LOAD_FALLBACK_COLLECTIVES(han_module, comm);
+        HAN_LOAD_FALLBACK_COLLECTIVES(comm, han_module);
         return han_module->previous_reduce(sbuf, rbuf, count, dtype, op, root,
                                           comm, han_module->previous_reduce_module);
     }
@@ -106,7 +107,7 @@ mca_coll_han_reduce_intra(const void *sbuf,
         /* Put back the fallback collective support and call it once. All
          * future calls will then be automatically redirected.
          */
-        HAN_LOAD_FALLBACK_COLLECTIVE(han_module, comm, reduce);
+        HAN_UNINSTALL_COLL_API(comm, han_module, reduce);
         return han_module->previous_reduce(sbuf, rbuf, count, dtype, op, root,
                                           comm, han_module->previous_reduce_module);
     }
@@ -311,7 +312,7 @@ mca_coll_han_reduce_intra_simple(const void *sbuf,
         OPAL_OUTPUT_VERBOSE((30, mca_coll_han_component.han_output,
                              "han cannot handle reduce with this communicator. Drop HAN support in this communicator and fall back on another component\n"));
         /* HAN cannot work with this communicator so fallback on all collectives */
-        HAN_LOAD_FALLBACK_COLLECTIVES(han_module, comm);
+        HAN_LOAD_FALLBACK_COLLECTIVES(comm, han_module);
         return han_module->previous_reduce(sbuf, rbuf, count, dtype, op, root,
                                           comm, han_module->previous_reduce_module);
     }
@@ -325,7 +326,7 @@ mca_coll_han_reduce_intra_simple(const void *sbuf,
         /* Put back the fallback collective support and call it once. All
          * future calls will then be automatically redirected.
          */
-        HAN_LOAD_FALLBACK_COLLECTIVE(han_module, comm, reduce);
+        HAN_UNINSTALL_COLL_API(comm, han_module, reduce);
         return han_module->previous_reduce(sbuf, rbuf, count, dtype, op, root,
                                           comm, han_module->previous_reduce_module);
     }

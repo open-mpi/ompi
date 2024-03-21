@@ -13,6 +13,7 @@
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018-2019 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -40,6 +41,12 @@
 #include "ompi/mca/coll/base/base.h"
 #include "coll_sync.h"
 
+static int
+mca_coll_sync_module_enable(mca_coll_base_module_t *module,
+                            struct ompi_communicator_t *comm);
+static int
+mca_coll_sync_module_disable(mca_coll_base_module_t *module,
+                             struct ompi_communicator_t *comm);
 
 static void mca_coll_sync_module_construct(mca_coll_sync_module_t *module)
 {
@@ -111,16 +118,10 @@ mca_coll_sync_comm_query(struct ompi_communicator_t *comm,
 
     /* Choose whether to use [intra|inter] */
     sync_module->super.coll_module_enable = mca_coll_sync_module_enable;
+    sync_module->super.coll_module_disable = mca_coll_sync_module_disable;
 
     /* The "all" versions are already synchronous.  So no need for an
        additional barrier there. */
-    sync_module->super.coll_allgather  = NULL;
-    sync_module->super.coll_allgatherv = NULL;
-    sync_module->super.coll_allreduce  = NULL;
-    sync_module->super.coll_alltoall   = NULL;
-    sync_module->super.coll_alltoallv  = NULL;
-    sync_module->super.coll_alltoallw  = NULL;
-    sync_module->super.coll_barrier    = NULL;
     sync_module->super.coll_bcast      = mca_coll_sync_bcast;
     sync_module->super.coll_exscan     = mca_coll_sync_exscan;
     sync_module->super.coll_gather     = mca_coll_sync_gather;
@@ -134,47 +135,78 @@ mca_coll_sync_comm_query(struct ompi_communicator_t *comm,
     return &(sync_module->super);
 }
 
+#define SYNC_INSTALL_COLL_API(__comm, __module, __api)                                                                   \
+    do                                                                                                                   \
+    {                                                                                                                    \
+        /* save the current selected collective */                                                                       \
+        MCA_COLL_SAVE_API(__comm, __api, __module->c_coll.coll_##__api, __module->c_coll.coll_##__api##_module, "sync"); \
+        /* install our own */                                                                                            \
+        MCA_COLL_INSTALL_API(__comm, __api, mca_coll_sync_##__api, &__module->super, "sync");                            \
+    } while (0)
+
+#define SYNC_UNINSTALL_COLL_API(__comm, __module, __api)                                                                \
+    do                                                                                                                  \
+    {                                                                                                                   \
+        if (__comm->c_coll->coll_##__api##_module == &__module->super)                                                  \
+        {                                                                                                               \
+            MCA_COLL_INSTALL_API(__comm, __api, mca_coll_sync_##__api, __module->c_coll.coll_##__api##_module, "sync"); \
+            __module->c_coll.coll_##__api = NULL;                                                                       \
+            __module->c_coll.coll_##__api##_module = NULL;                                                              \
+        }                                                                                                               \
+    } while (0)
 
 /*
  * Init module on the communicator
  */
-int mca_coll_sync_module_enable(mca_coll_base_module_t *module,
-                                struct ompi_communicator_t *comm)
+static int
+mca_coll_sync_module_enable(mca_coll_base_module_t *module,
+                            struct ompi_communicator_t *comm)
 {
-    bool good = true;
-    char *msg = NULL;
-    mca_coll_sync_module_t *s = (mca_coll_sync_module_t*) module;
+    mca_coll_sync_module_t *sync_module = (mca_coll_sync_module_t*) module;
 
-    /* Save the prior layer of coll functions */
-    s->c_coll = *comm->c_coll;
+    /* The "all" versions are already synchronous.  So no need for an
+       additional barrier there. */
+    SYNC_INSTALL_COLL_API(comm, sync_module, bcast);
+    SYNC_INSTALL_COLL_API(comm, sync_module, gather);
+    SYNC_INSTALL_COLL_API(comm, sync_module, gatherv);
+    SYNC_INSTALL_COLL_API(comm, sync_module, reduce);
+    SYNC_INSTALL_COLL_API(comm, sync_module, reduce_scatter);
+    SYNC_INSTALL_COLL_API(comm, sync_module, scatter);
+    SYNC_INSTALL_COLL_API(comm, sync_module, scatterv);
 
-#define CHECK_AND_RETAIN(name)                           \
-    if (NULL == s->c_coll.coll_ ## name ## _module) {    \
-        good = false;                                    \
-        msg = #name;                                     \
-    } else if (good) {                                   \
-        OBJ_RETAIN(s->c_coll.coll_ ## name ## _module);  \
-    }
-
-    CHECK_AND_RETAIN(bcast);
-    CHECK_AND_RETAIN(gather);
-    CHECK_AND_RETAIN(gatherv);
-    CHECK_AND_RETAIN(reduce);
-    CHECK_AND_RETAIN(reduce_scatter);
-    CHECK_AND_RETAIN(scatter);
-    CHECK_AND_RETAIN(scatterv);
     if (!OMPI_COMM_IS_INTER(comm)) {
         /* MPI does not define scan/exscan on intercommunicators */
-        CHECK_AND_RETAIN(exscan);
-        CHECK_AND_RETAIN(scan);
+        SYNC_INSTALL_COLL_API(comm, sync_module, scan);
+        SYNC_INSTALL_COLL_API(comm, sync_module, exscan);
     }
 
-    /* All done */
-    if (good) {
-        return OMPI_SUCCESS;
+    return OMPI_SUCCESS;
+}
+
+static int
+mca_coll_sync_module_disable(mca_coll_base_module_t *module,
+                             struct ompi_communicator_t *comm)
+{
+    mca_coll_sync_module_t *sync_module = (mca_coll_sync_module_t*) module;
+
+    /* Save the prior layer of coll functions */
+    sync_module->c_coll = *comm->c_coll;
+
+    /* The "all" versions are already synchronous.  So no need for an
+       additional barrier there. */
+    SYNC_UNINSTALL_COLL_API(comm, sync_module, bcast);
+    SYNC_UNINSTALL_COLL_API(comm, sync_module, gather);
+    SYNC_UNINSTALL_COLL_API(comm, sync_module, gatherv);
+    SYNC_UNINSTALL_COLL_API(comm, sync_module, reduce);
+    SYNC_UNINSTALL_COLL_API(comm, sync_module, reduce_scatter);
+    SYNC_UNINSTALL_COLL_API(comm, sync_module, scatter);
+    SYNC_UNINSTALL_COLL_API(comm, sync_module, scatterv);
+
+    if (!OMPI_COMM_IS_INTER(comm)) {
+        /* MPI does not define scan/exscan on intercommunicators */
+        SYNC_INSTALL_COLL_API(comm, sync_module, scan);
+        SYNC_INSTALL_COLL_API(comm, sync_module, exscan);
     }
-    opal_show_help("help-coll-sync.txt", "missing collective", true,
-                   ompi_process_info.nodename,
-                   mca_coll_sync_component.priority, msg);
-    return OMPI_ERR_NOT_FOUND;
+
+    return OMPI_SUCCESS;
 }

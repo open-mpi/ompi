@@ -14,6 +14,7 @@
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -113,14 +114,7 @@ mca_coll_inter_module_construct(mca_coll_inter_module_t *module)
     module->inter_comm = NULL;
 }
 
-static void
-mca_coll_inter_module_destruct(mca_coll_inter_module_t *module)
-{
-
-}
-
-
 OBJ_CLASS_INSTANCE(mca_coll_inter_module_t,
                    mca_coll_base_module_t,
                    mca_coll_inter_module_construct,
-                   mca_coll_inter_module_destruct);
+                   NULL);
