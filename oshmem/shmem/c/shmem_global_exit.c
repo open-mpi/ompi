@@ -11,6 +11,7 @@
 
 #include "oshmem/include/shmem.h"
 #include "oshmem/runtime/runtime.h"
+#include "oshmem/proc/proc.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 
