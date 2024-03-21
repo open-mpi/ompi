@@ -21,8 +21,16 @@
 
 module mpi_f08_types
 
+  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  ! Do NOT "use mpi" in here!  You will get conflicts for things that
+  ! are different types (e.g., MPI_STATUS[ES]_IGNORE).
+  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
    use, intrinsic :: ISO_C_BINDING
    use mpi_types
+
+   ! Use the same constants that are BIND(C)'ed in the mpi module
+   use :: mpi, only : MPI_ARGV_NULL, MPI_ARGVS_NULL, MPI_BOTTOM, MPI_ERRCODES_IGNORE, MPI_IN_PLACE, MPI_STATUS_IGNORE, MPI_STATUS_IGNORE, MPI_STATUSES_IGNORE, MPI_UNWEIGHTED, MPI_WEIGHTS_EMPTY
 
    include "mpif-config.h"
    include "mpif-constants.h"
@@ -159,9 +167,5 @@ module mpi_f08_types
   type(MPI_Datatype), parameter   :: MPI_COUNT                   = MPI_Datatype(OMPI_MPI_COUNT)
   type(MPI_Datatype), parameter   :: MPI_OFFSET                  = MPI_Datatype(OMPI_MPI_OFFSET)
   type(MPI_Datatype), parameter   :: MPI_COMPLEX4                = MPI_Datatype(OMPI_MPI_COMPLEX4)
-
-!... Special sentinel constants
-!------------------------------
-#include "mpif-f08-types.h"
 
 end module mpi_f08_types

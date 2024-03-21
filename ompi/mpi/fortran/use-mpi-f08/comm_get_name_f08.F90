@@ -10,7 +10,7 @@
 #include "mpi-f08-rename.h"
 
 subroutine MPI_Comm_get_name_f08(comm,comm_name,resultlen,ierror)
-   use :: mpi_f08_types, only : MPI_Comm, MPI_MAX_OBJECT_NAME
+   use :: mpi_f08_types, only : MPI_Comm
    use :: ompi_mpifh_bindings, only : ompi_comm_get_name_f
    implicit none
    TYPE(MPI_Comm), INTENT(IN) :: comm
