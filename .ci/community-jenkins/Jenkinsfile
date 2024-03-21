@@ -30,69 +30,15 @@ if (buildNumber > 1) {
 }
 milestone(buildNumber)
 
-// Add build description linking back to PR. This is redundant to the "GitHub"
-// link on the Pull Request page, but the Build page does not have a direct link
-// back to the PR. The "Details" link at the bottom of the GitHub PR page brings
-// you to the Jenkins Build page, so we're adding the link back to the GitHub PR
-// page.
-currentBuild.description = "This is a build of <a href=\"${CHANGE_URL}\"}\">Open MPI PR #${CHANGE_ID}</a>"
-
-check_stages = prepare_check_stages()
-println("Initialized Pipeline")
-
-// Today, we only expect to have one stage (do everything), but allow that
-// we may split build and test stages in the future.
-for (check_stage in check_stages) {
-    parallel(check_stage)
-}
-
-println('Tests Completed')
-
-// Returns a list of build stages ("build Open MPI", "Build Tests", etc.),
-// although currently we only support the one stage of "everything", where each
-// build stage is a map of different configurations to test.
-def prepare_check_stages() {
-    def configure_options = ["--disable-dlopen", "--disable-oshmem", "--enable-builtin-atomic", "--enable-ipv6"]
-    def compilers = ["clang10", "gcc5", "gcc6", "gcc7", "gcc8", "gcc9", "gcc10"]
-    def platforms = ["amazon_linux_2", "amazon_linux_2-arm64", "rhel7", "rhel8", "ubuntu_18.04"]
-    def check_stages_list = []
-
-    // Build everything stage
-    def build_parallel_map = [:]
-    for (platform in platforms) {
-        def name = "Platform: ${platform}".replaceAll("-", "")
-        build_parallel_map.put(name, prepare_build(name, platform, ""))
-    }
-
-    for (compiler in compilers) {
-        def name = "Compiler: ${compiler}".replaceAll("-", "")
-        build_parallel_map.put(name, prepare_build(name, compiler, "--compiler \\\"${compiler}\\\""))
-    }
-
-      for (configure_option in configure_options) {
-        def name = "Configure: ${configure_option}".replaceAll("-", "")
-        build_parallel_map.put(name, prepare_build(name, "(ec2&&linux)", "--configure-args \\\"${configure_option}\\\""))
-    }
-
-    build_parallel_map.put("distcheck", prepare_build("distcheck", "tarball_build", "--distcheck"))
-
-    check_stages_list.add(build_parallel_map)
-
-    return check_stages_list
-}
-
-def prepare_build(build_name, label, build_arg) {
-    return {
-        stage("${build_name}") {
-            node(label) {
-                checkout(changelog: false, poll: false, scm: scm)
-                try {
-                    sh "while :; do echo 'Putting Jenkins in infinite loop'; sleep 1; done"
-                } catch (Exception e) {
-                    currentBuild.result = "FAILURE"
-                }
-                cleanWs(notFailBuild: true)
-            }
+pipeline {
+  stages {
+    stage("Hi OMPI!") {
+      steps {
+        script {
+          sh "echo hi"
+          sh "while :; do echo 'Putting Jenkins in infinite loop'; sleep 1; done"
         }
+      }
     }
+  }
 }
