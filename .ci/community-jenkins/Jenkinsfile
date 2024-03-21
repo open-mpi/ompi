@@ -86,13 +86,8 @@ def prepare_build(build_name, label, build_arg) {
         stage("${build_name}") {
             node(label) {
                 checkout(changelog: false, poll: false, scm: scm)
-                // If pr-builder.sh fails, the sh step will throw an exception,
-                // which we catch so that the job doesn't abort and continues on
-                // to other steps - such as cleanup. Because we catch the
-                // exception, we need to tell Jenkins the overall job has
-                // failed.
                 try {
-                    sh "/bin/bash -x .ci/community-jenkins/pr-builder.sh ${build_arg} ompi"
+                    sh "while :; do echo 'Putting Jenkins in infinite loop'; sleep 1; done"
                 } catch (Exception e) {
                     currentBuild.result = "FAILURE"
                 }
