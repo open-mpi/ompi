@@ -13,6 +13,7 @@
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2022      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -61,23 +62,23 @@ mca_coll_inter_allgather_inter(const void *sbuf, int scount,
     /* Perform the gather locally at the root */
     if ( scount > 0 ) {
         span = opal_datatype_span(&sdtype->super, (int64_t)scount*(int64_t)size, &gap);
-	ptmp_free = (char*)malloc(span);
-	if (NULL == ptmp_free) {
-	    return OMPI_ERR_OUT_OF_RESOURCE;
-	}
+	    ptmp_free = (char*)malloc(span);
+	    if (NULL == ptmp_free) {
+	        return OMPI_ERR_OUT_OF_RESOURCE;
+	    }
         ptmp = ptmp_free - gap;
 
-	err = comm->c_local_comm->c_coll->coll_gather(sbuf, scount, sdtype,
+	    err = comm->c_local_comm->c_coll->coll_gather(sbuf, scount, sdtype,
 						     ptmp, scount, sdtype,
 						     0, comm->c_local_comm,
 						     comm->c_local_comm->c_coll->coll_gather_module);
-	if (OMPI_SUCCESS != err) {
-	    goto exit;
-	}
+	    if (OMPI_SUCCESS != err) {
+	        goto exit;
+	    }
     }
 
     if (rank == root) {
-	/* Do a send-recv between the two root procs. to avoid deadlock */
+	    /* Do a send-recv between the two root procs. to avoid deadlock */
         err = ompi_coll_base_sendrecv_actual(ptmp, scount*(size_t)size, sdtype, 0,
                                              MCA_COLL_BASE_TAG_ALLGATHER,
                                              rbuf, rcount*(size_t)rsize, rdtype, 0,

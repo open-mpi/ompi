@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -33,7 +34,7 @@
  *	Accepts:	- same as MPI_Allgather()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int mca_coll_demo_allgather_intra(void *sbuf, int scount,
+int mca_coll_demo_allgather_intra(const void *sbuf, int scount,
                                   struct ompi_datatype_t *sdtype, void *rbuf,
                                   int rcount, struct ompi_datatype_t *rdtype,
                                   struct ompi_communicator_t *comm,
@@ -41,9 +42,9 @@ int mca_coll_demo_allgather_intra(void *sbuf, int scount,
 {
     mca_coll_demo_module_t *demo_module = (mca_coll_demo_module_t*) module;
     opal_output_verbose(10, ompi_coll_base_framework.framework_output, "In demo allgather_intra");
-    return demo_module->underlying.coll_allgather(sbuf, scount, sdtype, rbuf,
-                                                  rcount, rdtype, comm,
-                                                  demo_module->underlying.coll_allgather_module);
+    return demo_module->c_coll.coll_allgather(sbuf, scount, sdtype, rbuf,
+                                              rcount, rdtype, comm,
+                                              demo_module->c_coll.coll_allgather_module);
 }
 
 
@@ -54,7 +55,7 @@ int mca_coll_demo_allgather_intra(void *sbuf, int scount,
  *	Accepts:	- same as MPI_Allgather()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int mca_coll_demo_allgather_inter(void *sbuf, int scount,
+int mca_coll_demo_allgather_inter(const void *sbuf, int scount,
                                   struct ompi_datatype_t *sdtype,
                                   void *rbuf, int rcount,
                                   struct ompi_datatype_t *rdtype,
@@ -63,7 +64,7 @@ int mca_coll_demo_allgather_inter(void *sbuf, int scount,
 {
     mca_coll_demo_module_t *demo_module = (mca_coll_demo_module_t*) module;
     opal_output_verbose(10, ompi_coll_base_framework.framework_output, "In demo allgather_inter");
-    return demo_module->underlying.coll_allgather(sbuf, scount, sdtype, rbuf,
-                                                  rcount, rdtype, comm,
-                                                  demo_module->underlying.coll_allgather_module);
+    return demo_module->c_coll.coll_allgather(sbuf, scount, sdtype, rbuf,
+                                              rcount, rdtype, comm,
+                                              demo_module->c_coll.coll_allgather_module);
 }

@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -33,7 +34,7 @@
  *	Accepts:	- same as MPI_Reduce()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int mca_coll_demo_reduce_intra(void *sbuf, void *rbuf, int count,
+int mca_coll_demo_reduce_intra(const void *sbuf, void *rbuf, int count,
                                struct ompi_datatype_t *dtype,
                                struct ompi_op_t *op,
                                int root, struct ompi_communicator_t *comm,
@@ -41,9 +42,9 @@ int mca_coll_demo_reduce_intra(void *sbuf, void *rbuf, int count,
 {
     mca_coll_demo_module_t *demo_module = (mca_coll_demo_module_t*) module;
     opal_output_verbose(10, ompi_coll_base_framework.framework_output, "In demo reduce_intra");
-    return demo_module->underlying.coll_reduce(sbuf, rbuf, count, dtype,
-                                               op, root, comm,
-                                               demo_module->underlying.coll_reduce_module);
+    return demo_module->c_coll.coll_reduce(sbuf, rbuf, count, dtype,
+                                           op, root, comm,
+                                           demo_module->c_coll.coll_reduce_module);
 }
 
 
@@ -54,7 +55,7 @@ int mca_coll_demo_reduce_intra(void *sbuf, void *rbuf, int count,
  *	Accepts:	- same as MPI_Reduce()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int mca_coll_demo_reduce_inter(void *sbuf, void *rbuf, int count,
+int mca_coll_demo_reduce_inter(const void *sbuf, void *rbuf, int count,
                                struct ompi_datatype_t *dtype,
                                struct ompi_op_t *op,
                                int root, struct ompi_communicator_t *comm,
@@ -62,7 +63,7 @@ int mca_coll_demo_reduce_inter(void *sbuf, void *rbuf, int count,
 {
     mca_coll_demo_module_t *demo_module = (mca_coll_demo_module_t*) module;
     opal_output_verbose(10, ompi_coll_base_framework.framework_output, "In demo reduce_inter");
-    return demo_module->underlying.coll_reduce(sbuf, rbuf, count, dtype,
-                                               op, root, comm,
-                                               demo_module->underlying.coll_reduce_module);
+    return demo_module->c_coll.coll_reduce(sbuf, rbuf, count, dtype,
+                                           op, root, comm,
+                                           demo_module->c_coll.coll_reduce_module);
 }

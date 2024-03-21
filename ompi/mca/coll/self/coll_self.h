@@ -12,6 +12,7 @@
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -49,9 +50,6 @@ int mca_coll_self_init_query(bool enable_progress_threads,
                              bool enable_mpi_threads);
 mca_coll_base_module_t *
 mca_coll_self_comm_query(struct ompi_communicator_t *comm, int *priority);
-
-int mca_coll_self_module_enable(mca_coll_base_module_t *module,
-                                struct ompi_communicator_t *comm);
 
 int mca_coll_self_allgather_intra(const void *sbuf, int scount,
                                   struct ompi_datatype_t *sdtype,

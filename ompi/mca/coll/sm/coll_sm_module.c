@@ -17,6 +17,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -70,16 +71,15 @@
  */
 uint32_t mca_coll_sm_one = 1;
 
-
 /*
  * Local functions
  */
-static int sm_module_enable(mca_coll_base_module_t *module,
-                          struct ompi_communicator_t *comm);
+static int mca_coll_sm_module_enable(mca_coll_base_module_t *module,
+                                     struct ompi_communicator_t *comm);
+static int mca_coll_sm_module_disable(mca_coll_base_module_t *module,
+                                      struct ompi_communicator_t *comm);
 static int bootstrap_comm(ompi_communicator_t *comm,
                           mca_coll_sm_module_t *module);
-static int mca_coll_sm_module_disable(mca_coll_base_module_t *module,
-                          struct ompi_communicator_t *comm);
 
 /*
  * Module constructor
@@ -90,7 +90,6 @@ static void mca_coll_sm_module_construct(mca_coll_sm_module_t *module)
     module->sm_comm_data = NULL;
     module->previous_reduce = NULL;
     module->previous_reduce_module = NULL;
-    module->super.coll_module_disable = mca_coll_sm_module_disable;
 }
 
 /*
@@ -111,26 +110,7 @@ static void mca_coll_sm_module_destruct(mca_coll_sm_module_t *module)
         free(c);
     }
 
-    /* It should always be non-NULL, but just in case */
-    if (NULL != module->previous_reduce_module) {
-        OBJ_RELEASE(module->previous_reduce_module);
-    }
-
     module->enabled = false;
-}
-
-/*
- * Module disable
- */
-static int mca_coll_sm_module_disable(mca_coll_base_module_t *module, struct ompi_communicator_t *comm)
-{
-    mca_coll_sm_module_t *sm_module = (mca_coll_sm_module_t*) module;
-    if (NULL != sm_module->previous_reduce_module) {
-	sm_module->previous_reduce = NULL;
-        OBJ_RELEASE(sm_module->previous_reduce_module);
-	sm_module->previous_reduce_module = NULL;
-    }
-    return OMPI_SUCCESS;
 }
 
 
@@ -196,23 +176,13 @@ mca_coll_sm_comm_query(struct ompi_communicator_t *comm, int *priority)
     }
 
     /* All is good -- return a module */
-    sm_module->super.coll_module_enable = sm_module_enable;
-    sm_module->super.coll_allgather  = NULL;
-    sm_module->super.coll_allgatherv = NULL;
+    sm_module->super.coll_module_enable = mca_coll_sm_module_enable;
+    sm_module->super.coll_module_disable = mca_coll_sm_module_disable;
+
     sm_module->super.coll_allreduce  = mca_coll_sm_allreduce_intra;
-    sm_module->super.coll_alltoall   = NULL;
-    sm_module->super.coll_alltoallv  = NULL;
-    sm_module->super.coll_alltoallw  = NULL;
     sm_module->super.coll_barrier    = mca_coll_sm_barrier_intra;
     sm_module->super.coll_bcast      = mca_coll_sm_bcast_intra;
-    sm_module->super.coll_exscan     = NULL;
-    sm_module->super.coll_gather     = NULL;
-    sm_module->super.coll_gatherv    = NULL;
     sm_module->super.coll_reduce     = mca_coll_sm_reduce_intra;
-    sm_module->super.coll_reduce_scatter = NULL;
-    sm_module->super.coll_scan       = NULL;
-    sm_module->super.coll_scatter    = NULL;
-    sm_module->super.coll_scatterv   = NULL;
 
     opal_output_verbose(10, ompi_coll_base_framework.framework_output,
                         "coll:sm:comm_query (%s/%s): pick me! pick me!",
@@ -220,22 +190,70 @@ mca_coll_sm_comm_query(struct ompi_communicator_t *comm, int *priority)
     return &(sm_module->super);
 }
 
+#define SM_INSTALL_COLL_API(__comm, __module, __api)                                              \
+    do                                                                                            \
+    {                                                                                             \
+        MCA_COLL_INSTALL_API(__comm, __api, mca_coll_sm_##__api##_intra, &__module->super, "sm"); \
+    } while (0)
+
+#define SM_UNINSTALL_COLL_API(__comm, __module, __api)                 \
+    do                                                                 \
+    {                                                                  \
+        if (__comm->c_coll->coll_##__api##_module == &__module->super) \
+        {                                                              \
+            MCA_COLL_INSTALL_API(__comm, __api, NULL, NULL, "sm");     \
+        }                                                              \
+    } while (0)
 
 /*
  * Init module on the communicator
  */
-static int sm_module_enable(mca_coll_base_module_t *module,
-                            struct ompi_communicator_t *comm)
+static int
+mca_coll_sm_module_enable(mca_coll_base_module_t *module,
+                          struct ompi_communicator_t *comm)
 {
     if (NULL == comm->c_coll->coll_reduce ||
         NULL == comm->c_coll->coll_reduce_module) {
         opal_output_verbose(10, ompi_coll_base_framework.framework_output,
                             "coll:sm:enable (%s/%s): no underlying reduce; disqualifying myself",
-			    ompi_comm_print_cid (comm), comm->c_name);
+                            ompi_comm_print_cid (comm), comm->c_name);
         return OMPI_ERROR;
     }
 
+    mca_coll_sm_module_t *sm_module = (mca_coll_sm_module_t *)module;
+
+    /* Save previous component's reduce information */
+    sm_module->previous_reduce = comm->c_coll->coll_reduce;
+    sm_module->previous_reduce_module = comm->c_coll->coll_reduce_module;
+    /* Install the SM collectives */
+    SM_INSTALL_COLL_API(comm, sm_module, allreduce);
+    SM_INSTALL_COLL_API(comm, sm_module, barrier);
+    SM_INSTALL_COLL_API(comm, sm_module, bcast);
+    SM_INSTALL_COLL_API(comm, sm_module, reduce);
+
     /* We do everything lazily in ompi_coll_sm_enable() */
+    return OMPI_SUCCESS;
+}
+
+/*
+ * Module disable
+ */
+static int
+mca_coll_sm_module_disable(mca_coll_base_module_t *module,
+                           struct ompi_communicator_t *comm)
+{
+    mca_coll_sm_module_t *sm_module = (mca_coll_sm_module_t *)module;
+
+    SM_UNINSTALL_COLL_API(comm, sm_module, allreduce);
+    SM_UNINSTALL_COLL_API(comm, sm_module, barrier);
+    SM_UNINSTALL_COLL_API(comm, sm_module, bcast);
+    if (NULL != sm_module->previous_reduce_module) {
+        comm->c_coll->coll_reduce = sm_module->previous_reduce;
+        comm->c_coll->coll_reduce_module = sm_module->previous_reduce_module;
+        sm_module->previous_reduce = NULL;
+        sm_module->previous_reduce_module = NULL;
+    }
+
     return OMPI_SUCCESS;
 }
 
@@ -459,11 +477,6 @@ int ompi_coll_sm_lazy_enable(mca_coll_base_module_t *module,
         memset((void *) data->mcb_data_index[i].mcbmi_control, 0,
                c->sm_control_size);
     }
-
-    /* Save previous component's reduce information */
-    sm_module->previous_reduce = comm->c_coll->coll_reduce;
-    sm_module->previous_reduce_module = comm->c_coll->coll_reduce_module;
-    OBJ_RETAIN(sm_module->previous_reduce_module);
 
     /* Indicate that we have successfully attached and setup */
     opal_atomic_add (&(data->sm_bootstrap_meta->module_seg->seg_inited), 1);

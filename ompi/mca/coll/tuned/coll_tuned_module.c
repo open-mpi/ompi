@@ -13,6 +13,7 @@
  * Copyright (c) 2016      Intel, Inc.  All rights reserved.
  * Copyright (c) 2018      Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
+ * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -35,6 +36,8 @@
 #include "coll_tuned_dynamic_file.h"
 
 static int tuned_module_enable(mca_coll_base_module_t *module,
+                   struct ompi_communicator_t *comm);
+static int tuned_module_disable(mca_coll_base_module_t *module,
                    struct ompi_communicator_t *comm);
 /*
  * Initial query function that is invoked during MPI_INIT, allowing
@@ -89,6 +92,7 @@ ompi_coll_tuned_comm_query(struct ompi_communicator_t *comm, int *priority)
      * but this would probably add an extra if and funct call to the path
      */
     tuned_module->super.coll_module_enable = tuned_module_enable;
+    tuned_module->super.coll_module_disable = tuned_module_disable;
 
     /* By default stick with the fixed version of the tuned collectives. Later on,
      * when the module get enabled, set the correct version based on the availability
@@ -99,18 +103,13 @@ ompi_coll_tuned_comm_query(struct ompi_communicator_t *comm, int *priority)
     tuned_module->super.coll_allreduce  = ompi_coll_tuned_allreduce_intra_dec_fixed;
     tuned_module->super.coll_alltoall   = ompi_coll_tuned_alltoall_intra_dec_fixed;
     tuned_module->super.coll_alltoallv  = ompi_coll_tuned_alltoallv_intra_dec_fixed;
-    tuned_module->super.coll_alltoallw  = NULL;
     tuned_module->super.coll_barrier    = ompi_coll_tuned_barrier_intra_dec_fixed;
     tuned_module->super.coll_bcast      = ompi_coll_tuned_bcast_intra_dec_fixed;
-    tuned_module->super.coll_exscan     = NULL;
     tuned_module->super.coll_gather     = ompi_coll_tuned_gather_intra_dec_fixed;
-    tuned_module->super.coll_gatherv    = NULL;
     tuned_module->super.coll_reduce     = ompi_coll_tuned_reduce_intra_dec_fixed;
     tuned_module->super.coll_reduce_scatter = ompi_coll_tuned_reduce_scatter_intra_dec_fixed;
     tuned_module->super.coll_reduce_scatter_block = ompi_coll_tuned_reduce_scatter_block_intra_dec_fixed;
-    tuned_module->super.coll_scan       = NULL;
     tuned_module->super.coll_scatter    = ompi_coll_tuned_scatter_intra_dec_fixed;
-    tuned_module->super.coll_scatterv   = NULL;
 
     return &(tuned_module->super);
 }
@@ -148,8 +147,26 @@ ompi_coll_tuned_forced_getvalues( enum COLLTYPE type,
     return (MPI_SUCCESS);
 }
 
-#define COLL_TUNED_EXECUTE_IF_DYNAMIC(TMOD, TYPE, EXECUTE)              \
+#define TUNED_INSTALL_COLL_API(__comm, __module, __api)                                                     \
+    do                                                                                                      \
+    {                                                                                                       \
+        if (__module->super.coll_##__api)                                                                   \
+        {                                                                                                   \
+            MCA_COLL_INSTALL_API(__comm, __api, __module->super.coll_##__api, &__module->super, "tuned");  \
+        }                                                                                                   \
+    } while (0)
+
+#define TUNED_UNINSTALL_COLL_API(__comm, __module, __api)               \
+    do                                                                  \
     {                                                                   \
+        if (__comm->c_coll->coll_##__api##_module == &__module->super)  \
+        {                                                               \
+            MCA_COLL_INSTALL_API(__comm, __api, NULL, NULL, "tuned");   \
+        }                                                               \
+    } while (0)
+    
+#define COLL_TUNED_EXECUTE_IF_DYNAMIC(TMOD, TYPE, EXECUTE)              \
+    do {                                                                \
         int need_dynamic_decision = 0;                                  \
         ompi_coll_tuned_forced_getvalues( (TYPE), &((TMOD)->user_forced[(TYPE)]) ); \
         (TMOD)->com_rules[(TYPE)] = NULL;                               \
@@ -168,7 +185,7 @@ ompi_coll_tuned_forced_getvalues( enum COLLTYPE type,
             OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned: enable dynamic selection for "#TYPE)); \
             EXECUTE;                                                    \
         }                                                               \
-    }
+    } while(0)
 
 /*
  * Init module on the communicator
@@ -249,6 +266,23 @@ tuned_module_enable( mca_coll_base_module_t *module,
         COLL_TUNED_EXECUTE_IF_DYNAMIC(tuned_module, SCATTERV,
                                       tuned_module->super.coll_scatterv   = NULL);
     }
+    TUNED_INSTALL_COLL_API(comm, tuned_module, allgather);
+    TUNED_INSTALL_COLL_API(comm, tuned_module, allgatherv);
+    TUNED_INSTALL_COLL_API(comm, tuned_module, allreduce);
+    TUNED_INSTALL_COLL_API(comm, tuned_module, alltoall);
+    TUNED_INSTALL_COLL_API(comm, tuned_module, alltoallv);
+    TUNED_INSTALL_COLL_API(comm, tuned_module, alltoallw);
+    TUNED_INSTALL_COLL_API(comm, tuned_module, barrier);
+    TUNED_INSTALL_COLL_API(comm, tuned_module, bcast);
+    TUNED_INSTALL_COLL_API(comm, tuned_module, exscan);
+    TUNED_INSTALL_COLL_API(comm, tuned_module, gather);
+    TUNED_INSTALL_COLL_API(comm, tuned_module, gatherv);
+    TUNED_INSTALL_COLL_API(comm, tuned_module, reduce);
+    TUNED_INSTALL_COLL_API(comm, tuned_module, reduce_scatter);
+    TUNED_INSTALL_COLL_API(comm, tuned_module, reduce_scatter_block);
+    TUNED_INSTALL_COLL_API(comm, tuned_module, scan);
+    TUNED_INSTALL_COLL_API(comm, tuned_module, scatter);
+    TUNED_INSTALL_COLL_API(comm, tuned_module, scatterv);
 
     /* general n fan out tree */
     data->cached_ntree = NULL;
@@ -271,5 +305,32 @@ tuned_module_enable( mca_coll_base_module_t *module,
     tuned_module->super.base_data = data;
 
     OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_init Tuned is in use"));
+    return OMPI_SUCCESS;
+}
+
+static int
+tuned_module_disable(mca_coll_base_module_t *module,
+                     struct ompi_communicator_t *comm)
+{
+    mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t *) module;
+
+    TUNED_UNINSTALL_COLL_API(comm, tuned_module, allgather);
+    TUNED_UNINSTALL_COLL_API(comm, tuned_module, allgatherv);
+    TUNED_UNINSTALL_COLL_API(comm, tuned_module, allreduce);
+    TUNED_UNINSTALL_COLL_API(comm, tuned_module, alltoall);
+    TUNED_UNINSTALL_COLL_API(comm, tuned_module, alltoallv);
+    TUNED_UNINSTALL_COLL_API(comm, tuned_module, alltoallw);
+    TUNED_UNINSTALL_COLL_API(comm, tuned_module, barrier);
+    TUNED_UNINSTALL_COLL_API(comm, tuned_module, bcast);
+    TUNED_UNINSTALL_COLL_API(comm, tuned_module, exscan);
+    TUNED_UNINSTALL_COLL_API(comm, tuned_module, gather);
+    TUNED_UNINSTALL_COLL_API(comm, tuned_module, gatherv);
+    TUNED_UNINSTALL_COLL_API(comm, tuned_module, reduce);
+    TUNED_UNINSTALL_COLL_API(comm, tuned_module, reduce_scatter);
+    TUNED_UNINSTALL_COLL_API(comm, tuned_module, reduce_scatter_block);
+    TUNED_UNINSTALL_COLL_API(comm, tuned_module, scan);
+    TUNED_UNINSTALL_COLL_API(comm, tuned_module, scatter);
+    TUNED_UNINSTALL_COLL_API(comm, tuned_module, scatterv);
+
     return OMPI_SUCCESS;
 }

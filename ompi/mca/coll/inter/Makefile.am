@@ -11,6 +11,7 @@
 #                         All rights reserved.
 # Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2017      IBM Corporation.  All rights reserved.
+# Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -43,7 +44,7 @@ libmca_coll_inter_la_LDFLAGS = -module -avoid-version
 
 sources = \
         coll_inter.h \
-        coll_inter.c \
+        coll_inter_module.c \
         coll_inter_allreduce.c \
 	coll_inter_allgather.c \
 	coll_inter_allgatherv.c \

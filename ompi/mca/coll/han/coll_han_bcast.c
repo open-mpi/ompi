@@ -4,6 +4,7 @@
  *                         reserved.
  * Copyright (c) 2020      Bull S.A.S. All rights reserved.
  * Copyright (c) 2020      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -83,7 +84,7 @@ mca_coll_han_bcast_intra(void *buf,
         /* Put back the fallback collective support and call it once. All
          * future calls will then be automatically redirected.
          */
-        HAN_LOAD_FALLBACK_COLLECTIVES(han_module, comm);
+        HAN_LOAD_FALLBACK_COLLECTIVES(comm, han_module);
         return han_module->previous_bcast(buf, count, dtype, root,
                                           comm, han_module->previous_bcast_module);
     }
@@ -96,7 +97,7 @@ mca_coll_han_bcast_intra(void *buf,
         /* Put back the fallback collective support and call it once. All
          * future calls will then be automatically redirected.
          */
-        HAN_LOAD_FALLBACK_COLLECTIVE(han_module, comm, bcast);
+        HAN_UNINSTALL_COLL_API(comm, han_module, bcast);
         return han_module->previous_bcast(buf, count, dtype, root,
                                           comm, han_module->previous_bcast_module);
     }
@@ -245,7 +246,7 @@ mca_coll_han_bcast_intra_simple(void *buf,
         /* Put back the fallback collective support and call it once. All
          * future calls will then be automatically redirected.
          */
-        HAN_LOAD_FALLBACK_COLLECTIVES(han_module, comm);
+        HAN_LOAD_FALLBACK_COLLECTIVES(comm, han_module);
         return han_module->previous_bcast(buf, count, dtype, root,
                                           comm, han_module->previous_bcast_module);
     }
@@ -258,7 +259,7 @@ mca_coll_han_bcast_intra_simple(void *buf,
         /* Put back the fallback collective support and call it once. All
          * future calls will then be automatically redirected.
          */
-        HAN_LOAD_FALLBACK_COLLECTIVE(han_module, comm, bcast);
+        HAN_UNINSTALL_COLL_API(comm, han_module, bcast);
         return han_module->previous_bcast(buf, count, dtype, root,
                                           comm, han_module->previous_bcast_module);
     }
