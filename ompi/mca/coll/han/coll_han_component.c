@@ -4,6 +4,7 @@
  *                         reserved.
  * Copyright (c) 2022      IBM Corporation. All rights reserved
  * Copyright (c) 2020-2022 Bull S.A.S. All rights reserved.
+ * Copyright (c) 2024      Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -45,6 +46,11 @@ ompi_coll_han_components ompi_coll_han_available_components[COMPONENTS_COUNT] = 
     { ADAPT, "adapt", NULL },
     { HAN, "han", NULL }
 };
+
+/*
+ * Thread lock for han
+ */
+opal_mutex_t mca_coll_han_lock = OPAL_MUTEX_STATIC_INIT;
 
 /*
  * Local functions
@@ -355,6 +361,32 @@ static int han_register(void)
                                               "low level module for scatter, 0 tuned, 1 sm",
                                               OPAL_INFO_LVL_9, &cs->han_scatter_low_module,
                                               &cs->han_op_module_name.scatter.han_op_low_module_name);
+
+    cs->han_alltoall_low_module = 0;
+    (void) mca_coll_han_query_module_from_mca(c, "alltoall_lower_module",
+                                              "low level module for alltoall, 0 tuned, 1 sm ",
+                                              OPAL_INFO_LVL_9, &cs->han_alltoall_low_module,
+                                              &cs->han_op_module_name.alltoall.han_op_low_module_name);
+    cs->han_alltoall_pstages = 0;
+    (void) mca_base_component_var_register(c, "alltoall_pstages",
+                                              "Parallel Stages for alltoall.  Higher numbers require more memory, "
+                                              "and performs more communication in parallel.  0 chooses pstages based on message size.",
+                                              MCA_BASE_VAR_TYPE_INT32_T, NULL, 0, 0,
+                                              OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+                                              &cs->han_alltoall_pstages);
+    cs->han_alltoall_subdivfactor = 0;
+    (void) mca_base_component_var_register(c, "alltoall_subdivfactor",
+                                              "Sub-divide Factor for alltoall.  1 puts pressure on SHM, 4 puts pressure on NIC. "
+                                              "Larger numbers require more rounds, but each round is faster.",
+                                              MCA_BASE_VAR_TYPE_INT32_T, NULL, 0, 0,
+                                              OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+                                              &cs->han_alltoall_subdivfactor);
+    cs->han_alltoall_algorithm = 0;
+    (void) mca_base_component_var_register(c, "alltoall_algorithm",
+                                              "Algorithm selection. 0=auto-based-on-size, 1=allgather-based, 2=xpmem-based.",
+                                              MCA_BASE_VAR_TYPE_UINT32_T, NULL, 0, 0,
+                                              OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+                                              &cs->han_alltoall_algorithm);
 
     cs->han_reproducible = 0;
     (void) mca_base_component_var_register(c, "reproducible",

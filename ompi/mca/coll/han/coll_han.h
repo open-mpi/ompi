@@ -4,6 +4,7 @@
  *                         reserved.
  * Copyright (c) 2022      IBM Corporation. All rights reserved
  * Copyright (c) 2020-2022 Bull S.A.S. All rights reserved.
+ * Copyright (c) 2024      Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -37,6 +38,7 @@
 #include "mpi.h"
 #include "ompi/mca/mca.h"
 #include "opal/util/output.h"
+#include "opal/mca/smsc/smsc.h"
 #include "ompi/mca/coll/base/coll_base_functions.h"
 #include "coll_han_trigger.h"
 #include "ompi/mca/coll/han/coll_han_dynamic.h"
@@ -190,6 +192,7 @@ typedef struct mca_coll_han_op_module_name_t {
     mca_coll_han_op_up_low_module_name_t allgather;
     mca_coll_han_op_up_low_module_name_t gather;
     mca_coll_han_op_up_low_module_name_t scatter;
+    mca_coll_han_op_up_low_module_name_t alltoall;
 } mca_coll_han_op_module_name_t;
 
 /**
@@ -237,6 +240,16 @@ typedef struct mca_coll_han_component_t {
     uint32_t han_scatter_up_module;
     /* low level module for scatter */
     uint32_t han_scatter_low_module;
+
+    /* low level module for alltoall */
+    uint32_t han_alltoall_low_module;
+    /* alltoall: parallel stages */
+    int32_t han_alltoall_pstages;
+    /* alltoall: factor to decrease exchange size while increasing rounds */
+    int32_t han_alltoall_subdivfactor;
+    uint32_t han_alltoall_algorithm;
+
+
     /* name of the modules */
     mca_coll_han_op_module_name_t han_op_module_name;
     /* whether we need reproducible results
@@ -271,6 +284,7 @@ typedef struct mca_coll_han_component_t {
  */
 typedef struct mca_coll_han_single_collective_fallback_s {
     union {
+        mca_coll_base_module_alltoall_fn_t alltoall;
         mca_coll_base_module_allgather_fn_t allgather;
         mca_coll_base_module_allgatherv_fn_t allgatherv;
         mca_coll_base_module_allreduce_fn_t allreduce;
@@ -289,6 +303,7 @@ typedef struct mca_coll_han_single_collective_fallback_s {
  * creation.
  */
 typedef struct mca_coll_han_collectives_fallback_s {
+    mca_coll_han_single_collective_fallback_t alltoall;
     mca_coll_han_single_collective_fallback_t allgather;
     mca_coll_han_single_collective_fallback_t allgatherv;
     mca_coll_han_single_collective_fallback_t allreduce;
@@ -348,6 +363,9 @@ OBJ_CLASS_DECLARATION(mca_coll_han_module_t);
  * Some defines to stick to the naming used in the other components in terms of
  * fallback routines
  */
+#define previous_alltoall           fallback.alltoall.module_fn.alltoall
+#define previous_alltoall_module    fallback.alltoall.module
+
 #define previous_allgather          fallback.allgather.module_fn.allgather
 #define previous_allgather_module   fallback.allgather.module
 
@@ -396,6 +414,7 @@ OBJ_CLASS_DECLARATION(mca_coll_han_module_t);
         HAN_LOAD_FALLBACK_COLLECTIVE(HANM, COMM, allreduce);                 \
         HAN_LOAD_FALLBACK_COLLECTIVE(HANM, COMM, allgather);                 \
         HAN_LOAD_FALLBACK_COLLECTIVE(HANM, COMM, allgatherv);                \
+        HAN_LOAD_FALLBACK_COLLECTIVE(HANM, COMM, alltoall);                \
         han_module->enabled = false;  /* entire module set to pass-through from now on */ \
     } while(0)
 
@@ -451,6 +470,9 @@ mca_coll_han_get_all_coll_modules(struct ompi_communicator_t *comm,
                                   mca_coll_han_module_t *han_module);
 
 int
+mca_coll_han_alltoall_intra_dynamic(ALLTOALL_BASE_ARGS,
+                                    mca_coll_base_module_t *module);
+int
 mca_coll_han_allgather_intra_dynamic(ALLGATHER_BASE_ARGS,
                                      mca_coll_base_module_t *module);
 int
@@ -485,5 +507,21 @@ ompi_coll_han_reorder_gather(const void *sbuf,
                              struct ompi_datatype_t *rdtype,
                              struct ompi_communicator_t *comm,
                              int * topo);
+
+
+static inline struct mca_smsc_endpoint_t *mca_coll_han_get_smsc_endpoint (struct ompi_proc_t *proc) {
+    extern opal_mutex_t mca_coll_han_lock;
+    if (NULL == proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_SMSC]) {
+        if (NULL == proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_SMSC]) {
+            OPAL_THREAD_LOCK(&mca_coll_han_lock);
+            if (NULL == proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_SMSC]) {
+                proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_SMSC] = mca_smsc->get_endpoint(&proc->super);
+            }
+            OPAL_THREAD_UNLOCK(&mca_coll_han_lock);
+        }
+    }
+
+    return (struct mca_smsc_endpoint_t *) proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_SMSC];
+}
 
 #endif                          /* MCA_COLL_HAN_EXPORT_H */
