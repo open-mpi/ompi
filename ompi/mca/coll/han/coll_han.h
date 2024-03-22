@@ -4,6 +4,8 @@
  *                         reserved.
  * Copyright (c) 2022      IBM Corporation. All rights reserved
  * Copyright (c) 2020-2022 Bull S.A.S. All rights reserved.
+ * Copyright (c) 2023      Computer Architecture and VLSI Systems (CARV)
+ *                         Laboratory, ICS Forth. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -44,11 +46,11 @@
 
 /*
  * Today;
- * . only 2 modules available for intranode (low) level
- * . only 2 modules available for internode (up) level
+ * . 3 modules available for intranode (low) level (tuned, sm, xhc)
+ * . only 2 modules available for internode (up) level (libnbc, adapt)
  */
 
-#define COLL_HAN_LOW_MODULES 2
+#define COLL_HAN_LOW_MODULES 3
 #define COLL_HAN_UP_MODULES 2
 
 struct mca_coll_han_bcast_args_s {
