@@ -137,7 +137,6 @@ int mca_pml_base_bsend_attach(void* addr, int size)
 {
     int align;
 
-    bool thread_safe = ompi_mpi_thread_multiple;
     if(NULL == addr || size <= 0) {
         return OMPI_ERR_BUFFER;
     }
@@ -150,7 +149,7 @@ int mca_pml_base_bsend_attach(void* addr, int size)
     }
 
     /* try to create an instance of the allocator - to determine thread safety level */
-    mca_pml_bsend_allocator = mca_pml_bsend_allocator_component->allocator_init(thread_safe, mca_pml_bsend_alloc_segment, NULL, NULL);
+    mca_pml_bsend_allocator = mca_pml_bsend_allocator_component->allocator_init(ompi_mpi_thread_multiple, mca_pml_bsend_alloc_segment, NULL, NULL);
     if(NULL == mca_pml_bsend_allocator) {
         OPAL_THREAD_UNLOCK(&mca_pml_bsend_mutex);
         return OMPI_ERR_BUFFER;
