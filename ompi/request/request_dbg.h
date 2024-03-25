@@ -1,6 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -17,7 +18,7 @@
  */
 
 /**
- * Enum inidicating the type of the request
+ * Enum indicating the type of the request
  */
 typedef enum {
     OMPI_REQUEST_PML,      /**< MPI point-to-point request */

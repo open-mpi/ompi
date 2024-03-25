@@ -17,6 +17,7 @@
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * Copyright (c) 2017      FUJITSU LIMITED.  All rights reserved.
  * Copyright (c) 2020      BULL S.A.S. All rights reserved.
+ * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -37,112 +38,119 @@
 #include "ompi/mca/coll/base/base.h"
 #include "ompi/mca/coll/base/coll_base_util.h"
 
-#define CLOSE(comm, func)                                        \
+#if OPAL_ENABLE_DEBUG
+#define CHECK_CLEAN_COLL(comm, func)                             \
     do {                                                         \
-        if (NULL != comm->c_coll->coll_ ## func ## _module) {    \
-            if (NULL != comm->c_coll->coll_ ## func ## _module->coll_module_disable) { \
-                comm->c_coll->coll_ ## func ## _module->coll_module_disable(           \
-                              comm->c_coll->coll_ ## func ## _module, comm);           \
-            }                                                    \
-            OBJ_RELEASE(comm->c_coll->coll_ ## func ## _module); \
-            comm->c_coll->coll_## func = NULL;                   \
-            comm->c_coll->coll_## func ## _module = NULL;        \
+        if (NULL != comm->c_coll->coll_ ## func ## _module ||    \
+            NULL != comm->c_coll->coll_ ## func ) {              \
+            opal_output_verbose(10, ompi_coll_base_framework.framework_output,                        \
+                "coll:base:comm_unselect: Comm %p (%s) has a left over %s collective during cleanup", \
+                (void*)comm, comm->c_name, #func);               \
         }                                                        \
     } while (0)
+#else
+#define CHECK_CLEAN_COLL(comm, func)
+#endif  /* OPAL_ENABLE_DEBUG */
 
 int mca_coll_base_comm_unselect(ompi_communicator_t * comm)
 {
     opal_list_item_t *item;
 
-    CLOSE(comm, allgather);
-    CLOSE(comm, allgatherv);
-    CLOSE(comm, allreduce);
-    CLOSE(comm, alltoall);
-    CLOSE(comm, alltoallv);
-    CLOSE(comm, alltoallw);
-    CLOSE(comm, barrier);
-    CLOSE(comm, bcast);
-    CLOSE(comm, exscan);
-    CLOSE(comm, gather);
-    CLOSE(comm, gatherv);
-    CLOSE(comm, reduce);
-    CLOSE(comm, reduce_scatter_block);
-    CLOSE(comm, reduce_scatter);
-    CLOSE(comm, scan);
-    CLOSE(comm, scatter);
-    CLOSE(comm, scatterv);
-
-    CLOSE(comm, iallgather);
-    CLOSE(comm, iallgatherv);
-    CLOSE(comm, iallreduce);
-    CLOSE(comm, ialltoall);
-    CLOSE(comm, ialltoallv);
-    CLOSE(comm, ialltoallw);
-    CLOSE(comm, ibarrier);
-    CLOSE(comm, ibcast);
-    CLOSE(comm, iexscan);
-    CLOSE(comm, igather);
-    CLOSE(comm, igatherv);
-    CLOSE(comm, ireduce);
-    CLOSE(comm, ireduce_scatter_block);
-    CLOSE(comm, ireduce_scatter);
-    CLOSE(comm, iscan);
-    CLOSE(comm, iscatter);
-    CLOSE(comm, iscatterv);
-
-    CLOSE(comm, allgather_init);
-    CLOSE(comm, allgatherv_init);
-    CLOSE(comm, allreduce_init);
-    CLOSE(comm, alltoall_init);
-    CLOSE(comm, alltoallv_init);
-    CLOSE(comm, alltoallw_init);
-    CLOSE(comm, barrier_init);
-    CLOSE(comm, bcast_init);
-    CLOSE(comm, exscan_init);
-    CLOSE(comm, gather_init);
-    CLOSE(comm, gatherv_init);
-    CLOSE(comm, reduce_init);
-    CLOSE(comm, reduce_scatter_block_init);
-    CLOSE(comm, reduce_scatter_init);
-    CLOSE(comm, scan_init);
-    CLOSE(comm, scatter_init);
-    CLOSE(comm, scatterv_init);
-
-    CLOSE(comm, neighbor_allgather);
-    CLOSE(comm, neighbor_allgatherv);
-    CLOSE(comm, neighbor_alltoall);
-    CLOSE(comm, neighbor_alltoallv);
-    CLOSE(comm, neighbor_alltoallw);
-
-    CLOSE(comm, ineighbor_allgather);
-    CLOSE(comm, ineighbor_allgatherv);
-    CLOSE(comm, ineighbor_alltoall);
-    CLOSE(comm, ineighbor_alltoallv);
-    CLOSE(comm, ineighbor_alltoallw);
-
-    CLOSE(comm, neighbor_allgather_init);
-    CLOSE(comm, neighbor_allgatherv_init);
-    CLOSE(comm, neighbor_alltoall_init);
-    CLOSE(comm, neighbor_alltoallv_init);
-    CLOSE(comm, neighbor_alltoallw_init);
-
-    CLOSE(comm, reduce_local);
-
-#if OPAL_ENABLE_FT_MPI
-    CLOSE(comm, agree);
-    CLOSE(comm, iagree);
-#endif
-
-    for (item = opal_list_remove_first(comm->c_coll->module_list);
-         NULL != item; item = opal_list_remove_first(comm->c_coll->module_list)) {
+    /* Call module disable in the reverse order in which enable has been called
+     * in order to allow the modules to properly chain themselves.
+     */
+    for (item = opal_list_remove_last(comm->c_coll->module_list);
+         NULL != item; item = opal_list_remove_last(comm->c_coll->module_list)) {
         mca_coll_base_avail_coll_t *avail = (mca_coll_base_avail_coll_t *) item;
 
         if(avail->ac_module) {
+            if (NULL != avail->ac_module->coll_module_disable ) {
+                avail->ac_module->coll_module_disable(avail->ac_module, comm);
+            }
             OBJ_RELEASE(avail->ac_module);
         }
         OBJ_RELEASE(avail);
     }
     OBJ_RELEASE(comm->c_coll->module_list);
+
+    CHECK_CLEAN_COLL(comm, allgather);
+    CHECK_CLEAN_COLL(comm, allgatherv);
+    CHECK_CLEAN_COLL(comm, allreduce);
+    CHECK_CLEAN_COLL(comm, alltoall);
+    CHECK_CLEAN_COLL(comm, alltoallv);
+    CHECK_CLEAN_COLL(comm, alltoallw);
+    CHECK_CLEAN_COLL(comm, barrier);
+    CHECK_CLEAN_COLL(comm, bcast);
+    CHECK_CLEAN_COLL(comm, exscan);
+    CHECK_CLEAN_COLL(comm, gather);
+    CHECK_CLEAN_COLL(comm, gatherv);
+    CHECK_CLEAN_COLL(comm, reduce);
+    CHECK_CLEAN_COLL(comm, reduce_scatter_block);
+    CHECK_CLEAN_COLL(comm, reduce_scatter);
+    CHECK_CLEAN_COLL(comm, scan);
+    CHECK_CLEAN_COLL(comm, scatter);
+    CHECK_CLEAN_COLL(comm, scatterv);
+
+    CHECK_CLEAN_COLL(comm, iallgather);
+    CHECK_CLEAN_COLL(comm, iallgatherv);
+    CHECK_CLEAN_COLL(comm, iallreduce);
+    CHECK_CLEAN_COLL(comm, ialltoall);
+    CHECK_CLEAN_COLL(comm, ialltoallv);
+    CHECK_CLEAN_COLL(comm, ialltoallw);
+    CHECK_CLEAN_COLL(comm, ibarrier);
+    CHECK_CLEAN_COLL(comm, ibcast);
+    CHECK_CLEAN_COLL(comm, iexscan);
+    CHECK_CLEAN_COLL(comm, igather);
+    CHECK_CLEAN_COLL(comm, igatherv);
+    CHECK_CLEAN_COLL(comm, ireduce);
+    CHECK_CLEAN_COLL(comm, ireduce_scatter_block);
+    CHECK_CLEAN_COLL(comm, ireduce_scatter);
+    CHECK_CLEAN_COLL(comm, iscan);
+    CHECK_CLEAN_COLL(comm, iscatter);
+    CHECK_CLEAN_COLL(comm, iscatterv);
+
+    CHECK_CLEAN_COLL(comm, allgather_init);
+    CHECK_CLEAN_COLL(comm, allgatherv_init);
+    CHECK_CLEAN_COLL(comm, allreduce_init);
+    CHECK_CLEAN_COLL(comm, alltoall_init);
+    CHECK_CLEAN_COLL(comm, alltoallv_init);
+    CHECK_CLEAN_COLL(comm, alltoallw_init);
+    CHECK_CLEAN_COLL(comm, barrier_init);
+    CHECK_CLEAN_COLL(comm, bcast_init);
+    CHECK_CLEAN_COLL(comm, exscan_init);
+    CHECK_CLEAN_COLL(comm, gather_init);
+    CHECK_CLEAN_COLL(comm, gatherv_init);
+    CHECK_CLEAN_COLL(comm, reduce_init);
+    CHECK_CLEAN_COLL(comm, reduce_scatter_block_init);
+    CHECK_CLEAN_COLL(comm, reduce_scatter_init);
+    CHECK_CLEAN_COLL(comm, scan_init);
+    CHECK_CLEAN_COLL(comm, scatter_init);
+    CHECK_CLEAN_COLL(comm, scatterv_init);
+
+    CHECK_CLEAN_COLL(comm, neighbor_allgather);
+    CHECK_CLEAN_COLL(comm, neighbor_allgatherv);
+    CHECK_CLEAN_COLL(comm, neighbor_alltoall);
+    CHECK_CLEAN_COLL(comm, neighbor_alltoallv);
+    CHECK_CLEAN_COLL(comm, neighbor_alltoallw);
+
+    CHECK_CLEAN_COLL(comm, ineighbor_allgather);
+    CHECK_CLEAN_COLL(comm, ineighbor_allgatherv);
+    CHECK_CLEAN_COLL(comm, ineighbor_alltoall);
+    CHECK_CLEAN_COLL(comm, ineighbor_alltoallv);
+    CHECK_CLEAN_COLL(comm, ineighbor_alltoallw);
+
+    CHECK_CLEAN_COLL(comm, neighbor_allgather_init);
+    CHECK_CLEAN_COLL(comm, neighbor_allgatherv_init);
+    CHECK_CLEAN_COLL(comm, neighbor_alltoall_init);
+    CHECK_CLEAN_COLL(comm, neighbor_alltoallv_init);
+    CHECK_CLEAN_COLL(comm, neighbor_alltoallw_init);
+
+    CHECK_CLEAN_COLL(comm, reduce_local);
+
+#if OPAL_ENABLE_FT_MPI
+    CHECK_CLEAN_COLL(comm, agree);
+    CHECK_CLEAN_COLL(comm, iagree);
+#endif
 
     free(comm->c_coll);
     comm->c_coll = NULL;

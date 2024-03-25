@@ -19,6 +19,7 @@
  * Copyright (c) 2017      Ian Bradley Morgan and Anthony Skjellum. All
  *                         rights reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -30,6 +31,7 @@
 
 #include "coll_libnbc.h"
 #include "nbc_internal.h"
+#include "ompi/mca/coll/base/base.h"
 
 #include "mpi.h"
 #include "ompi/mca/coll/coll.h"
@@ -106,6 +108,7 @@ static int libnbc_register(void);
 static int libnbc_init_query(bool, bool);
 static mca_coll_base_module_t *libnbc_comm_query(struct ompi_communicator_t *, int *);
 static int libnbc_module_enable(mca_coll_base_module_t *, struct ompi_communicator_t *);
+static int libnbc_module_disable(mca_coll_base_module_t *, struct ompi_communicator_t *);
 
 /*
  * Instantiate the public struct with all of our public information
@@ -313,6 +316,7 @@ libnbc_comm_query(struct ompi_communicator_t *comm,
     *priority = libnbc_priority;
 
     module->super.coll_module_enable = libnbc_module_enable;
+    module->super.coll_module_disable = libnbc_module_disable;
     if (OMPI_COMM_IS_INTER(comm)) {
         module->super.coll_iallgather = ompi_coll_libnbc_iallgather_inter;
         module->super.coll_iallgatherv = ompi_coll_libnbc_iallgatherv_inter;
@@ -407,7 +411,23 @@ libnbc_comm_query(struct ompi_communicator_t *comm,
     return &(module->super);
 }
 
+#define NBC_INSTALL_COLL_API(__comm, __module, __api)                                                     \
+    do                                                                                                    \
+    {                                                                                                     \
+        if (__module->super.coll_##__api)                                                                 \
+        {                                                                                                 \
+            MCA_COLL_INSTALL_API(__comm, __api, __module->super.coll_##__api, &__module->super, "libnbc"); \
+        }                                                                                                 \
+    } while (0)
 
+#define NBC_UNINSTALL_COLL_API(__comm, __module, __api)                \
+    do                                                                 \
+    {                                                                  \
+        if (__comm->c_coll->coll_##__api##_module == &__module->super) \
+        {                                                              \
+            MCA_COLL_INSTALL_API(__comm, __api, NULL, NULL, "libnbc"); \
+        }                                                              \
+    } while (0)
 /*
  * Init module on the communicator
  */
@@ -415,10 +435,120 @@ static int
 libnbc_module_enable(mca_coll_base_module_t *module,
                      struct ompi_communicator_t *comm)
 {
-    /* All done */
+    ompi_coll_libnbc_module_t *nbc_module = (ompi_coll_libnbc_module_t*)module;
+
+    NBC_INSTALL_COLL_API(comm, nbc_module, iallgather);
+    NBC_INSTALL_COLL_API(comm, nbc_module, iallgatherv);
+    NBC_INSTALL_COLL_API(comm, nbc_module, iallreduce);
+    NBC_INSTALL_COLL_API(comm, nbc_module, ialltoall);
+    NBC_INSTALL_COLL_API(comm, nbc_module, ialltoallv);
+    NBC_INSTALL_COLL_API(comm, nbc_module, ialltoallw);
+    NBC_INSTALL_COLL_API(comm, nbc_module, ibarrier);
+    NBC_INSTALL_COLL_API(comm, nbc_module, ibcast);
+    NBC_INSTALL_COLL_API(comm, nbc_module, igather);
+    NBC_INSTALL_COLL_API(comm, nbc_module, igatherv);
+    NBC_INSTALL_COLL_API(comm, nbc_module, ireduce);
+    NBC_INSTALL_COLL_API(comm, nbc_module, ireduce_scatter);
+    NBC_INSTALL_COLL_API(comm, nbc_module, ireduce_scatter_block);
+    NBC_INSTALL_COLL_API(comm, nbc_module, iscatter);
+    NBC_INSTALL_COLL_API(comm, nbc_module, iscatterv);
+
+    NBC_INSTALL_COLL_API(comm, nbc_module, allgather_init);
+    NBC_INSTALL_COLL_API(comm, nbc_module, allgatherv_init);
+    NBC_INSTALL_COLL_API(comm, nbc_module, allreduce_init);
+    NBC_INSTALL_COLL_API(comm, nbc_module, alltoall_init);
+    NBC_INSTALL_COLL_API(comm, nbc_module, alltoallv_init);
+    NBC_INSTALL_COLL_API(comm, nbc_module, alltoallw_init);
+    NBC_INSTALL_COLL_API(comm, nbc_module, barrier_init);
+    NBC_INSTALL_COLL_API(comm, nbc_module, bcast_init);
+    NBC_INSTALL_COLL_API(comm, nbc_module, gather_init);
+    NBC_INSTALL_COLL_API(comm, nbc_module, gatherv_init);
+    NBC_INSTALL_COLL_API(comm, nbc_module, reduce_init);
+    NBC_INSTALL_COLL_API(comm, nbc_module, reduce_scatter_init);
+    NBC_INSTALL_COLL_API(comm, nbc_module, reduce_scatter_block_init);
+    NBC_INSTALL_COLL_API(comm, nbc_module, scatter_init);
+    NBC_INSTALL_COLL_API(comm, nbc_module, scatterv_init);
+
+    if (!OMPI_COMM_IS_INTER(comm)) {
+        NBC_INSTALL_COLL_API(comm, nbc_module, exscan_init);
+        NBC_INSTALL_COLL_API(comm, nbc_module, iexscan);
+        NBC_INSTALL_COLL_API(comm, nbc_module, scan_init);
+        NBC_INSTALL_COLL_API(comm, nbc_module, iscan);
+
+        NBC_INSTALL_COLL_API(comm, nbc_module, ineighbor_allgather);
+        NBC_INSTALL_COLL_API(comm, nbc_module, ineighbor_allgatherv);
+        NBC_INSTALL_COLL_API(comm, nbc_module, ineighbor_alltoall);
+        NBC_INSTALL_COLL_API(comm, nbc_module, ineighbor_alltoallv);
+        NBC_INSTALL_COLL_API(comm, nbc_module, ineighbor_alltoallw);
+
+        NBC_INSTALL_COLL_API(comm, nbc_module, neighbor_allgather_init);
+        NBC_INSTALL_COLL_API(comm, nbc_module, neighbor_allgatherv_init);
+        NBC_INSTALL_COLL_API(comm, nbc_module, neighbor_alltoall_init);
+        NBC_INSTALL_COLL_API(comm, nbc_module, neighbor_alltoallv_init);
+        NBC_INSTALL_COLL_API(comm, nbc_module, neighbor_alltoallw_init);
+    } /* All done */
+
     return OMPI_SUCCESS;
 }
 
+static int
+libnbc_module_disable(mca_coll_base_module_t *module,
+                      struct ompi_communicator_t *comm)
+{
+    ompi_coll_libnbc_module_t *nbc_module = (ompi_coll_libnbc_module_t*)module;
+
+    NBC_UNINSTALL_COLL_API(comm, nbc_module, iallgather);
+    NBC_UNINSTALL_COLL_API(comm, nbc_module, iallgatherv);
+    NBC_UNINSTALL_COLL_API(comm, nbc_module, iallreduce);
+    NBC_UNINSTALL_COLL_API(comm, nbc_module, ialltoall);
+    NBC_UNINSTALL_COLL_API(comm, nbc_module, ialltoallv);
+    NBC_UNINSTALL_COLL_API(comm, nbc_module, ialltoallw);
+    NBC_UNINSTALL_COLL_API(comm, nbc_module, ibarrier);
+    NBC_UNINSTALL_COLL_API(comm, nbc_module, ibcast);
+    NBC_UNINSTALL_COLL_API(comm, nbc_module, igather);
+    NBC_UNINSTALL_COLL_API(comm, nbc_module, igatherv);
+    NBC_UNINSTALL_COLL_API(comm, nbc_module, ireduce);
+    NBC_UNINSTALL_COLL_API(comm, nbc_module, ireduce_scatter);
+    NBC_UNINSTALL_COLL_API(comm, nbc_module, ireduce_scatter_block);
+    NBC_UNINSTALL_COLL_API(comm, nbc_module, iscatter);
+    NBC_UNINSTALL_COLL_API(comm, nbc_module, iscatterv);
+
+    NBC_UNINSTALL_COLL_API(comm, nbc_module, allgather_init);
+    NBC_UNINSTALL_COLL_API(comm, nbc_module, allgatherv_init);
+    NBC_UNINSTALL_COLL_API(comm, nbc_module, allreduce_init);
+    NBC_UNINSTALL_COLL_API(comm, nbc_module, alltoall_init);
+    NBC_UNINSTALL_COLL_API(comm, nbc_module, alltoallv_init);
+    NBC_UNINSTALL_COLL_API(comm, nbc_module, alltoallw_init);
+    NBC_UNINSTALL_COLL_API(comm, nbc_module, barrier_init);
+    NBC_UNINSTALL_COLL_API(comm, nbc_module, bcast_init);
+    NBC_UNINSTALL_COLL_API(comm, nbc_module, gather_init);
+    NBC_UNINSTALL_COLL_API(comm, nbc_module, gatherv_init);
+    NBC_UNINSTALL_COLL_API(comm, nbc_module, reduce_init);
+    NBC_UNINSTALL_COLL_API(comm, nbc_module, reduce_scatter_init);
+    NBC_UNINSTALL_COLL_API(comm, nbc_module, reduce_scatter_block_init);
+    NBC_UNINSTALL_COLL_API(comm, nbc_module, scatter_init);
+    NBC_UNINSTALL_COLL_API(comm, nbc_module, scatterv_init);
+
+    if (!OMPI_COMM_IS_INTER(comm)) {
+        NBC_UNINSTALL_COLL_API(comm, nbc_module, exscan_init);
+        NBC_UNINSTALL_COLL_API(comm, nbc_module, iexscan);
+        NBC_UNINSTALL_COLL_API(comm, nbc_module, scan_init);
+        NBC_UNINSTALL_COLL_API(comm, nbc_module, iscan);
+
+        NBC_UNINSTALL_COLL_API(comm, nbc_module, ineighbor_allgather);
+        NBC_UNINSTALL_COLL_API(comm, nbc_module, ineighbor_allgatherv);
+        NBC_UNINSTALL_COLL_API(comm, nbc_module, ineighbor_alltoall);
+        NBC_UNINSTALL_COLL_API(comm, nbc_module, ineighbor_alltoallv);
+        NBC_UNINSTALL_COLL_API(comm, nbc_module, ineighbor_alltoallw);
+
+        NBC_UNINSTALL_COLL_API(comm, nbc_module, neighbor_allgather_init);
+        NBC_UNINSTALL_COLL_API(comm, nbc_module, neighbor_allgatherv_init);
+        NBC_UNINSTALL_COLL_API(comm, nbc_module, neighbor_alltoall_init);
+        NBC_UNINSTALL_COLL_API(comm, nbc_module, neighbor_alltoallv_init);
+        NBC_UNINSTALL_COLL_API(comm, nbc_module, neighbor_alltoallw_init);
+    } /* All done */
+    return OMPI_SUCCESS;
+}
 
 int
 ompi_coll_libnbc_progress(void)

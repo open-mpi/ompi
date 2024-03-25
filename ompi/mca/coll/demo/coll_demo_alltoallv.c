@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -34,19 +35,19 @@
  *	Returns:	- MPI_SUCCESS or an MPI error code
  */
 int
-mca_coll_demo_alltoallv_intra(void *sbuf, int *scounts, int *sdisps,
+mca_coll_demo_alltoallv_intra(const void *sbuf, const int *scounts, const int *sdisps,
                               struct ompi_datatype_t *sdtype,
-                              void *rbuf, int *rcounts, int *rdisps,
+                              void *rbuf, const int *rcounts, const int *rdisps,
                               struct ompi_datatype_t *rdtype,
                               struct ompi_communicator_t *comm,
                               mca_coll_base_module_t *module)
 {
     mca_coll_demo_module_t *demo_module = (mca_coll_demo_module_t*) module;
     opal_output_verbose(10, ompi_coll_base_framework.framework_output, "In demo alltoallv_intra");
-    return demo_module->underlying.coll_alltoallv(sbuf, scounts, sdisps,
-                                                  sdtype, rbuf, rcounts,
-                                                  rdisps, rdtype, comm,
-                                                  demo_module->underlying.coll_alltoallv_module);
+    return demo_module->c_coll.coll_alltoallv(sbuf, scounts, sdisps,
+                                              sdtype, rbuf, rcounts,
+                                              rdisps, rdtype, comm,
+                                              demo_module->c_coll.coll_alltoallv_module);
 }
 
 
@@ -58,17 +59,17 @@ mca_coll_demo_alltoallv_intra(void *sbuf, int *scounts, int *sdisps,
  *	Returns:	- MPI_SUCCESS or an MPI error code
  */
 int
-mca_coll_demo_alltoallv_inter(void *sbuf, int *scounts, int *sdisps,
+mca_coll_demo_alltoallv_inter(const void *sbuf, const int *scounts, const int *sdisps,
                               struct ompi_datatype_t *sdtype, void *rbuf,
-                              int *rcounts, int *rdisps,
+                              const int *rcounts, const int *rdisps,
                               struct ompi_datatype_t *rdtype,
                               struct ompi_communicator_t *comm,
                               mca_coll_base_module_t *module)
 {
     mca_coll_demo_module_t *demo_module = (mca_coll_demo_module_t*) module;
     opal_output_verbose(10, ompi_coll_base_framework.framework_output, "In demo alltoallv_inter");
-    return demo_module->underlying.coll_alltoallv(sbuf, scounts, sdisps,
-                                                  sdtype, rbuf, rcounts,
-                                                  rdisps, rdtype, comm,
-                                                  demo_module->underlying.coll_alltoallv_module);
+    return demo_module->c_coll.coll_alltoallv(sbuf, scounts, sdisps,
+                                              sdtype, rbuf, rcounts,
+                                              rdisps, rdtype, comm,
+                                              demo_module->c_coll.coll_alltoallv_module);
 }

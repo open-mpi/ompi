@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -42,9 +43,6 @@ int mca_coll_sync_init_query(bool enable_progress_threads,
 mca_coll_base_module_t
 *mca_coll_sync_comm_query(struct ompi_communicator_t *comm,
                           int *priority);
-
-int mca_coll_sync_module_enable(mca_coll_base_module_t *module,
-                                struct ompi_communicator_t *comm);
 
 int mca_coll_sync_barrier(struct ompi_communicator_t *comm,
                           mca_coll_base_module_t *module);

@@ -13,6 +13,7 @@
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -37,7 +38,6 @@
 
 
 #if 0
-static void mca_coll_inter_dump_struct ( struct mca_coll_base_comm_t *c);
 
 static const mca_coll_base_module_1_0_0_t inter = {
 
@@ -68,6 +68,12 @@ static const mca_coll_base_module_1_0_0_t inter = {
 };
 #endif
 
+static int
+mca_coll_inter_module_enable(mca_coll_base_module_t *module,
+                             struct ompi_communicator_t *comm);
+static int
+mca_coll_inter_module_disable(mca_coll_base_module_t *module,
+                              struct ompi_communicator_t *comm);
 
 /*
  * Initial query function that is invoked during MPI_INIT, allowing
@@ -101,22 +107,23 @@ mca_coll_inter_comm_query(struct ompi_communicator_t *comm, int *priority)
      * than or equal to 0, then the module is unavailable. */
     *priority = mca_coll_inter_priority_param;
     if (0 >= mca_coll_inter_priority_param) {
-	return NULL;
+        return NULL;
     }
 
     size = ompi_comm_size(comm);
     rsize = ompi_comm_remote_size(comm);
 
     if ( size < mca_coll_inter_crossover && rsize < mca_coll_inter_crossover) {
-	return NULL;
+        return NULL;
     }
 
     inter_module = OBJ_NEW(mca_coll_inter_module_t);
     if (NULL == inter_module) {
-	return NULL;
+        return NULL;
     }
 
     inter_module->super.coll_module_enable = mca_coll_inter_module_enable;
+    inter_module->super.coll_module_disable = mca_coll_inter_module_disable;
 
     inter_module->super.coll_allgather  = mca_coll_inter_allgather_inter;
     inter_module->super.coll_allgatherv = mca_coll_inter_allgatherv_inter;
@@ -139,11 +146,24 @@ mca_coll_inter_comm_query(struct ompi_communicator_t *comm, int *priority)
     return &(inter_module->super);
 }
 
+#define INTER_INSTALL_COLL_API(__comm, __module, __api)                                               \
+    do                                                                                                \
+    {                                                                                                 \
+        MCA_COLL_INSTALL_API(__comm, __api, __module->super.coll_##__api, &__module->super, "inter"); \
+    } while (0)
 
+#define INTER_UNINSTALL_COLL_API(__comm, __module, __api)               \
+    do                                                                  \
+    {                                                                   \
+        if (__comm->c_coll->coll_##__api##_module == &__module->super)  \
+        {                                                               \
+            MCA_COLL_INSTALL_API(__comm, __api, NULL, NULL, "inter");   \
+        }                                                               \
+    } while (0)
 /*
  * Init module on the communicator
  */
-int
+static int
 mca_coll_inter_module_enable(mca_coll_base_module_t *module,
                              struct ompi_communicator_t *comm)
 {
@@ -151,27 +171,35 @@ mca_coll_inter_module_enable(mca_coll_base_module_t *module,
 
     inter_module->inter_comm = comm;
 
-#if 0
-    if ( mca_coll_inter_verbose_param ) {
-      mca_coll_inter_dump_struct (data);
-    }
-#endif
-
+    INTER_INSTALL_COLL_API(comm, inter_module, allgather);
+    INTER_INSTALL_COLL_API(comm, inter_module, allgatherv);
+    INTER_INSTALL_COLL_API(comm, inter_module, allreduce);
+    INTER_INSTALL_COLL_API(comm, inter_module, bcast);
+    INTER_INSTALL_COLL_API(comm, inter_module, gather);
+    INTER_INSTALL_COLL_API(comm, inter_module, gatherv);
+    INTER_INSTALL_COLL_API(comm, inter_module, reduce);
+    INTER_INSTALL_COLL_API(comm, inter_module, scatter);
+    INTER_INSTALL_COLL_API(comm, inter_module, scatterv);
     return OMPI_SUCCESS;
 }
 
-
-#if 0
-static void mca_coll_inter_dump_struct ( struct mca_coll_base_comm_t *c)
+static int
+mca_coll_inter_module_disable(mca_coll_base_module_t *module,
+                              struct ompi_communicator_t *comm)
 {
-    int rank;
+    mca_coll_inter_module_t *inter_module = (mca_coll_inter_module_t*) module;
 
-    rank = ompi_comm_rank ( c->inter_comm );
+    INTER_UNINSTALL_COLL_API(comm, inter_module, allgather);
+    INTER_UNINSTALL_COLL_API(comm, inter_module, allgatherv);
+    INTER_UNINSTALL_COLL_API(comm, inter_module, allreduce);
+    INTER_UNINSTALL_COLL_API(comm, inter_module, bcast);
+    INTER_UNINSTALL_COLL_API(comm, inter_module, gather);
+    INTER_UNINSTALL_COLL_API(comm, inter_module, gatherv);
+    INTER_UNINSTALL_COLL_API(comm, inter_module, reduce);
+    INTER_UNINSTALL_COLL_API(comm, inter_module, scatter);
+    INTER_UNINSTALL_COLL_API(comm, inter_module, scatterv);
 
-    printf("%d: Dump of inter-struct for  comm %s cid %u\n",
-           rank, c->inter_comm->c_name, c->inter_comm->c_contextid);
+    inter_module->inter_comm = NULL;
 
-
-    return;
+    return OMPI_SUCCESS;
 }
-#endif

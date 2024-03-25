@@ -3,6 +3,7 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2020      Bull S.A.S. All rights reserved.
+ * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -36,10 +37,8 @@ mca_coll_han_barrier_intra_simple(struct ompi_communicator_t *comm,
     if( OMPI_SUCCESS != mca_coll_han_comm_create_new(comm, han_module) ) {
         OPAL_OUTPUT_VERBOSE((30, mca_coll_han_component.han_output,
                              "han cannot handle barrier with this communicator. Fall back on another component\n"));
-        /* Put back the fallback collective support and call it once. All
-         * future calls will then be automatically redirected.
-         */
-        HAN_LOAD_FALLBACK_COLLECTIVES(han_module, comm);
+        /* Try to put back the fallback collective support and call it once.  */
+        HAN_LOAD_FALLBACK_COLLECTIVES(comm, han_module);
         return han_module->previous_barrier(comm, han_module->previous_barrier_module);
     }
 

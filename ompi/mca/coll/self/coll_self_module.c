@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,6 +30,12 @@
 #include "ompi/mca/coll/base/coll_base_functions.h"
 #include "coll_self.h"
 
+static int
+mca_coll_self_module_enable(mca_coll_base_module_t *module,
+                            struct ompi_communicator_t *comm);
+static int
+mca_coll_self_module_disable(mca_coll_base_module_t *module,
+                             struct ompi_communicator_t *comm);
 
 /*
  * Initial query function that is invoked during MPI_INIT, allowing
@@ -63,22 +70,7 @@ mca_coll_self_comm_query(struct ompi_communicator_t *comm,
         if (NULL == module) return NULL;
 
         module->super.coll_module_enable = mca_coll_self_module_enable;
-        module->super.coll_allgather  = mca_coll_self_allgather_intra;
-        module->super.coll_allgatherv = mca_coll_self_allgatherv_intra;
-        module->super.coll_allreduce  = mca_coll_self_allreduce_intra;
-        module->super.coll_alltoall   = mca_coll_self_alltoall_intra;
-        module->super.coll_alltoallv  = mca_coll_self_alltoallv_intra;
-        module->super.coll_alltoallw  = mca_coll_self_alltoallw_intra;
-        module->super.coll_barrier    = mca_coll_self_barrier_intra;
-        module->super.coll_bcast      = mca_coll_self_bcast_intra;
-        module->super.coll_exscan     = mca_coll_self_exscan_intra;
-        module->super.coll_gather     = mca_coll_self_gather_intra;
-        module->super.coll_gatherv    = mca_coll_self_gatherv_intra;
-        module->super.coll_reduce     = mca_coll_self_reduce_intra;
-        module->super.coll_reduce_scatter = mca_coll_self_reduce_scatter_intra;
-        module->super.coll_scan       = mca_coll_self_scan_intra;
-        module->super.coll_scatter    = mca_coll_self_scatter_intra;
-        module->super.coll_scatterv   = mca_coll_self_scatterv_intra;
+        module->super.coll_module_disable = mca_coll_self_module_disable;
 
         module->super.coll_reduce_local = mca_coll_base_reduce_local;
 
@@ -88,13 +80,73 @@ mca_coll_self_comm_query(struct ompi_communicator_t *comm,
     return NULL;
 }
 
+#define SELF_INSTALL_COLL_API(__comm, __module, __api)                                                 \
+    do                                                                                                 \
+    {                                                                                                  \
+        MCA_COLL_INSTALL_API(__comm, __api, mca_coll_self_##__api##_intra, &__module->super, "self");  \
+    } while (0)
+
+#define SELF_UNINSTALL_COLL_API(__comm, __module, __api)                \
+    do                                                                  \
+    {                                                                   \
+        if (__comm->c_coll->coll_##__api##_module == &__module->super)  \
+        {                                                               \
+            MCA_COLL_INSTALL_API(__comm, __api, NULL, NULL, "self");    \
+        }                                                               \
+    } while (0)
 
 /*
  * Init module on the communicator
  */
-int
+static int
 mca_coll_self_module_enable(mca_coll_base_module_t *module,
                             struct ompi_communicator_t *comm)
 {
+    mca_coll_self_module_t *sm_module = (mca_coll_self_module_t*)module;
+
+    SELF_INSTALL_COLL_API(comm, sm_module, allgather);
+    SELF_INSTALL_COLL_API(comm, sm_module, allgatherv);
+    SELF_INSTALL_COLL_API(comm, sm_module, allreduce);
+    SELF_INSTALL_COLL_API(comm, sm_module, alltoall);
+    SELF_INSTALL_COLL_API(comm, sm_module, alltoallv);
+    SELF_INSTALL_COLL_API(comm, sm_module, alltoallw);
+    SELF_INSTALL_COLL_API(comm, sm_module, barrier);
+    SELF_INSTALL_COLL_API(comm, sm_module, bcast);
+    SELF_INSTALL_COLL_API(comm, sm_module, exscan);
+    SELF_INSTALL_COLL_API(comm, sm_module, gather);
+    SELF_INSTALL_COLL_API(comm, sm_module, gatherv);
+    SELF_INSTALL_COLL_API(comm, sm_module, reduce);
+    SELF_INSTALL_COLL_API(comm, sm_module, reduce_scatter);
+    SELF_INSTALL_COLL_API(comm, sm_module, scan);
+    SELF_INSTALL_COLL_API(comm, sm_module, scatter);
+    SELF_INSTALL_COLL_API(comm, sm_module, scatterv);
+
+    MCA_COLL_INSTALL_API(comm, reduce_local, mca_coll_base_reduce_local, module, "self");
+    return OMPI_SUCCESS;
+}
+
+static int
+mca_coll_self_module_disable(mca_coll_base_module_t *module,
+                             struct ompi_communicator_t *comm)
+{
+    mca_coll_self_module_t *sm_module = (mca_coll_self_module_t *)module;
+
+    SELF_UNINSTALL_COLL_API(comm, sm_module, allgather);
+    SELF_UNINSTALL_COLL_API(comm, sm_module, allgatherv);
+    SELF_UNINSTALL_COLL_API(comm, sm_module, allreduce);
+    SELF_UNINSTALL_COLL_API(comm, sm_module, alltoall);
+    SELF_UNINSTALL_COLL_API(comm, sm_module, alltoallv);
+    SELF_UNINSTALL_COLL_API(comm, sm_module, alltoallw);
+    SELF_UNINSTALL_COLL_API(comm, sm_module, barrier);
+    SELF_UNINSTALL_COLL_API(comm, sm_module, bcast);
+    SELF_UNINSTALL_COLL_API(comm, sm_module, exscan);
+    SELF_UNINSTALL_COLL_API(comm, sm_module, gather);
+    SELF_UNINSTALL_COLL_API(comm, sm_module, gatherv);
+    SELF_UNINSTALL_COLL_API(comm, sm_module, reduce);
+    SELF_UNINSTALL_COLL_API(comm, sm_module, reduce_scatter);
+    SELF_UNINSTALL_COLL_API(comm, sm_module, scan);
+    SELF_UNINSTALL_COLL_API(comm, sm_module, scatter);
+    SELF_UNINSTALL_COLL_API(comm, sm_module, scatterv);
+
     return OMPI_SUCCESS;
 }
