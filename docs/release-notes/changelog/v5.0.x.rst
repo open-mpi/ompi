@@ -4,6 +4,35 @@ Open MPI v5.0.x series
 This file contains all the NEWS updates for the Open MPI v5.0.x
 series, in reverse chronological order.
 
+Open MPI version v5.0.3rc1
+--------------------------
+:Date: 27 March 2024
+
+- Internal PMIx and PRRTe versions:
+
+  - PMIx (v5.0.2). Commit hash: ``33e93469e1e1f69904ff3e3827394719aa6b3671``.
+  - PRRTE (v3.0.5). Commit hash: ``3a70fac9a21700b31c4a9f9958afa207a627f0fa``.
+
+- Bugfixes and changes
+
+  - Fix HAN MPI_Scatter intra-node data count and type 
+  - Add missing write memory barrier in btl/smcuda 
+  - Fix MPI_Alltoallv and MPI_Ialltoallv data count and type check
+  - Enhance cuda-aware build by detecting default --with-cuda-lib value
+  - Enhance ofi NIC selection logic
+  - Fix an illegal memory access bug in mtl/ofi
+  - Multiple bugfixes in rocm accelerator 
+  - Fix a double free bug in oshmem
+  - Add missing oshmem headers
+  - Fix uninitialized lock in btl/usnic
+  - Fix uninitialized mutex in file_open
+  - Fix compiler warnings about unused cid_base variable
+  - Enhance autogen submodule checks
+  - Various document updates
+
+- Many thanks to Open MPI community including:
+  Christoph Niethammer, Christoph van Wüllen, Jakub Klinkovský, Lisandro Dalcin
+
 Open MPI version v5.0.2
 --------------------------
 :Date: 6 February 2024
