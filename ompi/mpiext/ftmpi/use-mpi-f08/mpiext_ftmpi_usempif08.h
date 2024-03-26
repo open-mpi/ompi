@@ -190,3 +190,25 @@ subroutine pmpix_comm_shrink_f08(comm,newcomm,ierror)
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine pmpix_comm_shrink_f08
 end interface pmpix_comm_shrink
+
+interface mpix_comm_ishrink
+subroutine mpix_comm_ishrink_f08(comm,newcomm,request,ierror)
+   use :: mpi_f08_types, only : MPI_Comm, MPI_Request
+   implicit none
+   TYPE(MPI_Comm), INTENT(IN) :: comm
+   TYPE(MPI_Comm), INTENT(OUT) :: newcomm
+   TYPE(MPI_Request), INTENT(OUT) :: request
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine mpix_comm_ishrink_f08
+end interface mpix_comm_ishrink
+
+interface pmpix_comm_ishrink
+subroutine pmpix_comm_ishrink_f08(comm,newcomm,request,ierror)
+   use :: mpi_f08_types, only : MPI_Comm, MPI_Request
+   implicit none
+   TYPE(MPI_Comm), INTENT(IN) :: comm
+   TYPE(MPI_Comm), INTENT(OUT) :: newcomm
+   TYPE(MPI_Request), INTENT(OUT) :: request
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine pmpix_comm_ishrink_f08
+end interface pmpix_comm_ishrink

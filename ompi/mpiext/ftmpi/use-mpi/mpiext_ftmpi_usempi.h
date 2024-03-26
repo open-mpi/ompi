@@ -61,6 +61,22 @@ interface pmpix_comm_shrink
     end subroutine pmpix_comm_shrink
 end interface pmpix_comm_shrink
 
+interface mpix_comm_ishrink
+    subroutine mpix_comm_ishrink(comm, newcomm, request, ierr)
+      integer, intent(IN) :: comm
+      integer, intent(OUT) :: newcomm, ierr
+      integer, intent(OUT) :: request
+    end subroutine mpix_comm_ishrink
+end interface mpix_comm_ishrink
+
+interface pmpix_comm_ishrink
+    subroutine pmpix_comm_ishrink(comm, newcomm, request, ierr)
+      integer, intent(IN) :: comm
+      integer, intent(OUT) :: newcomm, ierr
+      integer, intent(OUT) :: request
+    end subroutine pmpix_comm_ishrink
+end interface pmpix_comm_ishrink
+
 interface mpix_comm_get_failed
     subroutine mpix_comm_get_failed(comm, failedgrp, ierr)
         integer, intent(IN) :: comm

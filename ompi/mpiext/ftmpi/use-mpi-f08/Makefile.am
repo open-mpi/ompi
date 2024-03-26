@@ -62,7 +62,8 @@ mpi_api_files = \
     comm_ack_failed_f08.F90 \
     comm_agree_f08.F90 \
     comm_iagree_f08.F90 \
-    comm_shrink_f08.F90
+    comm_shrink_f08.F90 \
+    comm_ishrink_f08.F90
 
 pmpi_api_files = \
     profile/pcomm_revoke_f08.F90 \
@@ -73,7 +74,8 @@ pmpi_api_files = \
     profile/pcomm_ack_failed_f08.F90 \
     profile/pcomm_agree_f08.F90 \
     profile/pcomm_iagree_f08.F90 \
-    profile/pcomm_shrink_f08.F90
+    profile/pcomm_shrink_f08.F90 \
+    profile/pcomm_ishrink_f08.F90
 
 mpi_api_lo_files = $(mpi_api_files:.F90=.lo)
 pmpi_api_lo_files = $(pmpi_api_files:.F90=.lo)

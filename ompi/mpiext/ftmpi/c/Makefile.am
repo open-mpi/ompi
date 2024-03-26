@@ -27,6 +27,7 @@ libmpiext_ftmpi_c_la_SOURCES = \
     comm_revoke.c \
     comm_is_revoked.c \
     comm_shrink.c \
+    comm_ishrink.c \
     comm_failure_ack.c \
     comm_failure_get_acked.c \
     comm_get_failed.c \
