@@ -107,13 +107,13 @@ mca_coll_basic_gatherv_intra(const void *sbuf, int scount,
         err = ompi_request_wait_all(nrecv, reqs, MPI_STATUSES_IGNORE);
 
         if (MPI_ERR_IN_STATUS == err) {
-            for (int i = 0; i < nrecv; i++) {
-                if (MPI_REQUEST_NULL == reqs[i])
+            for (size_t j = 0; j < nrecv; j++) {
+                if (MPI_REQUEST_NULL == reqs[j])
                     continue;
-                if (MPI_ERR_PENDING == reqs[i]->req_status.MPI_ERROR)
+                if (MPI_ERR_PENDING == reqs[j]->req_status.MPI_ERROR)
                     continue;
-                if (MPI_SUCCESS != reqs[i]->req_status.MPI_ERROR) {
-                    err = reqs[i]->req_status.MPI_ERROR;
+                if (MPI_SUCCESS != reqs[j]->req_status.MPI_ERROR) {
+                    err = reqs[j]->req_status.MPI_ERROR;
                     break;
                 }
             }
