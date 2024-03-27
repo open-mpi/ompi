@@ -149,10 +149,7 @@ int mca_coll_han_gatherv_intra(const void *sbuf, int scount, struct ompi_datatyp
                                        root_low_rank, low_comm,
                                        low_comm->c_coll->coll_gatherv_module);
 
-        size_t rdsize;
         char *tmp_rbuf = rbuf;
-
-        ompi_datatype_type_size(rdtype, &rdsize);
 
         up_rcounts = calloc(up_size, sizeof(int));
         up_displs = malloc(up_size * sizeof(int));
@@ -210,7 +207,9 @@ int mca_coll_han_gatherv_intra(const void *sbuf, int scount, struct ompi_datatyp
         }
 
         if (need_bounce_buf) {
-            bounce_buf = malloc(rdsize * total_up_rcounts);
+            ptrdiff_t rsize, rgap;
+            rsize = opal_datatype_span(&rdtype->super, total_up_rcounts, &rgap);
+            bounce_buf = malloc(rsize);
             if (!bounce_buf) {
                 err = OMPI_ERR_OUT_OF_RESOURCE;
                 goto root_out;
@@ -222,7 +221,7 @@ int mca_coll_han_gatherv_intra(const void *sbuf, int scount, struct ompi_datatyp
                                                  : 0;
             }
 
-            tmp_rbuf = bounce_buf;
+            tmp_rbuf = bounce_buf - rgap;
         }
 
         /* Up Gatherv */
@@ -231,7 +230,8 @@ int mca_coll_han_gatherv_intra(const void *sbuf, int scount, struct ompi_datatyp
 
         /* Use a temp buffer to reorder the output buffer if needed */
         if (need_bounce_buf) {
-            ptrdiff_t offset = 0;
+            ptrdiff_t offset = 0, rdext;
+            ompi_datatype_type_extent(rdtype, &rdext);
 
             for (int i = 0; i < w_size; ++i) {
                 up_peer = topo[2 * i];
@@ -242,10 +242,9 @@ int mca_coll_han_gatherv_intra(const void *sbuf, int scount, struct ompi_datatyp
                 w_peer = topo[2 * i + 1];
 
                 ompi_datatype_copy_content_same_ddt(rdtype, (size_t) rcounts[w_peer],
-                                                    (char *) rbuf
-                                                        + (size_t) displs[w_peer] * rdsize,
+                                                    (char *) rbuf + (size_t) displs[w_peer] * rdext,
                                                     bounce_buf + offset);
-                offset += rdsize * (size_t) rcounts[w_peer];
+                offset += rdext * (size_t) rcounts[w_peer];
             }
         }
 
