@@ -42,6 +42,7 @@ static const mca_base_var_enum_value_t reduce_algorithms[] = {
     {5, "binomial"},
     {6, "in-order_binary"},
     {7, "rabenseifner"},
+    {8, "knomial"},
     {0, NULL}
 };
 
@@ -80,7 +81,7 @@ int ompi_coll_tuned_reduce_intra_check_forced_init (coll_tuned_force_algorithm_m
     mca_param_indices->algorithm_param_index =
         mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
                                         "reduce_algorithm",
-                                        "Which reduce algorithm is used. Can be locked down to choice of: 0 ignore, 1 linear, 2 chain, 3 pipeline, 4 binary, 5 binomial, 6 in-order binary, 7 rabenseifner. "
+                                        "Which reduce algorithm is used. Can be locked down to choice of: 0 ignore, 1 linear, 2 chain, 3 pipeline, 4 binary, 5 binomial, 6 in-order binary, 7 rabenseifner, 8 knomial. "
                                         "Only relevant if coll_tuned_use_dynamic_rules is true.",
                                         MCA_BASE_VAR_TYPE_INT, new_enum, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                         OPAL_INFO_LVL_5,
@@ -177,6 +178,10 @@ int ompi_coll_tuned_reduce_intra_do_this(const void *sbuf, void* rbuf, int count
                                                                   segsize, max_requests);
     case (7):  return ompi_coll_base_reduce_intra_redscat_gather(sbuf, rbuf, count, dtype,
                                                                   op, root, comm, module);
+    case (8):  return ompi_coll_base_reduce_intra_knomial(sbuf, rbuf, count, dtype,
+                                                          op, root, comm, module,
+                                                          segsize, max_requests,
+                                                          faninout);
     } /* switch */
     OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:reduce_intra_do_this attempt to select algorithm %d when only 0-%d is valid?",
                  algorithm, ompi_coll_tuned_forced_max_algorithms[REDUCE]));
