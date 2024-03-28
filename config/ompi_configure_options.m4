@@ -244,5 +244,26 @@ else
 fi
 AM_CONDITIONAL(OMPI_OMPIO_SUPPORT, test "$ompi_want_ompio" = "1")
 
+AC_MSG_CHECKING([if want bigcount support])
+AC_ARG_ENABLE([bigcount],
+    [AS_HELP_STRING([--enable-bigcount],
+        [Enable the bigcount API])])
+if test "$enable_bigcount" = "yes" ; then
+    AC_MSG_RESULT([yes])
+    ompi_enable_bigcount=1
+else
+    AC_MSG_RESULT([no])
+    ompi_enable_bigcount=0
+fi
+AC_DEFINE_UNQUOTED([OMPI_BIGCOUNT],[$ompi_enable_bigcount],
+    [Whether we want to compile bigcount API support])
+
+# If the binding source files don't exist, then we need Python to generate them
+AM_PATH_PYTHON([3.6],,[:])
+binding_file="${srcdir}/ompi/mpi/c/ompi_send.c"
+AS_IF([! test -e "$binding_file" && test "$PYTHON" = ":"],
+      [AC_MSG_ERROR([Open MPI requires Python >=3.6 for generating the bindings. Aborting])])
+AM_CONDITIONAL(OMPI_GENERATE_BINDINGS,[test "$PYTHON" != ":"])
+
 ])dnl
 

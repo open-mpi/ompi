@@ -34,12 +34,49 @@
 # layer, if weak symbols can't be used to alias the MPI_ namespace
 # into the PMPI_ namespace.
 
+include $(top_srcdir)/Makefile.ompi-rules
+
 noinst_LTLIBRARIES = libmpi_c.la libmpi_c_profile.la
 if BUILD_MPI_BINDINGS_LAYER
 noinst_LTLIBRARIES += libmpi_c_noprofile.la
 endif
 
 headers = bindings.h
+
+#
+# Template/prototype source files used for generating MPI functions
+#
+prototype_sources = \
+        abort.c.in \
+        alltoallv.c.in \
+        alltoallw.c.in \
+        send.c.in \
+        isend.c.in \
+        scan.c.in \
+        recv.c.in \
+        irecv.c.in \
+        waitsome.c.in \
+        accumulate.c.in \
+        comm_f2c.c.in \
+        wtime.c.in \
+        file_open.c.in \
+        init.c.in \
+        finalize.c.in \
+        comm_rank.c.in \
+        comm_size.c.in \
+        waitall.c.in \
+        comm_split.c.in \
+        comm_split_type.c.in \
+        comm_free.c.in \
+        finalized.c.in \
+        initialized.c.in \
+        allreduce.c.in \
+        get_library_version.c.in \
+        get_processor_name.c.in \
+        barrier.c.in
+
+# Include template files in case someone wants to update them
+EXTRA_DIST = $(prototype_sources)
 
 # attr_fn.c contains attribute manipulation functions which do not
 # profiling implications, and so are always built.
@@ -57,10 +94,11 @@ ompi_HEADERS = $(headers)
 endif
 
 #
-# List of all C files that have profile versions
+# List of all C files that have profile versions (generated_*.c files were
+# generated from prototype_sources above).
 #
 interface_profile_sources = \
-        abort.c \
+        generated_abort.c \
         add_error_class.c \
         add_error_code.c \
         add_error_string.c \
@@ -71,22 +109,22 @@ interface_profile_sources = \
         iallgatherv.c \
         allgatherv_init.c \
         alloc_mem.c \
-        allreduce.c \
+        generated_allreduce.c \
         iallreduce.c \
         allreduce_init.c \
         alltoall.c \
         ialltoall.c \
         alltoall_init.c \
-        alltoallv.c \
+        generated_alltoallv.c \
         ialltoallv.c \
         alltoallv_init.c \
-        alltoallw.c \
+        generated_alltoallw.c \
         ialltoallw.c \
         alltoallw_init.c \
         attr_delete.c \
         attr_get.c \
         attr_put.c \
-        barrier.c \
+        generated_barrier.c \
         ibarrier.c \
         barrier_init.c \
         bcast.c \
@@ -122,8 +160,8 @@ interface_profile_sources = \
         comm_dup_with_info.c \
         comm_idup.c \
         comm_idup_with_info.c \
-        comm_f2c.c \
-        comm_free.c \
+        generated_comm_f2c.c \
+        generated_comm_free.c \
         comm_free_keyval.c \
         comm_get_attr.c \
         comm_get_errhandler.c \
@@ -132,7 +170,7 @@ interface_profile_sources = \
         comm_get_parent.c \
         comm_group.c \
         comm_join.c \
-        comm_rank.c \
+        generated_comm_rank.c \
         comm_remote_group.c \
         comm_remote_size.c \
         comm_set_attr.c \
@@ -143,11 +181,11 @@ interface_profile_sources = \
         dist_graph_neighbors_count.c \
         comm_set_errhandler.c \
         comm_set_name.c \
-        comm_size.c \
+        generated_comm_size.c \
         comm_spawn.c \
         comm_spawn_multiple.c \
-        comm_split.c \
-        comm_split_type.c \
+        generated_comm_split.c \
+        generated_comm_split_type.c \
         comm_test_inter.c \
         compare_and_swap.c \
         dims_create.c \
@@ -187,7 +225,7 @@ interface_profile_sources = \
         file_iwrite.c \
         file_iwrite_all.c \
         file_iwrite_shared.c \
-        file_open.c \
+        generated_file_open.c \
         file_preallocate.c \
         file_read_all_begin.c \
         file_read_all.c \
@@ -221,8 +259,8 @@ interface_profile_sources = \
         file_write_ordered.c \
         file_write_ordered_end.c \
         file_write_shared.c \
-        finalize.c \
-        finalized.c \
+        generated_finalize.c \
+        generated_finalized.c \
         free_mem.c \
         gather.c \
         igather.c \
@@ -235,8 +273,8 @@ interface_profile_sources = \
         get_elements.c \
         get_elements_x.c \
         get_accumulate.c \
-        get_library_version.c \
-        get_processor_name.c \
+        generated_get_library_version.c \
+        generated_get_processor_name.c \
         get_version.c \
         graph_create.c \
         graph_get.c \
@@ -277,17 +315,17 @@ interface_profile_sources = \
         info_get_string.c \
         info_get_valuelen.c \
         info_set.c \
-        init.c \
+        generated_init.c \
         init_thread.c \
-        initialized.c \
+        generated_initialized.c \
         intercomm_create.c \
         intercomm_create_from_groups.c \
         intercomm_merge.c \
         iprobe.c \
-        irecv.c \
+        generated_irecv.c \
         irsend.c \
         is_thread_main.c \
-        isend.c \
+        generated_isend.c \
         isendrecv.c \
         isendrecv_replace.c \
         issend.c \
@@ -335,7 +373,7 @@ interface_profile_sources = \
         query_thread.c \
         raccumulate.c \
         recv_init.c \
-        recv.c \
+        generated_recv.c \
         reduce.c \
         ireduce.c \
         reduce_init.c \
@@ -356,7 +394,7 @@ interface_profile_sources = \
         rput.c \
         rsend_init.c \
         rsend.c \
-        scan.c \
+        generated_scan.c \
         iscan.c \
         scan_init.c \
         scatter.c \
@@ -365,7 +403,6 @@ interface_profile_sources = \
         scatterv.c \
         iscatterv.c \
         scatterv_init.c \
-        send.c \
         send_init.c \
         sendrecv.c \
         sendrecv_replace.c \
@@ -440,12 +477,12 @@ interface_profile_sources = \
         unpack.c \
         unpublish_name.c \
         wait.c \
-        waitall.c \
+        generated_waitall.c \
         waitany.c \
-        waitsome.c \
-        wtime.c \
+        generated_waitsome.c \
+        generated_wtime.c \
         wtick.c \
-        accumulate.c \
+        generated_accumulate.c \
         get.c \
         put.c \
         win_allocate.c \
@@ -486,6 +523,7 @@ interface_profile_sources = \
         win_test.c \
         win_unlock.c \
         win_unlock_all.c \
+        generated_send.c \
         win_wait.c
 
 # The following functions were removed from the MPI standard, but are
@@ -509,3 +547,19 @@ libmpi_c_profile_la_CPPFLAGS = -DOMPI_BUILD_MPI_PROFILING=1
 
 libmpi_c_noprofile_la_SOURCES = $(interface_profile_sources)
 libmpi_c_noprofile_la_CPPFLAGS = -DOMPI_BUILD_MPI_PROFILING=0
+
+# ABI generation rules
+if OMPI_GENERATE_BINDINGS
+generated_%.c: %.c.in
+	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
+	    --builddir $(abs_top_builddir) \
+	    --srcdir $(abs_top_srcdir) \
+	    --output $@ \
+	    c \
+	    source \
+	    ompi \
+	    $<
+
+# Delete generated files on maintainer-clean
+MAINTAINERCLEANFILES = generated_*.c
+endif

@@ -104,6 +104,55 @@ BEGIN_C_DECLS
         }                                                               \
     } while (0)
 
+/* Handling of MPI_Count/MPI_Aint and int array conversion */
+#define OMPI_BIGCOUNT_ARRAY_NAME(name) tmp_ ## name
+
+#define OMPI_BIGCOUNT_ARRAY_COUNT_IN_DECL(name) int *OMPI_BIGCOUNT_ARRAY_NAME(name)
+#define OMPI_BIGCOUNT_ARRAY_DISPL_IN_DECL(name) OMPI_BIGCOUNT_ARRAY_COUNT_IN_DECL(name)
+#define OMPI_BIGCOUNT_ARRAY_COUNT_OUT_DECL(name) OMPI_BIGCOUNT_ARRAY_COUNT_IN_DECL(name)
+#define OMPI_BIGCOUNT_ARRAY_DISPL_OUT_DECL(name) OMPI_BIGCOUNT_ARRAY_COUNT_IN_DECL(name)
+
+#define OMPI_BIGCOUNT_ARRAY_COUNT_IN_PREPARE(name, size, i) \
+    do { \
+        if (sizeof(*name) == sizeof(*OMPI_BIGCOUNT_ARRAY_NAME(name))) { \
+            OMPI_BIGCOUNT_ARRAY_NAME(name) = (int *) name; \
+            break; \
+        } \
+        OMPI_BIGCOUNT_ARRAY_NAME(name) = malloc(size * sizeof(*OMPI_BIGCOUNT_ARRAY_NAME(name))); \
+        for (i = 0; i < size; ++i) { \
+            OMPI_BIGCOUNT_ARRAY_NAME(name)[i] = name[i]; \
+        } \
+    } while (0)
+#define OMPI_BIGCOUNT_ARRAY_DISPL_IN_PREPARE(name, size, i) OMPI_BIGCOUNT_ARRAY_COUNT_IN_PREPARE(name, size, i)
+#define OMPI_BIGCOUNT_ARRAY_COUNT_OUT_PREPARE(name, size) \
+    do { \
+        if (sizeof(*name) == sizeof(*OMPI_BIGCOUNT_ARRAY_NAME(name))) { \
+            OMPI_BIGCOUNT_ARRAY_NAME(name) = (int *) name; \
+            break; \
+        } \
+        OMPI_BIGCOUNT_ARRAY_NAME(name) = malloc(size * sizeof(*OMPI_BIGCOUNT_ARRAY_NAME(name))); \
+    } while (0)
+#define OMPI_BIGCOUNT_ARRAY_DISPL_OUT_PREPARE(name, size) OMPI_BIGCOUNT_ARRAY_COUNT_OUT_PREPARE(name, size)
+
+#define OMPI_BIGCOUNT_ARRAY_COUNT_IN_POST(name) \
+    do { \
+        if (sizeof(*name) != sizeof(*OMPI_BIGCOUNT_ARRAY_NAME(name))) { \
+            free(OMPI_BIGCOUNT_ARRAY_NAME(name)); \
+        } \
+    } while (0)
+#define OMPI_BIGCOUNT_ARRAY_DISPL_IN_POST(name) OMPI_BIGCOUNT_ARRAY_COUNT_IN_POST(name)
+#define OMPI_BIGCOUNT_ARRAY_COUNT_OUT_POST(name, size, i) \
+    do { \
+        if (sizeof(*name) == sizeof(*OMPI_BIGCOUNT_ARRAY_NAME(name))) { \
+            break; \
+        } \
+        for (i = 0; i < size; ++i) { \
+            name[i] = OMPI_BIGCOUNT_ARRAY_NAME(name)[i]; \
+        } \
+        free(OMPI_BIGCOUNT_ARRAY_NAME(name)); \
+    } while (0)
+#define OMPI_BIGCOUNT_ARRAY_DISPL_OUT_POST(name, size, i) OMPI_BIGCOUNT_ARRAY_COUNT_OUT_POST(name, size, i)
+
 END_C_DECLS
 
 #endif /* OMPI_C_BINDINGS_H */
