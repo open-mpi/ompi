@@ -44,9 +44,8 @@
 #include "opal/util/opal_getcwd.h"
 #include "opal/util/output.h"
 
-static const char *opal_infosubscribe_inform_subscribers(opal_infosubscriber_t *object,
-                                                         const char *key, const char *new_value,
-                                                         int *found_callback);
+static int opal_infosubscribe_inform_subscribers(opal_infosubscriber_t *object, const char *key,
+                                                 const char *new_value);
 static void infosubscriber_construct(opal_infosubscriber_t *obj);
 static void infosubscriber_destruct(opal_infosubscriber_t *obj);
 
@@ -110,41 +109,32 @@ static void opal_callback_list_item_destruct(opal_callback_list_item_t *obj)
     }
 }
 
-static const char *opal_infosubscribe_inform_subscribers(opal_infosubscriber_t *object,
-                                                         const char *key, const char *new_value,
-                                                         int *found_callback)
+static int opal_infosubscribe_inform_subscribers(opal_infosubscriber_t *object, const char *key,
+                                                 const char *new_value)
 {
     opal_hash_table_t *table = &object->s_subscriber_table;
     opal_list_t *list = NULL;
     opal_callback_list_item_t *item;
-    const char *updated_value = NULL;
+    int update_cnt = 0;
 
-    if (found_callback) {
-        *found_callback = 0;
-    }
     /*
      * Present the new value to each subscriber.  They can decide to accept it, ignore it, or
      * over-ride it with their own value (like ignore, but they specify what value they want it to
      * have).
-     *
-     * Since multiple subscribers could set values, only the last setting is kept as the
-     * returned value.
      */
     if (table) {
         opal_hash_table_get_value_ptr(table, key, strlen(key), (void **) &list);
 
         if (list) {
-            updated_value = new_value;
             OPAL_LIST_FOREACH (item, list, opal_callback_list_item_t) {
-                updated_value = item->callback(object, key, updated_value);
-                if (found_callback) {
-                    *found_callback = 1;
+                if (item->callback(object, key, new_value)) {
+                    ++update_cnt;
                 }
             }
         }
     }
 
-    return updated_value;
+    return update_cnt;
 }
 
 /*
@@ -248,10 +238,9 @@ int opal_infosubscribe_testregister(opal_infosubscriber_t *object)
 int opal_infosubscribe_change_info(opal_infosubscriber_t *object, opal_info_t *new_info)
 {
     opal_info_entry_t *iterator;
-    const char *updated_value;
 
     /* for each key/value in new info, let subscribers know of new value */
-    int found_callback;
+    int update_cnt = 0;
 
     if (!object->s_info) {
         object->s_info = OBJ_NEW(opal_info_t);
@@ -266,12 +255,11 @@ int opal_infosubscribe_change_info(opal_infosubscriber_t *object, opal_info_t *n
             key_str = iterator->ie_key;
             OBJ_RETAIN(key_str);
 
-            updated_value = opal_infosubscribe_inform_subscribers(object, iterator->ie_key->string,
-                                                                  iterator->ie_value->string,
-                                                                  &found_callback);
-            if (NULL != updated_value
-                && 0 != strncmp(updated_value, value_str->string, value_str->length)) {
-                err = opal_info_set(object->s_info, iterator->ie_key->string, updated_value);
+            update_cnt = opal_infosubscribe_inform_subscribers(object, iterator->ie_key->string,
+                                                               iterator->ie_value->string);
+            if (0 < update_cnt) {
+                err = opal_info_set(object->s_info, iterator->ie_key->string,
+                                    iterator->ie_value->string);
             }
             OBJ_RELEASE(value_str);
             OBJ_RELEASE(key_str);

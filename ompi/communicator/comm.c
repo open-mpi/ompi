@@ -997,6 +997,7 @@ static int ompi_comm_split_type_core(ompi_communicator_t *comm,
     ompi_comm_assert_subscribe (newcomp, OMPI_COMM_ASSERT_LAZY_BARRIER);
     ompi_comm_assert_subscribe (newcomp, OMPI_COMM_ASSERT_ACTIVE_POLL);
     if (info) {
+        opal_info_dup(info, &newcomp->super.s_info);
         opal_infosubscribe_change_info(&newcomp->super, info);
     }
 
@@ -1353,6 +1354,7 @@ int ompi_comm_dup_with_info ( ompi_communicator_t * comm, opal_info_t *info, omp
     ompi_comm_assert_subscribe (newcomp, OMPI_COMM_ASSERT_LAZY_BARRIER);
     ompi_comm_assert_subscribe (newcomp, OMPI_COMM_ASSERT_ACTIVE_POLL);
     if (info) {
+        opal_info_dup(info, &newcomp->super.s_info);
         opal_infosubscribe_change_info(&newcomp->super, info);
     }
 
