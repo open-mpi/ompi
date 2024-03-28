@@ -37,9 +37,9 @@
  * handler invocation, but the collective components provide all other
  * functionality.
  *
- * Component selection is done per commuicator, at Communicator
+ * Component selection is done per communicator, at Communicator
  * construction time.  mca_coll_base_comm_select() is used to
- * create the list of components available to the componenent
+ * create the list of components available to the component
  * collm_comm_query function, instantiating a module for each
  * component that is usable, and sets the module collective function pointers.
  * mca_coll_base_comm_select() then loops through the list of available
@@ -59,6 +59,15 @@
  * components should be able to handle either style of communicator
  * during initialization (although handling may include indicating the
  * component is not available).
+ *
+ * Unlike the MPI standard, all buffers that are not supposed to be used (and
+ * therefore where the MPI standard does not require the tuple 
+ * (buffer, datatype, count) to be accessible, are replaced with NULL.
+ * As an example, the recvbuf for all non-root ranks in an MPI_Reduce,
+ * will be set to NULL at the MPI API level. The reason behind this is to
+ * allow collective components to indicate when buffers are really valid,
+ * such that collective modules delegating collectives to other modules
+ * can share temporary buffer.
  */
 
 #ifndef OMPI_MCA_COLL_COLL_H
@@ -508,7 +517,7 @@ typedef struct mca_coll_base_component_2_4_0_t mca_coll_base_component_t;
  *
  * Module interface to the Collective framework.  Modules are
  * reference counted based on the number of functions from the module
- * used on the commuicator.  There is at most one module per component
+ * used on the communicator.  There is at most one module per component
  * on a given communicator, and there can be many component modules on
  * a given communicator.
  *

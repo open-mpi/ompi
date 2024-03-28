@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2020 The University of Tennessee and The University
+ * Copyright (c) 2004-2023 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
@@ -136,8 +136,18 @@ int MPI_Reduce_init(const void *sendbuf, void *recvbuf, int count,
         OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
     }
 
+    void *updated_recvbuf;
+    const void *updated_sendbuf;
+    if(OMPI_COMM_IS_INTRA(comm)) {
+        updated_recvbuf = (ompi_comm_rank(comm) == root) ? recvbuf : NULL;
+        updated_sendbuf = sendbuf;
+    } else {
+        updated_sendbuf = ((MPI_ROOT == root) || (MPI_PROC_NULL == root)) ? NULL : sendbuf;
+        updated_recvbuf = (MPI_ROOT == root) ? recvbuf : NULL;
+    }
+
     /* Invoke the coll component to perform the back-end operation */
-    err = comm->c_coll->coll_reduce_init(sendbuf, recvbuf, count,
+    err = comm->c_coll->coll_reduce_init(updated_sendbuf, updated_recvbuf, count,
                                          datatype, op, root, comm, info, request,
                                          comm->c_coll->coll_reduce_init_module);
     if (OPAL_LIKELY(OMPI_SUCCESS == err)) {
