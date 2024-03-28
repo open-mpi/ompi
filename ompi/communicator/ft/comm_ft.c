@@ -416,6 +416,7 @@ struct ompi_comm_ishrink_context_t {
     ompi_group_t *failed_group;
     ompi_group_t *alive_group;
     ompi_group_t *alive_rgroup;
+    int flag;
     double start;
 };
 typedef struct ompi_comm_ishrink_context_t ompi_comm_ishrink_context_t;
@@ -429,7 +430,6 @@ static int ompi_comm_ishrink_check_activate(ompi_comm_request_t *request);
 int ompi_comm_ishrink_internal(ompi_communicator_t* comm, ompi_communicator_t** newcomm, ompi_request_t** req)
 {
     int rc;
-    int flag = 1;
 #if OPAL_ENABLE_DEBUG
     double stop;
 #endif
@@ -479,7 +479,8 @@ int ompi_comm_ishrink_internal(ompi_communicator_t* comm, ompi_communicator_t** 
      * the value of flag, instead we are only using the globally consistent
      * return value.
      */
-    rc = comm->c_coll->coll_iagree( &flag,
+    context->flag = 1;
+    rc = comm->c_coll->coll_iagree( &context->flag,
                                     1,
                                     &ompi_mpi_int.dt,
                                     &ompi_mpi_op_band.op,
@@ -488,8 +489,8 @@ int ompi_comm_ishrink_internal(ompi_communicator_t* comm, ompi_communicator_t** 
                                     subreq,
                                     comm->c_coll->coll_iagree_module );
     if( OMPI_SUCCESS != rc ) {
-        ompi_comm_request_return(request);
         OBJ_RELEASE(context->failed_group);
+        ompi_comm_request_return(request);
         return rc;
     }
 
@@ -508,7 +509,7 @@ static int ompi_comm_ishrink_check_agree(ompi_comm_request_t *request) {
     ompi_communicator_t *comm = context->comm;
     ompi_request_t *subreq[1];
     ompi_group_t *comm_group = NULL;
-    int rc, flag = 1;
+    int rc;
 #if OPAL_ENABLE_DEBUG
     double stop;
 #endif
@@ -528,7 +529,8 @@ static int ompi_comm_ishrink_check_agree(ompi_comm_request_t *request) {
     if( MPI_ERR_PROC_FAILED == rc ) {
         /* previous round found more failures, redo */
         request->super.req_status.MPI_ERROR = MPI_SUCCESS;
-        rc = comm->c_coll->coll_iagree( &flag,
+        context->flag = 1;
+        rc = comm->c_coll->coll_iagree( &context->flag,
                                         1,
                                         &ompi_mpi_int.dt,
                                         &ompi_mpi_op_band.op,
@@ -537,8 +539,8 @@ static int ompi_comm_ishrink_check_agree(ompi_comm_request_t *request) {
                                         subreq,
                                         comm->c_coll->coll_iagree_module );
         if( OMPI_SUCCESS != rc ) {
-            ompi_comm_request_return(request);
             OBJ_RELEASE(context->failed_group);
+            ompi_comm_request_return(request);
             return rc;
         }
         ompi_comm_request_schedule_append(request, ompi_comm_ishrink_check_agree, subreq, 1);
@@ -560,17 +562,17 @@ static int ompi_comm_ishrink_check_agree(ompi_comm_request_t *request) {
     comm_group = comm->c_local_group;
     rc = ompi_group_difference(comm_group, context->failed_group, &context->alive_group);
     if( OMPI_SUCCESS != rc ) {
-        ompi_comm_request_return(request);
         OBJ_RELEASE(context->failed_group);
+        ompi_comm_request_return(request);
         return rc;
     }
     if( OMPI_COMM_IS_INTER(comm) ) {
         comm_group = comm->c_remote_group;
         rc = ompi_group_difference(comm_group, context->failed_group, &context->alive_rgroup);
         if( OMPI_SUCCESS != rc ) {
-            ompi_comm_request_return(request);
             OBJ_RELEASE(context->alive_group);
             OBJ_RELEASE(context->failed_group);
+            ompi_comm_request_return(request);
             return rc;
         }
     }
@@ -591,11 +593,11 @@ static int ompi_comm_ishrink_check_agree(ompi_comm_request_t *request) {
                            subreq
                          );
     if( OMPI_SUCCESS != rc ) {
-        ompi_comm_request_return(request);
         OBJ_RELEASE(context->alive_group);
         if( NULL != context->alive_rgroup ) {
             OBJ_RELEASE(context->alive_rgroup);
         }
+        ompi_comm_request_return(request);
         return rc;
     }
 
@@ -614,17 +616,23 @@ static int ompi_comm_ishrink_check_setrank(ompi_comm_request_t *request) {
 
     /* cleanup temporary groups */
     OBJ_RELEASE(context->alive_group);
-    context->alive_group = NULL;
     if( NULL != context->alive_rgroup ) {
         OBJ_RELEASE(context->alive_rgroup);
     }
-    context->alive_rgroup = NULL;
 
     /* check errors in prior step */
     if( NULL == *context->newcomm ) {
-        rc = MPI_ERR_INTERN;
         ompi_comm_request_return(request);
+        rc = MPI_ERR_INTERN;
+        return rc;
+    }
+    rc = request->super.req_status.MPI_ERROR;
+    if( OMPI_SUCCESS != rc ) {
+        opal_output_verbose(1, ompi_ftmpi_output_handle,
+                            "%s ompi: comm_ishrink: Construction failed with error %d",
+                            OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), rc);
         OBJ_RELEASE(*context->newcomm);
+        ompi_comm_request_return(request);
         return rc;
     }
 
@@ -658,8 +666,8 @@ static int ompi_comm_ishrink_check_setrank(ompi_comm_request_t *request) {
                                mode,              /* mode */
                                subreq );
     if( OMPI_SUCCESS != rc ) {
-        ompi_comm_request_return(request);
         OBJ_RELEASE(*context->newcomm);
+        ompi_comm_request_return(request);
         return rc;
     }
 
@@ -682,8 +690,8 @@ static int ompi_comm_ishrink_check_cid(ompi_comm_request_t *request) {
         opal_output_verbose(1, ompi_ftmpi_output_handle,
                             "%s ompi: comm_ishrink: Determine context id failed with error %d",
                             OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), rc);
-        ompi_comm_request_return(request);
         OBJ_RELEASE(*context->newcomm);
+        ompi_comm_request_return(request);
         return rc;
     }
 #if OPAL_ENABLE_DEBUG
@@ -720,6 +728,7 @@ static int ompi_comm_ishrink_check_cid(ompi_comm_request_t *request) {
                                 subreq );
     if( OMPI_SUCCESS != rc ) {
         OBJ_RELEASE(*context->newcomm);
+        ompi_comm_request_return(request);
         return rc;
     }
 
@@ -729,6 +738,8 @@ static int ompi_comm_ishrink_check_cid(ompi_comm_request_t *request) {
 }
 
 static int ompi_comm_ishrink_check_activate(ompi_comm_request_t *request) {
+    ompi_comm_ishrink_context_t *context =
+        (ompi_comm_ishrink_context_t *)request->context;
     int rc;
 #if OPAL_ENABLE_DEBUG
     double stop;
@@ -736,11 +747,13 @@ static int ompi_comm_ishrink_check_activate(ompi_comm_request_t *request) {
 
     rc = request->super.req_status.MPI_ERROR;
     if( OMPI_SUCCESS != rc ) {
+        opal_output_verbose(1, ompi_ftmpi_output_handle,
+                            "%s ompi: comm_ishrink: Activation failed with error %d",
+                            OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), rc);
+        OBJ_RELEASE(*context->newcomm);
         return rc;
     }
 #if OPAL_ENABLE_DEBUG
-    ompi_comm_ishrink_context_t *context =
-        (ompi_comm_ishrink_context_t *)request->context;
     stop = MPI_Wtime();
     OPAL_OUTPUT_VERBOSE((10, ompi_ftmpi_output_handle,
                          "%s ompi: comm_ishrink: COLL SELECT: %g seconds\n",
