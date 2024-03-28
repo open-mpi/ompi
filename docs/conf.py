@@ -10,7 +10,6 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-import os
 
 # -- Project information -----------------------------------------------------
 
@@ -18,7 +17,7 @@ import os
 import re
 import datetime
 
-year = datetime.datetime.now().year
+year = 2023
 
 project = 'Open MPI'
 copyright = f'2003-{year}, The Open MPI Community'
