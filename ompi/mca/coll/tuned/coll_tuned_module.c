@@ -94,9 +94,13 @@ ompi_coll_tuned_comm_query(struct ompi_communicator_t *comm, int *priority)
      * when the module get enabled, set the correct version based on the availability
      * of the dynamic rules.
      */
+    if (OMPI_COMM_IS_DISJOINT_SET(comm) && OMPI_COMM_IS_DISJOINT(comm)) {
+        tuned_module->super.coll_allreduce  = ompi_coll_tuned_allreduce_intra_disjoint_dec_fixed;
+    } else {
+        tuned_module->super.coll_allreduce  = ompi_coll_tuned_allreduce_intra_dec_fixed;
+    }
     tuned_module->super.coll_allgather  = ompi_coll_tuned_allgather_intra_dec_fixed;
     tuned_module->super.coll_allgatherv = ompi_coll_tuned_allgatherv_intra_dec_fixed;
-    tuned_module->super.coll_allreduce  = ompi_coll_tuned_allreduce_intra_dec_fixed;
     tuned_module->super.coll_alltoall   = ompi_coll_tuned_alltoall_intra_dec_fixed;
     tuned_module->super.coll_alltoallv  = ompi_coll_tuned_alltoallv_intra_dec_fixed;
     tuned_module->super.coll_alltoallw  = NULL;
