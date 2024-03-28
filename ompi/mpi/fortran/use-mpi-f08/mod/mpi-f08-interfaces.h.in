@@ -7,8 +7,8 @@
 !                         of Tennessee Research Foundation.  All rights
 !                         reserved.
 ! Copyright (c) 2012      Inria.  All rights reserved.
-! Copyright (c) 2015-2020 Research Organization for Information Science
-!                         and Technology (RIST). All rights reserved.
+! Copyright (c) 2015-2023 Research Organization for Information Science
+!                         and Technology (RIST).  All rights reserved.
 ! Copyright (c) 2017-2018 FUJITSU LIMITED.  All rights reserved.
 ! Copyright (c) 2021-2023 Triad National Security, LLC. All rights
 !                         reserved.
@@ -203,11 +203,7 @@ interface  MPI_Precv_init
 subroutine MPI_Precv_init_f08(buf,partitions,count,datatype,dest,tag,comm,request,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request, MPI_COUNT_KIND
    implicit none
-   !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
-   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buf
-   !$PRAGMA IGNORE_TKR buf
-   !DIR$ IGNORE_TKR buf
-   !IBM* IGNORE_TKR buf
+   @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
    OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: buf
    INTEGER, INTENT(IN) :: partitions, dest, tag
    INTEGER(MPI_COUNT_KIND), INTENT(IN) :: count
@@ -222,11 +218,7 @@ interface  MPI_Psend_init
 subroutine MPI_Psend_init_f08(buf,partitions,count,datatype,dest,tag,comm,request,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request, MPI_COUNT_KIND
    implicit none
-   !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
-   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buf
-   !$PRAGMA IGNORE_TKR buf
-   !DIR$ IGNORE_TKR buf
-   !IBM* IGNORE_TKR buf
+   @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
    OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: buf
    INTEGER, INTENT(IN) :: partitions, dest, tag
    INTEGER(MPI_COUNT_KIND), INTENT(IN) :: count

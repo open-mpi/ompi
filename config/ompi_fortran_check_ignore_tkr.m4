@@ -14,6 +14,8 @@ dnl Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
 dnl                         reserved.
 dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2013      Research Organization for Information Science
+dnl                         and Technology (RIST).  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -70,22 +72,28 @@ AC_DEFUN([_OMPI_FORTRAN_CHECK_IGNORE_TKR], [
     ompi_fortran_ignore_tkr_predecl=!
     ompi_fortran_ignore_tkr_type=real
 
-    # Vendor-neutral, TYPE(*) syntax
+    # Vendor-neutral, TYPE(*), DIMENSION(..) syntax
     OMPI_FORTRAN_CHECK_IGNORE_TKR_SUB(
-         [!], [type(*)],
-         [TYPE(*), DIMENSION(*)],
+         [!], [type(*), DIMENSION(..)],[, ASYNCHRONOUS],
+         [TYPE(*), DIMENSION(..)],
          [internal_ignore_tkr_happy=1], [internal_ignore_tkr_happy=0])
+    # Vendor-neutral, TYPE(*), DIMENSION(*) syntax
+    AS_IF([test $internal_ignore_tkr_happy -eq 0],
+          [OMPI_FORTRAN_CHECK_IGNORE_TKR_SUB(
+              [!], [type(*), DIMENSION(*)],[],
+              [TYPE(*), DIMENSION(*)],
+              [internal_ignore_tkr_happy=1], [internal_ignore_tkr_happy=0])])
 
     # GCC compilers
     AS_IF([test $internal_ignore_tkr_happy -eq 0],
           [OMPI_FORTRAN_CHECK_IGNORE_TKR_SUB(
-              [!GCC\$ ATTRIBUTES NO_ARG_CHECK ::], [type(*), dimension(*)],
+              [!GCC\$ ATTRIBUTES NO_ARG_CHECK ::], [type(*), dimension(*)],[],
               [!GCC\$ ATTRIBUTES NO_ARG_CHECK],
               [internal_ignore_tkr_happy=1], [internal_ignore_tkr_happy=0])])
     # Intel compilers
     AS_IF([test $internal_ignore_tkr_happy -eq 0],
           [OMPI_FORTRAN_CHECK_IGNORE_TKR_SUB(
-              [!DEC\$ ATTRIBUTES NO_ARG_CHECK ::], [real, dimension(*)],
+              [!DEC\$ ATTRIBUTES NO_ARG_CHECK ::], [real, dimension(*)],[],
               [!DEC\$ ATTRIBUTES NO_ARG_CHECK],
               [internal_ignore_tkr_happy=1], [internal_ignore_tkr_happy=0])])
     # Solaris Studio compilers
@@ -93,19 +101,19 @@ AC_DEFUN([_OMPI_FORTRAN_CHECK_IGNORE_TKR], [
     # use the "character(*)" type
     AS_IF([test $internal_ignore_tkr_happy -eq 0],
           [OMPI_FORTRAN_CHECK_IGNORE_TKR_SUB(
-              [!\$PRAGMA IGNORE_TKR], [character(*)],
+              [!\$PRAGMA IGNORE_TKR], [character(*)],[],
               [!\$PRAGMA IGNORE_TKR],
               [internal_ignore_tkr_happy=1], [internal_ignore_tkr_happy=0])])
     # Cray compilers
     AS_IF([test $internal_ignore_tkr_happy -eq 0],
           [OMPI_FORTRAN_CHECK_IGNORE_TKR_SUB(
-              [!DIR\$ IGNORE_TKR], [real, dimension(*)],
+              [!DIR\$ IGNORE_TKR], [real, dimension(*)],[],
               [!DIR\$ IGNORE_TKR],
               [internal_ignore_tkr_happy=1], [internal_ignore_tkr_happy=0])])
     # IBM compilers
     AS_IF([test $internal_ignore_tkr_happy -eq 0],
           [OMPI_FORTRAN_CHECK_IGNORE_TKR_SUB(
-              [!IBM* IGNORE_TKR], [real, dimension(*)],
+              [!IBM* IGNORE_TKR], [real, dimension(*)],[],
               [!IBM* IGNORE_TKR],
               [internal_ignore_tkr_happy=1], [internal_ignore_tkr_happy=0])])
 
@@ -124,13 +132,14 @@ AC_DEFUN([_OMPI_FORTRAN_CHECK_IGNORE_TKR], [
 # functionality
 # $1: pre-decl qualifier line -- likely a compiler directive
 # $2: parameter type
-# $3: message for AC-MSG-CHECKING
-# $4: action to take if the test passes
-# $5: action to take if the test fails
+# $3: asynchronous keyword
+# $4: message for AC-MSG-CHECKING
+# $5: action to take if the test passes
+# $6: action to take if the test fails
 AC_DEFUN([OMPI_FORTRAN_CHECK_IGNORE_TKR_SUB], [
     OPAL_VAR_SCOPE_PUSH(msg)
     AC_LANG_PUSH([Fortran])
-    AC_MSG_CHECKING([for Fortran compiler support of $3])
+    AC_MSG_CHECKING([for Fortran compiler support of $4])
     AC_COMPILE_IFELSE(AC_LANG_PROGRAM([],[[!
 ! Autoconf puts "program main" at the top
 
@@ -184,20 +193,35 @@ AC_DEFUN([OMPI_FORTRAN_CHECK_IGNORE_TKR_SUB], [
   end program
 
   subroutine force_assumed_shape(a, count)
+    implicit none
     integer :: count
     real, dimension(:,:) :: a
     call foo(a, count)
   end subroutine force_assumed_shape
 
+  module mod
+    interface
+    subroutine bar(buffer, count)
+       $2, intent(in)$3 :: buffer
+       integer, intent(in) :: count
+    end subroutine bar
+    end interface
+  end module
+
+  subroutine bogus(buffer, count)
+  use mod, only : bar
+  implicit none
+  $2, intent(in)$3 :: buffer
+  integer, intent(in) :: count
+  call bar(buffer, count)
 ! Autoconf puts "end" after the last line
-  subroutine bogus
 ]]),
                     [msg=yes
                      ompi_fortran_ignore_tkr_predecl="$1"
                      ompi_fortran_ignore_tkr_type="$2"
-                     $4],
+                     $5],
                     [msg=no
-                     $5])
+                     $6])
   AC_MSG_RESULT($msg)
   AC_LANG_POP([Fortran])
   OPAL_VAR_SCOPE_POP
