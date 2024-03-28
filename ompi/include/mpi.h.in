@@ -120,6 +120,9 @@
 /* Whether we have FORTRAN LOGICAL*1 or not */
 #undef OMPI_HAVE_FORTRAN_LOGICAL1
 
+/* Whether we have FORTRAN LOGICAL*16 or not */
+#undef OMPI_HAVE_FORTRAN_LOGICAL16
+
 /* Whether we have FORTRAN LOGICAL*2 or not */
 #undef OMPI_HAVE_FORTRAN_LOGICAL2
 
@@ -1140,6 +1143,7 @@ OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_logical1;
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_logical2;
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_logical4;
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_logical8;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_logical16;
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_integer1;
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_integer2;
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_integer4;
@@ -1287,6 +1291,9 @@ OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_ub;
 #if OMPI_HAVE_FORTRAN_LOGICAL8
 #define MPI_LOGICAL8 OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_logical8)
 #endif
+#if OMPI_HAVE_FORTRAN_LOGICAL16
+#define MPI_LOGICAL16 OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_logical16)
+#endif
 #define MPI_INTEGER OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_integer)
 #if OMPI_HAVE_FORTRAN_INTEGER1
 #define MPI_INTEGER1 OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_integer1)
@@ -1374,6 +1381,7 @@ OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_ub;
 #define MPI_TYPECLASS_INTEGER    1
 #define MPI_TYPECLASS_REAL       2
 #define MPI_TYPECLASS_COMPLEX    3
+#define MPI_TYPECLASS_LOGICAL    4
 
 /* Aint helper macros (MPI-3.1) */
 #define MPI_Aint_add(base, disp) ((MPI_Aint) ((char *) (base) + (disp)))
