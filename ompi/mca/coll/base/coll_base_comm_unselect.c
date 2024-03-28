@@ -17,6 +17,8 @@
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * Copyright (c) 2017      FUJITSU LIMITED.  All rights reserved.
  * Copyright (c) 2020      BULL S.A.S. All rights reserved.
+ * Copyright (c) 2022      Computer Architecture and VLSI Systems (CARV)
+ *                         Laboratory, ICS Forth. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -40,10 +42,6 @@
 #define CLOSE(comm, func)                                        \
     do {                                                         \
         if (NULL != comm->c_coll->coll_ ## func ## _module) {    \
-            if (NULL != comm->c_coll->coll_ ## func ## _module->coll_module_disable) { \
-                comm->c_coll->coll_ ## func ## _module->coll_module_disable(           \
-                              comm->c_coll->coll_ ## func ## _module, comm);           \
-            }                                                    \
             OBJ_RELEASE(comm->c_coll->coll_ ## func ## _module); \
             comm->c_coll->coll_## func = NULL;                   \
             comm->c_coll->coll_## func ## _module = NULL;        \
@@ -52,7 +50,13 @@
 
 int mca_coll_base_comm_unselect(ompi_communicator_t * comm)
 {
-    opal_list_item_t *item;
+    mca_coll_base_avail_coll_t *avail;
+
+    OPAL_LIST_FOREACH(avail, comm->c_coll->module_list, mca_coll_base_avail_coll_t) {
+        if (NULL != avail->ac_module->coll_module_disable) {
+            avail->ac_module->coll_module_disable(avail->ac_module, comm);
+        }
+    }
 
     CLOSE(comm, allgather);
     CLOSE(comm, allgatherv);
@@ -133,16 +137,13 @@ int mca_coll_base_comm_unselect(ompi_communicator_t * comm)
     CLOSE(comm, iagree);
 #endif
 
-    for (item = opal_list_remove_first(comm->c_coll->module_list);
-         NULL != item; item = opal_list_remove_first(comm->c_coll->module_list)) {
-        mca_coll_base_avail_coll_t *avail = (mca_coll_base_avail_coll_t *) item;
-
-        if(avail->ac_module) {
+    OPAL_LIST_FOREACH(avail, comm->c_coll->module_list, mca_coll_base_avail_coll_t) {
+        if (avail->ac_module) {
             OBJ_RELEASE(avail->ac_module);
         }
-        OBJ_RELEASE(avail);
     }
-    OBJ_RELEASE(comm->c_coll->module_list);
+
+    OPAL_LIST_RELEASE(comm->c_coll->module_list);
 
     free(comm->c_coll);
     comm->c_coll = NULL;
