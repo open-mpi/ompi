@@ -125,7 +125,6 @@ int mca_coll_han_scatterv_intra(const void *sbuf, const int *scounts, const int 
         int need_bounce_buf = 0, total_up_scounts = 0, *up_displs = NULL, *up_scounts = NULL,
             *up_peer_lb = NULL, *up_peer_ub = NULL;
         char *reorder_sbuf = (char *) sbuf, *bounce_buf = NULL;
-        size_t sdsize;
 
         low_scounts = malloc(low_size * sizeof(int));
         low_displs = malloc(low_size * sizeof(int));
@@ -143,8 +142,6 @@ int mca_coll_han_scatterv_intra(const void *sbuf, const int *scounts, const int 
             low_displs[low_peer] = displs[w_peer];
             low_scounts[low_peer] = scounts[w_peer];
         }
-
-        ompi_datatype_type_size(sdtype, &sdsize);
 
         up_scounts = calloc(up_size, sizeof(int));
         up_displs = malloc(up_size * sizeof(int));
@@ -201,11 +198,14 @@ int mca_coll_han_scatterv_intra(const void *sbuf, const int *scounts, const int 
         }
 
         if (need_bounce_buf) {
-            bounce_buf = malloc(sdsize * total_up_scounts);
+            ptrdiff_t ssize, sgap;
+            ssize = opal_datatype_span(&rdtype->super, total_up_scounts, &sgap);
+            bounce_buf = malloc(ssize);
             if (!bounce_buf) {
                 err = OMPI_ERR_OUT_OF_RESOURCE;
                 goto root_out;
             }
+            reorder_sbuf = bounce_buf - sgap;
 
             /* Calculate displacements for the inter-node scatterv */
             for (up_peer = 0; up_peer < up_size; ++up_peer) {
@@ -214,7 +214,8 @@ int mca_coll_han_scatterv_intra(const void *sbuf, const int *scounts, const int 
             }
 
             /* Use a temp buffer to reorder the send buffer if needed */
-            ptrdiff_t offset = 0;
+            ptrdiff_t offset = 0, sdext;
+            ompi_datatype_type_extent(sdtype, &sdext);
 
             for (int i = 0; i < w_size; ++i) {
                 up_peer = topo[2 * i];
@@ -225,13 +226,11 @@ int mca_coll_han_scatterv_intra(const void *sbuf, const int *scounts, const int 
                 w_peer = topo[2 * i + 1];
 
                 ompi_datatype_copy_content_same_ddt(sdtype, (size_t) scounts[w_peer],
-                                                    bounce_buf + offset,
+                                                    reorder_sbuf + offset,
                                                     (char *) sbuf
-                                                        + (size_t) displs[w_peer] * sdsize);
-                offset += sdsize * (size_t) scounts[w_peer];
+                                                        + (size_t) displs[w_peer] * sdext);
+                offset += sdext * (size_t) scounts[w_peer];
             }
-
-            reorder_sbuf = bounce_buf;
         }
 
         /* Up Iscatterv */
