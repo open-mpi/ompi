@@ -28,7 +28,7 @@
 
 #include "ompi/datatype/ompi_datatype.h"
 
-int32_t ompi_datatype_create_vector( int count, int bLength, int stride,
+int32_t ompi_datatype_create_vector( size_t count, int bLength, int stride,
                                      const ompi_datatype_t* oldType, ompi_datatype_t** newType )
 {
     ompi_datatype_t *pTempData, *pData;
@@ -57,7 +57,7 @@ int32_t ompi_datatype_create_vector( int count, int bLength, int stride,
 }
 
 
-int32_t ompi_datatype_create_hvector( int count, int bLength, ptrdiff_t stride,
+int32_t ompi_datatype_create_hvector( size_t count, int bLength, ptrdiff_t stride,
                                       const ompi_datatype_t* oldType, ompi_datatype_t** newType )
 {
     ompi_datatype_t *pTempData, *pData;
