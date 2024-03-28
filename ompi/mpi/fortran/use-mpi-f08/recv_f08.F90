@@ -15,7 +15,7 @@ subroutine MPI_Recv_f08(buf,count,datatype,source,tag,comm,status,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Status
    use :: ompi_mpifh_bindings, only : ompi_recv_f
    implicit none
-   OMPI_FORTRAN_IGNORE_TKR_TYPE :: buf
+   OMPI_F08_IGNORE_TKR_TYPE :: buf
    INTEGER, INTENT(IN) :: count, source, tag
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    TYPE(MPI_Comm), INTENT(IN) :: comm
