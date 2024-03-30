@@ -78,9 +78,9 @@ pmix_data = read_version_file(f"{ompi_top_srcdir}/3rd-party/openpmix/VERSION")
 prte_data = read_version_file(f"{ompi_top_srcdir}/3rd-party/prrte/VERSION")
 
 hwloc_embedded_version = get_tarball_version(f"{ompi_top_srcdir}/3rd-party/",
-                                             r"hwloc-(.*).tar")
+                                             r"hwloc-([^-]+).*\.tar")
 event_embedded_version = get_tarball_version(f"{ompi_top_srcdir}/3rd-party/",
-                                             r"libevent-(.*)-stable.tar")
+                                             r"libevent-([^-]+).*\.tar")
 
 # ---------------------------
 
