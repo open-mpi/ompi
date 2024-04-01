@@ -92,12 +92,19 @@ mca_coll_han_topo_init(struct ompi_communicator_t *comm,
     }
     assert(up_comm != NULL && low_comm != NULL);
 
+    int up_rank = ompi_comm_rank(up_comm);
     int low_rank = ompi_comm_rank(low_comm);
     int low_size = ompi_comm_size(low_comm);
 
+    ompi_proc_t *up_proc = NULL;
+
     int *topo = (int *)malloc(sizeof(int) * size * num_topo_level);
-    int is_imbalanced = 1;
-    int ranks_non_consecutive = 0;
+    int is_imbalanced = 1, ranks_non_consecutive = 0, is_heterogeneous = 0;
+
+    if (0 != up_rank) {
+        up_proc = ompi_comm_peer_lookup(up_comm, 0);
+        is_heterogeneous = up_proc->super.proc_convertor->remoteArch != opal_local_arch;
+    }
 
     /* node leaders translate the node-local ranks to global ranks and check whether they are placed consecutively */
     if (0 == low_rank) {
@@ -116,15 +123,16 @@ mca_coll_han_topo_init(struct ompi_communicator_t *comm,
             }
         }
 
-        int reduce_vals[] = {ranks_non_consecutive, low_size, -low_size};
+        int reduce_vals[] = {ranks_non_consecutive, low_size, -low_size, is_heterogeneous};
 
-        up_comm->c_coll->coll_allreduce(MPI_IN_PLACE, &reduce_vals, 3,
+        up_comm->c_coll->coll_allreduce(MPI_IN_PLACE, &reduce_vals, 4,
                                         MPI_INT, MPI_MAX, up_comm,
                                         up_comm->c_coll->coll_allreduce_module);
 
         /* is the distribution of processes balanced per node? */
         is_imbalanced = (reduce_vals[1] == -reduce_vals[2]) ? 0 : 1;
         ranks_non_consecutive = reduce_vals[0];
+        is_heterogeneous = reduce_vals[3];
 
         if ( ranks_non_consecutive && !is_imbalanced ) {
             /* kick off up_comm allgather to collect non-consecutive rank information at node leaders */
@@ -136,12 +144,13 @@ mca_coll_han_topo_init(struct ompi_communicator_t *comm,
     }
 
 
-    /* broadcast balanced and consecutive properties from node leaders to remaining ranks */
-    int bcast_vals[] = {is_imbalanced, ranks_non_consecutive};
-    low_comm->c_coll->coll_bcast(bcast_vals, 2, MPI_INT, 0,
+    /* broadcast balanced, consecutive and homogeneity properties from node leaders to remaining ranks */
+    int bcast_vals[] = {is_imbalanced, ranks_non_consecutive, is_heterogeneous};
+    low_comm->c_coll->coll_bcast(bcast_vals, 3, MPI_INT, 0,
                                  low_comm, low_comm->c_coll->coll_bcast_module);
     is_imbalanced = bcast_vals[0];
     ranks_non_consecutive = bcast_vals[1];
+    han_module->is_heterogeneous = bcast_vals[2];
 
     /* error out if the rank distribution is not balanced */
     if (is_imbalanced) {

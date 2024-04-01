@@ -55,6 +55,12 @@
  *    to send the data in the correct order even if the process are NOT mapped by core.
  * 2. In the send buffer, other than the root's node, data destined to the same node are continuous
  *    - it is ok if data to different nodes has gap.
+ *
+ * Limitation:
+ * The node leader acts as a broker between the Root and node followers, but it cannot match the
+ * exact type signature of the followers; instead it forwards the intermediate data from Root in its
+ * packed form of MPI_BYTE type. This works for Gatherv but NOT for Scatterv provided that the Root
+ * has a different architecture, e.g. endianness, integer representation, etc.
  */
 int mca_coll_han_scatterv_intra(const void *sbuf, const int *scounts, const int *displs,
                                 struct ompi_datatype_t *sdtype, void *rbuf, int rcount,
@@ -90,6 +96,14 @@ int mca_coll_han_scatterv_intra(const void *sbuf, const int *scounts, const int 
         /* Put back the fallback collective support and call it once. All
          * future calls will then be automatically redirected.
          */
+        HAN_LOAD_FALLBACK_COLLECTIVE(han_module, comm, scatterv);
+        return han_module->previous_scatterv(sbuf, scounts, displs, sdtype, rbuf, rcount, rdtype,
+                                             root, comm, han_module->previous_scatterv_module);
+    }
+    if (han_module->is_heterogeneous) {
+        OPAL_OUTPUT_VERBOSE((30, mca_coll_han_component.han_output,
+                             "han cannot handle scatterv with this communicator (heterogeneous). Fall "
+                             "back on another component\n"));
         HAN_LOAD_FALLBACK_COLLECTIVE(han_module, comm, scatterv);
         return han_module->previous_scatterv(sbuf, scounts, displs, sdtype, rbuf, rcount, rdtype,
                                              root, comm, han_module->previous_scatterv_module);

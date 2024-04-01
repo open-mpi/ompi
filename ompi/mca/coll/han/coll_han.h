@@ -331,6 +331,7 @@ typedef struct mca_coll_han_module_t {
     int *cached_topo;
     bool is_mapbycore;
     bool are_ppn_imbalanced;
+    bool is_heterogeneous;
 
     /* To be able to fallback when the cases are not supported */
     struct mca_coll_han_collectives_fallback_s fallback;
