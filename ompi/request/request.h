@@ -139,9 +139,8 @@ typedef struct ompi_request_t ompi_request_t;
 #define REQUEST_PENDING        (void *)0L
 #define REQUEST_COMPLETED      (void *)1L
 
-#define REQUEST_CB_PENDING     (void *)0L
-#define REQUEST_CB_COMPLETED   (void *)1L
-
+#define REQUEST_CB_PENDING     (ompi_request_complete_fn_t)0L
+#define REQUEST_CB_COMPLETED   (ompi_request_complete_fn_t)1L
 
 struct ompi_predefined_request_t {
     struct ompi_request_t request;
@@ -566,9 +565,9 @@ static inline int ompi_request_set_callback(ompi_request_t* request,
 {
     request->req_complete_cb_data = cb_data;
     opal_atomic_wmb();
-    if ((REQUEST_CB_COMPLETED == request->req_complete_cb) ||
-        (REQUEST_CB_COMPLETED == (void*)OPAL_ATOMIC_SWAP_PTR((opal_atomic_intptr_t*)&request->req_complete_cb,
-                                                             (intptr_t)cb))) {
+    if ((REQUEST_CB_COMPLETED == (ompi_request_complete_fn_t)request->req_complete_cb) ||
+        (REQUEST_CB_COMPLETED == (ompi_request_complete_fn_t)OPAL_ATOMIC_SWAP_PTR((opal_atomic_intptr_t*)&request->req_complete_cb,
+                                                                                   (intptr_t)cb))) {
         if (NULL != cb) {
             /* the request was marked at least partially completed, make sure it's fully complete */
             while (!REQUEST_COMPLETE(request)) {}
