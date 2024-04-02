@@ -139,6 +139,10 @@ typedef struct ompi_request_t ompi_request_t;
 #define REQUEST_PENDING        (void *)0L
 #define REQUEST_COMPLETED      (void *)1L
 
+#define REQUEST_CB_PENDING     (void *)0L
+#define REQUEST_CB_COMPLETED   (void *)1L
+
+
 struct ompi_predefined_request_t {
     struct ompi_request_t request;
     char padding[PREDEFINED_REQUEST_PAD - sizeof(ompi_request_t)];
