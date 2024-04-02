@@ -218,8 +218,8 @@ static void init_tl_data(thread_local_data_t* tld)
 
 }
 
-static __opal_attribute_always_inline__ inline
-thread_local_data_t* get_tl_data()
+static inline __opal_attribute_always_inline__
+thread_local_data_t* get_tl_data(void)
 {
     static opal_thread_local thread_local_data_t tl_data = { .in_progress = false, .is_initialized = false };
     /* process global tl_data if threads are disabled */
@@ -304,9 +304,11 @@ void ompi_continue_cont_release(ompi_continuation_t *cont, int rc)
 static inline
 int ompi_continue_cont_invoke(ompi_continuation_t *cont)
 {
+#ifndef NDEBUG
     ompi_cont_request_t *cont_req = cont->cont_req;
     assert(NULL != cont_req);
     assert(OMPI_REQUEST_CONT == cont_req->super.req_type);
+#endif // NDEBUG
 
     MPIX_Continue_cb_function *fn = cont->cont_cb;
     void *cont_data = cont->cont_data;
@@ -361,13 +363,13 @@ int ompi_continue_progress_n(const uint32_t max, thread_local_data_t *tld)
     return completed;
 }
 
-static int ompi_continue_progress_callback()
+static int ompi_continue_progress_callback(void)
 {
     thread_local_data_t *tld = get_tl_data();
     return ompi_continue_progress_n(1, tld);
 }
 
-static int ompi_continue_wait_progress_callback()
+static int ompi_continue_wait_progress_callback(void)
 {
     thread_local_data_t *tld = get_tl_data();
     return ompi_continue_progress_n(UINT32_MAX, tld);
@@ -831,8 +833,6 @@ int ompi_continue_global_wakeup(int status) {
                 for (int i = 0; i < cont->cont_num_opreqs; ++i) {
                     ompi_request_t *request = cont->cont_opreqs[i];
                     if (MPI_REQUEST_NULL == request) continue;
-                    ompi_request_cont_data_t *req_cont_data;
-                    req_cont_data = (ompi_request_cont_data_t *)request->req_complete_cb_data;
                     if (ompi_request_is_failed(request) && opal_atomic_compare_exchange_strong_32(&cont->cont_failed, &failed_tmp, 1)) {
                         handle_failed_cont(cont, status, true);
                         break;
@@ -1132,7 +1132,7 @@ static inline __opal_attribute_always_inline__
 int ompi_continue_check_errhandler_abort(ompi_errhandler_t* errhandler)
 {
     /* it's safe to use binary OR here, safes a jmp */
-    return (errhandler == &ompi_mpi_errors_are_fatal.eh | errhandler == &ompi_mpi_errors_abort.eh);
+    return ((errhandler == &ompi_mpi_errors_are_fatal.eh) | (errhandler == &ompi_mpi_errors_abort.eh));
 }
 
 static inline
