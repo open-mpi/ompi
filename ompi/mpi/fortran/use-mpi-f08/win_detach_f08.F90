@@ -10,7 +10,7 @@
 #include "mpi-f08-rename.h"
 
 subroutine MPI_Win_detach_f08(win,base,ierror)
-   use :: mpi_f08_types, only : MPI_Win, MPI_ADDRESS_KIND
+   use :: mpi_f08_types, only : MPI_Win
    use :: ompi_mpifh_bindings, only : ompi_win_detach_f
    implicit none
    OMPI_FORTRAN_IGNORE_TKR_TYPE OMPI_ASYNCHRONOUS :: base

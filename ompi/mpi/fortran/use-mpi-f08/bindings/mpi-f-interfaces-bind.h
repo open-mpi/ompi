@@ -3782,7 +3782,6 @@ end subroutine ompi_mrecv_f
 subroutine ompi_neighbor_allgather_f(sendbuf,sendcount,sendtype,recvbuf,recvcount,recvtype, &
                              comm,ierror) &
                              BIND(C, name="ompi_neighbor_allgather_f")
-   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm
    implicit none
    OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf
    OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
@@ -3795,7 +3794,6 @@ end subroutine ompi_neighbor_allgather_f
 subroutine ompi_ineighbor_allgather_f(sendbuf,sendcount,sendtype,recvbuf,recvcount,recvtype, &
                              comm,request,ierror) &
                              BIND(C, name="ompi_ineighbor_allgather_f")
-   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) OMPI_ASYNCHRONOUS :: sendbuf
    OMPI_FORTRAN_IGNORE_TKR_TYPE OMPI_ASYNCHRONOUS :: recvbuf
@@ -3809,7 +3807,6 @@ end subroutine ompi_ineighbor_allgather_f
 subroutine ompi_neighbor_allgather_init_f(sendbuf,sendcount,sendtype,recvbuf,recvcount,recvtype, &
                              comm,info,request,ierror) &
                              BIND(C, name="ompi_neighbor_allgather_init_f")
-   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf
    OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
@@ -3824,7 +3821,6 @@ end subroutine ompi_neighbor_allgather_init_f
 subroutine ompi_neighbor_allgatherv_f(sendbuf,sendcount,sendtype,recvbuf,recvcounts,displs, &
                               recvtype,comm,ierror) &
                               BIND(C, name="ompi_neighbor_allgatherv_f")
-   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm
    implicit none
    OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf
    OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
@@ -3838,7 +3834,6 @@ end subroutine ompi_neighbor_allgatherv_f
 subroutine ompi_ineighbor_allgatherv_f(sendbuf,sendcount,sendtype,recvbuf,recvcounts,displs, &
                               recvtype,comm,request,ierror) &
                               BIND(C, name="ompi_ineighbor_allgatherv_f")
-   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) OMPI_ASYNCHRONOUS :: sendbuf
    OMPI_FORTRAN_IGNORE_TKR_TYPE OMPI_ASYNCHRONOUS :: recvbuf
@@ -3853,7 +3848,6 @@ end subroutine ompi_ineighbor_allgatherv_f
 subroutine ompi_neighbor_allgatherv_init_f(sendbuf,sendcount,sendtype,recvbuf,recvcounts,displs, &
                               recvtype,comm,info,request,ierror) &
                               BIND(C, name="ompi_neighbor_allgatherv_init_f")
-   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf
    OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
@@ -3869,7 +3863,6 @@ end subroutine ompi_neighbor_allgatherv_init_f
 subroutine ompi_neighbor_alltoall_f(sendbuf,sendcount,sendtype,recvbuf,recvcount,recvtype, &
                             comm,ierror) &
                             BIND(C, name="ompi_neighbor_alltoall_f")
-   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm
    implicit none
    OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf
    OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
@@ -3882,7 +3875,6 @@ end subroutine ompi_neighbor_alltoall_f
 subroutine ompi_ineighbor_alltoall_f(sendbuf,sendcount,sendtype,recvbuf,recvcount,recvtype, &
                             comm,request,ierror) &
                             BIND(C, name="ompi_ineighbor_alltoall_f")
-   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) OMPI_ASYNCHRONOUS :: sendbuf
    OMPI_FORTRAN_IGNORE_TKR_TYPE OMPI_ASYNCHRONOUS :: recvbuf
@@ -3896,7 +3888,6 @@ end subroutine ompi_ineighbor_alltoall_f
 subroutine ompi_neighbor_alltoall_init_f(sendbuf,sendcount,sendtype,recvbuf,recvcount,recvtype, &
                             comm,info,request,ierror) &
                             BIND(C, name="ompi_neighbor_alltoall_init_f")
-   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf
    OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
@@ -3911,7 +3902,6 @@ end subroutine ompi_neighbor_alltoall_init_f
 subroutine ompi_neighbor_alltoallv_f(sendbuf,sendcounts,sdispls,sendtype,recvbuf,recvcounts, &
                              rdispls,recvtype,comm,ierror) &
                              BIND(C, name="ompi_neighbor_alltoallv_f")
-   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm
    implicit none
    OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf
    OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
@@ -3924,7 +3914,6 @@ end subroutine ompi_neighbor_alltoallv_f
 subroutine ompi_ineighbor_alltoallv_f(sendbuf,sendcounts,sdispls,sendtype,recvbuf,recvcounts, &
                              rdispls,recvtype,comm,request,ierror) &
                              BIND(C, name="ompi_ineighbor_alltoallv_f")
-   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) OMPI_ASYNCHRONOUS :: sendbuf
    OMPI_FORTRAN_IGNORE_TKR_TYPE OMPI_ASYNCHRONOUS :: recvbuf
@@ -3938,7 +3927,6 @@ end subroutine ompi_ineighbor_alltoallv_f
 subroutine ompi_neighbor_alltoallv_init_f(sendbuf,sendcounts,sdispls,sendtype,recvbuf,recvcounts, &
                              rdispls,recvtype,comm,info,request,ierror) &
                              BIND(C, name="ompi_neighbor_alltoallv_init_f")
-   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf
    OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
@@ -3953,7 +3941,7 @@ end subroutine ompi_neighbor_alltoallv_init_f
 subroutine ompi_neighbor_alltoallw_f(sendbuf,sendcounts,sdispls,sendtypes,recvbuf,recvcounts, &
                              rdispls,recvtypes,comm,ierror) &
                              BIND(C, name="ompi_neighbor_alltoallw_f")
-   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_ADDRESS_KIND
+   use :: mpi_f08_types, only : MPI_ADDRESS_KIND
    implicit none
    OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf
    OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
@@ -3967,7 +3955,7 @@ end subroutine ompi_neighbor_alltoallw_f
 subroutine ompi_ineighbor_alltoallw_f(sendbuf,sendcounts,sdispls,sendtypes,recvbuf,recvcounts, &
                              rdispls,recvtypes,comm,request,ierror) &
                              BIND(C, name="ompi_ineighbor_alltoallw_f")
-   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request, MPI_ADDRESS_KIND
+   use :: mpi_f08_types, only : MPI_ADDRESS_KIND
    implicit none
    OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) OMPI_ASYNCHRONOUS :: sendbuf
    OMPI_FORTRAN_IGNORE_TKR_TYPE OMPI_ASYNCHRONOUS :: recvbuf
@@ -3982,7 +3970,7 @@ end subroutine ompi_ineighbor_alltoallw_f
 subroutine ompi_neighbor_alltoallw_init_f(sendbuf,sendcounts,sdispls,sendtypes,recvbuf,recvcounts, &
                              rdispls,recvtypes,comm,info,request,ierror) &
                              BIND(C, name="ompi_neighbor_alltoallw_init_f")
-   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request, MPI_ADDRESS_KIND
+   use :: mpi_f08_types, only : MPI_ADDRESS_KIND
    implicit none
    OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf
    OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf

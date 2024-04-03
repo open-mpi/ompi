@@ -48,6 +48,11 @@ noinst_LTLIBRARIES = libusempi_internal_modules.la
 nodist_libusempi_internal_modules_la_SOURCES = \
 	mpi-types.F90
 
+# mpif-sentinels.F90 is *not* generated, and should be distributed.
+libusempi_internal_modules_la_SOURCES = \
+        mpi-sentinels.F90
+
+mpi-sentinels.lo: mpi-sentinels.F90
 mpi-types.lo: mpi-types.F90
 
 # Install the generated .mod files.  Unfortunately, each F90 compiler

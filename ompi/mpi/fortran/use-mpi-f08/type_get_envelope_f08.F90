@@ -11,7 +11,7 @@
 
 subroutine MPI_Type_get_envelope_f08(datatype,num_integers,num_addresses, &
                                      num_datatypes,combiner,ierror)
-   use :: mpi_f08_types, only : MPI_Datatype, MPI_ADDRESS_KIND
+   use :: mpi_f08_types, only : MPI_Datatype
    use :: ompi_mpifh_bindings, only : ompi_type_get_envelope_f
    implicit none
    TYPE(MPI_Datatype), INTENT(IN) :: datatype

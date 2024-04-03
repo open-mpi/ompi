@@ -11,7 +11,7 @@
 
 subroutine MPI_Win_get_name_f08(win,win_name,resultlen,ierror)
    use, intrinsic :: ISO_C_BINDING, only : C_CHAR
-   use :: mpi_f08_types, only : MPI_Win, MPI_MAX_OBJECT_NAME
+   use :: mpi_f08_types, only : MPI_Win
    use :: ompi_mpifh_bindings, only : ompi_win_get_name_f
    implicit none
    TYPE(MPI_Win), INTENT(IN) :: win

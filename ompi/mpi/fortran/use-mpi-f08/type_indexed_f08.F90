@@ -11,7 +11,7 @@
 
 subroutine MPI_Type_indexed_f08(count,array_of_blocklengths, &
                                 array_of_displacements,oldtype,newtype,ierror)
-   use :: mpi_f08_types, only : MPI_Datatype, MPI_ADDRESS_KIND
+   use :: mpi_f08_types, only : MPI_Datatype
    use :: ompi_mpifh_bindings, only : ompi_type_indexed_f
    implicit none
    INTEGER, INTENT(IN) :: count

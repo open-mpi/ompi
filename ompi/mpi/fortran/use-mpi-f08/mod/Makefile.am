@@ -52,7 +52,8 @@ noinst_LTLIBRARIES = libusempif08_internal_modules.la libforce_usempif08_interna
 libusempif08_internal_modules_la_SOURCES = \
         mpi-f08-types.F90 \
         mpi-f08-callbacks.F90 \
-        mpi-f08-constants.h
+        mpi-f08-constants.h \
+        mpi-f08-sentinels.F90
 
 libusempif08_internal_modules_la_LIBADD = \
         $(top_builddir)/ompi/mpi/fortran/use-mpi/libusempi_internal_modules.la

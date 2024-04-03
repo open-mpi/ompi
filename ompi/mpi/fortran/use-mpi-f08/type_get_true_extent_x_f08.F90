@@ -10,7 +10,7 @@
 #include "mpi-f08-rename.h"
 
 subroutine MPI_Type_get_true_extent_x_f08(datatype,true_lb,true_extent,ierror)
-   use :: mpi_f08_types, only : MPI_Datatype, MPI_ADDRESS_KIND, MPI_COUNT_KIND
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_COUNT_KIND
    use :: ompi_mpifh_bindings, only : ompi_type_get_true_extent_x_f
    implicit none
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
