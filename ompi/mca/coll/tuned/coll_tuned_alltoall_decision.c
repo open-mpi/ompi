@@ -161,11 +161,11 @@ int ompi_coll_tuned_alltoall_intra_do_this(const void *sbuf, size_t scount,
                                            struct ompi_datatype_t *rdtype,
                                            struct ompi_communicator_t *comm,
                                            mca_coll_base_module_t *module,
-                                           int algorithm, int faninout, int segsize,
+                                           int algorithm, int radix, int segsize,
                                            int max_requests)
 {
-    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:alltoall_intra_do_this selected algorithm %d topo faninout %d segsize %d",
-                 algorithm, faninout, segsize));
+    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:alltoall_intra_do_this selected algorithm %d radix %d segsize %d",
+                 algorithm, radix, segsize));
 
     switch (algorithm) {
     case (0):
@@ -175,7 +175,7 @@ int ompi_coll_tuned_alltoall_intra_do_this(const void *sbuf, size_t scount,
     case (2):
         return ompi_coll_base_alltoall_intra_pairwise(sbuf, scount, sdtype, rbuf, rcount, rdtype, comm, module);
     case (3):
-        return ompi_coll_base_alltoall_intra_bruck(sbuf, scount, sdtype, rbuf, rcount, rdtype, comm, module);
+        return ompi_coll_base_alltoall_intra_k_bruck(sbuf, scount, sdtype, rbuf, rcount, rdtype, comm, module, radix);
     case (4):
         return ompi_coll_base_alltoall_intra_linear_sync(sbuf, scount, sdtype, rbuf, rcount, rdtype, comm, module, max_requests);
     case (5):

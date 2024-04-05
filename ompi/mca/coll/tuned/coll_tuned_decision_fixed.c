@@ -407,7 +407,7 @@ int ompi_coll_tuned_alltoall_intra_dec_fixed(const void *sbuf, size_t scount,
     return ompi_coll_tuned_alltoall_intra_do_this (sbuf, scount, sdtype,
                                                    rbuf, rcount, rdtype,
                                                    comm, module,
-                                                   alg, 0, 0, ompi_coll_tuned_alltoall_max_requests);
+                                                   alg, 2, 0, ompi_coll_tuned_alltoall_max_requests);
 }
 
 /*
