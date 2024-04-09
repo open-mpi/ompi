@@ -1,0 +1,69 @@
+# This is a reusable workflow that is invoked from mpi4py.yaml.
+#
+# It expects a single parameter: env_name.  This string sets an
+# environment variable of that name to value "1".
+
+name: mpi4py-tests
+
+on:
+  workflow_call:
+    inputs:
+      env_name:
+        required: true
+        type: string
+
+jobs:
+  mpi4py-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      ${{ inputs.env_name}}: 1
+    steps:
+    - name: Use Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: 3
+        architecture: x64
+    - name: Get artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: /
+        name: build-artifacts
+    - name: Restore executable permissions
+      run: chmod a+x /opt/openmpi/bin/*
+    - name: Add Open MPI to PATH
+      run: echo /opt/openmpi/bin >> $GITHUB_PATH
+    - name: Install the mpi4py wheel
+      run: python -m pip install mpi4py --no-index --find-links=.
+
+    #----------------------------------------------
+
+    - name: Test mpi4py (singleton)
+      run:  python test/main.py -v
+      if:   ${{ true }}
+      timeout-minutes: 10
+    - name: Test mpi4py (np=1)
+      run:  mpiexec -n 1 python test/main.py -v
+      if:   ${{ true }}
+      timeout-minutes: 10
+    - name: Test mpi4py (np=2)
+      run:  mpiexec -n 2 python test/main.py -v -f
+      if:   ${{ true }}
+      timeout-minutes: 10
+    - name: Test mpi4py (np=3)
+      run:  mpiexec -n 3 python test/main.py -v -f
+      if:   ${{ true }}
+      timeout-minutes: 10
+    - name: Test mpi4py (np=4)
+      run:  mpiexec -n 4 python test/main.py -v -f
+      if:   ${{ true }}
+      timeout-minutes: 10
+    - name: Test mpi4py (np=5)
+      run:  mpiexec -n 5 python test/main.py -v -f
+      if:   ${{ true }}
+      timeout-minutes: 10
+
+    - name: Test mpi4py.run
+      run:  python demo/test-run/test_run.py -v
+      if:   ${{ true }}
+      timeout-minutes: 10
