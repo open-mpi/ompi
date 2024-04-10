@@ -21,6 +21,7 @@ nodist_libpmpiext_ftmpi_c_la_SOURCES = \
     pcomm_revoke.c \
     pcomm_is_revoked.c \
     pcomm_shrink.c \
+    pcomm_ishrink.c \
     pcomm_get_failed.c \
     pcomm_ack_failed.c \
     pcomm_failure_ack.c \

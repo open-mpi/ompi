@@ -813,7 +813,7 @@ static void era_update_new_dead_list(ompi_coll_ftagree_era_agreement_info_t *ci)
                          ci->agreement_id.ERAID_FIELDS.contextid,
                          ci->agreement_id.ERAID_FIELDS.epoch,
                          ci->agreement_id.ERAID_FIELDS.agreementid,
-                         r, ci->current_value->new_dead_array, ags->afr_size));
+                         r, t, ags->afr_size));
 
 #if OPAL_ENABLE_DEBUG
     {
