@@ -588,7 +588,7 @@ static int ompi_comm_allreduce_getnextcid (ompi_comm_request_t *request)
         context->nextlocal_cid = mca_pml.pml_max_contextid;
         for (unsigned int i = context->start ; i < mca_pml.pml_max_contextid ; ++i) {
             flag = opal_pointer_array_test_and_set_item (&ompi_mpi_communicators, i,
-                                                         context->comm);
+                                                         OMPI_COMM_SENTINEL);
             if (true == flag) {
                 context->nextlocal_cid = i;
                 break;
@@ -662,7 +662,7 @@ static int ompi_comm_checkcid (ompi_comm_request_t *request)
             opal_pointer_array_set_item(&ompi_mpi_communicators, context->nextlocal_cid, NULL);
 
             context->flag = opal_pointer_array_test_and_set_item (&ompi_mpi_communicators,
-                                                                  context->nextcid, context->comm);
+                                                                  context->nextcid, OMPI_COMM_SENTINEL);
         }
     }
 
@@ -714,7 +714,7 @@ static int ompi_comm_nextcid_check_flag (ompi_comm_request_t *request)
             for (unsigned int i = context->start ; i < mca_pml.pml_max_contextid ; ++i) {
                 bool flag;
                 flag = opal_pointer_array_test_and_set_item (&ompi_mpi_communicators, i,
-                                                                context->comm);
+                                                             OMPI_COMM_SENTINEL);
                 if (true == flag) {
                     context->nextlocal_cid = i;
                     break;
@@ -1551,4 +1551,3 @@ static int ompi_comm_ft_allreduce_intra_pmix_nb(int *inbuf, int *outbuf, int cou
 }
 
 #endif /* OPAL_ENABLE_FT_MPI */
-
