@@ -1,11 +1,3 @@
-[submodule "prrte"]
-	path = 3rd-party/prrte
-	url = ../../openpmix/prrte
-	branch = v3.0
-[submodule "openpmix"]
-	path = 3rd-party/openpmix
-	url = ../../openpmix/openpmix.git
-	branch = v4.2
 [submodule "oac"]
 	path = config/oac
 	url = ../../open-mpi/oac
