@@ -1,0 +1,139 @@
+name: Build tests
+
+on: [pull_request]
+
+jobs:
+  macos:
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        path: ['non-vpath', 'vpath']
+        sphinx: ['no-sphinx', 'sphinx']
+    steps:
+    - name: Install dependencies
+      run: brew install libevent hwloc autoconf automake libtool
+    - name: Git clone OpenPMIx
+      uses: actions/checkout@v3
+      with:
+            submodules: recursive
+            repository: openpmix/openpmix
+            path: openpmix/master
+            ref: master
+    - name: Build OpenPMIx
+      run: |
+        cd openpmix/master
+        ./autogen.pl
+        ./configure --prefix=$RUNNER_TEMP/pmixinstall
+        make -j
+        make install
+    - name: Git clone PRRTE
+      uses: actions/checkout@v3
+      with:
+            submodules: recursive
+            clean: false
+    - name: Build PRRTE
+      run: |
+        ./autogen.pl
+
+        sphinx=
+        if test "${{ matrix.sphinx }}" = sphinx; then
+            pip3 install -r docs/requirements.txt
+            sphinx=--enable-sphinx
+        fi
+
+        c=./configure
+        if test "${{ matrix.path }}" = vpath; then
+            mkdir build
+            cd build
+            c=../configure
+        fi
+
+        $c --prefix=$RUNNER_TEMP/prteinstall --with-pmix=$RUNNER_TEMP/pmixinstall $sphinx
+        make -j
+        make install
+        make uninstall
+
+  ubuntu:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        path: ['non-vpath', 'vpath']
+        sphinx: ['no-sphinx', 'sphinx']
+    steps:
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y --no-install-recommends software-properties-common libhwloc-dev libevent-dev
+    - name: Git clone OpenPMIx
+      uses: actions/checkout@v3
+      with:
+            submodules: recursive
+            repository: openpmix/openpmix
+            path: openpmix/master
+            ref: master
+    - name: Build OpenPMIx
+      run: |
+        cd openpmix/master
+        ./autogen.pl
+        ./configure --prefix=$RUNNER_TEMP/pmixinstall
+        make -j
+        make install
+    - name: Git clone PRRTE
+      uses: actions/checkout@v3
+      with:
+            submodules: recursive
+            clean: false
+    - name: Build PRRTE
+      run: |
+        ./autogen.pl
+
+        sphinx=
+        if test "${{ matrix.sphinx }}" = sphinx; then
+            pip3 install -r docs/requirements.txt
+            sphinx=--enable-sphinx
+        fi
+
+        c=./configure
+        if test "${{ matrix.path }}" = vpath; then
+            mkdir build
+            cd build
+            c=../configure
+        fi
+
+        $c --prefix=$RUNNER_TEMP/prteinstall --with-pmix=$RUNNER_TEMP/pmixinstall $sphinx
+        make -j
+        make install
+        make uninstall
+
+  distcheck:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y --no-install-recommends software-properties-common libhwloc-dev libevent-dev python3 python3-pip
+    - name: Git clone OpenPMIx
+      uses: actions/checkout@v3
+      with:
+            submodules: recursive
+            repository: openpmix/openpmix
+            path: openpmix/master
+            ref: master
+    - name: Build OpenPMIx
+      run: |
+        cd openpmix/master
+        ./autogen.pl
+        ./configure --prefix=$RUNNER_TEMP/pmixinstall
+        make -j
+        make install
+    - name: Git clone PRRTE
+      uses: actions/checkout@v3
+      with:
+            submodules: recursive
+            clean: false
+    - name: Distcheck
+      run: |
+        pip install -r docs/requirements.txt
+        ./autogen.pl
+        ./configure --prefix=$RUNNER_TEMP/prteinstall --with-pmix=$RUNNER_TEMP/pmixinstall --enable-sphinx
+        make distcheck AM_DISTCHECK_MAKEFLAGS=-j AM_DISTCHECK_CONFIGURE_FLAGS="--with-pmix=$RUNNER_TEMP/pmixinstall"

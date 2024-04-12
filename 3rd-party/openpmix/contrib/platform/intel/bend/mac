@@ -1,0 +1,8 @@
+enable_debug_symbols=yes
+enable_binaries=yes
+enable_picky=yes
+enable_debug=yes
+enable_shared=yes
+enable_static=no
+enable_ipv6=no
+with_devel_headers=yes

@@ -1,0 +1,3 @@
+[submodule "oac"]
+	path = config/oac
+	url = ../../open-mpi/oac

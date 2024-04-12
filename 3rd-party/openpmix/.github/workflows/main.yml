@@ -1,0 +1,24 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  mlnx:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
+    - name: Build
+      uses: ./.github/actions/mlnx
+      with:
+        target: 'build'
+    - name: Build srcrpm
+      uses: ./.github/actions/mlnx
+      with:
+        target: 'srcrpm'
+    - name: Run tests
+      uses: ./.github/actions/mlnx
+      with:
+        target: 'test'

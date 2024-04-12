@@ -1,0 +1,32 @@
+This is a short description how to run tests for pmix standalone library.
+
+To compile test the user should run make in the test subdirectory.
+
+To start testing, the user should run either pmix_test or pmix_test_lite executable.
+These applications are using two different versions of server functionality and fork
+client process which implementation is located in the pmix_client.c file.
+There are several command line options (available to see by -h argument).
+The main options are the following:
+
+--job-fence - run fence operation between processes from the same namespace. It has some additional parameters:
+   -c - this fence should include data exchange (collective modex). Direct modex (no data exchange) is done by default.
+   -nb - fence should be non-blocking (blocking by default).
+--fence "[<data_exchange><blocking> | ns0:ranks;ns1:ranks...][...]" - run multiple fences (each fence in square brackets)
+   with different configurations in parsable format.
+   Example: --fence "[db | 1:1,2 ; 2:3-6][1: ]" means that need to test two fences. The first one is blocking (b)
+   and with data exchange (d) including ranks 1,2 from namespace 1 and ranks 3-6 from namespace 2.
+   The second fence is non-blocking without data exchange including all processes from namespace 1.
+   The assumption is that ranks should be set in increasing order (no same ranks in the different namespaces).
+   It also has additional parameters:
+   --noise "[ns0:ranks;ns1:ranks...]" - imitate system noise on certain ranks. It has similar to --fence format [0:0;1:1-3]
+   to specify ranks which should sleep several seconds before doing fence test.
+--use-same-keys - put the same keys in the interim between multiple fences.
+--ns-dist "n1:n2:n3" register n namespaces (3 in this example) each with ni ranks (n1, n2 or n3). For example, --ns-dist 1:2:8
+   says server to register 3 namespaces: 1 proc in the 1st ns, 2 procs in the 2d ns, 8 procs in the 3d.
+
+--test-publish - test publish/lookup/unpublish api.
+--test-spawn - test spawn api.
+--test-connect - test connect/disconnect api.
+--test-resolve-peers - test resolve_peers api.
+
+File cmd_examples contains some command lines to test the main functionality.

@@ -1,0 +1,24 @@
+# -*- makefile -*-
+# Copyright (c) 2008-2022 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
+# Copyright (c) 2020-2022 Intel, Inc.  All rights reserved.
+# Copyright (c) 2024      Nanook Consulting  All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+
+# A little verbosity magic; "make" will show the terse output.  "make
+# V=1" will show the actual commands used (just like the other
+# Automake-generated cprtelation/linker rules).
+V=0
+
+PMIX_V_SPHINX_HTML = $(pmix__v_SPHINX_HTML_$V)
+pmix__v_SPHINX_HTML_ = $(pmix__v_SPHINX_HTML_$AM_DEFAULT_VERBOSITY)
+pmix__v_SPHINX_HTML_0 = @echo "  GENERATE HTML docs";
+
+PMIX_V_SPHINX_MAN = $(pmix__v_SPHINX_MAN_$V)
+pmix__v_SPHINX_MAN_ = $(pmix__v_SPHINX_MAN_$AM_DEFAULT_VERBOSITY)
+pmix__v_SPHINX_MAN_0 = @echo "  GENERATE man pages";

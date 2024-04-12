@@ -1,0 +1,80 @@
+# -*- text -*-
+#
+# Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+#                         University Research and Technology
+#                         Corporation.  All rights reserved.
+# Copyright (c) 2004-2005 The University of Tennessee and The University
+#                         of Tennessee Research Foundation.  All rights
+#                         reserved.
+# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+#                         University of Stuttgart.  All rights reserved.
+# Copyright (c) 2004-2005 The Regents of the University of California.
+#                         All rights reserved.
+# Copyright (c) 2012      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2017-2020 Intel, Inc.  All rights reserved.
+# Copyright (c) 2022-2024 Nanook Consulting  All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+# This is the US/English help file for pquery
+#
+[usage]
+%s (%s) %s
+
+Usage: %s [OPTION] KEY[qualifier(s)]
+PMIx Query tool
+
+
+/*****      General Options      *****/
+
+-h|--help                            This help message
+-h|--help <arg0>                     Help for the specified option
+-v|--verbose                         Enable typical debug options
+-V|--version                         Print version and exit
+   --pmixmca <arg0> <arg1>           Set MCA parameter value
+
+   --uri <arg0>                      Specify the URI of the server to which we are to connect, or
+                                     the name of the file (specified as file:filename) that contains that info
+   --namespace <arg0>                Namespace of the daemon to which we should connect
+   --pid <arg0>                      PID of the daemon to which we should connect (int => PID or file:<file>
+                                     for file containing the PID
+   --system-server-first             First look for a system server and connect to it if found
+   --system-server                   Connect to a system-level server
+   --tmpdir <arg0>                   Set the root for the session directory tree
+   --wait-to-connect <arg0>          Delay specified number of seconds before trying to connect
+   --num-connect-retries <arg0>      Max number of times to try to connect
+
+Keys passed to pquery may optionally include one or more qualifiers, with the
+individual qualifiers delimited by semi-colons. For example:
+
+PMIX_STORAGE_XFER_SIZE[PMIX_STORAGE_ID=lustre1,lustre2;PMIX_STORAGE_PATH=foo]
+#
+[bad-option-input]
+%s was given an option that expected a string argument:
+
+  option: %s
+  argument: %s
+  expected: %s
+
+Please correct the option and try again.
+#
+[file-open-error]
+%s was unable to open the specified file provided as an option:
+
+  option: %s
+  argument: %s
+  file: %s
+
+Please correct the option and try again.
+#
+[bad-file]
+%s was unable to read the necessary info from the provided file:
+
+  option: %s
+  argument: %s
+  file: %s
+
+Please correct the option or the file and try again.

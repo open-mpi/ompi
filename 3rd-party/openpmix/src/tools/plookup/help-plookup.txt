@@ -1,0 +1,58 @@
+# -*- text -*-
+#
+# Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+#                         University Research and Technology
+#                         Corporation.  All rights reserved.
+# Copyright (c) 2004-2005 The University of Tennessee and The University
+#                         of Tennessee Research Foundation.  All rights
+#                         reserved.
+# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+#                         University of Stuttgart.  All rights reserved.
+# Copyright (c) 2004-2005 The Regents of the University of California.
+#                         All rights reserved.
+# Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2017      Intel, Inc. All rights reserved.
+# Copyright (c) 2021-2024 Nanook Consulting  All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+# This is the US/English help file for OpenPMIx lookup tool
+#
+[usage]
+%s (%s) %s
+
+Usage: %s [OPTION] <KEY1>,<KEY2>,...
+PMIx Lookup tool
+
+
+/*****      General Options      *****/
+
+-h|--help                            This help message
+-h|--help <arg0>                     Help for the specified option
+-v|--verbose                         Enable typical debug options
+-V|--version                         Print version and exit
+   --pmixmca <arg0> <arg1>           Set MCA parameter value
+
+   --pid <arg0>                      PID of the daemon to which we should connect (int => PID or file:<file>
+                                     for file containing the PID
+   --tmpdir <arg0>                   Set the root for the session directory tree
+   --timeout <arg0>                  Max number of seconds to wait for data to become available
+   --wait                            Wait for data to be available
+
+Report bugs to %s
+#
+[pid]
+PID of the daemon to which we should connect (int => PID or file:<file>
+for file containing the PID
+#
+[tmpdir]
+Set the root for the session directory tree
+#
+[timeout]
+Max number of seconds to wait for data to become available
+#
+[wait]
+Wait for data to be available

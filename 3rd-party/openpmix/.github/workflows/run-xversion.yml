@@ -1,0 +1,59 @@
+name: OpenPMIx Cross Version Testing
+
+on:
+  pull_request:
+    # We don't need this to be run on all types of PR behavior
+    # See
+    #  - https://docs.github.com/en/actions/reference/events-that-trigger-workflows#pull_request
+    #  - https://frontside.com/blog/2020-05-26-github-actions-pull_request
+    types:
+      - opened
+      - synchronize
+      - edited
+      - reopened
+
+env:
+  # Use docker.io for Docker Hub if empty
+  REGISTRY: docker.io
+  # github.repository as <account>/<repo>
+  IMAGE_NAME: jjhursey/pmix-xver-tester
+
+jobs:
+  xversion-client:
+    runs-on: ubuntu-latest
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - name: Check out the code
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      # Run the container tester
+      - name: Cross-version Client
+        run: docker run --rm -v ${GITHUB_WORKSPACE}:/home/pmixer/pmix-pr-to-test --env PR_TARGET_BRANCH=${GITHUB_BASE_REF} ${{ env.IMAGE_NAME }}:latest /bin/bash -c "/home/pmixer/bin/run-xversion.sh --path /home/pmixer/pmix-pr-to-test -- --skip-tool"
+        shell: bash
+
+  xversion-tool:
+    runs-on: ubuntu-latest
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - name: Check out the code
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      # Run the container tester
+      - name: Cross-version Tool
+        run: docker run --rm -v ${GITHUB_WORKSPACE}:/home/pmixer/pmix-pr-to-test --env PR_TARGET_BRANCH=${GITHUB_BASE_REF} ${{ env.IMAGE_NAME }}:latest /bin/bash -c "/home/pmixer/bin/run-xversion.sh --path /home/pmixer/pmix-pr-to-test -- --skip-client"
+        shell: bash
+
+  xversion-check:
+    runs-on: ubuntu-latest
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - name: Check out the code
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      # Run the container tester
+      - name: Cross-version Make Check
+        run: docker run --rm -v ${GITHUB_WORKSPACE}:/home/pmixer/pmix-pr-to-test --env PR_TARGET_BRANCH=${GITHUB_BASE_REF} ${{ env.IMAGE_NAME }}:latest /bin/bash -c "/home/pmixer/bin/run-xversion.sh --path /home/pmixer/pmix-pr-to-test -- --skip-client --skip-tool --make-check"
+        shell: bash

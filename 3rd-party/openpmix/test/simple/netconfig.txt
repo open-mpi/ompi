@@ -1,0 +1,10 @@
+# Example coordinate config file for the pnet/simptest component
+# Written as:
+# nodename  x  y  z  group
+
+test000  0  0  0  0
+test001  1  0  0  0
+test002  2  0  0  0
+test003  0  0  0  1
+test004  1  0  0  1
+test005  2  0  0  1

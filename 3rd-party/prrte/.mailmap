@@ -1,0 +1,113 @@
+# This file exists to help consolidate names and email addresses
+# (e.g., when people accidentally commit with an incorrect or local
+# email address).  Two common use cases:
+#
+# 1. Consolidate multiple email addresses from a single person.
+#    Example: one commit from John Smith is from
+#    <john.smith@his.work.com> and another is from
+#    <jsmith@workstation.his.work.com>, and a third is from
+#    <rocketman9982@users.noreply.github.com>.  But they're all from
+#    the same John Smith person.
+#
+# 2. Consolidate misspellings / altername names from a single person.
+#    Example: one commit is from "John Smith" and another is from
+#    "John Smith, CONTRACTOR", and third is from "RocketMan 9982".  But
+#    these are all really the same person, who can be listed once in
+#    AUTHORS as "John Smith".
+#
+# The format of this file is documented in git-shortlog(1).  Specifically,
+# a line like this:
+#
+#   Proper Name <proper@email.xx> <commit@email.xx>
+#
+# means that when git sees "commit@email.xx" it will display
+# "Proper Name <proper@email.xx>" instead in certain circumstances.  Those
+# circumstances include:
+#
+#   - git shortlog
+#   - git blame
+#   - git log --format=tformat:"%aN <%aE>"   (and similar)
+#
+
+Jeff Squyres <jsquyres@cisco.com> <jsquyres@users.noreply.github.com>
+Jeff Squyres <jsquyres@cisco.com> --quiet <--quiet>
+Jeff Squyres <no-author@open-mpi.org>
+
+George Bosilca <bosilca@icl.utk.edu> <bosilca@users.noreply.github.com>
+
+Howard Pritchard <howardp@lanl.gov> <hppritcha@users.noreply.github.com>
+Howard Pritchard <howardp@lanl.gov> <howardp@lanl.gov>
+
+Andrew Friedley <andrew.friedley@intel.com> <afriedle-intel@users.noreply.github.com>
+
+Devendar Bureddy <devendar@mellanox.com> <bureddy@users.noreply.github.com>
+
+Edgar Gabriel <egabriel@central.uh.edu> <edgargabriel@users.noreply.github.com>
+Edgar Gabriel <gabriel@cs.uh.edu> <gabriel@Peggys-MacBook-Air.local>
+
+Gilles Gouaillardet <gilles@rist.or.jp> <ggouaillardet@users.noreply.github.com>
+
+Matias A Cabral <matias.a.cabral@intel.com> <matcabral@users.noreply.github.com>
+Matias A Cabral <matias.a.cabral@intel.com> <matias.a.cabral@intel.com>
+
+Pavel Shamis <shamisp@ornl.gov> <shamisp@ornl.gov>
+Pavel Shamis <shamisp@ornl.gov> <shamisp@users.noreply.github.com>
+Pavel Shamis <pasharesearch@gmail.com> <pasharesearch@gmail.com>
+
+Todd Kordenbrock <thkgcode@gmail.com> <tkordenbrock@users.noreply.github.com>
+
+Yohann Burette <yohann.burette@intel.com> <yburette@users.noreply.github.com>
+Yohann Burette <yohann.burette@intel.com> <yohann.burette@intel.com>
+
+MPI Team (bot) <mpiteam@open-mpi.org> <mpiteam@open-mpi.org>
+MPI Team (bot) <mpiteam@open-mpi.org> <ompiteam@open-mpi.org>
+MPI Team (bot) <mpiteam@open-mpi.org> <mpiteam@build.open-mpi.org>
+
+Yossi Itigin <yosefe@mellanox.com> <yosefe@mellanox.com>
+
+Josh Hursey <jjhursey@open-mpi.org> <jjhursey@open-mpi.org>
+Josh Hursey <jhursey@us.ibm.com> <jhursey@us.ibm.com>
+
+Adrian Reber <adrian@lisas.de> <adrian@lisas.de>
+
+Elena Elkina <elena.elkina@itseez.com> <elena.elkina@itseez.com>
+Elena Elkina <elena.elkina@itseez.com> <elena.elkina89@gmail.com>
+
+Igor Ivanov <igor.ivanov.va@gmail.com> <igor.ivanov.va@gmail.com>
+Igor Ivanov <Igor.Ivanov@itseez.com> <Igor.Ivanov@itseez.com>
+
+Mangala Jyothi Bhaskar <mjbhaskar@uh.edu> <mjbhaskar@uh.edu>
+Mangala Jyothi Bhaskar <mjbhaskar@uh.edu> <mjbhaskar@crill.cs.uh.edu>
+
+Ralph Castain <rhc@open-mpi.org> <rhc@open-mpi.org>
+Ralph Castain <rhc@open-mpi.org> <rhc@odin.cs.indiana.edu>
+
+Rolf vandeVaart <rvandevaart@nvidia.com> <rvandevaart@nvidia.com>
+
+Karol Mroz <mroz.karol@gmail.com> <mroz.karol@gmail.com>
+
+Nadezhda Kogteva <nadezhda.kogteva@itseez.com> <nadezhda@mngx-orion-01.dmz.e2e.mlnx>
+
+Thananon Patinyasakdikul <apatinya@cisco.com> <apatinya@savbu-usnic-a.cisco.com>
+
+Nysal Jan K A <jnysal@in.ibm.com> <jnysal@in.ibm.com>
+Nysal Jan K A <jnysal@in.ibm.com> <jnysal@gmail.com>
+
+Zhi Ming Wang <wangzm@cn.ibm.com> <wangzm@cn.ibm.com>
+
+Annapurna Dasari <annapurna.dasari@intel.com> <annapurna.dasari@intel.com>
+
+L. R. Rajeshnarayanan <l.r.rajeshnarayanan@intel.com> <l.r.rajeshnarayanan@intel.com>
+
+Aurelien Bouteiller <bouteill@icl.utk.edu> <bouteill@icl.utk.edu>
+Aurelien Bouteiller <bouteill@icl.utk.edu> <darter4.nics.utk.edu>
+
+Alex Mikheev <alexm@mellanox.com> <alexm@mellanox.com>
+
+Thomas Naughton <naughtont@ornl.gov> <naughtont@ornl.gov>
+
+Geoffrey Paulsen <gpaulsen@us.ibm.com> <gpaulsen@users.noreply.github.com>
+
+Anandhi S Jayakumar <anandhi.s.jayakumar@intel.com>
+
+Mohan Gandhi <mohgan@amazon.com>

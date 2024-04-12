@@ -1,0 +1,10 @@
+enable_sensors=no
+enable_debug_symbols=yes
+enable_binaries=yes
+enable_picky=no
+enable_debug=yes
+enable_shared=yes
+enable_static=no
+enable_ipv6=no
+with_devel_headers=yes
+enable_prte_prefix_by_default=yes

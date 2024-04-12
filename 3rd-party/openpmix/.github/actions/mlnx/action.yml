@@ -1,0 +1,12 @@
+name: 'MLNX CI for PMIx'
+description: 'Build & test PMIx'
+inputs:
+  target:
+    description: 'build/srcrpm/test'
+    required: true
+    default: 'build'
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+  args:
+    - ${{ inputs.target }}

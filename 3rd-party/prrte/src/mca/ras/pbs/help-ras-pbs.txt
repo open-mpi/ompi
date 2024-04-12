@@ -1,0 +1,43 @@
+# -*- text -*-
+#
+# Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+#                         University Research and Technology
+#                         Corporation.  All rights reserved.
+# Copyright (c) 2004-2005 The University of Tennessee and The University
+#                         of Tennessee Research Foundation.  All rights
+#                         reserved.
+# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+#                         University of Stuttgart.  All rights reserved.
+# Copyright (c) 2004-2005 The Regents of the University of California.
+#                         All rights reserved.
+# Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
+#                         Use is subject to license terms.
+# Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
+# Copyright (c) 2022-2024 Nanook Consulting  All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+[no-nodefile]
+The PBS_NODEFILE environmental variable was
+not found - no nodes can be allocated
+[no-nodes-found]
+No nodes were found in the PBS_NODEFILE:
+
+%s
+
+This is probably a setup issue, could be due to a corrupted file, or
+- most probably - is caused by having failed to obtain an allocation.
+#
+[smp-error]
+The SMP mode flag was given, but the required PBS_PPN environmental
+variable was not found. Please check that your system actually supports
+the indicated mode and try again.
+#
+[smp-multi]
+The SMP mode flag was given, but a node was listed in the PBS_Nodefile
+more than once. This usually indicates that the system is not
+actually operating in SMP mode. Please check your system configuration
+and try again.

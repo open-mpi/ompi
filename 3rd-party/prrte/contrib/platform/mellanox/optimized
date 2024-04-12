@@ -1,0 +1,60 @@
+enable_mca_no_build=coll-ml,btl-uct
+enable_debug_symbols=yes
+enable_prterun_prefix_by_default=yes
+with_verbs=no
+with_devel_headers=yes
+enable_oshmem=yes
+enable_oshmem_fortran=yes
+disable_wrapper_rpath=yes
+
+mellanox_autodetect=${mellanox_autodetect:="no"}
+mellanox_debug=${mellanox_debug:="no"}
+mellanox_threads=${mellanox_threads:="no"}
+
+if [ "$mellanox_threads" == "yes" ]; then
+    enable_mpi_thread_multiple=yes
+    enable_opal_multi_threads=yes
+fi
+
+if [ "$mellanox_autodetect" == "yes" ]; then
+
+    ucx_dir=${ucx_dir:="$(pkg-config --variable=prefix ucx)"}
+    if [ -d $ucx_dir ]; then
+        with_ucx=$ucx_dir
+    fi
+
+    hcoll_dir=${hcoll_dir:="$(pkg-config --variable=prefix hcoll)"}
+    if [ -d $hcoll_dir ]; then
+        with_hcoll=$hcoll_dir
+    fi
+
+    slurm_dir=${slurm_dir:="/usr"}
+    if [ -f $slurm_dir/include/slurm/slurm.h ]; then
+        with_slurm=$slurm_dir
+        with_pmi=$slurm_dir
+    fi
+
+fi
+
+if [ "$mellanox_debug" == "yes" ]; then
+    enable_debug=yes
+    enable_memchecker=yes
+    with_valgrind=yes
+    CXXFLAGS="-O0 -g"
+    CCASFLAGS="-O0 -g"
+    FCFLAGS="-O0 -g"
+    CFLAGS="-O0 -g"
+else
+    enable_debug=no
+    enable_mem_debug=no
+    enable_mem_profile=no
+    enable_memchecker=no
+    enable_picky=no
+    enable_heterogeneous=no
+    enable_ft_thread=no
+    with_mpi_param_check=no
+    CXXFLAGS="-O3 -g"
+    CCASFLAGS="-O3 -g"
+    FCFLAGS="-O3 -g"
+    CFLAGS="-O3 -g"
+fi

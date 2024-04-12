@@ -1,0 +1,20 @@
+# -*- text -*-
+#
+# Copyright (c) 2020      Intel, Inc. All rights reserved.
+# Copyright (c) 2024      Nanook Consulting  All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+# This is the US/English general help file for PMIX.
+#
+[two-params]
+Values for both Slingshot MCA params were provided:
+
+  Groupings:  %s
+  Num Groups: %d
+
+Only one of these can be provided. Please correct the situation
+and retry.

@@ -1,0 +1,22 @@
+# -*- text -*-
+#
+# Copyright (c) 2022-2023 Triad National Security, LLC. All rights reserved.
+# Copyright (c) 2024      Nanook Consulting  All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+# This is the US/English general help file for PMIX.
+#
+[shmem2-segment-attach:address-mismatch]
+The gds/shmem2 component attempted to attach to a shared-memory segment at a
+particular base address, but was given a different one. Your job will now likely
+abort.
+
+  Requested Address: 0x%zx
+  Acquired Address:  0x%zx
+
+If this problem persists, please consider disabling the gds/shmem2 component by
+setting in your environment the following: PMIX_MCA_gds=hash

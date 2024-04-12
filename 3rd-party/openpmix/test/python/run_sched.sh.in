@@ -1,0 +1,5 @@
+#!/bin/bash
+
+export PYTHONPATH=@PMIX_PYTHON_EGG_PATH@
+
+./sched.py

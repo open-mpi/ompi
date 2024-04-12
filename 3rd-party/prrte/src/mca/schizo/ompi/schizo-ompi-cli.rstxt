@@ -1,0 +1,471 @@
+.. -*- rst -*-
+
+   Copyright (c) 2021-2024 Nanook Consulting  All rights reserved.
+   Copyright (c) 2022      Cisco Systems, Inc.  All rights reserved.
+   Copyright (c) 2022      IBM Corporation.  All rights reserved.
+   Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
+   $COPYRIGHT$
+
+   Additional copyrights may follow
+
+   $HEADER$
+
+General command line options
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The following general command line options are available.
+
+* ``-h`` | ``--help``: This help message
+
+* ``-v`` | ``--verbose``: Enable extra verbose output
+
+* ``-V`` | ``--version``: Print version and exit
+
+Launch options
+^^^^^^^^^^^^^^
+
+* ``--default-hostfile <filename>``: Provide a default hostfile.
+
+* ``-H`` | ``--host <list>``: Comma-delimited list of hosts on which to
+  to invoke processes.
+  :ref:`See below for details <label-schizo-ompi-host>`.
+
+* ``--hostfile <filename>``: Provide a hostfile.
+  :ref:`See below for details <label-schizo-ompi-hostfile>`.
+
+* ``--machinefile <filename>``: Synonym for ``--hostfile``.
+
+* ``--mca <key> <value>``: Pass context-specific MCA parameters; they
+  are considered global if ``--gmca`` is not used and only one context
+  is specified (``<key>`` is the parameter name; ``<value>`` is the
+  parameter value).
+
+* ``--path <path>``: Path to be used to look for executables to start
+  processes.
+
+* ``--pmixmca <key> <value>``: Pass context-specific PMIx MCA
+  parameters; they are considered global if only one context is
+  specified (``<key>>`` is the parameter name; ``<value>`` is the
+  parameter value).
+  :ref:`See below for details <label-schizo-ompi-pmixmca>`.
+
+* ``--preload-files <list>``: Preload the comma-separated list of
+  files to the remote machines current working directory before
+  starting the remote process.
+
+* ``--prtemca <key> <value>``: Pass context-specific PRTE MCA
+  parameters to the DVM.
+  :ref:`See below for details <label-schizo-ompi-prtemca>`.
+
+* ``--pset <name>``: User-specified name assigned to the processes in
+  their given application.
+
+* ``--rankfile <filename>``: Name of file to specify explicit task
+  mapping.
+
+* ``--runtime-options <list>``: List of options to pass to the launcher.
+  :ref:`See below for details <label-schizo-ompi-runtime-options>`.
+
+* ``-s`` | ``--preload-binary``: Preload the binary on the remote
+  machine before starting the remote process.
+
+* ``--set-cwd-to-session-dir``: Set the working directory of the
+  started processes to their session directory.
+
+* ``--show-progress``: Output a brief periodic report on launch
+  progress.
+
+* ``--wd <dir>``: Synonym for ``--wdir``.
+
+* ``--wdir <dir>``: Set the working directory of the started processes.
+
+* ``-x <var>``: Export a environment variable, optionally specifying a value.
+  :ref:`See below for details <label-schizo-ompi-x>`.
+
+Mapping, ranking, and binding options
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* ``--map-by <value>``: Controls how processes are distributed within
+  a host.  :ref:`See below for details <label-schizo-ompi-map-by>`.
+
+* ``--rank-by <value>``: Controls how processes are ordered in
+  ``MPI_COMM_WORLD``.  :ref:`See below for details
+  <label-schizo-ompi-rank-by>`.
+
+* ``--bind-to <value>``: Controls the resources to which processes are
+  bound within a host.  :ref:`See below for details
+  <label-schizo-ompi-bind-to>`.
+
+Output options
+^^^^^^^^^^^^^^
+
+* ``--output <list>``: Comma-delimited list of options that control
+  how output is generated.  :ref:`See below for details
+  <label-schizo-ompi-output>`.
+
+* ``--report-child-jobs-separately``: Return the exit status of the
+  primary job only.
+
+* ``--stream-buffering <value>``: Control how output is buffered.
+  :ref:`See below for details <label-schizo-ompi-stream-buffering>`.
+
+* ``--xterm <list>``: Create a new xterm window and display output
+  from the specified ranks there.
+
+Input options
+^^^^^^^^^^^^^
+
+* ``--stdin <list>``: Specify procs to receive stdin; alloable values
+  in ``<list>`` are: comma-delimited list of integer ranks, ``all``,
+  ``none``.  Defaults to ``0``, indicating rank 0.
+
+Specific options
+^^^^^^^^^^^^^^^^
+
+* ``--allow-run-as-root``: Allow execution as root **(STRONGLY
+  DISCOURAGED)**.  :ref:`See below for details
+  <label-schizo-ompi-allow-run-as-root>`.
+
+* ``--daemonize``: Daemonize the DVM daemons into the background.
+
+* ``--forward-signals <list>``: Comma-delimited list of additional
+  signals (names or integers) to forward to application
+  processes.
+  :ref:`See below for details <label-schizo-ompi-forward-signals>`.
+
+* ``--launch-agent <agent>``: Name of daemon executable used to start
+  processes on remote nodes (default: ``prted``).
+
+* ``--max-vm-size <size>``: Number of daemons to start.
+
+* ``--noprefix``: Disable automatic ``--prefix`` behavior.
+  :ref:`See below for details <label-schizo-ompi-noprefix>`.
+
+* ``--prefix <prefix>``: Prefix to be used to look for RTE executables.
+
+* ``--set-sid``: Direct the DVM daemons to separate from the current
+  session.
+
+* ``--singleton <id>``: ID of the singleton process that started us.
+
+* ``--tmpdir <dir>``: Set the root for the session directory tree.
+
+* ``--tune <filename>``: File(s) containing MCA params for tuning DVM
+  operations.
+  :ref:`See below for details <label-schizo-ompi-tune>`.
+
+MPI Options
+^^^^^^^^^^^
+
+* ``--initial-errhandler``: Specify the initial error handler that is
+  attached to predefined communicators during the first MPI call.
+* ``--display-comm``: Display table of communication methods between
+  MPI_COMM_WORLD ranks during MPI_Init
+* ``--display-comm-finalize``: Display table of communication methods
+  between ranks during MPI_Finalize
+* ``--soft``: This option does nothing, but is mandated by the MPI
+  standard
+* ``--arch <filename>``: This option does nothing, but is mandated by
+  the MPI standard
+* ``--file <filename>``: This option does nothing, but is mandated by
+  the MPI standard
+
+Debugger / tool options
+^^^^^^^^^^^^^^^^^^^^^^^
+
+* ``--keepalive <filename>``: Named pipe filename to monitor |mdash|
+  DVM will terminate upon closure
+* ``--report-pid <value>``: Print out PID on stdout (``-``), stderr
+  (``+``), or a filename (anything else)
+* ``--report-uri <value>``: Print out URI on stdout (``-``), stderr
+  (``+``), or a filename (anything else)
+* ``--stop-on-exec <value>``: If supported, stop each specified
+  process at start of execution
+* ``--stop-in-init <value>``: Direct the specified processes to stop
+  in the MPI initialization function
+* ``--stop-in-app <value>``: Direct the specified processes to stop at
+  an application-controlled location
+
+Debug options
+^^^^^^^^^^^^^
+
+* ``--debug-daemons``: Debug daemons |mdash| if not set, the "verbose"
+  setting will be limited to the DVM controller to reduce clutter.
+  :ref:`See below for details <label-schizo-ompi-debug-daemons>`.
+
+* ``--debug-daemons-file``: Enable debugging of any PRTE daemons used
+  by this application, storing their verbose output in files.
+  :ref:`See below for details <label-schizo-ompi-debug-daemons-file>`.
+
+* ``--display <value>``: Comma-delimited list of options for
+  displaying information about the allocation and job. Allowed values
+  for ``<value>``: ``allocation``, ``bind``, ``map``, ``map-devel``,
+  ``topo``.
+  :ref:`See below for details <label-schizo-ompi-display>`.
+
+* ``--get-stack-traces``: If a timeout occurs, get stack traces of all
+  application processes.
+
+* ``--leave-session-attached``: Do not discard stdout/stderr of remote
+  PRTE daemons.
+  :ref:`See below for details <label-schizo-ompi-leave-session-attached>`.
+
+* ``--report-state-on-timeout``: Report all job and process states
+  upon timeout.
+
+* ``--spawn-timeout <seconds>``: Timeout the job if spawn takes more
+  than the specified number of seconds.
+
+* ``--test-suicide <seconds>``: Suicide instead of clean abort after
+  delay.
+
+* ``--timeout <seconds>``: Timeout the job after the specified number
+  of seconds.
+
+* ``--output-proctable <value>``: Print the complete proctable to
+  stdout after launch; allowed ``<value>`` values are ``+``, ``-``, or
+  a filename.
+
+Fault Tolerance Options
+^^^^^^^^^^^^^^^^^^^^^^^
+
+These options are only available is Open MPI / PRRTE were compiled
+with Fault Tolerance functionality enabled.
+
+* ``--enable-recovery``: Enable recovery from process failure (Default
+  = disabled)
+* ``--max-restarts``: Max number of times to restart a failed process
+* ``--disable-recovery``: Disable recovery (resets all recovery
+  options to off)
+* ``--continuous``: Job is to run until explicitly terminated
+* ``--with-ft``: Specify the type(s) of error handling that the
+  application will use.
+
+Details of individual command line options
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The sections below offer more detail than the abbreviated lists,
+above.
+
+.. _label-schizo-ompi-allow-run-as-root:
+
+The ``--allow-run-as-root`` option
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. include:: /prrte-rst-content/cli-allow-run-as-root.rst
+
+.. _label-schizo-ompi-bind-to:
+
+The ``--bind-to`` option
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. include:: /prrte-rst-content/cli-bind-to.rst
+
+.. _label-schizo-ompi-debug-daemons:
+
+The ``--debug-daemons`` option
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. include:: /prrte-rst-content/cli-debug-daemons.rst
+
+.. _label-schizo-ompi-debug-daemons-file:
+
+The ``--debug-daemons-file`` option
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. include:: /prrte-rst-content/cli-debug-daemons-file.rst
+
+.. _label-schizo-ompi-display:
+
+The ``--display`` option
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. include:: /prrte-rst-content/cli-display.rst
+
+.. _label-schizo-ompi-forward-signals:
+
+The ``--forward-signals`` option
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. include:: /prrte-rst-content/cli-forward-signals.rst
+
+.. _label-schizo-ompi-host:
+
+The ``--host`` option
+~~~~~~~~~~~~~~~~~~~~~
+
+.. include:: /prrte-rst-content/cli-dash-host.rst
+
+.. _label-schizo-ompi-hostfile:
+
+The ``--hostfile`` option
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. include:: /prrte-rst-content/cli-dvm-hostfile.rst
+
+.. _label-schizo-ompi-leave-session-attached:
+
+The ``--leave-session-attached`` option
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. include:: /prrte-rst-content/cli-leave-session-attached.rst
+
+.. _label-schizo-ompi-map-by:
+
+The ``--map-by`` option
+~~~~~~~~~~~~~~~~~~~~~~~
+
+.. include:: /prrte-rst-content/cli-map-by.rst
+
+.. _label-schizo-ompi-output:
+
+The ``--output`` option
+~~~~~~~~~~~~~~~~~~~~~~~
+
+.. include:: /prrte-rst-content/cli-output.rst
+
+.. _label-schizo-ompi-pmixmca:
+
+The ``--pmixmca`` option
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. include:: /prrte-rst-content/cli-pmixmca.rst
+
+.. _label-schizo-ompi-prefix:
+
+The ``--prefix`` option
+~~~~~~~~~~~~~~~~~~~~~~~
+
+.. include:: /prrte-rst-content/cli-prefix.rst
+
+.. _label-schizo-ompi-prtemca:
+
+The ``--prtemca`` option
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. include:: /prrte-rst-content/cli-prtemca.rst
+
+.. _label-schizo-ompi-noprefix:
+
+The ``--noprefix`` option
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. include:: /prrte-rst-content/cli-noprefix.rst
+
+.. _label-schizo-ompi-rank-by:
+
+The ``--rank-by`` option
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. include:: /prrte-rst-content/cli-rank-by.rst
+
+.. _label-schizo-ompi-runtime-options:
+
+The ``--runtime-options`` option
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. include:: /prrte-rst-content/cli-runtime-options.rst
+
+.. _label-schizo-ompi-stream-buffering:
+
+The ``--stream-buffering`` option
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. include:: /prrte-rst-content/cli-stream-buffering.rst
+
+.. _label-schizo-ompi-tune:
+
+The ``--tune`` option
+~~~~~~~~~~~~~~~~~~~~~
+
+.. include:: /prrte-rst-content/cli-tune.rst
+
+.. _label-schizo-ompi-x:
+
+The ``-x`` option
+~~~~~~~~~~~~~~~~~
+
+.. include:: /prrte-rst-content/cli-x.rst
+
+
+Deprecated command line options
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The following command line options are deprecated, and should
+generally not be used.  They may be removed in a future release of
+Open MPI.
+
+The ``--bind-to-core`` option
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. include:: /prrte-rst-content/deprecated-bind-to-core.rst
+
+The ``--display-allocation`` option
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. include:: /prrte-rst-content/deprecated-display-allocation.rst
+
+The ``--display-devel-allocation`` option
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. include:: /prrte-rst-content/deprecated-display-devel-allocation.rst
+
+The ``--display-devel-map`` option
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. include:: /prrte-rst-content/deprecated-display-devel-map.rst
+
+The ``--display-map`` option
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. include:: /prrte-rst-content/deprecated-display-map.rst
+
+The ``--display-topo`` option
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. include:: /prrte-rst-content/deprecated-display-topo.rst
+
+The ``--gmca`` option
+~~~~~~~~~~~~~~~~~~~~~
+
+.. include:: /prrte-rst-content/deprecated-gmca.rst
+
+The ``--mca`` option
+~~~~~~~~~~~~~~~~~~~~
+
+.. include:: /prrte-rst-content/deprecated-mca.rst
+
+The ``--merge-stderr-to-stdout`` option
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. include:: /prrte-rst-content/deprecated-merge-stderr-to-stdout.rst
+
+The ``--output-directory`` option
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. include:: /prrte-rst-content/deprecated-output-directory.rst
+
+The ``--output-filename`` option
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. include:: /prrte-rst-content/deprecated-output-filename.rst
+
+The ``--report-bindings`` option
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. include:: /prrte-rst-content/deprecated-report-bindings.rst
+
+The ``--tag-output`` option
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. include:: /prrte-rst-content/deprecated-tag-output.rst
+
+The ``--timestamp-output`` option
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. include:: /prrte-rst-content/deprecated-timestamp-output.rst
+
+The ``--xml`` option
+~~~~~~~~~~~~~~~~~~~~
+
+.. include:: /prrte-rst-content/deprecated-xml.rst

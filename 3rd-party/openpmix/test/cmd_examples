@@ -1,0 +1,34 @@
+# 1 blocking fence with data exchange among all processes from two namespaces:
+./pmix_test -n 4 --ns-dist 3:1 --fence "[db | 0:0-2;1:3]"
+./pmix_test -n 4 --ns-dist 3:1 --fence "[db | 0:;1:3]"
+./pmix_test -n 4 --ns-dist 3:1 --fence "[db | 0:;1:]"
+
+# 1 non-blocking fence without data exchange among processes from the 1st namespace
+./pmix_test -n 4 --ns-dist 3:1 --fence "[0:]"
+
+# blocking fence without data exchange among processes from the 1st namespace
+./pmix_test -n 4 --ns-dist 3:1 --fence "[b | 0:]"
+
+# non-blocking fence with data exchange among processes from the 1st namespace. Ranks 0, 1 from ns 0 are sleeping for 2 sec before doing fence test.
+./pmix_test -n 4 --ns-dist 3:1 --fence "[d | 0:]" --noise "[0:0,1]"
+
+# blocking fence with data exchange across processes from the same namespace.
+./pmix_test -n 4 --job-fence -c
+
+# 3 fences: 1 - non-blocking without data exchange across processes from ns 0,
+# 2 - non-blocking across processes 0 and 1 from ns 0 and process 3 from ns 1,
+# 3 - blocking with data exchange across processes from their own namespace.
+# pmix currently doesn't support multiple fences, so disable this test.
+#./pmix_test -n 4 --job-fence -c --fence "[0:][d|0:0-1;1:]" --use-same-keys --ns-dist "3:1"
+
+# test publish/lookup/unpublish functionality.
+./pmix_test -n 2 --test-publish
+
+# test spawn functionality.
+./pmix_test -n 2 --test-spawn
+
+# test connect/disconnect between processes from the same namespace.
+./pmix_test -n 2 --test-connect
+
+# resolve peers from different namespaces.
+./pmix_test -n 5 --test-resolve-peers --ns-dist "1:2:2"

@@ -1,0 +1,95 @@
+m4_define([_m4_divert(SCRIPT)], 100)
+m4_divert_push([SCRIPT])dnl
+#!/bin/sh
+#
+# prte_get_version is created from prte_get_version.m4 and prte_get_version.m4sh.
+#
+# Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
+#                         University Research and Technology
+#                         Corporation.  All rights reserved.
+# Copyright (c) 2004-2005 The University of Tennessee and The University
+#                         of Tennessee Research Foundation.  All rights
+#                         reserved.
+# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+#                         University of Stuttgart.  All rights reserved.
+# Copyright (c) 2004-2005 The Regents of the University of California.
+#                         All rights reserved.
+# Copyright (c) 2008-2020 Cisco Systems, Inc.  All rights reserved
+# Copyright (c) 2019      Intel, Inc.  All rights reserved.
+# Copyright (c) 2024      Nanook Consulting  All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+
+m4_include([prte_get_version.m4])
+
+srcfile="$1"
+option="$2"
+
+if test -z "$srcfile"; then
+    option="--help"
+else
+    PRTE_GET_VERSION([$srcfile],[PRTE])
+
+    if test "$option" = ""; then
+	option="--full"
+    fi
+fi
+
+case "$option" in
+    --full|-v|--version)
+	echo $PRTE_VERSION
+	;;
+    --major)
+	echo $PRTE_MAJOR_VERSION
+	;;
+    --minor)
+	echo $PRTE_MINOR_VERSION
+	;;
+    --release)
+	echo $PRTE_RELEASE_VERSION
+	;;
+    --greek)
+	echo $PRTE_GREEK_VERSION
+	;;
+    --repo-rev)
+	echo $PRTE_REPO_REV
+	;;
+    --tarball)
+        echo $PRTE_TARBALL_VERSION
+        ;;
+    --release-date)
+        echo $PRTE_RELEASE_DATE
+        ;;
+    --all)
+        echo ${PRTE_VERSION} : ${PRTE_MAJOR_VERSION} : ${PRTE_MINOR_VERSION} : ${PRTE_RELEASE_VERSION} : ${PRTE_GREEK_VERSION} : ${PRTE_REPO_REV} : ${PRTE_TARBALL_VERSION}
+        ;;
+    -h|--help)
+	cat <<EOF
+$0 <srcfile> [<option>]
+
+<srcfile> - Text version file
+<option>  - One of:
+    --full         - Full version number
+    --major        - Major version number
+    --minor        - Minor version number
+    --release      - Release version number
+    --greek        - Greek (alpha, beta, etc) version number
+    --repo-rev     - Repository version
+    --tarball      - Show tarball filename version string
+    --all          - Show all version numbers, separated by :
+    --release-date - Show the release date
+    --help         - This message
+EOF
+        ;;
+    *)
+        echo "Unrecognized option $option.  Run $0 --help for options"
+        ;;
+esac
+
+# All done
+
+exit 0

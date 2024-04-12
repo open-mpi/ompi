@@ -1,0 +1,9 @@
+[Unit]
+Description=PRRTE persistent service.
+
+[Service]
+Type=simple
+ExecStart=/opt/hpc/local/prrte/bin/prte
+
+[Install]
+WantedBy=multi-user.target

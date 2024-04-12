@@ -1,0 +1,123 @@
+# Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
+# Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
+# Copyright (c) 2013      Mellanox Technologies, Inc.
+#                         All rights reserved.
+# Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+# Copyright (c) 2022      IBM Corporation. All rights reserved.
+
+# This is the VERSION file for PMIx, describing the precise
+# version of PMIx in this distribution.  The various components of
+# the version number below are combined to form a single version
+# number string.
+
+# major, minor, and release are generally combined in the form
+# <major>.<minor>.<release>.
+
+major=5
+minor=0
+release=2
+
+# greek is used for alpha or beta release tags.  If it is non-empty,
+# it will be appended to the version number.  It does not have to be
+# numeric.  Common examples include a1 (alpha release 1), b1 or (beta release 1).
+# The only requirement is that it must be entirely printable ASCII
+# characters and have no white space.
+
+greek=rc2
+
+# PMIx required dependency versions.
+# List in x.y.z format.
+
+hwloc_min_version=1.11.0
+event_min_version=2.0.21
+automake_min_version=1.13.4
+autoconf_min_version=2.69.0
+libtool_min_version=2.4.2
+flex_min_version=2.5.4
+
+# PMIx Standard Compliance Level
+# The major and minor numbers indicate the version
+# of the official PMIx Standard that is supported
+# by this release. The extension number tracks how
+# far beyond that Standard this implementation has
+# gone. It is incremented whenever a release ADDS
+# something beyond the Standard. An extension of "1"
+# therefore indicates that something beyond the
+# indicated Standard level has been added. A
+# subsequent release that did not further add
+# attributes or APIs to the implementation would
+# retain the same extension value - if it did
+# include further extensions, then the extension
+# value would increment to "2" regardless of the
+# magnitude of the changes.
+std_major=4
+std_minor=2
+std_extension=5
+
+# PMIx Standard ABI Compliance Level(s)
+# The major and minor numbers (MAJOR.MINOR) indicate the version
+# of the official PMIx Standard ABI that is supported
+# by this release. This may be a comma separated list (no spaces)
+# if more than one PMIx Standard ABI level is supported.
+# The PMIx Standard defines a 'stable' and a 'provisional' ABI.
+# Therefore, there are two sets of major/minor values.
+# Since no PMIx Standard ABI exists at the moment, set to "0.0"
+std_abi_stable=0.0
+std_abi_provisional=0.0
+
+# If repo_rev is empty, then the repository version number will be
+# obtained during "make dist" via the "git describe --tags --always"
+# command, or with the date (if "git describe" fails) in the form of
+# "date<date>".
+
+repo_rev=
+
+# If tarball_version is not empty, it is used as the version string in
+# the tarball filename, regardless of all other versions listed in
+# this file.  For example, if tarball_version is empty, the tarball
+# filename will be of the form
+# openmpi-<major>.<minor>.<release><greek>.tar.*.  However, if
+# tarball_version is not empty, the tarball filename will be of the
+# form openmpi-<tarball_version>.tar.*.
+
+tarball_version=
+
+# The date when this release was created
+
+date="Unreleased developer copy"
+
+# The shared library version of each of PMIx's public libraries.
+# These versions are maintained in accordance with the "Library
+# Interface Versions" chapter from the GNU Libtool documentation:
+#
+# - If the library source code has changed at all since the last
+#   update, then increment revision (`c:r:a' becomes `c:r+1:a').
+#
+# - If any interfaces have been added, removed, or changed since
+#   the last update, increment current, and set revision to 0.
+#
+# - If any interfaces have been added since the last public release,
+#   then increment age.
+#
+# - If any interfaces have been removed since the last public release,
+#   then set age to 0.
+#
+# All changes in these version numbers are dictated by the PMIx
+# release managers (not individual developers).  Notes:
+
+# 1. Since the PMIx master branch is maintained to always be compatible
+#    with all prior releases (i.e., we never remove an interface), the
+#    libtool 'c', 'r', and 'a' values are maintained equal to the highest
+#    values found on any given release branch. This ensure that the .so
+#    value remains the same as on the release branches, thereby indicating
+#    compatibility.
+
+# 2. The version number of libpmix refers to the public pmix interfaces.
+# It does not refer to any internal interfaces.
+
+# Version numbers are described in the Libtool current:revision:age
+# format.
+
+libpmix_so_version=15:2:13
+

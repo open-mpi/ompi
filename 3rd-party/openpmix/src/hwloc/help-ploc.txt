@@ -1,0 +1,22 @@
+# -*- text -*-
+#
+# Copyright (c) 2018-2020 Intel, Inc.  All rights reserved.
+# Copyright (c) 2021-2024 Nanook Consulting  All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+# This is a US/English help file
+#
+[no-actives]
+PMIx was not able to find any usable hardware topology
+components. This could be due to not finding a suitable
+supporting library such as HWLOC. PMIx requires access
+to topology information due to its increased role in
+providing information on critical areas such as device
+distances and fabric interfaces.
+
+Please reconfigure PMIx with a hardware topology library
+of your choice.

@@ -1,0 +1,33 @@
+# Copyright (c) 2016      Intel, Inc.  All rights reserved.
+# Copyright (c) 2024      Nanook Consulting  All rights reserved.
+# $COPYRIGHT$
+
+The files in this directory are sample PMIx applications provided both
+as a trivial primer to PMIx as well as simple tests to ensure that your
+PMIx Reference Server (PSVR) installation is working properly:
+
+client.c:
+A simple PMIx client that attaches to the server and performs a few
+simple PMIx_Get calls following a blocking fence operation that returns
+all collected data from calls to PMIx_Put.
+
+debugger.c:
+Mimics a debugger tool. Contacts the PSVR to obtain
+nspace information and displays it. Takes user input as to the application
+to be "debugged", and then instructs PSVR to launch the companion
+"debuggerd" daemons on the nodes where the application is running. The
+daemons then connect to the local PSVR daemon and issue a "breakpoint"
+notification so the application knows the debugger has attached and is
+released from its barrier. The debugger then cleans up and quits.
+
+dmodex.c:
+A simple PMIx client that attaches to the server and performs a few
+simple PMIx_Get calls following a blocking fence operation that has
+been directed _not_ to return any collected data from calls to PMIx_Put.
+
+dynamic.c:
+
+
+The Makefile assumes that the pcc wrapper compiler is in your path.
+
+Make today a PMIx day!

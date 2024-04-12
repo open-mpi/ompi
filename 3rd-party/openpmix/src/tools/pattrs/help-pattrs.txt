@@ -1,0 +1,144 @@
+# -*- text -*-
+#
+# Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+#                         University Research and Technology
+#                         Corporation.  All rights reserved.
+# Copyright (c) 2004-2005 The University of Tennessee and The University
+#                         of Tennessee Research Foundation.  All rights
+#                         reserved.
+# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+#                         University of Stuttgart.  All rights reserved.
+# Copyright (c) 2004-2005 The Regents of the University of California.
+#                         All rights reserved.
+# Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2017-2019 Intel, Inc.  All rights reserved.
+# Copyright (c) 2022-2024 Nanook Consulting  All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+# This is the US/English help file for pattrs
+#
+[usage]
+%s (%s) %s
+
+Usage: %s [OPTION]...
+PMIx Supported Attributes and Functions tool
+
+
+/*****      General Options      *****/
+
+-h|--help                            This help message
+-h|--help <arg0>                     Help for the specified option
+-v|--verbose                         Enable typical debug options
+-V|--version                         Print version and exit
+   --pmixmca <arg0> <arg1>           Set MCA parameter value
+
+   --do-not-connect                  Do not connect to a server
+   --uri <arg0>                      Specify the URI of the server to which we are to connect, or
+                                     the name of the file (specified as file:filename) that contains that info
+   --namespace <arg0>                Namespace of the daemon to which we should connect
+   --pid <arg0>                      PID of the daemon to which we should connect (int => PID or file:<file>
+                                     for file containing the PID
+   --system-server-first             First look for a system server and connect to it if found
+   --system-server                   Connect to a system-level server
+   --tmpdir <arg0>                   Set the root for the session directory tree
+   --wait-to-connect <arg0>          Delay specified number of seconds before trying to connect
+   --num-connect-retries <arg0>      Max number of times to try to connect
+
+   --client <arg0>                   Comma-delimited list of client functions whose attributes are to be
+                                     printed (function or "all")
+   --server <arg0>                   Comma-delimited list of server functions whose attributes are to be
+                                     printed (function or "all")
+   --tool <arg0>                     Comma-delimited list of tool functions whose attributes are to be
+                                     printed (function or "all")
+   --host <arg0>                     Comma-delimited list of host functions whose attributes are to be
+                                     printed (function or "all")
+   --client-fns                      List the functions supported in this client library
+   --server-fns                      List the functions supported in this server library
+   --tool-fns                        List the functions supported in this tool library
+   --host-fns                        List the functions supported by this host environment
+
+Report bugs to %s
+#
+[do-not-connect]
+Do not attempt to connect to a PMIx server
+#
+[uri]
+Specify the URI of the PMIx server we are to contact, or the name of the file (specified as
+file:filename) that contains that info
+#
+[namespace]
+Namespace of the daemon we are to connect to (char*)
+#
+[pid]
+PID of the daemon to which we should connect (int => PID or file:<file>
+for file containing the PID
+#
+[system-server-first]
+First look for a system server and connect to it if found
+#
+[system-server]
+Connect only to a system-level server - abort if one is not found
+#
+[tmpdir]
+Set the root for the session directory tree
+#
+[wait-to-connect]
+Delay specified number of seconds before trying to connect
+#
+[num-connect-retries]
+Max number of times to try to connect to the specified server (int)
+#
+[client]
+Comma-delimited list of client functions whose attributes are to be printed (function or "all")
+#
+[server]
+Comma-delimited list of server functions whose attributes are to be printed (function or "all")
+#
+[tool]
+Comma-delimited list of tool functions whose attributes are to be printed (function or "all")
+#
+[host]
+Comma-delimited list of host functions whose attributes are to be printed (function or "all")
+#
+[client-fns]
+List the functions supported in this client library
+#
+[server-fns]
+List the functions supported in this server library
+#
+[tool-fns]
+List the functions supported in this tool library
+#
+[host-fns]
+List the functions supported by this host environment
+#
+[bad-option-input]
+%s was given an option that expected a string argument:
+
+  option: %s
+  argument: %s
+  expected: %s
+
+Please correct the option and try again.
+#
+[file-open-error]
+%s was unable to open the specified file provided as an option:
+
+  option: %s
+  argument: %s
+  file: %s
+
+Please correct the option and try again.
+#
+[bad-file]
+%s was unable to read the necessary info from the provided file:
+
+  option: %s
+  argument: %s
+  file: %s
+
+Please correct the option or the file and try again.

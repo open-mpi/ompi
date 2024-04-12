@@ -1,0 +1,104 @@
+# Copyright (c) 2004-2005 The Regents of the University of California.
+#                         All rights reserved.
+# Copyright (c) 2011-2020 Cisco Systems, Inc.  All rights reserved
+# Copyright (c) 2013      Los Alamos National Security, LLC.
+#                         All rights reserved.
+# Copyright (c) 2018-2020 Intel, Inc.  All rights reserved.
+# Copyright (c) 2021-2024 Nanook Consulting  All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+# This is the US/English general help file for rankle utilities.
+#
+[no-rankfile]
+%s was unable to open the rankfile:
+  Filename: %s
+Check to make sure the path and filename are correct.
+
+usage:  %s -mca rmaps_rankfile_path rankfile ./app
+
+Examples of proper syntax include:
+  cat hostfile
+    host1
+    host2
+    host3
+    host4
+  cat rankfile
+    rank 1=host1 slot=1:0,1
+    rank 0=host2 slot=0:*
+    rank 2=host4 slot=1-2
+    rank 3=host3 slot=0:1;1:0-2
+#
+[bad-host]
+The rankfile that was used claimed that a host was either not
+allocated or oversubscribed its slots.  Please review your rank-slot
+assignments and your host allocation to ensure a proper match.  Also,
+some systems may require using full hostnames, such as
+"host1.example.com" (instead of just plain "host1").
+
+  Host: %s
+#
+[bad-index]
+Rankfile claimed host %s by index that is bigger than number of allocated hosts.
+#
+[bad-assign]
+Error, rank %d is already assigned to %s, check %s
+#
+[bad-syntax]
+Error, invalid syntax in the rankfile (%s)
+syntax must be the following
+
+rank i=host_i slot=string
+
+Examples of proper syntax include:
+    rank 1=host1 slot=1:0,1
+    rank 0=host2 slot=0:*
+    rank 2=host4 slot=1-2
+    rank 3=host3 slot=0:1;1:0-2
+#
+[missing-rank]
+A rank is missing its location specification:
+
+  Rank:        %d
+  Rank file:   %s
+
+All processes must have their location specified in the rank file. Either
+add an entry to the file, or provide a default slot_list to use for
+any unspecified ranks.
+#
+[missing-cpu]
+While parsing the rankfile, %s encountered a line that specified
+a non-existent CPU:
+
+  Slots: %s
+  Available CPUs: %s
+
+Please correct the line and try again.
+[lsf-affinity-file-not-found]
+The affinity file provided in LSB_AFFINITY_HOSTFILE could not be found:
+
+  File:  %s
+
+We cannot continue.
+[lsf-affinity-file-failed-convert]
+The affinity file provided in LSB_AFFINITY_HOSTFILE could not be converted
+to a rankfile:
+
+  File:  %s
+
+We cannot continue.
+[rmaps:proc-slots-overloaded]
+A process attempted to bind to resources already allocated on a node
+to a different process.
+ Process : %s
+ Node    : %s
+ Process Requested CPU Set : %s
+ Node Available CPU Set    : %s
+ Overlapping CPU Set       : %s
+
+If this is intentional then you must pass the "overload-allowed"
+qualifier to the --bind-to option.
+  --bind-to :overload-allowed

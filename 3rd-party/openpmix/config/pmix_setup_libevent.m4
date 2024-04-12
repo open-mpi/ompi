@@ -1,0 +1,189 @@
+# -*- autoconf -*-
+#
+# Copyright (c) 2009-2020 Cisco Systems, Inc.  All rights reserved
+# Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
+# Copyright (c) 2013-2020 Intel, Inc.  All rights reserved.
+# Copyright (c) 2017-2019 Research Organization for Information Science
+#                         and Technology (RIST).  All rights reserved.
+# Copyright (c) 2020      IBM Corporation.  All rights reserved.
+# Copyright (c) 2021-2024 Nanook Consulting  All rights reserved.
+# Copyright (c) 2021-2022 Amazon.com, Inc. or its affiliates.
+#                         All Rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+
+# PMIX_LIBEVENT_CONFIG([action-if-found], [action-if-not-found])
+# --------------------------------------------------------------------
+# Attempt to find a libevent package.  If found, evaluate
+# action-if-found.  Otherwise, evaluate action-if-not-found.
+#
+# Modifies the following in the environment:
+#  * pmix_libevent_CPPFLAGS
+#  * pmix_libevent_LDFLAGS
+#  * pmix_libevent_LIBS
+#
+# Adds the following to the wrapper compilers:
+#  * CPPFLAGS: none
+#  * LDFLAGS: add pmix_libevent_LDFLAGS
+#  * LIBS: add pmix_libevent_LIBS
+AC_DEFUN([PMIX_LIBEVENT_CONFIG],[
+    PMIX_VAR_SCOPE_PUSH([pmix_event_dir pmix_event_libdir pmix_check_libevent_save_CPPFLAGS pmix_check_libevent_save_LDFLAGS pmix_check_libevent_save_LIBS])
+
+    AC_ARG_WITH([libevent],
+                [AS_HELP_STRING([--with-libevent=DIR],
+                                [Search for libevent headers and libraries in DIR ])])
+    AC_ARG_WITH([libevent-libdir],
+                [AS_HELP_STRING([--with-libevent-libdir=DIR],
+                                [Search for libevent libraries in DIR ])])
+    AC_ARG_WITH([libevent-extra-libs],
+                [AS_HELP_STRING([--with-libevent-extra-libs=LIBS],
+                                [Add LIBS as dependencies of Libevent])])
+    AC_ARG_ENABLE([libevent-lib-checks],
+                   [AS_HELP_STRING([--disable-libevent-lib-checks],
+                                   [If --disable-libevent-lib-checks is specified, configure will assume that -levent is available])])
+
+    pmix_libevent_support=1
+
+    AS_IF([test "$with_libevent" = "no"],
+          [AC_MSG_NOTICE([Libevent support disabled by user.])
+           pmix_libevent_support=0])
+
+    AS_IF([test "$with_libevent_extra_libs" = "yes" -o "$with_libevent_extra_libs" = "no"],
+      [AC_MSG_ERROR([--with-libevent-extra-libs requires an argument other than yes or no])])
+
+    AS_IF([test $pmix_libevent_support -eq 1],
+          [pmix_check_libevent_save_CPPFLAGS="$CPPFLAGS"
+           pmix_check_libevent_save_LDFLAGS="$LDFLAGS"
+           pmix_check_libevent_save_LIBS="$LIBS"
+
+           AS_IF([test "$enable_libevent_lib_checks" != "no"],
+                 [dnl Do not use pkg-config for libevent, because we need the pthreads interface
+                  dnl and the libevent_pthreads module will always pull in libevent instead of
+                  dnl libevent_core.
+                  libevent_USE_PKG_CONFIG=0
+                  OAC_CHECK_PACKAGE([libevent],
+                                    [pmix_libevent],
+                                    [event.h],
+                                    [event_core event_pthreads $with_libevent_extra_libs],
+                                    [event_config_new],
+                                    [],
+                                    [pmix_libevent_support=0])],
+                 [PMIX_FLAGS_APPEND_UNIQ([PMIX_DELAYED_LIBS], [$with_libevent_extra_libs])])])
+
+    # Check to see if the above check failed because it conflicted with LSF's libevent.so
+    # This can happen if LSF's library is in the LDFLAGS envar or default search
+    # path. The 'event_getcode4name' function is only defined in LSF's libevent.so and not
+    # in Libevent's libevent.so
+    if test $pmix_libevent_support -eq 0; then
+        AC_CHECK_LIB([event], [event_getcode4name],
+                     [AC_MSG_WARN([===================================================================])
+                      AC_MSG_WARN([Possible conflicting libevent.so libraries detected on the system.])
+                      AC_MSG_WARN([])
+                      AC_MSG_WARN([LSF provides a libevent.so that is not from Libevent in its])
+                      AC_MSG_WARN([library path. It is possible that you have installed Libevent])
+                      AC_MSG_WARN([on the system, but the linker is picking up the wrong version.])
+                      AC_MSG_WARN([])
+                      AC_MSG_WARN([You will need to address this linker path issue. One way to do so is])
+                      AC_MSG_WARN([to make sure the libevent system library path occurs before the])
+                      AC_MSG_WARN([LSF library path.])
+                      AC_MSG_WARN([===================================================================])
+                      ])
+    fi
+
+    if test $pmix_libevent_support -eq 1; then
+        # need to add resulting flags to global ones so we can
+        # test for thread support
+        PMIX_FLAGS_PREPEND_UNIQ([CPPFLAGS], [$pmix_libevent_CPPFLAGS])
+        PMIX_FLAGS_PREPEND_UNIQ([LDFLAGS], [$pmix_libevent_LDFLAGS])
+        PMIX_FLAGS_PREPEND_UNIQ([LIBS], [$pmix_libevent_LIBS])
+
+        # Check for general threading support
+        AC_MSG_CHECKING([if libevent threads enabled])
+        AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
+#include <event.h>
+#include <event2/thread.h>
+          ], [[
+#if !(EVTHREAD_LOCK_API_VERSION >= 1)
+#  error "No threads!"
+#endif
+          ]])],
+          [AC_MSG_RESULT([yes])],
+          [AC_MSG_RESULT([no])
+           AC_MSG_WARN([PMIX rquires libevent to be compiled with thread support enabled])
+           pmix_libevent_support=0])
+    fi
+
+    if test $pmix_libevent_support -eq 1; then
+        AC_MSG_CHECKING([for libevent pthreads support])
+        AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
+#include <event.h>
+#include <event2/thread.h>
+          ], [[
+#if !defined(EVTHREAD_USE_PTHREADS_IMPLEMENTED) || !EVTHREAD_USE_PTHREADS_IMPLEMENTED
+#  error "No pthreads!"
+#endif
+          ]])],
+          [AC_MSG_RESULT([yes])],
+          [AC_MSG_RESULT([no])
+           AC_MSG_WARN([PMIX requires libevent to be compiled with pthread support enabled])
+           pmix_libevent_support=0])
+    fi
+
+    if test $pmix_libevent_support -eq 1; then
+        pmix_event_min_num_version=PMIX_EVENT_NUMERIC_MIN_VERSION
+        pmix_event_min_version=PMIX_EVENT_MIN_VERSION
+        AC_MSG_CHECKING([version at or above v$pmix_event_min_version])
+        AC_PREPROC_IFELSE([AC_LANG_PROGRAM([
+                                            #include <event2/event.h>
+#if defined(_EVENT_NUMERIC_VERSION) && _EVENT_NUMERIC_VERSION < $pmix_event_min_num_version
+#error "libevent API version is less than $pmix_event_min_version"
+#elif defined(EVENT__NUMERIC_VERSION) && EVENT__NUMERIC_VERSION < $pmix_event_min_num_version
+#error "libevent API version is less than $pmix_event_min_version"
+#endif
+                                       ], [])],
+                      [pmix_libevent_cv_version_check=yes
+                       AC_MSG_RESULT([yes])],
+                      [pmix_libevent_cv_version_check=no
+                       AC_MSG_RESULT([no])])
+        AS_IF([test "${pmix_libevent_cv_version_check}" = "no"],
+              [AC_MSG_WARN([libevent version is too old ($pmix_event_min_version or later required)])
+               pmix_libevent_support=0])
+    fi
+
+    # restore global flags
+    CPPFLAGS="$pmix_check_libevent_save_CPPFLAGS"
+    LDFLAGS="$pmix_check_libevent_save_LDFLAGS"
+    LIBS="$pmix_check_libevent_save_LIBS"
+
+    AC_MSG_CHECKING([will libevent support be built])
+    if test $pmix_libevent_support -eq 1; then
+        AC_MSG_RESULT([yes])
+        PMIX_FLAGS_APPEND_UNIQ([CPPFLAGS], [$pmix_libevent_CPPFLAGS])
+        PMIX_WRAPPER_FLAGS_ADD([CPPFLAGS], [$pmix_libevent_CPPFLAGS])
+
+        PMIX_FLAGS_APPEND_UNIQ([LDFLAGS], [$pmix_libevent_LDFLAGS])
+        PMIX_WRAPPER_FLAGS_ADD([LDFLAGS], [$pmix_libevent_LDFLAGS])
+        PMIX_WRAPPER_FLAGS_ADD([STATIC_LDFLAGS], [$pmix_libevent_STATIC_LDFLAGS])
+
+        PMIX_FLAGS_APPEND_UNIQ([PMIX_DELAYED_LIBS], [$pmix_libevent_LIBS])
+        PMIX_WRAPPER_FLAGS_ADD([LIBS], [$pmix_libevent_LIBS])
+        PMIX_WRAPPER_FLAGS_ADD([STATIC_LIBS], [$pmix_libevent_STATIC_LIBS])
+
+        PMIX_WRAPPER_FLAGS_ADD([PC_MODULES], [$pmix_libevent_PC_MODULES])
+
+        # Set output variables
+        PMIX_SUMMARY_ADD([Required Packages], [Libevent], [], [$pmix_libevent_SUMMARY])
+
+        $1
+    else
+        AC_MSG_RESULT([no])
+
+        $2
+    fi
+
+    PMIX_VAR_SCOPE_POP
+])

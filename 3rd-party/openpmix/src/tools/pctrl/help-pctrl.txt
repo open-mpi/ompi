@@ -1,0 +1,183 @@
+# -*- text -*-
+#
+# Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+#                         University Research and Technology
+#                         Corporation.  All rights reserved.
+# Copyright (c) 2004-2005 The University of Tennessee and The University
+#                         of Tennessee Research Foundation.  All rights
+#                         reserved.
+# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+#                         University of Stuttgart.  All rights reserved.
+# Copyright (c) 2004-2005 The Regents of the University of California.
+#                         All rights reserved.
+# Copyright (c) 2012      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2017-2020 Intel, Inc.  All rights reserved.
+# Copyright (c) 2022-2024 Nanook Consulting  All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+# This is the US/English help file for pctrl
+#
+[usage]
+%s (%s) %s
+
+Usage: %s [OPTION]...
+PMIx Job control tool
+
+
+/*****      General Options      *****/
+
+-h|--help                            This help message
+-h|--help <arg0>                     Help for the specified option
+-v|--verbose                         Enable typical debug options
+-V|--version                         Print version and exit
+   --pmixmca <arg0> <arg1>           Set MCA parameter value
+
+   --uri <arg0>                      Specify the URI of the server to which we are to connect, or
+                                     the name of the file (specified as file:filename) that contains that info
+   --namespace <arg0>                Namespace of the daemon to which we should connect
+   --nspace <arg0>                   Synonym for "namespace"
+   --pid <arg0>                      PID of the daemon to which we should connect (int => PID or file:<file>
+                                     for file containing the PID
+   --system-server-first             First look for a system server and connect to it if found
+   --system-server-only              Connect only to a system-level server
+   --tmpdir <arg0>                   Set the root for the session directory tree
+   --wait-to-connect <arg0>          Delay specified number of seconds before trying to connect
+   --num-connect-retries <arg0>      Max number of times to try to connect
+
+   --request-id <arg0>               String identifier for this job control request
+   --pause                           Pause the specified processes
+   --resume                          "Un-pause" the specified processes
+   --cancel <arg0>                   Cancel the specified request ID ("all" => cancel all requests from this requestor)
+   --kill                            Force terminate the specified processes
+   --terminate                       Politely terminate the specified processes
+   --signal <arg0>                   Provide the specified processes with the given signal
+   --restart <arg0>                  Restart the specified processes using the given checkpoint ID
+   --checkpoint <arg0>               Checkpoint the specified processes and assign the given ID to it
+   --pset <arg0>                     Define a new pset (with the given name) whose membership is
+                                     comprised of the specified processes
+   --targets <arg0>                  Comma-delimited list of target processes for the requested
+                                     job-control operation
+
+#
+# CONNECTION OPTIONS
+#
+#
+[uri]
+Specify the URI of the DVM master, or the name of the file (specified as
+file:filename) that contains that info
+#
+[num-connect-retries]
+Max number of times to try to connect to the specified server (int)
+#
+[pid]
+PID of the daemon to which we should connect (int => PID or file:<file>
+for file containing the PID
+#
+[namespace]
+Namespace of the daemon we are to connect to (char*)
+#
+[nspace]
+Namespace of the daemon we are to connect to (char*) - synonym for "namespace"
+#
+[system-server-first]
+First look for a system server and connect to it if found
+#
+[system-server-only]
+Connect only to a system-level server - abort if one is not found
+#
+[tmpdir]
+Define the root location for the session directory tree where the
+rendezvous files can be found.
+
+The rendezvous files contain connection information for a target
+server and are located in the session directory tree. It may be necessary to point the
+tool at the location where those files can be found if that location is other than the
+expected default.
+
+The root of the session directory defaults to the system temporary directory
+as defined in the environment using (in precedence order) the envars TMPDIR, TEMP, and
+finally TMP. In the absence of any of those variables, PMIx will default to the "/tmp"
+location.
+#
+[wait-to-connect]
+Delay specified number of seconds before trying to connect
+#
+#  PCTRL-SPECIFIC OPTIONS
+#
+[request-id]
+String identifier for this job control request. The request ID can be used for
+subsequent query of request status and/or cancellation of the request. Note that
+a request ID that matches a currently active request will be rejected - so care should be taken
+to ensure that the ID provided is unique and not currently in use.
+#
+[pause]
+Pause the specified processes. This typically takes the form of applying a SIGSTOP
+to the specified processes. The pctrl tool will return a status indicating whether
+or not the operation succeeded.
+#
+[resume]
+Direct the specified processes to resume execution. This typically takes the form
+of applying a SIGCONT signal to the specified processes. The pctrl tool will return
+a status indicating whether or not the operation succeeded.
+#
+[cancel]
+Cancel the specified request ID. The provided ID must match the ID provided to
+a prior request - if the ID cannot be found, then a PMIX_ERR_NOT_FOUND status
+shall be returned by pctrl.
+#
+[kill]
+Force terminate the specified processes. Precise behavior depends upon the
+runtime environment. However, typically the specified processes will receive
+the following sequence of signals:
+
+  * SIGCONT - wakeup a sleeping process
+  * SIGTERM - provide a trappable signal indicating that the process
+              should cleanly exit, if possible
+  * SIGKILL - forcibly terminate the process
+
+The pctrl tool will return a status indicating whether or not the operation
+succeeded (i.e., all processes exited).
+#
+[terminate]
+Politely terminate the specified processes. Precise behavior depends upon the
+runtime environment. However, typically the specified processes will receive
+the following sequence of signals:
+
+  * SIGCONT - wakeup a sleeping process
+  * SIGTERM - provide a trappable signal indicating that the process
+              should cleanly exit, if possible
+
+The pctrl tool will return a status indicating whether or not the operation
+succeeded (i.e., the processes terminated)
+#
+[signal]
+Provide the specified processes with the given signal. Signals are to be
+provided via their name (e.g., SIGTERM, SIGKILL) or an integer value
+(e.g., -9).
+#
+[restart]
+"Un-pause" the specified processes - usually implemented by applying a
+SIGCONT signal to the processes.
+#
+[checkpoint]
+Checkpoint the specified processes and assign the given ID to it. The checkpoint
+operation will be conducted according to the method specified when the processes
+were originally spawned. Support for this operation therefore depends both on the
+capabilities of the runtime environment _and_ the application being told to
+checkpoint.
+#
+[pset]
+Define a new pset (with the given name) whose membership is comprised of the
+specified processes.
+#
+[targets]
+Comma-delimited list of target processes for the requested job-control
+operation. Wildcard ranks (e.g., to apply the request to all processes
+in the specified namespace) can be indicated with an asterisk ('*'). Syntax
+requires that each process be identified as "nspace:rank". Note that
+typical command line restrictions may necessitate the use of special
+delimiters - e.g., "my\;weird.nspace:5".

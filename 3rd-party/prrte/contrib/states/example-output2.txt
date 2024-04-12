@@ -1,0 +1,538 @@
+# TJN-BEGIN: Wed Mar 25 14:47:18 EDT 2020
+#####################################
+# PWD: /gpfs/alpine/proj-shared/stf010/naughton/summit/ompix/scaling/tests
+#####################################
+# Run-Hostname: batch2
+#####################################
+# LSB_JOBID: 994949
+#####################################
+# LS_JOBID: 
+#####################################
+# BEGIN-module-list: 
+
+Currently Loaded Modules:
+  1) hsi/5.0.2.p5    3) DefApps     5) cuda/10.1.243   7) openmpi/master
+  2) lsf-tools/2.0   4) gcc/6.4.0   6) ucx/1.7.0
+
+ 
+
+# END-module-list: 
+###################################################
+##
+##  NOTE -- REMAINING INFO IS FROM COMPUTE NODE
+##          (i.e., via aprun commands)
+##
+###################################################
+#####################################
+#####################################
+# RUN-MPIRUN-TESTS
+#####################################
+# DBG: TTL_NODES=33
+# DBG: TTL_COMPUTE_NODES=32
+####################
+# STAGING-RUN-BEGIN
+# STAGE-CMD: mpirun     --prtemca prrte_state_base_verbose 1       --prtemca plm_rsh_num_concurrent 32       --prtemca routed direct       --prtemca rmaps_base_no_schedule_local 1           --np 32           --map-by ppr:1:node:NOLOCAL           --hostfile /gpfs/alpine/proj-shared/stf010/naughton/summit/ompix/scaling/tests/fqdn-hostfile.81788           -x PATH=/sw/sources/lsf-tools/2.0/summit/bin:/sw/summit/ums/ompix/DEVELOP/gcc/6.4.0/install/openmpi-br-master/bin:/sw/summit/ums/ompix/DEVELOP/gcc/6.4.0/install/ucx-1.7.0/bin:/sw/summit/cuda/10.1.243/bin:/sw/summit/gcc/6.4.0/bin:/opt/ibm/spectrumcomputing/lsf/10.1.0.9/linux3.10-glibc2.17-ppc64le-csm/bin:/usr/bin:/usr/sbin:/sw/sources/hpss/bin:/opt/ibm/spectrumcomputing/lsf/10.1.0.9/linux3.10-glibc2.17-ppc64le-csm/etc:/opt/ibm/csm/bin:/usr/local/bin:/usr/local/sbin:/opt/ibm/flightlog/bin:/opt/ibutils/bin:/opt/ibm/spectrum_mpi/jsm_pmix/bin:/opt/puppetlabs/bin:/usr/lpp/mmfs/bin           -x LD_LIBRARY_PATH=/sw/summit/ums/ompix/DEVELOP/gcc/6.4.0/install/openmpi-br-master/lib:/sw/summit/ums/ompix/DEVELOP/gcc/6.4.0/install/ucx-1.7.0/lib:/sw/summit/cuda/10.1.243/lib64:/sw/summit/gcc/6.4.0/lib64:/opt/ibm/spectrumcomputing/lsf/10.1.0.9/linux3.10-glibc2.17-ppc64le-csm/lib           /gpfs/alpine/proj-shared/stf010/naughton/summit/ompix/scaling/tests/hello_mpi 
+[batch2:82271] [[40915,0],0] [1585162039.032522] ACTIVATE JOB [40915,0] STATE PENDING ALLOCATION AT ../../../../../../../../source/openmpi-br-master/prrte/src/tools/prte/prte.c:455
+[batch2:82271] [[40915,0],0] [1585162039.033920] ACTIVATE JOB [40915,0] STATE ALLOCATION COMPLETE AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/ras/base/ras_base_allocate.c:530
+[batch2:82271] [[40915,0],0] [1585162039.033933] ACTIVATE JOB [40915,0] STATE PENDING DAEMON LAUNCH AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_launch_support.c:200
+[batch2:82271] [[40915,0],0] [1585162040.015379] ACTIVATE JOB [40915,0] STATE ALL DAEMONS REPORTED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_launch_support.c:1587
+[batch2:82271] [[40915,0],0] [1585162040.015427] ACTIVATE JOB [40915,0] STATE VM READY AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_launch_support.c:179
+[batch2:82271] [[40915,0],0] [1585162040.026719] ACTIVATE JOB [INVALID] STATE PENDING INIT AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/rsh/plm_rsh_module.c:907
+[batch2:82271] [[40915,0],0] [1585162040.027924] ACTIVATE JOB [40915,1] STATE INIT_COMPLETE AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_launch_support.c:320
+[batch2:82271] [[40915,0],0] [1585162040.027933] ACTIVATE JOB [40915,1] STATE PENDING ALLOCATION AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/dvm/state_dvm.c:243
+[batch2:82271] [[40915,0],0] [1585162040.027939] ACTIVATE JOB [40915,1] STATE ALLOCATION COMPLETE AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/ras/base/ras_base_allocate.c:530
+[batch2:82271] [[40915,0],0] [1585162040.027945] ACTIVATE JOB [40915,1] STATE PENDING DAEMON LAUNCH AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_launch_support.c:200
+[batch2:82271] [[40915,0],0] [1585162040.027956] ACTIVATE JOB [40915,1] STATE ALL DAEMONS REPORTED AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/rsh/plm_rsh_module.c:1061
+[batch2:82271] [[40915,0],0] [1585162040.027975] ACTIVATE JOB [40915,1] STATE VM READY AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_launch_support.c:179
+[batch2:82271] [[40915,0],0] [1585162040.027981] ACTIVATE JOB [40915,1] STATE PENDING MAPPING AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/dvm/state_dvm.c:231
+[batch2:82271] [[40915,0],0] [1585162040.041606] ACTIVATE JOB [40915,1] STATE MAP COMPLETE AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/rmaps/base/rmaps_base_map_job.c:514
+[batch2:82271] [[40915,0],0] [1585162040.041619] ACTIVATE JOB [40915,1] STATE PENDING FINAL SYSTEM PREP AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_launch_support.c:258
+[batch2:82271] [[40915,0],0] [1585162040.041633] ACTIVATE JOB [40915,1] STATE PENDING APP LAUNCH AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_launch_support.c:433
+[batch2:82271] [[40915,0],0] [1585162040.042307] ACTIVATE JOB [40915,1] STATE SENDING LAUNCH MSG AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/odls/base/odls_base_default_fns.c:157
+[b06n15:147995] [[40915,0],1] [1585162040.076256] ACTIVATE PROC [[40915,1],0] STATE RUNNING AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/odls/base/odls_base_default_fns.c:1038
+[batch2:82271] [[40915,0],0] [1585162040.076452] ACTIVATE PROC [[40915,1],0] STATE RUNNING AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:413
+[b06n15:147995] [[40915,0],1] [1585162040.076324] ACTIVATE JOB [40915,1] STATE LOCAL LAUNCH COMPLETE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/prted/state_prted.c:314
+[b06n16:125939] [[40915,0],2] [1585162040.076541] ACTIVATE PROC [[40915,1],1] STATE RUNNING AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/odls/base/odls_base_default_fns.c:1038
+[batch2:82271] [[40915,0],0] [1585162040.076707] ACTIVATE PROC [[40915,1],1] STATE RUNNING AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:413
+[b06n16:125939] [[40915,0],2] [1585162040.076602] ACTIVATE JOB [40915,1] STATE LOCAL LAUNCH COMPLETE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/prted/state_prted.c:314
+[batch2:82271] [[40915,0],0] [1585162040.079657] ACTIVATE PROC [[40915,1],2] STATE RUNNING AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:413
+[b06n17:106679] [[40915,0],3] [1585162040.079509] ACTIVATE PROC [[40915,1],2] STATE RUNNING AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/odls/base/odls_base_default_fns.c:1038
+[b06n17:106679] [[40915,0],3] [1585162040.079567] ACTIVATE JOB [40915,1] STATE LOCAL LAUNCH COMPLETE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/prted/state_prted.c:314
+[b06n18:128515] [[40915,0],4] [1585162040.080275] ACTIVATE PROC [[40915,1],3] STATE RUNNING AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/odls/base/odls_base_default_fns.c:1038
+[batch2:82271] [[40915,0],0] [1585162040.080461] ACTIVATE PROC [[40915,1],3] STATE RUNNING AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:413
+[b06n18:128515] [[40915,0],4] [1585162040.080346] ACTIVATE JOB [40915,1] STATE LOCAL LAUNCH COMPLETE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/prted/state_prted.c:314
+[b17n15:141994] [[40915,0],6] [1585162040.094837] ACTIVATE PROC [[40915,1],5] STATE RUNNING AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/odls/base/odls_base_default_fns.c:1038
+[batch2:82271] [[40915,0],0] [1585162040.095020] ACTIVATE PROC [[40915,1],5] STATE RUNNING AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:413
+[b30n12:23915] [[40915,0],10] [1585162040.094890] ACTIVATE PROC [[40915,1],9] STATE RUNNING AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/odls/base/odls_base_default_fns.c:1038
+[batch2:82271] [[40915,0],0] [1585162040.095067] ACTIVATE PROC [[40915,1],9] STATE RUNNING AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:413
+[b17n15:141994] [[40915,0],6] [1585162040.094906] ACTIVATE JOB [40915,1] STATE LOCAL LAUNCH COMPLETE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/prted/state_prted.c:314
+[b30n12:23915] [[40915,0],10] [1585162040.094955] ACTIVATE JOB [40915,1] STATE LOCAL LAUNCH COMPLETE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/prted/state_prted.c:314
+[b07n01:139664] [[40915,0],5] [1585162040.095005] ACTIVATE PROC [[40915,1],4] STATE RUNNING AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/odls/base/odls_base_default_fns.c:1038
+[batch2:82271] [[40915,0],0] [1585162040.095172] ACTIVATE PROC [[40915,1],4] STATE RUNNING AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:413
+[b07n01:139664] [[40915,0],5] [1585162040.095054] ACTIVATE JOB [40915,1] STATE LOCAL LAUNCH COMPLETE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/prted/state_prted.c:314
+[h27n10:130337] [[40915,0],28] [1585162040.095673] ACTIVATE PROC [[40915,1],27] STATE RUNNING AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/odls/base/odls_base_default_fns.c:1038
+[batch2:82271] [[40915,0],0] [1585162040.095849] ACTIVATE PROC [[40915,1],27] STATE RUNNING AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:413
+[b30n11:49033] [[40915,0],9] [1585162040.095728] ACTIVATE PROC [[40915,1],8] STATE RUNNING AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/odls/base/odls_base_default_fns.c:1038
+[h27n10:130337] [[40915,0],28] [1585162040.095734] ACTIVATE JOB [40915,1] STATE LOCAL LAUNCH COMPLETE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/prted/state_prted.c:314
+[batch2:82271] [[40915,0],0] [1585162040.095924] ACTIVATE PROC [[40915,1],8] STATE RUNNING AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:413
+[h27n07:103492] [[40915,0],25] [1585162040.095819] ACTIVATE PROC [[40915,1],24] STATE RUNNING AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/odls/base/odls_base_default_fns.c:1038
+[batch2:82271] [[40915,0],0] [1585162040.095985] ACTIVATE PROC [[40915,1],24] STATE RUNNING AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:413
+[b30n11:49033] [[40915,0],9] [1585162040.095801] ACTIVATE JOB [40915,1] STATE LOCAL LAUNCH COMPLETE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/prted/state_prted.c:314
+[h27n07:103492] [[40915,0],25] [1585162040.095884] ACTIVATE JOB [40915,1] STATE LOCAL LAUNCH COMPLETE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/prted/state_prted.c:314
+[h27n06:87678] [[40915,0],24] [1585162040.095996] ACTIVATE PROC [[40915,1],23] STATE RUNNING AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/odls/base/odls_base_default_fns.c:1038
+[h27n09:105965] [[40915,0],27] [1585162040.096015] ACTIVATE PROC [[40915,1],26] STATE RUNNING AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/odls/base/odls_base_default_fns.c:1038
+[batch2:82271] [[40915,0],0] [1585162040.096168] ACTIVATE PROC [[40915,1],23] STATE RUNNING AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:413
+[batch2:82271] [[40915,0],0] [1585162040.096180] ACTIVATE PROC [[40915,1],26] STATE RUNNING AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:413
+[h27n06:87678] [[40915,0],24] [1585162040.096058] ACTIVATE JOB [40915,1] STATE LOCAL LAUNCH COMPLETE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/prted/state_prted.c:314
+[h27n09:105965] [[40915,0],27] [1585162040.096084] ACTIVATE JOB [40915,1] STATE LOCAL LAUNCH COMPLETE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/prted/state_prted.c:314
+[h27n05:127708] [[40915,0],23] [1585162040.096152] ACTIVATE PROC [[40915,1],22] STATE RUNNING AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/odls/base/odls_base_default_fns.c:1038
+[batch2:82271] [[40915,0],0] [1585162040.096308] ACTIVATE PROC [[40915,1],22] STATE RUNNING AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:413
+[h27n05:127708] [[40915,0],23] [1585162040.096219] ACTIVATE JOB [40915,1] STATE LOCAL LAUNCH COMPLETE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/prted/state_prted.c:314
+[b30n09:40885] [[40915,0],7] [1585162040.096850] ACTIVATE PROC [[40915,1],6] STATE RUNNING AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/odls/base/odls_base_default_fns.c:1038
+[batch2:82271] [[40915,0],0] [1585162040.097021] ACTIVATE PROC [[40915,1],6] STATE RUNNING AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:413
+[b30n09:40885] [[40915,0],7] [1585162040.096917] ACTIVATE JOB [40915,1] STATE LOCAL LAUNCH COMPLETE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/prted/state_prted.c:314
+[h27n11:133026] [[40915,0],29] [1585162040.099912] ACTIVATE PROC [[40915,1],28] STATE RUNNING AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/odls/base/odls_base_default_fns.c:1038
+[batch2:82271] [[40915,0],0] [1585162040.100074] ACTIVATE PROC [[40915,1],28] STATE RUNNING AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:413
+[h27n11:133026] [[40915,0],29] [1585162040.099980] ACTIVATE JOB [40915,1] STATE LOCAL LAUNCH COMPLETE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/prted/state_prted.c:314
+[h27n08:104866] [[40915,0],26] [1585162040.100494] ACTIVATE PROC [[40915,1],25] STATE RUNNING AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/odls/base/odls_base_default_fns.c:1038
+[batch2:82271] [[40915,0],0] [1585162040.100667] ACTIVATE PROC [[40915,1],25] STATE RUNNING AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:413
+[h27n08:104866] [[40915,0],26] [1585162040.100561] ACTIVATE JOB [40915,1] STATE LOCAL LAUNCH COMPLETE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/prted/state_prted.c:314
+[h28n04:16897] [[40915,0],31] [1585162040.100686] ACTIVATE PROC [[40915,1],30] STATE RUNNING AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/odls/base/odls_base_default_fns.c:1038
+[batch2:82271] [[40915,0],0] [1585162040.100855] ACTIVATE PROC [[40915,1],30] STATE RUNNING AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:413
+[h28n06:158971] [[40915,0],32] [1585162040.100728] ACTIVATE PROC [[40915,1],31] STATE RUNNING AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/odls/base/odls_base_default_fns.c:1038
+[batch2:82271] [[40915,0],0] [1585162040.100888] ACTIVATE PROC [[40915,1],31] STATE RUNNING AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:413
+[h28n04:16897] [[40915,0],31] [1585162040.100745] ACTIVATE JOB [40915,1] STATE LOCAL LAUNCH COMPLETE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/prted/state_prted.c:314
+[h28n06:158971] [[40915,0],32] [1585162040.100788] ACTIVATE JOB [40915,1] STATE LOCAL LAUNCH COMPLETE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/prted/state_prted.c:314
+[h27n12:122423] [[40915,0],30] [1585162040.100837] ACTIVATE PROC [[40915,1],29] STATE RUNNING AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/odls/base/odls_base_default_fns.c:1038
+[batch2:82271] [[40915,0],0] [1585162040.100993] ACTIVATE PROC [[40915,1],29] STATE RUNNING AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:413
+[h27n12:122423] [[40915,0],30] [1585162040.100897] ACTIVATE JOB [40915,1] STATE LOCAL LAUNCH COMPLETE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/prted/state_prted.c:314
+[b31n01:160528] [[40915,0],17] [1585162040.103550] ACTIVATE PROC [[40915,1],16] STATE RUNNING AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/odls/base/odls_base_default_fns.c:1038
+[batch2:82271] [[40915,0],0] [1585162040.103706] ACTIVATE PROC [[40915,1],16] STATE RUNNING AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:413
+[b31n01:160528] [[40915,0],17] [1585162040.103612] ACTIVATE JOB [40915,1] STATE LOCAL LAUNCH COMPLETE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/prted/state_prted.c:314
+[b30n14:20639] [[40915,0],12] [1585162040.105257] ACTIVATE PROC [[40915,1],11] STATE RUNNING AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/odls/base/odls_base_default_fns.c:1038
+[batch2:82271] [[40915,0],0] [1585162040.105414] ACTIVATE PROC [[40915,1],11] STATE RUNNING AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:413
+[b30n14:20639] [[40915,0],12] [1585162040.105314] ACTIVATE JOB [40915,1] STATE LOCAL LAUNCH COMPLETE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/prted/state_prted.c:314
+[f23n16:23315] [[40915,0],21] [1585162040.105376] ACTIVATE PROC [[40915,1],20] STATE RUNNING AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/odls/base/odls_base_default_fns.c:1038
+[b31n02:171328] [[40915,0],18] [1585162040.105408] ACTIVATE PROC [[40915,1],17] STATE RUNNING AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/odls/base/odls_base_default_fns.c:1038
+[batch2:82271] [[40915,0],0] [1585162040.105596] ACTIVATE PROC [[40915,1],20] STATE RUNNING AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:413
+[batch2:82271] [[40915,0],0] [1585162040.105604] ACTIVATE PROC [[40915,1],17] STATE RUNNING AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:413
+[f23n16:23315] [[40915,0],21] [1585162040.105458] ACTIVATE JOB [40915,1] STATE LOCAL LAUNCH COMPLETE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/prted/state_prted.c:314
+[b31n04:127470] [[40915,0],20] [1585162040.105510] ACTIVATE PROC [[40915,1],19] STATE RUNNING AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/odls/base/odls_base_default_fns.c:1038
+[b31n02:171328] [[40915,0],18] [1585162040.105485] ACTIVATE JOB [40915,1] STATE LOCAL LAUNCH COMPLETE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/prted/state_prted.c:314
+[batch2:82271] [[40915,0],0] [1585162040.105689] ACTIVATE PROC [[40915,1],19] STATE RUNNING AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:413
+[b30n10:94844] [[40915,0],8] [1585162040.105586] ACTIVATE PROC [[40915,1],7] STATE RUNNING AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/odls/base/odls_base_default_fns.c:1038
+[batch2:82271] [[40915,0],0] [1585162040.105732] ACTIVATE PROC [[40915,1],7] STATE RUNNING AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:413
+[b31n04:127470] [[40915,0],20] [1585162040.105578] ACTIVATE JOB [40915,1] STATE LOCAL LAUNCH COMPLETE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/prted/state_prted.c:314
+[b30n16:38673] [[40915,0],14] [1585162040.105649] ACTIVATE PROC [[40915,1],13] STATE RUNNING AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/odls/base/odls_base_default_fns.c:1038
+[batch2:82271] [[40915,0],0] [1585162040.105809] ACTIVATE PROC [[40915,1],13] STATE RUNNING AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:413
+[b30n10:94844] [[40915,0],8] [1585162040.105643] ACTIVATE JOB [40915,1] STATE LOCAL LAUNCH COMPLETE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/prted/state_prted.c:314
+[b30n17:18592] [[40915,0],15] [1585162040.105715] ACTIVATE PROC [[40915,1],14] STATE RUNNING AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/odls/base/odls_base_default_fns.c:1038
+[b30n18:65526] [[40915,0],16] [1585162040.105747] ACTIVATE PROC [[40915,1],15] STATE RUNNING AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/odls/base/odls_base_default_fns.c:1038
+[batch2:82271] [[40915,0],0] [1585162040.105875] ACTIVATE PROC [[40915,1],14] STATE RUNNING AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:413
+[batch2:82271] [[40915,0],0] [1585162040.105911] ACTIVATE PROC [[40915,1],15] STATE RUNNING AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:413
+[b30n16:38673] [[40915,0],14] [1585162040.105718] ACTIVATE JOB [40915,1] STATE LOCAL LAUNCH COMPLETE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/prted/state_prted.c:314
+[b30n17:18592] [[40915,0],15] [1585162040.105773] ACTIVATE JOB [40915,1] STATE LOCAL LAUNCH COMPLETE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/prted/state_prted.c:314
+[b30n18:65526] [[40915,0],16] [1585162040.105820] ACTIVATE JOB [40915,1] STATE LOCAL LAUNCH COMPLETE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/prted/state_prted.c:314
+[batch2:82271] [[40915,0],0] [1585162040.107358] ACTIVATE PROC [[40915,1],0] STATE SYNC REGISTERED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:452
+[b06n15:147995] [[40915,0],1] [1585162040.107254] ACTIVATE PROC [[40915,1],0] STATE SYNC REGISTERED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/pmix/pmix_server_gen.c:92
+[b06n16:125939] [[40915,0],2] [1585162040.107434] ACTIVATE PROC [[40915,1],1] STATE SYNC REGISTERED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/pmix/pmix_server_gen.c:92
+[batch2:82271] [[40915,0],0] [1585162040.107533] ACTIVATE PROC [[40915,1],1] STATE SYNC REGISTERED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:452
+[batch2:82271] [[40915,0],0] [1585162040.111616] ACTIVATE PROC [[40915,1],2] STATE SYNC REGISTERED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:452
+[b06n17:106679] [[40915,0],3] [1585162040.111509] ACTIVATE PROC [[40915,1],2] STATE SYNC REGISTERED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/pmix/pmix_server_gen.c:92
+[batch2:82271] [[40915,0],0] [1585162040.113698] ACTIVATE PROC [[40915,1],3] STATE SYNC REGISTERED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:452
+[b06n18:128515] [[40915,0],4] [1585162040.113611] ACTIVATE PROC [[40915,1],3] STATE SYNC REGISTERED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/pmix/pmix_server_gen.c:92
+[batch2:82271] [[40915,0],0] [1585162040.124128] ACTIVATE PROC [[40915,1],23] STATE SYNC REGISTERED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:452
+[h27n06:87678] [[40915,0],24] [1585162040.124026] ACTIVATE PROC [[40915,1],23] STATE SYNC REGISTERED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/pmix/pmix_server_gen.c:92
+[h27n07:103492] [[40915,0],25] [1585162040.124332] ACTIVATE PROC [[40915,1],24] STATE SYNC REGISTERED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/pmix/pmix_server_gen.c:92
+[batch2:82271] [[40915,0],0] [1585162040.124431] ACTIVATE PROC [[40915,1],24] STATE SYNC REGISTERED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:452
+[b31n03:167060] [[40915,0],19] [1585162040.126205] ACTIVATE PROC [[40915,1],18] STATE RUNNING AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/odls/base/odls_base_default_fns.c:1038
+[batch2:82271] [[40915,0],0] [1585162040.126386] ACTIVATE PROC [[40915,1],18] STATE RUNNING AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:413
+[batch2:82271] [[40915,0],0] [1585162040.126483] ACTIVATE PROC [[40915,1],22] STATE SYNC REGISTERED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:452
+[h27n05:127708] [[40915,0],23] [1585162040.126365] ACTIVATE PROC [[40915,1],22] STATE SYNC REGISTERED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/pmix/pmix_server_gen.c:92
+[b31n03:167060] [[40915,0],19] [1585162040.126277] ACTIVATE JOB [40915,1] STATE LOCAL LAUNCH COMPLETE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/prted/state_prted.c:314
+[b07n01:139664] [[40915,0],5] [1585162040.126485] ACTIVATE PROC [[40915,1],4] STATE SYNC REGISTERED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/pmix/pmix_server_gen.c:92
+[batch2:82271] [[40915,0],0] [1585162040.126579] ACTIVATE PROC [[40915,1],4] STATE SYNC REGISTERED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:452
+[h27n10:130337] [[40915,0],28] [1585162040.127417] ACTIVATE PROC [[40915,1],27] STATE SYNC REGISTERED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/pmix/pmix_server_gen.c:92
+[batch2:82271] [[40915,0],0] [1585162040.127526] ACTIVATE PROC [[40915,1],27] STATE SYNC REGISTERED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:452
+[h27n09:105965] [[40915,0],27] [1585162040.128117] ACTIVATE PROC [[40915,1],26] STATE SYNC REGISTERED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/pmix/pmix_server_gen.c:92
+[batch2:82271] [[40915,0],0] [1585162040.128211] ACTIVATE PROC [[40915,1],26] STATE SYNC REGISTERED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:452
+[batch2:82271] [[40915,0],0] [1585162040.132004] ACTIVATE PROC [[40915,1],28] STATE SYNC REGISTERED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:452
+[h27n11:133026] [[40915,0],29] [1585162040.131915] ACTIVATE PROC [[40915,1],28] STATE SYNC REGISTERED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/pmix/pmix_server_gen.c:92
+[batch2:82271] [[40915,0],0] [1585162040.132111] ACTIVATE PROC [[40915,1],30] STATE SYNC REGISTERED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:452
+[h28n04:16897] [[40915,0],31] [1585162040.132010] ACTIVATE PROC [[40915,1],30] STATE SYNC REGISTERED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/pmix/pmix_server_gen.c:92
+[batch2:82271] [[40915,0],0] [1585162040.132558] ACTIVATE PROC [[40915,1],31] STATE SYNC REGISTERED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:452
+[h28n06:158971] [[40915,0],32] [1585162040.132466] ACTIVATE PROC [[40915,1],31] STATE SYNC REGISTERED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/pmix/pmix_server_gen.c:92
+[batch2:82271] [[40915,0],0] [1585162040.132846] ACTIVATE PROC [[40915,1],29] STATE SYNC REGISTERED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:452
+[h27n12:122423] [[40915,0],30] [1585162040.132761] ACTIVATE PROC [[40915,1],29] STATE SYNC REGISTERED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/pmix/pmix_server_gen.c:92
+[batch2:82271] [[40915,0],0] [1585162040.133356] ACTIVATE PROC [[40915,1],25] STATE SYNC REGISTERED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:452
+[h27n08:104866] [[40915,0],26] [1585162040.133241] ACTIVATE PROC [[40915,1],25] STATE SYNC REGISTERED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/pmix/pmix_server_gen.c:92
+[batch2:82271] [[40915,0],0] [1585162040.145324] ACTIVATE PROC [[40915,1],5] STATE SYNC REGISTERED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:452
+[b17n15:141994] [[40915,0],6] [1585162040.145218] ACTIVATE PROC [[40915,1],5] STATE SYNC REGISTERED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/pmix/pmix_server_gen.c:92
+[b30n12:23915] [[40915,0],10] [1585162040.145478] ACTIVATE PROC [[40915,1],9] STATE SYNC REGISTERED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/pmix/pmix_server_gen.c:92
+[batch2:82271] [[40915,0],0] [1585162040.145572] ACTIVATE PROC [[40915,1],9] STATE SYNC REGISTERED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:452
+[b30n11:49033] [[40915,0],9] [1585162040.146506] ACTIVATE PROC [[40915,1],8] STATE SYNC REGISTERED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/pmix/pmix_server_gen.c:92
+[batch2:82271] [[40915,0],0] [1585162040.146603] ACTIVATE PROC [[40915,1],8] STATE SYNC REGISTERED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:452
+[batch2:82271] [[40915,0],0] [1585162040.151815] ACTIVATE PROC [[40915,1],20] STATE SYNC REGISTERED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:452
+[f23n16:23315] [[40915,0],21] [1585162040.151713] ACTIVATE PROC [[40915,1],20] STATE SYNC REGISTERED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/pmix/pmix_server_gen.c:92
+[batch2:82271] [[40915,0],0] [1585162040.153289] ACTIVATE PROC [[40915,1],16] STATE SYNC REGISTERED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:452
+[b31n01:160528] [[40915,0],17] [1585162040.153187] ACTIVATE PROC [[40915,1],16] STATE SYNC REGISTERED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/pmix/pmix_server_gen.c:92
+[batch2:82271] [[40915,0],0] [1585162040.154399] ACTIVATE PROC [[40915,1],17] STATE SYNC REGISTERED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:452
+[b31n02:171328] [[40915,0],18] [1585162040.154302] ACTIVATE PROC [[40915,1],17] STATE SYNC REGISTERED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/pmix/pmix_server_gen.c:92
+[b30n18:65526] [[40915,0],16] [1585162040.154712] ACTIVATE PROC [[40915,1],15] STATE SYNC REGISTERED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/pmix/pmix_server_gen.c:92
+[batch2:82271] [[40915,0],0] [1585162040.154804] ACTIVATE PROC [[40915,1],15] STATE SYNC REGISTERED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:452
+[b30n16:38673] [[40915,0],14] [1585162040.154958] ACTIVATE PROC [[40915,1],13] STATE SYNC REGISTERED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/pmix/pmix_server_gen.c:92
+[batch2:82271] [[40915,0],0] [1585162040.155060] ACTIVATE PROC [[40915,1],13] STATE SYNC REGISTERED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:452
+[batch2:82271] [[40915,0],0] [1585162040.156042] ACTIVATE PROC [[40915,1],7] STATE SYNC REGISTERED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:452
+[b30n10:94844] [[40915,0],8] [1585162040.155940] ACTIVATE PROC [[40915,1],7] STATE SYNC REGISTERED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/pmix/pmix_server_gen.c:92
+[g30n11:31396] [[40915,0],22] [1585162040.165055] ACTIVATE PROC [[40915,1],21] STATE RUNNING AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/odls/base/odls_base_default_fns.c:1038
+[batch2:82271] [[40915,0],0] [1585162040.165209] ACTIVATE PROC [[40915,1],21] STATE RUNNING AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:413
+[g30n11:31396] [[40915,0],22] [1585162040.165115] ACTIVATE JOB [40915,1] STATE LOCAL LAUNCH COMPLETE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/prted/state_prted.c:314
+[batch2:82271] [[40915,0],0] [1585162040.175407] ACTIVATE PROC [[40915,1],18] STATE SYNC REGISTERED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:452
+[b31n03:167060] [[40915,0],19] [1585162040.175309] ACTIVATE PROC [[40915,1],18] STATE SYNC REGISTERED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/pmix/pmix_server_gen.c:92
+[batch2:82271] [[40915,0],0] [1585162040.213413] ACTIVATE PROC [[40915,1],21] STATE SYNC REGISTERED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:452
+[g30n11:31396] [[40915,0],22] [1585162040.213328] ACTIVATE PROC [[40915,1],21] STATE SYNC REGISTERED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/pmix/pmix_server_gen.c:92
+[batch2:82271] [[40915,0],0] [1585162040.235678] ACTIVATE PROC [[40915,1],19] STATE SYNC REGISTERED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:452
+[b31n04:127470] [[40915,0],20] [1585162040.235574] ACTIVATE PROC [[40915,1],19] STATE SYNC REGISTERED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/pmix/pmix_server_gen.c:92
+[batch2:82271] [[40915,0],0] [1585162040.236164] ACTIVATE PROC [[40915,1],6] STATE SYNC REGISTERED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:452
+[b30n09:40885] [[40915,0],7] [1585162040.236050] ACTIVATE PROC [[40915,1],6] STATE SYNC REGISTERED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/pmix/pmix_server_gen.c:92
+[b30n13:107044] [[40915,0],11] [1585162040.347683] ACTIVATE PROC [[40915,1],10] STATE RUNNING AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/odls/base/odls_base_default_fns.c:1038
+[batch2:82271] [[40915,0],0] [1585162040.347836] ACTIVATE PROC [[40915,1],10] STATE RUNNING AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:413
+[b30n13:107044] [[40915,0],11] [1585162040.347738] ACTIVATE JOB [40915,1] STATE LOCAL LAUNCH COMPLETE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/prted/state_prted.c:314
+[b30n15:39290] [[40915,0],13] [1585162040.367716] ACTIVATE PROC [[40915,1],12] STATE RUNNING AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/odls/base/odls_base_default_fns.c:1038
+[batch2:82271] [[40915,0],0] [1585162040.367898] ACTIVATE PROC [[40915,1],12] STATE RUNNING AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:413
+[batch2:82271] [[40915,0],0] [1585162040.367908] ACTIVATE JOB [40915,1] STATE RUNNING AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/base/state_base_fns.c:660
+[b30n15:39290] [[40915,0],13] [1585162040.367791] ACTIVATE JOB [40915,1] STATE LOCAL LAUNCH COMPLETE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/prted/state_prted.c:314
+[b30n17:18592] [[40915,0],15] [1585162040.435087] ACTIVATE PROC [[40915,1],14] STATE SYNC REGISTERED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/pmix/pmix_server_gen.c:92
+[batch2:82271] [[40915,0],0] [1585162040.435192] ACTIVATE PROC [[40915,1],14] STATE SYNC REGISTERED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:452
+[batch2:82271] [[40915,0],0] [1585162040.443533] ACTIVATE PROC [[40915,1],10] STATE SYNC REGISTERED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:452
+[b30n13:107044] [[40915,0],11] [1585162040.443424] ACTIVATE PROC [[40915,1],10] STATE SYNC REGISTERED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/pmix/pmix_server_gen.c:92
+[batch2:82271] [[40915,0],0] [1585162040.464734] ACTIVATE PROC [[40915,1],12] STATE SYNC REGISTERED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:452
+[b30n15:39290] [[40915,0],13] [1585162040.464617] ACTIVATE PROC [[40915,1],12] STATE SYNC REGISTERED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/pmix/pmix_server_gen.c:92
+[batch2:82271] [[40915,0],0] [1585162040.601615] ACTIVATE PROC [[40915,1],11] STATE SYNC REGISTERED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:452
+[b30n14:20639] [[40915,0],12] [1585162040.601511] ACTIVATE PROC [[40915,1],11] STATE SYNC REGISTERED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/pmix/pmix_server_gen.c:92
+[batch2:82271] [[40915,0],0] [1585162040.601625] ACTIVATE JOB [40915,1] STATE SYNC REGISTERED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/base/state_base_fns.c:669
+(b06n15:    0) I am rank: 0 of 32  (host=b06n15)
+(b30n10:    7) I am rank: 7 of 32  (host=b30n10)
+(b30n17:   14) I am rank: 14 of 32  (host=b30n17)
+(b06n18:    3) I am rank: 3 of 32  (host=b06n18)
+(b06n17:    2) I am rank: 2 of 32  (host=b06n17)
+(h28n06:   31) I am rank: 31 of 32  (host=h28n06)
+(b31n03:   18) I am rank: 18 of 32  (host=b31n03)
+(b30n15:   12) I am rank: 12 of 32  (host=b30n15)
+(b06n16:    1) I am rank: 1 of 32  (host=b06n16)
+(b31n01:   16) I am rank: 16 of 32  (host=b31n01)
+(b31n04:   19) I am rank: 19 of 32  (host=b31n04)
+(b30n09:    6) I am rank: 6 of 32  (host=b30n09)
+(b17n15:    5) I am rank: 5 of 32  (host=b17n15)
+(b30n13:   10) I am rank: 10 of 32  (host=b30n13)
+(b30n12:    9) I am rank: 9 of 32  (host=b30n12)
+(b07n01:    4) I am rank: 4 of 32  (host=b07n01)
+(b30n18:   15) I am rank: 15 of 32  (host=b30n18)
+(b30n16:   13) I am rank: 13 of 32  (host=b30n16)
+(h27n05:   22) I am rank: 22 of 32  (host=h27n05)
+(h27n09:   26) I am rank: 26 of 32  (host=h27n09)
+(h27n08:   25) I am rank: 25 of 32  (host=h27n08)
+(h27n10:   27) I am rank: 27 of 32  (host=h27n10)
+(b31n02:   17) I am rank: 17 of 32  (host=b31n02)
+(b30n14:   11) I am rank: 11 of 32  (host=b30n14)
+(f23n16:   20) I am rank: 20 of 32  (host=f23n16)
+(h27n06:   23) I am rank: 23 of 32  (host=h27n06)
+(h27n12:   29) I am rank: 29 of 32  (host=h27n12)
+(b30n11:    8) I am rank: 8 of 32  (host=b30n11)
+(h27n07:   24) I am rank: 24 of 32  (host=h27n07)
+(h28n04:   30) I am rank: 30 of 32  (host=h28n04)
+(h27n11:   28) I am rank: 28 of 32  (host=h27n11)
+(g30n11:   21) I am rank: 21 of 32  (host=g30n11)
+[b30n16:38673] [[40915,0],14] [1585162042.074889] ACTIVATE PROC [[40915,1],13] STATE IOF COMPLETE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/iof/prted/iof_prted_read.c:162
+[b30n16:38673] [[40915,0],14] [1585162042.075035] ACTIVATE PROC [[40915,1],13] STATE WAITPID FIRED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/odls/base/odls_base_default_fns.c:1716
+[b30n16:38673] [[40915,0],14] [1585162042.075045] ACTIVATE PROC [[40915,1],13] STATE NORMALLY TERMINATED AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/prted/state_prted.c:389
+[b30n18:65526] [[40915,0],16] [1585162042.075171] ACTIVATE PROC [[40915,1],15] STATE IOF COMPLETE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/iof/prted/iof_prted_read.c:162
+[b30n18:65526] [[40915,0],16] [1585162042.075333] ACTIVATE PROC [[40915,1],15] STATE WAITPID FIRED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/odls/base/odls_base_default_fns.c:1716
+[b30n18:65526] [[40915,0],16] [1585162042.075346] ACTIVATE PROC [[40915,1],15] STATE NORMALLY TERMINATED AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/prted/state_prted.c:389
+[b31n03:167060] [[40915,0],19] [1585162042.075411] ACTIVATE PROC [[40915,1],18] STATE IOF COMPLETE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/iof/prted/iof_prted_read.c:162
+[b31n03:167060] [[40915,0],19] [1585162042.075549] ACTIVATE PROC [[40915,1],18] STATE WAITPID FIRED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/odls/base/odls_base_default_fns.c:1716
+[b31n03:167060] [[40915,0],19] [1585162042.075559] ACTIVATE PROC [[40915,1],18] STATE NORMALLY TERMINATED AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/prted/state_prted.c:389
+[b30n17:18592] [[40915,0],15] [1585162042.075753] ACTIVATE PROC [[40915,1],14] STATE IOF COMPLETE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/iof/prted/iof_prted_read.c:162
+[h28n04:16897] [[40915,0],31] [1585162042.075732] ACTIVATE PROC [[40915,1],30] STATE IOF COMPLETE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/iof/prted/iof_prted_read.c:162
+[b30n17:18592] [[40915,0],15] [1585162042.075891] ACTIVATE PROC [[40915,1],14] STATE WAITPID FIRED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/odls/base/odls_base_default_fns.c:1716
+[h28n04:16897] [[40915,0],31] [1585162042.075870] ACTIVATE PROC [[40915,1],30] STATE WAITPID FIRED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/odls/base/odls_base_default_fns.c:1716
+[h28n04:16897] [[40915,0],31] [1585162042.075883] ACTIVATE PROC [[40915,1],30] STATE NORMALLY TERMINATED AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/prted/state_prted.c:389
+[b30n17:18592] [[40915,0],15] [1585162042.075902] ACTIVATE PROC [[40915,1],14] STATE NORMALLY TERMINATED AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/prted/state_prted.c:389
+[b30n14:20639] [[40915,0],12] [1585162042.076033] ACTIVATE PROC [[40915,1],11] STATE IOF COMPLETE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/iof/prted/iof_prted_read.c:162
+[batch2:82271] [[40915,0],0] [1585162042.076186] ACTIVATE PROC [[40915,1],13] STATE NORMALLY TERMINATED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:413
+[b30n14:20639] [[40915,0],12] [1585162042.076161] ACTIVATE PROC [[40915,1],11] STATE WAITPID FIRED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/odls/base/odls_base_default_fns.c:1716
+[b30n14:20639] [[40915,0],12] [1585162042.076172] ACTIVATE PROC [[40915,1],11] STATE NORMALLY TERMINATED AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/prted/state_prted.c:389
+[batch2:82271] [[40915,0],0] [1585162042.076464] ACTIVATE PROC [[40915,1],15] STATE NORMALLY TERMINATED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:413
+[batch2:82271] [[40915,0],0] [1585162042.076600] ACTIVATE PROC [[40915,1],18] STATE NORMALLY TERMINATED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:413
+[g30n11:31396] [[40915,0],22] [1585162042.076531] ACTIVATE PROC [[40915,1],21] STATE IOF COMPLETE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/iof/prted/iof_prted_read.c:162
+[g30n11:31396] [[40915,0],22] [1585162042.076699] ACTIVATE PROC [[40915,1],21] STATE WAITPID FIRED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/odls/base/odls_base_default_fns.c:1716
+[g30n11:31396] [[40915,0],22] [1585162042.076712] ACTIVATE PROC [[40915,1],21] STATE NORMALLY TERMINATED AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/prted/state_prted.c:389
+[batch2:82271] [[40915,0],0] [1585162042.076949] ACTIVATE PROC [[40915,1],30] STATE NORMALLY TERMINATED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:413
+[batch2:82271] [[40915,0],0] [1585162042.077114] ACTIVATE PROC [[40915,1],11] STATE NORMALLY TERMINATED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:413
+[h27n08:104866] [[40915,0],26] [1585162042.077019] ACTIVATE PROC [[40915,1],25] STATE IOF COMPLETE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/iof/prted/iof_prted_read.c:162
+[b06n17:106679] [[40915,0],3] [1585162042.077088] ACTIVATE PROC [[40915,1],2] STATE IOF COMPLETE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/iof/prted/iof_prted_read.c:162
+[h28n06:158971] [[40915,0],32] [1585162042.077111] ACTIVATE PROC [[40915,1],31] STATE IOF COMPLETE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/iof/prted/iof_prted_read.c:162
+[h27n12:122423] [[40915,0],30] [1585162042.077166] ACTIVATE PROC [[40915,1],29] STATE IOF COMPLETE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/iof/prted/iof_prted_read.c:162
+[h27n08:104866] [[40915,0],26] [1585162042.077168] ACTIVATE PROC [[40915,1],25] STATE WAITPID FIRED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/odls/base/odls_base_default_fns.c:1716
+[h27n08:104866] [[40915,0],26] [1585162042.077181] ACTIVATE PROC [[40915,1],25] STATE NORMALLY TERMINATED AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/prted/state_prted.c:389
+[b30n15:39290] [[40915,0],13] [1585162042.077169] ACTIVATE PROC [[40915,1],12] STATE IOF COMPLETE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/iof/prted/iof_prted_read.c:162
+[b06n17:106679] [[40915,0],3] [1585162042.077232] ACTIVATE PROC [[40915,1],2] STATE WAITPID FIRED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/odls/base/odls_base_default_fns.c:1716
+[h28n06:158971] [[40915,0],32] [1585162042.077240] ACTIVATE PROC [[40915,1],31] STATE WAITPID FIRED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/odls/base/odls_base_default_fns.c:1716
+[h28n06:158971] [[40915,0],32] [1585162042.077251] ACTIVATE PROC [[40915,1],31] STATE NORMALLY TERMINATED AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/prted/state_prted.c:389
+[b06n17:106679] [[40915,0],3] [1585162042.077243] ACTIVATE PROC [[40915,1],2] STATE NORMALLY TERMINATED AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/prted/state_prted.c:389
+[b31n01:160528] [[40915,0],17] [1585162042.077266] ACTIVATE PROC [[40915,1],16] STATE IOF COMPLETE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/iof/prted/iof_prted_read.c:162
+[b30n09:40885] [[40915,0],7] [1585162042.077237] ACTIVATE PROC [[40915,1],6] STATE IOF COMPLETE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/iof/prted/iof_prted_read.c:162
+[batch2:82271] [[40915,0],0] [1585162042.077413] ACTIVATE PROC [[40915,1],14] STATE NORMALLY TERMINATED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:413
+[b06n16:125939] [[40915,0],2] [1585162042.077301] ACTIVATE PROC [[40915,1],1] STATE IOF COMPLETE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/iof/prted/iof_prted_read.c:162
+[h27n12:122423] [[40915,0],30] [1585162042.077317] ACTIVATE PROC [[40915,1],29] STATE WAITPID FIRED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/odls/base/odls_base_default_fns.c:1716
+[h27n12:122423] [[40915,0],30] [1585162042.077328] ACTIVATE PROC [[40915,1],29] STATE NORMALLY TERMINATED AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/prted/state_prted.c:389
+[b30n15:39290] [[40915,0],13] [1585162042.077306] ACTIVATE PROC [[40915,1],12] STATE WAITPID FIRED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/odls/base/odls_base_default_fns.c:1716
+[b30n15:39290] [[40915,0],13] [1585162042.077321] ACTIVATE PROC [[40915,1],12] STATE NORMALLY TERMINATED AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/prted/state_prted.c:389
+[b30n09:40885] [[40915,0],7] [1585162042.077380] ACTIVATE PROC [[40915,1],6] STATE WAITPID FIRED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/odls/base/odls_base_default_fns.c:1716
+[b30n09:40885] [[40915,0],7] [1585162042.077393] ACTIVATE PROC [[40915,1],6] STATE NORMALLY TERMINATED AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/prted/state_prted.c:389
+[b31n01:160528] [[40915,0],17] [1585162042.077414] ACTIVATE PROC [[40915,1],16] STATE WAITPID FIRED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/odls/base/odls_base_default_fns.c:1716
+[b06n16:125939] [[40915,0],2] [1585162042.077446] ACTIVATE PROC [[40915,1],1] STATE WAITPID FIRED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/odls/base/odls_base_default_fns.c:1716
+[h27n07:103492] [[40915,0],25] [1585162042.077448] ACTIVATE PROC [[40915,1],24] STATE IOF COMPLETE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/iof/prted/iof_prted_read.c:162
+[b31n01:160528] [[40915,0],17] [1585162042.077425] ACTIVATE PROC [[40915,1],16] STATE NORMALLY TERMINATED AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/prted/state_prted.c:389
+[b06n16:125939] [[40915,0],2] [1585162042.077459] ACTIVATE PROC [[40915,1],1] STATE NORMALLY TERMINATED AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/prted/state_prted.c:389
+[b30n12:23915] [[40915,0],10] [1585162042.077515] ACTIVATE PROC [[40915,1],9] STATE IOF COMPLETE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/iof/prted/iof_prted_read.c:162
+[h27n06:87678] [[40915,0],24] [1585162042.077512] ACTIVATE PROC [[40915,1],23] STATE IOF COMPLETE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/iof/prted/iof_prted_read.c:162
+[h27n10:130337] [[40915,0],28] [1585162042.077525] ACTIVATE PROC [[40915,1],27] STATE IOF COMPLETE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/iof/prted/iof_prted_read.c:162
+[h27n07:103492] [[40915,0],25] [1585162042.077572] ACTIVATE PROC [[40915,1],24] STATE WAITPID FIRED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/odls/base/odls_base_default_fns.c:1716
+[batch2:82271] [[40915,0],0] [1585162042.077743] ACTIVATE PROC [[40915,1],21] STATE NORMALLY TERMINATED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:413
+[h27n10:130337] [[40915,0],28] [1585162042.077655] ACTIVATE PROC [[40915,1],27] STATE WAITPID FIRED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/odls/base/odls_base_default_fns.c:1716
+[h27n10:130337] [[40915,0],28] [1585162042.077666] ACTIVATE PROC [[40915,1],27] STATE NORMALLY TERMINATED AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/prted/state_prted.c:389
+[h27n06:87678] [[40915,0],24] [1585162042.077657] ACTIVATE PROC [[40915,1],23] STATE WAITPID FIRED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/odls/base/odls_base_default_fns.c:1716
+[h27n07:103492] [[40915,0],25] [1585162042.077583] ACTIVATE PROC [[40915,1],24] STATE NORMALLY TERMINATED AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/prted/state_prted.c:389
+[h27n11:133026] [[40915,0],29] [1585162042.077625] ACTIVATE PROC [[40915,1],28] STATE IOF COMPLETE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/iof/prted/iof_prted_read.c:162
+[b30n12:23915] [[40915,0],10] [1585162042.077669] ACTIVATE PROC [[40915,1],9] STATE WAITPID FIRED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/odls/base/odls_base_default_fns.c:1716
+[b30n12:23915] [[40915,0],10] [1585162042.077680] ACTIVATE PROC [[40915,1],9] STATE NORMALLY TERMINATED AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/prted/state_prted.c:389
+[b07n01:139664] [[40915,0],5] [1585162042.077728] ACTIVATE PROC [[40915,1],4] STATE IOF COMPLETE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/iof/prted/iof_prted_read.c:162
+[h27n06:87678] [[40915,0],24] [1585162042.077668] ACTIVATE PROC [[40915,1],23] STATE NORMALLY TERMINATED AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/prted/state_prted.c:389
+[h27n11:133026] [[40915,0],29] [1585162042.077778] ACTIVATE PROC [[40915,1],28] STATE WAITPID FIRED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/odls/base/odls_base_default_fns.c:1716
+[b07n01:139664] [[40915,0],5] [1585162042.077868] ACTIVATE PROC [[40915,1],4] STATE WAITPID FIRED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/odls/base/odls_base_default_fns.c:1716
+[h27n11:133026] [[40915,0],29] [1585162042.077790] ACTIVATE PROC [[40915,1],28] STATE NORMALLY TERMINATED AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/prted/state_prted.c:389
+[b07n01:139664] [[40915,0],5] [1585162042.077881] ACTIVATE PROC [[40915,1],4] STATE NORMALLY TERMINATED AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/prted/state_prted.c:389
+[b06n18:128515] [[40915,0],4] [1585162042.077981] ACTIVATE PROC [[40915,1],3] STATE IOF COMPLETE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/iof/prted/iof_prted_read.c:162
+[batch2:82271] [[40915,0],0] [1585162042.078212] ACTIVATE PROC [[40915,1],31] STATE NORMALLY TERMINATED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:413
+[batch2:82271] [[40915,0],0] [1585162042.078236] ACTIVATE PROC [[40915,1],25] STATE NORMALLY TERMINATED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:413
+[b06n15:147995] [[40915,0],1] [1585162042.078128] ACTIVATE PROC [[40915,1],0] STATE IOF COMPLETE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/iof/prted/iof_prted_read.c:162
+[b30n13:107044] [[40915,0],11] [1585162042.078126] ACTIVATE PROC [[40915,1],10] STATE IOF COMPLETE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/iof/prted/iof_prted_read.c:162
+[f23n16:23315] [[40915,0],21] [1585162042.078170] ACTIVATE PROC [[40915,1],20] STATE IOF COMPLETE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/iof/prted/iof_prted_read.c:162
+[b06n15:147995] [[40915,0],1] [1585162042.078266] ACTIVATE PROC [[40915,1],0] STATE WAITPID FIRED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/odls/base/odls_base_default_fns.c:1716
+[b30n13:107044] [[40915,0],11] [1585162042.078271] ACTIVATE PROC [[40915,1],10] STATE WAITPID FIRED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/odls/base/odls_base_default_fns.c:1716
+[batch2:82271] [[40915,0],0] [1585162042.078408] ACTIVATE PROC [[40915,1],2] STATE NORMALLY TERMINATED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:413
+[h27n09:105965] [[40915,0],27] [1585162042.078271] ACTIVATE PROC [[40915,1],26] STATE IOF COMPLETE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/iof/prted/iof_prted_read.c:162
+[batch2:82271] [[40915,0],0] [1585162042.078429] ACTIVATE PROC [[40915,1],6] STATE NORMALLY TERMINATED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:413
+[b06n15:147995] [[40915,0],1] [1585162042.078280] ACTIVATE PROC [[40915,1],0] STATE NORMALLY TERMINATED AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/prted/state_prted.c:389
+[batch2:82271] [[40915,0],0] [1585162042.078475] ACTIVATE PROC [[40915,1],29] STATE NORMALLY TERMINATED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:413
+[b30n13:107044] [[40915,0],11] [1585162042.078284] ACTIVATE PROC [[40915,1],10] STATE NORMALLY TERMINATED AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/prted/state_prted.c:389
+[b31n04:127470] [[40915,0],20] [1585162042.078276] ACTIVATE PROC [[40915,1],19] STATE IOF COMPLETE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/iof/prted/iof_prted_read.c:162
+[f23n16:23315] [[40915,0],21] [1585162042.078316] ACTIVATE PROC [[40915,1],20] STATE WAITPID FIRED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/odls/base/odls_base_default_fns.c:1716
+[f23n16:23315] [[40915,0],21] [1585162042.078327] ACTIVATE PROC [[40915,1],20] STATE NORMALLY TERMINATED AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/prted/state_prted.c:389
+[batch2:82271] [[40915,0],0] [1585162042.078507] ACTIVATE PROC [[40915,1],16] STATE NORMALLY TERMINATED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:413
+[h27n09:105965] [[40915,0],27] [1585162042.078411] ACTIVATE PROC [[40915,1],26] STATE WAITPID FIRED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/odls/base/odls_base_default_fns.c:1716
+[h27n09:105965] [[40915,0],27] [1585162042.078422] ACTIVATE PROC [[40915,1],26] STATE NORMALLY TERMINATED AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/prted/state_prted.c:389
+[b31n04:127470] [[40915,0],20] [1585162042.078434] ACTIVATE PROC [[40915,1],19] STATE WAITPID FIRED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/odls/base/odls_base_default_fns.c:1716
+[b31n04:127470] [[40915,0],20] [1585162042.078447] ACTIVATE PROC [[40915,1],19] STATE NORMALLY TERMINATED AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/prted/state_prted.c:389
+[h27n05:127708] [[40915,0],23] [1585162042.078443] ACTIVATE PROC [[40915,1],22] STATE IOF COMPLETE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/iof/prted/iof_prted_read.c:162
+[batch2:82271] [[40915,0],0] [1585162042.078585] ACTIVATE PROC [[40915,1],1] STATE NORMALLY TERMINATED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:413
+[batch2:82271] [[40915,0],0] [1585162042.078654] ACTIVATE PROC [[40915,1],24] STATE NORMALLY TERMINATED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:413
+[batch2:82271] [[40915,0],0] [1585162042.078662] ACTIVATE PROC [[40915,1],27] STATE NORMALLY TERMINATED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:413
+[b31n02:171328] [[40915,0],18] [1585162042.078546] ACTIVATE PROC [[40915,1],17] STATE IOF COMPLETE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/iof/prted/iof_prted_read.c:162
+[h27n05:127708] [[40915,0],23] [1585162042.078601] ACTIVATE PROC [[40915,1],22] STATE WAITPID FIRED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/odls/base/odls_base_default_fns.c:1716
+[h27n05:127708] [[40915,0],23] [1585162042.078612] ACTIVATE PROC [[40915,1],22] STATE NORMALLY TERMINATED AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/prted/state_prted.c:389
+[batch2:82271] [[40915,0],0] [1585162042.078737] ACTIVATE PROC [[40915,1],9] STATE NORMALLY TERMINATED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:413
+[batch2:82271] [[40915,0],0] [1585162042.078748] ACTIVATE PROC [[40915,1],23] STATE NORMALLY TERMINATED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:413
+[b31n02:171328] [[40915,0],18] [1585162042.078678] ACTIVATE PROC [[40915,1],17] STATE WAITPID FIRED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/odls/base/odls_base_default_fns.c:1716
+[b31n02:171328] [[40915,0],18] [1585162042.078689] ACTIVATE PROC [[40915,1],17] STATE NORMALLY TERMINATED AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/prted/state_prted.c:389
+[batch2:82271] [[40915,0],0] [1585162042.078790] ACTIVATE PROC [[40915,1],28] STATE NORMALLY TERMINATED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:413
+[batch2:82271] [[40915,0],0] [1585162042.078837] ACTIVATE PROC [[40915,1],12] STATE NORMALLY TERMINATED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:413
+[batch2:82271] [[40915,0],0] [1585162042.078904] ACTIVATE PROC [[40915,1],4] STATE NORMALLY TERMINATED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:413
+[b30n11:49033] [[40915,0],9] [1585162042.078930] ACTIVATE PROC [[40915,1],8] STATE IOF COMPLETE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/iof/prted/iof_prted_read.c:162
+[b30n10:94844] [[40915,0],8] [1585162042.079015] ACTIVATE PROC [[40915,1],7] STATE IOF COMPLETE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/iof/prted/iof_prted_read.c:162
+[b06n18:128515] [[40915,0],4] [1585162042.079076] ACTIVATE PROC [[40915,1],3] STATE WAITPID FIRED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/odls/base/odls_base_default_fns.c:1716
+[b30n11:49033] [[40915,0],9] [1585162042.079056] ACTIVATE PROC [[40915,1],8] STATE WAITPID FIRED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/odls/base/odls_base_default_fns.c:1716
+[b30n11:49033] [[40915,0],9] [1585162042.079069] ACTIVATE PROC [[40915,1],8] STATE NORMALLY TERMINATED AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/prted/state_prted.c:389
+[b30n10:94844] [[40915,0],8] [1585162042.079150] ACTIVATE PROC [[40915,1],7] STATE WAITPID FIRED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/odls/base/odls_base_default_fns.c:1716
+[b06n18:128515] [[40915,0],4] [1585162042.079089] ACTIVATE PROC [[40915,1],3] STATE NORMALLY TERMINATED AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/prted/state_prted.c:389
+[batch2:82271] [[40915,0],0] [1585162042.079258] ACTIVATE PROC [[40915,1],0] STATE NORMALLY TERMINATED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:413
+[batch2:82271] [[40915,0],0] [1585162042.079311] ACTIVATE PROC [[40915,1],10] STATE NORMALLY TERMINATED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:413
+[b30n10:94844] [[40915,0],8] [1585162042.079161] ACTIVATE PROC [[40915,1],7] STATE NORMALLY TERMINATED AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/prted/state_prted.c:389
+[b17n15:141994] [[40915,0],6] [1585162042.079219] ACTIVATE PROC [[40915,1],5] STATE IOF COMPLETE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/iof/prted/iof_prted_read.c:162
+[batch2:82271] [[40915,0],0] [1585162042.079366] ACTIVATE PROC [[40915,1],20] STATE NORMALLY TERMINATED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:413
+[b17n15:141994] [[40915,0],6] [1585162042.079368] ACTIVATE PROC [[40915,1],5] STATE WAITPID FIRED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/odls/base/odls_base_default_fns.c:1716
+[b17n15:141994] [[40915,0],6] [1585162042.079379] ACTIVATE PROC [[40915,1],5] STATE NORMALLY TERMINATED AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/prted/state_prted.c:389
+[batch2:82271] [[40915,0],0] [1585162042.079513] ACTIVATE PROC [[40915,1],26] STATE NORMALLY TERMINATED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:413
+[batch2:82271] [[40915,0],0] [1585162042.079520] ACTIVATE PROC [[40915,1],19] STATE NORMALLY TERMINATED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:413
+[batch2:82271] [[40915,0],0] [1585162042.079747] ACTIVATE PROC [[40915,1],22] STATE NORMALLY TERMINATED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:413
+[batch2:82271] [[40915,0],0] [1585162042.079754] ACTIVATE PROC [[40915,1],17] STATE NORMALLY TERMINATED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:413
+[batch2:82271] [[40915,0],0] [1585162042.080122] ACTIVATE PROC [[40915,1],8] STATE NORMALLY TERMINATED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:413
+[batch2:82271] [[40915,0],0] [1585162042.080185] ACTIVATE PROC [[40915,1],3] STATE NORMALLY TERMINATED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:413
+[batch2:82271] [[40915,0],0] [1585162042.080340] ACTIVATE PROC [[40915,1],7] STATE NORMALLY TERMINATED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:413
+[batch2:82271] [[40915,0],0] [1585162042.080468] ACTIVATE PROC [[40915,1],5] STATE NORMALLY TERMINATED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/plm/base/plm_base_receive.c:413
+[batch2:82271] [[40915,0],0] [1585162042.080477] ACTIVATE JOB [40915,1] STATE NORMALLY TERMINATED AT ../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/base/state_base_fns.c:761
+[batch2:82271] [[40915,0],0] [1585162042.080840] ACTIVATE JOB [40915,1] STATE NOTIFY COMPLETED AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/dvm/state_dvm.c:633
+[batch2:82271] [[40915,0],0] [1585162042.080874] ACTIVATE JOB [40915,1] STATE NOTIFIED AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/state/dvm/state_dvm.c:840
+[batch2:82271] [[40915,0],0] [1585162042.080974] ACTIVATE JOB [40915,1] STATE NORMALLY TERMINATED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/pmix/pmix_server_gen.c:451
+[b06n15:147995] [[40915,0],1] [1585162042.081192] ACTIVATE JOB [40915,1] STATE NORMALLY TERMINATED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/pmix/pmix_server_gen.c:451
+[b06n16:125939] [[40915,0],2] [1585162042.081212] ACTIVATE JOB [40915,1] STATE NORMALLY TERMINATED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/pmix/pmix_server_gen.c:451
+[b06n18:128515] [[40915,0],4] [1585162042.081230] ACTIVATE JOB [40915,1] STATE NORMALLY TERMINATED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/pmix/pmix_server_gen.c:451
+[b17n15:141994] [[40915,0],6] [1585162042.081240] ACTIVATE JOB [40915,1] STATE NORMALLY TERMINATED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/pmix/pmix_server_gen.c:451
+[b30n14:20639] [[40915,0],12] [1585162042.081256] ACTIVATE JOB [40915,1] STATE NORMALLY TERMINATED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/pmix/pmix_server_gen.c:451
+[b30n10:94844] [[40915,0],8] [1585162042.081255] ACTIVATE JOB [40915,1] STATE NORMALLY TERMINATED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/pmix/pmix_server_gen.c:451
+[b30n11:49033] [[40915,0],9] [1585162042.081260] ACTIVATE JOB [40915,1] STATE NORMALLY TERMINATED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/pmix/pmix_server_gen.c:451
+[b30n17:18592] [[40915,0],15] [1585162042.081275] ACTIVATE JOB [40915,1] STATE NORMALLY TERMINATED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/pmix/pmix_server_gen.c:451
+[b30n13:107044] [[40915,0],11] [1585162042.081254] ACTIVATE JOB [40915,1] STATE NORMALLY TERMINATED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/pmix/pmix_server_gen.c:451
+[b31n02:171328] [[40915,0],18] [1585162042.081285] ACTIVATE JOB [40915,1] STATE NORMALLY TERMINATED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/pmix/pmix_server_gen.c:451
+[b30n09:40885] [[40915,0],7] [1585162042.081245] ACTIVATE JOB [40915,1] STATE NORMALLY TERMINATED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/pmix/pmix_server_gen.c:451
+[b30n12:23915] [[40915,0],10] [1585162042.081253] ACTIVATE JOB [40915,1] STATE NORMALLY TERMINATED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/pmix/pmix_server_gen.c:451
+[b31n01:160528] [[40915,0],17] [1585162042.081284] ACTIVATE JOB [40915,1] STATE NORMALLY TERMINATED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/pmix/pmix_server_gen.c:451
+[b30n15:39290] [[40915,0],13] [1585162042.081271] ACTIVATE JOB [40915,1] STATE NORMALLY TERMINATED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/pmix/pmix_server_gen.c:451
+[b31n03:167060] [[40915,0],19] [1585162042.081297] ACTIVATE JOB [40915,1] STATE NORMALLY TERMINATED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/pmix/pmix_server_gen.c:451
+[b07n01:139664] [[40915,0],5] [1585162042.081227] ACTIVATE JOB [40915,1] STATE NORMALLY TERMINATED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/pmix/pmix_server_gen.c:451
+[h27n07:103492] [[40915,0],25] [1585162042.081327] ACTIVATE JOB [40915,1] STATE NORMALLY TERMINATED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/pmix/pmix_server_gen.c:451
+[b30n18:65526] [[40915,0],16] [1585162042.081287] ACTIVATE JOB [40915,1] STATE NORMALLY TERMINATED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/pmix/pmix_server_gen.c:451
+[b31n04:127470] [[40915,0],20] [1585162042.081294] ACTIVATE JOB [40915,1] STATE NORMALLY TERMINATED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/pmix/pmix_server_gen.c:451
+[h27n05:127708] [[40915,0],23] [1585162042.081321] ACTIVATE JOB [40915,1] STATE NORMALLY TERMINATED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/pmix/pmix_server_gen.c:451
+[h27n06:87678] [[40915,0],24] [1585162042.081333] ACTIVATE JOB [40915,1] STATE NORMALLY TERMINATED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/pmix/pmix_server_gen.c:451
+[b30n16:38673] [[40915,0],14] [1585162042.081287] ACTIVATE JOB [40915,1] STATE NORMALLY TERMINATED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/pmix/pmix_server_gen.c:451
+[f23n16:23315] [[40915,0],21] [1585162042.081319] ACTIVATE JOB [40915,1] STATE NORMALLY TERMINATED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/pmix/pmix_server_gen.c:451
+[h28n04:16897] [[40915,0],31] [1585162042.081354] ACTIVATE JOB [40915,1] STATE NORMALLY TERMINATED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/pmix/pmix_server_gen.c:451
+[b06n17:106679] [[40915,0],3] [1585162042.081224] ACTIVATE JOB [40915,1] STATE NORMALLY TERMINATED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/pmix/pmix_server_gen.c:451
+[h27n11:133026] [[40915,0],29] [1585162042.081351] ACTIVATE JOB [40915,1] STATE NORMALLY TERMINATED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/pmix/pmix_server_gen.c:451
+[h27n10:130337] [[40915,0],28] [1585162042.081335] ACTIVATE JOB [40915,1] STATE NORMALLY TERMINATED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/pmix/pmix_server_gen.c:451
+[h27n08:104866] [[40915,0],26] [1585162042.081330] ACTIVATE JOB [40915,1] STATE NORMALLY TERMINATED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/pmix/pmix_server_gen.c:451
+[h27n12:122423] [[40915,0],30] [1585162042.081362] ACTIVATE JOB [40915,1] STATE NORMALLY TERMINATED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/pmix/pmix_server_gen.c:451
+[h27n09:105965] [[40915,0],27] [1585162042.081349] ACTIVATE JOB [40915,1] STATE NORMALLY TERMINATED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/pmix/pmix_server_gen.c:451
+[g30n11:31396] [[40915,0],22] [1585162042.081321] ACTIVATE JOB [40915,1] STATE NORMALLY TERMINATED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/pmix/pmix_server_gen.c:451
+[h28n06:158971] [[40915,0],32] [1585162042.081359] ACTIVATE JOB [40915,1] STATE NORMALLY TERMINATED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/pmix/pmix_server_gen.c:451
+[b06n15:147995] [[40915,0],1] [1585162042.123249] ACTIVATE JOB NULL STATE DAEMONS TERMINATED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/prted_comm.c:549
+[b06n16:125939] [[40915,0],2] [1585162042.123262] ACTIVATE JOB NULL STATE DAEMONS TERMINATED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/prted_comm.c:549
+[b30n11:49033] [[40915,0],9] [1585162042.123305] ACTIVATE JOB NULL STATE DAEMONS TERMINATED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/prted_comm.c:549
+[b17n15:141994] [[40915,0],6] [1585162042.123288] ACTIVATE JOB NULL STATE DAEMONS TERMINATED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/prted_comm.c:549
+[b06n18:128515] [[40915,0],4] [1585162042.123278] ACTIVATE JOB NULL STATE DAEMONS TERMINATED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/prted_comm.c:549
+[b30n13:107044] [[40915,0],11] [1585162042.123307] ACTIVATE JOB NULL STATE DAEMONS TERMINATED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/prted_comm.c:549
+[b30n17:18592] [[40915,0],15] [1585162042.123331] ACTIVATE JOB NULL STATE DAEMONS TERMINATED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/prted_comm.c:549
+[b30n16:38673] [[40915,0],14] [1585162042.123336] ACTIVATE JOB NULL STATE DAEMONS TERMINATED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/prted_comm.c:549
+[b30n10:94844] [[40915,0],8] [1585162042.123305] ACTIVATE JOB NULL STATE DAEMONS TERMINATED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/prted_comm.c:549
+[b30n12:23915] [[40915,0],10] [1585162042.123313] ACTIVATE JOB NULL STATE DAEMONS TERMINATED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/prted_comm.c:549
+[b30n15:39290] [[40915,0],13] [1585162042.123316] ACTIVATE JOB NULL STATE DAEMONS TERMINATED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/prted_comm.c:549
+[b07n01:139664] [[40915,0],5] [1585162042.123274] ACTIVATE JOB NULL STATE DAEMONS TERMINATED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/prted_comm.c:549
+[b31n03:167060] [[40915,0],19] [1585162042.123347] ACTIVATE JOB NULL STATE DAEMONS TERMINATED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/prted_comm.c:549
+[b31n02:171328] [[40915,0],18] [1585162042.123351] ACTIVATE JOB NULL STATE DAEMONS TERMINATED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/prted_comm.c:549
+[b30n18:65526] [[40915,0],16] [1585162042.123337] ACTIVATE JOB NULL STATE DAEMONS TERMINATED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/prted_comm.c:549
+[b30n14:20639] [[40915,0],12] [1585162042.123320] ACTIVATE JOB NULL STATE DAEMONS TERMINATED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/prted_comm.c:549
+[b31n04:127470] [[40915,0],20] [1585162042.123350] ACTIVATE JOB NULL STATE DAEMONS TERMINATED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/prted_comm.c:549
+[b31n01:160528] [[40915,0],17] [1585162042.123348] ACTIVATE JOB NULL STATE DAEMONS TERMINATED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/prted_comm.c:549
+[h27n07:103492] [[40915,0],25] [1585162042.123387] ACTIVATE JOB NULL STATE DAEMONS TERMINATED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/prted_comm.c:549
+[f23n16:23315] [[40915,0],21] [1585162042.123374] ACTIVATE JOB NULL STATE DAEMONS TERMINATED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/prted_comm.c:549
+[h27n10:130337] [[40915,0],28] [1585162042.123408] ACTIVATE JOB NULL STATE DAEMONS TERMINATED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/prted_comm.c:549
+[b06n17:106679] [[40915,0],3] [1585162042.123273] ACTIVATE JOB NULL STATE DAEMONS TERMINATED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/prted_comm.c:549
+[h27n05:127708] [[40915,0],23] [1585162042.123386] ACTIVATE JOB NULL STATE DAEMONS TERMINATED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/prted_comm.c:549
+[h27n06:87678] [[40915,0],24] [1585162042.123392] ACTIVATE JOB NULL STATE DAEMONS TERMINATED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/prted_comm.c:549
+[h27n12:122423] [[40915,0],30] [1585162042.123407] ACTIVATE JOB NULL STATE DAEMONS TERMINATED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/prted_comm.c:549
+[g30n11:31396] [[40915,0],22] [1585162042.123382] ACTIVATE JOB NULL STATE DAEMONS TERMINATED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/prted_comm.c:549
+[h27n08:104866] [[40915,0],26] [1585162042.123402] ACTIVATE JOB NULL STATE DAEMONS TERMINATED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/prted_comm.c:549
+[h27n09:105965] [[40915,0],27] [1585162042.123406] ACTIVATE JOB NULL STATE DAEMONS TERMINATED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/prted_comm.c:549
+[h27n11:133026] [[40915,0],29] [1585162042.123411] ACTIVATE JOB NULL STATE DAEMONS TERMINATED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/prted_comm.c:549
+[h28n04:16897] [[40915,0],31] [1585162042.123427] ACTIVATE JOB NULL STATE DAEMONS TERMINATED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/prted_comm.c:549
+[h28n06:158971] [[40915,0],32] [1585162042.123434] ACTIVATE JOB NULL STATE DAEMONS TERMINATED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/prted_comm.c:549
+[b30n09:40885] [[40915,0],7] [1585162042.123292] ACTIVATE JOB NULL STATE DAEMONS TERMINATED AT ../../../../../../source/openmpi-br-master/prrte/src/prted/prted_comm.c:549
+[batch2:82271] [[40915,0],0] [1585162042.124946] ACTIVATE PROC [[40915,0],1] STATE COMMUNICATION FAILURE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/oob/tcp/oob_tcp_component.c:1022
+[batch2:82271] [[40915,0],0] [1585162042.125064] ACTIVATE PROC [[40915,0],12] STATE COMMUNICATION FAILURE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/oob/tcp/oob_tcp_component.c:1022
+[batch2:82271] [[40915,0],0] [1585162042.125084] ACTIVATE PROC [[40915,0],7] STATE COMMUNICATION FAILURE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/oob/tcp/oob_tcp_component.c:1022
+[batch2:82271] [[40915,0],0] [1585162042.125102] ACTIVATE PROC [[40915,0],11] STATE COMMUNICATION FAILURE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/oob/tcp/oob_tcp_component.c:1022
+[batch2:82271] [[40915,0],0] [1585162042.125143] ACTIVATE PROC [[40915,0],5] STATE COMMUNICATION FAILURE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/oob/tcp/oob_tcp_component.c:1022
+[batch2:82271] [[40915,0],0] [1585162042.125218] ACTIVATE PROC [[40915,0],28] STATE COMMUNICATION FAILURE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/oob/tcp/oob_tcp_component.c:1022
+[batch2:82271] [[40915,0],0] [1585162042.125236] ACTIVATE PROC [[40915,0],19] STATE COMMUNICATION FAILURE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/oob/tcp/oob_tcp_component.c:1022
+[batch2:82271] [[40915,0],0] [1585162042.125241] ACTIVATE PROC [[40915,0],20] STATE COMMUNICATION FAILURE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/oob/tcp/oob_tcp_component.c:1022
+[batch2:82271] [[40915,0],0] [1585162042.125247] ACTIVATE PROC [[40915,0],13] STATE COMMUNICATION FAILURE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/oob/tcp/oob_tcp_component.c:1022
+[batch2:82271] [[40915,0],0] [1585162042.125253] ACTIVATE PROC [[40915,0],18] STATE COMMUNICATION FAILURE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/oob/tcp/oob_tcp_component.c:1022
+[batch2:82271] [[40915,0],0] [1585162042.125387] ACTIVATE PROC [[40915,0],32] STATE COMMUNICATION FAILURE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/oob/tcp/oob_tcp_component.c:1022
+[batch2:82271] [[40915,0],0] [1585162042.125394] ACTIVATE PROC [[40915,0],10] STATE COMMUNICATION FAILURE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/oob/tcp/oob_tcp_component.c:1022
+[batch2:82271] [[40915,0],0] [1585162042.125400] ACTIVATE PROC [[40915,0],2] STATE COMMUNICATION FAILURE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/oob/tcp/oob_tcp_component.c:1022
+[batch2:82271] [[40915,0],0] [1585162042.125405] ACTIVATE PROC [[40915,0],25] STATE COMMUNICATION FAILURE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/oob/tcp/oob_tcp_component.c:1022
+[batch2:82271] [[40915,0],0] [1585162042.125426] ACTIVATE PROC [[40915,0],26] STATE COMMUNICATION FAILURE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/oob/tcp/oob_tcp_component.c:1022
+[batch2:82271] [[40915,0],0] [1585162042.125431] ACTIVATE PROC [[40915,0],21] STATE COMMUNICATION FAILURE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/oob/tcp/oob_tcp_component.c:1022
+[batch2:82271] [[40915,0],0] [1585162042.125444] ACTIVATE PROC [[40915,0],9] STATE COMMUNICATION FAILURE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/oob/tcp/oob_tcp_component.c:1022
+[batch2:82271] [[40915,0],0] [1585162042.125449] ACTIVATE PROC [[40915,0],16] STATE COMMUNICATION FAILURE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/oob/tcp/oob_tcp_component.c:1022
+[batch2:82271] [[40915,0],0] [1585162042.125455] ACTIVATE PROC [[40915,0],31] STATE COMMUNICATION FAILURE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/oob/tcp/oob_tcp_component.c:1022
+[batch2:82271] [[40915,0],0] [1585162042.125460] ACTIVATE PROC [[40915,0],4] STATE COMMUNICATION FAILURE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/oob/tcp/oob_tcp_component.c:1022
+[batch2:82271] [[40915,0],0] [1585162042.125466] ACTIVATE PROC [[40915,0],29] STATE COMMUNICATION FAILURE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/oob/tcp/oob_tcp_component.c:1022
+[batch2:82271] [[40915,0],0] [1585162042.125574] ACTIVATE PROC [[40915,0],22] STATE COMMUNICATION FAILURE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/oob/tcp/oob_tcp_component.c:1022
+[batch2:82271] [[40915,0],0] [1585162042.125581] ACTIVATE PROC [[40915,0],15] STATE COMMUNICATION FAILURE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/oob/tcp/oob_tcp_component.c:1022
+[batch2:82271] [[40915,0],0] [1585162042.125586] ACTIVATE PROC [[40915,0],14] STATE COMMUNICATION FAILURE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/oob/tcp/oob_tcp_component.c:1022
+[batch2:82271] [[40915,0],0] [1585162042.125591] ACTIVATE PROC [[40915,0],8] STATE COMMUNICATION FAILURE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/oob/tcp/oob_tcp_component.c:1022
+[batch2:82271] [[40915,0],0] [1585162042.125597] ACTIVATE PROC [[40915,0],27] STATE COMMUNICATION FAILURE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/oob/tcp/oob_tcp_component.c:1022
+[batch2:82271] [[40915,0],0] [1585162042.125602] ACTIVATE PROC [[40915,0],6] STATE COMMUNICATION FAILURE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/oob/tcp/oob_tcp_component.c:1022
+[batch2:82271] [[40915,0],0] [1585162042.125608] ACTIVATE PROC [[40915,0],23] STATE COMMUNICATION FAILURE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/oob/tcp/oob_tcp_component.c:1022
+[batch2:82271] [[40915,0],0] [1585162042.125664] ACTIVATE PROC [[40915,0],17] STATE COMMUNICATION FAILURE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/oob/tcp/oob_tcp_component.c:1022
+[batch2:82271] [[40915,0],0] [1585162042.125679] ACTIVATE PROC [[40915,0],3] STATE COMMUNICATION FAILURE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/oob/tcp/oob_tcp_component.c:1022
+[batch2:82271] [[40915,0],0] [1585162042.125692] ACTIVATE PROC [[40915,0],24] STATE COMMUNICATION FAILURE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/oob/tcp/oob_tcp_component.c:1022
+[batch2:82271] [[40915,0],0] [1585162042.125705] ACTIVATE PROC [[40915,0],30] STATE COMMUNICATION FAILURE AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/oob/tcp/oob_tcp_component.c:1022
+[batch2:82271] [[40915,0],0] [1585162042.125719] ACTIVATE JOB NULL STATE DAEMONS TERMINATED AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/errmgr/dvm/errmgr_dvm.c:297
+[batch2:82271] [[40915,0],0] [1585162042.125734] ACTIVATE JOB NULL STATE DAEMONS TERMINATED AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/errmgr/dvm/errmgr_dvm.c:297
+[batch2:82271] [[40915,0],0] [1585162042.125756] ACTIVATE JOB NULL STATE DAEMONS TERMINATED AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/errmgr/dvm/errmgr_dvm.c:297
+[batch2:82271] [[40915,0],0] [1585162042.125767] ACTIVATE JOB NULL STATE DAEMONS TERMINATED AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/errmgr/dvm/errmgr_dvm.c:297
+[batch2:82271] [[40915,0],0] [1585162042.125778] ACTIVATE JOB NULL STATE DAEMONS TERMINATED AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/errmgr/dvm/errmgr_dvm.c:297
+[batch2:82271] [[40915,0],0] [1585162042.125789] ACTIVATE JOB NULL STATE DAEMONS TERMINATED AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/errmgr/dvm/errmgr_dvm.c:297
+[batch2:82271] [[40915,0],0] [1585162042.125863] ACTIVATE JOB NULL STATE DAEMONS TERMINATED AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/errmgr/dvm/errmgr_dvm.c:297
+[batch2:82271] [[40915,0],0] [1585162042.125908] ACTIVATE JOB NULL STATE DAEMONS TERMINATED AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/errmgr/dvm/errmgr_dvm.c:297
+[batch2:82271] [[40915,0],0] [1585162042.125943] ACTIVATE JOB NULL STATE DAEMONS TERMINATED AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/errmgr/dvm/errmgr_dvm.c:297
+[batch2:82271] [[40915,0],0] [1585162042.125956] ACTIVATE JOB NULL STATE DAEMONS TERMINATED AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/errmgr/dvm/errmgr_dvm.c:297
+[batch2:82271] [[40915,0],0] [1585162042.125968] ACTIVATE JOB NULL STATE DAEMONS TERMINATED AT ../../../../../../../../../source/openmpi-br-master/prrte/src/mca/errmgr/dvm/errmgr_dvm.c:297
+# SLEEP 2
+####################
+# RESULTS-DBG: RC:0 NNODES:32  PES:32  NPERNODE:1 TIME:4.499
+#####################################
+# Results Dir: /gpfs/alpine/proj-shared/stf010/naughton/summit/ompix/scaling/tests
+#####################################
+#   TJN-END: Wed Mar 25 14:47:25 EDT 2020
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@batch2>
+Subject: Job 994949: <ompi-dbg> in cluster <summit> Done
+
+Job <ompi-dbg> was submitted from host <login5> by user <naughton> in cluster <summit> at Wed Mar 25 14:46:49 2020
+Job was executed on host(s) <1*batch2>, in queue <batch>, as user <naughton> in cluster <summit> at Wed Mar 25 14:47:01 2020
+                            <42*b06n15>
+                            <42*b06n16>
+                            <42*b06n17>
+                            <42*b06n18>
+                            <42*b07n01>
+                            <42*b17n15>
+                            <42*b30n09>
+                            <42*b30n10>
+                            <42*b30n11>
+                            <42*b30n12>
+                            <42*b30n13>
+                            <42*b30n14>
+                            <42*b30n15>
+                            <42*b30n16>
+                            <42*b30n17>
+                            <42*b30n18>
+                            <42*b31n01>
+                            <42*b31n02>
+                            <42*b31n03>
+                            <42*b31n04>
+                            <42*f23n16>
+                            <42*g30n11>
+                            <42*h27n05>
+                            <42*h27n06>
+                            <42*h27n07>
+                            <42*h27n08>
+                            <42*h27n09>
+                            <42*h27n10>
+                            <42*h27n11>
+                            <42*h27n12>
+                            <42*h28n04>
+                            <42*h28n06>
+</ccs/home/naughton> was used as the home directory.
+</gpfs/alpine/proj-shared/stf010/naughton/summit/ompix/scaling> was used as the working directory.
+Started at Wed Mar 25 14:47:01 2020
+Terminated at Wed Mar 25 14:47:25 2020
+Results reported at Wed Mar 25 14:47:25 2020
+
+The output (if any) is above this job summary.
+

@@ -1,0 +1,8 @@
+CC=clang
+CXX=clang++
+CFLAGS="-g -O1 -fsanitize=alignment"
+CXXFLAGS="-O1 -g -fsanitize=alignment"
+CCASFLAGS="-O1 -g -fsanitize=alignment"
+with_wrapper_cflags="-O1 -g -fsanitize=alignment"
+with_wrapper_cxxflags="-O1 -g -fsanitize=alignment"
+enable_mpi_fortran=no

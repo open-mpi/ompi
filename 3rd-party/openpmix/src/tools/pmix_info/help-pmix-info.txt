@@ -1,0 +1,152 @@
+# -*- text -*-
+#
+# Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+#                         University Research and Technology
+#                         Corporation.  All rights reserved.
+# Copyright (c) 2004-2005 The University of Tennessee and The University
+#                         of Tennessee Research Foundation.  All rights
+#                         reserved.
+# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+#                         University of Stuttgart.  All rights reserved.
+# Copyright (c) 2004-2005 The Regents of the University of California.
+#                         All rights reserved.
+# Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2017-2018 Intel, Inc. All rights reserved.
+# Copyright (c) 2022-2024 Nanook Consulting  All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+# This is the US/English help file for PMIx pmix-info help
+# messages.
+#
+[usage]
+%s (%s) %s
+
+Usage: %s [OPTION]...
+PMIx Library Information
+
+
+/*****      General Options      *****/
+
+-h|--help                            This help message
+-h|--help <arg0>                     Help for the specified option
+-v|--verbose                         Enable typical debug options
+-V|--version                         Print version and exit
+
+-a|--all                             Show all configuration options and MCA parameters
+   --arch                            Show architecture PMIx was compiled on
+-c|--config                          Show configuration options
+   --hostname                        Show the hostname that PMIx was configured and built on
+   --internal                        Show internal MCA parameters (not meant to be modified by users)
+   --param <arg0>:<arg1>,<arg2>      Show MCA parameters.  The first parameter is the framework (or the
+                                     keyword "all"); the second parameter is a comma-delimited list of
+                                     specific component names (if only <arg0> is given, then all
+                                     components will be reported).
+   --path <arg0>                     Show paths that PMIx was configured with.  Accepts the following
+                                     parameters: prefix, bindir, libdir, incdir, mandir, pkglibdir,
+                                     sysconfdir
+   --show-version <arg0>:<arg1>      Show version of PMIx or a component.  The first parameter can be the
+                                     keywords "prte" or "all", a framework name (indicating all components in
+                                     a framework), or a framework:component string (indicating a specific
+                                     component).  The second parameter can be one of: full, major, minor,
+                                     release, greek, svn.
+   --pretty-print                    When used in conjunction with other parameters, the output is
+                                     displayed in 'pretty-print' format (default)
+   --parsable                        When used in conjunction with other parameters, the output is
+                                     displayed in a machine-parsable format
+   --parseable                       Synonym for --parsable
+   --show-failed                     Show the components that failed to load along with the reason why they failed
+   --selected-only                   Show only variables from selected components
+
+Report bugs to %s
+#
+[param]
+Syntax: --param <arg0> <arg1>
+Show MCA parameters.  The first parameter is the framework (or the
+keyword "all"); the second parameter is the specific component name (or
+the keyword "all").
+#
+[internal]
+Syntax: --internal
+Show internal MCA parameters (i.e., parameters not meant to be modified by users)
+#
+[path]
+Syntax: --path <arg0>
+Show the paths with which PMIx was configured.  Accepts the following
+parameters: prefix, bindir, libdir, incdir, mandir, pkglibdir,
+sysconfdir
+#
+[arch]
+Syntax: --arch
+Show architecture PMIx was compiled on
+#
+[config]
+Syntax: -c or --config
+Show configuration options used to configure PMIx
+#
+[hostname]
+Syntax: --hostname
+Show the hostname upon which PMIx was configured and built
+#
+[all]
+Syntax: -a or --all
+Show all configuration options and MCA parameters
+#
+[show-version]
+Show version of PMIx or a component.  The first parameter can be the
+keywords "prte" or "all", a framework name (indicating all components in
+a framework), or a framework:component string (indicating a specific
+component).  The second parameter can be one of: full, major, minor,
+release, greek, svn.
+#
+[pretty-print]
+When used in conjunction with other parameters, the output is
+displayed in 'pretty-print' format (default)
+#
+[parsable]
+When used in conjunction with other parameters, the output is
+displayed in a machine-parsable format
+#
+[parseable]
+When used in conjunction with other parameters, the output is
+displayed in a machine-parsable format
+#
+[show-failed]
+Show the components that failed to load along with the reason why they failed
+#
+[selected-only]
+Show only variables from selected (active) components
+#
+[lib-call-fail]
+A library call unexpectedly failed.  This is a terminal error; please
+show this message to an ORTE wizard:
+
+        Library call: %s
+         Source file: %s
+  Source line number: %d
+
+Aborting...
+#
+[developer warning: field too long]
+**************************************************************************
+*** DEVELOPER WARNING: A field in pmix-info output is too long and
+*** will appear poorly in the prettyprint output.
+***
+***   Value:      "%s"
+***   Max length: %d
+**************************************************************************
+#
+[not-found]
+The specified framework could not be found:
+
+  Framework: %s
+
+This could be due to a misspelling of the framework name, or because support
+for that framework was not configured into this version of orte. Please see
+
+  pmix-info --config
+
+for a full report of how PMIx was configured.

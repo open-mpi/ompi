@@ -1,0 +1,18 @@
+# -*- makefile -*-
+#
+# Copyright (c) 2016      Intel, Inc.  All rights reserved.
+# Copyright (c) 2021-2024 Nanook Consulting  All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+
+dist_pmixdata_DATA += hwloc/help-ploc.txt
+
+headers += \
+        hwloc/pmix_hwloc.h
+
+sources += \
+        hwloc/pmix_hwloc.c \
+        hwloc/pmix_hwloc_datatype.c

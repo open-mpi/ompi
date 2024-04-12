@@ -1,0 +1,44 @@
+# Copyright (c) 2014      The University of Tennessee and The University
+#                         of Tennessee Research Foundation.  All rights
+#                         reserved.
+
+# Debug options
+enable_mem_debug=no
+enable_mem_profile=no
+enable_debug=no
+enable_debug_symbols=no
+#enable_pretty_print_stacktrace=no
+with_valgrind=no
+enable_contrib_no_build=
+
+# Extensions and language bindings
+enable_io_romio=yes
+enable_oshmem=no
+enable_mpi_cxx=no
+enable_mpi_cxx_seek=no
+enable_cxx_exceptions=no
+enable_binaries=yes
+
+# Components to load/ignore
+with_alps=yes
+with_tm=no
+with_slurm=no
+with_xpmem=yes
+with_verbs=no
+enable_mca_no_build=crs,filem,routed-linear,snapc,pml-example,pml-cm,ess-cnos,grpcomm-cnos,plm-rsh,btl-tcp,oob-ud,ras-simulator,mpool-fake,maffinity-first_use,maffinity-libnuma,paffinity-linux
+enable_mca_static=btl:ugni,btl:self,btl:vader,pml:ob1,coll:ml
+#enable_mca_direct=pml-ob1
+with_threads=yes
+enable_heterogeneous=no
+with_memory_manager=linux
+#enable_ipv6=no
+#enable_prte_static_ports=no
+#enable_pty_support=no
+
+# Setup for static build on Cray
+enable_static=yes
+enable_shared=no
+enable_dlopen=no
+enable_getpwuid=no
+enable_hwloc_pci=no
+

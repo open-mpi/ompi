@@ -1,0 +1,195 @@
+# -*- text -*-
+#
+# Copyright (c) 2020      Intel, Inc.  All rights reserved.
+# Copyright (c) 2020      IBM Corporation.  All rights reserved.
+# Copyright (c) 2021-2024 Nanook Consulting  All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+#
+[missing-param-file]
+Unable to locate the variable file:
+   %s
+[missing-param-file-def]
+Unable to locate the variable file:
+   %s
+either relative to the current working directory
+or in the default location:
+   %s
+#
+[bad-param-line]
+Parsing error in variable file:
+
+  FILE:  %s
+  LINE:  %s
+
+Please correct and try again.
+#
+[incorrect-env-list-param]
+WARNING: The format of "mca_base_env_list" parameter is a delimited list of VAR=VAL or
+VAR instances. By default, the delimiter is a semicolon: VAR1=VAL1;VAR2;VAR3=VAL3;...
+You can set other via "mca_base_env_list_delimiter" parameter. If the delimiter is a
+semicolon, the value of "mca_base_env_list" variable should be quoted to not interfere
+with SHELL command line parsing. In the case where a value is not assigned to variable
+VAR, the value will be taken from the current environment.
+The following environment variable was not found in the environment:
+  Variable:             %s
+  MCA variable value:   %s
+#
+[env-not-found]
+An environmental variable was requested to be forwarded, but was not found:
+
+  Variable:  %s
+
+This may result in unexpected behavior.
+#
+[single-dash-error]
+WARNING: All multi-character command line options must be prefixed with double
+dashes, not a single dash:
+
+  Deprecated option(s):   %s
+  Corrected  option(s):   %s
+
+We have updated this for you and will proceed. However, this will be treated
+as an error in a future release. Please update your command line.
+#
+[deprecated-converted]
+WARNING: A deprecated command line option was used.
+
+  Deprecated option:   %s
+  Corrected option:    %s
+
+We have updated this for you and will proceed. However, this will be treated
+as an error in a future release. Please update your command line.
+#
+[deprecated-inform]
+WARNING: A deprecated command line option was used.
+
+  Deprecated option:   %s
+  Reason: %s
+#
+[deprecated-fail]
+WARNING: A deprecated command line option was used. It is unclear how to update
+this option. Please contact the community for how best to resolve this issue.
+
+  Deprecated option:   %s
+  Reason: %s
+
+We are not able to proceed. Please update your command line.
+#
+[bad-ppr]
+The proc-per-resource request is not correct. The request must include both
+the number of procs for each resource and the type of resource to be used.
+
+  Specified option:  %s
+
+We are not able to proceed. Please correct your command line.
+#
+[bad-stream-buffering-value]
+An incorrect value for the "--stream-buffering" option was given:
+
+  Specified value:  %d
+
+Valid values are limited to 0, 1, or 2. Your application will continue, but
+please correct your command line in the future.
+#
+[missing-envar-param]
+Warning: Could not find the environment variable: %s
+#
+[duplicate-mca-value]
+Error: an MCA parameter was listed more than once on the command line, or
+multiple times in one or more files, but with conflicting values:
+
+  Param:  %s
+  Value:  %s
+  Value:  %s
+
+We cannot determine which value was intended, and therefore are unable to proceed.
+Please correct your command line.
+#
+[multi-instances]
+ERROR: The "%s" command line option was listed more than once on the command line.
+Only one instance of this option is permitted.
+Please correct your command line.
+#
+[no-proxy]
+ERROR: %s was unable to identify the proxy for your command.
+
+  Option specified: %s
+
+Please specify a personality or ask the library developer's to address
+the problem.
+#
+[unrecog-generic-param]
+The command line contains a generic MCA param that is not
+recognized by either the default or active personalities:
+
+  Param name:   %s
+  Param value:  %s
+
+Please modify the command line to either specify the personality
+this parameter belongs to (e.g., "--prtemca" for a PRRTE param,
+"--pmixmca" for a PMIx param, "--omca" for an OMPI param) or
+ensure that the generic param is correct and known to the active
+personality.
+#
+[too-many-instances]
+The command line includes too many instances of the following option:
+
+  Command line: %s
+  Option: %s
+  Number of instances: %d
+  Allowed number: %d
+
+Please correct the command line and try again.
+#
+[too-many-directives]
+When resolving deprecated command line options, the result generated
+too many directives for the target option:
+
+  Command line option: %s
+  Initial value: %s
+  Deprecated option: %s %s
+
+Please correct the command line and try again.
+#
+[too-many-values]
+When resolving deprecated command line options, the following
+command line option has more than one value:
+
+  Option: %s
+
+The resolution function cannot handle this scenario - please
+notify the developers
+#
+[binding-pe-conflict]
+The PE=<list> mapping directive cannot be combined with a
+binding directive other than "core" or "hwt" as it already
+mandates that we bind to the specified cpu(s). The conflicting
+directives that were given are:
+
+  map-by:  %s
+  bind-to: %s
+
+Please resolve the conflict and try again.
+#
+[missing-values]
+The provided command line option requires passing two
+values:
+
+  Option:  %s <MCA param name> <param value>
+
+Please provide the missing values and try again.
+#
+[non-supporting-pmix]
+The given command line directive is technically valid, but the
+underlying PMIx version being employed lacks the necessary attribute
+definitions to support it.
+
+  Directive:  %s
+  Option:     %s
+
+We are therefore unable to satisfy this request.

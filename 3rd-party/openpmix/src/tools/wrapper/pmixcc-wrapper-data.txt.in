@@ -1,0 +1,26 @@
+# There can be multiple blocks of configuration data, chosen by
+# compiler flags (using the compiler_args key to chose which block
+# should be activated.  This can be useful for multilib builds.  See the
+# multilib page at:
+#    https://github.com/open-mpi/ompi/wiki/compilerwrapper3264
+# for more information.
+
+project=PMI-Exascale (PMIx)
+project_short=PMIX
+version=@PMIX_VERSION@
+language=C
+compiler_env=CC
+compiler_flags_env=CFLAGS
+compiler=@WRAPPER_CC@
+includedir=${includedir}
+libdir=${libdir}
+preprocessor_flags=@PMIX_WRAPPER_CPPFLAGS@
+compiler_flags_prefix=@PMIX_WRAPPER_CFLAGS_PREFIX@
+compiler_flags=@PMIX_WRAPPER_CFLAGS@
+linker_flags=@PMIX_WRAPPER_LDFLAGS@
+linker_flags_static=@PMIX_WRAPPER_LDFLAGS_STATIC@
+libs=@PMIX_WRAPPER_LIBS@
+libs_static=@PMIX_WRAPPER_LIBS_STATIC@
+dyn_lib_file=libpmix.@PMIX_DYN_LIB_SUFFIX@
+static_lib_file=libpmix.a
+required_file=

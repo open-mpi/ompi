@@ -1,0 +1,78 @@
+# -*- text -*-
+#
+# Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+#                         University Research and Technology
+#                         Corporation.  All rights reserved.
+# Copyright (c) 2004-2005 The University of Tennessee and The University
+#                         of Tennessee Research Foundation.  All rights
+#                         reserved.
+# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+#                         University of Stuttgart.  All rights reserved.
+# Copyright (c) 2004-2005 The Regents of the University of California.
+#                         All rights reserved.
+# Copyright (c) 2017-2020 Intel, Inc.  All rights reserved.
+# Copyright (c) 2018-2020 Cisco Systems, Inc.  All rights reserved
+# Copyright (c) 2021-2024 Nanook Consulting  All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+# This is the US/English general help file for PRTE's prun.
+#
+[prte-rmaps-seq:resource-not-found]
+The specified sequence file contained a node (%s) that is not in your
+allocation. We therefore cannot map a process rank to it. Please
+check your allocation and sequence file to ensure the latter only
+contains allocated nodes.
+#
+[seq:not-enough-resources]
+A sequential map was requested, but not enough node entries
+were given to support the requested number of processes:
+
+  Num procs:  %d
+  Num nodes:  %d
+
+The sequential mapper requires that there be a node entry for
+every process in the job, and it processes the provided file
+using each node entry to identify the node where that numbered
+rank is to be placed.
+
+Note that you can provide a separate sequence file (different
+from a hostfile that specifies the number of slots on each node)
+for use by the sequential mapper in its assignments by using the
+appropriate modifier:
+
+  Example: --map-by seq:file=myseqfile
+#
+[missing-cpu]
+While parsing the sequential hostfile, %s encountered a line that
+specified a non-existent CPU:
+
+  Slots: %s
+  Available CPUs: %s
+
+Please correct the line and try again.
+#
+[bad-syntax]
+Error, invalid syntax in sequential hostfile %s.
+
+The sequential mapper requires that there be a node entry for
+every process in the job, and it processes the provided file
+using each node entry to identify the node where that numbered
+rank is to be placed. You can specify the CPU binding for the
+process on its node entry line in the following manner:
+
+A 1:0,1   # put this rank on node A, bound to socket 1, CPUs 0 and 1
+B 1-4     # put this rank on node B, bound to CPUs 1-4
+
+Please correct the syntax and try again.
+#
+[proc-failed-to-map]
+A process could not be mapped:
+
+  Hostname: %s
+  App: %s
+
+Could not continue.

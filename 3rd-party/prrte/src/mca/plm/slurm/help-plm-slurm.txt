@@ -1,0 +1,82 @@
+# -*- text -*-
+#
+# Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+#                         University Research and Technology
+#                         Corporation.  All rights reserved.
+# Copyright (c) 2004-2005 The University of Tennessee and The University
+#                         of Tennessee Research Foundation.  All rights
+#                         reserved.
+# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+#                         University of Stuttgart.  All rights reserved.
+# Copyright (c) 2004-2005 The Regents of the University of California.
+#                         All rights reserved.
+# Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
+# Copyright (c) 2020      Cisco Systems, Inc.  All rights reserved
+# Copyright (c) 2022-2024 Nanook Consulting  All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+[multiple-prefixes]
+The SLURM process starter for PRTE does not support multiple
+different --prefix options to mpirun.  You can specify at most one
+unique value for the --prefix option (in any of the application
+contexts); it will be applied to all the application contexts of your
+parallel job.
+
+Put simply, you must have PRTE installed in the same location on
+all of your SLURM nodes.
+
+Multiple different --prefix options were specified to mpirun.  This is
+a fatal error for the SLURM process starter in PRTE.
+
+The first two prefix values supplied were:
+    %s
+and %s
+#
+[no-hosts-in-list]
+The SLURM process starter for PRTE didn't find any hosts in
+the map for this application. This can be caused by a lack of
+an allocation, or by an error in the PRTE code. Please check
+to ensure you have a SLURM allocation. If you do, then please pass
+the error to the PRTE user's mailing list for assistance.
+#
+[no-local-slave-support]
+A call was made to launch a local slave process, but no support
+is available for doing so. Launching a local slave requires support
+for either rsh or ssh on the backend nodes where MPI processes
+are running.
+
+Please consult with your system administrator about obtaining
+such support.
+[no-srun]
+The SLURM process starter for OpenMPI was unable to locate a
+usable "srun" command in its path. Please check your path
+and try again.
+#
+[ancient-version]
+The Slurm process starter requires a minimum Slurm version level
+of v17.11. The detected version being used here is:
+
+  Major: %d
+  Minor: %d
+
+SchedMD strongly recommends that you upgrade your Slurm version.
+Versions of Slurm prior to 21.08.8 and 20.11.9 have been found
+to have a security issue and are not supported - therefore, it
+is recommended that you upgrade to a level at or above those
+versions.
+
+It is recognized that upgrades can take some time to complete.
+In the interim, you can execute your job by ignoring the Slurm
+process starter via the following MCA parameter:
+
+  Environment: PRTE_MCA_plm=^slurm
+  Cmd line: --prtemca plm ^slurm
+  Default MCA param file: plm = ^slurm
+
+This will result in use of the ssh process starter. This will have
+no impact on your application, but will result in any accounting
+being done solely at the allocation level instead of per-job.

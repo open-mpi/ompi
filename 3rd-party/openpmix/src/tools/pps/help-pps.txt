@@ -1,0 +1,78 @@
+# -*- text -*-
+#
+# Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+#                         University Research and Technology
+#                         Corporation.  All rights reserved.
+# Copyright (c) 2004-2005 The University of Tennessee and The University
+#                         of Tennessee Research Foundation.  All rights
+#                         reserved.
+# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+#                         University of Stuttgart.  All rights reserved.
+# Copyright (c) 2004-2005 The Regents of the University of California.
+#                         All rights reserved.
+# Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2017      Intel, Inc. All rights reserved.
+# Copyright (c) 2021-2024 Nanook Consulting  All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+# This is the US/English help file for PMIx PS tool
+#
+[usage]
+%s (%s) %s
+
+Usage: %s [OPTION]...
+PMIx Job and Process Status Tool
+
+/*****      General Options      *****/
+
+-h|--help                            This help message
+-h|--help <arg0>                     Help for the specified option
+-v|--verbose                         Enable typical debug options
+-V|--version                         Print version and exit
+
+   --uri <arg0>                      Specify the URI of the server to which we are to connect, or
+                                     the name of the file (specified as file:filename) that contains that info
+   --namespace <arg0>                Namespace of the daemon to which we should connect
+   --pid <arg0>                      PID of the daemon to which we should connect (int => PID or file:<file>
+                                     for file containing the PID
+   --system-server-first             First look for a system server and connect to it if found
+   --system-server                   Connect to a system-level server
+   --tmpdir <arg0>                   Set the root for the session directory tree
+   --wait-to-connect <arg0>          Delay specified number of seconds before trying to connect
+   --num-connect-retries <arg0>      Max number of times to try to connect
+   --nodes                           Display Node Information
+
+Report bugs to %s
+#
+[uri]
+Specify the URI of the PMIx server we are to contact, or the name of the file (specified as
+file:filename) that contains that info
+#
+[namespace]
+Namespace of the daemon we are to connect to (char*)
+#
+[pid]
+PID of the daemon to which we should connect (int => PID or file:<file>
+for file containing the PID
+#
+[system-server-first]
+First look for a system server and connect to it if found
+#
+[system-server]
+Connect only to a system-level server - abort if one is not found
+#
+[tmpdir]
+Set the root for the session directory tree
+#
+[wait-to-connect]
+Delay specified number of seconds before trying to connect
+#
+[num-connect-retries]
+Max number of times to try to connect to the specified server (int)
+#
+[nodes]
+Display node-level information

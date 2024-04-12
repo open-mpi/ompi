@@ -1,0 +1,303 @@
+# -*- text -*-
+#
+# Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+#                         University Research and Technology
+#                         Corporation.  All rights reserved.
+# Copyright (c) 2004-2005 The University of Tennessee and The University
+#                         of Tennessee Research Foundation.  All rights
+#                         reserved.
+# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+#                         University of Stuttgart.  All rights reserved.
+# Copyright (c) 2004-2005 The Regents of the University of California.
+#                         All rights reserved.
+# Copyright (c) 2012      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2017-2020 Intel, Inc.  All rights reserved.
+# Copyright (c) 2022-2024 Nanook Consulting  All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+# This is the US/English help file for palloc
+#
+[usage]
+%s (%s) %s
+
+Usage: %s [OPTION]...
+PMIx Allocation Request tool
+
+
+/*****      General Options      *****/
+
+-h|--help                            This help message
+-h|--help <arg0>                     Help for the specified option
+-v|--verbose                         Enable typical debug options
+-V|--version                         Print version and exit
+   --pmixmca <arg0> <arg1>           Set MCA parameter value
+
+   --uri <arg0>                      Specify the URI of the server to which we are to connect, or
+                                     the name of the file (specified as file:filename) that contains that info
+   --namespace <arg0>                Namespace of the daemon to which we should connect
+   --nspace <arg0>                   Synonym for "namespace"
+   --pid <arg0>                      PID of the daemon to which we should connect (int => PID or file:<file>
+                                     for file containing the PID
+   --system-server-first             First look for a system server and connect to it if found
+   --system-server-only              Connect only to a system-level server
+   --system-controller               Connect to the system controller
+   --tmpdir <arg0>                   Set the root for the session directory tree
+   --connect-order <arg0>            Specify search order for server connections - e.g., scheduler,
+                                     system controller, system-level server, or local server
+   --wait-to-connect <arg0>          Delay specified number of seconds before trying to connect
+   --num-connect-retries <arg0>      Max number of times to try to connect
+
+   --request-id <arg0>               String identifier for this allocation request
+-q|--queue <arg0>                    Scheduler queue this request should be passed to for processing
+-N|--nodes <arg0>                    Number of nodes to be allocated
+-i|--image <arg0>                    OS image to be provisioned on allocated nodes prior to initiating
+                                     execution of specified job, or turning nodes over to an interactive
+                                     session
+-x|--exclude <arg0>                  Comma-delimited list of nodes that are to be excluded from
+                                     consideration for scheduling this allocation
+   --wait-all-nodes                  Wait for all nodes to be ready before starting execution of the
+                                     specified job.
+-w|--nodelist <arg0>                 Comma-delimited list of ranges of specific nodes being requested
+                                     [e.g., host0[1-5],host128]. Can also pass the argument as a filename
+                                     using the "file:<path>" syntax. Ordering of names and/or duplicate
+                                     names are ignored.
+   --uid <arg0>                      Assign the resulting allocation to the specified user ID
+   --gid <arg0>                      Assign the resulting allocation to the specified group ID
+-t|--time <arg0>                     Time limit on the assigned allocation.
+   --signal <arg0>[@arg1]            Send all processes executing within the allocated session the specified signal
+                                     when it reaches the (optional) specified seconds of its end time.
+-s|--share                           Allocated resources can be shared with other allocations.
+   --extend   <arg0>                 Extend the specified existing session ID per the rest of the given request.
+   --shrink <arg0>                   Shrink the specified existing session ID per the rest of the given request.
+   --no-shell                        Immediately exit after allocating resources, without running a command.
+   --begin <arg0>                    Direct the scheduler to defer allocation until the specified time.
+-I|--immediate <arg0>                Exit if resources are not available within the time period specified.
+-d|--dependency <arg0>               Defer the start of this session until the specified dependencies have successfully
+                                     completed.
+   --do-not-wait                     Submit the allocation request to the scheduler, but do not wait for the allocation
+                                     to be assigned. Intended for use when submitting a job for batch execution.
+
+The command returns the string session ID of the resulting allocation, or if executed with the "--do-not-wait" option, the
+string session ID of the allocation request as assigned by the scheduler. Any command line arguments following the provided
+options are taken as the job script or executable to be run within the allocation (once assigned) and its attendant
+argv array. In this case, the allocation will terminate once the provide job script or executable completes.
+
+The user is responsible for free'ing the returned string session ID.
+#
+[bad-option-input]
+%s was given an option that expected a string argument:
+
+  option: %s
+  argument: %s
+  expected: %s
+
+Please correct the option and try again.
+#
+[file-open-error]
+%s was unable to open the specified file provided as an option:
+
+  option: %s
+  argument: %s
+  file: %s
+
+Please correct the option and try again.
+#
+[bad-file]
+%s was unable to read the necessary info from the provided file:
+
+  option: %s
+  argument: %s
+  file: %s
+
+Please correct the option or the file and try again.
+#
+# CONNECTION OPTIONS
+#
+#
+[uri]
+Specify the URI of the DVM master, or the name of the file (specified as
+file:filename) that contains that info
+#
+[num-connect-retries]
+Max number of times to try to connect to the specified server (int)
+#
+[pid]
+PID of the daemon to which we should connect (int => PID or file:<file>
+for file containing the PID
+#
+[namespace]
+Namespace of the daemon we are to connect to (char*)
+#
+[nspace]
+Namespace of the daemon we are to connect to (char*) - synonym for "namespace"
+#
+[system-server-first]
+First look for a system server and connect to it if found
+#
+[system-server-only]
+Connect only to a system-level server - abort if one is not found
+#
+[system-controller]
+Look for a system controller and connect to it if found
+#
+[tmpdir]
+Define the root location for the session directory tree where the
+rendezvous files can be found.
+
+The rendezvous files contain connection information for a target
+server and are located in the session directory tree. It may be necessary to point the
+tool at the location where those files can be found if that location is other than the
+expected default.
+
+The root of the session directory defaults to the system temporary directory
+as defined in the environment using (in precedence order) the envars TMPDIR, TEMP, and
+finally TMP. In the absence of any of those variables, PMIx will default to the "/tmp"
+location.
+#
+[wait-to-connect]
+Delay specified number of seconds before trying to connect
+#
+[connect-order]
+Comma-delimited list of attributes defining the order in which
+connections should be attempted, from first to last. If the
+final entry is not an "only" flag (e.g., PMIX_CONNECT_TO_SYSTEM),
+then connection will default to the local server if no preceding
+option succeeds. Thus, the following list:
+    PMIX_CONNECT_TO_SCHEDULER
+    PMIX_CONNECT_TO_SYS_CONTROLLER
+    PMIX_CONNECT_TO_SYSTEM
+would first attempt to connect to the scheduler, then the system
+controller, and then the local system-level server. If none of those
+succeed, then the connection attempt will error out.
+
+However, if the last entry were PMIX_CONNECT_SYSTEM_FIRST, then the
+connection procedure would (after failing to connect to a local
+system-level server) continue to include an attempt to connect
+to any local server that accepted the connection request.
+#
+#  QALLOC-SPECIFIC OPTIONS
+#
+[request-id]
+String identifier for this allocation request. The request ID can be used for
+subsequent query of request status and as a synonym for the eventual session ID
+assigned by the scheduler. Note that a request ID that matches a previously
+submitted request will be rejected by the scheduler - so care should be taken
+to ensure that the ID provided is unique and not previously used.
+#
+[queue]
+Scheduler queue this request should be passed to for processing. Most schedulers
+have a number of queues for requests, each queue typically representing a priority
+or class of request used in the scheduling process. Users should check the names
+of the queues for their system using the "pquery" tool and submit allocation
+requests accordingly.
+#
+[nodes]
+The number of nodes to be allocated. In systems where nodes are being subdivided for
+allocation (e.g., allocating individual cores or hwthreads), it may be necessary to
+provide a more detailed description of the requested resources.
+#
+[image]
+OS image to be provisioned on allocated nodes prior to initiating
+execution of specified job, or turning nodes over to an interactive
+session. Names of the available images can be obtained using the
+"pquery" tool.
+#
+[exclude]
+Comma-delimited list of nodes that are to be excluded from
+consideration for scheduling this allocation
+#
+[wait-all-nodes]
+Wait for all nodes to be ready before starting execution of the
+specified job.
+#
+[nodelist]
+Comma-delimited list of ranges of specific nodes being requested
+[e.g., host0[1-5],host128]. Can also pass the argument as a filename
+using the "file:<path>" syntax. Ordering of names and/or duplicate
+names are ignored.
+#
+[uid]
+Assign the resulting allocation to the specified user ID. Value
+can be provided as either an integer or a username
+#
+[gid]
+Assign the resulting allocation to the specified group ID. Value
+can be provided as either an integer or a group name. Typically
+used for determining file access permissions and for system
+accounting.
+#
+[time]
+Time limit on the assigned allocation.  When the time limit is reached,
+each process executing in the session is sent SIGTERM followed by SIGKILL.
+The session is then terminated and all resources returned to the
+scheduler for reuse. Time is specified in the usual time format of
+months:days:hours:minutes:seconds, scanning from right to left (i.e., a
+value of "2" equates to 2 seconds)
+#
+[signal]
+When a session is within the specified seconds of its end time, send all
+processes executing within it the specified signal. The <arg0> signal may
+be a signal number or string name. The optional <arg1> time is taken in
+seconds, defaulting to 60 seconds if not specified.
+#
+[share]
+Allocated resources can be shared with other allocations.
+#
+[extend]
+Extend the specified existing session ID per the rest of the given request.
+For example, an existing session can have additional nodes allocated to
+it, or could have its time limit increased.
+#
+[shrink]
+Shrink the specified existing session ID per the rest of the given request.
+For example, an existing session could have a certain number of nodes
+removed (returning them to the scheduler for reassignment), or its
+time reduced.
+#
+[no-shell]
+Immediately exit after allocating resources, without running a command.
+However, the session will still be created and will remain active and own
+the allocated resources as long as it is active - i.e., it will be an
+active session with an assigned session ID with no job executing within it.
+You can submit commands against this resource allocation (e.g., using "prun")
+if you specify the appropriate connection identification for this allocation.
+Note that the session is subject to the normal constraints on sessions, including
+time limits, so that eventually the session will terminate and the resources
+will be freed, or you can terminate the session manually using the "pcancel"
+command.
+#
+[begin]
+Direct the scheduler to defer allocation until the specified time. Time may be
+of the form HH:MM:SS to schedule the session to start at a specific time of day
+(seconds are optional). If that time is already past, the next day is assumed.
+You may also specify "midnight" or "noon", and you can have a time-of-day suffixed
+with AM or PM for running in the morning or the evening. You can also say what
+day the session should start by specifying a date of the form MMDDYY or MM/DD/YY
+YYYY-MM-DD. Combine date and time using the usual format YYYY-MM-DD[THH:MM[:SS]].
+You can also give times like "now + count" time-units, where the time-units can
+be "seconds" (default), "minutes", "hours", days, or weeks, or you can ask that
+the allocation be made "today" or "tomorrow".
+#
+[immediate]
+Exit if resources are not available within the time period specified. If no argument
+is given, resources must be available immediately for the request to succeed. By
+default, --immediate is off, and the command will block until resources become
+available. Since this
+option's argument is optional, for proper parsing the single
+letter option must be followed by an equal sign and the value - e.g., "-I=60"
+for a time of 60 seconds or "-I30:00" for a time of 30 minutes.
+#
+[dependency]
+Defer the start of this session until the specified dependencies have successfully
+completed. The dependencies are provided as a comma-delimited list of session IDs.
+All specified dependencies must be satisfied before the given allocation request
+will be scheduled.
+#
+[do-not-wait]
+Submit the allocation request to the scheduler, but do not wait for the allocation
+to be assigned. Intended for use when submitting a job for batch execution. Users
+should provide a string request ID to enable subsequent queries of request status.

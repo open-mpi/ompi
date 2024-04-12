@@ -1,0 +1,42 @@
+# -*- text -*-
+#
+# Copyright (c) 2018      Research Organization for Information Science
+#                         and Technology (RIST).  All rights reserved.
+# Copyright (c) 2019      Intel, Inc.  All rights reserved.
+# Copyright (c) 2022-2024 Nanook Consulting  All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+#
+[normal-termination-but]
+While %s job %s terminated normally, %d %s. Further examination may be required.
+#
+[bad-combination]
+The runtime option NOTIFYERRORS was set to true. This requests that the
+runtime provide a PMIx event whenever a job encounters an error - e.g., a
+process fails. The event is to be delivered to each remaining process in
+the job. However, this only can be done if the job is not to be terminated
+in the event of an error. The following runtime options govern that
+behavior:
+
+    RECOVERABLE[=(bool)] if set to true, this indicates that the application
+    wishes to consider the job as recoverable - i.e., the application is
+    assuming responsibility for recovering from any process failure. This
+    could include application-driven spawn of a substitute process or
+    internal compensation for the missing process. This option defaults to
+    a true value if the option is given without a value.
+
+    CONTINUOUS[=(bool)] if set to true, this informs the runtime that the
+    processes in this job are to run until explicitly terminated. Processes
+    that fail are to be automatically restarted up to "max restarts"
+    number of times. Notification of process failure is to be delivered
+    to all processes in the application. This is the equivalent of specifying
+    RECOVERABLE, NOTIFYERRORS, and AUTORESTART options except that the runtime,
+    not the application, assumes responsibility for process recovery. This
+    option defaults to a true value if the option is given without a value.
+
+You must specify one of the above in combination with NOTIFYERRORS in order
+to receive notifications of errors. Please correct the situation and try again.

@@ -1,0 +1,15 @@
+enable_io_romio=no
+enable_static=yes
+enable_shared=no
+with_threads=no
+enable_pretty_print_stacktrace=no
+enable_dlopen=no
+with_memory_manager=none
+enable_mca_no_build=maffinity,paffinity,timer,allocator-basic,rcache-vma,plm-gridengine,plm-slurm,ras-slurm,ras-gridengine,btl-sm,coll-hierarch,coll-sm,common-sm,mpool-sm,pml-dr,pml-cm,mpool-rdma,osc-rdma,ess-slurm,backtrace-darwin,memory-darwin,memory-malloc_hook,memory_ptmalloc2
+enable_heterogeneous=no
+enable_pty_support=no
+enable_mem_debug=no
+enable_mem_profile=no
+enable_debug_symbols=no
+enable_binaries=yes
+enable_mca_direct=pml-ob1

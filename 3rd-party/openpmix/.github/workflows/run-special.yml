@@ -1,0 +1,33 @@
+name: OpenPMIx Special Builds Testing
+
+on:
+  pull_request:
+    # We don't need this to be run on all types of PR behavior
+    # See
+    #  - https://docs.github.com/en/actions/reference/events-that-trigger-workflows#pull_request
+    #  - https://frontside.com/blog/2020-05-26-github-actions-pull_request
+    types:
+      - opened
+      - synchronize
+      - edited
+      - reopened
+
+env:
+  # Use docker.io for Docker Hub if empty
+  REGISTRY: docker.io
+  # github.repository as <account>/<repo>
+  IMAGE_NAME: jjhursey/pmix-xver-tester
+
+jobs:
+  special-builds:
+    runs-on: ubuntu-latest
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - name: Check out the code
+        uses: actions/checkout@v1
+        with:
+          submodules: recursive
+      # Run the container tester
+      - name: Special Builds
+        run: docker run --rm -v ${GITHUB_WORKSPACE}:/home/pmixer/openpmix --env PR_TARGET_BRANCH=${GITHUB_BASE_REF} -w /home/pmixer/pmix-tests/ci-builds ${{ env.IMAGE_NAME }}:latest /bin/bash -c 'git pull && ./run-all-pmix.sh && echo SUCCESS'
+        shell: bash

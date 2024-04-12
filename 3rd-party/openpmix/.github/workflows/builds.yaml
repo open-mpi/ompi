@@ -1,0 +1,132 @@
+name: Build tests
+
+on: [pull_request]
+
+jobs:
+  macos:
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        path: ['non-vpath', 'vpath']
+        sphinx: ['no-sphinx', 'sphinx']
+    steps:
+    - name: Install dependencies
+      run: brew install libevent hwloc autoconf automake libtool
+    - name: Git clone OpenPMIx
+      uses: actions/checkout@v3
+      with:
+            submodules: recursive
+    - name: Build OpenPMIx
+      run: |
+        ./autogen.pl
+
+        sphinx=
+        if test "${{ matrix.sphinx }}" = sphinx; then
+            pip3 install -r docs/requirements.txt
+            sphinx=--enable-sphinx
+        fi
+
+        c=./configure
+        if test "${{ matrix.path }}" = vpath; then
+            mkdir build
+            cd build
+            c=../configure
+        fi
+
+        $c --prefix=${PWD}/install $sphinx
+        make -j
+        cd test
+        make check
+        cd ..
+        make install
+        make uninstall
+
+  ubuntu:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        path: ['non-vpath', 'vpath']
+        sphinx: ['no-sphinx', 'sphinx']
+    steps:
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y --no-install-recommends software-properties-common libhwloc-dev libevent-dev
+    - name: Git clone OpenPMIx
+      uses: actions/checkout@v3
+      with:
+            submodules: recursive
+    - name: Build OpenPMIx
+      run: |
+        ./autogen.pl
+
+        sphinx=
+        if test "${{ matrix.sphinx }}" = sphinx; then
+            pip install -r docs/requirements.txt
+            sphinx=--enable-sphinx
+        fi
+
+        c=./configure
+        if test "${{ matrix.path }}" = vpath; then
+            mkdir build
+            cd build
+            c=../configure
+        fi
+
+        $c --prefix=${PWD}/install $sphinx
+        make -j
+        cd test
+        make check
+        cd ..
+        make install
+        make uninstall
+
+  ubuntu-oldHWLOC:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y --no-install-recommends software-properties-common libevent-dev
+    - name: Git clone HWLOC v1.x
+      uses: actions/checkout@v4
+      with:
+            repository: open-mpi/hwloc
+            ref: hwloc-1.11.13
+    - name: Build HWLOC
+      run: |
+        ./autogen.sh
+        ./configure --prefix=$RUNNER_TEMP/hwlocinstall
+        make -j install
+    - name: Git clone OpenPMIx
+      uses: actions/checkout@v3
+      with:
+            submodules: recursive
+    - name: Build OpenPMIx
+      run: |
+        ./autogen.pl
+        ./configure --prefix=${PWD}/install --with-hwloc=$RUNNER_TEMP/hwlocinstall
+        make -j
+        cd test
+        make check
+        cd ..
+        make install
+        make uninstall
+
+  distcheck:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y --no-install-recommends software-properties-common libhwloc-dev libevent-dev python3 python3-pip
+    - name: Git clone OpenPMIx
+      uses: actions/checkout@v3
+      with:
+            submodules: recursive
+    - name: Distcheck
+      run: |
+        pip install -r docs/requirements.txt
+        ./autogen.pl
+        ./configure --prefix=${PWD}/install --enable-sphinx
+        make distcheck AM_DISTCHECK_MAKEFLAGS=-j

@@ -1,0 +1,453 @@
+#!/bin/sh
+#
+# Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
+#                         University Research and Technology
+#                         Corporation.  All rights reserved.
+# Copyright (c) 2004-2005 The University of Tennessee and The University
+#                         of Tennessee Research Foundation.  All rights
+#                         reserved.
+# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+#                         University of Stuttgart.  All rights reserved.
+# Copyright (c) 2004-2005 The Regents of the University of California.
+#                         All rights reserved.
+# Copyright (c) 2008-2020 Cisco Systems, Inc.  All rights reserved
+# Copyright (c) 2016-2020 Intel, Inc.  All rights reserved.
+# Copyright (c) 2021-2024 Nanook Consulting  All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+
+#
+# Version of auto tools that we want
+#
+
+M4_TARGET_VERSION=1.4.17
+AM_TARGET_VERSION=1.15
+AC_TARGET_VERSION=2.69
+LT_TARGET_VERSION=2.4.6
+FLEX_TARGET_VERSION=2.5.35
+
+#
+# When running "make distcheck", use these parallelization flags.  Can
+# significantly decrease the time required for "make distcheck" because
+# that target includes multiple builds of the entire code base.
+#
+
+DISTCHECK_MAKE_FLAGS=-j4
+
+#########################################################################
+
+#
+# Check command line flags
+#
+
+# Default to requiring *exact* versions if we're making distribution
+# tarballs; but higher-than-expected versions are ok for
+# non-distribution tarballs.
+autogen_args=
+distdir=".."
+greekonly=0
+nogreek=0
+dirty_ok=0
+gnu_version_ignore=0
+dist_target=distcheck
+distcheck_flags="AM_MAKEFLAGS=$DISTCHECK_MAKE_FLAGS"
+git_update=1
+
+if test "`basename $0`" = "make_tarball"; then
+    dist_target=dist
+    distcheck_flags="AM_MAKEFLAGS=-j32"
+    highok=1
+    dirty_ok=1
+    greekonly=1
+else
+    highok=0
+fi
+
+while test "$1" != ""; do
+    case $1 in
+        --greekonly) greekonly=1 ;;
+        --no-greek) nogreek=1 ;;
+        --highok) highok=1 ;;
+        --autogen-args) autogen_args=$2; shift ;;
+        --config-args=*) config_args="${i#*=}"; shift ;;
+        --distdir) distdir=$2; shift ;;
+        --dirtyok) dirty_ok=1 ;;
+        --verok) gnu_version_ignore=1;;
+        --no-git-update) git_update=0;;
+        *)
+            cat <<EOF
+Unrecognized argument: $1
+
+Valid arguments:
+  --greekonly     Only build the greek tarball (vs. both tarballs)
+  --no-greek      Do not build the greek tarball
+  --highok        Ok if Autotools versions are too high
+  --autogen-args  Arguments to pass to autogen
+  --config-args  Arguments to pass to configure
+  --distdir       Move the tarball(s) to this directory when done
+  --dirtyok       Ok if the source tree is dirty
+  --verok         Ignore result of autotools version checking
+  --no-git-update Skip "git pull" part, assume local repo is updated already
+EOF
+            exit 1
+            ;;
+    esac
+    shift
+done
+
+#
+# First things first -- check that the auto versions that we have are
+# the ones that we want.
+#
+
+check_gnu_version() {
+    prog="$1"
+    target="$2"
+
+    ver="`$prog --version | head -n 1 | sed -e's/([^)]*)//g' -e's/[^0-9 .][^ ]* / /g' -e's/ //g'`"
+    echo $prog version is $ver
+
+    ver_major=`echo $ver | cut -d. -f1`
+    ver_minor=`echo $ver | cut -d. -f2`
+    ver_release=`echo $ver | cut -d. -f3`
+    if test "$ver_release" = ""; then
+        ver_release=0
+    fi
+
+    target_major=`echo $target | cut -d. -f1`
+    target_minor=`echo $target | cut -d. -f2`
+    target_release=`echo $target | cut -d. -f3`
+    if test "$target_release" = ""; then
+        target_release=0
+    fi
+
+    # Gah -- Libtool released version 2.2.6b, the "b" of which totally
+    # screws up the -lt and -gt comparisons, below.  So strip out any
+    # trailing letters in the target_release and ver_release variables
+    # -- if they don't match, we'll just get a "they don't match
+    # somehow" kind of message (because I'm not going to code up a
+    # complex/clever alphanumeric lower/higher comparison thingy).
+    # Sigh.
+    ver_release=`echo $ver_release | sed 's/[A-Za-z]//g'`
+    target_release=`echo $target_release | sed 's/[A-Za-z]//g'`
+
+    result=same
+    if test "$ver" != "$target"; then
+        if test "$ver_major" -lt "$target_major"; then
+            result=low
+        elif test "$ver_major" = "$target_major" -a "$ver_minor" -lt "$target_minor"; then
+            result=low
+        elif test "$ver_major" = "$target_major" -a "$ver_minor" = "$target_minor" -a "$ver_release" -lt "$target_release"; then
+            result=low
+        elif test "$ver_major" -gt "$target_major"; then
+            result=high
+        elif test "$ver_major" = "$target_major" -a "$ver_minor" -gt "$target_minor"; then
+            result=high
+        elif test "$ver_major" = "$target_major" -a "$ver_minor" = "$target_minor" -a "$ver_release" = "$target_release"; then
+            result=same
+        elif test "$ver_major" = "$target_major" -a "$ver_minor" = "$target_minor" -a "$ver_release" -gt "$target_release"; then
+            result=high
+        elif test "$ver_major" = "$target_major" -a "$ver_minor" = "$target_minor" -a "$ver_release" -lt "$target_release"; then
+            result=low
+        else
+            result=unknown
+        fi
+    fi
+
+    if test "$result" = "low"; then
+        cat <<EOF
+----------------------------------------------------------------------
+ERROR: Program "$prog" does not have a high enough version:
+       Found: $ver
+       Expected: $target
+
+Expected versions:
+m4: $M4_TARGET_VERSION
+Automake: $AM_TARGET_VERSION
+Autoconf: $AC_TARGET_VERSION
+Libtool:  $LT_TARGET_VERSION
+Flex:     $FLEX_TARGET_VERSION
+
+Either change this script to match the found version, or install
+the correct version of the tools.
+----------------------------------------------------------------------
+EOF
+        if test "$gnu_version_ignore" = "0"; then
+            exit 1
+        fi
+
+    elif test "$result" = "high"; then
+        if test "$highok" = "0"; then
+            cat <<EOF
+----------------------------------------------------------------------
+ERROR: Program "$prog" has a higher version than expected:
+       Found: $ver
+       Expected: $target
+
+Expected versions:
+m4: $M4_TARGET_VERSION
+Automake: $AM_TARGET_VERSION
+Autoconf: $AC_TARGET_VERSION
+Libtool:  $LT_TARGET_VERSION
+Flex:     $FLEX_TARGET_VERSION
+
+Either change this script to match the found version, or install
+the correct version of the tools.
+----------------------------------------------------------------------
+EOF
+        if test "$gnu_version_ignore" = "0"; then
+            exit 1
+        fi
+        else
+            cat <<EOF
+----------------------------------------------------------------------
+WARNING: Program "$prog" has a higher version than expected:
+         Found: $ver
+         Expected: $target
+
+Expected versions:
+m4: $M4_TARGET_VERSION
+Automake: $AM_TARGET_VERSION
+Autoconf: $AC_TARGET_VERSION
+Libtool:  $LT_TARGET_VERSION
+Flex:     $FLEX_TARGET_VERSION
+
+This is *usually* ok, but this script is going to sleep for 5 seconds
+to give you the chance to quit before doing anything.
+----------------------------------------------------------------------
+EOF
+            sleep 5
+        fi
+
+    elif test "$result" = "unknown"; then
+        cat <<EOF
+----------------------------------------------------------------------
+ERROR: Program "$prog" does not have the correct version:
+       Found: $ver
+       Expected: $target
+
+Expected versions:
+m4: $M4_TARGET_VERSION
+Automake: $AM_TARGET_VERSION
+Autoconf: $AC_TARGET_VERSION
+Libtool:  $LT_TARGET_VERSION
+Flex:     $FLEX_TARGET_VERSION
+
+Either change this script to match the found version, or install
+the correct version of the tools.
+----------------------------------------------------------------------
+EOF
+        if test "$gnu_version_ignore" = "0"; then
+            exit 1
+        fi
+    fi
+
+}
+
+#
+# Subroutine to actually make a tarball
+#
+
+make_tarball() {
+    #
+    # Autogen
+    #
+    echo "*** Running autogen $autogen_args..."
+    rm -f success
+    (./autogen.pl --force $autogen_args 2>&1 && touch success) | tee auto.out
+    if test ! -f success; then
+        echo "Autogen failed.  Aborting"
+        exit 1
+    fi
+
+    #
+    # Configure
+    #
+    echo "*** Running configure..."
+    rm -f success
+    (./configure $config_args 2>&1 && touch success) | tee config.out
+    if test ! -f success; then
+        echo "Configure failed.  Aborting"
+        exit 1
+    fi
+
+    #
+    # Remove all generated *_lex.c files so that we ensure to invoke
+    # flex from here in this script (to ensure that we're using a good
+    # version of flex, and not picking up random *_lex.c files that
+    # happened to be in the tree already).
+    #
+    echo "*** Removing old generated flex files..."
+    find . -name \*_lex.c -exec chmod ug+rw {} \; -exec rm -f {} \; -print
+
+    #
+    # make tarball
+    #
+    echo "*** Running make $dist_target..."
+    save_LD=$LD_LIBRARY_PATH
+    LD_LIBRARY_PATH=
+    rm -f success
+    (make $distcheck_flags $dist_target 2>&1 && touch success) | tee dist.out
+    if test ! -f success; then
+        echo "Make $dist_target failed.  Aborting"
+        exit 1
+    fi
+    rm -f success
+    LD_LIBRARY_PATH=$save_LD
+
+    #
+    # move
+    #
+    echo "*** Moving tarballs..."
+    mv prrte-* $distdir
+
+    echo "*** All done"
+}
+
+#########################################################################
+# main
+#########################################################################
+
+start=`date`
+echo "*** Start time: $start"
+
+echo "*** Checking tools versions..."
+if test "$gnu_version_ignore" = "0"; then
+    check_gnu_version m4 $M4_TARGET_VERSION
+    check_gnu_version automake $AM_TARGET_VERSION
+    check_gnu_version autoconf $AC_TARGET_VERSION
+    check_gnu_version libtool $LT_TARGET_VERSION
+    # Windows needs a recent version of flex; old versions don't generate
+    # Windows-friendly *_lex.c files.
+    check_gnu_version flex $FLEX_TARGET_VERSION
+fi
+
+#
+# Verify that we're in a top PRTE dir
+#
+echo "*** Checking to ensure in top-level PMIx Reference RunTime Environment directory..."
+if test -f VERSION -a -f configure.ac -a -f config/prte_get_version.m4 ; then
+    happy=1
+else
+    echo "Do not appear to be in an PMIx Reference RunTime Environment top directory.  Abort!"
+    exit 1
+fi
+
+if test $git_update -eq 1; then
+
+    #
+    # Get the latest
+    #
+    echo "*** Git pull to get the latest..."
+    git pull --rebase
+    if test $? -ne 0; then
+        echo "*** Git pull failed.  Cannot continue."
+        exit 1
+    fi
+fi
+
+#
+# Ensure we have a clean repo
+#
+if test $dirty_ok -eq 0; then
+    echo "*** Checking if source tree is dirty..."
+    dirty=0
+    file=git-status.$$.out
+    git status > $file
+    if test "`grep 'Changes not staged for commit' $file`" != "" ||
+       test "`grep 'Changes staged for commit' $file`" != ""; then
+        dirty=1
+    fi
+    rm -f $file
+
+    if test $dirty -eq 1; then
+        echo "    Source tree is dirty.  Cannot continue."
+        exit 1
+    fi
+fi
+
+#
+# Get our repo_rev
+#
+echo "*** Removing old VERSION file..."
+rm -f VERSION
+echo "*** Restoring pristine VERSION file..."
+git checkout VERSION
+echo "*** Getting git version..."
+repo_rev=`git describe --tags --always`
+echo "    Repo rev number: $repo_rev"
+
+# Sanity checks
+if test "$repo_rev" = ""; then
+    echo "Somehow the repo rev number is empty.  Abort!"
+    exit 1
+elif test "`echo $repo_rev | grep ' '`" != ""; then
+    echo "Somehow the repo rev number has a space in it -- bad!"
+    exit 1
+fi
+
+#
+# Set final values in VERSION
+#
+echo "*** Removing version numbers from VERSION..."
+version_files=VERSION
+release_date=`date '+%b %d, %Y'`
+echo "    Release date: $release_date"
+for file in $version_files; do
+    echo " - $file"
+    sed -e 's/^repo_rev=.*/'repo_rev=$repo_rev/ \
+        -e "s/^date=.*/date=\"$release_date\"/" \
+        -e "s/^tarball_version=.*/tarball_version=/" \
+        $file > $file.new
+    cp -f $file.new $file
+    rm $file.new
+done
+
+#
+# Make 2 tarballs:
+#
+# - one with the greek
+# - one without the greek
+#
+# unless the user specifically said --greekonly, then only make the
+# greek tarball.  Making both tarballs at once allows us to guarantee
+# to have two tarballs -- one greek and one not -- that have exactly
+# the same SVN r number (as opposed to, for example, running this
+# script to make a greek tarball, then running it again to make a
+# non-greek tarball -- there is a race condition that someone could
+# commit in the meantime and change the SVN r number in the 2nd
+# tarball)
+#
+
+# First, if ! --no-greek, make greek tarball
+
+if test $nogreek -eq 0; then
+    echo "*** Making greek tarball"
+    make_tarball
+fi
+
+# Now if ! --greekonly, make the non-greek tarball
+
+if test $greekonly -eq 0; then
+    echo "*** REMOVING ALL GREEK FROM VERSION NUMBERS!!"
+    for file in $version_files; do
+        echo " - $file"
+        sed -e 's/^greek=.*/greek=/' $file > $file.new
+        cp -f $file.new $file
+        rm $file.new
+    done
+    echo "Making non-greek tarball"
+    make_tarball
+fi
+
+# Put the VERSION file back the way it was
+rm -f VERSION
+git checkout VERSION
+
+echo " "
+echo "*** Start time:  $start"
+echo "*** Finish time: `date`"

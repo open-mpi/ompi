@@ -1,0 +1,471 @@
+# -*- text -*-
+#
+# Copyright (c) 2021-2024 Nanook Consulting  All rights reserved.
+# Copyright (c) 2022      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2022      IBM Corporation.  All rights reserved.
+# Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+#
+[version]
+%s (%s) %s
+
+%s
+#
+[usage]
+%s (%s) %s
+
+Usage: %s [OPTION]...
+
+See the mpirun(1) man page or HTML help for a detailed list of command
+line options that are available.
+
+%s
+#
+[dvm]
+Utilize an existing persistent DVM instead of instantiating an
+independent runtime infrastructure. This is provided as a convenience
+option for those wanting to embed the "mpirun" command in a script that
+can be optionally used to run either independently or under a persistent DVM.
+
+#include#help-schizo-cli#dvm
+#
+[prtemca]
+Syntax: --prtemca <arg0> <arg1>
+where arg0 is the parameter name and arg1 is the parameter value
+
+Pass a PRRTE MCA parameter
+#
+[pmixmca]
+Syntax: --pmixmca <arg0> <arg1>
+where arg0 is the parameter name and arg1 is the parameter value
+
+Pass a PMIx MCA parameter
+#
+[tune]
+File(s) containing PRRTE and PMIx MCA params for tuning DVM and/or application operations.
+Parameters in the file will be treated as _generic_ parameters and subject to the
+translation rules/uncertainties. See "--help mca" for more information.
+
+Syntax in the file is:
+
+param=value
+
+with one parameter and its associated value per line. Empty lines and lines beginning
+with the '#' character are ignored.
+
+There must not be any whitespace characters before or after the '=' in the param/value
+specification.
+#
+[daemonize]
+Daemonize the DVM daemons into the background
+#
+[set-sid]
+Direct the DVM daemons to separate from the current session
+#
+[report-pid]
+Display the PID a tool can use to connect to the mpirun process on stdout (-), stderr (+), or write it to
+the specified file if anything else is specified.
+#
+[report-uri]
+Display the URI that a tool can use to connect to the mpirun process on stdout (-), stderr (+), or write
+it to a file if anything else is specified.
+#
+[test-suicide]
+Suicide instead of clean abort after delay
+#
+[default-hostfile]
+This option specifies a default set of nodes that are to be used.
+
+If neither the --hostfile or --host options are specified, this will be the set of nodes used.
+
+The --hostfile and --host options can be used to select a subset of nodes from the default set to be used.
+
+If both the --hostfile and --host options are specified, then the --hostfile option specifies the
+initial subset of nodes used from the default-hostfile set, and the --host option specifies what subset of
+nodes from that second subset will be used as the final subset of nodes used.
+
+If a resource manager is used, the resource manager determines the initial set of nodes. Then the
+specifications for the --default-hostfile, --hostfile, and --host optons, in that order, are used to determine
+the final subset of nodes that are used.
+#
+[singleton]
+ID of the singleton process that started us
+#
+[keepalive]
+Pipe to monitor - DVM will terminate upon closure of this pipe.
+#
+[launch-agent]
+Name of daemon executable used to start processes on remote nodes (default: prted)
+#
+[max-vm-size]
+Maximum number of daemons to start
+#
+[debug-daemons]
+Debug daemon output enabled
+#
+[debug-daemons-file]
+Enable debugging of any PRTE daemons used by this application, storing output in files
+#
+[leave-session-attached]
+Do not discard stdout/stderr of remote PRTE daemons, mostly used when debugging the
+application launcher.
+#
+[tmpdir]
+Set the root for the session directory tree
+#
+[prefix]
+This option specifies the path to be used as a prefix when resolving the path to Open MPI
+executables.
+#
+[noprefix]
+Ignores the path specified if Open MPI was configured with the --prefix option when built
+from source code.
+#
+[forward-signals]
+Comma-delimited list of additional signals (names or integers) to forward to application
+processes ["none" => forward nothing]. Signals provided by default include SIGTSTP,
+SIGUSR1, SIGUSR2, SIGABRT, SIGALRM, and SIGCONT
+#
+[allow-run-as-root]
+Allow execution as root (STRONGLY DISCOURAGED)
+#
+[report-child-jobs-separately]
+Return the exit status of the primary job only
+#
+[timeout]
+Timeout the job if execution time exceeds the specified number of seconds
+#
+[report-state-on-timeout]
+Report all job and process states upon timeout
+#
+[get-stack-traces]
+Get stack traces of all application procs on timeout
+#
+[spawn-timeout]
+Timeout the job if spawn takes more than the specified number of seconds
+#
+[np]
+Specify number of application processes to be started
+#
+[n]
+Specify number of application processes to be started
+#
+[N]
+Specify number of application processes per node to be started
+#
+[app]
+Provide an appfile; ignore all other command line options
+#
+[xterm]
+Create a new xterm window and display output from the specified ranks there.
+Ranks are specified as a comma-delimited list of ranges - e.g., "1,3-6,9",
+or as "all"."
+#
+[stop-on-exec]
+If supported, stop each process at start of execution
+#
+[stop-in-init]
+Include the PMIX_DEBUG_STOP_IN_INIT attribute in the application's
+job info directing that the ranks stop in PMIx_Init pending
+release.
+#
+[stop-in-app]
+Include the PMIX_DEBUG_STOP_IN_APP attribute in the application's
+job info directing that the ranks stop at an application-determined
+point pending release.
+#
+[x]
+Export an environment variable, optionally specifying a value (e.g., "-x foo" exports the
+environment variable foo and takes its value from the current environment; "-x foo=bar"
+exports the environment variable name foo and sets its value to "bar" in the started
+processes; "-x foo*" exports all current environmental variables starting with "foo")
+#
+[wdir]
+Set the working directory of the started processes
+#
+[wd]
+Synonym for --wdir
+#
+[set-cwd-to-session-dir]
+Set the working directory of the started processes to their session directory
+#
+[path]
+PATH to be used to look for executables to start processes
+#
+[show-progress]
+Output a brief periodic report on launch progress
+#
+[pset]
+User-specified name assigned to the processes in their given application
+#
+[hostfile]
+Provide a hostfile
+#
+[machinefile]
+Provide a hostfile (synonym for "hostfile")
+#
+[host]
+Comma-separated list of hosts to invoke processes on
+#
+[personality]
+Specify the personality to be used
+#
+[preload-files]
+Syntax: --preload-files <arg0>
+
+Preload the comma separated list of files to the remote machines current
+working directory before starting the remote process.
+#
+[preload-binary]
+Syntax: --preload-binary
+
+Preload the binary on the remote machine before starting the
+remote process.
+#
+[output]
+Comma-delimited list of case-insensitive options that control how output is generated.
+Allowed values:
+    tag                         Mark each output line with the [job,rank] of the
+                                process that generated it
+    timestamp                   Prefix each output line with a datetime stamp. Note
+                                that the timestamp will be the time when the line
+                                is output by the DVM - not the time when the source
+                                output it
+    xml                         Format all output in XML
+    merge[-stderr-to-stdout]    Merge stderr into stdout
+    dir=DIRNAME                 Redirect output from application processes into files of
+                                the form DIRNAME/job/rank/std[out,err,diag].
+    file=filename               Redirect output from application processes into files of
+                                the form filename.rank.
+
+In both the "dir" and "file" cases, the provided name will be converted to an absolute path.
+Supported qualifiers include NOCOPY (i.e., output shall go only into the files - do not copy
+the output to the stdout/err streams).
+
+Only enough characters are required to uniquely identify the option.
+For example, TI is sufficient to identify TIMESTAMP option, while T cannot be used
+since it does not uniquely identify an option.
+#
+[stream-buffering]
+Adjust buffering for stdout/stderr [0 unbuffered] [1 line buffered] [2 fully buffered]
+Can also be set via the MCA parameter: --mca ompi_stream_buffering VALUE
+#
+[stdin]
+Specify procs to receive stdin [rank, "all", "none"] (default: 0, indicating rank 0)
+#
+[map-by]
+Mapping Policy for job:
+    slot
+    hwthread
+    core (default: np <= 2)
+    l1cache
+    l2cache
+    l3cache
+    numa (default: np > 2)
+    package
+    node
+    seq
+    dist
+    ppr
+    rankfile
+with supported colon-delimited qualifiers:
+    PE=y (for multiple cpus/proc)
+    SPAN
+    OVERSUBSCRIBE
+    NOOVERSUBSCRIBE
+    NOLOCAL
+    HWTCPUS
+    CORECPUS
+    DEVICE(for dist policy)
+    INHERIT
+    NOINHERIT
+    PE-LIST=a,b (comma-delimited ranges of cpus to use for this job)
+    FILE=<path> for seq and rankfile options
+#
+[rank-by]
+Ranking Policy for job:
+    slot (default: np <= 2)
+    hwthread
+    core
+    l1cache
+    l2cache
+    l3cache
+    numa (default: np > 2)
+    package
+    node
+with supported colon-delimited qualifiers:
+    SPAN
+    FILL
+#
+[bind-to]
+Binding Policy for job:
+    none (default: oversubscribed)
+    hwthread
+    core (default: np <= 2)
+    l1cache
+    l2cache
+    l3cache
+    numa (default: np > 2)
+    package
+with supported colon-delimited qualifiers:
+    overload-allowed
+    if-supported
+#
+[rankfile]
+Name of file to specify explicit task mapping
+#
+[display]
+Comma-delimited list of case-insensitive options for displaying information about
+the allocation and job.
+Allowed values:
+    allocation
+    bind
+    map
+    map-devel
+    topo
+Only enough characters are required to uniquely identify the option.
+For example, A is sufficient to identify ALLOCATION option, while MAP cannot be used
+to specify the MAP-DEVEL option since there is also a MAP option.
+#
+[do-not-launch]
+Perform all necessary operations to prepare to launch the application, but do not actually
+launch it (usually used to test mapping patterns)
+#
+[enable-recovery]
+Enable recovery from process failure [Default = disabled]
+#
+[max-restarts]
+Max number of times to restart a failed process
+#
+[disable-recovery]
+Disable recovery (resets all recovery options to off)
+#
+[continuous]
+Job is to run until explicitly terminated
+[openmpi-install-path-not-found]
+An internal Open MPI environment variable needed for Java support was not set.
+Open MPI 5.0.0 or newer is required for this support.
+#
+[output-proctable]
+Print the complete proctable to stdout after launch. This option accepts an optional argument,
+which must be + to print to stdout, - to print to stderr, or a valid filename to print to
+a file. For instance --output-proctable=+
+
+If the optional argument is omitted, then the table is printed to stdout.
+
+The table includes rank, hostname, executable name and pid.
+#
+#  DEPRECATED OPTIONS
+#
+[mca]
+Syntax: --mca <arg0> <arg1>
+where arg0 is the parameter name and arg1 is the parameter value
+
+Pass generic MCA parameters - i.e., parameters whose project affiliation
+must be determined by PRRTE based on matching the name of the parameter with defined values
+from various projects that PRRTE knows about.
+
+DEPRECATED: This translation can be incomplete (e.g., if  known project adds or changes
+parameters) - thus, it is strongly recommended that users use project-specific parameters
+such as "prtemca" or "pmixmca".
+#
+[gmca]
+Syntax: --gmca <arg0> <arg1>
+where arg0 is the parameter name and arg1 is the parameter value. The "g" prefix
+indicates that this parameter is to be applied to _all_ application contexts and
+not just the one in which the directive appears.
+
+Pass generic MCA parameters - i.e., parameters whose project affiliation
+must be determined by PRRTE based on matching the name of the parameter with defined values
+from various projects that PRRTE knows about. This translation can be incomplete (e.g., if
+a known project adds or changes parameters) - thus, it is strongly recommended that users
+use project-specific parameters such as "prtemca" or "pmixmca".
+
+DEPRECATED: This translation can be incomplete (e.g., if  known project adds or changes
+parameters) - thus, it is strongly recommended that users use project-specific parameters
+such as "gprtemca" or "gpmixmca".
+#
+[xml]
+Provide all output in XML format
+
+DEPRECATED: please see "--help output" for details
+#
+[tag-output]
+Tag all output with [job,rank]
+
+DEPRECATED: please see "--help output" for details
+#
+[timestamp-output]
+Timestamp all application process output
+
+DEPRECATED: please see "--help output" for details
+#
+[output-directory]
+Redirect output from application processes into filename/job/rank/std[out,err,diag]. A
+relative path value will be converted to an absolute path. The directory name may include a
+colon followed by a comma-delimited list of optional case-insensitive directives. Supported
+directives currently include NOJOBID (do not include a job-id directory level) and NOCOPY
+(do not copy the output to the stdout/err streams)
+
+DEPRECATED: please see "--help output" for details
+#
+[output-filename]
+Redirect output from application processes into filename.rank. A relative path value will be
+converted to an absolute path. The directory name may include a colon followed by a
+comma-delimited list of optional case-insensitive directives. Supported directives currently
+include NOCOPY (do not copy the output to the stdout/err streams)
+
+DEPRECATED: please see "--help output" for details
+#
+[merge-stderr-to-stdout]
+Merge stderr to stdout for each process
+
+DEPRECATED: please see "--help output" for details
+#
+[display-devel-map]
+Display a detailed process map (mostly intended for developers)
+just before launch
+
+DEPRECATED: please see "--help display" for details
+#
+[display-topo]
+Display the topology as part of the process map (mostly intended
+for developers) just before launch
+
+DEPRECATED: please see "--help display" for details
+#
+[report-bindings]
+Display process bindings to stderr
+
+DEPRECATED: please see "--help display" for details
+#
+[display-map]
+Display the process map just before launch
+
+DEPRECATED: please see "--help display" for details
+#
+[display-allocation]
+Display the allocation being used by this job
+
+DEPRECATED: please see "--help display" for details
+#
+[with-ft-bad-option]
+The OMPI personality was passed the --with-ft directive,
+but that directive was given an unsupported option:
+
+  Option: %s
+
+Supported options include:
+
+* typical represenations for "true" ("yes", "true", or "1")
+
+* typical representations for "false" ("no", "false", or "0")
+
+* either "ulfm" or "mpi"
+
+Please provide one of the above values and try again.

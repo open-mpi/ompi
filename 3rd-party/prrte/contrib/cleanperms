@@ -1,0 +1,11 @@
+#!/usr/bin/bash
+
+find . -type f -name "*.c" -perm /u+x -print -exec chmod -x {} \;
+find . -type f -name Makefile.am -perm /u+x -print -exec chmod -x {} \;
+find . -type f -name "*.h" -perm /u+x -print -exec chmod -x {} \;
+find . -type f -name Makefile.include -perm /u+x -print -exec chmod -x {} \;
+find . -type f -name Makefile -perm /u+x -print -exec chmod -x {} \;
+find . -type f -name "*.m4" -perm /u+x -print -exec chmod -x {} \;
+find . -type f -name "*.ac" -perm /u+x -print -exec chmod -x {} \;
+find . -type f -name "*.txt" -perm /u+x -print -exec chmod -x {} \;
+find . -type f -name "*.l" -perm /u+x -print -exec chmod -x {} \;

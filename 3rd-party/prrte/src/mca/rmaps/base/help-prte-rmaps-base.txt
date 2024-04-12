@@ -1,0 +1,831 @@
+# -*- text -*-
+#
+# Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+#                         University Research and Technology
+#                         Corporation.  All rights reserved.
+# Copyright (c) 2004-2005 The University of Tennessee and The University
+#                         of Tennessee Research Foundation.  All rights
+#                         reserved.
+# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+#                         University of Stuttgart.  All rights reserved.
+# Copyright (c) 2004-2005 The Regents of the University of California.
+#                         All rights reserved.
+# Copyright (c) 2011-2020 Cisco Systems, Inc.  All rights reserved
+# Copyright (c) 2011      Los Alamos National Security, LLC.
+#                         All rights reserved.
+# Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
+# Copyright (c) 2021-2024 Nanook Consulting  All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+# This is the US/English general help file for PRRTE's prun.
+#
+[prte-rmaps-base:alloc-error]
+There are not enough slots available in the system to satisfy the %d
+slots that were requested by the application:
+
+  %s
+
+Either request fewer procs for your application, or make more slots
+available for use.
+
+A "slot" is the PRRTE term for an allocatable unit where we can
+launch a process.  The number of slots available are defined by the
+environment in which PRRTE processes are run:
+
+  1. Hostfile, via "slots=N" clauses (N defaults to number of
+     processor cores if not provided)
+  2. The --host command line parameter, via a ":N" suffix on the
+     hostname (N defaults to 1 if not provided)
+  3. Resource manager (e.g., SLURM, PBS/Torque, LSF, etc.)
+  4. If none of a hostfile, the --host command line parameter, or an
+     RM is present, PRRTE defaults to the number of processor cores
+
+In all the above cases, if you want PRRTE to default to the number
+of hardware threads instead of the number of processor cores, use the
+--use-hwthread-cpus option.
+
+Alternatively, you can use the --map-by :OVERSUBSCRIBE option to ignore the
+number of available slots when deciding the number of processes to
+launch.
+#
+[prte-rmaps-base:not-all-mapped-alloc]
+Some of the requested hosts are not included in the current allocation for the
+application:
+  %s
+The requested hosts were:
+  %s
+
+Verify that you have mapped the allocated resources properly using the
+--host or --hostfile specification.
+[prte-rmaps-base:no-mapped-node]
+There are no allocated resources for the application:
+  %s
+that match the requested mapping:
+  %s: %s
+
+Verify that you have mapped the allocated resources properly for the
+indicated specification.
+[prte-rmaps-base:nolocal-no-available-resources]
+There are no available nodes allocated to this job. This could be because
+no nodes were found or all the available nodes were already used.
+
+Note that since the -nolocal option was given no processes can be
+launched on the local node.
+#
+[prte-rmaps-base:no-available-resources]
+No nodes are available for this job, either due to a failure to
+allocate nodes to the job, or allocated nodes being marked
+as unavailable (e.g., down, rebooting, or a process attempting
+to be relocated to another node when none are available).
+[prte-rmaps-base:all-available-resources-used]
+All nodes which are allocated for this job are already filled.
+#
+[out-of-vpids]
+The system has exhausted its available ranks - the application is attempting
+to spawn too many daemons and will be aborted.
+
+This may be resolved by increasing the number of available ranks by
+re-configuring with the --enable-jumbo-apps option, and then
+re-building the application.
+#
+[rmaps:too-many-procs]
+Your job has requested a conflicting number of processes for the
+application:
+
+App: %s
+number of procs:  %d
+
+This is more processes than we can launch under the following
+additional directives and conditions:
+
+%s:   %d
+%s:   %d
+
+Please revise the conflict and try again.
+#
+[too-many-cpus-per-rank]
+Your job has requested more cpus per process(rank) than there
+are cpus in a package:
+
+  Cpus/rank: %d
+  #cpus/package: %d
+
+Please correct one or both of these values and try again.
+#
+[failed-map]
+Your job failed to map. Either no mapper was available, or none
+of the available mappers was able to perform the requested
+mapping operation.
+
+  Mapper result:       %s
+  Application:         %s
+  #procs to be mapped: %d
+  Mapping policy:      %s
+  Binding policy:      %s
+
+#
+[span-packages-multiple]
+Your job failed to map because the resulting process placement
+would cause the process to be bound to CPUs in more than one
+package:
+
+  Mapping policy:  %s
+  Binding policy:  %s
+  CPUs/rank:       %d
+
+This configuration almost always results in a loss of performance
+that can significantly impact applications. Either alter the
+mapping, binding, and/or cpus/rank policies so that each process
+can fit into a single package, or consider using an alternative
+mapper that can handle this configuration (e.g., the rankfile mapper).
+#
+[span-packages-cpuset]
+Your job failed to map because the resulting process placement
+would cause the process to be bound to CPUs in more than one
+package:
+
+  Mapping policy:  %s
+  Binding policy:  %s
+  PE-LIST:         %s
+
+This configuration almost always results in a loss of performance
+that can significantly impact applications. Either alter the
+mapping, binding, and/or PE-LIST policies so that each process
+can fit into a single package, or consider using an alternative
+mapper that can handle this configuration (e.g., the rankfile mapper).
+#
+[unrecognized-policy]
+The specified %s directive is not recognized:
+
+  Directive: %s
+
+Please check for a typo or ensure that the directive is a supported
+one.
+#
+[oversubscribe-conflict]
+Conflicting directives for the default oversubscription policy were
+given stating that oversubscription was both allowed and not allowed.
+
+Please check that only one policy is defined.
+#
+[rmaps:binding-target-not-found]
+A request was made to bind to %s, but an appropriate target could not
+be found on node %s.
+#
+[allocation-overload]
+A request was made to bind that would require binding
+processes to more cpus than are available in your allocation:
+
+   Application:     %s
+   #processes:      %d
+   Mapping policy:  %s
+   Binding policy:  %s
+
+You can override this protection by adding the "overload-allowed"
+option to your binding directive.
+#
+[rmaps:no-topology]
+A mapping directive was given that requires knowledge of
+a remote node's topology. However, no topology info is
+available for the following node:
+
+  Node: %s
+
+The job cannot be executed under this condition. Please either
+remove the directive or investigate the lack of topology info.
+#
+[rmaps:no-available-cpus]
+While computing bindings, we found no available cpus on
+the following node:
+
+  Node:  %s
+
+Please check your allocation.
+#
+[rmaps:cpubind-not-supported]
+A request was made to bind a process, but at least one node does NOT
+support binding processes to cpus.
+
+Node: %s
+
+PRRTE uses the "hwloc" library to perform process and memory
+binding. This error message means that hwloc has indicated that
+processor binding support is not available on this machine.
+
+On OS X, processor and memory binding is not available at all (i.e.,
+the OS does not expose this functionality).
+
+On Linux, lack of the functionality can mean that you are on a
+platform where processor and memory affinity is not supported in Linux
+itself, or that hwloc was built without NUMA and/or processor affinity
+support. When building hwloc (which, depending on your PRRTE
+installation, may be embedded in PRRTE itself), it is important to
+have the libnuma header and library files available. Different linux
+distributions package these files under different names; look for
+packages with the word "numa" in them. You may also need a developer
+version of the package (e.g., with "dev" or "devel" in the name) to
+obtain the relevant header files.
+
+If you are getting this message on a non-OS X, non-Linux platform,
+then hwloc does not support processor / memory affinity on this
+platform. If the OS/platform does actually support processor / memory
+affinity, then you should contact the hwloc maintainers:
+https://github.com/open-mpi/hwloc.
+#
+[rmaps:membind-not-supported]
+WARNING: a request was made to bind a process. While the system
+supports binding the process itself, at least one node does NOT
+support binding memory to the process location.
+
+  Node:  %s
+
+PRRTE uses the "hwloc" library to perform process and memory
+binding. This error message means that hwloc has indicated that
+processor binding support is not available on this machine.
+
+On OS X, processor and memory binding is not available at all (i.e.,
+the OS does not expose this functionality).
+
+On Linux, lack of the functionality can mean that you are on a
+platform where processor and memory affinity is not supported in Linux
+itself, or that hwloc was built without NUMA and/or processor affinity
+support. When building hwloc (which, depending on your PRRTE
+installation, may be embedded in PRRTE itself), it is important to
+have the libnuma header and library files available. Different linux
+distributions package these files under different names; look for
+packages with the word "numa" in them. You may also need a developer
+version of the package (e.g., with "dev" or "devel" in the name) to
+obtain the relevant header files.
+
+If you are getting this message on a non-OS X, non-Linux platform,
+then hwloc does not support processor / memory affinity on this
+platform. If the OS/platform does actually support processor / memory
+affinity, then you should contact the hwloc maintainers:
+https://github.com/open-mpi/hwloc.
+
+This is a warning only; your job will continue, though performance may
+be degraded.
+#
+[rmaps:membind-not-supported-fatal]
+A request was made to bind a process. While the system
+supports binding the process itself, at least one node does NOT
+support binding memory to the process location.
+
+  Node:  %s
+
+PRRTE uses the "hwloc" library to perform process and memory
+binding. This error message means that hwloc has indicated that
+processor binding support is not available on this machine.
+
+On OS X, processor and memory binding is not available at all (i.e.,
+the OS does not expose this functionality).
+
+On Linux, lack of the functionality can mean that you are on a
+platform where processor and memory affinity is not supported in Linux
+itself, or that hwloc was built without NUMA and/or processor affinity
+support. When building hwloc (which, depending on your PRRTE
+installation, may be embedded in PRRTE itself), it is important to
+have the libnuma header and library files available. Different linux
+distributions package these files under different names; look for
+packages with the word "numa" in them. You may also need a developer
+version of the package (e.g., with "dev" or "devel" in the name) to
+obtain the relevant header files.
+
+If you are getting this message on a non-OS X, non-Linux platform,
+then hwloc does not support processor / memory affinity on this
+platform. If the OS/platform does actually support processor / memory
+affinity, then you should contact the hwloc maintainers:
+https://github.com/open-mpi/hwloc.
+
+The provided memory binding policy requires that PRRTE abort the
+job at this time.
+#
+[rmaps:no-bindable-objects]
+No bindable objects of the specified type were available
+on at least one node:
+
+  Node:    %s
+  Target:  %s
+#
+[rmaps:unknown-binding-level]
+Unknown binding level:
+
+  Target:  %s
+  Cache level:  %u
+#
+[prte-rmaps-base:missing-daemon]
+While attempting to build a map of this job, a node
+was detected to be missing a daemon:
+
+  Node:  %s
+
+This usually indicates a mismatch between what the
+allocation provided for the node name versus what was
+actually found on the node.
+#
+[prte-rmaps-base:no-objects]
+No objects of the specified type were found on at least one node:
+
+  Type: %s
+  Node: %s
+
+The map cannot be done as specified.
+#
+[topo-file]
+A topology file was given for the compute nodes, but
+we were unable to correctly process it. Common errors
+include incorrectly specifying the path to the file,
+or the file being generated in a way that is incompatible
+with the version of hwloc being used by OMPI.
+
+  File: %s
+
+Please correct the problem and try again.
+#
+[deprecated]
+The following command line options and corresponding MCA parameter have
+been deprecated and replaced as follows:
+
+  Command line options:
+    Deprecated:  %s
+    Replacement: %s
+
+  Equivalent MCA parameter:
+    Deprecated:  %s
+    Replacement: %s
+
+The deprecated forms *will* disappear in a future version of PRRTE.
+Please update to the new syntax.
+#
+[mismatch-binding]
+A request for multiple cpus-per-proc was given, but a conflicting binding
+policy was specified:
+
+  #cpus-per-proc:  %d
+  type of cpus:    %s
+  binding policy given: %s
+
+The correct binding policy for the given type of cpu is:
+
+  correct binding policy:  %s
+
+This is the binding policy we would apply by default for this
+situation, so no binding need be specified. Please correct the
+situation and try again.
+#
+[mapping-too-low]
+A request for multiple cpus-per-proc was given, but a directive
+was also given to map to an object level that has less cpus than
+requested ones:
+
+  #cpus-per-proc:  %d
+  number of cpus:  %d
+  map-by:          %s
+
+Please specify a mapping level that has more cpus, or else let us
+define a default mapping that will allow multiple cpus-per-proc.
+#
+[unrecognized-modifier]
+The mapping request contains an unrecognized qualifier:
+
+  Request: %s
+
+Please check your request and try again. Remember, multiple
+qualifiers must be separated by a colon (':').
+#
+[invalid-pattern]
+The mapping request contains a pattern that doesn't match
+the required syntax of #:object
+
+  Pattern: %s
+
+Please check your request and try again.
+#
+[prte-rmaps-base:oversubscribed]
+The requested number of processes exceeds the allocated
+number of slots:
+
+  #slots:       %d
+  #processes:   %d
+
+This creates an oversubscribed condition that may adversely
+impact performance when combined with the requested binding
+operation. We will continue, but will not bind the processes.
+This warning can be omitted by adding the "overload-allowed"
+qualifier to the binding policy.
+#
+[cannot-launch]
+Although we were able to map your job, we are unable to launch
+it at this time due to required resources being busy. Please
+try again later.
+#
+[rmaps:no-locale]
+The request to bind processes could not be completed due to
+an internal error - the locale of the following process was
+not set by the mapper code:
+
+  Process:  %s
+
+Please contact the OMPI developers for assistance. Meantime,
+you will still be able to run your application without binding
+by specifying "--bind-to none" on your command line.
+#
+[mapping-too-low-init]
+A request for multiple cpus-per-proc was given, but a directive
+was also given to map to an object level that cannot support that
+directive.
+
+Please specify a mapping level that has more than one cpu, or
+else let us define a default mapping that will allow multiple
+cpus-per-proc.
+#
+[device-not-specified]
+The request to map processes by distance could not be completed
+because device to map near by was not specified. Please, use
+rmaps_dist_device mca parameter to set it.
+#
+[num-procs-not-specified]
+Either the -host or -hostfile options were given, but the number
+of processes to start was omitted. This combination is not supported.
+
+Please specify the number of processes to run and try again.
+#
+[failed-assignments]
+The attempt to assign hardware locations to processes on a
+compute node failed:
+
+  Node:    %s
+  Policy:  %s
+
+We cannot continue - please check that the policy is in
+accordance with the actual available hardware.
+#
+[rmaps:insufficient-cpus]
+The request to bind processes to cpus in a provided list
+of logical id's based on their local rank on a node cannot
+be met due to there being more processes on a node than
+available cpus:
+
+  Node:         %s
+  Local rank:   %d
+  Cpu list:     %s
+
+Please adjust either the number of processes per node or
+the list of cpus.
+#
+[unsupported-default-modifier]
+A %s modifier was provided that is not supported as a default value:
+
+  Modifier:  %s
+
+You can provide this modifier on a per-job basis, but it cannot
+be the default setting.
+#
+[unsupported-default-policy]
+A %s policy was provided that is not supported as a default value:
+
+  Policy:  %s
+
+You can provide this policy on a per-job basis, but it cannot
+be the default setting.
+#
+[missing-value]
+A %s was given that requires a value, but no value for it was given
+or the value is missing the required '=' sign:
+
+  Policy:  %s
+  Given:   %s
+
+Please provide a value for this policy, or remove it.
+#
+[insufficient-cpus]
+An insufficient number of CPUs was found while attempting to map the job
+using the given request:
+
+  Mapping policy:  %s
+  Default cpuset:  %s
+  CPU list:        %s
+  Available CPUs:  %s
+
+Please modify either the external limit set by the resource manager (e.g.,
+cgroup), the default cpuset specified, or the cpu list provided as the
+mapping policy modifier.
+#
+[insufficient-cpus-per-proc]
+A request was made to bind a given number of cpus to each process, but
+not enough cpus are available to meet the request:
+
+  Binding policy:  %s
+  Node:            %s
+  CPU envelope:    %s
+  CPUs per proc:   %d
+
+Please adjust your request and try again.
+[invalid-value]
+A %s was given that requires a value, but the provided value is invalid:
+
+  Policy:  %s
+  Given:   %s
+
+Please provide a valid value for this policy, or remove it.
+#
+[rankfile-no-filename]
+The request to map processes using a rankfile could not be completed
+because the filename of the rankfile was not specified. Please
+specify the name of the rankfile.
+#
+[missing-modifier]
+A ':' was found in a modifier specification but there is no modifier
+following the ':'. Please specify a modifier.
+#
+[invalid-combination]
+We cannot bind to hardware threads if we are not treating hardware
+threads as independent CPUs since the lowest allocatable unit is
+"core" by default. In order to bind to hardware threads, you must
+therefore specify that we treat hardware threads as independent CPUs
+by adding the "HWTCPUS" modifier to the "--map-by" directive.
+
+The combination "--map-by core:hwtcpus --bind-to hwthread" or
+"--map-by :hwtcpus --bind-to hwthread" will result in one process
+being placed on each core, with the process bound to the first
+hardware thread in that core.
+
+In contrast, a case such as "--map-by package:hwtcpus --bind-to hwthread"
+would result in each process being bound to successive hardware threads
+on each package.
+#
+[unrecognized-qualifier]
+The %s directive contains an unrecognized qualifier:
+
+  Qualifier: %s
+  Valid qualifiers: %s
+
+Please check for a typo or ensure that the qualifier is a supported one.
+#
+[unrecognized-directive]
+The specified %s directive is not recognized:
+
+  Directive: %s
+  Valid directives: %s
+
+Please check for a typo or ensure that the directive is a supported one.
+#
+[missing-qualifier]
+The %s option contains a directive that is missing a value:
+
+  Directive: %s
+  Valid directive: "%s=<value>"
+
+Please check for a typo or ensure that the value is provided.
+#
+[missing-personality]
+PRRTE has hit an internal problem that should never happen - it is
+attempting to map a job that lacks an assigned personality.
+
+  Job: %s
+
+Please report this to the PRRTE developers (https://github.com/openpmix/prrte/issues)
+#
+[unsupported-combination]
+A %s policy was provided that is not supported in combination
+with the "PE=N" option:
+
+  Policy:  %s
+
+When specifying the number of CPUs to use for each process in a job,
+the processes must be bound at the CPU level - either HWThread if
+"HWTCPUS" was specified, or CORE. Please remove the bind policy
+specification and try again.
+#
+[unsupported-mapping-combo]
+A mapping policy was provided that is not supported in combination
+with the "PE-LIST=x,y,z" option:
+
+  Policy:  %s
+
+When specifying the CPUs to be used for the job, the mapper can
+only look at those CPUs. It is therefore not possible to map
+the job according to some other target object. Please either
+remove the mapping policy or change it to "slot" and try again.
+[must-map-by-obj]
+When ranking by FILL or by SPAN, you must map by an object
+type (e.g., HWTHREAD, NUMA, or cache level):
+
+  Map policy:   %s
+  Rank policy:  %s
+
+Please specify a supported combination and try again.
+#
+[out-of-resource]
+Either there are not enough slots available in the system to launch
+the %d processes that were requested by the application, or there are
+not enough CPUs to bind them as requested:
+
+  App: %s
+  Mapping: %s
+  Binding: %s
+
+Either request fewer processes for your application, make more slots
+available for use by expanding the allocation, or do not bind the
+processes so that the number of CPUs is no longer a limiting factor.
+
+A "slot" is the PRRTE term for an allocatable unit where we can
+launch a process.  The number of slots available are defined by the
+environment in which PRRTE processes are run:
+
+  1. Hostfile, via "slots=N" clauses (N defaults to number of
+     processor cores if not provided)
+  2. The --host command line parameter, via a ":N" suffix on the
+     hostname (N defaults to 1 if not provided)
+  3. Resource manager (e.g., SLURM, PBS/Torque, LSF, etc.)
+  4. If none of a hostfile, the --host command line parameter, or an
+     RM is present, PRRTE defaults to the number of processor cores
+
+In all the above cases, if you want PRRTE to default to the number
+of hardware threads instead of the number of processor cores, use the
+--use-hwthread-cpus option.
+
+Alternatively, you can use the --map-by :OVERSUBSCRIBE option to ignore the
+number of available slots when deciding the number of processes to
+launch. Similarly, you can use the --bind-to :OVERLOAD option to bind
+more than one process to a CPU, if desired, or --bind-to NONE to avoid
+binding altogether.
+
+#
+#  DEPRECATED OPTIONS
+#
+[placement-deprecated]
+------------------------------  Deprecated Options  ----------------------------
+
+These deprecated options will be removed in a future release.
+
+`--bind-to-core`
+
+:   **(Deprecated: Use `--bind-to core`)**
+    Bind processes to cores
+
+`-bind-to-socket, --bind-to-socket`
+
+:   **(Deprecated: Use `--bind-to package`)**
+    Bind processes to processor sockets
+
+`--bycore`
+
+:   **(Deprecated: Use `--map-by core`)**
+    Map processes by core
+
+`-bynode, --bynode`
+
+:   **(Deprecated: Use `--map-by node`)**
+    Launch processes one per node, cycling by node in a round-robin
+    fashion. This spreads processes evenly among nodes and assigns ranks
+    in a round-robin, "by node" manner.
+
+`--byslot`
+
+:   **(Deprecated: Use `--map-by slot`)**
+    Map and rank processes round-robin by slot.
+
+`--cpus-per-proc <#perproc>`
+
+:   **(Deprecated: Use `--map-by <obj>:PE=<#perproc>`)**
+    Bind each process to the specified number of cpus.
+
+`--cpus-per-rank <#perrank>`
+
+:   **(Deprecated: Use `--map-by <obj>:PE=<#perrank>`)**
+    Alias for `--cpus-per-proc`.
+
+`--display-allocation`
+
+:   **(Deprecated: Use `--display ALLOC`)**
+    Display the detected resource allocation.
+
+`--display-devel-map`
+
+:   **(Deprecated: Use `--display MAP-DEVEL`)**
+    Display a detailed process map (mostly intended for developers) just
+    before launch.
+
+`--display-map`
+
+:   **(Deprecated: Use `--display MAP`)**
+    Display a table showing the mapped location of each process prior to
+    launch.
+
+`--display-topo`
+
+:   **(Deprecated: Use `--display TOPO`)**
+    Display the topology as part of the process map (mostly intended for
+    developers) just before launch.
+
+`--do-not-launch`
+
+:   **(Deprecated: Use `--map-by :DONOTLAUNCH`)**
+    Perform all necessary operations to prepare to launch the application,
+    but do not actually launch it (usually used to test mapping patterns).
+
+`--do-not-resolve`
+
+:   **(Deprecated: Use `--map-by :DONOTRESOLVE`)**
+    Do not attempt to resolve interfaces - usually used to determine proposed
+    process placement/binding prior to obtaining an allocation.
+
+`-N <num>`
+
+:   **(Deprecated: Use `--map-by prr:<num>:node`)**
+    Launch `num` processes per node on all allocated nodes.
+
+`--nolocal`
+
+:   **(Deprecated: Use `--map-by :NOLOCAL`)**
+    Do not run any copies of the launched application on the same node
+    as `prun` is running. This option will override listing the `localhost`
+    with `--host` or any other host-specifying mechanism.
+
+`--nooversubscribe`
+
+:   **(Deprecated: Use `--map-by :NOOVERSUBSCRIBE`)**
+    Do not oversubscribe any nodes; error (without starting any
+    processes) if the requested number of processes would cause
+    oversubscription. This option implicitly sets "max_slots" equal
+    to the "slots" value for each node. (Enabled by default).
+
+`--npernode <#pernode>`
+
+:   **(Deprecated: Use `--map-by ppr:<#pernode>:node`)**
+    On each node, launch this many processes.
+
+`--npersocket <#persocket>`
+
+:   **(Deprecated: Use `--map-by ppr:<#perpackage>:package`)**
+    On each node, launch this many processes times the number of
+    processor sockets on the node. The `--npersocket` option also turns
+    on the `--bind-to socket` option. The term `socket` has been globally
+    replaced with `package`.
+
+`--oversubscribe`
+
+:   **(Deprecated: Use `--map-by :OVERSUBSCRIBE`)**
+    Nodes are allowed to be oversubscribed, even on a managed system,
+    and overloading of processing elements.
+
+`--pernode`
+
+:   **(Deprecated: Use `--map-by ppr:1:node`)**
+    On each node, launch one process.
+
+`--ppr`
+
+:   **(Deprecated: Use `--map-by ppr:<list>`)**
+    Comma-separated list of number of processes on a given resource type
+    [default: none].
+
+`--rankfile <FILENAME>`
+
+:   **(Deprecated: Use `--map-by rankfile:FILE=<FILENAME>`)**
+    Use a rankfile for mapping/ranking/binding
+
+`--report-bindings`
+
+:   **(Deprecated: Use `--display BINDINGS`)**
+    Report any bindings for launched processes.
+
+`--tag-output`
+
+:   **(Deprecated: Use `--output TAG`)**
+    Tag all output with [job,rank]
+
+`--timestamp-output`
+
+:   **(Deprecated: Use `--output TIMESTAMP`)**
+    Timestamp all application process output
+
+`--use-hwthread-cpus`
+
+:   **(Deprecated: Use `--map-by :HWTCPUS`)**
+    Use hardware threads as independent cpus.
+
+`--xml`
+
+:   **(Deprecated: Use `--output XML`)**
+    Provide all output in XML format
+#
+#  ALL
+#
+[placement-all]
+#include#help-schizo-detail#placement
+
+#include#help-schizo-detail#placement-examples
+
+#include#help-schizo-detail#placement-fundamentals
+
+#include#help-schizo-detail#placement-limits
+
+#include#help-schizo-detail#placement-diagnostics
+
+#include#help-schizo-detail#placement-rankfiles
