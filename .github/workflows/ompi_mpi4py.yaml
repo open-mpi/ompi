@@ -65,6 +65,9 @@ jobs:
         mca_params="$HOME/.prte/mca-params.conf"
         mkdir -p "$(dirname "$mca_params")"
         echo rmaps_default_mapping_policy = :oversubscribe >> "$mca_params"
+        mca_params="$HOME/.pmix/mca-params.conf"
+        mkdir -p "$(dirname "$mca_params")"
+        echo gds_shmem2_segment_size_multiplier = 1000.0 >> "$mca_params"
 
     - name: Show MPI
       run:  ompi_info
