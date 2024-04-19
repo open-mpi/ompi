@@ -1578,14 +1578,17 @@ static int ompi_comm_ft_allreduce_intra_nb(int *inbuf, int *outbuf, int count,
 static int ompi_comm_ft_allreduce_inter_nb(int *inbuf, int *outbuf, int count,
                                            struct ompi_op_t *op, ompi_comm_cid_context_t *cid_context,
                                            ompi_request_t **req) {
-    return MPI_ERR_UNSUPPORTED_OPERATION;
+    //TODO: CID_INTER_FT needs an implementation, using the non-ft for now...
+    int rc = ompi_comm_allreduce_inter_nb(inbuf, outbuf, count, op, cid_context, req);
+    return (rc == MPI_ERR_REVOKED  || rc == MPI_ERR_PROC_FAILED) ? MPI_ERR_UNSUPPORTED_OPERATION: rc;
 }
 
 static int ompi_comm_ft_allreduce_intra_pmix_nb(int *inbuf, int *outbuf, int count,
                                                 struct ompi_op_t *op, ompi_comm_cid_context_t *cid_context,
                                                 ompi_request_t **req) {
     //TODO: CID_INTRA_PMIX_FT needs an implementation, using the non-ft for now...
-    return ompi_comm_allreduce_intra_pmix_nb(inbuf, outbuf, count, op, cid_context, req);
+    int rc = ompi_comm_allreduce_intra_pmix_nb(inbuf, outbuf, count, op, cid_context, req);
+    return (rc == MPI_ERR_REVOKED || rc == MPI_ERR_PROC_FAILED) ? MPI_ERR_UNSUPPORTED_OPERATION: rc;
 }
 
 #endif /* OPAL_ENABLE_FT_MPI */
