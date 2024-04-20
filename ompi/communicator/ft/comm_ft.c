@@ -491,8 +491,8 @@ int ompi_comm_ishrink_internal(ompi_communicator_t* comm, ompi_communicator_t** 
                                     subreq,
                                     comm->c_coll->coll_iagree_module );
     if( OMPI_SUCCESS != rc ) {
-        ompi_comm_request_return(request);
         OBJ_RELEASE(context->failed_group);
+        ompi_comm_request_return(request);
         return rc;
     }
 
@@ -525,8 +525,8 @@ static int ompi_comm_ishrink_check_agree(ompi_comm_request_t *request) {
     rc = request->super.req_status.MPI_ERROR;
     if( (OMPI_SUCCESS != rc) && (MPI_ERR_PROC_FAILED != rc) ) {
         opal_output(0, "%s:%d Agreement failure: %d\n", __FILE__, __LINE__, rc);
-        ompi_comm_request_return(request);
         OBJ_RELEASE(context->failed_group);
+        ompi_comm_request_return(request);
         return rc;
     }
 
@@ -544,8 +544,8 @@ static int ompi_comm_ishrink_check_agree(ompi_comm_request_t *request) {
                                         subreq,
                                         comm->c_coll->coll_iagree_module );
         if( OMPI_SUCCESS != rc ) {
-            ompi_comm_request_return(request);
             OBJ_RELEASE(context->failed_group);
+            ompi_comm_request_return(request);
             return rc;
         }
         ompi_comm_request_schedule_append(request, ompi_comm_ishrink_check_agree, subreq, 1);
@@ -567,17 +567,17 @@ static int ompi_comm_ishrink_check_agree(ompi_comm_request_t *request) {
     comm_group = comm->c_local_group;
     rc = ompi_group_difference(comm_group, context->failed_group, &context->alive_group);
     if( OMPI_SUCCESS != rc ) {
-        ompi_comm_request_return(request);
         OBJ_RELEASE(context->failed_group);
+        ompi_comm_request_return(request);
         return rc;
     }
     if( OMPI_COMM_IS_INTER(comm) ) {
         comm_group = comm->c_remote_group;
         rc = ompi_group_difference(comm_group, context->failed_group, &context->alive_rgroup);
         if( OMPI_SUCCESS != rc ) {
-            ompi_comm_request_return(request);
             OBJ_RELEASE(context->alive_group);
             OBJ_RELEASE(context->failed_group);
+            ompi_comm_request_return(request);
             return rc;
         }
     }
@@ -597,11 +597,11 @@ static int ompi_comm_ishrink_check_agree(ompi_comm_request_t *request) {
                            subreq
                          );
     if( OMPI_SUCCESS != rc ) {
-        ompi_comm_request_return(request);
         OBJ_RELEASE(context->alive_group);
         if( NULL != context->alive_rgroup ) {
             OBJ_RELEASE(context->alive_rgroup);
         }
+        ompi_comm_request_return(request);
         return rc;
     }
 
@@ -630,8 +630,8 @@ static int ompi_comm_ishrink_check_setrank(ompi_comm_request_t *request) {
         opal_output_verbose(1, ompi_ftmpi_output_handle,
                             "%s ompi: comm_ishrink: Construction failed with error %d",
                             OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), rc);
-        ompi_comm_request_return(request);
         OBJ_RELEASE(*context->newcomm);
+        ompi_comm_request_return(request);
         return rc;
     }
 
@@ -665,8 +665,8 @@ static int ompi_comm_ishrink_check_setrank(ompi_comm_request_t *request) {
                                mode,              /* mode */
                                subreq );
     if( OMPI_SUCCESS != rc ) {
-        ompi_comm_request_return(request);
         OBJ_RELEASE(*context->newcomm);
+        ompi_comm_request_return(request);
         return rc;
     }
 
@@ -689,8 +689,8 @@ static int ompi_comm_ishrink_check_cid(ompi_comm_request_t *request) {
         opal_output_verbose(1, ompi_ftmpi_output_handle,
                             "%s ompi: comm_ishrink: Determine context id failed with error %d",
                             OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), rc);
-        ompi_comm_request_return(request);
         OBJ_RELEASE(*context->newcomm);
+        ompi_comm_request_return(request);
         return rc;
     }
 #if OPAL_ENABLE_DEBUG
@@ -726,8 +726,8 @@ static int ompi_comm_ishrink_check_cid(ompi_comm_request_t *request) {
                                 mode,
                                 subreq );
     if( OMPI_SUCCESS != rc ) {
-        ompi_comm_request_return(request);
         OBJ_RELEASE(*context->newcomm);
+        ompi_comm_request_return(request);
         return rc;
     }
 
@@ -749,8 +749,8 @@ static int ompi_comm_ishrink_check_activate(ompi_comm_request_t *request) {
         opal_output_verbose(1, ompi_ftmpi_output_handle,
                             "%s ompi: comm_ishrink: Activation failed with error %d",
                             OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), rc);
-        ompi_comm_request_return(request);
         OBJ_RELEASE(*context->newcomm);
+        ompi_comm_request_return(request);
         return rc;
     }
 #if OPAL_ENABLE_DEBUG
