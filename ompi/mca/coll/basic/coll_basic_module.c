@@ -17,6 +17,7 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation.  All rights reserved.
+ * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -97,13 +98,13 @@ mca_coll_basic_comm_query(struct ompi_communicator_t *comm,
         basic_module->super.coll_alltoallw  = mca_coll_basic_alltoallw_intra;
         basic_module->super.coll_barrier    = ompi_coll_base_barrier_intra_basic_linear;
         basic_module->super.coll_bcast      = ompi_coll_base_bcast_intra_basic_linear;
-        basic_module->super.coll_exscan     = mca_coll_basic_exscan_intra;
+        basic_module->super.coll_exscan     = ompi_coll_base_exscan_intra_linear;
         basic_module->super.coll_gather     = ompi_coll_base_gather_intra_basic_linear;
         basic_module->super.coll_gatherv    = mca_coll_basic_gatherv_intra;
         basic_module->super.coll_reduce     = ompi_coll_base_reduce_intra_basic_linear;
         basic_module->super.coll_reduce_scatter_block = mca_coll_basic_reduce_scatter_block_intra;
         basic_module->super.coll_reduce_scatter = mca_coll_basic_reduce_scatter_intra;
-        basic_module->super.coll_scan       = mca_coll_basic_scan_intra;
+        basic_module->super.coll_scan       = ompi_coll_base_scan_intra_linear;
         basic_module->super.coll_scatter    = ompi_coll_base_scatter_intra_basic_linear;
         basic_module->super.coll_scatterv   = mca_coll_basic_scatterv_intra;
     } else {
@@ -115,13 +116,13 @@ mca_coll_basic_comm_query(struct ompi_communicator_t *comm,
         basic_module->super.coll_alltoallw  = mca_coll_basic_alltoallw_intra;
         basic_module->super.coll_barrier    = mca_coll_basic_barrier_intra_log;
         basic_module->super.coll_bcast      = mca_coll_basic_bcast_log_intra;
-        basic_module->super.coll_exscan     = mca_coll_basic_exscan_intra;
+        basic_module->super.coll_exscan     = ompi_coll_base_exscan_intra_linear;
         basic_module->super.coll_gather     = ompi_coll_base_gather_intra_basic_linear;
         basic_module->super.coll_gatherv    = mca_coll_basic_gatherv_intra;
         basic_module->super.coll_reduce     = mca_coll_basic_reduce_log_intra;
         basic_module->super.coll_reduce_scatter_block = mca_coll_basic_reduce_scatter_block_intra;
         basic_module->super.coll_reduce_scatter = mca_coll_basic_reduce_scatter_intra;
-        basic_module->super.coll_scan       = mca_coll_basic_scan_intra;
+        basic_module->super.coll_scan       = ompi_coll_base_scan_intra_linear;
         basic_module->super.coll_scatter    = ompi_coll_base_scatter_intra_basic_linear;
         basic_module->super.coll_scatterv   = mca_coll_basic_scatterv_intra;
     }
