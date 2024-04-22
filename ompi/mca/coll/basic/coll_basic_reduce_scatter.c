@@ -49,7 +49,7 @@
  *	Returns:	- MPI_SUCCESS or error code
  *
  * Algorithm:
- *   Cummutative, reasonable sized messages
+ *   Commutative, reasonable sized messages
  *     recursive halving algorithm
  *   Others:
  *     reduce and scatterv (needs to be cleaned
