@@ -366,7 +366,7 @@ static int ompi_comm_ext_cid_new_block (ompi_communicator_t *newcomm, ompi_commu
             opal_show_help("help-comm.txt",
                            "MPI function not supported",
                            true,
-                           "MPI_Comm_from_group/MPI_Intercomm_from_groups",
+                           "MPI_Comm_create_from_group/MPI_Intercomm_create_from_groups",
                            msg_string);
             ret = MPI_ERR_UNSUPPORTED_OPERATION;
             break;
@@ -496,7 +496,7 @@ int ompi_comm_nextcid_nb (ompi_communicator_t *newcomm, ompi_communicator_t *com
 
     /* old CID algorighm */
 
-    /* if we got here and comm is NULL then that means the app is  invoking MPI-4 Sessions or later
+    /* if we got here and comm is NULL then that means the app is invoking MPI-4 Sessions or later
        functions but the pml does not support these functions so return not supported */
     if (NULL == comm) {
        char msg_string[1024];
@@ -505,7 +505,7 @@ int ompi_comm_nextcid_nb (ompi_communicator_t *newcomm, ompi_communicator_t *com
        opal_show_help("help-comm.txt",
                       "MPI function not supported",
                       true,
-                      "MPI_Comm_from_group/MPI_Intercomm_from_groups",
+                      "MPI_Comm_create_from_group/MPI_Intercomm_create_from_groups",
                       msg_string);
 
         return MPI_ERR_UNSUPPORTED_OPERATION;
