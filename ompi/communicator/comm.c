@@ -2383,7 +2383,7 @@ int ompi_comm_get_rprocs (ompi_communicator_t *local_comm, ompi_communicator_t *
        since it is used in the communicator */
     if ( OMPI_SUCCESS != rc ) {
         OMPI_ERROR_LOG(rc);
-        opal_output(0, "%d: Error in ompi_get_rprocs\n", local_rank);
+        opal_output(0, "%d: Error in ompi_comm_get_rprocs\n", local_rank);
         if ( NULL != rprocs ) {
             free ( rprocs );
             rprocs=NULL;
