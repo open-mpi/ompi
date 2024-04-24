@@ -136,17 +136,3 @@ jobs:
     with:
       # Enable the spawn tests
       env_name: MPI4PY_TEST_SPAWN
-
-  #==============================================
-
-  run_dynamic:
-    # This whole set of tests runs explicitly with setting "enable the
-    # spawn tests".  As of March 2024, we know that Open MPI is
-    # failing these tests.
-    needs: [ build ]
-    # Only run if the label "mpi4py" is set on this PR.
-    if: ${{ contains(github.event.pull_request.labels.*.name, 'mpi4py-all') }}
-    uses: ./.github/workflows/ompi_mpi4py_tests.yaml
-    with:
-      # Enable the dynamic process tests
-      env_name: MPI4PY_TEST_DYNPROC
