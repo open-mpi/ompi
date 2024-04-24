@@ -1768,9 +1768,9 @@ int ompi_dpm_dyn_finalize(void)
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
 
-        max = opal_pointer_array_get_size(&ompi_mpi_communicators);
+        max = ompi_comm_get_num_communicators();
         for (i=3; i<max; i++) {
-            comm = (ompi_communicator_t*)opal_pointer_array_get_item(&ompi_mpi_communicators,i);
+            comm = ompi_comm_lookup(i);
             if (NULL != comm &&  OMPI_COMM_IS_DYNAMIC(comm)) {
                 objs[j++] = disconnect_init(comm);
             }
