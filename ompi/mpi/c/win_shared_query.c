@@ -2,6 +2,9 @@
  * Copyright (c) 2012-2013 Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c)      2024 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -33,6 +36,7 @@ int MPI_Win_shared_query(MPI_Win win, int rank, MPI_Aint *size, int *disp_unit, 
 {
     int rc;
     size_t tsize;
+    ptrdiff_t du;
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -45,8 +49,9 @@ int MPI_Win_shared_query(MPI_Win win, int rank, MPI_Aint *size, int *disp_unit, 
     }
 
     if (NULL != win->w_osc_module->osc_win_shared_query) {
-        rc = win->w_osc_module->osc_win_shared_query(win, rank, &tsize, disp_unit, baseptr);
+        rc = win->w_osc_module->osc_win_shared_query(win, rank, &tsize, &du, baseptr);
         *size = tsize;
+        *disp_unit = du;
     } else {
         rc = MPI_ERR_RMA_FLAVOR;
     }
