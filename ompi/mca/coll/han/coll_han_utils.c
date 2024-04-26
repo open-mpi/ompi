@@ -25,12 +25,12 @@
  * @param[in]   size            Number of numerators
  * @returns     The GCD, where 1 <= GCD
  */
-size_t coll_han_utils_gcd(const size_t *numerators, const size_t size)
+size_t coll_han_utils_gcd(const uint64_t *numerators, const size_t size)
 {
-    size_t denominator = numerators[0], numerator, tmp;
+    size_t denominator = (size_t) numerators[0], numerator, tmp;
 
     for (size_t i = 1; i < size; ++i) {
-        numerator = numerators[i];
+        numerator = (size_t) numerators[i];
 
         if (0 == denominator) {
             denominator = numerator;
