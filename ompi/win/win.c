@@ -266,9 +266,6 @@ ompi_win_create(void *base, size_t size,
         return ret;
     }
 
-    /* MPI-4 §12.2.7 requires us to remove all unknown keys from the info object */
-    opal_info_remove_unreferenced(win->super.s_info);
-
     *newwin = win;
 
     return OMPI_SUCCESS;
@@ -299,9 +296,6 @@ ompi_win_allocate(size_t size, int disp_unit, opal_info_t *info,
         OBJ_RELEASE(win);
         return ret;
     }
-
-    /* MPI-4 §12.2.7 requires us to remove all unknown keys from the info object */
-    opal_info_remove_unreferenced(win->super.s_info);
 
     *((void**) baseptr) = base;
     *newwin = win;
@@ -335,9 +329,6 @@ ompi_win_allocate_shared(size_t size, int disp_unit, opal_info_t *info,
         return ret;
     }
 
-    /* MPI-4 §12.2.7 requires us to remove all unknown keys from the info object */
-    opal_info_remove_unreferenced(win->super.s_info);
-
     *((void**) baseptr) = base;
     *newwin = win;
 
@@ -367,9 +358,6 @@ ompi_win_create_dynamic(opal_info_t *info, ompi_communicator_t *comm, ompi_win_t
         OBJ_RELEASE(win);
         return ret;
     }
-
-    /* MPI-4 §12.2.7 requires us to remove all unknown keys from the info object */
-    opal_info_remove_unreferenced(win->super.s_info);
 
     *newwin = win;
 
