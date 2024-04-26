@@ -269,9 +269,10 @@ int opal_infosubscribe_change_info(opal_infosubscriber_t *object, opal_info_t *n
             updated_value = opal_infosubscribe_inform_subscribers(object, iterator->ie_key->string,
                                                                   iterator->ie_value->string,
                                                                   &found_callback);
-            if (NULL != updated_value
-                && 0 != strncmp(updated_value, value_str->string, value_str->length)) {
-                err = opal_info_set(object->s_info, iterator->ie_key->string, updated_value);
+            if (NULL != updated_value) {
+                err = opal_info_set(object->s_info, key_str->string, updated_value);
+            } else {
+                err = opal_info_set_internal(object->s_info, key_str->string, value_str->string);
             }
             OBJ_RELEASE(value_str);
             OBJ_RELEASE(key_str);

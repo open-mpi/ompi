@@ -65,14 +65,18 @@ OBJ_CLASS_INSTANCE(opal_info_entry_t, opal_list_item_t, info_entry_constructor,
                    info_entry_destructor);
 
 /*
- * Duplicate an info
+ * Duplicate an info into newinfo. If public_info is true we only duplicate
+ * key-value pairs that are not internal and that had been referenced,
+ * either through opal_info_get or opal_info_set.
  */
-int opal_info_dup(opal_info_t *info, opal_info_t **newinfo)
+static int opal_info_dup_impl(opal_info_t *info, opal_info_t **newinfo, bool public_only)
 {
     opal_info_entry_t *iterator;
 
     OPAL_THREAD_LOCK(info->i_lock);
     OPAL_LIST_FOREACH (iterator, &info->super, opal_info_entry_t) {
+        /* skip keys that are internal if we didn't ask for them */
+        if (public_only && (iterator->ie_internal || iterator->ie_referenced == 0)) continue;
         /* create a new info entry and retain the string objects */
         opal_info_entry_t *newentry = OBJ_NEW(opal_info_entry_t);
         newentry->ie_key = iterator->ie_key;
@@ -83,6 +87,16 @@ int opal_info_dup(opal_info_t *info, opal_info_t **newinfo)
     }
     OPAL_THREAD_UNLOCK(info->i_lock);
     return OPAL_SUCCESS;
+}
+
+int opal_info_dup_public(opal_info_t *info, opal_info_t **newinfo)
+{
+    return opal_info_dup_impl(info, newinfo, true);
+}
+
+int opal_info_dup(opal_info_t *info, opal_info_t **newinfo)
+{
+    return opal_info_dup_impl(info, newinfo, false);
 }
 
 static void opal_info_get_nolock(opal_info_t *info, const char *key, opal_cstring_t **value,
@@ -136,7 +150,7 @@ static int opal_info_set_cstring_nolock(opal_info_t *info, const char *key, opal
     return OPAL_SUCCESS;
 }
 
-static int opal_info_set_nolock(opal_info_t *info, const char *key, const char *value)
+static int opal_info_set_nolock(opal_info_t *info, const char *key, const char *value, bool internal)
 {
     opal_info_entry_t *old_info;
 
@@ -147,6 +161,7 @@ static int opal_info_set_nolock(opal_info_t *info, const char *key, const char *
          */
         size_t value_len = strlen(value);
         old_info->ie_referenced++;
+        old_info->ie_internal = internal;
         if (old_info->ie_value->length == value_len
             && 0 == strcmp(old_info->ie_value->string, value)) {
             return OPAL_SUCCESS;
@@ -171,6 +186,7 @@ static int opal_info_set_nolock(opal_info_t *info, const char *key, const char *
             return OPAL_ERR_OUT_OF_RESOURCE;
         }
         new_info->ie_referenced++;
+        new_info->ie_internal = internal;
         opal_list_append(&(info->super), (opal_list_item_t *) new_info);
     }
     return OPAL_SUCCESS;
@@ -184,7 +200,20 @@ int opal_info_set(opal_info_t *info, const char *key, const char *value)
     int ret;
 
     OPAL_THREAD_LOCK(info->i_lock);
-    ret = opal_info_set_nolock(info, key, value);
+    ret = opal_info_set_nolock(info, key, value, false);
+    OPAL_THREAD_UNLOCK(info->i_lock);
+    return ret;
+}
+
+/*
+ * Set a value on the info
+ */
+int opal_info_set_internal(opal_info_t *info, const char *key, const char *value)
+{
+    int ret;
+
+    OPAL_THREAD_LOCK(info->i_lock);
+    ret = opal_info_set_nolock(info, key, value, true);
     OPAL_THREAD_UNLOCK(info->i_lock);
     return ret;
 }
@@ -372,6 +401,7 @@ static void info_entry_constructor(opal_info_entry_t *entry)
     entry->ie_key = NULL;
     entry->ie_value = NULL;
     entry->ie_referenced = 0;
+    entry->ie_internal = false;
 }
 
 static void info_entry_destructor(opal_info_entry_t *entry)
@@ -409,53 +439,4 @@ static opal_info_entry_t *info_find_key(opal_info_t *info, const char *key)
         }
     }
     return NULL;
-}
-
-/**
- * Mark the entry \c key as referenced.
- */
-int opal_info_mark_referenced(opal_info_t *info, const char *key)
-{
-    opal_info_entry_t *entry;
-
-    OPAL_THREAD_LOCK(info->i_lock);
-    entry = info_find_key(info, key);
-    entry->ie_referenced++;
-    OPAL_THREAD_UNLOCK(info->i_lock);
-
-    return OPAL_SUCCESS;
-}
-
-/**
- * Remove a reference from the entry \c key.
- */
-int opal_info_unmark_referenced(opal_info_t *info, const char *key)
-{
-    opal_info_entry_t *entry;
-
-    OPAL_THREAD_LOCK(info->i_lock);
-    entry = info_find_key(info, key);
-    entry->ie_referenced--;
-    OPAL_THREAD_UNLOCK(info->i_lock);
-
-    return OPAL_SUCCESS;
-}
-
-/**
- * Remove any entries that are not marked as referenced
- */
-int opal_info_remove_unreferenced(opal_info_t *info)
-{
-    opal_info_entry_t *iterator, *next;
-    /* iterate over all entries and remove the ones that are not referenced */
-    OPAL_THREAD_LOCK(info->i_lock);
-    OPAL_LIST_FOREACH_SAFE (iterator, next, &info->super, opal_info_entry_t) {
-        if (!iterator->ie_referenced) {
-            opal_list_remove_item(&info->super, &iterator->super);
-        }
-    }
-    OPAL_THREAD_UNLOCK(info->i_lock);
-
-
-    return OPAL_SUCCESS;
 }
