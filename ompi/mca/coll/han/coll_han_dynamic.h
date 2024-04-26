@@ -111,7 +111,6 @@ typedef enum COMPONENTS {
 typedef struct {
     COMPONENT_T id;
     char* component_name;
-    mca_coll_base_component_t* component;
 } ompi_coll_han_components;
 
 extern ompi_coll_han_components ompi_coll_han_available_components[COMPONENTS_COUNT];
