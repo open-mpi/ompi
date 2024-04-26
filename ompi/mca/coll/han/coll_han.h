@@ -522,7 +522,7 @@ ompi_coll_han_reorder_gather(const void *sbuf,
                              int * topo);
 
 size_t
-coll_han_utils_gcd(const size_t *numerators, const size_t size);
+coll_han_utils_gcd(const uint64_t *numerators, const size_t size);
 
 int
 coll_han_utils_create_contiguous_datatype(size_t count, const ompi_datatype_t *oldType,
