@@ -343,7 +343,7 @@ int mca_coll_han_scatterv_intra(const void *sbuf, const int *scounts, const int 
     }
 
     if (max_data_size > (size_t) INT_MAX) {
-        datatype_size = coll_han_utils_gcd(low_data_size, low_size);
+        datatype_size = coll_han_utils_gcd((const size_t *) low_data_size, low_size);
     }
 
     low_scounts = malloc(low_size * sizeof(int));

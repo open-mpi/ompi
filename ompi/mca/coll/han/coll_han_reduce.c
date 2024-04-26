@@ -132,7 +132,6 @@ mca_coll_han_reduce_intra(const void *sbuf,
     int *vranks = han_module->cached_vranks;
     int low_rank = ompi_comm_rank(low_comm);
     int low_size = ompi_comm_size(low_comm);
-    int up_rank  = ompi_comm_rank(up_comm);
 
     int root_low_rank;
     int root_up_rank;

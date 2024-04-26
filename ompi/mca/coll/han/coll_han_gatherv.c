@@ -332,7 +332,7 @@ int mca_coll_han_gatherv_intra(const void *sbuf, int scount, struct ompi_datatyp
     }
 
     if (max_data_size > (size_t) INT_MAX) {
-        datatype_size = coll_han_utils_gcd(low_data_size, low_size);
+        datatype_size = coll_han_utils_gcd((const size_t *) low_data_size, low_size);
     }
 
     low_rcounts = malloc(low_size * sizeof(int));
