@@ -103,9 +103,6 @@ int  mca_fs_base_get_fstype(char *fname )
     if ( 0 == strncasecmp(fstype, "lustre", sizeof("lustre")) ) {
         ompio_type = LUSTRE;
     }
-    else if ( 0 == strncasecmp(fstype, "pvfs2", sizeof("pvfs2"))) {
-        ompio_type = PVFS2;
-    }
     else if ( 0 == strncasecmp(fstype, "ime", sizeof("ime"))) {
         ompio_type = IME;
     }
