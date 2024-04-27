@@ -369,7 +369,7 @@ static inline int ompi_osc_rdma_gacc_amo (ompi_osc_rdma_module_t *module, ompi_o
     void *to_free = NULL;
     int ret;
 
-    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "using network atomics for accumulate operation with count %d", count);
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "using network atomics for accumulate operation with count %zu", count);
 
     if (NULL == result) {
         to_free = result_start = result = malloc (request->len);
@@ -458,7 +458,7 @@ static inline int ompi_osc_rdma_gacc_contig (ompi_osc_rdma_sync_t *sync, const v
         OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "network atomics not available. falling back to get-op-put implementation...");
     }
 
-    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "using get-op-put to execute accumulate with count %d", target_count);
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "using get-op-put to execute accumulate with count %zu", target_count);
 
     if (&ompi_mpi_op_replace.op != op || OMPI_OSC_RDMA_TYPE_GET_ACC == request->type) {
         ptr = malloc (len);
