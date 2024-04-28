@@ -16,7 +16,7 @@
 # Copyright (c) 2016-2017 IBM Corporation.  All rights reserved.
 # Copyright (c) 2017      Los Alamos National Security, LLC.  All rights
 #                         reserved.
-# Copyright (c) 2019      Research Organization for Information Science
+# Copyright (c) 2019-2024 Research Organization for Information Science
 #                         and Technology (RIST).  All rights reserved.
 # Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
 # $COPYRIGHT$
@@ -93,8 +93,10 @@ mca_btl_usnic_la_LDFLAGS = \
         $(opal_btl_usnic_LDFLAGS) \
         $(btl_usnic_LDFLAGS) \
         -module -avoid-version
-mca_btl_usnic_la_LIBADD = $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la \
-        $(btl_usnic_LIBS)
+mca_btl_usnic_la_LIBADD = \
+        $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la \
+        $(btl_usnic_LIBS) \
+        $(opal_hwloc_LIBS)
 
 noinst_LTLIBRARIES = $(lib)
 libmca_btl_usnic_la_SOURCES = $(lib_sources)
@@ -102,7 +104,9 @@ libmca_btl_usnic_la_LDFLAGS = \
         $(opal_btl_usnic_LDFLAGS) \
         $(btl_usnic_LDFLAGS) \
         -module -avoid-version
-libmca_btl_usnic_la_LIBADD = $(btl_usnic_LIBS)
+libmca_btl_usnic_la_LIBADD = \
+        $(btl_usnic_LIBS) \
+        $(opal_hwloc_LIBS)
 
 if OPAL_BTL_USNIC_BUILD_UNIT_TESTS
 usnic_btl_run_tests_CPPFLAGS = $(AM_CPPFLAGS) \

@@ -16,6 +16,8 @@
 #                         reserved.
 # Copyright (c) 2019      Hewlett Packard Enterprise. All rights reserved.
 # Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+# Copyright (c) 2024      Research Organization for Information Science
+#                         and Technology (RIST).  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -75,11 +77,15 @@ lib@OPAL_LIB_NAME@mca_common_ofi_la_SOURCES = $(headers) $(sources)
 lib@OPAL_LIB_NAME@mca_common_ofi_la_LDFLAGS = \
         $(common_ofi_LDFLAGS) \
         -version-info $(libmca_opal_common_ofi_so_version)
-lib@OPAL_LIB_NAME@mca_common_ofi_la_LIBADD = $(common_ofi_LIBS)
+lib@OPAL_LIB_NAME@mca_common_ofi_la_LIBADD = \
+        $(common_ofi_LIBS) \
+        $(opal_hwloc_LIBS)
 
 lib@OPAL_LIB_NAME@mca_common_ofi_noinst_la_SOURCES = $(headers) $(sources)
 lib@OPAL_LIB_NAME@mca_common_ofi_noinst_la_LDFLAGS = $(common_ofi_LDFLAGS)
-lib@OPAL_LIB_NAME@mca_common_ofi_noinst_la_LIBADD = $(common_ofi_LIBS)
+lib@OPAL_LIB_NAME@mca_common_ofi_noinst_la_LIBADD = \
+        $(common_ofi_LIBS) \
+        $(opal_hwloc_LIBS)
 
 # Conditionally install the header files
 

@@ -269,5 +269,6 @@ dnl configure, to avoid pulling it into other configure tests.
 AC_DEFUN([OPAL_CONFIG_LIBEVENT_INTERNAL_LIBS_HANDLER], [
     OPAL_FLAGS_APPEND_UNIQ([CPPFLAGS], [${opal_libevent_CPPFLAGS}])
     OPAL_FLAGS_APPEND_UNIQ([LDFLAGS], [${opal_libevent_LDFLAGS}])
-    OPAL_FLAGS_APPEND_MOVE([LIBS], [${opal_libevent_BUILD_LIBS}])
+    opal_libevent_LIBS=${opal_libevent_BUILD_LIBS}
+    AC_SUBST([opal_libevent_LIBS])
 ])

@@ -8,6 +8,8 @@
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # Copyright (c) 2021      Amazon.com, Inc. or its affiliates.
 #                         All Rights reserved.
+# Copyright (c) 2024      Research Organization for Information Science
+#                         and Technology (RIST).  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -54,7 +56,8 @@ liboshmem_la_LIBADD = \
 	shmem/c/liboshmem_c.la \
 	$(fortran_oshmem_lib) \
 	$(MCA_oshmem_FRAMEWORK_LIBS) \
-	$(OSHMEM_TOP_BUILDDIR)/ompi/lib@OMPI_LIBMPI_NAME@.la
+	$(OSHMEM_TOP_BUILDDIR)/ompi/lib@OMPI_LIBMPI_NAME@.la \
+	$(opal_pmix_LIBS)
 liboshmem_la_DEPENDENCIES = $(liboshmem_la_LIBADD)
 liboshmem_la_LDFLAGS = \
         -version-info $(liboshmem_so_version) \

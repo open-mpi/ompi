@@ -3,6 +3,8 @@
 # Copyright (c) 2011-2017 Los Alamos National Security, LLC. All rights
 #                         reserved.
 # Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
+# Copyright (c) 2024      Research Organization for Information Science
+#                         and Technology (RIST).  All rights reserved.
 #
 # Additional copyrights may follow
 #
@@ -48,12 +50,16 @@ mcacomponentdir = $(opallibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_btl_ugni_la_SOURCES = $(ugni_SOURCES)
 nodist_mca_btl_ugni_la_SOURCES = $(ugni_nodist_SOURCES)
-mca_btl_ugni_la_LIBADD = $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la \
-	$(btl_ugni_LIBS)
+mca_btl_ugni_la_LIBADD = \
+	$(top_builddir)/opal/lib@OPAL_LIB_NAME@.la \
+	$(btl_ugni_LIBS) \
+	$(opal_hwloc_LIBS)
 mca_btl_ugni_la_LDFLAGS = -module -avoid-version $(btl_ugni_LDFLAGS)
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_btl_ugni_la_SOURCES = $(ugni_SOURCES)
 nodist_libmca_btl_ugni_la_SOURCES = $(ugni_nodist_SOURCES)
-libmca_btl_ugni_la_LIBADD = $(btl_ugni_LIBS)
+libmca_btl_ugni_la_LIBADD = \
+	$(btl_ugni_LIBS) \
+	$(opal_hwloc_LIBS)
 libmca_btl_ugni_la_LDFLAGS = -module -avoid-version $(btl_ugni_LDFLAGS)

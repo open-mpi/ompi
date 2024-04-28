@@ -295,5 +295,6 @@ dnl configure, to avoid pulling it into other configure tests.
 AC_DEFUN([OPAL_CONFIG_PMIX_INTERNAL_LIBS_HANDLER], [
     OPAL_FLAGS_APPEND_UNIQ([CPPFLAGS], [${opal_pmix_CPPFLAGS}])
     OPAL_FLAGS_APPEND_UNIQ([LDFLAGS], [${opal_pmix_LDFLAGS}])
-    OPAL_FLAGS_APPEND_MOVE([LIBS], [${opal_pmix_BUILD_LIBS}])
+    opal_pmix_LIBS=${opal_pmix_BUILD_LIBS}
+    AC_SUBST([opal_pmix_LIBS])
 ])

@@ -46,9 +46,11 @@ lib_LTLIBRARIES = lib@OPAL_LIB_NAME@.la
 
 libopen_pal_core_la_SOURCES =
 libopen_pal_core_la_LIBADD = \
-        mca/base/libmca_base.la \
-        util/libopalutil_core.la \
-	$(MCA_opal_FRAMEWORK_CORE_LIBS)
+	mca/base/libmca_base.la \
+	util/libopalutil_core.la \
+	$(MCA_opal_FRAMEWORK_CORE_LIBS) \
+	$(opal_pmix_LIBS) \
+	$(opal_libevent_LIBS)
 libopen_pal_core_la_DEPENDENCIES = \
         mca/base/libmca_base.la \
         util/libopalutil_core.la \
@@ -57,9 +59,11 @@ libopen_pal_core_la_DEPENDENCIES = \
 lib@OPAL_LIB_NAME@_la_SOURCES =
 lib@OPAL_LIB_NAME@_la_LIBADD = \
 	libopen-pal_core.la \
-        datatype/libdatatype.la \
-        util/libopalutil.la \
-	$(MCA_opal_FRAMEWORK_LIBS)
+	datatype/libdatatype.la \
+	util/libopalutil.la \
+	$(MCA_opal_FRAMEWORK_LIBS) \
+	$(opal_pmix_LIBS) \
+	$(opal_libevent_LIBS)
 lib@OPAL_LIB_NAME@_la_DEPENDENCIES = \
 	libopen-pal_core.la \
         datatype/libdatatype.la \
