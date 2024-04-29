@@ -90,6 +90,10 @@ int opal_abort_delay = 0;
 
 int opal_max_thread_in_progress = 1;
 
+#if OPAL_ENABLE_PROGRESS_THREADS == 1
+bool opal_async_progress = false;
+#endif
+
 static bool opal_register_util_done = false;
 
 static char *opal_var_dump_color_string = NULL;
@@ -415,6 +419,14 @@ int opal_register_util_params(void)
                                  "Number of thread allowed in opal_progress. Default: 1",
                                  MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_8,
                                  MCA_BASE_VAR_SCOPE_READONLY, &opal_max_thread_in_progress);
+
+#if OPAL_ENABLE_PROGRESS_THREADS == 1
+    /* Spawn a dedicated software progress-thread to execute opal_progress() */
+    (void) mca_base_var_register("opal", "opal", NULL, "async_progress",
+                                 "Spawn a dedicated software progress-thread. Default: false",
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY, &opal_async_progress);
+#endif
 
     /* Use sync_memops functionality with accelerator codes or deploy
        alternative path using IPC events to ensure consistency */

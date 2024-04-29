@@ -60,6 +60,16 @@ OPAL_DECLSPEC extern bool opal_built_with_cuda_support;
 OPAL_DECLSPEC extern bool opal_built_with_rocm_support;
 OPAL_DECLSPEC extern bool opal_built_with_ze_support;
 
+#    if OPAL_ENABLE_PROGRESS_THREADS == 1
+OPAL_DECLSPEC extern bool opal_async_progress_thread_spawned;
+#    else
+/* When disabled at configure, using 'static const' will allow compilers to
+ * not only evaluate the boolean at compile time, but also to remove its
+ * storage within any object file which is including this header.
+ * See https://godbolt.org/z/hxc8EjPa4  */
+OPAL_DECLSPEC static const bool opal_async_progress_thread_spawned = false;
+#    endif
+
 /**
  *  * Whether we want to enable CUDA GPU buffer send and receive support.
  *   */
