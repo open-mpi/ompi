@@ -17,7 +17,6 @@ There are multiple MPI network models available in this release:
   * ``tcp``: TCP
   * ``smcuda``: CUDA-enabled shared memory
   * ``usnic``: Cisco usNIC
-  * ``ugni``: uGNI (Cray Gemini, Aries)
 
 * ``cm`` supports a smaller number of networks (and they cannot be
   used together), but may provide better overall MPI performance by
@@ -40,7 +39,6 @@ There are multiple MPI network models available in this release:
   UCX currently supports:
 
   * OpenFabrics Verbs (including InfiniBand and RoCE)
-  * Cray's uGNI
   * TCP
   * Shared memory
   * NVIDIA CUDA drivers
@@ -50,7 +48,7 @@ time, Open MPI will select a default transport as follows:
 
 #. If InfiniBand devices are available, use the UCX PML.
 #. If PSM, PSM2, or other tag-matching-supporting Libfabric
-   transport devices are available (e.g., Cray uGNI), use the ``cm``
+   transport devices are available, use the ``cm``
    PML and a single appropriate corresponding ``mtl`` module.
 #. Otherwise, use the ``ob1`` PML and one or more appropriate ``btl``
    modules.
@@ -104,8 +102,6 @@ Miscellaneous network notes
   Although the usNIC is accessed via the OpenFabrics Libfabric API
   stack, this BTL is specific to Cisco usNIC devices.
 
-* uGNI is a Cray library for communicating over the Gemini and Aries
-  interconnects.
 
 * Linux ``knem`` support is used when the ``sm`` (shared memory) BTL is
   compiled with knem support (see the ``--with-knem`` configure option)

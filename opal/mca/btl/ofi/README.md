@@ -5,7 +5,7 @@ enable RDMA with multiple vendor hardware through one interface. Most
 of the operations are managed by upper layer (osc/rdma). This BTL is
 mostly doing the low level work.
 
-Tested providers: sockets,psm2,ugni
+Tested providers: sockets,psm2
 
 ## Component
 
