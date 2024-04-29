@@ -35,11 +35,9 @@ int ompi_request_default_test(ompi_request_t ** rptr,
 {
     ompi_request_t *request = *rptr;
 
-#if OPAL_ENABLE_PROGRESS_THREADS == 0
     int do_it_once = 0;
 
 recheck_request_status:
-#endif
     if( request->req_state == OMPI_REQUEST_INACTIVE ) {
         *completed = true;
         if (MPI_STATUS_IGNORE != status) {
@@ -84,8 +82,8 @@ recheck_request_status:
         return MPI_ERR_PROC_FAILED_PENDING;
     }
 #endif
-#if OPAL_ENABLE_PROGRESS_THREADS == 0
-    if( 0 == do_it_once ) {
+
+    if( 0 == do_it_once && !opal_async_progress_thread_spawned ) {
         /**
          * If we run the opal_progress then check the status of the request before
          * leaving. We will call the opal_progress only once per call.
@@ -95,7 +93,7 @@ recheck_request_status:
             goto recheck_request_status;
         }
     }
-#endif
+
     *completed = false;
     return OMPI_SUCCESS;
 }
@@ -166,9 +164,9 @@ int ompi_request_default_test_any(
     *index = MPI_UNDEFINED;
     if(num_requests_null_inactive != count) {
         *completed = false;
-#if OPAL_ENABLE_PROGRESS_THREADS == 0
-        opal_progress();
-#endif
+        if (!opal_async_progress_thread_spawned) {
+            opal_progress();
+        }
     } else {
         *completed = true;
         if (MPI_STATUS_IGNORE != status) {
@@ -211,8 +209,8 @@ int ompi_request_default_test_all(
             return MPI_ERR_PROC_FAILED_PENDING;
         }
 #endif /* OPAL_ENABLE_FT_MPI */
-#if OPAL_ENABLE_PROGRESS_THREADS == 0
-        if (0 == do_it_once) {
+
+        if (0 == do_it_once && !opal_async_progress_thread_spawned) {
             ++do_it_once;
             if (0 != opal_progress()) {
                 /* continue walking the list, retest the current request */
@@ -220,7 +218,7 @@ int ompi_request_default_test_all(
                 continue;
             }
         }
-#endif /* OPAL_ENABLE_PROGRESS_THREADS */
+
         /* short-circuit */
         break;
     }
@@ -354,9 +352,9 @@ int ompi_request_default_test_some(
     *outcount = num_requests_done;
 
     if (num_requests_done == 0) {
-#if OPAL_ENABLE_PROGRESS_THREADS == 0
-        opal_progress();
-#endif
+        if (!opal_async_progress_thread_spawned) {
+            opal_progress();
+        }
         return OMPI_SUCCESS;
     }
 
