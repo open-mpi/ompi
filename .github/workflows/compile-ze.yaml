@@ -1,0 +1,31 @@
+name: OneAPI ZE
+
+on: [pull_request]
+
+jobs:
+  compile-ze:
+    runs-on: ubuntu-22.04
+    steps:
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y --no-install-recommends wget lsb-core software-properties-common gpg curl cmake git
+    - name: Build OneAPI ZE  
+      run: |
+        git clone https://github.com/oneapi-src/level-zero.git
+        cd level-zero
+        mkdir build
+        cd build
+        cmake ../ -DCMAKE_INSTALL_PREFIX=/opt/ze
+        sudo make -j install
+    - uses: actions/checkout@v3
+      with:
+            submodules: recursive
+    - name: Build Open MPI
+      run: |
+        ./autogen.pl
+        #
+        # we have to disable romio as its old ze stuff doesn't compile with supported ZE API
+        #
+        ./configure --prefix=${PWD}/install --disable-mpi-fortran --disable-io-romio --disable-oshmem --with-ze
+        make -j
