@@ -1,8 +1,8 @@
 /**
- * Copyright (c) 2021 Mellanox Technologies. All rights reserved.
+ * Copyright (c) 2021      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
- * Copyright (c) 2022 NVIDIA Corporation. All rights reserved.
+ * Copyright (c) 2022-2024 NVIDIA Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -15,8 +15,6 @@
 #include "coll_ucc_dtypes.h"
 #include "ompi/mca/coll/base/coll_tags.h"
 #include "ompi/mca/pml/pml.h"
-
-#define OBJ_RELEASE_IF_NOT_NULL( obj ) if( NULL != (obj) ) OBJ_RELEASE( obj );
 
 static int ucc_comm_attr_keyval;
 /*
@@ -107,78 +105,7 @@ static void mca_coll_ucc_module_destruct(mca_coll_ucc_module_t *ucc_module)
             UCC_ERROR("ucc ompi_attr_free_keyval failed");
         }
     }
-    OBJ_RELEASE_IF_NOT_NULL(ucc_module->previous_allreduce_module);
-    OBJ_RELEASE_IF_NOT_NULL(ucc_module->previous_iallreduce_module);
-    OBJ_RELEASE_IF_NOT_NULL(ucc_module->previous_barrier_module);
-    OBJ_RELEASE_IF_NOT_NULL(ucc_module->previous_ibarrier_module);
-    OBJ_RELEASE_IF_NOT_NULL(ucc_module->previous_bcast_module);
-    OBJ_RELEASE_IF_NOT_NULL(ucc_module->previous_ibcast_module);
-    OBJ_RELEASE_IF_NOT_NULL(ucc_module->previous_alltoall_module);
-    OBJ_RELEASE_IF_NOT_NULL(ucc_module->previous_ialltoall_module);
-    OBJ_RELEASE_IF_NOT_NULL(ucc_module->previous_alltoallv_module);
-    OBJ_RELEASE_IF_NOT_NULL(ucc_module->previous_ialltoallv_module);
-    OBJ_RELEASE_IF_NOT_NULL(ucc_module->previous_allgather_module);
-    OBJ_RELEASE_IF_NOT_NULL(ucc_module->previous_iallgather_module);
-    OBJ_RELEASE_IF_NOT_NULL(ucc_module->previous_allgatherv_module);
-    OBJ_RELEASE_IF_NOT_NULL(ucc_module->previous_iallgatherv_module);
-    OBJ_RELEASE_IF_NOT_NULL(ucc_module->previous_reduce_module);
-    OBJ_RELEASE_IF_NOT_NULL(ucc_module->previous_ireduce_module);
-    OBJ_RELEASE_IF_NOT_NULL(ucc_module->previous_gather_module);
-    OBJ_RELEASE_IF_NOT_NULL(ucc_module->previous_igather_module);
-    OBJ_RELEASE_IF_NOT_NULL(ucc_module->previous_gatherv_module);
-    OBJ_RELEASE_IF_NOT_NULL(ucc_module->previous_igatherv_module);
-    OBJ_RELEASE_IF_NOT_NULL(ucc_module->previous_reduce_scatter_block_module);
-    OBJ_RELEASE_IF_NOT_NULL(ucc_module->previous_ireduce_scatter_block_module);
-    OBJ_RELEASE_IF_NOT_NULL(ucc_module->previous_reduce_scatter_module);
-    OBJ_RELEASE_IF_NOT_NULL(ucc_module->previous_ireduce_scatter_module);
-    OBJ_RELEASE_IF_NOT_NULL(ucc_module->previous_scatterv_module);
-    OBJ_RELEASE_IF_NOT_NULL(ucc_module->previous_iscatterv_module);
-    OBJ_RELEASE_IF_NOT_NULL(ucc_module->previous_scatter_module);
-    OBJ_RELEASE_IF_NOT_NULL(ucc_module->previous_iscatter_module);
     mca_coll_ucc_module_clear(ucc_module);
-}
-
-#define SAVE_PREV_COLL_API(__api) do {                                                       \
-        ucc_module->previous_ ## __api            = comm->c_coll->coll_ ## __api;            \
-        ucc_module->previous_ ## __api ## _module = comm->c_coll->coll_ ## __api ## _module; \
-        if (!comm->c_coll->coll_ ## __api || !comm->c_coll->coll_ ## __api ## _module) {     \
-            return OMPI_ERROR;                                                               \
-        }                                                                                    \
-        OBJ_RETAIN(ucc_module->previous_ ## __api ## _module);                               \
-    } while(0)
-
-static int mca_coll_ucc_save_coll_handlers(mca_coll_ucc_module_t *ucc_module)
-{
-    ompi_communicator_t *comm = ucc_module->comm;
-    SAVE_PREV_COLL_API(allreduce);
-    SAVE_PREV_COLL_API(iallreduce);
-    SAVE_PREV_COLL_API(barrier);
-    SAVE_PREV_COLL_API(ibarrier);
-    SAVE_PREV_COLL_API(bcast);
-    SAVE_PREV_COLL_API(ibcast);
-    SAVE_PREV_COLL_API(alltoall);
-    SAVE_PREV_COLL_API(ialltoall);
-    SAVE_PREV_COLL_API(alltoallv);
-    SAVE_PREV_COLL_API(ialltoallv);
-    SAVE_PREV_COLL_API(allgather);
-    SAVE_PREV_COLL_API(iallgather);
-    SAVE_PREV_COLL_API(allgatherv);
-    SAVE_PREV_COLL_API(iallgatherv);
-    SAVE_PREV_COLL_API(reduce);
-    SAVE_PREV_COLL_API(ireduce);
-    SAVE_PREV_COLL_API(gather);
-    SAVE_PREV_COLL_API(igather);
-    SAVE_PREV_COLL_API(gatherv);
-    SAVE_PREV_COLL_API(igatherv);
-    SAVE_PREV_COLL_API(reduce_scatter_block);
-    SAVE_PREV_COLL_API(ireduce_scatter_block);
-    SAVE_PREV_COLL_API(reduce_scatter);
-    SAVE_PREV_COLL_API(ireduce_scatter);
-    SAVE_PREV_COLL_API(scatterv);
-    SAVE_PREV_COLL_API(iscatterv);
-    SAVE_PREV_COLL_API(scatter);
-    SAVE_PREV_COLL_API(iscatter);
-    return OMPI_SUCCESS;
 }
 
 /*
@@ -440,6 +367,50 @@ static inline ucc_ep_map_t get_rank_map(struct ompi_communicator_t *comm)
 
     return map;
 }
+
+#define UCC_INSTALL_COLL_API(__comm, __ucc_module, __COLL, __api)                                                                          \
+    do                                                                                                                                     \
+    {                                                                                                                                      \
+        if ((mca_coll_ucc_component.ucc_lib_attr.coll_types & UCC_COLL_TYPE_##__COLL))                                                     \
+        {                                                                                                                                  \
+            if (mca_coll_ucc_component.cts_requested & UCC_COLL_TYPE_##__COLL)                                                             \
+            {                                                                                                                              \
+                MCA_COLL_SAVE_API(__comm, __api, (__ucc_module)->previous_##__api, (__ucc_module)->previous_##__api##_module, "ucc");      \
+                MCA_COLL_INSTALL_API(__comm, __api, mca_coll_ucc_##__api, &__ucc_module->super, "ucc");                                    \
+                (__ucc_module)->super.coll_##__api = mca_coll_ucc_##__api;                                                                 \
+            }                                                                                                                              \
+            if (mca_coll_ucc_component.nb_cts_requested & UCC_COLL_TYPE_##__COLL)                                                          \
+            {                                                                                                                              \
+                MCA_COLL_SAVE_API(__comm, i##__api, (__ucc_module)->previous_i##__api, (__ucc_module)->previous_i##__api##_module, "ucc"); \
+                MCA_COLL_INSTALL_API(__comm, i##__api, mca_coll_ucc_i##__api, &__ucc_module->super, "ucc");                                \
+                (__ucc_module)->super.coll_i##__api = mca_coll_ucc_i##__api;                                                               \
+            }                                                                                                                              \
+        }                                                                                                                                  \
+    } while (0)
+
+static int mca_coll_ucc_replace_coll_handlers(mca_coll_ucc_module_t *ucc_module)
+{
+    ompi_communicator_t *comm = ucc_module->comm;
+
+    UCC_INSTALL_COLL_API(comm, ucc_module, ALLREDUCE, allreduce);
+    UCC_INSTALL_COLL_API(comm, ucc_module, BARRIER, barrier);
+    UCC_INSTALL_COLL_API(comm, ucc_module, BCAST, bcast);
+    UCC_INSTALL_COLL_API(comm, ucc_module, ALLTOALL, alltoall);
+    UCC_INSTALL_COLL_API(comm, ucc_module, ALLTOALLV, alltoallv);
+    UCC_INSTALL_COLL_API(comm, ucc_module, ALLGATHER, allgather);
+    UCC_INSTALL_COLL_API(comm, ucc_module, ALLGATHERV, allgatherv);
+    UCC_INSTALL_COLL_API(comm, ucc_module, REDUCE, reduce);
+
+    UCC_INSTALL_COLL_API(comm, ucc_module, GATHER, gather);
+    UCC_INSTALL_COLL_API(comm, ucc_module, GATHERV, gatherv);
+    UCC_INSTALL_COLL_API(comm, ucc_module, REDUCE_SCATTER_BLOCK, reduce_scatter_block);
+    UCC_INSTALL_COLL_API(comm, ucc_module, REDUCE_SCATTER, reduce_scatter);
+    UCC_INSTALL_COLL_API(comm, ucc_module, SCATTER, scatter);
+    UCC_INSTALL_COLL_API(comm, ucc_module, SCATTERV, scatterv);
+
+    return OMPI_SUCCESS;
+}
+
 /*
  * Initialize module on the communicator
  */
@@ -470,11 +441,6 @@ static int mca_coll_ucc_module_enable(mca_coll_base_module_t *module,
                 (void*)comm, (long long unsigned)team_params.id,
                 ompi_comm_size(comm));
 
-    if (OMPI_SUCCESS != mca_coll_ucc_save_coll_handlers(ucc_module)){
-        UCC_ERROR("mca_coll_ucc_save_coll_handlers failed");
-        goto err;
-    }
-
     if (UCC_OK != ucc_team_create_post(&cm->ucc_context, 1,
                                        &team_params, &ucc_module->ucc_team)) {
         UCC_ERROR("ucc_team_create_post failed");
@@ -489,12 +455,18 @@ static int mca_coll_ucc_module_enable(mca_coll_base_module_t *module,
         goto err;
     }
 
+    if (OMPI_SUCCESS != mca_coll_ucc_replace_coll_handlers(ucc_module)) {
+        UCC_ERROR("mca_coll_ucc_replace_coll_handlers failed");
+        goto err;
+    }
+
     rc = ompi_attr_set_c(COMM_ATTR, comm, &comm->c_keyhash,
                          ucc_comm_attr_keyval, (void *)module, false);
     if (OMPI_SUCCESS != rc) {
         UCC_ERROR("ucc ompi_attr_set_c failed");
         goto err;
     }
+
     return OMPI_SUCCESS;
 
 err:
@@ -504,22 +476,53 @@ err:
     return OMPI_ERROR;
 }
 
+#define UCC_UNINSTALL_COLL_API(__comm, __ucc_module, __api)                                                                          \
+    do                                                                                                                               \
+    {                                                                                                                                \
+        if (&(__ucc_module)->super == (__comm)->c_coll->coll_##__api##_module)                                                       \
+        {                                                                                                                            \
+            MCA_COLL_INSTALL_API(__comm, __api, (__ucc_module)->previous_##__api, (__ucc_module)->previous_##__api##_module, "ucc"); \
+            (__ucc_module)->previous_##__api = NULL;                                                                                 \
+            (__ucc_module)->previous_##__api##_module = NULL;                                                                        \
+        }                                                                                                                            \
+    } while (0)
 
-#define SET_COLL_PTR(_module, _COLL, _coll) do {                          \
-        _module->super.coll_  ## _coll = NULL;                            \
-        _module->super.coll_i ## _coll = NULL;                            \
-        if ((mca_coll_ucc_component.ucc_lib_attr.coll_types &             \
-             UCC_COLL_TYPE_ ## _COLL)) {                                  \
-            if (mca_coll_ucc_component.cts_requested &                    \
-                UCC_COLL_TYPE_ ## _COLL) {                                \
-                _module->super.coll_ ## _coll  = mca_coll_ucc_  ## _coll; \
-            }                                                             \
-            if (mca_coll_ucc_component.nb_cts_requested &                 \
-                UCC_COLL_TYPE_ ## _COLL) {                                \
-                _module->super.coll_i ## _coll = mca_coll_ucc_i ## _coll; \
-            }                                                             \
-        }                                                                 \
-    } while(0)
+/**
+ * The disable will be called once per collective module, in the reverse order
+ * in which enable has been called. This reverse order allows the module to properly
+ * unregister the collective function pointers they provide for the communicator.
+ */
+static int
+mca_coll_ucc_module_disable(mca_coll_base_module_t *module,
+                            struct ompi_communicator_t *comm)
+{
+    mca_coll_ucc_module_t *ucc_module = (mca_coll_ucc_module_t*)module;
+    UCC_UNINSTALL_COLL_API(comm, ucc_module, allreduce);
+    UCC_UNINSTALL_COLL_API(comm, ucc_module, iallreduce);
+    UCC_UNINSTALL_COLL_API(comm, ucc_module, barrier);
+    UCC_UNINSTALL_COLL_API(comm, ucc_module, ibarrier);
+    UCC_UNINSTALL_COLL_API(comm, ucc_module, bcast);
+    UCC_UNINSTALL_COLL_API(comm, ucc_module, ibcast);
+    UCC_UNINSTALL_COLL_API(comm, ucc_module, alltoall);
+    UCC_UNINSTALL_COLL_API(comm, ucc_module, ialltoall);
+    UCC_UNINSTALL_COLL_API(comm, ucc_module, alltoallv);
+    UCC_UNINSTALL_COLL_API(comm, ucc_module, ialltoallv);
+    UCC_UNINSTALL_COLL_API(comm, ucc_module, allgather);
+    UCC_UNINSTALL_COLL_API(comm, ucc_module, iallgather);
+    UCC_UNINSTALL_COLL_API(comm, ucc_module, allgatherv);
+    UCC_UNINSTALL_COLL_API(comm, ucc_module, iallgatherv);
+    UCC_UNINSTALL_COLL_API(comm, ucc_module, reduce);
+    UCC_UNINSTALL_COLL_API(comm, ucc_module, ireduce);
+    UCC_UNINSTALL_COLL_API(comm, ucc_module, gather);
+    UCC_UNINSTALL_COLL_API(comm, ucc_module, gatherv);
+    UCC_UNINSTALL_COLL_API(comm, ucc_module, reduce_scatter_block);
+    UCC_UNINSTALL_COLL_API(comm, ucc_module, reduce_scatter);
+    UCC_UNINSTALL_COLL_API(comm, ucc_module, scatter);
+    UCC_UNINSTALL_COLL_API(comm, ucc_module, scatterv);
+
+    return OMPI_SUCCESS;
+}
+
 
 /*
  * Invoked when there's a new communicator that has been created.
@@ -554,23 +557,11 @@ mca_coll_ucc_comm_query(struct ompi_communicator_t *comm, int *priority)
         cm->ucc_enable = 0;
         return NULL;
     }
-    ucc_module->comm                     = comm;
-    ucc_module->super.coll_module_enable = mca_coll_ucc_module_enable;
-    *priority                            = cm->ucc_priority;
-    SET_COLL_PTR(ucc_module, BARRIER,         barrier);
-    SET_COLL_PTR(ucc_module, BCAST,           bcast);
-    SET_COLL_PTR(ucc_module, ALLREDUCE,       allreduce);
-    SET_COLL_PTR(ucc_module, ALLTOALL,        alltoall);
-    SET_COLL_PTR(ucc_module, ALLTOALLV,       alltoallv);
-    SET_COLL_PTR(ucc_module, REDUCE,          reduce);
-    SET_COLL_PTR(ucc_module, ALLGATHER,       allgather);
-    SET_COLL_PTR(ucc_module, ALLGATHERV,      allgatherv);
-    SET_COLL_PTR(ucc_module, GATHER,          gather);
-    SET_COLL_PTR(ucc_module, GATHERV,         gatherv);
-    SET_COLL_PTR(ucc_module, REDUCE_SCATTER,  reduce_scatter_block);
-    SET_COLL_PTR(ucc_module, REDUCE_SCATTERV, reduce_scatter);
-    SET_COLL_PTR(ucc_module, SCATTERV,        scatterv);
-    SET_COLL_PTR(ucc_module, SCATTER,         scatter);
+    ucc_module->comm                      = comm;
+    ucc_module->super.coll_module_enable  = mca_coll_ucc_module_enable;
+    ucc_module->super.coll_module_disable = mca_coll_ucc_module_disable;
+    *priority                             = cm->ucc_priority;
+
     return &ucc_module->super;
 }
 

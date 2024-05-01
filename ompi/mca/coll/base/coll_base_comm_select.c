@@ -22,6 +22,7 @@
  * Copyright (c) 2016-2017 IBM Corporation.  All rights reserved.
  * Copyright (c) 2017      FUJITSU LIMITED.  All rights reserved.
  * Copyright (c) 2020      BULL S.A.S. All rights reserved.
+ * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -70,18 +71,6 @@ static int query_2_4_0(const mca_coll_base_component_2_4_0_t *
                        coll_component, ompi_communicator_t * comm,
                        int *priority,
                        mca_coll_base_module_t ** module);
-
-#define COPY(module, comm, func)                                        \
-    do {                                                                \
-        if (NULL != module->coll_ ## func) {                            \
-            if (NULL != comm->c_coll->coll_ ## func ## _module) {       \
-                OBJ_RELEASE(comm->c_coll->coll_ ## func ## _module);    \
-            }                                                           \
-            comm->c_coll->coll_ ## func = module->coll_ ## func;        \
-            comm->c_coll->coll_ ## func ## _module = module;            \
-            OBJ_RETAIN(module);                                         \
-        }                                                               \
-    } while (0)
 
 #define CHECK_NULL(what, comm, func)                                    \
   ( (what) = # func , NULL == (comm)->c_coll->coll_ ## func)
@@ -147,88 +136,6 @@ int mca_coll_base_comm_select(ompi_communicator_t * comm)
             /* Save every component that is initialized,
              * queried and enabled successfully */
             opal_list_append(comm->c_coll->module_list, &avail->super);
-
-            /* copy over any of the pointers */
-            COPY(avail->ac_module, comm, allgather);
-            COPY(avail->ac_module, comm, allgatherv);
-            COPY(avail->ac_module, comm, allreduce);
-            COPY(avail->ac_module, comm, alltoall);
-            COPY(avail->ac_module, comm, alltoallv);
-            COPY(avail->ac_module, comm, alltoallw);
-            COPY(avail->ac_module, comm, barrier);
-            COPY(avail->ac_module, comm, bcast);
-            COPY(avail->ac_module, comm, exscan);
-            COPY(avail->ac_module, comm, gather);
-            COPY(avail->ac_module, comm, gatherv);
-            COPY(avail->ac_module, comm, reduce);
-            COPY(avail->ac_module, comm, reduce_scatter_block);
-            COPY(avail->ac_module, comm, reduce_scatter);
-            COPY(avail->ac_module, comm, scan);
-            COPY(avail->ac_module, comm, scatter);
-            COPY(avail->ac_module, comm, scatterv);
-
-            COPY(avail->ac_module, comm, iallgather);
-            COPY(avail->ac_module, comm, iallgatherv);
-            COPY(avail->ac_module, comm, iallreduce);
-            COPY(avail->ac_module, comm, ialltoall);
-            COPY(avail->ac_module, comm, ialltoallv);
-            COPY(avail->ac_module, comm, ialltoallw);
-            COPY(avail->ac_module, comm, ibarrier);
-            COPY(avail->ac_module, comm, ibcast);
-            COPY(avail->ac_module, comm, iexscan);
-            COPY(avail->ac_module, comm, igather);
-            COPY(avail->ac_module, comm, igatherv);
-            COPY(avail->ac_module, comm, ireduce);
-            COPY(avail->ac_module, comm, ireduce_scatter_block);
-            COPY(avail->ac_module, comm, ireduce_scatter);
-            COPY(avail->ac_module, comm, iscan);
-            COPY(avail->ac_module, comm, iscatter);
-            COPY(avail->ac_module, comm, iscatterv);
-
-            COPY(avail->ac_module, comm, allgather_init);
-            COPY(avail->ac_module, comm, allgatherv_init);
-            COPY(avail->ac_module, comm, allreduce_init);
-            COPY(avail->ac_module, comm, alltoall_init);
-            COPY(avail->ac_module, comm, alltoallv_init);
-            COPY(avail->ac_module, comm, alltoallw_init);
-            COPY(avail->ac_module, comm, barrier_init);
-            COPY(avail->ac_module, comm, bcast_init);
-            COPY(avail->ac_module, comm, exscan_init);
-            COPY(avail->ac_module, comm, gather_init);
-            COPY(avail->ac_module, comm, gatherv_init);
-            COPY(avail->ac_module, comm, reduce_init);
-            COPY(avail->ac_module, comm, reduce_scatter_block_init);
-            COPY(avail->ac_module, comm, reduce_scatter_init);
-            COPY(avail->ac_module, comm, scan_init);
-            COPY(avail->ac_module, comm, scatter_init);
-            COPY(avail->ac_module, comm, scatterv_init);
-
-            /* We can not reliably check if this comm has a topology
-             * at this time. The flags are set *after* coll_select */
-            COPY(avail->ac_module, comm, neighbor_allgather);
-            COPY(avail->ac_module, comm, neighbor_allgatherv);
-            COPY(avail->ac_module, comm, neighbor_alltoall);
-            COPY(avail->ac_module, comm, neighbor_alltoallv);
-            COPY(avail->ac_module, comm, neighbor_alltoallw);
-
-            COPY(avail->ac_module, comm, ineighbor_allgather);
-            COPY(avail->ac_module, comm, ineighbor_allgatherv);
-            COPY(avail->ac_module, comm, ineighbor_alltoall);
-            COPY(avail->ac_module, comm, ineighbor_alltoallv);
-            COPY(avail->ac_module, comm, ineighbor_alltoallw);
-
-            COPY(avail->ac_module, comm, neighbor_allgather_init);
-            COPY(avail->ac_module, comm, neighbor_allgatherv_init);
-            COPY(avail->ac_module, comm, neighbor_alltoall_init);
-            COPY(avail->ac_module, comm, neighbor_alltoallv_init);
-            COPY(avail->ac_module, comm, neighbor_alltoallw_init);
-
-            COPY(avail->ac_module, comm, reduce_local);
-
-#if OPAL_ENABLE_FT_MPI
-            COPY(avail->ac_module, comm, agree);
-            COPY(avail->ac_module, comm, iagree);
-#endif
         } else {
             /* release the original module reference and the list item */
             OBJ_RELEASE(avail->ac_module);
@@ -291,6 +198,10 @@ int mca_coll_base_comm_select(ompi_communicator_t * comm)
         ((OMPI_COMM_IS_INTRA(comm)) && CHECK_NULL(which_func, comm, scan_init)) ||
         CHECK_NULL(which_func, comm, scatter_init) ||
         CHECK_NULL(which_func, comm, scatterv_init) ||
+#if OPAL_ENABLE_FT_MPI
+        CHECK_NULL(which_func, comm, agree) ||
+        CHECK_NULL(which_func, comm, iagree) ||
+#endif  /* OPAL_ENABLE_FT_MPI */
         CHECK_NULL(which_func, comm, reduce_local) ) {
         /* TODO -- Once the topology flags are set before coll_select then
          * check if neighborhood collectives have been set. */
@@ -298,7 +209,7 @@ int mca_coll_base_comm_select(ompi_communicator_t * comm)
         opal_show_help("help-mca-coll-base.txt",
                        "comm-select:no-function-available", true, which_func);
 
-         mca_coll_base_comm_unselect(comm);
+        mca_coll_base_comm_unselect(comm);
         return OMPI_ERR_NOT_FOUND;
     }
     return OMPI_SUCCESS;

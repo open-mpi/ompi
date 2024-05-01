@@ -53,9 +53,6 @@ BEGIN_C_DECLS
         *mca_coll_basic_comm_query(struct ompi_communicator_t *comm,
                                    int *priority);
 
-    int mca_coll_basic_module_enable(mca_coll_base_module_t *module,
-                                     struct ompi_communicator_t *comm);
-
     int mca_coll_basic_allgather_inter(const void *sbuf, int scount,
                                        struct ompi_datatype_t *sdtype,
                                        void *rbuf, int rcount,

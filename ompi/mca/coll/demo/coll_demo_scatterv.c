@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -33,8 +34,8 @@
  *	Accepts:	- same arguments as MPI_Scatterv()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int mca_coll_demo_scatterv_intra(void *sbuf, int *scounts,
-                                 int *disps, struct ompi_datatype_t *sdtype,
+int mca_coll_demo_scatterv_intra(const void *sbuf, const int *scounts,
+                                 const int *disps, struct ompi_datatype_t *sdtype,
                                  void *rbuf, int rcount,
                                  struct ompi_datatype_t *rdtype, int root,
                                  struct ompi_communicator_t *comm,
@@ -42,10 +43,10 @@ int mca_coll_demo_scatterv_intra(void *sbuf, int *scounts,
 {
     mca_coll_demo_module_t *demo_module = (mca_coll_demo_module_t*) module;
     opal_output_verbose(10, ompi_coll_base_framework.framework_output, "In demo scatterv_intra");
-    return demo_module->underlying.coll_scatterv(sbuf, scounts, disps,
-                                                 sdtype, rbuf, rcount,
-                                                 rdtype, root, comm,
-                                                 demo_module->underlying.coll_scatterv_module);
+    return demo_module->c_coll.coll_scatterv(sbuf, scounts, disps,
+                                             sdtype, rbuf, rcount,
+                                             rdtype, root, comm,
+                                             demo_module->c_coll.coll_scatterv_module);
 }
 
 
@@ -56,8 +57,8 @@ int mca_coll_demo_scatterv_intra(void *sbuf, int *scounts,
  *	Accepts:	- same arguments as MPI_Scatterv()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int mca_coll_demo_scatterv_inter(void *sbuf, int *scounts,
-                                 int *disps, struct ompi_datatype_t *sdtype,
+int mca_coll_demo_scatterv_inter(const void *sbuf, const int *scounts,
+                                 const int *disps, struct ompi_datatype_t *sdtype,
                                  void *rbuf, int rcount,
                                  struct ompi_datatype_t *rdtype, int root,
                                  struct ompi_communicator_t *comm,
@@ -65,8 +66,8 @@ int mca_coll_demo_scatterv_inter(void *sbuf, int *scounts,
 {
     mca_coll_demo_module_t *demo_module = (mca_coll_demo_module_t*) module;
     opal_output_verbose(10, ompi_coll_base_framework.framework_output, "In demo scatterv_inter");
-    return demo_module->underlying.coll_scatterv(sbuf, scounts, disps,
-                                                 sdtype, rbuf, rcount,
-                                                 rdtype, root, comm,
-                                                 demo_module->underlying.coll_scatterv_module);
+    return demo_module->c_coll.coll_scatterv(sbuf, scounts, disps,
+                                             sdtype, rbuf, rcount,
+                                             rdtype, root, comm,
+                                             demo_module->c_coll.coll_scatterv_module);
 }
