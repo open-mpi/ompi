@@ -190,7 +190,7 @@ int main(int argc, char **argv)
     double *duration, tstart, tend;
     bool check = true;
     char type[5] = "uifd", *op = "sum", *mpi_type;
-    int lower = 1, upper = 1000000, skip_op_type;
+    int lower = 1, upper = 16*1024*1024, skip_op_type;
     MPI_Op mpi_op;
 
     while (-1 != (c = getopt(argc, argv, "l:u:r:t:o:i:s:n:1:2:vfh"))) {
