@@ -14,6 +14,8 @@ dnl Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
 dnl                         reserved.
 dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2024      Research Organization for Information Science
+dnl                         and Technology (RIST).  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -82,6 +84,12 @@ AC_DEFUN([_OMPI_FORTRAN_CHECK_IGNORE_TKR], [
               [!GCC\$ ATTRIBUTES NO_ARG_CHECK ::], [type(*), dimension(*)],
               [!GCC\$ ATTRIBUTES NO_ARG_CHECK],
               [internal_ignore_tkr_happy=1], [internal_ignore_tkr_happy=0])])
+    # LLVM compilers
+    AS_IF([test $internal_ignore_tkr_happy -eq 0],
+          [OMPI_FORTRAN_CHECK_IGNORE_TKR_SUB(
+              [!DIR\$ IGNORE_TKR], [type(*)],
+              [!DIR\$ IGNORE_TKR],
+              [internal_ignore_tkr_happy=1], [internal_ignore_tkr_happy=0])])
     # Intel compilers
     AS_IF([test $internal_ignore_tkr_happy -eq 0],
           [OMPI_FORTRAN_CHECK_IGNORE_TKR_SUB(
@@ -133,6 +141,7 @@ AC_DEFUN([OMPI_FORTRAN_CHECK_IGNORE_TKR_SUB], [
     AC_MSG_CHECKING([for Fortran compiler support of $3])
     AC_COMPILE_IFELSE(AC_LANG_PROGRAM([],[[!
 ! Autoconf puts "program main" at the top
+ implicit none
 
   interface
      subroutine force_assumed_shape(a, count)
@@ -157,6 +166,7 @@ AC_DEFUN([OMPI_FORTRAN_CHECK_IGNORE_TKR_SUB], [
   complex, pointer, dimension(:,:) :: ptr
   target :: buffer3
   integer :: buffer4
+  integer :: a
   ptr => buffer3
 
 ! Set some known values (somewhat irrelevant for this test, but just be
@@ -189,8 +199,23 @@ AC_DEFUN([OMPI_FORTRAN_CHECK_IGNORE_TKR_SUB], [
     call foo(a, count)
   end subroutine force_assumed_shape
 
+  module check_ignore_tkr
+  interface
+     subroutine foobar(buffer, count)
+       $1 buffer
+       $2, intent(in) :: buffer
+       integer, intent(in) :: count
+     end subroutine foobar
+  end interface
+  end module
+
+  subroutine bar(var)
+    use check_ignore_tkr
+    implicit none
+    real, intent(inout) :: var(:, :, :)
+
+    call foobar(var(1,1,1), 1)
 ! Autoconf puts "end" after the last line
-  subroutine bogus
 ]]),
                     [msg=yes
                      ompi_fortran_ignore_tkr_predecl="$1"
