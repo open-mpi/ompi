@@ -83,7 +83,13 @@ AC_DEFUN([_OMPI_FORTRAN_CHECK_IGNORE_TKR], [
           [OMPI_FORTRAN_CHECK_IGNORE_TKR_SUB(
               [!GCC\$ ATTRIBUTES NO_ARG_CHECK ::], [type(*), dimension(*)],
               [!GCC\$ ATTRIBUTES NO_ARG_CHECK],
-              [happy=1], [happy=0])])
+              [internal_ignore_tkr_happy=1], [internal_ignore_tkr_happy=0])])
+    # LLVM compilers
+    AS_IF([test $internal_ignore_tkr_happy -eq 0],
+          [OMPI_FORTRAN_CHECK_IGNORE_TKR_SUB(
+              [!DIR\$ IGNORE_TKR], [type(*)],
+              [!DIR\$ IGNORE_TKR],
+              [internal_ignore_tkr_happy=1], [internal_ignore_tkr_happy=0])])
     # Intel compilers
     AS_IF([test $happy -eq 0],
           [OMPI_FORTRAN_CHECK_IGNORE_TKR_SUB(
