@@ -3,6 +3,8 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2020      Bull S.A.S. All rights reserved.
+ * Copyright (c) 2023      Computer Architecture and VLSI Systems (CARV)
+ *                         Laboratory, ICS Forth. All rights reserved.
  *
  * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
@@ -313,6 +315,10 @@ int mca_coll_han_comm_create(struct ompi_communicator_t *comm,
     ompi_comm_split_type(comm, MPI_COMM_TYPE_SHARED, 0,
                          &comm_info, &(low_comms[1]));
     assert(OMPI_COMM_IS_DISJOINT_SET(low_comms[1]) && !OMPI_COMM_IS_DISJOINT(low_comms[1]));
+
+    opal_info_set(&comm_info, "ompi_comm_coll_preference", "xhc,^han");
+    ompi_comm_split_type(comm, MPI_COMM_TYPE_SHARED, 0,
+                         &comm_info, &(low_comms[2]));
 
     /*
      * Upgrade libnbc module priority to set up up_comms[0] with libnbc module
