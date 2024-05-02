@@ -2,7 +2,7 @@
  * Copyright (c) 2014      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2014-2015 NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2014-2024 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2024      Triad National Security, LLC. All rights reserved.
  * $COPYRIGHT$
  *
@@ -37,9 +37,6 @@ int mca_coll_accelerator_init_query(bool enable_progress_threads,
 mca_coll_base_module_t
 *mca_coll_accelerator_comm_query(struct ompi_communicator_t *comm,
                           int *priority);
-
-int mca_coll_accelerator_module_enable(mca_coll_base_module_t *module,
-                                struct ompi_communicator_t *comm);
 
 int
 mca_coll_accelerator_allreduce(const void *sbuf, void *rbuf, int count,

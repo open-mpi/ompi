@@ -2,6 +2,7 @@
  * Copyright (c) 2012-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -33,6 +34,30 @@ mca_coll_ftagree_init_query(bool enable_progress_threads,
     return OMPI_SUCCESS;
 }
 
+/*
+ * Init/Fini module on the communicator
+ */
+static int
+mca_coll_ftagree_module_enable(mca_coll_base_module_t *module,
+                             struct ompi_communicator_t *comm)
+{
+    MCA_COLL_INSTALL_API(comm, agree, module->coll_agree, module, "ftagree");
+    MCA_COLL_INSTALL_API(comm, iagree, module->coll_iagree, module, "ftagree");
+
+    /* All done */
+    return OMPI_SUCCESS;
+}
+
+static int
+mca_coll_ftagree_module_disable(mca_coll_base_module_t *module,
+                                struct ompi_communicator_t *comm)
+{
+    MCA_COLL_INSTALL_API(comm, agree, NULL, NULL, "ftagree");
+    MCA_COLL_INSTALL_API(comm, iagree, NULL, NULL, "ftagree");
+
+    /* All done */
+    return OMPI_SUCCESS;
+}
 
 /*
  * Invoked when there's a new communicator that has been created.
@@ -76,6 +101,7 @@ mca_coll_ftagree_comm_query(struct ompi_communicator_t *comm,
      * algorithms.
      */
     ftagree_module->super.coll_module_enable = mca_coll_ftagree_module_enable;
+    ftagree_module->super.coll_module_disable = mca_coll_ftagree_module_disable;
 
     /* This component does not provide any base collectives,
      * just the FT collectives.
@@ -110,17 +136,5 @@ mca_coll_ftagree_comm_query(struct ompi_communicator_t *comm,
     }
 
     return &(ftagree_module->super);
-}
-
-
-/*
- * Init module on the communicator
- */
-int
-mca_coll_ftagree_module_enable(mca_coll_base_module_t *module,
-                             struct ompi_communicator_t *comm)
-{
-    /* All done */
-    return OMPI_SUCCESS;
 }
 

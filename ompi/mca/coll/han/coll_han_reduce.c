@@ -4,6 +4,9 @@
  *                         reserved.
  * Copyright (c) 2020      Bull S.A.S. All rights reserved.
  * Copyright (c) 2022      IBM Corporation. All rights reserved
+ * Copyright (c) 2024      Computer Architecture and VLSI Systems (CARV)
+ *                         Laboratory, ICS Forth. All rights reserved.
+ * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -90,7 +93,7 @@ mca_coll_han_reduce_intra(const void *sbuf,
         OPAL_OUTPUT_VERBOSE((30, mca_coll_han_component.han_output,
                              "han cannot handle reduce with this communicator. Drop HAN support in this communicator and fall back on another component\n"));
         /* HAN cannot work with this communicator so fallback on all modules */
-        HAN_LOAD_FALLBACK_COLLECTIVES(han_module, comm);
+        HAN_LOAD_FALLBACK_COLLECTIVES(comm, han_module);
         return han_module->previous_reduce(sbuf, rbuf, count, dtype, op, root,
                                           comm, han_module->previous_reduce_module);
     }
@@ -104,7 +107,7 @@ mca_coll_han_reduce_intra(const void *sbuf,
         /* Put back the fallback collective support and call it once. All
          * future calls will then be automatically redirected.
          */
-        HAN_LOAD_FALLBACK_COLLECTIVE(han_module, comm, reduce);
+        HAN_UNINSTALL_COLL_API(comm, han_module, reduce);
         return han_module->previous_reduce(sbuf, rbuf, count, dtype, op, root,
                                           comm, han_module->previous_reduce_module);
     }
@@ -130,7 +133,6 @@ mca_coll_han_reduce_intra(const void *sbuf,
     int *vranks = han_module->cached_vranks;
     int low_rank = ompi_comm_rank(low_comm);
     int low_size = ompi_comm_size(low_comm);
-    int up_rank  = ompi_comm_rank(up_comm);
 
     int root_low_rank;
     int root_up_rank;
@@ -139,11 +141,18 @@ mca_coll_han_reduce_intra(const void *sbuf,
                          "[%d]: root_low_rank %d root_up_rank %d\n", w_rank, root_low_rank,
                          root_up_rank));
 
-    void *tmp_rbuf = rbuf;
+    /* node leaders require a buffer to store intermediate results */
+    void *tmp_rbuf = NULL;
     void *tmp_rbuf_to_free = NULL;
-    if (low_rank == root_low_rank && root_up_rank != up_rank) {
-        /* allocate 2 segments on node leaders that are not the global root */
+    if (w_rank == root) {
+        /* the global root already has one */
+        tmp_rbuf = rbuf;
+    } else if (low_rank == root_low_rank) {
+        /* allocate 2 temporary segments on node leaders that are not the global root */
         tmp_rbuf = malloc(2*extent*seg_count);
+        if (NULL == tmp_rbuf) {
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
         tmp_rbuf_to_free = tmp_rbuf;
     }
 
@@ -176,7 +185,7 @@ mca_coll_han_reduce_intra(const void *sbuf,
             t->sbuf = (char *) t->sbuf + extent * t->seg_count;
         }
 
-        if (up_rank == root_up_rank) {
+        if (w_rank == root) {
             t->rbuf = (char *) t->rbuf + extent * t->seg_count;
         }
         t->cur_seg = t->cur_seg + 1;
@@ -303,7 +312,7 @@ mca_coll_han_reduce_intra_simple(const void *sbuf,
         OPAL_OUTPUT_VERBOSE((30, mca_coll_han_component.han_output,
                              "han cannot handle reduce with this communicator. Drop HAN support in this communicator and fall back on another component\n"));
         /* HAN cannot work with this communicator so fallback on all collectives */
-        HAN_LOAD_FALLBACK_COLLECTIVES(han_module, comm);
+        HAN_LOAD_FALLBACK_COLLECTIVES(comm, han_module);
         return han_module->previous_reduce(sbuf, rbuf, count, dtype, op, root,
                                           comm, han_module->previous_reduce_module);
     }
@@ -317,7 +326,7 @@ mca_coll_han_reduce_intra_simple(const void *sbuf,
         /* Put back the fallback collective support and call it once. All
          * future calls will then be automatically redirected.
          */
-        HAN_LOAD_FALLBACK_COLLECTIVE(han_module, comm, reduce);
+        HAN_UNINSTALL_COLL_API(comm, han_module, reduce);
         return han_module->previous_reduce(sbuf, rbuf, count, dtype, op, root,
                                           comm, han_module->previous_reduce_module);
     }

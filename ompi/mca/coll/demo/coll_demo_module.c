@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,71 +28,6 @@
 #include "ompi/mca/coll/base/base.h"
 #include "coll_demo.h"
 
-#if 0
-
-/*
- * Linear set of collective algorithms
- */
-static const mca_coll_base_module_1_0_0_t intra = {
-
-    /* Initialization / finalization functions */
-
-    mca_coll_demo_module_init,
-    mca_coll_demo_module_finalize,
-
-    /* Collective function pointers */
-
-    mca_coll_demo_allgather_intra,
-    mca_coll_demo_allgatherv_intra,
-    mca_coll_demo_allreduce_intra,
-    mca_coll_demo_alltoall_intra,
-    mca_coll_demo_alltoallv_intra,
-    mca_coll_demo_alltoallw_intra,
-    mca_coll_demo_barrier_intra,
-    mca_coll_demo_bcast_intra,
-    NULL, /* Leave exscan blank just to force basic to be used */
-    mca_coll_demo_gather_intra,
-    mca_coll_demo_gatherv_intra,
-    mca_coll_demo_reduce_intra,
-    mca_coll_demo_reduce_scatter_intra,
-    mca_coll_demo_scan_intra,
-    mca_coll_demo_scatter_intra,
-    mca_coll_demo_scatterv_intra
-};
-
-
-/*
- * Linear set of collective algorithms for intercommunicators
- */
-static const mca_coll_base_module_1_0_0_t inter = {
-
-    /* Initialization / finalization functions */
-
-    mca_coll_demo_module_init,
-    mca_coll_demo_module_finalize,
-
-    /* Collective function pointers */
-
-    mca_coll_demo_allgather_inter,
-    mca_coll_demo_allgatherv_inter,
-    mca_coll_demo_allreduce_inter,
-    mca_coll_demo_alltoall_inter,
-    mca_coll_demo_alltoallv_inter,
-    mca_coll_demo_alltoallw_inter,
-    mca_coll_demo_barrier_inter,
-    mca_coll_demo_bcast_inter,
-    mca_coll_demo_exscan_inter,
-    mca_coll_demo_gather_inter,
-    mca_coll_demo_gatherv_inter,
-    mca_coll_demo_reduce_inter,
-    mca_coll_demo_reduce_scatter_inter,
-    NULL,
-    mca_coll_demo_scatter_inter,
-    mca_coll_demo_scatterv_inter
-};
-
-#endif
-
 /*
  * Initial query function that is invoked during MPI_INIT, allowing
  * this component to disqualify itself if it doesn't support the
@@ -104,6 +40,13 @@ int mca_coll_demo_init_query(bool enable_progress_threads,
 
     return OMPI_SUCCESS;
 }
+
+static int
+mca_coll_demo_module_enable(mca_coll_base_module_t *module,
+                            struct ompi_communicator_t *comm);
+static int
+mca_coll_demo_module_disable(mca_coll_base_module_t *module,
+                             struct ompi_communicator_t *comm);
 
 /*
  * Invoked when there's a new communicator that has been created.
@@ -121,54 +64,38 @@ mca_coll_demo_comm_query(struct ompi_communicator_t *comm, int *priority)
     *priority = mca_coll_demo_priority;
 
     demo_module->super.coll_module_enable = mca_coll_demo_module_enable;
-
-    if (OMPI_COMM_IS_INTRA(comm)) {
-        demo_module->super.coll_allgather  = mca_coll_demo_allgather_intra;
-        demo_module->super.coll_allgatherv = mca_coll_demo_allgatherv_intra;
-        demo_module->super.coll_allreduce  = mca_coll_demo_allreduce_intra;
-        demo_module->super.coll_alltoall   = mca_coll_demo_alltoall_intra;
-        demo_module->super.coll_alltoallv  = mca_coll_demo_alltoallv_intra;
-        demo_module->super.coll_alltoallw  = mca_coll_demo_alltoallw_intra;
-        demo_module->super.coll_barrier    = mca_coll_demo_barrier_intra;
-        demo_module->super.coll_bcast      = mca_coll_demo_bcast_intra;
-        demo_module->super.coll_exscan     = mca_coll_demo_exscan_intra;
-        demo_module->super.coll_gather     = mca_coll_demo_gather_intra;
-        demo_module->super.coll_gatherv    = mca_coll_demo_gatherv_intra;
-        demo_module->super.coll_reduce     = mca_coll_demo_reduce_intra;
-        demo_module->super.coll_reduce_scatter = mca_coll_demo_reduce_scatter_intra;
-        demo_module->super.coll_scan       = mca_coll_demo_scan_intra;
-        demo_module->super.coll_scatter    = mca_coll_demo_scatter_intra;
-        demo_module->super.coll_scatterv   = mca_coll_demo_scatterv_intra;
-    } else {
-        demo_module->super.coll_allgather  = mca_coll_demo_allgather_inter;
-        demo_module->super.coll_allgatherv = mca_coll_demo_allgatherv_inter;
-        demo_module->super.coll_allreduce  = mca_coll_demo_allreduce_inter;
-        demo_module->super.coll_alltoall   = mca_coll_demo_alltoall_inter;
-        demo_module->super.coll_alltoallv  = mca_coll_demo_alltoallv_inter;
-        demo_module->super.coll_alltoallw  = mca_coll_demo_alltoallw_inter;
-        demo_module->super.coll_barrier    = mca_coll_demo_barrier_inter;
-        demo_module->super.coll_bcast      = mca_coll_demo_bcast_inter;
-        demo_module->super.coll_exscan     = NULL;
-        demo_module->super.coll_gather     = mca_coll_demo_gather_inter;
-        demo_module->super.coll_gatherv    = mca_coll_demo_gatherv_inter;
-        demo_module->super.coll_reduce     = mca_coll_demo_reduce_inter;
-        demo_module->super.coll_reduce_scatter = mca_coll_demo_reduce_scatter_inter;
-        demo_module->super.coll_scan       = NULL;
-        demo_module->super.coll_scatter    = mca_coll_demo_scatter_inter;
-        demo_module->super.coll_scatterv   = mca_coll_demo_scatterv_inter;
-    }
+    demo_module->super.coll_module_disable = mca_coll_demo_module_disable;
 
     return &(demo_module->super);
 }
 
-#define COPY(comm, module, func)                                        \
-    do {                                                                \
-        module->underlying.coll_ ## func  = comm->c_coll->coll_ ## func; \
-        module->underlying.coll_ ## func  = comm->c_coll->coll_ ## func; \
-        if (NULL != module->underlying.coll_ ## func ## _module) {      \
-            OBJ_RETAIN(module->underlying.coll_ ## func ## _module);    \
-        }                                                               \
-    } while (0)
+#define DEMO_INSTALL_COLL_API(__comm, __module, __api, __func)                                                                   \
+    do                                                                                                                           \
+    {                                                                                                                            \
+        if (__comm->c_coll->coll_##__api)                                                                                        \
+        {                                                                                                                        \
+            /* save the current selected collective */                                                                           \
+            MCA_COLL_SAVE_API(__comm, __api, (__module)->c_coll.coll_##__api, (__module)->c_coll.coll_##__api##_module, "demo"); \
+            /* install our own */                                                                                                \
+            MCA_COLL_INSTALL_API(__comm, __api, __func, &__module->super, "demo");                                               \
+        }                                                                                                                        \
+        else                                                                                                                     \
+        {                                                                                                                        \
+            opal_show_help("help-mca-coll-base.txt", "comm-select:missing collective", true,                                     \
+                           "demo", #__api, ompi_process_info.nodename,                                                           \
+                           mca_coll_demo_priority);                                                                              \
+        }                                                                                                                        \
+    }    while (0)
+
+#define DEMO_UNINSTALL_COLL_API(__comm, __module, __api)                                                                        \
+    do                                                                                                                          \
+    {                                                                                                                           \
+        if (&(__module)->super == __comm->c_coll->coll_##__api##_module)                                                        \
+        {                                                                                                                       \
+            /* put back the original collective */                                                                              \
+            MCA_COLL_INSTALL_API(__comm, __api, __module->c_coll.coll_##__api, __module->c_coll.coll_##__api##_module, "demo"); \
+        }                                                                                                                       \
+     } while (0)
 
 int
 mca_coll_demo_module_enable(mca_coll_base_module_t *module,
@@ -180,23 +107,70 @@ mca_coll_demo_module_enable(mca_coll_base_module_t *module,
         printf("Hello!  This is the \"demo\" coll component.  I'll be your coll component\ntoday.  Please tip your waitresses well.\n");
     }
 
-    /* save the old pointers */
-    COPY(comm, demo_module, allgather);
-    COPY(comm, demo_module, allgatherv);
-    COPY(comm, demo_module, allreduce);
-    COPY(comm, demo_module, alltoall);
-    COPY(comm, demo_module, alltoallv);
-    COPY(comm, demo_module, alltoallw);
-    COPY(comm, demo_module, barrier);
-    COPY(comm, demo_module, bcast);
-    COPY(comm, demo_module, exscan);
-    COPY(comm, demo_module, gather);
-    COPY(comm, demo_module, gatherv);
-    COPY(comm, demo_module, reduce);
-    COPY(comm, demo_module, reduce_scatter);
-    COPY(comm, demo_module, scan);
-    COPY(comm, demo_module, scatter);
-    COPY(comm, demo_module, scatterv);
+    if (OMPI_COMM_IS_INTRA(comm))
+    {
+        DEMO_INSTALL_COLL_API(comm, demo_module, allgather, mca_coll_demo_allgather_intra);
+        DEMO_INSTALL_COLL_API(comm, demo_module, allgatherv, mca_coll_demo_allgatherv_intra);
+        DEMO_INSTALL_COLL_API(comm, demo_module, allreduce, mca_coll_demo_allreduce_intra);
+        DEMO_INSTALL_COLL_API(comm, demo_module, alltoall, mca_coll_demo_alltoall_intra);
+        DEMO_INSTALL_COLL_API(comm, demo_module, alltoallv, mca_coll_demo_alltoallv_intra);
+        DEMO_INSTALL_COLL_API(comm, demo_module, alltoallw, mca_coll_demo_alltoallw_intra);
+        DEMO_INSTALL_COLL_API(comm, demo_module, barrier, mca_coll_demo_barrier_intra);
+        DEMO_INSTALL_COLL_API(comm, demo_module, bcast, mca_coll_demo_bcast_intra);
+        DEMO_INSTALL_COLL_API(comm, demo_module, exscan, mca_coll_demo_exscan_intra);
+        DEMO_INSTALL_COLL_API(comm, demo_module, gather, mca_coll_demo_gather_intra);
+        DEMO_INSTALL_COLL_API(comm, demo_module, gatherv, mca_coll_demo_gatherv_intra);
+        DEMO_INSTALL_COLL_API(comm, demo_module, reduce, mca_coll_demo_reduce_intra);
+        DEMO_INSTALL_COLL_API(comm, demo_module, reduce_scatter, mca_coll_demo_reduce_scatter_intra);
+        DEMO_INSTALL_COLL_API(comm, demo_module, scan, mca_coll_demo_scan_intra);
+        DEMO_INSTALL_COLL_API(comm, demo_module, scatter, mca_coll_demo_scatter_intra);
+        DEMO_INSTALL_COLL_API(comm, demo_module, scatterv, mca_coll_demo_scatterv_intra);
+    }
+    else
+    {
+        DEMO_INSTALL_COLL_API(comm, demo_module, allgather, mca_coll_demo_allgather_inter);
+        DEMO_INSTALL_COLL_API(comm, demo_module, allgatherv, mca_coll_demo_allgatherv_inter);
+        DEMO_INSTALL_COLL_API(comm, demo_module, allreduce, mca_coll_demo_allreduce_inter);
+        DEMO_INSTALL_COLL_API(comm, demo_module, alltoall, mca_coll_demo_alltoall_inter);
+        DEMO_INSTALL_COLL_API(comm, demo_module, alltoallv, mca_coll_demo_alltoallv_inter);
+        DEMO_INSTALL_COLL_API(comm, demo_module, alltoallw, mca_coll_demo_alltoallw_inter);
+        DEMO_INSTALL_COLL_API(comm, demo_module, barrier, mca_coll_demo_barrier_inter);
+        DEMO_INSTALL_COLL_API(comm, demo_module, bcast, mca_coll_demo_bcast_inter);
+        /* Skip the exscan for inter-comms, it is not supported */
+        DEMO_INSTALL_COLL_API(comm, demo_module, gather, mca_coll_demo_gather_inter);
+        DEMO_INSTALL_COLL_API(comm, demo_module, gatherv, mca_coll_demo_gatherv_inter);
+        DEMO_INSTALL_COLL_API(comm, demo_module, reduce, mca_coll_demo_reduce_inter);
+        DEMO_INSTALL_COLL_API(comm, demo_module, reduce_scatter, mca_coll_demo_reduce_scatter_inter);
+        /* Skip the scan for inter-comms, it is not supported */
+        DEMO_INSTALL_COLL_API(comm, demo_module, scatter, mca_coll_demo_scatter_inter);
+        DEMO_INSTALL_COLL_API(comm, demo_module, scatterv, mca_coll_demo_scatterv_inter);
+    }
+    return OMPI_SUCCESS;
+}
+
+static int
+mca_coll_demo_module_disable(mca_coll_base_module_t *module,
+                             struct ompi_communicator_t *comm)
+{
+    mca_coll_demo_module_t *demo_module = (mca_coll_demo_module_t*) module;
+
+    /* put back the old pointers */
+    DEMO_UNINSTALL_COLL_API(comm, demo_module, allgather);
+    DEMO_UNINSTALL_COLL_API(comm, demo_module, allgatherv);
+    DEMO_UNINSTALL_COLL_API(comm, demo_module, allreduce);
+    DEMO_UNINSTALL_COLL_API(comm, demo_module, alltoall);
+    DEMO_UNINSTALL_COLL_API(comm, demo_module, alltoallv);
+    DEMO_UNINSTALL_COLL_API(comm, demo_module, alltoallw);
+    DEMO_UNINSTALL_COLL_API(comm, demo_module, barrier);
+    DEMO_UNINSTALL_COLL_API(comm, demo_module, bcast);
+    DEMO_UNINSTALL_COLL_API(comm, demo_module, exscan);
+    DEMO_UNINSTALL_COLL_API(comm, demo_module, gather);
+    DEMO_UNINSTALL_COLL_API(comm, demo_module, gatherv);
+    DEMO_UNINSTALL_COLL_API(comm, demo_module, reduce);
+    DEMO_UNINSTALL_COLL_API(comm, demo_module, reduce_scatter);
+    DEMO_UNINSTALL_COLL_API(comm, demo_module, scan);
+    DEMO_UNINSTALL_COLL_API(comm, demo_module, scatter);
+    DEMO_UNINSTALL_COLL_API(comm, demo_module, scatterv);
 
     return OMPI_SUCCESS;
 }

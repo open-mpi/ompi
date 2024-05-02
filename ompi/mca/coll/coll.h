@@ -20,6 +20,7 @@
  * Copyright (c) 2016-2017 IBM Corporation.  All rights reserved.
  * Copyright (c) 2017      FUJITSU LIMITED.  All rights reserved.
  * Copyright (c) 2020      BULL S.A.S. All rights reserved.
+ * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -37,9 +38,9 @@
  * handler invocation, but the collective components provide all other
  * functionality.
  *
- * Component selection is done per commuicator, at Communicator
+ * Component selection is done per communicator, at Communicator
  * construction time.  mca_coll_base_comm_select() is used to
- * create the list of components available to the componenent
+ * create the list of components available to the component
  * collm_comm_query function, instantiating a module for each
  * component that is usable, and sets the module collective function pointers.
  * mca_coll_base_comm_select() then loops through the list of available
@@ -59,6 +60,15 @@
  * components should be able to handle either style of communicator
  * during initialization (although handling may include indicating the
  * component is not available).
+ *
+ * Unlike the MPI standard, all buffers that are not supposed to be used (and
+ * therefore where the MPI standard does not require the tuple 
+ * (buffer, datatype, count) to be accessible, are replaced with NULL.
+ * As an example, the recvbuf for all non-root ranks in an MPI_Reduce,
+ * will be set to NULL at the MPI API level. The reason behind this is to
+ * allow collective components to indicate when buffers are really valid,
+ * such that collective modules delegating collectives to other modules
+ * can share temporary buffer.
  */
 
 #ifndef OMPI_MCA_COLL_COLL_H
@@ -71,6 +81,7 @@
 #include "opal/mca/base/base.h"
 
 #include "ompi/request/request.h"
+#include "ompi/mca/coll/base/base.h"
 
 BEGIN_C_DECLS
 
@@ -508,7 +519,7 @@ typedef struct mca_coll_base_component_2_4_0_t mca_coll_base_component_t;
  *
  * Module interface to the Collective framework.  Modules are
  * reference counted based on the number of functions from the module
- * used on the commuicator.  There is at most one module per component
+ * used on the communicator.  There is at most one module per component
  * on a given communicator, and there can be many component modules on
  * a given communicator.
  *
@@ -808,6 +819,29 @@ typedef struct mca_coll_base_comm_coll_t mca_coll_base_comm_coll_t;
 
 /* ******************************************************************** */
 
+#define MCA_COLL_SAVE_API(__comm, __api, __fct, __bmodule, __c_name)           \
+  do                                                                           \
+  {                                                                            \
+      OPAL_OUTPUT_VERBOSE((50, ompi_coll_base_framework.framework_output,      \
+                           "Save %s collective in comm %p (%s) %p into %s:%s", \
+                           #__api, (void *)__comm, __comm->c_name,             \
+                           (void*)(uintptr_t)__comm->c_coll->coll_##__api,     \
+                           __c_name, #__fct));                                 \
+      __fct = __comm->c_coll->coll_##__api;                                    \
+      __bmodule = __comm->c_coll->coll_##__api##_module;                       \
+  } while (0)
+
+#define MCA_COLL_INSTALL_API(__comm, __api, __fct, __bmodule, __c_name)                \
+  do                                                                                   \
+  {                                                                                    \
+    OPAL_OUTPUT_VERBOSE((50, ompi_coll_base_framework.framework_output,                \
+                         "Replace %s collective in comm %p (%s) from %p to %s:%s(%p)", \
+                         #__api, (void *)__comm, __comm->c_name,                       \
+                         (void*)(uintptr_t)__comm->c_coll->coll_##__api,               \
+                         __c_name, #__fct, (void*)(uintptr_t)__fct));                  \
+    __comm->c_coll->coll_##__api = __fct;                                              \
+    __comm->c_coll->coll_##__api##_module = __bmodule;                                 \
+  } while (0)
 
 END_C_DECLS
 

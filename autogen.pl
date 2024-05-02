@@ -71,7 +71,7 @@ my $ompi_automake_search = "automake";
 my $ompi_libtoolize_search = "libtoolize;glibtoolize";
 
 # version of packages we ship as tarballs
-my $libevent_version="2.1.12-stable";
+my $libevent_version="2.1.12-stable-ompi";
 my $hwloc_version="2.7.1";
 
 # One-time setup
@@ -1397,42 +1397,81 @@ if (list_contains("openpmix", @disabled_3rdparty_packages)) {
 # Make sure we got a submodule-full clone.  If not, abort and let a
 # human figure it out.
 if (-f ".gitmodules") {
-    open(IN, "git submodule status|")
-        || die "Can't run \"git submodule status\"";
+    # Do a quick sanity check to ensure that non-3rd-party
+    # submodules are at least present (e.g., they won't be present
+    # if you downloaded a GitHub.com-created tarball).
+    open(IN, ".gitmodules") ||
+        die "Can't open .gitmodules";
     while (<IN>) {
-        $_ =~ m/^(.)[0-9a-f]{40}\s+(\S+)/;
-        my $status = $1;
-        my $path   = $2;
-
-        print("=== Submodule: $path\n");
-        if (index($path, "pmix") != -1 and list_contains("pmix", @disabled_3rdparty_packages)) {
-          print("Disabled - skipping openpmix");
-          next;
+        # Find "path = " lines
+        if (!($_ =~ m/^\s+path = (.+)$/)) {
+            next;
         }
-        if (index($path, "prrte") != -1 and list_contains("prrte", @disabled_3rdparty_packages)) {
-          print("Disabled - skipping prrte");
-          next;
+        my $path = $1;
+
+        # Only care about paths that do not include "3rd-party"
+        if (index($path, "3rd-party") != -1) {
+            next;
         }
 
-        # Make sure the submodule is there
-        if ($status eq "-") {
-            print("    ==> ERROR: Missing
+        # Check that the path exists and is non-empty.
+        my $happy = 1;
+        if (! -d $path) {
+            $happy = 0;
+        } else {
+            opendir(DIR, $path) ||
+                my_die "Can't open $path directory";
+            my @files = readdir(DIR);
+            closedir(DIR);
+
+            $happy = 0
+                if ($#files < 2);
+        }
+
+        if (!$happy) {
+            print("    ==> ERROR: Missing submodule\n\nThe submodule \"$path\" is missing.\n\n");
+            exit(1);
+        }
+    }
+
+    if (-d ".git") {
+        open(IN, "git submodule status|")
+            || die "Can't run \"git submodule status\"";
+        while (<IN>) {
+            $_ =~ m/^(.)[0-9a-f]{40}\s+(\S+)/;
+            my $status = $1;
+            my $path   = $2;
+
+            print("=== Submodule: $path\n");
+            if (index($path, "pmix") != -1 and list_contains("pmix", @disabled_3rdparty_packages)) {
+                print("Disabled - skipping openpmix");
+                next;
+            }
+            if (index($path, "prrte") != -1 and list_contains("prrte", @disabled_3rdparty_packages)) {
+                print("Disabled - skipping prrte");
+                next;
+            }
+
+            # Make sure the submodule is there
+            if ($status eq "-") {
+                print("    ==> ERROR: Missing
 
 The submodule \"$path\" is missing.
 
 Perhaps you forgot to \"git clone --recursive ...\", or you need to
 \"git submodule update --init --recursive\"...?\n\n");
-            exit(1);
-        }
+                exit(1);
+            }
 
-        # See if the commit in the submodule is not the same as the
-        # commit that the git submodule thinks it should be.
-        elsif ($status eq "+") {
+            # See if the commit in the submodule is not the same as the
+            # commit that the git submodule thinks it should be.
+            elsif ($status eq "+") {
                 print("    ==> WARNING: Submodule hash is different than upstream.
          If this is not intentional, you may want to run:
          \"git submodule update --init --recursive\"\n");
-        } else {
-            print("    Local hash is what is expected by the submodule (good!)\n");
+            } else {
+                print("    Local hash is what is expected by the submodule (good!)\n");
+            }
         }
     }
 }

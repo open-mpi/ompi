@@ -76,7 +76,7 @@ mca_coll_basic_gatherv_intra(const void *sbuf, int scount,
         }
 
         ompi_request_t **reqs;
-        size_t nrecv = 0, recv_iter = 0;
+        int nrecv = 0, recv_iter = 0;
 
         for (i = 0; i < size; ++i) {
             /* We directly copied the data from self */
@@ -107,7 +107,7 @@ mca_coll_basic_gatherv_intra(const void *sbuf, int scount,
         err = ompi_request_wait_all(nrecv, reqs, MPI_STATUSES_IGNORE);
 
         if (MPI_ERR_IN_STATUS == err) {
-            for (int i = 0; i < nrecv; i++) {
+            for (i = 0; i < nrecv; i++) {
                 if (MPI_REQUEST_NULL == reqs[i])
                     continue;
                 if (MPI_ERR_PENDING == reqs[i]->req_status.MPI_ERROR)

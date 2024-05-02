@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -33,7 +34,7 @@
  *	Accepts:	- same arguments as MPI_Scatter()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int mca_coll_demo_scatter_intra(void *sbuf, int scount,
+int mca_coll_demo_scatter_intra(const void *sbuf, int scount,
                                 struct ompi_datatype_t *sdtype,
                                 void *rbuf, int rcount,
                                 struct ompi_datatype_t *rdtype,
@@ -43,10 +44,10 @@ int mca_coll_demo_scatter_intra(void *sbuf, int scount,
 {
     mca_coll_demo_module_t *demo_module = (mca_coll_demo_module_t*) module;
     opal_output_verbose(10, ompi_coll_base_framework.framework_output, "In demo scatter_intra");
-    return demo_module->underlying.coll_scatter(sbuf, scount, sdtype,
-                                                rbuf, rcount, rdtype,
-                                                root, comm,
-                                                demo_module->underlying.coll_scatter_module);
+    return demo_module->c_coll.coll_scatter(sbuf, scount, sdtype,
+                                            rbuf, rcount, rdtype,
+                                            root, comm,
+                                            demo_module->c_coll.coll_scatter_module);
 }
 
 
@@ -57,7 +58,7 @@ int mca_coll_demo_scatter_intra(void *sbuf, int scount,
  *	Accepts:	- same arguments as MPI_Scatter()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int mca_coll_demo_scatter_inter(void *sbuf, int scount,
+int mca_coll_demo_scatter_inter(const void *sbuf, int scount,
                                 struct ompi_datatype_t *sdtype,
                                 void *rbuf, int rcount,
                                 struct ompi_datatype_t *rdtype,
@@ -67,8 +68,8 @@ int mca_coll_demo_scatter_inter(void *sbuf, int scount,
 {
     mca_coll_demo_module_t *demo_module = (mca_coll_demo_module_t*) module;
     opal_output_verbose(10, ompi_coll_base_framework.framework_output, "In demo scatter_inter");
-    return demo_module->underlying.coll_scatter(sbuf, scount, sdtype,
-                                                rbuf, rcount, rdtype,
-                                                root, comm,
-                                                demo_module->underlying.coll_scatter_module);
+    return demo_module->c_coll.coll_scatter(sbuf, scount, sdtype,
+                                            rbuf, rcount, rdtype,
+                                            root, comm,
+                                            demo_module->c_coll.coll_scatter_module);
 }

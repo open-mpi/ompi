@@ -3,6 +3,7 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2022      IBM Corporation. All rights reserved
+ * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -86,7 +87,7 @@ mca_coll_han_scatter_intra(const void *sbuf, int scount,
         OPAL_OUTPUT_VERBOSE((30, mca_coll_han_component.han_output,
                              "han cannot handle scatter with this communicator. Fall back on another component\n"));
         /* HAN cannot work with this communicator so fallback on all collectives */
-        HAN_LOAD_FALLBACK_COLLECTIVES(han_module, comm);
+        HAN_LOAD_FALLBACK_COLLECTIVES(comm, han_module);
         return han_module->previous_scatter(sbuf, scount, sdtype, rbuf, rcount, rdtype, root,
                                             comm, han_module->previous_scatter_module);
     }
@@ -100,7 +101,7 @@ mca_coll_han_scatter_intra(const void *sbuf, int scount,
         /* Put back the fallback collective support and call it once. All
          * future calls will then be automatically redirected.
          */
-        HAN_LOAD_FALLBACK_COLLECTIVE(han_module, comm, scatter);
+        HAN_UNINSTALL_COLL_API(comm, han_module, scatter);
         return han_module->previous_scatter(sbuf, scount, sdtype, rbuf, rcount, rdtype, root,
                                             comm, han_module->previous_scatter_module);
     }
@@ -187,7 +188,7 @@ mca_coll_han_scatter_intra(const void *sbuf, int scount,
 
 }
 
-/* us: upper level (intra-node) scatter task */
+/* us: upper level (inter-node) scatter task */
 int mca_coll_han_scatter_us_task(void *task_args)
 {
     mca_coll_han_scatter_args_t *t = (mca_coll_han_scatter_args_t *) task_args;
@@ -218,6 +219,8 @@ int mca_coll_han_scatter_us_task(void *task_args)
                                          t->up_comm, t->up_comm->c_coll->coll_scatter_module);
         t->sbuf = tmp_rbuf;
         t->sbuf_inter_free = tmp_buf;
+        t->sdtype = dtype;
+        t->scount = count;
     }
 
     if (t->sbuf_reorder_free != NULL && t->root == t->w_rank) {
@@ -282,7 +285,7 @@ mca_coll_han_scatter_intra_simple(const void *sbuf, int scount,
                              "han cannot handle allgather within this communicator."
                              " Fall back on another component\n"));
         /* HAN cannot work with this communicator so fallback on all collectives */
-        HAN_LOAD_FALLBACK_COLLECTIVES(han_module, comm);
+        HAN_LOAD_FALLBACK_COLLECTIVES(comm, han_module);
         return han_module->previous_scatter(sbuf, scount, sdtype, rbuf, rcount, rdtype, root,
                                             comm, han_module->previous_scatter_module);
     }
@@ -292,7 +295,7 @@ mca_coll_han_scatter_intra_simple(const void *sbuf, int scount,
     if (han_module->are_ppn_imbalanced){
         OPAL_OUTPUT_VERBOSE((30, mca_coll_han_component.han_output,
                              "han cannot handle scatter with this communicator. It needs to fall back on another component\n"));
-        HAN_LOAD_FALLBACK_COLLECTIVES(han_module, comm);
+        HAN_UNINSTALL_COLL_API(comm, han_module, scatter);
         return han_module->previous_scatter(sbuf, scount, sdtype, rbuf, rcount, rdtype, root,
                                             comm, han_module->previous_scatter_module);
     }

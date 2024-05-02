@@ -7,6 +7,7 @@
  * Copyright (c) 2021      Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2022      IBM Corporation. All rights reserved
+ * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,15 +30,16 @@
 /*
  * Local functions
  */
-static int han_module_enable(mca_coll_base_module_t * module,
-                             struct ompi_communicator_t *comm);
+static int mca_coll_han_module_enable(mca_coll_base_module_t * module,
+                                      struct ompi_communicator_t *comm);
 static int mca_coll_han_module_disable(mca_coll_base_module_t * module,
                                        struct ompi_communicator_t *comm);
 
-#define CLEAN_PREV_COLL(HANDLE, NAME)                    \
-    do {                                                 \
-        (HANDLE)->fallback.NAME.module_fn.NAME = NULL;   \
-        (HANDLE)->fallback.NAME.module = NULL;           \
+#define CLEAN_PREV_COLL(__module, __api)              \
+    do                                                \
+    {                                                 \
+        (__module)->previous_##__api          = NULL; \
+        (__module)->previous_##__api##_module = NULL; \
     } while (0)
 
 /*
@@ -52,7 +54,9 @@ static void han_module_clear(mca_coll_han_module_t *han_module)
     CLEAN_PREV_COLL(han_module, bcast);
     CLEAN_PREV_COLL(han_module, reduce);
     CLEAN_PREV_COLL(han_module, gather);
+    CLEAN_PREV_COLL(han_module, gatherv);
     CLEAN_PREV_COLL(han_module, scatter);
+    CLEAN_PREV_COLL(han_module, scatterv);
 
     han_module->reproducible_reduce = NULL;
     han_module->reproducible_reduce_module = NULL;
@@ -69,7 +73,6 @@ static void mca_coll_han_module_construct(mca_coll_han_module_t * module)
 
     module->enabled = true;
     module->recursive_free_depth = 0;
-    module->super.coll_module_disable = mca_coll_han_module_disable;
     module->cached_low_comms = NULL;
     module->cached_up_comms = NULL;
     module->cached_vranks = NULL;
@@ -87,14 +90,6 @@ static void mca_coll_han_module_construct(mca_coll_han_module_t * module)
 
     han_module_clear(module);
 }
-
-
-#define OBJ_RELEASE_IF_NOT_NULL(obj)            \
-    do {                                        \
-        if (NULL != (obj)) {                    \
-            OBJ_RELEASE(obj);                   \
-        }                                       \
-    } while (0)
 
 /*
  * Module destructor
@@ -143,13 +138,6 @@ mca_coll_han_module_destruct(mca_coll_han_module_t * module)
             ompi_comm_free(&(module->sub_comm[i]));
         }
     }
-
-    OBJ_RELEASE_IF_NOT_NULL(module->previous_allgather_module);
-    OBJ_RELEASE_IF_NOT_NULL(module->previous_allreduce_module);
-    OBJ_RELEASE_IF_NOT_NULL(module->previous_bcast_module);
-    OBJ_RELEASE_IF_NOT_NULL(module->previous_gather_module);
-    OBJ_RELEASE_IF_NOT_NULL(module->previous_reduce_module);
-    OBJ_RELEASE_IF_NOT_NULL(module->previous_scatter_module);
 
     han_module_clear(module);
 }
@@ -210,13 +198,7 @@ mca_coll_han_comm_query(struct ompi_communicator_t * comm, int *priority)
         return NULL;
     }
 
-    han_module = OBJ_NEW(mca_coll_han_module_t);
-    if (NULL == han_module) {
-        return NULL;
-    }
-
-    /* All is good -- return a module */
-    han_module->topologic_level = GLOBAL_COMMUNICATOR;
+    int topologic_level = GLOBAL_COMMUNICATOR;
 
     if (NULL != comm->super.s_info) {
         /* Get the info value disaqualifying coll components */
@@ -225,43 +207,46 @@ mca_coll_han_comm_query(struct ompi_communicator_t * comm, int *priority)
                       &info_str, &flag);
 
         if (flag) {
-            if (0 == strcmp(info_str->string, "INTER_NODE")) {
-                han_module->topologic_level = INTER_NODE;
-            } else {
-                han_module->topologic_level = INTRA_NODE;
-            }
+            topologic_level = strcmp(info_str->string, "INTER_NODE") ? INTRA_NODE : INTER_NODE;
             OBJ_RELEASE(info_str);
         }
     }
 
     if( !ompi_group_have_remote_peers(comm->c_local_group)
-            && INTRA_NODE != han_module->topologic_level ) {
+            && INTRA_NODE != topologic_level ) {
         /* The group only contains local processes, and this is not a
          * intra-node subcomm we created. Disable HAN for now */
         opal_output_verbose(10, ompi_coll_base_framework.framework_output,
                             "coll:han:comm_query (%s/%s): comm has only local processes; disqualifying myself",
                             ompi_comm_print_cid(comm), comm->c_name);
-        OBJ_RELEASE(han_module);
         return NULL;
     }
 
-    han_module->super.coll_module_enable = han_module_enable;
+    /* All is good -- return a module */
+    han_module = OBJ_NEW(mca_coll_han_module_t);
+    if (NULL == han_module) {
+        return NULL;
+    }
+    han_module->topologic_level = topologic_level;
+
+    han_module->super.coll_module_enable = mca_coll_han_module_enable;
+    han_module->super.coll_module_disable = mca_coll_han_module_disable;
+
     han_module->super.coll_alltoall   = NULL;
     han_module->super.coll_alltoallv  = NULL;
     han_module->super.coll_alltoallw  = NULL;
     han_module->super.coll_exscan     = NULL;
-    han_module->super.coll_gatherv    = NULL;
     han_module->super.coll_reduce_scatter = NULL;
     han_module->super.coll_scan       = NULL;
-    han_module->super.coll_scatterv   = NULL;
+    han_module->super.coll_scatterv   = mca_coll_han_scatterv_intra_dynamic;
     han_module->super.coll_barrier    = mca_coll_han_barrier_intra_dynamic;
     han_module->super.coll_scatter    = mca_coll_han_scatter_intra_dynamic;
     han_module->super.coll_reduce     = mca_coll_han_reduce_intra_dynamic;
     han_module->super.coll_gather     = mca_coll_han_gather_intra_dynamic;
+    han_module->super.coll_gatherv    = mca_coll_han_gatherv_intra_dynamic;
     han_module->super.coll_bcast      = mca_coll_han_bcast_intra_dynamic;
     han_module->super.coll_allreduce  = mca_coll_han_allreduce_intra_dynamic;
     han_module->super.coll_allgather  = mca_coll_han_allgather_intra_dynamic;
-
     if (GLOBAL_COMMUNICATOR == han_module->topologic_level) {
         /* We are on the global communicator, return topological algorithms */
         han_module->super.coll_allgatherv = NULL;
@@ -283,53 +268,48 @@ mca_coll_han_comm_query(struct ompi_communicator_t * comm, int *priority)
  * . ompi_communicator_t *comm
  * . mca_coll_han_module_t *han_module
  */
-#define HAN_SAVE_PREV_COLL_API(__api)                                   \
+#define HAN_INSTALL_COLL_API(__comm, __module, __api)                   \
     do {                                                                \
-        if (!comm->c_coll->coll_ ## __api || !comm->c_coll->coll_ ## __api ## _module) { \
-            opal_output_verbose(1, ompi_coll_base_framework.framework_output, \
-                                "(%s/%s): no underlying " # __api"; disqualifying myself", \
-                                ompi_comm_print_cid(comm), comm->c_name); \
-            goto handle_error;                                  \
-        }                                                       \
-        han_module->previous_ ## __api            = comm->c_coll->coll_ ## __api; \
-        han_module->previous_ ## __api ## _module = comm->c_coll->coll_ ## __api ## _module; \
-        OBJ_RETAIN(han_module->previous_ ## __api ## _module);  \
-    } while(0)
+        if( NULL != __module->super.coll_ ## __api ) {                  \
+            if (!__comm->c_coll->coll_##__api || !__comm->c_coll->coll_##__api##_module) {  \
+                    opal_output_verbose(10, ompi_coll_base_framework.framework_output, \
+                                        "(%d/%s): no underlying " #__api " ; disqualifying myself", \
+                                        __comm->c_index, __comm->c_name); \
+            } else {                                                    \
+                MCA_COLL_SAVE_API(__comm, __api, __module->previous_##__api, \
+                                  __module->previous_##__api##_module, "han"); \
+                MCA_COLL_INSTALL_API(__comm, __api, __module->super.coll_##__api, &__module->super, "han"); \
+            }                                                           \
+        }                                                               \
+    } while (0)
+
+/* The HAN_UNINSTALL_COLL_API is in coll_han.h header as it is needed in several places. */
 
 /*
  * Init module on the communicator
  */
 static int
-han_module_enable(mca_coll_base_module_t * module,
-                  struct ompi_communicator_t *comm)
+mca_coll_han_module_enable(mca_coll_base_module_t * module,
+                           struct ompi_communicator_t *comm)
 {
     mca_coll_han_module_t * han_module = (mca_coll_han_module_t*) module;
 
-    HAN_SAVE_PREV_COLL_API(allgather);
-    HAN_SAVE_PREV_COLL_API(allgatherv);
-    HAN_SAVE_PREV_COLL_API(allreduce);
-    HAN_SAVE_PREV_COLL_API(barrier);
-    HAN_SAVE_PREV_COLL_API(bcast);
-    HAN_SAVE_PREV_COLL_API(gather);
-    HAN_SAVE_PREV_COLL_API(reduce);
-    HAN_SAVE_PREV_COLL_API(scatter);
+    HAN_INSTALL_COLL_API(comm, han_module, allgather);
+    HAN_INSTALL_COLL_API(comm, han_module, allgatherv);
+    HAN_INSTALL_COLL_API(comm, han_module, allreduce);
+    HAN_INSTALL_COLL_API(comm, han_module, barrier);
+    HAN_INSTALL_COLL_API(comm, han_module, bcast);
+    HAN_INSTALL_COLL_API(comm, han_module, gather);
+    HAN_INSTALL_COLL_API(comm, han_module, gatherv);
+    HAN_INSTALL_COLL_API(comm, han_module, reduce);
+    HAN_INSTALL_COLL_API(comm, han_module, scatter);
+    HAN_INSTALL_COLL_API(comm, han_module, scatterv);
 
     /* set reproducible algos */
     mca_coll_han_reduce_reproducible_decision(comm, module);
     mca_coll_han_allreduce_reproducible_decision(comm, module);
 
     return OMPI_SUCCESS;
-
-handle_error:
-    OBJ_RELEASE_IF_NOT_NULL(han_module->previous_allgather_module);
-    OBJ_RELEASE_IF_NOT_NULL(han_module->previous_allgatherv_module);
-    OBJ_RELEASE_IF_NOT_NULL(han_module->previous_allreduce_module);
-    OBJ_RELEASE_IF_NOT_NULL(han_module->previous_bcast_module);
-    OBJ_RELEASE_IF_NOT_NULL(han_module->previous_gather_module);
-    OBJ_RELEASE_IF_NOT_NULL(han_module->previous_reduce_module);
-    OBJ_RELEASE_IF_NOT_NULL(han_module->previous_scatter_module);
-
-    return OMPI_ERROR;
 }
 
 /*
@@ -341,14 +321,16 @@ mca_coll_han_module_disable(mca_coll_base_module_t * module,
 {
     mca_coll_han_module_t * han_module = (mca_coll_han_module_t *) module;
 
-    OBJ_RELEASE_IF_NOT_NULL(han_module->previous_allgather_module);
-    OBJ_RELEASE_IF_NOT_NULL(han_module->previous_allgatherv_module);
-    OBJ_RELEASE_IF_NOT_NULL(han_module->previous_allreduce_module);
-    OBJ_RELEASE_IF_NOT_NULL(han_module->previous_barrier_module);
-    OBJ_RELEASE_IF_NOT_NULL(han_module->previous_bcast_module);
-    OBJ_RELEASE_IF_NOT_NULL(han_module->previous_gather_module);
-    OBJ_RELEASE_IF_NOT_NULL(han_module->previous_reduce_module);
-    OBJ_RELEASE_IF_NOT_NULL(han_module->previous_scatter_module);
+    HAN_UNINSTALL_COLL_API(comm, han_module, allgather);
+    HAN_UNINSTALL_COLL_API(comm, han_module, allgatherv);
+    HAN_UNINSTALL_COLL_API(comm, han_module, allreduce);
+    HAN_UNINSTALL_COLL_API(comm, han_module, barrier);
+    HAN_UNINSTALL_COLL_API(comm, han_module, bcast);
+    HAN_UNINSTALL_COLL_API(comm, han_module, gather);
+    HAN_UNINSTALL_COLL_API(comm, han_module, gatherv);
+    HAN_UNINSTALL_COLL_API(comm, han_module, reduce);
+    HAN_UNINSTALL_COLL_API(comm, han_module, scatter);
+    HAN_UNINSTALL_COLL_API(comm, han_module, scatterv);
 
     han_module_clear(han_module);
 

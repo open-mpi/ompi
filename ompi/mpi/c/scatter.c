@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2020 The University of Tennessee and The University
+ * Copyright (c) 2004-2023 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
@@ -173,9 +173,19 @@ int MPI_Scatter(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
         return MPI_SUCCESS;
     }
 
+    const void *updated_sendbuf;
+    void *updated_recvbuf;
+    if (OMPI_COMM_IS_INTRA(comm)) {
+        updated_sendbuf = (ompi_comm_rank(comm) != root) ? NULL : sendbuf;
+        updated_recvbuf = recvbuf;
+    } else {
+        updated_sendbuf = (MPI_ROOT != root ) ? NULL : sendbuf;
+        updated_recvbuf = ((MPI_ROOT == root) || (MPI_PROC_NULL == root)) ? NULL : recvbuf;
+    }
+
     /* Invoke the coll component to perform the back-end operation */
-    err = comm->c_coll->coll_scatter(sendbuf, sendcount, sendtype, recvbuf,
-                                    recvcount, recvtype, root, comm,
-                                    comm->c_coll->coll_scatter_module);
+    err = comm->c_coll->coll_scatter(updated_sendbuf, sendcount, sendtype, updated_recvbuf,
+                                     recvcount, recvtype, root, comm,
+                                     comm->c_coll->coll_scatter_module);
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }

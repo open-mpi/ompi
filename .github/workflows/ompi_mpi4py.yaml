@@ -1,14 +1,12 @@
 name: mpi4py
 
-on: [pull_request]
+on: [ pull_request ]
 
 jobs:
-  mpi4py:
+  build:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
-
+    timeout-minutes: 30
     steps:
-
     - name: Configure hostname
       run:  echo 127.0.0.1 `hostname` | sudo tee -a /etc/hosts > /dev/null
       if:   ${{ runner.os == 'Linux' || runner.os == 'macOS' }}
@@ -28,6 +26,11 @@ jobs:
       run:  ./autogen.pl
       working-directory: mpi-build
 
+    # Install into a separate directory (/opt/openmpi) so that we can
+    # bundle up that tree into an artifact to share with other jobs in
+    # this github action.  Specifically don't use /usr/local, because
+    # there's a bunch of other stuff already installed in /usr/local,
+    # and we don't need to include that in our artifact.
     - name: Configure Open MPI
       run:  ./configure
               --disable-dependency-tracking
@@ -36,7 +39,8 @@ jobs:
               --disable-sphinx
               --disable-mpi-fortran
               --disable-oshmem
-              LDFLAGS=-Wl,-rpath,/usr/local/lib
+              --prefix=/opt/openmpi
+              LDFLAGS=-Wl,-rpath,/opt/openmpi/lib
       working-directory: mpi-build
 
     - name: Build MPI
@@ -46,6 +50,9 @@ jobs:
     - name: Install MPI
       run:  sudo make install
       working-directory: mpi-build
+
+    - name: Add Open MPI to PATH
+      run: echo /opt/openmpi/bin >> $GITHUB_PATH
 
     - name: Tweak MPI
       run:  |
@@ -84,37 +91,48 @@ jobs:
       with:
         repository: "mpi4py/mpi4py"
 
-    - name: Install mpi4py
-      run:  python -m pip install .
+    - name: Build mpi4py wheel
+      run:  python -m pip wheel .
       env:
         CFLAGS: "-O0"
 
-    - name: Test mpi4py (singleton)
-      run:  python test/main.py -v
-      if:   ${{ true }}
-      timeout-minutes: 10
-    - name: Test mpi4py (np=1)
-      run:  mpiexec -n 1 python test/main.py -v
-      if:   ${{ true }}
-      timeout-minutes: 10
-    - name: Test mpi4py (np=2)
-      run:  mpiexec -n 2 python test/main.py -v -f
-      if:   ${{ true }}
-      timeout-minutes: 10
-    - name: Test mpi4py (np=3)
-      run:  mpiexec -n 3 python test/main.py -v -f
-      if:   ${{ true }}
-      timeout-minutes: 10
-    - name: Test mpi4py (np=4)
-      run:  mpiexec -n 4 python test/main.py -v -f
-      if:   ${{ true }}
-      timeout-minutes: 10
-    - name: Test mpi4py (np=5)
-      run:  mpiexec -n 5 python test/main.py -v -f
-      if:   ${{ true }}
-      timeout-minutes: 10
+    - name: Save the artifacts for other jobs
+      uses: actions/upload-artifact@v4
+      with:
+        path: |
+          /opt/openmpi
+          ~/.openmpi
+          ~/.prte
+          test
+          demo
+          mpi4py-*.whl
+        retention-days: 2
+        name: build-artifacts
 
-    - name: Test mpi4py.run
-      run:  python demo/test-run/test_run.py -v
-      if:   ${{ true }}
-      timeout-minutes: 10
+  #==============================================
+
+  run_defaults:
+    # This whole set of tests run with mpi4py's defaults.  As of March
+    # 2024, this means disabling the spawn and dynamic tests.  We want
+    # this job of tests to pass.
+    needs: [ build ]
+    uses: ./.github/workflows/ompi_mpi4py_tests.yaml
+    with:
+      # This parameter is required, so send a meaningless
+      # environment variable name that will not affect the tests at
+      # all (i.e., the tests will be run with default values).
+      env_name: MAKE_TODAY_AN_OMPI_DAY
+
+  #==============================================
+
+  run_spawn:
+    # This whole set of tests runs explicitly with setting "enable the
+    # spawn tests".  As of March 2024, we know that Open MPI is
+    # failing these tests.
+    needs: [ build ]
+    # Only run if the label "mpi4py" is set on this PR.
+    if: ${{ contains(github.event.pull_request.labels.*.name, 'mpi4py-all') }}
+    uses: ./.github/workflows/ompi_mpi4py_tests.yaml
+    with:
+      # Enable the spawn tests
+      env_name: MPI4PY_TEST_SPAWN
