@@ -61,7 +61,7 @@ int MPI_Comm_get_info(MPI_Comm comm, MPI_Info *info_used)
 
     opal_info_t *opal_info_used = &(*info_used)->super;
 
-    opal_info_dup(comm->super.s_info, &opal_info_used);
+    opal_info_dup_public(comm->super.s_info, &opal_info_used);
 
     return MPI_SUCCESS;
 }

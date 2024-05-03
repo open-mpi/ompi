@@ -67,6 +67,7 @@ struct opal_info_entry_t {
     opal_cstring_t *ie_key;   /**< "key" part of the (key, value) pair */
     uint32_t ie_referenced;   /**< number of times this entry was internally
                                    referenced */
+    bool ie_internal;         /**< internal keys are not handed back to the user */
 };
 
 /**
@@ -90,7 +91,23 @@ OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_info_t);
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_info_entry_t);
 
 /**
- *   opal_info_dup - Duplicate an 'MPI_Info' object
+ *   opal_info_dup - Duplicate public keys of an 'MPI_Info' object
+ *
+ *   @param info source info object (handle)
+ *   @param newinfo pointer to the new info object (handle)
+ *
+ *   @retval OPAL_SUCCESS upon success
+ *   @retval OPAL_ERR_OUT_OF_RESOURCE if out of memory
+ *
+ *   Not only will the (key, value) pairs be duplicated, the order
+ *   of keys will be the same in 'newinfo' as it is in 'info'.  When
+ *   an info object is no longer being used, it should be freed with
+ *   \c opal_info_free.
+ */
+int opal_info_dup_public(opal_info_t *info, opal_info_t **newinfo);
+
+/**
+ *   opal_info_dup - Duplicate all entries of an 'MPI_Info' object
  *
  *   @param info source info object (handle)
  *   @param newinfo pointer to the new info object (handle)
@@ -116,6 +133,18 @@ int opal_info_dup(opal_info_t *info, opal_info_t **newinfo);
  * @retval OPAL_ERR_OUT_OF_RESOURCE if out of memory
  */
 OPAL_DECLSPEC int opal_info_set(opal_info_t *info, const char *key, const char *value);
+
+/**
+ * Set a new key,value pair on info and mark it as internal.
+ *
+ * @param info pointer to opal_info_t object
+ * @param key pointer to the new key object
+ * @param value pointer to the new value object
+ *
+ * @retval OPAL_SUCCESS upon success
+ * @retval OPAL_ERR_OUT_OF_RESOURCE if out of memory
+ */
+OPAL_DECLSPEC int opal_info_set_internal(opal_info_t *info, const char *key, const char *value);
 
 /**
  * Set a new key,value pair on info.
@@ -286,43 +315,6 @@ static inline int opal_info_get_nkeys(opal_info_t *info, int *nkeys)
     *nkeys = (int) opal_list_get_size(&(info->super));
     return OPAL_SUCCESS;
 }
-
-
-/**
- * Mark the entry \c key as referenced.
- *
- * This function is useful for lazily initialized components
- * that do not read the key immediately but want to make sure
- * the key is kept by the object owning the info key.
- *
- * @param info Pointer to opal_info_t object.
- * @param key The key which to mark as referenced.
- *
- * @retval OPAL_SUCCESS
- */
-int opal_info_mark_referenced(opal_info_t *info, const char *key);
-
-/**
- * Remove a reference from the entry \c key.
- *
- * This function should be used by components reading the key
- * without wanting to retain it in the object owning the info.
- *
- * @param info Pointer to opal_info_t object.
- * @param key The key which to unmark as referenced.
- *
- * @retval OPAL_SUCCESS
- */
-int opal_info_unmark_referenced(opal_info_t *info, const char *key);
-
-/**
- * Remove any entries that are not marked as referenced
- *
- * @param info Pointer to opal_info_t object.
- *
- * @retval OPAL_SUCCESS
- */
-int opal_info_remove_unreferenced(opal_info_t *info);
 
 END_C_DECLS
 
