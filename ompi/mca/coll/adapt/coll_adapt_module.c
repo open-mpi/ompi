@@ -5,6 +5,7 @@
  * Copyright (c) 2021      Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2022      IBM Corporation. All rights reserved
+ * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -83,25 +84,41 @@ OBJ_CLASS_INSTANCE(mca_coll_adapt_module_t,
             adapt_module_construct,
             adapt_module_destruct);
 
-/*
- * In this macro, the following variables are supposed to have been declared
- * in the caller:
- * . ompi_communicator_t *comm
- * . mca_coll_adapt_module_t *adapt_module
- */
-#define ADAPT_SAVE_PREV_COLL_API(__api)                                 \
-    do {                                                                \
-        adapt_module->previous_ ## __api            = comm->c_coll->coll_ ## __api; \
-        adapt_module->previous_ ## __api ## _module = comm->c_coll->coll_ ## __api ## _module; \
-        if (!comm->c_coll->coll_ ## __api || !comm->c_coll->coll_ ## __api ## _module) { \
-            opal_output_verbose(1, ompi_coll_base_framework.framework_output, \
-                                "(%s/%s): no underlying " # __api"; disqualifying myself", \
-                                ompi_comm_print_cid(comm), comm->c_name); \
-            return OMPI_ERROR;                                  \
-        }                                                       \
-        OBJ_RETAIN(adapt_module->previous_ ## __api ## _module);  \
-    } while(0)
-
+#define ADAPT_INSTALL_COLL_API(__comm, __module, __api)                                                   \
+    do                                                                                                    \
+    {                                                                                                     \
+        if (__module->super.coll_##__api)                                                                 \
+        {                                                                                                 \
+            MCA_COLL_INSTALL_API(__comm, __api, __module->super.coll_##__api, &__module->super, "adapt"); \
+        }                                                                                                 \
+    } while (0)
+#define ADAPT_UNINSTALL_COLL_API(__comm, __module, __api)                                 \
+    do                                                                                    \
+    {                                                                                     \
+        if (__comm->c_coll->coll_##__api##_module == &__module->super)                    \
+        {                                                                                 \
+            MCA_COLL_INSTALL_API(__comm, __api, NULL, NULL, "adapt");                     \
+        }                                                                                 \
+    } while (0)
+#define ADAPT_INSTALL_AND_SAVE_COLL_API(__comm, __module, __api)                                                         \
+    do                                                                                                                   \
+    {                                                                                                                    \
+        if (__comm->c_coll->coll_##__api && __comm->c_coll->coll_##__api##_module)                                       \
+        {                                                                                                                \
+            MCA_COLL_SAVE_API(__comm, __api, __module->previous_##__api, __module->previous_##__api##_module, "adapt");  \
+            MCA_COLL_INSTALL_API(__comm, __api, __module->super.coll_##__api, &__module->super, "adapt");                \
+        }                                                                                                                \
+    } while (0)
+#define ADAPT_UNINSTALL_AND_RESTORE_COLL_API(__comm, __module, __api)                                                      \
+    do                                                                                                                     \
+    {                                                                                                                      \
+        if (__comm->c_coll->coll_##__api##_module == &__module->super)                                                     \
+        {                                                                                                                  \
+            MCA_COLL_INSTALL_API(__comm, __api, __module->previous_##__api, __module->previous_##__api##_module, "adapt"); \
+            __module->previous_##__api = NULL;                                                                             \
+            __module->previous_##__api##_module = NULL;                                                                    \
+        }                                                                                                                  \
+    } while (0)
 
 /*
  * Init module on the communicator
@@ -111,12 +128,25 @@ static int adapt_module_enable(mca_coll_base_module_t * module,
 {
     mca_coll_adapt_module_t * adapt_module = (mca_coll_adapt_module_t*) module;
 
-    ADAPT_SAVE_PREV_COLL_API(reduce);
-    ADAPT_SAVE_PREV_COLL_API(ireduce);
+    ADAPT_INSTALL_AND_SAVE_COLL_API(comm, adapt_module, reduce);
+    ADAPT_INSTALL_COLL_API(comm, adapt_module, bcast);
+    ADAPT_INSTALL_AND_SAVE_COLL_API(comm, adapt_module, ireduce);
+    ADAPT_INSTALL_COLL_API(comm, adapt_module, ibcast);
 
     return OMPI_SUCCESS;
 }
+static int adapt_module_disable(mca_coll_base_module_t *module,
+                                struct ompi_communicator_t *comm)
+{
+    mca_coll_adapt_module_t *adapt_module = (mca_coll_adapt_module_t *)module;
 
+    ADAPT_UNINSTALL_AND_RESTORE_COLL_API(comm, adapt_module, reduce);
+    ADAPT_UNINSTALL_COLL_API(comm, adapt_module, bcast);
+    ADAPT_UNINSTALL_AND_RESTORE_COLL_API(comm, adapt_module, ireduce);
+    ADAPT_UNINSTALL_COLL_API(comm, adapt_module, ibcast);
+
+    return OMPI_SUCCESS;
+}
 /*
  * Initial query function that is invoked during MPI_INIT, allowing
  * this component to disqualify itself if it doesn't support the
@@ -165,24 +195,11 @@ mca_coll_base_module_t *ompi_coll_adapt_comm_query(struct ompi_communicator_t * 
 
     /* All is good -- return a module */
     adapt_module->super.coll_module_enable = adapt_module_enable;
-    adapt_module->super.coll_allgather = NULL;
-    adapt_module->super.coll_allgatherv = NULL;
-    adapt_module->super.coll_allreduce = NULL;
-    adapt_module->super.coll_alltoall = NULL;
-    adapt_module->super.coll_alltoallw = NULL;
-    adapt_module->super.coll_barrier = NULL;
+    adapt_module->super.coll_module_disable = adapt_module_disable;
     adapt_module->super.coll_bcast = ompi_coll_adapt_bcast;
-    adapt_module->super.coll_exscan = NULL;
-    adapt_module->super.coll_gather = NULL;
-    adapt_module->super.coll_gatherv = NULL;
     adapt_module->super.coll_reduce = ompi_coll_adapt_reduce;
-    adapt_module->super.coll_reduce_scatter = NULL;
-    adapt_module->super.coll_scan = NULL;
-    adapt_module->super.coll_scatter = NULL;
-    adapt_module->super.coll_scatterv = NULL;
     adapt_module->super.coll_ibcast = ompi_coll_adapt_ibcast;
     adapt_module->super.coll_ireduce = ompi_coll_adapt_ireduce;
-    adapt_module->super.coll_iallreduce = NULL;
 
     opal_output_verbose(10, ompi_coll_base_framework.framework_output,
                         "coll:adapt:comm_query (%s/%s): pick me! pick me!",

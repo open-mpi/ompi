@@ -41,8 +41,7 @@ can be used with ``configure``:
   compiler/linker search paths.
 
   Libfabric is the support library for OpenFabrics Interfaces-based
-  network adapters, such as Cisco usNIC, Intel True Scale PSM, Cray
-  uGNI, etc.
+  network adapters, such as Cisco usNIC, Intel True Scale PSM, etc.
 
 * ``--with-libfabric-libdir=DIR``:
   Look in directory for the libfabric libraries.  By default, Open MPI

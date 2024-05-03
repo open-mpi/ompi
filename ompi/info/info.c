@@ -243,7 +243,7 @@ int ompi_mpiinfo_init_env(int argc, char *argv[], ompi_info_t *info)
 // related calls:
 
 int ompi_info_dup (ompi_info_t *info, ompi_info_t **newinfo) {
-    return opal_info_dup (&(info->super), (opal_info_t **)newinfo);
+    return opal_info_dup_public (&(info->super), (opal_info_t **)newinfo);
 }
 int ompi_info_set (ompi_info_t *info, const char *key, const char *value) {
     return opal_info_set (&(info->super), key, value);

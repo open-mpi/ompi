@@ -808,9 +808,10 @@ int ompi_coll_tuned_reduce_intra_dec_fixed( const void *sendbuf, void *recvbuf,
         }
     }
 
+    int faninout = 2;
     return  ompi_coll_tuned_reduce_intra_do_this (sendbuf, recvbuf, count, datatype,
                                                   op, root, comm, module,
-                                                  alg, 0, 0, 0);
+                                                  alg, faninout, 0, 0);
 }
 
 /*
@@ -1222,9 +1223,10 @@ int ompi_coll_tuned_allgather_intra_dec_fixed(const void *sbuf, int scount,
     OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_allgather_intra_dec_fixed"
                  " rank %d com_size %d", ompi_comm_rank(comm), communicator_size));
 
+    int faninout = 2;
     return ompi_coll_tuned_allgather_intra_do_this(sbuf, scount, sdtype,
                                                    rbuf, rcount, rdtype,
-                                                   comm, module, alg, 0, 0);
+                                                   comm, module, alg, faninout, 0);
 }
 
 /*

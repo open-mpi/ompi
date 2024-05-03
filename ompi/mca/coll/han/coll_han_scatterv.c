@@ -7,6 +7,7 @@
  * Copyright (c) 2022      IBM Corporation. All rights reserved
  * Copyright (c)           Amazon.com, Inc. or its affiliates.
  *                         All rights reserved.
+ * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -81,7 +82,7 @@ int mca_coll_han_scatterv_intra(const void *sbuf, const int *scounts, const int 
             30, mca_coll_han_component.han_output,
             "han cannot handle scatterv with this communicator. Fall back on another component\n"));
         /* HAN cannot work with this communicator so fallback on all collectives */
-        HAN_LOAD_FALLBACK_COLLECTIVES(han_module, comm);
+        HAN_LOAD_FALLBACK_COLLECTIVES(comm, han_module);
         return han_module->previous_scatterv(sbuf, scounts, displs, sdtype, rbuf, rcount, rdtype,
                                              root, comm, han_module->previous_scatterv_module);
     }
@@ -96,7 +97,7 @@ int mca_coll_han_scatterv_intra(const void *sbuf, const int *scounts, const int 
         /* Put back the fallback collective support and call it once. All
          * future calls will then be automatically redirected.
          */
-        HAN_LOAD_FALLBACK_COLLECTIVE(han_module, comm, scatterv);
+        HAN_UNINSTALL_COLL_API(comm, han_module, scatterv);
         return han_module->previous_scatterv(sbuf, scounts, displs, sdtype, rbuf, rcount, rdtype,
                                              root, comm, han_module->previous_scatterv_module);
     }
@@ -104,7 +105,7 @@ int mca_coll_han_scatterv_intra(const void *sbuf, const int *scounts, const int 
         OPAL_OUTPUT_VERBOSE((30, mca_coll_han_component.han_output,
                              "han cannot handle scatterv with this communicator (heterogeneous). Fall "
                              "back on another component\n"));
-        HAN_LOAD_FALLBACK_COLLECTIVE(han_module, comm, scatterv);
+        HAN_UNINSTALL_COLL_API(comm, han_module, scatterv);
         return han_module->previous_scatterv(sbuf, scounts, displs, sdtype, rbuf, rcount, rdtype,
                                              root, comm, han_module->previous_scatterv_module);
     }

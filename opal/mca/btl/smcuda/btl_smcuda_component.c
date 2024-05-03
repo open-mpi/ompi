@@ -198,8 +198,7 @@ static int smcuda_register(void)
 
     /* Lower priority when CUDA support is not requested */
     if (0 != strcmp(opal_accelerator_base_selected_component.base_version.mca_component_name, "null")) {
-
-        mca_btl_smcuda.super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_HIGH + 1;
+        mca_btl_smcuda.super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_DEFAULT;
     } else {
         mca_btl_smcuda.super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_LOW;
     }

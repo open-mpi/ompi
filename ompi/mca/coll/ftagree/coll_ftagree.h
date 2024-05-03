@@ -3,6 +3,7 @@
  * Copyright (c) 2012-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -97,9 +98,6 @@ int mca_coll_ftagree_init_query(bool enable_progress_threads,
 mca_coll_base_module_t
 *mca_coll_ftagree_comm_query(struct ompi_communicator_t *comm,
                              int *priority);
-
-int mca_coll_ftagree_module_enable(mca_coll_base_module_t *module,
-                                   struct ompi_communicator_t *comm);
 
 /*
  * Agreement algorithms

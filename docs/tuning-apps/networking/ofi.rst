@@ -16,7 +16,6 @@ including (but not limited to):
 
 * AWS EFA
 * Cisco usNIC
-* Cray uGNI
 * Cornelius Networks Omni-Path
 * HPE Slingshot 11
 

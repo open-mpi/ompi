@@ -1,0 +1,24 @@
+#
+# Copyright (c) 2021-2023 Computer Architecture and VLSI Systems (CARV)
+#                         Laboratory, ICS Forth. All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+
+[bad-hierarchy-item]
+WARNING (coll/xhc)
+Unrecognized locality definition '%s' in hierarchy parameter string '%s'
+The component won't load
+#
+[bad-chunk-size-item]
+WARNING (coll/xhc)
+Malformed item '%s' in chunk size parameter string '%s'
+The component won't load
+#
+[xhc-init-failed]
+WARNING (coll/xhc)
+Component initialization failed with error code %d
+Errno: %d (%s)

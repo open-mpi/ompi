@@ -12,6 +12,7 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2022      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -101,9 +102,9 @@ mca_coll_basic_reduce_log_intra(const void *sbuf, void *rbuf, int count,
     char *rcv_buffer = (char*)rbuf;
     char *inplace_temp = NULL;
 
-    /* JMS Codearound for now -- if the operations is not communative,
+    /* JMS Code around for now -- if the operations is not commutative,
      * just call the linear algorithm.  Need to talk to Edgar / George
-     * about fixing this algorithm here to work with non-communative
+     * about fixing this algorithm here to work with non-commutative
      * operations. */
 
     if (!ompi_op_is_commute(op)) {
@@ -352,22 +353,4 @@ mca_coll_basic_reduce_lin_inter(const void *sbuf, void *rbuf, int count,
 
     /* All done */
     return err;
-}
-
-
-/*
- *	reduce_log_inter
- *
- *	Function:	- reduction using O(N) algorithm
- *	Accepts:	- same as MPI_Reduce()
- *	Returns:	- MPI_SUCCESS or error code
- */
-int
-mca_coll_basic_reduce_log_inter(const void *sbuf, void *rbuf, int count,
-                                struct ompi_datatype_t *dtype,
-                                struct ompi_op_t *op,
-                                int root, struct ompi_communicator_t *comm,
-                                mca_coll_base_module_t *module)
-{
-    return OMPI_ERR_NOT_IMPLEMENTED;
 }

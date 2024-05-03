@@ -4,6 +4,8 @@
  *                         reserved.
  * Copyright (c) 2022      IBM Corporation. All rights reserved
  * Copyright (c) 2020-2022 Bull S.A.S. All rights reserved.
+ * Copyright (c) 2023      Computer Architecture and VLSI Systems (CARV)
+ *                         Laboratory, ICS Forth. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -37,13 +39,14 @@ const char *mca_coll_han_component_version_string =
     "Open MPI HAN collective MCA component version " OMPI_VERSION;
 
 ompi_coll_han_components ompi_coll_han_available_components[COMPONENTS_COUNT] = {
-    { SELF, "self",  NULL },
-    { BASIC, "basic", NULL },
-    { LIBNBC, "libnbc", NULL },
-    { TUNED, "tuned", NULL },
-    { SM, "sm", NULL },
-    { ADAPT, "adapt", NULL },
-    { HAN, "han", NULL }
+    { SELF, "self" },
+    { BASIC, "basic" },
+    { LIBNBC, "libnbc" },
+    { TUNED, "tuned" },
+    { SM, "sm" },  /* this should not be used, the collective component is gone */
+    { ADAPT, "adapt" },
+    { HAN, "han" },
+    { XHC, "xhc" }
 };
 
 /*
@@ -287,7 +290,7 @@ static int han_register(void)
 
     cs->han_bcast_low_module = 0;
     (void) mca_coll_han_query_module_from_mca(c, "bcast_low_module",
-                                              "low level module for bcast, 0 tuned, 1 sm",
+                                              "low level module for bcast, 0 tuned, 2 xhc",
                                               OPAL_INFO_LVL_9,
                                               &cs->han_bcast_low_module,
                                               &cs->han_op_module_name.bcast.han_op_low_module_name);
@@ -307,7 +310,7 @@ static int han_register(void)
 
     cs->han_reduce_low_module = 0;
     (void) mca_coll_han_query_module_from_mca(c, "reduce_low_module",
-                                              "low level module for allreduce, 0 tuned, 1 sm",
+                                              "low level module for allreduce, 0 tuned, 2 xhc",
                                               OPAL_INFO_LVL_9, &cs->han_reduce_low_module,
                                               &cs->han_op_module_name.reduce.han_op_low_module_name);
 
@@ -326,7 +329,7 @@ static int han_register(void)
 
     cs->han_allreduce_low_module = 0;
     (void) mca_coll_han_query_module_from_mca(c, "allreduce_low_module",
-                                              "low level module for allreduce, 0 tuned, 1 sm",
+                                              "low level module for allreduce, 0 tuned, 2 xhc",
                                               OPAL_INFO_LVL_9, &cs->han_allreduce_low_module,
                                               &cs->han_op_module_name.allreduce.han_op_low_module_name);
 
@@ -338,7 +341,7 @@ static int han_register(void)
 
     cs->han_allgather_low_module = 0;
     (void) mca_coll_han_query_module_from_mca(c, "allgather_low_module",
-                                              "low level module for allgather, 0 tuned, 1 sm",
+                                              "low level module for allgather, 0 tuned, 2 xhc",
                                               OPAL_INFO_LVL_9, &cs->han_allgather_low_module,
                                               &cs->han_op_module_name.allgather.han_op_low_module_name);
 
@@ -350,7 +353,7 @@ static int han_register(void)
 
     cs->han_gather_low_module = 0;
     (void) mca_coll_han_query_module_from_mca(c, "gather_low_module",
-                                              "low level module for gather, 0 tuned, 1 sm",
+                                              "low level module for gather, 0 tuned, 2 xhc",
                                               OPAL_INFO_LVL_9, &cs->han_gather_low_module,
                                               &cs->han_op_module_name.gather.han_op_low_module_name);
 
@@ -374,7 +377,7 @@ static int han_register(void)
 
     cs->han_scatter_low_module = 0;
     (void) mca_coll_han_query_module_from_mca(c, "scatter_low_module",
-                                              "low level module for scatter, 0 tuned, 1 sm",
+                                              "low level module for scatter, 0 tuned, 2 xhc",
                                               OPAL_INFO_LVL_9, &cs->han_scatter_low_module,
                                               &cs->han_op_module_name.scatter.han_op_low_module_name);
 

@@ -156,7 +156,6 @@ Other MPI features
      #. ``sm``
      #. ``smcuda``
      #. ``tcp``
-     #. ``ugni``
      #. ``usnic``
 
   #. ``ucx``

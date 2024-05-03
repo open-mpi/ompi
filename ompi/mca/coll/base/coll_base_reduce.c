@@ -1142,3 +1142,169 @@ int ompi_coll_base_reduce_intra_redscat_gather(
         free(scount);
     return err;
 }
+
+/*
+ * ompi_coll_base_reduce_intra_knomial
+ *
+ * Function:  reduce using k-nomial tree algorithm
+ * Accepts:   Same arguments as MPI_Reduce, plus radix
+ * Returns:   MPI_SUCCESS or error code
+ * Parameters: radix -- k-nomial tree radix (>= 2)
+ *
+ * Time complexity: (radix - 1)O(\log_{radix}(comm_size))
+ *
+ * Example, comm_size=10
+ *    radix=2         radix=3             radix=4
+ *       0               0                   0
+ *    / / \ \       / /  |  \ \         /   / \ \ \
+ *   8 4   2 1     9 3   6   1 2       4   8  1 2 3
+ *   | |\  |         |\  |\           /|\  |
+ *   9 6 5 3         4 5 7 8         5 6 7 9
+ *     |
+ *     7
+ */
+int ompi_coll_base_reduce_intra_knomial( const void *sendbuf, void *recvbuf,
+                                           int count, ompi_datatype_t* datatype,
+                                           ompi_op_t* op, int root,
+                                           ompi_communicator_t* comm,
+                                           mca_coll_base_module_t *module,
+                                           uint32_t segsize,
+                                           int max_outstanding_reqs, int radix)
+{
+    int err = OMPI_SUCCESS, rank, line;
+    ptrdiff_t extent, lb;
+    size_t dtype_size;
+    char *child_buf = NULL;
+    char *child_buf_start = NULL;
+    char *reduce_buf = NULL;
+    char *reduce_buf_start = NULL;
+    char *sendtmpbuf = NULL;
+    mca_coll_base_module_t *base_module = (mca_coll_base_module_t*) module;
+    mca_coll_base_comm_t *data = base_module->base_data;
+    ompi_coll_tree_t* tree;
+    int num_children;
+    bool is_leaf;
+    ptrdiff_t buf_size, gap = 0;
+    int max_reqs = 0, num_reqs;
+    ompi_request_t **reqs;
+
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output, "coll:base:ompi_coll_base_reduce_intra_knomial msg size %d, max_requests %d",
+                 count, max_outstanding_reqs));
+
+    rank = ompi_comm_rank(comm);
+
+    // create a k-nomial tree with radix 4
+    COLL_BASE_UPDATE_KMTREE(comm, base_module, root, radix);
+    if (NULL == data->cached_kmtree) {
+        // fail to create knomial tree fallback to previous allreduce method
+        OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                     "REDUCE: failed to create knomial tree. \n"));
+        goto err_hndl;
+    }
+
+    tree = data->cached_kmtree;
+    num_children = tree->tree_nextsize;
+    is_leaf = (tree->tree_nextsize == 0) ? true : false;
+
+    ompi_datatype_get_extent(datatype, &lb, &extent);
+    ompi_datatype_type_size(datatype, &dtype_size);
+
+    sendtmpbuf = (char*) sendbuf;
+    if( sendbuf == MPI_IN_PLACE ) {
+        sendtmpbuf = (char *)recvbuf;
+    }
+    buf_size = opal_datatype_span(&datatype->super, (int64_t)count, &gap);
+    reduce_buf = (char *)malloc(buf_size);
+    reduce_buf_start = reduce_buf - gap;
+    err = ompi_datatype_copy_content_same_ddt(datatype, count,
+                                              (char*)reduce_buf_start,
+                                              (char*)sendtmpbuf);
+    if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
+
+    // do transfer in a single transaction instead of segments
+    num_reqs = 0;
+    max_reqs = num_children;
+    if(!is_leaf) {
+        buf_size = opal_datatype_span(&datatype->super, (int64_t)count * num_children, &gap);
+        child_buf = (char *)malloc(buf_size);
+        child_buf_start = child_buf - gap;
+        reqs = ompi_coll_base_comm_get_reqs(data, max_reqs);
+    }
+
+    for (int i = 0; i < num_children; i++) {
+        int child = tree->tree_next[i];
+        err = MCA_PML_CALL(irecv(child_buf_start + (ptrdiff_t)i * count * extent,
+                                 count,
+                                 datatype,
+                                 child,
+                                 MCA_COLL_BASE_TAG_REDUCE,
+                                 comm,
+                                 &reqs[num_reqs++]));
+        if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
+    }
+
+    if (num_reqs > 0) {
+        err = ompi_request_wait_all(num_reqs, reqs, MPI_STATUS_IGNORE);
+        if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
+    }
+
+    for (int i = 0; i < num_children; i++) {
+        ompi_op_reduce(op,
+                       child_buf_start + (ptrdiff_t)i * count * extent,
+                       reduce_buf,
+                       count,
+                       datatype);
+    }
+
+    if (rank != root) {
+        err = MCA_PML_CALL(send(reduce_buf_start,
+                                count,
+                                datatype,
+                                tree->tree_prev,
+                                MCA_COLL_BASE_TAG_REDUCE,
+                                MCA_PML_BASE_SEND_STANDARD,
+                                comm));
+        if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
+    }
+
+    if (rank == root) {
+        err = ompi_datatype_copy_content_same_ddt(datatype, count,
+                                                  (char*)recvbuf,
+                                                  (char*)reduce_buf_start);
+        if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
+    }
+
+    if (NULL != child_buf) free(child_buf);
+    if (NULL != reduce_buf) free(reduce_buf);
+    return MPI_SUCCESS;
+
+ err_hndl:
+    if (NULL != child_buf) {
+        free(child_buf);
+        child_buf = NULL;
+        child_buf_start = NULL;
+    }
+    if (NULL != reduce_buf) {
+        free(reduce_buf);
+        reduce_buf = NULL;
+        reduce_buf_start = NULL;
+    }
+    if( NULL != reqs ) {
+        if (MPI_ERR_IN_STATUS == err) {
+            for( num_reqs = 0; num_reqs < tree->tree_nextsize; num_reqs++ ) {
+                if (MPI_REQUEST_NULL == reqs[num_reqs]) continue;
+                if (MPI_ERR_PENDING == reqs[num_reqs]->req_status.MPI_ERROR) continue;
+                if (reqs[num_reqs]->req_status.MPI_ERROR != MPI_SUCCESS) {
+                    err = reqs[num_reqs]->req_status.MPI_ERROR;
+                    break;
+                }
+            }
+        }
+        ompi_coll_base_free_reqs(reqs, max_reqs);
+    }
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,  "%s:%4d\tError occurred %d, rank %2d",
+                 __FILE__, line, err, rank));
+    (void)line;  // silence compiler warning
+    return err;
+
+}

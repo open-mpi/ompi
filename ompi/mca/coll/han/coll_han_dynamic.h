@@ -5,6 +5,8 @@
  *                         reserved.
  * Copyright (c) 2020      Bull S.A.S. All rights reserved.
  * Copyright (c) 2022      IBM Corporation. All rights reserved
+ * Copyright (c) 2023      Computer Architecture and VLSI Systems (CARV)
+ *                         Laboratory, ICS Forth. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -105,13 +107,13 @@ typedef enum COMPONENTS {
     SM,
     ADAPT,
     HAN,
+    XHC,
     COMPONENTS_COUNT
 } COMPONENT_T;
 
 typedef struct {
     COMPONENT_T id;
     char* component_name;
-    mca_coll_base_component_t* component;
 } ompi_coll_han_components;
 
 extern ompi_coll_han_components ompi_coll_han_available_components[COMPONENTS_COUNT];

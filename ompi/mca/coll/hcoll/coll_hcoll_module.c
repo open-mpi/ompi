@@ -7,6 +7,7 @@
  * Copyright (c) 2018      Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
+ * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -86,8 +87,6 @@ static void mca_coll_hcoll_module_clear(mca_coll_hcoll_module_t *hcoll_module)
     hcoll_module->previous_igatherv_module    = NULL;
     hcoll_module->previous_ialltoall_module   = NULL;
     hcoll_module->previous_ialltoallv_module  = NULL;
-
-
 }
 
 static void mca_coll_hcoll_module_construct(mca_coll_hcoll_module_t *hcoll_module)
@@ -100,8 +99,6 @@ void mca_coll_hcoll_mem_release_cb(void *buf, size_t length,
 {
     hcoll_mem_unmap(buf, length, cbdata, from_alloc);
 }
-
-#define OBJ_RELEASE_IF_NOT_NULL( obj ) if( NULL != (obj) ) OBJ_RELEASE( obj );
 
 static void mca_coll_hcoll_module_destruct(mca_coll_hcoll_module_t *hcoll_module)
 {
@@ -119,37 +116,7 @@ static void mca_coll_hcoll_module_destruct(mca_coll_hcoll_module_t *hcoll_module
        destroy hcoll context*/
 
     if (hcoll_module->hcoll_context != NULL){
-        OBJ_RELEASE_IF_NOT_NULL(hcoll_module->previous_barrier_module);
-        OBJ_RELEASE_IF_NOT_NULL(hcoll_module->previous_bcast_module);
-        OBJ_RELEASE_IF_NOT_NULL(hcoll_module->previous_allreduce_module);
-        OBJ_RELEASE_IF_NOT_NULL(hcoll_module->previous_reduce_scatter_block_module);
-        OBJ_RELEASE_IF_NOT_NULL(hcoll_module->previous_reduce_scatter_module);
-        OBJ_RELEASE_IF_NOT_NULL(hcoll_module->previous_allgather_module);
-        OBJ_RELEASE_IF_NOT_NULL(hcoll_module->previous_allgatherv_module);
-        OBJ_RELEASE_IF_NOT_NULL(hcoll_module->previous_gatherv_module);
-        OBJ_RELEASE_IF_NOT_NULL(hcoll_module->previous_scatterv_module);
-        OBJ_RELEASE_IF_NOT_NULL(hcoll_module->previous_alltoall_module);
-        OBJ_RELEASE_IF_NOT_NULL(hcoll_module->previous_alltoallv_module);
-        OBJ_RELEASE_IF_NOT_NULL(hcoll_module->previous_reduce_module);
 
-        OBJ_RELEASE_IF_NOT_NULL(hcoll_module->previous_ibarrier_module);
-        OBJ_RELEASE_IF_NOT_NULL(hcoll_module->previous_ibcast_module);
-        OBJ_RELEASE_IF_NOT_NULL(hcoll_module->previous_iallreduce_module);
-        OBJ_RELEASE_IF_NOT_NULL(hcoll_module->previous_iallgather_module);
-        OBJ_RELEASE_IF_NOT_NULL(hcoll_module->previous_iallgatherv_module);
-        OBJ_RELEASE_IF_NOT_NULL(hcoll_module->previous_igatherv_module);
-        OBJ_RELEASE_IF_NOT_NULL(hcoll_module->previous_ialltoall_module);
-        OBJ_RELEASE_IF_NOT_NULL(hcoll_module->previous_ialltoallv_module);
-        OBJ_RELEASE_IF_NOT_NULL(hcoll_module->previous_ireduce_module);
-
-        /*
-        OBJ_RELEASE(hcoll_module->previous_allgatherv_module);
-        OBJ_RELEASE(hcoll_module->previous_gather_module);
-        OBJ_RELEASE(hcoll_module->previous_gatherv_module);
-        OBJ_RELEASE(hcoll_module->previous_alltoallw_module);
-        OBJ_RELEASE(hcoll_module->previous_reduce_scatter_module);
-        OBJ_RELEASE(hcoll_module->previous_reduce_module);
-        */
 #if !defined(HAVE_HCOLL_CONTEXT_FREE)
         context_destroyed = 0;
         hcoll_destroy_context(hcoll_module->hcoll_context,
@@ -160,52 +127,105 @@ static void mca_coll_hcoll_module_destruct(mca_coll_hcoll_module_t *hcoll_module
     mca_coll_hcoll_module_clear(hcoll_module);
 }
 
-#define HCOL_SAVE_PREV_COLL_API(__api) do {\
-    hcoll_module->previous_ ## __api            = comm->c_coll->coll_ ## __api;\
-    hcoll_module->previous_ ## __api ## _module = comm->c_coll->coll_ ## __api ## _module;\
-    if (!comm->c_coll->coll_ ## __api || !comm->c_coll->coll_ ## __api ## _module) {\
-        return OMPI_ERROR;\
-    }\
-    OBJ_RETAIN(hcoll_module->previous_ ## __api ## _module);\
-} while(0)
+#define HCOL_INSTALL_COLL_API(__comm, __module, __api)                                                                              \
+    do                                                                                                                              \
+    {                                                                                                                               \
+        if (NULL != __module->super.coll_##__api)                                                                                   \
+        {                                                                                                                           \
+            if (comm->c_coll->coll_##__api && !comm->c_coll->coll_##__api##_module)                                                 \
+            {                                                                                                                       \
+                /* save the current selected collective */                                                                          \
+                MCA_COLL_SAVE_API(__comm, __api, hcoll_module->previous_##__api, hcoll_module->previous_##__api##_module, "hcoll"); \
+                /* install our own */                                                                                               \
+                MCA_COLL_INSTALL_API(__comm, __api, __module->super.coll_##__api, &__module->super, "hcoll");                       \
+            }                                                                                                                       \
+        }                                                                                                                           \
+    } while (0)
 
+#define HCOL_UNINSTALL_COLL_API(__comm, __module, __api)                                                                   \
+    do                                                                                                                     \
+    {                                                                                                                      \
+        if (&__module->super == comm->c_coll->coll_##__api##_module)                                                       \
+        {                                                                                                                  \
+            MCA_COLL_INSTALL_API(__comm, __api, __module->previous_##__api, __module->previous_##__api##_module, "hcoll"); \
+            hcoll_module->previous_##__api = NULL;                                                                         \
+            hcoll_module->previous_##__api##_module = NULL;                                                                \
+        }                                                                                                                  \
+    } while (0)
 
 static int mca_coll_hcoll_save_coll_handlers(mca_coll_hcoll_module_t *hcoll_module)
 {
     ompi_communicator_t *comm;
     comm = hcoll_module->comm;
 
-    HCOL_SAVE_PREV_COLL_API(barrier);
-    HCOL_SAVE_PREV_COLL_API(bcast);
-    HCOL_SAVE_PREV_COLL_API(allreduce);
-    HCOL_SAVE_PREV_COLL_API(reduce_scatter_block);
-    HCOL_SAVE_PREV_COLL_API(reduce_scatter);
-    HCOL_SAVE_PREV_COLL_API(reduce);
-    HCOL_SAVE_PREV_COLL_API(allgather);
-    HCOL_SAVE_PREV_COLL_API(allgatherv);
-    HCOL_SAVE_PREV_COLL_API(gatherv);
-    HCOL_SAVE_PREV_COLL_API(scatterv);
-    HCOL_SAVE_PREV_COLL_API(alltoall);
-    HCOL_SAVE_PREV_COLL_API(alltoallv);
+    hcoll_module->super.coll_barrier = hcoll_collectives.coll_barrier ? mca_coll_hcoll_barrier : NULL;
+    hcoll_module->super.coll_bcast = hcoll_collectives.coll_bcast ? mca_coll_hcoll_bcast : NULL;
+    hcoll_module->super.coll_allgather = hcoll_collectives.coll_allgather ? mca_coll_hcoll_allgather : NULL;
+    hcoll_module->super.coll_allgatherv = hcoll_collectives.coll_allgatherv ? mca_coll_hcoll_allgatherv : NULL;
+    hcoll_module->super.coll_allreduce = hcoll_collectives.coll_allreduce ? mca_coll_hcoll_allreduce : NULL;
+    hcoll_module->super.coll_alltoall = hcoll_collectives.coll_alltoall ? mca_coll_hcoll_alltoall : NULL;
+    hcoll_module->super.coll_alltoallv = hcoll_collectives.coll_alltoallv ? mca_coll_hcoll_alltoallv : NULL;
+    hcoll_module->super.coll_gatherv = hcoll_collectives.coll_gatherv ? mca_coll_hcoll_gatherv : NULL;
+    hcoll_module->super.coll_scatterv = hcoll_collectives.coll_scatterv ? mca_coll_hcoll_scatterv : NULL;
+    hcoll_module->super.coll_reduce = hcoll_collectives.coll_reduce ? mca_coll_hcoll_reduce : NULL;
+    hcoll_module->super.coll_ibarrier = hcoll_collectives.coll_ibarrier ? mca_coll_hcoll_ibarrier : NULL;
+    hcoll_module->super.coll_ibcast = hcoll_collectives.coll_ibcast ? mca_coll_hcoll_ibcast : NULL;
+    hcoll_module->super.coll_iallgather = hcoll_collectives.coll_iallgather ? mca_coll_hcoll_iallgather : NULL;
+#if HCOLL_API >= HCOLL_VERSION(3, 5)
+    hcoll_module->super.coll_iallgatherv = hcoll_collectives.coll_iallgatherv ? mca_coll_hcoll_iallgatherv : NULL;
+#else
+    hcoll_module->super.coll_iallgatherv = NULL;
+#endif
+    hcoll_module->super.coll_iallreduce = hcoll_collectives.coll_iallreduce ? mca_coll_hcoll_iallreduce : NULL;
+#if HCOLL_API >= HCOLL_VERSION(3, 5)
+    hcoll_module->super.coll_ireduce = hcoll_collectives.coll_ireduce ? mca_coll_hcoll_ireduce : NULL;
+#else
+    hcoll_module->super.coll_ireduce = NULL;
+#endif
+    hcoll_module->super.coll_gather = /*hcoll_collectives.coll_gather ? mca_coll_hcoll_gather :*/ NULL;
+    hcoll_module->super.coll_igatherv = hcoll_collectives.coll_igatherv ? mca_coll_hcoll_igatherv : NULL;
+    hcoll_module->super.coll_ialltoall = /*hcoll_collectives.coll_ialltoall ? mca_coll_hcoll_ialltoall : */ NULL;
+#if HCOLL_API >= HCOLL_VERSION(3, 7)
+    hcoll_module->super.coll_ialltoallv = hcoll_collectives.coll_ialltoallv ? mca_coll_hcoll_ialltoallv : NULL;
+#else
+    hcoll_module->super.coll_ialltoallv = NULL;
+#endif
+#if HCOLL_API > HCOLL_VERSION(4, 5)
+    hcoll_module->super.coll_reduce_scatter_block = hcoll_collectives.coll_reduce_scatter_block ? mca_coll_hcoll_reduce_scatter_block : NULL;
+    hcoll_module->super.coll_reduce_scatter = hcoll_collectives.coll_reduce_scatter ? mca_coll_hcoll_reduce_scatter : NULL;
+#endif
 
-    HCOL_SAVE_PREV_COLL_API(ibarrier);
-    HCOL_SAVE_PREV_COLL_API(ibcast);
-    HCOL_SAVE_PREV_COLL_API(iallreduce);
-    HCOL_SAVE_PREV_COLL_API(ireduce);
-    HCOL_SAVE_PREV_COLL_API(iallgather);
-    HCOL_SAVE_PREV_COLL_API(iallgatherv);
-    HCOL_SAVE_PREV_COLL_API(igatherv);
-    HCOL_SAVE_PREV_COLL_API(ialltoall);
-    HCOL_SAVE_PREV_COLL_API(ialltoallv);
+    HCOL_INSTALL_COLL_API(comm, hcoll_module, barrier);
+    HCOL_INSTALL_COLL_API(comm, hcoll_module, bcast);
+    HCOL_INSTALL_COLL_API(comm, hcoll_module, allreduce);
+    HCOL_INSTALL_COLL_API(comm, hcoll_module, reduce_scatter_block);
+    HCOL_INSTALL_COLL_API(comm, hcoll_module, reduce_scatter);
+    HCOL_INSTALL_COLL_API(comm, hcoll_module, reduce);
+    HCOL_INSTALL_COLL_API(comm, hcoll_module, allgather);
+    HCOL_INSTALL_COLL_API(comm, hcoll_module, allgatherv);
+    HCOL_INSTALL_COLL_API(comm, hcoll_module, gatherv);
+    HCOL_INSTALL_COLL_API(comm, hcoll_module, scatterv);
+    HCOL_INSTALL_COLL_API(comm, hcoll_module, alltoall);
+    HCOL_INSTALL_COLL_API(comm, hcoll_module, alltoallv);
+
+    HCOL_INSTALL_COLL_API(comm, hcoll_module, ibarrier);
+    HCOL_INSTALL_COLL_API(comm, hcoll_module, ibcast);
+    HCOL_INSTALL_COLL_API(comm, hcoll_module, iallreduce);
+    HCOL_INSTALL_COLL_API(comm, hcoll_module, ireduce);
+    HCOL_INSTALL_COLL_API(comm, hcoll_module, iallgather);
+    HCOL_INSTALL_COLL_API(comm, hcoll_module, iallgatherv);
+    HCOL_INSTALL_COLL_API(comm, hcoll_module, igatherv);
+    HCOL_INSTALL_COLL_API(comm, hcoll_module, ialltoall);
+    HCOL_INSTALL_COLL_API(comm, hcoll_module, ialltoallv);
 
     /*
       These collectives are not yet part of hcoll, so
       don't retain them on hcoll module
-    HCOL_SAVE_PREV_COLL_API(reduce_scatter);
-    HCOL_SAVE_PREV_COLL_API(gather);
-    HCOL_SAVE_PREV_COLL_API(reduce);
-    HCOL_SAVE_PREV_COLL_API(allgatherv);
-    HCOL_SAVE_PREV_COLL_API(alltoallw);
+    HCOL_INSTALL_COLL_API(comm, hcoll_module, reduce_scatter);
+    HCOL_INSTALL_COLL_API(comm, hcoll_module, gather);
+    HCOL_INSTALL_COLL_API(comm, hcoll_module, reduce);
+    HCOL_INSTALL_COLL_API(comm, hcoll_module, allgatherv);
+    HCOL_INSTALL_COLL_API(comm, hcoll_module, alltoallw);
     */
     return OMPI_SUCCESS;
 }
@@ -251,6 +271,45 @@ static int mca_coll_hcoll_module_enable(mca_coll_base_module_t *module,
     return OMPI_SUCCESS;
 }
 
+static int mca_coll_hcoll_module_disable(mca_coll_base_module_t *module,
+                                         struct ompi_communicator_t *comm)
+{
+    mca_coll_hcoll_module_t *hcoll_module = (mca_coll_hcoll_module_t *)module;
+
+    HCOL_UNINSTALL_COLL_API(comm, hcoll_module, barrier);
+    HCOL_UNINSTALL_COLL_API(comm, hcoll_module, bcast);
+    HCOL_UNINSTALL_COLL_API(comm, hcoll_module, allreduce);
+    HCOL_UNINSTALL_COLL_API(comm, hcoll_module, reduce_scatter_block);
+    HCOL_UNINSTALL_COLL_API(comm, hcoll_module, reduce_scatter);
+    HCOL_UNINSTALL_COLL_API(comm, hcoll_module, reduce);
+    HCOL_UNINSTALL_COLL_API(comm, hcoll_module, allgather);
+    HCOL_UNINSTALL_COLL_API(comm, hcoll_module, allgatherv);
+    HCOL_UNINSTALL_COLL_API(comm, hcoll_module, gatherv);
+    HCOL_UNINSTALL_COLL_API(comm, hcoll_module, scatterv);
+    HCOL_UNINSTALL_COLL_API(comm, hcoll_module, alltoall);
+    HCOL_UNINSTALL_COLL_API(comm, hcoll_module, alltoallv);
+
+    HCOL_UNINSTALL_COLL_API(comm, hcoll_module, ibarrier);
+    HCOL_UNINSTALL_COLL_API(comm, hcoll_module, ibcast);
+    HCOL_UNINSTALL_COLL_API(comm, hcoll_module, iallreduce);
+    HCOL_UNINSTALL_COLL_API(comm, hcoll_module, ireduce);
+    HCOL_UNINSTALL_COLL_API(comm, hcoll_module, iallgather);
+    HCOL_UNINSTALL_COLL_API(comm, hcoll_module, iallgatherv);
+    HCOL_UNINSTALL_COLL_API(comm, hcoll_module, igatherv);
+    HCOL_UNINSTALL_COLL_API(comm, hcoll_module, ialltoall);
+    HCOL_UNINSTALL_COLL_API(comm, hcoll_module, ialltoallv);
+
+    /*
+      These collectives are not yet part of hcoll, so
+      don't retain them on hcoll module
+    HCOL_UNINSTALL_COLL_API(comm, hcoll_module, reduce_scatter);
+    HCOL_UNINSTALL_COLL_API(comm, hcoll_module, gather);
+    HCOL_UNINSTALL_COLL_API(comm, hcoll_module, reduce);
+    HCOL_UNINSTALL_COLL_API(comm, hcoll_module, allgatherv);
+    HCOL_UNINSTALL_COLL_API(comm, hcoll_module, alltoallw);
+    */
+    return OMPI_SUCCESS;
+}
 
 OBJ_CLASS_INSTANCE(mca_coll_hcoll_dtype_t,
                    opal_free_list_item_t,
@@ -395,44 +454,8 @@ mca_coll_hcoll_comm_query(struct ompi_communicator_t *comm, int *priority)
     }
 
     hcoll_module->super.coll_module_enable = mca_coll_hcoll_module_enable;
-    hcoll_module->super.coll_barrier = hcoll_collectives.coll_barrier ? mca_coll_hcoll_barrier : NULL;
-    hcoll_module->super.coll_bcast = hcoll_collectives.coll_bcast ? mca_coll_hcoll_bcast : NULL;
-    hcoll_module->super.coll_allgather = hcoll_collectives.coll_allgather ? mca_coll_hcoll_allgather : NULL;
-    hcoll_module->super.coll_allgatherv = hcoll_collectives.coll_allgatherv ? mca_coll_hcoll_allgatherv : NULL;
-    hcoll_module->super.coll_allreduce = hcoll_collectives.coll_allreduce ? mca_coll_hcoll_allreduce : NULL;
-    hcoll_module->super.coll_alltoall = hcoll_collectives.coll_alltoall ? mca_coll_hcoll_alltoall : NULL;
-    hcoll_module->super.coll_alltoallv = hcoll_collectives.coll_alltoallv ? mca_coll_hcoll_alltoallv : NULL;
-    hcoll_module->super.coll_gatherv = hcoll_collectives.coll_gatherv ? mca_coll_hcoll_gatherv : NULL;
-    hcoll_module->super.coll_scatterv = hcoll_collectives.coll_scatterv ? mca_coll_hcoll_scatterv : NULL;
-    hcoll_module->super.coll_reduce = hcoll_collectives.coll_reduce ? mca_coll_hcoll_reduce : NULL;
-    hcoll_module->super.coll_ibarrier = hcoll_collectives.coll_ibarrier ? mca_coll_hcoll_ibarrier : NULL;
-    hcoll_module->super.coll_ibcast = hcoll_collectives.coll_ibcast ? mca_coll_hcoll_ibcast : NULL;
-    hcoll_module->super.coll_iallgather = hcoll_collectives.coll_iallgather ? mca_coll_hcoll_iallgather : NULL;
-#if HCOLL_API >= HCOLL_VERSION(3,5)
-    hcoll_module->super.coll_iallgatherv = hcoll_collectives.coll_iallgatherv ? mca_coll_hcoll_iallgatherv : NULL;
-#else
-    hcoll_module->super.coll_iallgatherv = NULL;
-#endif
-    hcoll_module->super.coll_iallreduce = hcoll_collectives.coll_iallreduce ? mca_coll_hcoll_iallreduce : NULL;
-#if HCOLL_API >= HCOLL_VERSION(3,5)
-    hcoll_module->super.coll_ireduce = hcoll_collectives.coll_ireduce ? mca_coll_hcoll_ireduce : NULL;
-#else
-    hcoll_module->super.coll_ireduce = NULL;
-#endif
-    hcoll_module->super.coll_gather = /*hcoll_collectives.coll_gather ? mca_coll_hcoll_gather :*/ NULL;
-    hcoll_module->super.coll_igatherv = hcoll_collectives.coll_igatherv ? mca_coll_hcoll_igatherv : NULL;
-    hcoll_module->super.coll_ialltoall = /*hcoll_collectives.coll_ialltoall ? mca_coll_hcoll_ialltoall : */ NULL;
-#if HCOLL_API >= HCOLL_VERSION(3,7)
-    hcoll_module->super.coll_ialltoallv = hcoll_collectives.coll_ialltoallv ? mca_coll_hcoll_ialltoallv : NULL;
-#else
-    hcoll_module->super.coll_ialltoallv = NULL;
-#endif
-#if HCOLL_API > HCOLL_VERSION(4,5)
-    hcoll_module->super.coll_reduce_scatter_block = hcoll_collectives.coll_reduce_scatter_block ?
-        mca_coll_hcoll_reduce_scatter_block : NULL;
-    hcoll_module->super.coll_reduce_scatter = hcoll_collectives.coll_reduce_scatter ?
-        mca_coll_hcoll_reduce_scatter : NULL;
-#endif
+    hcoll_module->super.coll_module_disable = mca_coll_hcoll_module_disable;
+
     *priority = cm->hcoll_priority;
     module = &hcoll_module->super;
 
