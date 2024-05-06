@@ -1,6 +1,19 @@
 name: mpi4py
 
-on: [ pull_request ]
+on:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      repository:
+        description: 'mpi4py repository'
+        default: 'mpi4py/mpi4py'
+        required: false
+        type: string
+      ref:
+        description: 'mpi4py branch/tag/SHA'
+        default: 'master'
+        required: false
+        type: string
 
 jobs:
   build:
@@ -89,7 +102,8 @@ jobs:
     - name: Checkout mpi4py
       uses: actions/checkout@v4
       with:
-        repository: "mpi4py/mpi4py"
+        repository: ${{ inputs.repository || 'mpi4py/mpi4py' }}
+        ref: ${{ inputs.ref }}
 
     - name: Build mpi4py wheel
       run:  python -m pip wheel .
