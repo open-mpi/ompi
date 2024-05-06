@@ -69,6 +69,8 @@ int MPI_Waitany(int count, MPI_Request requests[], int *indx, MPI_Status *status
                 }
                 if (requests[i] == &ompi_request_empty) {
                     continue;
+                } else if (&ompi_request_null == requests[i]) {
+                    continue;
                 } else if (NULL == requests[i]->req_mpi_object.comm) {
                     continue;
                 } else if (NULL == check_req) {

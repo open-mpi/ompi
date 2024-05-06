@@ -68,6 +68,8 @@ int MPI_Waitall(int count, MPI_Request requests[], MPI_Status statuses[])
                 }
                 if (&ompi_request_empty == requests[i]) {
                     continue;
+                } else if (&ompi_request_null == requests[i]) {
+                    continue;
                 } else if (NULL == requests[i]->req_mpi_object.comm) {
                     continue;
                 } else if (NULL == check_req) {

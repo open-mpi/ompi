@@ -71,6 +71,8 @@ int MPI_Testsome(int incount, MPI_Request requests[],
                 }
                 if (&ompi_request_empty == requests[indx]) { 
                     continue;
+                } else if (&ompi_request_null == requests[indx]) {
+                    continue;
                 } else if (NULL == requests[indx]->req_mpi_object.comm) {
                     continue;
                 } else if (NULL == check_req) {
