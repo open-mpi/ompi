@@ -183,7 +183,7 @@ static void init_reduce_areas(xhc_comm_t *comms,
 }
 
 static void xhc_allreduce_init_local(xhc_comm_t *comms, int comm_count,
-        int allreduce_count, size_t dtype_size, xf_sig_t seq) {
+        size_t allreduce_count, size_t dtype_size, xf_sig_t seq) {
 
     for(int i = 0; i < comm_count; i++) {
         xhc_comm_t *xc = &comms[i];
@@ -216,7 +216,7 @@ static void xhc_allreduce_init_local(xhc_comm_t *comms, int comm_count,
     for(int i = 0; i < comm_count; i++) {
         xhc_comm_t *xc = &comms[i];
 
-        int initial_count = (xc->n_reduce_areas > 0 ?
+        size_t initial_count = (xc->n_reduce_areas > 0 ?
             xc->reduce_area[0].work_begin : allreduce_count);
 
         int m = 0;
@@ -264,7 +264,7 @@ static void xhc_allreduce_init_comm(xhc_comm_t *comms, int comm_count,
 }
 
 static void xhc_allreduce_init_member(xhc_comm_t *comms, int comm_count,
-        xhc_peer_info_t *peer_info, void *sbuf, void *rbuf, int allreduce_count,
+        xhc_peer_info_t *peer_info, void *sbuf, void *rbuf, size_t allreduce_count,
         bool do_cico, int ompi_rank, xf_sig_t seq) {
 
     for(int i = 0; i < comm_count; i++) {
@@ -474,12 +474,12 @@ static void xhc_allreduce_cico_publish(xhc_comm_t *xc, void *data_src,
     memcpy(dst, src, elements * dtype_size);
     xhc_atomic_wmb();
 
-    volatile xf_int_t *rrp = &xc->my_member_ctrl->reduce_ready;
-    xhc_atomic_store_int(rrp, ready + elements);
+    volatile xf_size_t *rrp = &xc->my_member_ctrl->reduce_ready;
+    xhc_atomic_store_size_t(rrp, ready + elements);
 }
 
 static int xhc_allreduce_reduce_get_next(xhc_comm_t *xc,
-        xhc_peer_info_t *peer_info, int allreduce_count,
+        xhc_peer_info_t *peer_info, size_t allreduce_count,
         size_t dtype_size, bool do_cico, bool out_of_order_reduce,
         xf_sig_t seq, xhc_rq_item_t **item_dst) {
 
@@ -529,10 +529,10 @@ static int xhc_allreduce_reduce_get_next(xhc_comm_t *xc,
                 elements += area->work_leftover;
             }
 
-            int self_ready = xc->my_member_ctrl->reduce_ready;
+            size_t self_ready = xc->my_member_ctrl->reduce_ready;
 
-            volatile xf_int_t *rrp = &xc->member_ctrl[member].reduce_ready;
-            int member_ready = xhc_atomic_load_int(rrp);
+            volatile xf_size_t *rrp = &xc->member_ctrl[member].reduce_ready;
+            size_t member_ready = xhc_atomic_load_size_t(rrp);
 
             if(self_ready >= item->count + elements
                     && member_ready >= item->count + elements
@@ -683,8 +683,8 @@ static void xhc_allreduce_reduce_return_item(xhc_comm_t *xc,
     if(first_item->count > xc->my_member_ctrl->reduce_done) {
         xhc_atomic_wmb();
 
-        volatile xf_int_t *rdp = &xc->my_member_ctrl->reduce_done;
-        xhc_atomic_store_int(rdp, first_item->count);
+        volatile xf_size_t *rdp = &xc->my_member_ctrl->reduce_done;
+        xhc_atomic_store_size_t(rdp, first_item->count);
     }
 }
 
@@ -730,7 +730,7 @@ static void xhc_allreduce_do_bcast(xhc_comm_t *comms, int comm_count,
 
 // -----------------------------
 
-int mca_coll_xhc_allreduce_internal(const void *sbuf, void *rbuf, int count,
+int mca_coll_xhc_allreduce_internal(const void *sbuf, void *rbuf, size_t count,
         ompi_datatype_t *datatype, ompi_op_t *op, ompi_communicator_t *ompi_comm,
         mca_coll_base_module_t *ompi_module, bool require_bcast) {
 
@@ -880,7 +880,7 @@ _allreduce: {
             }
 
             if(xc->is_coll_leader) {
-                int completed = 0;
+                size_t completed = 0;
 
                 if(!xc->all_joined) {
                     xhc_allreduce_leader_check_all_joined(xc, pvt_seq);
@@ -890,8 +890,8 @@ _allreduce: {
                     completed = count;
 
                     for(int m = 0; m < xc->size; m++) {
-                        volatile xf_int_t *rdp = &xc->member_ctrl[m].reduce_done;
-                        int member_done = xhc_atomic_load_int(rdp);
+                        volatile xf_size_t *rdp = &xc->member_ctrl[m].reduce_done;
+                        size_t member_done = xhc_atomic_load_size_t(rdp);
 
                         /* Watch out for double evaluation here, don't perform
                          * sensitive loads inside opal_min()'s parameter list. */
@@ -900,8 +900,8 @@ _allreduce: {
                 }
 
                 if(xnc && completed > xnc->my_member_ctrl->reduce_ready) {
-                    volatile xf_int_t *rrp = &xnc->my_member_ctrl->reduce_ready;
-                    xhc_atomic_store_int(rrp, completed);
+                    volatile xf_size_t *rrp = &xnc->my_member_ctrl->reduce_ready;
+                    xhc_atomic_store_size_t(rrp, completed);
                 } else if(!xnc) {
                     size_t bytes_fully_reduced = completed * dtype_size;
 
@@ -1004,7 +1004,7 @@ _reduce: {
             }
 
             if(xc->is_coll_leader) {
-                int completed = 0;
+                size_t completed = 0;
 
                 if(!xc->all_joined) {
                     xhc_allreduce_leader_check_all_joined(xc, pvt_seq);
@@ -1014,8 +1014,8 @@ _reduce: {
                     completed = count;
 
                     for(int m = 0; m < xc->size; m++) {
-                        volatile xf_int_t *rdp = &xc->member_ctrl[m].reduce_done;
-                        int member_done = xhc_atomic_load_int(rdp);
+                        volatile xf_size_t *rdp = &xc->member_ctrl[m].reduce_done;
+                        size_t member_done = xhc_atomic_load_size_t(rdp);
 
                         /* Watch out for double evaluation here, don't perform
                          * sensitive loads inside opal_min()'s parameter list. */
@@ -1024,8 +1024,8 @@ _reduce: {
                 }
 
                 if(xnc && completed > xnc->my_member_ctrl->reduce_ready) {
-                    volatile xf_int_t *rrp = &xnc->my_member_ctrl->reduce_ready;
-                    xhc_atomic_store_int(rrp, completed);
+                    volatile xf_size_t *rrp = &xnc->my_member_ctrl->reduce_ready;
+                    xhc_atomic_store_size_t(rrp, completed);
                 } else if(!xnc) {
                     size_t completed_bytes = completed * dtype_size;
 
@@ -1113,7 +1113,7 @@ _finish:
 }
 
 int mca_coll_xhc_allreduce(const void *sbuf, void *rbuf,
-        int count, ompi_datatype_t *datatype, ompi_op_t *op,
+        size_t count, ompi_datatype_t *datatype, ompi_op_t *op,
         ompi_communicator_t *ompi_comm, mca_coll_base_module_t *ompi_module) {
 
     return xhc_allreduce_internal(sbuf, rbuf,

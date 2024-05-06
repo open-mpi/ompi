@@ -9,7 +9,7 @@
 
 #include "coll_ucc_common.h"
 
-static inline ucc_status_t mca_coll_ucc_allreduce_init(const void *sbuf, void *rbuf, int count,
+static inline ucc_status_t mca_coll_ucc_allreduce_init(const void *sbuf, void *rbuf, size_t count,
                                                        struct ompi_datatype_t *dtype,
                                                        struct ompi_op_t *op, mca_coll_ucc_module_t *ucc_module,
                                                        ucc_coll_req_h *req,
@@ -57,7 +57,7 @@ fallback:
     return UCC_ERR_NOT_SUPPORTED;
 }
 
-int mca_coll_ucc_allreduce(const void *sbuf, void *rbuf, int count,
+int mca_coll_ucc_allreduce(const void *sbuf, void *rbuf, size_t count,
                            struct ompi_datatype_t *dtype,
                            struct ompi_op_t *op, struct ompi_communicator_t *comm,
                            mca_coll_base_module_t *module)
@@ -77,7 +77,7 @@ fallback:
                                           comm, ucc_module->previous_allreduce_module);
 }
 
-int mca_coll_ucc_iallreduce(const void *sbuf, void *rbuf, int count,
+int mca_coll_ucc_iallreduce(const void *sbuf, void *rbuf, size_t count,
                             struct ompi_datatype_t *dtype,
                             struct ompi_op_t *op, struct ompi_communicator_t *comm,
                             ompi_request_t** request,

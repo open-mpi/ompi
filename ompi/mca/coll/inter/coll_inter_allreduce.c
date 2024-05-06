@@ -42,7 +42,7 @@
  *	Returns:	- MPI_SUCCESS or error code
  */
 int
-mca_coll_inter_allreduce_inter(const void *sbuf, void *rbuf, int count,
+mca_coll_inter_allreduce_inter(const void *sbuf, void *rbuf, size_t count,
                                struct ompi_datatype_t *dtype,
                                struct ompi_op_t *op,
                                struct ompi_communicator_t *comm,

@@ -184,7 +184,7 @@ int ompi_coll_tuned_scan_intra_check_forced_init (coll_tuned_force_algorithm_mca
 
 struct mca_coll_tuned_component_t {
 	/** Base coll component */
-	mca_coll_base_component_2_4_0_t super;
+	mca_coll_base_component_3_0_0_t super;
 
 	/** MCA parameter: Priority of this component */
 	int tuned_priority;

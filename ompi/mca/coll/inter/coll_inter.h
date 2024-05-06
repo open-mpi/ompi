@@ -38,7 +38,7 @@ BEGIN_C_DECLS
  * Globally exported variable
  */
 
-OMPI_DECLSPEC extern const mca_coll_base_component_2_4_0_t mca_coll_inter_component;
+OMPI_DECLSPEC extern const mca_coll_base_component_3_0_0_t mca_coll_inter_component;
 extern int mca_coll_inter_priority_param;
 extern int mca_coll_inter_verbose_param;
 
@@ -51,9 +51,9 @@ int mca_coll_inter_init_query(bool allow_inter_user_threads,
 mca_coll_base_module_t *
 mca_coll_inter_comm_query(struct ompi_communicator_t *comm, int *priority);
 
-int mca_coll_inter_allgather_inter(const void *sbuf, int scount,
+int mca_coll_inter_allgather_inter(const void *sbuf, size_t scount,
 				   struct ompi_datatype_t *sdtype,
-				   void *rbuf, int rcount,
+				   void *rbuf, size_t rcount,
 				   struct ompi_datatype_t *rdtype,
 				   struct ompi_communicator_t *comm,
                                    mca_coll_base_module_t *module);
@@ -63,19 +63,19 @@ int mca_coll_inter_allgatherv_inter(const void *sbuf, int scount,
 				    struct ompi_datatype_t *rdtype,
 				    struct ompi_communicator_t *comm,
                                     mca_coll_base_module_t *module);
-int mca_coll_inter_allreduce_inter(const void *sbuf, void *rbuf, int count,
+int mca_coll_inter_allreduce_inter(const void *sbuf, void *rbuf, size_t count,
 				   struct ompi_datatype_t *dtype,
 				   struct ompi_op_t *op,
 				   struct ompi_communicator_t *comm,
                                    mca_coll_base_module_t *module);
-int mca_coll_inter_bcast_inter(void *buff, int count,
+int mca_coll_inter_bcast_inter(void *buff, size_t count,
 			       struct ompi_datatype_t *datatype,
 			       int root,
 			       struct ompi_communicator_t *comm,
                                mca_coll_base_module_t *module);
-int mca_coll_inter_gather_inter(const void *sbuf, int scount,
+int mca_coll_inter_gather_inter(const void *sbuf, size_t scount,
 				struct ompi_datatype_t *sdtype,
-				void *rbuf, int rcount,
+				void *rbuf, size_t rcount,
 				struct ompi_datatype_t *rdtype,
 				int root,
 				struct ompi_communicator_t *comm,
@@ -87,15 +87,15 @@ int mca_coll_inter_gatherv_inter(const void *sbuf, int scount,
 				 int root,
 				 struct ompi_communicator_t *comm,
                                  mca_coll_base_module_t *module);
-int mca_coll_inter_reduce_inter(const void *sbuf, void* rbuf, int count,
+int mca_coll_inter_reduce_inter(const void *sbuf, void* rbuf, size_t count,
 				struct ompi_datatype_t *dtype,
 				struct ompi_op_t *op,
 				int root,
 				struct ompi_communicator_t *comm,
                                 mca_coll_base_module_t *module);
-int mca_coll_inter_scatter_inter(const void *sbuf, int scount,
+int mca_coll_inter_scatter_inter(const void *sbuf, size_t scount,
 				 struct ompi_datatype_t *sdtype, void *rbuf,
-				 int rcount, struct ompi_datatype_t *rdtype,
+				 size_t rcount, struct ompi_datatype_t *rdtype,
 				 int root, struct ompi_communicator_t *comm,
                                  mca_coll_base_module_t *module);
 int mca_coll_inter_scatterv_inter(const void *sbuf, const int *scounts, const int *disps,

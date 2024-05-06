@@ -22,11 +22,11 @@
 
 static inline int allgather_sched_linear(
     int rank, int comm_size, NBC_Schedule *schedule, const void *sendbuf,
-    int scount, struct ompi_datatype_t *sdtype, void *recvbuf, int rcount,
+    size_t scount, struct ompi_datatype_t *sdtype, void *recvbuf, size_t rcount,
     struct ompi_datatype_t *rdtype);
 static inline int allgather_sched_recursivedoubling(
     int rank, int comm_size, NBC_Schedule *schedule, const void *sbuf,
-    int scount, struct ompi_datatype_t *sdtype, void *rbuf, int rcount,
+    size_t scount, struct ompi_datatype_t *sdtype, void *rbuf, size_t rcount,
     struct ompi_datatype_t *rdtype);
 
 #ifdef NBC_CACHE_SCHEDULE
@@ -49,7 +49,7 @@ int NBC_Allgather_args_compare(NBC_Allgather_args *a, NBC_Allgather_args *b, voi
 }
 #endif
 
-static int nbc_allgather_init(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount,
+static int nbc_allgather_init(const void* sendbuf, size_t sendcount, MPI_Datatype sendtype, void* recvbuf, size_t recvcount,
                               MPI_Datatype recvtype, struct ompi_communicator_t *comm, ompi_request_t ** request,
                               mca_coll_base_module_t *module, bool persistent)
 {
@@ -190,7 +190,7 @@ static int nbc_allgather_init(const void* sendbuf, int sendcount, MPI_Datatype s
   return OMPI_SUCCESS;
 }
 
-int ompi_coll_libnbc_iallgather(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount,
+int ompi_coll_libnbc_iallgather(const void* sendbuf, size_t sendcount, MPI_Datatype sendtype, void* recvbuf, size_t recvcount,
                                 MPI_Datatype recvtype, struct ompi_communicator_t *comm, ompi_request_t ** request,
                                 mca_coll_base_module_t *module)
 {
@@ -210,7 +210,7 @@ int ompi_coll_libnbc_iallgather(const void* sendbuf, int sendcount, MPI_Datatype
     return OMPI_SUCCESS;
 }
 
-static int nbc_allgather_inter_init(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount,
+static int nbc_allgather_inter_init(const void* sendbuf, size_t sendcount, MPI_Datatype sendtype, void* recvbuf, size_t recvcount,
                                     MPI_Datatype recvtype, struct ompi_communicator_t *comm, ompi_request_t ** request,
                                     mca_coll_base_module_t *module, bool persistent)
 {
@@ -267,7 +267,7 @@ static int nbc_allgather_inter_init(const void* sendbuf, int sendcount, MPI_Data
   return OMPI_SUCCESS;
 }
 
-int ompi_coll_libnbc_iallgather_inter(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount,
+int ompi_coll_libnbc_iallgather_inter(const void* sendbuf, size_t sendcount, MPI_Datatype sendtype, void* recvbuf, size_t recvcount,
 				      MPI_Datatype recvtype, struct ompi_communicator_t *comm, ompi_request_t ** request,
 				      mca_coll_base_module_t *module) {
     int res = nbc_allgather_inter_init(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype,
@@ -296,7 +296,7 @@ int ompi_coll_libnbc_iallgather_inter(const void* sendbuf, int sendcount, MPI_Da
  */
 static inline int allgather_sched_linear(
     int rank, int comm_size, NBC_Schedule *schedule, const void *sendbuf,
-    int scount, struct ompi_datatype_t *sdtype, void *recvbuf, int rcount,
+    size_t scount, struct ompi_datatype_t *sdtype, void *recvbuf, size_t rcount,
     struct ompi_datatype_t *rdtype)
 {
     int res = OMPI_SUCCESS;
@@ -354,7 +354,7 @@ cleanup_and_return:
  */
 static inline int allgather_sched_recursivedoubling(
     int rank, int comm_size, NBC_Schedule *schedule, const void *sbuf,
-    int scount, struct ompi_datatype_t *sdtype, void *rbuf, int rcount,
+    size_t scount, struct ompi_datatype_t *sdtype, void *rbuf, size_t rcount,
     struct ompi_datatype_t *rdtype)
 {
     int res = OMPI_SUCCESS;
@@ -389,7 +389,7 @@ cleanup_and_return:
     return res;
 }
 
-int ompi_coll_libnbc_allgather_init(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount,
+int ompi_coll_libnbc_allgather_init(const void* sendbuf, size_t sendcount, MPI_Datatype sendtype, void* recvbuf, size_t recvcount,
                                     MPI_Datatype recvtype, struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                                     mca_coll_base_module_t *module) {
     int res = nbc_allgather_init(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype,
@@ -401,7 +401,7 @@ int ompi_coll_libnbc_allgather_init(const void* sendbuf, int sendcount, MPI_Data
     return OMPI_SUCCESS;
 }
 
-int ompi_coll_libnbc_allgather_inter_init(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount,
+int ompi_coll_libnbc_allgather_inter_init(const void* sendbuf, size_t sendcount, MPI_Datatype sendtype, void* recvbuf, size_t recvcount,
                                           MPI_Datatype recvtype, struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                                           mca_coll_base_module_t *module) {
     int res = nbc_allgather_inter_init(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype,

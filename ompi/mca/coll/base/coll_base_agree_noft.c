@@ -19,7 +19,7 @@
 
 int
 ompi_coll_base_agree_noft(void *contrib,
-                         int dt_count,
+                         size_t dt_count,
                          struct ompi_datatype_t *dt,
                          struct ompi_op_t *op,
                          struct ompi_group_t **group, bool update_grp,
@@ -33,7 +33,7 @@ ompi_coll_base_agree_noft(void *contrib,
 
 int
 ompi_coll_base_iagree_noft(void *contrib,
-                          int dt_count,
+                          size_t dt_count,
                           struct ompi_datatype_t *dt,
                           struct ompi_op_t *op,
                           struct ompi_group_t **group, bool update_grp,

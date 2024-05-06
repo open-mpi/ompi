@@ -52,7 +52,7 @@
  *  Returns:    - MPI_SUCCESS or error code
  */
 int
-ompi_coll_tuned_allreduce_intra_dec_fixed(const void *sbuf, void *rbuf, int count,
+ompi_coll_tuned_allreduce_intra_dec_fixed(const void *sbuf, void *rbuf, size_t count,
                                           struct ompi_datatype_t *dtype,
                                           struct ompi_op_t *op,
                                           struct ompi_communicator_t *comm,
@@ -225,9 +225,9 @@ ompi_coll_tuned_allreduce_intra_dec_fixed(const void *sbuf, void *rbuf, int coun
  *	Returns:	- MPI_SUCCESS or error code
  */
 
-int ompi_coll_tuned_alltoall_intra_dec_fixed(const void *sbuf, int scount,
+int ompi_coll_tuned_alltoall_intra_dec_fixed(const void *sbuf, size_t scount,
                                              struct ompi_datatype_t *sdtype,
-                                             void* rbuf, int rcount,
+                                             void* rbuf, size_t rcount,
                                              struct ompi_datatype_t *rdtype,
                                              struct ompi_communicator_t *comm,
                                              mca_coll_base_module_t *module)
@@ -509,7 +509,7 @@ int ompi_coll_tuned_barrier_intra_dec_fixed(struct ompi_communicator_t *comm,
  *	Accepts:	- same arguments as MPI_Bcast()
  *	Returns:	- MPI_SUCCESS or error code (passed from the bcast implementation)
  */
-int ompi_coll_tuned_bcast_intra_dec_fixed(void *buff, int count,
+int ompi_coll_tuned_bcast_intra_dec_fixed(void *buff, size_t count,
                                           struct ompi_datatype_t *datatype, int root,
                                           struct ompi_communicator_t *comm,
                                           mca_coll_base_module_t *module)
@@ -660,7 +660,7 @@ int ompi_coll_tuned_bcast_intra_dec_fixed(void *buff, int count,
  *
  */
 int ompi_coll_tuned_reduce_intra_dec_fixed( const void *sendbuf, void *recvbuf,
-                                            int count, struct ompi_datatype_t* datatype,
+                                            size_t count, struct ompi_datatype_t* datatype,
                                             struct ompi_op_t* op, int root,
                                             struct ompi_communicator_t* comm,
                                             mca_coll_base_module_t *module)
@@ -971,7 +971,7 @@ int ompi_coll_tuned_reduce_scatter_intra_dec_fixed( const void *sbuf, void *rbuf
  *                        the reduce scatter implementation)
  */
 int ompi_coll_tuned_reduce_scatter_block_intra_dec_fixed(const void *sbuf, void *rbuf,
-                                                         int rcount,
+                                                         size_t rcount,
                                                          struct ompi_datatype_t *dtype,
                                                          struct ompi_op_t *op,
                                                          struct ompi_communicator_t *comm,
@@ -1091,9 +1091,9 @@ int ompi_coll_tuned_reduce_scatter_block_intra_dec_fixed(const void *sbuf, void 
  *                        internal allgather function.
  */
 
-int ompi_coll_tuned_allgather_intra_dec_fixed(const void *sbuf, int scount,
+int ompi_coll_tuned_allgather_intra_dec_fixed(const void *sbuf, size_t scount,
                                               struct ompi_datatype_t *sdtype,
-                                              void* rbuf, int rcount,
+                                              void* rbuf, size_t rcount,
                                               struct ompi_datatype_t *rdtype,
                                               struct ompi_communicator_t *comm,
                                               mca_coll_base_module_t *module)
@@ -1378,9 +1378,9 @@ int ompi_coll_tuned_allgatherv_intra_dec_fixed(const void *sbuf, int scount,
  *                        internal allgather function.
  */
 
-int ompi_coll_tuned_gather_intra_dec_fixed(const void *sbuf, int scount,
+int ompi_coll_tuned_gather_intra_dec_fixed(const void *sbuf, size_t scount,
                                            struct ompi_datatype_t *sdtype,
-                                           void* rbuf, int rcount,
+                                           void* rbuf, size_t rcount,
                                            struct ompi_datatype_t *rdtype,
                                            int root,
                                            struct ompi_communicator_t *comm,
@@ -1467,9 +1467,9 @@ int ompi_coll_tuned_gather_intra_dec_fixed(const void *sbuf, int scount,
  *                        internal allgather function.
  */
 
-int ompi_coll_tuned_scatter_intra_dec_fixed(const void *sbuf, int scount,
+int ompi_coll_tuned_scatter_intra_dec_fixed(const void *sbuf, size_t scount,
                                             struct ompi_datatype_t *sdtype,
-                                            void* rbuf, int rcount,
+                                            void* rbuf, size_t rcount,
                                             struct ompi_datatype_t *rdtype,
                                             int root, struct ompi_communicator_t *comm,
                                             mca_coll_base_module_t *module)

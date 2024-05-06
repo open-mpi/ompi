@@ -61,14 +61,15 @@
  */
 int
 ompi_coll_base_scatter_intra_binomial(
-    const void *sbuf, int scount, struct ompi_datatype_t *sdtype,
-    void *rbuf, int rcount, struct ompi_datatype_t *rdtype,
+    const void *sbuf, size_t scount, struct ompi_datatype_t *sdtype,
+    void *rbuf, size_t rcount, struct ompi_datatype_t *rdtype,
     int root, struct ompi_communicator_t *comm,
     mca_coll_base_module_t *module)
 {
     mca_coll_base_module_t *base_module = (mca_coll_base_module_t*)module;
     mca_coll_base_comm_t *data = base_module->base_data;
-    int line = -1, rank, vrank, size, err, packed_size, curr_count;
+    int line = -1, rank, vrank, size, err, packed_size;
+    size_t curr_count;
     char *ptmp, *tempbuf = NULL;
     size_t max_data, packed_sizet;
     opal_convertor_t convertor;
@@ -107,7 +108,7 @@ ompi_coll_base_scatter_intra_binomial(
             opal_convertor_copy_and_prepare_for_send( ompi_mpi_local_convertor, &(sdtype->super),
                                                       scount * size, sbuf, 0, &convertor );
             opal_convertor_get_packed_size( &convertor, &packed_sizet );
-            packed_size = (int)packed_sizet;
+            packed_size = packed_sizet;
             packed_sizet = packed_sizet / size;
             ptmp = tempbuf = (char *)malloc(packed_size);
             if (NULL == tempbuf) {
@@ -135,7 +136,7 @@ ompi_coll_base_scatter_intra_binomial(
         opal_convertor_copy_and_prepare_for_send( ompi_mpi_local_convertor, &(rdtype->super),
                                                   rcount, NULL, 0, &convertor );
         opal_convertor_get_packed_size( &convertor, &packed_sizet );
-        scount = (int)packed_sizet;
+        scount = packed_sizet;
 
         sdtype = MPI_PACKED;  /* default to MPI_PACKED as the send type */
 
@@ -157,7 +158,7 @@ ompi_coll_base_scatter_intra_binomial(
         if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
 
         /* Get received count */
-        curr_count = (int)status._ucount;  /* no need for conversion, work in bytes */
+        curr_count = status._ucount;  /* no need for conversion, work in bytes */
         sextent = 1;  /* bytes */
     }
 
@@ -219,9 +220,9 @@ ompi_coll_base_scatter_intra_binomial(
  *	Returns:	- MPI_SUCCESS or error code
  */
 int
-ompi_coll_base_scatter_intra_basic_linear(const void *sbuf, int scount,
+ompi_coll_base_scatter_intra_basic_linear(const void *sbuf, size_t scount,
                                           struct ompi_datatype_t *sdtype,
-                                          void *rbuf, int rcount,
+                                          void *rbuf, size_t rcount,
                                           struct ompi_datatype_t *rdtype,
                                           int root,
                                           struct ompi_communicator_t *comm,
@@ -286,9 +287,9 @@ ompi_coll_base_scatter_intra_basic_linear(const void *sbuf, int scount,
  * progression until the message is sent/(copied to some sort of transmit buffer).
  */
 int
-ompi_coll_base_scatter_intra_linear_nb(const void *sbuf, int scount,
+ompi_coll_base_scatter_intra_linear_nb(const void *sbuf, size_t scount,
                                        struct ompi_datatype_t *sdtype,
-                                       void *rbuf, int rcount,
+                                       void *rbuf, size_t rcount,
                                        struct ompi_datatype_t *rdtype,
                                        int root,
                                        struct ompi_communicator_t *comm,

@@ -16,7 +16,7 @@
 #include "ompi/communicator/communicator.h"
 #include "coll_monitoring.h"
 
-int mca_coll_monitoring_reduce(const void *sbuf, void *rbuf, int count,
+int mca_coll_monitoring_reduce(const void *sbuf, void *rbuf, size_t count,
                                struct ompi_datatype_t *dtype,
                                struct ompi_op_t *op,
                                int root,
@@ -45,7 +45,7 @@ int mca_coll_monitoring_reduce(const void *sbuf, void *rbuf, int count,
     return monitoring_module->real.coll_reduce(sbuf, rbuf, count, dtype, op, root, comm, monitoring_module->real.coll_reduce_module);
 }
 
-int mca_coll_monitoring_ireduce(const void *sbuf, void *rbuf, int count,
+int mca_coll_monitoring_ireduce(const void *sbuf, void *rbuf, size_t count,
                                 struct ompi_datatype_t *dtype,
                                 struct ompi_op_t *op,
                                 int root,

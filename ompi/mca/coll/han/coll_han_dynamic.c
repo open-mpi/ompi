@@ -372,9 +372,9 @@ get_algorithm(COLLTYPE_T coll_id,
  * calls the correct module if fallback mechanism is activated
  */
 int
-mca_coll_han_allgather_intra_dynamic(const void *sbuf, int scount,
+mca_coll_han_allgather_intra_dynamic(const void *sbuf, size_t scount,
                                      struct ompi_datatype_t *sdtype,
-                                     void *rbuf, int rcount,
+                                     void *rbuf, size_t rcount,
                                      struct ompi_datatype_t *rdtype,
                                      struct ompi_communicator_t *comm,
                                      mca_coll_base_module_t *module)
@@ -605,7 +605,7 @@ mca_coll_han_allgatherv_intra_dynamic(const void *sbuf, int scount,
 int
 mca_coll_han_allreduce_intra_dynamic(const void *sbuf,
                                      void *rbuf,
-                                     int count,
+                                     size_t count,
                                      struct ompi_datatype_t *dtype,
                                      struct ompi_op_t *op,
                                      struct ompi_communicator_t *comm,
@@ -820,7 +820,7 @@ mca_coll_han_barrier_intra_dynamic(struct ompi_communicator_t *comm,
  */
 int
 mca_coll_han_bcast_intra_dynamic(void *buff,
-                                 int count,
+                                 size_t count,
                                  struct ompi_datatype_t *dtype,
                                  int root,
                                  struct ompi_communicator_t *comm,
@@ -934,9 +934,9 @@ mca_coll_han_bcast_intra_dynamic(void *buff,
  * calls the correct module if fallback mechanism is activated
  */
 int
-mca_coll_han_gather_intra_dynamic(const void *sbuf, int scount,
+mca_coll_han_gather_intra_dynamic(const void *sbuf, size_t scount,
                                   struct ompi_datatype_t *sdtype,
-                                  void *rbuf, int rcount,
+                                  void *rbuf, size_t rcount,
                                   struct ompi_datatype_t *rdtype,
                                   int root,
                                   struct ompi_communicator_t *comm,
@@ -1156,7 +1156,7 @@ int mca_coll_han_gatherv_intra_dynamic(const void *sbuf, int scount, struct ompi
 int
 mca_coll_han_reduce_intra_dynamic(const void *sbuf,
                                   void *rbuf,
-                                  int count,
+                                  size_t count,
                                   struct ompi_datatype_t *dtype,
                                   struct ompi_op_t *op,
                                   int root,
@@ -1276,9 +1276,9 @@ mca_coll_han_reduce_intra_dynamic(const void *sbuf,
  * calls the correct module if fallback mechanism is activated
  */
 int
-mca_coll_han_scatter_intra_dynamic(const void *sbuf, int scount,
+mca_coll_han_scatter_intra_dynamic(const void *sbuf, size_t scount,
                                    struct ompi_datatype_t *sdtype,
-                                   void *rbuf, int rcount,
+                                   void *rbuf, size_t rcount,
                                    struct ompi_datatype_t *rdtype,
                                    int root,
                                    struct ompi_communicator_t *comm,

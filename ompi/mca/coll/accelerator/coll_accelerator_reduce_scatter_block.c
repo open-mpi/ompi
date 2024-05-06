@@ -32,7 +32,7 @@
  *     up at some point)
  */
 int
-mca_coll_accelerator_reduce_scatter_block(const void *sbuf, void *rbuf, int rcount,
+mca_coll_accelerator_reduce_scatter_block(const void *sbuf, void *rbuf, size_t rcount,
                                    struct ompi_datatype_t *dtype,
                                    struct ompi_op_t *op,
                                    struct ompi_communicator_t *comm,

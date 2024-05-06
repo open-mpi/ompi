@@ -48,13 +48,13 @@ static int ftagree_close(void);
  * and pointers to our public functions in it
  */
 
-const mca_coll_base_component_2_4_0_t mca_coll_ftagree_component = {
+const mca_coll_base_component_3_0_0_t mca_coll_ftagree_component = {
 
     /* First, the mca_component_t struct containing meta information
      * about the component itself */
 
     {
-     MCA_COLL_BASE_VERSION_2_4_0,
+     MCA_COLL_BASE_VERSION_3_0_0,
 
      /* Component name and version */
      "ftagree",
