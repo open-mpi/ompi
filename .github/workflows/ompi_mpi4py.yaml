@@ -131,11 +131,6 @@ jobs:
     # this job of tests to pass.
     needs: [ build ]
     uses: ./.github/workflows/ompi_mpi4py_tests.yaml
-    with:
-      # This parameter is required, so send a meaningless
-      # environment variable name that will not affect the tests at
-      # all (i.e., the tests will be run with default values).
-      env_name: MAKE_TODAY_AN_OMPI_DAY
 
   #==============================================
 

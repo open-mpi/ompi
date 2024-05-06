@@ -9,7 +9,8 @@ on:
   workflow_call:
     inputs:
       env_name:
-        required: true
+        default: 'MAKE_TODAY_AN_OMPI_DAY'
+        required: false
         type: string
 
 jobs:
@@ -17,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
-      ${{ inputs.env_name}}: 1
+      ${{ inputs.env_name }}: true
     steps:
     - name: Use Python
       uses: actions/setup-python@v5
@@ -67,3 +68,24 @@ jobs:
       run:  python demo/test-run/test_run.py -v
       if:   ${{ true }}
       timeout-minutes: 10
+
+    #----------------------------------------------
+
+    - name: Relocate Open MPI installation
+      run:  mv /opt/openmpi /opt/ompi
+    - name: Update PATH and set OPAL_PREFIX and LD_LIBRARY_PATH
+      run: |
+        sed -i '\|/opt/openmpi/bin|d' $GITHUB_PATH
+        echo OPAL_PREFIX=/opt/ompi >> $GITHUB_ENV
+        echo LD_LIBRARY_PATH=/opt/ompi/lib >> $GITHUB_ENV
+
+    - name: Test mpi4py (singleton)
+      run:  python test/main.py -v
+      if:   ${{ true }}
+      timeout-minutes: 10
+    - name: Test mpi4py (np=5)
+      run:  /opt/ompi/bin/mpiexec -n 5 python test/main.py -v -f
+      if:   ${{ true }}
+      timeout-minutes: 10
+
+    #----------------------------------------------
