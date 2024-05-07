@@ -8,6 +8,7 @@
  *                         reserved.
  * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
  * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2025      SiPearl.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -381,6 +382,10 @@ static int ompi_mpi_instance_init_common (int argc, char **argv)
     opal_finalize_domain_init (&ompi_instance_common_domain, "ompi_mpi_instance_init_common");
     opal_finalize_set_domain (&ompi_instance_common_domain);
 
+    /* Append PML cleanup into the finalize of this domain ('ompi_instance_common_domain')
+       before RTE init */
+    ompi_mpi_instance_append_finalize (ompi_mpi_instance_cleanup_pml);
+
     if (OPAL_SUCCESS != (ret = opal_arch_set_fortran_logical_size(sizeof(ompi_fortran_logical_t)))) {
         return ompi_instance_print_error ("ompi_mpi_init: opal_arch_set_fortran_logical_size failed", ret);
     }
@@ -637,8 +642,6 @@ static int ompi_mpi_instance_init_common (int argc, char **argv)
     if (OMPI_SUCCESS != (ret = ompi_group_init ())) {
         return ompi_instance_print_error ("ompi_group_init() failed", ret);
     }
-
-    ompi_mpi_instance_append_finalize (ompi_mpi_instance_cleanup_pml);
 
     /* initialize communicator subsystem */
     if (OMPI_SUCCESS != (ret = ompi_comm_init ())) {
@@ -906,8 +909,6 @@ static int ompi_mpi_instance_finalize_common (void)
         mca_mpool_base_tree_print (ompi_debug_show_mpi_alloc_mem_leaks);
     }
 
-    opal_finalize_cleanup_domain (&ompi_instance_common_domain);
-
     if (NULL != ompi_mpi_main_thread) {
         OBJ_RELEASE(ompi_mpi_main_thread);
         ompi_mpi_main_thread = NULL;
@@ -935,6 +936,9 @@ static int ompi_mpi_instance_finalize_common (void)
     }
 
     ompi_rte_initialized = false;
+
+    /* Should be called in reverse order of init, i.e. after RTE finalize */
+    opal_finalize_cleanup_domain (&ompi_instance_common_domain);
 
     for (int i = 0 ; ompi_lazy_frameworks[i] ; ++i) {
         if (0 < ompi_lazy_frameworks[i]->framework_refcnt) {
