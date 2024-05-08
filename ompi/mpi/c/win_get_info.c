@@ -60,7 +60,7 @@ int MPI_Win_get_info(MPI_Win win, MPI_Info *info_used)
     }
     opal_info_t *opal_info_used = &(*info_used)->super;
 
-    ret = opal_info_dup(win->super.s_info, &opal_info_used);
+    ret = opal_info_dup_public(win->super.s_info, &opal_info_used);
 
     OMPI_ERRHANDLER_RETURN(ret, win, ret, FUNC_NAME);
 }
