@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2024      Amazon.com, Inc. or its affiliates.
+ *                         All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,6 +26,28 @@
 #include <string.h>
 
 #include "support.h"
+
+#define test_verify_number(T, specifier)                                           \
+    int test_verify_##T(T expected_result, T test_result)                          \
+    {                                                                              \
+        int return_value;                                                          \
+        return_value = 1;                                                          \
+        if (expected_result != test_result) {                                      \
+            test_failure("Comparison failure");                                    \
+            fprintf(stderr, " Expected result: " specifier "\n", expected_result); \
+            fprintf(stderr, " Test result: " specifier "\n", test_result);         \
+            fflush(stderr);                                                        \
+            return_value = 0;                                                      \
+        } else {                                                                   \
+            test_success();                                                        \
+        }                                                                          \
+        return return_value;                                                       \
+    }
+
+test_verify_number(int, "%d")
+test_verify_number(int64_t, "%ld")
+test_verify_number(size_t, "%lu")
+test_verify_number(double, "%lf")
 
 /**
  * A testing support library to provide uniform reporting output
@@ -84,24 +108,6 @@ int test_verify_str(const char *expected_result, const char *test_result)
         test_failure("Comparison failure");
         fprintf(stderr, " Expected result: %s\n", expected_result);
         fprintf(stderr, " Test result: %s\n", test_result);
-        fflush(stderr);
-        return_value = 0;
-    } else {
-        test_success();
-    }
-
-    return return_value;
-}
-
-int test_verify_int(int expected_result, int test_result)
-{
-    int return_value;
-
-    return_value = 1;
-    if (expected_result != test_result) {
-        test_failure("Comparison failure");
-        fprintf(stderr, " Expected result: %d\n", expected_result);
-        fprintf(stderr, " Test result: %d\n", test_result);
         fflush(stderr);
         return_value = 0;
     } else {
