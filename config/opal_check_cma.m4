@@ -45,8 +45,8 @@ AC_DEFUN([OPAL_CHECK_CMA_BACKEND],
 [
     OPAL_VAR_SCOPE_PUSH([opal_check_cma_need_defs opal_check_cma_kernel_version opal_check_cma_CFLAGS opal_check_cma_msg])
 
-    # Some systems have process_cm_readv() in libc, which means CMA is
-    # supported.  Other systems do not have process_cm_readv() in
+    # Some systems have process_vm_readv() in libc, which means CMA is
+    # supported.  Other systems do not have process_vm_readv() in
     # libc, but have support for it in the kernel if we invoke it
     # directly.  Check for both.
     AC_CHECK_HEADERS([sys/prctl.h])
