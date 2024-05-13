@@ -18,6 +18,7 @@
  * Copyright (c) 2018      Siberian State University of Telecommunications
  *                         and Information Science. All rights reserved.
  * Copyright (c) 2022      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2024      Stony Brook University.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -1186,7 +1187,7 @@ int ompi_coll_base_reduce_intra_knomial( const void *sendbuf, void *recvbuf,
     bool is_leaf;
     ptrdiff_t buf_size, gap = 0;
     int max_reqs = 0, num_reqs;
-    ompi_request_t **reqs;
+    ompi_request_t **reqs = NULL;
 
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output, "coll:base:ompi_coll_base_reduce_intra_knomial msg size %zu, max_requests %d",
                  count, max_outstanding_reqs));
