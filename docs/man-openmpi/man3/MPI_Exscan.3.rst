@@ -101,7 +101,7 @@ INPUT PARAMETERS
 OUTPUT PARAMETERS
 -----------------
 * ``recvbuf``: Receive buffer (choice).
-* ``request``: Request (handle, non-blocking only).
+* ``request``: Request (handle, non-blocking and persistent only).
 * ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
