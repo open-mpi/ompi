@@ -24,6 +24,9 @@ C Syntax
    int MPI_Ibcast(void *buffer, int count, MPI_Datatype datatype,
        int root, MPI_Comm comm, MPI_Request *request)
 
+   int MPI_Bcast_init(void *buffer, int count, MPI_Datatype datatype,
+       int root, MPI_Comm comm, MPI_Info info, MPI_Request *request)
+
 Fortran Syntax
 ^^^^^^^^^^^^^^
 
@@ -38,6 +41,10 @@ Fortran Syntax
    MPI_IBCAST(BUFFER, COUNT, DATATYPE, ROOT, COMM, REQUEST, IERROR)
        <type>  BUFFER(*)
        INTEGER COUNT, DATATYPE, ROOT, COMM, REQUEST, IERROR
+
+   MPI_BCAST_INIT(BUFFER, COUNT, DATATYPE, ROOT, COMM, REQUEST, IERROR)
+       <type>  BUFFER(*)
+       INTEGER COUNT, DATATYPE, ROOT, COMM, INFO, REQUEST, IERROR
 
 Fortran 2008 Syntax
 ^^^^^^^^^^^^^^^^^^^
@@ -60,6 +67,15 @@ Fortran 2008 Syntax
        TYPE(MPI_Request), INTENT(OUT) :: request
        INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 
+   MPI_Bcast_init(buffer, count, datatype, root, comm, request, ierror)
+       TYPE(*), DIMENSION(..), ASYNCHRONOUS :: buffer
+       INTEGER, INTENT(IN) :: count, root
+       TYPE(MPI_Datatype), INTENT(IN) :: datatype
+       TYPE(MPI_Comm), INTENT(IN) :: comm
+       TYPE(MPI_Info), INTENT(IN) :: info
+       TYPE(MPI_Request), INTENT(OUT) :: request
+       INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+
 INPUT/OUTPUT PARAMETERS
 -----------------------
 
@@ -68,11 +84,12 @@ INPUT/OUTPUT PARAMETERS
 * ``datatype``: Data type of buffer (handle).
 * ``root``: Rank of broadcast root (integer).
 * ``comm``: Communicator (handle).
+* ``info``: Info (handle, persistent only).
 
 OUTPUT PARAMETERS
 -----------------
 
-* ``request``: Request (handle, non-blocking only).
+* ``request``: Request (handle, non-blocking and persistent only).
 * ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
