@@ -20,6 +20,7 @@
  * Copyright (c) 2022      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c)           Amazon.com, Inc. or its affiliates.
  *                         All rights reserved.
+ * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -983,14 +984,7 @@ int ompi_coll_base_allreduce_intra_redscat_allgather(
                  "coll:base:allreduce_intra_redscat_allgather: rank %d/%d",
                  rank, comm_size));
 
-    /* Find nearest power-of-two less than or equal to comm_size */
-    int nsteps = opal_hibit(comm_size, comm->c_cube_dim + 1);   /* ilog2(comm_size) */
-    if (-1 == nsteps) {
-        return MPI_ERR_ARG;
-    }
-    int nprocs_pof2 = 1 << nsteps;                              /* flp2(comm_size) */
-
-    if (count < (size_t) nprocs_pof2 || !ompi_op_is_commute(op)) {
+    if (!ompi_op_is_commute(op)) {
         OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
                      "coll:base:allreduce_intra_redscat_allgather: rank %d/%d "
                      "count %zu switching to basic linear allreduce",
@@ -999,6 +993,12 @@ int ompi_coll_base_allreduce_intra_redscat_allgather(
                                                            op, comm, module);
     }
 
+    /* Find nearest power-of-two less than or equal to comm_size */
+    int nsteps = opal_hibit(comm_size, comm->c_cube_dim + 1);   /* ilog2(comm_size) */
+    if (-1 == nsteps) {
+        return MPI_ERR_ARG;
+    }
+    int nprocs_pof2 = 1 << nsteps;                              /* flp2(comm_size) */
     int err = MPI_SUCCESS;
     ptrdiff_t lb, extent, dsize, gap = 0;
     ompi_datatype_get_extent(dtype, &lb, &extent);
