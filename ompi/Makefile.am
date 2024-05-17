@@ -183,8 +183,6 @@ include win/Makefile.am
 include tools/Makefile.am
 include mpi/Makefile.am
 include mpiext/Makefile.am
-include patterns/net/Makefile.am
-include patterns/comm/Makefile.am
 include mca/Makefile.am
 include util/Makefile.am
 include instance/Makefile.am
