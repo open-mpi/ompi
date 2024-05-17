@@ -106,12 +106,12 @@ INPUT PARAMETERS
 * ``recvtype``: Datatype of receive buffer elements (handle).
 * ``root``: Rank of sending process (integer).
 * ``comm``: Communicator (handle).
-* ``info``: Info (handle, persistent).
+* ``info``: Info (handle, persistent only).
 
 OUTPUT PARAMETERS
 -----------------
 * ``recvbuf``: Address of receive buffer (choice).
-* ``request``: Request (handle, non-blocking only).
+* ``request``: Request (handle, non-blocking and persistent only).
 * ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION

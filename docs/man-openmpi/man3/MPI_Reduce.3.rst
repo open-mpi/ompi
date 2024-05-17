@@ -106,12 +106,12 @@ INPUT PARAMETERS
 * ``op``: Reduce operation (handle).
 * ``root``: Rank of root process (integer).
 * ``comm``: Communicator (handle).
-* ``info``: Info (handle, persistent).
+* ``info``: Info (handle, persistent only).
 
 OUTPUT PARAMETERS
 -----------------
 * ``recvbuf``: Address of receive buffer (choice, significant only at root).
-* ``request``: Request (handle, non-blocking only).
+* ``request``: Request (handle, non-blocking and persistent only).
 * ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
