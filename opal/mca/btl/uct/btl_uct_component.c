@@ -15,7 +15,7 @@
  * Copyright (c) 2018      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
- * Copyright (c) 2018      Triad National Security, LLC. All rights
+ * Copyright (c) 2018-2024 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2019-2021 Google, LLC. All rights reserved.
  * Copyright (c) 2019      Intel, Inc.  All rights reserved.
@@ -348,6 +348,7 @@ static int mca_btl_uct_component_process_uct_md(uct_md_resource_desc_t *md_desc,
     bool found = false;
     unsigned num_tls;
     char *tmp;
+    ucs_status_t ucs_status;
 
     if (MCA_BTL_UCT_MAX_MODULES == mca_btl_uct_component.module_count) {
         BTL_VERBOSE(("created the maximum number of allowable modules"));
@@ -372,16 +373,40 @@ static int mca_btl_uct_component_process_uct_md(uct_md_resource_desc_t *md_desc,
     md = OBJ_NEW(mca_btl_uct_md_t);
 
 #if UCT_API >= UCT_VERSION(1, 7)
-    uct_md_config_read(component, NULL, NULL, &uct_config);
-    uct_md_open(component, md_desc->md_name, uct_config, &md->uct_md);
+    ucs_status = uct_md_config_read(component, NULL, NULL, &uct_config);
+    if (UCS_OK != ucs_status) {
+        BTL_VERBOSE(("uct_md_config_read failed %d (%s)", ucs_status, ucs_status_string(ucs_status)));
+        return OPAL_ERR_NOT_AVAILABLE;
+    }
+    ucs_status = uct_md_open(component, md_desc->md_name, uct_config, &md->uct_md);
+    if (UCS_OK != ucs_status) {
+        BTL_VERBOSE(("uct_md_open failed %d (%s)", ucs_status, ucs_status_string(ucs_status)));
+        return OPAL_ERR_NOT_AVAILABLE;
+    }
 #else
-    uct_md_config_read(md_desc->md_name, NULL, NULL, &uct_config);
-    uct_md_open(md_desc->md_name, uct_config, &md->uct_md);
+    ucs_status = uct_md_config_read(md_desc->md_name, NULL, NULL, &uct_config);
+    if (UCS_OK != ucs_status) {
+        BTL_VERBOSE(("uct_md_config_read failed %d (%s)", ucs_status, ucs_status_string(ucs_status)));
+        return OPAL_ERR_NOT_AVAILABLE;
+    }
+    ucs_status = uct_md_open(md_desc->md_name, uct_config, &md->uct_md);
+    if (UCS_OK != ucs_status) {
+        BTL_VERBOSE(("uct_md_open failed %d (%s)", ucs_status, ucs_status_string(ucs_status)));
+        return OPAL_ERR_NOT_AVAILABLE;
+    }
 #endif
     uct_config_release(uct_config);
 
-    uct_md_query(md->uct_md, &md_attr);
-    uct_md_query_tl_resources(md->uct_md, &tl_desc, &num_tls);
+    ucs_status = uct_md_query(md->uct_md, &md_attr);
+    if (UCS_OK != ucs_status) {
+        BTL_VERBOSE(("uct_config_release failed %d (%s)", ucs_status, ucs_status_string(ucs_status)));
+        return OPAL_ERR_NOT_AVAILABLE;
+    }
+    ucs_status = uct_md_query_tl_resources(md->uct_md, &tl_desc, &num_tls);
+    if (UCS_OK != ucs_status) {
+        BTL_VERBOSE(("uct_config_release failed %d (%s)", ucs_status, ucs_status_string(ucs_status)));
+        return OPAL_ERR_NOT_AVAILABLE;
+    }
 
     module = mca_btl_uct_alloc_module(md_desc->md_name, md, md_attr.rkey_packed_size);
     if (NULL == module) {
