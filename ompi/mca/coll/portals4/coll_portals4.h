@@ -222,26 +222,26 @@ int ompi_coll_portals4_iallreduce_intra(const void* sendbuf, void* recvbuf, int 
 int
 ompi_coll_portals4_iallreduce_intra_fini(struct ompi_coll_portals4_request_t *request);
 
-int ompi_coll_portals4_gather_intra(const void *sbuf, int scount, struct ompi_datatype_t *sdtype,
-                                    void *rbuf, int rcount, struct ompi_datatype_t *rdtype,
+int ompi_coll_portals4_gather_intra(const void *sbuf, size_t scount, struct ompi_datatype_t *sdtype,
+                                    void *rbuf, size_t rcount, struct ompi_datatype_t *rdtype,
                                     int root,
                                     struct ompi_communicator_t *comm,
                                     mca_coll_base_module_t *module);
-int ompi_coll_portals4_igather_intra(const void *sbuf, int scount, struct ompi_datatype_t *sdtype,
-                                     void *rbuf, int rcount, struct ompi_datatype_t *rdtype,
+int ompi_coll_portals4_igather_intra(const void *sbuf, size_t scount, struct ompi_datatype_t *sdtype,
+                                     void *rbuf, size_t rcount, struct ompi_datatype_t *rdtype,
                                      int root,
                                      struct ompi_communicator_t *comm,
                                      ompi_request_t **request,
                                      mca_coll_base_module_t *module);
 int ompi_coll_portals4_igather_intra_fini(struct ompi_coll_portals4_request_t *request);
 
-int ompi_coll_portals4_scatter_intra(const void *sbuf, int scount, struct ompi_datatype_t *sdtype,
-                                     void *rbuf, int rcount, struct ompi_datatype_t *rdtype,
+int ompi_coll_portals4_scatter_intra(const void *sbuf, size_t scount, struct ompi_datatype_t *sdtype,
+                                     void *rbuf, size_t rcount, struct ompi_datatype_t *rdtype,
                                      int root,
                                      struct ompi_communicator_t *comm,
                                      mca_coll_base_module_t *module);
-int ompi_coll_portals4_iscatter_intra(const void *sbuf, int scount, struct ompi_datatype_t *sdtype,
-                                      void *rbuf, int rcount, struct ompi_datatype_t *rdtype,
+int ompi_coll_portals4_iscatter_intra(const void *sbuf, size_t scount, struct ompi_datatype_t *sdtype,
+                                      void *rbuf, size_t rcount, struct ompi_datatype_t *rdtype,
                                       int root,
                                       struct ompi_communicator_t *comm,
                                       ompi_request_t **request,

@@ -10,4 +10,5 @@
 
 # Source code files
 headers += \
-	util/timings.h
+	util/timings.h \
+	util/count_disp_array.h

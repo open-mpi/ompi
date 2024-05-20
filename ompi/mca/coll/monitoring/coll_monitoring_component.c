@@ -20,6 +20,7 @@
 #include "ompi/constants.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/coll/coll.h"
+#include "ompi/mca/coll/base/base.h"
 #include "opal/mca/base/mca_base_component_repository.h"
 
 #define MONITORING_INSTALL_COLL_API(__module, __comm, __api)                                                                        \
