@@ -486,10 +486,10 @@ mca_coll_han_allgather_intra_dynamic(const void *sbuf, size_t scount,
  * The allgatherv size is the size of the biggest segment
  */
 int
-mca_coll_han_allgatherv_intra_dynamic(const void *sbuf, int scount,
+mca_coll_han_allgatherv_intra_dynamic(const void *sbuf, size_t scount,
                                       struct ompi_datatype_t *sdtype,
-                                      void *rbuf, const int *rcounts,
-                                      const int *displs,
+                                      void *rbuf, ompi_count_array_t rcounts,
+                                      ompi_disp_array_t displs,
                                       struct ompi_datatype_t *rdtype,
                                       struct ompi_communicator_t *comm,
                                       mca_coll_base_module_t *module)
@@ -506,8 +506,8 @@ mca_coll_han_allgatherv_intra_dynamic(const void *sbuf, int scount,
     ompi_datatype_type_size(rdtype, &dtype_size);
 
     for(i = 0; i < comm_size; i++) {
-        if(dtype_size * rcounts[i] > msg_size) {
-            msg_size = dtype_size * rcounts[i];
+        if(dtype_size * ompi_count_array_get(rcounts, i) > msg_size) {
+            msg_size = dtype_size * ompi_count_array_get(rcounts, i);
         }
     }
 
@@ -1055,8 +1055,8 @@ mca_coll_han_gather_intra_dynamic(const void *sbuf, size_t scount,
  * On the global communicator, calls the han collective implementation, or
  * calls the correct module if fallback mechanism is activated
  */
-int mca_coll_han_gatherv_intra_dynamic(const void *sbuf, int scount, struct ompi_datatype_t *sdtype,
-                                       void *rbuf, const int *rcounts, const int *displs,
+int mca_coll_han_gatherv_intra_dynamic(const void *sbuf, size_t scount, struct ompi_datatype_t *sdtype,
+                                       void *rbuf, ompi_count_array_t rcounts, ompi_disp_array_t displs,
                                        struct ompi_datatype_t *rdtype, int root,
                                        struct ompi_communicator_t *comm,
                                        mca_coll_base_module_t *module)
@@ -1407,9 +1407,9 @@ mca_coll_han_scatter_intra_dynamic(const void *sbuf, size_t scount,
  * calls the correct module if fallback mechanism is activated
  */
 int
-mca_coll_han_scatterv_intra_dynamic(const void *sbuf, const int *scounts,
-                                    const int *displs, struct ompi_datatype_t *sdtype,
-                                    void *rbuf, int rcount,
+mca_coll_han_scatterv_intra_dynamic(const void *sbuf, ompi_count_array_t scounts,
+                                    ompi_disp_array_t displs, struct ompi_datatype_t *sdtype,
+                                    void *rbuf, size_t rcount,
                                     struct ompi_datatype_t *rdtype, 
                                     int root,
                                     struct ompi_communicator_t *comm,

@@ -48,6 +48,8 @@ int MPI_Iscatterv(const void *sendbuf, const int sendcounts[], const int displs[
                   MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Request *request)
 {
     int i, size, err;
+    ompi_count_array_t sendcounts_desc;
+    ompi_disp_array_t displs_desc;
 
     SPC_RECORD(OMPI_SPC_ISCATTERV, 1);
 
@@ -202,7 +204,9 @@ int MPI_Iscatterv(const void *sendbuf, const int sendcounts[], const int displs[
     }
 
     /* Invoke the coll component to perform the back-end operation */
-    err = comm->c_coll->coll_iscatterv(updated_sendbuf, sendcounts, displs,
+    OMPI_COUNT_ARRAY_INIT(&sendcounts_desc, sendcounts);
+    OMPI_DISP_ARRAY_INIT(&displs_desc, displs);
+    err = comm->c_coll->coll_iscatterv(updated_sendbuf, sendcounts_desc, displs_desc,
                                        sendtype, updated_recvbuf, recvcount, recvtype, root, comm,
                                        request, comm->c_coll->coll_iscatterv_module);
     if (OPAL_LIKELY(OMPI_SUCCESS == err)) {

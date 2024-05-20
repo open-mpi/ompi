@@ -122,7 +122,7 @@ int ompi_coll_tuned_reduce_scatter_intra_check_forced_init (coll_tuned_force_alg
 }
 
 int ompi_coll_tuned_reduce_scatter_intra_do_this(const void *sbuf, void* rbuf,
-                                                 const int *rcounts,
+                                                 ompi_count_array_t rcounts,
                                                  struct ompi_datatype_t *dtype,
                                                  struct ompi_op_t *op,
                                                  struct ompi_communicator_t *comm,

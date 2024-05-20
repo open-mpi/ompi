@@ -41,16 +41,19 @@
  *	Returns:	- MPI_SUCCESS or error code
  */
 int
-mca_coll_inter_allgatherv_inter(const void *sbuf, int scount,
+mca_coll_inter_allgatherv_inter(const void *sbuf, size_t scount,
                                 struct ompi_datatype_t *sdtype,
-                                void *rbuf, const int *rcounts, const int *disps,
+                                void *rbuf, ompi_count_array_t rcounts, ompi_disp_array_t disps,
                                 struct ompi_datatype_t *rdtype,
                                 struct ompi_communicator_t *comm,
                                mca_coll_base_module_t *module)
 {
     int i, rank, size, size_local, err;
     size_t total = 0;
-    int *count=NULL,*displace=NULL;
+    size_t *count=NULL;
+    ptrdiff_t *displace=NULL;
+    ompi_count_array_t count_arg;
+    ompi_disp_array_t displace_arg;
     char *ptmp_free=NULL, *ptmp=NULL;
     ompi_datatype_t *ndtype = NULL;
 
@@ -59,18 +62,18 @@ mca_coll_inter_allgatherv_inter(const void *sbuf, int scount,
     size = ompi_comm_remote_size(comm);
 
     if (0 == rank) {
-	count = (int *)malloc(sizeof(int) * size_local);
-	displace = (int *)malloc(sizeof(int) * size_local);
+	count = (size_t *)malloc(sizeof(size_t) * size_local);
+	displace = (ptrdiff_t *)malloc(sizeof(ptrdiff_t) * size_local);
 	if ((NULL == count) || (NULL == displace)) {
             err = OMPI_ERR_OUT_OF_RESOURCE;
             goto exit;
 	}
     }
     /* Local gather to get the scount of each process */
-    err = comm->c_local_comm->c_coll->coll_gather(&scount, 1, MPI_INT,
-						 count, 1, MPI_INT,
-						 0, comm->c_local_comm,
-                                                 comm->c_local_comm->c_coll->coll_gather_module);
+    err = comm->c_local_comm->c_coll->coll_gather(&scount, sizeof(size_t), MPI_BYTE,
+                                                  count, sizeof(size_t), MPI_BYTE,
+                                                  0, comm->c_local_comm,
+                                                  comm->c_local_comm->c_coll->coll_gather_module);
     if (OMPI_SUCCESS != err) {
         goto exit;
     }
@@ -94,16 +97,31 @@ mca_coll_inter_allgatherv_inter(const void *sbuf, int scount,
             ptmp = ptmp_free - gap;
 	}
     }
+    OMPI_COUNT_ARRAY_INIT(&count_arg, count);
+    OMPI_DISP_ARRAY_INIT(&displace_arg, displace);
     err = comm->c_local_comm->c_coll->coll_gatherv(sbuf, scount, sdtype,
-						  ptmp, count, displace,
-						  sdtype,0, comm->c_local_comm,
-                                                  comm->c_local_comm->c_coll->coll_gatherv_module);
+                                                   ptmp, count_arg, displace_arg,
+                                                   sdtype,0, comm->c_local_comm,
+                                                   comm->c_local_comm->c_coll->coll_gatherv_module);
     if (OMPI_SUCCESS != err) {
         goto exit;
     }
 
-    ompi_datatype_create_indexed(size,rcounts,disps,rdtype,&ndtype);
+    /* TODO:BIGCOUNT: Remove tehese temporaries once ompi_datatype is updated for bigcount */
+    int *tmp_rcounts = malloc(sizeof(int) * size);
+    int *tmp_disps = malloc(sizeof(int) * size);
+    if (NULL == tmp_rcounts || NULL == tmp_disps) {
+        err = OMPI_ERR_OUT_OF_RESOURCE;
+        goto exit;
+    }
+    for (i = 0; i < size; ++i) {
+        tmp_rcounts[i] = (int) ompi_count_array_get(rcounts, i);
+        tmp_disps[i] = (int) ompi_disp_array_get(disps, i);
+    }
+    ompi_datatype_create_indexed(size,tmp_rcounts,tmp_disps,rdtype,&ndtype);
     ompi_datatype_commit(&ndtype);
+    free(tmp_rcounts);
+    free(tmp_disps);
 
     if (0 == rank) {
 	/* Exchange data between roots */

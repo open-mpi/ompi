@@ -10,8 +10,8 @@
 
 #include "coll_ucc_common.h"
 
-static inline ucc_status_t mca_coll_ucc_gatherv_init(const void *sbuf, int scount, struct ompi_datatype_t *sdtype,
-                                                     void *rbuf, const int *rcounts, const int *disps,
+static inline ucc_status_t mca_coll_ucc_gatherv_init(const void *sbuf, size_t scount, struct ompi_datatype_t *sdtype,
+                                                     void *rbuf, ompi_count_array_t rcounts, ompi_disp_array_t disps,
                                                      struct ompi_datatype_t *rdtype, int root,
                                                      mca_coll_ucc_module_t *ucc_module,
                                                      ucc_coll_req_h *req,
@@ -38,7 +38,11 @@ static inline ucc_status_t mca_coll_ucc_gatherv_init(const void *sbuf, int scoun
         }
     }
 
+    uint64_t flags = ompi_count_array_is_64bit(rcounts) ? UCC_COLL_ARGS_FLAG_COUNT_64BIT : 0;
+    flags |= ompi_disp_array_is_64bit(disps) ? UCC_COLL_ARGS_FLAG_DISPLACEMENTS_64BIT : 0;
+
     ucc_coll_args_t coll = {
+        .flags     = flags,
         .mask      = 0,
         .flags     = 0,
         .coll_type = UCC_COLL_TYPE_GATHERV,
@@ -51,8 +55,8 @@ static inline ucc_status_t mca_coll_ucc_gatherv_init(const void *sbuf, int scoun
         },
         .dst.info_v = {
             .buffer        = (void*)rbuf,
-            .counts        = (ucc_count_t*)rcounts,
-            .displacements = (ucc_aint_t*)disps,
+            .counts        = (ucc_count_t*)ompi_count_array_ptr(rcounts),
+            .displacements = (ucc_aint_t*)ompi_disp_array_ptr(disps),
             .datatype      = ucc_rdt,
             .mem_type      = UCC_MEMORY_TYPE_UNKNOWN
         },
@@ -60,7 +64,7 @@ static inline ucc_status_t mca_coll_ucc_gatherv_init(const void *sbuf, int scoun
 
     if (MPI_IN_PLACE == sbuf) {
         coll.mask |= UCC_COLL_ARGS_FIELD_FLAGS;
-        coll.flags = UCC_COLL_ARGS_FLAG_IN_PLACE;
+        coll.flags |= UCC_COLL_ARGS_FLAG_IN_PLACE;
     }
     COLL_UCC_REQ_INIT(coll_req, req, coll, ucc_module);
     return UCC_OK;
@@ -68,8 +72,8 @@ fallback:
     return UCC_ERR_NOT_SUPPORTED;
 }
 
-int mca_coll_ucc_gatherv(const void *sbuf, int scount, struct ompi_datatype_t *sdtype,
-                         void *rbuf, const int *rcounts, const int *disps,
+int mca_coll_ucc_gatherv(const void *sbuf, size_t scount, struct ompi_datatype_t *sdtype,
+                         void *rbuf, ompi_count_array_t rcounts, ompi_disp_array_t disps,
                          struct ompi_datatype_t *rdtype, int root,
                          struct ompi_communicator_t *comm,
                          mca_coll_base_module_t *module)
@@ -91,8 +95,8 @@ fallback:
                                         ucc_module->previous_gatherv_module);
 }
 
-int mca_coll_ucc_igatherv(const void *sbuf, int scount, struct ompi_datatype_t *sdtype,
-                          void *rbuf, const int *rcounts, const int *disps,
+int mca_coll_ucc_igatherv(const void *sbuf, size_t scount, struct ompi_datatype_t *sdtype,
+                          void *rbuf, ompi_count_array_t rcounts, ompi_disp_array_t disps,
                           struct ompi_datatype_t *rdtype, int root,
                           struct ompi_communicator_t *comm,
                           ompi_request_t** request,

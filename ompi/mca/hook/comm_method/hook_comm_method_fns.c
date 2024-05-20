@@ -543,6 +543,8 @@ ompi_report_comm_methods(int called_from_location)
 // the sizes first and allocate the receiving string.
     {
         int len, *lens, *disps;
+        ompi_count_array_t lens_desc;
+        ompi_disp_array_t disps_desc;
 
         // First get the array of host strings (host names and task lists) 
         // for all nodes.
@@ -570,16 +572,18 @@ ompi_report_comm_methods(int called_from_location)
                 allhoststrings[i] = p;
                 p += lens[i];
             }
+            OMPI_COUNT_ARRAY_INIT(&lens_desc, lens);
+            OMPI_DISP_ARRAY_INIT(&disps_desc, disps);
             leader_comm->c_coll->coll_gatherv(
                 hoststring, strlen(hoststring) + 1, MPI_CHAR,
-                &allhoststrings[0][0], lens, disps, MPI_CHAR,
+                &allhoststrings[0][0], lens_desc, disps_desc, MPI_CHAR,
                 0, leader_comm, leader_comm->c_coll->coll_gatherv_module);
         } else {
             // matching above call from rank 0, just &allhoststrings[0][0]
             // isn't legal here, and those args aren't used at non-root anyway
             leader_comm->c_coll->coll_gatherv(
                 hoststring, strlen(hoststring) + 1, MPI_CHAR,
-                NULL, NULL, NULL, MPI_CHAR,
+                NULL, 0, 0, MPI_CHAR,
                 0, leader_comm, leader_comm->c_coll->coll_gatherv_module);
         }
         if (myleaderrank == 0) {

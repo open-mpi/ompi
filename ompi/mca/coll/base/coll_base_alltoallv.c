@@ -50,7 +50,7 @@
  * and count) to send the data to the other.
  */
 int
-mca_coll_base_alltoallv_intra_basic_inplace(const void *rbuf, const int *rcounts, const int *rdisps,
+mca_coll_base_alltoallv_intra_basic_inplace(const void *rbuf, ompi_count_array_t rcounts, ompi_disp_array_t rdisps,
                                             struct ompi_datatype_t *rdtype,
                                             struct ompi_communicator_t *comm,
                                             mca_coll_base_module_t *module)
@@ -72,7 +72,7 @@ mca_coll_base_alltoallv_intra_basic_inplace(const void *rbuf, const int *rcounts
         if (i == rank) {
             continue;
         }
-        packed_size = rcounts[i] * type_size;
+        packed_size = ompi_count_array_get(rcounts, i) * type_size;
         max_size = opal_max(packed_size, max_size);
     }
 
@@ -111,11 +111,11 @@ mca_coll_base_alltoallv_intra_basic_inplace(const void *rbuf, const int *rcounts
         right = (rank + i) % size;
         left  = (rank + size - i) % size;
 
-        if( 0 != rcounts[right] ) {  /* nothing to exchange with the peer on the right */
+        if( 0 != ompi_count_array_get(rcounts, right) ) {  /* nothing to exchange with the peer on the right */
             ompi_proc_t *right_proc = ompi_comm_peer_lookup(comm, right);
             opal_convertor_clone(right_proc->super.proc_convertor, &convertor, 0);
-            opal_convertor_prepare_for_send(&convertor, &rdtype->super, rcounts[right],
-                                            (char *) rbuf + rdisps[right] * extent);
+            opal_convertor_prepare_for_send(&convertor, &rdtype->super, ompi_count_array_get(rcounts, right),
+                                            (char *) rbuf + ompi_disp_array_get(rdisps, right) * extent);
             packed_size = max_size;
             err = opal_convertor_pack(&convertor, &iov, &iov_count, &packed_size);
             if (1 != err) {
@@ -124,7 +124,8 @@ mca_coll_base_alltoallv_intra_basic_inplace(const void *rbuf, const int *rcounts
             }
 
             /* Receive data from the right */
-            err = MCA_PML_CALL(irecv ((char *) rbuf + rdisps[right] * extent, rcounts[right], rdtype,
+            err = MCA_PML_CALL(irecv ((char *) rbuf + ompi_disp_array_get(rdisps, right) * extent,
+                                      ompi_count_array_get(rcounts, right), rdtype,
                                       right, MCA_COLL_BASE_TAG_ALLTOALLV, comm, &req));
             if (MPI_SUCCESS != err) {
                 line = __LINE__;
@@ -132,9 +133,10 @@ mca_coll_base_alltoallv_intra_basic_inplace(const void *rbuf, const int *rcounts
             }
         }
 
-        if( (left != right) && (0 != rcounts[left]) ) {
+        if( (left != right) && (0 != ompi_count_array_get(rcounts, left)) ) {
             /* Send data to the left */
-            err = MCA_PML_CALL(send ((char *) rbuf + rdisps[left] * extent, rcounts[left], rdtype,
+            err = MCA_PML_CALL(send ((char *) rbuf + ompi_disp_array_get(rdisps, left) * extent,
+                                     ompi_count_array_get(rcounts, left), rdtype,
                                      left, MCA_COLL_BASE_TAG_ALLTOALLV, MCA_PML_BASE_SEND_STANDARD,
                                      comm));
             if (MPI_SUCCESS != err) {
@@ -149,7 +151,8 @@ mca_coll_base_alltoallv_intra_basic_inplace(const void *rbuf, const int *rcounts
              }
 
             /* Receive data from the left */
-            err = MCA_PML_CALL(irecv ((char *) rbuf + rdisps[left] * extent, rcounts[left], rdtype,
+            err = MCA_PML_CALL(irecv ((char *) rbuf + ompi_disp_array_get(rdisps, left) * extent,
+                                      ompi_count_array_get(rcounts, left), rdtype,
                                       left, MCA_COLL_BASE_TAG_ALLTOALLV, comm, &req));
             if (MPI_SUCCESS != err) {
                 line = __LINE__;
@@ -157,7 +160,7 @@ mca_coll_base_alltoallv_intra_basic_inplace(const void *rbuf, const int *rcounts
             }
         }
 
-        if( 0 != rcounts[right] ) {  /* nothing to exchange with the peer on the right */
+        if( 0 != ompi_count_array_get(rcounts, right) ) {  /* nothing to exchange with the peer on the right */
             /* Send data to the right */
             err = MCA_PML_CALL(send ((char *) tmp_buffer,  packed_size, MPI_PACKED,
                                      right, MCA_COLL_BASE_TAG_ALLTOALLV, MCA_PML_BASE_SEND_STANDARD,
@@ -191,9 +194,9 @@ mca_coll_base_alltoallv_intra_basic_inplace(const void *rbuf, const int *rcounts
 }
 
 int
-ompi_coll_base_alltoallv_intra_pairwise(const void *sbuf, const int *scounts, const int *sdisps,
+ompi_coll_base_alltoallv_intra_pairwise(const void *sbuf, ompi_count_array_t scounts, ompi_disp_array_t sdisps,
                                          struct ompi_datatype_t *sdtype,
-                                         void* rbuf, const int *rcounts, const int *rdisps,
+                                         void* rbuf, ompi_count_array_t rcounts, ompi_disp_array_t rdisps,
                                          struct ompi_datatype_t *rdtype,
                                          struct ompi_communicator_t *comm,
                                          mca_coll_base_module_t *module)
@@ -230,12 +233,12 @@ ompi_coll_base_alltoallv_intra_pairwise(const void *sbuf, const int *scounts, co
         recvfrom = (rank + size - step) % size;
 
         /* Determine sending and receiving locations */
-        psnd = (char*)sbuf + (ptrdiff_t)sdisps[sendto] * sext;
-        prcv = (char*)rbuf + (ptrdiff_t)rdisps[recvfrom] * rext;
+        psnd = (char*)sbuf + ompi_disp_array_get(sdisps, sendto) * sext;
+        prcv = (char*)rbuf + ompi_disp_array_get(rdisps, recvfrom) * rext;
 
         /* send and receive */
-        if (0 < rcounts[recvfrom] && 0 < rdtype_size) {
-            err = MCA_PML_CALL(irecv(prcv, rcounts[recvfrom], rdtype, recvfrom,
+        if (0 < ompi_count_array_get(rcounts, recvfrom) && 0 < rdtype_size) {
+            err = MCA_PML_CALL(irecv(prcv, ompi_count_array_get(rcounts, recvfrom), rdtype, recvfrom,
                                      MCA_COLL_BASE_TAG_ALLTOALLV, comm, &req));
             if (MPI_SUCCESS != err) {
                 line = __LINE__;
@@ -243,8 +246,8 @@ ompi_coll_base_alltoallv_intra_pairwise(const void *sbuf, const int *scounts, co
             }
         }
 
-        if (0 < scounts[sendto] && 0 < sdtype_size) {
-            err = MCA_PML_CALL(send(psnd, scounts[sendto], sdtype, sendto,
+        if (0 < ompi_count_array_get(scounts, sendto) && 0 < sdtype_size) {
+            err = MCA_PML_CALL(send(psnd, ompi_count_array_get(scounts, sendto), sdtype, sendto,
                                     MCA_COLL_BASE_TAG_ALLTOALLV, MCA_PML_BASE_SEND_STANDARD, comm));
             if (MPI_SUCCESS != err) {
                 line = __LINE__;
@@ -280,9 +283,9 @@ ompi_coll_base_alltoallv_intra_pairwise(const void *sbuf, const int *scounts, co
  * differently and so will not have to duplicate code.
  */
 int
-ompi_coll_base_alltoallv_intra_basic_linear(const void *sbuf, const int *scounts, const int *sdisps,
+ompi_coll_base_alltoallv_intra_basic_linear(const void *sbuf, ompi_count_array_t scounts, ompi_disp_array_t sdisps,
                                             struct ompi_datatype_t *sdtype,
-                                            void *rbuf, const int *rcounts, const int *rdisps,
+                                            void *rbuf, ompi_count_array_t rcounts, ompi_disp_array_t rdisps,
                                             struct ompi_datatype_t *rdtype,
                                             struct ompi_communicator_t *comm,
                                             mca_coll_base_module_t *module)
@@ -313,11 +316,11 @@ ompi_coll_base_alltoallv_intra_basic_linear(const void *sbuf, const int *scounts
     ompi_datatype_type_extent(rdtype, &rext);
 
     /* Simple optimization - handle send to self first */
-    psnd = ((char *) sbuf) + (ptrdiff_t)sdisps[rank] * sext;
-    prcv = ((char *) rbuf) + (ptrdiff_t)rdisps[rank] * rext;
-    if (0 < scounts[rank] && 0 < sdtype_size) {
-        err = ompi_datatype_sndrcv(psnd, scounts[rank], sdtype,
-                              prcv, rcounts[rank], rdtype);
+    psnd = ((char *) sbuf) + ompi_disp_array_get(sdisps, rank) * sext;
+    prcv = ((char *) rbuf) + ompi_disp_array_get(rdisps, rank) * rext;
+    if (0 < ompi_count_array_get(scounts, rank) && 0 < sdtype_size) {
+        err = ompi_datatype_sndrcv(psnd, ompi_count_array_get(scounts, rank), sdtype,
+                              prcv, ompi_count_array_get(rcounts, rank), rdtype);
         if (MPI_SUCCESS != err) {
             return err;
         }
@@ -339,10 +342,10 @@ ompi_coll_base_alltoallv_intra_basic_linear(const void *sbuf, const int *scounts
             continue;
         }
 
-        if (0 < rcounts[i] && 0 < rdtype_size) {
+        if (0 < ompi_count_array_get(rcounts, i) && 0 < rdtype_size) {
             ++nreqs;
-            prcv = ((char *) rbuf) + (ptrdiff_t)rdisps[i] * rext;
-            err = MCA_PML_CALL(irecv_init(prcv, rcounts[i], rdtype,
+            prcv = ((char *) rbuf) + ompi_disp_array_get(rdisps, i) * rext;
+            err = MCA_PML_CALL(irecv_init(prcv, ompi_count_array_get(rcounts, i), rdtype,
                                           i, MCA_COLL_BASE_TAG_ALLTOALLV, comm,
                                           preq++));
             if (MPI_SUCCESS != err) { goto err_hndl; }
@@ -355,10 +358,10 @@ ompi_coll_base_alltoallv_intra_basic_linear(const void *sbuf, const int *scounts
             continue;
         }
 
-        if (0 < scounts[i] && 0 < sdtype_size) {
+        if (0 < ompi_count_array_get(scounts, i) && 0 < sdtype_size) {
             ++nreqs;
-            psnd = ((char *) sbuf) + (ptrdiff_t)sdisps[i] * sext;
-            err = MCA_PML_CALL(isend_init(psnd, scounts[i], sdtype,
+            psnd = ((char *) sbuf) + ompi_disp_array_get(sdisps, i) * sext;
+            err = MCA_PML_CALL(isend_init(psnd, ompi_count_array_get(scounts, i), sdtype,
                                          i, MCA_COLL_BASE_TAG_ALLTOALLV,
                                          MCA_PML_BASE_SEND_STANDARD, comm,
                                          preq++));

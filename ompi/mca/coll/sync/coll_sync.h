@@ -67,9 +67,9 @@ int mca_coll_sync_gather(const void *sbuf, size_t scount,
                          struct ompi_communicator_t *comm,
                          mca_coll_base_module_t *module);
 
-int mca_coll_sync_gatherv(const void *sbuf, int scount,
+int mca_coll_sync_gatherv(const void *sbuf, size_t scount,
                           struct ompi_datatype_t *sdtype,
-                          void *rbuf, const int *rcounts, const int *disps,
+                          void *rbuf, ompi_count_array_t rcounts, ompi_disp_array_t disps,
                           struct ompi_datatype_t *rdtype,
                           int root,
                           struct ompi_communicator_t *comm,
@@ -83,7 +83,7 @@ int mca_coll_sync_reduce(const void *sbuf, void *rbuf, size_t count,
                          mca_coll_base_module_t *module);
 
 int mca_coll_sync_reduce_scatter(const void *sbuf, void *rbuf,
-                                 const int *rcounts,
+                                 ompi_count_array_t rcounts,
                                  struct ompi_datatype_t *dtype,
                                  struct ompi_op_t *op,
                                  struct ompi_communicator_t *comm,
@@ -103,9 +103,9 @@ int mca_coll_sync_scatter(const void *sbuf, size_t scount,
                           struct ompi_communicator_t *comm,
                           mca_coll_base_module_t *module);
 
-int mca_coll_sync_scatterv(const void *sbuf, const int *scounts, const int *disps,
+int mca_coll_sync_scatterv(const void *sbuf, ompi_count_array_t scounts, ompi_disp_array_t disps,
                            struct ompi_datatype_t *sdtype,
-                           void *rbuf, int rcount,
+                           void *rbuf, size_t rcount,
                            struct ompi_datatype_t *rdtype,
                            int root,
                            struct ompi_communicator_t *comm,

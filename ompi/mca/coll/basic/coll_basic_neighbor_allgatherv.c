@@ -37,8 +37,8 @@
 #include "ompi/mca/topo/base/base.h"
 
 static int
-mca_coll_basic_neighbor_allgatherv_cart(const void *sbuf, int scount, struct ompi_datatype_t *sdtype,
-                                        void *rbuf, const int rcounts[], const int disps[],
+mca_coll_basic_neighbor_allgatherv_cart(const void *sbuf, size_t scount, struct ompi_datatype_t *sdtype,
+                                        void *rbuf, ompi_count_array_t rcounts, ompi_disp_array_t disps,
                                         struct ompi_datatype_t *rdtype, struct ompi_communicator_t *comm,
                                         mca_coll_base_module_t *module)
 {
@@ -68,7 +68,8 @@ mca_coll_basic_neighbor_allgatherv_cart(const void *sbuf, int scount, struct omp
 
         if (MPI_PROC_NULL != srank) {
             nreqs++;
-            rc = MCA_PML_CALL(irecv((char *) rbuf + disps[i] * extent, rcounts[i], rdtype, srank,
+            rc = MCA_PML_CALL(irecv((char *) rbuf + ompi_disp_array_get(disps, i) * extent,
+                                    ompi_count_array_get(rcounts, i), rdtype, srank,
                                     MCA_COLL_BASE_TAG_NEIGHBOR_BASE - 2 * dim, comm, preqs++));
             if (OMPI_SUCCESS != rc) break;
 
@@ -83,7 +84,8 @@ mca_coll_basic_neighbor_allgatherv_cart(const void *sbuf, int scount, struct omp
 
         if (MPI_PROC_NULL != drank) {
             nreqs++;
-            rc = MCA_PML_CALL(irecv((char *) rbuf + disps[i+1] * extent, rcounts[i+1], rdtype, drank,
+            rc = MCA_PML_CALL(irecv((char *) rbuf + ompi_disp_array_get(disps, i+1) * extent,
+                                    ompi_count_array_get(rcounts, i+1), rdtype, drank,
                                     MCA_COLL_BASE_TAG_NEIGHBOR_BASE - 2 * dim - 1, comm, preqs++));
             if (OMPI_SUCCESS != rc) break;
 
@@ -108,8 +110,8 @@ mca_coll_basic_neighbor_allgatherv_cart(const void *sbuf, int scount, struct omp
 }
 
 static int
-mca_coll_basic_neighbor_allgatherv_graph(const void *sbuf, int scount, struct ompi_datatype_t *sdtype,
-                                         void *rbuf, const int rcounts[], const int disps[],
+mca_coll_basic_neighbor_allgatherv_graph(const void *sbuf, size_t scount, struct ompi_datatype_t *sdtype,
+                                         void *rbuf, ompi_count_array_t rcounts, ompi_disp_array_t disps,
                                          struct ompi_datatype_t *rdtype, struct ompi_communicator_t *comm,
                                          mca_coll_base_module_t *module)
 {
@@ -133,7 +135,7 @@ mca_coll_basic_neighbor_allgatherv_graph(const void *sbuf, int scount, struct om
     if( NULL == reqs ) { return OMPI_ERR_OUT_OF_RESOURCE; }
 
     for (neighbor = 0; neighbor < degree ; ++neighbor) {
-        rc = MCA_PML_CALL(irecv((char *) rbuf + disps[neighbor] * extent, rcounts[neighbor],
+        rc = MCA_PML_CALL(irecv((char *) rbuf + ompi_disp_array_get(disps, neighbor) * extent, ompi_count_array_get(rcounts, neighbor),
                                 rdtype, edges[neighbor], MCA_COLL_BASE_TAG_ALLGATHER, comm, preqs++));
         if (OMPI_SUCCESS != rc) break;
 
@@ -158,8 +160,8 @@ mca_coll_basic_neighbor_allgatherv_graph(const void *sbuf, int scount, struct om
 }
 
 static int
-mca_coll_basic_neighbor_allgatherv_dist_graph(const void *sbuf, int scount, struct ompi_datatype_t *sdtype,
-                                              void *rbuf, const int rcounts[], const int disps[],
+mca_coll_basic_neighbor_allgatherv_dist_graph(const void *sbuf, size_t scount, struct ompi_datatype_t *sdtype,
+                                              void *rbuf, ompi_count_array_t rcounts, ompi_disp_array_t disps,
                                               struct ompi_datatype_t *rdtype, struct ompi_communicator_t *comm,
                                               mca_coll_base_module_t *module)
 {
@@ -182,7 +184,7 @@ mca_coll_basic_neighbor_allgatherv_dist_graph(const void *sbuf, int scount, stru
     if( NULL == reqs ) { return OMPI_ERR_OUT_OF_RESOURCE; }
 
     for (neighbor = 0; neighbor < indegree ; ++neighbor) {
-        rc = MCA_PML_CALL(irecv((char *) rbuf + disps[neighbor] * extent, rcounts[neighbor], rdtype,
+        rc = MCA_PML_CALL(irecv((char *) rbuf + ompi_disp_array_get(disps, neighbor) * extent, ompi_count_array_get(rcounts, neighbor), rdtype,
                                 inedges[neighbor], MCA_COLL_BASE_TAG_ALLGATHER, comm, preqs++));
         if (OMPI_SUCCESS != rc) break;
     }
@@ -213,8 +215,9 @@ mca_coll_basic_neighbor_allgatherv_dist_graph(const void *sbuf, int scount, stru
     return rc;
 }
 
-int mca_coll_basic_neighbor_allgatherv(const void *sbuf, int scount, struct ompi_datatype_t *sdtype,
-                                       void *rbuf, const int rcounts[], const int disps[], struct ompi_datatype_t *rdtype,
+int mca_coll_basic_neighbor_allgatherv(const void *sbuf, size_t scount, struct ompi_datatype_t *sdtype,
+                                       void *rbuf, ompi_count_array_t rcounts, ompi_disp_array_t disps,
+                                       struct ompi_datatype_t *rdtype,
                                        struct ompi_communicator_t *comm, mca_coll_base_module_t *module)
 {
     if (OMPI_COMM_IS_INTER(comm)) {

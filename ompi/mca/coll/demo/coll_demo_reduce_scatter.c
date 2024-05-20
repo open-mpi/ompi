@@ -34,7 +34,7 @@
  *	Accepts:	- same as MPI_Reduce_scatter()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int mca_coll_demo_reduce_scatter_intra(const void *sbuf, void *rbuf, const int *rcounts,
+int mca_coll_demo_reduce_scatter_intra(const void *sbuf, void *rbuf, ompi_count_array_t rcounts,
                                        struct ompi_datatype_t *dtype,
                                        struct ompi_op_t *op,
                                        struct ompi_communicator_t *comm,
@@ -55,7 +55,7 @@ int mca_coll_demo_reduce_scatter_intra(const void *sbuf, void *rbuf, const int *
  *	Accepts:	- same arguments as MPI_Reduce_scatter()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int mca_coll_demo_reduce_scatter_inter(const void *sbuf, void *rbuf, const int *rcounts,
+int mca_coll_demo_reduce_scatter_inter(const void *sbuf, void *rbuf, ompi_count_array_t rcounts,
                                        struct ompi_datatype_t *dtype,
                                        struct ompi_op_t *op,
                                        struct ompi_communicator_t *comm,

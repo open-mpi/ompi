@@ -69,27 +69,27 @@ typedef enum COLLTYPE {
 
 /* defined arg lists to simply auto inclusion of user overriding decision functions */
 #define ALLGATHER_BASE_ARGS           const void *sendbuf, size_t sendcount, struct ompi_datatype_t *sendtype, void *recvbuf, size_t recvcount, struct ompi_datatype_t *recvtype, struct ompi_communicator_t *comm
-#define ALLGATHERV_BASE_ARGS          const void *sendbuf, int sendcount, struct ompi_datatype_t *sendtype, void *recvbuf, const int recvcounts[], const int displs[], struct ompi_datatype_t *recvtype, struct ompi_communicator_t *comm
+#define ALLGATHERV_BASE_ARGS          const void *sendbuf, size_t sendcount, struct ompi_datatype_t *sendtype, void *recvbuf, ompi_count_array_t recvcounts, ompi_disp_array_t displs, struct ompi_datatype_t *recvtype, struct ompi_communicator_t *comm
 #define ALLREDUCE_BASE_ARGS           const void *sendbuf, void *recvbuf, size_t count, struct ompi_datatype_t *datatype, struct ompi_op_t *op, struct ompi_communicator_t *comm
 #define ALLTOALL_BASE_ARGS            const void *sendbuf, size_t sendcount, struct ompi_datatype_t *sendtype, void *recvbuf, size_t recvcount, struct ompi_datatype_t *recvtype, struct ompi_communicator_t *comm
-#define ALLTOALLV_BASE_ARGS           const void *sendbuf, const int sendcounts[], const int sdispls[], struct ompi_datatype_t *sendtype, void *recvbuf, const int recvcounts[], const int rdispls[], struct ompi_datatype_t *recvtype, struct ompi_communicator_t *comm
-#define ALLTOALLW_BASE_ARGS           const void *sendbuf, const int sendcounts[], const int sdispls[], struct ompi_datatype_t * const sendtypes[], void *recvbuf, const int recvcounts[], const int rdispls[], struct ompi_datatype_t * const recvtypes[], struct ompi_communicator_t *comm
+#define ALLTOALLV_BASE_ARGS           const void *sendbuf, ompi_count_array_t sendcounts, ompi_disp_array_t sdispls, struct ompi_datatype_t *sendtype, void *recvbuf, ompi_count_array_t recvcounts, ompi_disp_array_t rdispls, struct ompi_datatype_t *recvtype, struct ompi_communicator_t *comm
+#define ALLTOALLW_BASE_ARGS           const void *sendbuf, ompi_count_array_t sendcounts, ompi_disp_array_t sdispls, struct ompi_datatype_t * const sendtypes[], void *recvbuf, ompi_count_array_t recvcounts, ompi_disp_array_t rdispls, struct ompi_datatype_t * const recvtypes[], struct ompi_communicator_t *comm
 #define BARRIER_BASE_ARGS             struct ompi_communicator_t *comm
 #define BCAST_BASE_ARGS               void *buffer, size_t count, struct ompi_datatype_t *datatype, int root, struct ompi_communicator_t *comm
 #define EXSCAN_BASE_ARGS              const void *sendbuf, void *recvbuf, size_t count, struct ompi_datatype_t *datatype, struct ompi_op_t *op, struct ompi_communicator_t *comm
 #define GATHER_BASE_ARGS              const void *sendbuf, size_t sendcount, struct ompi_datatype_t *sendtype, void *recvbuf, size_t recvcount, struct ompi_datatype_t *recvtype, int root, struct ompi_communicator_t *comm
-#define GATHERV_BASE_ARGS             const void *sendbuf, int sendcount, struct ompi_datatype_t *sendtype, void *recvbuf, const int recvcounts[], const int displs[], struct ompi_datatype_t *recvtype, int root, struct ompi_communicator_t *comm
+#define GATHERV_BASE_ARGS             const void *sendbuf, size_t sendcount, struct ompi_datatype_t *sendtype, void *recvbuf, ompi_count_array_t recvcounts, ompi_disp_array_t displs, struct ompi_datatype_t *recvtype, int root, struct ompi_communicator_t *comm
 #define REDUCE_BASE_ARGS              const void *sendbuf, void *recvbuf, size_t count, struct ompi_datatype_t *datatype, struct ompi_op_t *op, int root, struct ompi_communicator_t *comm
-#define REDUCESCATTER_BASE_ARGS       const void *sendbuf, void *recvbuf, const int recvcounts[], struct ompi_datatype_t *datatype, struct ompi_op_t *op, struct ompi_communicator_t *comm
+#define REDUCESCATTER_BASE_ARGS       const void *sendbuf, void *recvbuf, ompi_count_array_t recvcounts, struct ompi_datatype_t *datatype, struct ompi_op_t *op, struct ompi_communicator_t *comm
 #define REDUCESCATTERBLOCK_BASE_ARGS  const void *sendbuf, void *recvbuf, size_t recvcount, struct ompi_datatype_t *datatype, struct ompi_op_t *op, struct ompi_communicator_t *comm
 #define SCAN_BASE_ARGS                const void *sendbuf, void *recvbuf, size_t count, struct ompi_datatype_t *datatype, struct ompi_op_t *op, struct ompi_communicator_t *comm
 #define SCATTER_BASE_ARGS             const void *sendbuf, size_t sendcount, struct ompi_datatype_t *sendtype, void *recvbuf, size_t recvcount, struct ompi_datatype_t *recvtype, int root, struct ompi_communicator_t *comm
-#define SCATTERV_BASE_ARGS            const void *sendbuf, const int sendcounts[], const int displs[], struct ompi_datatype_t *sendtype, void *recvbuf, int recvcount, struct ompi_datatype_t *recvtype, int root, struct ompi_communicator_t *comm
+#define SCATTERV_BASE_ARGS            const void *sendbuf, ompi_count_array_t sendcounts, ompi_disp_array_t displs, struct ompi_datatype_t *sendtype, void *recvbuf, size_t recvcount, struct ompi_datatype_t *recvtype, int root, struct ompi_communicator_t *comm
 #define NEIGHBOR_ALLGATHER_BASE_ARGS  const void *sendbuf, size_t sendcount, struct ompi_datatype_t *sendtype, void *recvbuf, size_t recvcount, struct ompi_datatype_t *recvtype, struct ompi_communicator_t *comm
-#define NEIGHBOR_ALLGATHERV_BASE_ARGS const void *sendbuf, int sendcount, struct ompi_datatype_t *sendtype, void *recvbuf, const int recvcounts[], const int displs[], struct ompi_datatype_t *recvtype, struct ompi_communicator_t *comm
+#define NEIGHBOR_ALLGATHERV_BASE_ARGS const void *sendbuf, size_t sendcount, struct ompi_datatype_t *sendtype, void *recvbuf, ompi_count_array_t recvcounts, ompi_disp_array_t displs, struct ompi_datatype_t *recvtype, struct ompi_communicator_t *comm
 #define NEIGHBOR_ALLTOALL_BASE_ARGS   const void *sendbuf, size_t sendcount, struct ompi_datatype_t *sendtype, void *recvbuf, size_t recvcount, struct ompi_datatype_t *recvtype, struct ompi_communicator_t *comm
-#define NEIGHBOR_ALLTOALLV_BASE_ARGS  const void *sendbuf, const int sendcounts[], const int sdispls[], struct ompi_datatype_t *sendtype, void *recvbuf, const int recvcounts[], const int rdispls[], struct ompi_datatype_t *recvtype, struct ompi_communicator_t *comm
-#define NEIGHBOR_ALLTOALLW_BASE_ARGS  const void *sendbuf, const int sendcounts[], const MPI_Aint sdispls[], struct ompi_datatype_t * const sendtypes[], void *recvbuf, const int recvcounts[], const MPI_Aint rdispls[], struct ompi_datatype_t * const recvtypes[], struct ompi_communicator_t *comm
+#define NEIGHBOR_ALLTOALLV_BASE_ARGS  const void *sendbuf, ompi_count_array_t sendcounts, ompi_disp_array_t sdispls, struct ompi_datatype_t *sendtype, void *recvbuf, ompi_count_array_t recvcounts, ompi_disp_array_t rdispls, struct ompi_datatype_t *recvtype, struct ompi_communicator_t *comm
+#define NEIGHBOR_ALLTOALLW_BASE_ARGS  const void *sendbuf, ompi_count_array_t sendcounts, ompi_disp_array_t sdispls, struct ompi_datatype_t * const sendtypes[], void *recvbuf, ompi_count_array_t recvcounts, ompi_disp_array_t rdispls, struct ompi_datatype_t * const recvtypes[], struct ompi_communicator_t *comm
 
 #define ALLGATHER_ARGS           ALLGATHER_BASE_ARGS,           mca_coll_base_module_t *module
 #define ALLGATHERV_ARGS          ALLGATHERV_BASE_ARGS,          mca_coll_base_module_t *module
@@ -227,7 +227,7 @@ int mca_coll_base_alltoall_intra_basic_inplace(const void *rbuf, size_t rcount,
 /* AlltoAllV */
 int ompi_coll_base_alltoallv_intra_pairwise(ALLTOALLV_ARGS);
 int ompi_coll_base_alltoallv_intra_basic_linear(ALLTOALLV_ARGS);
-int mca_coll_base_alltoallv_intra_basic_inplace(const void *rbuf, const int *rcounts, const int *rdisps,
+int mca_coll_base_alltoallv_intra_basic_inplace(const void *rbuf, ompi_count_array_t rcounts, ompi_disp_array_t rdisps,
                                                 struct ompi_datatype_t *rdtype,
                                                 struct ompi_communicator_t *comm,
                                                 mca_coll_base_module_t *module);  /* special version for INPLACE */

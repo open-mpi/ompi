@@ -30,7 +30,7 @@
  *	Accepts:	- same as MPI_Reduce_scatter()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int mca_coll_sync_reduce_scatter(const void *sbuf, void *rbuf, const int *rcounts,
+int mca_coll_sync_reduce_scatter(const void *sbuf, void *rbuf, ompi_count_array_t rcounts,
                                  struct ompi_datatype_t *dtype,
                                  struct ompi_op_t *op,
                                  struct ompi_communicator_t *comm,

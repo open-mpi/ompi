@@ -16,11 +16,11 @@
 #include "ompi/mca/topo/base/base.h"
 #include "coll_monitoring.h"
 
-int mca_coll_monitoring_neighbor_alltoallw(const void *sbuf, const int *scounts,
-                                           const MPI_Aint *sdisps,
+int mca_coll_monitoring_neighbor_alltoallw(const void *sbuf, ompi_count_array_t scounts,
+                                           ompi_disp_array_t sdisps,
                                            struct ompi_datatype_t * const *sdtypes,
-                                           void *rbuf, const int *rcounts,
-                                           const MPI_Aint *rdisps,
+                                           void *rbuf, ompi_count_array_t rcounts,
+                                           ompi_disp_array_t rdisps,
                                            struct ompi_datatype_t * const *rdtypes,
                                            struct ompi_communicator_t *comm,
                                            mca_coll_base_module_t *module)
@@ -42,7 +42,7 @@ int mca_coll_monitoring_neighbor_alltoallw(const void *sbuf, const int *scounts,
 
         if (MPI_PROC_NULL != srank) {
             ompi_datatype_type_size(sdtypes[i], &type_size);
-            data_size = scounts[i] * type_size;
+            data_size = ompi_count_array_get(scounts, i) * type_size;
             /**
              * If this fails the destination is not part of my MPI_COM_WORLD
              * Lookup its name in the rank hashtable to get its MPI_COMM_WORLD rank
@@ -56,7 +56,7 @@ int mca_coll_monitoring_neighbor_alltoallw(const void *sbuf, const int *scounts,
 
         if (MPI_PROC_NULL != drank) {
             ompi_datatype_type_size(sdtypes[i], &type_size);
-            data_size = scounts[i] * type_size;
+            data_size = ompi_count_array_get(scounts, i) * type_size;
             /**
              * If this fails the destination is not part of my MPI_COM_WORLD
              * Lookup its name in the rank hashtable to get its MPI_COMM_WORLD rank
@@ -74,11 +74,11 @@ int mca_coll_monitoring_neighbor_alltoallw(const void *sbuf, const int *scounts,
     return monitoring_module->real.coll_neighbor_alltoallw(sbuf, scounts, sdisps, sdtypes, rbuf, rcounts, rdisps, rdtypes, comm, monitoring_module->real.coll_neighbor_alltoallw_module);
 }
 
-int mca_coll_monitoring_ineighbor_alltoallw(const void *sbuf, const int *scounts,
-                                            const MPI_Aint *sdisps,
+int mca_coll_monitoring_ineighbor_alltoallw(const void *sbuf, ompi_count_array_t scounts,
+                                            ompi_disp_array_t sdisps,
                                             struct ompi_datatype_t * const *sdtypes,
-                                            void *rbuf, const int *rcounts,
-                                            const MPI_Aint *rdisps,
+                                            void *rbuf, ompi_count_array_t rcounts,
+                                            ompi_disp_array_t rdisps,
                                             struct ompi_datatype_t * const *rdtypes,
                                             struct ompi_communicator_t *comm,
                                             ompi_request_t ** request,
@@ -101,7 +101,7 @@ int mca_coll_monitoring_ineighbor_alltoallw(const void *sbuf, const int *scounts
 
         if (MPI_PROC_NULL != srank) {
             ompi_datatype_type_size(sdtypes[i], &type_size);
-            data_size = scounts[i] * type_size;
+            data_size = ompi_count_array_get(scounts, i) * type_size;
             /**
              * If this fails the destination is not part of my MPI_COM_WORLD
              * Lookup its name in the rank hashtable to get its MPI_COMM_WORLD rank
@@ -115,7 +115,7 @@ int mca_coll_monitoring_ineighbor_alltoallw(const void *sbuf, const int *scounts
 
         if (MPI_PROC_NULL != drank) {
             ompi_datatype_type_size(sdtypes[i], &type_size);
-            data_size = scounts[i] * type_size;
+            data_size = ompi_count_array_get(scounts, i) * type_size;
             /**
              * If this fails the destination is not part of my MPI_COM_WORLD
              * Lookup its name in the rank hashtable to get its MPI_COMM_WORLD rank

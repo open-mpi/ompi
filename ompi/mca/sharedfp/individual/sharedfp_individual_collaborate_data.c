@@ -44,6 +44,8 @@ int mca_sharedfp_individual_collaborate_data(struct mca_sharedfp_base_data_t *sh
     OMPI_MPI_OFFSET_TYPE *offsetbuff = NULL;
     int *countbuff = NULL;
     int *displ = NULL;
+    ompi_count_array_t countbuff_desc;
+    ompi_disp_array_t displ_desc;
     double *ind_ts = NULL;
     long *ind_recordlength = NULL;
     OMPI_MPI_OFFSET_TYPE *local_off = NULL;
@@ -142,12 +144,15 @@ int mca_sharedfp_individual_collaborate_data(struct mca_sharedfp_base_data_t *sh
 	goto exit;
     }
 
+    OMPI_COUNT_ARRAY_INIT(&countbuff_desc, countbuff);
+    OMPI_DISP_ARRAY_INIT(&displ_desc, displ);
+
     ret = ompio_fh->f_comm->c_coll->coll_allgatherv ( ind_ts, 
                                                       countbuff[ompio_fh->f_rank], 
                                                       MPI_DOUBLE,
                                                       timestampbuff, 
-                                                      countbuff, 
-                                                      displ, 
+                                                      countbuff_desc,
+                                                      displ_desc,
                                                       MPI_DOUBLE,
                                                       ompio_fh->f_comm, 
                                                       ompio_fh->f_comm->c_coll->coll_allgatherv_module );
@@ -159,8 +164,8 @@ int mca_sharedfp_individual_collaborate_data(struct mca_sharedfp_base_data_t *sh
                                                       countbuff[ompio_fh->f_rank], 
                                                       OMPI_OFFSET_DATATYPE,
                                                       offsetbuff, 
-                                                      countbuff, 
-                                                      displ, 
+                                                      countbuff_desc,
+                                                      displ_desc,
                                                       OMPI_OFFSET_DATATYPE,
                                                       ompio_fh->f_comm, 
                                                       ompio_fh->f_comm->c_coll->coll_allgatherv_module );

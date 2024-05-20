@@ -48,6 +48,8 @@ int MPI_Igatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
                  MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Request *request)
 {
     int i, size, err;
+    ompi_count_array_t recvcounts_desc;
+    ompi_disp_array_t displs_desc;
 
     SPC_RECORD(OMPI_SPC_IGATHERV, 1);
 
@@ -199,8 +201,10 @@ int MPI_Igatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
     }
 
     /* Invoke the coll component to perform the back-end operation */
+    OMPI_COUNT_ARRAY_INIT(&recvcounts_desc, recvcounts);
+    OMPI_DISP_ARRAY_INIT(&displs_desc, displs);
     err = comm->c_coll->coll_igatherv(sendbuf, sendcount, sendtype, updated_recvbuf,
-                                     recvcounts, displs, recvtype,
+                                     recvcounts_desc, displs_desc, recvtype,
                                      root, comm, request, comm->c_coll->coll_igatherv_module);
     if (OPAL_LIKELY(OMPI_SUCCESS == err)) {
         if (OMPI_COMM_IS_INTRA(comm)) {

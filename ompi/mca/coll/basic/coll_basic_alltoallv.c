@@ -42,9 +42,9 @@
  *	Returns:	- MPI_SUCCESS or an MPI error code
  */
 int
-mca_coll_basic_alltoallv_inter(const void *sbuf, const int *scounts, const int *sdisps,
+mca_coll_basic_alltoallv_inter(const void *sbuf, ompi_count_array_t scounts, ompi_disp_array_t sdisps,
                                struct ompi_datatype_t *sdtype, void *rbuf,
-                               const int *rcounts, const int *rdisps,
+                               ompi_count_array_t rcounts, ompi_disp_array_t rdisps,
                                struct ompi_datatype_t *rdtype,
                                struct ompi_communicator_t *comm,
                                mca_coll_base_module_t *module)
@@ -75,9 +75,9 @@ mca_coll_basic_alltoallv_inter(const void *sbuf, const int *scounts, const int *
     /* Post all receives first  */
     /* A simple optimization: do not send and recv msgs of length zero */
     for (i = 0; i < rsize; ++i) {
-        prcv = ((char *) rbuf) + (rdisps[i] * rcvextent);
-        if (rcounts[i] > 0) {
-            err = MCA_PML_CALL(irecv(prcv, rcounts[i], rdtype,
+        prcv = ((char *) rbuf) + (ompi_disp_array_get(rdisps, i) * rcvextent);
+        if (ompi_count_array_get(rcounts, i) > 0) {
+            err = MCA_PML_CALL(irecv(prcv, ompi_count_array_get(rcounts, i), rdtype,
                                      i, MCA_COLL_BASE_TAG_ALLTOALLV, comm,
                                      &preq[i]));
             if (MPI_SUCCESS != err) {
@@ -89,9 +89,9 @@ mca_coll_basic_alltoallv_inter(const void *sbuf, const int *scounts, const int *
 
     /* Now post all sends */
     for (i = 0; i < rsize; ++i) {
-        psnd = ((char *) sbuf) + (sdisps[i] * sndextent);
-        if (scounts[i] > 0) {
-            err = MCA_PML_CALL(isend(psnd, scounts[i], sdtype,
+        psnd = ((char *) sbuf) + (ompi_disp_array_get(sdisps, i) * sndextent);
+        if (ompi_count_array_get(scounts, i) > 0) {
+            err = MCA_PML_CALL(isend(psnd, ompi_count_array_get(scounts, i), sdtype,
                                      i, MCA_COLL_BASE_TAG_ALLTOALLV,
                                      MCA_PML_BASE_SEND_STANDARD, comm,
                                      &preq[rsize + i]));
