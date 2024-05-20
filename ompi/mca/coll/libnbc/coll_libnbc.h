@@ -79,7 +79,7 @@ extern int libnbc_ireduce_algorithm;
 extern int libnbc_iscan_algorithm;
 
 struct ompi_coll_libnbc_component_t {
-    mca_coll_base_component_2_4_0_t super;
+    mca_coll_base_component_3_0_0_t super;
     opal_free_list_t requests;
     opal_list_t active_requests;
     opal_atomic_int32_t active_comms;
@@ -161,16 +161,16 @@ int NBC_Init_comm(MPI_Comm comm, ompi_coll_libnbc_module_t *module);
 int NBC_Progress(NBC_Handle *handle);
 
 
-int ompi_coll_libnbc_iallgather(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount,
+int ompi_coll_libnbc_iallgather(const void* sendbuf, size_t sendcount, MPI_Datatype sendtype, void* recvbuf, size_t recvcount,
                                 MPI_Datatype recvtype, struct ompi_communicator_t *comm, ompi_request_t ** request,
                                 mca_coll_base_module_t *module);
 int ompi_coll_libnbc_iallgatherv(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, const int *recvcounts, const int *displs,
                                  MPI_Datatype recvtype, struct ompi_communicator_t *comm, ompi_request_t ** request,
                                  mca_coll_base_module_t *module);
-int ompi_coll_libnbc_iallreduce(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
+int ompi_coll_libnbc_iallreduce(const void* sendbuf, void* recvbuf, size_t count, MPI_Datatype datatype, MPI_Op op,
                                 struct ompi_communicator_t *comm, ompi_request_t ** request,
                                 mca_coll_base_module_t *module);
-int ompi_coll_libnbc_ialltoall(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount,
+int ompi_coll_libnbc_ialltoall(const void* sendbuf, size_t sendcount, MPI_Datatype sendtype, void* recvbuf, size_t recvcount,
                                MPI_Datatype recvtype, struct ompi_communicator_t *comm, ompi_request_t ** request,
                                mca_coll_base_module_t *module);
 int ompi_coll_libnbc_ialltoallv(const void* sendbuf, const int *sendcounts, const int *sdispls,
@@ -183,34 +183,34 @@ int ompi_coll_libnbc_ialltoallw(const void *sbuf, const int *scounts, const int 
                                 mca_coll_base_module_t *module);
 int ompi_coll_libnbc_ibarrier(struct ompi_communicator_t *comm, ompi_request_t ** request,
                               mca_coll_base_module_t *module);
-int ompi_coll_libnbc_ibcast(void *buffer, int count, MPI_Datatype datatype, int root,
+int ompi_coll_libnbc_ibcast(void *buffer, size_t count, MPI_Datatype datatype, int root,
                             struct ompi_communicator_t *comm, ompi_request_t ** request,
                             mca_coll_base_module_t *module);
-int ompi_coll_libnbc_iexscan(const void *sbuf, void *rbuf, int count, struct ompi_datatype_t *dtype,
+int ompi_coll_libnbc_iexscan(const void *sbuf, void *rbuf, size_t count, struct ompi_datatype_t *dtype,
                              struct ompi_op_t *op, struct ompi_communicator_t *comm, ompi_request_t **request,
                              mca_coll_base_module_t *module);
-int ompi_coll_libnbc_igather(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount,
+int ompi_coll_libnbc_igather(const void* sendbuf, size_t sendcount, MPI_Datatype sendtype, void* recvbuf, size_t recvcount,
                              MPI_Datatype recvtype, int root, struct ompi_communicator_t *comm, ompi_request_t ** request,
                              mca_coll_base_module_t *module);
 int ompi_coll_libnbc_igatherv(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
                               void* recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype,
                               int root, struct ompi_communicator_t *comm, ompi_request_t ** request,
                               mca_coll_base_module_t *module);
-int ompi_coll_libnbc_ireduce(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype,
+int ompi_coll_libnbc_ireduce(const void* sendbuf, void* recvbuf, size_t count, MPI_Datatype datatype,
                              MPI_Op op, int root, struct ompi_communicator_t *comm, ompi_request_t ** request,
                              mca_coll_base_module_t *module);
 int ompi_coll_libnbc_ireduce_scatter(const void* sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype,
                                      MPI_Op op, struct ompi_communicator_t *comm, ompi_request_t ** request,
                                      mca_coll_base_module_t *module);
-int ompi_coll_libnbc_ireduce_scatter_block(const void *sbuf, void *rbuf, int rcount, struct ompi_datatype_t *dtype,
+int ompi_coll_libnbc_ireduce_scatter_block(const void *sbuf, void *rbuf, size_t rcount, struct ompi_datatype_t *dtype,
                                            struct ompi_op_t *op, struct ompi_communicator_t *comm,
                                            ompi_request_t **request,
                                            mca_coll_base_module_t *module);
-int ompi_coll_libnbc_iscan(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
+int ompi_coll_libnbc_iscan(const void* sendbuf, void* recvbuf, size_t count, MPI_Datatype datatype, MPI_Op op,
                            struct ompi_communicator_t *comm, ompi_request_t ** request,
                            mca_coll_base_module_t *module);
-int ompi_coll_libnbc_iscatter(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
-                              void* recvbuf, int recvcount, MPI_Datatype recvtype, int root,
+int ompi_coll_libnbc_iscatter(const void* sendbuf, size_t sendcount, MPI_Datatype sendtype,
+                              void* recvbuf, size_t recvcount, MPI_Datatype recvtype, int root,
                               struct ompi_communicator_t *comm, ompi_request_t ** request,
                               mca_coll_base_module_t *module);
 int ompi_coll_libnbc_iscatterv(const void* sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype,
@@ -219,16 +219,16 @@ int ompi_coll_libnbc_iscatterv(const void* sendbuf, const int *sendcounts, const
                                mca_coll_base_module_t *module);
 
 
-int ompi_coll_libnbc_iallgather_inter(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount,
+int ompi_coll_libnbc_iallgather_inter(const void* sendbuf, size_t sendcount, MPI_Datatype sendtype, void* recvbuf, size_t recvcount,
                                 MPI_Datatype recvtype, struct ompi_communicator_t *comm, ompi_request_t ** request,
                                 mca_coll_base_module_t *module);
 int ompi_coll_libnbc_iallgatherv_inter(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, const int *recvcounts, const int *displs,
                                  MPI_Datatype recvtype, struct ompi_communicator_t *comm, ompi_request_t ** request,
                                  mca_coll_base_module_t *module);
-int ompi_coll_libnbc_iallreduce_inter(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
+int ompi_coll_libnbc_iallreduce_inter(const void* sendbuf, void* recvbuf, size_t count, MPI_Datatype datatype, MPI_Op op,
                                 struct ompi_communicator_t *comm, ompi_request_t ** request,
                                 mca_coll_base_module_t *module);
-int ompi_coll_libnbc_ialltoall_inter(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount,
+int ompi_coll_libnbc_ialltoall_inter(const void* sendbuf, size_t sendcount, MPI_Datatype sendtype, void* recvbuf, size_t recvcount,
                                MPI_Datatype recvtype, struct ompi_communicator_t *comm, ompi_request_t ** request,
                                mca_coll_base_module_t *module);
 int ompi_coll_libnbc_ialltoallv_inter(const void* sendbuf, const int *sendcounts, const int *sdispls,
@@ -241,28 +241,28 @@ int ompi_coll_libnbc_ialltoallw_inter(const void *sbuf, const int *scounts, cons
                                       mca_coll_base_module_t *module);
 int ompi_coll_libnbc_ibarrier_inter(struct ompi_communicator_t *comm, ompi_request_t ** request,
                               mca_coll_base_module_t *module);
-int ompi_coll_libnbc_ibcast_inter(void *buffer, int count, MPI_Datatype datatype, int root,
+int ompi_coll_libnbc_ibcast_inter(void *buffer, size_t count, MPI_Datatype datatype, int root,
                             struct ompi_communicator_t *comm, ompi_request_t ** request,
                             mca_coll_base_module_t *module);
-int ompi_coll_libnbc_igather_inter(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount,
+int ompi_coll_libnbc_igather_inter(const void* sendbuf, size_t sendcount, MPI_Datatype sendtype, void* recvbuf, size_t recvcount,
                              MPI_Datatype recvtype, int root, struct ompi_communicator_t *comm, ompi_request_t ** request,
                              mca_coll_base_module_t *module);
 int ompi_coll_libnbc_igatherv_inter(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
                               void* recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype,
                               int root, struct ompi_communicator_t *comm, ompi_request_t ** request,
                               mca_coll_base_module_t *module);
-int ompi_coll_libnbc_ireduce_inter(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype,
+int ompi_coll_libnbc_ireduce_inter(const void* sendbuf, void* recvbuf, size_t count, MPI_Datatype datatype,
                              MPI_Op op, int root, struct ompi_communicator_t *comm, ompi_request_t ** request,
                              mca_coll_base_module_t *module);
 int ompi_coll_libnbc_ireduce_scatter_inter(const void* sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype,
                                      MPI_Op op, struct ompi_communicator_t *comm, ompi_request_t ** request,
                                      mca_coll_base_module_t *module);
-int ompi_coll_libnbc_ireduce_scatter_block_inter(const void *sbuf, void *rbuf, int rcount, struct ompi_datatype_t *dtype,
+int ompi_coll_libnbc_ireduce_scatter_block_inter(const void *sbuf, void *rbuf, size_t rcount, struct ompi_datatype_t *dtype,
                                                  struct ompi_op_t *op, struct ompi_communicator_t *comm,
                                                  ompi_request_t **request,
                                                  mca_coll_base_module_t *module);
-int ompi_coll_libnbc_iscatter_inter(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
-                              void* recvbuf, int recvcount, MPI_Datatype recvtype, int root,
+int ompi_coll_libnbc_iscatter_inter(const void* sendbuf, size_t sendcount, MPI_Datatype sendtype,
+                              void* recvbuf, size_t recvcount, MPI_Datatype recvtype, int root,
                               struct ompi_communicator_t *comm, ompi_request_t ** request,
                               mca_coll_base_module_t *module);
 int ompi_coll_libnbc_iscatterv_inter(const void* sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype,
@@ -271,15 +271,15 @@ int ompi_coll_libnbc_iscatterv_inter(const void* sendbuf, const int *sendcounts,
                                mca_coll_base_module_t *module);
 
 
-int ompi_coll_libnbc_ineighbor_allgather(const void *sbuf, int scount, MPI_Datatype stype, void *rbuf,
-                                         int rcount, MPI_Datatype rtype, struct ompi_communicator_t *comm,
+int ompi_coll_libnbc_ineighbor_allgather(const void *sbuf, size_t scount, MPI_Datatype stype, void *rbuf,
+                                         size_t rcount, MPI_Datatype rtype, struct ompi_communicator_t *comm,
                                          ompi_request_t ** request, mca_coll_base_module_t *module);
 int ompi_coll_libnbc_ineighbor_allgatherv(const void *sbuf, int scount, MPI_Datatype stype, void *rbuf,
                                           const int *rcounts, const int *displs, MPI_Datatype rtype,
                                           struct ompi_communicator_t *comm, ompi_request_t ** request,
                                           mca_coll_base_module_t *module);
-int ompi_coll_libnbc_ineighbor_alltoall(const void *sbuf, int scount, MPI_Datatype stype, void *rbuf,
-                                        int rcount, MPI_Datatype rtype, struct ompi_communicator_t *comm,
+int ompi_coll_libnbc_ineighbor_alltoall(const void *sbuf, size_t scount, MPI_Datatype stype, void *rbuf,
+                                        size_t rcount, MPI_Datatype rtype, struct ompi_communicator_t *comm,
                                         ompi_request_t ** request, mca_coll_base_module_t *module);
 int ompi_coll_libnbc_ineighbor_alltoallv(const void *sbuf, const int *scounts, const int *sdispls, MPI_Datatype stype,
                                          void *rbuf, const int *rcounts, const int *rdispls, MPI_Datatype rtype,
@@ -290,16 +290,16 @@ int ompi_coll_libnbc_ineighbor_alltoallw(const void *sbuf, const int *scounts, c
                                          struct ompi_communicator_t *comm, ompi_request_t ** request,
                                          mca_coll_base_module_t *module);
 
-int ompi_coll_libnbc_allgather_init(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount,
+int ompi_coll_libnbc_allgather_init(const void* sendbuf, size_t sendcount, MPI_Datatype sendtype, void* recvbuf, size_t recvcount,
                                     MPI_Datatype recvtype, struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                                     mca_coll_base_module_t *module);
 int ompi_coll_libnbc_allgatherv_init(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, const int *recvcounts, const int *displs,
                                      MPI_Datatype recvtype, struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                                      mca_coll_base_module_t *module);
-int ompi_coll_libnbc_allreduce_init(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
+int ompi_coll_libnbc_allreduce_init(const void* sendbuf, void* recvbuf, size_t count, MPI_Datatype datatype, MPI_Op op,
                                     struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                                     mca_coll_base_module_t *module);
-int ompi_coll_libnbc_alltoall_init(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount,
+int ompi_coll_libnbc_alltoall_init(const void* sendbuf, size_t sendcount, MPI_Datatype sendtype, void* recvbuf, size_t recvcount,
                                    MPI_Datatype recvtype, struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                                    mca_coll_base_module_t *module);
 int ompi_coll_libnbc_alltoallv_init(const void* sendbuf, const int *sendcounts, const int *sdispls,
@@ -312,33 +312,33 @@ int ompi_coll_libnbc_alltoallw_init(const void *sbuf, const int *scounts, const 
                                     mca_coll_base_module_t *module);
 int ompi_coll_libnbc_barrier_init(struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                                   mca_coll_base_module_t *module);
-int ompi_coll_libnbc_bcast_init(void *buffer, int count, MPI_Datatype datatype, int root,
+int ompi_coll_libnbc_bcast_init(void *buffer, size_t count, MPI_Datatype datatype, int root,
                                 struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                                 mca_coll_base_module_t *module);
-int ompi_coll_libnbc_exscan_init(const void *sbuf, void *rbuf, int count, struct ompi_datatype_t *dtype,
+int ompi_coll_libnbc_exscan_init(const void *sbuf, void *rbuf, size_t count, struct ompi_datatype_t *dtype,
                                  struct ompi_op_t *op, struct ompi_communicator_t *comm, MPI_Info info,  ompi_request_t **request,
                                  mca_coll_base_module_t *module);
-int ompi_coll_libnbc_gather_init(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount,
+int ompi_coll_libnbc_gather_init(const void* sendbuf, size_t sendcount, MPI_Datatype sendtype, void* recvbuf, size_t recvcount,
                                  MPI_Datatype recvtype, int root, struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                                  mca_coll_base_module_t *module);
 int ompi_coll_libnbc_gatherv_init(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
                                   void* recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype,
                                   int root, struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                                   mca_coll_base_module_t *module);
-int ompi_coll_libnbc_reduce_init(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype,
+int ompi_coll_libnbc_reduce_init(const void* sendbuf, void* recvbuf, size_t count, MPI_Datatype datatype,
                                  MPI_Op op, int root, struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                                  mca_coll_base_module_t *module);
 int ompi_coll_libnbc_reduce_scatter_init(const void* sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype,
                                          MPI_Op op, struct ompi_communicator_t *comm, MPI_Info info,  ompi_request_t ** request,
                                          mca_coll_base_module_t *module);
-int ompi_coll_libnbc_reduce_scatter_block_init(const void *sbuf, void *rbuf, int rcount, struct ompi_datatype_t *dtype,
+int ompi_coll_libnbc_reduce_scatter_block_init(const void *sbuf, void *rbuf, size_t rcount, struct ompi_datatype_t *dtype,
                                                struct ompi_op_t *op, struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t **request,
                                                mca_coll_base_module_t *module);
-int ompi_coll_libnbc_scan_init(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
+int ompi_coll_libnbc_scan_init(const void* sendbuf, void* recvbuf, size_t count, MPI_Datatype datatype, MPI_Op op,
                                struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                                mca_coll_base_module_t *module);
-int ompi_coll_libnbc_scatter_init(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
-                                  void* recvbuf, int recvcount, MPI_Datatype recvtype, int root,
+int ompi_coll_libnbc_scatter_init(const void* sendbuf, size_t sendcount, MPI_Datatype sendtype,
+                                  void* recvbuf, size_t recvcount, MPI_Datatype recvtype, int root,
                                   struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                                   mca_coll_base_module_t *module);
 int ompi_coll_libnbc_scatterv_init(const void* sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype,
@@ -346,16 +346,16 @@ int ompi_coll_libnbc_scatterv_init(const void* sendbuf, const int *sendcounts, c
                                    struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                                    mca_coll_base_module_t *module);
 
-int ompi_coll_libnbc_allgather_inter_init(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount,
+int ompi_coll_libnbc_allgather_inter_init(const void* sendbuf, size_t sendcount, MPI_Datatype sendtype, void* recvbuf, size_t recvcount,
                                           MPI_Datatype recvtype, struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                                           mca_coll_base_module_t *module);
 int ompi_coll_libnbc_allgatherv_inter_init(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, const int *recvcounts, const int *displs,
                                            MPI_Datatype recvtype, struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                                            mca_coll_base_module_t *module);
-int ompi_coll_libnbc_allreduce_inter_init(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
+int ompi_coll_libnbc_allreduce_inter_init(const void* sendbuf, void* recvbuf, size_t count, MPI_Datatype datatype, MPI_Op op,
                                           struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                                           mca_coll_base_module_t *module);
-int ompi_coll_libnbc_alltoall_inter_init(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount,
+int ompi_coll_libnbc_alltoall_inter_init(const void* sendbuf, size_t sendcount, MPI_Datatype sendtype, void* recvbuf, size_t recvcount,
                                          MPI_Datatype recvtype, struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                                          mca_coll_base_module_t *module);
 int ompi_coll_libnbc_alltoallv_inter_init(const void* sendbuf, const int *sendcounts, const int *sdispls,
@@ -368,28 +368,28 @@ int ompi_coll_libnbc_alltoallw_inter_init(const void *sbuf, const int *scounts, 
                                           mca_coll_base_module_t *module);
 int ompi_coll_libnbc_barrier_inter_init(struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                                         mca_coll_base_module_t *module);
-int ompi_coll_libnbc_bcast_inter_init(void *buffer, int count, MPI_Datatype datatype, int root,
+int ompi_coll_libnbc_bcast_inter_init(void *buffer, size_t count, MPI_Datatype datatype, int root,
                                       struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                                       mca_coll_base_module_t *module);
-int ompi_coll_libnbc_gather_inter_init(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount,
+int ompi_coll_libnbc_gather_inter_init(const void* sendbuf, size_t sendcount, MPI_Datatype sendtype, void* recvbuf, size_t recvcount,
                                        MPI_Datatype recvtype, int root, struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                                        mca_coll_base_module_t *module);
 int ompi_coll_libnbc_gatherv_inter_init(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
                                         void* recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype,
                                         int root, struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                                         mca_coll_base_module_t *module);
-int ompi_coll_libnbc_reduce_inter_init(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype,
+int ompi_coll_libnbc_reduce_inter_init(const void* sendbuf, void* recvbuf, size_t count, MPI_Datatype datatype,
                                        MPI_Op op, int root, struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                                        mca_coll_base_module_t *module);
 int ompi_coll_libnbc_reduce_scatter_inter_init(const void* sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype,
                                                MPI_Op op, struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                                                mca_coll_base_module_t *module);
-int ompi_coll_libnbc_reduce_scatter_block_inter_init(const void *sbuf, void *rbuf, int rcount, struct ompi_datatype_t *dtype,
+int ompi_coll_libnbc_reduce_scatter_block_inter_init(const void *sbuf, void *rbuf, size_t rcount, struct ompi_datatype_t *dtype,
                                                      struct ompi_op_t *op, struct ompi_communicator_t *comm,
                                                      MPI_Info info, ompi_request_t **request,
                                                      mca_coll_base_module_t *module);
-int ompi_coll_libnbc_scatter_inter_init(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
-                                        void* recvbuf, int recvcount, MPI_Datatype recvtype, int root,
+int ompi_coll_libnbc_scatter_inter_init(const void* sendbuf, size_t sendcount, MPI_Datatype sendtype,
+                                        void* recvbuf, size_t recvcount, MPI_Datatype recvtype, int root,
                                         struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                                         mca_coll_base_module_t *module);
 int ompi_coll_libnbc_scatterv_inter_init(const void* sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype,
@@ -397,15 +397,15 @@ int ompi_coll_libnbc_scatterv_inter_init(const void* sendbuf, const int *sendcou
                                          struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                                          mca_coll_base_module_t *module);
 
-int ompi_coll_libnbc_neighbor_allgather_init(const void *sbuf, int scount, MPI_Datatype stype, void *rbuf,
-                                             int rcount, MPI_Datatype rtype, struct ompi_communicator_t *comm,
+int ompi_coll_libnbc_neighbor_allgather_init(const void *sbuf, size_t scount, MPI_Datatype stype, void *rbuf,
+                                             size_t rcount, MPI_Datatype rtype, struct ompi_communicator_t *comm,
                                              MPI_Info info, ompi_request_t ** request, mca_coll_base_module_t *module);
 int ompi_coll_libnbc_neighbor_allgatherv_init(const void *sbuf, int scount, MPI_Datatype stype, void *rbuf,
                                               const int *rcounts, const int *displs, MPI_Datatype rtype,
                                               struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                                               mca_coll_base_module_t *module);
-int ompi_coll_libnbc_neighbor_alltoall_init(const void *sbuf, int scount, MPI_Datatype stype, void *rbuf,
-                                            int rcount, MPI_Datatype rtype, struct ompi_communicator_t *comm, MPI_Info info,
+int ompi_coll_libnbc_neighbor_alltoall_init(const void *sbuf, size_t scount, MPI_Datatype stype, void *rbuf,
+                                            size_t rcount, MPI_Datatype rtype, struct ompi_communicator_t *comm, MPI_Info info,
                                             ompi_request_t ** request, mca_coll_base_module_t *module);
 int ompi_coll_libnbc_neighbor_alltoallv_init(const void *sbuf, const int *scounts, const int *sdispls, MPI_Datatype stype,
                                              void *rbuf, const int *rcounts, const int *rdispls, MPI_Datatype rtype,

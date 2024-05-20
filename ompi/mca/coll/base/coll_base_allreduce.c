@@ -54,7 +54,7 @@
  *
  */
 int
-ompi_coll_base_allreduce_intra_nonoverlapping(const void *sbuf, void *rbuf, int count,
+ompi_coll_base_allreduce_intra_nonoverlapping(const void *sbuf, void *rbuf, size_t count,
                                                struct ompi_datatype_t *dtype,
                                                struct ompi_op_t *op,
                                                struct ompi_communicator_t *comm,
@@ -131,7 +131,7 @@ ompi_coll_base_allreduce_intra_nonoverlapping(const void *sbuf, void *rbuf, int 
  */
 int
 ompi_coll_base_allreduce_intra_recursivedoubling(const void *sbuf, void *rbuf,
-                                                  int count,
+                                                  size_t count,
                                                   struct ompi_datatype_t *dtype,
                                                   struct ompi_op_t *op,
                                                   struct ompi_communicator_t *comm,
@@ -341,7 +341,7 @@ ompi_coll_base_allreduce_intra_recursivedoubling(const void *sbuf, void *rbuf,
  *
  */
 int
-ompi_coll_base_allreduce_intra_ring(const void *sbuf, void *rbuf, int count,
+ompi_coll_base_allreduce_intra_ring(const void *sbuf, void *rbuf, size_t count,
                                      struct ompi_datatype_t *dtype,
                                      struct ompi_op_t *op,
                                      struct ompi_communicator_t *comm,
@@ -359,7 +359,7 @@ ompi_coll_base_allreduce_intra_ring(const void *sbuf, void *rbuf, int count,
     rank = ompi_comm_rank(comm);
 
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
-                 "coll:base:allreduce_intra_ring rank %d, count %d", rank, count));
+                 "coll:base:allreduce_intra_ring rank %d, count %zu", rank, count));
 
     /* Special case for size == 1 */
     if (1 == size) {
@@ -371,8 +371,8 @@ ompi_coll_base_allreduce_intra_ring(const void *sbuf, void *rbuf, int count,
     }
 
     /* Special case for count less than size - use recursive doubling */
-    if (count < size) {
-        OPAL_OUTPUT((ompi_coll_base_framework.framework_output, "coll:base:allreduce_ring rank %d/%d, count %d, switching to recursive doubling", rank, size, count));
+    if (count < (size_t) size) {
+        OPAL_OUTPUT((ompi_coll_base_framework.framework_output, "coll:base:allreduce_ring rank %d/%d, count %zu, switching to recursive doubling", rank, size, count));
         return (ompi_coll_base_allreduce_intra_recursivedoubling(sbuf, rbuf,
                                                                   count,
                                                                   dtype, op,
@@ -618,7 +618,7 @@ ompi_coll_base_allreduce_intra_ring(const void *sbuf, void *rbuf, int count,
  *
  */
 int
-ompi_coll_base_allreduce_intra_ring_segmented(const void *sbuf, void *rbuf, int count,
+ompi_coll_base_allreduce_intra_ring_segmented(const void *sbuf, void *rbuf, size_t count,
                                                struct ompi_datatype_t *dtype,
                                                struct ompi_op_t *op,
                                                struct ompi_communicator_t *comm,
@@ -627,8 +627,8 @@ ompi_coll_base_allreduce_intra_ring_segmented(const void *sbuf, void *rbuf, int 
 {
     int ret, line, rank, size, k, recv_from, send_to;
     int early_blockcount, late_blockcount, split_rank;
-    int segcount, max_segcount, num_phases, phase, block_count, inbi;
-    size_t typelng;
+    int num_phases, phase, block_count, inbi;
+    size_t typelng, segcount, max_segcount;
     char *tmpsend = NULL, *tmprecv = NULL, *inbuf[2] = {NULL, NULL};
     ptrdiff_t block_offset, max_real_segsize;
     ompi_request_t *reqs[2] = {MPI_REQUEST_NULL, MPI_REQUEST_NULL};
@@ -638,7 +638,7 @@ ompi_coll_base_allreduce_intra_ring_segmented(const void *sbuf, void *rbuf, int 
     rank = ompi_comm_rank(comm);
 
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
-                 "coll:base:allreduce_intra_ring_segmented rank %d, count %d", rank, count));
+                 "coll:base:allreduce_intra_ring_segmented rank %d, count %zu", rank, count));
 
     /* Special case for size == 1 */
     if (1 == size) {
@@ -656,16 +656,16 @@ ompi_coll_base_allreduce_intra_ring_segmented(const void *sbuf, void *rbuf, int 
     COLL_BASE_COMPUTED_SEGCOUNT(segsize, typelng, segcount)
 
         /* Special case for count less than size * segcount - use regular ring */
-        if (count < (size * segcount)) {
-            OPAL_OUTPUT((ompi_coll_base_framework.framework_output, "coll:base:allreduce_ring_segmented rank %d/%d, count %d, switching to regular ring", rank, size, count));
+        if (count < (size_t) (size * segcount)) {
+            OPAL_OUTPUT((ompi_coll_base_framework.framework_output, "coll:base:allreduce_ring_segmented rank %d/%d, count %zu, switching to regular ring", rank, size, count));
             return (ompi_coll_base_allreduce_intra_ring(sbuf, rbuf, count, dtype, op,
                                                          comm, module));
         }
 
     /* Determine the number of phases of the algorithm */
     num_phases = count / (size * segcount);
-    if ((count % (size * segcount) >= size) &&
-        (count % (size * segcount) > ((size * segcount) / 2))) {
+    if ((count % (size * segcount) >= (size_t) size) &&
+        (count % (size * segcount) > (size_t) ((size * segcount) / 2))) {
         num_phases++;
     }
 
@@ -881,7 +881,7 @@ ompi_coll_base_allreduce_intra_ring_segmented(const void *sbuf, void *rbuf, int 
  *	Returns:	- MPI_SUCCESS or error code
  */
 int
-ompi_coll_base_allreduce_intra_basic_linear(const void *sbuf, void *rbuf, int count,
+ompi_coll_base_allreduce_intra_basic_linear(const void *sbuf, void *rbuf, size_t count,
                                              struct ompi_datatype_t *dtype,
                                              struct ompi_op_t *op,
                                              struct ompi_communicator_t *comm,
@@ -971,7 +971,7 @@ ompi_coll_base_allreduce_intra_basic_linear(const void *sbuf, void *rbuf, int co
  *   count * typesize + 4 * \log_2(p) * sizeof(int) = O(count)
  */
 int ompi_coll_base_allreduce_intra_redscat_allgather(
-    const void *sbuf, void *rbuf, int count, struct ompi_datatype_t *dtype,
+    const void *sbuf, void *rbuf, size_t count, struct ompi_datatype_t *dtype,
     struct ompi_op_t *op, struct ompi_communicator_t *comm,
     mca_coll_base_module_t *module)
 {
@@ -990,10 +990,10 @@ int ompi_coll_base_allreduce_intra_redscat_allgather(
     }
     int nprocs_pof2 = 1 << nsteps;                              /* flp2(comm_size) */
 
-    if (count < nprocs_pof2 || !ompi_op_is_commute(op)) {
+    if (count < (size_t) nprocs_pof2 || !ompi_op_is_commute(op)) {
         OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
                      "coll:base:allreduce_intra_redscat_allgather: rank %d/%d "
-                     "count %d switching to basic linear allreduce",
+                     "count %zu switching to basic linear allreduce",
                      rank, comm_size, count));
         return ompi_coll_base_allreduce_intra_basic_linear(sbuf, rbuf, count, dtype,
                                                            op, comm, module);
@@ -1264,7 +1264,7 @@ int ompi_coll_base_allreduce_intra_redscat_allgather(
  *                   is not efficient in terms of network bandwidth comparing
  *                   to gather/reduce/bcast type of approach.
  */
-int ompi_coll_base_allreduce_intra_allgather_reduce(const void *sbuf, void *rbuf, int count,
+int ompi_coll_base_allreduce_intra_allgather_reduce(const void *sbuf, void *rbuf, size_t count,
                                                     struct ompi_datatype_t *dtype,
                                                     struct ompi_op_t *op,
                                                     struct ompi_communicator_t *comm,

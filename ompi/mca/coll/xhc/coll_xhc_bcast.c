@@ -178,7 +178,7 @@ static xhc_comm_t *xhc_bcast_src_comm(xhc_comm_t *comms, int comm_count) {
     return s;
 }
 
-int mca_coll_xhc_bcast(void *buf, int count, ompi_datatype_t *datatype, int root,
+int mca_coll_xhc_bcast(void *buf, size_t count, ompi_datatype_t *datatype, int root,
         ompi_communicator_t *ompi_comm, mca_coll_base_module_t *ompi_module) {
 
     xhc_module_t *module = (xhc_module_t *) ompi_module;

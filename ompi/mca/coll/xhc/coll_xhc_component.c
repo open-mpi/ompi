@@ -52,7 +52,7 @@ static const xhc_loc_t hwloc_topo_val[] = {
 mca_coll_xhc_component_t mca_coll_xhc_component = {
     .super = {
         .collm_version = {
-            MCA_COLL_BASE_VERSION_2_4_0,
+            MCA_COLL_BASE_VERSION_3_0_0,
 
             .mca_component_name = "xhc",
             MCA_BASE_MAKE_VERSION(component, OMPI_MAJOR_VERSION,

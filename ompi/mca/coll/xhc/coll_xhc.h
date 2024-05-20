@@ -253,17 +253,17 @@ struct xhc_comm_t {
      *    recalculate `elem_chunk`, so that all workers will perform
      *    equal work. */
     struct xhc_reduce_area_t {
-        int start; // where the area begins
-        int len; // the size of the area
+        size_t start; // where the area begins
+        size_t len; // the size of the area
         int workers; // how many processes perform reductions in the area
-        int stride; /* how much to advance inside the area after
+        size_t stride; /* how much to advance inside the area after
                      * each reduction, unused for non-combo areas */
 
         // local process settings
-        int work_begin; // where to begin the first reduction from
-        int work_end; // up to where to reduce
-        int work_chunk; // how much to reduce each time
-        int work_leftover; /* assigned leftover elements to include as
+        size_t work_begin; // where to begin the first reduction from
+        size_t work_end; // up to where to reduce
+        size_t work_chunk; // how much to reduce each time
+        size_t work_leftover; /* assigned leftover elements to include as
                             * part of the last reduction in the area */
     } reduce_area[3];
     int n_reduce_areas;
@@ -341,14 +341,14 @@ struct xhc_member_ctrl_t {
     volatile int cico_id;
 
     // reduction progress counters, written by member
-    volatile xf_int_t reduce_ready;
-    volatile xf_int_t reduce_done;
+    volatile xf_size_t reduce_ready;
+    volatile xf_size_t reduce_done;
 } __attribute__((aligned(OMPI_XHC_ALIGN)));
 
 struct xhc_reduce_queue_item_t {
     opal_list_item_t super;
     int member; // ID of member
-    int count; // current reduction progress for member
+    size_t count; // current reduction progress for member
     int area_id; // current reduce area
 };
 
@@ -446,18 +446,18 @@ void mca_coll_xhc_return_registration(xhc_reg_t *reg);
 // Primitives (respective file)
 // ----------------------------
 
-int mca_coll_xhc_bcast(void *buf, int count, ompi_datatype_t *datatype,
+int mca_coll_xhc_bcast(void *buf, size_t count, ompi_datatype_t *datatype,
     int root, ompi_communicator_t *comm, mca_coll_base_module_t *module);
 
 int mca_coll_xhc_barrier(ompi_communicator_t *ompi_comm,
     mca_coll_base_module_t *module);
 
 int mca_coll_xhc_reduce(const void *sbuf, void *rbuf,
-    int count, ompi_datatype_t *datatype, ompi_op_t *op, int root,
+    size_t count, ompi_datatype_t *datatype, ompi_op_t *op, int root,
     ompi_communicator_t *comm, mca_coll_base_module_t *module);
 
 int mca_coll_xhc_allreduce(const void *sbuf, void *rbuf,
-    int count, ompi_datatype_t *datatype, ompi_op_t *op,
+    size_t count, ompi_datatype_t *datatype, ompi_op_t *op,
     ompi_communicator_t *comm, mca_coll_base_module_t *module);
 
 // Miscellaneous
@@ -465,7 +465,7 @@ int mca_coll_xhc_allreduce(const void *sbuf, void *rbuf,
 
 #define xhc_allreduce_internal(...) mca_coll_xhc_allreduce_internal(__VA_ARGS__)
 
-int mca_coll_xhc_allreduce_internal(const void *sbuf, void *rbuf, int count,
+int mca_coll_xhc_allreduce_internal(const void *sbuf, void *rbuf, size_t count,
     ompi_datatype_t *datatype, ompi_op_t *op, ompi_communicator_t *ompi_comm,
     mca_coll_base_module_t *module, bool require_bcast);
 

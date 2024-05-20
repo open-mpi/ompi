@@ -15,7 +15,7 @@
 #include "coll_adapt_algorithms.h"
 
 /* MPI_Reduce and MPI_Ireduce in the ADAPT module only work for commutative operations */
-int ompi_coll_adapt_reduce(const void *sbuf, void *rbuf, int count, struct ompi_datatype_t *dtype,
+int ompi_coll_adapt_reduce(const void *sbuf, void *rbuf, size_t count, struct ompi_datatype_t *dtype,
                           struct ompi_op_t *op, int root, struct ompi_communicator_t *comm,
                           mca_coll_base_module_t * module)
 {

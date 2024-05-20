@@ -41,7 +41,7 @@
  *	Returns:	- MPI_SUCCESS or error code
  */
 int
-mca_coll_basic_allreduce_intra(const void *sbuf, void *rbuf, int count,
+mca_coll_basic_allreduce_intra(const void *sbuf, void *rbuf, size_t count,
                                struct ompi_datatype_t *dtype,
                                struct ompi_op_t *op,
                                struct ompi_communicator_t *comm,
@@ -76,7 +76,7 @@ mca_coll_basic_allreduce_intra(const void *sbuf, void *rbuf, int count,
  *	Returns:	- MPI_SUCCESS or error code
  */
 int
-mca_coll_basic_allreduce_inter(const void *sbuf, void *rbuf, int count,
+mca_coll_basic_allreduce_inter(const void *sbuf, void *rbuf, size_t count,
                                struct ompi_datatype_t *dtype,
                                struct ompi_op_t *op,
                                struct ompi_communicator_t *comm,

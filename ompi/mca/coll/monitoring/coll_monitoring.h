@@ -46,9 +46,9 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_coll_monitoring_module_t);
  */
 
 /* Blocking */
-extern int mca_coll_monitoring_allgather(const void *sbuf, int scount,
+extern int mca_coll_monitoring_allgather(const void *sbuf, size_t scount,
                                          struct ompi_datatype_t *sdtype,
-                                         void *rbuf, int rcount,
+                                         void *rbuf, size_t rcount,
                                          struct ompi_datatype_t *rdtype,
                                          struct ompi_communicator_t *comm,
                                          mca_coll_base_module_t *module);
@@ -61,15 +61,15 @@ extern int mca_coll_monitoring_allgatherv(const void *sbuf, int scount,
                                           struct ompi_communicator_t *comm,
                                           mca_coll_base_module_t *module);
 
-extern int mca_coll_monitoring_allreduce(const void *sbuf, void *rbuf, int count,
+extern int mca_coll_monitoring_allreduce(const void *sbuf, void *rbuf, size_t count,
                                          struct ompi_datatype_t *dtype,
                                          struct ompi_op_t *op,
                                          struct ompi_communicator_t *comm,
                                          mca_coll_base_module_t *module);
 
-extern int mca_coll_monitoring_alltoall(const void *sbuf, int scount,
+extern int mca_coll_monitoring_alltoall(const void *sbuf, size_t scount,
                                         struct ompi_datatype_t *sdtype,
-                                        void *rbuf, int rcount,
+                                        void *rbuf, size_t rcount,
                                         struct ompi_datatype_t *rdtype,
                                         struct ompi_communicator_t *comm,
                                         mca_coll_base_module_t *module);
@@ -95,21 +95,21 @@ extern int mca_coll_monitoring_alltoallw(const void *sbuf, const int *scounts,
 extern int mca_coll_monitoring_barrier(struct ompi_communicator_t *comm,
                                        mca_coll_base_module_t *module);
 
-extern int mca_coll_monitoring_bcast(void *buff, int count,
+extern int mca_coll_monitoring_bcast(void *buff, size_t count,
                                      struct ompi_datatype_t *datatype,
                                      int root,
                                      struct ompi_communicator_t *comm,
                                      mca_coll_base_module_t *module);
 
-extern int mca_coll_monitoring_exscan(const void *sbuf, void *rbuf, int count,
+extern int mca_coll_monitoring_exscan(const void *sbuf, void *rbuf, size_t count,
                                       struct ompi_datatype_t *dtype,
                                       struct ompi_op_t *op,
                                       struct ompi_communicator_t *comm,
                                       mca_coll_base_module_t *module);
 
-extern int mca_coll_monitoring_gather(const void *sbuf, int scount,
+extern int mca_coll_monitoring_gather(const void *sbuf, size_t scount,
                                       struct ompi_datatype_t *sdtype,
-                                      void *rbuf, int rcount, struct ompi_datatype_t *rdtype,
+                                      void *rbuf, size_t rcount, struct ompi_datatype_t *rdtype,
                                       int root, struct ompi_communicator_t *comm,
                                       mca_coll_base_module_t *module);
 
@@ -121,7 +121,7 @@ extern int mca_coll_monitoring_gatherv(const void *sbuf, int scount,
                                        struct ompi_communicator_t *comm,
                                        mca_coll_base_module_t *module);
 
-extern int mca_coll_monitoring_reduce(const void *sbuf, void *rbuf, int count,
+extern int mca_coll_monitoring_reduce(const void *sbuf, void *rbuf, size_t count,
                                       struct ompi_datatype_t *dtype,
                                       struct ompi_op_t *op,
                                       int root,
@@ -136,21 +136,21 @@ extern int mca_coll_monitoring_reduce_scatter(const void *sbuf, void *rbuf,
                                               mca_coll_base_module_t *module);
 
 extern int mca_coll_monitoring_reduce_scatter_block(const void *sbuf, void *rbuf,
-                                                    int rcount,
+                                                    size_t rcount,
                                                     struct ompi_datatype_t *dtype,
                                                     struct ompi_op_t *op,
                                                     struct ompi_communicator_t *comm,
                                                     mca_coll_base_module_t *module);
 
-extern int mca_coll_monitoring_scan(const void *sbuf, void *rbuf, int count,
+extern int mca_coll_monitoring_scan(const void *sbuf, void *rbuf, size_t count,
                                     struct ompi_datatype_t *dtype,
                                     struct ompi_op_t *op,
                                     struct ompi_communicator_t *comm,
                                     mca_coll_base_module_t *module);
 
-extern int mca_coll_monitoring_scatter(const void *sbuf, int scount,
+extern int mca_coll_monitoring_scatter(const void *sbuf, size_t scount,
                                        struct ompi_datatype_t *sdtype,
-                                       void *rbuf, int rcount,
+                                       void *rbuf, size_t rcount,
                                        struct ompi_datatype_t *rdtype,
                                        int root,
                                        struct ompi_communicator_t *comm,
@@ -165,9 +165,9 @@ extern int mca_coll_monitoring_scatterv(const void *sbuf, const int *scounts, co
                                         mca_coll_base_module_t *module);
 
 /* Nonblocking */
-extern int mca_coll_monitoring_iallgather(const void *sbuf, int scount,
+extern int mca_coll_monitoring_iallgather(const void *sbuf, size_t scount,
                                           struct ompi_datatype_t *sdtype,
-                                          void *rbuf, int rcount,
+                                          void *rbuf, size_t rcount,
                                           struct ompi_datatype_t *rdtype,
                                           struct ompi_communicator_t *comm,
                                           ompi_request_t ** request,
@@ -182,16 +182,16 @@ extern int mca_coll_monitoring_iallgatherv(const void *sbuf, int scount,
                                            ompi_request_t ** request,
                                            mca_coll_base_module_t *module);
 
-extern int mca_coll_monitoring_iallreduce(const void *sbuf, void *rbuf, int count,
+extern int mca_coll_monitoring_iallreduce(const void *sbuf, void *rbuf, size_t count,
                                           struct ompi_datatype_t *dtype,
                                           struct ompi_op_t *op,
                                           struct ompi_communicator_t *comm,
                                           ompi_request_t ** request,
                                           mca_coll_base_module_t *module);
 
-extern int mca_coll_monitoring_ialltoall(const void *sbuf, int scount,
+extern int mca_coll_monitoring_ialltoall(const void *sbuf, size_t scount,
                                          struct ompi_datatype_t *sdtype,
-                                         void *rbuf, int rcount,
+                                         void *rbuf, size_t rcount,
                                          struct ompi_datatype_t *rdtype,
                                          struct ompi_communicator_t *comm,
                                          ompi_request_t ** request,
@@ -221,23 +221,23 @@ extern int mca_coll_monitoring_ibarrier(struct ompi_communicator_t *comm,
                                         ompi_request_t ** request,
                                         mca_coll_base_module_t *module);
 
-extern int mca_coll_monitoring_ibcast(void *buff, int count,
+extern int mca_coll_monitoring_ibcast(void *buff, size_t count,
                                       struct ompi_datatype_t *datatype,
                                       int root,
                                       struct ompi_communicator_t *comm,
                                       ompi_request_t ** request,
                                       mca_coll_base_module_t *module);
 
-extern int mca_coll_monitoring_iexscan(const void *sbuf, void *rbuf, int count,
+extern int mca_coll_monitoring_iexscan(const void *sbuf, void *rbuf, size_t count,
                                        struct ompi_datatype_t *dtype,
                                        struct ompi_op_t *op,
                                        struct ompi_communicator_t *comm,
                                        ompi_request_t ** request,
                                        mca_coll_base_module_t *module);
 
-extern int mca_coll_monitoring_igather(const void *sbuf, int scount,
+extern int mca_coll_monitoring_igather(const void *sbuf, size_t scount,
                                        struct ompi_datatype_t *sdtype,
-                                       void *rbuf, int rcount, struct ompi_datatype_t *rdtype,
+                                       void *rbuf, size_t rcount, struct ompi_datatype_t *rdtype,
                                        int root, struct ompi_communicator_t *comm,
                                        ompi_request_t ** request,
                                        mca_coll_base_module_t *module);
@@ -251,7 +251,7 @@ extern int mca_coll_monitoring_igatherv(const void *sbuf, int scount,
                                         ompi_request_t ** request,
                                         mca_coll_base_module_t *module);
 
-extern int mca_coll_monitoring_ireduce(const void *sbuf, void *rbuf, int count,
+extern int mca_coll_monitoring_ireduce(const void *sbuf, void *rbuf, size_t count,
                                        struct ompi_datatype_t *dtype,
                                        struct ompi_op_t *op,
                                        int root,
@@ -268,23 +268,23 @@ extern int mca_coll_monitoring_ireduce_scatter(const void *sbuf, void *rbuf,
                                                mca_coll_base_module_t *module);
 
 extern int mca_coll_monitoring_ireduce_scatter_block(const void *sbuf, void *rbuf,
-                                                     int rcount,
+                                                     size_t rcount,
                                                      struct ompi_datatype_t *dtype,
                                                      struct ompi_op_t *op,
                                                      struct ompi_communicator_t *comm,
                                                      ompi_request_t ** request,
                                                      mca_coll_base_module_t *module);
 
-extern int mca_coll_monitoring_iscan(const void *sbuf, void *rbuf, int count,
+extern int mca_coll_monitoring_iscan(const void *sbuf, void *rbuf, size_t count,
                                      struct ompi_datatype_t *dtype,
                                      struct ompi_op_t *op,
                                      struct ompi_communicator_t *comm,
                                      ompi_request_t ** request,
                                      mca_coll_base_module_t *module);
 
-extern int mca_coll_monitoring_iscatter(const void *sbuf, int scount,
+extern int mca_coll_monitoring_iscatter(const void *sbuf, size_t scount,
                                         struct ompi_datatype_t *sdtype,
-                                        void *rbuf, int rcount,
+                                        void *rbuf, size_t rcount,
                                         struct ompi_datatype_t *rdtype,
                                         int root,
                                         struct ompi_communicator_t *comm,
@@ -301,9 +301,9 @@ extern int mca_coll_monitoring_iscatterv(const void *sbuf, const int *scounts, c
                                          mca_coll_base_module_t *module);
 
 /* Neighbor */
-extern int mca_coll_monitoring_neighbor_allgather(const void *sbuf, int scount,
+extern int mca_coll_monitoring_neighbor_allgather(const void *sbuf, size_t scount,
                                                   struct ompi_datatype_t *sdtype, void *rbuf,
-                                                  int rcount, struct ompi_datatype_t *rdtype,
+                                                  size_t rcount, struct ompi_datatype_t *rdtype,
                                                   struct ompi_communicator_t *comm,
                                                   mca_coll_base_module_t *module);
 
@@ -314,9 +314,9 @@ extern int mca_coll_monitoring_neighbor_allgatherv(const void *sbuf, int scount,
                                                    struct ompi_communicator_t *comm,
                                                    mca_coll_base_module_t *module);
 
-extern int mca_coll_monitoring_neighbor_alltoall(const void *sbuf, int scount,
+extern int mca_coll_monitoring_neighbor_alltoall(const void *sbuf, size_t scount,
                                                  struct ompi_datatype_t *sdtype,
-                                                 void *rbuf, int rcount,
+                                                 void *rbuf, size_t rcount,
                                                  struct ompi_datatype_t *rdtype,
                                                  struct ompi_communicator_t *comm,
                                                  mca_coll_base_module_t *module);
@@ -339,9 +339,9 @@ extern int mca_coll_monitoring_neighbor_alltoallw(const void *sbuf, const int *s
                                                   struct ompi_communicator_t *comm,
                                                   mca_coll_base_module_t *module);
 
-extern int mca_coll_monitoring_ineighbor_allgather(const void *sbuf, int scount,
+extern int mca_coll_monitoring_ineighbor_allgather(const void *sbuf, size_t scount,
                                                    struct ompi_datatype_t *sdtype, void *rbuf,
-                                                   int rcount, struct ompi_datatype_t *rdtype,
+                                                   size_t rcount, struct ompi_datatype_t *rdtype,
                                                    struct ompi_communicator_t *comm,
                                                    ompi_request_t ** request,
                                                    mca_coll_base_module_t *module);
@@ -355,9 +355,9 @@ extern int mca_coll_monitoring_ineighbor_allgatherv(const void *sbuf, int scount
                                                     ompi_request_t ** request,
                                                     mca_coll_base_module_t *module);
 
-extern int mca_coll_monitoring_ineighbor_alltoall(const void *sbuf, int scount,
+extern int mca_coll_monitoring_ineighbor_alltoall(const void *sbuf, size_t scount,
                                                   struct ompi_datatype_t *sdtype, void *rbuf,
-                                                  int rcount, struct ompi_datatype_t *rdtype,
+                                                  size_t rcount, struct ompi_datatype_t *rdtype,
                                                   struct ompi_communicator_t *comm,
                                                   ompi_request_t ** request,
                                                   mca_coll_base_module_t *module);

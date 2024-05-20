@@ -132,7 +132,7 @@ int ompi_coll_tuned_bcast_intra_check_forced_init (coll_tuned_force_algorithm_mc
     return (MPI_SUCCESS);
 }
 
-int ompi_coll_tuned_bcast_intra_do_this(void *buf, int count,
+int ompi_coll_tuned_bcast_intra_do_this(void *buf, size_t count,
                                         struct ompi_datatype_t *dtype,
                                         int root,
                                         struct ompi_communicator_t *comm,

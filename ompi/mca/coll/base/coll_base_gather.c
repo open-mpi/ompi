@@ -38,15 +38,16 @@
 /* Todo: gather_intra_generic, gather_intra_binary, gather_intra_chain,
  * gather_intra_pipeline, segmentation? */
 int
-ompi_coll_base_gather_intra_binomial(const void *sbuf, int scount,
+ompi_coll_base_gather_intra_binomial(const void *sbuf, size_t scount,
                                       struct ompi_datatype_t *sdtype,
-                                      void *rbuf, int rcount,
+                                      void *rbuf, size_t rcount,
                                       struct ompi_datatype_t *rdtype,
                                       int root,
                                       struct ompi_communicator_t *comm,
                                       mca_coll_base_module_t *module)
 {
-    int line = -1, i, rank, vrank, size, total_recv = 0, err;
+    int line = -1, i, rank, vrank, size, err;
+    size_t total_recv = 0;
     char *ptmp     = NULL, *tempbuf  = NULL;
     ompi_coll_tree_t* bmtree;
     MPI_Status status;
@@ -157,7 +158,7 @@ ompi_coll_base_gather_intra_binomial(const void *sbuf, int scount,
     if (rank != root) {
         /* all nodes except root send to parents */
         OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
-                     "ompi_coll_base_gather_intra_binomial rank %d send %d count %d\n",
+                     "ompi_coll_base_gather_intra_binomial rank %d send %d count %lu\n",
                      rank, bmtree->tree_prev, total_recv));
 
         err = MCA_PML_CALL(send(ptmp, total_recv, sdtype,
@@ -205,9 +206,9 @@ ompi_coll_base_gather_intra_binomial(const void *sbuf, int scount,
  *	Returns:	- MPI_SUCCESS or error code
  */
 int
-ompi_coll_base_gather_intra_linear_sync(const void *sbuf, int scount,
+ompi_coll_base_gather_intra_linear_sync(const void *sbuf, size_t scount,
                                          struct ompi_datatype_t *sdtype,
-                                         void *rbuf, int rcount,
+                                         void *rbuf, size_t rcount,
                                          struct ompi_datatype_t *rdtype,
                                          int root,
                                          struct ompi_communicator_t *comm,
@@ -367,9 +368,9 @@ ompi_coll_base_gather_intra_linear_sync(const void *sbuf, int scount,
  *	Returns:	- MPI_SUCCESS or error code
  */
 int
-ompi_coll_base_gather_intra_basic_linear(const void *sbuf, int scount,
+ompi_coll_base_gather_intra_basic_linear(const void *sbuf, size_t scount,
                                           struct ompi_datatype_t *sdtype,
-                                          void *rbuf, int rcount,
+                                          void *rbuf, size_t rcount,
                                           struct ompi_datatype_t *rdtype,
                                           int root,
                                           struct ompi_communicator_t *comm,
