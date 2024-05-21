@@ -1,0 +1,16 @@
+Copyright (c) 2024 Advanced Micro Devices, Inc. All rights reserved.
+
+$COPYRIGHT$
+
+Additional copyrights may follow
+
+$HEADER$
+
+===========================================================================
+
+The collective component, AMD Coll (“acoll”), is a high-performant MPI collective component for the OpenMPI library that is optimized for AMD "Zen"-based processors. “acoll” is optimized for communications within a single node of AMD “Zen”-based processors and provides the following commonly used collective algorithms: boardcast (MPI_Bcast), allreduce (MPI_Allreduce), reduce (MPI_Reduce), gather (MPI_Gather), allgather (MPI_Allgather), and barrier (MPI_Barrier).
+
+At present, “acoll” has been tested with OpenMPI v5.0.2 and can be built as part of OpenMPI.
+
+To run an application with acoll, use the following command line parameters
+-              mpirun <common mpi runtime parameters> --mca coll acoll,tuned,libnbc,basic --mca coll_acoll_priority 40 <executable>
