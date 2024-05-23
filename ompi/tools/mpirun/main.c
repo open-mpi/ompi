@@ -171,6 +171,9 @@ int main(int argc, char *argv[])
     // to Open MPI.
     setup_mca_prefixes();
 
+    // Only use the hash PMIX GDS unless user requested a different one.
+    opal_setenv("PMIX_MCA_gds", "hash", false, &environ);
+
     /* calling mpirun (and now prterun) with a full path has a special
      * meaning in terms of -prefix behavior, so copy that behavior
      * into prterun */
