@@ -283,20 +283,6 @@ int mca_pml_ucx_close(void)
     return OMPI_SUCCESS;
 }
 
-static ucs_thread_mode_t mca_pml_ucx_thread_mode(int ompi_mode)
-{
-    switch (ompi_mode) {
-    case MPI_THREAD_MULTIPLE:
-        return UCS_THREAD_MODE_MULTI;
-    case MPI_THREAD_SERIALIZED:
-        return UCS_THREAD_MODE_SERIALIZED;
-    case MPI_THREAD_FUNNELED:
-    case MPI_THREAD_SINGLE:
-    default:
-        return UCS_THREAD_MODE_SINGLE;
-    }
-}
-
 int mca_pml_ucx_init(int enable_mpi_threads)
 {
     ucp_worker_params_t params;
@@ -310,7 +296,8 @@ int mca_pml_ucx_init(int enable_mpi_threads)
     if (enable_mpi_threads) {
         params.thread_mode = UCS_THREAD_MODE_MULTI;
     } else {
-        params.thread_mode = mca_pml_ucx_thread_mode(ompi_mpi_thread_provided);
+        params.thread_mode =
+            opal_common_ucx_thread_mode(ompi_mpi_thread_provided);
     }
 
 #if HAVE_DECL_UCP_WORKER_FLAG_IGNORE_REQUEST_LEAK
