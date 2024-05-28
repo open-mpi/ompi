@@ -42,9 +42,9 @@ AC_DEFUN([OPAL_LIBNL_SANITY_INIT], [
     AC_ARG_WITH([libnl],
                 [AS_HELP_STRING([--with-libnl(=DIR)],
                                 [Directory prefix for libnlv3 (typically only necessary if libnl is installed in a location that the compiler/linker will not search by default)])])
-    AC_ARG_WITH([libn-libdirl],
+    AC_ARG_WITH([libnl-libdir],
                 [AS_HELP_STRING([--with-libnl-libdir=DIR],
-                                [Directory prefix for libnlv3 libs(typically only necessary if libnl is installed in a location that the compiler/linker will not search by default)])])
+                                [Directory prefix for libnlv3 libs (typically only necessary if libnl is installed in a location that the compiler/linker will not search by default)])])
 
     # ugly hack to deal with potentially alternate locations for
     # libnl3 headers.  Note that if the pkg-config file is found,
@@ -61,7 +61,7 @@ AC_DEFUN([OPAL_LIBNL_SANITY_INIT], [
 
 dnl OPAL_LIBNL_SANITY_FAIL_MSG(lib)
 dnl
-dnl Helper to pring a big warning message when we detect a libnl conflict.
+dnl Helper to print a big warning message when we detect a libnl conflict.
 dnl
 dnl --------------------------------------------------------------------
 AC_DEFUN([OPAL_LIBNL_SANITY_FAIL_MSG], [
