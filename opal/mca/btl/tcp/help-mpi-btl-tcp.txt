@@ -6,6 +6,7 @@
 #                         reserved.
 # Copyright (c) 2016      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -121,8 +122,10 @@ entry for that peer.
 This attempted connection will be ignored; your MPI job may or may not
 continue properly.
 
-  Local host: %s
+  Local guid: %s (on node %s)
   PID:        %d
+  Peer guid:  %s
+  Peer IP:    %s
 #
 [server getpeername failed]
 WARNING: Open MPI failed to look up the peer IP address information of
