@@ -22,7 +22,7 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
- * Copyright (c) 2018-2022 Triad National Security, LLC. All rights
+ * Copyright (c) 2018-2024 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2023      Advanced Micro Devices, Inc. All rights reserved.
  * $COPYRIGHT$
@@ -568,6 +568,13 @@ static inline ompi_communicator_t *ompi_comm_lookup (const uint32_t c_index)
         comm = NULL;
     }
 
+    /*
+     * return NULL if comm doesn't yet have an associated PML
+     */
+    if ((NULL != comm) && !OMPI_COMM_IS_PML_ADDED(comm)) {
+        comm = NULL;
+    }
+
     return comm;
 }
 
@@ -584,6 +591,13 @@ static inline ompi_communicator_t *ompi_comm_lookup_cid (const ompi_comm_extende
 {
     ompi_communicator_t *comm = NULL;
     (void) opal_hash_table_get_value_ptr (&ompi_comm_hash, &cid, sizeof (cid), (void **) &comm);
+    /*
+     * return NULL if the comm does not yet have an asociated PML
+     */
+    if ((NULL != comm) && !OMPI_COMM_IS_PML_ADDED(comm)) {
+        comm = NULL;
+    }
+
     return comm;
 }
 
