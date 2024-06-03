@@ -6,6 +6,7 @@
  *                         reserved.
  * Copyright (c) 2017-2022 Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
+ * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -39,7 +40,7 @@ opal_mutex_t opal_accelerator_cuda_stream_lock = {0};
 
 /* Initialization lock for delayed cuda initialization */
 static opal_mutex_t accelerator_cuda_init_lock;
-static bool accelerator_cuda_init_complete = false;
+bool mca_accelerator_cuda_init_complete = false;
 
 #define STRINGIFY2(x) #x
 #define STRINGIFY(x)  STRINGIFY2(x)
@@ -127,13 +128,13 @@ int opal_accelerator_cuda_delayed_init()
     /* Double checked locking to avoid having to
      * grab locks post lazy-initialization.  */
     opal_atomic_rmb();
-    if (true == accelerator_cuda_init_complete) {
+    if (true == mca_accelerator_cuda_init_complete) {
         return OPAL_SUCCESS;
     }
     OPAL_THREAD_LOCK(&accelerator_cuda_init_lock);
 
     /* If already initialized, just exit */
-    if (true == accelerator_cuda_init_complete) {
+    if (true == mca_accelerator_cuda_init_complete) {
         goto out;
     }
 
@@ -141,6 +142,7 @@ int opal_accelerator_cuda_delayed_init()
      * so, all is good.  If not, then disable registration of memory. */
     result = cuCtxGetCurrent(&cuContext);
     if (CUDA_SUCCESS != result) {
+        result = OPAL_ERR_NOT_INITIALIZED;
         opal_output_verbose(20, opal_accelerator_base_framework.framework_output, "CUDA: cuCtxGetCurrent failed");
         goto out;
     } else if ((CUDA_SUCCESS == result) && (NULL == cuContext)) {
@@ -172,7 +174,7 @@ int opal_accelerator_cuda_delayed_init()
     }
     result = OPAL_SUCCESS;
     opal_atomic_wmb();
-    accelerator_cuda_init_complete = true;
+    mca_accelerator_cuda_init_complete = true;
 out:
     OPAL_THREAD_UNLOCK(&accelerator_cuda_init_lock);
     return result;
@@ -189,7 +191,7 @@ static opal_accelerator_base_module_t* accelerator_cuda_init(void)
         return NULL;
     }
 
-    opal_accelerator_cuda_delayed_init();
+    (void)opal_accelerator_cuda_delayed_init();
     return &opal_accelerator_cuda_module;
 }
 
