@@ -6,6 +6,7 @@
  *                         All rights reserved.
  * Copyright (c)           Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
+ * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -105,6 +106,14 @@ opal_accelerator_base_module_t opal_accelerator_cuda_module =
 
     accelerator_cuda_get_buffer_id
 };
+
+static inline opal_accelerator_cuda_delayed_init_check(void)
+{
+    if (OPAL_UNLIKELY(true != mca_accelerator_cuda_init_complete)) {
+        return opal_accelerator_cuda_delayed_init();
+    }
+    return OPAL_SUCCESS;
+}
 
 static int accelerator_cuda_check_addr(const void *addr, int *dev_id, uint64_t *flags)
 {
@@ -236,15 +245,15 @@ static int accelerator_cuda_check_addr(const void *addr, int *dev_id, uint64_t *
         }
     }
     /* First access on a device pointer finalizes CUDA support initialization. */
-    opal_accelerator_cuda_delayed_init();
+    (void)opal_accelerator_cuda_delayed_init_check();
     return 1;
 }
 
 static int accelerator_cuda_create_stream(int dev_id, opal_accelerator_stream_t **stream)
 {
     CUresult result;
-    int delayed_init = opal_accelerator_cuda_delayed_init();
-    if (OPAL_UNLIKELY(0 != delayed_init)) {
+    int delayed_init = opal_accelerator_cuda_delayed_init_check();
+    if (OPAL_UNLIKELY(OPAL_SUCCESS != delayed_init)) {
         return delayed_init;
     }
     *stream = (opal_accelerator_stream_t*)OBJ_NEW(opal_accelerator_cuda_stream_t);
@@ -293,8 +302,8 @@ OBJ_CLASS_INSTANCE(
 static int accelerator_cuda_create_event(int dev_id, opal_accelerator_event_t **event, bool enable_ipc)
 {
     CUresult result;
-    int delayed_init = opal_accelerator_cuda_delayed_init();
-    if (OPAL_UNLIKELY(0 != delayed_init)) {
+    int delayed_init = opal_accelerator_cuda_delayed_init_check();
+    if (OPAL_UNLIKELY(OPAL_SUCCESS != delayed_init)) {
         return delayed_init;
     }
 
@@ -396,8 +405,8 @@ static int accelerator_cuda_memcpy_async(int dest_dev_id, int src_dev_id, void *
 {
     CUresult result;
 
-    int delayed_init = opal_accelerator_cuda_delayed_init();
-    if (OPAL_UNLIKELY(0 != delayed_init)) {
+    int delayed_init = opal_accelerator_cuda_delayed_init_check();
+    if (OPAL_UNLIKELY(OPAL_SUCCESS != delayed_init)) {
         return delayed_init;
     }
 
@@ -423,8 +432,8 @@ static int accelerator_cuda_memcpy(int dest_dev_id, int src_dev_id, void *dest, 
 {
     CUresult result;
 
-    int delayed_init = opal_accelerator_cuda_delayed_init();
-    if (OPAL_UNLIKELY(0 != delayed_init)) {
+    int delayed_init = opal_accelerator_cuda_delayed_init_check();
+    if (OPAL_UNLIKELY(OPAL_SUCCESS != delayed_init)) {
         return delayed_init;
     }
 
@@ -464,8 +473,8 @@ static int accelerator_cuda_memmove(int dest_dev_id, int src_dev_id, void *dest,
     CUdeviceptr tmp;
     CUresult result;
 
-    int delayed_init = opal_accelerator_cuda_delayed_init();
-    if (OPAL_UNLIKELY(0 != delayed_init)) {
+    int delayed_init = opal_accelerator_cuda_delayed_init_check();
+    if (OPAL_UNLIKELY(OPAL_SUCCESS != delayed_init)) {
         return delayed_init;
     }
 
@@ -503,8 +512,8 @@ static int accelerator_cuda_mem_alloc(int dev_id, void **ptr, size_t size)
 {
     CUresult result;
 
-    int delayed_init = opal_accelerator_cuda_delayed_init();
-    if (OPAL_UNLIKELY(0 != delayed_init)) {
+    int delayed_init = opal_accelerator_cuda_delayed_init_check();
+    if (OPAL_UNLIKELY(OPAL_SUCCESS != delayed_init)) {
         return delayed_init;
     }
 
@@ -542,8 +551,8 @@ static int accelerator_cuda_get_address_range(int dev_id, const void *ptr, void 
 {
     CUresult result;
 
-    int delayed_init = opal_accelerator_cuda_delayed_init();
-    if (OPAL_UNLIKELY(0 != delayed_init)) {
+    int delayed_init = opal_accelerator_cuda_delayed_init_check();
+    if (OPAL_UNLIKELY(OPAL_SUCCESS != delayed_init)) {
         return delayed_init;
     }
 
@@ -566,25 +575,80 @@ static int accelerator_cuda_get_address_range(int dev_id, const void *ptr, void 
 
 static bool accelerator_cuda_is_ipc_enabled(void)
 {
-    return false;
+    return true;
 }
+
+static void mca_accelerator_cuda_ipc_handle_destruct(opal_accelerator_cuda_ipc_handle_t *handle)
+{
+    if (NULL != handle && NULL != handle->base.dev_ptr) {
+        cuIpcCloseMemHandle((CUdeviceptr) handle->base.dev_ptr);
+        handle->base.dev_ptr = NULL;
+    }
+}
+
+OBJ_CLASS_INSTANCE(
+    opal_accelerator_cuda_ipc_handle_t,
+    opal_accelerator_ipc_handle_t,
+    NULL,
+    mca_accelerator_cuda_ipc_handle_destruct);
 
 static int accelerator_cuda_get_ipc_handle(int dev_id, void *dev_ptr,
                                            opal_accelerator_ipc_handle_t *handle)
 {
-    return OPAL_ERR_NOT_IMPLEMENTED;
+    if (NULL == dev_ptr || NULL == handle) {
+        return OPAL_ERR_BAD_PARAM;
+    }
+
+    CUipcMemHandle cuda_ipc_handle;
+    opal_accelerator_cuda_ipc_handle_t *cuda_handle = (opal_accelerator_cuda_ipc_handle_t *) handle;
+
+    OBJ_CONSTRUCT(cuda_handle, opal_accelerator_cuda_ipc_handle_t);
+    cuda_handle->base.dev_ptr = NULL;
+
+    CUresult err = cuIpcGetMemHandle(&cuda_ipc_handle,
+				     (CUdeviceptr)dev_ptr);
+    if (OPAL_UNLIKELY(CUDA_SUCCESS != err)) {
+        opal_output_verbose(10, opal_accelerator_base_framework.framework_output,
+                            "Error in cuIpcGetMemHandle dev_ptr %p", dev_ptr);
+        OBJ_DESTRUCT(cuda_handle);
+        return OPAL_ERROR;
+    }
+    memcpy(cuda_handle->base.handle, &cuda_ipc_handle, IPC_MAX_HANDLE_SIZE);
+
+    return OPAL_SUCCESS;
 }
 
 static int accelerator_cuda_import_ipc_handle(int dev_id, uint8_t ipc_handle[IPC_MAX_HANDLE_SIZE],
                                               opal_accelerator_ipc_handle_t *handle)
 {
-    return OPAL_ERR_NOT_IMPLEMENTED;
+    opal_accelerator_cuda_ipc_handle_t *cuda_handle = (opal_accelerator_cuda_ipc_handle_t *) handle;
+    OBJ_CONSTRUCT(cuda_handle, opal_accelerator_cuda_ipc_handle_t);
+    memcpy(cuda_handle->base.handle, ipc_handle, IPC_MAX_HANDLE_SIZE);
+
+    return OPAL_SUCCESS;
 }
 
 static int accelerator_cuda_open_ipc_handle(int dev_id, opal_accelerator_ipc_handle_t *handle,
                                             void **dev_ptr)
 {
-    return OPAL_ERR_NOT_IMPLEMENTED;
+    if (NULL == dev_ptr || NULL == handle) {
+        return OPAL_ERR_BAD_PARAM;
+    }
+
+    CUresult err = cuIpcOpenMemHandle((CUdeviceptr *) &handle->dev_ptr,
+				      *(CUipcMemHandle*)handle->handle,
+				      CU_IPC_MEM_LAZY_ENABLE_PEER_ACCESS);
+    if (CUDA_ERROR_ALREADY_MAPPED == err) {
+        return OPAL_ERR_WOULD_BLOCK;
+    }
+    else if (CUDA_SUCCESS != err) {
+        opal_output_verbose(10, opal_accelerator_base_framework.framework_output,
+                            "error in cuIpcOpenMemHandle");
+        return OPAL_ERROR;
+    }
+    *dev_ptr = handle->dev_ptr;
+
+    return OPAL_SUCCESS;
 }
 
 static int accelerator_cuda_compare_ipc_handles(uint8_t handle_1[IPC_MAX_HANDLE_SIZE],
@@ -593,29 +657,84 @@ static int accelerator_cuda_compare_ipc_handles(uint8_t handle_1[IPC_MAX_HANDLE_
     return memcmp(handle_1, handle_2, IPC_MAX_HANDLE_SIZE);
 }
 
+static void mca_accelerator_cuda_ipc_event_handle_destruct(opal_accelerator_cuda_ipc_handle_t *handle)
+{
+    // Just a place holder, there is no cuIpcCloseEventHandle.
+}
+
+OBJ_CLASS_INSTANCE(
+    opal_accelerator_cuda_ipc_event_handle_t,
+    opal_accelerator_ipc_event_handle_t,
+    NULL,
+    mca_accelerator_cuda_ipc_event_handle_destruct);
+
 static int accelerator_cuda_get_ipc_event_handle(opal_accelerator_event_t *event,
                                                  opal_accelerator_ipc_event_handle_t *handle)
 {
-    return OPAL_ERR_NOT_IMPLEMENTED;
+    if (NULL == event || NULL == handle) {
+        return OPAL_ERR_BAD_PARAM;
+    }
+
+    CUipcEventHandle cuda_ipc_handle;
+    opal_accelerator_cuda_ipc_event_handle_t *cuda_handle = (opal_accelerator_cuda_ipc_event_handle_t *) handle;
+    OBJ_CONSTRUCT(cuda_handle, opal_accelerator_cuda_ipc_event_handle_t);
+
+    memset(cuda_ipc_handle.reserved, 0, CU_IPC_HANDLE_SIZE);
+    CUresult err = cuIpcGetEventHandle(&cuda_ipc_handle,
+                                          *((CUevent *)event->event));
+    if (OPAL_UNLIKELY(CUDA_SUCCESS != err)) {
+        opal_output_verbose(10, opal_accelerator_base_framework.framework_output,
+                            "error in cuIpcGetEventHandle");
+        OBJ_DESTRUCT(cuda_handle);
+        return OPAL_ERROR;
+    }
+    memcpy(cuda_handle->base.handle, &cuda_ipc_handle, IPC_MAX_HANDLE_SIZE);
+
+    return OPAL_SUCCESS;
 }
 
 static int accelerator_cuda_import_ipc_event_handle(uint8_t ipc_handle[IPC_MAX_HANDLE_SIZE],
                                                     opal_accelerator_ipc_event_handle_t *handle)
 {
-    return OPAL_ERR_NOT_IMPLEMENTED;
+    opal_accelerator_cuda_ipc_handle_t *cuda_handle = (opal_accelerator_cuda_ipc_handle_t *) handle;
+
+    OBJ_CONSTRUCT(cuda_handle, opal_accelerator_cuda_ipc_handle_t);
+    memcpy(cuda_handle->base.handle, ipc_handle, IPC_MAX_HANDLE_SIZE);
+
+    return OPAL_SUCCESS;
 }
 
 static int accelerator_cuda_open_ipc_event_handle(opal_accelerator_ipc_event_handle_t *handle,
                                                   opal_accelerator_event_t *event)
 {
-    return OPAL_ERR_NOT_IMPLEMENTED;
+    if (NULL == event || NULL == handle) {
+        return OPAL_ERR_BAD_PARAM;
+    }
+
+    opal_accelerator_cuda_ipc_event_handle_t *cuda_handle = (opal_accelerator_cuda_ipc_event_handle_t *) handle;
+    opal_accelerator_cuda_event_t *cuda_event = (opal_accelerator_cuda_event_t *) event;
+    OBJ_CONSTRUCT(cuda_event, opal_accelerator_cuda_event_t);
+    cuda_event->base.event = malloc(sizeof(CUevent));
+    if (NULL == cuda_event->base.event) {
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+
+    CUresult err = cuIpcOpenEventHandle( (CUevent *)cuda_event->base.event,
+					 *((CUipcEventHandle*)cuda_handle->base.handle));
+    if (OPAL_UNLIKELY(CUDA_SUCCESS != err)) {
+        opal_output_verbose(10, opal_accelerator_base_framework.framework_output,
+                            "error in cuIpcOpenEventHandle");
+        return OPAL_ERROR;
+    }
+
+    return OPAL_SUCCESS;
 }
 
 static int accelerator_cuda_host_register(int dev_id, void *ptr, size_t size)
 {
     CUresult result;
-    int delayed_init = opal_accelerator_cuda_delayed_init();
-    if (OPAL_UNLIKELY(0 != delayed_init)) {
+    int delayed_init = opal_accelerator_cuda_delayed_init_check();
+    if (OPAL_UNLIKELY(OPAL_SUCCESS != delayed_init)) {
         return delayed_init;
     }
 
@@ -652,8 +771,8 @@ static int accelerator_cuda_get_device(int *dev_id)
     CUdevice cuDev;
     CUresult result;
 
-    int delayed_init = opal_accelerator_cuda_delayed_init();
-    if (OPAL_UNLIKELY(0 != delayed_init)) {
+    int delayed_init = opal_accelerator_cuda_delayed_init_check();
+    if (OPAL_UNLIKELY(OPAL_SUCCESS != delayed_init)) {
         return delayed_init;
     }
 
@@ -714,8 +833,8 @@ static int accelerator_cuda_device_can_access_peer(int *access, int dev1, int de
 {
     CUresult result;
 
-    int delayed_init = opal_accelerator_cuda_delayed_init();
-    if (OPAL_UNLIKELY(0 != delayed_init)) {
+    int delayed_init = opal_accelerator_cuda_delayed_init_check();
+    if (OPAL_UNLIKELY(OPAL_SUCCESS != delayed_init)) {
         return delayed_init;
     }
 
@@ -744,8 +863,8 @@ static int accelerator_cuda_get_buffer_id(int dev_id, const void *addr, opal_acc
     CUresult result;
     int enable = 1;
 
-    int delayed_init = opal_accelerator_cuda_delayed_init();
-    if (OPAL_UNLIKELY(0 != delayed_init)) {
+    int delayed_init = opal_accelerator_cuda_delayed_init_check();
+    if (OPAL_UNLIKELY(OPAL_SUCCESS != delayed_init)) {
         return delayed_init;
     }
 

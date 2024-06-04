@@ -176,6 +176,7 @@ int opal_accelerator_rocm_lazy_init()
 
     err = hipStreamCreate(&opal_accelerator_rocm_MemcpyStream);
     if (hipSuccess != err) {
+	err = OPAL_ERROR;  // we got hipErrorInvalidValue, pretty bad
         opal_output(0, "Could not create hipStream, err=%d %s\n",
                 err, hipGetErrorString(err));
         goto out;
