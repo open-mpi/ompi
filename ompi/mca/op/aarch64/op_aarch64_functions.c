@@ -119,7 +119,7 @@ _Generic((*(out)), \
         int left_over = *count;                                                               \
         type##type_size##_t *in = (type##type_size##_t *) _in,                                \
                             *out = (type##type_size##_t *) _out;                              \
-        OP_CONCAT(OMPI_OP_TYPE_PREPEND, type##type_size####x##type_cnt##_t) vsrc, vdst;       \
+        OP_CONCAT(OMPI_OP_TYPE_PREPEND, type##type_size##x##type_cnt##_t) vsrc, vdst;         \
         for (; left_over >= type_cnt; left_over -= type_cnt) {                                \
             vsrc = vld1q##_##type_name##type_size(in);                                        \
             vdst = vld1q##_##type_name##type_size(out);                                       \
