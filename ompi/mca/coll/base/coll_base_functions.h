@@ -40,6 +40,8 @@
 /* need to include our own topo prototypes so we can malloc data on the comm correctly */
 #include "coll_base_topo.h"
 
+#include "opal/mca/allocator/allocator.h"
+
 /* some fixed value index vars to simplify certain operations */
 typedef enum COLLTYPE {
     ALLGATHER = 0,       /*  0 */
@@ -516,6 +518,10 @@ struct mca_coll_base_comm_t {
 
     /* in-order binary tree (root of the in-order binary tree is rank 0) */
     ompi_coll_tree_t *cached_in_order_bintree;
+
+    /* pointer to per-device memory cache */
+    mca_allocator_base_module_t **device_allocators;
+    int num_device_allocators;
 };
 typedef struct mca_coll_base_comm_t mca_coll_base_comm_t;
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_coll_base_comm_t);
