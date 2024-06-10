@@ -1,0 +1,16 @@
+# -*- text -*-
+#
+# Copyright (c) 2004-2023 The University of Tennessee and The University
+#                         of Tennessee Research Foundation.  All rights
+#                         reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+# This is the US/English help file for Open MPI's allocator bucket support
+#
+[unknown chunk]
+WARNING: Unknown chunk for pointer %p
+#
