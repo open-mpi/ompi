@@ -288,7 +288,6 @@ int mca_pml_ucx_init(int enable_mpi_threads)
 
     PML_UCX_VERBOSE(1, "mca_pml_ucx_init");
 
-    /* TODO check MPI thread mode */
     params.field_mask  = UCP_WORKER_PARAM_FIELD_THREAD_MODE;
     if (enable_mpi_threads) {
         params.thread_mode = UCS_THREAD_MODE_MULTI;
