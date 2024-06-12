@@ -415,7 +415,7 @@ static int component_select(struct ompi_win_t *win, void **base, size_t size, in
         assert(mca_osc_ucx_component.ucp_worker == NULL);
         memset(&worker_params, 0, sizeof(worker_params));
         worker_params.field_mask = UCP_WORKER_PARAM_FIELD_THREAD_MODE;
-        if (mca_osc_ucx_component.enable_mpi_threads == true) {
+        if (mca_osc_ucx_component.enable_mpi_threads) {
             worker_params.thread_mode = UCS_THREAD_MODE_MULTI;
         } else {
             worker_params.thread_mode =
