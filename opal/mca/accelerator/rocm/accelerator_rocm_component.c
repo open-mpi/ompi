@@ -7,6 +7,9 @@
  * Copyright (c) 2017-2022 Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
  * Copyright (c) 2022-2024 Advanced Micro Devices, Inc. All Rights reserved.
+ * Copyright (c) 2024      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -19,7 +22,9 @@
 #include <stdio.h>
 
 #include "opal/mca/dl/base/base.h"
+#include "opal/mca/accelerator/base/base.h"
 #include "opal/runtime/opal_params.h"
+#include "opal/util/proc.h"
 #include "accelerator_rocm.h"
 
 int opal_accelerator_rocm_memcpy_async = 0;
@@ -31,7 +36,10 @@ size_t opal_accelerator_rocm_memcpyH2D_limit=1048576;
 static opal_mutex_t accelerator_rocm_init_lock;
 static bool accelerator_rocm_init_complete = false;
 
-hipStream_t opal_accelerator_rocm_MemcpyStream = NULL;
+/* Define global variables, used in accelerator_rocm.c */
+int opal_accelerator_rocm_num_devices = 0;
+float *opal_accelerator_rocm_mem_bw = NULL;
+hipStream_t *opal_accelerator_rocm_MemcpyStream = NULL;
 
 /*
  * Public string showing the accelerator rocm component version number
@@ -174,14 +182,41 @@ int opal_accelerator_rocm_lazy_init()
         goto out;
     }
 
-    err = hipStreamCreate(&opal_accelerator_rocm_MemcpyStream);
+    err = hipGetDeviceCount(&opal_accelerator_rocm_num_devices);
     if (hipSuccess != err) {
-	err = OPAL_ERROR;  // we got hipErrorInvalidValue, pretty bad
-        opal_output(0, "Could not create hipStream, err=%d %s\n",
+        opal_output(0, "Failed to query device count, err=%d %s\n",
                 err, hipGetErrorString(err));
+	    err = OPAL_ERROR;
         goto out;
     }
 
+    hipStream_t memcpy_stream;
+    err = hipStreamCreate(&memcpy_stream);
+    if (hipSuccess != err) {
+        opal_output(0, "Could not create hipStream, err=%d %s\n",
+                err, hipGetErrorString(err));
+	    err = OPAL_ERROR;  // we got hipErrorInvalidValue, pretty bad
+        goto out;
+    }
+    opal_accelerator_rocm_MemcpyStream = malloc(sizeof(hipStream_t));
+    *opal_accelerator_rocm_MemcpyStream = memcpy_stream;
+
+    opal_accelerator_rocm_mem_bw = malloc(sizeof(float)*opal_accelerator_rocm_num_devices);
+    for (int i = 0; i < opal_accelerator_rocm_num_devices; ++i) {
+        int mem_clock_rate; // kHz
+        err = hipDeviceGetAttribute(&mem_clock_rate,
+                                    hipDeviceAttributeMemoryClockRate,
+                                    i);
+        int bus_width; // bit
+        err = hipDeviceGetAttribute(&bus_width,
+                                    hipDeviceAttributeMemoryBusWidth,
+                                    i);
+        /* bw = clock_rate * bus width * 2bit multiplier
+         * See https://forums.developer.nvidia.com/t/memory-clock-rate/107940
+         */
+        float bw = ((float)mem_clock_rate*(float)bus_width*2.0) / 1024 / 1024 / 8;
+        opal_accelerator_rocm_mem_bw[i] = bw;
+    }
     err = OPAL_SUCCESS;
     opal_atomic_wmb();
     accelerator_rocm_init_complete = true;
@@ -193,7 +228,7 @@ out:
 static opal_accelerator_base_module_t* accelerator_rocm_init(void)
 {
     OBJ_CONSTRUCT(&accelerator_rocm_init_lock, opal_mutex_t);
-    
+
     hipError_t err;
 
     if (opal_rocm_runtime_initialized) {
@@ -215,12 +250,16 @@ static opal_accelerator_base_module_t* accelerator_rocm_init(void)
 
 static void accelerator_rocm_finalize(opal_accelerator_base_module_t* module)
 {
-    if (NULL != (void*)opal_accelerator_rocm_MemcpyStream) {
-        hipError_t err = hipStreamDestroy(opal_accelerator_rocm_MemcpyStream);
+    if (NULL != opal_accelerator_rocm_MemcpyStream) {
+        hipError_t err = hipStreamDestroy(*opal_accelerator_rocm_MemcpyStream);
         if (hipSuccess != err) {
             opal_output_verbose(10, 0, "hip_dl_finalize: error while destroying the hipStream\n");
         }
+        free(opal_accelerator_rocm_MemcpyStream);
         opal_accelerator_rocm_MemcpyStream = NULL;
+
+        free(opal_accelerator_rocm_mem_bw);
+        opal_accelerator_rocm_mem_bw = NULL;
     }
 
     OBJ_DESTRUCT(&accelerator_rocm_init_lock);

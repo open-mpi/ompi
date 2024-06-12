@@ -9,6 +9,9 @@
  * Copyright (c)           Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
  * Copyright (c) 2023      Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (c) 2024      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -50,11 +53,15 @@ static int accelerator_null_memcpy_async(int dest_dev_id, int src_dev_id, void *
                                          opal_accelerator_stream_t *stream, opal_accelerator_transfer_type_t type);
 static int accelerator_null_memcpy(int dest_dev_id, int src_dev_id, void *dest, const void *src,
                                    size_t size, opal_accelerator_transfer_type_t type);
+static int accelerator_null_memmove_async(int dest_dev_id, int src_dev_id, void *dest, const void *src, size_t size,
+                                          opal_accelerator_stream_t *stream, opal_accelerator_transfer_type_t type);
 static int accelerator_null_memmove(int dest_dev_id, int src_dev_id, void *dest, const void *src, size_t size,
                                     opal_accelerator_transfer_type_t type);
 
 static int accelerator_null_mem_alloc(int dev_id, void **ptr, size_t size);
 static int accelerator_null_mem_release(int dev_id, void *ptr);
+static int accelerator_null_mem_alloc_stream(int dev_id, void **ptr, size_t size, opal_accelerator_stream_t* stream);
+static int accelerator_null_mem_release_stream(int dev_id, void *ptr, opal_accelerator_stream_t *stream);
 static int accelerator_null_get_address_range(int dev_id, const void *ptr, void **base, size_t *size);
 
 static bool accelerator_null_is_ipc_enabled(void);
@@ -81,6 +88,12 @@ static int accelerator_null_get_device_pci_attr(int dev_id, opal_accelerator_pci
 static int accelerator_null_device_can_access_peer(int *access, int dev1, int dev2);
 
 static int accelerator_null_get_buffer_id(int dev_id, const void *addr, opal_accelerator_buffer_id_t *buf_id);
+
+static int accelerator_null_sync_stream(opal_accelerator_stream_t *stream);
+
+static int accelerator_null_get_num_devices(int *num_devices);
+
+static int accelerator_null_get_mem_bw(int device, float *bw);
 
 /*
  * Instantiate the public struct with all of our public information
@@ -125,6 +138,7 @@ opal_accelerator_base_module_t opal_accelerator_null_module =
     accelerator_null_check_addr,
 
     accelerator_null_create_stream,
+    accelerator_null_sync_stream,
 
     accelerator_null_create_event,
     accelerator_null_record_event,
@@ -133,9 +147,12 @@ opal_accelerator_base_module_t opal_accelerator_null_module =
 
     accelerator_null_memcpy_async,
     accelerator_null_memcpy,
+    accelerator_null_memmove_async,
     accelerator_null_memmove,
     accelerator_null_mem_alloc,
     accelerator_null_mem_release,
+    accelerator_null_mem_alloc_stream,
+    accelerator_null_mem_release_stream,
     accelerator_null_get_address_range,
 
     accelerator_null_is_ipc_enabled,
@@ -154,7 +171,10 @@ opal_accelerator_base_module_t opal_accelerator_null_module =
     accelerator_null_get_device_pci_attr,
     accelerator_null_device_can_access_peer,
 
-    accelerator_null_get_buffer_id
+    accelerator_null_get_buffer_id,
+
+    accelerator_null_get_num_devices,
+    accelerator_null_get_mem_bw
 };
 
 static int accelerator_null_open(void)
@@ -237,6 +257,13 @@ static int accelerator_null_memmove(int dest_dev_id, int src_dev_id, void *dest,
     return OPAL_SUCCESS;
 }
 
+static int accelerator_null_memmove_async(int dest_dev_id, int src_dev_id, void *dest, const void *src, size_t size,
+                                          opal_accelerator_stream_t *stream, opal_accelerator_transfer_type_t type)
+{
+    memmove(dest, src, size);
+    return OPAL_SUCCESS;
+}
+
 static int accelerator_null_mem_alloc(int dev_id, void **ptr, size_t size)
 {
     *ptr = malloc(size);
@@ -245,6 +272,23 @@ static int accelerator_null_mem_alloc(int dev_id, void **ptr, size_t size)
 
 static int accelerator_null_mem_release(int dev_id, void *ptr)
 {
+    free(ptr);
+    return OPAL_SUCCESS;
+}
+
+
+static int accelerator_null_mem_alloc_stream(int dev_id, void **ptr, size_t size,
+                                             opal_accelerator_stream_t *stream)
+{
+    (void)stream;
+    *ptr = malloc(size);
+    return OPAL_SUCCESS;
+}
+
+static int accelerator_null_mem_release_stream(int dev_id, void *ptr,
+                                               opal_accelerator_stream_t *stream)
+{
+    (void)stream;
     free(ptr);
     return OPAL_SUCCESS;
 }
@@ -330,4 +374,22 @@ static int accelerator_null_device_can_access_peer( int *access, int dev1, int d
 static int accelerator_null_get_buffer_id(int dev_id, const void *addr, opal_accelerator_buffer_id_t *buf_id)
 {
     return OPAL_ERR_NOT_IMPLEMENTED;
+}
+
+static int accelerator_null_sync_stream(opal_accelerator_stream_t *stream)
+{
+    return OPAL_SUCCESS;
+}
+
+static int accelerator_null_get_num_devices(int *num_devices)
+{
+    *num_devices = 0;
+    return OPAL_SUCCESS;
+}
+
+
+static int accelerator_null_get_mem_bw(int device, float *bw)
+{
+    *bw = 1.0; // return something that is not 0
+    return OPAL_SUCCESS;
 }

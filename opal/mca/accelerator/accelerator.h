@@ -5,6 +5,9 @@
  * Copyright (c)           Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
  * Copyright (c) 2023      Advanced Micro Devices, Inc. All Rights reserved.
+ * Copyright (c) 2024      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  *
  * $COPYRIGHT$
  *
@@ -185,6 +188,16 @@ typedef int (*opal_accelerator_base_module_create_stream_fn_t)(
     int dev_id, opal_accelerator_stream_t **stream);
 
 /**
+ * Wait for the completion of all operations inserted into the stream.
+ *
+ * @param[IN] stram          The stream to wait for.
+ *
+ * @return                   OPAL_SUCCESS or error status on failure
+ */
+typedef int (*opal_accelerator_base_module_sync_stream_fn_t)(
+    opal_accelerator_stream_t *stream);
+
+/**
  * Creates an event. An event is a synchronization marker that can be
  * appended to a stream to monitor device progress or synchronize the
  * corresponding stream. This function will allocate memory for the object.
@@ -193,7 +206,7 @@ typedef int (*opal_accelerator_base_module_create_stream_fn_t)(
  * @param[IN]  dev_id        Associated device for the event or
  *                           MCA_ACCELERATOR_NO_DEVICE_ID
  * @param[OUT] event         Event to create
- * @param[IN]  enable_ipc    support inter-process tracking of the event 
+ * @param[IN]  enable_ipc    support inter-process tracking of the event
  *
  * @return                   OPAL_SUCCESS or error status on failure.
  */
@@ -310,6 +323,31 @@ typedef int (*opal_accelerator_base_module_memmove_fn_t)(
     int dest_dev_id, int src_dev_id, void *dest, const void *src, size_t size,
     opal_accelerator_transfer_type_t type);
 
+
+/**
+ * Copies memory asynchronously from src to dest. Memory of dest and src
+ * may overlap. Optionally can specify the transfer type to
+ * avoid pointer detection for performance. The operations will be enqueued
+ * into the provided stream but are not guaranteed to be complete upon return.
+ *
+ * @param[IN] dest_dev_id    Associated device to copy to or
+ *                           MCA_ACCELERATOR_NO_DEVICE_ID
+ * @param[IN] src_dev_id     Associated device to copy from or
+ *                           MCA_ACCELERATOR_NO_DEVICE_ID
+ * @param[IN] dest           Destination to copy memory to
+ * @param[IN] src            Source to copy memory from
+ * @param[IN] size           Size of memory to copy
+ * @param[IN] stream         Stream to perform asynchronous move on
+ * @param[IN] type           Transfer type field for performance
+ *                           Can be set to MCA_ACCELERATOR_TRANSFER_UNSPEC
+ *                           if caller is unsure of the transfer direction.
+ *
+ * @return                   OPAL_SUCCESS or error status on failure
+ */
+typedef int (*opal_accelerator_base_module_memmove_async_fn_t)(
+    int dest_dev_id, int src_dev_id, void *dest, const void *src, size_t size,
+    opal_accelerator_stream_t *stream, opal_accelerator_transfer_type_t type);
+
 /**
  * Allocates size bytes memory from the device and sets ptr to the
  * pointer of the allocated memory. The memory is not initialized.
@@ -339,6 +377,46 @@ typedef int (*opal_accelerator_base_module_mem_alloc_fn_t)(
  */
 typedef int (*opal_accelerator_base_module_mem_release_fn_t)(
     int dev_id, void *ptr);
+
+
+/**
+ * Allocates size bytes memory from the device and sets ptr to the
+ * pointer of the allocated memory. The memory is not initialized.
+ * The allocation request is placed into the stream object.
+ * Any use of the memory must succeed the completion of this
+ * operation on the stream.
+ *
+ * @param[IN] dev_id         Associated device for the allocation or
+ *                           MCA_ACCELERATOR_NO_DEVICE_ID
+ * @param[OUT] ptr           Returns pointer to allocated memory
+ * @param[IN] size           Size of memory to allocate
+ * @param[IN] stream         Stream into which to insert the allocation request
+ *
+ * @return                   OPAL_SUCCESS or error status on failure
+ */
+typedef int (*opal_accelerator_base_module_mem_alloc_stream_fn_t)(
+    int dev_id, void **ptr, size_t size, opal_accelerator_stream_t *stream);
+
+/**
+ * Frees the memory space pointed to by ptr which has been returned by
+ * a previous call to an opal_accelerator_base_module_mem_alloc_stream_fn_t().
+ * If the function is called on a ptr that has already been freed,
+ * undefined behavior occurs. If ptr is NULL, no operation is performed,
+ * and the function returns OPAL_SUCCESS.
+ * The release of the memory will be inserted into the stream and occurs after
+ * all previous operations have completed.
+ *
+ * @param[IN] dev_id         Associated device for the allocation or
+ *                           MCA_ACCELERATOR_NO_DEVICE_ID
+ * @param[IN] ptr            Pointer to free
+ * @param[IN] stream         Stream into which to insert the free operation
+ *
+ * @return                   OPAL_SUCCESS or error status on failure
+ */
+typedef int (*opal_accelerator_base_module_mem_release_stream_fn_t)(
+    int dev_id, void *ptr, opal_accelerator_stream_t *stream);
+
+
 
 /**
  * Retrieves the base address and/or size of a memory allocation of the
@@ -557,6 +635,26 @@ typedef int (*opal_accelerator_base_module_device_can_access_peer_fn_t)(
 typedef int (*opal_accelerator_base_module_get_buffer_id_fn_t)(
     int dev_id, const void *addr, opal_accelerator_buffer_id_t *buf_id);
 
+/**
+ * Get the number of devices available.
+ *
+ * @param[OUT] stram         Number of devices.
+ *
+ * @return                   OPAL_SUCCESS or error status on failure
+ */
+typedef int (*opal_accelerator_base_module_get_num_devices_fn_t)(int *num_devices);
+
+/**
+ * Get the memory bandwidth of the device.
+ *
+ * @param[IN] device         The device to query.
+ * @param[OUT] bw            The returned bandwidth for the device.
+ *
+ * @return                   OPAL_SUCCESS or error status on failure
+ */
+typedef int (*opal_accelerator_base_module_get_mem_bw_fn_t)(int device, float *bw);
+
+
 /*
  * the standard public API data structure
  */
@@ -565,6 +663,7 @@ typedef struct {
     opal_accelerator_base_module_check_addr_fn_t check_addr;
 
     opal_accelerator_base_module_create_stream_fn_t create_stream;
+    opal_accelerator_base_module_sync_stream_fn_t sync_stream;
     opal_accelerator_base_module_create_event_fn_t create_event;
     opal_accelerator_base_module_record_event_fn_t record_event;
     opal_accelerator_base_module_query_event_fn_t query_event;
@@ -572,10 +671,13 @@ typedef struct {
 
     opal_accelerator_base_module_memcpy_async_fn_t mem_copy_async;
     opal_accelerator_base_module_memcpy_fn_t mem_copy;
+    opal_accelerator_base_module_memmove_async_fn_t mem_move_async;
     opal_accelerator_base_module_memmove_fn_t mem_move;
 
     opal_accelerator_base_module_mem_alloc_fn_t mem_alloc;
     opal_accelerator_base_module_mem_release_fn_t mem_release;
+    opal_accelerator_base_module_mem_alloc_stream_fn_t mem_alloc_stream;
+    opal_accelerator_base_module_mem_release_stream_fn_t mem_release_stream;
     opal_accelerator_base_module_get_address_range_fn_t get_address_range;
 
     opal_accelerator_base_module_is_ipc_enabled_fn_t is_ipc_enabled;
@@ -595,6 +697,9 @@ typedef struct {
     opal_accelerator_base_module_device_can_access_peer_fn_t device_can_access_peer;
 
     opal_accelerator_base_module_get_buffer_id_fn_t get_buffer_id;
+
+    opal_accelerator_base_module_get_num_devices_fn_t num_devices;
+    opal_accelerator_base_module_get_mem_bw_fn_t get_mem_bw;
 } opal_accelerator_base_module_t;
 
 /**

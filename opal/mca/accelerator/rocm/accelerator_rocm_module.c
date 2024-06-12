@@ -1,6 +1,9 @@
 /*
  * Copyright (c) 2022-2023  Advanced Micro Devices, Inc. All Rights reserved.
  * $COPYRIGHT$
+ * Copyright (c) 2024      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  *
  * Additional copyrights may follow
  *
@@ -27,10 +30,17 @@ static int mca_accelerator_rocm_memcpy_async(int dest_dev_id, int src_dev_id, vo
                                   opal_accelerator_stream_t *stream, opal_accelerator_transfer_type_t type);
 static int mca_accelerator_rocm_memcpy(int dest_dev_id, int src_dev_id, void *dest, const void *src,
                             size_t size, opal_accelerator_transfer_type_t type);
+static int mca_accelerator_rocm_memmove_async(int dest_dev_id, int src_dev_id, void *dest,
+                                              const void *src, size_t size,
+                                              opal_accelerator_stream_t *stream,
+                                              opal_accelerator_transfer_type_t type);
 static int mca_accelerator_rocm_memmove(int dest_dev_id, int src_dev_id, void *dest, const void *src, size_t size,
                                         opal_accelerator_transfer_type_t type);
 static int mca_accelerator_rocm_mem_alloc(int dev_id, void **ptr, size_t size);
 static int mca_accelerator_rocm_mem_release(int dev_id, void *ptr);
+static int mca_accelerator_rocm_mem_alloc_stream(int dev_id, void **ptr, size_t size,
+                                                 opal_accelerator_stream_t *stream);
+static int mca_accelerator_rocm_mem_release_stream(int dev_id, void *ptr, opal_accelerator_stream_t *stream);
 static int mca_accelerator_rocm_get_address_range(int dev_id, const void *ptr, void **base,
                                                   size_t *size);
 
@@ -59,6 +69,11 @@ static int mca_accelerator_rocm_device_can_access_peer( int *access, int dev1, i
 
 static int mca_accelerator_rocm_get_buffer_id(int dev_id, const void *addr, opal_accelerator_buffer_id_t *buf_id);
 
+static int mca_accelerator_rocm_sync_stream(opal_accelerator_stream_t *stream);
+
+static int mca_accelerator_rocm_get_num_devices(int *num_devices);
+
+static int mca_accelerator_rocm_get_mem_bw(int device, float *bw);
 
 #define GET_STREAM(_stream) (_stream == MCA_ACCELERATOR_STREAM_DEFAULT ? 0 : *((hipStream_t *)_stream->stream))
 
@@ -67,6 +82,7 @@ opal_accelerator_base_module_t opal_accelerator_rocm_module =
     mca_accelerator_rocm_check_addr,
 
     mca_accelerator_rocm_create_stream,
+    mca_accelerator_rocm_sync_stream,
 
     mca_accelerator_rocm_create_event,
     mca_accelerator_rocm_record_event,
@@ -75,9 +91,12 @@ opal_accelerator_base_module_t opal_accelerator_rocm_module =
 
     mca_accelerator_rocm_memcpy_async,
     mca_accelerator_rocm_memcpy,
+    mca_accelerator_rocm_memmove_async,
     mca_accelerator_rocm_memmove,
     mca_accelerator_rocm_mem_alloc,
     mca_accelerator_rocm_mem_release,
+    mca_accelerator_rocm_mem_alloc_stream,
+    mca_accelerator_rocm_mem_release_stream,
     mca_accelerator_rocm_get_address_range,
 
     mca_accelerator_rocm_is_ipc_enabled,
@@ -96,7 +115,10 @@ opal_accelerator_base_module_t opal_accelerator_rocm_module =
     mca_accelerator_rocm_get_device_pci_attr,
     mca_accelerator_rocm_device_can_access_peer,
 
-    mca_accelerator_rocm_get_buffer_id
+    mca_accelerator_rocm_get_buffer_id,
+
+    mca_accelerator_rocm_get_num_devices,
+    mca_accelerator_rocm_get_mem_bw
 };
 
 
@@ -233,7 +255,7 @@ OBJ_CLASS_INSTANCE(
     opal_accelerator_event_t,
     NULL,
     mca_accelerator_rocm_event_destruct);
- 
+
 static int mca_accelerator_rocm_record_event(int dev_id, opal_accelerator_event_t *event,
                                              opal_accelerator_stream_t *stream)
 {
@@ -348,14 +370,14 @@ static int mca_accelerator_rocm_memcpy(int dest_dev_id, int src_dev_id, void *de
 
     if (opal_accelerator_rocm_memcpy_async) {
         err = hipMemcpyAsync(dest, src, size, hipMemcpyDefault,
-                                       opal_accelerator_rocm_MemcpyStream);
+                                       *opal_accelerator_rocm_MemcpyStream);
         if (hipSuccess != err ) {
             opal_output_verbose(10, opal_accelerator_base_framework.framework_output,
                                 "error starting async copy\n");
             return OPAL_ERROR;
         }
 
-        err = hipStreamSynchronize(opal_accelerator_rocm_MemcpyStream);
+        err = hipStreamSynchronize(*opal_accelerator_rocm_MemcpyStream);
         if (hipSuccess != err ) {
             opal_output_verbose(10, opal_accelerator_base_framework.framework_output,
                                 "error synchronizing stream after async copy\n");
@@ -371,6 +393,44 @@ static int mca_accelerator_rocm_memcpy(int dest_dev_id, int src_dev_id, void *de
     }
 
     return OPAL_SUCCESS;
+}
+
+static int mca_accelerator_rocm_memmove_async(int dest_dev_id, int src_dev_id, void *dest, const void *src,
+                                              size_t size, opal_accelerator_stream_t *stream,
+                                              opal_accelerator_transfer_type_t type)
+{
+    hipDeviceptr_t tmp;
+    hipError_t result;
+    int ret;
+    void *ptr;
+
+    int delayed_init = opal_accelerator_rocm_lazy_init();
+    if (OPAL_UNLIKELY(0 != delayed_init)) {
+        return delayed_init;
+    }
+
+    if (NULL == dest || NULL == src || size <= 0) {
+        return OPAL_ERR_BAD_PARAM;
+    }
+
+    ret = mca_accelerator_rocm_mem_alloc_stream(src_dev_id, &ptr, size, stream);
+    if (OPAL_UNLIKELY(OPAL_SUCCESS != ret)) {
+        return OPAL_ERROR;
+    }
+    tmp = (hipDeviceptr_t)ptr;
+    result = hipMemcpyAsync(tmp, (hipDeviceptr_t) src, size, hipMemcpyDefault, *(hipStream_t*)stream->stream);
+    if (OPAL_UNLIKELY(hipSuccess != result)) {
+        opal_output_verbose(10, opal_accelerator_base_framework.framework_output,
+                            "error during synchronous copy\n");
+        return OPAL_ERROR;
+    }
+    result = hipMemcpyAsync((hipDeviceptr_t) dest, tmp, size, hipMemcpyDefault, *(hipStream_t*)stream->stream);
+    if (OPAL_UNLIKELY(hipSuccess != result)) {
+        opal_output_verbose(10, opal_accelerator_base_framework.framework_output,
+                            "error during synchronous copy\n");
+        return OPAL_ERROR;
+    }
+    return mca_accelerator_rocm_mem_release_stream(src_dev_id, ptr, stream);
 }
 
 static int mca_accelerator_rocm_memmove(int dest_dev_id, int src_dev_id, void *dest,
@@ -393,7 +453,7 @@ static int mca_accelerator_rocm_memmove(int dest_dev_id, int src_dev_id, void *d
 
     if (opal_accelerator_rocm_memcpy_async) {
         err = hipMemcpyAsync(tmp, src, size, hipMemcpyDefault,
-                                       opal_accelerator_rocm_MemcpyStream);
+                                       *opal_accelerator_rocm_MemcpyStream);
         if (hipSuccess != err ) {
             opal_output_verbose(10, opal_accelerator_base_framework.framework_output,
                                 "error in async memcpy for memmove\n");
@@ -401,14 +461,14 @@ static int mca_accelerator_rocm_memmove(int dest_dev_id, int src_dev_id, void *d
         }
 
         err = hipMemcpyAsync(dest, tmp, size, hipMemcpyDefault,
-                                       opal_accelerator_rocm_MemcpyStream);
+                                       *opal_accelerator_rocm_MemcpyStream);
         if (hipSuccess != err ) {
             opal_output_verbose(10, opal_accelerator_base_framework.framework_output,
                                 "error in async memcpy for memmove\n");
             return OPAL_ERROR;
         }
 
-        err = hipStreamSynchronize(opal_accelerator_rocm_MemcpyStream);
+        err = hipStreamSynchronize(*opal_accelerator_rocm_MemcpyStream);
         if (hipSuccess != err ) {
             opal_output_verbose(10, opal_accelerator_base_framework.framework_output,
                                 "error synchronizing stream for memmove\n");
@@ -535,7 +595,7 @@ static int mca_accelerator_rocm_get_ipc_handle(int dev_id, void *dev_ptr,
                             "Error in hipIpcGetMemHandle dev_ptr %p", dev_ptr);
         OBJ_DESTRUCT(rocm_handle);
         return OPAL_ERROR;
-    }    
+    }
     memcpy(rocm_handle->base.handle, &rocm_ipc_handle, IPC_MAX_HANDLE_SIZE);
 
     return OPAL_SUCCESS;
@@ -597,7 +657,7 @@ static int mca_accelerator_rocm_compare_ipc_handles(uint8_t handle_1[IPC_MAX_HAN
 
 static void mca_accelerator_rocm_ipc_event_handle_destruct(opal_accelerator_rocm_ipc_handle_t *handle)
 {
-    // Just a place holder, there is no hipIpcCloseEventHandle. 
+    // Just a place holder, there is no hipIpcCloseEventHandle.
 }
 
 OBJ_CLASS_INSTANCE(
@@ -617,7 +677,7 @@ static int mca_accelerator_rocm_get_ipc_event_handle(opal_accelerator_event_t *e
     hipIpcEventHandle_t rocm_ipc_handle;
     opal_accelerator_rocm_ipc_event_handle_t *rocm_handle = (opal_accelerator_rocm_ipc_event_handle_t *) handle;
     OBJ_CONSTRUCT(rocm_handle, opal_accelerator_rocm_ipc_event_handle_t);
-    
+
     memset(rocm_ipc_handle.reserved, 0, HIP_IPC_HANDLE_SIZE);
     hipError_t err = hipIpcGetEventHandle(&rocm_ipc_handle,
                                           *((hipEvent_t *)event->event));
@@ -626,7 +686,7 @@ static int mca_accelerator_rocm_get_ipc_event_handle(opal_accelerator_event_t *e
                             "error in hipIpcGetEventHandle");
         OBJ_DESTRUCT(rocm_handle);
         return OPAL_ERROR;
-    }    
+    }
     memcpy(rocm_handle->base.handle, &rocm_ipc_handle, IPC_MAX_HANDLE_SIZE);
 
     return OPAL_SUCCESS;
@@ -664,7 +724,7 @@ static int mca_accelerator_rocm_open_ipc_event_handle(opal_accelerator_ipc_event
         opal_output_verbose(10, opal_accelerator_base_framework.framework_output,
                             "error in hipIpcOpenEventHandle");
         return OPAL_ERROR;
-    }    
+    }
 
     return OPAL_SUCCESS;
 }
@@ -800,5 +860,83 @@ static int mca_accelerator_rocm_get_buffer_id(int dev_id, const void *addr, opal
         return OPAL_ERROR;
     }
 #endif
+    return OPAL_SUCCESS;
+}
+
+
+static int mca_accelerator_rocm_mem_alloc_stream(
+    int dev_id,
+    void **addr,
+    size_t size,
+    opal_accelerator_stream_t *stream)
+{
+    hipError_t result;
+
+    int delayed_init = opal_accelerator_rocm_lazy_init();
+    if (OPAL_UNLIKELY(0 != delayed_init)) {
+        return delayed_init;
+    }
+
+    if (NULL == stream || NULL == addr || 0 == size) {
+        return OPAL_ERR_BAD_PARAM;
+    }
+
+    result = hipMallocAsync(addr, size, *(hipStream_t*)stream->stream);
+    if (OPAL_UNLIKELY(hipSuccess != result)) {
+        opal_output_verbose(10, opal_accelerator_base_framework.framework_output,
+                            "error allocating memory\n");
+        return OPAL_ERROR;
+    }
+    return OPAL_SUCCESS;
+}
+
+static int mca_accelerator_rocm_mem_release_stream(
+    int dev_id,
+    void *addr,
+    opal_accelerator_stream_t *stream)
+{
+    hipError_t result;
+
+    if (NULL == stream || NULL == addr) {
+        return OPAL_ERR_BAD_PARAM;
+    }
+
+    result = hipFreeAsync(addr, *(hipStream_t*)stream->stream);
+    if (OPAL_UNLIKELY(hipSuccess != result)) {
+        opal_output_verbose(10, opal_accelerator_base_framework.framework_output,
+                            "error freeing memory\n");
+        return OPAL_ERROR;
+    }
+    return OPAL_SUCCESS;
+}
+
+static int mca_accelerator_rocm_sync_stream(opal_accelerator_stream_t *stream)
+{
+    hipError_t result;
+    result = hipStreamSynchronize(*(hipStream_t*)stream->stream);
+    if (OPAL_UNLIKELY(hipSuccess != result)) {
+        opal_output_verbose(10, opal_accelerator_base_framework.framework_output,
+                            "error synchronizing stream\n");
+        return OPAL_ERROR;
+    }
+    return OPAL_SUCCESS;
+}
+
+
+static int mca_accelerator_rocm_get_num_devices(int *num_devices)
+{
+    *num_devices = opal_accelerator_rocm_num_devices;
+    return OPAL_SUCCESS;
+}
+
+static int mca_accelerator_rocm_get_mem_bw(int device, float *bw)
+{
+    int delayed_init = opal_accelerator_rocm_lazy_init();
+    if (OPAL_UNLIKELY(0 != delayed_init)) {
+        return delayed_init;
+    }
+    assert(opal_accelerator_rocm_mem_bw != NULL);
+
+    *bw = opal_accelerator_rocm_mem_bw[device];
     return OPAL_SUCCESS;
 }

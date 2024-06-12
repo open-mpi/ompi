@@ -7,6 +7,9 @@
  * Copyright (c)           Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
  * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2024      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -36,10 +39,16 @@ static int accelerator_cuda_memcpy_async(int dest_dev_id, int src_dev_id, void *
                                   opal_accelerator_stream_t *stream, opal_accelerator_transfer_type_t type);
 static int accelerator_cuda_memcpy(int dest_dev_id, int src_dev_id, void *dest, const void *src,
                             size_t size, opal_accelerator_transfer_type_t type);
+static int accelerator_cuda_memmove_async(int dest_dev_id, int src_dev_id, void *dest, const void *src,
+                                          size_t size, opal_accelerator_stream_t *stream,
+                                          opal_accelerator_transfer_type_t type);
 static int accelerator_cuda_memmove(int dest_dev_id, int src_dev_id, void *dest, const void *src, size_t size,
                              opal_accelerator_transfer_type_t type);
 static int accelerator_cuda_mem_alloc(int dev_id, void **ptr, size_t size);
 static int accelerator_cuda_mem_release(int dev_id, void *ptr);
+static int accelerator_cuda_mem_alloc_stream(int dev_id, void **ptr, size_t size,
+                                             opal_accelerator_stream_t *stream);
+static int accelerator_cuda_mem_release_stream(int dev_id, void *ptr, opal_accelerator_stream_t *stream);
 static int accelerator_cuda_get_address_range(int dev_id, const void *ptr, void **base,
                                               size_t *size);
 
@@ -68,6 +77,11 @@ static int accelerator_cuda_device_can_access_peer( int *access, int dev1, int d
 
 static int accelerator_cuda_get_buffer_id(int dev_id, const void *addr, opal_accelerator_buffer_id_t *buf_id);
 
+static int accelerator_cuda_sync_stream(opal_accelerator_stream_t *stream);
+static int accelerator_cuda_get_num_devices(int *num_devices);
+static int accelerator_cuda_get_mem_bw(int device, float *bw);
+
+
 #define GET_STREAM(_stream) (_stream == MCA_ACCELERATOR_STREAM_DEFAULT ? 0 : *((CUstream *)_stream->stream))
 
 opal_accelerator_base_module_t opal_accelerator_cuda_module =
@@ -75,6 +89,7 @@ opal_accelerator_base_module_t opal_accelerator_cuda_module =
     accelerator_cuda_check_addr,
 
     accelerator_cuda_create_stream,
+    accelerator_cuda_sync_stream,
 
     accelerator_cuda_create_event,
     accelerator_cuda_record_event,
@@ -83,9 +98,12 @@ opal_accelerator_base_module_t opal_accelerator_cuda_module =
 
     accelerator_cuda_memcpy_async,
     accelerator_cuda_memcpy,
+    accelerator_cuda_memmove_async,
     accelerator_cuda_memmove,
     accelerator_cuda_mem_alloc,
     accelerator_cuda_mem_release,
+    accelerator_cuda_mem_alloc_stream,
+    accelerator_cuda_mem_release_stream,
     accelerator_cuda_get_address_range,
 
     accelerator_cuda_is_ipc_enabled,
@@ -104,7 +122,10 @@ opal_accelerator_base_module_t opal_accelerator_cuda_module =
     accelerator_cuda_get_device_pci_attr,
     accelerator_cuda_device_can_access_peer,
 
-    accelerator_cuda_get_buffer_id
+    accelerator_cuda_get_buffer_id,
+
+    accelerator_cuda_get_num_devices,
+    accelerator_cuda_get_mem_bw
 };
 
 static inline opal_accelerator_cuda_delayed_init_check(void)
@@ -113,6 +134,24 @@ static inline opal_accelerator_cuda_delayed_init_check(void)
         return opal_accelerator_cuda_delayed_init();
     }
     return OPAL_SUCCESS;
+}
+
+static int accelerator_cuda_get_device_id(CUcontext mem_ctx) {
+    /* query the device from the context */
+    int dev_id = -1;
+    CUdevice ptr_dev;
+    cuCtxPushCurrent(mem_ctx);
+    cuCtxGetDevice(&ptr_dev);
+    for (int i = 0; i < opal_accelerator_cuda_num_devices; ++i) {
+        CUdevice dev;
+        cuDeviceGet(&dev, i);
+        if (dev == ptr_dev) {
+            dev_id = i;
+            break;
+        }
+    }
+    cuCtxPopCurrent(&mem_ctx);
+    return dev_id;
 }
 
 static int accelerator_cuda_check_addr(const void *addr, int *dev_id, uint64_t *flags)
@@ -163,6 +202,9 @@ static int accelerator_cuda_check_addr(const void *addr, int *dev_id, uint64_t *
     } else if (0 == mem_type) {
         /* This can happen when CUDA is initialized but dbuf is not valid CUDA pointer */
         return 0;
+    } else {
+        /* query the device from the context */
+        *dev_id = accelerator_cuda_get_device_id(mem_ctx);
     }
     /* Must be a device pointer */
     assert(CU_MEMORYTYPE_DEVICE == mem_type);
@@ -178,6 +220,10 @@ static int accelerator_cuda_check_addr(const void *addr, int *dev_id, uint64_t *
     } else if (CU_MEMORYTYPE_HOST == mem_type) {
         /* Host memory, nothing to do here */
         return 0;
+    } else {
+        result = cuPointerGetAttribute(&mem_ctx, CU_POINTER_ATTRIBUTE_CONTEXT, dbuf);
+        /* query the device from the context */
+        *dev_id = accelerator_cuda_get_device_id(mem_ctx);
     }
     /* Must be a device pointer */
     assert(CU_MEMORYTYPE_DEVICE == mem_type);
@@ -225,7 +271,7 @@ static int accelerator_cuda_check_addr(const void *addr, int *dev_id, uint64_t *
         }
     }
 
-    /* WORKAROUND - They are times when the above code determines a pice of memory
+    /* WORKAROUND - There are times when the above code determines a pice of memory
      * is GPU memory, but it actually is not.  That has been seen on multi-GPU systems
      * with 6 or 8 GPUs on them. Therefore, we will do this extra check.  Note if we
      * made it this far, then the assumption at this point is we have GPU memory.
@@ -452,13 +498,13 @@ static int accelerator_cuda_memcpy(int dest_dev_id, int src_dev_id, void *dest, 
      * Additionally, cuMemcpy is not necessarily always synchronous. See:
      * https://docs.nvidia.com/cuda/cuda-driver-api/api-sync-behavior.html
      * TODO: Add optimizations for type field */
-    result = cuMemcpyAsync((CUdeviceptr) dest, (CUdeviceptr) src, size, opal_accelerator_cuda_memcpy_stream);
+    result = cuMemcpyAsync((CUdeviceptr) dest, (CUdeviceptr) src, size, GET_STREAM(opal_accelerator_cuda_memcpy_stream.super));
     if (OPAL_UNLIKELY(CUDA_SUCCESS != result)) {
         opal_show_help("help-accelerator-cuda.txt", "cuMemcpyAsync failed", true, dest, src,
                        size, result);
         return OPAL_ERROR;
     }
-    result = cuStreamSynchronize(opal_accelerator_cuda_memcpy_stream);
+    result = cuStreamSynchronize(GET_STREAM(opal_accelerator_cuda_memcpy_stream.super));
     if (OPAL_UNLIKELY(CUDA_SUCCESS != result)) {
         opal_show_help("help-accelerator-cuda.txt", "cuStreamSynchronize failed", true,
                        OPAL_PROC_MY_HOSTNAME, result);
@@ -467,11 +513,14 @@ static int accelerator_cuda_memcpy(int dest_dev_id, int src_dev_id, void *dest, 
     return OPAL_SUCCESS;
 }
 
-static int accelerator_cuda_memmove(int dest_dev_id, int src_dev_id, void *dest, const void *src, size_t size,
-                             opal_accelerator_transfer_type_t type)
+static int accelerator_cuda_memmove_async(int dest_dev_id, int src_dev_id, void *dest,
+                                          const void *src, size_t size,
+                                          opal_accelerator_stream_t *stream,
+                                          opal_accelerator_transfer_type_t type)
 {
     CUdeviceptr tmp;
     CUresult result;
+    void *ptr;
 
     int delayed_init = opal_accelerator_cuda_delayed_init_check();
     if (OPAL_UNLIKELY(OPAL_SUCCESS != delayed_init)) {
@@ -482,29 +531,41 @@ static int accelerator_cuda_memmove(int dest_dev_id, int src_dev_id, void *dest,
         return OPAL_ERR_BAD_PARAM;
     }
 
-    result = cuMemAlloc(&tmp, size);
-    if (OPAL_UNLIKELY(CUDA_SUCCESS != result)) {
+    result = accelerator_cuda_mem_alloc_stream(src_dev_id, &ptr, size, stream);
+    if (OPAL_UNLIKELY(OPAL_SUCCESS != result)) {
         return OPAL_ERROR;
     }
-    result = cuMemcpyAsync(tmp, (CUdeviceptr) src, size, opal_accelerator_cuda_memcpy_stream);
+    tmp = (CUdeviceptr)ptr;
+    result = cuMemcpyAsync(tmp, (CUdeviceptr) src, size, *(CUstream*)stream->stream);
     if (OPAL_UNLIKELY(CUDA_SUCCESS != result)) {
         opal_show_help("help-accelerator-cuda.txt", "cuMemcpyAsync failed", true, tmp, src, size,
                        result);
         return OPAL_ERROR;
     }
-    result = cuMemcpyAsync((CUdeviceptr) dest, tmp, size, opal_accelerator_cuda_memcpy_stream);
+    result = cuMemcpyAsync((CUdeviceptr) dest, tmp, size, *(CUstream*)stream->stream);
     if (OPAL_UNLIKELY(CUDA_SUCCESS != result)) {
         opal_show_help("help-accelerator-cuda.txt", "cuMemcpyAsync failed", true, dest, tmp,
                        size, result);
         return OPAL_ERROR;
     }
-    result = cuStreamSynchronize(opal_accelerator_cuda_memcpy_stream);
-    if (OPAL_UNLIKELY(CUDA_SUCCESS != result)) {
+    return accelerator_cuda_mem_release_stream(src_dev_id, ptr, stream);
+}
+
+static int accelerator_cuda_memmove(int dest_dev_id, int src_dev_id, void *dest, const void *src, size_t size,
+                                    opal_accelerator_transfer_type_t type)
+{
+    int ret;
+
+    ret = accelerator_cuda_memmove_async(dest_dev_id, src_dev_id, dest, src, size, &opal_accelerator_cuda_memcpy_stream.base, type);
+    if (OPAL_SUCCESS != ret) {
+        return OPAL_ERROR;
+    }
+    ret = accelerator_cuda_sync_stream(&opal_accelerator_cuda_memcpy_stream.base);
+    if (OPAL_UNLIKELY(OPAL_SUCCESS != result)) {
         opal_show_help("help-accelerator-cuda.txt", "cuStreamSynchronize failed", true,
                        OPAL_PROC_MY_HOSTNAME, result);
         return OPAL_ERROR;
     }
-    cuMemFree(tmp);
     return OPAL_SUCCESS;
 }
 
@@ -521,15 +582,35 @@ static int accelerator_cuda_mem_alloc(int dev_id, void **ptr, size_t size)
         return OPAL_ERR_BAD_PARAM;
     }
 
-    if (size > 0) {
-        result = cuMemAlloc((CUdeviceptr *) ptr, size);
-        if (OPAL_UNLIKELY(CUDA_SUCCESS != result)) {
-            opal_show_help("help-accelerator-cuda.txt", "cuMemAlloc failed", true,
-                           OPAL_PROC_MY_HOSTNAME, result);
-            return OPAL_ERROR;
-        }
+    result = cuMemAlloc((CUdeviceptr *) ptr, size);
+    if (OPAL_UNLIKELY(CUDA_SUCCESS != result)) {
+        opal_show_help("help-accelerator-cuda.txt", "cuMemAlloc failed", true,
+                        OPAL_PROC_MY_HOSTNAME, result);
+        return OPAL_ERROR;
     }
-    return 0;
+    return OPAL_SUCCESS;
+}
+
+
+
+static int accelerator_cuda_mem_alloc_stream(int dev_id, void **addr, size_t size,
+                                             opal_accelerator_stream_t *stream)
+{
+
+    int delayed_init = opal_accelerator_cuda_delayed_init();
+    if (OPAL_UNLIKELY(0 != delayed_init)) {
+        return delayed_init;
+    }
+
+    /* fall-back to regular stream allocation */
+
+    CUresult result = cuMemAllocAsync((CUdeviceptr*)addr, size, *(CUstream*)stream->stream);
+    if (OPAL_UNLIKELY(CUDA_SUCCESS != result)) {
+        opal_show_help("help-accelerator-cuda.txt", "cuMemAlloc failed", true,
+                        OPAL_PROC_MY_HOSTNAME, result);
+        return OPAL_ERROR;
+    }
+    return OPAL_SUCCESS;
 }
 
 static int accelerator_cuda_mem_release(int dev_id, void *ptr)
@@ -545,6 +626,38 @@ static int accelerator_cuda_mem_release(int dev_id, void *ptr)
     }
     return 0;
 }
+
+static int accelerator_cuda_mem_release_stream(int dev_id, void *addr,
+                                               opal_accelerator_stream_t *stream)
+{
+    CUresult result;
+
+    if (NULL == stream || NULL == addr) {
+        return OPAL_ERR_BAD_PARAM;
+    }
+
+    result = cuMemFreeAsync((CUdeviceptr)addr, *(CUstream*)stream->stream);
+    if (OPAL_UNLIKELY(CUDA_SUCCESS != result)) {
+        opal_show_help("help-accelerator-cuda.txt", "cuMemFree failed", true,
+                        OPAL_PROC_MY_HOSTNAME, result);
+        return OPAL_ERROR;
+    }
+    return OPAL_SUCCESS;
+}
+
+
+static int accelerator_cuda_sync_stream(opal_accelerator_stream_t *stream)
+{
+    CUresult result;
+    result = cuStreamSynchronize(*(CUstream*)stream->stream);
+    if (OPAL_UNLIKELY(CUDA_SUCCESS != result)) {
+        opal_show_help("help-accelerator-cuda.txt", "cuStreamSynchronize failed", true,
+                       OPAL_PROC_MY_HOSTNAME, result);
+        return OPAL_ERROR;
+    }
+    return OPAL_SUCCESS;
+}
+
 
 static int accelerator_cuda_get_address_range(int dev_id, const void *ptr, void **base,
                                        size_t *size)
@@ -881,5 +994,31 @@ static int accelerator_cuda_get_buffer_id(int dev_id, const void *addr, opal_acc
                        OPAL_PROC_MY_HOSTNAME, result, addr);
         return OPAL_ERROR;
     }
+    return OPAL_SUCCESS;
+}
+
+
+
+static int accelerator_cuda_get_num_devices(int *num_devices)
+{
+
+    int delayed_init = opal_accelerator_cuda_delayed_init();
+    if (OPAL_UNLIKELY(0 != delayed_init)) {
+        return delayed_init;
+    }
+
+    *num_devices = opal_accelerator_cuda_num_devices;
+    return OPAL_SUCCESS;
+}
+
+static int accelerator_cuda_get_mem_bw(int device, float *bw)
+{
+    int delayed_init = opal_accelerator_cuda_delayed_init();
+    if (OPAL_UNLIKELY(0 != delayed_init)) {
+        return delayed_init;
+    }
+    assert(opal_accelerator_cuda_mem_bw != NULL);
+
+    *bw = opal_accelerator_cuda_mem_bw[device];
     return OPAL_SUCCESS;
 }
