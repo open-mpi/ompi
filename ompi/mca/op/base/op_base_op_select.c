@@ -14,7 +14,7 @@
  *                         rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2020      Research Organization for Information Science
+ * Copyright (c) 2020-2024 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
@@ -163,7 +163,7 @@ int ompi_op_base_op_select(ompi_op_t *op)
 
             /* 3-buffer variants */
             if (NULL != avail->ao_module->opm_3buff_fns[i]) {
-                OBJ_RELEASE(op->o_func.intrinsic.modules[i]);
+                OBJ_RELEASE(op->o_3buff_intrinsic.modules[i]);
                 op->o_3buff_intrinsic.fns[i] =
                     avail->ao_module->opm_3buff_fns[i];
                 op->o_3buff_intrinsic.modules[i] = avail->ao_module;
