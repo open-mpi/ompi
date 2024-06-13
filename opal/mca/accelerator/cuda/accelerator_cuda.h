@@ -2,13 +2,10 @@
  * Copyright (c) 2014      Intel, Inc.  All rights reserved.
  * Copyright (c) 2017-2022 Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
-<<<<<<< HEAD
  * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
-=======
  * Copyright (c) 2024      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
->>>>>>> 26185d6108 (Add stream operations to accelerator components)
  * $COPYRIGHT$
  *
  * Additional copyrights may follow

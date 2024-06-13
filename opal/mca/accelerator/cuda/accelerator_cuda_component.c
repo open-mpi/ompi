@@ -128,7 +128,6 @@ static int accelerator_cuda_component_register(void)
 int opal_accelerator_cuda_delayed_init()
 {
     int result = OPAL_SUCCESS;
-    int prio_lo, prio_hi;
     CUcontext cuContext;
 
     /* Double checked locking to avoid having to

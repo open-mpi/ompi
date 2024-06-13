@@ -81,8 +81,8 @@ static int accelerator_cuda_sync_stream(opal_accelerator_stream_t *stream);
 static int accelerator_cuda_get_num_devices(int *num_devices);
 static int accelerator_cuda_get_mem_bw(int device, float *bw);
 
-
-#define GET_STREAM(_stream) (_stream == MCA_ACCELERATOR_STREAM_DEFAULT ? 0 : *((CUstream *)_stream->stream))
+#define GET_STREAM(_stream) \
+    ((_stream) == MCA_ACCELERATOR_STREAM_DEFAULT ? 0 : *((CUstream *) (_stream)->stream))
 
 opal_accelerator_base_module_t opal_accelerator_cuda_module =
 {
@@ -128,7 +128,7 @@ opal_accelerator_base_module_t opal_accelerator_cuda_module =
     accelerator_cuda_get_mem_bw
 };
 
-static inline opal_accelerator_cuda_delayed_init_check(void)
+static inline int opal_accelerator_cuda_delayed_init_check(void)
 {
     if (OPAL_UNLIKELY(true != mca_accelerator_cuda_init_complete)) {
         return opal_accelerator_cuda_delayed_init();
@@ -314,7 +314,7 @@ static int accelerator_cuda_create_stream(int dev_id, opal_accelerator_stream_t 
     }
 
     result = cuStreamCreate((*stream)->stream, 0);
-    if (OPAL_UNLIKELY(result != CUDA_SUCCESS)) {
+    if (OPAL_UNLIKELY(CUDA_SUCCESS != result)) {
         opal_show_help("help-accelerator-cuda.txt", "cuStreamCreate failed", true,
                        OPAL_PROC_MY_HOSTNAME, result);
         free((*stream)->stream);
@@ -498,13 +498,14 @@ static int accelerator_cuda_memcpy(int dest_dev_id, int src_dev_id, void *dest, 
      * Additionally, cuMemcpy is not necessarily always synchronous. See:
      * https://docs.nvidia.com/cuda/cuda-driver-api/api-sync-behavior.html
      * TODO: Add optimizations for type field */
-    result = cuMemcpyAsync((CUdeviceptr) dest, (CUdeviceptr) src, size, GET_STREAM(opal_accelerator_cuda_memcpy_stream.super));
+    result = cuMemcpyAsync((CUdeviceptr) dest, (CUdeviceptr) src, size,
+                           (CUstream *) opal_accelerator_cuda_memcpy_stream.base.stream);
     if (OPAL_UNLIKELY(CUDA_SUCCESS != result)) {
         opal_show_help("help-accelerator-cuda.txt", "cuMemcpyAsync failed", true, dest, src,
                        size, result);
         return OPAL_ERROR;
     }
-    result = cuStreamSynchronize(GET_STREAM(opal_accelerator_cuda_memcpy_stream.super));
+    result = cuStreamSynchronize((CUstream *) opal_accelerator_cuda_memcpy_stream.base.stream);
     if (OPAL_UNLIKELY(CUDA_SUCCESS != result)) {
         opal_show_help("help-accelerator-cuda.txt", "cuStreamSynchronize failed", true,
                        OPAL_PROC_MY_HOSTNAME, result);
@@ -532,7 +533,7 @@ static int accelerator_cuda_memmove_async(int dest_dev_id, int src_dev_id, void 
     }
 
     result = accelerator_cuda_mem_alloc_stream(src_dev_id, &ptr, size, stream);
-    if (OPAL_UNLIKELY(OPAL_SUCCESS != result)) {
+    if (OPAL_UNLIKELY(CUDA_SUCCESS != result)) {
         return OPAL_ERROR;
     }
     tmp = (CUdeviceptr)ptr;
@@ -561,9 +562,9 @@ static int accelerator_cuda_memmove(int dest_dev_id, int src_dev_id, void *dest,
         return OPAL_ERROR;
     }
     ret = accelerator_cuda_sync_stream(&opal_accelerator_cuda_memcpy_stream.base);
-    if (OPAL_UNLIKELY(OPAL_SUCCESS != result)) {
+    if (OPAL_UNLIKELY(OPAL_SUCCESS != ret)) {
         opal_show_help("help-accelerator-cuda.txt", "cuStreamSynchronize failed", true,
-                       OPAL_PROC_MY_HOSTNAME, result);
+                       OPAL_PROC_MY_HOSTNAME, ret);
         return OPAL_ERROR;
     }
     return OPAL_SUCCESS;
@@ -982,7 +983,7 @@ static int accelerator_cuda_get_buffer_id(int dev_id, const void *addr, opal_acc
     }
 
     result = cuPointerGetAttribute((unsigned long long *)buf_id, CU_POINTER_ATTRIBUTE_BUFFER_ID, (CUdeviceptr) addr);
-    if (OPAL_UNLIKELY(result != CUDA_SUCCESS)) {
+    if (OPAL_UNLIKELY(CUDA_SUCCESS != result)) {
         opal_show_help("help-accelerator-cuda.txt", "bufferID failed", true, OPAL_PROC_MY_HOSTNAME,
                        result);
         return OPAL_ERROR;
