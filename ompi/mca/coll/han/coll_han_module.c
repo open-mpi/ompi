@@ -49,6 +49,7 @@ static int mca_coll_han_module_disable(mca_coll_base_module_t * module,
 static void han_module_clear(mca_coll_han_module_t *han_module)
 {
     CLEAN_PREV_COLL(han_module, alltoall);
+    CLEAN_PREV_COLL(han_module, alltoallv);
     CLEAN_PREV_COLL(han_module, allgather);
     CLEAN_PREV_COLL(han_module, allgatherv);
     CLEAN_PREV_COLL(han_module, allreduce);
@@ -235,7 +236,7 @@ mca_coll_han_comm_query(struct ompi_communicator_t * comm, int *priority)
     han_module->super.coll_module_disable = mca_coll_han_module_disable;
 
     han_module->super.coll_alltoall   = mca_coll_han_alltoall_intra_dynamic;
-    han_module->super.coll_alltoallv  = NULL;
+    han_module->super.coll_alltoallv  = mca_coll_han_alltoallv_intra_dynamic;
     han_module->super.coll_alltoallw  = NULL;
     han_module->super.coll_exscan     = NULL;
     han_module->super.coll_reduce_scatter = NULL;
@@ -297,6 +298,7 @@ mca_coll_han_module_enable(mca_coll_base_module_t * module,
     mca_coll_han_module_t * han_module = (mca_coll_han_module_t*) module;
 
     HAN_INSTALL_COLL_API(comm, han_module, alltoall);
+    HAN_INSTALL_COLL_API(comm, han_module, alltoallv);
     HAN_INSTALL_COLL_API(comm, han_module, allgather);
     HAN_INSTALL_COLL_API(comm, han_module, allgatherv);
     HAN_INSTALL_COLL_API(comm, han_module, allreduce);
@@ -325,6 +327,7 @@ mca_coll_han_module_disable(mca_coll_base_module_t * module,
     mca_coll_han_module_t * han_module = (mca_coll_han_module_t *) module;
 
     HAN_UNINSTALL_COLL_API(comm, han_module, alltoall);
+    HAN_UNINSTALL_COLL_API(comm, han_module, alltoallv);
     HAN_UNINSTALL_COLL_API(comm, han_module, allgather);
     HAN_UNINSTALL_COLL_API(comm, han_module, allgatherv);
     HAN_UNINSTALL_COLL_API(comm, han_module, allreduce);

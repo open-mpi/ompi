@@ -82,6 +82,10 @@ mca_coll_han_algorithm_value_t*  mca_coll_han_available_algorithms[COLLCOUNT] = 
         {"smsc", (fnptr_t)&mca_coll_han_alltoall_using_smsc}, // 2-level
         { 0 }
     },
+    [ALLTOALLV] = (mca_coll_han_algorithm_value_t[]){
+        {"smsc", (fnptr_t)&mca_coll_han_alltoallv_using_smsc}, // 2-level
+        { 0 }
+    },
 };
 
 int

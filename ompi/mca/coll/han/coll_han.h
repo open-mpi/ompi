@@ -199,6 +199,7 @@ typedef struct mca_coll_han_op_module_name_t {
     mca_coll_han_op_up_low_module_name_t scatter;
     mca_coll_han_op_up_low_module_name_t scatterv;
     mca_coll_han_op_up_low_module_name_t alltoall;
+    mca_coll_han_op_up_low_module_name_t alltoallv;
 } mca_coll_han_op_module_name_t;
 
 /**
@@ -260,6 +261,11 @@ typedef struct mca_coll_han_component_t {
     /* alltoall: parallel stages */
     int32_t han_alltoall_pstages;
 
+    /* low level module for alltoallv */
+    uint32_t han_alltoallv_low_module;
+    int64_t han_alltoallv_smsc_avg_send_limit;
+    double han_alltoallv_smsc_noncontig_activation_limit;
+
 
     /* name of the modules */
     mca_coll_han_op_module_name_t han_op_module_name;
@@ -286,6 +292,8 @@ typedef struct mca_coll_han_component_t {
 
     /* Define maximum dynamic errors printed by rank 0 with a 0 verbosity level */
     int max_dynamic_errors;
+
+    opal_free_list_t pack_buffers;
 } mca_coll_han_component_t;
 
 /*
@@ -297,6 +305,7 @@ typedef struct mca_coll_han_single_collective_fallback_s
     union
     {
         mca_coll_base_module_alltoall_fn_t alltoall;
+        mca_coll_base_module_alltoallv_fn_t alltoallv;
         mca_coll_base_module_allgather_fn_t allgather;
         mca_coll_base_module_allgatherv_fn_t allgatherv;
         mca_coll_base_module_allreduce_fn_t allreduce;
@@ -319,6 +328,7 @@ typedef struct mca_coll_han_single_collective_fallback_s
 typedef struct mca_coll_han_collectives_fallback_s
 {
     mca_coll_han_single_collective_fallback_t alltoall;
+    mca_coll_han_single_collective_fallback_t alltoallv;
     mca_coll_han_single_collective_fallback_t allgather;
     mca_coll_han_single_collective_fallback_t allgatherv;
     mca_coll_han_single_collective_fallback_t allreduce;
@@ -384,6 +394,9 @@ OBJ_CLASS_DECLARATION(mca_coll_han_module_t);
 #define previous_alltoall           fallback.alltoall.alltoall
 #define previous_alltoall_module    fallback.alltoall.module
 
+#define previous_alltoallv           fallback.alltoallv.alltoallv
+#define previous_alltoallv_module    fallback.alltoallv.module
+
 #define previous_allgather          fallback.allgather.allgather
 #define previous_allgather_module   fallback.allgather.module
 
@@ -440,6 +453,7 @@ OBJ_CLASS_DECLARATION(mca_coll_han_module_t);
         HAN_UNINSTALL_COLL_API(COMM, HANM, allgather);                 \
         HAN_UNINSTALL_COLL_API(COMM, HANM, allgatherv);                \
         HAN_UNINSTALL_COLL_API(COMM, HANM, alltoall);                  \
+        HAN_UNINSTALL_COLL_API(COMM, HANM, alltoallv);                 \
         han_module->enabled = false;  /* entire module set to pass-through from now on */ \
     } while(0)
 
@@ -501,6 +515,9 @@ mca_coll_han_get_all_coll_modules(struct ompi_communicator_t *comm,
 
 int
 mca_coll_han_alltoall_intra_dynamic(ALLTOALL_BASE_ARGS,
+                                    mca_coll_base_module_t *module);
+int
+mca_coll_han_alltoallv_intra_dynamic(ALLTOALLV_BASE_ARGS,
                                     mca_coll_base_module_t *module);
 int
 mca_coll_han_allgather_intra_dynamic(ALLGATHER_BASE_ARGS,
@@ -565,5 +582,8 @@ static inline struct mca_smsc_endpoint_t *mca_coll_han_get_smsc_endpoint (struct
 
     return (struct mca_smsc_endpoint_t *) proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_SMSC];
 }
+
+#define COLL_HAN_PACKBUF_PAYLOAD_BYTES (128*1024)
+
 
 #endif                          /* MCA_COLL_HAN_EXPORT_H */
