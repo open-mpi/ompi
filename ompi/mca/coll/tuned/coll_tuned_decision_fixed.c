@@ -487,14 +487,8 @@ int ompi_coll_tuned_barrier_intra_dec_fixed(struct ompi_communicator_t *comm,
         alg = 3;
     } else if (communicator_size < 256) {
         alg = 4;
-    } else if (communicator_size < 512) {
-        alg = 6;
-    } else if (communicator_size < 1024) {
-        alg = 4;
-    } else if (communicator_size < 4096) {
-        alg = 6;
     } else {
-        alg = 4;
+        alg = 6;
     }
 
     return ompi_coll_tuned_barrier_intra_do_this (comm, module,
