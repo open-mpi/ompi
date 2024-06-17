@@ -22,6 +22,21 @@
 # $HEADER$
 #
 
+if OPAL_INSTALL_BINARIES
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = ompi.pc ompi-c.pc
+
+if OMPI_HAVE_CXX_COMPILER
+pkgconfig_DATA += ompi-cxx.pc
+endif
+
+if OMPI_HAVE_FORTRAN_COMPILER
+pkgconfig_DATA += ompi-fort.pc
+endif
+endif # OPAL_INSTALL_BINARIES
+
+#-----------------
+
 if OPAL_WANT_SCRIPT_WRAPPER_COMPILERS
 
 bin_SCRIPTS = ompi_wrapper_script
@@ -69,17 +84,6 @@ endif # CASE_SENSITIVE_FS
 else # OPAL_WANT_SCRIPT_WRAPPER_COMPILERS
 
 if OPAL_INSTALL_BINARIES
-
-pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = ompi.pc ompi-c.pc
-
-if OMPI_HAVE_CXX_COMPILER
-pkgconfig_DATA += ompi-cxx.pc
-endif
-
-if OMPI_HAVE_FORTRAN_COMPILER
-pkgconfig_DATA += ompi-fort.pc
-endif
 
 if OMPI_WANT_JAVA_BINDINGS
 bin_SCRIPTS = mpijavac.pl
