@@ -25,6 +25,8 @@
 #include "opal/util/argv.h"
 #include "opal/util/printf.h"
 
+#include "mpi.h"
+
 #include <ucm/api/ucm.h>
 #include <fnmatch.h>
 #include <stdio.h>
@@ -47,6 +49,23 @@ static void opal_common_ucx_mem_release_cb(void *buf, size_t length,
                                            void *cbdata, bool from_alloc)
 {
     ucm_vm_munmap(buf, length);
+}
+
+ucs_thread_mode_t opal_common_ucx_thread_mode(int ompi_mode)
+{
+    switch (ompi_mode) {
+    case MPI_THREAD_MULTIPLE:
+        return UCS_THREAD_MODE_MULTI;
+    case MPI_THREAD_SERIALIZED:
+        return UCS_THREAD_MODE_SERIALIZED;
+    case MPI_THREAD_FUNNELED:
+    case MPI_THREAD_SINGLE:
+        return UCS_THREAD_MODE_SINGLE;
+    default:
+        MCA_COMMON_UCX_WARN("Unknown MPI thread mode %d, using multithread",
+                            ompi_mode);
+        return UCS_THREAD_MODE_MULTI;
+    }
 }
 
 OPAL_DECLSPEC void opal_common_ucx_mca_var_register(const mca_base_component_t *component)

@@ -415,8 +415,12 @@ static int component_select(struct ompi_win_t *win, void **base, size_t size, in
         assert(mca_osc_ucx_component.ucp_worker == NULL);
         memset(&worker_params, 0, sizeof(worker_params));
         worker_params.field_mask = UCP_WORKER_PARAM_FIELD_THREAD_MODE;
-        worker_params.thread_mode = (mca_osc_ucx_component.enable_mpi_threads == true)
-                                    ? UCS_THREAD_MODE_MULTI : UCS_THREAD_MODE_SINGLE;
+        if (mca_osc_ucx_component.enable_mpi_threads) {
+            worker_params.thread_mode = UCS_THREAD_MODE_MULTI;
+        } else {
+            worker_params.thread_mode =
+                opal_common_ucx_thread_mode(ompi_mpi_thread_provided);
+        }
         status = ucp_worker_create(mca_osc_ucx_component.ucp_context, &worker_params,
                                    &(mca_osc_ucx_component.ucp_worker));
         if (UCS_OK != status) {
