@@ -253,7 +253,7 @@ echo "--> Found specfile: $specfile"
 #
 # try to find Libfabric lib subir
 #
-if test -n $libfabric_path; then
+if test -n "$libfabric_path"; then
     # does lib64 exist?
     if test -d $libfabric_path/lib64; then
         # yes, so I will use lib64 as include dir
