@@ -75,6 +75,8 @@ ompi_op_base_stream_handler_fn_t ompi_op_cuda_functions[OMPI_OP_BASE_FORTRAN_OP_
 extern
 ompi_op_base_3buff_stream_handler_fn_t ompi_op_cuda_3buff_functions[OMPI_OP_BASE_FORTRAN_OP_MAX][OMPI_OP_BASE_TYPE_MAX];
 
+void ompi_op_cuda_lazy_init();
+
 END_C_DECLS
 
 #endif /* MCA_OP_CUDA_EXPORT_H */

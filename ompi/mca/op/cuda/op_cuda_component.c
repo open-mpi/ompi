@@ -38,6 +38,9 @@ static struct ompi_op_base_module_1_0_0_t *
     cuda_component_op_query(struct ompi_op_t *op, int *priority);
 static int cuda_component_register(void);
 
+static opal_mutex_t init_lock = OPAL_MUTEX_STATIC_INIT;
+static bool init_complete = false;
+
 ompi_op_cuda_component_t mca_op_cuda_component = {
     {
         .opc_version = {
@@ -128,44 +131,6 @@ static int
 cuda_component_init_query(bool enable_progress_threads,
                          bool enable_mpi_thread_multiple)
 {
-    int num_devices;
-    int rc;
-    // TODO: is this init needed here?
-    cuInit(0);
-    CHECK(cuDeviceGetCount, (&num_devices));
-    mca_op_cuda_component.cu_num_devices = num_devices;
-    mca_op_cuda_component.cu_devices = (CUdevice*)malloc(num_devices*sizeof(CUdevice));
-    mca_op_cuda_component.cu_max_threads_per_block = (int*)malloc(num_devices*sizeof(int));
-    mca_op_cuda_component.cu_max_blocks = (int*)malloc(num_devices*sizeof(int));
-    for (int i = 0; i < num_devices; ++i) {
-        CHECK(cuDeviceGet, (&mca_op_cuda_component.cu_devices[i], i));
-        rc = cuDeviceGetAttribute(&mca_op_cuda_component.cu_max_threads_per_block[i],
-                                  CU_DEVICE_ATTRIBUTE_MAX_BLOCK_DIM_X,
-                                  mca_op_cuda_component.cu_devices[i]);
-        if (CUDA_SUCCESS != rc) {
-            /* fall-back to value that should work on every device */
-            mca_op_cuda_component.cu_max_threads_per_block[i] = 512;
-        }
-        if (-1 < mca_op_cuda_component.cu_max_num_threads) {
-            if (mca_op_cuda_component.cu_max_threads_per_block[i] >= mca_op_cuda_component.cu_max_num_threads) {
-                mca_op_cuda_component.cu_max_threads_per_block[i] = mca_op_cuda_component.cu_max_num_threads;
-            }
-        }
-
-        rc = cuDeviceGetAttribute(&mca_op_cuda_component.cu_max_blocks[i],
-                                  CU_DEVICE_ATTRIBUTE_MAX_GRID_DIM_X,
-                                  mca_op_cuda_component.cu_devices[i]);
-        if (CUDA_SUCCESS != rc) {
-            /* fall-back to value that should work on every device */
-            mca_op_cuda_component.cu_max_blocks[i] = 512;
-        }
-        if (-1 < mca_op_cuda_component.cu_max_num_blocks) {
-            if (mca_op_cuda_component.cu_max_blocks[i] >= mca_op_cuda_component.cu_max_num_blocks) {
-                mca_op_cuda_component.cu_max_blocks[i] = mca_op_cuda_component.cu_max_num_blocks;
-            }
-        }
-    }
-
     return OMPI_SUCCESS;
 }
 
@@ -192,4 +157,57 @@ cuda_component_op_query(struct ompi_op_t *op, int *priority)
     }
     *priority = 50;
     return (ompi_op_base_module_1_0_0_t *) module;
+}
+
+void ompi_op_cuda_lazy_init()
+{
+    /* Double checked locking to avoid having to
+     * grab locks post lazy-initialization.  */
+    opal_atomic_rmb();
+    if (init_complete) return;
+
+    OPAL_THREAD_LOCK(&init_lock);
+
+    if (!init_complete) {
+        int num_devices;
+        int rc;
+        // TODO: is this init needed here?
+        cuInit(0);
+        CHECK(cuDeviceGetCount, (&num_devices));
+        mca_op_cuda_component.cu_num_devices = num_devices;
+        mca_op_cuda_component.cu_devices = (CUdevice*)malloc(num_devices*sizeof(CUdevice));
+        mca_op_cuda_component.cu_max_threads_per_block = (int*)malloc(num_devices*sizeof(int));
+        mca_op_cuda_component.cu_max_blocks = (int*)malloc(num_devices*sizeof(int));
+        for (int i = 0; i < num_devices; ++i) {
+            CHECK(cuDeviceGet, (&mca_op_cuda_component.cu_devices[i], i));
+            rc = cuDeviceGetAttribute(&mca_op_cuda_component.cu_max_threads_per_block[i],
+                                    CU_DEVICE_ATTRIBUTE_MAX_BLOCK_DIM_X,
+                                    mca_op_cuda_component.cu_devices[i]);
+            if (CUDA_SUCCESS != rc) {
+                /* fall-back to value that should work on every device */
+                mca_op_cuda_component.cu_max_threads_per_block[i] = 512;
+            }
+            if (-1 < mca_op_cuda_component.cu_max_num_threads) {
+                if (mca_op_cuda_component.cu_max_threads_per_block[i] >= mca_op_cuda_component.cu_max_num_threads) {
+                    mca_op_cuda_component.cu_max_threads_per_block[i] = mca_op_cuda_component.cu_max_num_threads;
+                }
+            }
+
+            rc = cuDeviceGetAttribute(&mca_op_cuda_component.cu_max_blocks[i],
+                                    CU_DEVICE_ATTRIBUTE_MAX_GRID_DIM_X,
+                                    mca_op_cuda_component.cu_devices[i]);
+            if (CUDA_SUCCESS != rc) {
+                /* fall-back to value that should work on every device */
+                mca_op_cuda_component.cu_max_blocks[i] = 512;
+            }
+            if (-1 < mca_op_cuda_component.cu_max_num_blocks) {
+                if (mca_op_cuda_component.cu_max_blocks[i] >= mca_op_cuda_component.cu_max_num_blocks) {
+                    mca_op_cuda_component.cu_max_blocks[i] = mca_op_cuda_component.cu_max_num_blocks;
+                }
+            }
+        }
+        opal_atomic_wmb();
+        init_complete = true;
+    }
+    OPAL_THREAD_UNLOCK(&init_lock);
 }

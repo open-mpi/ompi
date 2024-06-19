@@ -55,6 +55,8 @@ static inline void device_op_pre(const void *orig_source1,
     uint64_t target_flags = -1, source1_flags = -1, source2_flags = -1;
     int target_rc, source1_rc, source2_rc = -1;
 
+    ompi_op_cuda_lazy_init();
+
     *target = orig_target;
     *source1 = (void*)orig_source1;
     if (NULL != orig_source2) {
