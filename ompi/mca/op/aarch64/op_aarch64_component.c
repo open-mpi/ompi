@@ -4,6 +4,8 @@
  *                         reserved.
  * Copyright (c) 2019      ARM Ltd.  All rights reserved.
  * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2024      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -165,11 +167,14 @@ ompi_op_aarch64_3buff_functions_sve[OMPI_OP_BASE_FORTRAN_OP_MAX][OMPI_OP_BASE_TY
 static struct ompi_op_base_module_1_0_0_t *
     mca_op_aarch64_component_op_query(struct ompi_op_t *op, int *priority)
 {
-    ompi_op_base_module_t *module = OBJ_NEW(ompi_op_base_module_t);
     /* Sanity check -- although the framework should never invoke the
        _component_op_query() on non-intrinsic MPI_Op's, we'll put a
        check here just to be sure. */
     if (0 == (OMPI_OP_FLAGS_INTRINSIC & op->o_flags)) {
+        return NULL;
+    }
+    ompi_op_base_module_t *module = OBJ_NEW(ompi_op_base_module_t);
+    if (NULL == module) {
         return NULL;
     }
 
@@ -200,30 +205,30 @@ static struct ompi_op_base_module_1_0_0_t *
                 }
             }
 #endif  /* defined(OMPI_MCA_OP_HAVE_NEON) */
-            if( NULL != module->opm_fns[i] ) {
-                OBJ_RETAIN(module);
-            }
-            if( NULL != module->opm_3buff_fns[i] ) {
-                OBJ_RETAIN(module);
-            }
         }
         break;
     case OMPI_OP_BASE_FORTRAN_LAND:
+        OBJ_RELEASE(module);
         module = NULL;
         break;
     case OMPI_OP_BASE_FORTRAN_LOR:
+        OBJ_RELEASE(module);
         module = NULL;
         break;
     case OMPI_OP_BASE_FORTRAN_LXOR:
+        OBJ_RELEASE(module);
         module = NULL;
         break;
     case OMPI_OP_BASE_FORTRAN_MAXLOC:
+        OBJ_RELEASE(module);
         module = NULL;
         break;
     case OMPI_OP_BASE_FORTRAN_MINLOC:
+        OBJ_RELEASE(module);
         module= NULL;
         break;
     default:
+        OBJ_RELEASE(module);
         module= NULL;
     }
     /* If we got a module from above, we'll return it.  Otherwise,
