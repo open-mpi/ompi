@@ -82,15 +82,7 @@ FUNC_FUNC_SIG(max, uint64_t, uint64_t)
 FUNC_FUNC_SIG(max,  long,  long)
 FUNC_FUNC_SIG(max,  ulong, unsigned long)
 
-#if 0
 /* Floating point */
-#if defined(HAVE_SHORT_FLOAT)
-FUNC_FUNC_SIG(max, short_float, short float)
-#elif defined(HAVE_OPAL_SHORT_FLOAT_T)
-FUNC_FUNC_SIG(max, short_float, opal_short_float_t)
-#endif
-#endif // 0
-
 FUNC_FUNC_SIG(max, float, float)
 FUNC_FUNC_SIG(max, double, double)
 FUNC_FUNC_SIG(max, long_double, long double)
@@ -111,15 +103,7 @@ FUNC_FUNC_SIG(min, uint64_t, uint64_t)
 FUNC_FUNC_SIG(min,  long,  long)
 FUNC_FUNC_SIG(min,  ulong, unsigned long)
 
-#if 0
 /* Floating point */
-#if defined(HAVE_SHORT_FLOAT)
-FUNC_FUNC_SIG(min, short_float, short float)
-#elif defined(HAVE_OPAL_SHORT_FLOAT_T)
-FUNC_FUNC_SIG(min, short_float, opal_short_float_t)
-#endif
-#endif // 0
-
 FUNC_FUNC_SIG(min, float, float)
 FUNC_FUNC_SIG(min, double, double)
 FUNC_FUNC_SIG(min, long_double, long double)
@@ -140,32 +124,13 @@ OP_FUNC_SIG(sum, uint64_t, uint64_t)
 OP_FUNC_SIG(sum,  long,  long)
 OP_FUNC_SIG(sum,  ulong, unsigned long)
 
-//#if __CUDA_ARCH__ >= 530
-//OP_FUNC_SIG(sum, half, half)
-//#endif // __CUDA_ARCH__
 
-#if 0
 /* Floating point */
-#if defined(HAVE_SHORT_FLOAT)
-OP_FUNC_SIG(sum, short_float, short float)
-#elif defined(HAVE_OPAL_SHORT_FLOAT_T)
-OP_FUNC_SIG(sum, short_float, opal_short_float_t)
-#endif
-#endif // 0
-
 OP_FUNC_SIG(sum, float, float)
 OP_FUNC_SIG(sum, double, double)
 OP_FUNC_SIG(sum, long_double, long double)
 
 /* Complex */
-#if 0
-#if defined(HAVE_SHORT_FLOAT__COMPLEX)
-OP_FUNC_SIG(sum, c_short_float_complex, short float _Complex)
-#elif defined(HAVE_OPAL_SHORT_FLOAT_COMPLEX_T)
-COMPLEX_SUM_FUNC(c_short_float_complex, opal_short_float_t)
-OP_FUNC_SIG(sum, c_long_double_complex, long double _Complex)
-#endif
-#endif // 0
 FUNC_FUNC_SIG(sum, c_float_complex, cuFloatComplex)
 FUNC_FUNC_SIG(sum, c_double_complex, cuDoubleComplex)
 
@@ -185,29 +150,10 @@ OP_FUNC_SIG(prod, uint64_t, uint64_t)
 OP_FUNC_SIG(prod,  long,  long)
 OP_FUNC_SIG(prod,  ulong, unsigned long)
 
-#if 0
 /* Floating point */
-#if defined(HAVE_SHORT_FLOAT)
-OP_FUNC_SIG(prod, short_float, short float)
-#elif defined(HAVE_OPAL_SHORT_FLOAT_T)
-OP_FUNC_SIG(prod, short_float, opal_short_float_t)
-#endif
-#endif // 0
-
-OP_FUNC_SIG(prod, float, float)
 OP_FUNC_SIG(prod, float, float)
 OP_FUNC_SIG(prod, double, double)
 OP_FUNC_SIG(prod, long_double, long double)
-
-/* Complex */
-#if 0
-#if defined(HAVE_SHORT_FLOAT__COMPLEX)
-OP_FUNC_SIG(prod, c_short_float_complex, short float _Complex)
-#elif defined(HAVE_OPAL_SHORT_FLOAT_COMPLEX_T)
-COMPLEX_PROD_FUNC(c_short_float_complex, opal_short_float_t)
-#endif
-OP_FUNC_SIG(prod, c_long_double_complex, long double _Complex)
-#endif // 0
 
 FUNC_FUNC_SIG(prod, c_float_complex, cuFloatComplex)
 FUNC_FUNC_SIG(prod, c_double_complex, cuDoubleComplex)
@@ -428,11 +374,6 @@ FUNC_FUNC_3BUF_SIG(max,  long,  long)
 FUNC_FUNC_3BUF_SIG(max,  ulong, unsigned long)
 
 /* Floating point */
-#if defined(HAVE_SHORT_FLOAT)
-FUNC_FUNC_3BUF_SIG(max, short_float, short float)
-#elif defined(HAVE_OPAL_SHORT_FLOAT_T)
-FUNC_FUNC_3BUF_SIG(max, short_float, opal_short_float_t)
-#endif
 FUNC_FUNC_3BUF_SIG(max, float, float)
 FUNC_FUNC_3BUF_SIG(max, double, double)
 FUNC_FUNC_3BUF_SIG(max, long_double, long double)
@@ -454,11 +395,6 @@ FUNC_FUNC_3BUF_SIG(min,  long,  long)
 FUNC_FUNC_3BUF_SIG(min,  ulong, unsigned long)
 
 /* Floating point */
-#if defined(HAVE_SHORT_FLOAT)
-FUNC_FUNC_3BUF_SIG(min, short_float, short float)
-#elif defined(HAVE_OPAL_SHORT_FLOAT_T)
-FUNC_FUNC_3BUF_SIG(min, short_float, opal_short_float_t)
-#endif
 FUNC_FUNC_3BUF_SIG(min, float, float)
 FUNC_FUNC_3BUF_SIG(min, double, double)
 FUNC_FUNC_3BUF_SIG(min, long_double, long double)
@@ -480,24 +416,11 @@ OP_FUNC_3BUF_SIG(sum,  long,  long)
 OP_FUNC_3BUF_SIG(sum,  ulong, unsigned long)
 
 /* Floating point */
-#if defined(HAVE_SHORT_FLOAT)
-OP_FUNC_3BUF_SIG(sum, short_float, short float)
-#elif defined(HAVE_OPAL_SHORT_FLOAT_T)
-OP_FUNC_3BUF_SIG(sum, short_float, opal_short_float_t)
-#endif
 OP_FUNC_3BUF_SIG(sum, float, float)
 OP_FUNC_3BUF_SIG(sum, double, double)
 OP_FUNC_3BUF_SIG(sum, long_double, long double)
 
 /* Complex */
-#if 0
-#if defined(HAVE_SHORT_FLOAT__COMPLEX)
-OP_FUNC_3BUF_SIG(sum, c_short_float_complex, short float _Complex)
-#elif defined(HAVE_OPAL_SHORT_FLOAT_COMPLEX_T)
-COMPLEX_SUM_FUNC_3BUF(c_short_float_complex, opal_short_float_t)
-#endif
-OP_FUNC_3BUF_SIG(sum, c_long_double_complex, long double _Complex)
-#endif // 0
 FUNC_FUNC_3BUF_SIG(sum, c_float_complex, cuFloatComplex)
 FUNC_FUNC_3BUF_SIG(sum, c_double_complex, cuDoubleComplex)
 
@@ -518,26 +441,11 @@ OP_FUNC_3BUF_SIG(prod,  long,  long)
 OP_FUNC_3BUF_SIG(prod,  ulong, unsigned long)
 
 /* Floating point */
-#if defined(HAVE_SHORT_FLOAT)
-OP_FUNC_3BUF_SIG(prod, short_float, short float)
-#elif defined(HAVE_OPAL_SHORT_FLOAT_T)
-OP_FUNC_3BUF_SIG(prod, short_float, opal_short_float_t)
-#endif
 OP_FUNC_3BUF_SIG(prod, float, float)
 OP_FUNC_3BUF_SIG(prod, double, double)
 OP_FUNC_3BUF_SIG(prod, long_double, long double)
 
 /* Complex */
-#if 0
-#if defined(HAVE_SHORT_FLOAT__COMPLEX)
-OP_FUNC_3BUF_SIG(prod, c_short_float_complex, short float _Complex)
-#elif defined(HAVE_OPAL_SHORT_FLOAT_COMPLEX_T)
-COMPLEX_PROD_FUNC_3BUF(c_short_float_complex, opal_short_float_t)
-#endif
-OP_FUNC_3BUF_SIG(prod, c_float_complex, float _Complex)
-OP_FUNC_3BUF_SIG(prod, c_double_complex, double _Complex)
-OP_FUNC_3BUF_SIG(prod, c_long_double_complex, long double _Complex)
-#endif // 0
 FUNC_FUNC_3BUF_SIG(prod, c_float_complex, cuFloatComplex)
 FUNC_FUNC_3BUF_SIG(prod, c_double_complex, cuDoubleComplex)
 

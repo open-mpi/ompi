@@ -344,14 +344,6 @@ FORT_INT_FUNC(max, fortran_integer8, ompi_fortran_integer8_t)
 FORT_INT_FUNC(max, fortran_integer16, ompi_fortran_integer16_t)
 #endif
 
-#if 0
-/* Floating point */
-#if defined(HAVE_SHORT_FLOAT)
-FUNC_FUNC(max, short_float, short float)
-#elif defined(HAVE_OPAL_SHORT_FLOAT_T)
-FUNC_FUNC(max, short_float, opal_short_float_t)
-#endif
-#endif // 0
 FUNC_FUNC(max, float, float)
 FUNC_FUNC(max, double, double)
 FUNC_FUNC(max, long_double, long double)
@@ -411,15 +403,6 @@ FORT_INT_FUNC(min, fortran_integer8, ompi_fortran_integer8_t)
 FORT_INT_FUNC(min, fortran_integer16, ompi_fortran_integer16_t)
 #endif
 
-#if 0
-/* Floating point */
-#if defined(HAVE_SHORT_FLOAT)
-FUNC_FUNC(min, short_float, short float)
-#elif defined(HAVE_OPAL_SHORT_FLOAT_T)
-FUNC_FUNC(min, short_float, opal_short_float_t)
-#endif
-#endif // 0
-
 FUNC_FUNC(min, float, float)
 FUNC_FUNC(min, double, double)
 FUNC_FUNC(min, long_double, long double)
@@ -478,15 +461,6 @@ FORT_INT_FUNC(sum, fortran_integer8, ompi_fortran_integer8_t)
 FORT_INT_FUNC(sum, fortran_integer16, ompi_fortran_integer16_t)
 #endif
 
-#if 0
-/* Floating point */
-#if defined(HAVE_SHORT_FLOAT)
-OP_FUNC(sum, short_float, short float)
-#elif defined(HAVE_OPAL_SHORT_FLOAT_T)
-OP_FUNC(sum, short_float, opal_short_float_t)
-#endif
-#endif // 0
-
 OP_FUNC(sum, float, float)
 OP_FUNC(sum, double, double)
 OP_FUNC(sum, long_double, long double)
@@ -508,16 +482,8 @@ FORT_FLOAT_FUNC(sum, fortran_real8, ompi_fortran_real8_t)
 #if OMPI_HAVE_FORTRAN_REAL16 && OMPI_REAL16_MATCHES_C
 FORT_FLOAT_FUNC(sum, fortran_real16, ompi_fortran_real16_t)
 #endif
-/* Complex */
-#if 0
-#if defined(HAVE_SHORT_FLOAT__COMPLEX)
-OP_FUNC(sum, c_short_float_complex, short float _Complex)
-#elif defined(HAVE_OPAL_SHORT_FLOAT_COMPLEX_T)
-COMPLEX_SUM_FUNC(c_short_float_complex, opal_short_float_t)
-#endif
-OP_FUNC(sum, c_long_double_complex, long double _Complex)
-#endif // 0
 
+/* Complex */
 FUNC_FUNC(sum, c_float_complex, cuFloatComplex)
 FUNC_FUNC(sum, c_double_complex, cuDoubleComplex)
 
@@ -556,16 +522,8 @@ FORT_INT_FUNC(prod, fortran_integer8, ompi_fortran_integer8_t)
 #if OMPI_HAVE_FORTRAN_INTEGER16
 FORT_INT_FUNC(prod, fortran_integer16, ompi_fortran_integer16_t)
 #endif
+
 /* Floating point */
-
-#if 0
-#if defined(HAVE_SHORT_FLOAT)
-OP_FUNC(prod, short_float, short float)
-#elif defined(HAVE_OPAL_SHORT_FLOAT_T)
-OP_FUNC(prod, short_float, opal_short_float_t)
-#endif
-#endif // 0
-
 OP_FUNC(prod, float, float)
 OP_FUNC(prod, double, double)
 OP_FUNC(prod, long_double, long double)
@@ -587,16 +545,8 @@ FORT_FLOAT_FUNC(prod, fortran_real8, ompi_fortran_real8_t)
 #if OMPI_HAVE_FORTRAN_REAL16 && OMPI_REAL16_MATCHES_C
 FORT_FLOAT_FUNC(prod, fortran_real16, ompi_fortran_real16_t)
 #endif
-/* Complex */
-#if 0
-#if defined(HAVE_SHORT_FLOAT__COMPLEX)
-OP_FUNC(prod, c_short_float_complex, short float _Complex)
-#elif defined(HAVE_OPAL_SHORT_FLOAT_COMPLEX_T)
-COMPLEX_PROD_FUNC(c_short_float_complex, opal_short_float_t)
-#endif
-OP_FUNC(prod, c_long_double_complex, long double _Complex)
-#endif // 0
 
+/* Complex */
 FUNC_FUNC(prod, c_float_complex, cuFloatComplex)
 FUNC_FUNC(prod, c_double_complex, cuDoubleComplex)
 
@@ -1016,13 +966,6 @@ FORT_INT_FUNC_3BUF(max, fortran_integer4, ompi_fortran_integer4_t)
 FORT_INT_FUNC_3BUF(max, fortran_integer8, ompi_fortran_integer8_t)
 #endif
 /* Floating point */
-#if 0
-#if defined(HAVE_SHORT_FLOAT)
-FUNC_FUNC_3BUF(max, short_float, short float)
-#elif defined(HAVE_OPAL_SHORT_FLOAT_T)
-FUNC_FUNC_3BUF(max, short_float, opal_short_float_t)
-#endif
-#endif // 0
 FUNC_FUNC_3BUF(max, float, float)
 FUNC_FUNC_3BUF(max, double, double)
 FUNC_FUNC_3BUF(max, long_double, long double)
@@ -1082,13 +1025,6 @@ FORT_INT_FUNC_3BUF(min, fortran_integer8, ompi_fortran_integer8_t)
 FORT_INT_FUNC_3BUF(min, fortran_integer16, ompi_fortran_integer16_t)
 #endif
 /* Floating point */
-#if 0
-#if defined(HAVE_SHORT_FLOAT)
-FUNC_FUNC_3BUF(min, short_float, short float)
-#elif defined(HAVE_OPAL_SHORT_FLOAT_T)
-FUNC_FUNC_3BUF(min, short_float, opal_short_float_t)
-#endif
-#endif // 0
 FUNC_FUNC_3BUF(min, float, float)
 FUNC_FUNC_3BUF(min, double, double)
 FUNC_FUNC_3BUF(min, long_double, long double)
@@ -1147,13 +1083,6 @@ FORT_INT_FUNC_3BUF(sum, fortran_integer8, ompi_fortran_integer8_t)
 FORT_INT_FUNC_3BUF(sum, fortran_integer16, ompi_fortran_integer16_t)
 #endif
 /* Floating point */
-#if 0
-#if defined(HAVE_SHORT_FLOAT)
-OP_FUNC_3BUF(sum, short_float, short float)
-#elif defined(HAVE_OPAL_SHORT_FLOAT_T)
-OP_FUNC_3BUF(sum, short_float, opal_short_float_t)
-#endif
-#endif // 0
 OP_FUNC_3BUF(sum, float, float)
 OP_FUNC_3BUF(sum, double, double)
 OP_FUNC_3BUF(sum, long_double, long double)
@@ -1176,17 +1105,6 @@ FORT_FLOAT_FUNC_3BUF(sum, fortran_real8, ompi_fortran_real8_t)
 FORT_FLOAT_FUNC_3BUF(sum, fortran_real16, ompi_fortran_real16_t)
 #endif
 /* Complex */
-#if 0
-#if defined(HAVE_SHORT_FLOAT__COMPLEX)
-OP_FUNC_3BUF(sum, c_short_float_complex, short float _Complex)
-#elif defined(HAVE_OPAL_SHORT_FLOAT_COMPLEX_T)
-COMPLEX_SUM_FUNC_3BUF(c_short_float_complex, opal_short_float_t)
-#endif
-OP_FUNC_3BUF(sum, c_float_complex, float _Complex)
-OP_FUNC_3BUF(sum, c_double_complex, double _Complex)
-OP_FUNC_3BUF(sum, c_long_double_complex, long double _Complex)
-#endif // 0
-
 FUNC_FUNC_3BUF(sum, c_float_complex, cuFloatComplex)
 FUNC_FUNC_3BUF(sum, c_double_complex, cuDoubleComplex)
 
@@ -1226,13 +1144,6 @@ FORT_INT_FUNC_3BUF(prod, fortran_integer8, ompi_fortran_integer8_t)
 FORT_INT_FUNC_3BUF(prod, fortran_integer16, ompi_fortran_integer16_t)
 #endif
 /* Floating point */
-#if 0
-#if defined(HAVE_SHORT_FLOAT)
-FORT_FLOAT_FUNC_3BUF(prod, short_float, short float)
-#elif defined(HAVE_OPAL_SHORT_FLOAT_T)
-FORT_FLOAT_FUNC_3BUF(prod, short_float, opal_short_float_t)
-#endif
-#endif // 0
 OP_FUNC_3BUF(prod, float, float)
 OP_FUNC_3BUF(prod, double, double)
 OP_FUNC_3BUF(prod, long_double, long double)
@@ -1255,15 +1166,6 @@ FORT_FLOAT_FUNC_3BUF(prod, fortran_real8, ompi_fortran_real8_t)
 FORT_FLOAT_FUNC_3BUF(prod, fortran_real16, ompi_fortran_real16_t)
 #endif
 /* Complex */
-#if 0
-#if defined(HAVE_SHORT_FLOAT__COMPLEX)
-OP_FUNC_3BUF(prod, c_short_float_complex, short float _Complex)
-#elif defined(HAVE_OPAL_SHORT_FLOAT_COMPLEX_T)
-COMPLEX_PROD_FUNC_3BUF(c_short_float_complex, opal_short_float_t)
-#endif
-OP_FUNC_3BUF(prod, c_long_double_complex, long double _Complex)
-#endif // 0
-
 FUNC_FUNC_3BUF(prod, c_float_complex, cuFloatComplex)
 FUNC_FUNC_3BUF(prod, c_double_complex, cuDoubleComplex)
 
