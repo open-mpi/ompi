@@ -499,13 +499,13 @@ static int accelerator_cuda_memcpy(int dest_dev_id, int src_dev_id, void *dest, 
      * https://docs.nvidia.com/cuda/cuda-driver-api/api-sync-behavior.html
      * TODO: Add optimizations for type field */
     result = cuMemcpyAsync((CUdeviceptr) dest, (CUdeviceptr) src, size,
-                           (CUstream *) opal_accelerator_cuda_memcpy_stream.base.stream);
+                           *(CUstream *) opal_accelerator_cuda_memcpy_stream.base.stream);
     if (OPAL_UNLIKELY(CUDA_SUCCESS != result)) {
         opal_show_help("help-accelerator-cuda.txt", "cuMemcpyAsync failed", true, dest, src,
                        size, result);
         return OPAL_ERROR;
     }
-    result = cuStreamSynchronize((CUstream *) opal_accelerator_cuda_memcpy_stream.base.stream);
+    result = cuStreamSynchronize(*(CUstream *) opal_accelerator_cuda_memcpy_stream.base.stream);
     if (OPAL_UNLIKELY(CUDA_SUCCESS != result)) {
         opal_show_help("help-accelerator-cuda.txt", "cuStreamSynchronize failed", true,
                        OPAL_PROC_MY_HOSTNAME, result);
