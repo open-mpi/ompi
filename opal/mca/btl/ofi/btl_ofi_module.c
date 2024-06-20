@@ -16,7 +16,7 @@
  *
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2020      Google, LLC. All rights reserved.
- * Copyright (c) 2022-2023 Triad National Security, LLC. All rights
+ * Copyright (c) 2022-2024 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -31,6 +31,7 @@
 #include "opal/mca/accelerator/accelerator.h"
 #include "opal/mca/accelerator/base/base.h"
 #include "opal/mca/btl/btl.h"
+#include "opal/mca/common/ofi/common_ofi.h"
 #include "opal/mca/mpool/base/base.h"
 #include "opal/mca/mpool/mpool.h"
 #include "opal/util/printf.h"
@@ -407,9 +408,8 @@ int mca_btl_ofi_post_recvs(mca_btl_base_module_t *module, mca_btl_ofi_context_t 
 
         comp = mca_btl_ofi_frag_completion_alloc(module, context, frag, MCA_BTL_OFI_TYPE_RECV);
 
-        rc = fi_recv(context->rx_ctx, &frag->hdr, MCA_BTL_OFI_RECV_SIZE, NULL, FI_ADDR_UNSPEC,
-                     &comp->comp_ctx);
-
+        OFI_RETRY_UNTIL_DONE(fi_recv(context->rx_ctx, &frag->hdr, MCA_BTL_OFI_RECV_SIZE, NULL, FI_ADDR_UNSPEC,
+                             &comp->comp_ctx), rc);
         if (FI_SUCCESS != rc) {
             BTL_ERROR(("cannot post recvs"));
             return OPAL_ERROR;
