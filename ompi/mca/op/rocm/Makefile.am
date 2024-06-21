@@ -65,7 +65,7 @@ mcacomponent_LTLIBRARIES = $(component_install)
 mca_op_rocm_la_SOURCES = $(sources)
 mca_op_rocm_la_LIBADD = $(rocm_sources:.cpp=.lo)
 mca_op_rocm_la_LDFLAGS = -module -avoid-version $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
-		$(op_rocm_LIBS)
+		$(op_rocm_LDFLAGS) $(op_rocm_LIBS)
 EXTRA_mca_op_rocm_la_SOURCES = $(rocm_sources)
 
 # Specific information for static builds.
@@ -77,6 +77,6 @@ noinst_LTLIBRARIES = $(component_noinst)
 libmca_op_rocm_la_SOURCES = $(sources)
 libmca_op_rocm_la_LIBADD = $(rocm_sources:.cpp=.lo)
 libmca_op_rocm_la_LDFLAGS = -module -avoid-version\
-		$(op_rocm_LIBS)
+		$(op_rocm_LDFLAGS) $(op_rocm_LIBS)
 EXTRA_libmca_op_rocm_la_SOURCES = $(rocm_sources)
 
