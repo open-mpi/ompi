@@ -11,7 +11,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2017-2021 Research Organization for Information Science
+# Copyright (c) 2017-2024 Research Organization for Information Science
 #                         and Technology (RIST).  All rights reserved.
 # $COPYRIGHT$
 #
@@ -30,17 +30,17 @@ AM_CPPFLAGS = \
         -I$(OMPI_TOP_BUILDDIR)/ompi/include \
         -I$(OMPI_TOP_SRCDIR)/ompi \
         -I$(OMPI_TOP_SRCDIR)/ompi/include \
-        -I$(OMPI_TOP_SRCDIR)/ompi/mca/io/romio341 \
-        -I$(OMPI_TOP_SRCDIR)/3rd-party/romio341/include \
-        -I$(OMPI_TOP_SRCDIR)/3rd-party/romio341/adio/include \
-        -I$(top_builddir)/3rd-party/romio341/mpl/include \
+        -I$(OMPI_TOP_SRCDIR)/ompi/mca/io/romio421 \
+        -I$(OMPI_TOP_SRCDIR)/3rd-party/romio421/include \
+        -I$(OMPI_TOP_SRCDIR)/3rd-party/romio421/adio/include \
+        -I$(top_builddir)/3rd-party/romio421/mpl/include \
         -I$(top_builddir)
 
 sources += \
-	src/io_romio341.h \
-	src/io_romio341_component.c \
-	src/io_romio341_file_open.c \
-	src/io_romio341_file_read.c \
-	src/io_romio341_file_write.c \
-	src/io_romio341_module.c
+	src/io_romio421.h \
+	src/io_romio421_component.c \
+	src/io_romio421_file_open.c \
+	src/io_romio421_file_read.c \
+	src/io_romio421_file_write.c \
+	src/io_romio421_module.c
 
