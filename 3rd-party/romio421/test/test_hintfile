@@ -1,0 +1,6 @@
+romio_cb_read enable
+# multiple info keys are strage but not an error.  Note only the first one will
+# be processed
+ind_rd_buffer_size 49
+ind_rd_buffer_size 60
+romio_no_indep_rw true

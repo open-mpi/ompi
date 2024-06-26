@@ -1,0 +1,11 @@
+#! /bin/sh
+##
+## Copyright (C) by Argonne National Laboratory
+##     See COPYRIGHT in top-level directory
+##
+
+# Append ROMIO library dependencies to the global list
+WRAPPER_LIBS="$WRAPPER_LIBS @LIBS@"
+
+MPI_OFFSET_TYPE="@MPI_OFFSET_TYPE@"
+FORTRAN_MPI_OFFSET="@FORTRAN_MPI_OFFSET@"
