@@ -121,6 +121,25 @@ ltoptions.m4
 3rd-party/romio341/test/pfcoll_test.f
 3rd-party/romio341/util/romioinstall
 
+3rd-party/romio421/adio/include/romioconf.h
+3rd-party/romio421/adio/include/romioconf.h.in
+3rd-party/romio421/include/mpio.h
+3rd-party/romio421/localdefs
+3rd-party/romio421/mpl/confdb/test-driver
+3rd-party/romio421/mpl/include/config.h
+3rd-party/romio421/mpl/include/config.h.in
+3rd-party/romio421/mpl/include/mplconfig.h
+3rd-party/romio421/mpl/include/mpl_timer.h
+3rd-party/romio421/mpl/localdefs
+3rd-party/romio421/test/runtests
+3rd-party/romio421/test/fcoll_test.f
+3rd-party/romio421/test/fmisc.f
+3rd-party/romio421/test/fperf.f
+3rd-party/romio421/test/large_file.c
+3rd-party/romio421/test/misc.c
+3rd-party/romio421/test/pfcoll_test.f
+3rd-party/romio421/util/romioinstall
+
 config/project_list.m4
 config/autogen_found_items.m4
 config/opal_get_version.sh
