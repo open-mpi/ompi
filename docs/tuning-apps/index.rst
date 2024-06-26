@@ -16,5 +16,6 @@ components that can be tuned to affect behavior at run time.
    large-clusters/index
    affinity
    mpi-io/index
+   coll-tuned
    benchmarking
    heterogeneity
