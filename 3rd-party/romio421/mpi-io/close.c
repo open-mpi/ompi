@@ -74,9 +74,15 @@ int MPI_File_close(MPI_File * fh)
      * somehow inform the MPI library that we no longer hold a reference to any
      * user defined error handler.  We do this by setting the errhandler at this
      * point to MPI_ERRORS_RETURN. */
+
+    /* Open MPI: The call to PMPI_File_set_errhandler has to be done in romio/src/io_romio_file_open.c
+     * in routine mca_io_romio_file_close()
+     */
+#if 0
     error_code = PMPI_File_set_errhandler(*fh, MPI_ERRORS_RETURN);
     if (error_code != MPI_SUCCESS)
         goto fn_fail;
+#endif
 
     ADIO_Close(adio_fh, &error_code);
     MPIO_File_free(fh);

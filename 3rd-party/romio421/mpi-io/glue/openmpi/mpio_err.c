@@ -3,8 +3,10 @@
  *     See COPYRIGHT in top-level directory
  */
 
+#include <romioconf.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "mpioimpl.h"
 #include "adio_extern.h"

@@ -784,12 +784,18 @@ to include the file {\tt mpio.h} for C or {\tt mpiof.h} for Fortran in
 your MPI-IO program.  
 
 Note that on HP machines running HPUX and on NEC SX-4, you need to
-compile Fortran programs with {\tt mpifort}.
+compile Fortran programs with {\tt mpifort}, because {\tt mpif77} does
+not support 8-byte integers.
 
 With MPICH, HP MPI, or NEC MPI, you can compile MPI-IO programs as \\
 \hspace*{.4in} {\tt mpicc foo.c}\\
 or \\
+\hspace*{.4in} {\tt mpif77 foo.f }\\
+or\\
 \hspace*{.4in} {\tt mpifort foo.f}\\
+
+As mentioned above, mpifort is preferred over mpif77 on HPUX and NEC
+because the f77 compilers on those machines do not support 8-byte integers.
 
 With SGI MPI, you can compile MPI-IO programs as \\
 \hspace*{.4in} {\tt cc foo.c -lmpi}\\
@@ -840,7 +846,8 @@ file system because it does not support {\tt fcntl} file locks,
 and ROMIO uses that feature to implement shared file pointers.
 
 \item On HP machines running HPUX and on NEC SX-4, you need to compile
-Fortran programs with {\tt mpifort}.
+Fortran programs with {\tt mpifort} instead of {\tt mpif77}, because
+the {\tt f77} compilers on these machines don't support 8-byte integers.
 
 \end{itemize}
 

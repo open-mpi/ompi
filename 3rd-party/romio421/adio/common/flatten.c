@@ -10,6 +10,9 @@
 #define FLATTEN_DEBUG 1
 #endif
 
+static MPI_Count ADIOI_Count_contiguous_blocks(MPI_Datatype, MPI_Count *);
+static void ADIOI_Flatten(MPI_Datatype, ADIOI_Flatlist_node *, ADIO_Offset, MPI_Count *);
+ 
 int ADIOI_Flattened_type_keyval = MPI_KEYVAL_INVALID;
 
 static int ADIOI_Flattened_type_copy(MPI_Datatype oldtype,

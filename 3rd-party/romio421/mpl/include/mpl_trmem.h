@@ -6,6 +6,8 @@
 #ifndef MPL_TRMEM_H_INCLUDED
 #define MPL_TRMEM_H_INCLUDED
 
+#include <stdlib.h>
+
 /* Sometime we have memory allocated from external library but requires
  * us to free. Use MPL_external_free for these cases.
 */
