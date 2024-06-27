@@ -59,11 +59,9 @@
 # strongly recommended for packagers.  However, if you want to override
 # this behavior, change the definition below to 0.
 #
-# NOTE: This option will cause "--with-libevent=external
-# --with-hwloc=external --with-pmix=external --with-prrte=external" to
-# be added to the arguments to configure. If you wish to use different
-# CLI options, set this value to 0 and set configure_options to the
-# CLI options you want.
+# NOTE: This option adds "--with-libevent=external --with-hwloc=external
+# --with-pmix=external --with-prrte=external" to configure if they are
+# not provided in configure_options.
 %{!?all_external_3rd_party: %define all_external_3rd_party 1}
 
 # Define this if you want this RPM to install environment setup
@@ -195,12 +193,6 @@
 # where they want it to go -- the modulefile is a bit different in
 # that the user may want it outside of /opt).
 %{!?modulefile_path: %define modulefile_path /opt/%{name}/%{version}/share/openmpi/modulefiles}
-%endif
-
-%if %{all_external_3rd_party}
-%define _configure_3rd_party --with-libevent=external --with-hwloc=external --with-pmix=external --with-prrte=external
-%else
-%define _configure_3rd_party %{nil}
 %endif
 
 # Now that we have processed install_in_opt, we can see if
@@ -495,7 +487,16 @@ CXXFLAGS="%{?cxxflags:%{cxxflags}}%{!?cxxflags:$RPM_OPT_FLAGS}"
 FCFLAGS="%{?fcflags:%{fcflags}}%{!?fcflags:$RPM_OPT_FLAGS}"
 export CFLAGS CXXFLAGS FCFLAGS
 
-%configure %{configure_options} %{_configure_3rd_party}
+_configure_3rd_party=""
+%if %{all_external_3rd_party}
+for pkg in libevent hwloc pmix prrte; do
+  if ! echo %{configure_options} | grep -- "--with-${pkg}="; then
+    _configure_3rd_party+=" --with-${pkg}=external"
+  fi
+done
+%endif
+
+%configure %{configure_options} ${_configure_3rd_party}
 %{__make} %{?mflags}
 
 
