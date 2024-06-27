@@ -64,7 +64,10 @@ libforce_usempif08_internal_modules_to_be_built_la_SOURCES = \
 
 nodist_noinst_HEADERS = mpi-f08-interfaces.h
 
-noinst_HEADERS = mpi-f08-rename.h
+noinst_HEADERS =  \
+        mpi-f08-subarrays-config.h \
+        mpi-f08-rename.h \
+        mpi-f08-interfaces.h
 
 libforce_usempi_internal_modules_to_be_built.la: libusempif08_internal_modules.la
 

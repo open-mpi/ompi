@@ -48,6 +48,7 @@ AM_FCFLAGS = -I$(top_srcdir)/ompi/mpi/fortran/use-mpi-f08/mod \
              $(OMPI_FC_MODULE_FLAG)$(top_builddir)/ompi/$(OMPI_FORTRAN_USEMPI_DIR) \
              $(OMPI_FC_MODULE_FLAG)../mod \
              $(OMPI_FC_MODULE_FLAG)../bindings \
+             $(OMPI_FC_MODULE_FLAG)../ts \
              -I$(top_srcdir) -I$(top_builddir) $(FCFLAGS_f90) \
              -DOMPI_BUILD_MPI_PROFILING=1
 
