@@ -31,13 +31,12 @@
 
 
 /* We try to merge together data that are contiguous */
-int32_t ompi_datatype_create_indexed( int count, const int* pBlockLength, const int* pDisp,
+int32_t ompi_datatype_create_indexed( size_t count, const int* pBlockLength, const int* pDisp,
                                       const ompi_datatype_t* oldType, ompi_datatype_t** newType )
 {
     ptrdiff_t extent, disp, endat;
     ompi_datatype_t* pdt;
-    size_t dLength;
-    int i;
+    size_t i, dLength;
 
     /* ignore all cases that lead to an empty type */
     ompi_datatype_type_size(oldType, &dLength);
@@ -72,13 +71,12 @@ int32_t ompi_datatype_create_indexed( int count, const int* pBlockLength, const 
 }
 
 
-int32_t ompi_datatype_create_hindexed( int count, const int* pBlockLength, const ptrdiff_t* pDisp,
+int32_t ompi_datatype_create_hindexed( size_t count, const int* pBlockLength, const ptrdiff_t* pDisp,
                                        const ompi_datatype_t* oldType, ompi_datatype_t** newType )
 {
     ptrdiff_t extent, disp, endat;
     ompi_datatype_t* pdt;
-    size_t dLength;
-    int i;
+    size_t i, dLength;
 
     /* ignore all cases that lead to an empty type */
     ompi_datatype_type_size(oldType, &dLength);
@@ -113,13 +111,12 @@ int32_t ompi_datatype_create_hindexed( int count, const int* pBlockLength, const
 }
 
 
-int32_t ompi_datatype_create_indexed_block( int count, int bLength, const int* pDisp,
+int32_t ompi_datatype_create_indexed_block( size_t count, int bLength, const int* pDisp,
                                             const ompi_datatype_t* oldType, ompi_datatype_t** newType )
 {
     ptrdiff_t extent, disp, endat;
     ompi_datatype_t* pdt;
-    size_t dLength;
-    int i;
+    size_t i, dLength;
 
     if( (count == 0) || (bLength == 0) ) {
         return ompi_datatype_duplicate(&ompi_mpi_datatype_null.dt, newType);
@@ -147,13 +144,12 @@ int32_t ompi_datatype_create_indexed_block( int count, int bLength, const int* p
     return OMPI_SUCCESS;
 }
 
-int32_t ompi_datatype_create_hindexed_block( int count, int bLength, const ptrdiff_t* pDisp,
+int32_t ompi_datatype_create_hindexed_block( size_t count, int bLength, const ptrdiff_t* pDisp,
                                              const ompi_datatype_t* oldType, ompi_datatype_t** newType )
 {
     ptrdiff_t extent, disp, endat;
     ompi_datatype_t* pdt;
-    size_t dLength;
-    int i;
+    size_t i, dLength;
 
     if( (count == 0) || (bLength == 0) ) {
         return ompi_datatype_duplicate(&ompi_mpi_datatype_null.dt, newType);
