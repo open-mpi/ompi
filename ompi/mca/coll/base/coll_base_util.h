@@ -31,6 +31,7 @@
 #include "ompi/mca/coll/base/coll_tags.h"
 #include "ompi/op/op.h"
 #include "ompi/mca/pml/pml.h"
+#include "opal/mca/accelerator/accelerator.h"
 
 BEGIN_C_DECLS
 
@@ -199,6 +200,49 @@ int ompi_coll_base_file_peek_next_char_is(FILE *fptr, int *fileline, int expecte
 /* Miscellaneous function */
 const char* mca_coll_base_colltype_to_str(int collid);
 int mca_coll_base_name_to_colltype(const char* name);
+
+/* device/host memory allocation functions */
+
+
+void *ompi_coll_base_allocate_on_device(int device, size_t size,
+                                        mca_coll_base_module_t *module);
+
+void ompi_coll_base_free_on_device(int device, void *ptr, mca_coll_base_module_t *module);
+
+
+static inline
+void ompi_coll_base_select_device(
+    struct ompi_op_t *op,
+    const void *sendbuf,
+    const void *recvbuf,
+    size_t count,
+    struct ompi_datatype_t *dtype,
+    int *sendbuf_device,
+    int *recvbuf_device,
+    uint64_t *sendbuf_flags,
+    uint64_t *recvbuf_flags,
+    int *op_device)
+{
+    *recvbuf_device = MCA_ACCELERATOR_NO_DEVICE_ID;
+    *sendbuf_device = MCA_ACCELERATOR_NO_DEVICE_ID;
+    if (sendbuf != NULL && sendbuf != MPI_IN_PLACE) opal_accelerator.check_addr(sendbuf, sendbuf_device, sendbuf_flags);
+    if (recvbuf != NULL) opal_accelerator.check_addr(recvbuf, recvbuf_device, recvbuf_flags);
+    ompi_op_preferred_device(op, *recvbuf_device, *sendbuf_device, count, dtype, op_device);
+}
+
+/**
+ * Frees memory allocated through ompi_coll_base_allocate_op_tmpbuf
+ * or ompi_coll_base_allocate_tmpbuf.
+ */
+static inline
+void ompi_coll_base_free_tmpbuf(void *tmpbuf, int device, mca_coll_base_module_t *module) {
+    if (-1 == device) {
+        free(tmpbuf);
+    } else if (NULL != tmpbuf) {
+        ompi_coll_base_free_on_device(device, tmpbuf, module);
+    }
+}
+
 
 END_C_DECLS
 #endif /* MCA_COLL_BASE_UTIL_EXPORT_H */
