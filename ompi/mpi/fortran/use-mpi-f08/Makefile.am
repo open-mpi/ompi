@@ -23,8 +23,6 @@
 # $HEADER$
 #
 
-SUBDIRS = profile
-
 include $(top_srcdir)/Makefile.ompi-rules
 
 # Note that Automake's Fortran-buidling rules uses CPPFLAGS and
@@ -45,14 +43,14 @@ AM_FCFLAGS = -I$(top_srcdir)/ompi/mpi/fortran/use-mpi-f08/mod \
              $(OMPI_FC_MODULE_FLAG)$(top_builddir)/ompi/$(OMPI_FORTRAN_USEMPI_DIR) \
              $(OMPI_FC_MODULE_FLAG)mod \
              $(OMPI_FC_MODULE_FLAG)bindings \
-             -I$(top_srcdir) -I$(top_builddir) $(FCFLAGS_f90) \
-             -DOMPI_BUILD_MPI_PROFILING=0
+             -I$(top_srcdir) -I$(top_builddir) $(FCFLAGS_f90)
 
 MOSTLYCLEANFILES = *.mod
 
 CLEANFILES += *.i90
 
 lib_LTLIBRARIES = lib@OMPI_LIBMPI_NAME@_usempif08.la
+noinst_LTLIBRARIES = lib@OMPI_LIBMPI_NAME@_usempif08_profile.la
 
 module_sentinel_files = \
         mod/libforce_usempif08_internal_modules_to_be_built.la \
@@ -97,9 +95,9 @@ sizeof_f08.f90:
 	    --complex4=$(OMPI_HAVE_FORTRAN_COMPLEX4) \
 	    --complex32=$(OMPI_HAVE_FORTRAN_COMPLEX32)
 
-profile/psizeof_f08.f90: $(top_builddir)/config.status
-profile/psizeof_f08.f90: $(sizeof_pl)
-profile/psizeof_f08.f90:
+psizeof_f08.f90: $(top_builddir)/config.status
+psizeof_f08.f90: $(sizeof_pl)
+psizeof_f08.f90:
 	$(OMPI_V_GEN) $(sizeof_pl) \
 	    --impl=$@ --ierror=optional --pmpi \
 	    --maxrank=$(OMPI_FORTRAN_MAX_ARRAY_RANK) \
@@ -110,7 +108,7 @@ profile/psizeof_f08.f90:
 	    --complex4=$(OMPI_HAVE_FORTRAN_COMPLEX4) \
 	    --complex32=$(OMPI_HAVE_FORTRAN_COMPLEX32)
 
-CLEANFILES += sizeof_f08.h sizeof_f08.f90 profile/psizeof_f08.f90
+CLEANFILES += sizeof_f08.h sizeof_f08.f90 psizeof_f08.f90
 
 mpi_api_files = \
         abort_f08.F90 \
@@ -127,11 +125,8 @@ mpi_api_files = \
         alloc_mem_f08.F90 \
         allreduce_f08.F90 \
         allreduce_init_f08.F90 \
-        alltoall_f08.F90 \
         alltoall_init_f08.F90 \
-        alltoallv_f08.F90 \
         alltoallv_init_f08.F90 \
-        alltoallw_f08.F90 \
         alltoallw_init_f08.F90 \
         barrier_f08.F90 \
         barrier_init_f08.F90 \
@@ -334,7 +329,6 @@ mpi_api_files = \
         intercomm_create_from_groups_f08.F90 \
         intercomm_merge_f08.F90 \
         iprobe_f08.F90 \
-        irecv_f08.F90 \
         ireduce_f08.F90 \
         ireduce_scatter_f08.F90 \
         ireduce_scatter_block_f08.F90 \
@@ -342,7 +336,6 @@ mpi_api_files = \
         iscan_f08.F90 \
         iscatter_f08.F90 \
         iscatterv_f08.F90 \
-        isend_f08.F90 \
         isendrecv_f08.F90 \
         isendrecv_replace_f08.F90 \
         issend_f08.F90 \
@@ -380,7 +373,6 @@ mpi_api_files = \
         put_f08.F90 \
         query_thread_f08.F90 \
         raccumulate_f08.F90 \
-        recv_f08.F90 \
         recv_init_f08.F90 \
         reduce_f08.F90 \
         reduce_init_f08.F90 \
@@ -403,7 +395,6 @@ mpi_api_files = \
         scatter_init_f08.F90 \
         scatterv_f08.F90 \
         scatterv_init_f08.F90 \
-        send_f08.F90 \
         send_init_f08.F90 \
         sendrecv_f08.F90 \
         sendrecv_replace_f08.F90 \
@@ -427,7 +418,6 @@ mpi_api_files = \
         status_set_elements_f08.F90 \
         status_set_elements_x_f08.F90 \
         testall_f08.F90 \
-        testany_f08.F90 \
         test_cancelled_f08.F90 \
         test_f08.F90 \
         testsome_f08.F90 \
@@ -468,7 +458,6 @@ mpi_api_files = \
         unpack_external_f08.F90 \
         unpack_f08.F90 \
         unpublish_name_f08.F90 \
-        waitall_f08.F90 \
         waitany_f08.F90 \
         wait_f08.F90 \
         waitsome_f08.F90 \
@@ -508,27 +497,24 @@ mpi_api_files = \
         win_test_f08.F90 \
         win_unlock_f08.F90 \
         win_unlock_all_f08.F90 \
-        win_wait_f08.F90
-
-# JMS Somehow this variable substitution isn't quite working, and I
-# don't have time to figure it out.  So just wholesale copy the file
-# list.  :-(
-#pmpi_api_files = $(mpi_api_files:%=profile/p%)
+        win_wait_f08.F90 \
+        api_f08_generated.F90
 
 lib@OMPI_LIBMPI_NAME@_usempif08_la_SOURCES = \
         $(mpi_api_files) \
         mpi-f08.F90
 
-# These are generated; do not ship them
-nodist_lib@OMPI_LIBMPI_NAME@_usempif08_la_SOURCES =
-
 if BUILD_FORTRAN_SIZEOF
 SIZEOF_H = sizeof_f08.h
-nodist_lib@OMPI_LIBMPI_NAME@_usempif08_la_SOURCES += \
+nodist_lib@OMPI_LIBMPI_NAME@_usempif08_la_SOURCES = \
         sizeof_f08.h \
         sizeof_f08.f90 \
-        profile/psizeof_f08.f90
+        psizeof_f08.f90
 endif
+
+lib@OMPI_LIBMPI_NAME@_usempif08_la_FCFLAGS = \
+        $(AM_FCFLAGS) \
+        -DOMPI_BUILD_MPI_PROFILING=0
 
 #
 # Include the mpi_f08-based MPI extensions in libmpi_usempif08, too.
@@ -539,13 +525,20 @@ endif
 #
 
 lib@OMPI_LIBMPI_NAME@_usempif08_la_LIBADD = \
-        profile/libmpi_usempif08_pmpi.la \
+        lib@OMPI_LIBMPI_NAME@_usempif08_profile.la \
         $(OMPI_MPIEXT_USEMPIF08_LIBS) \
         $(top_builddir)/ompi/mpi/fortran/mpif-h/lib@OMPI_LIBMPI_NAME@_mpifh.la \
         $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
         mod/libusempif08_internal_modules.la \
         base/libusempif08_ccode.la
-lib@OMPI_LIBMPI_NAME@_usempif08_la_DEPENDENCIES = $(module_sentinel_files)
+
+#
+# Make sure to build the profile library before this library, since adding it
+# to LIBADD doesn't enforce any ordering
+#
+lib@OMPI_LIBMPI_NAME@_usempif08_la_DEPENDENCIES = \
+        $(module_sentinel_files) \
+        lib@OMPI_LIBMPI_NAME@_usempif08_profile.la
 lib@OMPI_LIBMPI_NAME@_usempif08_la_LDFLAGS = -version-info $(libmpi_usempif08_so_version)
 
 #
@@ -558,6 +551,43 @@ mpi_api_lo_files = $(mpi_api_files:.F90=.lo)
 $(mpi_api_lo_files): bindings/libforce_usempif08_internal_bindings_to_be_built.la
 
 mpi-f08.lo: $(module_sentinel_files) $(SIZEOF_H)
+mpi-f08.F90: $(SIZEOF_H)
+
+#
+# Profiling interface
+#
+
+lib@OMPI_LIBMPI_NAME@_usempif08_profile_la_SOURCES = \
+        $(mpi_api_files)
+
+lib@OMPI_LIBMPI_NAME@_usempif08_profile_la_FCFLAGS = \
+        $(AM_FCFLAGS) \
+        -DOMPI_BUILD_MPI_PROFILING=1
+
+
+# Include script and JSON file for ABI generation from a distribution
+# tarball
+EXTRA_DIST = interface.json
+
+#
+# Generate the Fortran bindings and C wrapper functions for bindings with a
+# *.in template.
+#
+
+if OMPI_GENERATE_BINDINGS
+api_f08_generated.F90: interface.json
+	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
+	    --builddir $(abs_top_builddir) \
+	    --srcdir $(abs_top_srcdir) \
+	    --output $(abs_builddir)/$@ \
+	    fortran \
+	    --prototypes $(abs_srcdir)/$< \
+	    code \
+	    fortran
+
+# Delete generated file on maintainer-clean
+MAINTAINERCLEANFILES = api_f08_generated.F90
+endif
 
 ###########################################################################
 
