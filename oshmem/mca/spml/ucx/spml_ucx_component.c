@@ -463,7 +463,6 @@ static int mca_spml_ucx_component_fini(void)
     volatile int fenced = 0;
     int i;
     int ret = OSHMEM_SUCCESS;
-    mca_spml_ucx_ctx_t *ctx;
 
     opal_progress_unregister(spml_ucx_default_progress);
     if (mca_spml_ucx.active_array.ctxs_count) {

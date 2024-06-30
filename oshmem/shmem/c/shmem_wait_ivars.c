@@ -124,7 +124,6 @@
 #define SHMEM_TYPE_WAIT_UNTIL_ALL(type_name, type, code, prefix)    \
     void prefix##type_name##_wait_until_all(volatile type *ivars, size_t nelems, const int *status, int cmp, type value)   \
     {                                                               \
-                                                                    \
         RUNTIME_CHECK_INIT();                                       \
                                                                     \
         MCA_SPML_CALL(wait_until_all(                               \
@@ -132,94 +131,67 @@
             cmp,                                                    \
             (void*)&value,                                          \
             nelems, status, code));                                 \
-                                                                    \
-        return ;                                                    \
     }
 
 
 #define SHMEM_TYPE_WAIT_UNTIL_ANY(type_name, type, code, prefix)    \
     size_t prefix##type_name##_wait_until_any(volatile type *ivars, size_t nelems, const int *status, int cmp, type value)   \
     {                                                               \
-        size_t rc = 0;                                              \
-                                                                    \
         RUNTIME_CHECK_INIT();                                       \
                                                                     \
-        rc = MCA_SPML_CALL(wait_until_any(                          \
+        return MCA_SPML_CALL(wait_until_any(                        \
             (void*)ivars,                                           \
             cmp,                                                    \
             (void*)&value,                                          \
             nelems, status, code));                                 \
-        RUNTIME_CHECK_IMPL_RC(rc);                                  \
-                                                                    \
-        return rc;                                                  \
     }
 
 
 #define SHMEM_TYPE_WAIT_UNTIL_SOME(type_name, type, code, prefix)   \
     size_t  prefix##type_name##_wait_until_some(volatile type *ivars, size_t nelems, size_t *indices, const int *status, int cmp, type value)   \
     {                                                               \
-        size_t rc = 0;                                              \
-                                                                    \
         RUNTIME_CHECK_INIT();                                       \
                                                                     \
-        rc = MCA_SPML_CALL(wait_until_some(                         \
+        return MCA_SPML_CALL(wait_until_some(                       \
             (void*)ivars,                                           \
             cmp,                                                    \
             (void*)&value,                                          \
             nelems, indices, status, code));                        \
-        RUNTIME_CHECK_IMPL_RC(rc);                                  \
-                                                                    \
-        return rc;                                                  \
     }
 
 #define SHMEM_TYPE_WAIT_UNTIL_ANY_VECTOR(type_name, type, code, prefix)    \
     size_t prefix##type_name##_wait_until_any_vector(volatile type *ivars, size_t nelems, const int *status, int cmp, type *values)   \
     {                                                               \
-        size_t rc = 0;                                              \
-                                                                    \
         RUNTIME_CHECK_INIT();                                       \
                                                                     \
-        rc = MCA_SPML_CALL(wait_until_any_vector(                   \
+        return MCA_SPML_CALL(wait_until_any_vector(                 \
             (void*)ivars,                                           \
             cmp,                                                    \
             (void*)values,                                          \
             nelems, status, code));                                 \
-        RUNTIME_CHECK_IMPL_RC(rc);                                  \
-                                                                    \
-        return rc;                                                  \
     }
 
 #define SHMEM_TYPE_WAIT_UNTIL_SOME_VECTOR(type_name, type, code, prefix)    \
     size_t prefix##type_name##_wait_until_some_vector(volatile type *ivars, size_t nelems, size_t *indices, const int *status, int cmp, type *values)   \
     {                                                               \
-        size_t rc = 0;                                              \
-                                                                    \
         RUNTIME_CHECK_INIT();                                       \
                                                                     \
-        rc = MCA_SPML_CALL(wait_until_some_vector(                  \
+        return MCA_SPML_CALL(wait_until_some_vector(                \
             (void*)ivars,                                           \
             cmp,                                                    \
             (void*)values,                                          \
             nelems, indices, status, code));                        \
-        RUNTIME_CHECK_IMPL_RC(rc);                                  \
-                                                                    \
-        return rc;                                                  \
     }
 
 
 #define SHMEM_TYPE_WAIT_UNTIL_ALL_VECTOR(type_name, type, code, prefix)    \
     void prefix##type_name##_wait_until_all_vector(volatile type *ivars, size_t nelems, const int *status, int cmp, type *values)   \
     {                                                               \
-        int rc = OSHMEM_SUCCESS;                                    \
-                                                                    \
-                                                                    \
         MCA_SPML_CALL(wait_until_all_vector(                        \
             (void*)ivars,                                           \
             cmp,                                                    \
             (void*)values,                                          \
             nelems, status, code));                                 \
-                                                                    \
-        return ;                                                    \
     }
 
 
