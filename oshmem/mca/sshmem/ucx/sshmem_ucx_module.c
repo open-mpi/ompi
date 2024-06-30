@@ -181,12 +181,11 @@ segment_create(map_segment_t *ds_buf,
 {
     mca_spml_ucx_t *spml = (mca_spml_ucx_t*)mca_spml.self;
     unsigned flags       = UCP_MEM_MAP_ALLOCATE;
-    int status;
 
     if (hint & SHMEM_HINT_DEVICE_NIC_MEM) {
 #if HAVE_DECL_UCS_MEMORY_TYPE_RDMA
-        status = segment_create_internal(ds_buf, NULL, size, flags,
-                                         UCS_MEMORY_TYPE_RDMA, 3);
+        int status = segment_create_internal(ds_buf, NULL, size,
+                                             flags, UCS_MEMORY_TYPE_RDMA, 3);
         if (status == OSHMEM_SUCCESS) {
             ds_buf->alloc_hints = hint;
             ds_buf->allocator   = &sshmem_ucx_allocator;
