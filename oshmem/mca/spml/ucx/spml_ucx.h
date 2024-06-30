@@ -239,24 +239,22 @@ extern int mca_spml_ucx_put_signal_nb(shmem_ctx_t ctx, void* dst_addr, size_t si
         dst);
 extern void mca_spml_ucx_wait_until_all(void *ivars, int cmp, void
         *cmp_value, size_t nelems, const int *status, int datatype);
-extern size_t mca_spml_ucx_wait_until_any(void *ivars, int cmp, void
-        *cmp_value, size_t nelems, const int *status, int datatype);
-extern size_t mca_spml_ucx_wait_until_some(void *ivars, int cmp, void
-        *cmp_value, size_t nelems, size_t *indices, const int *status, int
-        datatype);
+extern int mca_spml_ucx_wait_until_any(void *ivars, int cmp, void *cmp_value, size_t nelems,
+                                       const int *status, int datatype);
+extern int mca_spml_ucx_wait_until_some(void *ivars, int cmp, void *cmp_value, size_t nelems,
+                                        size_t *indices, const int *status, int datatype);
 extern void mca_spml_ucx_wait_until_all_vector(void *ivars, int cmp, void
         *cmp_values, size_t nelems, const int *status, int datatype);
-extern size_t mca_spml_ucx_wait_until_any_vector(void *ivars, int cmp, void
-        *cmp_value, size_t nelems, const int *status, int datatype);
-extern size_t mca_spml_ucx_wait_until_some_vector(void *ivars, int cmp, void
-        *cmp_value, size_t nelems, size_t *indices, const int *status, int
-        datatype);
+extern int mca_spml_ucx_wait_until_any_vector(void *ivars, int cmp, void *cmp_value, size_t nelems,
+                                              const int *status, int datatype);
+extern int mca_spml_ucx_wait_until_some_vector(void *ivars, int cmp, void *cmp_value, size_t nelems,
+                                               size_t *indices, const int *status, int datatype);
 extern int mca_spml_ucx_test_all(void *ivars, int cmp, void *cmp_value,
         size_t nelems, const int *status, int datatype);
-extern size_t mca_spml_ucx_test_any(void *ivars, int cmp, void *cmp_value,
-        size_t nelems, const int *status, int datatype);
-extern size_t mca_spml_ucx_test_some(void *ivars, int cmp, void *cmp_value,
-        size_t nelems, size_t *indices, const int *status, int datatype);
+extern int mca_spml_ucx_test_any(void *ivars, int cmp, void *cmp_value, size_t nelems,
+                                 const int *status, int datatype);
+extern int mca_spml_ucx_test_some(void *ivars, int cmp, void *cmp_value, size_t nelems,
+                                  size_t *indices, const int *status, int datatype);
 extern int mca_spml_ucx_test_all_vector(void *ivars, int cmp, void
         *cmp_values, size_t nelems, const int *status, int datatype);
 extern int mca_spml_ucx_test_any_vector(void *ivars, int cmp, void
