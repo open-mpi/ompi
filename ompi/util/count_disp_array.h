@@ -13,13 +13,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-enum ompi_count_array_type {
-    OMPI_COUNT_ARRAY_TYPE_INT,
-    OMPI_COUNT_ARRAY_TYPE_SIZE_T,
-};
-
 typedef struct ompi_count_array_t {
-    enum ompi_count_array_type type;
     union {
         const int *int_array;
         const size_t *size_t_array;
@@ -29,14 +23,12 @@ typedef struct ompi_count_array_t {
 /* Initialize an int variant of the count array */
 static inline void ompi_count_array_init(ompi_count_array_t *array, const int *data)
 {
-    array->type = OMPI_COUNT_ARRAY_TYPE_INT;
-    array->data.int_array = data;
+    array->data.int_array = (const int *)((uint64_t)data | 0x1L);
 }
 
 /* Initialize a bigcount variant of the count array */
 static inline void ompi_count_array_init_c(ompi_count_array_t *array, const size_t *data)
 {
-    array->type = OMPI_COUNT_ARRAY_TYPE_SIZE_T;
     array->data.size_t_array = data;
 }
 
@@ -60,13 +52,13 @@ static inline void ompi_count_array_init_c(ompi_count_array_t *array, const size
 /* Return if the internal type is 64-bit or not */
 static inline bool ompi_count_array_is_64bit(ompi_count_array_t *array)
 {
-    return array->type == OMPI_COUNT_ARRAY_TYPE_SIZE_T && sizeof(size_t) == 8;
+    return !((uint64_t)array->data.size_t_array & 0x1L);
 }
 
 static inline const void *ompi_count_array_ptr(ompi_count_array_t *array)
 {
-    if (OPAL_LIKELY(array->type == OMPI_COUNT_ARRAY_TYPE_INT)) {
-        return array->data.int_array;
+    if (OPAL_LIKELY((uint64_t)array->data.int_array & 0x1L)){
+        return (const void *)((uint64_t)array->data.int_array & ~0x1L);
     }
     return array->data.size_t_array;
 }
@@ -74,19 +66,14 @@ static inline const void *ompi_count_array_ptr(ompi_count_array_t *array)
 /* Get a count in the array at index i */
 static inline size_t ompi_count_array_get(ompi_count_array_t *array, size_t i)
 {
-    if (OPAL_LIKELY(array->type == OMPI_COUNT_ARRAY_TYPE_INT)) {
-        return array->data.int_array[i];
+    if (OPAL_LIKELY((uint64_t)array->data.int_array & 0x1L)){
+        const int *iptr = (const int *)((uint64_t)array->data.int_array & ~0x1L);
+        return iptr[i];
     }
     return array->data.size_t_array[i];
 }
 
-enum ompi_disp_array_type {
-    OMPI_DISP_ARRAY_TYPE_INT,
-    OMPI_DISP_ARRAY_TYPE_PTRDIFF_T,
-};
-
 typedef struct ompi_disp_array_t {
-    enum ompi_disp_array_type type;
     union {
         const int *int_array;
         const ptrdiff_t *ptrdiff_t_array;
@@ -96,14 +83,12 @@ typedef struct ompi_disp_array_t {
 /* Initialize an int variant of the disp array */
 static inline void ompi_disp_array_init(ompi_disp_array_t *array, const int *data)
 {
-    array->type = OMPI_DISP_ARRAY_TYPE_INT;
-    array->data.int_array = data;
+    array->data.int_array = (const int *)((uint64_t)data | 0x1L);
 }
 
 /* Initialize a bigcount variant of the disp array */
 static inline void ompi_disp_array_init_c(ompi_disp_array_t *array, const ptrdiff_t *data)
 {
-    array->type = OMPI_DISP_ARRAY_TYPE_PTRDIFF_T;
     array->data.ptrdiff_t_array = data;
 }
 
@@ -127,22 +112,23 @@ static inline void ompi_disp_array_init_c(ompi_disp_array_t *array, const ptrdif
 /* Return if the internal type is 64-bit or not */
 static inline bool ompi_disp_array_is_64bit(ompi_disp_array_t *array)
 {
-    return array->type == OMPI_DISP_ARRAY_TYPE_PTRDIFF_T && sizeof(ptrdiff_t) == 8;
+    return !((uint64_t)array->data.ptrdiff_t_array & 0x1L);
 }
 
 /* Get a displacement in the array at index i */
 static inline ptrdiff_t ompi_disp_array_get(ompi_disp_array_t *array, size_t i)
 {
-    if (OPAL_LIKELY(array->type == OMPI_DISP_ARRAY_TYPE_INT)) {
-        return array->data.int_array[i];
+    if (OPAL_LIKELY((uint64_t)array->data.int_array & 0x1L)){
+        const int *iptr = (const int *)((uint64_t)array->data.int_array & ~0x1L);
+        return iptr[i];
     }
     return array->data.ptrdiff_t_array[i];
 }
 
 static inline const void *ompi_disp_array_ptr(ompi_disp_array_t *array)
 {
-    if (OPAL_LIKELY(array->type == OMPI_DISP_ARRAY_TYPE_INT)) {
-        return array->data.int_array;
+    if (OPAL_LIKELY((uint64_t)array->data.int_array & 0x1L)){
+        return (const void *)((uint64_t)array->data.int_array & ~0x1L);
     }
     return array->data.ptrdiff_t_array;
 }
