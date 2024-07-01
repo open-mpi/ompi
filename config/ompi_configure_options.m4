@@ -169,9 +169,9 @@ esac
 AC_MSG_CHECKING([where to install Fortran MPI modules])
 AC_ARG_WITH([mpi-moduledir],
     [AS_HELP_STRING([--with-mpi-moduledir],
-                    [specify where to install Fortran MPI modules (default: $libdir)])],
+                    [specify where to install Fortran MPI modules (default: $includedir)])],
     [OMPI_FORTRAN_MODULEDIR=$withval],
-    [OMPI_FORTRAN_MODULEDIR=$libdir])
+    [OMPI_FORTRAN_MODULEDIR=$includedir])
 AC_SUBST(OMPI_FORTRAN_MODULEDIR)
 AC_MSG_RESULT([$OMPI_FORTRAN_MODULEDIR])
 

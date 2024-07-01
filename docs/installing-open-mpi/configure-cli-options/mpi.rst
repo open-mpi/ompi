@@ -63,7 +63,10 @@ MPI API behaviors that can be used with ``configure``:
 * ``--with-mpi-moduledir=DIR``:
   Specify a specific ``DIR`` directory where to install the MPI
   Fortran bindings modulefiles.  By default, Open MPI will install
-  Fortran modulefiles into ``$libdir``.
+  Fortran modulefiles into ``$includedir``.
+
+  .. note:: Previous versions of Open MPI installed Fortran
+            modulefiles into ``$libdir``.
 
 * ``--enable-mpi-ext[=LIST]``:
   Enable Open MPI's non-portable API extensions.  ``LIST`` is a
