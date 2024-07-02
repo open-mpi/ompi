@@ -1,0 +1,28 @@
+# -*- text -*-
+#
+# Copyright (c) 2024    Amazon.com, Inc. or its affiliates. All Rights reserved.
+#
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+[Unknown JSON value type]
+The JSON value has an unknown type %s.
+
+[Invalid argument type]
+Function %s expects input type %s(%d) but got %d.
+
+[Invalid JSON string]
+The input is not a valid JSON string.
+
+[Unable to open file]
+Failed to open file %s. Please check the file path and permissions.
+
+[Memory allocation failure]
+Cannot allocate memory.
+
+[Unable to read file]
+Encountered error reading file %s.
+
+[Index out of bound]
+Index(%zu) is out of bound(length %ud).

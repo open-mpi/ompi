@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2024      Amazon.com, Inc. or its affiliates.
+ *                         All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -33,6 +35,9 @@ void test_success(void);
 void test_failure(const char *a);
 int test_verify_str(const char *expected_result, const char *test_result);
 int test_verify_int(int expected_result, int test_result);
+int test_verify_int64_t(int64_t expected_result, int64_t test_result);
+int test_verify_size_t(size_t expected_result, size_t test_result);
+int test_verify_double(double expected_result, double test_result);
 int test_finalize(void);
 void test_comment(const char *userstr);
 void test_fail_stop(const char *msg, int status);

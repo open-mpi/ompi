@@ -15,6 +15,8 @@
 # Copyright (c) 2018      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2018      Intel, Inc.  All rights reserved.
+# Copyright (c) 2024      Amazon.com, Inc. or its affiliates.
+#                         All Rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -37,9 +39,10 @@ AM_CPPFLAGS = -I$(top_srcdir)/test/support
 
 
 check_PROGRAMS = \
+	bipartite_graph \
 	opal_bit_ops \
 	opal_path_nfs \
-	bipartite_graph \
+        opal_json \
         opal_sha256
 
 TESTS = \
@@ -128,6 +131,12 @@ bipartite_graph_LDADD = \
         $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la \
         $(top_builddir)/test/support/libsupport.a
 bipartite_graph_DEPENDENCIES = $(bipartite_graph_LDADD)
+
+opal_json_SOURCES = opal_json.c
+opal_json_LDADD = \
+        $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la \
+        $(top_builddir)/test/support/libsupport.a
+opal_json_DEPENDENCIES = $(opal_json_LDADD)
 
 opal_sha256_SOURCES = opal_sha256.c
 opal_sha256_LDADD = \
