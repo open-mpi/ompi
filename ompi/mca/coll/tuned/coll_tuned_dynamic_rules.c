@@ -38,6 +38,30 @@
 #include "ompi/mca/coll/base/coll_base_util.h"
 
 
+/*
+ * topo level conversions both ways; str <-> id
+ * An enum is used for conversions.
+ */
+static mca_base_var_enum_value_t level_enumerator[] = {
+    { SINGLE_NODE, "singlenode" },
+    { DISJOINT, "disjoint" },
+    { 0 }
+};
+
+/*
+ * Stringifier for topological level
+ */
+int mca_coll_tuned_topo_name_to_id(const char *topo_level_name)
+{
+    for (int i = 0; level_enumerator[i].string != NULL; i++) {
+        if (0 == strcmp(topo_level_name, level_enumerator[i].string)) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+
 ompi_coll_alg_rule_t* ompi_coll_tuned_mk_alg_rules (int n_alg)
 {
     int i;
@@ -87,6 +111,7 @@ ompi_coll_msg_rule_t* ompi_coll_tuned_mk_msg_rules (int n_msg_rules, int alg_rul
         msg_rules[i].com_rule_id = com_rule_id;
         msg_rules[i].msg_rule_id = i;
         msg_rules[i].msg_size = 0;               /* unknown */
+        msg_rules[i].topologic_level = DEFAULT;  /* unknown & default */
         msg_rules[i].result_alg = 0;             /* unknown */
         msg_rules[i].result_topo_faninout = 0;   /* unknown */
         msg_rules[i].result_segsize = 0;         /* unknown */
@@ -327,8 +352,9 @@ ompi_coll_com_rule_t* ompi_coll_tuned_get_com_rule_ptr (ompi_coll_alg_rule_t* ru
 
 /*
  * This function takes a com_rule ptr (from the communicators coll tuned data structure)
- * (Which is chosen for a particular MPI collective)
- * and a (total_)msg_size and it returns (0) and a algorithm to use and a recommended topo faninout and segment size
+ * (Which is chosen for a particular MPI collective),
+ * a (total_)msg_size, and the communicator(comm) to which the process belongs,
+ * and it returns (0) and a algorithm to use and a recommended topo faninout and segment size
  * all based on the user supplied rules
  *
  * Just like the above functions it uses a less than or equal msg size
@@ -340,8 +366,9 @@ ompi_coll_com_rule_t* ompi_coll_tuned_get_com_rule_ptr (ompi_coll_alg_rule_t* ru
  *
  */
 
-int ompi_coll_tuned_get_target_method_params (ompi_coll_com_rule_t* base_com_rule, size_t mpi_msgsize, int *result_topo_faninout,
-                                              int* result_segsize, int* max_requests)
+int ompi_coll_tuned_get_target_method_params (ompi_coll_com_rule_t* base_com_rule, const size_t mpi_msgsize, 
+                                              const struct ompi_communicator_t *comm,
+                                              int *result_topo_faninout, int* result_segsize, int* max_requests)
 {
     ompi_coll_msg_rule_t*  msg_p = (ompi_coll_msg_rule_t*) NULL;
     ompi_coll_msg_rule_t*  best_msg_p = (ompi_coll_msg_rule_t*) NULL;
@@ -357,12 +384,18 @@ int ompi_coll_tuned_get_target_method_params (ompi_coll_com_rule_t* base_com_rul
     /* make a copy of the first msg rule */
     best_msg_p = msg_p = base_com_rule->msg_rules;
     i = 0;
+    bool found_rules = false;
 
     while (i<base_com_rule->n_msg_sizes) {
         /*       OPAL_OUTPUT((ompi_coll_tuned_stream,"checking mpi_msgsize %d against com_id %d msg_id %d index %d msg_size %d",  */
         /*             mpi_msgsize, msg_p->com_rule_id, msg_p->msg_rule_id, i, msg_p->msg_size)); */
         if (msg_p->msg_size <= mpi_msgsize) {
-            best_msg_p = msg_p;
+            if (msg_p->topologic_level == DEFAULT ||
+               (msg_p->topologic_level == SINGLE_NODE && !ompi_group_have_remote_peers(comm->c_local_group)) ||
+               (msg_p->topologic_level == DISJOINT && OMPI_COMM_IS_INTRA(comm) && OMPI_COMM_IS_DISJOINT_SET(comm) && OMPI_COMM_IS_DISJOINT(comm))) {
+                best_msg_p = msg_p;
+                found_rules = true;
+            }
             /*          OPAL_OUTPUT((ompi_coll_tuned_stream(":ok\n")); */
         }
         else {
@@ -372,6 +405,11 @@ int ompi_coll_tuned_get_target_method_params (ompi_coll_com_rule_t* base_com_rul
         /* go to the next entry */
         msg_p++;
         i++;
+    }
+
+    if (!found_rules) {
+        /* Fall back to fixed rules if there is no corresponding topological rule in the file */
+        return (0);
     }
 
     OPAL_OUTPUT((ompi_coll_tuned_stream,"Selected the following msg rule id %d\n", best_msg_p->msg_rule_id));
