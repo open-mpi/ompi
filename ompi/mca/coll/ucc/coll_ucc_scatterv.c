@@ -43,6 +43,7 @@ ucc_status_t mca_coll_ucc_scatterv_init(const void *sbuf, const int *scounts,
 
     ucc_coll_args_t coll = {
         .mask      = 0,
+        .flags     = 0,
         .coll_type = UCC_COLL_TYPE_SCATTERV,
         .root      = root,
         .src.info_v = {

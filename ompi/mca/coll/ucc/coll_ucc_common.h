@@ -47,6 +47,9 @@
             _coll.mask   |= UCC_COLL_ARGS_FIELD_CB;                     \
             _coll.cb.cb   = mca_coll_ucc_completion;                    \
             _coll.cb.data = (void*)_coll_req;                           \
+        } else {                                                        \
+            _coll.mask  |= UCC_COLL_ARGS_FIELD_FLAGS;                   \
+            _coll.flags |= UCC_COLL_ARGS_HINT_OPTIMIZE_LATENCY;         \
         }                                                               \
         COLL_UCC_CHECK(ucc_collective_init(&_coll, _req,                \
                                            _module->ucc_team));         \
