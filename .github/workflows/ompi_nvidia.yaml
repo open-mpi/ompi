@@ -7,11 +7,11 @@ jobs:
     runs-on: [self-hosted, linux, x64, nvidia]
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         submodules: recursive
     - name: Checkout CI scripts
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         repository: Mellanox/jenkins_scripts
         path: ompi_ci
