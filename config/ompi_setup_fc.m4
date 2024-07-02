@@ -50,9 +50,183 @@ AC_DEFUN_ONCE([_OMPI_SETUP_FC_COMPILER],[
 
 #############################################################################
 
+dnl On macOS with Xcode, test whether -Wl,-commons,use_dylibs works
+dnl by itself or whether it also needs -Wl,-ld_classic.
+dnl
+dnl Backstory
+dnl
+dnl The history is that for a long time (decades),
+dnl -Wl,-commons,use_dylibs worked by itself.
+dnl
+dnl XCode 15 introduced a a new linker (either "the new linker" or
+dnl "ld_prime", according to
+dnl https://developer.apple.com/forums/thread/715385). The new linker
+dnl originally did not support "-commons use_dylibs", but Apple recently
+dnl added support for that feature to the new linker in the XCode 16
+dnl beta. "-ld_classic" forces using the old linker (which doesn't support
+dnl some other features that customers might like, but Open MPI doesn't
+dnl use for its Fortran bindings, like mergable libraries).
+dnl
+dnl Sidenode: Open MPI needs this "-commons use_dylibs" functionality
+dnl because Fortran sentinel values (e.g., MPI_BOTTOM) are implemented
+dnl with Fortran common blocks.
+dnl
+dnl So there's three cases:
+dnl
+dnl 1. Customer's default linker is the classic linker, which always
+dnl    supported "-commons use_dylibs".
+dnl 2. Customer's default linker is the new linker, but not new enough
+dnl    to support "-commons use_dylibs", so we need to force using the old
+dnl    linker via "-ld_classic".
+dnl 3. Customer's default linker is the new linker, new enough to support
+dnl    "-commons use_dylibs", so we do not want to force using the old
+dnl    linker.
+dnl
+dnl We have to use a slightly complex test code that will actually
+dnl fail if the version of Xcode being used requires "-ld_classic"
+dnl with "-commons,use_dylibs".
+dnl
+dnl 1. Build a shared library (with C source code) with a public
+dnl    symbol that can be used as a Fortran common block symbol.
+dnl 2. Compile a Fortran program that calls a function in the shared
+dnl    library, and link it against the shared library.
+dnl
+dnl Note: This is a linker test; we are checking to see if this all
+dnl compiles and links properly.  The logic in the C / Fortran code
+dnl below specifically does not test for correctness because we do not
+dnl actually run the code.
+AC_DEFUN([_OMPI_SETUP_FC_XCODE_COMMONS_LDFLAGS],[
+    OPAL_VAR_SCOPE_PUSH([xcode_flags])
+
+    # This variable is used by the invoking macro to display the
+    # results via AC RESULT (just to keep the symmetry of
+    # MSG_CHECKING / RESULT in the same upper-level macro).
+    OMPI_FORTRAN_WRAPPER_FLAGS=
+
+    xcode_flags="-Wl,-commons,use_dylibs"
+    _OMPI_SETUP_FC_XCODE_COMMONS_LDFLAGS_BACKEND(
+        [$xcode_flags],
+        [OMPI_FORTRAN_WRAPPER_FLAGS=$xcode_flags], [])
+    AS_IF([test -z "$OMPI_FORTRAN_WRAPPER_FLAGS"],
+          [xcode_flags="-Wl,-commons,use_dylibs -Wl,-ld_classic"
+           _OMPI_SETUP_FC_XCODE_COMMONS_LDFLAGS_BACKEND(
+               [$xcode_flags],
+               [OMPI_FORTRAN_WRAPPER_FLAGS=$xcode_flags], [])])
+    AS_IF([test -z "$OMPI_FORTRAN_WRAPPER_FLAGS"],
+          [OMPI_FORTRAN_WRAPPER_FLAGS="none"])
+
+    OPAL_VAR_SCOPE_POP
+])
+
+dnl Companion to _OMPI SETUP_FC_XCODE_COMMONS_LDFLAGS;
+dnl see that macro for an explanation of this macro.
+dnl
+dnl $1: LDFLAGS to test
+dnl $2: action to perform upon success
+dnl $3: action to perform upon failure
+AC_DEFUN([_OMPI_SETUP_FC_XCODE_COMMONS_LDFLAGS_BACKEND],[
+    OPAL_VAR_SCOPE_PUSH([xcode_happy xcode_dir LDFLAGS_save_xcode LIBS_save_xcode])
+
+    xcode_dir=conftest.$$
+    rm -rf $xcode_dir
+    mkdir -p $xcode_dir
+    cd $xcode_dir
+
+    LIBS_save_xcode=$LIBS
+    LDFLAGS_save_xcode=$LDFLAGS
+    LDFLAGS="$LDFLAGS -L. $1"
+
+    # Note: we use COMPILE_IFELSE and LANG_SOURCE below, which assume
+    # that confdefs.h exists.  This is being invoked extremely early
+    # in the configure sequence, so we haven't AC DEFINE'ed anything
+    # yet, and therefore confdefs.h won't be automatically created
+    # yet.  So we'll make an empty confdefs.h to avoid some error
+    # messages (it'll be removed with the whole tempdir, later).
+    touch confdefs.h
+
+    # Step 1: make a C library with some public symbols
+    xcode_happy=0
+    AC_LANG_PUSH([C])
+    AC_COMPILE_IFELSE([AC_LANG_SOURCE([[
+/* Must end the symbol in _ (remember: we are specifically targeting
+   the MacOS compilation environment, so it is ok to target a specific
+   Fortran symbol convention), otherwise the Fortran linker will not
+   find it, and will just create a new Fortran symbol for it */
+int ompi_mpi_bottom_ = 42;
+
+void ompi_init_f(int *bogus);
+
+/* Empty / useless function that still ensures that this compilation
+   unit will not be optimized out */
+void ompi_init_f(int *bogus)
+{
+    *bogus = ompi_mpi_bottom_;
+}
+]])],
+        [ # If the above compiled successfully, Then use
+          # conftest.OBJEXT to make the library.  Note that
+          # conftest.OBJEXT will automatically be deleted upon exit of
+          # COMPILE_IFELSE.
+          #
+          # NOTE: this is pretty gross -- we're manually making a
+          # shared library.  But the libtool binary doesn't exist yet,
+          # so this is the best that we can do.
+         OPAL_LOG_COMMAND([$CC -dynamiclib -Wl,-undefined -Wl,dynamic_lookup $LDFLAGS conftest.$OBJEXT -o libconftest.dylib],
+                          [xcode_happy=1])])
+    AC_LANG_POP
+
+    # Now compile and link a Fortran program against this shared
+    # library.
+    AC_LANG_PUSH([Fortran])
+    AS_IF([test $xcode_happy -eq 1],
+          [LIBS="$LIBS -lconftest"
+           AC_LINK_IFELSE([AC_LANG_SOURCE([
+program test
+  integer :: mpi_bottom
+  common/ompi_mpi_bottom/mpi_bottom
+
+  interface
+     subroutine ompi_init(bogus) BIND(C, name="ompi_init_f")
+       implicit none
+       integer bogus
+     end subroutine ompi_init
+  end interface
+
+  integer bogus
+  call ompi_init(bogus)
+end program
+])],
+
+                          [],
+                          [xcode_happy=0])])
+    AC_LANG_POP
+
+    # Exit the temp dir
+    cd ..
+    rm -rf $xcode_dir
+
+    # LIBS was set specifically for the artificial conditions of this
+    # test, so reset it
+    LIBS=$LIBS_save_xcode
+
+    AS_IF([test $xcode_happy -eq 1],
+          [ # Restore LDFLAFGS + the new flags (i.e., get rid of the
+            # "-L." we added for this test)
+           LDFLAGS="$LDFLAGS_xcode_save $1"
+           $2],
+          [ # If we failed the test, reset LDFLAGS back to its
+            # original value.
+           LDFLAGS=$LDFLAGS_xcode_save
+           $3])
+
+    OPAL_VAR_SCOPE_POP
+])
+
+#############################################################################
+
 # General Fortran compiler setup
 AC_DEFUN([OMPI_SETUP_FC],[
-    OPAL_VAR_SCOPE_PUSH([ompi_fc_happy LDFLAGS_save fc_version])
+    OPAL_VAR_SCOPE_PUSH([ompi_fc_happy LDFLAGS_save fc_version OMPI_FORTRAN_WRAPPER_FLAGS])
 
     # Force the intro banner to be displayed first
     AC_REQUIRE([_OMPI_SETUP_FC_BANNER])
@@ -226,23 +400,12 @@ I = 3]])],
                  ])
           ])
 
-    # Per #1982, on OS X, we may need some esoteric linker flags in the
+    # Per Trac #1982, on OS X, we may need some esoteric linker flags in the
     # Fortran wrapper compiler.
     AC_MSG_CHECKING([to see if mpifort compiler needs additional linker flags])
     case "$host" in
     *apple-darwin*)
-        # Test whether -Wl,-commons,use_dylibs works; if it does, use it.
-        LDFLAGS_save=$LDFLAGS
-        LDFLAGS="$LDFLAGS -Wl,-commons,use_dylibs"
-        AC_LANG_PUSH([Fortran])
-        AC_LINK_IFELSE([AC_LANG_SOURCE([[program test
-    integer :: i
-end program]])],
-                       [OMPI_FORTRAN_WRAPPER_FLAGS="-Wl,-commons,use_dylibs"
-                        OPAL_WRAPPER_FLAGS_ADD([FCFLAGS], [$OMPI_FORTRAN_WRAPPER_FLAGS])],
-                       [OMPI_FORTRAN_WRAPPER_FLAGS=none])
-        AC_LANG_POP([Fortran])
-        LDFLAGS=$LDFLAGS_save
+        _OMPI_SETUP_FC_XCODE_COMMONS_LDFLAGS
         AC_MSG_RESULT([$OMPI_FORTRAN_WRAPPER_FLAGS])
         ;;
     *)
