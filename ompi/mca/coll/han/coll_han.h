@@ -42,6 +42,7 @@
 #include "mpi.h"
 #include "ompi/mca/mca.h"
 #include "opal/util/output.h"
+#include "opal/mca/smsc/smsc.h"
 #include "ompi/mca/coll/base/coll_base_functions.h"
 #include "coll_han_trigger.h"
 #include "ompi/mca/coll/han/coll_han_dynamic.h"
@@ -197,6 +198,7 @@ typedef struct mca_coll_han_op_module_name_t {
     mca_coll_han_op_up_low_module_name_t gatherv;
     mca_coll_han_op_up_low_module_name_t scatter;
     mca_coll_han_op_up_low_module_name_t scatterv;
+    mca_coll_han_op_up_low_module_name_t alltoall;
 } mca_coll_han_op_module_name_t;
 
 /**
@@ -252,6 +254,13 @@ typedef struct mca_coll_han_component_t {
     uint32_t han_scatterv_up_module;
     /* low level module for scatterv */
     uint32_t han_scatterv_low_module;
+
+    /* low level module for alltoall */
+    uint32_t han_alltoall_low_module;
+    /* alltoall: parallel stages */
+    int32_t han_alltoall_pstages;
+
+
     /* name of the modules */
     mca_coll_han_op_module_name_t han_op_module_name;
     /* whether we need reproducible results
@@ -287,6 +296,7 @@ typedef struct mca_coll_han_single_collective_fallback_s
 {
     union
     {
+        mca_coll_base_module_alltoall_fn_t alltoall;
         mca_coll_base_module_allgather_fn_t allgather;
         mca_coll_base_module_allgatherv_fn_t allgatherv;
         mca_coll_base_module_allreduce_fn_t allreduce;
@@ -308,6 +318,7 @@ typedef struct mca_coll_han_single_collective_fallback_s
  */
 typedef struct mca_coll_han_collectives_fallback_s
 {
+    mca_coll_han_single_collective_fallback_t alltoall;
     mca_coll_han_single_collective_fallback_t allgather;
     mca_coll_han_single_collective_fallback_t allgatherv;
     mca_coll_han_single_collective_fallback_t allreduce;
@@ -370,6 +381,9 @@ OBJ_CLASS_DECLARATION(mca_coll_han_module_t);
  * Some defines to stick to the naming used in the other components in terms of
  * fallback routines
  */
+#define previous_alltoall           fallback.alltoall.alltoall
+#define previous_alltoall_module    fallback.alltoall.module
+
 #define previous_allgather          fallback.allgather.allgather
 #define previous_allgather_module   fallback.allgather.module
 
@@ -425,6 +439,7 @@ OBJ_CLASS_DECLARATION(mca_coll_han_module_t);
         HAN_UNINSTALL_COLL_API(COMM, HANM, allreduce);                 \
         HAN_UNINSTALL_COLL_API(COMM, HANM, allgather);                 \
         HAN_UNINSTALL_COLL_API(COMM, HANM, allgatherv);                \
+        HAN_UNINSTALL_COLL_API(COMM, HANM, alltoall);                  \
         han_module->enabled = false;  /* entire module set to pass-through from now on */ \
     } while(0)
 
@@ -485,6 +500,9 @@ mca_coll_han_get_all_coll_modules(struct ompi_communicator_t *comm,
                                   mca_coll_han_module_t *han_module);
 
 int
+mca_coll_han_alltoall_intra_dynamic(ALLTOALL_BASE_ARGS,
+                                    mca_coll_base_module_t *module);
+int
 mca_coll_han_allgather_intra_dynamic(ALLGATHER_BASE_ARGS,
                                      mca_coll_base_module_t *module);
 int
@@ -532,4 +550,20 @@ coll_han_utils_gcd(const uint64_t *numerators, const size_t size);
 int
 coll_han_utils_create_contiguous_datatype(size_t count, const ompi_datatype_t *oldType,
                                           ompi_datatype_t **newType);
+
+static inline struct mca_smsc_endpoint_t *mca_coll_han_get_smsc_endpoint (struct ompi_proc_t *proc) {
+    extern opal_mutex_t mca_coll_han_lock;
+    if (NULL == proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_SMSC]) {
+        if (NULL == proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_SMSC]) {
+            OPAL_THREAD_LOCK(&mca_coll_han_lock);
+            if (NULL == proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_SMSC]) {
+                proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_SMSC] = mca_smsc->get_endpoint(&proc->super);
+            }
+            OPAL_THREAD_UNLOCK(&mca_coll_han_lock);
+        }
+    }
+
+    return (struct mca_smsc_endpoint_t *) proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_SMSC];
+}
+
 #endif                          /* MCA_COLL_HAN_EXPORT_H */

@@ -1,6 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2020-2022 Bull S.A.S. All rights reserved.
+ * Copyright (c) 2024      Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
  * $COPYRIGHT$
  *
@@ -75,6 +76,11 @@ mca_coll_han_algorithm_value_t*  mca_coll_han_available_algorithms[COLLCOUNT] = 
     [ALLGATHER] = (mca_coll_han_algorithm_value_t[]){
         {"intra", (fnptr_t)&mca_coll_han_allgather_intra}, // 2-level
         {"simple", (fnptr_t)&mca_coll_han_allgather_intra_simple}, // 2-level
+        { 0 }
+    },
+    [ALLTOALL] = (mca_coll_han_algorithm_value_t[]){
+        {"smsc", (fnptr_t)&mca_coll_han_alltoall_using_smsc}, // 2-level
+        {"disqualify", (fnptr_t)&mca_coll_han_alltoall_disqualified}, // not han
         { 0 }
     },
 };

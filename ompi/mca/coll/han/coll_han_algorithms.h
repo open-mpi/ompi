@@ -1,6 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2020-2022 Bull S.A.S. All rights reserved.
+ * Copyright (c) 2024      Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
  * $COPYRIGHT$
  *
@@ -207,5 +208,14 @@ mca_coll_han_allgather_intra_simple(const void *sbuf, size_t scount,
                                     struct ompi_datatype_t *rdtype,
                                     struct ompi_communicator_t *comm,
                                     mca_coll_base_module_t *module);
+
+/* Alltoall */
+int
+mca_coll_han_alltoall_using_smsc(ALLTOALL_BASE_ARGS,
+                                    mca_coll_base_module_t *module);
+int
+mca_coll_han_alltoall_disqualified(ALLTOALL_BASE_ARGS,
+                                    mca_coll_base_module_t *module);
+
 
 #endif
