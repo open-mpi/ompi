@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2023 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart,
@@ -44,6 +44,7 @@
 
 #include "opal/class/opal_object.h"
 #include "opal/util/printf.h"
+#include "opal/util/show_help.h"
 
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/mpi/fortran/base/fint_2_int.h"
@@ -122,6 +123,15 @@ enum ompi_op_type {
     OMPI_OP_REPLACE,
     OMPI_OP_NUM_OF_TYPES
 };
+
+/* device op information */
+struct ompi_device_op_t {
+    opal_accelerator_stream_t *do_stream;
+    ompi_op_base_op_stream_fns_t do_intrinsic;
+    ompi_op_base_op_3buff_stream_fns_t do_3buff_intrinsic;
+};
+typedef struct ompi_device_op_t ompi_device_op_t;
+
 /**
  * Back-end type of MPI_Op
  */
@@ -167,6 +177,10 @@ struct ompi_op_t {
     /** 3-buffer functions, which is only for intrinsic ops.  No need
         for the C/C++/Fortran user-defined functions. */
     ompi_op_base_op_3buff_fns_t o_3buff_intrinsic;
+
+    /** device functions, only for intrinsic ops.
+        Provided if device support is detected. */
+    ompi_device_op_t *o_device_op;
 };
 
 /**
@@ -376,7 +390,7 @@ OMPI_DECLSPEC void ompi_op_set_java_callback(ompi_op_t *op,  void *jnienv,
  * this function is provided to hide the internal structure field
  * names.
  */
-static inline bool ompi_op_is_intrinsic(ompi_op_t * op)
+static inline bool ompi_op_is_intrinsic(const ompi_op_t * op)
 {
     return (bool) (0 != (op->o_flags & OMPI_OP_FLAGS_INTRINSIC));
 }
@@ -500,9 +514,11 @@ static inline bool ompi_op_is_valid(ompi_op_t * op, ompi_datatype_t * ddt,
  * optimization).  If you give it an intrinsic op with a datatype that
  * is not defined to have that operation, it is likely to seg fault.
  */
-static inline void ompi_op_reduce(ompi_op_t * op, const void *source,
-                                  void *target, size_t full_count,
-                                  ompi_datatype_t * dtype)
+static inline void ompi_op_reduce_stream(ompi_op_t * op, const void *source,
+                                         void *target, size_t full_count,
+                                         ompi_datatype_t * dtype,
+                                         int device,
+                                         opal_accelerator_stream_t *stream)
 {
     MPI_Fint f_dtype, f_count;
     int count = full_count;
@@ -531,7 +547,7 @@ static inline void ompi_op_reduce(ompi_op_t * op, const void *source,
             }
             shift = done_count * ext;
             // Recurse one level in iterations of 'int'
-            ompi_op_reduce(op, (const char*)source + shift, (char*)target + shift, iter_count, dtype);
+            ompi_op_reduce_stream(op, (char*)source + shift, (char*)target + shift, iter_count, dtype, device, stream);
             done_count += iter_count;
         }
         return;
@@ -560,6 +576,44 @@ static inline void ompi_op_reduce(ompi_op_t * op, const void *source,
      * :-)
      */
 
+    bool use_device_op = false;
+    /* check if either of the buffers is on a device and if so make sure we can
+     * access handle it properly */
+    if (device != MCA_ACCELERATOR_NO_DEVICE_ID &&
+        ompi_datatype_is_predefined(dtype) &&
+        0 != (op->o_flags & OMPI_OP_FLAGS_INTRINSIC) &&
+        NULL != op->o_device_op) {
+        use_device_op = true;
+    }
+
+    if (!use_device_op) {
+        /* query the accelerator for whether we can still execute */
+        int source_dev_id, target_dev_id;
+        uint64_t source_flags, target_flags;
+        int target_check_addr = opal_accelerator.check_addr(target, &target_dev_id, &target_flags);
+        int source_check_addr = opal_accelerator.check_addr(source, &source_dev_id, &source_flags);
+        if (target_check_addr > 0 &&
+            source_check_addr > 0 &&
+            ompi_datatype_is_predefined(dtype) &&
+            0 != (op->o_flags & OMPI_OP_FLAGS_INTRINSIC) &&
+            NULL != op->o_device_op) {
+            use_device_op = true;
+            if (target_dev_id == source_dev_id) {
+                /* both inputs are on the same device; if not the op will take of that */
+                device = target_dev_id;
+            }
+        } else {
+            /* check whether we can access the memory from the host */
+            if ((target_check_addr == 0 || (target_flags & MCA_ACCELERATOR_FLAGS_UNIFIED_MEMORY)) &&
+                (source_check_addr == 0 || (source_flags & MCA_ACCELERATOR_FLAGS_UNIFIED_MEMORY))) {
+                /* nothing to be done, we won't need device-capable ops */
+            } else {
+                opal_show_help("help-ompi-op.txt", "missing implementation", true, op->o_name, dtype->name);
+                abort();
+            }
+        }
+    }
+
     /* For intrinsics, we also pass the corresponding op module */
     if (0 != (op->o_flags & OMPI_OP_FLAGS_INTRINSIC)) {
         int dtype_id;
@@ -569,9 +623,28 @@ static inline void ompi_op_reduce(ompi_op_t * op, const void *source,
         } else {
             dtype_id = ompi_op_ddt_map[dtype->id];
         }
-        op->o_func.intrinsic.fns[dtype_id](source, target,
-                                           &count, &dtype,
-                                           op->o_func.intrinsic.modules[dtype_id]);
+        if (use_device_op) {
+            if (NULL == op->o_device_op) {
+                fprintf(stderr, "no suitable device op module found!");
+                abort(); // TODO: be more graceful!
+            }
+            opal_accelerator_stream_t *actual_stream = stream;
+            bool flush_stream = false;
+            if (NULL == stream) {
+                actual_stream = MCA_ACCELERATOR_STREAM_DEFAULT;
+                flush_stream = true;
+            }
+            op->o_device_op->do_intrinsic.fns[dtype_id]((void*)source, target,
+                                                        &count, &dtype, device, actual_stream,
+                                                        op->o_device_op->do_intrinsic.modules[dtype_id]);
+            if (flush_stream) {
+                opal_accelerator.sync_stream(actual_stream);
+            }
+        } else {
+            op->o_func.intrinsic.fns[dtype_id]((void*)source, target,
+                                               &count, &dtype,
+                                               op->o_func.intrinsic.modules[dtype_id]);
+        }
         return;
     }
 
@@ -579,24 +652,31 @@ static inline void ompi_op_reduce(ompi_op_t * op, const void *source,
     if (0 != (op->o_flags & OMPI_OP_FLAGS_FORTRAN_FUNC)) {
         f_dtype = OMPI_INT_2_FINT(dtype->d_f_to_c_index);
         f_count = OMPI_INT_2_FINT(count);
-        op->o_func.fort_fn(source, target, &f_count, &f_dtype);
+        op->o_func.fort_fn((void*)source, target, &f_count, &f_dtype);
         return;
     } else if (0 != (op->o_flags & OMPI_OP_FLAGS_JAVA_FUNC)) {
-        op->o_func.java_data.intercept_fn(source, target, &count, &dtype,
+        op->o_func.java_data.intercept_fn((void*)source, target, &count, &dtype,
                                           op->o_func.java_data.baseType,
                                           op->o_func.java_data.jnienv,
                                           op->o_func.java_data.object);
         return;
     }
-    op->o_func.c_fn(source, target, &count, &dtype);
+    op->o_func.c_fn((void*)source, target, &count, &dtype);
     return;
 }
 
-static inline void ompi_3buff_op_user (ompi_op_t *op, void * restrict source1, void * restrict source2,
+static inline void ompi_op_reduce(ompi_op_t * op, const void *source,
+                                  void *target, size_t full_count,
+                                  ompi_datatype_t * dtype)
+{
+    ompi_op_reduce_stream(op, source, target, full_count, dtype, MCA_ACCELERATOR_NO_DEVICE_ID, NULL);
+}
+
+static inline void ompi_3buff_op_user (ompi_op_t *op, const void * source1, const void * source2,
                                        void * restrict result, int count, struct ompi_datatype_t *dtype)
 {
-    ompi_datatype_copy_content_same_ddt (dtype, count, (char*)result, (char*)source1);
-    op->o_func.c_fn (source2, result, &count, &dtype);
+    ompi_datatype_copy_content_same_ddt (dtype, count, result, (void*)source1);
+    op->o_func.c_fn ((void*)source2, result, &count, &dtype);
 }
 
 /**
@@ -622,24 +702,135 @@ static inline void ompi_3buff_op_user (ompi_op_t *op, void * restrict source1, v
  *
  * Otherwise, this function is the same as ompi_op_reduce.
  */
-static inline void ompi_3buff_op_reduce(ompi_op_t * op, void *source1,
-                                        void *source2, void *target,
+static inline void ompi_3buff_op_reduce_stream(ompi_op_t * op, const void *source1,
+                                               const void *source2, void *target,
+                                               int count, ompi_datatype_t * dtype,
+                                               int device,
+                                               opal_accelerator_stream_t *stream)
+{
+    bool use_device_op = false;
+    if (OPAL_UNLIKELY(!ompi_op_is_intrinsic (op))) {
+        /* no 3buff variants for user-defined ops */
+        ompi_3buff_op_user (op, source1, source2, target, count, dtype);
+        return;
+    }
+
+    if (device != MCA_ACCELERATOR_NO_DEVICE_ID &&
+        ompi_datatype_is_predefined(dtype) &&
+        op->o_flags & OMPI_OP_FLAGS_INTRINSIC &&
+        NULL != op->o_device_op) {
+        use_device_op = true;
+    }
+
+    if (!use_device_op) {
+        int source1_dev_id, source2_dev_id, target_dev_id;
+        uint64_t source1_flags, source2_flags, target_flags;
+        int target_check_addr = opal_accelerator.check_addr(target, &target_dev_id, &target_flags);
+        int source1_check_addr = opal_accelerator.check_addr(source1, &source1_dev_id, &source1_flags);
+        int source2_check_addr = opal_accelerator.check_addr(source2, &source2_dev_id, &source2_flags);
+        /* check if either of the buffers is on a device and if so make sure we can
+        * access handle it properly */
+        if (target_check_addr > 0 || source1_check_addr > 0 || source2_check_addr > 0) {
+            if (ompi_datatype_is_predefined(dtype) &&
+                op->o_flags & OMPI_OP_FLAGS_INTRINSIC &&
+                NULL != op->o_device_op) {
+                use_device_op = true;
+                device = target_dev_id;
+            } else {
+                /* check whether we can access the memory from the host */
+                if ((target_check_addr  == 0 || (target_flags  & MCA_ACCELERATOR_FLAGS_UNIFIED_MEMORY)) &&
+                    (source1_check_addr == 0 || (source1_flags & MCA_ACCELERATOR_FLAGS_UNIFIED_MEMORY)) &&
+                    (source2_check_addr == 0 || (source2_flags & MCA_ACCELERATOR_FLAGS_UNIFIED_MEMORY))) {
+                    /* nothing to be done, we won't need device-capable ops */
+                } else {
+                    fprintf(stderr, "3buff op: no suitable op module found for device memory!\n");
+                    abort();
+                }
+            }
+        }
+    }
+
+    /* For intrinsics, we also pass the corresponding op module */
+    if (0 != (op->o_flags & OMPI_OP_FLAGS_INTRINSIC)) {
+        int dtype_id;
+        if (!ompi_datatype_is_predefined(dtype)) {
+            ompi_datatype_t *dt = ompi_datatype_get_single_predefined_type_from_args(dtype);
+            dtype_id = ompi_op_ddt_map[dt->id];
+        } else {
+            dtype_id = ompi_op_ddt_map[dtype->id];
+        }
+        if (use_device_op) {
+            opal_accelerator_stream_t *actual_stream = stream;
+            bool flush_stream = false;
+            if (NULL == stream) {
+                actual_stream = MCA_ACCELERATOR_STREAM_DEFAULT;
+                flush_stream = true;
+            }
+            op->o_device_op->do_3buff_intrinsic.fns[dtype_id]((void*)source1, (void*)source2, target,
+                                                              &count, &dtype, device, actual_stream,
+                                                              op->o_device_op->do_3buff_intrinsic.modules[dtype_id]);
+            if (flush_stream) {
+                opal_accelerator.sync_stream(actual_stream);
+            }
+        } else {
+            op->o_3buff_intrinsic.fns[dtype_id]((void*)source1, (void*)source2, target,
+                                                &count, &dtype,
+                                                op->o_func.intrinsic.modules[dtype_id]);
+        }
+    }
+}
+
+
+static inline void ompi_3buff_op_reduce(ompi_op_t * op, const void *source1,
+                                        const void *source2, void *target,
                                         int count, ompi_datatype_t * dtype)
 {
-    void *restrict src1;
-    void *restrict src2;
-    void *restrict tgt;
-    src1 = source1;
-    src2 = source2;
-    tgt = target;
-
     if (OPAL_LIKELY(ompi_op_is_intrinsic (op))) {
-        op->o_3buff_intrinsic.fns[ompi_op_ddt_map[dtype->id]](src1, src2,
-                                                              tgt, &count,
-                                                              &dtype,
-                                                              op->o_3buff_intrinsic.modules[ompi_op_ddt_map[dtype->id]]);
+        ompi_3buff_op_reduce_stream(op, source1, source2, target, count, dtype, MCA_ACCELERATOR_NO_DEVICE_ID, NULL);
     } else {
-        ompi_3buff_op_user (op, src1, src2, tgt, count, dtype);
+        ompi_3buff_op_user (op, source1, source2, target, count, dtype);
+    }
+}
+
+static inline void ompi_op_preferred_device(ompi_op_t *op, int source_dev,
+                                            int target_dev, size_t count,
+                                            ompi_datatype_t *dtype, int *op_device)
+{
+    /* default to host */
+    *op_device = -1;
+    if (!ompi_op_is_intrinsic (op)) {
+        return;
+    }
+    /* quick check: can we execute on the device? */
+    int dtype_id = ompi_op_ddt_map[dtype->id];
+    if (NULL == op->o_device_op || NULL == op->o_device_op->do_intrinsic.fns[dtype_id]) {
+        /* not available on the gpu, must select host */
+        return;
+    }
+
+    size_t size_type;
+    ompi_datatype_type_size(dtype, &size_type);
+
+    float device_bw;
+    if (target_dev >= 0) {
+        opal_accelerator.get_mem_bw(target_dev, &device_bw);
+    } else if (source_dev >= 0) {
+        opal_accelerator.get_mem_bw(source_dev, &device_bw);
+    }
+
+    // assume we reach 50% of theoretical peak on the device
+    device_bw /= 2.0;
+
+    // TODO: determine at runtime (?)
+    const float host_bw = 10.0; // 10GB/s
+
+    float host_startup_cost = 0.0; // host has no startup cost
+    float host_compute_cost = (count*size_type) / (host_bw*1024); // assume 10GB/s memory bandwidth on host
+    float device_startup_cost = 10.0; // 10us startup cost on device
+    float device_compute_cost = (count*size_type) / (device_bw*1024);
+
+    if ((host_startup_cost + host_compute_cost) > (device_startup_cost + device_compute_cost)) {
+        *op_device = (target_dev >= 0) ? target_dev : source_dev;
     }
 }
 
