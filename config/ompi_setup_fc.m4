@@ -231,19 +231,39 @@ I = 3]])],
     AC_MSG_CHECKING([to see if mpifort compiler needs additional linker flags])
     case "$host" in
     *apple-darwin*)
-        # Test whether -Wl,-commons,use_dylibs works; if it does, use it.
+        # Test whether -Wl,-ld_classic works; if it does, use it.
+        # See https://github.com/open-mpi/ompi/issues/12427 for
+        # details.
+        message_result=
         LDFLAGS_save=$LDFLAGS
-        LDFLAGS="$LDFLAGS -Wl,-commons,use_dylibs"
+        LDFLAGS="$LDFLAGS -Wl,-ld_classic"
         AC_LANG_PUSH([Fortran])
         AC_LINK_IFELSE([AC_LANG_SOURCE([[program test
     integer :: i
 end program]])],
-                       [OMPI_FORTRAN_WRAPPER_FLAGS="-Wl,-commons,use_dylibs"
+                       [OMPI_FORTRAN_WRAPPER_FLAGS="-Wl,-ld_classic"
+                        message_result=$OMPI_FORTRAN_WRAPPER_FLAGS
                         OPAL_WRAPPER_FLAGS_ADD([FCFLAGS], [$OMPI_FORTRAN_WRAPPER_FLAGS])],
-                       [OMPI_FORTRAN_WRAPPER_FLAGS=none])
+                       [LDFLAGS=$LDFLAGS_save])
+
+        # Test whether -Wl,-commons,use_dylibs works; if it does, use it.
+        #
+        # Note: if -Wl,-ld_classic worked, above, it will still be in
+        # LDFLAGS.  If not, it won't be still in LDFLAGS.  This is
+        # intended behavior for this test: there are cases where
+        # -commons,use_dylibs required -ld_classic, and there are
+        # cases where it does not.
+        LDFLAGS="$LDFLAGS -Wl,-commons,use_dylibs"
+        AC_LINK_IFELSE([AC_LANG_SOURCE([[program test
+    integer :: i
+end program]])],
+                       [OMPI_FORTRAN_WRAPPER_FLAGS="-Wl,-commons,use_dylibs"
+                        message_result="$OMPI_FORTRAN_WRAPPER_FLAGS $message_result"
+                        OPAL_WRAPPER_FLAGS_ADD([FCFLAGS], [$OMPI_FORTRAN_WRAPPER_FLAGS])])
+
         AC_LANG_POP([Fortran])
         LDFLAGS=$LDFLAGS_save
-        AC_MSG_RESULT([$OMPI_FORTRAN_WRAPPER_FLAGS])
+        AC_MSG_RESULT([$message_result])
         ;;
     *)
         AC_MSG_RESULT([none])
