@@ -140,9 +140,9 @@
 
 
 #define SHMEM_TYPE_TEST_ANY(type_name, type, code, prefix)          \
-    size_t prefix##type_name##_test_any(volatile type *ivars, size_t nelems, const int *status, int cmp, type value)   \
+    int prefix##type_name##_test_any(volatile type *ivars, size_t nelems, const int *status, int cmp, type value)   \
     {                                                               \
-        size_t rc = 0;                                              \
+        int rc = 0;                                                 \
                                                                     \
         RUNTIME_CHECK_INIT();                                       \
                                                                     \
@@ -158,9 +158,9 @@
 
 
 #define SHMEM_TYPE_TEST_SOME(type_name, type, code, prefix)         \
-    size_t  prefix##type_name##_test_some(volatile type *ivars, size_t nelems, size_t *indices, const int *status, int cmp, type value)   \
+    int prefix##type_name##_test_some(volatile type *ivars, size_t nelems, size_t *indices, const int *status, int cmp, type value)   \
     {                                                               \
-        size_t rc = 0;                                              \
+        int rc = 0;                                                 \
                                                                     \
         RUNTIME_CHECK_INIT();                                       \
                                                                     \
@@ -175,9 +175,9 @@
     }
 
 #define SHMEM_TYPE_TEST_ANY_VECTOR(type_name, type, code, prefix)   \
-    size_t prefix##type_name##_test_any_vector(volatile type *ivars, size_t nelems, const int *status, int cmp, type *values)   \
+    int prefix##type_name##_test_any_vector(volatile type *ivars, size_t nelems, const int *status, int cmp, type *values)   \
     {                                                               \
-        size_t rc = 0;                                              \
+        int rc = 0;                                                 \
                                                                     \
         RUNTIME_CHECK_INIT();                                       \
                                                                     \
@@ -192,9 +192,9 @@
     }
 
 #define SHMEM_TYPE_TEST_SOME_VECTOR(type_name, type, code, prefix)  \
-    size_t prefix##type_name##_test_some_vector(volatile type *ivars, size_t nelems, size_t *indices, const int *status, int cmp, type *values)   \
+    int prefix##type_name##_test_some_vector(volatile type *ivars, size_t nelems, size_t *indices, const int *status, int cmp, type *values)   \
     {                                                               \
-        size_t rc = 0;                                              \
+        int rc = 0;                                                 \
                                                                     \
         RUNTIME_CHECK_INIT();                                       \
                                                                     \

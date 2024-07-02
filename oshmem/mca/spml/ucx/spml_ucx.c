@@ -1667,16 +1667,15 @@ void mca_spml_ucx_wait_until_all(void *ivars, int cmp, void
 }
 
 /* This routine is not implemented */
-size_t mca_spml_ucx_wait_until_any(void *ivars, int cmp, void
-        *cmp_value, size_t nelems, const int *status, int datatype)
+int mca_spml_ucx_wait_until_any(void *ivars, int cmp, void *cmp_value, size_t nelems,
+                                const int *status, int datatype)
 {
     return OSHMEM_ERR_NOT_IMPLEMENTED;
 }
 
 /* This routine is not implemented */
-size_t mca_spml_ucx_wait_until_some(void *ivars, int cmp, void
-        *cmp_value, size_t nelems, size_t *indices, const int *status, int
-        datatype)
+int mca_spml_ucx_wait_until_some(void *ivars, int cmp, void *cmp_value, size_t nelems,
+                                 size_t *indices, const int *status, int datatype)
 {
     return OSHMEM_ERR_NOT_IMPLEMENTED;
 }
@@ -1689,16 +1688,15 @@ void mca_spml_ucx_wait_until_all_vector(void *ivars, int cmp, void
 }
 
 /* This routine is not implemented */
-size_t mca_spml_ucx_wait_until_any_vector(void *ivars, int cmp, void
-        *cmp_value, size_t nelems, const int *status, int datatype)
+int mca_spml_ucx_wait_until_any_vector(void *ivars, int cmp, void *cmp_value, size_t nelems,
+                                       const int *status, int datatype)
 {
     return OSHMEM_ERR_NOT_IMPLEMENTED;
 }
 
 /* This routine is not implemented */
-size_t mca_spml_ucx_wait_until_some_vector(void *ivars, int cmp, void
-        *cmp_value, size_t nelems, size_t *indices, const int *status, int
-        datatype)
+int mca_spml_ucx_wait_until_some_vector(void *ivars, int cmp, void *cmp_value, size_t nelems,
+                                        size_t *indices, const int *status, int datatype)
 {
     return OSHMEM_ERR_NOT_IMPLEMENTED;
 }
@@ -1711,15 +1709,15 @@ int mca_spml_ucx_test_all(void *ivars, int cmp, void *cmp_value,
 }
 
 /* This routine is not implemented */
-size_t mca_spml_ucx_test_any(void *ivars, int cmp, void *cmp_value,
-        size_t nelems, const int *status, int datatype)
+int mca_spml_ucx_test_any(void *ivars, int cmp, void *cmp_value, size_t nelems, const int *status,
+                          int datatype)
 {
     return OSHMEM_ERR_NOT_IMPLEMENTED;
 }
 
 /* This routine is not implemented */
-size_t mca_spml_ucx_test_some(void *ivars, int cmp, void *cmp_value,
-        size_t nelems, size_t *indices, const int *status, int datatype)
+int mca_spml_ucx_test_some(void *ivars, int cmp, void *cmp_value, size_t nelems, size_t *indices,
+                           const int *status, int datatype)
 {
     return OSHMEM_ERR_NOT_IMPLEMENTED;
 }
