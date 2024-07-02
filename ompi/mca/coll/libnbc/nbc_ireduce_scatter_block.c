@@ -40,7 +40,7 @@
  *
  */
 
-static int nbc_reduce_scatter_block_init(const void* sendbuf, void* recvbuf, int recvcount, MPI_Datatype datatype,
+static int nbc_reduce_scatter_block_init(const void* sendbuf, void* recvbuf, size_t recvcount, MPI_Datatype datatype,
                                          MPI_Op op, struct ompi_communicator_t *comm, ompi_request_t ** request,
                                          mca_coll_base_module_t *module, bool persistent) {
   int peer, rank, maxr, p, res;

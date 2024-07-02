@@ -505,8 +505,8 @@ err_hdlr:
 }
 
 static int
-ompi_coll_portals4_gather_intra_binomial_top(const void *sbuf, int scount, struct ompi_datatype_t *sdtype,
-                                             void *rbuf, int rcount, struct ompi_datatype_t *rdtype,
+ompi_coll_portals4_gather_intra_binomial_top(const void *sbuf, size_t scount, struct ompi_datatype_t *sdtype,
+                                             void *rbuf, size_t rcount, struct ompi_datatype_t *rdtype,
                                              int root,
                                              struct ompi_communicator_t *comm,
                                              ompi_coll_portals4_request_t *request,
@@ -801,8 +801,8 @@ err_hdlr:
 }
 
 static int
-ompi_coll_portals4_gather_intra_linear_top(const void *sbuf, int scount, struct ompi_datatype_t *sdtype,
-                                           void *rbuf, int rcount, struct ompi_datatype_t *rdtype,
+ompi_coll_portals4_gather_intra_linear_top(const void *sbuf, size_t scount, struct ompi_datatype_t *sdtype,
+                                           void *rbuf, size_t rcount, struct ompi_datatype_t *rdtype,
                                            int root,
                                            struct ompi_communicator_t *comm,
                                            ompi_coll_portals4_request_t *request,
@@ -1212,8 +1212,8 @@ err_hdlr:
 }
 
 int
-ompi_coll_portals4_gather_intra(const void *sbuf, int scount, struct ompi_datatype_t *sdtype,
-                                void *rbuf, int rcount, struct ompi_datatype_t *rdtype,
+ompi_coll_portals4_gather_intra(const void *sbuf, size_t scount, struct ompi_datatype_t *sdtype,
+                                void *rbuf, size_t rcount, struct ompi_datatype_t *rdtype,
                                 int root,
                                 struct ompi_communicator_t *comm,
                                 mca_coll_base_module_t *module)
@@ -1284,8 +1284,8 @@ err_hdlr:
 
 
 int
-ompi_coll_portals4_igather_intra(const void *sbuf, int scount, struct ompi_datatype_t *sdtype,
-                                 void *rbuf, int rcount, struct ompi_datatype_t *rdtype,
+ompi_coll_portals4_igather_intra(const void *sbuf, size_t scount, struct ompi_datatype_t *sdtype,
+                                 void *rbuf, size_t rcount, struct ompi_datatype_t *rdtype,
                                  int root,
                                  struct ompi_communicator_t *comm,
                                  ompi_request_t **ompi_request,
