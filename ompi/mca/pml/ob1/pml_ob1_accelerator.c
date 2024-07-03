@@ -72,7 +72,6 @@ static int accelerator_event_dtoh_first_used, accelerator_event_htod_first_used;
 static volatile int accelerator_event_dtoh_num_used, accelerator_event_htod_num_used;
 
 /* Size of array holding events */
-static int accelerator_event_max = 400;
 static int accelerator_event_htod_most = 0;
 
 int mca_pml_ob1_record_htod_event(char *msg, struct mca_btl_base_descriptor_t *frag)
@@ -87,9 +86,9 @@ int mca_pml_ob1_record_htod_event(char *msg, struct mca_btl_base_descriptor_t *f
      * return an error.  The error message will tell the user to try and
      * run again, but with a larger array for storing events. */
     OPAL_THREAD_LOCK(&pml_ob1_accelerator_htod_lock);
-    if (accelerator_event_htod_num_used == accelerator_event_max) {
-        opal_output_verbose(1, mca_pml_ob1_output, "Out of event handles. Max: %d. Suggested to rerun with new max with --mca mpi_common_accelerator_event_max %d.",
-                            accelerator_event_max, accelerator_event_max + 100);
+    if (accelerator_event_htod_num_used == mca_pml_ob1_accelerator_events_max) {
+        opal_output_verbose(1, mca_pml_ob1_output, "Out of event handles. Max: %d. Suggested to rerun with new max with --mca pml_ob1_accelerator_events_max %d.",
+                            mca_pml_ob1_accelerator_events_max, mca_pml_ob1_accelerator_events_max + 100);
         OPAL_THREAD_UNLOCK(&pml_ob1_accelerator_htod_lock);
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
@@ -113,7 +112,7 @@ int mca_pml_ob1_record_htod_event(char *msg, struct mca_btl_base_descriptor_t *f
 
     /* Bump up the first available slot and number used by 1 */
     accelerator_event_htod_first_avail++;
-    if (accelerator_event_htod_first_avail >= accelerator_event_max) {
+    if (accelerator_event_htod_first_avail >= mca_pml_ob1_accelerator_events_max) {
         accelerator_event_htod_first_avail = 0;
     }
     accelerator_event_htod_num_used++;
@@ -169,7 +168,7 @@ int mca_pml_ob1_progress_one_htod_event(struct mca_btl_base_descriptor_t **frag)
         /* Bump counters, loop around the circular buffer if necessary */
         --accelerator_event_htod_num_used;
         ++accelerator_event_htod_first_used;
-        if (accelerator_event_htod_first_used >= accelerator_event_max) {
+        if (accelerator_event_htod_first_used >= mca_pml_ob1_accelerator_events_max) {
             accelerator_event_htod_first_used = 0;
         }
         /* A return value of 1 indicates an event completed and a frag was returned */
@@ -214,7 +213,7 @@ int mca_pml_ob1_accelerator_init(void)
     accelerator_event_dtoh_first_avail = 0;
     accelerator_event_dtoh_first_used = 0;
 
-    accelerator_event_dtoh_array = calloc(accelerator_event_max, sizeof(opal_accelerator_event_t *));
+    accelerator_event_dtoh_array = calloc(mca_pml_ob1_accelerator_events_max, sizeof(opal_accelerator_event_t *));
     if (NULL == accelerator_event_dtoh_array) {
         opal_output_verbose(1, mca_pml_ob1_output, "No memory.");
         rc = OPAL_ERROR;
@@ -222,8 +221,8 @@ int mca_pml_ob1_accelerator_init(void)
     }
 
     /* Create the events since they can be reused. */
-    for (i = 0; i < accelerator_event_max; i++) {
-        result = opal_accelerator.create_event(MCA_ACCELERATOR_NO_DEVICE_ID, &accelerator_event_dtoh_array[i]);
+    for (i = 0; i < mca_pml_ob1_accelerator_events_max; i++) {
+        result = opal_accelerator.create_event(MCA_ACCELERATOR_NO_DEVICE_ID, &accelerator_event_dtoh_array[i], false);
         if (OPAL_SUCCESS != result) {
             opal_output_verbose(1, mca_pml_ob1_output, "Accelerator create event failed.");
             rc = OPAL_ERROR;
@@ -234,7 +233,7 @@ int mca_pml_ob1_accelerator_init(void)
     /* The first available status index is 0.  Make an empty frag
        array. */
     accelerator_event_dtoh_frag_array = (struct mca_btl_base_descriptor_t **) malloc(
-        sizeof(struct mca_btl_base_descriptor_t *) * accelerator_event_max);
+        sizeof(struct mca_btl_base_descriptor_t *) * mca_pml_ob1_accelerator_events_max);
     if (NULL == accelerator_event_dtoh_frag_array) {
         opal_output_verbose(1, mca_pml_ob1_output, "No memory.");
         rc = OPAL_ERROR;
@@ -247,7 +246,7 @@ int mca_pml_ob1_accelerator_init(void)
     accelerator_event_htod_first_avail = 0;
     accelerator_event_htod_first_used = 0;
 
-    accelerator_event_htod_array = calloc(accelerator_event_max, sizeof(opal_accelerator_event_t *));
+    accelerator_event_htod_array = calloc(mca_pml_ob1_accelerator_events_max, sizeof(opal_accelerator_event_t *));
     if (NULL == accelerator_event_htod_array) {
         opal_output_verbose(1, mca_pml_ob1_output, "No memory.");
         rc = OPAL_ERROR;
@@ -255,8 +254,8 @@ int mca_pml_ob1_accelerator_init(void)
     }
 
     /* Create the events since they can be reused. */
-    for (i = 0; i < accelerator_event_max; i++) {
-        result = opal_accelerator.create_event(MCA_ACCELERATOR_NO_DEVICE_ID, &accelerator_event_htod_array[i]);
+    for (i = 0; i < mca_pml_ob1_accelerator_events_max; i++) {
+        result = opal_accelerator.create_event(MCA_ACCELERATOR_NO_DEVICE_ID, &accelerator_event_htod_array[i], false);
         if (OPAL_SUCCESS != result) {
             opal_output_verbose(1, mca_pml_ob1_output, "Accelerator create event failed.");
             rc = OPAL_ERROR;
@@ -267,7 +266,7 @@ int mca_pml_ob1_accelerator_init(void)
     /* The first available status index is 0.  Make an empty frag
        array. */
     accelerator_event_htod_frag_array = (struct mca_btl_base_descriptor_t **) malloc(
-        sizeof(struct mca_btl_base_descriptor_t *) * accelerator_event_max);
+        sizeof(struct mca_btl_base_descriptor_t *) * mca_pml_ob1_accelerator_events_max);
     if (NULL == accelerator_event_htod_frag_array) {
         opal_output_verbose(1, mca_pml_ob1_output, "No memory.");
         rc = OPAL_ERROR;
@@ -304,7 +303,7 @@ void mca_pml_ob1_accelerator_fini(void)
     }
 
     if (NULL != accelerator_event_htod_array) {
-        for (i = 0; i < accelerator_event_max; i++) {
+        for (i = 0; i < mca_pml_ob1_accelerator_events_max; i++) {
             if (NULL != accelerator_event_htod_array[i]) {
                 OBJ_RELEASE(accelerator_event_htod_array[i]);
             }
@@ -313,7 +312,7 @@ void mca_pml_ob1_accelerator_fini(void)
     }
 
     if (NULL != accelerator_event_dtoh_array) {
-        for (i = 0; i < accelerator_event_max; i++) {
+        for (i = 0; i < mca_pml_ob1_accelerator_events_max; i++) {
             if (NULL != accelerator_event_dtoh_array[i]) {
                 OBJ_RELEASE(accelerator_event_dtoh_array[i]);
             }
