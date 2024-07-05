@@ -43,6 +43,7 @@ extern int mca_fcoll_vulcan_priority;
 extern int mca_fcoll_vulcan_num_groups;
 extern int mca_fcoll_vulcan_write_chunksize;
 extern int mca_fcoll_vulcan_async_io;
+extern int mca_fcoll_vulcan_use_accelerator_buffers;
 
 OMPI_DECLSPEC extern mca_fcoll_base_component_3_0_0_t mca_fcoll_vulcan_component;
 
