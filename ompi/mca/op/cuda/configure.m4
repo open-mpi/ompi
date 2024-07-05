@@ -25,8 +25,9 @@ AC_DEFUN([MCA_ompi_op_cuda_CONFIG],[
 
     OPAL_CHECK_CUDA([op_cuda])
     OPAL_CHECK_CUDART([op_cudart])
+    OPAL_CHECK_NVCC([op_nvcc])
 
-    AS_IF([test "x$CUDA_SUPPORT" = "x1"],
+    AS_IF([test "x$CUDA_SUPPORT" = "x1" -a "x$CUDART_SUPPORT" = "x1" -a -n "$OPAL_NVCC"],
           [$1],
           [$2])
 
@@ -37,5 +38,8 @@ AC_DEFUN([MCA_ompi_op_cuda_CONFIG],[
     AC_SUBST([op_cudart_CPPFLAGS])
     AC_SUBST([op_cudart_LDFLAGS])
     AC_SUBST([op_cudart_LIBS])
+
+    AC_SUBST([OPAL_NVCC])
+    AC_SUBST([OPAL_NVCC_COMPUTE_ARCH])
 
 ])dnl
