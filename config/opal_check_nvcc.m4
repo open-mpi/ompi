@@ -1,7 +1,6 @@
 dnl -*- autoconf -*-
 dnl
-dnl Copyright (c) 2020-2022 Cisco Systems, Inc.  All rights reserved.
-dnl Copyright (c) 2024 Jeffrey M. Squyres.  All rights reserved.
+dnl Copyright (c) 2024      Stony Brook University.  All rights reserved.
 dnl
 dnl $COPYRIGHT$
 dnl
@@ -10,26 +9,16 @@ dnl
 dnl $HEADER$
 dnl
 
-dnl Setup Sphinx for building HTML docs and man pages
 dnl
-dnl 1 -> sanity file to check if pre-built docs are already available
-dnl      You probably want to pass something like
-dnl      "$srcdir/docs/_build/man/foo.1"
+dnl Check for NVCC and bail out if NVCC was requested
+dnl Options provided:
+dnl   --with-nvcc[=path/to/nvcc]: provide a path to NVCC
+dnl   --enable-nvcc: require NVCC, bail out if not found
+dnl   --nvcc-compute-arch: request a specific compute
+dnl                        architecture for the operator
+dnl                        kernels
 dnl
-dnl 2 -> (OPTIONAL) URL to display in AC_MSG_WARN when docs will not be installed
-dnl      If $2 is empty, nothing will be displayed.
-dnl      Note: if $2 contains a #, be sure to double quote it
-dnl      (e.g., [[https://example.com/foo.html#some-anchor]])
-dnl
-dnl 3 -> (OPTIONAL) Filename of requirements.txt-like file containing
-dnl      the required Pip modules (to be displayed if rendering a
-dnl      simple RST project fails).
-dnl
-dnl This macro requires that OAC_PUSH_PREFIX was previously called.
-dnl The pushed prefix may be used if this macro chooses to set {OAC
-dnl prefix}_MAKEDIST_DISABLE.  If set, it is a message indicating why
-dnl "make dist" should be disabled, suitable for emitting via
-dnl AC_MSG_WARN.
+
 AC_DEFUN([OPAL_CHECK_NVCC],[
 
     # This option is probably only helpful to developers: have
