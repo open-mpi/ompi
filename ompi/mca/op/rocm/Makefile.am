@@ -24,11 +24,9 @@ dist_ompidata_DATA = help-ompi-mca-op-rocm.txt
 sources = op_rocm_component.c op_rocm.h op_rocm_functions.c op_rocm_impl.h
 rocm_sources = op_rocm_impl.hip
 
-HIPCC = hipcc
-
 .hip.l$(OBJEXT):
 	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=compile $(HIPCC) -O2 -std=c++17 -fvectorize -prefer-non-pic -Wc,-fPIC,-g -c $<
+	$(LIBTOOLFLAGS) --mode=compile $(HIPCC) $(HIPCCFLAGS) -c $<
 
 # -o $($@.o:.lo)
 
