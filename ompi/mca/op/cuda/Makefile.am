@@ -24,13 +24,12 @@ dist_ompidata_DATA = help-ompi-mca-op-cuda.txt
 sources = op_cuda_component.c op_cuda.h op_cuda_functions.c op_cuda_impl.h
 cu_sources = op_cuda_impl.cu
 
-NVCCFLAGS = --std c++17 --gpu-architecture=compute_$(OPAL_NVCC_COMPUTE_ARCH)
 # let the underlying compiler generate PIC code
 PIC_FLAGS = -prefer-non-pic -Wc,-Xcompiler,-fPIC
 
 .cu.l$(OBJEXT):
 	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=compile $(OPAL_NVCC) $(NVCCFLAGS) $(PIC_FLAGS) -c $<
+	$(LIBTOOLFLAGS) --mode=compile $(NVCC) $(NVCCFLAGS) $(PIC_FLAGS) -c $<
 
 # Open MPI components can be compiled two ways:
 #
