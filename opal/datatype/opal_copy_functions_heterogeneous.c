@@ -8,6 +8,7 @@
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * Copyright (c) 2021      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2024      Stony Brook University.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -481,18 +482,23 @@ f128_to_f80(unsigned char *f80_buf_to, const unsigned char *f128_buf_from, ssize
 #define LDBL_INFO_MASK (OPAL_ARCH_LDMANTDIGISxx | OPAL_ARCH_LDEXPSIZEISxx)
 
 #ifdef HAVE___FLOAT128
-/*
- *  I'm not sure about the portability of alignof() so I'm handling things
- *  like the possibility of sizeof(long double) == 12 in a slower way.  The
- *  alignment requirement in that case would be 4 (largest power of 2 that
- *  divides into the sizeof).
+#if __STDC_VERSION__ >= 201101L
+#include <stdalign.h>
+static inline
+size_t
+alignment_of_long_double(void) {
+    return alignof(long double);
+}
+#else // __STDC_VERSION__ >= 201101L
+/**
+ *  No support for C11 so try to compute alignment manually.
  *
  *  And saving it static to just compute it once without running a loop
  *  every call.
  */
 static inline
 size_t
-alignment_of_long_double() {
+alignment_of_long_double(void) {
     static size_t val = 0;
 
     if (val == 0) {
@@ -503,7 +509,8 @@ alignment_of_long_double() {
     }
     return val;
 }
-#endif
+#endif // __STDC_VERSION__ >= 201101L
+#endif // HAVE___FLOAT128
 
 // ldbl_to_f128 (copies a long double(from_arch format) to a float128(local_endian))
 static inline
