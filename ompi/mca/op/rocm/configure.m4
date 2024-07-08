@@ -24,13 +24,16 @@ AC_DEFUN([MCA_ompi_op_rocm_CONFIG],[
     AC_CONFIG_FILES([ompi/mca/op/rocm/Makefile])
 
     OPAL_CHECK_ROCM([op_rocm])
+    OPAL_CHECK_HIPCC([op_hipcc])
 
-    AS_IF([test "x$ROCM_SUPPORT" = "x1"],
+    AS_IF([test "x$ROCM_SUPPORT" = "x1" -a -n "$OPAL_HIPCC"],
           [$1],
           [$2])
 
     AC_SUBST([op_rocm_CPPFLAGS])
     AC_SUBST([op_rocm_LDFLAGS])
     AC_SUBST([op_rocm_LIBS])
+
+    AC_SUBST([OPAL_HIPCC])
 
 ])dnl

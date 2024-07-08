@@ -26,7 +26,7 @@ rocm_sources = op_rocm_impl.hip
 
 HIPCC = hipcc
 
-.cpp.l$(OBJEXT):
+.hip.l$(OBJEXT):
 	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=compile $(HIPCC) -O2 -std=c++17 -fvectorize -prefer-non-pic -Wc,-fPIC,-g -c $<
 
