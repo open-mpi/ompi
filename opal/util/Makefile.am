@@ -138,6 +138,12 @@ libopalutil_core_la_DEPENDENCIES = \
         json/libopalutil_json.la \
         keyval/libopalutilkeyval.la
 
+# flex prior to version 2.6.6 uses the POSIX extension fileno()
+# without providing the proper feature test macro, so
+# we add the _POSIX_C_SOURCE macro here.
+# See https://github.com/westes/flex/issues/263
+libopalutil_core_la_CFLAGS = -D_POSIX_C_SOURCE=200809L
+
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
