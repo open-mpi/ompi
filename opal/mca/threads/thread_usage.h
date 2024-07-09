@@ -250,17 +250,7 @@ OPAL_THREAD_DEFINE_ATOMIC_SWAP(int64_t, int64_t, 64)
 #    define OPAL_ATOMIC_SWAP_64 opal_thread_swap_64
 
 /* thread local storage */
-#if OPAL_C_HAVE__THREAD_LOCAL
 #    define opal_thread_local      _Thread_local
 #    define OPAL_HAVE_THREAD_LOCAL 1
-
-#elif OPAL_C_HAVE___THREAD /* OPAL_C_HAVE__THREAD_LOCAL */
-#    define opal_thread_local      __thread
-#    define OPAL_HAVE_THREAD_LOCAL 1
-#endif /* OPAL_C_HAVE___THREAD */
-
-#if !defined(OPAL_HAVE_THREAD_LOCAL)
-#    define OPAL_HAVE_THREAD_LOCAL 0
-#endif /* !defined(OPAL_HAVE_THREAD_LOCAL) */
 
 #endif /* OPAL_MCA_THREADS_THREAD_USAGE_H */
