@@ -31,6 +31,7 @@ static inline ucc_status_t mca_coll_ucc_alltoallv_init(const void *sbuf, const i
 
     ucc_coll_args_t coll = {
         .mask      = 0,
+        .flags     = 0,
         .coll_type = UCC_COLL_TYPE_ALLTOALLV,
         .src.info_v = {
             .buffer        = (void*)sbuf,
