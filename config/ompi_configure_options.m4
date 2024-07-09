@@ -166,6 +166,15 @@ case "x$enable_mpi_fortran" in
         ;;
 esac
 
+AC_MSG_CHECKING([where to install Fortran MPI modules])
+AC_ARG_WITH([mpi-moduledir],
+    [AS_HELP_STRING([--with-mpi-moduledir],
+                    [specify where to install Fortran MPI modules (default: $libdir)])],
+    [OMPI_FORTRAN_MODULEDIR=$withval],
+    [OMPI_FORTRAN_MODULEDIR=$libdir])
+AC_SUBST(OMPI_FORTRAN_MODULEDIR)
+AC_MSG_RESULT([$OMPI_FORTRAN_MODULEDIR])
+
 # Remove these when we finally kill them once and for all
 AC_ARG_ENABLE([mpi1-compatibility],
     [AS_HELP_STRING([--enable-mpi1-compatibility],
