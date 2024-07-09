@@ -42,7 +42,7 @@
  *
  */
 
-static int nbc_reduce_scatter_init(const void* sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype,
+static int nbc_reduce_scatter_init(const void* sendbuf, void* recvbuf, ompi_count_array_t recvcounts, MPI_Datatype datatype,
                                    MPI_Op op, struct ompi_communicator_t *comm, ompi_request_t ** request,
                                    mca_coll_base_module_t *module, bool persistent) {
   int peer, rank, maxr, p, res;
@@ -68,13 +68,13 @@ static int nbc_reduce_scatter_init(const void* sendbuf, void* recvbuf, const int
 
   count = 0;
   for (int r = 0 ; r < p ; ++r) {
-    count += recvcounts[r];
+    count += ompi_count_array_get(recvcounts, r);
   }
 
   if ((1 == p && (!persistent || inplace)) || 0 == count) {
     if (!inplace) {
       /* single node not in_place: copy data to recvbuf */
-      res = NBC_Copy(sendbuf, recvcounts[0], datatype, recvbuf, recvcounts[0], datatype, comm);
+      res = NBC_Copy(sendbuf, ompi_count_array_get(recvcounts, 0), datatype, recvbuf, ompi_count_array_get(recvcounts, 0), datatype, comm);
       if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
         return res;
       }
@@ -164,10 +164,10 @@ static int nbc_reduce_scatter_init(const void* sendbuf, void* recvbuf, const int
   if (rank == 0) {
     size_t offset = 0;
     for (long int r = 1 ; r < p ; ++r) {
-      offset += recvcounts[r-1];
+      offset += ompi_count_array_get(recvcounts, r-1);
       sbuf = lbuf + (offset*ext);
       /* root sends the right buffer to the right receiver */
-      res = NBC_Sched_send (sbuf, true, recvcounts[r], datatype, r, schedule,
+      res = NBC_Sched_send (sbuf, true, ompi_count_array_get(recvcounts, r), datatype, r, schedule,
                             false);
       if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
         OBJ_RELEASE(schedule);
@@ -178,14 +178,14 @@ static int nbc_reduce_scatter_init(const void* sendbuf, void* recvbuf, const int
 
     if (p == 1) {
       /* single node not in_place: copy data to recvbuf */
-      res = NBC_Sched_copy ((void *)sendbuf, false, recvcounts[0], datatype,
-                            recvbuf, false, recvcounts[0], datatype, schedule, false);
+      res = NBC_Sched_copy ((void *)sendbuf, false, ompi_count_array_get(recvcounts, 0), datatype,
+                            recvbuf, false, ompi_count_array_get(recvcounts, 0), datatype, schedule, false);
     } else {
-      res = NBC_Sched_copy (lbuf, true, recvcounts[0], datatype, recvbuf, false,
-                            recvcounts[0], datatype, schedule, false);
+      res = NBC_Sched_copy (lbuf, true, ompi_count_array_get(recvcounts, 0), datatype, recvbuf, false,
+                            ompi_count_array_get(recvcounts, 0), datatype, schedule, false);
     }
   } else {
-    res = NBC_Sched_recv (recvbuf, false, recvcounts[rank], datatype, 0, schedule, false);
+    res = NBC_Sched_recv (recvbuf, false, ompi_count_array_get(recvcounts, rank), datatype, 0, schedule, false);
   }
 
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
@@ -211,7 +211,7 @@ static int nbc_reduce_scatter_init(const void* sendbuf, void* recvbuf, const int
   return OMPI_SUCCESS;
 }
 
-int ompi_coll_libnbc_ireduce_scatter (const void* sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype,
+int ompi_coll_libnbc_ireduce_scatter (const void* sendbuf, void* recvbuf, ompi_count_array_t recvcounts, MPI_Datatype datatype,
                                       MPI_Op op, struct ompi_communicator_t *comm, ompi_request_t ** request,
                                       mca_coll_base_module_t *module) {
     int res = nbc_reduce_scatter_init(sendbuf, recvbuf, recvcounts, datatype, op,
@@ -228,7 +228,7 @@ int ompi_coll_libnbc_ireduce_scatter (const void* sendbuf, void* recvbuf, const 
 
     return OMPI_SUCCESS;
 }
-static int nbc_reduce_scatter_inter_init (const void* sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype,
+static int nbc_reduce_scatter_inter_init (const void* sendbuf, void* recvbuf, ompi_count_array_t recvcounts, MPI_Datatype datatype,
                                           MPI_Op op, struct ompi_communicator_t *comm, ompi_request_t ** request,
                                           mca_coll_base_module_t *module, bool persistent) {
   int rank, res, lsize, rsize;
@@ -251,7 +251,7 @@ static int nbc_reduce_scatter_inter_init (const void* sendbuf, void* recvbuf, co
 
   count = 0;
   for (int r = 0 ; r < lsize ; ++r) {
-    count += recvcounts[r];
+    count += ompi_count_array_get(recvcounts, r);
   }
 
   span = opal_datatype_span(&datatype->super, count, &gap);
@@ -309,16 +309,16 @@ static int nbc_reduce_scatter_inter_init (const void* sendbuf, void* recvbuf, co
     }
 
     /* do the local scatterv with the local communicator */
-    res = NBC_Sched_copy (lbuf, true, recvcounts[0], datatype, recvbuf, false,
-                          recvcounts[0], datatype, schedule, false);
+    res = NBC_Sched_copy (lbuf, true, ompi_count_array_get(recvcounts, 0), datatype, recvbuf, false,
+                          ompi_count_array_get(recvcounts, 0), datatype, schedule, false);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
       OBJ_RELEASE(schedule);
       free(tmpbuf);
       return res;
     }
-    size_t offset = recvcounts[0] * ext;
+    size_t offset = ompi_count_array_get(recvcounts, 0) * ext;
     for (int peer = 1; peer < lsize ; ++peer) {
-      res = NBC_Sched_local_send (lbuf + offset, true, recvcounts[peer], datatype, peer, schedule,
+      res = NBC_Sched_local_send (lbuf + offset, true, ompi_count_array_get(recvcounts, peer), datatype, peer, schedule,
                                   false);
       if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
         OBJ_RELEASE(schedule);
@@ -326,11 +326,11 @@ static int nbc_reduce_scatter_inter_init (const void* sendbuf, void* recvbuf, co
         return res;
       }
 
-      offset += recvcounts[peer] * ext;
+      offset += ompi_count_array_get(recvcounts, peer) * ext;
     }
   } else {
     /* receive my block */
-    res = NBC_Sched_local_recv (recvbuf, false, recvcounts[rank], datatype, 0, schedule, false);
+    res = NBC_Sched_local_recv (recvbuf, false, ompi_count_array_get(recvcounts, rank), datatype, 0, schedule, false);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
       OBJ_RELEASE(schedule);
       free(tmpbuf);
@@ -355,7 +355,7 @@ static int nbc_reduce_scatter_inter_init (const void* sendbuf, void* recvbuf, co
   return OMPI_SUCCESS;
 }
 
-int ompi_coll_libnbc_ireduce_scatter_inter (const void* sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype,
+int ompi_coll_libnbc_ireduce_scatter_inter (const void* sendbuf, void* recvbuf, ompi_count_array_t recvcounts, MPI_Datatype datatype,
                                             MPI_Op op, struct ompi_communicator_t *comm, ompi_request_t ** request,
                                             mca_coll_base_module_t *module) {
     int res = nbc_reduce_scatter_inter_init(sendbuf, recvbuf, recvcounts, datatype, op,
@@ -373,7 +373,7 @@ int ompi_coll_libnbc_ireduce_scatter_inter (const void* sendbuf, void* recvbuf, 
     return OMPI_SUCCESS;
 }
 
-int ompi_coll_libnbc_reduce_scatter_init(const void* sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype,
+int ompi_coll_libnbc_reduce_scatter_init(const void* sendbuf, void* recvbuf, ompi_count_array_t recvcounts, MPI_Datatype datatype,
                                          MPI_Op op, struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                                          mca_coll_base_module_t *module) {
     int res = nbc_reduce_scatter_init(sendbuf, recvbuf, recvcounts, datatype, op,
@@ -385,7 +385,7 @@ int ompi_coll_libnbc_reduce_scatter_init(const void* sendbuf, void* recvbuf, con
     return OMPI_SUCCESS;
 }
 
-int ompi_coll_libnbc_reduce_scatter_inter_init(const void* sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype,
+int ompi_coll_libnbc_reduce_scatter_inter_init(const void* sendbuf, void* recvbuf, ompi_count_array_t recvcounts, MPI_Datatype datatype,
                                                MPI_Op op, struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                                                mca_coll_base_module_t *module) {
     int res = nbc_reduce_scatter_inter_init(sendbuf, recvbuf, recvcounts, datatype, op,

@@ -415,9 +415,9 @@ int ompi_coll_tuned_alltoall_intra_dec_fixed(const void *sbuf, size_t scount,
  *      Accepts:        - same arguments as MPI_Alltoallv()
  *      Returns:        - MPI_SUCCESS or error code
  */
-int ompi_coll_tuned_alltoallv_intra_dec_fixed(const void *sbuf, const int *scounts, const int *sdisps,
+int ompi_coll_tuned_alltoallv_intra_dec_fixed(const void *sbuf, ompi_count_array_t scounts, ompi_disp_array_t sdisps,
                                               struct ompi_datatype_t *sdtype,
-                                              void *rbuf, const int *rcounts, const int *rdisps,
+                                              void *rbuf, ompi_count_array_t rcounts, ompi_disp_array_t rdisps,
                                               struct ompi_datatype_t *rdtype,
                                               struct ompi_communicator_t *comm,
                                               mca_coll_base_module_t *module)
@@ -823,7 +823,7 @@ int ompi_coll_tuned_reduce_intra_dec_fixed( const void *sendbuf, void *recvbuf,
  *                        the reduce scatter implementation)
  */
 int ompi_coll_tuned_reduce_scatter_intra_dec_fixed( const void *sbuf, void *rbuf,
-                                                    const int *rcounts,
+                                                    ompi_count_array_t rcounts,
                                                     struct ompi_datatype_t *dtype,
                                                     struct ompi_op_t *op,
                                                     struct ompi_communicator_t *comm,
@@ -838,7 +838,7 @@ int ompi_coll_tuned_reduce_scatter_intra_dec_fixed( const void *sbuf, void *rbuf
     ompi_datatype_type_size(dtype, &dsize);
     total_dsize = 0;
     for (i = 0; i < communicator_size; i++) {
-        total_dsize += rcounts[i];
+        total_dsize += ompi_count_array_get(rcounts, i);
     }
     total_dsize *= dsize;
 
@@ -1238,10 +1238,10 @@ int ompi_coll_tuned_allgather_intra_dec_fixed(const void *sbuf, size_t scount,
  *                        internal allgatherv function.
  */
 
-int ompi_coll_tuned_allgatherv_intra_dec_fixed(const void *sbuf, int scount,
+int ompi_coll_tuned_allgatherv_intra_dec_fixed(const void *sbuf, size_t scount,
                                                struct ompi_datatype_t *sdtype,
-                                               void* rbuf, const int *rcounts,
-                                               const int *rdispls,
+                                               void* rbuf, ompi_count_array_t rcounts,
+                                               ompi_disp_array_t rdispls,
                                                struct ompi_datatype_t *rdtype,
                                                struct ompi_communicator_t *comm,
                                                mca_coll_base_module_t *module)
@@ -1258,7 +1258,7 @@ int ompi_coll_tuned_allgatherv_intra_dec_fixed(const void *sbuf, int scount,
     }
 
     total_dsize = 0;
-    for (i = 0; i < communicator_size; i++) { total_dsize += dsize * rcounts[i]; }
+    for (i = 0; i < communicator_size; i++) { total_dsize += dsize * ompi_count_array_get(rcounts, i); }
 
     /* use the per-rank data size as basis, similar to allgather */
     per_rank_dsize = total_dsize / communicator_size;

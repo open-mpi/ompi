@@ -188,16 +188,16 @@ int mca_coll_ucc_ialltoall(const void *sbuf, size_t scount, struct ompi_datatype
                            ompi_request_t** request,
                            mca_coll_base_module_t *module);
 
-int mca_coll_ucc_alltoallv(const void *sbuf, const int *scounts, const int *sdips,
+int mca_coll_ucc_alltoallv(const void *sbuf, ompi_count_array_t scounts, ompi_disp_array_t sdips,
                            struct ompi_datatype_t *sdtype,
-                           void* rbuf, const int *rcounts, const int *rdisps,
+                           void* rbuf, ompi_count_array_t rcounts, ompi_disp_array_t rdisps,
                            struct ompi_datatype_t *rdtype,
                            struct ompi_communicator_t *comm,
                            mca_coll_base_module_t *module);
 
-int mca_coll_ucc_ialltoallv(const void *sbuf, const int *scounts, const int *sdips,
+int mca_coll_ucc_ialltoallv(const void *sbuf, ompi_count_array_t scounts, ompi_disp_array_t sdips,
                             struct ompi_datatype_t *sdtype,
-                            void* rbuf, const int *rcounts, const int *rdisps,
+                            void* rbuf, ompi_count_array_t rcounts, ompi_disp_array_t rdisps,
                             struct ompi_datatype_t *rdtype,
                             struct ompi_communicator_t *comm,
                             ompi_request_t** request,
@@ -214,14 +214,14 @@ int mca_coll_ucc_iallgather(const void *sbuf, size_t scount, struct ompi_datatyp
                             ompi_request_t** request,
                             mca_coll_base_module_t *module);
 
-int mca_coll_ucc_allgatherv(const void *sbuf, int scount, struct ompi_datatype_t *sdtype,
-                            void* rbuf, const int *rcounts, const int *rdisps,
+int mca_coll_ucc_allgatherv(const void *sbuf, size_t scount, struct ompi_datatype_t *sdtype,
+                            void* rbuf, ompi_count_array_t rcounts, ompi_disp_array_t rdisps,
                             struct ompi_datatype_t *rdtype,
                             struct ompi_communicator_t *comm,
                             mca_coll_base_module_t *module);
 
-int mca_coll_ucc_iallgatherv(const void *sbuf, int scount, struct ompi_datatype_t *sdtype,
-                             void* rbuf, const int *rcounts, const int *rdisps,
+int mca_coll_ucc_iallgatherv(const void *sbuf, size_t scount, struct ompi_datatype_t *sdtype,
+                             void* rbuf, ompi_count_array_t rcounts, ompi_disp_array_t rdisps,
                              struct ompi_datatype_t *rdtype,
                              struct ompi_communicator_t *comm,
                              ompi_request_t** request,
@@ -238,14 +238,14 @@ int mca_coll_ucc_igather(const void *sbuf, size_t scount, struct ompi_datatype_t
                          ompi_request_t** request,
                          mca_coll_base_module_t *module);
 
-int mca_coll_ucc_gatherv(const void *sbuf, int scount, struct ompi_datatype_t *sdtype,
-                         void *rbuf, const int *rcounts, const int *disps,
+int mca_coll_ucc_gatherv(const void *sbuf, size_t scount, struct ompi_datatype_t *sdtype,
+                         void *rbuf, ompi_count_array_t rcounts, ompi_disp_array_t disps,
                          struct ompi_datatype_t *rdtype, int root,
                          struct ompi_communicator_t *comm,
                          mca_coll_base_module_t *module);
 
-int mca_coll_ucc_igatherv(const void *sbuf, int scount, struct ompi_datatype_t *sdtype,
-                          void *rbuf, const int *rcounts, const int *disps,
+int mca_coll_ucc_igatherv(const void *sbuf, size_t scount, struct ompi_datatype_t *sdtype,
+                          void *rbuf, ompi_count_array_t rcounts, ompi_disp_array_t disps,
                           struct ompi_datatype_t *rdtype, int root,
                           struct ompi_communicator_t *comm,
                           ompi_request_t** request,
@@ -264,29 +264,29 @@ int mca_coll_ucc_ireduce_scatter_block(const void *sbuf, void *rbuf, size_t rcou
                                        ompi_request_t** request,
                                        mca_coll_base_module_t *module);
 
-int mca_coll_ucc_reduce_scatter(const void *sbuf, void *rbuf, const int *rcounts,
+int mca_coll_ucc_reduce_scatter(const void *sbuf, void *rbuf, ompi_count_array_t rcounts,
                                 struct ompi_datatype_t *dtype,
                                 struct ompi_op_t *op,
                                 struct ompi_communicator_t *comm,
                                 mca_coll_base_module_t *module);
 
-int mca_coll_ucc_ireduce_scatter(const void *sbuf, void *rbuf, const int *rcounts,
+int mca_coll_ucc_ireduce_scatter(const void *sbuf, void *rbuf, ompi_count_array_t rcounts,
                                 struct ompi_datatype_t *dtype,
                                 struct ompi_op_t *op,
                                 struct ompi_communicator_t *comm,
                                 ompi_request_t** request,
                                 mca_coll_base_module_t *module);
 
-int mca_coll_ucc_scatterv(const void *sbuf, const int *scounts,
-                          const int *disps, struct ompi_datatype_t *sdtype,
-                          void *rbuf, int rcount,
+int mca_coll_ucc_scatterv(const void *sbuf, ompi_count_array_t scounts,
+                          ompi_disp_array_t disps, struct ompi_datatype_t *sdtype,
+                          void *rbuf, size_t rcount,
                           struct ompi_datatype_t *rdtype, int root,
                           struct ompi_communicator_t *comm,
                           mca_coll_base_module_t *module);
 
-int mca_coll_ucc_iscatterv(const void *sbuf, const int *scounts,
-                           const int *disps, struct ompi_datatype_t *sdtype,
-                           void *rbuf, int rcount,
+int mca_coll_ucc_iscatterv(const void *sbuf, ompi_count_array_t scounts,
+                           ompi_disp_array_t disps, struct ompi_datatype_t *sdtype,
+                           void *rbuf, size_t rcount,
                            struct ompi_datatype_t *rdtype, int root,
                            struct ompi_communicator_t *comm,
                            ompi_request_t** request,

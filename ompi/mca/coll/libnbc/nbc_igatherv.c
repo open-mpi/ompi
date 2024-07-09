@@ -30,7 +30,7 @@
 
 
 static int nbc_gatherv_init(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
-                            void* recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype,
+                            void* recvbuf, ompi_count_array_t recvcounts, ompi_disp_array_t displs, MPI_Datatype recvtype,
                             int root, struct ompi_communicator_t *comm, ompi_request_t ** request,
                             mca_coll_base_module_t *module, bool persistent) {
   int rank, p, res;
@@ -68,12 +68,12 @@ static int nbc_gatherv_init(const void* sendbuf, int sendcount, MPI_Datatype sen
     }
   } else {
     for (int i = 0 ; i < p ; ++i) {
-      rbuf = (char *) recvbuf + displs[i] * rcvext;
+      rbuf = (char *) recvbuf + ompi_disp_array_get(displs, i) * rcvext;
       if (i == root) {
         if (!inplace) {
           /* if I am the root - just copy the message */
           res = NBC_Sched_copy ((void *)sendbuf, false, sendcount, sendtype,
-                                rbuf, false, recvcounts[i], recvtype, schedule, false);
+                                rbuf, false, ompi_count_array_get(recvcounts, i), recvtype, schedule, false);
           if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
             OBJ_RELEASE(schedule);
             return res;
@@ -81,7 +81,7 @@ static int nbc_gatherv_init(const void* sendbuf, int sendcount, MPI_Datatype sen
         }
       } else {
         /* root receives message to the right buffer */
-        res = NBC_Sched_recv (rbuf, false, recvcounts[i], recvtype, i, schedule, false);
+        res = NBC_Sched_recv (rbuf, false, ompi_count_array_get(recvcounts, i), recvtype, i, schedule, false);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
           OBJ_RELEASE(schedule);
           return res;
@@ -105,8 +105,8 @@ static int nbc_gatherv_init(const void* sendbuf, int sendcount, MPI_Datatype sen
   return OMPI_SUCCESS;
 }
 
-int ompi_coll_libnbc_igatherv(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
-                              void* recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype,
+int ompi_coll_libnbc_igatherv(const void* sendbuf, size_t sendcount, MPI_Datatype sendtype,
+                              void* recvbuf, ompi_count_array_t recvcounts, ompi_disp_array_t displs, MPI_Datatype recvtype,
                               int root, struct ompi_communicator_t *comm, ompi_request_t ** request,
                               mca_coll_base_module_t *module) {
     int res = nbc_gatherv_init(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, root,
@@ -125,8 +125,8 @@ int ompi_coll_libnbc_igatherv(const void* sendbuf, int sendcount, MPI_Datatype s
     return OMPI_SUCCESS;
 }
 
-static int nbc_gatherv_inter_init (const void* sendbuf, int sendcount, MPI_Datatype sendtype,
-                                   void* recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype,
+static int nbc_gatherv_inter_init (const void* sendbuf, size_t sendcount, MPI_Datatype sendtype,
+                                   void* recvbuf, ompi_count_array_t recvcounts, ompi_disp_array_t displs, MPI_Datatype recvtype,
                                    int root, struct ompi_communicator_t *comm, ompi_request_t ** request,
                                    mca_coll_base_module_t *module, bool persistent) {
   int res, rsize;
@@ -160,9 +160,9 @@ static int nbc_gatherv_inter_init (const void* sendbuf, int sendcount, MPI_Datat
     }
   } else if (MPI_ROOT == root) {
     for (int i = 0 ; i < rsize ; ++i) {
-      rbuf = (char *) recvbuf + displs[i] * rcvext;
+      rbuf = (char *) recvbuf + ompi_disp_array_get(displs, i) * rcvext;
       /* root receives message to the right buffer */
-      res = NBC_Sched_recv (rbuf, false, recvcounts[i], recvtype, i, schedule, false);
+      res = NBC_Sched_recv (rbuf, false, ompi_count_array_get(recvcounts, i), recvtype, i, schedule, false);
       if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
         OBJ_RELEASE(schedule);
         return res;
@@ -185,8 +185,8 @@ static int nbc_gatherv_inter_init (const void* sendbuf, int sendcount, MPI_Datat
   return OMPI_SUCCESS;
 }
 
-int ompi_coll_libnbc_igatherv_inter(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
-                                    void* recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype,
+int ompi_coll_libnbc_igatherv_inter(const void* sendbuf, size_t sendcount, MPI_Datatype sendtype,
+                                    void* recvbuf, ompi_count_array_t recvcounts, ompi_disp_array_t displs, MPI_Datatype recvtype,
                                     int root, struct ompi_communicator_t *comm, ompi_request_t ** request,
                                     mca_coll_base_module_t *module) {
     int res = nbc_gatherv_inter_init(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, root,
@@ -205,8 +205,8 @@ int ompi_coll_libnbc_igatherv_inter(const void* sendbuf, int sendcount, MPI_Data
     return OMPI_SUCCESS;
 }
 
-int ompi_coll_libnbc_gatherv_init(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
-                                  void* recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype,
+int ompi_coll_libnbc_gatherv_init(const void* sendbuf, size_t sendcount, MPI_Datatype sendtype,
+                                  void* recvbuf, ompi_count_array_t recvcounts, ompi_disp_array_t displs, MPI_Datatype recvtype,
                                   int root, struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                                   mca_coll_base_module_t *module) {
     int res = nbc_gatherv_init(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, root,
@@ -218,8 +218,8 @@ int ompi_coll_libnbc_gatherv_init(const void* sendbuf, int sendcount, MPI_Dataty
     return OMPI_SUCCESS;
 }
 
-int ompi_coll_libnbc_gatherv_inter_init(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
-                                        void* recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype,
+int ompi_coll_libnbc_gatherv_inter_init(const void* sendbuf, size_t sendcount, MPI_Datatype sendtype,
+                                        void* recvbuf, ompi_count_array_t recvcounts, ompi_disp_array_t displs, MPI_Datatype recvtype,
                                         int root, struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                                         mca_coll_base_module_t *module) {
     int res = nbc_gatherv_inter_init(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, root,

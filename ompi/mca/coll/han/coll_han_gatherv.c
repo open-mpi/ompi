@@ -59,8 +59,8 @@
  * 2. No **gap** exists between data from the same node, other than the root's node, in the output
  *    buffer - it is ok if data from different nodes has gap.
  */
-int mca_coll_han_gatherv_intra(const void *sbuf, int scount, struct ompi_datatype_t *sdtype,
-                               void *rbuf, const int *rcounts, const int *displs,
+int mca_coll_han_gatherv_intra(const void *sbuf, size_t scount, struct ompi_datatype_t *sdtype,
+                               void *rbuf, ompi_count_array_t rcounts, ompi_disp_array_t displs,
                                struct ompi_datatype_t *rdtype, int root,
                                struct ompi_communicator_t *comm, mca_coll_base_module_t *module)
 {
@@ -68,7 +68,10 @@ int mca_coll_han_gatherv_intra(const void *sbuf, int scount, struct ompi_datatyp
     int w_rank, w_size;              /* information about the global communicator */
     int root_low_rank, root_up_rank; /* root ranks for both sub-communicators */
     int err, *vranks, low_rank, low_size, up_rank, up_size, *topo;
-    int *low_rcounts = NULL, *low_displs = NULL;
+    size_t *low_rcounts = NULL;
+    ptrdiff_t *low_displs = NULL;
+    ompi_count_array_t low_rcounts_desc;
+    ompi_disp_array_t low_displs_desc;
 
     /* Create the subcommunicators */
     err = mca_coll_han_comm_create(comm, han_module);
@@ -123,12 +126,16 @@ int mca_coll_han_gatherv_intra(const void *sbuf, int scount, struct ompi_datatyp
     err = OMPI_SUCCESS;
     /* #################### Root ########################### */
     if (root == w_rank) {
-        int need_bounce_buf = 0, total_up_rcounts = 0, *up_displs = NULL, *up_rcounts = NULL,
-            *up_peer_lb = NULL, *up_peer_ub = NULL;
+        int need_bounce_buf = 0;
+        size_t total_up_rcounts = 0;
+        ptrdiff_t *up_displs = NULL;
+        size_t *up_rcounts = NULL, *up_peer_lb = NULL, *up_peer_ub = NULL;
+        ompi_count_array_t up_rcounts_desc;
+        ompi_disp_array_t up_displs_desc;
         char *bounce_buf = NULL;
 
-        low_rcounts = malloc(low_size * sizeof(int));
-        low_displs = malloc(low_size * sizeof(int));
+        low_rcounts = malloc(low_size * sizeof(size_t));
+        low_displs = malloc(low_size * sizeof(ptrdiff_t));
         if (!low_rcounts || !low_displs) {
             err = OMPI_ERR_OUT_OF_RESOURCE;
             goto root_out;
@@ -141,20 +148,22 @@ int mca_coll_han_gatherv_intra(const void *sbuf, int scount, struct ompi_datatyp
                 /* Not a local peer */
                 continue;
             }
-            low_displs[low_peer] = displs[w_peer];
-            low_rcounts[low_peer] = rcounts[w_peer];
+            low_displs[low_peer] = ompi_disp_array_get(displs, w_peer);
+            low_rcounts[low_peer] = ompi_count_array_get(rcounts, w_peer);
         }
 
         /* Low Gatherv */
-        low_comm->c_coll->coll_gatherv(sbuf, scount, sdtype, rbuf, low_rcounts, low_displs, rdtype,
-                                       root_low_rank, low_comm,
+        OMPI_COUNT_ARRAY_INIT(&low_rcounts_desc, low_rcounts);
+        OMPI_DISP_ARRAY_INIT(&low_displs_desc, low_displs);
+        low_comm->c_coll->coll_gatherv(sbuf, scount, sdtype, rbuf, low_rcounts_desc,
+                                       low_displs_desc, rdtype, root_low_rank, low_comm,
                                        low_comm->c_coll->coll_gatherv_module);
 
         char *tmp_rbuf = rbuf;
 
-        up_rcounts = calloc(up_size, sizeof(int));
-        up_displs = malloc(up_size * sizeof(int));
-        up_peer_ub = calloc(up_size, sizeof(int));
+        up_rcounts = calloc(up_size, sizeof(size_t));
+        up_displs = malloc(up_size * sizeof(ptrdiff_t));
+        up_peer_ub = calloc(up_size, sizeof(size_t));
         if (!up_rcounts || !up_displs || !up_peer_ub) {
             err = OMPI_ERR_OUT_OF_RESOURCE;
             goto root_out;
@@ -169,8 +178,8 @@ int mca_coll_han_gatherv_intra(const void *sbuf, int scount, struct ompi_datatyp
         for (w_peer = 0; w_peer < w_size; ++w_peer) {
             mca_coll_han_get_ranks(vranks, w_peer, low_size, NULL, &up_peer);
 
-            if (!need_bounce_buf && root_up_rank != up_peer && 0 < rcounts[w_peer] && 0 < w_peer
-                && displs[w_peer] < displs[w_peer - 1]) {
+            if (!need_bounce_buf && root_up_rank != up_peer && 0 < ompi_count_array_get(rcounts, w_peer) && 0 < w_peer
+                && ompi_disp_array_get(displs, w_peer) < ompi_disp_array_get(displs, w_peer - 1)) {
                 /* Data is not placed in the rank order so reordering is needed */
                 need_bounce_buf = 1;
             }
@@ -180,17 +189,17 @@ int mca_coll_han_gatherv_intra(const void *sbuf, int scount, struct ompi_datatyp
                 continue;
             }
 
-            up_peer_ub[up_peer] = 0 < rcounts[w_peer]
-                                          && displs[w_peer] + rcounts[w_peer] > up_peer_ub[up_peer]
-                                      ? displs[w_peer] + rcounts[w_peer]
+            up_peer_ub[up_peer] = 0 < ompi_count_array_get(rcounts, w_peer)
+                                          && ompi_disp_array_get(displs, w_peer) + ompi_count_array_get(rcounts, w_peer) > up_peer_ub[up_peer]
+                                      ? ompi_disp_array_get(displs, w_peer) + ompi_count_array_get(rcounts, w_peer)
                                       : up_peer_ub[up_peer];
 
-            up_rcounts[up_peer] += rcounts[w_peer];
-            total_up_rcounts += rcounts[w_peer];
+            up_rcounts[up_peer] += ompi_count_array_get(rcounts, w_peer);
+            total_up_rcounts += ompi_count_array_get(rcounts, w_peer);
 
             /* Optimize for the happy path */
-            up_displs[up_peer] = 0 < rcounts[w_peer] && displs[w_peer] < up_displs[up_peer]
-                                     ? displs[w_peer]
+            up_displs[up_peer] = 0 < ompi_count_array_get(rcounts, w_peer) && ompi_disp_array_get(displs, w_peer) < up_displs[up_peer]
+                                     ? ompi_disp_array_get(displs, w_peer)
                                      : up_displs[up_peer];
         }
 
@@ -226,7 +235,9 @@ int mca_coll_han_gatherv_intra(const void *sbuf, int scount, struct ompi_datatyp
         }
 
         /* Up Gatherv */
-        up_comm->c_coll->coll_gatherv(sbuf, 0, sdtype, tmp_rbuf, up_rcounts, up_displs, rdtype,
+        OMPI_COUNT_ARRAY_INIT(&up_rcounts_desc, up_rcounts);
+        OMPI_DISP_ARRAY_INIT(&up_displs_desc, up_displs);
+        up_comm->c_coll->coll_gatherv(sbuf, 0, sdtype, tmp_rbuf, up_rcounts_desc, up_displs_desc, rdtype,
                                       root_up_rank, up_comm, up_comm->c_coll->coll_gatherv_module);
 
         /* Use a temp buffer to reorder the output buffer if needed */
@@ -242,10 +253,10 @@ int mca_coll_han_gatherv_intra(const void *sbuf, int scount, struct ompi_datatyp
 
                 w_peer = topo[2 * i + 1];
 
-                ompi_datatype_copy_content_same_ddt(rdtype, (size_t) rcounts[w_peer],
-                                                    (char *) rbuf + (size_t) displs[w_peer] * rdext,
+                ompi_datatype_copy_content_same_ddt(rdtype, ompi_count_array_get(rcounts, w_peer),
+                                                    (char *) rbuf + ompi_disp_array_get(displs, w_peer) * rdext,
                                                     bounce_buf + offset);
-                offset += rdext * (size_t) rcounts[w_peer];
+                offset += rdext * ompi_count_array_get(rcounts, w_peer);
             }
         }
 
@@ -278,90 +289,74 @@ int mca_coll_han_gatherv_intra(const void *sbuf, int scount, struct ompi_datatyp
     /* #################### Root's local peers ########################### */
     if (root_up_rank == up_rank) {
         /* Low Gatherv */
-        low_comm->c_coll->coll_gatherv(sbuf, scount, sdtype, NULL, NULL, NULL, NULL, root_low_rank,
+        low_comm->c_coll->coll_gatherv(sbuf, scount, sdtype, NULL, 0, 0, NULL, root_low_rank,
                                        low_comm, low_comm->c_coll->coll_gatherv_module);
         return OMPI_SUCCESS;
     }
 
     size_t sdsize = 0;
-    uint64_t send_size = 0;
+    size_t send_size = 0;
 
     ompi_datatype_type_size(sdtype, &sdsize);
-    send_size = (uint64_t) sdsize * (uint64_t) scount;
+    send_size = sdsize * scount;
 
     /* #################### Other node followers ########################### */
     if (root_low_rank != low_rank) {
         /* Low Gather - Gather each local peer's send data size */
-        low_comm->c_coll->coll_gather((const void *) &send_size, 1, MPI_UINT64_T, NULL, 1,
-                                      MPI_UINT64_T, root_low_rank, low_comm,
+        low_comm->c_coll->coll_gather((const void *) &send_size, sizeof(size_t), MPI_BYTE, NULL,
+                                      sizeof(size_t), MPI_BYTE, root_low_rank, low_comm,
                                       low_comm->c_coll->coll_gather_module);
         /* Low Gatherv */
-        low_comm->c_coll->coll_gatherv(sbuf, scount, sdtype, NULL, NULL, NULL, NULL, root_low_rank,
+        low_comm->c_coll->coll_gatherv(sbuf, scount, sdtype, NULL, 0, 0, NULL, root_low_rank,
                                        low_comm, low_comm->c_coll->coll_gatherv_module);
         return OMPI_SUCCESS;
     }
 
     /* #################### Node leaders ########################### */
 
-    uint64_t *low_data_size = NULL;
     char *tmp_buf = NULL;
-    ompi_datatype_t *temptype = MPI_BYTE;
 
     /* Allocate a temporary array to gather the data size, i.e. data type size x count,
      * in bytes from local peers */
-    low_data_size = malloc(low_size * sizeof(uint64_t));
-    if (!low_data_size) {
+    low_rcounts = malloc(low_size * sizeof(size_t));
+    if (!low_rcounts) {
         err = OMPI_ERR_OUT_OF_RESOURCE;
         goto node_leader_out;
     }
 
     /* Low Gather -  Gather local peers' send data sizes */
-    low_comm->c_coll->coll_gather((const void *) &send_size, 1, MPI_UINT64_T,
-                                  (void *) low_data_size, 1, MPI_UINT64_T, root_low_rank, low_comm,
+    low_comm->c_coll->coll_gather((const void *) &send_size, sizeof(size_t), MPI_BYTE,
+                                  (void *) low_rcounts, sizeof(size_t), MPI_BYTE, root_low_rank, low_comm,
                                   low_comm->c_coll->coll_gather_module);
 
-    /* Determine if we need to create a custom datatype instead of MPI_BYTE,
-     * to avoid count(type int) overflow
-     * TODO: Remove this logic once we adopt large-count, i.e. count will become 64-bit.
-     */
-    int total_up_scount = 0;
-    size_t rsize = 0, datatype_size = 1, max_data_size = 0;
-    for (int i = 0; i < low_size; ++i) {
-        rsize += (size_t) low_data_size[i];
-        max_data_size = (size_t) low_data_size[i] > max_data_size ? (size_t) low_data_size[i]
-                                                                  : max_data_size;
-    }
-
-    if (max_data_size > (size_t) INT_MAX) {
-        datatype_size = coll_han_utils_gcd(low_data_size, low_size);
-    }
-
-    low_rcounts = malloc(low_size * sizeof(int));
-    low_displs = malloc(low_size * sizeof(int));
-    tmp_buf = (char *) malloc(rsize); /* tmp_buf is still valid if rsize is 0 */
-    if (!tmp_buf || !low_rcounts || !low_displs) {
+    low_displs = malloc(low_size * sizeof(ptrdiff_t));
+    if (!low_displs) {
         err = OMPI_ERR_OUT_OF_RESOURCE;
         goto node_leader_out;
     }
 
+    size_t total_rsize = 0;
     for (int i = 0; i < low_size; ++i) {
-        low_rcounts[i] = (int) ((size_t) low_data_size[i] / datatype_size);
         low_displs[i] = i > 0 ? low_displs[i - 1] + low_rcounts[i - 1] : 0;
-        total_up_scount += low_rcounts[i];
+        total_rsize += low_rcounts[i];
     }
 
-    if (1 < datatype_size) {
-        coll_han_utils_create_contiguous_datatype(datatype_size, MPI_BYTE, &temptype);
-        ompi_datatype_commit(&temptype);
+    tmp_buf = (char *) malloc(total_rsize); /* tmp_buf is still valid if total_rsize is 0 */
+    if (!tmp_buf) {
+        err = OMPI_ERR_OUT_OF_RESOURCE;
+        goto node_leader_out;
     }
 
     /* Low Gatherv */
-    low_comm->c_coll->coll_gatherv(sbuf, scount, sdtype, (void *) tmp_buf, low_rcounts, low_displs,
-                                   temptype, root_low_rank, low_comm,
+    OMPI_COUNT_ARRAY_INIT(&low_rcounts_desc, low_rcounts);
+    OMPI_DISP_ARRAY_INIT(&low_displs_desc, low_displs);
+    low_comm->c_coll->coll_gatherv(sbuf, scount, sdtype, (void *) tmp_buf,
+                                   low_rcounts_desc, low_displs_desc,
+                                   MPI_BYTE, root_low_rank, low_comm,
                                    low_comm->c_coll->coll_gatherv_module);
 
     /* Up Gatherv */
-    up_comm->c_coll->coll_gatherv(tmp_buf, total_up_scount, temptype, NULL, NULL, NULL, NULL,
+    up_comm->c_coll->coll_gatherv(tmp_buf, total_rsize, MPI_BYTE, NULL, 0, 0, NULL,
                                   root_up_rank, up_comm, up_comm->c_coll->coll_gatherv_module);
 
 node_leader_out:
@@ -371,14 +366,8 @@ node_leader_out:
     if (low_displs) {
         free(low_displs);
     }
-    if (low_data_size) {
-        free(low_data_size);
-    }
     if (tmp_buf) {
         free(tmp_buf);
-    }
-    if (MPI_BYTE != temptype) {
-        ompi_datatype_destroy(&temptype);
     }
 
     return err;

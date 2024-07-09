@@ -122,10 +122,10 @@ ompi_coll_tuned_allgatherv_intra_check_forced_init(coll_tuned_force_algorithm_mc
     return (MPI_SUCCESS);
 }
 
-int ompi_coll_tuned_allgatherv_intra_do_this(const void *sbuf, int scount,
+int ompi_coll_tuned_allgatherv_intra_do_this(const void *sbuf, size_t scount,
                                              struct ompi_datatype_t *sdtype,
-                                             void *rbuf, const int *rcounts,
-                                             const int *rdispls,
+                                             void *rbuf, ompi_count_array_t rcounts,
+                                             ompi_disp_array_t rdispls,
                                              struct ompi_datatype_t *rdtype,
                                              struct ompi_communicator_t *comm,
                                              mca_coll_base_module_t *module,

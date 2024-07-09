@@ -48,6 +48,8 @@ int MPI_Scatterv(const void *sendbuf, const int sendcounts[], const int displs[]
                  MPI_Datatype recvtype, int root, MPI_Comm comm)
 {
     int i, size, err;
+    ompi_count_array_t sendcounts_desc;
+    ompi_disp_array_t displs_desc;
 
     SPC_RECORD(OMPI_SPC_SCATTERV, 1);
 
@@ -213,7 +215,9 @@ int MPI_Scatterv(const void *sendbuf, const int sendcounts[], const int displs[]
     }
 
     /* Invoke the coll component to perform the back-end operation */
-    err = comm->c_coll->coll_scatterv(updated_sendbuf, sendcounts, displs,
+    OMPI_COUNT_ARRAY_INIT(&sendcounts_desc, sendcounts);
+    OMPI_DISP_ARRAY_INIT(&displs_desc, displs);
+    err = comm->c_coll->coll_scatterv(updated_sendbuf, sendcounts_desc, displs_desc,
                                       sendtype, updated_recvbuf, recvcount, recvtype, root, comm,
                                       comm->c_coll->coll_scatterv_module);
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);

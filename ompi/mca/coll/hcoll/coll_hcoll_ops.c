@@ -108,8 +108,8 @@ int mca_coll_hcoll_allgather(const void *sbuf, size_t scount,
 
 int mca_coll_hcoll_allgatherv(const void *sbuf, int scount,
                             struct ompi_datatype_t *sdtype,
-                            void *rbuf, const int *rcount,
-                            const int *displs,
+                            void *rbuf, ompi_count_array_t rcount,
+                            ompi_disp_array_t displs,
                             struct ompi_datatype_t *rdtype,
                             struct ompi_communicator_t *comm,
                             mca_coll_base_module_t *module)
@@ -121,7 +121,8 @@ int mca_coll_hcoll_allgatherv(const void *sbuf, int scount,
     mca_coll_hcoll_module_t *hcoll_module = (mca_coll_hcoll_module_t*)module;
     stype = ompi_dtype_2_hcoll_dtype(sdtype, NO_DERIVED);
     rtype = ompi_dtype_2_hcoll_dtype(rdtype, NO_DERIVED);
-    if (OPAL_UNLIKELY(HCOL_DTE_IS_ZERO(stype) || HCOL_DTE_IS_ZERO(rtype))) {
+    if (OPAL_UNLIKELY(HCOL_DTE_IS_ZERO(stype) || HCOL_DTE_IS_ZERO(rtype)
+				              || ompi_count_array_is_64bit(rcount))) {
         /*If we are here then datatype is not simple predefined datatype */
         /*In future we need to add more complex mapping to the dte_data_representation_t */
         /* Now use fallback */
@@ -136,8 +137,14 @@ int mca_coll_hcoll_allgatherv(const void *sbuf, int scount,
                                              hcoll_module->previous_allgatherv_module);
         return rc;
     }
-    rc = hcoll_collectives.coll_allgatherv((void *)sbuf,scount,stype,rbuf,(int*)rcount,
-                                           (int*)displs,rtype,hcoll_module->hcoll_context);
+    rc = hcoll_collectives.coll_allgatherv((void *)sbuf,
+                                           scount,
+                                           stype,
+                                           rbuf,
+                                           (void *)ompi_count_array_ptr(rcount),
+                                           (void *)ompi_disp_array_ptr(displs),
+                                           rtype,
+                                           hcoll_module->hcoll_context);
     if (HCOLL_SUCCESS != rc){
         HCOL_VERBOSE(20,"RUNNING FALLBACK ALLGATHERV");
         rc = hcoll_module->previous_allgatherv(sbuf,scount,sdtype,
@@ -332,9 +339,9 @@ int mca_coll_hcoll_alltoall(const void *sbuf, size_t scount,
     return rc;
 }
 
-int mca_coll_hcoll_alltoallv(const void *sbuf, const int *scounts, const int *sdisps,
+int mca_coll_hcoll_alltoallv(const void *sbuf, ompi_count_array_t scounts, ompi_disp_array_t sdisps,
                             struct ompi_datatype_t *sdtype,
-                            void *rbuf, const int *rcounts, const int *rdisps,
+                            void *rbuf, ompi_count_array_t rcounts, ompi_disp_array_t rdisps,
                             struct ompi_datatype_t *rdtype,
                             struct ompi_communicator_t *comm,
                             mca_coll_base_module_t *module)
@@ -346,7 +353,8 @@ int mca_coll_hcoll_alltoallv(const void *sbuf, const int *scounts, const int *sd
     mca_coll_hcoll_module_t *hcoll_module = (mca_coll_hcoll_module_t*)module;
     stype = ompi_dtype_2_hcoll_dtype(sdtype, NO_DERIVED);
     rtype = ompi_dtype_2_hcoll_dtype(rdtype, NO_DERIVED);
-    if (OPAL_UNLIKELY(HCOL_DTE_IS_ZERO(stype) || HCOL_DTE_IS_ZERO(rtype))) {
+    if (OPAL_UNLIKELY(HCOL_DTE_IS_ZERO(stype) || HCOL_DTE_IS_ZERO(rtype) 
+			                      || ompi_count_array_is_64bit(scounts))) {
         HCOL_VERBOSE(20,"Ompi_datatype is not supported: sdtype = %s, rdtype = %s; calling fallback alltoallv;",
                      sdtype->super.name,
                      rdtype->super.name);
@@ -355,8 +363,14 @@ int mca_coll_hcoll_alltoallv(const void *sbuf, const int *scounts, const int *sd
                                             comm, hcoll_module->previous_alltoallv_module);
         return rc;
     }
-    rc = hcoll_collectives.coll_alltoallv(sbuf, scounts, sdisps, stype,
-                                          rbuf, rcounts, rdisps, rtype,
+    rc = hcoll_collectives.coll_alltoallv((void *)sbuf,
+                                          (void *)ompi_count_array_ptr(scounts),
+                                          (void *)ompi_disp_array_ptr(sdisps),
+                                          stype,
+                                          rbuf,
+                                          (void *)ompi_count_array_ptr(rcounts),
+                                          (void *)ompi_disp_array_ptr(rdisps),
+                                          rtype,
                                           hcoll_module->hcoll_context);
     if (HCOLL_SUCCESS != rc){
         HCOL_VERBOSE(20,"RUNNING FALLBACK ALLTOALLV");
@@ -367,9 +381,9 @@ int mca_coll_hcoll_alltoallv(const void *sbuf, const int *scounts, const int *sd
     return rc;
 }
 
-int mca_coll_hcoll_gatherv(const void* sbuf, int scount,
+int mca_coll_hcoll_gatherv(const void* sbuf, size_t scount,
                             struct ompi_datatype_t *sdtype,
-                            void* rbuf, const int *rcounts, const int *displs,
+                            void* rbuf, ompi_count_array_t rcounts, ompi_disp_array_t displs,
                             struct ompi_datatype_t *rdtype,
                             int root,
                             struct ompi_communicator_t *comm,
@@ -388,7 +402,8 @@ int mca_coll_hcoll_gatherv(const void* sbuf, int scount,
     stype = ompi_dtype_2_hcoll_dtype(sdtype, NO_DERIVED);
     rtype = ompi_dtype_2_hcoll_dtype(rdtype, NO_DERIVED);
 
-    if (OPAL_UNLIKELY(HCOL_DTE_IS_ZERO(stype) || HCOL_DTE_IS_ZERO(rtype))) {
+    if (OPAL_UNLIKELY(HCOL_DTE_IS_ZERO(stype) || HCOL_DTE_IS_ZERO(rtype)
+			                      || ompi_count_array_is_64bit(rcounts))) {
         /*If we are here then datatype is not simple predefined datatype */
         /*In future we need to add more complex mapping to the dte_data_representation_t */
         /* Now use fallback */
@@ -400,9 +415,15 @@ int mca_coll_hcoll_gatherv(const void* sbuf, int scount,
                                            comm, hcoll_module->previous_gatherv_module);
         return rc;
     }
-    rc = hcoll_collectives.coll_gatherv(sbuf, scount, stype, rbuf,
-                                        rcounts, displs, rtype,
-                                        root, hcoll_module->hcoll_context);
+    rc = hcoll_collectives.coll_gatherv((void *)sbuf,
+                                        scount,
+                                        stype,
+                                        rbuf,
+                                        (void *)ompi_count_array_ptr(rcounts),
+                                        (void *)ompi_disp_array_ptr(displs),
+                                        rtype,
+                                        root,
+                                        hcoll_module->hcoll_context);
     if (HCOLL_SUCCESS != rc){
         HCOL_VERBOSE(20,"RUNNING FALLBACK GATHERV");
         rc = hcoll_module->previous_gatherv(sbuf,scount,sdtype,
@@ -413,9 +434,9 @@ int mca_coll_hcoll_gatherv(const void* sbuf, int scount,
 
 }
 
-int mca_coll_hcoll_scatterv(const void* sbuf, const int *scounts, const int *displs,
+int mca_coll_hcoll_scatterv(const void* sbuf, ompi_count_array_t scounts, ompi_disp_array_t displs,
                             struct ompi_datatype_t *sdtype,
-                            void* rbuf, int rcount,
+                            void* rbuf, size_t rcount,
                             struct ompi_datatype_t *rdtype,
                             int root,
                             struct ompi_communicator_t *comm,
@@ -439,7 +460,8 @@ int mca_coll_hcoll_scatterv(const void* sbuf, const int *scounts, const int *dis
         assert(root == comm->c_my_rank);
         rtype = stype;
     }
-    if (OPAL_UNLIKELY(HCOL_DTE_IS_ZERO(stype) || HCOL_DTE_IS_ZERO(rtype))) {
+    if (OPAL_UNLIKELY(HCOL_DTE_IS_ZERO(stype) || HCOL_DTE_IS_ZERO(rtype)
+			                      || ompi_count_array_is_64bit(scounts))) {
         /*If we are here then datatype is not simple predefined datatype */
         /*In future we need to add more complex mapping to the dte_data_representation_t */
         /* Now use fallback */
@@ -451,12 +473,25 @@ int mca_coll_hcoll_scatterv(const void* sbuf, const int *scounts, const int *dis
                                            comm, hcoll_module->previous_scatterv_module);
         return rc;
     }
-    rc = hcoll_collectives.coll_scatterv(sbuf, scounts, displs, stype, rbuf, rcount, rtype, root, hcoll_module->hcoll_context);
+    rc = hcoll_collectives.coll_scatterv((void *)sbuf,
+                                         (void *)ompi_count_array_ptr(scounts),
+                                         (void *)ompi_disp_array_ptr(displs),
+                                         stype,
+                                         rbuf,
+                                         rcount,
+                                         rtype,
+                                         root,
+                                         hcoll_module->hcoll_context);
     if (HCOLL_SUCCESS != rc){
         HCOL_VERBOSE(20,"RUNNING FALLBACK SCATTERV");
-        rc = hcoll_module->previous_scatterv(sbuf, scounts, displs, sdtype,
-                                           rbuf, rcount, rdtype, root,
-                                           comm, hcoll_module->previous_scatterv_module);
+        rc = hcoll_module->previous_scatterv(sbuf, scounts, displs,
+                                             sdtype,
+                                             rbuf,
+                                             rcount,
+                                             rdtype,
+                                             root,
+                                             comm,
+                                             hcoll_module->previous_scatterv_module);
     }
     return rc;
 }
@@ -552,10 +587,10 @@ int mca_coll_hcoll_iallgather(const void *sbuf, size_t scount,
     return rc;
 }
 #if HCOLL_API >= HCOLL_VERSION(3,5)
-int mca_coll_hcoll_iallgatherv(const void *sbuf, int scount,
+int mca_coll_hcoll_iallgatherv(const void *sbuf, size_t scount,
                             struct ompi_datatype_t *sdtype,
-                            void *rbuf, const int *rcount,
-                            const int *displs,
+                            void *rbuf, ompi_count_array_t rcount,
+                            ompi_disp_array_t displs,
                             struct ompi_datatype_t *rdtype,
                             struct ompi_communicator_t *comm,
                             ompi_request_t ** request,
@@ -569,7 +604,8 @@ int mca_coll_hcoll_iallgatherv(const void *sbuf, int scount,
     stype = ompi_dtype_2_hcoll_dtype(sdtype, NO_DERIVED);
     rtype = ompi_dtype_2_hcoll_dtype(rdtype, NO_DERIVED);
     void **rt_handle = (void **) request;
-    if (OPAL_UNLIKELY(HCOL_DTE_IS_ZERO(stype) || HCOL_DTE_IS_ZERO(rtype))) {
+    if (OPAL_UNLIKELY(HCOL_DTE_IS_ZERO(stype) || HCOL_DTE_IS_ZERO(rtype)
+			                      || ompi_count_array_is_64bit(rcount))) {
         /*If we are here then datatype is not simple predefined datatype */
         /*In future we need to add more complex mapping to the dte_data_representation_t */
         /* Now use fallback */
@@ -585,7 +621,13 @@ int mca_coll_hcoll_iallgatherv(const void *sbuf, int scount,
                                              hcoll_module->previous_iallgatherv_module);
         return rc;
     }
-    rc = hcoll_collectives.coll_iallgatherv((void *)sbuf,scount,stype,rbuf,(int*)rcount,(int*)displs,rtype,
+    rc = hcoll_collectives.coll_iallgatherv((void *)sbuf,
+                                            scount,
+                                            stype,
+                                            rbuf,
+                                            (void *)ompi_count_array_ptr(rcount),
+                                            (void *)ompi_disp_array_ptr(displs),
+                                            rtype,
             hcoll_module->hcoll_context, rt_handle);
     if (HCOLL_SUCCESS != rc){
        HCOL_VERBOSE(20,"RUNNING FALLBACK NON-BLOCKING ALLGATHER");
@@ -706,9 +748,9 @@ int mca_coll_hcoll_ireduce(const void *sbuf, void *rbuf, size_t count,
     return rc;
 }
 #endif
-int mca_coll_hcoll_igatherv(const void* sbuf, int scount,
+int mca_coll_hcoll_igatherv(const void* sbuf, size_t scount,
                             struct ompi_datatype_t *sdtype,
-                            void* rbuf, const int *rcounts, const int *displs,
+                            void* rbuf, ompi_count_array_t rcounts, ompi_disp_array_t displs,
                             struct ompi_datatype_t *rdtype,
                             int root,
                             struct ompi_communicator_t *comm,
@@ -731,7 +773,8 @@ int mca_coll_hcoll_igatherv(const void* sbuf, int scount,
 
     stype = ompi_dtype_2_hcoll_dtype(sdtype, NO_DERIVED);
     rtype = ompi_dtype_2_hcoll_dtype(rdtype, NO_DERIVED);
-    if (OPAL_UNLIKELY(HCOL_DTE_IS_ZERO(stype) || HCOL_DTE_IS_ZERO(rtype))) {
+    if (OPAL_UNLIKELY(HCOL_DTE_IS_ZERO(stype) || HCOL_DTE_IS_ZERO(rtype)
+			                      || ompi_count_array_is_64bit(rcounts))) {
         /*If we are here then datatype is not simple predefined datatype */
         /*In future we need to add more complex mapping to the dte_data_representation_t */
         /* Now use fallback */
@@ -744,7 +787,16 @@ int mca_coll_hcoll_igatherv(const void* sbuf, int scount,
                                            hcoll_module->previous_igatherv_module);
         return rc;
     }
-    rc = hcoll_collectives.coll_igatherv((void *)sbuf, scount, stype, rbuf, (int *)rcounts, (int *)displs, rtype, root, hcoll_module->hcoll_context, rt_handle);
+    rc = hcoll_collectives.coll_igatherv((void *)sbuf,
+                                         scount,
+                                         stype,
+                                         rbuf,
+                                         (void *)ompi_count_array_ptr(rcounts),
+                                         (void *)ompi_disp_array_ptr(displs),
+                                         rtype,
+                                         root,
+                                         hcoll_module->hcoll_context,
+                                         rt_handle);
     if (HCOLL_SUCCESS != rc){
         HCOL_VERBOSE(20,"RUNNING FALLBACK IGATHERV");
         rc = hcoll_module->previous_igatherv(sbuf,scount,sdtype,
@@ -758,9 +810,9 @@ int mca_coll_hcoll_igatherv(const void* sbuf, int scount,
 
 
 #if HCOLL_API >= HCOLL_VERSION(3,7)
-int mca_coll_hcoll_ialltoallv(const void *sbuf, const int *scounts, const int *sdisps,
+int mca_coll_hcoll_ialltoallv(const void *sbuf, ompi_count_array_t scounts, ompi_disp_array_t sdisps,
                               struct ompi_datatype_t *sdtype,
-                              void *rbuf, const int *rcounts, const int *rdisps,
+                              void *rbuf, ompi_count_array_t rcounts, ompi_disp_array_t rdisps,
                               struct ompi_datatype_t *rdtype,
                               struct ompi_communicator_t *comm,
                               ompi_request_t ** request,
@@ -773,7 +825,8 @@ int mca_coll_hcoll_ialltoallv(const void *sbuf, const int *scounts, const int *s
     mca_coll_hcoll_module_t *hcoll_module = (mca_coll_hcoll_module_t*)module;
     stype = ompi_dtype_2_hcoll_dtype(sdtype, NO_DERIVED);
     rtype = ompi_dtype_2_hcoll_dtype(rdtype, NO_DERIVED);
-    if (OPAL_UNLIKELY(HCOL_DTE_IS_ZERO(stype) || HCOL_DTE_IS_ZERO(rtype))) {
+    if (OPAL_UNLIKELY(HCOL_DTE_IS_ZERO(stype) || HCOL_DTE_IS_ZERO(rtype)
+			                      || ompi_count_array_is_64bit(scounts))) {
         HCOL_VERBOSE(20,"Ompi_datatype is not supported: sdtype = %s, rdtype = %s; calling fallback ialltoallv;",
                      sdtype->super.name,
                      rdtype->super.name);
@@ -782,9 +835,16 @@ int mca_coll_hcoll_ialltoallv(const void *sbuf, const int *scounts, const int *s
                                                comm, request, hcoll_module->previous_alltoallv_module);
         return rc;
     }
-    rc = hcoll_collectives.coll_ialltoallv(sbuf, scounts, sdisps, stype,
-                                           rbuf, rcounts, rdisps, rtype,
-                                           hcoll_module->hcoll_context, (void**)request);
+    rc = hcoll_collectives.coll_ialltoallv((void *)sbuf,
+                                           (void *)ompi_count_array_ptr(scounts),
+                                           (void *)ompi_disp_array_ptr(sdisps),
+                                           stype,
+                                           rbuf,
+                                           (void *)ompi_count_array_ptr(rcounts),
+                                           (void *)ompi_disp_array_ptr(rdisps),
+                                           rtype,
+                                           hcoll_module->hcoll_context,
+                                           (void**)request);
     if (HCOLL_SUCCESS != rc){
         HCOL_VERBOSE(20,"RUNNING FALLBACK IALLTOALLV");
         rc = hcoll_module->previous_ialltoallv(sbuf, scounts, sdisps, sdtype,
@@ -837,7 +897,7 @@ int mca_coll_hcoll_reduce_scatter_block(const void *sbuf, void *rbuf, size_t rco
     return rc;
 }
 
-int mca_coll_hcoll_reduce_scatter(const void *sbuf, void *rbuf, const int *rcounts,
+int mca_coll_hcoll_reduce_scatter(const void *sbuf, void *rbuf, ompi_count_array_t rcounts,
                                   struct ompi_datatype_t *dtype,
                                   struct ompi_op_t *op,
                                   struct ompi_communicator_t *comm,
@@ -848,7 +908,7 @@ int mca_coll_hcoll_reduce_scatter(const void *sbuf, void *rbuf, const int *rcoun
     HCOL_VERBOSE(20,"RUNNING HCOL REDUCE SCATTER");
     mca_coll_hcoll_module_t *hcoll_module = (mca_coll_hcoll_module_t*)module;
     Dtype = ompi_dtype_2_hcoll_dtype(dtype, NO_DERIVED);
-    if (OPAL_UNLIKELY(HCOL_DTE_IS_ZERO(Dtype))){
+    if (OPAL_UNLIKELY(HCOL_DTE_IS_ZERO(Dtype) || ompi_count_array_is_64bit(rcounts))){
         /*If we are here then datatype is not simple predefined datatype */
         /*In future we need to add more complex mapping to the dte_data_representation_t */
         /* Now use fallback */
@@ -867,8 +927,12 @@ int mca_coll_hcoll_reduce_scatter(const void *sbuf, void *rbuf, const int *rcoun
         goto fallback;
     }
 
-    rc = hcoll_collectives.coll_reduce_scatter(sbuf, rbuf, rcounts,
-                                               Dtype, Op, hcoll_module->hcoll_context);
+    rc = hcoll_collectives.coll_reduce_scatter((void *)sbuf,
+                                               rbuf,
+                                               (void *)ompi_count_array_ptr(rcounts),
+                                               Dtype,
+                                               Op,
+                                               hcoll_module->hcoll_context);
     if (HCOLL_SUCCESS != rc){
     fallback:        
         HCOL_VERBOSE(20,"RUNNING FALLBACK ALLREDUCE");

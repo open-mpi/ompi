@@ -32,7 +32,7 @@
  *	Accepts:	- same as MPI_Reduce_scatter()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int mca_coll_self_reduce_scatter_intra(const void *sbuf, void *rbuf, const int *rcounts,
+int mca_coll_self_reduce_scatter_intra(const void *sbuf, void *rbuf, ompi_count_array_t rcounts,
                                        struct ompi_datatype_t *dtype,
                                        struct ompi_op_t *op,
                                        struct ompi_communicator_t *comm,
@@ -41,6 +41,6 @@ int mca_coll_self_reduce_scatter_intra(const void *sbuf, void *rbuf, const int *
     if (MPI_IN_PLACE == sbuf) {
         return MPI_SUCCESS;
     } else {
-        return ompi_datatype_copy_content_same_ddt(dtype, rcounts[0], (char*)rbuf, (char*)sbuf);
+        return ompi_datatype_copy_content_same_ddt(dtype, ompi_count_array_get(rcounts, 0), (char*)rbuf, (char*)sbuf);
     }
 }

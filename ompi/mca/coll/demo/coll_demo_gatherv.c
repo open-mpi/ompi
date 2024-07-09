@@ -36,7 +36,7 @@
  */
 int mca_coll_demo_gatherv_intra(const void *sbuf, int scount,
                                 struct ompi_datatype_t *sdtype,
-                                void *rbuf, const int *rcounts, const int *disps,
+                                void *rbuf, ompi_count_array_t rcounts, ompi_disp_array_t disps,
                                 struct ompi_datatype_t *rdtype, int root,
                                 struct ompi_communicator_t *comm,
                                 mca_coll_base_module_t *module)
@@ -59,7 +59,7 @@ int mca_coll_demo_gatherv_intra(const void *sbuf, int scount,
  */
 int mca_coll_demo_gatherv_inter(const void *sbuf, int scount,
                                 struct ompi_datatype_t *sdtype,
-                                void *rbuf, const int *rcounts, const int *disps,
+                                void *rbuf, ompi_count_array_t rcounts, ompi_disp_array_t disps,
                                 struct ompi_datatype_t *rdtype, int root,
                                 struct ompi_communicator_t *comm,
                                 mca_coll_base_module_t *module)

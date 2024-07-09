@@ -158,9 +158,9 @@ int ompi_coll_tuned_alltoall_intra_dec_dynamic(const void *sbuf, size_t scount,
  *    Returns:    - MPI_SUCCESS or error code
  */
 
-int ompi_coll_tuned_alltoallv_intra_dec_dynamic(const void *sbuf, const int *scounts, const int *sdisps,
+int ompi_coll_tuned_alltoallv_intra_dec_dynamic(const void *sbuf, ompi_count_array_t scounts, ompi_disp_array_t sdisps,
                                                 struct ompi_datatype_t *sdtype,
-                                                void* rbuf, const int *rcounts, const int *rdisps,
+                                                void* rbuf, ompi_count_array_t rcounts, ompi_disp_array_t rdisps,
                                                 struct ompi_datatype_t *rdtype,
                                                 struct ompi_communicator_t *comm,
                                                 mca_coll_base_module_t *module)
@@ -357,7 +357,7 @@ int ompi_coll_tuned_reduce_intra_dec_dynamic( const void *sbuf, void *rbuf,
  *
  */
 int ompi_coll_tuned_reduce_scatter_intra_dec_dynamic(const void *sbuf, void *rbuf,
-                                                     const int *rcounts,
+                                                     ompi_count_array_t rcounts,
                                                      struct ompi_datatype_t *dtype,
                                                      struct ompi_op_t *op,
                                                      struct ompi_communicator_t *comm,
@@ -383,7 +383,7 @@ int ompi_coll_tuned_reduce_scatter_intra_dec_dynamic(const void *sbuf, void *rbu
         int alg, faninout, segsize, ignoreme, i, count, size;
         size_t dsize;
         size = ompi_comm_size(comm);
-        for (i = 0, count = 0; i < size; i++) { count += rcounts[i];}
+        for (i = 0, count = 0; i < size; i++) { count += ompi_count_array_get(rcounts, i);}
         ompi_datatype_type_size (dtype, &dsize);
         dsize *= count;
 
@@ -526,10 +526,10 @@ int ompi_coll_tuned_allgather_intra_dec_dynamic(const void *sbuf, size_t scount,
  *                        allgatherv function).
  */
 
-int ompi_coll_tuned_allgatherv_intra_dec_dynamic(const void *sbuf, int scount,
+int ompi_coll_tuned_allgatherv_intra_dec_dynamic(const void *sbuf, size_t scount,
                                                  struct ompi_datatype_t *sdtype,
-                                                 void* rbuf, const int *rcounts,
-                                                 const int *rdispls,
+                                                 void* rbuf, ompi_count_array_t rcounts,
+                                                 ompi_disp_array_t rdispls,
                                                  struct ompi_datatype_t *rdtype,
                                                  struct ompi_communicator_t *comm,
                                                  mca_coll_base_module_t *module)
@@ -560,7 +560,7 @@ int ompi_coll_tuned_allgatherv_intra_dec_dynamic(const void *sbuf, int scount,
         comsize = ompi_comm_size(comm);
         ompi_datatype_type_size (sdtype, &dsize);
         total_size = 0;
-        for (i = 0; i < comsize; i++) { total_size += dsize * rcounts[i]; }
+        for (i = 0; i < comsize; i++) { total_size += dsize * ompi_count_array_get(rcounts, i); }
 
         per_rank_size = total_size / comsize;
 

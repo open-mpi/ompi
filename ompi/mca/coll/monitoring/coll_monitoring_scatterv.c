@@ -15,9 +15,9 @@
 #include "ompi/communicator/communicator.h"
 #include "coll_monitoring.h"
 
-int mca_coll_monitoring_scatterv(const void *sbuf, const int *scounts, const int *disps,
+int mca_coll_monitoring_scatterv(const void *sbuf, ompi_count_array_t scounts, ompi_disp_array_t disps,
                                  struct ompi_datatype_t *sdtype,
-                                 void* rbuf, int rcount, struct ompi_datatype_t *rdtype,
+                                 void* rbuf, size_t rcount, struct ompi_datatype_t *rdtype,
                                  int root, struct ompi_communicator_t *comm,
                                  mca_coll_base_module_t *module)
 {
@@ -29,7 +29,7 @@ int mca_coll_monitoring_scatterv(const void *sbuf, const int *scounts, const int
         int i, rank;
         ompi_datatype_type_size(sdtype, &type_size);
         for( i = 0; i < comm_size; ++i ) {
-            data_size = scounts[i] * type_size;
+            data_size = ompi_count_array_get(scounts, i) * type_size;
             /**
              * If this fails the destination is not part of my MPI_COM_WORLD
              * Lookup its name in the rank hashtable to get its MPI_COMM_WORLD rank
@@ -44,9 +44,9 @@ int mca_coll_monitoring_scatterv(const void *sbuf, const int *scounts, const int
     return monitoring_module->real.coll_scatterv(sbuf, scounts, disps, sdtype, rbuf, rcount, rdtype, root, comm, monitoring_module->real.coll_scatterv_module);
 }
 
-int mca_coll_monitoring_iscatterv(const void *sbuf, const int *scounts, const int *disps,
+int mca_coll_monitoring_iscatterv(const void *sbuf, ompi_count_array_t scounts, ompi_disp_array_t disps,
                                   struct ompi_datatype_t *sdtype,
-                                  void *rbuf, int rcount, struct ompi_datatype_t *rdtype,
+                                  void *rbuf, size_t rcount, struct ompi_datatype_t *rdtype,
                                   int root, struct ompi_communicator_t *comm,
                                   ompi_request_t ** request,
                                   mca_coll_base_module_t *module)
@@ -59,7 +59,7 @@ int mca_coll_monitoring_iscatterv(const void *sbuf, const int *scounts, const in
         int i, rank;
         ompi_datatype_type_size(sdtype, &type_size);
         for( i = 0; i < comm_size; ++i ) {
-            data_size = scounts[i] * type_size;
+            data_size = ompi_count_array_get(scounts, i) * type_size;
             /**
              * If this fails the destination is not part of my MPI_COM_WORLD
              * Lookup its name in the rank hashtable to get its MPI_COMM_WORLD rank

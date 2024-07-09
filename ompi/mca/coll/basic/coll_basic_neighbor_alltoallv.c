@@ -37,9 +37,9 @@
 #include "ompi/mca/topo/base/base.h"
 
 static int
-mca_coll_basic_neighbor_alltoallv_cart(const void *sbuf, const int scounts[], const int sdisps[],
-                                       struct ompi_datatype_t *sdtype, void *rbuf, const int rcounts[],
-                                       const int rdisps[], struct ompi_datatype_t *rdtype,
+mca_coll_basic_neighbor_alltoallv_cart(const void *sbuf, ompi_count_array_t scounts, ompi_disp_array_t sdisps,
+                                       struct ompi_datatype_t *sdtype, void *rbuf, ompi_count_array_t rcounts,
+                                       ompi_disp_array_t rdisps, struct ompi_datatype_t *rdtype,
                                        struct ompi_communicator_t *comm, mca_coll_base_module_t *module)
 {
     const mca_topo_base_comm_cart_2_2_0_t *cart = comm->c_topo->mtc.cart;
@@ -67,14 +67,16 @@ mca_coll_basic_neighbor_alltoallv_cart(const void *sbuf, const int scounts[], co
 
         if (MPI_PROC_NULL != srank) {
             nreqs++;
-            rc = MCA_PML_CALL(irecv((char *) rbuf + rdisps[i] * rdextent, rcounts[i], rdtype, srank,
+            rc = MCA_PML_CALL(irecv((char *) rbuf + ompi_disp_array_get(rdisps, i) * rdextent,
+                                    ompi_count_array_get(rcounts, i), rdtype, srank,
                                     MCA_COLL_BASE_TAG_NEIGHBOR_BASE - 2 * dim, comm, preqs++));
             if (OMPI_SUCCESS != rc) break;
         }
 
         if (MPI_PROC_NULL != drank) {
             nreqs++;
-            rc = MCA_PML_CALL(irecv((char *) rbuf + rdisps[i+1] * rdextent, rcounts[i+1], rdtype, drank,
+            rc = MCA_PML_CALL(irecv((char *) rbuf + ompi_disp_array_get(rdisps, i+1) * rdextent,
+                                    ompi_count_array_get(rcounts, i+1), rdtype, drank,
                                     MCA_COLL_BASE_TAG_NEIGHBOR_BASE - 2 * dim - 1, comm, preqs++));
             if (OMPI_SUCCESS != rc) break;
         }
@@ -97,14 +99,16 @@ mca_coll_basic_neighbor_alltoallv_cart(const void *sbuf, const int scounts[], co
         if (MPI_PROC_NULL != srank) {
             nreqs++;
             /* remove cast from const when the pml layer is updated to take a const for the send buffer */
-            rc = MCA_PML_CALL(isend((char *) sbuf + sdisps[i] * sdextent, scounts[i], sdtype, srank,
+            rc = MCA_PML_CALL(isend((char *) sbuf + ompi_disp_array_get(sdisps, i) * sdextent,
+                                    ompi_count_array_get(scounts, i), sdtype, srank,
                                     MCA_COLL_BASE_TAG_NEIGHBOR_BASE - 2 * dim - 1, MCA_PML_BASE_SEND_STANDARD, comm, preqs++));
             if (OMPI_SUCCESS != rc) break;
         }
 
         if (MPI_PROC_NULL != drank) {
             nreqs++;
-            rc = MCA_PML_CALL(isend((char *) sbuf + sdisps[i+1] * sdextent, scounts[i+1], sdtype, drank,
+            rc = MCA_PML_CALL(isend((char *) sbuf + ompi_disp_array_get(sdisps, i+1) * sdextent,
+                                    ompi_count_array_get(scounts, i+1), sdtype, drank,
                                     MCA_COLL_BASE_TAG_NEIGHBOR_BASE - 2 * dim, MCA_PML_BASE_SEND_STANDARD, comm, preqs++));
             if (OMPI_SUCCESS != rc) break;
         }
@@ -123,9 +127,9 @@ mca_coll_basic_neighbor_alltoallv_cart(const void *sbuf, const int scounts[], co
 }
 
 static int
-mca_coll_basic_neighbor_alltoallv_graph(const void *sbuf, const int scounts[], const int sdisps[],
-                                        struct ompi_datatype_t *sdtype, void *rbuf, const int rcounts[],
-                                        const int rdisps[], struct ompi_datatype_t *rdtype,
+mca_coll_basic_neighbor_alltoallv_graph(const void *sbuf, ompi_count_array_t scounts, ompi_disp_array_t sdisps,
+                                        struct ompi_datatype_t *sdtype, void *rbuf, ompi_count_array_t rcounts,
+                                        ompi_disp_array_t rdisps, struct ompi_datatype_t *rdtype,
                                         struct ompi_communicator_t *comm, mca_coll_base_module_t *module)
 {
     const mca_topo_base_comm_graph_2_2_0_t *graph = comm->c_topo->mtc.graph;
@@ -150,7 +154,8 @@ mca_coll_basic_neighbor_alltoallv_graph(const void *sbuf, const int scounts[], c
 
     /* post all receives first */
     for (neighbor = 0; neighbor < degree ; ++neighbor) {
-        rc = MCA_PML_CALL(irecv((char *) rbuf + rdisps[neighbor] * rdextent, rcounts[neighbor], rdtype,
+        rc = MCA_PML_CALL(irecv((char *) rbuf + ompi_disp_array_get(rdisps, neighbor) * rdextent,
+                                ompi_count_array_get(rcounts, neighbor), rdtype,
                                 edges[neighbor], MCA_COLL_BASE_TAG_ALLTOALL, comm, preqs++));
         if (OMPI_SUCCESS != rc) break;
     }
@@ -162,7 +167,8 @@ mca_coll_basic_neighbor_alltoallv_graph(const void *sbuf, const int scounts[], c
 
     for (neighbor = 0 ; neighbor < degree ; ++neighbor) {
         /* remove cast from const when the pml layer is updated to take a const for the send buffer */
-        rc = MCA_PML_CALL(isend((char *) sbuf + sdisps[neighbor] * sdextent, scounts[neighbor], sdtype,
+        rc = MCA_PML_CALL(isend((char *) sbuf + ompi_disp_array_get(sdisps, neighbor) * sdextent,
+                                ompi_count_array_get(scounts, neighbor), sdtype,
                                 edges[neighbor], MCA_COLL_BASE_TAG_ALLTOALL, MCA_PML_BASE_SEND_STANDARD,
                                 comm, preqs++));
         if (OMPI_SUCCESS != rc) break;
@@ -181,9 +187,9 @@ mca_coll_basic_neighbor_alltoallv_graph(const void *sbuf, const int scounts[], c
 }
 
 static int
-mca_coll_basic_neighbor_alltoallv_dist_graph(const void *sbuf, const int scounts[], const int sdisps[],
-                                             struct ompi_datatype_t *sdtype, void *rbuf, const int rcounts[],
-                                             const int rdisps[], struct ompi_datatype_t *rdtype,
+mca_coll_basic_neighbor_alltoallv_dist_graph(const void *sbuf, ompi_count_array_t scounts, ompi_disp_array_t sdisps,
+                                             struct ompi_datatype_t *sdtype, void *rbuf, ompi_count_array_t rcounts,
+                                             ompi_disp_array_t rdisps, struct ompi_datatype_t *rdtype,
                                              struct ompi_communicator_t *comm, mca_coll_base_module_t *module)
 {
     const mca_topo_base_comm_dist_graph_2_2_0_t *dist_graph = comm->c_topo->mtc.dist_graph;
@@ -207,7 +213,8 @@ mca_coll_basic_neighbor_alltoallv_dist_graph(const void *sbuf, const int scounts
 
     /* post all receives first */
     for (neighbor = 0; neighbor < indegree ; ++neighbor) {
-        rc = MCA_PML_CALL(irecv((char *) rbuf + rdisps[neighbor] * rdextent, rcounts[neighbor], rdtype,
+        rc = MCA_PML_CALL(irecv((char *) rbuf + ompi_disp_array_get(rdisps, neighbor) * rdextent,
+                                ompi_count_array_get(rcounts, neighbor), rdtype,
                                 inedges[neighbor], MCA_COLL_BASE_TAG_ALLTOALL, comm, preqs++));
         if (OMPI_SUCCESS != rc) break;
     }
@@ -219,7 +226,8 @@ mca_coll_basic_neighbor_alltoallv_dist_graph(const void *sbuf, const int scounts
 
     for (neighbor = 0 ; neighbor < outdegree ; ++neighbor) {
         /* remove cast from const when the pml layer is updated to take a const for the send buffer */
-        rc = MCA_PML_CALL(isend((char *) sbuf + sdisps[neighbor] * sdextent, scounts[neighbor], sdtype,
+        rc = MCA_PML_CALL(isend((char *) sbuf + ompi_disp_array_get(sdisps, neighbor) * sdextent,
+                                ompi_count_array_get(scounts, neighbor), sdtype,
                                 outedges[neighbor], MCA_COLL_BASE_TAG_ALLTOALL, MCA_PML_BASE_SEND_STANDARD,
                                 comm, preqs++));
         if (OMPI_SUCCESS != rc) break;
@@ -237,9 +245,9 @@ mca_coll_basic_neighbor_alltoallv_dist_graph(const void *sbuf, const int scounts
     return rc;
 }
 
-int mca_coll_basic_neighbor_alltoallv(const void *sbuf, const int scounts[], const int sdisps[],
-                                      struct ompi_datatype_t *sdtype, void *rbuf, const int rcounts[],
-                                      const int rdisps[], struct ompi_datatype_t *rdtype,
+int mca_coll_basic_neighbor_alltoallv(const void *sbuf, ompi_count_array_t scounts, ompi_disp_array_t sdisps,
+                                      struct ompi_datatype_t *sdtype, void *rbuf, ompi_count_array_t rcounts,
+                                      ompi_disp_array_t rdisps, struct ompi_datatype_t *rdtype,
                                       struct ompi_communicator_t *comm, mca_coll_base_module_t *module)
 {
     if (OMPI_COMM_IS_INTER(comm)) {

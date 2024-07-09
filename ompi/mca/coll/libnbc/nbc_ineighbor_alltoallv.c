@@ -44,8 +44,8 @@ int NBC_Ineighbor_alltoallv_args_compare(NBC_Ineighbor_alltoallv_args *a, NBC_In
 #endif
 
 
-static int nbc_neighbor_alltoallv_init(const void *sbuf, const int *scounts, const int *sdispls, MPI_Datatype stype,
-                                       void *rbuf, const int *rcounts, const int *rdispls, MPI_Datatype rtype,
+static int nbc_neighbor_alltoallv_init(const void *sbuf, ompi_count_array_t scounts, ompi_disp_array_t sdispls, MPI_Datatype stype,
+                                       void *rbuf, ompi_count_array_t rcounts, ompi_disp_array_t rdispls, MPI_Datatype rtype,
                                        struct ompi_communicator_t *comm, ompi_request_t ** request,
                                        mca_coll_base_module_t *module, bool persistent) {
   int res, indegree, outdegree, *srcs, *dsts;
@@ -93,7 +93,8 @@ static int nbc_neighbor_alltoallv_init(const void *sbuf, const int *scounts, con
     /* simply loop over neighbors and post send/recv operations */
     for (int i = 0 ; i < indegree ; ++i) {
       if (srcs[i] != MPI_PROC_NULL) {
-        res = NBC_Sched_recv ((char *) rbuf + rdispls[i] * rcvext, false, rcounts[i], rtype, srcs[i], schedule, false);
+        res = NBC_Sched_recv ((char *) rbuf + ompi_disp_array_get(rdispls, i) * rcvext, false,
+                              ompi_count_array_get(rcounts, i), rtype, srcs[i], schedule, false);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
           break;
         }
@@ -110,7 +111,8 @@ static int nbc_neighbor_alltoallv_init(const void *sbuf, const int *scounts, con
 
     for (int i = 0 ; i < outdegree ; ++i) {
       if (dsts[i] != MPI_PROC_NULL) {
-        res = NBC_Sched_send ((char *) sbuf + sdispls[i] * sndext, false, scounts[i], stype, dsts[i], schedule, false);
+        res = NBC_Sched_send ((char *) sbuf + ompi_disp_array_get(sdispls, i) * sndext, false,
+                              ompi_count_array_get(scounts, i), stype, dsts[i], schedule, false);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
           break;
         }
@@ -171,8 +173,8 @@ static int nbc_neighbor_alltoallv_init(const void *sbuf, const int *scounts, con
   return OMPI_SUCCESS;
 }
 
-int ompi_coll_libnbc_ineighbor_alltoallv(const void *sbuf, const int *scounts, const int *sdispls, MPI_Datatype stype,
-                                         void *rbuf, const int *rcounts, const int *rdispls, MPI_Datatype rtype,
+int ompi_coll_libnbc_ineighbor_alltoallv(const void *sbuf, ompi_count_array_t scounts, ompi_disp_array_t sdispls, MPI_Datatype stype,
+                                         void *rbuf, ompi_count_array_t rcounts, ompi_disp_array_t rdispls, MPI_Datatype rtype,
                                          struct ompi_communicator_t *comm, ompi_request_t ** request,
                                          mca_coll_base_module_t *module) {
     int res = nbc_neighbor_alltoallv_init(sbuf, scounts, sdispls, stype, rbuf, rcounts, rdispls, rtype,
@@ -190,8 +192,8 @@ int ompi_coll_libnbc_ineighbor_alltoallv(const void *sbuf, const int *scounts, c
     return OMPI_SUCCESS;
 }
 
-int ompi_coll_libnbc_neighbor_alltoallv_init(const void *sbuf, const int *scounts, const int *sdispls, MPI_Datatype stype,
-                                             void *rbuf, const int *rcounts, const int *rdispls, MPI_Datatype rtype,
+int ompi_coll_libnbc_neighbor_alltoallv_init(const void *sbuf, ompi_count_array_t scounts, ompi_disp_array_t sdispls, MPI_Datatype stype,
+                                             void *rbuf, ompi_count_array_t rcounts, ompi_disp_array_t rdispls, MPI_Datatype rtype,
                                              struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                                              mca_coll_base_module_t *module) {
     int res = nbc_neighbor_alltoallv_init(sbuf, scounts, sdispls, stype, rbuf, rcounts, rdispls, rtype,

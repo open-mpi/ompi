@@ -115,6 +115,8 @@ int mca_scoll_mpi_collect(struct oshmem_group_t *group,
     int i;
     void *sbuf, *rbuf;
     int *disps, *recvcounts;
+    ompi_count_array_t recvcounts_desc;
+    ompi_disp_array_t disps_desc;
     MPI_COLL_VERBOSE(20,"RUNNING MPI ALLGATHER");
     mpi_module = (mca_scoll_mpi_module_t *) group->g_scoll.scoll_collect_module;
 
@@ -196,8 +198,10 @@ int mca_scoll_mpi_collect(struct oshmem_group_t *group,
             disps[i] = disps[i - 1] + recvcounts[i - 1];
         }
 
-        rc = mpi_module->comm->c_coll->coll_allgatherv(source, nlong, stype, target, recvcounts,
-                                                       disps, rtype, mpi_module->comm,
+        OMPI_COUNT_ARRAY_INIT(&recvcounts_desc, recvcounts);
+        OMPI_DISP_ARRAY_INIT(&disps_desc, disps);
+        rc = mpi_module->comm->c_coll->coll_allgatherv(source, nlong, stype, target, recvcounts_desc,
+                                                       disps_desc, rtype, mpi_module->comm,
                                                        mpi_module->comm->c_coll->coll_allgatherv_module);
 failed_allgather:
         free(recvcounts);

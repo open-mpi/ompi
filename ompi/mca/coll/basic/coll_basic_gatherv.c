@@ -37,9 +37,9 @@
  *	Returns:	- MPI_SUCCESS or error code
  */
 int
-mca_coll_basic_gatherv_intra(const void *sbuf, int scount,
+mca_coll_basic_gatherv_intra(const void *sbuf, size_t scount,
                              struct ompi_datatype_t *sdtype,
-                             void *rbuf, const int *rcounts, const int *disps,
+                             void *rbuf, ompi_count_array_t rcounts, ompi_disp_array_t disps,
                              struct ompi_datatype_t *rdtype, int root,
                              struct ompi_communicator_t *comm,
                              mca_coll_base_module_t *module)
@@ -65,11 +65,11 @@ mca_coll_basic_gatherv_intra(const void *sbuf, int scount,
             return OMPI_ERROR;
         }
 
-        if (MPI_IN_PLACE != sbuf && (0 < scount) && (0 < rcounts[rank])) {
+        if (MPI_IN_PLACE != sbuf && (0 < scount) && (0 < ompi_count_array_get(rcounts, rank))) {
             /* Directly copy self sbuf to rbuf */
             err = ompi_datatype_sndrcv(sbuf, scount, sdtype,
-                                       ((char *) rbuf) + (extent * disps[rank]), rcounts[rank],
-                                       rdtype);
+                                       ((char *) rbuf) + (extent * ompi_disp_array_get(disps, rank)),
+                                       ompi_count_array_get(rcounts, rank), rdtype);
             if (MPI_SUCCESS != err) {
                 return err;
             }
@@ -80,7 +80,7 @@ mca_coll_basic_gatherv_intra(const void *sbuf, int scount,
 
         for (i = 0; i < size; ++i) {
             /* We directly copied the data from self */
-            if (0 < rcounts[i] && rank != i) {
+            if (0 < ompi_count_array_get(rcounts, i) && rank != i) {
                 ++nrecv;
             }
         }
@@ -94,10 +94,10 @@ mca_coll_basic_gatherv_intra(const void *sbuf, int scount,
 
         for (i = 1; i < size; ++i) {
             peer = (rank + i) % size;
-            ptmp = ((char *) rbuf) + (extent * disps[peer]);
+            ptmp = ((char *) rbuf) + (extent * ompi_disp_array_get(disps, peer));
             /* Only receive if there is something to receive */
-            if (0 < rcounts[peer]) {
-                err = MCA_PML_CALL(irecv(ptmp, rcounts[peer], rdtype, peer,
+            if (0 < ompi_count_array_get(rcounts, peer)) {
+                err = MCA_PML_CALL(irecv(ptmp, ompi_count_array_get(rcounts, peer), rdtype, peer,
                                          MCA_COLL_BASE_TAG_GATHERV, comm, &reqs[recv_iter++]));
             }
         }
@@ -146,9 +146,9 @@ mca_coll_basic_gatherv_intra(const void *sbuf, int scount,
  *	Returns:	- MPI_SUCCESS or error code
  */
 int
-mca_coll_basic_gatherv_inter(const void *sbuf, int scount,
+mca_coll_basic_gatherv_inter(const void *sbuf, size_t scount,
                              struct ompi_datatype_t *sdtype,
-                             void *rbuf, const int *rcounts, const int *disps,
+                             void *rbuf, ompi_count_array_t rcounts, ompi_disp_array_t disps,
                              struct ompi_datatype_t *rdtype, int root,
                              struct ompi_communicator_t *comm,
                              mca_coll_base_module_t *module)
@@ -182,8 +182,8 @@ mca_coll_basic_gatherv_inter(const void *sbuf, int scount,
         if( NULL == reqs ) { return OMPI_ERR_OUT_OF_RESOURCE; }
 
         for (i = 0; i < size; ++i) {
-            ptmp = ((char *) rbuf) + (extent * disps[i]);
-            err = MCA_PML_CALL(irecv(ptmp, rcounts[i], rdtype, i,
+            ptmp = ((char *) rbuf) + (extent * ompi_disp_array_get(disps, i));
+            err = MCA_PML_CALL(irecv(ptmp, ompi_count_array_get(rcounts, i), rdtype, i,
                                      MCA_COLL_BASE_TAG_GATHERV,
                                      comm, &reqs[i]));
             if (OMPI_SUCCESS != err) {

@@ -2402,6 +2402,8 @@ int ompi_comm_determine_first ( ompi_communicator_t *intercomm, int high )
     int rank, rsize;
     int *rcounts;
     int *rdisps;
+    ompi_count_array_t rcounts_desc;
+    ompi_disp_array_t rdisps_desc;
     int scount=0;
     int rc;
 
@@ -2429,8 +2431,10 @@ int ompi_comm_determine_first ( ompi_communicator_t *intercomm, int high )
         scount = 1;
     }
 
+    OMPI_COUNT_ARRAY_INIT(&rcounts_desc, rcounts);
+    OMPI_DISP_ARRAY_INIT(&rdisps_desc, rdisps);
     rc = intercomm->c_coll->coll_allgatherv(&high, scount, MPI_INT,
-                                           &rhigh, rcounts, rdisps,
+                                           &rhigh, rcounts_desc, rdisps_desc,
                                            MPI_INT, intercomm,
                                            intercomm->c_coll->coll_allgatherv_module);
     if ( NULL != rdisps ) {

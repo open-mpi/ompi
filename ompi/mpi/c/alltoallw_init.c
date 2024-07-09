@@ -50,6 +50,8 @@ int MPI_Alltoallw_init(const void *sendbuf, const int sendcounts[], const int sd
                        MPI_Info info, MPI_Request *request)
 {
     int i, size, err;
+    ompi_count_array_t sendcounts_desc, recvcounts_desc;
+    ompi_disp_array_t sdispls_desc, rdispls_desc;
 
     SPC_RECORD(OMPI_SPC_ALLTOALLW_INIT, 1);
 
@@ -122,9 +124,13 @@ int MPI_Alltoallw_init(const void *sendbuf, const int sendcounts[], const int sd
     }
 
     /* Invoke the coll component to perform the back-end operation */
-    err = comm->c_coll->coll_alltoallw_init(sendbuf, sendcounts, sdispls,
-                                            sendtypes, recvbuf, recvcounts,
-                                            rdispls, recvtypes, comm, info, request,
+    OMPI_COUNT_ARRAY_INIT(&sendcounts_desc, sendcounts);
+    OMPI_COUNT_ARRAY_INIT(&recvcounts_desc, recvcounts);
+    OMPI_DISP_ARRAY_INIT(&sdispls_desc, sdispls);
+    OMPI_DISP_ARRAY_INIT(&rdispls_desc, rdispls);
+    err = comm->c_coll->coll_alltoallw_init(sendbuf, sendcounts_desc, sdispls_desc,
+                                            sendtypes, recvbuf, recvcounts_desc,
+                                            rdispls_desc, recvtypes, comm, info, request,
                                             comm->c_coll->coll_alltoallw_init_module);
     if (OPAL_LIKELY(OMPI_SUCCESS == err)) {
         ompi_coll_base_retain_datatypes_w(*request, (MPI_IN_PLACE==sendbuf)?NULL:sendtypes, recvtypes, false);
