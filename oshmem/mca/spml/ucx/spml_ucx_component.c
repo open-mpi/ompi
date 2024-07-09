@@ -322,6 +322,8 @@ static int spml_ucx_init(void)
     wkr_params.field_mask  = UCP_WORKER_PARAM_FIELD_THREAD_MODE;
     if (oshmem_mpi_thread_requested == SHMEM_THREAD_MULTIPLE) {
         wkr_params.thread_mode = UCS_THREAD_MODE_MULTI;
+    } else if (oshmem_mpi_thread_requested == SHMEM_THREAD_SERIALIZED) {
+        wkr_params.thread_mode = UCS_THREAD_MODE_SERIALIZED;
     } else {
         wkr_params.thread_mode = UCS_THREAD_MODE_SINGLE;
     }

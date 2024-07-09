@@ -288,12 +288,12 @@ int mca_pml_ucx_init(int enable_mpi_threads)
 
     PML_UCX_VERBOSE(1, "mca_pml_ucx_init");
 
-    /* TODO check MPI thread mode */
     params.field_mask  = UCP_WORKER_PARAM_FIELD_THREAD_MODE;
     if (enable_mpi_threads) {
         params.thread_mode = UCS_THREAD_MODE_MULTI;
     } else {
-        params.thread_mode = UCS_THREAD_MODE_SINGLE;
+        params.thread_mode =
+            opal_common_ucx_thread_mode(ompi_mpi_thread_provided);
     }
 
 #if HAVE_DECL_UCP_WORKER_FLAG_IGNORE_REQUEST_LEAK
