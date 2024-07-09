@@ -24,5 +24,5 @@ jobs:
     - name: Build Open MPI
       run: |
         ./autogen.pl
-        ./configure --prefix=${PWD}/install --with-cuda=${CUDA_PATH} --with-cuda-libdir=${CUDA_PATH}/lib64/stubs
+        ./configure --prefix=${PWD}/install --with-cuda=${CUDA_PATH} --with-cuda-libdir=${CUDA_PATH}/lib64/stubs --enable-nvcc NVCC=/usr/local/cuda/bin/nvcc
         make -j
