@@ -162,6 +162,8 @@ variables to the new location where Open MPI now resides).
 
 There are three methods.
 
+.. _install-location-opal-prefix:
+
 Move an existing Open MPI installation to a new prefix
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -170,6 +172,41 @@ MPI.  For example, if Open MPI had initially been installed to
 ``/opt/openmpi`` and the entire ``openmpi`` tree was later moved to
 ``/home/openmpi``, setting ``OPAL_PREFIX`` to ``/home/openmpi`` will
 enable Open MPI to function properly.
+
+.. note:: The ``OPAL_PREFIX`` mechanism relies on all installation
+          directories being specified as relative to the ``prefix``
+          directory specified during ``configure``.
+
+          For example, if Open MPI is configured the following way:
+
+          .. code-block::
+
+             $ ./configure --prefix=/opt/openmpi --libdir=/usr/lib ...
+
+          Then setting ``OPAL_PREFIX`` will not affect the run-time
+          implications of ``libdir``, since ``/usr/lib`` is not
+          specified as relative to ``/opt/openmpi``.
+
+          Instead of specifying absolute directories, you can make
+          them relative to other ``configure``-recognized directories.
+          For example:
+
+          .. code-block::
+
+             $ ./configure --prefix=/opt/openmpi --libdir='${exec_prefix}/x86_64/lib' ...
+
+          Note the additional shell quoting that is likely necessary
+          to prevent shell variable expansion, and the additional
+          ``${}`` around ``exec_prefix`` that is necessary for Open MPI
+          to recognize that it is a special name that needs to be
+          expanded.
+
+          The directory names recognized by Open MPI are listed in the
+          :ref:`Overriding individual directories
+          <install-location-overriding-individual-directories>`
+          section (below), without the ``OPAL_`` prefix, and in lower
+          case.  For example, the ``OPAL_SYSCONFDIR`` environment
+          variable corresponds to ``${sysconfdir}``.
 
 "Stage" an Open MPI installation in a temporary location
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -188,6 +225,8 @@ MPI while it is installed in this staging area, the ``OPAL_DESTDIR``
 environment variable can be used; setting ``OPAL_DESTDIR`` to
 ``/var/rpm/build.1234`` will automatically prefix every directory such
 that Open MPI can function properly.
+
+.. _install-location-overriding-individual-directories:
 
 Overriding individual directories
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
