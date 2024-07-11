@@ -597,12 +597,11 @@ typedef int (*mca_spml_base_module_test_all_vector_fn_t)(void *ivars,
  *
  *  @return             OSHMEM_SUCCESS or failure status.
  */
-typedef int (*mca_spml_base_module_test_any_vector_fn_t)(void *ivars,
-                                                    int cmp,
-                                                    void *cmp_values,
-                                                    size_t nelems,
-                                                    const int *status,
-                                                    int datatype);
+typedef size_t (*mca_spml_base_module_test_any_vector_fn_t)(void *ivars, int cmp,
+                                                            void *cmp_values,
+                                                            size_t nelems,
+                                                            const int *status,
+                                                            int datatype);
 
 /*
  *  Indicate whether at least one variable within an array of variables on the local PE meets
@@ -624,13 +623,13 @@ typedef int (*mca_spml_base_module_test_any_vector_fn_t)(void *ivars,
  *
  *  @return             OSHMEM_SUCCESS or failure status.
  */
-typedef int (*mca_spml_base_module_test_some_vector_fn_t)(void *ivars,
-                                                    int cmp,
-                                                    void *cmp_values,
-                                                    size_t nelems,
-                                                    size_t *indices,
-                                                    const int *status,
-                                                    int datatype);
+typedef size_t (*mca_spml_base_module_test_some_vector_fn_t)(void *ivars,
+                                                             int cmp,
+                                                             void *cmp_values,
+                                                             size_t nelems,
+                                                             size_t *indices,
+                                                             const int *status,
+                                                             int datatype);
 
 /*
  *  Registers the arrival of a PE at a synchronization point.
