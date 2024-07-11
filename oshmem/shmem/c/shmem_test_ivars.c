@@ -124,7 +124,7 @@
 #define SHMEM_TYPE_TEST_ALL(type_name, type, code, prefix)          \
     int prefix##type_name##_test_all(volatile type *ivars, size_t nelems, const int *status, int cmp, type value)   \
     {                                                               \
-        int rc = OSHMEM_SUCCESS;                                    \
+        int rc;                                                     \
                                                                     \
         RUNTIME_CHECK_INIT();                                       \
                                                                     \
@@ -138,81 +138,60 @@
         return rc;                                                  \
     }
 
-
 #define SHMEM_TYPE_TEST_ANY(type_name, type, code, prefix)          \
     size_t prefix##type_name##_test_any(volatile type *ivars, size_t nelems, const int *status, int cmp, type value)   \
     {                                                               \
-        size_t rc = 0;                                              \
-                                                                    \
         RUNTIME_CHECK_INIT();                                       \
                                                                     \
-        rc = MCA_SPML_CALL(test_any(                                \
-            (void*)ivars,                                           \
-            cmp,                                                    \
-            (void*)&value,                                          \
-            nelems, status, code));                                 \
-        RUNTIME_CHECK_IMPL_RC(rc);                                  \
-                                                                    \
-        return rc;                                                  \
+        return MCA_SPML_CALL(test_any(                              \
+                                      (void*)ivars,                 \
+                                      cmp,                          \
+                                      (void*)&value,                \
+                                      nelems, status, code));       \
     }
 
 
 #define SHMEM_TYPE_TEST_SOME(type_name, type, code, prefix)         \
     size_t  prefix##type_name##_test_some(volatile type *ivars, size_t nelems, size_t *indices, const int *status, int cmp, type value)   \
     {                                                               \
-        size_t rc = 0;                                              \
-                                                                    \
         RUNTIME_CHECK_INIT();                                       \
                                                                     \
-        rc = MCA_SPML_CALL(test_some(                               \
+        return MCA_SPML_CALL(test_some(                             \
             (void*)ivars,                                           \
             cmp,                                                    \
             (void*)&value,                                          \
             nelems, indices, status, code));                        \
-        RUNTIME_CHECK_IMPL_RC(rc);                                  \
-                                                                    \
-        return rc;                                                  \
     }
 
 #define SHMEM_TYPE_TEST_ANY_VECTOR(type_name, type, code, prefix)   \
     size_t prefix##type_name##_test_any_vector(volatile type *ivars, size_t nelems, const int *status, int cmp, type *values)   \
     {                                                               \
-        size_t rc = 0;                                              \
-                                                                    \
         RUNTIME_CHECK_INIT();                                       \
                                                                     \
-        rc = MCA_SPML_CALL(test_any_vector(                         \
+        return MCA_SPML_CALL(test_any_vector(                       \
             (void*)ivars,                                           \
             cmp,                                                    \
             (void*)values,                                          \
             nelems, status, code));                                 \
-        RUNTIME_CHECK_IMPL_RC(rc);                                  \
-                                                                    \
-        return rc;                                                  \
     }
 
 #define SHMEM_TYPE_TEST_SOME_VECTOR(type_name, type, code, prefix)  \
     size_t prefix##type_name##_test_some_vector(volatile type *ivars, size_t nelems, size_t *indices, const int *status, int cmp, type *values)   \
     {                                                               \
-        size_t rc = 0;                                              \
-                                                                    \
         RUNTIME_CHECK_INIT();                                       \
                                                                     \
-        rc = MCA_SPML_CALL(test_some_vector(                        \
+        return MCA_SPML_CALL(test_some_vector(                      \
             (void*)ivars,                                           \
             cmp,                                                    \
             (void*)values,                                          \
             nelems, indices, status, code));                        \
-        RUNTIME_CHECK_IMPL_RC(rc);                                  \
-                                                                    \
-        return rc;                                                  \
     }
 
 
 #define SHMEM_TYPE_TEST_ALL_VECTOR(type_name, type, code, prefix)   \
-    int prefix##type_name##_test_all_vector(volatile type *ivars, size_t nelems, const int *status, int cmp, type *values)   \
+   int prefix##type_name##_test_all_vector(volatile type *ivars, size_t nelems, const int *status, int cmp, type *values)   \
     {                                                               \
-        int rc = OSHMEM_SUCCESS;                                    \
+        int rc;                                                     \
                                                                     \
         RUNTIME_CHECK_INIT();                                       \
                                                                     \

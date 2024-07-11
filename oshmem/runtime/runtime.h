@@ -237,6 +237,18 @@ OSHMEM_DECLSPEC int oshmem_shmem_register_params(void);
 
 #endif  /* OSHMEM_PARAM_CHECK */
 
+#define RUNTIME_SHMEM_NOT_IMPLEMENTED_API_ABORT()                    \
+    do {                                                             \
+        SHMEM_API_ERROR("Called non-implemented API: %s", __func__); \
+        oshmem_shmem_abort(OSHMEM_ERR_NOT_IMPLEMENTED);              \
+    } while (0)
+
+#define RUNTIME_SHMEM_NOT_IMPLEMENTED_API_ABORT_RET_SIZE_T() \
+    do {                                                     \
+        RUNTIME_SHMEM_NOT_IMPLEMENTED_API_ABORT();           \
+        return SIZE_MAX;                                     \
+    } while (0)
+
 END_C_DECLS
 
 #endif /* OSHMEM_SHMEM_RUNTIME_H */
