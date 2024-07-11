@@ -60,6 +60,11 @@ MPI API behaviors that can be used with ``configure``:
     ``--disable-mpi-fortran``).  This is mutually exclusive
     with building the OpenSHMEM Fortran interface.
 
+* ``--with-mpi-moduledir=DIR``:
+  Specify a specific ``DIR`` directory where to install the MPI
+  Fortran bindings modulefiles.  By default, Open MPI will install
+  Fortran modulefiles into ``$libdir``.
+
 * ``--enable-mpi-ext[=LIST]``:
   Enable Open MPI's non-portable API extensions.  ``LIST`` is a
   comma-delmited list of extensions.  If no ``LIST`` is specified, all

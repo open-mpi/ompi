@@ -541,7 +541,7 @@ AC_DEFUN([OPAL_SETUP_WRAPPER_FINAL],[
        OMPI_WRAPPER_FCFLAGS='-I${includedir}'" ${wrapper_extra_fcflags} ${with_wrapper_fcflags}"
        AS_IF([test -n "${OMPI_FC_MODULE_FLAG}"],
              [dnl deal with some interesting expansion behavior in OPAL_APPEND
-              wrapper_tmp_arg="${OMPI_FC_MODULE_FLAG}"'${libdir}'
+              wrapper_tmp_arg="${OMPI_FC_MODULE_FLAG}${OMPI_FORTRAN_MODULEDIR}"
               OPAL_APPEND([OMPI_WRAPPER_FCFLAGS], [${wrapper_tmp_arg}])])
        AC_SUBST([OMPI_WRAPPER_FCFLAGS])
        AC_MSG_RESULT([$OMPI_WRAPPER_EXTRA_FCFLAGS])
@@ -780,7 +780,7 @@ AC_DEFUN([OPAL_SETUP_WRAPPER_FINAL],[
        OSHMEM_WRAPPER_FCFLAGS='-I${includedir}'" ${wrapper_extra_fcflags} ${with_wrapper_fcflags}"
        AS_IF([test -n "${OMPI_FC_MODULE_FLAG}"],
              [dnl deal with some interesting expansion behavior in OPAL_APPEND
-              wrapper_tmp_arg="${OMPI_FC_MODULE_FLAG}"'${libdir}'
+              wrapper_tmp_arg="${OMPI_FC_MODULE_FLAG}${OMPI_FORTRAN_MODULEDIR}"
               OPAL_APPEND([OSHMEM_WRAPPER_FCFLAGS], [${wrapper_tmp_arg}])])
        AC_SUBST([OSHMEM_WRAPPER_FCFLAGS])
        AC_MSG_RESULT([$OSHMEM_WRAPPER_EXTRA_FCFLAGS])
