@@ -63,3 +63,35 @@ above categories that can be used with ``configure``:
   See the section on :ref:`customizing wrapper compiler behavior
   <label-customizing-wrapper-compiler>` to see how to alter the
   wrapper compiler behavior at run time.
+
+* ``--with-mpi-moduledir``: Specify the directory where the Fortran
+  MPI module files are installed.
+
+  For historical reasons, Open MPI's Fortran MPI modulefiles are
+  installed into ``$libdir`` by default.  This option lets you change
+  where they are installed; some users prefer Fortran module files
+  installed into ``$installdir``, for example.
+
+  .. note:: If you intend to make your Open MPI installation
+            relocatable :ref:`via the OPAL_PREFIX mechanism
+            <install-location-opal-prefix>`, you will want to ensure
+            to specify the module directory relative to the
+            ``prefix``.  For example:
+
+            .. code-block::
+
+               $ ./configure --prefix=/opt/openmpi --with-mpi-moduledir='${includedir}/modules`...
+
+            Note the additional shell quoting that is likely necessary
+            to prevent shell variable expansion, and the additional
+            ``${}`` around ``includedir`` that is necessary for Open MPI
+            to recognize that it is a special name that needs to be
+            expanded.
+
+            Finally, note that the Fortran module installation
+            directory is *not* one of the :ref:`recognized directories
+            that can be specified via environment variable at run time
+            <install-location-overriding-individual-directories>`.
+            Instead, to make the Fortran module directory relocatable,
+            it needs to be relative to one of the other recognized
+            directories.
