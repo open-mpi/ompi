@@ -4,6 +4,49 @@ Open MPI v5.0.x series
 This file contains all the NEWS updates for the Open MPI v5.0.x
 series, in reverse chronological order.
 
+Open MPI version v5.0.4rc1
+--------------------------
+:Date: 12 July 2024
+
+- Internal PMIx and PRRTe versions:
+
+  - PMIx (v5.0.3). Commit hash: ``8ab6d680b90afd6e61766220a8724065a1b554a7``.
+  - PRRTE (v3.0.6). Commit hash: ``b68a0acb32cfc0d3c19249e5514820555bcf438b``.
+
+- Bugfixes and changes
+
+  - btl/ofi: retry posting receive buffer
+  - btl/uct: check return status from some uct funcs
+  - fortran: use -Wl,-ld_classic if supported
+  - fortran: parameterize the install location of Fortran MPI bindings modulefiles
+    via the configure --with-mpi-moduledir CLI option
+  - fortran: various configury improvements
+  - use-mpi-f08: add missing subroutines in the mpi_f08 module
+  - pml/base: remove redundant copy of ompi_mpi_thread_multiple
+  - pml/cm: release datatype object in send completion callback
+  - pml/ucx: propagate MPI serialized thread mode for all worker creations
+  - pml/ob1: make no. of events an mca parameter
+  - oshmem/shmem: fix warnings regarding types and unused variables in shmem
+  - Add an AARCH64 OP component for for NEON and SVE ISA
+  - Fix MPI function names in error output
+  - Fix MPI_Neighbor_alltoall{v,w}_init to handle NULL parameters
+  - Fix a bug in intercomm creation
+  - Fix a bug in ompi_comm_lookup function to handle partially ready communicators
+  - Fix error message in ompi_comm_get_rproc
+  - Fix opal_basename for single character filenames
+  - Fix rpm build test
+  - Fix the info subscriber mechanism and hidden info keys
+  - Fix ulfm bugs in ishrink/agree/iagree
+  - Improve libcuda.so find command to follow symlinks
+  - Improve pkgconfig installation logic in script wrapper
+  - Change default tar format to tar-pax
+  - Various document updates
+
+- Many thanks to Open MPI community including:
+  Alex Margolin, Benjamin Kitor, Burlen Loring, Ethan Townsend, Geoffroy Vallee,
+  Jeff Hammond, Junchao Zhang, Lisandro Dalcin, Nuno Nobre, Rainer Keller,
+  Roie Danino, Thomas Vegas
+
 Open MPI version v5.0.3
 --------------------------
 :Date: 9 April 2024
