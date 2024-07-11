@@ -21,6 +21,7 @@ static inline ucc_status_t mca_coll_ucc_bcast_init(void *buf, int count, struct 
 
     ucc_coll_args_t coll = {
         .mask      = 0,
+        .flags     = 0,
         .coll_type = UCC_COLL_TYPE_BCAST,
         .root = root,
         .src.info = {
