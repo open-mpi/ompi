@@ -200,12 +200,12 @@ AC_DEFUN([OMPI_FORTRAN_CHECK_IGNORE_TKR_SUB], [
   end subroutine force_assumed_shape
 
   module check_ignore_tkr
-  interface
-     subroutine foobar(buffer, count)
+  interface foobar
+     subroutine foobar_x(buffer, count)
        $1 buffer
        $2, intent(in) :: buffer
        integer, intent(in) :: count
-     end subroutine foobar
+     end subroutine foobar_x
   end interface
   end module
 
