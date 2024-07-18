@@ -129,6 +129,15 @@ key = 'READTHEDOCS'
 if key in os.environ and os.environ[key] == 'True':
     print("OMPI: found ReadTheDocs build environment")
 
+    # Tell Jinja2 templates the build is running on Read the Docs
+    if "html_context" not in globals():
+        html_context = {}
+    html_context["READTHEDOCS"] = True
+
+    # Define the canonical URL if you are using a custom domain on
+    # Read the Docs
+    html_baseurl = os.environ.get("READTHEDOCS_CANONICAL_URL", "")
+
     rtd_v = os.environ['READTHEDOCS_VERSION']
     if os.environ['READTHEDOCS_VERSION_TYPE'] == 'external':
         # Make "release" be shorter than the full "ompi_ver" value.
