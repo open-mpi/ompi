@@ -37,10 +37,10 @@ def read_version_file(path):
     if not os.path.exists(path):
         print(f"ERROR: Unable to find file {path}")
         exit(1)
-        
+
     with open(path) as fp:
         version_lines = fp.readlines()
-    
+
     data = dict()
     for line in version_lines:
         if '#' in line:
