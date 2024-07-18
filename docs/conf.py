@@ -10,7 +10,7 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-# import os
+import os
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
 
@@ -44,6 +44,23 @@ for ompi_line in ompi_lines:
 series = f"{ompi_data['major']}.{ompi_data['minor']}.x"
 release = f"{ompi_data['major']}.{ompi_data['minor']}.{ompi_data['release']}{ompi_data['greek']}"
 
+# If we are building in a ReadTheDocs.io environment, there will be
+# READTHEDOCS environment variables.
+#
+# Relevant RTD env variables (documented
+# https://docs.readthedocs.io/en/stable/builds.html#build-environment):
+key = 'READTHEDOCS'
+if key in os.environ and os.environ[key] == 'True':
+    print("OMPI: found ReadTheDocs build environment")
+
+    # Tell Jinja2 templates the build is running on Read the Docs
+    if "html_context" not in globals():
+        html_context = {}
+    html_context["READTHEDOCS"] = True
+
+    # Define the canonical URL if you are using a custom domain on
+    # Read the Docs
+    html_baseurl = os.environ.get("READTHEDOCS_CANONICAL_URL", "")
 
 # -- General configuration ---------------------------------------------------
 
