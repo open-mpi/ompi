@@ -25,6 +25,7 @@
  * Copyright (c) 2018-2024 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2023      Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -607,11 +608,6 @@ static inline struct ompi_proc_t* ompi_comm_peer_lookup (const ompi_communicator
 #endif
     /*return comm->c_remote_group->grp_proc_pointers[peer_id];*/
     return ompi_group_peer_lookup(comm->c_remote_group,peer_id);
-}
-
-static inline bool ompi_comm_instances_same(const ompi_communicator_t *comm1, const ompi_communicator_t *comm2)
-{
-    return comm1->instance == comm2->instance;
 }
 
 #if OPAL_ENABLE_FT_MPI
