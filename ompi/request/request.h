@@ -19,6 +19,7 @@
  * Copyright (c) 2018      Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2022      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -557,6 +558,22 @@ static inline int ompi_request_set_callback(ompi_request_t* request,
     }
     return OMPI_SUCCESS;
 }
+
+/**
+ * Check if an array of requests contains only requests that belong to the same
+ * instance or MPI Session. Exclude predefined requests, that are generic and part
+ * of all instances.
+ * Right now, only tests for PML requests as they are the only requests that have
+ * support for MPI Sessions.
+ *
+ * @param requests (IN)   Array of requests
+ * @param count (IN)      Number of requests
+ * @return                true if all requests are part of the same instance
+ *                        or MPI Session, false otherwise.
+ *
+ */
+bool ompi_request_check_same_instance(ompi_request_t** requests,
+                                      int count);
 
 END_C_DECLS
 

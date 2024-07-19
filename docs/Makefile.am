@@ -881,7 +881,14 @@ ALL_MAN_BUILT = \
 # built HTML and man docs into a separate location that is included in
 # the tarball.  This gives users a fully copy of the docs included in
 # distribution tarballs.
-html: $(ALL_MAN_BUILT)
+#
+# Note: we name this "html-local" because otherwise Automake issues a
+# warning about us overriding its default "html" target.  In our
+# particular use case, the rules generated if we name this target
+# "html-local" instead of "html" are effectively equivalent to when we
+# name this target "html", so we might as well avoid the Automake
+# warning.
+html-local: $(ALL_MAN_BUILT)
 	$(OMPI_V_COPYALL) rm -rf html; cp -rp $(OUTDIR)/html .
 
 man: $(ALL_MAN_BUILT)
