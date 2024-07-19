@@ -1,0 +1,13 @@
+name: MacOS(arm64)
+
+on: [pull_request]
+
+jobs:
+  compile:
+    runs-on: macos-latest-large
+    steps:
+    - name: Build Open MPI
+      run: |
+        ./autogen.pl
+        ./configure
+        make -j
