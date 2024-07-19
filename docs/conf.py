@@ -37,10 +37,10 @@ def read_version_file(path):
     if not os.path.exists(path):
         print(f"ERROR: Unable to find file {path}")
         exit(1)
-        
+
     with open(path) as fp:
         version_lines = fp.readlines()
-    
+
     data = dict()
     for line in version_lines:
         if '#' in line:
@@ -128,6 +128,15 @@ release = ompi_ver[1:]
 key = 'READTHEDOCS'
 if key in os.environ and os.environ[key] == 'True':
     print("OMPI: found ReadTheDocs build environment")
+
+    # Tell Jinja2 templates the build is running on Read the Docs
+    if "html_context" not in globals():
+        html_context = {}
+    html_context["READTHEDOCS"] = True
+
+    # Define the canonical URL if you are using a custom domain on
+    # Read the Docs
+    html_baseurl = os.environ.get("READTHEDOCS_CANONICAL_URL", "")
 
     rtd_v = os.environ['READTHEDOCS_VERSION']
     if os.environ['READTHEDOCS_VERSION_TYPE'] == 'external':
