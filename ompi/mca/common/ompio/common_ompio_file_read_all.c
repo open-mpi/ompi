@@ -15,6 +15,7 @@
  * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
  * Copyright (c) 2024      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2024      Advanced Micro Devices, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -30,9 +31,12 @@
 #include "ompi/mca/fcoll/base/fcoll_base_coll_array.h"
 #include "ompi/mca/fcoll/base/base.h"
 #include "ompi/mca/common/ompio/common_ompio.h"
+#include "ompi/mca/common/ompio/common_ompio_request.h"
+#include "ompi/mca/common/ompio/common_ompio_buffer.h"
 #include "ompi/mca/io/io.h"
 #include "math.h"
 #include "ompi/mca/pml/pml.h"
+#include "opal/mca/accelerator/accelerator.h"
 #include <unistd.h>
 
 #define DEBUG_ON 0
@@ -106,6 +110,9 @@ mca_common_ompio_base_file_read_all (struct ompio_file_t *fh,
     int* blocklength_proc       = NULL;
     ptrdiff_t* displs_proc      = NULL;
 
+    int is_gpu, is_managed;
+    bool use_accelerator_buffer = false;
+
 #if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
     double read_time = 0.0, start_read_time = 0.0, end_read_time = 0.0;
     double rcomm_time = 0.0, start_rcomm_time = 0.0, end_rcomm_time = 0.0;
@@ -136,6 +143,12 @@ mca_common_ompio_base_file_read_all (struct ompio_file_t *fh,
     if ( OMPI_ERR_MAX == base_num_io_procs ) {
         ret = OMPI_ERROR;
         goto exit;
+    }
+
+    mca_common_ompio_check_gpu_buf (fh, buf, &is_gpu, &is_managed);
+    if (is_gpu && !is_managed && NULL != fh->f_fbtl->fbtl_ipreadv &&
+	fh->f_get_mca_parameter_value ("use_accelerator_buffers", strlen("use_accelerator_buffers"))) {
+	use_accelerator_buffer = true;
     }
 
     ret = mca_common_ompio_set_aggregator_props ((struct ompio_file_t *) fh,
@@ -364,11 +377,22 @@ mca_common_ompio_base_file_read_all (struct ompio_file_t *fh,
 	    goto exit;
 	}
 
-	global_buf = (char *) malloc (bytes_per_cycle);
-	if (NULL == global_buf){
-	    opal_output(1, "OUT OF MEMORY\n");
-	    ret = OMPI_ERR_OUT_OF_RESOURCE;
-	    goto exit;
+        if (use_accelerator_buffer) {
+            opal_output_verbose(10, ompi_fcoll_base_framework.framework_output,
+                                "Allocating GPU device buffer for aggregation\n");
+            ret = opal_accelerator.mem_alloc(MCA_ACCELERATOR_NO_DEVICE_ID, (void**)&global_buf,
+                                             bytes_per_cycle);
+            if (OPAL_SUCCESS != ret) {
+                opal_output(1, "Could not allocate accelerator memory");
+                ret = OMPI_ERR_OUT_OF_RESOURCE;
+                goto exit;
+            }
+        } else {global_buf = (char *) malloc (bytes_per_cycle);
+            if (NULL == global_buf){
+                opal_output(1, "OUT OF MEMORY\n");
+                ret = OMPI_ERR_OUT_OF_RESOURCE;
+                goto exit;
+            }
 	}
 
 	sendtype = (ompi_datatype_t **) malloc (fh->f_procs_per_group * sizeof(ompi_datatype_t *));
@@ -686,10 +710,26 @@ mca_common_ompio_base_file_read_all (struct ompio_file_t *fh,
 #endif
 
             if (fh->f_num_of_io_entries) {
-                if ( 0 >  fh->f_fbtl->fbtl_preadv (fh)) {
-                    opal_output (1, "READ FAILED\n");
-                    ret = OMPI_ERROR;
-                    goto exit;
+                if (use_accelerator_buffer) {
+		    mca_ompio_request_t *ompio_req = NULL;
+		    mca_common_ompio_request_alloc (&ompio_req, MCA_OMPIO_REQUEST_READ);
+
+                    ret = mca_common_ompio_file_iread_pregen(fh, (ompi_request_t *) ompio_req);
+                    if(0 > ret) {
+                        opal_output (1, "common_ompio_file_read_all: mca_common_ompio_iread_pregen failed\n");
+                        ompio_req->req_ompi.req_status.MPI_ERROR = ret;
+                        ompio_req->req_ompi.req_status._ucount = 0;
+                    }
+		    ret = ompi_request_wait ((ompi_request_t**)&ompio_req, MPI_STATUS_IGNORE);
+		    if (OMPI_SUCCESS != ret){
+			goto exit;
+		    }
+                } else {
+                    if ( 0 >  fh->f_fbtl->fbtl_preadv (fh)) {
+                        opal_output (1, "READ FAILED\n");
+                        ret = OMPI_ERROR;
+                        goto exit;
+                    }
                 }
             }
 
@@ -881,7 +921,11 @@ mca_common_ompio_base_file_read_all (struct ompio_file_t *fh,
 
 exit:
     if (NULL != global_buf) {
-        free (global_buf);
+	if (use_accelerator_buffer) {
+	    opal_accelerator.mem_release(MCA_ACCELERATOR_NO_DEVICE_ID, global_buf);
+	} else {
+	    free (global_buf);
+	}
         global_buf = NULL;
     }
     if (NULL != sorted) {
