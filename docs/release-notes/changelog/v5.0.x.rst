@@ -4,6 +4,24 @@ Open MPI v5.0.x series
 This file contains all the NEWS updates for the Open MPI v5.0.x
 series, in reverse chronological order.
 
+Open MPI version v5.0.5
+--------------------------
+:Date: 23 July 2024
+
+  .. note:: This is a quick follow-up release that fixes v5.0.4 which does
+            not compile on macOS (arm64) with the inbox Apple clang compiler (``/usr/bin/gcc``).
+            The *only* change in v5.0.5 compared to v5.0.4 is a fix for this compilation issue.
+
+- Internal PMIx and PRRTe versions:
+
+  - PMIx (v5.0.3). Commit hash: ``8ab6d680b90afd6e61766220a8724065a1b554a7``.
+  - PRRTE (v3.0.6). Commit hash: ``b68a0acb32cfc0d3c19249e5514820555bcf438b``.
+
+- Bugfixes and changes
+
+  - Fix a typo that breaks the build on macOS with the Apple clang compiler on arm64 platforms.
+    Many thanks to Lisandro Dalcin for reporting the issue.
+
 Open MPI version v5.0.4
 --------------------------
 :Date: 19 July 2024
