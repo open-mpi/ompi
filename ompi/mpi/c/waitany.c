@@ -17,7 +17,6 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2021      Triad National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -57,13 +56,31 @@ int MPI_Waitany(int count, MPI_Request requests[], int *indx, MPI_Status *status
     );
 
     if ( MPI_PARAM_CHECK ) {
-        int rc = MPI_SUCCESS;
+        int i, rc = MPI_SUCCESS;
+        MPI_Request check_req = NULL;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if ((NULL == requests) && (0 != count)) {
             rc = MPI_ERR_REQUEST;
         } else {
-            if(!ompi_request_check_same_instance(requests, count) ) {
-                rc = MPI_ERR_REQUEST;
+            for (i = 0; i < count; i++) {
+                if (NULL == requests[i]) {
+                    rc = MPI_ERR_REQUEST;
+                    break;
+                }
+                if (requests[i] == &ompi_request_empty) {
+                    continue;
+                } else if (NULL == requests[i]->req_mpi_object.comm) {
+                    continue;
+                } else if (NULL == check_req) {
+                    check_req = requests[i];
+                }
+                else {
+                    if (!ompi_comm_instances_same(requests[i]->req_mpi_object.comm,
+                                                     check_req->req_mpi_object.comm)) {
+                        rc = MPI_ERR_REQUEST;
+                        break;
+                    }
+                }
             }
         }
         if ((NULL == indx && count > 0) ||
