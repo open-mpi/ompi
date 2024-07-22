@@ -1,0 +1,45 @@
+name: macOS
+
+on: [pull_request]
+
+jobs:
+  macOS:
+    runs-on: macos-latest
+    steps:
+    - name: Setup macOS
+      run: |
+        # Copied from mpi4py/mpi-publish
+        # create gfortran symlink
+        cd $(brew --prefix)/bin
+        gfortran=$(ls gfortran-* | sort | head -n 1)
+        sudo ln -s $gfortran gfortran
+        # install autotools
+        brew install autoconf
+        brew install automake
+        brew install libtool
+        # unlink libevent
+        brew unlink libevent || true
+    - uses: actions/checkout@v4
+      with:
+            submodules: recursive
+    - name: Build Open MPI
+      run: |
+        ./autogen.pl
+        ./configure --prefix=/opt/openmpi
+        make -j $(sysctl -n hw.logicalcpu)
+    - name: Run unit tests
+      run: |
+        make check
+    - name: Install Open MPI
+      run: |
+        sudo make install
+    - name: Add Open MPI to PATH
+      run: echo /opt/openmpi/bin >> $GITHUB_PATH
+    - name: Build examples
+      run: |
+        pushd examples
+        make
+        popd
+    - name: Test ring
+      run: |
+        mpirun --map-by ppr:1:core examples/ring_c
