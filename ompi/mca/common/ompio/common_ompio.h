@@ -299,6 +299,8 @@ OMPI_DECLSPEC int mca_common_ompio_file_read_at (ompio_file_t *fh, OMPI_MPI_OFFS
 OMPI_DECLSPEC int mca_common_ompio_file_iread (ompio_file_t *fh, void *buf, size_t count,
                                                struct ompi_datatype_t *datatype, ompi_request_t **request);
 
+OMPI_DECLSPEC int mca_common_ompio_file_iread_pregen (ompio_file_t *fh, ompi_request_t *request);
+
 OMPI_DECLSPEC int mca_common_ompio_file_iread_at (ompio_file_t *fh, OMPI_MPI_OFFSET_TYPE offset,
                                                   void *buf, size_t count, struct ompi_datatype_t *datatype,
                                                   ompi_request_t **request);
