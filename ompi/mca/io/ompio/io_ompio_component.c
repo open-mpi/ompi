@@ -49,7 +49,7 @@ int mca_io_ompio_max_aggregators_ratio=8;
 int mca_io_ompio_aggregators_cutoff_threshold=3;
 int mca_io_ompio_overwrite_amode = 1;
 int mca_io_ompio_verbose_info_parsing = 0;
-int mca_io_ompio_use_accelerator_buffers = 1;
+int mca_io_ompio_use_accelerator_buffers = 0;
 int mca_io_ompio_grouping_option=5;
 
 /*
@@ -263,7 +263,7 @@ static int register_component(void)
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_io_ompio_verbose_info_parsing);
 
-    mca_io_ompio_use_accelerator_buffers = 1;
+    mca_io_ompio_use_accelerator_buffers = 0;
     (void) mca_base_component_var_register(&mca_io_ompio_component.io_version,
                                            "use_accelerator_buffers", "Allow using accelerator buffers"
                                            "for data aggregation in collective I/O if input buffer is device memory",
