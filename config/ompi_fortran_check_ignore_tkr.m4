@@ -189,8 +189,23 @@ AC_DEFUN([OMPI_FORTRAN_CHECK_IGNORE_TKR_SUB], [
     call foo(a, count)
   end subroutine force_assumed_shape
 
+  module check_ignore_tkr
+  interface foobar
+     subroutine foobar_x(buffer, count)
+       $1 buffer
+       $2, intent(in) :: buffer
+       integer, intent(in) :: count
+     end subroutine foobar_x
+  end interface
+  end module
+
+  subroutine bar(var)
+    use check_ignore_tkr
+    implicit none
+    real, intent(inout) :: var(:, :, :)
+
+    call foobar(var(1,1,1), 1)
 ! Autoconf puts "end" after the last line
-  subroutine bogus
 ]]),
                     [msg=yes
                      ompi_fortran_ignore_tkr_predecl="$1"
@@ -198,6 +213,7 @@ AC_DEFUN([OMPI_FORTRAN_CHECK_IGNORE_TKR_SUB], [
                      $4],
                     [msg=no
                      $5])
+  rm -f *.mod
   AC_MSG_RESULT($msg)
   AC_LANG_POP([Fortran])
   OPAL_VAR_SCOPE_POP
