@@ -253,7 +253,8 @@ int ompi_request_persistent_noop_create(ompi_request_t** request)
 bool ompi_request_check_same_instance(ompi_request_t** requests,
                                       int count)
 {
-    ompi_request_t *req, *base = NULL;
+    ompi_instance_t* base_instance = NULL;
+    ompi_request_t *req;
 
     for(int idx = 0; idx < count; idx++ ) {
         req = requests[idx];
@@ -262,11 +263,11 @@ bool ompi_request_check_same_instance(ompi_request_t** requests,
         /* Only PML requests have support for MPI sessions */
         if(OMPI_REQUEST_PML != req->req_type)
             continue;
-        if(NULL == base) {
-            base = req;
+        if(NULL == base_instance) {
+            base_instance = req->req_mpi_object.comm->instance;
             continue;
         }
-        if(base->req_mpi_object.comm != req->req_mpi_object.comm)
+        if(base_instance != req->req_mpi_object.comm->instance)
             return false;
     }
     return true;

@@ -92,7 +92,7 @@ mca_coll_base_alltoallv_intra_basic_inplace(const void *rbuf, ompi_count_array_t
         if( OPAL_UNLIKELY(opal_local_arch != ompi_proc->super.proc_convertor->master->remote_arch))  {
             packed_size = opal_datatype_compute_remote_size(&rdtype->super,
                                                             ompi_proc->super.proc_convertor->master->remote_sizes);
-            packed_size *= rcounts[right];
+            packed_size *= ompi_count_array_get(rcounts, right);
             max_size = packed_size > max_size ? packed_size : max_size;
         }
     }
