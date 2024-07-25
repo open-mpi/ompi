@@ -2245,7 +2245,8 @@ ompi_osc_portals4_raccumulate(const void *origin_addr,
     size_t offset, size;
     ptl_op_t ptl_op;
     ptl_datatype_t ptl_dt;
-    ptrdiff_t sent, length, origin_lb, target_lb, extent;
+    ptl_size_t sent, length;
+    ptrdiff_t origin_lb, target_lb, extent;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "raccumulate: 0x%lx, %zu, %s, %d, %lu, %zu, %s, %s 0x%lx",
@@ -2998,7 +2999,8 @@ ompi_osc_portals4_accumulate(const void *origin_addr,
     size_t offset, size;
     ptl_op_t ptl_op;
     ptl_datatype_t ptl_dt;
-    ptrdiff_t sent, length, origin_lb, target_lb, extent;
+    ptl_size_t sent, length;
+    ptrdiff_t origin_lb, target_lb, extent;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "accumulate: 0x%lx, %zu, %s, %d, %lu, %zu, %s, %s, 0x%lx",
