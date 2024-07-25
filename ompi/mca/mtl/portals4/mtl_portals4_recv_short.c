@@ -162,7 +162,7 @@ ompi_mtl_portals4_recv_short_block_alloc(bool release_on_free)
 static int
 ompi_mtl_portals4_recv_short_block_free(ompi_mtl_portals4_recv_short_block_t *block)
 {
-    if (PTL_INVALID_HANDLE != block->me_h) {
+    if (!PtlHandleIsEqual(block->me_h, PTL_INVALID_HANDLE)) {
         PtlMEUnlink(block->me_h);
         block->me_h = PTL_INVALID_HANDLE;
     }
