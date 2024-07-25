@@ -95,10 +95,30 @@ struct mca_coll_portals4_module_t {
     opal_atomic_size_t coll_count;
 
     /* record handlers dedicated to fallback if offloaded operations are not supported */
+    mca_coll_base_module_barrier_fn_t previous_barrier;
+    mca_coll_base_module_t *previous_barrier_module;
+    mca_coll_base_module_ibarrier_fn_t previous_ibarrier;
+    mca_coll_base_module_t *previous_ibarrier_module;
+
+    mca_coll_base_module_bcast_fn_t previous_bcast;
+    mca_coll_base_module_t *previous_bcast_module;
+    mca_coll_base_module_ibcast_fn_t previous_ibcast;
+    mca_coll_base_module_t *previous_ibcast_module;
+
+    mca_coll_base_module_gather_fn_t previous_gather;
+    mca_coll_base_module_t *previous_gather_module;
+    mca_coll_base_module_igather_fn_t previous_igather;
+    mca_coll_base_module_t *previous_igather_module;
+
     mca_coll_base_module_reduce_fn_t previous_reduce;
     mca_coll_base_module_t *previous_reduce_module;
     mca_coll_base_module_ireduce_fn_t previous_ireduce;
     mca_coll_base_module_t *previous_ireduce_module;
+
+    mca_coll_base_module_scatter_fn_t previous_scatter;
+    mca_coll_base_module_t *previous_scatter_module;
+    mca_coll_base_module_iscatter_fn_t previous_iscatter;
+    mca_coll_base_module_t *previous_iscatter_module;
 
     mca_coll_base_module_allreduce_fn_t previous_allreduce;
     mca_coll_base_module_t *previous_allreduce_module;
@@ -187,22 +207,22 @@ int ompi_coll_portals4_ibarrier_intra(struct ompi_communicator_t *comm,
         mca_coll_base_module_t *module);
 int ompi_coll_portals4_ibarrier_intra_fini(struct ompi_coll_portals4_request_t *request);
 
-int ompi_coll_portals4_bcast_intra(void *buff, int count,
+int ompi_coll_portals4_bcast_intra(void *buff, size_t count,
         struct ompi_datatype_t *datatype, int root,
         struct ompi_communicator_t *comm,mca_coll_base_module_t *module);
-int ompi_coll_portals4_ibcast_intra(void *buff, int count,
+int ompi_coll_portals4_ibcast_intra(void *buff, size_t count,
         struct ompi_datatype_t *datatype, int root,
         struct ompi_communicator_t *comm,
         ompi_request_t **request,
         mca_coll_base_module_t *module);
 int ompi_coll_portals4_ibcast_intra_fini(struct ompi_coll_portals4_request_t *request);
 
-int ompi_coll_portals4_reduce_intra(const void *sbuf, void *rbuf, int count,
+int ompi_coll_portals4_reduce_intra(const void *sbuf, void *rbuf, size_t count,
         MPI_Datatype dtype, MPI_Op op,
         int root,
         struct ompi_communicator_t *comm,
         mca_coll_base_module_t *module);
-int ompi_coll_portals4_ireduce_intra(const void* sendbuf, void* recvbuf, int count,
+int ompi_coll_portals4_ireduce_intra(const void* sendbuf, void* recvbuf, size_t count,
         MPI_Datatype dype, MPI_Op op,
         int root,
         struct ompi_communicator_t *comm,
@@ -210,11 +230,11 @@ int ompi_coll_portals4_ireduce_intra(const void* sendbuf, void* recvbuf, int cou
         mca_coll_base_module_t *module);
 int ompi_coll_portals4_ireduce_intra_fini(struct ompi_coll_portals4_request_t *request);
 
-int ompi_coll_portals4_allreduce_intra(const void* sendbuf, void* recvbuf, int count,
+int ompi_coll_portals4_allreduce_intra(const void* sendbuf, void* recvbuf, size_t count,
         MPI_Datatype dtype, MPI_Op op,
         struct ompi_communicator_t *comm,
         mca_coll_base_module_t *module);
-int ompi_coll_portals4_iallreduce_intra(const void* sendbuf, void* recvbuf, int count,
+int ompi_coll_portals4_iallreduce_intra(const void* sendbuf, void* recvbuf, size_t count,
         MPI_Datatype dtype, MPI_Op op,
         struct ompi_communicator_t *comm,
         ompi_request_t ** ompi_request,
