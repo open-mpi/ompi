@@ -162,7 +162,7 @@ The scheduler then passes both pieces of information (the number of
 processes and the hosts to use) to Open MPI.
 
 There are two ways to launch in a scheduled environment.  Nominally,
-they both achieve the same thing: they launch MPI processes.  Them
+they both achieve the same thing: they launch MPI processes.  The
 main user-observable difference between the two methods is that
 :ref:`mpirun(1) <man1-mpirun>` has many more features than scheduler
 direct launchers.
