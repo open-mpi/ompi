@@ -1,0 +1,372 @@
+[
+    {
+        "name": "alltoall",
+        "parameters": [
+            {
+                "type": "BUFFER",
+                "name": "sendbuf",
+                "dep_params": {
+                    "count": "sendcount",
+                    "type": "sendtype",
+                    "comm": "comm"
+                }
+            },
+            {
+                "type": "INT",
+                "name": "sendcount"
+            },
+            {
+                "type": "DATATYPE",
+                "name": "sendtype"
+            },
+            {
+                "type": "BUFFER",
+                "name": "recvbuf",
+                "dep_params": {
+                    "count": "recvcount",
+                    "type": "recvtype",
+                    "comm": "comm"
+                }
+            },
+            {
+                "type": "INT",
+                "name": "recvcount"
+            },
+            {
+                "type": "DATATYPE",
+                "name": "recvtype"
+            },
+            {
+                "type": "COMM",
+                "name": "comm"
+            }
+        ]
+    },
+    {
+        "name": "alltoallv",
+        "parameters": [
+            {
+                "type": "VBUFFER",
+                "name": "sendbuf",
+                "dep_params": {
+                    "counts": "sendcounts",
+                    "displs": "sdispls",
+                    "type": "sendtype",
+                    "comm": "comm"
+                }
+            },
+            {
+                "type": "COUNT_ARRAY",
+                "name": "sendcounts",
+                "dep_params": {
+                    "comm": "comm"
+                }
+            },
+            {
+                "type": "DISPL_ARRAY",
+                "name": "sdispls",
+                "dep_params": {
+                    "comm": "comm"
+                }
+            },
+            {
+                "type": "DATATYPE",
+                "name": "sendtype"
+            },
+            {
+                "type": "VBUFFER_OUT",
+                "name": "recvbuf",
+                "dep_params": {
+                    "comm": "comm",
+                    "type": "recvtype"
+                }
+            },
+            {
+                "type": "COUNT_ARRAY",
+                "name": "recvcounts",
+                "dep_params": {
+                    "comm": "comm"
+                }
+            },
+            {
+                "type": "DISPL_ARRAY",
+                "name": "rdispls",
+                "dep_params": {
+                    "comm": "comm"
+                }
+            },
+            {
+                "type": "DATATYPE",
+                "name": "recvtype"
+            },
+            {
+                "type": "COMM",
+                "name": "comm"
+            }
+        ]
+    },
+    {
+        "name": "alltoallw",
+        "parameters": [
+            {
+                "type": "WBUFFER",
+                "name": "sendbuf",
+                "dep_params": {
+                    "counts": "sendcounts",
+                    "displs": "sdispls",
+                    "types": "sendtypes",
+                    "comm": "comm"
+                }
+            },
+            {
+                "type": "COUNT_ARRAY",
+                "name": "sendcounts",
+                "dep_params": {
+                    "comm": "comm"
+                }
+            },
+            {
+                "type": "DISPL_ARRAY",
+                "name": "sdispls",
+                "dep_params": {
+                    "comm": "comm"
+                }
+            },
+            {
+                "type": "DATATYPE_ARRAY",
+                "name": "sendtypes"
+            },
+            {
+                "type": "WBUFFER_OUT",
+                "name": "recvbuf",
+                "dep_params": {
+                    "counts": "recvcounts",
+                    "displs": "rdispls",
+                    "types": "recvtypes",
+                    "comm": "comm"
+                }
+            },
+            {
+                "type": "COUNT_ARRAY",
+                "name": "recvcounts",
+                "dep_params": {
+                    "comm": "comm"
+                }
+            },
+            {
+                "type": "DISPL_ARRAY",
+                "name": "rdispls",
+                "dep_params": {
+                    "comm": "comm"
+                }
+            },
+            {
+                "type": "DATATYPE_ARRAY",
+                "name": "recvtypes"
+            },
+            {
+                "type": "COMM",
+                "name": "comm"
+            }
+        ]
+    },
+    {
+        "name": "irecv",
+        "parameters": [
+            {
+                "type": "BUFFER_ASYNC_OUT",
+                "name": "buf",
+                "dep_params": {
+                    "count": "count",
+                    "type": "datatype",
+                    "comm": "comm"
+                }
+            },
+            {
+                "type": "COUNT",
+                "name": "count"
+            },
+            {
+                "type": "DATATYPE",
+                "name": "datatype"
+            },
+            {
+                "type": "RANK",
+                "name": "source"
+            },
+            {
+                "type": "TAG",
+                "name": "tag"
+            },
+            {
+                "type": "COMM",
+                "name": "comm"
+            },
+            {
+                "type": "REQUEST",
+                "name": "request"
+            }
+        ]
+    },
+    {
+        "name": "isend",
+        "parameters": [
+            {
+                "type": "BUFFER_ASYNC",
+                "name": "buf",
+                "dep_params": {
+                    "count": "count",
+                    "type": "datatype",
+                    "comm": "comm"
+                }
+            },
+            {
+                "type": "COUNT",
+                "name": "count"
+            },
+            {
+                "type": "DATATYPE",
+                "name": "datatype"
+            },
+            {
+                "type": "RANK",
+                "name": "dest"
+            },
+            {
+                "type": "TAG",
+                "name": "tag"
+            },
+            {
+                "type": "COMM",
+                "name": "comm"
+            },
+            {
+                "type": "REQUEST",
+                "name": "request"
+            }
+        ]
+    },
+    {
+        "name": "recv",
+        "parameters": [
+            {
+                "type": "BUFFER_OUT",
+                "name": "buf",
+                "dep_params": {
+                    "count": "count",
+                    "type": "datatype",
+                    "comm": "comm"
+                }
+            },
+            {
+                "type": "COUNT",
+                "name": "count"
+            },
+            {
+                "type": "DATATYPE",
+                "name": "datatype"
+            },
+            {
+                "type": "RANK",
+                "name": "source"
+            },
+            {
+                "type": "TAG",
+                "name": "tag"
+            },
+            {
+                "type": "COMM",
+                "name": "comm"
+            },
+            {
+                "type": "STATUS",
+                "name": "status"
+            }
+        ]
+    },
+    {
+        "name": "send",
+        "parameters": [
+            {
+                "type": "BUFFER",
+                "name": "buf",
+                "dep_params": {
+                    "count": "count",
+                    "type": "datatype",
+                    "comm": "comm"
+                }
+            },
+            {
+                "type": "COUNT",
+                "name": "count"
+            },
+            {
+                "type": "DATATYPE",
+                "name": "datatype"
+            },
+            {
+                "type": "RANK",
+                "name": "dest"
+            },
+            {
+                "type": "TAG",
+                "name": "tag"
+            },
+            {
+                "type": "COMM",
+                "name": "comm"
+            }
+        ]
+    },
+    {
+        "name": "testany",
+        "parameters": [
+            {
+                "type": "SHORTCUT_COUNT",
+                "name": "count"
+            },
+            {
+                "type": "REQUEST_ARRAY",
+                "name": "array_of_requests",
+                "dep_params": {
+                    "count": "count"
+                }
+            },
+            {
+                "type": "INDEX_OUT",
+                "name": "index"
+            },
+            {
+                "type": "LOGICAL_OUT",
+                "name": "flag"
+            },
+            {
+                "type": "STATUS",
+                "name": "status"
+            }
+        ]
+    },
+    {
+        "name": "waitall",
+        "parameters": [
+            {
+                "type": "SHORTCUT_COUNT",
+                "name": "count"
+            },
+            {
+                "type": "REQUEST_ARRAY",
+                "name": "array_of_requests",
+                "dep_params": {
+                    "count": "count"
+                }
+            },
+            {
+                "type": "STATUS_ARRAY",
+                "name": "array_of_statuses",
+                "dep_params": {
+                    "count": "count"
+                }
+            }
+        ]
+    }
+]

@@ -112,20 +112,6 @@ subroutine MPI_Iprobe_f08(source,tag,comm,flag,status,ierror)
 end subroutine MPI_Iprobe_f08
 end interface  MPI_Iprobe
 
-interface  MPI_Irecv
-subroutine MPI_Irecv_f08(buf,count,datatype,source,tag,comm,request,ierror)
-   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
-   implicit none
-   @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ OMPI_ASYNCHRONOUS :: buf
-   INTEGER, INTENT(IN) :: count, source, tag
-   TYPE(MPI_Datatype), INTENT(IN) :: datatype
-   TYPE(MPI_Comm), INTENT(IN) :: comm
-   TYPE(MPI_Request), INTENT(OUT) :: request
-   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-end subroutine MPI_Irecv_f08
-end interface  MPI_Irecv
-
 interface  MPI_Irsend
 subroutine MPI_Irsend_f08(buf,count,datatype,dest,tag,comm,request,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
@@ -139,20 +125,6 @@ subroutine MPI_Irsend_f08(buf,count,datatype,dest,tag,comm,request,ierror)
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine MPI_Irsend_f08
 end interface  MPI_Irsend
-
-interface  MPI_Isend
-subroutine MPI_Isend_f08(buf,count,datatype,dest,tag,comm,request,ierror)
-   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
-   implicit none
-   @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) OMPI_ASYNCHRONOUS :: buf
-   INTEGER, INTENT(IN) :: count, dest, tag
-   TYPE(MPI_Datatype), INTENT(IN) :: datatype
-   TYPE(MPI_Comm), INTENT(IN) :: comm
-   TYPE(MPI_Request), INTENT(OUT) :: request
-   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-end subroutine MPI_Isend_f08
-end interface  MPI_Isend
 
 interface  MPI_Isendrecv
 subroutine MPI_Isendrecv_f08(sendbuf,sendcount,sendtype,dest,sendtag,recvbuf, &
@@ -203,12 +175,8 @@ interface  MPI_Precv_init
 subroutine MPI_Precv_init_f08(buf,partitions,count,datatype,dest,tag,comm,request,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request, MPI_COUNT_KIND
    implicit none
-   !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
-   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buf
-   !$PRAGMA IGNORE_TKR buf
-   !DIR$ IGNORE_TKR buf
-   !IBM* IGNORE_TKR buf
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: buf
+   @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: buf
    INTEGER, INTENT(IN) :: partitions, dest, tag
    INTEGER(MPI_COUNT_KIND), INTENT(IN) :: count
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
@@ -222,12 +190,8 @@ interface  MPI_Psend_init
 subroutine MPI_Psend_init_f08(buf,partitions,count,datatype,dest,tag,comm,request,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request, MPI_COUNT_KIND
    implicit none
-   !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
-   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buf
-   !$PRAGMA IGNORE_TKR buf
-   !DIR$ IGNORE_TKR buf
-   !IBM* IGNORE_TKR buf
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: buf
+   @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
+   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: buf
    INTEGER, INTENT(IN) :: partitions, dest, tag
    INTEGER(MPI_COUNT_KIND), INTENT(IN) :: count
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
@@ -290,20 +254,6 @@ subroutine MPI_Probe_f08(source,tag,comm,status,ierror)
 end subroutine MPI_Probe_f08
 end interface  MPI_Probe
 
-interface  MPI_Recv
-subroutine MPI_Recv_f08(buf,count,datatype,source,tag,comm,status,ierror)
-   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Status
-   implicit none
-   @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: buf
-   INTEGER, INTENT(IN) :: count, source, tag
-   TYPE(MPI_Datatype), INTENT(IN) :: datatype
-   TYPE(MPI_Comm), INTENT(IN) :: comm
-   TYPE(MPI_Status) :: status
-   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-end subroutine MPI_Recv_f08
-end interface  MPI_Recv
-
 interface  MPI_Recv_init
 subroutine MPI_Recv_init_f08(buf,count,datatype,source,tag,comm,request,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
@@ -364,19 +314,6 @@ subroutine MPI_Rsend_init_f08(buf,count,datatype,dest,tag,comm,request,ierror)
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine MPI_Rsend_init_f08
 end interface  MPI_Rsend_init
-
-interface  MPI_Send
-subroutine MPI_Send_f08(buf,count,datatype,dest,tag,comm,ierror)
-   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm
-   implicit none
-   @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) :: buf
-   INTEGER, INTENT(IN) :: count, dest, tag
-   TYPE(MPI_Datatype), INTENT(IN) :: datatype
-   TYPE(MPI_Comm), INTENT(IN) :: comm
-   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-end subroutine MPI_Send_f08
-end interface  MPI_Send
 
 interface  MPI_Sendrecv
 subroutine MPI_Sendrecv_f08(sendbuf,sendcount,sendtype,dest,sendtag,recvbuf, &
@@ -598,19 +535,6 @@ subroutine MPI_Testall_f08(count,array_of_requests,flag,array_of_statuses,ierror
 end subroutine MPI_Testall_f08
 end interface  MPI_Testall
 
-interface  MPI_Testany
-subroutine MPI_Testany_f08(count,array_of_requests,index,flag,status,ierror)
-   use :: mpi_f08_types, only : MPI_Request, MPI_Status
-   implicit none
-   INTEGER, INTENT(IN) :: count
-   TYPE(MPI_Request), INTENT(INOUT) :: array_of_requests(count)
-   INTEGER, INTENT(OUT) :: index
-   LOGICAL, INTENT(OUT) :: flag
-   TYPE(MPI_Status) :: status
-   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-end subroutine MPI_Testany_f08
-end interface  MPI_Testany
-
 interface  MPI_Testsome
 subroutine MPI_Testsome_f08(incount,array_of_requests,outcount, &
                         array_of_indices,array_of_statuses,ierror)
@@ -643,17 +567,6 @@ subroutine MPI_Wait_f08(request,status,ierror)
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine MPI_Wait_f08
 end interface  MPI_Wait
-
-interface  MPI_Waitall
-subroutine MPI_Waitall_f08(count,array_of_requests,array_of_statuses,ierror)
-   use :: mpi_f08_types, only : MPI_Request, MPI_Status
-   implicit none
-   INTEGER, INTENT(IN) :: count
-   TYPE(MPI_Request), INTENT(INOUT) :: array_of_requests(count)
-   TYPE(MPI_Status) :: array_of_statuses(*)
-   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-end subroutine MPI_Waitall_f08
-end interface  MPI_Waitall
 
 interface  MPI_Waitany
 subroutine MPI_Waitany_f08(count,array_of_requests,index,status,ierror)
@@ -1206,21 +1119,6 @@ subroutine MPI_Allreduce_init_f08(sendbuf,recvbuf,count,datatype,op,comm,info,re
 end subroutine MPI_Allreduce_init_f08
 end interface  MPI_Allreduce_init
 
-interface  MPI_Alltoall
-subroutine MPI_Alltoall_f08(sendbuf,sendcount,sendtype,recvbuf,recvcount,recvtype, &
-                            comm,ierror)
-   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm
-   implicit none
-   @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf, recvbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) :: sendbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: recvbuf
-   INTEGER, INTENT(IN) :: sendcount, recvcount
-   TYPE(MPI_Datatype), INTENT(IN) :: sendtype, recvtype
-   TYPE(MPI_Comm), INTENT(IN) :: comm
-   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-end subroutine MPI_Alltoall_f08
-end interface  MPI_Alltoall
-
 interface  MPI_Ialltoall
 subroutine MPI_Ialltoall_f08(sendbuf,sendcount,sendtype,recvbuf,recvcount,recvtype, &
                             comm,request,ierror)
@@ -1254,21 +1152,6 @@ subroutine MPI_Alltoall_init_f08(sendbuf,sendcount,sendtype,recvbuf,recvcount,re
 end subroutine MPI_Alltoall_init_f08
 end interface  MPI_Alltoall_init
 
-interface  MPI_Alltoallv
-subroutine MPI_Alltoallv_f08(sendbuf,sendcounts,sdispls,sendtype,recvbuf,recvcounts, &
-                             rdispls,recvtype,comm,ierror)
-   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm
-   implicit none
-   @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf, recvbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) :: sendbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: recvbuf
-   INTEGER, INTENT(IN) :: sendcounts(*), sdispls(*), recvcounts(*), rdispls(*)
-   TYPE(MPI_Datatype), INTENT(IN) :: sendtype, recvtype
-   TYPE(MPI_Comm), INTENT(IN) :: comm
-   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-end subroutine MPI_Alltoallv_f08
-end interface  MPI_Alltoallv
-
 interface  MPI_Ialltoallv
 subroutine MPI_Ialltoallv_f08(sendbuf,sendcounts,sdispls,sendtype,recvbuf,recvcounts, &
                              rdispls,recvtype,comm,request,ierror)
@@ -1301,21 +1184,6 @@ subroutine MPI_Alltoallv_init_f08(sendbuf,sendcounts,sdispls,sendtype,recvbuf,re
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine MPI_Alltoallv_init_f08
 end interface  MPI_Alltoallv_init
-
-interface  MPI_Alltoallw
-subroutine MPI_Alltoallw_f08(sendbuf,sendcounts,sdispls,sendtypes,recvbuf,recvcounts, &
-                             rdispls,recvtypes,comm,ierror)
-   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm
-   implicit none
-   @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf, recvbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) :: sendbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: recvbuf
-   INTEGER, INTENT(IN) :: sendcounts(*), sdispls(*), recvcounts(*), rdispls(*)
-   TYPE(MPI_Datatype), INTENT(IN) :: sendtypes(*), recvtypes(*)
-   TYPE(MPI_Comm), INTENT(IN) :: comm
-   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-end subroutine MPI_Alltoallw_f08
-end interface  MPI_Alltoallw
 
 interface  MPI_Ialltoallw
 subroutine MPI_Ialltoallw_f08(sendbuf,sendcounts,sdispls,sendtypes,recvbuf,recvcounts, &
