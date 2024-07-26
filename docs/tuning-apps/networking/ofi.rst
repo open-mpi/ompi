@@ -16,7 +16,7 @@ including (but not limited to):
 
 * AWS EFA
 * Cisco usNIC
-* Cornelius Networks Omni-Path
+* Cornelis Networks Omni-Path
 * HPE Slingshot 11
 
 In general, the OFI-based components in Open MPI will auto-select
@@ -131,6 +131,5 @@ Users can restrict access to a single HFI using the environment variable:
 More details can be found on the PSM2 Programmer's Guide and the Omni-Path
 Fabric Performance Tuning Guide.
 
-Please also see `the full Omni-Path documentation
-<https://www.intel.com/content/www/us/en/support/articles/000016242/network-and-i-o/fabric-products.html>`_
+Please see the `Cornelis Networks Customer Center <https://customercenter.cornelisnetworks.com/>`_
 for more details.
