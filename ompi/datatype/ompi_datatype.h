@@ -278,19 +278,20 @@ static inline int32_t
 ompi_datatype_copy_content_same_ddt( const ompi_datatype_t* type, size_t count,
                                      char* pDestBuf, char* pSrcBuf )
 {
-    int32_t length, rc;
+    int32_t rc;
+    size_t length;
     ptrdiff_t extent;
 
     ompi_datatype_type_extent( type, &extent );
     while( 0 != count ) {
         length = INT_MAX;
-        if( ((size_t)length) > count ) length = (int32_t)count;
+        if( length > count ) length = count;
         rc = opal_datatype_copy_content_same_ddt( &type->super, length,
                                                   pDestBuf, pSrcBuf );
         if( 0 != rc ) return rc;
         pDestBuf += ((ptrdiff_t)length) * extent;
         pSrcBuf  += ((ptrdiff_t)length) * extent;
-        count -= (size_t)length;
+        count -= length;
     }
     return 0;
 }

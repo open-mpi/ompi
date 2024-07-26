@@ -194,8 +194,8 @@ OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_unsigned_long;
  */
 int opal_datatype_register_params(void);
 OPAL_DECLSPEC int32_t opal_datatype_init(void);
-OPAL_DECLSPEC opal_datatype_t *opal_datatype_create(int32_t expectedSize);
-OPAL_DECLSPEC int32_t opal_datatype_create_desc(opal_datatype_t *datatype, int32_t expectedSize);
+OPAL_DECLSPEC opal_datatype_t *opal_datatype_create(size_t expectedSize);
+OPAL_DECLSPEC int32_t opal_datatype_create_desc(opal_datatype_t *datatype, size_t expectedSize);
 OPAL_DECLSPEC int32_t opal_datatype_commit(opal_datatype_t *pData);
 OPAL_DECLSPEC int32_t opal_datatype_destroy(opal_datatype_t **);
 OPAL_DECLSPEC int32_t opal_datatype_is_monotonic(opal_datatype_t *type);
@@ -225,7 +225,7 @@ static inline int32_t opal_datatype_is_predefined(const opal_datatype_t *type)
  * is contiguous in the memory. And false (0) otherwise.
  */
 static inline int32_t opal_datatype_is_contiguous_memory_layout(const opal_datatype_t *datatype,
-                                                                int32_t count)
+                                                                size_t count)
 {
     if (!(datatype->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS))
         return 0;
@@ -246,7 +246,7 @@ OPAL_DECLSPEC int32_t opal_datatype_clone(const opal_datatype_t *src_type,
 /**
  * A contiguous array of identical datatypes.
  */
-OPAL_DECLSPEC int32_t opal_datatype_create_contiguous(int count, const opal_datatype_t *oldType,
+OPAL_DECLSPEC int32_t opal_datatype_create_contiguous(size_t count, const opal_datatype_t *oldType,
                                                       opal_datatype_t **newType);
 /**
  * Add a new datatype to the base type description. The count is the number
@@ -306,7 +306,7 @@ OPAL_DECLSPEC ssize_t opal_datatype_get_element_count(const opal_datatype_t *pDa
 OPAL_DECLSPEC int32_t opal_datatype_set_element_count(const opal_datatype_t *pData, size_t count,
                                                       size_t *length);
 OPAL_DECLSPEC int32_t opal_datatype_copy_content_same_ddt(const opal_datatype_t *pData,
-                                                          int32_t count, char *pDestBuf,
+                                                          size_t count, char *pDestBuf,
                                                           char *pSrcBuf);
 
 OPAL_DECLSPEC int opal_datatype_compute_ptypes(opal_datatype_t *datatype);
@@ -348,10 +348,10 @@ static inline ptrdiff_t opal_datatype_span(const opal_datatype_t *pData, size_t 
  * to make it stop on all pack and unpack errors.
  */
 OPAL_DECLSPEC int opal_datatype_safeguard_pointer_debug_breakpoint(const void *actual_ptr,
-                                                                   int length,
+                                                                   size_t length,
                                                                    const void *initial_ptr,
                                                                    const opal_datatype_t *pData,
-                                                                   int count);
+                                                                   size_t count);
 #endif /* OPAL_ENABLE_DEBUG */
 
 END_C_DECLS
