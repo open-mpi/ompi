@@ -74,7 +74,7 @@ can be used with ``configure``:
   only necessary if the PSM headers and libraries are not in default
   compiler/linker search paths.
 
-  PSM is the support library for QLogic InfiniPath and Intel TrueScale
+  PSM is the support library for QLogic InfiniPath and Intel True Scale
   network adapters.
 
 * ``--with-psm-libdir=DIR``:
