@@ -110,12 +110,17 @@ static int accelerator_ze_close(void)
 
 static int accelerator_ze_component_register(void)
 {
+    int var_id;
+
     /* Set verbosity in the ze related code. */
     opal_accelerator_ze_verbose = 0;
-    (void) mca_base_var_register("ompi", "mpi", "accelerator_ze", "verbose",
-                                 "Set level of ze verbosity", MCA_BASE_VAR_TYPE_INT, NULL,
-                                 0, 0, OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
-                                 &opal_accelerator_ze_verbose);
+    var_id = mca_base_component_var_register(&mca_accelerator_ze_component.super.base_version,
+                                             "verbose", "Set level of ze verbosity",
+                                             MCA_BASE_VAR_TYPE_INT, NULL,
+                                             0, 0, OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+                                             &opal_accelerator_ze_verbose);
+    (void) mca_base_var_register_synonym (var_id, "ompi", "mpi", "accelerator_ze", "verbose",
+                                          MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
 
     return OPAL_SUCCESS;
 }
