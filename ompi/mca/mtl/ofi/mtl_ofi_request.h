@@ -13,8 +13,6 @@
 #ifndef OMPI_MTL_OFI_REQUEST_H
 #define OMPI_MTL_OFI_REQUEST_H
 
-#include "mtl_ofi.h"
-
 #ifndef container_of
 #    define container_of(ptr, type, member) ((type *) (((char *) (ptr)) - offsetof(type, member)))
 #endif
