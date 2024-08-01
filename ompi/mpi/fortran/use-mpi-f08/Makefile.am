@@ -575,7 +575,10 @@ EXTRA_DIST = interface.json
 #
 
 if OMPI_GENERATE_BINDINGS
-api_f08_generated.F90: interface.json
+
+include Makefile.prototype_files
+
+api_f08_generated.F90: interface.json $(prototype_files)
 	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
 	    --builddir $(abs_top_builddir) \
 	    --srcdir $(abs_top_srcdir) \
