@@ -15,7 +15,7 @@ subroutine MPI_File_iwrite_shared_f08(fh,buf,count,datatype,request,ierror)
    use :: mpi_f08_types, only : MPI_File, MPI_Datatype, MPI_Request
    use :: ompi_mpifh_bindings, only : ompi_file_iwrite_shared_f
    implicit none
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: buf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE OMPI_ASYNCHRONOUS, INTENT(IN) :: buf
    TYPE(MPI_File), INTENT(IN) :: fh
    INTEGER, INTENT(IN) :: count
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
