@@ -31,7 +31,7 @@ def main():
 
     # Fortran set up code
     parser_fortran = subparsers.add_parser('fortran', help='subcommand for generating Fortran code')
-    parser_fortran.add_argument('--ts', action='store_true', help='generate bindings w/o TS 29113 support')
+    parser_fortran.add_argument('prototype_files', nargs='+', help='prototype files to generate code for')
     parser_fortran.add_argument('--prototypes', required=True, help='JSON prototype file to use')
     subparsers_fortran = parser_fortran.add_subparsers()
     # Handler for generating actual code

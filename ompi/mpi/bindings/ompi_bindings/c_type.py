@@ -9,21 +9,21 @@ class Type(ABC):
 
     PARAMS_STANDARD_ABI = {}
 
-    def __init__(self, type_, name=None,
+    def __init__(self, type_name, name=None,
                  mangle_name=lambda name: abi_internal_name(name),
                  count_param=None, **kwargs):
-        self.type = type_
+        self.type = type_name
         self.name = name
         self.count_param = count_param
         self.mangle_name = mangle_name
 
     @staticmethod
-    def construct(abi_type, type_, **kwargs):
+    def construct(abi_type, type_name, **kwargs):
         """Construct the parameter for the given ABI and type."""
         if abi_type == 'ompi':
-            return Type.PARAMS_OMPI_ABI[type_](type_, **kwargs)
+            return Type.PARAMS_OMPI_ABI[type_name](type_name, **kwargs)
         elif abi_type == 'standard':
-            return Type.PARAMS_STANDARD_ABI[type_](type_, **kwargs)
+            return Type.PARAMS_STANDARD_ABI[type_name](type_name, **kwargs)
         else:
             raise RuntimeError(f'invalid ABI type {abi_type}')
 
@@ -35,7 +35,6 @@ class Type(ABC):
                 Type.PARAMS_OMPI_ABI[type_name] = class_
             if 'standard' in abi_type:
                 Type.PARAMS_STANDARD_ABI[type_name] = class_
-            # Parameter.TYPES[type_] = class_
             return class_
         return wrapper
 

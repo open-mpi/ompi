@@ -26,11 +26,10 @@
 #include "ompi/mpi/fortran/use-mpi-f08/ts/bindings.h"
 #include "ompi/mpi/fortran/base/constants.h"
 
-
-static const char FUNC_NAME[] = "MPI_Send";
-
-void ompi_send_ts(CFI_cdesc_t* x, MPI_Fint *count, MPI_Fint *datatype,
-                  MPI_Fint *dest, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *ierr)
+/* void ompi_send_ts(CFI_cdesc_t* x, MPI_Fint *count, MPI_Fint *datatype,
+                     MPI_Fint *dest, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *ierr) */
+PROTOTYPE ERROR_CLASS send(BUFFER x, COUNT count, DATATYPE datatype, RANK dest,
+                           TAG tag, COMM comm)
 {
     int c_ierr;
 

@@ -5,32 +5,32 @@ class Parameter:
     def __init__(self, text, type_constructor):
         """Parse a parameter."""
         # parameter in the form "TYPE NAME" or "TYPE NAME:COUNT_VAR"
-        type_, namecount = text.split()
+        type_name, namecount = text.split()
         if ':' in namecount:
             name, count_param = namecount.split(':')
         else:
             name, count_param = namecount, None
-        self.type_ = type_
+        self.type_name = type_name
         self.name = name
         self.count_param = count_param
         self.type_constructor = type_constructor
 
     def construct(self, **kwargs):
         """Construct the type parameter for the given ABI."""
-        return self.type_constructor(type_=self.type_, name=self.name,
+        return self.type_constructor(type_name=self.type_name, name=self.name,
                                      count_param=self.count_param, **kwargs)
 
 
 class ReturnType:
     """Return type wrapper."""
 
-    def __init__(self, type_, type_constructor):
-        self.type_ = type_
+    def __init__(self, type_name, type_constructor):
+        self.type_name = type_name
         self.type_constructor = type_constructor
 
     def construct(self, **kwargs):
         """Construct the return type for the given ABI."""
-        return self.type_constructor(type_=self.type_, **kwargs)
+        return self.type_constructor(type_name=self.type_name, **kwargs)
 
 
 class Prototype:
@@ -53,7 +53,7 @@ class Prototype:
     @property
     def need_bigcount(self):
         """Check if a bigcount interface is required for a prototype."""
-        return any('COUNT' in param.type_ for param in self.params)
+        return any('COUNT' in param.type_name for param in self.params)
 
 
 def validate_body(body):

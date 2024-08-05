@@ -19,6 +19,7 @@ import json
 import re
 from ompi_bindings import compiler, consts, util
 from ompi_bindings.fortran_type import FortranType
+from ompi_bindings.parser import SourceTemplate
 
 
 FortranParameter = namedtuple('FortranParameter', ['type_name', 'name', 'dep_params'])
@@ -27,54 +28,24 @@ FortranPrototype = namedtuple('FortranPrototype', ['fn_name', 'parameters'])
 
 def load_prototypes(fname):
     """Load the prototypes from a JSON file."""
-    with open(fname) as fp:
-        data = json.load(fp)
-        prototypes = []
-        for proto in data:
-            fn_name = proto['name']
-            parameters = []
-            for param in proto['parameters']:
-                type_name = param['type']
-                type_ = FortranType.get(type_name)
-                param_name = param['name']
-                dep_params = param['dep_params'] if 'dep_params' in param else None
-                try:
-                    type_.validate_dep_param_keys(param_name, [] if dep_params is None else dep_params.keys())
-                except util.BindingError as err:
-                    raise util.BindingError(f'Invalid prototype "{fn_name}": {err}') from None
-                parameters.append(FortranParameter(type_name, param_name, dep_params))
-            prototypes.append(FortranPrototype(fn_name, parameters))
-        return prototypes
+    return []
 
 
 class FortranBinding:
     """Class for generating the binding for a single function."""
 
-    def __init__(self, prototype, out, bigcount=False, ts=False):
+    def __init__(self, prototype, out, template=None, bigcount=False, ts=False):
         # Generate bigcount interface version
         self.bigcount = bigcount
         # Generate files with support for TS 29113 or not
         self.ts = ts
-        self.fn_name = prototype.fn_name
+        self.fn_name = template.prototype.name
         self.out = out
+        self.template = template
         self.parameters = []
-        param_map = {}
-        dep_params = {}
-        for param in prototype.parameters:
-            type_ = FortranType.get(param.type_name)
-            param_type = type_(param.name, self.fn_name, bigcount=bigcount, ts=ts)
-            self.parameters.append(param_type)
-            param_map[param.name] = param_type
-            if param.dep_params is not None:
-                dep_params[param.name] = param.dep_params
-        # Set dependent parameters for those that need them
-        for name, deps in dep_params.items():
-            try:
-                param_map[name].dep_params = {key: param_map[dep_name] for key, dep_name in deps.items()}
-            except KeyError as err:
-                raise util.BindingError(
-                    f'Invalid dependent type for parameter "{name}" (prototype "{prototype.fn_name}"): {err}'
-                ) from None
+        for param in self.template.prototype.params:
+            self.parameters.append(param.construct(fn_name=self.fn_name,
+                                                   bigcount=bigcount, ts=ts))
 
     def dump(self, *pargs, **kwargs):
         """Write to the output file."""
@@ -203,6 +174,8 @@ class FortranBinding:
 
     def print_c_source(self):
         """Output the C source and function that the Fortran calls into."""
+        if self.template is None:
+            return
         parameters = [param.c_parameter() for param in self.parameters]
         # Always append the integer error
         parameters.append(f'MPI_Fint *{consts.C_ERROR_NAME}')
@@ -211,40 +184,7 @@ class FortranBinding:
         c_func = self.c_func_name
         self.dump(f'void {c_func}({parameters});')
         self.dump(f'void {c_func}({parameters})')
-        self.dump('{')
-        self.dump(f'    int {consts.C_ERROR_TMP_NAME}; ')
-
-        # First the temporary declarations
-        for param in self.parameters:
-            self.dump_lines(param.c_declare_tmp())
-
-        # Shortcut conditions, if any
-        for param in self.parameters:
-            condition = param.c_shortcut_condition()
-            if condition is None:
-                continue
-            self.dump(f'    if ({condition}) {{')
-            self.dump(f'        *{consts.C_ERROR_NAME} = OMPI_INT_2_FINT(MPI_SUCCESS);')
-            for other_param in self.parameters:
-                self.dump_lines(other_param.c_shortcut_code())
-            self.dump('        return;')
-            self.dump('    }')
-
-        # Prepare code for temporaries, etc.
-        for param in self.parameters:
-            self.dump_lines(param.c_prepare())
-
-        # Call into the C API
-        c_api_func = util.ext_api_func_name_profile(self.fn_name, bigcount=self.bigcount)
-        arguments = [param.c_argument() for param in self.parameters]
-        arguments = ', '.join(arguments)
-        self.dump(f'    {consts.C_ERROR_TMP_NAME} = {c_api_func}({arguments});')
-
-        # Post-processing code
-        self.dump(f'    *{consts.C_ERROR_NAME} = OMPI_INT_2_FINT({consts.C_ERROR_TMP_NAME});')
-        for param in self.parameters:
-            self.dump_lines(param.c_post())
-        self.dump('}')
+        self.template.print_body(c_func, out=self.out)
 
     def print_interface(self):
         """Output just the Fortran interface for this binding."""
@@ -257,6 +197,7 @@ def print_f_source_header(out):
     """Print the fortran f08 file header."""
     out.dump(f'! {consts.GENERATED_MESSAGE}')
     out.dump('#include "ompi/mpi/fortran/configure-fortran-output.h"')
+    out.dump('#include "mpi-f08-rename.h"')
 
 
 def print_profiling_rename_macros(prototypes, out):
@@ -291,9 +232,9 @@ def print_c_source_header(out, ts=False):
     out.dump('#include "ompi/communicator/communicator.h"')
 
 
-def print_binding(prototype, lang, out, bigcount=False, ts=False):
+def print_binding(prototype, lang, out, bigcount=False, template=None, ts=False):
     """Print the binding with or without bigcount."""
-    binding = FortranBinding(prototype, out=out, bigcount=bigcount, ts=ts)
+    binding = FortranBinding(prototype, out=out, bigcount=bigcount, template=template, ts=ts)
     if lang == 'fortran':
         binding.print_f_source()
     else:
@@ -309,14 +250,24 @@ def generate_code(args, out):
         print_profiling_rename_macros(prototypes, out)
         out.dump()
     else:
-        print_c_source_header(out, ts=args.ts)
+        print_c_source_header(out, ts=True)
     for prototype in prototypes:
         out.dump()
-        print_binding(prototype, args.lang, out, ts=args.ts)
+        print_binding(prototype, args.lang, out, ts=True)
         if util.fortran_prototype_has_bigcount(prototype):
             out.dump()
             out.dump('#if OMPI_BIGCOUNT')
-            print_binding(prototype, args.lang, bigcount=True, out=out, ts=args.ts)
+            print_binding(prototype, args.lang, bigcount=True, out=out, ts=True)
+            out.dump('#endif /* OMPI_BIGCOUNT */')
+
+    for prototype_file in args.prototype_files:
+        tmpl = SourceTemplate.load(prototype_file, type_constructor=FortranType.construct)
+        out.dump()
+        print_binding(tmpl.prototype, args.lang, out, template=tmpl, ts=True)
+        if util.fortran_prototype_has_bigcount(tmpl.prototype):
+            out.dump()
+            out.dump('#if OMPI_BIGCOUNT')
+            print_binding(tmpl.prototype, args.lang, bigcount=True, out=out, template=tmpl, ts=True)
             out.dump('#endif /* OMPI_BIGCOUNT */')
 
 
@@ -327,12 +278,28 @@ def generate_interface(args, out):
     for prototype in prototypes:
         ext_name = util.ext_api_func_name(prototype.fn_name)
         out.dump(f'interface {ext_name}')
-        binding = FortranBinding(prototype, out=out, ts=args.ts)
+        binding = FortranBinding(prototype, out=out, ts=True)
         binding.print_interface()
         if util.fortran_prototype_has_bigcount(prototype):
             out.dump()
-            binding_c = FortranBinding(prototype, out=out, bigcount=True, ts=args.ts)
+            binding_c = FortranBinding(prototype, out=out, bigcount=True, ts=True)
             out.dump('#if OMPI_BIGCOUNT')
             binding_c.print_interface()
             out.dump('#endif /* OMPI_BIGCOUNT */')
         out.dump(f'end interface {ext_name}')
+
+    for prototype_file in args.prototype_files:
+        tmpl = SourceTemplate.load(prototype_file, type_constructor=FortranType.construct)
+        ext_name = util.ext_api_func_name(tmpl.prototype.name)
+        out.dump(f'interface {ext_name}')
+        binding = FortranBinding(tmpl.prototype, template=tmpl, out=out, ts=True)
+        binding.print_interface()
+        if util.fortran_prototype_has_bigcount(tmpl.prototype):
+            out.dump()
+            binding_c = FortranBinding(tmpl.prototype, out=out, template=tmpl,
+                                       bigcount=True, ts=True)
+            out.dump('#if OMPI_BIGCOUNT')
+            binding_c.print_interface()
+            out.dump('#endif /* OMPI_BIGCOUNT */')
+        out.dump(f'end interface {ext_name}')
+        out.dump(f'! {prototype_file}')
