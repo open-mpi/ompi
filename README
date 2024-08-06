@@ -1133,7 +1133,8 @@ NETWORKING SUPPORT / OPTIONS
   Specify the directory where the OpenFabrics Interfaces libfabric
   library and header files are located.  This option is generally only
   necessary if the libfabric headers and libraries are not in default
-  compiler/linker search paths.
+  compiler/linker search paths. Note: v4.1.6 or older will only build
+  successfully with libfabric v1.x.
 
   Libfabric is the support library for OpenFabrics Interfaces-based
   network adapters, such as Cisco usNIC, Intel True Scale PSM, Cray
