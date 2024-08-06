@@ -19,18 +19,9 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
-
-#include "ompi/communicator/communicator.h"
-#include "ompi/errhandler/errhandler.h"
-#include "ompi/mpi/fortran/use-mpi-f08/ts/bindings.h"
-#include "ompi/mpi/fortran/base/constants.h"
-
-static const char FUNC_NAME[] = "MPI_Reduce";
-
-void ompi_reduce_ts(CFI_cdesc_t *x1, CFI_cdesc_t *x2, MPI_Fint *count,
-                    MPI_Fint *datatype, MPI_Fint *op,
-                    MPI_Fint *root, MPI_Fint *comm, MPI_Fint *ierr)
+PROTOTYPE VOID reduce(BUFFER x1, BUFFER_OUT x2, COUNT count,
+                      DATATYPE datatype, OP op,
+                      RANK root, COMM comm)
 {
     int c_ierr;
     MPI_Datatype c_type;

@@ -249,7 +249,6 @@ mpi_api_files = \
         file_write_at_all_end_f08.F90 \
         file_write_at_all_f08.F90 \
         file_write_at_f08.F90 \
-        file_write_f08.F90 \
         file_write_ordered_begin_f08.F90 \
         file_write_ordered_end_f08.F90 \
         file_write_ordered_f08.F90 \
@@ -373,7 +372,6 @@ mpi_api_files = \
         query_thread_f08.F90 \
         raccumulate_f08.F90 \
         recv_init_f08.F90 \
-        reduce_f08.F90 \
         reduce_init_f08.F90 \
         reduce_local_f08.F90 \
         reduce_scatter_f08.F90 \

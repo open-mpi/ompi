@@ -20,18 +20,8 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
-
-#include "ompi/file/file.h"
-#include "ompi/errhandler/errhandler.h"
-#include "ompi/mpi/fortran/use-mpi-f08/ts/bindings.h"
-#include "ompi/mpi/fortran/mpif-h/status-conversion.h"
-#include "ompi/mpi/fortran/base/constants.h"
-
-static const char FUNC_NAME[] = "MPI_File_write";
-
-void ompi_file_write_ts(MPI_Fint *fh, CFI_cdesc_t *x, MPI_Fint *count,
-                        MPI_Fint *datatype, MPI_Fint *status, MPI_Fint *ierr)
+PROTOTYPE VOID file_write(FILE fh, BUFFER x, COUNT count,
+                          DATATYPE datatype, STATUS_OUT status)
 {
     int c_ierr;
     MPI_File c_fh = PMPI_File_f2c(*fh);

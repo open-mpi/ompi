@@ -22,15 +22,6 @@ from ompi_bindings.fortran_type import FortranType
 from ompi_bindings.parser import SourceTemplate
 
 
-FortranParameter = namedtuple('FortranParameter', ['type_name', 'name', 'dep_params'])
-FortranPrototype = namedtuple('FortranPrototype', ['fn_name', 'parameters'])
-
-
-def load_prototypes(fname):
-    """Load the prototypes from a JSON file."""
-    return []
-
-
 class FortranBinding:
     """Class for generating the binding for a single function."""
 
@@ -197,21 +188,20 @@ def print_f_source_header(out):
     """Print the fortran f08 file header."""
     out.dump(f'! {consts.GENERATED_MESSAGE}')
     out.dump('#include "ompi/mpi/fortran/configure-fortran-output.h"')
-    out.dump('#include "mpi-f08-rename.h"')
 
 
-def print_profiling_rename_macros(prototypes, out):
+def print_profiling_rename_macros(templates, out):
     """Print macros for renaming functions for the profiling interface.
 
     Previously hardcoded in mpi-f08-rename.h.
     """
     out.dump('#if OMPI_BUILD_MPI_PROFILING')
-    for prototype in prototypes:
-        name = util.fortran_f08_name(prototype.fn_name)
+    for template in templates:
+        name = util.fortran_f08_name(template.prototype.name)
         out.dump(f'#define {name} P{name}')
         # Check for bigcount version
-        if util.fortran_prototype_has_bigcount(prototype):
-            bigcount_name = util.fortran_f08_name(prototype.fn_name, bigcount=True)
+        if util.fortran_prototype_has_bigcount(template.prototype):
+            bigcount_name = util.fortran_f08_name(template.prototype.name, bigcount=True)
             out.dump(f'#define {bigcount_name} P{bigcount_name}')
     out.dump('#endif /* OMPI_BUILD_MPI_PROFILING */')
 
@@ -230,6 +220,9 @@ def print_c_source_header(out, ts=False):
     out.dump('#include "ompi/mpi/fortran/base/fint_2_int.h"')
     out.dump('#include "ompi/request/request.h"')
     out.dump('#include "ompi/communicator/communicator.h"')
+    out.dump('#include "ompi/win/win.h"')
+    out.dump('#include "ompi/file/file.h"')
+    out.dump('#include "ompi/errhandler/errhandler.h"')
 
 
 def print_binding(prototype, lang, out, bigcount=False, template=None, ts=False):
@@ -241,65 +234,51 @@ def print_binding(prototype, lang, out, bigcount=False, template=None, ts=False)
         binding.print_c_source()
 
 
+def load_function_templates(prototype_files):
+    """Load the templates from a file list."""
+    return [
+        SourceTemplate.load(fname, type_constructor=FortranType.construct)
+        for fname in prototype_files
+    ]
+
+
 def generate_code(args, out):
     """Generate binding code based on arguments."""
-    prototypes = load_prototypes(args.prototypes)
+    templates = load_function_templates(args.prototype_files)
+
     if args.lang == 'fortran':
         print_f_source_header(out)
         out.dump()
-        print_profiling_rename_macros(prototypes, out)
+        print_profiling_rename_macros(templates, out)
         out.dump()
     else:
         print_c_source_header(out, ts=True)
-    for prototype in prototypes:
-        out.dump()
-        print_binding(prototype, args.lang, out, ts=True)
-        if util.fortran_prototype_has_bigcount(prototype):
-            out.dump()
-            out.dump('#if OMPI_BIGCOUNT')
-            print_binding(prototype, args.lang, bigcount=True, out=out, ts=True)
-            out.dump('#endif /* OMPI_BIGCOUNT */')
 
-    for prototype_file in args.prototype_files:
-        tmpl = SourceTemplate.load(prototype_file, type_constructor=FortranType.construct)
+    for template in templates:
         out.dump()
-        print_binding(tmpl.prototype, args.lang, out, template=tmpl, ts=True)
-        if util.fortran_prototype_has_bigcount(tmpl.prototype):
+        print_binding(template.prototype, args.lang, out, template=template, ts=True)
+        if util.fortran_prototype_has_bigcount(template.prototype):
             out.dump()
             out.dump('#if OMPI_BIGCOUNT')
-            print_binding(tmpl.prototype, args.lang, bigcount=True, out=out, template=tmpl, ts=True)
+            print_binding(template.prototype, args.lang, bigcount=True, out=out, template=template, ts=True)
             out.dump('#endif /* OMPI_BIGCOUNT */')
 
 
 def generate_interface(args, out):
     """Generate the Fortran interface files."""
-    prototypes = load_prototypes(args.prototypes)
     out.dump(f'! {consts.GENERATED_MESSAGE}')
-    for prototype in prototypes:
-        ext_name = util.ext_api_func_name(prototype.fn_name)
-        out.dump(f'interface {ext_name}')
-        binding = FortranBinding(prototype, out=out, ts=True)
-        binding.print_interface()
-        if util.fortran_prototype_has_bigcount(prototype):
-            out.dump()
-            binding_c = FortranBinding(prototype, out=out, bigcount=True, ts=True)
-            out.dump('#if OMPI_BIGCOUNT')
-            binding_c.print_interface()
-            out.dump('#endif /* OMPI_BIGCOUNT */')
-        out.dump(f'end interface {ext_name}')
 
-    for prototype_file in args.prototype_files:
-        tmpl = SourceTemplate.load(prototype_file, type_constructor=FortranType.construct)
-        ext_name = util.ext_api_func_name(tmpl.prototype.name)
+    templates = load_function_templates(args.prototype_files)
+    for template in templates:
+        ext_name = util.ext_api_func_name(template.prototype.name)
         out.dump(f'interface {ext_name}')
-        binding = FortranBinding(tmpl.prototype, template=tmpl, out=out, ts=True)
+        binding = FortranBinding(template.prototype, template=template, out=out, ts=True)
         binding.print_interface()
-        if util.fortran_prototype_has_bigcount(tmpl.prototype):
+        if util.fortran_prototype_has_bigcount(template.prototype):
             out.dump()
-            binding_c = FortranBinding(tmpl.prototype, out=out, template=tmpl,
+            binding_c = FortranBinding(template.prototype, out=out, template=template,
                                        bigcount=True, ts=True)
             out.dump('#if OMPI_BIGCOUNT')
             binding_c.print_interface()
             out.dump('#endif /* OMPI_BIGCOUNT */')
         out.dump(f'end interface {ext_name}')
-        out.dump(f'! {prototype_file}')

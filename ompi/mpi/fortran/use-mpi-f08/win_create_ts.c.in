@@ -19,17 +19,8 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
-
-#include "ompi/communicator/communicator.h"
-#include "ompi/errhandler/errhandler.h"
-#include "ompi/mpi/fortran/use-mpi-f08/ts/bindings.h"
-
-static const char FUNC_NAME[] = "MPI_Win_create";
-
-void ompi_win_create_ts(CFI_cdesc_t *x, MPI_Aint *size, MPI_Fint *disp_unit,
-                        MPI_Fint *info, MPI_Fint *comm, MPI_Fint *win,
-                        MPI_Fint *ierr)
+PROTOTYPE VOID win_create(BUFFER x, AINT size, DISP disp_unit,
+                          INFO info, COMM comm, WIN_OUT win)
 {
     int c_ierr;
     MPI_Win c_win;

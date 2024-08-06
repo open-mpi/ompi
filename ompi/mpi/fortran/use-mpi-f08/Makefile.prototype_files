@@ -138,5 +138,7 @@ ready_prototype_files = \
         $(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/recv_ts.c.in \
         $(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/isend_ts.c.in \
         $(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/irecv_ts.c.in \
+        $(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/file_write_ts.c.in \
+        $(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/reduce_ts.c.in \
         $(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/waitall.c.in \
         $(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/testany.c.in

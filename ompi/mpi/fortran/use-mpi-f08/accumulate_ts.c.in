@@ -21,7 +21,7 @@
 
 PROTOTYPE VOID accumulate(BUFFER x, COUNT origin_count,
                           DATATYPE origin_datatype, RANK target_rank,
-                          DISP target_disp, COUNT target_count,
+                          AINT target_disp, COUNT target_count,
                           DATATYPE target_datatype, OP op, WIN win)
 {
     int c_ierr;
