@@ -258,19 +258,32 @@ mca_part_persist_progress(void)
                     req->my_recv_tag  = req->setup_info[1].setup_tag;
                     req->real_parts   = req->setup_info[1].num_parts;
                     req->real_count   = req->setup_info[1].count;
+                    req->real_dt_size = req->setup_info[1].dt_size;
+
 
                     err = opal_datatype_type_size(&(req->req_datatype->super), &dt_size_);
                     if(OMPI_SUCCESS != err) return OMPI_ERROR;
                     dt_size = (dt_size_ > (size_t) INT_MAX) ? MPI_UNDEFINED : (int) dt_size_;
                     int32_t bytes = req->real_count * dt_size;
 
-                    /* Set up persistent sends */
+
+
+		    /* Set up persistent sends */
                     req->persist_reqs = (ompi_request_t**) malloc(sizeof(ompi_request_t*)*(req->real_parts));
                     req->flags = (int*) calloc(req->real_parts,sizeof(int));
-                    for(i = 0; i < req->real_parts; i++) {
-                         void *buf = ((void*) (((char*)req->req_addr) + (bytes * i)));
-                         err = MCA_PML_CALL(irecv_init(buf, req->real_count, req->req_datatype, req->world_peer, req->my_send_tag+i, ompi_part_persist.part_comm, &(req->persist_reqs[i])));
-                    }
+
+                    if(req->real_dt_size == dt_size) {
+
+     	                for(i = 0; i < req->real_parts; i++) {
+                            void *buf = ((void*) (((char*)req->req_addr) + (bytes * i)));
+                            err = MCA_PML_CALL(irecv_init(buf, req->real_count, req->req_datatype, req->world_peer, req->my_send_tag+i, ompi_part_persist.part_comm, &(req->persist_reqs[i])));
+                        }
+                    } else {
+                        for(i = 0; i < req->real_parts; i++) {
+                            void *buf = ((void*) (((char*)req->req_addr) + (req->real_count * req->real_dt_size * i)));
+                            err = MCA_PML_CALL(irecv_init(buf, req->real_count * req->real_dt_size, MPI_BYTE, req->world_peer, req->my_send_tag+i, ompi_part_persist.part_comm, &(req->persist_reqs[i])));
+                        }
+		    }
                     err = req->persist_reqs[0]->req_start(req->real_parts, (&(req->persist_reqs[0])));                     
 
                     /* Send back a message */
@@ -372,7 +385,6 @@ mca_part_persist_precv_init(void *buf,
     dt_size = (dt_size_ > (size_t) INT_MAX) ? MPI_UNDEFINED : (int) dt_size_;
     req->req_bytes = parts * count * dt_size;
 
-
     /* Set ompi request initial values */
     req->req_ompi.req_persistent = true;
     req->req_part_complete = true;
@@ -433,8 +445,6 @@ mca_part_persist_psend_init(const void* buf,
     dt_size = (dt_size_ > (size_t) INT_MAX) ? MPI_UNDEFINED : (int) dt_size_;
     req->req_bytes = parts * count * dt_size;
 
-
-
     /* non-blocking send set-up data */
     req->setup_info[0].world_rank = ompi_comm_rank(&ompi_mpi_comm_world.comm);
     req->setup_info[0].start_tag = ompi_part_persist.next_send_tag; ompi_part_persist.next_send_tag += parts; 
@@ -445,7 +455,7 @@ mca_part_persist_psend_init(const void* buf,
     req->real_parts = parts;
     req->setup_info[0].count = count;
     req->real_count = count;
-
+    req->setup_info[0].dt_size = dt_size;
 
     req->flags = (int*) calloc(req->real_parts, sizeof(int));
 
