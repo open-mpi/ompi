@@ -18,16 +18,12 @@
 #include "opal/constants.h"
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_pointer_array.h"
+#include "opal/util/misc.h"
 #include "opal/util/output.h"
 #include "opal/util/error.h"
 
 #include "opal/util/bipartite_graph.h"
 #include "opal/util/bipartite_graph_internal.h"
-
-#ifndef container_of
-#define container_of(ptr, type, member) ( \
-        (type *)( ((char *)(ptr)) - offsetof(type,member) ))
-#endif
 
 #define GRAPH_DEBUG 0
 #if GRAPH_DEBUG
