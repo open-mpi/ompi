@@ -112,7 +112,6 @@ CLEANFILES += sizeof_f08.h sizeof_f08.f90 psizeof_f08.f90
 
 mpi_api_files = \
         abort_f08.F90 \
-        accumulate_f08.F90 \
         add_error_class_f08.F90 \
         add_error_code_f08.F90 \
         add_error_string_f08.F90 \

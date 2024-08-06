@@ -130,6 +130,7 @@ prototype_files = \
 
 # Temporary variable while converting files.
 ready_prototype_files = \
+        $(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/accumulate_ts.c.in \
         $(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/alltoall_ts.c.in \
         $(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/alltoallv_ts.c.in \
         $(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/alltoallw_ts.c.in \

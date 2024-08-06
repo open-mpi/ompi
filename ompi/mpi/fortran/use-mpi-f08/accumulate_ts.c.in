@@ -19,20 +19,10 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
-
-#include "ompi/win/win.h"
-#include "ompi/errhandler/errhandler.h"
-#include "ompi/mpi/fortran/use-mpi-f08/ts/bindings.h"
-#include "ompi/mpi/fortran/base/constants.h"
-
-static const char FUNC_NAME[] = "MPI_Accumulate";
-
-void ompi_accumulate_ts(CFI_cdesc_t *x, MPI_Fint *origin_count,
-                        MPI_Fint *origin_datatype, MPI_Fint *target_rank,
-                        MPI_Aint *target_disp, MPI_Fint *target_count,
-                        MPI_Fint *target_datatype, MPI_Fint *op, MPI_Fint *win,
-                        MPI_Fint *ierr)
+PROTOTYPE VOID accumulate(BUFFER x, COUNT origin_count,
+                          DATATYPE origin_datatype, RANK target_rank,
+                          DISP target_disp, COUNT target_count,
+                          DATATYPE target_datatype, OP op, WIN win)
 {
     int c_ierr;
 

@@ -394,6 +394,20 @@ class CountArray(IntArray):
         return f'{count_type} *{self.name}'
 
 
+@FortranType.add('DISP')
+class Disp(FortranType):
+    """Displacement type."""
+
+    def declare(self):
+        return f'INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: {self.name}'
+
+    def use(self):
+        return [('mpi_f08_types', 'MPI_ADDRESS_KIND')]
+
+    def c_parameter(self):
+        return f'MPI_Aint *{self.name}'
+
+
 @FortranType.add('DISP_ARRAY')
 class DispArray(IntArray):
     """Array of MPI_Aint or int."""
@@ -410,3 +424,31 @@ class DispArray(IntArray):
     def c_parameter(self):
         count_type = 'MPI_Aint' if self.bigcount else 'MPI_Fint'
         return f'{count_type} *{self.name}'
+
+
+@FortranType.add('OP')
+class Op(FortranType):
+    """MPI_Op type."""
+
+    def declare(self):
+        return f'TYPE(MPI_Op), INTENT(IN) :: {self.name}'
+
+    def use(self):
+        return [('mpi_f08_types', 'MPI_Op')]
+
+    def c_parameter(self):
+        return f'MPI_Op *{self.name}'
+
+
+@FortranType.add('WIN')
+class Win(FortranType):
+    """MPI_Win type."""
+
+    def declare(self):
+        return f'TYPE(MPI_Win), INTENT(IN) :: {self.name}'
+
+    def use(self):
+        return [('mpi_f08_types', 'MPI_Win')]
+
+    def c_parameter(self):
+        return f'MPI_Win *{self.name}'
