@@ -100,3 +100,8 @@ prototype_files = \
         $(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/win_attach_ts.c.in \
         $(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/win_create_ts.c.in \
         $(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/win_detach_ts.c.in
+
+# Temporary variable while converting files.
+ready_prototype_files = \
+        $(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/send_ts.c.in \
+        $(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/recv_ts.c.in

@@ -20,6 +20,7 @@
  * $HEADER$
  */
 
+/*
 #include "ompi_config.h"
 
 #include "ompi/communicator/communicator.h"
@@ -27,12 +28,10 @@
 #include "ompi/mpi/fortran/use-mpi-f08/ts/bindings.h"
 #include "ompi/mpi/fortran/mpif-h/status-conversion.h"
 #include "ompi/mpi/fortran/base/constants.h"
+*/
 
-static const char FUNC_NAME[] = "MPI_Recv";
-
-void ompi_recv_ts(CFI_cdesc_t *x, MPI_Fint *count, MPI_Fint *datatype,
-                  MPI_Fint *source, MPI_Fint *tag, MPI_Fint *comm,
-                  MPI_Fint *status, MPI_Fint *ierr)
+PROTOTYPE VOID recv(BUFFER_OUT x, COUNT count, DATATYPE datatype,
+                    RANK source, TAG tag, COMM comm, STATUS status)
 {
     OMPI_FORTRAN_STATUS_DECLARATION(c_status,c_status2)
     MPI_Comm c_comm = PMPI_Comm_f2c(*comm);

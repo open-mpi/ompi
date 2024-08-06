@@ -584,7 +584,7 @@ api_f08_generated.F90: interface.json $(prototype_files)
 	    --srcdir $(abs_top_srcdir) \
 	    --output $(abs_builddir)/$@ \
 	    fortran \
-	    send_ts.c.in \
+	    --prototype-files $(ready_prototype_files) \
 	    --prototypes $(abs_srcdir)/$< \
 	    code \
 	    fortran
