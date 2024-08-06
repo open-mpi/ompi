@@ -304,7 +304,7 @@ class CommType(FortranType):
         return f'MPI_Fint *{self.name}'
 
 
-@FortranType.add('STATUS')
+@FortranType.add('STATUS_OUT')
 class StatusType(FortranType):
     def declare(self):
         return f'TYPE(MPI_Status), INTENT(OUT) :: {self.name}'
@@ -317,7 +317,7 @@ class StatusType(FortranType):
         return f'MPI_Fint *{self.name}'
 
 
-@FortranType.add('REQUEST')
+@FortranType.add('REQUEST_OUT')
 class RequestType(FortranType):
     def declare(self):
         return f'TYPE(MPI_Request), INTENT(OUT) :: {self.name}'
@@ -338,10 +338,10 @@ class RequestType(FortranType):
 @FortranType.add('REQUEST_ARRAY')
 class RequestArrayType(FortranType):
     def declare(self):
-        return f'TYPE(MPI_Request), INTENT(INOUT) :: {self.name}({self.dep_params["count"].name})'
+        return f'TYPE(MPI_Request), INTENT(INOUT) :: {self.name}({self.count_param})'
 
     def declare_cbinding_fortran(self):
-        return f'INTEGER, INTENT(INOUT) :: {self.name}({self.dep_params["count"].name})'
+        return f'INTEGER, INTENT(INOUT) :: {self.name}({self.count_param})'
 
     def argument(self):
         return f'{self.name}(:)%MPI_VAL'
@@ -394,8 +394,8 @@ class CountArray(IntArray):
         return f'{count_type} *{self.name}'
 
 
-@FortranType.add('DISPL_ARRAY')
-class DisplArray(IntArray):
+@FortranType.add('DISP_ARRAY')
+class DispArray(IntArray):
     """Array of MPI_Aint or int."""
 
     def declare(self):

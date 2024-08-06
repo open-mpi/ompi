@@ -2,6 +2,10 @@
 # Shared list of prototype files to avoid listing dependencies multiple times.
 #
 
+non_ts_prototype_files = \
+        $(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/waitall.c.in \
+        $(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/testany.c.in
+
 prototype_files = \
         $(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/accumulate_ts.c.in \
         $(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/bsend_init_ts.c.in \
@@ -75,7 +79,6 @@ prototype_files = \
         $(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/iscatterv_ts.c.in \
         $(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/isendrecv_replace_ts.c.in \
         $(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/isendrecv_ts.c.in \
-        $(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/isend_ts.c.in \
         $(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/issend_ts.c.in \
         $(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/mrecv_ts.c.in \
         $(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/pack_external_ts.c.in \
@@ -99,9 +102,40 @@ prototype_files = \
         $(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/unpack_ts.c.in \
         $(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/win_attach_ts.c.in \
         $(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/win_create_ts.c.in \
-        $(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/win_detach_ts.c.in
+        $(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/win_detach_ts.c.in \
+        $(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/allgather_ts.c.in \
+        $(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/allgatherv_ts.c.in \
+        $(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/allreduce_ts.c.in \
+        $(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/alltoall_ts.c.in \
+        $(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/alltoallv_ts.c.in \
+        $(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/alltoallw_ts.c.in \
+        $(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/bcast_ts.c.in \
+        $(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/bindings.h \
+        $(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/exscan_ts.c.in \
+        $(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/gather_ts.c.in \
+        $(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/gatherv_ts.c.in \
+        $(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/neighbor_allgather_ts.c.in \
+        $(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/neighbor_allgatherv_ts.c.in \
+        $(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/neighbor_alltoall_ts.c.in \
+        $(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/neighbor_alltoallv_ts.c.in \
+        $(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/neighbor_alltoallw_ts.c.in \
+        $(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/reduce_local_ts.c.in \
+        $(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/reduce_scatter_block_ts.c.in \
+        $(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/reduce_scatter_ts.c.in \
+        $(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/reduce_ts.c.in \
+        $(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/scan_ts.c.in \
+        $(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/scatter_ts.c.in \
+        $(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/scatterv_ts.c.in \
+        $(non_ts_prototype_files)
 
 # Temporary variable while converting files.
 ready_prototype_files = \
+        $(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/alltoall_ts.c.in \
+        $(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/alltoallv_ts.c.in \
+        $(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/alltoallw_ts.c.in \
         $(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/send_ts.c.in \
-        $(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/recv_ts.c.in
+        $(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/recv_ts.c.in \
+        $(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/isend_ts.c.in \
+        $(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/irecv_ts.c.in \
+        $(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/waitall.c.in \
+        $(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/testany.c.in

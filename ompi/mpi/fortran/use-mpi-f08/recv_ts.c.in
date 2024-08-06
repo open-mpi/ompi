@@ -31,7 +31,7 @@
 */
 
 PROTOTYPE VOID recv(BUFFER_OUT x, COUNT count, DATATYPE datatype,
-                    RANK source, TAG tag, COMM comm, STATUS status)
+                    RANK source, TAG tag, COMM comm, STATUS_OUT status)
 {
     OMPI_FORTRAN_STATUS_DECLARATION(c_status,c_status2)
     MPI_Comm c_comm = PMPI_Comm_f2c(*comm);

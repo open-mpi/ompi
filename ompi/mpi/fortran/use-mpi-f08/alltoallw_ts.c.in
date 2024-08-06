@@ -19,21 +19,11 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
-
-#include "ompi/communicator/communicator.h"
-#include "ompi/errhandler/errhandler.h"
-#include "ompi/mpi/fortran/use-mpi-f08/ts/bindings.h"
-#include "ompi/mpi/fortran/base/constants.h"
-#include "ompi/communicator/communicator.h"
-
-static const char FUNC_NAME[] = "MPI_Alltoallw";
-
-void ompi_alltoallw_ts(CFI_cdesc_t *x1, MPI_Fint *sendcounts,
-                       MPI_Fint *sdispls, MPI_Fint *sendtypes,
-                       CFI_cdesc_t *x2, MPI_Fint *recvcounts,
-                       MPI_Fint *rdispls, MPI_Fint *recvtypes,
-                       MPI_Fint *comm, MPI_Fint *ierr)
+PROTOTYPE VOID alltoallw(BUFFER x1, COUNT_ARRAY sendcounts,
+                         DISP_ARRAY sdispls, DATATYPE_ARRAY sendtypes,
+                         BUFFER_OUT x2, COUNT_ARRAY recvcounts,
+                         DISP_ARRAY rdispls, DATATYPE_ARRAY recvtypes,
+                         COMM comm)
 {
     MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
     MPI_Datatype *c_sendtypes = NULL, *c_recvtypes;

@@ -19,16 +19,8 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
-
-#include "ompi/communicator/communicator.h"
-#include "ompi/errhandler/errhandler.h"
-#include "ompi/mpi/fortran/use-mpi-f08/ts/bindings.h"
-#include "ompi/mpi/fortran/base/constants.h"
-
-static const char FUNC_NAME[] = "MPI_Isend";
-
-void ompi_isend_ts(CFI_cdesc_t* x, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *dest, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *request, MPI_Fint *ierr)
+PROTOTYPE VOID isend(BUFFER x, COUNT count, DATATYPE datatype, RANK dest,
+                     TAG tag, COMM comm, REQUEST_OUT request)
 {
     int c_ierr;
     MPI_Datatype c_datatype, c_type = PMPI_Type_f2c(*datatype);
