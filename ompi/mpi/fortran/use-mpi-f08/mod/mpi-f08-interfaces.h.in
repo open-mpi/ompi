@@ -1468,21 +1468,6 @@ subroutine MPI_Op_free_f08(op,ierror)
 end subroutine MPI_Op_free_f08
 end interface  MPI_Op_free
 
-interface  MPI_Reduce
-subroutine MPI_Reduce_f08(sendbuf,recvbuf,count,datatype,op,root,comm,ierror)
-   use :: mpi_f08_types, only : MPI_Datatype, MPI_Op, MPI_Comm
-   implicit none
-   @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf, recvbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) :: sendbuf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: recvbuf
-   INTEGER, INTENT(IN) :: count, root
-   TYPE(MPI_Datatype), INTENT(IN) :: datatype
-   TYPE(MPI_Op), INTENT(IN) :: op
-   TYPE(MPI_Comm), INTENT(IN) :: comm
-   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-end subroutine MPI_Reduce_f08
-end interface  MPI_Reduce
-
 interface  MPI_Ireduce
 subroutine MPI_Ireduce_f08(sendbuf,recvbuf,count,datatype,op,root,comm,request,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Op, MPI_Comm, MPI_Request
@@ -3172,23 +3157,6 @@ subroutine MPI_Unpublish_name_f08(service_name,info,port_name,ierror)
 end subroutine MPI_Unpublish_name_f08
 end interface  MPI_Unpublish_name
 
-interface  MPI_Accumulate
-subroutine MPI_Accumulate_f08(origin_addr,origin_count,origin_datatype,target_rank, &
-                              target_disp,target_count,target_datatype,op,win,ierror)
-   use :: mpi_f08_types, only : MPI_Datatype, MPI_Op, MPI_Win, MPI_ADDRESS_KIND
-   implicit none
-   @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ origin_addr
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) OMPI_ASYNCHRONOUS :: origin_addr
-   INTEGER, INTENT(IN) :: origin_count, target_rank, target_count
-   TYPE(MPI_Datatype), INTENT(IN) :: origin_datatype
-   INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: target_disp
-   TYPE(MPI_Datatype), INTENT(IN) :: target_datatype
-   TYPE(MPI_Op), INTENT(IN) :: op
-   TYPE(MPI_Win), INTENT(IN) :: win
-   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-end subroutine MPI_Accumulate_f08
-end interface  MPI_Accumulate
-
 interface  MPI_Raccumulate
 subroutine MPI_Raccumulate_f08(origin_addr,origin_count,origin_datatype,target_rank, &
                                target_disp,target_count,target_datatype,op,win,request, &
@@ -4186,20 +4154,6 @@ subroutine MPI_File_sync_f08(fh,ierror)
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine MPI_File_sync_f08
 end interface  MPI_File_sync
-
-interface  MPI_File_write
-subroutine MPI_File_write_f08(fh,buf,count,datatype,status,ierror)
-   use :: mpi_f08_types, only : MPI_File, MPI_Datatype, MPI_Status
-   implicit none
-   TYPE(MPI_File), INTENT(IN) :: fh
-   @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
-   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) :: buf
-   INTEGER, INTENT(IN) :: count
-   TYPE(MPI_Datatype), INTENT(IN) :: datatype
-   TYPE(MPI_Status) :: status
-   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-end subroutine MPI_File_write_f08
-end interface  MPI_File_write
 
 interface  MPI_File_write_all
 subroutine MPI_File_write_all_f08(fh,buf,count,datatype,status,ierror)
