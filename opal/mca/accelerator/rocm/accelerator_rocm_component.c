@@ -130,38 +130,52 @@ static int accelerator_rocm_close(void)
 
 static int accelerator_rocm_component_register(void)
 {
+    int var_id;
+
     /* Set verbosity in the rocm related code. */
     opal_accelerator_rocm_verbose = 0;
-    (void) mca_base_var_register("ompi", "mpi", "accelerator_rocm", "verbose",
-                                 "Set level of rocm verbosity", MCA_BASE_VAR_TYPE_INT, NULL,
-                                 0, 0, OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
-                                 &opal_accelerator_rocm_verbose);
+    var_id = mca_base_component_var_register (&mca_accelerator_rocm_component.super.base_version,
+                                              "verbose", "Set level of verbosity of rocm component",
+                                              MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                              0, OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+                                              &opal_accelerator_rocm_verbose);
+    (void) mca_base_var_register_synonym (var_id, "ompi", "mpi", "accelerator_rocm", "verbose",
+                                          MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
 
     /* Switching point between using memcpy and hipMemcpy* functions. */
     opal_accelerator_rocm_memcpyD2H_limit = 1024;
-    (void) mca_base_var_register("ompi", "mpi", "accelerator_rocm", "memcpyD2H_limit",
-                                 "Max. msg. length to use memcpy instead of hip functions "
-                                 "for device-to-host copy operations",
-                                 MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                 OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
-                                 &opal_accelerator_rocm_memcpyD2H_limit);
-
+    var_id = mca_base_component_var_register (&mca_accelerator_rocm_component.super.base_version,
+                                              "memcpyD2H_limit",
+                                              "Max. msg. length to use memcpy instead of hip functions "
+                                              "for device-to-host copy operations",
+                                              MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                              OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+                                              &opal_accelerator_rocm_memcpyD2H_limit);
+    (void) mca_base_var_register_synonym (var_id, "ompi", "mpi", "accelerator_rocm", "memcpyD2H_limit",
+                                          MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
+    
     /* Switching point between using memcpy and hipMemcpy* functions. */
     opal_accelerator_rocm_memcpyH2D_limit = 1048576;
-    (void) mca_base_var_register("ompi", "mpi", "accelerator_rocm", "memcpyH2D_limit",
-                                 "Max. msg. length to use memcpy instead of hip functions "
-                                 "for host-to-device copy operations",
-                                 MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                 OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
-                                 &opal_accelerator_rocm_memcpyH2D_limit);
+    var_id = mca_base_component_var_register (&mca_accelerator_rocm_component.super.base_version,
+                                              "memcpyH2D_limit",
+                                              "Max. msg. length to use memcpy instead of hip functions "
+                                              "for host-to-device copy operations",
+                                              MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                              OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+                                              &opal_accelerator_rocm_memcpyH2D_limit);
+    (void) mca_base_var_register_synonym (var_id, "ompi", "mpi", "accelerator_rocm", "memcpyH2D_limit",
+                                          MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
 
     /* Use this flag to test async vs sync copies */
     opal_accelerator_rocm_memcpy_async = 0;
-    (void) mca_base_var_register("ompi", "mpi", "accelerator_rocm", "memcpy_async",
-                                 "Set to 1 to force using hipMemcpyAsync instead of hipMemcpy",
-                                 MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_9,
-                                 MCA_BASE_VAR_SCOPE_READONLY, &opal_accelerator_rocm_memcpy_async);
-
+    var_id = mca_base_component_var_register (&mca_accelerator_rocm_component.super.base_version,
+                                              "memcpy_async",
+                                              "Set to 1 to force using hipMemcpyAsync instead of hipMemcpy",
+                                              MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_9,
+                                              MCA_BASE_VAR_SCOPE_READONLY,
+                                              &opal_accelerator_rocm_memcpy_async);
+    (void) mca_base_var_register_synonym (var_id, "ompi", "mpi", "accelerator_rocm", "memcpy_async",
+                                          MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
     return OPAL_SUCCESS;
 }
 
