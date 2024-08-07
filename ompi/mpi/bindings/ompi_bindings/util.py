@@ -126,7 +126,7 @@ def abi_internal_name(extname):
     return f'{extname}_ABI_INTERNAL'
 
 
-def fortran_prototype_has_bigcount(prototype):
+def prototype_has_bigcount(prototype):
     """Should this prototype have a bigcount version?"""
     return any(param.type_name in ('COUNT', 'COUNT_ARRAY', 'DISP', 'DISP_ARRAY')
                for param in prototype.params)

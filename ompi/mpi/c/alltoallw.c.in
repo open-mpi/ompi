@@ -35,8 +35,8 @@
 #include "ompi/runtime/ompi_spc.h"
 
 PROTOTYPE ERROR_CLASS alltoallw(BUFFER sendbuf, COUNT_ARRAY sendcounts,
-                                DISPL_ARRAY sdispls, DATATYPE_ARRAY sendtypes,
-                                BUFFER_OUT recvbuf, COUNT_ARRAY recvcounts, DISPL_ARRAY rdispls,
+                                DISP_ARRAY sdispls, DATATYPE_ARRAY sendtypes,
+                                BUFFER_OUT recvbuf, COUNT_ARRAY recvcounts, DISP_ARRAY rdispls,
                                 DATATYPE_ARRAY recvtypes, COMM comm)
 {
     int i, size, err;

@@ -17,7 +17,7 @@ listed.
 from collections import namedtuple
 import json
 import re
-from ompi_bindings import compiler, consts, util
+from ompi_bindings import consts, util
 from ompi_bindings.fortran_type import FortranType
 from ompi_bindings.parser import SourceTemplate
 
@@ -200,7 +200,7 @@ def print_profiling_rename_macros(templates, out):
         name = util.fortran_f08_name(template.prototype.name)
         out.dump(f'#define {name} P{name}')
         # Check for bigcount version
-        if util.fortran_prototype_has_bigcount(template.prototype):
+        if util.prototype_has_bigcount(template.prototype):
             bigcount_name = util.fortran_f08_name(template.prototype.name, bigcount=True)
             out.dump(f'#define {bigcount_name} P{bigcount_name}')
     out.dump('#endif /* OMPI_BUILD_MPI_PROFILING */')
@@ -257,7 +257,7 @@ def generate_code(args, out):
     for template in templates:
         out.dump()
         print_binding(template.prototype, args.lang, out, template=template, ts=True)
-        if util.fortran_prototype_has_bigcount(template.prototype):
+        if util.prototype_has_bigcount(template.prototype):
             out.dump()
             out.dump('#if OMPI_BIGCOUNT')
             print_binding(template.prototype, args.lang, bigcount=True, out=out, template=template, ts=True)
@@ -274,7 +274,7 @@ def generate_interface(args, out):
         out.dump(f'interface {ext_name}')
         binding = FortranBinding(template.prototype, template=template, out=out, ts=True)
         binding.print_interface()
-        if util.fortran_prototype_has_bigcount(template.prototype):
+        if util.prototype_has_bigcount(template.prototype):
             out.dump()
             binding_c = FortranBinding(template.prototype, out=out, template=template,
                                        bigcount=True, ts=True)

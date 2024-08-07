@@ -56,7 +56,7 @@ class ABIHeaderBuilder:
             # Profiling prototype
             signatures.append(prototype.signature(f'P{base_name}', abi_type='standard',
                                                   mangle_name=mangle_name))
-            if prototype.need_bigcount:
+            if util.prototype_has_bigcount(prototype):
                 signatures.append(prototype.signature(f'{base_name}_c', abi_type='standard',
                                                       enable_count=True,
                                                       mangle_name=mangle_name))
@@ -299,7 +299,7 @@ def ompi_abi(base_name, template, out):
     out.dump(template.prototype.signature(base_name, abi_type='ompi'))
     template.print_body(func_name=base_name, out=out)
     # Check if we need to generate the bigcount interface
-    if template.prototype.need_bigcount:
+    if util.prototype_has_bigcount(template.prototype):
         out.dump('#if OMPI_BIGCOUNT')
         base_name_c = f'{base_name}_c'
         print_profiling_header(base_name_c, out)
@@ -351,7 +351,7 @@ def standard_abi(base_name, template, out):
         out.dump('}')
 
     generate_function(template.prototype, base_name, internal_name)
-    if template.prototype.need_bigcount:
+    if util.prototype_has_bigcount(template.prototype):
         base_name_c = f'{base_name}_c'
         generate_function(template.prototype, base_name_c, internal_name,
                           enable_count=True)

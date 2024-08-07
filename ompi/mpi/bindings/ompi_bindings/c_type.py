@@ -141,7 +141,7 @@ class TypePartitionedCount(Type):
         return 'MPI_Count'
 
 
-@Type.add_type('DISPL_ARRAY')
+@Type.add_type('DISP_ARRAY')
 class TypeDisplArray(Type):
 
     @property

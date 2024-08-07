@@ -37,7 +37,7 @@
 
 
 PROTOTYPE ERROR_CLASS Allgatherv_init(BUFFER sendbuf, INT sendcount, DATATYPE sendtype,
-                        BUFFER_OUT recvbuf, COUNT_ARRAY recvcounts, DISPL_ARRAY displs,
+                        BUFFER_OUT recvbuf, COUNT_ARRAY recvcounts, DISP_ARRAY displs,
                         DATATYPE recvtype, COMM comm,
                         INFO info, REQUEST_INOUT request)
 {

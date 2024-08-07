@@ -50,11 +50,6 @@ class Prototype:
         return_type_text = self.return_type.construct(**kwargs).type_text(enable_count=enable_count)
         return f'{return_type_text} {fn_name}({params})'
 
-    @property
-    def need_bigcount(self):
-        """Check if a bigcount interface is required for a prototype."""
-        return any('COUNT' in param.type_name for param in self.params)
-
 
 def validate_body(body):
     """Validate the body of a template."""

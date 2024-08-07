@@ -546,9 +546,6 @@ docs/schizo-ompi-rst-content
 docs/html
 docs/man
 
-# Generated binding scripts
-ompi/mpi/bindings/ompi_bindings/compiler.py
-
 # Generated C Bindings
 ompi/mpi/c/generated_*.c
 

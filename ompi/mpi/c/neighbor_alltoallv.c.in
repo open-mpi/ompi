@@ -37,9 +37,9 @@
 #include "ompi/runtime/ompi_spc.h"
 
 
-PROTOTYPE ERROR_CLASS Neighbor_alltoallv(BUFFER sendbuf, COUNT_ARRAY sendcounts, DISPL_ARRAY sdispls,
+PROTOTYPE ERROR_CLASS Neighbor_alltoallv(BUFFER sendbuf, COUNT_ARRAY sendcounts, DISP_ARRAY sdispls,
                            DATATYPE sendtype, BUFFER_OUT recvbuf,
-                           COUNT_ARRAY recvcounts, DISPL_ARRAY rdispls,
+                           COUNT_ARRAY recvcounts, DISP_ARRAY rdispls,
                            DATATYPE recvtype, COMM comm)
 {
     int i, err;

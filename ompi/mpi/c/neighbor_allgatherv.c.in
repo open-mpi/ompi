@@ -40,7 +40,7 @@
 
 
 PROTOTYPE ERROR_CLASS Neighbor_allgatherv(BUFFER sendbuf, INT sendcount, DATATYPE sendtype,
-                            BUFFER_OUT recvbuf, COUNT_ARRAY recvcounts, DISPL_ARRAY displs,
+                            BUFFER_OUT recvbuf, COUNT_ARRAY recvcounts, DISP_ARRAY displs,
                             DATATYPE recvtype, COMM comm)
 {
     int in_size, out_size, err;

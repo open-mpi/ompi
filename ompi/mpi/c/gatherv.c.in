@@ -35,7 +35,7 @@
 
 
 PROTOTYPE ERROR_CLASS Gatherv(BUFFER sendbuf, INT sendcount, DATATYPE sendtype,
-                BUFFER_OUT recvbuf, COUNT_ARRAY recvcounts, DISPL_ARRAY displs,
+                BUFFER_OUT recvbuf, COUNT_ARRAY recvcounts, DISP_ARRAY displs,
                 DATATYPE recvtype, INT root, COMM comm)
 {
     int i, size, err;

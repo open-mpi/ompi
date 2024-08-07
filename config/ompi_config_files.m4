@@ -46,7 +46,6 @@ AC_DEFUN([OMPI_CONFIG_FILES],[
         ompi/mpi/fortran/use-mpi-f08/mod/mpi-f08-interfaces.h
         ompi/mpi/fortran/mpiext-use-mpi/Makefile
         ompi/mpi/fortran/mpiext-use-mpi-f08/Makefile
-        ompi/mpi/bindings/ompi_bindings/compiler.py
         ompi/mpi/tool/Makefile
 
         ompi/tools/ompi_info/Makefile
