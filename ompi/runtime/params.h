@@ -192,7 +192,7 @@ OMPI_DECLSPEC extern int ompi_mpi_event_tick_rate;
 OMPI_DECLSPEC extern bool ompi_mpi_yield_when_idle;
 
  /**
- * A integer value specifying verbosity level for communicator management
+ * An integer value specifying verbosity level for communicator management
  * subsystem.
  */
 OMPI_DECLSPEC extern int ompi_comm_verbose_level;

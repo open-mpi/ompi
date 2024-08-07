@@ -315,7 +315,7 @@ static int ompi_comm_ext_cid_new_block (ompi_communicator_t *newcomm, ompi_commu
     opal_process_name_t opal_proc_name;
     bool cid_base_set = false;
     char *tag = NULL;
-    size_t proc_count = 0, rproc_count = 0, cid_base = 0UL, ninfo;
+    size_t proc_count = 0, rproc_count = 0, tproc_count = 0, cid_base = 0UL, ninfo;
     int rc, leader_rank;
     pmix_proc_t *procs;
     void *grpinfo = NULL, *list = NULL;
@@ -338,13 +338,15 @@ static int ompi_comm_ext_cid_new_block (ompi_communicator_t *newcomm, ompi_commu
 
     grpinfo = PMIx_Info_list_start();
     if (NULL == grpinfo) {
-        return OMPI_ERR_OUT_OF_RESOURCE ;
+        rc = OMPI_ERR_OUT_OF_RESOURCE;
+        goto fn_exit;
     }
 
     rc = PMIx_Info_list_add(grpinfo, PMIX_GROUP_ASSIGN_CONTEXT_ID, NULL, PMIX_BOOL);
     if (PMIX_SUCCESS != rc) {
         OPAL_OUTPUT_VERBOSE((10, ompi_comm_output, "PMIx_Info_list_add failed %s %d", PMIx_Error_string(rc), __LINE__));
-        return OMPI_ERR_OUT_OF_RESOURCE ;
+        rc = OMPI_ERR_OUT_OF_RESOURCE;
+        goto fn_exit;
     }
 
     list = PMIx_Info_list_start();
@@ -353,32 +355,34 @@ static int ompi_comm_ext_cid_new_block (ompi_communicator_t *newcomm, ompi_commu
     rc = PMIx_Info_list_add(list, PMIX_GROUP_LOCAL_CID, &c_index, PMIX_SIZE);
     if (PMIX_SUCCESS != rc) {
         OPAL_OUTPUT_VERBOSE((10, ompi_comm_output, "PMIx_Info_list_add failed %s %d", PMIx_Error_string(rc), __LINE__));
-        return OMPI_ERR_OUT_OF_RESOURCE ;
+        rc = OMPI_ERR_OUT_OF_RESOURCE;
+        goto fn_exit;
     }
 
     rc = PMIx_Info_list_convert(list, &darray);
     if (PMIX_SUCCESS != rc) {
         OPAL_OUTPUT_VERBOSE((10, ompi_comm_output, "PMIx_Info_list_convert failed %s %d", PMIx_Error_string(rc), __LINE__));
-        return OMPI_ERR_OUT_OF_RESOURCE ;
+        rc = OMPI_ERR_OUT_OF_RESOURCE;
+        goto fn_exit;
     }
     rc = PMIx_Info_list_add(grpinfo, PMIX_GROUP_INFO, &darray, PMIX_DATA_ARRAY);
     if (PMIX_SUCCESS != rc) {
         OPAL_OUTPUT_VERBOSE((10, ompi_comm_output, "PMIx_Info_list_add failed %s %d", PMIx_Error_string(rc), __LINE__));
-        return OMPI_ERR_OUT_OF_RESOURCE ;
+        PMIX_DATA_ARRAY_DESTRUCT(&darray);
+        rc = OMPI_ERR_OUT_OF_RESOURCE;
+        goto fn_exit;
     }
-    PMIx_Info_list_release(list);
     PMIX_DATA_ARRAY_DESTRUCT(&darray);
-
 
     rc = PMIx_Info_list_convert(grpinfo, &darray);
     if (PMIX_SUCCESS != rc) {
         OPAL_OUTPUT_VERBOSE((10, ompi_comm_output, "PMIx_Info_list_convert failed %s %d", PMIx_Error_string(rc), __LINE__));
-        return OMPI_ERR_OUT_OF_RESOURCE ;
+        rc = OMPI_ERR_OUT_OF_RESOURCE;
+        goto fn_exit;
     }
 
     pinfo = (pmix_info_t*)darray.array;
     ninfo = darray.size;
-    PMIx_Info_list_release(grpinfo);
 
     proc_count = newcomm->c_local_group->grp_proc_count;
     if ( OMPI_COMM_IS_INTER (newcomm) ){
@@ -396,10 +400,11 @@ static int ompi_comm_ext_cid_new_block (ompi_communicator_t *newcomm, ompi_commu
         OPAL_PMIX_CONVERT_NAME(&procs[proc_count+i],&opal_proc_name);
     }
 
+    tproc_count = proc_count + rproc_count;
 
     OPAL_OUTPUT_VERBOSE((10, ompi_comm_output, "calling PMIx_Group_construct - tag %s size %ld ninfo %ld cid_base %ld\n",
-                         tag, proc_count + rproc_count, ninfo, cid_base));
-    rc = PMIx_Group_construct(tag, procs, proc_count + rproc_count, pinfo, ninfo, &results, &nresults);
+                         tag, tproc_count, ninfo, cid_base));
+    rc = PMIx_Group_construct(tag, procs, tproc_count, pinfo, ninfo, &results, &nresults);
     PMIX_DATA_ARRAY_DESTRUCT(&darray);
     if(PMIX_SUCCESS != rc) {
        char msg_string[1024];
@@ -443,7 +448,7 @@ static int ompi_comm_ext_cid_new_block (ompi_communicator_t *newcomm, ompi_commu
     }
 
     OPAL_OUTPUT_VERBOSE((10, ompi_comm_output, "PMIx_Group_construct - tag %s size %ld ninfo %ld cid_base %ld\n",
-                         tag, proc_count + rproc_count, ninfo, cid_base));
+                         tag, tproc_count, ninfo, cid_base));
 
     /* destruct the group */
     rc = PMIx_Group_destruct (tag, NULL, 0);
@@ -468,8 +473,16 @@ fn_exit:
     }
 
     if(NULL != procs) {
-        PMIX_PROC_FREE(procs, proc_count);
+        PMIX_PROC_FREE(procs, tproc_count);
         procs = NULL;
+    }
+
+    if (NULL != grpinfo) {
+        PMIx_Info_list_release(grpinfo);
+    }
+
+    if (NULL != list) {
+        PMIx_Info_list_release(list);
     }
 
     return rc;

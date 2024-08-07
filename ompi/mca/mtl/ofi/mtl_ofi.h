@@ -591,7 +591,7 @@ ompi_mtl_ofi_send_generic(struct mca_mtl_base_module_t *mtl,
         mtl_comm = comm->c_mtl_comm;
         /*
          * if we do not have the local cid for the target receiver,
-         * retrive via the PMIx modex
+         * retrieve via the PMIx modex
          */
         if (mtl_comm->c_index_vec[dest].c_index == 0) {
             ompi_ret = ompi_comm_get_remote_cid(comm, dest, &remote_cid);
