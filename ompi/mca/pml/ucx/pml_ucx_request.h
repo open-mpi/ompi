@@ -157,6 +157,7 @@ int mca_pml_ucx_request_cancel_send(ompi_request_t *req, int flag);
 
 static inline void mca_pml_ucx_request_reset(ompi_request_t *req)
 {
+    OMPI_REQUEST_INIT(req, req->req_persistent);
     req->req_complete          = REQUEST_PENDING;
 }
 
