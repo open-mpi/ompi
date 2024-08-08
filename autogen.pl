@@ -5,7 +5,7 @@
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
 # Copyright (c) 2013-2020 Intel, Inc.  All rights reserved.
-# Copyright (c) 2015-2021 Research Organization for Information Science
+# Copyright (c) 2015-2024 Research Organization for Information Science
 #                         and Technology (RIST).  All rights reserved.
 # Copyright (c) 2015-2022 IBM Corporation.  All rights reserved.
 # Copyright (c) 2020      Amazon.com, Inc. or its affiliates.
@@ -1084,6 +1084,30 @@ sub patch_autotools_output {
         lt_prog_compiler_static_FC='-Bstatic'
         ;;";
     $c =~ s/$search_string/$replace_string/g;
+
+    push(@verbose_out, $indent_str . "Patching configure for Libtool NVIDIA Fortran compiler name\n");
+    $c =~ s/for ac_prog in gfortran f95 fort xlf95 ifort ifc efc pgfortran pgf95 lf95 f90 xlf90 pgf90 epcf90 nagfor/for ac_prog in gfortran f95 fort xlf95 ifort ifc efc pgfortran pgf95 lf95 f90 xlf90 pgf90 epcf90 nagfor nvfortran/g;
+    foreach my $tag (("", "_FC")) {
+        $search_string = 'tcc\*\)
+	# Fabrice Bellard et al\'s Tiny C Compiler
+	lt_prog_compiler_wl'."${tag}".'=\'-Wl,\'
+	lt_prog_compiler_pic'."${tag}".'=\'-fPIC\'
+	lt_prog_compiler_static'."${tag}".'=\'-static\'
+	;;';
+        $replace_string = "nvfortran*)
+	# NVIDIA Fortran compiler
+	lt_prog_compiler_wl${tag}='-Wl,'
+	lt_prog_compiler_pic${tag}='-fPIC'
+	lt_prog_compiler_static${tag}='-Bstatic'
+	;;
+      tcc*)
+	# Fabrice Bellard et al's Tiny C Compiler
+	lt_prog_compiler_wl='-Wl,'
+	lt_prog_compiler_pic='-fPIC'
+	lt_prog_compiler_static='-static'
+	;;";
+        $c =~ s/$search_string/$replace_string/g;
+    }
 
     # Only write out verbose statements and a new configure if the
     # configure content actually changed
