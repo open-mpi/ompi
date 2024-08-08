@@ -293,9 +293,9 @@ int32_t opal_datatype_init(void)
  * Set a breakpoint to this function in your favorite debugger
  * to make it stop on all pack and unpack errors.
  */
-int opal_datatype_safeguard_pointer_debug_breakpoint(const void *actual_ptr, int length,
+int opal_datatype_safeguard_pointer_debug_breakpoint(const void *actual_ptr, size_t length,
                                                      const void *initial_ptr,
-                                                     const opal_datatype_t *pData, int count)
+                                                     const opal_datatype_t *pData, size_t count)
 {
     return 0;
 }

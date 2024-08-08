@@ -137,13 +137,13 @@ static void *opal_datatype_accelerator_memmove(void *dest, const void *src, size
 #define MEM_OP opal_datatype_accelerator_memmove
 #include "opal_datatype_copy.h"
 
-int32_t opal_datatype_copy_content_same_ddt(const opal_datatype_t *datatype, int32_t count,
+int32_t opal_datatype_copy_content_same_ddt(const opal_datatype_t *datatype, size_t count,
                                             char *destination_base, char *source_base)
 {
     ptrdiff_t extent;
-    int32_t (*fct)(const opal_datatype_t *, int32_t, char *, char *);
+    int32_t (*fct)(const opal_datatype_t *, size_t, char *, char *);
 
-    DO_DEBUG(opal_output(0, "opal_datatype_copy_content_same_ddt( %p, %d, dst %p, src %p )\n",
+    DO_DEBUG(opal_output(0, "opal_datatype_copy_content_same_ddt( %p, %zu, dst %p, src %p )\n",
                          (void *) datatype, count, (void *) destination_base,
                          (void *) source_base););
 

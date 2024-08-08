@@ -91,11 +91,11 @@ static void opal_datatype_destruct(opal_datatype_t *datatype)
 
 OBJ_CLASS_INSTANCE(opal_datatype_t, opal_object_t, opal_datatype_construct, opal_datatype_destruct);
 
-opal_datatype_t *opal_datatype_create(int32_t expectedSize)
+opal_datatype_t *opal_datatype_create(size_t expectedSize)
 {
     opal_datatype_t *datatype = (opal_datatype_t *) OBJ_NEW(opal_datatype_t);
 
-    if (expectedSize == -1) {
+    if (expectedSize == (size_t) -1) {
         expectedSize = DT_INCREASE_STACK;
     }
     datatype->desc.length = expectedSize + 1; /* one for the fake elem at the end */
@@ -107,9 +107,9 @@ opal_datatype_t *opal_datatype_create(int32_t expectedSize)
     return datatype;
 }
 
-int32_t opal_datatype_create_desc(opal_datatype_t *datatype, int32_t expectedSize)
+int32_t opal_datatype_create_desc(opal_datatype_t *datatype, size_t expectedSize)
 {
-    if (expectedSize == -1) {
+    if (expectedSize == (size_t) -1) {
         expectedSize = DT_INCREASE_STACK;
     }
     datatype->desc.length = expectedSize + 1; /* one for the fake elem at the end */

@@ -24,7 +24,7 @@
 #include "opal/datatype/opal_datatype.h"
 #include "opal/datatype/opal_datatype_internal.h"
 
-int32_t opal_datatype_create_contiguous(int count, const opal_datatype_t *oldType,
+int32_t opal_datatype_create_contiguous(size_t count, const opal_datatype_t *oldType,
                                         opal_datatype_t **newType)
 {
     opal_datatype_t *pdt;

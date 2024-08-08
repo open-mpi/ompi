@@ -109,7 +109,7 @@ static inline void _contiguous_loop(const dt_elem_desc_t *ELEM, const opal_datat
     *(SPACE) -= _copy_loops;
 }
 
-static inline int32_t _copy_content_same_ddt(const opal_datatype_t *datatype, int32_t count,
+static inline int32_t _copy_content_same_ddt(const opal_datatype_t *datatype, size_t count,
                                              char *destination_base, char *source_base)
 {
     dt_stack_t *pStack;  /* pointer to the position on the stack */
@@ -122,10 +122,10 @@ static inline int32_t _copy_content_same_ddt(const opal_datatype_t *datatype, in
     unsigned char *source = (unsigned char *) source_base,
                   *destination = (unsigned char *) destination_base;
 
-    DO_DEBUG(opal_output(0, "_copy_content_same_ddt( %p, %d, dst %p, src %p )\n", (void *) datatype,
+    DO_DEBUG(opal_output(0, "_copy_content_same_ddt( %p, %zu, dst %p, src %p )\n", (void *) datatype,
                          count, (void *) destination_base, (void *) source_base););
 
-    iov_len_local = (size_t) count * datatype->size;
+    iov_len_local = count * datatype->size;
 
     /* If we have to copy a contiguous datatype then simply
      * do a MEM_OP.
@@ -155,7 +155,7 @@ static inline int32_t _copy_content_same_ddt(const opal_datatype_t *datatype, in
             }
             return 0; /* completed */
         }
-        for (pos_desc = 0; (int32_t) pos_desc < count; pos_desc++) {
+        for (pos_desc = 0; pos_desc < count; pos_desc++) {
             OPAL_DATATYPE_SAFEGUARD_POINTER(destination, datatype->size,
                                             (unsigned char *) destination_base, datatype, count);
             OPAL_DATATYPE_SAFEGUARD_POINTER(source, datatype->size, (unsigned char *) source_base,

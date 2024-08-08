@@ -408,7 +408,7 @@ static int32_t opal_datatype_create_struct(int count, const int *pBlockLength,
     lastDisp = pDisp[0];
     endto = pDisp[0] + lastExtent * lastBlock;
 
-    pdt = opal_datatype_create((int32_t) disp);
+    pdt = opal_datatype_create((size_t) disp);
 
     /* Do again the same loop but now add the elements */
     for (i = 1; i < count; i++) {
