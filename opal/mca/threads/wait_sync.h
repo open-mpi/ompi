@@ -46,6 +46,8 @@ typedef struct ompi_wait_sync_t {
     opal_thread_internal_mutex_t lock;
     struct ompi_wait_sync_t *next;
     struct ompi_wait_sync_t *prev;
+    opal_progress_callback_t progress_cb;
+    opal_atomic_int32_t num_req_need_progress;
     volatile bool signaling;
 } ompi_wait_sync_t;
 
@@ -119,6 +121,8 @@ static inline int sync_wait_st(ompi_wait_sync_t *sync)
             opal_thread_internal_cond_init(&(sync)->condition);    \
             opal_thread_internal_mutex_init(&(sync)->lock, false); \
         }                                                          \
+        (sync)->progress_cb = NULL;                                \
+        (sync)->num_req_need_progress = 0;                         \
     } while (0)
 
 /**
@@ -141,9 +145,10 @@ OPAL_DECLSPEC void opal_threads_base_wait_sync_global_wakeup_mt(int status);
 static inline void wait_sync_update(ompi_wait_sync_t *sync, int updates, int status)
 {
     if (OPAL_LIKELY(OPAL_SUCCESS == status)) {
-        if (0 != (OPAL_THREAD_ADD_FETCH32(&sync->count, -updates))) {
+        if (1 != sync->count && 0 != (OPAL_THREAD_ADD_FETCH32(&sync->count, -updates))) {
             return;
         }
+        sync->count = 0;
     } else {
         /* this is an error path so just use the atomic */
         sync->status = status;

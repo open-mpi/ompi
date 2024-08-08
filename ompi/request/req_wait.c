@@ -31,6 +31,10 @@
 #include "ompi/request/request_default.h"
 #include "ompi/request/grequest.h"
 
+#if OMPI_HAVE_MPI_EXT_CONTINUE
+#include "ompi/mpiext/continue/c/continuation.h"
+#endif /* OMPI_HAVE_MPI_EXT_CONTINUE */
+
 int ompi_request_default_wait(
     ompi_request_t ** req_ptr,
     ompi_status_public_t * status)
@@ -61,6 +65,7 @@ int ompi_request_default_wait(
     if( MPI_STATUS_IGNORE != status ) {
         OMPI_COPY_STATUS(status, req->req_status, false);
     }
+
     if( req->req_persistent ) {
         if( req->req_state == OMPI_REQUEST_INACTIVE ) {
             if (MPI_STATUS_IGNORE != status) {
@@ -68,6 +73,7 @@ int ompi_request_default_wait(
             }
             return OMPI_SUCCESS;
         }
+
         req->req_state = OMPI_REQUEST_INACTIVE;
         return req->req_status.MPI_ERROR;
     }
@@ -94,6 +100,9 @@ int ompi_request_default_wait_any(size_t count,
     int rc = OMPI_SUCCESS;
     ompi_request_t *request=NULL;
     ompi_wait_sync_t sync;
+#if OMPI_HAVE_MPI_EXT_CONTINUE
+    bool have_cont_req = false;
+#endif /* OMPI_HAVE_MPI_EXT_CONTINUE */
 
     if (OPAL_UNLIKELY(0 == count)) {
         *index = MPI_UNDEFINED;
@@ -125,6 +134,13 @@ recheck:
             }
         }
 
+#if OMPI_HAVE_MPI_EXT_CONTINUE
+        if (OMPI_REQUEST_CONT == request->req_type) {
+            have_cont_req = true;
+            ompi_continue_register_request_progress(request, &sync);
+        }
+#endif /* OMPI_HAVE_MPI_EXT_CONTINUE */
+
 #if OPAL_ENABLE_FT_MPI
         if(OPAL_UNLIKELY( ompi_request_is_failed(request) )) {
             completed = i;
@@ -147,6 +163,19 @@ recheck:
     rc = SYNC_WAIT(&sync);
 
   after_sync_wait:
+
+#if OMPI_HAVE_MPI_EXT_CONTINUE
+    if (have_cont_req) {
+        have_cont_req = false;
+        for (i = 0; i < count; i++) {
+            request = requests[i];
+            if (OMPI_REQUEST_CONT == request->req_type) {
+                ompi_continue_deregister_request_progress(request);
+            }
+        }
+    }
+#endif /* OMPI_HAVE_MPI_EXT_CONTINUE */
+
     /* recheck the complete status and clean up the sync primitives.
      * Do it backward to return the earliest complete request to the
      * user.
@@ -181,7 +210,7 @@ recheck:
     if( *index == (int)completed ) {
         /* Only one request has triggered. There was no in-flight
          * completions. Drop the signalled flag so we won't block
-         * in WAIT_SYNC_RELEASE 
+         * in WAIT_SYNC_RELEASE
          */
         WAIT_SYNC_SIGNALLED(&sync);
     }
@@ -257,6 +286,12 @@ recheck:
             }
         }
 
+#if OMPI_HAVE_MPI_EXT_CONTINUE
+        if (OMPI_REQUEST_CONT == request->req_type) {
+            ompi_continue_register_request_progress(request, &sync);
+        }
+#endif /* OMPI_HAVE_MPI_EXT_CONTINUE */
+
 #if OPAL_ENABLE_FT_MPI
         if(OPAL_UNLIKELY( ompi_request_is_failed(request) )) {
             failed++;
@@ -315,6 +350,12 @@ recheck:
             void *_tmp_ptr = &sync;
 
             request = *rptr;
+
+#if OMPI_HAVE_MPI_EXT_CONTINUE
+            if (OMPI_REQUEST_CONT == request->req_type) {
+                ompi_continue_deregister_request_progress(request);
+            }
+#endif /* OMPI_HAVE_MPI_EXT_CONTINUE */
 
             if( request->req_state == OMPI_REQUEST_INACTIVE ) {
                 OMPI_COPY_STATUS(&statuses[i], ompi_status_empty, true);
@@ -379,6 +420,12 @@ recheck:
             void *_tmp_ptr = &sync;
 
             request = *rptr;
+
+#if OMPI_HAVE_MPI_EXT_CONTINUE
+            if (OMPI_REQUEST_CONT == request->req_type) {
+                ompi_continue_deregister_request_progress(request);
+            }
+#endif /* OMPI_HAVE_MPI_EXT_CONTINUE */
 
             if( request->req_state == OMPI_REQUEST_INACTIVE ) {
                 rc = ompi_status_empty.MPI_ERROR;
@@ -498,6 +545,12 @@ int ompi_request_default_wait_some(size_t count,
             }
         }
 
+#if OMPI_HAVE_MPI_EXT_CONTINUE
+        if (OMPI_REQUEST_CONT == request->req_type) {
+            ompi_continue_register_request_progress(request, &sync);
+        }
+#endif /* OMPI_HAVE_MPI_EXT_CONTINUE */
+
 #if OPAL_ENABLE_FT_MPI
         if(OPAL_UNLIKELY( ompi_request_is_failed(request) )) {
             num_requests_done++;
@@ -531,6 +584,12 @@ int ompi_request_default_wait_some(size_t count,
 
         request = *rptr;
 
+#if OMPI_HAVE_MPI_EXT_CONTINUE
+        if (OMPI_REQUEST_CONT == request->req_type) {
+            ompi_continue_deregister_request_progress(request);
+        }
+#endif /* OMPI_HAVE_MPI_EXT_CONTINUE */
+
         if( request->req_state == OMPI_REQUEST_INACTIVE ) {
             continue;
         }
@@ -538,14 +597,14 @@ int ompi_request_default_wait_some(size_t count,
          * a) request was found completed in the first loop
          *    => ( indices[i] == 0 )
          * b) request was completed between first loop and this check
-         *    => ( indices[i] == 1 ) and we can NOT atomically mark the 
+         *    => ( indices[i] == 1 ) and we can NOT atomically mark the
          *    request as pending.
          * c) request wasn't finished yet
-         *    => ( indices[i] == 1 ) and we CAN  atomically mark the 
+         *    => ( indices[i] == 1 ) and we CAN  atomically mark the
          *    request as pending.
          * NOTE that in any case (i >= num_requests_done) as latter grows
          * either slowly (in case of partial completion)
-         * OR in parallel with `i` (in case of full set completion)  
+         * OR in parallel with `i` (in case of full set completion)
          */
         if( !indices[num_active_reqs] ) {
             indices[num_requests_done++] = i;
