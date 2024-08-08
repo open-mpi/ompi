@@ -15,6 +15,7 @@
  * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
  * Copyright (c) 2024      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2024      Advanced Micro Devices, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -30,10 +31,12 @@
 #include "ompi/mca/fcoll/fcoll.h"
 #include "ompi/mca/fcoll/base/fcoll_base_coll_array.h"
 #include "ompi/mca/common/ompio/common_ompio.h"
+#include "ompi/mca/common/ompio/common_ompio_buffer.h"
 #include "ompi/mca/io/io.h"
 #include "ompi/mca/common/ompio/common_ompio_request.h"
 #include "math.h"
 #include "ompi/mca/pml/pml.h"
+#include "opal/mca/accelerator/accelerator.h"
 #include <unistd.h>
 
 #define DEBUG_ON 0
@@ -88,13 +91,12 @@ typedef struct mca_io_ompio_aggregator_data {
         _aggr[_i]->prev_recvtype=(ompi_datatype_t **)_t;          }                                                             \
 }
 
-
-
 static int shuffle_init ( int index, int cycles, int aggregator, int rank, 
                           mca_io_ompio_aggregator_data *data, 
                           ompi_request_t **reqs );
 static int write_init (ompio_file_t *fh, int aggregator, mca_io_ompio_aggregator_data *aggr_data,
-                        int write_chunksize, int write_synchType, ompi_request_t **request);
+                       int write_chunksize, int write_synchType, ompi_request_t **request,
+                       bool is_accelerator_buffer);
 int mca_fcoll_vulcan_break_file_view ( struct iovec *decoded_iov, int iov_count, 
                                         struct iovec *local_iov_array, int local_count, 
                                         struct iovec ***broken_decoded_iovs, int **broken_iov_counts,
@@ -155,6 +157,8 @@ int mca_fcoll_vulcan_file_write_all (struct ompio_file_t *fh,
 
     ompi_count_array_t fview_count_desc;
     ompi_disp_array_t displs_desc;
+    int is_gpu, is_managed;
+    bool use_accelerator_buffer = false;
 
 #if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
     double write_time = 0.0, start_write_time = 0.0, end_write_time = 0.0;
@@ -180,6 +184,11 @@ int mca_fcoll_vulcan_file_write_all (struct ompio_file_t *fh,
         goto exit;
     }
 
+    mca_common_ompio_check_gpu_buf (fh, buf, &is_gpu, &is_managed);
+    if (is_gpu && !is_managed &&
+	fh->f_get_mca_parameter_value ("use_accelerator_buffers", strlen("use_accelerator_buffers"))) {
+	use_accelerator_buffer = true;
+    }
     /* since we want to overlap 2 iterations, define the bytes_per_cycle to be half of what
        the user requested */
     bytes_per_cycle =bytes_per_cycle/2;
@@ -529,13 +538,31 @@ int mca_fcoll_vulcan_file_write_all (struct ompio_file_t *fh,
                 goto exit;
             }
         
-            
-            aggr_data[i]->global_buf       = (char *) malloc (bytes_per_cycle);
-            aggr_data[i]->prev_global_buf  = (char *) malloc (bytes_per_cycle);
-            if (NULL == aggr_data[i]->global_buf || NULL == aggr_data[i]->prev_global_buf){
-                opal_output(1, "OUT OF MEMORY");
-                ret = OMPI_ERR_OUT_OF_RESOURCE;
-                goto exit;
+            if (use_accelerator_buffer) {
+		opal_output_verbose(10, ompi_fcoll_base_framework.framework_output,
+				    "Allocating GPU device buffer for aggregation\n");
+                ret = opal_accelerator.mem_alloc(MCA_ACCELERATOR_NO_DEVICE_ID, (void**)&aggr_data[i]->global_buf,
+                                                 bytes_per_cycle);
+                if (OPAL_SUCCESS != ret) {
+                    opal_output(1, "Could not allocate accelerator memory");
+                    ret = OMPI_ERR_OUT_OF_RESOURCE;
+                    goto exit;
+                }
+                ret = opal_accelerator.mem_alloc(MCA_ACCELERATOR_NO_DEVICE_ID, (void**)&aggr_data[i]->prev_global_buf,
+                                                 bytes_per_cycle);
+                if (OPAL_SUCCESS != ret) {
+                    opal_output(1, "Could not allocate accelerator memory");
+                    ret = OMPI_ERR_OUT_OF_RESOURCE;
+                    goto exit;
+                }
+            } else {
+                aggr_data[i]->global_buf       = (char *) malloc (bytes_per_cycle);
+                aggr_data[i]->prev_global_buf  = (char *) malloc (bytes_per_cycle);
+                if (NULL == aggr_data[i]->global_buf || NULL == aggr_data[i]->prev_global_buf){
+                    opal_output(1, "OUT OF MEMORY");
+                    ret = OMPI_ERR_OUT_OF_RESOURCE;
+                    goto exit;
+                }
             }
         
             aggr_data[i]->recvtype = (ompi_datatype_t **) malloc (fh->f_procs_per_group  * 
@@ -605,7 +632,7 @@ int mca_fcoll_vulcan_file_write_all (struct ompio_file_t *fh,
             start_write_time = MPI_Wtime();
 #endif
             ret = write_init (fh, fh->f_aggr_list[aggr_index], aggr_data[aggr_index],
-                              write_chunksize, write_synch_type, &req_iwrite);
+                              write_chunksize, write_synch_type, &req_iwrite, use_accelerator_buffer);
             if (OMPI_SUCCESS != ret){
                 goto exit;
             }
@@ -645,7 +672,7 @@ int mca_fcoll_vulcan_file_write_all (struct ompio_file_t *fh,
             start_write_time = MPI_Wtime();
 #endif
             ret = write_init (fh, fh->f_aggr_list[aggr_index], aggr_data[aggr_index],
-                              write_chunksize, write_synch_type, &req_iwrite);
+                              write_chunksize, write_synch_type, &req_iwrite, use_accelerator_buffer);
             if (OMPI_SUCCESS != ret){
                 goto exit;
             }
@@ -704,8 +731,13 @@ exit :
                 
                 free (aggr_data[i]->disp_index);
                 free (aggr_data[i]->max_disp_index);
-                free (aggr_data[i]->global_buf);
-                free (aggr_data[i]->prev_global_buf);
+		if (use_accelerator_buffer) {
+		    opal_accelerator.mem_release(MCA_ACCELERATOR_NO_DEVICE_ID, aggr_data[i]->global_buf);
+		    opal_accelerator.mem_release(MCA_ACCELERATOR_NO_DEVICE_ID, aggr_data[i]->prev_global_buf);
+		} else {
+		    free (aggr_data[i]->global_buf);
+		    free (aggr_data[i]->prev_global_buf);
+		}
                 for(l=0;l<aggr_data[i]->procs_per_group;l++){
                     free (aggr_data[i]->blocklen_per_process[l]);
                     free (aggr_data[i]->displs_per_process[l]);
@@ -749,7 +781,8 @@ static int write_init (ompio_file_t *fh,
                        mca_io_ompio_aggregator_data *aggr_data,
                        int write_chunksize,
                        int write_synchType,
-                       ompi_request_t **request )
+                       ompi_request_t **request,
+                       bool is_accelerator_buffer)
 {
     int ret = OMPI_SUCCESS;
     ssize_t ret_temp = 0;
@@ -770,11 +803,20 @@ static int write_init (ompio_file_t *fh,
                                           write_chunksize);
 
         if (1 == write_synchType) {
-            ret = fh->f_fbtl->fbtl_ipwritev(fh, (ompi_request_t *) ompio_req);
-            if(0 > ret) {
-                opal_output (1, "vulcan_write_all: fbtl_ipwritev failed\n");
-                ompio_req->req_ompi.req_status.MPI_ERROR = ret;
-                ompio_req->req_ompi.req_status._ucount = 0;
+            if (is_accelerator_buffer) {
+                ret = mca_common_ompio_file_iwrite_pregen(fh, (ompi_request_t *) ompio_req);
+                if(0 > ret) {
+                    opal_output (1, "vulcan_write_all: mca_common_ompio_iwrite_pregen failed\n");
+                    ompio_req->req_ompi.req_status.MPI_ERROR = ret;
+                    ompio_req->req_ompi.req_status._ucount = 0;
+                }
+            } else {
+                ret = fh->f_fbtl->fbtl_ipwritev(fh, (ompi_request_t *) ompio_req);
+                if(0 > ret) {
+                    opal_output (1, "vulcan_write_all: fbtl_ipwritev failed\n");
+                    ompio_req->req_ompi.req_status.MPI_ERROR = ret;
+                    ompio_req->req_ompi.req_status._ucount = 0;
+                }
             }
         }
         else {

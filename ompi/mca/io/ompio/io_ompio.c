@@ -15,7 +15,7 @@
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2022      Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (c) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -555,6 +555,9 @@ int mca_io_ompio_get_mca_parameter_value ( char *mca_parameter_name, int name_le
     }
     else if ( !strncmp ( mca_parameter_name, "coll_timing_info", name_length )) {
         return mca_io_ompio_coll_timing_info;
+    }
+    else if ( !strncmp (mca_parameter_name, "use_accelerator_buffers", name_length)) {
+	return mca_io_ompio_use_accelerator_buffers;
     }
     else {
         opal_output (1, "Error in mca_io_ompio_get_mca_parameter_value: unknown parameter name");

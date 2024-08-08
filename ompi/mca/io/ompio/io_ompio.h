@@ -14,7 +14,7 @@
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
- * Copyright (c) 2022      Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (c) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
  * Copyright (c) 2024      Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -57,7 +57,7 @@ extern int mca_io_ompio_max_aggregators_ratio;
 extern int mca_io_ompio_aggregators_cutoff_threshold;
 extern int mca_io_ompio_overwrite_amode;
 extern int mca_io_ompio_verbose_info_parsing;
-
+extern int mca_io_ompio_use_accelerator_buffers;
 OMPI_DECLSPEC extern int mca_io_ompio_coll_timing_info;
 
 #define QUEUESIZE 2048
