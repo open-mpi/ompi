@@ -37,7 +37,7 @@ void ompi_file_read_ordered_ts(MPI_Fint *fh, CFI_cdesc_t *x, MPI_Fint *count,
     int c_ierr;
     MPI_File c_fh = PMPI_File_f2c(*fh);
     MPI_Datatype c_datatype, c_type = PMPI_Type_f2c(*datatype);
-    void *buf = x->base_addr;
+    void *buf = OMPI_CFI_BASE_ADDR(x);
     int c_count =  OMPI_FINT_2_INT(*count);
     OMPI_FORTRAN_STATUS_DECLARATION(c_status,c_status2)
 

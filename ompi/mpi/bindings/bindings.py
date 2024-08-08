@@ -31,18 +31,19 @@ def main():
 
     # Fortran set up code
     parser_fortran = subparsers.add_parser('fortran', help='subcommand for generating Fortran code')
-    parser_fortran.add_argument('--prototype-files', nargs='+', help='prototype files to generate code for')
-    parser_fortran.add_argument('--prototypes', required=True, help='JSON prototype file to use')
-    subparsers_fortran = parser_fortran.add_subparsers()
     # Handler for generating actual code
+    subparsers_fortran = parser_fortran.add_subparsers()
     parser_code = subparsers_fortran.add_parser('code', help='generate binding code')
-    parser_code.add_argument('lang', choices=('fortran', 'c'),
-                             help='generate dependent files in C or Fortran')
     parser_code.set_defaults(handler=lambda args, out: fortran.generate_code(args, out))
+    parser_code.add_argument('--lang', choices=('fortran', 'c'),
+                             help='language to generate (only for code subparser)')
     # Handler for generating the Fortran interface files
     parser_interface = subparsers_fortran.add_parser('interface',
                                                      help='generate Fortran interface specifications')
     parser_interface.set_defaults(handler=lambda args, out: fortran.generate_interface(args, out))
+    # The prototype files argument must come last and be specified for both subparsers
+    for f_subparser in [parser_code, parser_interface]:
+        f_subparser.add_argument('--prototype-files', nargs='+', help='prototype files to generate code for')
 
     # C set up code
     parser_c = subparsers.add_parser('c', help='subcommand for generating C code')

@@ -14,6 +14,8 @@
 
 #include <assert.h>
 
+#if OMPI_FORTRAN_HAVE_TS
+
 int ompi_ts_create_datatype(CFI_cdesc_t *cdesc, int oldcount, MPI_Datatype oldtype, MPI_Datatype *newtype)
 {
     const int MAX_RANK = 15; /* Fortran 2008 specifies a maximum rank of 15 */
@@ -134,3 +136,4 @@ size_t ompi_ts_size(CFI_cdesc_t *cdesc) {
     }
     return res;
 }
+#endif /* OMPI_FORTRAN_HAVE_TS */

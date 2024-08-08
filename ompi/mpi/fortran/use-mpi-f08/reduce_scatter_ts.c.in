@@ -37,7 +37,7 @@ void ompi_reduce_scatter_ts(CFI_cdesc_t *x1, CFI_cdesc_t *x2,
     MPI_Datatype c_type;
     MPI_Op c_op;
     int size;
-    char *sendbuf = x1->base_addr, *recvbuf = x2->base_addr;
+    char *sendbuf = OMPI_CFI_BASE_ADDR(x1), *recvbuf = OMPI_CFI_BASE_ADDR(x2);
     OMPI_ARRAY_NAME_DECL(recvcounts);
 
     OMPI_CFI_CHECK_CONTIGUOUS(x1, c_ierr);

@@ -36,7 +36,7 @@ void ompi_ssend_ts(CFI_cdesc_t* x, MPI_Fint *count, MPI_Fint *datatype,
     MPI_Datatype c_datatype, c_type = PMPI_Type_f2c(*datatype);
     MPI_Comm c_comm = PMPI_Comm_f2c (*comm);
 
-    void *buf = x->base_addr;
+    void *buf = OMPI_CFI_BASE_ADDR(x);
     int c_count =  OMPI_FINT_2_INT(*count);
 
     OMPI_CFI_2_C(x, c_count, c_type, c_datatype, c_ierr);

@@ -19,13 +19,11 @@ from ompi_bindings import consts, util
 
 class FortranType(ABC):
 
-    def __init__(self, name, fn_name, bigcount=False, ts=False, count_param=None, **kwargs):
+    def __init__(self, name, fn_name, bigcount=False, count_param=None, **kwargs):
         self.name = name
         self.fn_name = fn_name
         # Generate the bigcount interface version?
         self.bigcount = bigcount
-        # Generate with support for TS 29113?
-        self.ts = ts
         self.count_param = count_param
         self.used_counters = 0
 
@@ -115,9 +113,9 @@ class BufferType(FortranType):
         return f'OMPI_F08_IGNORE_TKR_TYPE, INTENT(IN) :: {self.name}'
 
     def c_parameter(self):
-        if self.ts:
-            return f'CFI_cdesc_t *{self.name}'
-        return f'char *{self.name}'
+        # See fortran/use-mpi-f08/base/ts.h; OMPI_CFI_BUFFER is expanded based
+        # on whether or not the compiler supports TS 29113.
+        return f'OMPI_CFI_BUFFER *{self.name}'
 
 
 @FortranType.add('BUFFER_ASYNC')
@@ -145,9 +143,7 @@ class VBufferType(FortranType):
         return f'OMPI_F08_IGNORE_TKR_TYPE, INTENT(IN) :: {self.name}'
 
     def c_parameter(self):
-        if self.ts:
-            return f'CFI_cdesc_t *{self.name}'
-        return f'char *{self.name}'
+        return f'OMPI_CFI_BUFFER *{self.name}'
 
 
 @FortranType.add('VBUFFER_OUT')
@@ -157,9 +153,7 @@ class VBufferType(FortranType):
         return f'OMPI_F08_IGNORE_TKR_TYPE :: {self.name}'
 
     def c_parameter(self):
-        if self.ts:
-            return f'CFI_cdesc_t *{self.name}'
-        return f'char *{self.name}'
+        return f'OMPI_CFI_BUFFER *{self.name}'
 
 
 @FortranType.add('WBUFFER')
@@ -169,10 +163,7 @@ class WBufferType(FortranType):
         return f'OMPI_F08_IGNORE_TKR_TYPE, INTENT(IN) :: {self.name}'
 
     def c_parameter(self):
-        if self.ts:
-            return f'CFI_cdesc_t *{self.name}'
-        else:
-            return f'char *{self.name}'
+        return f'OMPI_CFI_BUFFER *{self.name}'
 
 
 @FortranType.add('WBUFFER_OUT')
@@ -182,9 +173,7 @@ class WBufferType(FortranType):
         return f'OMPI_F08_IGNORE_TKR_TYPE :: {self.name}'
 
     def c_parameter(self):
-        if self.ts:
-            return f'CFI_cdesc_t *{self.name}'
-        return f'char *{self.name}'
+        return f'OMPI_CFI_BUFFER *{self.name}'
 
 
 @FortranType.add('COUNT')

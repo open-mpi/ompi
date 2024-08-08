@@ -37,7 +37,7 @@ void ompi_iallgatherv_ts(CFI_cdesc_t *x1, MPI_Fint *sendcount, MPI_Fint *sendtyp
     int c_sendcount = 0;
     MPI_Datatype c_sendtype = NULL, c_senddatatype = NULL;
     MPI_Datatype c_recvtype = PMPI_Type_f2c(*recvtype);
-    char *sendbuf = x1->base_addr, *recvbuf = x2->base_addr;
+    char *sendbuf = OMPI_CFI_BASE_ADDR(x1), *recvbuf = OMPI_CFI_BASE_ADDR(x2);
     MPI_Request c_request;
     OMPI_COND_STATEMENT(int size);
     OMPI_ARRAY_NAME_DECL(recvcounts);

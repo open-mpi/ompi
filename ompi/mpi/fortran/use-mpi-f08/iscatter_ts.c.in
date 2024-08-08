@@ -40,7 +40,7 @@ void ompi_iscatter_ts(CFI_cdesc_t *x1, MPI_Fint *sendcount,
     int c_root = OMPI_FINT_2_INT(*root);
     MPI_Datatype c_sendtype = NULL, c_recvtype = NULL, c_recvdatatype = NULL;
     int c_sendcount = 0, c_recvcount = 0;
-    char *sendbuf = x1->base_addr, *recvbuf = x2->base_addr;
+    char *sendbuf = OMPI_CFI_BASE_ADDR(x1), *recvbuf = OMPI_CFI_BASE_ADDR(x2);
     MPI_Request c_request;
 
     if (OMPI_COMM_IS_INTER(c_comm)) {
@@ -95,6 +95,8 @@ void ompi_iscatter_ts(CFI_cdesc_t *x1, MPI_Fint *sendcount,
     c_ierr = PMPI_Iscatter(sendbuf,c_sendcount, c_sendtype,
                            recvbuf, c_recvcount, c_recvdatatype,
                            c_root, c_comm, &c_request);
+
+    /* TODO: Destroy datatypes */
 
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
     if (MPI_SUCCESS == c_ierr) *request = PMPI_Request_c2f(c_request);

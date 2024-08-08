@@ -39,7 +39,7 @@ void ompi_igatherv_ts(CFI_cdesc_t *x1, MPI_Fint *sendcount, MPI_Fint *sendtype,
     int c_root = OMPI_FINT_2_INT(*root);
     MPI_Datatype c_senddatatype = NULL, c_sendtype = NULL, c_recvtype = NULL;
     int c_sendcount = 0;
-    char *sendbuf = x1->base_addr, *recvbuf = x2->base_addr;
+    char *sendbuf = OMPI_CFI_BASE_ADDR(x1), *recvbuf = OMPI_CFI_BASE_ADDR(x2);
     MPI_Request c_request;
     OMPI_ARRAY_NAME_DECL(recvcounts);
     OMPI_ARRAY_NAME_DECL(displs);

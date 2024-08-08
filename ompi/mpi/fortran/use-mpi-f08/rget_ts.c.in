@@ -41,7 +41,7 @@ void ompi_rget_ts(CFI_cdesc_t *x, MPI_Fint *origin_count,
     MPI_Datatype c_origin_datatype, c_origin_type = PMPI_Type_f2c(*origin_datatype);
     MPI_Datatype c_target_datatype = PMPI_Type_f2c(*target_datatype);
     MPI_Win c_win = PMPI_Win_f2c(*win);
-    char *origin_addr = x->base_addr;
+    char *origin_addr = OMPI_CFI_BASE_ADDR(x);
     int c_origin_count = OMPI_INT_2_FINT(*origin_count);
     MPI_Request c_req;
 

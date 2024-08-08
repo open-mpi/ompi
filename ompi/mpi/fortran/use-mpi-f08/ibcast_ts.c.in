@@ -35,7 +35,7 @@ void ompi_ibcast_ts(CFI_cdesc_t* x, MPI_Fint *count, MPI_Fint *datatype,
     MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
     MPI_Datatype c_datatype = NULL, c_type = NULL;
     int c_root = OMPI_FINT_2_INT(*root);
-    void *buffer = x->base_addr;
+    void *buffer = OMPI_CFI_BASE_ADDR(x);
     int c_count = 0;
     MPI_Request c_req;
 

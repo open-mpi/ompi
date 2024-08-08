@@ -38,7 +38,7 @@ void ompi_compare_and_swap_ts(CFI_cdesc_t *x1, CFI_cdesc_t *x2, CFI_cdesc_t *x3,
     int c_ierr;
     MPI_Datatype c_datatype = PMPI_Type_f2c(*datatype);
     MPI_Win c_win = PMPI_Win_f2c(*win);
-    char *origin_addr = x1->base_addr, *compare_addr = x2->base_addr, *result_addr = x3->base_addr;
+    char *origin_addr = OMPI_CFI_BASE_ADDR(x1), *compare_addr = OMPI_CFI_BASE_ADDR(x2), *result_addr = OMPI_CFI_BASE_ADDR(x3);
 
     OMPI_CFI_CHECK_CONTIGUOUS(x1, c_ierr);
     if (MPI_SUCCESS != c_ierr) {

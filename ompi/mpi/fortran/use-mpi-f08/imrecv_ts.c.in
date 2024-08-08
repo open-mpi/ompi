@@ -36,7 +36,7 @@ void ompi_imrecv_ts(CFI_cdesc_t* x, MPI_Fint *count, MPI_Fint *datatype,
     MPI_Datatype c_datatype, c_type = PMPI_Type_f2c(*datatype);
     MPI_Request c_req;
     MPI_Message c_message;
-    void *buf = x->base_addr;
+    void *buf = OMPI_CFI_BASE_ADDR(x);
     int c_count =  OMPI_FINT_2_INT(*count);
 
     c_message = PMPI_Message_f2c(*message);

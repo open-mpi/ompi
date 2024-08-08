@@ -39,7 +39,7 @@ void ompi_isendrecv_replace_ts(CFI_cdesc_t* x, MPI_Fint *count, MPI_Fint *dataty
     MPI_Comm c_comm = PMPI_Comm_f2c (*comm);
 
     MPI_Status c_status;
-    void *buf = x->base_addr;
+    void *buf = OMPI_CFI_BASE_ADDR(x);
     int c_count =  OMPI_FINT_2_INT(*count);
 
     OMPI_CFI_2_C(x, c_count, c_type, c_datatype, c_ierr);

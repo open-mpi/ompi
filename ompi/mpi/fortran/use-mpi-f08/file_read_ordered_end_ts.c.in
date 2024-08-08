@@ -33,7 +33,7 @@ void ompi_file_read_ordered_end_ts(MPI_Fint *fh, CFI_cdesc_t *x,
 {
     int c_ierr;
     MPI_File c_fh = PMPI_File_f2c(*fh);
-    void *buf = x->base_addr;
+    void *buf = OMPI_CFI_BASE_ADDR(x);
     OMPI_FORTRAN_STATUS_DECLARATION(c_status,c_status2)
 
     OMPI_FORTRAN_STATUS_SET_POINTER(c_status,c_status2,status)

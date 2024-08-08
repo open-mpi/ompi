@@ -24,7 +24,7 @@ void ompi_win_detach_ts(MPI_Fint *win, CFI_cdesc_t *x,
 
     c_win = PMPI_Win_f2c(*win);
     if (OMPI_CFI_IS_CONTIGUOUS(x)) {
-         c_ierr = PMPI_Win_detach(c_win, x->base_addr);
+         c_ierr = PMPI_Win_detach(c_win, OMPI_CFI_BASE_ADDR(x));
     } else {
         c_ierr = MPI_ERR_BUFFER;
         OMPI_ERRHANDLER_INVOKE(c_win, c_ierr, FUNC_NAME);

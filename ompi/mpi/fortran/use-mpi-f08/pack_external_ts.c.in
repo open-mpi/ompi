@@ -38,8 +38,8 @@ void ompi_pack_external_ts(char *datarep, CFI_cdesc_t* x1, MPI_Fint *incount,
     int ret, c_ierr;
     char *c_datarep;
     MPI_Datatype c_datatype, c_type = PMPI_Type_f2c(*datatype);
-    void *inbuf = x1->base_addr;
-    char *outbuf = x2->base_addr;
+    void *inbuf = OMPI_CFI_BASE_ADDR(x1);
+    char *outbuf = OMPI_CFI_BASE_ADDR(x2);
     int c_incount = OMPI_FINT_2_INT(*incount);
 
     /* Convert the fortran string */

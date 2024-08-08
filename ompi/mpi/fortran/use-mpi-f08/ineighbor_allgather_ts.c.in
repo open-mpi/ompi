@@ -37,7 +37,7 @@ void ompi_ineighbor_allgather_ts(CFI_cdesc_t *x1, MPI_Fint *sendcount, MPI_Fint 
 {
     int c_ierr;
     MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
-    char *sendbuf = x1->base_addr, *recvbuf = x2->base_addr;
+    char *sendbuf = OMPI_CFI_BASE_ADDR(x1), *recvbuf = OMPI_CFI_BASE_ADDR(x2);
     MPI_Datatype c_senddatatype, c_sendtype = PMPI_Type_f2c(*sendtype);
     int c_sendcount =  OMPI_FINT_2_INT(*sendcount);
     MPI_Datatype c_recvtype = PMPI_Type_f2c(*recvtype);

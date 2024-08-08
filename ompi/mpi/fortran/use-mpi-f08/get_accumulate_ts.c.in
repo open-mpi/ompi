@@ -44,9 +44,9 @@ void ompi_get_accumulate_ts(CFI_cdesc_t *x1, MPI_Fint *origin_count,
     MPI_Datatype c_target_datatype = PMPI_Type_f2c(*target_datatype);
     MPI_Win c_win = PMPI_Win_f2c(*win);
     MPI_Op c_op = PMPI_Op_f2c(*op);
-    char *origin_addr = x1->base_addr;
+    char *origin_addr = OMPI_CFI_BASE_ADDR(x1);
     int c_origin_count = OMPI_INT_2_FINT(*origin_count);
-    char *result_addr = x2->base_addr;
+    char *result_addr = OMPI_CFI_BASE_ADDR(x2);
     int c_result_count = OMPI_INT_2_FINT(*result_count);
 
     OMPI_CFI_2_C(x1, c_origin_count, c_origin_type, c_origin_datatype, c_ierr);

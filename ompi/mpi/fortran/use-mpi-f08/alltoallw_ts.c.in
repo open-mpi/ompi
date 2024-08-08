@@ -28,7 +28,7 @@ PROTOTYPE VOID alltoallw(BUFFER x1, COUNT_ARRAY sendcounts,
     MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
     MPI_Datatype *c_sendtypes = NULL, *c_recvtypes;
     int size, c_ierr;
-    char *sendbuf = x1->base_addr, *recvbuf = x2->base_addr;
+    char *sendbuf = OMPI_CFI_BASE_ADDR(x1), *recvbuf = OMPI_CFI_BASE_ADDR(x2);
 
     OMPI_ARRAY_NAME_DECL(sendcounts);
     OMPI_ARRAY_NAME_DECL(sdispls);

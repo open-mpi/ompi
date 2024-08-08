@@ -12,10 +12,14 @@
 
 #include "ompi_config.h"
 
-#include <ISO_Fortran_binding.h>
-
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/mpi/fortran/base/fint_2_int.h"
+
+#if OMPI_FORTRAN_HAVE_TS
+
+#include <ISO_Fortran_binding.h>
+
+#define OMPI_CFI_BUFFER CFI_cdesc_t
 
 extern int ompi_ts_create_datatype(CFI_cdesc_t *cdesc, int oldcount, MPI_Datatype oldtype, MPI_Datatype *newtype);
 
@@ -24,6 +28,8 @@ extern size_t ompi_ts_size(CFI_cdesc_t *cdesc);
 extern int ompi_ts_copy_back(char *buffer, CFI_cdesc_t *cdesc);
 
 extern int ompi_ts_copy(CFI_cdesc_t *cdesc, char *buffer);
+
+#define OMPI_CFI_BASE_ADDR(x) (x)->base_addr
 
 #define OMPI_CFI_2_C(x, count, type, datatype, rc)                      \
     do {                                                                \
@@ -104,4 +110,47 @@ extern int ompi_ts_copy(CFI_cdesc_t *cdesc, char *buffer);
             rc = MPI_ERR_INTERN;                                        \
         }                                                               \
     } while (0)
-    
+
+#else
+
+/*
+ * Macros for compilers not supporting TS 29113.
+ */
+
+#define OMPI_CFI_BUFFER char
+
+#define OMPI_CFI_BASE_ADDR(x) (x)
+
+#define OMPI_CFI_2_C(x, count, type, datatype, rc)                      \
+    do {                                                                \
+        datatype = type;                                                \
+        rc = MPI_SUCCESS;                                               \
+    } while (0)
+
+#define OMPI_CFI_2_C_ALLOC(x, buffer, count, type, datatype, rc)        \
+    do {                                                                \
+        datatype = type;                                                \
+        buffer = x;                                                     \
+        rc = MPI_SUCCESS;                                               \
+    } while (0)
+
+#define OMPI_CFI_2_C_COPY(x, buffer, count, type, datatype, rc)         \
+    do {                                                                \
+        datatype = type;                                                \
+        buffer = x;                                                     \
+        rc = MPI_SUCCESS;                                               \
+    } while (0)
+
+#define OMPI_C_2_CFI_FREE(x, buffer, count, type, datatype, rc)         \
+    do {} while (0)
+
+#define OMPI_C_2_CFI_COPY(x, buffer, count, type, datatype, rc)         \
+    do {} while (0)
+
+#define OMPI_CFI_IS_CONTIGUOUS(x) 1
+
+#define OMPI_CFI_CHECK_CONTIGUOUS(x, rc)                                \
+    do {                                                                \
+        rc = MPI_SUCCESS;                                               \
+    } while (0)
+#endif /* OMPI_FORTRAN_HAVE_TS */

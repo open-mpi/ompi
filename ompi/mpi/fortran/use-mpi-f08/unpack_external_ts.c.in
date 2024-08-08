@@ -37,8 +37,8 @@ void ompi_unpack_external_ts(char* datarep, CFI_cdesc_t* x1, MPI_Aint *insize,
     int ret, c_ierr;
     char *c_datarep;
     MPI_Datatype c_datatype, c_type = PMPI_Type_f2c(*datatype);
-    char *inbuf = x1->base_addr;
-    void *outbuf = x2->base_addr;
+    char *inbuf = OMPI_CFI_BASE_ADDR(x1);
+    void *outbuf = OMPI_CFI_BASE_ADDR(x2);
     int c_outcount = OMPI_FINT_2_INT(*outcount);
 
     c_type = PMPI_Type_f2c(*datatype);

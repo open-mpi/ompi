@@ -37,7 +37,7 @@ void ompi_scatter_ts(CFI_cdesc_t *x1, MPI_Fint *sendcount,
     MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
     int c_root = OMPI_FINT_2_INT(*root);
     MPI_Datatype c_sendtype = NULL, c_recvtype = NULL, c_recvdatatype = NULL;
-    void *sendbuf = x1->base_addr, *recvbuf = x2->base_addr;
+    void *sendbuf = OMPI_CFI_BASE_ADDR(x1), *recvbuf = OMPI_CFI_BASE_ADDR(x2);
     int c_sendcount = 0, c_recvcount = 0;
 
     if (OMPI_COMM_IS_INTER(c_comm)) {

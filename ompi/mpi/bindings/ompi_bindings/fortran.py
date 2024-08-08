@@ -25,18 +25,16 @@ from ompi_bindings.parser import SourceTemplate
 class FortranBinding:
     """Class for generating the binding for a single function."""
 
-    def __init__(self, prototype, out, template=None, bigcount=False, ts=False):
+    def __init__(self, prototype, out, template=None, bigcount=False):
         # Generate bigcount interface version
         self.bigcount = bigcount
-        # Generate files with support for TS 29113 or not
-        self.ts = ts
         self.fn_name = template.prototype.name
         self.out = out
         self.template = template
         self.parameters = []
         for param in self.template.prototype.params:
             self.parameters.append(param.construct(fn_name=self.fn_name,
-                                                   bigcount=bigcount, ts=ts))
+                                                   bigcount=bigcount))
 
     def dump(self, *pargs, **kwargs):
         """Write to the output file."""
@@ -206,12 +204,10 @@ def print_profiling_rename_macros(templates, out):
     out.dump('#endif /* OMPI_BUILD_MPI_PROFILING */')
 
 
-def print_c_source_header(out, ts=False):
+def print_c_source_header(out):
     """Print the header of the C source file."""
     out.dump(f'/* {consts.GENERATED_MESSAGE} */')
-    if ts:
-        out.dump('#include <ISO_Fortran_binding.h>')
-        out.dump('#include "ts.h"')
+    out.dump('#include "ts.h"')
     out.dump('#include "ompi_config.h"')
     out.dump('#include "mpi.h"')
     out.dump('#include "ompi/errhandler/errhandler.h"')
@@ -223,11 +219,12 @@ def print_c_source_header(out, ts=False):
     out.dump('#include "ompi/win/win.h"')
     out.dump('#include "ompi/file/file.h"')
     out.dump('#include "ompi/errhandler/errhandler.h"')
+    out.dump('#include "ompi/datatype/ompi_datatype.h"')
 
 
-def print_binding(prototype, lang, out, bigcount=False, template=None, ts=False):
+def print_binding(prototype, lang, out, bigcount=False, template=None):
     """Print the binding with or without bigcount."""
-    binding = FortranBinding(prototype, out=out, bigcount=bigcount, template=template, ts=ts)
+    binding = FortranBinding(prototype, out=out, bigcount=bigcount, template=template)
     if lang == 'fortran':
         binding.print_f_source()
     else:
@@ -252,15 +249,15 @@ def generate_code(args, out):
         print_profiling_rename_macros(templates, out)
         out.dump()
     else:
-        print_c_source_header(out, ts=True)
+        print_c_source_header(out)
 
     for template in templates:
         out.dump()
-        print_binding(template.prototype, args.lang, out, template=template, ts=True)
+        print_binding(template.prototype, args.lang, out, template=template)
         if util.prototype_has_bigcount(template.prototype):
             out.dump()
             out.dump('#if OMPI_BIGCOUNT')
-            print_binding(template.prototype, args.lang, bigcount=True, out=out, template=template, ts=True)
+            print_binding(template.prototype, args.lang, bigcount=True, out=out, template=template)
             out.dump('#endif /* OMPI_BIGCOUNT */')
 
 
@@ -272,12 +269,12 @@ def generate_interface(args, out):
     for template in templates:
         ext_name = util.ext_api_func_name(template.prototype.name)
         out.dump(f'interface {ext_name}')
-        binding = FortranBinding(template.prototype, template=template, out=out, ts=True)
+        binding = FortranBinding(template.prototype, template=template, out=out)
         binding.print_interface()
         if util.prototype_has_bigcount(template.prototype):
             out.dump()
             binding_c = FortranBinding(template.prototype, out=out, template=template,
-                                       bigcount=True, ts=True)
+                                       bigcount=True)
             out.dump('#if OMPI_BIGCOUNT')
             binding_c.print_interface()
             out.dump('#endif /* OMPI_BIGCOUNT */')

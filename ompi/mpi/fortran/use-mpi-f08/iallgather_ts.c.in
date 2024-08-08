@@ -36,10 +36,10 @@ void ompi_iallgather_ts(CFI_cdesc_t* x1, MPI_Fint *sendcount, MPI_Fint *sendtype
     MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
     MPI_Request c_req;
     MPI_Datatype c_sendtype = NULL, c_senddatatype = NULL;
-    void *sendbuf = x1->base_addr;
+    void *sendbuf = OMPI_CFI_BASE_ADDR(x1);
     int c_sendcount =  0;
     MPI_Datatype c_recvtype = PMPI_Type_f2c(*recvtype);
-    void *recvbuf = x2->base_addr;
+    void *recvbuf = OMPI_CFI_BASE_ADDR(x2);
     int c_recvcount =  OMPI_FINT_2_INT(*recvcount);
 
     OMPI_CFI_CHECK_CONTIGUOUS(x2, c_ierr);

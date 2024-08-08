@@ -36,7 +36,7 @@ void ompi_allgatherv_ts(CFI_cdesc_t *x1, MPI_Fint *sendcount, MPI_Fint *sendtype
     MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
     int c_sendcount = 0;
     MPI_Datatype c_sendtype = NULL, c_senddatatype = NULL, c_recvtype = PMPI_Type_f2c(*recvtype);
-    char *sendbuf = x1->base_addr, *recvbuf = x2->base_addr;
+    char *sendbuf = OMPI_CFI_BASE_ADDR(x1), *recvbuf = OMPI_CFI_BASE_ADDR(x2);
     OMPI_COND_STATEMENT(int size);
     OMPI_ARRAY_NAME_DECL(recvcounts);
     OMPI_ARRAY_NAME_DECL(displs);

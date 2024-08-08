@@ -35,8 +35,8 @@ void ompi_unpack_ts(CFI_cdesc_t* x1, MPI_Fint *insize, MPI_Fint *position,
     MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
     MPI_Datatype c_datatype, c_type = PMPI_Type_f2c(*datatype);
     OMPI_SINGLE_NAME_DECL(position);
-    char *inbuf = x1->base_addr;
-    void *outbuf = x2->base_addr;
+    char *inbuf = OMPI_CFI_BASE_ADDR(x1);
+    void *outbuf = OMPI_CFI_BASE_ADDR(x2);
     int c_outcount = OMPI_FINT_2_INT(*outcount);
 
     OMPI_CFI_CHECK_CONTIGUOUS(x1, c_ierr);

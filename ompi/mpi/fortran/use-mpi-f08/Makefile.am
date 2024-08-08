@@ -562,10 +562,6 @@ lib@OMPI_LIBMPI_NAME@_usempif08_profile_la_FCFLAGS = \
         -DOMPI_BUILD_MPI_PROFILING=1
 
 
-# Include script and JSON file for ABI generation from a distribution
-# tarball
-EXTRA_DIST = interface.json
-
 #
 # Generate the Fortran bindings and C wrapper functions for bindings with a
 # *.in template.
@@ -575,16 +571,15 @@ if OMPI_GENERATE_BINDINGS
 
 include Makefile.prototype_files
 
-api_f08_generated.F90: interface.json $(prototype_files)
+api_f08_generated.F90: $(prototype_files)
 	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
 	    --builddir $(abs_top_builddir) \
 	    --srcdir $(abs_top_srcdir) \
 	    --output $(abs_builddir)/$@ \
 	    fortran \
-	    --prototype-files $(ready_prototype_files) \
-	    --prototypes $(abs_srcdir)/$< \
 	    code \
-	    fortran
+	    --lang fortran \
+	    --prototype-files $(ready_prototype_files)
 
 # Delete generated file on maintainer-clean
 MAINTAINERCLEANFILES = api_f08_generated.F90

@@ -38,7 +38,7 @@ void ompi_mrecv_ts(CFI_cdesc_t* x, MPI_Fint *count, MPI_Fint *datatype,
     OMPI_FORTRAN_STATUS_DECLARATION(c_status,c_status2)
     MPI_Message c_message = PMPI_Message_f2c(*message);
     MPI_Datatype c_datatype, c_type = PMPI_Type_f2c(*datatype);
-    void *buf = x->base_addr;
+    void *buf = OMPI_CFI_BASE_ADDR(x);
     int c_count =  OMPI_FINT_2_INT(*count);
 
     OMPI_FORTRAN_STATUS_SET_POINTER(c_status,c_status2,status)

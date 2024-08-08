@@ -31,7 +31,7 @@ void ompi_buffer_attach_ts(CFI_cdesc_t *x, MPI_Fint *size, MPI_Fint *ierr)
 {
     int c_ierr;
     if (OMPI_CFI_IS_CONTIGUOUS(x)) {
-        c_ierr = PMPI_Buffer_attach(x->base_addr, OMPI_FINT_2_INT(*size));
+        c_ierr = PMPI_Buffer_attach(OMPI_CFI_BASE_ADDR(x), OMPI_FINT_2_INT(*size));
     } else {
         c_ierr = MPI_ERR_BUFFER;
         OMPI_ERRHANDLER_INVOKE(MPI_COMM_SELF, c_ierr, FUNC_NAME);

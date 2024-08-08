@@ -33,54 +33,31 @@ noinst_LTLIBRARIES = libusempif08_ccode.la
 libusempif08_ccode_la_SOURCES = \
         buffer_detach.c
 
-
-if OMPI_FORTRAN_HAVE_TS
 libusempif08_ccode_la_SOURCES += \
         ts.h \
         ts.c \
-        api_f08_ts_generated.c
-else
-libusempif08_ccode_la_SOURCES += api_f08_generated.c
-endif
+        api_f08_generated.c
 
 #
-# We generate two versions of the C files, one with TS 29113 support and the
-# other without. This ensures that the end user is not required to run the
-# binding scripts in order to generate the specific version for their compiler.
+# api_f08_generated.c should work with all compilers, supporting CFI or TS 29113 support
+# through macros in ts.h and ts.c.
 #
 if OMPI_GENERATE_BINDINGS
 
 include ../Makefile.prototype_files
 
-api_f08_generated.c: ../interface.json $(prototype_files)
+api_f08_generated.c: $(prototype_files)
 	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
 	    --builddir $(abs_top_builddir) \
 	    --srcdir $(abs_top_srcdir) \
 	    --output $(abs_builddir)/$@ \
 	    fortran \
-	    --prototype-files $(ready_prototype_files) \
-	    --prototypes $(abs_srcdir)/$< \
 	    code \
-	    c
-
-api_f08_ts_generated.c: ../interface.json $(prototype_files)
-	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
-	    --builddir $(abs_top_builddir) \
-	    --srcdir $(abs_top_srcdir) \
-	    --output $(abs_builddir)/$@ \
-	    fortran \
-	    --prototype-files $(ready_prototype_files) \
-	    --prototypes $(abs_srcdir)/$< \
-	    code \
-	    c
+	    --lang c \
+	    --prototype-files $(ready_prototype_files)
 
 # Delete generated files on maintainer-clean
-MAINTAINERCLEANFILES = api_f08_generated.c api_f08_ts_generated.c
+MAINTAINERCLEANFILES = api_f08_generated.c
 endif
-
-# Always distribute both versions of the C files
-EXTRA_DIST = \
-        api_f08_generated.c \
-        api_f08_ts_generated.c
 
 endif

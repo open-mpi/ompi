@@ -31,7 +31,7 @@ void ompi_get_address_ts(CFI_cdesc_t *x, MPI_Aint *address, MPI_Fint *ierr)
     int c_ierr;
     MPI_Aint c_address;
 
-    c_ierr = PMPI_Get_address(OMPI_F2C_BOTTOM(x->base_addr), &c_address);
+    c_ierr = PMPI_Get_address(OMPI_F2C_BOTTOM(OMPI_CFI_BASE_ADDR(x)), &c_address);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {

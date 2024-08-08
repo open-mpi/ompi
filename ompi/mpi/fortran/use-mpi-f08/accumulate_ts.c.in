@@ -30,7 +30,7 @@ PROTOTYPE VOID accumulate(BUFFER x, COUNT origin_count,
     MPI_Datatype c_target_datatype = PMPI_Type_f2c(*target_datatype);
     MPI_Win c_win = PMPI_Win_f2c(*win);
     MPI_Op c_op = PMPI_Op_f2c(*op);
-    char *origin_addr = x->base_addr;
+    char *origin_addr = OMPI_CFI_BASE_ADDR(x);
     int c_origin_count = OMPI_INT_2_FINT(*origin_count);
 
     OMPI_CFI_2_C(x, c_origin_count, c_origin_type, c_origin_datatype, c_ierr);

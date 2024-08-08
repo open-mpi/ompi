@@ -35,7 +35,7 @@ void ompi_ialltoallv_ts(CFI_cdesc_t *x1, MPI_Fint *sendcounts, MPI_Fint *sdispls
 {
     int c_ierr;
     MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
-    char *sendbuf = x1->base_addr, *recvbuf = x2->base_addr;
+    char *sendbuf = OMPI_CFI_BASE_ADDR(x1), *recvbuf = OMPI_CFI_BASE_ADDR(x2);
     MPI_Datatype c_sendtype = NULL, c_recvtype = PMPI_Type_f2c(*recvtype);
     MPI_Request c_request;
     OMPI_COND_STATEMENT(int size = OMPI_COMM_IS_INTER(c_comm)?ompi_comm_remote_size(c_comm):ompi_comm_size(c_comm));
@@ -79,6 +79,8 @@ void ompi_ialltoallv_ts(CFI_cdesc_t *x1, MPI_Fint *sendcounts, MPI_Fint *sdispls
                              OMPI_ARRAY_NAME_CONVERT(recvcounts),
                              OMPI_ARRAY_NAME_CONVERT(rdispls),
                              c_recvtype, c_comm, &c_request);
+
+    /* TODO: Destroy datatypes */
 
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
     if (MPI_SUCCESS == c_ierr) *request = PMPI_Request_c2f(c_request);

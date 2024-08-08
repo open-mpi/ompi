@@ -26,7 +26,7 @@ PROTOTYPE VOID alltoall(BUFFER x1, COUNT sendcount, DATATYPE sendtype,
     int c_ierr;
     MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
     MPI_Datatype c_sendtype = NULL, c_recvtype = PMPI_Type_f2c(*recvtype);
-    void *sendbuf = x1->base_addr, *recvbuf = x2->base_addr;
+    void *sendbuf = OMPI_CFI_BASE_ADDR(x1), *recvbuf = OMPI_CFI_BASE_ADDR(x2);
     int c_sendcount = 0, c_recvcount =  OMPI_FINT_2_INT(*recvcount);
 
     if (OMPI_COMM_IS_INTER(c_comm) || !OMPI_IS_FORTRAN_IN_PLACE(sendbuf)) {

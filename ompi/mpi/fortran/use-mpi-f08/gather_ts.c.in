@@ -35,10 +35,10 @@ void ompi_gather_ts(CFI_cdesc_t *x1, MPI_Fint *sendcount, MPI_Fint *sendtype,
     int c_root, c_ierr;
     MPI_Comm c_comm;
     MPI_Datatype c_senddatatype = NULL, c_sendtype = NULL;
-    void *sendbuf = x1->base_addr;
+    void *sendbuf = OMPI_CFI_BASE_ADDR(x1);
     int c_sendcount =  0, c_recvcount = 0;
     MPI_Datatype c_recvtype = NULL;
-    void *recvbuf = x2->base_addr;
+    void *recvbuf = OMPI_CFI_BASE_ADDR(x2);
 
     c_comm = PMPI_Comm_f2c(*comm);
     c_root = OMPI_FINT_2_INT(*root);

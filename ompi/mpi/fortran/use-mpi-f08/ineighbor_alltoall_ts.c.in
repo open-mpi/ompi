@@ -39,7 +39,7 @@ void ompi_ineighbor_alltoall_ts(CFI_cdesc_t *x1, MPI_Fint *sendcount, MPI_Fint *
     MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
     MPI_Request c_req;
     MPI_Datatype c_sendtype, c_recvtype;
-    char *sendbuf = x1->base_addr, *recvbuf = x2->base_addr;
+    char *sendbuf = OMPI_CFI_BASE_ADDR(x1), *recvbuf = OMPI_CFI_BASE_ADDR(x2);
 
     OMPI_CFI_CHECK_CONTIGUOUS(x1, c_ierr);
     if (MPI_SUCCESS != c_ierr) {

@@ -41,7 +41,7 @@ void ompi_ineighbor_alltoallw_ts(CFI_cdesc_t *x1, MPI_Fint *sendcounts,
     MPI_Datatype *c_sendtypes, *c_recvtypes;
     MPI_Request c_request;
     int size, c_ierr;
-    char *sendbuf = x1->base_addr, *recvbuf = x2->base_addr;
+    char *sendbuf = OMPI_CFI_BASE_ADDR(x1), *recvbuf = OMPI_CFI_BASE_ADDR(x2);
     OMPI_ARRAY_NAME_DECL(sendcounts);
     OMPI_ARRAY_NAME_DECL(recvcounts);
 

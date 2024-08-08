@@ -896,6 +896,9 @@ end type test_mpi_handle],
     AM_CONDITIONAL(OMPI_FORTRAN_HAVE_TS,
                    [test $OMPI_FORTRAN_HAVE_TS -eq 1])
     AC_SUBST(OMPI_FORTRAN_HAVE_TS)
+    AC_DEFINE_UNQUOTED([OMPI_FORTRAN_HAVE_TS],
+                       [$OMPI_FORTRAN_HAVE_TS],
+                       [For ompi/mpi/fortran/use-mpi-f08/base/ts.*: whether the compiler supports TS 29113 or not])
 
     AS_IF([test $OMPI_FORTRAN_HAVE_TS -eq 1],
           [OMPI_F08_IGNORE_TKR_TYPE="type(*), dimension(..)"
