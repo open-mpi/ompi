@@ -69,14 +69,14 @@ PROTOTYPE VOID alltoallw(BUFFER x1, COUNT_ARRAY sendcounts,
     sendbuf = (char *) OMPI_F2C_BOTTOM(sendbuf);
     recvbuf = (char *) OMPI_F2C_BOTTOM(recvbuf);
 
-    c_ierr = PMPI_Alltoallw(sendbuf,
-                           OMPI_ARRAY_NAME_CONVERT(sendcounts),
-                           OMPI_ARRAY_NAME_CONVERT(sdispls),
-                           c_sendtypes,
-                           recvbuf,
-                           OMPI_ARRAY_NAME_CONVERT(recvcounts),
-                           OMPI_ARRAY_NAME_CONVERT(rdispls),
-                           c_recvtypes, c_comm);
+    c_ierr = @INNER_CALL@(sendbuf,
+                          OMPI_ARRAY_NAME_CONVERT(sendcounts),
+                          OMPI_ARRAY_NAME_CONVERT(sdispls),
+                          c_sendtypes,
+                          recvbuf,
+                          OMPI_ARRAY_NAME_CONVERT(recvcounts),
+                          OMPI_ARRAY_NAME_CONVERT(rdispls),
+                          c_recvtypes, c_comm);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     OMPI_ARRAY_FINT_2_INT_CLEANUP(sendcounts);

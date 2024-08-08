@@ -49,10 +49,10 @@ PROTOTYPE VOID reduce(BUFFER x1, BUFFER_OUT x2, COUNT count,
     sendbuf = (char *) OMPI_F2C_BOTTOM(sendbuf);
     recvbuf = (char *) OMPI_F2C_BOTTOM(recvbuf);
 
-    c_ierr = PMPI_Reduce(sendbuf, recvbuf,
-                        OMPI_FINT_2_INT(*count),
-                        c_type, c_op,
-                        OMPI_FINT_2_INT(*root),
-                        c_comm);
+    c_ierr = @INNER_CALL@(sendbuf, recvbuf,
+                          OMPI_FINT_2_INT(*count),
+                          c_type, c_op,
+                          OMPI_FINT_2_INT(*root),
+                          c_comm);
    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 }

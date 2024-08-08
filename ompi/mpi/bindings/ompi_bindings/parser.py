@@ -129,11 +129,13 @@ class SourceTemplate:
         for line in self.header:
             out.dump(line)
 
-    def print_body(self, func_name, out):
+    def print_body(self, func_name, out, inner_call=None):
         """Print the body."""
         for line in self.body:
             # FUNC_NAME is used for error messages
             line = line.replace('FUNC_NAME', f'"{func_name}"')
+            if inner_call is not None:
+                line = line.replace('@INNER_CALL@', inner_call)
             if func_name in FUNCTION_BODY_REPLACEMENTS:
                 for key, value in FUNCTION_BODY_REPLACEMENTS[func_name]:
                     line = line.replace(key, value)

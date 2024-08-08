@@ -39,13 +39,13 @@ PROTOTYPE VOID accumulate(BUFFER x, COUNT origin_count,
         OMPI_ERRHANDLER_INVOKE(c_win, c_ierr, FUNC_NAME)
         return;
     }
-    c_ierr = PMPI_Accumulate(OMPI_F2C_BOTTOM(origin_addr),
-                             c_origin_count,
-                             c_origin_datatype,
-                             OMPI_FINT_2_INT(*target_rank),
-                             *target_disp,
-                             OMPI_FINT_2_INT(*target_count),
-                             c_target_datatype, c_op, c_win);
+    c_ierr = @INNER_CALL@(OMPI_F2C_BOTTOM(origin_addr),
+                          c_origin_count,
+                          c_origin_datatype,
+                          OMPI_FINT_2_INT(*target_rank),
+                          *target_disp,
+                          OMPI_FINT_2_INT(*target_count),
+                          c_target_datatype, c_op, c_win);
     if (c_origin_datatype != c_origin_type) {
         ompi_datatype_destroy(&c_origin_datatype);
     }

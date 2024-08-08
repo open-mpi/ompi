@@ -44,9 +44,9 @@ PROTOTYPE VOID send(BUFFER x, COUNT count, DATATYPE datatype, RANK dest,
         OMPI_ERRHANDLER_INVOKE(c_comm, c_ierr, FUNC_NAME);
         return;
     }
-    c_ierr = PMPI_Send(OMPI_F2C_BOTTOM(buf), c_count,
-                      c_datatype, OMPI_FINT_2_INT(*dest),
-                      OMPI_FINT_2_INT(*tag), c_comm);
+    c_ierr = @INNER_CALL@(OMPI_F2C_BOTTOM(buf), c_count,
+                          c_datatype, OMPI_FINT_2_INT(*dest),
+                          OMPI_FINT_2_INT(*tag), c_comm);
     if (c_datatype != c_type) {
         ompi_datatype_destroy(&c_datatype);
     }

@@ -50,10 +50,10 @@ PROTOTYPE VOID recv(BUFFER_OUT x, COUNT count, DATATYPE datatype,
     OMPI_FORTRAN_STATUS_SET_POINTER(c_status,c_status2,status)
 
     /* Call the C function */
-    c_ierr = PMPI_Recv(OMPI_F2C_BOTTOM(buf), c_count,
-                      c_datatype, OMPI_FINT_2_INT(*source),
-                      OMPI_FINT_2_INT(*tag), c_comm,
-                      c_status);
+    c_ierr = @INNER_CALL@(OMPI_F2C_BOTTOM(buf), c_count,
+                          c_datatype, OMPI_FINT_2_INT(*source),
+                          OMPI_FINT_2_INT(*tag), c_comm,
+                          c_status);
 
     if (c_datatype != c_type) {
         ompi_datatype_destroy(&c_datatype);

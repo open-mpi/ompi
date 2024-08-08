@@ -52,12 +52,12 @@ PROTOTYPE VOID alltoall(BUFFER x1, COUNT sendcount, DATATYPE sendtype,
     sendbuf = (char *) OMPI_F2C_BOTTOM(sendbuf);
     recvbuf = (char *) OMPI_F2C_BOTTOM(recvbuf);
 
-    c_ierr = PMPI_Alltoall(sendbuf,
-                           c_sendcount,
-                           c_sendtype,
-                           recvbuf,
-                           c_recvcount,
-                           c_recvtype, c_comm);
+    c_ierr = @INNER_CALL@(sendbuf,
+                          c_sendcount,
+                          c_sendtype,
+                          recvbuf,
+                          c_recvcount,
+                          c_recvtype, c_comm);
 
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 }

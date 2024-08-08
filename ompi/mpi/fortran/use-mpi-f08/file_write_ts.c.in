@@ -39,9 +39,9 @@ PROTOTYPE VOID file_write(FILE fh, BUFFER x, COUNT count,
 
     OMPI_FORTRAN_STATUS_SET_POINTER(c_status,c_status2,status)
 
-    c_ierr = PMPI_File_write(c_fh, OMPI_F2C_BOTTOM(buf),
-                             OMPI_FINT_2_INT(*count),
-                             c_type, c_status);
+    c_ierr = @INNER_CALL@(c_fh, OMPI_F2C_BOTTOM(buf),
+                          OMPI_FINT_2_INT(*count),
+                          c_type, c_status);
 
     if (c_datatype != c_type) {
         ompi_datatype_destroy(&c_datatype);

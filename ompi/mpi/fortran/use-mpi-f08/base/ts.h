@@ -154,3 +154,5 @@ extern int ompi_ts_copy(CFI_cdesc_t *cdesc, char *buffer);
         rc = MPI_SUCCESS;                                               \
     } while (0)
 #endif /* OMPI_FORTRAN_HAVE_TS */
+
+#define OMPI_COUNT_CONVERT(fcount)

@@ -49,6 +49,11 @@ class FortranBinding:
         """Produce the final C func name from base_name."""
         return f'ompi_{self.fn_name}_wrapper_f08{self._fn_name_suffix()}'
 
+    @property
+    def inner_call(self):
+        """Produce the name of the function to call in the body of the C code."""
+        return f'PMPI_{self.fn_name.capitalize()}{self._fn_name_suffix()}'
+
     def _use(self):
         """Determine the Fortran use-statements needed."""
         use = {}
@@ -173,7 +178,7 @@ class FortranBinding:
         c_func = self.c_func_name
         self.dump(f'void {c_func}({parameters});')
         self.dump(f'void {c_func}({parameters})')
-        self.template.print_body(c_func, out=self.out)
+        self.template.print_body(c_func, out=self.out, inner_call=self.inner_call)
 
     def print_interface(self):
         """Output just the Fortran interface for this binding."""

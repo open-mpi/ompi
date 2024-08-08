@@ -37,9 +37,9 @@ PROTOTYPE void irecv(BUFFER_OUT x, COUNT count, DATATYPE datatype,
         return;
     }
 
-    c_ierr = PMPI_Irecv(OMPI_F2C_BOTTOM(buf), c_count,
-                        c_datatype, OMPI_FINT_2_INT(*source),
-                        OMPI_FINT_2_INT(*tag), c_comm, &c_req);
+    c_ierr = @INNER_CALL@(OMPI_F2C_BOTTOM(buf), c_count,
+                          c_datatype, OMPI_FINT_2_INT(*source),
+                          OMPI_FINT_2_INT(*tag), c_comm, &c_req);
     if (c_datatype != c_type) {
         ompi_datatype_destroy(&c_datatype);
     }
