@@ -30,5 +30,11 @@ libopalutilkeyval_la_SOURCES = \
 	keyval_lex.h \
         keyval_lex.l
 
+# flex prior to version 2.6.6 uses the POSIX extension fileno()
+# without providing the proper feature test macro, so
+# we add the _POSIX_C_SOURCE macro here.
+# See https://github.com/westes/flex/issues/263
+libopalutilkeyval_la_CFLAGS = -D_POSIX_C_SOURCE=200809L
+
 maintainer-clean-local:
 	rm -f keyval_lex.c
