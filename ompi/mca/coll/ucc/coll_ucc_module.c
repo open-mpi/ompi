@@ -3,6 +3,7 @@
  * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
  * Copyright (c) 2022-2024 NVIDIA Corporation. All rights reserved.
+ * Copyright (c) 2024      Triad National Security, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -92,7 +93,7 @@ static void mca_coll_ucc_module_construct(mca_coll_ucc_module_t *ucc_module)
     mca_coll_ucc_module_clear(ucc_module);
 }
 
-int mca_coll_ucc_progress(void)
+static int mca_coll_ucc_progress(void)
 {
     ucc_context_progress(mca_coll_ucc_component.ucc_context);
     return OPAL_SUCCESS;
@@ -403,8 +404,8 @@ static int mca_coll_ucc_replace_coll_handlers(mca_coll_ucc_module_t *ucc_module)
 
     UCC_INSTALL_COLL_API(comm, ucc_module, GATHER, gather);
     UCC_INSTALL_COLL_API(comm, ucc_module, GATHERV, gatherv);
-    UCC_INSTALL_COLL_API(comm, ucc_module, REDUCE_SCATTER_BLOCK, reduce_scatter_block);
-    UCC_INSTALL_COLL_API(comm, ucc_module, REDUCE_SCATTER, reduce_scatter);
+    UCC_INSTALL_COLL_API(comm, ucc_module, REDUCE_SCATTER, reduce_scatter_block);
+    UCC_INSTALL_COLL_API(comm, ucc_module, REDUCE_SCATTERV, reduce_scatter);
     UCC_INSTALL_COLL_API(comm, ucc_module, SCATTER, scatter);
     UCC_INSTALL_COLL_API(comm, ucc_module, SCATTERV, scatterv);
 

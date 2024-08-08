@@ -55,13 +55,13 @@ mpi-types.lo: mpi-types.F90
 
 install-exec-hook:
 	@ for file in `ls *.mod`; do \
-	  echo $(INSTALL) $$file $(DESTDIR)$(libdir); \
-	  $(INSTALL) $$file $(DESTDIR)$(libdir); \
+	  echo $(INSTALL) $$file $(DESTDIR)$(OMPI_FORTRAN_MODULEDIR); \
+	  $(INSTALL) $$file $(DESTDIR)$(OMPI_FORTRAN_MODULEDIR); \
 	done
 
 uninstall-local:
 	@ for file in `ls *.mod`; do \
-	  echo rm -f $(DESTDIR)$(libdir)/$$file; \
-	  rm -f $(DESTDIR)$(libdir)/$$file; \
+	  echo rm -f $(DESTDIR)$(OMPI_FORTRAN_MODULEDIR)/$$file; \
+	  rm -f $(DESTDIR)$(OMPI_FORTRAN_MODULEDIR)/$$file; \
 	done
 endif

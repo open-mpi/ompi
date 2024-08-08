@@ -26,19 +26,19 @@
 
 #include <assert.h>
 
-static inline int allred_sched_diss(int rank, int p, int count, MPI_Datatype datatype, ptrdiff_t gap, const void *sendbuf,
+static inline int allred_sched_diss(int rank, int p, size_t count, MPI_Datatype datatype, ptrdiff_t gap, const void *sendbuf,
                                     void *recvbuf, MPI_Op op, char inplace, NBC_Schedule *schedule, void *tmpbuf);
 static inline int allred_sched_recursivedoubling(int rank, int p, const void *sendbuf, void *recvbuf,
-                                                 int count, MPI_Datatype datatype, ptrdiff_t gap, MPI_Op op,
+                                                 size_t count, MPI_Datatype datatype, ptrdiff_t gap, MPI_Op op,
                                                  char inplace, NBC_Schedule *schedule, void *tmpbuf);
-static inline int allred_sched_ring(int rank, int p, int count, MPI_Datatype datatype, const void *sendbuf,
+static inline int allred_sched_ring(int rank, int p, size_t count, MPI_Datatype datatype, const void *sendbuf,
                                     void *recvbuf, MPI_Op op, int size, int ext, NBC_Schedule *schedule,
                                     void *tmpbuf);
-static inline int allred_sched_linear(int rank, int p, const void *sendbuf, void *recvbuf, int count,
+static inline int allred_sched_linear(int rank, int p, const void *sendbuf, void *recvbuf, size_t count,
                                       MPI_Datatype datatype, ptrdiff_t gap, MPI_Op op, int ext, int size,
                                       NBC_Schedule *schedule, void *tmpbuf);
 static inline int allred_sched_redscat_allgather(
-    int rank, int comm_size, int count, MPI_Datatype datatype, ptrdiff_t gap,
+    int rank, int comm_size, size_t count, MPI_Datatype datatype, ptrdiff_t gap,
     const void *sbuf, void *rbuf, MPI_Op op, char inplace,
     NBC_Schedule *schedule, void *tmpbuf, struct ompi_communicator_t *comm);
 
@@ -61,7 +61,7 @@ int NBC_Allreduce_args_compare(NBC_Allreduce_args *a, NBC_Allreduce_args *b, voi
 }
 #endif
 
-static int nbc_allreduce_init(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
+static int nbc_allreduce_init(const void* sendbuf, void* recvbuf, size_t count, MPI_Datatype datatype, MPI_Op op,
                               struct ompi_communicator_t *comm, ompi_request_t ** request,
                               mca_coll_base_module_t *module, bool persistent)
 {
@@ -118,7 +118,7 @@ static int nbc_allreduce_init(const void* sendbuf, void* recvbuf, int count, MPI
   if (libnbc_iallreduce_algorithm == 0) {
     if(p < 4 || size*count < 65536 || !ompi_op_is_commute(op) || inplace) {
       alg = NBC_ARED_BINOMIAL;
-    } else if (count >= nprocs_pof2 && ompi_op_is_commute(op)) {
+    } else if (count >= (size_t) nprocs_pof2 && ompi_op_is_commute(op)) {
       alg = NBC_ARED_REDSCAT_ALLGATHER;
     }
   } else {
@@ -126,7 +126,7 @@ static int nbc_allreduce_init(const void* sendbuf, void* recvbuf, int count, MPI
       alg = NBC_ARED_RING;
     else if (libnbc_iallreduce_algorithm == 2)
       alg = NBC_ARED_BINOMIAL;
-    else if (libnbc_iallreduce_algorithm == 3 && count >= nprocs_pof2 && ompi_op_is_commute(op))
+    else if (libnbc_iallreduce_algorithm == 3 && count >= (size_t) nprocs_pof2 && ompi_op_is_commute(op))
       alg = NBC_ARED_REDSCAT_ALLGATHER;
     else if (libnbc_iallreduce_algorithm == 4)
       alg = NBC_ARED_RDBL;
@@ -221,7 +221,7 @@ static int nbc_allreduce_init(const void* sendbuf, void* recvbuf, int count, MPI
   return OMPI_SUCCESS;
 }
 
-int ompi_coll_libnbc_iallreduce(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
+int ompi_coll_libnbc_iallreduce(const void* sendbuf, void* recvbuf, size_t count, MPI_Datatype datatype, MPI_Op op,
                                 struct ompi_communicator_t *comm, ompi_request_t ** request,
                                 mca_coll_base_module_t *module) {
     int res = nbc_allreduce_init(sendbuf, recvbuf, count, datatype, op,
@@ -240,7 +240,7 @@ int ompi_coll_libnbc_iallreduce(const void* sendbuf, void* recvbuf, int count, M
     return OMPI_SUCCESS;
 }
 
-static int nbc_allreduce_inter_init(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
+static int nbc_allreduce_inter_init(const void* sendbuf, void* recvbuf, size_t count, MPI_Datatype datatype, MPI_Op op,
                                     struct ompi_communicator_t *comm, ompi_request_t ** request,
                                     mca_coll_base_module_t *module, bool persistent)
 {
@@ -304,7 +304,7 @@ static int nbc_allreduce_inter_init(const void* sendbuf, void* recvbuf, int coun
   return OMPI_SUCCESS;
 }
 
-int ompi_coll_libnbc_iallreduce_inter(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
+int ompi_coll_libnbc_iallreduce_inter(const void* sendbuf, void* recvbuf, size_t count, MPI_Datatype datatype, MPI_Op op,
                                       struct ompi_communicator_t *comm, ompi_request_t ** request,
                                       mca_coll_base_module_t *module) {
     int res = nbc_allreduce_inter_init(sendbuf, recvbuf, count, datatype, op,
@@ -358,7 +358,7 @@ int ompi_coll_libnbc_iallreduce_inter(const void* sendbuf, void* recvbuf, int co
   if (vrank == 0) rank = root; \
   if (vrank == root) rank = 0; \
 }
-static inline int allred_sched_diss(int rank, int p, int count, MPI_Datatype datatype, ptrdiff_t gap, const void *sendbuf, void *recvbuf,
+static inline int allred_sched_diss(int rank, int p, size_t count, MPI_Datatype datatype, ptrdiff_t gap, const void *sendbuf, void *recvbuf,
                                     MPI_Op op, char inplace, NBC_Schedule *schedule, void *tmpbuf) {
   int root, vrank, maxr, vpeer, peer, res;
   char *rbuf, *lbuf, *buf;
@@ -516,7 +516,7 @@ static inline int allred_sched_diss(int rank, int p, int count, MPI_Datatype dat
  *
  */
 static inline int allred_sched_recursivedoubling(int rank, int p, const void *sendbuf, void *recvbuf,
-                                                 int count, MPI_Datatype datatype, ptrdiff_t gap, MPI_Op op,
+                                                 size_t count, MPI_Datatype datatype, ptrdiff_t gap, MPI_Op op,
                                                  char inplace, NBC_Schedule *schedule, void *tmpbuf)
 {
   int res, pof2, nprocs_rem, vrank;
@@ -632,7 +632,7 @@ static inline int allred_sched_recursivedoubling(int rank, int p, const void *se
 
 static inline int
 allred_sched_ring(int r, int p,
-                  int count, MPI_Datatype datatype, const void *sendbuf, void *recvbuf,
+                  size_t count, MPI_Datatype datatype, const void *sendbuf, void *recvbuf,
                   MPI_Op op, int size, int ext, NBC_Schedule *schedule, void *tmpbuf)
 {
   int segsize, *segsizes, *segoffsets; /* segment sizes and offsets per segment (number of segments == number of nodes */
@@ -828,7 +828,7 @@ free_and_return:
   return res;
 }
 
-static inline int allred_sched_linear(int rank, int rsize, const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
+static inline int allred_sched_linear(int rank, int rsize, const void *sendbuf, void *recvbuf, size_t count, MPI_Datatype datatype,
 				      ptrdiff_t gap, MPI_Op op, int ext, int size, NBC_Schedule *schedule, void *tmpbuf) {
   int res;
 
@@ -969,7 +969,7 @@ static inline int allred_sched_linear(int rank, int rsize, const void *sendbuf, 
  * Schedule length (rounds): O(\log(p))
  */
 static inline int allred_sched_redscat_allgather(
-    int rank, int comm_size, int count, MPI_Datatype datatype, ptrdiff_t gap,
+    int rank, int comm_size, size_t count, MPI_Datatype datatype, ptrdiff_t gap,
     const void *sbuf, void *rbuf, MPI_Op op, char inplace,
     NBC_Schedule *schedule, void *tmpbuf, struct ompi_communicator_t *comm)
 {
@@ -1179,7 +1179,7 @@ static inline int allred_sched_redscat_allgather(
     return res;
 }
 
-int ompi_coll_libnbc_allreduce_init(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
+int ompi_coll_libnbc_allreduce_init(const void* sendbuf, void* recvbuf, size_t count, MPI_Datatype datatype, MPI_Op op,
                                     struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                                     mca_coll_base_module_t *module) {
     int res = nbc_allreduce_init(sendbuf, recvbuf, count, datatype, op,
@@ -1191,7 +1191,7 @@ int ompi_coll_libnbc_allreduce_init(const void* sendbuf, void* recvbuf, int coun
     return OMPI_SUCCESS;
 }
 
-int ompi_coll_libnbc_allreduce_inter_init(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
+int ompi_coll_libnbc_allreduce_inter_init(const void* sendbuf, void* recvbuf, size_t count, MPI_Datatype datatype, MPI_Op op,
                                           struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                                           mca_coll_base_module_t *module) {
     int res = nbc_allreduce_inter_init(sendbuf, recvbuf, count, datatype, op,

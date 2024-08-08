@@ -82,9 +82,9 @@
  *          step, and send them appropriate messages.
  */
 int
-ompi_coll_base_allgather_intra_recursivedoubling(const void *sbuf, int scount,
+ompi_coll_base_allgather_intra_recursivedoubling(const void *sbuf, size_t scount,
                                                   struct ompi_datatype_t *sdtype,
-                                                  void* rbuf, int rcount,
+                                                  void* rbuf, size_t rcount,
                                                   struct ompi_datatype_t *rdtype,
                                                   struct ompi_communicator_t *comm,
                                                   mca_coll_base_module_t *module)
@@ -224,9 +224,9 @@ ompi_coll_base_allgather_intra_recursivedoubling(const void *sbuf, int scount,
  *         [5]    [5]    [5]    [5]    [5]    [5]
  */
 
-int ompi_coll_base_allgather_intra_sparbit(const void *sbuf, int scount,
+int ompi_coll_base_allgather_intra_sparbit(const void *sbuf, size_t scount,
                                                   struct ompi_datatype_t *sdtype,
-                                                  void* rbuf, int rcount,
+                                                  void* rbuf, size_t rcount,
                                                   struct ompi_datatype_t *rdtype,
                                                   struct ompi_communicator_t *comm,
                                                   mca_coll_base_module_t *module)
@@ -327,9 +327,9 @@ err_hndl:
  *               No additional memory requirements.
  *
  */
-int ompi_coll_base_allgather_intra_ring(const void *sbuf, int scount,
+int ompi_coll_base_allgather_intra_ring(const void *sbuf, size_t scount,
                                          struct ompi_datatype_t *sdtype,
-                                         void* rbuf, int rcount,
+                                         void* rbuf, size_t rcount,
                                          struct ompi_datatype_t *rdtype,
                                          struct ompi_communicator_t *comm,
                                          mca_coll_base_module_t *module)
@@ -453,9 +453,9 @@ int ompi_coll_base_allgather_intra_ring(const void *sbuf, int scount,
  *         [5]    [5]    [5]    [5]    [5]    [5]
  */
 int
-ompi_coll_base_allgather_intra_neighborexchange(const void *sbuf, int scount,
+ompi_coll_base_allgather_intra_neighborexchange(const void *sbuf, size_t scount,
                                                  struct ompi_datatype_t *sdtype,
-                                                 void* rbuf, int rcount,
+                                                 void* rbuf, size_t rcount,
                                                  struct ompi_datatype_t *rdtype,
                                                  struct ompi_communicator_t *comm,
                                                  mca_coll_base_module_t *module)
@@ -567,9 +567,9 @@ ompi_coll_base_allgather_intra_neighborexchange(const void *sbuf, int scount,
 }
 
 
-int ompi_coll_base_allgather_intra_two_procs(const void *sbuf, int scount,
+int ompi_coll_base_allgather_intra_two_procs(const void *sbuf, size_t scount,
                                               struct ompi_datatype_t *sdtype,
-                                              void* rbuf, int rcount,
+                                              void* rbuf, size_t rcount,
                                               struct ompi_datatype_t *rdtype,
                                               struct ompi_communicator_t *comm,
                                               mca_coll_base_module_t *module)
@@ -650,10 +650,10 @@ int ompi_coll_base_allgather_intra_two_procs(const void *sbuf, int scount,
  *    Returns:    - MPI_SUCCESS or error code
  */
 int
-ompi_coll_base_allgather_intra_basic_linear(const void *sbuf, int scount,
+ompi_coll_base_allgather_intra_basic_linear(const void *sbuf, size_t scount,
                                              struct ompi_datatype_t *sdtype,
                                              void *rbuf,
-                                             int rcount,
+                                             size_t rcount,
                                              struct ompi_datatype_t *rdtype,
                                              struct ompi_communicator_t *comm,
                                              mca_coll_base_module_t *module)
@@ -764,9 +764,9 @@ ompi_coll_base_allgather_intra_basic_linear(const void *sbuf, int scount,
  *         [8]    [8]    [8]    [8]    [8]    [8]    [8]    [8]    [8]    [8]
  *         [9]    [9]    [9]    [9]    [9]    [9]    [9]    [9]    [9]    [9]
  */
-int ompi_coll_base_allgather_intra_k_bruck(const void *sbuf, int scount,
+int ompi_coll_base_allgather_intra_k_bruck(const void *sbuf, size_t scount,
                                           struct ompi_datatype_t *sdtype,
-                                          void* rbuf, int rcount,
+                                          void* rbuf, size_t rcount,
                                           struct ompi_datatype_t *rdtype,
                                           struct ompi_communicator_t *comm,
                                           mca_coll_base_module_t *module,
@@ -927,9 +927,9 @@ err_hndl:
  * Caution is needed on larger communicators(n) and data sizes(m), which will
  * result in m*n^2 total traffic and potential network congestion.
  */
-int ompi_coll_base_allgather_direct_messaging(const void *sbuf, int scount,
+int ompi_coll_base_allgather_direct_messaging(const void *sbuf, size_t scount,
                                               struct ompi_datatype_t *sdtype,
-                                              void* rbuf, int rcount,
+                                              void* rbuf, size_t rcount,
                                               struct ompi_datatype_t *rdtype,
                                               struct ompi_communicator_t *comm,
                                               mca_coll_base_module_t *module)

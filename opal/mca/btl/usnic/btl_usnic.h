@@ -35,6 +35,7 @@
 #include "opal/class/opal_hash_table.h"
 #include "opal/util/alfg.h"
 #include "opal/util/event.h"
+#include "opal/util/misc.h"
 #include "opal_stdint.h"
 
 #include "opal/mca/btl/base/base.h"
@@ -64,10 +65,6 @@ static inline uint64_t get_ticks(void)
 
 /* RNG buffer declaration */
 extern opal_rng_buff_t opal_btl_usnic_rand_buff;
-
-#ifndef container_of
-#    define container_of(ptr, type, member) ((type *) (((char *) (ptr)) - offsetof(type, member)))
-#endif
 
 #ifndef max
 #    define max(a, b) (((a) > (b)) ? (a) : (b))

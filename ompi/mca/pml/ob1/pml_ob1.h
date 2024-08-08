@@ -94,6 +94,8 @@ typedef struct mca_pml_ob1_t mca_pml_ob1_t;
 extern mca_pml_ob1_t mca_pml_ob1;
 extern int mca_pml_ob1_output;
 extern bool mca_pml_ob1_matching_protection;
+extern int mca_pml_ob1_accelerator_events_max;
+
 /*
  * PML interface functions.
  */

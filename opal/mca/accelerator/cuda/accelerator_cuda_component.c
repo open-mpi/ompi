@@ -6,6 +6,10 @@
  *                         reserved.
  * Copyright (c) 2017-2022 Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
+ * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2024      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -34,12 +38,14 @@
 #include "opal/sys/atomic.h"
 
 /* Define global variables, used in accelerator_cuda.c */
-CUstream opal_accelerator_cuda_memcpy_stream = NULL;
-opal_mutex_t opal_accelerator_cuda_stream_lock = {0};
+opal_accelerator_cuda_stream_t opal_accelerator_cuda_memcpy_stream = {0};
+int opal_accelerator_cuda_num_devices = 0;
 
 /* Initialization lock for delayed cuda initialization */
 static opal_mutex_t accelerator_cuda_init_lock;
-static bool accelerator_cuda_init_complete = false;
+bool mca_accelerator_cuda_init_complete = false;
+
+float *opal_accelerator_cuda_mem_bw = NULL;
 
 #define STRINGIFY2(x) #x
 #define STRINGIFY(x)  STRINGIFY2(x)
@@ -127,37 +133,71 @@ int opal_accelerator_cuda_delayed_init()
     /* Double checked locking to avoid having to
      * grab locks post lazy-initialization.  */
     opal_atomic_rmb();
-    if (true == accelerator_cuda_init_complete) {
+    if (true == mca_accelerator_cuda_init_complete) {
         return OPAL_SUCCESS;
     }
     OPAL_THREAD_LOCK(&accelerator_cuda_init_lock);
 
     /* If already initialized, just exit */
-    if (true == accelerator_cuda_init_complete) {
+    if (true == mca_accelerator_cuda_init_complete) {
         goto out;
     }
+
+    cuDeviceGetCount(&opal_accelerator_cuda_num_devices);
 
     /* Check to see if this process is running in a CUDA context.  If
      * so, all is good.  If not, then disable registration of memory. */
     result = cuCtxGetCurrent(&cuContext);
     if (CUDA_SUCCESS != result) {
+        result = OPAL_ERR_NOT_INITIALIZED;
         opal_output_verbose(20, opal_accelerator_base_framework.framework_output, "CUDA: cuCtxGetCurrent failed");
         goto out;
     } else if ((CUDA_SUCCESS == result) && (NULL == cuContext)) {
         opal_output_verbose(20, opal_accelerator_base_framework.framework_output, "CUDA: cuCtxGetCurrent returned NULL context");
-        result = OPAL_ERROR;
-        goto out;
+
+        /* create a context for each device */
+        for (int i = 0; i < opal_accelerator_cuda_num_devices; ++i) {
+            CUdevice dev;
+            result = cuDeviceGet(&dev, i);
+            if (CUDA_SUCCESS != result) {
+                opal_output_verbose(20, opal_accelerator_base_framework.framework_output,
+                                    "CUDA: cuDeviceGet failed");
+                result = OPAL_ERROR;
+                goto out;
+            }
+            result = cuDevicePrimaryCtxRetain(&cuContext, dev);
+            if (CUDA_SUCCESS != result) {
+                opal_output_verbose(20, opal_accelerator_base_framework.framework_output,
+                                    "CUDA: cuDevicePrimaryCtxRetain failed");
+                result = OPAL_ERROR;
+                goto out;
+            }
+            if (0 == i) {
+                result = cuCtxPushCurrent(cuContext);
+                if (CUDA_SUCCESS != result) {
+                    opal_output_verbose(20, opal_accelerator_base_framework.framework_output,
+                                        "CUDA: cuCtxPushCurrent failed");
+                    result = OPAL_ERROR;
+                    goto out;
+                }
+            }
+        }
+
+
     } else {
         opal_output_verbose(20, opal_accelerator_base_framework.framework_output, "CUDA: cuCtxGetCurrent succeeded");
     }
 
     /* Create stream for use in cuMemcpyAsync synchronous copies */
-    result = cuStreamCreate(&opal_accelerator_cuda_memcpy_stream, 0);
+    CUstream memcpy_stream;
+    result = cuStreamCreate(&memcpy_stream, 0);
     if (OPAL_UNLIKELY(result != CUDA_SUCCESS)) {
         opal_show_help("help-accelerator-cuda.txt", "cuStreamCreate failed", true,
                        OPAL_PROC_MY_HOSTNAME, result);
         goto out;
     }
+    opal_accelerator_cuda_memcpy_stream.base.stream = malloc(sizeof(CUstream));
+    *(CUstream*)opal_accelerator_cuda_memcpy_stream.base.stream = memcpy_stream;
 
     result = cuMemHostRegister(&checkmem, sizeof(int), 0);
     if (result != CUDA_SUCCESS) {
@@ -165,14 +205,39 @@ int opal_accelerator_cuda_delayed_init()
          * This is not a fatal error. */
         opal_show_help("help-accelerator-cuda.txt", "cuMemHostRegister during init failed", true,
                        &checkmem, sizeof(int), OPAL_PROC_MY_HOSTNAME, result, "checkmem");
-
     } else {
         opal_output_verbose(20, opal_accelerator_base_framework.framework_output,
                             "CUDA: cuMemHostRegister OK on test region");
     }
+
+    /* determine the memory bandwidth */
+    opal_accelerator_cuda_mem_bw = malloc(sizeof(float)*opal_accelerator_cuda_num_devices);
+    for (int i = 0; i < opal_accelerator_cuda_num_devices; ++i) {
+        CUdevice dev;
+        result = cuDeviceGet(&dev, i);
+        if (CUDA_SUCCESS != result) {
+            opal_output_verbose(20, opal_accelerator_base_framework.framework_output,
+                                "CUDA: cuDeviceGet failed");
+            goto out;
+        }
+        int mem_clock_rate; // kHz
+        result = cuDeviceGetAttribute(&mem_clock_rate,
+                                CU_DEVICE_ATTRIBUTE_MEMORY_CLOCK_RATE,
+                                dev);
+        int bus_width; // bit
+        result = cuDeviceGetAttribute(&bus_width,
+                                CU_DEVICE_ATTRIBUTE_GLOBAL_MEMORY_BUS_WIDTH,
+                                dev);
+        /* bw = clock_rate * bus width * 2bit multiplier
+         * See https://forums.developer.nvidia.com/t/memory-clock-rate/107940
+         */
+        float bw = ((float)mem_clock_rate*(float)bus_width*2.0) / 1024 / 1024 / 8;
+        opal_accelerator_cuda_mem_bw[i] = bw;
+    }
+
     result = OPAL_SUCCESS;
     opal_atomic_wmb();
-    accelerator_cuda_init_complete = true;
+    mca_accelerator_cuda_init_complete = true;
 out:
     OPAL_THREAD_UNLOCK(&accelerator_cuda_init_lock);
     return result;
@@ -180,8 +245,9 @@ out:
 
 static opal_accelerator_base_module_t* accelerator_cuda_init(void)
 {
-    OBJ_CONSTRUCT(&opal_accelerator_cuda_stream_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&accelerator_cuda_init_lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&opal_accelerator_cuda_memcpy_stream, opal_accelerator_cuda_stream_t);
+
     /* First check if the support is enabled.  In the case that the user has
      * turned it off, we do not need to continue with any CUDA specific
      * initialization.  Do this after MCA parameter registration. */
@@ -189,7 +255,7 @@ static opal_accelerator_base_module_t* accelerator_cuda_init(void)
         return NULL;
     }
 
-    opal_accelerator_cuda_delayed_init();
+    (void)opal_accelerator_cuda_delayed_init();
     return &opal_accelerator_cuda_module;
 }
 
@@ -205,11 +271,14 @@ static void accelerator_cuda_finalize(opal_accelerator_base_module_t* module)
     if (CUDA_SUCCESS != result) {
         ctx_ok = 0;
     }
-    if ((NULL != opal_accelerator_cuda_memcpy_stream) && ctx_ok) {
-        cuStreamDestroy(opal_accelerator_cuda_memcpy_stream);
+
+    if ((NULL != opal_accelerator_cuda_memcpy_stream.base.stream) && ctx_ok) {
+        OBJ_DESTRUCT(&opal_accelerator_cuda_memcpy_stream);
     }
 
-    OBJ_DESTRUCT(&opal_accelerator_cuda_stream_lock);
+    free(opal_accelerator_cuda_mem_bw);
+    opal_accelerator_cuda_mem_bw = NULL;
+
     OBJ_DESTRUCT(&accelerator_cuda_init_lock);
     return;
 }

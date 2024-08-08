@@ -179,10 +179,10 @@ struct NBC_dummyarg {
 typedef struct {
   NBC_Schedule *schedule;
   void *sendbuf;
-  int sendcount;
+  size_t sendcount;
   MPI_Datatype sendtype;
   void* recvbuf;
-  int recvcount;
+  size_t recvcount;
   MPI_Datatype recvtype;
 } NBC_Alltoall_args;
 int NBC_Alltoall_args_compare(NBC_Alltoall_args *a, NBC_Alltoall_args *b, void *param);
@@ -190,10 +190,10 @@ int NBC_Alltoall_args_compare(NBC_Alltoall_args *a, NBC_Alltoall_args *b, void *
 typedef struct {
   NBC_Schedule *schedule;
   void *sendbuf;
-  int sendcount;
+  size_t sendcount;
   MPI_Datatype sendtype;
   void* recvbuf;
-  int recvcount;
+  size_t recvcount;
   MPI_Datatype recvtype;
 } NBC_Allgather_args;
 int NBC_Allgather_args_compare(NBC_Allgather_args *a, NBC_Allgather_args *b, void *param);
@@ -202,7 +202,7 @@ typedef struct {
   NBC_Schedule *schedule;
   void *sendbuf;
   void* recvbuf;
-  int count;
+  size_t count;
   MPI_Datatype datatype;
   MPI_Op op;
 } NBC_Allreduce_args;
@@ -211,7 +211,7 @@ int NBC_Allreduce_args_compare(NBC_Allreduce_args *a, NBC_Allreduce_args *b, voi
 typedef struct {
   NBC_Schedule *schedule;
   void *buffer;
-  int count;
+  size_t count;
   MPI_Datatype datatype;
   int root;
 } NBC_Bcast_args;
@@ -220,10 +220,10 @@ int NBC_Bcast_args_compare(NBC_Bcast_args *a, NBC_Bcast_args *b, void *param);
 typedef struct {
   NBC_Schedule *schedule;
   void *sendbuf;
-  int sendcount;
+  size_t sendcount;
   MPI_Datatype sendtype;
   void* recvbuf;
-  int recvcount;
+  size_t recvcount;
   MPI_Datatype recvtype;
   int root;
 } NBC_Gather_args;
@@ -233,7 +233,7 @@ typedef struct {
   NBC_Schedule *schedule;
   void *sendbuf;
   void* recvbuf;
-  int count;
+  size_t count;
   MPI_Datatype datatype;
   MPI_Op op;
   int root;
@@ -244,7 +244,7 @@ typedef struct {
   NBC_Schedule *schedule;
   void *sendbuf;
   void* recvbuf;
-  int count;
+  size_t count;
   MPI_Datatype datatype;
   MPI_Op op;
 } NBC_Scan_args;
@@ -253,10 +253,10 @@ int NBC_Scan_args_compare(NBC_Scan_args *a, NBC_Scan_args *b, void *param);
 typedef struct {
   NBC_Schedule *schedule;
   void *sendbuf;
-  int sendcount;
+  size_t sendcount;
   MPI_Datatype sendtype;
   void* recvbuf;
-  int recvcount;
+  size_t recvcount;
   MPI_Datatype recvtype;
   int root;
 } NBC_Scatter_args;
@@ -506,7 +506,7 @@ static inline int NBC_Type_intrinsic(MPI_Datatype type) {
 }
 
 /* let's give a try to inline functions */
-static inline int NBC_Copy(const void *src, int srccount, MPI_Datatype srctype, void *tgt, int tgtcount, MPI_Datatype tgttype, MPI_Comm comm) {
+static inline int NBC_Copy(const void *src, size_t srccount, MPI_Datatype srctype, void *tgt, size_t tgtcount, MPI_Datatype tgttype, MPI_Comm comm) {
   int res;
 
   res = ompi_datatype_sndrcv(src, srccount, srctype, tgt, tgtcount, tgttype);
@@ -518,7 +518,7 @@ static inline int NBC_Copy(const void *src, int srccount, MPI_Datatype srctype, 
   return OMPI_SUCCESS;
 }
 
-static inline int NBC_Unpack(void *src, int srccount, MPI_Datatype srctype, void *tgt, MPI_Comm comm) {
+static inline int NBC_Unpack(void *src, size_t srccount, MPI_Datatype srctype, void *tgt, MPI_Comm comm) {
   MPI_Aint size, pos;
   int res;
   ptrdiff_t ext, lb;

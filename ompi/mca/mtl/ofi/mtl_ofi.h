@@ -24,6 +24,7 @@
 #include "ompi/mca/mtl/mtl.h"
 #include "ompi/mca/mtl/base/base.h"
 #include "opal/datatype/opal_convertor.h"
+#include "opal/util/misc.h"
 #include "opal/util/show_help.h"
 #include "opal/util/printf.h"
 

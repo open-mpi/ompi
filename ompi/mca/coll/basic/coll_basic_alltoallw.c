@@ -45,7 +45,7 @@
  * and count) to send the data to the other.
  */
 static int
-mca_coll_basic_alltoallw_intra_inplace(const void *rbuf, const int *rcounts, const int *rdisps,
+mca_coll_basic_alltoallw_intra_inplace(const void *rbuf, ompi_count_array_t rcounts, ompi_disp_array_t rdisps,
                                        struct ompi_datatype_t * const *rdtypes,
                                        struct ompi_communicator_t *comm,
                                        mca_coll_base_module_t *module)
@@ -79,7 +79,7 @@ mca_coll_basic_alltoallw_intra_inplace(const void *rbuf, const int *rcounts, con
 #else
         opal_datatype_type_size(&rdtypes[right]->super, &packed_size);
 #endif  /* OPAL_ENABLE_HETEROGENEOUS_SUPPORT */
-        packed_size *= rcounts[right];
+        packed_size *= ompi_count_array_get(rcounts, right);
         max_size = packed_size > max_size ? packed_size : max_size;
     }
 
@@ -97,29 +97,31 @@ mca_coll_basic_alltoallw_intra_inplace(const void *rbuf, const int *rcounts, con
         left  = (rank + size - i) % size;
 
         ompi_datatype_type_size(rdtypes[right], &msg_size_right);
-        msg_size_right *= rcounts[right];
+        msg_size_right *= ompi_count_array_get(rcounts, right);
 
         ompi_datatype_type_size(rdtypes[left], &msg_size_left);
-        msg_size_left *= rcounts[left];
+        msg_size_left *= ompi_count_array_get(rcounts, left);
 
         if( 0 != msg_size_right ) {  /* nothing to exchange with the peer on the right */
             ompi_proc_t *right_proc = ompi_comm_peer_lookup(comm, right);
             opal_convertor_clone(right_proc->super.proc_convertor, &convertor, 0);
-            opal_convertor_prepare_for_send(&convertor, &rdtypes[right]->super, rcounts[right],
-                                            (char *) rbuf + rdisps[right]);
+            opal_convertor_prepare_for_send(&convertor, &rdtypes[right]->super, ompi_count_array_get(rcounts, right),
+                                            (char *) rbuf + ompi_disp_array_get(rdisps, right));
             packed_size = max_size;
             err = opal_convertor_pack(&convertor, &iov, &iov_count, &packed_size);
             if (1 != err) { goto error_hndl; }
 
             /* Receive data from the right */
-            err = MCA_PML_CALL(irecv ((char *) rbuf + rdisps[right], rcounts[right], rdtypes[right],
+            err = MCA_PML_CALL(irecv ((char *) rbuf + ompi_disp_array_get(rdisps, right),
+                                      ompi_count_array_get(rcounts, right), rdtypes[right],
                                       right, MCA_COLL_BASE_TAG_ALLTOALLW, comm, &req));
             if (MPI_SUCCESS != err) { goto error_hndl; }
         }
 
         if( (left != right) && (0 != msg_size_left) ) {
             /* Send data to the left */
-            err = MCA_PML_CALL(send ((char *) rbuf + rdisps[left], rcounts[left], rdtypes[left],
+            err = MCA_PML_CALL(send ((char *) rbuf + ompi_disp_array_get(rdisps, left),
+                                     ompi_count_array_get(rcounts, left), rdtypes[left],
                                      left, MCA_COLL_BASE_TAG_ALLTOALLW, MCA_PML_BASE_SEND_STANDARD,
                                      comm));
             if (MPI_SUCCESS != err) { goto error_hndl; }
@@ -128,7 +130,8 @@ mca_coll_basic_alltoallw_intra_inplace(const void *rbuf, const int *rcounts, con
             if (MPI_SUCCESS != err) { goto error_hndl; }
 
             /* Receive data from the left */
-            err = MCA_PML_CALL(irecv ((char *) rbuf + rdisps[left], rcounts[left], rdtypes[left],
+            err = MCA_PML_CALL(irecv ((char *) rbuf + ompi_disp_array_get(rdisps, left),
+                                      ompi_count_array_get(rcounts, left), rdtypes[left],
                                       left, MCA_COLL_BASE_TAG_ALLTOALLW, comm, &req));
             if (MPI_SUCCESS != err) { goto error_hndl; }
         }
@@ -163,9 +166,9 @@ mca_coll_basic_alltoallw_intra_inplace(const void *rbuf, const int *rcounts, con
  *	Returns:	- MPI_SUCCESS or an MPI error code
  */
 int
-mca_coll_basic_alltoallw_intra(const void *sbuf, const int *scounts, const int *sdisps,
+mca_coll_basic_alltoallw_intra(const void *sbuf, ompi_count_array_t scounts, ompi_disp_array_t sdisps,
                                struct ompi_datatype_t * const *sdtypes,
-                               void *rbuf, const int *rcounts, const int *rdisps,
+                               void *rbuf, ompi_count_array_t rcounts, ompi_disp_array_t rdisps,
                                struct ompi_datatype_t * const *rdtypes,
                                struct ompi_communicator_t *comm,
                                mca_coll_base_module_t *module)
@@ -185,11 +188,11 @@ mca_coll_basic_alltoallw_intra(const void *sbuf, const int *scounts, const int *
 
     /* simple optimization */
 
-    psnd = ((char *) sbuf) + sdisps[rank];
-    prcv = ((char *) rbuf) + rdisps[rank];
+    psnd = ((char *) sbuf) + ompi_disp_array_get(sdisps, rank);
+    prcv = ((char *) rbuf) + ompi_disp_array_get(rdisps, rank);
 
-    err = ompi_datatype_sndrcv(psnd, scounts[rank], sdtypes[rank],
-                               prcv, rcounts[rank], rdtypes[rank]);
+    err = ompi_datatype_sndrcv(psnd, ompi_count_array_get(scounts, rank), sdtypes[rank],
+                               prcv, ompi_count_array_get(rcounts, rank), rdtypes[rank]);
     if (MPI_SUCCESS != err) {
         return err;
     }
@@ -211,13 +214,13 @@ mca_coll_basic_alltoallw_intra(const void *sbuf, const int *scounts, const int *
     for (i = 0; i < size; ++i) {
         size_t msg_size;
         ompi_datatype_type_size(rdtypes[i], &msg_size);
-        msg_size *= rcounts[i];
+        msg_size *= ompi_count_array_get(rcounts, i);
 
         if (i == rank || 0 == msg_size)
             continue;
 
-        prcv = ((char *) rbuf) + rdisps[i];
-        err = MCA_PML_CALL(irecv_init(prcv, rcounts[i], rdtypes[i],
+        prcv = ((char *) rbuf) + ompi_disp_array_get(rdisps, i);
+        err = MCA_PML_CALL(irecv_init(prcv, ompi_count_array_get(rcounts, i), rdtypes[i],
                                       i, MCA_COLL_BASE_TAG_ALLTOALLW, comm,
                                       preq++));
         ++nreqs;
@@ -232,13 +235,13 @@ mca_coll_basic_alltoallw_intra(const void *sbuf, const int *scounts, const int *
     for (i = 0; i < size; ++i) {
         size_t msg_size;
         ompi_datatype_type_size(sdtypes[i], &msg_size);
-        msg_size *= scounts[i];
+        msg_size *= ompi_count_array_get(scounts, i);
 
         if (i == rank || 0 == msg_size)
             continue;
 
-        psnd = ((char *) sbuf) + sdisps[i];
-        err = MCA_PML_CALL(isend_init(psnd, scounts[i], sdtypes[i],
+        psnd = ((char *) sbuf) + ompi_disp_array_get(sdisps, i);
+        err = MCA_PML_CALL(isend_init(psnd, ompi_count_array_get(scounts, i), sdtypes[i],
                                       i, MCA_COLL_BASE_TAG_ALLTOALLW,
                                       MCA_PML_BASE_SEND_STANDARD, comm,
                                       preq++));
@@ -277,9 +280,9 @@ mca_coll_basic_alltoallw_intra(const void *sbuf, const int *scounts, const int *
  *	Returns:	- MPI_SUCCESS or an MPI error code
  */
 int
-mca_coll_basic_alltoallw_inter(const void *sbuf, const int *scounts, const int *sdisps,
+mca_coll_basic_alltoallw_inter(const void *sbuf, ompi_count_array_t scounts, ompi_disp_array_t sdisps,
                                struct ompi_datatype_t * const *sdtypes,
-                               void *rbuf, const int *rcounts, const int *rdisps,
+                               void *rbuf, ompi_count_array_t rcounts, ompi_disp_array_t rdisps,
                                struct ompi_datatype_t * const *rdtypes,
                                struct ompi_communicator_t *comm,
                                mca_coll_base_module_t *module)
@@ -300,13 +303,13 @@ mca_coll_basic_alltoallw_inter(const void *sbuf, const int *scounts, const int *
     for (i = 0; i < size; ++i) {
         size_t msg_size;
         ompi_datatype_type_size(rdtypes[i], &msg_size);
-        msg_size *= rcounts[i];
+        msg_size *= ompi_count_array_get(rcounts, i);
 
         if (0 == msg_size)
             continue;
 
-        prcv = ((char *) rbuf) + rdisps[i];
-        err = MCA_PML_CALL(irecv_init(prcv, rcounts[i], rdtypes[i],
+        prcv = ((char *) rbuf) + ompi_disp_array_get(rdisps, i);
+        err = MCA_PML_CALL(irecv_init(prcv, ompi_count_array_get(rcounts, i), rdtypes[i],
                                       i, MCA_COLL_BASE_TAG_ALLTOALLW,
                                       comm, preq++));
         ++nreqs;
@@ -320,13 +323,13 @@ mca_coll_basic_alltoallw_inter(const void *sbuf, const int *scounts, const int *
     for (i = 0; i < size; ++i) {
         size_t msg_size;
         ompi_datatype_type_size(sdtypes[i], &msg_size);
-        msg_size *= scounts[i];
+        msg_size *= ompi_count_array_get(scounts, i);
 
         if (0 == msg_size)
             continue;
 
-        psnd = ((char *) sbuf) + sdisps[i];
-        err = MCA_PML_CALL(isend_init(psnd, scounts[i], sdtypes[i],
+        psnd = ((char *) sbuf) + ompi_disp_array_get(sdisps, i);
+        err = MCA_PML_CALL(isend_init(psnd, ompi_count_array_get(scounts, i), sdtypes[i],
                                       i, MCA_COLL_BASE_TAG_ALLTOALLW,
                                       MCA_PML_BASE_SEND_STANDARD, comm,
                                       preq++));

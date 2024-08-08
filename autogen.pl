@@ -1429,7 +1429,12 @@ if (-f ".gitmodules") {
         }
 
         if (!$happy) {
-            print("    ==> ERROR: Missing submodule\n\nThe submodule \"$path\" is missing.\n\n");
+                print("    ==> ERROR: Missing
+
+The submodule \"$path\" is missing.
+
+Perhaps you forgot to \"git clone --recursive ...\", or you need to
+\"git submodule update --init --recursive\"...?\n\n");
             exit(1);
         }
     }

@@ -23,7 +23,7 @@ message-passing programs that would be efficient, flexible, and
 portable.
 
 The outcome, known as the MPI Standard, was first published in 1993; its
-most recent version (MPI-4.0) was published in June 2021. Open MPI
+most recent version (MPI-4.1) was published in November 2023. Open MPI
 includes all MPI |mpi_standard_version|-compliant routines.
 
 For more information about Open MPI, see https://www.open-mpi.org.

@@ -111,7 +111,7 @@ INPUT PARAMETERS
 OUTPUT PARAMETERS
 -----------------
 * ``recvbuf``: Address of receive buffer (choice).
-* ``request``: Request (handle, non-blocking only).
+* ``request``: Request (handle, non-blocking and persistent only).
 * ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
@@ -134,7 +134,7 @@ executed n calls to
      MPI_Gather(sendbuf, sendcount, sendtype, recvbuf, recvcount,
                 recvtype, root, comm);
 
-     // for root = 0 , ..., n-1.
+     // for root = 0, ..., n-1.
 
 The rules for correct usage of :ref:`MPI_Allgather`
 are easily found from the corresponding rules for :ref:`MPI_Gather`.
@@ -171,10 +171,10 @@ identical to the case in which all processes executed *n* calls to
 
 .. code-block:: c
 
-      MPI_Allgather( MPI_IN_PLACE, 0, MPI_DATATYPE_NULL, recvbuf,
-                     recvcount, recvtype, root, comm )
+      MPI_Gather(MPI_IN_PLACE, 0, MPI_DATATYPE_NULL, recvbuf,
+                 recvcount, recvtype, root, comm);
 
-      // for root =0, ... , n-1.
+      // for root = 0, ..., n-1.
 
 Note that MPI_IN_PLACE is a special kind of value; it has the same
 restrictions on its use as MPI_BOTTOM.

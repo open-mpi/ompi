@@ -21,6 +21,7 @@
  * Copyright (c) 2018      Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2022      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -247,4 +248,27 @@ int ompi_request_persistent_noop_create(ompi_request_t** request)
 
     *request = req;
     return OMPI_SUCCESS;
+}
+
+bool ompi_request_check_same_instance(ompi_request_t** requests,
+                                      int count)
+{
+    ompi_instance_t* base_instance = NULL;
+    ompi_request_t *req;
+
+    for(int idx = 0; idx < count; idx++ ) {
+        req = requests[idx];
+        if(OMPI_REQUEST_NULL == req->req_type)  /* predefined requests are generic */
+            continue;
+        /* Only PML requests have support for MPI sessions */
+        if(OMPI_REQUEST_PML != req->req_type)
+            continue;
+        if(NULL == base_instance) {
+            base_instance = req->req_mpi_object.comm->instance;
+            continue;
+        }
+        if(base_instance != req->req_mpi_object.comm->instance)
+            return false;
+    }
+    return true;
 }

@@ -1,5 +1,8 @@
 /*
  * Copyright (c) 2022-2023  Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (c) 2024      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  *
  * $COPYRIGHT$
  *
@@ -41,7 +44,7 @@ typedef struct {
 } opal_accelerator_rocm_component_t;
 
 OPAL_DECLSPEC extern opal_accelerator_rocm_component_t mca_accelerator_rocm_component;
-OPAL_DECLSPEC extern opal_accelerator_base_module_t opal_accelerator_rocm_module;
+extern opal_accelerator_base_module_t opal_accelerator_rocm_module;
 
 struct opal_accelerator_rocm_stream_t {
     opal_accelerator_stream_t base;
@@ -67,12 +70,14 @@ struct opal_accelerator_rocm_ipc_event_handle_t {
 typedef struct opal_accelerator_rocm_ipc_event_handle_t opal_accelerator_rocm_ipc_event_handle_t;
 OBJ_CLASS_DECLARATION(opal_accelerator_rocm_ipc_event_handle_t);
 
-OPAL_DECLSPEC extern hipStream_t opal_accelerator_rocm_MemcpyStream;
-OPAL_DECLSPEC extern int opal_accelerator_rocm_memcpy_async;
-OPAL_DECLSPEC extern int opal_accelerator_rocm_verbose;
-OPAL_DECLSPEC extern size_t opal_accelerator_rocm_memcpyH2D_limit;
-OPAL_DECLSPEC extern size_t opal_accelerator_rocm_memcpyD2H_limit;
+extern hipStream_t *opal_accelerator_rocm_MemcpyStream;
+extern int opal_accelerator_rocm_memcpy_async;
+extern int opal_accelerator_rocm_verbose;
+extern size_t opal_accelerator_rocm_memcpyH2D_limit;
+extern size_t opal_accelerator_rocm_memcpyD2H_limit;
+extern int opal_accelerator_rocm_num_devices;
+extern float *opal_accelerator_rocm_mem_bw;
 
-OPAL_DECLSPEC extern int opal_accelerator_rocm_lazy_init(void);
+extern int opal_accelerator_rocm_lazy_init(void);
 
 #endif

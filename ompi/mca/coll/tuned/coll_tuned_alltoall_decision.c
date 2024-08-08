@@ -5,6 +5,7 @@
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -115,21 +116,22 @@ int ompi_coll_tuned_alltoall_intra_check_forced_init (coll_tuned_force_algorithm
                                       MCA_BASE_VAR_SCOPE_ALL,
                                       &coll_tuned_alltoall_chain_fanout);
 
+    int deprecated_mca_params = -1;
     (void) mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
                                            "alltoall_large_msg",
                                            "use pairwise exchange algorithm for messages larger than this value",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_DEPRECATED,
                                            OPAL_INFO_LVL_6,
                                            MCA_BASE_VAR_SCOPE_READONLY,
-                                           &ompi_coll_tuned_alltoall_large_msg);
+                                           &deprecated_mca_params);
 
     (void) mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
                                            "alltoall_min_procs",
                                            "use pairwise exchange algorithm for communicators larger than this value",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_DEPRECATED,
                                            OPAL_INFO_LVL_6,
                                            MCA_BASE_VAR_SCOPE_READONLY,
-                                           &ompi_coll_tuned_alltoall_min_procs);
+                                           &deprecated_mca_params);
 
     mca_param_indices->max_requests_param_index =
       mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
@@ -153,9 +155,9 @@ int ompi_coll_tuned_alltoall_intra_check_forced_init (coll_tuned_force_algorithm
     return (MPI_SUCCESS);
 }
 
-int ompi_coll_tuned_alltoall_intra_do_this(const void *sbuf, int scount,
+int ompi_coll_tuned_alltoall_intra_do_this(const void *sbuf, size_t scount,
                                            struct ompi_datatype_t *sdtype,
-                                           void* rbuf, int rcount,
+                                           void* rbuf, size_t rcount,
                                            struct ompi_datatype_t *rdtype,
                                            struct ompi_communicator_t *comm,
                                            mca_coll_base_module_t *module,

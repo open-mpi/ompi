@@ -8,7 +8,7 @@
 
 #include "coll_ucc_common.h"
 
-static inline ucc_status_t mca_coll_ucc_reduce_init(const void *sbuf, void *rbuf, int count,
+static inline ucc_status_t mca_coll_ucc_reduce_init(const void *sbuf, void *rbuf, size_t count,
                                                     struct ompi_datatype_t *dtype,
                                                     struct ompi_op_t *op, int root,
                                                     mca_coll_ucc_module_t *ucc_module,
@@ -31,7 +31,8 @@ static inline ucc_status_t mca_coll_ucc_reduce_init(const void *sbuf, void *rbuf
         goto fallback;
     }
     ucc_coll_args_t coll = {
-        .mask = 0,
+        .mask      = 0,
+        .flags     = 0,
         .coll_type = UCC_COLL_TYPE_REDUCE,
         .root = root,
         .src.info = {
@@ -58,11 +59,11 @@ fallback:
     return UCC_ERR_NOT_SUPPORTED;
 }
 
-int mca_coll_ucc_reduce(const void *sbuf, void* rbuf, int count,
+int mca_coll_ucc_reduce(const void *sbuf, void* rbuf, size_t count,
                         struct ompi_datatype_t *dtype,
                         struct ompi_op_t *op, int root,
                         struct ompi_communicator_t *comm,
-                        struct mca_coll_base_module_2_4_0_t *module)
+                        struct mca_coll_base_module_3_0_0_t *module)
 {
     mca_coll_ucc_module_t *ucc_module = (mca_coll_ucc_module_t*)module;
     ucc_coll_req_h         req;
@@ -79,12 +80,12 @@ fallback:
                                        comm, ucc_module->previous_reduce_module);
 }
 
-int mca_coll_ucc_ireduce(const void *sbuf, void* rbuf, int count,
+int mca_coll_ucc_ireduce(const void *sbuf, void* rbuf, size_t count,
                          struct ompi_datatype_t *dtype,
                          struct ompi_op_t *op, int root,
                          struct ompi_communicator_t *comm,
                          ompi_request_t** request,
-                         struct mca_coll_base_module_2_4_0_t *module)
+                         struct mca_coll_base_module_3_0_0_t *module)
 {
     mca_coll_ucc_module_t *ucc_module = (mca_coll_ucc_module_t*)module;
     ucc_coll_req_h         req;

@@ -10,9 +10,9 @@
 #include "coll_ucc_common.h"
 
 static inline
-ucc_status_t mca_coll_ucc_scatter_init(const void *sbuf, int scount,
+ucc_status_t mca_coll_ucc_scatter_init(const void *sbuf, size_t scount,
                                        struct ompi_datatype_t *sdtype,
-                                       void *rbuf, int rcount,
+                                       void *rbuf, size_t rcount,
                                        struct ompi_datatype_t *rdtype, int root,
                                        mca_coll_ucc_module_t *ucc_module,
                                        ucc_coll_req_h *req,
@@ -42,11 +42,12 @@ ucc_status_t mca_coll_ucc_scatter_init(const void *sbuf, int scount,
 
     ucc_coll_args_t coll = {
         .mask      = 0,
+        .flags     = 0,
         .coll_type = UCC_COLL_TYPE_SCATTER,
         .root      = root,
         .src.info  = {
             .buffer   = (void*)sbuf,
-            .count    = ((size_t)scount) * comm_size,
+            .count    = scount * comm_size,
             .datatype = ucc_sdt,
             .mem_type = UCC_MEMORY_TYPE_UNKNOWN
         },
@@ -68,8 +69,8 @@ fallback:
     return UCC_ERR_NOT_SUPPORTED;
 }
 
-int mca_coll_ucc_scatter(const void *sbuf, int scount,
-                         struct ompi_datatype_t *sdtype, void *rbuf, int rcount,
+int mca_coll_ucc_scatter(const void *sbuf, size_t scount,
+                         struct ompi_datatype_t *sdtype, void *rbuf, size_t rcount,
                          struct ompi_datatype_t *rdtype, int root,
                          struct ompi_communicator_t *comm,
                          mca_coll_base_module_t *module)
@@ -92,8 +93,8 @@ fallback:
 
 }
 
-int mca_coll_ucc_iscatter(const void *sbuf, int scount,
-                         struct ompi_datatype_t *sdtype, void *rbuf, int rcount,
+int mca_coll_ucc_iscatter(const void *sbuf, size_t scount,
+                         struct ompi_datatype_t *sdtype, void *rbuf, size_t rcount,
                          struct ompi_datatype_t *rdtype, int root,
                          struct ompi_communicator_t *comm,
                          ompi_request_t** request,

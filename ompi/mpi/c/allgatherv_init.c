@@ -51,6 +51,8 @@ int MPI_Allgatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtyp
                         MPI_Info info, MPI_Request *request)
 {
     int i, size, err;
+    ompi_count_array_t recvcounts_desc;
+    ompi_disp_array_t displs_desc;
 
     SPC_RECORD(OMPI_SPC_ALLGATHERV_INIT, 1);
 
@@ -122,8 +124,10 @@ int MPI_Allgatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtyp
     }
 
     /* Invoke the coll component to perform the back-end operation */
+    OMPI_COUNT_ARRAY_INIT(&recvcounts_desc, recvcounts);
+    OMPI_DISP_ARRAY_INIT(&displs_desc, displs);
     err = comm->c_coll->coll_allgatherv_init(sendbuf, sendcount, sendtype,
-                                             recvbuf, recvcounts, displs,
+                                             recvbuf, recvcounts_desc, displs_desc,
                                              recvtype, comm, info, request,
                                              comm->c_coll->coll_allgatherv_init_module);
     if (OPAL_LIKELY(OMPI_SUCCESS == err)) {

@@ -20,6 +20,7 @@
 #include "ompi/constants.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/coll/coll.h"
+#include "ompi/mca/coll/base/base.h"
 #include "opal/mca/base/mca_base_component_repository.h"
 
 #define MONITORING_INSTALL_COLL_API(__module, __comm, __api)                                                                        \
@@ -213,7 +214,7 @@ mca_coll_monitoring_component_t mca_coll_monitoring_component = {
         /* First, the mca_base_component_t struct containing meta
            information about the component itself */
         .collm_version = {
-            MCA_COLL_BASE_VERSION_2_4_0,
+            MCA_COLL_BASE_VERSION_3_0_0,
 
             .mca_component_name = "monitoring", /* MCA component name */
             MCA_MONITORING_MAKE_VERSION,

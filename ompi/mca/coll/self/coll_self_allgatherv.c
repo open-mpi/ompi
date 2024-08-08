@@ -32,9 +32,9 @@
  *	Accepts:	- same as MPI_Allgatherv()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int mca_coll_self_allgatherv_intra(const void *sbuf, int scount,
+int mca_coll_self_allgatherv_intra(const void *sbuf, size_t scount,
                                    struct ompi_datatype_t *sdtype,
-                                   void * rbuf, const int *rcounts, const int *disps,
+                                   void * rbuf, ompi_count_array_t rcounts, ompi_disp_array_t disps,
                                    struct ompi_datatype_t *rdtype,
                                    struct ompi_communicator_t *comm,
                                    mca_coll_base_module_t *module)
@@ -49,6 +49,6 @@ int mca_coll_self_allgatherv_intra(const void *sbuf, int scount,
             return OMPI_ERROR;
         }
         return ompi_datatype_sndrcv(sbuf, scount, sdtype,
-                               ((char *) rbuf) + disps[0] * extent, rcounts[0], rdtype);
+                               ((char *) rbuf) + ompi_disp_array_get(disps, 0) * extent, ompi_count_array_get(rcounts, 0), rdtype);
     }
 }

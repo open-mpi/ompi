@@ -8,7 +8,7 @@
 
 #include "coll_ucc_common.h"
 
-static inline ucc_status_t mca_coll_ucc_bcast_init(void *buf, int count, struct ompi_datatype_t *dtype,
+static inline ucc_status_t mca_coll_ucc_bcast_init(void *buf, size_t count, struct ompi_datatype_t *dtype,
                                                    int root, mca_coll_ucc_module_t *ucc_module,
                                                    ucc_coll_req_h *req,
                                                    mca_coll_ucc_req_t *coll_req)
@@ -21,6 +21,7 @@ static inline ucc_status_t mca_coll_ucc_bcast_init(void *buf, int count, struct 
 
     ucc_coll_args_t coll = {
         .mask      = 0,
+        .flags     = 0,
         .coll_type = UCC_COLL_TYPE_BCAST,
         .root = root,
         .src.info = {
@@ -36,7 +37,7 @@ fallback:
     return UCC_ERR_NOT_SUPPORTED;
 }
 
-int mca_coll_ucc_bcast(void *buf, int count, struct ompi_datatype_t *dtype,
+int mca_coll_ucc_bcast(void *buf, size_t count, struct ompi_datatype_t *dtype,
                        int root, struct ompi_communicator_t *comm,
                        mca_coll_base_module_t *module)
 {
@@ -54,7 +55,7 @@ fallback:
                                        comm, ucc_module->previous_bcast_module);
 }
 
-int mca_coll_ucc_ibcast(void *buf, int count, struct ompi_datatype_t *dtype,
+int mca_coll_ucc_ibcast(void *buf, size_t count, struct ompi_datatype_t *dtype,
                         int root, struct ompi_communicator_t *comm,
                         ompi_request_t** request,
                         mca_coll_base_module_t *module)

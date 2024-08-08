@@ -1,0 +1,28 @@
+name: CUDA
+
+on: [pull_request]
+
+env:
+  CUDA_PATH: /usr/local/cuda
+jobs:
+  compile-cuda:
+    runs-on: ubuntu-22.04
+    steps:
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y --no-install-recommends wget
+    - name: Install extra dependencies
+      run: |
+        wget https://developer.download.nvidia.com/compute/cuda/repos/wsl-ubuntu/x86_64/cuda-keyring_1.1-1_all.deb
+        sudo dpkg -i cuda-keyring_1.1-1_all.deb
+        sudo apt update
+        sudo apt install -y cuda-toolkit
+    - uses: actions/checkout@v4
+      with:
+            submodules: recursive
+    - name: Build Open MPI
+      run: |
+        ./autogen.pl
+        ./configure --prefix=${PWD}/install --with-cuda=${CUDA_PATH} --with-cuda-libdir=${CUDA_PATH}/lib64/stubs
+        make -j

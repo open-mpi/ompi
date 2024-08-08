@@ -17,7 +17,7 @@
 #include "coll_monitoring.h"
 
 int mca_coll_monitoring_reduce_scatter(const void *sbuf, void *rbuf,
-                                       const int *rcounts,
+                                       ompi_count_array_t rcounts,
                                        struct ompi_datatype_t *dtype,
                                        struct ompi_op_t *op,
                                        struct ompi_communicator_t *comm,
@@ -31,7 +31,7 @@ int mca_coll_monitoring_reduce_scatter(const void *sbuf, void *rbuf,
     ompi_datatype_type_size(dtype, &type_size);
     for( i = 0; i < comm_size; ++i ) {
         if( my_rank == i ) continue; /* No communication for self */
-        data_size = rcounts[i] * type_size;
+        data_size = ompi_count_array_get(rcounts, i) * type_size;
         /**
          * If this fails the destination is not part of my MPI_COM_WORLD
          * Lookup its name in the rank hashtable to get its MPI_COMM_WORLD rank
@@ -46,7 +46,7 @@ int mca_coll_monitoring_reduce_scatter(const void *sbuf, void *rbuf,
 }
 
 int mca_coll_monitoring_ireduce_scatter(const void *sbuf, void *rbuf,
-                                        const int *rcounts,
+                                        ompi_count_array_t rcounts,
                                         struct ompi_datatype_t *dtype,
                                         struct ompi_op_t *op,
                                         struct ompi_communicator_t *comm,
@@ -61,7 +61,7 @@ int mca_coll_monitoring_ireduce_scatter(const void *sbuf, void *rbuf,
     ompi_datatype_type_size(dtype, &type_size);
     for( i = 0; i < comm_size; ++i ) {
         if( my_rank == i ) continue; /* No communication for self */
-        data_size = rcounts[i] * type_size;
+        data_size = ompi_count_array_get(rcounts, i) * type_size;
         /**
          * If this fails the destination is not part of my MPI_COM_WORLD
          * Lookup its name in the rank hashtable to get its MPI_COMM_WORLD rank

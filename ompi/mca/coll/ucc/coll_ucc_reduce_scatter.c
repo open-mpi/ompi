@@ -10,7 +10,7 @@
 #include "coll_ucc_common.h"
 
 static inline
-ucc_status_t mca_coll_ucc_reduce_scatter_init(const void *sbuf, void *rbuf, const int *rcounts,
+ucc_status_t mca_coll_ucc_reduce_scatter_init(const void *sbuf, void *rbuf, ompi_count_array_t rcounts,
                                               struct ompi_datatype_t *dtype,
                                               struct ompi_op_t *op, mca_coll_ucc_module_t *ucc_module,
                                               ucc_coll_req_h *req,
@@ -43,11 +43,13 @@ ucc_status_t mca_coll_ucc_reduce_scatter_init(const void *sbuf, void *rbuf, cons
     }
     total_count = 0;
     for (i = 0; i < comm_size; i++) {
-        total_count += rcounts[i];
+        total_count += ompi_count_array_get(rcounts, i);
     }
 
     ucc_coll_args_t coll = {
+        .flags     = ompi_count_array_is_64bit(rcounts) ? UCC_COLL_ARGS_FLAG_COUNT_64BIT : 0,
         .mask      = 0,
+        .flags     = 0,
         .coll_type = UCC_COLL_TYPE_REDUCE_SCATTERV,
         .src.info = {
             .buffer   = (void*)sbuf,
@@ -57,7 +59,7 @@ ucc_status_t mca_coll_ucc_reduce_scatter_init(const void *sbuf, void *rbuf, cons
         },
         .dst.info_v = {
             .buffer   = rbuf,
-            .counts   = (ucc_count_t*)rcounts,
+            .counts   = (ucc_count_t*)ompi_count_array_ptr(rcounts),
             .datatype = ucc_dt,
             .mem_type = UCC_MEMORY_TYPE_UNKNOWN
         },
@@ -69,7 +71,7 @@ fallback:
     return UCC_ERR_NOT_SUPPORTED;
 }
 
-int mca_coll_ucc_reduce_scatter(const void *sbuf, void *rbuf, const int *rcounts,
+int mca_coll_ucc_reduce_scatter(const void *sbuf, void *rbuf, ompi_count_array_t rcounts,
                                 struct ompi_datatype_t *dtype,
                                 struct ompi_op_t *op,
                                 struct ompi_communicator_t *comm,
@@ -91,7 +93,7 @@ fallback:
                                                ucc_module->previous_reduce_scatter_module);
 }
 
-int mca_coll_ucc_ireduce_scatter(const void *sbuf, void *rbuf, const int *rcounts,
+int mca_coll_ucc_ireduce_scatter(const void *sbuf, void *rbuf, ompi_count_array_t rcounts,
                                  struct ompi_datatype_t *dtype,
                                  struct ompi_op_t *op,
                                  struct ompi_communicator_t *comm,

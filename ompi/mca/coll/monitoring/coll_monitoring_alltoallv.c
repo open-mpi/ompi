@@ -15,9 +15,9 @@
 #include "ompi/communicator/communicator.h"
 #include "coll_monitoring.h"
 
-int mca_coll_monitoring_alltoallv(const void *sbuf, const int *scounts, const int *sdisps,
+int mca_coll_monitoring_alltoallv(const void *sbuf, ompi_count_array_t scounts, ompi_disp_array_t sdisps,
                                   struct ompi_datatype_t *sdtype,
-                                  void *rbuf, const int *rcounts, const int *rdisps,
+                                  void *rbuf, ompi_count_array_t rcounts, ompi_disp_array_t rdisps,
                                   struct ompi_datatype_t *rdtype,
                                   struct ompi_communicator_t *comm,
                                   mca_coll_base_module_t *module)
@@ -30,7 +30,7 @@ int mca_coll_monitoring_alltoallv(const void *sbuf, const int *scounts, const in
     ompi_datatype_type_size(sdtype, &type_size);
     for( i = 0; i < comm_size; ++i ) {
         if( my_rank == i ) continue; /* No communication for self */
-        data_size = scounts[i] * type_size;
+        data_size = ompi_count_array_get(scounts, i) * type_size;
         /**
          * If this fails the destination is not part of my MPI_COM_WORLD
          * Lookup its name in the rank hashtable to get its MPI_COMM_WORLD rank
@@ -44,11 +44,11 @@ int mca_coll_monitoring_alltoallv(const void *sbuf, const int *scounts, const in
     return monitoring_module->real.coll_alltoallv(sbuf, scounts, sdisps, sdtype, rbuf, rcounts, rdisps, rdtype, comm, monitoring_module->real.coll_alltoallv_module);
 }
 
-int mca_coll_monitoring_ialltoallv(const void *sbuf, const int *scounts,
-                                   const int *sdisps,
+int mca_coll_monitoring_ialltoallv(const void *sbuf, ompi_count_array_t scounts,
+                                   ompi_disp_array_t sdisps,
                                    struct ompi_datatype_t *sdtype,
-                                   void *rbuf, const int *rcounts,
-                                   const int *rdisps,
+                                   void *rbuf, ompi_count_array_t rcounts,
+                                   ompi_disp_array_t rdisps,
                                    struct ompi_datatype_t *rdtype,
                                    struct ompi_communicator_t *comm,
                                    ompi_request_t ** request,
@@ -62,7 +62,7 @@ int mca_coll_monitoring_ialltoallv(const void *sbuf, const int *scounts,
     ompi_datatype_type_size(sdtype, &type_size);
     for( i = 0; i < comm_size; ++i ) {
         if( my_rank == i ) continue; /* No communication for self */
-        data_size = scounts[i] * type_size;
+        data_size = ompi_count_array_get(scounts, i) * type_size;
         /**
          * If this fails the destination is not part of my MPI_COM_WORLD
          * Lookup its name in the rank hashtable to get its MPI_COMM_WORLD rank

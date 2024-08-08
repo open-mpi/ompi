@@ -49,7 +49,7 @@ mca_coll_sync_component_t mca_coll_sync_component = {
          * about the component itself */
 
        .collm_version = {
-            MCA_COLL_BASE_VERSION_2_4_0,
+            MCA_COLL_BASE_VERSION_3_0_0,
 
             /* Component name and version */
             .mca_component_name = "sync",

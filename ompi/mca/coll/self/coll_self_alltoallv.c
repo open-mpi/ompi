@@ -34,9 +34,9 @@
  *	Returns:	- MPI_SUCCESS or an MPI error code
  */
 int
-mca_coll_self_alltoallv_intra(const void *sbuf, const int *scounts, const int *sdisps,
+mca_coll_self_alltoallv_intra(const void *sbuf, ompi_count_array_t scounts, ompi_disp_array_t sdisps,
                               struct ompi_datatype_t *sdtype,
-                              void *rbuf, const int *rcounts, const int *rdisps,
+                              void *rbuf, ompi_count_array_t rcounts, ompi_disp_array_t rdisps,
                               struct ompi_datatype_t *rdtype,
                               struct ompi_communicator_t *comm,
                               mca_coll_base_module_t *module)
@@ -56,8 +56,8 @@ mca_coll_self_alltoallv_intra(const void *sbuf, const int *scounts, const int *s
     if (OMPI_SUCCESS != err) {
         return OMPI_ERROR;
     }
-    return ompi_datatype_sndrcv(((char *) sbuf) + sdisps[0] * sextent,
-                           scounts[0], sdtype,
-                           ((char *) rbuf) + rdisps[0] * rextent,
-                           rcounts[0], rdtype);
+    return ompi_datatype_sndrcv(((char *) sbuf) + ompi_disp_array_get(sdisps, 0) * sextent,
+                           ompi_count_array_get(scounts, 0), sdtype,
+                           ((char *) rbuf) + ompi_disp_array_get(rdisps, 0) * rextent,
+                           ompi_count_array_get(rcounts, 0), rdtype);
 }

@@ -164,6 +164,8 @@ AC_DEFUN([_OMPI_SETUP_PRRTE_INTERNAL], [
 
     internal_prrte_CPPFLAGS=
     internal_prrte_args="--with-proxy-version-string=$OPAL_VERSION --with-proxy-package-name=\"Open MPI\" --with-proxy-bugreport=\"https://www.open-mpi.org/community/help/\""
+    # PRRTE sets -Werror on devel builds so avoid buid breaks caused by 3rd-party codes
+    internal_prrte_args="$internal_prrte_args --disable-devel-check"
 
     # Set --enable-prte-prefix-by-default to the deprecated options,
     # if they were specified.  Otherwise, set it to enabled if the

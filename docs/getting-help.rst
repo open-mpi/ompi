@@ -120,7 +120,7 @@ information (adjust as necessary for your specific environment):
    # Fill in the options you want to pass to configure here
    options=""
    ./configure $options 2>&1  | tee $dir/config.out
-   tar -cf - `find . -name config.log` | tar -x -C $dir -
+   tar -cf - `find . -name config.log` | tar -x -C $dir
 
    # Build and install Open MPI
    make V=1 all 2>&1          | tee $dir/make.out

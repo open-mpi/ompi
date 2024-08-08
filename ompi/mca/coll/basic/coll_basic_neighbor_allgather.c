@@ -37,9 +37,9 @@
 #include "ompi/mca/topo/base/base.h"
 
 static int
-mca_coll_basic_neighbor_allgather_cart(const void *sbuf, int scount,
+mca_coll_basic_neighbor_allgather_cart(const void *sbuf, size_t scount,
                                        struct ompi_datatype_t *sdtype, void *rbuf,
-                                       int rcount, struct ompi_datatype_t *rdtype,
+                                       size_t rcount, struct ompi_datatype_t *rdtype,
                                        struct ompi_communicator_t *comm,
                                        mca_coll_base_module_t *module)
 {
@@ -117,9 +117,9 @@ mca_coll_basic_neighbor_allgather_cart(const void *sbuf, int scount,
 }
 
 static int
-mca_coll_basic_neighbor_allgather_graph(const void *sbuf, int scount,
+mca_coll_basic_neighbor_allgather_graph(const void *sbuf, size_t scount,
                                         struct ompi_datatype_t *sdtype, void *rbuf,
-                                        int rcount, struct ompi_datatype_t *rdtype,
+                                        size_t rcount, struct ompi_datatype_t *rdtype,
                                         struct ompi_communicator_t *comm,
                                         mca_coll_base_module_t *module)
 {
@@ -170,9 +170,9 @@ mca_coll_basic_neighbor_allgather_graph(const void *sbuf, int scount,
 }
 
 static int
-mca_coll_basic_neighbor_allgather_dist_graph(const void *sbuf, int scount,
+mca_coll_basic_neighbor_allgather_dist_graph(const void *sbuf, size_t scount,
                                              struct ompi_datatype_t *sdtype, void *rbuf,
-                                             int rcount, struct ompi_datatype_t *rdtype,
+                                             size_t rcount, struct ompi_datatype_t *rdtype,
                                              struct ompi_communicator_t *comm,
                                              mca_coll_base_module_t *module)
 {
@@ -229,9 +229,9 @@ mca_coll_basic_neighbor_allgather_dist_graph(const void *sbuf, int scount,
     return rc;
 }
 
-int mca_coll_basic_neighbor_allgather(const void *sbuf, int scount,
+int mca_coll_basic_neighbor_allgather(const void *sbuf, size_t scount,
                                       struct ompi_datatype_t *sdtype, void *rbuf,
-                                      int rcount, struct ompi_datatype_t *rdtype,
+                                      size_t rcount, struct ompi_datatype_t *rdtype,
                                       struct ompi_communicator_t *comm,
                                       mca_coll_base_module_t *module)
 {

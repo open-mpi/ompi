@@ -51,7 +51,7 @@
 
 
 static int recv_nb(dte_data_representation_t data ,
-                   uint32_t count ,
+                   size_t count ,
                    void *buffer,
                    rte_ec_handle_t ,
                    rte_grp_handle_t ,
@@ -59,7 +59,7 @@ static int recv_nb(dte_data_representation_t data ,
                    rte_request_handle_t * req);
 
 static int send_nb(dte_data_representation_t data,
-                   uint32_t count,
+                   size_t count,
                    void *buffer,
                    rte_ec_handle_t ec_h,
                    rte_grp_handle_t grp_h,
@@ -161,7 +161,7 @@ void hcoll_rte_fns_setup(void)
 }
 
 static int recv_nb(struct dte_data_representation_t data,
-                   uint32_t count ,
+                   size_t count,
                    void *buffer,
                    rte_ec_handle_t ec_h,
                    rte_grp_handle_t grp_h,
@@ -187,8 +187,8 @@ static int recv_nb(struct dte_data_representation_t data,
     }
     size = (size_t)data.rep.in_line_rep.data_handle.in_line.packed_size*count/8;
 
-    HCOL_VERBOSE(30,"PML_IRECV: dest = %d: buf = %p: size = %u: comm = %p",
-                 ec_h.rank, buffer, (unsigned int)size, (void *)comm);
+    HCOL_VERBOSE(30,"PML_IRECV: dest = %d: buf = %p: size = %zu: comm = %p",
+                 ec_h.rank, buffer, size, (void *)comm);
     if (MCA_PML_CALL(irecv(buffer,size,&(ompi_mpi_unsigned_char.dt),ec_h.rank,
                            tag,comm,&ompi_req)))
     {
@@ -202,7 +202,7 @@ static int recv_nb(struct dte_data_representation_t data,
 
 
 static int send_nb( dte_data_representation_t data,
-                    uint32_t count,
+                    size_t count,
                     void *buffer,
                     rte_ec_handle_t ec_h,
                     rte_grp_handle_t grp_h,
@@ -226,8 +226,8 @@ static int send_nb( dte_data_representation_t data,
         return HCOLL_ERROR;
     }
     size = (size_t)data.rep.in_line_rep.data_handle.in_line.packed_size*count/8;
-    HCOL_VERBOSE(30,"PML_ISEND: dest = %d: buf = %p: size = %u: comm = %p",
-                 ec_h.rank, buffer, (unsigned int)size, (void *)comm);
+    HCOL_VERBOSE(30,"PML_ISEND: dest = %d: buf = %p: size = %zu: comm = %p",
+                 ec_h.rank, buffer, size, (void *)comm);
     if (MCA_PML_CALL(isend(buffer,size,&(ompi_mpi_unsigned_char.dt),ec_h.rank,
                            tag,MCA_PML_BASE_SEND_STANDARD,comm,&ompi_req)))
     {

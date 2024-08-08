@@ -4,7 +4,8 @@
 # Copyright (c) 2020      The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
-# Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+# Copyright (c) 2022-2024 Amazon.com, Inc. or its affiliates.
+#                         All Rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -21,6 +22,7 @@ AC_DEFUN([OPAL_CONFIG_FILES],[
         opal/include/Makefile
         opal/datatype/Makefile
         opal/util/Makefile
+        opal/util/json/Makefile
         opal/util/keyval/Makefile
         opal/mca/base/Makefile
         opal/tools/wrappers/Makefile

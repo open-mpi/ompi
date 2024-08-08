@@ -20,14 +20,14 @@
  */
 #include "nbc_internal.h"
 
-static inline int bcast_sched_binomial(int rank, int p, int root, NBC_Schedule *schedule, void *buffer, int count,
+static inline int bcast_sched_binomial(int rank, int p, int root, NBC_Schedule *schedule, void *buffer, size_t count,
                                        MPI_Datatype datatype);
-static inline int bcast_sched_linear(int rank, int p, int root, NBC_Schedule *schedule, void *buffer, int count,
+static inline int bcast_sched_linear(int rank, int p, int root, NBC_Schedule *schedule, void *buffer, size_t count,
                                      MPI_Datatype datatype);
-static inline int bcast_sched_chain(int rank, int p, int root, NBC_Schedule *schedule, void *buffer, int count,
-                                    MPI_Datatype datatype, int fragsize, size_t size);
+static inline int bcast_sched_chain(int rank, int p, int root, NBC_Schedule *schedule, void *buffer, size_t count,
+                                    MPI_Datatype datatype, size_t fragsize, size_t size);
 static inline int bcast_sched_knomial(int rank, int comm_size, int root, NBC_Schedule *schedule, void *buf,
-                                      int count, MPI_Datatype datatype, int knomial_radix);
+                                      size_t count, MPI_Datatype datatype, int knomial_radix);
 
 #ifdef NBC_CACHE_SCHEDULE
 /* tree comparison function for schedule cache */
@@ -47,7 +47,7 @@ int NBC_Bcast_args_compare(NBC_Bcast_args *a, NBC_Bcast_args *b, void *param) {
 }
 #endif
 
-static int nbc_bcast_init(void *buffer, int count, MPI_Datatype datatype, int root,
+static int nbc_bcast_init(void *buffer, size_t count, MPI_Datatype datatype, int root,
                           struct ompi_communicator_t *comm, ompi_request_t ** request,
                           mca_coll_base_module_t *module, bool persistent)
 {
@@ -191,7 +191,7 @@ static int nbc_bcast_init(void *buffer, int count, MPI_Datatype datatype, int ro
   return OMPI_SUCCESS;
 }
 
-int ompi_coll_libnbc_ibcast(void *buffer, int count, MPI_Datatype datatype, int root,
+int ompi_coll_libnbc_ibcast(void *buffer, size_t count, MPI_Datatype datatype, int root,
                             struct ompi_communicator_t *comm, ompi_request_t ** request,
                             mca_coll_base_module_t *module)
 {
@@ -235,7 +235,7 @@ int ompi_coll_libnbc_ibcast(void *buffer, int count, MPI_Datatype datatype, int 
   if (vrank == 0) rank = root; \
   if (vrank == root) rank = 0; \
 }
-static inline int bcast_sched_binomial(int rank, int p, int root, NBC_Schedule *schedule, void *buffer, int count, MPI_Datatype datatype) {
+static inline int bcast_sched_binomial(int rank, int p, int root, NBC_Schedule *schedule, void *buffer, size_t count, MPI_Datatype datatype) {
   int maxr, vrank, peer, res;
 
   maxr = ceil_of_log2(p);
@@ -275,7 +275,7 @@ static inline int bcast_sched_binomial(int rank, int p, int root, NBC_Schedule *
 }
 
 /* simple linear MPI_Ibcast */
-static inline int bcast_sched_linear(int rank, int p, int root, NBC_Schedule *schedule, void *buffer, int count, MPI_Datatype datatype) {
+static inline int bcast_sched_linear(int rank, int p, int root, NBC_Schedule *schedule, void *buffer, size_t count, MPI_Datatype datatype) {
   int res;
 
   /* send to all others */
@@ -301,7 +301,7 @@ static inline int bcast_sched_linear(int rank, int p, int root, NBC_Schedule *sc
 }
 
 /* simple chained MPI_Ibcast */
-static inline int bcast_sched_chain(int rank, int p, int root, NBC_Schedule *schedule, void *buffer, int count, MPI_Datatype datatype, int fragsize, size_t size) {
+static inline int bcast_sched_chain(int rank, int p, int root, NBC_Schedule *schedule, void *buffer, size_t count, MPI_Datatype datatype, size_t fragsize, size_t size) {
   int res, vrank, rpeer, speer, numfrag, fragcount, thiscount;
   MPI_Aint ext;
   char *buf;
@@ -372,7 +372,7 @@ static inline int bcast_sched_chain(int rank, int p, int root, NBC_Schedule *sch
  */
 static inline int bcast_sched_knomial(
     int rank, int comm_size, int root, NBC_Schedule *schedule, void *buf,
-    int count, MPI_Datatype datatype, int knomial_radix)
+    size_t count, MPI_Datatype datatype, int knomial_radix)
 {
     int res = OMPI_SUCCESS;
 
@@ -408,7 +408,7 @@ cleanup_and_return:
     return res;
 }
 
-static int nbc_bcast_inter_init(void *buffer, int count, MPI_Datatype datatype, int root,
+static int nbc_bcast_inter_init(void *buffer, size_t count, MPI_Datatype datatype, int root,
                                 struct ompi_communicator_t *comm, ompi_request_t ** request,
                                 mca_coll_base_module_t *module, bool persistent) {
   int res;
@@ -460,7 +460,7 @@ static int nbc_bcast_inter_init(void *buffer, int count, MPI_Datatype datatype, 
   return OMPI_SUCCESS;
 }
 
-int ompi_coll_libnbc_ibcast_inter(void *buffer, int count, MPI_Datatype datatype, int root,
+int ompi_coll_libnbc_ibcast_inter(void *buffer, size_t count, MPI_Datatype datatype, int root,
                                   struct ompi_communicator_t *comm, ompi_request_t ** request,
                                   mca_coll_base_module_t *module) {
     int res = nbc_bcast_inter_init(buffer, count, datatype, root,
@@ -479,7 +479,7 @@ int ompi_coll_libnbc_ibcast_inter(void *buffer, int count, MPI_Datatype datatype
     return OMPI_SUCCESS;
 }
 
-int ompi_coll_libnbc_bcast_init(void *buffer, int count, MPI_Datatype datatype, int root,
+int ompi_coll_libnbc_bcast_init(void *buffer, size_t count, MPI_Datatype datatype, int root,
                                 struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                                 mca_coll_base_module_t *module) {
     int res = nbc_bcast_init(buffer, count, datatype, root,
@@ -491,7 +491,7 @@ int ompi_coll_libnbc_bcast_init(void *buffer, int count, MPI_Datatype datatype, 
     return OMPI_SUCCESS;
 }
 
-int ompi_coll_libnbc_bcast_inter_init(void *buffer, int count, MPI_Datatype datatype, int root,
+int ompi_coll_libnbc_bcast_inter_init(void *buffer, size_t count, MPI_Datatype datatype, int root,
                                       struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                                       mca_coll_base_module_t *module) {
     int res = nbc_bcast_inter_init(buffer, count, datatype, root,

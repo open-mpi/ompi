@@ -148,9 +148,9 @@ int mca_fcoll_dynamic_gen2_file_write_all (struct ompio_file_t *fh,
     int *aggregators=NULL;
     int *result_counts=NULL;
 
-    int *temp_displs = NULL, *temp_counts = NULL;
-    
-    
+    ompi_count_array_t fview_count_desc;
+    ompi_disp_array_t displs_desc;
+
 #if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
     double write_time = 0.0, start_write_time = 0.0, end_write_time = 0.0;
     double comm_time = 0.0, start_comm_time = 0.0, end_comm_time = 0.0;
@@ -413,29 +413,17 @@ int mca_fcoll_dynamic_gen2_file_write_all (struct ompio_file_t *fh,
         start_comm_time = MPI_Wtime();
 #endif
         if ( 1 == mca_fcoll_dynamic_gen2_num_groups ) {
-            /* TODO:BIGCOUNT: Remove temporary values here once the coll
-             * framework is using size_t/ptrdiff_t */
-            temp_counts = (int *)malloc(2 * fh->f_procs_per_group * sizeof(int));
-            if (NULL == temp_counts) {
-                opal_output(1, "OUT OF MEMORY\n");
-                ret = OMPI_ERR_OUT_OF_RESOURCE;
-                goto exit;
-            }
-            temp_displs = temp_counts + total_fview_count;
-            for (j = 0; j < fh->f_procs_per_group; j++) {
-                temp_counts[j] = aggr_data[i]->fview_count[j];
-                temp_displs[j] = displs[j];
-            }
+            OMPI_COUNT_ARRAY_INIT(&fview_count_desc, aggr_data[i]->fview_count);
+            OMPI_DISP_ARRAY_INIT(&displs_desc, displs);
             ret = fh->f_comm->c_coll->coll_allgatherv (broken_iov_arrays[i],
                                                       broken_counts[i],
                                                       fh->f_iov_type,
                                                       aggr_data[i]->global_iov_array,
-                                                      temp_counts,
-                                                      temp_displs,
+                                                      fview_count_desc,
+                                                      displs_desc,
                                                       fh->f_iov_type,
                                                       fh->f_comm,
                                                       fh->f_comm->c_coll->coll_allgatherv_module );
-            free(temp_counts);
         }
         else {
             ret = ompi_fcoll_base_coll_allgatherv_array (broken_iov_arrays[i],

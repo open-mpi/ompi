@@ -707,11 +707,6 @@ int ompi_comm_split_with_info( ompi_communicator_t* comm, int color, int key,
     /* Activate the communicator and init coll-component */
     rc = ompi_comm_activate (&newcomp, comm, NULL, NULL, NULL, false, mode);
 
-    /* MPI-4 §7.4.4 requires us to remove all unknown keys from the info object */
-    if (NULL != newcomp->super.s_info) {
-        opal_info_remove_unreferenced(newcomp->super.s_info);
-    }
-
  exit:
     free ( results );
     free ( sorted );
@@ -1027,9 +1022,6 @@ static int ompi_comm_split_type_core(ompi_communicator_t *comm,
         ompi_comm_print_cid (newcomp), ompi_comm_print_cid (comm));
         goto exit;
     }
-
-    /* MPI-4 §7.4.4 requires us to remove all unknown keys from the info object */
-    opal_info_remove_unreferenced(newcomp->super.s_info);
 
     /* TODO: there probably is better way to handle this case without throwing away the
      * intermediate communicator. */
@@ -1363,9 +1355,6 @@ int ompi_comm_dup_with_info ( ompi_communicator_t * comm, opal_info_t *info, omp
         return rc;
     }
 
-    /* MPI-4 §7.4.4 requires us to remove all unknown keys from the info object */
-    opal_info_remove_unreferenced(newcomp->super.s_info);
-
     *newcomm = newcomp;
     return MPI_SUCCESS;
 }
@@ -1522,8 +1511,6 @@ static int ompi_comm_idup_with_info_finish (ompi_comm_request_t *request)
 {
     ompi_comm_idup_with_info_context_t *context =
         (ompi_comm_idup_with_info_context_t *) request->context;
-    /* MPI-4 §7.4.4 requires us to remove all unknown keys from the info object */
-    opal_info_remove_unreferenced(context->newcomp->super.s_info);
 
     /* done */
     return MPI_SUCCESS;
@@ -2415,6 +2402,8 @@ int ompi_comm_determine_first ( ompi_communicator_t *intercomm, int high )
     int rank, rsize;
     int *rcounts;
     int *rdisps;
+    ompi_count_array_t rcounts_desc;
+    ompi_disp_array_t rdisps_desc;
     int scount=0;
     int rc;
 
@@ -2442,8 +2431,10 @@ int ompi_comm_determine_first ( ompi_communicator_t *intercomm, int high )
         scount = 1;
     }
 
+    OMPI_COUNT_ARRAY_INIT(&rcounts_desc, rcounts);
+    OMPI_DISP_ARRAY_INIT(&rdisps_desc, rdisps);
     rc = intercomm->c_coll->coll_allgatherv(&high, scount, MPI_INT,
-                                           &rhigh, rcounts, rdisps,
+                                           &rhigh, rcounts_desc, rdisps_desc,
                                            MPI_INT, intercomm,
                                            intercomm->c_coll->coll_allgatherv_module);
     if ( NULL != rdisps ) {

@@ -120,6 +120,8 @@ int ompi_io_ompio_generate_current_file_view (struct ompio_file_t *fh,
     if (mca_io_ompio_record_offset_info){
 
 	int tot_entries=0, *recvcounts=NULL, *displs=NULL;
+	ompi_count_array_t recvcounts_desc;
+	ompi_disp_array_t displs_desc;
 	mca_io_ompio_offlen_array_t *per_process=NULL;
 	mca_io_ompio_offlen_array_t  *all_process=NULL;
 	int *sorted=NULL, *column_list=NULL, *values=NULL;
@@ -249,12 +251,14 @@ int ompi_io_ompio_generate_current_file_view (struct ompio_file_t *fh,
                 }
             }
 	}
+	OMPI_COUNT_ARRAY_INIT(&recvcounts_desc, recvcounts);
+	OMPI_DISP_ARRAY_INIT(&displs_desc, displs);
 	fh->f_comm->c_coll->coll_gatherv (per_process,
 					 k,
 					 io_array_type,
 					 all_process,
-					 recvcounts,
-					 displs,
+					 recvcounts_desc,
+					 displs_desc,
 					 io_array_type,
 					 OMPIO_ROOT,
 					 fh->f_comm,

@@ -6,6 +6,7 @@
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2019      Mellanox Technologies. All rights reserved.
+ * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -37,10 +38,6 @@ extern char* ompi_coll_tuned_dynamic_rules_filename;
 extern int   ompi_coll_tuned_init_tree_fanout;
 extern int   ompi_coll_tuned_init_chain_fanout;
 extern int   ompi_coll_tuned_init_max_requests;
-extern int   ompi_coll_tuned_alltoall_small_msg;
-extern int   ompi_coll_tuned_alltoall_intermediate_msg;
-extern int   ompi_coll_tuned_alltoall_large_msg;
-extern int   ompi_coll_tuned_alltoall_min_procs;
 extern int   ompi_coll_tuned_alltoall_max_requests;
 extern int   ompi_coll_tuned_scatter_intermediate_msg;
 extern int   ompi_coll_tuned_scatter_large_msg;
@@ -184,7 +181,7 @@ int ompi_coll_tuned_scan_intra_check_forced_init (coll_tuned_force_algorithm_mca
 
 struct mca_coll_tuned_component_t {
 	/** Base coll component */
-	mca_coll_base_component_2_4_0_t super;
+	mca_coll_base_component_3_0_0_t super;
 
 	/** MCA parameter: Priority of this component */
 	int tuned_priority;

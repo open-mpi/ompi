@@ -85,7 +85,7 @@ int ompi_coll_tuned_exscan_intra_check_forced_init (coll_tuned_force_algorithm_m
     return (MPI_SUCCESS);
 }
 
-int ompi_coll_tuned_exscan_intra_do_this(const void *sbuf, void* rbuf, int count,
+int ompi_coll_tuned_exscan_intra_do_this(const void *sbuf, void* rbuf, size_t count,
                                          struct ompi_datatype_t *dtype,
                                          struct ompi_op_t *op,
                                          struct ompi_communicator_t *comm,

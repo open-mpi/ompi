@@ -1047,8 +1047,11 @@ static int mca_spml_ucx_ctx_create_common(long options, mca_spml_ucx_ctx_t **ucx
     ucx_ctx->strong_sync = mca_spml_ucx_ctx_default.strong_sync;      
 
     params.field_mask  = UCP_WORKER_PARAM_FIELD_THREAD_MODE;
-    if (oshmem_mpi_thread_provided == SHMEM_THREAD_SINGLE || options & SHMEM_CTX_PRIVATE || options & SHMEM_CTX_SERIALIZED) {
+    if (oshmem_mpi_thread_provided == SHMEM_THREAD_SINGLE ||
+        oshmem_mpi_thread_provided == SHMEM_THREAD_FUNNELED || options & SHMEM_CTX_PRIVATE) {
         params.thread_mode = UCS_THREAD_MODE_SINGLE;
+    } else if (oshmem_mpi_thread_provided == SHMEM_THREAD_SERIALIZED || options & SHMEM_CTX_SERIALIZED) {
+        params.thread_mode = UCS_THREAD_MODE_SERIALIZED;
     } else {
         params.thread_mode = UCS_THREAD_MODE_MULTI;
     }
@@ -1660,14 +1663,14 @@ int mca_spml_ucx_put_signal_nb(shmem_ctx_t ctx, void* dst_addr, size_t size,
 void mca_spml_ucx_wait_until_all(void *ivars, int cmp, void
         *cmp_value, size_t nelems, const int *status, int datatype)
 {
-    return ;
+    RUNTIME_SHMEM_NOT_IMPLEMENTED_API_ABORT();
 }
 
 /* This routine is not implemented */
 size_t mca_spml_ucx_wait_until_any(void *ivars, int cmp, void
         *cmp_value, size_t nelems, const int *status, int datatype)
 {
-    return OSHMEM_ERR_NOT_IMPLEMENTED;
+    RUNTIME_SHMEM_NOT_IMPLEMENTED_API_ABORT_RET_SIZE_T();
 }
 
 /* This routine is not implemented */
@@ -1675,21 +1678,21 @@ size_t mca_spml_ucx_wait_until_some(void *ivars, int cmp, void
         *cmp_value, size_t nelems, size_t *indices, const int *status, int
         datatype)
 {
-    return OSHMEM_ERR_NOT_IMPLEMENTED;
+    RUNTIME_SHMEM_NOT_IMPLEMENTED_API_ABORT_RET_SIZE_T();
 }
 
 /* This routine is not implemented */ 
 void mca_spml_ucx_wait_until_all_vector(void *ivars, int cmp, void
         *cmp_values, size_t nelems, const int *status, int datatype)
 {
-    return ;
+    RUNTIME_SHMEM_NOT_IMPLEMENTED_API_ABORT();
 }
 
 /* This routine is not implemented */
 size_t mca_spml_ucx_wait_until_any_vector(void *ivars, int cmp, void
         *cmp_value, size_t nelems, const int *status, int datatype)
 {
-    return OSHMEM_ERR_NOT_IMPLEMENTED;
+    RUNTIME_SHMEM_NOT_IMPLEMENTED_API_ABORT_RET_SIZE_T();
 }
 
 /* This routine is not implemented */
@@ -1697,7 +1700,7 @@ size_t mca_spml_ucx_wait_until_some_vector(void *ivars, int cmp, void
         *cmp_value, size_t nelems, size_t *indices, const int *status, int
         datatype)
 {
-    return OSHMEM_ERR_NOT_IMPLEMENTED;
+    RUNTIME_SHMEM_NOT_IMPLEMENTED_API_ABORT_RET_SIZE_T();
 }
 
 /* This routine is not implemented */
@@ -1711,36 +1714,39 @@ int mca_spml_ucx_test_all(void *ivars, int cmp, void *cmp_value,
 size_t mca_spml_ucx_test_any(void *ivars, int cmp, void *cmp_value,
         size_t nelems, const int *status, int datatype)
 {
-    return OSHMEM_ERR_NOT_IMPLEMENTED;
+    RUNTIME_SHMEM_NOT_IMPLEMENTED_API_ABORT_RET_SIZE_T();
 }
 
 /* This routine is not implemented */
 size_t mca_spml_ucx_test_some(void *ivars, int cmp, void *cmp_value,
         size_t nelems, size_t *indices, const int *status, int datatype)
 {
-    return OSHMEM_ERR_NOT_IMPLEMENTED;
+    RUNTIME_SHMEM_NOT_IMPLEMENTED_API_ABORT_RET_SIZE_T();
 }
 
 /* This routine is not implemented */
-int mca_spml_ucx_test_all_vector(void *ivars, int cmp, void
-        *cmp_values, size_t nelems, const int *status, int datatype)
+int mca_spml_ucx_test_all_vector(void *ivars, int cmp, void *cmp_values,
+                                 size_t nelems, const int *status,
+                                 int datatype)
 {
     return OSHMEM_ERR_NOT_IMPLEMENTED;
 }
 
 /* This routine is not implemented */
-int mca_spml_ucx_test_any_vector(void *ivars, int cmp, void
-        *cmp_values, size_t nelems, const int *status, int datatype)
+size_t mca_spml_ucx_test_any_vector(void *ivars, int cmp,
+                                    void *cmp_values, size_t nelems,
+                                    const int *status, int datatype)
 {
-    return OSHMEM_ERR_NOT_IMPLEMENTED;
+    RUNTIME_SHMEM_NOT_IMPLEMENTED_API_ABORT_RET_SIZE_T();
 }
 
 /* This routine is not implemented */
-int mca_spml_ucx_test_some_vector(void *ivars, int cmp, void
-        *cmp_values, size_t nelems, size_t *indices, const int *status, int
-        datatype)
+size_t mca_spml_ucx_test_some_vector(void *ivars, int cmp,
+                                     void *cmp_values, size_t nelems,
+                                     size_t *indices, const int *status,
+                                     int datatype)
 {
-    return OSHMEM_ERR_NOT_IMPLEMENTED;
+    RUNTIME_SHMEM_NOT_IMPLEMENTED_API_ABORT_RET_SIZE_T();
 }
 
 /* This routine is not implemented */
@@ -1852,5 +1858,3 @@ int mca_spml_ucx_team_reduce(shmem_team_t team, void
 {
     return OSHMEM_ERR_NOT_IMPLEMENTED;
 }
-
-

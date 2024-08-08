@@ -9,8 +9,8 @@
 
 #include "coll_ucc_common.h"
 
-static inline ucc_status_t mca_coll_ucc_alltoall_init(const void *sbuf, int scount, struct ompi_datatype_t *sdtype,
-                                                      void* rbuf, int rcount, struct ompi_datatype_t *rdtype,
+static inline ucc_status_t mca_coll_ucc_alltoall_init(const void *sbuf, size_t scount, struct ompi_datatype_t *sdtype,
+                                                      void* rbuf, size_t rcount, struct ompi_datatype_t *rdtype,
                                                       mca_coll_ucc_module_t *ucc_module,
                                                       ucc_coll_req_h *req,
                                                       mca_coll_ucc_req_t *coll_req)
@@ -34,6 +34,7 @@ static inline ucc_status_t mca_coll_ucc_alltoall_init(const void *sbuf, int scou
 
     ucc_coll_args_t coll = {
         .mask      = 0,
+        .flags     = 0,
         .coll_type = UCC_COLL_TYPE_ALLTOALL,
         .src.info = {
             .buffer   = (void*)sbuf,
@@ -59,8 +60,8 @@ fallback:
     return UCC_ERR_NOT_SUPPORTED;
 }
 
-int mca_coll_ucc_alltoall(const void *sbuf, int scount, struct ompi_datatype_t *sdtype,
-                          void* rbuf, int rcount, struct ompi_datatype_t *rdtype,
+int mca_coll_ucc_alltoall(const void *sbuf, size_t scount, struct ompi_datatype_t *sdtype,
+                          void* rbuf, size_t rcount, struct ompi_datatype_t *rdtype,
                           struct ompi_communicator_t *comm,
                           mca_coll_base_module_t *module)
 {
@@ -80,8 +81,8 @@ fallback:
                                           comm, ucc_module->previous_alltoall_module);
 }
 
-int mca_coll_ucc_ialltoall(const void *sbuf, int scount, struct ompi_datatype_t *sdtype,
-                           void* rbuf, int rcount, struct ompi_datatype_t *rdtype,
+int mca_coll_ucc_ialltoall(const void *sbuf, size_t scount, struct ompi_datatype_t *sdtype,
+                           void* rbuf, size_t rcount, struct ompi_datatype_t *rdtype,
                            struct ompi_communicator_t *comm,
                            ompi_request_t** request,
                            mca_coll_base_module_t *module)

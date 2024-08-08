@@ -78,6 +78,8 @@ AC_DEFUN([OPAL_CONFIG_PMIX], [
                 # desired.
 
                 internal_pmix_args="--without-tests-examples --enable-pmix-binaries --disable-pmix-backward-compatibility --disable-visibility"
+                # Open PMIx sets -Werror on devel builds so avoid buid breaks caused by 3rd-party codes
+                internal_pmix_args="$internal_pmix_args --disable-devel-check"
                 internal_pmix_wrapper_libs=
                 internal_pmix_CPPFLAGS=
 

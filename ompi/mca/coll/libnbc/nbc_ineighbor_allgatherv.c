@@ -45,7 +45,7 @@ int NBC_Ineighbor_allgatherv_args_compare(NBC_Ineighbor_allgatherv_args *a, NBC_
 
 
 static int nbc_neighbor_allgatherv_init(const void *sbuf, int scount, MPI_Datatype stype, void *rbuf,
-                                        const int *rcounts, const int *displs, MPI_Datatype rtype,
+                                        ompi_count_array_t rcounts, ompi_disp_array_t displs, MPI_Datatype rtype,
                                         struct ompi_communicator_t *comm, ompi_request_t ** request,
                                         mca_coll_base_module_t *module, bool persistent) {
   int res, indegree, outdegree, *srcs, *dsts;
@@ -87,7 +87,8 @@ static int nbc_neighbor_allgatherv_init(const void *sbuf, int scount, MPI_Dataty
     /* simply loop over neighbors and post send/recv operations */
     for (int i = 0 ; i < indegree ; ++i) {
       if (srcs[i] != MPI_PROC_NULL) {
-        res = NBC_Sched_recv ((char *) rbuf + displs[i] * rcvext, false, rcounts[i], rtype, srcs[i], schedule, false);
+        res = NBC_Sched_recv ((char *) rbuf + ompi_disp_array_get(displs, i) * rcvext,
+                              false, ompi_count_array_get(rcounts, i), rtype, srcs[i], schedule, false);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
           break;
         }
@@ -164,8 +165,8 @@ static int nbc_neighbor_allgatherv_init(const void *sbuf, int scount, MPI_Dataty
   return OMPI_SUCCESS;
 }
 
-int ompi_coll_libnbc_ineighbor_allgatherv(const void *sbuf, int scount, MPI_Datatype stype, void *rbuf,
-					  const int *rcounts, const int *displs, MPI_Datatype rtype,
+int ompi_coll_libnbc_ineighbor_allgatherv(const void *sbuf, size_t scount, MPI_Datatype stype, void *rbuf,
+					  ompi_count_array_t rcounts, ompi_disp_array_t displs, MPI_Datatype rtype,
 					  struct ompi_communicator_t *comm, ompi_request_t ** request,
 					  mca_coll_base_module_t *module) {
     int res = nbc_neighbor_allgatherv_init(sbuf, scount, stype, rbuf, rcounts, displs, rtype,
@@ -183,8 +184,8 @@ int ompi_coll_libnbc_ineighbor_allgatherv(const void *sbuf, int scount, MPI_Data
     return OMPI_SUCCESS;
 }
 
-int ompi_coll_libnbc_neighbor_allgatherv_init(const void *sbuf, int scount, MPI_Datatype stype, void *rbuf,
-                                              const int *rcounts, const int *displs, MPI_Datatype rtype,
+int ompi_coll_libnbc_neighbor_allgatherv_init(const void *sbuf, size_t scount, MPI_Datatype stype, void *rbuf,
+                                              ompi_count_array_t rcounts, ompi_disp_array_t displs, MPI_Datatype rtype,
                                               struct ompi_communicator_t *comm, MPI_Info info, ompi_request_t ** request,
                                               mca_coll_base_module_t *module) {
     int res = nbc_neighbor_allgatherv_init(sbuf, scount, stype, rbuf, rcounts, displs, rtype,

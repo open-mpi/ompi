@@ -10,8 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014-2015 Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014-2024 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
@@ -77,16 +77,18 @@ char *opal_basename(const char *filename)
 
     /* Remove trailing sep's (note that we already know that strlen > 0) */
     tmp = strdup(filename);
-    for (i = strlen(tmp) - 1; i > 0; --i) {
-        if (sep == tmp[i]) {
-            tmp[i] = '\0';
-        } else {
-            break;
+    if (1 < strlen(tmp)) {
+        for (i = strlen(tmp) - 1; i > 0; --i) {
+            if (sep == tmp[i]) {
+                tmp[i] = '\0';
+            } else {
+                break;
+            }
         }
-    }
-    if (0 == i) {
-        tmp[0] = sep;
-        return tmp;
+        if (0 == i) {
+            tmp[0] = sep;
+            return tmp;
+        }
     }
 
     /* Look for the final sep */

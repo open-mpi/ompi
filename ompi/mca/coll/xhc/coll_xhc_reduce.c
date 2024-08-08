@@ -23,7 +23,7 @@
 #include "coll_xhc.h"
 
 int mca_coll_xhc_reduce(const void *sbuf, void *rbuf,
-        int count, ompi_datatype_t *datatype, ompi_op_t *op, int root,
+        size_t count, ompi_datatype_t *datatype, ompi_op_t *op, int root,
         ompi_communicator_t *ompi_comm, mca_coll_base_module_t *ompi_module) {
 
     xhc_module_t *module = (xhc_module_t *) ompi_module;
