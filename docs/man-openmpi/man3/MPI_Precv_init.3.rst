@@ -20,8 +20,8 @@ C Syntax
 
    #include <mpi.h>
 
-   int MPI_Precv_init(const void *buf, int partitions, int count, MPI_Datatype datatype, int dest,
-   	int tag, MPI_Comm comm, MPI_Info info, MPI_Request *request)
+   int MPI_Precv_init(const void *buf, int partitions, int count, MPI_Datatype datatype,
+   	int source, int tag, MPI_Comm comm, MPI_Info info, MPI_Request *request)
 
 
 Fortran Syntax
@@ -31,9 +31,9 @@ Fortran Syntax
 
    USE MPI
    ! or the older form: INCLUDE 'mpif.h'
-   MPI_PRECV_INIT(BUF, PARTITIONS, COUNT, DATATYPE, DEST, TAG, COMM, INFO, REQUEST, IERROR)
+   MPI_PRECV_INIT(BUF, PARTITIONS, COUNT, DATATYPE, SOURCE, TAG, COMM, INFO, REQUEST, IERROR)
    	<type>	BUF(*)
-   	INTEGER	PARTITIONS, COUNT, DATATYPE, DEST, TAG, COMM, INFO, REQUEST, IERROR
+   	INTEGER	PARTITIONS, COUNT, DATATYPE, SOURCE, TAG, COMM, INFO, REQUEST, IERROR
 
 
 Fortran 2008 Syntax
@@ -42,9 +42,9 @@ Fortran 2008 Syntax
 .. code-block:: fortran
 
    USE mpi_f08
-   MPI_Precv_init(buf, partitions, count, datatype, dest, tag, comm, info, request, ierror)
+   MPI_Precv_init(buf, partitions, count, datatype, source, tag, comm, info, request, ierror)
    	TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: buf
-   	INTEGER, INTENT(IN) :: partitions, count, dest, tag
+   	INTEGER, INTENT(IN) :: partitions, count, source, tag
    	TYPE(MPI_Datatype), INTENT(IN) :: datatype
    	TYPE(MPI_Comm), INTENT(IN) :: comm
    	TYPE(MPI_Info), INTENT(IN) :: info
@@ -58,7 +58,7 @@ INPUT PARAMETERS
 * ``partitions``: Number of partitions (integer).
 * ``count``: Number of elements to be received per partition (integer).
 * ``datatype``: Datatype of each element (handle).
-* ``dest``: Rank of source (integer).
+* ``source``: Rank of source (integer).
 * ``tag``: Message tag (integer).
 * ``comm``: Communicator (handle).
 * ``info``: Info argument (handle).
