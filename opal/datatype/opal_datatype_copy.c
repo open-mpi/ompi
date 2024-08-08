@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2013 The University of Tennessee and The University
+ * Copyright (c) 2004-2024 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -55,7 +55,8 @@
         }                                                                                   \
     } while (0)
 
-static void *opal_datatype_accelerator_memcpy(void *dest, const void *src, size_t size)
+static void *opal_datatype_accelerator_memcpy(void *dest, const void *src, size_t size,
+                                              opal_accelerator_stream_t *stream)
 {
     int res;
     int dst_type, dst_dev, src_type, src_dev;
@@ -74,13 +75,18 @@ static void *opal_datatype_accelerator_memcpy(void *dest, const void *src, size_
         return memcpy(dest, src, size);
     }
     else if (0 >= dst_type && 0 < src_type) {
-	copy_type = MCA_ACCELERATOR_TRANSFER_DTOH;
+        copy_type = MCA_ACCELERATOR_TRANSFER_DTOH;
     }
-    else if (0 < dst_type && 0 >= dst_type) {
-	copy_type = MCA_ACCELERATOR_TRANSFER_HTOD;
+    else if (0 < dst_type && 0 >= src_type) {
+        copy_type = MCA_ACCELERATOR_TRANSFER_HTOD;
     }
-    res = opal_accelerator.mem_copy(dst_dev, src_dev,
-				    dest, src, size, copy_type);
+    if (NULL != stream) {
+        res = opal_accelerator.mem_copy_async(dst_dev, src_dev,
+                                              dest, src, size, stream, copy_type);
+    } else {
+        res = opal_accelerator.mem_copy(dst_dev, src_dev,
+                                        dest, src, size, copy_type);
+    }
     if (OPAL_SUCCESS != res) {
         opal_output(0, "Error in accelerator memcpy");
         abort();
@@ -88,7 +94,8 @@ static void *opal_datatype_accelerator_memcpy(void *dest, const void *src, size_
     return dest;
 }
 
-static void *opal_datatype_accelerator_memmove(void *dest, const void *src, size_t size)
+static void *opal_datatype_accelerator_memmove(void *dest, const void *src, size_t size,
+                                               opal_accelerator_stream_t *stream)
 {
     int res;
     int dst_type, dst_dev, src_type, src_dev;
@@ -107,13 +114,18 @@ static void *opal_datatype_accelerator_memmove(void *dest, const void *src, size
         return memmove(dest, src, size);
     }
     else if (0 >= dst_type && 0 < src_type) {
-	copy_type = MCA_ACCELERATOR_TRANSFER_DTOH;
+        copy_type = MCA_ACCELERATOR_TRANSFER_DTOH;
     }
-    else if (0 < dst_type && 0 >= dst_type) {
-	copy_type = MCA_ACCELERATOR_TRANSFER_HTOD;
+    else if (0 < dst_type && 0 >= src_type) {
+        copy_type = MCA_ACCELERATOR_TRANSFER_HTOD;
     }
-    res = opal_accelerator.mem_move(dst_dev, src_dev,
-                                    dest, src, size, copy_type);
+    if (NULL == stream) {
+        res = opal_accelerator.mem_move(dst_dev, src_dev,
+                                        dest, src, size, copy_type);
+    } else {
+        res = opal_accelerator.mem_move_async(dst_dev, src_dev,
+                                              dest, src, size, stream, copy_type);
+    }
     if (OPAL_SUCCESS != res) {
         opal_output(0, "Error in accelerator memmove");
         abort();
@@ -137,11 +149,12 @@ static void *opal_datatype_accelerator_memmove(void *dest, const void *src, size
 #define MEM_OP opal_datatype_accelerator_memmove
 #include "opal_datatype_copy.h"
 
-int32_t opal_datatype_copy_content_same_ddt(const opal_datatype_t *datatype, int32_t count,
-                                            char *destination_base, char *source_base)
+int32_t opal_datatype_copy_content_same_ddt_stream(const opal_datatype_t *datatype, int32_t count,
+                                                   char *destination_base, char *source_base,
+                                                   opal_accelerator_stream_t *stream)
 {
     ptrdiff_t extent;
-    int32_t (*fct)(const opal_datatype_t *, int32_t, char *, char *);
+    int32_t (*fct)(const opal_datatype_t *, int32_t, char *, char *, opal_accelerator_stream_t*);
 
     DO_DEBUG(opal_output(0, "opal_datatype_copy_content_same_ddt( %p, %d, dst %p, src %p )\n",
                          (void *) datatype, count, (void *) destination_base,
@@ -173,5 +186,11 @@ int32_t opal_datatype_copy_content_same_ddt(const opal_datatype_t *datatype, int
             fct = overlap_accelerator_copy_content_same_ddt;
         }
     }
-    return fct(datatype, count, destination_base, source_base);
+    return fct(datatype, count, destination_base, source_base, stream);
+}
+
+int32_t opal_datatype_copy_content_same_ddt(const opal_datatype_t *datatype, int32_t count,
+                                            char *destination_base, char *source_base)
+{
+    return opal_datatype_copy_content_same_ddt_stream(datatype, count, destination_base, source_base, NULL);
 }
