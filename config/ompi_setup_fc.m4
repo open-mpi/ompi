@@ -210,13 +210,13 @@ end program
     LIBS=$LIBS_save_xcode
 
     AS_IF([test $xcode_happy -eq 1],
-          [ # Restore LDFLAFGS + the new flags (i.e., get rid of the
+          [ # Restore LDFLAGS + the new flags (i.e., get rid of the
             # "-L." we added for this test)
-           LDFLAGS="$LDFLAGS_xcode_save $1"
+           LDFLAGS="$LDFLAGS_save_xcode $1"
            $2],
           [ # If we failed the test, reset LDFLAGS back to its
             # original value.
-           LDFLAGS=$LDFLAGS_xcode_save
+           LDFLAGS=$LDFLAGS_save_xcode
            $3])
 
     OPAL_VAR_SCOPE_POP
