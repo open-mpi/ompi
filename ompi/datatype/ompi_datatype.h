@@ -49,6 +49,7 @@ BEGIN_C_DECLS
 #define OMPI_DATATYPE_FLAG_ANALYZED      0x0400
 #define OMPI_DATATYPE_FLAG_MONOTONIC     0x0800
 /* Keep trace of the type of the predefined datatypes */
+#define OMPI_DATATYPE_FLAG_DATA_BOOL     0x0000 /* TODO: what to do here? */
 #define OMPI_DATATYPE_FLAG_DATA_INT      0x1000
 #define OMPI_DATATYPE_FLAG_DATA_FLOAT    0x2000
 #define OMPI_DATATYPE_FLAG_DATA_COMPLEX  0x3000
