@@ -418,7 +418,7 @@ ompi_mtl_portals4_long_isend(void *start, size_t length, uint32_t contextid, int
 
 #if OMPI_MTL_PORTALS4_FLOW_CONTROL
 void
-ompi_mtl_portals4_pending_list_progress()
+ompi_mtl_portals4_pending_list_progress(void)
 {
     int ret, val;
     opal_list_item_t *item;

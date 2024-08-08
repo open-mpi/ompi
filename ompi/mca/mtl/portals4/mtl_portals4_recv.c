@@ -49,7 +49,7 @@ read_msg(void *start, ptl_size_t length, ptl_process_t target,
          ompi_mtl_portals4_recv_request_t *request)
 {
     int ret, i;
-    ptl_size_t rest = length, asked = 0;
+    ptl_size_t rest = length;
     int32_t frag_count;
 
 #if OMPI_MTL_PORTALS4_FLOW_CONTROL
@@ -102,7 +102,6 @@ read_msg(void *start, ptl_size_t length, ptl_process_t target,
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
         rest -= frag->frag_length;
-        asked += frag->frag_length;
     }
 
     return OMPI_SUCCESS;

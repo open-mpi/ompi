@@ -834,7 +834,7 @@ bcast_pipeline_bottom(ompi_coll_portals4_request_t *request)
 
 
 int
-ompi_coll_portals4_bcast_intra(void *buff, int count,
+ompi_coll_portals4_bcast_intra(void *buff, size_t count,
         struct ompi_datatype_t *datatype, int root,
         struct ompi_communicator_t *comm,
         mca_coll_base_module_t *module)
@@ -878,7 +878,7 @@ ompi_coll_portals4_bcast_intra(void *buff, int count,
 
 
 int
-ompi_coll_portals4_ibcast_intra(void *buff, int count,
+ompi_coll_portals4_ibcast_intra(void *buff, size_t count,
         struct ompi_datatype_t *datatype, int root,
         struct ompi_communicator_t *comm,
         ompi_request_t **ompi_request,

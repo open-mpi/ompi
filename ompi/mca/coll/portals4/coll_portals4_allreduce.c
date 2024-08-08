@@ -32,7 +32,7 @@
 #define COLL_PORTALS4_ALLREDUCE_MAX_CHILDREN	2
 
 static int
-allreduce_kary_tree_top(const void *sendbuf, void *recvbuf, int count,
+allreduce_kary_tree_top(const void *sendbuf, void *recvbuf, size_t count,
         MPI_Datatype dtype, MPI_Op op,
         struct ompi_communicator_t *comm,
         ompi_coll_portals4_request_t *request,
@@ -380,7 +380,7 @@ allreduce_kary_tree_bottom(ompi_coll_portals4_request_t *request)
     return (OMPI_SUCCESS);
 }
 
-int ompi_coll_portals4_allreduce_intra(const void* sendbuf, void* recvbuf, int count,
+int ompi_coll_portals4_allreduce_intra(const void* sendbuf, void* recvbuf, size_t count,
         MPI_Datatype dtype, MPI_Op op,
         struct ompi_communicator_t *comm,
         mca_coll_base_module_t *module)
@@ -409,7 +409,7 @@ int ompi_coll_portals4_allreduce_intra(const void* sendbuf, void* recvbuf, int c
 }
 
 
-int ompi_coll_portals4_iallreduce_intra(const void* sendbuf, void* recvbuf, int count,
+int ompi_coll_portals4_iallreduce_intra(const void* sendbuf, void* recvbuf, size_t count,
         MPI_Datatype dtype, MPI_Op op,
         struct ompi_communicator_t *comm,
         ompi_request_t ** ompi_request,

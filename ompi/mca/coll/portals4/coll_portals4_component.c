@@ -135,7 +135,7 @@ ptl_datatype_t ompi_coll_portals4_atomic_datatype [OMPI_DATATYPE_MPI_MAX_PREDEFI
         {                                                                                                                 \
             opal_output_verbose(1, ompi_coll_base_framework.framework_output,                                             \
                                 "(%d/%s): no underlying " #__api "; disqualifying myself",                                \
-                                __comm->c_contextid, __comm->c_name);                                                     \
+                                ompi_comm_get_local_cid(__comm), __comm->c_name); \
             __module->previous_##__api = NULL;                                                                            \
             __module->previous_##__api##_module = NULL;                                                                   \
         }                                                                                                                 \
@@ -144,7 +144,7 @@ ptl_datatype_t ompi_coll_portals4_atomic_datatype [OMPI_DATATYPE_MPI_MAX_PREDEFI
             /* save the current selected collective */                                                                    \
             MCA_COLL_SAVE_API(__comm, __api, __module->previous_##__api, __module->previous_##__api##_module, "portals"); \
             /* install our own */                                                                                         \
-            MCA_COLL_INSTALL_API(__comm, __api, __module->super.coll##__api, &__module->super, "portals");                \
+            MCA_COLL_INSTALL_API(__comm, __api, __module->super.coll_##__api, &__module->super, "portals");                \
         }                                                                                                                 \
     } while (0)
 
@@ -187,7 +187,7 @@ mca_coll_portals4_component_t mca_coll_portals4_component = {
          * about the component itself */
 
         .collm_version = {
-            MCA_COLL_BASE_VERSION_2_4_0,
+            MCA_COLL_BASE_VERSION_3_0_0,
 
             /* Component name and version */
             .mca_component_name = "portals4",

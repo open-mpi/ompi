@@ -32,7 +32,7 @@
 
 
 static int
-reduce_kary_tree_top(const void *sendbuf, void *recvbuf, int count,
+reduce_kary_tree_top(const void *sendbuf, void *recvbuf, size_t count,
         MPI_Datatype dtype, MPI_Op op,
         int root,
         struct ompi_communicator_t *comm,
@@ -377,7 +377,7 @@ err_hdlr:
 
 
 int
-ompi_coll_portals4_reduce_intra(const void *sendbuf, void *recvbuf, int count,
+ompi_coll_portals4_reduce_intra(const void *sendbuf, void *recvbuf, size_t count,
         MPI_Datatype dtype, MPI_Op op,
         int root,
         struct ompi_communicator_t *comm,
@@ -412,7 +412,7 @@ ompi_coll_portals4_reduce_intra(const void *sendbuf, void *recvbuf, int count,
 
 
 int
-ompi_coll_portals4_ireduce_intra(const void* sendbuf, void* recvbuf, int count,
+ompi_coll_portals4_ireduce_intra(const void* sendbuf, void* recvbuf, size_t count,
         MPI_Datatype dtype, MPI_Op op,
         int root,
         struct ompi_communicator_t *comm,

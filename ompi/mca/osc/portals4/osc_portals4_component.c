@@ -115,18 +115,18 @@ static bool
 check_config_value_bool(char *key, opal_info_t *info)
 {
     int ret, flag, param;
-    const bool *flag_value;
-    bool result;
+    bool result = false;
+    const bool *flag_value = &result;
+
     ret = opal_info_get_bool(info, key, &result, &flag);
-    if (OMPI_SUCCESS != ret || !flag) goto info_not_found;
-    return result;
+    if (OMPI_SUCCESS == ret && flag) {
+        return result;
+    }
 
- info_not_found:
     param = mca_base_var_find("ompi", "osc", "portals4", key);
-    if (0 > param) return false;
-
-    ret = mca_base_var_get_value(param, &flag_value, NULL, NULL);
-    if (OMPI_SUCCESS != ret) return false;
+    if (0 <= param) {
+        (void) mca_base_var_get_value(param, &flag_value, NULL, NULL);
+    }
 
     return flag_value[0];
 }
