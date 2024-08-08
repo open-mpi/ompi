@@ -455,9 +455,6 @@ end program]])],
     AS_IF([test $OMPI_TRY_FORTRAN_BINDINGS -ge $OMPI_FORTRAN_USEMPIF08_BINDINGS],
           [OMPI_FORTRAN_CHECK_TS([OMPI_FORTRAN_HAVE_TS=1])])
 
-    AC_SUBST(OMPI_MPI_SUBARRAYS_SUPPORTED)
-    AC_SUBST(OMPI_MPI_ASYNC_PROTECTS_NONBLOCKING)
-
     # We need to have ignore TKR or the ISO Fortran bindings functionality to build the mpi_f08
     # module
     AS_IF([test $OMPI_TRY_FORTRAN_BINDINGS -ge $OMPI_FORTRAN_USEMPIF08_BINDINGS],
@@ -470,6 +467,9 @@ end program]])],
                  [OMPI_BUILD_FORTRAN_BINDINGS=$OMPI_FORTRAN_USEMPIF08_BINDINGS
                   OMPI_MPI_SUBARRAYS_SUPPORTED=.true.
                   OMPI_MPI_ASYNC_PROTECTS_NONBLOCKING=.true.])])
+
+    AC_SUBST(OMPI_MPI_SUBARRAYS_SUPPORTED)
+    AC_SUBST(OMPI_MPI_ASYNC_PROTECTS_NONBLOCKING)
 
     # The overall "_BIND_C" variable will be set to 1 if we have all
     # the necessary forms of BIND(C)
