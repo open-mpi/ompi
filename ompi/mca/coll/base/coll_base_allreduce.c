@@ -1281,7 +1281,6 @@ int ompi_coll_base_allreduce_intra_allgather_reduce(const void *sbuf, void *rbuf
     ptrdiff_t extent, lb;
     ompi_datatype_get_extent(dtype, &lb, &extent);
 
-    int rank = ompi_comm_rank(comm);
     int size = ompi_comm_size(comm);
 
     sendtmpbuf = (char*) sbuf;
@@ -1337,7 +1336,7 @@ err_hndl:
         tmpsend_start = NULL;
     }
    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,  "%s:%4d\tError occurred %d, rank %2d",
-                 __FILE__, line, err, rank));
+                 __FILE__, line, err, ompi_comm_rank(comm)));
     (void)line;  // silence compiler warning
     return err;
 

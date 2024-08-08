@@ -1509,10 +1509,7 @@ static int ompi_comm_idup_with_info_activate (ompi_comm_request_t *request)
 
 static int ompi_comm_idup_with_info_finish (ompi_comm_request_t *request)
 {
-    ompi_comm_idup_with_info_context_t *context =
-        (ompi_comm_idup_with_info_context_t *) request->context;
-
-    /* done */
+    /* nothing to be done */
     return MPI_SUCCESS;
 }
 

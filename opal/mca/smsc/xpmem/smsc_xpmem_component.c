@@ -116,10 +116,10 @@ static int mca_smsc_xpmem_component_query(void)
     char buffer[1024];
     uintptr_t address_max = 0;
     while (fgets(buffer, sizeof(buffer), fh)) {
-        uintptr_t low, high;
+        uintptr_t high;
         char *tmp;
         /* each line of /proc/self/maps starts with low-high in hexadecimal (without a 0x) */
-        low = strtoul(buffer, &tmp, 16);
+        strtoul(buffer, &tmp, 16);
         high = strtoul(tmp + 1, NULL, 16);
         if (address_max < high) {
             address_max = high;
