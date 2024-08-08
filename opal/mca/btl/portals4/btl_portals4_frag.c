@@ -45,7 +45,7 @@ static void mca_btl_portals4_frag_eager_constructor(mca_btl_portals4_frag_t *fra
 
 static void mca_btl_portals4_frag_eager_destructor(mca_btl_portals4_frag_t *frag)
 {
-    if (PTL_INVALID_HANDLE != frag->me_h) {
+    if (!PtlHandleIsEqual(frag->me_h, PTL_INVALID_HANDLE)) {
         PtlMEUnlink(frag->me_h);
         frag->me_h = PTL_INVALID_HANDLE;
     }

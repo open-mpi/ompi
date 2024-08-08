@@ -487,13 +487,13 @@ int mca_btl_portals4_free(struct mca_btl_base_module_t *btl_base, mca_btl_base_d
         OPAL_BTL_PORTALS4_FRAG_RETURN_EAGER(portals4_btl, frag);
 
     } else if (BTL_PORTALS4_FRAG_TYPE_MAX == frag->type) {
-        if (frag->me_h != PTL_INVALID_HANDLE) {
+        if (!PtlHandleIsEqual(frag->me_h,PTL_INVALID_HANDLE)) {
             frag->me_h = PTL_INVALID_HANDLE;
         }
         OPAL_BTL_PORTALS4_FRAG_RETURN_MAX(portals4_btl, frag);
 
     } else if (BTL_PORTALS4_FRAG_TYPE_USER == frag->type) {
-        if (frag->me_h != PTL_INVALID_HANDLE) {
+        if (!PtlHandleIsEqual(frag->me_h,PTL_INVALID_HANDLE)) {
             frag->me_h = PTL_INVALID_HANDLE;
         }
         OPAL_THREAD_ADD_FETCH32(&portals4_btl->portals_outstanding_ops, -1);
