@@ -20,7 +20,7 @@
  *                         All rights reserved.
  * Copyright (c) 2016-2021 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
- * Copyright (c) 2018-2021 Triad National Security, LLC. All rights
+ * Copyright (c) 2018-2024 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * Copyright (c) 2022      IBM Corporation.  All rights reserved.
@@ -104,6 +104,7 @@ bool ompi_ftmpi_enabled = false;
 #endif /* OPAL_ENABLE_FT_MPI */
 
 static int ompi_stream_buffering_mode = -1;
+int ompi_comm_verbose_level = 0;
 
 int ompi_mpi_register_params(void)
 {
@@ -445,6 +446,10 @@ int ompi_mpi_register_params(void)
     }
 #endif /* OPAL_ENABLE_FT_MPI */
 
+    (void) mca_base_var_register ("ompi", "mpi", "comm", "verbose",
+                                  "Verbosity level for communicator management subsystem",
+                                  MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                  OPAL_INFO_LVL_8, MCA_BASE_VAR_SCOPE_LOCAL, &ompi_comm_verbose_level);
 
     return OMPI_SUCCESS;
 }

@@ -64,6 +64,14 @@ struct mca_pml_ucx_module {
 extern mca_pml_base_component_2_1_0_t mca_pml_ucx_component;
 extern mca_pml_ucx_module_t ompi_pml_ucx;
 
+typedef struct mca_pml_comm_t {
+    opal_object_t super;
+    uint32_t c_index;
+    uint32_t *c_index_vec;
+} mca_pml_comm_t;
+
+OBJ_CLASS_DECLARATION(mca_pml_comm_t);
+
 int mca_pml_ucx_open(void);
 int mca_pml_ucx_close(void);
 int mca_pml_ucx_init(int enable_mpi_threads);
