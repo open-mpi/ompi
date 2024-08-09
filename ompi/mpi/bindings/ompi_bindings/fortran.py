@@ -178,7 +178,11 @@ class FortranBinding:
         c_func = self.c_func_name
         self.dump(f'void {c_func}({parameters});')
         self.dump(f'void {c_func}({parameters})')
-        self.template.print_body(c_func, out=self.out, inner_call=self.inner_call)
+        count_type, disp_type = ('MPI_Count', 'MPI_Aint') if self.bigcount else ('int', 'int')
+        self.template.print_body(c_func, out=self.out,
+                                 replacements={'INNER_CALL': self.inner_call,
+                                               'COUNT_TYPE': count_type,
+                                               'DISP_TYPE': disp_type})
 
     def print_interface(self):
         """Output just the Fortran interface for this binding."""
@@ -212,7 +216,6 @@ def print_profiling_rename_macros(templates, out):
 def print_c_source_header(out):
     """Print the header of the C source file."""
     out.dump(f'/* {consts.GENERATED_MESSAGE} */')
-    out.dump('#include "ts.h"')
     out.dump('#include "ompi_config.h"')
     out.dump('#include "mpi.h"')
     out.dump('#include "ompi/errhandler/errhandler.h"')
@@ -225,6 +228,8 @@ def print_c_source_header(out):
     out.dump('#include "ompi/file/file.h"')
     out.dump('#include "ompi/errhandler/errhandler.h"')
     out.dump('#include "ompi/datatype/ompi_datatype.h"')
+    out.dump('#include "ts.h"')
+    out.dump('#include "array.h"')
 
 
 def print_binding(prototype, lang, out, bigcount=False, template=None):

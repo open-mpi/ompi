@@ -36,6 +36,7 @@ libusempif08_ccode_la_SOURCES = \
 libusempif08_ccode_la_SOURCES += \
         ts.h \
         ts.c \
+        array.h \
         api_f08_generated.c
 
 #
