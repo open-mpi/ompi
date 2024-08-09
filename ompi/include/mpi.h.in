@@ -1389,7 +1389,6 @@ OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_ub;
 /*
  * MPI API
  */
-
 OMPI_DECLSPEC  int MPI_Abort(MPI_Comm comm, int errorcode);
 OMPI_DECLSPEC  int MPI_Accumulate(const void *origin_addr, int origin_count, MPI_Datatype origin_datatype,
                                   int target_rank, MPI_Aint target_disp, int target_count,
@@ -1419,6 +1418,10 @@ OMPI_DECLSPEC  int MPI_Alloc_mem(MPI_Aint size, MPI_Info info,
                                  void *baseptr);
 OMPI_DECLSPEC  int MPI_Allreduce(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
                                  MPI_Op op, MPI_Comm comm);
+#ifdef OMPI_BIGCOUNT
+OMPI_DECLSPEC  int MPI_Allreduce_c(const void *sendbuf, void *recvbuf, MPI_Count count, MPI_Datatype datatype,
+                                   MPI_Op op, MPI_Comm comm);
+#endif
 OMPI_DECLSPEC  int MPI_Iallreduce(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
                                   MPI_Op op, MPI_Comm comm, MPI_Request *request);
 OMPI_DECLSPEC  int MPI_Allreduce_init(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
@@ -1435,6 +1438,11 @@ OMPI_DECLSPEC  int MPI_Alltoall_init(const void *sendbuf, int sendcount, MPI_Dat
 OMPI_DECLSPEC  int MPI_Alltoallv(const void *sendbuf, const int sendcounts[], const int sdispls[], MPI_Datatype sendtype,
                                  void *recvbuf, const int recvcounts[], const int rdispls[], MPI_Datatype recvtype,
                                  MPI_Comm comm);
+#ifdef OMPI_BIGCOUNT
+OMPI_DECLSPEC  int MPI_Alltoallv_c(const void *sendbuf, const MPI_Count sendcounts[], const MPI_Aint sdispls[], MPI_Datatype sendtype,
+                                   void *recvbuf, const MPI_Count recvcounts[], const MPI_Aint rdispls[], MPI_Datatype recvtype,
+                                   MPI_Comm comm);
+#endif
 OMPI_DECLSPEC  int MPI_Ialltoallv(const void *sendbuf, const int sendcounts[], const int sdispls[], MPI_Datatype sendtype,
                                   void *recvbuf, const int recvcounts[], const int rdispls[], MPI_Datatype recvtype,
                                   MPI_Comm comm, MPI_Request *request);
@@ -1444,6 +1452,11 @@ OMPI_DECLSPEC  int MPI_Alltoallv_init(const void *sendbuf, const int sendcounts[
 OMPI_DECLSPEC  int MPI_Alltoallw(const void *sendbuf, const int sendcounts[], const int sdispls[], const MPI_Datatype sendtypes[],
                                  void *recvbuf, const int recvcounts[], const int rdispls[], const MPI_Datatype recvtypes[],
                                  MPI_Comm comm);
+#ifdef OMPI_BIGCOUNT
+OMPI_DECLSPEC  int MPI_Alltoallw_c(const void *sendbuf, const MPI_Count sendcounts[], const MPI_Aint sdispls[], const MPI_Datatype sendtypes[],
+                                   void *recvbuf, const MPI_Count recvcounts[], const MPI_Aint rdispls[], const MPI_Datatype recvtypes[],
+                                   MPI_Comm comm);
+#endif
 OMPI_DECLSPEC  int MPI_Ialltoallw(const void *sendbuf, const int sendcounts[], const int sdispls[], const MPI_Datatype sendtypes[],
                                   void *recvbuf, const int recvcounts[], const int rdispls[], const MPI_Datatype recvtypes[],
                                   MPI_Comm comm, MPI_Request *request);
@@ -1774,10 +1787,18 @@ OMPI_DECLSPEC  int MPI_Iprobe(int source, int tag, MPI_Comm comm, int *flag,
                               MPI_Status *status);
 OMPI_DECLSPEC  int MPI_Irecv(void *buf, int count, MPI_Datatype datatype, int source,
                              int tag, MPI_Comm comm, MPI_Request *request);
+#ifdef OMPI_BIGCOUNT
+OMPI_DECLSPEC  int MPI_Irecv_c(void *buf, MPI_Count count, MPI_Datatype datatype, int source,
+                               int tag, MPI_Comm comm, MPI_Request *request);
+#endif
 OMPI_DECLSPEC  int MPI_Irsend(const void *buf, int count, MPI_Datatype datatype, int dest,
                               int tag, MPI_Comm comm, MPI_Request *request);
 OMPI_DECLSPEC  int MPI_Isend(const void *buf, int count, MPI_Datatype datatype, int dest,
                              int tag, MPI_Comm comm, MPI_Request *request);
+#ifdef OMPI_BIGCOUNT
+OMPI_DECLSPEC  int MPI_Isend_c(const void *buf, MPI_Count count, MPI_Datatype datatype, int dest,
+                               int tag, MPI_Comm comm, MPI_Request *request);
+#endif
 OMPI_DECLSPEC  int MPI_Isendrecv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
                                  int dest, int sendtag, void *recvbuf, int recvcount,
                                  MPI_Datatype recvtype, int source, int recvtag,
@@ -1882,6 +1903,10 @@ OMPI_DECLSPEC  int MPI_Recv_init(void *buf, int count, MPI_Datatype datatype, in
                                  int tag, MPI_Comm comm, MPI_Request *request);
 OMPI_DECLSPEC  int MPI_Recv(void *buf, int count, MPI_Datatype datatype, int source,
                             int tag, MPI_Comm comm, MPI_Status *status);
+#ifdef OMPI_BIGCOUNT
+OMPI_DECLSPEC  int MPI_Recv_c(void *buf, MPI_Count count, MPI_Datatype datatype, int source,
+                              int tag, MPI_Comm comm, MPI_Status *status);
+#endif
 OMPI_DECLSPEC  int MPI_Reduce(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
                               MPI_Op op, int root, MPI_Comm comm);
 OMPI_DECLSPEC  int MPI_Ireduce(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
@@ -1930,6 +1955,10 @@ OMPI_DECLSPEC  int MPI_Rsend_init(const void *buf, int count, MPI_Datatype datat
                                   MPI_Request *request);
 OMPI_DECLSPEC  int MPI_Scan(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
                             MPI_Op op, MPI_Comm comm);
+#ifdef OMPI_BIGCOUNT
+OMPI_DECLSPEC  int MPI_Scan_c(const void *sendbuf, void *recvbuf, MPI_Count count, MPI_Datatype datatype,
+                              MPI_Op op, MPI_Comm comm);
+#endif
 OMPI_DECLSPEC  int MPI_Iscan(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
                              MPI_Op op, MPI_Comm comm, MPI_Request *request);
 OMPI_DECLSPEC  int MPI_Scan_init(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
@@ -1957,6 +1986,10 @@ OMPI_DECLSPEC  int MPI_Send_init(const void *buf, int count, MPI_Datatype dataty
                                  MPI_Request *request);
 OMPI_DECLSPEC  int MPI_Send(const void *buf, int count, MPI_Datatype datatype, int dest,
                             int tag, MPI_Comm comm);
+#ifdef OMPI_BIGCOUNT
+OMPI_DECLSPEC  int MPI_Send_c(const void *buf, MPI_Count count, MPI_Datatype datatype, int dest,
+                              int tag, MPI_Comm comm);
+#endif
 OMPI_DECLSPEC  int MPI_Sendrecv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
                                 int dest, int sendtag, void *recvbuf, int recvcount,
                                 MPI_Datatype recvtype, int source, int recvtag,
@@ -2153,6 +2186,11 @@ OMPI_DECLSPEC  int PMPI_Abort(MPI_Comm comm, int errorcode);
 OMPI_DECLSPEC  int PMPI_Accumulate(const void *origin_addr, int origin_count, MPI_Datatype origin_datatype,
                                    int target_rank, MPI_Aint target_disp, int target_count,
                                    MPI_Datatype target_datatype, MPI_Op op, MPI_Win win);
+#ifdef OMPI_BIGCOUNT
+OMPI_DECLSPEC  int PMPI_Accumulate_c(const void *origin_addr, MPI_Count origin_count, MPI_Datatype origin_datatype,
+                                     int target_rank, MPI_Aint target_disp, MPI_Count target_count,
+                                     MPI_Datatype target_datatype, MPI_Op op, MPI_Win win);
+#endif
 OMPI_DECLSPEC  int PMPI_Add_error_class(int *errorclass);
 OMPI_DECLSPEC  int PMPI_Add_error_code(int errorclass, int *errorcode);
 OMPI_DECLSPEC  int PMPI_Add_error_string(int errorcode, const char *string);
@@ -2178,6 +2216,10 @@ OMPI_DECLSPEC  int PMPI_Alloc_mem(MPI_Aint size, MPI_Info info,
                                   void *baseptr);
 OMPI_DECLSPEC  int PMPI_Allreduce(const void *sendbuf, void *recvbuf, int count,
                                   MPI_Datatype datatype, MPI_Op op, MPI_Comm comm);
+#ifdef OMPI_BIGCOUNT
+OMPI_DECLSPEC  int PMPI_Allreduce_c(const void *sendbuf, void *recvbuf, MPI_Count count,
+                                    MPI_Datatype datatype, MPI_Op op, MPI_Comm comm);
+#endif
 OMPI_DECLSPEC  int PMPI_Iallreduce(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
                                    MPI_Op op, MPI_Comm comm, MPI_Request *request);
 OMPI_DECLSPEC  int PMPI_Allreduce_init(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
@@ -2194,6 +2236,11 @@ OMPI_DECLSPEC  int PMPI_Alltoall_init(const void *sendbuf, int sendcount, MPI_Da
 OMPI_DECLSPEC  int PMPI_Alltoallv(const void *sendbuf, const int sendcounts[], const int sdispls[], MPI_Datatype sendtype,
                                   void *recvbuf, const int recvcounts[], const int rdispls[], MPI_Datatype recvtype,
                                   MPI_Comm comm);
+#ifdef OMPI_BIGCOUNT
+OMPI_DECLSPEC  int PMPI_Alltoallv_c(const void *sendbuf, const MPI_Count sendcounts[], const MPI_Aint sdispls[], MPI_Datatype sendtype,
+                                    void *recvbuf, const MPI_Count recvcounts[], const MPI_Aint rdispls[], MPI_Datatype recvtype,
+                                    MPI_Comm comm);
+#endif
 OMPI_DECLSPEC  int PMPI_Ialltoallv(const void *sendbuf, const int sendcounts[], const int sdispls[], MPI_Datatype sendtype,
                                    void *recvbuf, const int recvcounts[], const int rdispls[], MPI_Datatype recvtype,
                                    MPI_Comm comm, MPI_Request *request);
@@ -2203,6 +2250,11 @@ OMPI_DECLSPEC  int PMPI_Alltoallv_init(const void *sendbuf, const int sendcounts
 OMPI_DECLSPEC  int PMPI_Alltoallw(const void *sendbuf, const int sendcounts[], const int sdispls[], const MPI_Datatype sendtypes[],
                                   void *recvbuf, const int recvcounts[], const int rdispls[], const MPI_Datatype recvtypes[],
                                   MPI_Comm comm);
+#ifdef OMPI_BIGCOUNT
+OMPI_DECLSPEC  int PMPI_Alltoallw_c(const void *sendbuf, const MPI_Count sendcounts[], const MPI_Aint sdispls[], const MPI_Datatype sendtypes[],
+                                    void *recvbuf, const MPI_Count recvcounts[], const MPI_Aint rdispls[], const MPI_Datatype recvtypes[],
+                                    MPI_Comm comm);
+#endif
 OMPI_DECLSPEC  int PMPI_Ialltoallw(const void *sendbuf, const int sendcounts[], const int sdispls[], const MPI_Datatype sendtypes[],
                                    void *recvbuf, const int recvcounts[], const int rdispls[], const MPI_Datatype recvtypes[],
                                    MPI_Comm comm, MPI_Request *request);
@@ -2535,10 +2587,18 @@ OMPI_DECLSPEC  int PMPI_Iprobe(int source, int tag, MPI_Comm comm, int *flag,
                                MPI_Status *status);
 OMPI_DECLSPEC  int PMPI_Irecv(void *buf, int count, MPI_Datatype datatype, int source,
                               int tag, MPI_Comm comm, MPI_Request *request);
+#ifdef OMPI_BIGCOUNT
+OMPI_DECLSPEC  int PMPI_Irecv_c(void *buf, MPI_Count count, MPI_Datatype datatype, int source,
+                                int tag, MPI_Comm comm, MPI_Request *request);
+#endif
 OMPI_DECLSPEC  int PMPI_Irsend(const void *buf, int count, MPI_Datatype datatype, int dest,
                                int tag, MPI_Comm comm, MPI_Request *request);
 OMPI_DECLSPEC  int PMPI_Isend(const void *buf, int count, MPI_Datatype datatype, int dest,
                               int tag, MPI_Comm comm, MPI_Request *request);
+#ifdef OMPI_BIGCOUNT
+OMPI_DECLSPEC  int PMPI_Isend_c(const void *buf, MPI_Count count, MPI_Datatype datatype, int dest,
+                                int tag, MPI_Comm comm, MPI_Request *request);
+#endif
 OMPI_DECLSPEC  int PMPI_Isendrecv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
                                   int dest, int sendtag, void *recvbuf, int recvcount,
                                   MPI_Datatype recvtype, int source, int recvtag,
@@ -2643,6 +2703,10 @@ OMPI_DECLSPEC  int PMPI_Recv_init(void *buf, int count, MPI_Datatype datatype, i
                                   int tag, MPI_Comm comm, MPI_Request *request);
 OMPI_DECLSPEC  int PMPI_Recv(void *buf, int count, MPI_Datatype datatype, int source,
                              int tag, MPI_Comm comm, MPI_Status *status);
+#ifdef OMPI_BIGCOUNT
+OMPI_DECLSPEC  int PMPI_Recv_c(void *buf, MPI_Count count, MPI_Datatype datatype, int source,
+                               int tag, MPI_Comm comm, MPI_Status *status);
+#endif
 OMPI_DECLSPEC  int PMPI_Reduce(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
                                MPI_Op op, int root, MPI_Comm comm);
 OMPI_DECLSPEC  int PMPI_Ireduce(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
@@ -2691,6 +2755,10 @@ OMPI_DECLSPEC  int PMPI_Rsend_init(const void *buf, int count, MPI_Datatype data
                                    MPI_Request *request);
 OMPI_DECLSPEC  int PMPI_Scan(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
                              MPI_Op op, MPI_Comm comm);
+#ifdef OMPI_BIGCOUNT
+OMPI_DECLSPEC  int PMPI_Scan_c(const void *sendbuf, void *recvbuf, MPI_Count count, MPI_Datatype datatype,
+                               MPI_Op op, MPI_Comm comm);
+#endif
 OMPI_DECLSPEC  int PMPI_Iscan(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
                               MPI_Op op, MPI_Comm comm, MPI_Request *request);
 OMPI_DECLSPEC  int PMPI_Scan_init(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
@@ -2718,6 +2786,10 @@ OMPI_DECLSPEC  int PMPI_Send_init(const void *buf, int count, MPI_Datatype datat
                                   MPI_Request *request);
 OMPI_DECLSPEC  int PMPI_Send(const void *buf, int count, MPI_Datatype datatype, int dest,
                              int tag, MPI_Comm comm);
+#ifdef OMPI_BIGCOUNT
+OMPI_DECLSPEC  int PMPI_Send_c(const void *buf, MPI_Count count, MPI_Datatype datatype, int dest,
+                               int tag, MPI_Comm comm);
+#endif
 OMPI_DECLSPEC  int PMPI_Sendrecv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
                                  int dest, int sendtag, void *recvbuf, int recvcount,
                                  MPI_Datatype recvtype, int source, int recvtag,

@@ -33,4 +33,32 @@ noinst_LTLIBRARIES = libusempif08_ccode.la
 libusempif08_ccode_la_SOURCES = \
         buffer_detach.c
 
+libusempif08_ccode_la_SOURCES += \
+        ts.h \
+        ts.c \
+        array.h \
+        api_f08_generated.c
+
+#
+# api_f08_generated.c should work with all compilers, supporting CFI or TS 29113 support
+# through macros in ts.h and ts.c.
+#
+if OMPI_GENERATE_BINDINGS
+
+include ../Makefile.prototype_files
+
+api_f08_generated.c: $(prototype_files)
+	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
+	    --builddir $(abs_top_builddir) \
+	    --srcdir $(abs_top_srcdir) \
+	    --output $(abs_builddir)/$@ \
+	    fortran \
+	    code \
+	    --lang c \
+	    --prototype-files $(ready_prototype_files)
+
+# Delete generated files on maintainer-clean
+MAINTAINERCLEANFILES = api_f08_generated.c
+endif
+
 endif

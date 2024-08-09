@@ -49,6 +49,7 @@
 #define MPI_Probe_f08 PMPI_Probe_f08
 #define MPI_Recv PMPI_Recv
 #define MPI_Recv_f08 PMPI_Recv_f08
+#define MPI_Recv_f08_c PMPI_Recv_f08_c
 #define MPI_Recv_init PMPI_Recv_init
 #define MPI_Recv_init_f08 PMPI_Recv_init_f08
 #define MPI_Request_free PMPI_Request_free
@@ -61,6 +62,7 @@
 #define MPI_Rsend_init_f08 PMPI_Rsend_init_f08
 #define MPI_Send PMPI_Send
 #define MPI_Send_f08 PMPI_Send_f08
+#define MPI_Send_f08_c PMPI_Send_f08_c
 #define MPI_Sendrecv PMPI_Sendrecv
 #define MPI_Sendrecv_f08 PMPI_Sendrecv_f08
 #define MPI_Sendrecv_replace PMPI_Sendrecv_replace
