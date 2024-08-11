@@ -207,8 +207,8 @@ start_allgather:
             /* all ranks will pull from the other ranks' sbuf */
             gather_buf_in[0] = (void*)sbuf;
         }
-        gather_buf_in[1] = *(void**)&send_needs_bounce;
-        gather_buf_in[2] = *(void**)&ii_push_data;
+        gather_buf_in[1] = (void*)(intptr_t)send_needs_bounce;
+        gather_buf_in[2] = (void*)(intptr_t)ii_push_data;
 
         rc = low_comm->c_coll->coll_allgather(gather_buf_in, nptrs_gather, MPI_AINT,
                     gather_buf_out, nptrs_gather, MPI_AINT, low_comm,
@@ -385,5 +385,4 @@ cleanup:
     OPAL_OUTPUT_VERBOSE((40, mca_coll_han_component.han_output,
                 "Alltoall Complete with %d\n",rc));
     return rc;
-
 }
