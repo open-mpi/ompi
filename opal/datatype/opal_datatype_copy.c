@@ -17,6 +17,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2022      Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (c) 2024      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -76,7 +77,7 @@ static void *opal_datatype_accelerator_memcpy(void *dest, const void *src, size_
     else if (0 >= dst_type && 0 < src_type) {
 	copy_type = MCA_ACCELERATOR_TRANSFER_DTOH;
     }
-    else if (0 < dst_type && 0 >= dst_type) {
+    else if (0 < dst_type && 0 >= src_type) {
 	copy_type = MCA_ACCELERATOR_TRANSFER_HTOD;
     }
     res = opal_accelerator.mem_copy(dst_dev, src_dev,
@@ -109,7 +110,7 @@ static void *opal_datatype_accelerator_memmove(void *dest, const void *src, size
     else if (0 >= dst_type && 0 < src_type) {
 	copy_type = MCA_ACCELERATOR_TRANSFER_DTOH;
     }
-    else if (0 < dst_type && 0 >= dst_type) {
+    else if (0 < dst_type && 0 >= src_type) {
 	copy_type = MCA_ACCELERATOR_TRANSFER_HTOD;
     }
     res = opal_accelerator.mem_move(dst_dev, src_dev,
