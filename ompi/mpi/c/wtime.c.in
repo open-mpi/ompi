@@ -40,16 +40,12 @@
 
 #include "opal/util/clock_gettime.h"
 
-#if OMPI_BUILD_MPI_PROFILING
 /**
  * Use this as a base time set early during MPI initialization to improve the range
  * and accuracy of the user visible timer.
  * More info: https://github.com/mpi-forum/mpi-issues/issues/77#issuecomment-369663119
  */
-struct timespec ompi_wtime_time_origin = {.tv_sec = 0};
-#else
 extern struct timespec ompi_wtime_time_origin;
-#endif
 
 PROTOTYPE DOUBLE wtime()
 {
