@@ -10,6 +10,8 @@
 # Copyright (c) 2015-2020 Research Organization for Information Science
 #                         and Technology (RIST).  All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
+# Copyright (C) 2024      Triad National Security, LLC. All rights
+#                         reserved.
 #
 # $COPYRIGHT$
 #
@@ -64,13 +66,33 @@ libforce_usempif08_internal_modules_to_be_built_la_SOURCES = \
 
 nodist_noinst_HEADERS = mpi-f08-interfaces.h
 
-noinst_HEADERS = mpi-f08-rename.h
+noinst_HEADERS = \
+	mpi-f08-rename.h \
+        mpi-f08-interfaces-generated.h
 
 libforce_usempi_internal_modules_to_be_built.la: libusempif08_internal_modules.la
 
 config_h = \
     $(top_builddir)/ompi/mpi/fortran/configure-fortran-output.h \
     $(top_srcdir)/ompi/mpi/fortran/configure-fortran-output-bottom.h
+
+# Generate the Fortran interfaces
+if OMPI_GENERATE_BINDINGS
+
+include ../Makefile.prototype_files
+
+mpi-f08-interfaces-generated.h: $(prototype_files)
+	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
+	    --builddir $(abs_top_builddir) \
+	    --srcdir $(abs_top_srcdir) \
+	    --output $(abs_builddir)/$@ \
+	    fortran \
+	    interface \
+	    --prototype-files $(prototype_files)
+
+# Delete generated file on maintainer-clean
+MAINTAINERCLEANFILES = mpi-f08-interfaces-generated.h
+endif
 
 #
 # Automake doesn't do Fortran dependency analysis, so must list them
@@ -83,6 +105,7 @@ mpi-f08-interfaces.lo: $(config_h)
 mpi-f08-interfaces.lo: mpi-f08-interfaces.F90
 mpi-f08-interfaces.lo: mpi-f08-interfaces-callbacks.lo
 mpi-f08-interfaces.lo: mpi-f08-interfaces.h
+mpi-f08-interfaces.lo: mpi-f08-interfaces-generated.h
 mpi-f08-interfaces-callbacks.lo: $(config_h)
 mpi-f08-interfaces-callbacks.lo: mpi-f08-interfaces-callbacks.F90
 mpi-f08-interfaces-callbacks.lo: mpi-f08-types.lo
@@ -94,6 +117,7 @@ pmpi-f08-interfaces.lo: pmpi-f08-interfaces.F90
 pmpi-f08-interfaces.lo: mpi-f08-interfaces-callbacks.lo
 pmpi-f08-interfaces.lo: mpi-f08-interfaces.h
 pmpi-f08-interfaces.lo: mpi-f08-rename.h
+pmpi-f08-interfaces.lo: mpi-f08-interfaces-generated.h
 
 ###########################################################################
 
