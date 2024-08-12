@@ -534,9 +534,10 @@ docs/_static
 docs/_static/css/custom.css
 docs/_templates
 
-# Common Python virtual environment directory names
+# Common Python virtual environment and cache directory names
 venv
 py??
+__pycache__/
 
 # Copies of PRRTE RST files (i.e., not source controlled in this tree)
 docs/prrte-rst-content
@@ -546,3 +547,11 @@ docs/schizo-ompi-rst-content
 # tarballs)
 docs/html
 docs/man
+
+# Generated C Bindings
+ompi/mpi/c/generated_*.c
+
+# Generated Fortran Bindings
+ompi/mpi/fortran/use-mpi-f08/*_generated.F90
+ompi/mpi/fortran/use-mpi-f08/base/*_generated.c
+ompi/mpi/fortran/use-mpi-f08/mod/mpi-f08-interfaces-generated.h
