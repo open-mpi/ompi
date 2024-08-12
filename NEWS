@@ -20,7 +20,7 @@ Copyright (c) 2012      Sandia National Laboratories.  All rights reserved.
 Copyright (c) 2012      University of Houston. All rights reserved.
 Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
 Copyright (c) 2013-2018 Intel, Inc. All rights reserved.
-Copyright (c) 2018-2023 Amazon.com, Inc. or its affiliates.  All Rights
+Copyright (c) 2018-2024 Amazon.com, Inc. or its affiliates.  All Rights
                         reserved.
 Copyright (c) 2019-2021 Triad National Security, LLC. All rights
                         reserved.
@@ -59,8 +59,37 @@ included in the vX.Y.Z section and be denoted as:
    (** also appeared: A.B.C)  -- indicating that this item was previously
                                  included in release version vA.B.C.
 
-4.1.6 -- September, 2023
+4.1.7 -- August, 2024
 ---------------------
+
+- Fix bug in Fortran / C interface array calculation.
+- Fix potential initialization in UCX OpenSHMEM support
+- Add OpenSHMEM support for symmetric remote key handling to improve
+  scalability of OpenSHMEM interface.
+- Add MCS Locks as default implementation for OpenSHMEM locks.
+- Fix bug to properly handle ORTE Prefix of "/".
+- Fix bug in I/O interface handling of soft links on Lustre
+  filesystems.
+- Fix memory leak in UCX one-sided implementation.
+- Fix bug in rcache components that could lead to assert on macOS
+  systems.
+- Fix race condition in smcuda Shared Memory transport (used on
+  platforms with CUDA support).
+- Fix mishandling of a NULL completion context in the OFI transport.
+- Tarballs are now built with the tar-pax format.
+- Set MPI_THREAD_SERIALIZED instead of MPI_THREAD_SINGLE as supported
+  threading model when using UCX that supports
+  UCS_THREAD_MODE_SERIALIZED.
+- Improve macOS configure test to only add `-ld_classic` to the
+  Fortran bindings link line if using a version of Xcode that ships a
+  version of the "new linker" that does not support `-commons
+  use_dylibs`.  Xcode 16 betas ship a new linker that supports
+  `-commons use_dylibs`.
+- Fix issue that would prevent using Libfabric 2.x releases.
+
+
+4.1.6 -- September, 2023
+------------------------
 
 - Fix configure issue with XCode 15.
 - Update embedded PMIx to 3.2.5.  PMIx 3.2.5 addresses CVE-2023-41915.

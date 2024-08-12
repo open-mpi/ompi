@@ -48,7 +48,7 @@
 # Copyright (c) 2018-2020 IBM Corporation.  All rights reserved.
 # Copyright (c) 2018      Research Organization for Information Science
 #                         and Technology (RIST).  All rights reserved.
-# Copyright (c) 2020-2022 Amazon.com, Inc. or its affiliates.  All Rights
+# Copyright (c) 2020-2024 Amazon.com, Inc. or its affiliates.  All Rights
 #                         reserved.
 
 # This is the VERSION file for Open MPI, describing the precise
@@ -70,7 +70,7 @@ release=7
 # requirement is that it must be entirely printable ASCII characters
 # and have no white space.
 
-greek=a1
+greek=rc1
 
 # If repo_rev is empty, then the repository version number will be
 # obtained during "make dist" via the "git describe --tags --always"
@@ -128,16 +128,16 @@ date="Unreleased developer copy"
 # Version numbers are described in the Libtool current:revision:age
 # format.
 
-libmpi_so_version=70:6:30
+libmpi_so_version=70:7:30
 libmpi_cxx_so_version=70:1:30
-libmpi_mpifh_so_version=70:0:30
-libmpi_usempi_tkr_so_version=70:0:30
-libmpi_usempi_ignore_tkr_so_version=70:0:30
-libmpi_usempif08_so_version=70:0:30
-libopen_rte_so_version=70:3:30
-libopen_pal_so_version=70:3:30
+libmpi_mpifh_so_version=70:1:30
+libmpi_usempi_tkr_so_version=70:1:30
+libmpi_usempi_ignore_tkr_so_version=70:1:30
+libmpi_usempif08_so_version=70:1:30
+libopen_rte_so_version=70:4:30
+libopen_pal_so_version=70:4:30
 libmpi_java_so_version=70:0:30
-liboshmem_so_version=70:3:30
+liboshmem_so_version=70:4:31
 libompitrace_so_version=70:1:30
 
 # "Common" components install standalone libraries that are run-time
