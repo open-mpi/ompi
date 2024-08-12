@@ -13,6 +13,7 @@
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
+ * Copyright (c) 2024      Advanced Micro Devices, Inc. All rights reserverd.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -105,12 +106,6 @@ mca_fs_ufs_file_open (struct ompi_communicator_t *comm,
                    component. */
                 fh->f_flags |= OMPIO_LOCK_ENTIRE_FILE;
             }
-            else {
-                fh->f_flags |= OMPIO_LOCK_NEVER;
-            }
-        }
-        else {
-            fh->f_flags |= OMPIO_LOCK_NEVER;
         }
         free (fstype);
     }
