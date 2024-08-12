@@ -33,21 +33,22 @@
  */
 
 #if OMPI_SIZEOF_FORTRAN_INTEGER == SIZEOF_INT
-  #define OMPI_ARRAY_NAME_DECL(a) int *c_##a = NULL
-  #define OMPI_2_DIM_ARRAY_NAME_DECL(a, dim2) int (*c_##a)[dim2]
+  #define OMPI_ARRAY_NAME_DECL(a)
+  #define OMPI_2_DIM_ARRAY_NAME_DECL(a, dim2)
   #define OMPI_SINGLE_NAME_DECL(a)
-  #define OMPI_ARRAY_NAME_CONVERT(a) c_##a
+  #define OMPI_ARRAY_NAME_CONVERT(a) a
   #define OMPI_SINGLE_NAME_CONVERT(a) a
   #define OMPI_INT_2_FINT(a) a
   #define OMPI_FINT_2_INT(a) a
   #define OMPI_PFINT_2_PINT(a) a
-  #define OMPI_ARRAY_FINT_2_INT_ALLOC(in, n) { OMPI_ARRAY_NAME_CONVERT(in) = in; }
-  #define OMPI_ARRAY_FINT_2_INT(in, n) { OMPI_ARRAY_NAME_CONVERT(in) = in; }
-  #define OMPI_2_DIM_ARRAY_FINT_2_INT(in, n, dim2) { OMPI_ARRAY_NAME_CONVERT(in) = in; }
+  #define OMPI_ARRAY_FINT_2_INT_ALLOC(in, n)
+  #define OMPI_ARRAY_FINT_2_INT(in, n)
+  #define OMPI_2_DIM_ARRAY_FINT_2_INT(in, n, dim2)
   #define OMPI_ARRAY_FINT_2_INT_CLEANUP(in)
   #define OMPI_SINGLE_FINT_2_INT(in)
   #define OMPI_SINGLE_INT_2_FINT(in)
   #define OMPI_ARRAY_INT_2_FINT(in, n)
+  #define OMPI_COND_STATEMENT(a)
 
 #elif OMPI_SIZEOF_FORTRAN_INTEGER > SIZEOF_INT
   #define OMPI_ARRAY_NAME_DECL(a) int *c_##a = NULL
@@ -87,7 +88,8 @@
 
   /* This is for IN parameters. Does only free */
   #define OMPI_ARRAY_FINT_2_INT_CLEANUP(in) \
-    free(OMPI_ARRAY_NAME_CONVERT(in))
+    if (NULL != OMPI_ARRAY_NAME_CONVERT(in)) \
+      free(OMPI_ARRAY_NAME_CONVERT(in))
 
   /* This is for single IN parameter */
   #define OMPI_SINGLE_FINT_2_INT(in) \
@@ -106,6 +108,8 @@
       } \
       free(OMPI_ARRAY_NAME_CONVERT(in)); \
     } while (0)
+
+  #define OMPI_COND_STATEMENT(a) a
 #else /* int > MPI_Fint  */
   #define OMPI_ARRAY_NAME_DECL(a) int *c_##a = NULL
   #define OMPI_2_DIM_ARRAY_NAME_DECL(a, dim2) int (*c_##a)[dim2], dim2_index
@@ -141,7 +145,8 @@
     } while (0)
 
   #define OMPI_ARRAY_FINT_2_INT_CLEANUP(in) \
-    free(OMPI_ARRAY_NAME_CONVERT(in))
+    if (NULL != OMPI_ARRAY_NAME_CONVERT(in)) \
+      free(OMPI_ARRAY_NAME_CONVERT(in))
 
   #define OMPI_SINGLE_FINT_2_INT(in) \
      OMPI_ARRAY_NAME_CONVERT(in) = *(in)
@@ -158,6 +163,7 @@
       free(OMPI_ARRAY_NAME_CONVERT(in)); \
     } while (0)
 
+  #define OMPI_COND_STATEMENT(a) a
 #endif
 
 /*
