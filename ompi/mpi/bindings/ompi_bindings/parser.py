@@ -105,7 +105,7 @@ class SourceTemplate:
                     header.append(line)
 
             if not prototype:
-                raise RuntimeError('missing prototype')
+                raise RuntimeError(f'missing prototype for {fname}')
             # Parse the prototype
             prototype = ''.join(prototype)
             prototype = prototype[len('PROTOTYPE'):]
