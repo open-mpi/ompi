@@ -253,5 +253,12 @@ else
 fi
 AM_CONDITIONAL(OMPI_OMPIO_SUPPORT, test "$ompi_want_ompio" = "1")
 
+# If the binding source files don't exist, then we need Python to generate them
+AM_PATH_PYTHON([3.6],,[:])
+binding_file="${srcdir}/ompi/mpi/c/ompi_send.c"
+AS_IF([! test -e "$binding_file" && test "$PYTHON" = ":"],
+      [AC_MSG_ERROR([Open MPI requires Python >=3.6 for generating the bindings. Aborting])])
+AM_CONDITIONAL(OMPI_GENERATE_BINDINGS,[test "$PYTHON" != ":"])
+
 ])dnl
 

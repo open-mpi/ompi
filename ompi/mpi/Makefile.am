@@ -22,4 +22,11 @@
 
 EXTRA_DIST += \
         mpi/fortran/configure-fortran-output-bottom.h \
-        mpi/help-mpi-api.txt
+        mpi/help-mpi-api.txt \
+        mpi/bindings/bindings.py \
+        mpi/bindings/ompi_bindings/consts.py \
+        mpi/bindings/ompi_bindings/c.py \
+        mpi/bindings/ompi_bindings/c_type.py \
+        mpi/bindings/ompi_bindings/fortran.py \
+        mpi/bindings/ompi_bindings/fortran_type.py \
+        mpi/bindings/ompi_bindings/util.py
