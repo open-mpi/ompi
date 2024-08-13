@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2024      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -50,7 +51,7 @@ int main(int argc, char *argv[])
         OPAL_ERR_NOT_FOUND,
         OPAL_ERR_BAD_PARAM,
         OPAL_ERR_MAX + 10, /* bad value */
-        1,                 /* sentinal */
+        1,                 /* sentinel */
     };
     char buf[1024];
 
