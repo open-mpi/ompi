@@ -20,7 +20,7 @@ shell startup files)::
    export AUTOMAKE_JOBS=4
 
    # For csh/tcsh:
-   set AUTOMAKE_JOBS 4
+   setenv AUTOMAKE_JOBS 4
 
 .. important:: You generally need to run ``autogen.pl`` whenever the
    top-level file ``configure.ac`` changes, or any files in the
