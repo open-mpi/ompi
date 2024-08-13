@@ -21,7 +21,7 @@ C Syntax
 
    #include <mpi.h>
 
-   int MPI_Parrived(MPI_Request *request, int partition, int *flag)
+   int MPI_Parrived(MPI_Request request, int partition, int *flag)
 
 
 Fortran Syntax
