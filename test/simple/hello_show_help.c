@@ -29,7 +29,7 @@ int main(int argc, char *argv[])
         opal_output(
             0, "This test ensures that the aggregation functionality of the opal_show_help\nsystem "
                "is working properly.  It outputs a bogus warning about opal_init(),\nand contains "
-               "sleep statements to ensure that the timer is firiing properly\nin the HNP and "
+               "sleep statements to ensure that the timer is firing properly\nin the HNP and "
                "aggregates messages properly.  The total sleep time is\n(3 * num_procs).  You "
                "should see:\n\n - aggregation messages from the HNP every five seconds or so\n - a "
                "total of (2 * num_procs) messages");

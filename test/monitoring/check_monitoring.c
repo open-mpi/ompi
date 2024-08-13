@@ -3,6 +3,7 @@
  * Copyright (c) 2017      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2024      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -503,7 +504,7 @@ int main(int argc, char *argv[])
         MPI_Abort(MPI_COMM_WORLD, -1);
 
     /* third phase: exchange size times data with everyone, including self, in
-       MPI_COMM_WORLD with RMA opertations */
+       MPI_COMM_WORLD with RMA operations */
     char win_buff[20];
     MPI_Win win;
     MPI_Win_create(win_buff, 20, sizeof(char), MPI_INFO_NULL, MPI_COMM_WORLD, &win);

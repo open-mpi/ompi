@@ -58,7 +58,7 @@ int main(int argc, char *argv[])
     else {
         hostname = opal_gethostname();
         if (argc == 1) {
-            printf("ERROR: child did not receive exepcted argv!\n");
+            printf("ERROR: child did not receive expected argv!\n");
             i = -1;
         } else {
             i = atoi(argv[1]);
