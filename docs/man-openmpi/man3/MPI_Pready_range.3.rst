@@ -21,7 +21,7 @@ C Syntax
 
    #include <mpi.h>
 
-   int MPI_Pready_range(int partition_low, int partition_high, MPI_Request *request)
+   int MPI_Pready_range(int partition_low, int partition_high, MPI_Request request)
 
 
 Fortran Syntax
