@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 2024      NVIDIA Corporation. All rights reserved.
  * Copyright (c) 2004-2023 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
@@ -35,7 +36,7 @@ mca_coll_accelerator_reduce(const void *sbuf, void *rbuf, size_t count,
                      mca_coll_base_module_t *module)
 {
     mca_coll_accelerator_module_t *s = (mca_coll_accelerator_module_t*) module;
-    int rank = ompi_comm_rank(comm);
+    int rank = (comm == NULL) ? -1 : ompi_comm_rank(comm);
     ptrdiff_t gap;
     char *rbuf1 = NULL, *sbuf1 = NULL, *rbuf2 = NULL;
     size_t bufsize;
@@ -70,9 +71,15 @@ mca_coll_accelerator_reduce(const void *sbuf, void *rbuf, size_t count,
         rbuf2 = rbuf; /* save away original buffer */
         rbuf = rbuf1 - gap;
     }
-    rc = s->c_coll.coll_reduce((void *) sbuf, rbuf, count,
-                               dtype, op, root, comm,
-                               s->c_coll.coll_reduce_module);
+
+    if ((comm == NULL) && (root == -1)) {
+        ompi_op_reduce(op, (void *)sbuf, rbuf, count, dtype);
+        rc = OMPI_SUCCESS;
+    } else {
+        rc = s->c_coll.coll_reduce((void *) sbuf, rbuf, count,
+                                   dtype, op, root, comm,
+                                   s->c_coll.coll_reduce_module);
+    }
 
     if (NULL != sbuf1) {
         free(sbuf1);
@@ -83,4 +90,14 @@ mca_coll_accelerator_reduce(const void *sbuf, void *rbuf, size_t count,
         free(rbuf1);
     }
     return rc;
+}
+
+int
+mca_coll_accelerator_reduce_local(const void *sbuf, void *rbuf, size_t count,
+                                  struct ompi_datatype_t *dtype,
+                                  struct ompi_op_t *op,
+                                  mca_coll_base_module_t *module)
+{
+    return mca_coll_accelerator_reduce(sbuf, rbuf, count, dtype, op, -1, NULL,
+                                       module);
 }
