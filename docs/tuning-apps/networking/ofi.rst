@@ -16,7 +16,7 @@ including (but not limited to):
 
 * AWS EFA
 * Cisco usNIC
-* Cornelius Networks Omni-Path
+* Cornelis Networks Omni-Path
 * HPE Slingshot 11
 
 In general, the OFI-based components in Open MPI will auto-select
