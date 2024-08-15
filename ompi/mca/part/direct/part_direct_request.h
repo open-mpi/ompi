@@ -31,7 +31,7 @@ typedef enum {
     MCA_PART_DIRECT_REQUEST_PSEND,
     MCA_PART_DIRECT_REQUEST_PRECV,
     MCA_PART_DIRECT_REQUEST_NULL
-} mca_part_direct_request_type_t;
+} mca_part_persist_request_type_t;
 
 struct mca_part_direct_list_t;
 
@@ -53,7 +53,7 @@ struct mca_part_direct_request_t {
     ompi_request_t req_ompi;              /**< base request */
     volatile int32_t req_part_complete;   /**< flag indicating if the pt-2-pt layer is done with this request */
     volatile int32_t req_free_called;     /**< flag indicating if the user has freed this request */
-    mca_part_direct_request_type_t req_type; /**< MPI request type - used for test */
+    mca_part_persist_request_type_t req_type; /**< MPI request type - used for test */
     struct ompi_communicator_t *req_comm; /**< communicator pointer */
     struct ompi_datatype_t *req_datatype; /**< pointer to data type */
     opal_convertor_t req_convertor;       /**< always need the convertor */

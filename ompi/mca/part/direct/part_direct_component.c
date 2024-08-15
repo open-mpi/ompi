@@ -93,6 +93,8 @@ mca_part_direct_component_open(void)
 {
     OBJ_CONSTRUCT(&ompi_part_direct.lock, opal_mutex_t);
 
+   fprintf(stderr, "Open the direct component?\n");
+
     ompi_part_direct.next_send_tag = 0;                /**< This is a counter for send tags for the actual data transfer. */
     ompi_part_direct.next_recv_tag = 0; 
 
@@ -123,6 +125,8 @@ mca_part_direct_component_init(int* priority,
                             bool enable_mpi_threads)
 {
     *priority = 1;
+
+     fprintf(stderr, "Init the direct component?\n");
 
     opal_output_verbose( 10, 0,
                          "in direct part priority is %d\n", *priority);

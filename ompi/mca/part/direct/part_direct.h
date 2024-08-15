@@ -331,12 +331,15 @@ mca_part_direct_precv_init(void *buf,
                         int src,
                         int tag,
                         struct ompi_communicator_t *comm,
+			struct ompi_info_t * info,
                         struct ompi_request_t **request)
 {
     int err = OMPI_SUCCESS;
     size_t dt_size_;
     int dt_size;
     mca_part_direct_list_t* new_progress_elem = NULL;
+
+    fprintf(stderr,"precv_init\n");
 
     mca_part_direct_precv_request_t *recvreq;
 
@@ -374,6 +377,7 @@ mca_part_direct_precv_init(void *buf,
     /* Set ompi request initial values */
     req->req_ompi.req_persistent = true;
     req->req_part_complete = true;
+    req->req_ompi.req_type = OMPI_REQUEST_PART;
     req->req_ompi.req_complete = REQUEST_COMPLETED;
     req->req_ompi.req_state = OMPI_REQUEST_INACTIVE;
 
@@ -398,6 +402,7 @@ mca_part_direct_psend_init(const void* buf,
                         int dst,
                         int tag,
                         ompi_communicator_t* comm,
+			struct ompi_info_t * info,
                         ompi_request_t** request)
 {
     int err = OMPI_SUCCESS;
@@ -405,7 +410,7 @@ mca_part_direct_psend_init(const void* buf,
     int dt_size;
     mca_part_direct_list_t* new_progress_elem = NULL;
     mca_part_direct_psend_request_t *sendreq;
-
+    fprintf(stderr, "psend_init\n");
     /* if module hasn't been called before, flag module to init. */
     if(-1 == ompi_part_direct.init_world)
     {
@@ -418,6 +423,8 @@ mca_part_direct_psend_init(const void* buf,
     MCA_PART_DIRECT_PSEND_REQUEST_INIT(sendreq, ompi_proc, comm, tag, dst,
                                     datatype, buf, parts, count, flags);
     mca_part_direct_request_t *req = (mca_part_direct_request_t *) sendreq;
+
+    req->req_ompi.req_type = OMPI_REQUEST_PART; // TMP HACK
 
     /* Set lazy initialization variables */
     req->initialized = false;
@@ -461,6 +468,7 @@ mca_part_direct_psend_init(const void* buf,
     /* Initilaize completion variables */
     sendreq->req_base.req_ompi.req_persistent = true;
     req->req_part_complete = true;
+    req->req_ompi.req_type = OMPI_REQUEST_PART;
     req->req_ompi.req_complete = REQUEST_COMPLETED;
     req->req_ompi.req_state = OMPI_REQUEST_INACTIVE;
  
@@ -483,6 +491,8 @@ mca_part_direct_start(size_t count, ompi_request_t** requests)
     int err = OMPI_SUCCESS;
     size_t _count = count;
     size_t i;
+
+    fprintf(stderr,"Yay we crashed in the right spot at least?\n");
 
     for(i = 0; i < _count && OMPI_SUCCESS == err; i++) {
         mca_part_direct_request_t *req = (mca_part_direct_request_t *)(requests[i]);
