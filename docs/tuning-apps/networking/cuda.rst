@@ -160,7 +160,7 @@ PSM2 support for CUDA
 ---------------------
 
 CUDA-aware support is present in PSM2 MTL.  When running CUDA-aware
-Open MPI on Intel Omni-path, the PSM2 MTL will automatically set
+Open MPI on Cornelis Networks Omni-Path, the PSM2 MTL will automatically set
 ``PSM2_CUDA`` environment variable which enables PSM2 to handle GPU
 buffers.  If the user wants to use host buffers with a CUDA-aware Open
 MPI, it is recommended to set ``PSM2_CUDA`` to ``0`` in the execution
@@ -168,13 +168,13 @@ environment. PSM2 also has support for the NVIDIA GPUDirect support
 feature. To enable this, users will need to set ``PSM2_GPUDIRECT``
 to ``1`` in the execution environment.
 
-Note: The PSM2 library and ``hfi1`` driver with CUDA support are
-requirements to use GPUDirect support on Intel Omni-Path. The minimum
+Note: The PSM2 library and ``hfi1`` driver with CUDA support are requirements
+to use GPUDirect support on Cornelis Networks Omni-Path. The minimum
 PSM2 build version required is `PSM2 10.2.175
 <https://github.com/01org/opa-psm2/releases/tag/PSM2_10.2-175>`_.
 
-For more information refer to the `Intel Omni-Path documentation
-<https://www.intel.com/content/www/us/en/support/articles/000016242/network-and-i-o/fabric-products.html>`_.
+For more information refer to the `Cornelis Networks Customer Center
+<https://customercenter.cornelisnetworks.com/>`_.
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -629,10 +629,9 @@ limit is reached:
 What are some guidelines for using CUDA and Open MPI with Omni-Path?
 --------------------------------------------------------------------
 
-When developing CUDA-aware Open MPI applications for OPA-based
-fabrics, the PSM2 transport is preferred and a CUDA-aware version of
-PSM2 is provided with all versions of the Intel Omni-Path IFS software
-suite.
+When developing CUDA-aware Open MPI applications for OPA-based fabrics, the
+PSM2 transport is preferred and a CUDA-aware version of PSM2 is provided with
+all versions of the Cornelis Networks Omni-Path OPXS software suite.
 
 .. error:: TODO Are Intel/OPA references still correct?
 
@@ -655,10 +654,10 @@ processes do not move between NUMA nodes. See the section on
 :ref:`NUMA Node Issues <faq-cuda-mpi-cuda-numa-issues-label>`, for
 more information.
 
-For more information see the *Intel Performance Scaled Messaging 2
-(PSM2) Programmer's Guide* and the *Intel Omni-Path Performance Tuning
-Guide*, which can be found on the `Intel Omni-Path web site
-<https://www.intel.com/omnipath/FabricSoftwarePublications>`_.
+For more information see the *Cornelis Networks Performance Scaled Messaging 2
+(PSM2) Programmer's Guide* and the *Cornelis Networks Omni-Path Performance
+Tuning Guide*, which can be found in the `Cornelis Networks Customer Center
+<https://customercenter.cornelisnetworks.com/>`_.
 
 .. error:: TODO Are Intel/OPA references still correct?
 
