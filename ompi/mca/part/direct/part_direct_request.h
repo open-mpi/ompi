@@ -67,33 +67,29 @@ struct mca_part_direct_request_t {
 
 /* END: These fields have to match the definition of the mca_part_direct_request_t */
 
-    size_t  req_bytes;                    /**< bytes for completion status */
+    size_t req_bytes;                    /**< bytes for completion status */
 
-    size_t real_parts;                   /**< internal number of partitions */
-    size_t real_count;
-    size_t part_size; 
+    size_t count;
+    size_t parts;
+    size_t part_size;
+    ompi_datatype_t* datatype;
 
-    ompi_request_t** direct_reqs;            /**< requests for directant sends/recvs */
-    ompi_request_t* setup_req [2];                /**< Request structure for setup messages */
+    int32_t round;                        /**< This is a simple counter pair to match for the flag window */ 
+    int32_t tround;
 
+    MPI_Comm comm;                        /**< To limit window create to two processes, we need a per request communicator. */
+    MPI_Win window;                       /**< RMA Window for Data Transfer */
+    MPI_Win window_flags;                 /**< RMA Window for completion flags. And RTS Flag. */
 
     int32_t req_partitions_send;          /**< Send side number of partitions */
     int32_t req_partitions_recv;          /**< Recv side number of partitions */
 
-    int32_t my_send_tag;                  /**< This is a counter for send tags for the actual data transfer. */
-    int32_t my_recv_tag;                  /**< This is a counter for recive tags, for incoming setup messages. */ 
-
     int32_t world_peer;                   /**< peer's rank in MPI_COMM_WORLD */
 
-    int32_t initialized;                  /**< flag for initialized state */
-    int32_t first_send;                   /**< flag for whether the first send has happend */
-    int32_t flag_post_setup_recv;  
     size_t done_count;             /**< counter for the number of partitions marked ready */
 
     int32_t *flags;               /**< array of flags to determine whether a partition has arrived */
 
-    struct ompi_mca_direct_setup_t setup_info[2]; /**< Setup info to send durring initialization. */
-  
     struct mca_part_direct_list_t* progress_elem; /**< pointer to progress list element for removal durring free. */ 
 
 };

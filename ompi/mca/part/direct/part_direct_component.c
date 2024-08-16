@@ -95,16 +95,7 @@ mca_part_direct_component_open(void)
 
    fprintf(stderr, "Open the direct component?\n");
 
-    ompi_part_direct.next_send_tag = 0;                /**< This is a counter for send tags for the actual data transfer. */
-    ompi_part_direct.next_recv_tag = 0; 
-
     mca_part_direct_init_lists(); 
-
-    ompi_part_direct.init_comms = 0;
-    ompi_part_direct.init_world = -1;
-
-    ompi_part_direct.part_comm_ready = 0;
-    ompi_part_direct.part_comm_ready = 0;
 
     ompi_part_direct.block_entry = 0;
     return OMPI_SUCCESS;
