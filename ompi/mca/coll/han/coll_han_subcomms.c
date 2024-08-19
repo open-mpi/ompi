@@ -79,6 +79,7 @@ int mca_coll_han_comm_create_new(struct ompi_communicator_t *comm,
      * Gather + Bcast may be called by the allgather implementation
      */
     HAN_SUBCOM_SAVE_COLLECTIVE(fallbacks, comm, han_module, alltoall);
+    HAN_SUBCOM_SAVE_COLLECTIVE(fallbacks, comm, han_module, alltoallv);
     HAN_SUBCOM_SAVE_COLLECTIVE(fallbacks, comm, han_module, allgatherv);
     HAN_SUBCOM_SAVE_COLLECTIVE(fallbacks, comm, han_module, allgather);
     HAN_SUBCOM_SAVE_COLLECTIVE(fallbacks, comm, han_module, allreduce);
@@ -111,6 +112,7 @@ int mca_coll_han_comm_create_new(struct ompi_communicator_t *comm,
         han_module->enabled = false;  /* entire module set to pass-through from now on */
         /* restore saved collectives */
         HAN_SUBCOM_RESTORE_COLLECTIVE(fallbacks, comm, han_module, alltoall);
+        HAN_SUBCOM_RESTORE_COLLECTIVE(fallbacks, comm, han_module, alltoallv);
         HAN_SUBCOM_RESTORE_COLLECTIVE(fallbacks, comm, han_module, allgatherv);
         HAN_SUBCOM_RESTORE_COLLECTIVE(fallbacks, comm, han_module, allgather);
         HAN_SUBCOM_RESTORE_COLLECTIVE(fallbacks, comm, han_module, allreduce);
@@ -189,6 +191,7 @@ int mca_coll_han_comm_create_new(struct ompi_communicator_t *comm,
 
     /* Restore the saved collectives */
     HAN_SUBCOM_RESTORE_COLLECTIVE(fallbacks, comm, han_module, alltoall);
+    HAN_SUBCOM_RESTORE_COLLECTIVE(fallbacks, comm, han_module, alltoallv);
     HAN_SUBCOM_RESTORE_COLLECTIVE(fallbacks, comm, han_module, allgatherv);
     HAN_SUBCOM_RESTORE_COLLECTIVE(fallbacks, comm, han_module, allgather);
     HAN_SUBCOM_RESTORE_COLLECTIVE(fallbacks, comm, han_module, allreduce);
@@ -248,6 +251,7 @@ int mca_coll_han_comm_create(struct ompi_communicator_t *comm,
      * Gather + Bcast may be called by the allgather implementation
      */
     HAN_SUBCOM_SAVE_COLLECTIVE(fallbacks, comm, han_module, alltoall);
+    HAN_SUBCOM_SAVE_COLLECTIVE(fallbacks, comm, han_module, alltoallv);
     HAN_SUBCOM_SAVE_COLLECTIVE(fallbacks, comm, han_module, allgatherv);
     HAN_SUBCOM_SAVE_COLLECTIVE(fallbacks, comm, han_module, allgather);
     HAN_SUBCOM_SAVE_COLLECTIVE(fallbacks, comm, han_module, allreduce);
@@ -275,6 +279,7 @@ int mca_coll_han_comm_create(struct ompi_communicator_t *comm,
     if( local_procs == 1 ) {
         /* restore saved collectives */
         HAN_SUBCOM_RESTORE_COLLECTIVE(fallbacks, comm, han_module, alltoall);
+        HAN_SUBCOM_RESTORE_COLLECTIVE(fallbacks, comm, han_module, alltoallv);
         HAN_SUBCOM_RESTORE_COLLECTIVE(fallbacks, comm, han_module, allgatherv);
         HAN_SUBCOM_RESTORE_COLLECTIVE(fallbacks, comm, han_module, allgather);
         HAN_SUBCOM_RESTORE_COLLECTIVE(fallbacks, comm, han_module, allreduce);
@@ -370,6 +375,7 @@ int mca_coll_han_comm_create(struct ompi_communicator_t *comm,
 
     /* Reset the saved collectives to point back to HAN */
     HAN_SUBCOM_RESTORE_COLLECTIVE(fallbacks, comm, han_module, alltoall);
+    HAN_SUBCOM_RESTORE_COLLECTIVE(fallbacks, comm, han_module, alltoallv);
     HAN_SUBCOM_RESTORE_COLLECTIVE(fallbacks, comm, han_module, allgatherv);
     HAN_SUBCOM_RESTORE_COLLECTIVE(fallbacks, comm, han_module, allgather);
     HAN_SUBCOM_RESTORE_COLLECTIVE(fallbacks, comm, han_module, allreduce);
