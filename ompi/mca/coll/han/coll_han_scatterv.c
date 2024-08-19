@@ -174,7 +174,7 @@ int mca_coll_han_scatterv_intra(const void *sbuf, ompi_count_array_t scounts, om
         }
 
         for (up_peer = 0; up_peer < up_size; ++up_peer) {
-            up_displs[up_peer] = SIZE_MAX;
+            up_displs[up_peer] = PTRDIFF_MAX;
         }
 
         /* Calculate send counts for the inter-node scatterv */

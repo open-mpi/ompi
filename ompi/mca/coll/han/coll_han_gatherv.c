@@ -170,7 +170,7 @@ int mca_coll_han_gatherv_intra(const void *sbuf, size_t scount, struct ompi_data
         }
 
         for (up_peer = 0; up_peer < up_size; ++up_peer) {
-            up_displs[up_peer] = INT_MAX;
+            up_displs[up_peer] = PTRDIFF_MAX;
         }
 
         /* Calculate recv counts for the inter-node gatherv - no need to gather
