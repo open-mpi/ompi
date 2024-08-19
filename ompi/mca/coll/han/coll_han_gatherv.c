@@ -129,7 +129,7 @@ int mca_coll_han_gatherv_intra(const void *sbuf, size_t scount, struct ompi_data
         int need_bounce_buf = 0;
         size_t total_up_rcounts = 0;
         ptrdiff_t *up_displs = NULL;
-        size_t *up_rcounts = NULL, *up_peer_lb = NULL, *up_peer_ub = NULL;
+        size_t *up_rcounts = NULL, *up_peer_ub = NULL;
         ompi_count_array_t up_rcounts_desc;
         ompi_disp_array_t up_displs_desc;
         char *bounce_buf = NULL;
@@ -272,9 +272,6 @@ int mca_coll_han_gatherv_intra(const void *sbuf, size_t scount, struct ompi_data
         }
         if (up_rcounts) {
             free(up_rcounts);
-        }
-        if (up_peer_lb) {
-            free(up_peer_lb);
         }
         if (up_peer_ub) {
             free(up_peer_ub);

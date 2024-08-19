@@ -143,7 +143,7 @@ int mca_coll_han_scatterv_intra(const void *sbuf, ompi_count_array_t scounts, om
         int need_bounce_buf = 0;
         size_t total_up_scounts = 0;
         ptrdiff_t *up_displs = NULL;
-        size_t *up_scounts = NULL, *up_peer_lb = NULL, *up_peer_ub = NULL;
+        size_t *up_scounts = NULL, *up_peer_ub = NULL;
         ompi_count_array_t up_scounts_desc;
         ompi_disp_array_t up_displs_desc;
         char *reorder_sbuf = (char *) sbuf, *bounce_buf = NULL;
@@ -289,9 +289,6 @@ int mca_coll_han_scatterv_intra(const void *sbuf, ompi_count_array_t scounts, om
         }
         if (up_scounts) {
             free(up_scounts);
-        }
-        if (up_peer_lb) {
-            free(up_peer_lb);
         }
         if (up_peer_ub) {
             free(up_peer_ub);
