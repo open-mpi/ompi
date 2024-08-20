@@ -561,13 +561,6 @@ ompi_coll_han_reorder_gather(const void *sbuf,
                              struct ompi_communicator_t *comm,
                              int * topo);
 
-size_t
-coll_han_utils_gcd(const uint64_t *numerators, const size_t size);
-
-int
-coll_han_utils_create_contiguous_datatype(size_t count, const ompi_datatype_t *oldType,
-                                          ompi_datatype_t **newType);
-
 static inline struct mca_smsc_endpoint_t *mca_coll_han_get_smsc_endpoint (struct ompi_proc_t *proc) {
     extern opal_mutex_t mca_coll_han_lock;
     if (NULL == proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_SMSC]) {
