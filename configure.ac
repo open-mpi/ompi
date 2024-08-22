@@ -276,6 +276,7 @@ m4_ifdef([project_oshmem],
 ############################################################################
 # Configuration options
 ############################################################################
+OMPI_HAVE_ACCELERATOR_SUPPORT=0
 
 OPAL_CONFIGURE_OPTIONS
 

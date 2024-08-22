@@ -56,7 +56,8 @@ AC_DEFUN([OPAL_CHECK_ZE],[
 
      AS_IF([ test "$opal_check_ze_happy" = "yes" ],
            [ AC_DEFINE_UNQUOTED([OPAL_ZE_SUPPORT], [1], [Enable Intel ZE support])
-             ZE_SUPPORT=1 ],
+             ZE_SUPPORT=1
+             OMPI_HAVE_ACCELERATOR_SUPPORT=1 ],
            [ AC_DEFINE_UNQUOTED([OPAL_ZE_SUPPORT], [0], [Disable Intel ZE support])
              ZE_SUPPORT=0 ])
 

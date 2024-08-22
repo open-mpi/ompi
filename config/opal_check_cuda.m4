@@ -154,6 +154,7 @@ AC_MSG_CHECKING([if have cuda support])
 if test "$opal_check_cuda_happy" = "yes"; then
     AC_MSG_RESULT([yes (-I$opal_cuda_incdir)])
     CUDA_SUPPORT=1
+    OMPI_HAVE_ACCELERATOR_SUPPORT=1
     common_cuda_CPPFLAGS="-I$opal_cuda_incdir"
     AC_SUBST([common_cuda_CPPFLAGS])
 else
