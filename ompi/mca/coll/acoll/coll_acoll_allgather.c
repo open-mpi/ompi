@@ -481,21 +481,21 @@ int mca_coll_acoll_allgather(const void *sbuf, size_t scount, struct ompi_dataty
     int brank, last_brank;
     int use_rd_base;
     mca_coll_acoll_module_t *acoll_module = (mca_coll_acoll_module_t *) module;
-    coll_acoll_subcomms_t *subc;
-    int cid = ompi_comm_get_local_cid(comm);
+    coll_acoll_subcomms_t *subc = NULL;
     char *local_rbuf;
     ompi_communicator_t *intra_comm;
 
-    /* Fallback to ring if cid is beyond supported limit */
-    if (cid >= MCA_COLL_ACOLL_MAX_CID) {
+    /* Obtain the subcomms structure */
+    err = check_and_create_subc(comm, acoll_module, &subc);
+    /* Fallback to ring if subc is not obtained */
+    if (NULL == subc) {
         return ompi_coll_base_allgather_intra_ring(sbuf, scount, sdtype, rbuf, rcount, rdtype, comm,
                                                    module);
     }
 
-    subc = &acoll_module->subc[cid];
     size = ompi_comm_size(comm);
     if (!subc->initialized && size > 2) {
-        err = mca_coll_acoll_comm_split_init(comm, acoll_module, 0);
+        err = mca_coll_acoll_comm_split_init(comm, acoll_module, subc, 0);
         if (MPI_SUCCESS != err) {
             return err;
         }

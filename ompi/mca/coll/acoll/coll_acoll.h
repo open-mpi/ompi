@@ -33,6 +33,7 @@ BEGIN_C_DECLS
 /* Globally exported variables */
 OMPI_DECLSPEC extern const mca_coll_base_component_3_0_0_t mca_coll_acoll_component;
 extern int mca_coll_acoll_priority;
+extern int mca_coll_acoll_max_comms;
 extern int mca_coll_acoll_sg_size;
 extern int mca_coll_acoll_sg_scale;
 extern int mca_coll_acoll_node_size;
@@ -75,7 +76,6 @@ int mca_coll_acoll_barrier_intra(struct ompi_communicator_t *comm, mca_coll_base
 
 END_C_DECLS
 
-#define MCA_COLL_ACOLL_MAX_CID            100
 #define MCA_COLL_ACOLL_ROOT_CHANGE_THRESH 10
 
 typedef enum MCA_COLL_ACOLL_SG_SIZES {
@@ -208,8 +208,10 @@ struct mca_coll_acoll_module_t {
     int mnode_log2_sg_size;
     int allg_lin;
     int allg_ring;
-    coll_acoll_subcomms_t subc[MCA_COLL_ACOLL_MAX_CID];
+    int max_comms;
+    coll_acoll_subcomms_t **subc;
     coll_acoll_reserve_mem_t reserve_mem_s;
+    int num_subc;
 };
 
 #ifdef HAVE_XPMEM_H

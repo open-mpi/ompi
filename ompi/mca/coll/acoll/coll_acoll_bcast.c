@@ -444,24 +444,25 @@ int mca_coll_acoll_bcast(void *buff, size_t count, struct ompi_datatype_t *datat
     size_t total_dsize, dsize;
     mca_coll_acoll_module_t *acoll_module = (mca_coll_acoll_module_t *) module;
     bcast_subc_func bcast_func[2] = {&bcast_binomial, &bcast_flat_tree};
-    coll_acoll_subcomms_t *subc;
+    coll_acoll_subcomms_t *subc = NULL;
     struct ompi_communicator_t *subcomms[MCA_COLL_ACOLL_NUM_SC] = {NULL};
     int subc_roots[MCA_COLL_ACOLL_NUM_SC] = {-1};
-    int cid = ompi_comm_get_local_cid(comm);
 
-    /* Fallback to knomial if cid is beyond supported limit */
-    if (cid >= MCA_COLL_ACOLL_MAX_CID) {
+    /* Obtain the subcomms structure */
+    err = check_and_create_subc(comm, acoll_module, &subc);
+    /* Fallback to knomial if subcomms is not obtained */
+    if (NULL == subc) {
         return ompi_coll_base_bcast_intra_knomial(buff, count, datatype, root, comm, module, 0, 4);
     }
 
-    subc = &acoll_module->subc[cid];
     /* Fallback to knomial if no. of root changes is beyond a threshold */
-    if (subc->num_root_change > MCA_COLL_ACOLL_ROOT_CHANGE_THRESH) {
+    if ((subc->num_root_change > MCA_COLL_ACOLL_ROOT_CHANGE_THRESH)
+        && (root != subc->prev_init_root)) {
         return ompi_coll_base_bcast_intra_knomial(buff, count, datatype, root, comm, module, 0, 4);
     }
     size = ompi_comm_size(comm);
     if ((!subc->initialized || (root != subc->prev_init_root)) && size > 2) {
-        err = mca_coll_acoll_comm_split_init(comm, acoll_module, root);
+        err = mca_coll_acoll_comm_split_init(comm, acoll_module, subc, root);
         if (MPI_SUCCESS != err) {
             return err;
         }

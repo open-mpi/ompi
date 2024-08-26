@@ -130,21 +130,22 @@ int mca_coll_acoll_barrier_intra(struct ompi_communicator_t *comm, mca_coll_base
     ompi_request_t **reqs;
     int num_nodes;
     mca_coll_acoll_module_t *acoll_module = (mca_coll_acoll_module_t *) module;
-    coll_acoll_subcomms_t *subc;
-    int cid = ompi_comm_get_local_cid(comm);
+    coll_acoll_subcomms_t *subc = NULL;
 
-    /* Fallback to linear if cid is beyond supported limit */
-    if (cid >= MCA_COLL_ACOLL_MAX_CID) {
+    /* Obtain the subcomms structure */
+    err = check_and_create_subc(comm, acoll_module, &subc);
+
+    /* Fallback to linear if subcomms structure is not obtained */
+    if (NULL == subc) {
         return ompi_coll_base_barrier_intra_basic_linear(comm, module);
     }
 
-    subc = &acoll_module->subc[cid];
     size = ompi_comm_size(comm);
     if (size == 1) {
         return err;
     }
     if (!subc->initialized && size > 1) {
-        err = mca_coll_acoll_comm_split_init(comm, acoll_module, 0);
+        err = mca_coll_acoll_comm_split_init(comm, acoll_module, subc, 0);
         if (MPI_SUCCESS != err) {
             return err;
         }

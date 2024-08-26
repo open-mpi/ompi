@@ -28,7 +28,8 @@ void mca_coll_acoll_sync(coll_acoll_data_t *data, int offset, int *group, int gp
 int mca_coll_acoll_allreduce_small_msgs_h(const void *sbuf, void *rbuf, size_t count,
                                           struct ompi_datatype_t *dtype, struct ompi_op_t *op,
                                           struct ompi_communicator_t *comm,
-                                          mca_coll_base_module_t *module, int intra);
+                                          mca_coll_base_module_t *module,
+                                          coll_acoll_subcomms_t *subc, int intra);
 
 
 static inline int coll_allreduce_decision_fixed(int comm_size, size_t msg_size)
@@ -52,16 +53,13 @@ static inline int coll_allreduce_decision_fixed(int comm_size, size_t msg_size)
 static inline int mca_coll_acoll_reduce_xpmem_h(const void *sbuf, void *rbuf, size_t count,
                                                 struct ompi_datatype_t *dtype, struct ompi_op_t *op,
                                                 struct ompi_communicator_t *comm,
-                                                mca_coll_base_module_t *module)
+                                                mca_coll_base_module_t *module,
+                                                coll_acoll_subcomms_t *subc)
 {
     int size;
     size_t total_dsize, dsize;
-    mca_coll_acoll_module_t *acoll_module = (mca_coll_acoll_module_t *) module;
 
-    coll_acoll_subcomms_t *subc;
-    int cid = ompi_comm_get_local_cid(comm);
-    subc = &acoll_module->subc[cid];
-    coll_acoll_init(module, comm, subc->data);
+    coll_acoll_init(module, comm, subc->data, subc);
     coll_acoll_data_t *data = subc->data;
     if (NULL == data) {
         return -1;
@@ -188,16 +186,13 @@ static inline int mca_coll_acoll_allreduce_xpmem_f(const void *sbuf, void *rbuf,
                                                    struct ompi_datatype_t *dtype,
                                                    struct ompi_op_t *op,
                                                    struct ompi_communicator_t *comm,
-                                                   mca_coll_base_module_t *module)
+                                                   mca_coll_base_module_t *module,
+                                                   coll_acoll_subcomms_t *subc)
 {
     int size;
     size_t total_dsize, dsize;
-    mca_coll_acoll_module_t *acoll_module = (mca_coll_acoll_module_t *) module;
 
-    coll_acoll_subcomms_t *subc;
-    int cid = ompi_comm_get_local_cid(comm);
-    subc = &acoll_module->subc[cid];
-    coll_acoll_init(module, comm, subc->data);
+    coll_acoll_init(module, comm, subc->data, subc);
     coll_acoll_data_t *data = subc->data;
     if (NULL == data) {
         return -1;
@@ -361,15 +356,13 @@ void mca_coll_acoll_sync(coll_acoll_data_t *data, int offset, int *group, int gp
 int mca_coll_acoll_allreduce_small_msgs_h(const void *sbuf, void *rbuf, size_t count,
                                           struct ompi_datatype_t *dtype, struct ompi_op_t *op,
                                           struct ompi_communicator_t *comm,
-                                          mca_coll_base_module_t *module, int intra)
+                                          mca_coll_base_module_t *module,
+                                          coll_acoll_subcomms_t *subc, int intra)
 {
     size_t dsize;
     int err = MPI_SUCCESS;
-    mca_coll_acoll_module_t *acoll_module = (mca_coll_acoll_module_t *) module;
-    coll_acoll_subcomms_t *subc;
-    int cid = ompi_comm_get_local_cid(comm);
-    subc = &acoll_module->subc[cid];
-    coll_acoll_init(module, comm, subc->data);
+
+    coll_acoll_init(module, comm, subc->data, subc);
     coll_acoll_data_t *data = subc->data;
     if (NULL == data) {
         return -1;
@@ -385,7 +378,6 @@ int mca_coll_acoll_allreduce_small_msgs_h(const void *sbuf, void *rbuf, size_t c
 
     int l1_local_rank = data->l1_local_rank;
     int l2_local_rank = data->l2_local_rank;
-    int comm_id = ompi_comm_get_local_cid(comm);
 
     int offset1 = data->offset[0];
     int offset2 = data->offset[1];
@@ -441,8 +433,8 @@ int mca_coll_acoll_allreduce_small_msgs_h(const void *sbuf, void *rbuf, size_t c
         }
     }
 
-    if (intra && (ompi_comm_size(acoll_module->subc[comm_id].numa_comm) > 1)) {
-        err = mca_coll_acoll_bcast(rbuf, count, dtype, 0, acoll_module->subc[comm_id].numa_comm, module);
+    if (intra && (ompi_comm_size(subc->numa_comm) > 1)) {
+        err = mca_coll_acoll_bcast(rbuf, count, dtype, 0, subc->numa_comm, module);
     }
     return err;
 }
@@ -466,25 +458,23 @@ int mca_coll_acoll_allreduce_intra(const void *sbuf, void *rbuf, size_t count,
         return MPI_SUCCESS;
     }
 
-    coll_acoll_subcomms_t *subc;
-    int cid = ompi_comm_get_local_cid(comm);
-    subc = &acoll_module->subc[cid];
-
     /* Falling back to recursivedoubling for non-commutative operators to be safe */
     if (!ompi_op_is_commute(op)) {
         return ompi_coll_base_allreduce_intra_recursivedoubling(sbuf, rbuf, count, dtype, op, comm,
                                                                 module);
     }
 
-    /* Fallback to knomial if cid is beyond supported limit */
-    if (cid >= MCA_COLL_ACOLL_MAX_CID) {
+    /* Obtain the subcomms structure */
+    coll_acoll_subcomms_t *subc = NULL;
+    err = check_and_create_subc(comm, acoll_module, &subc);
+
+    /* Fallback to knomial if subc is not obtained */
+    if (NULL == subc) {
         return ompi_coll_base_allreduce_intra_redscat_allgather(sbuf, rbuf, count, dtype, op, comm,
                                                                 module);
     }
-
-    subc = &acoll_module->subc[cid];
     if (!subc->initialized) {
-        err = mca_coll_acoll_comm_split_init(comm, acoll_module, 0);
+        err = mca_coll_acoll_comm_split_init(comm, acoll_module, subc, 0);
         if (MPI_SUCCESS != err)
             return err;
     }
@@ -499,7 +489,7 @@ int mca_coll_acoll_allreduce_intra(const void *sbuf, void *rbuf, size_t count,
                                                                     comm, module);
         } else if (total_dsize < 512) {
             return mca_coll_acoll_allreduce_small_msgs_h(sbuf, rbuf, count, dtype, op, comm, module,
-                                                         1);
+                                                         subc, 1);
         } else if (total_dsize <= 2048) {
             return ompi_coll_base_allreduce_intra_recursivedoubling(sbuf, rbuf, count, dtype, op,
                                                                     comm, module);
@@ -517,7 +507,7 @@ int mca_coll_acoll_allreduce_intra(const void *sbuf, void *rbuf, size_t count,
         } else if (total_dsize < 4194304) {
 #ifdef HAVE_XPMEM_H
             if (((subc->xpmem_use_sr_buf != 0) || (subc->xpmem_buf_size > 2 * total_dsize)) && (subc->without_xpmem != 1)) {
-                return mca_coll_acoll_allreduce_xpmem_f(sbuf, rbuf, count, dtype, op, comm, module);
+                return mca_coll_acoll_allreduce_xpmem_f(sbuf, rbuf, count, dtype, op, comm, module, subc);
             } else {
                 return ompi_coll_base_allreduce_intra_redscat_allgather(sbuf, rbuf, count, dtype,
                                                                         op, comm, module);
@@ -529,7 +519,7 @@ int mca_coll_acoll_allreduce_intra(const void *sbuf, void *rbuf, size_t count,
         } else if (total_dsize <= 16777216) {
 #ifdef HAVE_XPMEM_H
             if (((subc->xpmem_use_sr_buf != 0) || (subc->xpmem_buf_size > 2 * total_dsize)) && (subc->without_xpmem != 1)) {
-                mca_coll_acoll_reduce_xpmem_h(sbuf, rbuf, count, dtype, op, comm, module);
+                mca_coll_acoll_reduce_xpmem_h(sbuf, rbuf, count, dtype, op, comm, module, subc);
                 return mca_coll_acoll_bcast(rbuf, count, dtype, 0, comm, module);
             } else {
                 return ompi_coll_base_allreduce_intra_redscat_allgather(sbuf, rbuf, count, dtype,
@@ -542,7 +532,7 @@ int mca_coll_acoll_allreduce_intra(const void *sbuf, void *rbuf, size_t count,
         } else {
 #ifdef HAVE_XPMEM_H
             if (((subc->xpmem_use_sr_buf != 0) || (subc->xpmem_buf_size > 2 * total_dsize)) && (subc->without_xpmem != 1)) {
-                return mca_coll_acoll_allreduce_xpmem_f(sbuf, rbuf, count, dtype, op, comm, module);
+                return mca_coll_acoll_allreduce_xpmem_f(sbuf, rbuf, count, dtype, op, comm, module, subc);
             } else {
                 return ompi_coll_base_allreduce_intra_redscat_allgather(sbuf, rbuf, count, dtype,
                                                                         op, comm, module);
