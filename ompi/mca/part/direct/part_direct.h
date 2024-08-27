@@ -268,6 +268,31 @@ mca_part_direct_precv_init(void *buf,
     mca_part_direct_create_partition_communicator(comm, rank_count, ranks, &req->comm);
     // TODO Make Window
     // TODO Make Flag Window
+    // open buffer windows
+
+    err = MPI_Win_create(buf,
+                         parts * count * dt_size,
+                         dt_size,
+                         MPI_INFO_NULL,
+                         req->comm,
+                         &req->window);
+    assert(MPI_SUCCESS == err);
+
+    err = MPI_Win_lock_all(1, req->window); fflush(stdout);
+    assert(MPI_SUCCESS == err);
+
+    // open flags window
+    err = MPI_Win_create(&req->tround,
+                         1,
+                         sizeof(int32_t),
+                         MPI_INFO_NULL,
+                         req->comm,
+                         &req->window_flags);
+    assert(MPI_SUCCESS == err);
+
+    err = MPI_Win_lock_all(1, req->window_flags);
+    assert(MPI_SUCCESS == err);
+
 
     /* Set ompi request initial values */
     req->req_ompi.req_persistent = true;
@@ -342,7 +367,31 @@ mca_part_direct_psend_init(const void* buf,
 
     // TODO Make Window
     // TODO Make Flag Window
+    // create exchange window
 
+    // open buffer windows
+    err = MPI_Win_create(0,
+                         0,
+                         dt_size,
+                         MPI_INFO_NULL,
+                         req->comm,
+                         &req->window);
+    assert(MPI_SUCCESS == err);
+
+    err = MPI_Win_lock_all(1, req->window); fflush(stdout);
+    assert(MPI_SUCCESS == err);
+
+    // open flags window
+    err = MPI_Win_create(&req->tround,
+                         1,
+                         sizeof(int32_t),
+                         MPI_INFO_NULL,
+                         req->comm,
+                         &req->window_flags);
+    assert(MPI_SUCCESS == err);
+
+    err = MPI_Win_lock_all(1, req->window_flags);
+    assert(MPI_SUCCESS == err);
 
     /* Initilaize completion variables */
     sendreq->req_base.req_ompi.req_persistent = true;
