@@ -197,6 +197,26 @@ mca_part_direct_progress(void)
     return OMPI_SUCCESS;
 }
 
+__opal_attribute_always_inline__ static inline void
+mca_part_direct_create_partition_communicator(MPI_Comm comm,
+                                   int rank_count,
+                                   const int ranks[],
+                                   MPI_Comm* new_comm)
+{
+    int err = MPI_SUCCESS;
+    MPI_Group group_super, group_sub;
+
+    err = MPI_Comm_group(comm, &group_super);
+    assert(MPI_SUCCESS == err);
+
+    err = MPI_Group_incl(group_super, rank_count, ranks, &group_sub);
+    assert(MPI_SUCCESS == err);
+
+    err = MPI_Comm_create_group(comm, group_sub, 0, new_comm);
+    assert(MPI_SUCCESS == err);
+}
+
+
 __opal_attribute_always_inline__ static inline int
 mca_part_direct_precv_init(void *buf,
                         size_t parts, 
@@ -238,6 +258,17 @@ mca_part_direct_precv_init(void *buf,
     req->req_bytes = parts * count * dt_size;
 
 
+    // TODO Make Comm
+    int rank_super;
+    err = MPI_Comm_rank(comm, &rank_super);
+    int rank_count = 2;
+    int ranks[rank_count];
+    ranks[0] = src;
+    ranks[1] = rank_super;
+    mca_part_direct_create_partition_communicator(comm, rank_count, ranks, &req->comm);
+    // TODO Make Window
+    // TODO Make Flag Window
+
     /* Set ompi request initial values */
     req->req_ompi.req_persistent = true;
     req->req_part_complete = true;
@@ -257,6 +288,7 @@ mca_part_direct_precv_init(void *buf,
     *request = (ompi_request_t*) recvreq;
     return err;
 }
+
 
 __opal_attribute_always_inline__ static inline int
 mca_part_direct_psend_init(const void* buf,
@@ -299,6 +331,15 @@ mca_part_direct_psend_init(const void* buf,
 
 
     // TODO Make Comm
+    int rank_super;
+    err = MPI_Comm_rank(comm, &rank_super);
+    int rank_count = 2;
+    int ranks[rank_count];
+    ranks[0] = rank_super;
+    ranks[1] = dst;
+    mca_part_direct_create_partition_communicator(comm, rank_count, ranks, &req->comm);
+
+
     // TODO Make Window
     // TODO Make Flag Window
 
