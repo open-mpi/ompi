@@ -45,6 +45,8 @@ OPAL_DECLSPEC extern opal_accelerator_cuda_component_t mca_accelerator_cuda_comp
 
 OPAL_DECLSPEC extern opal_accelerator_base_module_t opal_accelerator_cuda_module;
 
+OPAL_DECLSPEC extern int opal_accelerator_cuda_num_devices;
+
 OPAL_DECLSPEC extern int opal_accelerator_cuda_delayed_init(void);
 
 END_C_DECLS
