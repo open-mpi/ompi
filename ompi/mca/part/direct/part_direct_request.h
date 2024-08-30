@@ -69,6 +69,10 @@ struct mca_part_direct_request_t {
 
     size_t req_bytes;                    /**< bytes for completion status */
 
+    size_t part_bytes;                   /**< used for offset in put */
+
+    uint8_t * buf;
+
     size_t count;
     size_t parts;
     size_t part_size;

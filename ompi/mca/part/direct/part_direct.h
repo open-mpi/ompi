@@ -164,21 +164,33 @@ mca_part_direct_progress(void)
                for(i = 0; i < req->parts; i++) {
                     /* Check to see if partition is queued for being started. Only applicable to sends. */ 
                     if(-2 ==  req->flags[i]) {
-                        //TODO Put
+		        err = MPI_Put(req->buf + req->part_bytes, req->count, req->datatype, 1,
+                                     i*req->count, req->count, req->datatype, req->window);
+                        assert(MPI_SUCCESS == err);
+
                         req->flags[i] = 0;
+			req->done_count++;
                     }
                 }
 
                 /* Check for completion and complete the requests */
                 if(req->done_count == req->parts)
                 {
-                    // TODO: INC tround.
+	            /* Incriment round on reciever */
+		    MPI_Win_flush(1,req->window);
+                    MPI_Put(&req->round, 1, MPI_INT, 1, 0, 1, MPI_INT, req->window_flags);
+                    MPI_Win_flush(1,req->window_flags);
+
                     mca_part_direct_complete(req);
                 }
 
 	    }	
         } else {
-            //TODO RECV complete
+            if(false == req->req_part_complete && REQUEST_COMPLETED != req->req_ompi.req_complete && OMPI_REQUEST_ACTIVE == req->req_ompi.req_state) {
+		if(req->round == req->tround) {
+                    mca_part_direct_complete(req);
+		}
+	    }
 	}
 
         if(true == req->req_free_called && true == req->req_part_complete && REQUEST_COMPLETED == req->req_ompi.req_complete &&  OMPI_REQUEST_INACTIVE == req->req_ompi.req_state) {
@@ -258,7 +270,9 @@ mca_part_direct_precv_init(void *buf,
     req->req_bytes = parts * count * dt_size;
 
 
-    // TODO Make Comm
+    req->round = 0;
+    req->tround = 0;
+
     int rank_super;
     err = MPI_Comm_rank(comm, &rank_super);
     int rank_count = 2;
@@ -266,10 +280,8 @@ mca_part_direct_precv_init(void *buf,
     ranks[0] = src;
     ranks[1] = rank_super;
     mca_part_direct_create_partition_communicator(comm, rank_count, ranks, &req->comm);
-    // TODO Make Window
-    // TODO Make Flag Window
-    // open buffer windows
 
+    // open buffer windows
     err = MPI_Win_create(buf,
                          parts * count * dt_size,
                          dt_size,
@@ -346,16 +358,19 @@ mca_part_direct_psend_init(const void* buf,
     if(OMPI_SUCCESS != err) return OMPI_ERROR;
     dt_size = (dt_size_ > (size_t) INT_MAX) ? MPI_UNDEFINED : (int) dt_size_;
     req->req_bytes = parts * count * dt_size;
-
+    req->part_bytes = count * dt_size;
 
     req->parts = parts;
     req->count = count;
-
+    req->buf = (uint8_t*)buf;
 
     req->flags = (int*) calloc(req->parts, sizeof(int));
 
+    req->round = 0;
+    req->tround = 0;
 
-    // TODO Make Comm
+
+    // Make Comm
     int rank_super;
     err = MPI_Comm_rank(comm, &rank_super);
     int rank_count = 2;
@@ -364,10 +379,6 @@ mca_part_direct_psend_init(const void* buf,
     ranks[1] = dst;
     mca_part_direct_create_partition_communicator(comm, rank_count, ranks, &req->comm);
 
-
-    // TODO Make Window
-    // TODO Make Flag Window
-    // create exchange window
 
     // open buffer windows
     err = MPI_Win_create(0,
@@ -422,12 +433,9 @@ mca_part_direct_start(size_t count, ompi_request_t** requests)
 
     fprintf(stderr,"Yay we crashed in the right spot at least?\n");
 
-    // TODO do we need to anthing else RMA here.
-    // TODO Incriment round variable?
-
     for(i = 0; i < _count && OMPI_SUCCESS == err; i++) {
         mca_part_direct_request_t *req = (mca_part_direct_request_t *)(requests[i]);
-        /* First use is a special case, to support lazy initialization */
+	req->round++;
         if(MCA_PART_DIRECT_REQUEST_PSEND == req->req_type) {
             req->done_count = 0;
             for(i = 0; i < req->parts && OMPI_SUCCESS == err; i++) {
@@ -435,7 +443,9 @@ mca_part_direct_start(size_t count, ompi_request_t** requests)
             }
         } else {
             req->done_count = 0;
-	    // TODO INC RTS round.
+	    /* Increment round on sender */
+	    MPI_Put(&req->round, 1, MPI_INT, 0, 0, 1, MPI_INT, req->window_flags);
+	    MPI_Win_flush(0,req->window_flags);
         } 
         req->req_ompi.req_state = OMPI_REQUEST_ACTIVE;    
         req->req_ompi.req_status.MPI_TAG = MPI_ANY_TAG;
@@ -458,18 +468,8 @@ mca_part_direct_pready(size_t min_part,
     size_t i;
 
     mca_part_direct_request_t *req = (mca_part_direct_request_t *)(request);
-    if(req->round == req->tround)
-    {
-        // TODO MPI PUT 
-        for(i = min_part; i <= max_part && OMPI_SUCCESS == err; i++) {
-            req->flags[i] = 0; /* Mark partion as ready for testing */
-        }
-    }
-    else
-    {
-        for(i = min_part; i <= max_part && OMPI_SUCCESS == err; i++) {
-            req->flags[i] = -2; /* Mark partition as queued */
-        }
+    for(i = min_part; i <= max_part && OMPI_SUCCESS == err; i++) {
+        req->flags[i] = -2; /* Mark partition as queued */
     }
     return err;
 }
