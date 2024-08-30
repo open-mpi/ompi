@@ -164,7 +164,7 @@ mca_part_direct_progress(void)
                for(i = 0; i < req->parts; i++) {
                     /* Check to see if partition is queued for being started. Only applicable to sends. */ 
                     if(-2 ==  req->flags[i]) {
-		        err = MPI_Put(req->buf + req->part_bytes, req->count, req->datatype, 1,
+		        err = MPI_Put(req->buf + i*req->part_bytes, req->count, req->datatype, 1,
                                      i*req->count, req->count, req->datatype, req->window);
                         assert(MPI_SUCCESS == err);
 
@@ -359,6 +359,7 @@ mca_part_direct_psend_init(const void* buf,
     dt_size = (dt_size_ > (size_t) INT_MAX) ? MPI_UNDEFINED : (int) dt_size_;
     req->req_bytes = parts * count * dt_size;
     req->part_bytes = count * dt_size;
+    req->datatype = datatype;
 
     req->parts = parts;
     req->count = count;
@@ -381,7 +382,7 @@ mca_part_direct_psend_init(const void* buf,
 
 
     // open buffer windows
-    err = MPI_Win_create(0,
+    err = MPI_Win_create((void*)buf,
                          0,
                          dt_size,
                          MPI_INFO_NULL,

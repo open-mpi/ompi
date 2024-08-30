@@ -26,6 +26,7 @@
 static void
 mca_part_direct_precv_request_construct(mca_part_direct_precv_request_t* recvreq)
 {
+    fprintf(stderr,"This is the right contsruct call");
     recvreq->req_base.req_ompi.req_start = mca_part_direct_start;
     recvreq->req_base.req_ompi.req_free = mca_part_direct_free;
     recvreq->req_base.req_ompi.req_cancel = NULL; 
