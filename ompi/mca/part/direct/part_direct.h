@@ -160,12 +160,12 @@ mca_part_direct_progress(void)
         mca_part_direct_request_t *req = (mca_part_direct_request_t *) current->item;
         if(MCA_PART_DIRECT_REQUEST_PSEND == req->req_type)
         {
-            if(false == req->req_part_complete && REQUEST_COMPLETED != req->req_ompi.req_complete && OMPI_REQUEST_ACTIVE == req->req_ompi.req_state) {
+            if(false == req->req_part_complete && REQUEST_COMPLETED != req->req_ompi.req_complete && OMPI_REQUEST_ACTIVE == req->req_ompi.req_state && req->round == req->tround) {
                for(i = 0; i < req->parts; i++) {
                     /* Check to see if partition is queued for being started. Only applicable to sends. */ 
                     if(-2 ==  req->flags[i]) {
-		        err = MPI_Put(req->buf + i*req->part_bytes, req->count, req->datatype, 1,
-                                     i*req->count, req->count, req->datatype, req->window);
+   	  	        err = MPI_Put(req->buf + i*req->part_bytes, req->count, req->datatype, 1,
+                                      i*req->count*req->part_bytes, req->count, req->datatype, req->window);
                         assert(MPI_SUCCESS == err);
 
                         req->flags[i] = 0;
@@ -245,7 +245,7 @@ mca_part_direct_precv_init(void *buf,
     int dt_size;
     mca_part_direct_list_t* new_progress_elem = NULL;
 
-    fprintf(stderr,"precv_init\n");
+    //fprintf(stderr,"precv_init\n");
 
     mca_part_direct_precv_request_t *recvreq;
 
@@ -284,7 +284,7 @@ mca_part_direct_precv_init(void *buf,
     // open buffer windows
     err = MPI_Win_create(buf,
                          parts * count * dt_size,
-                         dt_size,
+                         1,
                          MPI_INFO_NULL,
                          req->comm,
                          &req->window);
@@ -343,7 +343,7 @@ mca_part_direct_psend_init(const void* buf,
     int dt_size;
     mca_part_direct_list_t* new_progress_elem = NULL;
     mca_part_direct_psend_request_t *sendreq;
-    fprintf(stderr, "psend_init\n");
+    //fprintf(stderr, "psend_init\n");
 
     /* Create new request object */
     MCA_PART_DIRECT_PSEND_REQUEST_ALLOC(sendreq, comm, dst, ompi_proc);
@@ -432,7 +432,7 @@ mca_part_direct_start(size_t count, ompi_request_t** requests)
     size_t _count = count;
     size_t i;
 
-    fprintf(stderr,"Yay we crashed in the right spot at least?\n");
+    //fprintf(stderr,"Yay we crashed in the right spot at least?\n");
 
     for(i = 0; i < _count && OMPI_SUCCESS == err; i++) {
         mca_part_direct_request_t *req = (mca_part_direct_request_t *)(requests[i]);

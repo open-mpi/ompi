@@ -129,7 +129,7 @@ int mca_part_base_select(bool enable_progress_threads,
             continue;
         }
 
-	fprintf(stderr, "%s\n", component->partm_version.mca_component_name);
+	//fprintf(stderr, "%s\n", component->partm_version.mca_component_name);
 
         opal_output_verbose( 10, ompi_part_base_framework.framework_output,
                              "select: init returned priority %d", priority );
