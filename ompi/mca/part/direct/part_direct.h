@@ -79,9 +79,9 @@ mca_part_direct_free_req(struct mca_part_direct_request_t* req)
     opal_list_remove_item(ompi_part_direct.progress_list, (opal_list_item_t*)req->progress_elem);
     OBJ_RELEASE(req->progress_elem);
 
-    // TODO: Close Window
-    // TODO: Close Flag Window
-    // TODO: Free Communicator
+    MPI_Win_free(&req->window);
+    MPI_Win_free(&req->window_flags);
+    MPI_Comm_free(&req->comm);
     free(req->flags);
 
     if( MCA_PART_DIRECT_REQUEST_PRECV == req->req_type ) {
