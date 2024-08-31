@@ -16,7 +16,7 @@ subroutine MPI_File_iread_f08(fh,buf,count,datatype,request,ierror)
    use :: ompi_mpifh_bindings, only : ompi_file_iread_f
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: buf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE OMPI_ASYNCHRONOUS :: buf
    INTEGER, INTENT(IN) :: count
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    TYPE(MPI_Request), INTENT(OUT) :: request
