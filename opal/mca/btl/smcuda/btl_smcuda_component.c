@@ -21,6 +21,7 @@
  * Copyright (c) 2023      Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2024      Advanced Micro Devices, Inc. All Rights reserved.
+ * Copyright (c) 2024      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -417,7 +418,7 @@ static int get_mpool_res_size(int32_t max_procs, size_t *out_res_size)
      * mpool_sm_component.c when sizeof(mca_common_sm_module_t) is
      * added.
      */
-    if (((double) size) * max_procs > LONG_MAX - 4096) {
+    if (((double) size) * max_procs > (double) (LONG_MAX - 4096)) {
         return OPAL_ERR_VALUE_OUT_OF_BOUNDS;
     }
     size *= (size_t) max_procs;

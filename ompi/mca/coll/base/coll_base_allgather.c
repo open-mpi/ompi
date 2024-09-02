@@ -14,6 +14,7 @@
  *                         reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2024      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -776,7 +777,7 @@ int ompi_coll_base_allgather_intra_k_bruck(const void *sbuf, size_t scount,
     int recvcount, distance;
     ptrdiff_t rlb, rextent;
     ptrdiff_t rsize, rgap = 0;
-    ompi_request_t **reqs;
+    ompi_request_t **reqs = NULL;
     int num_reqs, max_reqs = 0;
 
     char *tmpsend = NULL;
@@ -937,7 +938,7 @@ int ompi_coll_base_allgather_direct_messaging(const void *sbuf, size_t scount,
     int line = -1, rank, comm_size, err = MPI_SUCCESS;
     ptrdiff_t rlb, rextent;
     ptrdiff_t incr;
-    ompi_request_t **reqs;
+    ompi_request_t **reqs = NULL;
     int max_reqs = 0, reqs_needed = 0;
     int peer_rank = 0;
 
