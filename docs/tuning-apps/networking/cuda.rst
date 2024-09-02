@@ -73,12 +73,12 @@ An example configure command would look like the following:
 How do I verify that Open MPI has been built with CUDA support?
 ---------------------------------------------------------------
 
-Verify that Open MPI has been built with cuda using ``ompi_info``
+Verify that Open MPI has been built with CUDA using ``ompi_info``:
 
 .. code-block:: sh
 
-   # Use ompi_info to verify cuda support in Open MPI
-   shell$ ./ompi_info |grep "MPI extensions"
+   # Use the ompi_info command to verify cuda support in Open MPI
+   shell$ ./ompi_info | grep "MPI extensions"
           MPI extensions: affinity, cuda, pcollreq
 
 /////////////////////////////////////////////////////////////////////////
