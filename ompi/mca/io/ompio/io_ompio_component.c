@@ -17,7 +17,7 @@
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * Copyright (c) 2018      DataDirect Networks. All rights reserved.
- * Copyright (c) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (c) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
  * Copyright (c) 2024      Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -49,7 +49,7 @@ int mca_io_ompio_max_aggregators_ratio=8;
 int mca_io_ompio_aggregators_cutoff_threshold=3;
 int mca_io_ompio_overwrite_amode = 1;
 int mca_io_ompio_verbose_info_parsing = 0;
-
+int mca_io_ompio_use_accelerator_buffers = 0;
 int mca_io_ompio_grouping_option=5;
 
 /*
@@ -262,6 +262,14 @@ static int register_component(void)
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_io_ompio_verbose_info_parsing);
+
+    mca_io_ompio_use_accelerator_buffers = 0;
+    (void) mca_base_component_var_register(&mca_io_ompio_component.io_version,
+                                           "use_accelerator_buffers", "Allow using accelerator buffers"
+                                           "for data aggregation in collective I/O if input buffer is device memory",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY, &mca_io_ompio_use_accelerator_buffers);
 
     return OMPI_SUCCESS;
 }
