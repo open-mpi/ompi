@@ -115,18 +115,18 @@ static bool
 check_config_value_bool(char *key, opal_info_t *info)
 {
     int ret, flag, param;
-    const bool *flag_value;
-    bool result;
+    bool result = false;
+    const bool *flag_value = &result;
+
     ret = opal_info_get_bool(info, key, &result, &flag);
-    if (OMPI_SUCCESS != ret || !flag) goto info_not_found;
-    return result;
+    if (OMPI_SUCCESS == ret && flag) {
+        return result;
+    }
 
- info_not_found:
     param = mca_base_var_find("ompi", "osc", "portals4", key);
-    if (0 > param) return false;
-
-    ret = mca_base_var_get_value(param, &flag_value, NULL, NULL);
-    if (OMPI_SUCCESS != ret) return false;
+    if (0 <= param) {
+        (void) mca_base_var_get_value(param, &flag_value, NULL, NULL);
+    }
 
     return flag_value[0];
 }
@@ -615,10 +615,10 @@ component_select(struct ompi_win_t *win, void **base, size_t size, ptrdiff_t dis
 
  error:
     /* BWB: FIX ME: This is all wrong... */
-    if (0 != module->ct_h) PtlCTFree(module->ct_h);
-    if (0 != module->data_me_h) PtlMEUnlink(module->data_me_h);
-    if (0 != module->req_md_h) PtlMDRelease(module->req_md_h);
-    if (0 != module->md_h) PtlMDRelease(module->md_h);
+    if (!PtlHandleIsEqual(module->ct_h, PTL_INVALID_HANDLE)) PtlCTFree(module->ct_h);
+    if (!PtlHandleIsEqual(module->data_me_h, PTL_INVALID_HANDLE)) PtlMEUnlink(module->data_me_h);
+    if (!PtlHandleIsEqual(module->req_md_h, PTL_INVALID_HANDLE)) PtlMDRelease(module->req_md_h);
+    if (!PtlHandleIsEqual(module->md_h, PTL_INVALID_HANDLE)) PtlMDRelease(module->md_h);
     if (NULL != module->comm) ompi_comm_free(&module->comm);
     if (NULL != module) free(module);
 
@@ -655,11 +655,11 @@ ompi_osc_portals4_free(struct ompi_win_t *win)
     PtlMEUnlink(module->control_me_h);
     PtlMEUnlink(module->data_me_h);
     PtlMDRelease(module->md_h);
-    if (module->origin_iovec_md_h != PTL_INVALID_HANDLE) {
+    if (!PtlHandleIsEqual(module->origin_iovec_md_h,PTL_INVALID_HANDLE)) {
         PtlMDRelease(module->origin_iovec_md_h);
         free(module->origin_iovec_list);
     }
-    if (module->result_iovec_md_h != PTL_INVALID_HANDLE) {
+    if (!PtlHandleIsEqual(module->result_iovec_md_h,PTL_INVALID_HANDLE)) {
         PtlMDRelease(module->result_iovec_md_h);
         free(module->result_iovec_list);
     }

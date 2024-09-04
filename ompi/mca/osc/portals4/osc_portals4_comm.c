@@ -496,7 +496,7 @@ get_to_iovec(ompi_osc_portals4_module_t *module,
     ptrdiff_t length, origin_lb, target_lb, extent;
     ptl_md_t md;
 
-    if (module->origin_iovec_md_h != PTL_INVALID_HANDLE) {
+    if (!PtlHandleIsEqual(module->origin_iovec_md_h,PTL_INVALID_HANDLE)) {
         PtlMDRelease(module->origin_iovec_md_h);
         free(module->origin_iovec_list);
         module->origin_iovec_md_h = PTL_INVALID_HANDLE;
@@ -583,7 +583,7 @@ atomic_get_to_iovec(ompi_osc_portals4_module_t *module,
     ptrdiff_t length, origin_lb, target_lb, extent;
     ptl_md_t md;
 
-    if (module->origin_iovec_md_h != PTL_INVALID_HANDLE) {
+    if (!PtlHandleIsEqual(module->origin_iovec_md_h,PTL_INVALID_HANDLE)) {
         PtlMDRelease(module->origin_iovec_md_h);
         free(module->origin_iovec_list);
         module->origin_iovec_md_h = PTL_INVALID_HANDLE;
@@ -665,7 +665,7 @@ put_from_iovec(ompi_osc_portals4_module_t *module,
     ptrdiff_t length, origin_lb, target_lb, extent;
     ptl_md_t md;
 
-    if (module->origin_iovec_md_h != PTL_INVALID_HANDLE) {
+    if (!PtlHandleIsEqual(module->origin_iovec_md_h,PTL_INVALID_HANDLE)) {
         PtlMDRelease(module->origin_iovec_md_h);
         free(module->origin_iovec_list);
         module->origin_iovec_md_h = PTL_INVALID_HANDLE;
@@ -754,7 +754,7 @@ atomic_put_from_iovec(ompi_osc_portals4_module_t *module,
     ptrdiff_t length, origin_lb, target_lb, extent;
     ptl_md_t md;
 
-    if (module->origin_iovec_md_h != PTL_INVALID_HANDLE) {
+    if (!PtlHandleIsEqual(module->origin_iovec_md_h,PTL_INVALID_HANDLE)) {
         PtlMDRelease(module->origin_iovec_md_h);
         free(module->origin_iovec_list);
         module->origin_iovec_md_h = PTL_INVALID_HANDLE;
@@ -841,7 +841,7 @@ atomic_from_iovec(ompi_osc_portals4_module_t *module,
     ptl_op_t ptl_op;
     ptl_datatype_t ptl_dt;
 
-    if (module->origin_iovec_md_h != PTL_INVALID_HANDLE) {
+    if (!PtlHandleIsEqual(module->origin_iovec_md_h,PTL_INVALID_HANDLE)) {
         PtlMDRelease(module->origin_iovec_md_h);
         free(module->origin_iovec_list);
         module->origin_iovec_md_h = PTL_INVALID_HANDLE;
@@ -940,7 +940,7 @@ swap_to_iovec(ompi_osc_portals4_module_t *module,
     ptl_md_t md;
     ptl_datatype_t ptl_dt;
 
-    if (module->result_iovec_md_h != PTL_INVALID_HANDLE) {
+    if (!PtlHandleIsEqual(module->result_iovec_md_h,PTL_INVALID_HANDLE)) {
         PtlMDRelease(module->result_iovec_md_h);
         free(module->result_iovec_list);
         module->result_iovec_md_h = PTL_INVALID_HANDLE;
@@ -971,7 +971,7 @@ swap_to_iovec(ompi_osc_portals4_module_t *module,
         return ret;
     }
 
-    if (module->origin_iovec_md_h != PTL_INVALID_HANDLE) {
+    if (!PtlHandleIsEqual(module->origin_iovec_md_h,PTL_INVALID_HANDLE)) {
         PtlMDRelease(module->origin_iovec_md_h);
         free(module->origin_iovec_list);
         module->origin_iovec_md_h = PTL_INVALID_HANDLE;
@@ -1066,7 +1066,7 @@ fetch_atomic_to_iovec(ompi_osc_portals4_module_t *module,
     ptl_op_t ptl_op;
     ptl_datatype_t ptl_dt;
 
-    if (module->result_iovec_md_h != PTL_INVALID_HANDLE) {
+    if (!PtlHandleIsEqual(module->result_iovec_md_h,PTL_INVALID_HANDLE)) {
         PtlMDRelease(module->result_iovec_md_h);
         free(module->result_iovec_list);
         module->result_iovec_md_h = PTL_INVALID_HANDLE;
@@ -1097,7 +1097,7 @@ fetch_atomic_to_iovec(ompi_osc_portals4_module_t *module,
         return ret;
     }
 
-    if (module->origin_iovec_md_h != PTL_INVALID_HANDLE) {
+    if (!PtlHandleIsEqual(module->origin_iovec_md_h,PTL_INVALID_HANDLE)) {
         PtlMDRelease(module->origin_iovec_md_h);
         free(module->origin_iovec_list);
         module->origin_iovec_md_h = PTL_INVALID_HANDLE;
@@ -2245,7 +2245,8 @@ ompi_osc_portals4_raccumulate(const void *origin_addr,
     size_t offset, size;
     ptl_op_t ptl_op;
     ptl_datatype_t ptl_dt;
-    ptrdiff_t sent, length, origin_lb, target_lb, extent;
+    ptl_size_t sent, length;
+    ptrdiff_t origin_lb, target_lb, extent;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "raccumulate: 0x%lx, %zu, %s, %d, %lu, %zu, %s, %s 0x%lx",
@@ -2998,7 +2999,8 @@ ompi_osc_portals4_accumulate(const void *origin_addr,
     size_t offset, size;
     ptl_op_t ptl_op;
     ptl_datatype_t ptl_dt;
-    ptrdiff_t sent, length, origin_lb, target_lb, extent;
+    ptl_size_t sent, length;
+    ptrdiff_t origin_lb, target_lb, extent;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "accumulate: 0x%lx, %zu, %s, %d, %lu, %zu, %s, %s, 0x%lx",

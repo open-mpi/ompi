@@ -91,7 +91,7 @@ setup_scatter_buffers_linear(struct ompi_communicator_t   *comm,
         opal_output_verbose(30, ompi_coll_base_framework.framework_output,
                             "%s:%d:rank(%d): root - scatter_buf(%p) - scatter_bytes(%lu)=packed_size(%ld) * size(%d)",
                             __FILE__, __LINE__, request->u.scatter.my_rank,
-                            request->u.scatter.scatter_buf, request->u.scatter.scatter_bytes,
+                            (void*)request->u.scatter.scatter_buf, request->u.scatter.scatter_bytes,
                             request->u.scatter.packed_size, request->u.scatter.size);
     } else {
         request->u.scatter.scatter_bytes=request->u.scatter.packed_size;
@@ -104,7 +104,7 @@ setup_scatter_buffers_linear(struct ompi_communicator_t   *comm,
         opal_output_verbose(30, ompi_coll_base_framework.framework_output,
                             "%s:%d:rank(%d): leaf - scatter_buf(%p) - scatter_bytes(%lu)=packed_size(%ld)",
                             __FILE__, __LINE__, request->u.scatter.my_rank,
-                            request->u.scatter.scatter_buf, request->u.scatter.scatter_bytes,
+                            (void*)request->u.scatter.scatter_buf, request->u.scatter.scatter_bytes,
                             request->u.scatter.packed_size);
     }
 

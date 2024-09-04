@@ -16,6 +16,7 @@ coll_han.h \
 coll_han_trigger.h \
 coll_han_algorithms.h \
 coll_han_alltoall.c \
+coll_han_alltoallv.c \
 coll_han_dynamic.h \
 coll_han_dynamic_file.h \
 coll_han_barrier.c \
@@ -34,8 +35,7 @@ coll_han_algorithms.c \
 coll_han_dynamic.c \
 coll_han_dynamic_file.c \
 coll_han_topo.c \
-coll_han_subcomms.c \
-coll_han_utils.c
+coll_han_subcomms.c
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la

@@ -83,7 +83,7 @@ do {                                                                  \
 #define MCA_PART_PERSIST_PSEND_REQUEST_RETURN(sendreq)                      \
     {                                                                   \
         /*  Let the base handle the reference counts */                 \
-        OMPI_DATATYPE_RETAIN(sendreq->req_datatype);  \
+        OMPI_DATATYPE_RELEASE(sendreq->req_datatype);  \
         OBJ_RELEASE(sendreq->req_comm);               \
         OMPI_REQUEST_FINI(&sendreq->req_ompi);        \
         opal_convertor_cleanup( &(sendreq->req_convertor) ); \

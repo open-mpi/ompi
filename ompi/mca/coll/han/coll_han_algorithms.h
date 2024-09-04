@@ -214,5 +214,10 @@ int
 mca_coll_han_alltoall_using_smsc(ALLTOALL_BASE_ARGS,
                                     mca_coll_base_module_t *module);
 
+/* Alltoallv */
+int
+mca_coll_han_alltoallv_using_smsc(ALLTOALLV_BASE_ARGS,
+                                    mca_coll_base_module_t *module);
+
 
 #endif

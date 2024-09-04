@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2021-2023 Computer Architecture and VLSI Systems (CARV)
  *                         Laboratory, ICS Forth. All rights reserved.
+ * Copyright (c) 2024      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -523,7 +524,7 @@ static int xhc_module_create_hierarchy(xhc_module_t *module,
             continue;
         }
 
-        int member_id;
+        int member_id = -1;
         int members = 0;
 
         // If working with rank list, set the ranks from the list as "local"
@@ -559,6 +560,8 @@ static int xhc_module_create_hierarchy(xhc_module_t *module,
                 rank_list[members++] = r;
             }
         }
+
+        assert(member_id != -1);
 
         /* If split or max ranks was specified, math partition the locality
          * and remove the previously added locality mapping to some ranks */

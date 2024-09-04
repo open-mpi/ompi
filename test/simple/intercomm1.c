@@ -13,7 +13,7 @@ int main(int argc, char *argv[])
     MPI_Comm_split(MPI_COMM_WORLD, color, rank, &scomm);
     printf("%d Calling Intercomm_create\n", rank);
     MPI_Intercomm_create(scomm, 0, MPI_COMM_WORLD, 1 - color, 1, &comm);
-    printf("%d Completet\n", rank);
+    printf("%d Complete\n", rank);
     MPI_Comm_rank(comm, &rank);
     MPI_Comm_remote_size(comm, &size);
     MPI_Comm_free(&scomm);

@@ -118,7 +118,24 @@ static int han_open(void)
         mca_coll_han_component.han_output = ompi_coll_base_framework.framework_output;
     }
 
+    OBJ_CONSTRUCT(&mca_coll_han_component.pack_buffers, opal_free_list_t);
 
+    int ret = opal_free_list_init(
+        /* *flist,frag_size,frag_alignment */
+        &mca_coll_han_component.pack_buffers, sizeof(opal_free_list_item_t), 8,
+        /* opal_class_t *frag_class */
+        OBJ_CLASS(opal_free_list_item_t),
+        /* payload_buffer_size, payload_buffer_alignment */
+        COLL_HAN_PACKBUF_PAYLOAD_BYTES, 8,
+        /* num_elements_to_alloc, max_elements_to_alloc, num_elements_per_alloc */
+        0, 32, 8,
+        /* *mpool, rcache_reg_flags, *rcache, */
+        NULL, 0, NULL,
+        /* fn_t item_init, void *ctx */
+        NULL, NULL);
+    if (ret != 0) {
+        printf("han: initializing free list got %d\n",ret);
+    }
 
     return mca_coll_han_init_dynamic_rules();
 }
@@ -410,6 +427,26 @@ static int han_register(void)
                                               MCA_BASE_VAR_TYPE_INT32_T, NULL, 0, 0,
                                               OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
                                               &cs->han_alltoall_pstages);
+
+    cs->han_alltoallv_low_module = 0;
+    (void) mca_coll_han_query_module_from_mca(c, "alltoallv_lower_module",
+                                              "low level module for alltoallv, 0 tuned, 1 sm ",
+                                              OPAL_INFO_LVL_9, &cs->han_alltoallv_low_module,
+                                              &cs->han_op_module_name.alltoallv.han_op_low_module_name);
+    cs->han_alltoallv_smsc_avg_send_limit = 8192;
+    (void) mca_base_component_var_register(c, "alltoallv_smsc_avg_send_limit",
+                                              "The per-rank averaged send bytes limit above which smsc-based alltoallv will disqualify itself.",
+                                              MCA_BASE_VAR_TYPE_INT64_T, NULL, 0, 0,
+                                              OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+                                              &cs->han_alltoallv_smsc_avg_send_limit);
+    cs->han_alltoallv_smsc_noncontig_activation_limit = 0.10;
+    (void) mca_base_component_var_register(c, "alltoallv_smsc_noncontig_limit",
+                                              "The fractional (0.00-1.00) limit of peers in the communicator which have "
+                                              "strided or otherwise non-contiguous data buffers.  Above this limit "
+                                              "smsc-based alltoallv will ignore the avg_send_limit, and always remain active.",
+                                              MCA_BASE_VAR_TYPE_DOUBLE, NULL, 0, 0,
+                                              OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+                                              &cs->han_alltoallv_smsc_noncontig_activation_limit);
 
     cs->han_reproducible = 0;
     (void) mca_base_component_var_register(c, "reproducible",
