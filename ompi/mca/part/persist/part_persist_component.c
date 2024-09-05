@@ -122,7 +122,7 @@ mca_part_persist_component_init(int* priority,
                             bool enable_progress_threads,
                             bool enable_mpi_threads)
 {
-    *priority = 1;
+    *priority = 2;
 
     opal_output_verbose( 10, 0,
                          "in persist part priority is %d\n", *priority);

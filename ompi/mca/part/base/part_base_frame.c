@@ -139,7 +139,7 @@ static int mca_part_base_open(mca_base_open_flag_t flags)
 
     /* Currently this uses a default with no selection criteria as there is only 1 module. */
     opal_pointer_array_add(&mca_part_base_part, strdup("direct"));
-//    opal_pointer_array_add(&mca_part_base_part, strdup("persist"));
+    opal_pointer_array_add(&mca_part_base_part, strdup("persist"));
 
     return OMPI_SUCCESS;
 }
