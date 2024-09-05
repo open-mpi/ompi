@@ -164,8 +164,8 @@ mca_part_direct_progress(void)
                for(i = 0; i < req->parts; i++) {
                     /* Check to see if partition is queued for being started. Only applicable to sends. */ 
                     if(-2 ==  req->flags[i]) {
-   	  	        err = MPI_Put(req->buf + i*req->part_bytes, req->count, req->datatype, 1,
-                                      i*req->count*req->part_bytes, req->count, req->datatype, req->window);
+   	  	        err = MPI_Put(req->buf + i*req->part_bytes, req->part_bytes, MPI_CHAR, 1,
+                                      i*req->part_bytes, req->part_bytes, MPI_CHAR, req->window);
                         assert(MPI_SUCCESS == err);
 
                         req->flags[i] = 0;
@@ -183,8 +183,7 @@ mca_part_direct_progress(void)
 
                     mca_part_direct_complete(req);
                 }
-
-	    }	
+            }	    
         } else {
             if(false == req->req_part_complete && REQUEST_COMPLETED != req->req_ompi.req_complete && OMPI_REQUEST_ACTIVE == req->req_ompi.req_state) {
 		if(req->round == req->tround) {
@@ -245,8 +244,6 @@ mca_part_direct_precv_init(void *buf,
     int dt_size;
     mca_part_direct_list_t* new_progress_elem = NULL;
 
-    //fprintf(stderr,"precv_init\n");
-
     mca_part_direct_precv_request_t *recvreq;
 
 
@@ -281,7 +278,6 @@ mca_part_direct_precv_init(void *buf,
     ranks[1] = rank_super;
     mca_part_direct_create_partition_communicator(comm, rank_count, ranks, &req->comm);
 
-    // open buffer windows
     err = MPI_Win_create(buf,
                          parts * count * dt_size,
                          1,
@@ -293,7 +289,6 @@ mca_part_direct_precv_init(void *buf,
     err = MPI_Win_lock_all(1, req->window); fflush(stdout);
     assert(MPI_SUCCESS == err);
 
-    // open flags window
     err = MPI_Win_create(&req->tround,
                          1,
                          sizeof(int32_t),
@@ -343,7 +338,6 @@ mca_part_direct_psend_init(const void* buf,
     int dt_size;
     mca_part_direct_list_t* new_progress_elem = NULL;
     mca_part_direct_psend_request_t *sendreq;
-    //fprintf(stderr, "psend_init\n");
 
     /* Create new request object */
     MCA_PART_DIRECT_PSEND_REQUEST_ALLOC(sendreq, comm, dst, ompi_proc);
@@ -371,7 +365,6 @@ mca_part_direct_psend_init(const void* buf,
     req->tround = 0;
 
 
-    // Make Comm
     int rank_super;
     err = MPI_Comm_rank(comm, &rank_super);
     int rank_count = 2;
@@ -380,11 +373,9 @@ mca_part_direct_psend_init(const void* buf,
     ranks[1] = dst;
     mca_part_direct_create_partition_communicator(comm, rank_count, ranks, &req->comm);
 
-
-    // open buffer windows
     err = MPI_Win_create((void*)buf,
                          0,
-                         dt_size,
+                         1,
                          MPI_INFO_NULL,
                          req->comm,
                          &req->window);
@@ -393,7 +384,6 @@ mca_part_direct_psend_init(const void* buf,
     err = MPI_Win_lock_all(1, req->window); fflush(stdout);
     assert(MPI_SUCCESS == err);
 
-    // open flags window
     err = MPI_Win_create(&req->tround,
                          1,
                          sizeof(int32_t),
@@ -431,8 +421,6 @@ mca_part_direct_start(size_t count, ompi_request_t** requests)
     int err = OMPI_SUCCESS;
     size_t _count = count;
     size_t i;
-
-    //fprintf(stderr,"Yay we crashed in the right spot at least?\n");
 
     for(i = 0; i < _count && OMPI_SUCCESS == err; i++) {
         mca_part_direct_request_t *req = (mca_part_direct_request_t *)(requests[i]);
