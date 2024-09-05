@@ -22,6 +22,7 @@
  *                         reserved.
  * Copyright (c) 2019      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2024      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -572,6 +573,13 @@ static int do_open(int output_id, opal_output_stream_t *lds)
 
     if (!initialized) {
         opal_output_init();
+    }
+
+    /* Bozo check */
+
+    if (output_id >= OPAL_OUTPUT_MAX_STREAMS ||
+        output_id < -1) {
+        return OPAL_ERR_BAD_PARAM;
     }
 
     str = getenv("OPAL_OUTPUT_REDIRECT");

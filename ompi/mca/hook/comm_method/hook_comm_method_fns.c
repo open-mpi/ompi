@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2022 IBM Corporation. All rights reserved.
+ * Copyright (c) 2024      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -15,6 +16,7 @@
 #include <dlfcn.h>
 #endif
 
+#include "opal/util/string_copy.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/pml/pml.h"
 #include "opal/mca/btl/btl.h"
@@ -105,21 +107,21 @@ comm_method_string(MPI_Comm comm, int rank, int *comm_mode) {
             if (comm_mode) { *comm_mode = MODE_IS_BTL; }
             btl = lookup_btl_name_for_send(comm, rank);
             if (NULL == btl) {
-                strncpy(string, "n/a", COMM_METHOD_STRING_SIZE);
+                opal_string_copy(string, "n/a", COMM_METHOD_STRING_SIZE);
             } else {
-                strncpy(string, btl, COMM_METHOD_STRING_SIZE);
+                opal_string_copy(string, btl, COMM_METHOD_STRING_SIZE);
             }
         }
         else if (p && 0==strncmp("cm", p, 3)) {  // MTL
             if (comm_mode) { *comm_mode = MODE_IS_MTL; }
-            strncpy(string, lookup_mtl_name(), COMM_METHOD_STRING_SIZE);
+            opal_string_copy(string, lookup_mtl_name(), COMM_METHOD_STRING_SIZE);
         } else {                        // PML
             if (comm_mode) { *comm_mode = MODE_IS_PML; }
             if (p) {
-                strncpy(string, p, COMM_METHOD_STRING_SIZE);
+                opal_string_copy(string, p, COMM_METHOD_STRING_SIZE);
             }
             else {
-                strncpy(string, "n/a", COMM_METHOD_STRING_SIZE);
+                opal_string_copy(string, "n/a", COMM_METHOD_STRING_SIZE);
             }
         }
     }
@@ -691,7 +693,7 @@ ompi_report_comm_methods(int called_from_location)
                 p = str;
                 for (k=0; k<nleaderranks; ++k) {
                     char *method_string;
-                    char ucx_label[10];
+                    char ucx_label[20];
                     
                     method_string = comm_method_to_string(method[i * nleaderranks + k]);
                     if (0 == strncmp(method_string, UCX_TAG, strlen(UCX_TAG))) {

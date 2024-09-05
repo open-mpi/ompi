@@ -8,6 +8,7 @@
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * Copyright (c) 2021      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2024      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -492,7 +493,7 @@ f128_to_f80(unsigned char *f80_buf_to, const unsigned char *f128_buf_from, ssize
  */
 static inline
 size_t
-alignment_of_long_double() {
+alignment_of_long_double(void) {
     static size_t val = 0;
 
     if (val == 0) {
