@@ -7,10 +7,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-    - name: Configure hostname
-      run:  echo 127.0.0.1 `hostname` | sudo tee -a /etc/hosts > /dev/null
-      if:   ${{ runner.os == 'Linux' || runner.os == 'macOS' }}
-
     - name: Install depencencies
       run:  sudo apt-get install -y -q
               libnuma-dev
@@ -54,18 +50,6 @@ jobs:
     - name: Add Open MPI to PATH
       run: echo /opt/openmpi/bin >> $GITHUB_PATH
 
-    - name: Tweak MPI
-      run:  |
-        # Tweak MPI
-        mca_params="$HOME/.openmpi/mca-params.conf"
-        mkdir -p "$(dirname "$mca_params")"
-        echo mpi_param_check = true >> "$mca_params"
-        echo mpi_show_handle_leaks = true >> "$mca_params"
-        echo rmaps_base_oversubscribe = true >> "$mca_params"
-        mca_params="$HOME/.prte/mca-params.conf"
-        mkdir -p "$(dirname "$mca_params")"
-        echo rmaps_default_mapping_policy = :oversubscribe >> "$mca_params"
-
     - name: Show MPI
       run:  ompi_info
 
@@ -101,8 +85,6 @@ jobs:
       with:
         path: |
           /opt/openmpi
-          ~/.openmpi
-          ~/.prte
           test
           demo
           mpi4py-*.whl
