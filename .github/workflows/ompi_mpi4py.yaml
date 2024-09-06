@@ -112,6 +112,13 @@ jobs:
       env:
         CFLAGS: "-O0"
 
+    - name: Check slots
+      run:  |
+        lscpu
+        mpiexec -n 2 -display-allocation hostname
+        mpiexec -n 3 -display-allocation hostname
+        mpiexec -n 4 -display-allocation hostname
+
     - name: Test mpi4py (singleton)
       run:  python test/main.py -v
       if:   ${{ true }}
