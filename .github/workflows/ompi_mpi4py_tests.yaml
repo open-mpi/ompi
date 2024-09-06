@@ -19,20 +19,40 @@ jobs:
     env:
       ${{ inputs.env_name}}: 1
     steps:
+    - name: Configure hostname
+      run:  echo 127.0.0.1 `hostname` | sudo tee -a /etc/hosts > /dev/null
+      if:   ${{ runner.os == 'Linux' || runner.os == 'macOS' }}
+
     - name: Use Python
       uses: actions/setup-python@v5
       with:
         python-version: 3
         architecture: x64
+
     - name: Get artifacts
       uses: actions/download-artifact@v4
       with:
         path: /
         name: build-artifacts
+
     - name: Restore executable permissions
       run: chmod a+x /opt/openmpi/bin/*
+
     - name: Add Open MPI to PATH
       run: echo /opt/openmpi/bin >> $GITHUB_PATH
+
+    - name: Tweak MPI
+      run:  |
+        # Tweak MPI
+        mca_params="$HOME/.openmpi/mca-params.conf"
+        mkdir -p "$(dirname "$mca_params")"
+        echo mpi_param_check = true >> "$mca_params"
+        echo mpi_show_handle_leaks = true >> "$mca_params"
+        echo rmaps_base_oversubscribe = true >> "$mca_params"
+        mca_params="$HOME/.prte/mca-params.conf"
+        mkdir -p "$(dirname "$mca_params")"
+        echo rmaps_default_mapping_policy = :oversubscribe >> "$mca_params"
+
     - name: Install the mpi4py wheel
       run: python -m pip install mpi4py --no-index --find-links=.
 
