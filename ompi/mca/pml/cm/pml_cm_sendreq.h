@@ -376,7 +376,7 @@ do {                                                                    \
             max_data = iov.iov_len = sendreq->req_count;                \
             iov_count = 1;                                              \
             opal_convertor_prepare_for_send( &sendreq->req_send.req_base.req_convertor, \
-                                             sendreq->req_send.req_base.req_datatype,   \
+                                             &sendreq->req_send.req_base.req_datatype->super,   \
                                              max_data,                  \
                                              sendreq->req_addr);        \
             opal_convertor_pack( &sendreq->req_send.req_base.req_convertor, \
