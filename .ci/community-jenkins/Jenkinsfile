@@ -71,7 +71,7 @@ def prepare_check_stages() {
 
       for (configure_option in configure_options) {
         def name = "Configure: ${configure_option}".replaceAll("-", "")
-        build_parallel_map.put(name, prepare_build(name, "(ec2&&linux)", "--configure-args \\\"${configure_option}\\\""))
+        build_parallel_map.put(name, prepare_build(name, "amazon_linux_2", "--configure-args \\\"${configure_option}\\\""))
     }
 
     build_parallel_map.put("distcheck", prepare_build("distcheck", "tarball_build", "--distcheck"))
