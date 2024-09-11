@@ -291,7 +291,7 @@
           PLATFORM_COMPILER_VERSION_INT(__PATHCC__,__PATHCC_MINOR__,__PATHCC_PATCHLEVEL__+0)
   #define PLATFORM_COMPILER_VERSION_STR __PATHSCALE__
 
-#elif defined(__NVCOMPILER) // Must occur prior to PGI and CLANG
+#elif defined(__NVCOMPILER) /* Must occur prior to PGI and CLANG */
   #define PLATFORM_COMPILER_NVHPC  1
   #define PLATFORM_COMPILER_FAMILYNAME NVHPC
   #define PLATFORM_COMPILER_FAMILYID 20
@@ -590,7 +590,7 @@
     #define PLATFORM_COMPILER_VERSION_STR __clang_version__
   #endif
 
-// NOTE: PLATFORM_COMPILER_FAMILYID "20" is allocated to NVHPC, appearing earlier
+/* NOTE: PLATFORM_COMPILER_FAMILYID "20" is allocated to NVHPC, appearing earlier */
 
 #else /* unknown compiler */
   #define PLATFORM_COMPILER_UNKNOWN  1
