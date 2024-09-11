@@ -729,8 +729,10 @@ exit :
     }
     free(broken_iov_arrays);
     free(fh->f_procs_in_group);
+    free(fh->f_aggr_list);
     fh->f_procs_in_group=NULL;
     fh->f_procs_per_group=0;
+    fh->f_aggr_list=NULL;
     free(result_counts);
     free(reqs);
      
