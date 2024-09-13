@@ -196,7 +196,6 @@ int mca_btl_uct_process_connection_request(mca_btl_uct_module_t *module,
     struct opal_proc_t *remote_proc = opal_proc_for_name(req->proc_name);
     mca_btl_base_endpoint_t *endpoint = mca_btl_uct_get_ep(&module->super, remote_proc);
     mca_btl_uct_tl_endpoint_t *tl_endpoint = endpoint->uct_eps[req->context_id] + req->tl_index;
-    int32_t ep_flags;
     int rc;
 
     BTL_VERBOSE(("got connection request for endpoint %p. type = %d. context id = %d",
@@ -209,16 +208,12 @@ int mca_btl_uct_process_connection_request(mca_btl_uct_module_t *module,
 
     assert(req->type < 2);
 
-    ep_flags = opal_atomic_fetch_or_32(&tl_endpoint->flags, MCA_BTL_UCT_ENDPOINT_FLAG_CONN_REC);
-
-    if (!(ep_flags & MCA_BTL_UCT_ENDPOINT_FLAG_CONN_REC)) {
-        /* create any necessary resources */
-        rc = mca_btl_uct_endpoint_connect(module, endpoint, req->context_id, req->ep_addr,
-                                          req->tl_index);
-        if (OPAL_SUCCESS != rc && OPAL_ERR_OUT_OF_RESOURCE != rc) {
-            BTL_ERROR(("could not setup rdma endpoint. rc = %d", rc));
-            return rc;
-        }
+    /* create any necessary resources */
+    rc = mca_btl_uct_endpoint_connect(module, endpoint, req->context_id, req->ep_addr,
+                                      req->tl_index);
+    if (OPAL_SUCCESS != rc && OPAL_ERR_OUT_OF_RESOURCE != rc) {
+        BTL_ERROR(("could not setup rdma endpoint. rc = %d", rc));
+        return rc;
     }
 
     /* the connection is ready once we have received the connection data and also a connection ready
@@ -226,20 +221,15 @@ int mca_btl_uct_process_connection_request(mca_btl_uct_module_t *module,
      * an endpoint can be used. */
     if (req->type == 1) {
         /* remote side is ready */
-        mca_btl_uct_base_frag_t *frag;
 
         /* to avoid a race with send adding pending frags grab the lock here */
         OPAL_THREAD_SCOPED_LOCK(&endpoint->ep_lock, {
             BTL_VERBOSE(("connection ready. sending %" PRIsize_t " frags",
                          opal_list_get_size(&module->pending_frags)));
-            (void) opal_atomic_or_fetch_32(&tl_endpoint->flags,
-                                           MCA_BTL_UCT_ENDPOINT_FLAG_CONN_READY);
+            mca_btl_uct_tl_endpoint_set_flag(tl_endpoint, MCA_BTL_UCT_ENDPOINT_FLAG_CONN_REM_READY);
             opal_atomic_wmb();
-
-            OPAL_LIST_FOREACH (frag, &module->pending_frags, mca_btl_uct_base_frag_t) {
-                if (frag->context->context_id == req->context_id && endpoint == frag->endpoint) {
-                    frag->ready = true;
-                }
+            if (mca_btl_uct_tl_endpoint_ready(tl_endpoint)) {
+                btl_uct_release_pending_frags(module, endpoint, req->context_id);
             }
         });
     }
@@ -562,57 +552,30 @@ static int mca_btl_uct_evaluate_tl(mca_btl_uct_module_t *module, mca_btl_uct_tl_
 }
 
 int mca_btl_uct_query_tls(mca_btl_uct_module_t *module, mca_btl_uct_md_t *md,
-                          uct_tl_resource_desc_t *tl_descs, unsigned tl_count)
+                          uct_tl_resource_desc_t *tl_descs, unsigned tl_count,
+                          bool evaluate_for_conn_only)
 {
-    bool include = true, any = false;
     mca_btl_uct_tl_t *tl;
     opal_list_t tl_list;
-    char **tl_filter;
-    int any_priority = 0;
 
     OBJ_CONSTRUCT(&tl_list, opal_list_t);
 
-    tl_filter = opal_argv_split(mca_btl_uct_component.allowed_transports, ',');
-
-    if ('^' == tl_filter[0][0]) {
-        /* user has negated the include list */
-        char *tmp = strdup(tl_filter[0] + 1);
-
-        free(tl_filter[0]);
-        tl_filter[0] = tmp;
-        include = false;
-    }
-
-    /* check for the any keyword */
-    for (unsigned j = 0; tl_filter[j]; ++j) {
-        if (0 == strcmp(tl_filter[j], "any")) {
-            any_priority = j;
-            any = true;
-            break;
-        }
-    }
-
-    if (any && !include) {
-        opal_argv_free(tl_filter);
-        return OPAL_ERR_NOT_AVAILABLE;
-    }
-
     for (unsigned i = 0; i < tl_count; ++i) {
-        bool try_tl = any;
-        int priority = any_priority;
+        int priority = 0;
 
-        for (unsigned j = 0; tl_filter[j]; ++j) {
-            if (0 == strcmp(tl_filter[j], tl_descs[i].tl_name)) {
-                try_tl = include;
-                priority = j;
-                break;
+        BTL_VERBOSE(("processing tl %s, evaluate_for_conn_only=%d", tl_descs[i].tl_name, evaluate_for_conn_only));
+        
+        if (!evaluate_for_conn_only) {
+            priority = mca_btl_uct_include_list_rank (tl_descs[i].tl_name, &mca_btl_uct_component.allowed_transport_list);
+
+            BTL_VERBOSE(("tl filter: tl_name = %s, priority = %d", tl_descs[i].tl_name,
+                         priority));
+
+            if (priority < 0) {
+                continue;
             }
-        }
-
-        BTL_VERBOSE(("tl filter: tl_name = %s, use = %d, priority = %d", tl_descs[i].tl_name,
-                     try_tl, priority));
-
-        if (!try_tl) {
+        } else if (tl_descs[i].dev_type != UCT_DEVICE_TYPE_NET) {
+            /* only network types are suitable for forming connections */
             continue;
         }
 
@@ -625,11 +588,22 @@ int mca_btl_uct_query_tls(mca_btl_uct_module_t *module, mca_btl_uct_md_t *md,
         tl = mca_btl_uct_create_tl(module, md, tl_descs + i, priority);
 
         if (tl) {
-            opal_list_append(&tl_list, &tl->super);
+            if (mca_btl_uct_tl_supports_conn(tl) && evaluate_for_conn_only) {
+                BTL_VERBOSE(("evaluating tl %s for forming connections", tl_descs[i].tl_name));
+                int rc = mca_btl_uct_set_tl_conn(module, tl);
+                OBJ_RELEASE(tl);
+
+                if (OPAL_SUCCESS == rc) {
+                    mca_btl_uct_context_enable_progress(tl->uct_dev_contexts[0]);
+                    return OPAL_SUCCESS;
+                }
+
+                BTL_VERBOSE(("tl %s cannot be used for forming connections", tl_descs[i].tl_name));
+            } else {
+                opal_list_append(&tl_list, &tl->super);
+            }
         }
     }
-
-    opal_argv_free(tl_filter);
 
     if (0 == opal_list_get_size(&tl_list)) {
         BTL_VERBOSE(("no suitable tls match filter: %s", mca_btl_uct_component.allowed_transports));
@@ -679,10 +653,6 @@ int mca_btl_uct_query_tls(mca_btl_uct_module_t *module, mca_btl_uct_md_t *md,
         /* no connection tl needed for selected transports */
         OBJ_RELEASE(module->conn_tl);
         module->conn_tl = NULL;
-    } else if (NULL == module->conn_tl) {
-        BTL_VERBOSE(("a connection tl is required but no tls match the filter %s",
-                     mca_btl_uct_component.allowed_transports));
-        return OPAL_ERROR;
     }
 
     return OPAL_SUCCESS;

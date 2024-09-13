@@ -139,9 +139,15 @@ struct mca_btl_uct_component_t {
 
     /** allowed UCT memory domains */
     char *memory_domains;
+    mca_btl_uct_include_list_t memory_domain_list;
 
     /** allowed transports */
     char *allowed_transports;
+    mca_btl_uct_include_list_t allowed_transport_list;
+
+    /** transports to consider for forming connections */
+    char *connection_domains;
+    mca_btl_uct_include_list_t connection_domain_list;
 
     /** number of worker contexts to create */
     int num_contexts_per_module;
@@ -153,6 +159,10 @@ struct mca_btl_uct_component_t {
 
     /** disable UCX memory hooks */
     bool disable_ucx_memory_hooks;
+
+    /** alternate connection-only module that can be used if no suitable
+     * connection tl is found. this is usually a tcp tl. */
+    mca_btl_uct_module_t *conn_module;
 };
 typedef struct mca_btl_uct_component_t mca_btl_uct_component_t;
 
@@ -289,7 +299,8 @@ struct mca_btl_base_endpoint_t *mca_btl_uct_get_ep(struct mca_btl_base_module_t 
                                                    opal_proc_t *proc);
 
 int mca_btl_uct_query_tls(mca_btl_uct_module_t *module, mca_btl_uct_md_t *md,
-                          uct_tl_resource_desc_t *tl_descs, unsigned tl_count);
+                          uct_tl_resource_desc_t *tl_descs, unsigned tl_count,
+                          bool evaluate_for_conn_only);
 int mca_btl_uct_process_connection_request(mca_btl_uct_module_t *module,
                                            mca_btl_uct_conn_req_t *req);
 
@@ -335,6 +346,16 @@ static inline bool mca_btl_uct_tl_requires_connection_tl(mca_btl_uct_tl_t *tl)
 {
     return !(MCA_BTL_UCT_TL_ATTR(tl, 0).cap.flags & UCT_IFACE_FLAG_CONNECT_TO_IFACE);
 }
+
+/**
+ * @brief Find the rank of `name` in the include list `list`.
+ *
+ * @param[in] name   name to find
+ * @param[in] list   list to search
+ *
+ * A negative result means the name is not present or the list is negated.
+ */
+int mca_btl_uct_include_list_rank (const char *name, const mca_btl_uct_include_list_t *list);
 
 END_C_DECLS
 #endif

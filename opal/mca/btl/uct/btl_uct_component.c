@@ -48,7 +48,7 @@ static int mca_btl_uct_component_register(void)
 {
     mca_btl_uct_module_t *module = &mca_btl_uct_module_template;
 
-    mca_btl_uct_component.memory_domains = "mlx5_0,mlx4_0";
+    mca_btl_uct_component.memory_domains = "mlx5_0,mlx4_0,rocep0s4";
     (void) mca_base_component_var_register(
         &mca_btl_uct_component.super.btl_version, "memory_domains",
         "Comma-delimited list of memory domains of the form "
@@ -66,6 +66,15 @@ static int mca_btl_uct_component_register(void)
         "values: any (any available) (default: dc_mlx5,rc_mlx5,ud,any)",
         MCA_BASE_VAR_TYPE_STRING, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_3,
         MCA_BASE_VAR_SCOPE_LOCAL, &mca_btl_uct_component.allowed_transports);
+
+    mca_btl_uct_component.connection_domains = "tcp";
+    (void) mca_base_component_var_register(
+        &mca_btl_uct_component.super.btl_version, "connection_domains",
+        "Comma-delimited list of connection-only domains to use sorted by increasing "
+        "priority. The list of transports available can be queried using ucx_info. Special"
+        "values: any (any available) (default: tcp)",
+        MCA_BASE_VAR_TYPE_STRING, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_3,
+        MCA_BASE_VAR_SCOPE_LOCAL, &mca_btl_uct_component.connection_domains);
 
     mca_btl_uct_component.num_contexts_per_module = 0;
     (void) mca_base_component_var_register(
@@ -113,6 +122,45 @@ static void mca_btl_uct_mem_release_cb(void *buf, size_t length, void *cbdata, b
     ucm_vm_munmap(buf, length);
 }
 
+static void mca_btl_uct_component_parse_include_list (const char *value, mca_btl_uct_include_list_t *list) {
+    list->list = NULL;
+    list->include = true;
+
+    if (value == NULL) {
+        return;
+    }
+
+    if (value[0] == '^') {
+        list->include = false;
+        value++;
+    }
+
+    list->list = opal_argv_split(value, ',');
+}
+
+static void mca_btl_uct_include_list_free (mca_btl_uct_include_list_t *list) {
+    opal_argv_free (list->list);
+    list->list = NULL;
+}
+
+int mca_btl_uct_include_list_rank (const char *name, const mca_btl_uct_include_list_t *list) {
+    if (list->list == NULL) {
+        return -1;
+    }
+
+    for (int i = 0; list->list[i]; ++i) {
+        BTL_VERBOSE(("evaluating %s vs %s-list item %s", name, list->include ? "include" : "exclude", list->list[i]));
+        if (0 == strcasecmp(name, list->list[i])) {
+            return list->include ? i + 1 : -(i + 1);
+        }
+        if (0 == strcasecmp("any", list->list[i])) {
+            return i + i;
+        }
+    }
+
+    return list->include ? -1 : 1;
+}
+
 static int mca_btl_uct_component_open(void)
 {
     if (0 == mca_btl_uct_component.num_contexts_per_module) {
@@ -156,9 +204,18 @@ static int mca_btl_uct_component_open(void)
  */
 static int mca_btl_uct_component_close(void)
 {
+    if (NULL != mca_btl_uct_component.conn_module) {
+        mca_btl_uct_finalize (&mca_btl_uct_component.conn_module->super);
+        mca_btl_uct_component.conn_module = NULL;
+    }
+
     if (mca_btl_uct_component.disable_ucx_memory_hooks) {
         opal_mem_hooks_unregister_release(mca_btl_uct_mem_release_cb);
     }
+
+    mca_btl_uct_include_list_free (&mca_btl_uct_component.memory_domain_list);
+    mca_btl_uct_include_list_free (&mca_btl_uct_component.allowed_transport_list);
+    mca_btl_uct_include_list_free (&mca_btl_uct_component.connection_domain_list);
 
     return OPAL_SUCCESS;
 }
@@ -224,6 +281,34 @@ static size_t mca_btl_uct_tl_modex_pack(mca_btl_uct_tl_t *tl, uint8_t *modex_dat
     return modex_size;
 }
 
+static uint8_t *mca_btl_uct_modex_pack(mca_btl_uct_module_t *module, uint8_t *modex_data)
+{
+    size_t name_len = strlen(module->md_name);
+
+    /* pack the size */
+    *((uint32_t *) modex_data) = (uint32_t) mca_btl_uct_module_modex_size(module);
+
+    modex_data += 4;
+
+    strcpy((char *) modex_data, module->md_name);
+    modex_data += name_len + 1;
+
+    if (module->rdma_tl) {
+        modex_data += mca_btl_uct_tl_modex_pack(module->rdma_tl, modex_data);
+    }
+
+    if (module->am_tl && module->am_tl != module->rdma_tl) {
+        modex_data += mca_btl_uct_tl_modex_pack(module->am_tl, modex_data);
+    }
+
+    if (module->conn_tl && module->conn_tl != module->rdma_tl
+        && module->conn_tl != module->am_tl) {
+        modex_data += mca_btl_uct_tl_modex_pack(module->conn_tl, modex_data);
+    }
+
+    return modex_data;
+}
+
 static int mca_btl_uct_modex_send(void)
 {
     size_t modex_size = sizeof(mca_btl_uct_modex_t);
@@ -235,35 +320,24 @@ static int mca_btl_uct_modex_send(void)
         modex_size += mca_btl_uct_module_modex_size(mca_btl_uct_component.modules[i]);
     }
 
+    if (mca_btl_uct_component.conn_module != NULL) {
+        modex_size += mca_btl_uct_module_modex_size(mca_btl_uct_component.conn_module);
+    }
+
     modex = alloca(modex_size);
     modex_data = modex->data;
 
     modex->module_count = mca_btl_uct_component.module_count;
+    if (mca_btl_uct_component.conn_module != NULL) {
+        ++modex->module_count;
+    }
 
     for (int i = 0; i < mca_btl_uct_component.module_count; ++i) {
-        mca_btl_uct_module_t *module = mca_btl_uct_component.modules[i];
-        size_t name_len = strlen(module->md_name);
+        modex_data = mca_btl_uct_modex_pack (mca_btl_uct_component.modules[i], modex_data);
+    }
 
-        /* pack the size */
-        *((uint32_t *) modex_data) = (uint32_t) mca_btl_uct_module_modex_size(module);
-
-        modex_data += 4;
-
-        strcpy((char *) modex_data, module->md_name);
-        modex_data += name_len + 1;
-
-        if (module->rdma_tl) {
-            modex_data += mca_btl_uct_tl_modex_pack(module->rdma_tl, modex_data);
-        }
-
-        if (module->am_tl && module->am_tl != module->rdma_tl) {
-            modex_data += mca_btl_uct_tl_modex_pack(module->am_tl, modex_data);
-        }
-
-        if (module->conn_tl && module->conn_tl != module->rdma_tl
-            && module->conn_tl != module->am_tl) {
-            modex_data += mca_btl_uct_tl_modex_pack(module->conn_tl, modex_data);
-        }
+    if (mca_btl_uct_component.conn_module != NULL) {
+        modex_data = mca_btl_uct_modex_pack (mca_btl_uct_component.conn_module, modex_data);
     }
 
     OPAL_MODEX_SEND(rc, PMIX_GLOBAL, &mca_btl_uct_component.super.btl_version, modex, modex_size);
@@ -332,11 +406,9 @@ ucs_status_t mca_btl_uct_am_handler(void *arg, void *data, size_t length, unsign
 
 #if UCT_API >= UCT_VERSION(1, 7)
 static int mca_btl_uct_component_process_uct_md(uct_component_h component,
-                                                uct_md_resource_desc_t *md_desc,
-                                                char **allowed_ifaces)
+                                                uct_md_resource_desc_t *md_desc)
 #else
-static int mca_btl_uct_component_process_uct_md(uct_md_resource_desc_t *md_desc,
-                                                char **allowed_ifaces)
+static int mca_btl_uct_component_process_uct_md(uct_md_resource_desc_t *md_desc)
 #endif
 {
     mca_rcache_base_resources_t rcache_resources;
@@ -345,29 +417,35 @@ static int mca_btl_uct_component_process_uct_md(uct_md_resource_desc_t *md_desc,
     uct_md_config_t *uct_config;
     uct_md_attr_t md_attr;
     mca_btl_uct_md_t *md;
-    bool found = false;
+    int list_rank;
     unsigned num_tls;
     char *tmp;
+    int connection_list_rank = -1;
+    bool consider_for_connection_module = false;
     ucs_status_t ucs_status;
+
+    BTL_VERBOSE(("processing memory domain %s", md_desc->md_name));
 
     if (MCA_BTL_UCT_MAX_MODULES == mca_btl_uct_component.module_count) {
         BTL_VERBOSE(("created the maximum number of allowable modules"));
         return OPAL_ERR_NOT_AVAILABLE;
     }
 
-    BTL_VERBOSE(("processing memory domain %s", md_desc->md_name));
+    BTL_VERBOSE(("checking if %s should be used for communication", md_desc->md_name));
+    list_rank = mca_btl_uct_include_list_rank (md_desc->md_name, &mca_btl_uct_component.memory_domain_list);
 
-    for (int j = 0; allowed_ifaces[j]; ++j) {
-        if (0 == strncmp(allowed_ifaces[j], md_desc->md_name, strlen(md_desc->md_name))
-            || 0 == strcmp(allowed_ifaces[j], "all")) {
-            found = true;
-            break;
+    if (list_rank < 0) {
+        BTL_VERBOSE(("checking if %s should be used for connections", md_desc->md_name));
+        connection_list_rank = mca_btl_uct_include_list_rank (md_desc->md_name, &mca_btl_uct_component.connection_domain_list);
+
+        if (connection_list_rank < 0) {
+            /* nothing to do */
+            BTL_VERBOSE(("not continuing with memory domain %s", md_desc->md_name));
+            return OPAL_SUCCESS;
         }
-    }
 
-    if (!found) {
-        /* nothing to do */
-        return OPAL_SUCCESS;
+        BTL_VERBOSE(("will be considering domain %s for connections only", md_desc->md_name));
+        consider_for_connection_module = true;
     }
 
     md = OBJ_NEW(mca_btl_uct_md_t);
@@ -414,7 +492,9 @@ static int mca_btl_uct_component_process_uct_md(uct_md_resource_desc_t *md_desc,
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
-    (void) mca_btl_uct_query_tls(module, md, tl_desc, num_tls);
+    /* if this module is not to be used for communication check if it has a transport suitable 
+     * for forming connections. */
+    (void) mca_btl_uct_query_tls(module, md, tl_desc, num_tls, consider_for_connection_module);
 
     uct_release_tl_resource_list(tl_desc);
 
@@ -422,7 +502,7 @@ static int mca_btl_uct_component_process_uct_md(uct_md_resource_desc_t *md_desc,
      * remain open until those modules are finalized. */
     OBJ_RELEASE(md);
 
-    if (NULL == module->am_tl && NULL == module->rdma_tl) {
+    if (NULL == module->am_tl && NULL == module->rdma_tl && (NULL == module->conn_tl || !consider_for_connection_module)) {
         BTL_VERBOSE(("uct memory domain %s does not have any appropriate tls", md_desc->md_name));
         mca_btl_uct_finalize(&module->super);
         return OPAL_ERR_NOT_AVAILABLE;
@@ -432,35 +512,43 @@ static int mca_btl_uct_component_process_uct_md(uct_md_resource_desc_t *md_desc,
     module->uct_component = component;
 #endif
 
-    mca_btl_uct_component.modules[mca_btl_uct_component.module_count++] = module;
+    if (!consider_for_connection_module) {
+        mca_btl_uct_component.modules[mca_btl_uct_component.module_count++] = module;
 
-    /* NTH: a registration cache shouldn't be necessary when using UCT but there are measurable
-     * performance benefits to using rcache/grdma instead of assuming UCT will do the right
-     * thing. */
-    (void) opal_asprintf(&tmp, "uct.%s", module->md_name);
+        /* NTH: a registration cache shouldn't be necessary when using UCT but there are measurable
+         * performance benefits to using rcache/grdma instead of assuming UCT will do the right
+         * thing. */
+        (void) opal_asprintf(&tmp, "uct.%s", module->md_name);
 
-    rcache_resources.cache_name = tmp;
-    rcache_resources.reg_data = (void *) module;
-    rcache_resources.sizeof_reg = sizeof(mca_btl_uct_reg_t)
-                                  + module->super.btl_registration_handle_size;
-    rcache_resources.register_mem = mca_btl_uct_reg_mem;
-    rcache_resources.deregister_mem = mca_btl_uct_dereg_mem;
+        rcache_resources.cache_name = tmp;
+        rcache_resources.reg_data = (void *) module;
+        rcache_resources.sizeof_reg = sizeof(mca_btl_uct_reg_t)
+            + module->super.btl_registration_handle_size;
+        rcache_resources.register_mem = mca_btl_uct_reg_mem;
+        rcache_resources.deregister_mem = mca_btl_uct_dereg_mem;
 
-    module->rcache = mca_rcache_base_module_create("grdma", module, &rcache_resources);
-    free(tmp);
-    if (NULL == module->rcache) {
-        /* something when horribly wrong */
-        BTL_VERBOSE(("could not allocate a registration cache for this btl module"));
-        mca_btl_uct_finalize(&module->super);
-        return OPAL_ERROR;
+        module->rcache = mca_rcache_base_module_create("grdma", module, &rcache_resources);
+        free(tmp);
+        if (NULL == module->rcache) {
+            /* something when horribly wrong */
+            BTL_VERBOSE(("could not allocate a registration cache for this btl module"));
+            mca_btl_uct_finalize(&module->super);
+            return OPAL_ERROR;
+        }
+    } else {
+        if (NULL == mca_btl_uct_component.conn_module) {
+            BTL_VERBOSE(("memory domain %s may be used for connections", md_desc->md_name));
+            mca_btl_uct_component.conn_module = module;
+        } else {
+            mca_btl_uct_finalize(&module->super);
+        }
     }
 
     return OPAL_SUCCESS;
 }
 
 #if UCT_API >= UCT_VERSION(1, 7)
-static int mca_btl_uct_component_process_uct_component(uct_component_h component,
-                                                       char **allowed_ifaces)
+static int mca_btl_uct_component_process_uct_component(uct_component_h component)
 {
     uct_component_attr_t attr = {.field_mask = UCT_COMPONENT_ATTR_FIELD_NAME
                                                | UCT_COMPONENT_ATTR_FIELD_MD_RESOURCE_COUNT};
@@ -482,7 +570,7 @@ static int mca_btl_uct_component_process_uct_component(uct_component_h component
     }
 
     for (unsigned i = 0; i < attr.md_resource_count; ++i) {
-        rc = mca_btl_uct_component_process_uct_md(component, attr.md_resources + i, allowed_ifaces);
+        rc = mca_btl_uct_component_process_uct_md(component, attr.md_resources + i);
         if (OPAL_SUCCESS != rc) {
             break;
         }
@@ -493,6 +581,63 @@ static int mca_btl_uct_component_process_uct_component(uct_component_h component
     return OPAL_SUCCESS;
 }
 #endif /* UCT_API >= UCT_VERSION(1, 7) */
+
+static void mca_btl_uct_component_validate_modules(void) {
+    if (mca_btl_uct_component.conn_module != NULL) {
+        /* verify that a connection-only module is required. this might be the case in some systems
+         * where rc verbs is avaiable but ud is not. */
+        bool need_conn_module = false;
+        for (int i = 0 ; i < mca_btl_uct_component.module_count ; ++i) {
+            mca_btl_uct_module_t *module =  mca_btl_uct_component.modules[i];
+            if (module->conn_tl != NULL) {
+                continue;
+            }
+            if ((module->rdma_tl && mca_btl_uct_tl_requires_connection_tl(module->rdma_tl)) ||
+                (module->am_tl && mca_btl_uct_tl_requires_connection_tl(module->am_tl))) {
+                need_conn_module = true;
+                break;
+            }
+        }
+
+        if (!need_conn_module) {
+            mca_btl_uct_finalize (&mca_btl_uct_component.conn_module->super);
+            mca_btl_uct_component.conn_module = NULL;
+        }
+    } else {
+        int usable_module_count = mca_btl_uct_component.module_count;
+
+        /* check that all modules can be used */
+        for (int i = 0 ; i < mca_btl_uct_component.module_count ; ++i) {
+            mca_btl_uct_module_t *module =  mca_btl_uct_component.modules[i];
+            if (NULL != module->conn_tl) {
+                /* module has its own connection transport */
+                continue;
+            }
+
+            if ((module->rdma_tl && mca_btl_uct_tl_requires_connection_tl(module->rdma_tl)) ||
+                (module->am_tl && mca_btl_uct_tl_requires_connection_tl(module->am_tl))
+                && NULL == module->conn_tl) {
+                /* module can not be used */
+                BTL_VERBOSE(("module for memory domain %s can not be used due to missing connection transport",
+                             module->md_name));
+                mca_btl_uct_finalize (&mca_btl_uct_component.modules[i]->super);
+                mca_btl_uct_component.modules[i] = NULL;
+            }
+        }
+
+        /* remove holes in the module array */
+        if (usable_module_count < mca_btl_uct_component.module_count) {
+            for (int i = 0 ; i < mca_btl_uct_component.module_count ; ++i) {
+                if (mca_btl_uct_component.modules[i] == NULL) {
+                    for (int j = i ; j < mca_btl_uct_component.module_count ; ++j) {
+                        mca_btl_uct_component.modules[i++] = mca_btl_uct_component.modules[j];
+                    }
+                }
+            }
+            mca_btl_uct_component.module_count = usable_module_count;
+        }
+    }
+}
 
 /*
  *  UCT component initialization:
@@ -510,7 +655,6 @@ static mca_btl_base_module_t **mca_btl_uct_component_init(int *num_btl_modules,
      */
     struct mca_btl_base_module_t **base_modules;
     ucs_status_t ucs_status;
-    char **allowed_ifaces;
     int rc;
 
     BTL_VERBOSE(("initializing uct btl"));
@@ -522,10 +666,9 @@ static mca_btl_base_module_t **mca_btl_uct_component_init(int *num_btl_modules,
         return NULL;
     }
 
-    allowed_ifaces = opal_argv_split(mca_btl_uct_component.memory_domains, ',');
-    if (NULL == allowed_ifaces) {
-        return NULL;
-    }
+    mca_btl_uct_component_parse_include_list(mca_btl_uct_component.memory_domains, &mca_btl_uct_component.memory_domain_list);
+    mca_btl_uct_component_parse_include_list(mca_btl_uct_component.allowed_transports, &mca_btl_uct_component.allowed_transport_list);
+    mca_btl_uct_component_parse_include_list(mca_btl_uct_component.connection_domains, &mca_btl_uct_component.connection_domain_list);
 
     mca_btl_uct_component.module_count = 0;
 
@@ -541,7 +684,7 @@ static mca_btl_base_module_t **mca_btl_uct_component_init(int *num_btl_modules,
 
     /* generate all suitable btl modules */
     for (unsigned i = 0; i < num_components; ++i) {
-        rc = mca_btl_uct_component_process_uct_component(components[i], allowed_ifaces);
+        rc = mca_btl_uct_component_process_uct_component(components[i]);
         if (OPAL_SUCCESS != rc) {
             break;
         }
@@ -557,7 +700,7 @@ static mca_btl_base_module_t **mca_btl_uct_component_init(int *num_btl_modules,
 
     /* generate all suitable btl modules */
     for (unsigned i = 0; i < resource_count; ++i) {
-        rc = mca_btl_uct_component_process_uct_md(resources + i, allowed_ifaces);
+        rc = mca_btl_uct_component_process_uct_md(resources + i);
         if (OPAL_SUCCESS != rc) {
             break;
         }
@@ -567,7 +710,9 @@ static mca_btl_base_module_t **mca_btl_uct_component_init(int *num_btl_modules,
 
 #endif /* UCT_API >= UCT_VERSION(1, 7) */
 
-    opal_argv_free(allowed_ifaces);
+    /* filter out unusable modules before sending the modex */
+    mca_btl_uct_component_validate_modules();
+
     mca_btl_uct_modex_send();
 
     /* pass module array back to caller */
@@ -633,6 +778,38 @@ static int mca_btl_uct_component_progress_pending(mca_btl_uct_module_t *uct_btl)
     return completed;
 }
 
+static int mca_btl_uct_component_progress_connections (mca_btl_uct_module_t *module) {
+    mca_btl_uct_pending_connection_request_t *request;
+    int ret;
+
+    if (module->conn_tl == NULL) {
+        return 0;
+    }
+
+    ret = mca_btl_uct_tl_progress(module->conn_tl, 0);
+
+    while (NULL
+           != (request = (mca_btl_uct_pending_connection_request_t *) opal_fifo_pop_atomic(
+                                                                                           &module->pending_connection_reqs))) {
+        mca_btl_uct_conn_req_t *conn_req = (mca_btl_uct_conn_req_t *) request->request_data;
+        BTL_VERBOSE(("processing connection request...."));
+        for (int i = 0; i < mca_btl_uct_component.module_count; ++i) {
+            if (0 == strcmp(mca_btl_uct_component.modules[i]->md_name, conn_req->module_name)) {
+                module = mca_btl_uct_component.modules[i];
+                break;
+            }
+        }
+        int rc = mca_btl_uct_process_connection_request(module, conn_req);
+        if (rc != OPAL_SUCCESS) {
+            opal_fifo_push_atomic(&module->pending_connection_reqs, &request->super);
+            break;
+        }
+        OBJ_RELEASE(request);
+    }
+
+    return ret;
+}
+
 /**
  * @brief UCT BTL progress function
  *
@@ -654,25 +831,15 @@ static int mca_btl_uct_component_progress(void)
             ret += mca_btl_uct_tl_progress(module->am_tl, starting_index);
         }
 
-        if (module->conn_tl) {
-            mca_btl_uct_pending_connection_request_t *request;
-
-            if (module->conn_tl != module->am_tl && module->conn_tl != module->rdma_tl) {
-                ret += mca_btl_uct_tl_progress(module->conn_tl, 0);
-            }
-
-            while (NULL
-                   != (request = (mca_btl_uct_pending_connection_request_t *) opal_fifo_pop_atomic(
-                           &module->pending_connection_reqs))) {
-                mca_btl_uct_process_connection_request(module, (mca_btl_uct_conn_req_t *)
-                                                                   request->request_data);
-                OBJ_RELEASE(request);
-            }
-        }
+        mca_btl_uct_component_progress_connections (module);
 
         if (0 != opal_list_get_size(&module->pending_frags)) {
             mca_btl_uct_component_progress_pending(module);
         }
+    }
+
+    if (NULL != mca_btl_uct_component.conn_module) {
+        ret += mca_btl_uct_component_progress_connections (mca_btl_uct_component.conn_module);
     }
 
     return (int) ret;
