@@ -58,31 +58,36 @@ AC_ARG_WITH([cudart-libdir],
 ####################################
 #### Check for CUDA runtime library
 ####################################
-AS_IF([test "x$with_cudart" != "xno" || test "x$with_cudart" = "x"],
+AS_IF([test "x$with_cudart" = "xno" || test "x$with_cudart" = "x"],
       [opal_check_cudart_happy=no
        AC_MSG_RESULT([not set (--with-cudart=$with_cudart)])],
       [AS_IF([test ! -d "$with_cudart"],
              [AC_MSG_RESULT([not found])
-              AC_MSG_WARN([Directory $with_cudart not found])]
-             [AS_IF([test "x`ls $with_cudart/include/cuda_runtime.h 2> /dev/null`" = "x"]
-                    [AC_MSG_RESULT([not found])
-                     AC_MSG_WARN([Could not find cuda_runtime.h in $with_cudart/include])]
-                    [opal_check_cudart_happy=yes
-                     opal_cudart_incdir="$with_cudart/include"])])])
+              AC_MSG_WARN([Directory $with_cudart not found])],
+             [OPAL_FLAGS_APPEND_UNIQ([CPPFLAGS], [-I$with_cudart/include])
+              AC_CHECK_HEADERS([cuda_runtime.h],
+                               [opal_check_cudart_happy=yes
+                                opal_cudart_incdir="$with_cudart/include"]
+                               [AC_MSG_RESULT([not found])
+                                AC_MSG_WARN([Could not find cuda_runtime.h in $with_cudart/include])])])])
+CPPFLAGS=${cudart_save_CPPFLAGS}
 
+# try include path relative to nvcc
 AS_IF([test "$opal_check_cudart_happy" = "no" && test "$with_cudart" != "no"],
       [AC_PATH_PROG([nvcc_bin], [nvcc], ["not-found"])
        AS_IF([test "$nvcc_bin" = "not-found"],
              [AC_MSG_WARN([Could not find nvcc binary])],
              [nvcc_dirname=`AS_DIRNAME([$nvcc_bin])`
-              with_cudart=$nvcc_dirname/../
-              opal_cudart_incdir=$nvcc_dirname/../include
-              opal_check_cudart_happy=yes])
-      ]
+              OPAL_FLAGS_APPEND_UNIQ([CPPFLAGS], [-I$nvcc_dirname/../include])
+              AC_CHECK_HEADERS([cuda_runtime.h],
+                               [opal_check_cudart_happy=yes,
+                                with_cudart=$nvcc_dirname/../
+                                opal_cudart_incdir="$with_cudart/include"])])],
       [])
+CPPFLAGS=${cudart_save_CPPFLAGS}
 
 AS_IF([test x"$with_cudart_libdir" = "x"],
-      [with_cudart_libdir=$with_cudart/lib64/]
+      [with_cudart_libdir=$with_cudart/lib64/],
       [])
 
 AS_IF([test "$opal_check_cudart_happy" = "yes"],
