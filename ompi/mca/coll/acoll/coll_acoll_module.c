@@ -77,6 +77,7 @@ mca_coll_base_module_t *mca_coll_acoll_comm_query(struct ompi_communicator_t *co
     *priority = mca_coll_acoll_priority;
 
     /* Set topology params */
+    acoll_module->max_comms = mca_coll_acoll_max_comms;
     acoll_module->sg_scale = mca_coll_acoll_sg_scale;
     acoll_module->sg_size = mca_coll_acoll_sg_size;
     acoll_module->sg_cnt = mca_coll_acoll_sg_size / mca_coll_acoll_sg_scale;

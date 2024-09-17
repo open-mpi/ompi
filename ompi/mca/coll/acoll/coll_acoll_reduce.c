@@ -47,10 +47,10 @@ static inline int coll_reduce_decision_fixed(int comm_size, size_t msg_size)
 static inline int coll_acoll_reduce_topo(const void *sbuf, void *rbuf, size_t count,
                                          struct ompi_datatype_t *dtype, struct ompi_op_t *op,
                                          int root, struct ompi_communicator_t *comm,
-                                         mca_coll_base_module_t *module)
+                                         mca_coll_base_module_t *module,
+                                         coll_acoll_subcomms_t *subc)
 {
     int ret = MPI_SUCCESS, rank, sz;
-    int cid = ompi_comm_get_local_cid(comm);
 
     ptrdiff_t dsize, gap = 0;
     char *free_buffer = NULL;
@@ -59,7 +59,6 @@ static inline int coll_acoll_reduce_topo(const void *sbuf, void *rbuf, size_t co
     char *tmp_sbuf = NULL;
 
     mca_coll_acoll_module_t *acoll_module = (mca_coll_acoll_module_t *) module;
-    coll_acoll_subcomms_t *subc = &acoll_module->subc[cid];
     coll_acoll_reserve_mem_t *reserve_mem_rbuf_reduce = &(acoll_module->reserve_mem_s);
 
     rank = ompi_comm_rank(comm);
@@ -158,7 +157,8 @@ static inline int coll_acoll_reduce_topo(const void *sbuf, void *rbuf, size_t co
 static inline int mca_coll_acoll_reduce_xpmem(const void *sbuf, void *rbuf, size_t count,
                                               struct ompi_datatype_t *dtype, struct ompi_op_t *op,
                                               int root, struct ompi_communicator_t *comm,
-                                              mca_coll_base_module_t *module)
+                                              mca_coll_base_module_t *module,
+                                              coll_acoll_subcomms_t *subc)
 {
     int size;
     size_t total_dsize, dsize;
@@ -166,10 +166,7 @@ static inline int mca_coll_acoll_reduce_xpmem(const void *sbuf, void *rbuf, size
 
     mca_coll_acoll_module_t *acoll_module = (mca_coll_acoll_module_t *) module;
 
-    coll_acoll_subcomms_t *subc;
-    int cid = ompi_comm_get_local_cid(comm);
-    subc = &acoll_module->subc[cid];
-    coll_acoll_init(module, comm, subc->data);
+    coll_acoll_init(module, comm, subc->data, subc);
     coll_acoll_reserve_mem_t *reserve_mem_rbuf_reduce = NULL;
     if (subc->xpmem_use_sr_buf != 0) {
         reserve_mem_rbuf_reduce = &(acoll_module->reserve_mem_s);
@@ -337,19 +334,18 @@ int mca_coll_acoll_reduce_intra(const void *sbuf, void *rbuf, size_t count,
 
     alg = coll_reduce_decision_fixed(size, total_dsize);
 
-    coll_acoll_subcomms_t *subc;
-    int cid = ompi_comm_get_local_cid(comm);
-    subc = &acoll_module->subc[cid];
+    /* Obtain the subcomms structure */
+    coll_acoll_subcomms_t *subc = NULL;
+    ret = check_and_create_subc(comm, acoll_module, &subc);
 
-    /* Fallback to knomial if cid is beyond supported limit */
-    if (cid >= MCA_COLL_ACOLL_MAX_CID) {
+    /* Fallback to knomial if subc is not obtained */
+    if (NULL == subc) {
         return ompi_coll_base_reduce_intra_binomial(sbuf, rbuf, count, dtype, op, root, comm,
                                                     module, 0, 0);
     }
 
-    subc = &acoll_module->subc[cid];
     if (!subc->initialized || (root != subc->prev_init_root)) {
-        ret = mca_coll_acoll_comm_split_init(comm, acoll_module, 0);
+        ret = mca_coll_acoll_comm_split_init(comm, acoll_module, subc, 0);
         if (MPI_SUCCESS != ret) {
             return ret;
         }
@@ -360,7 +356,8 @@ int mca_coll_acoll_reduce_intra(const void *sbuf, void *rbuf, size_t count,
     if (num_nodes == 1) {
         if (total_dsize < 262144) {
             if (alg == -1 /* interaction with xpmem implementation causing issues 0*/) {
-                return coll_acoll_reduce_topo(sbuf, rbuf, count, dtype, op, root, comm, module);
+                return coll_acoll_reduce_topo(sbuf, rbuf, count, dtype, op, root, comm, module,
+                                              subc);
             } else if (alg == 1) {
                 return ompi_coll_base_reduce_intra_basic_linear(sbuf, rbuf, count, dtype, op, root,
                                                                 comm, module);
@@ -379,7 +376,7 @@ int mca_coll_acoll_reduce_intra(const void *sbuf, void *rbuf, size_t count,
                  || ((subc->xpmem_use_sr_buf == 0) && (subc->xpmem_buf_size > 2 * total_dsize)))
                 && (subc->without_xpmem != 1)) {
                 return mca_coll_acoll_reduce_xpmem(sbuf, rbuf, count, dtype, op, root, comm,
-                                                   module);
+                                                   module, subc);
             } else {
                 return ompi_coll_base_reduce_intra_binomial(sbuf, rbuf, count, dtype, op,
                                                                    root, comm, module, 0, 0);
