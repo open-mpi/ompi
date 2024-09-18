@@ -14,6 +14,7 @@
 #include "oshmem/proc/proc.h"
 #include "oshmem/mca/memheap/memheap.h"
 #include "oshmem/mca/memheap/base/base.h"
+#include "oshmem/mca/sshmem/base/base.h"
 #include "oshmem/util/oshmem_util.h"
 
 #include <stdio.h>
@@ -50,6 +51,14 @@ int mca_memheap_base_static_init(mca_memheap_map_t *map)
         MEMHEAP_ERROR("Failed to open /proc/self/maps");
         return OSHMEM_ERROR;
     }
+
+#ifdef __linux__
+    extern unsigned _end;
+    if (mca_sshmem_base_start_address < (uintptr_t)&_end) {
+        MEMHEAP_WARN("sshmem base start address is inside data region"
+                     " (%p < %p)", mca_sshmem_base_start_address, &_end);
+    }
+#endif
 
     while (NULL != fgets(line, sizeof(line), fp)) {
         if (3 > sscanf(line,

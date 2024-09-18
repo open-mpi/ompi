@@ -37,6 +37,8 @@
  */
 #if UINTPTR_MAX == 0xFFFFFFFF
 void *mca_sshmem_base_start_address = (void*)0;
+#elif defined(__aarch64__)
+void* mca_sshmem_base_start_address = (void*)0xAB0000000000;
 #else
 void* mca_sshmem_base_start_address = (void*)0xFF000000;
 #endif
