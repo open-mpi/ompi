@@ -22,6 +22,7 @@
  * Copyright (c) 2018-2019 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2022      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2024      Google, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -1109,6 +1110,12 @@ mca_pml_ob1_send_request_schedule_once(mca_pml_ob1_send_request_t* sendreq)
         return OMPI_SUCCESS;
 
     range = get_send_range(sendreq);
+
+    if (NULL != sendreq->rdma_frag) {
+        /* this request was first attempted with RDMA but is now using send/recv */
+        MCA_PML_OB1_RDMA_FRAG_RETURN(sendreq->rdma_frag);
+        sendreq->rdma_frag = NULL;
+    }
 
     while(range && (false == sendreq->req_throttle_sends ||
           sendreq->req_pipeline_depth < mca_pml_ob1.send_pipeline_depth)) {
