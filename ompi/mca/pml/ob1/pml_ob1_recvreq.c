@@ -382,7 +382,7 @@ static int mca_pml_ob1_recv_request_get_frag_failed (mca_pml_ob1_rdma_frag_t *fr
         }
     }
 
-    if (++frag->retries < mca_pml_ob1.rdma_retries_limit &&
+    if (frag->retries < mca_pml_ob1.rdma_retries_limit &&
         OMPI_ERR_OUT_OF_RESOURCE == rc) {
         OPAL_THREAD_LOCK(&mca_pml_ob1.lock);
         opal_list_append(&mca_pml_ob1.rdma_pending, (opal_list_item_t*)frag);
