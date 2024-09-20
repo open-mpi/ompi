@@ -22,6 +22,7 @@
  * Copyright (c) 2018-2019 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2022      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2024      Google, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -1110,6 +1111,12 @@ mca_pml_ob1_send_request_schedule_once(mca_pml_ob1_send_request_t* sendreq)
 
     range = get_send_range(sendreq);
 
+    if (NULL != sendreq->rdma_frag) {
+        /* this request was first attempted with RDMA but is now using send/recv */
+        MCA_PML_OB1_RDMA_FRAG_RETURN(sendreq->rdma_frag);
+        sendreq->rdma_frag = NULL;
+    }
+
     while(range && (false == sendreq->req_throttle_sends ||
           sendreq->req_pipeline_depth < mca_pml_ob1.send_pipeline_depth)) {
         mca_pml_ob1_frag_hdr_t* hdr;
@@ -1268,30 +1275,31 @@ static void mca_pml_ob1_send_request_put_frag_failed (mca_pml_ob1_rdma_frag_t *f
     mca_pml_ob1_send_request_t* sendreq = (mca_pml_ob1_send_request_t *) frag->rdma_req;
     mca_bml_base_btl_t *bml_btl = frag->rdma_bml;
 
-    if (++frag->retries < mca_pml_ob1.rdma_retries_limit && OMPI_ERR_OUT_OF_RESOURCE == rc) {
+    if (frag->retries < mca_pml_ob1.rdma_retries_limit && OMPI_ERR_OUT_OF_RESOURCE == rc) {
         /* queue the frag for later if there was a resource error */
         OPAL_THREAD_LOCK(&mca_pml_ob1.lock);
         opal_list_append(&mca_pml_ob1.rdma_pending, (opal_list_item_t*)frag);
         OPAL_THREAD_UNLOCK(&mca_pml_ob1.lock);
-    } else {
-#if OPAL_ENABLE_FT
-        if(!ompi_proc_is_active(sendreq->req_send.req_base.req_proc)) {
-            return;
-        }
-#endif /* OPAL_ENABLE_FT */
-        /* tell receiver to deregister memory */
-        mca_pml_ob1_send_fin (sendreq->req_send.req_base.req_proc, bml_btl,
-                              frag->rdma_hdr.hdr_rdma.hdr_frag, 0, MCA_BTL_NO_ORDER,
-                              OPAL_ERR_TEMP_OUT_OF_RESOURCE);
-
-        /* send fragment by copy in/out */
-        mca_pml_ob1_send_request_copy_in_out(sendreq, frag->rdma_hdr.hdr_rdma.hdr_rdma_offset,
-                                             frag->rdma_length);
-        /* if a pointer to a receive request is not set it means that
-         * ACK was not yet received. Don't schedule sends before ACK */
-        if (NULL != sendreq->req_recv.pval)
-            mca_pml_ob1_send_request_schedule (sendreq);
+        return;
     }
+
+#if OPAL_ENABLE_FT
+    if(!ompi_proc_is_active(sendreq->req_send.req_base.req_proc)) {
+        return;
+    }
+#endif /* OPAL_ENABLE_FT */
+    /* tell receiver to deregister memory */
+    mca_pml_ob1_send_fin (sendreq->req_send.req_base.req_proc, bml_btl,
+                          frag->rdma_hdr.hdr_rdma.hdr_frag, 0, MCA_BTL_NO_ORDER,
+                          OPAL_ERR_TEMP_OUT_OF_RESOURCE);
+
+    /* send fragment by copy in/out */
+    mca_pml_ob1_send_request_copy_in_out(sendreq, frag->rdma_hdr.hdr_rdma.hdr_rdma_offset,
+                                         frag->rdma_length);
+    /* if a pointer to a receive request is not set it means that
+     * ACK was not yet received. Don't schedule sends before ACK */
+    if (NULL != sendreq->req_recv.pval)
+        mca_pml_ob1_send_request_schedule (sendreq);
 }
 
 /**

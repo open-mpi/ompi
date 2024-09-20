@@ -382,7 +382,7 @@ static int mca_pml_ob1_recv_request_get_frag_failed (mca_pml_ob1_rdma_frag_t *fr
         }
     }
 
-    if (++frag->retries < mca_pml_ob1.rdma_retries_limit &&
+    if (frag->retries < mca_pml_ob1.rdma_retries_limit &&
         OMPI_ERR_OUT_OF_RESOURCE == rc) {
         OPAL_THREAD_LOCK(&mca_pml_ob1.lock);
         opal_list_append(&mca_pml_ob1.rdma_pending, (opal_list_item_t*)frag);
@@ -413,6 +413,7 @@ static void mca_pml_ob1_rget_completion (mca_btl_base_module_t* btl, struct mca_
     /* check completion status */
     if (OPAL_UNLIKELY(OMPI_SUCCESS != status)) {
         status = mca_pml_ob1_recv_request_get_frag_failed (frag, status);
+        /* fragment was returned or queue by the above call */
         if (OPAL_UNLIKELY(OMPI_SUCCESS != status)) {
             size_t skipped_bytes = recvreq->req_send_offset - recvreq->req_rdma_offset;
             opal_output_verbose(mca_pml_ob1_output, 1, "pml:ob1: %s: operation failed with code %d", __func__, status);
@@ -435,11 +436,11 @@ static void mca_pml_ob1_rget_completion (mca_btl_base_module_t* btl, struct mca_
         mca_pml_ob1_send_fin (recvreq->req_recv.req_base.req_proc,
                               bml_btl, frag->rdma_hdr.hdr_rget.hdr_frag,
                               frag->rdma_length, 0, 0);
+
+        MCA_PML_OB1_RDMA_FRAG_RETURN(frag);
     }
 
     recv_request_pml_complete_check(recvreq);
-
-    MCA_PML_OB1_RDMA_FRAG_RETURN(frag);
 
     MCA_PML_OB1_PROGRESS_PENDING(bml_btl);
 }
