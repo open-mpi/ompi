@@ -12,7 +12,7 @@
 static inline
 ucc_status_t mca_coll_ucc_scatterv_init(const void *sbuf, const int *scounts,
                                         const int *disps, struct ompi_datatype_t *sdtype,
-                                        void *rbuf, int rcount,
+                                        void *rbuf, size_t rcount,
                                         struct ompi_datatype_t *rdtype, int root,
                                         mca_coll_ucc_module_t *ucc_module,
                                         ucc_coll_req_h *req,
