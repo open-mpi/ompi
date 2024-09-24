@@ -10,6 +10,7 @@
  *                         reserved.
  * Copyright (c) 2021      Amazon.com, Inc. or its affiliates.  All Rights
  *                         reserved.
+ * Copyright (c) 2024      Google, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -88,6 +89,17 @@ int MPI_T_cvar_read (MPI_T_cvar_handle handle, void *buf)
             }
 
             break;
+        case MCA_BASE_VAR_TYPE_INCLUDE_LIST: {
+            char *tmp = mca_base_var_string_value (handle->var->mbv_index);
+            if (strlen(tmp) == 0) {
+                ((char *)buf)[0] = '\0';                
+            } else {
+                strcpy ((char *) buf, tmp);
+                free (tmp);
+            }
+
+            break;
+        }
         default:
             rc = MPI_T_ERR_INVALID;
         }

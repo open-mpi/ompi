@@ -19,6 +19,7 @@
  *                         reserved.
  * Copyright (c) 2022      Computer Architecture and VLSI Systems (CARV)
  *                         Laboratory, ICS Forth. All rights reserved.
+ * Copyright (c) 2024      Google, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -106,6 +107,10 @@ typedef enum {
     MCA_BASE_VAR_TYPE_INT64_T,
     /** The variable is of type uint64_t */
     MCA_BASE_VAR_TYPE_UINT64_T,
+    /** The variable is an include list. Must be OBJ_CONSTRUCTed before
+     * registration to be valid. The destuction is automatic when the
+     * variable is deregistered. */
+    MCA_BASE_VAR_TYPE_INCLUDE_LIST,
 
     /** Maximum variable type. */
     MCA_BASE_VAR_TYPE_MAX
@@ -213,6 +218,22 @@ typedef enum {
 } mca_base_var_flag_t;
 
 /**
+ * An include list. These are strings of the form:
+ *   foo,bar,baz    (include)
+ *   ^foo,bar,baz   (exclude)
+ */
+struct mca_base_var_include_list {
+    opal_object_t super;
+    /** argv array of items */
+    char **items;
+    /** is this an exclude list */
+    bool is_exclude;
+};
+typedef struct mca_base_var_include_list mca_base_var_include_list_t;
+
+OPAL_DECLSPEC OBJ_CLASS_DECLARATION(mca_base_var_include_list_t);
+
+/**
  * Types for MCA parameters.
  */
 typedef union {
@@ -242,6 +263,8 @@ typedef union {
     size_t sizetval;
     /** double value */
     double lfval;
+    /** include/exclude list */
+    mca_base_var_include_list_t ilistval;
 } mca_base_var_storage_t;
 
 /**
@@ -717,6 +740,29 @@ typedef enum {
  * and the array must be freed by the caller.
  */
 OPAL_DECLSPEC int mca_base_var_dump(int vari, char ***out, mca_base_var_dump_type_t output_type);
+
+/**
+ * Get a string representation of a variable.
+ *
+ * @param[in]  vari        Variable index
+ *
+ * This function returns the string representation of the variable or NULL if an
+ * error occurs. It is the caller's responsibility to free the string.
+ */
+OPAL_DECLSPEC char *mca_base_var_string_value(int vari);
+
+/**
+ * Parse an include list.
+ *
+ * @param[in]  value    Include list string
+ * @param[out] result   Parsed include/exclude list (must already be OBJ_CONSTRUCTed)
+ *
+ * In Open MPI include lists are a comma-seperated list of things that can be negated
+ * by prefixing the list with a ^. Example: self,vader,ugni or ^tcp,ofi. This method
+ * fills in the mca_base_var_include_list_t struct with an argv array of items and
+ * a boolean indicating whether this is an exclude list or not.
+ */
+OPAL_DECLSPEC int mca_base_var_parse_include_list(const char *value, mca_base_var_include_list_t *result);
 
 #define MCA_COMPILETIME_VER "print_compiletime_version"
 #define MCA_RUNTIME_VER     "print_runtime_version"
