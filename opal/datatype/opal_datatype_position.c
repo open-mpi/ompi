@@ -66,8 +66,8 @@ static inline void position_single_block(opal_convertor_t *CONVERTOR, unsigned c
 }
 
 /**
- * Advance the convertors' position according. Update the pointer and the remaining space
- * accordingly.
+ * Advance the convertors' position according to account for *COUNT elements. Update
+ * the pointer and the remaining space accordingly.
  */
 static inline void position_predefined_data(opal_convertor_t *CONVERTOR, dt_elem_desc_t *ELEM,
                                             size_t *COUNT, unsigned char **POINTER, size_t *SPACE)
@@ -82,7 +82,8 @@ static inline void position_predefined_data(opal_convertor_t *CONVERTOR, dt_elem
 
     if (cando_count > *(COUNT)) {
         cando_count = *(COUNT);
-    }
+    } else if( 0 == cando_count )
+        return;
 
     if (1 == _elem->blocklen) {
         DO_DEBUG(opal_output(0,
