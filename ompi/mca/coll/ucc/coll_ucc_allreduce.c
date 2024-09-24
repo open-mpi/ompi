@@ -9,7 +9,7 @@
 
 #include "coll_ucc_common.h"
 
-static inline ucc_status_t mca_coll_ucc_allreduce_init(const void *sbuf, void *rbuf, int count,
+static inline ucc_status_t mca_coll_ucc_allreduce_init(const void *sbuf, void *rbuf, size_t count,
                                                        struct ompi_datatype_t *dtype,
                                                        struct ompi_op_t *op, mca_coll_ucc_module_t *ucc_module,
                                                        ucc_coll_req_h *req,
