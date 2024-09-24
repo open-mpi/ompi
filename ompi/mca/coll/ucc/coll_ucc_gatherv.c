@@ -10,7 +10,7 @@
 
 #include "coll_ucc_common.h"
 
-static inline ucc_status_t mca_coll_ucc_gatherv_init(const void *sbuf, int scount, struct ompi_datatype_t *sdtype,
+static inline ucc_status_t mca_coll_ucc_gatherv_init(const void *sbuf, size_t scount, struct ompi_datatype_t *sdtype,
                                                      void *rbuf, const int *rcounts, const int *disps,
                                                      struct ompi_datatype_t *rdtype, int root,
                                                      mca_coll_ucc_module_t *ucc_module,

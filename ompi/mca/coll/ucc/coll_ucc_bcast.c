@@ -8,7 +8,7 @@
 
 #include "coll_ucc_common.h"
 
-static inline ucc_status_t mca_coll_ucc_bcast_init(void *buf, int count, struct ompi_datatype_t *dtype,
+static inline ucc_status_t mca_coll_ucc_bcast_init(void *buf, size_t count, struct ompi_datatype_t *dtype,
                                                    int root, mca_coll_ucc_module_t *ucc_module,
                                                    ucc_coll_req_h *req,
                                                    mca_coll_ucc_req_t *coll_req)
