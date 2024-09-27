@@ -36,6 +36,7 @@
 /* Define global variables, used in accelerator_cuda.c */
 CUstream opal_accelerator_cuda_memcpy_stream = NULL;
 opal_mutex_t opal_accelerator_cuda_stream_lock = {0};
+int opal_accelerator_cuda_num_devices = 0;
 
 /* Initialization lock for delayed cuda initialization */
 static opal_mutex_t accelerator_cuda_init_lock;
@@ -136,6 +137,8 @@ int opal_accelerator_cuda_delayed_init()
     if (true == accelerator_cuda_init_complete) {
         goto out;
     }
+
+    cuDeviceGetCount(&opal_accelerator_cuda_num_devices);
 
     /* Check to see if this process is running in a CUDA context.  If
      * so, all is good.  If not, then disable registration of memory. */
