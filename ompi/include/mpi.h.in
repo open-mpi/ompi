@@ -268,22 +268,15 @@
       * hacks to eliminate warnings in the portable_platform.h file.
       */
 #    ifndef SIZEOF_VOID_P
-#    define CLEANUP_SIZEOF_VOID_P 1
+#    define OMPI_CLEANUP_SIZEOF_VOID_P 1
 #    define SIZEOF_VOID_P OPAL_SIZEOF_VOID_P
 #    else
-#    define CLEANUP_SIZEOF_VOID_P 0
-#    endif
-
-#    ifndef _PORTABLE_PLATFORM_H
-#    define _PORTABLE_PLATFORM_H 0
-#    endif
-#    ifndef PLATFORM_HEADER_VERSION
-#    define PLATFORM_HEADER_VERSION 0
+#    define OMPI_CLEANUP_SIZEOF_VOID_P 0
 #    endif
 
 #    include "mpi_portable_platform.h"
 
-#if CLEANUP_SIZEOF_VOID_P
+#if OMPI_CLEANUP_SIZEOF_VOID_P
 #undef SIZEOF_VOID_P
 #endif
 

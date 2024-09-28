@@ -28,10 +28,11 @@
  */
 /* Publish and enforce version number for the public interface to this header */
 /* YOU ARE NOT PERMITTED TO CHANGE THIS SECTION WITHOUT DIRECT APPROVAL FROM DAN BONACHEA */
-#if _PORTABLE_PLATFORM_H != PLATFORM_HEADER_VERSION \
-     || PLATFORM_HEADER_VERSION < 16
+#if !defined(_PORTABLE_PLATFORM_H) || !defined(PLATFORM_HEADER_VERSION) \
+     || _PORTABLE_PLATFORM_H != PLATFORM_HEADER_VERSION \
+     || PLATFORM_HEADER_VERSION < 22
 #undef  PLATFORM_HEADER_VERSION 
-#define PLATFORM_HEADER_VERSION 16
+#define PLATFORM_HEADER_VERSION 22
 #undef  _PORTABLE_PLATFORM_H
 #define _PORTABLE_PLATFORM_H PLATFORM_HEADER_VERSION
 /* End Header versioning handshake */
@@ -115,14 +116,17 @@
 #undef PLATFORM_COMPILER_UNKNOWN
 
 #undef PLATFORM_OS_FAMILYNAME
+#undef PLATFORM_OS_SUBFAMILYNAME
 #undef PLATFORM_OS_CATAMOUNT
-#undef PLATFORM_OS_CNL
 #undef PLATFORM_OS_BGP
 #undef PLATFORM_OS_BGQ
-#undef PLATFORM_OS_WSL
 #undef PLATFORM_OS_K42
 #undef PLATFORM_OS_UCLINUX
 #undef PLATFORM_OS_LINUX
+#undef PLATFORM_OS_CNL
+#undef PLATFORM_OS_SUBFAMILY_CNL
+#undef PLATFORM_OS_WSL
+#undef PLATFORM_OS_SUBFAMILY_WSL
 #undef PLATFORM_OS_BLRTS
 #undef PLATFORM_OS_CYGWIN
 #undef PLATFORM_OS_MSWINDOWS
@@ -167,6 +171,7 @@
 #undef PLATFORM_ARCH_AARCH64
 #undef PLATFORM_ARCH_TILE
 #undef PLATFORM_ARCH_S390
+#undef PLATFORM_ARCH_RISCV
 #undef PLATFORM_ARCH_UNKNOWN
 
 /* prevent known old/broken versions of this header from loading */
@@ -291,7 +296,7 @@
           PLATFORM_COMPILER_VERSION_INT(__PATHCC__,__PATHCC_MINOR__,__PATHCC_PATCHLEVEL__+0)
   #define PLATFORM_COMPILER_VERSION_STR __PATHSCALE__
 
-#elif defined(__NVCOMPILER) // Must occur prior to PGI and CLANG
+#elif defined(__NVCOMPILER) /* Must occur prior to PGI and CLANG */
   #define PLATFORM_COMPILER_NVHPC  1
   #define PLATFORM_COMPILER_FAMILYNAME NVHPC
   #define PLATFORM_COMPILER_FAMILYID 20
@@ -330,7 +335,7 @@
       /* Include below might fail for ancient versions lacking this header, but testing shows it
          works back to at least 5.1-3 (Nov 2003), and based on docs probably back to 3.2 (Sep 2000) */
         #define PLATFORM_COMPILER_VERSION 0       
-    #elif defined(__x86_64__) /* bug 1753 - 64-bit omp.h upgrade happened in <6.0-8,6.1-1] */
+    #elif defined(__x86_64__) /* bug 1753 - 64-bit omp.h upgrade happenned in <6.0-8,6.1-1] */
       #include "omp.h"
       #if defined(_PGOMP_H)
         /* 6.1.1 or newer */
@@ -341,7 +346,7 @@
         #define PLATFORM_COMPILER_VERSION 0
         #define PLATFORM_COMPILER_VERSION_STR "<=6.0-8"
       #endif
-    #else /* 32-bit omp.h upgrade happened in <5.2-4,6.0-8] */
+    #else /* 32-bit omp.h upgrade happenned in <5.2-4,6.0-8] */
       #include "omp.h"
       #if defined(_PGOMP_H)
         /* 6.0-8 or newer */
@@ -590,7 +595,7 @@
     #define PLATFORM_COMPILER_VERSION_STR __clang_version__
   #endif
 
-// NOTE: PLATFORM_COMPILER_FAMILYID "20" is allocated to NVHPC, appearing earlier
+/* NOTE: PLATFORM_COMPILER_FAMILYID "20" is allocted to NVHPC, appearing earlier */
 
 #else /* unknown compiler */
   #define PLATFORM_COMPILER_UNKNOWN  1
@@ -750,16 +755,16 @@
    PLATFORM_OS_<family>:
      defined to a positive value if OS belongs to a given family, undef otherwise
    PLATFORM_OS_FAMILYNAME:
-     unquoted token which provides the compiler family name
+     unquoted token which provides the OS family name
+
+   Some systems also define a subfamily:
+    PLATFORM_OS_SUBFAMILY_<subfamily>: positive value or undef
+    PLATFORM_OS_SUBFAMILYNAME: unquoted token for subfamily name or undef
 */
 
 #if defined(__LIBCATAMOUNT__) || defined(__QK_USER__)
   #define PLATFORM_OS_CATAMOUNT 1
   #define PLATFORM_OS_FAMILYNAME CATAMOUNT
-
-#elif defined(__CRAYXT_COMPUTE_LINUX_TARGET)
-  #define PLATFORM_OS_CNL 1
-  #define PLATFORM_OS_FAMILYNAME CNL
 
 #elif defined(GASNETI_ARCH_BGP) || defined(__bgp__)
   #define PLATFORM_OS_BGP 1
@@ -768,10 +773,6 @@
 #elif defined(GASNETI_ARCH_BGQ) || defined(__bgq__)
   #define PLATFORM_OS_BGQ 1
   #define PLATFORM_OS_FAMILYNAME BGQ
-
-#elif defined(GASNETI_ARCH_WSL)
-  #define PLATFORM_OS_WSL 1
-  #define PLATFORM_OS_FAMILYNAME WSL
 
 #elif defined(__K42)
   #define PLATFORM_OS_K42 1
@@ -784,6 +785,14 @@
 #elif defined(__linux) || defined(__linux__) || defined(__gnu_linux__)
   #define PLATFORM_OS_LINUX 1
   #define PLATFORM_OS_FAMILYNAME LINUX
+  #if defined(GASNETI_ARCH_WSL)
+    #define PLATFORM_OS_SUBFAMILY_WSL 1
+    #define PLATFORM_OS_SUBFAMILYNAME WSL
+  #elif defined(__CRAYXT_COMPUTE_LINUX_TARGET)
+    /* NOTE: As of 2022-07 this is ONLY defined for the Cray cc/CC wrappers, and not the raw PrgEnv compilers */
+    #define PLATFORM_OS_SUBFAMILY_CNL 1
+    #define PLATFORM_OS_SUBFAMILYNAME CNL
+  #endif
 
 #elif defined(__blrts) || defined(__blrts__) || defined(__gnu_blrts__)
   #define PLATFORM_OS_BLRTS 1
@@ -1031,6 +1040,16 @@
     #define _PLATFORM_ARCH_32 1
   #endif
 
+#elif defined(__riscv)
+  #define PLATFORM_ARCH_RISCV 1
+  #define PLATFORM_ARCH_FAMILYNAME RISCV
+  #define _PLATFORM_ARCH_LITTLE_ENDIAN 1
+  #if __riscv_xlen == 32
+    #define _PLATFORM_ARCH_32 1
+  #else  /* (__riscv_xlen == 64) || (__riscv_xlen == 128) */
+    #define _PLATFORM_ARCH_64 1
+  #endif
+
 #else /* unknown CPU */
   #define PLATFORM_ARCH_UNKNOWN 1
   #define PLATFORM_ARCH_FAMILYNAME UNKNOWN
@@ -1128,16 +1147,21 @@ int main(void) {
   PLATFORM_DISPX(COMPILER_VERSION);
   PLATFORM_DISP(COMPILER_VERSION_STR);
   PLATFORM_DISP(COMPILER_IDSTR);
-  #if PLATFORM_COMPILER_C_LANGLVL
+  #ifdef PLATFORM_COMPILER_C_LANGLVL
     PLATFORM_DISPI(COMPILER_C_LANGLVL);
-  #elif PLATFORM_COMPILER_CXX_LANGLVL
+  #elif defined(PLATFORM_COMPILER_CXX_LANGLVL)
     PLATFORM_DISPI(COMPILER_CXX_LANGLVL);
   #else
     printf("WARNING: Missing PLATFORM_COMPILER_C(XX)_LANGLVL!");
   #endif
   PLATFORM_DISP(OS_FAMILYNAME);
+  #ifdef PLATFORM_OS_SUBFAMILYNAME
+  { const char * OS_SUBFAMILYNAME = PLATFORM_STRINGIFY(PLATFORM_OS_SUBFAMILYNAME);
+    PLATFORM_DISP(OS_SUBFAMILYNAME);
+  }
+  #endif
   PLATFORM_DISP(ARCH_FAMILYNAME);
-  #if PLATFORM_ARCH_32
+  #ifdef PLATFORM_ARCH_32
     PLATFORM_DISPI(ARCH_32);
     assert(sizeof(void *) == 4);
   #else
@@ -1146,7 +1170,7 @@ int main(void) {
   #endif
   { int x = 0x00FF;
     unsigned char *p = (unsigned char *)&x;
-  #if PLATFORM_ARCH_BIG_ENDIAN
+  #ifdef PLATFORM_ARCH_BIG_ENDIAN
     PLATFORM_DISPI(ARCH_BIG_ENDIAN);
     assert(*p == 0);
   #else
