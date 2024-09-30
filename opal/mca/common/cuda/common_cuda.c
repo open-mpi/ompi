@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
@@ -106,6 +107,13 @@ struct cudaFunctionTable {
     int (*cuStreamDestroy)(CUstream);
 #if OPAL_CUDA_GET_ATTRIBUTES
     int (*cuPointerGetAttributes)(unsigned int, CUpointer_attribute *, void **, CUdeviceptr);
+#if OPAL_CUDA_VMM_SUPPORT
+    int (*cuDeviceGetCount)(int*);
+    int (*cuMemRelease)(CUmemGenericAllocationHandle);
+    int (*cuMemRetainAllocationHandle)(CUmemGenericAllocationHandle*, void*);
+    int (*cuMemGetAllocationPropertiesFromHandle)(CUmemAllocationProp *, CUmemGenericAllocationHandle);
+    int (*cuMemGetAccess)(unsigned long long*, const CUmemLocation*, CUdeviceptr);
+#endif
 #endif /* OPAL_CUDA_GET_ATTRIBUTES */
 };
 typedef struct cudaFunctionTable cudaFunctionTable_t;
@@ -479,6 +487,13 @@ int mca_common_cuda_stage_one_init(void)
 #if OPAL_CUDA_GET_ATTRIBUTES
     OPAL_CUDA_DLSYM(libcuda_handle, cuPointerGetAttributes);
 #endif /* OPAL_CUDA_GET_ATTRIBUTES */
+#if OPAL_CUDA_VMM_SUPPORT
+    OPAL_CUDA_DLSYM(libcuda_handle, cuDeviceGetCount);
+    OPAL_CUDA_DLSYM(libcuda_handle, cuMemRelease);
+    OPAL_CUDA_DLSYM(libcuda_handle, cuMemRetainAllocationHandle);
+    OPAL_CUDA_DLSYM(libcuda_handle, cuMemGetAllocationPropertiesFromHandle);
+    OPAL_CUDA_DLSYM(libcuda_handle, cuMemGetAccess);
+#endif
     return 0;
 }
 
@@ -1730,13 +1745,77 @@ static float mydifftime(opal_timer_t ts_start, opal_timer_t ts_end) {
 }
 #endif /* OPAL_ENABLE_DEBUG */
 
+static int mca_common_cuda_check_vmm(CUdeviceptr dbuf, CUmemorytype *mem_type)
+{
+#if OPAL_CUDA_VMM_SUPPORT
+    static int device_count = -1;
+    CUmemAllocationProp prop;
+    CUmemLocation location;
+    CUresult result;
+    unsigned long long flags;
+    CUmemGenericAllocationHandle alloc_handle;
+
+    if (device_count == -1) {
+        result = cuFunc.cuDeviceGetCount(&device_count);
+        if (result != CUDA_SUCCESS) {
+            return 0;
+        }
+    }
+
+    result = cuFunc.cuMemRetainAllocationHandle(&alloc_handle, (void*)dbuf);
+    if (result != CUDA_SUCCESS) {
+        return 0;
+    }
+
+    result = cuFunc.cuMemGetAllocationPropertiesFromHandle(&prop, alloc_handle);
+    if (result != CUDA_SUCCESS) {
+        cuFunc.cuMemRelease(alloc_handle);
+        return 0;
+    }
+
+    if (prop.location.type == CU_MEM_LOCATION_TYPE_DEVICE) {
+        *mem_type = CU_MEMORYTYPE_DEVICE;
+        cuFunc.cuMemRelease(alloc_handle);
+        return 1;
+    }
+
+    if (prop.location.type == CU_MEM_LOCATION_TYPE_HOST_NUMA) {
+        /* check if device has access */
+        for (int i = 0; i < device_count; i++) {
+            location.type = CU_MEM_LOCATION_TYPE_DEVICE;
+            location.id   = i;
+            result = cuFunc.cuMemGetAccess(&flags, &location, dbuf);
+            if ((CUDA_SUCCESS == result) &&
+                (CU_MEM_ACCESS_FLAGS_PROT_READWRITE == flags)) {
+                *mem_type = CU_MEMORYTYPE_DEVICE;
+                cuFunc.cuMemRelease(alloc_handle);
+                return 1;
+            }
+        }
+    }
+
+    /* host must have access as device access possibility is exhausted */
+    *mem_type = CU_MEMORYTYPE_HOST;
+    cuFunc.cuMemRelease(alloc_handle);
+    return 1;
+
+#endif
+
+    return 0;
+}
+
 /* Routines that get plugged into the opal datatype code */
 static int mca_common_cuda_is_gpu_buffer(const void *pUserBuf, opal_convertor_t *convertor)
 {
     int res;
+    int is_vmm = 0;
+    CUmemorytype vmm_mem_type = 0;
     CUmemorytype memType = 0;
     CUdeviceptr dbuf = (CUdeviceptr)pUserBuf;
     CUcontext ctx = NULL, memCtx = NULL;
+
+    is_vmm = mca_common_cuda_check_vmm(dbuf, &vmm_mem_type);
+
 #if OPAL_CUDA_GET_ATTRIBUTES
     uint32_t isManaged = 0;
     /* With CUDA 7.0, we can get multiple attributes with a single call */
@@ -1763,8 +1842,12 @@ static int mca_common_cuda_is_gpu_buffer(const void *pUserBuf, opal_convertor_t 
          * just assume it is not. */
         return 0;
     } else if (memType == CU_MEMORYTYPE_HOST) {
-        /* Host memory, nothing to do here */
-        return 0;
+        if (is_vmm && (vmm_mem_type == CU_MEMORYTYPE_DEVICE)) {
+            memType = CU_MEMORYTYPE_DEVICE;
+        } else {
+            /* Host memory, nothing to do here */
+            return 0;
+        }
     } else if (memType == 0) {
         /* This can happen when CUDA is initialized but dbuf is not valid CUDA pointer */
         return 0;
@@ -1779,8 +1862,12 @@ static int mca_common_cuda_is_gpu_buffer(const void *pUserBuf, opal_convertor_t 
          * just assume it is not. */
         return 0;
     } else if (memType == CU_MEMORYTYPE_HOST) {
-        /* Host memory, nothing to do here */
-        return 0;
+        if (is_vmm && (vmm_mem_type == CU_MEMORYTYPE_DEVICE)) {
+            memType = CU_MEMORYTYPE_DEVICE;
+        } else {
+            /* Host memory, nothing to do here */
+            return 0;
+        }
     }
     /* Must be a device pointer */
     assert(memType == CU_MEMORYTYPE_DEVICE);
@@ -1806,6 +1893,16 @@ static int mca_common_cuda_is_gpu_buffer(const void *pUserBuf, opal_convertor_t 
                 return OPAL_ERROR;
             }
 #endif /* OPAL_CUDA_GET_ATTRIBUTES */
+            if (is_vmm) {
+                /* This function is expected to set context if pointer is device
+                 * accessible but VMM allocations have NULL context associated
+                 * which cannot be set against the calling thread */
+                opal_output(0,
+                        "CUDA: unable to set context with the given pointer"
+                        "ptr=%p aborting...", dbuf);
+                return OPAL_ERROR;
+            }
+
             res = cuFunc.cuCtxSetCurrent(memCtx);
             if (OPAL_UNLIKELY(res != CUDA_SUCCESS)) {
                 opal_output(0, "CUDA: error calling cuCtxSetCurrent: "

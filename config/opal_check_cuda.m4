@@ -1,5 +1,6 @@
 dnl -*- shell-script -*-
 dnl
+dnl Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
 dnl Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
 dnl                         University Research and Technology
 dnl                         Corporation.  All rights reserved.
@@ -113,6 +114,12 @@ AS_IF([test "$opal_check_cuda_happy"="yes"],
         [#include <$opal_cuda_incdir/cuda.h>]),
     [])
 
+# If we have CUDA support, check to see if we have support for cuMemCreate memory on host NUMA.
+AS_IF([test "$opal_check_cuda_happy"="yes"],
+    [AC_CHECK_DECL([CU_MEM_LOCATION_TYPE_HOST_NUMA], [CUDA_VMM_SUPPORT=1], [CUDA_VMM_SUPPORT=0],
+        [#include <$opal_cuda_incdir/cuda.h>])],
+    [])
+
 AC_MSG_CHECKING([if have cuda support])
 if test "$opal_check_cuda_happy" = "yes"; then
     AC_MSG_RESULT([yes (-I$opal_cuda_incdir)])
@@ -133,6 +140,10 @@ AC_DEFINE_UNQUOTED([OPAL_CUDA_SUPPORT],$CUDA_SUPPORT,
 AM_CONDITIONAL([OPAL_cuda_sync_memops], [test "x$CUDA_SYNC_MEMOPS" = "x1"])
 AC_DEFINE_UNQUOTED([OPAL_CUDA_SYNC_MEMOPS],$CUDA_SYNC_MEMOPS,
                    [Whether we have CUDA CU_POINTER_ATTRIBUTE_SYNC_MEMOPS support available])
+
+AM_CONDITIONAL([OPAL_cuda_vmm_support], [test "x$CUDA_VMM_SUPPORT" = "x1"])
+AC_DEFINE_UNQUOTED([OPAL_CUDA_VMM_SUPPORT],$CUDA_VMM_SUPPORT,
+                   [Whether we have CU_MEM_LOCATION_TYPE_HOST_NUMA support available])
 
 AM_CONDITIONAL([OPAL_cuda_get_attributes], [test "x$CUDA_GET_ATTRIBUTES" = "x1"])
 AC_DEFINE_UNQUOTED([OPAL_CUDA_GET_ATTRIBUTES],$CUDA_GET_ATTRIBUTES,
