@@ -13,6 +13,7 @@
  * Copyright (c) 2015-2020 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
+ * Copyright (c) 2024      Advanced Micro Devices, Inc. All rights reserverd.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -171,8 +172,22 @@ mca_fs_lustre_file_open (struct ompi_communicator_t *comm,
     fh->f_stripe_size   = lump->lmm_stripe_size;
     fh->f_stripe_count  = lump->lmm_stripe_count;
     fh->f_fs_block_size = lump->lmm_stripe_size;
-    fh->f_flags |= OMPIO_LOCK_NEVER;
     free(lump);
+
+    if (FS_LUSTRE_LOCK_AUTO == mca_fs_lustre_lock_algorithm ||
+        FS_LUSTRE_LOCK_NEVER == mca_fs_lustre_lock_algorithm ) {
+        fh->f_flags |= OMPIO_LOCK_NEVER;
+    }
+    else if (FS_LUSTRE_LOCK_ENTIRE_FILE == mca_fs_lustre_lock_algorithm) {
+        fh->f_flags |= OMPIO_LOCK_ENTIRE_FILE;
+    }
+    else if (FS_LUSTRE_LOCK_RANGES == mca_fs_lustre_lock_algorithm) {
+        /* Nothing to be done. This is what the posix fbtl component would do
+           anyway without additional information . */
+    }
+    else {
+        opal_output ( 1, "Invalid value for mca_fs_lustre_lock_algorithm %d", mca_fs_lustre_lock_algorithm );
+    }
 
     return OMPI_SUCCESS;
 }

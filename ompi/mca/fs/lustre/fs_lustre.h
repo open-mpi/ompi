@@ -13,6 +13,7 @@
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
+ * Copyright (c) 2024      Advanced Micro Devices, Inc. All rights reserverd.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -31,6 +32,12 @@
 extern int mca_fs_lustre_priority;
 extern int mca_fs_lustre_stripe_size;
 extern int mca_fs_lustre_stripe_width;
+extern int mca_fs_lustre_lock_algorithm;
+
+#define FS_LUSTRE_LOCK_AUTO        0
+#define FS_LUSTRE_LOCK_NEVER       1
+#define FS_LUSTRE_LOCK_ENTIRE_FILE 2
+#define FS_LUSTRE_LOCK_RANGES      3
 
 BEGIN_C_DECLS
 
