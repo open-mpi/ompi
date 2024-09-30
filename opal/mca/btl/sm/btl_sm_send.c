@@ -73,18 +73,4 @@ int mca_btl_sm_send(struct mca_btl_base_module_t *btl, struct mca_btl_base_endpo
     }
 
     return OPAL_SUCCESS;
-
-#if 0
-    if (((frag->hdr->flags & MCA_BTL_SM_FLAG_SINGLE_COPY) ||
-        !(frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP)) &&
-        frag->base.des_cbfunc) {
-        frag->base.des_flags |= MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
-
-        return OPAL_SUCCESS;
-    }
-
-    /* data is gone (from the pml's perspective). frag callback/release will
-       happen later */
-    return 1;
-#endif
 }

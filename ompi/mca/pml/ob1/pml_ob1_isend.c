@@ -143,7 +143,7 @@ static inline int mca_pml_ob1_send_inline (const void *buf, size_t count,
     }
 
     if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
-	return rc;
+        return rc;
     }
 
     return (int) size;
