@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2014      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
@@ -44,6 +45,11 @@ mca_coll_cuda_allreduce(const void *sbuf, void *rbuf, int count,
                         struct ompi_op_t *op,
                         struct ompi_communicator_t *comm,
                         mca_coll_base_module_t *module);
+
+int mca_coll_cuda_reduce_local(const void *sbuf, void *rbuf, int count,
+                               struct ompi_datatype_t *dtype,
+                               struct ompi_op_t *op,
+                               mca_coll_base_module_t *module);
 
 int mca_coll_cuda_reduce(const void *sbuf, void *rbuf, int count,
                          struct ompi_datatype_t *dtype,
