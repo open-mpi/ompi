@@ -40,6 +40,7 @@ static void mca_coll_cuda_module_destruct(mca_coll_cuda_module_t *module)
 {
     OBJ_RELEASE(module->c_coll.coll_allreduce_module);
     OBJ_RELEASE(module->c_coll.coll_reduce_module);
+    OBJ_RELEASE(module->c_coll.coll_reduce_local_module);
     OBJ_RELEASE(module->c_coll.coll_reduce_scatter_block_module);
     OBJ_RELEASE(module->c_coll.coll_scatter_module);
     /* If the exscan module is not NULL, then this was an
@@ -103,6 +104,7 @@ mca_coll_cuda_comm_query(struct ompi_communicator_t *comm,
     cuda_module->super.coll_gather     = NULL;
     cuda_module->super.coll_gatherv    = NULL;
     cuda_module->super.coll_reduce     = mca_coll_cuda_reduce;
+    cuda_module->super.coll_reduce_local = mca_coll_cuda_reduce_local;
     cuda_module->super.coll_reduce_scatter = NULL;
     cuda_module->super.coll_reduce_scatter_block = mca_coll_cuda_reduce_scatter_block;
     cuda_module->super.coll_scan       = mca_coll_cuda_scan;
@@ -135,6 +137,7 @@ int mca_coll_cuda_module_enable(mca_coll_base_module_t *module,
 
     CHECK_AND_RETAIN(comm, s, allreduce);
     CHECK_AND_RETAIN(comm, s, reduce);
+    CHECK_AND_RETAIN(comm, s, reduce_local);
     CHECK_AND_RETAIN(comm, s, reduce_scatter_block);
     CHECK_AND_RETAIN(comm, s, scatter);
     if (!OMPI_COMM_IS_INTER(comm)) {
