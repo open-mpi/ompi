@@ -74,23 +74,29 @@ system.
 
     .. note:: The Open MPI community has heavily tested Libevent
               |event_embedded_version|.  Other versions should *work*,
-              but |mdash| unlike Hwloc, Open PMIx, and PRRTE |mdash|
+              but |mdash| unlike Hwloc, OpenPMIx, and PRRTE |mdash|
               there is not much reason to upgrade to use a later
               version of Libevent.
 
-* `PMIx <https://pmix.org/>`_
+* `OpenPMIx <https://docs.openpmix.org/>`_
 
   * This library is required; Open MPI will not build without it.
   * **Minimum version required when building without PRRTE:**
     |pmix_min_version|
 
-    .. note:: While the minimum version of Open PMIx will *work*, it
+    .. note:: While the minimum version of OpenPMIx will *work*, it
               may still have bugs and/or have less functionality as
               compared to later versions.
 
               The Open MPI community generally recomends using the
-              latest available version of Open PMIx unless there is a
+              latest available version of OpenPMIx unless there is a
               specific reason not to.
+
+    .. note:: While `OpenPMIx <https://docs.openpmix.org/>`_ is the
+              formal name of the software that implements the `PMIx
+              <https://pmix.org/>`_ standard, the term "PMIx" is used
+              extensively throughout this documentation to refer to
+              the OpenPMIx software package.
 
   * **Minimum version required when building with PRRTE:** `See the
     PRRTE project documentation <https://docs.prrte.org/>`_.
