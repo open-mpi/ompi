@@ -51,7 +51,7 @@ mca_btl_base_descriptor_t *mca_btl_uct_alloc(mca_btl_base_module_t *btl,
 }
 
 static inline void _mca_btl_uct_send_pack(void *data, void *header, size_t header_size,
-                                          opal_convertor_t *convertor, size_t payload_size)
+                                          opal_convertor_t *convertor, size_t* payload_size)
 {
     uint32_t iov_count = 1;
     struct iovec iov;
@@ -64,11 +64,9 @@ static inline void _mca_btl_uct_send_pack(void *data, void *header, size_t heade
 
     /* pack the data into the supplied buffer */
     iov.iov_base = (IOVBASE_TYPE *) ((intptr_t) data + header_size);
-    iov.iov_len = length = payload_size;
+    iov.iov_len = *payload_size;
 
-    (void) opal_convertor_pack(convertor, &iov, &iov_count, &length);
-
-    assert(length == payload_size);
+    (void) opal_convertor_pack(convertor, &iov, &iov_count, payload_size);
 }
 
 struct mca_btl_base_descriptor_t *mca_btl_uct_prepare_src(mca_btl_base_module_t *btl,
@@ -92,7 +90,10 @@ struct mca_btl_base_descriptor_t *mca_btl_uct_prepare_src(mca_btl_base_module_t 
         }
 
         _mca_btl_uct_send_pack((void *) ((intptr_t) frag->uct_iov.buffer + reserve), NULL, 0,
-                               convertor, *size);
+                               convertor, size);
+        /* update the length of the fragment according to the convertor packed data */
+        frag->segments[0].seg_len = reserve + *size;
+        frag->uct_iov.length = frag->segments[0].seg_len;
     } else {
         opal_convertor_get_current_pointer(convertor, &data_ptr);
         assert(NULL != data_ptr);
@@ -286,7 +287,7 @@ static size_t mca_btl_uct_sendi_pack(void *data, void *arg)
 
     am_header->value = args->am_header;
     _mca_btl_uct_send_pack((void *) ((intptr_t) data + 8), args->header, args->header_size,
-                           args->convertor, args->payload_size);
+                           args->convertor, &args->payload_size);
     return args->header_size + args->payload_size + 8;
 }
 
@@ -329,9 +330,18 @@ int mca_btl_uct_sendi(mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpo
     } else if (msg_size < (size_t) MCA_BTL_UCT_TL_ATTR(uct_btl->am_tl, context->context_id)
                               .cap.am.max_short) {
         int8_t *data = alloca(total_size);
-        _mca_btl_uct_send_pack(data, header, header_size, convertor, payload_size);
-        ucs_status = uct_ep_am_short(ep_handle, MCA_BTL_UCT_FRAG, am_header.value, data,
-                                     total_size);
+        size_t packed_payload_size = payload_size;
+        _mca_btl_uct_send_pack(data, header, header_size, convertor, &packed_payload_size);
+        if (packed_payload_size != payload_size) {
+            /* This should never happen as the packed data should go in a single pack. But
+               in case it does, fallback onto a descriptor allocation and let the caller
+               send the data.
+             */
+            ucs_status = UCS_ERR_NO_RESOURCE;
+        } else {
+            ucs_status = uct_ep_am_short(ep_handle, MCA_BTL_UCT_FRAG, am_header.value, data,
+                                         total_size);
+        }
     } else {
         ssize_t size;
 

@@ -337,7 +337,8 @@ mca_btl_uct_module_t mca_btl_uct_module_template = {
 
         /* set the default flags for this btl. uct provides us with rdma and both
          * fetching and non-fetching atomics (though limited to add and cswap) */
-        .btl_flags = MCA_BTL_FLAGS_RDMA | MCA_BTL_FLAGS_ATOMIC_FOPS | MCA_BTL_FLAGS_ATOMIC_OPS,
+        .btl_flags = MCA_BTL_FLAGS_RDMA | MCA_BTL_FLAGS_ATOMIC_FOPS | MCA_BTL_FLAGS_ATOMIC_OPS
+                     | MCA_BTL_FLAGS_RDMA_REMOTE_COMPLETION,
         .btl_atomic_flags = MCA_BTL_ATOMIC_SUPPORTS_ADD | MCA_BTL_ATOMIC_SUPPORTS_CSWAP
                             | MCA_BTL_ATOMIC_SUPPORTS_SWAP | MCA_BTL_ATOMIC_SUPPORTS_32BIT,
 
