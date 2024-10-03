@@ -313,20 +313,35 @@ static int alltoallv_sendrecv_w(
     ompi_request_t *requests[MAX_BUF_COUNT];
     opal_free_list_item_t *buf_items[MAX_BUF_COUNT];
 
-    size_t buf_len = COLL_HAN_PACKBUF_PAYLOAD_BYTES;
+    size_t buf_len = mca_coll_han_component.han_packbuf_bytes;
     int nbufs = MAX_BUF_COUNT;
     for (int jbuf=0; jbuf<nbufs; jbuf++) {
         buf_items[jbuf] = opal_free_list_get(&mca_coll_han_component.pack_buffers);
         if (buf_items[jbuf] == NULL) {
-            nbufs = jbuf - 1;
-            opal_output_verbose(20, mca_coll_han_component.han_output,
-                "Uh-oh, not enough buffers: %d\n",nbufs);
+            nbufs = jbuf;
+            opal_output_verbose(30, mca_coll_han_component.han_output,
+                "alltoallv_sendrecv_w: Number of buffers reduced to %d instead of %d.  "
+                "Check mca parameter coll_han_packbuf_max_count (currently %ld).\n",
+                nbufs, MAX_BUF_COUNT, mca_coll_han_component.han_packbuf_max_count);
             break;
         }
     }
+
+    /* although we could feasibly disqualify the higher-level alltoallv
+    algorithm for these conditions, they represent invalid user parameters, so
+    let's fail and tell the user why.  */
     if (nbufs < 2) {
         opal_output_verbose(1, mca_coll_han_component.han_output,
-                    "ERROR: Need at least 2 buffers from mca_coll_han_component.pack_buffers!");
+                    "ERROR: Need at least 2 buffers from HAN pack buffers!  "
+                    "Check mca parameter coll_han_packbuf_max_count (currently %ld)\n",
+                    mca_coll_han_component.han_packbuf_max_count);
+        return MPI_ERR_NO_MEM;
+    }
+    if (buf_len < 16) {
+        opal_output_verbose(1, mca_coll_han_component.han_output,
+                    "ERROR: Need a buffer that can hold at least 16 bytes!  "
+                    "Check mca parameter coll_han_packbuf_bytes (currently %ld)\n",
+                    mca_coll_han_component.han_packbuf_bytes);
         return MPI_ERR_NO_MEM;
     }
 
