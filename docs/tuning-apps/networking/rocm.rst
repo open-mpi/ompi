@@ -79,7 +79,7 @@ using Open MPI and UCX ROCm support is something like this:
 .. code-block::
 
    shell$ mpirun -n 2 --mca pml ucx \
-           ./osu_latency -d rocm D D
+           ./osu_latency D D
 
 Note: some additional configure flags are required to compile the OSU
 benchmark to support ROCm buffers. Please refer to the `UCX ROCm
