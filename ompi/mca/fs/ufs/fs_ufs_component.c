@@ -32,6 +32,15 @@
 
 int mca_fs_ufs_priority = 10;
 int mca_fs_ufs_lock_algorithm=0; /* auto */
+
+static const mca_base_var_enum_value_t ompi_fs_ufs_lock_algorithm_modes[] = {
+    {.value = 0, .string = "auto"},
+    {.value = 1, .string = "skip locking"},
+    {.value = 2, .string = "always lock entire file"},
+    {.value = 3, .string = "lock specific ranges"},
+    {.string = NULL},
+};
+
 /*
  * Private functions
  */
@@ -73,6 +82,8 @@ mca_fs_base_component_2_0_0_t mca_fs_ufs_component = {
 
 static int register_component(void)
 {
+    mca_base_var_enum_t *new_enum;
+
     mca_fs_ufs_priority = 10;
     (void) mca_base_component_var_register(&mca_fs_ufs_component.fsm_version,
                                            "priority", "Priority of the fs ufs component",
@@ -81,15 +92,17 @@ static int register_component(void)
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_fs_ufs_priority);
 
+    (void) mca_base_var_enum_create("mca_fs_ufs_lock_algorithm", ompi_fs_ufs_lock_algorithm_modes, &new_enum);
+
     mca_fs_ufs_lock_algorithm = 0;
     (void) mca_base_component_var_register(&mca_fs_ufs_component.fsm_version,
                                            "lock_algorithm", "Locking algorithm used by the fs ufs component. "
-                                           " 0: auto (default), 1: skip locking, 2: always lock entire file, "
-                                           "3: lock only specific ranges",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           "(default: auto)",
+                                           MCA_BASE_VAR_TYPE_INT, new_enum, 0, 0,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
-                                           &mca_fs_ufs_lock_algorithm );
+                                           &mca_fs_ufs_lock_algorithm);
+    OBJ_RELEASE(new_enum);
 
     return OMPI_SUCCESS;
 }
