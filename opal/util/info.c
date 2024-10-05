@@ -69,19 +69,24 @@ OBJ_CLASS_INSTANCE(opal_info_entry_t, opal_list_item_t, info_entry_constructor,
  * key-value pairs that are not internal and that had been referenced,
  * either through opal_info_get or opal_info_set.
  */
-static int opal_info_dup_impl(opal_info_t *info, opal_info_t **newinfo, bool public_only)
+static int opal_info_dup_impl(opal_info_t *info, opal_info_t **newinfo, bool public)
 {
     opal_info_entry_t *iterator;
 
     OPAL_THREAD_LOCK(info->i_lock);
     OPAL_LIST_FOREACH (iterator, &info->super, opal_info_entry_t) {
         /* skip keys that are internal if we didn't ask for them */
-        if (public_only && (iterator->ie_internal || iterator->ie_referenced == 0)) continue;
+        if (public && (iterator->ie_internal || iterator->ie_referenced == 0)) continue;
         /* create a new info entry and retain the string objects */
         opal_info_entry_t *newentry = OBJ_NEW(opal_info_entry_t);
         newentry->ie_key = iterator->ie_key;
         OBJ_RETAIN(iterator->ie_key);
         newentry->ie_value = iterator->ie_value;
+        if (public) {
+            /* for public info-dup we also duplicate the references so that subsequent
+             * duplications see the same info keys */
+            newentry->ie_referenced = iterator->ie_referenced;
+        }
         OBJ_RETAIN(iterator->ie_value);
         opal_list_append (&((*newinfo)->super), (opal_list_item_t *) newentry);
     }
