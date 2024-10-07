@@ -120,6 +120,8 @@ static ucc_coll_type_t mca_coll_ucc_str_to_type(const char *str)
         return UCC_COLL_TYPE_ALLGATHERV;
     } else if (0 == strcasecmp(str, "reduce")) {
         return UCC_COLL_TYPE_REDUCE;
+    } else if (0 == strcasecmp(str, "reduce_scatter_block")) {
+        return UCC_COLL_TYPE_REDUCE_SCATTER;
     }
     UCC_ERROR("incorrect value for cts: %s, allowed: %s",
               str, COLL_UCC_CTS_STR);

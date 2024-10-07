@@ -12,21 +12,22 @@
 
 AM_CPPFLAGS = $(coll_ucc_CPPFLAGS)
 
-coll_ucc_sources =           \
-		coll_ucc.h           \
-		coll_ucc_debug.h     \
-		coll_ucc_dtypes.h    \
-		coll_ucc_common.h    \
-		coll_ucc_module.c    \
-		coll_ucc_component.c \
-		coll_ucc_barrier.c   \
-		coll_ucc_bcast.c     \
-		coll_ucc_allreduce.c \
-		coll_ucc_reduce.c    \
-		coll_ucc_alltoall.c  \
-		coll_ucc_alltoallv.c \
-		coll_ucc_allgather.c \
-		coll_ucc_allgatherv.c
+coll_ucc_sources =            \
+		coll_ucc.h            \
+		coll_ucc_debug.h      \
+		coll_ucc_dtypes.h     \
+		coll_ucc_common.h     \
+		coll_ucc_module.c     \
+		coll_ucc_component.c  \
+		coll_ucc_barrier.c    \
+		coll_ucc_bcast.c      \
+		coll_ucc_allreduce.c  \
+		coll_ucc_reduce.c     \
+		coll_ucc_alltoall.c   \
+		coll_ucc_alltoallv.c  \
+		coll_ucc_allgather.c  \
+		coll_ucc_allgatherv.c \
+		coll_ucc_reduce_scatter_block.c
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
