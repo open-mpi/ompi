@@ -43,8 +43,6 @@ const char *mca_fcoll_vulcan_component_version_string =
  * Global variables
  */
 int mca_fcoll_vulcan_priority = 10;
-int mca_fcoll_vulcan_num_groups = 1;
-int mca_fcoll_vulcan_write_chunksize = -1;
 int mca_fcoll_vulcan_async_io = 0;
 
 /*
@@ -90,20 +88,6 @@ vulcan_register(void)
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY, &mca_fcoll_vulcan_priority);
-
-    mca_fcoll_vulcan_num_groups = 1;
-    (void) mca_base_component_var_register(&mca_fcoll_vulcan_component.fcollm_version,
-                                           "num_groups", "Number of subgroups created by the vulcan component",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY, &mca_fcoll_vulcan_num_groups);
-
-    mca_fcoll_vulcan_write_chunksize = -1;
-    (void) mca_base_component_var_register(&mca_fcoll_vulcan_component.fcollm_version,
-                                           "write_chunksize", "Chunk size written at once. Default: stripe_size of the file system",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY, &mca_fcoll_vulcan_write_chunksize);
 
     mca_fcoll_vulcan_async_io = 0;
     (void) mca_base_component_var_register(&mca_fcoll_vulcan_component.fcollm_version,

@@ -40,8 +40,6 @@ BEGIN_C_DECLS
 /* Globally exported variables */
 
 extern int mca_fcoll_vulcan_priority;
-extern int mca_fcoll_vulcan_num_groups;
-extern int mca_fcoll_vulcan_write_chunksize;
 extern int mca_fcoll_vulcan_async_io;
 extern int mca_fcoll_vulcan_use_accelerator_buffers;
 
