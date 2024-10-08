@@ -23,6 +23,16 @@ system.
 
   * This library is required; Open MPI will not build without it.
   * **Minimum version required:** |hwloc_min_version|
+
+    .. note:: While the minimum version of Hwloc will *work*, it may
+              still have bugs and/or have less functionality as
+              compared to later versions.
+
+              Other than the Hwloc restriction about v3.0.0 and beyond
+              (see below), the Open MPI community generally recomends
+              using the latest available version of Hwloc unless there
+              is a specific reason not to.
+
   * **Version embedded in Open MPI distribution:**
     |hwloc_embedded_version|
 
@@ -62,11 +72,32 @@ system.
   * **Version embedded in Open MPI distribution:**
     |event_embedded_version|
 
-* `PMIx <https://pmix.org/>`_
+    .. note:: The Open MPI community has heavily tested Libevent
+              |event_embedded_version|.  Other versions should *work*,
+              but |mdash| unlike Hwloc, OpenPMIx, and PRRTE |mdash|
+              there is not much reason to upgrade to use a later
+              version of Libevent.
+
+* `OpenPMIx <https://docs.openpmix.org/>`_
 
   * This library is required; Open MPI will not build without it.
   * **Minimum version required when building without PRRTE:**
     |pmix_min_version|
+
+    .. note:: While the minimum version of OpenPMIx will *work*, it
+              may still have bugs and/or have less functionality as
+              compared to later versions.
+
+              The Open MPI community generally recomends using the
+              latest available version of OpenPMIx unless there is a
+              specific reason not to.
+
+    .. note:: While `OpenPMIx <https://docs.openpmix.org/>`_ is the
+              formal name of the software that implements the `PMIx
+              <https://pmix.org/>`_ standard, the term "PMIx" is used
+              extensively throughout this documentation to refer to
+              the OpenPMIx software package.
+
   * **Minimum version required when building with PRRTE:** `See the
     PRRTE project documentation <https://docs.prrte.org/>`_.
   * **Version embedded in Open MPI distribution:**
@@ -77,10 +108,15 @@ system.
   * This library is optional in some environments. See below.
   * **Minimum version required:** |prte_min_version|
 
-    .. note:: While building Open MPI with PRRTE |prte_min_version|
-              *works*, you will not get a fully-populated
-              ``mpirun(1)`` man page.  The Open MPI community
-              recommends that you use PRRTE version 3.0.1 or higher.
+    .. note:: While the minimum version of PRRTE will *work*, it may
+              still have bugs and/or have less functionality as
+              compared to later versions.  For example, if you build
+              and run with |prte_min_version|, you will not get a
+              fully-populated ``mpirun(1)`` man page.
+
+              The Open MPI community generally recomends using the
+              latest available version of PRRTE unless there is a
+              specific reason not to.
 
   * **Version embedded in Open MPI distribution:**
     |prte_embedded_version|
