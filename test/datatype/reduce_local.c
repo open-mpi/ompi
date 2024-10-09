@@ -20,6 +20,7 @@
 /* needed for posix_memalign() and getopt() */
 #define _POSIX_C_SOURCE 200809L
 
+#include "ompi_config.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
