@@ -1,0 +1,75 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
+/*
+ * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ *                         University Research and Technology
+ *                         Corporation.  All rights reserved.
+ * Copyright (c) 2004-2005 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+ *                         University of Stuttgart.  All rights reserved.
+ * Copyright (c) 2004-2005 The Regents of the University of California.
+ *                         All rights reserved.
+ * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ *                         reserved.
+ * Copyright (c) 2015-2019 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+PROTOTYPE VOID get_accumulate(BUFFER_ASYNC x1, COUNT origin_count,
+                              DATATYPE origin_datatype, BUFFER_ASYNC_OUT x2,
+                              COUNT result_count, DATATYPE result_datatype,
+                              RANK target_rank, DISP target_disp,
+                              COUNT target_count, DATATYPE target_datatype,
+                              OP op, WIN win)
+{
+    int c_ierr;
+    MPI_Datatype c_origin_datatype, c_origin_type = PMPI_Type_f2c(*origin_datatype);
+    MPI_Datatype c_result_datatype, c_result_type = PMPI_Type_f2c(*result_datatype);
+    MPI_Datatype c_target_datatype = PMPI_Type_f2c(*target_datatype);
+    MPI_Win c_win = PMPI_Win_f2c(*win);
+    MPI_Op c_op = PMPI_Op_f2c(*op);
+    char *origin_addr = OMPI_CFI_BASE_ADDR(x1);
+    @COUNT_TYPE@ c_origin_count = (@COUNT_TYPE@) *origin_count;
+    char *result_addr = OMPI_CFI_BASE_ADDR(x2);
+    @COUNT_TYPE@ c_result_count = (@COUNT_TYPE@) *result_count;
+
+    OMPI_CFI_2_C(x1, c_origin_count, c_origin_type, c_origin_datatype, c_ierr);
+    if (MPI_SUCCESS != c_ierr) {
+        if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+        OMPI_ERRHANDLER_INVOKE(c_win, c_ierr, FUNC_NAME)
+        return;
+    }
+    OMPI_CFI_2_C(x2, c_result_count, c_result_type, c_result_datatype, c_ierr);
+    if (MPI_SUCCESS != c_ierr) {
+        if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+        if (c_origin_datatype != c_origin_type) {
+            ompi_datatype_destroy(&c_origin_datatype);
+        }
+        OMPI_ERRHANDLER_INVOKE(c_win, c_ierr, FUNC_NAME)
+        return;
+    }
+    c_ierr = @INNER_CALL@(OMPI_F2C_BOTTOM(origin_addr),
+                          c_origin_count,
+                          c_origin_datatype,
+                          OMPI_F2C_BOTTOM(result_addr),
+                          c_result_count,
+                          c_result_datatype,
+                          OMPI_FINT_2_INT(*target_rank),
+                          *target_disp,
+                          OMPI_FINT_2_INT(*target_count),
+                          c_target_datatype, c_op, c_win);
+    if (c_origin_datatype != c_origin_type) {
+        ompi_datatype_destroy(&c_origin_datatype);
+    }
+    if (c_result_datatype != c_result_type) {
+        ompi_datatype_destroy(&c_result_datatype);
+    }
+    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+}

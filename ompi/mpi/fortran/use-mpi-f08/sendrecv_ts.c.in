@@ -1,0 +1,75 @@
+/*
+ * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ *                         University Research and Technology
+ *                         Corporation.  All rights reserved.
+ * Copyright (c) 2004-2005 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+ *                         University of Stuttgart.  All rights reserved.
+ * Copyright (c) 2004-2005 The Regents of the University of California.
+ *                         All rights reserved.
+ * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015-2019 Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+PROTOTYPE VOID sendrecv(BUFFER x1, COUNT sendcount, DATATYPE sendtype,
+                        RANK dest, TAG sendtag, BUFFER_OUT x2,
+                        COUNT recvcount, DATATYPE recvtype,
+                        RANK source, TAG recvtag, COMM comm,
+                        STATUS_OUT status)
+{
+    int c_ierr;
+    MPI_Comm c_comm = PMPI_Comm_f2c (*comm);
+
+    MPI_Datatype c_senddatatype, c_sendtype = PMPI_Type_f2c(*sendtype);
+    MPI_Datatype c_recvdatatype, c_recvtype = PMPI_Type_f2c(*recvtype);
+    MPI_Status c_status;
+    void *sendbuf = OMPI_CFI_BASE_ADDR(x1);
+    @COUNT_TYPE@ c_sendcount = (@COUNT_TYPE@) *sendcount;
+    void *recvbuf = OMPI_CFI_BASE_ADDR(x2);
+    @COUNT_TYPE@ c_recvcount = (@COUNT_TYPE@) *recvcount;
+
+    OMPI_CFI_2_C(x1, c_sendcount, c_sendtype, c_senddatatype, c_ierr);
+    if (MPI_SUCCESS != c_ierr) {
+        if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+        OMPI_ERRHANDLER_INVOKE(c_comm, c_ierr, FUNC_NAME);
+        return;
+    }
+    OMPI_CFI_2_C(x2, c_recvcount, c_recvtype, c_recvdatatype, c_ierr);
+    if (MPI_SUCCESS != c_ierr) {
+        if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+        if (c_senddatatype != c_sendtype) {
+            ompi_datatype_destroy(&c_senddatatype);
+        }
+        OMPI_ERRHANDLER_INVOKE(c_comm, c_ierr, FUNC_NAME);
+        return;
+    }
+
+    c_ierr = @INNER_CALL@(OMPI_F2C_BOTTOM(sendbuf), c_sendcount,
+                          c_senddatatype,
+                          OMPI_FINT_2_INT(*dest),
+                          OMPI_FINT_2_INT(*sendtag),
+                          OMPI_F2C_BOTTOM(recvbuf), c_recvcount,
+                          c_recvdatatype, OMPI_FINT_2_INT(*source),
+                          OMPI_FINT_2_INT(*recvtag),
+                          c_comm, &c_status);
+    if (c_senddatatype != c_sendtype) {
+        ompi_datatype_destroy(&c_senddatatype);
+    }
+    if (c_recvdatatype != c_recvtype) {
+        ompi_datatype_destroy(&c_recvdatatype);
+    }
+    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+
+    if (MPI_SUCCESS == c_ierr &&
+        !OMPI_IS_FORTRAN_STATUS_IGNORE(status)) {
+        PMPI_Status_c2f(&c_status, status);
+    }
+}

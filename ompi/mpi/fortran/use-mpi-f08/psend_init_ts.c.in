@@ -1,0 +1,77 @@
+/*
+ * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ *                         University Research and Technology
+ *                         Corporation.  All rights reserved.
+ * Copyright (c) 2004-2005 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+ *                         University of Stuttgart.  All rights reserved.
+ * Copyright (c) 2004-2005 The Regents of the University of California.
+ *                         All rights reserved.
+ * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2020      Sandia National Laboratories. All rights reserved.
+ * Copyright (c) 2021      Bull S.A.S. All rights reserved.
+ * Copyright (c) 2023      Triad National Security, LLC. All rights
+ *                         reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+
+/*
+ * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ *                         University Research and Technology
+ *                         Corporation.  All rights reserved.
+ * Copyright (c) 2004-2005 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+ *                         University of Stuttgart.  All rights reserved.
+ * Copyright (c) 2004-2005 The Regents of the University of California.
+ *                         All rights reserved.
+ * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015-2019 Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+PROTOTYPE VOID psend_init(BUFFER_ASYNC x, INT partitions, PARTITIONED_COUNT count, DATATYPE datatype, 
+		          RANK dest, TAG tag, COMM comm, INFO info, REQUEST_OUT request)
+{
+    int c_ierr;
+    MPI_Info c_info;
+    MPI_Datatype c_datatype, c_type = PMPI_Type_f2c(*datatype);
+    MPI_Request c_req;
+    MPI_Comm c_comm;
+    void *buf = OMPI_CFI_BASE_ADDR(x);
+    @COUNT_TYPE@ c_count = (@COUNT_TYPE@) *count;
+
+    c_info = PMPI_Info_f2c(*info);
+    c_comm = PMPI_Comm_f2c (*comm);
+
+    OMPI_CFI_2_C(x, c_count, c_type, c_datatype, c_ierr);
+    c_ierr = @INNER_CALL@(OMPI_F2C_BOTTOM(buf), 
+                          OMPI_FINT_2_INT(*partitions),
+                          c_count,
+                          c_type, OMPI_FINT_2_INT(*dest),
+                          OMPI_FINT_2_INT(*tag),
+                          c_comm, c_info, &c_req);
+    if (c_datatype != c_type) {
+        ompi_datatype_destroy(&c_datatype);
+    }
+   if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+
+   if (MPI_SUCCESS == c_ierr) {
+      *request = PMPI_Request_c2f(c_req);
+   }
+}

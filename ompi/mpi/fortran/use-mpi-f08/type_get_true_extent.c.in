@@ -1,0 +1,30 @@
+/*
+ * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ *                         University Research and Technology
+ *                         Corporation.  All rights reserved.
+ * Copyright (c) 2004-2005 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+ *                         University of Stuttgart.  All rights reserved.
+ * Copyright (c) 2004-2005 The Regents of the University of California.
+ *                         All rights reserved.
+ * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+
+PROTOTYPE VOID type_get_true_extent(DATATYPE datatype, AINT_OUT true_lb, AINT_OUT true_extent)
+{
+    int c_ierr;
+    MPI_Datatype c_type = PMPI_Type_f2c(*datatype);
+
+    c_ierr = @INNER_CALL@(c_type, true_lb, true_extent);
+    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+}

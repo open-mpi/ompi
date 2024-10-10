@@ -1,0 +1,63 @@
+/*
+ * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ *                         University Research and Technology
+ *                         Corporation.  All rights reserved.
+ * Copyright (c) 2004-2005 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+ *                         University of Stuttgart.  All rights reserved.
+ * Copyright (c) 2004-2005 The Regents of the University of California.
+ *                         All rights reserved.
+ * Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+
+/*
+ * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ *                         University Research and Technology
+ *                         Corporation.  All rights reserved.
+ * Copyright (c) 2004-2005 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
+ * Copyright (c) 2004-2014 High Performance Computing Center Stuttgart,
+ *                         University of Stuttgart.  All rights reserved.
+ * Copyright (c) 2004-2005 The Regents of the University of California.
+ *                         All rights reserved.
+ * Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+
+
+PROTOTYPE VOID win_allocate_shared(AINT size, DISP disp_unit,
+                                   INFO info, COMM comm, C_PTR_OUT baseptr,
+                                   WIN win)
+{
+    int c_ierr;
+    MPI_Info c_info;
+    MPI_Comm c_comm;
+    MPI_Win c_win;
+
+    c_info = PMPI_Info_f2c(*info);
+    c_comm = PMPI_Comm_f2c(*comm);
+
+    c_ierr = @INNER_CALL@(*size, OMPI_FINT_2_INT(*disp_unit),
+                                     c_info, c_comm,
+                                     baseptr, &c_win);
+    *win = PMPI_Win_c2f(c_win);
+    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+}
