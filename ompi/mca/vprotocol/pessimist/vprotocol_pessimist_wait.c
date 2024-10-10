@@ -20,7 +20,7 @@ static int vprotocol_pessimist_request_no_free(ompi_request_t **req) {
 }
 
 #define PREPARE_REQUESTS_WITH_NO_FREE(count, requests) do { \
-    for (typeof(count) i = 0; i < count; i++)     \
+    for (size_t i = 0; i < count; i++)     \
     { \
         if(requests[i] == MPI_REQUEST_NULL) continue; \
         requests[i]->req_free = vprotocol_pessimist_request_no_free; \

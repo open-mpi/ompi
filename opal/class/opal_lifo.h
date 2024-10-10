@@ -30,7 +30,6 @@
 
 #include "opal_config.h"
 #include "opal/class/opal_list.h"
-#include <time.h>
 
 #include "opal/mca/threads/mutex.h"
 #include "opal/sys/atomic.h"
@@ -92,17 +91,7 @@ opal_read_counted_pointer(volatile opal_counted_pointer_t *volatile addr,
 /**
  * @brief Helper function for lifo/fifo to sleep this thread if excessive contention is detected
  */
-static inline void _opal_lifo_release_cpu(void)
-{
-    /* NTH: there are many ways to cause the current thread to be suspended. This one
-     * should work well in most cases. Another approach would be to use poll (NULL, 0, ) but
-     * the interval will be forced to be in ms (instead of ns or us). Note that there
-     * is a performance improvement for the lifo test when this call is made on detection
-     * of contention but it may not translate into actually MPI or application performance
-     * improvements. */
-    static struct timespec interval = {.tv_sec = 0, .tv_nsec = 100};
-    nanosleep(&interval, NULL);
-}
+void opal_lifo_release_cpu(void);
 
 /* Atomic Last In First Out lists. If we are in a multi-threaded environment then the
  * atomicity is insured via the compare-and-swap operation, if not we simply do a read
@@ -225,7 +214,7 @@ static inline opal_list_item_t *opal_lifo_pop_atomic(opal_lifo_t *lifo)
         if (++attempt == 5) {
             /* deliberately suspend this thread to allow other threads to run. this should
              * only occur during periods of contention on the lifo. */
-            _opal_lifo_release_cpu();
+            opal_lifo_release_cpu();
             attempt = 0;
         }
 
