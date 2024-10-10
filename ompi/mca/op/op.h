@@ -85,6 +85,7 @@
 #include "ompi_config.h"
 
 #include "opal/class/opal_object.h"
+#include "opal/mca/accelerator/accelerator.h"
 #include "ompi/mca/mca.h"
 
 /*
@@ -266,6 +267,22 @@ typedef void (*ompi_op_base_handler_fn_1_0_0_t)(const void *, void *, int *,
 
 typedef ompi_op_base_handler_fn_1_0_0_t ompi_op_base_handler_fn_t;
 
+/**
+ * Typedef for 2-buffer op functions on streams/devices.
+ *
+ * We don't use MPI_User_function because this would create a
+ * confusing dependency loop between this file and mpi.h.  So this is
+ * repeated code, but it's better this way (and this typedef will
+ * never change, so there's not much of a maintenance worry).
+ */
+typedef void (*ompi_op_base_stream_handler_fn_1_0_0_t)(const void *, void *, int *,
+                                                       struct ompi_datatype_t **,
+                                                       int device,
+                                                       opal_accelerator_stream_t *stream,
+                                                       struct ompi_op_base_module_1_0_0_t *);
+
+typedef ompi_op_base_stream_handler_fn_1_0_0_t ompi_op_base_stream_handler_fn_t;
+
 /*
  * Typedef for 3-buffer (two input and one output) op functions.
  */
@@ -276,6 +293,19 @@ typedef void (*ompi_op_base_3buff_handler_fn_1_0_0_t)(const void *,
                                                       struct ompi_op_base_module_1_0_0_t *);
 
 typedef ompi_op_base_3buff_handler_fn_1_0_0_t ompi_op_base_3buff_handler_fn_t;
+
+/*
+ * Typedef for 3-buffer (two input and one output) op functions on streams.
+ */
+typedef void (*ompi_op_base_3buff_stream_handler_fn_1_0_0_t)(const void *,
+                                                             const void *,
+                                                             void *, int *,
+                                                             struct ompi_datatype_t **,
+                                                             int device,
+                                                             opal_accelerator_stream_t*,
+                                                             struct ompi_op_base_module_1_0_0_t *);
+
+typedef ompi_op_base_3buff_stream_handler_fn_1_0_0_t ompi_op_base_3buff_stream_handler_fn_t;
 
 /**
  * Op component initialization
@@ -376,10 +406,18 @@ typedef struct ompi_op_base_module_1_0_0_t {
         is being used for */
     struct ompi_op_t *opm_op;
 
+    bool opm_device_enabled;
+
     /** Function pointers for all the different datatypes to be used
         with the MPI_Op that this module is used with */
-    ompi_op_base_handler_fn_1_0_0_t opm_fns[OMPI_OP_BASE_TYPE_MAX];
-    ompi_op_base_3buff_handler_fn_1_0_0_t opm_3buff_fns[OMPI_OP_BASE_TYPE_MAX];
+    union {
+        ompi_op_base_handler_fn_1_0_0_t        opm_fns[OMPI_OP_BASE_TYPE_MAX];
+        ompi_op_base_stream_handler_fn_1_0_0_t opm_stream_fns[OMPI_OP_BASE_TYPE_MAX];
+    };
+    union {
+        ompi_op_base_3buff_handler_fn_1_0_0_t        opm_3buff_fns[OMPI_OP_BASE_TYPE_MAX];
+        ompi_op_base_3buff_stream_handler_fn_1_0_0_t opm_3buff_stream_fns[OMPI_OP_BASE_TYPE_MAX];
+    };
 } ompi_op_base_module_1_0_0_t;
 
 /**
@@ -409,12 +447,36 @@ typedef ompi_op_base_op_fns_1_0_0_t ompi_op_base_op_fns_t;
  * pointers to the corresopnding modules (so that we can properly
  * RETAIN/RELEASE them)
  */
+typedef struct ompi_op_base_op_stream_fns_1_0_0_t {
+    ompi_op_base_stream_handler_fn_1_0_0_t fns[OMPI_OP_BASE_TYPE_MAX];
+    ompi_op_base_module_t *modules[OMPI_OP_BASE_TYPE_MAX];
+} ompi_op_base_op_stream_fns_1_0_0_t;
+
+typedef ompi_op_base_op_stream_fns_1_0_0_t ompi_op_base_op_stream_fns_t;
+
+/**
+ * Struct that is used in op.h to hold all the function pointers and
+ * pointers to the corresopnding modules (so that we can properly
+ * RETAIN/RELEASE them)
+ */
 typedef struct ompi_op_base_op_3buff_fns_1_0_0_t {
     ompi_op_base_3buff_handler_fn_1_0_0_t fns[OMPI_OP_BASE_TYPE_MAX];
     ompi_op_base_module_t *modules[OMPI_OP_BASE_TYPE_MAX];
 } ompi_op_base_op_3buff_fns_1_0_0_t;
 
 typedef ompi_op_base_op_3buff_fns_1_0_0_t ompi_op_base_op_3buff_fns_t;
+
+/**
+ * Struct that is used in op.h to hold all the function pointers and
+ * pointers to the corresopnding modules (so that we can properly
+ * RETAIN/RELEASE them)
+ */
+typedef struct ompi_op_base_op_3buff_stream_fns_1_0_0_t {
+    ompi_op_base_3buff_stream_handler_fn_1_0_0_t fns[OMPI_OP_BASE_TYPE_MAX];
+    ompi_op_base_module_t *modules[OMPI_OP_BASE_TYPE_MAX];
+} ompi_op_base_op_3buff_stream_fns_1_0_0_t;
+
+typedef ompi_op_base_op_3buff_stream_fns_1_0_0_t ompi_op_base_op_3buff_stream_fns_t;
 
 /*
  * Macro for use in modules that are of type op v2.0.0
