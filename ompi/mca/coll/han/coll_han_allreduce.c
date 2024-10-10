@@ -132,7 +132,7 @@ mca_coll_han_allreduce_intra(const void *sbuf,
                                 seg_count);
 
     /* Determine number of elements sent per task. */
-    OPAL_OUTPUT_VERBOSE((10, mca_coll_han_component.han_output,
+    OPAL_OUTPUT_VERBOSE((30, mca_coll_han_component.han_output,
                          "In HAN Allreduce seg_size %d seg_count %d count %zu\n",
                          mca_coll_han_component.han_allreduce_segsize, seg_count, count));
     int num_segments = (count + seg_count - 1) / seg_count;
