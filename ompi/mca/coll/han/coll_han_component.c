@@ -126,9 +126,9 @@ static int han_open(void)
         /* opal_class_t *frag_class */
         OBJ_CLASS(opal_free_list_item_t),
         /* payload_buffer_size, payload_buffer_alignment */
-        COLL_HAN_PACKBUF_PAYLOAD_BYTES, 8,
+        mca_coll_han_component.han_packbuf_bytes, 8,
         /* num_elements_to_alloc, max_elements_to_alloc, num_elements_per_alloc */
-        0, 32, 8,
+        0, mca_coll_han_component.han_packbuf_max_count, 8,
         /* *mpool, rcache_reg_flags, *rcache, */
         NULL, 0, NULL,
         /* fn_t item_init, void *ctx */
@@ -456,6 +456,20 @@ static int han_register(void)
                                            MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
                                            OPAL_INFO_LVL_3,
                                            MCA_BASE_VAR_SCOPE_READONLY, &cs->han_reproducible);
+
+    cs->han_packbuf_bytes = 128*1024;
+    (void) mca_base_component_var_register(c, "packbuf_bytes",
+                                           "The number of bytes in each HAN packbuf.",
+                                           MCA_BASE_VAR_TYPE_INT64_T, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+                                           &cs->han_packbuf_bytes);
+    cs->han_packbuf_max_count = 32;
+    (void) mca_base_component_var_register(c, "packbuf_max_count",
+                                           "The maximum number of packbufs that are allowed to be allocated.",
+                                           MCA_BASE_VAR_TYPE_INT64_T, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+                                           &cs->han_packbuf_max_count);
+
     /*
      * Han algorithms MCA parameters for each collective.
      * Shows algorithms thanks to enumerator

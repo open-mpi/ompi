@@ -294,6 +294,8 @@ typedef struct mca_coll_han_component_t {
     int max_dynamic_errors;
 
     opal_free_list_t pack_buffers;
+    int64_t han_packbuf_max_count;
+    int64_t han_packbuf_bytes;
 } mca_coll_han_component_t;
 
 /*
@@ -575,8 +577,5 @@ static inline struct mca_smsc_endpoint_t *mca_coll_han_get_smsc_endpoint (struct
 
     return (struct mca_smsc_endpoint_t *) proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_SMSC];
 }
-
-#define COLL_HAN_PACKBUF_PAYLOAD_BYTES (128*1024)
-
 
 #endif                          /* MCA_COLL_HAN_EXPORT_H */
