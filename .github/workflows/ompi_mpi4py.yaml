@@ -54,6 +54,7 @@ jobs:
               --disable-sphinx
               --disable-mpi-fortran
               --disable-oshmem
+              --disable-silent-rules
               --prefix=/opt/openmpi
               LDFLAGS=-Wl,-rpath,/opt/openmpi/lib
       working-directory: mpi-build
