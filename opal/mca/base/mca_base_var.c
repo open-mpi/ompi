@@ -20,7 +20,7 @@
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2018      Triad National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2020      Google, LLC. All rights reserved.
+ * Copyright (c) 2020-2024 Google, LLC. All rights reserved.
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * Copyright (c) 2022      Computer Architecture and VLSI Systems (CARV)
  *                         Laboratory, ICS Forth. All rights reserved.
@@ -137,6 +137,11 @@ OBJ_CLASS_INSTANCE(mca_base_var_t, opal_object_t, var_constructor, var_destructo
 static void fv_constructor(mca_base_var_file_value_t *p);
 static void fv_destructor(mca_base_var_file_value_t *p);
 OBJ_CLASS_INSTANCE(mca_base_var_file_value_t, opal_list_item_t, fv_constructor, fv_destructor);
+
+static void include_list_contructor(mca_base_var_include_list_t *p);
+static void include_list_destructor(mca_base_var_include_list_t *p);
+OBJ_CLASS_INSTANCE(mca_base_var_include_list_t, opal_object_t, include_list_contructor,
+                   include_list_destructor);
 
 static const char *mca_base_var_source_file(const mca_base_var_t *var)
 {
@@ -766,6 +771,9 @@ static int var_set_from_string(mca_base_var_t *var, char *src)
     case MCA_BASE_VAR_TYPE_VERSION_STRING:
         var_set_string(var, src);
         break;
+    case MCA_BASE_VAR_TYPE_INCLUDE_LIST:
+        mca_base_var_parse_include_list(src, &var->mbv_storage->ilistval);
+        break;
     case MCA_BASE_VAR_TYPE_MAX:
         return OPAL_ERROR;
     }
@@ -803,11 +811,13 @@ int mca_base_var_set_value(int vari, const void *value, size_t size, mca_base_va
         }
     }
 
-    if (MCA_BASE_VAR_TYPE_STRING != var->mbv_type
-        && MCA_BASE_VAR_TYPE_VERSION_STRING != var->mbv_type) {
-        memmove(var->mbv_storage, value, ompi_var_type_sizes[var->mbv_type]);
+    if (MCA_BASE_VAR_TYPE_STRING == var->mbv_type ||
+        MCA_BASE_VAR_TYPE_VERSION_STRING == var->mbv_type) {
+        ret = var_set_string(var, (char *) value);
+    } else if (MCA_BASE_VAR_TYPE_INCLUDE_LIST == var->mbv_type) {
+        ret = mca_base_var_parse_include_list((char *) value, &var->mbv_storage->ilistval);
     } else {
-        var_set_string(var, (char *) value);
+        memmove(var->mbv_storage, value, ompi_var_type_sizes[var->mbv_type]);
     }
 
     var->mbv_source = source;
@@ -817,7 +827,7 @@ int mca_base_var_set_value(int vari, const void *value, size_t size, mca_base_va
         var->mbv_source_file = append_filename_to_list(source_file);
     }
 
-    return OPAL_SUCCESS;
+    return ret;
 }
 
 /*
@@ -847,11 +857,12 @@ int mca_base_var_deregister(int vari)
     }
 
     /* Release the current value if it is a string. */
-    if ((MCA_BASE_VAR_TYPE_STRING == var->mbv_type
-         || MCA_BASE_VAR_TYPE_VERSION_STRING == var->mbv_type)
-        && var->mbv_storage->stringval) {
+    if (MCA_BASE_VAR_TYPE_STRING == var->mbv_type
+        || MCA_BASE_VAR_TYPE_VERSION_STRING == var->mbv_type) {
         free(var->mbv_storage->stringval);
         var->mbv_storage->stringval = NULL;
+    } else if (MCA_BASE_VAR_TYPE_INCLUDE_LIST == var->mbv_type) {
+        OBJ_DESTRUCT(&var->mbv_storage->ilistval);
     } else {
         OPAL_MCA_VAR_MBV_ENUMERATOR_FREE(var->mbv_enumerator);
     }
@@ -1046,9 +1057,11 @@ int mca_base_var_build_env(char ***env, int *num_env, bool internal)
             continue;
         }
 
-        if ((MCA_BASE_VAR_TYPE_STRING == var->mbv_type
+        if (((MCA_BASE_VAR_TYPE_STRING == var->mbv_type
              || MCA_BASE_VAR_TYPE_VERSION_STRING == var->mbv_type)
-            && NULL == var->mbv_storage->stringval) {
+            && NULL == var->mbv_storage->stringval) ||
+            (MCA_BASE_VAR_TYPE_INCLUDE_LIST == var->mbv_type &&
+             NULL == var->mbv_storage->ilistval.items)) {
             continue;
         }
 
@@ -1331,7 +1344,11 @@ static int register_variable(const char *project_name, const char *framework_nam
         align = OPAL_ALIGNMENT_DOUBLE;
         break;
     case MCA_BASE_VAR_TYPE_VERSION_STRING:
+        /* fall through */
     case MCA_BASE_VAR_TYPE_STRING:
+        /* fall through */
+    case MCA_BASE_VAR_TYPE_INCLUDE_LIST:
+        /* fall through */
     default:
         align = 0;
         break;
@@ -1532,6 +1549,9 @@ int mca_base_var_register(const char *project_name, const char *framework_name,
     /* Only integer variables can have enumerator */
     assert(NULL == enumerator
            || (MCA_BASE_VAR_TYPE_INT == type || MCA_BASE_VAR_TYPE_UNSIGNED_INT == type));
+
+
+    assert(MCA_BASE_VAR_TYPE_INCLUDE_LIST != type || ((mca_base_var_include_list_t *) storage)->super.obj_reference_count > 0);
 
     ret = register_variable(project_name, framework_name, component_name, variable_name,
                             description, type, enumerator, bind, flags, info_lvl, scope, -1,
@@ -1855,25 +1875,26 @@ static void var_constructor(mca_base_var_t *var)
  */
 static void var_destructor(mca_base_var_t *var)
 {
-    if ((MCA_BASE_VAR_TYPE_STRING == var->mbv_type
-         || MCA_BASE_VAR_TYPE_VERSION_STRING == var->mbv_type)
-        && NULL != var->mbv_storage && NULL != var->mbv_storage->stringval) {
-        free(var->mbv_storage->stringval);
-        var->mbv_storage->stringval = NULL;
+    if (NULL != var->mbv_storage) {
+        if (MCA_BASE_VAR_TYPE_STRING == var->mbv_type
+            || MCA_BASE_VAR_TYPE_VERSION_STRING == var->mbv_type) {
+            free(var->mbv_storage->stringval);
+            var->mbv_storage->stringval = NULL;
+        } else if (MCA_BASE_VAR_TYPE_INCLUDE_LIST == var->mbv_type) {
+            OBJ_DESTRUCT(&var->mbv_storage->ilistval);
+        }
+
+        var->mbv_storage = NULL;
     }
 
     /* don't release the boolean enumerator */
     OPAL_MCA_VAR_MBV_ENUMERATOR_FREE(var->mbv_enumerator);
 
-    if (NULL != var->mbv_long_name) {
-        free(var->mbv_long_name);
-    }
+    free(var->mbv_long_name);
     var->mbv_full_name = NULL;
     var->mbv_variable_name = NULL;
 
-    if (NULL != var->mbv_description) {
-        free(var->mbv_description);
-    }
+    free(var->mbv_description);
 
     /* Destroy the synonym array */
     OBJ_DESTRUCT(&var->mbv_synonyms);
@@ -1994,6 +2015,19 @@ static int var_value_string(mca_base_var_t *var, char **value_string)
         case MCA_BASE_VAR_TYPE_DOUBLE:
             ret = opal_asprintf(value_string, "%lf", value->lfval);
             break;
+        case MCA_BASE_VAR_TYPE_INCLUDE_LIST:
+            if (NULL == value->ilistval.items) {
+                *value_string = strdup("");
+            } else {
+                char *tmp = opal_argv_join(value->ilistval.items, ',');
+                if (value->ilistval.is_exclude) {
+                    ret = opal_asprintf(value_string, "^%s", tmp);
+                    free(tmp);
+                } else {
+                    *value_string = tmp;
+                }
+            }
+            break;
         default:
             ret = -1;
             break;
@@ -2012,6 +2046,20 @@ static int var_value_string(mca_base_var_t *var, char **value_string)
     }
 
     return ret;
+}
+
+char *mca_base_var_string_value(int vari)
+{
+    char *tmp = NULL;
+    mca_base_var_t *var;
+
+    int ret = var_get(vari, &var, false);
+    if (OPAL_SUCCESS != ret) {
+        return NULL;
+    }
+
+    (void) var_value_string(var, &tmp);
+    return tmp;
 }
 
 int mca_base_var_check_exclusive(const char *project, const char *type_a, const char *component_a,
@@ -2290,3 +2338,34 @@ int mca_base_var_dump(int vari, char ***out, mca_base_var_dump_type_t output_typ
 
     return OPAL_SUCCESS;
 }
+
+static void include_list_contructor(mca_base_var_include_list_t *p)
+{
+    p->items = NULL;
+    p->is_exclude = false;
+}
+
+static void include_list_destructor(mca_base_var_include_list_t *p)
+{
+    opal_argv_free(p->items);
+    include_list_contructor(p);
+}
+
+int mca_base_var_parse_include_list(const char *value, mca_base_var_include_list_t *result)
+{
+    /* release any current value and set to defaults */
+    include_list_destructor(result);
+
+    if (NULL == value || 0 == strlen(value)) {
+        return OPAL_SUCCESS;
+    }
+
+    if ('^' == value[0]) {
+        result->is_exclude = true;
+        ++value;
+    }
+
+    result->items = opal_argv_split(value, ',');
+    return OPAL_SUCCESS;
+}
+
