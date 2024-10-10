@@ -136,6 +136,8 @@ enum {
     MCA_SMSC_FEATURE_REQUIRE_REGISTRATION = 1,
     /** Module can map peer memory into the local processes' address space. */
     MCA_SMSC_FEATURE_CAN_MAP = 2,
+    /** Module can handle accelerator memory types */
+    MCA_SMSC_FEATURE_ACCELERATOR = 4,
 };
 
 struct mca_smsc_module_t {
