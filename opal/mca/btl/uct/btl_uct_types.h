@@ -85,6 +85,9 @@ struct mca_btl_uct_conn_req_t {
     /** transport index that should be connected */
     int tl_index;
 
+    /** name of the connecting module */
+    char module_name[64];
+
     /** endpoint address data */
     uint8_t ep_addr[];
 };
@@ -180,6 +183,18 @@ union mca_btl_uct_am_header_t {
 };
 
 typedef union mca_btl_uct_am_header_t mca_btl_uct_am_header_t;
+
+/**
+ * @brief parsed include/exclude list
+ *
+ */
+struct mca_btl_uct_include_list_t {
+    /** argv-style (NULL terminated) array of strings */
+    char **list;
+    /** is an inclusive list (vs exclusive) */
+    bool include;
+};
+typedef struct mca_btl_uct_include_list_t mca_btl_uct_include_list_t;
 
 /**
  * @brief structure to keep track of btl callback
