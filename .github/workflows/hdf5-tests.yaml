@@ -1,0 +1,52 @@
+name: HDF5
+
+on: [pull_request]
+
+jobs:
+  hdf5-testsuite:
+    runs-on: ubuntu-22.04
+    steps:
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y --no-install-recommends wget
+    - uses: actions/checkout@v4
+      with:
+            submodules: recursive
+    - name: Build Open MPI
+      run: |
+        ./autogen.pl
+        ./configure --prefix=/opt/openmpi --with-pmix=internal --with-prrte=internal --with-hwloc=internal --with-libevent=internal --disable-mpi-fortran --disable-oshmem
+        make -j 8 && make install
+    - name: Install HDF5
+      run: |
+         wget https://github.com/HDFGroup/hdf5/releases/latest/download/hdf5.tar.gz
+         tar -xzf hdf5.tar.gz
+         mv hdf5-1* hdf5
+         cd hdf5
+         export PATH=/opt/openmpi/bin:${PATH}
+         export LD_LIBRARY_PATH=/opt/openmpi/lib:${LD_LIBRARY_PATH}
+         echo ${PATH}
+         echo ${LD_LIBRARY_PATH}
+         ./configure --enable-parallel
+         make -j 8
+    - name: Tweak MPI
+      run:  |
+         # Tweak MPI
+         mca_params="$HOME/.prte/mca-params.conf"
+         mkdir -p "$(dirname "$mca_params")"
+         echo rmaps_default_mapping_policy = :oversubscribe >> "$mca_params"
+    - name: Run testsuite (ompio)
+      run: |
+         export PATH=/opt/openmpi/bin:${PATH}
+         export LD_LIBRARY_PATH=/opt/openmpi/lib:${LD_LIBRARY_PATH}
+         HDF5TestExpress=0 mpirun --mca io ompio -np 4 ./hdf5/testpar/t_shapesame
+         mpirun --mca io ompio -np 4 ./hdf5/testpar/t_filters_parallel
+         mpirun --mca io ompio -np 4 ./hdf5/testpar/testphdf5
+    - name: Run testsuite (romio)
+      run: |
+         export PATH=/opt/openmpi/bin:${PATH}
+         export LD_LIBRARY_PATH=/opt/openmpi/lib:${LD_LIBRARY_PATH}
+         HDF5TestExpress=0 mpirun --mca io ^ompio -np 4 ./hdf5/testpar/t_shapesame
+         mpirun --mca io ^ompio -np 4 ./hdf5/testpar/t_filters_parallel
+         mpirun --mca io ^ompio -np 4 ./hdf5/testpar/testphdf5
