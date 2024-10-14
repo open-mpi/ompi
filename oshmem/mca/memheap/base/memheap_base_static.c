@@ -55,8 +55,8 @@ int mca_memheap_base_static_init(mca_memheap_map_t *map)
 #ifdef __linux__
     extern unsigned _end;
     if (mca_sshmem_base_start_address < (uintptr_t)&_end) {
-        MEMHEAP_WARN("sshmem base start address is inside data region"
-                     " (%p < %p)", mca_sshmem_base_start_address, &_end);
+        MEMHEAP_VERBOSE(1, "sshmem base start address is inside data region"
+                        " (%p < %p)", mca_sshmem_base_start_address, &_end);
     }
 #endif
 
