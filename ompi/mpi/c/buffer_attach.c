@@ -41,15 +41,15 @@ int MPI_Buffer_attach(void *buffer, int size)
 {
     int ret = OMPI_SUCCESS;
 
-  if (MPI_PARAM_CHECK) {
-    OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-    if (NULL == buffer || size < 0) {
-      return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, FUNC_NAME);
+    if (MPI_PARAM_CHECK) {
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+        if (NULL == buffer || size < 0) {
+           return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, FUNC_NAME);
+        }
     }
-  }
 
-  ret = mca_pml_base_bsend_attach(buffer, size);
+    ret = mca_pml_base_bsend_attach(buffer, size);
 
-  return ret;
+    return ret;
 }
 
