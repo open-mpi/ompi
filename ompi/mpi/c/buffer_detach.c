@@ -39,16 +39,20 @@ static const char FUNC_NAME[] = "MPI_Buffer_detach";
 
 int MPI_Buffer_detach(void *buffer, int *size)
 {
+    size_t size_arg;
     int ret = OMPI_SUCCESS;
 
-  if (MPI_PARAM_CHECK) {
-    OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-    if (NULL == buffer || NULL == size) {
-      return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, FUNC_NAME);
+    if (MPI_PARAM_CHECK) {
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+        if (NULL == buffer || NULL == size) {
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, FUNC_NAME);
+        }
     }
-  }
 
-  ret = mca_pml_base_bsend_detach(buffer, size);
+    ret = mca_pml_base_bsend_detach(buffer, &size_arg);
+    if (MPI_SUCCESS == ret) {
+        *size = (int)size_arg;
+    }
 
-  return ret;
+    return ret;
 }

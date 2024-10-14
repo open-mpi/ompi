@@ -30,8 +30,8 @@ BEGIN_C_DECLS
 
 OMPI_DECLSPEC int mca_pml_base_bsend_init (void);
 
-int mca_pml_base_bsend_attach(void* addr, int size);
-int mca_pml_base_bsend_detach(void* addr, int* size);
+int mca_pml_base_bsend_attach(void* addr, size_t size);
+int mca_pml_base_bsend_detach(void* addr, size_t* size);
 
 OMPI_DECLSPEC int mca_pml_base_bsend_request_alloc(ompi_request_t*);
 OMPI_DECLSPEC int mca_pml_base_bsend_request_start(ompi_request_t*);

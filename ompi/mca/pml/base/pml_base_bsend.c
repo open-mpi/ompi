@@ -133,7 +133,7 @@ static int mca_pml_base_bsend_fini (void)
 /*
  * User-level call to attach buffer.
  */
-int mca_pml_base_bsend_attach(void* addr, int size)
+int mca_pml_base_bsend_attach(void* addr, size_t size)
 {
     int align;
 
@@ -179,7 +179,7 @@ int mca_pml_base_bsend_attach(void* addr, int size)
 /*
  * User-level call to detach buffer
  */
-int mca_pml_base_bsend_detach(void* addr, int* size)
+int mca_pml_base_bsend_detach(void* addr, size_t* size)
 {
     OPAL_THREAD_LOCK(&mca_pml_bsend_mutex);
 
@@ -201,7 +201,7 @@ int mca_pml_base_bsend_detach(void* addr, int* size)
     if(NULL != addr)
         *((void**)addr) = mca_pml_bsend_userbase;
     if(NULL != size)
-        *size = (int)mca_pml_bsend_usersize;
+        *size = mca_pml_bsend_usersize;
 
     /* reset local variables */
     mca_pml_bsend_userbase = NULL;
