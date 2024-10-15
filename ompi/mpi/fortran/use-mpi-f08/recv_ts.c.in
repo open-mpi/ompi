@@ -13,13 +13,14 @@
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2024      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
  *
  * $HEADER$
  */
-
 
 PROTOTYPE VOID recv(BUFFER_OUT x, COUNT count, DATATYPE datatype,
                     RANK source, TAG tag, COMM comm, STATUS_OUT status)

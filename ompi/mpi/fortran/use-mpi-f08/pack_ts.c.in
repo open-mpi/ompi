@@ -12,13 +12,14 @@
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015-2019 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
+ * Copyright (c) 2024      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
  *
  * $HEADER$
  */
-
 
 PROTOTYPE VOID pack(BUFFER x1, COUNT incount, DATATYPE datatype,
                     BUFFER x2, COUNT outsize, COUNT_INOUT position,

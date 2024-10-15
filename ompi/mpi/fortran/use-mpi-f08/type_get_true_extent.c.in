@@ -12,13 +12,14 @@
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2024      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
  *
  * $HEADER$
  */
-
 
 PROTOTYPE VOID type_get_true_extent(DATATYPE datatype, AINT_OUT true_lb, AINT_OUT true_extent)
 {

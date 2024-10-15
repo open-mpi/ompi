@@ -5,13 +5,14 @@
  * Copyright (c) 2012      Inria.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2024      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
  *
  * $HEADER$
  */
-
 
 PROTOTYPE VOID type_create_hindexed_block(COUNT count, COUNT blocklength,
 				          AINT_COUNT_ARRAY array_of_displacements,

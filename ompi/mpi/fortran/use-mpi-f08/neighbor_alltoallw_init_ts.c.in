@@ -15,13 +15,14 @@
  *                         reserved.
  * Copyright (c) 2015-2021 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
+ * Copyright (c) 2024      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
  *
  * $HEADER$
  */
-
 
 PROTOTYPE VOID neighbor_alltoallw_init(BUFFER x1, COUNT_ARRAY sendcounts,
                                       AINT_ARRAY sdispls, DATATYPE_ARRAY sendtypes,
