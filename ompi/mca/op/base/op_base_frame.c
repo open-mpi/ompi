@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2023 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -42,6 +42,7 @@ static void module_constructor(ompi_op_base_module_t *m)
 {
     m->opm_enable = NULL;
     m->opm_op = NULL;
+    m->opm_device_enabled = false;
     memset(&(m->opm_fns), 0, sizeof(m->opm_fns));
     memset(&(m->opm_3buff_fns), 0, sizeof(m->opm_3buff_fns));
 }
@@ -50,6 +51,7 @@ static void module_constructor_1_0_0(ompi_op_base_module_1_0_0_t *m)
 {
     m->opm_enable = NULL;
     m->opm_op = NULL;
+    m->opm_device_enabled = false;
     memset(&(m->opm_fns), 0, sizeof(m->opm_fns));
     memset(&(m->opm_3buff_fns), 0, sizeof(m->opm_3buff_fns));
 }

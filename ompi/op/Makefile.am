@@ -22,6 +22,8 @@
 # This makefile.am does not stand on its own - it is included from
 # ompi/Makefile.am
 
+dist_ompidata_DATA += op/help-ompi-op.txt
+
 headers += op/op.h
 
 lib@OMPI_LIBMPI_NAME@_la_SOURCES += op/op.c
