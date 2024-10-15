@@ -77,8 +77,6 @@ jobs:
         echo mpi_param_check = true >> "$mca_params"
         echo mpi_show_handle_leaks = true >> "$mca_params"
         echo rmaps_base_oversubscribe = true >> "$mca_params"
-        mca_params="$HOME/.prte/mca-params.conf"
-        mkdir -p "$(dirname "$mca_params")"
         echo rmaps_default_mapping_policy = :oversubscribe >> "$mca_params"
 
     - name: Show MPI
