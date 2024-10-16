@@ -27,5 +27,5 @@ jobs:
     - name: Build Open MPI
       run: |
         ./autogen.pl
-        ./configure --prefix=${PWD}/install --with-rocm=/opt/rocm --disable-mpi-fortran
+        ./configure --prefix=${PWD}/install --with-rocm=/opt/rocm --disable-mpi-fortran --disable-silent-rules
         LD_LIBRARY_PATH=/opt/rocm/lib make -j
