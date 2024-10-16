@@ -195,6 +195,7 @@ int ompi_coll_base_file_getnext_string(FILE *fptr, int *fileline, char** val);
  * eat the value, otherwise put it back into the file.
  */
 int ompi_coll_base_file_peek_next_char_is(FILE *fptr, int *fileline, int expected);
+int ompi_coll_base_file_peek_next_char_isdigit(FILE *fptr);
 
 /* Miscellaneous function */
 const char* mca_coll_base_colltype_to_str(int collid);
