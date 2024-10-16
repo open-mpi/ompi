@@ -64,13 +64,15 @@ PROTOTYPE VOID neighbor_allgatherv(BUFFER x1, COUNT sendcount, DATATYPE sendtype
 
     c_ierr = @INNER_CALL@(sendbuf,
                           c_sendcount,
-                          c_sendtype,
+                          c_senddatatype,
                           recvbuf,
                           tmp_recvcounts,
                           tmp_displs,
                           c_recvtype, c_comm);
 
-    /* TODO: Free datatypes (note: it also looks like the code above is not using the datatypes) */
+    if (c_senddatatype != c_sendtype) {
+        ompi_datatype_destroy(&c_senddatatype);
+    }
 
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 

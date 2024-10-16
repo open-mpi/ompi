@@ -25,7 +25,7 @@ PROTOTYPE VOID ireduce_scatter(BUFFER_ASYNC x1, BUFFER_ASYNC_OUT x2,
                                COUNT_ARRAY recvcounts, DATATYPE datatype,
                                OP op, COMM comm, REQUEST_OUT request)
 {
-    int c_ierr;
+    int c_ierr, idx = 0;
     MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
     MPI_Datatype c_type;
     MPI_Request c_request;
@@ -61,5 +61,6 @@ PROTOTYPE VOID ireduce_scatter(BUFFER_ASYNC x1, BUFFER_ASYNC_OUT x2,
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
     if (MPI_SUCCESS == c_ierr) *request = PMPI_Request_c2f(c_request);
 
-    /* TODO: Set pointer to tmp_recvcounts on request? */
+    OMPI_FORTRAN_BIGCOUNT_ARRAY_CLEANUP_NONBLOCKING(recvcounts, tmp_recvcounts, c_request, c_ierr, idx);
+
 }

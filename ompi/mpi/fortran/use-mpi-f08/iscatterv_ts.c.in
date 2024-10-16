@@ -31,8 +31,8 @@ PROTOTYPE VOID iscatterv(BUFFER_ASYNC x1, COUNT_ARRAY sendcounts,
     int c_ierr;
     MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
     int c_root = OMPI_FINT_2_INT(*root);
-    MPI_Datatype  __opal_attribute_unused__ c_recvdatatype = NULL;
-    MPI_Datatype c_sendtype = NULL, c_recvtype = NULL;
+    MPI_Datatype  __opal_attribute_unused__ c_recvdatatype = MPI_DATATYPE_NULL;
+    MPI_Datatype c_sendtype = MPI_DATATYPE_NULL, c_recvtype = MPI_DATATYPE_NULL;
     @COUNT_TYPE@ c_recvcount = 0;
     char *sendbuf = OMPI_CFI_BASE_ADDR(x1), *recvbuf = OMPI_CFI_BASE_ADDR(x2);
     MPI_Request c_request;
@@ -91,15 +91,17 @@ PROTOTYPE VOID iscatterv(BUFFER_ASYNC x1, COUNT_ARRAY sendcounts,
     recvbuf = (char *) OMPI_F2C_IN_PLACE(recvbuf);
     recvbuf = (char *) OMPI_F2C_BOTTOM(recvbuf);
 
-    /* TODO: c_recvdatatype seems to be getting allocated in some cases but is not used below? */
     c_ierr = @INNER_CALL@(sendbuf,
                           tmp_sendcounts,
                           tmp_displs,
                           c_sendtype,
-                          recvbuf, c_recvcount, c_recvtype,
+                          recvbuf,
+                          c_recvcount,
+                          (c_recvdatatype == MPI_DATATYPE_NULL) ? c_recvtype : c_recvdatatype,
                           c_root, c_comm, &c_request);
-
-    /* TODO: Free datatypes */
+    if (c_recvdatatype != MPI_DATATYPE_NULL && c_recvdatatype != c_recvtype) {
+        ompi_datatype_destroy(&c_recvdatatype);
+    }
 
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
     if (MPI_SUCCESS == c_ierr) *request = PMPI_Request_c2f(c_request);
