@@ -28,6 +28,7 @@ module mpi
   use mpi_types
 #endif
   include "mpif-config.h"
+  include "mpif-subarrays-config.h"
   include "mpif-constants.h"
   include "mpif-handles.h"
   include "mpif-io-constants.h"
