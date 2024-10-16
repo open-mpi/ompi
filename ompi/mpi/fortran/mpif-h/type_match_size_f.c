@@ -97,6 +97,9 @@ void ompi_type_match_size_f(MPI_Fint *typeclass, MPI_Fint *size, MPI_Fint *type,
     case MPI_TYPECLASS_COMPLEX:
         c_type = (MPI_Datatype)ompi_datatype_match_size( c_size, OMPI_DATATYPE_FLAG_DATA_COMPLEX, OMPI_DATATYPE_FLAG_DATA_FORTRAN );
         break;
+    case MPI_TYPECLASS_LOGICAL:
+        c_type = (MPI_Datatype)ompi_datatype_match_size( c_size, OMPI_DATATYPE_FLAG_DATA_BOOL, OMPI_DATATYPE_FLAG_DATA_FORTRAN );
+        break;
     default:
         c_type = &ompi_mpi_datatype_null.dt;
     }
