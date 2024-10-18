@@ -38,7 +38,7 @@ static inline void ompi_count_array_init_c(ompi_count_array_t *array, const size
                                                     const int *: ompi_count_array_init, \
                                                     size_t *: ompi_count_array_init_c, \
                                                     const size_t *: ompi_count_array_init_c, \
-                                                    const MPI_Count *: ompi_count_array_init_c)(array, data)
+                                                    const MPI_Count *: ompi_count_array_init_c)(array, (const void *) data)
 #else
 #define OMPI_COUNT_ARRAY_INIT(array, data) \
     do { \
