@@ -23,8 +23,6 @@
 # $HEADER$
 #
 
-SUBDIRS = profile
-
 include $(top_srcdir)/Makefile.ompi-rules
 
 # Note that Automake's Fortran-buidling rules uses CPPFLAGS and
@@ -45,14 +43,14 @@ AM_FCFLAGS = -I$(top_srcdir)/ompi/mpi/fortran/use-mpi-f08/mod \
              $(OMPI_FC_MODULE_FLAG)$(top_builddir)/ompi/$(OMPI_FORTRAN_USEMPI_DIR) \
              $(OMPI_FC_MODULE_FLAG)mod \
              $(OMPI_FC_MODULE_FLAG)bindings \
-             -I$(top_srcdir) -I$(top_builddir) $(FCFLAGS_f90) \
-             -DOMPI_BUILD_MPI_PROFILING=0
+             -I$(top_srcdir) -I$(top_builddir) $(FCFLAGS_f90)
 
 MOSTLYCLEANFILES = *.mod
 
 CLEANFILES += *.i90
 
 lib_LTLIBRARIES = lib@OMPI_LIBMPI_NAME@_usempif08.la
+noinst_LTLIBRARIES = lib@OMPI_LIBMPI_NAME@_usempif08_profile.la
 
 module_sentinel_files = \
         mod/libforce_usempif08_internal_modules_to_be_built.la \
@@ -97,9 +95,9 @@ sizeof_f08.f90:
 	    --complex4=$(OMPI_HAVE_FORTRAN_COMPLEX4) \
 	    --complex32=$(OMPI_HAVE_FORTRAN_COMPLEX32)
 
-profile/psizeof_f08.f90: $(top_builddir)/config.status
-profile/psizeof_f08.f90: $(sizeof_pl)
-profile/psizeof_f08.f90:
+psizeof_f08.f90: $(top_builddir)/config.status
+psizeof_f08.f90: $(sizeof_pl)
+psizeof_f08.f90:
 	$(OMPI_V_GEN) $(sizeof_pl) \
 	    --impl=$@ --ierror=optional --pmpi \
 	    --maxrank=$(OMPI_FORTRAN_MAX_ARRAY_RANK) \
@@ -110,37 +108,18 @@ profile/psizeof_f08.f90:
 	    --complex4=$(OMPI_HAVE_FORTRAN_COMPLEX4) \
 	    --complex32=$(OMPI_HAVE_FORTRAN_COMPLEX32)
 
-CLEANFILES += sizeof_f08.h sizeof_f08.f90 profile/psizeof_f08.f90
+CLEANFILES += sizeof_f08.h sizeof_f08.f90 psizeof_f08.f90
 
 mpi_api_files = \
         abort_f08.F90 \
-        accumulate_f08.F90 \
         add_error_class_f08.F90 \
         add_error_code_f08.F90 \
         add_error_string_f08.F90 \
         aint_add_f08.F90 \
         aint_diff_f08.F90 \
-        allgather_f08.F90 \
-        allgather_init_f08.F90 \
-        allgatherv_f08.F90 \
-        allgatherv_init_f08.F90 \
         alloc_mem_f08.F90 \
-        allreduce_f08.F90 \
-        allreduce_init_f08.F90 \
-        alltoall_f08.F90 \
-        alltoall_init_f08.F90 \
-        alltoallv_f08.F90 \
-        alltoallv_init_f08.F90 \
-        alltoallw_f08.F90 \
-        alltoallw_init_f08.F90 \
         barrier_f08.F90 \
         barrier_init_f08.F90 \
-        bcast_f08.F90 \
-        bcast_init_f08.F90 \
-        bsend_f08.F90 \
-        bsend_init_f08.F90 \
-        buffer_attach_f08.F90 \
-        buffer_detach_f08.F90 \
         cancel_f08.F90 \
         cart_coords_f08.F90 \
         cart_create_f08.F90 \
@@ -188,7 +167,6 @@ mpi_api_files = \
         comm_split_f08.F90 \
         comm_split_type_f08.F90 \
         comm_test_inter_f08.F90 \
-        compare_and_swap_f08.F90 \
         dist_graph_create_adjacent_f08.F90 \
         dist_graph_create_f08.F90 \
         dist_graph_neighbors_count_f08.F90 \
@@ -197,10 +175,7 @@ mpi_api_files = \
         errhandler_free_f08.F90 \
         error_class_f08.F90 \
         error_string_f08.F90 \
-        exscan_f08.F90 \
-        exscan_init_f08.F90 \
         f_sync_reg_f08.F90 \
-        fetch_and_op_f08.F90 \
         file_call_errhandler_f08.F90 \
         file_close_f08.F90 \
         file_create_errhandler_f08.F90 \
@@ -216,30 +191,8 @@ mpi_api_files = \
         file_get_size_f08.F90 \
         file_get_type_extent_f08.F90 \
         file_get_view_f08.F90 \
-        file_iread_at_f08.F90 \
-        file_iread_f08.F90 \
-        file_iread_at_all_f08.F90 \
-        file_iread_all_f08.F90 \
-        file_iread_shared_f08.F90 \
-        file_iwrite_at_f08.F90 \
-        file_iwrite_f08.F90 \
-        file_iwrite_at_all_f08.F90 \
-        file_iwrite_all_f08.F90 \
-        file_iwrite_shared_f08.F90 \
         file_open_f08.F90 \
         file_preallocate_f08.F90 \
-        file_read_all_begin_f08.F90 \
-        file_read_all_end_f08.F90 \
-        file_read_all_f08.F90 \
-        file_read_at_all_begin_f08.F90 \
-        file_read_at_all_end_f08.F90 \
-        file_read_at_all_f08.F90 \
-        file_read_at_f08.F90 \
-        file_read_f08.F90 \
-        file_read_ordered_begin_f08.F90 \
-        file_read_ordered_end_f08.F90 \
-        file_read_ordered_f08.F90 \
-        file_read_shared_f08.F90 \
         file_seek_f08.F90 \
         file_seek_shared_f08.F90 \
         file_set_atomicity_f08.F90 \
@@ -248,31 +201,9 @@ mpi_api_files = \
         file_set_size_f08.F90 \
         file_set_view_f08.F90 \
         file_sync_f08.F90 \
-        file_write_all_begin_f08.F90 \
-        file_write_all_end_f08.F90 \
-        file_write_all_f08.F90 \
-        file_write_at_all_begin_f08.F90 \
-        file_write_at_all_end_f08.F90 \
-        file_write_at_all_f08.F90 \
-        file_write_at_f08.F90 \
-        file_write_f08.F90 \
-        file_write_ordered_begin_f08.F90 \
-        file_write_ordered_end_f08.F90 \
-        file_write_ordered_f08.F90 \
-        file_write_shared_f08.F90 \
         finalized_f08.F90 \
         finalize_f08.F90 \
-        free_mem_f08.F90 \
-        gather_f08.F90 \
-        gather_init_f08.F90 \
-        gatherv_f08.F90 \
-        gatherv_init_f08.F90 \
-        get_accumulate_f08.F90 \
-        get_address_f08.F90 \
-        get_count_f08.F90 \
-        get_elements_f08.F90 \
         get_elements_x_f08.F90 \
-        get_f08.F90 \
         get_library_version_f08.F90 \
         get_processor_name_f08.F90 \
         get_version_f08.F90 \
@@ -297,25 +228,8 @@ mpi_api_files = \
         group_size_f08.F90 \
         group_translate_ranks_f08.F90 \
         group_union_f08.F90 \
-        iallgather_f08.F90 \
-        iallgatherv_f08.F90 \
-        iallreduce_f08.F90 \
-        ialltoall_f08.F90 \
-        ialltoallv_f08.F90 \
-        ialltoallw_f08.F90 \
         ibarrier_f08.F90 \
-        ibcast_f08.F90 \
-        ibsend_f08.F90 \
-        iexscan_f08.F90 \
-        igather_f08.F90 \
-        igatherv_f08.F90 \
         improbe_f08.F90 \
-        imrecv_f08.F90 \
-        ineighbor_allgather_f08.F90 \
-        ineighbor_allgatherv_f08.F90 \
-        ineighbor_alltoall_f08.F90 \
-        ineighbor_alltoallv_f08.F90 \
-        ineighbor_alltoallw_f08.F90 \
         info_create_f08.F90 \
         info_create_env_f08.F90 \
         info_delete_f08.F90 \
@@ -334,79 +248,24 @@ mpi_api_files = \
         intercomm_create_from_groups_f08.F90 \
         intercomm_merge_f08.F90 \
         iprobe_f08.F90 \
-        irecv_f08.F90 \
-        ireduce_f08.F90 \
-        ireduce_scatter_f08.F90 \
-        ireduce_scatter_block_f08.F90 \
-        irsend_f08.F90 \
-        iscan_f08.F90 \
-        iscatter_f08.F90 \
-        iscatterv_f08.F90 \
-        isend_f08.F90 \
-        isendrecv_f08.F90 \
-        isendrecv_replace_f08.F90 \
-        issend_f08.F90 \
         is_thread_main_f08.F90 \
         lookup_name_f08.F90 \
         mprobe_f08.F90 \
-        mrecv_f08.F90 \
-        neighbor_allgather_f08.F90 \
-        neighbor_allgather_init_f08.F90 \
-        neighbor_allgatherv_f08.F90 \
-        neighbor_allgatherv_init_f08.F90 \
-        neighbor_alltoall_f08.F90 \
-        neighbor_alltoall_init_f08.F90 \
-        neighbor_alltoallv_f08.F90 \
-        neighbor_alltoallv_init_f08.F90 \
-        neighbor_alltoallw_f08.F90 \
-        neighbor_alltoallw_init_f08.F90 \
         op_commutative_f08.F90 \
         op_create_f08.F90 \
         open_port_f08.F90 \
         op_free_f08.F90 \
-        pack_external_f08.F90 \
-        pack_external_size_f08.F90 \
-        pack_f08.F90 \
-        pack_size_f08.F90 \
         parrived_f08.F90 \
         pcontrol_f08.F90 \
         pready_f08.F90 \
         pready_range_f08.F90 \
         pready_list_f08.F90 \
-        precv_init_f08.F90 \
         probe_f08.F90 \
-        psend_init_f08.F90 \
         publish_name_f08.F90 \
-        put_f08.F90 \
         query_thread_f08.F90 \
-        raccumulate_f08.F90 \
-        recv_f08.F90 \
-        recv_init_f08.F90 \
-        reduce_f08.F90 \
-        reduce_init_f08.F90 \
-        reduce_local_f08.F90 \
-        reduce_scatter_f08.F90 \
-        reduce_scatter_init_f08.F90 \
-        reduce_scatter_block_f08.F90 \
-        reduce_scatter_block_init_f08.F90 \
         register_datarep_f08.F90 \
         request_free_f08.F90 \
         request_get_status_f08.F90 \
-        rget_f08.F90 \
-        rget_accumulate_f08.F90 \
-        rput_f08.F90 \
-        rsend_f08.F90 \
-        rsend_init_f08.F90 \
-        scan_f08.F90 \
-        scan_init_f08.F90 \
-        scatter_f08.F90 \
-        scatter_init_f08.F90 \
-        scatterv_f08.F90 \
-        scatterv_init_f08.F90 \
-        send_f08.F90 \
-        send_init_f08.F90 \
-        sendrecv_f08.F90 \
-        sendrecv_replace_f08.F90 \
         session_call_errhandler_f08.F90\
         session_create_errhandler_f08.F90\
         session_get_errhandler_f08.F90\
@@ -417,72 +276,50 @@ mpi_api_files = \
 	session_init_f08.F90 \
 	session_finalize_f08.F90 \
         session_set_errhandler_f08.F90\
-        ssend_f08.F90 \
-        ssend_init_f08.F90 \
         startall_f08.F90 \
         start_f08.F90 \
         status_f082f_f08.F90 \
         status_f2f08_f08.F90 \
         status_set_cancelled_f08.F90 \
-        status_set_elements_f08.F90 \
         status_set_elements_x_f08.F90 \
         testall_f08.F90 \
-        testany_f08.F90 \
         test_cancelled_f08.F90 \
         test_f08.F90 \
         testsome_f08.F90 \
         topo_test_f08.F90 \
         type_commit_f08.F90 \
-        type_contiguous_f08.F90 \
-        type_create_darray_f08.F90 \
         type_create_f90_complex_f08.F90 \
         type_create_f90_integer_f08.F90 \
         type_create_f90_real_f08.F90 \
-        type_create_hindexed_f08.F90 \
-        type_create_hvector_f08.F90 \
-        type_create_indexed_block_f08.F90 \
-        type_create_hindexed_block_f08.F90 \
         type_create_keyval_f08.F90 \
         type_create_resized_f08.F90 \
-        type_create_struct_f08.F90 \
-        type_create_subarray_f08.F90 \
         type_delete_attr_f08.F90 \
         type_dup_f08.F90 \
         type_free_f08.F90 \
         type_free_keyval_f08.F90 \
         type_get_attr_f08.F90 \
         type_get_contents_f08.F90 \
-        type_get_envelope_f08.F90 \
+        type_get_contents_f08_c.F90 \
         type_get_extent_f08.F90 \
         type_get_extent_x_f08.F90 \
         type_get_name_f08.F90 \
-        type_get_true_extent_f08.F90 \
         type_get_true_extent_x_f08.F90 \
-        type_indexed_f08.F90 \
+        type_get_envelope_f08.F90 \
+        type_get_envelope_f08_c.F90 \
         type_match_size_f08.F90 \
         type_set_attr_f08.F90 \
         type_set_name_f08.F90 \
-        type_size_f08.F90 \
         type_size_x_f08.F90 \
-        type_vector_f08.F90 \
-        unpack_external_f08.F90 \
-        unpack_f08.F90 \
         unpublish_name_f08.F90 \
-        waitall_f08.F90 \
         waitany_f08.F90 \
         wait_f08.F90 \
         waitsome_f08.F90 \
-        win_allocate_f08.F90 \
-        win_allocate_shared_f08.F90 \
-        win_attach_f08.F90 \
         win_call_errhandler_f08.F90 \
         win_complete_f08.F90 \
         win_create_dynamic_f08.F90 \
         win_create_errhandler_f08.F90 \
-        win_create_f08.F90 \
         win_create_keyval_f08.F90 \
         win_delete_attr_f08.F90 \
-        win_detach_f08.F90 \
         win_fence_f08.F90 \
         win_flush_f08.F90 \
         win_flush_all_f08.F90 \
@@ -502,33 +339,29 @@ mpi_api_files = \
         win_set_errhandler_f08.F90 \
         win_set_info_f08.F90 \
         win_set_name_f08.F90 \
-        win_shared_query_f08.F90 \
         win_start_f08.F90 \
         win_sync_f08.F90 \
         win_test_f08.F90 \
         win_unlock_f08.F90 \
         win_unlock_all_f08.F90 \
-        win_wait_f08.F90
-
-# JMS Somehow this variable substitution isn't quite working, and I
-# don't have time to figure it out.  So just wholesale copy the file
-# list.  :-(
-#pmpi_api_files = $(mpi_api_files:%=profile/p%)
+        win_wait_f08.F90 \
+        api_f08_generated.F90
 
 lib@OMPI_LIBMPI_NAME@_usempif08_la_SOURCES = \
         $(mpi_api_files) \
         mpi-f08.F90
 
-# These are generated; do not ship them
-nodist_lib@OMPI_LIBMPI_NAME@_usempif08_la_SOURCES =
-
 if BUILD_FORTRAN_SIZEOF
 SIZEOF_H = sizeof_f08.h
-nodist_lib@OMPI_LIBMPI_NAME@_usempif08_la_SOURCES += \
+nodist_lib@OMPI_LIBMPI_NAME@_usempif08_la_SOURCES = \
         sizeof_f08.h \
         sizeof_f08.f90 \
-        profile/psizeof_f08.f90
+        psizeof_f08.f90
 endif
+
+lib@OMPI_LIBMPI_NAME@_usempif08_la_FCFLAGS = \
+        $(AM_FCFLAGS) \
+        -DOMPI_BUILD_MPI_PROFILING=0
 
 #
 # Include the mpi_f08-based MPI extensions in libmpi_usempif08, too.
@@ -539,13 +372,20 @@ endif
 #
 
 lib@OMPI_LIBMPI_NAME@_usempif08_la_LIBADD = \
-        profile/libmpi_usempif08_pmpi.la \
+        lib@OMPI_LIBMPI_NAME@_usempif08_profile.la \
         $(OMPI_MPIEXT_USEMPIF08_LIBS) \
         $(top_builddir)/ompi/mpi/fortran/mpif-h/lib@OMPI_LIBMPI_NAME@_mpifh.la \
         $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
         mod/libusempif08_internal_modules.la \
         base/libusempif08_ccode.la
-lib@OMPI_LIBMPI_NAME@_usempif08_la_DEPENDENCIES = $(module_sentinel_files)
+
+#
+# Make sure to build the profile library before this library, since adding it
+# to LIBADD doesn't enforce any ordering
+#
+lib@OMPI_LIBMPI_NAME@_usempif08_la_DEPENDENCIES = \
+        $(module_sentinel_files) \
+        lib@OMPI_LIBMPI_NAME@_usempif08_profile.la
 lib@OMPI_LIBMPI_NAME@_usempif08_la_LDFLAGS = -version-info $(libmpi_usempif08_so_version)
 
 #
@@ -558,6 +398,44 @@ mpi_api_lo_files = $(mpi_api_files:.F90=.lo)
 $(mpi_api_lo_files): bindings/libforce_usempif08_internal_bindings_to_be_built.la
 
 mpi-f08.lo: $(module_sentinel_files) $(SIZEOF_H)
+mpi-f08.F90: $(SIZEOF_H)
+
+#
+# Profiling interface
+#
+
+lib@OMPI_LIBMPI_NAME@_usempif08_profile_la_SOURCES = \
+        $(mpi_api_files)
+
+lib@OMPI_LIBMPI_NAME@_usempif08_profile_la_FCFLAGS = \
+        $(AM_FCFLAGS) \
+        -DOMPI_BUILD_MPI_PROFILING=1
+
+
+#
+# Generate the Fortran bindings and C wrapper functions for bindings with a
+# *.in template.
+#
+
+if OMPI_GENERATE_BINDINGS
+
+include Makefile.prototype_files
+
+api_f08_generated.F90: $(prototype_files)
+	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
+	    --builddir $(abs_top_builddir) \
+	    --srcdir $(abs_top_srcdir) \
+	    --output $(abs_builddir)/$@ \
+	    fortran \
+	    code \
+	    --lang fortran \
+	    --prototype-files $(prototype_files)
+
+EXTRA_DIST = $(extra_dist_prototype_files)
+
+# Delete generated file on maintainer-clean
+MAINTAINERCLEANFILES = api_f08_generated.F90
+endif
 
 ###########################################################################
 
