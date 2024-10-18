@@ -65,14 +65,15 @@ EXAMPLES = \
 	 oshmem_max_reduction \
 	 oshmem_strided_puts \
 	 oshmem_symmetric_data \
-	 spc_example
+	 spc_example \
+         hello_sessions_c
 
 
 # Default target.  Always build the C MPI examples.  Only build the
 # others if we have the appropriate Open MPI / OpenSHMEM language
 # bindings.
 
-all: hello_c ring_c connectivity_c spc_example
+all: hello_c ring_c connectivity_c spc_example hello_sessions_c
 	@ if which ompi_info >/dev/null 2>&1 ; then \
 	    $(MAKE) mpi; \
 	fi
@@ -128,6 +129,8 @@ ring_c: ring_c.c
 connectivity_c: connectivity_c.c
 	$(MPICC) $(CFLAGS) $(LDFLAGS) $? $(LDLIBS) -o $@
 spc_example: spc_example.c
+	$(MPICC) $(CFLAGS) $(LDFLAGS) $? $(LDLIBS) -o $@
+hello_sessions_c: hello_sessions_c.c
 	$(MPICC) $(CFLAGS) $(LDFLAGS) $? $(LDLIBS) -o $@
 
 hello_mpifh: hello_mpifh.f
