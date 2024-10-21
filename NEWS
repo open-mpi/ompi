@@ -59,9 +59,20 @@ included in the vX.Y.Z section and be denoted as:
    (** also appeared: A.B.C)  -- indicating that this item was previously
                                  included in release version vA.B.C.
 
-4.1.7 -- August, 2024
+4.1.7 -- October, 2024
 ---------------------
 
+- Improve CUDA memory pool and context handling.
+- Fix detection of host vs. CUDA memory when cumemcreate is used with
+  certain arguments, leading to a crash.
+- Fix int overflow bug in UCC collectives routine, which would impact
+  large message collectives.
+- Fix SHMEM bounds checking warnings
+- Fix memory leak in the fcoll/vulcan component
+- Fix memory leak when using non-contiguious datatyles with pml/cm
+  (used when using Libfabric or Portals transports)
+- Change default locking protocol for ufs IO component to fix data
+  sieving use case.
 - Fix bug in Fortran / C interface array calculation.
 - Fix potential initialization in UCX OpenSHMEM support
 - Add OpenSHMEM support for symmetric remote key handling to improve
