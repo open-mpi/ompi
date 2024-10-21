@@ -192,6 +192,7 @@ case ${PLATFORM_ID} in
         CONFIGURE_ARGS="$CONFIGURE_ARGS LDFLAGS=-Wl,-rpath,/usr/local/lib/gcc5 --with-wrapper-ldflags=-Wl,-rpath,/usr/local/lib/gcc5"
         ;;
 esac
+CONFIGURE_ARGS="$CONFIGURE_ARGS --disable-silent-rules"
 
 echo "--> Compiler setup: $CONFIGURE_ARGS"
 

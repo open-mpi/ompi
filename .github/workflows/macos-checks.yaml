@@ -25,7 +25,7 @@ jobs:
     - name: Build Open MPI
       run: |
         ./autogen.pl
-        ./configure --prefix=/opt/openmpi
+        ./configure --prefix=/opt/openmpi --disable-silent-rules
         make -j $(sysctl -n hw.logicalcpu)
     - name: Run unit tests
       run: |
