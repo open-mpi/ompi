@@ -483,6 +483,30 @@ int ompi_coll_base_file_peek_next_char_is(FILE *fptr, int *fileline, int expecte
 }
 
 /**
+ * return 1 if the next non-space to read on the current line is a digit.
+ * otherwise return 0.
+ */
+int ompi_coll_base_file_peek_next_char_isdigit(FILE *fptr)
+{
+    do {
+        int next = fgetc(fptr);
+
+        if ((' ' == next) || ('\t' == next)) {
+            continue; /* discard space and tab. keep everything else */
+        }
+
+        ungetc(next, fptr); /* put the char back into the stream */
+
+        if (isdigit(next)) {
+            return 1; /* next is a digit */
+        }
+        else {
+            return 0; /* next is not a digit */
+        }
+    } while (1);
+}
+
+/**
  * There are certainly simpler implementation for this function when performance
  * is not a critical point. But, as this function is used during the collective
  * configuration, and we can do this configurations once for each communicator,
