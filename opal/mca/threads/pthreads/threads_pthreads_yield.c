@@ -10,6 +10,9 @@
  * $HEADER$
  */
 
+/* needed for nanosleep() */
+#define _POSIX_C_SOURCE 200809L
+
 #include "opal_config.h"
 #include <time.h>
 #ifdef HAVE_SCHED_H

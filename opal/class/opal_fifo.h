@@ -224,7 +224,7 @@ static inline opal_list_item_t *opal_fifo_pop_atomic(opal_fifo_t *fifo)
         if (++attempt == 5) {
             /* deliberately suspend this thread to allow other threads to run. this should
              * only occur during periods of contention on the lifo. */
-            _opal_lifo_release_cpu();
+            opal_lifo_release_cpu();
             attempt = 0;
         }
 
