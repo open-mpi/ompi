@@ -739,6 +739,8 @@ int mca_pml_ucx_isend_init(const void *buf, size_t count, ompi_datatype_t *datat
                            struct ompi_communicator_t* comm,
                            struct ompi_request_t **request)
 {
+    int rc;
+    uint32_t cid;
     mca_pml_ucx_persistent_request_t *req;
     ucp_ep_h ep;
 
@@ -755,12 +757,17 @@ int mca_pml_ucx_isend_init(const void *buf, size_t count, ompi_datatype_t *datat
         return OMPI_ERROR;
     }
 
+    rc = ompi_comm_get_remote_cid(comm, dst, &cid);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
+         return rc;
+    }
+
     req->ompi.req_state           = OMPI_REQUEST_INACTIVE;
     req->ompi.req_mpi_object.comm = comm;
     req->flags                    = MCA_PML_UCX_REQUEST_FLAG_SEND;
     req->buffer                   = (void *)buf;
     req->count                    = count;
-    req->tag                      = PML_UCX_MAKE_SEND_TAG(tag, comm);
+    req->tag                      = PML_UCX_MAKE_SEND_TAG(tag, comm, cid);
     req->send.mode                = mode;
     req->send.ep                  = ep;
     req->ompi_datatype            = datatype;
@@ -885,7 +892,9 @@ int mca_pml_ucx_isend(const void *buf, size_t count, ompi_datatype_t *datatype,
                       struct ompi_communicator_t* comm,
                       struct ompi_request_t **request)
 {
+    int rc;
     ompi_request_t *req;
+    uint32_t cid;
     ucp_ep_h ep;
 
     PML_UCX_TRACE_SEND("i%ssend request *%p",
@@ -897,15 +906,18 @@ int mca_pml_ucx_isend(const void *buf, size_t count, ompi_datatype_t *datatype,
     if (OPAL_UNLIKELY(NULL == ep)) {
         return OMPI_ERROR;
     }
-
+    rc = ompi_comm_get_remote_cid(comm, dst, &cid);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
+        return rc;
+    }
 #if HAVE_DECL_UCP_TAG_SEND_NBX
     req = (ompi_request_t*)mca_pml_ucx_common_send_nbx(ep, buf, count, datatype,
-                                                       PML_UCX_MAKE_SEND_TAG(tag, comm), mode,
+                                                       PML_UCX_MAKE_SEND_TAG(tag, comm, cid), mode,
                                                        &mca_pml_ucx_get_op_data(datatype)->op_param.isend);
 #else
     req = (ompi_request_t*)mca_pml_ucx_common_send(ep, buf, count, datatype,
                                                    mca_pml_ucx_get_datatype(datatype),
-                                                   PML_UCX_MAKE_SEND_TAG(tag, comm), mode,
+                                                   PML_UCX_MAKE_SEND_TAG(tag, comm, cid), mode,
                                                    mca_pml_ucx_send_completion);
 #endif
 
@@ -1002,7 +1014,9 @@ int mca_pml_ucx_send(const void *buf, size_t count, ompi_datatype_t *datatype, i
                      int tag, mca_pml_base_send_mode_t mode,
                      struct ompi_communicator_t* comm)
 {
+    int rc;
     ucp_ep_h ep;
+    uint32_t cid;
 
     PML_UCX_TRACE_SEND("%s", buf, count, datatype, dst, tag, mode, comm,
                        mode == MCA_PML_BASE_SEND_BUFFERED ? "bsend" : "send");
@@ -1019,17 +1033,22 @@ int mca_pml_ucx_send(const void *buf, size_t count, ompi_datatype_t *datatype, i
                     OMPI_SPC_BYTES_SENT_USER, OMPI_SPC_BYTES_SENT_MPI);
 #endif
 
+    rc = ompi_comm_get_remote_cid(comm, dst, &cid);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
+        return rc;
+    }
+
 #if HAVE_DECL_UCP_TAG_SEND_NBR
     if (OPAL_LIKELY((MCA_PML_BASE_SEND_BUFFERED != mode) &&
                     (MCA_PML_BASE_SEND_SYNCHRONOUS != mode))) {
         return mca_pml_ucx_send_nbr(ep, buf, count, datatype,
-                                    PML_UCX_MAKE_SEND_TAG(tag, comm));
+                                    PML_UCX_MAKE_SEND_TAG(tag, comm, cid));
     }
 #endif
 
     return mca_pml_ucx_send_nb(ep, buf, count, datatype,
                                mca_pml_ucx_get_datatype(datatype),
-                               PML_UCX_MAKE_SEND_TAG(tag, comm), mode);
+                               PML_UCX_MAKE_SEND_TAG(tag, comm, cid), mode);
 }
 
 int mca_pml_ucx_iprobe(int src, int tag, struct ompi_communicator_t* comm,
