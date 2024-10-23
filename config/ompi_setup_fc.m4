@@ -43,7 +43,7 @@ AC_DEFUN_ONCE([_OMPI_SETUP_FC_COMPILER],[
     # Fortran compilers (excluding the f77 compiler names) from AC's
     # default list of compilers and use it here.  This is the main
     # reason we have an OMPI-ized version of the PROG_FC macro.
-    AC_PROG_FC([gfortran f95 fort xlf95 ifort ifc efc pgfortran pgf95 lf95 f90 xlf90 pgf90 epcf90 nagfor])
+    AC_PROG_FC([gfortran f95 fort xlf95 ifort ifc efc pgfortran pgf95 lf95 f90 xlf90 pgf90 epcf90 nagfor nvfortran])
     FCFLAGS="$ompi_fcflags_save"
     OPAL_VAR_SCOPE_POP
 ])
