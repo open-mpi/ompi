@@ -21,7 +21,6 @@
  * $HEADER$
  */
 
-
 PROTOTYPE VOID bcast_init(BUFFER_ASYNC x, COUNT count, DATATYPE datatype,
                           RANK root, COMM comm, INFO info, REQUEST_OUT request)
 {
@@ -29,7 +28,7 @@ PROTOTYPE VOID bcast_init(BUFFER_ASYNC x, COUNT count, DATATYPE datatype,
     MPI_Comm c_comm;
     MPI_Info c_info;
     MPI_Request c_req;
-    MPI_Datatype c_type, c_datatype;
+    MPI_Datatype c_type, c_datatype = MPI_DATATYPE_NULL;
     void *buffer = OMPI_CFI_BASE_ADDR(x);
     @COUNT_TYPE@ c_count = (@COUNT_TYPE@) *count;
     int c_root = OMPI_FINT_2_INT(*root);
@@ -49,12 +48,12 @@ PROTOTYPE VOID bcast_init(BUFFER_ASYNC x, COUNT count, DATATYPE datatype,
 
     c_ierr = @INNER_CALL@(OMPI_F2C_BOTTOM(buffer),
                           c_count,
-                          c_datatype,
+                          (c_datatype == MPI_DATATYPE_NULL) ? c_type : c_datatype,
                           c_root,
                           c_comm,
                           c_info,
                           &c_req);
-    if (c_datatype != c_type) {
+    if (MPI_DATATYPE_NULL != c_datatype && c_datatype != c_type) {
         ompi_datatype_destroy(&c_datatype);
     }
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
