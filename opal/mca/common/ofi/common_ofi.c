@@ -321,9 +321,10 @@ int opal_common_ofi_providers_subset_of_list(struct fi_info *provider_list, char
 
 int opal_common_ofi_mca_register(const mca_base_component_t *component)
 {
-    static int include_index = -1;
-    static int exclude_index = -1;
-    static int verbose_index = -1;
+    int include_index;
+    int exclude_index;
+    int verbose_index;
+    int param;
     int ret;
 
     if (fi_version() < FI_VERSION(1, 0)) {
@@ -332,7 +333,8 @@ int opal_common_ofi_mca_register(const mca_base_component_t *component)
 
     OPAL_THREAD_LOCK(&opal_common_ofi_mutex);
 
-    if (0 > include_index) {
+    param = mca_base_var_find("opal", "opal_common", "ofi", "provider_include");
+    if (0 > param) {
         /*
          * this monkey business is needed because of the way the MCA VARs stuff tries to handle
          * pointers to strings when when destructing the MCA var database.  If you don't do
@@ -355,9 +357,12 @@ int opal_common_ofi_mca_register(const mca_base_component_t *component)
             ret = include_index;
             goto err;
         }
+    } else {
+       include_index = param;
     }
 
-    if (0 > exclude_index) {
+    param = mca_base_var_find("opal", "opal_common", "ofi", "provider_exclude");
+    if (0 > param) {
         if (NULL == opal_common_ofi.prov_exclude) {
             opal_common_ofi.prov_exclude = (char **) malloc(sizeof(char *));
             assert(NULL != opal_common_ofi.prov_exclude);
@@ -374,9 +379,12 @@ int opal_common_ofi_mca_register(const mca_base_component_t *component)
             ret = exclude_index;
             goto err;
         }
+    } else {
+        exclude_index = param;
     }
 
-    if (0 > verbose_index) {
+    param = mca_base_var_find("opal", "opal_common", "ofi", "verbose");
+    if (0 > param) {
         verbose_index = mca_base_var_register("opal", "opal_common", "ofi", "verbose",
                                               "Verbose level of the OFI components",
                                               MCA_BASE_VAR_TYPE_INT, NULL, 0,
@@ -387,6 +395,8 @@ int opal_common_ofi_mca_register(const mca_base_component_t *component)
             ret = verbose_index;
             goto err;
         }
+    } else {
+        verbose_index = param;
     }
 
     if (component) {
