@@ -115,7 +115,7 @@ static mca_base_framework_t *ompi_framework_dependencies[] = {
     &ompi_hook_base_framework, &ompi_op_base_framework,
     &opal_allocator_base_framework, &opal_rcache_base_framework, &opal_mpool_base_framework, &opal_smsc_base_framework,
     &ompi_bml_base_framework, &ompi_pml_base_framework, &ompi_coll_base_framework,
-    &ompi_osc_base_framework, NULL,
+    &ompi_osc_base_framework, &ompi_part_base_framework, NULL,
 };
 
 static mca_base_framework_t *ompi_lazy_frameworks[] = {
@@ -657,11 +657,7 @@ static int ompi_mpi_instance_init_common (int argc, char **argv)
         return ompi_instance_print_error ("ompi_win_init() failed", ret);
     }
 
-    /* initialize partcomm */
-    if (OMPI_SUCCESS != (ret = mca_base_framework_open(&ompi_part_base_framework, 0))) {
-        return ompi_instance_print_error ("mca_part_base_select() failed", ret);
-    }
-
+    /* select part component to use */
     if (OMPI_SUCCESS != (ret = mca_part_base_select (true, true))) {
         return ompi_instance_print_error ("mca_part_base_select() failed", ret);
     }
