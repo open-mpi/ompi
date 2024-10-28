@@ -126,6 +126,7 @@ segment_create(map_segment_t *ds_buf,
     /* init the contents of map_segment_t */
     shmem_ds_reset(ds_buf);
 
+    (void)munmap(mca_sshmem_base_start_address, size);
     addr = mmap((void *)mca_sshmem_base_start_address,
                 size,
                 PROT_READ | PROT_WRITE,
