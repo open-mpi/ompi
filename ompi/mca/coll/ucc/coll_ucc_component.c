@@ -1,6 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2021 Mellanox Technologies. All rights reserved.
+ * Copyright (c) 2024 NVIDIA CORPORATION. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -59,24 +60,24 @@ static int mca_coll_ucc_register(void)
     mca_coll_ucc_component_t *cm = &mca_coll_ucc_component;
     mca_base_component_t     *c  = &cm->super.collm_version;
     mca_base_component_var_register(c, "priority", "Priority of the UCC coll component",
-                                    MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                    MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                     OPAL_INFO_LVL_9,
-                                    MCA_BASE_VAR_SCOPE_READONLY, &cm->ucc_priority);
+                                    MCA_BASE_VAR_SCOPE_ALL, &cm->ucc_priority);
 
     mca_base_component_var_register(c, "verbose", "Verbose level of the UCC coll component",
-                                    MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                    MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                     OPAL_INFO_LVL_9,
-                                    MCA_BASE_VAR_SCOPE_READONLY, &cm->ucc_verbose);
+                                    MCA_BASE_VAR_SCOPE_ALL, &cm->ucc_verbose);
 
     mca_base_component_var_register(c, "enable", "[0|1] Enable/Disable the UCC coll component",
-                                    MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                    MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                     OPAL_INFO_LVL_9,
-                                    MCA_BASE_VAR_SCOPE_READONLY, &cm->ucc_enable);
+                                    MCA_BASE_VAR_SCOPE_ALL, &cm->ucc_enable);
 
     mca_base_component_var_register(c, "np", "Minimal communicator size for the UCC coll component",
-                                    MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                    MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                     OPAL_INFO_LVL_9,
-                                    MCA_BASE_VAR_SCOPE_READONLY, &cm->ucc_np);
+                                    MCA_BASE_VAR_SCOPE_ALL, &cm->ucc_np);
 
     mca_base_component_var_register(c, MCA_COMPILETIME_VER,
                                     "Version of the libucc library with which Open MPI was compiled",
@@ -92,13 +93,13 @@ static int mca_coll_ucc_register(void)
 
     mca_base_component_var_register(c, "cls",
                                     "Comma separated list of UCC CLS to be used for team creation",
-                                    MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
-                                    OPAL_INFO_LVL_6, MCA_BASE_VAR_SCOPE_READONLY, &cm->cls);
+                                    MCA_BASE_VAR_TYPE_STRING, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                    OPAL_INFO_LVL_6, MCA_BASE_VAR_SCOPE_ALL, &cm->cls);
 
     mca_base_component_var_register(c, "cts",
                                     "Comma separated list of UCC coll types to be enabled",
-                                    MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
-                                    OPAL_INFO_LVL_6, MCA_BASE_VAR_SCOPE_READONLY, &cm->cts);
+                                    MCA_BASE_VAR_TYPE_STRING, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                    OPAL_INFO_LVL_6, MCA_BASE_VAR_SCOPE_ALL, &cm->cts);
     return OMPI_SUCCESS;
 }
 
