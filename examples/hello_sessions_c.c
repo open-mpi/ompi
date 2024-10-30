@@ -17,4 +17,5 @@ int main(int argc, char** argv) {
   MPI_Session_init(MPI_INFO_NULL, MPI_ERRORS_RETURN, &s2);
   MPI_Session_finalize(&s2);
   MPI_Info_free(&info);
+  return 0;
 }
