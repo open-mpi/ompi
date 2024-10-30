@@ -82,6 +82,11 @@ static int opal_info_dup_impl(opal_info_t *info, opal_info_t **newinfo, bool pub
         newentry->ie_key = iterator->ie_key;
         OBJ_RETAIN(iterator->ie_key);
         newentry->ie_value = iterator->ie_value;
+        if (public_only) {
+            /* for public info-dup we also duplicate the references so that subsequent
+             * duplications see the same info keys */
+            newentry->ie_referenced = iterator->ie_referenced;
+        }
         OBJ_RETAIN(iterator->ie_value);
         opal_list_append (&((*newinfo)->super), (opal_list_item_t *) newentry);
     }
