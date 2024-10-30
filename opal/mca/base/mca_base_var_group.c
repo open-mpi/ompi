@@ -15,6 +15,8 @@
  *                         reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2024      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -374,6 +376,8 @@ int mca_base_var_group_deregister(int group_index)
     for (int i = 0; i < size; ++i) {
         OBJ_RELEASE(enums[i]);
     }
+    opal_value_array_set_size(&group->group_enums, 0);
+
 
     size = opal_value_array_get_size(&group->group_subgroups);
     subgroups = OPAL_VALUE_ARRAY_GET_BASE(&group->group_subgroups, int);

@@ -222,6 +222,8 @@ void ompi_mpi_instance_release (void)
     opal_argv_free (ompi_mpi_instance_pmix_psets);
     ompi_mpi_instance_pmix_psets = NULL;
 
+    OBJ_DESTRUCT(&ompi_mpi_instance_null);
+
     opal_finalize_cleanup_domain (&ompi_instance_basic_domain);
     OBJ_DESTRUCT(&ompi_instance_basic_domain);
 
@@ -949,8 +951,6 @@ static int ompi_mpi_instance_finalize_common (void)
     }
 
     ompi_proc_finalize();
-
-    OBJ_DESTRUCT(&ompi_mpi_instance_null);
 
     ompi_mpi_instance_release ();
 
