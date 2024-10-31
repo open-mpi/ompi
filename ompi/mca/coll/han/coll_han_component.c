@@ -7,6 +7,7 @@
  * Copyright (c) 2023      Computer Architecture and VLSI Systems (CARV)
  *                         Laboratory, ICS Forth. All rights reserved.
  * Copyright (c) 2024      Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * Copyright (c) 2024      NVIDIA CORPORATION. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -257,9 +258,9 @@ mca_coll_han_query_module_from_mca(mca_base_component_t* c,
     *storage = ompi_coll_han_available_components[mod_id].component_name;
 
     (void) mca_base_component_var_register(c, param_name, param_doc,
-                                           MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_STRING, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                            info_level,
-                                           MCA_BASE_VAR_SCOPE_READONLY, storage);
+                                           MCA_BASE_VAR_SCOPE_ALL, storage);
     module_name = *storage;
     mod_id = strtol(module_name, &endptr, 10);
     if( module_name == endptr ) {  /* no conversion, maybe we got a module name instead */
@@ -288,22 +289,22 @@ static int han_register(void)
     COMPONENT_T component;
 
     (void) mca_base_component_var_register(c, "priority", "Priority of the HAN coll component",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                            OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY, &cs->han_priority);
+                                           MCA_BASE_VAR_SCOPE_ALL, &cs->han_priority);
 
     cs->han_output_verbose = 0;
     (void) mca_base_component_var_register(c, "verbose", "Verbosity of the HAN coll component (use coll base verbosity if not set)",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                            OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY, &cs->han_output_verbose);
+                                           MCA_BASE_VAR_SCOPE_ALL, &cs->han_output_verbose);
 
     cs->han_bcast_segsize = 65536;
     (void) mca_base_component_var_register(c, "bcast_segsize",
                                            "segment size for bcast",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                            OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY, &cs->han_bcast_segsize);
+                                           MCA_BASE_VAR_SCOPE_ALL, &cs->han_bcast_segsize);
 
     cs->han_bcast_up_module = 0;
     (void) mca_coll_han_query_module_from_mca(c, "bcast_up_module",
@@ -321,9 +322,9 @@ static int han_register(void)
     cs->han_reduce_segsize = 65536;
     (void) mca_base_component_var_register(c, "reduce_segsize",
                                            "segment size for reduce",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                            OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY, &cs->han_reduce_segsize);
+                                           MCA_BASE_VAR_SCOPE_ALL, &cs->han_reduce_segsize);
 
     cs->han_reduce_up_module = 0;
     (void) mca_coll_han_query_module_from_mca(c, "reduce_up_module",
@@ -340,9 +341,9 @@ static int han_register(void)
     cs->han_allreduce_segsize = 65536;
     (void) mca_base_component_var_register(c, "allreduce_segsize",
                                            "segment size for allreduce",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                            OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY, &cs->han_allreduce_segsize);
+                                           MCA_BASE_VAR_SCOPE_ALL, &cs->han_allreduce_segsize);
 
     cs->han_allreduce_up_module = 0;
     (void) mca_coll_han_query_module_from_mca(c, "allreduce_up_module",
@@ -424,8 +425,8 @@ static int han_register(void)
     (void) mca_base_component_var_register(c, "alltoall_pstages",
                                               "Parallel Stages for alltoall.  Higher numbers require more memory, "
                                               "and performs more communication in parallel.  0 chooses pstages based on message size.",
-                                              MCA_BASE_VAR_TYPE_INT32_T, NULL, 0, 0,
-                                              OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+                                              MCA_BASE_VAR_TYPE_INT32_T, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                              OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_ALL,
                                               &cs->han_alltoall_pstages);
 
     cs->han_alltoallv_low_module = 0;
@@ -436,16 +437,16 @@ static int han_register(void)
     cs->han_alltoallv_smsc_avg_send_limit = 8192;
     (void) mca_base_component_var_register(c, "alltoallv_smsc_avg_send_limit",
                                               "The per-rank averaged send bytes limit above which smsc-based alltoallv will disqualify itself.",
-                                              MCA_BASE_VAR_TYPE_INT64_T, NULL, 0, 0,
-                                              OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+                                              MCA_BASE_VAR_TYPE_INT64_T, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                              OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_ALL,
                                               &cs->han_alltoallv_smsc_avg_send_limit);
     cs->han_alltoallv_smsc_noncontig_activation_limit = 0.10;
     (void) mca_base_component_var_register(c, "alltoallv_smsc_noncontig_limit",
                                               "The fractional (0.00-1.00) limit of peers in the communicator which have "
                                               "strided or otherwise non-contiguous data buffers.  Above this limit "
                                               "smsc-based alltoallv will ignore the avg_send_limit, and always remain active.",
-                                              MCA_BASE_VAR_TYPE_DOUBLE, NULL, 0, 0,
-                                              OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+                                              MCA_BASE_VAR_TYPE_DOUBLE, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                              OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_ALL,
                                               &cs->han_alltoallv_smsc_noncontig_activation_limit);
 
     cs->han_reproducible = 0;
@@ -453,21 +454,21 @@ static int han_register(void)
                                            "whether we need reproducible results "
                                            "(enabling this disables optimisations using topology)"
                                            "0 disable 1 enable, default 0",
-                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                            OPAL_INFO_LVL_3,
-                                           MCA_BASE_VAR_SCOPE_READONLY, &cs->han_reproducible);
+                                           MCA_BASE_VAR_SCOPE_ALL, &cs->han_reproducible);
 
     cs->han_packbuf_bytes = 128*1024;
     (void) mca_base_component_var_register(c, "packbuf_bytes",
                                            "The number of bytes in each HAN packbuf.",
-                                           MCA_BASE_VAR_TYPE_INT64_T, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+                                           MCA_BASE_VAR_TYPE_INT64_T, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                           OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_ALL,
                                            &cs->han_packbuf_bytes);
     cs->han_packbuf_max_count = 32;
     (void) mca_base_component_var_register(c, "packbuf_max_count",
                                            "The maximum number of packbufs that are allowed to be allocated.",
-                                           MCA_BASE_VAR_TYPE_INT64_T, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+                                           MCA_BASE_VAR_TYPE_INT64_T, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                           OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_ALL,
                                            &cs->han_packbuf_max_count);
 
     /*
@@ -582,9 +583,9 @@ static int han_register(void)
             }
 
             mca_base_component_var_register(c, param_name, param_desc,
-                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                             OPAL_INFO_LVL_9,
-                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            MCA_BASE_VAR_SCOPE_ALL,
                                             &(cs->mca_sub_components[coll][topo_lvl]));
         }
     }
@@ -594,27 +595,27 @@ static int han_register(void)
     (void) mca_base_component_var_register(&mca_coll_han_component.super.collm_version,
                                            "use_dynamic_file_rules",
                                            "Enable the dynamic selection provided via the dynamic_rules_filename MCA",
-                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                            OPAL_INFO_LVL_6,
-                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           MCA_BASE_VAR_SCOPE_ALL,
                                            &(cs->use_dynamic_file_rules));
 
     cs->dynamic_rules_filename = NULL;
     (void) mca_base_component_var_register(&mca_coll_han_component.super.collm_version,
                                            "dynamic_rules_filename",
                                            "Configuration file containing the dynamic selection rules",
-                                           MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_STRING, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                            OPAL_INFO_LVL_6,
-                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           MCA_BASE_VAR_SCOPE_ALL,
                                            &(cs->dynamic_rules_filename));
 
     cs->dump_dynamic_rules = false;
     (void) mca_base_component_var_register(&mca_coll_han_component.super.collm_version,
                                            "dump_dynamic_rules",
                                            "Switch used to decide if we dump  dynamic rules provided by configuration file",
-                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                            OPAL_INFO_LVL_6,
-                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           MCA_BASE_VAR_SCOPE_ALL,
                                            &(cs->dump_dynamic_rules));
 
     if((cs->dump_dynamic_rules || NULL != cs->dynamic_rules_filename)
@@ -631,9 +632,9 @@ static int han_register(void)
                                            "errors printed on rank 0 "
                                            "with a 0 verbosity."
                                            "Useless if coll_base_verbose is 30 or more.",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                            OPAL_INFO_LVL_6,
-                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           MCA_BASE_VAR_SCOPE_ALL,
                                            &(cs->max_dynamic_errors));
 
 
