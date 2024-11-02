@@ -80,7 +80,7 @@ int ompi_coll_tuned_read_rules_config_file (char *fname, ompi_coll_alg_rule_t** 
          SEGSIZE = 0,   /* algorithm specific tuning parameter */
          MAXREQ = 0;    /* algorithm specific tuning parameter */
     FILE *fptr = (FILE*) NULL;
-    int x, ncs, nms;
+    int x, ncs, nms, version;
 
     ompi_coll_alg_rule_t *alg_rules = (ompi_coll_alg_rule_t*) NULL;   /* complete table of rules */
 
@@ -122,6 +122,11 @@ int ompi_coll_tuned_read_rules_config_file (char *fname, ompi_coll_alg_rule_t** 
     if (NULL == alg_rules) {
         OPAL_OUTPUT((ompi_coll_tuned_stream,"Cannot allocate rules for file [%s]\n", fname));
         goto on_file_error;
+    }
+
+    /* consume the optional version identifier */
+    if (0 == fscanf(fptr, "rule-file-version-%u", &version)) {
+        version = 1;
     }
 
     /* get the number of collectives for which rules are provided in the file */
@@ -232,7 +237,7 @@ int ompi_coll_tuned_read_rules_config_file (char *fname, ompi_coll_alg_rule_t** 
 
                 /* read the max requests tuning parameter. optional */
                 msg_p->result_max_requests = ompi_coll_tuned_alltoall_max_requests;
-                if( isnext_digit(fptr) ) {
+                if( (version > 1) && isnext_digit(fptr) ) {
                     if( (getnext (fptr, &MAXREQ) < 0) || (MAXREQ < 0) ) {
                         OPAL_OUTPUT((ompi_coll_tuned_stream,"Could not read max requests for collective ID %ld com rule %d msg rule %d at around line %d\n", COLID, ncs, nms, fileline));
                         goto on_file_error;
@@ -267,6 +272,7 @@ int ompi_coll_tuned_read_rules_config_file (char *fname, ompi_coll_alg_rule_t** 
     fclose (fptr);
 
     OPAL_OUTPUT((ompi_coll_tuned_stream,"\nConfigure file Stats\n"));
+    OPAL_OUTPUT((ompi_coll_tuned_stream,"Version\t\t\t\t\t: %5u\n", version));
     OPAL_OUTPUT((ompi_coll_tuned_stream,"Collectives with rules\t\t\t: %5d\n", total_alg_count));
     OPAL_OUTPUT((ompi_coll_tuned_stream,"Communicator sizes with rules\t\t: %5d\n", total_com_count));
     OPAL_OUTPUT((ompi_coll_tuned_stream,"Message sizes with rules\t\t: %5d\n", total_msg_count));
