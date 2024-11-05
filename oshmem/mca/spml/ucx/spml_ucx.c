@@ -638,12 +638,13 @@ int mca_spml_ucx_add_procs(oshmem_group_t* group, size_t nprocs)
     unsigned int *wk_roffs  = NULL;
     unsigned int *wk_rsizes = NULL;
     char *wk_raddrs         = NULL;
-    size_t i, j, w, n, temp;
+    size_t i, w, n;
     ucs_status_t err;
     ucp_address_t **wk_local_addr;
     unsigned int *wk_addr_len;
     ucp_ep_params_t ep_params;
     int *indices;
+    int proc_index, swap_index, temp_index;
 
     wk_local_addr = calloc(mca_spml_ucx.ucp_workers, sizeof(ucp_address_t *));
     wk_addr_len = calloc(mca_spml_ucx.ucp_workers, sizeof(size_t));
@@ -703,20 +704,20 @@ int mca_spml_ucx_add_procs(oshmem_group_t* group, size_t nprocs)
     srand((unsigned int)time(NULL));
 
     /* Get the EP connection requests for all the processes from modex */
-    for (i = nprocs - 1; i >= 0; --i) {
+    for (proc_index = nprocs - 1; proc_index >= 0; --proc_index) {
         /* Fisher-Yates shuffle algorithm */
-        if (i > 0) {
-            j = rand() % (i + 1);
-            temp = indices[i];
-            indices[i] = indices[j];
-            indices[j] = temp;
+        if (proc_index > 0) {
+            swap_index = rand() % (proc_index + 1);
+            temp_index = indices[proc_index];
+            indices[proc_index] = indices[swap_index];
+            indices[proc_index] = temp_index;
         }
 
         ep_params.field_mask = UCP_EP_PARAM_FIELD_REMOTE_ADDRESS;
-        ep_params.address    = (ucp_address_t *) mca_spml_ucx.remote_addrs_tbl[0][indices[i]];
+        ep_params.address = (ucp_address_t *) mca_spml_ucx.remote_addrs_tbl[0][indices[proc_index]];
 
         err = ucp_ep_create(mca_spml_ucx_ctx_default.ucp_worker[0], &ep_params,
-                            &mca_spml_ucx_ctx_default.ucp_peers[indices[i]].ucp_conn);
+                            &mca_spml_ucx_ctx_default.ucp_peers[indices[proc_index]].ucp_conn);
         if (UCS_OK != err) {
             SPML_UCX_ERROR("ucp_ep_create(proc=%zu/%zu) failed: %s", n, nprocs,
                     ucs_status_string(err));
@@ -724,7 +725,7 @@ int mca_spml_ucx_add_procs(oshmem_group_t* group, size_t nprocs)
         }
 
         /* Initialize mkeys as NULL for all processes */
-        mca_spml_ucx_peer_mkey_cache_init(&mca_spml_ucx_ctx_default, indices[i]);
+        mca_spml_ucx_peer_mkey_cache_init(&mca_spml_ucx_ctx_default, indices[proc_index]);
     }
 
     for (i = 0; i < mca_spml_ucx.ucp_workers; i++) {
