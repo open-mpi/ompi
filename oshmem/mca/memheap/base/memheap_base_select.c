@@ -124,6 +124,7 @@ static void *memheap_mmap_get(void *hint, size_t size)
 static int memheap_exchange_base_address(size_t size, void **address)
 {
     int nprocs = oshmem_num_procs();
+    int need_sync = (*address != NULL);
     void *base = NULL;
     void *ptr = NULL;
     int rc, i;
@@ -154,23 +155,29 @@ static int memheap_exchange_base_address(size_t size, void **address)
                     oshmem_my_proc_id(), base,
                     (base == ptr)? "ok" : "unavailable");
 
-    rc = oshmem_shmem_allgather(&ptr, bases, sizeof(ptr));
-    if (OSHMEM_SUCCESS != rc) {
-        MEMHEAP_ERROR("Failed to exchange selected vma for base segment "
-                      "(error %d)", rc);
-        goto out;
-    }
-
     *address = base;
-    for (i = 0; i < nprocs; i++) {
-        if ((NULL == bases[i]) || (bases[i] != base)) {
-            *address = NULL;
-            break;
+    if (need_sync) {
+        /* They all succeed or fail to allow fallback */
+        rc = oshmem_shmem_allgather(&ptr, bases, sizeof(ptr));
+        if (OSHMEM_SUCCESS != rc) {
+            MEMHEAP_ERROR("Failed to exchange selected vma for base segment "
+                          "(error %d)", rc);
+            goto out;
         }
+
+        for (i = 0; i < nprocs; i++) {
+            if ((NULL == bases[i]) || (bases[i] != base)) {
+                *address = NULL;
+                break;
+            }
+        }
+    } else if (ptr != base) {
+        /* Any failure terminates the rank and others start teardown */
+        rc = OSHMEM_ERROR;
     }
 
 out:
-    if (((OSHMEM_SUCCESS != rc) || (*address == NULL)) && (NULL != ptr)) {
+    if (((OSHMEM_SUCCESS != rc) || (*address == NULL)) && (ptr != NULL)) {
         (void)munmap(ptr, size);
     }
 
@@ -187,7 +194,8 @@ static int memheap_base_segment_setup(size_t size)
 {
     int rc;
 
-    if (mca_sshmem_base_start_address == (void *)UINTPTR_MAX) {
+    if ((mca_sshmem_base_start_address == (void *)UINTPTR_MAX) ||
+        (mca_sshmem_base_start_address == NULL)) {
         if (UINTPTR_MAX == 0xFFFFFFFF) {
             /**
              * if 32 bit we set sshmem_base_start_adress to 0
