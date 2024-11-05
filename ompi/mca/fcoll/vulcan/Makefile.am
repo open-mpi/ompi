@@ -13,6 +13,7 @@
 # Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2018      Research Organization for Information Science
 #                         and Technology (RIST).  All rights reserved.
+# Copyright (c) 2024      Advanced Micro Devices, Inc. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -22,6 +23,7 @@
 
 sources = \
         fcoll_vulcan.h \
+        fcoll_vulcan_internal.h \
         fcoll_vulcan_module.c \
         fcoll_vulcan_component.c \
         fcoll_vulcan_file_read_all.c \

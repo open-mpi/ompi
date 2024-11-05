@@ -27,7 +27,7 @@ mpi_standard_subversion=1
 # List in x.y.z format.
 pmix_min_version=4.2.0
 prte_min_version=3.0.0
-hwloc_min_version=1.11.0
+hwloc_min_version=2.1.0
 event_min_version=2.0.21
 automake_min_version=1.13.4
 autoconf_min_version=2.69.0

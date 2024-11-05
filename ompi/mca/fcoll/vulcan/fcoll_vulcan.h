@@ -14,6 +14,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2024      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2024      Advanced Micro Devices, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -40,8 +41,6 @@ BEGIN_C_DECLS
 /* Globally exported variables */
 
 extern int mca_fcoll_vulcan_priority;
-extern int mca_fcoll_vulcan_num_groups;
-extern int mca_fcoll_vulcan_write_chunksize;
 extern int mca_fcoll_vulcan_async_io;
 extern int mca_fcoll_vulcan_use_accelerator_buffers;
 
