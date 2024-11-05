@@ -254,7 +254,7 @@ static memheap_context_t* _memheap_create(void)
         return NULL;
     }
 
-    /* Inititialize symmetric area */
+    /* Initialize symmetric area */
     rc = mca_memheap_base_alloc_init(&mca_memheap_base_map,
                                      user_size + MEMHEAP_BASE_PRIVATE_SIZE, 0,
                                      "regular_mem");

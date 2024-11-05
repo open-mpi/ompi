@@ -170,11 +170,9 @@ static int _check_address(void *start, void **end)
     /**
      * SGI shmem only supports globals&static in main program.
      * It does not support them in shared objects or in dlopen()
-     * (Clarified on PGAS 2011 tutorial)
+     * (Clarified on PGAS 2011 tutorial).
      *
-     * So ignored any maps that start higher then process _end
-     * FIXME: make sure we do not register symmetric heap twice
-     * if we decide to allow shared objects
+     * So ignored any maps that start higher then process _end.
      */
     if ((uintptr_t)start > data_end) {
         MEMHEAP_VERBOSE(100,
