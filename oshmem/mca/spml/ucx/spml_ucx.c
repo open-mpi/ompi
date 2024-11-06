@@ -692,7 +692,7 @@ int mca_spml_ucx_add_procs(oshmem_group_t* group, size_t nprocs)
         }
     }
 
-    indices = malloc(nprocs * sizeof(int));
+    indices = malloc(nprocs * sizeof(*indices));
     if (!indices) {
         goto error;
     }
@@ -719,7 +719,7 @@ int mca_spml_ucx_add_procs(oshmem_group_t* group, size_t nprocs)
         err = ucp_ep_create(mca_spml_ucx_ctx_default.ucp_worker[0], &ep_params,
                             &mca_spml_ucx_ctx_default.ucp_peers[indices[proc_index]].ucp_conn);
         if (UCS_OK != err) {
-            SPML_UCX_ERROR("ucp_ep_create(proc=%zu/%zu) failed: %s", n, nprocs,
+            SPML_UCX_ERROR("ucp_ep_create(proc=%d/%zu) failed: %s", proc_index, nprocs,
                     ucs_status_string(err));
             goto error2;
         }
