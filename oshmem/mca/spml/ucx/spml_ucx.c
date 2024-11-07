@@ -710,7 +710,7 @@ int mca_spml_ucx_add_procs(oshmem_group_t* group, size_t nprocs)
             swap_index = rand() % (proc_index + 1);
             temp_index = indices[proc_index];
             indices[proc_index] = indices[swap_index];
-            indices[proc_index] = temp_index;
+            indices[swap_index] = temp_index;
         }
 
         ep_params.field_mask = UCP_EP_PARAM_FIELD_REMOTE_ADDRESS;
