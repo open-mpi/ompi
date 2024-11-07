@@ -4,6 +4,36 @@ Open MPI v5.0.x series
 This file contains all the NEWS updates for the Open MPI v5.0.x
 series, in reverse chronological order.
 
+Open MPI Version v5.0.6.rc1
+------------------------------
+:Date: 7 November 2024
+
+- Internal PMIx and PRRTe version:
+
+  - PMIx (v5.0.4). Repo: ``https://github.com/openpmix/openpmix``. Commit hash: ``c6b895e261384016e154865dd236faaaa471d173``.
+  - PRRTE (v3.0.7). repo: ``https://github.com/openpmix/prrte``. Commit hash: ``1b6e6d7e3cb8c0837eba1730cb62b62186ab042c``.
+
+  - Session Management Enhancements:
+  - Finalization Control: Ensures proper finalization of classes when references to the OPAL utility layer reach zero. A new smoke test has been added to validate this behavior.
+  - Test and CI Additions: A smoke test was introduced for session management, also integrated into macOS GitHub CI to ensure stability across platforms.
+  - Recognize requests from the same instance rather than same communicator, fixes Waitall/Waitany/Testall/Testany.
+  - Multiple Init/Finalize Handling: Improvements to handling session multiple initializations and finalizations, addressing issues with parameter management and session destruction.
+
+  - CUDA and NVIDIA HPC Compiler Compatibility:
+  - Stream-ordered Allocations: Adjustments for handling CUDA stream-ordered allocations and assigning primary device context in `opal/cuda` (Akshay Venkatesh).
+  - nvfortran Compatibility: Configure script updated to handle NVIDIA's `nvfortran` compiler, enabling proper compilation with `-fPIC` flags for shared libraries (Gilles Gouaillardet).
+  - CUDA Memory Address Management: Improvements for handling virtual memory manager (VMM) pointers in CUDA applications to prevent runtime issues.
+
+  - MPI Communication and Resource Management:
+  - Info Duplication: Enhanced `MPI_Info_dup` function to ensure consistent key management across duplicated info objects, supporting better memory and resource handling.
+  - OFI/Initialization Improvements: Refactored code for OFI common components to support session-based initialization models per MPI 4 standards.
+  - Resource Leak Fixes: Addressed memory leaks and reference count issues in several components to improve memory management and stability in high-demand environments.
+
+  - Detailed Locking Protocol: Modified default file-locking protocols in UFS component to ensure data consistency, especially when using data-sieving operations, which require broader locking.
+
+  - MPI_T Interface Enhancements: Modified MCA parameter settings to allow runtime tuning of collectives through the MPI_T interface, adding flexibility for dynamic rules in collective operations.
+  - Corrected various documentation typos and clarified parameter settings in several API references, improving readability and usability for end users.
+
 Open MPI version v5.0.5
 --------------------------
 :Date: 23 July 2024
