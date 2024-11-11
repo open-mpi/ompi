@@ -21,6 +21,8 @@ dnl Copyright (c) 2021      Nanook Consulting.  All rights reserved.
 dnl Copyright (c) 2021-2022 IBM Corporation.  All rights reserved.
 dnl Copyright (c) 2023-2024 Jeffrey M. Squyres.  All rights reserved.
 dnl Copyright (c) 2025      Advanced Micro Devices, Inc. All rights reserved.
+dnl Copyright (c) 2025      Triad National Security, LLC. All rights
+dnl                         reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -118,9 +120,18 @@ OPAL_VAR_SCOPE_PUSH([prrte_setup_internal_happy prrte_setup_external_happy targe
                        [$OMPI_USING_INTERNAL_PRRTE],
                        [Whether or not we are using the internal PRRTE])
 
+    AM_CONDITIONAL(OMPI_USING_INTERNAL_PRRTE, [test $OMPI_USING_INTERNAL_PRRTE -eq 1])
+
     AC_SUBST(OMPI_PRRTE_RST_CONTENT_DIR)
     AC_SUBST(OMPI_SCHIZO_OMPI_RST_CONTENT_DIR)
     AM_CONDITIONAL(OMPI_HAVE_PRRTE_RST, [test $OMPI_HAVE_PRRTE_RST -eq 1])
+
+dnl
+dnl If using external prrte that supports prte_launch or using internal prtte then
+dnl set OMPI_HAVE_PRTE_LAUNCH
+dnl
+    AS_IF([test "$setup_pprte_external_has_prte_launch" = "1" -o "$prrte_setup_internal_happy" = "1"],
+          [AC_DEFINE_UNQUOTED([OMPI_HAVE_PRTE_LAUNCH], [1], [Whether prte_launch support available])])
 
     OPAL_SUMMARY_ADD([Miscellaneous], [PRRTE], [], [$opal_prrte_mode])
 
@@ -296,6 +307,11 @@ AC_DEFUN([_OMPI_SETUP_PRRTE_EXTERNAL], [
                  [ompi_setup_prrte_cv_version_happy="no"])])
            AS_IF([test "${ompi_setup_prrte_cv_version_happy}" = "no"],
                  [setup_prrte_external_happy="no"])])
+
+    AS_IF([test "${setup_prrte_external_happy}" = "yes"],
+          [AC_CHECK_DECL([prte_launch],
+                  [setup_prrte_external_has_prte_launch=1], [setup_pprte_external_has_prte_launch=0],
+                  [#include "prte.h"])],[])
 
     CPPFLAGS="$opal_prrte_CPPFLAGS_save"
 

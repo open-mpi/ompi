@@ -1975,7 +1975,10 @@ static char *find_prte(void)
 #if OMPI_USING_INTERNAL_PRRTE
     /* 2) If using internal PRRTE, use our bindir.  Note that this
      * will obey OPAL_PREFIX and OPAL_DESTDIR */
-    opal_asprintf(&filename, "%s%sprte", opal_install_dirs.bindir, OPAL_PATH_SEP);
+/*
+ * TODO: HPP replace hard-wired prrte prefix with something configurable
+ */
+    opal_asprintf(&filename, "%s%sompi-prte", opal_install_dirs.bindir, OPAL_PATH_SEP);
     return filename;
 #else
 

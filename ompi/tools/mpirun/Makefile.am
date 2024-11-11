@@ -14,6 +14,12 @@
 
 if OMPI_WANT_PRRTE
 
+#
+# to help VPATH'd builds find prrte_version.h
+#
+AM_CFLAGS = \
+	-I$(top_srcdir)/3rd-party/prrte/include -I$(includedir)
+
 bin_PROGRAMS = mpirun
 
 EXTRA_DIST = help-mpirun.txt
@@ -21,8 +27,15 @@ EXTRA_DIST = help-mpirun.txt
 mpirun_SOURCES = \
     main.c
 
+#
+# TODO: HPP replace hard-wired prrte prefix with something configurable
+#
 mpirun_LDADD = \
 	$(top_builddir)/opal/libopen-pal_core.la
+if OMPI_USING_INTERNAL_PRRTE
+mpirun_LDADD += \
+	$(top_builddir)/3rd-party/prrte/src/libompi-prrte.la
+endif
 
 mpirun_CPPFLAGS = \
     -DMCA_oshmem_FRAMEWORKS="\"$(MCA_oshmem_FRAMEWORKS)\"" \
