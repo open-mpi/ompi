@@ -693,7 +693,7 @@ int mca_spml_ucx_add_procs(oshmem_group_t* group, size_t nprocs)
     }
 
     indices = malloc(nprocs * sizeof(*indices));
-    if (!indices) {
+    if (NULL == indices) {
         goto error;
     }
 
@@ -701,7 +701,7 @@ int mca_spml_ucx_add_procs(oshmem_group_t* group, size_t nprocs)
         indices[i] = i;
     }
 
-    srand((unsigned int)time(NULL));
+    srand(time(NULL));
 
     /* Get the EP connection requests for all the processes from modex */
     for (proc_index = nprocs - 1; proc_index >= 0; --proc_index) {
@@ -719,7 +719,7 @@ int mca_spml_ucx_add_procs(oshmem_group_t* group, size_t nprocs)
         err = ucp_ep_create(mca_spml_ucx_ctx_default.ucp_worker[0], &ep_params,
                             &mca_spml_ucx_ctx_default.ucp_peers[indices[proc_index]].ucp_conn);
         if (UCS_OK != err) {
-            SPML_UCX_ERROR("ucp_ep_create(proc=%d/%zu) failed: %s", proc_index, nprocs,
+            SPML_UCX_ERROR("ucp_ep_create(proc=%d/%zu, index=%u) failed: %s", proc_index, nprocs, indices[proc_index],
                     ucs_status_string(err));
             goto error2;
         }
