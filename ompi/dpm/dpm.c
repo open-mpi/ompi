@@ -430,7 +430,7 @@ bcast_rportlen:
             wildcard_rank.jobid = proc->super.proc_name.jobid;
             wildcard_rank.vpid = OMPI_NAME_WILDCARD->vpid;
             /* retrieve the local peers for the specified jobid */
-            OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_LOCAL_PEERS,
+            OPAL_MODEX_RECV_VALUE_IMMEDIATE(rc, PMIX_LOCAL_PEERS,
                                            &wildcard_rank, &val, PMIX_STRING);
             if (OPAL_SUCCESS == rc && NULL != val) {
                 char **peers = opal_argv_split(val, ',');
