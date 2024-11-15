@@ -4,14 +4,14 @@ Open MPI v5.0.x series
 This file contains all the NEWS updates for the Open MPI v5.0.x
 series, in reverse chronological order.
 
-Open MPI Version v5.0.6.rc1
+Open MPI Version v5.0.6
 ------------------------------
-:Date: 7 November 2024
+:Date: 14 November 2024
 
 - Internal PMIx and PRRTe version:
 
-  - PMIx (v5.0.4). Repo: ``https://github.com/openpmix/openpmix``. Commit hash: ``c6b895e261384016e154865dd236faaaa471d173``.
-  - PRRTE (v3.0.7). repo: ``https://github.com/openpmix/prrte``. Commit hash: ``1b6e6d7e3cb8c0837eba1730cb62b62186ab042c``.
+  - PMIx (v5.0.4). Repo: ``https://github.com/openpmix/openpmix``. Commit hash: ``20ad9b16fe49ede4a76e7489bdf0e2ea05c3de95``.
+  - PRRTE (v3.0.7). repo: ``https://github.com/openpmix/prrte``. Commit hash: ``b2f4163e40a84fe777fa36dfbffa4db23d8d31dd``.
 
   - Session Management Enhancements:
   - Finalization Control: Ensures proper finalization of classes when references to the OPAL utility layer reach zero. A new smoke test has been added to validate this behavior.
