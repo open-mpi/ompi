@@ -124,7 +124,7 @@ static void *memheap_mmap_get(void *hint, size_t size)
 static int memheap_exchange_base_address(size_t size, void **address)
 {
     int nprocs = oshmem_num_procs();
-    int need_sync = (*address != NULL);
+    int need_sync = (*address == NULL);
     void *base = NULL;
     void *ptr = NULL;
     int rc, i;
