@@ -9,7 +9,7 @@
  *                         reserved.
  * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
- * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
+ * Copyright (c) 2021-2024 Nanook Consulting  All rights reserved.
  * Copyright (c) 2021      Argonne National Laboratory.  All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -293,7 +293,7 @@ typedef struct {
         OPAL_OUTPUT_VERBOSE((1, opal_pmix_verbose_output,                              \
                              "%s[%s:%d] MODEX RECV VALUE OPTIONAL FOR PROC %s KEY %s", \
                              OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), __FILE__, __LINE__,   \
-                             OPAL_NAME_PRINT(*(p)), (s)));                             \
+                             OPAL_NAME_PRINT(*(p)), PMIx_Get_attribute_name(s)));      \
         OPAL_PMIX_CONVERT_NAME(&_proc, (p));                                           \
         PMIX_INFO_LOAD(&_info, PMIX_OPTIONAL, NULL, PMIX_BOOL);                        \
         (r) = PMIx_Get(&(_proc), (s), &(_info), 1, &(_kv));                            \
@@ -334,7 +334,7 @@ typedef struct {
         OPAL_OUTPUT_VERBOSE((1, opal_pmix_verbose_output,                               \
                              "%s[%s:%d] MODEX RECV VALUE IMMEDIATE FOR PROC %s KEY %s", \
                              OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), __FILE__, __LINE__,    \
-                             OPAL_NAME_PRINT(*(p)), (s)));                              \
+                             OPAL_NAME_PRINT(*(p)), PMIx_Get_attribute_name(s)));       \
         OPAL_PMIX_CONVERT_NAME(&_proc, (p));                                            \
         PMIX_INFO_LOAD(&_info, PMIX_IMMEDIATE, NULL, PMIX_BOOL);                        \
         (r) = PMIx_Get(&(_proc), (s), &(_info), 1, &(_kv));                             \
@@ -370,7 +370,8 @@ typedef struct {
         size_t _sz;                                                                                \
         OPAL_OUTPUT_VERBOSE(                                                                       \
             (1, opal_pmix_verbose_output, "%s[%s:%d] MODEX RECV VALUE FOR PROC %s KEY %s",         \
-             OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), __FILE__, __LINE__, OPAL_NAME_PRINT(*(p)), (s))); \
+             OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), __FILE__, __LINE__, OPAL_NAME_PRINT(*(p)),        \
+             PMIx_Get_attribute_name(s))); \
         OPAL_PMIX_CONVERT_NAME(&_proc, (p));                                                       \
         (r) = PMIx_Get(&(_proc), (s), NULL, 0, &(_kv));                                            \
         if (NULL == _kv) {                                                                         \
@@ -406,7 +407,7 @@ typedef struct {
         OPAL_OUTPUT_VERBOSE((1, opal_pmix_verbose_output,                               \
                              "%s[%s:%d] MODEX RECV STRING OPTIONAL FOR PROC %s KEY %s", \
                              OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), __FILE__, __LINE__,    \
-                             OPAL_NAME_PRINT(*(p)), (s)));                              \
+                             OPAL_NAME_PRINT(*(p)), PMIx_Get_attribute_name(s)));       \
         *(d) = NULL;                                                                    \
         *(sz) = 0;                                                                      \
         OPAL_PMIX_CONVERT_NAME(&_proc, (p));                                            \
@@ -444,7 +445,8 @@ typedef struct {
         pmix_info_t _info;                                                                         \
         OPAL_OUTPUT_VERBOSE(                                                                       \
             (1, opal_pmix_verbose_output, "%s[%s:%d] MODEX RECV STRING FOR PROC %s KEY %s",        \
-             OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), __FILE__, __LINE__, OPAL_NAME_PRINT(*(p)), (s))); \
+             OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), __FILE__, __LINE__, OPAL_NAME_PRINT(*(p)),        \
+             PMIx_Get_attribute_name(s)));                                                         \
         *(d) = NULL;                                                                               \
         *(sz) = 0;                                                                                 \
         OPAL_PMIX_CONVERT_NAME(&_proc, (p));                                                       \
