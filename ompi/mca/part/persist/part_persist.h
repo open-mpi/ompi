@@ -159,15 +159,15 @@ __opal_attribute_always_inline__ static inline int
 mca_part_persist_progress(void)
 {
     mca_part_persist_list_t *current;
-    int err;
+    int err = OMPI_SUCCESS;
+    int completed = 0;
     size_t i;
 
     /* prevent re-entry, */
     int block_entry = opal_atomic_add_fetch_32(&(ompi_part_persist.block_entry), 1);
-    if(1 < block_entry)
-    {
+    if(1 < block_entry) {
         block_entry = opal_atomic_add_fetch_32(&(ompi_part_persist.block_entry), -1);
-        return OMPI_SUCCESS;
+        return completed;
     }
 
     OPAL_THREAD_LOCK(&ompi_part_persist.lock);
@@ -175,47 +175,40 @@ mca_part_persist_progress(void)
     mca_part_persist_request_t* to_delete = NULL;
 
     /* Don't do anything till a function in the module is called. */
-    if(-1 == ompi_part_persist.init_world)
-    {
-        OPAL_THREAD_UNLOCK(&ompi_part_persist.lock);
-        block_entry = opal_atomic_add_fetch_32(&(ompi_part_persist.block_entry), -1);
-        return OMPI_SUCCESS;
+    if(-1 == ompi_part_persist.init_world) {
+        goto end_part_progress;
     }
 
     /* Can't do anything if we don't have world */
     if(0 == ompi_part_persist.init_world) {
         ompi_part_persist.my_world_rank = ompi_comm_rank(&ompi_mpi_comm_world.comm);
         err = ompi_comm_idup(&ompi_mpi_comm_world.comm, &ompi_part_persist.part_comm, &ompi_part_persist.part_comm_req);
-        if(err != OMPI_SUCCESS) {
-             exit(-1);
-        }
+        if(OMPI_SUCCESS != err) goto end_part_progress;
         ompi_part_persist.part_comm_ready = 0;
         err = ompi_comm_idup(&ompi_mpi_comm_world.comm, &ompi_part_persist.part_comm_setup, &ompi_part_persist.part_comm_sreq);
-        if(err != OMPI_SUCCESS) {
-            exit(-1);
-        }
+        if(OMPI_SUCCESS != err) goto end_part_progress;
         ompi_part_persist.part_comm_sready = 0;
         ompi_part_persist.init_world = 1;
 
-        OPAL_THREAD_UNLOCK(&ompi_part_persist.lock);
-        block_entry = opal_atomic_add_fetch_32(&(ompi_part_persist.block_entry), -1);
-        return OMPI_SUCCESS;
+        completed++;
+        goto end_part_progress;
     }
 
     /* Check to see if Comms are setup */
     if(0 == ompi_part_persist.init_comms) {
         if(0 == ompi_part_persist.part_comm_ready) {
-            ompi_request_test(&ompi_part_persist.part_comm_req, &ompi_part_persist.part_comm_ready, MPI_STATUS_IGNORE);
+            err = ompi_request_test(&ompi_part_persist.part_comm_req, &ompi_part_persist.part_comm_ready, MPI_STATUS_IGNORE);
+            if(OMPI_SUCCESS != err) goto end_part_progress;
         }
         if(0 == ompi_part_persist.part_comm_sready) {
-            ompi_request_test(&ompi_part_persist.part_comm_sreq, &ompi_part_persist.part_comm_sready, MPI_STATUS_IGNORE);
+            err = ompi_request_test(&ompi_part_persist.part_comm_sreq, &ompi_part_persist.part_comm_sready, MPI_STATUS_IGNORE);
+            if(OMPI_SUCCESS != err) goto end_part_progress;
         }
         if(0 != ompi_part_persist.part_comm_ready && 0 != ompi_part_persist.part_comm_sready) {
             ompi_part_persist.init_comms = 1;
         }
-        OPAL_THREAD_UNLOCK(&ompi_part_persist.lock);
-        block_entry = opal_atomic_add_fetch_32(&(ompi_part_persist.block_entry), -1);
-        return OMPI_SUCCESS;
+        completed++;
+        goto end_part_progress;
     }
 
     OPAL_LIST_FOREACH(current, ompi_part_persist.progress_list, mca_part_persist_list_t) {
@@ -227,10 +220,12 @@ mca_part_persist_progress(void)
             
             if(true == req->flag_post_setup_recv) {
                 err = MCA_PML_CALL(irecv(&(req->setup_info[1]), sizeof(struct ompi_mca_persist_setup_t), MPI_BYTE, OMPI_ANY_SOURCE, req->my_recv_tag, ompi_part_persist.part_comm_setup, &req->setup_req[1]));
+                if(OMPI_SUCCESS != err) goto end_part_progress;
                 req->flag_post_setup_recv = false;
             } 
  
-            ompi_request_test(&(req->setup_req[1]), &done, MPI_STATUS_IGNORE);
+            err = ompi_request_test(&(req->setup_req[1]), &done, MPI_STATUS_IGNORE);
+            if(OMPI_SUCCESS != err) goto end_part_progress;
 
             if(done) {
                 size_t dt_size_;
@@ -241,15 +236,16 @@ mca_part_persist_progress(void)
                     req->world_peer  = req->setup_info[1].world_rank; 
 
                     err = opal_datatype_type_size(&(req->req_datatype->super), &dt_size_);
-                    if(OMPI_SUCCESS != err) return OMPI_ERROR;
+                    if(OMPI_SUCCESS != err) goto end_part_progress;
                     dt_size = (dt_size_ > (size_t) UINT_MAX) ? MPI_UNDEFINED : (uint32_t) dt_size_;
                     uint32_t bytes = req->real_count * dt_size;
 
                     /* Set up persistent sends */
                     req->persist_reqs = (ompi_request_t**) malloc(sizeof(ompi_request_t*)*(req->real_parts));
                     for(i = 0; i < req->real_parts; i++) {
-                         void *buf = ((void*) (((char*)req->req_addr) + (bytes * i)));
-                         err = MCA_PML_CALL(isend_init(buf, req->real_count, req->req_datatype, req->world_peer, req->my_send_tag+i, MCA_PML_BASE_SEND_STANDARD, ompi_part_persist.part_comm, &(req->persist_reqs[i])));
+                        void *buf = ((void*) (((char*)req->req_addr) + (bytes * i)));
+                        err = MCA_PML_CALL(isend_init(buf, req->real_count, req->req_datatype, req->world_peer, req->my_send_tag+i, MCA_PML_BASE_SEND_STANDARD, ompi_part_persist.part_comm, &(req->persist_reqs[i])));
+                        if(OMPI_SUCCESS != err) goto end_part_progress;
                     }    
                 } else {
                     /* parse message */
@@ -262,37 +258,38 @@ mca_part_persist_progress(void)
 
 
                     err = opal_datatype_type_size(&(req->req_datatype->super), &dt_size_);
-                    if(OMPI_SUCCESS != err) return OMPI_ERROR;
+                    if(OMPI_SUCCESS != err) goto end_part_progress;
                     dt_size = (dt_size_ > (size_t) UINT_MAX) ? MPI_UNDEFINED : (uint32_t) dt_size_;
                     uint32_t bytes = req->real_count * dt_size;
 
 
-
-		    /* Set up persistent sends */
+                    /* Set up persistent sends */
                     req->persist_reqs = (ompi_request_t**) malloc(sizeof(ompi_request_t*)*(req->real_parts));
                     req->flags = (int*) calloc(req->real_parts,sizeof(int));
-
                     if(req->real_dt_size == dt_size) {
-
-     	                for(i = 0; i < req->real_parts; i++) {
+                        for(i = 0; i < req->real_parts; i++) {
                             void *buf = ((void*) (((char*)req->req_addr) + (bytes * i)));
                             err = MCA_PML_CALL(irecv_init(buf, req->real_count, req->req_datatype, req->world_peer, req->my_send_tag+i, ompi_part_persist.part_comm, &(req->persist_reqs[i])));
+                            if(OMPI_SUCCESS != err) goto end_part_progress;
                         }
                     } else {
                         for(i = 0; i < req->real_parts; i++) {
                             void *buf = ((void*) (((char*)req->req_addr) + (req->real_count * req->real_dt_size * i)));
                             err = MCA_PML_CALL(irecv_init(buf, req->real_count * req->real_dt_size, MPI_BYTE, req->world_peer, req->my_send_tag+i, ompi_part_persist.part_comm, &(req->persist_reqs[i])));
+                            if(OMPI_SUCCESS != err) goto end_part_progress;
                         }
-		    }
-                    err = req->persist_reqs[0]->req_start(req->real_parts, (&(req->persist_reqs[0])));                     
+                    }
+                    err = req->persist_reqs[0]->req_start(req->real_parts, (&(req->persist_reqs[0])));
+                    if(OMPI_SUCCESS != err) goto end_part_progress;
 
                     /* Send back a message */
                     req->setup_info[0].world_rank = ompi_part_persist.my_world_rank;
                     err = MCA_PML_CALL(isend(&(req->setup_info[0]), sizeof(struct ompi_mca_persist_setup_t), MPI_BYTE, req->world_peer, req->my_recv_tag, MCA_PML_BASE_SEND_STANDARD, ompi_part_persist.part_comm_setup, &req->setup_req[0]));
-                    if(OMPI_SUCCESS != err) return OMPI_ERROR;
+                    if(OMPI_SUCCESS != err) goto end_part_progress;
                 }
 
-                req->initialized = true; 
+                completed++;
+                req->initialized = true;
             }
         } else {
             if(false == req->req_part_complete && REQUEST_COMPLETED != req->req_ompi.req_complete && OMPI_REQUEST_ACTIVE == req->req_ompi.req_state) {
@@ -301,21 +298,27 @@ mca_part_persist_progress(void)
                     /* Check to see if partition is queued for being started. Only applicable to sends. */ 
                     if(-2 ==  req->flags[i]) {
                         err = req->persist_reqs[i]->req_start(1, (&(req->persist_reqs[i])));
+                        if(OMPI_SUCCESS != err) goto end_part_progress;
                         req->flags[i] = 0;
                     }
 
                     if(0 == req->flags[i] && OMPI_REQUEST_ACTIVE == req->persist_reqs[i]->req_state) {
-                        ompi_request_test(&(req->persist_reqs[i]), &(req->flags[i]), MPI_STATUS_IGNORE);
-                        if(0 != req->flags[i]) req->done_count++;
+                        err = ompi_request_test(&(req->persist_reqs[i]), &(req->flags[i]), MPI_STATUS_IGNORE);
+                        if(OMPI_SUCCESS != err) goto end_part_progress;
+                        if(0 != req->flags[i]) {
+                            req->done_count++;
+                        }
                     }
                 }
 
                 /* Check for completion and complete the requests */
-                if(req->done_count == req->real_parts)
-                {
+                if(req->done_count == req->real_parts) {
                     req->first_send = false;
                     mca_part_persist_complete(req);
-                } 
+                    completed++;
+                } else if(req->done_count > req->real_parts) {
+                    ompi_rte_abort(OMPI_ERR_FATAL, "internal part request done count is %d > %d", req->done_count, req->real_parts);
+                }
             }
 
             if(true == req->req_free_called && true == req->req_part_complete && REQUEST_COMPLETED == req->req_ompi.req_complete &&  OMPI_REQUEST_INACTIVE == req->req_ompi.req_state) {
@@ -328,10 +331,14 @@ mca_part_persist_progress(void)
         err = mca_part_persist_free_req(to_delete);
     }
 
+end_part_progress:
+    if(OMPI_SUCCESS != err) {
+        ompi_rte_abort(err, "part progress internal failure");
+    }
     OPAL_THREAD_UNLOCK(&ompi_part_persist.lock);
     block_entry = opal_atomic_add_fetch_32(&(ompi_part_persist.block_entry), -1);
 
-    return OMPI_SUCCESS;
+    return completed;
 }
 
 __opal_attribute_always_inline__ static inline int
