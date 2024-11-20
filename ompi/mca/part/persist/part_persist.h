@@ -304,8 +304,7 @@ mca_part_persist_progress(void)
                         req->flags[i] = 0;
                     }
 
-                    if(0 == req->flags[i])
-                    {
+                    if(0 == req->flags[i] && OMPI_REQUEST_ACTIVE == req->persist_reqs[i]->req_state) {
                         ompi_request_test(&(req->persist_reqs[i]), &(req->flags[i]), MPI_STATUS_IGNORE);
                         if(0 != req->flags[i]) req->done_count++;
                     }
@@ -323,16 +322,14 @@ mca_part_persist_progress(void)
                 to_delete = req;
             }
         }
-
     }
+
+    if(NULL != to_delete && OPAL_SUCCESS == err) {
+        err = mca_part_persist_free_req(to_delete);
+    }
+
     OPAL_THREAD_UNLOCK(&ompi_part_persist.lock);
     block_entry = opal_atomic_add_fetch_32(&(ompi_part_persist.block_entry), -1);
-    if(to_delete) {
-        err =  mca_part_persist_free_req(to_delete);
-        if (OMPI_SUCCESS != err) {
-            return OMPI_ERROR;
-        }
-    }
 
     return OMPI_SUCCESS;
 }
