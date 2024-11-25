@@ -54,7 +54,7 @@ int mca_coll_cuda_reduce(const void *sbuf, void *rbuf, int count,
                          struct ompi_communicator_t *comm,
                          mca_coll_base_module_t *module);
 
-int mca_coll_cuda_reduce_local(const void *sbuf, void *rbuf, size_t count,
+int mca_coll_cuda_reduce_local(const void *sbuf, void *rbuf, int count,
                                struct ompi_datatype_t *dtype,
                                struct ompi_op_t *op,
                                mca_coll_base_module_t *module);
