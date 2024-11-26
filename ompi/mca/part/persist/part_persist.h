@@ -232,7 +232,11 @@ mca_part_persist_progress(void)
 
                     err = opal_datatype_type_size(&(req->req_datatype->super), &dt_size_);
                     if(OMPI_SUCCESS != err) goto end_part_progress;
-                    dt_size = (dt_size_ > (size_t) UINT_MAX) ? MPI_UNDEFINED : (uint32_t) dt_size_;
+                    if(dt_size_ > (size_t) UINT_MAX) {
+                        err = OMPI_ERR_UNKNOWN_DATA_TYPE;
+                        goto end_part_progress;
+                    }
+                    dt_size = (uint32_t) dt_size_;
                     uint32_t bytes = req->real_count * dt_size;
 
                     /* Set up persistent sends */
@@ -253,7 +257,11 @@ mca_part_persist_progress(void)
 
                     err = opal_datatype_type_size(&(req->req_datatype->super), &dt_size_);
                     if(OMPI_SUCCESS != err) goto end_part_progress;
-                    dt_size = (dt_size_ > (size_t) UINT_MAX) ? MPI_UNDEFINED : (uint32_t) dt_size_;
+                    if(dt_size_ > (size_t) UINT_MAX) {
+                        err = OMPI_ERR_UNKNOWN_DATA_TYPE;
+                        goto end_part_progress;
+                    }
+                    dt_size = (uint32_t) dt_size_;
                     uint32_t bytes = req->real_count * dt_size;
 
                     /* Set up persistent receives */
@@ -355,8 +363,7 @@ mca_part_persist_precv_init(void *buf,
                         struct ompi_request_t **request)
 {
     int err = OMPI_SUCCESS;
-    size_t dt_size_;
-    uint32_t dt_size;
+    size_t dt_size;
     mca_part_persist_list_t* new_progress_elem = NULL;
 
     mca_part_persist_precv_request_t *recvreq;
@@ -387,10 +394,10 @@ mca_part_persist_precv_init(void *buf,
     if(OMPI_SUCCESS != err) return OMPI_ERROR;
 
     /* Compute total number of bytes */
-    err = opal_datatype_type_size(&(req->req_datatype->super), &dt_size_);
+    err = opal_datatype_type_size(&(req->req_datatype->super), &dt_size);
     if(OMPI_SUCCESS != err) return OMPI_ERROR;
-    dt_size = (dt_size_ > (size_t) UINT_MAX) ? MPI_UNDEFINED : (uint32_t) dt_size_;
-    req->req_bytes = parts * count * dt_size;
+    if(dt_size > (size_t) UINT_MAX) return OMPI_ERR_UNKNOWN_DATA_TYPE;
+    req->req_bytes = parts * count * ((uint32_t) dt_size);
 
     /* Set ompi request initial values */
     req->req_ompi.req_persistent = true;
@@ -448,7 +455,8 @@ mca_part_persist_psend_init(const void* buf,
     /* Determine total bytes to send. */
     err = opal_datatype_type_size(&(req->req_datatype->super), &dt_size_);
     if(OMPI_SUCCESS != err) return OMPI_ERROR;
-    dt_size = (dt_size_ > (size_t) UINT_MAX) ? MPI_UNDEFINED : (uint32_t) dt_size_;
+    if(dt_size_ > (size_t) UINT_MAX) return OMPI_ERR_UNKNOWN_DATA_TYPE;
+    dt_size = (uint32_t) dt_size_;
     req->req_bytes = parts * count * dt_size;
 
     /* non-blocking send set-up data */
