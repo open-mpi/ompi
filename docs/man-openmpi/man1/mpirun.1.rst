@@ -422,7 +422,22 @@ Setting MCA parameters:
 
 * ``--mca <key> <value>``: Send arguments to various MCA modules.  See
   the :ref:`Setting MCA Parameters
-  <man1-mpirun-setting-mca-parameters>` section for mode details.
+  <man1-mpirun-setting-mca-parameters>` section for more details.
+
+  .. note:: Open MPI will attempt to discern PMIx and PRRTE MCA
+            parameters passed via ``--mca`` and handle them
+            appropriately, but it may not always guess correctly.  It
+            is best to use ``--pmixmca`` and ``--prtemca`` when
+            passing MCA parammeters to PMIx and PRRTE, respectively.
+
+* ``--pmixmca <key> <value>``: Send arguments to MCA modules in the
+  PMIx subsystem.  See the :ref:`Setting MCA Parameters
+  <man1-mpirun-setting-mca-parameters>` section for more details.
+
+* ``--prtemca <key> <value>``: Send arguments to MCA modules in the
+  PMIx Reference Runtime Environment (PRRTE) subsystem.  See the
+  :ref:`Setting MCA Parameters <man1-mpirun-setting-mca-parameters>`
+  section for more details.
 
 * ``--tune <tune_file>``: Specify a tune file to set arguments for
   various MCA modules and environment variables.  See the :ref:`
