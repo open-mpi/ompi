@@ -532,11 +532,11 @@ generally useful to most Open MPI users:
   just before launch.
 
 * ``--launch-agent``: Name of the executable that is to be used to
-  start processes on the remote nodes. The default is ``PRRTEd``. This
+  start processes on the remote nodes. The default is ``prted``. This
   option can be used to test new daemon concepts, or to pass options
   back to the daemons without having mpirun itself see them. For
-  example, specifying a launch agent of ``PRRTEd -mca odls_base_verbose
-  5`` allows the developer to ask the ``PRRTEd`` for debugging output
+  example, specifying a launch agent of ``prted --prtemca odls_base_verbose
+  5`` allows the developer to ask the ``prted`` for debugging output
   without clutter from ``mpirun`` itself.
 
 * ``--report-state-on-timeout``: When paired with the ``--timeout``
@@ -1013,10 +1013,12 @@ MCA parameters can be set not only on the mpirun command line, but
 alternatively in a system or user ``mca-params.conf`` file or as
 environment variables, as described in the :ref:`Setting MCA
 Parameters <man1-mpirun-setting-mca-parameters>`. These are MCA parameters for
-the PRRTE runtime so the command line argument ``--PRRTEmca`` must be used to
-pass the MCA parameter key/value pair. Alternatively, the MCA parameter key/
-value pair may be specific on the command line by prefixing the key with
-``PRRTE_MCA_``. Some examples include:
+the PRRTE runtime so the command line argument ``--prtemca``
+(yes, ``prte`` with a single ``r``, not two ``r``'s) must be used to
+pass the MCA parameter key/value pair. Alternatively, the MCA parameter
+key/value pair may be specific on the command line by prefixing the key with
+``PRTE_MCA_`` (again, that is not a typo: ``PRTE`` not ``PRRTE``).
+Some examples include:
 
 .. list-table::
    :header-rows: 1
@@ -1662,7 +1664,7 @@ that job are designated "secondary" jobs):
   summary print statement.
 
 By default, the job will abort when any process terminates with
-non-zero status. The MCA parameter ``--PRRTEmca state_base_error_non_zero_exit``
+non-zero status. The MCA parameter ``--prtemca state_base_error_non_zero_exit``
 can be set to "false" (or "0") to cause Open MPI to not abort a job if
 one or more processes return a non-zero status. In that situation the
 Open MPI records and notes that processes exited with non-zero
