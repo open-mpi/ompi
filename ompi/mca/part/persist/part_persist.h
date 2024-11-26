@@ -105,6 +105,7 @@ mca_part_persist_free_req(struct mca_part_persist_request_t* req)
     if( MCA_PART_PERSIST_REQUEST_PRECV == req->req_type ) {
         MCA_PART_PERSIST_PRECV_REQUEST_RETURN(req);
     } else {
+        free(req->part_ready);
         MCA_PART_PERSIST_PSEND_REQUEST_RETURN(req);
     }
     return err;
@@ -261,8 +262,11 @@ mca_part_persist_progress(void)
                     uint32_t bytes = req->real_count * dt_size;
 
                     /* Set up persistent receives */
-                    req->persist_reqs = (ompi_request_t**) malloc(sizeof(ompi_request_t*)*(req->real_parts));
-                    req->flags = (int*) calloc(req->real_parts,sizeof(int));
+                    req->persist_reqs = (ompi_request_t**) malloc(sizeof(ompi_request_t*)*req->real_parts);
+                    req->flags = (mca_part_persist_partition_state_t*) malloc(sizeof(mca_part_persist_partition_state_t)*req->real_parts);
+                    for(i = 0; i < req->real_parts; i++) {
+                        req->flags[i] = MCA_PART_PERSIST_PARTITION_STARTED;
+                    }
                     if(req->real_dt_size == dt_size) {
                         for(i = 0; i < req->real_parts; i++) {
                             void *buf = ((void*) (((char*)req->req_addr) + (bytes * i)));
@@ -290,30 +294,37 @@ mca_part_persist_progress(void)
             }
         } else {
             if(false == req->req_part_complete && REQUEST_COMPLETED != req->req_ompi.req_complete && OMPI_REQUEST_ACTIVE == req->req_ompi.req_state) {
+                int part_done;
+                size_t done_count = 0;
                 for(i = 0; i < req->real_parts; i++) {
+                    /* Letting 'MPI_Pready' change 'req->flags' directly would lead to concurrency
+                     * issues, therefore 'req->part_ready' acts as a proxy for thread safety.
+                     * 'req->part_ready' is only relevant for send requests. */
+                    if(NULL != req->part_ready && 0 == req->part_ready[i]) continue;
+
                     /* Check to see if partition is queued for being started. Only applicable to sends. */
-                    if(-2 == req->flags[i]) {
-                        err = req->persist_reqs[i]->req_start(1, (&(req->persist_reqs[i])));
+                    if(MCA_PART_PERSIST_PARTITION_QUEUED == req->flags[i]) {
+                        err = req->persist_reqs[i]->req_start(1, &req->persist_reqs[i]);
                         if(OMPI_SUCCESS != err) goto end_part_progress;
-                        req->flags[i] = 0;
+                        req->flags[i] = MCA_PART_PERSIST_PARTITION_STARTED;
                     }
 
-                    if(0 == req->flags[i] && OMPI_REQUEST_ACTIVE == req->persist_reqs[i]->req_state) {
-                        err = ompi_request_test(&(req->persist_reqs[i]), &(req->flags[i]), MPI_STATUS_IGNORE);
+                    if(MCA_PART_PERSIST_PARTITION_STARTED == req->flags[i] && OMPI_REQUEST_ACTIVE == req->persist_reqs[i]->req_state) {
+                        err = ompi_request_test(&(req->persist_reqs[i]), &part_done, MPI_STATUS_IGNORE);
                         if(OMPI_SUCCESS != err) goto end_part_progress;
-                        if(0 != req->flags[i]) {
-                            req->done_count++;
+                        if(0 != part_done) {
+                            req->flags[i] = MCA_PART_PERSIST_PARTITION_COMPLETE;
                         }
                     }
+
+                    done_count += MCA_PART_PERSIST_PARTITION_COMPLETE == req->flags[i];
                 }
 
                 /* Check for completion and complete the requests */
-                if(req->done_count == req->real_parts) {
+                if(done_count == req->real_parts) {
                     req->first_send = false;
                     mca_part_persist_complete(req);
                     completed++;
-                } else if(req->done_count > req->real_parts) {
-                    ompi_rte_abort(OMPI_ERR_FATAL, "internal part request done count is %d > %d", req->done_count, req->real_parts);
                 }
             }
 
@@ -375,6 +386,7 @@ mca_part_persist_precv_init(void *buf,
     req->first_send  = true;
     req->flag_post_setup_recv = false;
     req->flags = NULL;
+    req->part_ready = NULL;
     /* Non-blocking receive on setup info */
     err	= MCA_PML_CALL(irecv(&req->setup_info[1], sizeof(struct ompi_mca_persist_setup_t), MPI_BYTE, src, tag, comm, &req->setup_req[1])); 
     if(OMPI_SUCCESS != err) return OMPI_ERROR;
@@ -416,7 +428,7 @@ mca_part_persist_psend_init(const void* buf,
                         ompi_request_t** request)
 {
     int err = OMPI_SUCCESS;
-    size_t dt_size_;
+    size_t dt_size_, i;
     uint32_t dt_size;
     mca_part_persist_list_t* new_progress_elem = NULL;
     mca_part_persist_psend_request_t *sendreq;
@@ -456,7 +468,12 @@ mca_part_persist_psend_init(const void* buf,
     req->real_count = count;
     req->setup_info[0].dt_size = dt_size;
 
-    req->flags = (int*) calloc(req->real_parts, sizeof(int));
+    req->flags = (mca_part_persist_partition_state_t*) malloc(sizeof(mca_part_persist_partition_state_t) * req->real_parts);
+    req->part_ready = (int32_t*) malloc(sizeof(int32_t) * req->real_parts);
+    for (i = 0; i < req->real_parts; i++) {
+        req->flags[i] = MCA_PART_PERSIST_PARTITION_STARTED;
+        req->part_ready[i] = 0;
+    }
 
     err = MCA_PML_CALL(isend(&(req->setup_info[0]), sizeof(struct ompi_mca_persist_setup_t), MPI_BYTE, dst, tag, MCA_PML_BASE_SEND_STANDARD, comm, &req->setup_req[0]));
     if(OMPI_SUCCESS != err) return OMPI_ERROR;
@@ -502,21 +519,20 @@ mca_part_persist_start(size_t count, ompi_request_t** requests)
         if(false == req->first_send)
         {
             if(MCA_PART_PERSIST_REQUEST_PSEND == req->req_type) {
-                req->done_count = 0;
-                memset((void*)req->flags,0,sizeof(uint32_t)*req->real_parts);
-            } else {
-                req->done_count = 0;
-                err = req->persist_reqs[0]->req_start(req->real_parts, req->persist_reqs);
-                memset((void*)req->flags,0,sizeof(uint32_t)*req->real_parts);
-            } 
-        } else {
-            if(MCA_PART_PERSIST_REQUEST_PSEND == req->req_type) {
-                req->done_count = 0;
-                for(i = 0; i < req->real_parts && OMPI_SUCCESS == err; i++) {
-                    req->flags[i] = -1;
+                for(i = 0; i < req->real_parts; i++) {
+                    req->flags[i] = MCA_PART_PERSIST_PARTITION_STARTED;
+                    req->part_ready[i] = 0;
                 }
             } else {
-                req->done_count = 0;
+                err = req->persist_reqs[0]->req_start(req->real_parts, req->persist_reqs);
+                for(i = 0; i < req->real_parts; i++) {
+                    req->flags[i] = MCA_PART_PERSIST_PARTITION_STARTED;
+                }
+            } 
+        } else if(MCA_PART_PERSIST_REQUEST_PSEND == req->req_type) {
+            for(i = 0; i < req->real_parts; i++) {
+                req->flags[i] = MCA_PART_PERSIST_PARTITION_QUEUED;
+                req->part_ready[i] = 0;
             }
         }
         req->req_ompi.req_state = OMPI_REQUEST_ACTIVE;
@@ -540,17 +556,17 @@ mca_part_persist_pready(size_t min_part,
     size_t i;
 
     mca_part_persist_request_t *req = (mca_part_persist_request_t *)(request);
-    if(true == req->initialized)
-    {
-        err = req->persist_reqs[min_part]->req_start(max_part-min_part+1, (&(req->persist_reqs[min_part])));
-        for(i = min_part; i <= max_part && OMPI_SUCCESS == err; i++) {
-            req->flags[i] = 0; /* Mark partition as ready for testing */
+    if(MCA_PART_PERSIST_REQUEST_PSEND != req->req_type) {
+        err = OMPI_ERROR;
+    } else {
+        if(true == req->initialized) {
+            err = req->persist_reqs[min_part]->req_start(max_part-min_part+1, &req->persist_reqs[min_part]);
+            for(i = min_part; i <= max_part; i++) {
+                req->flags[i] = MCA_PART_PERSIST_PARTITION_STARTED;
+            }
         }
-    }
-    else
-    {
-        for(i = min_part; i <= max_part && OMPI_SUCCESS == err; i++) {
-            req->flags[i] = -2; /* Mark partition as queued */
+        for(i = min_part; i <= max_part; i++) {
+            req->part_ready[i] = 1;
         }
     }
     return err;
@@ -567,23 +583,27 @@ mca_part_persist_parrived(size_t min_part,
     int _flag = false;
     mca_part_persist_request_t *req = (mca_part_persist_request_t *)request;
 
-    if(0 != req->flags) {
+    if(MCA_PART_PERSIST_REQUEST_PRECV != req->req_type) {
+        err = OMPI_ERROR;
+    } else if(OMPI_REQUEST_INACTIVE == req->req_ompi.req_state) {
+        _flag = 1;
+    } else if(0 != req->flags) {
         _flag = 1;
         if(req->req_parts == req->real_parts) {
             for(i = min_part; i <= max_part; i++) {
-                _flag = _flag && req->flags[i];
+                _flag &= MCA_PART_PERSIST_PARTITION_COMPLETE == req->flags[i];
             }
         } else {
             float convert = ((float)req->real_parts) / ((float)req->req_parts);
             size_t _min = floor(convert * min_part);
             size_t _max = ceil(convert * max_part);
             for(i = _min; i <= _max; i++) {
-                _flag = _flag && req->flags[i];
+                _flag &= MCA_PART_PERSIST_PARTITION_COMPLETE == req->flags[i];
             }
         }
     }
 
-    if(!_flag) {
+    if(!_flag && OMPI_SUCCESS == err) {
         opal_progress();
     }
     *flag = _flag;
