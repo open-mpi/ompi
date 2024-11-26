@@ -66,16 +66,14 @@ struct ompi_part_persist_t {
     int32_t next_recv_tag; 
     ompi_communicator_t   *part_comm; /* This approach requires a separate tag space, so we need a dedicated communicator. */
     ompi_request_t        *part_comm_req;
-    int32_t                part_comm_ready;
     ompi_communicator_t   *part_comm_setup; /* We create a second communicator to send set-up messages (rational: these 
                                                messages go in the opposite direction of normal messages, need to use MPI_ANY_SOURCE 
                                                to support different communicators, and thus need to have a unique tag. Because tags 
                                                are controlled by the sender in this model, we cannot assume that the tag will be 
                                                unused in part_comm. */
     ompi_request_t        *part_comm_sreq;
-    int32_t                part_comm_sready;
-    int32_t                init_comms;
     int32_t                init_world;
+    int32_t                init_world_step;
     int32_t                my_world_rank; /* Because the back end communicators use a world rank, we need to communicate ours 
                                              to set up the requests. */
     opal_atomic_int32_t    block_entry;
@@ -182,32 +180,29 @@ mca_part_persist_progress(void)
 
     /* Can't do anything if we don't have world */
     if(0 == ompi_part_persist.init_world) {
-        ompi_part_persist.my_world_rank = ompi_comm_rank(&ompi_mpi_comm_world.comm);
-        err = ompi_comm_idup(&ompi_mpi_comm_world.comm, &ompi_part_persist.part_comm, &ompi_part_persist.part_comm_req);
-        if(OMPI_SUCCESS != err) goto end_part_progress;
-        ompi_part_persist.part_comm_ready = 0;
-        err = ompi_comm_idup(&ompi_mpi_comm_world.comm, &ompi_part_persist.part_comm_setup, &ompi_part_persist.part_comm_sreq);
-        if(OMPI_SUCCESS != err) goto end_part_progress;
-        ompi_part_persist.part_comm_sready = 0;
-        ompi_part_persist.init_world = 1;
-        completed++;
-        goto end_part_progress;
-    }
-
-    /* Check to see if Comms are setup */
-    if(0 == ompi_part_persist.init_comms) {
-        if(0 == ompi_part_persist.part_comm_ready) {
-            err = ompi_request_test(&ompi_part_persist.part_comm_req, &ompi_part_persist.part_comm_ready, MPI_STATUS_IGNORE);
-            if(OMPI_SUCCESS != err) goto end_part_progress;
+        int done = 0;
+        switch (ompi_part_persist.init_world_step) {
+        case 0:
+            ompi_part_persist.my_world_rank = ompi_comm_rank(&ompi_mpi_comm_world.comm);
+            err = ompi_comm_idup(&ompi_mpi_comm_world.comm, &ompi_part_persist.part_comm, &ompi_part_persist.part_comm_req);
+            done = 1;
+            break;
+        case 1:
+            err = ompi_request_test(&ompi_part_persist.part_comm_req, &done, MPI_STATUS_IGNORE);
+            break;
+        case 2:
+            err = ompi_comm_idup(&ompi_mpi_comm_world.comm, &ompi_part_persist.part_comm_setup, &ompi_part_persist.part_comm_sreq);
+            done = 1;
+            break;
+        case 3:
+            err = ompi_request_test(&ompi_part_persist.part_comm_sreq, &done, MPI_STATUS_IGNORE);
+            break;
+        default:
+            ompi_part_persist.init_world = 1;
+            break;
         }
-        if(0 == ompi_part_persist.part_comm_sready) {
-            err = ompi_request_test(&ompi_part_persist.part_comm_sreq, &ompi_part_persist.part_comm_sready, MPI_STATUS_IGNORE);
-            if(OMPI_SUCCESS != err) goto end_part_progress;
-        }
-        if(0 != ompi_part_persist.part_comm_ready && 0 != ompi_part_persist.part_comm_sready) {
-            ompi_part_persist.init_comms = 1;
-        }
-        completed++;
+        ompi_part_persist.init_world_step += 0 != done;
+        completed += 0 != done;
         goto end_part_progress;
     }
 
@@ -479,7 +474,7 @@ mca_part_persist_psend_init(const void* buf,
     if(OMPI_SUCCESS != err) return OMPI_ERROR;
 
     /* Non-blocking receive on setup info */
-    if(1 == ompi_part_persist.init_comms) {
+    if(1 == ompi_part_persist.init_world) {
         err = MCA_PML_CALL(irecv(&(req->setup_info[1]), sizeof(struct ompi_mca_persist_setup_t), MPI_BYTE, MPI_ANY_SOURCE, req->my_recv_tag, ompi_part_persist.part_comm_setup, &req->setup_req[1]));
         if(OMPI_SUCCESS != err) return OMPI_ERROR;
         req->flag_post_setup_recv = false;

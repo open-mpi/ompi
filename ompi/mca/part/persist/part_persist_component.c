@@ -98,11 +98,8 @@ mca_part_persist_component_open(void)
 
     mca_part_persist_init_lists(); 
 
-    ompi_part_persist.init_comms = 0;
     ompi_part_persist.init_world = -1;
-
-    ompi_part_persist.part_comm_ready = 0;
-    ompi_part_persist.part_comm_ready = 0;
+    ompi_part_persist.init_world_step = 0;
 
     ompi_part_persist.block_entry = 0;
     return OMPI_SUCCESS;
