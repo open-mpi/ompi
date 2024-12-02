@@ -262,7 +262,7 @@ To map processes:
 
 * ``--bynode``: Launch processes one per node, cycling by node in a
   round-robin fashion.  This spreads processes evenly among nodes and
-  assigns MPI_COMM_WORLD ranks in a round-robin, "by node" manner.
+  assigns ``MPI_COMM_WORLD`` ranks in a round-robin, "by node" manner.
   (deprecated in favor of ``--map-by node``)
 
 * ``--cpu-list <cpus>``: Comma-delimited list of processor IDs to
@@ -272,7 +272,7 @@ To map processes:
   .. note:: You can run Run the hwloc ``lstopo(1)`` command to see a
             list of available cores and their logical IDs.
 
-To order processes' ranks in MPI_COMM_WORLD:
+To order processes' ranks in ``MPI_COMM_WORLD``:
 
 * ``--rank-by <mode>``: Rank in round-robin fashion according to the
   specified mode, defaults to slot. Supported options include
@@ -311,15 +311,15 @@ To manage standard I/O:
   specified filename. Any directories in the filename will
   automatically be created.  Each output file will consist of
   ``filename.id``, where the ``id`` will be the processes' rank in
-  MPI_COMM_WORLD, left-filled with zero's for correct ordering in
+  ``MPI_COMM_WORLD``, left-filled with zero's for correct ordering in
   listings. A relative path value will be converted to an absolute
   path based on the cwd where mpirun is executed. Note that this will
   not work on environments where the file system on compute nodes
   differs from that where :ref:`mpirun(1) <man1-mpirun>` is
   executed.
 
-* ``--stdin <rank>``: The MPI_COMM_WORLD rank of the process that is
-  to receive stdin.  The default is to forward stdin to MPI_COMM_WORLD
+* ``--stdin <rank>``: The ``MPI_COMM_WORLD`` rank of the process that is
+  to receive stdin.  The default is to forward stdin to ``MPI_COMM_WORLD``
   rank 0, but this option can be used to forward stdin to any
   process. It is also acceptable to specify none, indicating that no
   processes are to receive stdin.
@@ -329,7 +329,7 @@ To manage standard I/O:
 
 * ``--tag-output``: Tag each line of output to stdout, stderr, and
   stddiag with ``[jobid, MCW_rank]<stdxxx>`` indicating the process
-  jobid and MPI_COMM_WORLD rank of the process that generated the
+  jobid and ``MPI_COMM_WORLD`` rank of the process that generated the
   output, and the channel which generated it.
 
 * ``--timestamp-output``: Timestamp each line of output to stdout,
@@ -342,7 +342,7 @@ To manage standard I/O:
   specified file.
 
 * ``--xterm <ranks>``: Display the output from the processes
-  identified by their MPI_COMM_WORLD ranks in separate xterm
+  identified by their ``MPI_COMM_WORLD`` ranks in separate xterm
   windows. The ranks are specified as a comma-separated list of
   ranges, with a ``-1`` indicating all. A separate window will be created
   for each specified process.
@@ -422,7 +422,22 @@ Setting MCA parameters:
 
 * ``--mca <key> <value>``: Send arguments to various MCA modules.  See
   the :ref:`Setting MCA Parameters
-  <man1-mpirun-setting-mca-parameters>` section for mode details.
+  <man1-mpirun-setting-mca-parameters>` section for more details.
+
+  .. note:: Open MPI will attempt to discern PMIx and PRRTE MCA
+            parameters passed via ``--mca`` and handle them
+            appropriately, but it may not always guess correctly.  It
+            is best to use ``--pmixmca`` and ``--prtemca`` when
+            passing MCA parammeters to PMIx and PRRTE, respectively.
+
+* ``--pmixmca <key> <value>``: Send arguments to MCA modules in the
+  PMIx subsystem.  See the :ref:`Setting MCA Parameters
+  <man1-mpirun-setting-mca-parameters>` section for more details.
+
+* ``--prtemca <key> <value>``: Send arguments to MCA modules in the
+  PMIx Reference Runtime Environment (PRRTE) subsystem.  See the
+  :ref:`Setting MCA Parameters <man1-mpirun-setting-mca-parameters>`
+  section for more details.
 
 * ``--tune <tune_file>``: Specify a tune file to set arguments for
   various MCA modules and environment variables.  See the :ref:`
@@ -532,11 +547,11 @@ generally useful to most Open MPI users:
   just before launch.
 
 * ``--launch-agent``: Name of the executable that is to be used to
-  start processes on the remote nodes. The default is ``PRRTEd``. This
+  start processes on the remote nodes. The default is ``prted``. This
   option can be used to test new daemon concepts, or to pass options
   back to the daemons without having mpirun itself see them. For
-  example, specifying a launch agent of ``PRRTEd -mca odls_base_verbose
-  5`` allows the developer to ask the ``PRRTEd`` for debugging output
+  example, specifying a launch agent of ``prted --prtemca odls_base_verbose
+  5`` allows the developer to ask the ``prted`` for debugging output
   without clutter from ``mpirun`` itself.
 
 * ``--report-state-on-timeout``: When paired with the ``--timeout``
@@ -716,7 +731,7 @@ options that describe mapping policies.
 
 Consider the same hostfile as above, again with ``-n 6``.  The table
 below lists a few ``mpirun`` variations, and shows which
-MPI_COMM_WORLD ranks end up on which node:
+``MPI_COMM_WORLD`` ranks end up on which node:
 
 .. list-table::
    :header-rows: 1
@@ -832,7 +847,7 @@ Open MPI employs a three-phase procedure for assigning process locations
 and ranks:
 
 #. **Mapping**: Assigns a default location to each process
-#. **Ranking**: Assigns an MPI_COMM_WORLD rank value to each process
+#. **Ranking**: Assigns an ``MPI_COMM_WORLD`` rank value to each process
 #. **Binding**: Constrains each process to run on specific processors
 
 The mapping step is used to assign a default location to each process
@@ -864,7 +879,7 @@ gives you detailed control over process binding as well.  Rankfiles
 are discussed :ref:`below <man1-mpirun-rankfiles>`.
 
 The second phase focuses on the ranking of the process within the
-job's MPI_COMM_WORLD.  Open MPI separates this from the mapping
+job's ``MPI_COMM_WORLD``.  Open MPI separates this from the mapping
 procedure to allow more flexibility in the relative placement of MPI
 processes. This is best illustrated by considering the following
 cases where we used the ``--np 8 --map-by ppr:2:package --host aa:4,bb:4`` option:
@@ -1013,10 +1028,12 @@ MCA parameters can be set not only on the mpirun command line, but
 alternatively in a system or user ``mca-params.conf`` file or as
 environment variables, as described in the :ref:`Setting MCA
 Parameters <man1-mpirun-setting-mca-parameters>`. These are MCA parameters for
-the PRRTE runtime so the command line argument ``--PRRTEmca`` must be used to
-pass the MCA parameter key/value pair. Alternatively, the MCA parameter key/
-value pair may be specific on the command line by prefixing the key with
-``PRRTE_MCA_``. Some examples include:
+the PRRTE runtime so the command line argument ``--prtemca``
+(yes, ``prte`` with a single ``r``, not two ``r``'s) must be used to
+pass the MCA parameter key/value pair. Alternatively, the MCA parameter
+key/value pair may be specific on the command line by prefixing the key with
+``PRTE_MCA_`` (again, that is not a typo: ``PRTE`` not ``PRRTE``).
+Some examples include:
 
 .. list-table::
    :header-rows: 1
@@ -1166,7 +1183,7 @@ Rankfiles are text files that specify detailed information about how
 individual processes should be mapped to nodes, and to which
 processor(s) they should be bound.  Each line of a rankfile specifies
 the location of one process (for MPI jobs, the process' "rank" refers
-to its rank in MPI_COMM_WORLD).  The general form of each line in the
+to its rank in ``MPI_COMM_WORLD``).  The general form of each line in the
 rankfile is:
 
 .. code::
@@ -1299,11 +1316,11 @@ Standard I/O
    retained, or removed?
 
 Open MPI directs UNIX standard input to ``/dev/null`` on all processes
-except the MPI_COMM_WORLD rank 0 process. The MPI_COMM_WORLD rank 0
+except the ``MPI_COMM_WORLD`` rank 0 process. The ``MPI_COMM_WORLD`` rank 0
 process inherits standard input from ``mpirun``.
 
 .. note:: The node that invoked ``mpirun`` need not be the same as the
-          node where the MPI_COMM_WORLD rank 0 process resides. Open
+          node where the ``MPI_COMM_WORLD`` rank 0 process resides. Open
           MPI handles the redirection of ``mpirun``'s standard input
           to the rank 0 process.
 
@@ -1320,7 +1337,7 @@ example:
 
    shell$ mpirun -n 2 my_app < my_input > my_output
 
-Note that in this example only the MPI_COMM_WORLD rank 0 process will
+Note that in this example only the ``MPI_COMM_WORLD`` rank 0 process will
 receive the stream from ``my_input`` on stdin.  The stdin on all the other
 nodes will be tied to ``/dev/null``.  However, the stdout from all nodes
 will be collected into the ``my_output`` file.
@@ -1643,7 +1660,7 @@ that job are designated "secondary" jobs):
 
 * If one or more processes in the primary job normally terminate with
   non-zero exit status, ``mpirun`` returns the exit status of the
-  process with the lowest MPI_COMM_WORLD rank to have a non-zero
+  process with the lowest ``MPI_COMM_WORLD`` rank to have a non-zero
   status.
 
 * If all processes in the primary job normally terminate with exit
@@ -1651,7 +1668,7 @@ that job are designated "secondary" jobs):
   terminate with non-zero exit status, ``mpirun``:
 
   #. Returns the exit status of the process with the lowest
-     MPI_COMM_WORLD rank in the lowest jobid to have a non-zero
+     ``MPI_COMM_WORLD`` rank in the lowest jobid to have a non-zero
      status, and
   #. Outputs a message summarizing the exit status of the primary and
      all secondary jobs.
@@ -1662,7 +1679,7 @@ that job are designated "secondary" jobs):
   summary print statement.
 
 By default, the job will abort when any process terminates with
-non-zero status. The MCA parameter ``--PRRTEmca state_base_error_non_zero_exit``
+non-zero status. The MCA parameter ``--prtemca state_base_error_non_zero_exit``
 can be set to "false" (or "0") to cause Open MPI to not abort a job if
 one or more processes return a non-zero status. In that situation the
 Open MPI records and notes that processes exited with non-zero
@@ -1705,7 +1722,7 @@ processes exited before calling :ref:`MPI_FINALIZE(3) <mpi_finalize>`.
 If an internal error occurred in mpirun, the corresponding error code
 is returned.  In the event that one or more processes exit before
 calling :ref:`MPI_FINALIZE(3) <mpi_finalize>`, the return value of
-the MPI_COMM_WORLD rank of the process that mpirun first notices died
+the ``MPI_COMM_WORLD`` rank of the process that mpirun first notices died
 before calling :ref:`MPI_FINALIZE(3) <mpi_finalize>` will be
 returned.  Note that, in general, this will be the first process that
 died but is not guaranteed to be so.
