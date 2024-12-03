@@ -35,7 +35,11 @@ milestone(buildNumber)
 // back to the PR. The "Details" link at the bottom of the GitHub PR page brings
 // you to the Jenkins Build page, so we're adding the link back to the GitHub PR
 // page.
-currentBuild.description = "This is a build of <a href=\"${CHANGE_URL}\"}\">Open MPI PR #${CHANGE_ID}</a>"
+if (env.CHANGE_URL) {
+    currentBuild.description = "This is a build of <a href=\"${CHANGE_URL}\"}\">Open MPI PR #${CHANGE_ID}</a>"
+} else {
+    currentBuild.description = "Build of ${BRANCH_NAME}"
+}
 
 check_stages = prepare_check_stages()
 println("Initialized Pipeline")
