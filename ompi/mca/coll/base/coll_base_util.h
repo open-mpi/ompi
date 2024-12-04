@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2014-2020 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
+ * Copyright (c) 2024      NVIDIA CORPORATION. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -185,6 +186,7 @@ int ompi_coll_base_file_getnext_string(FILE *fptr, int *fileline, char** val);
  * eat the value, otherwise put it back into the file.
  */
 int ompi_coll_base_file_peek_next_char_is(FILE *fptr, int *fileline, int expected);
+int ompi_coll_base_file_peek_next_char_isdigit(FILE *fptr);
 
 /* Miscelaneous function */
 const char* mca_coll_base_colltype_to_str(int collid);
