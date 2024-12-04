@@ -390,6 +390,12 @@ static int mca_accelerator_rocm_memcpy(int dest_dev_id, int src_dev_id, void *de
                                 "error during synchronous copy\n");
             return OPAL_ERROR;
         }
+        err = hipStreamSynchronize(0);
+        if (hipSuccess != err ) {
+            opal_output_verbose(10, opal_accelerator_base_framework.framework_output,
+                                "error synchronizing default stream after hipMemcpy\n");
+            return OPAL_ERROR;
+        }
     }
 
     return OPAL_SUCCESS;
