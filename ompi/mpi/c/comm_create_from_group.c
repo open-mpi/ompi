@@ -15,7 +15,7 @@
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2021      Triad National Security, LLC. All rights
+ * Copyright (c) 2021-2024 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -54,23 +54,31 @@ int MPI_Comm_create_from_group (MPI_Group group, const char *tag, MPI_Info info,
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
+        if (NULL == errhandler ||
+               MPI_ERRHANDLER_NULL == errhandler ||
+                    ( OMPI_ERRHANDLER_TYPE_COMM != errhandler->eh_mpi_object_type &&
+                     OMPI_ERRHANDLER_TYPE_PREDEFINED != errhandler->eh_mpi_object_type) ) {
+               return ompi_errhandler_invoke (NULL, MPI_COMM_NULL, OMPI_ERRHANDLER_TYPE_COMM,
+                                              MPI_ERR_ARG,FUNC_NAME);
+        }
+
         if (NULL == tag) {
-            return ompi_errhandler_invoke (errhandler, MPI_COMM_NULL, errhandler->eh_mpi_object_type,
+            return ompi_errhandler_invoke (errhandler, MPI_COMM_NULL, OMPI_ERRHANDLER_TYPE_COMM,
                                            MPI_ERR_TAG, FUNC_NAME);
         }
 
         if (NULL == group) {
-            return ompi_errhandler_invoke (errhandler, MPI_COMM_NULL, errhandler->eh_mpi_object_type,
+            return ompi_errhandler_invoke (errhandler, MPI_COMM_NULL, OMPI_ERRHANDLER_TYPE_COMM,
                                            MPI_ERR_GROUP, FUNC_NAME);
         }
 
         if (NULL == info || ompi_info_is_freed(info)) {
-            return ompi_errhandler_invoke (errhandler, MPI_COMM_NULL, errhandler->eh_mpi_object_type,
+            return ompi_errhandler_invoke (errhandler, MPI_COMM_NULL, OMPI_ERRHANDLER_TYPE_COMM,
                                            MPI_ERR_INFO, FUNC_NAME);
         }
 
         if (NULL == newcomm) {
-            return ompi_errhandler_invoke (errhandler, MPI_COMM_NULL, errhandler->eh_mpi_object_type,
+            return ompi_errhandler_invoke (errhandler, MPI_COMM_NULL, OMPI_ERRHANDLER_TYPE_COMM,
                                            MPI_ERR_ARG, FUNC_NAME);
         }
     }
