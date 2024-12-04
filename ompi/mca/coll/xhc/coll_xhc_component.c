@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2023 Computer Architecture and VLSI Systems (CARV)
+ * Copyright (c) 2021-2024 Computer Architecture and VLSI Systems (CARV)
  *                         Laboratory, ICS Forth. All rights reserved.
  * $COPYRIGHT$
  *
@@ -13,21 +13,26 @@
 
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/base.h"
+#include "ompi/mca/coll/base/coll_base_functions.h"
+#include "ompi/mca/coll/base/coll_base_util.h"
 
+#include "opal/include/opal/align.h"
 #include "opal/mca/shmem/base/base.h"
 #include "opal/util/show_help.h"
 
 #include "coll_xhc.h"
 
+// -----------------------------
+
 typedef int (*csv_parse_conv_fn_t)(char *str, void *dst);
 typedef void (*csv_parse_destruct_fn_t)(void *data);
 
 static int xhc_register(void);
+static int xhc_var_check_exclusive(const char *param_a, const char *param_b);
 
-const char *mca_coll_xhc_component_version_string =
-    "Open MPI xhc collective MCA component version " OMPI_VERSION;
+// -----------------------------
 
-static const char *hwloc_topo_str[] = {
+static const char *xhc_topo_str[] = {
     "node", "flat",
     "socket",
     "numa",
@@ -38,7 +43,7 @@ static const char *hwloc_topo_str[] = {
     "hwthread", "thread"
 };
 
-static const xhc_loc_t hwloc_topo_val[] = {
+static const xhc_loc_t xhc_topo_val[] = {
     OPAL_PROC_ON_NODE, OPAL_PROC_ON_NODE,
     OPAL_PROC_ON_SOCKET,
     OPAL_PROC_ON_NUMA,
@@ -48,6 +53,23 @@ static const xhc_loc_t hwloc_topo_val[] = {
     OPAL_PROC_ON_CORE,
     OPAL_PROC_ON_HWTHREAD, OPAL_PROC_ON_HWTHREAD
 };
+
+static const COLLTYPE_T xhc_colltype_to_universal_map[XHC_COLLCOUNT] = {
+    [XHC_BCAST] = BCAST,
+    [XHC_BARRIER] = BARRIER,
+    [XHC_REDUCE] = REDUCE,
+    [XHC_ALLREDUCE] = ALLREDUCE
+};
+
+static const char *xhc_config_source_to_str_map[XHC_CONFIG_SOURCE_COUNT] = {
+    [XHC_CONFIG_SOURCE_INFO_GLOBAL] = "info/global",
+    [XHC_CONFIG_SOURCE_INFO_OP] = "info/op",
+    [XHC_CONFIG_SOURCE_MCA_GLOBAL] = "mca/global",
+    [XHC_CONFIG_SOURCE_MCA_OP] = "mca/op"
+};
+
+const char *mca_coll_xhc_component_version_string =
+    "Open MPI xhc collective MCA component version " OMPI_VERSION;
 
 mca_coll_xhc_component_t mca_coll_xhc_component = {
     .super = {
@@ -70,197 +92,408 @@ mca_coll_xhc_component_t mca_coll_xhc_component = {
     },
 
     .priority = 0,
-    .print_info = false,
+    .print_info = 0,
 
     .shmem_backing = NULL,
+
+    .memcpy_chunk_size = 256 << 10,
 
     .dynamic_leader = false,
 
     .barrier_root = 0,
+    .allreduce_root = 0,
 
-    .dynamic_reduce = OMPI_XHC_DYNAMIC_REDUCE_NON_FLOAT,
-    .lb_reduce_leader_assist =
-        (OMPI_XHC_LB_RLA_TOP_LEVEL | OMPI_XHC_LB_RLA_FIRST_CHUNK),
-
-    .force_reduce = false,
-
-    .cico_max = 1024,
+    .dynamic_reduce = XHC_DYNAMIC_REDUCE_NON_FLOAT,
+    .reduce_load_balance = (XHC_REDUCE_LB_LEADER_ASSIST_TOP_LEVEL
+        | XHC_REDUCE_LB_LEADER_ASSIST_FIRST_CHUNK),
 
     .uniform_chunks = true,
-    .uniform_chunks_min = 1024,
+    .uniform_chunks_min = 4096,
 
-    /* These are the parameters that will need
-     * processing, and their default values. */
-    .hierarchy_mca = "numa,socket",
-    .chunk_size_mca = "16K"
+    .op_mca[XHC_BCAST] = {
+        .hierarchy = "numa,socket",
+        .chunk_size = "16K",
+        .cico_max = 256
+    },
+
+    .op_mca[XHC_BARRIER] = {
+        .hierarchy = "numa,socket",
+        .chunk_size = "1",
+        .cico_max = 0
+    },
+
+    .op_mca[XHC_REDUCE] = {
+        .hierarchy = "l3,numa,socket",
+        .chunk_size = "16K",
+        .cico_max = 4096
+    },
+
+    .op_mca[XHC_ALLREDUCE] = {
+        .hierarchy = "l3,numa,socket",
+        .chunk_size = "16K",
+        .cico_max = 4096
+    }
 };
+
+// -----------------------------
 
 /* Initial query function that is invoked during MPI_INIT, allowing
  * this component to disqualify itself if it doesn't support the
  * required level of thread support. */
 int mca_coll_xhc_component_init_query(bool enable_progress_threads,
         bool enable_mpi_threads) {
-
     return OMPI_SUCCESS;
 }
 
-static mca_base_var_enum_value_t dynamic_reduce_options[] = {
-    {OMPI_XHC_DYNAMIC_REDUCE_DISABLED, "disabled"},
-    {OMPI_XHC_DYNAMIC_REDUCE_NON_FLOAT, "non-float"},
-    {OMPI_XHC_DYNAMIC_REDUCE_ALL, "all"},
-    {0, NULL}
-};
+COLLTYPE_T mca_coll_xhc_colltype_to_universal(XHC_COLLTYPE_T xhc_colltype) {
+    if(xhc_colltype < 0 || xhc_colltype >= XHC_COLLCOUNT)
+        return -1;
+    return xhc_colltype_to_universal_map[xhc_colltype];
+}
 
-static mca_base_var_enum_value_flag_t lb_reduce_leader_assist_options[] = {
-    {OMPI_XHC_LB_RLA_TOP_LEVEL, "top", OMPI_XHC_LB_RLA_ALL},
-    {OMPI_XHC_LB_RLA_FIRST_CHUNK, "first", OMPI_XHC_LB_RLA_ALL},
-    {OMPI_XHC_LB_RLA_ALL, "all",
-        (OMPI_XHC_LB_RLA_TOP_LEVEL | OMPI_XHC_LB_RLA_FIRST_CHUNK)},
-    {0, NULL, 0}
-};
+const char *mca_coll_xhc_colltype_to_str(XHC_COLLTYPE_T colltype) {
+    return mca_coll_base_colltype_to_str(xhc_colltype_to_universal(colltype));
+}
+
+const char *mca_coll_xhc_config_source_to_str(xhc_config_source_t source) {
+    return (source >= 0 && source < XHC_CONFIG_SOURCE_COUNT ?
+        xhc_config_source_to_str_map[source] : NULL);
+}
 
 static int xhc_register(void) {
     mca_base_var_enum_t *var_enum;
     mca_base_var_enum_flag_t *var_enum_flag;
-    char *tmp, *desc;
-    int ret;
+    const mca_base_var_t *var = NULL;
+    int vari;
+
+    char *tmp, *name, *desc;
+    int err;
 
     /* Priority */
+    // -----------
 
-    (void) mca_base_component_var_register(&mca_coll_xhc_component.super.collm_version,
-        "priority", "Priority of the xhc component",
+    mca_base_component_var_register(&mca_coll_xhc_component.super.collm_version,
+        "priority", "Priority of the xhc component.",
         MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_2,
         MCA_BASE_VAR_SCOPE_READONLY, &mca_coll_xhc_component.priority);
 
-    /* Info */
-
-    (void) mca_base_component_var_register(&mca_coll_xhc_component.super.collm_version,
-        "print_info", "Print information during initialization",
-        MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_3,
-        MCA_BASE_VAR_SCOPE_READONLY, &mca_coll_xhc_component.print_info);
-
     /* SHM Backing dir */
+    // ------------------
 
     mca_coll_xhc_component.shmem_backing = (access("/dev/shm", W_OK) == 0 ?
         "/dev/shm" : opal_process_info.job_session_dir);
 
-    (void) mca_base_component_var_register(&mca_coll_xhc_component.super.collm_version,
+    mca_base_component_var_register(&mca_coll_xhc_component.super.collm_version,
         "shmem_backing", "Directory to place backing files for shared-memory"
-        " control-data communication", MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+        " control-data communication.", MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
         OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_READONLY,
         &mca_coll_xhc_component.shmem_backing);
 
-    /* Dynamic leader */
+    /* Memcpy limit (see smsc_xpmem_memcpy_chunk_size) */
+    // --------------------------------------------------
 
-    (void) mca_base_component_var_register(&mca_coll_xhc_component.super.collm_version,
-        "dynamic_leader", "Enable dynamic operation-wise group-leader selection",
+    int var_index = mca_base_var_find("opal", "smsc", "xpmem", "memcpy_chunk_size");
+
+    if(var_index >= 0) {
+        size_t *var_value_ptr;
+
+        err = mca_base_var_get_value(var_index, &var_value_ptr, NULL, NULL);
+
+        if(err == OPAL_SUCCESS)
+            mca_coll_xhc_component.memcpy_chunk_size = *var_value_ptr;
+        else {
+            opal_output_verbose(MCA_BASE_VERBOSE_COMPONENT,
+                ompi_coll_base_framework.framework_output, "coll:xhc:component: "
+                "Can't get smsc_xpmem_memcpy_chunk_size MCA param value "
+                "from var index %d (%d); using xhc default", var_index, err);
+        }
+    } else {
+        opal_output_verbose(MCA_BASE_VERBOSE_COMPONENT,
+            ompi_coll_base_framework.framework_output, "coll:xhc:component: "
+            "Can't find smsc_xpmem_memcpy_chunk_size MCA param (%d); "
+            "using xhc default", var_index);
+    }
+
+    mca_base_component_var_register(&mca_coll_xhc_component.super.collm_version,
+        "memcpy_chunk_size", "Maximum size to copy with a single call to memcpy, "
+        "following smsc/xpmem's paradigm. A smaller/larger value may provide "
+        "better performance on some systems.", MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0,
+        MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_READONLY,
+        &mca_coll_xhc_component.memcpy_chunk_size);
+
+    /* Print Info */
+    // -------------
+
+    mca_base_var_enum_value_flag_t print_info_options[XHC_COLLCOUNT + 4] = {
+        [XHC_COLLCOUNT + 0] = {XHC_PRINT_INFO_HIER_DOT, "dot", 0},
+        [XHC_COLLCOUNT + 1] = {XHC_PRINT_INFO_CONFIG, "config", 0},
+        [XHC_COLLCOUNT + 2] = {XHC_PRINT_INFO_ALL, "all", 0},
+        [XHC_COLLCOUNT + 3] = {0, NULL, 0}
+    };
+
+    for(int t = 0; t < XHC_COLLCOUNT; t++) {
+        print_info_options[t] = (mca_base_var_enum_value_flag_t) {
+            1 << t, xhc_colltype_to_str(t), 0};
+    }
+
+    err = mca_base_var_enum_create_flag("coll_xhc_print_info",
+        print_info_options, &var_enum_flag);
+    if(err != OPAL_SUCCESS) return err;
+
+    mca_base_component_var_register(&mca_coll_xhc_component.super.collm_version,
+        "print_info", "Print information during initialization.",
+        MCA_BASE_VAR_TYPE_UNSIGNED_INT, &var_enum_flag->super, 0, 0, OPAL_INFO_LVL_3,
+        MCA_BASE_VAR_SCOPE_READONLY, &mca_coll_xhc_component.print_info);
+
+    if(mca_coll_xhc_component.print_info & XHC_PRINT_INFO_ALL) {
+        for(mca_base_var_enum_value_flag_t *flag = print_info_options;
+                flag->string; flag++) {
+            mca_coll_xhc_component.print_info |= flag->flag;
+        }
+    }
+
+    OBJ_RELEASE(var_enum_flag);
+
+    /* Root ranks for unrooted collectives */
+    // --------------------------------------
+
+    mca_base_component_var_register(&mca_coll_xhc_component.super.collm_version,
+        "barrier_root", "Internal root for the barrier operation (rank ID).",
+        MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_5,
+        MCA_BASE_VAR_SCOPE_READONLY, &mca_coll_xhc_component.barrier_root);
+
+    // Currently, only rank 0 is supported in allreduce.
+    mca_base_component_var_register(&mca_coll_xhc_component.super.collm_version,
+        "allreduce_root", "Internal root for the allreduce operation (rank ID).",
+        MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_DEFAULT_ONLY, OPAL_INFO_LVL_5,
+        MCA_BASE_VAR_SCOPE_READONLY, &mca_coll_xhc_component.allreduce_root);
+
+    /* Dynamic leader */
+    // -----------------
+
+    mca_base_component_var_register(&mca_coll_xhc_component.super.collm_version,
+        "dynamic_leader", "Enable dynamic operation-wise group-leader selection.",
         MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_5,
         MCA_BASE_VAR_SCOPE_READONLY, &mca_coll_xhc_component.dynamic_leader);
 
     /* Dynamic reduce */
+    // -----------------
 
-    ret = mca_base_var_enum_create("coll_xhc_dynamic_reduce_options",
+    static mca_base_var_enum_value_t dynamic_reduce_options[] = {
+        {XHC_DYNAMIC_REDUCE_DISABLED, "disabled"},
+        {XHC_DYNAMIC_REDUCE_NON_FLOAT, "non-float"},
+        {XHC_DYNAMIC_REDUCE_ALL, "all"},
+        {0, NULL}
+    };
+
+    err = mca_base_var_enum_create("coll_xhc_dynamic_reduce_options",
         dynamic_reduce_options, &var_enum);
-    if(ret != OPAL_SUCCESS) {
-        return ret;
-    }
+    if(err != OPAL_SUCCESS) return err;
 
-    /* Barrier root */
-
-    (void) mca_base_component_var_register(&mca_coll_xhc_component.super.collm_version,
-        "barrier_root", "Internal root for the barrier operation (rank ID)",
-        MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_5,
-        MCA_BASE_VAR_SCOPE_READONLY, &mca_coll_xhc_component.barrier_root);
-
-    (void) mca_base_component_var_register(&mca_coll_xhc_component.super.collm_version,
-        "dynamic_reduce", "Dynamic/out-of-order intra-group reduction",
+    mca_base_component_var_register(&mca_coll_xhc_component.super.collm_version,
+        "dynamic_reduce", "Dynamic/out-of-order intra-group reduction.",
         MCA_BASE_VAR_TYPE_INT, var_enum, 0, 0, OPAL_INFO_LVL_6,
         MCA_BASE_VAR_SCOPE_READONLY, &mca_coll_xhc_component.dynamic_reduce);
 
     OBJ_RELEASE(var_enum);
 
-    /* Load balancing: Reduce leader assistance */
+    /* Load balancing: Reduction leader assistance */
+    // ----------------------------------------------
 
-    ret = mca_base_var_enum_create_flag("coll_xhc_lb_reduce_leader_assist",
-        lb_reduce_leader_assist_options, &var_enum_flag);
-    if(ret != OPAL_SUCCESS) {
-        return ret;
-    }
+    mca_base_var_enum_value_flag_t reduce_load_balance_options[] = {
+        {XHC_REDUCE_LB_LEADER_ASSIST_TOP_LEVEL, "top", XHC_REDUCE_LB_LEADER_ASSIST_ALL},
+        {XHC_REDUCE_LB_LEADER_ASSIST_FIRST_CHUNK, "first", XHC_REDUCE_LB_LEADER_ASSIST_ALL},
+        {XHC_REDUCE_LB_LEADER_ASSIST_ALL, "all", (XHC_REDUCE_LB_LEADER_ASSIST_TOP_LEVEL |
+            XHC_REDUCE_LB_LEADER_ASSIST_FIRST_CHUNK)},
+        {0, NULL, 0}
+    };
 
-    (void) mca_base_component_var_register(&mca_coll_xhc_component.super.collm_version,
-        "lb_reduce_leader_assist", "Reduction leader assistance modes for load balancing",
+    err = mca_base_var_enum_create_flag("coll_xhc_reduce_load_balance",
+        reduce_load_balance_options, &var_enum_flag);
+    if(err != OPAL_SUCCESS) return err;
+
+    mca_base_component_var_register(&mca_coll_xhc_component.super.collm_version,
+        "reduce_load_balance", "Reduction leader assistance modes for load balancing.",
         MCA_BASE_VAR_TYPE_INT, &var_enum_flag->super, 0, 0, OPAL_INFO_LVL_6,
-        MCA_BASE_VAR_SCOPE_READONLY, &mca_coll_xhc_component.lb_reduce_leader_assist);
+        MCA_BASE_VAR_SCOPE_READONLY, &mca_coll_xhc_component.reduce_load_balance);
 
     OBJ_RELEASE(var_enum_flag);
 
-    /* Force enable "hacky" reduce */
+    /* (All)reduce uniform chunks */
+    // ---------------------------
 
-    (void) mca_base_component_var_register(&mca_coll_xhc_component.super.collm_version,
-        "force_reduce", "Force enable the \"special\" Reduce for all calls",
-        MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_9,
-        MCA_BASE_VAR_SCOPE_READONLY, &mca_coll_xhc_component.force_reduce);
-
-    /* Hierarchy features */
-
-    desc = NULL;
-
-    for(size_t i = 0; i < sizeof(hwloc_topo_str)/sizeof(char *); i++) {
-        ret = opal_asprintf(&tmp, "%s%s%s", (i > 0 ? desc : ""),
-            (i > 0 ? ", " : ""), hwloc_topo_str[i]);
-        free(desc); desc = tmp;
-        if(ret < 0) {
-            return OPAL_ERR_OUT_OF_RESOURCE;
-        }
-    }
-
-    ret = opal_asprintf(&tmp, "Comma-separated list of topology features to "
-        "consider for the hierarchy (%s)", desc);
-    free(desc); desc = tmp;
-    if(ret < 0) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-
-    (void) mca_base_component_var_register(&mca_coll_xhc_component.super.collm_version,
-        "hierarchy", desc, MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_4,
-        MCA_BASE_VAR_SCOPE_READONLY, &mca_coll_xhc_component.hierarchy_mca);
-
-    free(desc);
-
-    /* Chunk size(s) */
-
-    (void) mca_base_component_var_register(&mca_coll_xhc_component.super.collm_version,
-        "chunk_size", "The chunk size(s) to be used for the pipeline "
-        "(single value, or comma separated list for different hierarchy levels "
-        "(bottom to top))",
-        MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_5,
-        MCA_BASE_VAR_SCOPE_READONLY, &mca_coll_xhc_component.chunk_size_mca);
-
-    /* Allreduce uniform chunks */
-
-    (void) mca_base_component_var_register(&mca_coll_xhc_component.super.collm_version,
+    mca_base_component_var_register(&mca_coll_xhc_component.super.collm_version,
         "uniform_chunks", "Automatically optimize chunk size in reduction "
-        "collectives according to message size, for load balancing",
+        "collectives according to message size, for load balancing.",
         MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_5,
         MCA_BASE_VAR_SCOPE_READONLY, &mca_coll_xhc_component.uniform_chunks);
 
-    /* Allreduce uniform chunks min size */
-
-    (void) mca_base_component_var_register(&mca_coll_xhc_component.super.collm_version,
+    mca_base_component_var_register(&mca_coll_xhc_component.super.collm_version,
         "uniform_chunks_min", "Minimum chunk size for reduction collectives, "
-        "when \"uniform chunks\" are enabled", MCA_BASE_VAR_TYPE_SIZE_T,
+        "when \"uniform chunks\" are enabled.", MCA_BASE_VAR_TYPE_SIZE_T,
         NULL, 0, 0, OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_READONLY,
         &mca_coll_xhc_component.uniform_chunks_min);
 
-    /* CICO threshold (inclusive) */
+    /* Hierarchy */
+    // ------------
 
-    (void) mca_base_component_var_register(&mca_coll_xhc_component.super.collm_version,
-        "cico_max", "Maximum message size up to which to use CICO",
-        MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0, 0, OPAL_INFO_LVL_5,
-        MCA_BASE_VAR_SCOPE_READONLY, &mca_coll_xhc_component.cico_max);
+    char *topo_list = NULL;
+
+    for(size_t i = 0; i < sizeof(xhc_topo_str)/sizeof(char *); i++) {
+        err = opal_asprintf(&tmp, "%s%s%s", (i > 0 ? topo_list : ""),
+            (i > 0 ? ", " : ""), xhc_topo_str[i]);
+        free(topo_list); topo_list = tmp;
+        if(err < 0) return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+
+    err = opal_asprintf(&desc, "Comma-separated list of topology features to "
+        "consider for the hierarchy (%s), for all collectives. Mutually "
+        "exclusive with respective op-specific params.", topo_list);
+    if(err < 0) {free(topo_list); return OMPI_ERR_OUT_OF_RESOURCE;}
+
+    vari = mca_base_component_var_register(&mca_coll_xhc_component.super.collm_version,
+        "hierarchy", desc, MCA_BASE_VAR_TYPE_STRING, NULL, 0, MCA_BASE_VAR_FLAG_DEF_UNSET,
+        OPAL_INFO_LVL_4, MCA_BASE_VAR_SCOPE_READONLY,
+        &mca_coll_xhc_component.op_mca_global.hierarchy);
+
+    free(desc);
+
+    mca_base_var_get(vari, &var);
+
+    for(int t = 0; t < XHC_COLLCOUNT; t++) {
+        err = opal_asprintf(&name, "%s_hierarchy", xhc_colltype_to_str(t));
+        if(err < 0) {free(topo_list); return OPAL_ERR_OUT_OF_RESOURCE;}
+
+        err = opal_asprintf(&desc, "Comma-separated list of topology features to "
+            "consider for the hierarchy (%s), for %s.", topo_list, xhc_colltype_to_str(t));
+        if(err < 0) {free(topo_list); free(name); return OMPI_ERR_OUT_OF_RESOURCE;}
+
+        mca_base_component_var_register(&mca_coll_xhc_component.super.collm_version,
+            name, desc, MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_7,
+            MCA_BASE_VAR_SCOPE_READONLY, &mca_coll_xhc_component.op_mca[t].hierarchy);
+
+        /* The op-specific MCA vars are mutually exclusive with
+         * the global one. Otherwise things get complicated. */
+        err = xhc_var_check_exclusive("hierarchy", name);
+
+        free(name);
+        free(desc);
+
+        if(err != OPAL_SUCCESS)
+            return err;
+
+        /* If the global MCA var was set (because the user set it, it's unset
+         * by default), it overrides the op-specific ones. (and both of them
+         * can't be set at the same time, as they are mutually exclusive. */
+        if(var && var->mbv_source != MCA_BASE_VAR_SOURCE_DEFAULT) {
+            mca_coll_xhc_component.op_mca[t].hierarchy =
+                strdup(mca_coll_xhc_component.op_mca_global.hierarchy);
+        }
+    }
+
+    free(topo_list);
+
+    /* Chunk size */
+    // ---------------
+
+    vari = mca_base_component_var_register(&mca_coll_xhc_component.super.collm_version,
+        "chunk_size", "Chunk size(s) for the pipeline (single value, or comma-separated "
+        "list for different hierarchy levels (bottom to top)), for all collectives. "
+        "Mutually exclusive with respective op-specific params.",
+        MCA_BASE_VAR_TYPE_STRING, NULL, 0, MCA_BASE_VAR_FLAG_DEF_UNSET, OPAL_INFO_LVL_5,
+        MCA_BASE_VAR_SCOPE_READONLY, &mca_coll_xhc_component.op_mca_global.chunk_size);
+
+    mca_base_var_get(vari, &var);
+
+    for(int t = 0; t < XHC_COLLCOUNT; t++) {
+        if(t == XHC_BARRIER)
+            continue;
+
+        err = opal_asprintf(&name, "%s_chunk_size", xhc_colltype_to_str(t));
+        if(err < 0) return OPAL_ERR_OUT_OF_RESOURCE;
+
+        err = opal_asprintf(&desc, "Chunk size(s) for the pipeline (single "
+            "value, or comma-separated list for different hierarchy levels "
+            "(bottom to top)), for %s.", xhc_colltype_to_str(t));
+        if(err < 0) {free(name); return OMPI_ERR_OUT_OF_RESOURCE;}
+
+        mca_base_component_var_register(&mca_coll_xhc_component.super.collm_version,
+            name, desc, MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_8,
+            MCA_BASE_VAR_SCOPE_READONLY, &mca_coll_xhc_component.op_mca[t].chunk_size);
+
+        err = xhc_var_check_exclusive("chunk_size", name);
+
+        free(name);
+        free(desc);
+
+        if(err != OPAL_SUCCESS)
+            return err;
+
+        if(var && var->mbv_source != MCA_BASE_VAR_SOURCE_DEFAULT) {
+            mca_coll_xhc_component.op_mca[t].chunk_size =
+                strdup(mca_coll_xhc_component.op_mca_global.chunk_size);
+        }
+    }
+
+    /* CICO threshold */
+    // -----------------
+
+    vari = mca_base_component_var_register(&mca_coll_xhc_component.super.collm_version,
+        "cico_max", "Maximum message size up to which to use CICO, for all collectives. "
+        "Mutually exclusive with respective op-specific params.",
+        MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0, MCA_BASE_VAR_FLAG_DEF_UNSET, OPAL_INFO_LVL_5,
+        MCA_BASE_VAR_SCOPE_READONLY, &mca_coll_xhc_component.op_mca_global.cico_max);
+
+    mca_coll_xhc_component.op_mca_global.cico_max = OPAL_ALIGN(
+        mca_coll_xhc_component.op_mca_global.cico_max, XHC_ALIGN, size_t);
+
+    mca_base_var_get(vari, &var);
+
+    for(int t = 0; t < XHC_COLLCOUNT; t++) {
+        if(t == XHC_BARRIER)
+            continue;
+
+        err = opal_asprintf(&name, "%s_cico_max", xhc_colltype_to_str(t));
+        if(err < 0) return OPAL_ERR_OUT_OF_RESOURCE;
+
+        err = opal_asprintf(&desc, "Maximum message size up to which "
+            "to use CICO, for %s.", xhc_colltype_to_str(t));
+        if(err < 0) {free(name); return OMPI_ERR_OUT_OF_RESOURCE;}
+
+        mca_base_component_var_register(&mca_coll_xhc_component.super.collm_version,
+            name, desc, MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0, 0,
+            OPAL_INFO_LVL_8, MCA_BASE_VAR_SCOPE_READONLY,
+            &mca_coll_xhc_component.op_mca[t].cico_max);
+
+        mca_coll_xhc_component.op_mca[t].cico_max = OPAL_ALIGN(
+            mca_coll_xhc_component.op_mca[t].cico_max, XHC_ALIGN, size_t);
+
+        err = xhc_var_check_exclusive("cico_max", name);
+
+        free(name);
+        free(desc);
+
+        if(err != OPAL_SUCCESS)
+            return err;
+
+        if(var && var->mbv_source != MCA_BASE_VAR_SOURCE_DEFAULT) {
+            mca_coll_xhc_component.op_mca[t].cico_max =
+                mca_coll_xhc_component.op_mca_global.cico_max;
+        }
+    }
 
     return OMPI_SUCCESS;
 }
+
+static int xhc_var_check_exclusive(const char *param_a, const char *param_b) {
+    return mca_base_var_check_exclusive("ompi",
+        mca_coll_xhc_component.super.collm_version.mca_type_name,
+        mca_coll_xhc_component.super.collm_version.mca_component_name, param_a,
+        mca_coll_xhc_component.super.collm_version.mca_type_name,
+        mca_coll_xhc_component.super.collm_version.mca_component_name, param_b);
+}
+
+// -----------------------------
 
 static int parse_csv(const char *csv_orig, char sep, char ignore_start,
         char ignore_end, void **vals_dst, int *len_dst, size_t type_size,
@@ -281,13 +514,11 @@ static int parse_csv(const char *csv_orig, char sep, char ignore_start,
 
     int return_code = OMPI_SUCCESS;
 
-    if(!(csv = strdup(csv_orig))) {
+    if(!(csv = strdup(csv_orig)))
         RETURN_WITH_ERROR(return_code, OMPI_ERR_OUT_OF_RESOURCE, end);
-    }
 
-    if(!(vals = malloc((vals_size = 5) * type_size))) {
+    if(!(vals = malloc((vals_size = 5) * type_size)))
         RETURN_WITH_ERROR(return_code, OMPI_ERR_OUT_OF_RESOURCE, end);
-    }
 
     int ignore_cnt = 0;
     char *token = csv;
@@ -299,22 +530,18 @@ static int parse_csv(const char *csv_orig, char sep, char ignore_start,
 
         if(ntokens == vals_size) {
             void *tmp = realloc(vals, (vals_size *= 2) * sizeof(type_size));
-            if(!tmp) {
-                RETURN_WITH_ERROR(return_code, OMPI_ERR_OUT_OF_RESOURCE, end);
-            }
+            if(!tmp) RETURN_WITH_ERROR(return_code, OMPI_ERR_OUT_OF_RESOURCE, end);
             vals = tmp;
         }
 
         if(ignore_start != 0) {
-            if(*c == ignore_start) {
+            if(*c == ignore_start)
                 ignore_cnt++;
-            } else if(*c == ignore_end) {
+            else if(*c == ignore_end)
                 ignore_cnt--;
-            }
 
-            if(ignore_cnt < 0) {
+            if(ignore_cnt < 0)
                 RETURN_WITH_ERROR(return_code, OMPI_ERR_BAD_PARAM, end);
-            }
         }
 
         if(ignore_cnt == 0 && (*c == sep || *c == '\0')) {
@@ -324,10 +551,9 @@ static int parse_csv(const char *csv_orig, char sep, char ignore_start,
             int status = conv_fn(token, (char *) vals + ntokens*type_size);
 
             if(status != OMPI_SUCCESS) {
-                if(err_help_header) {
+                if(err_help_header)
                     opal_show_help("help-coll-xhc.txt",
                         err_help_header, true, token, csv_orig);
-                }
 
                 RETURN_WITH_ERROR(return_code, status, end);
             }
@@ -348,9 +574,8 @@ static int parse_csv(const char *csv_orig, char sep, char ignore_start,
 
     if(return_code != OMPI_SUCCESS) {
         if(vals && destructor_fn) {
-            for(int i = 0; i < ntokens; i++) {
+            for(int i = 0; i < ntokens; i++)
                 destructor_fn((char *) vals + i*type_size);
-            }
         }
 
         free(vals);
@@ -358,6 +583,8 @@ static int parse_csv(const char *csv_orig, char sep, char ignore_start,
 
     return return_code;
 }
+
+// -----------------------------
 
 static int conv_xhc_loc_def_rank_list(char *str, void *result) {
     char *strs[2] = {str, NULL};
@@ -377,9 +604,8 @@ static int conv_xhc_loc_def_rank_list(char *str, void *result) {
 
         nums[i] = strtol(strs[i], &endptr, 10);
 
-        if(endptr[0] != '\0' || nums[i] < 0) {
+        if(endptr[0] != '\0' || nums[i] < 0)
             RETURN_WITH_ERROR(return_code, OMPI_ERR_BAD_PARAM, end);
-        }
     }
 
     ((xhc_rank_range_t *) result)->start_rank = nums[0];
@@ -387,9 +613,8 @@ static int conv_xhc_loc_def_rank_list(char *str, void *result) {
 
     end:
 
-    if(range_op_pos) {
+    if(range_op_pos)
         *range_op_pos = '.';
-    }
 
     return return_code;
 }
@@ -416,9 +641,8 @@ static int conv_xhc_loc_def(char *str, void *result) {
     char *s = strdup(str);
     xhc_loc_def_t *def = OBJ_NEW(xhc_loc_def_t);
 
-    if(!s || !def) {
+    if(!s || !def)
         RETURN_WITH_ERROR(return_code, OMPI_ERR_OUT_OF_RESOURCE, end);
-    }
 
     /* Parse modifiers and remove them from string */
 
@@ -430,23 +654,19 @@ static int conv_xhc_loc_def(char *str, void *result) {
     char *colon_pos = strrchr(s, ':');
     char *qmark_pos = strrchr(s, '?');
 
-    if(colon_pos && qmark_pos) {
+    if(colon_pos && qmark_pos)
         RETURN_WITH_ERROR(return_code, OMPI_ERR_BAD_PARAM, end);
-    } else if(colon_pos || qmark_pos) {
+    else if(colon_pos || qmark_pos) {
         char *numstr = (colon_pos ? colon_pos : qmark_pos);
         char *endptr;
 
         int num = strtol(numstr + 1, &endptr, 10);
 
-        if(endptr[0] != '\0' || num <= 0) {
+        if(endptr[0] != '\0' || num <= 0)
             RETURN_WITH_ERROR(return_code, OMPI_ERR_BAD_PARAM, end);
-        }
 
-        if(colon_pos) {
-            def->split = num;
-        } else {
-            def->max_ranks = num;
-        }
+        if(colon_pos) def->split = num;
+        else def->max_ranks = num;
 
         *numstr = '\0';
     }
@@ -454,9 +674,8 @@ static int conv_xhc_loc_def(char *str, void *result) {
     /* Parse locality definition */
 
     if(s[0] == '[') {
-        if(def->repeat) { // repeat only makes sense with named localities
+        if(def->repeat) // repeat only makes sense with named localities
             RETURN_WITH_ERROR(return_code, OMPI_ERR_BAD_PARAM, end);
-        }
 
         s[strlen(s) - 1] = '\0';
 
@@ -464,23 +683,21 @@ static int conv_xhc_loc_def(char *str, void *result) {
             &def->rank_list_len, sizeof(xhc_rank_range_t),
             conv_xhc_loc_def_rank_list, NULL, NULL);
 
-        if(status != OMPI_SUCCESS) {
+        if(status != OMPI_SUCCESS)
             RETURN_WITH_ERROR(return_code, status, end);
-        }
     } else {
         bool found = false;
 
-        for(size_t i = 0; i < sizeof(hwloc_topo_str)/sizeof(char *); i++) {
-            if(strcasecmp(s, hwloc_topo_str[i]) == 0) {
-                def->named_loc = hwloc_topo_val[i];
+        for(size_t i = 0; i < sizeof(xhc_topo_str)/sizeof(char *); i++) {
+            if(strcasecmp(s, xhc_topo_str[i]) == 0) {
+                def->named_loc = xhc_topo_val[i];
                 found = true;
                 break;
             }
         }
 
-        if(!found) {
+        if(!found)
             RETURN_WITH_ERROR(return_code, OMPI_ERR_BAD_PARAM, end);
-        }
     }
 
     * (xhc_loc_def_t **) result = def;
@@ -489,9 +706,8 @@ static int conv_xhc_loc_def(char *str, void *result) {
 
     free(s);
 
-    if(return_code != OMPI_SUCCESS) {
+    if(return_code != OMPI_SUCCESS)
         OBJ_RELEASE_IF_NOT_NULL(def);
-    }
 
     return return_code;
 }
@@ -507,16 +723,13 @@ static int conv_xhc_loc_def_combination(char *str, void *result) {
     int status = parse_csv(str, '+', 0, 0, (void **) &defs,
         &ndefs, sizeof(xhc_loc_def_t *), conv_xhc_loc_def,
         destruct_xhc_loc_def, NULL);
-    if(status != OMPI_SUCCESS) {
-        return status;
-    }
+    if(status != OMPI_SUCCESS) return status;
 
     opal_list_t *def_list = (opal_list_t *) result;
     OBJ_CONSTRUCT(def_list, opal_list_t);
 
-    for(int i = 0; i < ndefs; i++) {
+    for(int i = 0; i < ndefs; i++)
         opal_list_append(def_list, (opal_list_item_t *) defs[i]);
-    }
 
     free(defs);
 
@@ -545,7 +758,7 @@ int mca_coll_xhc_component_parse_hierarchy(const char *val_str,
      *
      * Each item in this '+'-separated list, can be of the following types:
      * 1. A "named locality", e.g. hwloc's localities (only ones currently
-     *    available), see hwloc_topo_str[].
+     *    available), see xhc_topo_str[].
      * 2. A list of ranks that should be grouped together. This is a comma-
      *    separated list of integers, enclosed in [] (I know, list-ception!).
      *    It may also contain range operators (..), to select multiple ranks
@@ -555,8 +768,8 @@ int mca_coll_xhc_component_parse_hierarchy(const char *val_str,
      * Finally, each such item may be suffixed by a special modifier:
      * 1. The split modifier (:<n>) specifies to group according to the
      *    locality it refers to, but to split each such group into multiple
-     *    parts. E.g. the locality 'numa:2' will group ranks into half-numas
-     *    group, such that for each NUMA node, half the ranks are in one
+     *    parts. E.g. the locality 'numa:2' will group ranks into half-numa
+     *    groups, such that for each NUMA node, half the ranks are in one
      *    group, and the rest are in another.
      * 2. The max-ranks modifier (?<n>) works similarly to the split modifier,
      *    only that it specifies that at most _n_ ranks should be placed in
@@ -572,10 +785,10 @@ int mca_coll_xhc_component_parse_hierarchy(const char *val_str,
      *   example, "numa", even though it is a single key, means to group
      *   all ranks that are in the same NUMA together, which will lead to
      *   multiple groups if multiple NUMA nodes are present. This is in
-     *   contract to rank lists, which only create a single group, containing
+     *   contrast to rank lists, which only create a single group, containing
      *   the ranks specified in it. The different items in the '+'-separated
      *   list are consumed in-order left-to-right, and any named localities
-     *   are automatically repeated to apply all ranks that are not included
+     *   are automatically repeated to apply to all ranks that are not included
      *   in other items. When multiple named localities are present one after
      *   the other, the last one is repeated, unless another repetition was
      *   explicitly requested via the repeat modifier.
@@ -619,7 +832,9 @@ int mca_coll_xhc_component_parse_hierarchy(const char *val_str,
     return status;
 }
 
-static int conv_chunk_size(char *str, void *result) {
+// -----------------------------
+
+static int conv_num_size(char *str, void *result) {
     size_t last_idx = strlen(str) - 1;
     char saved_char = str[last_idx];
 
@@ -660,9 +875,8 @@ int mca_coll_xhc_component_parse_chunk_sizes(const char *val_str,
 
     if(val_str == NULL) {
         *chunks_dst = malloc(sizeof(size_t));
-        if(*chunks_dst == NULL) {
+        if(*chunks_dst == NULL)
             return OMPI_ERR_OUT_OF_RESOURCE;
-        }
 
         (*chunks_dst)[0] = (size_t) -1;
         *len_dst = 1;
@@ -671,7 +885,23 @@ int mca_coll_xhc_component_parse_chunk_sizes(const char *val_str,
     }
 
     int status = parse_csv(val_str, ',', 0, 0, (void **) chunks_dst, len_dst,
-        sizeof(size_t), conv_chunk_size, NULL, "bad-chunk-size-item");
+        sizeof(size_t), conv_num_size, NULL, "bad-chunk-size-item");
+
+    return status;
+}
+
+int mca_coll_xhc_component_parse_cico_max(const char *val_str,
+        size_t *cico_max_dst) {
+
+    int status;
+
+    if(val_str) {
+        status = conv_num_size((char *) val_str, cico_max_dst);
+    } else
+        status = OMPI_ERR_BAD_PARAM;
+
+    if(status == OMPI_ERR_BAD_PARAM)
+        opal_show_help("help-coll-xhc.txt", "bad_cico_max", true, val_str);
 
     return status;
 }

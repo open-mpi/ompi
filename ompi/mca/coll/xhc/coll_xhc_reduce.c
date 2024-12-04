@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2023 Computer Architecture and VLSI Systems (CARV)
+ * Copyright (c) 2021-2024 Computer Architecture and VLSI Systems (CARV)
  *                         Laboratory, ICS Forth. All rights reserved.
  * $COPYRIGHT$
  *
@@ -28,14 +28,15 @@ int mca_coll_xhc_reduce(const void *sbuf, void *rbuf,
 
     xhc_module_t *module = (xhc_module_t *) ompi_module;
 
-    // Currently, XHC's reduce only supports root = 0
+    /* Currently, XHC's reduce only supports the top-level
+     * owner as the root (typically rank 0). */
     if(root == 0) {
-        return xhc_allreduce_internal(sbuf, rbuf, count,
+        return mca_coll_xhc_allreduce_internal(sbuf, rbuf, count,
             datatype, op, ompi_comm, ompi_module, false);
     } else {
-        xhc_coll_fns_t fallback = module->prev_colls;
-
-        return fallback.coll_reduce(sbuf, rbuf, count, datatype,
-            op, root, ompi_comm, fallback.coll_reduce_module);
+        WARN_ONCE("coll:xhc: Warning: XHC does not currently support "
+            "non-zero-root reduce; utilizing fallback component");
+        return XHC_CALL_FALLBACK(module->prev_colls, XHC_REDUCE,
+            reduce, sbuf, rbuf, count, datatype, op, root, ompi_comm);
     }
 }
