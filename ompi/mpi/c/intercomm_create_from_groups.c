@@ -17,7 +17,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2018-2021 Triad National Security, LLC. All rights
+ * Copyright (c) 2018-2024 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -50,7 +50,7 @@ int MPI_Intercomm_create_from_groups (MPI_Group local_group, int local_leader, M
                                       int remote_leader, const char *tag, MPI_Info info, MPI_Errhandler errhandler,
                                       MPI_Comm *newintercomm)
 {
-    int rc;
+    int rc, my_grp_rank, remote_grp_size;
 
     MEMCHECKER(
         memchecker_comm(local_comm);
@@ -60,25 +60,42 @@ int MPI_Intercomm_create_from_groups (MPI_Group local_group, int local_leader, M
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
-        if (NULL == errhandler) {
-            return MPI_ERR_ARG;
+        if (NULL == errhandler ||
+               MPI_ERRHANDLER_NULL == errhandler ||
+                    ( OMPI_ERRHANDLER_TYPE_COMM != errhandler->eh_mpi_object_type &&
+                     OMPI_ERRHANDLER_TYPE_PREDEFINED != errhandler->eh_mpi_object_type) ) {
+               return ompi_errhandler_invoke (NULL, MPI_COMM_NULL, OMPI_ERRHANDLER_TYPE_COMM,
+                                      MPI_ERR_ARG,FUNC_NAME);
+
         }
 
-        if (NULL == local_group || NULL == remote_group) {
-            return ompi_errhandler_invoke (errhandler, MPI_COMM_NULL, errhandler->eh_mpi_object_type,
-                                           MPI_ERR_GROUP, FUNC_NAME);
-        }
         if (NULL == info || ompi_info_is_freed(info)) {
-            return ompi_errhandler_invoke (errhandler, MPI_COMM_NULL, errhandler->eh_mpi_object_type,
+            return ompi_errhandler_invoke (errhandler, MPI_COMM_NULL, OMPI_ERRHANDLER_TYPE_COMM,
                                            MPI_ERR_INFO, FUNC_NAME);
         }
         if (NULL == tag) {
-            return ompi_errhandler_invoke (errhandler, MPI_COMM_NULL, errhandler->eh_mpi_object_type,
+            return ompi_errhandler_invoke (errhandler, MPI_COMM_NULL, OMPI_ERRHANDLER_TYPE_COMM,
                                            MPI_ERR_TAG, FUNC_NAME);
         }
         if (NULL == newintercomm) {
-            return ompi_errhandler_invoke (errhandler, MPI_COMM_NULL, errhandler->eh_mpi_object_type,
+            return ompi_errhandler_invoke (errhandler, MPI_COMM_NULL, OMPI_ERRHANDLER_TYPE_COMM,
                                            MPI_ERR_ARG, FUNC_NAME);
+        }
+
+        my_grp_rank = ompi_group_rank((ompi_group_t *)local_group);
+        if (local_leader == my_grp_rank) {
+
+            if (NULL == local_group || NULL == remote_group) {
+                return ompi_errhandler_invoke (errhandler, MPI_COMM_NULL, OMPI_ERRHANDLER_TYPE_COMM,
+                                               MPI_ERR_GROUP, FUNC_NAME);
+            }
+
+            remote_grp_size = ompi_group_size((ompi_group_t *)remote_group);
+            if (remote_leader >= remote_grp_size) {
+                rc = ompi_errhandler_invoke (errhandler, MPI_COMM_NULL, OMPI_ERRHANDLER_TYPE_COMM,
+                                               MPI_ERR_ARG, FUNC_NAME);
+                return rc;
+            }
         }
     }
 
