@@ -7,7 +7,7 @@
 # Copyright (c) 2012-2013 Inria.  All rights reserved.
 # Copyright (c) 2013      Los Alamos National Security, LLC. All rights
 #                         reserved.
-# Copyright (c) 2015-2020 Research Organization for Information Science
+# Copyright (c) 2015-2024 Research Organization for Information Science
 #                         and Technology (RIST).  All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
 #
@@ -54,6 +54,7 @@ mpi-types.lo: mpi-types.F90
 # may generate different filenames, so we have to use a glob.  :-(
 
 install-exec-hook:
+	@ $(INSTALL) -d $(DESTDIR)$(OMPI_FORTRAN_MODULEDIR)
 	@ for file in `ls *.mod`; do \
 	  echo $(INSTALL) $$file $(DESTDIR)$(OMPI_FORTRAN_MODULEDIR); \
 	  $(INSTALL) $$file $(DESTDIR)$(OMPI_FORTRAN_MODULEDIR); \
