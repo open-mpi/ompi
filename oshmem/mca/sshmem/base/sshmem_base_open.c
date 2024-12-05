@@ -31,17 +31,7 @@
  * globals
  */
 
-/**
- * if 32 bit we set sshmem_base_start_address to 0
- * to let OS allocate segment automatically
- */
-#if UINTPTR_MAX == 0xFFFFFFFF
-void *mca_sshmem_base_start_address = (void*)0;
-#elif defined(__aarch64__)
-void* mca_sshmem_base_start_address = (void*)0xAB0000000000;
-#else
-void* mca_sshmem_base_start_address = (void*)0xFF000000;
-#endif
+void *mca_sshmem_base_start_address = UINTPTR_MAX;
 
 char * mca_sshmem_base_backing_file_dir = NULL;
 
