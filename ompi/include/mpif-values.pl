@@ -226,6 +226,7 @@ $handles->{MPI_C_DOUBLE_COMPLEX} = 70;
 $handles->{MPI_C_LONG_DOUBLE_COMPLEX} = 71;
 $handles->{MPI_COUNT} = 72;
 $handles->{MPI_COMPLEX4} = 73;
+$handles->{MPI_LOGICAL16} = 74;
 
 $handles->{MPI_MESSAGE_NO_PROC} = 1;
 
@@ -286,6 +287,7 @@ $constants->{MPI_DISTRIBUTE_DFLT_DARG} = -1;
 $constants->{MPI_TYPECLASS_INTEGER} = 1;
 $constants->{MPI_TYPECLASS_REAL} = 2;
 $constants->{MPI_TYPECLASS_COMPLEX} = 3;
+$constants->{MPI_TYPECLASS_LOGICAL} = 4;
 $constants->{MPI_MODE_NOCHECK} = 1;
 $constants->{MPI_MODE_NOPRECEDE} = 2;
 $constants->{MPI_MODE_NOPUT} = 4;
