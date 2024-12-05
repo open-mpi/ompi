@@ -1784,22 +1784,22 @@ int ompi_intercomm_create_from_groups (ompi_group_t *local_group, int local_lead
                 leader_procs[1] = tmp;
             }
 
-            /* create a unique tag for allocating the leader communicator. we can eliminate this step
-             * if we take a CID from the newly allocated block belonging to local_comm. this is
-             * a note to make this change at a later time. */
-            opal_asprintf (&sub_tag, "%s-OMPIi-LC", tag);
-            if (OPAL_UNLIKELY(NULL == sub_tag)) {
-                ompi_comm_free (&local_comm);
-                free(leader_procs);
-                return OMPI_ERR_OUT_OF_RESOURCE;
-            }
-
             leader_group = ompi_group_allocate_plist_w_procs (NULL, leader_procs, 2);
             ompi_set_group_rank (leader_group, my_proc);
             if (OPAL_UNLIKELY(NULL == leader_group)) {
-                free (sub_tag);
                 free(leader_procs);
                 ompi_comm_free (&local_comm);
+                return OMPI_ERR_OUT_OF_RESOURCE;
+            }
+
+            /* create a unique tag for allocating the leader communicator. we can eliminate this step
+             * if we take a CID from the newly allocated block belonging to local_comm. this is
+             * a note to make this change at a later time. */
+            opal_asprintf (&sub_tag, "%s-OMPIi-LC-%s", tag, OPAL_NAME_PRINT(ompi_group_get_proc_name (leader_group, 0)));
+            if (OPAL_UNLIKELY(NULL == sub_tag)) {
+                free(leader_procs);
+                ompi_comm_free (&local_comm);
+                OBJ_RELEASE(leader_group);
                 return OMPI_ERR_OUT_OF_RESOURCE;
             }
 
@@ -1809,6 +1809,7 @@ int ompi_intercomm_create_from_groups (ompi_group_t *local_group, int local_lead
             rc = ompi_comm_create_from_group (leader_group, sub_tag, info, errhandler, &leader_comm);
             OBJ_RELEASE(leader_group);
             free (sub_tag);
+            sub_tag = NULL;
             if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
                 free(leader_procs);
                 ompi_comm_free (&local_comm);
@@ -1864,7 +1865,16 @@ int ompi_intercomm_create_from_groups (ompi_group_t *local_group, int local_lead
         return rc;
     }
 
-    rc = ompi_comm_nextcid (newcomp, NULL, NULL, (void *) tag, NULL, false, OMPI_COMM_CID_GROUP_NEW);
+    /*
+     * append the pmix CONTEXT_ID obtained when creating the leader comm as discriminator
+     */
+    opal_asprintf (&sub_tag, "%s-%ld", tag, data[1]);
+    if (OPAL_UNLIKELY(NULL == sub_tag)) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    rc = ompi_comm_nextcid (newcomp, NULL, NULL, (void *) sub_tag, NULL, false, OMPI_COMM_CID_GROUP_NEW);
+    free (sub_tag);
     if ( OMPI_SUCCESS != rc ) {
         OBJ_RELEASE(newcomp);
         return rc;
