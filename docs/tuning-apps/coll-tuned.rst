@@ -82,7 +82,7 @@ Dynamic Decisions and the Rules File
 
 Given that the best choice of algorithm for a given collective depends on a
 number of factors only known at run time, and that some of these factors may
-vary with in a run, setting an algorithm on the command line often is an
+vary within a run, setting an algorithm on the command line often is an
 ineffective means of tuning.  The rules file provides a means of choosing
 an algorithm at run time based on communicator and message size.  The rules
 file can be specified on the command line, or the other usual ways to set MCA
@@ -104,13 +104,29 @@ Dynamic tuning files are organized in this format:
 .. code-block:: sh
    :linenos:
 
-   1             # Number of collectives
-   1             # Collective ID
-   1             # Number of comm sizes
-   2             # Comm size
-   2             # Number of message sizes
-   0 1 0 0       # Message size 0, algorithm 1, topo and segmentation at 0
-   1024 2 0 0    # Message size 1024, algorithm 2, topo and segmentation at 0
+   rule-file-version-2
+   1   # num of collectives
+   3   # collective ID
+   1   # number of comm sizes
+   #=====================
+   64   # comm size
+   14   # number of rules
+   # Bytes   alg topo segs reqs
+   #----------------------
+   0            0 0 0 0
+   512000       4 0 0 64
+   1536000      4 0 0 64
+   3072000      4 0 0 64
+   6144000      4 0 0 64
+   12288000     4 0 0 16
+   24576000     4 0 0 16
+   49152000     4 0 0 16
+   98304000     4 0 0 16
+   196608000    4 0 0 8
+   393216000    4 0 0 8
+   786432000    4 0 0 1
+   1572864000   4 0 0 1
+   2621440000   0 0 0 0
 
 The rules file effectively defines, for one or more collectives, a function of
 two variables, which given communicator and message size, returns an algorithm
@@ -128,10 +144,20 @@ for details.
 One may provide rules for as many collectives, communicator sizes, and message
 sizes as desired. Simply repeat the sections as needed and adjust the relevant
 count parameters.  One must always provide a rule for message size of zero.
-Message size rules are expected in ascending order.  The last two parameters in
-the rule may or may not be used and have different meaning depending on the
-collective and algorithm.  As of writing not all of the relevant control
-parameters can be set by the rules file (See issue #12589).
+Message size rules are expected in ascending order. The last parameters in the
+message size rule may or may not be used and have different meaning depending
+on the collective and algorithm. The first two parameters in the rule following
+the algorithm ID, `topo` and `segment size`, are always required. In version 2
+of the file format a third parameter, `max requests`, may also be provided. A
+release of Open MPI at least v5.0.7 is required for version 2 features.
+
+The file format version specifier, `rule-file-version-N` where N is an integer
+greater or equal to 1, should appear on the first line of the file.  If the
+version specifier is not present, the file format is assumed to be version 1.
+Version 2 or greater is required to use the `max requests` parameter. Open MPI
+releases older than v5.0.7 do not support the file format version
+identifier. When using older releases of Open MPI do not include a version
+specifier and do not use the `max requests` parameter in message size rules.
 
 .. _CollectivesAndAlgorithms:
 
