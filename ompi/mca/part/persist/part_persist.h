@@ -4,8 +4,8 @@
  * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2015      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2024 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2017      Intel, Inc. All rights reserved
  * Copyright (c) 2019-2021 The University of Tennessee at Chattanooga and The University
  *                         of Tennessee Research Foundation. All rights reserved.
@@ -28,7 +28,7 @@
 #include <alloca.h>
 #endif
 
-#include<math.h>
+#include <math.h>
 
 #include "ompi_config.h"
 #include "ompi/request/request.h"
@@ -495,9 +495,8 @@ mca_part_persist_start(size_t count, ompi_request_t** requests)
 {
     int err = OMPI_SUCCESS;
     size_t _count = count;
-    size_t i;
 
-    for(i = 0; i < _count && OMPI_SUCCESS == err; i++) {
+    for(size_t i = 0; i < _count && OMPI_SUCCESS == err; i++) {
         mca_part_persist_request_t *req = (mca_part_persist_request_t *)(requests[i]);
         /* First use is a special case, to support lazy initialization */
         if(false == req->first_send)
@@ -513,8 +512,8 @@ mca_part_persist_start(size_t count, ompi_request_t** requests)
         } else {
             if(MCA_PART_PERSIST_REQUEST_PSEND == req->req_type) {
                 req->done_count = 0;
-                for(i = 0; i < req->real_parts && OMPI_SUCCESS == err; i++) {
-                    req->flags[i] = -1;
+                for(size_t j = 0; j < req->real_parts && OMPI_SUCCESS == err; j++) {
+                    req->flags[j] = -1;
                 }
             } else {
                 req->done_count = 0;
