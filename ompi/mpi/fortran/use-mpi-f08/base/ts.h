@@ -36,7 +36,7 @@ extern int ompi_ts_copy(CFI_cdesc_t *cdesc, char *buffer);
         datatype = type;                                                \
         if (x->rank != 0 && !CFI_is_contiguous(x)) {                    \
             rc = ompi_ts_create_datatype(x, count, type, &datatype);    \
-            if (MPI_SUCCESS == rc) {                                    \
+            if (OPAL_LIKELY(MPI_SUCCESS == rc)) {                       \
                 count = 1;                                              \
             }                                                           \
         } else {                                                        \
@@ -50,7 +50,7 @@ extern int ompi_ts_copy(CFI_cdesc_t *cdesc, char *buffer);
         if (x->rank != 0 && !CFI_is_contiguous(x)) {                    \
             size_t size = ompi_ts_size(x);                              \
             buffer = malloc(size);                                      \
-            if (NULL == buffer) {                                       \
+            if (OPAL_UNLIKELY(NULL == buffer)) {                        \
                 rc = MPI_ERR_NO_MEM;                                    \
             } else {                                                    \
                 rc = MPI_SUCCESS;                                       \
@@ -67,7 +67,7 @@ extern int ompi_ts_copy(CFI_cdesc_t *cdesc, char *buffer);
         if (x->rank != 0 && !CFI_is_contiguous(x)) {                    \
             size_t size = ompi_ts_size(x);                              \
             buffer = malloc(size);                                      \
-            if (NULL == buffer) {                                       \
+            if (OPAL_UNLIKELY(NULL == buffer)) {                        \
                 rc = MPI_ERR_NO_MEM;                                    \
             } else {                                                    \
                 rc = ompi_ts_copy(x, buffer);                           \
@@ -84,18 +84,18 @@ extern int ompi_ts_copy(CFI_cdesc_t *cdesc, char *buffer);
             free(buffer);                                               \
         }                                                               \
         if (type != datatype) {                                         \
-	    rc = PMPI_Type_free(&datatype);                             \
+            rc = PMPI_Type_free(&datatype);                             \
         }                                                               \
     } while (0)
 
 #define OMPI_C_2_CFI_COPY(x, buffer, count, type, datatype, rc)         \
     do {                                                                \
         if (buffer != x->base_addr) {                                   \
-	    rc = ompi_ts_copy_back(buffer, x);                          \
+            rc = ompi_ts_copy_back(buffer, x);                          \
             free(buffer);                                               \
         }                                                               \
         if (type != datatype) {                                         \
-	    rc = PMPI_Type_free(&datatype);                             \
+            rc = PMPI_Type_free(&datatype);                             \
         }                                                               \
     } while (0)
 

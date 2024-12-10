@@ -23,7 +23,7 @@ int ompi_ts_create_datatype(CFI_cdesc_t *cdesc, int oldcount, MPI_Datatype oldty
     int mpi_errno = MPI_SUCCESS;
     int accum_elems = 1;
     int accum_sm = cdesc->elem_len;
-    int done = 0; /* Have we created a datatype for oldcount of oldtype? */
+    int done = false; /* Have we created a datatype for oldcount of oldtype? */
     int last; /* Index of the last successfully created datatype in types[] */
     int extent;
     int i, j;
@@ -34,7 +34,7 @@ int ompi_ts_create_datatype(CFI_cdesc_t *cdesc, int oldcount, MPI_Datatype oldty
         assert(cdesc->rank <= MAX_RANK);
         ompi_datatype_type_size(oldtype, &size);
         /* When cdesc->elem_len != size, things suddenly become complicated. Generally, it is hard to create
-         * a composite datatype based on two datatypes. Currently we don't support it and doubt it is usefull.
+         * a composite datatype based on two datatypes. Currently we don't support it and doubt it is useful.
          */
         assert(cdesc->elem_len == size);
     }
@@ -42,7 +42,7 @@ int ompi_ts_create_datatype(CFI_cdesc_t *cdesc, int oldcount, MPI_Datatype oldty
 
     types[0] = oldtype;
     i = 0;
-    done = 0;
+    done = false;
     while (i < cdesc->rank && !done) {
         if (oldcount % accum_elems) {
             /* oldcount should be a multiple of accum_elems, otherwise we might need an
@@ -58,7 +58,7 @@ int ompi_ts_create_datatype(CFI_cdesc_t *cdesc, int oldcount, MPI_Datatype oldty
             extent = cdesc->dim[i].extent;
         } else {
             /* Up to now, we have accumlated enough elements */
-            done = 1;
+            done = true;
         }
 
         if (cdesc->dim[i].sm == accum_sm) {
@@ -90,8 +90,9 @@ int ompi_ts_create_datatype(CFI_cdesc_t *cdesc, int oldcount, MPI_Datatype oldty
     }
 
 fn_exit:
-    for (j = 1; j <= last; j++)
+    for (j = 1; j <= last; j++) {
         PMPI_Type_free(&types[j]);
+    }
     return mpi_errno;
 }
 
