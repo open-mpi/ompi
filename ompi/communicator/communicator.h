@@ -149,6 +149,8 @@ OMPI_DECLSPEC extern opal_hash_table_t ompi_comm_hash;
 OMPI_DECLSPEC extern opal_pointer_array_t ompi_mpi_communicators;
 OMPI_DECLSPEC extern opal_pointer_array_t ompi_comm_f_to_c_table;
 
+OMPI_DECLSPEC extern int ompi_comm_output;
+
 struct ompi_comm_extended_cid_t {
     uint64_t  cid_base;
     union {
@@ -280,6 +282,10 @@ struct ompi_communicator_t {
     uint32_t c_epoch;  /* Identifier used to differentiate between two communicators
                           using the same c_contextid (not at the same time, obviously) */
 #endif
+    /* vector used to store remote cid values for communicators not using
+     * a global cid, i.e. when OMPI_COMM_IS_GLOBAL_INDEX(comm) returns 0.
+     */
+    uint32_t                     *c_index_vec;
     /* Non-blocking collective tag. These tags might be shared between
      * all non-blocking collective modules (to avoid message collision
      * between them in the case where multiple outstanding non-blocking
@@ -531,6 +537,30 @@ static inline uint32_t ompi_comm_get_local_cid (const ompi_communicator_t* comm)
     return comm->c_index;
 }
 
+int ompi_comm_get_remote_cid_from_pmix (ompi_communicator_t *comm, int dest, uint32_t *remote_cid);
+
+/**
+ * Get remote cid for the communicator.  In the case of communicators created
+ * using methods that don't supply an input communicator, i.e.
+ * MPI_Comm_create_from_group, the remote cid may be different from the local cid.
+ */
+static inline int ompi_comm_get_remote_cid (ompi_communicator_t *comm, int dest, uint32_t *remote_cid)
+{
+    int rc = OMPI_SUCCESS;
+
+    assert(NULL != remote_cid);
+
+    if (OPAL_LIKELY(OMPI_COMM_IS_GLOBAL_INDEX(comm))) {
+        *remote_cid = comm->c_index;
+    } else if (0 != comm->c_index_vec[dest]) {
+        *remote_cid = comm->c_index_vec[dest];
+    } else {
+        rc = ompi_comm_get_remote_cid_from_pmix(comm, dest, remote_cid);
+    }
+
+    return rc;
+}
+
 /**
  * Get the extended context ID for the communicator, suitable for passing
  * to ompi_comm_lookup_cid for getting the communicator back
@@ -608,6 +638,12 @@ static inline struct ompi_proc_t* ompi_comm_peer_lookup (const ompi_communicator
 #endif
     /*return comm->c_remote_group->grp_proc_pointers[peer_id];*/
     return ompi_group_peer_lookup(comm->c_remote_group,peer_id);
+}
+
+static inline bool ompi_comm_instances_same(const ompi_communicator_t *comm1,
+                                            const ompi_communicator_t *comm2)
+{
+    return comm1->instance == comm2->instance;
 }
 
 #if OPAL_ENABLE_FT_MPI
