@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2021-2023 Computer Architecture and VLSI Systems (CARV)
+# Copyright (c) 2021-2024 Computer Architecture and VLSI Systems (CARV)
 #                         Laboratory, ICS Forth. All rights reserved.
 # $COPYRIGHT$
 #
@@ -9,16 +9,35 @@
 #
 
 [bad-hierarchy-item]
-WARNING (coll/xhc)
-Unrecognized locality definition '%s' in hierarchy parameter string '%s'
-The component won't load
+ERROR (coll/xhc)
+Unrecognized locality definition: '%s'
+In hierarchy parameter string: '%s'
+Falling back to another component
 #
 [bad-chunk-size-item]
-WARNING (coll/xhc)
-Malformed item '%s' in chunk size parameter string '%s'
-The component won't load
+ERROR (coll/xhc)
+Malformed chunk size item: '%s'
+In chunk size parameter string: '%s'
+Falling back to another component
+#
+[bad-cico-max]
+ERROR (coll/xhc)
+Malformed cico_max parameter '%s'
+Falling back to another component
 #
 [xhc-init-failed]
-WARNING (coll/xhc)
-Component initialization failed with error code %d
+ERROR (coll/xhc)
+Initialization failed, error code %d
+Falling back to another component
 Errno: %d (%s)
+#
+[xhc-op-init-failed]
+ERROR (coll/xhc)
+Initialization for %s failed, error code %d
+Falling back to another component
+Errno: %d (%s)
+#
+[too-many-virt-hiers]
+ERROR (coll/xhc)
+Too many virtual hierarchies requested
+Falling back to another component
