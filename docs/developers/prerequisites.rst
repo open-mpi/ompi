@@ -47,6 +47,15 @@ build them manually, see the :ref:`how to build and install GNU
 Autotools section <developers-installing-autotools-label>` for much
 more detail.
 
+Python
+------
+
+Python >= v3.6 is required for generating the Fortran bindings, which
+is necessary if you build Open MPI from a Git clone.
+
+Python is also required for running Sphinx to generate the docs, too
+(:ref:`see below <developers-requirements-sphinx-label>`).
+
 Perl
 ----
 
@@ -87,6 +96,8 @@ your operating system's packaging system (to include Homebrew or
 MacPorts on MacOS), see `the Flex Github repository
 <https://github.com/westes/flex>`_.
 
+
+.. _developers-requirements-sphinx-label:
 
 Sphinx (and therefore Python)
 -----------------------------
