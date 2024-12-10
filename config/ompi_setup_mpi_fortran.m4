@@ -653,8 +653,6 @@ end type test_mpi_handle],
     AS_IF([test $OMPI_MIN_REQUIRED_FORTRAN_BINDINGS -gt $OMPI_BUILD_FORTRAN_BINDINGS],
           [AC_MSG_ERROR([Cannot build requested Fortran bindings, aborting])])
 
-    dnl AC_CONFIG_FILES([ompi/mpi/fortran/use-mpi-f08/bindings/mpi-f-interfaces-bind.h])
-
     # -------------------
     # mpif.h final setup
     # -------------------
