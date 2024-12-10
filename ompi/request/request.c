@@ -15,8 +15,8 @@
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2015      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2024 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * Copyright (c) 2018      Triad National Security, LLC. All rights
  *                         reserved.
@@ -267,6 +267,8 @@ bool ompi_request_check_same_instance(ompi_request_t** requests,
             base_instance = req->req_mpi_object.comm->instance;
             continue;
         }
+        if(&ompi_mpi_comm_null.comm == req->req_mpi_object.comm)
+            continue;
         if(base_instance != req->req_mpi_object.comm->instance)
             return false;
     }
