@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2021-2023 Computer Architecture and VLSI Systems (CARV)
+# Copyright (c) 2021-2024 Computer Architecture and VLSI Systems (CARV)
 #                         Laboratory, ICS Forth. All rights reserved.
 # $COPYRIGHT$
 #
@@ -12,8 +12,10 @@ dist_opaldata_DATA = help-coll-xhc.txt
 
 sources = \
     coll_xhc.h \
-    coll_xhc_atomic.h \
+    coll_xhc_intrinsic.h \
     coll_xhc.c \
+    coll_xhc_comm.c \
+    coll_xhc_hierarchy.c \
     coll_xhc_component.c \
     coll_xhc_module.c \
     coll_xhc_bcast.c \
