@@ -7,6 +7,7 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
+ * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -53,10 +54,11 @@
 #include "ompi/mca/topo/base/base.h"
 #include "opal/mca/pmix/base/base.h"
 
-#include "opal/mca/mpool/base/mpool_base_tree.h"
 #include "ompi/mca/pml/base/pml_base_bsend.h"
 #include "ompi/util/timings.h"
+#include "opal/mca/mpool/base/mpool_base_tree.h"
 #include "opal/mca/pmix/pmix-internal.h"
+#include "opal/util/clock_gettime.h"
 
 ompi_predefined_instance_t ompi_mpi_instance_null = {{{{0}}}};
 
@@ -73,6 +75,14 @@ __opal_attribute_constructor__ static void instance_lock_init(void) {
 
 /** MPI_Init instance */
 ompi_instance_t *ompi_mpi_instance_default = NULL;
+
+/**
+ * @brief: Base timer initialization. All timers returned to the user via MPI_Wtime
+ *         are relative to this timer. Setting it early in during the common
+ *         initialization (world or session model) allows for measuring the cost of
+ *         the MPI initialization.
+ */
+struct timespec ompi_wtime_time_origin = {.tv_sec = 0};
 
 enum {
     OMPI_INSTANCE_INITIALIZING = -1,
@@ -357,6 +367,10 @@ static int ompi_mpi_instance_init_common (int argc, char **argv)
     pmix_status_t rc;
     opal_pmix_lock_t mylock;
     OMPI_TIMING_INIT(64);
+
+    // We intentionally don't use the OPAL timer framework here.  See
+    // https://github.com/open-mpi/ompi/issues/3003 for more details.
+    (void) opal_clock_gettime(&ompi_wtime_time_origin);
 
     ret = ompi_mpi_instance_retain ();
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
