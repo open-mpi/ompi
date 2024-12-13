@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2020 The University of Tennessee and The University
+ * Copyright (c) 2004-2022 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -44,7 +44,12 @@ int MPI_Win_get_name(MPI_Win win, char *win_name, int *resultlen)
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
-        if (ompi_win_invalid(win)) {
+        /* Do not use ompi_comm_invalid, it prevent returning
+         * the name for the predefined MPI_COMM_NULL.
+         */
+        if (NULL == win ||
+            (OMPI_WIN_INVALID & win->w_flags) ||
+            (OMPI_WIN_FREED & win->w_flags)) {
             return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_WIN, FUNC_NAME);
         } else if (NULL == win_name || NULL == resultlen) {
             return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_ARG, FUNC_NAME);
