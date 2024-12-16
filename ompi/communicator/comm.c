@@ -24,7 +24,7 @@
  * Copyright (c) 2015      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2017-2022 IBM Corporation.  All rights reserved.
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
- * Copyright (c) 2018-2022 Triad National Security, LLC. All rights
+ * Copyright (c) 2018-2024 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2023      Advanced Micro Devices, Inc. All rights reserved.
  * $COPYRIGHT$
@@ -1741,7 +1741,7 @@ int ompi_intercomm_create_from_groups (ompi_group_t *local_group, int local_lead
                                        ompi_communicator_t **newintercomm)
 {
     ompi_communicator_t *newcomp = NULL, *local_comm, *leader_comm = MPI_COMM_NULL;
-    ompi_comm_extended_cid_block_t new_block;
+    ompi_comm_extended_cid_block_t new_block = {0};
     bool i_am_leader = local_leader == local_group->grp_my_rank;
     ompi_proc_t **rprocs;
     uint64_t data[4];
@@ -1787,22 +1787,22 @@ int ompi_intercomm_create_from_groups (ompi_group_t *local_group, int local_lead
                 leader_procs[1] = tmp;
             }
 
-            /* create a unique tag for allocating the leader communicator. we can eliminate this step
-             * if we take a CID from the newly allocated block belonging to local_comm. this is
-             * a note to make this change at a later time. */
-            opal_asprintf (&sub_tag, "%s-OMPIi-LC", tag);
-            if (OPAL_UNLIKELY(NULL == sub_tag)) {
-                ompi_comm_free (&local_comm);
-                free(leader_procs);
-                return OMPI_ERR_OUT_OF_RESOURCE;
-            }
-
             leader_group = ompi_group_allocate_plist_w_procs (NULL, leader_procs, 2);
             ompi_set_group_rank (leader_group, my_proc);
             if (OPAL_UNLIKELY(NULL == leader_group)) {
-                free (sub_tag);
                 free(leader_procs);
                 ompi_comm_free (&local_comm);
+                return OMPI_ERR_OUT_OF_RESOURCE;
+            }
+
+            /* create a unique tag for allocating the leader communicator. we can eliminate this step
+             * if we take a CID from the newly allocated block belonging to local_comm. this is
+             * a note to make this change at a later time. */
+            opal_asprintf (&sub_tag, "%s-OMPIi-LC-%s", tag, OPAL_NAME_PRINT(ompi_group_get_proc_name (leader_group, 0)));
+            if (OPAL_UNLIKELY(NULL == sub_tag)) {
+                free(leader_procs);
+                ompi_comm_free (&local_comm);
+                OBJ_RELEASE(leader_group);
                 return OMPI_ERR_OUT_OF_RESOURCE;
             }
 
@@ -1812,6 +1812,7 @@ int ompi_intercomm_create_from_groups (ompi_group_t *local_group, int local_lead
             rc = ompi_comm_create_from_group (leader_group, sub_tag, info, errhandler, &leader_comm);
             OBJ_RELEASE(leader_group);
             free (sub_tag);
+            sub_tag = NULL;
             if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
                 free(leader_procs);
                 ompi_comm_free (&local_comm);
@@ -1867,14 +1868,16 @@ int ompi_intercomm_create_from_groups (ompi_group_t *local_group, int local_lead
         return rc;
     }
 
-    /* will be using a communicator ID derived from the bridge communicator to save some time */
-    new_block.block_cid.cid_base = data[1];
-    new_block.block_cid.cid_sub.u64 = data[2];
-    new_block.block_nextsub = 0;
-    new_block.block_nexttag = 0;
-    new_block.block_level = (int8_t) data[3];
+    /*
+     * append the pmix CONTEXT_ID obtained when creating the leader comm as discriminator
+     */
+    opal_asprintf (&sub_tag, "%s-%ld", tag, data[1]);
+    if (OPAL_UNLIKELY(NULL == sub_tag)) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
 
-    rc = ompi_comm_nextcid (newcomp, NULL, NULL, (void *) tag, &new_block, false, OMPI_COMM_CID_GROUP_NEW);
+    rc = ompi_comm_nextcid (newcomp, NULL, NULL, (void *) sub_tag, NULL, false, OMPI_COMM_CID_GROUP_NEW);
+    free (sub_tag);
     if ( OMPI_SUCCESS != rc ) {
         OBJ_RELEASE(newcomp);
         return rc;
