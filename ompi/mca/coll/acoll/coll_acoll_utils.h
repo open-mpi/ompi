@@ -692,6 +692,14 @@ static inline int coll_acoll_init(mca_coll_base_module_t *module, ompi_communica
         ret = OMPI_ERR_OUT_OF_RESOURCE;
         goto error_hndl;
     }
+    data->xpmem_reg_tracker_ht = NULL;
+    data->xpmem_reg_tracker_ht = (opal_hash_table_t **) malloc(sizeof(opal_hash_table_t*) * size);
+    if (NULL == data->xpmem_reg_tracker_ht) {
+        line = __LINE__;
+        ret = OMPI_ERR_OUT_OF_RESOURCE;
+        goto error_hndl;
+    }
+
     seg_id = xpmem_make(0, XPMEM_MAXADDR_SIZE, XPMEM_PERMIT_MODE, (void *) 0666);
     if (-1 == seg_id) {
         line = __LINE__;
@@ -733,6 +741,8 @@ static inline int coll_acoll_init(mca_coll_base_module_t *module, ompi_communica
                 line = __LINE__;
                 goto error_hndl;
             }
+            data->xpmem_reg_tracker_ht[i] = OBJ_NEW(opal_hash_table_t);
+            opal_hash_table_init(data->xpmem_reg_tracker_ht[i], 2048);
         }
     }
 #endif
@@ -831,6 +841,8 @@ error_hndl:
         data->xpmem_saddr = NULL;
         free(data->xpmem_raddr);
         data->xpmem_raddr = NULL;
+        free(data->xpmem_reg_tracker_ht);
+        data->xpmem_reg_tracker_ht = NULL;
         free(data->rcache);
         data->rcache = NULL;
         free(data->scratch);
@@ -851,6 +863,25 @@ error_hndl:
 }
 
 #ifdef HAVE_XPMEM_H
+static inline void update_rcache_reg_hashtable_entry
+                            (struct acoll_xpmem_rcache_reg_t *reg,
+                             opal_hash_table_t* ht)
+{
+    // Converting pointer to uint64 to use as key.
+    uint64_t key = (uint64_t)reg;
+    // Converting uint64_t to pointer type to use for value.
+    uint64_t value = 1;
+    int ht_ret = opal_hash_table_get_value_uint64(ht, key, (void**)(&value));
+
+    if (OPAL_ERR_NOT_FOUND == ht_ret) {
+        value = 1;
+        opal_hash_table_set_value_uint64(ht, key, (void*)(value));
+    } else if (OPAL_SUCCESS == ht_ret) {
+        value += 1;
+        opal_hash_table_set_value_uint64(ht, key, (void*)(value));
+    }
+}
+
 static inline void register_and_cache(int size, size_t total_dsize, int rank,
                                       coll_acoll_data_t *data)
 {
@@ -870,6 +901,8 @@ static inline void register_and_cache(int size, size_t total_dsize, int rank,
                 sbuf_reg = NULL;
                 return;
             }
+            update_rcache_reg_hashtable_entry(sbuf_reg, data->xpmem_reg_tracker_ht[i]);
+
             data->xpmem_saddr[i] = (void *) ((uintptr_t) sbuf_reg->xpmem_vaddr
                                              + ((uintptr_t) data->allshm_sbuf[i]
                                                 - (uintptr_t) sbuf_reg->base.base));
@@ -884,6 +917,8 @@ static inline void register_and_cache(int size, size_t total_dsize, int rank,
                 rbuf_reg = NULL;
                 return;
             }
+            update_rcache_reg_hashtable_entry(rbuf_reg, data->xpmem_reg_tracker_ht[i]);
+
             data->xpmem_raddr[i] = (void *) ((uintptr_t) rbuf_reg->xpmem_vaddr
                                              + ((uintptr_t) data->allshm_rbuf[i]
                                                 - (uintptr_t) rbuf_reg->base.base));

@@ -22,6 +22,7 @@
 
 #ifdef HAVE_XPMEM_H
 #include "opal/mca/rcache/base/base.h"
+#include "opal/class/opal_hash_table.h"
 #include <xpmem.h>
 #endif
 
@@ -125,6 +126,7 @@ typedef struct coll_acoll_data {
     void **xpmem_raddr;
     mca_rcache_base_module_t **rcache;
     void *scratch;
+    opal_hash_table_t **xpmem_reg_tracker_ht;
 #endif
     opal_shmem_ds_t *allshmseg_id;
     void **allshmmmap_sbuf;

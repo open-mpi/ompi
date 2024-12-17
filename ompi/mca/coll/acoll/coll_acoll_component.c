@@ -243,8 +243,24 @@ static void mca_coll_acoll_module_destruct(mca_coll_acoll_module_t *module)
                     if (ompi_comm_rank(subc->orig_comm) == j) {
                         continue;
                     }
+                    // Dereg all rcache regs.
+                    uint64_t key = 0;
+                    uint64_t value = 0;
+                    uint64_t zero_value = 0;
+                    OPAL_HASH_TABLE_FOREACH(key,uint64,value,(data->xpmem_reg_tracker_ht[j])) {
+                        mca_rcache_base_registration_t* reg =
+                            (mca_rcache_base_registration_t*) key;
+
+                        for (uint64_t d_i = 0; d_i < value; ++d_i) {
+                            (data->rcache[j])->rcache_deregister(data->rcache[j], reg);
+                        }
+                        opal_hash_table_set_value_uint64(data->xpmem_reg_tracker_ht[j],
+                                 key, (void*)(zero_value));
+                    }
                     xpmem_release(data->all_apid[j]);
                     mca_rcache_base_module_destroy(data->rcache[j]);
+                    opal_hash_table_remove_all(data->xpmem_reg_tracker_ht[j]);
+                    OBJ_RELEASE(data->xpmem_reg_tracker_ht[j]);
                 }
                 xpmem_remove(data->allseg_id[ompi_comm_rank(subc->orig_comm)]);
 
@@ -262,6 +278,8 @@ static void mca_coll_acoll_module_destruct(mca_coll_acoll_module_t *module)
                 data->xpmem_raddr = NULL;
                 free(data->scratch);
                 data->scratch = NULL;
+                free(data->xpmem_reg_tracker_ht);
+                data->xpmem_reg_tracker_ht = NULL;
                 free(data->rcache);
                 data->rcache = NULL;
 #endif
