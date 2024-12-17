@@ -5,6 +5,7 @@
  *                         reserved.
  * Copyright (c) 2020      Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
+ * Copyright (c) 2024      Stony Brook University.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -12,6 +13,14 @@
  * $HEADER$
  */
 
+/* needed for strsep() */
+#define _DEFAULT_SOURCE
+#define _BSD_SOURCE
+
+/* needed for posix_memalign() and getopt() */
+#define _POSIX_C_SOURCE 200809L
+
+#include "ompi_config.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -50,19 +59,9 @@ static int do_ops[12] = {
 static int verbose = 0;
 static int total_errors = 0;
 
-#define max(a, b)               \
-    ({                          \
-        __typeof__(a) _a = (a); \
-        __typeof__(b) _b = (b); \
-        _a > _b ? _a : _b;      \
-    })
+#define max(a, b) (a) > (b) ? (a) : (b)
 
-#define min(a, b)               \
-    ({                          \
-        __typeof__(a) _a = (a); \
-        __typeof__(b) _b = (b); \
-        _a < _b ? _a : _b;      \
-    })
+#define min(a, b) (a) < (b) ? (a) : (b)
 
 static void print_status(char *op, char *type, int type_size, int count, int max_shift,
                          double *duration, int repeats, int correct)

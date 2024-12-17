@@ -1,0 +1,11 @@
+Open MPI v6.0.x series
+======================
+
+This file contains all the NEWS updates for the Open MPI v6.0.x
+series, in reverse chronological order.
+
+Open MPI version v6.0.0
+--------------------------
+:Date: ...fill me in...
+
+- Open MPI now requires a C11-compliant compiler to build.

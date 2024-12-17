@@ -8,6 +8,7 @@ since v1.0.0.
 .. toctree::
    :maxdepth: 1
 
+   v6.0.x
    v5.0.x
    v4.1.x
    v4.0.x
