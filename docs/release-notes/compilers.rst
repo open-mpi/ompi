@@ -3,7 +3,7 @@
 Compiler Notes
 ==============
 
-* Open MPI requires a C99-capable compiler to build.
+* Open MPI requires a C11-capable compiler to build.
 
 * On platforms other than x86-64, AArc64 (64-bit ARM), and PPC, Open
   MPI requires a compiler that either supports C11 atomics or the GCC
