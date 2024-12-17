@@ -132,11 +132,15 @@ mca_coll_base_module_t *mca_coll_acoll_comm_query(struct ompi_communicator_t *co
         break;
     }
 
+    acoll_module->force_numa = mca_coll_acoll_force_numa;
     acoll_module->use_dyn_rules = mca_coll_acoll_use_dynamic_rules;
     acoll_module->use_mnode = mca_coll_acoll_mnode_enable;
+    /* Value of 0 is currently unsupported for mnode_enable */
+    acoll_module->use_mnode = 1;
     acoll_module->use_lin0 = mca_coll_acoll_bcast_lin0;
     acoll_module->use_lin1 = mca_coll_acoll_bcast_lin1;
     acoll_module->use_lin2 = mca_coll_acoll_bcast_lin2;
+    acoll_module->use_socket = mca_coll_acoll_bcast_socket;
     if (mca_coll_acoll_bcast_nonsg) {
         acoll_module->mnode_sg_size = acoll_module->node_cnt;
         acoll_module->mnode_log2_sg_size = acoll_module->log2_node_cnt;
@@ -181,6 +185,11 @@ static int acoll_module_enable(mca_coll_base_module_t *module, struct ompi_commu
    ACOLL_INSTALL_COLL_API(comm, acoll_module, bcast);
    ACOLL_INSTALL_COLL_API(comm, acoll_module, gather);
    ACOLL_INSTALL_COLL_API(comm, acoll_module, reduce);
+
+   /* Initialize k-nomial tree */
+    module->base_data->cached_kmtree = NULL;
+    module->base_data->cached_kmtree_root = -1;
+    module->base_data->cached_kmtree_radix = 4;
 
     /* All done */
     return OMPI_SUCCESS;

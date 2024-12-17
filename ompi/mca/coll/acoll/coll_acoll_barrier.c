@@ -141,7 +141,7 @@ int mca_coll_acoll_barrier_intra(struct ompi_communicator_t *comm, mca_coll_base
     }
 
     size = ompi_comm_size(comm);
-    if (size == 1) {
+    if (1 == size) {
         return err;
     }
     if (!subc->initialized && size > 1) {

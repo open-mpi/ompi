@@ -64,14 +64,14 @@ static inline int coll_acoll_reduce_topo(const void *sbuf, void *rbuf, size_t co
     rank = ompi_comm_rank(comm);
 
     tmp_sbuf = (char *) sbuf;
-    if ((sbuf == MPI_IN_PLACE) && (rank == root)) {
+    if ((MPI_IN_PLACE == sbuf) && (rank == root)) {
         tmp_sbuf = (char *) rbuf;
     }
 
     int i;
     int ind1 = MCA_COLL_ACOLL_L3CACHE;
     int ind2 = MCA_COLL_ACOLL_LYR_NODE;
-    int is_base = rank == subc->base_rank[ind1] ? 1 : 0;
+    int is_base = rank == subc->base_rank[ind1][ind2] ? 1 : 0;
     int bound = subc->subgrp_size;
 
     sz = ompi_comm_size(subc->base_comm[ind1][ind2]);
@@ -166,7 +166,7 @@ static inline int mca_coll_acoll_reduce_xpmem(const void *sbuf, void *rbuf, size
 
     mca_coll_acoll_module_t *acoll_module = (mca_coll_acoll_module_t *) module;
 
-    coll_acoll_init(module, comm, subc->data, subc);
+    coll_acoll_init(module, comm, subc->data, subc, 0);
     coll_acoll_reserve_mem_t *reserve_mem_rbuf_reduce = NULL;
     if (subc->xpmem_use_sr_buf != 0) {
         reserve_mem_rbuf_reduce = &(acoll_module->reserve_mem_s);
@@ -192,17 +192,17 @@ static inline int mca_coll_acoll_reduce_xpmem(const void *sbuf, void *rbuf, size
     char *tmp_sbuf = NULL;
     char *tmp_rbuf = NULL;
 
-    if (subc->xpmem_use_sr_buf == 0) {
+    if (0 == subc->xpmem_use_sr_buf) {
         tmp_rbuf = (char *) data->scratch;
         tmp_sbuf = (char *) data->scratch + (subc->xpmem_buf_size) / 2;
-        if ((sbuf == MPI_IN_PLACE) && (rank == root)) {
+        if ((MPI_IN_PLACE == sbuf) && (rank == root)) {
             memcpy(tmp_sbuf, rbuf, total_dsize);
         } else {
             memcpy(tmp_sbuf, sbuf, total_dsize);
         }
     } else {
         tmp_sbuf = (char *) sbuf;
-        if ((sbuf == MPI_IN_PLACE) && (rank == root)) {
+        if ((MPI_IN_PLACE == sbuf) && (rank == root)) {
             tmp_sbuf = (char *) rbuf;
         }
 
@@ -270,7 +270,7 @@ static inline int mca_coll_acoll_reduce_xpmem(const void *sbuf, void *rbuf, size
         chunk = count / local_size;
         my_count_size = (l2_local_rank == (local_size - 1)) ? chunk + (count % local_size) : chunk;
 
-        if (l2_local_rank == 0) {
+        if (0 == l2_local_rank) {
             for (int i = 1; i < local_size; i++) {
                 ompi_op_reduce(op, (char *) data->xpmem_raddr[l2_gp[i]], (char *) tmp_rbuf,
                                my_count_size, dtype);
@@ -291,7 +291,7 @@ static inline int mca_coll_acoll_reduce_xpmem(const void *sbuf, void *rbuf, size
         }
     }
     ompi_coll_base_barrier_intra_tree(comm, module);
-    if (subc->xpmem_use_sr_buf == 0) {
+    if (0 == subc->xpmem_use_sr_buf) {
         if (rank == root) {
             memcpy(rbuf, tmp_rbuf, total_dsize);
         }
@@ -353,15 +353,15 @@ int mca_coll_acoll_reduce_intra(const void *sbuf, void *rbuf, size_t count,
 
     num_nodes = subc->num_nodes;
 
-    if (num_nodes == 1) {
+    if (1 == num_nodes) {
         if (total_dsize < 262144) {
-            if (alg == -1 /* interaction with xpmem implementation causing issues 0*/) {
+            if (-1 == alg /* interaction with xpmem implementation causing issues 0*/) {
                 return coll_acoll_reduce_topo(sbuf, rbuf, count, dtype, op, root, comm, module,
                                               subc);
-            } else if (alg == 1) {
+            } else if (1 == alg) {
                 return ompi_coll_base_reduce_intra_basic_linear(sbuf, rbuf, count, dtype, op, root,
                                                                 comm, module);
-            } else if (alg == 2) {
+            } else if (2 == alg) {
                 return ompi_coll_base_reduce_intra_binomial(sbuf, rbuf, count, dtype, op, root,
                                                             comm, module, 0, 0);
             } else { /*(alg == 3)*/
@@ -373,7 +373,7 @@ int mca_coll_acoll_reduce_intra(const void *sbuf, void *rbuf, size_t count,
             if ((((subc->xpmem_use_sr_buf != 0)
                   && (acoll_module->reserve_mem_s).reserve_mem_allocate
                   && ((acoll_module->reserve_mem_s).reserve_mem_size >= total_dsize))
-                 || ((subc->xpmem_use_sr_buf == 0) && (subc->xpmem_buf_size > 2 * total_dsize)))
+                 || ((0 == subc->xpmem_use_sr_buf) && (subc->xpmem_buf_size > 2 * total_dsize)))
                 && (subc->without_xpmem != 1)) {
                 return mca_coll_acoll_reduce_xpmem(sbuf, rbuf, count, dtype, op, root, comm,
                                                    module, subc);
