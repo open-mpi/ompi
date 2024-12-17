@@ -3,6 +3,7 @@
  * Copyright (c) 2011 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2024 NVIDIA CORPORATION. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -107,8 +108,8 @@ static int reg_int(const char* param_name,
     index = mca_base_component_var_register(
             &mca_coll_hcoll_component.super.collm_version,
             param_name, param_desc, MCA_BASE_VAR_TYPE_INT,
-            NULL, 0, 0,OPAL_INFO_LVL_9,
-            MCA_BASE_VAR_SCOPE_READONLY, storage);
+            NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,OPAL_INFO_LVL_9,
+            MCA_BASE_VAR_SCOPE_ALL, storage);
     if (NULL != deprecated_param_name) {
         (void) mca_base_var_register_synonym(index,
                 "ompi", "coll", "hcoll", deprecated_param_name,

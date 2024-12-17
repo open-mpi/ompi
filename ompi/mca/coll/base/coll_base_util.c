@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2014-2020 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
+ * Copyright (c) 2024      NVIDIA CORPORATION. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -434,6 +435,26 @@ int ompi_coll_base_file_peek_next_char_is(FILE *fptr, int *fileline, int expecte
         if( 0 != fseek(fptr, -1, SEEK_CUR) )
             return -1;
         return 0;
+    } while (1);
+}
+
+/**
+ * return non-zero if the next non-space to read on the current line is a digit.
+ * otherwise return 0.
+ */
+int ompi_coll_base_file_peek_next_char_isdigit(FILE *fptr)
+{
+    do {
+        int next = fgetc(fptr);
+
+        if ((' ' == next) || ('\t' == next)) {
+            continue; /* discard space and tab. keep everything else */
+        }
+
+        ungetc(next, fptr); /* put the char back into the stream */
+
+        return isdigit(next); /* report back whether or not next is a digit */
+
     } while (1);
 }
 

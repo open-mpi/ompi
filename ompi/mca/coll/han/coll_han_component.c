@@ -3,6 +3,7 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2020      Bull S.A.S. All rights reserved.
+ * Copyright (c) 2024      NVIDIA CORPORATION. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -148,6 +149,7 @@ const char* mca_coll_han_topo_lvl_to_str(TOPO_LVL_T topo_lvl)
 }
 
 
+
 /*
  * Register MCA params
  */
@@ -165,122 +167,122 @@ static int han_register(void)
 
     cs->han_priority = 0;
     (void) mca_base_component_var_register(c, "priority", "Priority of the HAN coll component",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                            OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY, &cs->han_priority);
+                                           MCA_BASE_VAR_SCOPE_ALL, &cs->han_priority);
 
     cs->han_bcast_segsize = 65536;
     (void) mca_base_component_var_register(c, "bcast_segsize",
                                            "segment size for bcast",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                            OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY, &cs->han_bcast_segsize);
+                                           MCA_BASE_VAR_SCOPE_ALL, &cs->han_bcast_segsize);
 
     cs->han_bcast_up_module = 0;
     (void) mca_base_component_var_register(c, "bcast_up_module",
                                            "up level module for bcast, 0 libnbc, 1 adapt",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                            OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY, &cs->han_bcast_up_module);
+                                           MCA_BASE_VAR_SCOPE_ALL, &cs->han_bcast_up_module);
 
     cs->han_bcast_low_module = 0;
     (void) mca_base_component_var_register(c, "bcast_low_module",
                                            "low level module for bcast, 0 tuned, 1 sm",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                            OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY, &cs->han_bcast_low_module);
+                                           MCA_BASE_VAR_SCOPE_ALL, &cs->han_bcast_low_module);
 
     cs->han_reduce_segsize = 65536;
     (void) mca_base_component_var_register(c, "reduce_segsize",
                                            "segment size for reduce",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                            OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY, &cs->han_reduce_segsize);
+                                           MCA_BASE_VAR_SCOPE_ALL, &cs->han_reduce_segsize);
 
     cs->han_reduce_up_module = 0;
     (void) mca_base_component_var_register(c, "reduce_up_module",
                                            "up level module for allreduce, 0 libnbc, 1 adapt",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                            OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY, &cs->han_reduce_up_module);
+                                           MCA_BASE_VAR_SCOPE_ALL, &cs->han_reduce_up_module);
 
     cs->han_reduce_low_module = 0;
     (void) mca_base_component_var_register(c, "reduce_low_module",
                                            "low level module for allreduce, 0 tuned, 1 sm",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                            OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY, &cs->han_reduce_low_module);
+                                           MCA_BASE_VAR_SCOPE_ALL, &cs->han_reduce_low_module);
     cs->han_allreduce_segsize = 65536;
     (void) mca_base_component_var_register(c, "allreduce_segsize",
                                            "segment size for allreduce",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                            OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY, &cs->han_allreduce_segsize);
+                                           MCA_BASE_VAR_SCOPE_ALL, &cs->han_allreduce_segsize);
 
     cs->han_allreduce_up_module = 0;
     (void) mca_base_component_var_register(c, "allreduce_up_module",
                                            "up level module for allreduce, 0 libnbc, 1 adapt",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                            OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY, &cs->han_allreduce_up_module);
+                                           MCA_BASE_VAR_SCOPE_ALL, &cs->han_allreduce_up_module);
 
     cs->han_allreduce_low_module = 0;
     (void) mca_base_component_var_register(c, "allreduce_low_module",
                                            "low level module for allreduce, 0 tuned, 1 sm",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                            OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY, &cs->han_allreduce_low_module);
+                                           MCA_BASE_VAR_SCOPE_ALL, &cs->han_allreduce_low_module);
 
     cs->han_allgather_up_module = 0;
     (void) mca_base_component_var_register(c, "allgather_up_module",
                                            "up level module for allgather, 0 libnbc, 1 adapt",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                            OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY, &cs->han_allgather_up_module);
+                                           MCA_BASE_VAR_SCOPE_ALL, &cs->han_allgather_up_module);
 
     cs->han_allgather_low_module = 0;
     (void) mca_base_component_var_register(c, "allgather_low_module",
                                            "low level module for allgather, 0 tuned, 1 sm",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                            OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY, &cs->han_allgather_low_module);
+                                           MCA_BASE_VAR_SCOPE_ALL, &cs->han_allgather_low_module);
 
     cs->han_gather_up_module = 0;
     (void) mca_base_component_var_register(c, "gather_up_module",
                                            "up level module for gather, 0 libnbc, 1 adapt",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                            OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY, &cs->han_gather_up_module);
+                                           MCA_BASE_VAR_SCOPE_ALL, &cs->han_gather_up_module);
 
     cs->han_gather_low_module = 0;
     (void) mca_base_component_var_register(c, "gather_low_module",
                                            "low level module for gather, 0 tuned, 1 sm",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                            OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY, &cs->han_gather_low_module);
+                                           MCA_BASE_VAR_SCOPE_ALL, &cs->han_gather_low_module);
 
     cs->han_scatter_up_module = 0;
     (void) mca_base_component_var_register(c, "scatter_up_module",
                                            "up level module for scatter, 0 libnbc, 1 adapt",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                            OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY, &cs->han_scatter_up_module);
+                                           MCA_BASE_VAR_SCOPE_ALL, &cs->han_scatter_up_module);
 
     cs->han_scatter_low_module = 0;
     (void) mca_base_component_var_register(c, "scatter_low_module",
                                            "low level module for scatter, 0 tuned, 1 sm",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                            OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY, &cs->han_scatter_low_module);
+                                           MCA_BASE_VAR_SCOPE_ALL, &cs->han_scatter_low_module);
 
     cs->han_reproducible = 0;
     (void) mca_base_component_var_register(c, "reproducible",
                                            "whether we need reproducible results "
                                            "(enabling this disables optimisations using topology)"
                                            "0 disable 1 enable, default 0",
-                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                            OPAL_INFO_LVL_3,
-                                           MCA_BASE_VAR_SCOPE_READONLY, &cs->han_reproducible);
+                                           MCA_BASE_VAR_SCOPE_ALL, &cs->han_reproducible);
 
     /*
      * Simple algorithms MCA parameters :
@@ -297,9 +299,9 @@ static int han_register(void)
                      mca_coll_base_colltype_to_str(coll));
             mca_base_component_var_register(c, param_name,
                                             param_desc,
-                                            MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                            MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                             OPAL_INFO_LVL_5,
-                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            MCA_BASE_VAR_SCOPE_ALL,
                                             &(cs->use_simple_algorithm[coll]));
         }
     }
@@ -354,9 +356,9 @@ static int han_register(void)
             }
 
             mca_base_component_var_register(c, param_name, param_desc,
-                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                             OPAL_INFO_LVL_9,
-                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            MCA_BASE_VAR_SCOPE_ALL,
                                             &(cs->mca_rules[coll][topo_lvl]));
         }
     }
@@ -366,27 +368,27 @@ static int han_register(void)
     (void) mca_base_component_var_register(&mca_coll_han_component.super.collm_version,
                                            "use_dynamic_file_rules",
                                            "Enable the dynamic selection provided via the dynamic_rules_filename MCA",
-                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                            OPAL_INFO_LVL_6,
-                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           MCA_BASE_VAR_SCOPE_ALL,
                                            &(cs->use_dynamic_file_rules));
 
     cs->dynamic_rules_filename = NULL;
     (void) mca_base_component_var_register(&mca_coll_han_component.super.collm_version,
                                            "dynamic_rules_filename",
                                            "Configuration file containing the dynamic selection rules",
-                                           MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_STRING, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                            OPAL_INFO_LVL_6,
-                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           MCA_BASE_VAR_SCOPE_ALL,
                                            &(cs->dynamic_rules_filename));
 
     cs->dump_dynamic_rules = false;
     (void) mca_base_component_var_register(&mca_coll_han_component.super.collm_version,
                                            "dump_dynamic_rules",
                                            "Switch used to decide if we dump  dynamic rules provided by configuration file",
-                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                            OPAL_INFO_LVL_6,
-                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           MCA_BASE_VAR_SCOPE_ALL,
                                            &(cs->dump_dynamic_rules));
 
     if((cs->dump_dynamic_rules || NULL != cs->dynamic_rules_filename)
@@ -403,9 +405,9 @@ static int han_register(void)
                                            "errors printed on rank 0 "
                                            "with a 0 verbosity."
                                            "Useless if coll_base_verbose is 30 or more.",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                            OPAL_INFO_LVL_6,
-                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           MCA_BASE_VAR_SCOPE_ALL,
                                            &(cs->max_dynamic_errors));
 
 
