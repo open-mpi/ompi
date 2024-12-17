@@ -23,6 +23,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 
 #define TEST_AND_REPORT(res, exp_res, str) \
     if (res == exp_res)                    \

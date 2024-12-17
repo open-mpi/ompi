@@ -317,7 +317,7 @@ static int ompi_comm_ext_cid_new_block (ompi_communicator_t *newcomm, ompi_commu
     char *tag = NULL;
     size_t proc_count = 0, rproc_count = 0, tproc_count = 0, cid_base = 0UL, ninfo;
     int rc, leader_rank;
-    pmix_proc_t *procs;
+    pmix_proc_t *procs = NULL;
     void *grpinfo = NULL, *list = NULL;
     pmix_data_array_t darray;
 

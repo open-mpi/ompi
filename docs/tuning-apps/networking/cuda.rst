@@ -53,9 +53,12 @@ be found, please also pass ``--with-cuda-libdir``. For example:
 ``--with-cuda=<path-to-cuda> --with-cuda-libdir=/usr/local/cuda/lib64/stubs``.
 
 Open MPI supports building with CUDA libraries and running on systems
-without CUDA libraries or hardware. In order to take advantage of
-this functionality, when compiling, you have to specify the CUDA
-dependent components to be built as DSOs using the
+without CUDA libraries or hardware.
+
+For releases v5.0.2 and newer no special steps are required to get this behavior.
+
+In order to realize this behavior for the v5.0.0 and v5.0.1 releases,
+when configuring Open MPI, you have to specify the CUDA dependent components to be built as DSOs using the
 ``--enable-mca-dso=<comma-delimited-list-of-cuda-components.``
 configure option.
 

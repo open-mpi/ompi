@@ -27,11 +27,10 @@ that a release of Open MPI supports.
 * Systems that have been tested are:
 
   * Linux (various flavors/distros), 64 bit (x86, ppc, aarch64),
-    with gcc (>=4.8.x+), clang (>=3.6.0), Absoft (fortran), Intel,
+    with gcc/gfortran (>=7.x+), clang (>=10.x), Intel,
     and Portland (be sure to also see :ref:`the Compiler Notes
     section <compiler-notes-section-label>`)
-  * macOS (10.14-10.15, 11.x, 12.x), 64 bit (x86_64) with XCode
-    compilers
+  * macOS (14.x, 15.x), 64 bit (x86_64) with XCode compilers
 
 * Other systems have been lightly (but not fully) tested:
 
