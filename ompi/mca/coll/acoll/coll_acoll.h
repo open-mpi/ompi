@@ -37,12 +37,14 @@ extern int mca_coll_acoll_max_comms;
 extern int mca_coll_acoll_sg_size;
 extern int mca_coll_acoll_sg_scale;
 extern int mca_coll_acoll_node_size;
+extern int mca_coll_acoll_force_numa;
 extern int mca_coll_acoll_use_dynamic_rules;
 extern int mca_coll_acoll_mnode_enable;
 extern int mca_coll_acoll_bcast_lin0;
 extern int mca_coll_acoll_bcast_lin1;
 extern int mca_coll_acoll_bcast_lin2;
 extern int mca_coll_acoll_bcast_nonsg;
+extern int mca_coll_acoll_bcast_socket;
 extern int mca_coll_acoll_allgather_lin;
 extern int mca_coll_acoll_allgather_ring_1;
 
@@ -160,7 +162,7 @@ typedef struct coll_acoll_subcomms {
     int numa_root;
     int socket_ldr_root;
     int base_root[MCA_COLL_ACOLL_NUM_BASE_LYRS][MCA_COLL_ACOLL_NUM_LAYERS];
-    int base_rank[MCA_COLL_ACOLL_NUM_BASE_LYRS];
+    int base_rank[MCA_COLL_ACOLL_NUM_BASE_LYRS][MCA_COLL_ACOLL_NUM_LAYERS];
     int socket_rank;
     int subgrp_size;
     int initialized;
@@ -198,12 +200,14 @@ struct mca_coll_acoll_module_t {
     int log2_sg_cnt;
     int node_cnt;
     int log2_node_cnt;
+    int force_numa;
     int use_dyn_rules;
     // Todo: Use substructure for every API related ones
     int use_mnode;
     int use_lin0;
     int use_lin1;
     int use_lin2;
+    int use_socket;
     int mnode_sg_size;
     int mnode_log2_sg_size;
     int allg_lin;

@@ -59,7 +59,7 @@ static inline int mca_coll_acoll_reduce_xpmem_h(const void *sbuf, void *rbuf, si
     int size;
     size_t total_dsize, dsize;
 
-    coll_acoll_init(module, comm, subc->data, subc);
+    coll_acoll_init(module, comm, subc->data, subc, 0);
     coll_acoll_data_t *data = subc->data;
     if (NULL == data) {
         return -1;
@@ -82,7 +82,7 @@ static inline int mca_coll_acoll_reduce_xpmem_h(const void *sbuf, void *rbuf, si
     if (!subc->xpmem_use_sr_buf) {
         tmp_rbuf = (char *) data->scratch;
         tmp_sbuf = (char *) data->scratch + (subc->xpmem_buf_size) / 2;
-        if ((sbuf == MPI_IN_PLACE)) {
+        if ((MPI_IN_PLACE == sbuf)) {
             memcpy(tmp_sbuf, rbuf, total_dsize);
         } else {
             memcpy(tmp_sbuf, sbuf, total_dsize);
@@ -90,7 +90,7 @@ static inline int mca_coll_acoll_reduce_xpmem_h(const void *sbuf, void *rbuf, si
     } else {
         tmp_sbuf = (char *) sbuf;
         tmp_rbuf = (char *) rbuf;
-        if (sbuf == MPI_IN_PLACE) {
+        if (MPI_IN_PLACE == sbuf) {
             tmp_sbuf = (char *) rbuf;
         }
     }
@@ -153,7 +153,7 @@ static inline int mca_coll_acoll_reduce_xpmem_h(const void *sbuf, void *rbuf, si
 
         my_count_size = (l2_local_rank == (local_size - 1)) ? chunk + (count % local_size) : chunk;
 
-        if (l2_local_rank == 0) {
+        if (0 == l2_local_rank) {
             for (int i = 1; i < local_size; i++) {
                 ompi_op_reduce(op, (char *) data->xpmem_raddr[l2_gp[i]], (char *) tmp_rbuf,
                                my_count_size, dtype);
@@ -192,7 +192,7 @@ static inline int mca_coll_acoll_allreduce_xpmem_f(const void *sbuf, void *rbuf,
     int size;
     size_t total_dsize, dsize;
 
-    coll_acoll_init(module, comm, subc->data, subc);
+    coll_acoll_init(module, comm, subc->data, subc, 0);
     coll_acoll_data_t *data = subc->data;
     if (NULL == data) {
         return -1;
@@ -207,7 +207,7 @@ static inline int mca_coll_acoll_allreduce_xpmem_f(const void *sbuf, void *rbuf,
     if (!subc->xpmem_use_sr_buf) {
         tmp_rbuf = (char *) data->scratch;
         tmp_sbuf = (char *) data->scratch + (subc->xpmem_buf_size) / 2;
-        if ((sbuf == MPI_IN_PLACE)) {
+        if ((MPI_IN_PLACE == sbuf)) {
             memcpy(tmp_sbuf, rbuf, total_dsize);
         } else {
             memcpy(tmp_sbuf, sbuf, total_dsize);
@@ -215,7 +215,7 @@ static inline int mca_coll_acoll_allreduce_xpmem_f(const void *sbuf, void *rbuf,
     } else {
         tmp_sbuf = (char *) sbuf;
         tmp_rbuf = (char *) rbuf;
-        if (sbuf == MPI_IN_PLACE) {
+        if (MPI_IN_PLACE == sbuf) {
             tmp_sbuf = (char *) rbuf;
         }
     }
@@ -242,7 +242,7 @@ static inline int mca_coll_acoll_allreduce_xpmem_f(const void *sbuf, void *rbuf,
 
     size_t chunk = count / size;
     size_t my_count_size = (rank == (size - 1)) ? (count / size) + count % size : count / size;
-    if (rank == 0) {
+    if (0 == rank) {
         if (sbuf != MPI_IN_PLACE)
             memcpy(tmp_rbuf, sbuf, my_count_size * dsize);
     } else {
@@ -299,7 +299,7 @@ void mca_coll_acoll_sync(coll_acoll_data_t *data, int offset, int *group, int gp
     opal_atomic_wmb();
 
     int val;
-    if (up == 1) {
+    if (1 == up) {
         val = data->sync[0];
     } else {
         val = data->sync[1];
@@ -346,7 +346,7 @@ void mca_coll_acoll_sync(coll_acoll_data_t *data, int offset, int *group, int gp
                                    __ATOMIC_RELAXED);
         }
     }
-    if (up == 1) {
+    if (1 == up) {
         data->sync[0] = val;
     } else {
         data->sync[1] = val;
@@ -361,8 +361,7 @@ int mca_coll_acoll_allreduce_small_msgs_h(const void *sbuf, void *rbuf, size_t c
 {
     size_t dsize;
     int err = MPI_SUCCESS;
-
-    coll_acoll_init(module, comm, subc->data, subc);
+    coll_acoll_init(module, comm, subc->data, subc, 0);
     coll_acoll_data_t *data = subc->data;
     if (NULL == data) {
         return -1;
@@ -434,7 +433,7 @@ int mca_coll_acoll_allreduce_small_msgs_h(const void *sbuf, void *rbuf, size_t c
     }
 
     if (intra && (ompi_comm_size(subc->numa_comm) > 1)) {
-        err = mca_coll_acoll_bcast(rbuf, count, dtype, 0, subc->numa_comm, module);
+        err = ompi_coll_base_bcast_intra_basic_linear(rbuf, count, dtype, 0, subc->numa_comm, module);
     }
     return err;
 }
@@ -451,7 +450,7 @@ int mca_coll_acoll_allreduce_intra(const void *sbuf, void *rbuf, size_t count,
     ompi_datatype_type_size(dtype, &dsize);
     total_dsize = dsize * count;
 
-    if (size == 1) {
+    if (1 == size) {
         if (MPI_IN_PLACE != sbuf) {
             memcpy((char *) rbuf, sbuf, total_dsize);
         }
@@ -483,7 +482,7 @@ int mca_coll_acoll_allreduce_intra(const void *sbuf, void *rbuf, size_t count,
 
     alg = coll_allreduce_decision_fixed(size, total_dsize);
 
-    if (num_nodes == 1) {
+    if (1 == num_nodes) {
         if (total_dsize < 32) {
             return ompi_coll_base_allreduce_intra_recursivedoubling(sbuf, rbuf, count, dtype, op,
                                                                     comm, module);
@@ -494,10 +493,10 @@ int mca_coll_acoll_allreduce_intra(const void *sbuf, void *rbuf, size_t count,
             return ompi_coll_base_allreduce_intra_recursivedoubling(sbuf, rbuf, count, dtype, op,
                                                                     comm, module);
         } else if (total_dsize < 65536) {
-            if (alg == 1) {
+            if (1 == alg) {
                 return ompi_coll_base_allreduce_intra_recursivedoubling(sbuf, rbuf, count, dtype,
                                                                         op, comm, module);
-            } else if (alg == 2) {
+            } else if (2 == alg) {
                 return ompi_coll_base_allreduce_intra_redscat_allgather(sbuf, rbuf, count, dtype,
                                                                         op, comm, module);
             } else { /*alg == 3 */

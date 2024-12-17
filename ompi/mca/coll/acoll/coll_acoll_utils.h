@@ -230,7 +230,7 @@ static inline int comm_grp_ranks_local(ompi_communicator_t *comm, ompi_communica
 }
 
 static inline int mca_coll_acoll_create_base_comm(ompi_communicator_t **parent_comm,
-                                                  coll_acoll_subcomms_t *subc, int color, int rank,
+                                                  coll_acoll_subcomms_t *subc, int color, int *rank,
                                                   int *root, int base_lyr)
 {
     int i;
@@ -240,7 +240,7 @@ static inline int mca_coll_acoll_create_base_comm(ompi_communicator_t **parent_c
         int is_root_node = 0;
 
         /* Create base comm */
-        err = ompi_comm_split(parent_comm[i], color, rank, &subc->base_comm[base_lyr][i], false);
+        err = ompi_comm_split(parent_comm[i], color, rank[i], &subc->base_comm[base_lyr][i], false);
         if (MPI_SUCCESS != err)
             return err;
 
@@ -340,6 +340,7 @@ static inline int mca_coll_acoll_comm_split_init(ompi_communicator_t *comm,
         subc->numa_root = 0;
         subc->is_root_socket = 0;
         subc->socket_ldr_root = -1;
+        subc->is_root_node = 0;
 
         if (subc->initialized) {
             if (subc->num_nodes > 1) {
@@ -377,13 +378,14 @@ static inline int mca_coll_acoll_comm_split_init(ompi_communicator_t *comm,
     }
 
     /* Further subcommunicators based on root */
-    if (subc->num_nodes > 1) {
+    int *subgrp_ranks = NULL, *numa_ranks = NULL, *socket_ranks = NULL;
+    ompi_communicator_t *parent_comm[MCA_COLL_ACOLL_NUM_LAYERS];
+    int parent_rank[MCA_COLL_ACOLL_NUM_LAYERS];
+    if (subc->num_nodes > 1) { /* Multinode case */
         int local_rank = ompi_comm_rank(subc->local_comm);
         int color = MPI_UNDEFINED;
         int is_root_node = 0, is_root_socket = 0;
         int local_root = 0;
-        int *subgrp_ranks = NULL, *numa_ranks = NULL, *socket_ranks = NULL;
-        ompi_communicator_t *parent_comm[MCA_COLL_ACOLL_NUM_LAYERS];
 
         /* Initializations */
         subc->local_root[MCA_COLL_ACOLL_LYR_NODE] = 0;
@@ -395,7 +397,7 @@ static inline int mca_coll_acoll_comm_split_init(ompi_communicator_t *comm,
 
         /* Create subcommunicator with leader ranks */
         color = 1;
-        if (!subc->is_root_node && (local_rank == 0)) {
+        if (!subc->is_root_node && (0 == local_rank)) {
             color = 0;
         }
         if (rank == root) {
@@ -419,56 +421,59 @@ static inline int mca_coll_acoll_comm_split_init(ompi_communicator_t *comm,
                                    local_root);
 
         /* Create subcommunicator with socket leaders */
-        subc->socket_rank = subc->is_root_socket == 1 ? local_root : socket_ranks[0];
+        subc->socket_rank = 1 == subc->is_root_socket ? local_root : socket_ranks[0];
         color = local_rank == subc->socket_rank ? 0 : 1;
-        err = ompi_comm_split(subc->local_comm, color, local_rank, &subc->socket_ldr_comm, false);
+        err = ompi_comm_split(comm, color, rank, &subc->socket_ldr_comm, false);
         if (MPI_SUCCESS != err)
             return err;
 
         /* Find out local rank of root in socket leader comm */
-        err = comm_grp_ranks_local(subc->local_comm, subc->socket_ldr_comm, &is_root_socket,
-                                   &subc->socket_ldr_root, NULL, local_root);
+        err = comm_grp_ranks_local(comm, subc->socket_ldr_comm, &is_root_socket,
+                                   &subc->socket_ldr_root, NULL, root);
 
         /* Find out local rank of root in subgroup comm */
         err = comm_grp_ranks_local(subc->local_comm, subc->subgrp_comm, &subc->is_root_sg,
                                    &subc->subgrp_root, &subgrp_ranks, local_root);
 
+        subc->base_rank[MCA_COLL_ACOLL_L3CACHE][MCA_COLL_ACOLL_LYR_NODE] =
+                1 == subc->is_root_sg ? local_root : subgrp_ranks[0];
+        /* Find out socket rank of root in subgroup comm */
+        int tmp_root;
+        err = comm_grp_ranks_local(subc->socket_comm, subc->subgrp_comm, &subc->is_root_sg,
+                                   &tmp_root, &subgrp_ranks,
+                                   subc->local_root[MCA_COLL_ACOLL_LYR_SOCKET]);
+        subc->base_rank[MCA_COLL_ACOLL_L3CACHE][MCA_COLL_ACOLL_LYR_SOCKET] =
+            1 == subc->is_root_sg ? subc->local_root[MCA_COLL_ACOLL_LYR_SOCKET] : subgrp_ranks[0];
+
         /* Create subcommunicator with base ranks */
-        subc->base_rank[MCA_COLL_ACOLL_L3CACHE] = subc->is_root_sg == 1 ? local_root
-                                                                        : subgrp_ranks[0];
-        color = local_rank == subc->base_rank[MCA_COLL_ACOLL_L3CACHE] ? 0 : 1;
+        color = local_rank == subc->base_rank[MCA_COLL_ACOLL_L3CACHE][MCA_COLL_ACOLL_LYR_NODE] ? 0 : 1;
         parent_comm[MCA_COLL_ACOLL_LYR_NODE] = subc->local_comm;
         parent_comm[MCA_COLL_ACOLL_LYR_SOCKET] = subc->socket_comm;
-        err = mca_coll_acoll_create_base_comm(parent_comm, subc, color, local_rank,
+        parent_rank[MCA_COLL_ACOLL_LYR_NODE] = local_rank;
+        parent_rank[MCA_COLL_ACOLL_LYR_SOCKET] = ompi_comm_rank(subc->socket_comm);
+        err = mca_coll_acoll_create_base_comm(parent_comm, subc, color, parent_rank,
                                               subc->local_root, MCA_COLL_ACOLL_L3CACHE);
 
         /* Find out local rank of root in numa comm */
         err = comm_grp_ranks_local(subc->local_comm, subc->numa_comm, &subc->is_root_numa,
                                    &subc->numa_root, &numa_ranks, local_root);
 
-        subc->base_rank[MCA_COLL_ACOLL_NUMA] = subc->is_root_numa == 1 ? local_root : numa_ranks[0];
-        color = local_rank == subc->base_rank[MCA_COLL_ACOLL_NUMA] ? 0 : 1;
-        err = mca_coll_acoll_create_base_comm(parent_comm, subc, color, local_rank,
-                                              subc->local_root, MCA_COLL_ACOLL_NUMA);
+        subc->base_rank[MCA_COLL_ACOLL_NUMA][MCA_COLL_ACOLL_LYR_NODE] =
+                1 == subc->is_root_numa ? local_root : numa_ranks[0];
+        /* Find out socket rank of root in numa comm */
+        err = comm_grp_ranks_local(subc->socket_comm, subc->numa_comm, &subc->is_root_numa,
+                                   &tmp_root, &numa_ranks,
+                                   subc->local_root[MCA_COLL_ACOLL_LYR_SOCKET]);
+        subc->base_rank[MCA_COLL_ACOLL_NUMA][MCA_COLL_ACOLL_LYR_SOCKET] =
+            1 == subc->is_root_numa ? subc->local_root[MCA_COLL_ACOLL_LYR_SOCKET] : numa_ranks[0];
 
-        if (socket_ranks != NULL) {
-            free(socket_ranks);
-            socket_ranks = NULL;
-        }
-        if (subgrp_ranks != NULL) {
-            free(subgrp_ranks);
-            subgrp_ranks = NULL;
-        }
-        if (numa_ranks != NULL) {
-            free(numa_ranks);
-            numa_ranks = NULL;
-        }
+        color = local_rank == subc->base_rank[MCA_COLL_ACOLL_NUMA][MCA_COLL_ACOLL_LYR_NODE] ? 0 : 1;
+        err = mca_coll_acoll_create_base_comm(parent_comm, subc, color, parent_rank,
+                                              subc->local_root, MCA_COLL_ACOLL_NUMA);
     } else {
         /* Intra node case */
         int color;
         int is_root_socket = 0;
-        int *subgrp_ranks = NULL, *numa_ranks = NULL, *socket_ranks = NULL;
-        ompi_communicator_t *parent_comm[MCA_COLL_ACOLL_NUM_LAYERS];
 
         /* Initializations */
         subc->local_root[MCA_COLL_ACOLL_LYR_NODE] = root;
@@ -480,7 +485,7 @@ static inline int mca_coll_acoll_comm_split_init(ompi_communicator_t *comm,
                                    root);
 
         /* Create subcommunicator with socket leaders */
-        subc->socket_rank = subc->is_root_socket == 1 ? root : socket_ranks[0];
+        subc->socket_rank = 1 == subc->is_root_socket ? root : socket_ranks[0];
         color = rank == subc->socket_rank ? 0 : 1;
         err = ompi_comm_split(comm, color, rank, &subc->socket_ldr_comm, false);
         if (MPI_SUCCESS != err) {
@@ -495,40 +500,59 @@ static inline int mca_coll_acoll_comm_split_init(ompi_communicator_t *comm,
         err = comm_grp_ranks_local(comm, subc->subgrp_comm, &subc->is_root_sg, &subc->subgrp_root,
                                    &subgrp_ranks, root);
 
+        subc->base_rank[MCA_COLL_ACOLL_L3CACHE][MCA_COLL_ACOLL_LYR_NODE] =
+                        1 == subc->is_root_sg ? root : subgrp_ranks[0];
+        /* Find out socket rank of root in subgroup comm */
+        int tmp_root;
+        err = comm_grp_ranks_local(subc->socket_comm, subc->subgrp_comm, &subc->is_root_sg,
+                                   &tmp_root, &subgrp_ranks,
+                                   subc->local_root[MCA_COLL_ACOLL_LYR_SOCKET]);
+        subc->base_rank[MCA_COLL_ACOLL_L3CACHE][MCA_COLL_ACOLL_LYR_SOCKET] =
+            1 == subc->is_root_sg ? subc->local_root[MCA_COLL_ACOLL_LYR_SOCKET] : subgrp_ranks[0];
+
         /* Create subcommunicator with base ranks */
-        subc->base_rank[MCA_COLL_ACOLL_L3CACHE] = subc->is_root_sg == 1 ? root : subgrp_ranks[0];
-        color = rank == subc->base_rank[MCA_COLL_ACOLL_L3CACHE] ? 0 : 1;
+        color = rank == subc->base_rank[MCA_COLL_ACOLL_L3CACHE][MCA_COLL_ACOLL_LYR_NODE] ? 0 : 1;
         parent_comm[MCA_COLL_ACOLL_LYR_NODE] = subc->local_comm;
         parent_comm[MCA_COLL_ACOLL_LYR_SOCKET] = subc->socket_comm;
-        err = mca_coll_acoll_create_base_comm(parent_comm, subc, color, rank, subc->local_root,
+        parent_rank[MCA_COLL_ACOLL_LYR_NODE] = rank;
+        parent_rank[MCA_COLL_ACOLL_LYR_SOCKET] = ompi_comm_rank(subc->socket_comm);
+        err = mca_coll_acoll_create_base_comm(parent_comm, subc, color, parent_rank, subc->local_root,
                                               MCA_COLL_ACOLL_L3CACHE);
 
         int numa_rank;
         numa_rank = ompi_comm_rank(subc->numa_comm);
-        color = (numa_rank == 0) ? 0 : 1;
+        color = (0 == numa_rank) ? 0 : 1;
         err = ompi_comm_split(subc->local_comm, color, rank, &subc->numa_comm_ldrs, false);
 
         /* Find out local rank of root in numa comm */
         err = comm_grp_ranks_local(comm, subc->numa_comm, &subc->is_root_numa, &subc->numa_root,
                                    &numa_ranks, root);
 
-        subc->base_rank[MCA_COLL_ACOLL_NUMA] = subc->is_root_numa == 1 ? root : numa_ranks[0];
-        color = rank == subc->base_rank[MCA_COLL_ACOLL_NUMA] ? 0 : 1;
-        err = mca_coll_acoll_create_base_comm(parent_comm, subc, color, rank, subc->local_root,
-                                              MCA_COLL_ACOLL_NUMA);
+        subc->base_rank[MCA_COLL_ACOLL_NUMA][MCA_COLL_ACOLL_LYR_NODE] =
+                            1 == subc->is_root_numa ? root : numa_ranks[0];
+        /* Find out socket rank of root in numa comm */
+        err = comm_grp_ranks_local(subc->socket_comm, subc->numa_comm, &subc->is_root_numa,
+                                   &tmp_root, &numa_ranks,
+                                   subc->local_root[MCA_COLL_ACOLL_LYR_SOCKET]);
+        subc->base_rank[MCA_COLL_ACOLL_NUMA][MCA_COLL_ACOLL_LYR_SOCKET] =
+            1 == subc->is_root_numa ? subc->local_root[MCA_COLL_ACOLL_LYR_SOCKET] : numa_ranks[0];
 
-        if (socket_ranks != NULL) {
-            free(socket_ranks);
-            socket_ranks = NULL;
-        }
-        if (subgrp_ranks != NULL) {
-            free(subgrp_ranks);
-            subgrp_ranks = NULL;
-        }
-        if (numa_ranks != NULL) {
-            free(numa_ranks);
-            numa_ranks = NULL;
-        }
+        color = rank == subc->base_rank[MCA_COLL_ACOLL_NUMA][MCA_COLL_ACOLL_LYR_NODE] ? 0 : 1;
+        err = mca_coll_acoll_create_base_comm(parent_comm, subc, color, parent_rank, subc->local_root,
+                                              MCA_COLL_ACOLL_NUMA);
+    }
+
+    if (socket_ranks != NULL) {
+        free(socket_ranks);
+        socket_ranks = NULL;
+    }
+    if (subgrp_ranks != NULL) {
+        free(subgrp_ranks);
+        subgrp_ranks = NULL;
+    }
+    if (numa_ranks != NULL) {
+        free(numa_ranks);
+        numa_ranks = NULL;
     }
 
     /* Restore originals for local and socket comms */
@@ -595,7 +619,7 @@ static inline int mca_coll_acoll_xpmem_deregister(void *xpmem_apid,
 #endif
 
 static inline int coll_acoll_init(mca_coll_base_module_t *module, ompi_communicator_t *comm,
-                                  coll_acoll_data_t *data, coll_acoll_subcomms_t *subc)
+                                  coll_acoll_data_t *data, coll_acoll_subcomms_t *subc, int root)
 {
     int size, ret = 0, rank, line;
 
@@ -614,7 +638,7 @@ static inline int coll_acoll_init(mca_coll_base_module_t *module, ompi_communica
     data->comm_size = size;
 
 #ifdef HAVE_XPMEM_H
-    if (subc->xpmem_use_sr_buf == 0) {
+    if (0 == subc->xpmem_use_sr_buf) {
         data->scratch = (char *) malloc(subc->xpmem_buf_size);
         if (NULL == data->scratch) {
             line = __LINE__;
@@ -669,7 +693,7 @@ static inline int coll_acoll_init(mca_coll_base_module_t *module, ompi_communica
         goto error_hndl;
     }
     seg_id = xpmem_make(0, XPMEM_MAXADDR_SIZE, XPMEM_PERMIT_MODE, (void *) 0666);
-    if (seg_id == -1) {
+    if (-1 == seg_id) {
         line = __LINE__;
         ret = -1;
         goto error_hndl;
@@ -685,12 +709,12 @@ static inline int coll_acoll_init(mca_coll_base_module_t *module, ompi_communica
         if (rank != i) {
             data->all_apid[i] = xpmem_get(data->allseg_id[i], XPMEM_RDWR, XPMEM_PERMIT_MODE,
                                           (void *) 0666);
-            if (data->all_apid[i] == -1) {
+            if (-1 == data->all_apid[i]) {
                 line = __LINE__;
                 ret = -1;
                 goto error_hndl;
             }
-            if (data->all_apid[i] == -1) {
+            if (-1 == data->all_apid[i]) {
                 line = __LINE__;
                 ret = -1;
                 goto error_hndl;
@@ -704,7 +728,7 @@ static inline int coll_acoll_init(mca_coll_base_module_t *module, ompi_communica
                    .deregister_mem = mca_coll_acoll_xpmem_deregister};
 
             data->rcache[i] = mca_rcache_base_module_create("grdma", NULL, &rcache_element);
-            if (data->rcache[i] == NULL) {
+            if (NULL == data->rcache[i]) {
                 ret = -1;
                 line = __LINE__;
                 goto error_hndl;
@@ -714,7 +738,7 @@ static inline int coll_acoll_init(mca_coll_base_module_t *module, ompi_communica
 #endif
 
     /* temporary variables */
-    int tmp1, tmp2, tmp3 = 0;
+    int tmp1, tmp2, tmp3 = root;
     comm_grp_ranks_local(comm, subc->numa_comm, &tmp1, &tmp2, &data->l1_gp, tmp3);
     data->l1_gp_size = ompi_comm_size(subc->numa_comm);
     data->l1_local_rank = ompi_comm_rank(subc->numa_comm);
@@ -776,6 +800,8 @@ static inline int coll_acoll_init(mca_coll_base_module_t *module, ompi_communica
                 &data->allshmseg_id[data->l2_gp[i]]);
         }
     }
+
+    data->allshmmmap_sbuf[root] = opal_shmem_segment_attach(&data->allshmseg_id[0]);
 
     int offset = LEADER_SHM_SIZE;
     memset(((char *) data->allshmmmap_sbuf[data->l1_gp[0]]) + offset + CACHE_LINE_SIZE * rank, 0, CACHE_LINE_SIZE);
