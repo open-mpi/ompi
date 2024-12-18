@@ -31,6 +31,36 @@
 
 BEGIN_C_DECLS
 
+#define COLL_ACC_ALLGATHER             0x00000001
+#define COLL_ACC_ALLGATHERV            0x00000002
+#define COLL_ACC_ALLREDUCE             0x00000004
+#define COLL_ACC_ALLTOALL              0x00000008
+#define COLL_ACC_ALLTOALLV             0x00000010
+#define COLL_ACC_ALLTOALLW             0x00000020
+#define COLL_ACC_BARRIER               0x00000040
+#define COLL_ACC_BCAST                 0x00000080
+#define COLL_ACC_EXSCAN                0x00000100
+#define COLL_ACC_GATHER                0x00000200
+#define COLL_ACC_GATHERV               0x00000400
+#define COLL_ACC_REDUCE                0x00000800
+#define COLL_ACC_REDUCE_SCATTER        0x00001000
+#define COLL_ACC_REDUCE_SCATTER_BLOCK  0x00002000
+#define COLL_ACC_REDUCE_LOCAL          0x00004000
+#define COLL_ACC_SCAN                  0x00008000
+#define COLL_ACC_SCATTER               0x00010000
+#define COLL_ACC_SCATTERV              0x00020000
+#define COLL_ACC_NEIGHBOR_ALLGATHER    0x00040000
+#define COLL_ACC_NEIGHBOR_ALLGATHERV   0x00080000
+#define COLL_ACC_NEIGHBOR_ALLTOALL     0x00100000
+#define COLL_ACC_NEIGHBOR_ALLTTOALLV   0x00200000
+#define COLL_ACC_NEIGHBOR_ALLTTOALLW   0x00400000
+#define COLL_ACC_LASTCOLL              0x00800000
+
+#define COLL_ACCELERATOR_CTS_STR "allreduce,reduce_scatter_block,reduce_local,reduce,scan,exscan"
+#define COLL_ACCELERATOR_CTS COLL_ACC_ALLREDUCE            | COLL_ACC_REDUCE       | \
+                             COLL_ACC_REDUCE_SCATTER_BLOCK | COLL_ACC_REDUCE_LOCAL | \
+                             COLL_ACC_EXSCAN               | COLL_ACC_SCAN
+
 /* API functions */
 
 int mca_coll_accelerator_init_query(bool enable_progress_threads,
@@ -131,6 +161,8 @@ typedef struct mca_coll_accelerator_component_t {
 
     int priority; /* Priority of this component */
     int disable_accelerator_coll;  /* Force disable of the accelerator collective component */
+    char *cts; /* String of collective operations which the component shall register itself */
+    uint64_t cts_requested;
 } mca_coll_accelerator_component_t;
 
 /* Globally exported variables */
