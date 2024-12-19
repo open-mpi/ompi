@@ -22,3 +22,4 @@ probably don't need to read this section.
    gnu-autotools
    sphinx
    rst-for-markdown-expats.rst
+   bindings
