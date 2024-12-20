@@ -57,6 +57,10 @@ int MPI_Request_free(MPI_Request *request)
     }
 
     rc = ompi_request_free(request);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != rc && MPI_REQUEST_NULL != *request)) {
+        (*request)->req_status.MPI_ERROR = rc;
+        return ompi_errhandler_request_invoke(1, request, FUNC_NAME);
+    }
     OMPI_ERRHANDLER_NOHANDLE_RETURN(rc, rc, FUNC_NAME);
 }
 
