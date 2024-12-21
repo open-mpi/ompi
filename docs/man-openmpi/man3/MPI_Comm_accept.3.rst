@@ -74,6 +74,8 @@ through a call to :ref:`MPI_Open_port` on the root.
 ERRORS
 ------
 
+.. include:: ./MPIRUN-ONLY.rst
+
 .. include:: ./ERRORS.rst
 
 .. seealso::
