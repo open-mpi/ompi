@@ -11,6 +11,11 @@ provided support for a wide range of resilience techniques:
       migrating from FT-MPI); :ref:`see its documentation section
       <ulfm-label>`.
 
+      Note that FT functionality only works properly when the MPI job
+      is launched via :ref:`man1-mpirun`.  Using the FT functionality
+      in other run-time environments is currently unsupported, and may
+      result in undefined behavior (e.g., the MPI job may hang).
+
 * Only for research / non-production usage
       
     * Message logging techniques. Similar to those implemented in
