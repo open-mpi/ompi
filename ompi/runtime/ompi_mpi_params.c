@@ -391,7 +391,7 @@ int ompi_mpi_register_params(void)
 
     ompi_pmix_connect_timeout = 0; /* infinite timeout - see PMIx standard */
     (void) mca_base_var_register ("ompi", "mpi", NULL, "pmix_connect_timeout",
-                                  "Timeout(secs) for calls to PMIx_Connect. Default is no timeout.",
+                                  "Timeout(secs) for calls to PMIx_Connect and PMIx_Group_construct/destruct. Default is no timeout.",
                                   MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL,
                                   0, 0, OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_LOCAL,
                                   &ompi_pmix_connect_timeout);
