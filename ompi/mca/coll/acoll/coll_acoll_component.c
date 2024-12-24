@@ -29,12 +29,14 @@ int mca_coll_acoll_max_comms = 10;
 int mca_coll_acoll_sg_size = 8;
 int mca_coll_acoll_sg_scale = 1;
 int mca_coll_acoll_node_size = 128;
+int mca_coll_acoll_force_numa = -1;
 int mca_coll_acoll_use_dynamic_rules = 0;
 int mca_coll_acoll_mnode_enable = 1;
 int mca_coll_acoll_bcast_lin0 = 0;
 int mca_coll_acoll_bcast_lin1 = 0;
 int mca_coll_acoll_bcast_lin2 = 0;
 int mca_coll_acoll_bcast_nonsg = 0;
+int mca_coll_acoll_bcast_socket = -1;
 int mca_coll_acoll_allgather_lin = 0;
 int mca_coll_acoll_allgather_ring_1 = 0;
 int mca_coll_acoll_reserve_memory_for_algo = 0;
@@ -112,6 +114,10 @@ static int acoll_register(void)
                                            "Size of node for multinode cases",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY, &mca_coll_acoll_node_size);
+    (void) mca_base_component_var_register(&mca_coll_acoll_component.collm_version, "force_numa",
+                                           "Force enable/disable NUMA based comm split",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY, &mca_coll_acoll_force_numa);
     (void)
         mca_base_component_var_register(&mca_coll_acoll_component.collm_version,
                                         "use_dynamic_rules",
@@ -140,6 +146,10 @@ static int acoll_register(void)
         &mca_coll_acoll_component.collm_version, "bcast_nonsg",
         "Flag to turn on/off subgroup based algorithms for multinode", MCA_BASE_VAR_TYPE_INT, NULL,
         0, 0, OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY, &mca_coll_acoll_bcast_nonsg);
+    (void) mca_base_component_var_register(&mca_coll_acoll_component.collm_version, "bcast_socket",
+                                           "Flag to turn on/off socket based algorithms for bcast",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY, &mca_coll_acoll_bcast_socket);
     (void) mca_base_component_var_register(&mca_coll_acoll_component.collm_version, "allgather_lin",
                                            "Flag to indicate use of linear allgather for multinode",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_9,
@@ -230,10 +240,29 @@ static void mca_coll_acoll_module_destruct(mca_coll_acoll_module_t *module)
             if (NULL != data) {
 #ifdef HAVE_XPMEM_H
                 for (int j = 0; j < data->comm_size; j++) {
+                    if (ompi_comm_rank(subc->orig_comm) == j) {
+                        continue;
+                    }
+                    // Dereg all rcache regs.
+                    uint64_t key = 0;
+                    uint64_t value = 0;
+                    uint64_t zero_value = 0;
+                    OPAL_HASH_TABLE_FOREACH(key,uint64,value,(data->xpmem_reg_tracker_ht[j])) {
+                        mca_rcache_base_registration_t* reg =
+                            (mca_rcache_base_registration_t*) key;
+
+                        for (uint64_t d_i = 0; d_i < value; ++d_i) {
+                            (data->rcache[j])->rcache_deregister(data->rcache[j], reg);
+                        }
+                        opal_hash_table_set_value_uint64(data->xpmem_reg_tracker_ht[j],
+                                 key, (void*)(zero_value));
+                    }
                     xpmem_release(data->all_apid[j]);
-                    xpmem_remove(data->allseg_id[j]);
                     mca_rcache_base_module_destroy(data->rcache[j]);
+                    opal_hash_table_remove_all(data->xpmem_reg_tracker_ht[j]);
+                    OBJ_RELEASE(data->xpmem_reg_tracker_ht[j]);
                 }
+                xpmem_remove(data->allseg_id[ompi_comm_rank(subc->orig_comm)]);
 
                 free(data->allseg_id);
                 data->allseg_id = NULL;
@@ -249,6 +278,8 @@ static void mca_coll_acoll_module_destruct(mca_coll_acoll_module_t *module)
                 data->xpmem_raddr = NULL;
                 free(data->scratch);
                 data->scratch = NULL;
+                free(data->xpmem_reg_tracker_ht);
+                data->xpmem_reg_tracker_ht = NULL;
                 free(data->rcache);
                 data->rcache = NULL;
 #endif

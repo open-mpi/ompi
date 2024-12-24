@@ -344,7 +344,7 @@ static inline int mca_coll_acoll_allgather_intra(const void *sbuf, size_t scount
     }
 
     /* Return if all ranks belong to single subgroup */
-    if (num_sgs == 1) {
+    if (1 == num_sgs) {
         /* All done */
         return err;
     }
@@ -396,7 +396,7 @@ static inline int mca_coll_acoll_allgather_intra(const void *sbuf, size_t scount
     }
     /* Now all base ranks have the full data */
     /* Do broadcast within subgroups from the base ranks for the extra data */
-    if (sg_id == 0) {
+    if (0 == sg_id) {
         num_data_blks = 1;
         data_blk_size[0] = bcount * (num_sgs - 2) + last_subgrp_rcnt;
         blk_ofst[0] = bcount;
@@ -527,7 +527,7 @@ int mca_coll_acoll_allgather(const void *sbuf, size_t scount, struct ompi_dataty
         if (num_nodes > 1) {
             assert(subc->local_r_comm != NULL);
         }
-        intra_comm = num_nodes == 1 ? comm : subc->local_r_comm;
+        intra_comm = 1 == num_nodes ? comm : subc->local_r_comm;
     }
     err = mca_coll_acoll_allgather_intra(sbuf, scount, sdtype, local_rbuf, rcount, rdtype,
                                          intra_comm, module);
@@ -536,7 +536,7 @@ int mca_coll_acoll_allgather(const void *sbuf, size_t scount, struct ompi_dataty
     }
 
     /* Return if intra-node communicator */
-    if ((num_nodes == 1) || (size <= 2)) {
+    if ((1 == num_nodes) || (size <= 2)) {
         /* All done */
         return err;
     }
@@ -592,7 +592,7 @@ int mca_coll_acoll_allgather(const void *sbuf, size_t scount, struct ompi_dataty
     } /* End of if inter leader */
 
     /* Do intra node broadcast */
-    if (node_id == 0) {
+    if (0 == node_id) {
         num_data_blks = 1;
         data_blk_size[0] = bcount * (num_nodes - 2) + last_subgrp_rcnt;
         blk_ofst[0] = bcount;
@@ -613,7 +613,7 @@ int mca_coll_acoll_allgather(const void *sbuf, size_t scount, struct ompi_dataty
     /* Loop over data blocks */
     for (i = 0; i < num_data_blks; i++) {
         char *buff = (char *) rbuf + (ptrdiff_t) blk_ofst[i] * rext;
-        err = (comm)->c_coll->coll_bcast(buff, data_blk_size[i], rdtype, 0, subc->local_r_comm,
+        err = ompi_coll_base_bcast_intra_basic_linear(buff, data_blk_size[i], rdtype, 0, subc->local_r_comm,
                                          module);
         if (MPI_SUCCESS != err) {
             return err;
