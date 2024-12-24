@@ -13,7 +13,7 @@
 # Copyright (c) 2006-2021 Cisco Systems, Inc.  All rights reserved
 # Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
 #                         reserved.
-# Copyright (c) 2014-2021 Research Organization for Information Science
+# Copyright (c) 2014-2024 Research Organization for Information Science
 #                         and Technology (RIST).  All rights reserved.
 # Copyright (c) 2016-2022 IBM Corporation.  All rights reserved.
 # Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
@@ -167,6 +167,7 @@ DISTCLEANFILES = $(nodist_lib@OMPI_LIBMPI_NAME@_usempi_la_SOURCES)
 #
 
 install-exec-hook:
+	@ $(INSTALL) -d $(DESTDIR)$(OMPI_FORTRAN_MODULEDIR)
 	@ for file in `ls *.mod`; do \
 	  echo $(INSTALL) $$file $(DESTDIR)$(OMPI_FORTRAN_MODULEDIR); \
 	  $(INSTALL) $$file $(DESTDIR)$(OMPI_FORTRAN_MODULEDIR); \
