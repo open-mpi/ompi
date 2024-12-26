@@ -113,10 +113,12 @@ permissions to run this command):
    # Or: python3 -m pip install install -r docs/requirements.txt
 
 This will install Sphinx and some Python modules required for building
-the Open MPI documentation in a system-wide location.
+the Open MPI documentation in a user-specific location, likely
+somewhere under ``$HOME``
 
 You will likely need to find the location where ``sphinx-build`` was
-installed and add it to your ``PATH``.
+installed and add it to your ``PATH`` (e.g., on macOS, it might appear
+under ``$HOME/Library/Python/PYTHON_VERSION/bin/sphinx-build``).
 
 .. note:: On MacOS, look for ``sphinx-build`` under
           ``$HOME/Library/Python/VERSION/bin`` (where ``VERSION`` is
