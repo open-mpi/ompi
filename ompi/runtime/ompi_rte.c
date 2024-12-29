@@ -14,7 +14,7 @@
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.  All Rights
  *                         reserved.
- * Copyright (c) 2021-2022 Nanook Consulting.  All rights reserved.
+ * Copyright (c) 2021-2025 Nanook Consulting  All rights reserved.
  * Copyright (c) 2021-2022 IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  */
@@ -69,6 +69,7 @@ opal_process_name_t pmix_name_invalid = {UINT32_MAX, UINT32_MAX};
  * session directory structure, then we shall cleanup after ourselves.
  */
 static bool destroy_job_session_dir = false;
+static bool destroy_proc_session_dir = false;
 
 static int _setup_top_session_dir(char **sdir);
 static int _setup_job_session_dir(char **sdir);
@@ -995,9 +996,12 @@ int ompi_rte_finalize(void)
         opal_process_info.top_session_dir = NULL;
     }
 
-    if (NULL != opal_process_info.proc_session_dir) {
+    if (NULL != opal_process_info.proc_session_dir && destroy_proc_session_dir) {
+        opal_os_dirpath_destroy(opal_process_info.proc_session_dir,
+                                false, check_file);
         free(opal_process_info.proc_session_dir);
         opal_process_info.proc_session_dir = NULL;
+        destroy_proc_session_dir = false;
     }
 
     if (NULL != opal_process_info.app_sizes) {
@@ -1174,6 +1178,7 @@ static int _setup_top_session_dir(char **sdir)
 
 static int _setup_job_session_dir(char **sdir)
 {
+    int rc;
     /* get the effective uid */
     uid_t uid = geteuid();
 
@@ -1185,18 +1190,34 @@ static int _setup_job_session_dir(char **sdir)
         opal_process_info.job_session_dir = NULL;
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
+    rc = opal_os_dirpath_create(opal_process_info.job_session_dir, 0755);
+    if (OPAL_SUCCESS != rc) {
+        // could not create session dir
+        free(opal_process_info.job_session_dir);
+        opal_process_info.job_session_dir = NULL;
+        return rc;
+    }
     destroy_job_session_dir = true;
     return OPAL_SUCCESS;
 }
 
 static int _setup_proc_session_dir(char **sdir)
 {
+    int rc;
+
     if (0 > opal_asprintf(sdir,  "%s/%d",
                           opal_process_info.job_session_dir,
                           opal_process_info.my_name.vpid)) {
         opal_process_info.proc_session_dir = NULL;
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
-
+    rc = opal_os_dirpath_create(opal_process_info.proc_session_dir, 0755);
+    if (OPAL_SUCCESS != rc) {
+        // could not create session dir
+        free(opal_process_info.proc_session_dir);
+        opal_process_info.proc_session_dir = NULL;
+        return rc;
+    }
+    destroy_proc_session_dir = true;
     return OPAL_SUCCESS;
 }
