@@ -414,19 +414,21 @@ static void mca_io_ompio_file_get_eof_offset (ompio_file_t *fh,
     in_offset -= fh->f_fview.f_disp;
     if ( fh->f_fview.f_view_size  > 0 ) {
         /* starting offset of the current copy of the filew view */
-        start_offset = in_offset / fh->f_fview.f_view_extent;
+        start_offset = (in_offset / fh->f_fview.f_view_extent) * fh->f_fview.f_view_extent;
         
         index_in_file_view = 0;
         /* determine block id that the offset is located in and
            the starting offset of that block */
-        while ( offset <= in_offset && index_in_file_view < fh->f_fview.f_iov_count) {
-            prev_offset = offset;
+        while (offset <= in_offset && index_in_file_view < fh->f_fview.f_iov_count) {
             offset = start_offset + (OMPI_MPI_OFFSET_TYPE)(intptr_t) fh->f_fview.f_decoded_iov[index_in_file_view++].iov_base;
+	    if (offset <= in_offset) {
+		prev_offset = offset;
+	    }
         }
         
         offset = prev_offset;
         blocklen = fh->f_fview.f_decoded_iov[index_in_file_view-1].iov_len;
-        while (  offset <= in_offset && k <= blocklen )  {
+        while (offset <= in_offset && k <= blocklen)  {
             prev_offset = offset;
             offset += fh->f_fview.f_etype_size;
             k += fh->f_fview.f_etype_size;
