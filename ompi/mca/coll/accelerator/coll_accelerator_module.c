@@ -93,8 +93,11 @@ mca_coll_accelerator_comm_query(struct ompi_communicator_t *comm,
     accelerator_module->super.coll_module_enable = mca_coll_accelerator_module_enable;
     accelerator_module->super.coll_module_disable = mca_coll_accelerator_module_disable;
 
+    accelerator_module->super.coll_allgather  = mca_coll_accelerator_allgather;
     accelerator_module->super.coll_allreduce  = mca_coll_accelerator_allreduce;
+    accelerator_module->super.coll_alltoall   = mca_coll_accelerator_alltoall;
     accelerator_module->super.coll_reduce     = mca_coll_accelerator_reduce;
+    accelerator_module->super.coll_bcast      = mca_coll_accelerator_bcast;
     accelerator_module->super.coll_reduce_local         = mca_coll_accelerator_reduce_local;
     accelerator_module->super.coll_reduce_scatter       = mca_coll_accelerator_reduce_scatter;
     accelerator_module->super.coll_reduce_scatter_block = mca_coll_accelerator_reduce_scatter_block;
@@ -142,7 +145,10 @@ mca_coll_accelerator_module_enable(mca_coll_base_module_t *module,
 {
     mca_coll_accelerator_module_t *s = (mca_coll_accelerator_module_t*) module;
 
+    ACCELERATOR_INSTALL_COLL_API(comm, s, allgather);
     ACCELERATOR_INSTALL_COLL_API(comm, s, allreduce);
+    ACCELERATOR_INSTALL_COLL_API(comm, s, alltoall);
+    ACCELERATOR_INSTALL_COLL_API(comm, s, bcast);
     ACCELERATOR_INSTALL_COLL_API(comm, s, reduce);
     ACCELERATOR_INSTALL_COLL_API(comm, s, reduce_local);
     ACCELERATOR_INSTALL_COLL_API(comm, s, reduce_scatter);
@@ -162,8 +168,11 @@ mca_coll_accelerator_module_disable(mca_coll_base_module_t *module,
 {
     mca_coll_accelerator_module_t *s = (mca_coll_accelerator_module_t*) module;
 
+    ACCELERATOR_UNINSTALL_COLL_API(comm, s, allgather);
     ACCELERATOR_UNINSTALL_COLL_API(comm, s, allreduce);
+    ACCELERATOR_UNINSTALL_COLL_API(comm, s, alltoall);
     ACCELERATOR_UNINSTALL_COLL_API(comm, s, reduce);
+    ACCELERATOR_UNINSTALL_COLL_API(comm, s, bcast);
     ACCELERATOR_UNINSTALL_COLL_API(comm, s, reduce_local);
     ACCELERATOR_UNINSTALL_COLL_API(comm, s, reduce_scatter);
     ACCELERATOR_UNINSTALL_COLL_API(comm, s, reduce_scatter_block);
