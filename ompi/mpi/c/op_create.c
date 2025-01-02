@@ -12,6 +12,8 @@
  * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2025      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -57,6 +59,7 @@ int MPI_Op_create(MPI_User_function * function, int commute, MPI_Op * op)
     /* Create and cache the op.  Sets a refcount of 1. */
 
     *op = ompi_op_create_user(OPAL_INT_TO_BOOL(commute),
+                              false,
                               (ompi_op_fortran_handler_fn_t *) function);
     if (NULL == *op) {
         err = MPI_ERR_INTERN;

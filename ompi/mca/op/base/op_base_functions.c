@@ -14,6 +14,8 @@
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2025      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -38,11 +40,11 @@
  * This macro is for (out op in).
  */
 #define OP_FUNC(name, type_name, type, op) \
-  static void ompi_op_base_2buff_##name##_##type_name(const void *in, void *out, int *count, \
+  static void ompi_op_base_2buff_##name##_##type_name(const void *in, void *out, size_t *count, \
                                                       struct ompi_datatype_t **dtype, \
-                                                      struct ompi_op_base_module_1_0_0_t *module) \
+                                                      struct ompi_op_base_module_2_0_0_t *module) \
   {                                                                      \
-      int i;                                                             \
+      size_t i;                                                          \
       type *a = (type *) in;                                             \
       type *b = (type *) out;                                            \
       for (i = *count; i > 0; i--) {                                     \
@@ -58,11 +60,11 @@
  * This macro is for (out = op(out, in))
  */
 #define FUNC_FUNC(name, type_name, type) \
-  static void ompi_op_base_2buff_##name##_##type_name(const void *in, void *out, int *count, \
+  static void ompi_op_base_2buff_##name##_##type_name(const void *in, void *out, size_t *count, \
                                                 struct ompi_datatype_t **dtype, \
-                                                struct ompi_op_base_module_1_0_0_t *module) \
+                                                struct ompi_op_base_module_2_0_0_t *module) \
   {                                                                      \
-      int i;                                                             \
+      size_t i;                                                          \
       type *a = (type *) in;                                             \
       type *b = (type *) out;                                            \
       for (i = *count; i > 0; i--) {                                     \
@@ -86,11 +88,11 @@
   } ompi_op_predefined_##type_name##_t;
 
 #define LOC_FUNC(name, type_name, op) \
-    static void ompi_op_base_2buff_##name##_##type_name(const void *in, void *out, int *count, \
+    static void ompi_op_base_2buff_##name##_##type_name(const void *in, void *out, size_t *count, \
                                                         struct ompi_datatype_t **dtype, \
-                                                        struct ompi_op_base_module_1_0_0_t *module) \
+                                                        struct ompi_op_base_module_2_0_0_t *module) \
     {                                                                   \
-        int i;                                                          \
+        size_t i;                                                          \
         ompi_op_predefined_##type_name##_t *a = (ompi_op_predefined_##type_name##_t*) in; \
         ompi_op_predefined_##type_name##_t *b = (ompi_op_predefined_##type_name##_t*) out; \
         for (i = *count; i > 0; i--, ++a, ++b) {                        \
@@ -110,11 +112,11 @@
  * not supports the corresponding complex number type.
  */
 #define COMPLEX_SUM_FUNC(type_name, type) \
-  static void ompi_op_base_2buff_sum_##type_name(const void *in, void *out, int *count, \
+  static void ompi_op_base_2buff_sum_##type_name(const void *in, void *out, size_t *count, \
                                                  struct ompi_datatype_t **dtype, \
-                                                 struct ompi_op_base_module_1_0_0_t *module) \
+                                                 struct ompi_op_base_module_2_0_0_t *module) \
   {                                                                      \
-      int i;                                                             \
+      size_t i;                                                          \
       type (*a)[2] = (type (*)[2]) in;                                   \
       type (*b)[2] = (type (*)[2]) out;                                  \
       for (i = *count; i > 0; i--, ++a, ++b) {                           \
@@ -130,11 +132,11 @@
  * not supports the corresponding complex number type.
  */
 #define COMPLEX_PROD_FUNC(type_name, type) \
-  static void ompi_op_base_2buff_prod_##type_name(const void *in, void *out, int *count, \
+  static void ompi_op_base_2buff_prod_##type_name(const void *in, void *out, size_t *count, \
                                                   struct ompi_datatype_t **dtype, \
-                                                  struct ompi_op_base_module_1_0_0_t *module) \
+                                                  struct ompi_op_base_module_2_0_0_t *module) \
   {                                                                      \
-      int i;                                                             \
+      size_t i;                                                          \
       type (*a)[2] = (type (*)[2]) in;                                   \
       type (*b)[2] = (type (*)[2]) out;                                  \
       type c[2];                                                         \
@@ -685,11 +687,11 @@ LOC_FUNC(minloc, long_double_int, <)
  */
 #define OP_FUNC_3BUF(name, type_name, type, op) \
     static void ompi_op_base_3buff_##name##_##type_name(const void * restrict in1,   \
-                                                        const void * restrict in2, void * restrict out, int *count, \
+                                                        const void * restrict in2, void * restrict out, size_t *count, \
                                                         struct ompi_datatype_t **dtype, \
-                                                        struct ompi_op_base_module_1_0_0_t *module) \
+                                                        struct ompi_op_base_module_2_0_0_t *module) \
     {                                                                   \
-        int i;                                                          \
+        size_t i;                                                          \
         type *a1 = (type *) in1;                                        \
         type *a2 = (type *) in2;                                        \
         type *b = (type *) out;                                         \
@@ -707,11 +709,11 @@ LOC_FUNC(minloc, long_double_int, <)
  */
 #define FUNC_FUNC_3BUF(name, type_name, type)                           \
     static void ompi_op_base_3buff_##name##_##type_name(const void * restrict in1, \
-                                                        const void * restrict in2, void * restrict out, int *count, \
+                                                        const void * restrict in2, void * restrict out, size_t *count, \
                                                         struct ompi_datatype_t **dtype, \
-                                                        struct ompi_op_base_module_1_0_0_t *module) \
+                                                        struct ompi_op_base_module_2_0_0_t *module) \
     {                                                                   \
-        int i;                                                          \
+        size_t i;                                                       \
         type *a1 = (type *) in1;                                        \
         type *a2 = (type *) in2;                                        \
         type *b = (type *) out;                                         \
@@ -740,11 +742,11 @@ LOC_FUNC(minloc, long_double_int, <)
 
 #define LOC_FUNC_3BUF(name, type_name, op) \
   static void ompi_op_base_3buff_##name##_##type_name(const void * restrict in1,      \
-                                                      const void * restrict in2, void * restrict out, int *count, \
+                                                      const void * restrict in2, void * restrict out, size_t *count, \
                                                       struct ompi_datatype_t **dtype, \
-                                                      struct ompi_op_base_module_1_0_0_t *module) \
+                                                      struct ompi_op_base_module_2_0_0_t *module) \
   {                                                                     \
-      int i;                                                            \
+      size_t i;                                                          \
       ompi_op_predefined_##type_name##_t *a1 = (ompi_op_predefined_##type_name##_t*) in1; \
       ompi_op_predefined_##type_name##_t *a2 = (ompi_op_predefined_##type_name##_t*) in2; \
       ompi_op_predefined_##type_name##_t *b = (ompi_op_predefined_##type_name##_t*) out; \
@@ -770,11 +772,11 @@ LOC_FUNC(minloc, long_double_int, <)
  */
 #define COMPLEX_SUM_FUNC_3BUF(type_name, type) \
   static void ompi_op_base_3buff_sum_##type_name(const void * restrict in1,    \
-                                                 const void * restrict in2, void * restrict out, int *count, \
+                                                 const void * restrict in2, void * restrict out, size_t *count, \
                                                  struct ompi_datatype_t **dtype, \
-                                                 struct ompi_op_base_module_1_0_0_t *module) \
+                                                 struct ompi_op_base_module_2_0_0_t *module) \
   {                                                                      \
-      int i;                                                             \
+      size_t i;                                                          \
       type (*a1)[2] = (type (*)[2]) in1;                                 \
       type (*a2)[2] = (type (*)[2]) in2;                                 \
       type (*b)[2] = (type (*)[2]) out;                                  \
@@ -792,11 +794,11 @@ LOC_FUNC(minloc, long_double_int, <)
  */
 #define COMPLEX_PROD_FUNC_3BUF(type_name, type) \
   static void ompi_op_base_3buff_prod_##type_name(const void * restrict in1,   \
-                                                  const void * restrict in2, void * restrict out, int *count, \
+                                                  const void * restrict in2, void * restrict out, size_t *count, \
                                                   struct ompi_datatype_t **dtype, \
-                                                  struct ompi_op_base_module_1_0_0_t *module) \
+                                                  struct ompi_op_base_module_2_0_0_t *module) \
   {                                                                      \
-      int i;                                                             \
+      size_t i;                                                          \
       type (*a1)[2] = (type (*)[2]) in1;                                 \
       type (*a2)[2] = (type (*)[2]) in2;                                 \
       type (*b)[2] = (type (*)[2]) out;                                  \

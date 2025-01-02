@@ -16,6 +16,8 @@
  * Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2020-2024 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
+ * Copyright (c) 2025      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -52,7 +54,7 @@ typedef struct avail_op_t {
     opal_list_item_t super;
 
     int ao_priority;
-    ompi_op_base_module_1_0_0_t *ao_module;
+    ompi_op_base_module_2_0_0_t *ao_module;
 } avail_op_t;
 
 
@@ -63,15 +65,15 @@ static opal_list_t *check_components(opal_list_t *components,
                                      ompi_op_t *op);
 static int check_one_component(ompi_op_t *op,
                                const mca_base_component_t *component,
-                               ompi_op_base_module_1_0_0_t **module);
+                               ompi_op_base_module_2_0_0_t **module);
 
 static int query(const mca_base_component_t *component,
                  ompi_op_t *op, int *priority,
-                 ompi_op_base_module_1_0_0_t **module);
+                 ompi_op_base_module_2_0_0_t **module);
 
-static int query_1_0_0(const ompi_op_base_component_1_0_0_t *op_component,
+static int query_2_0_0(const ompi_op_base_component_2_0_0_t *op_component,
                        ompi_op_t *op, int *priority,
-                       ompi_op_base_module_1_0_0_t **module);
+                       ompi_op_base_module_2_0_0_t **module);
 
 /*
  * Stuff for the OBJ interface
@@ -232,7 +234,7 @@ static opal_list_t *check_components(opal_list_t *components,
     int priority;
     mca_base_component_list_item_t *cli;
     const mca_base_component_t *component;
-    ompi_op_base_module_1_0_0_t *module;
+    ompi_op_base_module_2_0_0_t *module;
     opal_list_t *selectable;
     avail_op_t *avail;
 
@@ -270,7 +272,7 @@ static opal_list_t *check_components(opal_list_t *components,
  */
 static int check_one_component(ompi_op_t *op,
                                const mca_base_component_t *component,
-                               ompi_op_base_module_1_0_0_t **module)
+                               ompi_op_base_module_2_0_0_t **module)
 {
     int err;
     int priority = -1;
@@ -304,16 +306,16 @@ static int check_one_component(ompi_op_t *op,
  */
 static int query(const mca_base_component_t *component,
                  ompi_op_t *op,
-                 int *priority, ompi_op_base_module_1_0_0_t **module)
+                 int *priority, ompi_op_base_module_2_0_0_t **module)
 {
     *module = NULL;
-    if (1 == component->mca_type_major_version &&
+    if (2 == component->mca_type_major_version &&
         0 == component->mca_type_minor_version &&
         0 == component->mca_type_release_version) {
-        const ompi_op_base_component_1_0_0_t *op100 =
-            (ompi_op_base_component_1_0_0_t *) component;
+        const ompi_op_base_component_2_0_0_t *op100 =
+            (ompi_op_base_component_2_0_0_t *) component;
 
-        return query_1_0_0(op100, op, priority, module);
+        return query_2_0_0(op100, op, priority, module);
     }
 
     /* Unknown op API version -- return error */
@@ -322,11 +324,11 @@ static int query(const mca_base_component_t *component,
 }
 
 
-static int query_1_0_0(const ompi_op_base_component_1_0_0_t *component,
+static int query_2_0_0(const ompi_op_base_component_2_0_0_t *component,
                        ompi_op_t *op, int *priority,
-                       ompi_op_base_module_1_0_0_t **module)
+                       ompi_op_base_module_2_0_0_t **module)
 {
-    ompi_op_base_module_1_0_0_t *ret;
+    ompi_op_base_module_2_0_0_t *ret;
 
     /* There's currently no need for conversion */
 

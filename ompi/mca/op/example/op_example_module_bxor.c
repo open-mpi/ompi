@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2025      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -41,7 +43,7 @@
  * on the example component.
  */
 typedef struct {
-    ompi_op_base_module_1_0_0_t super;
+    ompi_op_base_module_2_0_0_t super;
 
     /* Just like the ompi_op_example_component_t, this struct is meant to
        cache information on a per-module basis.  What follows are
@@ -109,7 +111,7 @@ static OBJ_CLASS_INSTANCE(module_bxor_t,
 /**
  * Bxor function for C int
  */
-static void bxor_int(void *in, void *out, int *count,
+static void bxor_int(void *in, void *out, size_t *count,
                     ompi_datatype_t **type, ompi_op_base_module_t *module)
 {
     module_bxor_t *m = (module_bxor_t*) module;

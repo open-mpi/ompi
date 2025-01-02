@@ -14,6 +14,8 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2025      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -43,7 +45,7 @@ static int example_component_open(void);
 static int example_component_close(void);
 static int example_component_init_query(bool enable_progress_threads,
                                      bool enable_mpi_thread_multiple);
-static struct ompi_op_base_module_1_0_0_t *
+static struct ompi_op_base_module_2_0_0_t *
     example_component_op_query(struct ompi_op_t *op, int *priority);
 static int example_component_register(void);
 
@@ -52,7 +54,7 @@ ompi_op_example_component_t mca_op_example_component = {
        information about the component itself */
     {
         .opc_version = {
-            OMPI_OP_BASE_VERSION_1_0_0,
+            OMPI_OP_BASE_VERSION_2_0_0,
 
             .mca_component_name = "example",
             MCA_BASE_MAKE_VERSION(component, OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION,
@@ -248,7 +250,7 @@ static int example_component_init_query(bool enable_progress_threads,
 /*
  * Query whether this component can be used for a specific op
  */
-static struct ompi_op_base_module_1_0_0_t *
+static struct ompi_op_base_module_2_0_0_t *
     example_component_op_query(struct ompi_op_t *op, int *priority)
 {
     ompi_op_base_module_t *module = NULL;
@@ -307,5 +309,5 @@ static struct ompi_op_base_module_1_0_0_t *
     if (NULL != module) {
         *priority = 50;
     }
-    return (ompi_op_base_module_1_0_0_t *) module;
+    return (ompi_op_base_module_2_0_0_t *) module;
 }
