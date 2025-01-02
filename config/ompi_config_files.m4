@@ -41,7 +41,6 @@ AC_DEFUN([OMPI_CONFIG_FILES],[
         ompi/mpi/fortran/use-mpi-ignore-tkr/mpi-ignore-tkr-removed-interfaces.h
         ompi/mpi/fortran/use-mpi-f08/Makefile
         ompi/mpi/fortran/use-mpi-f08/base/Makefile
-        ompi/mpi/fortran/use-mpi-f08/profile/Makefile
         ompi/mpi/fortran/use-mpi-f08/bindings/Makefile
         ompi/mpi/fortran/use-mpi-f08/mod/Makefile
         ompi/mpi/fortran/use-mpi-f08/mod/mpi-f08-interfaces.h
