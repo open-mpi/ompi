@@ -34,6 +34,11 @@ BEGIN_C_DECLS
 
 /* API functions */
 
+
+extern int mca_coll_accelerator_bcast_thresh;
+extern int mca_coll_accelerator_allgather_thresh;
+extern int mca_coll_accelerator_alltoall_thresh;
+
 int mca_coll_accelerator_init_query(bool enable_progress_threads,
                              bool enable_mpi_threads);
 mca_coll_base_module_t
@@ -78,6 +83,35 @@ mca_coll_accelerator_reduce_scatter_block(const void *sbuf, void *rbuf, size_t r
                                    struct ompi_communicator_t *comm,
                                    mca_coll_base_module_t *module);
 
+int
+mca_coll_accelerator_reduce_scatter(const void *sbuf, void *rbuf, ompi_count_array_t rcounts,
+                                   struct ompi_datatype_t *dtype,
+                                   struct ompi_op_t *op,
+                                   struct ompi_communicator_t *comm,
+                                   mca_coll_base_module_t *module);
+
+int
+mca_coll_accelerator_allgather(const void *sbuf, size_t scount,
+			       struct ompi_datatype_t *sdtype,
+			       void *rbuf, size_t rcount,
+			       struct ompi_datatype_t *rdtype,
+			       struct ompi_communicator_t *comm,
+			       mca_coll_base_module_t *module);
+
+int
+mca_coll_accelerator_alltoall(const void *sbuf, size_t scount,
+			      struct ompi_datatype_t *sdtype,
+			      void *rbuf, size_t rcount,
+			      struct ompi_datatype_t *rdtype,
+			      struct ompi_communicator_t *comm,
+			      mca_coll_base_module_t *module);
+
+int
+mca_coll_accelerator_bcast(void *buff, size_t count,
+			   struct ompi_datatype_t *datatype,
+			   int root,
+			   struct ompi_communicator_t *comm,
+			   mca_coll_base_module_t *module);
 
 /* Checks the type of pointer
  *
