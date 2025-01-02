@@ -61,48 +61,19 @@ typedef pthread_mutex_t opal_thread_internal_mutex_t;
 #    define OPAL_THREAD_INTERNAL_RECURSIVE_MUTEX_INITIALIZER PTHREAD_RECURSIVE_MUTEX_INITIALIZER
 #endif
 
+
+int opal_thread_internal_mutex_init_recursive(opal_thread_internal_mutex_t *p_mutex);
+
 static inline int opal_thread_internal_mutex_init(opal_thread_internal_mutex_t *p_mutex,
                                                   bool recursive)
 {
     int ret;
-#if OPAL_ENABLE_DEBUG
     if (recursive) {
-        pthread_mutexattr_t mutex_attr;
-        ret = pthread_mutexattr_init(&mutex_attr);
-        if (0 != ret)
-            return OPAL_ERR_IN_ERRNO;
-        ret = pthread_mutexattr_settype(&mutex_attr, PTHREAD_MUTEX_RECURSIVE);
-        if (0 != ret) {
-            ret = pthread_mutexattr_destroy(&mutex_attr);
-            assert(0 == ret);
-            return OPAL_ERR_IN_ERRNO;
-        }
-        ret = pthread_mutex_init(p_mutex, &mutex_attr);
-        if (0 != ret) {
-            ret = pthread_mutexattr_destroy(&mutex_attr);
-            assert(0 == ret);
-            return OPAL_ERR_IN_ERRNO;
-        }
-        ret = pthread_mutexattr_destroy(&mutex_attr);
-        assert(0 == ret);
+        return opal_thread_internal_mutex_init_recursive(p_mutex);
     } else {
         ret = pthread_mutex_init(p_mutex, NULL);
+        return 0 == ret ? OPAL_SUCCESS : OPAL_ERR_IN_ERRNO;
     }
-#else
-    if (recursive) {
-        pthread_mutexattr_t mutex_attr;
-        ret = pthread_mutexattr_init(&mutex_attr);
-        if (0 != ret) {
-            return OPAL_ERR_IN_ERRNO;
-        }
-        pthread_mutexattr_settype(&mutex_attr, PTHREAD_MUTEX_RECURSIVE);
-        ret = pthread_mutex_init(p_mutex, &mutex_attr);
-        pthread_mutexattr_destroy(&mutex_attr);
-    } else {
-        ret = pthread_mutex_init(p_mutex, NULL);
-    }
-#endif
-    return 0 == ret ? OPAL_SUCCESS : OPAL_ERR_IN_ERRNO;
 }
 
 static inline void opal_thread_internal_mutex_lock(opal_thread_internal_mutex_t *p_mutex)
