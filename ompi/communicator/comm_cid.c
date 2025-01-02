@@ -24,7 +24,7 @@
  * Copyright (c) 2017      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
- * Copyright (c) 2020-2024 Triad National Security, LLC. All rights
+ * Copyright (c) 2020-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -320,6 +320,7 @@ static int ompi_comm_ext_cid_new_block (ompi_communicator_t *newcomm, ompi_commu
     pmix_proc_t *procs = NULL;
     void *grpinfo = NULL, *list = NULL;
     pmix_data_array_t darray;
+    pmix_info_t tinfo;
 
     switch (mode) {
     case OMPI_COMM_CID_GROUP_NEW:
@@ -343,6 +344,13 @@ static int ompi_comm_ext_cid_new_block (ompi_communicator_t *newcomm, ompi_commu
     }
 
     rc = PMIx_Info_list_add(grpinfo, PMIX_GROUP_ASSIGN_CONTEXT_ID, NULL, PMIX_BOOL);
+    if (PMIX_SUCCESS != rc) {
+        OPAL_OUTPUT_VERBOSE((10, ompi_comm_output, "PMIx_Info_list_add failed %s %d", PMIx_Error_string(rc), __LINE__));
+        rc = OMPI_ERR_OUT_OF_RESOURCE;
+        goto fn_exit;
+    }
+
+    rc = PMIx_Info_list_add(grpinfo, PMIX_TIMEOUT, &ompi_pmix_connect_timeout, PMIX_UINT32);
     if (PMIX_SUCCESS != rc) {
         OPAL_OUTPUT_VERBOSE((10, ompi_comm_output, "PMIx_Info_list_add failed %s %d", PMIx_Error_string(rc), __LINE__));
         rc = OMPI_ERR_OUT_OF_RESOURCE;
@@ -450,7 +458,10 @@ static int ompi_comm_ext_cid_new_block (ompi_communicator_t *newcomm, ompi_commu
                          tag, tproc_count, ninfo, cid_base));
 
     /* destruct the group */
-    rc = PMIx_Group_destruct (tag, NULL, 0);
+    PMIX_INFO_CONSTRUCT(&tinfo);
+    PMIX_INFO_LOAD(&tinfo, PMIX_TIMEOUT, &ompi_pmix_connect_timeout, PMIX_UINT32);
+    rc = PMIx_Group_destruct (tag, &tinfo, 0);
+    PMIX_INFO_DESTRUCT(&tinfo);
     if(PMIX_SUCCESS != rc) {
         OPAL_OUTPUT_VERBOSE((10, ompi_comm_output, "PMIx_Group_destruct failed %s", PMIx_Error_string(rc)));
         rc = opal_pmix_convert_status(rc);
