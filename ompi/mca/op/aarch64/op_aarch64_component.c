@@ -6,6 +6,8 @@
  * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2024      Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
+ * Copyright (c) 2025      Triad National Security, LLC. All rights
+ *                         reserved.
  *
  * $COPYRIGHT$
  *
@@ -34,7 +36,7 @@ static int mca_op_aarch64_component_open(void);
 static int mca_op_aarch64_component_close(void);
 static int mca_op_aarch64_component_init_query(bool enable_progress_threads,
                                      bool enable_mpi_thread_multiple);
-static struct ompi_op_base_module_1_0_0_t *
+static struct ompi_op_base_module_2_0_0_t *
     mca_op_aarch64_component_op_query(struct ompi_op_t *op, int *priority);
 static int mca_op_aarch64_component_register(void);
 
@@ -43,7 +45,7 @@ ompi_op_aarch64_component_t mca_op_aarch64_component = {
        information about the component itself */
     {
         .opc_version = {
-            OMPI_OP_BASE_VERSION_1_0_0,
+            OMPI_OP_BASE_VERSION_2_0_0,
 
             .mca_component_name = "aarch64",
             MCA_BASE_MAKE_VERSION(component, OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION,
@@ -164,7 +166,7 @@ ompi_op_aarch64_3buff_functions_sve[OMPI_OP_BASE_FORTRAN_OP_MAX][OMPI_OP_BASE_TY
 /*
  * Query whether this component can be used for a specific op
  */
-static struct ompi_op_base_module_1_0_0_t *
+static struct ompi_op_base_module_2_0_0_t *
     mca_op_aarch64_component_op_query(struct ompi_op_t *op, int *priority)
 {
     /* Sanity check -- although the framework should never invoke the
@@ -242,5 +244,5 @@ static struct ompi_op_base_module_1_0_0_t *
     if (NULL != module) {
         *priority = 50;
     }
-    return (ompi_op_base_module_1_0_0_t *) module;
+    return (ompi_op_base_module_2_0_0_t *) module;
 }

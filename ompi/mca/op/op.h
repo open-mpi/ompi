@@ -17,6 +17,8 @@
  * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2025      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -248,9 +250,9 @@ enum {
  * Pre-declare this so that we can pass it as an argument to the
  * typedef'ed functions.
  */
-struct ompi_op_base_module_1_0_0_t;
+struct ompi_op_base_module_2_0_0_t;
 
-typedef struct ompi_op_base_module_1_0_0_t ompi_op_base_module_t;
+typedef struct ompi_op_base_module_2_0_0_t ompi_op_base_module_t;
 
 /**
  * Typedef for 2-buffer op functions.
@@ -260,22 +262,22 @@ typedef struct ompi_op_base_module_1_0_0_t ompi_op_base_module_t;
  * repeated code, but it's better this way (and this typedef will
  * never change, so there's not much of a maintenance worry).
  */
-typedef void (*ompi_op_base_handler_fn_1_0_0_t)(const void *, void *, int *,
+typedef void (*ompi_op_base_handler_fn_2_0_0_t)(const void *, void *, size_t *,
                                                 struct ompi_datatype_t **,
-                                                struct ompi_op_base_module_1_0_0_t *);
+                                                struct ompi_op_base_module_2_0_0_t *);
 
-typedef ompi_op_base_handler_fn_1_0_0_t ompi_op_base_handler_fn_t;
+typedef ompi_op_base_handler_fn_2_0_0_t ompi_op_base_handler_fn_t;
 
 /*
  * Typedef for 3-buffer (two input and one output) op functions.
  */
-typedef void (*ompi_op_base_3buff_handler_fn_1_0_0_t)(const void *,
+typedef void (*ompi_op_base_3buff_handler_fn_2_0_0_t)(const void *,
                                                       const void *,
-                                                      void *, int *,
+                                                      void *, size_t *,
                                                       struct ompi_datatype_t **,
-                                                      struct ompi_op_base_module_1_0_0_t *);
+                                                      struct ompi_op_base_module_2_0_0_t *);
 
-typedef ompi_op_base_3buff_handler_fn_1_0_0_t ompi_op_base_3buff_handler_fn_t;
+typedef ompi_op_base_3buff_handler_fn_2_0_0_t ompi_op_base_3buff_handler_fn_t;
 
 /**
  * Op component initialization
@@ -322,8 +324,8 @@ typedef int (*ompi_op_base_component_init_query_fn_t)
  * provide a module with the requested functionality or NULL if the
  * component should not be used on the given communicator.
  */
-typedef struct ompi_op_base_module_1_0_0_t *
-  (*ompi_op_base_component_op_query_1_0_0_fn_t)
+typedef struct ompi_op_base_module_2_0_0_t *
+  (*ompi_op_base_component_op_query_2_0_0_fn_t)
     (struct ompi_op_t *op, int *priority);
 
 /**
@@ -333,7 +335,7 @@ typedef struct ompi_op_base_module_1_0_0_t *
  * this structure, called mca_op_[component_name]_component, must
  * exist in any op component.
  */
-typedef struct ompi_op_base_component_1_0_0_t {
+typedef struct ompi_op_base_component_2_0_0_t {
     /** Base component description */
     mca_base_component_t opc_version;
     /** Base component data block */
@@ -342,14 +344,14 @@ typedef struct ompi_op_base_component_1_0_0_t {
     /** Component initialization function */
     ompi_op_base_component_init_query_fn_t opc_init_query;
     /** Query whether component is usable for given op */
-    ompi_op_base_component_op_query_1_0_0_fn_t opc_op_query;
-} ompi_op_base_component_1_0_0_t;
+    ompi_op_base_component_op_query_2_0_0_fn_t opc_op_query;
+} ompi_op_base_component_2_0_0_t;
 
 
 /** Per guidance in mca.h, use the unversioned struct name if you just
     want to always keep up with the most recent version of the
     interface. */
-typedef struct ompi_op_base_component_1_0_0_t ompi_op_base_component_t;
+typedef struct ompi_op_base_component_2_0_0_t ompi_op_base_component_t;
 
 /**
  * Module initialization function.  Should return OPAL_SUCCESS if
@@ -357,20 +359,20 @@ typedef struct ompi_op_base_component_1_0_0_t ompi_op_base_component_t;
  * if the module doesn't need to do anything between the component
  * query function and being invoked for MPI_Op operations.
  */
-typedef int (*ompi_op_base_module_enable_1_0_0_fn_t)
-    (struct ompi_op_base_module_1_0_0_t *module,
+typedef int (*ompi_op_base_module_enable_2_0_0_fn_t)
+    (struct ompi_op_base_module_2_0_0_t *module,
      struct ompi_op_t *op);
 
 /**
  * Module struct
  */
-typedef struct ompi_op_base_module_1_0_0_t {
+typedef struct ompi_op_base_module_2_0_0_t {
     /** Op modules all inherit from opal_object */
     opal_object_t super;
 
     /** Enable function called when an op module is (possibly) going
         to be used for the given MPI_Op */
-    ompi_op_base_module_enable_1_0_0_fn_t opm_enable;
+    ompi_op_base_module_enable_2_0_0_fn_t opm_enable;
 
     /** Just for reference -- a pointer to the MPI_Op that this module
         is being used for */
@@ -378,9 +380,9 @@ typedef struct ompi_op_base_module_1_0_0_t {
 
     /** Function pointers for all the different datatypes to be used
         with the MPI_Op that this module is used with */
-    ompi_op_base_handler_fn_1_0_0_t opm_fns[OMPI_OP_BASE_TYPE_MAX];
-    ompi_op_base_3buff_handler_fn_1_0_0_t opm_3buff_fns[OMPI_OP_BASE_TYPE_MAX];
-} ompi_op_base_module_1_0_0_t;
+    ompi_op_base_handler_fn_2_0_0_t opm_fns[OMPI_OP_BASE_TYPE_MAX];
+    ompi_op_base_3buff_handler_fn_2_0_0_t opm_3buff_fns[OMPI_OP_BASE_TYPE_MAX];
+} ompi_op_base_module_2_0_0_t;
 
 /**
  * Declare the module as a class, unversioned
@@ -390,37 +392,37 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_op_base_module_t);
 /**
  * Declare the module as a class, unversioned
  */
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_op_base_module_1_0_0_t);
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_op_base_module_2_0_0_t);
 
 /**
  * Struct that is used in op.h to hold all the function pointers and
  * pointers to the corresopnding modules (so that we can properly
  * RETAIN/RELEASE them)
  */
-typedef struct ompi_op_base_op_fns_1_0_0_t {
-    ompi_op_base_handler_fn_1_0_0_t fns[OMPI_OP_BASE_TYPE_MAX];
+typedef struct ompi_op_base_op_fns_2_0_0_t {
+    ompi_op_base_handler_fn_2_0_0_t fns[OMPI_OP_BASE_TYPE_MAX];
     ompi_op_base_module_t *modules[OMPI_OP_BASE_TYPE_MAX];
-} ompi_op_base_op_fns_1_0_0_t;
+} ompi_op_base_op_fns_2_0_0_t;
 
-typedef ompi_op_base_op_fns_1_0_0_t ompi_op_base_op_fns_t;
+typedef ompi_op_base_op_fns_2_0_0_t ompi_op_base_op_fns_t;
 
 /**
  * Struct that is used in op.h to hold all the function pointers and
  * pointers to the corresopnding modules (so that we can properly
  * RETAIN/RELEASE them)
  */
-typedef struct ompi_op_base_op_3buff_fns_1_0_0_t {
-    ompi_op_base_3buff_handler_fn_1_0_0_t fns[OMPI_OP_BASE_TYPE_MAX];
+typedef struct ompi_op_base_op_3buff_fns_2_0_0_t {
+    ompi_op_base_3buff_handler_fn_2_0_0_t fns[OMPI_OP_BASE_TYPE_MAX];
     ompi_op_base_module_t *modules[OMPI_OP_BASE_TYPE_MAX];
-} ompi_op_base_op_3buff_fns_1_0_0_t;
+} ompi_op_base_op_3buff_fns_2_0_0_t;
 
-typedef ompi_op_base_op_3buff_fns_1_0_0_t ompi_op_base_op_3buff_fns_t;
+typedef ompi_op_base_op_3buff_fns_2_0_0_t ompi_op_base_op_3buff_fns_t;
 
 /*
  * Macro for use in modules that are of type op v2.0.0
  */
-#define OMPI_OP_BASE_VERSION_1_0_0 \
-    OMPI_MCA_BASE_VERSION_2_1_0("op", 1, 0, 0)
+#define OMPI_OP_BASE_VERSION_2_0_0 \
+    OMPI_MCA_BASE_VERSION_2_1_0("op", 2, 0, 0)
 
 END_C_DECLS
 

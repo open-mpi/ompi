@@ -4,6 +4,8 @@
  *                         reserved.
  * Copyright (c) 2019      Arm Ltd.  All rights reserved.
  * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2025      Triad National Security, LLC. All rights
+ *                         reserved.
  *
  * $COPYRIGHT$
  *
@@ -31,7 +33,7 @@ BEGIN_C_DECLS
  */
 typedef struct {
     /** The base op component struct */
-    ompi_op_base_component_1_0_0_t super;
+    ompi_op_base_component_2_0_0_t super;
 
     /* What follows is aarch64-component-specific cached information.  We
        tend to use this scheme (caching information on the aarch64

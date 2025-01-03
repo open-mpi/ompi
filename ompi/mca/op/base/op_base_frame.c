@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2025      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -46,7 +48,7 @@ static void module_constructor(ompi_op_base_module_t *m)
     memset(&(m->opm_3buff_fns), 0, sizeof(m->opm_3buff_fns));
 }
 
-static void module_constructor_1_0_0(ompi_op_base_module_1_0_0_t *m)
+static void module_constructor_2_0_0(ompi_op_base_module_2_0_0_t *m)
 {
     m->opm_enable = NULL;
     m->opm_op = NULL;
@@ -56,8 +58,8 @@ static void module_constructor_1_0_0(ompi_op_base_module_1_0_0_t *m)
 
 OBJ_CLASS_INSTANCE(ompi_op_base_module_t, opal_object_t,
                    module_constructor, NULL);
-OBJ_CLASS_INSTANCE(ompi_op_base_module_1_0_0_t, opal_object_t,
-                   module_constructor_1_0_0, NULL);
+OBJ_CLASS_INSTANCE(ompi_op_base_module_2_0_0_t, opal_object_t,
+                   module_constructor_2_0_0, NULL);
 
 MCA_BASE_FRAMEWORK_DECLARE(ompi, op, NULL, NULL, NULL, NULL,
                            mca_op_base_static_components, 0);

@@ -5,6 +5,8 @@
  * Copyright (c) 2020      Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2021      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2025      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -32,7 +34,7 @@ static int avx_component_open(void);
 static int avx_component_close(void);
 static int avx_component_init_query(bool enable_progress_threads,
                                     bool enable_mpi_thread_multiple);
-static struct ompi_op_base_module_1_0_0_t *
+static struct ompi_op_base_module_2_0_0_t *
     avx_component_op_query(struct ompi_op_t *op, int *priority);
 static int avx_component_register(void);
 
@@ -131,7 +133,7 @@ static uint32_t has_intel_AVX_features(void)
 ompi_op_avx_component_t mca_op_avx_component = {
     {
         .opc_version = {
-            OMPI_OP_BASE_VERSION_1_0_0,
+            OMPI_OP_BASE_VERSION_2_0_0,
 
             .mca_component_name = "avx",
             MCA_BASE_MAKE_VERSION(component, OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION,
@@ -250,7 +252,7 @@ avx_component_init_query(bool enable_progress_threads,
 /*
  * Query whether this component can be used for a specific op
  */
-static struct ompi_op_base_module_1_0_0_t*
+static struct ompi_op_base_module_2_0_0_t*
 avx_component_op_query(struct ompi_op_t *op, int *priority)
 {
     ompi_op_base_module_t *module = NULL;
@@ -325,5 +327,5 @@ avx_component_op_query(struct ompi_op_t *op, int *priority)
     if (NULL != module) {
         *priority = 50;
     }
-    return (ompi_op_base_module_1_0_0_t *) module;
+    return (ompi_op_base_module_2_0_0_t *) module;
 }

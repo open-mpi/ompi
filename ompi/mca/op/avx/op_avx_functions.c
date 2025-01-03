@@ -4,6 +4,8 @@
  *                         reserved.
  * Copyright (c) 2020      Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
+ * Copyright (c) 2025      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -189,7 +191,7 @@
 #if __AVX512F__
 #define OP_AVX_AVX512_FUNC(name, type_sign, type_size, type, op)               \
     if( OMPI_OP_AVX_HAS_FLAGS(OMPI_OP_AVX_HAS_AVX512F_FLAG|OMPI_OP_AVX_HAS_AVX512BW_FLAG) ) { \
-        int types_per_step = (512 / 8) / sizeof(type);                         \
+        size_t types_per_step = (512 / 8) / sizeof(type);                      \
         for( ; left_over >= types_per_step; left_over -= types_per_step ) {    \
             __m512i vecA = _mm512_loadu_si512((__m512*)in);                    \
             in += types_per_step;                                              \
@@ -211,7 +213,7 @@
 #if __AVX__
 #define OP_AVX_AVX2_FUNC(name, type_sign, type_size, type, op)                 \
     if( OMPI_OP_AVX_HAS_FLAGS(OMPI_OP_AVX_HAS_AVX2_FLAG | OMPI_OP_AVX_HAS_AVX_FLAG) ) {  \
-        int types_per_step = (256 / 8) / sizeof(type);  /* AVX2 */             \
+        size_t types_per_step = (256 / 8) / sizeof(type);  /* AVX2 */          \
         for( ; left_over >= types_per_step; left_over -= types_per_step ) {    \
             __m256i vecA = _mm256_loadu_si256((__m256i*)in);                   \
             in += types_per_step;                                              \
@@ -233,7 +235,7 @@
 #if __SSE3__
 #define OP_AVX_SSE4_1_FUNC(name, type_sign, type_size, type, op)               \
     if( OMPI_OP_AVX_HAS_FLAGS(OMPI_OP_AVX_HAS_SSE3_FLAG | OMPI_OP_AVX_HAS_SSE4_1_FLAG) ) { \
-        int types_per_step = (128 / 8) / sizeof(type);                         \
+        size_t types_per_step = (128 / 8) / sizeof(type);                      \
         for( ; left_over >= types_per_step; left_over -= types_per_step ) {    \
             __m128i vecA = _mm_lddqu_si128((__m128i*)in);                      \
             in += types_per_step;                                              \
@@ -251,17 +253,17 @@
 #endif  /* defined(OMPI_MCA_OP_HAVE_AVX) && (1 == OMPI_MCA_OP_HAVE_AVX) */
 
 #define OP_AVX_FUNC(name, type_sign, type_size, type, op)                      \
-static void OP_CONCAT(ompi_op_avx_2buff_##name##_##type,PREPEND)(const void *_in, void *_out, int *count, \
+static void OP_CONCAT(ompi_op_avx_2buff_##name##_##type,PREPEND)(const void *_in, void *_out, size_t *count, \
                                                                  struct ompi_datatype_t **dtype, \
-                                                                 struct ompi_op_base_module_1_0_0_t *module) \
+                                                                 struct ompi_op_base_module_2_0_0_t *module) \
 {                                                                              \
-    int left_over = *count;                                                    \
+    size_t left_over = *count;                                                 \
     type *in = (type*)_in, *out = (type*)_out;                                 \
     OP_AVX_AVX512_FUNC(name, type_sign, type_size, type, op);                  \
     OP_AVX_AVX2_FUNC(name, type_sign, type_size, type, op);                    \
     OP_AVX_SSE4_1_FUNC(name, type_sign, type_size, type, op);                  \
     while( left_over > 0 ) {                                                   \
-        int how_much = (left_over > 8) ? 8 : left_over;                        \
+        size_t how_much = (left_over > 8) ? 8 : left_over;                     \
         switch(how_much) {                                                     \
         case 8: out[7] = current_func(out[7], in[7]);                          \
         case 7: out[6] = current_func(out[6], in[6]);                          \
@@ -282,7 +284,7 @@ static void OP_CONCAT(ompi_op_avx_2buff_##name##_##type,PREPEND)(const void *_in
 #if __AVX512BW__ && __AVX__
 #define OP_AVX_AVX512_MUL(name, type_sign, type_size, type, op)         \
     if( OMPI_OP_AVX_HAS_FLAGS(OMPI_OP_AVX_HAS_AVX512F_FLAG | OMPI_OP_AVX_HAS_AVX512BW_FLAG) ) {  \
-        int types_per_step = (256 / 8) / sizeof(type);                  \
+        size_t types_per_step = (256 / 8) / sizeof(type);                  \
         for (; left_over >= types_per_step; left_over -= types_per_step) { \
             __m256i vecA_tmp = _mm256_loadu_si256((__m256i*)in);        \
             __m256i vecB_tmp = _mm256_loadu_si256((__m256i*)out);       \
@@ -309,15 +311,15 @@ static void OP_CONCAT(ompi_op_avx_2buff_##name##_##type,PREPEND)(const void *_in
 
 /* special case for int8 mul */
 #define OP_AVX_MUL(name, type_sign, type_size, type, op)                \
-static void OP_CONCAT( ompi_op_avx_2buff_##name##_##type, PREPEND)(const void *_in, void *_out, int *count, \
+static void OP_CONCAT( ompi_op_avx_2buff_##name##_##type, PREPEND)(const void *_in, void *_out, size_t *count, \
                                                                    struct ompi_datatype_t **dtype, \
-                                                                   struct ompi_op_base_module_1_0_0_t *module) \
+                                                                   struct ompi_op_base_module_2_0_0_t *module) \
 {                                                                       \
-    int left_over = *count;                                             \
+    size_t left_over = *count;                                          \
     type *in = (type*)_in, *out = (type*)_out;                          \
     OP_AVX_AVX512_MUL(name, type_sign, type_size, type, op);            \
     while( left_over > 0 ) {                                            \
-        int how_much = (left_over > 8) ? 8 : left_over;                 \
+        size_t how_much = (left_over > 8) ? 8 : left_over;              \
         switch(how_much) {                                              \
         case 8: out[7] = current_func(out[7], in[7]);                   \
         case 7: out[6] = current_func(out[6], in[6]);                   \
@@ -406,17 +408,17 @@ static void OP_CONCAT( ompi_op_avx_2buff_##name##_##type, PREPEND)(const void *_
 #endif  /* defined(OMPI_MCA_OP_HAVE_AVX) && (1 == OMPI_MCA_OP_HAVE_AVX) */
 
 #define OP_AVX_BIT_FUNC(name, type_size, type, op)                      \
-static void OP_CONCAT(ompi_op_avx_2buff_##name##_##type,PREPEND)(const void *_in, void *_out, int *count, \
+static void OP_CONCAT(ompi_op_avx_2buff_##name##_##type,PREPEND)(const void *_in, void *_out, size_t *count, \
                                                        struct ompi_datatype_t **dtype, \
-                                                       struct ompi_op_base_module_1_0_0_t *module) \
+                                                       struct ompi_op_base_module_2_0_0_t *module) \
 {                                                                       \
-    int types_per_step, left_over = *count;                             \
+    size_t types_per_step, left_over = *count;                          \
     type *in = (type*)_in, *out = (type*)_out;                          \
     OP_AVX_AVX512_BIT_FUNC(name, type_size, type, op);                  \
     OP_AVX_AVX2_BIT_FUNC(name, type_size, type, op);                    \
     OP_AVX_SSE3_BIT_FUNC(name, type_size, type, op);                    \
     while( left_over > 0 ) {                                            \
-        int how_much = (left_over > 8) ? 8 : left_over;                 \
+        size_t how_much = (left_over > 8) ? 8 : left_over;              \
         switch(how_much) {                                              \
         case 8: out[7] = current_func(out[7], in[7]);                   \
         case 7: out[6] = current_func(out[6], in[6]);                   \
@@ -499,17 +501,18 @@ static void OP_CONCAT(ompi_op_avx_2buff_##name##_##type,PREPEND)(const void *_in
 #endif  /* defined(OMPI_MCA_OP_HAVE_AVX) && (1 == OMPI_MCA_OP_HAVE_AVX) */
 
 #define OP_AVX_FLOAT_FUNC(op) \
-static void OP_CONCAT(ompi_op_avx_2buff_##op##_float,PREPEND)(const void *_in, void *_out, int *count, \
+static void OP_CONCAT(ompi_op_avx_2buff_##op##_float,PREPEND)(const void *_in, void *_out, size_t *count, \
                                                               struct ompi_datatype_t **dtype, \
-                                                              struct ompi_op_base_module_1_0_0_t *module) \
+                                                              struct ompi_op_base_module_2_0_0_t *module) \
 {                                                                       \
-    int types_per_step, left_over = *count;                             \
+    size_t types_per_step;                                              \
+    size_t left_over = *count;                                          \
     float *in = (float*)_in, *out = (float*)_out;                       \
     OP_AVX_AVX512_FLOAT_FUNC(op);                                       \
     OP_AVX_AVX_FLOAT_FUNC(op);                                          \
     OP_AVX_SSE_FLOAT_FUNC(op);                                          \
     while( left_over > 0 ) {                                            \
-        int how_much = (left_over > 8) ? 8 : left_over;                 \
+        size_t how_much = (left_over > 8) ? 8 : left_over;              \
         switch(how_much) {                                              \
         case 8: out[7] = current_func(out[7], in[7]);                   \
         case 7: out[6] = current_func(out[6], in[6]);                   \
@@ -592,19 +595,19 @@ static void OP_CONCAT(ompi_op_avx_2buff_##op##_float,PREPEND)(const void *_in, v
 #endif  /* defined(OMPI_MCA_OP_HAVE_AVX) && (1 == OMPI_MCA_OP_HAVE_AVX) */
 
 #define OP_AVX_DOUBLE_FUNC(op) \
-static void OP_CONCAT(ompi_op_avx_2buff_##op##_double,PREPEND)(const void *_in, void *_out, int *count, \
+static void OP_CONCAT(ompi_op_avx_2buff_##op##_double,PREPEND)(const void *_in, void *_out, size_t *count, \
                                                                struct ompi_datatype_t **dtype, \
-                                                               struct ompi_op_base_module_1_0_0_t *module) \
+                                                               struct ompi_op_base_module_2_0_0_t *module) \
 {                                                                       \
-    int types_per_step = (512 / 8)  / sizeof(double);                   \
-    int left_over = *count;                                             \
+    size_t types_per_step = (512 / 8)  / sizeof(double);                \
+    size_t left_over = *count;                                          \
     double* in = (double*)_in;                                          \
     double* out = (double*)_out;                                        \
     OP_AVX_AVX512_DOUBLE_FUNC(op);                                      \
     OP_AVX_AVX_DOUBLE_FUNC(op);                                         \
     OP_AVX_SSE2_DOUBLE_FUNC(op);                                        \
     while( left_over > 0 ) {                                            \
-        int how_much = (left_over > 8) ? 8 : left_over;                 \
+        size_t how_much = (left_over > 8) ? 8 : left_over;              \
         switch(how_much) {                                              \
         case 8: out[7] = current_func(out[7], in[7]);                   \
         case 7: out[6] = current_func(out[6], in[6]);                   \
@@ -759,7 +762,7 @@ static void OP_CONCAT(ompi_op_avx_2buff_##op##_double,PREPEND)(const void *_in, 
 #if __AVX512F__
 #define OP_AVX_AVX512_FUNC_3(name, type_sign, type_size, type, op)      \
     if( OMPI_OP_AVX_HAS_FLAGS(OMPI_OP_AVX_HAS_AVX512F_FLAG|OMPI_OP_AVX_HAS_AVX512BW_FLAG) ) {   \
-        int types_per_step = (512 / 8) / sizeof(type);                  \
+        size_t types_per_step = (512 / 8) / sizeof(type);                  \
         for (; left_over >= types_per_step; left_over -= types_per_step) { \
             __m512i vecA = _mm512_loadu_si512(in1);                     \
             __m512i vecB = _mm512_loadu_si512(in2);                     \
@@ -782,7 +785,7 @@ static void OP_CONCAT(ompi_op_avx_2buff_##op##_double,PREPEND)(const void *_in, 
 #if __AVX__
 #define OP_AVX_AVX2_FUNC_3(name, type_sign, type_size, type, op)        \
     if( OMPI_OP_AVX_HAS_FLAGS(OMPI_OP_AVX_HAS_AVX2_FLAG | OMPI_OP_AVX_HAS_AVX_FLAG) ) { \
-        int types_per_step = (256 / 8) / sizeof(type);                  \
+        size_t types_per_step = (256 / 8) / sizeof(type);               \
         for( ; left_over >= types_per_step; left_over -= types_per_step ) { \
             __m256i vecA = _mm256_loadu_si256((__m256i*)in1);           \
             __m256i vecB = _mm256_loadu_si256((__m256i*)in2);           \
@@ -805,7 +808,7 @@ static void OP_CONCAT(ompi_op_avx_2buff_##op##_double,PREPEND)(const void *_in, 
 #if __SSE3__ && __SSE2__
 #define OP_AVX_SSE4_1_FUNC_3(name, type_sign, type_size, type, op)      \
     if( OMPI_OP_AVX_HAS_FLAGS(OMPI_OP_AVX_HAS_SSE3_FLAG | OMPI_OP_AVX_HAS_SSE4_1_FLAG) ) {       \
-        int types_per_step = (128 / 8) / sizeof(type);                  \
+        size_t types_per_step = (128 / 8) / sizeof(type);                  \
         for( ; left_over >= types_per_step; left_over -= types_per_step ) { \
             __m128i vecA = _mm_lddqu_si128((__m128i*)in1);              \
             __m128i vecB = _mm_lddqu_si128((__m128i*)in2);              \
@@ -826,17 +829,17 @@ static void OP_CONCAT(ompi_op_avx_2buff_##op##_double,PREPEND)(const void *_in, 
 #define OP_AVX_FUNC_3(name, type_sign, type_size, type, op)               \
 static void OP_CONCAT(ompi_op_avx_3buff_##name##_##type,PREPEND)(const void * restrict _in1, \
                                                                  const void * restrict _in2, \
-                                                                 void * restrict _out, int *count, \
+                                                                 void * restrict _out, size_t *count, \
                                                                  struct ompi_datatype_t **dtype, \
-                                                                 struct ompi_op_base_module_1_0_0_t *module) \
+                                                                 struct ompi_op_base_module_2_0_0_t *module) \
 {                                                                       \
     type *in1 = (type*)_in1, *in2 = (type*)_in2, *out = (type*)_out;    \
-    int left_over = *count;                                             \
+    size_t left_over = *count;                                          \
     OP_AVX_AVX512_FUNC_3(name, type_sign, type_size, type, op);         \
     OP_AVX_AVX2_FUNC_3(name, type_sign, type_size, type, op);           \
     OP_AVX_SSE4_1_FUNC_3(name, type_sign, type_size, type, op);         \
     while( left_over > 0 ) {                                            \
-        int how_much = (left_over > 8) ? 8 : left_over;                 \
+        size_t how_much = (left_over > 8) ? 8 : left_over;              \
         switch(how_much) {                                              \
         case 8: out[7] = current_func(in1[7], in2[7]);                  \
         case 7: out[6] = current_func(in1[6], in2[6]);                  \
@@ -858,7 +861,7 @@ static void OP_CONCAT(ompi_op_avx_3buff_##name##_##type,PREPEND)(const void * re
 #if __AVX512BW__ && __AVX__
 #define OP_AVX_AVX512_MUL_3(name, type_sign, type_size, type, op)       \
     if( OMPI_OP_AVX_HAS_FLAGS(OMPI_OP_AVX_HAS_AVX512F_FLAG | OMPI_OP_AVX_HAS_AVX512BW_FLAG) ) { \
-        int types_per_step = (256 / 8) / sizeof(type);                  \
+        size_t types_per_step = (256 / 8) / sizeof(type);               \
         for (; left_over >= types_per_step; left_over -= types_per_step) { \
             __m256i vecA_tmp = _mm256_loadu_si256((__m256i*)in1);       \
             __m256i vecB_tmp = _mm256_loadu_si256((__m256i*)in2);       \
@@ -888,15 +891,15 @@ static void OP_CONCAT(ompi_op_avx_3buff_##name##_##type,PREPEND)(const void * re
 #define OP_AVX_MUL_3(name, type_sign, type_size, type, op)              \
 static void OP_CONCAT(ompi_op_avx_3buff_##name##_##type,PREPEND)(const void * restrict _in1, \
                                                                  const void * restrict _in2, \
-                                                                 void * restrict _out, int *count, \
+                                                                 void * restrict _out, size_t *count, \
                                                                  struct ompi_datatype_t **dtype, \
-                                                                 struct ompi_op_base_module_1_0_0_t *module) \
+                                                                 struct ompi_op_base_module_2_0_0_t *module) \
 {                                                                       \
     type *in1 = (type*)_in1, *in2 = (type*)_in2, *out = (type*)_out;    \
-    int left_over = *count;                                             \
+    size_t left_over = *count;                                          \
     OP_AVX_AVX512_MUL_3(name, type_sign, type_size, type, op);          \
     while( left_over > 0 ) {                                            \
-        int how_much = (left_over > 8) ? 8 : left_over;                 \
+        size_t how_much = (left_over > 8) ? 8 : left_over;              \
         switch(how_much) {                                              \
         case 8: out[7] = current_func(in1[7], in2[7]);                  \
         case 7: out[6] = current_func(in1[6], in2[6]);                  \
@@ -984,17 +987,17 @@ static void OP_CONCAT(ompi_op_avx_3buff_##name##_##type,PREPEND)(const void * re
 
 #define OP_AVX_BIT_FUNC_3(name, type_size, type, op)                    \
 static void OP_CONCAT(ompi_op_avx_3buff_##op##_##type,PREPEND)(const void *_in1, const void *_in2, \
-                                                               void *_out, int *count, \
+                                                               void *_out, size_t *count, \
                                                                struct ompi_datatype_t **dtype, \
-                                                               struct ompi_op_base_module_1_0_0_t *module) \
+                                                               struct ompi_op_base_module_2_0_0_t *module) \
 {                                                                       \
-    int types_per_step, left_over = *count;                             \
+    size_t types_per_step, left_over = *count;                          \
     type *in1 = (type*)_in1, *in2 = (type*)_in2, *out = (type*)_out;    \
     OP_AVX_AVX512_BIT_FUNC_3(name, type_size, type, op);                \
     OP_AVX_AVX2_BIT_FUNC_3(name, type_size, type, op);                  \
     OP_AVX_SSE3_BIT_FUNC_3(name, type_size, type, op);                  \
     while( left_over > 0 ) {                                            \
-        int how_much = (left_over > 8) ? 8 : left_over;                 \
+        size_t how_much = (left_over > 8) ? 8 : left_over;              \
         switch(how_much) {                                              \
         case 8: out[7] = current_func(in1[7], in2[7]);                  \
         case 7: out[6] = current_func(in1[6], in2[6]);                  \
@@ -1082,17 +1085,17 @@ static void OP_CONCAT(ompi_op_avx_3buff_##op##_##type,PREPEND)(const void *_in1,
 
 #define OP_AVX_FLOAT_FUNC_3(op)                                         \
 static void OP_CONCAT(ompi_op_avx_3buff_##op##_float,PREPEND)(const void *_in1, const void *_in2, \
-                                                              void *_out, int *count, \
+                                                              void *_out, size_t *count, \
                                                               struct ompi_datatype_t **dtype, \
-                                                              struct ompi_op_base_module_1_0_0_t *module) \
+                                                              struct ompi_op_base_module_2_0_0_t *module) \
 {                                                                       \
-    int types_per_step, left_over = *count;                             \
+    size_t types_per_step, left_over = *count;                          \
     float *in1 = (float*)_in1, *in2 = (float*)_in2, *out = (float*)_out; \
     OP_AVX_AVX512_FLOAT_FUNC_3(op);                                     \
     OP_AVX_AVX_FLOAT_FUNC_3(op);                                        \
     OP_AVX_SSE_FLOAT_FUNC_3(op);                                        \
     while( left_over > 0 ) {                                            \
-        int how_much = (left_over > 8) ? 8 : left_over;                 \
+        size_t how_much = (left_over > 8) ? 8 : left_over;              \
         switch(how_much) {                                              \
         case 8: out[7] = current_func(in1[7], in2[7]);                  \
         case 7: out[6] = current_func(in1[6], in2[6]);                  \
@@ -1180,17 +1183,17 @@ static void OP_CONCAT(ompi_op_avx_3buff_##op##_float,PREPEND)(const void *_in1, 
 
 #define OP_AVX_DOUBLE_FUNC_3(op)                                        \
 static void OP_CONCAT(ompi_op_avx_3buff_##op##_double,PREPEND)(const void *_in1, const void *_in2, \
-                                                               void *_out, int *count, \
+                                                               void *_out, size_t *count, \
                                                                struct ompi_datatype_t **dtype, \
-                                                               struct ompi_op_base_module_1_0_0_t *module) \
+                                                               struct ompi_op_base_module_2_0_0_t *module) \
 {                                                                       \
-    int types_per_step, left_over = *count;                             \
+    size_t types_per_step, left_over = *count;                          \
     double *in1 = (double*)_in1, *in2 = (double*)_in2, *out = (double*)_out; \
     OP_AVX_AVX512_DOUBLE_FUNC_3(op);                                    \
     OP_AVX_AVX_DOUBLE_FUNC_3(op);                                       \
     OP_AVX_SSE2_DOUBLE_FUNC_3(op);                                      \
     while( left_over > 0 ) {                                            \
-        int how_much = (left_over > 8) ? 8 : left_over;                 \
+        size_t how_much = (left_over > 8) ? 8 : left_over;              \
         switch(how_much) {                                              \
         case 8: out[7] = current_func(in1[7], in2[7]);                  \
         case 7: out[6] = current_func(in1[6], in2[6]);                  \

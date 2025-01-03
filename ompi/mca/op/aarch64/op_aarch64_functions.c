@@ -6,6 +6,8 @@
  * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2024      Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
+ * Copyright (c) 2025      Triad National Security, LLC. All rights
+ *                         reserved.
  *
  * $COPYRIGHT$
  *
@@ -114,11 +116,11 @@ _Generic((*(out)), \
 #if defined(GENERATE_NEON_CODE)
 #define OP_AARCH64_FUNC(name, type_name, type_size, type_cnt, type, op)                       \
     static void OP_CONCAT(ompi_op_aarch64_2buff_##name##_##type##type_size##_t,               \
-                          APPEND)(const void *_in, void *_out, int *count,                    \
+                          APPEND)(const void *_in, void *_out, size_t *count,                 \
                                   struct ompi_datatype_t **dtype,                             \
-                                  struct ompi_op_base_module_1_0_0_t *module)                 \
+                                  struct ompi_op_base_module_2_0_0_t *module)                 \
     {                                                                                         \
-        int left_over = *count;                                                               \
+        size_t left_over = *count;                                                               \
         type##type_size##_t *in = (type##type_size##_t *) _in,                                \
                             *out = (type##type_size##_t *) _out;                              \
         OP_CONCAT(OMPI_OP_TYPE_PREPEND, type##type_size##x##type_cnt##_t) vsrc, vdst;         \
@@ -138,12 +140,12 @@ _Generic((*(out)), \
 #elif defined(GENERATE_SVE_CODE)
 #define OP_AARCH64_FUNC(name, type_name, type_size, type_cnt, type, op)           \
     static void OP_CONCAT(ompi_op_aarch64_2buff_##name##_##type##type_size##_t, APPEND) \
-                            (const void *_in, void *_out, int *count,             \
+                            (const void *_in, void *_out, size_t *count,             \
                              struct ompi_datatype_t **dtype,                      \
-                             struct ompi_op_base_module_1_0_0_t *module)          \
+                             struct ompi_op_base_module_2_0_0_t *module)          \
     {                                                                             \
         const int types_per_step = svcnt(*((type##type_size##_t *) _in));         \
-        const int cnt = *count;                                                   \
+        const size_t cnt = *count;                                                   \
         type##type_size##_t *in = (type##type_size##_t *) _in,                    \
                             *out = (type##type_size##_t *) _out;                  \
         OP_CONCAT(OMPI_OP_TYPE_PREPEND, type##type_size##_t) vsrc, vdst;          \
@@ -279,11 +281,11 @@ _Generic((*(out)), \
 #if defined(GENERATE_NEON_CODE)
 #define OP_AARCH64_FUNC_3BUFF(name, type_name, type_size, type_cnt, type, op)                 \
 static void OP_CONCAT(ompi_op_aarch64_3buff_##name##_##type##type_size##_t, APPEND)       \
-                             (const void *_in1, const void *_in2, void *_out, int *count, \
+                             (const void *_in1, const void *_in2, void *_out, size_t *count, \
                               struct ompi_datatype_t **dtype,                             \
-                              struct ompi_op_base_module_1_0_0_t *module)                 \
+                              struct ompi_op_base_module_2_0_0_t *module)                 \
 {                                                                                         \
-    int left_over = *count;                                                               \
+    size_t left_over = *count;                                                               \
     type##type_size##_t *in1 = (type##type_size##_t *) _in1,                              \
                         *in2 = (type##type_size##_t *) _in2,                              \
                         *out = (type##type_size##_t *) _out;                              \
@@ -304,17 +306,17 @@ static void OP_CONCAT(ompi_op_aarch64_3buff_##name##_##type##type_size##_t, APPE
 #elif defined(GENERATE_SVE_CODE)
 #define OP_AARCH64_FUNC_3BUFF(name, type_name, type_size, type_cnt, type, op)             \
 static void OP_CONCAT(ompi_op_aarch64_3buff_##name##_##type##type_size##_t, APPEND)       \
-                             (const void *_in1, const void *_in2, void *_out, int *count, \
+                             (const void *_in1, const void *_in2, void *_out, size_t *count, \
                               struct ompi_datatype_t **dtype,                             \
-                              struct ompi_op_base_module_1_0_0_t *module)                 \
+                              struct ompi_op_base_module_2_0_0_t *module)                 \
 {                                                                                         \
     const int types_per_step = svcnt(*((type##type_size##_t *) _in1));                    \
     type##type_size##_t *in1 = (type##type_size##_t *) _in1,                              \
                         *in2 = (type##type_size##_t *) _in2,                              \
                         *out = (type##type_size##_t *) _out;                              \
-    const int cnt = *count;                                                               \
+    const size_t cnt = *count;                                                               \
     OP_CONCAT(OMPI_OP_TYPE_PREPEND, type##type_size##_t) vsrc, vdst;                      \
-    for (int idx=0; idx < cnt; idx += types_per_step) {                                   \
+    for (size_t idx=0; idx < cnt; idx += types_per_step) {                                   \
         svbool_t pred = svwhilelt_b##type_size(idx, cnt);                                 \
         vsrc = svld1(pred, &in1[idx]);                                                    \
         vdst = svld1(pred, &in2[idx]);                                                    \

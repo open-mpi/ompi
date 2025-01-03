@@ -2,6 +2,8 @@
  * Copyright (c) 2019-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2025      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -37,7 +39,7 @@ BEGIN_C_DECLS
  */
 typedef struct {
     /** The base op component struct */
-    ompi_op_base_component_1_0_0_t super;
+    ompi_op_base_component_2_0_0_t super;
 
     /* What follows is avx-component-specific cached information.  We
        tend to use this scheme (caching information on the avx
