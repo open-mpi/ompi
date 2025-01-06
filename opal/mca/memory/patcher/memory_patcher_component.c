@@ -16,6 +16,7 @@
  * Copyright (c) 2016-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2020 IBM Corporation.  All rights reserved.
+ * Copyright (c) 2025      Triad National Security, LLC. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -73,6 +74,7 @@ static int patcher_register(void);
 static int patcher_query(int *);
 
 static int mca_memory_patcher_priority;
+static int was_executed_already = 0;
 
 opal_memory_patcher_component_t mca_memory_patcher_component = {
     .super =
@@ -585,7 +587,6 @@ static int patcher_query(int *priority)
 
 static int patcher_open(void)
 {
-    static int was_executed_already = 0;
     int rc;
 
     if (was_executed_already) {
@@ -677,6 +678,8 @@ err_patching:
 static int patcher_close(void)
 {
     mca_base_framework_close(&opal_patcher_base_framework);
+
+    was_executed_already = 0;
 
     /* Note that we don't need to unpatch any symbols here; the
        patcher framework will take care of all of that for us. */
