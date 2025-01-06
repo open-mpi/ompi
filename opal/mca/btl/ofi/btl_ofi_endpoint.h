@@ -15,6 +15,8 @@
  * Copyright (c) 2018      Intel, Inc, All rights reserved
  * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
+ * Copyright (c) 2025      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -32,10 +34,6 @@
 
 BEGIN_C_DECLS
 
-#if OPAL_HAVE_THREAD_LOCAL
-extern opal_thread_local mca_btl_ofi_context_t *my_context;
-#endif /* OPAL_HAVE_THREAD_LOCAL */
-
 struct mca_btl_base_endpoint_t {
     opal_list_item_t super;
 
@@ -52,8 +50,6 @@ struct mca_btl_base_endpoint_t {
 typedef struct mca_btl_base_endpoint_t mca_btl_base_endpoint_t;
 typedef mca_btl_base_endpoint_t mca_btl_ofi_endpoint_t;
 OBJ_CLASS_DECLARATION(mca_btl_ofi_endpoint_t);
-
-int init_context_freelists(mca_btl_ofi_context_t *context);
 
 mca_btl_base_endpoint_t *mca_btl_ofi_endpoint_create(opal_proc_t *proc, struct fid_ep *ep);
 

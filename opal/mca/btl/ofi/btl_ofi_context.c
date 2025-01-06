@@ -2,6 +2,8 @@
 /*
  * $COPYRIGHT$
  * Copyright (c) 2018      Intel Inc. All rights reserved
+ * Copyright (c) 2025      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -14,10 +16,10 @@
 #include "btl_ofi_rdma.h"
 
 #if OPAL_HAVE_THREAD_LOCAL
-opal_thread_local mca_btl_ofi_context_t *my_context = NULL;
+static opal_thread_local mca_btl_ofi_context_t *my_context = NULL;
 #endif /* OPAL_HAVE_THREAD_LOCAL */
 
-int init_context_freelists(mca_btl_ofi_context_t *context)
+static int init_context_freelists(mca_btl_ofi_context_t *context)
 {
     int rc;
     OBJ_CONSTRUCT(&context->rdma_comp_list, opal_free_list_t);
@@ -113,6 +115,7 @@ mca_btl_ofi_context_t *mca_btl_ofi_context_alloc_normal(struct fi_info *info,
     context->tx_ctx = ep;
     context->rx_ctx = ep;
     context->context_id = 0;
+    my_context = NULL;
 
     return context;
 
