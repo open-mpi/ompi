@@ -110,6 +110,38 @@ mca_coll_xhc_component_t mca_coll_xhc_component = {
     .uniform_chunks = true,
     .uniform_chunks_min = 4096,
 
+#if 0
+    .op_mca[XHC_BCAST] = {
+        .hierarchy = "numa,socket",
+        .chunk_size = "16K",
+        .cico_max = 256
+    },
+
+    .op_mca[XHC_BARRIER] = {
+        .hierarchy = "numa,socket",
+        .chunk_size = "1",
+        .cico_max = 0
+    },
+
+    .op_mca[XHC_REDUCE] = {
+        .hierarchy = "l3,numa,socket",
+        .chunk_size = "16K",
+        .cico_max = 4096
+    },
+
+    .op_mca[XHC_ALLREDUCE] = {
+        .hierarchy = "l3,numa,socket",
+        .chunk_size = "16K",
+        .cico_max = 4096
+    }
+#endif
+};
+
+struct xhc_op_mca_init_values_t {
+   struct xhc_op_mca_t op_mca[XHC_COLLCOUNT];
+};
+
+static struct xhc_op_mca_init_values_t mca_coll_op_mca_init_values = {
     .op_mca[XHC_BCAST] = {
         .hierarchy = "numa,socket",
         .chunk_size = "16K",
@@ -370,6 +402,10 @@ static int xhc_register(void) {
             "consider for the hierarchy (%s), for %s.", topo_list, xhc_colltype_to_str(t));
         if(err < 0) {free(topo_list); free(name); return OMPI_ERR_OUT_OF_RESOURCE;}
 
+        if (mca_coll_op_mca_init_values.op_mca[t].hierarchy != NULL) {
+            mca_coll_xhc_component.op_mca[t].hierarchy = strdup(mca_coll_op_mca_init_values.op_mca[t].hierarchy);
+        }
+
         mca_base_component_var_register(&mca_coll_xhc_component.super.collm_version,
             name, desc, MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_7,
             MCA_BASE_VAR_SCOPE_READONLY, &mca_coll_xhc_component.op_mca[t].hierarchy);
@@ -409,6 +445,12 @@ static int xhc_register(void) {
     mca_base_var_get(vari, &var);
 
     for(int t = 0; t < XHC_COLLCOUNT; t++) {
+        if (mca_coll_op_mca_init_values.op_mca[t].chunk_size != NULL) {
+            mca_coll_xhc_component.op_mca[t].chunk_size = strdup(mca_coll_op_mca_init_values.op_mca[t].chunk_size);
+        }
+    }
+
+    for(int t = 0; t < XHC_COLLCOUNT; t++) {
         if(XHC_BARRIER == t) {
             continue;
         }
@@ -420,6 +462,12 @@ static int xhc_register(void) {
             "value, or comma-separated list for different hierarchy levels "
             "(bottom to top)), for %s.", xhc_colltype_to_str(t));
         if(err < 0) {free(name); return OMPI_ERR_OUT_OF_RESOURCE;}
+
+#if 0
+        if (mca_coll_op_mca_init_values.op_mca[t].chunk_size != NULL) {
+            mca_coll_xhc_component.op_mca[t].chunk_size = strdup(mca_coll_op_mca_init_values.op_mca[t].chunk_size);
+        }
+#endif
 
         mca_base_component_var_register(&mca_coll_xhc_component.super.collm_version,
             name, desc, MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_8,
@@ -455,6 +503,9 @@ static int xhc_register(void) {
     mca_base_var_get(vari, &var);
 
     for(int t = 0; t < XHC_COLLCOUNT; t++) {
+
+        mca_coll_xhc_component.op_mca[t].cico_max = mca_coll_op_mca_init_values.op_mca[t].cico_max;
+
         if(XHC_BARRIER == t) {
             continue;
         }
