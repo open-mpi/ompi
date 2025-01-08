@@ -23,6 +23,9 @@
 #include <pthread.h>
 
 static int _check_perms(const char *perm);
+static int _check_non_static_segment(const map_segment_t *mem_segs,
+                                     int n_segment,
+                                     const void *start, const void *end);
 static int _check_address(void *start, void **end);
 static int _check_pathname(uint64_t inode, const char *pathname);
 
@@ -30,6 +33,7 @@ int mca_memheap_base_static_init(mca_memheap_map_t *map)
 {
     /* read and parse segments from /proc/self/maps */
     int ret = OSHMEM_SUCCESS;
+    int n_segments = map->n_segments;
     uint64_t total_mem = 0;
     void* start;
     void* end;
@@ -52,14 +56,6 @@ int mca_memheap_base_static_init(mca_memheap_map_t *map)
         return OSHMEM_ERROR;
     }
 
-#ifdef __linux__
-    extern unsigned _end;
-    if (mca_sshmem_base_start_address < (uintptr_t)&_end) {
-        MEMHEAP_VERBOSE(1, "sshmem base start address is inside data region"
-                        " (%p < %p)", mca_sshmem_base_start_address, &_end);
-    }
-#endif
-
     while (NULL != fgets(line, sizeof(line), fp)) {
         if (3 > sscanf(line,
                "%llx-%llx %s %llx %s %llx %s",
@@ -73,6 +69,12 @@ int mca_memheap_base_static_init(mca_memheap_map_t *map)
             MEMHEAP_ERROR("Failed to sscanf /proc/self/maps output %s", line);
             ret = OSHMEM_ERROR;
             goto out;
+        }
+
+        if (OSHMEM_ERROR == _check_non_static_segment(
+                                                   map->mem_segs, n_segments,
+                                                   start, end)) {
+            continue;
         }
 
         if (OSHMEM_ERROR == _check_address(start, &end))
@@ -136,6 +138,26 @@ static int _check_perms(const char *perms)
     return OSHMEM_ERROR;
 }
 
+static int _check_non_static_segment(const map_segment_t *mem_segs,
+                                     int n_segment,
+                                     const void *start, const void *end)
+{
+    int i;
+
+    for (i = 0; i < n_segment; i++) {
+        if ((start <= mem_segs[i].super.va_base) &&
+            (mem_segs[i].super.va_base < end)) {
+            MEMHEAP_VERBOSE(100,
+                            "non static segment: %p-%p already exists as %p-%p",
+                            start, end, mem_segs[i].super.va_base,
+                            mem_segs[i].super.va_end);
+            return OSHMEM_ERROR;
+        }
+    }
+
+    return OSHMEM_SUCCESS;
+}
+
 static int _check_address(void *start, void **end)
 {
     /* FIXME Linux specific code */
@@ -146,11 +168,9 @@ static int _check_address(void *start, void **end)
     /**
      * SGI shmem only supports globals&static in main program.
      * It does not support them in shared objects or in dlopen()
-     * (Clarified on PGAS 2011 tutorial)
+     * (Clarified on PGAS 2011 tutorial).
      *
-     * So ignored any maps that start higher then process _end
-     * FIXME: make sure we do not register symmetric heap twice
-     * if we decide to allow shared objects
+     * So ignored any maps that start higher then process _end.
      */
     if ((uintptr_t)start > data_end) {
         MEMHEAP_VERBOSE(100,

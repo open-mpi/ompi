@@ -169,6 +169,7 @@ retry_alloc:
     }
 
     /* Attach to the segment */
+    (void)munmap(mca_sshmem_base_start_address, size);
     addr = shmat(shmid, (void *) mca_sshmem_base_start_address, 0);
     if (addr == (void *) -1L) {
         opal_show_help("help-oshmem-sshmem.txt",
