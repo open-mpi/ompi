@@ -516,7 +516,7 @@ static inline void ompi_op_reduce(ompi_op_t * op, const void *source,
                                   ompi_datatype_t * dtype)
 {
     MPI_Fint f_dtype, f_count;
-    int count = full_count;
+    int count = (int)full_count;
 
     /*
      * Call the reduction function.  Two dimensions: a) if both the op
@@ -553,6 +553,34 @@ static inline void ompi_op_reduce(ompi_op_t * op, const void *source,
         op->o_func.intrinsic.fns[dtype_id](source, target,
                                            &full_count, &dtype,
                                            op->o_func.intrinsic.modules[dtype_id]);
+        return;
+    }
+
+    /*
+     * If the full_count is > INT_MAX and the user supplied reduction
+     * op is not of the full count type, we need to do
+     * in iterations of counts <= INT_MAX.
+     */
+
+    if( OPAL_UNLIKELY((full_count > INT_MAX) &&
+        (0 == (op->o_flags & OMPI_OP_FLAGS_BIGCOUNT))) ) {
+        size_t done_count = 0, shift;
+        int iter_count;
+        ptrdiff_t ext, lb;
+
+        ompi_datatype_get_extent(dtype, &lb, &ext);
+
+        while(done_count < full_count) {
+            if(done_count + INT_MAX > full_count) {
+                iter_count = full_count - done_count;
+            } else {
+                iter_count = INT_MAX;
+            }
+            shift = done_count * ext;
+            // Recurse one level in iterations of 'int'
+            ompi_op_reduce(op, (const char*)source + shift, (char*)target + shift, iter_count, dtype);
+            done_count += iter_count;
+        }
         return;
     }
 
