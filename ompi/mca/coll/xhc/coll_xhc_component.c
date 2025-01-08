@@ -110,30 +110,43 @@ mca_coll_xhc_component_t mca_coll_xhc_component = {
     .uniform_chunks = true,
     .uniform_chunks_min = 4096,
 
-    .op_mca[XHC_BCAST] = {
+    .op_mca = {{0}},
+    .op_mca_global = {0}
+};
+
+/* Rather than having the defaults directly inside the component, we keep
+ * them in a separate structure and copy them over (in xhc_register()). The
+ * structs in the component are used as storage for the MCA variables, and
+ * the MCA system will nullify the storage of string variables when it is
+ * teared down during Finalize. This is a problem if we have multiple MPI
+ * Sessions, as we'll have lost our defaults the next time we attempt to
+ * initialize our MCA variables at the second Init. */
+static xhc_op_mca_t op_mca_default[XHC_COLLCOUNT] = {
+     [XHC_BCAST] = {
         .hierarchy = "numa,socket",
         .chunk_size = "16K",
         .cico_max = 256
     },
 
-    .op_mca[XHC_BARRIER] = {
+    [XHC_BARRIER] = {
         .hierarchy = "numa,socket",
         .chunk_size = "1",
         .cico_max = 0
     },
 
-    .op_mca[XHC_REDUCE] = {
+    [XHC_REDUCE] = {
         .hierarchy = "l3,numa,socket",
         .chunk_size = "16K",
         .cico_max = 4096
     },
 
-    .op_mca[XHC_ALLREDUCE] = {
+    [XHC_ALLREDUCE] = {
         .hierarchy = "l3,numa,socket",
         .chunk_size = "16K",
         .cico_max = 4096
     }
 };
+static xhc_op_mca_t op_mca_global_default = {0};
 
 // -----------------------------
 
@@ -322,7 +335,7 @@ static int xhc_register(void) {
     OBJ_RELEASE(var_enum_flag);
 
     /* (All)reduce uniform chunks */
-    // ---------------------------
+    // -----------------------------
 
     mca_base_component_var_register(&mca_coll_xhc_component.super.collm_version,
         "uniform_chunks", "Automatically optimize chunk size in reduction "
@@ -335,6 +348,15 @@ static int xhc_register(void) {
         "when \"uniform chunks\" are enabled.", MCA_BASE_VAR_TYPE_SIZE_T,
         NULL, 0, 0, OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_READONLY,
         &mca_coll_xhc_component.uniform_chunks_min);
+
+    /* Apply the op mca defaults. Gotta do it here rather than in-line in
+     * the registration loops below, as some iterations are skipped, for the
+     * variables that are not applicable (e.g. chunk size in Barrier). */
+
+    for(int t = 0; t < XHC_COLLCOUNT; t++) {
+        mca_coll_xhc_component.op_mca[t] = op_mca_default[t];
+    }
+    mca_coll_xhc_component.op_mca_global = op_mca_global_default;
 
     /* Hierarchy */
     // ------------
