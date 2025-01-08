@@ -1818,6 +1818,7 @@ static int mca_common_cuda_check_mpool(CUdeviceptr dbuf, CUmemorytype *mem_type,
 
 static int mca_common_cuda_get_primary_context(CUdevice dev_id, CUcontext *pctx)
 {
+#if OPAL_CUDA_VMM_SUPPORT
     CUresult result;
     unsigned int flags;
     int active;
@@ -1831,7 +1832,7 @@ static int mca_common_cuda_get_primary_context(CUdevice dev_id, CUcontext *pctx)
         result = cuFunc.cuDevicePrimaryCtxRetain(pctx, dev_id);
         return OPAL_SUCCESS;
     }
-
+#endif  /* OPAL_CUDA_VMM_SUPPORT */
     return OPAL_ERROR;
 }
 
