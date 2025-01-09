@@ -16,6 +16,15 @@
 #include "oshmem/runtime/runtime.h"
 #include "oshmem/runtime/params.h"
 
+int oshmem_shmem_bcast(void *buf, int elem_size, int root)
+{
+    int rc;
+
+    rc = PMPI_Bcast(buf, elem_size, MPI_BYTE, root, oshmem_comm_world);
+
+    return rc;
+}
+
 int oshmem_shmem_allgather(void *send_buf, void *rcv_buf, int elem_size)
 {
     int rc;
