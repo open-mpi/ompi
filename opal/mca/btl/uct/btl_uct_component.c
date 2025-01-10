@@ -17,7 +17,7 @@
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2018-2024 Triad National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2019-2024 Google, LLC. All rights reserved.
+ * Copyright (c) 2019-2025 Google, LLC. All rights reserved.
  * Copyright (c) 2019      Intel, Inc.  All rights reserved.
  * Copyright (c) 2022      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
@@ -103,7 +103,7 @@ static int mca_btl_uct_component_register(void)
 #endif
 
     /* for now we want this component to lose to btl/ugni and btl/vader */
-    module->super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_HIGH;
+    module->super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_HIGH - 1;
 
     return mca_btl_base_param_register(&mca_btl_uct_component.super.btl_version, &module->super);
 }
