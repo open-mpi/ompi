@@ -88,6 +88,24 @@ mca_part_persist_aggregated_component_register(void)
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &ompi_part_persist_aggregated.free_list_inc);
 
+    // variable for minimal internal partition size
+    ompi_part_persist_aggregated.min_message_size = 4096;
+    (void) mca_base_component_var_register(&mca_part_persist_aggregated_component.partm_version, "min_message_size",
+                                           "Minimal size of transferred messages (internal partitions)",
+                                           MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &ompi_part_persist_aggregated.min_message_size);
+
+    // variable for maximal internal partition count
+    ompi_part_persist_aggregated.max_message_count = 4096;
+    (void) mca_base_component_var_register(&mca_part_persist_aggregated_component.partm_version, "max_message_count",
+                                           "Maximal number of transferred messages (internal partitions)",
+                                           MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &ompi_part_persist_aggregated.max_message_count);
+
 
     return OPAL_SUCCESS;
 }

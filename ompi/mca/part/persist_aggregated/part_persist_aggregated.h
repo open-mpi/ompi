@@ -80,6 +80,10 @@ struct ompi_part_persist_aggregated_t {
     int32_t                init_world;
     int32_t                my_world_rank; /* Because the back end communicators use a world rank, we need to communicate ours 
                                              to set up the requests. */
+
+    uint32_t min_message_size;          /* parameters to control internal partitioning */
+    uint32_t max_message_count;
+
     opal_atomic_int32_t    block_entry;
     opal_mutex_t lock; 
 };
