@@ -44,6 +44,7 @@ struct ompi_mca_persist_setup_t {
    size_t num_parts;
    size_t dt_size;
    size_t count;
+   size_t remainder;
 };
 
 
@@ -52,7 +53,7 @@ struct ompi_mca_persist_setup_t {
  */
 struct mca_part_persist_aggregated_request_t {
 
-/* START: These fields have to match the definition of the mca_part_persist_aggregated_request_t */
+/* START: These fields have to match the definition of the mca_part_base_request_t */
     ompi_request_t req_ompi;              /**< base request */
     volatile int32_t req_part_complete;   /**< flag indicating if the pt-2-pt layer is done with this request */
     volatile int32_t req_free_called;     /**< flag indicating if the user has freed this request */
@@ -68,12 +69,13 @@ struct mca_part_persist_aggregated_request_t {
     int32_t req_tag;                      /**< user defined tag */
     struct ompi_proc_t* req_proc;         /**< peer process */
 
-/* END: These fields have to match the definition of the mca_part_persist_aggregated_request_t */
+/* END: These fields have to match the definition of the mca_part_base_request_t */
 
     size_t  req_bytes;                    /**< bytes for completion status */
 
     size_t real_parts;                   /**< internal number of partitions */
     size_t real_count;
+    size_t real_remainder;               /**< size of last internal partition (in elements) */
     size_t real_dt_size;                 /**< receiver needs to know how large the sender's datatype is. */
     size_t part_size; 
 

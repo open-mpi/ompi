@@ -33,8 +33,13 @@
 #include "ompi/mca/part/part.h"
 #include "opal/prefetch.h"
 
+#include "ompi/mca/part/persist_aggregated/schemes/part_persist_aggregated_scheme_regular.h"
+
+
 struct mca_part_persist_aggregated_psend_request_t {
     mca_part_persist_aggregated_request_t req_base;
+    
+    struct part_persist_aggregation_state aggregation_state;
 };
 typedef struct mca_part_persist_aggregated_psend_request_t mca_part_persist_aggregated_psend_request_t;
 OBJ_CLASS_DECLARATION(mca_part_persist_aggregated_psend_request_t);
