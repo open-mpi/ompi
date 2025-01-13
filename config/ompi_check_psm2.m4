@@ -17,7 +17,8 @@
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2016      Los Alamos National Security, LLC. All rights
 #                         reserved.
-#  Copyright (c) 2021     Triad National Security, LLC. All rights
+# Copyright (c) 2020      Cornelis Network, Inc. All rights reserved.
+# Copyright (c) 2021      Triad National Security, LLC. All rights
 #                         reserved.
 # Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
 # $COPYRIGHT$
@@ -37,10 +38,10 @@ AC_DEFUN([OMPI_CHECK_PSM2],[
 
     AC_ARG_WITH([psm2],
                 [AS_HELP_STRING([--with-psm2(=DIR)],
-                    [Build PSM2 (Intel PSM2) support, optionally adding DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries])])
+                    [Build PSM2 (Cornelis PSM2) support, optionally adding DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries])])
     AC_ARG_WITH([psm2-libdir],
                 [AS_HELP_STRING([--with-psm2-libdir=DIR],
-                    [Search for PSM (Intel PSM2) libraries in DIR])])
+                    [Search for PSM (Cornelis PSM2) libraries in DIR])])
 
     AC_ARG_ENABLE([psm2-version-check],
                   [AS_HELP_STRING([--disable-psm2-version-check],
@@ -81,7 +82,7 @@ AC_DEFUN([OMPI_CHECK_PSM2],[
 
     CPPFLAGS="${opal_psm2_CPPFLAGS_save}"
 
-    OPAL_SUMMARY_ADD([Transports], [Intel Omnipath (PSM2)], [], [${$1_SUMMARY}])
+    OPAL_SUMMARY_ADD([Transports], [Cornelis Omnipath (PSM2)], [], [${$1_SUMMARY}])
 
     AS_IF([test "$ompi_check_psm2_happy" = "yes"],
           [$2],
