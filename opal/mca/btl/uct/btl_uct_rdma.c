@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2014-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2025      Google, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -18,7 +19,7 @@ static void mca_btl_uct_uct_completion_compat(uct_completion_t *uct_comp, ucs_st
                                                   - offsetof(mca_btl_uct_uct_completion_t,
                                                              uct_comp));
 
-    BTL_VERBOSE(("network operation complete. status = %d", status));
+    BTL_VERBOSE(("network operation complete. frag = %p, status = %d", (void *) comp->frag, status));
 
     comp->status = status;
     opal_fifo_push(&comp->dev_context->completion_fifo, &comp->super.super);
@@ -26,7 +27,13 @@ static void mca_btl_uct_uct_completion_compat(uct_completion_t *uct_comp, ucs_st
 
 #if UCT_API >= ((1L<<UCT_MAJOR_BIT)|(10L << UCT_MINOR_BIT))
 static void mca_btl_uct_uct_completion(uct_completion_t *uct_comp) {
-    mca_btl_uct_uct_completion_compat(uct_comp, uct_comp->status);
+    ucs_status_t status = uct_comp->status;
+    /* reset the status now as the completion can not be accessed after calling
+     * mca_btl_uct_uct_completion_compat (may get returned) */
+    uct_comp->status = UCS_OK;
+
+    mca_btl_uct_uct_completion_compat(uct_comp, status);
+    /* do not access the completion struture here */
 }
 #else
 static void mca_btl_uct_uct_completion(uct_completion_t *uct_comp, ucs_status_t status) {
@@ -38,6 +45,11 @@ static void mca_btl_uct_uct_completion_construct(mca_btl_uct_uct_completion_t *c
 {
     comp->frag = NULL;
     comp->uct_comp.func = mca_btl_uct_uct_completion;
+    comp.uct_comp.count = 1;
+
+#if UCT_API >= ((1L<<UCT_MAJOR_BIT)|(10L << UCT_MINOR_BIT))
+    comp->uct_comp->status = UCS_OK;
+#endif
 }
 
 OBJ_CLASS_INSTANCE(mca_btl_uct_uct_completion_t, opal_free_list_item_t,
