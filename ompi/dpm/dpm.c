@@ -21,7 +21,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2021-2024 Nanook Consulting  All rights reserved.
- * Copyright (c) 2018-2022 Triad National Security, LLC. All rights
+ * Copyright (c) 2018-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2022      IBM Corporation.  All rights reserved.
  * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
@@ -852,6 +852,7 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
 #if PMIX_NUMERIC_VERSION >= 0x00040000
     const char *checkkey;
 #endif
+    bool found_pmix_rankby_item = false;
 
     /* parse the info object */
     /* check potentially for
@@ -1358,6 +1359,7 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
             /* check for 'rank_by' - job-level key */
             ompi_info_get(array_of_info[i], "rank_by", &info_str, &flag);
             if ( flag ) {
+                found_pmix_rankby_item = true;
                 rc = dpm_convert(&job_info, "rank_by", PMIX_RANKBY, info_str->string, NULL, false);
                 OBJ_RELEASE(info_str);
                 if (OMPI_SUCCESS != rc) {
@@ -1369,6 +1371,7 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
             }
             ompi_info_get(array_of_info[i], "PMIX_RANKBY", &info_str, &flag);
             if ( flag ) {
+                found_pmix_rankby_item = true;
                 info = OBJ_NEW(opal_info_item_t);
                 PMIX_INFO_LOAD(&info->info, PMIX_RANKBY, info_str->string, PMIX_STRING);
                 opal_list_append(&job_info, &info->super);
@@ -1378,13 +1381,13 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
             checkkey = PMIx_Get_attribute_string("PMIX_RANKBY");
             ompi_info_get(array_of_info[i], checkkey, &info_str, &flag);
             if ( flag ) {
+                found_pmix_rankby_item = true;
                 info = OBJ_NEW(opal_info_item_t);
                 PMIX_INFO_LOAD(&info->info, PMIX_RANKBY, info_str->string, PMIX_STRING);
                 opal_list_append(&job_info, &info->super);
                 OBJ_RELEASE(info_str);
             }
 #endif
-
             /* check for 'bind_to' - job-level key */
             ompi_info_get(array_of_info[i], "bind_to", &info_str, &flag);
             if ( flag ) {
@@ -1539,6 +1542,18 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
                 OBJ_RELEASE(info_str);
             }
 #endif
+        }
+
+        /*
+         * If the application has not specified otherwise, we want to get
+         * the behavior of MPI_Comm_spawn_multiple ranking as specified in the
+         * Process Creation and Management chapter of the MPI standard.
+         * See section 11.8.3 of the MPI 4.1 standard.
+         */
+        if (false == found_pmix_rankby_item) {
+            info = OBJ_NEW(opal_info_item_t);
+            PMIX_INFO_LOAD(&info->info, PMIX_RANKBY, "slot", PMIX_STRING);
+            opal_list_append(&job_info, &info->super);
         }
 
         /* default value: If the user did not tell us where to look for the
