@@ -91,8 +91,10 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
+    /* Fast box buffers are prepended with a metadata section. */
     rc = opal_free_list_init(&component->sm_fboxes, sizeof(opal_free_list_item_t), 8,
-                             OBJ_CLASS(opal_free_list_item_t), mca_btl_sm_component.fbox_size,
+                             OBJ_CLASS(opal_free_list_item_t), mca_btl_sm_component.fbox_size +
+                             sizeof (mca_btl_sm_fbox_metadata_t),
                              opal_cache_line_size, 0, mca_btl_sm_component.fbox_max, 4,
                              component->mpool, 0, NULL, NULL, NULL);
     if (OPAL_SUCCESS != rc) {

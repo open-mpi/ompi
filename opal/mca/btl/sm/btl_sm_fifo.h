@@ -123,7 +123,7 @@ static inline void sm_fifo_write(sm_fifo_t *fifo, fifo_value_t value)
 
     opal_atomic_wmb();
     prev = opal_atomic_swap_ptr(&fifo->fifo_tail, value);
-    opal_atomic_rmb();
+    opal_atomic_wmb();
 
     assert(prev != value);
 
