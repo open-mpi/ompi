@@ -47,7 +47,7 @@ C / C++
      if (whatever)
         return OMPI_SUCCESS;
 
-* Starting with Open MPI 1.7, Open MPI requires a C99-compliant
+* Starting with Open MPI 6.0, Open MPI requires a C11-compliant
   compiler.
 
   * C++-style comments are now allowed (and preferred).

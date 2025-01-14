@@ -170,7 +170,7 @@ AC_DEFUN([OPAL_SETUP_CC],[
     AC_REQUIRE([_OPAL_PROG_CC])
     AC_REQUIRE([AM_PROG_CC_C_O])
 
-    OPAL_VAR_SCOPE_PUSH([opal_prog_cc_c11_helper__Thread_local_available opal_prog_cc_c11_helper_atomic_var_available opal_prog_cc_c11_helper__Atomic_available opal_prog_cc_c11_helper__static_assert_available opal_prog_cc_c11_helper__Generic_available opal_prog_cc__thread_available opal_prog_cc_c11_helper_atomic_fetch_xor_explicit_available opal_prog_cc_c11_helper_proper__Atomic_support_in_atomics])
+    OPAL_VAR_SCOPE_PUSH([opal_prog_cc_c11_helper__Thread_local_available opal_prog_cc_c11_helper_atomic_var_available opal_prog_cc_c11_helper__Atomic_available opal_prog_cc_c11_helper__static_assert_available opal_prog_cc_c11_helper__Generic_available opal_prog_cc_c11_helper_atomic_fetch_xor_explicit_available opal_prog_cc_c11_helper_proper__Atomic_support_in_atomics])
 
     OPAL_PROG_CC_C11
 
@@ -179,32 +179,10 @@ AC_DEFUN([OPAL_SETUP_CC],[
     OPAL_C_COMPILER_VENDOR([opal_c_vendor])
 
     if test $opal_cv_c11_supported = no ; then
-        # It is not currently an error if C11 support is not available. Uncomment the
-        # following lines and update the warning when we require a C11 compiler.
-        # AC_MSG_WARNING([Open MPI requires a C11 (or newer) compiler])
-        # AC_MSG_ERROR([Aborting.])
-        # From Open MPI 1.7 on we require a C99 compliant compiler
-        dnl with autoconf 2.70 AC_PROG_CC makes AC_PROG_CC_C99 obsolete
-        m4_version_prereq([2.70],
-            [],
-            [AC_PROG_CC_C99])
-        # The result of AC_PROG_CC_C99 is stored in ac_cv_prog_cc_c99
-        if test "x$ac_cv_prog_cc_c99" = xno ; then
-            AC_MSG_WARN([Open MPI requires a C99 (or newer) compiler. C11 is recommended.])
-            AC_MSG_ERROR([Aborting.])
-        fi
-
-        # Get the correct result for C11 support flags now that the compiler flags have
-        # changed
-        OPAL_PROG_CC_C11_HELPER([], [], [])
+        # C11 is required
+        AC_MSG_WARN([Open MPI requires a C11 (or newer) compiler. C11 is required.])
+        AC_MSG_ERROR([Aborting.])
     fi
-
-    # Check if compiler support __thread
-    OPAL_CC_HELPER([if $CC $1 supports __thread], [opal_prog_cc__thread_available],
-               [],[[static __thread int  foo = 1;++foo;]])
-
-    OPAL_CC_HELPER([if $CC $1 supports C11 _Thread_local], [opal_prog_cc_c11_helper__Thread_local_available],
-                   [],[[static _Thread_local int  foo = 1;++foo;]])
 
     dnl At this time Open MPI only needs thread local and the atomic convenience types for C11 support. These
     dnl will likely be required in the future.
@@ -222,9 +200,6 @@ AC_DEFUN([OPAL_SETUP_CC],[
 
     AC_DEFINE_UNQUOTED([OPAL_C_HAVE__STATIC_ASSERT], [$opal_prog_cc_c11_helper__static_assert_available],
                        [Whether C compiler support _Static_assert keyword])
-
-    AC_DEFINE_UNQUOTED([OPAL_C_HAVE___THREAD], [$opal_prog_cc__thread_available],
-                       [Whether C compiler supports __thread])
 
     # Check for standard headers, needed here because needed before
     # the types checks.  This is only necessary for Autoconf < v2.70.
