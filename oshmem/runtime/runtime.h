@@ -128,6 +128,11 @@ int oshmem_shmem_finalize(void);
 OSHMEM_DECLSPEC int oshmem_shmem_abort(int errcode);
 
 /**
+ * Broadcast between all PEs
+ */
+OSHMEM_DECLSPEC int oshmem_shmem_bcast(void *buf, int elem_size, int root);
+
+/**
  * Allgather between all PEs
  */
 OSHMEM_DECLSPEC int oshmem_shmem_allgather(void *send_buf, void *rcv_buf, int elem_size);
