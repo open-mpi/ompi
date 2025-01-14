@@ -17,7 +17,7 @@
  * Copyright (c) 2015      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2018      Triad National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2020      Google, LLC. All rights reserved.
+ * Copyright (c) 2020-2025 Google, LLC. All rights reserved.
  *
  * Copyright (c) 2019-2020 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
@@ -49,24 +49,32 @@ struct mca_btl_sm_modex_t {
 
 typedef struct mca_btl_sm_modex_t mca_btl_sm_modex_t;
 
+typedef struct mca_btl_sm_fbox_metadata {
+    uint32_t start;
+    uint8_t  padding[26];
+} mca_btl_sm_fbox_metadata_t;
+
+typedef struct mca_btl_sm_fbox_out {
+    unsigned char *buffer; /**< starting address of peer's fast box in */
+    mca_btl_sm_fbox_metadata_t *metadata;
+    unsigned int start, end;
+    uint16_t seq;
+    opal_free_list_item_t *fbox; /**< fast-box free list item */
+} mca_btl_sm_fbox_out_t;
+
+typedef struct mca_btl_sm_fbox_in {
+    unsigned char *buffer; /**< starting address of peer's fast box out */
+    mca_btl_sm_fbox_metadata_t *metadata;
+    unsigned int start;
+    uint16_t seq;
+} mca_btl_sm_fbox_in_t;
+
 typedef struct mca_btl_base_endpoint_t {
     opal_list_item_t super;
 
     /* per peer buffers */
-    struct {
-        unsigned char *buffer; /**< starting address of peer's fast box out */
-        uint32_t *startp;
-        unsigned int start;
-        uint16_t seq;
-    } fbox_in;
-
-    struct {
-        unsigned char *buffer; /**< starting address of peer's fast box in */
-        uint32_t *startp;      /**< pointer to location storing start offset */
-        unsigned int start, end;
-        uint16_t seq;
-        opal_free_list_item_t *fbox; /**< fast-box free list item */
-    } fbox_out;
+    mca_btl_sm_fbox_in_t fbox_in;
+    mca_btl_sm_fbox_out_t fbox_out;
 
     uint16_t peer_smp_rank;        /**< my peer's SMP process rank.  Used for accessing
                                     *   SMP specific data structures. */
