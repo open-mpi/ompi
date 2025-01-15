@@ -22,6 +22,11 @@
 #include "ompi/constants.h"
 #include "coll_accelerator.h"
 
+
+int mca_coll_accelerator_bcast_thresh = 256;
+int mca_coll_accelerator_allgather_thresh = 65536;
+int mca_coll_accelerator_alltoall_thresh = 65536;
+
 /*
  * Public string showing the coll ompi_accelerator component version number
  */
@@ -87,6 +92,33 @@ static int accelerator_register(void)
                                            OPAL_INFO_LVL_2,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_coll_accelerator_component.disable_accelerator_coll);
+
+    mca_coll_accelerator_bcast_thresh = 256;
+    (void) mca_base_component_var_register(&mca_coll_accelerator_component.super.collm_version,
+                                           "bcast_thresh",
+                                           "max. msg length for which to copy accelerator buffer to CPU for bcast operation",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_coll_accelerator_bcast_thresh);
+
+    mca_coll_accelerator_allgather_thresh = 65536;
+    (void) mca_base_component_var_register(&mca_coll_accelerator_component.super.collm_version,
+                                           "allgather_thresh",
+                                           "max. msg length for which to copy accelerator buffer to CPU for allgather operation",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_coll_accelerator_allgather_thresh);
+
+    mca_coll_accelerator_alltoall_thresh = 65536;
+    (void) mca_base_component_var_register(&mca_coll_accelerator_component.super.collm_version,
+                                           "alltoall_thresh",
+                                           "max. msg length for which to copy accelerator buffer to CPU for alltoall operation",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_coll_accelerator_alltoall_thresh);
 
     return OMPI_SUCCESS;
 }
