@@ -138,11 +138,6 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
     AC_DEFINE([ompi_fortran_bogus_type_t], [int],
               [A bogus type that allows us to have sentinel type values that are still valid])
 
-    # These get filled in as we check for each type
-    OMPI_FORTRAN_IKINDS=
-    OMPI_FORTRAN_RKINDS=
-    OMPI_FORTRAN_CKINDS=
-
     # We want to set the #define's for all of these, so invoke the macros
     # regardless of whether we have F77 support or not.
     OMPI_FORTRAN_CHECK([CHARACTER], [yes],
@@ -284,14 +279,6 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
                        [$OMPI_FORTRAN_STATUS_SIZE],
                        [The number or Fortran INTEGER in MPI Status])
 
-    # Setup for the compilers that don't support ignore TKR functionality
-    OPAL_UNIQ(OMPI_FORTRAN_IKINDS)
-    AC_SUBST(OMPI_FORTRAN_IKINDS)
-    OPAL_UNIQ(OMPI_FORTRAN_RKINDS)
-    AC_SUBST(OMPI_FORTRAN_RKINDS)
-    OPAL_UNIQ(OMPI_FORTRAN_CKINDS)
-    AC_SUBST(OMPI_FORTRAN_CKINDS)
-
     # We can't use C_INTxx_T KIND values in mpif.h because many
     # existing MPI Fortran applications are of the form:
     #
@@ -405,16 +392,15 @@ end program]])],
           ])
 
     # If we got here, we can build the mpi module if it was requested.
-    # Decide whether to build the ignore TKR version or the
-    # non-ignore-TKR/legacy version.
+    # We only support compilers which have an ignore TKR feature.
     AS_IF([test $OMPI_TRY_FORTRAN_BINDINGS -ge $OMPI_FORTRAN_USEMPI_BINDINGS && \
            test $ompi_fortran_happy -eq 1],
           [OMPI_BUILD_FORTRAN_BINDINGS=$OMPI_FORTRAN_USEMPI_BINDINGS
            AS_IF([test $OMPI_FORTRAN_HAVE_IGNORE_TKR -eq 1],
                  [OMPI_FORTRAN_USEMPI_DIR=mpi/fortran/use-mpi-ignore-tkr
                   OMPI_FORTRAN_USEMPI_LIB=-l${with_libmpi_name}_usempi_ignore_tkr],
-                 [OMPI_FORTRAN_USEMPI_DIR=mpi/fortran/use-mpi-tkr
-                  OMPI_FORTRAN_USEMPI_LIB=-l${with_libmpi_name}_usempi])
+                 [AC_MSG_WARN([** Fortran compiler does not support ignoring TKR.  Please use a newer fortran compiler.])
+                  AC_MSG_ERROR([*** Cannot continue])])
           ])
 
     OMPI_FORTRAN_HAVE_ISO_C_BINDING=0

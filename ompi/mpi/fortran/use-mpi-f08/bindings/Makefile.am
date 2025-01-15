@@ -34,7 +34,7 @@ if OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS
 AM_FCFLAGS = -I$(top_builddir)/ompi/include \
              -I$(top_srcdir)/ompi/include \
              $(OMPI_FC_MODULE_FLAG)$(top_builddir)/ompi/mpi/fortran/use-mpi \
-             $(OMPI_FC_MODULE_FLAG)$(top_builddir)/ompi/$(OMPI_FORTRAN_USEMPI_DIR) \
+             $(OMPI_FC_MODULE_FLAG)$(top_builddir)/ompi/mpi/fortran/use-mpi-ignore-tkr \
              $(OMPI_FC_MODULE_FLAG). \
              $(OMPI_FC_MODULE_FLAG)../mod \
              -I$(top_srcdir) -I$(top_builddir) $(FCFLAGS_f90)
