@@ -413,8 +413,8 @@ end program]])],
            AS_IF([test $OMPI_FORTRAN_HAVE_IGNORE_TKR -eq 1],
                  [OMPI_FORTRAN_USEMPI_DIR=mpi/fortran/use-mpi-ignore-tkr
                   OMPI_FORTRAN_USEMPI_LIB=-l${with_libmpi_name}_usempi_ignore_tkr],
-                 [OMPI_FORTRAN_USEMPI_DIR=mpi/fortran/use-mpi-tkr
-                  OMPI_FORTRAN_USEMPI_LIB=-l${with_libmpi_name}_usempi])
+                 [AC_MSG_WARN([** Fortran compiler does not support ignoring tkr.  Please use a newer fortran compiler])
+                  AC_MSG_ERROR([*** Cannot continue])])
           ])
 
     OMPI_FORTRAN_HAVE_ISO_C_BINDING=0

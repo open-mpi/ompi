@@ -113,7 +113,6 @@ DIST_SUBDIRS = \
         mpi/fortran/base \
         mpi/fortran/mpif-h \
         mpi/fortran/use-mpi \
-        mpi/fortran/use-mpi-tkr \
         mpi/fortran/use-mpi-ignore-tkr \
         mpi/fortran/mpiext-use-mpi \
         mpi/fortran/use-mpi-f08 \
