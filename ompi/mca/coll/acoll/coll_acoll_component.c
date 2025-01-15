@@ -332,6 +332,13 @@ static void mca_coll_acoll_module_destruct(mca_coll_acoll_module_t *module)
                 }
             }
         }
+
+        for (int k = 0; k < MCA_COLL_ACOLL_SPLIT_FACTOR_LIST_LEN; ++k) {
+            if (subc->split_comm[k] != NULL) {
+                ompi_comm_free(&(subc->split_comm[k]));
+                subc->split_comm[k] = NULL;
+            }
+        }
         subc->initialized = 0;
         free(subc);
         module->subc[i] = NULL;
