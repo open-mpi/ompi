@@ -1,6 +1,6 @@
 /* -*- Mode: C; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2024 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (c) 2024 - 2025 Advanced Micro Devices, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -154,6 +154,10 @@ static inline int check_and_create_subc(ompi_communicator_t *comm,
         subc->local_root[j] = 0;
     }
 
+    for (int k = 0; k < MCA_COLL_ACOLL_SPLIT_FACTOR_LIST_LEN; ++k) {
+        subc->split_comm[k] = NULL;
+    }
+
     subc->numa_comm = NULL;
     subc->numa_comm_ldrs = NULL;
     subc->node_comm = NULL;
@@ -249,6 +253,133 @@ static inline int mca_coll_acoll_create_base_comm(ompi_communicator_t **parent_c
                                    &subc->base_root[base_lyr][i], NULL, root[i]);
     }
     return err;
+}
+
+static inline int mca_coll_acoll_is_adj_rank_same_sub_comm
+                            (ompi_communicator_t* sub_comm,
+                             int sub_comm_size, int* sub_comm_ranks,
+                             ompi_group_t* parent_grp,
+                             int parent_comm_size, int* parent_comm_ranks,
+                             int par_comm_rank, bool* is_adj)
+{
+    (*is_adj) = false;
+
+    ompi_group_t *sub_comm_grp;
+    int error = ompi_comm_group(sub_comm, &sub_comm_grp);
+    if (MPI_SUCCESS != error) {
+        return error;
+    }
+
+    for (int i = 0; i < sub_comm_size; ++i) {
+        sub_comm_ranks[i] = i;
+    }
+
+    /* Current rank is guaranteed to be in all the accessed subcomms. */
+    error = ompi_group_translate_ranks(sub_comm_grp, sub_comm_size, sub_comm_ranks,
+                                       parent_grp, parent_comm_ranks);
+    if (MPI_SUCCESS != error) {
+        return error;
+    }
+
+    for (int ii = 0; ii < sub_comm_size; ++ii)
+    {
+        if (((par_comm_rank + 1) % parent_comm_size) == parent_comm_ranks[ii])
+        {
+            (*is_adj) = true;
+            break;
+        }
+    }
+
+    return MPI_SUCCESS;
+}
+
+static inline int mca_coll_acoll_derive_r2r_latency
+                                (ompi_communicator_t *comm,
+                                 coll_acoll_subcomms_t *subc,
+                                 mca_coll_acoll_module_t *acoll_module)
+{
+    int size = ompi_comm_size(comm);
+    int rank = ompi_comm_rank(comm);
+    subc->r2r_dist = DIST_NODE;
+
+    coll_acoll_reserve_mem_t *rsv_mem = &(acoll_module->reserve_mem_s);
+    int* workbuf = (int *) coll_acoll_buf_alloc(rsv_mem,
+                                                2 * size * sizeof(int));
+    if (NULL == workbuf) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    int* comm_ranks = workbuf + size;
+    ompi_group_t *comm_grp;
+    int error = ompi_comm_group(comm, &comm_grp);
+    if (MPI_SUCCESS != error) { goto error_handler; }
+
+    bool is_same_l3 = false;
+    int distance = DIST_CORE; /* map-by core distance. */
+    int l3_comm_size = subc->subgrp_size;
+    error = mca_coll_acoll_is_adj_rank_same_sub_comm(subc->subgrp_comm,
+                                l3_comm_size, workbuf, comm_grp,
+                                size, comm_ranks, rank, &is_same_l3);
+    if (MPI_SUCCESS != error) { goto error_handler; }
+
+    bool is_same_numa = false;
+    if (!is_same_l3) {
+        distance = DIST_L3CACHE; /* map-by l3 distance. */
+        int numa_comm_size = ompi_comm_size(subc->numa_comm);
+        error = mca_coll_acoll_is_adj_rank_same_sub_comm(subc->numa_comm,
+                                    numa_comm_size, workbuf, comm_grp,
+                                    size, comm_ranks, rank, &is_same_numa);
+        if (MPI_SUCCESS != error) { goto error_handler; }
+    }
+
+    bool is_same_socket = false;
+    if ((!is_same_l3) && (!is_same_numa)) {
+        distance = DIST_NUMA; /* map-by numa distance. */
+        int socket_comm_size = ompi_comm_size(subc->socket_comm);
+        error = mca_coll_acoll_is_adj_rank_same_sub_comm(subc->socket_comm,
+                                    socket_comm_size, workbuf, comm_grp,
+                                    size, comm_ranks, rank, &is_same_socket);
+        if (MPI_SUCCESS != error) { goto error_handler; }
+    }
+
+    bool is_same_node = false;
+    if ((!is_same_l3) && (!is_same_numa) && (!is_same_socket)) {
+        distance = DIST_SOCKET; /* map-by socket distance. */
+        int local_comm_size = ompi_comm_size(subc->local_comm);
+        error = mca_coll_acoll_is_adj_rank_same_sub_comm(subc->local_comm,
+                                    local_comm_size, workbuf, comm_grp,
+                                    size, comm_ranks, rank, &is_same_node);
+        if (MPI_SUCCESS != error) { goto error_handler; }
+    }
+
+    if ((!is_same_l3) && (!is_same_numa) && (!is_same_socket) && (!is_same_node)) {
+        distance = DIST_NODE; /* map-by node distance. */
+    }
+
+    error = (comm)->c_coll->coll_allgather(&distance, 1, MPI_INT,
+                                           workbuf, 1, MPI_INT,
+                                           comm, &acoll_module->super);
+    if (MPI_SUCCESS != error) { goto error_handler; }
+
+    int dist_count_array[DIST_END] = {0};
+    for (int ii = 0; ii < size; ++ii) {
+        dist_count_array[workbuf[ii]] += 1;
+    }
+
+    int max_idx = DIST_CORE;
+    for (int ii = (max_idx + 1); ii < DIST_END; ++ii) {
+        if (dist_count_array[ii] > dist_count_array[max_idx]) {
+            max_idx = ii;
+        }
+    }
+    subc->r2r_dist = max_idx;
+
+    coll_acoll_buf_free(rsv_mem, workbuf);
+    return MPI_SUCCESS;
+
+error_handler:
+    coll_acoll_buf_free(rsv_mem, workbuf);
+    return error;
 }
 
 static inline int mca_coll_acoll_comm_split_init(ompi_communicator_t *comm,
@@ -576,6 +707,32 @@ static inline int mca_coll_acoll_comm_split_init(ompi_communicator_t *comm,
                 return err;
             }
         }
+
+        err = mca_coll_acoll_derive_r2r_latency(comm, subc, acoll_module);
+        if (MPI_SUCCESS != err) {
+            return err;
+        }
+
+        const int split_factor_list_len = MCA_COLL_ACOLL_SPLIT_FACTOR_LIST_LEN;
+        const int split_factor_list[MCA_COLL_ACOLL_SPLIT_FACTOR_LIST_LEN] =
+                    MCA_COLL_ACOLL_SPLIT_FACTOR_LIST;
+        for (int ii = 0; ii < split_factor_list_len; ++ii) {
+            int split_comm_color = rank % split_factor_list[ii];
+
+            /* If comm size is not a perfect multiple of split factor, then
+             * unless comm size % split factor <= 1, the split_comm
+             * for split factor 2 is used.*/
+            if ((0 != (size % split_factor_list[ii])) &&
+                (rank >= (size - (size % split_factor_list[ii])))) {
+                split_comm_color = split_factor_list[ii];
+            }
+            err = ompi_comm_split(comm, split_comm_color, rank,
+                            &subc->split_comm[ii], false);
+            if (MPI_SUCCESS != err) {
+                return err;
+            }
+        }
+
         subc->derived_node_size = (size + subc->num_nodes - 1) / subc->num_nodes;
     }
 
