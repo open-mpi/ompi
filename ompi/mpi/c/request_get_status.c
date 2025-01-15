@@ -75,17 +75,18 @@ int MPI_Request_get_status(MPI_Request request, int *flag,
         return MPI_SUCCESS;
     }
     if( request->req_complete ) {
+        int rc = MPI_SUCCESS;
         *flag = true;
         /* If this is a generalized request, we *always* have to call
            the query function to get the status (MPI-2:8.2), even if
            the user passed STATUS_IGNORE. */
         if (OMPI_REQUEST_GEN == request->req_type) {
-            ompi_grequest_invoke_query(request, &request->req_status);
+            rc = ompi_grequest_invoke_query(request, &request->req_status);
         }
         if (MPI_STATUS_IGNORE != status) {
             OMPI_COPY_STATUS(status, request->req_status, false);
         }
-        return MPI_SUCCESS;
+        return rc;
     }
 #if OPAL_ENABLE_PROGRESS_THREADS == 0
     if( 0 == do_it_once ) {
