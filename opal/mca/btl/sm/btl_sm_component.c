@@ -21,7 +21,7 @@
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2018      Triad National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2019-2021 Google, Inc. All rights reserved.
+ * Copyright (c) 2019-2025 Google, Inc. All rights reserved.
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * Copyright (c) 2022      IBM Corporation.  All rights reserved.
  * Copyright (c) 2022      Computer Architecture and VLSI Systems (CARV)
@@ -36,6 +36,7 @@
 
 #include "opal/mca/btl/base/btl_base_error.h"
 #include "opal/mca/threads/mutex.h"
+#include "opal/util/bit_ops.h"
 #include "opal/util/output.h"
 #include "opal/util/printf.h"
 
@@ -182,7 +183,7 @@ static int mca_btl_sm_component_register(void)
 
     mca_btl_sm_component.fbox_size = 4096;
     (void) mca_base_component_var_register(&mca_btl_sm_component.super.btl_version, "fbox_size",
-                                           "Size of per-peer fast transfer buffers (default: 4k)",
+                                           "Size of per-peer fast transfer buffers. Must be a power of two (default: 4k)",
                                            MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, 0,
                                            MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_5,
                                            MCA_BASE_VAR_SCOPE_LOCAL,
@@ -324,8 +325,10 @@ mca_btl_sm_component_init(int *num_btls, bool enable_progress_threads, bool enab
         component->segment_size = (2 << 20);
     }
 
-    component->fbox_size = (component->fbox_size + MCA_BTL_SM_FBOX_ALIGNMENT_MASK)
-                           & ~MCA_BTL_SM_FBOX_ALIGNMENT_MASK;
+    if (component->fbox_size & (component->fbox_size - 1)) {
+        BTL_VERBOSE(("fast box size must be a power of two, rounding up to next power of two."));
+        component->fbox_size = opal_next_poweroftwo_inclusive(component->fbox_size);
+    }
 
     if (component->segment_size > (1ul << MCA_BTL_SM_OFFSET_BITS)) {
         component->segment_size = 2ul << MCA_BTL_SM_OFFSET_BITS;
