@@ -3,6 +3,7 @@
  * Copyright (c) 2014-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2025      Google, LLC. All rights reserved.
+ * Copyright (c) 2025      Triad National Security, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -45,10 +46,10 @@ static void mca_btl_uct_uct_completion_construct(mca_btl_uct_uct_completion_t *c
 {
     comp->frag = NULL;
     comp->uct_comp.func = mca_btl_uct_uct_completion;
-    comp.uct_comp.count = 1;
+    comp->uct_comp.count = 1;
 
 #if UCT_API >= ((1L<<UCT_MAJOR_BIT)|(10L << UCT_MINOR_BIT))
-    comp->uct_comp->status = UCS_OK;
+    comp->uct_comp.status = UCS_OK;
 #endif
 }
 
