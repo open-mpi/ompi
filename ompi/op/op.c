@@ -17,7 +17,7 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
- * Copyright (c) 2018      Triad National Security, LLC. All rights
+ * Copyright (c) 2018-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -353,6 +353,7 @@ static int ompi_op_finalize (void)
  * Create a new MPI_Op
  */
 ompi_op_t *ompi_op_create_user(bool commute,
+                               bool bigcount,
                                ompi_op_fortran_handler_fn_t func)
 {
     ompi_op_t *new_op;
@@ -381,6 +382,9 @@ ompi_op_t *ompi_op_create_user(bool commute,
     new_op->o_flags = OMPI_OP_FLAGS_ASSOC;
     if (commute) {
         new_op->o_flags |= OMPI_OP_FLAGS_COMMUTE;
+    }
+    if(bigcount) {
+        new_op->o_flags |= OMPI_OP_FLAGS_BIGCOUNT;
     }
 
     opal_string_copy(new_op->o_name, "USER OP", sizeof(new_op->o_name));
