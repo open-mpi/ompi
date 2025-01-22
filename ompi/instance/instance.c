@@ -33,6 +33,7 @@
 #include "ompi/errhandler/errcode.h"
 #include "ompi/message/message.h"
 #include "ompi/info/info.h"
+#include "ompi/info/info_memkind.h"
 #include "ompi/attribute/attribute.h"
 #include "ompi/op/op.h"
 #include "ompi/dpm/dpm.h"
@@ -857,7 +858,20 @@ int ompi_mpi_instance_init (int ts_level,  opal_info_t *info, ompi_errhandler_t 
 
     /* Copy info if there is one. */
     if (OPAL_UNLIKELY(NULL != info)) {
+        opal_cstring_t *memkind_requested;
+        int flag;
+        
         new_instance->super.s_info = OBJ_NEW(opal_info_t);
+        opal_info_get(info, "mpi_memory_alloc_kinds", &memkind_requested, &flag);
+        if (1 == flag) {
+            char *memkind_provided;
+            ompi_info_memkind_process (memkind_requested->string, &memkind_provided);
+            opal_infosubscribe_subscribe (&new_instance->super, "mpi_memory_alloc_kinds",
+                                          memkind_provided, ompi_info_memkind_cb);
+            free (memkind_provided);
+            OBJ_RELEASE(memkind_requested);
+        }
+
         if (info) {
             opal_info_dup(info, &new_instance->super.s_info);
         }

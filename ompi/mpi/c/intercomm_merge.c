@@ -140,6 +140,10 @@ int MPI_Intercomm_merge(MPI_Comm intercomm, int high,
         goto exit;
     }
 
+    newcomp->super.s_info = OBJ_NEW(opal_info_t);
+    ompi_info_memkind_copy_or_set (&intercomm->instance->super, &newcomp->super,
+                                   &ompi_mpi_info_null.info.super);
+    
  exit:
 
     if ( NULL != procs ) {

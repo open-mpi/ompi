@@ -19,6 +19,7 @@
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * Copyright (c) 2018-2019 Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2024      Advanced Micro Devices, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -38,6 +39,7 @@
 #include "ompi/attribute/attribute.h"
 #include "ompi/group/group.h"
 #include "ompi/info/info.h"
+#include "ompi/info/info_memkind.h"
 #include "ompi/mca/osc/base/base.h"
 #include "ompi/mca/osc/osc.h"
 
@@ -167,7 +169,7 @@ static int alloc_window(struct ompi_communicator_t *comm, opal_info_t *info, int
     if (info) {
         opal_info_dup(info, &(win->super.s_info));
     }
-
+    ompi_info_memkind_copy_or_set (&comm->instance->super, &win->super, info);
 
     ret = opal_info_get_value_enum (win->super.s_info, "accumulate_ops", &acc_ops,
                                     OMPI_WIN_ACCUMULATE_OPS_SAME_OP_NO_OP,
