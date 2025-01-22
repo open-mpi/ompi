@@ -21,7 +21,9 @@
 # This makefile.am does not stand on its own - it is included from ompi/Makefile.am
 
 headers += \
-        info/info.h
+        info/info.h                 \
+        info/info_memkind.h
 
 lib@OMPI_LIBMPI_NAME@_la_SOURCES += \
-        info/info.c
+        info/info.c                 \
+        info/info_memkind.c
