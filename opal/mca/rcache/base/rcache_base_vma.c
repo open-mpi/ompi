@@ -39,7 +39,10 @@
 
 static void mca_rcache_base_vma_module_construct(mca_rcache_base_vma_module_t *vma_module)
 {
+    OBJ_CONSTRUCT(&vma_module->vma_list, opal_list_t);
+    OBJ_CONSTRUCT(&vma_module->vma_gc_lifo, opal_lifo_t);
     OBJ_CONSTRUCT(&vma_module->vma_lock, opal_recursive_mutex_t);
+    vma_module->reg_cur_cache_size = 0;
     (void) mca_rcache_base_vma_tree_init(vma_module);
 }
 
