@@ -26,6 +26,8 @@
 #include "oshmem/mca/sshmem/base/base.h"
 #include "ompi/util/timings.h"
 
+#include <sys/mman.h>
+
 mca_memheap_base_config_t mca_memheap_base_config = {
     .device_nic_mem_seg_size = 0
 };
@@ -107,6 +109,136 @@ static size_t _memheap_size(void)
     return (size_t) memheap_align(oshmem_shmem_info_env.symmetric_heap_size);
 }
 
+static void *memheap_mmap_get(void *hint, size_t size)
+{
+    void *addr;
+
+    addr = mmap(hint, size,
+                PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    if (addr == MAP_FAILED) {
+        return NULL;
+    }
+
+    return addr;
+}
+
+static int memheap_exchange_base_address(size_t size, void **address)
+{
+    int nprocs = oshmem_num_procs();
+    int need_sync = (*address == NULL);
+    void *base = NULL;
+    void *ptr = NULL;
+    int rc, i;
+    void **bases;
+
+    bases = calloc(nprocs, sizeof(*bases));
+    if (NULL == bases) {
+        return OSHMEM_ERROR;
+    }
+
+    if (oshmem_my_proc_id() == 0) {
+        ptr = memheap_mmap_get(NULL, size);
+        base = ptr;
+    }
+
+    rc = oshmem_shmem_bcast(&base, sizeof(base), 0);
+    if (OSHMEM_SUCCESS != rc) {
+        MEMHEAP_ERROR("Failed to exchange allocated vma for base segment "
+                      "(error %d)", rc);
+        goto out;
+    }
+
+    if (oshmem_my_proc_id() != 0) {
+        ptr = memheap_mmap_get(base, size);
+    }
+
+    MEMHEAP_VERBOSE(100, "#%d: exchange base address: base %p: %s",
+                    oshmem_my_proc_id(), base,
+                    (base == ptr)? "ok" : "unavailable");
+
+    *address = base;
+    if (need_sync) {
+        /* They all succeed or fail to allow fallback */
+        rc = oshmem_shmem_allgather(&ptr, bases, sizeof(ptr));
+        if (OSHMEM_SUCCESS != rc) {
+            MEMHEAP_ERROR("Failed to exchange selected vma for base segment "
+                          "(error %d)", rc);
+            goto out;
+        }
+
+        for (i = 0; i < nprocs; i++) {
+            if ((NULL == bases[i]) || (bases[i] != base)) {
+                *address = NULL;
+                break;
+            }
+        }
+    } else if (ptr != base) {
+        /* Any failure terminates the rank and others start teardown */
+        rc = OSHMEM_ERROR;
+    }
+
+out:
+    if (((OSHMEM_SUCCESS != rc) || (*address == NULL)) && (ptr != NULL)) {
+        (void)munmap(ptr, size);
+    }
+
+    free(bases);
+    return rc;
+}
+
+
+/*
+ * The returned mca_sshmem_base_start_address value is reserved by using
+ * mmap() for the expected size.
+ */
+static int memheap_base_segment_setup(size_t size)
+{
+    int rc;
+
+    if ((mca_sshmem_base_start_address == (void *)UINTPTR_MAX) ||
+        (mca_sshmem_base_start_address == NULL)) {
+        if (UINTPTR_MAX == 0xFFFFFFFF) {
+            /**
+             * if 32 bit we set sshmem_base_start_adress to 0
+             * to let OS allocate segment automatically
+             */
+            mca_sshmem_base_start_address = NULL;
+            return OSHMEM_SUCCESS;
+        }
+
+        rc = memheap_exchange_base_address(size, &mca_sshmem_base_start_address);
+        if (OSHMEM_SUCCESS != rc) {
+            MEMHEAP_ERROR("Failed to setup base segment address (error %d)", rc);
+            return rc;
+        }
+
+        if (NULL != mca_sshmem_base_start_address) {
+            goto done; /* Region is reserved */
+        }
+
+#if defined(__aarch64__)
+        mca_sshmem_base_start_address = (void*)0xAB0000000000;
+#else
+        mca_sshmem_base_start_address = (void*)0xFF000000;
+#endif
+    }
+
+    if (mca_sshmem_base_start_address != memheap_mmap_get(
+                                      mca_sshmem_base_start_address, size)) {
+        MEMHEAP_ERROR("Failed to create segment address %p/%zu",
+                      mca_sshmem_base_start_address, size);
+        return OSHMEM_ERROR;
+    }
+
+done:
+    if (oshmem_my_proc_id() == 0) {
+        MEMHEAP_VERBOSE(10, "Using symmetric segment address %p/%zu",
+                        mca_sshmem_base_start_address, size);
+    }
+
+    return OSHMEM_SUCCESS;
+}
+
 static memheap_context_t* _memheap_create(void)
 {
     int rc = OSHMEM_SUCCESS;
@@ -124,12 +256,17 @@ static memheap_context_t* _memheap_create(void)
 
     OPAL_TIMING_ENV_NEXT(timing, "_memheap_size()");
 
-    /* Inititialize symmetric area */
-    if (OSHMEM_SUCCESS == rc) {
-        rc = mca_memheap_base_alloc_init(&mca_memheap_base_map,
-                                         user_size + MEMHEAP_BASE_PRIVATE_SIZE, 0,
-                                         "regular_mem");
+    /* Locate and reserve symmetric area */
+    rc = memheap_base_segment_setup(user_size + MEMHEAP_BASE_PRIVATE_SIZE);
+    if (OSHMEM_SUCCESS != rc) {
+        MEMHEAP_ERROR("Failed to negotiate base segment addres");
+        return NULL;
     }
+
+    /* Initialize symmetric area */
+    rc = mca_memheap_base_alloc_init(&mca_memheap_base_map,
+                                     user_size + MEMHEAP_BASE_PRIVATE_SIZE, 0,
+                                     "regular_mem");
 
     OPAL_TIMING_ENV_NEXT(timing, "mca_memheap_base_alloc_init()");
 
