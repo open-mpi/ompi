@@ -59,8 +59,31 @@ included in the vX.Y.Z section and be denoted as:
    (** also appeared: A.B.C)  -- indicating that this item was previously
                                  included in release version vA.B.C.
 
+4.1.8 -- January, 2024
+----------------------
+
+** NOTE: Open MPI 4.1.7 incorrectly changed the shared library
+   versioning information for the OpenSHMEM interface, potentially
+   causing link errors when updating from prior releases of Open MPI
+   to 4.1.7.  This release resets the shared library version number
+   history to allow updates from Open MPI 4.1.6 and prior.  Customers
+   who updated to 4.1.7 and relinked their OpenSHMEM applications will
+   have to relink their application again.
+
+- Allocate and exchange OpenSHMEM base segment addresses earlier in
+  startup.
+- Fixed file_seek calculation when using SEEK_END and io/ompio.
+- Protect against using CUDA without VMM support.
+- Change several variables in coll/adapt, coll/basic, coll/han,
+  coll/hcoll, and coll/ucc from READONLY to ALL scope so that they can
+  be set via the MPI_T interface.
+- Add version identifier to rules file in coll/tuned and extend the
+  dynamic rules file to support the alltoall_algorithm_max_requests
+  tuning parameter.
+
+
 4.1.7 -- October, 2024
----------------------
+----------------------
 
 - Improve CUDA memory pool and context handling.
 - Fix detection of host vs. CUDA memory when cumemcreate is used with
