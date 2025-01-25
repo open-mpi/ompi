@@ -26,6 +26,7 @@
 #include "opal/mca/rcache/rcache.h"
 #include "opal/util/show_help.h"
 #include "opal/util/proc.h"
+
 /* Accelerator API's */
 static int accelerator_cuda_check_addr(const void *addr, int *dev_id, uint64_t *flags);
 static int accelerator_cuda_create_stream(int dev_id, opal_accelerator_stream_t **stream);
@@ -80,9 +81,13 @@ static int accelerator_cuda_get_buffer_id(int dev_id, const void *addr, opal_acc
 static int accelerator_cuda_sync_stream(opal_accelerator_stream_t *stream);
 static int accelerator_cuda_get_num_devices(int *num_devices);
 static int accelerator_cuda_get_mem_bw(int device, float *bw);
+static void accelerator_cuda_get_memkind(char **name, int *num_restrictors, char **restrictors);
 
 #define GET_STREAM(_stream) \
     ((_stream) == MCA_ACCELERATOR_STREAM_DEFAULT ? 0 : *((CUstream *) (_stream)->stream))
+
+// This value is based on the memory kind MPI side document
+#define MCA_ACCELERATOR_CUDA_NUM_RESTRICTORS 3
 
 opal_accelerator_base_module_t opal_accelerator_cuda_module =
 {
@@ -125,7 +130,8 @@ opal_accelerator_base_module_t opal_accelerator_cuda_module =
     accelerator_cuda_get_buffer_id,
 
     accelerator_cuda_get_num_devices,
-    accelerator_cuda_get_mem_bw
+    accelerator_cuda_get_mem_bw,
+    accelerator_cuda_get_memkind
 };
 
 static inline int opal_accelerator_cuda_delayed_init_check(void)
@@ -1217,4 +1223,25 @@ static int accelerator_cuda_get_mem_bw(int device, float *bw)
 
     *bw = opal_accelerator_cuda_mem_bw[device];
     return OPAL_SUCCESS;
+}
+
+static void accelerator_cuda_get_memkind (char **name, int *num_restrictors, char **restrictors)
+{
+    int n_restrictors = *num_restrictors > MCA_ACCELERATOR_CUDA_NUM_RESTRICTORS ?
+	MCA_ACCELERATOR_CUDA_NUM_RESTRICTORS : *num_restrictors;
+
+    *name = strdup("cuda");
+
+    if (n_restrictors > 0) {
+	restrictors[0] = strdup("host");
+    }
+    if (n_restrictors > 1) {
+	restrictors[1] = strdup("device");
+    }
+    if (n_restrictors > 2) {
+	restrictors[2] = strdup("managed");
+    }
+    *num_restrictors = n_restrictors;
+
+  return;
 }

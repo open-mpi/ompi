@@ -166,11 +166,9 @@ static int ompi_info_memkind_get_available(int *num_memkinds, ompi_memkind_t **m
     }
 
     int tmp_num = 2;
-#if 0
     if (0 != strcmp(opal_accelerator_base_selected_component.base_version.mca_component_name, "null")) {
         tmp_num++;
     }
-#endif
 
     ompi_info_memkind_available = (ompi_memkind_t *) malloc (tmp_num * sizeof(ompi_memkind_t));
     if (NULL == ompi_info_memkind_available) {
@@ -190,11 +188,12 @@ static int ompi_info_memkind_get_available(int *num_memkinds, ompi_memkind_t **m
     ompi_info_memkind_available[1].im_restrictors[1] = strdup ("win_allocate");
     ompi_info_memkind_available[1].im_restrictors[2] = strdup ("win_allocate_shared");
 
-#if 0
     if (tmp_num > 2) {
-        opal_accelerator.get_memkind_info (&ompi_info_memkind_available[2]);
+        ompi_info_memkind_available[2].im_num_restrictors = OMPI_MAX_NUM_MEMKIND_RESTRICTORS;
+        opal_accelerator.get_memkind (&(ompi_info_memkind_available[2].im_name),
+                                      &(ompi_info_memkind_available[2].im_num_restrictors),
+                                      (char**)ompi_info_memkind_available[2].im_restrictors);
     }
-#endif
     ompi_info_memkind_num_available = tmp_num;
 
  exit:

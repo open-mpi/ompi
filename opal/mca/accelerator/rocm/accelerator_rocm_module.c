@@ -74,8 +74,12 @@ static int mca_accelerator_rocm_sync_stream(opal_accelerator_stream_t *stream);
 static int mca_accelerator_rocm_get_num_devices(int *num_devices);
 
 static int mca_accelerator_rocm_get_mem_bw(int device, float *bw);
+static void mca_accelerator_rocm_get_memkind(char **name, int *num_restrictors, char **restrictors);
 
 #define GET_STREAM(_stream) (_stream == MCA_ACCELERATOR_STREAM_DEFAULT ? 0 : *((hipStream_t *)_stream->stream))
+
+// This value is based on the memory kind MPI side document
+#define MCA_ACCELERATOR_ROCM_NUM_RESTRICTORS 3
 
 opal_accelerator_base_module_t opal_accelerator_rocm_module =
 {
@@ -118,7 +122,8 @@ opal_accelerator_base_module_t opal_accelerator_rocm_module =
     mca_accelerator_rocm_get_buffer_id,
 
     mca_accelerator_rocm_get_num_devices,
-    mca_accelerator_rocm_get_mem_bw
+    mca_accelerator_rocm_get_mem_bw,
+    mca_accelerator_rocm_get_memkind
 };
 
 
@@ -945,4 +950,25 @@ static int mca_accelerator_rocm_get_mem_bw(int device, float *bw)
 
     *bw = opal_accelerator_rocm_mem_bw[device];
     return OPAL_SUCCESS;
+}
+
+static void mca_accelerator_rocm_get_memkind (char **name, int *num_restrictors, char **restrictors)
+{
+    int n_restrictors = *num_restrictors > MCA_ACCELERATOR_ROCM_NUM_RESTRICTORS ?
+	MCA_ACCELERATOR_ROCM_NUM_RESTRICTORS : *num_restrictors;
+
+    *name = strdup("rocm");
+
+    if (n_restrictors > 0) {
+	restrictors[0] = strdup("host");
+    }
+    if (n_restrictors > 1) {
+	restrictors[1] = strdup("device");
+    }
+    if (n_restrictors > 2) {
+	restrictors[2] = strdup("managed");
+    }
+    *num_restrictors = n_restrictors;
+
+    return;
 }

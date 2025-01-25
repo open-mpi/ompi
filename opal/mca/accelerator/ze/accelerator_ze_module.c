@@ -77,6 +77,10 @@ static int mca_accelerator_ze_sync_stream(opal_accelerator_stream_t *stream);
 static int mca_accelerator_ze_get_num_devices(int *num_devices);
 
 static int mca_accelerator_ze_get_mem_bw(int device, float *bw);
+static void mca_accelerator_ze_get_memkind(char **name, int *num_restrictors, char **restrictors);
+
+// This value is based on the memory kind MPI side document
+#define MCA_ACCELERATOR_ZE_NUM_RESTRICTORS 3
 
 opal_accelerator_base_module_t opal_accelerator_ze_module =
 {
@@ -118,7 +122,8 @@ opal_accelerator_base_module_t opal_accelerator_ze_module =
 
     .get_buffer_id = mca_accelerator_ze_get_buffer_id,
     .num_devices = mca_accelerator_ze_get_num_devices,
-    .get_mem_bw = mca_accelerator_ze_get_mem_bw
+    .get_mem_bw = mca_accelerator_ze_get_mem_bw,
+    .get_memkind = mca_accelerator_ze_get_memkind
 };
 
 static int accelerator_ze_dev_handle_to_dev_id(ze_device_handle_t hDevice)
@@ -872,4 +877,25 @@ static int mca_accelerator_ze_get_mem_bw(int device, float *bw)
      * TODO
      */
     return OPAL_ERR_NOT_IMPLEMENTED;
+}
+
+static void mca_accelerator_ze_get_memkind (char **name, int *num_restrictors, char **restrictors)
+{
+    int n_restrictors = *num_restrictors > MCA_ACCELERATOR_ZE_NUM_RESTRICTORS ?
+	MCA_ACCELERATOR_ZE_NUM_RESTRICTORS : *num_restrictors;
+
+    *name = strdup("level_zero");
+
+    if (n_restrictors > 0) {
+	restrictors[0] = strdup("host");
+    }
+    if (n_restrictors > 1) {
+	restrictors[1] = strdup("device");
+    }
+    if (n_restrictors > 2) {
+	restrictors[2] = strdup("shared");
+    }
+    *num_restrictors = n_restrictors;
+
+    return;
 }
