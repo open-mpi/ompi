@@ -23,6 +23,7 @@
 
 #include "accelerator_null_component.h"
 #include "opal/constants.h"
+#include "ompi/info/info_memkind.h"
 #include <string.h>
 
 /*
@@ -94,6 +95,7 @@ static int accelerator_null_sync_stream(opal_accelerator_stream_t *stream);
 static int accelerator_null_get_num_devices(int *num_devices);
 
 static int accelerator_null_get_mem_bw(int device, float *bw);
+static void accelerator_null_get_memkind(ompi_memkind_t *memkind);
 
 /*
  * Instantiate the public struct with all of our public information
@@ -174,7 +176,8 @@ opal_accelerator_base_module_t opal_accelerator_null_module =
     accelerator_null_get_buffer_id,
 
     accelerator_null_get_num_devices,
-    accelerator_null_get_mem_bw
+    accelerator_null_get_mem_bw,
+    accelerator_null_get_memkind
 };
 
 static int accelerator_null_open(void)
@@ -392,4 +395,13 @@ static int accelerator_null_get_mem_bw(int device, float *bw)
 {
     *bw = 1.0; // return something that is not 0
     return OPAL_SUCCESS;
+}
+
+static void accelerator_null_get_memkind (ompi_memkind_t *memkind)
+{
+  memkind->im_name = NULL;
+  memkind->im_no_restrictors = false;
+  memkind->im_num_restrictors = 0;
+
+  return;
 }

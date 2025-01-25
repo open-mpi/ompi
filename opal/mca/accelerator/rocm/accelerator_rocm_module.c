@@ -1,10 +1,9 @@
 /*
- * Copyright (c) 2022-2023  Advanced Micro Devices, Inc. All Rights reserved.
- * $COPYRIGHT$
+ * Copyright (c) 2022-2025 Advanced Micro Devices, Inc. All Rights reserved.
  * Copyright (c) 2024      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- *
+ * $COPYRIGHT$
  * Additional copyrights may follow
  *
  * $HEADER$
@@ -16,6 +15,7 @@
 #include "opal/mca/accelerator/base/base.h"
 #include "opal/constants.h"
 #include "opal/util/output.h"
+#include "ompi/info/info_memkind.h"
 
 /* Accelerator API's */
 static int mca_accelerator_rocm_check_addr(const void *addr, int *dev_id, uint64_t *flags);
@@ -74,6 +74,7 @@ static int mca_accelerator_rocm_sync_stream(opal_accelerator_stream_t *stream);
 static int mca_accelerator_rocm_get_num_devices(int *num_devices);
 
 static int mca_accelerator_rocm_get_mem_bw(int device, float *bw);
+static void mca_accelerator_rocm_get_memkind(ompi_memkind_t *memkind);
 
 #define GET_STREAM(_stream) (_stream == MCA_ACCELERATOR_STREAM_DEFAULT ? 0 : *((hipStream_t *)_stream->stream))
 
@@ -118,7 +119,8 @@ opal_accelerator_base_module_t opal_accelerator_rocm_module =
     mca_accelerator_rocm_get_buffer_id,
 
     mca_accelerator_rocm_get_num_devices,
-    mca_accelerator_rocm_get_mem_bw
+    mca_accelerator_rocm_get_mem_bw,
+    mca_accelerator_rocm_get_memkind
 };
 
 
@@ -945,4 +947,16 @@ static int mca_accelerator_rocm_get_mem_bw(int device, float *bw)
 
     *bw = opal_accelerator_rocm_mem_bw[device];
     return OPAL_SUCCESS;
+}
+
+static void mca_accelerator_rocm_get_memkind (ompi_memkind_t *memkind)
+{
+  memkind->im_name = strdup("rocm");
+  memkind->im_no_restrictors = false;
+  memkind->im_num_restrictors = 3;
+  memkind->im_restrictors[0] = strdup("host");
+  memkind->im_restrictors[1] = strdup("device");
+  memkind->im_restrictors[2] = strdup("managed");
+
+  return;
 }

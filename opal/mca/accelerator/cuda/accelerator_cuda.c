@@ -26,6 +26,7 @@
 #include "opal/mca/rcache/rcache.h"
 #include "opal/util/show_help.h"
 #include "opal/util/proc.h"
+#include "ompi/info/info_memkind.h"
 /* Accelerator API's */
 static int accelerator_cuda_check_addr(const void *addr, int *dev_id, uint64_t *flags);
 static int accelerator_cuda_create_stream(int dev_id, opal_accelerator_stream_t **stream);
@@ -80,6 +81,7 @@ static int accelerator_cuda_get_buffer_id(int dev_id, const void *addr, opal_acc
 static int accelerator_cuda_sync_stream(opal_accelerator_stream_t *stream);
 static int accelerator_cuda_get_num_devices(int *num_devices);
 static int accelerator_cuda_get_mem_bw(int device, float *bw);
+static void accelerator_cuda_get_memkind(ompi_memkind_t *memkind);
 
 #define GET_STREAM(_stream) \
     ((_stream) == MCA_ACCELERATOR_STREAM_DEFAULT ? 0 : *((CUstream *) (_stream)->stream))
@@ -125,7 +127,8 @@ opal_accelerator_base_module_t opal_accelerator_cuda_module =
     accelerator_cuda_get_buffer_id,
 
     accelerator_cuda_get_num_devices,
-    accelerator_cuda_get_mem_bw
+    accelerator_cuda_get_mem_bw,
+    accelerator_cuda_get_memkind
 };
 
 static inline int opal_accelerator_cuda_delayed_init_check(void)
@@ -1217,4 +1220,16 @@ static int accelerator_cuda_get_mem_bw(int device, float *bw)
 
     *bw = opal_accelerator_cuda_mem_bw[device];
     return OPAL_SUCCESS;
+}
+
+static void mca_accelerator_cuda_get_memkind (ompi_memkind_t *memkind)
+{
+  memkind->im_name = strdup("cuda");
+  memkind->im_no_restrictors = false;
+  memkind->im_num_restrictors = 3;
+  memkind->im_restrictors[0] = strdup("host");
+  memkind->im_restrictors[1] = strdup("device");
+  memkind->im_restrictors[2] = strdup("managed");
+
+  return;
 }

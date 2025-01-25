@@ -18,6 +18,7 @@
 #include "opal/util/printf.h"
 #include "opal/constants.h"
 #include "opal/util/output.h"
+#include "ompi/info/info_memkind.h"
 
 /* Accelerator API's */
 static int mca_accelerator_ze_check_addr(const void *addr, int *dev_id, uint64_t *flags);
@@ -77,6 +78,7 @@ static int mca_accelerator_ze_sync_stream(opal_accelerator_stream_t *stream);
 static int mca_accelerator_ze_get_num_devices(int *num_devices);
 
 static int mca_accelerator_ze_get_mem_bw(int device, float *bw);
+static void mca_accelerator_ze_get_memkind(ompi_memkind_t *memkind);
 
 opal_accelerator_base_module_t opal_accelerator_ze_module =
 {
@@ -118,7 +120,8 @@ opal_accelerator_base_module_t opal_accelerator_ze_module =
 
     .get_buffer_id = mca_accelerator_ze_get_buffer_id,
     .num_devices = mca_accelerator_ze_get_num_devices,
-    .get_mem_bw = mca_accelerator_ze_get_mem_bw
+    .get_mem_bw = mca_accelerator_ze_get_mem_bw,
+    .get_memkind = mca_accelerator_ze_get_memkind
 };
 
 static int accelerator_ze_dev_handle_to_dev_id(ze_device_handle_t hDevice)
@@ -872,4 +875,16 @@ static int mca_accelerator_ze_get_mem_bw(int device, float *bw)
      * TODO
      */
     return OPAL_ERR_NOT_IMPLEMENTED;
+}
+
+static void mca_accelerator_ze_get_memkind (ompi_memkind_t *memkind)
+{
+  memkind->im_name = strdup("level_zero");
+  memkind->im_no_restrictors = false;
+  memkind->im_num_restrictors = 3;
+  memkind->im_restrictors[0] = strdup("host");
+  memkind->im_restrictors[1] = strdup("device");
+  memkind->im_restrictors[2] = strdup("shared");
+
+  return;
 }
