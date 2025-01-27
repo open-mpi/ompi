@@ -436,14 +436,18 @@ bcast_rportlen:
                 opal_list_remove_item(&ilist, (opal_list_item_t*)cd);  // TODO: do we need to release cd ?
                 OBJ_RELEASE(cd);
                 /* ompi_proc_complete_init_single() initializes and optionally retrieves
-                 * OPAL_PMIX_LOCALITY and OPAL_PMIX_HOSTNAME. since we can live without
-                 * them, we are just fine */
+                 * OPAL_PMIX_LOCALITY and OPAL_PMIX_HOSTNAME.
+                 */
                 ompi_proc_complete_init_single(proc);
                 /* if this proc is local, then get its locality */
                 if (NULL != local_ranks_in_jobid) {
-                    uint16_t u16;
+                    uint16_t u16 = 0;
                     for (prn=0; prn < nprn; prn++) {
-                        if (local_ranks_in_jobid[prn] == proc->super.proc_name.vpid) {
+                        /*
+                         * exclude procs not in our job id (aka pmix namespace) from localization optimizations
+                         */
+                        if ((local_ranks_in_jobid[prn] == proc->super.proc_name.vpid)
+                             &&  (OMPI_PROC_MY_NAME->jobid == proc->super.proc_name.jobid)) {
                             /* get their locality string */
                             val = NULL;
                             OPAL_MODEX_RECV_VALUE_IMMEDIATE(rc, PMIX_LOCALITY_STRING,
