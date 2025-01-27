@@ -15,6 +15,7 @@
  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
  * Copyright (c) 2015-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2025      NVIDIA Corporation.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -43,9 +44,6 @@ struct mca_rcache_base_registration_t;
 struct mca_rcache_base_vma_module_t {
     opal_object_t super;
     opal_interval_tree_t tree;
-    opal_list_t vma_list;
-    opal_lifo_t vma_gc_lifo;
-    size_t reg_cur_cache_size;
     opal_mutex_t vma_lock;
 };
 typedef struct mca_rcache_base_vma_module_t mca_rcache_base_vma_module_t;
