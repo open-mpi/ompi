@@ -43,7 +43,7 @@ int mca_memheap_base_static_init(mca_memheap_map_t *map)
     uint64_t offset;
     char dev[8];
     uint64_t inode;
-    char pathname[MAXPATHLEN];
+    char pathname[OPAL_PATH_MAX];
     FILE *fp;
     char line[1024];
     map_segment_t *s;
