@@ -154,6 +154,7 @@ examples/hello_cxx
 examples/hello_mpifh
 examples/hello_usempi
 examples/hello_usempif08
+examples/hello_sessions_c
 examples/ring_c
 examples/ring_cxx
 examples/ring_mpifh
