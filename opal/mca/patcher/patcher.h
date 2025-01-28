@@ -30,9 +30,9 @@
  * Reference: "64-bit PowerPC ELF Application Binary Interface Supplement 1.9" */
 #    define OPAL_PATCHER_BEGIN                      \
         unsigned long toc_save;                     \
-        asm volatile("std 2, %0" : "=m"(toc_save)); \
-        asm volatile("nop; nop; nop; nop; nop");
-#    define OPAL_PATCHER_END asm volatile("ld  2, %0" : : "m"(toc_save));
+        asm volatile("std 2, %0" : "=m"(toc_save) :: "memory"); \
+        asm volatile("nop; nop; nop; nop; nop"::: "memory");
+#    define OPAL_PATCHER_END asm volatile("ld  2, %0" : : "m"(toc_save) : "memory");
 
 #else /* !__PPC64__ */
 
