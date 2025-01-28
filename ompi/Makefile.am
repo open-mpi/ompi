@@ -83,7 +83,7 @@ SUBDIRS = \
         mpi/fortran/mpif-h \
         mpi/fortran/use-mpi \
         $(OMPI_MPIEXT_USEMPI_DIR) \
-        $(OMPI_FORTRAN_USEMPI_DIR) \
+        mpi/fortran/use-mpi-ignore-tkr \
         mpi/fortran/mpiext-use-mpi \
         mpi/fortran/use-mpi-f08/base \
         mpi/fortran/use-mpi-f08/mod \
@@ -113,7 +113,6 @@ DIST_SUBDIRS = \
         mpi/fortran/base \
         mpi/fortran/mpif-h \
         mpi/fortran/use-mpi \
-        mpi/fortran/use-mpi-tkr \
         mpi/fortran/use-mpi-ignore-tkr \
         mpi/fortran/mpiext-use-mpi \
         mpi/fortran/use-mpi-f08 \
