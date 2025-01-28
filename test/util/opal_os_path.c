@@ -174,7 +174,7 @@ static bool test3(void)
 
 static bool test4(void)
 {
-    char a[MAXPATHLEN + 10];
+    char a[OPAL_PATH_MAX + 10];
     int i;
 
     if (NULL == path_sep) {
@@ -182,7 +182,7 @@ static bool test4(void)
         return false;
     }
 
-    for (i = 0; i < MAXPATHLEN + 5; i++) {
+    for (i = 0; i < OPAL_PATH_MAX + 5; i++) {
         a[i] = 'a';
     }
     a[i] = '\0';
