@@ -94,9 +94,9 @@ static inline bool mca_fs_base_is_link (const char *filename)
 static inline void mca_fs_base_get_real_filename (const char *filename, char **rfilename)
 {
     int namelen;
-    char linkbuf[PATH_MAX+1];
+    char linkbuf[OPAL_PATH_MAX+1];
 
-    namelen = readlink(filename, linkbuf, PATH_MAX);
+    namelen = readlink(filename, linkbuf, OPAL_PATH_MAX);
     if (namelen == -1) {
         /* something strange has happened between the time that
          * we determined that this was a link and the time that
