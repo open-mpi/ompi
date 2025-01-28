@@ -6,7 +6,7 @@
  * Copyright (c) 2014-2024 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2019      Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
- * Copyright (c) 2023      Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (c) 2023-2024 Advanced Micro Devices, Inc. All rights reserved.
  * Copyright (c) 2024      Triad National Security, LLC. All rights reserved.
  * $COPYRIGHT$
  *
@@ -106,18 +106,21 @@ mca_coll_accelerator_comm_query(struct ompi_communicator_t *comm,
 }
 
 
-#define  ACCELERATOR_INSTALL_COLL_API(__comm, __module, __api) \
+#define  ACCELERATOR_INSTALL_COLL_API(__comm, __module, __api, __API) \
     do \
     { \
         if ((__comm)->c_coll->coll_##__api) \
         { \
-            MCA_COLL_SAVE_API(__comm, __api, (__module)->c_coll.coll_##__api, (__module)->c_coll.coll_##__api##_module, "accelerator"); \
-            MCA_COLL_INSTALL_API(__comm, __api, mca_coll_accelerator_##__api, &__module->super, "accelerator"); \
+	    if (mca_coll_accelerator_component.cts_requested & COLL_ACC_##__API)  \
+            { \
+                MCA_COLL_SAVE_API(__comm, __api, (__module)->c_coll.coll_##__api, (__module)->c_coll.coll_##__api##_module, "accelerator"); \
+                MCA_COLL_INSTALL_API(__comm, __api, mca_coll_accelerator_##__api, &__module->super, "accelerator"); \
+	    } \
         } \
         else \
         { \
             opal_show_help("help-mca-coll-base.txt", "comm-select:missing collective", true, \
-                           "cuda", #__api, ompi_process_info.nodename, \
+                           "accelerator", #__api, ompi_process_info.nodename, \
                            mca_coll_accelerator_component.priority); \
         } \
     } while (0)
@@ -141,14 +144,14 @@ mca_coll_accelerator_module_enable(mca_coll_base_module_t *module,
 {
     mca_coll_accelerator_module_t *s = (mca_coll_accelerator_module_t*) module;
 
-    ACCELERATOR_INSTALL_COLL_API(comm, s, allreduce);
-    ACCELERATOR_INSTALL_COLL_API(comm, s, reduce);
-    ACCELERATOR_INSTALL_COLL_API(comm, s, reduce_local);
-    ACCELERATOR_INSTALL_COLL_API(comm, s, reduce_scatter_block);
+    ACCELERATOR_INSTALL_COLL_API(comm, s, allreduce, ALLREDUCE);
+    ACCELERATOR_INSTALL_COLL_API(comm, s, reduce, REDUCE);
+    ACCELERATOR_INSTALL_COLL_API(comm, s, reduce_local, REDUCE_LOCAL);
+    ACCELERATOR_INSTALL_COLL_API(comm, s, reduce_scatter_block, REDUCE_SCATTER_BLOCK);
     if (!OMPI_COMM_IS_INTER(comm)) {
         /* MPI does not define scan/exscan on intercommunicators */
-        ACCELERATOR_INSTALL_COLL_API(comm, s, exscan);
-        ACCELERATOR_INSTALL_COLL_API(comm, s, scan);
+      ACCELERATOR_INSTALL_COLL_API(comm, s, exscan, EXSCAN);
+      ACCELERATOR_INSTALL_COLL_API(comm, s, scan, SCAN);
     }
 
     return OMPI_SUCCESS;
