@@ -33,6 +33,9 @@
 #include "ompi/constants.h"
 #include "ompi/mca/fbtl/fbtl.h"
 
+#ifndef IOV_MAX
+#define IOV_MAX 1024
+#endif
 
 static ssize_t mca_fbtl_posix_preadv_datasieving (ompio_file_t *fh, struct flock *lock, int *lock_counter);
 static ssize_t mca_fbtl_posix_preadv_generic (ompio_file_t *fh, struct flock *lock, int *lock_counter);
