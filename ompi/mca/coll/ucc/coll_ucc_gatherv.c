@@ -86,9 +86,8 @@ int mca_coll_ucc_gatherv(const void *sbuf, int scount, struct ompi_datatype_t *s
     return OMPI_SUCCESS;
 fallback:
     UCC_VERBOSE(3, "running fallback gatherv");
-    return ucc_module->previous_gatherv(sbuf, scount, sdtype, rbuf, rcounts,
-                                        disps, rdtype, root, comm,
-                                        ucc_module->previous_gatherv_module);
+    return mca_coll_ucc_call_previous(gatherv, ucc_module,
+        sbuf, scount, sdtype, rbuf, rcounts, disps, rdtype, root, comm);
 }
 
 int mca_coll_ucc_igatherv(const void *sbuf, int scount, struct ompi_datatype_t *sdtype,
@@ -115,7 +114,6 @@ fallback:
     if (coll_req) {
         mca_coll_ucc_req_free((ompi_request_t **)&coll_req);
     }
-    return ucc_module->previous_igatherv(sbuf, scount, sdtype, rbuf, rcounts,
-                                         disps, rdtype, root, comm, request,
-                                         ucc_module->previous_igatherv_module);
+    return mca_coll_ucc_call_previous(igatherv, ucc_module,
+        sbuf, scount, sdtype, rbuf, rcounts, disps, rdtype, root, comm, request);
 }

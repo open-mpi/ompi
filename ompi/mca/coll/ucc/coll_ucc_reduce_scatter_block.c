@@ -82,9 +82,8 @@ int mca_coll_ucc_reduce_scatter_block(const void *sbuf, void *rbuf, int rcount,
     return OMPI_SUCCESS;
 fallback:
     UCC_VERBOSE(3, "running fallback reduce_scatter_block");
-    return ucc_module->previous_reduce_scatter_block(sbuf, rbuf, rcount, dtype,
-                                                     op, comm,
-                                                     ucc_module->previous_reduce_scatter_block_module);
+    return mca_coll_ucc_call_previous(reduce_scatter_block, ucc_module,
+        sbuf, rbuf, rcount, dtype, op, comm);
 }
 
 int mca_coll_ucc_ireduce_scatter_block(const void *sbuf, void *rbuf, int rcount,
@@ -111,7 +110,6 @@ fallback:
     if (coll_req) {
         mca_coll_ucc_req_free((ompi_request_t **)&coll_req);
     }
-    return ucc_module->previous_ireduce_scatter_block(sbuf, rbuf, rcount, dtype,
-                                                      op, comm, request,
-                                                      ucc_module->previous_ireduce_scatter_block_module);
+    return mca_coll_ucc_call_previous(ireduce_scatter_block, ucc_module,
+        sbuf, rbuf, rcount, dtype, op, comm, request);
 }

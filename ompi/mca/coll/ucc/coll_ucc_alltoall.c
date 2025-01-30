@@ -77,8 +77,8 @@ int mca_coll_ucc_alltoall(const void *sbuf, int scount, struct ompi_datatype_t *
     return OMPI_SUCCESS;
 fallback:
     UCC_VERBOSE(3, "running fallback alltoall");
-    return ucc_module->previous_alltoall(sbuf, scount, sdtype, rbuf, rcount, rdtype,
-                                          comm, ucc_module->previous_alltoall_module);
+    return mca_coll_ucc_call_previous(alltoall, ucc_module,
+        sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
 }
 
 int mca_coll_ucc_ialltoall(const void *sbuf, int scount, struct ompi_datatype_t *sdtype,
@@ -104,6 +104,6 @@ fallback:
     if (coll_req) {
         mca_coll_ucc_req_free((ompi_request_t **)&coll_req);
     }
-    return ucc_module->previous_ialltoall(sbuf, scount, sdtype, rbuf, rcount, rdtype,
-                                          comm, request, ucc_module->previous_ialltoall_module);
+    return mca_coll_ucc_call_previous(ialltoall, ucc_module,
+        sbuf, scount, sdtype, rbuf, rcount, rdtype, comm, request);
 }

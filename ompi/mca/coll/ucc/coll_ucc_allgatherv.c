@@ -78,9 +78,8 @@ int mca_coll_ucc_allgatherv(const void *sbuf, int scount,
     return OMPI_SUCCESS;
 fallback:
     UCC_VERBOSE(3, "running fallback allgatherv");
-    return ucc_module->previous_allgatherv(sbuf, scount, sdtype,
-                                           rbuf, rcounts, rdisps, rdtype,
-                                           comm, ucc_module->previous_allgatherv_module);
+    return mca_coll_ucc_call_previous(allgatherv, ucc_module,
+        sbuf, scount, sdtype, rbuf, rcounts, rdisps, rdtype, comm);
 }
 
 int mca_coll_ucc_iallgatherv(const void *sbuf, int scount,
@@ -108,7 +107,6 @@ fallback:
     if (coll_req) {
         mca_coll_ucc_req_free((ompi_request_t **)&coll_req);
     }
-    return ucc_module->previous_iallgatherv(sbuf, scount, sdtype,
-                                            rbuf, rcounts, rdisps, rdtype,
-                                            comm, request, ucc_module->previous_iallgatherv_module);
+    return mca_coll_ucc_call_previous(iallgatherv, ucc_module,
+        sbuf, scount, sdtype, rbuf, rcounts, rdisps, rdtype, comm, request);
 }

@@ -90,9 +90,8 @@ int mca_coll_ucc_scatterv(const void *sbuf, const int *scounts,
     return OMPI_SUCCESS;
 fallback:
     UCC_VERBOSE(3, "running fallback scatterv");
-    return ucc_module->previous_scatterv(sbuf, scounts, disps, sdtype, rbuf,
-                                         rcount, rdtype, root, comm,
-                                         ucc_module->previous_scatterv_module);
+    return mca_coll_ucc_call_previous(scatterv, ucc_module,
+        sbuf, scounts, disps, sdtype, rbuf, rcount, rdtype, root, comm);
 }
 
 int mca_coll_ucc_iscatterv(const void *sbuf, const int *scounts,
@@ -120,7 +119,6 @@ fallback:
     if (coll_req) {
         mca_coll_ucc_req_free((ompi_request_t **)&coll_req);
     }
-    return ucc_module->previous_iscatterv(sbuf, scounts, disps, sdtype, rbuf,
-                                          rcount, rdtype, root, comm, request,
-                                          ucc_module->previous_iscatterv_module);
+    return mca_coll_ucc_call_previous(iscatterv, ucc_module,
+        sbuf, scounts, disps, sdtype, rbuf, rcount, rdtype, root, comm, request);
 }

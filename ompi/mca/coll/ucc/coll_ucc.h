@@ -40,6 +40,11 @@ BEGIN_C_DECLS
                          "iallgatherv,ireduce,igather,igatherv,ireduce_scatter_block,"\
                          "ireduce_scatter,iscatterv,iscatter"
 
+#define mca_coll_ucc_call_previous(__api, ucc_module, ...) \
+    (ucc_module->previous_ ## __api == NULL ? \
+        UCC_ERR_NOT_SUPPORTED : \
+        ucc_module->previous_ ## __api (__VA_ARGS__, ucc_module->previous_ ## __api ## _module))
+
 typedef struct mca_coll_ucc_req {
     ompi_request_t super;
     ucc_coll_req_h ucc_req;

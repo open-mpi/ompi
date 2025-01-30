@@ -141,13 +141,12 @@ static void mca_coll_ucc_module_destruct(mca_coll_ucc_module_t *ucc_module)
 #define SAVE_PREV_COLL_API(__api) do {                                                       \
         ucc_module->previous_ ## __api            = comm->c_coll->coll_ ## __api;            \
         ucc_module->previous_ ## __api ## _module = comm->c_coll->coll_ ## __api ## _module; \
-        if (!comm->c_coll->coll_ ## __api || !comm->c_coll->coll_ ## __api ## _module) {     \
-            return OMPI_ERROR;                                                               \
+        if (comm->c_coll->coll_ ## __api && comm->c_coll->coll_ ## __api ## _module) {       \
+            OBJ_RETAIN(ucc_module->previous_ ## __api ## _module);                           \
         }                                                                                    \
-        OBJ_RETAIN(ucc_module->previous_ ## __api ## _module);                               \
     } while(0)
 
-static int mca_coll_ucc_save_coll_handlers(mca_coll_ucc_module_t *ucc_module)
+static void mca_coll_ucc_save_coll_handlers(mca_coll_ucc_module_t *ucc_module)
 {
     ompi_communicator_t *comm = ucc_module->comm;
     SAVE_PREV_COLL_API(allreduce);
@@ -178,7 +177,6 @@ static int mca_coll_ucc_save_coll_handlers(mca_coll_ucc_module_t *ucc_module)
     SAVE_PREV_COLL_API(iscatterv);
     SAVE_PREV_COLL_API(scatter);
     SAVE_PREV_COLL_API(iscatter);
-    return OMPI_SUCCESS;
 }
 
 /*
@@ -470,11 +468,6 @@ static int mca_coll_ucc_module_enable(mca_coll_base_module_t *module,
                 (void*)comm, (long long unsigned)team_params.id,
                 ompi_comm_size(comm));
 
-    if (OMPI_SUCCESS != mca_coll_ucc_save_coll_handlers(ucc_module)){
-        UCC_ERROR("mca_coll_ucc_save_coll_handlers failed");
-        goto err;
-    }
-
     if (UCC_OK != ucc_team_create_post(&cm->ucc_context, 1,
                                        &team_params, &ucc_module->ucc_team)) {
         UCC_ERROR("ucc_team_create_post failed");
@@ -495,6 +488,9 @@ static int mca_coll_ucc_module_enable(mca_coll_base_module_t *module,
         UCC_ERROR("ucc ompi_attr_set_c failed");
         goto err;
     }
+
+    mca_coll_ucc_save_coll_handlers(ucc_module);
+
     return OMPI_SUCCESS;
 
 err:
