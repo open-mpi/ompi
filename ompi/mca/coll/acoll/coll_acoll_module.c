@@ -60,17 +60,17 @@ mca_coll_base_module_t *mca_coll_acoll_comm_query(struct ompi_communicator_t *co
 {
     mca_coll_acoll_module_t *acoll_module;
 
-    acoll_module = OBJ_NEW(mca_coll_acoll_module_t);
-    if (NULL == acoll_module) {
-        return NULL;
-    }
-
     if (OMPI_COMM_IS_INTER(comm)) {
         *priority = 0;
         return NULL;
     }
     if (OMPI_COMM_IS_INTRA(comm) && ompi_comm_size(comm) < 2) {
         *priority = 0;
+        return NULL;
+    }
+
+    acoll_module = OBJ_NEW(mca_coll_acoll_module_t);
+    if (NULL == acoll_module) {
         return NULL;
     }
 
