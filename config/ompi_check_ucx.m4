@@ -61,28 +61,18 @@ AC_DEFUN([OMPI_CHECK_UCX],[
 
     AS_IF([test "$ompi_check_ucx_happy" = yes],
           [# Turn off UCX version v1.8 due to issue #8321
-           AC_CACHE_CHECK([UCX version 1.8.x],
-               [ompi_check_ucx_cv_have_version_1_8],
+           AC_CACHE_CHECK([UCX version > 1.9.x],
+               [ompi_check_ucx_cv_have_version_gt_1_9],
                [AC_PREPROC_IFELSE([AC_LANG_PROGRAM([[
 #include <ucp/api/ucp_version.h>
                                  ]], [[
-#if (UCP_API_MAJOR == 1) && (UCP_API_MINOR == 8)
-#error "Invalid version"
-#endif
-                                 ]])],
-                             [ompi_check_ucx_cv_have_version_1_8=no],
-                             [ompi_check_ucx_cv_have_version_1_8=yes])])
-           AS_IF([test "${ompi_check_ucx_cv_have_version_1_8}" = "yes"],
-                 [AC_MSG_WARN([UCX support skipped because version 1.8.x was found, which has a known catastrophic issue.])
-                  ompi_check_ucx_happy=no])])
-           AC_PREPROC_IFELSE([AC_LANG_PROGRAM([[
-#include <ucp/api/ucp_version.h>
-                             ]], [[
 #if (UCP_API_MAJOR < 1) || ((UCP_API_MAJOR == 1) && (UCP_API_MINOR < 9))
 #error "Version too low"
 #endif
-                             ]])],
-                             [], [AC_MSG_WARN([UCX version is too old, please upgrade to 1.9 or higher.])])
+                                 ]])],
+                             [ompi_check_ucx_cv_have_version_gt_1_9=yes],
+                             [ompi_check_ucx_cv_have_version_gt_1_9=no
+                              ompi_check_ucx_happy=no])])])
 
     AS_IF([test "$ompi_check_ucx_happy" = yes],
           [AC_CHECK_DECLS([ucp_tag_send_nbr],
