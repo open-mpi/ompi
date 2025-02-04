@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2018      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2025      Google, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -13,6 +14,8 @@
 #    define BTL_UCT_TYPES_H
 
 #    include "opal/mca/btl/btl.h"
+
+#include "opal/mca/timer/base/base.h"
 
 /* forward declarations */
 struct mca_btl_uct_module_t;
@@ -100,6 +103,9 @@ struct mca_btl_uct_tl_endpoint_t {
 
     /** UCT endpoint handle */
     uct_ep_h uct_ep;
+
+    /** Time of last connection message. */
+    opal_timer_t last_connection_req;
 };
 
 typedef struct mca_btl_uct_tl_endpoint_t mca_btl_uct_tl_endpoint_t;

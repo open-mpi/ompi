@@ -102,6 +102,17 @@ static int mca_btl_uct_component_register(void)
         MCA_BASE_VAR_SCOPE_ALL, &mca_btl_uct_component.bind_threads_to_contexts);
 #endif
 
+    /* timeout between connection message attempts in µs */
+    mca_btl_uct_component.connection_retry_timeout = 2000;
+    (void) mca_base_component_var_register(
+        &mca_btl_uct_component.super.btl_version, "connection_retry_timeout",
+        "Timeout between attempts to send connection messages for connect-to-"
+        "endpoint connections. The timeout is measured in µs and is only"
+        "necessary when using unreliable transports for connections (ex: UD). "
+        "(default: 2000µs)",
+        MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_4,
+        MCA_BASE_VAR_SCOPE_LOCAL, &mca_btl_uct_component.connection_retry_timeout);
+
     /* for now we want this component to lose to btl/ugni and btl/vader */
     module->super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_HIGH - 1;
 

@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2019      Google, LLC. All rights reserved.
+ * Copyright (c) 2019-2025 Google, LLC. All rights reserved.
  * Copyright (c) 2019      Intel, Inc.  All rights reserved.
  * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
@@ -40,6 +40,8 @@
 #include "opal/mca/mpool/mpool.h"
 #include "opal/mca/pmix/pmix-internal.h"
 #include "opal/mca/rcache/base/base.h"
+#include "opal/mca/threads/condition.h"
+#include "opal/mca/threads/mutex.h"
 #include "opal/mca/threads/tsd.h"
 #include "opal/util/event.h"
 #include <uct/api/uct.h>
@@ -153,6 +155,9 @@ struct mca_btl_uct_component_t {
 
     /** disable UCX memory hooks */
     bool disable_ucx_memory_hooks;
+
+    /** connection retry timeout */
+    unsigned int connection_retry_timeout;
 };
 typedef struct mca_btl_uct_component_t mca_btl_uct_component_t;
 
