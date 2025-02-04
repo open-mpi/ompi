@@ -13,6 +13,7 @@
  * Copyright (c) 2015-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2020      Google, LLC. All rights reserved.
+ * Copyright (c) 2025      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -81,6 +82,7 @@ static void opal_interval_tree_construct (opal_interval_tree_t *tree)
     tree->tree_size = 0;
     tree->lock = 0;
     tree->reader_count = 0;
+    tree->reader_id = 0;
     tree->epoch = 0;
 
     /* set all reader epochs to UINT_MAX. this value is used to simplfy

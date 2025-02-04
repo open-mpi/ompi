@@ -14,7 +14,7 @@
  * Copyright (c) 2006      Voltaire. All rights reserved.
  * Copyright (c) 2007      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
- * Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2013-2025 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2013-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2015-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
@@ -34,7 +34,6 @@
 int mca_rcache_base_vma_tree_init (mca_rcache_base_vma_module_t *vma_module)
 {
     OBJ_CONSTRUCT(&vma_module->tree, opal_interval_tree_t);
-    vma_module->reg_cur_cache_size = 0;
     return opal_interval_tree_init (&vma_module->tree);
 }
 
