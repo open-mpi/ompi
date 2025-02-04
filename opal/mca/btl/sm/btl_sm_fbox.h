@@ -4,7 +4,7 @@
  *                         reserved.
  * Copyright (c) 2018      Triad National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2020      Google, LLC. All rights reserveed.
+ * Copyright (c) 2020-2025 Google, LLC. All rights reserveed.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -17,45 +17,11 @@
 
 #include "opal/mca/btl/sm/btl_sm_types.h"
 #include "opal/mca/btl/sm/btl_sm_virtual.h"
+#include "opal/util/minmax.h"
 
 #define MCA_BTL_SM_POLL_COUNT          31
 #define MCA_BTL_SM_FBOX_ALIGNMENT      32
 #define MCA_BTL_SM_FBOX_ALIGNMENT_MASK (MCA_BTL_SM_FBOX_ALIGNMENT - 1)
-
-/**
- *  An abstraction that represents a connection to a endpoint process.
- *  An instance of mca_ptl_base_endpoint_t is associated w/ each process
- *  and BTL pair at startup.
- */
-
-static inline void mca_btl_sm_endpoint_setup_fbox_recv(struct mca_btl_base_endpoint_t *endpoint,
-                                                       void *base)
-{
-    endpoint->fbox_in.startp = (uint32_t *) base;
-    endpoint->fbox_in.start = MCA_BTL_SM_FBOX_ALIGNMENT;
-    endpoint->fbox_in.seq = 0;
-    opal_atomic_wmb();
-    endpoint->fbox_in.buffer = base;
-}
-
-static inline void mca_btl_sm_endpoint_setup_fbox_send(struct mca_btl_base_endpoint_t *endpoint,
-                                                       opal_free_list_item_t *fbox)
-{
-    void *base = fbox->ptr;
-
-    endpoint->fbox_out.start = MCA_BTL_SM_FBOX_ALIGNMENT;
-    endpoint->fbox_out.end = MCA_BTL_SM_FBOX_ALIGNMENT;
-    endpoint->fbox_out.startp = (uint32_t *) base;
-    endpoint->fbox_out.startp[0] = MCA_BTL_SM_FBOX_ALIGNMENT;
-    endpoint->fbox_out.seq = 0;
-    endpoint->fbox_out.fbox = fbox;
-
-    /* zero out the first header in the fast box */
-    memset((char *) base + MCA_BTL_SM_FBOX_ALIGNMENT, 0, MCA_BTL_SM_FBOX_ALIGNMENT);
-
-    opal_atomic_wmb();
-    endpoint->fbox_out.buffer = base;
-}
 
 typedef union mca_btl_sm_fbox_hdr_t {
     struct {
@@ -77,18 +43,60 @@ typedef union mca_btl_sm_fbox_hdr_t {
     uint64_t ival;
 } mca_btl_sm_fbox_hdr_t;
 
+/**
+ *  An abstraction that represents a connection to a endpoint process.
+ *  An instance of mca_ptl_base_endpoint_t is associated w/ each process
+ *  and BTL pair at startup.
+ */
+
+static inline void mca_btl_sm_endpoint_setup_fbox_recv(struct mca_btl_base_endpoint_t *endpoint,
+                                                       void *base)
+{
+    endpoint->fbox_in.metadata = (mca_btl_sm_fbox_metadata_t *) base;
+    endpoint->fbox_in.start = endpoint->fbox_in.metadata->start;
+    endpoint->fbox_in.seq = 0;
+    endpoint->fbox_in.buffer = (unsigned char *)(endpoint->fbox_in.metadata + 1);
+}
+
+static inline void mca_btl_sm_endpoint_setup_fbox_send(struct mca_btl_base_endpoint_t *endpoint,
+                                                       opal_free_list_item_t *fbox)
+{
+    void *base = fbox->ptr;
+
+    endpoint->fbox_out.start = 0;
+    endpoint->fbox_out.end = 0;
+    endpoint->fbox_out.seq = 0;
+    endpoint->fbox_out.fbox = fbox;
+
+    endpoint->fbox_out.metadata = (mca_btl_sm_fbox_metadata_t *) base;
+    endpoint->fbox_out.metadata->start = 0;
+
+    endpoint->fbox_out.buffer = (unsigned char *)(endpoint->fbox_out.metadata + 1);
+
+    /* zero out the first header in the fast box */
+    ((mca_btl_sm_fbox_hdr_t *)endpoint->fbox_out.buffer)->ival = 0;
+
+    opal_atomic_wmb();
+}
+
 #define MCA_BTL_SM_FBOX_HDR(x) ((mca_btl_sm_fbox_hdr_t *) (x))
 
-#define MCA_BTL_SM_FBOX_OFFSET_MASK 0x7fffffff
-#define MCA_BTL_SM_FBOX_HB_MASK     0x80000000
+static inline unsigned int mca_btl_sm_fbox_out_free(mca_btl_sm_fbox_out_t *fbox_out, unsigned int fbox_size) {
+    unsigned int fbox_offset_mask = fbox_size - 1;
+    unsigned int masked_end = fbox_out->end & fbox_offset_mask;
+    unsigned int free;
 
-/* if the two offsets are equal and the high bit matches the buffer is empty else the buffer is
- * full. note that start will never be end - 1 so this simplified conditional will always produce
- * the correct result */
-#define BUFFER_FREE(s, e, hbm, size) (((s + !hbm) > (e)) ? (s) - (e) : (size - (e)))
+    /* start pointer will always trail the end pointer. check for rollover of the end pointer where
+     * the start pointer has not yet rolled over. */
+    if (OPAL_UNLIKELY(fbox_out->end <= fbox_size && fbox_out->start > fbox_size)) {
+        unsigned int masked_start = fbox_out->start & fbox_offset_mask;
+        free = masked_start - masked_end;
+    } else {
+        free = fbox_size - (fbox_out->end - fbox_out->start);
+    }
 
-/** macro for checking if the high bit is set */
-#define MCA_BTL_SM_FBOX_OFFSET_HBS(v) (!!((v) &MCA_BTL_SM_FBOX_HB_MASK))
+    return opal_min(free, fbox_size - masked_end);
+}
 
 void mca_btl_sm_poll_handle_frag(mca_btl_sm_hdr_t *hdr, mca_btl_base_endpoint_t *endpoint);
 
@@ -96,21 +104,108 @@ static inline void mca_btl_sm_fbox_set_header(mca_btl_sm_fbox_hdr_t *hdr, uint16
                                               uint16_t seq, uint32_t size)
 {
     mca_btl_sm_fbox_hdr_t tmp = {.data = {.tag = tag, .seq = seq, .size = size}};
-    /* clear out existing tag/seq */
-    hdr->data_i32.value1 = 0;
     opal_atomic_wmb();
-    hdr->data_i32.value0 = size;
-    opal_atomic_wmb();
-    hdr->data_i32.value1 = tmp.data_i32.value1;
+    hdr->ival = tmp.ival;
 }
 
 static inline mca_btl_sm_fbox_hdr_t mca_btl_sm_fbox_read_header(mca_btl_sm_fbox_hdr_t *hdr)
 {
     mca_btl_sm_fbox_hdr_t tmp = {.data_i32 = {.value1 = hdr->data_i32.value1}};
-    ;
+
     opal_atomic_rmb();
     tmp.data_i32.value0 = hdr->data_i32.value0;
     return tmp;
+}
+
+static inline unsigned int mca_btl_sm_fbox_align(unsigned int size) {
+    return (size + MCA_BTL_SM_FBOX_ALIGNMENT_MASK) & ~MCA_BTL_SM_FBOX_ALIGNMENT_MASK;
+}
+
+static inline unsigned char *mca_btl_sm_fbox_reserve_locked(mca_btl_base_endpoint_t *ep, unsigned int data_size) {
+    const unsigned int fbox_size = mca_btl_sm_component.fbox_size;
+    const unsigned int fbox_offset_mask = fbox_size - 1;
+    unsigned int buffer_free;
+    unsigned char *dst;
+    size_t aligned_entry_size;
+
+    /* don't try to use the per-peer buffer for messages that will fill up more than 25% of the
+     * buffer */
+    if (OPAL_UNLIKELY(NULL == ep->fbox_out.buffer || data_size > (fbox_size >> 2))) {
+        return NULL;
+    }
+
+    assert ((fbox_size & fbox_offset_mask) == 0);
+
+    buffer_free = mca_btl_sm_fbox_out_free(&ep->fbox_out, fbox_size);
+
+    /* need space for the fragment + the header */
+    aligned_entry_size = mca_btl_sm_fbox_align(data_size + sizeof(mca_btl_sm_fbox_hdr_t));
+
+    dst = ep->fbox_out.buffer + (ep->fbox_out.end & fbox_offset_mask);
+
+    if (OPAL_UNLIKELY(buffer_free < aligned_entry_size)) {
+        /* check if we need to free up space for this fragment */
+        BTL_VERBOSE(("not enough room for a fragment of size %u. in use buffer segment: {start: "
+                     "%x, end: %x}",
+                     (unsigned) aligned_entry_size, ep->fbox_out.start, ep->fbox_out.end));
+
+        /* read the current start pointer from the remote peer and recalculate the available buffer
+         * space */
+        ep->fbox_out.start = ep->fbox_out.metadata->start;
+        opal_atomic_rmb();
+
+        buffer_free = mca_btl_sm_fbox_out_free(&ep->fbox_out, fbox_size);
+
+        /* if this is the end of the buffer and the fragment doesn't fit then mark the remaining
+         * buffer space to be skipped and check if the fragment can be written at the beginning of
+         * the buffer. */
+        if (OPAL_UNLIKELY(buffer_free > 0 && buffer_free < aligned_entry_size &&
+                          ((ep->fbox_out.end + buffer_free) & fbox_offset_mask) == 0)) {
+#if OPAL_ENABLE_DEBUG
+            unsigned int old_end = ep->fbox_out.end;
+#endif
+            unsigned int remaining = buffer_free;
+
+            BTL_VERBOSE(("space needed for message: %" PRIsize_t ", remaining space in buffer: "
+                         "%u, checking for space at beginning of buffer",
+                         aligned_entry_size, remaining));
+
+            ep->fbox_out.end += remaining;
+            buffer_free = mca_btl_sm_fbox_out_free(&ep->fbox_out, fbox_size);
+            if (OPAL_UNLIKELY(buffer_free < aligned_entry_size)) {
+                /* not writing the skip token so give this space back */
+                ep->fbox_out.end -= remaining;
+                return NULL;
+            }
+
+            MCA_BTL_SM_FBOX_HDR(ep->fbox_out.buffer)->ival = 0;
+            opal_atomic_wmb();
+
+            BTL_VERBOSE(("writing a skip token at offset %u", old_end));
+            /* space is available. go ahead and mark remaining space to skip */
+            mca_btl_sm_fbox_set_header(MCA_BTL_SM_FBOX_HDR(dst), 0xff, ep->fbox_out.seq++,
+                                       remaining - sizeof(mca_btl_sm_fbox_hdr_t));
+            dst = ep->fbox_out.buffer;
+        }
+
+        if (buffer_free < aligned_entry_size) {
+            return NULL;
+        }
+    }
+
+    BTL_VERBOSE(("writing fragment of size %u {start: 0x%x, end: 0x%x} of "
+                 "peer's buffer. free = %u",
+                 (unsigned int) aligned_entry_size, ep->fbox_out.start, ep->fbox_out.end, buffer_free));
+
+    ep->fbox_out.end += aligned_entry_size;
+    
+    /* zero-out the next */
+    if (buffer_free > aligned_entry_size) {
+        MCA_BTL_SM_FBOX_HDR(ep->fbox_out.buffer + (ep->fbox_out.end & fbox_offset_mask))->ival = 0;
+        opal_atomic_wmb();
+    }
+
+    return dst;
 }
 
 /* attempt to reserve a contiguous segment from the remote ep */
@@ -118,83 +213,16 @@ static inline bool mca_btl_sm_fbox_sendi(mca_btl_base_endpoint_t *ep, unsigned c
                                          void *restrict header, const size_t header_size,
                                          void *restrict payload, const size_t payload_size)
 {
-    const unsigned int fbox_size = mca_btl_sm_component.fbox_size;
-    size_t size = header_size + payload_size;
-    unsigned int start, end, buffer_free;
-    size_t data_size = size;
-    unsigned char *dst, *data;
-    bool hbs, hbm;
+    size_t data_size = header_size + payload_size;
 
-    /* don't try to use the per-peer buffer for messages that will fill up more than 25% of the
-     * buffer */
-    if (OPAL_UNLIKELY(NULL == ep->fbox_out.buffer || size > (fbox_size >> 2))) {
+    OPAL_THREAD_LOCK(&ep->lock);
+    unsigned char *dst = mca_btl_sm_fbox_reserve_locked(ep, (unsigned int) data_size);
+    OPAL_THREAD_UNLOCK(&ep->lock);
+    if (OPAL_UNLIKELY(NULL == dst)) {
         return false;
     }
 
-    OPAL_THREAD_LOCK(&ep->lock);
-
-    /* the high bit helps determine if the buffer is empty or full */
-    hbs = MCA_BTL_SM_FBOX_OFFSET_HBS(ep->fbox_out.end);
-    hbm = MCA_BTL_SM_FBOX_OFFSET_HBS(ep->fbox_out.start) == hbs;
-
-    /* read current start and end offsets and check for free space */
-    start = ep->fbox_out.start & MCA_BTL_SM_FBOX_OFFSET_MASK;
-    end = ep->fbox_out.end & MCA_BTL_SM_FBOX_OFFSET_MASK;
-    buffer_free = BUFFER_FREE(start, end, hbm, fbox_size);
-
-    /* need space for the fragment + the header */
-    size = (size + sizeof(mca_btl_sm_fbox_hdr_t) + MCA_BTL_SM_FBOX_ALIGNMENT_MASK)
-           & ~MCA_BTL_SM_FBOX_ALIGNMENT_MASK;
-
-    dst = ep->fbox_out.buffer + end;
-
-    if (OPAL_UNLIKELY(buffer_free < size)) {
-        /* check if we need to free up space for this fragment */
-        BTL_VERBOSE(("not enough room for a fragment of size %u. in use buffer segment: {start: "
-                     "%x, end: %x, high bit matches: %d}",
-                     (unsigned) size, start, end, (int) hbm));
-
-        /* read the current start pointer from the remote peer and recalculate the available buffer
-         * space */
-        start = ep->fbox_out.start = ep->fbox_out.startp[0];
-
-        /* recalculate how much buffer space is available */
-        start &= MCA_BTL_SM_FBOX_OFFSET_MASK;
-        hbm = MCA_BTL_SM_FBOX_OFFSET_HBS(ep->fbox_out.start) == hbs;
-        buffer_free = BUFFER_FREE(start, end, hbm, fbox_size);
-
-        opal_atomic_rmb();
-
-        /* if this is the end of the buffer and the fragment doesn't fit then mark the remaining
-         * buffer space to be skipped and check if the fragment can be written at the beginning of
-         * the buffer. */
-        if (OPAL_UNLIKELY(buffer_free > 0 && buffer_free < size && start <= end)) {
-            BTL_VERBOSE(("message will not fit in remaining buffer space. skipping to beginning"));
-
-            mca_btl_sm_fbox_set_header(MCA_BTL_SM_FBOX_HDR(dst), 0xff, ep->fbox_out.seq++,
-                                       buffer_free - sizeof(mca_btl_sm_fbox_hdr_t));
-
-            end = MCA_BTL_SM_FBOX_ALIGNMENT;
-            /* toggle the high bit */
-            hbs = !hbs;
-            /* toggle the high bit match */
-            buffer_free = BUFFER_FREE(start, end, !hbm, fbox_size);
-            dst = ep->fbox_out.buffer + end;
-        }
-
-        if (OPAL_UNLIKELY(buffer_free < size)) {
-            ep->fbox_out.end = (hbs << 31) | end;
-            opal_atomic_wmb();
-            OPAL_THREAD_UNLOCK(&ep->lock);
-            return false;
-        }
-    }
-
-    BTL_VERBOSE(("writing fragment of size %u to offset %u {start: 0x%x, end: 0x%x (hbs: %d)} of "
-                 "peer's buffer. free = %u",
-                 (unsigned int) size, end, start, end, hbs, buffer_free));
-
-    data = dst + sizeof(mca_btl_sm_fbox_hdr_t);
+    unsigned char *data = dst + sizeof(mca_btl_sm_fbox_hdr_t);
 
     memcpy(data, header, header_size);
     if (payload) {
@@ -202,110 +230,94 @@ static inline bool mca_btl_sm_fbox_sendi(mca_btl_base_endpoint_t *ep, unsigned c
         memcpy(data + header_size, payload, payload_size);
     }
 
-    end += size;
-
-    if (OPAL_UNLIKELY(fbox_size == end)) {
-        /* toggle the high bit */
-        hbs = !hbs;
-        /* reset the end pointer to the beginning of the buffer */
-        end = MCA_BTL_SM_FBOX_ALIGNMENT;
-    } else if (buffer_free > size) {
-        MCA_BTL_SM_FBOX_HDR(ep->fbox_out.buffer + end)->ival = 0;
-    }
-
-    /* write out part of the header now. the tag will be written when the data is available */
-    mca_btl_sm_fbox_set_header(MCA_BTL_SM_FBOX_HDR(dst), tag, ep->fbox_out.seq++, data_size);
-
-    /* align the buffer */
-    ep->fbox_out.end = ((uint32_t) hbs << 31) | end;
     opal_atomic_wmb();
-    OPAL_THREAD_UNLOCK(&ep->lock);
+    /* write out part of the header now. the tag will be written when the data is available */
+    mca_btl_sm_fbox_set_header(MCA_BTL_SM_FBOX_HDR(dst), tag, ep->fbox_out.seq++,
+                               (uint32_t) data_size);
 
     return true;
 }
 
-static inline bool mca_btl_sm_check_fboxes(void)
+static inline bool mca_btl_sm_poll_fbox(mca_btl_base_endpoint_t *ep)
 {
-    const unsigned int fbox_size = mca_btl_sm_component.fbox_size;
-    bool processed = false;
+    const unsigned int fbox_offset_mask = mca_btl_sm_component.fbox_size - 1;
+    unsigned int start_offset = ep->fbox_in.start & fbox_offset_mask;
+    const mca_btl_sm_fbox_hdr_t hdr = mca_btl_sm_fbox_read_header(
+        MCA_BTL_SM_FBOX_HDR(ep->fbox_in.buffer + start_offset));
+
+    /* check for a valid tag a sequence number */
+    if (0 == hdr.data.tag || hdr.data.seq != ep->fbox_in.seq) {
+        return false;
+    }
+
+    ++ep->fbox_in.seq;
+
+    /* force all prior reads to complete before continuing */
+    opal_atomic_rmb();
+
+    BTL_VERBOSE(
+        ("got frag from %d with header {.tag = %d, .size = %d, .seq = %u} from offset %u",
+         ep->peer_smp_rank, hdr.data.tag, hdr.data.size, hdr.data.seq, start_offset));
+
+    /* the 0xff tag indicates we should skip the rest of the buffer */
+    if (OPAL_LIKELY((0xfe & hdr.data.tag) != 0xfe)) {
+        mca_btl_base_segment_t segment;
+        const mca_btl_active_message_callback_t *reg = mca_btl_base_active_message_trigger
+            + hdr.data.tag;
+        mca_btl_base_receive_descriptor_t desc = {.endpoint = ep,
+                                                  .des_segments = &segment,
+                                                  .des_segment_count = 1,
+                                                  .tag = hdr.data.tag,
+                                                  .cbdata = reg->cbdata};
+
+        /* fragment fits entirely in the remaining buffer space. some
+         * btl users do not handle fragmented data so we can't split
+         * the fragment without introducing another copy here. this
+         * limitation has not appeared to cause any performance
+         * degradation. */
+        segment.seg_len = hdr.data.size;
+        segment.seg_addr.pval = (void *) (ep->fbox_in.buffer + start_offset + sizeof(hdr));
+
+        /* call the registered callback function */
+        reg->cbfunc(&mca_btl_sm.super, &desc);
+    } else if (OPAL_LIKELY(0xfe == hdr.data.tag)) {
+        /* process fragment header */
+        fifo_value_t *value = (fifo_value_t *) (ep->fbox_in.buffer + start_offset + sizeof(hdr));
+        mca_btl_sm_hdr_t *sm_hdr = relative2virtual(*value);
+        mca_btl_sm_poll_handle_frag(sm_hdr, ep);
+    }
+
+    ep->fbox_in.start += mca_btl_sm_fbox_align(hdr.data.size + sizeof(hdr));
+
+    return true;
+}
+
+static inline int mca_btl_sm_check_fboxes(void)
+{
+    int total_processed = 0;
 
     for (unsigned int i = 0; i < mca_btl_sm_component.num_fbox_in_endpoints; ++i) {
         mca_btl_base_endpoint_t *ep = mca_btl_sm_component.fbox_in_endpoints[i];
-        unsigned int start = ep->fbox_in.start & MCA_BTL_SM_FBOX_OFFSET_MASK;
 
-        /* save the current high bit state */
-        bool hbs = MCA_BTL_SM_FBOX_OFFSET_HBS(ep->fbox_in.start);
-        int poll_count;
-
-        for (poll_count = 0; poll_count <= MCA_BTL_SM_POLL_COUNT; ++poll_count) {
-            const mca_btl_sm_fbox_hdr_t hdr = mca_btl_sm_fbox_read_header(
-                MCA_BTL_SM_FBOX_HDR(ep->fbox_in.buffer + start));
-
-            /* check for a valid tag a sequence number */
-            if (0 == hdr.data.tag || hdr.data.seq != ep->fbox_in.seq) {
+        int frag_count = 0;
+        for (int j = 0 ; j < MCA_BTL_SM_POLL_COUNT ; ++j) {
+            if (!mca_btl_sm_poll_fbox(ep)) {
                 break;
             }
-
-            ++ep->fbox_in.seq;
-
-            /* force all prior reads to complete before continuing */
-            opal_atomic_rmb();
-
-            BTL_VERBOSE(
-                ("got frag from %d with header {.tag = %d, .size = %d, .seq = %u} from offset %u",
-                 ep->peer_smp_rank, hdr.data.tag, hdr.data.size, hdr.data.seq, start));
-
-            /* the 0xff tag indicates we should skip the rest of the buffer */
-            if (OPAL_LIKELY((0xfe & hdr.data.tag) != 0xfe)) {
-                mca_btl_base_segment_t segment;
-                const mca_btl_active_message_callback_t *reg = mca_btl_base_active_message_trigger
-                                                               + hdr.data.tag;
-                mca_btl_base_receive_descriptor_t desc = {.endpoint = ep,
-                                                          .des_segments = &segment,
-                                                          .des_segment_count = 1,
-                                                          .tag = hdr.data.tag,
-                                                          .cbdata = reg->cbdata};
-
-                /* fragment fits entirely in the remaining buffer space. some
-                 * btl users do not handle fragmented data so we can't split
-                 * the fragment without introducing another copy here. this
-                 * limitation has not appeared to cause any performance
-                 * degradation. */
-                segment.seg_len = hdr.data.size;
-                segment.seg_addr.pval = (void *) (ep->fbox_in.buffer + start + sizeof(hdr));
-
-                /* call the registered callback function */
-                reg->cbfunc(&mca_btl_sm.super, &desc);
-            } else if (OPAL_LIKELY(0xfe == hdr.data.tag)) {
-                /* process fragment header */
-                fifo_value_t *value = (fifo_value_t *) (ep->fbox_in.buffer + start + sizeof(hdr));
-                mca_btl_sm_hdr_t *sm_hdr = relative2virtual(*value);
-                mca_btl_sm_poll_handle_frag(sm_hdr, ep);
-            }
-
-            start = (start + hdr.data.size + sizeof(hdr) + MCA_BTL_SM_FBOX_ALIGNMENT_MASK)
-                    & ~MCA_BTL_SM_FBOX_ALIGNMENT_MASK;
-            if (OPAL_UNLIKELY(fbox_size == start)) {
-                /* jump to the beginning of the buffer */
-                start = MCA_BTL_SM_FBOX_ALIGNMENT;
-                /* toggle the high bit */
-                hbs = !hbs;
-            }
+            ++frag_count;
         }
 
-        if (poll_count) {
-            BTL_VERBOSE(("left off at offset %u (hbs: %d)", start, hbs));
+        if (frag_count) {
+            BTL_VERBOSE(("finished processing at offset %x", ep->fbox_in.start));
 
-            /* save where we left off */
             /* let the sender know where we stopped */
             opal_atomic_mb();
-            ep->fbox_in.start = ep->fbox_in.startp[0] = ((uint32_t) hbs << 31) | start;
-            processed = true;
+            ep->fbox_in.metadata->start = ep->fbox_in.start;
+            total_processed += frag_count;
         }
     }
 
-    /* return the number of fragments processed */
-    return processed;
+    return total_processed;
 }
 
 static inline void mca_btl_sm_try_fbox_setup(mca_btl_base_endpoint_t *ep, mca_btl_sm_hdr_t *hdr)
@@ -326,7 +338,7 @@ static inline void mca_btl_sm_try_fbox_setup(mca_btl_base_endpoint_t *ep, mca_bt
                 mca_btl_sm_endpoint_setup_fbox_send(ep, fbox);
 
                 hdr->flags |= MCA_BTL_SM_FLAG_SETUP_FBOX;
-                hdr->fbox_base = virtual2relative((char *) ep->fbox_out.buffer);
+                hdr->fbox_base = virtual2relative((char *) ep->fbox_out.metadata);
             } else {
                 opal_atomic_add_fetch_32(&ep->fifo->fbox_available, 1);
             }
