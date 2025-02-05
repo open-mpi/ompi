@@ -28,4 +28,4 @@ Developers who clone the Open MPI Git repository will not have the
 HTML documentation and man pages by default; it must be built.
 Instructions for how to build the Open MPI documentation can be found
 here:
-https://docs.open-mpi.org/en/main/developers/prerequisites.html#sphinx.
+https://docs.open-mpi.org/en/main/developers/prerequisites.html#sphinx-and-therefore-python.
