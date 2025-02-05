@@ -87,10 +87,8 @@ int mca_coll_ucc_scatter(const void *sbuf, int scount,
     return OMPI_SUCCESS;
 fallback:
     UCC_VERBOSE(3, "running fallback scatter");
-    return ucc_module->previous_scatter(sbuf, scount, sdtype, rbuf, rcount,
-                                        rdtype, root, comm,
-                                        ucc_module->previous_scatter_module);
-
+    return mca_coll_ucc_call_previous(scatter, ucc_module,
+        sbuf, scount, sdtype, rbuf, rcount, rdtype, root, comm);
 }
 
 int mca_coll_ucc_iscatter(const void *sbuf, int scount,
@@ -117,7 +115,6 @@ fallback:
     if (coll_req) {
         mca_coll_ucc_req_free((ompi_request_t **)&coll_req);
     }
-    return ucc_module->previous_iscatter(sbuf, scount, sdtype, rbuf, rcount,
-                                         rdtype, root, comm, request,
-                                         ucc_module->previous_iscatter_module);
+    return mca_coll_ucc_call_previous(iscatter, ucc_module,
+        sbuf, scount, sdtype, rbuf, rcount, rdtype, root, comm, request);
 }

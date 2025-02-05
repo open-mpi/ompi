@@ -51,8 +51,9 @@ int mca_coll_ucc_bcast(void *buf, int count, struct ompi_datatype_t *dtype,
     return OMPI_SUCCESS;
 fallback:
     UCC_VERBOSE(3, "running fallback bcast");
-    return ucc_module->previous_bcast(buf, count, dtype, root,
-                                       comm, ucc_module->previous_bcast_module);
+    return mca_coll_ucc_call_previous(bcast, ucc_module,
+        buf, count, dtype, root, comm);
+
 }
 
 int mca_coll_ucc_ibcast(void *buf, int count, struct ompi_datatype_t *dtype,
@@ -76,6 +77,6 @@ fallback:
     if (coll_req) {
         mca_coll_ucc_req_free((ompi_request_t **)&coll_req);
     }
-    return ucc_module->previous_ibcast(buf, count, dtype, root,
-                                       comm, request, ucc_module->previous_ibcast_module);
+    return mca_coll_ucc_call_previous(ibcast, ucc_module,
+        buf, count, dtype, root, comm, request);
 }

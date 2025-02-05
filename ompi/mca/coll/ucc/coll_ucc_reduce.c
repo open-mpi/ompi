@@ -76,8 +76,8 @@ int mca_coll_ucc_reduce(const void *sbuf, void* rbuf, int count,
     return OMPI_SUCCESS;
 fallback:
     UCC_VERBOSE(3, "running fallback reduce");
-    return ucc_module->previous_reduce(sbuf, rbuf, count, dtype, op, root,
-                                       comm, ucc_module->previous_reduce_module);
+    return mca_coll_ucc_call_previous(reduce, ucc_module,
+        sbuf, rbuf, count, dtype, op, root, comm);
 }
 
 int mca_coll_ucc_ireduce(const void *sbuf, void* rbuf, int count,
@@ -103,6 +103,6 @@ fallback:
     if (coll_req) {
         mca_coll_ucc_req_free((ompi_request_t **)&coll_req);
     }
-    return ucc_module->previous_ireduce(sbuf, rbuf, count, dtype, op, root,
-                                        comm, request, ucc_module->previous_ireduce_module);
+    return mca_coll_ucc_call_previous(ireduce, ucc_module,
+        sbuf, rbuf, count, dtype, op, root, comm, request);
 }
