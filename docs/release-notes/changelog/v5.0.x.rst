@@ -4,6 +4,22 @@ Open MPI v5.0.x series
 This file contains all the NEWS updates for the Open MPI v5.0.x
 series, in reverse chronological order.
 
+Open MPI Version v5.0.7rc2
+------------------------------
+:Date: 5 February January 2025
+
+- Updated UCX version requirement to v1.9
+
+- Singleton initialization fix.
+  - Ensures that singletons properly create their own sessions directory trees.
+
+- Misc fixes
+  - Fixed build issues on Hurd.
+  - Removed unused portions of rcache base structure.
+  - Fixed oshmem base segment address exchange.
+  - Fixed UCC collective fallback issue.
+  - Updated Nvidia/Mellanox platform file
+
 Open MPI Version v5.0.7rc1
 ------------------------------
 :Date: 16 January 2025
