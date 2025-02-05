@@ -27,7 +27,11 @@
 #if defined(PLATFORM_ARCH_POWERPC) && defined(PLATFORM_ARCH_64)
 
 /* special processing for ppc64 to save and restore TOC (r2)
- * Reference: "64-bit PowerPC ELF Application Binary Interface Supplement 1.9" */
+ * Reference: "64-bit PowerPC ELF Application Binary Interface Supplement 1.9"
+ *
+ * As suggested here https://gcc.gnu.org/bugzilla/show_bug.cgi?id=95692
+ * we need to clobber the memory to guarantee ordering.
+ */
 #    define OPAL_PATCHER_BEGIN                      \
         unsigned long toc_save;                     \
         asm volatile("std 2, %0" : "=m"(toc_save) :: "memory"); \
