@@ -1802,6 +1802,7 @@ int ompi_intercomm_create_from_groups (ompi_group_t *local_group, int local_lead
                 ompi_comm_free (&local_comm);
                 return OMPI_ERR_OUT_OF_RESOURCE;
             }
+            leader_group->grp_instance = local_group->grp_instance;
 
             /* create a unique tag for allocating the leader communicator. we can eliminate this step
              * if we take a CID from the newly allocated block belonging to local_comm. this is
