@@ -25,7 +25,7 @@
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * Copyright (c) 2018-2024 Triad National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2023      Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (c) 2023-2024 Advanced Micro Devices, Inc. All rights reserved.
  * Copyright (c) 2023      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -53,6 +53,7 @@
 #include "ompi/dpm/dpm.h"
 #include "ompi/memchecker.h"
 #include "ompi/instance/instance.h"
+#include "ompi/info/info_memkind.h"
 
 /*
 ** Table for Fortran <-> C communicator handle conversion
@@ -266,6 +267,7 @@ int ompi_comm_init_mpi3 (void)
             free(str);
         }
     }
+
     /* Setup MPI_COMM_SELF */
     OBJ_CONSTRUCT(&ompi_mpi_comm_self, ompi_communicator_t);
     assert(ompi_mpi_comm_self.comm.c_f_to_c_index == 1);
@@ -299,6 +301,17 @@ int ompi_comm_init_mpi3 (void)
        predefined attributes.  If a user defines an attribute on
        MPI_COMM_SELF, the keyhash will automatically be created. */
     ompi_mpi_comm_self.comm.c_keyhash = NULL;
+
+    char *memkind_requested = getenv ("OMPI_MCA_mpi_memory_alloc_kinds");
+    if (NULL != memkind_requested) {
+        char *memkind_provided;
+
+        ompi_info_memkind_process (memkind_requested, &memkind_provided);
+        opal_infosubscribe_subscribe (&ompi_mpi_comm_world.comm.super, "mpi_memory_alloc_kinds", memkind_provided, ompi_info_memkind_cb);
+        opal_infosubscribe_subscribe (&ompi_mpi_comm_self.comm.super, "mpi_memory_alloc_kinds", memkind_provided, ompi_info_memkind_cb);
+        opal_infosubscribe_subscribe (&ompi_mpi_comm_world.comm.instance->super, "mpi_memory_alloc_kinds", memkind_provided, ompi_info_memkind_cb);
+        free (memkind_provided);
+    }
 
     /*
      * finally here we set the predefined attribute keyvals

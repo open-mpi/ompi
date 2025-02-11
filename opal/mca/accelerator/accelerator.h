@@ -4,7 +4,7 @@
  *                         reserved.
  * Copyright (c)           Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
- * Copyright (c) 2023      Advanced Micro Devices, Inc. All Rights reserved.
+ * Copyright (c) 2023-2025 Advanced Micro Devices, Inc. All Rights reserved.
  * Copyright (c) 2024      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
@@ -81,6 +81,7 @@
 
 #include "opal/class/opal_object.h"
 #include "opal/mca/mca.h"
+#include "ompi/info/info_memkind.h"
 
 BEGIN_C_DECLS
 
@@ -654,6 +655,12 @@ typedef int (*opal_accelerator_base_module_get_num_devices_fn_t)(int *num_device
  */
 typedef int (*opal_accelerator_base_module_get_mem_bw_fn_t)(int device, float *bw);
 
+/**
+ * Get the memkind information of the accelerator component.
+ * @param[OUT] supported     Memory alloc kinds supported by component
+ *
+ */
+typedef void (*opal_accelerator_base_module_get_memkind_fn_t)(ompi_memkind_t *memkind);
 
 /*
  * the standard public API data structure
@@ -700,6 +707,7 @@ typedef struct {
 
     opal_accelerator_base_module_get_num_devices_fn_t num_devices;
     opal_accelerator_base_module_get_mem_bw_fn_t get_mem_bw;
+    opal_accelerator_base_module_get_memkind_fn_t get_memkind;
 } opal_accelerator_base_module_t;
 
 /**
