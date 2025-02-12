@@ -368,6 +368,9 @@ static int mca_btl_uct_endpoint_connect_endpoint(
         if (UCS_OK != ucs_status) {
             return OPAL_ERROR;
         }
+
+        mca_btl_uct_endpoint_set_flag(uct_btl, endpoint, tl_context->context_id, tl_endpoint,
+                                      MCA_BTL_UCT_ENDPOINT_FLAG_EP_CONNECTED);
     }
 
     opal_timer_t now = opal_timer_base_get_usec();
