@@ -27,8 +27,10 @@ struct mca_btl_uct_base_frag_t;
 #    define MCA_BTL_UCT_ENDPOINT_FLAG_CONN_REC 0x1
 /** remote endpoint read */
 #    define MCA_BTL_UCT_ENDPOINT_FLAG_CONN_REM_READY 0x2
+/** local UCT endpoint connected */
+#    define MCA_BTL_UCT_ENDPOINT_FLAG_EP_CONNECTED 0x4
 /** connection was established */
-#    define MCA_BTL_UCT_ENDPOINT_FLAG_CONN_READY 0x4
+#    define MCA_BTL_UCT_ENDPOINT_FLAG_CONN_READY 0x8
 
 /* AM tags */
 /** BTL fragment */

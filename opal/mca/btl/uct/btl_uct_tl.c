@@ -6,7 +6,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018      Triad National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2019      Google, LLC. All rights reserved.
+ * Copyright (c) 2019-2025 Google, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -199,9 +199,6 @@ int mca_btl_uct_process_connection_request(mca_btl_uct_module_t *module,
     int32_t ep_flags;
     int rc;
 
-    BTL_VERBOSE(("got connection request for endpoint %p. type = %d. context id = %d",
-                 (void *) endpoint, req->type, req->context_id));
-
     if (NULL == endpoint) {
         BTL_ERROR(("could not create endpoint for connection request"));
         return UCS_ERR_UNREACHABLE;
@@ -210,6 +207,9 @@ int mca_btl_uct_process_connection_request(mca_btl_uct_module_t *module,
     assert(req->type < 2);
 
     ep_flags = opal_atomic_fetch_or_32(&tl_endpoint->flags, MCA_BTL_UCT_ENDPOINT_FLAG_CONN_REC);
+
+    BTL_VERBOSE(("got connection request for endpoint %p. type = %d. context id = %d. ep_flags = %x",
+                 (void *) endpoint, req->type, req->context_id, ep_flags));
 
     if (!(ep_flags & MCA_BTL_UCT_ENDPOINT_FLAG_CONN_REC)) {
         /* create any necessary resources */
@@ -225,22 +225,13 @@ int mca_btl_uct_process_connection_request(mca_btl_uct_module_t *module,
      * message. this might be overkill but there is little documentation at the UCT level on when
      * an endpoint can be used. */
     if (req->type == 1) {
-        /* remote side is ready */
-        mca_btl_uct_base_frag_t *frag;
-
+        /* remote side is connected */
         /* to avoid a race with send adding pending frags grab the lock here */
         OPAL_THREAD_SCOPED_LOCK(&endpoint->ep_lock, {
             BTL_VERBOSE(("connection ready. sending %" PRIsize_t " frags",
                          opal_list_get_size(&module->pending_frags)));
-            (void) opal_atomic_or_fetch_32(&tl_endpoint->flags,
-                                           MCA_BTL_UCT_ENDPOINT_FLAG_CONN_READY);
-            opal_atomic_wmb();
-
-            OPAL_LIST_FOREACH (frag, &module->pending_frags, mca_btl_uct_base_frag_t) {
-                if (frag->context->context_id == req->context_id && endpoint == frag->endpoint) {
-                    frag->ready = true;
-                }
-            }
+            mca_btl_uct_endpoint_set_flag(module, endpoint, req->context_id, tl_endpoint,
+                                          MCA_BTL_UCT_ENDPOINT_FLAG_CONN_REM_READY);
         });
     }
 

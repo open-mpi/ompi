@@ -14,6 +14,7 @@
  *                         reserved.
  * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
+ * Copyright (c) 2025      Google, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -104,6 +105,30 @@ static inline int mca_btl_uct_endpoint_check_am(mca_btl_uct_module_t *module,
     assert(NULL != module->am_tl);
     return mca_btl_uct_endpoint_check(module, endpoint, context, ep_handle,
                                       module->am_tl->tl_index);
+}
+
+// Requires that the endpoint lock is held.
+static inline void mca_btl_uct_endpoint_set_flag(mca_btl_uct_module_t *module, mca_btl_uct_endpoint_t *endpoint,
+                                                 int context_id, mca_btl_uct_tl_endpoint_t *tl_endpoint, int32_t flag) {
+    opal_atomic_wmb();
+    int32_t flag_value = opal_atomic_or_fetch_32(&tl_endpoint->flags, flag);
+    if ((flag_value & (MCA_BTL_UCT_ENDPOINT_FLAG_EP_CONNECTED | MCA_BTL_UCT_ENDPOINT_FLAG_CONN_REM_READY)) ==
+        (MCA_BTL_UCT_ENDPOINT_FLAG_EP_CONNECTED | MCA_BTL_UCT_ENDPOINT_FLAG_CONN_REM_READY)) {
+	opal_atomic_fetch_or_32(&tl_endpoint->flags, MCA_BTL_UCT_ENDPOINT_FLAG_CONN_READY);
+
+        opal_atomic_wmb();
+
+        mca_btl_uct_base_frag_t *frag;
+        OPAL_LIST_FOREACH (frag, &module->pending_frags, mca_btl_uct_base_frag_t) {
+            if (frag->context->context_id == context_id && endpoint == frag->endpoint) {
+                frag->ready = true;
+            }
+        }
+
+        if (endpoint->conn_ep) {
+            OBJ_RELEASE(endpoint->conn_ep);
+        }
+    }
 }
 
 END_C_DECLS
