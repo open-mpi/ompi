@@ -124,6 +124,10 @@ static inline void mca_btl_uct_endpoint_set_flag(mca_btl_uct_module_t *module, m
                 frag->ready = true;
             }
         }
+
+        if (endpoint->conn_ep) {
+            OBJ_RELEASE(endpoint->conn_ep);
+        }
     }
 }
 
