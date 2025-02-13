@@ -82,6 +82,12 @@ mca_coll_accelerator_comm_query(struct ompi_communicator_t *comm,
         return NULL;
     }
 
+    if (OMPI_COMM_CHECK_ASSERT_NO_ACCEL_BUF(comm)) {
+        opal_output_verbose(10, ompi_coll_base_framework.framework_output,
+			    "coll:accelerator:comm_query: NO_ACCEL_BUF assertion set: disqualifying myself");
+	return NULL;
+    }
+
     accelerator_module = OBJ_NEW(mca_coll_accelerator_module_t);
     if (NULL == accelerator_module) {
         return NULL;

@@ -859,13 +859,14 @@ int ompi_mpi_instance_init (int ts_level,  opal_info_t *info, ompi_errhandler_t 
     /* Copy info if there is one. */
     if (OPAL_UNLIKELY(NULL != info)) {
         opal_cstring_t *memkind_requested;
+        ompi_info_memkind_assert_type type;
         int flag;
         
         new_instance->super.s_info = OBJ_NEW(opal_info_t);
         opal_info_get(info, "mpi_memory_alloc_kinds", &memkind_requested, &flag);
         if (1 == flag) {
             char *memkind_provided;
-            ompi_info_memkind_process (memkind_requested->string, &memkind_provided);
+            ompi_info_memkind_process (memkind_requested->string, &memkind_provided, &type);
             opal_infosubscribe_subscribe (&new_instance->super, "mpi_memory_alloc_kinds",
                                           memkind_provided, ompi_info_memkind_cb);
             free (memkind_provided);

@@ -124,7 +124,8 @@ int ompi_file_open(struct ompi_communicator_t *comm, const char *filename,
     if (info) {
         opal_info_dup(info, &(file->super.s_info));
     }
-    ompi_info_memkind_copy_or_set (&comm->instance->super, &file->super, info);
+    ompi_info_memkind_assert_type type;
+    ompi_info_memkind_copy_or_set (&comm->instance->super, &file->super, info, &type);
 
     file->f_amode = amode;
     file->f_filename = strdup(filename);

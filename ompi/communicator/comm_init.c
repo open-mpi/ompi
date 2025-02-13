@@ -305,11 +305,16 @@ int ompi_comm_init_mpi3 (void)
     char *memkind_requested = getenv ("OMPI_MCA_mpi_memory_alloc_kinds");
     if (NULL != memkind_requested) {
         char *memkind_provided;
+        ompi_info_memkind_assert_type type;
 
-        ompi_info_memkind_process (memkind_requested, &memkind_provided);
+        ompi_info_memkind_process (memkind_requested, &memkind_provided, &type);
         opal_infosubscribe_subscribe (&ompi_mpi_comm_world.comm.super, "mpi_memory_alloc_kinds", memkind_provided, ompi_info_memkind_cb);
         opal_infosubscribe_subscribe (&ompi_mpi_comm_self.comm.super, "mpi_memory_alloc_kinds", memkind_provided, ompi_info_memkind_cb);
         opal_infosubscribe_subscribe (&ompi_mpi_comm_world.comm.instance->super, "mpi_memory_alloc_kinds", memkind_provided, ompi_info_memkind_cb);
+        if (OMPI_INFO_MEMKIND_ASSERT_NO_ACCEL == type) {
+            ompi_mpi_comm_world.comm.c_assertions |= OMPI_COMM_ASSERT_NO_ACCEL_BUF;
+            ompi_mpi_comm_self.comm.c_assertions |= OMPI_COMM_ASSERT_NO_ACCEL_BUF;
+        }
         free (memkind_provided);
     }
 

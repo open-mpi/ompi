@@ -448,7 +448,11 @@ int ompi_comm_create_w_info (ompi_communicator_t *comm, ompi_group_t *group, opa
     if (info) {
         opal_info_dup(info, &(newcomp->super.s_info));
     }
-    ompi_info_memkind_copy_or_set (&comm->instance->super, &newcomp->super, info);
+    ompi_info_memkind_assert_type type;
+    ompi_info_memkind_copy_or_set (&comm->instance->super, &newcomp->super, info, &type);
+    if (OMPI_INFO_MEMKIND_ASSERT_NO_ACCEL == type) {
+        newcomp->c_assertions |= OMPI_COMM_ASSERT_NO_ACCEL_BUF;
+    }
 
     /* Set name for debugging purposes */
     snprintf(newcomp->c_name, MPI_MAX_OBJECT_NAME, "MPI COMMUNICATOR %s CREATE FROM %s",
@@ -705,8 +709,11 @@ int ompi_comm_split_with_info( ompi_communicator_t* comm, int color, int key,
     if (info) {
         opal_info_dup(info, &(newcomp->super.s_info));
     }
-    ompi_info_memkind_copy_or_set (&comm->instance->super, &newcomp->super, info);
-
+    ompi_info_memkind_assert_type type;
+    ompi_info_memkind_copy_or_set (&comm->instance->super, &newcomp->super, info, &type);
+    if (OMPI_INFO_MEMKIND_ASSERT_NO_ACCEL == type) {
+        newcomp->c_assertions |= OMPI_COMM_ASSERT_NO_ACCEL_BUF;
+    }
     /* Activate the communicator and init coll-component */
     rc = ompi_comm_activate (&newcomp, comm, NULL, NULL, NULL, false, mode);
 
@@ -997,7 +1004,11 @@ static int ompi_comm_split_type_core(ompi_communicator_t *comm,
     if (info) {
         opal_infosubscribe_change_info(&newcomp->super, info);
     }
-    ompi_info_memkind_copy_or_set (&comm->instance->super, &newcomp->super, info);
+    ompi_info_memkind_assert_type type;
+    ompi_info_memkind_copy_or_set (&comm->instance->super, &newcomp->super, info, &type);
+    if (OMPI_INFO_MEMKIND_ASSERT_NO_ACCEL == type) {
+        newcomp->c_assertions |= OMPI_COMM_ASSERT_NO_ACCEL_BUF;
+    }
 
     /* Activate the communicator and init coll-component */
     rc = ompi_comm_activate (&newcomp, comm, NULL, NULL, NULL, false, mode);
@@ -1351,7 +1362,11 @@ int ompi_comm_dup_with_info ( ompi_communicator_t * comm, opal_info_t *info, omp
     if (info) {
         opal_infosubscribe_change_info(&newcomp->super, info);
     }
-    ompi_info_memkind_copy_or_set (&comm->instance->super, &newcomp->super, info);
+    ompi_info_memkind_assert_type type;
+    ompi_info_memkind_copy_or_set (&comm->instance->super, &newcomp->super, info, &type);
+    if (OMPI_INFO_MEMKIND_ASSERT_NO_ACCEL == type) {
+        newcomp->c_assertions |= OMPI_COMM_ASSERT_NO_ACCEL_BUF;
+    }
 
     /* activate communicator and init coll-module */
     rc = ompi_comm_activate (&newcomp, comm, NULL, NULL, NULL, false, mode);
@@ -1442,7 +1457,12 @@ static int ompi_comm_idup_internal (ompi_communicator_t *comm, ompi_group_t *gro
         if (info) {
             opal_info_dup(info, &(newcomp->super.s_info));
         }
-        ompi_info_memkind_copy_or_set (&comm->super, &newcomp->super, info);
+
+        ompi_info_memkind_assert_type type;
+        ompi_info_memkind_copy_or_set (&comm->super, &newcomp->super, info, &type);
+        if (OMPI_INFO_MEMKIND_ASSERT_NO_ACCEL == type) {
+            newcomp->c_assertions |= OMPI_COMM_ASSERT_NO_ACCEL_BUF;
+        }
     }
 
     ompi_comm_request_schedule_append (request, ompi_comm_idup_getcid, subreq, subreq[0] ? 1 : 0);
@@ -1594,7 +1614,11 @@ int ompi_comm_create_from_group (ompi_group_t *group, const char *tag, opal_info
     if (NULL == newcomp->super.s_info) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
-    ompi_info_memkind_copy_or_set (&group->grp_instance->super, &newcomp->super, info);
+    ompi_info_memkind_assert_type type;
+    ompi_info_memkind_copy_or_set (&group->grp_instance->super, &newcomp->super, info, &type);
+    if (OMPI_INFO_MEMKIND_ASSERT_NO_ACCEL == type) {
+        newcomp->c_assertions |= OMPI_COMM_ASSERT_NO_ACCEL_BUF;
+    }
 
     /* activate communicator and init coll-module. use the group allreduce implementation as
      * no collective module has yet been selected. the tag does not matter as any tag will
@@ -1736,7 +1760,12 @@ int ompi_intercomm_create (ompi_communicator_t *local_comm, int local_leader, om
 
     // Copy info if there is one.
     newcomp->super.s_info = OBJ_NEW(opal_info_t);
-    ompi_info_memkind_copy_or_set (&local_comm->instance->super, &newcomp->super, &ompi_mpi_info_null.info.super);
+    ompi_info_memkind_assert_type type;
+    ompi_info_memkind_copy_or_set (&local_comm->instance->super, &newcomp->super,
+                                   &ompi_mpi_info_null.info.super, &type);
+    if (OMPI_INFO_MEMKIND_ASSERT_NO_ACCEL == type) {
+        newcomp->c_assertions |= OMPI_COMM_ASSERT_NO_ACCEL_BUF;
+    }
 
     *newintercomm = newcomp;
 
@@ -1900,7 +1929,11 @@ int ompi_intercomm_create_from_groups (ompi_group_t *local_group, int local_lead
     if (info) {
         opal_info_dup(info, &(newcomp->super.s_info));
     }
-    ompi_info_memkind_copy_or_set (&local_group->grp_instance->super, &newcomp->super, info);
+    ompi_info_memkind_assert_type type;
+    ompi_info_memkind_copy_or_set (&local_group->grp_instance->super, &newcomp->super, info, &type);
+    if (OMPI_INFO_MEMKIND_ASSERT_NO_ACCEL == type) {
+        newcomp->c_assertions |= OMPI_COMM_ASSERT_NO_ACCEL_BUF;
+    }
 
     /* activate communicator and init coll-module */
     rc = ompi_comm_activate (&newcomp, local_comm, leader_comm, &local_leader, &leader_comm_remote_leader,

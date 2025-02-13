@@ -169,7 +169,8 @@ static int alloc_window(struct ompi_communicator_t *comm, opal_info_t *info, int
     if (info) {
         opal_info_dup(info, &(win->super.s_info));
     }
-    ompi_info_memkind_copy_or_set (&comm->instance->super, &win->super, info);
+    ompi_info_memkind_assert_type type;
+    ompi_info_memkind_copy_or_set (&comm->instance->super, &win->super, info, &type);
 
     ret = opal_info_get_value_enum (win->super.s_info, "accumulate_ops", &acc_ops,
                                     OMPI_WIN_ACCUMULATE_OPS_SAME_OP_NO_OP,
