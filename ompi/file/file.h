@@ -39,9 +39,9 @@
 /*
  * Flags
  */
-#define OMPI_FILE_ISCLOSED     0x00000001
-#define OMPI_FILE_HIDDEN       0x00000002
-
+#define OMPI_FILE_ISCLOSED            0x00000001
+#define OMPI_FILE_HIDDEN              0x00000002
+#define OMPI_FILE_ASSERT_NO_ACCEL_BUF 0x00000004
 BEGIN_C_DECLS
 
 /**
