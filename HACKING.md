@@ -12,5 +12,5 @@ Please see the content of this file in its new location:
 https://docs.open-mpi.org/en/v5.0.x/developers/
 
 Additionally, see
-https://docs.open-mpi.org/en/v5.0.x/developers/prerequisites.html#sphinx
+https://docs.open-mpi.org/en/v5.0.x/developers/prerequisites.html#sphinx-and-therefore-python
 if you want to edit and build the documentation locally.
