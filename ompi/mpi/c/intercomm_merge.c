@@ -140,9 +140,14 @@ int MPI_Intercomm_merge(MPI_Comm intercomm, int high,
         goto exit;
     }
 
+    ompi_info_memkind_assert_type type;
     newcomp->super.s_info = OBJ_NEW(opal_info_t);
     ompi_info_memkind_copy_or_set (&intercomm->instance->super, &newcomp->super,
-                                   &ompi_mpi_info_null.info.super);
+                                   &ompi_mpi_info_null.info.super, &type);
+    if (OMPI_INFO_MEMKIND_ASSERT_NO_ACCEL == type) {
+        newcomp->c_assertions |= OMPI_COMM_ASSERT_NO_ACCEL_BUF;
+    }
+
     
  exit:
 

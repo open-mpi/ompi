@@ -56,6 +56,7 @@ static void ompi_info_memkind_extract (const char* memkind_str, int *num_memkind
     */
 
     /* Separate requested_str into an array of individual entries */
+    int current_max = 0;
     char **memkind_combos = opal_argv_split(memkind_str, ',');
     int max_num_memkinds = opal_argv_count(memkind_combos);
 
@@ -71,7 +72,6 @@ static void ompi_info_memkind_extract (const char* memkind_str, int *num_memkind
 
     int iter = 0;
     char *m = memkind_combos[iter];
-    int current_max = 0;
     while (m != NULL) {
         bool name_found = false;
         char **tmp_str = opal_argv_split (m, ':');
@@ -419,19 +419,52 @@ static bool ompi_info_memkind_validate (const char *assert_str, const char *pare
     return ret;
 }
 
+static bool ompi_info_memkind_check_no_accel (int num_memkinds, ompi_memkind_t *memkinds)
+{
+    bool result = true;
 
-int ompi_info_memkind_process (const char* requested_str, char **provided_str)
+    for (int i = 0; i < num_memkinds; i++) {
+        if (!strncmp(memkinds[i].im_name, "system", strlen("system"))) {
+            continue;
+        }
+        if (!strncmp(memkinds[i].im_name, "mpi", strlen("mpi"))) {
+            continue;
+        }
+        result = false;
+        break;
+    }
+
+    return result;
+}
+
+static bool ompi_info_memkind_check_no_accel_from_string (char *mstring)
+{
+    bool ret = false;
+    int num_memkinds;
+    ompi_memkind_t *memkinds = NULL;
+
+    ompi_info_memkind_extract (mstring, &num_memkinds, &memkinds);
+    if (NULL != memkinds) {
+        ret = ompi_info_memkind_check_no_accel (num_memkinds, memkinds);
+        ompi_info_memkind_free(num_memkinds, memkinds);
+    }
+
+    return ret;
+}
+int ompi_info_memkind_process (const char* requested_str, char **provided_str,
+                               ompi_info_memkind_assert_type *type)
 {
     int err;
     char *tmp_str = NULL;
-
     int num_requested_memkinds, num_available_memkinds, num_provided_memkinds;
     ompi_memkind_t *requested_memkinds = NULL ;
     ompi_memkind_t *available_memkinds = NULL;
     ompi_memkind_t *provided_memkinds = NULL;
+    ompi_info_memkind_assert_type assert_type = OMPI_INFO_MEMKIND_ASSERT_UNDEFINED;
 
     if (NULL == requested_str) {
         *provided_str = NULL;
+        *type = assert_type;
         return OMPI_SUCCESS;
     }
 
@@ -448,6 +481,10 @@ int ompi_info_memkind_process (const char* requested_str, char **provided_str)
         goto exit;
     }
 
+    if (ompi_info_memkind_check_no_accel (num_provided_memkinds, provided_memkinds)) {
+        assert_type = OMPI_INFO_MEMKIND_ASSERT_NO_ACCEL;
+    }
+    
     ompi_info_memkind_str_create(num_provided_memkinds, provided_memkinds, &tmp_str);
 
  exit:
@@ -459,6 +496,7 @@ int ompi_info_memkind_process (const char* requested_str, char **provided_str)
     }
     // Don't free the available_memkinds, they will be released in info_finalize;
     
+    *type = assert_type;
     *provided_str = tmp_str;
     return err;
 }
@@ -504,15 +542,17 @@ const char *ompi_info_memkind_cb (opal_infosubscriber_t *obj, const char *key, c
 ** value of another info key (mpi_memory_alloc_kinds).
 */
 int ompi_info_memkind_copy_or_set (opal_infosubscriber_t *parent, opal_infosubscriber_t *child,
-                                   opal_info_t *info)
+                                   opal_info_t *info, ompi_info_memkind_assert_type *type)
 {
     opal_cstring_t *parent_val;
     opal_cstring_t *assert_val;
+    ompi_info_memkind_assert_type assert_type = OMPI_INFO_MEMKIND_ASSERT_UNDEFINED;
     char *final_str = NULL;
     int flag;
 
     opal_info_get(parent->s_info, "mpi_memory_alloc_kinds", &parent_val, &flag);
     if (0 == flag) {
+        *type = assert_type;
         return OMPI_SUCCESS;
     }
     final_str = (char*) parent_val->string;
@@ -539,6 +579,12 @@ int ompi_info_memkind_copy_or_set (opal_infosubscriber_t *parent, opal_infosubsc
     opal_infosubscribe_subscribe (child, "mpi_memory_alloc_kinds", final_str,
                                   ompi_info_memkind_cb);
     OBJ_RELEASE(parent_val);
+
+    if (ompi_info_memkind_check_no_accel_from_string(final_str)) {
+        assert_type = OMPI_INFO_MEMKIND_ASSERT_NO_ACCEL;
+    }
+
+    *type = assert_type;
     return OMPI_SUCCESS;
 }
 

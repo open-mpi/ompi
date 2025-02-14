@@ -11,6 +11,7 @@
  *                          All rights reserved.
  *  Copyright (c) 2008-2019 University of Houston. All rights reserved.
  *  Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ *  Copyright (c) 2025      Advanced Micro Devices, Inc. All rights reserved.
  *  $COPYRIGHT$
  *
  *  Additional copyrights may follow
@@ -47,7 +48,11 @@ void mca_common_ompio_check_gpu_buf ( ompio_file_t *fh, const void *buf, int *is
 
     *is_gpu=0;
     *is_managed=0;
-    
+
+    if (fh->f_fh->f_flags & OMPI_FILE_ASSERT_NO_ACCEL_BUF) {
+        return;
+    }
+
     if (0 < opal_accelerator.check_addr(buf, &dev_id, &flags)) {
         *is_gpu = 1;
         if (flags & MCA_ACCELERATOR_FLAGS_UNIFIED_MEMORY) {
@@ -62,16 +67,14 @@ static void* mca_common_ompio_buffer_alloc_seg ( void*ctx, size_t *size )
 {
     char *buf=NULL;
     size_t realsize, numpages;
-    uint64_t flags = 0;
-    int dev_id;
 
     numpages = (*size + mca_common_ompio_pagesize -1 )/mca_common_ompio_pagesize;
     realsize = numpages * mca_common_ompio_pagesize;
 
-    buf = malloc ( realsize);
+    buf = malloc (realsize);
 
-    if (NULL != buf && 0 == opal_accelerator.check_addr(buf, &dev_id, &flags)) {
-        opal_accelerator.host_register(dev_id, (void *)buf, realsize);
+    if (NULL != buf) {
+        opal_accelerator.host_register(MCA_ACCELERATOR_NO_DEVICE_ID, (void *)buf, realsize);
     }
 
     *size = realsize;
