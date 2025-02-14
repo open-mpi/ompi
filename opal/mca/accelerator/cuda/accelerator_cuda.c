@@ -1222,7 +1222,7 @@ static int accelerator_cuda_get_mem_bw(int device, float *bw)
     return OPAL_SUCCESS;
 }
 
-static void mca_accelerator_cuda_get_memkind (ompi_memkind_t *memkind)
+static void accelerator_cuda_get_memkind (ompi_memkind_t *memkind)
 {
   memkind->im_name = strdup("cuda");
   memkind->im_no_restrictors = false;
