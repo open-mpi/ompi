@@ -4,29 +4,15 @@ Open MPI v5.0.x series
 This file contains all the NEWS updates for the Open MPI v5.0.x
 series, in reverse chronological order.
 
-Open MPI Version v5.0.7rc2
+Open MPI Version v5.0.7
 ------------------------------
-:Date: 5 February January 2025
-
-- Updated UCX version requirement to v1.9
-
-- Singleton initialization fix.
-  - Ensures that singletons properly create their own sessions directory trees.
-
-- Misc fixes
-  - Fixed build issues on Hurd.
-  - Removed unused portions of rcache base structure.
-  - Fixed oshmem base segment address exchange.
-  - Fixed UCC collective fallback issue.
-  - Updated Nvidia/Mellanox platform file
-
-Open MPI Version v5.0.7rc1
-------------------------------
-:Date: 16 January 2025
+:Date: 14 February January 2025
 
 - Internal PMIx and PRRTe version:
   - PMIx (v5.0.5). Repo: ``https://github.com/openpmix/openpmix``. Commit hash: ``707920c99de946a5c3a1850da457340f38c0caf2``.
   - PRRTE (v3.0.8). repo: ``https://github.com/openpmix/prrte``. Commit hash: ``f6f5c181c1dec317c31f61effd73f960ce2eac25``.
+
+- Updated UCX version requirement to v1.9
 
 - Documentation Improvements
   - Updated `coll tuned` rules file documentation to reflect changes in versioning and features.
@@ -43,9 +29,15 @@ Open MPI Version v5.0.7rc1
   - Adjusted MCA variable scopes across multiple components to allow setting via the `MPI_T` interface: `coll adapt,ucc, han, basic, hcoll`
 
 - Bug Fixes and Minor Enhancements
+  - Ensures that singletons properly create their own sessions directory trees.
   - Fixed community Jenkins build pipeline to handle branch commits properly.
   - Resolved missing profiling symbols in the `mpi_f08` Fortran library.
   - Corrected parameter mismatches in `coll/cuda` functions to avoid type issues.
+  - Fixed build issues on Hurd.
+  - Removed unused portions of rcache base structure.
+  - Fixed oshmem base segment address exchange.
+  - Fixed UCC collective fallback issue.
+  - Updated Nvidia/Mellanox platform file
 
 Open MPI Version v5.0.6
 ------------------------------
