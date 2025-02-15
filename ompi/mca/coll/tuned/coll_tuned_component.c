@@ -18,6 +18,9 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2019      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2025      Amazon.com, Inc. or its affiliates.  All rights
+ *                         reserved.
+
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -230,7 +233,7 @@ static int tuned_open(void)
             OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:component_open Reading collective rules file [%s]",
                          ompi_coll_tuned_dynamic_rules_filename));
             rc = ompi_coll_tuned_read_rules_config_file( ompi_coll_tuned_dynamic_rules_filename,
-                                                         &(mca_coll_tuned_component.all_base_rules), COLLCOUNT);
+                                                         &(mca_coll_tuned_component.all_base_rules));
             if( rc >= 0 ) {
                 OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_open Read %d valid rules\n", rc));
             } else {
@@ -257,7 +260,7 @@ static int tuned_close(void)
     OPAL_OUTPUT((ompi_coll_tuned_stream, "coll:tuned:component_close: done!"));
 
     if( NULL != mca_coll_tuned_component.all_base_rules ) {
-        ompi_coll_tuned_free_all_rules(mca_coll_tuned_component.all_base_rules, COLLCOUNT);
+        ompi_coll_tuned_free_all_rules(mca_coll_tuned_component.all_base_rules);
         mca_coll_tuned_component.all_base_rules = NULL;
     }
 

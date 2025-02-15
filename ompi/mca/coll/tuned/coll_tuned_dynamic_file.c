@@ -13,6 +13,8 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
  * Copyright (c) 2024      NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2025      Amazon.com, Inc. or its affiliates.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,6 +29,7 @@
 #include "mpi.h"
 #include "ompi/mca/mca.h"
 #include "coll_tuned.h"
+#include "ompi/mca/coll/base/coll_base_functions.h"
 
 /* need to include our own topo prototypes so we can malloc data on the comm correctly */
 #include "ompi/mca/coll/base/coll_base_topo.h"
@@ -67,7 +70,7 @@ static int fileline=0; /* used for verbose error messages */
  *
  */
 
-int ompi_coll_tuned_read_rules_config_file (char *fname, ompi_coll_alg_rule_t** rules, int n_collectives)
+int ompi_coll_tuned_read_rules_config_file (char *fname, ompi_coll_alg_rule_t** rules)
 {
     long NCOL = 0,      /* number of collectives for which rules are provided  */
          COLID = 0,     /* identifies the collective type to associate the rules with */
@@ -106,11 +109,6 @@ int ompi_coll_tuned_read_rules_config_file (char *fname, ompi_coll_alg_rule_t** 
         return (-2);
     }
 
-    if (n_collectives<1) {
-        OPAL_OUTPUT((ompi_coll_tuned_stream,"Gave %d as max number of collectives in the rule table configuration file for tuned collectives!... ignoring!\n", n_collectives));
-        return (-3);
-    }
-
     fptr = fopen (fname, "r");
     if (!fptr) {
         OPAL_OUTPUT((ompi_coll_tuned_stream,"Cannot read rules file [%s]\n", fname));
@@ -118,7 +116,7 @@ int ompi_coll_tuned_read_rules_config_file (char *fname, ompi_coll_alg_rule_t** 
     }
 
     /* make space and init the algorithm rules for each of the n_collectives MPI collectives */
-    alg_rules = ompi_coll_tuned_mk_alg_rules (n_collectives);
+    alg_rules = ompi_coll_tuned_mk_alg_rules(COLLCOUNT);
     if (NULL == alg_rules) {
         OPAL_OUTPUT((ompi_coll_tuned_stream,"Cannot allocate rules for file [%s]\n", fname));
         goto on_file_error;
@@ -134,8 +132,8 @@ int ompi_coll_tuned_read_rules_config_file (char *fname, ompi_coll_alg_rule_t** 
         OPAL_OUTPUT((ompi_coll_tuned_stream,"Could not read number of collectives in configuration file around line %d\n", fileline));
         goto on_file_error;
     }
-    if (NCOL>n_collectives) {
-        OPAL_OUTPUT((ompi_coll_tuned_stream,"Number of collectives in configuration file %ld is greater than number of MPI collectives possible %d ??? error around line %d\n", NCOL, n_collectives, fileline));
+    if (NCOL>COLLCOUNT) {
+        OPAL_OUTPUT((ompi_coll_tuned_stream,"Number of collectives in configuration file %ld is greater than number of MPI collectives possible %d ??? error around line %d\n", NCOL, COLLCOUNT, fileline));
         goto on_file_error;
     }
 
@@ -146,8 +144,8 @@ int ompi_coll_tuned_read_rules_config_file (char *fname, ompi_coll_alg_rule_t** 
             OPAL_OUTPUT((ompi_coll_tuned_stream,"Could not read next Collective id in configuration file around line %d\n", fileline));
             goto on_file_error;
         }
-        if (COLID>=n_collectives) {
-            OPAL_OUTPUT((ompi_coll_tuned_stream,"Collective id in configuration file %ld is greater than MPI collectives possible %d. Error around line %d\n", COLID, n_collectives, fileline));
+        if (COLID>=COLLCOUNT) {
+            OPAL_OUTPUT((ompi_coll_tuned_stream,"Collective id in configuration file %ld is greater than MPI collectives possible %d. Error around line %d\n", COLID, COLLCOUNT, fileline));
             goto on_file_error;
         }
 
@@ -296,7 +294,7 @@ int ompi_coll_tuned_read_rules_config_file (char *fname, ompi_coll_alg_rule_t** 
     OPAL_OUTPUT((ompi_coll_tuned_stream,"Fix errors as listed above and try again.\n"));
 
     /* deallocate memory if allocated */
-    if (alg_rules) ompi_coll_tuned_free_all_rules (alg_rules, n_collectives);
+    if (alg_rules) ompi_coll_tuned_free_all_rules (alg_rules);
 
     /* close file */
     if (fptr) fclose (fptr);

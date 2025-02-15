@@ -11,6 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2025      Amazon.com, Inc. or its affiliates.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -87,7 +89,7 @@ int ompi_coll_tuned_dump_all_rules (ompi_coll_alg_rule_t* alg_p, int n_rules);
 /* free alloced memory routines, used by file and tuned component/module */
 int ompi_coll_tuned_free_msg_rules_in_com_rule (ompi_coll_com_rule_t* com_p);
 int ompi_coll_tuned_free_coms_in_alg_rule (ompi_coll_alg_rule_t* alg_p);
-int ompi_coll_tuned_free_all_rules (ompi_coll_alg_rule_t* alg_p, int n_algs);
+int ompi_coll_tuned_free_all_rules (ompi_coll_alg_rule_t* alg_p);
 
 
 /* the IMPORTANT routines, i.e. the ones that do stuff for everyday communicators and collective calls */
