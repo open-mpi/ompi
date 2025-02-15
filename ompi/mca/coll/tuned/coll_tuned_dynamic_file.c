@@ -125,7 +125,7 @@ int ompi_coll_tuned_read_rules_config_file (char *fname, ompi_coll_alg_rule_t** 
     }
 
     /* consume the optional version identifier */
-    if (0 == fscanf(fptr, "rule-file-version-%u", &version)) {
+    if (0 == fscanf(fptr, "rule-file-version-%d", &version)) {
         version = 1;
     }
 
