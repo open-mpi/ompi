@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024      Amazon.com, Inc. or its affiliates.
+ * Copyright (c) 2024-2025 Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
  * $COPYRIGHT$
  *
@@ -183,6 +183,33 @@ int opal_json_get_key(const opal_json_t *json, const char *key, const opal_json_
         opal_json_internal_free(result);
     }
 
+    return ret;
+}
+
+int opal_json_get_key_by_index(const opal_json_t *json, const size_t index, const char **key, const opal_json_t **out)
+{
+    int ret = OPAL_ERROR;
+
+    CHECK_OBJ_TYPE(json, OPAL_JSON_OBJECT);
+
+    opal_json_internal_t *in = (opal_json_internal_t *) json;
+    opal_json_internal_t *result = NULL;
+
+    json_object_entry entry = {0};
+
+    if (index < 0 || index >= in->value->u.object.length) {
+        opal_show_help("help-json.txt", "Index out of bound", true, index,
+                       in->value->u.array.length);
+        return ret;
+    }
+    entry = in->value->u.object.values[index];
+    *key = entry.name;
+    ret = opal_json_internal_new(entry.value, &result);
+    if (OPAL_SUCCESS == ret) {
+        *out = (opal_json_t *) result;
+    } else if (result) {
+        opal_json_internal_free(result);
+    }
     return ret;
 }
 
