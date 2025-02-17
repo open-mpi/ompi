@@ -216,4 +216,9 @@ struct mca_coll_tuned_module_t {
 typedef struct mca_coll_tuned_module_t mca_coll_tuned_module_t;
 OBJ_CLASS_DECLARATION(mca_coll_tuned_module_t);
 
+int coll_tuned_alg_from_str(int collective_id, const char *alg_name, int *alg_index);
+int coll_tuned_alg_to_str(int collective_id, int alg_value, char **alg_string);
+int coll_tuned_alg_register_options(int collective_id, mca_base_var_enum_t *options);
+
+
 #endif  /* MCA_COLL_TUNED_EXPORT_H */
