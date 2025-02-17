@@ -20,7 +20,6 @@
  * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2025      Amazon.com, Inc. or its affiliates.  All rights
  *                         reserved.
-
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -76,6 +75,10 @@ int   ompi_coll_tuned_scatter_blocking_send_ratio = 0;
 coll_tuned_force_algorithm_mca_param_indices_t ompi_coll_tuned_forced_params[COLLCOUNT] = {{0}};
 /* max algorithm values */
 int ompi_coll_tuned_forced_max_algorithms[COLLCOUNT] = {0};
+
+/* names of each algorithm for each collective */
+mca_base_var_enum_t *coll_tuned_algorithm_enums[COLLCOUNT] = {0};
+
 
 /*
  * Local function
@@ -234,8 +237,8 @@ static int tuned_open(void)
                          ompi_coll_tuned_dynamic_rules_filename));
             rc = ompi_coll_tuned_read_rules_config_file( ompi_coll_tuned_dynamic_rules_filename,
                                                          &(mca_coll_tuned_component.all_base_rules));
-            if( rc >= 0 ) {
-                OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_open Read %d valid rules\n", rc));
+            if( rc == OPAL_SUCCESS ) {
+                OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_open Read a valid rules file"));
             } else {
                 OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_open Reading collective rules file failed\n"));
                 mca_coll_tuned_component.all_base_rules = NULL;
@@ -264,6 +267,12 @@ static int tuned_close(void)
         mca_coll_tuned_component.all_base_rules = NULL;
     }
 
+    for (int i=0; i<COLLCOUNT; i++) {
+        if (coll_tuned_algorithm_enums[i] != NULL) {
+            OBJ_RELEASE(coll_tuned_algorithm_enums[i]);
+        }
+    }
+
     return OMPI_SUCCESS;
 }
 
@@ -277,6 +286,41 @@ mca_coll_tuned_module_construct(mca_coll_tuned_module_t *module)
         tuned_module->com_rules[i] = NULL;
     }
 }
+
+int coll_tuned_alg_from_str(int collective_id, const char *alg_name, int *alg_value) {
+    int rc;
+    if (collective_id > COLLCOUNT || collective_id < 0) { return OPAL_ERROR; };
+    rc = coll_tuned_algorithm_enums[collective_id]->value_from_string(
+        coll_tuned_algorithm_enums[collective_id],
+        alg_name, alg_value );
+    return rc;
+}
+
+/* return the enum's value and string.  caller's responsibility to free alg_string if NULL was not provided. */
+int coll_tuned_alg_to_str(int collective_id, int alg_value, char **alg_string) {
+    int rc;
+    if (collective_id > COLLCOUNT || collective_id < 0) { return OPAL_ERROR; };
+    rc = coll_tuned_algorithm_enums[collective_id]->string_from_value(
+        coll_tuned_algorithm_enums[collective_id],
+        alg_value, alg_string );
+    return rc;
+}
+
+
+int coll_tuned_alg_register_options(int collective_id, mca_base_var_enum_t *options) {
+    /* use the same enum used for mca parameters to allow tuning files to use
+    algorithm names rather than just numbers.*/
+    if (!options) { return OPAL_ERROR; }
+    if (collective_id > COLLCOUNT || collective_id < 0) {
+        return OPAL_ERROR;
+    }
+
+    /* retain the enum until tuned_close() */
+    OBJ_RETAIN(options);
+    coll_tuned_algorithm_enums[collective_id] = options;
+    return OPAL_SUCCESS;
+}
+
 
 OBJ_CLASS_INSTANCE(mca_coll_tuned_module_t, mca_coll_base_module_t,
                    mca_coll_tuned_module_construct, NULL);

@@ -6,6 +6,8 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2021      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2025      Amazon.com, Inc. or its affiliates.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -84,6 +86,7 @@ ompi_coll_tuned_allgatherv_intra_check_forced_init(coll_tuned_force_algorithm_mc
                                         OPAL_INFO_LVL_5,
                                         MCA_BASE_VAR_SCOPE_CONSTANT,
                                         &coll_tuned_allgatherv_forced_algorithm);
+    coll_tuned_alg_register_options( ALLGATHERV, new_enum );
     OBJ_RELEASE(new_enum);
     if (mca_param_indices->algorithm_param_index < 0) {
         return mca_param_indices->algorithm_param_index;
