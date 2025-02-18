@@ -1,0 +1,52 @@
+.. _mpi_t_event_copy:
+
+
+MPI_T_event_copy
+================
+
+.. include_body
+
+:ref:`MPI_T_event_copy` |mdash| Copy event data as a whole into a user-specified buffer.
+
+
+SYNTAX
+------
+
+
+C Syntax
+^^^^^^^^
+
+.. code-block:: c
+
+   #include <mpi.h>
+
+   int MPI_T_event_copy(MPI_T_event_instance event_instance, void *buffer)
+
+
+INPUT PARAMETERS
+----------------
+* ``event_instance``: event-instance handle provided to the callback function.
+* ``buf``: pointer to a memory location to store the event data.
+
+DESCRIPTION
+-----------
+
+:ref:`MPI_T_event_copy` copies the event data as a whole into the user-provided buffer.
+The user must assure that the buffer is of at least the size of the extent of the event
+type, which can be computed from the type and displacement information returned by the
+corresponding call to :ref:`MPI_T_event_get_info`.
+
+ERRORS
+------
+
+:ref:`MPI_T_event_copy` will fail if:
+
+* ``MPI_T_ERR_NOT_INITIALIZED``: The MPI Tools interface not initialized
+
+* ``MPI_T_ERR_INVALID_HANDLE``: The handle is invalid
+
+* ``MPI_T_ERR_INVALID``: Invalid use of the interface or bad parameter values(s).
+
+
+.. seealso::
+   * :ref:`MPI_T_event_read`

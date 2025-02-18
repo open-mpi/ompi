@@ -362,6 +362,21 @@ MPI API manual pages (section 3)
    MPI_T_cvar_write.3.rst
    MPI_T_enum_get_info.3.rst
    MPI_T_enum_get_item.3.rst
+   MPI_T_event_callback_get_info.3.rst
+   MPI_T_event_callback_set_info.3.rst
+   MPI_T_event_copy.3.rst
+   MPI_T_event_get_index.3.rst
+   MPI_T_event_get_info.3.rst
+   MPI_T_event_get_num.3.rst
+   MPI_T_event_get_source.3.rst
+   MPI_T_event_get_timestamp.3.rst
+   MPI_T_event_handle_alloc.3.rst
+   MPI_T_event_handle_free.3.rst
+   MPI_T_event_handle_get_info.3.rst
+   MPI_T_event_handle_set_info.3.rst
+   MPI_T_event_read.3.rst
+   MPI_T_event_register_callback.3.rst
+   MPI_T_event_set_dropped_handler.3.rst
    MPI_T_finalize.3.rst
    MPI_T_init_thread.3.rst
    MPI_T_pvar_get_info.3.rst
@@ -376,6 +391,9 @@ MPI API manual pages (section 3)
    MPI_T_pvar_start.3.rst
    MPI_T_pvar_stop.3.rst
    MPI_T_pvar_write.3.rst
+   MPI_T_source_get_info.3.rst
+   MPI_T_source_get_num.3.rst
+   MPI_T_source_get_timestamp.3.rst
    MPI_Test.3.rst
    MPI_Test_cancelled.3.rst
    MPI_Testall.3.rst

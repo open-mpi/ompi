@@ -437,6 +437,21 @@ OMPI_MAN3 = \
         MPI_T_cvar_write.3 \
         MPI_T_enum_get_info.3 \
         MPI_T_enum_get_item.3 \
+        MPI_T_event_callback_get_info.3 \
+        MPI_T_event_callback_set_info.3 \
+        MPI_T_event_copy.3 \
+        MPI_T_event_get_index.3 \
+        MPI_T_event_get_info.3 \
+        MPI_T_event_get_num.3 \
+        MPI_T_event_get_source.3 \
+        MPI_T_event_get_timestamp.3 \
+        MPI_T_event_handle_alloc.3 \
+        MPI_T_event_handle_free.3 \
+        MPI_T_event_handle_get_info.3 \
+        MPI_T_event_handle_set_info.3 \
+        MPI_T_event_read.3 \
+        MPI_T_event_register_callback.3 \
+        MPI_T_event_set_dropped_handler.3 \
         MPI_Test.3 \
         MPI_Testall.3 \
         MPI_Testany.3 \
@@ -457,6 +472,9 @@ OMPI_MAN3 = \
         MPI_T_pvar_start.3 \
         MPI_T_pvar_stop.3 \
         MPI_T_pvar_write.3 \
+        MPI_T_source_get_info.3 \
+        MPI_T_source_get_num.3 \
+        MPI_T_source_get_timestamp.3 \
         MPI_Type_c2f.3 \
         MPI_Type_commit.3 \
         MPI_Type_contiguous.3 \
