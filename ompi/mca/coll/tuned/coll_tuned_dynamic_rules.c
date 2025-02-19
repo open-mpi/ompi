@@ -256,12 +256,12 @@ int ompi_coll_tuned_free_coms_in_alg_rule (ompi_coll_alg_rule_t* alg_p)
 }
 
 
-int ompi_coll_tuned_free_all_rules (ompi_coll_alg_rule_t* alg_p, int n_algs)
+int ompi_coll_tuned_free_all_rules (ompi_coll_alg_rule_t* alg_p)
 {
     int i;
     int rc = 0;
 
-    for( i = 0; i < n_algs; i++ ) {
+    for( i = 0; i < COLLCOUNT; i++ ) {
         rc += ompi_coll_tuned_free_coms_in_alg_rule (&(alg_p[i]));
     }
 

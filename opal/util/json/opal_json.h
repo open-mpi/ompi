@@ -124,6 +124,22 @@ OPAL_DECLSPEC int opal_json_get_index(const opal_json_t *json, const size_t inde
                                       const opal_json_t **out);
 
 /**
+ * Get the JSON object and key at index from a JSON object
+ *
+ * @param[in]   json    Parent JSON array
+ * @param[in]   index   Index value
+ * @param[out]  key     The name of the key at the given index. This pointer
+ *                      remains valid for the lifetime of the parent JSON
+ *                      object.  The caller should not free it.
+ * @param[out]  out     Output JSON object at the specified index. This object
+ *                      should be freed by caller with opal_json_free.
+ */
+OPAL_DECLSPEC int
+opal_json_get_key_by_index( const opal_json_t *json, const size_t index,
+                            const char **key, const opal_json_t **out);
+
+
+/**
  * Get the number of objects in a container-type value, i.e. object, array.
  *
  * @param[in]   json    A container JSON object

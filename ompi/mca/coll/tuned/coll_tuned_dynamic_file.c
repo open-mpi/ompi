@@ -27,6 +27,9 @@
 #include "mpi.h"
 #include "ompi/mca/mca.h"
 #include "coll_tuned.h"
+#include "ompi/mca/coll/base/coll_base_functions.h"
+#include "opal/util/json/opal_json.h"
+
 
 /* need to include our own topo prototypes so we can malloc data on the comm correctly */
 #include "ompi/mca/coll/base/coll_base_topo.h"
@@ -44,6 +47,88 @@ static int fileline=0; /* used for verbose error messages */
 
 #define getnext(fptr, pval)        ompi_coll_base_file_getnext_long(fptr, &fileline, pval)
 #define isnext_digit(fptr)         ompi_coll_base_file_peek_next_char_isdigit(fptr)
+
+static int ompi_coll_tuned_name_to_coll_id( const char *coll_name, int *coll_id ) {
+    // TODO: implement me.
+    *coll_id = 1;
+    return 0;
+}
+
+
+static int ompi_coll_tuned_read_rules_json (const opal_json_t *json_root, ompi_coll_alg_rule_t** rules) {
+
+    int rc = OPAL_ERROR;
+
+    /* complete table of rules */
+    ompi_coll_alg_rule_t *alg_rules = (ompi_coll_alg_rule_t*) NULL;
+
+    /* individual pointers to sections of rules */
+    ompi_coll_alg_rule_t *alg_p = (ompi_coll_alg_rule_t*) NULL;
+    ompi_coll_com_rule_t *com_p = (ompi_coll_com_rule_t*) NULL;
+    ompi_coll_msg_rule_t *msg_p = (ompi_coll_msg_rule_t*) NULL;
+
+
+    alg_rules = ompi_coll_tuned_mk_alg_rules(COLLCOUNT);
+
+    const opal_json_t *collectives_obj;
+    size_t num_collectives = 0;
+    size_t num_comm_rules;
+    rc = opal_json_get_key(json_root, "collectives", &collectives_obj);
+    // TODO err
+
+    rc = opal_json_get_container_size(collectives_obj, &num_collectives);
+    // TODO err
+
+    for( size_t jcol = 0; jcol < num_collectives; jcol++ ) {
+        const opal_json_t *comm_rule_array;
+        const char* coll_name;
+        int coll_id;
+        rc = opal_json_get_key_by_index( collectives_obj, jcol, &coll_name, &comm_rule_array);
+        // TODO: err
+        rc = ompi_coll_tuned_name_to_coll_id( coll_name, &coll_id );
+        // TODO: err
+
+        alg_p = &alg_rules[coll_id];
+        alg_p->alg_rule_id = coll_id;
+        rc = opal_json_get_container_size(comm_rule_array, &num_comm_rules);
+        // TODO: err
+        alg_p->n_com_sizes = (int)num_comm_rules;
+        alg_p->com_rules = ompi_coll_tuned_mk_com_rules (num_comm_rules, coll_id);
+
+        for (size_t jcomm_rule=0; jcomm_rule < num_comm_rules; jcomm_rule++) {
+            const opal_json_t *comm_rule;
+            const opal_json_t *msg_size_array;
+            size_t num_msg_rules;
+            int64_t comm_size;
+            rc = opal_json_get_index(comm_rule_array, jcomm_rule, &comm_rule);
+            com_p = &(alg_p->com_rules[jcomm_rule]);
+            rc = opal_json_read_integer("comm_size", &comm_size);
+            rc = opal_json_get_key( comm_rule, "rules", &msg_size_array);
+            rc = opal_json_get_container_size(msg_size_array, &num_msg_rules);
+
+            for (size_t jmsg_rule=0; jmsg_rule < num_msg_rules; jmsg_rule++) {
+                /* { "bytes" : 0, "alg" : 0, "reqs" : 20 } */
+                const opal_json_t *msg_rule;
+                rc = opal_json_get_index(msg_size_array, jmsg_rule, &msg_rule);
+                msg_p = &(com_p->msg_rules[jmsg_rule]);
+                int64_t msg_size, faninout;
+                opal_json_read_integer(msg_rule, &msg_size);
+                /* allow arg by string? */
+                msg_p->msg_size = (size_t)msg_size;
+
+                opal_json_free(&msg_rule);
+            }
+
+            opal_json_free(&msg_size_array);
+            opal_json_free(&comm_rule);
+        }
+
+        opal_json_free(&comm_rule_array);
+    }
+
+    // TODO free collectives_obj
+    return rc;
+}
 
 /*
  * Reads a rule file called fname
@@ -67,7 +152,7 @@ static int fileline=0; /* used for verbose error messages */
  *
  */
 
-int ompi_coll_tuned_read_rules_config_file (char *fname, ompi_coll_alg_rule_t** rules, int n_collectives)
+static int ompi_coll_tuned_read_rules_config_file_classic (char *fname, ompi_coll_alg_rule_t** rules)
 {
     long NCOL = 0,      /* number of collectives for which rules are provided  */
          COLID = 0,     /* identifies the collective type to associate the rules with */
@@ -106,11 +191,6 @@ int ompi_coll_tuned_read_rules_config_file (char *fname, ompi_coll_alg_rule_t** 
         return (-2);
     }
 
-    if (n_collectives<1) {
-        OPAL_OUTPUT((ompi_coll_tuned_stream,"Gave %d as max number of collectives in the rule table configuration file for tuned collectives!... ignoring!\n", n_collectives));
-        return (-3);
-    }
-
     fptr = fopen (fname, "r");
     if (!fptr) {
         OPAL_OUTPUT((ompi_coll_tuned_stream,"Cannot read rules file [%s]\n", fname));
@@ -118,14 +198,14 @@ int ompi_coll_tuned_read_rules_config_file (char *fname, ompi_coll_alg_rule_t** 
     }
 
     /* make space and init the algorithm rules for each of the n_collectives MPI collectives */
-    alg_rules = ompi_coll_tuned_mk_alg_rules (n_collectives);
+    alg_rules = ompi_coll_tuned_mk_alg_rules(COLLCOUNT);
     if (NULL == alg_rules) {
         OPAL_OUTPUT((ompi_coll_tuned_stream,"Cannot allocate rules for file [%s]\n", fname));
         goto on_file_error;
     }
 
     /* consume the optional version identifier */
-    if (0 == fscanf(fptr, "rule-file-version-%u", &version)) {
+    if (0 == fscanf(fptr, "rule-file-version-%d", &version)) {
         version = 1;
     }
 
@@ -134,8 +214,8 @@ int ompi_coll_tuned_read_rules_config_file (char *fname, ompi_coll_alg_rule_t** 
         OPAL_OUTPUT((ompi_coll_tuned_stream,"Could not read number of collectives in configuration file around line %d\n", fileline));
         goto on_file_error;
     }
-    if (NCOL>n_collectives) {
-        OPAL_OUTPUT((ompi_coll_tuned_stream,"Number of collectives in configuration file %ld is greater than number of MPI collectives possible %d ??? error around line %d\n", NCOL, n_collectives, fileline));
+    if (NCOL>COLLCOUNT) {
+        OPAL_OUTPUT((ompi_coll_tuned_stream,"Number of collectives in configuration file %ld is greater than number of MPI collectives possible %d ??? error around line %d\n", NCOL, COLLCOUNT, fileline));
         goto on_file_error;
     }
 
@@ -146,8 +226,8 @@ int ompi_coll_tuned_read_rules_config_file (char *fname, ompi_coll_alg_rule_t** 
             OPAL_OUTPUT((ompi_coll_tuned_stream,"Could not read next Collective id in configuration file around line %d\n", fileline));
             goto on_file_error;
         }
-        if (COLID>=n_collectives) {
-            OPAL_OUTPUT((ompi_coll_tuned_stream,"Collective id in configuration file %ld is greater than MPI collectives possible %d. Error around line %d\n", COLID, n_collectives, fileline));
+        if (COLID>=COLLCOUNT) {
+            OPAL_OUTPUT((ompi_coll_tuned_stream,"Collective id in configuration file %ld is greater than MPI collectives possible %d. Error around line %d\n", COLID, COLLCOUNT, fileline));
             goto on_file_error;
         }
 
@@ -296,7 +376,7 @@ int ompi_coll_tuned_read_rules_config_file (char *fname, ompi_coll_alg_rule_t** 
     OPAL_OUTPUT((ompi_coll_tuned_stream,"Fix errors as listed above and try again.\n"));
 
     /* deallocate memory if allocated */
-    if (alg_rules) ompi_coll_tuned_free_all_rules (alg_rules, n_collectives);
+    if (alg_rules) ompi_coll_tuned_free_all_rules (alg_rules);
 
     /* close file */
     if (fptr) fclose (fptr);
@@ -305,3 +385,29 @@ int ompi_coll_tuned_read_rules_config_file (char *fname, ompi_coll_alg_rule_t** 
     return (-1);
 }
 
+int ompi_coll_tuned_read_rules_config_file (char *fname, ompi_coll_alg_rule_t** rules) {
+    if (!fname) {
+        OPAL_OUTPUT((ompi_coll_tuned_stream,"Gave NULL as rule table configuration file for tuned collectives... ignoring!\n"));
+        return (-1);
+    }
+
+    if (!rules) {
+        OPAL_OUTPUT((ompi_coll_tuned_stream,"Gave NULL as rule table result ptr!... ignoring!\n"));
+        return (-2);
+    }
+
+    const opal_json_t *json;
+    int ret = opal_json_load_file(fname, &json);
+    if (ret == OPAL_SUCCESS) {
+        ret = ompi_coll_tuned_read_rules_json(json, rules);
+        opal_json_free(&json);
+        return ret;
+    } else {
+        opal_output_verbose(20, ompi_coll_tuned_stream, "Failed to parse %s as valid json.  Assuming classic format.\n",fname);
+        ret = ompi_coll_tuned_read_rules_config_file_classic(fname, rules);
+        if (ret != OPAL_SUCCESS) {
+            opal_output_verbose(1, ompi_coll_tuned_stream, "Failed to load %s in either json or classic readers.  Check format.\n",fname);
+        }
+        return ret;
+    }
+}
