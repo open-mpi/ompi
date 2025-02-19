@@ -15,6 +15,7 @@
 #                         reserved.
 # Copyright (c) 2021      Nanook Consulting.  All rights reserved.
 # Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+# Copyright (c) 2024      Google, LLC. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -41,7 +42,9 @@ headers += \
         class/opal_value_array.h \
         class/opal_ring_buffer.h \
         class/opal_rb_tree.h \
-        class/opal_interval_tree.h
+        class/opal_interval_tree.h \
+        class/opal_include_list.h \
+        class/opal_serializable.h
 
 libopen_pal_core_la_SOURCES += \
         class/opal_bitmap.c \
@@ -58,4 +61,6 @@ libopen_pal_core_la_SOURCES += \
         class/opal_value_array.c \
         class/opal_ring_buffer.c \
         class/opal_rb_tree.c \
-        class/opal_interval_tree.c
+        class/opal_interval_tree.c \
+        class/opal_include_list.c \
+        class/opal_serializable.c
