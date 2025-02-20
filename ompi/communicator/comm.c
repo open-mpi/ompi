@@ -1459,7 +1459,7 @@ static int ompi_comm_idup_internal (ompi_communicator_t *comm, ompi_group_t *gro
         }
 
         ompi_info_memkind_assert_type type;
-        ompi_info_memkind_copy_or_set (&comm->super, &newcomp->super, info, &type);
+        ompi_info_memkind_copy_or_set (&comm->instance->super, &newcomp->super, info, &type);
         if (OMPI_INFO_MEMKIND_ASSERT_NO_ACCEL == type) {
             newcomp->c_assertions |= OMPI_COMM_ASSERT_NO_ACCEL_BUF;
         }
