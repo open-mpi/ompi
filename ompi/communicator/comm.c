@@ -1451,7 +1451,7 @@ static int ompi_comm_idup_internal (ompi_communicator_t *comm, ompi_group_t *gro
     }
 
     // Copy info if there is one.
-    {
+    if (info != NULL) {
         ompi_communicator_t *newcomp = context->newcomp;
         newcomp->super.s_info = OBJ_NEW(opal_info_t);
         if (info) {
