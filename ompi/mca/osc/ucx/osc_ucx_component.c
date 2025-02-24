@@ -844,6 +844,7 @@ int ompi_osc_ucx_win_attach(struct ompi_win_t *win, void *base, size_t len) {
         memmove((void *)&module->state.dynamic_wins[insert_index+1],
                 (void *)&module->state.dynamic_wins[insert_index],
                 (OMPI_OSC_UCX_ATTACH_MAX - (insert_index + 1)) * sizeof(ompi_osc_dynamic_win_info_t));
+        module->local_dynamic_win_info[insert_index].refcnt = 0;
     } else {
         insert_index = 0;
     }
