@@ -23,7 +23,7 @@
  * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2017-2022 IBM Corporation.  All rights reserved.
- * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
+ * Copyright (c) 2021-2025 Nanook Consulting  All rights reserved.
  * Copyright (c) 2018-2024 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2023-2025 Advanced Micro Devices, Inc. All rights reserved.
@@ -1137,7 +1137,7 @@ static int ompi_comm_split_unguided(ompi_communicator_t *comm, int split_type, i
         if (new_size < original_size) {
             /* If a valid info object was passed, set the selected topology */
             if (NULL != info) {
-                opal_info_set(info, "mpi_hw_resource_type", 
+                opal_info_set(info, "mpi_hw_resource_type",
                               ompi_comm_split_type_hw_guided_support[i].info_value);
             }
             ompi_comm_free(&unguided_comm);
@@ -1166,7 +1166,7 @@ static int ompi_comm_split_unguided(ompi_communicator_t *comm, int split_type, i
  * info(in/out)          : Info guiding the split operation
  * newcomm(out)          : Pointer to the newly created communicator, or pointer to MPI_COMM_NULL
  *                         if no communicator created.
- */                         
+ */
 int ompi_comm_split_type (ompi_communicator_t *comm, int split_type, int key,
                           opal_info_t *info, ompi_communicator_t **newcomm)
 {
@@ -1632,7 +1632,7 @@ int ompi_comm_create_from_group (ompi_group_t *group, const char *tag, opal_info
     newcomp->instance = group->grp_instance;
 
     /*
-     * setup predefined keyvals - see MPI Standard for predefined keyvals cached on 
+     * setup predefined keyvals - see MPI Standard for predefined keyvals cached on
      * communicators created via MPI_Comm_create_from_group or MPI_Intercomm_create_from_groups
      */
     ompi_attr_hash_init(&newcomp->c_keyhash);
@@ -2392,18 +2392,9 @@ int ompi_comm_get_rprocs (ompi_communicator_t *local_comm, ompi_communicator_t *
         goto err_exit;
     }
 
-    /* set the locality of the remote procs */
-    for (i=0; i < rsize; i++) {
-        /* get the locality information - all RTEs are required
-         * to provide this information at startup */
-        uint16_t *u16ptr, u16;
-        u16ptr = &u16;
-        OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_LOCALITY, &rprocs[i]->super.proc_name, &u16ptr, PMIX_UINT16);
-        if (OPAL_SUCCESS == rc) {
-            rprocs[i]->super.proc_flags = u16;
-        } else {
-            rprocs[i]->super.proc_flags = OPAL_PROC_NON_LOCAL;
-        }
+    rc = ompi_dpm_set_locality(rprocs, rsize);
+    if (OMPI_SUCCESS != rc) {
+        goto err_exit;
     }
 
     /* And now add the information into the database */
