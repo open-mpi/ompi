@@ -26,11 +26,25 @@ static void mca_btl_uct_base_frag_constructor(mca_btl_uct_base_frag_t *frag)
     frag->base.des_segment_count = 1;
 
     frag->segments[0].seg_addr.pval = frag->base.super.ptr;
-    frag->uct_iov.buffer = frag->base.super.ptr;
-    frag->uct_iov.stride = 0;
-    frag->uct_iov.count = 1;
+    /* header */
+    frag->uct_iov[0].buffer = &frag->header;
+    frag->uct_iov[0].length = sizeof(frag->header);
+    frag->uct_iov[0].stride = 0;
+    frag->uct_iov[0].count = 1;
+
+    /* fragment buffer (reserve with or without data) */
+    frag->uct_iov[1].buffer = frag->base.super.ptr;
+    frag->uct_iov[1].stride = 0;
+    frag->uct_iov[1].count = 1;
+
+    /* reserved for user data */
+    frag->uct_iov[2].buffer = NULL;
+    frag->uct_iov[2].stride = 0;
+    frag->uct_iov[2].length = 0;
+    frag->uct_iov[2].count = 1;
+    frag->uct_iov_count = 1;
     if (reg) {
-        frag->uct_iov.memh = reg->uct_memh;
+        frag->uct_iov[1].memh = reg->uct_memh;
     }
 }
 
