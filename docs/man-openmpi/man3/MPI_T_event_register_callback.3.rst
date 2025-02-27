@@ -37,8 +37,8 @@ DESCRIPTION
 -----------
 
 :ref:`MPI_T_event_register_callback` associates a user-defined function pointed to
-by `event_cb_function` with an allocated event-registration handle. The maximum callback
-safety level supported by the callback function is passed in the argument `cb_safety`.
+by ``event_cb_function`` with an allocated event-registration handle. The maximum callback
+safety level supported by the callback function is passed in the argument ``cb_safety``.
 
 
 ERRORS

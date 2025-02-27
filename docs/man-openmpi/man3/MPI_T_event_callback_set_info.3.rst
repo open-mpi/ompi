@@ -32,7 +32,7 @@ INPUT PARAMETERS
 DESCRIPTION
 -----------
 
-:ref:`MPI_T_event_callback_set_info` Updates the hints of the callback function registered for the callback safety level specified by `cb_safety` of the event-registration handle associated with event_registration.
+:ref:`MPI_T_event_callback_set_info` Updates the hints of the callback function registered for the callback safety level specified by ``cb_safety`` of the event-registration handle associated with event_registration.
 
 
 ERRORS
@@ -40,10 +40,4 @@ ERRORS
 
 :ref:`MPI_T_event_callback_set_info` will fail if:
 
-* ``MPI_T_ERR_NOT_INITIALIZED``: The MPI Tools interface not initialized
-
-* ``MPI_T_ERR_INVALID_HANDLE``: The handle is invalid
-
-* ``MPI_T_ERR_INVALID_HANDLE``: Invalid use of the interface or bad parameter values(s).
-
-* ``MPI_T_ERR_OTHER``: Other error
+.. include:: ./MPI_T_ERRORS.rst

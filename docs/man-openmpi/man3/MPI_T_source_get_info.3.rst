@@ -21,8 +21,8 @@ C Syntax
    #include <mpi.h>
 
    int MPI_T_source_get_info(int source_index, char *name, int *name_len,
-   char *desc, int *desc_len, MPI_T_source_order *ordering,
-   MPI_Count *ticks_per_second, MPI_Count *max_ticks, MPI_Info *info)
+                             char *desc, int *desc_len, MPI_T_source_order *ordering,
+                             MPI_Count *ticks_per_second, MPI_Count *max_ticks, MPI_Info *info)
 
 
 INPUT PARAMETERS

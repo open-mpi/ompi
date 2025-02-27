@@ -6,8 +6,7 @@ MPI_T_event_handle_alloc
 
 .. include_body
 
-:ref:`MPI_T_event_handle_alloc`, :ref:`MPI_T_event_handle_free` - Allocate/free
-event handles
+:ref:`MPI_T_event_handle_alloc` - Allocate event handles
 
 
 SYNTAX
@@ -21,11 +20,19 @@ C Syntax
 
    #include <mpi.h>
 
-   int MPI_T_event_handle_alloc(int event_index, void *obj_handle,
+   int MPI_T_event_handle_alloc(int event_index, void *obj_handle, MPI info,
                                 MPI_T_event_registration *event_registration)
 
-   int MPI_T_event_handle_free(MPI_T_event_registration event_registration,
-                               void *user_data, MPI_T_event_free_cb_function free_cb_function)
+INPUT PARAMETERS
+----------------
+* ``event_index``: Index of event type for which the registration handle is to be allocated.
+* ``obj_handle``: reference to a handle of the MPI object to which this event is supposed to be bound.
+* ``info``: Info object.
+
+OUTPUT PARAMETERS
+-----------------
+* ``event_registration``: Event registration.
+
 
 DESCRIPTION
 -----------
@@ -35,19 +42,12 @@ DESCRIPTION
 :ref:`MPI_T_event_get_info` returns MPI_T_BIND_NO_OBJECT as the binding of the
 variable the *obj_handle* argument is ignored.
 
-:ref:`MPI_T_event_handle_free` frees a handle allocated by
-:ref:`MPI_T_event_handle_alloc`.
-
 ERRORS
 ------
 
 :ref:`MPI_T_event_handle_alloc` will fail if:
 
-* ``MPI_T_ERR_NOT_INITIALIZED``: The MPI Tools interface not initialized
-
-* ``MPI_T_ERR_INVALID_INDEX``: The supplied event index is invalid
-
-* ``MPI_T_ERR_INVALID``: The supplied input parameter is invalid
+.. include:: ./MPI_T_ERRORS.rst
 
 .. seealso::
    * :ref:`MPI_T_event_get_info`

@@ -34,7 +34,7 @@ OUTPUT PARAMETERS
 DESCRIPTION
 -----------
 
-:ref:`MPI_T_event_get_source` returns the index of the source of `event_instance`.
+:ref:`MPI_T_event_get_source` returns the index of the source of ``event_instance``.
 
 ERRORS
 ------

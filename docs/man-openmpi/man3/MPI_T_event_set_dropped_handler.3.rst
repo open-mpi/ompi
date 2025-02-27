@@ -33,8 +33,8 @@ DESCRIPTION
 -----------
 
 :ref:`MPI_T_event_set_dropped_handler` registers the function
-`dropped_cb_function` to be called by the MPI implementation when event information is
-dropped for the registration handle specified in `event_registration`.
+``dropped_cb_function`` to be called by the MPI implementation when event information is
+dropped for the registration handle specified in ``event_registration``.
 
 
 ERRORS
@@ -42,8 +42,4 @@ ERRORS
 
 :ref:`MPI_T_event_set_dropped_handler` will fail if:
 
-* ``MPI_T_ERR_NOT_INITIALIZED``: The MPI Tools interface not initialized
-
-* ``MPI_T_ERR_INVALID_HANDLE``: The handle is invalid
-
-* ``MPI_T_ERR_OTHER``: Other error
+.. include:: ./MPI_T_ERRORS.rst

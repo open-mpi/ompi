@@ -40,12 +40,12 @@ OUTPUT PARAMETERS
 -----------------
 * ``name``: Buffer to return the string containing the name of the event type.
 * ``verbosity``: Verbosity level of this event type
-* ``array_of_datatypes``:  Array of mpi basic datatypes used to encode the event data
+* ``array_of_datatypes``:  Array of MPI basic datatypes used to encode the event data
 * ``array_of_displacements``:  Array of byte displacements of the elements in the event buffer
 * ``enumtype``:  Optional descriptor for enumeration information
 * ``info``: Optional info argument.
 * ``desc``: Buffer to return the string containing the description of the event type.
-* ``bind``:  Type of mpi object to which an event of this type must be bound
+* ``bind``:  Type of MPI object to which an event of this type must be bound
 
 DESCRIPTION
 -----------

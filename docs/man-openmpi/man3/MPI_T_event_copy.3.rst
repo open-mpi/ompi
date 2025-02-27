@@ -41,12 +41,7 @@ ERRORS
 
 :ref:`MPI_T_event_copy` will fail if:
 
-* ``MPI_T_ERR_NOT_INITIALIZED``: The MPI Tools interface not initialized
-
-* ``MPI_T_ERR_INVALID_HANDLE``: The handle is invalid
-
-* ``MPI_T_ERR_INVALID``: Invalid use of the interface or bad parameter values(s).
-
+.. include:: ./MPI_T_ERRORS.rst
 
 .. seealso::
    * :ref:`MPI_T_event_read`
