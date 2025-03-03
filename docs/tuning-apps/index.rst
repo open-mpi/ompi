@@ -15,7 +15,7 @@ components that can be tuned to affect behavior at run time.
    fault-tolerance/index
    large-clusters/index
    affinity
-   mpi-io/index
+   mpi-io
    coll-tuned
    benchmarking
    heterogeneity

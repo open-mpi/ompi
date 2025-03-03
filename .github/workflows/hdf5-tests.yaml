@@ -36,17 +36,10 @@ jobs:
          mca_params="$HOME/.prte/mca-params.conf"
          mkdir -p "$(dirname "$mca_params")"
          echo rmaps_default_mapping_policy = :oversubscribe >> "$mca_params"
-    - name: Run testsuite (ompio)
+    - name: Run testsuite
       run: |
          export PATH=/opt/openmpi/bin:${PATH}
          export LD_LIBRARY_PATH=/opt/openmpi/lib:${LD_LIBRARY_PATH}
-         HDF5TestExpress=0 mpirun --mca io ompio -np 4 ./hdf5/testpar/t_shapesame
-         mpirun --mca io ompio -np 4 ./hdf5/testpar/t_filters_parallel
-         mpirun --mca io ompio -np 4 ./hdf5/testpar/testphdf5
-    - name: Run testsuite (romio)
-      run: |
-         export PATH=/opt/openmpi/bin:${PATH}
-         export LD_LIBRARY_PATH=/opt/openmpi/lib:${LD_LIBRARY_PATH}
-         HDF5TestExpress=0 mpirun --mca io ^ompio -np 4 ./hdf5/testpar/t_shapesame
-         mpirun --mca io ^ompio -np 4 ./hdf5/testpar/t_filters_parallel
-         mpirun --mca io ^ompio -np 4 ./hdf5/testpar/testphdf5
+         HDF5TestExpress=0 mpirun -np 4 ./hdf5/testpar/t_shapesame
+         mpirun -np 4 ./hdf5/testpar/t_filters_parallel
+         mpirun -np 4 ./hdf5/testpar/testphdf5

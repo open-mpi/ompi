@@ -1,4 +1,4 @@
-Open MPI IO ("OMPIO")
+MPI-IO tuning options
 =====================
 
 OMPIO is an Open MPI-native implementation of the MPI I/O functions
