@@ -9,3 +9,5 @@ Open MPI version v6.0.0
 :Date: ...fill me in...
 
 - Open MPI now requires a C11-compliant compiler to build.
+- Removed ROMIO package.
+

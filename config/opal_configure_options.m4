@@ -513,7 +513,7 @@ OPAL_WITH_OPTION_MIN_MAX_VALUE(error_string,    256,  64, 1024)
 # Min length according to MPI-2.1, p. 236 (information passed in ompi/communicator/comm.c: min only 48)
 OPAL_WITH_OPTION_MIN_MAX_VALUE(object_name,      64,  64,  256)
 
-# Min and Max length according to MPI-2.1, p. 287 is 32; longest key in ROMIO however 33
+# Min and Max length according to MPI-2.1, p. 287 is 32
 OPAL_WITH_OPTION_MIN_MAX_VALUE(info_key,         36,  34,  255)
 
 # No lower and upper bound required or enforced!
