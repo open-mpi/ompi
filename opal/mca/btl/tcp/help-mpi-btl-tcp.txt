@@ -156,14 +156,3 @@ continue properly.
 
   Local host: %s
   PID:        %d
-#
-[client connect fail]
-WARNING: Open MPI failed to TCP connect to a peer MPI process via
-TCP.  This should not happen.
-
-Your Open MPI job may now fail.
-
-  Local host: %s
-  PID:        %d
-  Message:    %s
-  Error:      %s (%d)
