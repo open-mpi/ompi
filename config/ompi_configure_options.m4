@@ -252,4 +252,9 @@ else
    ompi_want_ompio=1
 fi
 AM_CONDITIONAL(OMPI_OMPIO_SUPPORT, test "$ompi_want_ompio" = "1")
+
+AC_ARG_ENABLE([deprecate-mpif-h],
+              [AS_HELP_STRING([--enable-deprecate-mpif-h],
+                              [Mark the mpif.h bindings as deprecated (default: enabled)])])
+
 ])dnl

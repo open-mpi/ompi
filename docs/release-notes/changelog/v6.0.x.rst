@@ -30,3 +30,7 @@ Open MPI version v6.0.0
   (which has been the default for quite a while, anyway).
 
 - Added MPI-4.1 ``MPI_Status_*`` functions.
+
+- MPI-4.1 has deprecated the use of the Fortran ``mpif.h`` include
+  file.  Open MPI will now issue a warning when the file is included
+  and the Fortran compiler supports the ``#warning`` directive.
