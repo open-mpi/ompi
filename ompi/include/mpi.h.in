@@ -28,6 +28,7 @@
  * Copyright (c) 2018      Triad National Security, LLC. All rights
  * Copyright (c) 2018-2022 Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2025      Advanced Micro Devices, Inc. All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -1985,7 +1986,13 @@ OMPI_DECLSPEC  int MPI_Status_f082c(const MPI_F08_status *f08_status, MPI_Status
 OMPI_DECLSPEC  int MPI_Status_f082f(const MPI_F08_status *f08_status, MPI_Fint *f_status);
 OMPI_DECLSPEC  int MPI_Status_f2c(const MPI_Fint *f_status, MPI_Status *c_status);
 OMPI_DECLSPEC  int MPI_Status_f2f08(const MPI_Fint *f_status, MPI_F08_status *f08_status);
+OMPI_DECLSPEC  int MPI_Status_get_error(const MPI_Status *status, int *error);
+OMPI_DECLSPEC  int MPI_Status_get_source(const MPI_Status *status, int *source);
+OMPI_DECLSPEC  int MPI_Status_get_tag(const MPI_Status *status, int *tag);
 OMPI_DECLSPEC  int MPI_Status_set_cancelled(MPI_Status *status, int flag);
+OMPI_DECLSPEC  int MPI_Status_set_error(MPI_Status *status, int error);
+OMPI_DECLSPEC  int MPI_Status_set_source(MPI_Status *status, int source);
+OMPI_DECLSPEC  int MPI_Status_set_tag(MPI_Status *status, int tag);
 OMPI_DECLSPEC  int MPI_Status_set_elements(MPI_Status *status, MPI_Datatype datatype,
                                            int count);
 OMPI_DECLSPEC  int MPI_Status_set_elements_x(MPI_Status *status, MPI_Datatype datatype,
@@ -2746,7 +2753,13 @@ OMPI_DECLSPEC  int PMPI_Status_f082f(const MPI_F08_status *f08_status, MPI_Fint 
 OMPI_DECLSPEC  int PMPI_Status_f082c(const MPI_F08_status *f08_status, MPI_Status *c_status);
 OMPI_DECLSPEC  int PMPI_Status_f2c(const MPI_Fint *f_status, MPI_Status *c_status);
 OMPI_DECLSPEC  int PMPI_Status_f2f08(const MPI_Fint *f_status, MPI_F08_status *f08_status);
+OMPI_DECLSPEC  int PMPI_Status_get_error(const MPI_Status *status, int *error);
+OMPI_DECLSPEC  int PMPI_Status_get_source(const MPI_Status *status, int *source);
+OMPI_DECLSPEC  int PMPI_Status_get_tag(const MPI_Status *status, int *tag);
 OMPI_DECLSPEC  int PMPI_Status_set_cancelled(MPI_Status *status, int flag);
+OMPI_DECLSPEC  int PMPI_Status_set_error(MPI_Status *status, int error);
+OMPI_DECLSPEC  int PMPI_Status_set_source(MPI_Status *status, int source);
+OMPI_DECLSPEC  int PMPI_Status_set_tag(MPI_Status *status, int tag);
 OMPI_DECLSPEC  int PMPI_Status_set_elements(MPI_Status *status, MPI_Datatype datatype,
                                             int count);
 OMPI_DECLSPEC  int PMPI_Status_set_elements_x(MPI_Status *status, MPI_Datatype datatype,
