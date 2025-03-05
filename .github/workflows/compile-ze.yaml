@@ -24,8 +24,5 @@ jobs:
     - name: Build Open MPI
       run: |
         ./autogen.pl
-        #
-        # we have to disable romio as its old ze stuff doesn't compile with supported ZE API
-        #
-        ./configure --prefix=${PWD}/install --disable-mpi-fortran --disable-io-romio --disable-oshmem --with-ze --disable-silent-rules
+        ./configure --prefix=${PWD}/install --disable-mpi-fortran  --disable-oshmem --with-ze --disable-silent-rules
         make -j
