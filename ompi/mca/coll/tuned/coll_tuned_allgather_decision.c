@@ -135,7 +135,7 @@ int ompi_coll_tuned_allgather_intra_do_this(const void *sbuf, size_t scount,
                                             mca_coll_base_module_t *module,
                                             int algorithm, int faninout, int segsize)
 {
-    OPAL_OUTPUT((ompi_coll_tuned_stream,
+    OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
                  "coll:tuned:allgather_intra_do_this selected algorithm %d topo faninout %d segsize %d",
                  algorithm, faninout, segsize));
     switch (algorithm) {
@@ -176,7 +176,7 @@ int ompi_coll_tuned_allgather_intra_do_this(const void *sbuf, size_t scount,
                                                          rbuf, rcount, rdtype,
                                                          comm, module);
     } /* switch */
-    OPAL_OUTPUT((ompi_coll_tuned_stream,
+    OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
                  "coll:tuned:allgather_intra_do_this attempt to select algorithm %d when only 0-%d is valid?",
                  algorithm, ompi_coll_tuned_forced_max_algorithms[ALLGATHER]));
     return (MPI_ERR_ARG);

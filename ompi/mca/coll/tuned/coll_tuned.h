@@ -32,6 +32,8 @@
 
 BEGIN_C_DECLS
 
+#define COLL_TUNED_TRACING_VERBOSE 50
+
 /* these are the same across all modules and are loaded at component query time */
 extern int   ompi_coll_tuned_stream;
 extern int   ompi_coll_tuned_priority;

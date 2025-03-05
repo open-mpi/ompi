@@ -156,8 +156,9 @@ int ompi_coll_tuned_reduce_intra_do_this(const void *sbuf, void* rbuf, size_t co
                                          int algorithm, int faninout,
                                          int segsize, int max_requests )
 {
-    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:reduce_intra_do_this selected algorithm %d topo faninout %d segsize %d",
-                 algorithm, faninout, segsize));
+    OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
+        "coll:tuned:reduce_intra_do_this selected algorithm %d topo faninout %d segsize %d",
+        algorithm, faninout, segsize));
 
     switch (algorithm) {
     case (0):  return ompi_coll_tuned_reduce_intra_dec_fixed(sbuf, rbuf, count, dtype,
@@ -186,7 +187,8 @@ int ompi_coll_tuned_reduce_intra_do_this(const void *sbuf, void* rbuf, size_t co
                                                           segsize, max_requests,
                                                           faninout);
     } /* switch */
-    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:reduce_intra_do_this attempt to select algorithm %d when only 0-%d is valid?",
-                 algorithm, ompi_coll_tuned_forced_max_algorithms[REDUCE]));
+    OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
+        "coll:tuned:reduce_intra_do_this attempt to select algorithm %d when only 0-%d is valid?",
+        algorithm, ompi_coll_tuned_forced_max_algorithms[REDUCE]));
     return (MPI_ERR_ARG);
 }

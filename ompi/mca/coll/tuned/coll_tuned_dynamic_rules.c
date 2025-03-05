@@ -109,7 +109,7 @@ int ompi_coll_tuned_dump_msg_rule (ompi_coll_msg_rule_t* msg_p)
     int rc;
 
     if (!msg_p) {
-        OPAL_OUTPUT((ompi_coll_tuned_stream,"ERROR: Message rule was a NULL ptr?!\n"));
+        opal_output(ompi_coll_tuned_stream, "ERROR: Message rule was a NULL ptr?!\n");
         return (-1);
     }
     if (msg_p->msg_size_max == COLL_RULES_MESSAGE_SIZE_INF) {
@@ -216,7 +216,8 @@ int ompi_coll_tuned_free_msg_rules_in_com_rule (ompi_coll_com_rule_t* com_p)
     ompi_coll_msg_rule_t* msg_p;
 
     if (!com_p) {
-        OPAL_OUTPUT((ompi_coll_tuned_stream,"attempt to free NULL com_rule ptr\n"));
+        opal_output_verbose(1, ompi_coll_tuned_stream,
+            "attempt to free NULL com_rule ptr\n");
         return (-1);
     }
 
@@ -224,7 +225,8 @@ int ompi_coll_tuned_free_msg_rules_in_com_rule (ompi_coll_com_rule_t* com_p)
         msg_p = com_p->msg_rules;
 
         if (!msg_p) {
-            OPAL_OUTPUT((ompi_coll_tuned_stream,"attempt to free NULL n_rules when msg count was %d\n", com_p->n_rules));
+            opal_output_verbose(1, ompi_coll_tuned_stream,
+                "attempt to free NULL n_rules when msg count was %d\n", com_p->n_rules);
             rc = -1; /* some error */
         }
         else {
@@ -247,7 +249,7 @@ int ompi_coll_tuned_free_coms_in_alg_rule (ompi_coll_alg_rule_t* alg_p)
     ompi_coll_com_rule_t* com_p;
 
     if (!alg_p) {
-        OPAL_OUTPUT((ompi_coll_tuned_stream,"attempt to free NULL alg_rule ptr\n"));
+        opal_output_verbose(1, ompi_coll_tuned_stream,"attempt to free NULL alg_rule ptr\n");
         return (-1);
     }
 
@@ -255,7 +257,7 @@ int ompi_coll_tuned_free_coms_in_alg_rule (ompi_coll_alg_rule_t* alg_p)
         com_p = alg_p->com_rules;
 
         if (!com_p) {
-            OPAL_OUTPUT((ompi_coll_tuned_stream,"attempt to free NULL com_rules when com count was %d\n", alg_p->n_com_sizes));
+            opal_output_verbose(1, ompi_coll_tuned_stream,"attempt to free NULL com_rules when com count was %d\n", alg_p->n_com_sizes);
         } else {
             /* ok, memory exists for the com rules so free their message rules first */
             for( i = 0; i < alg_p->n_com_sizes; i++ ) {

@@ -98,7 +98,7 @@ int ompi_coll_tuned_alltoallv_intra_do_this(const void *sbuf, ompi_count_array_t
                                             mca_coll_base_module_t *module,
                                             int algorithm)
 {
-    OPAL_OUTPUT((ompi_coll_tuned_stream,
+    OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
                  "coll:tuned:alltoallv_intra_do_this selected algorithm %d ",
                  algorithm));
 
@@ -116,7 +116,7 @@ int ompi_coll_tuned_alltoallv_intra_do_this(const void *sbuf, ompi_count_array_t
                                                        rbuf, rcounts, rdisps, rdtype,
                                                        comm, module);
     }  /* switch */
-    OPAL_OUTPUT((ompi_coll_tuned_stream,
+    OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
                  "coll:tuned:alltoall_intra_do_this attempt to select "
                  "algorithm %d when only 0-%d is valid.",
                  algorithm, ompi_coll_tuned_forced_max_algorithms[ALLTOALLV]));

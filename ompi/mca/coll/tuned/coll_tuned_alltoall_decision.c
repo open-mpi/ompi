@@ -167,8 +167,9 @@ int ompi_coll_tuned_alltoall_intra_do_this(const void *sbuf, size_t scount,
                                            int algorithm, int faninout, int segsize,
                                            int max_requests)
 {
-    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:alltoall_intra_do_this selected algorithm %d topo faninout %d segsize %d",
-                 algorithm, faninout, segsize));
+    OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
+        "coll:tuned:alltoall_intra_do_this selected algorithm %d topo faninout %d segsize %d",
+        algorithm, faninout, segsize));
 
     switch (algorithm) {
     case (0):
@@ -184,7 +185,8 @@ int ompi_coll_tuned_alltoall_intra_do_this(const void *sbuf, size_t scount,
     case (5):
         return ompi_coll_base_alltoall_intra_two_procs(sbuf, scount, sdtype, rbuf, rcount, rdtype, comm, module);
     } /* switch */
-    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:alltoall_intra_do_this attempt to select algorithm %d when only 0-%d is valid?",
-                 algorithm, ompi_coll_tuned_forced_max_algorithms[ALLTOALL]));
+    OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
+        "coll:tuned:alltoall_intra_do_this attempt to select algorithm %d when only 0-%d is valid?",
+        algorithm, ompi_coll_tuned_forced_max_algorithms[ALLTOALL]));
     return (MPI_ERR_ARG);
 }

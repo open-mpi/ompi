@@ -16,7 +16,7 @@
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2019      Mellanox Technologies. All rights reserved.
- * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.
+ * Copyright (c) 2020-2025 Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
  * $COPYRIGHT$
  *
@@ -61,7 +61,8 @@ ompi_coll_tuned_allreduce_intra_dec_fixed(const void *sbuf, void *rbuf, size_t c
     size_t dsize, total_dsize;
     int communicator_size, alg;
     communicator_size = ompi_comm_size(comm);
-    OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_allreduce_intra_dec_fixed"));
+    OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
+        "ompi_coll_tuned_allreduce_intra_dec_fixed"));
 
     ompi_datatype_type_size(dtype, &dsize);
     total_dsize = dsize * (ptrdiff_t)count;
@@ -425,7 +426,8 @@ int ompi_coll_tuned_alltoallv_intra_dec_fixed(const void *sbuf, ompi_count_array
     int communicator_size, alg;
     communicator_size = ompi_comm_size(comm);
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_alltoallv_intra_dec_fixed com_size %d",
+    OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
+        "ompi_coll_tuned_alltoallv_intra_dec_fixed com_size %d",
                  communicator_size));
     /** Algorithms:
      *  {1, "basic_linear"},
@@ -467,8 +469,9 @@ int ompi_coll_tuned_barrier_intra_dec_fixed(struct ompi_communicator_t *comm,
     int communicator_size, alg;
     communicator_size = ompi_comm_size(comm);
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_barrier_intra_dec_fixed com_size %d",
-                 communicator_size));
+    OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
+        "ompi_coll_tuned_barrier_intra_dec_fixed com_size %d",
+        communicator_size));
     /** Algorithms:
      *  {1, "linear"},
      *  {2, "double_ring"},
@@ -521,9 +524,9 @@ int ompi_coll_tuned_bcast_intra_dec_fixed(void *buff, size_t count,
     ompi_datatype_type_size(datatype, &dsize);
     total_dsize = dsize * (unsigned long)count;
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_bcast_intra_dec_fixed"
-                 " root %d rank %d com_size %d",
-                 root, ompi_comm_rank(comm), communicator_size));
+    OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
+        "ompi_coll_tuned_bcast_intra_dec_fixed root %d rank %d com_size %d",
+        root, ompi_comm_rank(comm), communicator_size));
 
     /** Algorithms:
      *  {1, "basic_linear"},
@@ -670,8 +673,9 @@ int ompi_coll_tuned_reduce_intra_dec_fixed( const void *sendbuf, void *recvbuf,
 
     communicator_size = ompi_comm_size(comm);
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_reduce_intra_dec_fixed "
-                 "root %d rank %d com_size %d", root, ompi_comm_rank(comm), communicator_size));
+    OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
+        "ompi_coll_tuned_reduce_intra_dec_fixed root %d rank %d com_size %d",
+        root, ompi_comm_rank(comm), communicator_size));
 
     ompi_datatype_type_size(datatype, &dsize);
     total_dsize = dsize * (ptrdiff_t)count;   /* needed for decision */
@@ -832,7 +836,8 @@ int ompi_coll_tuned_reduce_scatter_intra_dec_fixed( const void *sbuf, void *rbuf
     int communicator_size, i, alg;
     size_t total_dsize, dsize;
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_reduce_scatter_intra_dec_fixed"));
+    OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
+        "ompi_coll_tuned_reduce_scatter_intra_dec_fixed"));
 
     communicator_size = ompi_comm_size(comm);
     ompi_datatype_type_size(dtype, &dsize);
@@ -980,7 +985,8 @@ int ompi_coll_tuned_reduce_scatter_block_intra_dec_fixed(const void *sbuf, void 
     int communicator_size, alg;
     size_t dsize, total_dsize;
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_reduce_scatter_block_intra_dec_fixed"));
+    OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
+        "ompi_coll_tuned_reduce_scatter_block_intra_dec_fixed"));
 
 
     ompi_datatype_type_size(dtype, &dsize);
@@ -1220,8 +1226,9 @@ int ompi_coll_tuned_allgather_intra_dec_fixed(const void *sbuf, size_t scount,
         }
     }
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_allgather_intra_dec_fixed"
-                 " rank %d com_size %d", ompi_comm_rank(comm), communicator_size));
+    OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
+        "ompi_coll_tuned_allgather_intra_dec_fixed rank %d com_size %d",
+        ompi_comm_rank(comm), communicator_size));
 
     int faninout = 2;
     return ompi_coll_tuned_allgather_intra_do_this(sbuf, scount, sdtype,
@@ -1358,7 +1365,7 @@ int ompi_coll_tuned_allgatherv_intra_dec_fixed(const void *sbuf, size_t scount,
         }
     }
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,
+    OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
                  "ompi_coll_tuned_allgatherv_intra_dec_fixed"
                  " rank %d com_size %d", ompi_comm_rank(comm), communicator_size));
 
@@ -1389,7 +1396,7 @@ int ompi_coll_tuned_gather_intra_dec_fixed(const void *sbuf, size_t scount,
     int communicator_size, alg, rank;
     size_t dsize, total_dsize;
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,
+    OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
                  "ompi_coll_tuned_gather_intra_dec_fixed"));
 
     communicator_size = ompi_comm_size(comm);
@@ -1477,7 +1484,7 @@ int ompi_coll_tuned_scatter_intra_dec_fixed(const void *sbuf, size_t scount,
     int communicator_size, alg, rank;
     size_t dsize, total_dsize;
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,
+    OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
                  "ompi_coll_tuned_scatter_intra_dec_fixed"));
 
     communicator_size = ompi_comm_size(comm);
