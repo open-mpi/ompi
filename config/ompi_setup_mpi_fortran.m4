@@ -59,7 +59,10 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
     AC_ARG_ENABLE([deprecate-mpif-h],
                   [AS_HELP_STRING([--enable-deprecate-mpif-h],
                                   [Mark the mpif.h bindings as deprecated (default: enabled)])])
-    if test "$enable_deprecate_mpif_h" = "no"; then
+    if test "x$FC" != "xflang-new"; then
+        AC_MSG_RESULT([no (only for flang-new)])
+        OMPI_FORTRAN_DEPRECATE_MPIF_H=""
+    elif test "$enable_deprecate_mpif_h" = "no"; then
         AC_MSG_RESULT([no])
         OMPI_FORTRAN_DEPRECATE_MPIF_H=""
     else
