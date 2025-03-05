@@ -56,7 +56,7 @@ static int load_json(const char *string, enum INPUT_TYPE input_type, const opal_
         fclose(fp);
         close(fd);
         /* Load the input string from the temporary file */
-        ret = opal_json_load_file(filename, json);
+        ret = opal_json_load_file(filename, json, 1);
         /* Remember to delete the file */
         (void) remove(filename);
         break;
