@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2024      Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
+ * Copyright (c) 2025      Barcelona Supercomputing Center (BSC-CNS). All Rights Reserved.
+ *
  * Additional copyrights may follow
  *
  * $HEADER$
@@ -369,6 +371,13 @@ start_allgather:
     ompi_request_wait_all(inter_recv_count, inter_recv_reqs, MPI_STATUS_IGNORE);
 
 cleanup:
+
+    /* we may still have neighbors reading directly from our buffer, so we must ensure it is not modified */
+    if (!ii_push_data)
+    {
+        low_comm->c_coll->coll_barrier(low_comm, low_comm->c_coll->coll_barrier_module);
+    }
+
     for (int jlow=0; jlow<low_size; jlow++) {
         if (jlow != low_rank ) {
             mca_smsc->unmap_peer_region(sbuf_map_ctx[jlow]);
