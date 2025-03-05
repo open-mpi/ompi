@@ -21,6 +21,7 @@ dnl Copyright (c) 2016-2022 IBM Corporation.  All rights reserved.
 dnl Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
 dnl Copyright (c) 2022      Triad National Security, LLC. All rights
 dnl                         reserved.
+dnl Copyright (c) 2025      Stony Brook University.  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -53,6 +54,23 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
     OMPI_FORTRAN_HAVE_BIND_C_TYPE_NAME=0
     OMPI_FORTRAN_HAVE_F08_ASSUMED_RANK=0
     OMPI_FORTRAN_HAVE_PRIVATE=0
+
+    AC_MSG_CHECKING([if we should mark mpif.h bindings as deprecated])
+    AC_ARG_ENABLE([deprecate-mpif-h],
+                  [AS_HELP_STRING([--enable-deprecate-mpif-h],
+                                  [Mark the mpif.h bindings as deprecated (default: enabled)])])
+    if test "$enable_deprecate_mpif_h" = "no"; then
+        AC_MSG_RESULT([no])
+        OMPI_FORTRAN_DEPRECATE_MPIF_H=""
+    else
+        if test "$enable_deprecate_mpif_h" = "yes"; then
+            AC_MSG_RESULT([yes])
+        else
+            AC_MSG_RESULT([yes (default)])
+        fi
+        OMPI_FORTRAN_DEPRECATE_MPIF_H="#warning mpif.h is deprecated since MPI 4.1. Refer to MPI Sec. 19.1.4."
+    fi
+    AC_SUBST(OMPI_FORTRAN_DEPRECATE_MPIF_H)
 
     # These macros control symbol names for Fortran/C interoperability
     #
