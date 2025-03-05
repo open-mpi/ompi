@@ -93,8 +93,9 @@ int ompi_coll_tuned_scan_intra_do_this(const void *sbuf, void* rbuf, size_t coun
                                          mca_coll_base_module_t *module,
                                          int algorithm)
 {
-    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:scan_intra_do_this selected algorithm %d",
-                 algorithm));
+    OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
+        "coll:tuned:scan_intra_do_this selected algorithm %d",
+        algorithm));
 
     switch (algorithm) {
     case (0):
@@ -103,7 +104,8 @@ int ompi_coll_tuned_scan_intra_do_this(const void *sbuf, void* rbuf, size_t coun
     case (2):  return ompi_coll_base_scan_intra_recursivedoubling(sbuf, rbuf, count, dtype,
                                                                   op, comm, module);
     } /* switch */
-    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:scan_intra_do_this attempt to select algorithm %d when only 0-%d is valid?",
-                 algorithm, ompi_coll_tuned_forced_max_algorithms[SCAN]));
+    OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
+        "coll:tuned:scan_intra_do_this attempt to select algorithm %d when only 0-%d is valid?",
+        algorithm, ompi_coll_tuned_forced_max_algorithms[SCAN]));
     return (MPI_ERR_ARG);
 }
