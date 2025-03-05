@@ -83,6 +83,7 @@ int ompi_coll_tuned_reduce_scatter_intra_check_forced_init (coll_tuned_force_alg
                                         OPAL_INFO_LVL_5,
                                         MCA_BASE_VAR_SCOPE_ALL,
                                         &coll_tuned_reduce_scatter_forced_algorithm);
+    coll_tuned_alg_register_options( REDUCESCATTER, new_enum );
     OBJ_RELEASE(new_enum);
     if (mca_param_indices->algorithm_param_index < 0) {
         return mca_param_indices->algorithm_param_index;
@@ -129,8 +130,9 @@ int ompi_coll_tuned_reduce_scatter_intra_do_this(const void *sbuf, void* rbuf,
                                                  mca_coll_base_module_t *module,
                                                  int algorithm, int faninout, int segsize)
 {
-    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:reduce_scatter_intra_do_this selected algorithm %d topo faninout %d segsize %d",
-                 algorithm, faninout, segsize));
+    OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
+        "coll:tuned:reduce_scatter_intra_do_this selected algorithm %d topo faninout %d segsize %d",
+        algorithm, faninout, segsize));
 
     switch (algorithm) {
     case (0): return ompi_coll_tuned_reduce_scatter_intra_dec_fixed(sbuf, rbuf, rcounts,
@@ -144,7 +146,8 @@ int ompi_coll_tuned_reduce_scatter_intra_do_this(const void *sbuf, void* rbuf,
     case (4): return ompi_coll_base_reduce_scatter_intra_butterfly(sbuf, rbuf, rcounts,
                                                                    dtype, op, comm, module);
     } /* switch */
-    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:reduce_scatter_intra_do_this attempt to select algorithm %d when only 0-%d is valid?",
-                 algorithm, ompi_coll_tuned_forced_max_algorithms[REDUCESCATTER]));
+    OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
+        "coll:tuned:reduce_scatter_intra_do_this attempt to select algorithm %d when only 0-%d is valid?",
+        algorithm, ompi_coll_tuned_forced_max_algorithms[REDUCESCATTER]));
     return (MPI_ERR_ARG);
 }

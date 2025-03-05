@@ -82,6 +82,7 @@ ompi_coll_tuned_scatter_intra_check_forced_init(coll_tuned_force_algorithm_mca_p
                                         OPAL_INFO_LVL_5,
                                         MCA_BASE_VAR_SCOPE_ALL,
                                         &coll_tuned_scatter_forced_algorithm);
+    coll_tuned_alg_register_options( SCATTER, new_enum );
     OBJ_RELEASE(new_enum);
     if (mca_param_indices->algorithm_param_index < 0) {
         return mca_param_indices->algorithm_param_index;
@@ -162,7 +163,7 @@ ompi_coll_tuned_scatter_intra_do_this(const void *sbuf, size_t scount,
                                       mca_coll_base_module_t *module,
                                       int algorithm, int faninout, int segsize)
 {
-    OPAL_OUTPUT((ompi_coll_tuned_stream,
+    OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
                  "coll:tuned:scatter_intra_do_this selected algorithm %d topo faninout %d segsize %d",
                  algorithm, faninout, segsize));
 
@@ -185,7 +186,7 @@ ompi_coll_tuned_scatter_intra_do_this(const void *sbuf, size_t scount,
                                                       root, comm, module,
                                                       ompi_coll_tuned_scatter_blocking_send_ratio);
     } /* switch */
-    OPAL_OUTPUT((ompi_coll_tuned_stream,
+    OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
                  "coll:tuned:scatter_intra_do_this attempt to select algorithm %d when only 0-%d is valid?",
                  algorithm, ompi_coll_tuned_forced_max_algorithms[SCATTER]));
     return MPI_ERR_ARG;

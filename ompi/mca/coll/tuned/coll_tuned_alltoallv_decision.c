@@ -77,7 +77,7 @@ int ompi_coll_tuned_alltoallv_intra_check_forced_init(coll_tuned_force_algorithm
                                         OPAL_INFO_LVL_5,
                                         MCA_BASE_VAR_SCOPE_ALL,
                                         &coll_tuned_alltoallv_forced_algorithm);
-
+    coll_tuned_alg_register_options( ALLTOALLV, new_enum );
     OBJ_RELEASE(new_enum);
     if (mca_param_indices->algorithm_param_index < 0) {
         return mca_param_indices->algorithm_param_index;
@@ -96,7 +96,7 @@ int ompi_coll_tuned_alltoallv_intra_do_this(const void *sbuf, ompi_count_array_t
                                             mca_coll_base_module_t *module,
                                             int algorithm)
 {
-    OPAL_OUTPUT((ompi_coll_tuned_stream,
+    OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
                  "coll:tuned:alltoallv_intra_do_this selected algorithm %d ",
                  algorithm));
 
@@ -114,7 +114,7 @@ int ompi_coll_tuned_alltoallv_intra_do_this(const void *sbuf, ompi_count_array_t
                                                        rbuf, rcounts, rdisps, rdtype,
                                                        comm, module);
     }  /* switch */
-    OPAL_OUTPUT((ompi_coll_tuned_stream,
+    OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
                  "coll:tuned:alltoall_intra_do_this attempt to select "
                  "algorithm %d when only 0-%d is valid.",
                  algorithm, ompi_coll_tuned_forced_max_algorithms[ALLTOALLV]));
