@@ -80,47 +80,47 @@ static void mca_accelerator_rocm_get_memkind(ompi_memkind_t *memkind);
 
 opal_accelerator_base_module_t opal_accelerator_rocm_module =
 {
-    mca_accelerator_rocm_check_addr,
+    .check_addr = mca_accelerator_rocm_check_addr,
 
-    mca_accelerator_rocm_create_stream,
-    mca_accelerator_rocm_sync_stream,
+    .create_stream = mca_accelerator_rocm_create_stream,
+    .sync_stream = mca_accelerator_rocm_sync_stream,
 
-    mca_accelerator_rocm_create_event,
-    mca_accelerator_rocm_record_event,
-    mca_accelerator_rocm_query_event,
-    mca_accelerator_rocm_wait_event,
+    .create_event = mca_accelerator_rocm_create_event,
+    .record_event = mca_accelerator_rocm_record_event,
+    .query_event = mca_accelerator_rocm_query_event,
+    .wait_event = mca_accelerator_rocm_wait_event,
 
-    mca_accelerator_rocm_memcpy_async,
-    mca_accelerator_rocm_memcpy,
-    mca_accelerator_rocm_memmove_async,
-    mca_accelerator_rocm_memmove,
-    mca_accelerator_rocm_mem_alloc,
-    mca_accelerator_rocm_mem_release,
-    mca_accelerator_rocm_mem_alloc_stream,
-    mca_accelerator_rocm_mem_release_stream,
-    mca_accelerator_rocm_get_address_range,
+    .mem_copy_async = mca_accelerator_rocm_memcpy_async,
+    .mem_copy = mca_accelerator_rocm_memcpy,
+    .mem_move_async = mca_accelerator_rocm_memmove_async,
+    .mem_move = mca_accelerator_rocm_memmove,
+    .mem_alloc = mca_accelerator_rocm_mem_alloc,
+    .mem_release = mca_accelerator_rocm_mem_release,
+    .mem_alloc_stream = mca_accelerator_rocm_mem_alloc_stream,
+    .mem_release_stream = mca_accelerator_rocm_mem_release_stream,
+    .get_address_range = mca_accelerator_rocm_get_address_range,
 
-    mca_accelerator_rocm_is_ipc_enabled,
-    mca_accelerator_rocm_get_ipc_handle,
-    mca_accelerator_rocm_import_ipc_handle,
-    mca_accelerator_rocm_open_ipc_handle,
-    mca_accelerator_rocm_compare_ipc_handles,
-    mca_accelerator_rocm_get_ipc_event_handle,
-    mca_accelerator_rocm_import_ipc_event_handle,
-    mca_accelerator_rocm_open_ipc_event_handle,
+    .is_ipc_enabled = mca_accelerator_rocm_is_ipc_enabled,
+    .get_ipc_handle = mca_accelerator_rocm_get_ipc_handle,
+    .import_ipc_handle = mca_accelerator_rocm_import_ipc_handle,
+    .open_ipc_handle = mca_accelerator_rocm_open_ipc_handle,
+    .compare_ipc_handles = mca_accelerator_rocm_compare_ipc_handles,
+    .get_ipc_event_handle = mca_accelerator_rocm_get_ipc_event_handle,
+    .import_ipc_event_handle = mca_accelerator_rocm_import_ipc_event_handle,
+    .open_ipc_event_handle = mca_accelerator_rocm_open_ipc_event_handle,
 
-    mca_accelerator_rocm_host_register,
-    mca_accelerator_rocm_host_unregister,
+    .host_register = mca_accelerator_rocm_host_register,
+    .host_unregister = mca_accelerator_rocm_host_unregister,
 
-    mca_accelerator_rocm_get_device,
-    mca_accelerator_rocm_get_device_pci_attr,
-    mca_accelerator_rocm_device_can_access_peer,
+    .get_device = mca_accelerator_rocm_get_device,
+    .get_device_pci_attr = mca_accelerator_rocm_get_device_pci_attr,
+    .device_can_access_peer = mca_accelerator_rocm_device_can_access_peer,
 
-    mca_accelerator_rocm_get_buffer_id,
+    .get_buffer_id = mca_accelerator_rocm_get_buffer_id,
 
-    mca_accelerator_rocm_get_num_devices,
-    mca_accelerator_rocm_get_mem_bw,
-    mca_accelerator_rocm_get_memkind
+    .num_devices = mca_accelerator_rocm_get_num_devices,
+    .get_mem_bw = mca_accelerator_rocm_get_mem_bw,
+    .get_memkind = mca_accelerator_rocm_get_memkind
 };
 
 
