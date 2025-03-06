@@ -43,10 +43,3 @@ jobs:
          HDF5TestExpress=0 mpirun --mca io ompio -np 4 ./hdf5/testpar/t_shapesame
          mpirun --mca io ompio -np 4 ./hdf5/testpar/t_filters_parallel
          mpirun --mca io ompio -np 4 ./hdf5/testpar/testphdf5
-    - name: Run testsuite (romio)
-      run: |
-         export PATH=/opt/openmpi/bin:${PATH}
-         export LD_LIBRARY_PATH=/opt/openmpi/lib:${LD_LIBRARY_PATH}
-         HDF5TestExpress=0 mpirun --mca io ^ompio -np 4 ./hdf5/testpar/t_shapesame
-         mpirun --mca io ^ompio -np 4 ./hdf5/testpar/t_filters_parallel
-         mpirun --mca io ^ompio -np 4 ./hdf5/testpar/testphdf5

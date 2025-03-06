@@ -74,22 +74,7 @@ MPI API behaviors that can be used with ``configure``:
 
 * ``--disable-mpi-io``:
   Disable built-in support for MPI-2 I/O, likely because an
-  externally-provided MPI I/O package will be used. Default is to use
-  the internal framework system that uses the ompio component and a
-  specially modified version of ROMIO that fits inside the romio
-  component
-
-* ``--disable-io-romio``:
-  Disable the :ref:`ROMIO MPI-IO <label-romio-reference>` component
-  from being compiled. This is a deprecated mechanism; it is effectively
-  the same as adding ``io-romio341`` to the list of items passed to
-  ``--enable-mca-no-build``.
-
-* ``--with-io-romio-flags=FLAGS``:
-  Pass ``FLAGS`` to the ROMIO distribution configuration script.  This
-  option is usually only necessary to pass
-  parallel-filesystem-specific preprocessor/compiler/linker flags back
-  to the ROMIO system.
+  externally-provided MPI I/O package will be used.
 
 * ``--disable-io-ompio``:
   Disable the ompio MPI-IO component

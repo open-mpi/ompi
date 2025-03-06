@@ -75,8 +75,7 @@ foreach my $f (@files) {
     $core = 1;
     $core = 0
         if ($f =~ /ompi\/contrib\/[a-zA-Z0-9]+\// ||
-            $f =~ /opal\/event/ ||
-            $f =~ /ompi\/mca\/io\/romio\/romio/);
+            $f =~ /opal\/event/);
 
     # Scan the file for copyrights
     open FILE, $f || die "Can't open file: $f";

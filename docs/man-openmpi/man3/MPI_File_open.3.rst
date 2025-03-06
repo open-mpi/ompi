@@ -74,9 +74,8 @@ group. :ref:`MPI_File_open` is a collective routine; all processes
 must provide the same value for *amode,* and all processes must
 provide filenames that reference the same file which are textually
 identical (note: Open MPI I/O plugins may have restrictions on
-characters that can be used in filenames. For example, the ROMIO
-plugin may disallow the colon (":") character from appearing in a
-filename). A process can open a file independently of other processes
+characters that can be used in filenames. 
+A process can open a file independently of other processes
 by using the MPI_COMM_SELF communicator. The file handle returned,
 *fh,* can be subsequently used to access the file until the file is
 closed using :ref:`MPI_File_close`. Before calling
