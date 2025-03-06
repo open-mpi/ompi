@@ -344,9 +344,15 @@ MPI API manual pages (section 3)
    MPI_Status_f082f.3.rst
    MPI_Status_f2c.3.rst
    MPI_Status_f2f08.3.rst
+   MPI_Status_get_error.3.rst
+   MPI_Status_get_source.3.rst
+   MPI_Status_get_tag.3.rst
    MPI_Status_set_cancelled.3.rst
    MPI_Status_set_elements.3.rst
    MPI_Status_set_elements_x.3.rst
+   MPI_Status_set_error.3.rst
+   MPI_Status_set_source.3.rst
+   MPI_Status_set_tag.3.rst
    MPI_T.3.rst
    MPI_T_category_changed.3.rst
    MPI_T_category_get_categories.3.rst
