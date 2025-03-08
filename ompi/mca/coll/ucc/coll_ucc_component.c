@@ -55,6 +55,7 @@ mca_coll_ucc_component_t mca_coll_ucc_component = {
     COLL_UCC_CTS_STR,  /* requested coll_types string */
     UCC_VERSION_STRING /* ucc version                 */
 };
+MCA_BASE_COMPONENT_INIT(ompi, coll, ucc)
 
 static int mca_coll_ucc_register(void)
 {

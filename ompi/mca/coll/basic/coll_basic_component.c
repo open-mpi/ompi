@@ -82,6 +82,7 @@ const mca_coll_base_component_3_0_0_t mca_coll_basic_component = {
     .collm_init_query = mca_coll_basic_init_query,
     .collm_comm_query = mca_coll_basic_comm_query,
 };
+MCA_BASE_COMPONENT_INIT(ompi, coll, basic)
 
 
 static int

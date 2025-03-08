@@ -59,6 +59,7 @@ mca_topo_base_component_2_2_0_t mca_topo_example_component =
     .topoc_init_query = init_query,
     .topoc_comm_query = comm_query,
 };
+MCA_BASE_COMPONENT_INIT(ompi, topo, example)
 
 
 static int init_query(bool enable_progress_threads, bool enable_mpi_threads)

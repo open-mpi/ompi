@@ -66,6 +66,7 @@ ompi_osc_portals4_component_t mca_osc_portals4_component = {
         .osc_finalize = component_finalize,
     }
 };
+MCA_BASE_COMPONENT_INIT(ompi, osc, portals4)
 
 
 ompi_osc_portals4_module_t ompi_osc_portals4_module_template = {

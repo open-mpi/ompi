@@ -41,6 +41,7 @@ opal_if_base_component_t mca_if_posix_ipv4_component = {
     {/* This component is checkpointable */
      MCA_BASE_METADATA_PARAM_CHECKPOINT},
 };
+MCA_BASE_COMPONENT_INIT(opal, if, posix_ipv4)
 
 /* convert a netmask (in network byte order) to CIDR notation */
 static int prefix(uint32_t netmask)

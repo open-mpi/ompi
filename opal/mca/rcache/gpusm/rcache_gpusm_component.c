@@ -63,6 +63,7 @@ mca_rcache_gpusm_component_t mca_rcache_gpusm_component = {{
 
     .rcache_init = gpusm_init,
 }};
+MCA_BASE_COMPONENT_INIT(opal, rcache, gpusm)
 
 /**
  * Component open/close/init/register functions.  Most do not do anything,

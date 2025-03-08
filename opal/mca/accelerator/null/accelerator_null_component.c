@@ -134,6 +134,7 @@ opal_accelerator_null_component_t mca_accelerator_null_component = {{
     .accelerator_init = accelerator_null_init,
     .accelerator_finalize = accelerator_null_finalize,
 }};
+MCA_BASE_COMPONENT_INIT(opal, accelerator, null)
 
 opal_accelerator_base_module_t opal_accelerator_null_module =
 {

@@ -107,6 +107,7 @@ opal_memory_patcher_component_t mca_memory_patcher_component = {
     /* Component-specific data, filled in later (compiler will 0/NULL
        it out) */
 };
+MCA_BASE_COMPONENT_INIT(opal, memory, patcher)
 
 #if HAVE_DECL___SYSCALL && defined(HAVE___SYSCALL)
 /* calling __syscall is preferred on some systems when some arguments may be 64-bit. it also

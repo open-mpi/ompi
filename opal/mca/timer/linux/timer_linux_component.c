@@ -76,6 +76,10 @@ const opal_timer_base_component_2_0_0_t mca_timer_linux_component = {
         {/* The component is checkpoint ready */
          MCA_BASE_METADATA_PARAM_CHECKPOINT},
 };
+#ifdef linux
+#    undef linux
+#endif
+MCA_BASE_COMPONENT_INIT(opal, timer, linux)
 
 static char *find_info(FILE *fp, char *str, char *buf, size_t buflen)
 {

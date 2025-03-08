@@ -43,3 +43,4 @@ const opal_backtrace_base_component_2_0_0_t mca_backtrace_none_component = {
         {/* The component is checkpoint ready */
          MCA_BASE_METADATA_PARAM_CHECKPOINT},
 };
+MCA_BASE_COMPONENT_INIT(opal, backtrace, none)

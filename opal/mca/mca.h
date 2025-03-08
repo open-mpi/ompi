@@ -394,4 +394,15 @@ typedef struct mca_base_component_data_2_0_0_t mca_base_component_data_2_0_0_t;
     MCA_BASE_VERSION_2_1_0("opal", OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION, OPAL_RELEASE_VERSION, \
                            type, type_major, type_minor, type_release)
 
+
+#define MCA_BASE_COMPONENT_DECLARE_STAMP(project, framework, component, suffix)                 \
+    mca ## _ ## framework ## _ ## component ## _ ##suffix
+
+#define MCA_BASE_COMPONENT_DECLARE_EXPANDER(project, framework, component, suffix)              \
+    MCA_BASE_COMPONENT_DECLARE_STAMP(project, framework, component, suffix)
+
+#define MCA_BASE_COMPONENT_INIT(project, framework, comp_name)                                  \
+    const mca_base_component_t *MCA_BASE_COMPONENT_DECLARE_EXPANDER(project, framework, comp_name, component_ptr)  =        \
+            (const mca_base_component_t *)&MCA_BASE_COMPONENT_DECLARE_EXPANDER(project, framework, comp_name, component);
+
 #endif /* OPAL_MCA_H */

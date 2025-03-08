@@ -5,9 +5,9 @@
 extern "C" {
 #endif
 
-const mca_base_component_t *mca_hwloc_base_static_components[] = {
-
-    NULL};
+const mca_base_component_t **mca_hwloc_base_static_components[] = {
+    NULL
+};
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

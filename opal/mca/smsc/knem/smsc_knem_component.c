@@ -47,6 +47,7 @@ mca_smsc_knem_component_t mca_smsc_knem_component = {
         .enable = mca_smsc_knem_component_enable,
     },
 };
+MCA_BASE_COMPONENT_INIT(opal, smsc, knem)
 
 static int mca_smsc_knem_component_register(void)
 {

@@ -95,6 +95,7 @@ opal_accelerator_ze_component_t mca_accelerator_ze_component = {{
     .accelerator_init = accelerator_ze_init,
     .accelerator_finalize = accelerator_ze_finalize,
 }};
+MCA_BASE_COMPONENT_INIT(opal, accelerator, ze)
 
 static int accelerator_ze_open(void)
 {

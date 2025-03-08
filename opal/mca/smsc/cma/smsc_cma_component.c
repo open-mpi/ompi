@@ -39,6 +39,7 @@ mca_smsc_component_t mca_smsc_cma_component = {
   .query = mca_smsc_cma_component_query,
   .enable = mca_smsc_cma_component_enable,
 };
+MCA_BASE_COMPONENT_INIT(opal, smsc, cma)
 
 static int mca_smsc_cma_component_register(void)
 {

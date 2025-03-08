@@ -128,6 +128,7 @@ mca_coll_tuned_component_t mca_coll_tuned_component = {
     /* Tuned component specific information */
     NULL /* ompi_coll_alg_rule_t ptr */
 };
+MCA_BASE_COMPONENT_INIT(ompi, coll, tuned)
 
 static int tuned_register(void)
 {

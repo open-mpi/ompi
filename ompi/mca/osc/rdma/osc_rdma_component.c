@@ -110,6 +110,7 @@ ompi_osc_rdma_component_t mca_osc_rdma_component = {
         .osc_finalize = ompi_osc_rdma_component_finalize
     }
 };
+MCA_BASE_COMPONENT_INIT(ompi, osc, rdma)
 
 ompi_osc_base_module_t ompi_osc_rdma_module_rdma_template = {
     .osc_win_attach = ompi_osc_rdma_attach,

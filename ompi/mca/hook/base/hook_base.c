@@ -49,7 +49,7 @@ static int ompi_hook_base_register( mca_base_register_flag_t flags )
 static int ompi_hook_base_open( mca_base_open_flag_t flags )
 {
     int ret;
-    const mca_base_component_t **static_components = ompi_hook_base_framework.framework_static_components;
+    const mca_base_component_t ***static_components = ompi_hook_base_framework.framework_static_components;
     mca_base_component_list_item_t *cli = NULL;
     const mca_base_component_t *component = NULL;
     bool found = false;
@@ -68,7 +68,7 @@ static int ompi_hook_base_open( mca_base_open_flag_t flags )
      */
     if( NULL != static_components ) {
         for (int i = 0 ; NULL != static_components[i]; ++i) {
-            const mca_base_component_t *static_component = static_components[i];
+            const mca_base_component_t *static_component = *(static_components[i]);
             if( static_component->mca_component_flags & MCA_BASE_COMPONENT_FLAG_REQUIRED ) {
                 // Make sure that this component is in the list of components that
                 // were included in the earlier framework_components_open() call.
@@ -183,11 +183,11 @@ MCA_BASE_FRAMEWORK_DECLARE(ompi, hook, "hook hooks",
  */
 #define HOOK_CALL_COMMON_HOOK_NOT_INITIALIZED(fn_name, ...)                             \
     do {                                                                                \
-        const mca_base_component_t **static_components = ompi_hook_base_framework.framework_static_components; \
+        const mca_base_component_t ***static_components = ompi_hook_base_framework.framework_static_components; \
                                                                                         \
         if( NULL != static_components ) {                                               \
             for (int i = 0 ; NULL != static_components[i]; ++i) {                       \
-                const mca_base_component_t *base_component = static_components[i];      \
+                const mca_base_component_t *base_component = *(static_components[i]);   \
                 const ompi_hook_base_component_t *component = (const ompi_hook_base_component_t*)base_component; \
                 if( NULL != component->hookm_ ## fn_name &&                             \
                     ompi_hook_base_ ## fn_name != component->hookm_ ## fn_name ) {      \

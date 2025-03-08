@@ -89,6 +89,7 @@ opal_shmem_posix_component_t mca_shmem_posix_component = {
             .runtime_query = posix_runtime_query,
         },
 };
+MCA_BASE_COMPONENT_INIT(opal, shmem, posix)
 
 /* ////////////////////////////////////////////////////////////////////////// */
 static int posix_register(void)
