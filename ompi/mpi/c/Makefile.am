@@ -19,6 +19,7 @@
 #                         and Technology (RIST).  All rights reserved.
 # Copyright (c) 2021      Amazon.com, Inc. or its affiliates.  All Rights
 #                         reserved.
+# Copyright (c) 2025      Advanced Micro Devices, Inc. All Rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -392,9 +393,15 @@ interface_profile_sources = \
         status_f082f.c \
         status_f2c.c \
         status_f2f08.c \
+        status_get_error.c \
+        status_get_source.c \
+        status_get_tag.c \
         status_set_cancelled.c \
         status_set_elements.c \
         status_set_elements_x.c \
+        status_set_error.c \
+        status_set_source.c \
+        status_set_tag.c \
         testall.c \
         testany.c \
         test.c \
