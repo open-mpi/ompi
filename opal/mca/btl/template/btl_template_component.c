@@ -67,6 +67,7 @@ mca_btl_template_component_t mca_btl_template_component = {
         .btl_init = mca_btl_template_component_init,
         .btl_progress = mca_btl_template_component_progress,
     }};
+MCA_BASE_COMPONENT_INIT(opal, btl, template)
 
 static int mca_btl_template_component_open(void)
 {

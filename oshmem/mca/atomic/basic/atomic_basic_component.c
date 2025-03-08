@@ -66,6 +66,7 @@ mca_atomic_base_component_t mca_atomic_basic_component = {
     .atomic_finalize = mca_atomic_basic_finalize,
     .atomic_query = mca_atomic_basic_query,
 };
+MCA_BASE_COMPONENT_INIT(oshmem, atomic, basic)
 
 static int _basic_register(void)
 {

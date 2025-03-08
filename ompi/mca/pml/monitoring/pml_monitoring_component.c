@@ -206,4 +206,5 @@ mca_pml_base_component_2_1_0_t mca_pml_monitoring_component = {
     .pmlm_init = mca_pml_monitoring_component_init,  /* component init */
     .pmlm_finalize = mca_pml_monitoring_component_finish   /* component finalize */
 };
+MCA_BASE_COMPONENT_INIT(ompi, pml, monitoring)
 

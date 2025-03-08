@@ -74,6 +74,7 @@ mca_coll_adapt_component_t mca_coll_adapt_component = {
     /* default values for non-MCA parameters */
     /* Not specifying values here gives us all 0's */
 };
+MCA_BASE_COMPONENT_INIT(ompi, coll, adapt)
 
 /* Open the component */
 static int adapt_open(void)

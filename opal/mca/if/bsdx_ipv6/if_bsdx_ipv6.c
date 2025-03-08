@@ -75,6 +75,7 @@ opal_if_base_component_t mca_if_bsdx_ipv6_component = {
     {/* This component is checkpointable */
      MCA_BASE_METADATA_PARAM_CHECKPOINT},
 };
+MCA_BASE_COMPONENT_INIT(opal, if, bsdx_ipv6)
 
 /* configure using getifaddrs(3) */
 static int if_bsdx_ipv6_open(void)

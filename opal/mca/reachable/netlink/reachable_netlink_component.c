@@ -65,6 +65,7 @@ opal_reachable_base_component_t mca_reachable_netlink_component = {
     /* Next the MCA v1.0.0 component meta data */
     .base_data = {/* The component is checkpoint ready */
                   MCA_BASE_METADATA_PARAM_CHECKPOINT}};
+MCA_BASE_COMPONENT_INIT(opal, reachable, netlink)
 
 static int reachable_netlink_open(void)
 {

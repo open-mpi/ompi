@@ -65,6 +65,7 @@ const ompi_hook_base_component_1_0_0_t mca_hook_demo_component = {
     .hookm_mpi_finalize_top = ompi_hook_demo_mpi_finalize_top,
     .hookm_mpi_finalize_bottom = ompi_hook_demo_mpi_finalize_bottom,
 };
+MCA_BASE_COMPONENT_INIT(ompi, hook, demo)
 
 /*
  * Example 'extra' component with an additional callback that is dynamically

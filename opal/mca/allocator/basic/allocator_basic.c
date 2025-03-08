@@ -42,6 +42,7 @@ mca_allocator_base_component_t mca_allocator_basic_component = {
     {/* The component is checkpoint ready */
      MCA_BASE_METADATA_PARAM_CHECKPOINT},
     mca_allocator_basic_component_init};
+MCA_BASE_COMPONENT_INIT(opal, allocator, basic)
 
 OBJ_CLASS_INSTANCE(mca_allocator_basic_segment_t, opal_free_list_item_t, NULL, NULL);
 

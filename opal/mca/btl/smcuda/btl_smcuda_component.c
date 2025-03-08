@@ -103,6 +103,7 @@ mca_btl_smcuda_component_t mca_btl_smcuda_component = {
             .btl_progress = mca_btl_smcuda_component_progress,
         } /* end super */
 };
+MCA_BASE_COMPONENT_INIT(opal, btl, smcuda)
 
 /*
  * utility routines for parameter registration

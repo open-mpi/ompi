@@ -64,6 +64,7 @@ mca_coll_hcoll_component_t mca_coll_hcoll_component = {
     0,   /* hcoll_enable */
     NULL /*hcoll version */
 };
+MCA_BASE_COMPONENT_INIT(ompi, coll, hcoll)
 
 
 

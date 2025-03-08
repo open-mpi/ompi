@@ -75,6 +75,7 @@ ompi_op_example_component_t mca_op_example_component = {
        0/false/whatever.  We'll fill them in with meaningful values
        during _component_init_query(). */
 };
+MCA_BASE_COMPONENT_INIT(ompi, op, example)
 
 /*
  * Component open
