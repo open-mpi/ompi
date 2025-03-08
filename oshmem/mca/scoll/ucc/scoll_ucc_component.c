@@ -66,6 +66,7 @@ mca_scoll_ucc_component_t mca_scoll_ucc_component = {
     false,              /* libucc_initialized */
     NULL                /* ucc_context */
 };
+MCA_BASE_COMPONENT_INIT(oshmem, scoll, ucc)
 
 static int ucc_register(void)
 {

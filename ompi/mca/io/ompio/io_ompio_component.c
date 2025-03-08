@@ -130,6 +130,7 @@ mca_io_base_component_3_0_0_t mca_io_ompio_component = {
 
     .io_register_datarep = register_datarep,
 };
+MCA_BASE_COMPONENT_INIT(ompi, io, ompio)
 
 static int register_component(void)
 {

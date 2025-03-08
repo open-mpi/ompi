@@ -81,6 +81,7 @@ const mca_coll_base_component_3_0_0_t mca_coll_self_component = {
     .collm_init_query = mca_coll_self_init_query,
     .collm_comm_query = mca_coll_self_comm_query,
 };
+MCA_BASE_COMPONENT_INIT(ompi, coll, self)
 
 static int self_register(void)
 {

@@ -74,6 +74,7 @@ mca_atomic_base_component_t mca_atomic_ucx_component = {
     mca_atomic_ucx_finalize,
     mca_atomic_ucx_query
 };
+MCA_BASE_COMPONENT_INIT(oshmem, atomic, ucx)
 
 static int ucx_register(void)
 {

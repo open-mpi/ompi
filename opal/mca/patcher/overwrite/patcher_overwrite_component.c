@@ -44,3 +44,4 @@ mca_patcher_base_component_t mca_patcher_overwrite_component = {
             .mca_register_component_params = mca_patcher_overwrite_register,
         },
 };
+MCA_BASE_COMPONENT_INIT(opal, patcher, overwrite)

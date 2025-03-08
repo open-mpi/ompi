@@ -108,6 +108,7 @@ opal_accelerator_cuda_component_t mca_accelerator_cuda_component = {{
     .accelerator_init = accelerator_cuda_init,
     .accelerator_finalize = accelerator_cuda_finalize,
 }};
+MCA_BASE_COMPONENT_INIT(opal, accelerator, cuda)
 
 static int accelerator_cuda_open(void)
 {

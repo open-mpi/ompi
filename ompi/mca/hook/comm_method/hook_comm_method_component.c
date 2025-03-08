@@ -65,6 +65,7 @@ ompi_hook_base_component_1_0_0_t mca_hook_comm_method_component = {
     .hookm_mpi_finalize_top = ompi_hook_comm_method_mpi_finalize_top,
     .hookm_mpi_finalize_bottom = NULL,
 };
+MCA_BASE_COMPONENT_INIT(ompi, hook, comm_method)
 
 enum mca_hook_comm_method_mode_flags_t {
     /* Display on MPI_INIT */

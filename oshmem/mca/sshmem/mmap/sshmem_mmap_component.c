@@ -75,6 +75,7 @@ mca_sshmem_mmap_component_t mca_sshmem_mmap_component = {
         .runtime_query = mmap_runtime_query,
     },
 };
+MCA_BASE_COMPONENT_INIT(oshmem, sshmem, mmap)
 
 /* ////////////////////////////////////////////////////////////////////////// */
 static int

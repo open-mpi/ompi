@@ -49,7 +49,7 @@ static int ompi_hook_base_register( mca_base_register_flag_t flags )
 static int ompi_hook_base_open( mca_base_open_flag_t flags )
 {
     int ret;
-    const mca_base_component_t **static_components = ompi_hook_base_framework.framework_static_components;
+    const mca_base_component_t ***static_components = ompi_hook_base_framework.framework_static_components;
     mca_base_component_list_item_t *cli = NULL;
     mca_base_component_t *component = NULL;
     bool found = false;
@@ -68,13 +68,14 @@ static int ompi_hook_base_open( mca_base_open_flag_t flags )
      */
     if( NULL != static_components ) {
         for (int i = 0 ; NULL != static_components[i]; ++i) {
-            if( static_components[i]->mca_component_flags & MCA_BASE_COMPONENT_FLAG_REQUIRED ) {
+            const mca_base_component_t *static_component = *(static_components[i]);
+            if( static_component->mca_component_flags & MCA_BASE_COMPONENT_FLAG_REQUIRED ) {
                 // Make sure that this component is in the list of components that
                 // were included in the earlier framework_components_open() call.
                 found = false;
                 OPAL_LIST_FOREACH(cli, &ompi_hook_base_framework.framework_components, mca_base_component_list_item_t) {
                     component = (mca_base_component_t*)cli->cli_component;
-                    if( component == static_components[i] ) {
+                    if( component == static_component ) {
                         found = true;
                         break;
                     }
@@ -82,7 +83,7 @@ static int ompi_hook_base_open( mca_base_open_flag_t flags )
                 if( !found ) {
                     opal_show_help("help-mca-hook-base.txt", "hook:missing-required-component", true,
                                    ompi_hook_base_framework.framework_name,
-                                   static_components[i]->mca_component_name);
+                                   static_component->mca_component_name);
                     return OPAL_ERR_NOT_SUPPORTED;
                 }
             }

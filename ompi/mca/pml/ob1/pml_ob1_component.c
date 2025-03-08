@@ -87,6 +87,7 @@ mca_pml_base_component_2_1_0_t mca_pml_ob1_component = {
     .pmlm_init = mca_pml_ob1_component_init,
     .pmlm_finalize = mca_pml_ob1_component_fini,
 };
+MCA_BASE_COMPONENT_INIT(ompi, pml, ob1)
 
 void *mca_pml_ob1_seg_alloc (void *ctx, size_t* size);
 

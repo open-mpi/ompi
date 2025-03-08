@@ -64,6 +64,7 @@ mca_rcache_rgpusm_component_t mca_rcache_rgpusm_component = {
           MCA_BASE_METADATA_PARAM_CHECKPOINT},
 
      .rcache_init = rgpusm_init}};
+MCA_BASE_COMPONENT_INIT(opal, rcache, rgpusm)
 
 /**
  * component open/close/init function

@@ -115,6 +115,7 @@ opal_accelerator_rocm_component_t mca_accelerator_rocm_component = {{
     .accelerator_init = accelerator_rocm_init,
     .accelerator_finalize = accelerator_rocm_finalize,
 }};
+MCA_BASE_COMPONENT_INIT(opal, accelerator, rocm)
 
 static int accelerator_rocm_open(void)
 {

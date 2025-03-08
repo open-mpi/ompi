@@ -82,6 +82,7 @@ const mca_coll_base_component_3_0_0_t mca_coll_inter_component = {
     .collm_init_query = mca_coll_inter_init_query,
     .collm_comm_query = mca_coll_inter_comm_query,
 };
+MCA_BASE_COMPONENT_INIT(ompi, coll, inter)
 
 
 static int inter_register(void)

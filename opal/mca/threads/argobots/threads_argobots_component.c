@@ -48,6 +48,7 @@ const opal_threads_base_component_1_0_0_t mca_threads_argobots_component = {
         {/* The component is checkpoint ready */
          MCA_BASE_METADATA_PARAM_CHECKPOINT},
 };
+MCA_BASE_COMPONENT_INIT(opal, threads, argobots)
 
 int opal_threads_argobots_open(void)
 {

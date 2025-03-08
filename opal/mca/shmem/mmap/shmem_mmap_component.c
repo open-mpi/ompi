@@ -81,6 +81,7 @@ opal_shmem_mmap_component_t mca_shmem_mmap_component = {
             .runtime_query = mmap_runtime_query,
         },
 };
+MCA_BASE_COMPONENT_INIT(opal, shmem, mmap)
 
 /* ////////////////////////////////////////////////////////////////////////// */
 static int mmap_runtime_query(mca_base_module_t **module, int *priority, const char *hint)
