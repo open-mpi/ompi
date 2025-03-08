@@ -272,6 +272,8 @@ intercommunicator can be used immediately).
 ERRORS
 ------
 
+.. include:: ./MPIRUN-ONLY.rst
+
 .. include:: ./ERRORS.rst
 
 .. seealso::
