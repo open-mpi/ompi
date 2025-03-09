@@ -6,7 +6,7 @@ MPI_Status_set_source
 
 .. include_body
 
-:ref:`MPI_Status_set_source` |mdash| Sets the MPI_SOURCE field on *status*.
+:ref:`MPI_Status_set_source` |mdash| Sets the ``MPI_SOURCE`` field on ``status``.
 
 
 SYNTAX
@@ -53,7 +53,7 @@ INPUT/OUTPUT PARAMETER
 
 INPUT PARAMETER
 ---------------
-* ``source``: rank to set in the MPI_SOURCE field (integer).
+* ``source``: rank to set in the ``MPI_SOURCE`` field (integer).
 
 OUTPUT PARAMETER
 ----------------
@@ -62,10 +62,26 @@ OUTPUT PARAMETER
 DESCRIPTION
 -----------
 
-Set the MPI_SOURCE field in the status object to the provided source argument.
+Set the ``MPI_SOURCE`` field in the ``status`` object to the provided
+source argument.
+
+While the ``status`` object members ``MPI_SOURCE``, ``MPI_TAG``, and
+``MPI_ERROR`` are directly accessible in C and Fortran, for
+convenience in other contexts (e.g., when using alternate MPI bindings
+in languages that do not directly translate the ``status`` object),
+users can also access these values via procedure calls such as this
+one.
 
 
 ERRORS
 ------
 
 .. include:: ./ERRORS.rst
+
+
+.. seealso::
+   * :ref:`MPI_Status_get_error`
+   * :ref:`MPI_Status_get_source`
+   * :ref:`MPI_Status_get_tag`
+   * :ref:`MPI_Status_set_error`
+   * :ref:`MPI_Status_set_tag`
