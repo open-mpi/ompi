@@ -59,6 +59,7 @@ OPAL_DECLSPEC extern int opal_initialized;
 OPAL_DECLSPEC extern bool opal_built_with_cuda_support;
 OPAL_DECLSPEC extern bool opal_built_with_rocm_support;
 OPAL_DECLSPEC extern bool opal_built_with_ze_support;
+OPAL_DECLSPEC extern bool opal_async_progress_thread_spawned;
 
 /**
  *  * Whether we want to enable CUDA GPU buffer send and receive support.
