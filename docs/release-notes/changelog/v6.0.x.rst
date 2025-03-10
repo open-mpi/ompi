@@ -10,4 +10,4 @@ Open MPI version v6.0.0
 
 - Open MPI now requires a C11-compliant compiler to build.
 - Removed ROMIO package.
-
+- Added MPI-4.1 ``MPI_Status_*`` functions.
