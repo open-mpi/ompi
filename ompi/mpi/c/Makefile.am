@@ -388,9 +388,15 @@ prototype_sources = \
 	status_f082f.c.in \
 	status_f2c.c.in \
 	status_f2f08.c.in \
+        status_get_error.c.in \
+        status_get_source.c.in \
+        status_get_tag.c.in \
 	status_set_cancelled.c.in \
 	status_set_elements.c.in \
 	status_set_elements_x.c.in \
+        status_set_error.c.in \
+        status_set_source.c.in \
+        status_set_tag.c.in \
 	testall.c.in \
 	testany.c.in \
 	test.c.in \
@@ -820,9 +826,15 @@ interface_profile_sources = \
         generated_status_f082f.c \
         generated_status_f2c.c \
         generated_status_f2f08.c \
+        generated_status_get_error.c \
+        generated_status_get_source.c \
+        generated_status_get_tag.c \
         generated_status_set_cancelled.c \
         generated_status_set_elements.c \
         generated_status_set_elements_x.c \
+        generated_status_set_error.c \
+        generated_status_set_source.c \
+        generated_status_set_tag.c \
         generated_testall.c \
         generated_testany.c \
         generated_test.c \
