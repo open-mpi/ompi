@@ -1,5 +1,8 @@
 /*
  * Copyright (c) 2025      Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (c) 2025      Triad National Security, LLC. All rights
+ *                         reserved.
+ *
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -15,17 +18,7 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/memchecker.h"
 
-#if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Status_set_source = PMPI_Status_set_source
-#endif
-#define MPI_Status_set_source PMPI_Status_set_source
-#endif
-
-static const char FUNC_NAME[] = "MPI_Status_set_source";
-
-
-int MPI_Status_set_source(MPI_Status *status, int source)
+PROTOTYPE ERROR_CLASS status_set_tag(STATUS_OUT status, INT tag)
 {
     MEMCHECKER(
         if(status != MPI_STATUSES_IGNORE) {
@@ -49,6 +42,6 @@ int MPI_Status_set_source(MPI_Status *status, int source)
         OMPI_ERRHANDLER_NOHANDLE_CHECK(rc, rc, FUNC_NAME);
     }
 
-    status->MPI_SOURCE = source;
+    status->MPI_TAG = tag;
     return MPI_SUCCESS;
 }
