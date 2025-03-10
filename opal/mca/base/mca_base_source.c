@@ -160,10 +160,12 @@ int mca_base_source_get_count (int *count)
     return OPAL_SUCCESS;
 }
 
+/* This function should be under mca_base_source_lock. */
+/* Due to this being called only from mca_base_source_register() currently, */
+/* and that is under such lock, there aren't any locks here. */
+/* This should be considered if this needs to be called from somewhere else. */
 static inline int mca_base_source_get_by_name (const char *name, mca_base_source_t **source_out)
 {
-    OPAL_THREAD_LOCK(&mca_base_source_lock);
-
     /* there are expected to be a relatively small number of sources so a linear search should be fine */
     for (int i = 0 ; i < source_count ; ++i) {
         mca_base_source_t *source = opal_pointer_array_get_item (&registered_sources, i);
@@ -172,12 +174,10 @@ static inline int mca_base_source_get_by_name (const char *name, mca_base_source
                 *source_out = source;
             }
 
-            OPAL_THREAD_UNLOCK(&mca_base_source_lock);
             return OPAL_SUCCESS;
         }
     }
 
-    OPAL_THREAD_UNLOCK(&mca_base_source_lock);
     return OPAL_ERR_NOT_FOUND;
 }
 
