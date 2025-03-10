@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2025      Amazon.com, Inc. or its affiliates.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,7 +29,7 @@
 
 BEGIN_C_DECLS
 
-int ompi_coll_tuned_read_rules_config_file (char *fname, ompi_coll_alg_rule_t** rules, int n_collectives);
+int ompi_coll_tuned_read_rules_config_file (char *fname, ompi_coll_alg_rule_t** rules);
 
 
 END_C_DECLS
