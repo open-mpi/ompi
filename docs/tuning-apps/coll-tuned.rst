@@ -92,14 +92,77 @@ after.
 .. code-block:: sh
 
    shell$ mpirun ... --mca coll_tuned_use_dynamic_rules 1 \
-                     --mca coll_tuned_dynamic_rules_filename /path/to/my_rules.conf ...
+                     --mca coll_tuned_dynamic_rules_filename /path/to/my_rules.json ...
 
 The loaded set of rules then are used to select the algorithm
 to use based on the collective, the communicator size, and the message size.
 Collectives for which rules have not be specified in the file will make use of
 the *fixed decision* rules as usual.
 
-Dynamic tuning files are organized in this format:
+Starting with Open MPI 6.0, dynamic tuning files can be specified in JSON
+format, although the classic format will still be accepted.  A converter script
+is also available to transfer classic format files into JSON.
+
+The JSON format can be checked using the schema in
+`docs/tuning-apps/tuned_dynamic_file_schema.json`.  If your editor supports it,
+this schema may provide validation of your file along with helpful tooltips for
+each variable.
+
+An example file is shown here:
+
+.. code-block:: json
+
+    {
+        "$schema": "tuned_schema.json",
+        "rule_file_version" : 3,
+        "module" : "tuned",
+        "collectives" : {
+            "allreduce" :
+            [
+                {
+                    "comm_size_min" : 64,
+                    "comm_size_max" : 128,
+                    "rules" : [
+                        {
+                            "msg_size_min" : 512,
+                            "msg_size_max" : 511999,
+                            "alg" : 2,
+                        },
+                        {
+                            "msg_size_min" : 512000,
+                            "msg_size_max" : "inf",
+                            "alg" : "recursive_doubling",
+                            "reqs" : 8
+                        }
+                    ]
+                }
+            ]
+        }
+    }
+
+In this toy example the MPI_Allreduce collective (indicated by the `allreduce`
+field) has two algorithms that will only be used on communicators with between
+64 and 128 ranks.  Additionally, those rules only apply to certain message
+sizes.  All others communicator sizes or message sizes fall back to the default
+set of rules, and collectives other than MPI_Allreduce are not affected.
+
+Unlike in the classic file format, there is no need to specify a default rule or
+specify rules in increasing order.  Overlapping message sizes or communicator
+sizes are allowed, and won't emit warnings.
+
+The process for selecting the matching rule is a simple first-match principle.
+During communicator creation, the first set of communicator-rules which
+satisfies the requirements (`comm_size_min`/`comm_size_max`) is selected. Then,
+during each collective call, the message size is used to find the first matching
+entry in the "rules" list.
+
+The algorithm selected is indicated by the `alg` field.  It may be either an
+integer mapping to the classic file format, or a string.  In both cases, the
+value is checked against the appropriate coll_tuned_<collectived>_algorithm MCA
+parameter, and un-recognized values will cause the rule to be ignored.
+
+
+Classic file format:
 
 .. code-block:: sh
    :linenos:

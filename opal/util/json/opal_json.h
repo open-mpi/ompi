@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024      Amazon.com, Inc. or its affiliates.
+ * Copyright (c) 2024-2025 Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
  * $COPYRIGHT$
  *
@@ -21,7 +21,7 @@ const opal_json_t *json = NULL, *item = NULL;
 char *val;
 size_t len;
 
-ret = opal_json_load_file("my_file.json", &json); // Parse the file content into json
+ret = opal_json_load_file("my_file.json", &json, 1); // Parse the file content into json
 if (OPAL_SUCCESS != ret) {
      goto out;
 }
@@ -88,7 +88,7 @@ OPAL_DECLSPEC int opal_json_load(const char *str, const size_t len, const opal_j
  * @returns     OPAL_SUCCESS if the file is read and parsed successfully
  *              OPAL_ERROR otherwise
  */
-OPAL_DECLSPEC int opal_json_load_file(const char *filename, const opal_json_t **json);
+OPAL_DECLSPEC int opal_json_load_file(const char *filename, const opal_json_t **json, int show_errors);
 
 /**
  * Free JSON resources
@@ -122,6 +122,22 @@ OPAL_DECLSPEC int opal_json_get_key(const opal_json_t *json, const char *key,
  */
 OPAL_DECLSPEC int opal_json_get_index(const opal_json_t *json, const size_t index,
                                       const opal_json_t **out);
+
+/**
+ * Get the JSON object and key at index from a JSON object
+ *
+ * @param[in]   json    Parent JSON array
+ * @param[in]   index   Index value
+ * @param[out]  key     The name of the key at the given index. This pointer
+ *                      remains valid for the lifetime of the parent JSON
+ *                      object.  The caller should not free it.
+ * @param[out]  out     Output JSON object at the specified index. This object
+ *                      should be freed by caller with opal_json_free.
+ */
+OPAL_DECLSPEC int
+opal_json_get_key_by_index( const opal_json_t *json, const size_t index,
+                            const char **key, const opal_json_t **out);
+
 
 /**
  * Get the number of objects in a container-type value, i.e. object, array.
