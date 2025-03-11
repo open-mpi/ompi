@@ -65,9 +65,9 @@ The function returns an MPI datatype matching a local variable of type
 (*typeclass*, *size*). The returned type is a reference (handle) to a
 predefined named datatype, not a duplicate. This type cannot be freed.
 
-The value of *typeclass* may be set to one of MPI_TYPECLASS_REAL,
-MPI_TYPECLASS_INTEGER, or MPI_TYPECLASS_COMPLEX, corresponding to the
-desired datatype.
+The value of *typeclass* may be set to one of MPI_TYPECLASS_LOGICAL,
+MPI_TYPECLASS_INTEGER, MPI_TYPECLASS_REAL, or MPI_TYPECLASS_COMPLEX,
+corresponding to the desired datatype.
 
 MPI_type_match_size can be used to obtain a size-specific type that
 matches a Fortran numeric intrinsic type: first call :ref:`MPI_Sizeof` to
