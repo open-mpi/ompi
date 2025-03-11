@@ -69,6 +69,8 @@
 #include "ompi/mca/bml/base/base.h"
 #include "ompi/mca/mtl/base/base.h"
 
+static int ompi_osc_rdma_shared_query(struct ompi_win_t *win, int rank, size_t *size,
+                               ptrdiff_t *disp_unit, void *baseptr);
 static int ompi_osc_rdma_component_register (void);
 static int ompi_osc_rdma_component_init (bool enable_progress_threads, bool enable_mpi_threads);
 static int ompi_osc_rdma_component_finalize (void);
@@ -113,6 +115,7 @@ ompi_osc_rdma_component_t mca_osc_rdma_component = {
 MCA_BASE_COMPONENT_INIT(ompi, osc, rdma)
 
 ompi_osc_base_module_t ompi_osc_rdma_module_rdma_template = {
+    .osc_win_shared_query = ompi_osc_rdma_shared_query,
     .osc_win_attach = ompi_osc_rdma_attach,
     .osc_win_detach  = ompi_osc_rdma_detach,
     .osc_free = ompi_osc_rdma_free,
@@ -898,7 +901,7 @@ static void ompi_osc_rdma_ensure_local_add_procs (void)
             /* this will cause add_proc to get called if it has not already been called */
             (void) mca_bml_base_get_endpoint (proc);
         }
-    } 
+    }
 
     free(procs);
 }
@@ -1631,4 +1634,59 @@ ompi_osc_rdma_set_no_lock_info(opal_infosubscriber_t *obj, const char *key, cons
      * Accept any value
      */
     return module->no_locks ? "true" : "false";
+}
+
+int ompi_osc_rdma_shared_query(
+    struct ompi_win_t *win, int rank, size_t *size,
+    ptrdiff_t *disp_unit, void *baseptr)
+{
+    ompi_osc_rdma_peer_t *peer;
+    int actual_rank = rank;
+    ompi_osc_rdma_module_t *module = GET_MODULE(win);
+
+    peer = ompi_osc_rdma_module_peer (module, actual_rank);
+    if (NULL == peer) {
+        return OMPI_ERR_BAD_PARAM;
+    }
+
+    /* currently only supported for allocated windows */
+    if (MPI_WIN_FLAVOR_ALLOCATE != module->flavor) {
+        return OMPI_ERR_NOT_SUPPORTED;
+    }
+
+    if (!ompi_osc_rdma_peer_local_base(peer)) {
+        return OMPI_ERR_NOT_SUPPORTED;
+    }
+
+    if (MPI_PROC_NULL == rank) {
+        /* iterate until we find a rank that has a non-zero size */
+        for (int i = 0 ; i < ompi_comm_size(module->comm) ; ++i) {
+            peer = ompi_osc_rdma_module_peer (module, i);
+            ompi_osc_rdma_peer_extended_t *ex_peer = (ompi_osc_rdma_peer_extended_t *) peer;
+            if (!ompi_osc_rdma_peer_local_base(peer)) {
+                continue;
+            } else if (module->same_size && ex_peer->super.base) {
+                break;
+            } else if (ex_peer->size > 0) {
+                break;
+            }
+        }
+    }
+
+    if (module->same_size && module->same_disp_unit) {
+        *size = module->size;
+        *disp_unit = module->disp_unit;
+        ompi_osc_rdma_peer_basic_t *ex_peer = (ompi_osc_rdma_peer_basic_t *) peer;
+        *((void**) baseptr) = (void *) (intptr_t)ex_peer->base;
+    } else {
+        ompi_osc_rdma_peer_extended_t *ex_peer = (ompi_osc_rdma_peer_extended_t *) peer;
+        if (ex_peer->super.base != 0) {
+            /* we know the base of the peer */
+            *((void**) baseptr) = (void *) (intptr_t)ex_peer->super.base;
+            *size = ex_peer->size;
+            *disp_unit = ex_peer->disp_unit;
+            return OMPI_SUCCESS;
+        }
+    }
+    return OMPI_ERR_NOT_SUPPORTED;
 }
