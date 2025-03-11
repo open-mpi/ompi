@@ -15,6 +15,7 @@
  * Copyright (c) 2020      FUJITSU LIMITED.  All rights reserved.
  * Copyright (c) 2020      High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
+ * Copyright (c) 2025      Stony Brook University.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -283,12 +284,12 @@ component_select(struct ompi_win_t *win, void **base, size_t size, ptrdiff_t dis
         if (module->noncontig) {
             opal_output_verbose(MCA_BASE_VERBOSE_DEBUG, ompi_osc_base_framework.framework_output,
                                 "allocating window using non-contiguous strategy");
-            total = ((size - 1) / pagesize + 1) * pagesize;
         } else {
             opal_output_verbose(MCA_BASE_VERBOSE_DEBUG, ompi_osc_base_framework.framework_output,
                                 "allocating window using contiguous strategy");
-            total = size;
         }
+
+        total = size;
         ret = module->comm->c_coll->coll_allgather(&total, 1, MPI_UNSIGNED_LONG,
                                                   rbuf, 1, MPI_UNSIGNED_LONG,
                                                   module->comm,
@@ -301,6 +302,9 @@ component_select(struct ompi_win_t *win, void **base, size_t size, ptrdiff_t dis
         total = 0;
         for (i = 0 ; i < comm_size ; ++i) {
             total += rbuf[i];
+            if (module->noncontig) {
+                total += OPAL_ALIGN_PAD_AMOUNT(total, pagesize);
+            }
         }
 
         /* user opal/shmem directly to create a shared memory segment */
@@ -378,6 +382,9 @@ component_select(struct ompi_win_t *win, void **base, size_t size, ptrdiff_t dis
             if (module->sizes[i] || !module->noncontig) {
                 module->bases[i] = ((char *) module->segment_base) + total;
                 total += rbuf[i];
+                if (module->noncontig) {
+                    total += OPAL_ALIGN_PAD_AMOUNT(total, pagesize);
+                }
             } else {
                 module->bases[i] = NULL;
             }
@@ -480,10 +487,6 @@ ompi_osc_sm_shared_query(struct ompi_win_t *win, int rank, size_t *size, ptrdiff
 {
     ompi_osc_sm_module_t *module =
         (ompi_osc_sm_module_t*) win->w_osc_module;
-
-    if (module->flavor != MPI_WIN_FLAVOR_SHARED) {
-        return MPI_ERR_WIN;
-    }
 
     if (MPI_PROC_NULL != rank) {
         *size = module->sizes[rank];

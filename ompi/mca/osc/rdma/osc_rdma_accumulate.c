@@ -13,6 +13,7 @@
  * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
  * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
+ * Copyright (c) 2025      Stony Brook University.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -990,7 +991,7 @@ int ompi_osc_rdma_compare_and_swap (const void *origin_addr, const void *compare
      * OR if we have an exclusive lock
      * OR if other processes won't try to use the network either */
     bool use_shared_mem = module->single_node ||
-                          (ompi_osc_rdma_peer_local_base (peer) &&
+                          (ompi_osc_rdma_peer_cpu_atomics (peer) &&
                               (ompi_osc_rdma_peer_is_exclusive (peer) ||
                                   !module->acc_single_intrinsic));
 
@@ -1013,7 +1014,7 @@ int ompi_osc_rdma_compare_and_swap (const void *origin_addr, const void *compare
         lock_acquired = true;
     }
 
-    if (ompi_osc_rdma_peer_local_base (peer)) {
+    if (ompi_osc_rdma_peer_cpu_atomics (peer)) {
         ret = ompi_osc_rdma_cas_local (origin_addr, compare_addr, result_addr, dt,
                                        peer, target_address, target_handle, module,
                                        lock_acquired);
@@ -1095,7 +1096,7 @@ int ompi_osc_rdma_rget_accumulate_internal (ompi_win_t *win, const void *origin_
         (void) ompi_osc_rdma_lock_acquire_exclusive (module, peer, offsetof (ompi_osc_rdma_state_t, accumulate_lock));
     }
 
-    if (ompi_osc_rdma_peer_local_base (peer)) {
+    if (ompi_osc_rdma_peer_cpu_atomics (peer)) {
         /* local/self optimization */
         ret = ompi_osc_rdma_gacc_local (origin_addr, origin_count, origin_datatype, result_addr, result_count,
                                         result_datatype, peer, target_address, target_handle, target_count,
