@@ -270,6 +270,10 @@ void mca_smsc_xpmem_return_endpoint(mca_smsc_endpoint_t *endpoint)
     OBJ_RELEASE(endpoint);
 }
 
+size_t mca_smsc_xpmem_get_endpoint_size() {
+    return sizeof(mca_smsc_xpmem_endpoint_t);
+}
+
 /* memcpy is faster at larger sizes but is undefined if the
    pointers are aliased (TODO -- read alias check) */
 static inline void mca_smsc_xpmem_memmove(void *dst, void *src, size_t size)
@@ -331,6 +335,7 @@ mca_smsc_xpmem_module_t mca_smsc_xpmem_module = {
         .features = MCA_SMSC_FEATURE_CAN_MAP,
         .get_endpoint = mca_smsc_xpmem_get_endpoint,
         .return_endpoint = mca_smsc_xpmem_return_endpoint,
+        .get_endpoint_size = mca_smsc_xpmem_get_endpoint_size,
         .copy_to = mca_smsc_xpmem_copy_to,
         .copy_from = mca_smsc_xpmem_copy_from,
         .map_peer_region = mca_smsc_xpmem_map_peer_region,
