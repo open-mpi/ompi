@@ -598,6 +598,9 @@ int ompi_osc_ucx_get(void *origin_addr, int origin_count,
 static inline bool ompi_osc_need_acc_lock(ompi_osc_ucx_module_t *module, int target)
 {
     ompi_osc_ucx_lock_t *lock = NULL;
+    if (module->no_locks) {
+        return true; // if we have no locks we always need to acquire the accumulate lock
+    }
     opal_hash_table_get_value_uint32(&module->outstanding_locks,
                                      (uint32_t) target, (void **) &lock);
 
