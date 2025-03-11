@@ -28,6 +28,7 @@
 #include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/pml/pml.h"
+#include "ompi/mca/part/part.h"
 #include "ompi/request/request.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/memchecker.h"
@@ -77,7 +78,6 @@ int MPI_Start(MPI_Request *request)
     switch((*request)->req_type) {
     case OMPI_REQUEST_PML:
     case OMPI_REQUEST_COLL:
-    case OMPI_REQUEST_PART:
         if ( MPI_PARAM_CHECK && !((*request)->req_persistent &&
                                   OMPI_REQUEST_INACTIVE == (*request)->req_state)) {
             return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_REQUEST, FUNC_NAME);
@@ -86,6 +86,18 @@ int MPI_Start(MPI_Request *request)
         ret = (*request)->req_start(1, request);
 
         OMPI_ERRHANDLER_NOHANDLE_RETURN(ret, ret, FUNC_NAME);
+
+
+    case OMPI_REQUEST_PART:
+        if ( MPI_PARAM_CHECK && !((*request)->req_persistent &&
+                                  OMPI_REQUEST_INACTIVE == (*request)->req_state)) {
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_REQUEST, FUNC_NAME);
+        }
+
+        ret = mca_part.part_start(1, request);
+
+        OMPI_ERRHANDLER_NOHANDLE_RETURN(ret, ret, FUNC_NAME);
+
 
     case OMPI_REQUEST_NOOP:
         /**
