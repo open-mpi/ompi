@@ -101,7 +101,7 @@ AC_DEFUN([_OMPI_SETUP_JAVA],[
            if test "$ompi_java_found" = "0"; then
                # Various Linux
                if test -z "$JAVA_HOME"; then
-                   ompi_java_dir='/usr/lib/jvm/java-*-openjdk-*/include/'
+                   ompi_java_dir='/usr/lib/jvm/java-*-openjdk*/include/'
                else
                    ompi_java_dir=$JAVA_HOME/include
                fi
