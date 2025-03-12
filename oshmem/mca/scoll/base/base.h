@@ -52,7 +52,7 @@ OSHMEM_DECLSPEC extern mca_base_framework_t oshmem_scoll_base_framework;
 #define __SCOLL_FILE__ __FILE__
 #endif
 
-#ifdef OPAL_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
 #define SCOLL_VERBOSE(level, ...) \
     oshmem_output_verbose(level, oshmem_scoll_base_framework.framework_output, \
        "%s:%d - %s()", __SCOLL_FILE__, __LINE__, __func__, __VA_ARGS__)

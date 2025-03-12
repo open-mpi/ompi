@@ -18,7 +18,7 @@
 #define __MPI_FILE__ __FILE__
 #endif
 
-#ifdef OPAL_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
 #define MPI_COLL_VERBOSE(level, ...) \
     oshmem_output_verbose(level, mca_scoll_mpi_output, "%s:%d - %s() ", \
                         __MPI_FILE__, __LINE__, __FUNCTION__, __VA_ARGS__)

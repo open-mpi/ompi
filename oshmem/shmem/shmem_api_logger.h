@@ -27,7 +27,7 @@ OSHMEM_DECLSPEC extern int shmem_api_logger_output;
 #define __SPML_FILE__ __FILE__
 #endif
 
-#ifdef OPAL_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
 #define SHMEM_API_VERBOSE(level, ...) \
     oshmem_output_verbose(level, shmem_api_logger_output, \
         "%s:%d - %s()", __SPML_FILE__, __LINE__, __func__, __VA_ARGS__)
