@@ -53,6 +53,8 @@
 ! WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+@OMPI_FORTRAN_DEPRECATE_MPIF_H@
+
       include 'mpif-config.h'
       include 'mpif-constants.h'
       include 'mpif-handles.h'
