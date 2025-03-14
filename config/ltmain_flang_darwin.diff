@@ -1,0 +1,59 @@
+--- config/ltmain.sh
++++ config/ltmain.sh
+@@ -8338,7 +8338,7 @@
+ 	    esac
+ 	  done
+ 	fi
+-	dependency_libs=`$ECHO " $dependency_libs" | $SED 's% \([^ $]*\).ltframework% -framework \1%g'`
++	dependency_libs=`$ECHO " $dependency_libs" | $SED 's% \([^ $]*\).ltframework% -Wl,-framework,\1%g'`
+ 	if test lib,link = "$linkmode,$pass" ||
+ 	   test prog,scan = "$linkmode,$pass" ||
+ 	   { test prog != "$linkmode" && test lib != "$linkmode"; }; then
+@@ -9023,7 +9023,7 @@
+ 	  compile_deplibs="$new_inherited_linker_flags $compile_deplibs"
+ 	  finalize_deplibs="$new_inherited_linker_flags $finalize_deplibs"
+ 	else
+-	  compiler_flags="$compiler_flags "`$ECHO " $new_inherited_linker_flags" | $SED 's% \([^ $]*\).ltframework% -framework \1%g'`
++	  compiler_flags="$compiler_flags "`$ECHO " $new_inherited_linker_flags" | $SED 's% \([^ $]*\).ltframework% -Wl,-framework,\1%g'`
+ 	fi
+       fi
+       dependency_libs=$newdependency_libs
+@@ -9367,7 +9367,7 @@
+           # On Darwin other compilers
+           func_cc_basename $CC
+           case $func_cc_basename_result in
+-              nagfor*)
++              flang*|nagfor*)
+                   verstring="$wl-compatibility_version $wl$minor_current $wl-current_version $wl$minor_current.$revision"
+                   ;;
+               *)
+@@ -9864,12 +9864,12 @@
+ 	# Done checking deplibs!
+ 	deplibs=$newdeplibs
+       fi
+-      # Time to change all our "foo.ltframework" stuff back to "-framework foo"
++      # Time to change all our "foo.ltframework" stuff back to "-Wl,-framework,foo"
+       case $host in
+ 	*-*-darwin*)
+-	  newdeplibs=`$ECHO " $newdeplibs" | $SED 's% \([^ $]*\).ltframework% -framework \1%g'`
+-	  new_inherited_linker_flags=`$ECHO " $new_inherited_linker_flags" | $SED 's% \([^ $]*\).ltframework% -framework \1%g'`
+-	  deplibs=`$ECHO " $deplibs" | $SED 's% \([^ $]*\).ltframework% -framework \1%g'`
++	  newdeplibs=`$ECHO " $newdeplibs" | $SED 's% \([^ $]*\).ltframework% -Wl,-framework,\1%g'`
++	  new_inherited_linker_flags=`$ECHO " $new_inherited_linker_flags" | $SED 's% \([^ $]*\).ltframework% -Wl,-framework,\1%g'`
++	  deplibs=`$ECHO " $deplibs" | $SED 's% \([^ $]*\).ltframework% -Wl,-framework,\1%g'`
+ 	  ;;
+       esac
+ 
+@@ -10598,9 +10598,9 @@
+ 	    ;;
+ 	  esac
+ 	fi
+-	# Time to change all our "foo.ltframework" stuff back to "-framework foo"
+-	compile_deplibs=`$ECHO " $compile_deplibs" | $SED 's% \([^ $]*\).ltframework% -framework \1%g'`
+-	finalize_deplibs=`$ECHO " $finalize_deplibs" | $SED 's% \([^ $]*\).ltframework% -framework \1%g'`
++	# Time to change all our "foo.ltframework" stuff back to "-Wl,-framework,foo"
++	compile_deplibs=`$ECHO " $compile_deplibs" | $SED 's% \([^ $]*\).ltframework% -Wl,-framework,\1%g'`
++	finalize_deplibs=`$ECHO " $finalize_deplibs" | $SED 's% \([^ $]*\).ltframework% -Wl,-framework,\1%g'`
+ 	;;
+       esac
+ 
