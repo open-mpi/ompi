@@ -2,7 +2,7 @@
 # Copyright (c) 2008-2022 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
 # Copyright (c) 2020      Intel, Inc.  All rights reserved.
-# Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
+# Copyright (c) 2023-2025 Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -42,3 +42,5 @@ ompi__v_SPHINX_HTML_0 = @echo "  GENERATE HTML docs";
 OMPI_V_SPHINX_MAN = $(ompi__v_SPHINX_MAN_$V)
 ompi__v_SPHINX_MAN_ = $(ompi__v_SPHINX_MAN_$AM_DEFAULT_VERBOSITY)
 ompi__v_SPHINX_MAN_0 = @echo "  GENERATE man pages";
+
+OMPI_HELP_GEN = $(OMPI_V_GEN) $(top_srcdir)/config/ini-to-c.py

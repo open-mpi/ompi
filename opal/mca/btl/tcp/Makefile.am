@@ -13,6 +13,7 @@
 # Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
 # Copyright (c) 2017      IBM Corporation.  All rights reserved.
 # Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+# Copyright (c) 2025      Jeffrey M. Squyres.  All Rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -20,9 +21,22 @@
 # $HEADER$
 #
 
-dist_opaldata_DATA = help-mpi-btl-tcp.txt
+include $(top_srcdir)/Makefile.ompi-rules
+
+EXTRA_DIST = $(HELP_INI)
+
+HELP_INI       = help-mpi-btl-tcp.txt
+HELP_PREFIX    = btl_tcp_help
+GENERATED_HELP = $(HELP_PREFIX).h $(HELP_PREFIX).c
+
+$(GENERATED_HELP): $(HELP_INI)
+	$(OMPI_HELP_GEN) \
+	        --in $(abs_srcdir)/$(HELP_INI) \
+	        --out $(HELP_PREFIX) \
+	        --prefix $(HELP_PREFIX)_
 
 sources = \
+    $(GENERATED_HELP) \
     btl_tcp.c \
     btl_tcp.h \
     btl_tcp_addr.h \
@@ -59,3 +73,5 @@ mca_btl_tcp_la_LDFLAGS = -module -avoid-version
 noinst_LTLIBRARIES = $(lib)
 libmca_btl_tcp_la_SOURCES = $(lib_sources)
 libmca_btl_tcp_la_LDFLAGS = -module -avoid-version
+
+MAINTAINERCLEANFILES = $(GENERATED_HELP)

@@ -13,6 +13,7 @@
  * Copyright (c) 2008-2018 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2018      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2025      Jeffrey M. Squyres.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -152,6 +153,22 @@ OPAL_DECLSPEC char *opal_show_help_string(const char *filename, const char *topi
  */
 OPAL_DECLSPEC char *opal_show_help_vstring(const char *filename, const char *topic,
                                            int want_error_header, va_list ap);
+
+/**
+ * This is a placeholder/demo function that will eventually replace
+ * opal_show_help and friends (when we no longer load show_help
+ * content from text files).
+ *
+ * NOTE: The function name here is just a placeholder, chosen
+ * specifically to have the same number of characters as
+ * opal_show_help in an attempt to make the proposal diff as small as
+ * possible (by not incurring whitespace indenting changes for
+ * multi-line existing calls to opal_show_help()).
+ */
+OPAL_DECLSPEC int opal_showhelp2(const char *unique_topic,
+                                 const char *format,
+                                 int want_error_header,
+                                 ...);
 
 /**
  * This function adds another search location for the files that

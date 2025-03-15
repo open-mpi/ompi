@@ -316,6 +316,10 @@ opal/tools/wrappers/opal.pc
 opal/util/show_help_lex.c
 opal/util/keyval/keyval_lex.c
 
+# In general, these files are generated
+*_help.c
+*_help.h
+
 test/monitoring/aggregate_profile.pl
 test/monitoring/profile2mat.pl
 

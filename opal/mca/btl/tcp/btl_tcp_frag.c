@@ -16,6 +16,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2020      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -51,6 +52,7 @@
 #include "btl_tcp_endpoint.h"
 #include "btl_tcp_frag.h"
 #include "btl_tcp_proc.h"
+#include "btl_tcp_help.h"
 
 static void mca_btl_tcp_frag_eager_constructor(mca_btl_tcp_frag_t *frag)
 {
@@ -237,7 +239,9 @@ repeat:
         case ECONNRESET:
             if (mca_btl_base_warn_peer_error || mca_btl_base_verbose > 0) {
                 errhost = opal_get_proc_hostname(btl_endpoint->endpoint_proc->proc_opal);
-                opal_show_help("help-mpi-btl-tcp.txt", "peer hung up", true,
+                opal_showhelp2("btl_tcp:peer hung up",
+                               btl_tcp_help_peer_hung_up,
+                               true,
                                opal_process_info.nodename, getpid(), errhost);
                 free(errhost);
             }

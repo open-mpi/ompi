@@ -16,6 +16,7 @@
 # Copyright (c) 2016      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+# Copyright (c) 2025      Jeffrey M. Squyres.  All Rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -46,7 +47,8 @@ EXTRA_DIST = \
         getdate.sh \
         from-savannah/upstream-config.guess \
         from-savannah/upstream-config.sub \
-        extract-3rd-party-configure.pl
+        extract-3rd-party-configure.pl \
+        ini-to-c.py
 
 maintainer-clean-local:
 	rm -f opal_get_version.sh

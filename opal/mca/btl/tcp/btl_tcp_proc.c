@@ -21,6 +21,7 @@
  *                         reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
+ * Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -53,6 +54,7 @@
 
 #include "btl_tcp.h"
 #include "btl_tcp_proc.h"
+#include "btl_tcp_help.h"
 
 static void mca_btl_tcp_proc_construct(mca_btl_tcp_proc_t *proc);
 static void mca_btl_tcp_proc_destruct(mca_btl_tcp_proc_t *proc);
@@ -680,7 +682,9 @@ void mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t *btl_proc, struct sockaddr *addr
             addr_str = tmp;
         }
         tmp = opal_get_proc_hostname(btl_proc->proc_opal);
-        opal_show_help("help-mpi-btl-tcp.txt", "dropped inbound connection", true,
+        opal_showhelp2("btl_tcp:dropped inbound connection",
+                       btl_tcp_help_dropped_inbound_connection,
+                       true,
                        opal_process_info.nodename, getpid(), tmp,
                        OPAL_NAME_PRINT(btl_proc->proc_opal->proc_name),
                        opal_net_get_hostname((struct sockaddr *) addr),

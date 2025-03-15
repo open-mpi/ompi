@@ -17,6 +17,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018-2020 Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2020      Google, LLC. All rights reserved.
+ * Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -66,6 +67,7 @@
 #include "btl_tcp_endpoint.h"
 #include "btl_tcp_frag.h"
 #include "btl_tcp_proc.h"
+#include "btl_tcp_help.h"
 
 /*
  * Magic ID string send during connect/accept handshake
@@ -428,7 +430,9 @@ static int mca_btl_tcp_endpoint_send_connect_ack(mca_btl_base_endpoint_t *btl_en
 
     if (sizeof(hs_msg)
         != mca_btl_tcp_endpoint_send_blocking(btl_endpoint, &hs_msg, sizeof(hs_msg))) {
-        opal_show_help("help-mpi-btl-tcp.txt", "client handshake fail", true,
+        opal_showhelp2("btl_tcp:client handshake fail",
+                       btl_tcp_help_client_handshake_fail,
+                       true,
                        opal_process_info.nodename, sizeof(hs_msg),
                        "connect ACK failed to send magic-id and guid");
         return OPAL_ERR_UNREACH;
@@ -645,13 +649,17 @@ static int mca_btl_tcp_endpoint_recv_connect_ack(mca_btl_base_endpoint_t *btl_en
                upstream. */
             return OPAL_ERROR;
         }
-        opal_show_help("help-mpi-btl-tcp.txt", "client handshake fail", true,
+        opal_showhelp2("btl_tcp:client handshake fail",
+                       btl_tcp_help_client_handshake_fail,
+                       true,
                        opal_process_info.nodename, getpid(),
                        "did not receive entire connect ACK from peer");
         return OPAL_ERR_BAD_PARAM;
     }
     if (0 != strncmp(hs_msg.magic_id, mca_btl_tcp_magic_id_string, len)) {
-        opal_show_help("help-mpi-btl-tcp.txt", "server did not receive magic string", true,
+        opal_showhelp2("btl_tcp:server did not receive magic string",
+                       btl_tcp_help_server_did_not_receive_magic_string,
+                       true,
                        opal_process_info.nodename, getpid(), "client", hs_msg.magic_id,
                        "string value");
         return OPAL_ERR_BAD_PARAM;
@@ -751,7 +759,9 @@ static int mca_btl_tcp_endpoint_start_connect(mca_btl_base_endpoint_t *btl_endpo
 
     /* setup the socket as non-blocking */
     if ((flags = fcntl(btl_endpoint->endpoint_sd, F_GETFL, 0)) < 0) {
-        opal_show_help("help-mpi-btl-tcp.txt", "socket flag fail", true, opal_process_info.nodename,
+        opal_showhelp2("btl_tcp:socket flag fail",
+                       btl_tcp_help_socket_flag_fail,
+                       true, opal_process_info.nodename,
                        getpid(), "fcntl(sd, F_GETFL, 0)", strerror(opal_socket_errno),
                        opal_socket_errno);
         /* Upper layer will handler the error */
@@ -759,7 +769,9 @@ static int mca_btl_tcp_endpoint_start_connect(mca_btl_base_endpoint_t *btl_endpo
     } else {
         flags |= O_NONBLOCK;
         if (fcntl(btl_endpoint->endpoint_sd, F_SETFL, flags) < 0) {
-            opal_show_help("help-mpi-btl-tcp.txt", "socket flag fail", true,
+            opal_showhelp2("btl_tcp:socket flag fail",
+                           btl_tcp_help_socket_flag_fail,
+                           true,
                            opal_process_info.nodename, getpid(),
                            "fcntl(sd, F_SETFL, flags & O_NONBLOCK)", strerror(opal_socket_errno),
                            opal_socket_errno);
@@ -883,7 +895,9 @@ static int mca_btl_tcp_endpoint_complete_connect(mca_btl_base_endpoint_t *btl_en
     /* check connect completion status */
     if (getsockopt(btl_endpoint->endpoint_sd, SOL_SOCKET, SO_ERROR, (char *) &so_error, &so_length)
         < 0) {
-        opal_show_help("help-mpi-btl-tcp.txt", "socket flag fail", true, opal_process_info.nodename,
+        opal_showhelp2("btl_tcp:socket flag fail",
+                       btl_tcp_help_socket_flag_fail,
+                       true, opal_process_info.nodename,
                        getpid(), "fcntl(sd, F_GETFL, 0)", strerror(opal_socket_errno),
                        opal_socket_errno);
         BTL_ERROR(("getsockopt() to %s:%d failed: %s (%d)",
@@ -903,7 +917,9 @@ static int mca_btl_tcp_endpoint_complete_connect(mca_btl_base_endpoint_t *btl_en
             opal_asprintf(&msg, "connect() to %s:%d failed",
                           opal_net_get_hostname((struct sockaddr *) &endpoint_addr),
                           ntohs(((struct sockaddr_in *) &endpoint_addr)->sin_port));
-            opal_show_help("help-mpi-btl-tcp.txt", "client connect fail", true,
+            opal_showhelp2("btl_tcp:client connect fail",
+                           btl_tcp_help_client_connect_fail,
+                           true,
                            opal_process_info.nodename, getpid(), msg, strerror(so_error), so_error);
             free(msg);
         }

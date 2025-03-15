@@ -20,7 +20,7 @@
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018-2022 Amazon.com, Inc. or its affiliates.  All Rights reserved.
- * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
+ * Copyright (c) 2023-2025 Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -85,6 +85,7 @@
 #include "btl_tcp_endpoint.h"
 #include "btl_tcp_frag.h"
 #include "btl_tcp_proc.h"
+#include "btl_tcp_help.h"
 #include "opal/constants.h"
 #include "opal/mca/btl/base/base.h"
 #include "opal/mca/btl/base/btl_base_error.h"
@@ -201,13 +202,17 @@ static void mca_btl_tcp_component_accept_handler(int, short, void *);
 static int mca_btl_tcp_component_verify(void)
 {
     if (mca_btl_tcp_component.tcp_port_min > USHRT_MAX) {
-        opal_show_help("help-mpi-btl-tcp.txt", "invalid minimum port", true, "v4",
+        opal_showhelp2("btl_tcp:invalid minimum port",
+                       btl_tcp_help_invalid_minimum_port,
+                       true, "v4",
                        opal_process_info.nodename, mca_btl_tcp_component.tcp_port_min);
         mca_btl_tcp_component.tcp_port_min = 1024;
     }
 #if OPAL_ENABLE_IPV6
     if (mca_btl_tcp_component.tcp6_port_min > USHRT_MAX) {
-        opal_show_help("help-mpi-btl-tcp.txt", "invalid minimum port", true, "v6",
+        opal_showhelp2("btl_tcp:invalid minimum port",
+                       btl_tcp_help_invalid_minimum_port
+                       true, "v6",
                        opal_process_info.nodename, mca_btl_tcp_component.tcp6_port_min);
         mca_btl_tcp_component.tcp6_port_min = 1024;
     }
@@ -678,7 +683,9 @@ static char **split_and_resolve(char **orig_str, char *name, bool reqd)
         tmp = strdup(argv[i]);
         str = strchr(argv[i], '/');
         if (NULL == str) {
-            opal_show_help("help-mpi-btl-tcp.txt", "invalid if_inexclude", true, name,
+            opal_showhelp2("btl_tcp:invalid if_inexclude",
+                           btl_tcp_help_invalid_if_inexclude,
+                           true, name,
                            opal_process_info.nodename, tmp,
                            "Invalid specification (missing \"/\")");
             free(argv[i]);
@@ -694,7 +701,9 @@ static char **split_and_resolve(char **orig_str, char *name, bool reqd)
         free(argv[i]);
 
         if (1 != ret) {
-            opal_show_help("help-mpi-btl-tcp.txt", "invalid if_inexclude", true, name,
+            opal_showhelp2("btl_tcp:invalid if_inexclude",
+                           btl_tcp_help_invalid_if_inexclude,
+                           true, name,
                            opal_process_info.nodename, tmp,
                            "Invalid specification (inet_pton() failed)");
             free(tmp);
@@ -737,7 +746,9 @@ static char **split_and_resolve(char **orig_str, char *name, bool reqd)
         /* If we didn't find a match, keep trying */
         if (0 == match_count) {
             if (reqd || mca_btl_tcp_component.report_all_unfound_interfaces) {
-                opal_show_help("help-mpi-btl-tcp.txt", "invalid if_inexclude", true, name,
+                opal_showhelp2("btl_tcp:invalid if_inexclude",
+                               btl_tcp_help_invalid_if_inexclude,
+                               true, name,
                                opal_process_info.nodename, tmp,
                                "Did not find interface matching this subnet");
             }
@@ -833,7 +844,9 @@ static int mca_btl_tcp_component_create_instances(void)
         char *if_name = *argv;
         int idx = opal_ifnametokindex(if_name);
         if (idx < 0) {
-            opal_show_help("help-mpi-btl-tcp.txt", "invalid if_inexclude", true, "include",
+            opal_showhelp2("btl_tcp:invalid if_inexclude",
+                           btl_tcp_help_invalid_if_inexclude,
+                           true, "include",
                            opal_process_info.nodename, if_name, "Unknown interface name");
             ret = OPAL_ERR_NOT_FOUND;
             goto cleanup;
@@ -1079,7 +1092,9 @@ socket_binded:
 
     /* set socket up to be non-blocking, otherwise accept could block */
     if ((flags = fcntl(sd, F_GETFL, 0)) < 0) {
-        opal_show_help("help-mpi-btl-tcp.txt", "socket flag fail", true, opal_process_info.nodename,
+        opal_showhelp2("btl_tcp:socket flag fail",
+                       btl_tcp_help_socket_flag_fail,
+                       true, opal_process_info.nodename,
                        getpid(), "fcntl(sd, F_GETFL, 0)", strerror(opal_socket_errno),
                        opal_socket_errno);
         CLOSE_THE_SOCKET(sd);
@@ -1087,7 +1102,9 @@ socket_binded:
     } else {
         flags |= O_NONBLOCK;
         if (fcntl(sd, F_SETFL, flags) < 0) {
-            opal_show_help("help-mpi-btl-tcp.txt", "socket flag fail", true,
+            opal_showhelp2("btl_tcp:socket flag fail",
+                           btl_tcp_help_socket_flag_fail,
+                           true,
                            opal_process_info.nodename, getpid(),
                            "fcntl(sd, F_SETFL, flags & O_NONBLOCK)", strerror(opal_socket_errno),
                            opal_socket_errno);
@@ -1362,7 +1379,9 @@ static void mca_btl_tcp_component_accept_handler(int incoming_sd, short ignored,
                 continue;
             }
             if (opal_socket_errno != EAGAIN && opal_socket_errno != EWOULDBLOCK) {
-                opal_show_help("help-mpi-btl-tcp.txt", "accept failed", true,
+                opal_showhelp2("btl_tcp:accept failed",
+                               btl_tcp_help_accept_failed,
+                               true,
                                opal_process_info.nodename, getpid(), opal_socket_errno,
                                strerror(opal_socket_errno));
             }
@@ -1409,7 +1428,9 @@ static void mca_btl_tcp_component_recv_handler(int sd, short flags, void *user)
         if (ENOPROTOOPT == errno || EOPNOTSUPP == errno) {
             sockopt = false;
         } else {
-            opal_show_help("help-mpi-btl-tcp.txt", "socket flag fail", true,
+            opal_showhelp2("btl_tcp:socket flag fail",
+                           btl_tcp_help_socket_flag_fail,
+                           true,
                            opal_process_info.nodename, getpid(),
                            "getsockopt(sd, SOL_SOCKET, SO_RCVTIMEO, ...)",
                            strerror(opal_socket_errno), opal_socket_errno);
@@ -1419,7 +1440,9 @@ static void mca_btl_tcp_component_recv_handler(int sd, short flags, void *user)
         tv.tv_sec = 2;
         tv.tv_usec = 0;
         if (0 != setsockopt(sd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv))) {
-            opal_show_help("help-mpi-btl-tcp.txt", "socket flag fail", true,
+            opal_showhelp2("btl_tcp:socket flag fail",
+                           btl_tcp_help_socket_flag_fail,
+                           true,
                            opal_process_info.nodename, getpid(),
                            "setsockopt(sd, SOL_SOCKET, SO_RCVTIMEO, ...)",
                            strerror(opal_socket_errno), opal_socket_errno);
@@ -1472,7 +1495,9 @@ static void mca_btl_tcp_component_recv_handler(int sd, short flags, void *user)
     if (sockopt) {
         /* reset RECVTIMEO option to its original state */
         if (0 != setsockopt(sd, SOL_SOCKET, SO_RCVTIMEO, &save, sizeof(save))) {
-            opal_show_help("help-mpi-btl-tcp.txt", "socket flag fail", true,
+            opal_showhelp2("btl_tcp:socket flag fail",
+                           btl_tcp_help_socket_flag_fail,
+                           true,
                            opal_process_info.nodename, getpid(),
                            "setsockopt(sd, SOL_SOCKET, SO_RCVTIMEO, ...)",
                            strerror(opal_socket_errno), opal_socket_errno);
@@ -1484,14 +1509,18 @@ static void mca_btl_tcp_component_recv_handler(int sd, short flags, void *user)
 
     /* now set socket up to be non-blocking */
     if ((flags = fcntl(sd, F_GETFL, 0)) < 0) {
-        opal_show_help("help-mpi-btl-tcp.txt", "socket flag fail", true, opal_process_info.nodename,
+        opal_showhelp2("btl_tcp:socket flag fail",
+                       btl_tcp_help_socket_flag_fail,
+                       true, opal_process_info.nodename,
                        getpid(), "fcntl(sd, F_GETFL, 0)", strerror(opal_socket_errno),
                        opal_socket_errno);
         CLOSE_THE_SOCKET(sd);
     } else {
         flags |= O_NONBLOCK;
         if (fcntl(sd, F_SETFL, flags) < 0) {
-            opal_show_help("help-mpi-btl-tcp.txt", "socket flag fail", true,
+            opal_showhelp2("btl_tcp:socket flag fail",
+                           btl_tcp_help_socket_flag_fail,
+                           true,
                            opal_process_info.nodename, getpid(),
                            "fcntl(sd, F_SETFL, flags & O_NONBLOCK)", strerror(opal_socket_errno),
                            opal_socket_errno);
@@ -1502,7 +1531,9 @@ static void mca_btl_tcp_component_recv_handler(int sd, short flags, void *user)
     /* lookup the corresponding process */
     btl_proc = mca_btl_tcp_proc_lookup(&guid);
     if (NULL == btl_proc) {
-        opal_show_help("help-mpi-btl-tcp.txt", "server accept cannot find guid", true,
+        opal_showhelp2("btl_tcp:server accept cannot find guid",
+                       btl_tcp_help_server_accept_cannot_find_guid,
+                       true,
                        opal_process_info.nodename, getpid());
         CLOSE_THE_SOCKET(sd);
         return;
@@ -1511,7 +1542,9 @@ static void mca_btl_tcp_component_recv_handler(int sd, short flags, void *user)
     /* lookup peer address */
     if (getpeername(sd, (struct sockaddr *) &addr, &addr_len) != 0) {
         if (ENOTCONN != opal_socket_errno) {
-            opal_show_help("help-mpi-btl-tcp.txt", "server getpeername failed", true,
+            opal_showhelp2("btl_tcp:server getpeername failed",
+                           btl_tcp_help_server_getpeername_failed,
+                           true,
                            opal_process_info.nodename, getpid(), strerror(opal_socket_errno),
                            opal_socket_errno);
         }

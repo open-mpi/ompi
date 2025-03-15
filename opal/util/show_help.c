@@ -16,6 +16,7 @@
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2018      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2025      Jeffrey M. Squyres.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -462,6 +463,46 @@ static int opal_show_help_internal(const char *filename, const char *topic, int 
     va_end(arglist);
 
     return rc;
+}
+
+int opal_showhelp2(const char *unique_topic,
+                   const char *format,
+                   int want_error_header,
+                   ...)
+{
+    int rc;
+    va_list arglist;
+    char *single_string;
+    char *array[] = { (char*) format, NULL };
+    char *output = NULL;
+
+    // Optionally add the error header lines
+    rc = array2string(&single_string, want_error_header, array);
+    if (OPAL_SUCCESS != rc) {
+        return rc;
+    }
+
+    // Render the formatted string
+    va_start(arglist, want_error_header);
+    opal_vasprintf(&output, single_string, arglist);
+    va_end(arglist);
+
+    free(single_string);
+
+    // If we got a valid output string, emit it.
+    if (NULL != output) {
+        // Older versions of Open MPI used to load help strings from
+        // text files at run time.  Hence, help messages were indexed
+        // (for de-duplication purposes) from a filename and a topic
+        // name.  Now that help strings are embedded in C code,
+        // there's no additional filename necessary -- we just need a
+        // unique topic string for de-duplication purposes.  PMIx
+        // still requires a filename, so we just put in a fixed string
+        // for it.
+        local_delivery("help message", unique_topic, output);
+    }
+
+    return (NULL == output) ? OPAL_ERROR : OPAL_SUCCESS;
 }
 
 int opal_show_help_add_dir(const char *directory)
