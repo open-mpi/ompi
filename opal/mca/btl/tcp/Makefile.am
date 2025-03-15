@@ -20,7 +20,7 @@
 # $HEADER$
 #
 
-dist_opaldata_DATA = help-mpi-btl-tcp.txt
+EXTRA_DIST = help-mpi-btl-tcp.txt
 
 sources = \
     btl_tcp.c \

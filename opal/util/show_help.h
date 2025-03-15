@@ -13,6 +13,7 @@
  * Copyright (c) 2008-2018 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2018      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2025      Jeffrey M. Squyres.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -166,6 +167,19 @@ OPAL_DECLSPEC char *opal_show_help_vstring(const char *filename, const char *top
  * needs to tell show_help how to find its own show_help files.
  */
 OPAL_DECLSPEC int opal_show_help_add_dir(const char *directory);
+
+/**
+ * \internal
+ *
+ * This is an internal function that returns a string representing the
+ * content of the section "topic" from the help file "filename".  This
+ * content is a hard-coded C string and should not be freed by the
+ * caller.
+ *
+ * NOTE: This hard-coded C string is generated during "make" in the
+ * opal/util directory -- it is not read from a text file at run time.
+ */
+const char *opal_show_help_get_content(const char *filename, const char* topic);
 
 END_C_DECLS
 
