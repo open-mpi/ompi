@@ -14,6 +14,7 @@
 # Copyright (c) 2012      NVIDIA Corporation.  All rights reserved.
 # Copyright (c) 2017      IBM Corporation.  All rights reserved.
 # Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+# Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -21,10 +22,9 @@
 # $HEADER$
 #
 
-dist_ompidata_DATA = \
+EXTRA_DIST = \
+        post_configure.sh \
 	help-mpi-pml-ob1.txt
-
-EXTRA_DIST = post_configure.sh
 
 ob1_sources  = \
 	pml_ob1.c \

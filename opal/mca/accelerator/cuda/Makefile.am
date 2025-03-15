@@ -3,6 +3,7 @@
 # Copyright (c) 2017      IBM Corporation.  All rights reserved.
 # Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
 #                         All Rights reserved.
+# Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -12,7 +13,7 @@
 
 
 AM_CPPFLAGS = $(common_cuda_CPPFLAGS)
-dist_opaldata_DATA = help-accelerator-cuda.txt
+EXTRA_DIST = help-accelerator-cuda.txt
 sources = \
         accelerator_cuda.h \
         accelerator_cuda_component.c \

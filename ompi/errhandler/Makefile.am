@@ -12,6 +12,7 @@
 #                         All rights reserved.
 # Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
+# Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -21,7 +22,7 @@
 
 # This makefile.am does not stand on its own - it is included from ompi/Makefile.am
 
-dist_ompidata_DATA += errhandler/help-mpi-errors.txt
+EXTRA_DIST += errhandler/help-mpi-errors.txt
 
 headers += \
         errhandler/errcode.h \

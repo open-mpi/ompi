@@ -15,6 +15,7 @@
 # Copyright (c) 2014      Intel, Inc. All rights reserved
 # Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+# Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -28,8 +29,8 @@ AM_CFLAGS = \
             -DOPAL_CONFIGURE_HOST="\"@OPAL_CONFIGURE_HOST@\""
 
 # Source code files
-dist_opaldata_DATA += runtime/help-opal-runtime.txt \
-                     runtime/help-opal_info.txt
+EXTRA_DIST += runtime/help-opal-runtime.txt \
+        runtime/help-opal_info.txt
 
 headers += \
         runtime/opal_progress.h \

@@ -15,6 +15,7 @@
 # Copyright (c) 2014      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
+# Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -39,4 +40,4 @@ lib@OMPI_LIBMPI_NAME@_la_SOURCES += \
 	communicator/ft/comm_ft.c communicator/ft/comm_ft_reliable_bcast.c communicator/ft/comm_ft_propagator.c communicator/ft/comm_ft_detector.c communicator/ft/comm_ft_revoke.c
 endif # WANT_FT_MPI
 
-dist_ompidata_DATA += communicator/help-comm.txt
+EXTRA_DIST += communicator/help-comm.txt

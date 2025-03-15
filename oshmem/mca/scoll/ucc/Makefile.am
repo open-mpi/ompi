@@ -1,5 +1,6 @@
 # Copyright (c) 2021 Mellanox Technologies, Inc.
 #                         All rights reserved.
+# Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
 #
 #  Additional copyrights may follow
@@ -8,7 +9,7 @@
 #
 #
 
-dist_oshmemdata_DATA = \
+EXTRA_DIST = \
 	help-oshmem-scoll-ucc.txt
 
 AM_CPPFLAGS = $(scoll_ucc_CPPFLAGS)
@@ -24,7 +25,7 @@ scoll_ucc_sources =           \
 		scoll_ucc_broadcast.c \
 		scoll_ucc_reduce.c    \
 		scoll_ucc_collect.c   \
-		scoll_ucc_alltoall.c 
+		scoll_ucc_alltoall.c
 if MCA_BUILD_oshmem_scoll_ucc_DSO
 component_noinst =
 component_install = mca_scoll_ucc.la

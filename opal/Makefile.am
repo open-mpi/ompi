@@ -15,6 +15,7 @@
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2020-2022 Amazon.com, Inc. or its affiliates.  All Rights reserved.
 # Copyright (c) 2022      Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -69,7 +70,7 @@ lib@OPAL_LIB_NAME@_la_LDFLAGS = -version-info @libopen_pal_so_version@
 
 # included subdirectory Makefile.am's and appended-to variables
 headers =
-dist_opaldata_DATA =
+EXTRA_DIST =
 lib@OPAL_LIB_NAME@_la_SOURCES += $(headers)
 
 # Conditionally install the header files

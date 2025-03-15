@@ -13,6 +13,7 @@
 # Copyright (c) 2012      NVIDIA Corporation.  All rights reserved.
 # Copyright (c) 2017      IBM Corporation.  All rights reserved.
 # Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+# Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -20,7 +21,7 @@
 # $HEADER$
 #
 
-dist_opaldata_DATA = help-mpi-btl-smcuda.txt
+EXTRA_DIST = help-mpi-btl-smcuda.txt
 
 libmca_btl_smcuda_la_sources = \
     btl_smcuda.c \

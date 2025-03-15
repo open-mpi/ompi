@@ -6,6 +6,7 @@
 # Copyright (c) 2017      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2019      Intel, Inc.  All rights reserved.
+# Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -49,10 +50,10 @@ bin_PROGRAMS =
 if PROJECT_OSHMEM
 # Only build/install the binary pages if we're building oshmem
 bin_PROGRAMS += oshmem_info
-dist_ompidata_DATA = \
-     help-oshmem-info.txt
 endif
 
+EXTRA_DIST = \
+     help-oshmem-info.txt
 
 oshmem_info_SOURCES = \
         oshmem_info.h \

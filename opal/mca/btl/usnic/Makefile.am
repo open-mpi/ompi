@@ -19,6 +19,7 @@
 # Copyright (c) 2019      Research Organization for Information Science
 #                         and Technology (RIST).  All rights reserved.
 # Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+# Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -28,9 +29,8 @@
 
 AM_CPPFLAGS = $(btl_usnic_CPPFLAGS) -DOMPI_LIBMPI_NAME=\"$(OMPI_LIBMPI_NAME)\"
 
-EXTRA_DIST = README.md README.test
-
-dist_opaldata_DATA = \
+EXTRA_DIST = \
+    README.md README.test \
     help-mpi-btl-usnic.txt
 
 test_sources = \

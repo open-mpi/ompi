@@ -1,14 +1,13 @@
 # Copyright (c) 2014      Mellanox Technologies, Inc.
 #                         All rights reserved.
 # Copyright (c) 2017      IBM Corporation.  All rights reserved.
+# Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
 #
 # $HEADER$
 #
-
-#dist_oshmemdata_DATA = help-oshmem-sshmem-mmap.txt
 
 AM_CPPFLAGS = $(sshmem_ucx_CPPFLAGS)
 
@@ -40,4 +39,3 @@ mca_sshmem_ucx_la_LIBADD = $(top_builddir)/oshmem/liboshmem.la \
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_sshmem_ucx_la_SOURCES =$(sources)
 libmca_sshmem_ucx_la_LDFLAGS = -module -avoid-version $(sshmem_ucx_LDFLAGS)
-

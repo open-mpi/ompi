@@ -16,6 +16,7 @@
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2018      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2025      Jeffrey M. Squyres.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -38,7 +39,6 @@
 #include "opal/util/output.h"
 #include "opal/util/printf.h"
 #include "opal/util/show_help.h"
-#include "opal/util/show_help_lex.h"
 
 /*
  * Private variables
@@ -178,8 +178,8 @@ static void local_delivery(const char *file, const char *topic, char *msg) {
 static void opal_show_help_error(const char *file, const char *topic) {
     char *msg;
     opal_asprintf(&msg,
-                   "%sSorry!  You were supposed to get help about:\n    %s\nfrom the file:\n  "
-                   "  %s\nBut I couldn't find that topic in the file.  Sorry!\n%s",
+                   "%sSorry!  You were supposed to get help about:\n    %s\nfrom topic:\n  "
+                   "  %s\nBut I couldn't find that help topic.  Sorry!\n%s",
                     dash_line, topic ? topic : "(Not specified)", file ? file : "(Not specified)", dash_line);
     local_delivery(topic, file, msg);
 }
@@ -232,182 +232,18 @@ static int array2string(char **outstring, int want_error_header, char **lines)
     return OPAL_SUCCESS;
 }
 
-/*
- * Find the right file to open
- */
-static int open_file(const char *base, const char *topic)
-{
-    char *filename = NULL, *err_msg = NULL;
-    size_t base_len;
-    int i, rc = OPAL_SUCCESS;
-
-    /* If no filename was supplied, use the default */
-    if (NULL == base) {
-        base = default_filename;
-    }
-
-    /* if this is called prior to someone initializing the system,
-     * then don't try to look
-     */
-    if (NULL != search_dirs) {
-        /* Try to open the file.  If we can't find it, try it with a .txt
-         * extension.
-         */
-        for (i = 0; NULL != search_dirs[i]; i++) {
-            filename = opal_os_path(false, search_dirs[i], base, NULL);
-            if(filename) {
-                opal_show_help_yyin = fopen(filename, "r");
-                if (NULL == opal_show_help_yyin) {
-                    opal_asprintf(&err_msg, "%s: %s", filename, strerror(errno));
-                    base_len = strlen(base);
-                    if (4 > base_len || 0 != strcmp(base + base_len - 4, ".txt")) {
-                        free(filename);
-                        opal_asprintf(&filename, "%s%s%s.txt", search_dirs[i], OPAL_PATH_SEP, base);
-                        opal_show_help_yyin = fopen(filename, "r");
-                    }
-                }
-                if (NULL != opal_show_help_yyin) {
-                    break;
-                }
-            }
-        }
-    }
-
-    /* If we still couldn't open it, then something is wrong */
-    if (NULL == opal_show_help_yyin) {
-        const char *file_ptr = NULL;
-        if(err_msg) {
-            file_ptr = err_msg;
-        }
-        else if(filename) {
-            file_ptr = filename;
-        }
-        else {
-            file_ptr = base;
-        }
-        opal_show_help_error(file_ptr, topic);
-        rc = OPAL_ERR_NOT_FOUND;
-        goto cleanup;
-    }
-
-    /* Set the buffer */
-    opal_show_help_init_buffer(opal_show_help_yyin);
-
-cleanup:
-
-    if(filename) {
-        free(filename);
-    }
-    if(err_msg) {
-        free(err_msg);
-    }
-
-    return rc;
-}
-
-/*
- * In the file that has already been opened, find the topic that we're
- * supposed to output
- */
-static int find_topic(const char *base, const char *topic)
-{
-    int token, ret;
-    char *tmp;
-
-    /* Examine every topic */
-
-    while (1) {
-        token = opal_show_help_yylex();
-        switch (token) {
-        case OPAL_SHOW_HELP_PARSE_TOPIC:
-            tmp = strdup(opal_show_help_yytext);
-            if (NULL == tmp) {
-                return OPAL_ERR_OUT_OF_RESOURCE;
-            }
-            tmp[strlen(tmp) - 1] = '\0';
-            ret = strcmp(tmp + 1, topic);
-            free(tmp);
-            if (0 == ret) {
-                return OPAL_SUCCESS;
-            }
-            break;
-
-        case OPAL_SHOW_HELP_PARSE_MESSAGE:
-            break;
-
-        case OPAL_SHOW_HELP_PARSE_DONE: {
-           opal_show_help_error(topic, base);
-           return OPAL_ERR_NOT_FOUND;
-        }
-        default:
-            break;
-        }
-    }
-
-    /* Never get here */
-}
-
-/*
- * We have an open file, and we're pointed at the right topic.  So
- * read in all the lines in the topic and make a list of them.
- */
-static int read_topic(char ***array)
-{
-    int token, rc;
-
-    while (1) {
-        token = opal_show_help_yylex();
-        switch (token) {
-        case OPAL_SHOW_HELP_PARSE_MESSAGE:
-            /* opal_argv_append_nosize does strdup(opal_show_help_yytext) */
-            rc = opal_argv_append_nosize(array, opal_show_help_yytext);
-            if (rc != OPAL_SUCCESS) {
-                return rc;
-            }
-            break;
-
-        default:
-            return OPAL_SUCCESS;
-            break;
-        }
-    }
-
-    /* Never get here */
-}
-
-static int load_array(char ***array, const char *filename, const char *topic)
-{
-    int ret;
-
-    if (OPAL_SUCCESS != (ret = open_file(filename, topic))) {
-        return ret;
-    }
-
-    ret = find_topic(filename, topic);
-    if (OPAL_SUCCESS == ret) {
-        ret = read_topic(array);
-    }
-
-    fclose(opal_show_help_yyin);
-    opal_show_help_yylex_destroy();
-
-    if (OPAL_SUCCESS != ret) {
-        opal_argv_free(*array);
-    }
-
-    return ret;
-}
-
 char *opal_show_help_vstring(const char *filename, const char *topic, int want_error_header,
                              va_list arglist)
 {
-    int rc;
-    char *single_string, *output, **array = NULL;
-
-    /* Load the message */
-    if (OPAL_SUCCESS != (rc = load_array(&array, filename, topic))) {
+    const char *content = opal_show_help_get_content(filename, topic);
+    if (NULL == content) {
+        opal_show_help_error(filename, topic);
         return NULL;
     }
+
+    int rc;
+    char *single_string, *output;
+    char *array[] = { (char*) content, NULL };
 
     /* Convert it to a single raw string */
     rc = array2string(&single_string, want_error_header, array);
@@ -418,7 +254,6 @@ char *opal_show_help_vstring(const char *filename, const char *topic, int want_e
         free(single_string);
     }
 
-    opal_argv_free(array);
     return (OPAL_SUCCESS == rc) ? output : NULL;
 }
 

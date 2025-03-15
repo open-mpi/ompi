@@ -11,6 +11,7 @@
 #                         All rights reserved.
 # Copyright (c) 2013-2016 Los Alamos National Security, LLC. All rights
 #                         reserved
+# Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -32,5 +33,5 @@ libmca_rcache_la_SOURCES += \
 	base/rcache_base_vma_tree.c \
 	base/rcache_base_mem_cb.c
 
-dist_opaldata_DATA = \
+EXTRA_DIST = \
         base/help-rcache-base.txt

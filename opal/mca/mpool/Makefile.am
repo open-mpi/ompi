@@ -10,6 +10,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -31,7 +32,7 @@ opaldir = $(opalincludedir)/$(subdir)
 nobase_opal_HEADERS = $(headers)
 endif
 
-dist_opaldata_DATA =
+EXTRA_DIST =
 include base/Makefile.am
 
 distclean-local:
