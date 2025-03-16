@@ -128,17 +128,15 @@ OPAL_DECLSPEC int opal_show_help_init(void);
  * promotion to va_start() has undefined behavior (according to clang
  * warnings on MacOS High Sierra).
  */
-typedef int (*opal_show_help_fn_t)(const char *filename, const char *topic, int want_error_header,
-                                   ...);
-OPAL_DECLSPEC extern opal_show_help_fn_t opal_show_help;
+OPAL_DECLSPEC int opal_show_help(const char *filename, const char *topic, int want_error_header,
+                                 ...);
 
 /**
  * This function does the same thing as opal_show_help(), but accepts
  * a va_list form of varargs.
  */
-typedef int (*opal_show_vhelp_fn_t)(const char *filename, const char *topic, int want_error_header,
-                                    va_list ap);
-OPAL_DECLSPEC extern opal_show_vhelp_fn_t opal_show_vhelp;
+OPAL_DECLSPEC int opal_show_vhelp(const char *filename, const char *topic, int want_error_header,
+                                  va_list ap);
 
 /**
  * This function does the same thing as opal_show_help(), but returns
