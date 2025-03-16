@@ -53,10 +53,6 @@ static bool opal_help_want_aggregate = true;
 /*
  * Local functions
  */
-static int opal_show_vhelp_internal(const char *filename, const char *topic, int want_error_header,
-                                    va_list arglist);
-static int opal_show_help_internal(const char *filename, const char *topic, int want_error_header,
-                                   ...);
 static void opal_show_help_finalize(void);
 
 typedef struct {
@@ -64,9 +60,6 @@ typedef struct {
     pmix_info_t *dirs;
     char *msg;
 } opal_log_info_t;
-
-opal_show_help_fn_t opal_show_help = opal_show_help_internal;
-opal_show_vhelp_fn_t opal_show_vhelp = opal_show_vhelp_internal;
 
 int opal_show_help_init(void)
 {
@@ -269,8 +262,8 @@ char *opal_show_help_string(const char *filename, const char *topic, int want_er
     return output;
 }
 
-static int opal_show_vhelp_internal(const char *filename, const char *topic, int want_error_header,
-                                    va_list arglist)
+int opal_show_vhelp(const char *filename, const char *topic, int want_error_header,
+                    va_list arglist)
 {
     char *output;
 
@@ -285,8 +278,7 @@ static int opal_show_vhelp_internal(const char *filename, const char *topic, int
     return (NULL == output) ? OPAL_ERROR : OPAL_SUCCESS;
 }
 
-static int opal_show_help_internal(const char *filename, const char *topic, int want_error_header,
-                                   ...)
+int opal_show_help(const char *filename, const char *topic, int want_error_header, ...)
 {
     va_list arglist;
     int rc;
