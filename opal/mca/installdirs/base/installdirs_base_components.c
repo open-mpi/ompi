@@ -21,7 +21,11 @@
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/mca/mca.h"
 
+#include <sys/stat.h>
+#include <errno.h>
+
 opal_install_dirs_t opal_install_dirs = {0};
+static int opal_install_dir_warn_if_non_existent = 0;
 
 #define CONDITIONAL_COPY(target, origin, field)             \
     do {                                                    \
@@ -29,6 +33,23 @@ opal_install_dirs_t opal_install_dirs = {0};
             target.field = origin.field;                    \
         }                                                   \
     } while (0)
+
+#define CHECK_AND_COMPLAIN(field) \
+    do { \
+        if(!directory_exists(opal_install_dirs.field)) { \
+            fprintf(stderr, #field ":         %s\n", opal_install_dirs.field); \
+        } \
+    } while (0)
+
+static int directory_exists(const char *path)
+{
+    struct stat info;
+
+    if (0 != stat(path, &info)) {
+        return 0;
+    }
+    return S_ISDIR(info.st_mode);
+}
 
 static int opal_installdirs_base_open(mca_base_open_flag_t flags)
 {
@@ -87,26 +108,30 @@ static int opal_installdirs_base_open(mca_base_open_flag_t flags)
     opal_install_dirs.opalincludedir = opal_install_dirs_expand_setup(
         opal_install_dirs.opalincludedir);
 
-#if 0
-    fprintf(stderr, "prefix:         %s\n", opal_install_dirs.prefix);
-    fprintf(stderr, "exec_prefix:    %s\n", opal_install_dirs.exec_prefix);
-    fprintf(stderr, "bindir:         %s\n", opal_install_dirs.bindir);
-    fprintf(stderr, "sbindir:        %s\n", opal_install_dirs.sbindir);
-    fprintf(stderr, "libexecdir:     %s\n", opal_install_dirs.libexecdir);
-    fprintf(stderr, "datarootdir:    %s\n", opal_install_dirs.datarootdir);
-    fprintf(stderr, "datadir:        %s\n", opal_install_dirs.datadir);
-    fprintf(stderr, "sysconfdir:     %s\n", opal_install_dirs.sysconfdir);
-    fprintf(stderr, "sharedstatedir: %s\n", opal_install_dirs.sharedstatedir);
-    fprintf(stderr, "localstatedir:  %s\n", opal_install_dirs.localstatedir);
-    fprintf(stderr, "libdir:         %s\n", opal_install_dirs.libdir);
-    fprintf(stderr, "includedir:     %s\n", opal_install_dirs.includedir);
-    fprintf(stderr, "infodir:        %s\n", opal_install_dirs.infodir);
-    fprintf(stderr, "mandir:         %s\n", opal_install_dirs.mandir);
-    fprintf(stderr, "pkgdatadir:     %s\n", opal_install_dirs.pkgdatadir);
-    fprintf(stderr, "pkglibdir:      %s\n", opal_install_dirs.pkglibdir);
-    fprintf(stderr, "pkgincludedir:  %s\n", opal_install_dirs.pkgincludedir);
-#endif
+    (void)mca_base_var_register("opal", "opal", "installdir", "warn",
+                                "Print a warning is any of the OMPI necessary paths cannot be found",
+                                MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_9,
+                                MCA_BASE_VAR_SCOPE_READONLY, &opal_install_dir_warn_if_non_existent);
 
+    if(opal_install_dir_warn_if_non_existent) {
+        CHECK_AND_COMPLAIN(prefix);
+        CHECK_AND_COMPLAIN(exec_prefix);
+        CHECK_AND_COMPLAIN(bindir);
+        //CHECK_AND_COMPLAIN(sbindir);
+        //CHECK_AND_COMPLAIN(libexecdir);
+        CHECK_AND_COMPLAIN(datarootdir);
+        CHECK_AND_COMPLAIN(datadir);
+        CHECK_AND_COMPLAIN(sysconfdir);
+        //CHECK_AND_COMPLAIN(sharedstatedir);
+        //CHECK_AND_COMPLAIN(localstatedir);
+        CHECK_AND_COMPLAIN(libdir);
+        CHECK_AND_COMPLAIN(includedir);
+        //CHECK_AND_COMPLAIN(infodir);
+        CHECK_AND_COMPLAIN(mandir);
+        CHECK_AND_COMPLAIN(opaldatadir);
+        CHECK_AND_COMPLAIN(opallibdir);
+        CHECK_AND_COMPLAIN(opalincludedir);
+    }
     /* NTH: Is it ok not to close the components? If not we can add a flag
        to mca_base_framework_components_close to indicate not to deregister
        variable groups */
