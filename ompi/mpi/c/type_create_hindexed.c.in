@@ -67,9 +67,14 @@ PROTOTYPE ERROR_CLASS type_create_hindexed(COUNT count,
                                               FUNC_NAME );
             }
         }
+#if OMPI_BIGCOUNT_SRC
+        OMPI_CHECK_MPI_COUNT_INT_CONVERSION_OVERFLOW(rc, count);
+        if (OMPI_SUCCESS != rc) {
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(rc, FUNC_NAME);
+        }
+#endif
     }
 
-/* TODO:BIGCOUNT: need to embiggen ompi_datatype_create_hindexed, etc. */
 #if OMPI_BIGCOUNT_SRC
     iarray_of_blocklengths = (int *)malloc(count * sizeof(int));
     if (NULL == iarray_of_blocklengths) {

@@ -60,6 +60,12 @@ PROTOTYPE ERROR_CLASS type_indexed(COUNT count,
             return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG,
                                           FUNC_NAME);
         }
+#if OMPI_BIGCOUNT_SRC
+        OMPI_CHECK_MPI_COUNT_INT_CONVERSION_OVERFLOW(rc, count);
+        if (OMPI_SUCCESS != rc) {
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(rc, FUNC_NAME);
+        }
+#endif
         for( i = 0; i < count; i++ ) {
             if( array_of_blocklengths[i] < 0 ) {
                 return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG,
@@ -68,7 +74,6 @@ PROTOTYPE ERROR_CLASS type_indexed(COUNT count,
         }
     }
 
-/* TODO:BIGCOUNT: Need to embiggen ompi_datatype_create_indexed */
 #if OMPI_BIGCOUNT_SRC
     iarray_of_blocklengths = (int *)malloc(count * sizeof(int));
     if (NULL == iarray_of_blocklengths) {

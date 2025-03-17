@@ -69,6 +69,14 @@ PROTOTYPE ERROR_CLASS type_create_darray(INT size,
             return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, FUNC_NAME);
         }
         if( ndims > 0 ) {
+#if OMPI_BIGCOUNT_SRC
+            for( i = 0; i < ndims; i++ ) {
+                OMPI_CHECK_MPI_COUNT_INT_CONVERSION_OVERFLOW(rc, gsize_array[i]);
+                if (OMPI_SUCCESS != rc) {
+                    return OMPI_ERRHANDLER_NOHANDLE_INVOKE(rc, FUNC_NAME);
+                }
+            }
+#endif
             for( i = 0; i < ndims; i++ ) {
                 if( (MPI_DISTRIBUTE_BLOCK != distrib_array[i]) &&
                     (MPI_DISTRIBUTE_CYCLIC != distrib_array[i]) &&
@@ -90,9 +98,6 @@ PROTOTYPE ERROR_CLASS type_create_darray(INT size,
         }
     }
 
-/* TODO:BIGCOUNT: need to embiggen ompi_datatype_create_array and
- * ompi_datatype_set_args.
- */
 #if OMPI_BIGCOUNT_SRC
     igsize_array = (int *)malloc(ndims * sizeof(int));
     if (NULL == igsize_array) {

@@ -67,8 +67,15 @@ PROTOTYPE ERROR_CLASS win_allocate(AINT size, DISP disp_unit, INFO info,
         return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COMM, FUNC_NAME);
     }
 
+#if OMPI_BIGCOUNT_SRC
+    OMPI_CHECK_MPI_COUNT_INT_CONVERSION_OVERFLOW(ret, disp_unit);
+    if (OMPI_SUCCESS != ret) {
+        *win = MPI_WIN_NULL;
+        return OMPI_ERRHANDLER_INVOKE(comm, ret, FUNC_NAME);
+    }
+#endif
+
     /* create window and return */
-    /* TODO:BIGCOUNT: Update ompi_win_allocate to take ptrdiff_t/MPI_Aint disp units */
     ret = ompi_win_allocate((size_t)size, (int)disp_unit, &(info->super),
                             comm, baseptr, win);
     if (OMPI_SUCCESS != ret) {

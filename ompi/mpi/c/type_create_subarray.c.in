@@ -62,6 +62,20 @@ PROTOTYPE ERROR_CLASS type_create_subarray(INT ndims,
             return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, FUNC_NAME);
         }
         for( i = 0; i < ndims; i++ ) {
+#if OMPI_BIGCOUNT_SRC
+            OMPI_CHECK_MPI_COUNT_INT_CONVERSION_OVERFLOW(rc, size_array[i]);
+            if (OMPI_SUCCESS != rc) {
+                return OMPI_ERRHANDLER_NOHANDLE_INVOKE(rc, FUNC_NAME);
+            }
+            OMPI_CHECK_MPI_COUNT_INT_CONVERSION_OVERFLOW(rc, subsize_array[i]);
+            if (OMPI_SUCCESS != rc) {
+                return OMPI_ERRHANDLER_NOHANDLE_INVOKE(rc, FUNC_NAME);
+            }
+            OMPI_CHECK_MPI_COUNT_INT_CONVERSION_OVERFLOW(rc, start_array[i]);
+            if (OMPI_SUCCESS != rc) {
+                return OMPI_ERRHANDLER_NOHANDLE_INVOKE(rc, FUNC_NAME);
+            }
+#endif
             if( (subsize_array[i] < 1) || (subsize_array[i] > size_array[i]) ) {
                 return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, FUNC_NAME);
             } else if( (start_array[i] < 0) || (start_array[i] > (size_array[i] - subsize_array[i])) ) {
@@ -69,8 +83,6 @@ PROTOTYPE ERROR_CLASS type_create_subarray(INT ndims,
             }
         }
     }
-
-/* TODO:BIGCOUNT: Need to embiggen ompi_datatype_create_subarray */
 
 #if OMPI_BIGCOUNT_SRC
     isize_array = (int *)malloc(ndims * sizeof(int));

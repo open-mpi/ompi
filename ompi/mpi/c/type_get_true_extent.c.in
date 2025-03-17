@@ -52,7 +52,6 @@ PROTOTYPE ERROR_CLASS type_get_true_extent(DATATYPE datatype,
       }
    }
 
-/* TODO:BIGCOUNT: need to embiggen ompi_datatype_get_true_extent */
    rc = ompi_datatype_get_true_extent( datatype, (MPI_Aint *)true_lb, (MPI_Aint *)true_extent );
    OMPI_ERRHANDLER_NOHANDLE_RETURN(rc, rc, FUNC_NAME );
 }

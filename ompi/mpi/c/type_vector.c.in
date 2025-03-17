@@ -57,9 +57,14 @@ PROTOTYPE ERROR_CLASS type_vector(COUNT count,
             OMPI_ERRHANDLER_NOHANDLE_RETURN( MPI_ERR_ARG, 
                                     MPI_ERR_ARG, FUNC_NAME );
         }
+#if OMPI_BIGCOUNT_SRC
+        OMPI_CHECK_MPI_COUNT_INT_CONVERSION_OVERFLOW(rc, count);
+        if (OMPI_SUCCESS != rc) {
+            OMPI_ERRHANDLER_NOHANDLE_RETURN(rc, rc, FUNC_NAME);
+        }
+#endif
     }
 
-/* TODO:BIGCOUNT: Need to embiggen ompi_datatype_set_args */
     rc = ompi_datatype_create_vector ( count, blocklength, stride, oldtype, newtype );
     OMPI_ERRHANDLER_NOHANDLE_CHECK(rc, rc, FUNC_NAME );
 

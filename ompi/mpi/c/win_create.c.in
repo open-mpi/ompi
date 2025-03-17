@@ -60,6 +60,13 @@ PROTOTYPE ERROR_CLASS win_create(BUFFER_OUT base, AINT size, DISP disp_unit,
         } else if ( disp_unit <= 0 ) {
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_DISP, FUNC_NAME);
         }
+#if OMPI_BIGCOUNT_SRC
+        OMPI_CHECK_MPI_COUNT_INT_CONVERSION_OVERFLOW(ret, disp_unit);
+        if (OMPI_SUCCESS != ret) {
+            *win = MPI_WIN_NULL;
+            return OMPI_ERRHANDLER_INVOKE(comm, ret, FUNC_NAME);
+        }
+#endif
     }
 
     /* communicator must be an intracommunicator */
@@ -68,8 +75,7 @@ PROTOTYPE ERROR_CLASS win_create(BUFFER_OUT base, AINT size, DISP disp_unit,
     }
 
     /* create window and return */
-    /* TODO:BIGCOUNT: Need to update internal function with ptrdiff_t for disp_unit argument */
-    ret = ompi_win_create(base, (size_t)size, disp_unit, comm,
+    ret = ompi_win_create(base, (size_t)size, (int)disp_unit, comm,
                           &(info->super), win);
     if (OMPI_SUCCESS != ret) {
         *win = MPI_WIN_NULL;

@@ -58,9 +58,13 @@ PROTOTYPE ERROR_CLASS pack_external(STRING datarep, BUFFER inbuf, COUNT incount,
         OMPI_ERRHANDLER_NOHANDLE_CHECK(rc, rc, FUNC_NAME);
         OMPI_CHECK_USER_BUFFER(rc, inbuf, datatype, incount);
         OMPI_ERRHANDLER_NOHANDLE_CHECK(rc, rc, FUNC_NAME);
+#if OMPI_BIGCOUNT_SRC
+        OMPI_CHECK_MPI_COUNT_INT_CONVERSION_OVERFLOW(rc, incount);
+        if (MPI_SUCCESS != rc) {
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(rc, FUNC_NAME);
+        }
+#endif
     }
-
-    /* TODO:BIGCOUNT: Update ompi_datatype_pack_external for bigcount */
 
     rc = ompi_datatype_pack_external(datarep, inbuf, incount,
                                      datatype, outbuf, 

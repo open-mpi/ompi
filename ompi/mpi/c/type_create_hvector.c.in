@@ -57,9 +57,13 @@ PROTOTYPE ERROR_CLASS type_create_hvector(COUNT count,
             return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_TYPE,
                                           FUNC_NAME );
         }
+#if OMPI_BIGCOUNT_SRC
+        OMPI_CHECK_MPI_COUNT_INT_CONVERSION_OVERFLOW(rc, count);
+        if (OMPI_SUCCESS != rc) {
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(rc, FUNC_NAME);
+        }
+#endif
     }
-
-/* TODO:BIGCOUNT: need to embiggen ompi_datatype_create_hvector */
 
     rc = ompi_datatype_create_hvector ( count, blocklength, stride, oldtype,
                                         newtype );

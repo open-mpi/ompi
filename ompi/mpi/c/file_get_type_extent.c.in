@@ -58,7 +58,6 @@ PROTOTYPE ERROR_CLASS file_get_type_extent(FILE fh, DATATYPE datatype,
 
     switch (fh->f_io_version) {
     case MCA_IO_BASE_V_3_0_0:
-        /* TODO:BIGCOUNT: Need to update below code with bigcount variant */
         rc = fh->f_io_selected_module.v3_0_0.
             io_module_file_get_type_extent(fh, datatype, &tmp_extent);
         *extent = tmp_extent;

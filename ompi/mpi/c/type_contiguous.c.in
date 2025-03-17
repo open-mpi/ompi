@@ -50,6 +50,12 @@ PROTOTYPE ERROR_CLASS type_contiguous(COUNT count,
         } else if( count < 0 ) {
             return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_COUNT, FUNC_NAME);
         }
+#if OMPI_BIGCOUNT_SRC
+        OMPI_CHECK_MPI_COUNT_INT_CONVERSION_OVERFLOW(rc, count);
+        if (OMPI_SUCCESS != rc) {
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(rc, FUNC_NAME);
+        }
+#endif
     }
 
     rc = ompi_datatype_create_contiguous( count, oldtype, newtype );
@@ -57,7 +63,6 @@ PROTOTYPE ERROR_CLASS type_contiguous(COUNT count,
 
     /* data description */
     {
-/* TODO:BIGCOUNT: need to embiggen  ompi_datatype_set_args */
 #if OMPI_BIGCOUNT_SRC
         int icount = (int)count;
         const int* a_i[1] = {&icount};

@@ -55,9 +55,13 @@ PROTOTYPE ERROR_CLASS unpack_external (STRING datarep, BUFFER inbuf, AINT_COUNT 
         OMPI_ERRHANDLER_NOHANDLE_CHECK(rc, rc, FUNC_NAME);
         OMPI_CHECK_USER_BUFFER(rc, outbuf, datatype, outcount);
         OMPI_ERRHANDLER_NOHANDLE_CHECK(rc, rc, FUNC_NAME);
+#if OMPI_BIGCOUNT_SRC
+        OMPI_CHECK_MPI_COUNT_INT_CONVERSION_OVERFLOW(rc, insize);
+        if (MPI_SUCCESS != rc) {
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(rc, FUNC_NAME);
+        }
+#endif
     }
-
-    /* TODO:BIGCOUNT: Update once ompi_datatype_unpack_external() is updated with a bigcount variant */
 
     rc = ompi_datatype_unpack_external(datarep, inbuf, (MPI_Aint) insize,
                                        (MPI_Aint *)position, outbuf, (int) outcount,
