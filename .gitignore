@@ -532,7 +532,7 @@ docs/html
 docs/man
 
 # Generated C Bindings
-ompi/mpi/c/generated_*.c
+ompi/mpi/c/*_generated*.c
 
 # Generated Fortran Bindings
 ompi/mpi/fortran/use-mpi-f08/*_generated.F90
