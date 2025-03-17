@@ -95,6 +95,7 @@ prototype_sources = \
         comm_connect.c.in \
 	comm_create.c.in \
 	comm_create_errhandler.c.in \
+	comm_create_group.c.in \
 	comm_create_from_group.c.in \
 	comm_create_keyval.c.in \
         comm_delete_attr.c.in \
@@ -278,6 +279,7 @@ prototype_sources = \
 	intercomm_create_from_groups.c.in \
 	intercomm_merge.c.in \
 	iprobe.c.in \
+        iallreduce.c.in \
         irecv.c.in \
 	ireduce.c.in \
 	ireduce_scatter_block.c.in \
@@ -308,9 +310,12 @@ prototype_sources = \
         neighbor_alltoallv_init.c.in\
 	neighbor_alltoallw.c.in \
 	neighbor_alltoallw_init.c.in \
+        open_port.c.in \
+	op_c2f.c.in \
 	op_commutative.c.in \
 	op_create.c.in \
 	op_free.c.in \
+	op_f2c.c.in \
 	pack.c.in \
 	pack_external.c.in \
 	pack_external_size.c.in \
@@ -343,6 +348,7 @@ prototype_sources = \
 	rget_accumulate.c.in \
 	rget.c.in \
 	rput.c.in \
+	rsend.c.in \
 	rsend_init.c.in \
         scan.c.in \
 	scan_init.c.in \
