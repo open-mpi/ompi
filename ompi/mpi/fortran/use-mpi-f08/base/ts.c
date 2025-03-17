@@ -28,7 +28,7 @@ int ompi_ts_create_datatype(CFI_cdesc_t *cdesc, int oldcount, MPI_Datatype oldty
     int extent;
     int i, j;
 
-#ifdef OPAL_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
     {
         size_t size;
         assert(cdesc->rank <= MAX_RANK);
