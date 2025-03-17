@@ -18,7 +18,7 @@
 #define __UCC_FILE__ __FILE__
 #endif
 
-#ifdef OPAL_ENABLE_DEBUG
+#if OPAL_ENABLE_DEBUG
 #define UCC_VERBOSE(level, ...) \
     oshmem_output_verbose(level, mca_scoll_ucc_output, "%s:%d - %s() ", \
                         __UCC_FILE__, __LINE__, __FUNCTION__, __VA_ARGS__)
