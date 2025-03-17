@@ -1546,18 +1546,6 @@ subroutine MPI_Finalized_f08(flag,ierror)
 end subroutine MPI_Finalized_f08
 end interface  MPI_Finalized
 
-! ASYNCHRONOUS had to removed from the base argument because
-! the dummy argument is not an assumed-shape array.  This will
-! be okay once the Interop TR is implemented.
-! interface  MPI_Free_mem
-! subroutine MPI_Free_mem_f08(base,ierror)
-!    implicit none
-!    @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ base
-!    @OMPI_FORTRAN_IGNORE_TKR_TYPE@, INTENT(IN) :: base
-!    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-! end subroutine MPI_Free_mem_f08
-! end interface  MPI_Free_mem
-
 interface  MPI_Get_processor_name
 subroutine MPI_Get_processor_name_f08(name,resultlen,ierror)
    use :: mpi_f08_types, only : MPI_MAX_PROCESSOR_NAME
