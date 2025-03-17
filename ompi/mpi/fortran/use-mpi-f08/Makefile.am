@@ -34,6 +34,20 @@ AM_CPPFLAGS =
 
 # This Makefile is only relevant if we're building the "use mpi_f08"
 # MPI bindings.
+
+# Profiling entry points are generated using a combination of the
+# the mod/mpi-f08-rename.h file and the OMPI_BUILD_MPI_PROFILING
+# define flag.  This approach is used both for the generated
+# F08 entry points like MPI_SEND and ones that are still built
+# using *.F90 files like COMM_SET_ERRHANDLER.
+#
+# When adding a new function, if it involves big count arguments and/or
+# involves a user supplied buffer(s), and hence the need to generate
+# either assumed rank or assumed shape arrays with possible async
+# attributes, the *.c.in method needs to be used. Otherwise a *.F90
+# file can be used.   In addition, the mod/mpi-f08-rename.h file 
+# will need to be updated to include a rename line for the new method.
+#
 if OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS
 
 AM_FCFLAGS = -I$(top_srcdir)/ompi/mpi/fortran/use-mpi-f08/mod \
