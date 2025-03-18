@@ -501,7 +501,6 @@ endif
 # generated from prototype_sources above).
 #
 #
-#interface_profile_sources = $(patsubst %.c.in,%.c,$(prototype_sources))
 interface_profile_sources = $(prototype_sources:.c.in=_generated.c)
 
 
