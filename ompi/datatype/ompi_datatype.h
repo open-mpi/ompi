@@ -11,6 +11,7 @@
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * Copyright (c) 2021      IBM Corporation. All rights reserved.
+ * Copyright (c) 2025      Triad National Security, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -377,15 +378,15 @@ OMPI_DECLSPEC int ompi_datatype_safeguard_pointer_debug_breakpoint( const void* 
                                                                     int count );
 #endif  /* OPAL_ENABLE_DEBUG */
 
-OMPI_DECLSPEC int ompi_datatype_pack_external( const char datarep[], const void *inbuf, int incount,
+OMPI_DECLSPEC int ompi_datatype_pack_external( const char datarep[], const void *inbuf, size_t incount,
                                                ompi_datatype_t *datatype, void *outbuf,
                                                MPI_Aint outsize, MPI_Aint *position);
 
 OMPI_DECLSPEC int ompi_datatype_unpack_external( const char datarep[], const void *inbuf, MPI_Aint insize,
-                                                 MPI_Aint *position, void *outbuf, int outcount,
+                                                 MPI_Aint *position, void *outbuf, size_t outcount,
                                                  ompi_datatype_t *datatype);
 
-OMPI_DECLSPEC int ompi_datatype_pack_external_size( const char datarep[], int incount,
+OMPI_DECLSPEC int ompi_datatype_pack_external_size( const char datarep[], size_t incount,
                                                     ompi_datatype_t *datatype, MPI_Aint *size);
 
 #define OMPI_DATATYPE_RETAIN(ddt)                                       \
