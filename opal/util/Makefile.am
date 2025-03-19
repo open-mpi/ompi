@@ -27,16 +27,16 @@
 # $HEADER$
 #
 
+include $(top_srcdir)/Makefile.ompi-rules
+
 SUBDIRS = \
         json \
         keyval
 
-dist_opaldata_DATA = \
+EXTRA_DIST = \
         help-opal-util.txt \
-        json/help-json.txt
-
-AM_LFLAGS = -Popal_show_help_yy
-LEX_OUTPUT_ROOT = lex.opal_show_help_yy
+        json/help-json.txt \
+        convert-help-files-to-c-code.py
 
 noinst_LTLIBRARIES = libopalutil.la libopalutil_core.la
 
@@ -76,7 +76,6 @@ headers = \
         proc.h \
         qsort.h \
         show_help.h \
-        show_help_lex.h \
         stacktrace.h \
         string_copy.h \
         sys_limits.h \
@@ -121,11 +120,16 @@ libopalutil_core_la_SOURCES = \
         qsort.c \
         sha256.c \
         show_help.c \
-        show_help_lex.l \
+        show_help_content.c \
         stacktrace.c \
         string_copy.c \
         sys_limits.c \
         uri.c
+
+show_help_content.c: convert-help-files-to-c-code.py
+	$(OMPI_V_GEN) $(abs_srcdir)/convert-help-files-to-c-code.py \
+	    --root $(abs_top_srcdir) \
+	    --out show_help_content.c
 
 if OPAL_COMPILE_TIMING
 libopalutil_core_la_SOURCES += timings.c
@@ -138,12 +142,6 @@ libopalutil_core_la_DEPENDENCIES = \
         json/libopalutil_json.la \
         keyval/libopalutilkeyval.la
 
-# flex prior to version 2.6.6 uses the POSIX extension fileno()
-# without providing the proper feature test macro, so
-# we add the _POSIX_C_SOURCE macro here.
-# See https://github.com/westes/flex/issues/263
-libopalutil_core_la_CFLAGS = -D_POSIX_C_SOURCE=200809L
-
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
@@ -151,5 +149,5 @@ opaldir = $(opalincludedir)/$(subdir)
 opal_HEADERS = $(headers)
 endif
 
-maintainer-clean-local:
-	rm -f show_help_lex.c
+# This file is generated
+CLEANFILES = show_help_content.c
