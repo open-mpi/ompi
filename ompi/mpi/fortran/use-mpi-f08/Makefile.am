@@ -444,7 +444,7 @@ api_f08_generated.F90: $(prototype_files)
 	    --lang fortran \
 	    --prototype-files $(prototype_files)
 
-EXTRA_DIST = $(extra_dist_prototype_files)
+EXTRA_DIST = $(prototype_files)
 
 # Delete generated file on maintainer-clean
 MAINTAINERCLEANFILES = api_f08_generated.F90

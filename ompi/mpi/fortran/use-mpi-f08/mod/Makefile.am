@@ -80,15 +80,16 @@ config_h = \
 if OMPI_GENERATE_BINDINGS
 
 include ../Makefile.prototype_files
+template_files =${prototype_files:%=../%}
 
-mpi-f08-interfaces-generated.h: $(prototype_files)
+mpi-f08-interfaces-generated.h: $(template_files)
 	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
 	    --builddir $(abs_top_builddir) \
 	    --srcdir $(abs_top_srcdir) \
 	    --output $(abs_builddir)/$@ \
 	    fortran \
 	    interface \
-	    --prototype-files $(prototype_files)
+	    --prototype-files $(template_files)
 
 # Delete generated file on maintainer-clean
 MAINTAINERCLEANFILES = mpi-f08-interfaces-generated.h
