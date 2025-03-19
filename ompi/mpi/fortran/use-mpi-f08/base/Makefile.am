@@ -59,7 +59,7 @@ api_f08_generated.c: $(template_files)
 	    fortran \
 	    code \
 	    --lang c \
-	    --prototype-files $(template_prototype_files)
+	    --prototype-files $(template_files)
 
 # Delete generated files on maintainer-clean
 MAINTAINERCLEANFILES = api_f08_generated.c
