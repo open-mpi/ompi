@@ -61,6 +61,9 @@ PROTOTYPE ERROR_CLASS win_allocate_shared(AINT size, DISP disp_unit, INFO info,
         } else if ( size < 0 ) {
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_SIZE, FUNC_NAME);
         }
+/*
+ * TODO:BIGCOUNT remove this check once ompi-rma supports bigcount
+ */
 #if OMPI_BIGCOUNT_SRC
         OMPI_CHECK_MPI_COUNT_INT_CONVERSION_OVERFLOW(ret, disp_unit);
         if (OMPI_SUCCESS != ret) {
@@ -76,6 +79,9 @@ PROTOTYPE ERROR_CLASS win_allocate_shared(AINT size, DISP disp_unit, INFO info,
     }
 
     /* create window and return */
+/*
+ * TODO:BIGCOUNT remove (int) from disp_unit once ompi-rma supports bigcount
+ */
     ret = ompi_win_allocate_shared((size_t)size, (int)disp_unit, &(info->super),
                                    comm, baseptr, win);
     if (OMPI_SUCCESS != ret) {

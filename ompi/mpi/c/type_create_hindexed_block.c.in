@@ -25,6 +25,11 @@
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/memchecker.h"
 
+/*
+ * TODO:BIGCOUNT this file will need to be updated once
+ * the datatype framework supports bigcount 
+ */
+
 PROTOTYPE ERROR_CLASS type_create_hindexed_block(COUNT count,
                                                  COUNT blocklength,
                                                  AINT_COUNT_ARRAY array_of_displacements,
