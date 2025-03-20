@@ -201,6 +201,7 @@ ompi/mpi/fortran/mpiext/mpi-ext-module.F90
 ompi/mpi/fortran/mpiext/mpi-f08-ext-module.F90
 ompi/mpi/fortran/mpiext-use-mpi/mpi-ext-module.F90
 ompi/mpi/fortran/mpiext-use-mpi-f08/mpi-f08-ext-module.F90
+ompi/mpi/fortran/use-mpi-f08/psizeof_f08.f90
 
 ompi/mpi/fortran/mpif-h/sizeof_f.f90
 ompi/mpi/fortran/mpif-h/profile/p*.c
@@ -516,9 +517,10 @@ docs/_static
 docs/_static/css/custom.css
 docs/_templates
 
-# Common Python virtual environment directory names
+# Common Python virtual environment and cache directory names
 venv
 py??
+__pycache__/
 
 # Copies of PRRTE RST files (i.e., not source controlled in this tree)
 docs/prrte-rst-content
@@ -528,3 +530,11 @@ docs/schizo-ompi-rst-content
 # tarballs)
 docs/html
 docs/man
+
+# Generated C Bindings
+ompi/mpi/c/*_generated*.c
+
+# Generated Fortran Bindings
+ompi/mpi/fortran/use-mpi-f08/*_generated.F90
+ompi/mpi/fortran/use-mpi-f08/base/*_generated.c
+ompi/mpi/fortran/use-mpi-f08/mod/mpi-f08-interfaces-generated.h

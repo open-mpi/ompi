@@ -1,0 +1,133 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
+/*
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ *                         University Research and Technology
+ *                         Corporation.  All rights reserved.
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
+ *                         University of Stuttgart.  All rights reserved.
+ * Copyright (c) 2004-2005 The Regents of the University of California.
+ *                         All rights reserved.
+ * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
+ *                         reserved.
+ * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2024      Triad National Security, LLC. All rights
+ *                         reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+#include "ompi_config.h"
+
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/params.h"
+#include "ompi/communicator/communicator.h"
+#include "ompi/errhandler/errhandler.h"
+#include "ompi/datatype/ompi_datatype.h"
+#include "ompi/memchecker.h"
+
+/*
+ * TODO:BIGCOUNT this file will need to be updated once
+ * the datatype framework supports bigcount 
+ */
+
+
+PROTOTYPE ERROR_CLASS type_create_darray(INT size,
+                                         INT rank,
+                                         INT ndims,
+                                         COUNT_ARRAY gsize_array,
+                                         INT_ARRAY distrib_array,
+                                         INT_ARRAY darg_array,
+                                         INT_ARRAY psize_array,
+                                         INT order,
+                                         DATATYPE oldtype,
+                                         DATATYPE_OUT newtype)
+{
+    int i, rc;
+    int *igsize_array = NULL;
+
+    MEMCHECKER(
+        memchecker_datatype(oldtype);
+    );
+
+    if (MPI_PARAM_CHECK) {
+        int prod_psize = 1;
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+        if( (rank < 0) || (size < 0) || (rank >= size) ) {
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, FUNC_NAME);
+        } else if( ndims < 0 ) {
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_COUNT, FUNC_NAME);
+        } else if( (ndims > 0) && ((NULL == gsize_array) || (NULL == distrib_array) ||
+                                   (NULL == darg_array) || (NULL == psize_array))) {
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, FUNC_NAME);
+        } else if (NULL == newtype) {
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_TYPE, FUNC_NAME);
+        } else if( !(OPAL_DATATYPE_FLAG_DATA & oldtype->super.flags) ) {
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_TYPE, FUNC_NAME);
+        } else if( (MPI_ORDER_C != order) && (MPI_ORDER_FORTRAN != order) ) {
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, FUNC_NAME);
+        }
+        if( ndims > 0 ) {
+#if OMPI_BIGCOUNT_SRC
+            for( i = 0; i < ndims; i++ ) {
+                OMPI_CHECK_MPI_COUNT_INT_CONVERSION_OVERFLOW(rc, gsize_array[i]);
+                if (OMPI_SUCCESS != rc) {
+                    return OMPI_ERRHANDLER_NOHANDLE_INVOKE(rc, FUNC_NAME);
+                }
+            }
+#endif
+            for( i = 0; i < ndims; i++ ) {
+                if( (MPI_DISTRIBUTE_BLOCK != distrib_array[i]) &&
+                    (MPI_DISTRIBUTE_CYCLIC != distrib_array[i]) &&
+                    (MPI_DISTRIBUTE_NONE != distrib_array[i]) ) {
+                    return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, FUNC_NAME);
+                } else if( (gsize_array[i] < 1) || (psize_array[i] < 0) ||
+                           ((darg_array[i] < 0) && (MPI_DISTRIBUTE_DFLT_DARG != darg_array[i]) ) ) {
+                    return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, FUNC_NAME);
+                } else if( (MPI_DISTRIBUTE_DFLT_DARG != darg_array[i]) &&
+                           (MPI_DISTRIBUTE_BLOCK == distrib_array[i]) &&
+                           ((darg_array[i] * psize_array[i]) < gsize_array[i]) ) {
+                    return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, FUNC_NAME);
+                } else if( 1 > psize_array[i] )
+                    return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, FUNC_NAME);
+                prod_psize *= psize_array[i];
+            }
+            if( prod_psize != size )
+                return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, FUNC_NAME);
+        }
+    }
+
+#if OMPI_BIGCOUNT_SRC
+    igsize_array = (int *)malloc(ndims * sizeof(int));
+    if (NULL == igsize_array) {
+        return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_NO_MEM, FUNC_NAME);
+    }
+    for (int ii=0;ii<ndims;ii++) {
+        igsize_array[ii] = (int)gsize_array[ii];
+    }
+#else
+    igsize_array = (int *)gsize_array;
+#endif
+    rc = ompi_datatype_create_darray( size, rank, ndims,
+                                      igsize_array, distrib_array, darg_array, psize_array,
+                                      order, oldtype, newtype );
+    if( OMPI_SUCCESS == rc ) {
+        const int* a_i[8] = {&size, &rank, &ndims, igsize_array, distrib_array, darg_array,
+                             psize_array, &order};
+
+        ompi_datatype_set_args( *newtype, 4 * ndims + 4, a_i, 0, NULL, 1, &oldtype,
+                                MPI_COMBINER_DARRAY );
+    }
+#if OMPI_BIGCOUNT_SRC
+    free(igsize_array);
+#endif
+
+    OMPI_ERRHANDLER_NOHANDLE_RETURN(rc, rc, FUNC_NAME);
+}
