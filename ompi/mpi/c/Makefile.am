@@ -550,6 +550,6 @@ if OMPI_GENERATE_BINDINGS
 	    ompi \
 	    $<
 
+endif
 # Delete generated files on maintainer-clean
 MAINTAINERCLEANFILES = *_generated.c
-endif
