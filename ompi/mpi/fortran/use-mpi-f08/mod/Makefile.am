@@ -91,9 +91,9 @@ mpi-f08-interfaces-generated.h: $(template_files)
 	    interface \
 	    --prototype-files $(template_files)
 
+endif
 # Delete generated file on maintainer-clean
 MAINTAINERCLEANFILES = mpi-f08-interfaces-generated.h
-endif
 
 #
 # Automake doesn't do Fortran dependency analysis, so must list them

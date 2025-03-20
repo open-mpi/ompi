@@ -446,9 +446,10 @@ api_f08_generated.F90: $(prototype_files)
 
 EXTRA_DIST = $(prototype_files)
 
+endif
+
 # Delete generated file on maintainer-clean
 MAINTAINERCLEANFILES = api_f08_generated.F90
-endif
 
 ###########################################################################
 

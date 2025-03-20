@@ -61,8 +61,9 @@ api_f08_generated.c: $(template_files)
 	    --lang c \
 	    --prototype-files $(template_files)
 
+endif
+
 # Delete generated files on maintainer-clean
 MAINTAINERCLEANFILES = api_f08_generated.c
-endif
 
 endif
