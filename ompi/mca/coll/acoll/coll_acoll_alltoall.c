@@ -150,7 +150,7 @@ static void mca_coll_acoll_get_split_factor_and_base_algo
         if (total_dsize <= 32) {
             (*sync_enable) = true;
             (*split_factor) = 8;
-        } else if (total_dsize <= 512) {
+        } else if (total_dsize <= 2048) {
             (*sync_enable) = false;
             (*split_factor) = 8;
         } else if (total_dsize <= 8192) {
@@ -321,7 +321,7 @@ static int mca_coll_acoll_last_rank_scatter_gather
     }
 
 error_handler:
-    ;
+
     return error;
 }
 
@@ -383,8 +383,14 @@ static inline int mca_coll_acoll_exchange_data
     size_t ps_grp_rcount_ext = ps_grp_rcount * rext;
     size_t ps_grp_buf_copy_stride = ps_grp_size * rcount * rext;
 
-    int* displs = (int *) malloc(ps_grp_num_ranks * sizeof(int));
-    int* blen = (int *) malloc(ps_grp_num_ranks * sizeof(int));
+    /* Create a new datatype that iterates over the send buffer in strides
+     * of ps_grp_size * rcount. */
+    struct ompi_datatype_t *new_ddt;
+    ompi_datatype_create_vector(ps_grp_num_ranks, rcount,
+                    (rcount * ps_grp_size),
+                    rdtype, &new_ddt);
+    error = ompi_datatype_commit(&new_ddt);
+    if (MPI_SUCCESS != error) { goto error_handler; }
 
     for (int iter = 1; iter < ps_grp_size; ++iter) {
         int next_rank = ps_grp_start_rank + ((rank + iter) % ps_grp_size);
@@ -392,32 +398,19 @@ static inline int mca_coll_acoll_exchange_data
                         ((rank + ps_grp_size - iter) % ps_grp_size);
         int read_pos = ((rank + iter) % ps_grp_size);
 
-        /* Create a new datatype that iterates over the send buffer in strides
-         * of ps_grp_size * rcount. */
-        struct ompi_datatype_t *new_ddt;
-        int idx = 0;
-        for (idx = 0; idx < ps_grp_num_ranks; ++idx) {
-            displs[idx] = (ptrdiff_t)(read_pos + (ps_grp_size * idx)) *
-                          (ptrdiff_t)rcount;
-            blen[idx] = rcount;
-        }
-        /* Set unit data length and displacements. */
-        error = ompi_datatype_create_indexed(idx, blen, displs, rdtype, &new_ddt);
-        if (MPI_SUCCESS != error) { goto error_handler; }
-
-        error = ompi_datatype_commit(&new_ddt);
-        if (MPI_SUCCESS != error) { goto error_handler; }
-
         error = ompi_coll_base_sendrecv
-                    (rbuf, 1, new_ddt, next_rank, MCA_COLL_BASE_TAG_ALLTOALL,
+                    ((char*)rbuf + ((ptrdiff_t)read_pos * rcount * rext),
+                     1, new_ddt, next_rank,
+                     MCA_COLL_BASE_TAG_ALLTOALL,
                      (char*)work_buf + ((iter - 1) * ps_grp_rcount_ext),
                      ps_grp_rcount, rdtype, prev_rank,
-                     MCA_COLL_BASE_TAG_ALLTOALL, comm, MPI_STATUS_IGNORE, rank);
-        if (MPI_SUCCESS != error) { goto error_handler; }
-
-        error = ompi_datatype_destroy(&new_ddt);
+                     MCA_COLL_BASE_TAG_ALLTOALL,
+                     comm, MPI_STATUS_IGNORE, rank);
         if (MPI_SUCCESS != error) { goto error_handler; }
     }
+
+    error = ompi_datatype_destroy(&new_ddt);
+    if (MPI_SUCCESS != error) { goto error_handler; }
 
     /* Copy received data to the correct blocks. */
     for (int iter = 1; iter < ps_grp_size; ++iter) {
@@ -436,8 +429,6 @@ static inline int mca_coll_acoll_exchange_data
     }
 
 error_handler:
-    if (displs != NULL) free(displs);
-    if (blen != NULL) free(blen);
 
     return error;
 }
