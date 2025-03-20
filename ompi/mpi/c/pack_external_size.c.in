@@ -51,15 +51,9 @@ PROTOTYPE ERROR_CLASS pack_external_size(STRING datarep, COUNT incount,
         } else if (MPI_DATATYPE_NULL == datatype || NULL == datatype) {
             return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_TYPE, FUNC_NAME);
         }
-#if OMPI_BIGCOUNT_SRC
-        OMPI_CHECK_MPI_COUNT_INT_CONVERSION_OVERFLOW(rc, incount);
-        if (MPI_SUCCESS != rc) {
-            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(rc, FUNC_NAME);
-        }
-#endif
     }
 
-    rc = ompi_datatype_pack_external_size(datarep, (int) incount,
+    rc = ompi_datatype_pack_external_size(datarep, incount,
                                           datatype, &tmp_size);
     *size = tmp_size;
 
