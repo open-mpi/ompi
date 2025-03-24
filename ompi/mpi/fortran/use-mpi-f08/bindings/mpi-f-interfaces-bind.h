@@ -4004,12 +4004,12 @@ end subroutine ompi_session_get_info_f
 
 subroutine ompi_session_get_nth_pset_f(session, info, n, pset_len, pset_name, ierror, pset_name_len) &
    BIND(C, name="ompi_session_get_nth_pset_f")
-   use, intrinsic :: ISO_C_BINDING, only : C_CHAR, C_INT
+   use, intrinsic :: ISO_C_BINDING, only : C_CHAR
    implicit none
    INTEGER, INTENT(IN) :: session
    INTEGER, INTENT(IN) :: info
    INTEGER, INTENT(IN) :: n
-   INTEGER(KIND=C_INT), VALUE, INTENT(IN) :: pset_name_len
+   INTEGER, VALUE, INTENT(IN) :: pset_name_len
    INTEGER, INTENT(INOUT) :: pset_len
    CHARACTER(KIND=C_CHAR), DIMENSION(*), INTENT(OUT) :: pset_name
    INTEGER, INTENT(out) :: ierror
