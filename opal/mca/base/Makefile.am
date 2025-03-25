@@ -11,6 +11,7 @@
 #                         All rights reserved.
 # Copyright (c) 2010 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2020      Google LLC. All rights reserved.
+# Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -26,7 +27,7 @@ AM_CPPFLAGS = \
 
 noinst_LTLIBRARIES = libmca_base.la
 
-dist_opaldata_DATA = help-mca-base.txt help-mca-var.txt
+EXTRA_DIST = help-mca-base.txt help-mca-var.txt
 
 # Source code files
 

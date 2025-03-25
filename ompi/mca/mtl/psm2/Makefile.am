@@ -13,8 +13,9 @@
 # Copyright (c) 2015      Intel, Inc. All rights reserved
 # Copyright (c) 2017      Los Alamos National Security, LLC.
 #                         All rights reserved.
-#   
+#
 # Copyright (c) 2017      IBM Corporation.  All rights reserved.
+# Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -22,11 +23,12 @@
 # $HEADER$
 #
 
-EXTRA_DIST = post_configure.sh
+EXTRA_DIST = \
+        post_configure.sh \
+        help-mtl-psm2.txt
 
 AM_CPPFLAGS = $(mtl_psm2_CPPFLAGS)
 
-dist_ompidata_DATA = help-mtl-psm2.txt
 
 mtl_psm2_sources = \
 	       mtl_psm2.c \

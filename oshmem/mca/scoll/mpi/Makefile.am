@@ -1,6 +1,7 @@
 # Copyright (c) 2013-2015 Mellanox Technologies, Inc.
 #                         All rights reserved.
 # Copyright (c) 2017      IBM Corporation.  All rights reserved.
+# Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
 #
 #  Additional copyrights may follow
@@ -9,7 +10,7 @@
 #
 #
 
-dist_oshmemdata_DATA = \
+EXTRA_DIST = \
 	help-oshmem-scoll-mpi.txt
 
 scoll_mpi_sources = \

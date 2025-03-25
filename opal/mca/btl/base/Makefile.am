@@ -11,6 +11,7 @@
 #                         All rights reserved.
 # Copyright (c) 2021      Triad National Security, LLC. All rights reserved.
 # Copyright (c) 2021      Google, LLC. All rights reserved.
+# Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -18,7 +19,7 @@
 # $HEADER$
 #
 
-dist_opaldata_DATA = base/help-mpi-btl-base.txt
+EXTRA_DIST = base/help-mpi-btl-base.txt
 
 headers += \
         base/base.h \

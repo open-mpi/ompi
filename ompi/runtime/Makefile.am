@@ -12,6 +12,7 @@
 # Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
+# Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -21,7 +22,7 @@
 
 # This makefile.am does not stand on its own - it is included from ompi/Makefile.am
 
-dist_ompidata_DATA += runtime/help-mpi-runtime.txt
+EXTRA_DIST += runtime/help-mpi-runtime.txt
 
 headers += \
         runtime/mpiruntime.h \

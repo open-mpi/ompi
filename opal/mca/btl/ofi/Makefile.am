@@ -16,14 +16,13 @@
 # Copyright (c) 2020      Triad National Security, LLC. All rights
 #                         reserved.
 # Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+# Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
 #
 # $HEADER$
 #
-
-#dist_opaldata_DATA = help-mpi-btl-ofi.txt
 
 AM_CPPFLAGS = $(btl_ofi_CPPFLAGS)
 sources = \

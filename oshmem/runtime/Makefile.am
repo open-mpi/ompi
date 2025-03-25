@@ -1,5 +1,6 @@
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
+# Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -9,9 +10,7 @@
 
 # This makefile.am does not stand on its own - it is included from oshmem/Makefile.am
 
-if PROJECT_OSHMEM
-dist_oshmemdata_DATA += runtime/help-shmem-runtime.txt
-endif
+EXTRA_DIST += runtime/help-shmem-runtime.txt
 
 headers += \
 	runtime/runtime.h \
@@ -26,4 +25,3 @@ liboshmem_la_SOURCES += \
 	runtime/oshmem_shmem_params.c \
 	runtime/oshmem_shmem_exchange.c \
 	runtime/oshmem_info_support.c
-

@@ -16,6 +16,7 @@
 #                         reserved.
 # Copyright (c) 2019      Hewlett Packard Enterprise. All rights reserved.
 # Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+# Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -32,7 +33,7 @@
 
 AM_CPPFLAGS = $(common_ofi_CPPFLAGS)
 
-dist_opaldata_DATA = help-common-ofi.txt
+EXTRA_DIST = help-common-ofi.txt
 
 # Header files
 

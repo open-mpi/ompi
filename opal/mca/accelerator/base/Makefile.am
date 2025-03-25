@@ -4,6 +4,7 @@
 # Copyright (c) 2014      Intel, Inc. All rights reserved.
 # Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
 #                         All Rights reserved.
+# Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -11,7 +12,7 @@
 # $HEADER$
 #
 
-dist_opaldata_DATA = base/help-accelerator-base.txt
+EXTRA_DIST = base/help-accelerator-base.txt
 
 headers += \
 	base/base.h

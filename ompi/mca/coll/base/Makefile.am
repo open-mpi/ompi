@@ -9,6 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -16,7 +17,7 @@
 # $HEADER$
 #
 
-dist_ompidata_DATA = base/help-mca-coll-base.txt
+EXTRA_DIST = base/help-mca-coll-base.txt
 
 headers += \
         base/base.h \
@@ -51,4 +52,3 @@ if WANT_FT_MPI
 libmca_coll_la_SOURCES += \
         base/coll_base_agree_noft.c
 endif # WANT_FT_MPI
-

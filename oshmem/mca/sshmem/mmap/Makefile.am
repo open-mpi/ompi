@@ -1,6 +1,7 @@
 # Copyright (c) 2014      Mellanox Technologies, Inc.
 #                         All rights reserved.
 # Copyright (c) 2017      IBM Corporation.  All rights reserved.
+# Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -8,7 +9,7 @@
 # $HEADER$
 #
 
-dist_oshmemdata_DATA = help-oshmem-sshmem-mmap.txt
+EXTRA_DIST = help-oshmem-sshmem-mmap.txt
 
 sources = \
         sshmem_mmap.h \

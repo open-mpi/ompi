@@ -13,6 +13,7 @@
 # Copyright (c) 2010-2011 Los Alamos National Security, LLC.
 #                         All rights reserved.
 # Copyright (c) 2017      IBM Corporation.  All rights reserved.
+# Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -49,4 +50,4 @@ libmca_shmem_posix_la_SOURCES = $(sources)
 libmca_shmem_posix_la_LDFLAGS = -module -avoid-version
 
 # help file
-dist_opaldata_DATA = help-opal-shmem-posix.txt
+EXTRA_DIST = help-opal-shmem-posix.txt

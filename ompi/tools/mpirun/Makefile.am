@@ -4,6 +4,7 @@
 # Copyright (c) 2021-2022 Amazon.com, Inc. or its affiliates.  All Rights reserved.
 # Copyright (c) 2021      Nanook Consulting.  All rights reserved.
 # Copyright (c) 2022      Cisco Systems, Inc.  All rights reserved
+# Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -15,7 +16,7 @@ if OMPI_WANT_PRRTE
 
 bin_PROGRAMS = mpirun
 
-dist_ompidata_DATA = help-mpirun.txt
+EXTRA_DIST = help-mpirun.txt
 
 mpirun_SOURCES = \
     main.c

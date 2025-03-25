@@ -10,6 +10,7 @@
 # Copyright (c) 2020      Triad National Security, LLC. All rights
 #                         reserved.
 # Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+# Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -18,14 +19,13 @@
 #
 
 EXTRA_DIST = post_configure.sh \
+    help-mtl-ofi.txt \
     $(generated_source_modules)
 
 MAINTAINERCLEANFILES = \
     $(generated_sources)
 
 AM_CPPFLAGS = $(mtl_ofi_CPPFLAGS)
-
-dist_ompidata_DATA = help-mtl-ofi.txt
 
 generated_source_modules = \
     mtl_ofi_send_opt.pm \

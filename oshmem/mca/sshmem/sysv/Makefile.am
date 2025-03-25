@@ -2,6 +2,7 @@
 #                         All rights reserved.
 # Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2017      IBM Corporation.  All rights reserved.
+# Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -9,7 +10,7 @@
 # $HEADER$
 #
 
-dist_oshmemdata_DATA = help-oshmem-sshmem-sysv.txt
+EXTRA_DIST = help-oshmem-sshmem-sysv.txt
 
 sources = \
         sshmem_sysv.h \

@@ -21,6 +21,7 @@
 # Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
 # Copyright (c) 2021      Amazon.com, Inc. or its affiliates.  All Rights
 #                         reserved.
+# Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -153,7 +154,7 @@ lib@OMPI_LIBMPI_NAME@_la_LDFLAGS = \
 headers =
 noinst_LTLIBRARIES =
 include_HEADERS =
-dist_ompidata_DATA =
+EXTRA_DIST =
 lib@OMPI_LIBMPI_NAME@_la_SOURCES += $(headers)
 
 # Conditionally install the header files

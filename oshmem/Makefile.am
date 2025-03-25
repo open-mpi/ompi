@@ -8,6 +8,7 @@
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # Copyright (c) 2021      Amazon.com, Inc. or its affiliates.
 #                         All Rights reserved.
+# Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -64,7 +65,7 @@ liboshmem_la_LDFLAGS = \
 headers =
 noinst_LTLIBRARIES =
 include_HEADERS =
-dist_oshmemdata_DATA =
+EXTRA_DIST =
 liboshmem_la_SOURCES += $(headers)
 
 # Conditionally install the header files

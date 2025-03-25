@@ -313,7 +313,7 @@ opal/tools/wrappers/opalCC-wrapper-data.txt
 opal/tools/wrappers/opal_wrapper
 opal/tools/wrappers/opal.pc
 
-opal/util/show_help_lex.c
+opal/util/show_help_content.c
 opal/util/keyval/keyval_lex.c
 
 test/monitoring/aggregate_profile.pl

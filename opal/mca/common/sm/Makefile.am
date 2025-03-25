@@ -12,6 +12,7 @@
 # Copyright (c) 2010-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2010-2015 Los Alamos National Security, LLC.
 #                         All rights reserved.
+# Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -55,7 +56,7 @@ sources = \
 
 # Help file
 
-dist_opaldata_DATA = help-mpi-common-sm.txt
+EXTRA_DIST = help-mpi-common-sm.txt
 
 # As per above, we'll either have an installable or noinst result.
 # The installable one should follow the same MCA prefix naming rules

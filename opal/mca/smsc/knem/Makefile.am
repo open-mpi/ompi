@@ -14,6 +14,7 @@
 #                         reserved.
 # Copyright (c) 2017      IBM Corporation.  All rights reserved.
 # Copyright (c) 2020-2021 Google, LLC. All rights reserved.
+# Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -21,11 +22,12 @@
 # $HEADER$
 #
 
-EXTRA_DIST = post_configure.sh
+EXTRA_DIST = \
+    post_configure.sh \
+    help-smsc-knem.txt
 
 AM_CPPFLAGS = $(smsc_knem_CPPFLAGS)
 
-dist_opaldata_DATA = help-smsc-knem.txt
 
 libmca_smsc_knem_la_sources = \
     smsc_knem_component.c \

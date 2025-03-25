@@ -10,6 +10,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -17,7 +18,7 @@
 # $HEADER$
 #
 
-dist_opaldata_DATA = help-opal-timer-linux.txt
+EXTRA_DIST = help-opal-timer-linux.txt
 
 noinst_LTLIBRARIES = libmca_timer_linux.la
 

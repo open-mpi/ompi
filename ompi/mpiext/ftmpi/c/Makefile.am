@@ -3,6 +3,7 @@
 # Copyright (c) 2016-2022 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
+# Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -37,7 +38,7 @@ libmpiext_ftmpi_c_la_SOURCES = \
 libmpiext_ftmpi_c_la_LIBADD = \
     profile/libpmpiext_ftmpi_c.la
 
-dist_ompidata_DATA = help-mpi-ft.txt
+EXTRA_DIST = help-mpi-ft.txt
 
 ompidir = $(ompiincludedir)/mpiext/
 ompi_HEADERS = $(headers)

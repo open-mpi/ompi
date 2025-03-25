@@ -14,6 +14,7 @@
 # Copyright (c) 2014      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+# Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -28,7 +29,7 @@ if OPAL_INSTALL_BINARIES
 
 bin_PROGRAMS = opal_wrapper
 
-dist_opaldata_DATA = help-opal-wrapper.txt
+EXTRA_DIST = help-opal-wrapper.txt
 
 # Only install the following for developer-level installs
 if WANT_INSTALL_HEADERS

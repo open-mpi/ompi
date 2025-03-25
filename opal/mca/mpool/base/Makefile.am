@@ -12,6 +12,7 @@
 # Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2015      Los Alamos National Security, LLC. All rights
 #                         reserved.
+# Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -31,5 +32,5 @@ libmca_mpool_la_SOURCES += \
 	base/mpool_base_default.c \
 	base/mpool_base_basic.c
 
-dist_opaldata_DATA += \
+EXTRA_DIST += \
         base/help-mpool-base.txt
