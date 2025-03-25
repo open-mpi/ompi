@@ -1,0 +1,39 @@
+--- config/ltmain.sh	2025-03-25 11:32:01
++++ config/ltmain.sh	2025-03-25 11:36:23
+@@ -9023,7 +9023,14 @@
+ 	  compile_deplibs="$new_inherited_linker_flags $compile_deplibs"
+ 	  finalize_deplibs="$new_inherited_linker_flags $finalize_deplibs"
+ 	else
+-	  compiler_flags="$compiler_flags "`$ECHO " $new_inherited_linker_flags" | $SED 's% \([^ $]*\).ltframework% -framework \1%g'`
++	  case $host in
++	    *-*-darwin*)
++	      case $CC in
++		flang*) compiler_flags="$compiler_flags "`$ECHO " $new_inherited_linker_flags" | $SED 's% \([^ $]*\).ltframework% -Wl,-framework,\1%g'`;;
++		*) compiler_flags="$compiler_flags "`$ECHO " $new_inherited_linker_flags" | $SED 's% \([^ $]*\).ltframework% -framework \1%g'`;;
++	      esac;;
++	  *) compiler_flags="$compiler_flags "`$ECHO " $new_inherited_linker_flags" | $SED 's% \([^ $]*\).ltframework% -framework \1%g'`;;
++	  esac
+ 	fi
+       fi
+       dependency_libs=$newdependency_libs
+@@ -9367,7 +9374,7 @@
+ 	  verstring="-compatibility_version $minor_current -current_version $minor_current.$revision"
+           # On Darwin other compilers
+           case $CC in
+-              nagfor*)
++              flang*|nagfor*)
+                   verstring="$wl-compatibility_version $wl$minor_current $wl-current_version $wl$minor_current.$revision"
+                   ;;
+               *)
+@@ -9867,7 +9874,10 @@
+       # Time to change all our "foo.ltframework" stuff back to "-framework foo"
+       case $host in
+ 	*-*-darwin*)
+-	  newdeplibs=`$ECHO " $newdeplibs" | $SED 's% \([^ $]*\).ltframework% -framework \1%g'`
++	  case $CC in
++	    flang*) newdeplibs=`$ECHO " $newdeplibs" | $SED 's% \([^ $]*\).ltframework% -Wl,-framework,\1%g'`;;
++	    *) newdeplibs=`$ECHO " $newdeplibs" | $SED 's% \([^ $]*\).ltframework% -framework \1%g'`;;
++	  esac
+ 	  new_inherited_linker_flags=`$ECHO " $new_inherited_linker_flags" | $SED 's% \([^ $]*\).ltframework% -framework \1%g'`
+ 	  deplibs=`$ECHO " $deplibs" | $SED 's% \([^ $]*\).ltframework% -framework \1%g'`
+ 	  ;;
