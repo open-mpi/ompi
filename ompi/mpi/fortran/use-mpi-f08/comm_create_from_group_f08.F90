@@ -14,6 +14,7 @@
 subroutine MPI_Comm_create_from_group_f08(group, stringtag, info, errhandler, newcomm, ierror)
    use :: mpi_f08_types, only : MPI_Comm, MPI_Group, MPI_Errhandler, MPI_Info
    use :: ompi_mpifh_bindings, only : ompi_comm_create_from_group_f
+   use, intrinsic :: ISO_C_BINDING, only : C_INT
    implicit none
    TYPE(MPI_Group), INTENT(IN) :: group
    CHARACTER(LEN=*), INTENT(IN) :: stringtag
@@ -24,7 +25,7 @@ subroutine MPI_Comm_create_from_group_f08(group, stringtag, info, errhandler, ne
    integer :: c_ierror
 
    call ompi_comm_create_from_group_f(group%MPI_VAL, stringtag, info%MPI_VAL, errhandler%MPI_VAL, &
-                                      newcomm%MPI_VAL, c_ierror, len(stringtag))
+                                      newcomm%MPI_VAL, c_ierror, len(stringtag,KIND=C_INT))
    if (present(ierror)) ierror = c_ierror
 
 end subroutine MPI_Comm_create_from_group_f08

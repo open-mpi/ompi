@@ -15,6 +15,7 @@
 subroutine MPI_Group_from_session_pset_f08(session, pset_name, newgroup, ierror)
    use :: mpi_f08_types, only : MPI_Session, MPI_Group
    use :: ompi_mpifh_bindings, only : ompi_group_from_session_pset_f
+   use, intrinsic :: ISO_C_BINDING, only : C_INT
    implicit none
    TYPE(MPI_Session), INTENT(IN) :: session
    CHARACTER(LEN=*), INTENT(IN) :: pset_name
@@ -22,7 +23,7 @@ subroutine MPI_Group_from_session_pset_f08(session, pset_name, newgroup, ierror)
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
    integer :: c_ierror
 
-   call ompi_group_from_session_pset_f(session%MPI_VAL, pset_name, newgroup%MPI_VAL, c_ierror, len(pset_name))
+   call ompi_group_from_session_pset_f(session%MPI_VAL, pset_name, newgroup%MPI_VAL, c_ierror, len(pset_name,KIND=C_INT))
    if (present(ierror)) ierror = c_ierror
 
 end subroutine MPI_Group_from_session_pset_f08

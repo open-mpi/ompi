@@ -12,6 +12,7 @@
 subroutine MPI_Type_get_name_f08(datatype,type_name,resultlen,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_MAX_OBJECT_NAME
    use :: ompi_mpifh_bindings, only : ompi_type_get_name_f
+   use, intrinsic :: ISO_C_BINDING, only : C_INT
    implicit none
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    CHARACTER(LEN=*), INTENT(OUT) :: type_name
@@ -19,7 +20,8 @@ subroutine MPI_Type_get_name_f08(datatype,type_name,resultlen,ierror)
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
    integer :: c_ierror
 
-   call ompi_type_get_name_f(datatype%MPI_VAL,type_name,resultlen,c_ierror,len(type_name))
+   call ompi_type_get_name_f(datatype%MPI_VAL,type_name,resultlen,c_ierror, &
+                             len(type_name,KIND=C_INT))
    if (present(ierror)) ierror = c_ierror
 
 end subroutine MPI_Type_get_name_f08

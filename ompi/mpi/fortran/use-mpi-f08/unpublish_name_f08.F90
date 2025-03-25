@@ -12,6 +12,7 @@
 subroutine MPI_Unpublish_name_f08(service_name,info,port_name,ierror)
    use :: mpi_f08_types, only : MPI_Info
    use :: ompi_mpifh_bindings, only : ompi_unpublish_name_f
+   use, intrinsic :: ISO_C_BINDING, only : C_INT
    implicit none
    CHARACTER(LEN=*), INTENT(IN) :: service_name, port_name
    TYPE(MPI_Info), INTENT(IN) :: info
@@ -19,7 +20,8 @@ subroutine MPI_Unpublish_name_f08(service_name,info,port_name,ierror)
    integer :: c_ierror
 
    call ompi_unpublish_name_f(service_name,info%MPI_VAL,port_name,c_ierror, &
-                              len(service_name), len(port_name))
+                              len(service_name,KIND=C_INT), &
+                              len(port_name, KIND=C_INT))
    if (present(ierror)) ierror = c_ierror
 
 end subroutine MPI_Unpublish_name_f08
