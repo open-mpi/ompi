@@ -12,6 +12,7 @@
 subroutine MPI_Comm_connect_f08(port_name,info,root,comm,newcomm,ierror)
    use :: mpi_f08_types, only : MPI_Info, MPI_Comm
    use :: ompi_mpifh_bindings, only : ompi_comm_connect_f
+   use, intrinsic :: ISO_C_BINDING, only : C_INT
    implicit none
    CHARACTER(LEN=*), INTENT(IN) :: port_name
    TYPE(MPI_Info), INTENT(IN) :: info
@@ -22,7 +23,7 @@ subroutine MPI_Comm_connect_f08(port_name,info,root,comm,newcomm,ierror)
    integer :: c_ierror
 
    call ompi_comm_connect_f(port_name,info%MPI_VAL,root,comm%MPI_VAL,newcomm%MPI_VAL, &
-                            c_ierror,len(port_name))
+                            c_ierror,len(port_name,KIND=C_INT))
    if (present(ierror)) ierror = c_ierror
 
 end subroutine MPI_Comm_connect_f08

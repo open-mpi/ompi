@@ -12,6 +12,7 @@
 subroutine MPI_Pack_external_size_f08(datarep,incount,datatype,size,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_ADDRESS_KIND
    use :: ompi_mpifh_bindings, only : ompi_pack_external_size_f
+   use, intrinsic :: ISO_C_BINDING, only : C_INT
    implicit none
    CHARACTER(LEN=*), INTENT(IN) :: datarep
    INTEGER, INTENT(IN) :: incount
@@ -20,7 +21,7 @@ subroutine MPI_Pack_external_size_f08(datarep,incount,datatype,size,ierror)
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
    integer :: c_ierror
 
-   call ompi_pack_external_size_f(datarep,incount,datatype%MPI_VAL,size,c_ierror,len(datarep))
+   call ompi_pack_external_size_f(datarep,incount,datatype%MPI_VAL,size,c_ierror,len(datarep,KIND=C_INT))
    if (present(ierror)) ierror = c_ierror
 
 end subroutine MPI_Pack_external_size_f08

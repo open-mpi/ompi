@@ -12,13 +12,14 @@
 subroutine MPI_Info_delete_f08(info,key,ierror)
    use :: mpi_f08_types, only : MPI_Info
    use :: ompi_mpifh_bindings, only : ompi_info_delete_f
+   use, intrinsic :: ISO_C_BINDING, only : C_INT
    implicit none
    TYPE(MPI_Info), INTENT(IN) :: info
    CHARACTER(LEN=*), INTENT(IN) :: key
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
    integer :: c_ierror
 
-   call ompi_info_delete_f(info%MPI_VAL,key,c_ierror,len(key))
+   call ompi_info_delete_f(info%MPI_VAL,key,c_ierror,len(key,KIND=C_INT))
    if (present(ierror)) ierror = c_ierror
 
 end subroutine MPI_Info_delete_f08

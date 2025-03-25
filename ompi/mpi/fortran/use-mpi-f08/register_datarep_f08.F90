@@ -13,7 +13,7 @@
 
 subroutine MPI_Register_datarep_f08(datarep,read_conversion_fn,write_conversion_fn, &
                                     dtype_file_extent_fn,extra_state,ierror)
-   use, intrinsic :: iso_c_binding, only: c_funptr, c_funloc
+   use, intrinsic :: iso_c_binding, only: c_funptr, c_funloc, C_INT
    use :: mpi_f08_types, only : MPI_ADDRESS_KIND
    use :: mpi_f08_interfaces_callbacks, only : MPI_Datarep_conversion_function
    use :: mpi_f08_interfaces_callbacks, only : MPI_Datarep_extent_function
@@ -32,7 +32,7 @@ subroutine MPI_Register_datarep_f08(datarep,read_conversion_fn,write_conversion_
    fwrite_fn = c_funloc(write_conversion_fn)
    fdtype_fn = c_funloc(dtype_file_extent_fn)
    call ompi_register_datarep_f(datarep,fread_fn,fwrite_fn, &
-                                fdtype_fn,extra_state,c_ierror,len(datarep))
+                                fdtype_fn,extra_state,c_ierror,len(datarep,KIND=C_INT))
    if (present(ierror)) ierror = c_ierror
 
 end subroutine MPI_Register_datarep_f08

@@ -12,13 +12,14 @@
 subroutine MPI_Comm_set_name_f08(comm,comm_name,ierror)
    use :: mpi_f08_types, only : MPI_Comm
    use :: ompi_mpifh_bindings, only : ompi_comm_set_name_f
+   use, intrinsic :: ISO_C_BINDING, only : C_INT
    implicit none
    TYPE(MPI_Comm), INTENT(IN) :: comm
    CHARACTER(LEN=*), INTENT(IN) :: comm_name
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
    integer :: c_ierror
 
-   call ompi_comm_set_name_f(comm%MPI_VAL,comm_name,c_ierror,len(comm_name))
+   call ompi_comm_set_name_f(comm%MPI_VAL,comm_name,c_ierror,len(comm_name,KIND=C_INT))
    if (present(ierror)) ierror = c_ierror
 
 end subroutine MPI_Comm_set_name_f08

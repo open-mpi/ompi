@@ -15,6 +15,7 @@
 subroutine MPI_Unpack_external_f08(datarep,inbuf,insize,position,outbuf,outcount,datatype,ierror)
    use :: mpi_f08_types, only : MPI_Datatype, MPI_ADDRESS_KIND
    use :: ompi_mpifh_bindings, only : ompi_unpack_external_f
+   use, intrinsic :: ISO_C_BINDING, only : C_INT
    implicit none
    CHARACTER(LEN=*), INTENT(IN) :: datarep
    OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: inbuf
@@ -27,7 +28,7 @@ subroutine MPI_Unpack_external_f08(datarep,inbuf,insize,position,outbuf,outcount
    integer :: c_ierror
 
    call ompi_unpack_external_f(datarep,inbuf,insize,position,outbuf,&
-                               outcount,datatype%MPI_VAL,c_ierror,len(datarep))
+                               outcount,datatype%MPI_VAL,c_ierror,len(datarep,KIND=C_INT))
    if (present(ierror)) ierror = c_ierror
 
 end subroutine MPI_Unpack_external_f08

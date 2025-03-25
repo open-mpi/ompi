@@ -12,6 +12,7 @@
 subroutine MPI_Info_get_nthkey_f08(info,n,key,ierror)
    use :: mpi_f08_types, only : MPI_Info
    use :: ompi_mpifh_bindings, only : ompi_info_get_nthkey_f
+   use, intrinsic :: ISO_C_BINDING, only : C_INT
    implicit none
    TYPE(MPI_Info), INTENT(IN) :: info
    INTEGER, INTENT(IN) :: n
@@ -19,7 +20,7 @@ subroutine MPI_Info_get_nthkey_f08(info,n,key,ierror)
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
    integer :: c_ierror
 
-   call ompi_info_get_nthkey_f(info%MPI_VAL,n,key,c_ierror,len(key))
+   call ompi_info_get_nthkey_f(info%MPI_VAL,n,key,c_ierror,len(key,KIND=C_INT))
    if (present(ierror)) ierror = c_ierror
 
 end subroutine MPI_Info_get_nthkey_f08
