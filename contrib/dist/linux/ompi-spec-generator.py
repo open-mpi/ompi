@@ -1,10 +1,10 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # generator for Open MPI
 import sys
 import os
 import optparse
-import ConfigParser
+import configparser
 
 
 ######################################################################
@@ -230,15 +230,15 @@ cat <<EOF > $RPM_BUILD_ROOT/etc/profile.d/%%{ompi_name}-%%{ompi_version}.sh
 
 CHANGED=0
 if test -z \"`echo $PATH | grep %%{_prefix}/bin`\"; then
-    PATH=\${PATH}:%%{_prefix}/bin/
+    PATH=\\${PATH}:%%{_prefix}/bin/
     CHANGED=1
 fi
 if test -z \"`echo $LD_LIBRARY_PATH | grep %%{_libdir}`\"; then
-    LD_LIBRARY_PATH=\${LD_LIBRARY_PATH}:%%{_libdir}
+    LD_LIBRARY_PATH=\\${LD_LIBRARY_PATH}:%%{_libdir}
     CHANGED=1
 fi
 if test -z \"`echo $MANPATH | grep %%{_mandir}`\"; then
-    MANPATH=\${MANPATH}:%%{_mandir}
+    MANPATH=\\${MANPATH}:%%{_mandir}
     CHANGED=1
 fi
 if test \"$CHANGED\" = \"1\"; then
@@ -252,16 +252,16 @@ cat <<EOF > $RPM_BUILD_ROOT/etc/profile.d/%%{ompi_name}-%%{ompi_version}s.csh
 # uninstalled, or b) if the RPM is upgraded or uninstalled.
 
 if (\"`echo $PATH | grep %%{_prefix}/bin`\") then
-    setenv PATH \${PATH}:%%{_prefix}/bin/
+    setenv PATH \\${PATH}:%%{_prefix}/bin/
 endif
 if (\"$?LD_LIBRARY_PATH\") then
     if (\"`echo $LD_LIBRARY_PATH | grep %%{_libdir}`\") then
-        setenv LD_LIBRARY_PATH \${LD_LIBRARY_PATH}:%%{_libdir}
+        setenv LD_LIBRARY_PATH \\${LD_LIBRARY_PATH}:%%{_libdir}
     endif
 endif
 if (\"$?MANPATH\") then
     if (\"`echo $MANPATH | grep %%{_mandir}`\") then
-        setenv MANPATH \${MANPATH}:%%{_mandir}
+        setenv MANPATH \\${MANPATH}:%%{_mandir}
     endif
 endif
 EOF
@@ -483,7 +483,7 @@ class Package:
     def Dump(self, prefix=""):
         global options
         for option in options:
-            print "%(prefix)s %(name)-15s : %(value)s" % {"prefix":prefix, "name":option, "value":self.options[option]}
+            print("%(prefix)s %(name)-15s : %(value)s" % {"prefix":prefix, "name":option, "value":self.options[option]})
 
 
 ######################################################################
@@ -506,7 +506,7 @@ def get_package(name):
 ######################################################################
 def verbose(msg):
     if (params.verbose or params.debug):
-        print msg
+        print(msg)
 
 
 ######################################################################
@@ -516,7 +516,7 @@ def verbose(msg):
 ######################################################################
 def debug(msg):
     if (params.debug):
-        print msg
+        print(msg)
 
 
 ######################################################################
@@ -525,7 +525,7 @@ def debug(msg):
 #
 ######################################################################
 def error(msg):
-    print "+++ ERROR : " + msg
+    print("+++ ERROR : " + msg)
 
 
 ######################################################################
@@ -549,7 +549,7 @@ def  get_compiler(name):
 
 def shell_help(cmd):
     for item in shell_cmds.values():
-        print "%(cmd)-10s - %(help)s" % {"cmd":item["name"], "help":item["help"]}
+        print("%(cmd)-10s - %(help)s" % {"cmd":item["name"], "help":item["help"]})
     return True
 
 def shell_quit(cmd):
@@ -560,28 +560,28 @@ def shell_list(cmd):
 
 def shell_list(cmd):
     for package in packages.keys():
-        print package
+        print(package)
     return True
 
 def shell_show(cmd):
     if len(cmd) < 2:
-        print "Usage : show PACKAGE\n"
+        print("Usage : show PACKAGE\n")
     else:
         if cmd[1] in packages.keys():
             package = packages[cmd[1]]
             package.Dump()
         else:
-            print "Invalid package : " + cmd[1]
+            print("Invalid package : " + cmd[1])
     return True
 
 def shell_drop(cmd):
     if len(cmd) < 2:
-        print "Usage : drop PACKAGE"
+        print("Usage : drop PACKAGE")
     else:
         if cmd[1] in packages.keys():
             packages.pop(cmd[1])
         else:
-            print "Package not found : " + cmd[1]
+            print("Package not found : " + cmd[1])
     return True
 
 def shell_write(cmd):
@@ -599,8 +599,8 @@ def shell():
     register_shell_cmd("show", "Display one specific package", shell_show)
     register_shell_cmd("drop", "Remove the specified package from the list", shell_drop)
     register_shell_cmd("write", "Write the specfile", shell_write)
-    print "ompi-spec-generator interactive shell"
-    print "Type 'help' to get more information about available commands."
+    print("ompi-spec-generator interactive shell")
+    print("Type 'help' to get more information about available commands.")
     while loop:
         try:
             cmd = raw_input("ompi-spec-generator> ")
@@ -612,9 +612,9 @@ def shell():
                 shell_cmd_func = shell_cmd["function"]
                 loop = shell_cmd_func(cmd)
             else:
-                print "Invalid command"
+                print("Invalid command")
         except Exception:
-            print "\n"
+            print("\n")
             continue
 
 
@@ -627,7 +627,7 @@ def shell():
 def write_specfile(build_packages):
     global params
     # create output file
-    print "--> Create output file"
+    print("--> Create output file")
     verbose("     Open output file : %(filename)s" % {"filename":params.output})
     specfile = open(params.output, 'w')
     verbose("     Write copyright header")
@@ -735,12 +735,12 @@ def main():
     if ( params.ompi_prefix == "/opt/openmpi" ):
         params.ompi_prefix = params.ompi_prefix + "/" + params.ompi_version
 
-    print "--> Using root " + params.root
+    print("--> Using root " + params.root)
     if params.output == None:
         params.output = params.ompi_name_prefix + params.ompi_name + "-" + params.ompi_version + ".spec"
 
     # find config files
-    print "--> Search for configuration files"
+    print("--> Search for configuration files")
     for root, dirs, files in os.walk(params.root):
         for f in files:
             if configext != os.path.splitext(f)[1]:
@@ -750,7 +750,7 @@ def main():
             verbose("     Found : " + cf)
 
     # parse config files
-    print "--> Parse config files"
+    print("--> Parse config files")
     for file in configfiles:
         verbose("     Parse " + file)
         # parse configfile
@@ -779,7 +779,7 @@ def main():
         return
 
     # filter packages
-    print "--> Select packages"
+    print("--> Select packages")
     build_packages = []
     # filter packages
     if params.packages != None:
@@ -795,7 +795,7 @@ def main():
         build_packages = packages.values()
 
     # do sanity check on the components
-    print "--> Sanity check packages"
+    print("--> Sanity check packages")
     for package in build_packages:
         verbose("     Check package " + package.getOption("name") )
         if params.debug:
@@ -806,7 +806,7 @@ def main():
     write_specfile(build_packages)
 
     # done
-    print "--> Finished."
+    print("--> Finished.")
 
 
 if ("__main__" == __name__):
