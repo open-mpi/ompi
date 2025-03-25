@@ -12,6 +12,7 @@
 subroutine MPI_File_set_view_f08(fh,disp,etype,filetype,datarep,info,ierror)
    use :: mpi_f08_types, only : MPI_File, MPI_Datatype, MPI_Info, MPI_OFFSET_KIND
    use :: ompi_mpifh_bindings, only : ompi_file_set_view_f
+   use, intrinsic :: ISO_C_BINDING, only : C_INT
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    INTEGER(MPI_OFFSET_KIND), INTENT(IN) :: disp
@@ -23,7 +24,7 @@ subroutine MPI_File_set_view_f08(fh,disp,etype,filetype,datarep,info,ierror)
    integer :: c_ierror
 
    call ompi_file_set_view_f(fh%MPI_VAL,disp,etype%MPI_VAL,filetype%MPI_VAL, &
-                             datarep,info%MPI_VAL,c_ierror,len(datarep))
+                             datarep,info%MPI_VAL,c_ierror,len(datarep,KIND=C_INT))
    if (present(ierror)) ierror = c_ierror
 
 end subroutine MPI_File_set_view_f08

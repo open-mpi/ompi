@@ -11,13 +11,14 @@
 
 subroutine MPI_Get_processor_name_f08(name,resultlen,ierror)
    use :: ompi_mpifh_bindings, only : ompi_get_processor_name_f
+   use, intrinsic :: ISO_C_BINDING, only : C_INT
    implicit none
    character(len=*), intent(out) :: name
    integer, intent(out) :: resultlen
    integer, optional, intent(out) :: ierror
    integer :: c_ierror
 
-   call ompi_get_processor_name_f(name,resultlen,c_ierror,len(name))
+   call ompi_get_processor_name_f(name,resultlen,c_ierror,len(name,KIND=C_INT))
    if (present(ierror)) ierror = c_ierror
 
 end subroutine MPI_Get_processor_name_f08

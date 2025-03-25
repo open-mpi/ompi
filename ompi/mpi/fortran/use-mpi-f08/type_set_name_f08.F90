@@ -12,13 +12,14 @@
 subroutine MPI_Type_set_name_f08(datatype,type_name,ierror)
    use :: mpi_f08_types, only : MPI_Datatype
    use :: ompi_mpifh_bindings, only : ompi_type_set_name_f
+   use, intrinsic :: ISO_C_BINDING, only : C_INT
    implicit none
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    CHARACTER(LEN=*), INTENT(IN) :: type_name
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
    integer :: c_ierror
 
-   call ompi_type_set_name_f(datatype%MPI_VAL,type_name,c_ierror,len(type_name))
+   call ompi_type_set_name_f(datatype%MPI_VAL,type_name,c_ierror,len(type_name,KIND=C_INT))
    if (present(ierror)) ierror = c_ierror
 
 end subroutine MPI_Type_set_name_f08

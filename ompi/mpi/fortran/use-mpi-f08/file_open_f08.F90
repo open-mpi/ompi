@@ -12,6 +12,7 @@
 subroutine MPI_File_open_f08(comm,filename,amode,info,fh,ierror)
    use :: mpi_f08_types, only : MPI_Comm, MPI_Info, MPI_File
    use :: ompi_mpifh_bindings, only : ompi_file_open_f
+   use, intrinsic :: ISO_C_BINDING, only : C_INT
    implicit none
    TYPE(MPI_Comm), INTENT(IN) :: comm
    CHARACTER(LEN=*), INTENT(IN) :: filename
@@ -22,7 +23,7 @@ subroutine MPI_File_open_f08(comm,filename,amode,info,fh,ierror)
    integer :: c_ierror
 
    call ompi_file_open_f(comm%MPI_VAL,filename,amode,info%MPI_VAL,fh%MPI_VAL, &
-                         c_ierror, len(filename))
+                         c_ierror, len(filename,KIND=C_INT))
    if (present(ierror)) ierror = c_ierror
 
 end subroutine MPI_File_open_f08

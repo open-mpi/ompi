@@ -12,13 +12,14 @@
 subroutine MPI_Win_set_name_f08(win,win_name,ierror)
    use :: mpi_f08_types, only : MPI_Win
    use :: ompi_mpifh_bindings, only : ompi_win_set_name_f
+   use, intrinsic :: ISO_C_BINDING, only : C_INT
    implicit none
    TYPE(MPI_Win), INTENT(IN) :: win
    CHARACTER(LEN=*), INTENT(IN) :: win_name
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
    integer :: c_ierror
 
-   call ompi_win_set_name_f(win%MPI_VAL,win_name,c_ierror,len(win_name))
+   call ompi_win_set_name_f(win%MPI_VAL,win_name,c_ierror,len(win_name,KIND=C_INT))
    if (present(ierror)) ierror = c_ierror
 
 end subroutine MPI_Win_set_name_f08

@@ -13,6 +13,7 @@ subroutine MPI_Win_get_name_f08(win,win_name,resultlen,ierror)
    use, intrinsic :: ISO_C_BINDING, only : C_CHAR
    use :: mpi_f08_types, only : MPI_Win, MPI_MAX_OBJECT_NAME
    use :: ompi_mpifh_bindings, only : ompi_win_get_name_f
+   use, intrinsic :: ISO_C_BINDING, only : C_INT
    implicit none
    TYPE(MPI_Win), INTENT(IN) :: win
    CHARACTER(KIND=C_CHAR), DIMENSION(*), INTENT(OUT) :: win_name
@@ -20,7 +21,8 @@ subroutine MPI_Win_get_name_f08(win,win_name,resultlen,ierror)
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
    integer :: c_ierror
 
-   call ompi_win_get_name_f(win%MPI_VAL,win_name,resultlen,c_ierror,len(win_name))
+   call ompi_win_get_name_f(win%MPI_VAL,win_name,resultlen,c_ierror, &
+                            len(win_name,KIND=C_INT))
    if (present(ierror)) ierror = c_ierror
 
 end subroutine MPI_Win_get_name_f08
