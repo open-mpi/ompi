@@ -18,6 +18,10 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/pml/pml.h"
 
+#if OMPI_HAVE_MPI_EXT_CONTINUE
+#include "ompi/mpiext/continue/c/continuation.h"
+#endif /* OMPI_HAVE_MPI_EXT_CONTINUE */
+
 static int ompi_comm_revoke_local(ompi_communicator_t* comm,
                                   ompi_comm_rbcast_message_t* msg);
 
@@ -93,6 +97,14 @@ static int ompi_comm_revoke_local(ompi_communicator_t* comm, ompi_comm_rbcast_me
     MCA_PML_CALL(revoke_comm(comm, false));
     /* Signal the point-to-point stack to recheck requests */
     wait_sync_global_wakeup(MPI_ERR_REVOKED);
+
+#ifdef OMPI_HAVE_MPI_EXT_CONTINUE
+    /* Continuations:
+     * Release continuations and mark them as failed.
+     */
+    ompi_continue_global_wakeup(MPI_ERR_PROC_FAILED);
+#endif // OMPI_HAVE_MPI_EXT_CONTINUE
+
     return true;
 }
 

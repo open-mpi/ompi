@@ -43,6 +43,11 @@
 #include "opal/mca/threads/wait_sync.h"
 #include "ompi/constants.h"
 #include "ompi/runtime/params.h"
+#include "ompi/request/mpi_object.h"
+
+#if OMPI_HAVE_MPI_EXT_CONTINUE
+#include "ompi/mpiext/continue/c/continuation.h"
+#endif /* OMPI_HAVE_MPI_EXT_CONTINUE */
 
 BEGIN_C_DECLS
 
@@ -101,30 +106,6 @@ typedef int (*ompi_request_cancel_fn_t)(struct ompi_request_t* request, int flag
 typedef int (*ompi_request_complete_fn_t)(struct ompi_request_t* request);
 
 /**
- * Forward declaration
- */
-struct ompi_communicator_t;
-
-/**
- * Forward declaration
- */
-struct ompi_win_t;
-
-/**
- * Forward declaration
- */
-struct ompi_file_t;
-
-/**
- * Union for holding several different MPI pointer types on the request
- */
-typedef union ompi_mpi_object_t {
-    struct ompi_communicator_t *comm;
-    struct ompi_file_t *file;
-    struct ompi_win_t *win;
-} ompi_mpi_object_t;
-
-/**
  * Main top-level request struct definition
  */
 struct ompi_request_t {
@@ -158,6 +139,9 @@ typedef struct ompi_request_t ompi_request_t;
 
 #define REQUEST_PENDING        (void *)0L
 #define REQUEST_COMPLETED      (void *)1L
+
+#define REQUEST_CB_PENDING     (ompi_request_complete_fn_t)0L
+#define REQUEST_CB_COMPLETED   (ompi_request_complete_fn_t)1L
 
 struct ompi_predefined_request_t {
     struct ompi_request_t request;
@@ -450,6 +434,11 @@ static inline bool ompi_request_tag_is_collective(int tag) {
 
 static inline void ompi_request_wait_completion(ompi_request_t *req)
 {
+#if OMPI_HAVE_MPI_EXT_CONTINUE
+    if (OMPI_REQUEST_CONT == req->req_type) {
+        ompi_continue_progress_request(req);
+    }
+#endif /* OMPI_HAVE_MPI_EXT_CONTINUE */
     if (opal_using_threads ()) {
         if(!REQUEST_COMPLETE(req)) {
             void *_tmp_ptr;
@@ -467,7 +456,20 @@ static inline void ompi_request_wait_completion(ompi_request_t *req)
             WAIT_SYNC_INIT(&sync, 1);
 
             if (OPAL_ATOMIC_COMPARE_EXCHANGE_STRONG_PTR(&req->req_complete, &_tmp_ptr, &sync)) {
+#if OMPI_HAVE_MPI_EXT_CONTINUE
+                if (OMPI_REQUEST_CONT == req->req_type) {
+                    /* let the continuations be processed as part of the global progress loop
+                    * while we're waiting for their completion */
+                    ompi_continue_register_request_progress(req, &sync);
+                }
+#endif /* OMPI_HAVE_MPI_EXT_CONTINUE */
                 SYNC_WAIT(&sync);
+
+#if OMPI_HAVE_MPI_EXT_CONTINUE
+                if (OMPI_REQUEST_CONT == req->req_type) {
+                    ompi_continue_deregister_request_progress(req);
+                }
+#endif /* OMPI_HAVE_MPI_EXT_CONTINUE */
             } else {
                 /* completed before we had a chance to swap in the sync object */
                 WAIT_SYNC_SIGNALLED(&sync);
@@ -489,6 +491,13 @@ static inline void ompi_request_wait_completion(ompi_request_t *req)
      }
      opal_atomic_rmb();
     } else {
+#if OMPI_HAVE_MPI_EXT_CONTINUE
+        if (OMPI_REQUEST_CONT == req->req_type) {
+            /* let the continuations be processed as part of the global progress loop
+            * while we're waiting for their completion */
+            ompi_continue_register_request_progress(req, NULL);
+        }
+#endif /* OMPI_HAVE_MPI_EXT_CONTINUE */
         while(!REQUEST_COMPLETE(req)) {
             opal_progress();
 #if OPAL_ENABLE_FT_MPI
@@ -499,6 +508,12 @@ static inline void ompi_request_wait_completion(ompi_request_t *req)
             }
 #endif /* OPAL_ENABLE_FT_MPI */
         }
+
+#if OMPI_HAVE_MPI_EXT_CONTINUE
+        if (OMPI_REQUEST_CONT == req->req_type) {
+            ompi_continue_deregister_request_progress(req);
+        }
+#endif /* OMPI_HAVE_MPI_EXT_CONTINUE */
     }
 }
 
@@ -518,12 +533,13 @@ static inline void ompi_request_wait_completion(ompi_request_t *req)
 static inline int ompi_request_complete(ompi_request_t* request, bool with_signal)
 {
     int rc = 0;
-
-    if(NULL != request->req_complete_cb) {
-        /* Set the request cb to NULL to allow resetting in the callback */
-        ompi_request_complete_fn_t fct = request->req_complete_cb;
-        request->req_complete_cb = NULL;
-        rc = fct( request );
+    ompi_request_complete_fn_t cb;
+	cb = (ompi_request_complete_fn_t)OPAL_ATOMIC_SWAP_PTR((opal_atomic_intptr_t*)&request->req_complete_cb,
+			                                              (intptr_t)REQUEST_CB_COMPLETED);
+    if (REQUEST_CB_PENDING != cb) {
+        request->req_complete_cb = REQUEST_CB_PENDING;
+        opal_atomic_wmb();
+        rc = cb(request);
     }
 
     if (0 == rc) {
@@ -549,12 +565,18 @@ static inline int ompi_request_set_callback(ompi_request_t* request,
                                             void* cb_data)
 {
     request->req_complete_cb_data = cb_data;
-    request->req_complete_cb = cb;
-    /* If request is completed and the callback is not called, need to call callback */
-    if ((NULL != request->req_complete_cb) && (request->req_complete == REQUEST_COMPLETED)) {
-        ompi_request_complete_fn_t fct = request->req_complete_cb;
-        request->req_complete_cb = NULL;
-        return fct( request );
+    opal_atomic_wmb();
+    if ((REQUEST_CB_COMPLETED == (ompi_request_complete_fn_t)request->req_complete_cb) ||
+        (REQUEST_CB_COMPLETED == (ompi_request_complete_fn_t)OPAL_ATOMIC_SWAP_PTR((opal_atomic_intptr_t*)&request->req_complete_cb,
+                                                                                   (intptr_t)cb))) {
+        if (NULL != cb) {
+            /* the request was marked at least partially completed, make sure it's fully complete */
+            while (!REQUEST_COMPLETE(request)) {}
+            /* Set the request cb to NULL to allow resetting in the callback */
+            request->req_complete_cb = REQUEST_CB_PENDING;
+            opal_atomic_wmb();
+            cb(request);
+        }
     }
     return OMPI_SUCCESS;
 }

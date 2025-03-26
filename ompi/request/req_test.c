@@ -26,6 +26,10 @@
 #include "ompi/request/request_default.h"
 #include "ompi/request/grequest.h"
 
+#if OMPI_HAVE_MPI_EXT_CONTINUE
+#include "ompi/mpiext/continue/c/continuation.h"
+#endif /* OMPI_HAVE_MPI_EXT_CONTINUE */
+
 int ompi_request_default_test(ompi_request_t ** rptr,
                               int *completed,
                               ompi_status_public_t * status )
@@ -58,6 +62,7 @@ recheck_request_status:
             opal_atomic_rmb();
             OMPI_COPY_STATUS(status, request->req_status, false);
         }
+
         if( request->req_persistent ) {
             request->req_state = OMPI_REQUEST_INACTIVE;
             return request->req_status.MPI_ERROR;
@@ -88,7 +93,17 @@ recheck_request_status:
          * leaving. We will call the opal_progress only once per call.
          */
         ++do_it_once;
-        if (0 != opal_progress()) {
+        int rc = 0;
+
+#if OMPI_HAVE_MPI_EXT_CONTINUE
+        if (OMPI_REQUEST_CONT == request->req_type) {
+            /* continuations may elect to not participate in global progress
+             * so progress them separately. */
+            rc = ompi_continue_progress_request(request);
+        }
+#endif // OMPI_HAVE_MPI_EXT_CONTINUE
+
+        if (rc != 0 || 0 != opal_progress()) {
             goto recheck_request_status;
         }
     }
@@ -157,6 +172,14 @@ int ompi_request_default_test_any(
             return MPI_ERR_PROC_FAILED_PENDING;
         }
 #endif /* OPAL_ENABLE_FT_MPI */
+
+#if OMPI_HAVE_MPI_EXT_CONTINUE
+        if (OMPI_REQUEST_CONT == request->req_type) {
+            /* continuations may elect to not participate in global progress
+             * so progress them separately. */
+            ompi_continue_progress_request(request);
+        }
+#endif // OMPI_HAVE_MPI_EXT_CONTINUE
     }
 
     /* Only fall through here if we found nothing */
@@ -195,6 +218,15 @@ int ompi_request_default_test_all(
             num_completed++;
             continue;
         }
+
+#if OMPI_HAVE_MPI_EXT_CONTINUE
+        if (OMPI_REQUEST_CONT == request->req_type) {
+            /* continuations may elect to not participate in global progress
+             * so progress them separately. */
+            ompi_continue_progress_request(request);
+        }
+#endif // OMPI_HAVE_MPI_EXT_CONTINUE
+
 #if OPAL_ENABLE_FT_MPI
         /* Check for dead requests due to process failure */
         /* Special case for MPI_ANY_SOURCE */
@@ -218,8 +250,11 @@ int ompi_request_default_test_all(
             }
         }
 #endif /* OPAL_ENABLE_PROGRESS_THREADS */
-        /* short-circuit */
+
+#if !OMPI_HAVE_MPI_EXT_CONTINUE
+        /* short-circuit, unless there may be continuation requests */
         break;
+#endif /* OMPI_HAVE_MPI_EXT_CONTINUE */
     }
 
     if (num_completed != count) {
@@ -248,6 +283,7 @@ int ompi_request_default_test_all(
                 ompi_grequest_invoke_query(request, &request->req_status);
             }
             OMPI_COPY_STATUS(&statuses[i], request->req_status, true);
+
             if( request->req_persistent ) {
                 request->req_state = OMPI_REQUEST_INACTIVE;
                 continue;
@@ -283,6 +319,7 @@ int ompi_request_default_test_all(
             if (OMPI_REQUEST_GEN == request->req_type) {
                 ompi_grequest_invoke_query(request, &request->req_status);
             }
+
             if( request->req_persistent ) {
                 request->req_state = OMPI_REQUEST_INACTIVE;
                 continue;
@@ -332,6 +369,7 @@ int ompi_request_default_test_some(
             indices[num_requests_done++] = i;
             continue;
         }
+
 #if OPAL_ENABLE_FT_MPI
         /* Check for dead requests due to process failure */
         /* Special case for MPI_ANY_SOURCE - Error managed below */
@@ -340,6 +378,14 @@ int ompi_request_default_test_some(
             indices[num_requests_done++] = i;
         }
 #endif /* OPAL_ENABLE_FT_MPI */
+
+#if OMPI_HAVE_MPI_EXT_CONTINUE
+        if (OMPI_REQUEST_CONT == request->req_type) {
+            /* continuations may elect to not participate in global progress
+             * so progress them separately. */
+            ompi_continue_progress_request(request);
+        }
+#endif // OMPI_HAVE_MPI_EXT_CONTINUE
     }
 
     /*
