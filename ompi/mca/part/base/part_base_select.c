@@ -129,6 +129,7 @@ int mca_part_base_select(bool enable_progress_threads,
             continue;
         }
 
+
         opal_output_verbose( 10, ompi_part_base_framework.framework_output,
                              "select: init returned priority %d", priority );
         if (priority > best_priority) {
@@ -216,7 +217,7 @@ int mca_part_base_select(bool enable_progress_threads,
     /* This base function closes, unloads, and removes from the
        available list all unselected components.  The available list will
        contain only the selected component. */
-
+    
     mca_base_components_close(ompi_part_base_framework.framework_output,
                               &ompi_part_base_framework.framework_components,
                               (mca_base_component_t *) best_component);
@@ -227,7 +228,7 @@ int mca_part_base_select(bool enable_progress_threads,
     }
 
     /* All done */
-
+    
     return OMPI_SUCCESS;
 }
 
