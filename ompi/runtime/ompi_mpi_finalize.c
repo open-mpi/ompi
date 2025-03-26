@@ -193,9 +193,10 @@ int ompi_mpi_finalize(void)
     opal_atomic_swap_32(&ompi_mpi_state,
                         OMPI_MPI_STATE_FINALIZE_PAST_COMM_SELF_DESTRUCT);
 
-#if OPAL_ENABLE_PROGRESS_THREADS == 0
-    opal_progress_set_event_flag(OPAL_EVLOOP_ONCE | OPAL_EVLOOP_NONBLOCK);
-#endif
+    /* shutdown async progress thread before tearing down further services */
+    if (opal_async_progress_thread_spawned) {
+        opal_progress_shutdown_async_progress_thread();
+    }
 
     /* NOTE: MPI-2.1 requires that MPI_FINALIZE is "collective" across
        *all* connected processes.  This only means that all processes
