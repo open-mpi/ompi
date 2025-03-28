@@ -104,6 +104,18 @@ BEGIN_C_DECLS
         }                                                               \
     } while (0)
 
+
+/* check for integer overflow - needed while parts of Open MPI have not been embiggened */
+#define OMPI_CHECK_MPI_COUNT_INT_CONVERSION_OVERFLOW(RC, x) \
+    do { \
+        if ((x) > INT_MAX) { \
+            (RC) = MPI_ERR_VALUE_TOO_LARGE; \
+        } else { \
+            (RC) = MPI_SUCCESS; \
+       }  \
+    } while (0)
+
+
 END_C_DECLS
 
 #endif /* OMPI_C_BINDINGS_H */

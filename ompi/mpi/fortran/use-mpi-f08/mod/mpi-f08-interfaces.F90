@@ -24,6 +24,7 @@
 module mpi_f08_interfaces
 
 #include "mpi-f08-interfaces.h"
+#include "mpi-f08-interfaces-generated.h"
 
 ! MPI_Wtick is not a wrapper function
 !
