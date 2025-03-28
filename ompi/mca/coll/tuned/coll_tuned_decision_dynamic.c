@@ -12,7 +12,7 @@
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.
+ * Copyright (c) 2020-2025 Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
  * $COPYRIGHT$
  *
@@ -60,7 +60,8 @@ ompi_coll_tuned_allreduce_intra_dec_dynamic (const void *sbuf, void *rbuf, size_
 {
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_allreduce_intra_dec_dynamic"));
+    OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
+        "ompi_coll_tuned_allreduce_intra_dec_dynamic"));
 
     /* Check first if an algorithm is set explicitly for this collective */
     if (tuned_module->user_forced[ALLREDUCE].algorithm) {
@@ -111,7 +112,8 @@ int ompi_coll_tuned_alltoall_intra_dec_dynamic(const void *sbuf, size_t scount,
 {
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_alltoall_intra_dec_dynamic"));
+    OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
+        "ompi_coll_tuned_alltoall_intra_dec_dynamic"));
 
     /* Check first if an algorithm is set explicitly for this collective */
     if (tuned_module->user_forced[ALLTOALL].algorithm) {
@@ -167,7 +169,8 @@ int ompi_coll_tuned_alltoallv_intra_dec_dynamic(const void *sbuf, ompi_count_arr
 {
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_alltoallv_intra_dec_dynamic"));
+    OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
+        "ompi_coll_tuned_alltoallv_intra_dec_dynamic"));
 
     /* Check first if an algorithm is set explicitly for this collective */
     if (tuned_module->user_forced[ALLTOALLV].algorithm) {
@@ -215,7 +218,8 @@ int ompi_coll_tuned_barrier_intra_dec_dynamic(struct ompi_communicator_t *comm,
 {
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,"ompi_coll_tuned_barrier_intra_dec_dynamic"));
+    OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
+        "ompi_coll_tuned_barrier_intra_dec_dynamic"));
 
     /* Check first if an algorithm is set explicitly for this collective */
     if (tuned_module->user_forced[BARRIER].algorithm) {
@@ -257,7 +261,8 @@ int ompi_coll_tuned_bcast_intra_dec_dynamic(void *buf, size_t count,
 {
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream, "coll:tuned:bcast_intra_dec_dynamic"));
+    OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
+        "coll:tuned:bcast_intra_dec_dynamic"));
 
     /* Check first if an algorithm is set explicitly for this collective */
     if (tuned_module->user_forced[BCAST].algorithm) {
@@ -309,7 +314,8 @@ int ompi_coll_tuned_reduce_intra_dec_dynamic( const void *sbuf, void *rbuf,
 {
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream, "coll:tuned:reduce_intra_dec_dynamic"));
+    OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
+        "coll:tuned:reduce_intra_dec_dynamic"));
 
     /* Check first if an algorithm is set explicitly for this collective */
     if (tuned_module->user_forced[REDUCE].algorithm) {
@@ -365,7 +371,8 @@ int ompi_coll_tuned_reduce_scatter_intra_dec_dynamic(const void *sbuf, void *rbu
 {
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream, "coll:tuned:reduce_scatter_intra_dec_dynamic"));
+    OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
+        "coll:tuned:reduce_scatter_intra_dec_dynamic"));
 
     /* Check first if an algorithm is set explicitly for this collective */
     if (tuned_module->user_forced[REDUCESCATTER].algorithm) {
@@ -420,7 +427,8 @@ int ompi_coll_tuned_reduce_scatter_block_intra_dec_dynamic(const void *sbuf, voi
 {
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream, "coll:tuned:reduce_scatter_block_intra_dec_dynamic"));
+    OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
+        "coll:tuned:reduce_scatter_block_intra_dec_dynamic"));
 
     /* Check first if an algorithm is set explicitly for this collective */
     if (tuned_module->user_forced[REDUCESCATTERBLOCK].algorithm) {
@@ -474,7 +482,7 @@ int ompi_coll_tuned_allgather_intra_dec_dynamic(const void *sbuf, size_t scount,
 {
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,
+    OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
                  "ompi_coll_tuned_allgather_intra_dec_dynamic"));
 
     /* Check first if an algorithm is set explicitly for this collective */
@@ -536,7 +544,7 @@ int ompi_coll_tuned_allgatherv_intra_dec_dynamic(const void *sbuf, size_t scount
 {
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,
+    OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
                  "ompi_coll_tuned_allgatherv_intra_dec_dynamic"));
 
     /* Check first if an algorithm is set explicitly for this collective */
@@ -593,7 +601,7 @@ int ompi_coll_tuned_gather_intra_dec_dynamic(const void *sbuf, size_t scount,
 {
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,
+    OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
                  "ompi_coll_tuned_gather_intra_dec_dynamic"));
 
     /* Check first if an algorithm is set explicitly for this collective */
@@ -643,7 +651,7 @@ int ompi_coll_tuned_scatter_intra_dec_dynamic(const void *sbuf, size_t scount,
 {
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,
+    OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
                  "ompi_coll_tuned_scatter_intra_dec_dynamic"));
 
     /* Check first if an algorithm is set explicitly for this collective */
@@ -692,7 +700,7 @@ int ompi_coll_tuned_exscan_intra_dec_dynamic(const void *sbuf, void* rbuf, size_
 {
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,
+    OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
                  "ompi_coll_tuned_exscan_intra_dec_dynamic"));
 
     /* Check first if an algorithm is set explicitly for this collective */
@@ -736,7 +744,7 @@ int ompi_coll_tuned_scan_intra_dec_dynamic(const void *sbuf, void* rbuf, size_t 
 {
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,
+    OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
                  "ompi_coll_tuned_scan_intra_dec_dynamic"));
 
     /* Check first if an algorithm is set explicitly for this collective */
