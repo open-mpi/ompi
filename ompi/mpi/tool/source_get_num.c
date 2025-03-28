@@ -33,6 +33,5 @@ int MPI_T_source_get_num (int *num_source)
         return MPI_ERR_ARG;
     }
 
-    *num_source = 0;
-    return MPI_SUCCESS;
+    return mca_base_source_get_count (num_source);
 }
