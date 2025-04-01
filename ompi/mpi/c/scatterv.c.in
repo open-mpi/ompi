@@ -49,12 +49,12 @@ PROTOTYPE ERROR_CLASS scatterv(BUFFER sendbuf, COUNT_ARRAY sendcounts, DISP_ARRA
         ptrdiff_t ext;
 
         size = ompi_comm_remote_size(comm);
-        ompi_datatype_type_extent(recvtype, &ext);
 
         memchecker_comm(comm);
         if(OMPI_COMM_IS_INTRA(comm)) {
               if(ompi_comm_rank(comm) == root) {
                 memchecker_datatype(sendtype);
+                ompi_datatype_type_extent(sendtype, &ext);
                 /* check whether root's send buffer is defined. */
                 for (i = 0; i < size; i++) {
                     memchecker_call(&opal_memchecker_base_isdefined,
@@ -74,6 +74,7 @@ PROTOTYPE ERROR_CLASS scatterv(BUFFER sendbuf, COUNT_ARRAY sendcounts, DISP_ARRA
         } else {
             if(MPI_ROOT == root) {
                   memchecker_datatype(sendtype);
+                  ompi_datatype_type_extent(sendtype, &ext);
                   /* check whether root's send buffer is defined. */
                   for (i = 0; i < size; i++) {
                       memchecker_call(&opal_memchecker_base_isdefined,
