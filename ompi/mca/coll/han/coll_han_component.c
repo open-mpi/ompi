@@ -147,6 +147,7 @@ static int han_open(void)
 static int han_close(void)
 {
     mca_coll_han_free_dynamic_rules();
+    mca_coll_han_free_algorithms();
 
     free(mca_coll_han_component.han_op_module_name.bcast.han_op_up_module_name);
     mca_coll_han_component.han_op_module_name.bcast.han_op_up_module_name = NULL;

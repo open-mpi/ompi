@@ -187,6 +187,9 @@ int mca_coll_han_comm_create_new(struct ompi_communicator_t *comm,
     /*
      * Set the cached info
      */
+    if (NULL != han_module->cached_vranks) {
+        free(han_module->cached_vranks);
+    }
     han_module->cached_vranks = vranks;
 
     /* Restore the saved collectives */
