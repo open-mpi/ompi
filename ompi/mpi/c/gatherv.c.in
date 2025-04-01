@@ -49,11 +49,12 @@ PROTOTYPE ERROR_CLASS gatherv(BUFFER sendbuf, COUNT sendcount, DATATYPE sendtype
         ptrdiff_t ext;
 
         size = ompi_comm_remote_size(comm);
-        ompi_datatype_type_extent(recvtype, &ext);
 
         memchecker_comm(comm);
         if(OMPI_COMM_IS_INTRA(comm)) {
             if(ompi_comm_rank(comm) == root) {
+                memchecker_datatype(recvtype);
+                ompi_datatype_type_extent(recvtype, &ext);
                 /* check whether root's send buffer is defined. */
                 if (MPI_IN_PLACE == sendbuf) {
                     for (i = 0; i < size; i++) {
@@ -66,7 +67,6 @@ PROTOTYPE ERROR_CLASS gatherv(BUFFER sendbuf, COUNT sendcount, DATATYPE sendtype
                     memchecker_call(&opal_memchecker_base_isdefined, sendbuf, sendcount, sendtype);
                 }
 
-                memchecker_datatype(recvtype);
                 /* check whether root's receive buffer is addressable. */
                 for (i = 0; i < size; i++) {
                     memchecker_call(&opal_memchecker_base_isaddressable,
@@ -82,6 +82,7 @@ PROTOTYPE ERROR_CLASS gatherv(BUFFER sendbuf, COUNT sendcount, DATATYPE sendtype
             if (MPI_ROOT == root) {
                 memchecker_datatype(recvtype);
                 /* check whether root's receive buffer is addressable. */
+                ompi_datatype_type_extent(recvtype, &ext);
                 for (i = 0; i < size; i++) {
                     memchecker_call(&opal_memchecker_base_isaddressable,
                                     (char *)(recvbuf)+displs[i]*ext,
