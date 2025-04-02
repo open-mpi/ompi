@@ -235,15 +235,90 @@ int ompi_coll_base_alltoall_intra_pairwise(const void *sbuf, size_t scount,
     return err;
 }
 
-
-int ompi_coll_base_alltoall_intra_bruck(const void *sbuf, size_t scount,
-                                         struct ompi_datatype_t *sdtype,
-                                         void* rbuf, size_t rcount,
-                                         struct ompi_datatype_t *rdtype,
-                                         struct ompi_communicator_t *comm,
-                                         mca_coll_base_module_t *module)
+/*
+ * 
+ * Function: ompi_coll_base_alltoall_intra_k_bruck using O(logk(N)) steps
+ * Accepts:  Same arguments as MPI_Alltoall
+ * Returns: MPI_SUCCESS or error code
+ * 
+ * Description: This method extends ompi_coll_base_alltoall_intra_bruck to handle any
+ * radix k(k >= 2).
+ * 
+ *   Example on 6 ranks with k = 4
+ *    #     0      1      2      3      4      5
+ *         [00]   [10]   [20]   [30]   [40]   [50]
+ *         [01]   [11]   [21]   [31]   [41]   [51]
+ *         [02]   [12]   [22]   [32]   [42]   [52]
+ *         [03]   [13]   [23]   [33]   [43]   [53]
+ *         [04]   [14]   [24]   [34]   [44]   [54]
+ *         [05]   [15]   [25]   [35]   [45]   [55]
+ *   After local rotation
+ *    #     0      1      2      3      4      5
+ *         [00]   [11]   [22]   [33]   [44]   [55]
+ *         [01]   [12]   [23]   [34]   [45]   [50]
+ *         [02]   [13]   [24]   [35]   [40]   [51]
+ *         [03]   [14]   [25]   [30]   [41]   [52]
+ *         [04]   [15]   [20]   [31]   [42]   [53]
+ *         [05]   [10]   [21]   [32]   [43]   [54]
+ *   Phase 0: send message to (rank + k^0 * i), receive message from (rank - k^0 * i)
+ *            send the data block whose least significant bit is i in base k representation
+ *            for i between [1, k-1]
+ *     i = 1: send the data block at offset i, i + k to (rank + 1)
+ *    #     0      1      2      3      4      5
+ *         [00]   [11]   [22]   [33]   [44]   [55]
+ *         [50]   [01]   [12]   [23]   [34]   [45]
+ *         [02]   [13]   [24]   [35]   [40]   [51]
+ *         [03]   [14]   [25]   [30]   [41]   [52]
+ *         [04]   [15]   [20]   [31]   [42]   [53]
+ *         [54]   [05]   [10]   [21]   [32]   [43]   
+ *     i = 2: send the data block at offset i to (rank + 2)
+ *    #     0      1      2      3      4      5
+ *         [00]   [11]   [22]   [33]   [44]   [55]
+ *         [50]   [01]   [12]   [23]   [34]   [45]
+ *         [40]   [51]   [02]   [13]   [24]   [35]
+ *         [03]   [14]   [25]   [30]   [41]   [52]
+ *         [04]   [15]   [20]   [31]   [42]   [53]
+ *         [54]   [05]   [10]   [21]   [32]   [43]   
+ *     i = 3: send the data block at offset i to (rank + 3)
+ *    #     0      1      2      3      4      5
+ *         [00]   [11]   [22]   [33]   [44]   [55]
+ *         [50]   [01]   [12]   [23]   [34]   [45]
+ *         [40]   [51]   [02]   [13]   [24]   [35]
+ *         [30]   [41]   [52]   [03]   [14]   [25]
+ *         [04]   [15]   [20]   [31]   [42]   [53]
+ *         [54]   [05]   [10]   [21]   [32]   [43]         
+ *   Phase 1: send message to (rank + k^1 * i), receive message from (rank - k^1 * i)
+ *            send the data block whose second bit is i in base k representation 
+ *            for i between [1, k-1]
+ *     i = 1: send the data block at offset k with size of min(k, size-i*k)=2 to (rank + 4)
+ *    #     0      1      2      3      4      5
+ *         [00]   [11]   [22]   [33]   [44]   [55]
+ *         [50]   [01]   [12]   [23]   [34]   [45]
+ *         [40]   [51]   [02]   [13]   [24]   [35]
+ *         [30]   [41]   [52]   [03]   [14]   [25]
+ *         [20]   [31]   [42]   [53]   [04]   [15]   
+ *         [10]   [21]   [32]   [43]   [54]   [05]
+ *     i = 2: nothing is to be sent
+ *     i = 3: nothing is to be sent
+ *   After local inverse rotation
+ *    #     0      1      2      3      4      5
+ *         [00]   [01]   [02]   [03]   [04]   [05]
+ *         [10]   [11]   [12]   [13]   [14]   [15]
+ *         [20]   [21]   [22]   [23]   [24]   [25]
+ *         [30]   [31]   [32]   [33]   [34]   [35]
+ *         [40]   [41]   [42]   [43]   [44]   [45]   
+ *         [50]   [51]   [52]   [53]   [54]   [55]    
+ *        
+*/
+int ompi_coll_base_alltoall_intra_k_bruck(const void *sbuf, size_t scount,
+                                          struct ompi_datatype_t *sdtype,
+                                          void* rbuf, size_t rcount,
+                                          struct ompi_datatype_t *rdtype,
+                                          struct ompi_communicator_t *comm,
+                                          mca_coll_base_module_t *module,
+                                          int radix)
 {
-    int i, line = -1, rank, size, err = 0;
+    int i, j, line = -1, rank, size, err = 0;
     int sendto, recvfrom, distance, *displs = NULL;
     char *tmpbuf = NULL, *tmpbuf_free = NULL;
     ptrdiff_t sext, rext, span, gap = 0;
@@ -257,8 +332,12 @@ int ompi_coll_base_alltoall_intra_bruck(const void *sbuf, size_t scount,
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
 
+    if (radix < 2) {
+        line = __LINE__; err = -1; goto err_hndl;
+    }
+
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
-                 "coll:base:alltoall_intra_bruck rank %d", rank));
+                 "coll:base:alltoall_intra_k_bruck radix %d rank %d", radix, rank));
 
     err = ompi_datatype_type_extent (sdtype, &sext);
     if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl; }
@@ -297,42 +376,48 @@ int ompi_coll_base_alltoall_intra_bruck(const void *sbuf, size_t scount,
     }
 
     /* perform communication step */
-    for (distance = 1; distance < size; distance<<=1) {
+    for (distance = 1; distance < size; distance *= radix) {
+        for (i = 1; i < radix; i++) {
 
-        sendto = (rank + distance) % size;
-        recvfrom = (rank - distance + size) % size;
-
-        new_ddt = ompi_datatype_create((1 + size/distance) * (2 + rdtype->super.desc.used));
-
-        /* Create datatype describing data sent/received */
-        for (i = distance; i < size; i += 2*distance) {
-            int nblocks = distance;
-            if (i + distance >= size) {
-                nblocks = size - i;
+            if (distance * i >= size) {
+                break;
             }
-            ompi_datatype_add(new_ddt, rdtype, rcount * nblocks,
-                              i * rcount * rext, rext);
+
+            sendto = (rank + distance * i) % size;
+            recvfrom = (rank - distance * i + size) % size;
+
+            new_ddt = ompi_datatype_create((1 + size/distance) * (2 + rdtype->super.desc.used));
+
+            /* Create datatype describing data sent/received */
+            for (j = i * distance; j < size; j += radix * distance) {
+                int nblocks = distance;
+                if (j + distance >= size) {
+                    nblocks = size - j;
+                }
+                ompi_datatype_add(new_ddt, rdtype, rcount * nblocks,
+                                  j * rcount * rext, rext);
+            }
+
+            /* Commit the new datatype */
+            err = ompi_datatype_commit(&new_ddt);
+            if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl;  }
+
+            /* Sendreceive */
+            err = ompi_coll_base_sendrecv ( tmpbuf, 1, new_ddt, sendto,
+                                            MCA_COLL_BASE_TAG_ALLTOALL,
+                                            rbuf, 1, new_ddt, recvfrom,
+                                            MCA_COLL_BASE_TAG_ALLTOALL,
+                                            comm, MPI_STATUS_IGNORE, rank );
+            if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl; }
+
+            /* Copy back new data from recvbuf to tmpbuf */
+            err = ompi_datatype_copy_content_same_ddt(new_ddt, 1, tmpbuf, (char *) rbuf);
+            if (err < 0) { line = __LINE__; err = -1; goto err_hndl;  }
+
+            /* free ddt */
+            err = ompi_datatype_destroy(&new_ddt);
+            if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl;  }
         }
-
-        /* Commit the new datatype */
-        err = ompi_datatype_commit(&new_ddt);
-        if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl;  }
-
-        /* Sendreceive */
-        err = ompi_coll_base_sendrecv ( tmpbuf, 1, new_ddt, sendto,
-                                         MCA_COLL_BASE_TAG_ALLTOALL,
-                                         rbuf, 1, new_ddt, recvfrom,
-                                         MCA_COLL_BASE_TAG_ALLTOALL,
-                                         comm, MPI_STATUS_IGNORE, rank );
-        if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl; }
-
-        /* Copy back new data from recvbuf to tmpbuf */
-        err = ompi_datatype_copy_content_same_ddt(new_ddt, 1,tmpbuf, (char *) rbuf);
-        if (err < 0) { line = __LINE__; err = -1; goto err_hndl;  }
-
-        /* free ddt */
-        err = ompi_datatype_destroy(&new_ddt);
-        if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl;  }
     } /* end of for (distance = 1... */
 
     /* Step 3 - local rotation - */

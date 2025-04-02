@@ -215,7 +215,7 @@ int ompi_coll_base_allreduce_intra_allgather_reduce(ALLREDUCE_ARGS);
 
 /* AlltoAll */
 int ompi_coll_base_alltoall_intra_pairwise(ALLTOALL_ARGS);
-int ompi_coll_base_alltoall_intra_bruck(ALLTOALL_ARGS);
+int ompi_coll_base_alltoall_intra_k_bruck(ALLTOALL_ARGS, int radix);
 int ompi_coll_base_alltoall_intra_basic_linear(ALLTOALL_ARGS);
 int ompi_coll_base_alltoall_intra_linear_sync(ALLTOALL_ARGS, int max_requests);
 int ompi_coll_base_alltoall_intra_two_procs(ALLTOALL_ARGS);
