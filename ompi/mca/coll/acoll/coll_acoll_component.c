@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-acoll-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2024 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (c) 2024 - 2025 Advanced Micro Devices, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -42,6 +42,9 @@ int mca_coll_acoll_allgather_ring_1 = 0;
 int mca_coll_acoll_reserve_memory_for_algo = 0;
 uint64_t mca_coll_acoll_reserve_memory_size_for_algo = 128 * 32768; // 4 MB
 uint64_t mca_coll_acoll_xpmem_buffer_size = 128 * 32768;
+int mca_coll_acoll_alltoall_split_factor = 0;
+size_t mca_coll_acoll_alltoall_psplit_msg_thres = 0;
+size_t mca_coll_acoll_alltoall_xpmem_msg_thres = 0;
 
 /* By default utilize xpmem based algorithms applicable when built with xpmem. */
 int mca_coll_acoll_without_xpmem = 0;
@@ -193,6 +196,24 @@ static int acoll_register(void)
         "assumed to persist for the duration of the application.",
         MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
         &mca_coll_acoll_xpmem_use_sr_buf);
+    (void) mca_base_component_var_register(
+        &mca_coll_acoll_component.collm_version, "alltoall_split_factor",
+        "Split factor value to be used in alltoall parallel split algorithm,"
+        "valid values are 2, 4, 8, 16, 32, 64.",
+        MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+        &mca_coll_acoll_alltoall_split_factor);
+    (void) mca_base_component_var_register(
+        &mca_coll_acoll_component.collm_version, "alltoall_psplit_msg_thresh",
+        "Message threshold above which parallel split alltoall algorithm "
+        "should not be used.",
+        MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0, 0, OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+        &mca_coll_acoll_alltoall_psplit_msg_thres);
+    (void) mca_base_component_var_register(
+        &mca_coll_acoll_component.collm_version, "alltoall_xpmem_msg_thresh",
+        "Message threshold above which xpmem based linear alltoall algorithm "
+        "should be used for intra node cases.",
+        MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0, 0, OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+        &mca_coll_acoll_alltoall_xpmem_msg_thres);
 
     return OMPI_SUCCESS;
 }
@@ -217,6 +238,33 @@ static void mca_coll_acoll_module_construct(mca_coll_acoll_module_t *module)
         && (false == ompi_mpi_thread_multiple)) {
         (module->reserve_mem_s).reserve_mem_allocate = true;
         (module->reserve_mem_s).reserve_mem_size = mca_coll_acoll_reserve_memory_size_for_algo;
+    }
+
+    /* Ensure valid split factor is given. */
+    int8_t valid_sf = 0;
+    const int split_factor_list[MCA_COLL_ACOLL_SPLIT_FACTOR_LIST_LEN] =
+                MCA_COLL_ACOLL_SPLIT_FACTOR_LIST;
+    for (int ii = 0; ii < MCA_COLL_ACOLL_SPLIT_FACTOR_LIST_LEN; ++ii) {
+        if (split_factor_list[ii] == mca_coll_acoll_alltoall_split_factor) {
+            valid_sf = 1;
+            break;
+        }
+    }
+    (module->alltoall_attr).split_factor = 0;
+    if (1 == valid_sf) {
+        (module->alltoall_attr).split_factor = mca_coll_acoll_alltoall_split_factor;
+    }
+
+    (module->alltoall_attr).psplit_msg_thresh = 0;
+    if (0 < mca_coll_acoll_alltoall_psplit_msg_thres) {
+        (module->alltoall_attr).psplit_msg_thresh =
+            mca_coll_acoll_alltoall_psplit_msg_thres;
+    }
+
+    (module->alltoall_attr).xpmem_msg_thresh = 0;
+    if (0 < mca_coll_acoll_alltoall_xpmem_msg_thres) {
+        (module->alltoall_attr).xpmem_msg_thresh =
+            mca_coll_acoll_alltoall_xpmem_msg_thres;
     }
 }
 
@@ -332,6 +380,13 @@ static void mca_coll_acoll_module_destruct(mca_coll_acoll_module_t *module)
                 }
             }
         }
+
+        for (int k = 0; k < MCA_COLL_ACOLL_SPLIT_FACTOR_LIST_LEN; ++k) {
+            if (subc->split_comm[k] != NULL) {
+                ompi_comm_free(&(subc->split_comm[k]));
+                subc->split_comm[k] = NULL;
+            }
+        }
         subc->initialized = 0;
         free(subc);
         module->subc[i] = NULL;
@@ -345,6 +400,10 @@ static void mca_coll_acoll_module_destruct(mca_coll_acoll_module_t *module)
         && (NULL != (module->reserve_mem_s).reserve_mem)) {
         free((module->reserve_mem_s).reserve_mem);
     }
+
+    (module->alltoall_attr).split_factor = 0;
+    (module->alltoall_attr).psplit_msg_thresh = 0;
+    (module->alltoall_attr).xpmem_msg_thresh = 0;
 }
 
 OBJ_CLASS_INSTANCE(mca_coll_acoll_module_t, mca_coll_base_module_t, mca_coll_acoll_module_construct,
