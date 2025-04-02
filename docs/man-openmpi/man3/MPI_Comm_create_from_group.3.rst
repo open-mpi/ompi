@@ -94,6 +94,8 @@ shall have a value of at least 63.
 ERRORS
 ------
 
+.. include:: ./MPIRUN-ONLY.rst
+
 .. include:: ./ERRORS.rst
 
 .. seealso::
