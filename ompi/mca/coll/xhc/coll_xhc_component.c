@@ -210,7 +210,7 @@ static int xhc_register(void) {
     int var_index = mca_base_var_find("opal", "smsc", "xpmem", "memcpy_chunk_size");
 
     if(var_index >= 0) {
-        size_t *var_value_ptr;
+        size_t *var_value_ptr = NULL;
 
         err = mca_base_var_get_value(var_index, &var_value_ptr, NULL, NULL);
 
