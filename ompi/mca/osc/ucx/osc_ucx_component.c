@@ -1,7 +1,7 @@
 /*
  * Copyright (C) Mellanox Technologies Ltd. 2001-2017. ALL RIGHTS RESERVED.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
- * Copyright (c) 2021      Triad National Security, LLC. All rights
+ * Copyright (c) 2021-2025 Triad National Security, LLC. All rights
  *                         reserved.
  *
  * Copyright (c) 2022      IBM Corporation.  All rights reserved.
@@ -352,6 +352,8 @@ static int component_finalize(void) {
     opal_common_ucx_mca_deregister();
     if (mca_osc_ucx_component.env_initialized) {
         opal_common_ucx_wpool_finalize(mca_osc_ucx_component.wpool);
+        OBJ_DESTRUCT(&mca_osc_ucx_component.accumulate_requests);
+        OBJ_DESTRUCT(&mca_osc_ucx_component.requests);
     }
     opal_common_ucx_wpool_free(mca_osc_ucx_component.wpool);
 
