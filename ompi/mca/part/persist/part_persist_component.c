@@ -12,6 +12,8 @@
  * Copyright (c) 2013-2021 Sandia National Laboratories.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2024      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -86,6 +88,29 @@ mca_part_persist_component_register(void)
 
 
     return OPAL_SUCCESS;
+}
+
+static void mca_part_persist_init_lists(void)
+{
+    opal_free_list_init (&mca_part_base_precv_requests,
+                         sizeof(mca_part_persist_precv_request_t),
+                         opal_cache_line_size,
+                         OBJ_CLASS(mca_part_persist_precv_request_t),
+                         0,opal_cache_line_size,
+                         ompi_part_persist.free_list_num,
+                         ompi_part_persist.free_list_max,
+                         ompi_part_persist.free_list_inc,
+                         NULL, 0, NULL, NULL, NULL);
+    opal_free_list_init (&mca_part_base_psend_requests,
+                         sizeof(mca_part_persist_psend_request_t),
+                         opal_cache_line_size,
+                         OBJ_CLASS(mca_part_persist_psend_request_t),
+                         0,opal_cache_line_size,
+                         ompi_part_persist.free_list_num,
+                         ompi_part_persist.free_list_max,
+                         ompi_part_persist.free_list_inc,
+                         NULL, 0, NULL, NULL, NULL);
+     ompi_part_persist.progress_list = OBJ_NEW(opal_list_t);
 }
 
 static int
