@@ -45,3 +45,8 @@ OBJ_CLASS_INSTANCE(mca_part_persist_list_t,
                    NULL,
                    NULL);
 
+OBJ_CLASS_INSTANCE(mca_part_persist_send_tag_list_t,
+                   opal_list_item_t,
+                   NULL,
+                   NULL);
+
