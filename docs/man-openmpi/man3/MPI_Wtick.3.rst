@@ -8,39 +8,8 @@ MPI_Wtick
 
 :ref:`MPI_Wtick` |mdash| Returns the resolution of :ref:`MPI_Wtime`.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   double MPI_Wtick()
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   DOUBLE PRECISION MPI_WTICK()
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   DOUBLE PRECISION MPI_WTICK()
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_wtick.rst
 
 RETURN VALUE
 ------------

@@ -7,41 +7,8 @@ MPI_Buffer_attach
 
 :ref:`MPI_Buffer_attach` |mdash| Attaches a user-defined buffer for sending.
 
-SYNTAX
-------
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: C
-
-   #include <mpi.h>
-
-   int MPI_Buffer_attach(void *buf, int size)
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: Fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-
-   MPI_BUFFER_ATTACH(BUF, SIZE, IERROR)
-       <type>  BUF(*)
-       INTEGER SIZE, IERROR
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: Fortran
-
-   USE mpi_f08
-
-   MPI_Buffer_attach(buffer, size, ierror)
-       TYPE(*), DIMENSION(..), ASYNCHRONOUS :: buffer
-       INTEGER, INTENT(IN) :: size
-       INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_buffer_attach.rst
 
 INPUT PARAMETERS
 ----------------

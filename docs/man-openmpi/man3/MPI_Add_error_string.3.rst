@@ -8,44 +8,8 @@ MPI_Add_error_string
 
 :ref:`MPI_Add_error_string` |mdash| Associates a string with an error code or class
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Add_error_string(int errorcode, const char *string)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_ADD_ERROR_STRING(ERRORCODE, STRING, IERROR)
-   	INTEGER		ERRORCODE, IERROR
-   	CHARACTER*(*)	STRING
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Add_error_string(errorcode, string, ierror)
-   	INTEGER, INTENT(IN) :: errorcode
-   	CHARACTER(LEN=*), INTENT(IN) :: string
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_add_error_string.rst
 
 INPUT PARAMETERS
 ----------------

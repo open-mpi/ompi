@@ -9,47 +9,8 @@ MPI_File_get_byte_offset
 :ref:`MPI_File_get_byte_offset` |mdash| Converts a view-relative offset into an
 absolute byte position.
 
-
-SYNTAX
-------
-
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_File_get_byte_offset(MPI_File fh, MPI_Offset offset,
-   	MPI_Offset *disp)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_FILE_GET_BYTE_OFFSET(FH, OFFSET, DISP, IERROR)
-   	INTEGER	FH, IERROR
-   	INTEGER(KIND=MPI_OFFSET_KIND)	OFFSET, DISP
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_File_get_byte_offset(fh, offset, disp, ierror)
-   	TYPE(MPI_File), INTENT(IN) :: fh
-   	INTEGER(KIND=MPI_OFFSET_KIND), INTENT(IN) :: offset
-   	INTEGER(KIND=MPI_OFFSET_KIND), INTENT(OUT) :: disp
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_file_get_byte_offset.rst
 
 INPUT PARAMETERS
 ----------------

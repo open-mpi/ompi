@@ -8,41 +8,8 @@ MPI_Pcontrol
 
 :ref:`MPI_Pcontrol` |mdash| Controls profiling.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Pcontrol(const int level, ... )
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_PCONTROL(LEVEL)
-   	INTEGER	LEVEL
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Pcontrol(level)
-   	INTEGER, INTENT(IN) :: level
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_pcontrol.rst
 
 INPUT PARAMETER
 ---------------

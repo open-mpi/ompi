@@ -9,53 +9,8 @@ MPI_Dist_graph_create
 :ref:`MPI_Dist_graph_create` |mdash| Makes a new communicator to which topology
 information has been attached.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Dist_graph_create(MPI_Comm comm_old, int n, const int sources[],
-   	const int degrees[], const int destinations[], const int weights[],
-           MPI_Info info, int reorder, MPI_Comm *comm_dist_graph)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_DIST_GRAPH_CREATE(COMM_OLD, N, SOURCES, DEGREES, DESTINATIONS, WEIGHTS,
-                   INFO, REORDER, COMM_DIST_GRAPH, IERROR)
-   	INTEGER	COMM_OLD, N, SOURCES(*), DEGRES(*), WEIGHTS(*), INFO
-   	INTEGER	COMM_DIST_GRAPH, IERROR
-   	LOGICAL   REORDER
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Dist_Graph_create(comm_old, n, sources, degrees, destinations, weights,
-   		info, reorder, comm_dist_graph, ierror)
-   	TYPE(MPI_Comm), INTENT(IN) :: comm_old
-   	INTEGER, INTENT(IN) :: n, sources(n), degrees(n), destinations(*)
-   	INTEGER, INTENT(IN) :: weights(*)
-   	TYPE(MPI_Info), INTENT(IN) :: info
-   	LOGICAL, INTENT(IN) :: reorder
-   	TYPE(MPI_Comm), INTENT(OUT) :: comm_dist_graph
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_dist_graph_create.rst
 
 INPUT PARAMETERS
 ----------------

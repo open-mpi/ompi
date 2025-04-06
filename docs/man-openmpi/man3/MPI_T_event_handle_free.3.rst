@@ -8,20 +8,8 @@ MPI_T_event_handle_free
 
 :ref:`MPI_T_event_handle_free` - Free event handles
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_T_event_handle_free(MPI_T_event_registration event_registration,
-                               void *user_data, MPI_T_event_free_cb_function free_cb_function)
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_t_event_handle_free.rst
 
 INPUT PARAMETERS
 ----------------

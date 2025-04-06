@@ -8,43 +8,8 @@ MPI_Comm_set_info
 
 :ref:`MPI_Comm_set_info` |mdash| Set communicator info hints
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Comm_set_info(MPI_Comm comm, MPI_Info info)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_COMM_SET_INFO(COMM, INFO, IERROR)
-   	INTEGER	COMM, INFO, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Comm_set_info(comm, info, ierror)
-   	TYPE(MPI_Comm), INTENT(IN) :: comm
-   	TYPE(MPI_Info), INTENT(IN) :: info
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_comm_set_info.rst
 
 INPUT PARAMETERS
 ----------------

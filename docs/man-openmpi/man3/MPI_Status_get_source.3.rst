@@ -8,44 +8,8 @@ MPI_Status_get_source
 
 :ref:`MPI_Status_get_source` |mdash| Retrieves the ``MPI_SOURCE`` field from ``status``.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Status_get_source(MPI_Status *status, int *source)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_STATUS_GET_SOURCE(STATUS, SOURCE, IERROR)
-   	INTEGER	STATUS(MPI_STATUS_SIZE), IERROR
-   	INTEGER SOURCE
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Status_get_source(status, source, ierror)
-        TYPE(MPI_Status), INTENT(IN) :: status
-        INTEGER, INTENT(OUT) :: source
-        INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_status_get_source.rst
 
 INPUT PARAMETER
 ---------------

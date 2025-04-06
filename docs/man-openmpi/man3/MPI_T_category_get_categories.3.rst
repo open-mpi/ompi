@@ -9,20 +9,8 @@ MPI_T_category_get_categories
 :ref:`MPI_T_category_get_categories` |mdash| Query which categories are in a
 category
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_T_category_get_categories(int cat_index, int len, int indices[])
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_t_category_get_categories.rst
 
 INPUT PARAMETERS
 ----------------

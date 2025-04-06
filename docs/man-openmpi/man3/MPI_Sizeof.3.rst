@@ -8,34 +8,8 @@ MPI_Sizeof
 
 :ref:`MPI_Sizeof` |mdash| Returns the size, in bytes, of the given type
 
-
-SYNTAX
-------
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_SIZEOF(X, SIZE, IERROR)
-   <type>	X
-   INTEGER	SIZE, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Sizeof(x, size, ierror)
-   	TYPE(*), DIMENSION(..) :: x
-   	INTEGER, INTENT(OUT) :: size
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_sizeof.rst
 
 INPUT PARAMETER
 ---------------

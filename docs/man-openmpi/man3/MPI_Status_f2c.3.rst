@@ -8,18 +8,12 @@ MPI_Status_f2c
 :ref:`MPI_Status_f2c`, :ref:`MPI_Status_f2c` - Translates a C status into a Fortran
 INTEGER-style status, or vice versa.
 
-SYNTAX
-------
+.. The following directive tells the man page generation script to
+   generate multiple bindings for this file.
+.. mpi-bindings: MPI_Status_f2c, MPI_Status_c2f
 
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Status_f2c(const MPI_Fint *f_status, MPI_Status *c_status)
-   int MPI_Status_c2f(const MPI_Status *c_status, MPI_Fint *f_status)
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_status_f2c.rst
 
 PARAMETERS
 ----------

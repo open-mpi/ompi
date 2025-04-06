@@ -9,42 +9,8 @@ MPI_Win_wait
 :ref:`MPI_Win_wait` |mdash| Completes an RMA exposure epoch started by a call to
 :ref:`MPI_Win_post` on *win*
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Win_wait(MPI_Win win)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_WIN_WAIT( WIN, IERROR)
-   	INTEGER  WIN, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Win_wait(win, ierror)
-   	TYPE(MPI_Win), INTENT(IN) :: win
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_win_wait.rst
 
 INPUT PARAMETERS
 ----------------

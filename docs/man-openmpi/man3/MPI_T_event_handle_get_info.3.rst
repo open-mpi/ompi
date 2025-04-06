@@ -8,21 +8,8 @@ MPI_T_event_handle_get_info
 
 :ref:`MPI_T_event_handle_get_info` |mdash| Returns a new info object containing the hints of the event-registration handle associated with event_registration
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_T_event_handle_get_info(MPI_T_event_registration event_registration,
-                                   MPI_Info *info)
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_t_event_handle_get_info.rst
 
 INPUT PARAMETERS
 ----------------
@@ -36,7 +23,7 @@ DESCRIPTION
 -----------
 
 :ref:`MPI_T_event_handle_get_info` can be used to query information from a
-source. 
+source.
 
 
 ERRORS

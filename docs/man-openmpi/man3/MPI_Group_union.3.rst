@@ -8,44 +8,8 @@ MPI_Group_union
 
 :ref:`MPI_Group_union` |mdash| Produces a group by combining two groups.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Group_union(MPI_Group group1, MPI_Group group2,
-   	MPI_Group *newgroup)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_GROUP_UNION(GROUP1, GROUP2, NEWGROUP, IERROR)
-   	INTEGER	GROUP1, GROUP2, NEWGROUP, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Group_union(group1, group2, newgroup, ierror)
-   	TYPE(MPI_Group), INTENT(IN) :: group1, group2
-   	TYPE(MPI_Group), INTENT(OUT) :: newgroup
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_group_union.rst
 
 INPUT PARAMETERS
 ----------------

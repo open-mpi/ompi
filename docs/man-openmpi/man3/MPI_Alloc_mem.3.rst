@@ -8,46 +8,8 @@ MPI_Alloc_mem
 
 :ref:`MPI_Alloc_mem` |mdash| Allocates a specified memory segment.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Alloc_mem(MPI_Aint size, MPI_Info info, void *baseptr)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_ALLOC_MEM(SIZE, INFO, BASEPTR, IERROR)
-   	INTEGER INFO, IERROR
-   	INTEGER(KIND=MPI_ADDRESS_KIND) SIZE, BASEPTR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Alloc_mem(size, info, baseptr, ierror)
-   	USE, INTRINSIC :: ISO_C_BINDING, ONLY
-   	INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(IN) :: size
-   	TYPE(MPI_Info), INTENT(IN) :: info
-   	TYPE(C_PTR), INTENT(OUT) :: baseptr
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_alloc_mem.rst
 
 INPUT PARAMETERS
 ----------------

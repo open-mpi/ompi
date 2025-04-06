@@ -9,45 +9,8 @@ MPI_File_get_atomicity
 :ref:`MPI_File_get_atomicity` |mdash| Returns current consistency semantics for
 data-access operations.
 
-
-SYNTAX
-------
-
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_File_get_atomicity(MPI_File fh, int *flag)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_FILE_GET_ATOMICITY(FH, FLAG, IERROR)
-   	INTEGER	FH, IERROR
-   	LOGICAL	FLAG
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_File_get_atomicity(fh, flag, ierror)
-   	TYPE(MPI_File), INTENT(IN) :: fh
-   	LOGICAL, INTENT(OUT) :: flag
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_file_get_atomicity.rst
 
 INPUT PARAMETER
 ---------------

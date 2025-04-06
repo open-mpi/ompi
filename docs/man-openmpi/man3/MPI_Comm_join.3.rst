@@ -8,43 +8,8 @@ MPI_Comm_join
 
 :ref:`MPI_Comm_join` |mdash| Establishes communication between MPI jobs
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Comm_join(int fd, MPI_Comm *intercomm)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_COMM_JOIN(FD, INTERCOMM, IERROR)
-   	INTEGER	FD, INTERCOMM, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Comm_join(fd, intercomm, ierror)
-   	INTEGER, INTENT(IN) :: fd
-   	TYPE(MPI_Comm), INTENT(OUT) :: intercomm
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_comm_join.rst
 
 INPUT PARAMETER
 ---------------

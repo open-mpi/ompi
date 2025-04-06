@@ -8,20 +8,8 @@ MPI_T_category_get_num
 
 :ref:`MPI_T_category_get_num` |mdash| Query the number of categories
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_T_category_get_num(int *num_cat)
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_t_category_get_num.rst
 
 OUTPUT PARAMETERS
 -----------------

@@ -8,34 +8,8 @@ MPI_Keyval_create
 
 :ref:`MPI_Keyval_create` |mdash| Generates a new attribute key |mdash| |deprecated_favor| :ref:`MPI_Comm_create_keyval`.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Keyval_create(MPI_Copy_function *copy_fn,
-   	MPI_Delete_function *delete_fn, int *keyval, void *extra_state)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-
-   MPI_KEYVAL_CREATE(COPY_FN, DELETE_FN, KEYVAL, EXTRA_STATE, IERROR)
-   	EXTERNAL	COPY_FN, DELETE_FN
-   	INTEGER	KEYVAL, EXTRA_STATE, IERROR
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_keyval_create.rst
 
 INPUT PARAMETERS
 ----------------

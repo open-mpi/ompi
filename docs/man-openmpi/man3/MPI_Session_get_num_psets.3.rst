@@ -8,41 +8,8 @@ MPI_Session_get_num_psets
 :ref:`MPI_Session_get_num_psets` |mdash| Query runtime for number of available
 process sets
 
-SYNTAX
-------
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Session_get_num_psets(MPI_Session session, MPI_Info info, int *npset_names)
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-
-   MPI_SESSION_GET_NUM_PSETS(SESSION, INFO, NPSET_NAMES, IERROR)
-       INTEGER SESSION, INFO, SESSION, IERROR
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-
-   MPI_Session_get_num_psets(session, info, npset_names, ierror)
-       TYPE(MPI_Session), INTENT(IN) :: session
-       TYPE(MPI_Info), INTENT(IN) :: info
-       INTEGER, INTENT(OUT) :: npset_names
-       INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_session_get_num_psets.rst
 
 INPUT PARAMETERS
 ----------------

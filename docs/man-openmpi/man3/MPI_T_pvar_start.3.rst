@@ -9,22 +9,12 @@ MPI_T_pvar_start
 :ref:`MPI_T_pvar_start`, :ref:`MPI_T_pvar_stop` - Start/stop a performance
 variable
 
+.. The following directive tells the man page generation script to
+   generate multiple bindings for this file.
+.. mpi-bindings: MPI_T_pvar_start, MPI_T_pvar_stop
 
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_T_pvar_start(MPI_T_pvar_session session, MPI_T_pvar_handle handle)
-
-   int MPI_T_pvar_stop(MPI_T_pvar_session session, MPI_T_pvar_handle handle)
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_t_pvar_start.rst
 
 INPUT PARAMETERS
 ----------------

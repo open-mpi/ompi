@@ -8,20 +8,8 @@ MPI_T_source_get_num
 
 :ref:`MPI_T_source_get_num` |mdash| Query the number of MPI_T event sources
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_T_source_get_num(int *num_sources)
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_t_source_get_num.rst
 
 OUTPUT PARAMETERS
 -----------------

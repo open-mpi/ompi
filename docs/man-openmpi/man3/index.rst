@@ -91,7 +91,9 @@ MPI API manual pages (section 3)
    MPI_Dist_graph_create_adjacent.3.rst
    MPI_Dist_graph_neighbors.3.rst
    MPI_Dist_graph_neighbors_count.3.rst
+   MPI_Errhandler_c2f.3.rst
    MPI_Errhandler_create.3.rst
+   MPI_Errhandler_f2c.3.rst
    MPI_Errhandler_free.3.rst
    MPI_Errhandler_get.3.rst
    MPI_Errhandler_set.3.rst
@@ -322,6 +324,7 @@ MPI API manual pages (section 3)
    MPI_Send_init.3.rst
    MPI_Sendrecv.3.rst
    MPI_Sendrecv_replace.3.rst
+   MPI_Session_c2f.3.rst
    MPI_Session_call_errhandler.3.rst
    MPI_Session_create_errhandler.3.rst
    MPI_Session_f2c.3.rst

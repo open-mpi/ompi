@@ -9,50 +9,8 @@ MPI_Win_allocate
 :ref:`MPI_Win_allocate` |mdash| One-sided MPI call that allocates memory and
 returns a window object for RMA operations.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Win_allocate (MPI_Aint size, int disp_unit, MPI_Info info,
-                         MPI_Comm comm, void *baseptr, MPI_Win *win)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_WIN_ALLOCATE(SIZE, DISP_UNIT, INFO, COMM, BASEPTR, WIN, IERROR)
-   	INTEGER(KIND=MPI_ADDRESS_KIND) SIZE, BASEPTR
-   	INTEGER DISP_UNIT, INFO, COMM, WIN, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Win_allocate(size, disp_unit, info, comm, baseptr, win, ierror)
-   	USE, INTRINSIC :: ISO_C_BINDING, ONLY : C_PTR
-   	INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(IN) :: size
-   	INTEGER, INTENT(IN) :: disp_unit
-   	TYPE(MPI_Info), INTENT(IN) :: info
-   	TYPE(MPI_Comm), INTENT(IN) :: comm
-   	TYPE(C_PTR), INTENT(OUT) :: baseptr
-   	TYPE(MPI_Win), INTENT(OUT) :: win
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_win_allocate.rst
 
 INPUT PARAMETERS
 ----------------

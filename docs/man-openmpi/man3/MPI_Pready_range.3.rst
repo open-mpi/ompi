@@ -9,43 +9,8 @@ MPI_Pready_range
 :ref:`MPI_Pready_range` |mdash| Indicates that a given range os send-side
 partitions are ready to be transferred.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Pready_range(int partition_low, int partition_high, MPI_Request request)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_PREADY(PARTITION_LOW, PARTITION_HIGH, REQUEST, IERROR)
-   	INTEGER	PARTITION_LOW, PARTITION_HIGH, REQUEST, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Pready(partition_low, partition_high, request, ierror)
-   	INTEGER, INTENT(IN) :: partition_low, partition_high
-   	TYPE(MPI_Request), INTENT(IN) :: request
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_pready_range.rst
 
 INPUT PARAMETERS
 ----------------

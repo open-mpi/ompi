@@ -8,42 +8,8 @@ MPI_Session_get_pset_info
 :ref:`MPI_Session_get_pset_info` |mdash| Returns an info object containing properties
 of a specific process set
 
-SYNTAX
-------
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Session_get_pset_info(MPI_Session session, const char *pset_name, MPI_Info *info)
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-
-   MPI_SESSION_GET_PSET_INFO(SESSION, PSET_NAME, INFO, IERROR)
-       INTEGER SESSION, INFO, IERROR
-       CHARACTER*(*) PSET_NAME
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-
-   MPI_Session_get_pset_info(session, pset_name, info, ierror)
-       TYPE(MPI_Session), INTENT(IN) :: session
-       CHARACTER(LEN=*), INTENT(IN) :: pset_name
-       TYPE(MPI_Info), INTENT(OUT) :: info
-       INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_session_get_pset_info.rst
 
 INPUT PARAMETERS
 ----------------

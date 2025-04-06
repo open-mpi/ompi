@@ -8,39 +8,8 @@ MPI_Get_version
 :ref:`MPI_Get_version` |mdash| Returns the version of the standard corresponding
 to the current implementation.
 
-SYNTAX
-------
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Get_version(int *version, int *subversion)
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-
-   MPI_GET_VERSION(VERSION, SUBVERSION, IERROR)
-       INTEGER VERSION, SUBVERSION, IERROR
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-
-   MPI_Get_version(version, subversion, ierror)
-       INTEGER, INTENT(OUT) :: version, subversion
-       INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_get_version.rst
 
 OUTPUT PARAMETERS
 -----------------

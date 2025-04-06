@@ -8,39 +8,8 @@ MPI_Grequest_complete
 :ref:`MPI_Grequest_complete` |mdash| Reports that a generalized request is
 complete.
 
-SYNTAX
-------
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Grequest_complete(MPI_Request request)
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-
-   MPI_GREQUEST_COMPLETE(REQUEST, IERROR)
-       INTEGER REQUEST, IERROR
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-
-   MPI_Grequest_complete(request, ierror)
-       TYPE(MPI_Request), INTENT(IN) :: request
-       INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_grequest_complete.rst
 
 INPUT/OUTPUT PARAMETER
 ----------------------

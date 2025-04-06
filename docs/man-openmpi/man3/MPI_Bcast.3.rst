@@ -5,76 +5,15 @@ MPI_Bcast
 
 .. include_body
 
-:ref:`MPI_Bcast`, :ref:`MPI_Ibcast` - Broadcasts a message from the process
+:ref:`MPI_Bcast`, :ref:`MPI_Ibcast`, :ref:`MPI_Bcast_init` - Broadcasts a message from the process
 with rank *root* to all other processes of the group.
 
-SYNTAX
-------
+.. The following directive tells the man page generation script to
+   generate multiple bindings for this file.
+.. mpi-bindings: MPI_Bcast, MPI_Ibcast, MPI_Bcast_init
 
-C Syntax
-^^^^^^^^
-
-.. code-block:: C
-
-   #include <mpi.h>
-
-   int MPI_Bcast(void *buffer, int count, MPI_Datatype datatype,
-       int root, MPI_Comm comm)
-
-   int MPI_Ibcast(void *buffer, int count, MPI_Datatype datatype,
-       int root, MPI_Comm comm, MPI_Request *request)
-
-   int MPI_Bcast_init(void *buffer, int count, MPI_Datatype datatype,
-       int root, MPI_Comm comm, MPI_Info info, MPI_Request *request)
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: Fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_BCAST(BUFFER, COUNT, DATATYPE, ROOT, COMM, IERROR)
-       <type>  BUFFER(*)
-       INTEGER COUNT, DATATYPE, ROOT, COMM, IERROR
-
-   MPI_IBCAST(BUFFER, COUNT, DATATYPE, ROOT, COMM, REQUEST, IERROR)
-       <type>  BUFFER(*)
-       INTEGER COUNT, DATATYPE, ROOT, COMM, REQUEST, IERROR
-
-   MPI_BCAST_INIT(BUFFER, COUNT, DATATYPE, ROOT, COMM, REQUEST, IERROR)
-       <type>  BUFFER(*)
-       INTEGER COUNT, DATATYPE, ROOT, COMM, INFO, REQUEST, IERROR
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: Fortran
-
-   USE mpi_f08
-   MPI_Bcast(buffer, count, datatype, root, comm, ierror)
-       TYPE(*), DIMENSION(..) :: buffer
-       INTEGER, INTENT(IN) :: count, root
-       TYPE(MPI_Datatype), INTENT(IN) :: datatype
-       TYPE(MPI_Comm), INTENT(IN) :: comm
-       INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
-   MPI_Ibcast(buffer, count, datatype, root, comm, request, ierror)
-       TYPE(*), DIMENSION(..), ASYNCHRONOUS :: buffer
-       INTEGER, INTENT(IN) :: count, root
-       TYPE(MPI_Datatype), INTENT(IN) :: datatype
-       TYPE(MPI_Comm), INTENT(IN) :: comm
-       TYPE(MPI_Request), INTENT(OUT) :: request
-       INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
-   MPI_Bcast_init(buffer, count, datatype, root, comm, request, ierror)
-       TYPE(*), DIMENSION(..), ASYNCHRONOUS :: buffer
-       INTEGER, INTENT(IN) :: count, root
-       TYPE(MPI_Datatype), INTENT(IN) :: datatype
-       TYPE(MPI_Comm), INTENT(IN) :: comm
-       TYPE(MPI_Info), INTENT(IN) :: info
-       TYPE(MPI_Request), INTENT(OUT) :: request
-       INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_bcast.rst
 
 INPUT/OUTPUT PARAMETERS
 -----------------------

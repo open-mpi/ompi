@@ -8,20 +8,8 @@ MPI_T_event_get_timestamp
 
 :ref:`MPI_T_event_get_timestamp` |mdash|  Returns the timestamp of when the event was initially observed by the implementation
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_T_event_get_timestamp(MPI_T_event_instance event_instance, MPI_Count *event_timestamp)
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_t_event_get_timestamp.rst
 
 INPUT PARAMETERS
 ----------------

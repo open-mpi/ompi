@@ -7,42 +7,8 @@ MPI_Get_count
 
 :ref:`MPI_Get_count` |mdash| Gets the number of top-level elements received.
 
-SYNTAX
-------
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Get_count(const MPI_Status *status, MPI_Datatype datatype,
-       int *count)
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-
-   MPI_GET_COUNT(STATUS, DATATYPE, COUNT, IERROR)
-       INTEGER STATUS(MPI_STATUS_SIZE), DATATYPE, COUNT, IERROR
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-
-   MPI_Get_count(status, datatype, count, ierror)
-       TYPE(MPI_Status), INTENT(IN) :: status
-       TYPE(MPI_Datatype), INTENT(IN) :: datatype
-       INTEGER, INTENT(OUT) :: count
-       INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_get_count.rst
 
 INPUT PARAMETERS
 ----------------

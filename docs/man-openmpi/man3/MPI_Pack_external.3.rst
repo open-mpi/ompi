@@ -8,57 +8,8 @@ MPI_Pack_external
 
 :ref:`MPI_Pack_external` |mdash| Writes data to a portable format
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Pack_external(const char *datarep, const void *inbuf,
-   	int incount, MPI_Datatype datatype,
-   	void *outbuf, MPI_Aint outsize,
-   	MPI_Aint *position)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_PACK_EXTERNAL(DATAREP, INBUF, INCOUNT, DATATYPE,
-   	OUTBUF, OUTSIZE, POSITION, IERROR)
-
-   	INTEGER		INCOUNT, DATATYPE, IERROR
-   	INTEGER(KIND=MPI_ADDRESS_KIND) OUTSIZE, POSITION
-   	CHARACTER*(*)	DATAREP
-   	<type>		INBUF(*), OUTBUF(*)
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Pack_external(datarep, inbuf, incount, datatype, outbuf, outsize,
-   		position, ierror)
-   	CHARACTER(LEN=*), INTENT(IN) :: datarep
-   	TYPE(*), DIMENSION(..), INTENT(IN) :: inbuf
-   	TYPE(*), DIMENSION(..) :: outbuf
-   	INTEGER, INTENT(IN) :: incount
-   	TYPE(MPI_Datatype), INTENT(IN) :: datatype
-   	INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(IN) :: outsize
-   	INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(INOUT) :: position
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_pack_external.rst
 
 INPUT PARAMETERS
 ----------------

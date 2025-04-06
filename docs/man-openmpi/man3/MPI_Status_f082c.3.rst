@@ -8,18 +8,12 @@ MPI_Status_f082c
 :ref:`MPI_Status_f082c`, :ref:`MPI_Status_c2f08` - Translates a C status into a
 Fortran 2008 status, or vice versa.
 
-SYNTAX
-------
+.. The following directive tells the man page generation script to
+   generate multiple bindings for this file.
+.. mpi-bindings: MPI_Status_f082c, MPI_Status_c2f08
 
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Status_f082c(const MPI_F08_status *f08_status, MPI_Status *c_status)
-   int MPI_Status_c2f08(const MPI_Status *c_status, MPI_F08_status *f08_status)
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_status_f082c.rst
 
 PARAMETERS
 ----------

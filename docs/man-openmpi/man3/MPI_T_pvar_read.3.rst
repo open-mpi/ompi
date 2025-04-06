@@ -8,20 +8,8 @@ MPI_T_pvar_read
 
 :ref:`MPI_T_pvar_read` |mdash| Read the value of a performance variable
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_T_pvar_read(MPI_T_pvar_session session, MPI_T_pvar_handle handle, const void *buf)
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_t_pvar_read.rst
 
 INPUT PARAMETERS
 ----------------

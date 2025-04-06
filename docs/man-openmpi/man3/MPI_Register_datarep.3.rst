@@ -8,57 +8,8 @@ MPI_Register_datarep
 
 :ref:`MPI_Register_datarep` |mdash| Defines data representation.
 
-
-SYNTAX
-------
-
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Register_datarep(const char *datarep,
-   	MPI_Datarep_conversion_function *read_conversion_fn,
-   	MPI_Datarep_conversion_function *write_conversion_fn,
-   	MPI_Datarep_extent_function *dtype_file_extent_fn,
-   	void *extra_state)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_REGISTER_DATAREP(DATAREP, READ_CONVERSION_FN,
-   	WRITE_CONVERSION_FN, DTYPE_FILE_EXTENT_FN,
-   	EXTRA_STATE, IERROR)
-   	CHARACTER*(*)	DATAREP
-   	EXTERNAL	READ_CONVERSION_FN, WRITE_CONVERSION_FN, DTYPE_FILE_EXTENT_FN
-   	INTEGER	IERROR
-   	INTEGER(KIND=MPI_ADDRESS_KIND)	EXTRA_STATE
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Register_datarep(datarep, read_conversion_fn, write_conversion_fn,
-   		dtype_file_extent_fn, extra_state, ierror)
-   	CHARACTER(LEN=*), INTENT(IN) :: datarep
-   	PROCEDURE(MPI_Datarep_conversion_function) :: read_conversion_fn
-   	PROCEDURE(MPI_Datarep_conversion_function) :: write_conversion_fn
-   	PROCEDURE(MPI_Datarep_extent_function) :: dtype_file_extent_fn
-   	INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(IN) :: extra_state
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_register_datarep.rst
 
 INPUT PARAMETERS
 ----------------

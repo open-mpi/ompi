@@ -8,20 +8,8 @@ MPI_T_finalize
 
 :ref:`MPI_T_finalize` |mdash| Finalize the MPI tool information interface
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_T_finalize(void)
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_t_finalize.rst
 
 DESCRIPTION
 -----------

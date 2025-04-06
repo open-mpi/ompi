@@ -8,50 +8,8 @@ MPI_File_open
 
 :ref:`MPI_File_open` |mdash| Opens a file (collective).
 
-
-SYNTAX
-------
-
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_File_open(MPI_Comm comm, const char *filename,
-   	int amode, MPI_Info info,
-   	MPI_File *fh)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_FILE_OPEN(COMM, FILENAME, AMODE, INFO, FH, IERROR)
-   	CHARACTER*(*)	FILENAME
-   	INTEGER	COMM, AMODE, INFO, FH, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_File_open(comm, filename, amode, info, fh, ierror)
-   	TYPE(MPI_Comm), INTENT(IN) :: comm
-   	CHARACTER(LEN=*), INTENT(IN) :: filename
-   	INTEGER, INTENT(IN) :: amode
-   	TYPE(MPI_Info), INTENT(IN) :: info
-   	TYPE(MPI_File), INTENT(OUT) :: fh
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_file_open.rst
 
 INPUT PARAMETERS
 ----------------
@@ -74,7 +32,7 @@ group. :ref:`MPI_File_open` is a collective routine; all processes
 must provide the same value for *amode,* and all processes must
 provide filenames that reference the same file which are textually
 identical (note: Open MPI I/O plugins may have restrictions on
-characters that can be used in filenames. 
+characters that can be used in filenames.
 A process can open a file independently of other processes
 by using the MPI_COMM_SELF communicator. The file handle returned,
 *fh,* can be subsequently used to access the file until the file is

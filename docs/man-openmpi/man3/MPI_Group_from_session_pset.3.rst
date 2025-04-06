@@ -8,42 +8,8 @@ MPI_Group_from_session_pset
 :ref:`MPI_Group_from_session_pset` |mdash| Creates a group using a provided session
 handle and process set.
 
-SYNTAX
-------
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Group_from_session_pset(MPI_Session session, const char *pset_name, MPI_Group *newgroup)
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-
-   MPI_GROUP_FROM_SESSION_PSET(SESSION, PSET_NAME, NEWGROUP, IERROR)
-       INTEGER SESSION,  NEWGROUP, IERROR
-       CHARACTER*(*) PSET_NAME
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-
-   MPI_Group_from_session_pset(session, pset_name, newgroup, ierror)
-       TYPE(MPI_Session), INTENT(IN) :: session
-       CHARACTER(LEN=*), INTENT(IN) :: pset_name
-       TYPE(MPI_Group), INTENT(OUT) :: newgroup
-       INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_group_from_session_pset.rst
 
 INPUT PARAMETERS
 ----------------

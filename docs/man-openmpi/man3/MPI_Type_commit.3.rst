@@ -8,42 +8,8 @@ MPI_Type_commit
 
 :ref:`MPI_Type_commit` |mdash| Commits a data type.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Type_commit(MPI_Datatype *datatype)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_TYPE_COMMIT(DATATYPE, IERROR)
-   	INTEGER	DATATYPE, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Type_commit(datatype, ierror)
-   	TYPE(MPI_Datatype), INTENT(INOUT) :: datatype
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_type_commit.rst
 
 INPUT PARAMETER
 ---------------

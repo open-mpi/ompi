@@ -8,53 +8,8 @@ MPI_Unpack
 
 :ref:`MPI_Unpack` |mdash| Unpacks a datatype into contiguous memory.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Unpack(const void *inbuf, int insize, int *position,
-   	void *outbuf, int outcount, MPI_Datatype datatype,
-   	MPI_Comm comm)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_UNPACK(INBUF, INSIZE, POSITION, OUTBUF, OUTCOUNT,
-   	DATATYPE, COMM, IERROR)
-   	<type>	INBUF(*), OUTBUF(*)
-   	INTEGER	INSIZE, POSITION, OUTCOUNT, DATATYPE,
-   		COMM, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Unpack(inbuf, insize, position, outbuf, outcount, datatype, comm,
-   		ierror)
-   	TYPE(*), DIMENSION(..), INTENT(IN) :: inbuf
-   	TYPE(*), DIMENSION(..) :: outbuf
-   	INTEGER, INTENT(IN) :: insize, outcount
-   	INTEGER, INTENT(INOUT) :: position
-   	TYPE(MPI_Datatype), INTENT(IN) :: datatype
-   	TYPE(MPI_Comm), INTENT(IN) :: comm
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_unpack.rst
 
 INPUT PARAMETERS
 ----------------

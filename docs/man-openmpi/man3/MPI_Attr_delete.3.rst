@@ -8,31 +8,8 @@ MPI_Attr_delete
 
 :ref:`MPI_Attr_delete` |mdash| Deletes attribute value associated with a key |mdash| |deprecated_favor| :ref:`MPI_Comm_delete_attr`.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Attr_delete(MPI_Comm comm, int keyval)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-
-   MPI_ATTR_DELETE(COMM, KEYVAL, IERROR)
-   	INTEGER	COMM, KEYVAL, IERROR
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_attr_delete.rst
 
 
 INPUT PARAMETERS

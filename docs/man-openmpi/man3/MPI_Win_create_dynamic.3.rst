@@ -9,44 +9,8 @@ MPI_Win_create_dynamic
 :ref:`MPI_Win_create_dynamic` |mdash| One-sided MPI call that returns a window
 object for RMA operations.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   MPI_Win_create_dynamic(MPI_Info info, MPI_Comm comm, MPI_Win *win)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_WIN_CREATE_DYNAMIC(INFO, COMM, WIN, IERROR)
-   	INTEGER INFO, COMM, WIN, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Win_create_dynamic(info, comm, win, ierror)
-   	TYPE(MPI_Info), INTENT(IN) :: info
-   	TYPE(MPI_Comm), INTENT(IN) :: comm
-   	TYPE(MPI_Win), INTENT(OUT) :: win
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_win_create_dynamic.rst
 
 INPUT PARAMETERS
 ----------------

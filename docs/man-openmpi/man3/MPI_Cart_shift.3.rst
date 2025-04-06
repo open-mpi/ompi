@@ -8,44 +8,8 @@ MPI_Cart_shift
 :ref:`MPI_Cart_shift` |mdash| Returns the shifted source and destination ranks,
 given a shift direction and amount.
 
-SYNTAX
-------
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Cart_shift(MPI_Comm comm, int direction, int disp,
-       int *rank_source, int *rank_dest)
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-
-   MPI_CART_SHIFT(COMM, DIRECTION, DISP, RANK_SOURCE,
-           RANK_DEST, IERROR)
-       INTEGER COMM, DIRECTION, DISP, RANK_SOURCE
-       INTEGER RANK_DEST, IERROR
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-
-   MPI_Cart_shift(comm, direction, disp, rank_source, rank_dest, ierror)
-       TYPE(MPI_Comm), INTENT(IN) :: comm
-       INTEGER, INTENT(IN) :: direction, disp
-       INTEGER, INTENT(OUT) :: rank_source, rank_dest
-       INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_cart_shift.rst
 
 INPUT PARAMETERS
 ----------------

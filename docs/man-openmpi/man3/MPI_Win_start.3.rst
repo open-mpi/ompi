@@ -8,44 +8,8 @@ MPI_Win_start
 
 :ref:`MPI_Win_start` |mdash| Starts an RMA access epoch for *win*
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Win_start(MPI_Group group, int assert, MPI_Win win)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_WIN_START(GROUP, ASSERT, WIN, IERROR)
-   	INTEGER GROUP, ASSERT, WIN, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Win_start(group, assert, win, ierror)
-   	TYPE(MPI_Group), INTENT(IN) :: group
-   	INTEGER, INTENT(IN) :: assert
-   	TYPE(MPI_Win), INTENT(IN) :: win
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_win_start.rst
 
 INPUT PARAMETERS
 ----------------

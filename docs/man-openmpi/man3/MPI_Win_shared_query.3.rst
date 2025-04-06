@@ -8,49 +8,8 @@ MPI_Win_shared_query
 
 :ref:`MPI_Win_shared_query` |mdash| Query a shared memory window
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Win_shared_query (MPI_Win win, int rank, MPI_Aint *size,
-                             int *disp_unit, void *baseptr)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_WIN_SHARED_QUERY(WIN, RANK, SIZE, DISP_UNIT, BASEPTR, IERROR)
-           INTEGER WIN, RANK, DISP_UNIT, IERROR
-           INTEGER(KIND=MPI_ADDRESS_KIND) SIZE, BASEPTR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Win_shared_query(win, rank, size, disp_unit, baseptr, ierror)
-   	USE, INTRINSIC :: ISO_C_BINDING, ONLY : C_PTR
-   	TYPE(MPI_Win), INTENT(IN) :: win
-   	INTEGER, INTENT(IN) :: rank
-   	INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(OUT) :: size
-   	INTEGER, INTENT(OUT) :: disp_unit
-   	TYPE(C_PTR), INTENT(OUT) :: baseptr
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_win_shared_query.rst
 
 INPUT PARAMETERS
 ----------------

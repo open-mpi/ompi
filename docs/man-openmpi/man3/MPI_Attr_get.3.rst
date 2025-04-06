@@ -8,34 +8,8 @@ MPI_Attr_get
 
 :ref:`MPI_Attr_get` |mdash| Retrieves attribute value by key |mdash| |deprecated_favor| :ref:`MPI_Comm_get_attr`.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Attr_get(MPI_Comm comm, int keyval,void *attribute_val,
-   	int *flag )
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-
-   MPI_ATTR_GET(COMM, KEYVAL, ATTRIBUTE_VAL, FLAG, IERROR)
-   	INTEGER	COMM, KEYVAL, ATTRIBUTE_VAL, IERROR
-   	LOGICAL	FLAG
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_attr_get.rst
 
 INPUT PARAMETERS
 ----------------

@@ -7,39 +7,8 @@ MPI_Session_finalize
 
 :ref:`MPI_Session_finalize` |mdash| releases all MPI state associated with a session
 
-SYNTAX
-------
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Session_finalize(MPI_Session *session)
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-
-   MPI_SESSION_FINALIZE(SESSION, IERROR)
-       INTEGER SESSION, IERROR
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-
-   MPI_Session_finalize(session, ierror)
-       TYPE(MPI_Session), INTENT(IN) :: session
-       INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_session_finalize.rst
 
 INPUT PARAMETERS
 ----------------

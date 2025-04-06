@@ -8,44 +8,8 @@ MPI_Type_set_name
 
 :ref:`MPI_Type_set_name` |mdash| Sets the name of a data type.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Type_set_name(MPI_Datatype type, const char *type_name)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_TYPE_SET_NAME(TYPE, TYPE_NAME, IERROR)
-   	INTEGER	TYPE, IERROR
-   	CHARACTER*(*) TYPE_NAME
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Type_set_name(datatype, type_name, ierror)
-   	TYPE(MPI_Datatype), INTENT(IN) :: datatype
-   	CHARACTER(LEN=*), INTENT(IN) :: type_name
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_type_set_name.rst
 
 INPUT/OUTPUT PARAMETER
 ----------------------

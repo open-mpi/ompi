@@ -8,42 +8,8 @@ MPI_Request_free
 
 :ref:`MPI_Request_free` |mdash| Frees a communication request object.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Request_free(MPI_Request *request)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_REQUEST_FREE(REQUEST, IERROR)
-   	INTEGER	REQUEST, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Request_free(request, ierror)
-   	TYPE(MPI_Request), INTENT(INOUT) :: request
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_request_free.rst
 
 INPUT/OUTPUT PARAMETER
 ----------------------

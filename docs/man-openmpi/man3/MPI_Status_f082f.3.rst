@@ -5,53 +5,15 @@ MPI_Status_f082f
 
 .. include_body
 
-:ref:`MPI_Status_f082f`, :ref:`MPI_Status_c2f08` - Translates a Fortran 2008 status
+:ref:`MPI_Status_f082f`, :ref:`MPI_Status_f2f08` - Translates a Fortran 2008 status
 into a Fortran INTEGER-style status, or vice versa.
 
-SYNTAX
-------
+.. The following directive tells the man page generation script to
+   generate multiple bindings for this file.
+.. mpi-bindings: MPI_Status_f082f, MPI_Status_f2f08
 
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Status_f082f(const MPI_F08_status *f08_status, MPI_Fint *f_status)
-   int MPI_Status_f2f08(const MPI_Fint *f_status, MPI_F08_status *f08_status)
-
-Fortran mpi Module Syntax
-^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-
-   MPI_STATUS_F082F(F08_STATUS, F_STATUS, IERROR)
-       TYPE(MPI_Status) :: F08_STATUS
-       INTEGER :: STATUS(MPI_STATUS_SIZE), IERROR
-
-   MPI_STATUS_F2F08(F_STATUS, F08_STATUS, IERROR)
-       INTEGER :: F_STATUS(MPI_STATUS_SIZE), IERROR
-       TYPE(MPI_Status) :: F08_STATUS
-
-Fortran mpi_f08 Module Syntax
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-
-   MPI_Status_f082f(f08_status, f_status, ierror)
-       TYPE(MPI_Status), INTENT(IN) :: f08_status
-       INTEGER, INTENT(OUT) :: f_status(MPI_STATUS_SIZE)
-       INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
-   MPI_Status_f2f08(f_status, f08_status, ierror)
-       INTEGER, INTENT(IN) :: f_status(MPI_STATUS_SIZE)
-       TYPE(MPI_Status), INTENT(OUT) :: f08_status
-       INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_status_f082f.rst
 
 PARAMETERS
 ----------

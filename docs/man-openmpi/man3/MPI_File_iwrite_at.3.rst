@@ -9,51 +9,8 @@ MPI_File_iwrite_at
 :ref:`MPI_File_iwrite_at` |mdash| Writes a file at an explicitly specified offset
 (nonblocking, noncollective).
 
-
-SYNTAX
-------
-
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_File_iwrite_at(MPI_File fh, MPI_Offset offset,
-   	const void *buf, int count, MPI_Datatype datatype, MPI_Request *request)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_FILE_IWRITE_AT(FH, OFFSET, BUF, COUNT, DATATYPE, REQUEST, IERROR)
-   	<type>	BUF(*)
-   	INTEGER	FH, COUNT, DATATYPE, REQUEST, IERROR
-   	INTEGER(KIND=MPI_OFFSET_KIND)	OFFSET
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_File_iwrite_at(fh, offset, buf, count, datatype, request, ierror)
-   	TYPE(MPI_File), INTENT(IN) :: fh
-   	INTEGER(KIND=MPI_OFFSET_KIND), INTENT(IN) :: offset
-   	TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: buf
-   	INTEGER, INTENT(IN) :: count
-   	TYPE(MPI_Datatype), INTENT(IN) :: datatype
-   	TYPE(MPI_Request), INTENT(OUT) :: request
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_file_iwrite_at.rst
 
 INPUT/OUTPUT PARAMETER
 ----------------------

@@ -9,44 +9,8 @@ MPI_Comm_idup
 :ref:`MPI_Comm_idup` |mdash| Start the nonblocking duplication of an existing
 communicator with all its cached information.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Comm_idup(MPI_Comm comm, MPI_Comm *newcomm, MPI_Request *request)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_COMM_IDUP(COMM, NEWCOMM, REQUEST, IERROR)
-   	INTEGER	COMM, NEWCOMM, REQUEST, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Comm_idup(comm, newcomm, request, ierror)
-   	TYPE(MPI_Comm), INTENT(IN) :: comm
-   	TYPE(MPI_Comm), INTENT(OUT) :: newcomm
-   	TYPE(MPI_Request), INTENT(OUT) :: request
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_comm_idup.rst
 
 INPUT PARAMETER
 ---------------

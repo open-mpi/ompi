@@ -9,45 +9,8 @@ MPI_Request_get_status
 :ref:`MPI_Request_get_status` |mdash| Access information associated with a
 request without freeing the request.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Request_get_status(MPI_Request request, int *flag, MPI_Status *status)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_REQUEST_GET_STATUS(REQUEST, FLAG, STATUS, IERROR)
-   	INTEGER	REQUEST, STATUS(MPI_STATUS_SIZE), IERROR
-   	LOGICAL	FLAG
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Request_get_status(request, flag, status, ierror)
-   	TYPE(MPI_Request), INTENT(IN) :: request
-   	LOGICAL, INTENT(OUT) :: flag
-   	TYPE(MPI_Status) :: status
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_request_get_status.rst
 
 INPUT PARAMETER
 ---------------

@@ -9,43 +9,8 @@ MPI_Dims_create
 :ref:`MPI_Dims_create` |mdash| Creates a division of processors in a Cartesian
 grid.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Dims_create(int nnodes, int ndims, int dims[])
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_DIMS_CREATE(NNODES, NDIMS, DIMS, IERROR)
-   	INTEGER	NNODES, NDIMS, DIMS(*), IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Dims_create(nnodes, ndims, dims, ierror)
-   	INTEGER, INTENT(IN) :: nnodes, ndims
-   	INTEGER, INTENT(INOUT) :: dims(ndims)
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_dims_create.rst
 
 INPUT PARAMETERS
 ----------------

@@ -8,20 +8,8 @@ MPI_T_event_read
 
 :ref:`MPI_T_event_read` |mdash| Read the value of a event instance.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_T_event_read(MPI_T_event_instance event_instance, int elem_index, void *buffer)
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_t_event_read.rst
 
 INPUT PARAMETERS
 ----------------

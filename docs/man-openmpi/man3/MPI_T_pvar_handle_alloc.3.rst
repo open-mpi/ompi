@@ -9,23 +9,12 @@ MPI_T_pvar_handle_alloc
 :ref:`MPI_T_pvar_handle_alloc`, :ref:`MPI_T_pvar_handle_free` - Allocate/free
 MPI performance variable handles
 
+.. The following directive tells the man page generation script to
+   generate multiple bindings for this file.
+.. mpi-bindings: MPI_T_pvar_handle_alloc, MPI_T_pvar_handle_free
 
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_T_pvar_handle_alloc(int session, int pvar_index, void *obj_handle,
-                               MPI_T_pvar_handle *handle, int *count)
-
-   int MPI_T_pvar_handle_free(int session, MPI_T_pvar_handle *handle)
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_t_pvar_handle_alloc.rst
 
 DESCRIPTION
 -----------

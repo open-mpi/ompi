@@ -8,44 +8,8 @@ MPI_Comm_create_from_group
 :ref:`MPI_Comm_create_from_group` |mdash| Creates a new communicator from a group and
 stringtag
 
-SYNTAX
-------
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: C
-
-   #include <mpi.h>
-
-   int MPI_Comm_create_from_group(MPI_Group group, const char *stringtag, MPI_Info info, MPI_Errhandler errhandler, MPI_Comm *newcomm)
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: Fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-
-   MPI_COMM_CREATE_FROM_GROUP(GROUP, STRINGTAG, INFO, ERRHANDLER, NEWCOMM, IERROR)
-       INTEGER GROUP, INFO, ERRHANDLER, NEWCOMM, IERROR
-       CHARACTER*(*) STRINGTAG
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: Fortran
-
-   USE mpi_f08
-
-   MPI_Comm_create_from_group(group, stringtag, info, errhandler, newcomm, ierror)
-       TYPE(MPI_Group), INTENT(IN) :: group
-       CHARACTER(LEN=*), INTENT(IN) :: stringtag
-       TYPE(MPI_Info), INTENT(IN) :: info
-       TYPE(MPI_Errhandler), INTENT(IN) :: errhandler
-       TYPE(MPI_Comm), INTENT(OUT) :: newcomm
-       INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_comm_create_from_group.rst
 
 INPUT PARAMETERS
 ----------------

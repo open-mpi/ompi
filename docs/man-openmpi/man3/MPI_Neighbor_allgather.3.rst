@@ -7,96 +7,15 @@ MPI_Neighbor_allgather
 .. include_body
 
 :ref:`MPI_Neighbor_allgather`, :ref:`MPI_Ineighbor_allgather`,
-:ref:`MPI_Neighbor_allgather` |mdash| Gathers and distributes data from and to all
+:ref:`MPI_Neighbor_allgather_init` |mdash| Gathers and distributes data from and to all
 neighbors
 
+.. The following directive tells the man page generation script to
+   generate multiple bindings for this file.
+.. mpi-bindings: MPI_Neighbor_allgather, MPI_Ineighbor_allgather, MPI_Neighbor_allgather_init
 
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Neighbor_allgather(const void *sendbuf, int  sendcount,
-   	MPI_Datatype sendtype, void *recvbuf, int recvcount,
-   	 MPI_Datatype recvtype, MPI_Comm comm)
-
-   int MPI_Ineighbor_allgather(const void *sendbuf, int  sendcount,
-   	MPI_Datatype sendtype, void *recvbuf, int recvcount,
-   	 MPI_Datatype recvtype, MPI_Comm comm, MPI_Request req)
-
-   int MPI_Neighbor_allgather_init(const void *sendbuf, int  sendcount,
-   	MPI_Datatype sendtype, void *recvbuf, int recvcount,
-   	 MPI_Datatype recvtype, MPI_Comm comm, MPI_Infoinfo, MPI_Request req)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_NEIGHBOR_ALLGATHER(SENDBUF, SENDCOUNT, SENDTYPE, RECVBUF, RECVCOUNT,
-   		RECVTYPE, COMM, IERROR)
-   	<type>	SENDBUF (*), RECVBUF (*)
-   	INTEGER	SENDCOUNT, SENDTYPE, RECVCOUNT, RECVTYPE, COMM,
-   	INTEGER	IERROR
-
-   MPI_INEIGHBOR_ALLGATHER(SENDBUF, SENDCOUNT, SENDTYPE, RECVBUF, RECVCOUNT,
-   		RECVTYPE, COMM, REQUEST, IERROR)
-   	<type>	SENDBUF (*), RECVBUF (*)
-   	INTEGER	SENDCOUNT, SENDTYPE, RECVCOUNT, RECVTYPE, COMM,
-   	INTEGER	REQUEST, IERROR
-
-   MPI_NEIGHBOR_ALLGATHER_INIT(SENDBUF, SENDCOUNT, SENDTYPE, RECVBUF, RECVCOUNT,
-   		RECVTYPE, COMM, INFO, IREQUEST, IERROR)
-   	<type>	SENDBUF (*), RECVBUF (*)
-   	INTEGER	SENDCOUNT, SENDTYPE, RECVCOUNT, RECVTYPE, COMM,
-   	INTEGER	INFO, REQUEST, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Neighbor_allgather(sendbuf, sendcount, sendtype, recvbuf, recvcount,
-   		recvtype, comm, ierror)
-   	TYPE(*), DIMENSION(..), INTENT(IN) :: sendbuf
-   	TYPE(*), DIMENSION(..) :: recvbuf
-   	INTEGER, INTENT(IN) :: sendcount, recvcount
-   	TYPE(MPI_Datatype), INTENT(IN) :: sendtype, recvtype
-   	TYPE(MPI_Comm), INTENT(IN) :: comm
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
-   MPI_Ineighbor_allgather(sendbuf, sendcount, sendtype, recvbuf, recvcount,
-   		recvtype, comm, request, ierror)
-   	TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: sendbuf
-   	TYPE(*), DIMENSION(..), ASYNCHRONOUS :: recvbuf
-   	INTEGER, INTENT(IN) :: sendcount, recvcount
-   	TYPE(MPI_Datatype), INTENT(IN) :: sendtype, recvtype
-   	TYPE(MPI_Comm), INTENT(IN) :: comm
-   	TYPE(MPI_Request), INTENT(OUT) :: request
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
-   MPI_Neighbor_allgather_init(sendbuf, sendcount, sendtype, recvbuf, recvcount,
-   		recvtype, comm, info, request, ierror)
-   	TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: sendbuf
-   	TYPE(*), DIMENSION(..), ASYNCHRONOUS :: recvbuf
-   	INTEGER, INTENT(IN) :: sendcount, recvcount
-   	TYPE(MPI_Datatype), INTENT(IN) :: sendtype, recvtype
-   	TYPE(MPI_Comm), INTENT(IN) :: comm
-   	TYPE(MPI_Info), INTENT(IN) :: info
-   	TYPE(MPI_Request), INTENT(OUT) :: request
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_neighbor_allgather.rst
 
 INPUT PARAMETERS
 ----------------
@@ -170,6 +89,6 @@ ERRORS
 .. seealso::
    * :ref:`MPI_Neighbor_allgatherv`
    * :ref:`MPI_Cart_create`
-   * MPI_Garph_create
+   * :ref:`MPI_Graph_create`
    * :ref:`MPI_Dist_graph_create`
    * :ref:`MPI_Gather`

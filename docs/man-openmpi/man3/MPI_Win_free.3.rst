@@ -8,42 +8,8 @@ MPI_Win_free
 
 :ref:`MPI_Win_free` |mdash| Frees the window object and returns a null handle.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Win_free(MPI_Win *win)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_WIN_FREE(WIN, IERROR)
-   	INTEGER WIN, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Win_free(win, ierror)
-   	TYPE(MPI_Win), INTENT(INOUT) :: win
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_win_free.rst
 
 INPUT/OUTPUT PARAMETER
 ----------------------

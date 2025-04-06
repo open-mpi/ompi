@@ -8,43 +8,8 @@ MPI_Type_dup
 
 :ref:`MPI_Type_dup` |mdash| Duplicates a data type with associated key values.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Type_dup(MPI_Datatype type, MPI_Datatype *newtype)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_TYPE_DUP(TYPE, NEWTYPE, IERROR)
-   	INTEGER	TYPE, NEWTYPE, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Type_dup(oldtype, newtype, ierror)
-   	TYPE(MPI_Datatype), INTENT(IN) :: oldtype
-   	TYPE(MPI_Datatype), INTENT(OUT) :: newtype
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_type_dup.rst
 
 INPUT PARAMETER
 ---------------
