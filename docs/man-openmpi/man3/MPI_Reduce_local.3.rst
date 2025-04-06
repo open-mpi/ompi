@@ -8,48 +8,8 @@ MPI_Reduce_local
 
 :ref:`MPI_Reduce_local` |mdash| Perform a local reduction
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Reduce_local(const void *inbuf, void *inoutbuf, int count,
-   	MPI_Datatype datatype, MPI_Op op)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_REDUCE_LOCAL(INBUF, INOUTBUF, COUNT, DATATYPE, OP, IERROR)
-   	<type>	INBUF(*), INOUTBUF(*)
-   	INTEGER	COUNT, DATATYPE, OP, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Reduce_local(inbuf, inoutbuf, count, datatype, op, ierror)
-   	TYPE(*), DIMENSION(..), INTENT(IN) :: inbuf
-   	TYPE(*), DIMENSION(..) :: inoutbuf
-   	INTEGER, INTENT(IN) :: count
-   	TYPE(MPI_Datatype), INTENT(IN) :: datatype
-   	TYPE(MPI_Op), INTENT(IN) :: op
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_reduce_local.rst
 
 INPUT PARAMETERS
 ----------------
@@ -216,7 +176,7 @@ The operation that defines MPI_MAXLOC is
 MPI_MINLOC is defined similarly:
 
 ::
-   
+
             ( u )    (  v )      ( w )
             (   )  o (    )   =  (   )
             ( i )    (  j )      ( k )

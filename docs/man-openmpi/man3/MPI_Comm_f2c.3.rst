@@ -6,51 +6,36 @@ MPI_Comm_f2c
 
 .. include_body
 
-:ref:`MPI_Comm_f2c`, :ref:`MPI_Comm_c2f`, :ref:`MPI_File_f2c`, :ref:`MPI_File_c2f`, :ref:`MPI_Info_f2c`,
-:ref:`MPI_Info_c2f`, :ref:`MPI_Message_f2c`, :ref:`MPI_Message_c2f`, :ref:`MPI_Op_f2c`, :ref:`MPI_Op_c2f`,
-:ref:`MPI_Request_f2c`, :ref:`MPI_Request_c2f`, :ref:`MPI_Type_f2c`, :ref:`MPI_Type_c2f`,
+:ref:`MPI_Comm_f2c`, :ref:`MPI_Comm_c2f`,
+:ref:`MPI_Errhandler_f2c`, :ref:`MPI_Errhandler_c2f`,
+:ref:`MPI_File_f2c`, :ref:`MPI_File_c2f`,
+:ref:`MPI_Group_f2c`, :ref:`MPI_Group_c2f`,
+:ref:`MPI_Info_f2c`, :ref:`MPI_Info_c2f`,
+:ref:`MPI_Message_f2c`, :ref:`MPI_Message_c2f`,
+:ref:`MPI_Op_f2c`, :ref:`MPI_Op_c2f`,
+:ref:`MPI_Request_f2c`, :ref:`MPI_Request_c2f`,
+:ref:`MPI_Session_f2c`, :ref:`MPI_Session_c2f`,
+:ref:`MPI_Status_f2c`, :ref:`MPI_Status_c2f`,
+:ref:`MPI_Type_f2c`, :ref:`MPI_Type_c2f`,
 :ref:`MPI_Win_f2c`, :ref:`MPI_Win_c2f` - Translates a C handle into a Fortran
 handle, or vice versa.
 
+.. The following directive tells the man page generation script to
+   generate multiple bindings for this file.
+.. mpi-bindings: MPI_Comm_f2c, MPI_Comm_c2f
+.. mpi-bindings: MPI_Errhandler_f2c, MPI_Errhandler_c2f
+.. mpi-bindings: MPI_File_f2c, MPI_File_c2f
+.. mpi-bindings: MPI_Group_f2c, MPI_Group_c2f
+.. mpi-bindings: MPI_Info_f2c, MPI_Info_c2f
+.. mpi-bindings: MPI_Message_f2c, MPI_Message_c2f
+.. mpi-bindings: MPI_Op_f2c, MPI_Op_c2f
+.. mpi-bindings: MPI_Request_f2c, MPI_Request_c2f
+.. mpi-bindings: MPI_Session_f2c, MPI_Session_c2f
+.. mpi-bindings: MPI_Type_f2c, MPI_Type_c2f
+.. mpi-bindings: MPI_Win_f2c, MPI_Win_c2f
 
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   MPI_Comm MPI_Comm_f2c(MPI_Fint comm)
-   MPI_Fint MPI_Comm_c2f(MPI_Comm comm)
-
-   MPI_File MPI_File_f2c(MPI_Fint file)
-   MPI_Fint MPI_File_c2f(MPI_File file)
-
-   MPI_Group MPI_Group_f2c(MPI Fint group)
-   MPI_Fint MPI_Group_c2f(MPI Group group)
-
-   MPI_Info MPI_Info_f2c(MPI_Fint info)
-   MPI_Fint MPI_Info_c2f(MPI_Info info)
-
-   MPI_Message MPI_Message_f2c(MPI_Fint message)
-   MPI_Fint MPI_Message_c2f(MPI_Message message)
-
-   MPI_Op MPI_Op_f2c(MPI_Fint op)
-   MPI_Fint MPI_Op_c2f(MPI_Op op)
-
-   MPI_Request MPI_Request_f2c(MPI_Fint request)
-   MPI_Fint MPI_Request_c2f(MPI_Request request)
-
-   MPI_Datatype MPI_Type_f2c(MPI_Fint datatype)
-   MPI_Fint MPI_Type_c2f(MPI_Datatype datatype)
-
-   MPI_Win MPI_Win_f2c(MPI_Fint win)
-   MPI_Fint MPI_Win_c2f(MPI_Win win)
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_comm_f2c.rst
 
 DESCRIPTION
 -----------
@@ -70,8 +55,11 @@ C handle; if *comm* is an invalid Fortran handle, then :ref:`MPI_Comm_f2c`
 returns an invalid C handle.
 
 
-NOTE
-----
+NOTES
+-----
+
+These functions are only available in C; they are not available in any
+of the Fortran MPI interfaces.
 
 This function does not return an error value. Consequently, the result
 of calling it before :ref:`MPI_Init` or after :ref:`MPI_Finalize` is undefined.

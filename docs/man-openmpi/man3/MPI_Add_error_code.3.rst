@@ -9,43 +9,8 @@ MPI_Add_error_code
 :ref:`MPI_Add_error_code` |mdash| Creates a new error code associated with
 *errorclass*
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Add_error_code(int errorclass, int *errorcode)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_ADD_ERROR_CODE(ERRORCLASS, ERRORCODE, IERROR)
-   	INTEGER  ERRORCLASS, ERRORCODE, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Add_error_code(errorclass, errorcode, ierror)
-   	INTEGER, INTENT(IN) :: errorclass
-   	INTEGER, INTENT(OUT) :: errorcode
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_add_error_code.rst
 
 INPUT PARAMETER
 ---------------

@@ -8,40 +8,8 @@ MPI_Comm_dup
 :ref:`MPI_Comm_dup` |mdash| Duplicates an existing communicator with all its cached
 information.
 
-SYNTAX
-------
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Comm_dup(MPI_Comm comm, MPI_Comm *newcomm)
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-
-   MPI_COMM_DUP(COMM, NEWCOMM, IERROR)
-       INTEGER COMM, NEWCOMM, IERROR
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-
-   MPI_Comm_dup(comm, newcomm, ierror)
-       TYPE(MPI_Comm), INTENT(IN) :: comm
-       TYPE(MPI_Comm), INTENT(OUT) :: newcomm
-       INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_comm_dup.rst
 
 INPUT PARAMETER
 ---------------

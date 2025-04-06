@@ -9,53 +9,8 @@ MPI_Sendrecv_replace
 :ref:`MPI_Sendrecv_replace` |mdash| Sends and receives a message using a single
 buffer.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Sendrecv_replace(void *buf, int count, MPI_Datatype datatype,
-   	int dest, int sendtag, int source, int recvtag, MPI_Comm comm,
-   	MPI_Status *status)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_SENDRECV_REPLACE(BUF, COUNT, DATATYPE, DEST, SENDTAG, SOURCE,
-   		RECVTAG, COMM, STATUS, IERROR)
-   	<type>	BUF(*)
-   	INTEGER	COUNT, DATATYPE, DEST, SENDTAG
-   	INTEGER	SOURCE, RECVTAG, COMM
-   	INTEGER	STATUS(MPI_STATUS_SIZE), IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Sendrecv_replace(buf, count, datatype, dest, sendtag, source, recvtag,
-   		comm, status, ierror)
-   	TYPE(*), DIMENSION(..) :: buf
-   	INTEGER, INTENT(IN) :: count, dest, sendtag, source, recvtag
-   	TYPE(MPI_Datatype), INTENT(IN) :: datatype
-   	TYPE(MPI_Comm), INTENT(IN) :: comm
-   	TYPE(MPI_Status) :: status
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_sendrecv_replace.rst
 
 INPUT/OUTPUT PARAMETER
 ----------------------

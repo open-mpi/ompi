@@ -9,44 +9,8 @@ MPI_File_get_group
 :ref:`MPI_File_get_group` |mdash| Returns a duplicate of the process group of a
 file.
 
-
-SYNTAX
-------
-
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_File_get_group(MPI_File fh, MPI_Group *group)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_FILE_GET_GROUP(FH, GROUP, IERROR)
-   	INTEGER	FH, GROUP, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_File_get_group(fh, group, ierror)
-   	TYPE(MPI_File), INTENT(IN) :: fh
-   	TYPE(MPI_Group), INTENT(OUT) :: group
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_file_get_group.rst
 
 INPUT PARAMETER
 ---------------

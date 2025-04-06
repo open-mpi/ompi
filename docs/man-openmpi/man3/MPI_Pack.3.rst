@@ -8,50 +8,8 @@ MPI_Pack
 
 :ref:`MPI_Pack` |mdash| Packs data of a given datatype into contiguous memory.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Pack(const void *inbuf, int incount, MPI_Datatype datatype,
-   	void *outbuf, int outsize, int *position, MPI_Comm comm)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_PACK(INBUF, INCOUNT, DATATYPE, OUTBUF,OUTSIZE, POSITION,
-   		COMM, IERROR)
-   	<type>	INBUF(*), OUTBUF(*)
-   	INTEGER	INCOUNT, DATATYPE, OUTSIZE, POSITION, COMM, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Pack(inbuf, incount, datatype, outbuf, outsize, position, comm, ierror)
-   	TYPE(*), DIMENSION(..), INTENT(IN) :: inbuf
-   	TYPE(*), DIMENSION(..) :: outbuf
-   	INTEGER, INTENT(IN) :: incount, outsize
-   	TYPE(MPI_Datatype), INTENT(IN) :: datatype
-   	INTEGER, INTENT(INOUT) :: position
-   	TYPE(MPI_Comm), INTENT(IN) :: comm
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_pack.rst
 
 INPUT PARAMETERS
 ----------------

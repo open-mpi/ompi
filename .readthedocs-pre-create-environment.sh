@@ -26,3 +26,6 @@ PRRTE_RST_TARGET_DIR=docs/prrte-rst-content
 
 cp -rp $SCHIZO_SRC_DIR $SCHIZO_TARGET_DIR
 cp -rp $PRRTE_RST_SRC_DIR $PRRTE_RST_TARGET_DIR
+
+cd docs
+python3 ./generate-mpi-man3-bindings.py --srcdir . --builddir .

@@ -7,44 +7,8 @@ MPI_Session_get_nth_pset
 
 :ref:`MPI_Session_get_nth_pset` |mdash| Query runtime for name of the nth process set
 
-SYNTAX
-------
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Session_get_nth_pset(MPI_Session session, MPI_Info info, int n, int *pset_len, char *pset_name)
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-
-   MPI_SESSION_GET_NTH_PSET(SESSION, INFO, N, PSET_LEN, PSET_NAME, IERROR)
-       INTEGER SESSION, INFO, N, PSET_LEN, IERROR
-       CHARACTER*(*) PSET_NAME
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-
-   MPI_Session_get_nth_pset(session, info, n, pset_len, pset_name, ierror)
-       TYPE(MPI_Session), INTENT(IN) :: session
-       TYPE(MPI_Info), INTENT(IN) :: info
-       INTEGER, INTENT(IN) :: n
-       INTEGER, INTENT(INOUT) :: pset_len
-       CHARACTER(LEN=*), INTENT(OUT) :: pset_name
-       INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_session_get_nth_pset.rst
 
 INPUT PARAMETERS
 ----------------

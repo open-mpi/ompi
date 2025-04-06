@@ -10,92 +10,12 @@ MPI_Reduce_scatter_block
 :ref:`MPI_Reduce_scatter_block_init` |mdash| Combines values and scatters the
 results in blocks.
 
+.. The following directive tells the man page generation script to
+   generate multiple bindings for this file.
+.. mpi-bindings: MPI_Reduce_scatter_block, MPI_Ireduce_scatter_block, MPI_Reduce_scatter_block_init
 
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Reduce_scatter_block(const void *sendbuf, void *recvbuf, int recvcount,
-   	MPI_Datatype datatype, MPI_Op op, MPI_Comm comm)
-
-   int MPI_Ireduce_scatter_block(const void *sendbuf, void *recvbuf, int recvcount,
-   	MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request)
-
-
-   int MPI_Reduce_scatter_block_init(const void *sendbuf, void *recvbuf, int recvcount,
-   	MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Info info, MPI_Request *request)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_REDUCE_SCATTER_BLOCK(SENDBUF, RECVBUF, RECVCOUNT, DATATYPE, OP,
-   		COMM, IERROR)
-   	<type>	SENDBUF(*), RECVBUF(*)
-   	INTEGER	RECVCOUNT, DATATYPE, OP, COMM, IERROR
-
-   MPI_IREDUCE_SCATTER_BLOCK(SENDBUF, RECVBUF, RECVCOUNT, DATATYPE, OP,
-   		COMM, REQUEST, IERROR)
-   	<type>	SENDBUF(*), RECVBUF(*)
-   	INTEGER	RECVCOUNT, DATATYPE, OP, COMM, REQUEST, IERROR
-
-
-   MPI_REDUCE_SCATTER_BLOCK_INOT(SENDBUF, RECVBUF, RECVCOUNT, DATATYPE, OP,
-   		COMM, INFO, REQUEST, IERROR)
-   	<type>	SENDBUF(*), RECVBUF(*)
-   	INTEGER	RECVCOUNT, DATATYPE, OP, COMM, INFO, REQUEST, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Ireduce_scatter_block(sendbuf, recvbuf, recvcount, datatype, op, comm,
-   		ierror)
-   	TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: sendbuf
-   	TYPE(*), DIMENSION(..), ASYNCHRONOUS :: recvbuf
-   	INTEGER, INTENT(IN) :: recvcount
-   	TYPE(MPI_Datatype), INTENT(IN) :: datatype
-   	TYPE(MPI_Op), INTENT(IN) :: op
-   	TYPE(MPI_Comm), INTENT(IN) :: comm
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
-   MPI_Ireduce_scatter_block(sendbuf, recvbuf, recvcount, datatype, op, comm,
-   		request, ierror)
-   	TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: sendbuf
-   	TYPE(*), DIMENSION(..), ASYNCHRONOUS :: recvbuf
-   	INTEGER, INTENT(IN) :: recvcount
-   	TYPE(MPI_Datatype), INTENT(IN) :: datatype
-   	TYPE(MPI_Op), INTENT(IN) :: op
-   	TYPE(MPI_Comm), INTENT(IN) :: comm
-   	TYPE(MPI_Request), INTENT(OUT) :: request
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
-   MPI_Reduce_scatter_block_init(sendbuf, recvbuf, recvcount, datatype, op, comm,
-   		info, request, ierror)
-   	TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: sendbuf
-   	TYPE(*), DIMENSION(..), ASYNCHRONOUS :: recvbuf
-   	INTEGER, INTENT(IN) :: recvcount
-   	TYPE(MPI_Datatype), INTENT(IN) :: datatype
-   	TYPE(MPI_Op), INTENT(IN) :: op
-   	TYPE(MPI_Comm), INTENT(IN) :: comm
-   	TYPE(MPI_Info), INTENT(IN) :: info
-   	TYPE(MPI_Request), INTENT(OUT) :: request
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_reduce_scatter_block.rst
 
 INPUT PARAMETERS
 ----------------

@@ -8,42 +8,8 @@ MPI_Graph_neighbors_count
 :ref:`MPI_Graph_neighbors_count` |mdash| Returns the number of neighbors of a node
 associated with a graph topology.
 
-SYNTAX
-------
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Graph_neighbors_count(MPI_Comm comm, int rank,
-       int *nneighbors)
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-
-   MPI_GRAPH_NEIGHBORS_COUNT(COMM, RANK, NNEIGHBORS, IERROR)
-       INTEGER COMM, RANK, NNEIGHBORS, IERROR
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-
-   MPI_Graph_neighbors_count(comm, rank, nneighbors, ierror)
-       TYPE(MPI_Comm), INTENT(IN) :: comm
-       INTEGER, INTENT(IN) :: rank
-       INTEGER, INTENT(OUT) :: nneighbors
-       INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_graph_neighbors_count.rst
 
 INPUT PARAMETERS
 ----------------

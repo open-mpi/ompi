@@ -8,47 +8,8 @@ MPI_Waitany
 
 :ref:`MPI_Waitany` |mdash| Waits for any specified send or receive to complete.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Waitany(int count, MPI_Request array_of_requests[],
-   	int *index, MPI_Status *status)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_WAITANY(COUNT, ARRAY_OF_REQUESTS, INDEX, STATUS, IERROR)
-   	INTEGER	COUNT, ARRAY_OF_REQUESTS(*), INDEX
-   	INTEGER	STATUS(MPI_STATUS_SIZE), IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Waitany(count, array_of_requests, index, status, ierror)
-   	INTEGER, INTENT(IN) :: count
-   	TYPE(MPI_Request), INTENT(INOUT) :: array_of_requests(count)
-   	INTEGER, INTENT(OUT) :: index
-   	TYPE(MPI_Status) :: status
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_waitany.rst
 
 INPUT PARAMETERS
 ----------------

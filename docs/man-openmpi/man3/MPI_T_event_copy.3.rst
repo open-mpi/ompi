@@ -8,20 +8,8 @@ MPI_T_event_copy
 
 :ref:`MPI_T_event_copy` |mdash| Copy event data as a whole into a user-specified buffer.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_T_event_copy(MPI_T_event_instance event_instance, void *buffer)
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_t_event_copy.rst
 
 INPUT PARAMETERS
 ----------------

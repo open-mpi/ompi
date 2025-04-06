@@ -9,49 +9,8 @@ MPI_Pack_external_size
 :ref:`MPI_Pack_external_size` |mdash| Calculates upper bound on space needed to
 write to a portable format
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Pack_external_size(const char *datarep, int incount,
-   	MPI_Datatype datatype, MPI_Aint *size)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_PACK_EXTERNAL_SIZE(DATAREP, INCOUNT, DATATYPE, SIZE, IERROR)
-
-   	INTEGER		INCOUNT, DATATYPE, IERROR
-   	INTEGER(KIND=MPI_ADDRESS_KIND) SIZE
-   	CHARACTER*(*)	DATAREP
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Pack_external_size(datarep, incount, datatype, size, ierror)
-   	TYPE(MPI_Datatype), INTENT(IN) :: datatype
-   	INTEGER, INTENT(IN) :: incount
-   	CHARACTER(LEN=*), INTENT(IN) :: datarep
-   	INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(OUT) :: size
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_pack_external_size.rst
 
 INPUT PARAMETERS
 ----------------

@@ -8,47 +8,8 @@ MPI_Op_create
 
 :ref:`MPI_Op_create` |mdash| Creates a user-defined combination function handle.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Op_create(MPI_User_function *function, int commute,
-   	MPI_Op *op)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_OP_CREATE(FUNCTION, COMMUTE, OP, IERROR)
-   	EXTERNAL	FUNCTION
-   	LOGICAL	COMMUTE
-   	INTEGER	OP, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Op_create(user_fn, commute, op, ierror)
-   	PROCEDURE(MPI_User_function) :: user_fn
-   	LOGICAL, INTENT(IN) :: commute
-   	TYPE(MPI_Op), INTENT(OUT) :: op
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_op_create.rst
 
 INPUT PARAMETERS
 ----------------

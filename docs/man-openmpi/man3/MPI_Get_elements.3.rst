@@ -8,56 +8,12 @@ MPI_Get_elements
 :ref:`MPI_Get_elements`, :ref:`MPI_Get_elements_x` - Returns the number of basic
 elements in a data type.
 
-SYNTAX
-------
+.. The following directive tells the man page generation script to
+   generate multiple bindings for this file.
+.. mpi-bindings: MPI_Get_elements, MPI_Get_elements_x
 
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Get_elements(const MPI_Status *status, MPI_Datatype datatype,
-       int *count)
-
-   int MPI_Get_elements_x(const MPI_Status *status, MPI_Datatype datatype,
-       MPI_Count *count)
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-
-   MPI_GET_ELEMENTS(STATUS, DATATYPE, COUNT, IERROR)
-       INTEGER STATUS(MPI_STATUS_SIZE), DATATYPE, COUNT, IERROR
-
-   MPI_GET_ELEMENTS_X(STATUS, DATATYPE, COUNT, IERROR)
-       INTEGER STATUS(MPI_STATUS_SIZE), DATATYPE
-           INTEGER(KIND=MPI_COUNT_KIND) COUNT
-           INTEGER IERROR
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-
-   MPI_Get_elements(status, datatype, count, ierror)
-       TYPE(MPI_Status), INTENT(IN) :: status
-       TYPE(MPI_Datatype), INTENT(IN) :: datatype
-       INTEGER, INTENT(OUT) :: count
-       INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
-   MPI_Get_elements_x(status, datatype, count, ierror)
-       TYPE(MPI_Status), INTENT(IN) :: status
-       TYPE(MPI_Datatype), INTENT(IN) :: datatype
-       INTEGER(KIND = MPI_COUNT_KIND), INTENT(OUT) :: count
-       INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_get_elements.rst
 
 INPUT PARAMETERS
 ----------------

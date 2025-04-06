@@ -8,54 +8,8 @@ MPI_Comm_spawn
 
 :ref:`MPI_Comm_spawn` |mdash| Spawns a number of identical binaries.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Comm_spawn(const char *command, char *argv[], int maxprocs,
-   	MPI_Info info, int root, MPI_Comm comm,
-   	MPI_Comm *intercomm, int array_of_errcodes[])
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_COMM_SPAWN(COMMAND, ARGV, MAXPROCS, INFO, ROOT, COMM,
-   	INTERCOMM, ARRAY_OF_ERRCODES, IERROR)
-
-   	CHARACTER*(*) COMMAND, ARGV(*)
-   	INTEGER	INFO, MAXPROCS, ROOT, COMM, INTERCOMM,
-   	ARRAY_OF_ERRCODES(*), IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Comm_spawn(command, argv, maxprocs, info, root, comm, intercomm,
-   		array_of_errcodes, ierror)
-   	CHARACTER(LEN=*), INTENT(IN) :: command, argv(*)
-   	INTEGER, INTENT(IN) :: maxprocs, root
-   	TYPE(MPI_Info), INTENT(IN) :: info
-   	TYPE(MPI_Comm), INTENT(IN) :: comm
-   	TYPE(MPI_Comm), INTENT(OUT) :: intercomm
-   	INTEGER :: array_of_errcodes(*)
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_comm_spawn.rst
 
 INPUT PARAMETERS
 ----------------

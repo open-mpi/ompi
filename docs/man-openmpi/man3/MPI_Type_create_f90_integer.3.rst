@@ -10,43 +10,8 @@ MPI_Type_create_f90_integer
 
    MPI_Type_create_f90_integer - Returns a bounded MPI integer datatype
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Type_create_f90_integer(int r, MPI_Datatype *newtype)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_TYPE_CREATE_F90_INTEGER (R, NEWTYPE, IERROR)
-   	INTEGER	R, NEWTYPE, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Type_create_f90_integer(r, newtype, ierror)
-   	INTEGER, INTENT(IN) :: r
-   	TYPE(MPI_Datatype), INTENT(OUT) :: newtype
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_type_create_f90_integer.rst
 
 INPUT PARAMETER
 ---------------

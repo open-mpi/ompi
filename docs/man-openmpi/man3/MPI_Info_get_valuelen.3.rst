@@ -9,48 +9,8 @@ MPI_Info_get_valuelen
 :ref:`MPI_Info_get_valuelen` |mdash| Retrieves the length of the key value
 associated with an info object.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Info_get_valuelen(MPI_Info info, const char *key,
-   	int *valuelen, int *flag)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_INFO_GET_VALUELEN(INFO, KEY, VALUELEN, FLAG, IERROR)
-   	INTEGER		INFO, VALUELEN, IERROR
-   	LOGICAL		FLAG
-   	CHARACTER*(*)	KEY
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Info_get_valuelen(info, key, valuelen, flag, ierror)
-   	TYPE(MPI_Info), INTENT(IN) :: info
-   	CHARACTER(LEN=*), INTENT(IN) :: key
-   	INTEGER, INTENT(OUT) :: valuelen
-   	LOGICAL, INTENT(OUT) :: flag
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_info_get_valuelen.rst
 
 INPUT PARAMETERS
 ----------------

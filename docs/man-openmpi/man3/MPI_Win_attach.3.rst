@@ -9,57 +9,12 @@ MPI_Win_attach
 :ref:`MPI_Win_attach`, :ref:`MPI_Win_detach` - One-sided MPI call that attaches /
 detaches a memory region to / from a window object for RMA operations.
 
+.. The following directive tells the man page generation script to
+   generate multiple bindings for this file.
+.. mpi-bindings: MPI_Win_attach, MPI_Win_detach
 
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   MPI_Win_attach(MPI_Win win, void *base, MPI_Aint size)
-
-   MPI_Win_detach(MPI_Win win, void *base)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_WIN_ATTACH(WIN, BASE, SIZE, IERROR)
-   	<type> BASE(*)
-   	INTEGER(KIND=MPI_ADDRESS_KIND) SIZE
-   	INTEGER WIN, IERROR
-
-   MPI_WIN_DETACH(WIN, BASE, IERROR)
-   	<type> BASE(*)
-   	INTEGER WIN, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Win_attach(win, base, size, ierror)
-   	TYPE(MPI_Win), INTENT(IN) :: win
-   	TYPE(*), DIMENSION(..), INTENT(IN) :: base
-   	INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(IN) :: size
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
-   MPI_Win_detach(win, base, ierror)
-   	TYPE(MPI_Win), INTENT(IN) :: win
-   	TYPE(*), DIMENSION(..), INTENT(IN) :: base
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_win_attach.rst
 
 INPUT PARAMETERS
 ----------------

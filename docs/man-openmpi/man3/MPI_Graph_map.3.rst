@@ -7,42 +7,8 @@ MPI_Graph_map
 
 :ref:`MPI_Graph_map` |mdash| Maps process to graph topology information.
 
-SYNTAX
-------
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Graph_map(MPI_Comm comm, int nnodes, const int index[],
-       const int edges[], int *newrank)
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-
-   MPI_GRAPH_MAP(COMM, NNODES, INDEX, EDGES, NEWRANK, IERROR)
-       INTEGER COMM, NNODES, INDEX(*), EDGES(*), NEWRANK, IERROR
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-
-   MPI_Graph_map(comm, nnodes, index, edges, newrank, ierror)
-       TYPE(MPI_Comm), INTENT(IN) :: comm
-       INTEGER, INTENT(IN) :: nnodes, index(nnodes), edges(*)
-       INTEGER, INTENT(OUT) :: newrank
-       INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_graph_map.rst
 
 INPUT PARAMETERS
 ----------------

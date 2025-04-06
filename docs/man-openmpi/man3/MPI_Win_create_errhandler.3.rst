@@ -8,45 +8,8 @@ MPI_Win_create_errhandler
 
 :ref:`MPI_Win_create_errhandler` |mdash| Creates an error handler for a window.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Win_create_errhandler(MPI_Win_errhandler_function *function,
-   	MPI_Errhandler *errhandler)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_WIN_CREATE_ERRHANDLER(FUNCTION, ERRHANDLER, IERROR)
-   	EXTERNAL FUNCTION
-   	INTEGER ERRHANDLER, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Win_create_errhandler(win_errhandler_fn, errhandler, ierror)
-   	PROCEDURE(MPI_Win_errhandler_function) :: win_errhandler_fn
-   	TYPE(MPI_Errhandler), INTENT(OUT) :: errhandler
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_win_create_errhandler.rst
 
 DEPRECATED TYPE NAME NOTE
 -------------------------

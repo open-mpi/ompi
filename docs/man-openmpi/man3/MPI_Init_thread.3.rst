@@ -8,44 +8,8 @@ MPI_Init_thread
 
 :ref:`MPI_Init_thread` |mdash| Initializes the MPI execution environment
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Init_thread(int *argc, char ***argv,
-   	int required, int *provided)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_INIT_THREAD(REQUIRED, PROVIDED, IERROR)
-   	INTEGER	REQUIRED, PROVIDED, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Init_thread(required, provided, ierror)
-   	INTEGER, INTENT(IN) :: required
-   	INTEGER, INTENT(OUT) :: provided
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_init_thread.rst
 
 INPUT PARAMETERS
 ----------------

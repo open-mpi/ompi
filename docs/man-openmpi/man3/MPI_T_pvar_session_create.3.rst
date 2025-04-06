@@ -9,22 +9,12 @@ MPI_T_pvar_session_create
 :ref:`MPI_T_pvar_session_create`, :ref:`MPI_T_pvar_session_free` - Create/free
 performance variable session
 
+.. The following directive tells the man page generation script to
+   generate multiple bindings for this file.
+.. mpi-bindings: MPI_T_pvar_session_create, MPI_T_pvar_session_free
 
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_T_pvar_session_create(MPI_T_pvar_session *session)
-
-   int MPI_T_pvar_session_free(MPI_T_pvar_session *session)
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_t_pvar_session_create.rst
 
 DESCRIPTION
 -----------

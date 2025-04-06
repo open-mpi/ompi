@@ -8,23 +8,8 @@ MPI_T_event_get_info
 
 :ref:`MPI_T_event_get_info` |mdash|  Returns additional information about a specific event type
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_T_event_get_info(int event_index, char *name, int *name_len,
-                            int *verbosity, MPI_Datatype array_of_datatypes[],
-                            MPI_Aint array_of_displacements[], int *num_elements,
-                            MPI_T_enum *enumtype, MPI_Info *info, char *desc,
-                            int *desc_len, int *bind)
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_t_event_get_info.rst
 
 INPUT PARAMETERS
 ----------------

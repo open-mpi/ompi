@@ -8,44 +8,8 @@ MPI_Info_delete
 
 :ref:`MPI_Info_delete` |mdash| Deletes a key/value pair from *info*.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Info_delete(MPI_Info info, const char *key)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_INFO_DELETE(INFO, KEY, IERROR)
-   	INTEGER		INFO, IERROR
-   	CHARACTER*(*)	KEY
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Info_delete(info, key, ierror)
-   	TYPE(MPI_Info), INTENT(IN) :: info
-   	CHARACTER(LEN=*), INTENT(IN) :: key
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_info_delete.rst
 
 INPUT/OUTPUT PARAMETER
 ----------------------

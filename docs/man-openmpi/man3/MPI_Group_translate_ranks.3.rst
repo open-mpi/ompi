@@ -9,46 +9,8 @@ MPI_Group_translate_ranks
 :ref:`MPI_Group_translate_ranks` |mdash| Translates the ranks of processes in one
 group to those in another group.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Group_translate_ranks(MPI_Group group1, int n,
-   	const int ranks1[], MPI_Group group2, int ranks2[])
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_GROUP_TRANSLATE_RANKS(GROUP1, N, RANKS1, GROUP2, RANKS2,
-   		IERROR)
-   	INTEGER	GROUP1, N, RANKS1(*), GROUP2, RANKS2(*), IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Group_translate_ranks(group1, n, ranks1, group2, ranks2, ierror)
-   	TYPE(MPI_Group), INTENT(IN) :: group1, group2
-   	INTEGER, INTENT(IN) :: n, ranks1(n)
-   	INTEGER, INTENT(OUT) :: ranks2(n)
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_group_translate_ranks.rst
 
 INPUT PARAMETERS
 ----------------

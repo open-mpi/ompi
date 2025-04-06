@@ -8,39 +8,8 @@ MPI_Wtime
 
 :ref:`MPI_Wtime` |mdash| Returns an elapsed time on the calling processor.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   double MPI_Wtime()
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   DOUBLE PRECISION MPI_WTIME()
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   DOUBLE PRECISION MPI_WTIME()
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_wtime.rst
 
 RETURN VALUE
 ------------

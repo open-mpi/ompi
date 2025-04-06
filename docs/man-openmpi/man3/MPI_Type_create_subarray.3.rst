@@ -9,51 +9,8 @@ MPI_Type_create_subarray
 :ref:`MPI_Type_create_subarray` |mdash| Creates a data type describing an
 *n*-dimensional subarray of an *n*-dimensional array.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Type_create_subarray(int ndims, const int array_of_sizes[],
-       const int array_of_subsizes[], const int array_of_starts[],
-       int order, MPI_Datatype oldtype, MPI_Datatype *newtype)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_TYPE_CREATE_SUBARRAY(NDIMS, ARRAY_OF_SIZES, ARRAY_OF_SUBSIZES,
-   	ARRAY_OF_STARTS, ORDER, OLDTYPE, NEWTYPE, IERROR)
-
-   	INTEGER	NDIMS, ARRAY_OF_SIZES(*), ARRAY_OF_SUBSIZES(*),
-   	ARRAY_OF_STARTS(*), ORDER, OLDTYPE, NEWTYPE, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Type_create_subarray(ndims, array_of_sizes, array_of_subsizes,
-   		array_of_starts, order, oldtype, newtype, ierror)
-   	INTEGER, INTENT(IN) :: ndims, array_of_sizes(ndims),
-   	array_of_subsizes(ndims), array_of_starts(ndims), order
-   	TYPE(MPI_Datatype), INTENT(IN) :: oldtype
-   	TYPE(MPI_Datatype), INTENT(OUT) :: newtype
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_type_create_subarray.rst
 
 INPUT PARAMETERS
 ----------------

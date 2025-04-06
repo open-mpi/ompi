@@ -9,54 +9,8 @@ MPI_Dist_graph_create_adjacent
 :ref:`MPI_Dist_graph_create_adjacent` |mdash| Makes a new communicator to which
 topology information has been attached.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Dist_graph_create_adjacent(MPI_Comm comm_old, int indegree, const int sources[],
-   	const int sourceweights[], int outdegree, const int destinations[], const int destweights[],
-           MPI_Info info, int reorder, MPI_Comm *comm_dist_graph)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_DIST_GRAPH_CREATE_ADJACENT(COMM_OLD, INDEGREE, SOURCES, SOURCEWEIGHTS, OUTDEGREE,
-                   DESTINATIONS, DESTWEIGHTS, INFO, REORDER, COMM_DIST_GRAPH, IERROR)
-   	INTEGER	COMM_OLD, INDEGREE, SOURCES(*), SOURCEWEIGHTS(*), OUTDEGREE, DESTINATIONS(*), DESTWEIGHTS(*), INFO
-   	INTEGER	COMM_DIST_GRAPH, IERROR
-   	LOGICAL REORDER
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Dist_Graph_create_adjacent(comm_old, ndegree, sources, sourceweights,
-   		outdegree, destinations, destweights, info, reorder,
-   		comm_dist_graph, ierror)
-   	TYPE(MPI_Comm), INTENT(IN) :: comm_old
-   	INTEGER, INTENT(IN) :: indegree, sources(indegree), outdegree, destinations(outdegree)
-   	INTEGER, INTENT(IN) :: sourceweights(*), destweights(*)
-   	TYPE(MPI_Info), INTENT(IN) :: info
-   	LOGICAL, INTENT(IN) :: reorder
-   	TYPE(MPI_Comm), INTENT(OUT) :: comm_dist_graph
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_dist_graph_create_adjacent.rst
 
 INPUT PARAMETERS
 ----------------

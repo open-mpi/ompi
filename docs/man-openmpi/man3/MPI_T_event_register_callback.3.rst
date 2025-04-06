@@ -8,22 +8,8 @@ MPI_T_event_register_callback
 
 :ref:`MPI_T_event_register_callback` |mdash| Associates a user-defined function with an allocated event-registration handle
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_T_event_register_callback(MPI_T_event_registration event_registration,
-                                     MPI_T_cb_safety cb_safety, MPI_Info info,
-                                     void *user_data, MPI_T_event_cb_funciton event_cb_function) 
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_t_event_register_callback.rst
 
 INPUT PARAMETERS
 ----------------

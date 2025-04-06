@@ -9,43 +9,8 @@ MPI_Type_delete_attr
 :ref:`MPI_Type_delete_attr` |mdash| Deletes a datatype-caching attribute value
 associated with a key.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Type_delete_attr(MPI_Datatype type, int type_keyval)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_TYPE_DELETE_ATTR(TYPE, TYPE_KEYVAL, IERROR)
-   	INTEGER	TYPE, TYPE_KEYVAL, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Type_delete_attr(datatype, type_keyval, ierror)
-   	TYPE(MPI_Datatype), INTENT(IN) :: datatype
-   	INTEGER, INTENT(IN) :: type_keyval
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_type_delete_attr.rst
 
 INPUT/OUTPUT PARAMETER
 ----------------------

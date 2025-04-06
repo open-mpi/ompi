@@ -9,20 +9,8 @@ MPI_T_category_get_num_events
 :ref:`MPI_T_category_get_num_events` |mdash| Query returns the number of event types contained
 in the queried category.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_T_category_get_num_events(int cat_index, int *num_events)
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_t_category_get_num_events.rst
 
 INPUT PARAMETERS
 ----------------

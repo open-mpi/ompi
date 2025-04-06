@@ -9,20 +9,8 @@ MPI_T_pvar_readreset
 :ref:`MPI_T_pvar_readreset` |mdash| Atomically read and reset the value of a
 performance variable
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_T_pvar_readreset(MPI_T_pvar_session session, MPI_T_pvar_handle handle, const void *buf)
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_t_pvar_readreset.rst
 
 INPUT PARAMETERS
 ----------------

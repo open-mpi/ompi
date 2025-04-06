@@ -9,43 +9,8 @@ MPI_Comm_remote_size
 :ref:`MPI_Comm_remote_size` |mdash| Determines the size of the remote group
 associated with an intercommunicator.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Comm_remote_size(MPI_Comm comm, int *size)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_COMM_REMOTE_SIZE(COMM, SIZE, IERROR)
-   	INTEGER	COMM, SIZE, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Comm_remote_size(comm, size, ierror)
-   	TYPE(MPI_Comm), INTENT(IN) :: comm
-   	INTEGER, INTENT(OUT) :: size
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_comm_remote_size.rst
 
 INPUT PARAMETER
 ---------------

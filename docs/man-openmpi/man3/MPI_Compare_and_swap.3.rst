@@ -8,53 +8,8 @@ MPI_Compare_and_swap
 
 :ref:`MPI_Compare_and_swap` |mdash| Perform RMA compare-and-swap
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Compare_and_swap(const void *origin_addr, const void *compare_addr,
-   	void *result_addr, MPI_Datatype datatype, int target_rank,
-   	MPI_Aint target_disp, MPI_Win win)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_COMPARE_AND_SWAP(ORIGIN_ADDR, COMPARE_ADDR, RESULT_ADDR, DATATYPE, TARGET_RANK,
-   	TARGET_DISP, WIN, IERROR)
-   	<type> ORIGIN_ADDR, COMPARE_ADDR, RESULT_ADDR(*)
-   	INTEGER(KIND=MPI_ADDRESS_KIND) TARGET_DISP
-   	INTEGER DATATYPE, TARGET_RANK, WIN, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Compare_and_swap(origin_addr, compare_addr, result_addr, datatype,
-   		target_rank, target_disp, win, ierror)
-   	TYPE(*), DIMENSION(..), INTENT(IN) :: origin_addr, compare_addr
-   	TYPE(*), DIMENSION(..) :: result_addr
-   	TYPE(MPI_Datatype), INTENT(IN) :: datatype
-   	INTEGER, INTENT(IN) :: target_rank
-   	INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(IN) :: target_disp
-   	TYPE(MPI_Win), INTENT(IN) :: win
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_compare_and_swap.rst
 
 INPUT PARAMETERS
 ----------------

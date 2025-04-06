@@ -8,42 +8,8 @@ MPI_Errhandler_free
 
 :ref:`MPI_Errhandler_free` |mdash| Frees an MPI-style error handler.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Errhandler_free(MPI_Errhandler *errhandler)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_ERRHANDLER_FREE(ERRHANDLER, IERROR)
-   	INTEGER	ERRHANDLER, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Errhandler_free(errhandler, ierror)
-   	TYPE(MPI_Errhandler), INTENT(INOUT) :: errhandler
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_errhandler_free.rst
 
 INPUT PARAMETER
 ---------------

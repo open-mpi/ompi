@@ -9,42 +9,8 @@ MPI_Info_create_env
 :ref:`MPI_Info_create_env` |mdash| Creates a new info object with the same construction as :ref:`MPI_INFO_ENV` as created during :ref:`MPI_Init`  or :ref:`MPI_Init_thread` when the same arguments
 are used.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Info_create_env(int argc, char *argv[], MPI_Info *info)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_INFO_CREATE_ENV(INFO, IERROR)
-   	INTEGER	INFO, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Info_create_env(info, ierror)
-   	TYPE(MPI_Info), INTENT(OUT) :: info
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_info_create_env.rst
 
 OUTPUT PARAMETERS
 -----------------

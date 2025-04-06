@@ -2,26 +2,14 @@
 
 
 MPI_T_source_get_timestamp
-========================== 
+==========================
 
 .. include_body
 
-:ref:`MPI_T_source_get_timestamp` |mdash| Returns a current timestamp from the source identified by the source_index argument 
+:ref:`MPI_T_source_get_timestamp` |mdash| Returns a current timestamp from the source identified by the source_index argument
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_T_source_get_timestamp(int source_index, MPI_Count *timestamp)
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_t_source_get_timestamp.rst
 
 INPUT PARAMETERS
 ----------------

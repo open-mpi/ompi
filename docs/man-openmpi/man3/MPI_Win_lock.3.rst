@@ -9,43 +9,8 @@ MPI_Win_lock
 :ref:`MPI_Win_lock` |mdash| Starts an RMA access epoch locking access to a
 particular rank.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Win_lock(int lock_type, int rank, int assert, MPI_Win win)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_WIN_LOCK(LOCK_TYPE, RANK, ASSERT, WIN, IERROR)
-   	INTEGER LOCK_TYPE, RANK, ASSERT, WIN, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Win_lock(lock_type, rank, assert, win, ierror)
-   	INTEGER, INTENT(IN) :: lock_type, rank, assert
-   	TYPE(MPI_Win), INTENT(IN) :: win
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_win_lock.rst
 
 INPUT PARAMETERS
 ----------------

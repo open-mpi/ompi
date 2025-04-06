@@ -7,40 +7,8 @@ MPI_Finalized
 
 :ref:`MPI_Finalized` |mdash| Checks whether MPI has been finalized
 
-SYNTAX
-------
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Finalized(int *flag)
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-
-   MPI_FINALIZED(FLAG, IERROR)
-       LOGICAL FLAG
-       INTEGER IERROR
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-
-   MPI_Finalized(flag, ierror)
-       LOGICAL, INTENT(OUT) :: flag
-       INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_finalized.rst
 
 OUTPUT PARAMETER
 ----------------

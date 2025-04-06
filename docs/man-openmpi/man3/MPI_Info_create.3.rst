@@ -8,42 +8,8 @@ MPI_Info_create
 
 :ref:`MPI_Info_create` |mdash| Creates a new info object.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Info_create(MPI_Info *info)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_INFO_CREATE(INFO, IERROR)
-   	INTEGER	INFO, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Info_create(info, ierror)
-   	TYPE(MPI_Info), INTENT(OUT) :: info
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_info_create.rst
 
 OUTPUT PARAMETERS
 -----------------

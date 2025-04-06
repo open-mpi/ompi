@@ -9,52 +9,8 @@ MPI_File_set_view
 :ref:`MPI_File_set_view` |mdash| Changes process's view of data in file
 (collective).
 
-
-SYNTAX
-------
-
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_File_set_view(MPI_File fh, MPI_Offset disp,
-   	MPI_Datatype etype, MPI_Datatype filetype,
-   	const char *datarep, MPI_Info info)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_FILE_SET_VIEW(FH, DISP, ETYPE,
-   	FILETYPE, DATAREP, INFO, IERROR)
-   	INTEGER	FH, ETYPE, FILETYPE, INFO, IERROR
-   	CHARACTER*(*)	DATAREP
-   	INTEGER(KIND=MPI_OFFSET_KIND)	DISP
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_File_set_view(fh, disp, etype, filetype, datarep, info, ierror)
-   	TYPE(MPI_File), INTENT(IN) :: fh
-   	INTEGER(KIND=MPI_OFFSET_KIND), INTENT(IN) :: disp
-   	TYPE(MPI_Datatype), INTENT(IN) :: etype, filetype
-   	CHARACTER(LEN=*), INTENT(IN) :: datarep
-   	TYPE(MPI_Info), INTENT(IN) :: info
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_file_set_view.rst
 
 INPUT/OUTPUT PARAMETER
 ----------------------

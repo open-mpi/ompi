@@ -9,80 +9,12 @@ MPI_Accumulate
 :ref:`MPI_Accumulate`, :ref:`MPI_Raccumulate` - Combines the contents of the
 origin buffer with that of a target buffer.
 
+.. The following directive tells the man page generation script to
+   generate multiple bindings for this file.
+.. mpi-bindings: MPI_Accumulate, MPI_Raccumulate
 
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Accumulate(const void *origin_addr, int origin_count,
-   	MPI_Datatype origin_datatype, int target_rank,
-   	MPI_Aint target_disp, int target_count,
-   	MPI_Datatype target_datatype, MPI_Op op, MPI_Win win)
-
-   int MPI_Raccumulate(const void *origin_addr, int origin_count,
-   	MPI_Datatype origin_datatype, int target_rank,
-   	MPI_Aint target_disp, int target_count,
-   	MPI_Datatype target_datatype, MPI_Op op, MPI_Win win,
-   	MPI_Request *request)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_ACCUMULATE(ORIGIN_ADDR, ORIGIN_COUNT, ORIGIN_DATATYPE, TARGET_RANK,
-   	TARGET_DISP, TARGET_COUNT, TARGET_DATATYPE, OP, WIN, IERROR)
-   	<type> ORIGIN_ADDR(*)
-   	INTEGER(KIND=MPI_ADDRESS_KIND) TARGET_DISP
-   	INTEGER ORIGIN_COUNT, ORIGIN_DATATYPE, TARGET_RANK, TARGET_COUNT,
-   	TARGET_DATATYPE, OP, WIN, IERROR
-
-   MPI_RACCUMULATE(ORIGIN_ADDR, ORIGIN_COUNT, ORIGIN_DATATYPE, TARGET_RANK,
-   	TARGET_DISP, TARGET_COUNT, TARGET_DATATYPE, OP, WIN, REQUEST, IERROR)
-   	<type> ORIGIN_ADDR(*)
-   	INTEGER(KIND=MPI_ADDRESS_KIND) TARGET_DISP
-   	INTEGER ORIGIN_COUNT, ORIGIN_DATATYPE, TARGET_RANK, TARGET_COUNT,
-   	TARGET_DATATYPE, OP, WIN, REQUEST, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Accumulate(origin_addr, origin_count, origin_datatype, target_rank,
-   		target_disp, target_count, target_datatype, op, win, ierror)
-   	TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: origin_addr
-   	INTEGER, INTENT(IN) :: origin_count, target_rank, target_count
-   	TYPE(MPI_Datatype), INTENT(IN) :: origin_datatype, target_datatype
-   	INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(IN) :: target_disp
-   	TYPE(MPI_Op), INTENT(IN) :: op
-   	TYPE(MPI_Win), INTENT(IN) :: win
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
-   MPI_Raccumulate(origin_addr, origin_count, origin_datatype, target_rank,
-   	target_disp, target_count, target_datatype, op, win, request,
-   		ierror)
-   	TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: origin_addr
-   	INTEGER, INTENT(IN) :: origin_count, target_rank, target_count
-   	TYPE(MPI_Datatype), INTENT(IN) :: origin_datatype, target_datatype
-   	INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(IN) :: target_disp
-   	TYPE(MPI_Op), INTENT(IN) :: op
-   	TYPE(MPI_Win), INTENT(IN) :: win
-   	TYPE(MPI_Request), INTENT(OUT) :: request
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_accumulate.rst
 
 INPUT PARAMETERS
 ----------------

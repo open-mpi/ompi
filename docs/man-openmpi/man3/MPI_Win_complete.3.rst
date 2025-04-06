@@ -9,41 +9,8 @@ MPI_Win_complete
 :ref:`MPI_Win_complete` |mdash| Completes an RMA access epoch on *win* started by
 a call to :ref:`MPI_Win_start`
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   MPI_Win_complete(MPI_Win win)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_WIN_COMPLETE(WIN, IERROR)
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Win_complete(win, ierror)
-   	TYPE(MPI_Win), INTENT(IN) :: win
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_win_complete.rst
 
 INPUT PARAMETERS
 ----------------

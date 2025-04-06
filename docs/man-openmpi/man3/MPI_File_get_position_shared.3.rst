@@ -9,45 +9,8 @@ MPI_File_get_position_shared
 :ref:`MPI_File_get_position_shared` |mdash| Returns the current position of the
 shared file pointer.
 
-
-SYNTAX
-------
-
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_File_get_position_shared(MPI_File fh, MPI_Offset *offset)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_FILE_GET_POSITION_SHARED(FH, OFFSET, IERROR)
-   	INTEGER	FH, IERROR
-   	INTEGER(KIND=MPI_OFFSET_KIND)	OFFSET
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_File_get_position_shared(fh, offset, ierror)
-   	TYPE(MPI_File), INTENT(IN) :: fh
-   	INTEGER(KIND=MPI_OFFSET_KIND), INTENT(OUT) :: offset
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_file_get_position_shared.rst
 
 INPUT PARAMETER
 ---------------

@@ -8,44 +8,8 @@ MPI_Comm_disconnect
 :ref:`MPI_Comm_disconnect` |mdash| Deallocates communicator object and sets handle to
 MPI_COMM_NULL.
 
-SYNTAX
-------
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Comm_disconnect(MPI_Comm *comm)
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-
-   MPI_COMM_DISCONNECT(COMM, IERROR)
-       INTEGER COMM, IERROR
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-
-   MPI_Comm_disconnect(comm, ierror)
-       TYPE(MPI_Comm), INTENT(INOUT) :: comm
-       INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
-INPUT/OUTPUT PARAMETER
-^^^^^^^^^^^^^^^^^^^^^^
-
-* ``comm`` : Communicator (handle).
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_comm_disconnect.rst
 
 OUTPUT PARAMETER
 ----------------

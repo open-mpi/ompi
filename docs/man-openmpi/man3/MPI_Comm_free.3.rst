@@ -8,42 +8,8 @@ MPI_Comm_free
 
 :ref:`MPI_Comm_free` |mdash| Mark a communicator object for deallocation.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Comm_free(MPI_Comm *comm)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_COMM_FREE(COMM, IERROR)
-   	INTEGER	COMM, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Comm_free(comm, ierror)
-   	TYPE(MPI_Comm), INTENT(INOUT) :: comm
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_comm_free.rst
 
 INPUT PARAMETER
 ---------------

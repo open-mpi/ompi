@@ -7,41 +7,8 @@ MPI_Group_compare
 
 :ref:`MPI_Group_compare` |mdash| Compares two groups.
 
-SYNTAX
-------
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Group_compare(MPI_Group group1, MPI_Group group2,
-       int *result)
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-
-   MPI_GROUP_COMPARE(GROUP1, GROUP2, RESULT, IERROR)
-       INTEGER GROUP1, GROUP2, RESULT, IERROR
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-
-   MPI_Group_compare(group1, group2, result, ierror)
-       TYPE(MPI_Group), INTENT(IN) :: group1, group2
-       INTEGER, INTENT(OUT) :: result
-       INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_group_compare.rst
 
 INPUT PARAMETERS
 ----------------

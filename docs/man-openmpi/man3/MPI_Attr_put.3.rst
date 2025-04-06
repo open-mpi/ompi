@@ -9,32 +9,8 @@ MPI_Attr_put
 :ref:`MPI_Attr_put` |mdash| Stores attribute value associated with a key |mdash| |deprecated_favor| :ref:`MPI_Comm_set_attr`.
 
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Attr_put(MPI_Comm comm, int keyval, void *attribute_val)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-
-   MPI_ATTR_PUT(COMM, KEYVAL, ATTRIBUTE_VAL, IERROR)
-   	INTEGER	COMM, KEYVAL, ATTRIBUTE_VAL, IERROR
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_attr_put.rst
 
 INPUT PARAMETERS
 ----------------

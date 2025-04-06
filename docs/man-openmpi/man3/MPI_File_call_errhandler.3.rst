@@ -9,43 +9,8 @@ MPI_File_call_errhandler
 :ref:`MPI_File_call_errhandler` |mdash| Passes the supplied error code to the
 error handler assigned to a file
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_File_call_errhandler(MPI_File fh, int errorcode)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_FILE_CALL_ERRHANDLER(FH, ERRORCODE, IERROR)
-   	INTEGER	FH, IERRORCODE, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_File_call_errhandler(fh, errorcode, ierror)
-   	TYPE(MPI_File), INTENT(IN) :: fh
-   	INTEGER, INTENT(IN) :: errorcode
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_file_call_errhandler.rst
 
 INPUT PARAMETERS
 ----------------

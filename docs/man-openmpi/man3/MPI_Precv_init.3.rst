@@ -8,49 +8,8 @@ MPI_Precv_init
 
 :ref:`MPI_Precv_init` |mdash| Initializes a partitioned receive.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Precv_init(const void *buf, int partitions, int count, MPI_Datatype datatype,
-   	int source, int tag, MPI_Comm comm, MPI_Info info, MPI_Request *request)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_PRECV_INIT(BUF, PARTITIONS, COUNT, DATATYPE, SOURCE, TAG, COMM, INFO, REQUEST, IERROR)
-   	<type>	BUF(*)
-   	INTEGER	PARTITIONS, COUNT, DATATYPE, SOURCE, TAG, COMM, INFO, REQUEST, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Precv_init(buf, partitions, count, datatype, source, tag, comm, info, request, ierror)
-   	TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: buf
-   	INTEGER, INTENT(IN) :: partitions, count, source, tag
-   	TYPE(MPI_Datatype), INTENT(IN) :: datatype
-   	TYPE(MPI_Comm), INTENT(IN) :: comm
-   	TYPE(MPI_Info), INTENT(IN) :: info
-   	TYPE(MPI_Request), INTENT(OUT) :: request
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_precv_init.rst
 
 INPUT PARAMETERS
 ----------------

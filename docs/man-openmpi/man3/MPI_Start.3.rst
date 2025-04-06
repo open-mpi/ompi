@@ -9,42 +9,8 @@ MPI_Start
 :ref:`MPI_Start` |mdash| Initiates a communication using a persistent request
 handle.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Start(MPI_Request *request)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_START(REQUEST, IERROR)
-   	INTEGER	REQUEST, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Start(request, ierror)
-   	TYPE(MPI_Request), INTENT(INOUT) :: request
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_start.rst
 
 INPUT PARAMETER
 ---------------

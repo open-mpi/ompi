@@ -9,50 +9,8 @@ MPI_Win_create
 :ref:`MPI_Win_create` |mdash| One-sided MPI call that returns a window object for
 RMA operations.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   MPI_Win_create(void *base, MPI_Aint size, int disp_unit,
-   	MPI_Info info, MPI_Comm comm, MPI_Win *win)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_WIN_CREATE(BASE, SIZE, DISP_UNIT, INFO, COMM, WIN, IERROR)
-   	<type> BASE(*)
-   	INTEGER(KIND=MPI_ADDRESS_KIND) SIZE
-   	INTEGER DISP_UNIT, INFO, COMM, WIN, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Win_create(base, size, disp_unit, info, comm, win, ierror)
-   	TYPE(*), DIMENSION(..), ASYNCHRONOUS :: base
-   	INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(IN) :: size
-   	INTEGER, INTENT(IN) :: disp_unit
-   	TYPE(MPI_Info), INTENT(IN) :: info
-   	TYPE(MPI_Comm), INTENT(IN) :: comm
-   	TYPE(MPI_Win), INTENT(OUT) :: win
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_win_create.rst
 
 INPUT PARAMETERS
 ----------------

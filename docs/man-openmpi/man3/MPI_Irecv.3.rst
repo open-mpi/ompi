@@ -8,49 +8,8 @@ MPI_Irecv
 
 :ref:`MPI_Irecv` |mdash| Starts a standard-mode, nonblocking receive.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Irecv(void *buf, int count, MPI_Datatype datatype,
-           int source, int tag, MPI_Comm comm, MPI_Request *request)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_IRECV(BUF, COUNT, DATATYPE, SOURCE, TAG, COMM, REQUEST,
-   		IERROR)
-   	<type>	BUF(*)
-   	INTEGER	COUNT, DATATYPE, SOURCE, TAG, COMM, REQUEST, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Irecv(buf, count, datatype, source, tag, comm, request, ierror)
-   	TYPE(*), DIMENSION(..), ASYNCHRONOUS :: buf
-   	INTEGER, INTENT(IN) :: count, source, tag
-   	TYPE(MPI_Datatype), INTENT(IN) :: datatype
-   	TYPE(MPI_Comm), INTENT(IN) :: comm
-   	TYPE(MPI_Request), INTENT(OUT) :: request
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_irecv.rst
 
 INPUT PARAMETERS
 ----------------

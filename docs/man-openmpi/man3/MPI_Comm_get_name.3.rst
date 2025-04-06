@@ -9,45 +9,8 @@ MPI_Comm_get_name
 :ref:`MPI_Comm_get_name` |mdash| Returns the name that was most recently
 associated with a communicator.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Comm_get_name(MPI_Comm comm, char *comm_name, int *resultlen)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_COMM_GET_NAME(COMM, COMM_NAME, RESULTLEN, IERROR)
-   	INTEGER	COMM, RESULTLEN, IERROR
-   	CHARACTER*(*) COMM_NAME
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Comm_get_name(comm, comm_name, resultlen, ierror)
-   	TYPE(MPI_Comm), INTENT(IN) :: comm
-   	CHARACTER(LEN=MPI_MAX_OBJECT_NAME), INTENT(OUT) :: comm_name
-   	INTEGER, INTENT(OUT) :: resultlen
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_comm_get_name.rst
 
 INPUT PARAMETER
 ---------------

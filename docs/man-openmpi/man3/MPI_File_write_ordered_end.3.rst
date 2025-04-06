@@ -9,43 +9,8 @@ MPI_File_write_ordered_end
 by a shared file pointer; ending part of a split collective routine
 (blocking).
 
-SYNTAX
-------
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_File_write_ordered_end(MPI_File fh, const void *buf,
-       MPI_Status *status)
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-
-   MPI_FILE_WRITE_ORDERED_END(FH, BUF, STATUS, IERROR)
-       <type>  BUF(*)
-       INTEGER FH, STATUS(MPI_STATUS_SIZE), IERROR
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-
-   MPI_File_write_ordered_end(fh, buf, status, ierror)
-       TYPE(MPI_File), INTENT(IN) :: fh
-       TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: buf
-       TYPE(MPI_Status) :: status
-       INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_file_write_ordered_end.rst
 
 INPUT/OUTPUT PARAMETER
 ----------------------

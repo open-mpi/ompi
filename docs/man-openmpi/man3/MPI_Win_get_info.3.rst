@@ -8,43 +8,8 @@ MPI_Win_get_info
 
 :ref:`MPI_Win_get_info` |mdash| Retrieves active window info hints
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Win_get_info(MPI_Win win, MPI_Info *info_used)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_WIN_GET_INFO(WIN, INFO_USED, IERROR)
-   	INTEGER	WIN, INFO_USED, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Win_get_info(win, info_used, ierror)
-   	TYPE(MPI_Win), INTENT(IN) :: win
-   	TYPE(MPI_Info), INTENT(OUT) :: info_used
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_win_get_info.rst
 
 INPUT PARAMETERS
 ----------------

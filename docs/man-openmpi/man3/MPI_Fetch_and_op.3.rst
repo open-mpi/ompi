@@ -9,54 +9,8 @@ MPI_Fetch_and_op
 :ref:`MPI_Fetch_and_op` |mdash| Combines the contents of the origin buffer with
 that of a target buffer and returns the target buffer value.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Fetch_and_op(const void *origin_addr, void *result_addr,
-   	MPI_Datatype datatype, int target_rank, MPI_Aint target_disp,
-   	MPI_Op op, MPI_Win win)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_FETCH_AND_OP(ORIGIN_ADDR, RESULT_ADDR, DATATYPE, TARGET_RANK,
-                    TARGET_DISP, OP, WIN, IERROR)
-   	<type> ORIGIN_ADDR, RESULT_ADDR(*)
-   	INTEGER(KIND=MPI_ADDRESS_KIND) TARGET_DISP
-   	INTEGER DATATYPE, TARGET_RANK, OP, WIN, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Fetch_and_op(origin_addr, result_addr, datatype, target_rank,
-   		target_disp, op, win, ierror)
-   	TYPE(*), DIMENSION(..), INTENT(IN) :: origin_addr
-   	TYPE(*), DIMENSION(..) :: result_addr
-   	TYPE(MPI_Datatype), INTENT(IN) :: datatype
-   	INTEGER, INTENT(IN) :: target_rank
-   	INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(IN) :: target_disp
-   	TYPE(MPI_Op), INTENET(IN) :: op
-   	TYPE(MPI_Win), INTENT(IN) :: win
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_fetch_and_op.rst
 
 INPUT PARAMETERS
 ----------------

@@ -8,22 +8,8 @@ MPI_T_category_get_info
 
 :ref:`MPI_T_category_get_info` |mdash| Query information from a category
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_T_category_get_info(int cat_index, char *name, int *name_len,
-   char *desc, int *desc_len, int *num_cvars, int *num_pvars,
-   int *num_categories)
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_t_category_get_info.rst
 
 INPUT PARAMETERS
 ----------------

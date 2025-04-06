@@ -9,42 +9,8 @@ MPI_Comm_get_parent
 :ref:`MPI_Comm_get_parent` |mdash| Returns the parent intercommunicator of
 current spawned process.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Comm_get_parent(MPI_Comm *parent)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_COMM_GET_PARENT(PARENT, IERROR)
-   	INTEGER	PARENT, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Comm_get_parent(parent, ierror)
-   	TYPE(MPI_Comm), INTENT(OUT) :: parent
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_comm_get_parent.rst
 
 OUTPUT PARAMETERS
 -----------------

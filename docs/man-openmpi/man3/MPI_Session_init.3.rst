@@ -7,41 +7,8 @@ MPI_Session_init
 
 :ref:`MPI_Session_init` |mdash| Creates a new session handle
 
-SYNTAX
-------
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Session_init(MPI_Info info, MPI_Errhandler errhandler, MPI_Session *session)
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-
-   MPI_SESSION_INIT(INFO, ERRHANDLER, SESSION, IERROR)
-       INTEGER INFO, ERRHANDLER, SESSION, IERROR
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-
-   MPI_Session_init(info, errhandler, session, ierror)
-       TYPE(MPI_Info), INTENT(IN) :: info
-       TYPE(MPI_Errhandler), INTENT(IN) :: errhandler
-       TYPE(MPI_Session), INTENT(OUT) :: session
-       INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_session_init.rst
 
 INPUT PARAMETERS
 ----------------

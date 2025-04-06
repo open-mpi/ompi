@@ -9,54 +9,8 @@ MPI_Type_get_contents
 :ref:`MPI_Type_get_contents` |mdash| Returns information about arguments used in
 creation of a data type.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Type_get_contents(MPI_Datatype datatype, int max_integers,
-   	int max_addresses, int max_datatypes, int array_of_integers[], MPI_Aint array_of_addresses[], MPI_Datatype array_of_datatypes[])
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_TYPE_GET_CONTENTS(DATATYPE, MAX_INTEGERS, MAX_ADDRESSES,
-   		MAX_DATATYPES, ARRAY_OF_INTEGERS, ARRAY_OF_ADDRESSES,
-   		ARRAY_OF_DATATYPES, IERROR)
-   	INTEGER	DATATYPE, MAX_INTEGERS, MAX_ADDRESSES, MAX_DATATYPES
-   	INTEGER	ARRAY_OF_INTEGERS(*), ARRAY_OF_DATATYPES(*), IERROR
-   	INTEGER(KIND=MPI_ADDRESS_KIND) ARRAY_OF_ADDRESSES(*)
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Type_get_contents(datatype, max_integers, max_addresses, max_datatypes,
-   	array_of_integers, array_of_addresses, array_of_datatypes,
-   		ierror)
-   	TYPE(MPI_Datatype), INTENT(IN) :: datatype
-   	INTEGER, INTENT(IN) :: max_integers, max_addresses, max_datatypes
-   	INTEGER, INTENT(OUT) :: array_of_integers(max_integers)
-   	INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(OUT) ::
-   	array_of_addresses(max_addresses)
-   	TYPE(MPI_Datatype), INTENT(OUT) :: array_of_datatypes(max_datatypes)
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_type_get_contents.rst
 
 INPUT PARAMETERS
 ----------------

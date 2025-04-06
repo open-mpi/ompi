@@ -9,48 +9,8 @@ MPI_Intercomm_create
 :ref:`MPI_Intercomm_create` |mdash| Creates an intercommunicator from two
 intracommunicators.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
-   	MPI_Comm peer_comm, int remote_leader, int tag, MPI_Comm *newintercomm)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_INTERCOMM_CREATE(LOCAL_COMM, LOCAL_LEADER, PEER_COMM,
-   		REMOTE_LEADER, TAG, NEWINTERCOMM, IERROR)
-   	INTEGER	LOCAL_COMM, LOCAL_LEADER, PEER_COMM, REMOTE_LEADER
-   	INTEGER	TAG, NEWINTERCOMM, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Intercomm_create(local_comm, local_leader, peer_comm, remote_leader,
-   		tag, newintercomm, ierror)
-   	TYPE(MPI_Comm), INTENT(IN) :: local_comm, peer_comm
-   	INTEGER, INTENT(IN) :: local_leader, remote_leader, tag
-   	TYPE(MPI_Comm), INTENT(OUT) :: newintercomm
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_intercomm_create.rst
 
 INPUT PARAMETERS
 ----------------

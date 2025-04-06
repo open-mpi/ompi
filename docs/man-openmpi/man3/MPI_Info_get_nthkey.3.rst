@@ -8,45 +8,8 @@ MPI_Info_get_nthkey
 
 :ref:`MPI_Info_get_nthkey` |mdash| Returns the *n*\ th defined key in *info*.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Info_get_nthkey(MPI_Info info, int n, char *key)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_INFO_GET_NTHKEY(INFO, N, KEY, IERROR)
-   	INTEGER		INFO, N, IERROR
-   	CHARACTER*(*)	KEY
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Info_get_nthkey(info, n, key, ierror)
-   	TYPE(MPI_Info), INTENT(IN) :: info
-   	INTEGER, INTENT(IN) :: n
-   	CHARACTER(LEN=*), INTENT(OUT) :: key
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_info_get_nthkey.rst
 
 INPUT PARAMETERS
 ----------------

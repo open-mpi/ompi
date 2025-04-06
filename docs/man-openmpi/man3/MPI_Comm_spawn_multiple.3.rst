@@ -9,57 +9,8 @@ MPI_Comm_spawn_multiple
 :ref:`MPI_Comm_spawn_multiple` |mdash| Spawns multiple binaries, or the same
 binary with multiple sets of arguments.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Comm_spawn_multiple(int count, char *array_of_commands[],
-   	char **array_of_argv[], const int array_of_maxprocs[], const MPI_Info
-   	array_of_info[], int root, MPI_Comm comm, MPI_Comm *intercomm,
-   	int array_of_errcodes[])
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_COMM_SPAWN_MULTIPLE(COUNT, ARRAY_OF_COMMANDS, ARRAY_OF_ARGV,
-   	ARRAY_OF_MAXPROCS, ARRAY_OF_INFO, ROOT, COMM, INTERCOMM,
-   	ARRAY_OF_ERRCODES, IERROR)
-   	INTEGER	COUNT, ARRAY_OF_INFO(*), ARRAY_OF_MAXPROCS(*), ROOT,
-   		COMM, INTERCOMM, ARRAY_OF_ERRCODES(*), IERROR
-   	CHARACTER*(*) ARRAY_OF_COMMANDS(*), ARRAY_OF_ARGV(COUNT, *)
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Comm_spawn_multiple(count, array_of_commands, array_of_argv,
-   	array_of_maxprocs, array_of_info, root, comm, intercomm,
-   		array_of_errcodes, ierror)
-   	INTEGER, INTENT(IN) :: count, array_of_maxprocs(*), root
-   	CHARACTER(LEN=*), INTENT(IN) :: array_of_commands(*)
-   	CHARACTER(LEN=*), INTENT(IN) :: array_of_argv(count, *)
-   	TYPE(MPI_Info), INTENT(IN) :: array_of_info(*)
-   	TYPE(MPI_Comm), INTENT(IN) :: comm
-   	TYPE(MPI_Comm), INTENT(OUT) :: intercomm
-   	INTEGER :: array_of_errcodes(*)
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_comm_spawn_multiple.rst
 
 INPUT PARAMETERS
 ----------------
