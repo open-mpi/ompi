@@ -1755,53 +1755,178 @@ int mca_spml_ucx_team_sync(shmem_team_t team)
     return OSHMEM_ERR_NOT_IMPLEMENTED;
 }
 
-/* This routine is not implemented */
 int mca_spml_ucx_team_my_pe(shmem_team_t team)
 {
-    return OSHMEM_ERR_NOT_IMPLEMENTED;
+    mca_spml_ucx_team_t *ucx_team = (mca_spml_ucx_team_t *)team;
+
+    if (team == SHMEM_TEAM_WORLD) {
+        return shmem_my_pe();
+    }
+
+    return ucx_team->my_pe;
 }
 
-/* This routine is not implemented */
 int mca_spml_ucx_team_n_pes(shmem_team_t team)
 {
-    return OSHMEM_ERR_NOT_IMPLEMENTED;
+    mca_spml_ucx_team_t *ucx_team = (mca_spml_ucx_team_t *)team;
+
+    if (team == SHMEM_TEAM_WORLD) {
+        return shmem_n_pes();
+    }
+
+    return ucx_team->n_pes;
 }
 
-/* This routine is not implemented */
 int mca_spml_ucx_team_get_config(shmem_team_t team, long config_mask,
         shmem_team_config_t *config)
 {
-    return OSHMEM_ERR_NOT_IMPLEMENTED;
+    mca_spml_ucx_team_t *ucx_team = (mca_spml_ucx_team_t *)team;
+    SPML_UCX_VALIDATE_TEAM(team);
+
+    memcpy(config, &ucx_team->config, sizeof(shmem_team_config_t));
+
+    return SHMEM_SUCCESS;
 }
 
-/* This routine is not implemented */
-int mca_spml_ucx_team_translate_pe(shmem_team_t src_team, int src_pe,
-        shmem_team_t dest_team)
+static inline int mca_spml_ucx_is_pe_in_strided_team(int src_pe, int start,
+                                                     int stride, int size)
 {
-    return OSHMEM_ERR_NOT_IMPLEMENTED;
+    return (src_pe >= start) && (src_pe < start + size * stride)
+           && ((src_pe - start) % stride == 0);
 }
 
-/* This routine is not implemented */
+int mca_spml_ucx_team_translate_pe(shmem_team_t src_team, int src_pe,
+                                   shmem_team_t dest_team)
+{
+    mca_spml_ucx_team_t *ucx_src_team  = (mca_spml_ucx_team_t*) src_team;
+    mca_spml_ucx_team_t *ucx_dest_team = (mca_spml_ucx_team_t*) dest_team;
+    int global_pe;
+
+    if ((src_pe == SPML_UCX_PE_NOT_IN_TEAM) || (src_team == dest_team)) {
+        return src_pe;
+    }
+
+    global_pe = ucx_src_team->start + src_pe * ucx_src_team->stride;
+
+    if (dest_team == SHMEM_TEAM_WORLD) {
+        return global_pe;
+    }
+
+    if (!mca_spml_ucx_is_pe_in_strided_team(global_pe, ucx_dest_team->start, ucx_dest_team->stride,
+                                            ucx_dest_team->n_pes)) {
+        return SPML_UCX_PE_NOT_IN_TEAM;
+    }
+
+    return (global_pe - ucx_dest_team->start) / ucx_dest_team->stride;
+}
+
 int mca_spml_ucx_team_split_strided(shmem_team_t parent_team, int start, int
         stride, int size, const shmem_team_config_t *config, long config_mask,
         shmem_team_t *new_team)
 {
-    return OSHMEM_ERR_NOT_IMPLEMENTED;
+    mca_spml_ucx_team_t *ucx_parent_team;
+    mca_spml_ucx_team_t *ucx_new_team;
+    int parent_pe;
+    int parent_start;
+    int parent_stride;
+    int my_pe;
+
+    SPML_UCX_ASSERT(((start + size * stride) <= oshmem_num_procs()) &&
+                    (stride > 0) && (size > 0));
+
+    if (parent_team == SHMEM_TEAM_WORLD) {
+        parent_pe = shmem_my_pe();
+        parent_start = 0;
+        parent_stride = 1;
+    } else {
+        ucx_parent_team = (mca_spml_ucx_team_t*) parent_team;
+        parent_pe = ucx_parent_team->my_pe;
+        parent_start = ucx_parent_team->start;
+        parent_stride = ucx_parent_team->stride;
+    }
+
+    if (mca_spml_ucx_is_pe_in_strided_team(parent_pe, start, stride, size)) {
+        my_pe = (parent_pe - start) / stride;
+    } else {
+        /* not in team, according to spec it should be SHMEM_TEAM_INVALID but its value is NULL which
+        can be also interpreted as 0 (first pe), therefore -1 is used */
+        my_pe = SPML_UCX_PE_NOT_IN_TEAM;
+    }
+
+    /* In order to simplify pe translations start and stride are calculated with respect to
+     * world_team */
+    ucx_new_team = (mca_spml_ucx_team_t *)malloc(sizeof(mca_spml_ucx_team_t));
+    ucx_new_team->start = parent_start + (start * parent_stride);
+    ucx_new_team->stride = parent_stride * stride;
+
+    ucx_new_team->n_pes = size;
+    ucx_new_team->my_pe = my_pe;
+
+    ucx_new_team->config = calloc(1, sizeof(mca_spml_ucx_team_config_t));
+
+    if (config != NULL) {
+        memcpy(&ucx_new_team->config->super, config, sizeof(shmem_team_config_t));
+    }
+
+    ucx_new_team->parent_team = (mca_spml_ucx_team_t*)parent_team;
+
+    *new_team = (shmem_team_t)ucx_new_team;
+
+    return OSHMEM_SUCCESS;
 }
 
-/* This routine is not implemented */
 int mca_spml_ucx_team_split_2d(shmem_team_t parent_team, int xrange, const
         shmem_team_config_t *xaxis_config, long xaxis_mask, shmem_team_t
         *xaxis_team, const shmem_team_config_t *yaxis_config, long yaxis_mask,
         shmem_team_t *yaxis_team)
 {
-    return OSHMEM_ERR_NOT_IMPLEMENTED;
+    mca_spml_ucx_team_t *ucx_parent_team = (mca_spml_ucx_team_t*) parent_team;
+    int parent_n_pes = (parent_team == SHMEM_TEAM_WORLD) ?
+                                        oshmem_num_procs() :
+                                        ucx_parent_team->n_pes;
+    int parent_my_pe = (parent_team == SHMEM_TEAM_WORLD) ?
+                                        shmem_my_pe() :
+                                        ucx_parent_team->my_pe;
+    int yrange = parent_n_pes / xrange;
+    int pe_x = parent_my_pe % xrange;
+    int pe_y = parent_my_pe / xrange;
+    int rc;
+
+    /* Create x-team of my_pe */
+    rc = mca_spml_ucx_team_split_strided(parent_team, pe_y * xrange, 1, xrange,
+                                         xaxis_config, xaxis_mask, xaxis_team);
+
+    if (rc != OSHMEM_SUCCESS) {
+        SPML_UCX_ERROR("mca_spml_ucx_team_split_strided failed (x-axis team creation)");
+        return rc;
+    }
+
+    /* Create y-team of my_pe */
+    rc = mca_spml_ucx_team_split_strided(parent_team, pe_x, xrange, yrange,
+                                         yaxis_config, yaxis_mask, yaxis_team);
+    if (rc != OSHMEM_SUCCESS) {
+        SPML_UCX_ERROR("mca_spml_ucx_team_split_strided failed (y-axis team creation)");
+        goto out_free_xaxis;
+    }
+
+    return OSHMEM_SUCCESS;
+
+out_free_xaxis:
+    mca_spml_ucx_team_destroy(*xaxis_team);
+    return rc;
 }
 
 /* This routine is not implemented */
 int mca_spml_ucx_team_destroy(shmem_team_t team)
 {
-    return OSHMEM_ERR_NOT_IMPLEMENTED;
+    mca_spml_ucx_team_t *ucx_team = (mca_spml_ucx_team_t *)team;
+
+    SPML_UCX_VALIDATE_TEAM(team);
+
+    free(ucx_team->config);
+    free(team);
+
+    return OSHMEM_SUCCESS;
 }
 
 /* This routine is not implemented */

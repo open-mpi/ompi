@@ -51,14 +51,9 @@ void shmem_team_sync(shmem_team_t team)
 
 int shmem_team_my_pe(shmem_team_t team)
 {
-    int rc = 0;
-
     RUNTIME_CHECK_INIT();
 
-    rc = MCA_SPML_CALL(team_my_pe(team));
-    RUNTIME_CHECK_IMPL_RC(rc);
-
-    return rc;
+    return MCA_SPML_CALL(team_my_pe(team));
 }
 
 int shmem_team_n_pes(shmem_team_t team)
@@ -85,15 +80,11 @@ int shmem_team_get_config(shmem_team_t team, long config_mask, shmem_team_config
 }
 int shmem_team_translate_pe(shmem_team_t src_team, int src_pe, shmem_team_t dest_team)
 {
-    int rc = 0;
-
     RUNTIME_CHECK_INIT();
 
-    rc = MCA_SPML_CALL(team_translate_pe(src_team, src_pe, dest_team));
-    RUNTIME_CHECK_IMPL_RC(rc);
-
-    return rc;
+    return MCA_SPML_CALL(team_translate_pe(src_team, src_pe, dest_team));
 }
+
 int shmem_team_split_strided (shmem_team_t parent_team, int start, int stride,
         int size, const shmem_team_config_t *config, long config_mask,
         shmem_team_t *new_team)
