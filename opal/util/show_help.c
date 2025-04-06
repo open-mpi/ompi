@@ -43,7 +43,6 @@
 /*
  * Private variables
  */
-static const char *default_filename = "help-messages";
 static const char *dash_line
     = "--------------------------------------------------------------------------\n";
 static int output_stream = -1;
@@ -95,6 +94,9 @@ static void opal_show_help_finalize(void)
         opal_argv_free(search_dirs);
         search_dirs = NULL;
     }
+
+    /* free the rendered help strings */
+    opal_show_help_content_free();
 }
 
 static void opal_show_help_output(const char *msg) {

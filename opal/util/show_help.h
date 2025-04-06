@@ -179,6 +179,14 @@ OPAL_DECLSPEC int opal_show_help_add_dir(const char *directory);
  */
 const char *opal_show_help_get_content(const char *filename, const char* topic);
 
+/**
+ * \internal
+ *
+ * Free up any strings that may have been allocated in when rendering
+ * show_help strings.
+ */
+void opal_show_help_content_free(void);
+
 END_C_DECLS
 
 #endif
