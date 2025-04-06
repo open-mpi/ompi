@@ -129,16 +129,8 @@ typedef struct mca_spml_ucx_team_config {
 
 } mca_spml_ucx_team_config_t;
 
-typedef enum {
-    MCA_SPML_UCX_TEAM_TYPE_STRIDED,
-    MCA_SPML_UCX_TEAM_TYPE_2D_X,
-    MCA_SPML_UCX_TEAM_TYPE_2D_Y,
-    MCA_SPML_UCX_TEAM_TYPE_LAST = MCA_SPML_UCX_TEAM_TYPE_2D_Y
-} mca_spml_ucx_team_type_t;
-
 typedef struct mca_spml_ucx_team {
     shmem_team_t                super;
-    mca_spml_ucx_team_type_t    team_type;
     int                         n_pes;
     int                         my_pe;
     int                         stride;

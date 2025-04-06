@@ -1870,7 +1870,6 @@ int mca_spml_ucx_team_split_strided(shmem_team_t parent_team, int start, int
     ucx_new_team = (mca_spml_ucx_team_t *)malloc(sizeof(mca_spml_ucx_team_t));
     ucx_new_team->n_pes = size;
     ucx_new_team->my_pe = my_pe;
-    ucx_new_team->team_type = MCA_SPML_UCX_TEAM_TYPE_STRIDED;
 
     /* In order to simplify pe translations start and stride are calculated with respect to
      * world_team */
