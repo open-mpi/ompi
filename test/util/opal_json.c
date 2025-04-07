@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024      Amazon.com, Inc. or its affiliates.
+ * Copyright (c) 2024-2025 Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
  * $COPYRIGHT$
  *
@@ -56,7 +56,7 @@ static int load_json(const char *string, enum INPUT_TYPE input_type, const opal_
         fclose(fp);
         close(fd);
         /* Load the input string from the temporary file */
-        ret = opal_json_load_file(filename, json);
+        ret = opal_json_load_file(filename, json, 1);
         /* Remember to delete the file */
         (void) remove(filename);
         break;
@@ -129,7 +129,9 @@ static void test_valid_json(void)
     int ret = 0;
     size_t size;
     const opal_json_t *json = NULL, *a = NULL, *b = NULL, *b0 = NULL, *b1 = NULL, *c = NULL,
-                      *d = NULL;
+                      *d = NULL, *dummy = NULL;
+    const char *found_key;
+
     /**
      * Human readable form:
      * {
@@ -206,6 +208,21 @@ static void test_valid_json(void)
             test_failure("Failed to find a valid key");
         } else {
             test_json_double_val(d, 3.456);
+        }
+
+        ret = opal_json_get_key_by_index(json, 3, &found_key, &d);
+        if (ret) {
+            test_failure("opal_json_get_key_by_index failed when called with a valid index");
+        } else {
+            if ( 0 != strcmp(found_key, "d") ) {
+                test_failure("opal_json_get_key_by_index returned the wrong key value");
+            }
+            test_json_double_val(d, 3.456);
+        }
+
+        ret = opal_json_get_key_by_index(json, 4, &found_key, &dummy);
+        if (ret == OPAL_SUCCESS) {
+            test_failure("opal_json_get_key_by_index returned OPAL_SUCCESS when passed invalid index.");
         }
 
         /* JSON objects can be released in any order */

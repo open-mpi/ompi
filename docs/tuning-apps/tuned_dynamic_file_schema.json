@@ -1,0 +1,130 @@
+{
+    "$schema": "https://json-schema.org/draft/2019-09/schema#",
+    "title": "OpenMPITunedRules",
+    "description": "Defines configuration for the Open MPI Tuned module to select which collective algorithms will be used depending on comm size, message size, etc.",
+    "type": "object",
+    "required": ["rule_file_version","module","collectives"],
+    "additionalProperties" : false,
+    "properties": {
+      "rule_file_version": {
+        "description": "The version of this configuration file",
+        "type": "number"
+      },
+      "module": {
+        "description": "The collective module intended to use these rules (tuned)",
+        "type": "string"
+      },
+      "$schema": {
+        "description": "The schema used for validation",
+        "type": "string"
+      },
+      "collectives" : {
+        "description": "The collectives, each with their own rules.  Each collective is indicated by a lowercase property such as \"allgather\"",
+        "type": "object",
+        "additionalProperties" : false,
+        "patternProperties": {
+            "^(allgather|allreduce|alltoall|alltoallv|alltoallw|barrier)$": {
+                "type" : "array",
+                "items": { "$ref" : "#/$defs/comm_size_rule" }
+            },
+            "^(bcast|exscan|gather|gatherv|reduce|reducescatter|reducescatterblock)$": {
+                "type" : "array",
+                "items": { "$ref" : "#/$defs/comm_size_rule" }
+            },
+            "^(scan|scatter|scatterv|neighbor_allgather|neighbor_allgatherv)$": {
+                "type" : "array",
+                "items": { "$ref" : "#/$defs/comm_size_rule" }
+            },
+            "^(neighbor_alltoall|neighbor_alltoallv|neighbor_alltoallw)$": {
+                "type" : "array",
+                "items": { "$ref" : "#/$defs/comm_size_rule" }
+            }
+        }
+      }
+    },
+
+    "$defs": {
+        "msg_size_rule": {
+            "type": "object",
+            "required": ["alg"],
+            "additionalProperties" : false,
+            "properties" : {
+                "msg_size_min" : {
+                    "description" : "The smallest message size in bytes this rule applies to",
+                    "anyOf" : { "$ref" : "#/$defs/int_or_inf" }
+                },
+                "msg_size_max" : {
+                    "description" : "The largest message size (inclusive) in bytes this rule applies to",
+                    "anyOf" : { "$ref" : "#/$defs/int_or_inf" }
+                },
+                "alg" : {
+                    "description" : "The algorithm to use for this collective. Integer or name, see coll_tuned_<collective>_algorithm for options.",
+                    "type" : [ "string", "integer"]
+                },
+                "reqs" : {
+                    "description" : "Algorithm parameter: Use this many requests.  Some algorithms may ignore this option.",
+                    "type" : [ "integer"]
+                },
+                "faninout" : {
+                    "description" : "Algorithm parameter: Fan in and/or out by this much.  Some algorithms may ignore this option.",
+                    "type" : [ "integer"]
+                }
+            }
+        },
+
+        "comm_size_rule": {
+            "type": "object",
+            "required": ["rules"],
+            "additionalProperties" : false,
+            "properties" : {
+                "comm_size_min" : {
+                    "description" : "The smallest size communicator these rules apply to",
+                    "anyOf" :  { "$ref" : "#/$defs/int_or_inf" }
+                },
+                "comm_size_max" : {
+                    "description" : "The largest (inclusive) size communicator these rules apply to",
+                    "anyOf" :  { "$ref" : "#/$defs/int_or_inf" }
+                },
+                "comm_rank_distribution" : {
+                    "description" : "A description of how the ranks are distributed within the communicator",
+                    "enum" : ["any", "one-per-node", "single-node"]
+                },
+
+                "rules" : {
+                    "description" : "A list of rules.  The first matching rule is selected.  If no match is found, defaults are used.",
+                    "type" : "array",
+                    "items":  { "$ref" : "#/$defs/msg_size_rule" }
+                }
+            }
+        },
+        "collective_identifier": {
+            "enum" : [
+                "allgather",
+                "allreduce",
+                "alltoall",
+                "alltoallv",
+                "alltoallw",
+                "barrier",
+                "bcast",
+                "exscan",
+                "gather",
+                "gatherv",
+                "reduce",
+                "reducescatter",
+                "reducescatterblock",
+                "scan",
+                "scatter",
+                "scatterv",
+                "neighbor_allgather",
+                "neighbor_allgatherv",
+                "neighbor_alltoall",
+                "neighbor_alltoallv",
+                "neighbor_alltoallw"
+            ]
+        },
+        "int_or_inf": [
+            { "type" : "integer" },
+            { "enum": ["inf","INF","Inf"] }
+        ]
+    }
+}

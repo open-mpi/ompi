@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024      Amazon.com, Inc. or its affiliates.
+ * Copyright (c) 2024-2025 Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
  * $COPYRIGHT$
  *
@@ -19,8 +19,6 @@
 #define CHECK_OBJ_TYPE(obj, expected)                                                           \
     do {                                                                                        \
         if ((obj)->type != (expected)) {                                                        \
-            opal_show_help("help-json.txt", "Invalid argument type", true, __func__, #expected, \
-                           expected, (obj)->type);                                              \
             return OPAL_ERROR;                                                                  \
         }                                                                                       \
     } while (0)
@@ -97,7 +95,6 @@ int opal_json_load(const char *str, const size_t len, const opal_json_t **json)
 
     json_value *value = json_parse(str, len);
     if (!value) {
-        opal_show_help("help-json.txt", "Invalid JSON string", true);
         ret = OPAL_ERROR;
         goto out;
     }
@@ -114,7 +111,7 @@ out:
     return ret;
 }
 
-int opal_json_load_file(const char *filename, const opal_json_t **json)
+int opal_json_load_file(const char *filename, const opal_json_t **json, int show_errors)
 {
     FILE *fp = NULL;
     size_t file_size;
@@ -123,7 +120,9 @@ int opal_json_load_file(const char *filename, const opal_json_t **json)
 
     fp = fopen(filename, "r");
     if (fp == NULL) {
-        opal_show_help("help-json.txt", "Unable to open file", true, filename);
+        if (show_errors) {
+            opal_show_help("help-json.txt", "Unable to open file", true, filename);
+        }
         ret = OPAL_ERROR;
         goto out;
     }
@@ -134,18 +133,25 @@ int opal_json_load_file(const char *filename, const opal_json_t **json)
 
     file_contents = (char *) malloc(file_size);
     if (!file_contents) {
-        opal_show_help("help-json.txt", "Memory allocation failure", true);
+        if (show_errors) {
+            opal_show_help("help-json.txt", "Memory allocation failure", true);
+        }
         ret = OPAL_ERROR;
         goto out;
     }
 
     if (file_size > fread(file_contents, 1, file_size, fp)) {
-        opal_show_help("help-json.txt", "Unable to read file", true, filename);
+        if (show_errors) {
+            opal_show_help("help-json.txt", "Unable to read file", true, filename);
+        }
         ret = OPAL_ERROR;
         goto out;
     }
 
     ret = opal_json_load(file_contents, file_size, json);
+    if (ret != OPAL_SUCCESS && show_errors) {
+        opal_show_help("help-json.txt", "Invalid JSON string", true);
+    }
 
 out:
     if (fp) {
@@ -183,6 +189,33 @@ int opal_json_get_key(const opal_json_t *json, const char *key, const opal_json_
         opal_json_internal_free(result);
     }
 
+    return ret;
+}
+
+int opal_json_get_key_by_index(const opal_json_t *json, const size_t index, const char **key, const opal_json_t **out)
+{
+    int ret = OPAL_ERROR;
+
+    CHECK_OBJ_TYPE(json, OPAL_JSON_OBJECT);
+
+    opal_json_internal_t *in = (opal_json_internal_t *) json;
+    opal_json_internal_t *result = NULL;
+
+    json_object_entry entry = {0};
+
+    if (index < 0 || index >= in->value->u.object.length) {
+        opal_show_help("help-json.txt", "Index out of bound", true, index,
+                       in->value->u.array.length);
+        return ret;
+    }
+    entry = in->value->u.object.values[index];
+    *key = entry.name;
+    ret = opal_json_internal_new(entry.value, &result);
+    if (OPAL_SUCCESS == ret) {
+        *out = (opal_json_t *) result;
+    } else if (result) {
+        opal_json_internal_free(result);
+    }
     return ret;
 }
 

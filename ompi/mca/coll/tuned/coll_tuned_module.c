@@ -14,6 +14,8 @@
  * Copyright (c) 2018      Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2025      Amazon.com, Inc. or its affiliates.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -61,7 +63,8 @@ ompi_coll_tuned_comm_query(struct ompi_communicator_t *comm, int *priority)
 {
     mca_coll_tuned_module_t *tuned_module;
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream, "coll:tuned:module_tuned query called"));
+    OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
+        "coll:tuned:module_tuned query called"));
 
     /**
      * No support for inter-communicator yet.
@@ -176,13 +179,14 @@ ompi_coll_tuned_forced_getvalues( enum COLLTYPE type,
         if( NULL != mca_coll_tuned_component.all_base_rules ) {         \
             (TMOD)->com_rules[(TYPE)]                                   \
                 = ompi_coll_tuned_get_com_rule_ptr( mca_coll_tuned_component.all_base_rules, \
-                                                    (TYPE), size );     \
+                                                    (TYPE), comm );     \
             if( NULL != (TMOD)->com_rules[(TYPE)] ) {                   \
                 need_dynamic_decision = 1;                              \
             }                                                           \
         }                                                               \
         if( 1 == need_dynamic_decision ) {                              \
-            OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned: enable dynamic selection for "#TYPE)); \
+            OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream, \
+                "coll:tuned: enable dynamic selection for "#TYPE));     \
             EXECUTE;                                                    \
         }                                                               \
     } while(0)
@@ -194,18 +198,10 @@ static int
 tuned_module_enable( mca_coll_base_module_t *module,
                      struct ompi_communicator_t *comm )
 {
-    int size;
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t *) module;
     mca_coll_base_comm_t *data = NULL;
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_init called."));
-
-    /* Allocate the data that hangs off the communicator */
-    if (OMPI_COMM_IS_INTER(comm)) {
-        size = ompi_comm_remote_size(comm);
-    } else {
-        size = ompi_comm_size(comm);
-    }
+    OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream, "coll:tuned:module_init called."));
 
     /**
      * we still malloc data as it is used by the TUNED modules
@@ -225,7 +221,7 @@ tuned_module_enable( mca_coll_base_module_t *module,
     }
 
     if (ompi_coll_tuned_use_dynamic_rules) {
-        OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_init MCW & Dynamic"));
+        OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream, "coll:tuned:module_init MCW & Dynamic"));
 
         /**
          * next dynamic state, recheck all forced rules as well
@@ -304,7 +300,7 @@ tuned_module_enable( mca_coll_base_module_t *module,
     /* All done */
     tuned_module->super.base_data = data;
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_init Tuned is in use"));
+    OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,"coll:tuned:module_init Tuned is in use"));
     return OMPI_SUCCESS;
 }
 

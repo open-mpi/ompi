@@ -18,6 +18,8 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2019      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2025      Amazon.com, Inc. or its affiliates.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -56,6 +58,7 @@ char* ompi_coll_tuned_dynamic_rules_filename = (char*) NULL;
 int   ompi_coll_tuned_init_tree_fanout = 4;
 int   ompi_coll_tuned_init_chain_fanout = 4;
 int   ompi_coll_tuned_init_max_requests = 128;
+int   ompi_coll_tuned_verbose = 0;
 
 /* Set it to the same value as intermediate msg by default, so it does not affect
  * default algorithm selection. Changing this value will force using linear with
@@ -73,6 +76,10 @@ int   ompi_coll_tuned_scatter_blocking_send_ratio = 0;
 coll_tuned_force_algorithm_mca_param_indices_t ompi_coll_tuned_forced_params[COLLCOUNT] = {{0}};
 /* max algorithm values */
 int ompi_coll_tuned_forced_max_algorithms[COLLCOUNT] = {0};
+
+/* names of each algorithm for each collective */
+mca_base_var_enum_t *coll_tuned_algorithm_enums[COLLCOUNT] = {0};
+
 
 /*
  * Local function
@@ -187,6 +194,15 @@ static int tuned_register(void)
                                            MCA_BASE_VAR_SCOPE_ALL,
                                            &ompi_coll_tuned_dynamic_rules_filename);
 
+    ompi_coll_tuned_verbose = 0;
+    (void) mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
+                                           "verbose",
+                                           "Verbosity of the tuned coll component",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_ALL,
+                                           &ompi_coll_tuned_verbose);
+
     /* register forced params */
     ompi_coll_tuned_allreduce_intra_check_forced_init(&ompi_coll_tuned_forced_params[ALLREDUCE]);
     ompi_coll_tuned_alltoall_intra_check_forced_init(&ompi_coll_tuned_forced_params[ALLTOALL]);
@@ -210,11 +226,10 @@ static int tuned_open(void)
 {
     int rc;
 
-#if OPAL_ENABLE_DEBUG
-    if (ompi_coll_base_framework.framework_verbose) {
+    if (ompi_coll_tuned_verbose) {
         ompi_coll_tuned_stream = opal_output_open(NULL);
+        opal_output_set_verbosity(ompi_coll_tuned_stream, ompi_coll_tuned_verbose);
     }
-#endif  /* OPAL_ENABLE_DEBUG */
 
     /* now check that the user hasn't overrode any of the decision functions if dynamic rules are enabled */
     /* the user can redo this before every comm dup/create if they like */
@@ -227,20 +242,24 @@ static int tuned_open(void)
     /* by default DISABLE dynamic rules and instead use fixed [if based] rules */
     if (ompi_coll_tuned_use_dynamic_rules) {
         if( ompi_coll_tuned_dynamic_rules_filename ) {
-            OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:component_open Reading collective rules file [%s]",
-                         ompi_coll_tuned_dynamic_rules_filename));
+            OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
+                "coll:tuned:component_open Reading collective rules file [%s]",
+                ompi_coll_tuned_dynamic_rules_filename));
             rc = ompi_coll_tuned_read_rules_config_file( ompi_coll_tuned_dynamic_rules_filename,
-                                                         &(mca_coll_tuned_component.all_base_rules), COLLCOUNT);
-            if( rc >= 0 ) {
-                OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_open Read %d valid rules\n", rc));
+                                                         &(mca_coll_tuned_component.all_base_rules));
+            if( rc == OPAL_SUCCESS ) {
+                OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
+                    "coll:tuned:module_open Read a valid rules file"));
             } else {
-                OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_open Reading collective rules file failed\n"));
+                OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
+                    "coll:tuned:module_open Reading collective rules file failed\n"));
                 mca_coll_tuned_component.all_base_rules = NULL;
             }
         }
     }
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream, "coll:tuned:component_open: done!"));
+    OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
+        "coll:tuned:component_open: done!"));
 
     return OMPI_SUCCESS;
 }
@@ -249,16 +268,24 @@ static int tuned_open(void)
 /* i.e. alg table and dynamic changeable rules if allocated etc */
 static int tuned_close(void)
 {
-    OPAL_OUTPUT((ompi_coll_tuned_stream, "coll:tuned:component_close: called"));
+    OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
+        "coll:tuned:component_close: called"));
 
     /* dealloc alg table if allocated */
     /* dealloc dynamic changeable rules if allocated */
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream, "coll:tuned:component_close: done!"));
+    OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
+        "coll:tuned:component_close: done!"));
 
     if( NULL != mca_coll_tuned_component.all_base_rules ) {
-        ompi_coll_tuned_free_all_rules(mca_coll_tuned_component.all_base_rules, COLLCOUNT);
+        ompi_coll_tuned_free_all_rules(mca_coll_tuned_component.all_base_rules);
         mca_coll_tuned_component.all_base_rules = NULL;
+    }
+
+    for (int i=0; i<COLLCOUNT; i++) {
+        if (coll_tuned_algorithm_enums[i] != NULL) {
+            OBJ_RELEASE(coll_tuned_algorithm_enums[i]);
+        }
     }
 
     return OMPI_SUCCESS;
@@ -274,6 +301,41 @@ mca_coll_tuned_module_construct(mca_coll_tuned_module_t *module)
         tuned_module->com_rules[i] = NULL;
     }
 }
+
+int coll_tuned_alg_from_str(int collective_id, const char *alg_name, int *alg_value) {
+    int rc;
+    if (collective_id > COLLCOUNT || collective_id < 0) { return OPAL_ERROR; };
+    rc = coll_tuned_algorithm_enums[collective_id]->value_from_string(
+        coll_tuned_algorithm_enums[collective_id],
+        alg_name, alg_value );
+    return rc;
+}
+
+/* return the enum's value and string.  caller's responsibility to free alg_string if NULL was not provided. */
+int coll_tuned_alg_to_str(int collective_id, int alg_value, char **alg_string) {
+    int rc;
+    if (collective_id > COLLCOUNT || collective_id < 0) { return OPAL_ERROR; };
+    rc = coll_tuned_algorithm_enums[collective_id]->string_from_value(
+        coll_tuned_algorithm_enums[collective_id],
+        alg_value, alg_string );
+    return rc;
+}
+
+
+int coll_tuned_alg_register_options(int collective_id, mca_base_var_enum_t *options) {
+    /* use the same enum used for mca parameters to allow tuning files to use
+    algorithm names rather than just numbers.*/
+    if (!options) { return OPAL_ERROR; }
+    if (collective_id > COLLCOUNT || collective_id < 0) {
+        return OPAL_ERROR;
+    }
+
+    /* retain the enum until tuned_close() */
+    OBJ_RETAIN(options);
+    coll_tuned_algorithm_enums[collective_id] = options;
+    return OPAL_SUCCESS;
+}
+
 
 OBJ_CLASS_INSTANCE(mca_coll_tuned_module_t, mca_coll_base_module_t,
                    mca_coll_tuned_module_construct, NULL);
