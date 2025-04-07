@@ -30,7 +30,7 @@
 #include "ompi/mpi/fortran/base/fint_2_int.h"
 #include "ompi/memchecker.h"
 
-PROTOTYPE ERROR_CLASS comm_c2f(COMM comm)
+PROTOTYPE FINT comm_c2f(COMM comm)
 {
     MEMCHECKER(
         memchecker_comm(comm);

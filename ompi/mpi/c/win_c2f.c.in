@@ -31,7 +31,7 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/mpi/fortran/base/fint_2_int.h"
 
-PROTOTYPE ERROR_CLASS win_c2f(WIN win)
+PROTOTYPE FINT win_c2f(WIN win)
 {
     if ( MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
