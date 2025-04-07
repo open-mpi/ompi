@@ -44,7 +44,7 @@ PROTOTYPE ERROR_CLASS neighbor_allgatherv(BUFFER sendbuf, COUNT sendcount, DATAT
                                           BUFFER_OUT recvbuf, COUNT_ARRAY recvcounts, DISP_ARRAY displs,
                                           DATATYPE recvtype, COMM comm)
 {
-    int in_size, out_size, err;
+    int in_size, out_size, err = MPI_SUCCESS;
     ompi_count_array_t recvcounts_desc;
     ompi_disp_array_t displs_desc;
 
@@ -53,7 +53,10 @@ PROTOTYPE ERROR_CLASS neighbor_allgatherv(BUFFER sendbuf, COUNT sendcount, DATAT
     MEMCHECKER(
         ptrdiff_t ext;
 
-        mca_topo_base_neighbor_count (comm, &in_size, &out_size);
+        err = mca_topo_base_neighbor_count (comm, &in_size, &out_size);
+        if (MPI_SUCCESS != err) {
+            return OMPI_ERRHANDLER_INVOKE(comm, err, FUNC_NAME);
+        }
         ompi_datatype_type_extent(recvtype, &ext);
 
         memchecker_datatype(recvtype);
@@ -99,7 +102,10 @@ PROTOTYPE ERROR_CLASS neighbor_allgatherv(BUFFER sendbuf, COUNT sendcount, DATAT
          get the size of the remote group here for both intra- and
          intercommunicators */
 
-        mca_topo_base_neighbor_count (comm, &in_size, &out_size);
+        err = mca_topo_base_neighbor_count (comm, &in_size, &out_size);
+        if (MPI_SUCCESS != err) {
+            return OMPI_ERRHANDLER_INVOKE(comm, err, FUNC_NAME);
+        }
         for (int i = 0; i < in_size; ++i) {
           if (recvcounts[i] < 0) {
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COUNT, FUNC_NAME);
@@ -118,7 +124,10 @@ PROTOTYPE ERROR_CLASS neighbor_allgatherv(BUFFER sendbuf, COUNT sendcount, DATAT
         }
         else if( OMPI_COMM_IS_GRAPH(comm) ) {
             int degree;
-            mca_topo_base_graph_neighbors_count(comm, ompi_comm_rank(comm), &degree);
+            err = mca_topo_base_graph_neighbors_count(comm, ompi_comm_rank(comm), &degree);
+            if (MPI_SUCCESS != err) {
+                return OMPI_ERRHANDLER_INVOKE(comm, err, FUNC_NAME);
+            }
             if( 0 > degree ) {
                 return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
             }

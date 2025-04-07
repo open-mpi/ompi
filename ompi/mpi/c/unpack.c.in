@@ -39,7 +39,7 @@ PROTOTYPE ERROR_CLASS unpack(BUFFER inbuf,
 			     COUNT outcount, DATATYPE datatype,
                              COMM comm)
 {
-    int rc = MPI_SUCCESS;
+    int rc = MPI_SUCCESS, rc_keep = MPI_SUCCESS;
     opal_convertor_t local_convertor;
     struct iovec outvec;
     unsigned int iov_count;
@@ -114,11 +114,12 @@ PROTOTYPE ERROR_CLASS unpack(BUFFER inbuf,
         /* All done.  Note that the convertor returns 1 upon success, not
            OPAL_SUCCESS. */
         if (1 != ret) {
-            rc = OMPI_ERROR;
+            rc_keep = OMPI_ERROR;
         }
     }
 
     rc = ompi_datatype_consolidate_free(&dtmod);
+    rc = (rc_keep != MPI_SUCCESS) ? rc_keep : rc;
 
     OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME);
 }

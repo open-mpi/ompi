@@ -41,7 +41,7 @@ PROTOTYPE ERROR_CLASS sendrecv(BUFFER sendbuf, COUNT sendcount, DATATYPE sendtyp
                                DATATYPE recvtype, INT source, INT recvtag,
                                COMM comm, STATUS_OUT status)
 {
-    ompi_request_t* req;
+    ompi_request_t* req = MPI_REQUEST_NULL;
     int rc = MPI_SUCCESS;
     int rcs = MPI_SUCCESS;
 
