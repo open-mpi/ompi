@@ -1878,13 +1878,13 @@ int mca_spml_ucx_team_split_strided(shmem_team_t parent_team, int start, int
     ucx_new_team->config = calloc(1, sizeof(mca_spml_ucx_team_config_t));
 
     if (config != NULL) {
-        memcpy(&ucx_new_team->config.super, config, sizeof(shmem_team_config_t));
+        memcpy(&ucx_new_team->config->super, config, sizeof(shmem_team_config_t));
     }
 
     ucx_new_team->config = config;
-    ucx_new_team->parent = parent_team;
+    ucx_new_team->parent_team = parent_team;
 
-    *new_team = ucx_new_team
+    *new_team = ucx_new_team;
 
     return OSHMEM_SUCCESS;
 }

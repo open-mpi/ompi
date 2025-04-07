@@ -136,7 +136,7 @@ typedef struct mca_spml_ucx_team {
     int                         stride;
     int                         start;
     mca_spml_ucx_team_config_t  *config;
-    mca_spml_ucx_team_t         *parent_team;
+    struct mca_spml_ucx_team    *parent_team;
 } mca_spml_ucx_team_t;
 
 struct mca_spml_ucx {
