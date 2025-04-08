@@ -244,9 +244,11 @@ static int ompi_coll_tuned_read_rules_json (const opal_json_t *json_root, ompi_c
 
     const opal_json_t *collectives_obj = NULL;
     const opal_json_t *comm_rule_array = NULL;
+    const opal_json_t *comm_rule = NULL;
+    const opal_json_t *msg_size_array = NULL;
 
     size_t num_collectives = 0;
-    size_t num_comm_rules;
+    size_t num_comm_rules = 0;
     rc = opal_json_get_key(json_root, "collectives", &collectives_obj);
     if (rc != OPAL_SUCCESS) {
         opal_output_verbose(1, ompi_coll_tuned_stream,
@@ -269,15 +271,14 @@ static int ompi_coll_tuned_read_rules_json (const opal_json_t *json_root, ompi_c
             opal_output_verbose(1, ompi_coll_tuned_stream,
                 "Internal json error when attempting to parse the collective at index %ld\n",
                 jcol);
-            goto error_bad_coll;
+            goto error_cleanup;
         }
         coll_id = mca_coll_base_name_to_colltype(coll_name);
         if (coll_id < 0) {
             opal_output_verbose(1, ompi_coll_tuned_stream,
                 "Unrecognized collective: \"%s\". Use all lowercase such as \"allgather\"",
                 coll_name);
-            opal_json_free(&comm_rule_array);
-            goto error_bad_coll;
+            goto error_cleanup;
         }
 
         alg_p = &alg_rules[coll_id];
@@ -287,14 +288,12 @@ static int ompi_coll_tuned_read_rules_json (const opal_json_t *json_root, ompi_c
             opal_output_verbose(1, ompi_coll_tuned_stream,
                 "Problem parsing the collective at index %ld (for %s).  Expected an array of comm-related rules.",
                 jcol, mca_coll_base_colltype_to_str(coll_id) );
-            goto error_bad_coll;
+            goto error_cleanup;
         }
         alg_p->n_com_sizes = (int)num_comm_rules;
         alg_p->com_rules = ompi_coll_tuned_mk_com_rules (num_comm_rules, coll_id);
 
         for (jcomm_rule=0; jcomm_rule < num_comm_rules; jcomm_rule++) {
-            const opal_json_t *comm_rule;
-            const opal_json_t *msg_size_array;
             size_t num_msg_rules;
             rc = opal_json_get_index(comm_rule_array, jcomm_rule, &comm_rule);
             com_p = &(alg_p->com_rules[jcomm_rule]);
@@ -353,15 +352,16 @@ error_bad_message_rule:
         "Problem occurred within collective %s, "
         "comm_size_min=%d, comm_size_max=%d (entry number %ld in the comm_size array), "
         "message size entry number %ld.", coll_name, com_p->mpi_comsize_min, com_p->mpi_comsize_max, 1+jcomm_rule, 1+jmsg_rule);
-    opal_json_free(&collectives_obj);
-    return OMPI_ERROR;
+    goto error_cleanup;
 error_bad_comm_rule:
     opal_output_verbose(1, ompi_coll_tuned_stream,
         "Problem occurred within collective %s, "
         "in entry number %ld of the comm_size array", coll_name, 1+jcomm_rule);
-    opal_json_free(&collectives_obj);
-    return OMPI_ERROR;
-error_bad_coll:
+    goto error_cleanup;
+error_cleanup:
+    opal_json_free(&msg_size_array);
+    opal_json_free(&comm_rule);
+    opal_json_free(&comm_rule_array);
     opal_json_free(&collectives_obj);
     return OMPI_ERROR;
 }
