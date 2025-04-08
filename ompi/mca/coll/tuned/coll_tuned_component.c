@@ -304,7 +304,7 @@ mca_coll_tuned_module_construct(mca_coll_tuned_module_t *module)
 
 int coll_tuned_alg_from_str(int collective_id, const char *alg_name, int *alg_value) {
     int rc;
-    if (collective_id > COLLCOUNT || collective_id < 0) { return OPAL_ERROR; };
+    if (collective_id >= COLLCOUNT || collective_id < 0) { return OPAL_ERROR; };
     rc = coll_tuned_algorithm_enums[collective_id]->value_from_string(
         coll_tuned_algorithm_enums[collective_id],
         alg_name, alg_value );
@@ -314,7 +314,7 @@ int coll_tuned_alg_from_str(int collective_id, const char *alg_name, int *alg_va
 /* return the enum's value and string.  caller's responsibility to free alg_string if NULL was not provided. */
 int coll_tuned_alg_to_str(int collective_id, int alg_value, char **alg_string) {
     int rc;
-    if (collective_id > COLLCOUNT || collective_id < 0) { return OPAL_ERROR; };
+    if (collective_id >= COLLCOUNT || collective_id < 0) { return OPAL_ERROR; };
     rc = coll_tuned_algorithm_enums[collective_id]->string_from_value(
         coll_tuned_algorithm_enums[collective_id],
         alg_value, alg_string );
@@ -326,7 +326,7 @@ int coll_tuned_alg_register_options(int collective_id, mca_base_var_enum_t *opti
     /* use the same enum used for mca parameters to allow tuning files to use
     algorithm names rather than just numbers.*/
     if (!options) { return OPAL_ERROR; }
-    if (collective_id > COLLCOUNT || collective_id < 0) {
+    if (collective_id >= COLLCOUNT || collective_id < 0) {
         return OPAL_ERROR;
     }
 
