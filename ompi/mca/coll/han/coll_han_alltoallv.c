@@ -804,6 +804,7 @@ int mca_coll_han_alltoallv_using_smsc(
     low_gather_out = malloc(sizeof(*low_gather_out) * low_size);
     struct peer_data *peers = malloc(sizeof(*peers) * low_size);
     opal_datatype_t *peer_send_types = malloc(sizeof(*peer_send_types) * low_size);
+    bool have_bufs_and_types = false;
 
     low_gather_in.serialization_buffer = serialization_buf;
     low_gather_in.sbuf = (void*)sbuf; // cast to discard the const
@@ -896,6 +897,7 @@ int mca_coll_han_alltoallv_using_smsc(
         peers[jrank].sendtype = &peer_send_types[jrank];
     }
 
+    have_bufs_and_types = true;
     send_from_addrs = malloc(sizeof(*send_from_addrs)*low_size);
     recv_to_addrs = malloc(sizeof(*recv_to_addrs)*low_size);
     send_counts = malloc(sizeof(*send_counts)*low_size);
@@ -964,14 +966,16 @@ int mca_coll_han_alltoallv_using_smsc(
         free(recv_types);
     }
 
-    for (int jlow=0; jlow<low_size; jlow++) {
-        if (jlow != low_rank) {
-            OBJ_DESTRUCT(&peer_send_types[jlow]);
-        }
+    if (have_bufs_and_types) {
+        for (int jlow=0; jlow<low_size; jlow++) {
+            if (jlow != low_rank) {
+                OBJ_DESTRUCT(&peer_send_types[jlow]);
+            }
 
-        for (int jbuf=0; jbuf<2; jbuf++) {
-            if (peers[jlow].map_ctx[jbuf]) {
-                mca_smsc->unmap_peer_region(peers[jlow].map_ctx[jbuf]);
+            for (int jbuf=0; jbuf<2; jbuf++) {
+                if (peers[jlow].map_ctx[jbuf]) {
+                    mca_smsc->unmap_peer_region(peers[jlow].map_ctx[jbuf]);
+                }
             }
         }
     }
