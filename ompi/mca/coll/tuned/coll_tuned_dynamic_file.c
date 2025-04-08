@@ -494,6 +494,11 @@ static int ompi_coll_tuned_read_rules_config_file_classic (char *fname, ompi_col
         }
         opal_output_verbose(25, ompi_coll_tuned_stream,
             "Read communicator count %ld for dynamic rule for collective ID %ld\n", NCOMSIZES, COLID);
+        if( NCOMSIZES > INT_MAX) {
+            opal_output_verbose(25, ompi_coll_tuned_stream,
+                "Refusing to proceed: suspiciously large number found for the number of communicator-based rules: %ld\n", NCOMSIZES);
+            goto on_file_error;
+        }
         alg_p->n_com_sizes = NCOMSIZES;
         alg_p->com_rules = ompi_coll_tuned_mk_com_rules (NCOMSIZES, COLID);
         if (NULL == alg_p->com_rules) {
