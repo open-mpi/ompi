@@ -12,7 +12,7 @@
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015-2021 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
- * Copyright (c) 2024      Triad National Security, LLC. All rights
+ * Copyright (c) 2024-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -107,12 +107,9 @@ PROTOTYPE VOID gatherv_init(BUFFER_ASYNC x1, COUNT sendcount, DATATYPE sendtype,
         ompi_datatype_destroy(&c_senddatatype);
     }
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
-    if (MPI_SUCCESS == c_ierr) {
-        *request = PMPI_Request_c2f(c_request);
-    } else {
-        OMPI_ARRAY_FINT_2_INT_CLEANUP(recvcounts);
-        OMPI_ARRAY_FINT_2_INT_CLEANUP(displs);
-    }
+    if (MPI_SUCCESS == c_ierr) *request = PMPI_Request_c2f(c_request);
+
     OMPI_FORTRAN_BIGCOUNT_ARRAY_CLEANUP_NONBLOCKING(recvcounts, tmp_recvcounts, c_request, c_ierr, idx);
     OMPI_FORTRAN_BIGCOUNT_ARRAY_CLEANUP_NONBLOCKING(displs, tmp_displs, c_request, c_ierr, idx);
 }
+

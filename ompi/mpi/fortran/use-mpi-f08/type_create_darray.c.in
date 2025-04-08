@@ -12,7 +12,7 @@
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2024      Triad National Security, LLC. All rights
+ * Copyright (c) 2024-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -30,30 +30,30 @@ PROTOTYPE VOID  type_create_darray(INT size, RANK rank,
     int c_ierr;
     MPI_Datatype c_old = PMPI_Type_f2c(*oldtype);
     MPI_Datatype c_new;
-    OMPI_ARRAY_NAME_DECL(gsize_array);
-    OMPI_ARRAY_NAME_DECL(distrib_array);
-    OMPI_ARRAY_NAME_DECL(darg_array);
-    OMPI_ARRAY_NAME_DECL(psize_array);
+    @COUNT_TYPE@ *tmp_gsize_array = NULL;
+    int *tmp_distrib_array = NULL;
+    int *tmp_darg_array = NULL;
+    int *tmp_psize_array = NULL;
 
-    OMPI_ARRAY_FINT_2_INT(gsize_array, *ndims);
-    OMPI_ARRAY_FINT_2_INT(distrib_array, *ndims);
-    OMPI_ARRAY_FINT_2_INT(darg_array, *ndims);
-    OMPI_ARRAY_FINT_2_INT(psize_array, *ndims);
+    OMPI_FORTRAN_BIGCOUNT_ARRAY_SET(gsize_array, tmp_gsize_array, *ndims);
+    OMPI_FORTRAN_BIGCOUNT_ARRAY_SET(distrib_array, tmp_distrib_array, *ndims);
+    OMPI_FORTRAN_BIGCOUNT_ARRAY_SET(darg_array, tmp_darg_array, *ndims);
+    OMPI_FORTRAN_BIGCOUNT_ARRAY_SET(psize_array, tmp_psize_array, *ndims);
 
     c_ierr = @INNER_CALL@(OMPI_FINT_2_INT(*size),
                                     OMPI_FINT_2_INT(*rank),
                                     OMPI_FINT_2_INT(*ndims),
-                                    OMPI_ARRAY_NAME_CONVERT(gsize_array),
-                                    OMPI_ARRAY_NAME_CONVERT(distrib_array),
-                                    OMPI_ARRAY_NAME_CONVERT(darg_array),
-                                    OMPI_ARRAY_NAME_CONVERT(psize_array),
+                                    tmp_gsize_array,
+                                    tmp_distrib_array,
+                                    tmp_darg_array,
+                                    tmp_psize_array,
                                     OMPI_FINT_2_INT(*order), c_old, &c_new);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
-    OMPI_ARRAY_FINT_2_INT_CLEANUP(gsize_array);
-    OMPI_ARRAY_FINT_2_INT_CLEANUP(distrib_array);
-    OMPI_ARRAY_FINT_2_INT_CLEANUP(darg_array);
-    OMPI_ARRAY_FINT_2_INT_CLEANUP(psize_array);
+    OMPI_FORTRAN_BIGCOUNT_ARRAY_CLEANUP(gsize_array, tmp_gsize_array);
+    OMPI_FORTRAN_BIGCOUNT_ARRAY_CLEANUP(distrib_array, tmp_distrib_array);
+    OMPI_FORTRAN_BIGCOUNT_ARRAY_CLEANUP(darg_array, tmp_darg_array);
+    OMPI_FORTRAN_BIGCOUNT_ARRAY_CLEANUP(psize_array, tmp_psize_array);
 
     if (MPI_SUCCESS == c_ierr) {
       *newtype = PMPI_Type_c2f(c_new);

@@ -12,7 +12,7 @@
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2024      Triad National Security, LLC. All rights
+ * Copyright (c) 2024-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -28,9 +28,11 @@ PROTOTYPE VOID type_create_hvector(COUNT count, COUNT blocklength,
     int c_ierr;
     MPI_Datatype c_old = PMPI_Type_f2c(*oldtype);
     MPI_Datatype c_new;
+    @COUNT_TYPE@ c_blocklength = (@COUNT_TYPE@)*blocklength;
+    @COUNT_TYPE@ c_count = (@COUNT_TYPE@)*count;
 
-    c_ierr = @INNER_CALL@(OMPI_FINT_2_INT(*count),
-                              OMPI_FINT_2_INT(*blocklength),
+    c_ierr = @INNER_CALL@(c_count,
+                              c_blocklength,
                               *stride,
                               c_old, &c_new);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);

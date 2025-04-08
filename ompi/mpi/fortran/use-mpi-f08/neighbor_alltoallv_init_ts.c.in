@@ -15,7 +15,7 @@
  *                         reserved.
  * Copyright (c) 2015-2019 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
- * Copyright (c) 2024      Triad National Security, LLC. All rights
+ * Copyright (c) 2024-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -32,7 +32,8 @@ PROTOTYPE VOID neighbor_alltoallv_init(BUFFER x1, COUNT_ARRAY sendcounts, DISP_A
 				       REQUEST_OUT request)
 {
     MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
-    MPI_Datatype c_sendtype, c_recvtype;
+    MPI_Datatype c_sendtype = PMPI_Type_f2c(*sendtype);
+    MPI_Datatype c_recvtype = PMPI_Type_f2c(*recvtype);;
     MPI_Info c_info;
     MPI_Request c_request;
     int size, c_ierr, idx = 0;
@@ -56,8 +57,6 @@ PROTOTYPE VOID neighbor_alltoallv_init(BUFFER x1, COUNT_ARRAY sendcounts, DISP_A
         OMPI_ERRHANDLER_INVOKE(c_comm, c_ierr, FUNC_NAME)
         return;
     }
-    c_sendtype = PMPI_Type_f2c(*sendtype);
-    c_recvtype = PMPI_Type_f2c(*recvtype);
 
     PMPI_Comm_size(c_comm, &size);
     OMPI_FORTRAN_BIGCOUNT_ARRAY_SET(sendcounts, tmp_sendcounts, size);
@@ -84,14 +83,10 @@ PROTOTYPE VOID neighbor_alltoallv_init(BUFFER x1, COUNT_ARRAY sendcounts, DISP_A
 
     if (MPI_SUCCESS == c_ierr) {
         *request = PMPI_Request_c2f(c_request);
-        OMPI_FORTRAN_BIGCOUNT_ARRAY_CLEANUP_NONBLOCKING(recvcounts, tmp_recvcounts, c_request, c_ierr, idx);
-        OMPI_FORTRAN_BIGCOUNT_ARRAY_CLEANUP_NONBLOCKING(sendcounts, tmp_sendcounts, c_request, c_ierr, idx);
-        OMPI_FORTRAN_BIGCOUNT_ARRAY_CLEANUP_NONBLOCKING(rdispls, tmp_rdispls, c_request, c_ierr, idx);
-        OMPI_FORTRAN_BIGCOUNT_ARRAY_CLEANUP_NONBLOCKING(sdispls, tmp_sdispls, c_request, c_ierr, idx);
-    } else {
-        OMPI_FORTRAN_BIGCOUNT_ARRAY_CLEANUP(recvcounts, tmp_recvcounts);
-        OMPI_FORTRAN_BIGCOUNT_ARRAY_CLEANUP(sendcounts, tmp_sendcounts);
-        OMPI_FORTRAN_BIGCOUNT_ARRAY_CLEANUP(rdispls, tmp_rdispls);
-        OMPI_FORTRAN_BIGCOUNT_ARRAY_CLEANUP(sdispls, tmp_sdispls);
     }
+
+    OMPI_FORTRAN_BIGCOUNT_ARRAY_CLEANUP_NONBLOCKING(recvcounts, tmp_recvcounts, c_request, c_ierr, idx);
+    OMPI_FORTRAN_BIGCOUNT_ARRAY_CLEANUP_NONBLOCKING(sendcounts, tmp_sendcounts, c_request, c_ierr, idx);
+    OMPI_FORTRAN_BIGCOUNT_ARRAY_CLEANUP_NONBLOCKING(rdispls, tmp_rdispls, c_request, c_ierr, idx);
+    OMPI_FORTRAN_BIGCOUNT_ARRAY_CLEANUP_NONBLOCKING(sdispls, tmp_sdispls, c_request, c_ierr, idx);
 }

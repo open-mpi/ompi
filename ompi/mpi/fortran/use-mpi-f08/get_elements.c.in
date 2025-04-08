@@ -12,7 +12,7 @@
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2024      Triad National Security, LLC. All rights
+ * Copyright (c) 2024-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -23,22 +23,21 @@
 
 PROTOTYPE VOID get_elements(STATUS status, DATATYPE datatype, COUNT_OUT count)
 {
-    int c_ierr;
+    int c_ierr = MPI_SUCCESS;
     MPI_Datatype c_type = PMPI_Type_f2c(*datatype);
     MPI_Status   c_status;
-    OMPI_SINGLE_NAME_DECL(count);
+    @COUNT_TYPE@ c_count = 0;
 
-    if (OMPI_IS_FORTRAN_STATUS_IGNORE(status)) {
-        *count = OMPI_INT_2_FINT(0);
-        c_ierr = MPI_SUCCESS;
-    } else {
+    if (!OMPI_IS_FORTRAN_STATUS_IGNORE(status)) {
         c_ierr = PMPI_Status_f2c(status, &c_status);
-
         if (MPI_SUCCESS == c_ierr) {
             c_ierr = @INNER_CALL@(&c_status, c_type,
-                                      OMPI_SINGLE_NAME_CONVERT(count));
-            OMPI_SINGLE_INT_2_FINT(count);
+                                      &c_count);
         }
+    }
+
+    if (MPI_SUCCESS == c_ierr) {
+        *count = (@COUNT_FINT_TYPE@)(c_count);
     }
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 }

@@ -12,7 +12,7 @@
  * Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2024      Triad National Security, LLC. All rights
+ * Copyright (c) 2024-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -26,12 +26,15 @@ PROTOTYPE VOID win_shared_query(WIN win, INT rank, AINT_OUT size,
 {
     int c_ierr;
     MPI_Win c_win;
-    OMPI_SINGLE_NAME_DECL(disp_unit);
+    @DISP_TYPE@ c_disp_unit;
 
     c_win = PMPI_Win_f2c(*win);
 
     c_ierr = @INNER_CALL@(c_win, OMPI_FINT_2_INT(*rank), size,
-                          OMPI_SINGLE_NAME_CONVERT(disp_unit), baseptr);
+                          &c_disp_unit, baseptr);
+    if (MPI_SUCCESS == c_ierr) {
+        *disp_unit =  (@COUNT_FINT_TYPE@)(c_disp_unit);
+    }
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
 }

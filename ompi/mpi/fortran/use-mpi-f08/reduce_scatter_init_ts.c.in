@@ -26,7 +26,7 @@ PROTOTYPE VOID reduce_scatter_init(BUFFER x1, BUFFER_OUT x2,
                                    OP op, COMM comm, INFO info, 
 				   REQUEST_OUT request)
 {
-    int c_ierr;
+    int c_ierr, idx = 0;
     MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
     MPI_Datatype c_type;
     MPI_Op c_op;
@@ -71,14 +71,10 @@ PROTOTYPE VOID reduce_scatter_init(BUFFER x1, BUFFER_OUT x2,
 			  &c_request);
     if (MPI_SUCCESS == c_ierr) {
         *request = PMPI_Request_c2f(c_request);
-	if ((recvcounts != NULL) && (recvcounts != tmp_recvcounts)) {
-            ompi_coll_base_nbc_request_t* nb_request = (ompi_coll_base_nbc_request_t*)c_request;
-            nb_request->data.release_arrays[0] = tmp_recvcounts;
-            nb_request->data.release_arrays[1] = NULL;
-	}
-    } else {
-        OMPI_FORTRAN_BIGCOUNT_ARRAY_CLEANUP(recvcounts, tmp_recvcounts);
     }
+
+    OMPI_FORTRAN_BIGCOUNT_ARRAY_CLEANUP_NONBLOCKING(recvcounts, tmp_recvcounts, c_request, c_ierr, idx);
+
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
 }

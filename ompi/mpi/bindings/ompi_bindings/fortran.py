@@ -179,10 +179,11 @@ class FortranBinding:
         c_func = self.c_func_name
         self.dump(f'void {c_func}({parameters});')
         self.dump(f'void {c_func}({parameters})')
-        count_type, disp_type = ('MPI_Count', 'MPI_Aint') if self.bigcount else ('int', 'int')
+        count_type, disp_type, count_fint_type = ('MPI_Count', 'MPI_Aint', 'MPI_Count') if self.bigcount else ('int', 'int', 'MPI_Fint')
         self.template.print_body(c_func, out=self.out,
                                  replacements={'INNER_CALL': self.inner_call,
                                                'COUNT_TYPE': count_type,
+                                               'COUNT_FINT_TYPE': count_fint_type,
                                                'DISP_TYPE': disp_type})
 
     def print_interface(self):

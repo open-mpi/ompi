@@ -12,7 +12,7 @@
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2024      Triad National Security, LLC. All rights
+ * Copyright (c) 2024-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -27,17 +27,18 @@ PROTOTYPE VOID pack_size(COUNT incount, DATATYPE datatype,
     int c_ierr;
     MPI_Comm c_comm;
     MPI_Datatype c_type;
-    OMPI_SINGLE_NAME_DECL(size);
+    @COUNT_TYPE@ c_size;
+    @COUNT_TYPE@ c_incount = (@COUNT_TYPE@)*incount;
 
     c_comm = PMPI_Comm_f2c(*comm);
     c_type = PMPI_Type_f2c(*datatype);
 
-    c_ierr = @INNER_CALL@(OMPI_FINT_2_INT(*incount),
+    c_ierr = @INNER_CALL@(c_incount,
                           c_type, c_comm,
-                          OMPI_SINGLE_NAME_CONVERT(size));
+                          &c_size);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
-        OMPI_SINGLE_INT_2_FINT(size);
+        *size = (@COUNT_FINT_TYPE@)(c_size);
     }
 }

@@ -15,7 +15,7 @@
  *                         reserved.
  * Copyright (c) 2015-2019 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
- * Copyright (c) 2024      Triad National Security, LLC. All rights
+ * Copyright (c) 2024-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -50,9 +50,6 @@ PROTOTYPE VOID neighbor_allgather(BUFFER x1, COUNT sendcount, DATATYPE sendtype,
         OMPI_ERRHANDLER_INVOKE(c_comm, c_ierr, FUNC_NAME)
         return;
     }
-
-    c_sendtype = PMPI_Type_f2c(*sendtype);
-    c_recvtype = PMPI_Type_f2c(*recvtype);
 
     sendbuf = (char *) OMPI_F2C_IN_PLACE(sendbuf);
     sendbuf = (char *) OMPI_F2C_BOTTOM(sendbuf);

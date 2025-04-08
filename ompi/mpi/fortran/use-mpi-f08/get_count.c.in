@@ -26,7 +26,7 @@ PROTOTYPE VOID get_count(STATUS status, DATATYPE datatype, COUNT count)
     int c_ierr;
     MPI_Datatype c_type = PMPI_Type_f2c(*datatype);
     MPI_Status   c_status;
-    OMPI_SINGLE_NAME_DECL(count);
+    @COUNT_TYPE@ c_count;
 
     if (OMPI_IS_FORTRAN_STATUS_IGNORE(status)) {
         *count = OMPI_INT_2_FINT(0);
@@ -36,9 +36,13 @@ PROTOTYPE VOID get_count(STATUS status, DATATYPE datatype, COUNT count)
 
         if (MPI_SUCCESS == c_ierr) {
             c_ierr = @INNER_CALL@(&c_status, c_type,
-                                   OMPI_SINGLE_NAME_CONVERT(count));
-            OMPI_SINGLE_INT_2_FINT(count);
+                                   &c_count);
         }
     }
+
+    if (MPI_SUCCESS == c_ierr) {
+        *count = (@COUNT_FINT_TYPE@)(c_count);
+    }
+
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 }
