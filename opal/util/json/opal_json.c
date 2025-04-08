@@ -203,7 +203,7 @@ int opal_json_get_key_by_index(const opal_json_t *json, const size_t index, cons
 
     json_object_entry entry = {0};
 
-    if (index < 0 || index >= in->value->u.object.length) {
+    if (index >= in->value->u.object.length) {
         opal_show_help("help-json.txt", "Index out of bound", true, index,
                        in->value->u.array.length);
         return ret;
