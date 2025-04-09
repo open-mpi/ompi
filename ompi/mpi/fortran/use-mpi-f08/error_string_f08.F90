@@ -11,6 +11,7 @@
 
 subroutine MPI_Error_string_f08(errorcode,string,resultlen,ierror)
    use :: ompi_mpifh_bindings, only : ompi_error_string_f
+   use, intrinsic :: ISO_C_BINDING, only : C_INT
    implicit none
    integer, intent(in) :: errorcode
    character(len=*), intent(out) :: string
@@ -18,7 +19,7 @@ subroutine MPI_Error_string_f08(errorcode,string,resultlen,ierror)
    integer, optional, intent(out) :: ierror
    integer :: c_ierror
 
-   call ompi_error_string_f(errorcode,string,resultlen,c_ierror,len(string))
+   call ompi_error_string_f(errorcode,string,resultlen,c_ierror,len(string,KIND=C_INT))
    if (present(ierror)) ierror = c_ierror
 
 end subroutine MPI_Error_string_f08

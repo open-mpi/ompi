@@ -16,6 +16,7 @@ subroutine MPI_Intercomm_create_from_groups_f08(local_group, local_leader, remot
                                                 newintercomm, ierror)
    use :: mpi_f08_types, only : MPI_Comm, MPI_Group, MPI_Errhandler, MPI_Info
    use :: ompi_mpifh_bindings, only : ompi_intercomm_create_from_groups_f
+   use, intrinsic :: ISO_C_BINDING, only : C_INT
    implicit none
    TYPE(MPI_Group), INTENT(IN) :: local_group, remote_group
    INTEGER, INTENT(IN):: local_leader, remote_leader
@@ -30,7 +31,7 @@ subroutine MPI_Intercomm_create_from_groups_f08(local_group, local_leader, remot
                                             remote_group%MPI_VAL,  &
                                             remote_leader, stringtag, info%MPI_VAL, &
                                             errhandler%MPI_VAL, &
-                                            newintercomm%MPI_VAL, c_ierror, len(stringtag))
+                                            newintercomm%MPI_VAL, c_ierror, len(stringtag,KIND=C_INT))
    if (present(ierror)) ierror = c_ierror
 
 end subroutine MPI_Intercomm_create_from_groups_f08

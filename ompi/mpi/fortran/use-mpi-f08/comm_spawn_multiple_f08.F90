@@ -15,6 +15,7 @@ subroutine MPI_Comm_spawn_multiple_f08(count,array_of_commands,array_of_argv, &
                                        comm,intercomm,array_of_errcodes,ierror)
    use :: mpi_f08_types, only : MPI_Info, MPI_Comm
    use :: ompi_mpifh_bindings, only : ompi_comm_spawn_multiple_f
+   use, intrinsic :: ISO_C_BINDING, only : C_INT
    implicit none
    INTEGER, INTENT(IN) :: count, root
    INTEGER, INTENT(IN) :: array_of_maxprocs(count)
@@ -33,7 +34,7 @@ subroutine MPI_Comm_spawn_multiple_f08(count,array_of_commands,array_of_argv, &
    call ompi_comm_spawn_multiple_f(count,array_of_commands,array_of_argv, &
                                    array_of_maxprocs,array_of_info(:)%MPI_VAL,root, &
                                    comm%MPI_VAL,intercomm%MPI_VAL,array_of_errcodes,c_ierror, &
-                                   len(array_of_commands), len(array_of_argv))
+                                   len(array_of_commands,KIND=C_INT), len(array_of_argv,KIND=C_INT))
    if (present(ierror)) ierror = c_ierror
 
 end subroutine MPI_Comm_spawn_multiple_f08

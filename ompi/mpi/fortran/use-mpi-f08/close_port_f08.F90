@@ -11,12 +11,13 @@
 
 subroutine MPI_Close_port_f08(port_name,ierror)
    use :: ompi_mpifh_bindings, only : ompi_close_port_f
+   use, intrinsic :: ISO_C_BINDING, only : C_INT
    implicit none
    CHARACTER(LEN=*), INTENT(IN) :: port_name
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
    integer :: c_ierror
 
-   call ompi_close_port_f(port_name,c_ierror,len(port_name))
+   call ompi_close_port_f(port_name,c_ierror,len(port_name,KIND=C_INT))
    if (present(ierror)) ierror = c_ierror
 
 end subroutine MPI_Close_port_f08
