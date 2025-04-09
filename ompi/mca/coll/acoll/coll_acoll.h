@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2024 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (c) 2024 - 2025 Advanced Micro Devices, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -66,6 +66,13 @@ int mca_coll_acoll_gather_intra(const void *sbuf, size_t scount, struct ompi_dat
                                 void *rbuf, size_t rcount, struct ompi_datatype_t *rdtype, int root,
                                 struct ompi_communicator_t *comm, mca_coll_base_module_t *module);
 
+int mca_coll_acoll_alltoall(const void *sbuf, size_t scount,
+                            struct ompi_datatype_t *sdtype,
+                            void* rbuf, size_t rcount,
+                            struct ompi_datatype_t *rdtype,
+                            struct ompi_communicator_t *comm,
+                            mca_coll_base_module_t *module);
+
 int mca_coll_acoll_reduce_intra(const void *sbuf, void *rbuf, size_t count,
                                 struct ompi_datatype_t *dtype, struct ompi_op_t *op, int root,
                                 struct ompi_communicator_t *comm, mca_coll_base_module_t *module);
@@ -80,6 +87,8 @@ int mca_coll_acoll_barrier_intra(struct ompi_communicator_t *comm, mca_coll_base
 END_C_DECLS
 
 #define MCA_COLL_ACOLL_ROOT_CHANGE_THRESH 10
+#define MCA_COLL_ACOLL_SPLIT_FACTOR_LIST_LEN 6
+#define MCA_COLL_ACOLL_SPLIT_FACTOR_LIST {2, 4, 8, 16, 32, 64}
 
 typedef enum MCA_COLL_ACOLL_SG_SIZES {
     MCA_COLL_ACOLL_SG_SIZE_1 = 8,
@@ -142,6 +151,18 @@ typedef struct coll_acoll_data {
     int sync[2];
 } coll_acoll_data_t;
 
+/* The enum literals are used as indices into arrays and values are
+ * assigned to the enum literals so as to ensure it is valid irrespective
+ * of what the compiler assigns. */
+typedef enum MCA_COLL_ACOLL_R2R_DIST {
+    DIST_CORE = 0,
+    DIST_L3CACHE,
+    DIST_NUMA,
+    DIST_SOCKET,
+    DIST_NODE,
+    DIST_END
+} MCA_COLL_ACOLL_R2R_DIST_T;
+
 typedef struct coll_acoll_subcomms {
     ompi_communicator_t *local_comm;
     ompi_communicator_t *local_r_comm;
@@ -152,6 +173,7 @@ typedef struct coll_acoll_subcomms {
     ompi_communicator_t *orig_comm;
     ompi_communicator_t *socket_comm;
     ompi_communicator_t *socket_ldr_comm;
+    ompi_communicator_t *split_comm[MCA_COLL_ACOLL_SPLIT_FACTOR_LIST_LEN]; // AllToAll odd even split comm
     int num_nodes;
     int derived_node_size;
     int is_root_node;
@@ -170,6 +192,7 @@ typedef struct coll_acoll_subcomms {
     int initialized;
     int prev_init_root;
     int num_root_change;
+    MCA_COLL_ACOLL_R2R_DIST_T r2r_dist;
 
     ompi_communicator_t *numa_comm_ldrs;
     ompi_communicator_t *node_comm;
@@ -192,6 +215,12 @@ typedef struct coll_acoll_reserve_mem {
     bool reserve_mem_allocate;
     bool reserve_mem_in_use;
 } coll_acoll_reserve_mem_t;
+
+typedef struct {
+    int split_factor;
+    size_t psplit_msg_thresh;
+    size_t xpmem_msg_thresh;
+} coll_acoll_alltoall_attr_t;
 
 struct mca_coll_acoll_module_t {
     mca_coll_base_module_t super;
@@ -218,6 +247,7 @@ struct mca_coll_acoll_module_t {
     coll_acoll_subcomms_t **subc;
     coll_acoll_reserve_mem_t reserve_mem_s;
     int num_subc;
+    coll_acoll_alltoall_attr_t alltoall_attr;
 };
 
 #ifdef HAVE_XPMEM_H

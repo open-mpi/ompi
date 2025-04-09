@@ -15,6 +15,7 @@ sources = \
         coll_acoll_allgather.c \
         coll_acoll_bcast.c \
         coll_acoll_gather.c \
+        coll_acoll_alltoall.c \
         coll_acoll_reduce.c \
         coll_acoll_allreduce.c \
         coll_acoll_barrier.c \
