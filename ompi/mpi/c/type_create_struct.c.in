@@ -43,7 +43,7 @@ PROTOTYPE ERROR_CLASS type_create_struct(COUNT count,
                                          DATATYPE_ARRAY array_of_types,
                                          DATATYPE_OUT newtype)
 {
-    int i, rc;
+    int i, rc, icount = (int)count;
     int *iarray_of_blocklengths = NULL;
     MPI_Aint *iarray_of_displacements = NULL;
 
@@ -77,6 +77,12 @@ PROTOTYPE ERROR_CLASS type_create_struct(COUNT count,
                                               FUNC_NAME);
             }
         }
+#if OMPI_BIGCOUNT_SRC
+        OMPI_CHECK_MPI_COUNT_INT_CONVERSION_OVERFLOW(rc, count);
+        if (OMPI_SUCCESS != rc) {
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(rc, FUNC_NAME);
+        }
+#endif
     }
 
 #if OMPI_BIGCOUNT_SRC
@@ -97,7 +103,7 @@ PROTOTYPE ERROR_CLASS type_create_struct(COUNT count,
     iarray_of_blocklengths = (int *)array_of_blocklengths;
     iarray_of_displacements = (MPI_Aint *)array_of_displacements;
 #endif
-    rc = ompi_datatype_create_struct( count, iarray_of_blocklengths, iarray_of_displacements,
+    rc = ompi_datatype_create_struct( icount, iarray_of_blocklengths, iarray_of_displacements,
                                       array_of_types, newtype );
     if( rc != MPI_SUCCESS ) {
         ompi_datatype_destroy( newtype );
@@ -110,10 +116,10 @@ PROTOTYPE ERROR_CLASS type_create_struct(COUNT count,
     }
 
     {
-        const int* a_i[2] = {(int *)&count, iarray_of_blocklengths};
+        const int* a_i[2] = {(int *)&icount, iarray_of_blocklengths};
 
-        ompi_datatype_set_args( *newtype, count + 1, a_i, count, iarray_of_displacements,
-                                count, array_of_types, MPI_COMBINER_STRUCT );
+        ompi_datatype_set_args( *newtype, icount + 1, a_i, icount, iarray_of_displacements,
+                                icount, array_of_types, MPI_COMBINER_STRUCT );
     }
 #if OMPI_BIGCOUNT_SRC
     free(iarray_of_blocklengths);
