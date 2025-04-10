@@ -1162,23 +1162,25 @@ typedef struct {
 
 static void era_call_tree_fn(ompi_coll_ftagree_era_agreement_info_t *ci)
 {
-#if 0
+#if 1
     hierarch_tree_info_t *reps, *rep_p;
     int                   rep, r, rc;
     opal_hash_table_t *rep_table;
     ompi_proc_t *proc;
-    orte_vpid_t  daemon_id;
+    opal_vpid_t  daemon_id;
+    uint32_t num_daemons;
     era_tree_t  *subtree, *rep_tree;
     int          subtree_size, rep_tree_size;
 
     if( mca_coll_ftagree_cur_era_topology > 0 ) {
         assert( sizeof(daemon_id) == sizeof(uint32_t) );
+        OPAL_MODEX_RECV_VALUE(rc, PMIX_NUM_NODES, OPAL_NAME_WILDCARD, &num_daemons, PMIX_UINT32);
+        assert( PMIX_SUCCESS == rc );
 
         rep_table = OBJ_NEW(opal_hash_table_t);
-        opal_hash_table_init(rep_table, orte_process_info.num_daemons);
+        opal_hash_table_init(rep_table, num_daemons);
 
-        reps = (hierarch_tree_info_t *)malloc( (orte_process_info.num_daemons) * sizeof(hierarch_tree_info_t) );
-
+        reps = (hierarch_tree_info_t *)malloc( num_daemons * sizeof(hierarch_tree_info_t) );
         rep = 0;
         for(r = 0; r < AGS(ci->comm)->tree_size; r++) {
             if( ompi_group_get_proc_name(ci->comm->c_local_group, AGS(ci->comm)->tree[r].rank_in_comm).jobid !=
@@ -1189,10 +1191,11 @@ static void era_call_tree_fn(ompi_coll_ftagree_era_agreement_info_t *ci)
                 era_tree_fn(AGS(ci->comm)->tree, AGS(ci->comm)->tree_size);
                 return;
             }
-            daemon_id = orte_ess.proc_get_daemon( &proc->super.proc_name );
-            assert( ORTE_VPID_INVALID != daemon_id );
+            OPAL_MODEX_RECV_VALUE(rc, PMIX_NODEID, &proc->super.proc_name, &daemon_id, PMIX_UINT32);
+            assert( PMIX_SUCCESS == rc );
+            assert( OPAL_VPID_INVALID != daemon_id );
             if( opal_hash_table_get_value_uint32(rep_table, (uint32_t)daemon_id, (void**)&rep_p) != OPAL_SUCCESS ) {
-                assert(rep <= orte_process_info.num_daemons);
+                assert(rep <= num_daemons);
                 reps[rep].rep = r;
                 reps[rep].size = 1;
                 opal_hash_table_set_value_uint32(rep_table, (uint32_t)daemon_id, (void*)&reps[rep]);
@@ -1202,7 +1205,7 @@ static void era_call_tree_fn(ompi_coll_ftagree_era_agreement_info_t *ci)
             }
         }
 
-        subtree = (era_tree_t *)malloc( (ompi_comm_size(ci->comm) + orte_process_info.num_daemons) * sizeof(era_tree_t));
+        subtree = (era_tree_t *)malloc( (ompi_comm_size(ci->comm) + num_daemons) * sizeof(era_tree_t));
         subtree_size = 0;
         for(r = 0; r < rep; r++) {
             reps[r].tree = &subtree[subtree_size];
@@ -1214,8 +1217,9 @@ static void era_call_tree_fn(ompi_coll_ftagree_era_agreement_info_t *ci)
 
         for(r = 0; r < AGS(ci->comm)->tree_size; r++) {
             proc = ompi_group_peer_lookup(ci->comm->c_local_group, AGS(ci->comm)->tree[r].rank_in_comm);
-            daemon_id = orte_ess.proc_get_daemon( &proc->super.proc_name );
-            assert( ORTE_VPID_INVALID != daemon_id );
+            OPAL_MODEX_RECV_VALUE(rc, PMIX_NODEID, &proc->super.proc_name, &daemon_id, PMIX_UINT32);
+            assert( PMIX_SUCCESS == rc );
+            assert( OPAL_VPID_INVALID != daemon_id );
             rc = opal_hash_table_get_value_uint32(rep_table, (uint32_t)daemon_id, (void**)&rep_p);
             assert( rc == OPAL_SUCCESS );
             rep_p->tree[rep_p->size].rank_in_comm = r;
