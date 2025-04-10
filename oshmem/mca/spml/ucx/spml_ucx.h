@@ -48,6 +48,15 @@ BEGIN_C_DECLS
 #define SPML_UCX_TRANSP_IDX 0
 #define SPML_UCX_TRANSP_CNT 1
 #define SPML_UCX_SERVICE_SEG 0
+#define SPML_UCX_PE_NOT_IN_TEAM -1
+
+#define SPML_UCX_VALIDATE_TEAM(_team)                       \
+    do {                                                    \
+        if (OPAL_UNLIKELY((_team) == SHMEM_TEAM_INVALID)) { \
+            SPML_UCX_ERROR("Invalid team at %s", __func__); \
+            return OSHMEM_ERROR;                            \
+        }                                                   \
+    } while (0)
 
 enum {
     SPML_UCX_STRONG_ORDERING_NONE  = 0, /* don't use strong ordering */
@@ -114,6 +123,21 @@ typedef struct mca_spml_ucx_ctx_array {
     int                      ctxs_num;
     mca_spml_ucx_ctx_t       **ctxs;
 } mca_spml_ucx_ctx_array_t;
+
+typedef struct mca_spml_ucx_team_config {
+    shmem_team_config_t super;
+
+} mca_spml_ucx_team_config_t;
+
+typedef struct mca_spml_ucx_team {
+    shmem_team_t                super;
+    int                         n_pes;
+    int                         my_pe;
+    int                         stride;
+    int                         start;
+    mca_spml_ucx_team_config_t  *config;
+    struct mca_spml_ucx_team    *parent_team;
+} mca_spml_ucx_team_t;
 
 struct mca_spml_ucx {
     mca_spml_base_module_t   super;
@@ -299,6 +323,9 @@ mca_spml_ucx_mem_map_flags_symmetric_rkey(struct mca_spml_ucx *spml_ucx);
 
 extern void mca_spml_ucx_rkey_store_init(mca_spml_ucx_rkey_store_t *store);
 extern void mca_spml_ucx_rkey_store_cleanup(mca_spml_ucx_rkey_store_t *store);
+
+void mca_spml_ucx_team_world_init();
+void mca_spml_ucx_team_world_destroy();
 
 static inline int
 mca_spml_ucx_peer_mkey_get(ucp_peer_t *ucp_peer, int index, spml_ucx_cached_mkey_t **out_rmkey)
