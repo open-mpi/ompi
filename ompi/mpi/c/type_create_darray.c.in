@@ -93,7 +93,7 @@ PROTOTYPE ERROR_CLASS type_create_darray(INT size,
                     return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, FUNC_NAME);
                 } else if( (MPI_DISTRIBUTE_DFLT_DARG != darg_array[i]) &&
                            (MPI_DISTRIBUTE_BLOCK == distrib_array[i]) &&
-                           ((MPI_Count)(darg_array[i] * psize_array[i]) < (MPI_Count)gsize_array[i]) ) {
+                           (((MPI_Count)darg_array[i] * (MPI_Count)psize_array[i]) < (MPI_Count)gsize_array[i]) ) {
                     return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, FUNC_NAME);
                 } else if( 1 > psize_array[i] )
                     return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, FUNC_NAME);
