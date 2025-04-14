@@ -1,4 +1,4 @@
-# Copyright (c) 2024      Triad National Security, LLC. All rights
+# Copyright (c) 2024-2025 Triad National Security, LLC. All rights
 #                         reserved.
 #
 # $COPYRIGHT$
@@ -25,12 +25,13 @@ from ompi_bindings.parser import SourceTemplate
 class FortranBinding:
     """Class for generating the binding for a single function."""
 
-    def __init__(self, prototype, out, template=None, bigcount=False):
+    def __init__(self, prototype, out, template=None, bigcount=False, needs_ts=False):
         # Generate bigcount interface version
         self.bigcount = bigcount
         self.fn_name = template.prototype.name
         self.out = out
         self.template = template
+        self.needs_ts = needs_ts
         self.parameters = []
         for param in self.template.prototype.params:
             self.parameters.append(param.construct(fn_name=self.fn_name,
@@ -117,7 +118,7 @@ class FortranBinding:
 
     def _print_fortran_subroutine(self):
         """Output the Fortran subroutine line."""
-        sub_name = util.fortran_f08_name(self.fn_name, bigcount=self.bigcount)
+        sub_name = util.fortran_f08_name(self.fn_name, bigcount=self.bigcount, needs_ts=self.needs_ts)
         params = [param.name for param in self.parameters]
         params.append(consts.FORTRAN_ERROR_NAME)
         lines = util.break_param_lines_fortran(f'subroutine {sub_name}(', params, ')')
@@ -126,7 +127,7 @@ class FortranBinding:
 
     def _print_fortran_subroutine_end(self):
         """Output the Fortran end subroutine line."""
-        sub_name = util.fortran_f08_name(self.fn_name, bigcount=self.bigcount)
+        sub_name = util.fortran_f08_name(self.fn_name, bigcount=self.bigcount, needs_ts=self.needs_ts)
         self.dump(f'end subroutine {sub_name}')
 
     def dump_lines(self, line_text):
@@ -197,19 +198,23 @@ def print_f_source_header(out):
     out.dump('#include "ompi/mpi/fortran/configure-fortran-output.h"')
 
 
-def print_profiling_rename_macros(templates, out):
+def print_profiling_rename_macros(templates, out, args):
     """Print macros for renaming functions for the profiling interface.
 
     Previously hardcoded in mpi-f08-rename.h.
     """
     out.dump('#if OMPI_BUILD_MPI_PROFILING')
     for template in templates:
-        name = util.fortran_f08_name(template.prototype.name)
+        has_buffers = util.prototype_has_buffers(template.prototype)
+        needs_ts = has_buffers and args.generate_ts_suffix
+        name = util.fortran_f08_name(template.prototype.name, needs_ts=needs_ts)
         out.dump(f'#define {name} P{name}')
         # Check for bigcount version
         if util.prototype_has_bigcount(template.prototype):
-            bigcount_name = util.fortran_f08_name(template.prototype.name, bigcount=True)
+            bigcount_name = util.fortran_f08_name(template.prototype.name, bigcount=True, needs_ts=needs_ts)
             out.dump(f'#define {bigcount_name} P{bigcount_name}')
+        name = util.fortran_f08_generic_interface_name(template.prototype.name)
+        out.dump(f'#define {name} P{name}')
     out.dump('#endif /* OMPI_BUILD_MPI_PROFILING */')
 
 
@@ -233,9 +238,9 @@ def print_c_source_header(out):
     out.dump('#include "bigcount.h"')
 
 
-def print_binding(prototype, lang, out, bigcount=False, template=None):
+def print_binding(prototype, lang, out, bigcount=False, template=None, needs_ts=False):
     """Print the binding with or without bigcount."""
-    binding = FortranBinding(prototype, out=out, bigcount=bigcount, template=template)
+    binding = FortranBinding(prototype, out=out, bigcount=bigcount, template=template, needs_ts=needs_ts)
     if lang == 'fortran':
         binding.print_f_source()
     else:
@@ -257,17 +262,19 @@ def generate_code(args, out):
     if args.lang == 'fortran':
         print_f_source_header(out)
         out.dump()
-        print_profiling_rename_macros(templates, out)
+        print_profiling_rename_macros(templates, out, args)
         out.dump()
     else:
         print_c_source_header(out)
 
     for template in templates:
         out.dump()
-        print_binding(template.prototype, args.lang, out, template=template)
+        has_buffers = util.prototype_has_buffers(template.prototype)
+        needs_ts = has_buffers and args.generate_ts_suffix
+        print_binding(template.prototype, args.lang, out, template=template, needs_ts=needs_ts)
         if util.prototype_has_bigcount(template.prototype):
             out.dump()
-            print_binding(template.prototype, args.lang, bigcount=True, out=out, template=template)
+            print_binding(template.prototype, args.lang, bigcount=True, out=out, template=template, needs_ts=needs_ts)
 
 
 def generate_interface(args, out):
@@ -275,14 +282,18 @@ def generate_interface(args, out):
     out.dump(f'! {consts.GENERATED_MESSAGE}')
 
     templates = load_function_templates(args.prototype_files)
+    print_profiling_rename_macros(templates, out, args)
+
     for template in templates:
         ext_name = util.ext_api_func_name(template.prototype.name)
         out.dump(f'interface {ext_name}')
-        binding = FortranBinding(template.prototype, template=template, out=out)
+        has_buffers = util.prototype_has_buffers(template.prototype)
+        needs_ts = has_buffers and args.generate_ts_suffix
+        binding = FortranBinding(template.prototype, template=template, needs_ts=needs_ts, out=out)
         binding.print_interface()
         if util.prototype_has_bigcount(template.prototype):
             out.dump()
             binding_c = FortranBinding(template.prototype, out=out, template=template,
-                                       bigcount=True)
+                                       needs_ts=needs_ts, bigcount=True)
             binding_c.print_interface()
         out.dump(f'end interface {ext_name}')

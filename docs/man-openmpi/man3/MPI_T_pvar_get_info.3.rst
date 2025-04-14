@@ -166,7 +166,9 @@ returned in the *bind* parameter may be one of the following:
 
 * ``MPI_T_BIND_MPI_INFO``: MPI info object
 
-For more information see MPI-3 section 14.3.2.
+* ``MPI_T_BIND_MPI_SESSION``: MPI session
+
+For more information see MPI-4 section 14.3.2.
 
 
 NOTES

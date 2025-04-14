@@ -1,4 +1,4 @@
-# Copyright (c) 2024      Triad National Security, LLC. All rights
+# Copyright (c) 2024-2025 Triad National Security, LLC. All rights
 #                         reserved.
 #
 # $COPYRIGHT$
@@ -67,11 +67,15 @@ def ext_api_func_name_profile(fn_name, bigcount=False):
     return f'P{ext_api_func_name(fn_name, bigcount)}'
 
 
-def fortran_f08_name(fn_name, bigcount=False):
-    """Produce the final f08 name from base_name."""
+def fortran_f08_name(fn_name, bigcount=False, needs_ts=False):
+    """Produce the final f08 name from base_name. See section 19.2 of MPI 4.1 standard."""
     suffix = '_c' if bigcount else ''
-    return f'MPI_{fn_name.capitalize()}_f08{suffix}'
+    ts = 'ts' if needs_ts else ''
+    return f'MPI_{fn_name.capitalize()}{suffix}_f08{ts}'
 
+def fortran_f08_generic_interface_name(fn_name):
+    """Produce the generic interface name from the base_name."""
+    return f'MPI_{fn_name.capitalize()}'
 
 def break_param_lines_fortran(start, params, end):
     """Break paramters for a fortran call onto multiple lines.
@@ -147,3 +151,17 @@ BIGCOUNT_TYPE_NAMES = [
 def prototype_has_bigcount(prototype):
     """Should this prototype have a bigcount version?"""
     return any(param.type_name in BIGCOUNT_TYPE_NAMES for param in prototype.params)
+
+BUFFER_TYPE_NAMES = [
+    'BUFFER',
+    'BUFFER_ASYNC',
+    'BUFFER_OUT',
+    'BUFFER_ASYNC_OUT',
+]
+
+def prototype_has_buffers(prototype):
+    """Does the prototype have buffer arguments?"""
+    if any(param.type_name in BUFFER_TYPE_NAMES for param in prototype.params):
+        return True
+    else:
+        return False
