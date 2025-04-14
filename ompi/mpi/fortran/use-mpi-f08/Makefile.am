@@ -435,12 +435,17 @@ if OMPI_GENERATE_BINDINGS
 include Makefile.prototype_files
 template_files =${prototype_files:%=$(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/%}
 
+if OMPI_FORTRAN_HAVE_TS
+gen_ts = --generate-ts-suffix
+endif
+
 api_f08_generated.F90: $(template_files)
 	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
 	    --builddir $(abs_top_builddir) \
 	    --srcdir $(abs_top_srcdir) \
 	    --output $(abs_builddir)/$@ \
 	    fortran \
+	    $(gen_ts) \
 	    code \
 	    --lang fortran \
 	    --prototype-files $(template_files)

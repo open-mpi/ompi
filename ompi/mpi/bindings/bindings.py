@@ -1,4 +1,4 @@
-# Copyright (c) 2024      Triad National Security, LLC. All rights
+# Copyright (c) 2024-2025 Triad National Security, LLC. All rights
 #                         reserved.
 #
 # $COPYRIGHT$
@@ -31,6 +31,8 @@ def main():
 
     # Fortran set up code
     parser_fortran = subparsers.add_parser('fortran', help='subcommand for generating Fortran code')
+    parser_fortran.add_argument('--generate-ts-suffix', action="store_true",
+                                help='generate ts suffixes for appropriate routines')
     # Handler for generating actual code
     subparsers_fortran = parser_fortran.add_subparsers()
     parser_code = subparsers_fortran.add_parser('code', help='generate binding code')

@@ -12,7 +12,7 @@
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015-2019 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
- * Copyright (c) 2024      Triad National Security, LLC. All rights
+ * Copyright (c) 2024-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -23,7 +23,7 @@
 
 PROTOTYPE VOID pack_external(CHAR_ARRAY datarep, BUFFER x1, COUNT incount,
                              DATATYPE datatype, BUFFER x2,
-                             COUNT outsize, AINT_COUNT_INOUT position)
+                             AINT_COUNT outsize, AINT_COUNT_INOUT position)
 {
     int c_ierr;
     MPI_Datatype c_datatype, c_type = PMPI_Type_f2c(*datatype);
