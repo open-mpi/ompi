@@ -6,7 +6,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2012-2018 Los Alamos National Security, LLC. All rights
 #                         reserved.
-# Copyright (c) 2018-2025 Triad National Security, LLC. All rightsa
+# Copyright (c) 2018-2025 Triad National Security, LLC. All rights
 #                         reserved.
 # Copyright (c) 2021      Amazon.com, Inc. or its affiliates.  All Rights
 #                         reserved.
@@ -54,9 +54,11 @@ interface_profile_sources = \
 	category_changed.c \
 	category_get_categories.c \
 	category_get_cvars.c \
+	category_get_events.c \
 	category_get_info.c \
 	category_get_index.c \
 	category_get_num.c \
+	category_get_num_events.c \
 	category_get_pvars.c \
 	cvar_get_info.c \
 	cvar_get_index.c \
