@@ -8,43 +8,8 @@ MPI_Initialized
 
 :ref:`MPI_Initialized` |mdash| Checks whether MPI has been initialized
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Initialized(int *flag)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_INITIALIZED(FLAG, IERROR)
-   	LOGICAL	FLAG
-   	INTEGER	IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Initialized(flag, ierror)
-   	LOGICAL, INTENT(OUT) :: flag
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_initialized.rst
 
 OUTPUT PARAMETERS
 -----------------

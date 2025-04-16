@@ -9,47 +9,8 @@ MPI_File_get_type_extent
 :ref:`MPI_File_get_type_extent` |mdash| Returns the extent of the data type in a
 file.
 
-
-SYNTAX
-------
-
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_File_get_type_extent(MPI_File fh, MPI_Datatype
-   	datatype, MPI_Aint *extent)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_FILE_GET_TYPE_EXTENT(FH, DATATYPE, EXTENT, IERROR)
-   	INTEGER	FH, DATATYPE, IERROR
-   	INTEGER(KIND=MPI_ADDRESS_KIND)	EXTENT
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_File_get_type_extent(fh, datatype, extent, ierror)
-   	TYPE(MPI_File), INTENT(IN) :: fh
-   	TYPE(MPI_Datatype), INTENT(IN) :: datatype
-   	INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(OUT) :: extent
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_file_get_type_extent.rst
 
 INPUT PARAMETERS
 ----------------

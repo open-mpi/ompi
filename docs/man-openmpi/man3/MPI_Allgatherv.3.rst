@@ -10,97 +10,12 @@ MPI_Allgatherv
 from all processes and delivers it to all. Each process may contribute a
 different amount of data.
 
+.. The following directive tells the man page generation script to
+   generate multiple bindings for this file.
+.. mpi-bindings: MPI_Allgatherv, MPI_Iallgatherv, MPI_Allgatherv_init
 
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Allgatherv(const void *sendbuf, int sendcount,
-   	MPI_Datatype sendtype, void *recvbuf, const int recvcounts[],
-   	const int displs[], MPI_Datatype recvtype, MPI_Comm comm)
-
-   int MPI_Iallgatherv(const void *sendbuf, int sendcount,
-   	MPI_Datatype sendtype, void *recvbuf, const int recvcounts[],
-   	const int displs[], MPI_Datatype recvtype, MPI_Comm comm,
-           MPI_Request *request)
-
-   int MPI_Allgatherv_init(const void *sendbuf, int sendcount,
-   	MPI_Datatype sendtype, void *recvbuf, const int recvcounts[],
-   	const int displs[], MPI_Datatype recvtype, MPI_Comm comm,
-           MPI_Info info, MPI_Request *request)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_ALLGATHERV(SENDBUF, SENDCOUNT, SENDTYPE, RECVBUF,
-   		RECVCOUNT, DISPLS, RECVTYPE, COMM, IERROR)
-   	<type>	SENDBUF(*), RECVBUF(*)
-   	INTEGER	SENDCOUNT, SENDTYPE, RECVCOUNT(*)
-   	INTEGER	DISPLS(*), RECVTYPE, COMM, IERROR
-
-   MPI_IALLGATHERV(SENDBUF, SENDCOUNT, SENDTYPE, RECVBUF,
-   		RECVCOUNT, DISPLS, RECVTYPE, COMM,  REQUEST,  IERROR)
-   	<type>	SENDBUF(*), RECVBUF(*)
-   	INTEGER	SENDCOUNT, SENDTYPE, RECVCOUNT(*),
-   	INTEGER	DISPLS(*), RECVTYPE, COMM, REQUEST, IERROR
-
-   MPI_ALLGATHERV_INIT(SENDBUF, SENDCOUNT, SENDTYPE, RECVBUF,
-   		RECVCOUNT, DISPLS, RECVTYPE, COMM,  INFO,  REQUEST,  IERROR)
-   	<type>	SENDBUF(*), RECVBUF(*)
-   	INTEGER	SENDCOUNT, SENDTYPE, RECVCOUNT(*),
-   	INTEGER	DISPLS(*), RECVTYPE, COMM, INFO, REQUEST, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Allgatherv(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs,
-   		recvtype, comm, ierror)
-   	TYPE(*), DIMENSION(..), INTENT(IN) :: sendbuf
-   	TYPE(*), DIMENSION(..) :: recvbuf
-   	INTEGER, INTENT(IN) :: sendcount, recvcounts(*), displs(*)
-   	TYPE(MPI_Datatype), INTENT(IN) :: sendtype, recvtype
-   	TYPE(MPI_Comm), INTENT(IN) :: comm
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
-   MPI_Iallgatherv(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs,
-   		recvtype, comm, request, ierror)
-   	TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: sendbuf
-   	TYPE(*), DIMENSION(..), ASYNCHRONOUS :: recvbuf
-   	INTEGER, INTENT(IN) :: sendcount
-   	INTEGER, INTENT(IN), ASYNCHRONOUS :: recvcounts(*), displs(*)
-   	TYPE(MPI_Datatype), INTENT(IN) :: sendtype, recvtype
-   	TYPE(MPI_Comm), INTENT(IN) :: comm
-   	TYPE(MPI_Request), INTENT(OUT) :: request
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
-   MPI_Allgatherv_init(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs,
-   			recvtype, comm, info, request, ierror)
-   	TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: sendbuf
-   	TYPE(*), DIMENSION(..), ASYNCHRONOUS :: recvbuf
-   	INTEGER, INTENT(IN) :: sendcount
-   	INTEGER, INTENT(IN), ASYNCHRONOUS :: recvcounts(*), displs(*)
-   	TYPE(MPI_Datatype), INTENT(IN) :: sendtype, recvtype
-   	TYPE(MPI_Comm), INTENT(IN) :: comm
-   	TYPE(MPI_Info), INTENT(IN) :: info
-   	TYPE(MPI_Request), INTENT(OUT) :: request
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_allgatherv.rst
 
 INPUT PARAMETERS
 ----------------

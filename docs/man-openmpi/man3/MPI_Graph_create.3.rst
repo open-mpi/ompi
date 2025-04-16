@@ -8,47 +8,8 @@ MPI_Graph_create
 :ref:`MPI_Graph_create` |mdash| Makes a new communicator to which topology
 information has been attached.
 
-SYNTAX
-------
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Graph_create(MPI_Comm comm_old, int nnodes, const int index[],
-       const int edges[], int reorder, MPI_Comm *comm_graph)
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-
-   MPI_GRAPH_CREATE(COMM_OLD, NNODES, INDEX, EDGES, REORDER,
-           COMM_GRAPH, IERROR)
-       INTEGER COMM_OLD, NNODES, INDEX(*), EDGES(*)
-       INTEGER COMM_GRAPH, IERROR
-       LOGICAL   REORDER
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-
-   MPI_Graph_create(comm_old, nnodes, index, edges, reorder, comm_graph,
-           ierror)
-       TYPE(MPI_Comm), INTENT(IN) :: comm_old
-       INTEGER, INTENT(IN) :: nnodes, index(nnodes), edges(*)
-       LOGICAL, INTENT(IN) :: reorder
-       TYPE(MPI_Comm), INTENT(OUT) :: comm_graph
-       INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_graph_create.rst
 
 INPUT PARAMETERS
 ----------------

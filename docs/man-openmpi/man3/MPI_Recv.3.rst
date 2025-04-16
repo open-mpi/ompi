@@ -8,49 +8,8 @@ MPI_Recv
 
 :ref:`MPI_Recv` |mdash| Performs a standard-mode blocking receive.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Recv(void *buf, int count, MPI_Datatype datatype,
-   	int source, int tag, MPI_Comm comm, MPI_Status *status)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_RECV(BUF, COUNT, DATATYPE, SOURCE, TAG, COMM, STATUS, IERROR)
-   	<type>	BUF(*)
-   	INTEGER	COUNT, DATATYPE, SOURCE, TAG, COMM
-   	INTEGER	STATUS(MPI_STATUS_SIZE), IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Recv(buf, count, datatype, source, tag, comm, status, ierror)
-   	TYPE(*), DIMENSION(..) :: buf
-   	INTEGER, INTENT(IN) :: count, source, tag
-   	TYPE(MPI_Datatype), INTENT(IN) :: datatype
-   	TYPE(MPI_Comm), INTENT(IN) :: comm
-   	TYPE(MPI_Status) :: status
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_recv.rst
 
 INPUT PARAMETERS
 ----------------

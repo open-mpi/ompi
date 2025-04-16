@@ -9,51 +9,8 @@ MPI_Type_create_keyval
 :ref:`MPI_Type_create_keyval` |mdash| Generates a new attribute key for caching
 on data types.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Type_create_keyval(MPI_Type_copy_attr_function *type_copy_attr_fn,
-   	MPI_Type_delete_attr_function *type_delete_attr_fn,
-   	int *type_keyval, void *extra_state)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_TYPE_CREATE_KEYVAL(TYPE_COPY_ATTR_FN, TYPE_DELETE_ATTR_FN,
-   		TYPE_KEYVAL, EXTRA_STATE, IERROR)
-   	EXTERNAL TYPE_COPY_ATTR_FN, TYPE_DELETE_ATTR_FN
-   	INTEGER	TYPE_KEYVAL, IERROR
-   	INTEGER(KIND=MPI_ADDRESS_KIND) EXTRA_STATE
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Type_create_keyval(type_copy_attr_fn, type_delete_attr_fn, type_keyval,
-   		extra_state, ierror)
-   	PROCEDURE(MPI_Type_copy_attr_function) :: type_copy_attr_fn
-   	PROCEDURE(MPI_Type_delete_attr_function) :: type_delete_attr_fn
-   	INTEGER, INTENT(OUT) :: type_keyval
-   	INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(IN) :: extra_state
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_type_create_keyval.rst
 
 INPUT PARAMETERS
 ----------------

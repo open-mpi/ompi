@@ -6,75 +6,10 @@ MPI_Type_indexed
 
 .. include_body
 
-:ref:`MPI_Type_indexed`, :ref:`MPI_Type_create_hindexed` - Creates an indexed
-datatype.
+:ref:`MPI_Type_indexed` - Creates an indexed datatype.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Type_indexed(int count, const int array_of_blocklengths[],
-   	const int array_of_displacements[], MPI_Datatype oldtype,
-   	MPI_Datatype *newtype)
-
-   int MPI_Type_create_hindexed(int count,
-   	const int array_of_blocklengths[],
-   	const MPI_Aint array_of_displacements[], MPI_Datatype oldtype,
-   	MPI_Datatype *newtype)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_TYPE_INDEXED(COUNT, ARRAY_OF_BLOCKLENGTHS,
-   		ARRAY_OF_DISPLACEMENTS, OLDTYPE, NEWTYPE, IERROR)
-   	INTEGER	COUNT, ARRAY_OF_BLOCKLENGTHS(*)
-   	INTEGER	ARRAY_OF_DISPLACEMENTS(*), OLDTYPE, NEWTYPE
-   	INTEGER	IERROR
-
-   MPI_TYPE_CREATE_HINDEXED(COUNT, ARRAY_OF_BLOCKLENGTHS,
-   		ARRAY_OF_DISPLACEMENTS, OLDTYPE, NEWTYPE, IERROR)
-   	INTEGER	COUNT, ARRAY_OF_BLOCKLENGTHS(*)
-   	INTEGER	OLDTYPE, NEWTYPE
-   	INTEGER(KIND=MPI_ADDRESS_KIND) ARRAY_OF_DISPLACEMENTS(*)
-   	INTEGER	IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Type_indexed(count, array_of_blocklengths, array_of_displacements,
-   		oldtype, newtype, ierror)
-   	INTEGER, INTENT(IN) :: count, array_of_blocklengths(count),
-   	array_of_displacements(count)
-   	TYPE(MPI_Datatype), INTENT(IN) :: oldtype
-   	TYPE(MPI_Datatype), INTENT(OUT) :: newtype
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
-   MPI_Type_create_hindexed(count, array_of_blocklengths,
-   		array_of_displacements, oldtype, newtype, ierror)
-   	INTEGER, INTENT(IN) :: count, array_of_blocklengths(count)
-   	INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(IN) ::
-   	array_of_displacements(count)
-   	TYPE(MPI_Datatype), INTENT(IN) :: oldtype
-   	TYPE(MPI_Datatype), INTENT(OUT) :: newtype
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_type_indexed.rst
 
 INPUT PARAMETERS
 ----------------

@@ -12,6 +12,11 @@ MPI_Type_lb
 SYNTAX
 ------
 
+.. NOTE: The bindings for this man page are not automatically
+   generated from the official MPI Forum JSON/Python library because
+   this function is deprecated.  Hence, this function is not included
+   in the MPI Forum JSON data, and we therefore have to hard-code the
+   bindings here ourselves.
 
 C Syntax
 ^^^^^^^^

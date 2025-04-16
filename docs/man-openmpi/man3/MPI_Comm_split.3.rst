@@ -8,45 +8,8 @@ MPI_Comm_split
 
 :ref:`MPI_Comm_split` |mdash| Creates new communicators based on colors and keys.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Comm_split(MPI_Comm comm, int color, int key,
-   	MPI_Comm *newcomm)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_COMM_SPLIT(COMM, COLOR, KEY, NEWCOMM, IERROR)
-   	INTEGER	COMM, COLOR, KEY, NEWCOMM, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Comm_split(comm, color, key, newcomm, ierror)
-   	TYPE(MPI_Comm), INTENT(IN) :: comm
-   	INTEGER, INTENT(IN) :: color, key
-   	TYPE(MPI_Comm), INTENT(OUT) :: newcomm
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_comm_split.rst
 
 INPUT PARAMETERS
 ----------------

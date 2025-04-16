@@ -8,49 +8,8 @@ MPI_Mrecv
 
 :ref:`MPI_Mrecv` |mdash| Blocking receive for a matched message
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Mrecv(void *buf, int count, MPI_Datatype type,
-   	MPI_Message *message, MPI_Status *status)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_MRECV(BUF, COUNT, DATATYPE, MESSAGE, STATUS, IERROR)
-   	<type>	BUF(*)
-   	INTEGER	COUNT, DATATYPE, MESSAGE
-   	INTEGER	STATUS(MPI_STATUS_SIZE), IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Mrecv(buf, count, datatype, message, status, ierror)
-   	TYPE(*), DIMENSION(..) :: buf
-   	INTEGER, INTENT(IN) :: count
-   	TYPE(MPI_Datatype), INTENT(IN) :: datatype
-   	TYPE(MPI_Message), INTENT(INOUT) :: message
-   	TYPE(MPI_Status) :: status
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_mrecv.rst
 
 INPUT PARAMETERS
 ----------------

@@ -7,50 +7,8 @@ MPI_Comm_create_keyval
 
 :ref:`MPI_Comm_create_keyval` |mdash| Generates a new attribute key.
 
-SYNTAX
-------
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Comm_create_keyval(MPI_Comm_copy_attr_function
-       *comm_copy_attr_fn, MPI_Comm_delete_attr_function
-       *comm_delete_attr_fn, int *comm_keyval,
-       void *extra_state)
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-
-   MPI_COMM_CREATE_KEYVAL(COMM_COPY_ATTR_FN, COMM_DELETE_ATTR_FN,
-       COMM_KEYVAL, EXTRA_STATE, IERROR)
-       EXTERNAL COMM_COPY_ATTR_FN, COMM_DELETE_ATTR_FN
-       INTEGER COMM_KEYVAL, IERROR
-
-       INTEGER(KIND=MPI_ADDRESS_KIND) EXTRA_STATE
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-
-   MPI_Comm_create_keyval(comm_copy_attr_fn, comm_delete_attr_fn, comm_keyval,
-           extra_state, ierror)
-       PROCEDURE(MPI_Comm_copy_attr_function) :: comm_copy_attr_fn
-       PROCEDURE(MPI_Comm_delete_attr_function) :: comm_delete_attr_fn
-       INTEGER, INTENT(OUT) :: comm_keyval
-       INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(IN) :: extra_state
-       INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_comm_create_keyval.rst
 
 INPUT PARAMETERS
 ----------------

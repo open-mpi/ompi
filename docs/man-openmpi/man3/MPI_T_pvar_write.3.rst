@@ -8,20 +8,8 @@ MPI_T_pvar_write
 
 :ref:`MPI_T_pvar_write` |mdash| Write the value of a control variable
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_T_pvar_write(MPI_T_pvar_session session, MPI_T_pvar_handle handle, const void *buf)
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_t_pvar_write.rst
 
 INPUT PARAMETERS
 ----------------

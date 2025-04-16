@@ -8,20 +8,8 @@ MPI_T_event_get_num
 
 :ref:`MPI_T_event_get_num` |mdash| Query the number of MPI_T event types
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_T_event_get_num(int *num_events)
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_t_event_get_num.rst
 
 OUTPUT PARAMETERS
 -----------------
@@ -39,7 +27,7 @@ The number of available event types can be queried with a call to
 execution of an MPI process. However, MPI implementations are not allowed to change the
 index of an event type or to delete an event type once it has been made visible to the user.
 
-.. note:: Open MPI will currently return that there are 0 event types. 
+.. note:: Open MPI will currently return that there are 0 event types.
 
 
 ERRORS

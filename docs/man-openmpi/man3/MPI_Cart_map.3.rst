@@ -7,44 +7,8 @@ MPI_Cart_map
 
 :ref:`MPI_Cart_map` |mdash| Maps process to Cartesian topology information.
 
-SYNTAX
-------
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: C
-
-   #include <mpi.h>
-
-   int MPI_Cart_map(MPI_Comm comm, int ndims, const int dims[],
-       const int periods[], int *newrank)
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: Fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-
-   MPI_CART_MAP(COMM, NDIMS, DIMS, PERIODS, NEWRANK, IERROR)
-       INTEGER COMM, NDIMS, DIMS(*), NEWRANK, IERROR
-       LOGICAL PERIODS(*)
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: Fortran
-
-   USE mpi_f08
-
-   MPI_Cart_map(comm, ndims, dims, periods, newrank, ierror)
-       TYPE(MPI_Comm), INTENT(IN) :: comm
-       INTEGER, INTENT(IN) :: ndims, dims(ndims)
-       LOGICAL, INTENT(IN) :: periods(ndims)
-       INTEGER, INTENT(OUT) :: newrank
-       INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_cart_map.rst
 
 INPUT PARAMETERS
 ----------------

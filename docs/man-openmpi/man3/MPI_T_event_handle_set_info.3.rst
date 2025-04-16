@@ -8,21 +8,8 @@ MPI_T_event_handle_set_info
 
 :ref:`MPI_T_event_handle_set_info` |mdash| Updates the hints of the event-registration handle associated with event_registration.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_T_event_handle_set_info(MPI_T_event_registration event_registration,
-                                   MPI_Info info)
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_t_event_handle_set_info.rst
 
 INPUT PARAMETERS
 ----------------

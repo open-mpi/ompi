@@ -9,42 +9,8 @@ MPI_Comm_free_keyval
 :ref:`MPI_Comm_free_keyval` |mdash| Frees attribute key for communicator cache
 attribute.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Comm_free_keyval(int *comm_keyval)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_COMM_FREE_KEYVAL(COMM_KEYVAL, IERROR)
-   	INTEGER	COMM_KEYVAL, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Comm_free_keyval(comm_keyval, ierror)
-   	INTEGER, INTENT(INOUT) :: comm_keyval
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_comm_free_keyval.rst
 
 INPUT/OUTPUT PARAMETER
 ----------------------

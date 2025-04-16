@@ -8,57 +8,8 @@ MPI_Unpack_external
 
 :ref:`MPI_Unpack_external` |mdash| Reads data from a portable format
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Unpack_external(const char datarep[], const void *inbuf,
-   	MPI_Aint insize, MPI_Aint *position,
-   	void *outbuf, int outcount,
-   	MPI_Datatype datatype)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_UNPACK_EXTERNAL(DATAREP, INBUF, INSIZE, POSITION,
-   	OUTBUF, OUTCOUNT, DATATYPE, IERROR)
-
-   	INTEGER		OUTCOUNT, DATATYPE, IERROR
-   	INTEGER(KIND=MPI_ADDRESS_KIND) INSIZE, POSITION
-   	CHARACTER*(*)	DATAREP
-   	<type>		INBUF(*), OUTBUF(*)
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Unpack_external(datarep, inbuf, insize, position, outbuf, outcount,
-   		datatype, ierror)
-   	CHARACTER(LEN=*), INTENT(IN) :: datarep
-   	TYPE(*), DIMENSION(..), INTENT(IN) :: inbuf
-   	TYPE(*), DIMENSION(..) :: outbuf
-   	INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(IN) :: insize
-   	INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(INOUT) :: position
-   	INTEGER, INTENT(IN) :: outcount
-   	TYPE(MPI_Datatype), INTENT(IN) :: datatype
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_unpack_external.rst
 
 INPUT PARAMETERS
 ----------------

@@ -9,43 +9,8 @@ MPI_Win_unlock
 :ref:`MPI_Win_unlock` |mdash| Completes an RMA access epoch started by a call to
 :ref:`MPI_Win_lock`.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Win_unlock(int rank, MPI_Win win)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_WIN_UNLOCK(RANK, WIN, IERROR)
-   	INTEGER RANK, WIN, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Win_unlock(rank, win, ierror)
-   	INTEGER, INTENT(IN) :: rank
-   	TYPE(MPI_Win), INTENT(IN) :: win
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_win_unlock.rst
 
 INPUT PARAMETERS
 ----------------

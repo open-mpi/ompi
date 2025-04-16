@@ -8,20 +8,8 @@ MPI_T_cvar_write
 
 :ref:`MPI_T_cvar_write` |mdash| Write the value of a bound control variable
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_T_cvar_write(MPI_T_cvar_handle handle, const void *buf)
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_t_cvar_write.rst
 
 INPUT PARAMETERS
 ----------------

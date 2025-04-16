@@ -9,49 +9,8 @@ MPI_Testall
 :ref:`MPI_Testall` |mdash| Tests for the completion of all previously initiated
 communications in a list.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Testall(int count, MPI_Request array_of_requests[],
-   	int *flag, MPI_Status array_of_statuses[])
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_TESTALL(COUNT, ARRAY_OF_REQUESTS, FLAG, ARRAY_OF_STATUSES,
-   		IERROR)
-   	LOGICAL	FLAG
-   	INTEGER	COUNT, ARRAY_OF_REQUESTS(*)
-   	INTEGER	ARRAY_OF_STATUSES(MPI_STATUS_SIZE,*), IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Testall(count, array_of_requests, flag, array_of_statuses, ierror)
-   	INTEGER, INTENT(IN) :: count
-   	TYPE(MPI_Request), INTENT(INOUT) :: array_of_requests(count)
-   	LOGICAL, INTENT(OUT) :: flag
-   	TYPE(MPI_Status) :: array_of_statuses(*)
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_testall.rst
 
 INPUT PARAMETERS
 ----------------

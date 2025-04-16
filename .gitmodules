@@ -9,3 +9,6 @@
 [submodule "oac"]
 	path = config/oac
 	url = ../../open-mpi/oac
+[submodule "3rd-party/pympistandard"]
+	path = 3rd-party/pympistandard
+	url = ../../mpi-forum/pympistandard

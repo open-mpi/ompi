@@ -7,45 +7,8 @@ MPI_Comm_connect
 
 :ref:`MPI_Comm_connect` |mdash| Establishes communication with a server.
 
-SYNTAX
-------
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: C
-
-   #include <mpi.h>
-
-   int MPI_Comm_connect(const char *port_name, MPI_Info info, int root,
-       MPI_Comm comm, MPI_Comm *newcomm)
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: Fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-
-   MPI_COMM_CONNECT(PORT_NAME, INFO, ROOT, COMM, NEWCOMM, IERROR)
-       CHARACTER*(*)   PORT_NAME
-       INTEGER     INFO, ROOT, COMM, NEWCOMM, IERROR
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: Fortran
-
-   USE mpi_f08
-
-   MPI_Comm_connect(port_name, info, root, comm, newcomm, ierror)
-       CHARACTER(LEN=*), INTENT(IN) :: port_name
-       TYPE(MPI_Info), INTENT(IN) :: info
-       INTEGER, INTENT(IN) :: root
-       TYPE(MPI_Comm), INTENT(IN) :: comm
-       TYPE(MPI_Comm), INTENT(OUT) :: newcomm
-       INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_comm_connect.rst
 
 INPUT PARAMETERS
 ----------------

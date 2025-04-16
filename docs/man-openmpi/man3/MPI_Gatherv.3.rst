@@ -8,92 +8,12 @@ MPI_Gatherv
 :ref:`MPI_Gatherv`, :ref:`MPI_Igatherv`, :ref:`MPI_Gatherv_init` - Gathers varying amounts of
 data from all processes to the root process
 
-SYNTAX
-------
+.. The following directive tells the man page generation script to
+   generate multiple bindings for this file.
+.. mpi-bindings: MPI_Gatherv, MPI_Igatherv, MPI_Gatherv_init
 
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Gatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
-       void *recvbuf, const int recvcounts[], const int displs[], MPI_Datatype recvtype,
-       int root, MPI_Comm comm)
-
-   int MPI_Igatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
-       void *recvbuf, const int recvcounts[], const int displs[], MPI_Datatype recvtype,
-       int root, MPI_Comm comm, MPI_Request *request)
-
-   int MPI_Gatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
-       void *recvbuf, const int recvcounts[], const int displs[], MPI_Datatype recvtype,
-       int root, MPI_Comm comm, MPI_Info info, MPI_Request *request)
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-
-   MPI_GATHERV(SENDBUF, SENDCOUNT, SENDTYPE, RECVBUF, RECVCOUNTS,
-           DISPLS, RECVTYPE, ROOT, COMM, IERROR)
-       <type>  SENDBUF(*), RECVBUF(*)
-       INTEGER SENDCOUNT, SENDTYPE, RECVCOUNTS(*), DISPLS(*)
-       INTEGER RECVTYPE, ROOT, COMM, IERROR
-
-   MPI_IGATHERV(SENDBUF, SENDCOUNT, SENDTYPE, RECVBUF, RECVCOUNTS,
-           DISPLS, RECVTYPE, ROOT, COMM, REQUEST, IERROR)
-       <type>  SENDBUF(*), RECVBUF(*)
-       INTEGER SENDCOUNT, SENDTYPE, RECVCOUNTS(*), DISPLS(*)
-       INTEGER RECVTYPE, ROOT, COMM, REQUEST, IERROR
-
-   MPI_GATHERV_INIT(SENDBUF, SENDCOUNT, SENDTYPE, RECVBUF, RECVCOUNTS,
-           DISPLS, RECVTYPE, ROOT, COMM, INFO, REQUEST, IERROR)
-       <type>  SENDBUF(*), RECVBUF(*)
-       INTEGER SENDCOUNT, SENDTYPE, RECVCOUNTS(*), DISPLS(*)
-       INTEGER RECVTYPE, ROOT, COMM, INFO, REQUEST, IERROR
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-
-   MPI_Gatherv(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs,
-           recvtype, root, comm, ierror)
-       TYPE(*), DIMENSION(..), INTENT(IN) :: sendbuf
-       TYPE(*), DIMENSION(..) :: recvbuf
-       INTEGER, INTENT(IN) :: sendcount, recvcounts(*), displs(*), root
-       TYPE(MPI_Datatype), INTENT(IN) :: sendtype, recvtype
-       TYPE(MPI_Comm), INTENT(IN) :: comm
-       INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
-   MPI_Igatherv(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs,
-           recvtype, root, comm, request, ierror)
-       TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: sendbuf
-       TYPE(*), DIMENSION(..), ASYNCHRONOUS :: recvbuf
-       INTEGER, INTENT(IN) :: sendcount, root
-       INTEGER, INTENT(IN), ASYNCHRONOUS :: recvcounts(*), displs(*)
-       TYPE(MPI_Datatype), INTENT(IN) :: sendtype, recvtype
-       TYPE(MPI_Comm), INTENT(IN) :: comm
-       TYPE(MPI_Request), INTENT(OUT) :: request
-       INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
-   MPI_Gatherv_init(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs,
-           recvtype, root, comm, info, request, ierror)
-       TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: sendbuf
-       TYPE(*), DIMENSION(..), ASYNCHRONOUS :: recvbuf
-       INTEGER, INTENT(IN) :: sendcount, root
-       INTEGER, INTENT(IN), ASYNCHRONOUS :: recvcounts(*), displs(*)
-       TYPE(MPI_Datatype), INTENT(IN) :: sendtype, recvtype
-       TYPE(MPI_Comm), INTENT(IN) :: comm
-       TYPE(MPI_Info), INTENT(IN) :: info
-       TYPE(MPI_Request), INTENT(OUT) :: request
-       INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_gatherv.rst
 
 INPUT PARAMETERS
 ----------------
@@ -133,13 +53,13 @@ The outcome is as if each process, including the root process, sends a
 message to the root,
 
 .. code-block:: c
-   
+
    MPI_Send(sendbuf, sendcount, sendtype, root, ...);
 
 and the root executes n receives,
 
 .. code-block:: c
-   
+
    MPI_Recv(recvbuf + disp[i] * extent(recvtype), recvcounts[i],
             recvtype, i, ...);
 
@@ -197,7 +117,7 @@ Example 2: Same as Example 1 on the receiving side, but send the 100
 ints from the 0th column of a 100 150 int array, in C.
 
 .. code-block:: c
-   
+
    MPI_Comm comm;
    int gsize, sendarray[100][150];
    int root, *rbuf, stride;
@@ -226,20 +146,20 @@ Example 3: Process i sends (100-i) ints from the ith column of a 100 x
 previous two examples.
 
 .. code-block:: c
-   
+
    MPI_Comm comm;
    int gsize, sendarray[100][150], *sptr;
    int root, *rbuf, stride, myrank;
    MPI_Datatype stype;
    int displs, i, rcounts;
    ...
-   
+
    MPI_Comm_size(comm, &gsize);
    MPI_Comm_rank( comm, &myrank );
    rbuf = (int)malloc(gsize * stride * sizeof(int));
    displs = (int)malloc(gsize * sizeof(int));
    rcounts = (int )malloc(gsize * sizeof(int));
-   
+
    for (i=0; i<gsize; ++i) {
      displs[i] = i * stride;
      rcounts[i] = 100-i; // note change from previous example
@@ -260,7 +180,7 @@ end. We create a datatype that causes the correct striding at the
 sending end so that we read a column of a C array.
 
 .. code-block:: c
-   
+
    MPI_Comm comm;
    int gsize, sendarray[100][150], *sptr;
    int root, *rbuf, stride, myrank, disp[2], blocklen[2];
@@ -296,7 +216,7 @@ Example 5: Same as Example 3 at sending side, but at receiving side we
 make the stride between received blocks vary from block to block.
 
 .. code-block:: c
-   
+
    MPI_Comm comm;
    int gsize, sendarray[100][150], *sptr;
    int root, *rbuf, *stride, myrank, bufsize;

@@ -7,42 +7,8 @@ MPI_Get_address
 
 :ref:`MPI_Get_address` |mdash| Gets the address of a location in memory.
 
-SYNTAX
-------
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Get_address(const void *location, MPI_Aint *address)
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-
-   MPI_GET_ADDRESS(LOCATION, ADDRESS, IERROR)
-       <type> LOCATION(*)
-       INTEGER(KIND=MPI_ADDRESS_KIND) ADDRESS
-       INTEGER IERROR
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-
-   MPI_Get_address(location, address, ierror)
-       TYPE(*), DIMENSION(..), ASYNCHRONOUS :: location
-       INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(OUT) :: address
-       INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_get_address.rst
 
 INPUT PARAMETERS
 ----------------

@@ -8,46 +8,8 @@ MPI_Waitall
 
 :ref:`MPI_Waitall` |mdash| Waits for all given communications to complete.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Waitall(int count, MPI_Request array_of_requests[],
-   	MPI_Status *array_of_statuses)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_WAITALL(COUNT, ARRAY_OF_REQUESTS, ARRAY_OF_STATUSES, IERROR)
-   	INTEGER	COUNT, ARRAY_OF_REQUESTS(*)
-   	INTEGER	ARRAY_OF_STATUSES(MPI_STATUS_SIZE,*), IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Waitall(count, array_of_requests, array_of_statuses, ierror)
-   	INTEGER, INTENT(IN) :: count
-   	TYPE(MPI_Request), INTENT(INOUT) :: array_of_requests(count)
-   	TYPE(MPI_Status) :: array_of_statuses(*)
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_waitall.rst
 
 INPUT PARAMETERS
 ----------------

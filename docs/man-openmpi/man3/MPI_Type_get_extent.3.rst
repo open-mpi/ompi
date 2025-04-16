@@ -9,54 +9,12 @@ MPI_Type_get_extent
 :ref:`MPI_Type_get_extent`, :ref:`MPI_Type_get_extent_x` - Returns the lower
 bound and extent of a data type.
 
+.. The following directive tells the man page generation script to
+   generate multiple bindings for this file.
+.. mpi-bindings: MPI_Type_get_extent, MPI_Type_get_extent_x
 
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Type_get_extent(MPI_Datatype datatype, MPI_Aint *lb,
-   	MPI_Aint *extent)
-   int MPI_Type_get_extent_x(MPI_Datatype datatype, MPI_Count *lb,
-   	MPI_Count *extent)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_TYPE_GET_EXTENT(DATATYPE, LB, EXTENT, IERROR)
-   	INTEGER	DATATYPE, IERROR
-   	INTEGER(KIND=MPI_ADDRESS_KIND) LB, EXTENT
-   MPI_TYPE_GET_EXTENT_X(DATATYPE, LB, EXTENT, IERROR)
-   	INTEGER	DATATYPE, IERROR
-   	INTEGER(KIND=MPI_COUNT_KIND) LB, EXTENT
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Type_get_extent(datatype, lb, extent, ierror)
-   	TYPE(MPI_Datatype), INTENT(IN) :: datatype
-   	INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(OUT) :: lb, extent
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-   MPI_Type_get_extent_x(datatype, lb, extent, ierror)
-   	TYPE(MPI_Datatype), INTENT(IN) :: datatype
-   	INTEGER(KIND = MPI_COUNT_KIND), INTENT(OUT) :: lb, extent
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_type_get_extent.rst
 
 INPUT PARAMETER
 ---------------

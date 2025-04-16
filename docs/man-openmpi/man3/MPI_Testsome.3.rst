@@ -9,51 +9,8 @@ MPI_Testsome
 :ref:`MPI_Testsome` |mdash| Tests for completion of one or more previously
 initiated communications in a list.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Testsome(int incount, MPI_Request array_of_requests[],
-   	int *outcount, int array_of_indices[],
-   	MPI_Status array_of_statuses[])
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_TESTSOME(INCOUNT, ARRAY_OF_REQUESTS, OUTCOUNT,
-   		ARRAY_OF_INDICES, ARRAY_OF_STATUSES, IERROR)
-   	INTEGER	INCOUNT, ARRAY_OF_REQUESTS(*)
-   	INTEGER	OUTCOUNT, ARRAY_OF_INDICES(*)
-   	INTEGER	ARRAY_OF_STATUSES(MPI_STATUS_SIZE,*), IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Testsome(incount, array_of_requests, outcount, array_of_indices,
-   		array_of_statuses, ierror)
-   	INTEGER, INTENT(IN) :: incount
-   	TYPE(MPI_Request), INTENT(INOUT) :: array_of_requests(incount)
-   	INTEGER, INTENT(OUT) :: outcount, array_of_indices(*)
-   	TYPE(MPI_Status) :: array_of_statuses(*)
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_testsome.rst
 
 INPUT PARAMETERS
 ----------------

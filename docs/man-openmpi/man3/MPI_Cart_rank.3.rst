@@ -8,41 +8,8 @@ MPI_Cart_rank
 :ref:`MPI_Cart_rank` |mdash| Determines process rank in communicator given Cartesian
 location.
 
-SYNTAX
-------
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: C
-
-   #include <mpi.h>
-
-   int MPI_Cart_rank(MPI_Comm comm, int coords[], int *rank)
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: Fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-
-   MPI_CART_RANK(COMM, COORDS, RANK, IERROR)
-       INTEGER COMM, COORDS(*), RANK, IERROR
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: Fortran
-
-   USE mpi_f08
-
-   MPI_Cart_rank(comm, coords, rank, ierror)
-       TYPE(MPI_Comm), INTENT(IN) :: comm
-       INTEGER, INTENT(IN) :: coords(*)
-       INTEGER, INTENT(OUT) :: rank
-       INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_cart_rank.rst
 
 INPUT PARAMETERS
 ----------------

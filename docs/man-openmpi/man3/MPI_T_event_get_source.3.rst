@@ -8,20 +8,8 @@ MPI_T_event_get_source
 
 :ref:`MPI_T_event_get_source` |mdash|  Returns the index of the source of the event instance
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_T_event_get_source(MPI_T_event_instance event_instance, int *source_index)
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_t_event_get_source.rst
 
 INPUT PARAMETERS
 ----------------

@@ -7,41 +7,8 @@ MPI_Get_processor_name
 
 :ref:`MPI_Get_processor_name` |mdash| Gets the name of the processor.
 
-SYNTAX
-------
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Get_processor_name(char *name, int *resultlen)
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-
-   MPI_GET_PROCESSOR_NAME(NAME, RESULTLEN, IERROR)
-       CHARACTER*(*)   NAME
-       INTEGER     RESULTLEN, IERROR
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-
-   MPI_Get_processor_name(name, resultlen, ierror)
-       CHARACTER(LEN=MPI_MAX_PROCESSOR_NAME), INTENT(OUT) :: name
-       INTEGER, INTENT(OUT) :: resultlen
-       INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_get_processor_name.rst
 
 OUTPUT PARAMETERS
 -----------------

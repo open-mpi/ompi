@@ -8,20 +8,8 @@ MPI_T_pvar_get_num
 
 :ref:`MPI_T_pvar_get_num` |mdash| Query the number of performance variables
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_T_pvar_get_num(int *num_pvar)
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_t_pvar_get_num.rst
 
 OUTPUT PARAMETERS
 -----------------

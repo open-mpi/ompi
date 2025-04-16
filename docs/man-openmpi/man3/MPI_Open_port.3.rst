@@ -9,44 +9,8 @@ MPI_Open_port
 :ref:`MPI_Open_port` |mdash| Establishes a network address for a server to accept
 connections from clients.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Open_port(MPI_Info info, char *port_name)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_OPEN_PORT(INFO, PORT_NAME, IERROR)
-   	CHARACTER*(*)	PORT_NAME
-   	INTEGER		INFO, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Open_port(info, port_name, ierror)
-   	TYPE(MPI_Info), INTENT(IN) :: info
-   	CHARACTER(LEN=MPI_MAX_PORT_NAME), INTENT(OUT) :: port_name
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_open_port.rst
 
 INPUT PARAMETER
 ---------------

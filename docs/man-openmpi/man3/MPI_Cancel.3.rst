@@ -7,39 +7,8 @@ MPI_Cancel
 
 :ref:`MPI_Cancel` |mdash| Cancels a communication request.
 
-SYNTAX
-------
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: C
-
-   #include <mpi.h>
-
-   int MPI_Cancel(MPI_Request *request)
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: Fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-
-   MPI_CANCEL(REQUEST, IERROR)
-       INTEGER REQUEST, IERROR
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: Fortran
-
-   USE mpi_f08
-
-   MPI_Cancel(request, ierror)
-       TYPE(MPI_Request), INTENT(IN) :: request
-       INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_cancel.rst
 
 INPUT PARAMETER
 ---------------

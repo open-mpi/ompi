@@ -8,52 +8,8 @@ MPI_Waitsome
 
 :ref:`MPI_Waitsome` |mdash| Waits for some given communications to complete.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Waitsome(int incount, MPI_Request array_of_requests[],
-   	int *outcount, int array_of_indices[],
-   	MPI_Status array_of_statuses[])
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_WAITSOME(INCOUNT, ARRAY_OF_REQUESTS, OUTCOUNT,
-   		ARRAY_OF_INDICES, ARRAY_OF_STATUSES, IERROR)
-   	INTEGER	INCOUNT, ARRAY_OF_REQUESTS(*), OUTCOUNT
-   	INTEGER	ARRAY_OF_INDICES(*)
-   	INTEGER	ARRAY_OF_STATUSES(MPI_STATUS_SIZE*)
-   	INTEGER	IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Waitsome(incount, array_of_requests, outcount, array_of_indices,
-   		array_of_statuses, ierror)
-   	INTEGER, INTENT(IN) :: incount
-   	TYPE(MPI_Request), INTENT(INOUT) :: array_of_requests(incount)
-   	INTEGER, INTENT(OUT) :: outcount, array_of_indices(*)
-   	TYPE(MPI_Status) :: array_of_statuses(*)
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_waitsome.rst
 
 INPUT PARAMETERS
 ----------------

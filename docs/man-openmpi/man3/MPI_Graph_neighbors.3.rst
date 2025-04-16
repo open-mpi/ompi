@@ -9,45 +9,8 @@ MPI_Graph_neighbors
 :ref:`MPI_Graph_neighbors` |mdash| Returns the neighbors of a node associated
 with a graph topology.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Graph_neighbors(MPI_Comm comm, int rank, int maxneighbors,
-   	int neighbors[])
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_GRAPH_NEIGHBORS(COMM, RANK, MAXNEIGHBORS, NEIGHBORS, IERROR)
-   	INTEGER	COMM, RANK, MAXNEIGHBORS, NEIGHBORS(*), IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Graph_neighbors(comm, rank, maxneighbors, neighbors, ierror)
-   	TYPE(MPI_Comm), INTENT(IN) :: comm
-   	INTEGER, INTENT(IN) :: rank, maxneighbors
-   	INTEGER, INTENT(OUT) :: neighbors(maxneighbors)
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_graph_neighbors.rst
 
 INPUT PARAMETERS
 ----------------

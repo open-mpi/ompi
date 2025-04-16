@@ -9,43 +9,8 @@ MPI_Comm_rank
 :ref:`MPI_Comm_rank` |mdash| Determines the rank of the calling process in the
 communicator.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Comm_rank(MPI_Comm comm, int *rank)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_COMM_RANK(COMM, RANK, IERROR)
-   	INTEGER	COMM, RANK, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Comm_rank(comm, rank, ierror)
-   	TYPE(MPI_Comm), INTENT(IN) :: comm
-   	INTEGER, INTENT(OUT) :: rank
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_comm_rank.rst
 
 INPUT PARAMETERS
 ----------------

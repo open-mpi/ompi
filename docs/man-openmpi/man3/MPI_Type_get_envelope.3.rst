@@ -9,48 +9,8 @@ MPI_Type_get_envelope
 :ref:`MPI_Type_get_envelope` |mdash| Returns information about input arguments
 associated with a data type.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Type_get_envelope(MPI_Datatype datatype, int *num_integers,
-   	int *num_addresses, int *num_datatypes, int *combiner)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_TYPE_GET_ENVELOPE(DATATYPE, NUM_INTEGERS, NUM_ADDRESSES,
-   		NUM_DATATYPES, COMBINER, IERROR)
-   	INTEGER	DATATYPE, NUM_INTEGERS, NUM_ADDRESSES
-   	INTEGER	NUM_DATATYPES, COMBINER, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Type_get_envelope(datatype, num_integers, num_addresses, num_datatypes,
-   		combiner, ierror)
-   	TYPE(MPI_Datatype), INTENT(IN) :: datatype
-   	INTEGER, INTENT(OUT) :: num_integers, num_addresses, num_datatypes,
-   	combiner
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_type_get_envelope.rst
 
 INPUT PARAMETER
 ---------------

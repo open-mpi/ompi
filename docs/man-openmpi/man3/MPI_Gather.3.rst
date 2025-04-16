@@ -11,87 +11,12 @@ of processes.
 Synopsis
 --------
 
-C Syntax
-^^^^^^^^
+.. The following directive tells the man page generation script to
+   generate multiple bindings for this file.
+.. mpi-bindings: MPI_Gather, MPI_Igather, MPI_Gather_init
 
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Gather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
-       void *recvbuf, int recvcount, MPI_Datatype recvtype, int root,
-       MPI_Comm comm)
-
-   int MPI_Igather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
-       void *recvbuf, int recvcount, MPI_Datatype recvtype, int root,
-       MPI_Comm comm, MPI_Request *request)
-
-   int MPI_Gather_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
-       void *recvbuf, int recvcount, MPI_Datatype recvtype, int root,
-       MPI_Comm comm, MPI_Info info, MPI_Request *request)
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-
-   MPI_GATHER(SENDBUF, SENDCOUNT, SENDTYPE, RECVBUF, RECVCOUNT,
-           RECVTYPE, ROOT, COMM, IERROR)
-       <type>  SENDBUF(*), RECVBUF(*)
-       INTEGER SENDCOUNT, SENDTYPE, RECVCOUNT, RECVTYPE, ROOT
-       INTEGER COMM, IERROR
-
-   MPI_IGATHER(SENDBUF, SENDCOUNT, SENDTYPE, RECVBUF, RECVCOUNT,
-           RECVTYPE, ROOT, COMM, REQUEST, IERROR)
-       <type>  SENDBUF(*), RECVBUF(*)
-       INTEGER SENDCOUNT, SENDTYPE, RECVCOUNT, RECVTYPE, ROOT
-       INTEGER COMM, REQUEST, IERROR
-
-   MPI_GATHER_INIT(SENDBUF, SENDCOUNT, SENDTYPE, RECVBUF, RECVCOUNT,
-           RECVTYPE, ROOT, COMM, INFO, REQUEST, IERROR)
-       <type>  SENDBUF(*), RECVBUF(*)
-       INTEGER SENDCOUNT, SENDTYPE, RECVCOUNT, RECVTYPE, ROOT
-       INTEGER COMM, INFO, REQUEST, IERROR
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-
-   MPI_Gather(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype,
-           root, comm, ierror)
-       TYPE(*), DIMENSION(..), INTENT(IN) :: sendbuf
-       TYPE(*), DIMENSION(..) :: recvbuf
-       INTEGER, INTENT(IN) :: sendcount, recvcount, root
-       TYPE(MPI_Datatype), INTENT(IN) :: sendtype, recvtype
-       TYPE(MPI_Comm), INTENT(IN) :: comm
-       INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
-   MPI_Igather(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype,
-           root, comm, request, ierror)
-       TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: sendbuf
-       TYPE(*), DIMENSION(..), ASYNCHRONOUS :: recvbuf
-       INTEGER, INTENT(IN) :: sendcount, recvcount, root
-       TYPE(MPI_Datatype), INTENT(IN) :: sendtype, recvtype
-       TYPE(MPI_Comm), INTENT(IN) :: comm
-       TYPE(MPI_Request), INTENT(OUT) :: request
-       INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
-   MPI_Gather_init(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype,
-           root, comm, info, request, ierror)
-       TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: sendbuf
-       TYPE(*), DIMENSION(..), ASYNCHRONOUS :: recvbuf
-       INTEGER, INTENT(IN) :: sendcount, recvcount, root
-       TYPE(MPI_Datatype), INTENT(IN) :: sendtype, recvtype
-       TYPE(MPI_Comm), INTENT(IN) :: comm
-       TYPE(MPI_Info), INTENT(IN) :: info
-       TYPE(MPI_Request), INTENT(OUT) :: request
-       INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_gather.rst
 
 INPUT PARAMETERS
 ----------------
@@ -124,13 +49,13 @@ stores them in rank order. The outcome is as if each of the n processes
 in the group (including the root process) had executed a call to
 
 ::
-   
+
    MPI_Send(sendbuf, sendcount, sendtype, root, ...)
 
 and the root had executed n calls to
 
 ::
-   
+
    MPI_Recv(recfbuf + i * recvcount * extent(recvtype), recvcount,
             recvtype, i, ...)
 
@@ -164,7 +89,7 @@ receives from each process, not the total number of items it receives.
 Example 1: Gather 100 ints from every process in group to root.
 
 .. code-block:: c
-   
+
    MPI_Comm comm;
    int gsize, sendarray[100];
    int root, *rbuf;
@@ -179,7 +104,7 @@ Example 2: Previous example modified |mdash| only the root allocates memory
 for the receive buffer.
 
 .. code-block:: c
-   
+
    MPI_Comm comm;
    int gsize, sendarray[100];
    int root, myrank, *rbuf;
@@ -204,7 +129,7 @@ process in the gather.
    int root, *rbuf;
    MPI_Datatype rtype;
    ...
-   
+
    MPI_Comm_size( comm, &gsize);
    MPI_Type_contiguous( 100, MPI_INT, &rtype);
    MPI_Type_commit( &rtype );

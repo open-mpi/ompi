@@ -8,45 +8,8 @@ MPI_Error_string
 
 :ref:`MPI_Error_string` |mdash| Returns a string for a given error code.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Error_string(int errorcode, char *string, int *resultlen)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_ERROR_STRING(ERRORCODE, STRING, RESULTLEN, IERROR)
-   	INTEGER		ERRORCODE, RESULTLEN, IERROR
-   	CHARACTER*(*)	STRING
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Error_string(errorcode, string, resultlen, ierror)
-   	INTEGER, INTENT(IN) :: errorcode
-   	CHARACTER(LEN=MPI_MAX_ERROR_STRING), INTENT(OUT) :: string
-   	INTEGER, INTENT(OUT) :: resultlen
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_error_string.rst
 
 INPUT PARAMETER
 ---------------

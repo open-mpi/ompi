@@ -8,42 +8,8 @@ MPI_Cart_coords
 :ref:`MPI_Cart_coords` |mdash| Determines process coords in Cartesian topology
 given rank in group.
 
-SYNTAX
-------
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Cart_coords(MPI_Comm comm, int rank, int maxdims,
-       int coords[])
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-
-   MPI_CART_COORDS(COMM, RANK, MAXDIMS, COORDS, IERROR)
-       INTEGER COMM, RANK, MAXDIMS, COORDS(*), IERROR
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-
-   MPI_Cart_coords(comm, rank, maxdims, coords, ierror)
-       TYPE(MPI_Comm), INTENT(IN) :: comm
-       INTEGER, INTENT(IN) :: rank, maxdims
-       INTEGER, INTENT(OUT) :: coords(maxdims)
-       INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_cart_coords.rst
 
 INPUT PARAMETERS
 ----------------

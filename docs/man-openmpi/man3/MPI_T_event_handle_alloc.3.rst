@@ -8,20 +8,8 @@ MPI_T_event_handle_alloc
 
 :ref:`MPI_T_event_handle_alloc` - Allocate event handles
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_T_event_handle_alloc(int event_index, void *obj_handle, MPI info,
-                                MPI_T_event_registration *event_registration)
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_t_event_handle_alloc.rst
 
 INPUT PARAMETERS
 ----------------

@@ -8,45 +8,8 @@ MPI_File_set_size
 
 :ref:`MPI_File_set_size` |mdash| Resizes a file (collective).
 
-
-SYNTAX
-------
-
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_File_set_size(MPI_File fh, MPI_Offset size)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_FILE_SET_SIZE(FH, SIZE, IERROR)
-   	INTEGER	FH, IERROR
-   	INTEGER(KIND=MPI_OFFSET_KIND)	SIZE
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_File_set_size(fh, size, ierror)
-   	TYPE(MPI_File), INTENT(IN) :: fh
-   	INTEGER(KIND=MPI_OFFSET_KIND), INTENT(IN) :: size
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_file_set_size.rst
 
 INPUT PARAMETERS
 ----------------

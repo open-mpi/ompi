@@ -8,56 +8,8 @@ MPI_Type_create_darray
 
 :ref:`MPI_Type_create_darray` |mdash| Creates a distributed array datatype;
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Type_create_darray(int size, int rank, int ndims,
-   	const int array_of_gsizes[], const int array_of_distribs[],
-   	const int array_of_dargs[], const int array_of_psizes[],
-   	int order, MPI_Datatype oldtype, MPI_Datatype *newtype)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_TYPE_CREATE_DARRAY(SIZE, RANK, NDIMS, ARRAY_OF_GSIZES,
-   	ARRAY_OF_DISTRIBS, ARRAY_OF_DARGS, ARRAY_OF_PSIZES, ORDER,
-   	OLDTYPE, NEWTYPE, IERROR)
-
-   	INTEGER	SIZE, RANK, NDIMS, ARRAY_OF_GSIZES(*), ARRAY_OF_DISTRIBS(*),
-   		ARRAY_OF_DARGS(*), ARRAY_OF_PSIZES(*), ORDER, OLDTYPE,
-   		NEWTYPE, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Type_create_darray(size, rank, ndims, array_of_gsizes,
-   	array_of_distribs, array_of_dargs, array_of_psizes, order,
-   		oldtype, newtype, ierror)
-   	INTEGER, INTENT(IN) :: size, rank, ndims, array_of_gsizes(ndims),
-   	array_of_distribs(ndims), array_of_dargs(ndims),
-   	array_of_psizes(ndims), order
-   	TYPE(MPI_Datatype), INTENT(IN) :: oldtype
-   	TYPE(MPI_Datatype), INTENT(OUT) :: newtype
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_type_create_darray.rst
 
 INPUT PARAMETERS
 ----------------

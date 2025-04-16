@@ -9,48 +9,8 @@ MPI_Info_get
 :ref:`MPI_Info_get` |mdash| Retrieves the value associated with a key in an info
 object.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Info_get(MPI_Info info, const char *key, int valuelen, char *value, int *flag)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_INFO_GET(INFO, KEY, VALUELEN, VALUE, FLAG, IERROR)
-   	INTEGER	INFO, VALUELEN, IERROR
-   	CHARACTER*(*) KEY, VALUE
-   	LOGICAL FLAG
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Info_get(info, key, valuelen, value, flag, ierror)
-   	TYPE(MPI_Info), INTENT(IN) :: info
-   	CHARACTER(LEN=*), INTENT(IN) :: key
-   	INTEGER, INTENT(IN) :: valuelen
-   	CHARACTER(LEN=valuelen), INTENT(OUT) :: value
-   	LOGICAL, INTENT(OUT) :: flag
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_info_get.rst
 
 INPUT PARAMETERS
 ----------------

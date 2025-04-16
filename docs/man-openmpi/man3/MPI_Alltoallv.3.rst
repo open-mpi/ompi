@@ -10,110 +10,12 @@ MPI_Alltoallv
 send different amount of data to, and receive different amount of data
 from, all processes
 
+.. The following directive tells the man page generation script to
+   generate multiple bindings for this file.
+.. mpi-bindings: MPI_Alltoallv, MPI_Ialltoallv, MPI_Alltoallv_init
 
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Alltoallv(const void *sendbuf, const int sendcounts[],
-   	const int sdispls[], MPI_Datatype sendtype,
-   	void *recvbuf, const int recvcounts[],
-   	const int rdispls[], MPI_Datatype recvtype, MPI_Comm comm)
-
-   int MPI_Ialltoallv(const void *sendbuf, const int sendcounts[],
-   	const int sdispls[], MPI_Datatype sendtype,
-   	void *recvbuf, const int recvcounts[],
-   	const int rdispls[], MPI_Datatype recvtype, MPI_Comm comm,
-   	MPI_Request *request)
-
-   int MPI_Alltoallv_init(const void *sendbuf, const int sendcounts[],
-   	const int sdispls[], MPI_Datatype sendtype,
-   	void *recvbuf, const int recvcounts[],
-   	const int rdispls[], MPI_Datatype recvtype, MPI_Comm comm,
-   	MPI_Info info, MPI_Request *request)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_ALLTOALLV(SENDBUF, SENDCOUNTS, SDISPLS, SENDTYPE,
-   	RECVBUF, RECVCOUNTS, RDISPLS, RECVTYPE, COMM, IERROR)
-
-   	<type>	SENDBUF(*), RECVBUF(*)
-   	INTEGER	SENDCOUNTS(*), SDISPLS(*), SENDTYPE
-   	INTEGER	RECVCOUNTS(*), RDISPLS(*), RECVTYPE
-   	INTEGER	COMM, IERROR
-
-   MPI_IALLTOALLV(SENDBUF, SENDCOUNTS, SDISPLS, SENDTYPE,
-   	RECVBUF, RECVCOUNTS, RDISPLS, RECVTYPE, COMM, REQUEST, IERROR)
-
-   	<type>	SENDBUF(*), RECVBUF(*)
-   	INTEGER	SENDCOUNTS(*), SDISPLS(*), SENDTYPE
-   	INTEGER	RECVCOUNTS(*), RDISPLS(*), RECVTYPE
-   	INTEGER	COMM, REQUEST, IERROR
-
-   MPI_ALLTOALLV_INIT(SENDBUF, SENDCOUNTS, SDISPLS, SENDTYPE,
-   	RECVBUF, RECVCOUNTS, RDISPLS, RECVTYPE, COMM, INFO, REQUEST, IERROR)
-
-   	<type>	SENDBUF(*), RECVBUF(*)
-   	INTEGER	SENDCOUNTS(*), SDISPLS(*), SENDTYPE
-   	INTEGER	RECVCOUNTS(*), RDISPLS(*), RECVTYPE
-   	INTEGER	COMM, INFO, REQUEST, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Alltoallv(sendbuf, sendcounts, sdispls, sendtype, recvbuf, recvcounts,
-   		rdispls, recvtype, comm, ierror)
-
-   	TYPE(*), DIMENSION(..), INTENT(IN) :: sendbuf
-   	TYPE(*), DIMENSION(..) :: recvbuf
-   	INTEGER, INTENT(IN) :: sendcounts(*), sdispls(*), recvcounts(*),
-   	rdispls(*)
-   	TYPE(MPI_Datatype), INTENT(IN) :: sendtype, recvtype
-   	TYPE(MPI_Comm), INTENT(IN) :: comm
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
-   MPI_Ialltoallv(sendbuf, sendcounts, sdispls, sendtype, recvbuf, recvcounts,
-   		rdispls, recvtype, comm, request, ierror)
-
-   	TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: sendbuf
-   	TYPE(*), DIMENSION(..), ASYNCHRONOUS :: recvbuf
-   	INTEGER, INTENT(IN), ASYNCHRONOUS :: sendcounts(*), sdispls(*),
-   	recvcounts(*), rdispls(*)
-   	TYPE(MPI_Datatype), INTENT(IN) :: sendtype, recvtype
-   	TYPE(MPI_Comm), INTENT(IN) :: comm
-   	TYPE(MPI_Request), INTENT(OUT) :: request
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
-   MPI_Alltoallv_init(sendbuf, sendcounts, sdispls, sendtype, recvbuf, recvcounts,
-   			rdispls, recvtype, comm, info, request, ierror)
-
-   	TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: sendbuf
-   	TYPE(*), DIMENSION(..), ASYNCHRONOUS :: recvbuf
-   	INTEGER, INTENT(IN), ASYNCHRONOUS :: sendcounts(*), sdispls(*),
-   	recvcounts(*), rdispls(*)
-   	TYPE(MPI_Datatype), INTENT(IN) :: sendtype, recvtype
-   	TYPE(MPI_Comm), INTENT(IN) :: comm
-   	TYPE(MPI_Info), INTENT(IN) :: info
-   	TYPE(MPI_Request), INTENT(OUT) :: request
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_alltoallv.rst
 
 INPUT PARAMETERS
 ----------------

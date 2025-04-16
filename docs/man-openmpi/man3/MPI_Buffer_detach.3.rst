@@ -8,42 +8,8 @@ MPI_Buffer_detach
 :ref:`MPI_Buffer_detach` |mdash| Removes an existing buffer (for use in in :ref:`MPI_Bsend`,
 etc.)
 
-SYNTAX
-------
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: C
-
-   #include <mpi.h>
-
-   int MPI_Buffer_detach(void *buf, int *size)
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: Fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-
-   MPI_BUFFER_DETACH(BUF, SIZE, IERROR)
-       <type>  BUF(*)
-       INTEGER SIZE, IERROR
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: Fortran
-
-   USE mpi_f08
-
-   MPI_Buffer_detach(buffer_addr, size, ierror)
-       USE, INTRINSIC :: ISO_C_BINDING, ONLY
-       TYPE(C_PTR), INTENT(OUT) :: buffer_addr
-       INTEGER, INTENT(OUT) :: size
-       INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_buffer_detach.rst
 
 OUTPUT PARAMETERS
 -----------------
@@ -83,7 +49,7 @@ buffer being detached is to allow nested libraries to replace and
 restore the buffer. For example, consider
 
 .. code-block:: c
-   
+
    int size, mysize, idummy;
    void *ptr, *myptr, *dummy;
    MPI_Buffer_detach( &ptr, &size );

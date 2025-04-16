@@ -8,46 +8,8 @@ MPI_Cart_create
 :ref:`MPI_Cart_create` |mdash| Makes a new communicator to which Cartesian
 topology information has been attached.
 
-SYNTAX
-------
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Cart_create(MPI_Comm comm_old, int ndims, const int dims[],
-
-       const int periods[], int reorder, MPI_Comm *comm_cart)
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-
-   MPI_CART_CREATE(COMM_OLD, NDIMS, DIMS, PERIODS, REORDER,
-           COMM_CART, IERROR)
-       INTEGER COMM_OLD, NDIMS, DIMS(*), COMM_CART, IERROR
-       LOGICAL PERIODS(*), REORDER
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-
-   MPI_Cart_create(comm_old, ndims, dims, periods, reorder, comm_cart, ierror)
-       TYPE(MPI_Comm), INTENT(IN) :: comm_old
-       INTEGER, INTENT(IN) :: ndims, dims(ndims)
-       LOGICAL, INTENT(IN) :: periods(ndims), reorder
-       TYPE(MPI_Comm), INTENT(OUT) :: comm_cart
-       INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_cart_create.rst
 
 INPUT PARAMETERS
 ----------------

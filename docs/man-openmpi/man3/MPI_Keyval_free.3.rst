@@ -8,31 +8,8 @@ MPI_Keyval_free
 
 :ref:`MPI_Keyval_free` |mdash| Frees attribute key for communicator cache attribute |mdash| |deprecated_favor| :ref:`MPI_Comm_free_keyval`.
 
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Keyval_free(int *keyval)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-
-   MPI_KEYVAL_FREE(KEYVAL, IERROR)
-   	INTEGER	KEYVAL, IERROR
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_keyval_free.rst
 
 INPUT PARAMETER
 ---------------

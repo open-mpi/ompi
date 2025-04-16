@@ -10,113 +10,12 @@ MPI_Alltoallw
 send data of different types to, and receive data of different types
 from, all processes
 
+.. The following directive tells the man page generation script to
+   generate multiple bindings for this file.
+.. mpi-bindings: MPI_Alltoallw, MPI_Ialltoallw, MPI_Alltoallw_init
 
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Alltoallw(const void *sendbuf, const int sendcounts[],
-   	const int sdispls[], const MPI_Datatype sendtypes[],
-   	void *recvbuf, const int recvcounts[], const int rdispls[],
-   	const MPI_Datatype recvtypes[], MPI_Comm comm)
-
-   int MPI_Ialltoallw(const void *sendbuf, const int sendcounts[],
-   	const int sdispls[], const MPI_Datatype sendtypes[],
-   	void *recvbuf, const int recvcounts[], const int rdispls[],
-   	const MPI_Datatype recvtypes[], MPI_Comm comm,
-   	MPI_Request *request)
-
-   int MPI_Alltoallw_init(const void *sendbuf, const int sendcounts[],
-   	const int sdispls[], const MPI_Datatype sendtypes[],
-   	void *recvbuf, const int recvcounts[], const int rdispls[],
-   	const MPI_Datatype recvtypes[], MPI_Comm comm, MPI_Info info,
-   	MPI_Request *request)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_ALLTOALLW(SENDBUF, SENDCOUNTS, SDISPLS, SENDTYPES,
-   	RECVBUF, RECVCOUNTS, RDISPLS, RECVTYPES, COMM, IERROR)
-
-   	<type>	SENDBUF(*), RECVBUF(*)
-   	INTEGER	SENDCOUNTS(*), SDISPLS(*), SENDTYPES(*)
-   	INTEGER	RECVCOUNTS(*), RDISPLS(*), RECVTYPES(*)
-   	INTEGER	COMM, IERROR
-
-   MPI_IALLTOALLW(SENDBUF, SENDCOUNTS, SDISPLS, SENDTYPES,
-   	RECVBUF, RECVCOUNTS, RDISPLS, RECVTYPES, COMM, REQUEST, IERROR)
-
-   	<type>	SENDBUF(*), RECVBUF(*)
-   	INTEGER	SENDCOUNTS(*), SDISPLS(*), SENDTYPES(*)
-   	INTEGER	RECVCOUNTS(*), RDISPLS(*), RECVTYPES(*)
-   	INTEGER	COMM, REQUEST, IERROR
-
-   MPI_ALLTOALLW_INIT(SENDBUF, SENDCOUNTS, SDISPLS, SENDTYPES,
-   	RECVBUF, RECVCOUNTS, RDISPLS, RECVTYPES, COMM, INFO, REQUEST, IERROR)
-
-   	<type>	SENDBUF(*), RECVBUF(*)
-   	INTEGER	SENDCOUNTS(*), SDISPLS(*), SENDTYPES(*)
-   	INTEGER	RECVCOUNTS(*), RDISPLS(*), RECVTYPES(*)
-   	INTEGER	COMM, INFO, REQUEST, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Alltoallw(sendbuf, sendcounts, sdispls, sendtypes, recvbuf, recvcounts,
-   		rdispls, recvtypes, comm, ierror)
-
-   	TYPE(*), DIMENSION(..), INTENT(IN) :: sendbuf
-   	TYPE(*), DIMENSION(..) :: recvbuf
-   	INTEGER, INTENT(IN) :: sendcounts(*), sdispls(*), recvcounts(*),
-   	rdispls(*)
-   	TYPE(MPI_Datatype), INTENT(IN) :: sendtypes(*)
-   	TYPE(MPI_Datatype), INTENT(IN) :: recvtypes(*)
-   	TYPE(MPI_Comm), INTENT(IN) :: comm
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
-   MPI_Ialltoallw(sendbuf, sendcounts, sdispls, sendtypes, recvbuf,
-   		recvcounts, rdispls, recvtypes, comm, request, ierror)
-
-   	TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: sendbuf
-   	TYPE(*), DIMENSION(..), ASYNCHRONOUS :: recvbuf
-   	INTEGER, INTENT(IN), ASYNCHRONOUS :: sendcounts(*), sdispls(*),
-   	recvcounts(*), rdispls(*)
-   	TYPE(MPI_Datatype), INTENT(IN), ASYNCHRONOUS :: sendtypes(*),
-   	recvtypes(*)
-   	TYPE(MPI_Comm), INTENT(IN) :: comm
-   	TYPE(MPI_Request), INTENT(OUT) :: request
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
-   MPI_Alltoallw_init(sendbuf, sendcounts, sdispls, sendtypes, recvbuf,
-   		recvcounts, rdispls, recvtypes, comm, fIinfo, request, ierror)
-
-   	TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: sendbuf
-   	TYPE(*), DIMENSION(..), ASYNCHRONOUS :: recvbuf
-   	INTEGER, INTENT(IN), ASYNCHRONOUS :: sendcounts(*), sdispls(*),
-   	recvcounts(*), rdispls(*)
-   	TYPE(MPI_Datatype), INTENT(IN), ASYNCHRONOUS :: sendtypes(*),
-   	recvtypes(*)
-   	TYPE(MPI_Comm), INTENT(IN) :: comm
-   	TYPE(MPI_Info), INTENT(IN) :: info
-   	TYPE(MPI_Request), INTENT(OUT) :: request
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_alltoallw.rst
 
 INPUT PARAMETERS
 ----------------

@@ -9,95 +9,12 @@ MPI_Scatterv
 :ref:`MPI_Scatterv`, :ref:`MPI_Iscatterv`, :ref:`MPI_Scatterv_init` - Scatters a buffer
 in parts to all tasks in a group.
 
+.. The following directive tells the man page generation script to
+   generate multiple bindings for this file.
+.. mpi-bindings: MPI_Scatterv, MPI_Iscatterv, MPI_Scatterv_init
 
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Scatterv(const void *sendbuf, const int sendcounts[], const int displs[],
-   	MPI_Datatype sendtype, void *recvbuf, int recvcount,
-   	MPI_Datatype recvtype, int root, MPI_Comm comm)
-
-   int MPI_Iscatterv(const void *sendbuf, const int sendcounts[], const int displs[],
-   	MPI_Datatype sendtype, void *recvbuf, int recvcount,
-   	MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Request *request)
-
-   int MPI_Scatterv_init(const void *sendbuf, const int sendcounts[], const int displs[],
-   	MPI_Datatype sendtype, void *recvbuf, int recvcount,
-   	MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Info info, MPI_Request *request)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_SCATTERV(SENDBUF, SENDCOUNTS, DISPLS, SENDTYPE, RECVBUF,
-   		RECVCOUNT, RECVTYPE, ROOT, COMM, IERROR)
-   	<type>	SENDBUF(*), RECVBUF(*)
-   	INTEGER	SENDCOUNTS(*), DISPLS(*), SENDTYPE
-   	INTEGER	RECVCOUNT, RECVTYPE, ROOT, COMM, IERROR
-
-   MPI_ISCATTERV(SENDBUF, SENDCOUNTS, DISPLS, SENDTYPE, RECVBUF,
-   		RECVCOUNT, RECVTYPE, ROOT, COMM, REQUEST, IERROR)
-   	<type>	SENDBUF(*), RECVBUF(*)
-   	INTEGER	SENDCOUNTS(*), DISPLS(*), SENDTYPE
-   	INTEGER	RECVCOUNT, RECVTYPE, ROOT, COMM, REQUEST, IERROR
-
-   MPI_SCATTERV_INIT(SENDBUF, SENDCOUNTS, DISPLS, SENDTYPE, RECVBUF,
-   		RECVCOUNT, RECVTYPE, ROOT, COMM, INFO, REQUEST, IERROR)
-   	<type>	SENDBUF(*), RECVBUF(*)
-   	INTEGER	SENDCOUNTS(*), DISPLS(*), SENDTYPE
-   	INTEGER	RECVCOUNT, RECVTYPE, ROOT, COMM, INFO, REQUEST, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Scatterv(sendbuf, sendcounts, displs, sendtype, recvbuf, recvcount,
-   		recvtype, root, comm, ierror)
-   	TYPE(*), DIMENSION(..), INTENT(IN) :: sendbuf
-   	TYPE(*), DIMENSION(..) :: recvbuf
-   	INTEGER, INTENT(IN) :: sendcounts(*), displs(*), recvcount, root
-   	TYPE(MPI_Datatype), INTENT(IN) :: sendtype, recvtype
-   	TYPE(MPI_Comm), INTENT(IN) :: comm
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
-   MPI_Iscatterv(sendbuf, sendcounts, displs, sendtype, recvbuf, recvcount,
-   		recvtype, root, comm, request, ierror)
-   	TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: sendbuf
-   	TYPE(*), DIMENSION(..), ASYNCHRONOUS :: recvbuf
-   	INTEGER, INTENT(IN), ASYNCHRONOUS :: sendcounts(*), displs(*)
-   	INTEGER, INTENT(IN) :: recvcount, root
-   	TYPE(MPI_Datatype), INTENT(IN) :: sendtype, recvtype
-   	TYPE(MPI_Comm), INTENT(IN) :: comm
-   	TYPE(MPI_Request), INTENT(OUT) :: request
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
-   MPI_scatterv_init(sendbuf, sendcounts, displs, sendtype, recvbuf, recvcount,
-   		recvtype, root, comm, info, request, ierror)
-   	TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: sendbuf
-   	TYPE(*), DIMENSION(..), ASYNCHRONOUS :: recvbuf
-   	INTEGER, INTENT(IN), ASYNCHRONOUS :: sendcounts(*), displs(*)
-   	INTEGER, INTENT(IN) :: recvcount, root
-   	TYPE(MPI_Datatype), INTENT(IN) :: sendtype, recvtype
-   	TYPE(MPI_Comm), INTENT(IN) :: comm
-   	TYPE(MPI_Info), INTENT(IN) :: info
-   	TYPE(MPI_Request), INTENT(OUT) :: request
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_scatterv.rst
 
 INPUT PARAMETERS
 ----------------

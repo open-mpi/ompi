@@ -9,50 +9,8 @@ MPI_File_read_all
 :ref:`MPI_File_read_all` |mdash| Reads a file starting at the locations specified
 by individual file pointers (blocking, collective).
 
-
-SYNTAX
-------
-
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_File_read_all(MPI_File fh, void *buf,
-   	int count, MPI_Datatype datatype, MPI_Status *status)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_FILE_READ_ALL(FH, BUF, COUNT,
-   	DATATYPE, STATUS, IERROR)
-   	<type>	BUF(*)
-   	INTEGER	FH, COUNT, DATATYPE, STATUS(MPI_STATUS_SIZE),IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_File_read_all(fh, buf, count, datatype, status, ierror)
-   	TYPE(MPI_File), INTENT(IN) :: fh
-   	TYPE(*), DIMENSION(..) :: buf
-   	INTEGER, INTENT(IN) :: count
-   	TYPE(MPI_Datatype), INTENT(IN) :: datatype
-   	TYPE(MPI_Status) :: status
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_file_read_all.rst
 
 INPUT PARAMETERS
 ----------------

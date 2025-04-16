@@ -10,46 +10,8 @@ MPI_Dist_graph_neighbors_count
 edges for the calling processes in a distributed graph topology and a
 flag indicating whether the distributed graph is weighted.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Dist_graph_neighbors_count(MPI_Comm comm, int *indegree,
-   	int *outdegree, int *weighted)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_DIST_GRAPH_NEIGHBORS_COUNT(COMM, INDEGREE, OUTDEGREE, WEIGHTED, IERROR)
-   	INTEGER	COMM, INDEGREE, OUTDEGREE, IERROR
-           LOGICAL WEIGHTED
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Dist_graph_neighbors_count(comm, indegree, outdegree, weighted, ierror)
-   	TYPE(MPI_Comm), INTENT(IN) :: comm
-   	INTEGER, INTENT(IN) :: indegree, outdegree
-   	INTEGER, INTENT(OUT) :: weighted
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_dist_graph_neighbors_count.rst
 
 INPUT PARAMETERS
 ----------------

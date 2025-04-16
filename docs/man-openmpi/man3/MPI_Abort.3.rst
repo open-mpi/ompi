@@ -8,43 +8,8 @@ MPI_Abort
 
 :ref:`MPI_Abort` |mdash| Terminates MPI execution environment.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Abort(MPI_Comm comm, int errorcode)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_ABORT(COMM, ERRORCODE, IERROR)
-   	INTEGER		COMM, ERRORCODE, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Abort(comm, errorcode, ierror)
-   	TYPE(MPI_Comm), INTENT(IN) :: comm
-   	INTEGER, INTENT(IN) :: errorcode
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_abort.rst
 
 INPUT PARAMETERS
 ----------------

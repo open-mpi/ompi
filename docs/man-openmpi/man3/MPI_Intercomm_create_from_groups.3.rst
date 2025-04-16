@@ -8,45 +8,8 @@ MPI_Intercomm_create_from_groups
 :ref:`MPI_Intercomm_create_from_groups` |mdash| Creates a new inter-communicator from
 a local and remote group and stringtag
 
-SYNTAX
-------
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Intercomm_create_from_groups(MPI_Group local_group, int local_leader, MPI_Group remote_group, int remote_leader, const char *stringtag, MPI_Info info, MPI_Errhandler errhandler, MPI_Comm *newintercomm)
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-
-   MPI_INTERCOMM_CREATE_FROM_GROUPS(LOCAL_GROUP, LOCAL_LEADER, REMOTE_GROUP, REMOTE_LEADER, STRINGTAG, INFO, ERRHANDLER, NEWINTERCOMM, IERROR)
-       INTEGER LOCAL_GROUP, LOCAL_LEADER, REMOTE_GROUP, REMOTE_LEADER, INFO, ERRHANDLER, NEWINTERCOMM, IERROR
-       CHARACTER*(*) STRINGTAG
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-
-   MPI_Intercomm_create_from_groups(local_group, local_leader, remote_group, remote_leader, stringtag, info, errhandler, newintercomm, ierror)
-       TYPE(MPI_Group), INTENT(IN) :: local_group, remote_group
-       INTEGER, INTENT(IN) :: local_leader, remote_leader
-       CHARACTER(LEN=*), INTENT(IN) :: stringtag
-       TYPE(MPI_Info), INTENT(IN) :: info
-       TYPE(MPI_Errhandler), INTENT(IN) :: errhandler
-       TYPE(MPI_Comm), INTENT(OUT) :: newintercomm
-       INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_intercomm_create_from_groups.rst
 
 INPUT PARAMETERS
 ----------------

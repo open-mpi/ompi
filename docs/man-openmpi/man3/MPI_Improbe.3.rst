@@ -8,49 +8,8 @@ MPI_Improbe
 
 :ref:`MPI_Improbe` |mdash| Non-blocking matched probe for a message.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Improbe(int source, int tag, MPI_Comm comm,
-   	int *flag, MPI_Message *message, MPI_Status *status)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_IMPROBE(SOURCE, TAG, COMM, FLAG, MESSAGE, STATUS, IERROR)
-   	LOGICAL	FLAG
-   	INTEGER	SOURCE, TAG, COMM, MESSAGE
-   	INTEGER	STATUS(MPI_STATUS_SIZE), IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Improbe(source, tag, comm, flag, message, status, ierror)
-   	INTEGER, INTENT(IN) :: source, tag
-   	TYPE(MPI_Comm), INTENT(IN) :: comm
-   	INTEGER, INTENT(OUT) :: flag
-   	TYPE(MPI_Message), INTENT(OUT) :: message
-   	TYPE(MPI_Status) :: status
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_improbe.rst
 
 INPUT PARAMETERS
 ----------------

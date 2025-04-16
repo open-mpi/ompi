@@ -8,44 +8,8 @@ MPI_Test_cancelled
 
 :ref:`MPI_Test_cancelled` |mdash| Tests whether a request was canceled.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Test_cancelled(const MPI_Status *status, int *flag)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_TEST_CANCELLED(STATUS, FLAG, IERROR)
-   	LOGICAL	FLAG
-   	INTEGER	STATUS(MPI_STATUS_SIZE), IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Test_cancelled(status, flag, ierror)
-   	TYPE(MPI_Status), INTENT(IN) :: status
-   	LOGICAL, INTENT(OUT) :: flag
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_test_cancelled.rst
 
 INPUT PARAMETER
 ---------------

@@ -9,46 +9,8 @@ MPI_Pack_size
 :ref:`MPI_Pack_size` |mdash| Returns the upper bound on the amount of space
 needed to pack a message.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Pack_size(int incount, MPI_Datatype datatype, MPI_Comm comm,
-   	int *size)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_PACK_SIZE(INCOUNT, DATATYPE, COMM, SIZE, IERROR)
-   	INTEGER	INCOUNT, DATATYPE, COMM, SIZE, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Pack_size(incount, datatype, comm, size, ierror)
-   	INTEGER, INTENT(IN) :: incount
-   	TYPE(MPI_Datatype), INTENT(IN) :: datatype
-   	TYPE(MPI_Comm), INTENT(IN) :: comm
-   	INTEGER, INTENT(OUT) :: size
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_pack_size.rst
 
 INPUT PARAMETERS
 ----------------

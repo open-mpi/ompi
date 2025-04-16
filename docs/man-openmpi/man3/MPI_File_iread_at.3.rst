@@ -9,52 +9,8 @@ MPI_File_iread_at
 :ref:`MPI_File_iread_at` |mdash| Reads a file at an explicitly specified offset
 (nonblocking, noncollective).
 
-
-SYNTAX
-------
-
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_File_iread_at(MPI_File fh, MPI_Offset offset,
-   	void *buf, int count, MPI_Datatype datatype,
-   	MPI_Request *request)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_FILE_IREAD_AT(FH, OFFSET, BUF, COUNT, DATATYPE, REQUEST, IERROR)
-   	<type>	BUF(*)
-   	INTEGER	FH, COUNT, DATATYPE, REQUEST, IERROR
-   	INTEGER(KIND=MPI_OFFSET_KIND)	OFFSET
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_File_iread_at(fh, offset, buf, count, datatype, request, ierror)
-   	TYPE(MPI_File), INTENT(IN) :: fh
-   	INTEGER(KIND=MPI_OFFSET_KIND), INTENT(IN) :: offset
-   	TYPE(*), DIMENSION(..), ASYNCHRONOUS :: buf
-   	INTEGER, INTENT(IN) :: count
-   	TYPE(MPI_Datatype), INTENT(IN) :: datatype
-   	TYPE(MPI_Request), INTENT(OUT) :: request
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_file_iread_at.rst
 
 INPUT PARAMETERS
 ----------------

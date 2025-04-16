@@ -7,17 +7,8 @@ MPI_T_init_thread
 
 :ref:`MPI_T_init_thread` |mdash| Initializes the MPI Tool information interface
 
-SYNTAX
-------
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_T_init_thread(int required, int *provided)
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_t_init_thread.rst
 
 INPUT PARAMETERS
 ----------------

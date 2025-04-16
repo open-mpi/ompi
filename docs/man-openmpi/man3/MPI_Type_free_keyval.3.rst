@@ -8,42 +8,8 @@ MPI_Type_free_keyval
 
 :ref:`MPI_Type_free_keyval` |mdash| Frees a previously created type key value.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Type_free_keyval(int *type_keyval)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_TYPE_FREE_KEYVAL(TYPE_KEYVAL, IERROR)
-   	INTEGER	TYPE_KEYVAL, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Type_free_keyval(type_keyval, ierror)
-   	INTEGER, INTENT(INOUT) :: type_keyval
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_type_free_keyval.rst
 
 INPUT/OUTPUT PARAMETER
 ----------------------

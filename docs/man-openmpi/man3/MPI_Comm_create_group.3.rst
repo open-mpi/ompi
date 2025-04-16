@@ -7,42 +7,8 @@ MPI_Comm_create_group
 
 :ref:`MPI_Comm_create_group` |mdash| Creates a new communicator.
 
-SYNTAX
-------
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: C
-
-   #include <mpi.h>
-
-   int MPI_Comm_create_group(MPI_Comm comm, MPI_Group group, int tag, MPI_Comm *newcomm)
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: Fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-
-   MPI_COMM_CREATE_GROUP(COMM, GROUP, TAG, NEWCOMM, IERROR)
-       INTEGER COMM, GROUP, TAG, NEWCOMM, IERROR
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: Fortran
-
-   USE mpi_f08
-
-   MPI_Comm_create_group(comm, group, tag, newcomm, ierror)
-       TYPE(MPI_Comm), INTENT(IN) :: comm
-       TYPE(MPI_Group), INTENT(IN) :: group
-       INTEGER, INTENT(IN) :: tag
-       TYPE(MPI_Comm), INTENT(OUT) :: newcomm
-       INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_comm_create_group.rst
 
 INPUT PARAMETERS
 ----------------

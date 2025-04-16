@@ -10,45 +10,8 @@ MPI_Unpublish_name
 
    MPI_Unpublish_name - Unpublishes a service name
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Unpublish_name(const char *service_name, MPI_Info info,
-   	const char *port_name)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_UNPUBLISH_NAME(SERVICE_NAME, INFO, PORT_NAME, IERROR)
-   	CHARACTER*(*)	SERVICE_NAME, PORT_NAME
-   	INTEGER		INFO, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Unpublish_name(service_name, info, port_name, ierror)
-   	CHARACTER(LEN=*), INTENT(IN) :: service_name, port_name
-   	TYPE(MPI_Info), INTENT(IN) :: info
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_unpublish_name.rst
 
 INPUT PARAMETERS
 ----------------

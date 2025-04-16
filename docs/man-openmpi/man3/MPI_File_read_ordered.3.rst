@@ -9,50 +9,8 @@ MPI_File_read_ordered
 :ref:`MPI_File_read_ordered` |mdash| Reads a file at a location specified by a
 shared file pointer (blocking, collective).
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_File_read_ordered(MPI_File fh, void *buf,
-   	int count, MPI_Datatype datatype,
-   	MPI_Status *status)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_FILE_READ_ORDERED(FH, BUF, COUNT, DATATYPE,
-   	STATUS, IERROR)
-   	<type>	BUF(*)
-   	INTEGER	FH, COUNT, DATATYPE, STATUS(MPI_STATUS_SIZE), IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_File_read_ordered(fh, buf, count, datatype, status, ierror)
-   	TYPE(MPI_File), INTENT(IN) :: fh
-   	TYPE(*), DIMENSION(..) :: buf
-   	INTEGER, INTENT(IN) :: count
-   	TYPE(MPI_Datatype), INTENT(IN) :: datatype
-   	TYPE(MPI_Status) :: status
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_file_read_ordered.rst
 
 INPUT PARAMETERS
 ----------------

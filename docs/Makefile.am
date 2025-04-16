@@ -1,6 +1,6 @@
 #
 # Copyright (c) 2022 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2023-2024 Jeffrey M. Squyres.  All rights reserved.
+# Copyright (c) 2023-2025 Jeffrey M. Squyres.  All rights reserved.
 #
 # $COPYRIGHT$
 #
@@ -54,12 +54,16 @@ RST_SOURCE_FILES   = \
         $(srcdir)/license/*.rst \
         $(srcdir)/man-openmpi/*.rst \
         $(srcdir)/man-openmpi/man*/*.rst \
+        $(srcdir)/man-openmpi/man*/bindings/*.rst \
         $(srcdir)/man-openshmem/*.rst \
         $(srcdir)/man-openshmem/man*/*.rst
 
 EXTRA_DIST         = \
         requirements.txt \
         no-prrte-content.rst.txt \
+        generate-mpi-man3-bindings.py \
+        mpi-standard-apis.json \
+        man-openmpi/man3/bindings \
         html \
         man \
         $(SPHINX_CONFIG) \
@@ -843,6 +847,10 @@ OMPI_MAN3_RST = $(OMPI_MAN3:%.3=man-openmpi/man3/%.3.rst)
 OMPI_MAN3_BUILT = $(OMPI_MAN3:%.3=$(MAN_OUTDIR)/%.3)
 OMPI_MAN3_INSTALL_FROM = $(OMPI_MAN3:%.3=$(MAN_INSTALL_FROM)/%.3)
 
+# Use this one file as a sentinel for building all the man page
+# bindings files
+SENTINEL_OMPI_MAN3_BINDING = man-openmpi/man3/bindings/mpi_init.rst
+
 OMPI_MAN7_RST = $(OMPI_MAN7:%.7=man-openmpi/man7/%.7.rst)
 OMPI_MAN7_BUILT = $(OMPI_MAN7:%.7=$(MAN_OUTDIR)/%.7)
 OMPI_MAN7_INSTALL_FROM = $(OMPI_MAN7:%.7=$(MAN_INSTALL_FROM)/%.7)
@@ -921,7 +929,7 @@ man: $(ALL_MAN_BUILT)
 # Remove the copies of the built HTML and man pages to get back to a
 # clean git clone.
 maintainer-clean-local:
-	rm -rf html man
+	rm -rf html man man-openmpi/man3/bindings
 
 # If we're doing a VPATH build, we may have "html" and "man"
 # directories in the build tree (e.g., if we did "make dist").  Remove
@@ -998,10 +1006,16 @@ $(builddir)/schizo-ompi-rst-content/schizo-ompi-cli.rstxt: $(srcdir)/no-prrte-co
 	cp -pf $(srcdir)/no-prrte-content.rst.txt "$@"
 endif
 
+$(SENTINEL_OMPI_MAN3_BINDING): generate-mpi-man3-bindings.py
+$(SENTINEL_OMPI_MAN3_BINDING): mpi-standard-apis.json
+	$(OMPI_V_GEN) $(PYTHON3) $(srcdir)/generate-mpi-man3-bindings.py \
+		--srcdir $(srcdir) --builddir $(builddir)
+
 $(ALL_MAN_BUILT): $(builddir)/prrte-rst-content
 $(ALL_MAN_BUILT): $(builddir)/schizo-ompi-rst-content/schizo-ompi-cli.rstxt
 $(ALL_MAN_BUILT): $(RST_SOURCE_FILES) $(IMAGE_SOURCE_FILES)
 $(ALL_MAN_BUILT): $(TEXT_SOURCE_FILES) $(SPHINX_CONFIG)
+$(ALL_MAN_BUILT): $(SENTINEL_OMPI_MAN3_BINDING)
 
 # Render the RST source into both 1) full HTML docs and 2) nroff man
 # pages.
@@ -1039,6 +1053,7 @@ $(ALL_MAN_BUILT): $(TEXT_SOURCE_FILES) $(SPHINX_CONFIG)
 # changed.  We're going to overwrite any local changes in the build
 # tree, but you shouldn't be editing the build tree, anyway.  So --
 # good enough.
+
 $(ALL_MAN_BUILT):
 	$(OMPI_V_SPHINX_COPYRST) if test "$(srcdir)" != "$(builddir)"; then \
 	    len=`echo "$(srcdir)/" | wc -c`; \

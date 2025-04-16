@@ -9,45 +9,8 @@ MPI_Group_range_excl
 :ref:`MPI_Group_range_excl` |mdash| Produces a group by excluding ranges of
 processes from an existing group.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Group_range_excl(MPI_Group group, int n, int ranges[][3],
-   	MPI_Group *newgroup)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_GROUP_RANGE_EXCL(GROUP, N, RANGES, NEWGROUP, IERROR)
-   	INTEGER	GROUP, N, RANGES(3,*), NEWGROUP, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Group_range_excl(group, n, ranges, newgroup, ierror)
-   	TYPE(MPI_Group), INTENT(IN) :: group
-   	INTEGER, INTENT(IN) :: n, ranges(3,n)
-   	TYPE(MPI_Group), INTENT(OUT) :: newgroup
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_group_range_excl.rst
 
 INPUT PARAMETERS
 ----------------

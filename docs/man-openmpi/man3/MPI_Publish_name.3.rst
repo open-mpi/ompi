@@ -8,45 +8,8 @@ MPI_Publish_name
 
 :ref:`MPI_Publish_name` |mdash| Publishes a service name associated with a port
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Publish_name(const char *service_name, MPI_Info info,
-   	const char *port_name)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_PUBLISH_NAME(SERVICE_NAME, INFO, PORT_NAME, IERROR)
-   	CHARACTER*(*)	SERVICE_NAME, PORT_NAME
-   	INTEGER		INFO, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Publish_name(service_name, info, port_name, ierror)
-   	TYPE(MPI_Info), INTENT(IN) :: info
-   	CHARACTER(LEN=*), INTENT(IN) :: service_name, port_name
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_publish_name.rst
 
 INPUT PARAMETERS
 ----------------

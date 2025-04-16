@@ -9,44 +9,8 @@ MPI_Session_set_errhandler
 :ref:`MPI_Session_set_errhandler` |mdash| Attaches a new error handler to a
 session.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Session_set_errhandler(MPI_Session session,
-   	MPI_Errhandler errhandler)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_SESSION_SET_ERRHANDLER(SESSION, ERRHANDLER, IERROR)
-   	INTEGER	SESSION, ERRHANDLER, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Session_set_errhandler(session, errhandler, ierror)
-   	TYPE(MPI_Session), INTENT(IN) :: session
-   	TYPE(MPI_Errhandler), INTENT(IN) :: errhandler
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_session_set_errhandler.rst
 
 INPUT/OUTPUT PARAMETER
 ----------------------

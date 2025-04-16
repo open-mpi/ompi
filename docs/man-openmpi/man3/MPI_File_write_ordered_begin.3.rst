@@ -9,44 +9,8 @@ MPI_File_write_ordered_begin
 by a shared file pointer; beginning part of a split collective routine
 (nonblocking).
 
-SYNTAX
-------
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_File_write_ordered_begin(MPI_File fh, const void *buf,
-       int count, MPI_Datatype datatype)
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-
-   MPI_FILE_WRITE_ORDERED_BEGIN(FH, BUF, COUNT, DATATYPE, IERROR)
-       <type>  BUF(*)
-       INTEGER FH, COUNT, DATATYPE, IERROR
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-
-   MPI_File_write_ordered_begin(fh, buf, count, datatype, ierror)
-       TYPE(MPI_File), INTENT(IN) :: fh
-       TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: buf
-       INTEGER, INTENT(IN) :: count
-       TYPE(MPI_Datatype), INTENT(IN) :: datatype
-       INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_file_write_ordered_begin.rst
 
 INPUT/OUTPUT PARAMETER
 ----------------------

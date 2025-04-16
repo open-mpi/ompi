@@ -8,43 +8,8 @@ MPI_Comm_get_info
 
 :ref:`MPI_Comm_get_info` |mdash| Retrieves active communicator info hints
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Comm_get_info(MPI_Comm comm, MPI_Info *info_used)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_COMM_GET_INFO(COMM, INFO_USED, IERROR)
-   	INTEGER	COMM, INFO_USED, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Comm_get_info(comm, info_used, ierror)
-   	TYPE(MPI_Comm), INTENT(IN) :: comm
-   	TYPE(MPI_Info), INTENT(OUT) :: info_used
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_comm_get_info.rst
 
 INPUT PARAMETERS
 ----------------
