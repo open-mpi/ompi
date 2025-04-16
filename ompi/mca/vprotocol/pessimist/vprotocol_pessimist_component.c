@@ -56,6 +56,7 @@ mca_vprotocol_base_component_2_0_0_t mca_vprotocol_pessimist_component =
     .pmlm_init = mca_vprotocol_pessimist_component_init,
     .pmlm_finalize = mca_vprotocol_pessimist_component_finalize,
 };
+MCA_BASE_COMPONENT_INIT(ompi, vprotocol, pessimist)
 
 /** MCA level functions
   */

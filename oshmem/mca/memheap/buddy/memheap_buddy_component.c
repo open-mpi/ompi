@@ -40,6 +40,7 @@ mca_memheap_base_component_t mca_memheap_buddy_component = {
     },
     .memheap_init = mca_memheap_buddy_module_init
 };
+MCA_BASE_COMPONENT_INIT(oshmem, memheap, buddy)
 
 /* Open component */
 static int _basic_open(void)

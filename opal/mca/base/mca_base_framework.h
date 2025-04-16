@@ -144,7 +144,7 @@ typedef struct mca_base_framework_t {
     /** Framework open count */
     int framework_refcnt;
     /** List of static components */
-    const mca_base_component_t **framework_static_components;
+    const mca_base_component_t ***framework_static_components;
     /** Component selection. This will be registered with the MCA
         variable system and should be either NULL (all components) or
         a heap allocated, comma-delimited list of components. */

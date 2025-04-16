@@ -70,6 +70,7 @@ mca_sshmem_ucx_component_t mca_sshmem_ucx_component = {
         .runtime_query = ucx_runtime_query,
     },
 };
+MCA_BASE_COMPONENT_INIT(oshmem, sshmem, ucx)
 
 static int
 ucx_runtime_query(mca_base_module_t **module,

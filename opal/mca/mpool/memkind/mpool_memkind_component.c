@@ -67,6 +67,7 @@ mca_mpool_memkind_component_t mca_mpool_memkind_component = {{
 
     .mpool_query = mca_mpool_memkind_query,
 }};
+MCA_BASE_COMPONENT_INIT(opal, mpool, memkind)
 
 static void mca_mpool_memkind_module_le_destroy(mca_mpool_memkind_module_le_t *elem)
 {

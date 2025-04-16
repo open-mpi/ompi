@@ -104,6 +104,7 @@ mca_coll_han_component_t mca_coll_han_component = {
     /* workaround for nvcc compiler */
     .dynamic_rules_filename = NULL,
 };
+MCA_BASE_COMPONENT_INIT(ompi, coll, han)
 
 /*
  * Init the component

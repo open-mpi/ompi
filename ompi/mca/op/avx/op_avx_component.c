@@ -149,6 +149,7 @@ ompi_op_avx_component_t mca_op_avx_component = {
         .opc_op_query = avx_component_op_query,
     },
 };
+MCA_BASE_COMPONENT_INIT(ompi, op, avx)
 
 /*
  * Component open

@@ -74,6 +74,7 @@ opal_if_base_component_t mca_if_linux_ipv6_component = {
     {/* This component is checkpointable */
      MCA_BASE_METADATA_PARAM_CHECKPOINT},
 };
+MCA_BASE_COMPONENT_INIT(opal, if, linux_ipv6)
 
 #if OPAL_ENABLE_IPV6
 static bool hex2int(char hex, int *dst)

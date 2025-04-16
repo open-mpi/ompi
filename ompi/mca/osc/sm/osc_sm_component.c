@@ -66,6 +66,7 @@ ompi_osc_sm_component_t mca_osc_sm_component = {
         .osc_finalize = component_finalize,
     }
 };
+MCA_BASE_COMPONENT_INIT(ompi, osc, sm)
 
 
 ompi_osc_sm_module_t ompi_osc_sm_module_template = {

@@ -37,6 +37,7 @@ opal_installdirs_base_component_t mca_installdirs_env_component = {
         NULL,
     },
 };
+MCA_BASE_COMPONENT_INIT(opal, installdirs, env)
 
 #define SET_FIELD(field, envname)                                    \
     do {                                                             \

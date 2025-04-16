@@ -78,6 +78,7 @@ const mca_coll_base_component_3_0_0_t mca_coll_ftagree_component = {
     mca_coll_ftagree_init_query,
     mca_coll_ftagree_comm_query
 };
+MCA_BASE_COMPONENT_INIT(ompi, coll, ftagree)
 
 static int
 ftagree_close(void)

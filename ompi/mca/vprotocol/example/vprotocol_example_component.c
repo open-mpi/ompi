@@ -50,6 +50,7 @@ mca_pml_v_protocol_base_component_2_0_0_t mca_vprotocol_example_component =
   .pmlm_init = mca_vprotocol_example_component_init,
   .pmlm_finalize = mca_vprotocol_example_component_finalize,
 };
+MCA_BASE_COMPONENT_INIT(ompi, vprotocol, example)
 
 /** MCA level functions
   */

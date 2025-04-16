@@ -61,6 +61,7 @@ ompi_op_aarch64_component_t mca_op_aarch64_component = {
         .opc_op_query = mca_op_aarch64_component_op_query,
     },
 };
+MCA_BASE_COMPONENT_INIT(ompi, op, aarch64)
 
 /*
  * Component open

@@ -113,6 +113,7 @@ mca_coll_xhc_component_t mca_coll_xhc_component = {
     .op_mca = {{0}},
     .op_mca_global = {0}
 };
+MCA_BASE_COMPONENT_INIT(ompi, coll, xhc)
 
 /* Rather than having the defaults directly inside the component, we keep
  * them in a separate structure and copy them over (in xhc_register()). The

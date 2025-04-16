@@ -62,6 +62,7 @@ mca_rcache_grdma_component_t mca_rcache_grdma_component = {{
 
     .rcache_init = grdma_init,
 }};
+MCA_BASE_COMPONENT_INIT(opal, rcache, grdma)
 
 /**
  * component open/close/init function

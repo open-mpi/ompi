@@ -85,6 +85,7 @@ ompi_osc_ucx_component_t mca_osc_ucx_component = {
     .comm_world_size        = 0,
     .endpoints              = NULL
 };
+MCA_BASE_COMPONENT_INIT(ompi, osc, ucx)
 
 ompi_osc_ucx_module_t ompi_osc_ucx_module_template = {
     {

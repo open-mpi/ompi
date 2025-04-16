@@ -5,11 +5,9 @@
 extern "C" {
 #endif
 
-extern const mca_base_component_t mca_pmix_pmix4x_component;
-
-const mca_base_component_t *mca_pmix_base_static_components[] = {
-
-    NULL};
+const mca_base_component_t **mca_pmix_base_static_components[] = {
+    NULL
+};
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

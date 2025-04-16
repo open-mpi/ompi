@@ -71,6 +71,8 @@ mca_mtl_base_component_2_0_0_t mca_mtl_portals4_component = {
 
     .mtl_init = ompi_mtl_portals4_component_init,
 };
+MCA_BASE_COMPONENT_INIT(ompi, mtl, portals4)
+
 
 static mca_base_var_enum_value_t long_protocol_values[] = {
     {eager, "eager"},

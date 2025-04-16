@@ -41,6 +41,7 @@ mca_memheap_base_component_t mca_memheap_ptmalloc_component = {
     },
     .memheap_init = mca_memheap_ptmalloc_module_init,
 };
+MCA_BASE_COMPONENT_INIT(oshmem, memheap, ptmalloc)
 
 /* Open component */
 static int _basic_open(void)

@@ -101,7 +101,7 @@ static bool use_component(const mca_base_framework_t *framework, const bool incl
 int mca_base_component_find(const char *directory, mca_base_framework_t *framework,
                             bool ignore_requested, bool open_dso_components)
 {
-    const mca_base_component_t **static_components = framework->framework_static_components;
+    const mca_base_component_t ***static_components = framework->framework_static_components;
     char **requested_component_names = NULL;
     mca_base_component_list_item_t *cli;
     bool include_mode = true;
@@ -119,13 +119,13 @@ int mca_base_component_find(const char *directory, mca_base_framework_t *framewo
     if (static_components) {
         for (int i = 0; NULL != static_components[i]; ++i) {
             if (use_component(framework, include_mode, (const char **) requested_component_names,
-                              static_components[i]->mca_component_name)) {
+                              (*static_components[i])->mca_component_name)) {
                 cli = OBJ_NEW(mca_base_component_list_item_t);
                 if (NULL == cli) {
                     ret = OPAL_ERR_OUT_OF_RESOURCE;
                     goto component_find_out;
                 }
-                cli->cli_component = static_components[i];
+                cli->cli_component = (*static_components[i]);
                 opal_list_append(&framework->framework_components, (opal_list_item_t *) cli);
             }
         }

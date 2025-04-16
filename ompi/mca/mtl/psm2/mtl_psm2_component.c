@@ -88,6 +88,7 @@ mca_mtl_psm2_component_t mca_mtl_psm2_component = {
         .mtl_init = ompi_mtl_psm2_component_init,
     }
 };
+MCA_BASE_COMPONENT_INIT(ompi, mtl, psm2)
 
 struct ompi_mtl_psm2_shadow_variable {
     int variable_type;
