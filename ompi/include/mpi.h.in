@@ -3760,11 +3760,13 @@ OMPI_DECLSPEC  int PMPI_T_cvar_handle_free (MPI_T_cvar_handle *handle);
 OMPI_DECLSPEC  int PMPI_T_cvar_read (MPI_T_cvar_handle handle, void *buf);
 OMPI_DECLSPEC  int PMPI_T_cvar_write (MPI_T_cvar_handle handle, const void *buf);
 OMPI_DECLSPEC  int PMPI_T_category_get_num(int *num_cat);
+OMPI_DECLSPEC  int PMPI_T_category_get_num_events (int cat_index, int *num_events);
 OMPI_DECLSPEC  int PMPI_T_category_get_info(int cat_index, char *name, int *name_len,
                                             char *desc, int *desc_len, int *num_cvars,
                                             int *num_pvars, int *num_categories);
 OMPI_DECLSPEC  int PMPI_T_category_get_index (const char *name, int *category_index);
 OMPI_DECLSPEC  int PMPI_T_category_get_cvars(int cat_index, int len, int indices[]);
+OMPI_DECLSPEC  int PMPI_T_category_get_events(int cat_index, int len, int indices[]);
 OMPI_DECLSPEC  int PMPI_T_category_get_pvars(int cat_index, int len, int indices[]);
 OMPI_DECLSPEC  int PMPI_T_category_get_categories(int cat_index, int len, int indices[]);
 OMPI_DECLSPEC  int PMPI_T_category_changed(int *stamp);
@@ -3845,11 +3847,13 @@ OMPI_DECLSPEC  int MPI_T_cvar_handle_free (MPI_T_cvar_handle *handle);
 OMPI_DECLSPEC  int MPI_T_cvar_read (MPI_T_cvar_handle handle, void *buf);
 OMPI_DECLSPEC  int MPI_T_cvar_write (MPI_T_cvar_handle handle, const void *buf);
 OMPI_DECLSPEC  int MPI_T_category_get_num(int *num_cat);
+OMPI_DECLSPEC  int MPI_T_category_get_num_events (int cat_index, int *num_events);
 OMPI_DECLSPEC  int MPI_T_category_get_info(int cat_index, char *name, int *name_len,
                                            char *desc, int *desc_len, int *num_cvars,
                                            int *num_pvars, int *num_categories);
 OMPI_DECLSPEC  int MPI_T_category_get_index (const char *name, int *category_index);
 OMPI_DECLSPEC  int MPI_T_category_get_cvars(int cat_index, int len, int indices[]);
+OMPI_DECLSPEC  int MPI_T_category_get_events(int cat_index, int len, int indices[]);
 OMPI_DECLSPEC  int MPI_T_category_get_pvars(int cat_index, int len, int indices[]);
 OMPI_DECLSPEC  int MPI_T_category_get_categories(int cat_index, int len, int indices[]);
 OMPI_DECLSPEC  int MPI_T_category_changed(int *stamp);

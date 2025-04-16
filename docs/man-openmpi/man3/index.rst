@@ -357,8 +357,10 @@ MPI API manual pages (section 3)
    MPI_T_category_changed.3.rst
    MPI_T_category_get_categories.3.rst
    MPI_T_category_get_cvars.3.rst
+   MPI_T_category_get_events.3.rst
    MPI_T_category_get_info.3.rst
    MPI_T_category_get_num.3.rst
+   MPI_T_category_get_num_events.3.rst
    MPI_T_category_get_pvars.3.rst
    MPI_T_cvar_get_info.3.rst
    MPI_T_cvar_get_num.3.rst

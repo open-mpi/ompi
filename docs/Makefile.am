@@ -432,8 +432,10 @@ OMPI_MAN3 = \
         MPI_T_category_changed.3 \
         MPI_T_category_get_categories.3 \
         MPI_T_category_get_cvars.3 \
+        MPI_T_category_get_events.3 \
         MPI_T_category_get_info.3 \
         MPI_T_category_get_num.3 \
+        MPI_T_category_get_num_events.3 \
         MPI_T_category_get_pvars.3 \
         MPI_T_cvar_get_info.3 \
         MPI_T_cvar_get_num.3 \
