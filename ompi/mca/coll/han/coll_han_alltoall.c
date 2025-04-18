@@ -69,6 +69,10 @@ int mca_coll_han_alltoall_using_smsc(
 {
 
     mca_coll_han_module_t *han_module = (mca_coll_han_module_t *)module;
+    opal_convertor_t convertor;
+    int send_needs_bounce, have_device_buffer;
+    size_t packed_size = 0;
+
 
     OPAL_OUTPUT_VERBOSE((90, mca_coll_han_component.han_output,
                             "Entering mca_coll_han_alltoall_using_smsc\n"));
@@ -81,6 +85,44 @@ int mca_coll_han_alltoall_using_smsc(
         return han_module->previous_alltoall(sbuf, scount, sdtype, rbuf, rcount, rdtype,
                                              comm, han_module->previous_alltoall_module);
     }
+
+    if (sbuf == MPI_IN_PLACE) {
+        /* This is not an in-place algorithm */
+        return han_module->previous_alltoall(sbuf, scount, sdtype, rbuf, rcount, rdtype,
+                                             comm, han_module->previous_alltoall_module);
+   }
+
+    OBJ_CONSTRUCT( &convertor, opal_convertor_t );
+    send_needs_bounce = 0;
+    have_device_buffer = 0;
+    /* get converter for copying to one of the leader ranks, and get packed size: */
+    opal_convertor_copy_and_prepare_for_send(ompi_mpi_local_convertor, &sdtype->super, scount, sbuf, 0, &convertor);
+    have_device_buffer |= opal_convertor_on_device(&convertor);
+    send_needs_bounce  |= opal_convertor_need_buffers(&convertor);
+    opal_convertor_cleanup(&convertor);
+
+    opal_convertor_copy_and_prepare_for_recv(ompi_mpi_local_convertor, &rdtype->super, rcount, rbuf, 0, &convertor);
+    have_device_buffer |= opal_convertor_on_device(&convertor);
+    send_needs_bounce  |= opal_convertor_need_buffers(&convertor);
+    opal_convertor_get_packed_size( &convertor, &packed_size );
+    opal_convertor_cleanup(&convertor);
+
+    if (have_device_buffer) {
+        /*
+        Although this algorithm is functional for device buffers, it requires an
+        extra copy through the bounce buffer that doesn't make it efficient.
+        Prefer another algorithm instead.
+
+        Note that Open MPI makes assumptions that if one rank uses a device
+        buffer in a collective, then all ranks will use device buffers, so there
+        is no need to communicate before taking this branch.
+        */
+        OBJ_DESTRUCT(&convertor);
+        return han_module->previous_alltoall(sbuf, scount, sdtype, rbuf, rcount, rdtype,
+                                             comm, han_module->previous_alltoall_module);
+    }
+
+
 
     /* Create the subcommunicators */
     if( OMPI_SUCCESS != mca_coll_han_comm_create_new(comm, han_module) ) {
@@ -107,12 +149,11 @@ int mca_coll_han_alltoall_using_smsc(
                                              comm, han_module->previous_alltoall_module);
     }
 
-    int rc, send_needs_bounce, ii_push_data;
+    int rc, ii_push_data;
     size_t sndsize;
     MPI_Aint sextent, rextent, lb;
-    char *send_bounce;
-    opal_convertor_t convertor;
-    size_t packed_size = 0, packed_size_tmp;
+    char *send_bounce = NULL;
+    size_t packed_size_tmp;
     int use_isend;
     void *gather_buf_in[4];
     int up_rank;
@@ -139,22 +180,6 @@ int mca_coll_han_alltoall_using_smsc(
         fanout = 1;
     }
     if (fanout > up_size) { fanout = up_size; }
-
-    OBJ_CONSTRUCT( &convertor, opal_convertor_t );
-
-
-    send_needs_bounce = 0;
-    /* get converter for copying to one of the leader ranks, and get packed size: */
-    opal_convertor_copy_and_prepare_for_send(ompi_mpi_local_convertor, &sdtype->super, scount, sbuf, 0, &convertor);
-    send_needs_bounce |= 0 != opal_convertor_on_device(&convertor);
-    send_needs_bounce |= opal_convertor_need_buffers(&convertor);
-    opal_convertor_cleanup(&convertor);
-
-    opal_convertor_copy_and_prepare_for_recv(ompi_mpi_local_convertor, &rdtype->super, rcount, rbuf, 0, &convertor);
-    send_needs_bounce |= 0 != opal_convertor_on_device(&convertor);
-    send_needs_bounce |= opal_convertor_need_buffers(&convertor);
-    opal_convertor_get_packed_size( &convertor, &packed_size );
-    opal_convertor_cleanup(&convertor);
 
     /*
       Because push-mode needs extra synchronizations, we'd like to avoid it,
