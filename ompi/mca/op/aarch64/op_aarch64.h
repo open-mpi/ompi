@@ -24,6 +24,12 @@
 
 BEGIN_C_DECLS
 
+#if defined(OMPI_MCA_OP_SVE_EXTRA_FLAGS)
+#define SVE_ATTR __attribute__ ((__target__ ("+sve")))
+#else
+#define SVE_ATTR
+#endif
+
 /**
  * Derive a struct from the base op component struct, allowing us to
  * cache some component-specific information on our well-known
