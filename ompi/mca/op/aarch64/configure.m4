@@ -73,7 +73,7 @@ AC_DEFUN([MCA_ompi_op_aarch64_CONFIG],[
                             [op_cv_neon_fp_support=no])])])
 
     
-                  #
+            #
            # Check for SVE support
            #
            AC_CACHE_CHECK([for SVE support], [op_cv_sve_support], [
@@ -131,7 +131,6 @@ int main(void) {
              ])
            ])
 
-           # restore the language after our C tests
            AC_LANG_POP
 ])
     AM_CONDITIONAL([MCA_BUILD_ompi_op_has_neon_support],
@@ -140,13 +139,10 @@ int main(void) {
                    [test "$op_cv_neon_fp_support" = "yes"])
     AM_CONDITIONAL([MCA_BUILD_ompi_op_has_sve_support],
                    [test "$op_cv_sve_support" = "yes"])
-    AM_CONDITIONAL([MCA_BUILD_ompi_op_sve_add_flags],
-                   [test "$op_cv_sve_add_flags" = "yes"])
 
     AC_SUBST(MCA_BUILD_ompi_op_has_neon_support)
     AC_SUBST(MCA_BUILD_ompi_op_has_neon_fp_support)
     AC_SUBST(MCA_BUILD_ompi_op_has_sve_support)
-    AC_SUBST(MCA_BUILD_ompi_op_sve_add_flags)
 
     AS_IF([test "$op_cv_neon_support" = "yes"],
           [AC_DEFINE([OMPI_MCA_OP_HAVE_NEON], [1],[NEON supported in the current build])])
