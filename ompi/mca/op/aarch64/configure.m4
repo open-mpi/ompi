@@ -13,7 +13,7 @@
 #
 
 # MCA_ompi_op_arm_CONFIG([action-if-can-compile],
-#		         [action-if-cant-compile])
+#                [action-if-cant-compile])
 # ------------------------------------------------
 AC_DEFUN([MCA_ompi_op_aarch64_CONFIG],[
     AC_CONFIG_FILES([ompi/mca/op/aarch64/Makefile])

@@ -137,7 +137,7 @@ _Generic((*(out)), \
     }
 #elif defined(GENERATE_SVE_CODE)
 #define OP_AARCH64_FUNC(name, type_name, type_size, type_cnt, type, op)                 \
-    SVE_ATTR                                                                            \    
+    SVE_ATTR                                                                            \
     static void OP_CONCAT(ompi_op_aarch64_2buff_##name##_##type##type_size##_t, APPEND) \
                             (const void *_in, void *_out, int *count,                   \
                              struct ompi_datatype_t **dtype,                            \
