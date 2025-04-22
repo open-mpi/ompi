@@ -327,7 +327,7 @@ struct mca_btl_uct_tl_t {
     int max_device_contexts;
 
     /** array of device contexts */
-    mca_btl_uct_device_context_t **uct_dev_contexts;
+    mca_btl_uct_device_context_t *uct_dev_contexts[MCA_BTL_UCT_MAX_WORKERS];
 
     /** tl index. this is used to differentiate (if there is any difference)
      * between rdma and am endpoints */

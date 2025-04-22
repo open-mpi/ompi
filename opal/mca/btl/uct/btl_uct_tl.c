@@ -160,7 +160,6 @@ static void mca_btl_uct_tl_destructor(mca_btl_uct_tl_t *tl)
         OBJ_RELEASE(tl->uct_md);
     }
 
-    free(tl->uct_dev_contexts);
     free(tl->uct_tl_name);
     free(tl->uct_dev_name);
 
@@ -246,7 +245,10 @@ static int mca_btl_uct_setup_connection_tl(mca_btl_uct_module_t *module)
         return OPAL_ERR_NOT_SUPPORTED;
     }
 
-    ucs_status = uct_iface_set_am_handler(module->conn_tl->uct_dev_contexts[0]->uct_iface,
+    mca_btl_uct_device_context_t *context = mca_btl_uct_module_get_tl_context_specific(module, module->conn_tl,
+                                                                                       /*context_id=*/0);
+
+    ucs_status = uct_iface_set_am_handler(context->uct_iface,
                                           MCA_BTL_UCT_CONNECT_RDMA, mca_btl_uct_conn_req_cb, module,
                                           UCT_CB_FLAG_ASYNC);
     if (UCS_OK != ucs_status) {
@@ -377,7 +379,7 @@ mca_btl_uct_device_context_t *mca_btl_uct_context_create(mca_btl_uct_module_t *m
         return NULL;
     }
 
-    if (context_id > 0 && tl == module->am_tl) {
+    if (tl == module->am_tl) {
         BTL_VERBOSE(("installing AM handler for tl %p context id %d", (void *) tl, context_id));
         uct_iface_set_am_handler(context->uct_iface, MCA_BTL_UCT_FRAG, mca_btl_uct_am_handler,
                                  context, MCA_BTL_UCT_CB_FLAG_SYNC);
@@ -433,12 +435,6 @@ static mca_btl_uct_tl_t *mca_btl_uct_create_tl(mca_btl_uct_module_t *module, mca
     tl->uct_dev_name = strdup(tl_desc->dev_name);
     tl->priority = priority;
 
-    tl->uct_dev_contexts = calloc(MCA_BTL_UCT_MAX_WORKERS, sizeof(tl->uct_dev_contexts[0]));
-    if (NULL == tl->uct_dev_contexts) {
-        OBJ_RELEASE(tl);
-        return NULL;
-    }
-
     (void) uct_md_iface_config_read(md->uct_md, tl_desc->tl_name, NULL, NULL, &tl->uct_tl_config);
 
     int rc = mca_btl_uct_populate_tl_attr(module, tl);
@@ -491,15 +487,8 @@ static void mca_btl_uct_set_tl_rdma(mca_btl_uct_module_t *module, mca_btl_uct_tl
 static void mca_btl_uct_set_tl_am(mca_btl_uct_module_t *module, mca_btl_uct_tl_t *tl)
 {
     BTL_VERBOSE(("tl %s is suitable for active-messaging", tl->uct_tl_name));
-
-    if (module->rdma_tl == tl) {
-        module->shared_endpoints = true;
-    }
     module->am_tl = tl;
     OBJ_RETAIN(tl);
-
-    uct_iface_set_am_handler(tl->uct_dev_contexts[0]->uct_iface, MCA_BTL_UCT_FRAG,
-                             mca_btl_uct_am_handler, tl->uct_dev_contexts[0], UCT_CB_FLAG_ASYNC);
 
     tl->tl_index = (module->rdma_tl && tl != module->rdma_tl) ? 1 : 0;
     module->comm_tls[tl->tl_index] = tl;
@@ -580,12 +569,6 @@ static int mca_btl_uct_evaluate_tl(mca_btl_uct_module_t *module, mca_btl_uct_tl_
         module->super.btl_latency = 1;
     }
 
-    if (tl == module->rdma_tl || tl == module->am_tl || tl == module->conn_tl) {
-        /* make sure progress is enabled on the default context now that we know this TL will be
-         * used */
-        mca_btl_uct_context_enable_progress(tl->uct_dev_contexts[0]);
-    }
-
     return OPAL_SUCCESS;
 }
 
@@ -629,7 +612,6 @@ int mca_btl_uct_query_tls(mca_btl_uct_module_t *module, mca_btl_uct_md_t *md,
                 OBJ_RELEASE(tl);
 
                 if (OPAL_SUCCESS == rc) {
-                    mca_btl_uct_context_enable_progress(tl->uct_dev_contexts[0]);
                     return OPAL_SUCCESS;
                 }
 

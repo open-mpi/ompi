@@ -275,9 +275,11 @@ static size_t mca_btl_uct_module_modex_size(mca_btl_uct_module_t *module)
     return modex_size;
 }
 
-static size_t mca_btl_uct_tl_modex_pack(mca_btl_uct_tl_t *tl, uint8_t *modex_data)
+static size_t mca_btl_uct_tl_modex_pack(mca_btl_uct_module_t *module, mca_btl_uct_tl_t *tl,
+                                        uint8_t *modex_data)
 {
-    mca_btl_uct_device_context_t *dev_context = tl->uct_dev_contexts[0];
+    mca_btl_uct_device_context_t *dev_context =
+        mca_btl_uct_module_get_tl_context_specific(module, tl, /*context_id=*/0);
     size_t modex_size = mca_btl_uct_tl_modex_size(tl);
 
     *((uint32_t *) modex_data) = (uint32_t) modex_size;
@@ -316,16 +318,16 @@ static uint8_t *mca_btl_uct_modex_pack(mca_btl_uct_module_t *module, uint8_t *mo
     modex_data += name_len + 1;
 
     if (module->rdma_tl) {
-        modex_data += mca_btl_uct_tl_modex_pack(module->rdma_tl, modex_data);
+        modex_data += mca_btl_uct_tl_modex_pack(module, module->rdma_tl, modex_data);
     }
 
     if (module->am_tl && module->am_tl != module->rdma_tl) {
-        modex_data += mca_btl_uct_tl_modex_pack(module->am_tl, modex_data);
+        modex_data += mca_btl_uct_tl_modex_pack(module, module->am_tl, modex_data);
     }
 
     if (module->conn_tl && module->conn_tl != module->rdma_tl
         && module->conn_tl != module->am_tl) {
-        modex_data += mca_btl_uct_tl_modex_pack(module->conn_tl, modex_data);
+        modex_data += mca_btl_uct_tl_modex_pack(module, module->conn_tl, modex_data);
     }
 
     return modex_data;
