@@ -370,13 +370,18 @@ int mca_io_ompio_file_write_all_begin (ompi_file_t *fh,
 
     data = (mca_common_ompio_data_t *) fh->f_io_selected_data;
     fp = &data->ompio_fh;
-    if ( true == fp->f_split_coll_in_use ) {
-	printf("Only one split collective I/O operation allowed per file handle at any given point in time!\n");
-	return MPI_ERR_OTHER;
+
+    OPAL_THREAD_LOCK(&fh->f_lock);
+    if (true == fp->f_split_coll_in_use) {
+        printf("Only one split collective I/O operation allowed per file handle at any given point in time!\n");
+        OPAL_THREAD_UNLOCK(&fh->f_lock);
+        return MPI_ERR_OTHER;
     }
-    /* No need for locking fh->f_lock, that is done in file_iwrite_all */
-    ret = mca_io_ompio_file_iwrite_all ( fh, buf, count, datatype, &fp->f_split_coll_req );
     fp->f_split_coll_in_use = true;
+    OPAL_THREAD_UNLOCK(&fh->f_lock);
+
+    /* No need for locking fh->f_lock the operation itself, that is done in io_ompio_file_iwrite_all */
+    ret = mca_io_ompio_file_iwrite_all ( fh, buf, count, datatype, &fp->f_split_coll_req );
 
     return ret;
 }
@@ -412,14 +417,15 @@ int mca_io_ompio_file_write_at_all_begin (ompi_file_t *fh,
     data = (mca_common_ompio_data_t *) fh->f_io_selected_data;
     fp = &data->ompio_fh;
 
-    if ( true == fp->f_split_coll_in_use ) {
-	printf("Only one split collective I/O operation allowed per file handle at any given point in time!\n");
-	return MPI_ERR_REQUEST;
-    }
     OPAL_THREAD_LOCK(&fh->f_lock);
+    if (true == fp->f_split_coll_in_use) {
+        printf("Only one split collective I/O operation allowed per file handle at any given point in time!\n");
+        OPAL_THREAD_UNLOCK(&fh->f_lock);
+        return MPI_ERR_OTHER;
+    }
+    fp->f_split_coll_in_use = true;
     ret = mca_common_ompio_file_iwrite_at_all ( fp, offset, buf, count, datatype, &fp->f_split_coll_req );
     OPAL_THREAD_UNLOCK(&fh->f_lock);
-    fp->f_split_coll_in_use = true;
 
     return ret;
 }
