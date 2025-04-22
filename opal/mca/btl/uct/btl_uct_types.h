@@ -154,9 +154,6 @@ struct mca_btl_uct_device_context_t {
     /** UCT interface handle */
     uct_iface_h uct_iface;
 
-    /** interface attributes */
-    uct_iface_attr_t uct_iface_attr;
-
     /** RDMA completions */
     opal_free_list_t rdma_completions;
 
@@ -335,12 +332,13 @@ struct mca_btl_uct_tl_t {
     /** tl index. this is used to differentiate (if there is any difference)
      * between rdma and am endpoints */
     int tl_index;
+
+    /** interface attributes */
+    uct_iface_attr_t uct_iface_attr;
 };
 
 typedef struct mca_btl_uct_tl_t mca_btl_uct_tl_t;
 OBJ_CLASS_DECLARATION(mca_btl_uct_tl_t);
-
-#    define MCA_BTL_UCT_TL_ATTR(tl, context_id) (tl)->uct_dev_contexts[(context_id)]->uct_iface_attr
 
 struct mca_btl_uct_pending_connection_request_t {
     opal_list_item_t super;

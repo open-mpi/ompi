@@ -246,14 +246,14 @@ static size_t mca_btl_uct_tl_modex_size(mca_btl_uct_tl_t *tl)
 {
     const size_t size = strlen(tl->uct_tl_name) + 1;
 
-    if (MCA_BTL_UCT_TL_ATTR(tl, 0).cap.flags & UCT_IFACE_FLAG_CONNECT_TO_IFACE) {
+    if (tl->uct_iface_attr.cap.flags & UCT_IFACE_FLAG_CONNECT_TO_IFACE) {
         /* pad out to a multiple of 4 bytes */
-        return (4 + 3 + size + MCA_BTL_UCT_TL_ATTR(tl, 0).device_addr_len
-                + MCA_BTL_UCT_TL_ATTR(tl, 0).iface_addr_len)
+        return (4 + 3 + size + tl->uct_iface_attr.device_addr_len
+                + tl->uct_iface_attr.iface_addr_len)
                & ~3;
     }
 
-    return (4 + 3 + size + MCA_BTL_UCT_TL_ATTR(tl, 0).device_addr_len) & ~3;
+    return (4 + 3 + size + tl->uct_iface_attr.device_addr_len) & ~3;
 }
 
 static size_t mca_btl_uct_module_modex_size(mca_btl_uct_module_t *module)
@@ -292,13 +292,13 @@ static size_t mca_btl_uct_tl_modex_pack(mca_btl_uct_tl_t *tl, uint8_t *modex_dat
      * the same endpoint since we are only doing RDMA. if any of these assumptions are
      * wrong then we can't delay creating the other contexts and must include their
      * information in the modex. */
-    if (MCA_BTL_UCT_TL_ATTR(tl, 0).cap.flags & UCT_IFACE_FLAG_CONNECT_TO_IFACE) {
+    if (tl->uct_iface_attr.cap.flags & UCT_IFACE_FLAG_CONNECT_TO_IFACE) {
         uct_iface_get_address(dev_context->uct_iface, (uct_iface_addr_t *) modex_data);
-        modex_data += MCA_BTL_UCT_TL_ATTR(tl, 0).iface_addr_len;
+        modex_data += tl->uct_iface_attr.iface_addr_len;
     }
 
     uct_iface_get_device_address(dev_context->uct_iface, (uct_device_addr_t *) modex_data);
-    modex_data += MCA_BTL_UCT_TL_ATTR(tl, 0).device_addr_len;
+    modex_data += tl->uct_iface_attr.device_addr_len;
 
     return modex_size;
 }
@@ -406,10 +406,6 @@ ucs_status_t mca_btl_uct_am_handler(void *arg, void *data, size_t length, unsign
     mca_btl_uct_device_context_t *tl_context = (mca_btl_uct_device_context_t *) arg;
     mca_btl_uct_module_t *uct_btl = tl_context->uct_btl;
     mca_btl_uct_am_header_t *header = (mca_btl_uct_am_header_t *) data;
-    if (header->data.tag == 0xff) {
-        fprintf (stderr, "%d: got an invalid tag\n", getpid());
-        while (true) {}
-    }
     mca_btl_active_message_callback_t *reg = mca_btl_base_active_message_trigger + header->data.tag;
     mca_btl_base_segment_t seg = {.seg_addr = {.pval = (void *) ((intptr_t) data
                                                                  + sizeof(*header))},
@@ -424,7 +420,6 @@ ucs_status_t mca_btl_uct_am_handler(void *arg, void *data, size_t length, unsign
     tl_context->in_am_callback = true;
     reg->cbfunc(&uct_btl->super, &desc);
     tl_context->in_am_callback = false;
-    header->data.tag = 0xff;
 
     return UCS_OK;
 }

@@ -150,7 +150,7 @@ static int mca_btl_uct_endpoint_connect_iface(mca_btl_uct_module_t *uct_btl, mca
     /* easy case. just connect to the interface */
     iface_addr = (uct_iface_addr_t *) tl_data;
     device_addr = (uct_device_addr_t *) ((uintptr_t) iface_addr
-                                         + MCA_BTL_UCT_TL_ATTR(tl, tl_context->context_id)
+                                         + tl->uct_iface_attr
                                                .iface_addr_len);
 
     BTL_VERBOSE(("connecting endpoint to interface"));
@@ -270,7 +270,7 @@ static int mca_btl_uct_endpoint_get_helper_endpoint(mca_btl_uct_module_t *uct_bt
 
     uct_iface_addr_t *iface_addr = (uct_iface_addr_t *) conn_tl_data;
     uct_device_addr_t *device_addr = (uct_device_addr_t *) ((uintptr_t) conn_tl_data
-                                                            + MCA_BTL_UCT_TL_ATTR(conn_tl, 0).iface_addr_len);
+                                                            + conn_tl->uct_iface_attr.iface_addr_len);
 
     endpoint->conn_ep = OBJ_NEW(mca_btl_uct_connection_ep_t);
     if (OPAL_UNLIKELY(NULL == endpoint->conn_ep)) {
@@ -308,7 +308,7 @@ static int mca_btl_uct_endpoint_send_connection_data(
     BTL_VERBOSE(("connecting endpoint to remote endpoint"));
 
     size_t request_length = sizeof(mca_btl_uct_conn_req_t)
-                            + MCA_BTL_UCT_TL_ATTR(tl, tl_context->context_id).ep_addr_len;
+                            + tl->uct_iface_attr.ep_addr_len;
     mca_btl_uct_conn_req_t *request = alloca(request_length);
 
     /* fill in common request parameters */

@@ -72,11 +72,11 @@ static uint64_t mca_btl_uct_cap_to_btl_atomic_flag[][2] = {
 
 static void mca_btl_uct_module_set_atomic_flags(mca_btl_uct_module_t *module, mca_btl_uct_tl_t *tl)
 {
-    uint64_t cap_flags = MCA_BTL_UCT_TL_ATTR(tl, 0).cap.flags;
+    uint64_t cap_flags = tl->uct_iface_attr.cap.flags;
 
     /* NTH: only use the fetching atomics for now */
-    uint64_t atomic_flags32 = MCA_BTL_UCT_TL_ATTR(tl, 0).cap.atomic32.fop_flags;
-    uint64_t atomic_flags64 = MCA_BTL_UCT_TL_ATTR(tl, 0).cap.atomic64.fop_flags;
+    uint64_t atomic_flags32 = tl->uct_iface_attr.cap.atomic32.fop_flags;
+    uint64_t atomic_flags64 = tl->uct_iface_attr.cap.atomic64.fop_flags;
 
     uint64_t all_flags = atomic_flags64 | atomic_flags32;
 
@@ -122,7 +122,7 @@ static uint64_t mca_btl_uct_cap_to_btl_atomic_flag[][2] = {
  */
 static void mca_btl_uct_module_set_atomic_flags(mca_btl_uct_module_t *module, mca_btl_uct_tl_t *tl)
 {
-    uint64_t cap_flags = MCA_BTL_UCT_TL_ATTR(tl, 0).cap.flags;
+    uint64_t cap_flags = tl->uct_iface_attr.cap.flags;
 
     module->super.btl_atomic_flags = 0;
 
@@ -269,6 +269,53 @@ static void mca_btl_uct_context_enable_progress(mca_btl_uct_device_context_t *co
     }
 }
 
+static int mca_btl_uct_populate_tl_attr(mca_btl_uct_module_t *module, mca_btl_uct_tl_t *tl) {
+#if UCT_API >= UCT_VERSION(1, 6)
+    uct_iface_params_t iface_params = {.field_mask = UCT_IFACE_PARAM_FIELD_OPEN_MODE
+                                                     | UCT_IFACE_PARAM_FIELD_DEVICE,
+                                       .open_mode = UCT_IFACE_OPEN_MODE_DEVICE,
+                                       .mode = {.device = {.tl_name = tl->uct_tl_name,
+                                                           .dev_name = tl->uct_dev_name}}};
+#else
+    uct_iface_params_t iface_params = {.rndv_cb = NULL,
+                                       .eager_cb = NULL,
+                                       .stats_root = NULL,
+                                       .rx_headroom = 0,
+                                       .open_mode = UCT_IFACE_OPEN_MODE_DEVICE,
+                                       .mode = {.device = {.tl_name = tl->uct_tl_name,
+                                                           .dev_name = tl->uct_dev_name}}};
+#endif
+    ucs_status_t ucs_status;
+
+    /* do the bare minimum to get tl attributes */
+    uct_worker_h uct_worker;
+    ucs_status = uct_worker_create(module->ucs_async, UCS_THREAD_MODE_SINGLE, &uct_worker);
+    if (OPAL_UNLIKELY(UCS_OK != ucs_status)) {
+        BTL_VERBOSE(("could not create a UCT worker"));
+        return OPAL_ERROR;
+    }
+
+    uct_iface_h uct_iface;
+    ucs_status = uct_iface_open(tl->uct_md->uct_md, uct_worker, &iface_params,
+                                tl->uct_tl_config, &uct_iface);
+    if (OPAL_UNLIKELY(UCS_OK != ucs_status)) {
+        BTL_VERBOSE(("could not open UCT interface. error code: %d", ucs_status));
+        uct_worker_destroy(uct_worker);
+        return OPAL_ERROR;
+    }
+
+    /* only need to query one of the interfaces to get the attributes */
+    ucs_status = uct_iface_query(uct_iface, &tl->uct_iface_attr);
+    if (UCS_OK != ucs_status) {
+        BTL_VERBOSE(("Error querying UCT interface"));
+        uct_worker_destroy(uct_worker);
+        return OPAL_ERROR;
+    }
+
+    uct_iface_close(uct_iface);
+    return OPAL_SUCCESS;
+}
+
 mca_btl_uct_device_context_t *mca_btl_uct_context_create(mca_btl_uct_module_t *module,
                                                          mca_btl_uct_tl_t *tl, int context_id,
                                                          bool enable_progress)
@@ -326,14 +373,6 @@ mca_btl_uct_device_context_t *mca_btl_uct_context_create(mca_btl_uct_module_t *m
                                 tl->uct_tl_config, &context->uct_iface);
     if (OPAL_UNLIKELY(UCS_OK != ucs_status)) {
         BTL_VERBOSE(("could not open UCT interface. error code: %d", ucs_status));
-        mca_btl_uct_context_destroy(context);
-        return NULL;
-    }
-
-    /* only need to query one of the interfaces to get the attributes */
-    ucs_status = uct_iface_query(context->uct_iface, &context->uct_iface_attr);
-    if (UCS_OK != ucs_status) {
-        BTL_VERBOSE(("Error querying UCT interface"));
         mca_btl_uct_context_destroy(context);
         return NULL;
     }
@@ -402,16 +441,14 @@ static mca_btl_uct_tl_t *mca_btl_uct_create_tl(mca_btl_uct_module_t *module, mca
 
     (void) uct_md_iface_config_read(md->uct_md, tl_desc->tl_name, NULL, NULL, &tl->uct_tl_config);
 
-    /* always create a 0 context (needed to query) */
-    tl->uct_dev_contexts[0] = mca_btl_uct_context_create(module, tl, 0, false);
-    if (NULL == tl->uct_dev_contexts[0]) {
-        BTL_VERBOSE(("could not create a uct device context"));
+    int rc = mca_btl_uct_populate_tl_attr(module, tl);
+    if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
         OBJ_RELEASE(tl);
         return NULL;
     }
 
     BTL_VERBOSE(("Interface CAPS for tl %s::%s: 0x%lx", module->md_name, tl_desc->tl_name,
-                 (unsigned long) MCA_BTL_UCT_TL_ATTR(tl, 0).cap.flags));
+                 (unsigned long) tl->uct_iface_attr.cap.flags));
 
     return tl;
 }
@@ -422,23 +459,23 @@ static void mca_btl_uct_set_tl_rdma(mca_btl_uct_module_t *module, mca_btl_uct_tl
 
     mca_btl_uct_module_set_atomic_flags(module, tl);
 
-    module->super.btl_get_limit = MCA_BTL_UCT_TL_ATTR(tl, 0).cap.get.max_zcopy;
-    if (MCA_BTL_UCT_TL_ATTR(tl, 0).cap.get.max_bcopy) {
+    module->super.btl_get_limit = tl->uct_iface_attr.cap.get.max_zcopy;
+    if (tl->uct_iface_attr.cap.get.max_bcopy) {
         module->super.btl_get_alignment = 0;
-        module->super.btl_get_local_registration_threshold = MCA_BTL_UCT_TL_ATTR(tl, 0)
+        module->super.btl_get_local_registration_threshold = tl->uct_iface_attr
                                                                  .cap.get.max_bcopy;
     } else {
         /* this is overkill in terms of alignment but we have no way to enforce a minimum get size
          */
         module->super.btl_get_alignment = opal_next_poweroftwo_inclusive(
-            MCA_BTL_UCT_TL_ATTR(tl, 0).cap.get.min_zcopy);
+            tl->uct_iface_attr.cap.get.min_zcopy);
     }
 
-    module->super.btl_put_limit = MCA_BTL_UCT_TL_ATTR(tl, 0).cap.put.max_zcopy;
+    module->super.btl_put_limit = tl->uct_iface_attr.cap.put.max_zcopy;
     module->super.btl_put_alignment = 0;
 
     /* no registration needed when using short/bcopy put */
-    module->super.btl_put_local_registration_threshold = MCA_BTL_UCT_TL_ATTR(tl, 0)
+    module->super.btl_put_local_registration_threshold = tl->uct_iface_attr
                                                              .cap.put.max_bcopy;
 
     module->rdma_tl = tl;
@@ -470,10 +507,10 @@ static void mca_btl_uct_set_tl_am(mca_btl_uct_module_t *module, mca_btl_uct_tl_t
         tl->max_device_contexts = mca_btl_uct_component.num_contexts_per_module;
     }
 
-    module->super.btl_eager_limit = MCA_BTL_UCT_TL_ATTR(tl, 0).cap.am.max_bcopy
+    module->super.btl_eager_limit = tl->uct_iface_attr.cap.am.max_bcopy
                                     - sizeof(mca_btl_uct_am_header_t);
-    if (MCA_BTL_UCT_TL_ATTR(tl, 0).cap.flags & UCT_IFACE_FLAG_AM_ZCOPY) {
-        module->super.btl_max_send_size = MCA_BTL_UCT_TL_ATTR(tl, 0).cap.am.max_zcopy
+    if (tl->uct_iface_attr.cap.flags & UCT_IFACE_FLAG_AM_ZCOPY) {
+        module->super.btl_max_send_size = tl->uct_iface_attr.cap.am.max_zcopy
                                           - sizeof(mca_btl_uct_am_header_t);
     } else {
         module->super.btl_max_send_size = module->super.btl_eager_limit;
@@ -524,20 +561,20 @@ static int mca_btl_uct_evaluate_tl(mca_btl_uct_module_t *module, mca_btl_uct_tl_
     }
 
     if (tl == module->rdma_tl || tl == module->am_tl) {
-        BTL_VERBOSE(("tl has flags 0x%" PRIx64, MCA_BTL_UCT_TL_ATTR(tl, 0).cap.flags));
-        module->super.btl_flags |= mca_btl_uct_module_flags(MCA_BTL_UCT_TL_ATTR(tl, 0).cap.flags);
+        BTL_VERBOSE(("tl has flags 0x%" PRIx64, tl->uct_iface_attr.cap.flags));
+        module->super.btl_flags |= mca_btl_uct_module_flags(tl->uct_iface_attr.cap.flags);
 
         /* the bandwidth and latency numbers relate to both rdma and active messages. need to
          * come up with a better estimate. */
 
         /* UCT bandwidth is in bytes/sec, BTL is in MB/sec */
 #if UCT_API >= UCT_VERSION(1, 7)
-        module->super.btl_bandwidth = (uint32_t)((MCA_BTL_UCT_TL_ATTR(tl, 0).bandwidth.dedicated
-                                                  + MCA_BTL_UCT_TL_ATTR(tl, 0).bandwidth.shared
+        module->super.btl_bandwidth = (uint32_t)((tl->uct_iface_attr.bandwidth.dedicated
+                                                  + tl->uct_iface_attr.bandwidth.shared
                                                         / (opal_process_info.num_local_peers + 1))
                                                  / 1048576.0);
 #else
-        module->super.btl_bandwidth = (uint32_t)(MCA_BTL_UCT_TL_ATTR(tl, 0).bandwidth / 1048576.0);
+        module->super.btl_bandwidth = (uint32_t)(tl->uct_iface_attr.bandwidth / 1048576.0);
 #endif
         /* TODO -- figure out how to translate UCT latency to us */
         module->super.btl_latency = 1;
