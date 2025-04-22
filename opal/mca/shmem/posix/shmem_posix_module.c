@@ -17,6 +17,7 @@
  * Copyright (c) 2019      Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2022      IBM Corporation. All rights reserved
+ * Copyright (c) 2025      Nanook Consulting  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -30,15 +31,9 @@
 #ifdef HAVE_FCNTL_H
 #    include <fcntl.h>
 #endif /* HAVE_FCNTL_H */
-#if OPAL_HAVE_SOLARIS && !defined(_POSIX_C_SOURCE)
-#    define _POSIX_C_SOURCE 200112L /* Required for shm_{open,unlink} decls */
+#ifdef HAVE_SYS_MMAN_H
 #    include <sys/mman.h>
-#    undef _POSIX_C_SOURCE
-#else
-#    ifdef HAVE_SYS_MMAN_H
-#        include <sys/mman.h>
-#    endif /* HAVE_SYS_MMAN_H */
-#endif
+#endif /* HAVE_SYS_MMAN_H */
 #ifdef HAVE_UNISTD_H
 #    include <unistd.h>
 #endif /* HAVE_UNISTD_H */

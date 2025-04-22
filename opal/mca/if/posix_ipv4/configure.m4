@@ -3,6 +3,7 @@
 # Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2015      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2025      Nanook Consulting  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -25,7 +26,7 @@ AC_DEFUN([MCA_opal_if_posix_ipv4_CONFIG], [
     OPAL_VAR_SCOPE_PUSH([opal_if_posix_ipv4_happy])
     opal_if_posix_ipv4_happy=no
 
-    AC_REQUIRE([OPAL_CHECK_OS_FLAVORS])
+    AC_REQUIRE([OAC_CHECK_OS_FLAVORS])
 
     # If we found struct sockaddr and we're NOT on most of the BSDs,
     # we're happy.  I.e., if posix but not:

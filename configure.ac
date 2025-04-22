@@ -29,6 +29,7 @@
 # Copyright (c) 2019      Triad National Security, LLC. All rights
 #                         reserved.
 # Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
+# Copyright (c) 2025      Nanook Consulting  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -995,7 +996,7 @@ AC_CACHE_SAVE
 opal_show_title "System-specific tests"
 
 ##################################
-OPAL_CHECK_OS_FLAVORS
+OAC_CHECK_OS_FLAVORS
 
 
 

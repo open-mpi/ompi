@@ -3,6 +3,7 @@
 # Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2015      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2025      Nanook Consulting  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -22,7 +23,7 @@ AC_DEFUN([MCA_opal_if_linux_ipv6_COMPILE_MODE], [
 AC_DEFUN([MCA_opal_if_linux_ipv6_CONFIG], [
     AC_CONFIG_FILES([opal/mca/if/linux_ipv6/Makefile])
 
-    AC_REQUIRE([OPAL_CHECK_OS_FLAVORS])
+    AC_REQUIRE([OAC_CHECK_OS_FLAVORS])
 
     AC_MSG_CHECKING([if we are on Linux with TCP])
     # If we have struct sockaddr and we're on Linux, then we're
