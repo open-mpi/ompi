@@ -369,7 +369,7 @@ AC_DEFUN([OPAL_INTL_POSIX_THREADS_SPECIAL_FLAGS],[
 #
 # Put -mt before -mthreads because HP-UX aCC will properly compile
 # with -mthreads (reading as -mt), but emit a warning about unknown
-# flags threads.  Stupid compilers.
+# flags "hreads".  Stupid compilers.
 OPAL_VAR_SCOPE_PUSH([pflags])
 
 pflags="-Kthread -kthread -pthread -pthreads -mt -mthreads"
