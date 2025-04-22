@@ -427,6 +427,7 @@ static void mca_io_ompio_file_get_eof_offset (ompio_file_t *fh,
         }
         
         offset = prev_offset;
+        assert(index_in_file_view > 0);
         blocklen = fh->f_fview.f_decoded_iov[index_in_file_view-1].iov_len;
         while (offset <= in_offset && k <= blocklen)  {
             prev_offset = offset;
