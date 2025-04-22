@@ -205,6 +205,7 @@ int mca_common_ompio_file_read_pipelined (ompio_file_t *fh, void *buf,
         tbuf2 = mca_common_ompio_alloc_buf (fh, bytes_per_cycle);
         if (NULL == tbuf2) {
             opal_output(1, "common_ompio: error allocating memory\n");
+            opal_convertor_cleanup (&convertor);
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
         unpackbuf = tbuf2;

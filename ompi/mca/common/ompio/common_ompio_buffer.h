@@ -29,6 +29,7 @@
     _tbuf = mca_common_ompio_alloc_buf (_fh, _tmp_buf_size==0 ? _max_data : _tmp_buf_size); \
     if ( NULL == _tbuf ) {                                              \
         opal_output(1, "common_ompio: error allocating memory\n");      \
+        opal_convertor_cleanup (_convertor);                            \
         return OMPI_ERR_OUT_OF_RESOURCE;                                \
     }                                                                   \
     if (NULL != _decoded_iov) {                                         \
@@ -43,6 +44,7 @@
     _tbuf = mca_common_ompio_alloc_buf (_fh, _tmp_buf_size==0 ? _max_data : _tmp_buf_size); \
     if ( NULL == _tbuf ) {                                              \
         opal_output(1, "common_ompio: error allocating memory\n");      \
+        opal_convertor_cleanup (_convertor);                            \
         return OMPI_ERR_OUT_OF_RESOURCE;                                \
     }                                                                   \
     if (NULL != _decoded_iov) {                                         \
