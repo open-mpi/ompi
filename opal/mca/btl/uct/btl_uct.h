@@ -162,6 +162,11 @@ struct mca_btl_uct_component_t {
     /** alternate connection-only module that can be used if no suitable
      * connection tl is found. this is usually a tcp tl. */
     mca_btl_uct_module_t *conn_module;
+
+#if UCT_API >= UCT_VERSION(1, 7)
+    uct_component_h *uct_components;
+    unsigned num_uct_components;
+#endif
 };
 typedef struct mca_btl_uct_component_t mca_btl_uct_component_t;
 

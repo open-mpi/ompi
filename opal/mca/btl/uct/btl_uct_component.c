@@ -239,6 +239,14 @@ static int mca_btl_uct_component_close(void)
     mca_btl_uct_include_list_free (&mca_btl_uct_component.allowed_transport_list);
     mca_btl_uct_include_list_free (&mca_btl_uct_component.connection_domain_list);
 
+#if UCT_API >= UCT_VERSION(1, 7)
+    if (NULL != mca_btl_uct_component.uct_components) {
+        uct_release_component_list(mca_btl_uct_component.uct_components);
+        mca_btl_uct_component.uct_components = NULL;
+        mca_btl_uct_component.num_uct_components = 0;
+    }
+#endif
+
     return OPAL_SUCCESS;
 }
 
@@ -690,25 +698,20 @@ static mca_btl_base_module_t **mca_btl_uct_component_init(int *num_btl_modules,
     mca_btl_uct_component.module_count = 0;
 
 #if UCT_API >= UCT_VERSION(1, 7)
-    uct_component_h *components;
-    unsigned num_components;
-
-    ucs_status = uct_query_components(&components, &num_components);
+    ucs_status = uct_query_components(&mca_btl_uct_component.uct_components,
+                                      &mca_btl_uct_component.num_uct_components);
     if (UCS_OK != ucs_status) {
         BTL_ERROR(("could not query UCT components"));
         return NULL;
     }
 
     /* generate all suitable btl modules */
-    for (unsigned i = 0; i < num_components; ++i) {
-        rc = mca_btl_uct_component_process_uct_component(components[i]);
+    for (unsigned i = 0; i < mca_btl_uct_component.num_uct_components; ++i) {
+        rc = mca_btl_uct_component_process_uct_component(mca_btl_uct_component.uct_components[i]);
         if (OPAL_SUCCESS != rc) {
             break;
         }
     }
-
-    uct_release_component_list(components);
-
 #else /* UCT 1.6 and older */
     uct_md_resource_desc_t *resources;
     unsigned resource_count;
