@@ -288,7 +288,7 @@ struct mca_btl_base_endpoint_t {
     opal_proc_t *ep_proc;
 
     /** mutex to protect this structure */
-    opal_recursive_mutex_t ep_lock;
+    opal_mutex_t ep_lock;
 
     /** cached connection endpoint */
     mca_btl_uct_connection_ep_t *conn_ep;

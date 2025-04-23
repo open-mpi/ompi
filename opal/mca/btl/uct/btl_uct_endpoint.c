@@ -24,7 +24,7 @@ static void mca_btl_uct_endpoint_construct(mca_btl_uct_endpoint_t *endpoint)
     memset(endpoint->uct_eps, 0,
            sizeof(endpoint->uct_eps[0]) * mca_btl_uct_component.num_contexts_per_module);
     endpoint->conn_ep = NULL;
-    OBJ_CONSTRUCT(&endpoint->ep_lock, opal_recursive_mutex_t);
+    OBJ_CONSTRUCT(&endpoint->ep_lock, opal_mutex_t);
 }
 
 static void mca_btl_uct_endpoint_destruct(mca_btl_uct_endpoint_t *endpoint)
