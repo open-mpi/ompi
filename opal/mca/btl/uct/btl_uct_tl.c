@@ -18,6 +18,7 @@
 #include "btl_uct_device_context.h"
 #include "opal/util/argv.h"
 #include "opal/util/bit_ops.h"
+#include "opal/util/minmax.h"
 
 #if HAVE_DECL_UCT_CB_FLAG_SYNC
 #    define MCA_BTL_UCT_CB_FLAG_SYNC UCT_CB_FLAG_SYNC
@@ -70,8 +71,9 @@ static uint64_t mca_btl_uct_cap_to_btl_atomic_flag[][2] = {
     },
 };
 
-static void mca_btl_uct_module_set_atomic_flags(mca_btl_uct_module_t *module, mca_btl_uct_tl_t *tl)
+static void mca_btl_uct_module_set_atomic_flags(mca_btl_uct_module_t *module)
 {
+    mca_btl_uct_tl_t *tl = module->rdma_tl;
     uint64_t cap_flags = tl->uct_iface_attr.cap.flags;
 
     /* NTH: only use the fetching atomics for now */
@@ -120,8 +122,9 @@ static uint64_t mca_btl_uct_cap_to_btl_atomic_flag[][2] = {
  *
  * @returns equivalent BTL atomic flags
  */
-static void mca_btl_uct_module_set_atomic_flags(mca_btl_uct_module_t *module, mca_btl_uct_tl_t *tl)
+static void mca_btl_uct_module_set_atomic_flags(mca_btl_uct_module_t *module)
 {
+    mca_btl_uct_tl_t *tl = module->rdma_tl;
     uint64_t cap_flags = tl->uct_iface_attr.cap.flags;
 
     module->super.btl_atomic_flags = 0;
@@ -274,7 +277,7 @@ static void mca_btl_uct_context_enable_progress(mca_btl_uct_device_context_t *co
     }
 }
 
-static int mca_btl_uct_populate_tl_attr(mca_btl_uct_module_t *module, mca_btl_uct_tl_t *tl) {
+static int mca_btl_uct_populate_tl_attr(mca_btl_uct_tl_t *tl) {
 #if UCT_API >= UCT_VERSION(1, 6)
     uct_iface_params_t iface_params = {.field_mask = UCT_IFACE_PARAM_FIELD_OPEN_MODE
                                                      | UCT_IFACE_PARAM_FIELD_DEVICE,
@@ -309,16 +312,16 @@ static int mca_btl_uct_populate_tl_attr(mca_btl_uct_module_t *module, mca_btl_uc
         return OPAL_ERROR;
     }
 
-    /* only need to query one of the interfaces to get the attributes */
+    int rc = OPAL_SUCCESS;
     ucs_status = uct_iface_query(uct_iface, &tl->uct_iface_attr);
     if (UCS_OK != ucs_status) {
         BTL_VERBOSE(("Error querying UCT interface"));
-        uct_worker_destroy(uct_worker);
-        return OPAL_ERROR;
+        rc = OPAL_ERROR;
     }
 
     uct_iface_close(uct_iface);
-    return OPAL_SUCCESS;
+    uct_worker_destroy(uct_worker);
+    return rc;
 }
 
 mca_btl_uct_device_context_t *mca_btl_uct_context_create(mca_btl_uct_module_t *module,
@@ -383,13 +386,15 @@ mca_btl_uct_device_context_t *mca_btl_uct_context_create(mca_btl_uct_module_t *m
     }
 
     if (module != NULL && tl == module->am_tl) {
-        BTL_VERBOSE(("installing AM handler for tl %p context id %d", (void *) tl, context_id));
+        BTL_VERBOSE(("installing AM handler for tl %s::%s context id %d",
+                     tl->uct_md->md_name, tl->uct_tl_name, context_id));
         uct_iface_set_am_handler(context->uct_iface, MCA_BTL_UCT_FRAG, mca_btl_uct_am_handler,
                                  context, MCA_BTL_UCT_CB_FLAG_SYNC);
     }
 
     if (enable_progress) {
-        BTL_VERBOSE(("enabling progress for tl %p context id %d", (void *) tl, context_id));
+        BTL_VERBOSE(("enabling progress for tl %s::%s context id %d",
+                     tl->uct_md->md_name, tl->uct_tl_name, context_id));
         mca_btl_uct_context_enable_progress(context);
     }
 
@@ -413,15 +418,7 @@ void mca_btl_uct_context_destroy(mca_btl_uct_device_context_t *context)
     free(context);
 }
 
-static int tl_compare(opal_list_item_t **a, opal_list_item_t **b)
-{
-    mca_btl_uct_tl_t *tl_a = (mca_btl_uct_tl_t *) *a;
-    mca_btl_uct_tl_t *tl_b = (mca_btl_uct_tl_t *) *b;
-
-    return tl_a->priority - tl_b->priority;
-}
-
-static mca_btl_uct_tl_t *mca_btl_uct_create_tl(mca_btl_uct_module_t *module, mca_btl_uct_md_t *md,
+static mca_btl_uct_tl_t *mca_btl_uct_create_tl(mca_btl_uct_md_t *md,
                                                uct_tl_resource_desc_t *tl_desc, int priority)
 {
     mca_btl_uct_tl_t *tl = OBJ_NEW(mca_btl_uct_tl_t);
@@ -435,6 +432,7 @@ static mca_btl_uct_tl_t *mca_btl_uct_create_tl(mca_btl_uct_module_t *module, mca
 
     tl->uct_tl_name = strdup(tl_desc->tl_name);
     tl->uct_dev_name = strdup(tl_desc->dev_name);
+    tl->dev_type = tl_desc->dev_type;
     tl->priority = priority;
 
     (void) uct_md_iface_config_read(md->uct_md, tl_desc->tl_name, NULL, NULL, &tl->uct_tl_config);
@@ -446,14 +444,14 @@ static mca_btl_uct_tl_t *mca_btl_uct_create_tl(mca_btl_uct_module_t *module, mca
         return NULL;
     }
 
-    int rc = mca_btl_uct_populate_tl_attr(module, tl);
+    int rc = mca_btl_uct_populate_tl_attr(tl);
     if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
         OBJ_RELEASE(tl);
         return NULL;
     }
 
-    BTL_VERBOSE(("Interface CAPS for tl %s::%s: 0x%lx", md->md_name, tl_desc->tl_name,
-                 (unsigned long) tl->uct_iface_attr.cap.flags));
+    BTL_VERBOSE(("Interface CAPS for tl %s::%s::%s 0x%lx", md->md_name, tl_desc->tl_name,
+                 tl_desc->dev_name, (unsigned long) tl->uct_iface_attr.cap.flags));
 
     return tl;
 }
@@ -462,9 +460,12 @@ static void mca_btl_uct_set_tl_rdma(mca_btl_uct_module_t *module, mca_btl_uct_tl
 {
     BTL_VERBOSE(("tl %s is suitable for RDMA", tl->uct_tl_name));
 
-    mca_btl_uct_module_set_atomic_flags(module, tl);
+    module->rdma_tl = tl;
 
-    module->super.btl_get_limit = tl->uct_iface_attr.cap.get.max_zcopy;
+    mca_btl_uct_module_set_atomic_flags(module);
+
+    module->super.btl_get_limit = opal_min(tl->uct_iface_attr.cap.get.max_zcopy,
+                                           module->super.btl_get_limit);
     if (tl->uct_iface_attr.cap.get.max_bcopy) {
         module->super.btl_get_alignment = 0;
         module->super.btl_get_local_registration_threshold = tl->uct_iface_attr
@@ -476,17 +477,15 @@ static void mca_btl_uct_set_tl_rdma(mca_btl_uct_module_t *module, mca_btl_uct_tl
             tl->uct_iface_attr.cap.get.min_zcopy);
     }
 
-    module->super.btl_put_limit = tl->uct_iface_attr.cap.put.max_zcopy;
+    module->super.btl_put_limit = opal_min(tl->uct_iface_attr.cap.put.max_zcopy,
+                                           module->super.btl_put_limit);
     module->super.btl_put_alignment = 0;
 
     /* no registration needed when using short/bcopy put */
     module->super.btl_put_local_registration_threshold = tl->uct_iface_attr
                                                              .cap.put.max_bcopy;
 
-    module->rdma_tl = tl;
-
     tl->tl_index = (module->am_tl && tl != module->am_tl) ? 1 : 0;
-    module->comm_tls[tl->tl_index] = tl;
     if (tl->max_device_contexts <= 1) {
         tl->max_device_contexts = mca_btl_uct_component.num_contexts_per_module;
     }
@@ -498,28 +497,29 @@ static void mca_btl_uct_set_tl_am(mca_btl_uct_module_t *module, mca_btl_uct_tl_t
     module->am_tl = tl;
 
     tl->tl_index = (module->rdma_tl && tl != module->rdma_tl) ? 1 : 0;
-    module->comm_tls[tl->tl_index] = tl;
     if (tl->max_device_contexts <= 1) {
         tl->max_device_contexts = mca_btl_uct_component.num_contexts_per_module;
     }
 
-    module->super.btl_eager_limit = tl->uct_iface_attr.cap.am.max_bcopy
-                                    - sizeof(mca_btl_uct_am_header_t);
+    size_t max_eager_limit = tl->uct_iface_attr.cap.am.max_bcopy
+        - sizeof(mca_btl_uct_am_header_t);
+    size_t max_send_size = max_eager_limit;
+
     if (tl->uct_iface_attr.cap.flags & UCT_IFACE_FLAG_AM_ZCOPY) {
-        module->super.btl_max_send_size = tl->uct_iface_attr.cap.am.max_zcopy
-                                          - sizeof(mca_btl_uct_am_header_t);
-    } else {
-        module->super.btl_max_send_size = module->super.btl_eager_limit;
+        max_send_size = opal_max(max_send_size, tl->uct_iface_attr.cap.am.max_zcopy
+                                 - sizeof(mca_btl_uct_am_header_t));
     }
+
+    module->super.btl_eager_limit = opal_min(module->super.btl_eager_limit, max_eager_limit);
+    module->super.btl_max_send_size = opal_min(module->super.btl_max_send_size, max_send_size);
 }
 
-static int mca_btl_uct_set_tl_conn(mca_btl_uct_module_t *module, mca_btl_uct_tl_t *tl)
+int mca_btl_uct_enable_tl_conn(mca_btl_uct_tl_t *tl)
 {
     int rc;
 
     BTL_VERBOSE(("tl %s is suitable for making connections", tl->uct_tl_name));
 
-    module->conn_tl = tl;
     rc = mca_btl_uct_setup_connection_tl(tl);
     if (OPAL_SUCCESS != rc) {
         return rc;
@@ -534,11 +534,9 @@ static int mca_btl_uct_set_tl_conn(mca_btl_uct_module_t *module, mca_btl_uct_tl_
     return OPAL_SUCCESS;
 }
 
-static int mca_btl_uct_evaluate_tl(mca_btl_uct_module_t *module, mca_btl_uct_tl_t *tl)
+int mca_btl_uct_evaluate_tl(mca_btl_uct_module_t *module, mca_btl_uct_tl_t *tl)
 {
-    int rc;
-
-    BTL_VERBOSE(("evaluating tl %s", tl->uct_tl_name));
+    BTL_VERBOSE(("evaluating tl %s::%s", tl->uct_md->md_name, tl->uct_tl_name));
     if (NULL == module->rdma_tl && mca_btl_uct_tl_supports_rdma(tl)) {
         mca_btl_uct_set_tl_rdma(module, tl);
     }
@@ -547,16 +545,10 @@ static int mca_btl_uct_evaluate_tl(mca_btl_uct_module_t *module, mca_btl_uct_tl_
         mca_btl_uct_set_tl_am(module, tl);
     }
 
-    if (NULL == module->conn_tl && mca_btl_uct_tl_supports_conn(tl)) {
-        rc = mca_btl_uct_set_tl_conn(module, tl);
-        if (OPAL_SUCCESS != rc) {
-            return rc;
-        }
-    }
-
     if (tl == module->rdma_tl || tl == module->am_tl) {
         BTL_VERBOSE(("tl has flags 0x%" PRIx64, tl->uct_iface_attr.cap.flags));
         module->super.btl_flags |= mca_btl_uct_module_flags(tl->uct_iface_attr.cap.flags);
+        module->super.btl_flags |= MCA_BTL_FLAGS_RDMA_REMOTE_COMPLETION;
 
         /* the bandwidth and latency numbers relate to both rdma and active messages. need to
          * come up with a better estimate. */
@@ -577,106 +569,23 @@ static int mca_btl_uct_evaluate_tl(mca_btl_uct_module_t *module, mca_btl_uct_tl_
     return OPAL_SUCCESS;
 }
 
-int mca_btl_uct_query_tls(mca_btl_uct_module_t *module, mca_btl_uct_md_t *md,
-                          uct_tl_resource_desc_t *tl_descs, unsigned tl_count,
-                          bool evaluate_for_conn_only)
+int mca_btl_uct_populate_tls(mca_btl_uct_md_t *md, uct_tl_resource_desc_t *tl_descs, unsigned tl_count)
 {
-    mca_btl_uct_tl_t *tl;
+    BTL_VERBOSE(("processing %u tls in memory domain %s", tl_count, md->md_name));
 
     for (unsigned i = 0; i < tl_count; ++i) {
-        int priority = 0;
-        BTL_VERBOSE(("processing tl %s, evaluate_for_conn_only=%d", tl_descs[i].tl_name, evaluate_for_conn_only));
+        BTL_VERBOSE(("processing tl %s::%s::%s", md->md_name, tl_descs[i].tl_name, tl_descs[i].dev_name));
 
-        if (!evaluate_for_conn_only) {
-            priority = mca_btl_uct_include_list_rank (tl_descs[i].tl_name, &mca_btl_uct_component.allowed_transport_list);
-            BTL_VERBOSE(("tl filter: tl_name = %s, priority = %d", tl_descs[i].tl_name,
-                         priority));
-            if (priority < 0) {
-                continue;
-            }
-        } else if (tl_descs[i].dev_type != UCT_DEVICE_TYPE_NET) {
-            /* only network types are suitable for forming connections */
-            continue;
-        }
-
-        if (0 == strcmp(tl_descs[i].tl_name, "ud")) {
-            /* ud looks like any normal transport but we do not want to use it for anything other
-             * than connection management so ensure it gets evaluated last */
-            priority = INT_MAX;
-        }
-
-        tl = mca_btl_uct_create_tl(module, md, tl_descs + i, priority);
-
+        /* the priority will be set during module creation */
+        mca_btl_uct_tl_t *tl = mca_btl_uct_create_tl(md, tl_descs + i, /*priority=*/0);
         if (tl) {
-            if (mca_btl_uct_tl_supports_conn(tl) && evaluate_for_conn_only) {
-                BTL_VERBOSE(("evaluating tl %s for forming connections", tl_descs[i].tl_name));
-                int rc = mca_btl_uct_set_tl_conn(module, tl);
-
-                if (OPAL_SUCCESS == rc) {
-                    opal_list_append(&md->tls, &tl->super);
-                    return OPAL_SUCCESS;
-                }
-
-                BTL_VERBOSE(("tl %s cannot be used for forming connections", tl_descs[i].tl_name));
-            } else {
-                opal_list_append(&md->tls, &tl->super);
-            }
+            opal_list_append(&md->tls, &tl->super);
         }
     }
 
     if (0 == opal_list_get_size(&md->tls)) {
         BTL_VERBOSE(("no suitable tls match filter: %s", mca_btl_uct_component.allowed_transports));
         return OPAL_ERR_NOT_AVAILABLE;
-    }
-
-    opal_list_sort(&md->tls, tl_compare);
-
-    OPAL_LIST_FOREACH (tl, &md->tls, mca_btl_uct_tl_t) {
-        mca_btl_uct_evaluate_tl(module, tl);
-        if (NULL != module->am_tl && NULL != module->rdma_tl
-            && (NULL != module->conn_tl
-                || !(mca_btl_uct_tl_requires_connection_tl(module->am_tl)
-                     || mca_btl_uct_tl_requires_connection_tl(module->rdma_tl)))) {
-            /* all done */
-            break;
-        }
-    }
-
-    if (NULL == module->rdma_tl) {
-        /* no rdma tls */
-        BTL_VERBOSE(("no rdma tl matched supplied filter. disabling RDMA support"));
-
-        module->super.btl_flags &= ~MCA_BTL_FLAGS_RDMA;
-        module->super.btl_put = NULL;
-        module->super.btl_get = NULL;
-        module->super.btl_atomic_fop = NULL;
-        module->super.btl_atomic_op = NULL;
-    }
-
-    if (NULL == module->am_tl) {
-        /* no active message tls == no send/recv */
-        BTL_VERBOSE(("no active message tl matched supplied filter. disabling send/recv support"));
-
-        module->super.btl_send = NULL;
-        module->super.btl_sendi = NULL;
-        module->super.btl_alloc = NULL;
-        module->super.btl_free = NULL;
-    }
-
-    if (!(NULL != module->am_tl && mca_btl_uct_tl_requires_connection_tl(module->am_tl))
-        && !(NULL != module->rdma_tl && mca_btl_uct_tl_requires_connection_tl(module->rdma_tl))
-        && module->conn_tl) {
-        /* no connection tl needed for selected transports */
-        module->conn_tl = NULL;
-    }
-
-    /* clear out unused tls */
-    mca_btl_uct_tl_t *next;
-    OPAL_LIST_FOREACH_SAFE(tl, next, &md->tls, mca_btl_uct_tl_t) {
-        if (tl != module->conn_tl && tl != module->rdma_tl && tl != module->am_tl) {
-            opal_list_remove_item(&md->tls, &tl->super);
-            OBJ_RELEASE(tl);
-        }
     }
 
     return OPAL_SUCCESS;

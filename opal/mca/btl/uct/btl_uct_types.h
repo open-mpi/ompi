@@ -10,11 +10,16 @@
  * $HEADER$
  */
 
+#include <uct/api/uct.h>
+
 #if !defined(BTL_UCT_TYPES_H)
 #    define BTL_UCT_TYPES_H
 
 #    include "opal/mca/btl/btl.h"
 
+#include "opal/class/opal_fifo.h"
+#include "opal/class/opal_list.h"
+#include "opal/class/opal_object.h"
 #include "opal/mca/timer/base/base.h"
 
 /* forward declarations */
@@ -65,7 +70,11 @@ typedef struct mca_btl_uct_modex_t mca_btl_uct_modex_t;
  */
 struct mca_btl_uct_md_t {
     /** make this an opal object */
-    opal_object_t super;
+    opal_list_item_t super;
+
+    /** if true none of the tls in this domain will be used
+     * for communication */
+    bool connection_only_domain;
 
     /** name of the memory domain backing this module */
     char *md_name;
@@ -75,6 +84,9 @@ struct mca_btl_uct_md_t {
 
     /** UCT memory domain handle */
     uct_md_h uct_md;
+
+    /** memory domain attributes */
+    uct_md_attr_t md_attr;
 
 #if UCT_API >= UCT_VERSION(1, 7)
     uct_component_h uct_component;
@@ -336,6 +348,9 @@ struct mca_btl_uct_tl_t {
     /** device name for this tl (used for creating device contexts) */
     char *uct_dev_name;
 
+    /** UCT device type from the tl description */
+    uct_device_type_t dev_type;
+
     /** maximum number of device contexts that can be created */
     int max_device_contexts;
 
@@ -372,12 +387,31 @@ OBJ_CLASS_DECLARATION(mca_btl_uct_pending_connection_request_t);
  *
  */
 struct mca_btl_uct_include_list_t {
+    opal_object_t super;
+
     /** argv-style (NULL terminated) array of strings */
     char **list;
     /** is an inclusive list (vs exclusive) */
     bool include;
 };
 typedef struct mca_btl_uct_include_list_t mca_btl_uct_include_list_t;
+OBJ_CLASS_DECLARATION(mca_btl_uct_include_list_t);
 
+struct mca_btl_uct_tl_modex_t {
+    /** total size of this modex */
+    uint16_t size;
+    char tl_name[UCT_TL_NAME_MAX];
+    uint8_t data[];
+} __opal_attribute_packed__;
+typedef struct mca_btl_uct_tl_modex_t mca_btl_uct_tl_modex_t;
+
+struct mca_btl_uct_md_modex_t {
+    /** total size of this modex */
+    uint16_t size;
+    uint16_t module_index;
+    char md_name[UCT_MD_NAME_MAX];
+    uint8_t data[];
+} __opal_attribute_packed__;
+typedef struct mca_btl_uct_md_modex_t mca_btl_uct_md_modex_t;
 
 #endif /* !defined(BTL_UCT_TYPES_H) */

@@ -233,7 +233,7 @@ int mca_btl_uct_send_frag(mca_btl_uct_module_t *uct_btl, mca_btl_uct_base_frag_t
     }
 
     OPAL_THREAD_LOCK(&uct_btl->lock);
-    mca_btl_uct_append_pending_frag(uct_btl, frag, context, true);
+    mca_btl_uct_append_pending_frag(uct_btl, frag, context, /*ready=*/true);
     OPAL_THREAD_UNLOCK(&uct_btl->lock);
 
     return OPAL_SUCCESS;
@@ -260,14 +260,14 @@ int mca_btl_uct_send(mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoi
         OPAL_THREAD_LOCK(&uct_btl->lock);
         /* check one more time in case another thread is completing the connection now */
         if (OPAL_SUCCESS != mca_btl_uct_endpoint_test_am(uct_btl, endpoint, context, &ep_handle)) {
-            mca_btl_uct_append_pending_frag(uct_btl, frag, context, false);
+            mca_btl_uct_append_pending_frag(uct_btl, frag, context, /*ready=*/false);
             OPAL_THREAD_UNLOCK(&uct_btl->lock);
             return OPAL_SUCCESS;
         }
         OPAL_THREAD_UNLOCK(&uct_btl->lock);
     }
 
-    return mca_btl_uct_send_frag(uct_btl, frag, true);
+    return mca_btl_uct_send_frag(uct_btl, frag, /*append=*/true);
 }
 
 struct mca_btl_uct_sendi_pack_args_t {

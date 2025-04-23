@@ -85,12 +85,6 @@ struct mca_btl_uct_module_t {
     /** transport for RDMA/AMOs */
     mca_btl_uct_tl_t *rdma_tl;
 
-    /** transport for forming connections (if needed) */
-    mca_btl_uct_tl_t *conn_tl;
-
-    /** array containing the am_tl and rdma_tl */
-    mca_btl_uct_tl_t *comm_tls[2];
-
     /** registration cache */
     mca_rcache_base_module_t *rcache;
 
@@ -111,6 +105,10 @@ struct mca_btl_uct_module_t {
 
     /** frags that were waiting on connections that are now ready to send */
     opal_list_t pending_frags;
+
+    /** allowed transports */
+    char *allowed_transports;
+    mca_btl_uct_include_list_t allowed_transport_list;
 };
 typedef struct mca_btl_uct_module_t mca_btl_uct_module_t;
 
@@ -122,6 +120,9 @@ extern mca_btl_uct_module_t mca_btl_uct_module_template;
 struct mca_btl_uct_component_t {
     /** base BTL component */
     mca_btl_base_component_3_0_0_t super;
+
+    /** whether the component is initialized. controls cleanup. */
+    bool initialized;
 
     /** number of TL modules */
     int module_count;
@@ -135,7 +136,6 @@ struct mca_btl_uct_component_t {
 
     /** allowed transports */
     char *allowed_transports;
-    mca_btl_uct_include_list_t allowed_transport_list;
 
     /** transports to consider for forming connections */
     char *connection_domains;
@@ -155,14 +155,16 @@ struct mca_btl_uct_component_t {
     /** connection retry timeout */
     unsigned int connection_retry_timeout;
 
-    /** alternate connection-only module that can be used if no suitable
-     * connection tl is found. this is usually a tcp tl. */
-    mca_btl_uct_module_t *conn_module;
-
 #if UCT_API >= UCT_VERSION(1, 7)
     uct_component_h *uct_components;
     unsigned num_uct_components;
 #endif
+
+    /** list of memory domains (btl_uct_md_t) */
+    opal_list_t md_list;
+
+    /** connection transport (if needed). reference is owned by conn_md */
+    mca_btl_uct_tl_t *conn_tl;
 };
 typedef struct mca_btl_uct_component_t mca_btl_uct_component_t;
 
@@ -298,11 +300,15 @@ ucs_status_t mca_btl_uct_am_handler(void *arg, void *data, size_t length, unsign
 struct mca_btl_base_endpoint_t *mca_btl_uct_get_ep(struct mca_btl_base_module_t *module,
                                                    opal_proc_t *proc);
 
-int mca_btl_uct_query_tls(mca_btl_uct_module_t *module, mca_btl_uct_md_t *md,
-                          uct_tl_resource_desc_t *tl_descs, unsigned tl_count,
-                          bool evaluate_for_conn_only);
+int mca_btl_uct_populate_tls(mca_btl_uct_md_t *md, uct_tl_resource_desc_t *tl_descs, unsigned tl_count);
 int mca_btl_uct_process_connection_request(mca_btl_uct_module_t *module,
                                            mca_btl_uct_conn_req_t *req);
+
+mca_btl_uct_module_t *mca_btl_uct_alloc_module(mca_btl_uct_md_t *md,
+                                               size_t registration_size);
+
+int mca_btl_uct_evaluate_tl(mca_btl_uct_module_t *module, mca_btl_uct_tl_t *tl);
+int mca_btl_uct_enable_tl_conn(mca_btl_uct_tl_t *tl);
 
 /**
  * @brief Checks if a tl is suitable for using for RDMA
@@ -344,18 +350,12 @@ static inline bool mca_btl_uct_tl_supports_conn(mca_btl_uct_tl_t *tl)
  */
 static inline bool mca_btl_uct_tl_requires_connection_tl(mca_btl_uct_tl_t *tl)
 {
+    if (NULL == tl) {
+        return false;
+    }
+
     return !(tl->uct_iface_attr.cap.flags & UCT_IFACE_FLAG_CONNECT_TO_IFACE);
 }
-
-/**
- * @brief Find the rank of `name` in the include list `list`.
- *
- * @param[in] name   name to find
- * @param[in] list   list to search
- *
- * A negative result means the name is not present or the list is negated.
- */
-int mca_btl_uct_include_list_rank (const char *name, const mca_btl_uct_include_list_t *list);
 
 END_C_DECLS
 #endif
