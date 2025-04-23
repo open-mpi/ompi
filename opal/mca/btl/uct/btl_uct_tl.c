@@ -457,7 +457,7 @@ static mca_btl_uct_tl_t *mca_btl_uct_create_tl(mca_btl_uct_module_t *module, mca
         return NULL;
     }
 
-    BTL_VERBOSE(("Interface CAPS for tl %s::%s: 0x%lx", module->md_name, tl_desc->tl_name,
+    BTL_VERBOSE(("Interface CAPS for tl %s::%s: 0x%lx", module->md->md_name, tl_desc->tl_name,
                  (unsigned long) tl->uct_iface_attr.cap.flags));
 
     return tl;

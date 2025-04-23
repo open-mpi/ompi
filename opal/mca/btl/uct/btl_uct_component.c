@@ -258,7 +258,7 @@ static size_t mca_btl_uct_tl_modex_size(mca_btl_uct_tl_t *tl)
 
 static size_t mca_btl_uct_module_modex_size(mca_btl_uct_module_t *module)
 {
-    size_t modex_size = 4 + strlen(module->md_name) + 1;
+    size_t modex_size = 4 + strlen(module->md->md_name) + 1;
 
     if (module->rdma_tl) {
         modex_size += mca_btl_uct_tl_modex_size(module->rdma_tl);
@@ -307,14 +307,14 @@ static size_t mca_btl_uct_tl_modex_pack(mca_btl_uct_module_t *module, mca_btl_uc
 
 static uint8_t *mca_btl_uct_modex_pack(mca_btl_uct_module_t *module, uint8_t *modex_data)
 {
-    size_t name_len = strlen(module->md_name);
+    size_t name_len = strlen(module->md->md_name);
 
     /* pack the size */
     *((uint32_t *) modex_data) = (uint32_t) mca_btl_uct_module_modex_size(module);
 
     modex_data += 4;
 
-    strcpy((char *) modex_data, module->md_name);
+    strcpy((char *) modex_data, module->md->md_name);
     modex_data += name_len + 1;
 
     if (module->rdma_tl) {
@@ -366,7 +366,7 @@ static int mca_btl_uct_modex_send(void)
     return rc;
 }
 
-static mca_btl_uct_module_t *mca_btl_uct_alloc_module(const char *md_name, mca_btl_uct_md_t *md,
+static mca_btl_uct_module_t *mca_btl_uct_alloc_module(mca_btl_uct_md_t *md,
                                                       size_t registration_size)
 {
     mca_btl_uct_module_t *module;
@@ -389,7 +389,6 @@ static mca_btl_uct_module_t *mca_btl_uct_alloc_module(const char *md_name, mca_b
     OBJ_CONSTRUCT(&module->lock, opal_recursive_mutex_t);
 
     module->md = md;
-    module->md_name = strdup(md_name);
     module->super.btl_registration_handle_size = registration_size;
 
     return module;
@@ -463,6 +462,7 @@ static int mca_btl_uct_component_process_uct_md(uct_md_resource_desc_t *md_desc)
     }
 
     md = OBJ_NEW(mca_btl_uct_md_t);
+    md->md_name = strdup(md_desc->md_name);
 
 #if UCT_API >= UCT_VERSION(1, 7)
     ucs_status = uct_md_config_read(component, NULL, NULL, &uct_config);
@@ -470,18 +470,18 @@ static int mca_btl_uct_component_process_uct_md(uct_md_resource_desc_t *md_desc)
         BTL_VERBOSE(("uct_md_config_read failed %d (%s)", ucs_status, ucs_status_string(ucs_status)));
         return OPAL_ERR_NOT_AVAILABLE;
     }
-    ucs_status = uct_md_open(component, md_desc->md_name, uct_config, &md->uct_md);
+    ucs_status = uct_md_open(component, md->md_name, uct_config, &md->uct_md);
     if (UCS_OK != ucs_status) {
         BTL_VERBOSE(("uct_md_open failed %d (%s)", ucs_status, ucs_status_string(ucs_status)));
         return OPAL_ERR_NOT_AVAILABLE;
     }
 #else
-    ucs_status = uct_md_config_read(md_desc->md_name, NULL, NULL, &uct_config);
+    ucs_status = uct_md_config_read(md->md_name, NULL, NULL, &uct_config);
     if (UCS_OK != ucs_status) {
         BTL_VERBOSE(("uct_md_config_read failed %d (%s)", ucs_status, ucs_status_string(ucs_status)));
         return OPAL_ERR_NOT_AVAILABLE;
     }
-    ucs_status = uct_md_open(md_desc->md_name, uct_config, &md->uct_md);
+    ucs_status = uct_md_open(md->md_name, uct_config, &md->uct_md);
     if (UCS_OK != ucs_status) {
         BTL_VERBOSE(("uct_md_open failed %d (%s)", ucs_status, ucs_status_string(ucs_status)));
         return OPAL_ERR_NOT_AVAILABLE;
@@ -500,7 +500,7 @@ static int mca_btl_uct_component_process_uct_md(uct_md_resource_desc_t *md_desc)
         return OPAL_ERR_NOT_AVAILABLE;
     }
 
-    module = mca_btl_uct_alloc_module(md_desc->md_name, md, md_attr.rkey_packed_size);
+    module = mca_btl_uct_alloc_module(md, md_attr.rkey_packed_size);
     if (NULL == module) {
         uct_release_tl_resource_list(tl_desc);
         return OPAL_ERR_OUT_OF_RESOURCE;
@@ -517,7 +517,7 @@ static int mca_btl_uct_component_process_uct_md(uct_md_resource_desc_t *md_desc)
     OBJ_RELEASE(md);
 
     if (NULL == module->am_tl && NULL == module->rdma_tl && (NULL == module->conn_tl || !consider_for_connection_module)) {
-        BTL_VERBOSE(("uct memory domain %s does not have any appropriate tls", md_desc->md_name));
+        BTL_VERBOSE(("uct memory domain %s does not have any appropriate tls", md->md_name));
         mca_btl_uct_finalize(&module->super);
         return OPAL_ERR_NOT_AVAILABLE;
     }
@@ -534,7 +534,7 @@ static int mca_btl_uct_component_process_uct_md(uct_md_resource_desc_t *md_desc)
         /* NTH: a registration cache shouldn't be necessary when using UCT but there are measurable
          * performance benefits to using rcache/grdma instead of assuming UCT will do the right
          * thing. */
-        (void) opal_asprintf(&tmp, "uct.%s", module->md_name);
+        (void) opal_asprintf(&tmp, "uct.%s", md->md_name);
 
         rcache_resources.cache_name = tmp;
         rcache_resources.reg_data = (void *) module;
@@ -553,7 +553,7 @@ static int mca_btl_uct_component_process_uct_md(uct_md_resource_desc_t *md_desc)
         }
     } else {
         if (NULL == mca_btl_uct_component.conn_module) {
-            BTL_VERBOSE(("memory domain %s may be used for connections", md_desc->md_name));
+            BTL_VERBOSE(("memory domain %s may be used for connections", md->md_name));
             mca_btl_uct_component.conn_module = module;
         } else {
             mca_btl_uct_finalize(&module->super);
@@ -635,7 +635,7 @@ static void mca_btl_uct_component_validate_modules(void) {
                 && NULL == module->conn_tl) {
                 /* module can not be used */
                 BTL_VERBOSE(("module for memory domain %s can not be used due to missing connection transport",
-                             module->md_name));
+                             module->md->md_name));
                 mca_btl_uct_finalize (&mca_btl_uct_component.modules[i]->super);
                 mca_btl_uct_component.modules[i] = NULL;
             }

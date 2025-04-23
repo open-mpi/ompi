@@ -67,6 +67,9 @@ struct mca_btl_uct_md_t {
     /** make this an opal object */
     opal_object_t super;
 
+    /** name of the memory domain backing this module */
+    char *md_name;
+
     /** UCT memory domain handle */
     uct_md_h uct_md;
 };

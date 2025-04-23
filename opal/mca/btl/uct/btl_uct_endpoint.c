@@ -410,11 +410,11 @@ static int mca_btl_uct_find_modex(mca_btl_uct_module_t *uct_btl, mca_btl_uct_mod
     for (int i = 0; i < modex->module_count; ++i) {
         uint32_t modex_size = *((uint32_t *) modex_data);
 
-        BTL_VERBOSE(("found modex for md %s, searching for %s", modex_data + 4, uct_btl->md_name));
+        BTL_VERBOSE(("found modex for md %s, searching for %s", modex_data + 4, uct_btl->md->md_name));
 
         modex_data += 4;
 
-        if (0 != strcmp((char *) modex_data, uct_btl->md_name)) {
+        if (0 != strcmp((char *) modex_data, uct_btl->md->md_name)) {
             /* modex belongs to a different module, skip it and continue */
             modex_data += modex_size - 4;
             continue;
@@ -427,12 +427,12 @@ static int mca_btl_uct_find_modex(mca_btl_uct_module_t *uct_btl, mca_btl_uct_mod
             *remote_module_index = i;
         }
 
-        BTL_VERBOSE(("finished processing modex for %s", uct_btl->md_name));
+        BTL_VERBOSE(("finished processing modex for %s", uct_btl->md->md_name));
 
         return OPAL_SUCCESS;
     }
 
-    BTL_ERROR(("could not find modex for %s", uct_btl->md_name));
+    BTL_ERROR(("could not find modex for %s", uct_btl->md->md_name));
 
     return OPAL_ERR_NOT_FOUND;
 }

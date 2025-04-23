@@ -303,7 +303,6 @@ int mca_btl_uct_finalize(mca_btl_base_module_t *btl)
 
     OBJ_DESTRUCT(&uct_module->endpoint_lock);
 
-    free(uct_module->md_name);
     free(uct_module);
 
     return OPAL_SUCCESS;
@@ -357,10 +356,12 @@ OBJ_CLASS_INSTANCE(mca_btl_uct_reg_t, opal_free_list_item_t, NULL, NULL);
 static void mca_btl_uct_md_construct(mca_btl_uct_md_t *md)
 {
     md->uct_md = NULL;
+    md->md_name = NULL;
 }
 
 static void mca_btl_uct_md_destruct(mca_btl_uct_md_t *md)
 {
+    free(md->md_name);
     if (md->uct_md) {
         uct_md_close(md->uct_md);
         md->uct_md = NULL;

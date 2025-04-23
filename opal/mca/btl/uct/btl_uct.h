@@ -98,9 +98,6 @@ struct mca_btl_uct_module_t {
     /** registration cache */
     mca_rcache_base_module_t *rcache;
 
-    /** name of the memory domain backing this module */
-    char *md_name;
-
     /** am and rdma share endpoints */
     bool shared_endpoints;
 
