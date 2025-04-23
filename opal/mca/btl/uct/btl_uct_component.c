@@ -393,13 +393,6 @@ static mca_btl_uct_module_t *mca_btl_uct_alloc_module(const char *md_name, mca_b
     module->md_name = strdup(md_name);
     module->super.btl_registration_handle_size = registration_size;
 
-    ucs_status = ucs_async_context_create(UCS_ASYNC_MODE_THREAD, &module->ucs_async);
-    if (UCS_OK != ucs_status) {
-        BTL_VERBOSE(("Could not create a UCT async context"));
-        mca_btl_uct_finalize(&module->super);
-        return NULL;
-    }
-
     return module;
 }
 

@@ -338,6 +338,9 @@ struct mca_btl_uct_tl_t {
 
     /** interface attributes */
     uct_iface_attr_t uct_iface_attr;
+
+    /** async context */
+    ucs_async_context_t *ucs_async;
 };
 
 typedef struct mca_btl_uct_tl_t mca_btl_uct_tl_t;

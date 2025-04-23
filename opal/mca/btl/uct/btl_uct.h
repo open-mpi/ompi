@@ -79,9 +79,6 @@ struct mca_btl_uct_module_t {
     /** mutex to protect the module */
     opal_recursive_mutex_t lock;
 
-    /** async context */
-    ucs_async_context_t *ucs_async;
-
     /** transport for active messaging */
     mca_btl_uct_tl_t *am_tl;
 

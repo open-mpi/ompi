@@ -156,6 +156,10 @@ static void mca_btl_uct_tl_destructor(mca_btl_uct_tl_t *tl)
         }
     }
 
+    if (tl->ucs_async) {
+        ucs_async_context_destroy(tl->ucs_async);
+    }
+
     if (tl->uct_md) {
         OBJ_RELEASE(tl->uct_md);
     }
@@ -291,7 +295,7 @@ static int mca_btl_uct_populate_tl_attr(mca_btl_uct_module_t *module, mca_btl_uc
 
     /* do the bare minimum to get tl attributes */
     uct_worker_h uct_worker;
-    ucs_status = uct_worker_create(module->ucs_async, UCS_THREAD_MODE_SINGLE, &uct_worker);
+    ucs_status = uct_worker_create(tl->ucs_async, UCS_THREAD_MODE_SINGLE, &uct_worker);
     if (OPAL_UNLIKELY(UCS_OK != ucs_status)) {
         BTL_VERBOSE(("could not create a UCT worker"));
         return OPAL_ERROR;
@@ -364,7 +368,7 @@ mca_btl_uct_device_context_t *mca_btl_uct_context_create(mca_btl_uct_module_t *m
      * use our own locks just go ahead and use UCS_THREAD_MODE_SINGLE. if they ever fix their
      * api then change this back to UCS_THREAD_MODE_MULTI and remove the locks around the
      * various UCT calls. */
-    ucs_status = uct_worker_create(module->ucs_async, UCS_THREAD_MODE_SINGLE, &context->uct_worker);
+    ucs_status = uct_worker_create(tl->ucs_async, UCS_THREAD_MODE_SINGLE, &context->uct_worker);
     if (OPAL_UNLIKELY(UCS_OK != ucs_status)) {
         BTL_VERBOSE(("could not create a UCT worker"));
         mca_btl_uct_context_destroy(context);
@@ -436,6 +440,13 @@ static mca_btl_uct_tl_t *mca_btl_uct_create_tl(mca_btl_uct_module_t *module, mca
     tl->priority = priority;
 
     (void) uct_md_iface_config_read(md->uct_md, tl_desc->tl_name, NULL, NULL, &tl->uct_tl_config);
+
+    ucs_status_t ucs_status = ucs_async_context_create(UCS_ASYNC_MODE_THREAD, &tl->ucs_async);
+    if (UCS_OK != ucs_status) {
+        BTL_VERBOSE(("Could not create a UCT async context"));
+        OBJ_RELEASE(tl);
+        return NULL;
+    }
 
     int rc = mca_btl_uct_populate_tl_attr(module, tl);
     if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {

@@ -302,8 +302,6 @@ int mca_btl_uct_finalize(mca_btl_base_module_t *btl)
         OBJ_RELEASE(uct_module->rdma_tl);
     }
 
-    ucs_async_context_destroy(uct_module->ucs_async);
-
     OBJ_DESTRUCT(&uct_module->endpoint_lock);
 
     free(uct_module->md_name);
