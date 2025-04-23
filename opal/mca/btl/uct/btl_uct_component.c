@@ -471,6 +471,9 @@ static int mca_btl_uct_component_process_uct_md(uct_md_resource_desc_t *md_desc)
 
     md = OBJ_NEW(mca_btl_uct_md_t);
     md->md_name = strdup(md_desc->md_name);
+#if UCT_API >= UCT_VERSION(1, 7)
+    md->uct_component = component;
+#endif
 
 #if UCT_API >= UCT_VERSION(1, 7)
     ucs_status = uct_md_config_read(component, NULL, NULL, &uct_config);
@@ -527,10 +530,6 @@ static int mca_btl_uct_component_process_uct_md(uct_md_resource_desc_t *md_desc)
         mca_btl_uct_finalize(&module->super);
         return OPAL_ERR_NOT_AVAILABLE;
     }
-
-#if UCT_API >= UCT_VERSION(1, 7)
-    module->uct_component = component;
-#endif
 
     if (!consider_for_connection_module) {
         module->module_index = mca_btl_uct_component.module_count;

@@ -344,6 +344,7 @@ OBJ_CLASS_INSTANCE(mca_btl_uct_reg_t, opal_free_list_item_t, NULL, NULL);
 
 static void mca_btl_uct_md_construct(mca_btl_uct_md_t *md)
 {
+    md->uct_component = NULL;
     md->uct_md = NULL;
     md->md_name = NULL;
     OBJ_CONSTRUCT(&md->tls, opal_list_t);

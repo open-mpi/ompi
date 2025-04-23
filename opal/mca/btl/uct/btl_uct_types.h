@@ -75,6 +75,10 @@ struct mca_btl_uct_md_t {
 
     /** UCT memory domain handle */
     uct_md_h uct_md;
+
+#if UCT_API >= UCT_VERSION(1, 7)
+    uct_component_h uct_component;
+#endif
 };
 
 typedef struct mca_btl_uct_md_t mca_btl_uct_md_t;
