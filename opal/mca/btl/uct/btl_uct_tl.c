@@ -144,6 +144,7 @@ static void mca_btl_uct_tl_constructor(mca_btl_uct_tl_t *tl)
 {
     memset((void *) ((uintptr_t) tl + sizeof(tl->super)), 0, sizeof(*tl) - sizeof(tl->super));
     OBJ_CONSTRUCT(&tl->tl_lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&tl->pending_connection_reqs, opal_fifo_t);
 }
 
 static void mca_btl_uct_tl_destructor(mca_btl_uct_tl_t *tl)
@@ -172,6 +173,7 @@ static void mca_btl_uct_tl_destructor(mca_btl_uct_tl_t *tl)
     }
 
     OBJ_DESTRUCT(&tl->tl_lock);
+    OBJ_DESTRUCT(&tl->pending_connection_reqs);
 }
 
 OBJ_CLASS_INSTANCE(mca_btl_uct_tl_t, opal_list_item_t, mca_btl_uct_tl_constructor,
@@ -179,14 +181,14 @@ OBJ_CLASS_INSTANCE(mca_btl_uct_tl_t, opal_list_item_t, mca_btl_uct_tl_constructo
 
 static ucs_status_t mca_btl_uct_conn_req_cb(void *arg, void *data, size_t length, unsigned flags)
 {
-    mca_btl_uct_module_t *module = (mca_btl_uct_module_t *) arg;
+    mca_btl_uct_tl_t *tl = (mca_btl_uct_tl_t *) arg;
     mca_btl_uct_pending_connection_request_t *request = calloc(1, length + sizeof(request->super));
 
     /* it is not safe to process the connection request from the callback so just save it for
      * later processing */
     OBJ_CONSTRUCT(request, mca_btl_uct_pending_connection_request_t);
     memcpy(&request->request_data, (void *) ((intptr_t) data + 8), length);
-    opal_fifo_push_atomic(&module->pending_connection_reqs, &request->super);
+    opal_fifo_push_atomic(&tl->pending_connection_reqs, &request->super);
 
     return UCS_OK;
 }
@@ -241,20 +243,21 @@ int mca_btl_uct_process_connection_request(mca_btl_uct_module_t *module,
     return OPAL_SUCCESS;
 }
 
-static int mca_btl_uct_setup_connection_tl(mca_btl_uct_module_t *module)
+static int mca_btl_uct_setup_connection_tl(mca_btl_uct_tl_t *tl)
 {
     ucs_status_t ucs_status;
 
-    if (NULL == module->conn_tl) {
+    if (NULL == tl) {
         return OPAL_ERR_NOT_SUPPORTED;
     }
 
-    mca_btl_uct_device_context_t *context = mca_btl_uct_module_get_tl_context_specific(module, module->conn_tl,
-                                                                                       /*context_id=*/0);
+    mca_btl_uct_device_context_t *context =
+        mca_btl_uct_module_get_tl_context_specific(/*module=*/NULL, tl,
+                                                   /*context_id=*/0);
 
     ucs_status = uct_iface_set_am_handler(context->uct_iface,
-                                          MCA_BTL_UCT_CONNECT_RDMA, mca_btl_uct_conn_req_cb, module,
-                                          UCT_CB_FLAG_ASYNC);
+                                          MCA_BTL_UCT_CONNECT_RDMA, mca_btl_uct_conn_req_cb,
+                                          tl, UCT_CB_FLAG_ASYNC);
     if (UCS_OK != ucs_status) {
         BTL_ERROR(("could not set active message handler for uct tl"));
     }
@@ -383,7 +386,7 @@ mca_btl_uct_device_context_t *mca_btl_uct_context_create(mca_btl_uct_module_t *m
         return NULL;
     }
 
-    if (tl == module->am_tl) {
+    if (module != NULL && tl == module->am_tl) {
         BTL_VERBOSE(("installing AM handler for tl %p context id %d", (void *) tl, context_id));
         uct_iface_set_am_handler(context->uct_iface, MCA_BTL_UCT_FRAG, mca_btl_uct_am_handler,
                                  context, MCA_BTL_UCT_CB_FLAG_SYNC);
@@ -524,7 +527,7 @@ static int mca_btl_uct_set_tl_conn(mca_btl_uct_module_t *module, mca_btl_uct_tl_
     BTL_VERBOSE(("tl %s is suitable for making connections", tl->uct_tl_name));
 
     module->conn_tl = tl;
-    rc = mca_btl_uct_setup_connection_tl(module);
+    rc = mca_btl_uct_setup_connection_tl(tl);
     if (OPAL_SUCCESS != rc) {
         return rc;
     }

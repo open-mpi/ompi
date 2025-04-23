@@ -118,9 +118,6 @@ struct mca_btl_uct_module_t {
 
     /** frags that were waiting on connections that are now ready to send */
     opal_list_t pending_frags;
-
-    /** pending connection requests */
-    opal_fifo_t pending_connection_reqs;
 };
 typedef struct mca_btl_uct_module_t mca_btl_uct_module_t;
 

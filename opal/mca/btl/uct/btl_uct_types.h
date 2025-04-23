@@ -341,6 +341,9 @@ struct mca_btl_uct_tl_t {
 
     /** async context */
     ucs_async_context_t *ucs_async;
+
+    /** pending connection requests */
+    opal_fifo_t pending_connection_reqs;
 };
 
 typedef struct mca_btl_uct_tl_t mca_btl_uct_tl_t;

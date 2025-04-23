@@ -387,7 +387,6 @@ static mca_btl_uct_module_t *mca_btl_uct_alloc_module(const char *md_name, mca_b
     OBJ_CONSTRUCT(&module->max_frags, opal_free_list_t);
     OBJ_CONSTRUCT(&module->pending_frags, opal_list_t);
     OBJ_CONSTRUCT(&module->lock, opal_recursive_mutex_t);
-    OBJ_CONSTRUCT(&module->pending_connection_reqs, opal_fifo_t);
 
     module->md = md;
     module->md_name = strdup(md_name);
@@ -798,19 +797,19 @@ static int mca_btl_uct_component_progress_pending(mca_btl_uct_module_t *uct_btl)
     return completed;
 }
 
-static int mca_btl_uct_component_progress_connections (mca_btl_uct_module_t *module) {
+static int mca_btl_uct_component_progress_connections (mca_btl_uct_tl_t *conn_tl) {
     mca_btl_uct_pending_connection_request_t *request;
     int ret;
 
-    if (module->conn_tl == NULL) {
+    if (conn_tl == NULL) {
         return 0;
     }
 
-    ret = mca_btl_uct_tl_progress(module->conn_tl, 0);
+    ret = mca_btl_uct_tl_progress(conn_tl, 0);
 
     while (NULL
            != (request = (mca_btl_uct_pending_connection_request_t *) opal_fifo_pop_atomic(
-                                                                                           &module->pending_connection_reqs))) {
+                                                                                           &conn_tl->pending_connection_reqs))) {
         mca_btl_uct_conn_req_t *conn_req = (mca_btl_uct_conn_req_t *) request->request_data;
         BTL_VERBOSE(("processing connection request...."));
         if (conn_req->module_index >= mca_btl_uct_component.module_count) {
@@ -819,7 +818,7 @@ static int mca_btl_uct_component_progress_connections (mca_btl_uct_module_t *mod
         }
         int rc = mca_btl_uct_process_connection_request(mca_btl_uct_component.modules[conn_req->module_index], conn_req);
         if (rc != OPAL_SUCCESS) {
-            opal_fifo_push_atomic(&module->pending_connection_reqs, &request->super);
+            opal_fifo_push_atomic(&conn_tl->pending_connection_reqs, &request->super);
             break;
         }
         OBJ_RELEASE(request);
@@ -849,7 +848,7 @@ static int mca_btl_uct_component_progress(void)
             ret += mca_btl_uct_tl_progress(module->am_tl, starting_index);
         }
 
-        mca_btl_uct_component_progress_connections (module);
+        mca_btl_uct_component_progress_connections (module->conn_tl);
  
         if (0 != opal_list_get_size(&module->pending_frags)) {
             mca_btl_uct_component_progress_pending(module);
@@ -857,7 +856,7 @@ static int mca_btl_uct_component_progress(void)
     }
 
     if (NULL != mca_btl_uct_component.conn_module) {
-        ret += mca_btl_uct_component_progress_connections (mca_btl_uct_component.conn_module);
+        ret += mca_btl_uct_component_progress_connections (mca_btl_uct_component.conn_module->conn_tl);
     }
 
     return (int) ret;

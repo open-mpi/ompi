@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2014-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2020      Google, LLC. All rights reserved.
+ * Copyright (c) 2020-2025 Google, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -284,7 +284,6 @@ int mca_btl_uct_finalize(mca_btl_base_module_t *btl)
     OBJ_DESTRUCT(&uct_module->max_frags);
     OBJ_DESTRUCT(&uct_module->pending_frags);
     OBJ_DESTRUCT(&uct_module->lock);
-    OBJ_DESTRUCT(&uct_module->pending_connection_reqs);
 
     if (uct_module->rcache) {
         mca_rcache_base_module_destroy(uct_module->rcache);
