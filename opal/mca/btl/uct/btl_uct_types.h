@@ -21,6 +21,7 @@
 struct mca_btl_uct_module_t;
 struct mca_btl_base_endpoint_t;
 struct mca_btl_uct_base_frag_t;
+struct mca_btl_uct_tl_t;
 
 /* TL endpoint flags */
 /** connection data was received */
@@ -121,6 +122,8 @@ typedef struct mca_btl_uct_tl_endpoint_t mca_btl_uct_tl_endpoint_t;
 struct mca_btl_uct_connection_ep_t {
     /** opal base object */
     opal_object_t super;
+
+    struct mca_btl_uct_tl_t *tl;
 
     /** UCT endpoint used for connection */
     uct_ep_h uct_ep;

@@ -164,22 +164,6 @@ static int mca_btl_uct_endpoint_connect_iface(mca_btl_uct_module_t *uct_btl, mca
     return (UCS_OK == ucs_status) ? OPAL_SUCCESS : OPAL_ERROR;
 }
 
-static void mca_btl_uct_connection_ep_construct(mca_btl_uct_connection_ep_t *ep)
-{
-    ep->uct_ep = NULL;
-}
-
-static void mca_btl_uct_connection_ep_destruct(mca_btl_uct_connection_ep_t *ep)
-{
-    if (ep->uct_ep) {
-        uct_ep_destroy(ep->uct_ep);
-        ep->uct_ep = NULL;
-    }
-}
-
-OBJ_CLASS_INSTANCE(mca_btl_uct_connection_ep_t, opal_object_t, mca_btl_uct_connection_ep_construct,
-                   mca_btl_uct_connection_ep_destruct);
-
 struct mca_btl_uct_conn_completion_t {
     uct_completion_t super;
     volatile bool complete;
@@ -203,24 +187,62 @@ static void mca_btl_uct_endpoint_flush_complete(uct_completion_t *self, ucs_stat
 }
 #endif
 
-static int mca_btl_uct_endpoint_send_conn_req(mca_btl_uct_module_t *uct_btl,
-                                              mca_btl_base_endpoint_t *endpoint,
-                                              mca_btl_uct_device_context_t *conn_tl_context,
-                                              mca_btl_uct_conn_req_t *request,
-                                              size_t request_length)
+static void mca_btl_uct_flush_conn_endpoint(mca_btl_uct_connection_ep_t *conn_ep)
 {
+    mca_btl_uct_device_context_t *conn_tl_context = conn_ep->tl->uct_dev_contexts[0];
     mca_btl_uct_conn_completion_t completion
         = {.super = {.count = 1, .func = mca_btl_uct_endpoint_flush_complete}, .complete = false};
     ucs_status_t ucs_status;
+    MCA_BTL_UCT_CONTEXT_SERIALIZE(conn_tl_context, {
+            ucs_status = uct_ep_flush(conn_ep->uct_ep, 0, &completion.super);
+    });
+    if (UCS_OK != ucs_status && UCS_INPROGRESS != ucs_status) {
+        /* NTH: I don't know if this path is needed. For some networks we must use a completion. */
+        do {
+            MCA_BTL_UCT_CONTEXT_SERIALIZE(conn_tl_context, {
+                    ucs_status = uct_ep_flush(conn_ep->uct_ep, 0, NULL);
+            });
+            mca_btl_uct_context_progress(conn_tl_context);
+        } while (UCS_INPROGRESS == ucs_status);
+    } else {
+        do {
+            mca_btl_uct_context_progress(conn_tl_context);
+        } while (!completion.complete);
+    }
+}
+
+static void mca_btl_uct_connection_ep_construct(mca_btl_uct_connection_ep_t *ep)
+{
+    ep->uct_ep = NULL;
+    ep->tl = NULL;
+}
+
+static void mca_btl_uct_connection_ep_destruct(mca_btl_uct_connection_ep_t *ep)
+{
+    if (ep->uct_ep) {
+        mca_btl_uct_flush_conn_endpoint(ep);
+        uct_ep_destroy(ep->uct_ep);
+        ep->uct_ep = NULL;
+    }
+}
+
+OBJ_CLASS_INSTANCE(mca_btl_uct_connection_ep_t, opal_object_t, mca_btl_uct_connection_ep_construct,
+                   mca_btl_uct_connection_ep_destruct);
+
+static int mca_btl_uct_endpoint_send_conn_req(mca_btl_uct_module_t *uct_btl,
+                                              mca_btl_base_endpoint_t *endpoint,
+                                              mca_btl_uct_tl_t *conn_tl,
+                                              mca_btl_uct_conn_req_t *request,
+                                              size_t request_length)
+{
+    mca_btl_uct_device_context_t *conn_tl_context = conn_tl->uct_dev_contexts[0];
 
     BTL_VERBOSE(
         ("sending connection request to peer. context id: %d, type: %d, length: %" PRIsize_t,
          request->context_id, request->type, request_length));
 
-    /* need to drop the lock to avoid hold-and-wait */
-    opal_mutex_unlock(&endpoint->ep_lock);
-
     do {
+        ucs_status_t ucs_status;
         MCA_BTL_UCT_CONTEXT_SERIALIZE(conn_tl_context, {
             ucs_status = uct_ep_am_short(endpoint->conn_ep->uct_ep, MCA_BTL_UCT_CONNECT_RDMA,
                                          request->type, request, request_length);
@@ -233,25 +255,12 @@ static int mca_btl_uct_endpoint_send_conn_req(mca_btl_uct_module_t *uct_btl,
             return OPAL_ERROR;
         }
 
+        /* need to drop the lock to avoid hold-and-wait */
+        opal_mutex_unlock(&endpoint->ep_lock);
         /* some TLs (UD for example) need to be progressed to get resources */
         mca_btl_uct_context_progress(conn_tl_context);
+        opal_mutex_lock(&endpoint->ep_lock);
     } while (1);
-
-    /* for now we just wait for the connection request to complete before continuing */
-    ucs_status = uct_ep_flush(endpoint->conn_ep->uct_ep, 0, &completion.super);
-    if (UCS_OK != ucs_status && UCS_INPROGRESS != ucs_status) {
-        /* NTH: I don't know if this path is needed. For some networks we must use a completion. */
-        do {
-            ucs_status = uct_ep_flush(endpoint->conn_ep->uct_ep, 0, NULL);
-            mca_btl_uct_context_progress(conn_tl_context);
-        } while (UCS_INPROGRESS == ucs_status);
-    } else {
-        do {
-            mca_btl_uct_context_progress(conn_tl_context);
-        } while (!completion.complete);
-    }
-
-    opal_mutex_lock(&endpoint->ep_lock);
 
     return OPAL_SUCCESS;
 }
@@ -277,6 +286,8 @@ static int mca_btl_uct_endpoint_get_helper_endpoint(mca_btl_uct_module_t *uct_bt
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
+    endpoint->conn_ep->tl = conn_tl;
+
     ucs_status_t ucs_status;
     mca_btl_uct_device_context_t *conn_tl_context = conn_tl->uct_dev_contexts[0];
     /* create a temporary endpoint for setting up the rdma endpoint */
@@ -300,10 +311,7 @@ static int mca_btl_uct_endpoint_send_connection_data(
     mca_btl_uct_tl_t *tl, mca_btl_uct_device_context_t *tl_context,
     mca_btl_uct_tl_endpoint_t *tl_endpoint, int request_type, int remote_module_index)
 {
-    mca_btl_uct_device_context_t *conn_tl_context = conn_tl->uct_dev_contexts[0];
     ucs_status_t ucs_status;
-
-    assert(NULL != conn_tl);
 
     BTL_VERBOSE(("connecting endpoint to remote endpoint"));
 
@@ -330,7 +338,7 @@ static int mca_btl_uct_endpoint_send_connection_data(
 
     /* let the remote side know that the connection has been established and
      * wait for the message to be sent */
-    int rc = mca_btl_uct_endpoint_send_conn_req(uct_btl, endpoint, conn_tl_context, request,
+    int rc = mca_btl_uct_endpoint_send_conn_req(uct_btl, endpoint, conn_tl, request,
                                                 request_length);
     if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
         OBJ_RELEASE(endpoint->conn_ep);
@@ -375,20 +383,23 @@ static int mca_btl_uct_endpoint_connect_endpoint(
         if (UCS_OK != ucs_status) {
             return OPAL_ERROR;
         }
+    }
 
+    opal_timer_t now = opal_timer_base_get_usec();
+    if ((now - tl_endpoint->last_connection_req) > mca_btl_uct_component.connection_retry_timeout || ep_addr) {
+        int rc = mca_btl_uct_endpoint_send_connection_data(uct_btl, conn_tl, endpoint, tl, tl_context, tl_endpoint,
+                                                           /*request_type=*/!!ep_addr, remote_module_index);
+        if (OPAL_SUCCESS != rc) {
+            return rc;
+        }
+    }
+
+    if (ep_addr) {
         mca_btl_uct_endpoint_set_flag(uct_btl, endpoint, tl_context->context_id, tl_endpoint,
                                       MCA_BTL_UCT_ENDPOINT_FLAG_EP_CONNECTED);
     }
 
-    opal_timer_t now = opal_timer_base_get_usec();
-    if ((now - tl_endpoint->last_connection_req) < mca_btl_uct_component.connection_retry_timeout && !ep_addr) {
-        return (tl_endpoint->flags & MCA_BTL_UCT_ENDPOINT_FLAG_CONN_READY) ? OPAL_SUCCESS
-            : OPAL_ERR_OUT_OF_RESOURCE;
-    }
-
-    int rc = mca_btl_uct_endpoint_send_connection_data(uct_btl, conn_tl, endpoint, tl, tl_context, tl_endpoint,
-                                                       /*request_type=*/!!ep_addr, remote_module_index);
-    return (OPAL_SUCCESS == rc) ? OPAL_ERR_OUT_OF_RESOURCE : rc;
+    return OPAL_ERR_OUT_OF_RESOURCE;
 }
 
 static int mca_btl_uct_find_modex(mca_btl_uct_module_t *uct_btl, mca_btl_uct_modex_t *modex,
