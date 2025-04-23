@@ -289,19 +289,8 @@ int mca_btl_uct_finalize(mca_btl_base_module_t *btl)
         mca_rcache_base_module_destroy(uct_module->rcache);
     }
 
-    if (NULL != uct_module->am_tl) {
-        OBJ_RELEASE(uct_module->am_tl);
-    }
-
-    if (NULL != uct_module->conn_tl) {
-        OBJ_RELEASE(uct_module->conn_tl);
-    }
-
-    if (NULL != uct_module->rdma_tl) {
-        OBJ_RELEASE(uct_module->rdma_tl);
-    }
-
     OBJ_DESTRUCT(&uct_module->endpoint_lock);
+    OBJ_RELEASE(uct_module->md);
 
     free(uct_module);
 
@@ -357,10 +346,13 @@ static void mca_btl_uct_md_construct(mca_btl_uct_md_t *md)
 {
     md->uct_md = NULL;
     md->md_name = NULL;
+    OBJ_CONSTRUCT(&md->tls, opal_list_t);
 }
 
 static void mca_btl_uct_md_destruct(mca_btl_uct_md_t *md)
 {
+    OPAL_LIST_DESTRUCT(&md->tls);
+
     free(md->md_name);
     if (md->uct_md) {
         uct_md_close(md->uct_md);

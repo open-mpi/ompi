@@ -500,8 +500,10 @@ static int mca_btl_uct_component_process_uct_md(uct_md_resource_desc_t *md_desc)
         return OPAL_ERR_NOT_AVAILABLE;
     }
 
+    /* module will take ownership of the md */
     module = mca_btl_uct_alloc_module(md, md_attr.rkey_packed_size);
     if (NULL == module) {
+        OBJ_RELEASE(md);
         uct_release_tl_resource_list(tl_desc);
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
@@ -511,10 +513,6 @@ static int mca_btl_uct_component_process_uct_md(uct_md_resource_desc_t *md_desc)
     (void) mca_btl_uct_query_tls(module, md, tl_desc, num_tls, consider_for_connection_module);
 
     uct_release_tl_resource_list(tl_desc);
-
-    /* release the initial reference to the md object. if any modules were created the UCT md will
-     * remain open until those modules are finalized. */
-    OBJ_RELEASE(md);
 
     if (NULL == module->am_tl && NULL == module->rdma_tl && (NULL == module->conn_tl || !consider_for_connection_module)) {
         BTL_VERBOSE(("uct memory domain %s does not have any appropriate tls", md->md_name));
@@ -842,10 +840,9 @@ static int mca_btl_uct_component_progress(void)
 
         /* unlike ucp, uct actually tells us something useful! its almost like it was "inspired"
          * by the btl progress functions.... */
-        ret += mca_btl_uct_tl_progress(module->rdma_tl, starting_index);
-
-        if (module->am_tl != module->rdma_tl) {
-            ret += mca_btl_uct_tl_progress(module->am_tl, starting_index);
+        mca_btl_uct_tl_t *tl;
+        OPAL_LIST_FOREACH(tl, &module->md->tls, mca_btl_uct_tl_t) {
+            ret += mca_btl_uct_tl_progress(tl, starting_index);
         }
 
         mca_btl_uct_component_progress_connections (module->conn_tl);

@@ -70,6 +70,9 @@ struct mca_btl_uct_md_t {
     /** name of the memory domain backing this module */
     char *md_name;
 
+    /** list of mca_btl_uct_tl_t's for this memory domain */
+    opal_list_t tls;
+
     /** UCT memory domain handle */
     uct_md_h uct_md;
 };
@@ -314,7 +317,7 @@ struct mca_btl_uct_tl_t {
     /** relative priority 0 == highest */
     int priority;
 
-    /** memory domain associated with this tl */
+    /** memory domain associated with this tl (no reference) */
     mca_btl_uct_md_t *uct_md;
 
     /** lock protecting tl structures */

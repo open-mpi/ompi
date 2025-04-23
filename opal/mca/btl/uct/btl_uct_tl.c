@@ -161,10 +161,6 @@ static void mca_btl_uct_tl_destructor(mca_btl_uct_tl_t *tl)
         ucs_async_context_destroy(tl->ucs_async);
     }
 
-    if (tl->uct_md) {
-        OBJ_RELEASE(tl->uct_md);
-    }
-
     free(tl->uct_tl_name);
     free(tl->uct_dev_name);
 
@@ -436,7 +432,6 @@ static mca_btl_uct_tl_t *mca_btl_uct_create_tl(mca_btl_uct_module_t *module, mca
 
     /* initialize btl tl structure */
     tl->uct_md = md;
-    OBJ_RETAIN(md);
 
     tl->uct_tl_name = strdup(tl_desc->tl_name);
     tl->uct_dev_name = strdup(tl_desc->dev_name);
@@ -457,7 +452,7 @@ static mca_btl_uct_tl_t *mca_btl_uct_create_tl(mca_btl_uct_module_t *module, mca
         return NULL;
     }
 
-    BTL_VERBOSE(("Interface CAPS for tl %s::%s: 0x%lx", module->md->md_name, tl_desc->tl_name,
+    BTL_VERBOSE(("Interface CAPS for tl %s::%s: 0x%lx", md->md_name, tl_desc->tl_name,
                  (unsigned long) tl->uct_iface_attr.cap.flags));
 
     return tl;
@@ -489,7 +484,6 @@ static void mca_btl_uct_set_tl_rdma(mca_btl_uct_module_t *module, mca_btl_uct_tl
                                                              .cap.put.max_bcopy;
 
     module->rdma_tl = tl;
-    OBJ_RETAIN(tl);
 
     tl->tl_index = (module->am_tl && tl != module->am_tl) ? 1 : 0;
     module->comm_tls[tl->tl_index] = tl;
@@ -502,7 +496,6 @@ static void mca_btl_uct_set_tl_am(mca_btl_uct_module_t *module, mca_btl_uct_tl_t
 {
     BTL_VERBOSE(("tl %s is suitable for active-messaging", tl->uct_tl_name));
     module->am_tl = tl;
-    OBJ_RETAIN(tl);
 
     tl->tl_index = (module->rdma_tl && tl != module->rdma_tl) ? 1 : 0;
     module->comm_tls[tl->tl_index] = tl;
@@ -531,8 +524,6 @@ static int mca_btl_uct_set_tl_conn(mca_btl_uct_module_t *module, mca_btl_uct_tl_
     if (OPAL_SUCCESS != rc) {
         return rc;
     }
-
-    OBJ_RETAIN(tl);
 
     if (!tl->max_device_contexts) {
         /* if a tl is only being used to create connections do not bother with multiple
@@ -591,9 +582,6 @@ int mca_btl_uct_query_tls(mca_btl_uct_module_t *module, mca_btl_uct_md_t *md,
                           bool evaluate_for_conn_only)
 {
     mca_btl_uct_tl_t *tl;
-    opal_list_t tl_list;
-
-    OBJ_CONSTRUCT(&tl_list, opal_list_t);
 
     for (unsigned i = 0; i < tl_count; ++i) {
         int priority = 0;
@@ -623,28 +611,27 @@ int mca_btl_uct_query_tls(mca_btl_uct_module_t *module, mca_btl_uct_md_t *md,
             if (mca_btl_uct_tl_supports_conn(tl) && evaluate_for_conn_only) {
                 BTL_VERBOSE(("evaluating tl %s for forming connections", tl_descs[i].tl_name));
                 int rc = mca_btl_uct_set_tl_conn(module, tl);
-                OBJ_RELEASE(tl);
 
                 if (OPAL_SUCCESS == rc) {
+                    opal_list_append(&md->tls, &tl->super);
                     return OPAL_SUCCESS;
                 }
 
                 BTL_VERBOSE(("tl %s cannot be used for forming connections", tl_descs[i].tl_name));
             } else {
-                opal_list_append(&tl_list, &tl->super);
+                opal_list_append(&md->tls, &tl->super);
             }
         }
     }
 
-    if (0 == opal_list_get_size(&tl_list)) {
+    if (0 == opal_list_get_size(&md->tls)) {
         BTL_VERBOSE(("no suitable tls match filter: %s", mca_btl_uct_component.allowed_transports));
-        OBJ_DESTRUCT(&tl_list);
         return OPAL_ERR_NOT_AVAILABLE;
     }
 
-    opal_list_sort(&tl_list, tl_compare);
+    opal_list_sort(&md->tls, tl_compare);
 
-    OPAL_LIST_FOREACH (tl, &tl_list, mca_btl_uct_tl_t) {
+    OPAL_LIST_FOREACH (tl, &md->tls, mca_btl_uct_tl_t) {
         mca_btl_uct_evaluate_tl(module, tl);
         if (NULL != module->am_tl && NULL != module->rdma_tl
             && (NULL != module->conn_tl
@@ -676,14 +663,20 @@ int mca_btl_uct_query_tls(mca_btl_uct_module_t *module, mca_btl_uct_md_t *md,
         module->super.btl_free = NULL;
     }
 
-    OPAL_LIST_DESTRUCT(&tl_list);
-
     if (!(NULL != module->am_tl && mca_btl_uct_tl_requires_connection_tl(module->am_tl))
         && !(NULL != module->rdma_tl && mca_btl_uct_tl_requires_connection_tl(module->rdma_tl))
         && module->conn_tl) {
         /* no connection tl needed for selected transports */
-        OBJ_RELEASE(module->conn_tl);
         module->conn_tl = NULL;
+    }
+
+    /* clear out unused tls */
+    mca_btl_uct_tl_t *next;
+    OPAL_LIST_FOREACH_SAFE(tl, next, &md->tls, mca_btl_uct_tl_t) {
+        if (tl != module->conn_tl && tl != module->rdma_tl && tl != module->am_tl) {
+            opal_list_remove_item(&md->tls, &tl->super);
+            OBJ_RELEASE(tl);
+        }
     }
 
     return OPAL_SUCCESS;
