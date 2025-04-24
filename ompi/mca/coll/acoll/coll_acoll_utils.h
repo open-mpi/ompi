@@ -33,6 +33,7 @@
 extern uint64_t mca_coll_acoll_xpmem_buffer_size;
 extern int mca_coll_acoll_without_xpmem;
 extern int mca_coll_acoll_xpmem_use_sr_buf;
+extern int mca_coll_acoll_barrier_algo;
 
 
 /* Function to allocate scratch buffer */
@@ -165,6 +166,7 @@ static inline int check_and_create_subc(ompi_communicator_t *comm,
     subc->initialized_data = false;
     subc->initialized_shm_data = false;
     subc->data = NULL;
+    subc->barrier_algo = mca_coll_acoll_barrier_algo;
 #ifdef HAVE_XPMEM_H
     subc->xpmem_buf_size = mca_coll_acoll_xpmem_buffer_size;
     subc->without_xpmem = mca_coll_acoll_without_xpmem;
@@ -942,7 +944,7 @@ static inline int coll_acoll_init(mca_coll_base_module_t *module, ompi_communica
         /* Assuming cacheline size is 64 */
         long memsize
             = (LEADER_SHM_SIZE /* scratch leader */ + CACHE_LINE_SIZE * size /* sync variables l1 group*/
-               + CACHE_LINE_SIZE * size /* sync variables l2 group*/ + PER_RANK_SHM_SIZE * size /*data from ranks*/);
+               + CACHE_LINE_SIZE * size /* sync variables l2 group*/ + PER_RANK_SHM_SIZE * size /*data from ranks*/ + 2 * CACHE_LINE_SIZE * size /* sync variables for bcast and barrier*/);
         ret = opal_shmem_segment_create(&seg_ds, shfn, memsize);
         free(shfn);
     }
@@ -971,7 +973,19 @@ static inline int coll_acoll_init(mca_coll_base_module_t *module, ompi_communica
     data->allshmmmap_sbuf[root] = opal_shmem_segment_attach(&data->allshmseg_id[0]);
 
     int offset = LEADER_SHM_SIZE;
-    memset(((char *) data->allshmmmap_sbuf[data->l1_gp[0]]) + offset + CACHE_LINE_SIZE * rank, 0, CACHE_LINE_SIZE);
+    memset(((char *) data->allshmmmap_sbuf[data->l1_gp[0]]) + offset + CACHE_LINE_SIZE * rank, 0,
+           CACHE_LINE_SIZE);
+    int offset_bcast = LEADER_SHM_SIZE + 2 * CACHE_LINE_SIZE * size + PER_RANK_SHM_SIZE * size;
+    int offset_barrier = offset_bcast + CACHE_LINE_SIZE * size;
+    memset(((char *) data->allshmmmap_sbuf[data->l1_gp[0]])
+               + offset_bcast /*16K + 16k + 16k + 2M */ + CACHE_LINE_SIZE * rank,
+           0, CACHE_LINE_SIZE);
+    memset(((char *) data->allshmmmap_sbuf[data->l1_gp[0]])
+               + offset_barrier /*16K + 16k + 16k + 2M + 16k*/ + CACHE_LINE_SIZE * rank,
+           0, CACHE_LINE_SIZE);
+    memset(((char *) data->allshmmmap_sbuf[root])
+               + offset_barrier /*16K + 16k + 16k + 2M + 16k*/ + CACHE_LINE_SIZE * rank,
+           0, CACHE_LINE_SIZE);
     if (data->l1_gp[0] == rank) {
         memset(((char *) data->allshmmmap_sbuf[data->l2_gp[0]]) + (offset + CACHE_LINE_SIZE * size) + CACHE_LINE_SIZE * rank,
                0, CACHE_LINE_SIZE);

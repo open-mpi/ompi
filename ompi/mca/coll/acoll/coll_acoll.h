@@ -26,6 +26,7 @@
 #include <xpmem.h>
 #endif
 
+#include "opal/mca/accelerator/accelerator.h"
 #include "opal/mca/shmem/base/base.h"
 #include "opal/mca/shmem/shmem.h"
 
@@ -40,6 +41,7 @@ extern int mca_coll_acoll_sg_scale;
 extern int mca_coll_acoll_node_size;
 extern int mca_coll_acoll_force_numa;
 extern int mca_coll_acoll_use_dynamic_rules;
+extern int mca_coll_acoll_disable_shmbcast;
 extern int mca_coll_acoll_mnode_enable;
 extern int mca_coll_acoll_bcast_lin0;
 extern int mca_coll_acoll_bcast_lin1;
@@ -201,6 +203,7 @@ typedef struct coll_acoll_subcomms {
     coll_acoll_data_t *data;
     bool initialized_data;
     bool initialized_shm_data;
+    int barrier_algo;
 #ifdef HAVE_XPMEM_H
     uint64_t xpmem_buf_size;
     int without_xpmem;
@@ -233,6 +236,7 @@ struct mca_coll_acoll_module_t {
     int log2_node_cnt;
     int force_numa;
     int use_dyn_rules;
+    int disable_shmbcast;
     // Todo: Use substructure for every API related ones
     int use_mnode;
     int use_lin0;
