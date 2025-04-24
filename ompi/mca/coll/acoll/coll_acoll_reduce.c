@@ -119,7 +119,7 @@ static inline int coll_acoll_reduce_topo(const void *sbuf, void *rbuf, size_t co
                                     MCA_COLL_BASE_TAG_REDUCE, MCA_PML_BASE_SEND_STANDARD,
                                     subc->base_comm[ind1][ind2]));
             if (ret != MPI_SUCCESS) {
-                free(pml_buffer);
+                free(free_buffer);
                 if (NULL != tmp_rbuf) {
                     coll_acoll_buf_free(reserve_mem_rbuf_reduce, tmp_rbuf);
                 }
@@ -134,7 +134,7 @@ static inline int coll_acoll_reduce_topo(const void *sbuf, void *rbuf, size_t co
                 ret = MCA_PML_CALL(recv(pml_buffer, count, dtype, i, MCA_COLL_BASE_TAG_REDUCE,
                                         subc->base_comm[ind1][ind2], MPI_STATUS_IGNORE));
                 if (ret != MPI_SUCCESS) {
-                    free(pml_buffer);
+                    free(free_buffer);
                     return ret;
                 }
                 ompi_op_reduce(op, pml_buffer, rbuf, count, dtype);
@@ -143,8 +143,8 @@ static inline int coll_acoll_reduce_topo(const void *sbuf, void *rbuf, size_t co
     }
 
     /* if local root, reduce at root */
-    if (is_base && (sz > 1)) {
-        free(pml_buffer);
+    if (is_base) {
+        free(free_buffer);
         if (rank != root && NULL != tmp_rbuf) {
             coll_acoll_buf_free(reserve_mem_rbuf_reduce, tmp_rbuf);
         }
@@ -329,6 +329,20 @@ int mca_coll_acoll_reduce_intra(const void *sbuf, void *rbuf, size_t count,
                                                     module, 0, 0);
     }
 
+    /* Disable shm/xpmem based optimizations if: */
+    /* - datatype is not a predefined type */
+    /* - it's a gpu buffer */
+    uint64_t flags = 0;
+    int dev_id;
+    bool is_opt = true;
+    if (!OMPI_COMM_CHECK_ASSERT_NO_ACCEL_BUF(comm)) {
+        if (!ompi_datatype_is_predefined(dtype)
+            || (0 < opal_accelerator.check_addr(sbuf, &dev_id, &flags))
+            || (0 < opal_accelerator.check_addr(rbuf, &dev_id, &flags))) {
+            is_opt = false;
+        }
+    }
+
     ompi_datatype_type_size(dtype, &dsize);
     total_dsize = dsize * count;
 
@@ -374,7 +388,7 @@ int mca_coll_acoll_reduce_intra(const void *sbuf, void *rbuf, size_t count,
                   && (acoll_module->reserve_mem_s).reserve_mem_allocate
                   && ((acoll_module->reserve_mem_s).reserve_mem_size >= total_dsize))
                  || ((0 == subc->xpmem_use_sr_buf) && (subc->xpmem_buf_size > 2 * total_dsize)))
-                && (subc->without_xpmem != 1)) {
+                && (subc->without_xpmem != 1) && is_opt) {
                 return mca_coll_acoll_reduce_xpmem(sbuf, rbuf, count, dtype, op, root, comm,
                                                    module, subc);
             } else {

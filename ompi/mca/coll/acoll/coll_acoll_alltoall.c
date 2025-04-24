@@ -529,14 +529,8 @@ int mca_coll_acoll_alltoall
         struct ompi_communicator_t *split_comm;
 
         /* Select the right split_comm. */
-        int pow2_idx = -2;
-        int tmp_grp_split_f = grp_split_f;
-        while (tmp_grp_split_f > 0)
-        {
-            pow2_idx += 1;
-            tmp_grp_split_f = tmp_grp_split_f / 2;
-        }
-        split_comm = subc->split_comm[pow2_idx];
+        int comm_idx = grp_split_f > 2 ? opal_cube_dim(grp_split_f/2) : 0;
+        split_comm = subc->split_comm[comm_idx];
 
         error = mca_coll_acoll_base_alltoall_dispatcher
                         (sbuf, (grp_split_f * scount), sdtype,

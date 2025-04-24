@@ -450,7 +450,21 @@ int mca_coll_acoll_allreduce_intra(const void *sbuf, void *rbuf, size_t count,
     ompi_datatype_type_size(dtype, &dsize);
     total_dsize = dsize * count;
 
-    if (1 == size) {
+    /* Disable shm/xpmem based optimizations if: */
+    /* - datatype is not a predefined type */
+    /* - it's a gpu buffer */
+    uint64_t flags = 0;
+    int dev_id;
+    bool is_opt = true;
+    if (!OMPI_COMM_CHECK_ASSERT_NO_ACCEL_BUF(comm)) {
+        if (!ompi_datatype_is_predefined(dtype)
+            || (0 < opal_accelerator.check_addr(sbuf, &dev_id, &flags))
+            || (0 < opal_accelerator.check_addr(rbuf, &dev_id, &flags))) {
+            is_opt = false;
+        }
+    }
+
+    if ((1 == size) && is_opt) {
         if (MPI_IN_PLACE != sbuf) {
             memcpy((char *) rbuf, sbuf, total_dsize);
         }
@@ -486,7 +500,7 @@ int mca_coll_acoll_allreduce_intra(const void *sbuf, void *rbuf, size_t count,
         if (total_dsize < 32) {
             return ompi_coll_base_allreduce_intra_recursivedoubling(sbuf, rbuf, count, dtype, op,
                                                                     comm, module);
-        } else if (total_dsize < 512) {
+        } else if ((total_dsize < 512) && is_opt) {
             return mca_coll_acoll_allreduce_small_msgs_h(sbuf, rbuf, count, dtype, op, comm, module,
                                                          subc, 1);
         } else if (total_dsize <= 2048) {
@@ -505,7 +519,7 @@ int mca_coll_acoll_allreduce_intra(const void *sbuf, void *rbuf, size_t count,
             }
         } else if (total_dsize < 4194304) {
 #ifdef HAVE_XPMEM_H
-            if (((subc->xpmem_use_sr_buf != 0) || (subc->xpmem_buf_size > 2 * total_dsize)) && (subc->without_xpmem != 1)) {
+            if (((subc->xpmem_use_sr_buf != 0) || (subc->xpmem_buf_size > 2 * total_dsize)) && (subc->without_xpmem != 1) && is_opt) {
                 return mca_coll_acoll_allreduce_xpmem_f(sbuf, rbuf, count, dtype, op, comm, module, subc);
             } else {
                 return ompi_coll_base_allreduce_intra_redscat_allgather(sbuf, rbuf, count, dtype,
@@ -517,7 +531,7 @@ int mca_coll_acoll_allreduce_intra(const void *sbuf, void *rbuf, size_t count,
 #endif
         } else if (total_dsize <= 16777216) {
 #ifdef HAVE_XPMEM_H
-            if (((subc->xpmem_use_sr_buf != 0) || (subc->xpmem_buf_size > 2 * total_dsize)) && (subc->without_xpmem != 1)) {
+            if (((subc->xpmem_use_sr_buf != 0) || (subc->xpmem_buf_size > 2 * total_dsize)) && (subc->without_xpmem != 1) && is_opt) {
                 mca_coll_acoll_reduce_xpmem_h(sbuf, rbuf, count, dtype, op, comm, module, subc);
                 return mca_coll_acoll_bcast(rbuf, count, dtype, 0, comm, module);
             } else {
@@ -530,7 +544,7 @@ int mca_coll_acoll_allreduce_intra(const void *sbuf, void *rbuf, size_t count,
 #endif
         } else {
 #ifdef HAVE_XPMEM_H
-            if (((subc->xpmem_use_sr_buf != 0) || (subc->xpmem_buf_size > 2 * total_dsize)) && (subc->without_xpmem != 1)) {
+            if (((subc->xpmem_use_sr_buf != 0) || (subc->xpmem_buf_size > 2 * total_dsize)) && (subc->without_xpmem != 1) && is_opt) {
                 return mca_coll_acoll_allreduce_xpmem_f(sbuf, rbuf, count, dtype, op, comm, module, subc);
             } else {
                 return ompi_coll_base_allreduce_intra_redscat_allgather(sbuf, rbuf, count, dtype,

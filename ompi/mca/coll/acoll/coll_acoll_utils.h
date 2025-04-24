@@ -101,13 +101,15 @@ static inline int check_and_create_subc(ompi_communicator_t *comm,
         if (NULL == acoll_module->subc) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
-    }
-
-    /* Check if subcomms structure is already created for the communicator */
-    for (int i = 0; i < num_subc; i++) {
-        if (acoll_module->subc[i]->cid == cid) {
-            *subc_ptr = acoll_module->subc[i];
-            return MPI_SUCCESS;
+    } else {
+        /* Check if subcomms structure is already created for the communicator */
+        for (int i = 0; i < num_subc; i++) {
+            if (NULL != acoll_module->subc[i]) {
+                if (acoll_module->subc[i]->cid == cid) {
+                    *subc_ptr = acoll_module->subc[i];
+                    return MPI_SUCCESS;
+                }
+            }
         }
     }
 

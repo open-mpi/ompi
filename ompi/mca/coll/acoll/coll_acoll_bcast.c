@@ -686,6 +686,18 @@ int mca_coll_acoll_bcast(void *buff, size_t count, struct ompi_datatype_t *datat
     if (size <= 2)
         no_sg = 1;
 
+    /* Disable shm based bcast if: */
+    /* - datatype is not a predefined type */
+    /* - it's a gpu buffer */
+    uint64_t flags = 0;
+    int dev_id;
+    if (!OMPI_COMM_CHECK_ASSERT_NO_ACCEL_BUF(comm)) {
+        if (!ompi_datatype_is_predefined(datatype)
+            || (0 < opal_accelerator.check_addr(buff, &dev_id, &flags))) {
+            use_shm = 0;
+        }
+    }
+
     coll_acoll_bcast_subcomms(comm, subc, subcomms, subc_roots, root, num_nodes, use_0, no_sg,
                               use_numa, use_socket);
 

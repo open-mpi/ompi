@@ -29,7 +29,7 @@ static inline int log_sg_bcast_intra(void *buff, size_t count, struct ompi_datat
                                      mca_coll_base_module_t *module, ompi_request_t **preq,
                                      int *nreqs)
 {
-    int msb_pos, sub_rank, peer, err;
+    int msb_pos, sub_rank, peer, err = MPI_SUCCESS;
     int i, mask;
     int end_sg, end_peer;
 
@@ -92,7 +92,7 @@ static inline int lin_sg_bcast_intra(void *buff, size_t count, struct ompi_datat
                                      int *nreqs)
 {
     int peer;
-    int err;
+    int err = MPI_SUCCESS;
     int sg_end;
 
     sg_end = sg_start + sg_size - 1;
