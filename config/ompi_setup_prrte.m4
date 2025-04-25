@@ -20,6 +20,7 @@ dnl Copyright (c) 2020-2022 Amazon.com, Inc. or its affiliates.  All Rights rese
 dnl Copyright (c) 2021      Nanook Consulting.  All rights reserved.
 dnl Copyright (c) 2021-2022 IBM Corporation.  All rights reserved.
 dnl Copyright (c) 2023-2024 Jeffrey M. Squyres.  All rights reserved.
+dnl Copyright (c) 2025      Advanced Micro Devices, Inc. All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -85,7 +86,7 @@ OPAL_VAR_SCOPE_PUSH([prrte_setup_internal_happy prrte_setup_external_happy targe
     # unless internal specifically requested by the user, try to find
     # an external that works.
     prrte_setup_external_happy=0
-    AS_IF([test "$opal_prrte_mode" != "internal" -o "$opal_prrte_mode" != "disabled"],
+    AS_IF([test "$opal_prrte_mode" != "internal" -a "$opal_prrte_mode" != "disabled"],
           [_OMPI_SETUP_PRRTE_EXTERNAL(
               [prrte_setup_external_happy=1
                opal_prrte_mode="external"],
