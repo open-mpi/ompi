@@ -13,6 +13,7 @@
  * Copyright (c) 2007-2008 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2025      Advanced Micro Devices, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -54,7 +55,12 @@ int MPI_Init(int *argc, char ***argv)
 
     if (NULL != (env = getenv("OMPI_MPI_THREAD_LEVEL"))) {
         required = atoi(env);
-        if (required < MPI_THREAD_SINGLE || required > MPI_THREAD_MULTIPLE) {
+        /* In the future we may have to contend with non-sequential (MPI ABI) values
+         * If you are implementing MPI ABI changes please refer to
+         * https://github.com/open-mpi/ompi/pull/13211#discussion_r2085086844
+         */
+        if (required != MPI_THREAD_SINGLE && required != MPI_THREAD_FUNNELED &&
+            required != MPI_THREAD_SERIALIZED && required != MPI_THREAD_MULTIPLE) {
             required = MPI_THREAD_MULTIPLE;
         }
     }
