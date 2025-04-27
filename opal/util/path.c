@@ -15,8 +15,8 @@
  *                         All rights reserved.
  * Copyright (c) 2014      Intel, Inc.  All rights reserved.
  * Copyright (c) 2016      University of Houston. All rights reserved.
- * Copyright (c) 2016      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016-2022 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -496,6 +496,9 @@ static char *opal_check_mtab(char *dev_path)
 #ifndef PVFS2_SUPER_MAGIC
 #    define PVFS2_SUPER_MAGIC 0x20030528
 #endif
+#ifndef CEPH_SUPER_MAGIC
+#    define CEPH_SUPER_MAGIC 0x00c36400
+#endif
 
 #define MASK2 0xffff
 #define MASK4 0xffffffff
@@ -526,7 +529,8 @@ bool opal_path_nfs(char *fname, char **ret_fstype)
                     {AUTOFS_SUPER_MAGIC, MASK2, "autofs"},
                     {PAN_KERNEL_FS_CLIENT_SUPER_MAGIC, MASK4, "panfs"},
                     {GPFS_SUPER_MAGIC, MASK4, "gpfs"},
-                    {PVFS2_SUPER_MAGIC, MASK4, "pvfs2"}};
+                    {PVFS2_SUPER_MAGIC, MASK4, "pvfs2"},
+                    {CEPH_SUPER_MAGIC, MASK4, "ceph"}};
 #define FS_TYPES_NUM (int) (sizeof(fs_types) / sizeof(fs_types[0]))
 
     /*

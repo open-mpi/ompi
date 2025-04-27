@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2020 University of Houston. All rights reserved.
- * Copyright (c) 2018      Research Organization for Information Science
+ * Copyright (c) 2018-2022 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018      DataDirect Networks. All rights reserved.
  * Copyright (c) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
@@ -112,7 +112,8 @@ enum ompio_fs_type
     LUSTRE = 3,
     PLFS = 4,
     IME = 5,
-    GPFS = 6
+    GPFS = 6,
+    CEPH = 7
 };
 
 typedef struct mca_common_ompio_io_array_t {
