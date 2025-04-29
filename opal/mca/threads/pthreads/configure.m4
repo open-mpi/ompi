@@ -16,6 +16,7 @@
 # Copyright (c) 2019      Sandia National Laboratories.  All rights reserved.
 # Copyright (c) 2019      Triad National Security, LLC. All rights
 #                         reserved.
+# Copyright (c) 2025      Nanook Consulting  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -363,23 +364,15 @@ AC_DEFUN([OPAL_INTL_POSIX_THREADS_SPECIAL_FLAGS],[
 # -Kthread:
 # -kthread:  FreeBSD kernel threads
 # -pthread:  Modern GCC (most all platforms)
-# -pthreads: GCC on solaris
 # -mthreads:
-# -mt:       Solaris native compilers / HP-UX aCC
+# -mt:       HP-UX aCC
 #
 # Put -mt before -mthreads because HP-UX aCC will properly compile
 # with -mthreads (reading as -mt), but emit a warning about unknown
-# flags hreads.  Stupid compilers.
+# flags "hreads".  Stupid compilers.
 OPAL_VAR_SCOPE_PUSH([pflags])
 
-case "${host_cpu}-${host_os}" in
-  *solaris*)
-    pflags="-pthread -pthreads -mt"
-  ;;
-  *)
-    pflags="-Kthread -kthread -pthread -pthreads -mt -mthreads"
-  ;;
-esac
+pflags="-Kthread -kthread -pthread -pthreads -mt -mthreads"
 
 # Only run C++ and Fortran if those compilers were found
 
@@ -705,7 +698,7 @@ AC_DEFUN([MCA_opal_threads_pthreads_COMPILE_MODE], [
 
 # If component was selected, $1 will be 1 and we should set the base header
 AC_DEFUN([MCA_opal_threads_pthreads_POST_CONFIG],[
-    AS_IF([test "$1" = "1"], 
+    AS_IF([test "$1" = "1"],
           [opal_thread_type_found="pthreads"
            AC_DEFINE_UNQUOTED([MCA_threads_base_include_HEADER],
                               ["opal/mca/threads/pthreads/threads_pthreads_threads.h"],

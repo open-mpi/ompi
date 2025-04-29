@@ -17,6 +17,7 @@
  * Copyright (c) 2016      University of Houston. All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2025      Nanook Consulting  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -86,7 +87,7 @@
 #endif
 
 /*
- * Note that some OS's (e.g., NetBSD and Solaris) have statfs(), but
+ * Note that some OS's (e.g., NetBSD has statfs(), but
  * no struct statfs (!).  So check to make sure we have struct statfs
  * before allowing the use of statfs().
  */
@@ -409,8 +410,8 @@ char *opal_find_absolute_path(char *app_name)
 
 /**
  * Read real FS type from /etc/mtab, needed to translate autofs fs type into real fs type
- * TODO: solaris? OSX?
- * Limitations: autofs on solaris/osx will be assumed as "nfs" type
+ * TODO: OSX?
+ * Limitations: autofs on osx will be assumed as "nfs" type
  */
 
 static char *opal_check_mtab(char *dev_path)
@@ -456,10 +457,6 @@ static char *opal_check_mtab(char *dev_path)
  *          return 0 success, -1 on failure with errno set.
  *   statvfs (const char *path, struct statvfs *buf);
  *          with unsigned long  f_fsid;   -- returns wrong info
- *          return 0 success, -1 on failure with errno set.
- * Solaris:
- *   statvfs (const char *path, struct statvfs *buf);
- *          with f_basetype, contains a string of length FSTYPSZ
  *          return 0 success, -1 on failure with errno set.
  * FreeBSD:
  *   statfs(const char *path, struct statfs *buf);

@@ -18,6 +18,7 @@ dnl Copyright (c) 2013      Intel, Inc.  All rights reserved.
 dnl Copyright (c) 2015-2018 Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl Copyright (c) 2017      FUJITSU LIMITED.  All rights reserved.
+dnl Copyright (c) 2025      Nanook Consulting  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -128,17 +129,6 @@ AC_DEFUN([_OMPI_SETUP_JAVA],[
                              [AC_MSG_RESULT([not found])])])
            fi
 
-           if test "$ompi_java_found" = "0"; then
-               # Solaris
-               ompi_java_dir=/usr/java
-               AC_MSG_CHECKING([for Java in Solaris locations])
-               AS_IF([test -d $ompi_java_dir && test -r "$ompi_java_dir/include/jni.h"],
-                     [AC_MSG_RESULT([found ($ompi_java_dir)])
-                      with_jdk_headers=$ompi_java_dir/include
-                      with_jdk_bindir=$ompi_java_dir/bin
-                      ompi_java_found=1],
-                     [AC_MSG_RESULT([not found])])
-           fi
           ],
           [ompi_java_found=1])
 
@@ -188,11 +178,6 @@ EOF
                       # too.  Ugh.
                       AS_IF([test -d "$with_jdk_headers/linux"],
                             [OMPI_JDK_CPPFLAGS="$OMPI_JDK_CPPFLAGS -I$with_jdk_headers/linux"])
-                      # Solaris JDK also require -I<blah>/solaris.
-                      # See if that's there, and if so, add a -I for that,
-                      # too.  Ugh.
-                      AS_IF([test -d "$with_jdk_headers/solaris"],
-                            [OMPI_JDK_CPPFLAGS="$OMPI_JDK_CPPFLAGS -I$with_jdk_headers/solaris"])
                       # Darwin JDK also require -I<blah>/darwin.
                       # See if that's there, and if so, add a -I for that,
                       # too.  Ugh.

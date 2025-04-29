@@ -1263,9 +1263,6 @@ extern void*     sbrk(ptrdiff_t);
 #if USE_LOCKS
 #ifndef WIN32
 #include <pthread.h>
-#if defined (__SVR4) && defined (__sun)  /* solaris */
-#include <thread.h>
-#endif /* solaris */
 #else
 #ifndef _M_AMD64
 /* These are already defined on AMD64 builds */
@@ -1544,15 +1541,11 @@ static FORCEINLINE int pthread_acquire_lock (MLOCK_T *sl) {
         break;
       }
       if ((++spins & SPINS_PER_YIELD) == 0) {
-#if defined (__SVR4) && defined (__sun) /* solaris */
-        thr_yield();
-#else
 #ifdef linux
         sched_yield();
 #else  /* no-op yield on unknown systems */
         ;
 #endif /* linux */
-#endif /* solaris */
       }
     }
   }

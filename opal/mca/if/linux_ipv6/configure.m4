@@ -3,6 +3,8 @@
 # Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2015      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2025      Nanook Consulting  All rights reserved.
+# Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -22,12 +24,13 @@ AC_DEFUN([MCA_opal_if_linux_ipv6_COMPILE_MODE], [
 AC_DEFUN([MCA_opal_if_linux_ipv6_CONFIG], [
     AC_CONFIG_FILES([opal/mca/if/linux_ipv6/Makefile])
 
-    AC_REQUIRE([OPAL_CHECK_OS_FLAVORS])
+    AC_REQUIRE([OAC_CHECK_OS_FLAVORS])
 
-    AC_MSG_CHECKING([if we are on Linux with TCP])
-    # If we have struct sockaddr and we're on Linux, then we're
-    # happy.
-    AS_IF([test "$opal_found_sockaddr" = "yes" && test "$opal_found_linux" = "yes"],
+    # If we previously found struct sockaddr_in6 (we don't repeat the
+    # AC CHECK_TYPES test here simply because it's cumbersome with all
+    # the required #includes) and we're on Linux, we're happy.
+    AC_MSG_CHECKING([for Linux with struct sockaddr_in6])
+    AS_IF([test "$ac_cv_type_struct_sockaddr_in6" = "yes" && test "$oac_found_linux" = "yes"],
           [AC_MSG_RESULT([yes])
            $1],
           [AC_MSG_RESULT([no])
