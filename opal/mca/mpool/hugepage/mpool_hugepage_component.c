@@ -209,7 +209,6 @@ static void mca_mpool_hugepage_find_hugepages (void) {
     mca_mpool_hugepage_hugepage_t *hp;
     FILE *fh;
     struct mntent *mntent;
-    char *opts, *tok, *ctx;
 
     fh = setmntent ("/proc/mounts", "r");
     if (NULL == fh) {
@@ -223,6 +222,18 @@ static void mca_mpool_hugepage_find_hugepages (void) {
             continue;
         }
 
+#if defined(USE_STATFS)
+        struct statfs info;
+        statfs(mntent->mnt_dir, &info);
+        page_size = info.f_bsize;
+#elif defined(HAVE_STATVFS)
+        struct statvfs info;
+        statvfs(mntent->mnt_dir, &info);
+        page_size = info.f_bsize;
+#else
+        // Fallback for extremely old systems that do not have
+        // statfs().
+        char *opts, *tok, *ctx;
         opts = strdup(mntent->mnt_opts);
         if (NULL == opts) {
             break;
@@ -231,26 +242,20 @@ static void mca_mpool_hugepage_find_hugepages (void) {
         tok = strtok_r (opts, ",", &ctx);
 
         do {
-            if (0 == strncmp (tok, "pagesize", 8)) {
-                break;
+            if (NULL != tok && 0 == strncmp(tok, "pagesize", 8)) {
+                // It is expected that pagesize=X will be an integer
+                // number with no units qualifier following it.
+                // Specifically: Linux circa 2025 has /proc/mounts
+                // output like "... rw,relatime,pagesize=2M".  But if
+                // your system is signifncantly older than that
+                // (statfs() was introduced around 1994), we're
+                // assuming that there is no units qualifier.
+                (void) sscanf(tok, "pagesize=%lu", &page_size);
             }
             tok = strtok_r (NULL, ",", &ctx);
         } while (tok);
-
-        if (!tok) {
-#if defined(USE_STATFS)
-            struct statfs info;
-
-            statfs (mntent->mnt_dir, &info);
-#elif defined(HAVE_STATVFS)
-            struct statvfs info;
-            statvfs (mntent->mnt_dir, &info);
-#endif
-            page_size = info.f_bsize;
-        } else {
-            (void) sscanf (tok, "pagesize=%lu", &page_size);
-        }
         free(opts);
+#endif
 
         if (0 == page_size) {
             /* could not get page size */
