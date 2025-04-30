@@ -56,8 +56,8 @@ ssize_t mca_fbtl_posix_ipreadv (ompio_file_t *fh,
     data->prd_req_type  = FBTL_POSIX_AIO_READ;
     data->prd_req_chunks = ompi_fbtl_posix_max_prd_active_reqs;
     data->prd_total_len = 0;
-    data->prd_aio.aio_reqs = (struct aiocb *) malloc (sizeof(struct aiocb) *
-                                              fh->f_num_of_io_entries);
+    data->prd_aio.aio_reqs = (struct aiocb *) calloc (fh->f_num_of_io_entries,
+                                                      sizeof(struct aiocb));
     if (NULL == data->prd_aio.aio_reqs) {
         opal_output(1, "mca_fbtl_posix_ipreadv: could not allocate memory\n");
         free(data);
