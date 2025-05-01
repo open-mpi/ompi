@@ -31,6 +31,7 @@ PROTOTYPE VOID reduce_scatter_block(BUFFER x1, BUFFER_OUT x2,
     MPI_Op c_op;
     int size;
     char *sendbuf = OMPI_CFI_BASE_ADDR(x1), *recvbuf = OMPI_CFI_BASE_ADDR(x2);
+    @COUNT_TYPE@ c_recvcount = (@COUNT_TYPE@)*recvcount;
 
     OMPI_CFI_CHECK_CONTIGUOUS(x1, c_ierr);
     if (MPI_SUCCESS != c_ierr) {
@@ -54,7 +55,7 @@ PROTOTYPE VOID reduce_scatter_block(BUFFER x1, BUFFER_OUT x2,
     recvbuf = (char *) OMPI_F2C_BOTTOM(recvbuf);
 
     c_ierr = @INNER_CALL@(sendbuf, recvbuf,
-                          (@COUNT_TYPE@) *recvcount,
+                          c_recvcount,
                           c_type, c_op, c_comm);
    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 }

@@ -16,7 +16,7 @@
  * Copyright (c) 2015-2019 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2015      FUJITSU LIMITED.  All rights reserved.
- * Copyright (c) 2024      Triad National Security, LLC. All rights
+ * Copyright (c) 2024-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -40,6 +40,7 @@ PROTOTYPE VOID rget_accumulate(BUFFER_ASYNC x1, COUNT origin_count,
     MPI_Op c_op = PMPI_Op_f2c(*op);
     char *origin_addr = OMPI_CFI_BASE_ADDR(x1);
     @COUNT_TYPE@ c_origin_count = (@COUNT_TYPE@) *origin_count;
+    @COUNT_TYPE@ c_target_count = (@COUNT_TYPE@) *target_count;
     char *result_addr = OMPI_CFI_BASE_ADDR(x2);
     @COUNT_TYPE@ c_result_count = (@COUNT_TYPE@) *result_count;
     MPI_Request c_req;
@@ -67,7 +68,7 @@ PROTOTYPE VOID rget_accumulate(BUFFER_ASYNC x1, COUNT origin_count,
                           c_result_datatype,
                           OMPI_FINT_2_INT(*target_rank),
                           *target_disp,
-                          (@COUNT_TYPE@) *target_count,
+                          c_target_count,
                           c_target_datatype, c_op, c_win, &c_req);
     if (c_origin_datatype != c_origin_type) {
         ompi_datatype_destroy(&c_origin_datatype);

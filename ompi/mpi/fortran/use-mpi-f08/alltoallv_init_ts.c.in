@@ -62,8 +62,6 @@ PROTOTYPE VOID alltoallv_init(BUFFER_ASYNC x1, COUNT_ARRAY sendcounts, DISP_ARRA
         OMPI_ERRHANDLER_INVOKE(c_comm, c_ierr, FUNC_NAME)
         return;
     }
-    OMPI_ARRAY_FINT_2_INT(sendcounts, size);
-    OMPI_ARRAY_FINT_2_INT(sdispls, size);
     OMPI_FORTRAN_BIGCOUNT_ARRAY_SET(recvcounts, tmp_recvcounts, size);
     OMPI_FORTRAN_BIGCOUNT_ARRAY_SET(rdispls, tmp_rdispls, size);
 

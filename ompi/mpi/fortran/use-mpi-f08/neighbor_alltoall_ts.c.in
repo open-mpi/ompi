@@ -15,7 +15,7 @@
  *                         reserved.
  * Copyright (c) 2015-2019 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
- * Copyright (c) 2024      Triad National Security, LLC. All rights
+ * Copyright (c) 2024-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -30,8 +30,11 @@ PROTOTYPE VOID neighbor_alltoall(BUFFER x1, COUNT sendcount, DATATYPE sendtype,
 {
     int c_ierr;
     MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
-    MPI_Datatype c_sendtype, c_recvtype;
+    MPI_Datatype c_sendtype = PMPI_Type_f2c(*sendtype);
+    MPI_Datatype c_recvtype = PMPI_Type_f2c(*recvtype);
     char *sendbuf = OMPI_CFI_BASE_ADDR(x1), *recvbuf = OMPI_CFI_BASE_ADDR(x2);
+    @COUNT_TYPE@ c_sendcount = (@COUNT_TYPE@)*sendcount;
+    @COUNT_TYPE@ c_recvcount = (@COUNT_TYPE@)*recvcount;
 
     OMPI_CFI_CHECK_CONTIGUOUS(x1, c_ierr);
     if (MPI_SUCCESS != c_ierr) {
@@ -46,18 +49,15 @@ PROTOTYPE VOID neighbor_alltoall(BUFFER x1, COUNT sendcount, DATATYPE sendtype,
         return;
     }
 
-    c_sendtype = PMPI_Type_f2c(*sendtype);
-    c_recvtype = PMPI_Type_f2c(*recvtype);
-
     sendbuf = (char *) OMPI_F2C_IN_PLACE(sendbuf);
     sendbuf = (char *) OMPI_F2C_BOTTOM(sendbuf);
     recvbuf = (char *) OMPI_F2C_BOTTOM(recvbuf);
 
     c_ierr = @INNER_CALL@(sendbuf,
-                          (@COUNT_TYPE@) *sendcount,
+                          c_sendcount,
                           c_sendtype,
                           recvbuf,
-                          (@COUNT_TYPE@) *recvcount,
+                          c_recvcount,
                           c_recvtype, c_comm);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 }

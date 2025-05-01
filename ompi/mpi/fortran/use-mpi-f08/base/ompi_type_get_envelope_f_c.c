@@ -40,23 +40,17 @@ void ompi_type_get_envelope_f_c(MPI_Fint *type, MPI_Count *num_integers,
 {
     int c_ierr;
     MPI_Datatype c_type = PMPI_Type_f2c(*type);
-    OMPI_SINGLE_NAME_DECL(num_integers);
-    OMPI_SINGLE_NAME_DECL(num_addresses);
-    OMPI_SINGLE_NAME_DECL(num_datatypes);
-    OMPI_SINGLE_NAME_DECL(combiner);
+    int c_combiner;
 
     c_ierr = PMPI_Type_get_envelope_c(c_type,
-                                   OMPI_SINGLE_NAME_CONVERT(num_integers),
-                                   OMPI_SINGLE_NAME_CONVERT(num_addresses),
-                                   OMPI_SINGLE_NAME_CONVERT(num_large_counts),
-                                   OMPI_SINGLE_NAME_CONVERT(num_datatypes),
-                                   OMPI_SINGLE_NAME_CONVERT(combiner));
+                                     num_integers,
+                                     num_addresses,
+                                     num_large_counts,
+                                     num_datatypes,
+                                     &c_combiner);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
-        OMPI_SINGLE_INT_2_FINT(num_integers);
-        OMPI_SINGLE_INT_2_FINT(num_addresses);
-        OMPI_SINGLE_INT_2_FINT(num_datatypes);
-        OMPI_SINGLE_INT_2_FINT(combiner);
+        *combiner = (MPI_Fint)(c_combiner);
     }
 }

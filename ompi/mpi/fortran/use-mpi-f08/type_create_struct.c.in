@@ -12,7 +12,7 @@
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2024      Triad National Security, LLC. All rights
+ * Copyright (c) 2024-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -28,9 +28,10 @@ PROTOTYPE VOID  type_create_struct(COUNT count,
 			           DATATYPE_OUT newtype)
 {
     MPI_Datatype c_new;
-    MPI_Datatype *c_type_old_array;
+    MPI_Datatype *c_type_old_array = NULL;
     int i, c_ierr;
-    OMPI_ARRAY_NAME_DECL(array_of_block_lengths);
+    @COUNT_TYPE@ c_count = (@COUNT_TYPE@)*count;
+    @COUNT_TYPE@ *tmp_array_of_block_lengths = NULL;
 
     c_type_old_array = (MPI_Datatype *) malloc(*count * sizeof(MPI_Datatype));
     if (NULL == c_type_old_array) {
@@ -44,14 +45,15 @@ PROTOTYPE VOID  type_create_struct(COUNT count,
         c_type_old_array[i] = PMPI_Type_f2c(array_of_types[i]);
     }
 
-    OMPI_ARRAY_FINT_2_INT(array_of_block_lengths, *count);
+    OMPI_FORTRAN_BIGCOUNT_ARRAY_SET(array_of_block_lengths, tmp_array_of_block_lengths, *count);
 
-    c_ierr = @INNER_CALL@(OMPI_FINT_2_INT(*count),
-			   OMPI_ARRAY_NAME_CONVERT(array_of_block_lengths),
-                           array_of_displacements, c_type_old_array, &c_new);
+    c_ierr = @INNER_CALL@(c_count,
+			   tmp_array_of_block_lengths,
+                           array_of_displacements,
+                           c_type_old_array, &c_new);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
-    OMPI_ARRAY_FINT_2_INT_CLEANUP(array_of_block_lengths);
+    OMPI_FORTRAN_BIGCOUNT_ARRAY_CLEANUP(array_of_block_lengths, tmp_array_of_block_lengths);
 
     if (MPI_SUCCESS == c_ierr) {
         *newtype = PMPI_Type_c2f(c_new);

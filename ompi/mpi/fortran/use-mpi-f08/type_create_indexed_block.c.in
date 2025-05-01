@@ -12,7 +12,7 @@
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2024      Triad National Security, LLC. All rights
+ * Copyright (c) 2024-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -28,13 +28,15 @@ PROTOTYPE VOID type_create_indexed_block(COUNT count, COUNT blocklength,
     int c_ierr;
     MPI_Datatype c_old = PMPI_Type_f2c(*oldtype);
     MPI_Datatype c_new;
-    OMPI_ARRAY_NAME_DECL(array_of_displacements);
+    @COUNT_TYPE@ c_count = (@COUNT_TYPE@)*count;
+    @COUNT_TYPE@ c_blocklength = (@COUNT_TYPE@)*blocklength;
+    @COUNT_TYPE@ *tmp_array_of_displacements = NULL;
 
-    OMPI_ARRAY_FINT_2_INT(array_of_displacements, *count);
+    OMPI_FORTRAN_BIGCOUNT_ARRAY_SET(array_of_displacements, tmp_array_of_displacements, *count);
 
-    c_ierr = @INNER_CALL@(OMPI_FINT_2_INT(*count),
-			OMPI_FINT_2_INT(*blocklength),
-			OMPI_ARRAY_NAME_CONVERT(array_of_displacements),
+    c_ierr = @INNER_CALL@(c_count,
+			c_blocklength,
+			tmp_array_of_displacements,
                         c_old, &c_new);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
@@ -42,6 +44,5 @@ PROTOTYPE VOID type_create_indexed_block(COUNT count, COUNT blocklength,
         *newtype = PMPI_Type_c2f(c_new);
     }
 
-    OMPI_ARRAY_FINT_2_INT_CLEANUP(array_of_displacements);
+    OMPI_FORTRAN_BIGCOUNT_ARRAY_CLEANUP(array_of_displacements, tmp_array_of_displacements);
 }
-

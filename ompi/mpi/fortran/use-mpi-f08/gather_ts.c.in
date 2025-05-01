@@ -12,7 +12,7 @@
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015-2019 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2024      Triad National Security, LLC. All rights
+ * Copyright (c) 2024-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -29,7 +29,8 @@ PROTOTYPE VOID gather(BUFFER x1, COUNT sendcount, DATATYPE sendtype,
     MPI_Comm c_comm;
     MPI_Datatype c_senddatatype = NULL, c_sendtype = NULL;
     void *sendbuf = OMPI_CFI_BASE_ADDR(x1);
-    int c_sendcount =  0, c_recvcount = 0;
+    @COUNT_TYPE@ c_sendcount =  (@COUNT_TYPE@)*sendcount;
+    @COUNT_TYPE@ c_recvcount =  (@COUNT_TYPE@)*recvcount;
     MPI_Datatype c_recvtype = NULL;
     void *recvbuf = OMPI_CFI_BASE_ADDR(x2);
 
@@ -39,7 +40,6 @@ PROTOTYPE VOID gather(BUFFER x1, COUNT sendcount, DATATYPE sendtype,
     if (OMPI_COMM_IS_INTER(c_comm)) {
         if (MPI_ROOT == c_root) {
             c_recvtype = PMPI_Type_f2c(*recvtype);
-            c_recvcount = OMPI_FINT_2_INT(*recvcount);
             OMPI_CFI_CHECK_CONTIGUOUS(x2, c_ierr);
             if (MPI_SUCCESS != c_ierr) {
                 if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
@@ -48,7 +48,6 @@ PROTOTYPE VOID gather(BUFFER x1, COUNT sendcount, DATATYPE sendtype,
             }
         } else if (MPI_PROC_NULL != c_root) {
             c_sendtype = PMPI_Type_f2c(*sendtype);
-            c_sendcount = OMPI_FINT_2_INT(*sendcount);
             OMPI_CFI_2_C(x1, c_sendcount, c_sendtype, c_senddatatype, c_ierr);
             if (MPI_SUCCESS != c_ierr) {
                 if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
@@ -59,7 +58,6 @@ PROTOTYPE VOID gather(BUFFER x1, COUNT sendcount, DATATYPE sendtype,
     } else {
         if (ompi_comm_rank(c_comm) == c_root) {
             c_recvtype = PMPI_Type_f2c(*recvtype);
-            c_recvcount = OMPI_FINT_2_INT(*recvcount);
             OMPI_CFI_CHECK_CONTIGUOUS(x2, c_ierr);
             if (MPI_SUCCESS != c_ierr) {
                 if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
@@ -71,7 +69,6 @@ PROTOTYPE VOID gather(BUFFER x1, COUNT sendcount, DATATYPE sendtype,
             sendbuf = MPI_IN_PLACE;
         } else {
             c_sendtype = PMPI_Type_f2c(*sendtype);
-            c_sendcount = OMPI_FINT_2_INT(*sendcount);
             OMPI_CFI_2_C(x1, c_sendcount, c_sendtype, c_senddatatype, c_ierr);
             if (MPI_SUCCESS != c_ierr) {
                 if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);

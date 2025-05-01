@@ -15,7 +15,7 @@
  *                         reserved.
  * Copyright (c) 2015-2019 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
- * Copyright (c) 2024      Triad National Security, LLC. All rights
+ * Copyright (c) 2024-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -33,7 +33,8 @@ PROTOTYPE VOID ineighbor_allgather(BUFFER_ASYNC x1, COUNT sendcount, DATATYPE se
     char *sendbuf = OMPI_CFI_BASE_ADDR(x1), *recvbuf = OMPI_CFI_BASE_ADDR(x2);
     MPI_Datatype __opal_attribute_unused__  c_senddatatype;
     MPI_Datatype c_sendtype = PMPI_Type_f2c(*sendtype);
-    @COUNT_TYPE@ __opal_attribute_unused__  c_sendcount = (@COUNT_TYPE@) *sendcount;
+    @COUNT_TYPE@ c_sendcount = (@COUNT_TYPE@) *sendcount;
+    @COUNT_TYPE@ c_recvcount = (@COUNT_TYPE@) *recvcount;
     MPI_Datatype c_recvtype = PMPI_Type_f2c(*recvtype);
     MPI_Request c_req;
 
@@ -58,10 +59,10 @@ PROTOTYPE VOID ineighbor_allgather(BUFFER_ASYNC x1, COUNT sendcount, DATATYPE se
     recvbuf = (char *) OMPI_F2C_BOTTOM(recvbuf);
 
     c_ierr = @INNER_CALL@(sendbuf,
-                          (@COUNT_TYPE@) *sendcount,
+                          c_sendcount,
                           c_sendtype,
                           recvbuf,
-                          (@COUNT_TYPE@) *recvcount,
+                          c_recvcount,
                           c_recvtype, c_comm, &c_req);
 
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);

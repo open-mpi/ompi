@@ -12,7 +12,7 @@
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2024      Triad National Security, LLC. All rights
+ * Copyright (c) 2024-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -29,20 +29,20 @@ PROTOTYPE VOID type_create_subarray(INT ndims,  COUNT_ARRAY size_array,
     int c_ierr;
     MPI_Datatype c_old;
     MPI_Datatype c_new;
-    OMPI_ARRAY_NAME_DECL(size_array);
-    OMPI_ARRAY_NAME_DECL(subsize_array);
-    OMPI_ARRAY_NAME_DECL(start_array);
+    @COUNT_TYPE@ *tmp_size_array = NULL;
+    @COUNT_TYPE@ *tmp_subsize_array = NULL;
+    @COUNT_TYPE@ *tmp_start_array = NULL;
 
     c_old = PMPI_Type_f2c(*oldtype);
 
-    OMPI_ARRAY_FINT_2_INT(size_array, *ndims);
-    OMPI_ARRAY_FINT_2_INT(subsize_array, *ndims);
-    OMPI_ARRAY_FINT_2_INT(start_array, *ndims);
+    OMPI_FORTRAN_BIGCOUNT_ARRAY_SET(size_array, tmp_size_array, *ndims);
+    OMPI_FORTRAN_BIGCOUNT_ARRAY_SET(subsize_array, tmp_subsize_array, *ndims);
+    OMPI_FORTRAN_BIGCOUNT_ARRAY_SET(start_array, tmp_start_array, *ndims);
 
     c_ierr = @INNER_CALL@(OMPI_FINT_2_INT(*ndims),
-                          OMPI_ARRAY_NAME_CONVERT(size_array),
-                          OMPI_ARRAY_NAME_CONVERT(subsize_array),
-                          OMPI_ARRAY_NAME_CONVERT(start_array),
+                          tmp_size_array,
+                          tmp_subsize_array,
+                          tmp_start_array,
                           *order, c_old, &c_new);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
@@ -50,7 +50,7 @@ PROTOTYPE VOID type_create_subarray(INT ndims,  COUNT_ARRAY size_array,
         *newtype = PMPI_Type_c2f(c_new);
     }
 
-    OMPI_ARRAY_FINT_2_INT_CLEANUP(size_array);
-    OMPI_ARRAY_FINT_2_INT_CLEANUP(subsize_array);
-    OMPI_ARRAY_FINT_2_INT_CLEANUP(start_array);
+    OMPI_FORTRAN_BIGCOUNT_ARRAY_CLEANUP(size_array, tmp_size_array);
+    OMPI_FORTRAN_BIGCOUNT_ARRAY_CLEANUP(subsize_array, tmp_subsize_array);
+    OMPI_FORTRAN_BIGCOUNT_ARRAY_CLEANUP(start_array, tmp_start_array);
 }

@@ -12,7 +12,7 @@
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015-2019 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
- * Copyright (c) 2024      Triad National Security, LLC. All rights
+ * Copyright (c) 2024-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -33,6 +33,7 @@ PROTOTYPE VOID ireduce_scatter_block(BUFFER_ASYNC x1, BUFFER_ASYNC_OUT x2,
     MPI_Op c_op;
     int size;
     char *sendbuf = OMPI_CFI_BASE_ADDR(x1), *recvbuf = OMPI_CFI_BASE_ADDR(x2);
+    @COUNT_TYPE@ c_recvcount = (@COUNT_TYPE@) *recvcount;
 
     OMPI_CFI_CHECK_CONTIGUOUS(x1, c_ierr);
     if (MPI_SUCCESS != c_ierr) {
@@ -56,7 +57,7 @@ PROTOTYPE VOID ireduce_scatter_block(BUFFER_ASYNC x1, BUFFER_ASYNC_OUT x2,
     sendbuf = (char *) OMPI_F2C_BOTTOM(sendbuf);
     recvbuf = (char *) OMPI_F2C_BOTTOM(recvbuf);
 
-    c_ierr = @INNER_CALL@(sendbuf, recvbuf, (@COUNT_TYPE@) *recvcount,
+    c_ierr = @INNER_CALL@(sendbuf, recvbuf, c_recvcount,
                           c_type, c_op, c_comm, &c_request);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
     if (MPI_SUCCESS == c_ierr) *request = PMPI_Request_c2f(c_request);

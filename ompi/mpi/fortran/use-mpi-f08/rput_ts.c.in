@@ -15,7 +15,7 @@
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2024      Triad National Security, LLC. All rights
+ * Copyright (c) 2024-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -35,6 +35,7 @@ PROTOTYPE VOID rput(BUFFER_ASYNC x, COUNT origin_count,
     MPI_Win c_win = PMPI_Win_f2c(*win);
     char *origin_addr = OMPI_CFI_BASE_ADDR(x);
     @COUNT_TYPE@ c_origin_count = (@COUNT_TYPE@) *origin_count;
+    @COUNT_TYPE@ c_target_count = (@COUNT_TYPE@) *target_count;
     MPI_Request c_req;
 
     OMPI_CFI_2_C(x, c_origin_count, c_origin_type, c_origin_datatype, c_ierr);
@@ -48,7 +49,7 @@ PROTOTYPE VOID rput(BUFFER_ASYNC x, COUNT origin_count,
                           c_origin_datatype,
                           OMPI_FINT_2_INT(*target_rank),
                           *target_disp,
-                          (@COUNT_TYPE@) *target_count,
+                          c_target_count,
                           c_target_datatype, c_win, &c_req);
     if (c_origin_datatype != c_origin_type) {
         ompi_datatype_destroy(&c_origin_datatype);

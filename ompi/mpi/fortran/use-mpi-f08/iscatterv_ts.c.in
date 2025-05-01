@@ -28,12 +28,12 @@ PROTOTYPE VOID iscatterv(BUFFER_ASYNC x1, COUNT_ARRAY sendcounts,
                          DATATYPE recvtype, RANK root,
                          COMM comm, REQUEST_OUT request)
 {
-    int c_ierr;
+    int c_ierr, idx = 0;
     MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
     int c_root = OMPI_FINT_2_INT(*root);
     MPI_Datatype  __opal_attribute_unused__ c_recvdatatype = MPI_DATATYPE_NULL;
     MPI_Datatype c_sendtype = MPI_DATATYPE_NULL, c_recvtype = MPI_DATATYPE_NULL;
-    @COUNT_TYPE@ c_recvcount = 0;
+    @COUNT_TYPE@ c_recvcount = (@COUNT_TYPE@)*recvcount;
     char *sendbuf = OMPI_CFI_BASE_ADDR(x1), *recvbuf = OMPI_CFI_BASE_ADDR(x2);
     MPI_Request c_request;
     @COUNT_TYPE@ *tmp_sendcounts = NULL;
@@ -53,7 +53,6 @@ PROTOTYPE VOID iscatterv(BUFFER_ASYNC x1, COUNT_ARRAY sendcounts,
             OMPI_FORTRAN_BIGCOUNT_ARRAY_SET(displs, tmp_displs, size);
         } else if (MPI_PROC_NULL != c_root) {
             c_recvtype = PMPI_Type_f2c(*recvtype);
-            c_recvcount = OMPI_FINT_2_INT(*recvcount);
             OMPI_CFI_2_C(x2, c_recvcount, c_recvtype, c_recvdatatype, c_ierr);
             if (MPI_SUCCESS != c_ierr) {
                 if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
@@ -78,7 +77,6 @@ PROTOTYPE VOID iscatterv(BUFFER_ASYNC x1, COUNT_ARRAY sendcounts,
             recvbuf = MPI_IN_PLACE;
         } else {
             c_recvtype = PMPI_Type_f2c(*recvtype);
-            c_recvcount = OMPI_FINT_2_INT(*recvcount);
             OMPI_CFI_2_C(x2, c_recvcount, c_recvtype, c_recvdatatype, c_ierr);
             if (MPI_SUCCESS != c_ierr) {
                 if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
@@ -106,6 +104,6 @@ PROTOTYPE VOID iscatterv(BUFFER_ASYNC x1, COUNT_ARRAY sendcounts,
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
     if (MPI_SUCCESS == c_ierr) *request = PMPI_Request_c2f(c_request);
 
-    OMPI_FORTRAN_BIGCOUNT_ARRAY_CLEANUP(sendcounts, tmp_sendcounts);
-    OMPI_FORTRAN_BIGCOUNT_ARRAY_CLEANUP(displs, tmp_displs);
+    OMPI_FORTRAN_BIGCOUNT_ARRAY_CLEANUP_NONBLOCKING(sendcounts, tmp_sendcounts, c_request, c_ierr, idx);
+    OMPI_FORTRAN_BIGCOUNT_ARRAY_CLEANUP_NONBLOCKING(displs, tmp_displs, c_request, c_ierr, idx);
 }

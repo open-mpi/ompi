@@ -29,7 +29,7 @@ PROTOTYPE VOID pack_external(CHAR_ARRAY datarep, BUFFER x1, COUNT incount,
     MPI_Datatype c_datatype, c_type = PMPI_Type_f2c(*datatype);
     void *inbuf = OMPI_CFI_BASE_ADDR(x1);
     char *outbuf = OMPI_CFI_BASE_ADDR(x2);
-    int c_incount = OMPI_FINT_2_INT(*incount);
+    @COUNT_TYPE@ c_incount = (@COUNT_TYPE@)(*incount);
 
     OMPI_CFI_2_C(x1, c_incount, c_type, c_datatype, c_ierr);
     if (MPI_SUCCESS != c_ierr) {

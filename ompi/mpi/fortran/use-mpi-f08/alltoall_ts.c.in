@@ -12,7 +12,7 @@
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015-2019 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2024      Triad National Security, LLC. All rights
+ * Copyright (c) 2024-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -30,11 +30,11 @@ PROTOTYPE VOID alltoall(BUFFER x1, COUNT sendcount, DATATYPE sendtype,
     MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
     MPI_Datatype c_sendtype = NULL, c_recvtype = PMPI_Type_f2c(*recvtype);
     void *sendbuf = OMPI_CFI_BASE_ADDR(x1), *recvbuf = OMPI_CFI_BASE_ADDR(x2);
-    int c_sendcount = 0, c_recvcount =  OMPI_FINT_2_INT(*recvcount);
+    @COUNT_TYPE@ c_sendcount = (@COUNT_TYPE@)(*sendcount);
+    @COUNT_TYPE@ c_recvcount =  (@COUNT_TYPE@)(*recvcount);
 
     if (OMPI_COMM_IS_INTER(c_comm) || !OMPI_IS_FORTRAN_IN_PLACE(sendbuf)) {
         c_sendtype = PMPI_Type_f2c(*sendtype);
-        c_sendcount = OMPI_FINT_2_INT(*sendcount);
         OMPI_CFI_CHECK_CONTIGUOUS(x1, c_ierr);
         if (MPI_SUCCESS != c_ierr) {
             if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
