@@ -48,7 +48,8 @@ sources = \
     btl_uct_tl.c \
     btl_uct_discover.c \
     btl_uct_modex.c \
-    btl_uct_include_list.c
+    btl_uct_include_list.c \
+    btl_uct_device_context.c
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
