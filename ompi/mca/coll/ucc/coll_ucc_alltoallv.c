@@ -17,10 +17,15 @@ static inline ucc_status_t mca_coll_ucc_alltoallv_init(const void *sbuf, ompi_co
                                                        ucc_coll_req_h *req,
                                                        mca_coll_ucc_req_t *coll_req)
 {
-    ucc_datatype_t         ucc_sdt, ucc_rdt;
+    ucc_datatype_t ucc_sdt = UCC_DT_INT8, ucc_rdt = UCC_DT_INT8;
+    bool is_inplace = (MPI_IN_PLACE == sbuf);
+    uint64_t flags = 0;
 
-    ucc_sdt = ompi_dtype_to_ucc_dtype(sdtype);
     ucc_rdt = ompi_dtype_to_ucc_dtype(rdtype);
+    if (!is_inplace) {
+        ucc_sdt = ompi_dtype_to_ucc_dtype(sdtype);
+    }
+
     if (COLL_UCC_DT_UNSUPPORTED == ucc_sdt ||
         COLL_UCC_DT_UNSUPPORTED == ucc_rdt) {
         UCC_VERBOSE(5, "ompi_datatype is not supported: dtype = %s",
@@ -30,13 +35,13 @@ static inline ucc_status_t mca_coll_ucc_alltoallv_init(const void *sbuf, ompi_co
     }
 
     /* Assumes that send counts/displs and recv counts/displs are both 32-bit or both 64-bit */
-    uint64_t flags = ompi_count_array_is_64bit(scounts) ? UCC_COLL_ARGS_FLAG_COUNT_64BIT : 0;
-    flags |= ompi_disp_array_is_64bit(sdisps) ? UCC_COLL_ARGS_FLAG_DISPLACEMENTS_64BIT : 0;
+    flags = (ompi_count_array_is_64bit(scounts) ? UCC_COLL_ARGS_FLAG_COUNT_64BIT : 0) |
+            (ompi_disp_array_is_64bit(sdisps) ? UCC_COLL_ARGS_FLAG_DISPLACEMENTS_64BIT : 0) |
+            (is_inplace ? UCC_COLL_ARGS_FLAG_IN_PLACE : 0);
 
     ucc_coll_args_t coll = {
+        .mask      = flags ? UCC_COLL_ARGS_FIELD_FLAGS : 0,
         .flags     = flags,
-        .mask      = 0,
-        .flags     = 0,
         .coll_type = UCC_COLL_TYPE_ALLTOALLV,
         .src.info_v = {
             .buffer        = (void*)sbuf,
@@ -54,10 +59,6 @@ static inline ucc_status_t mca_coll_ucc_alltoallv_init(const void *sbuf, ompi_co
         }
     };
 
-    if (MPI_IN_PLACE == sbuf) {
-        coll.mask  = UCC_COLL_ARGS_FIELD_FLAGS;
-        coll.flags |= UCC_COLL_ARGS_FLAG_IN_PLACE;
-    }
     COLL_UCC_REQ_INIT(coll_req, req, coll, ucc_module);
     return UCC_OK;
 fallback:

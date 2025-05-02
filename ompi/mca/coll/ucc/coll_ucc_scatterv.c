@@ -18,22 +18,25 @@ ucc_status_t mca_coll_ucc_scatterv_init(const void *sbuf, ompi_count_array_t sco
                                         ucc_coll_req_h *req,
                                         mca_coll_ucc_req_t *coll_req)
 {
-    ucc_datatype_t ucc_sdt, ucc_rdt;
+    ucc_datatype_t ucc_sdt = UCC_DT_INT8, ucc_rdt = UCC_DT_INT8;
+    bool is_inplace = (MPI_IN_PLACE == rbuf);
     int comm_rank = ompi_comm_rank(ucc_module->comm);
-    int comm_size = ompi_comm_size(ucc_module->comm);
-
-    ucc_rdt = ompi_dtype_to_ucc_dtype(rdtype);
+    uint64_t flags = 0;
     if (comm_rank == root) {
         ucc_sdt = ompi_dtype_to_ucc_dtype(sdtype);
+        if (!is_inplace) {
+            ucc_rdt = ompi_dtype_to_ucc_dtype(rdtype);
+        }
+
         if ((COLL_UCC_DT_UNSUPPORTED == ucc_sdt) ||
-            (MPI_IN_PLACE != rbuf && COLL_UCC_DT_UNSUPPORTED == ucc_rdt)) {
+            (COLL_UCC_DT_UNSUPPORTED == ucc_rdt)) {
             UCC_VERBOSE(5, "ompi_datatype is not supported: dtype = %s",
                         (COLL_UCC_DT_UNSUPPORTED == ucc_sdt) ?
                         sdtype->super.name : rdtype->super.name);
             goto fallback;
         }
-
     } else {
+        ucc_rdt = ompi_dtype_to_ucc_dtype(rdtype);
         if (COLL_UCC_DT_UNSUPPORTED == ucc_rdt) {
             UCC_VERBOSE(5, "ompi_datatype is not supported: dtype = %s",
                         rdtype->super.name);
@@ -41,13 +44,13 @@ ucc_status_t mca_coll_ucc_scatterv_init(const void *sbuf, ompi_count_array_t sco
         }
     }
 
-    uint64_t flags = ompi_count_array_is_64bit(scounts) ? UCC_COLL_ARGS_FLAG_COUNT_64BIT : 0;
-    flags |= ompi_disp_array_is_64bit(disps) ? UCC_COLL_ARGS_FLAG_DISPLACEMENTS_64BIT : 0;
+    flags = (ompi_count_array_is_64bit(scounts) ? UCC_COLL_ARGS_FLAG_COUNT_64BIT : 0) |
+            (ompi_disp_array_is_64bit(disps) ? UCC_COLL_ARGS_FLAG_DISPLACEMENTS_64BIT : 0) |
+            (is_inplace ? UCC_COLL_ARGS_FLAG_IN_PLACE : 0);
 
     ucc_coll_args_t coll = {
+        .mask      = flags ? UCC_COLL_ARGS_FIELD_FLAGS : 0,
         .flags     = flags,
-        .mask      = 0,
-        .flags     = 0,
         .coll_type = UCC_COLL_TYPE_SCATTERV,
         .root      = root,
         .src.info_v = {
@@ -65,10 +68,6 @@ ucc_status_t mca_coll_ucc_scatterv_init(const void *sbuf, ompi_count_array_t sco
         },
     };
 
-    if (MPI_IN_PLACE == rbuf) {
-        coll.mask |= UCC_COLL_ARGS_FIELD_FLAGS;
-        coll.flags |= UCC_COLL_ARGS_FLAG_IN_PLACE;
-    }
     COLL_UCC_REQ_INIT(coll_req, req, coll, ucc_module);
     return UCC_OK;
 fallback:
