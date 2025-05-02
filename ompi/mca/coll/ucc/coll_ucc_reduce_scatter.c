@@ -21,6 +21,7 @@ ucc_status_t mca_coll_ucc_reduce_scatter_init(const void *sbuf, void *rbuf, ompi
     size_t total_count;
     int i;
     int comm_size = ompi_comm_size(ucc_module->comm);
+    uint64_t flags = 0;
 
     if (MPI_IN_PLACE == sbuf) {
         /* TODO: UCC defines inplace differently:
@@ -46,10 +47,11 @@ ucc_status_t mca_coll_ucc_reduce_scatter_init(const void *sbuf, void *rbuf, ompi
         total_count += ompi_count_array_get(rcounts, i);
     }
 
+    flags = (ompi_count_array_is_64bit(rcounts) ? UCC_COLL_ARGS_FLAG_COUNT_64BIT : 0);
+
     ucc_coll_args_t coll = {
-        .flags     = ompi_count_array_is_64bit(rcounts) ? UCC_COLL_ARGS_FLAG_COUNT_64BIT : 0,
-        .mask      = 0,
-        .flags     = 0,
+        .mask      = flags ? UCC_COLL_ARGS_FIELD_FLAGS : 0,
+        .flags     = flags,
         .coll_type = UCC_COLL_TYPE_REDUCE_SCATTERV,
         .src.info = {
             .buffer   = (void*)sbuf,
