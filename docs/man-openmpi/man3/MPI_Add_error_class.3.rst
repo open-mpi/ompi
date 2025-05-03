@@ -8,42 +8,8 @@ MPI_Add_error_class
 
 :ref:`MPI_Add_error_class` |mdash| Creates a new error class and returns its value
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Add_error_class(int *errorclass)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_ADD_ERROR_CLASS(ERRORCLASS, IERROR)
-   	INTEGER	ERRORCLASS, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Add_error_class(errorclass, ierror)
-   	INTEGER, INTENT(OUT) :: errorclass
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_add_error_class.rst
 
 OUTPUT PARAMETERS
 -----------------

@@ -8,43 +8,8 @@ MPI_Is_thread_main
 
 :ref:`MPI_Is_thread_main` |mdash| Determines if thread called :ref:`MPI_Init`
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Is_thread_main(int *flag)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_IS_THREAD_MAIN(FLAG, IERROR)
-   	LOGICAL	FLAG
-   	INTEGER	IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Is_thread_main(flag, ierror)
-   	LOGICAL, INTENT(OUT) :: flag
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_is_thread_main.rst
 
 OUTPUT PARAMETERS
 -----------------

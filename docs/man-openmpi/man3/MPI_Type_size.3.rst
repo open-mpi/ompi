@@ -9,52 +9,12 @@ MPI_Type_size
 :ref:`MPI_Type_size`, :ref:`MPI_Type_size_x` - Returns the number of bytes
 occupied by entries in a data type.
 
+.. The following directive tells the man page generation script to
+   generate multiple bindings for this file.
+.. mpi-bindings: MPI_Type_size, MPI_Type_size_x
 
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Type_size(MPI_Datatype datatype, int *size)
-   int MPI_Type_size_x(MPI_Datatype datatype, MPI_Count *size)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_TYPE_SIZE(DATATYPE, SIZE, IERROR)
-   	INTEGER	DATATYPE, SIZE, IERROR
-   MPI_TYPE_SIZE_X(DATATYPE, SIZE, IERROR)
-   	INTEGER	DATATYPE
-           INTEGER(KIND=MPI_COUNT_KIND) SIZE
-           INTEGER IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Type_size(datatype, size, ierror)
-   	TYPE(MPI_Datatype), INTENT(IN) :: datatype
-   	INTEGER, INTENT(OUT) :: size
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-   MPI_Type_size_x(datatype, size, ierror)
-   	TYPE(MPI_Datatype), INTENT(IN) :: datatype
-   	INTEGER(KIND=MPI_COUNT_KIND), INTENT(OUT) :: size
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_type_size.rst
 
 INPUT PARAMETER
 ---------------

@@ -8,43 +8,8 @@ MPI_Wait
 
 :ref:`MPI_Wait` |mdash| Waits for an MPI send or receive to complete.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Wait(MPI_Request *request, MPI_Status *status)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_WAIT(REQUEST, STATUS, IERROR)
-   	INTEGER	REQUEST, STATUS(MPI_STATUS_SIZE), IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Wait(request, status, ierror)
-   	TYPE(MPI_Request), INTENT(INOUT) :: request
-   	TYPE(MPI_Status) :: status
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_wait.rst
 
 INPUT PARAMETER
 ---------------
@@ -114,7 +79,7 @@ Example: Simple usage of nonblocking operations and :ref:`MPI_Wait`.
 ERRORS
 ------
 
-.. include:: ./ERRORS.rst 
+.. include:: ./ERRORS.rst
 
 Note that per the "Return Status" section in the "Point-to-Point
 Communication" chapter in the `MPI Standard

@@ -8,42 +8,8 @@ MPI_Group_incl
 :ref:`MPI_Group_incl` |mdash| Produces a group by reordering an existing group and
 taking only listed members.
 
-SYNTAX
-------
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Group_incl(MPI_Group group, int n, const int ranks[],
-       MPI_Group *newgroup)
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-
-   MPI_GROUP_INCL(GROUP, N, RANKS, NEWGROUP, IERROR)
-       INTEGER GROUP, N, RANKS(*), NEWGROUP, IERROR
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-
-   MPI_Group_incl(group, n, ranks, newgroup, ierror)
-       TYPE(MPI_Group), INTENT(IN) :: group
-       INTEGER, INTENT(IN) :: n, ranks(n)
-       TYPE(MPI_Group), INTENT(OUT) :: newgroup
-       INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_group_incl.rst
 
 INPUT PARAMETERS
 ----------------

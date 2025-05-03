@@ -9,44 +9,8 @@ MPI_Type_match_size
 :ref:`MPI_Type_match_size` |mdash| Returns an MPI datatype of a given type and
 size
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Type_match_size(int typeclass, int size,
-   	MPI_Datatype *type)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_TYPE_MATCH_SIZE(TYPECLASS, SIZE, TYPE, IERROR)
-   	INTEGER	TYPECLASS, SIZE, TYPE, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Type_match_size(typeclass, size, datatype, ierror)
-   	INTEGER, INTENT(IN) :: typeclass, size
-   	TYPE(MPI_Datatype), INTENT(OUT) :: datatype
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_type_match_size.rst
 
 INPUT PARAMETERS
 ----------------

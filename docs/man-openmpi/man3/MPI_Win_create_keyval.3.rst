@@ -8,51 +8,8 @@ MPI_Win_create_keyval
 
 :ref:`MPI_Win_create_keyval` |mdash| Creates a keyval for a window.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Win_create_keyval(MPI_Win_copy_attr_function *win_copy_attr_fn,
-   	MPI_Win_delete_attr_function *win_delete_attr_fn,
-   	int *win_keyval, void *extra_state)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_WIN_CREATE_KEYVAL(WIN_COPY_ATTR_FN, WIN_DELETE_ATTR_FN,
-   	WIN_KEYVAL, EXTRA_STATE, IERROR)
-   	EXTERNAL WIN_COPY_ATTR_FN, WIN_DELETE_ATTR_FN
-   	INTEGER WIN_KEYVAL, IERROR
-   	INTEGER(KIND=MPI_ADDRESS_KIND) EXTRA_STATE
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Win_create_keyval(win_copy_attr_fn, win_delete_attr_fn, win_keyval,
-   		extra_state, ierror)
-   	PROCEDURE(MPI_Win_copy_attr_function) :: win_copy_attr_fn
-   	PROCEDURE(MPI_Win_delete_attr_function) :: win_delete_attr_fn
-   	INTEGER, INTENT(OUT) :: win_keyval
-   	INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(IN) :: extra_state
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_win_create_keyval.rst
 
 INPUT PARAMETERS
 ----------------

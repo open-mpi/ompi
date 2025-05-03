@@ -8,43 +8,8 @@ MPI_Startall
 
 :ref:`MPI_Startall` |mdash| Starts a collection of requests.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Startall(int count, MPI_Request array_of_requests[])
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_STARTALL(COUNT, ARRAY_OF_REQUESTS, IERROR)
-   	INTEGER	COUNT, ARRAY_OF_REQUESTS(*), IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Startall(count, array_of_requests, ierror)
-   	INTEGER, INTENT(IN) :: count
-   	TYPE(MPI_Request), INTENT(INOUT) :: array_of_requests(count)
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_startall.rst
 
 INPUT PARAMETER
 ---------------

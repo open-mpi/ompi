@@ -9,45 +9,8 @@ MPI_File_preallocate
 :ref:`MPI_File_preallocate` |mdash| Preallocates a specified amount of storage
 space at the beginning of a file (collective).
 
-
-SYNTAX
-------
-
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_File_preallocate(MPI_File fh, MPI_Offset size)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_FILE_PREALLOCATE(FH, SIZE, IERROR)
-   	INTEGER	FH, IERROR
-   	INTEGER(KIND=MPI_OFFSET_KIND)	SIZE
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_File_preallocate(fh, size, ierror)
-   	TYPE(MPI_File), INTENT(IN) :: fh
-   	INTEGER(KIND=MPI_OFFSET_KIND), INTENT(IN) :: size
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_file_preallocate.rst
 
 INPUT/OUTPUT PARAMETER
 ----------------------

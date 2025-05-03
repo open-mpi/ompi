@@ -7,37 +7,8 @@ MPI_Type_create_hindexed
 
 :ref:`MPI_Type_create_hindexed` |mdash| Creates an indexed datatype with offsets in bytes.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Type_create_hindexed(int count, int *array_of_blocklengths,
-        MPI_Aint *array_of_displacements, MPI_Datatype oldtype,
-        MPI_Datatype *newtype)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-
-   MPI_TYPE_CREATE_HINDEXED(COUNT, ARRAY_OF_BLOCKLENGTHS,
-             ARRAY_OF_DISPLACEMENTS, OLDTYPE, NEWTYPE, IERROR)
-       INTEGER COUNT, ARRAY_OF_BLOCKLENGTHS(*)
-       INTEGER ARRAY_OF_DISPLACEMENTS(*), OLDTYPE, NEWTYPE
-       INTEGER IERROR
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_type_create_hindexed.rst
 
 INPUT PARAMETERS
 ----------------

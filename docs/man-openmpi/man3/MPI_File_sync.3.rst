@@ -9,43 +9,8 @@ MPI_File_sync
 :ref:`MPI_File_sync` |mdash| Makes semantics consistent for data-access
 operations (collective).
 
-
-SYNTAX
-------
-
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_File_sync(MPI_File fh)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_FILE_SYNC(FH, IERROR)
-   	INTEGER	FH, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_File_sync(fh, ierror)
-   	TYPE(MPI_File), INTENT(IN) :: fh
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_file_sync.rst
 
 INPUT PARAMETER
 ---------------

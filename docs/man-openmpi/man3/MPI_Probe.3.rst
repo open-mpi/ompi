@@ -8,44 +8,8 @@ MPI_Probe
 
 :ref:`MPI_Probe` |mdash| Blocking test for a message.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Probe(int source, int tag, MPI_Comm comm, MPI_Status *status)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_PROBE(SOURCE, TAG, COMM, STATUS, IERROR)
-   	INTEGER	SOURCE, TAG, COMM, STATUS(MPI_STATUS_SIZE), IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Probe(source, tag, comm, status, ierror)
-   	INTEGER, INTENT(IN) :: source, tag
-   	TYPE(MPI_Comm), INTENT(IN) :: comm
-   	TYPE(MPI_Status) :: status
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_probe.rst
 
 INPUT PARAMETERS
 ----------------

@@ -9,65 +9,12 @@ MPI_Type_create_indexed_block
 :ref:`MPI_Type_create_indexed_block`, :ref:`MPI_Type_create_hindexed_block` -
 Creates an indexed data type with the same block length for all blocks.
 
+.. The following directive tells the man page generation script to
+   generate multiple bindings for this file.
+.. mpi-bindings: MPI_Type_create_indexed_block, MPI_Type_create_hindexed_block
 
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Type_create_indexed_block(int count, int blocklength, const int array_of_displacements[], MPI_Datatype oldtype, MPI_Datatype *newtype)
-
-   int MPI_Type_create_hindexed_block(int count, int blocklength, const MPI_Aint array_of_displacements[], MPI_Datatype oldtype, MPI_Datatype *newtype)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_TYPE_CREATE_INDEXED_BLOCK(COUNT, BLOCKLENGTH,
-   		ARRAY_OF_DISPLACEMENTS, OLDTYPE, NEWTYPE, IERROR)
-   	INTEGER	COUNT, BLOCKLENGTH, ARRAY_OF_DISPLACEMENTS(*),
-   	        OLDTYPE, NEWTYPE, IERROR
-
-   MPI_TYPE_CREATE_HINDEXED_BLOCK(COUNT, BLOCKLENGTH,
-   		ARRAY_OF_DISPLACEMENTS, OLDTYPE, NEWTYPE, IERROR)
-   	INTEGER	COUNT, BLOCKLENGTH, OLDTYPE, NEWTYPE
-   	INTEGER(KIND=MPI_ADDRESS_KIND) ARRAY_OF_DISPLACEMENTS(*)
-   	INTEGER	IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Type_create_indexed_block(count, blocklength, array_of_displacements,
-   		oldtype, newtype, ierror)
-   	INTEGER, INTENT(IN) :: count, blocklength,
-   	array_of_displacements(count)
-   	TYPE(MPI_Datatype), INTENT(IN) :: oldtype
-   	TYPE(MPI_Datatype), INTENT(OUT) :: newtype
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
-   MPI_Type_create_hindexed_block(count, blocklength, array_of_displacements,
-   		oldtype, newtype, ierror)
-   	INTEGER, INTENT(IN) :: count, blocklength
-   	INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(IN) ::
-   	array_of_displacements(count)
-   	TYPE(MPI_Datatype), INTENT(IN) :: oldtype
-   	TYPE(MPI_Datatype), INTENT(OUT) :: newtype
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_type_create_indexed_block.rst
 
 INPUT PARAMETERS
 ----------------

@@ -8,20 +8,8 @@ MPI_T_category_changed
 
 :ref:`MPI_T_category_changed` |mdash| Get a timestamp for the categories
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_T_category_changed(int *stamp)
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_t_category_changed.rst
 
 INPUT PARAMETERS
 ----------------

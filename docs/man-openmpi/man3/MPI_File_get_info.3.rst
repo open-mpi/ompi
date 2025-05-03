@@ -9,44 +9,8 @@ MPI_File_get_info
 :ref:`MPI_File_get_info` |mdash| Returns a new info object containing values for
 current hints associated with a file.
 
-
-SYNTAX
-------
-
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_File_get_info(MPI_File fh, MPI_Info *info_used)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_FILE_GET_INFO(FH, INFO_USED, IERROR)
-   	INTEGER	FH, INFO_USED, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_File_get_info(fh, info_used, ierror)
-   	TYPE(MPI_File), INTENT(IN) :: fh
-   	TYPE(MPI_Info), INTENT(OUT) :: info_used
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_file_get_info.rst
 
 INPUT PARAMETER
 ---------------

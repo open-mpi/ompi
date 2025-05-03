@@ -8,46 +8,8 @@ MPI_Type_set_attr
 
 :ref:`MPI_Type_set_attr` |mdash| Sets a key value/attribute pair to a data type.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Type_set_attr(MPI_Datatype type, int type_keyval,
-   	void *attribute_val)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_TYPE_SET_ATTR(TYPE, TYPE_KEYVAL, ATTRIBUTE_VAL, IERROR)
-   	INTEGER	TYPE, TYPE_KEYVAL, IERROR
-   	INTEGER(KIND=MPI_ADDRESS_KIND) ATTRIBUTE_VAL
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Type_set_attr(datatype, type_keyval, attribute_val, ierror)
-   	TYPE(MPI_Datatype), INTENT(IN) :: datatype
-   	INTEGER, INTENT(IN) :: type_keyval
-   	INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(IN) :: attribute_val
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_type_set_attr.rst
 
 INPUT/OUTPUT PARAMETER
 ----------------------

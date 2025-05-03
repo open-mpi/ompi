@@ -9,43 +9,8 @@ MPI_Win_test
 :ref:`MPI_Win_test` |mdash| Attempts to complete an RMA exposure epoch; a
 nonblocking version of :ref:`MPI_Win_wait`
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Win_test(MPI_Win win, int *flag)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_WIN_TEST( WIN, FLAG, IERROR)
-   	INTEGER  WIN, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Win_test(win, flag, ierror)
-   	TYPE(MPI_Win), INTENT(IN) :: win
-   	LOGICAL, INTENT(OUT) :: flag
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_win_test.rst
 
 INPUT PARAMETERS
 ----------------

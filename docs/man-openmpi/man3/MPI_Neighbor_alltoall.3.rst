@@ -8,99 +8,12 @@ MPI_Neighbor_alltoall
 
 :ref:`MPI_Neighbor_alltoall`, :ref:`MPI_Ineighbor_alltoall`, :ref:`MPI_Neighbor_alltoall` - All processes send data to neighboring processes in a virtual topology communicator
 
+.. The following directive tells the man page generation script to
+   generate multiple bindings for this file.
+.. mpi-bindings: MPI_Neighbor_alltoall, MPI_Ineighbor_alltoall, MPI_Neighbor_alltoall_init
 
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Neighbor_alltoall(const void *sendbuf, int sendcount,
-   	MPI_Datatype sendtype, void *recvbuf, int recvcount,
-   	MPI_Datatype recvtype, MPI_Comm comm)
-
-   int MPI_Ineighbor_alltoall(const void *sendbuf, int sendcount,
-   	MPI_Datatype sendtype, void *recvbuf, int recvcount,
-   	MPI_Datatype recvtype, MPI_Comm comm, MPI_Request *request)
-
-   int MPI_Neighbor_alltoall_init(const void *sendbuf, int sendcount,
-   	MPI_Datatype sendtype, void *recvbuf, int recvcount,
-   	MPI_Datatype recvtype, MPI_Comm comm, MPI_Info info, MPI_Request *request)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_NEIGHBOR_ALLTOALL(SENDBUF, SENDCOUNT, SENDTYPE, RECVBUF, RECVCOUNT,
-   	RECVTYPE, COMM, IERROR)
-
-   	<type>	SENDBUF(*), RECVBUF(*)
-   	INTEGER	SENDCOUNT, SENDTYPE, RECVCOUNT, RECVTYPE
-   	INTEGER	COMM, IERROR
-
-   MPI_INEIGHBOR_ALLTOALL(SENDBUF, SENDCOUNT, SENDTYPE, RECVBUF, RECVCOUNT,
-   	RECVTYPE, COMM, REQUEST, IERROR)
-
-   	<type>	SENDBUF(*), RECVBUF(*)
-   	INTEGER	SENDCOUNT, SENDTYPE, RECVCOUNT, RECVTYPE
-   	INTEGER	COMM, REQUEST, IERROR
-
-   MPI_NEIGHBOR_ALLTOALL_INIT(SENDBUF, SENDCOUNT, SENDTYPE, RECVBUF, RECVCOUNT,
-   	RECVTYPE, COMM, INFO, REQUEST, IERROR)
-
-   	<type>	SENDBUF(*), RECVBUF(*)
-   	INTEGER	SENDCOUNT, SENDTYPE, RECVCOUNT, RECVTYPE
-   	INTEGER	COMM, INFO, REQUEST, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Neighbor_alltoall(sendbuf, sendcount, sendtype, recvbuf, recvcount,
-   		recvtype, comm, ierror)
-
-   	TYPE(*), DIMENSION(..), INTENT(IN) :: sendbuf
-   	TYPE(*), DIMENSION(..) :: recvbuf
-   	INTEGER, INTENT(IN) :: sendcount, recvcount
-   	TYPE(MPI_Datatype), INTENT(IN) :: sendtype, recvtype
-   	TYPE(MPI_Comm), INTENT(IN) :: comm
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
-   MPI_Ineighbor_alltoall(sendbuf, sendcount, sendtype, recvbuf, recvcount,
-   		recvtype, comm, request, ierror)
-
-   	TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: sendbuf
-   	TYPE(*), DIMENSION(..), ASYNCHRONOUS :: recvbuf
-   	INTEGER, INTENT(IN) :: sendcount, recvcount
-   	TYPE(MPI_Datatype), INTENT(IN) :: sendtype, recvtype
-   	TYPE(MPI_Comm), INTENT(IN) :: comm
-   	TYPE(MPI_Request), INTENT(OUT) :: request
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
-   MPI_Neighbor_alltoall_init(sendbuf, sendcount, sendtype, recvbuf, recvcount,
-   		recvtype, comm, info, request, ierror)
-
-   	TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: sendbuf
-   	TYPE(*), DIMENSION(..), ASYNCHRONOUS :: recvbuf
-   	INTEGER, INTENT(IN) :: sendcount, recvcount
-   	TYPE(MPI_Datatype), INTENT(IN) :: sendtype, recvtype
-   	TYPE(MPI_Comm), INTENT(IN) :: comm
-   	TYPE(MPI_Info), INTENT(IN) :: info
-   	TYPE(MPI_Request), INTENT(OUT) :: request
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_neighbor_alltoall.rst
 
 INPUT PARAMETERS
 ----------------

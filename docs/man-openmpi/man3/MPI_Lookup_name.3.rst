@@ -10,46 +10,8 @@ MPI_Lookup_name
 
    MPI_Lookup_name - Finds port associated with a service name
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Lookup_name(const char *service_name, MPI_Info info,
-   	char *port_name)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_LOOKUP_NAME(SERVICE_NAME, INFO, PORT_NAME, IERROR)
-   	CHARACTER*(*)	SERVICE_NAME, PORT_NAME
-   	INTEGER		INFO, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Lookup_name(service_name, info, port_name, ierror)
-   	CHARACTER(LEN=*), INTENT(IN) :: service_name
-   	TYPE(MPI_Info), INTENT(IN) :: info
-   	CHARACTER(LEN=MPI_MAX_PORT_NAME), INTENT(OUT) :: port_name
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_lookup_name.rst
 
 INPUT PARAMETERS
 ----------------

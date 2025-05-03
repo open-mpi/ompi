@@ -9,53 +9,8 @@ MPI_File_read_at_all
 :ref:`MPI_File_read_at_all` |mdash| Reads a file at explicitly specified offsets
 (blocking, collective).
 
-
-SYNTAX
-------
-
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_File_read_at_all(MPI_File fh, MPI_Offset offset,
-   	void *buf, int count, MPI_Datatype datatype,
-   	MPI_Status *status)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_FILE_READ_AT_ALL(FH, OFFSET, BUF, COUNT,
-   	DATATYPE, STATUS, IERROR)
-   	<type>	BUF(*)
-   	INTEGER	FH, COUNT, DATATYPE, STATUS(MPI_STATUS_SIZE), IERROR
-   	INTEGER(KIND=MPI_OFFSET_KIND)	OFFSET
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_File_read_at_all(fh, offset, buf, count, datatype, status, ierror)
-   	TYPE(MPI_File), INTENT(IN) :: fh
-   	INTEGER(KIND=MPI_OFFSET_KIND), INTENT(IN) :: offset
-   	TYPE(*), DIMENSION(..) :: buf
-   	INTEGER, INTENT(IN) :: count
-   	TYPE(MPI_Datatype), INTENT(IN) :: datatype
-   	TYPE(MPI_Status) :: status
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_file_read_at_all.rst
 
 INPUT PARAMETERS
 ----------------

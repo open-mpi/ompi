@@ -8,39 +8,8 @@ MPI_Session_get_info
 :ref:`MPI_Session_get_info` |mdash| Returns an info object containing the hints of an
 MPI Session
 
-SYNTAX
-------
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Session_get_info(MPI_Session session, MPI_Info *info_used)
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-
-   MPI_SESSION_GET_INFO(SESSION, INFO_USED)
-       INTEGER SESSION, INFO_USED
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-
-   MPI_Session_get_info(session, info_used)
-       TYPE(MPI_Session), INTENT(IN) :: session
-       TYPE(MPI_Info), INTENT(OUT) :: info_used
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_session_get_info.rst
 
 INPUT PARAMETERS
 ----------------

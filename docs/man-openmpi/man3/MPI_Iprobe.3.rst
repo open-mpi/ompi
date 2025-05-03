@@ -8,47 +8,8 @@ MPI_Iprobe
 
 :ref:`MPI_Iprobe` |mdash| Nonblocking test for a message.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Iprobe(int source, int tag, MPI_Comm comm, int *flag,
-   	MPI_Status *status)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_IPROBE(SOURCE, TAG, COMM, FLAG, STATUS, IERROR)
-   	LOGICAL	FLAG
-   	INTEGER	SOURCE, TAG, COMM, STATUS(MPI_STATUS_SIZE), IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Iprobe(source, tag, comm, flag, status, ierror)
-   	INTEGER, INTENT(IN) :: source, tag
-   	TYPE(MPI_Comm), INTENT(IN) :: comm
-   	LOGICAL, INTENT(OUT) :: flag
-   	TYPE(MPI_Status) :: status
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_iprobe.rst
 
 INPUT PARAMETERS
 ----------------

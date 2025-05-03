@@ -9,23 +9,12 @@ MPI_T_cvar_handle_alloc
 :ref:`MPI_T_cvar_handle_alloc`, :ref:`MPI_T_cvar_handle_free` - Allocate/free
 control variable handles
 
+.. The following directive tells the man page generation script to
+   generate multiple bindings for this file.
+.. mpi-bindings: MPI_T_cvar_handle_alloc, MPI_T_cvar_handle_free
 
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_T_cvar_handle_alloc(int cvar_index, void *obj_handle,
-                               MPI_T_cvar_handle *handle, int *count)
-
-   int MPI_T_cvar_handle_free(MPI_T_cvar_handle *handle)
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_t_cvar_handle_alloc.rst
 
 DESCRIPTION
 -----------

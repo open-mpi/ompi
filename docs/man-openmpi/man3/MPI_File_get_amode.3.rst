@@ -9,44 +9,8 @@ MPI_File_get_amode
 :ref:`MPI_File_get_amode` |mdash| Returns access mode associated with an open
 file.
 
-
-SYNTAX
-------
-
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_File_get_amode(MPI_File fh, int *amode)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_FILE_GET_AMODE(FH, AMODE, IERROR)
-   	INTEGER	FH, AMODE, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_File_get_amode(fh, amode, ierror)
-   	TYPE(MPI_File), INTENT(IN) :: fh
-   	INTEGER, INTENT(OUT) :: amode
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_file_get_amode.rst
 
 INPUT PARAMETER
 ---------------

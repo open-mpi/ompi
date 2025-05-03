@@ -8,43 +8,8 @@ MPI_File_close
 
 :ref:`MPI_File_close` |mdash| Closes a file (collective).
 
-
-SYNTAX
-------
-
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_File_close(MPI_File *fh)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_FILE_CLOSE(FH, IERROR)
-   	INTEGER	FH, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_File_close(fh, ierror)
-   	TYPE(MPI_File), INTENT(INOUT) :: fh
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_file_close.rst
 
 INPUT/OUTPUT PARAMETER
 ----------------------

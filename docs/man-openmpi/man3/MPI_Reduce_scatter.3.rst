@@ -9,91 +9,12 @@ MPI_Reduce_scatter
 :ref:`MPI_Reduce_scatter`, :ref:`MPI_Ireduce_scatter`, :ref:`MPI_Reduce_scatter_init` -
 Combines values and scatters the results.
 
+.. The following directive tells the man page generation script to
+   generate multiple bindings for this file.
+.. mpi-bindings: MPI_Reduce_scatter, MPI_Ireduce_scatter, MPI_Reduce_scatter_init
 
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Reduce_scatter(const void *sendbuf, void *recvbuf, const int recvcounts[],
-   	MPI_Datatype datatype, MPI_Op op, MPI_Comm comm)
-
-   int MPI_Ireduce_scatter(const void *sendbuf, void *recvbuf, const int recvcounts[],
-   	MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request)
-
-   int MPI_Reduce_scatter_init(const void *sendbuf, void *recvbuf,
-        const int recvcounts[], MPI_Datatype datatype, MPI_Op op,
-        MPI_Comm comm, MPI_Info info, MPI_Request *request)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_REDUCE_SCATTER(SENDBUF, RECVBUF, RECVCOUNTS, DATATYPE, OP,
-   		COMM, IERROR)
-   	<type>	SENDBUF(*), RECVBUF(*)
-   	INTEGER	RECVCOUNTS(*), DATATYPE, OP, COMM, IERROR
-
-   MPI_IREDUCE_SCATTER(SENDBUF, RECVBUF, RECVCOUNTS, DATATYPE, OP,
-   		COMM, REQUEST, IERROR)
-   	<type>	SENDBUF(*), RECVBUF(*)
-   	INTEGER	RECVCOUNTS(*), DATATYPE, OP, COMM, REQUEST, IERROR
-
-   MPI_REDUCE_SCATTER_INIT(SENDBUF, RECVBUF, RECVCOUNTS, DATATYPE, OP,
-   		COMM, INFO, REQUEST, IERROR)
-   	<type>	SENDBUF(*), RECVBUF(*)
-   	INTEGER	RECVCOUNTS(*), DATATYPE, OP, COMM, INFO, REQUEST, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Reduce_scatter(sendbuf, recvbuf, recvcounts, datatype, op, comm,
-   		ierror)
-   	TYPE(*), DIMENSION(..), INTENT(IN) :: sendbuf
-   	TYPE(*), DIMENSION(..) :: recvbuf
-   	INTEGER, INTENT(IN) :: recvcounts(*)
-   	TYPE(MPI_Datatype), INTENT(IN) :: datatype
-   	TYPE(MPI_Op), INTENT(IN) :: op
-   	TYPE(MPI_Comm), INTENT(IN) :: comm
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
-   MPI_Ireduce_scatter(sendbuf, recvbuf, recvcounts, datatype, op, comm,
-   		request, ierror)
-   	TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: sendbuf
-   	TYPE(*), DIMENSION(..), ASYNCHRONOUS :: recvbuf
-   	INTEGER, INTENT(IN), ASYNCHRONOUS :: recvcounts(*)
-   	TYPE(MPI_Datatype), INTENT(IN) :: datatype
-   	TYPE(MPI_Op), INTENT(IN) :: op
-   	TYPE(MPI_Comm), INTENT(IN) :: comm
-   	TYPE(MPI_Request), INTENT(OUT) :: request
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
-   MPI_Reduce_scatter_init(sendbuf, recvbuf, recvcounts, datatype, op, comm,
-   		info, request, ierror)
-   	TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: sendbuf
-   	TYPE(*), DIMENSION(..), ASYNCHRONOUS :: recvbuf
-   	INTEGER, INTENT(IN), ASYNCHRONOUS :: recvcounts(*)
-   	TYPE(MPI_Datatype), INTENT(IN) :: datatype
-   	TYPE(MPI_Op), INTENT(IN) :: op
-   	TYPE(MPI_Comm), INTENT(IN) :: comm
-   	TYPE(MPI_Info), INTENT(IN) :: info
-   	TYPE(MPI_Request), INTENT(OUT) :: request
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_reduce_scatter.rst
 
 INPUT PARAMETERS
 ----------------

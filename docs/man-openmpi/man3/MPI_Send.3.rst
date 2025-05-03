@@ -8,47 +8,8 @@ MPI_Send
 
 :ref:`MPI_Send` |mdash| Performs a standard-mode blocking send.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Send(const void *buf, int count, MPI_Datatype datatype, int dest,
-   	int tag, MPI_Comm comm)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_SEND(BUF, COUNT, DATATYPE, DEST, TAG, COMM, IERROR)
-   	<type>	BUF(*)
-   	INTEGER	COUNT, DATATYPE, DEST, TAG, COMM, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Send(buf, count, datatype, dest, tag, comm, ierror)
-   	TYPE(*), DIMENSION(..), INTENT(IN) :: buf
-   	INTEGER, INTENT(IN) :: count, dest, tag
-   	TYPE(MPI_Datatype), INTENT(IN) :: datatype
-   	TYPE(MPI_Comm), INTENT(IN) :: comm
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_send.rst
 
 INPUT PARAMETERS
 ----------------

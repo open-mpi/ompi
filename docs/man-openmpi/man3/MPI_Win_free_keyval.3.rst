@@ -8,42 +8,8 @@ MPI_Win_free_keyval
 
 :ref:`MPI_Win_free_keyval` |mdash| Frees a window keyval.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Win_free_keyval(int *win_keyval)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_WIN_FREE_KEYVAL(WIN_KEYVAL, IERROR)
-   	INTEGER WIN_KEYVAL, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Win_free_keyval(win_keyval, ierror)
-   	INTEGER, INTENT(INOUT) :: win_keyval
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_win_free_keyval.rst
 
 INPUT/OUTPUT PARAMETER
 ----------------------

@@ -8,47 +8,8 @@ MPI_Type_vector
 
 :ref:`MPI_Type_vector` |mdash| Creates a vector (strided) datatype.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Type_vector(int count, int blocklength, int stride,
-   	MPI_Datatype oldtype, MPI_Datatype *newtype)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_TYPE_VECTOR(COUNT, BLOCKLENGTH, STRIDE, OLDTYPE, NEWTYPE,
-   		IERROR)
-   	INTEGER	COUNT, BLOCKLENGTH, STRIDE, OLDTYPE
-   	INTEGER	NEWTYPE, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Type_vector(count, blocklength, stride, oldtype, newtype, ierror)
-   	INTEGER, INTENT(IN) :: count, blocklength, stride
-   	TYPE(MPI_Datatype), INTENT(IN) :: oldtype
-   	TYPE(MPI_Datatype), INTENT(OUT) :: newtype
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_type_vector.rst
 
 INPUT PARAMETERS
 ----------------

@@ -7,40 +7,8 @@ MPI_Comm_compare
 
 :ref:`MPI_Comm_compare` |mdash| Compares two communicators.
 
-SYNTAX
-------
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Comm_compare(MPI_Comm comm1, MPI_Comm comm2, int *result)
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-
-   MPI_COMM_COMPARE(COMM1, COMM2, RESULT, IERROR)
-       INTEGER COMM1, COMM2, RESULT, IERROR
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-
-   MPI_Comm_compare(comm1, comm2, result, ierror)
-       TYPE(MPI_Comm), INTENT(IN) :: comm1, comm2
-       INTEGER, INTENT(OUT) :: result
-       INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_comm_compare.rst
 
 INPUT PARAMETERS
 ----------------

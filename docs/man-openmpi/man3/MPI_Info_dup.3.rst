@@ -8,43 +8,8 @@ MPI_Info_dup
 
 :ref:`MPI_Info_dup` |mdash| Duplicates an info object.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Info_dup(MPI_Info info, MPI_Info *newinfo)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_INFO_DUP(INFO, NEWINFO, IERROR)
-   	INTEGER		INFO, NEWINFO, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Info_dup(info, newinfo, ierror)
-   	TYPE(MPI_Info), INTENT(IN) :: info
-   	TYPE(MPI_Info), INTENT(OUT) :: newinfo
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_info_dup.rst
 
 INPUT PARAMETER
 ---------------

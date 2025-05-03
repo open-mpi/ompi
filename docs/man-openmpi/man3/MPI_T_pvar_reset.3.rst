@@ -8,20 +8,8 @@ MPI_T_pvar_reset
 
 :ref:`MPI_T_pvar_reset` |mdash| Reset the value of a performance variable
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_T_pvar_reset(MPI_T_pvar_session session, MPI_T_pvar_handle handle)
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_t_pvar_reset.rst
 
 INPUT PARAMETERS
 ----------------

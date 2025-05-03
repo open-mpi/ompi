@@ -8,44 +8,8 @@ MPI_File_set_info
 
 :ref:`MPI_File_set_info` |mdash| Sets new values for hints (collective).
 
-
-SYNTAX
-------
-
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_File_set_info(MPI_File fh, MPI_Info info)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_FILE_SET_INFO(FH, INFO, IERROR)
-   	INTEGER	FH, INFO, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_File_set_info(fh, info, ierror)
-   	TYPE(MPI_File), INTENT(IN) :: fh
-   	TYPE(MPI_Info), INTENT(IN) :: info
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_file_set_info.rst
 
 INPUT/OUTPUT PARAMETER
 ----------------------

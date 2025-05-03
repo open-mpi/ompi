@@ -8,45 +8,8 @@ MPI_Comm_set_attr
 
 :ref:`MPI_Comm_set_attr` |mdash| Stores attribute value associated with a key.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Comm_set_attr(MPI_Comm comm, int comm_keyval, void *attribute_val)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_COMM_SET_ATTR(COMM, COMM_KEYVAL, ATTRIBUTE_VAL, IERROR)
-   	INTEGER	COMM, COMM_KEYVAL, IERROR
-   	INTEGER(KIND=MPI_ADDRESS_KIND) ATTRIBUTE_VAL
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Comm_set_attr(comm, comm_keyval, attribute_val, ierror)
-   	TYPE(MPI_Comm), INTENT(IN) :: comm
-   	INTEGER, INTENT(IN) :: comm_keyval
-   	INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(IN) :: attribute_val
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_comm_set_attr.rst
 
 INPUT/OUTPUT PARAMETER
 ----------------------

@@ -8,44 +8,8 @@ MPI_Comm_set_name
 
 :ref:`MPI_Comm_set_name` |mdash| Associates a name with a communicator.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Comm_set_name(MPI_Comm comm, const char *comm_name)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_COMM_SET_NAME(COMM, COMM_NAME, IERROR)
-   	INTEGER	COMM, IERROR
-   	CHARACTER*(*) COMM_NAME
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Comm_set_name(comm, comm_name, ierror)
-   	TYPE(MPI_Comm), INTENT(IN) :: comm
-   	CHARACTER(LEN=*), INTENT(IN) :: comm_name
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_comm_set_name.rst
 
 INPUT/OUTPUT PARAMETER
 ----------------------

@@ -9,94 +9,12 @@ MPI_Reduce
 :ref:`MPI_Reduce`, :ref:`MPI_Ireduce`, :ref:`MPI_Reduce_init` - Reduces values on all
 processes within a group.
 
+.. The following directive tells the man page generation script to
+   generate multiple bindings for this file.
+.. mpi-bindings: MPI_Reduce, MPI_Ireduce, MPI_Reduce_init
 
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Reduce(const void *sendbuf, void *recvbuf, int count,
-                  MPI_Datatype datatype, MPI_Op op, int root,
-                  MPI_Comm comm)
-
-   int MPI_Ireduce(const void *sendbuf, void *recvbuf, int count,
-                   MPI_Datatype datatype, MPI_Op op, int root,
-                   MPI_Comm comm, MPI_Request *request)
-
-
-   int MPI_Reduce_init(const void *sendbuf, void *recvbuf, int count,
-                   MPI_Datatype datatype, MPI_Op op, int root,
-                   MPI_Comm comm, MPI_Info info, MPI_Request *request)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_REDUCE(SENDBUF, RECVBUF, COUNT, DATATYPE, OP, ROOT, COMM,
-   		IERROR)
-   	<type>	SENDBUF(*), RECVBUF(*)
-   	INTEGER	COUNT, DATATYPE, OP, ROOT, COMM, IERROR
-
-   MPI_IREDUCE(SENDBUF, RECVBUF, COUNT, DATATYPE, OP, ROOT, COMM,
-               REQUEST, IERROR)
-   	<type>	SENDBUF(*), RECVBUF(*)
-   	INTEGER	COUNT, DATATYPE, OP, ROOT, COMM, REQUEST, IERROR
-
-   MPI_REDUCE_INIT(SENDBUF, RECVBUF, COUNT, DATATYPE, OP, ROOT, COMM,
-               INFO, REQUEST, IERROR)
-   	<type>	SENDBUF(*), RECVBUF(*)
-   	INTEGER	COUNT, DATATYPE, OP, ROOT, COMM, INFO, REQUEST, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Reduce(sendbuf, recvbuf, count, datatype, op, root, comm, ierror)
-   	TYPE(*), DIMENSION(..), INTENT(IN) :: sendbuf
-   	TYPE(*), DIMENSION(..) :: recvbuf
-   	INTEGER, INTENT(IN) :: count, root
-   	TYPE(MPI_Datatype), INTENT(IN) :: datatype
-   	TYPE(MPI_Op), INTENT(IN) :: op
-   	TYPE(MPI_Comm), INTENT(IN) :: comm
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
-   MPI_Ireduce(sendbuf, recvbuf, count, datatype, op, root, comm, request,
-   		ierror)
-   	TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: sendbuf
-   	TYPE(*), DIMENSION(..), ASYNCHRONOUS :: recvbuf
-   	INTEGER, INTENT(IN) :: count, root
-   	TYPE(MPI_Datatype), INTENT(IN) :: datatype
-   	TYPE(MPI_Op), INTENT(IN) :: op
-   	TYPE(MPI_Comm), INTENT(IN) :: comm
-   	TYPE(MPI_Request), INTENT(OUT) :: request
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
-
-   MPI_Reduce_init(sendbuf, recvbuf, count, datatype, op, root, comm, info, request,
-   		ierror)
-   	TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: sendbuf
-   	TYPE(*), DIMENSION(..), ASYNCHRONOUS :: recvbuf
-   	INTEGER, INTENT(IN) :: count, root
-   	TYPE(MPI_Datatype), INTENT(IN) :: datatype
-   	TYPE(MPI_Op), INTENT(IN) :: op
-   	TYPE(MPI_Comm), INTENT(IN) :: comm
-   	TYPE(MPI_Info), INTENT(IN) :: info
-   	TYPE(MPI_Request), INTENT(OUT) :: request
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_reduce.rst
 
 INPUT PARAMETERS
 ----------------
@@ -344,7 +262,7 @@ The operation that defines MPI_MAXLOC is
 MPI_MINLOC is defined similarly:
 
 ::
-   
+
             ( u )    (  v )      ( w )
             (   )  o (    )   =  (   )
             ( i )    (  j )      ( k )

@@ -8,41 +8,8 @@ MPI_Comm_dup_with_info
 :ref:`MPI_Comm_dup_with_info` |mdash| Duplicates an existing communicator using
 provided info.
 
-SYNTAX
-------
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Comm_dup_with_info(MPI_Comm comm, MPI_Info info, MPI_Comm *newcomm)
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-
-   MPI_COMM_DUP_WITH_INFO(COMM, INFO, NEWCOMM, IERROR)
-       INTEGER COMM, INFO, NEWCOMM, IERROR
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-
-   MPI_Comm_dup_with_info(comm, info, newcomm, ierror)
-       TYPE(MPI_Comm), INTENT(IN) :: comm
-       TYPE(MPI_Info), INTENT(IN) :: info
-       TYPE(MPI_Comm), INTENT(OUT) :: newcomm
-       INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_comm_dup_with_info.rst
 
 INPUT PARAMETER
 ---------------

@@ -9,44 +9,8 @@ MPI_Comm_test_inter
 :ref:`MPI_Comm_test_inter` |mdash| Tests to see if a comm is an
 intercommunicator.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Comm_test_inter(MPI_Comm comm, int *flag)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_COMM_TEST_INTER(COMM, FLAG, IERROR)
-   	INTEGER	COMM, IERROR
-   	LOGICAL	FLAG
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Comm_test_inter(comm, flag, ierror)
-   	TYPE(MPI_Comm), INTENT(IN) :: comm
-   	LOGICAL, INTENT(OUT) :: flag
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_comm_test_inter.rst
 
 INPUT PARAMETER
 ---------------

@@ -8,20 +8,8 @@ MPI_T_event_callback_get_info
 
 :ref:`MPI_T_event_callback_get_info` |mdash| Returns a new info object containing the hints of the callback function registered for the callback safety level specified by cb_safety of the event-registration handle associated with event_registration.
 
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_T_event_callback_get_info(MPI_T_event_registration event_registration,
-                                     MPI_T_cb_safety cb_safety, MPI_Info *info_used)
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_t_event_callback_get_info.rst
 
 INPUT PARAMETERS
 ----------------

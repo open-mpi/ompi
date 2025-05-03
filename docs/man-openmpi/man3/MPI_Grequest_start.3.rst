@@ -8,50 +8,8 @@ MPI_Grequest_start
 :ref:`MPI_Grequest_start` |mdash| Starts a generalized request and returns a
 handle to it in ``request``.
 
-SYNTAX
-------
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Grequest_start(MPI_Grequest_query_function *query_fn,
-       MPI_Grequest_free_function *free_fn,
-       MPI_Grequest_cancel_function *cancel_fn, void *extra_state,
-       MPI_Request *request)
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-
-   MPI_GREQUEST_START(QUERY_FN, FREE_FN, CANCEL_FN, EXTRA_STATE,
-       REQUEST, IERROR)
-       INTEGER REQUEST, IERROR
-       EXTERNAL QUERY_FN, FREE_FN, CANCEL_FN
-         INTEGER(KIND=MPI_ADDRESS_KIND) EXTRA_STATE
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-
-   MPI_Grequest_start(query_fn, free_fn, cancel_fn, extra_state, request,
-           ierror)
-       PROCEDURE(MPI_Grequest_query_function) :: query_fn
-       PROCEDURE(MPI_Grequest_free_function) :: free_fn
-       PROCEDURE(MPI_Grequest_cancel_function) :: cancel_fn
-       INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(IN) :: extra_state
-       TYPE(MPI_Request), INTENT(OUT) :: request
-       INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_grequest_start.rst
 
 INPUT PARAMETERS
 ----------------

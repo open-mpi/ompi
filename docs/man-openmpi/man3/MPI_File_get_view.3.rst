@@ -8,51 +8,8 @@ MPI_File_get_view
 
 :ref:`MPI_File_get_view` |mdash| Returns the process's view of data in the file.
 
-
-SYNTAX
-------
-
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_File_get_view(MPI_File fh, MPI_Offset *disp,
-   	MPI_Datatype *etype, MPI_Datatype *filetype,
-   	char *datarep)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_FILE_GET_VIEW(FH, DISP, ETYPE,
-   	FILETYPE, DATAREP, IERROR)
-   	INTEGER	FH, ETYPE, FILETYPE, IERROR
-   	CHARACTER*(*)	DATAREP
-   	INTEGER(KIND=MPI_OFFSET_KIND)	DISP
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_File_get_view(fh, disp, etype, filetype, datarep, ierror)
-   	TYPE(MPI_File), INTENT(IN) :: fh
-   	INTEGER(KIND=MPI_OFFSET_KIND), INTENT(OUT) :: disp
-   	TYPE(MPI_Datatype), INTENT(OUT) :: etype, filetype
-   	CHARACTER(LEN=*), INTENT(OUT) :: datarep
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_file_get_view.rst
 
 INPUT PARAMETER
 ---------------

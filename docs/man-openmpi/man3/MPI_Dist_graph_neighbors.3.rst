@@ -9,49 +9,8 @@ MPI_Dist_graph_neighbors
 :ref:`MPI_Dist_graph_neighbors` |mdash| Returns the neighbors of the calling
 process in a distributed graph topology.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Dist_graph_neighbors(MPI_Comm comm, int maxindegree, int sources[], int sourceweights[],
-                                int maxoutdegree, int destinations[], int destweights[])
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_DIST_GRAPH_NEIGHBORS(COMM, MAXINDEGREE, SOURCES, SOURCEWEIGHTS,
-           MAXOUTDEGREE, DESTINATIONS, DESTWEIGHTS, IERROR)
-           INTEGER COMM, MAXINDEGREE, SOURCES(*), SOURCEWEIGHTS(*), MAXOUTDEGREE,
-                   DESTINATIONS(*), DESTWEIGHTS(*), IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Dist_Graph_neighbors(comm, maxindegree, sources, sourceweights,
-   		maxoutdegree, destinations, destweights, ierror)
-   	TYPE(MPI_Comm), INTENT(IN) :: comm
-   	INTEGER, INTENT(IN) :: maxindegree, maxoutdegree
-   	INTEGER, INTENT(OUT) :: sources(maxindegree), destinations(maxoutdegree)
-   	INTEGER :: sourceweights(*), destweights(*)
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_dist_graph_neighbors.rst
 
 INPUT PARAMETERS
 ----------------

@@ -8,40 +8,8 @@ MPI_Cartdim_get
 :ref:`MPI_Cartdim_get` |mdash| Retrieves Cartesian topology information associated
 with a communicator.
 
-SYNTAX
-------
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: C
-
-   #include <mpi.h>
-
-   int MPI_Cartdim_get(MPI_Comm comm, int *ndims)
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-
-   MPI_CARTDIM_GET(COMM, NDIMS, IERROR)
-       INTEGER COMM, NDIMS, IERROR
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-
-   MPI_Cartdim_get(comm, ndims, ierror)
-       TYPE(MPI_Comm), INTENT(IN) :: comm
-       INTEGER, INTENT(OUT) :: ndims
-       INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_cartdim_get.rst
 
 INPUT PARAMETER
 ---------------

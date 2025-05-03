@@ -8,42 +8,8 @@ MPI_Op_free
 
 :ref:`MPI_Op_free` |mdash| Frees a user-defined combination function handle.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Op_free(MPI_Op *op)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_OP_FREE(OP, IERROR)
-   	INTEGER	OP, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Op_free(op, ierror)
-   	TYPE(MPI_Op), INTENT(INOUT) :: op
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_op_free.rst
 
 INPUT/OUTPUT PARAMETER
 ----------------------

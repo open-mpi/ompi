@@ -9,44 +9,8 @@ MPI_Status_set_cancelled
 :ref:`MPI_Status_set_cancelled` |mdash| Sets *status* to indicate a request has
 been canceled.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Status_set_cancelled(MPI_Status *status, int flag)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_STATUS_SET_CANCELLED(STATUS, FLAG, IERROR)
-   	INTEGER	STATUS(MPI_STATUS_SIZE), IERROR
-   	LOGICAL FLAG
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Status_set_cancelled(status, flag, ierror)
-   	TYPE(MPI_Status), INTENT(INOUT) :: status
-   	LOGICAL, INTENT(OUT) :: flag
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_status_set_cancelled.rst
 
 INPUT/OUTPUT PARAMETER
 ----------------------

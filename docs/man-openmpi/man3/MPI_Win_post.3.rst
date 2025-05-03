@@ -9,44 +9,8 @@ MPI_Win_post
 :ref:`MPI_Win_post` |mdash| Starts an RMA exposure epoch for the local window
 associated with *win*
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Win_post(MPI_Group group, int assert, MPI_Win win)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_WIN_POST(GROUP, ASSERT, WIN, IERROR)
-   	INTEGER GROUP, ASSERT, WIN, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Win_post(group, assert, win, ierror)
-   	TYPE(MPI_Group), INTENT(IN) :: group
-   	INTEGER, INTENT(IN) :: assert
-   	TYPE(MPI_Win), INTENT(IN) :: win
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_win_post.rst
 
 INPUT PARAMETERS
 ----------------

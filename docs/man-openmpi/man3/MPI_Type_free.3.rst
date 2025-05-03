@@ -8,42 +8,8 @@ MPI_Type_free
 
 :ref:`MPI_Type_free` |mdash| Frees a data type.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Type_free(MPI_Datatype *datatype)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_TYPE_FREE(DATATYPE, IERROR)
-   	INTEGER	DATATYPE, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Type_free(datatype, ierror)
-   	TYPE(MPI_Datatype), INTENT(INOUT) :: datatype
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_type_free.rst
 
 INPUT/OUTPUT PARAMETER
 ----------------------

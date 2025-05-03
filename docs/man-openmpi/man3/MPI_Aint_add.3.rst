@@ -9,49 +9,12 @@ MPI_Aint_add
 :ref:`MPI_Aint_add`, :ref:`MPI_Aint_diff` - Portable functions for arithmetic
 on MPI_Aint values.
 
+.. The following directive tells the man page generation script to
+   generate multiple bindings for this file.
+.. mpi-bindings: MPI_Aint_add, MPI_Aint_diff
 
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   MPI_Aint MPI_Aint_add(MPI_Aint base, MPI_Aint disp)
-
-   MPI_Aint MPI_Aint_diff(MPI_Aint addr1, MPI_Aint addr2)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   INTEGER(KIND=MPI_ADDRESS_KIND) MPI_AINT_ADD(BASE, DISP)
-           INTEGER(KIND=MPI_ADDRESS_KIND) BASE, DISP
-
-   INTEGER(KIND=MPI_ADDRESS_KIND) MPI_AINT_DIFF(ADDR1, ADDR2)
-           INTEGER(KIND=MPI_ADDRESS_KIND) ADDR1, ADDR2
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   INTEGER(KIND=MPI_ADDRESS_KIND) MPI_AINT_ADD(BASE, DISP)
-           INTEGER(KIND=MPI_ADDRESS_KIND) BASE, DISP
-
-   INTEGER(KIND=MPI_ADDRESS_KIND) MPI_AINT_DIFF(ADDR1, ADDR2)
-           INTEGER(KIND=MPI_ADDRESS_KIND) ADDR1, ADDR2
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_aint_add.rst
 
 INPUT PARAMETERS
 ----------------

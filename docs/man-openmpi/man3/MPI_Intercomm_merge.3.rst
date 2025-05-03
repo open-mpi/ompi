@@ -9,46 +9,8 @@ MPI_Intercomm_merge
 :ref:`MPI_Intercomm_merge` |mdash| Creates an intracommunicator from an
 intercommunicator.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Intercomm_merge(MPI_Comm intercomm, int high,
-        MPI_Comm *newintracomm)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_INTERCOMM_MERGE(INTERCOMM, HIGH, NEWINTRACOMM, IERROR)
-   	INTEGER	INTERCOMM, NEWINTRACOMM, IERROR
-   	LOGICAL	HIGH
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Intercomm_merge(intercomm, high, newintracomm, ierror)
-   	TYPE(MPI_Comm), INTENT(IN) :: intercomm
-   	LOGICAL, INTENT(IN) :: high
-   	TYPE(MPI_Comm), INTENT(OUT) :: newintracomm
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_intercomm_merge.rst
 
 INPUT PARAMETERS
 ----------------

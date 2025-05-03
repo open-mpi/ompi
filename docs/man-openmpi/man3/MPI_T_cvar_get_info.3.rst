@@ -10,22 +10,8 @@ MPI_T_cvar_get_info
 
 :ref:`MPI_T_cvar_get_info` |mdash| Query information from a control variable
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_T_cvar_get_info(int cvar_index, char *name, int *name_len,
-                           int *verbosity, MPI_Datatype *datatype, MPI_T_enum *enumtype,
-                           const *desc, int *desc_len, int *bind, int *scope)
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_t_cvar_get_info.rst
 
 INPUT PARAMETERS
 ----------------

@@ -8,20 +8,8 @@ MPI_T_enum_get_info
 
 :ref:`MPI_T_enum_get_info` |mdash| Query information about an enumerator
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_T_enum_get_info(MPI_T_enum enumtype, int *num, char *name, int *name_len)
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_t_enum_get_info.rst
 
 INPUT PARAMETERS
 ----------------

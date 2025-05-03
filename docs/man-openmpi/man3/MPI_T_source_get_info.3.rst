@@ -8,22 +8,8 @@ MPI_T_source_get_info
 
 :ref:`MPI_T_source_get_info` |mdash| Query information from a source
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_T_source_get_info(int source_index, char *name, int *name_len,
-                             char *desc, int *desc_len, MPI_T_source_order *ordering,
-                             MPI_Count *ticks_per_second, MPI_Count *max_ticks, MPI_Info *info)
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_t_source_get_info.rst
 
 INPUT PARAMETERS
 ----------------
@@ -47,7 +33,7 @@ DESCRIPTION
 -----------
 
 :ref:`MPI_T_source_get_info` can be used to query information from a
-source. 
+source.
 
 
 ERRORS

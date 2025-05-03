@@ -8,44 +8,8 @@ MPI_Status_set_tag
 
 :ref:`MPI_Status_set_tag` |mdash| Sets the ``MPI_TAG`` field on ``status``.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Status_set_tag(MPI_Status *status, int tag)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_STATUS_SET_TAG(STATUS, TAG, IERROR)
-   	INTEGER	STATUS(MPI_STATUS_SIZE), IERROR
-   	INTEGER TAG
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Status_set_tag(status, tag, ierror)
-   	TYPE(MPI_Status), INTENT(INOUT) :: status
-   	INTEGER, INTENT(IN) :: tag
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_status_set_tag.rst
 
 INPUT/OUTPUT PARAMETER
 ----------------------

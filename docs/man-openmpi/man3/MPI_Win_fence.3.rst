@@ -8,43 +8,8 @@ MPI_Win_fence
 
 :ref:`MPI_Win_fence` |mdash| Synchronizes RMA calls on a window.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Win_fence(int assert, MPI_Win win)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_WIN_FENCE(ASSERT, WIN, IERROR)
-   	INTEGER ASSERT, WIN, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Win_fence(assert, win, ierror)
-   	INTEGER, INTENT(IN) :: assert
-   	TYPE(MPI_Win), INTENT(IN) :: win
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_win_fence.rst
 
 INPUT PARAMETERS
 ----------------

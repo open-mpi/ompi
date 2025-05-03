@@ -8,44 +8,8 @@ MPI_Status_set_error
 
 :ref:`MPI_Status_set_error` |mdash| Sets the ``MPI_ERROR`` field on ``status``.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Status_set_error(MPI_Status *status, int error)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_STATUS_SET_ERROR(STATUS, ERROR, IERROR)
-   	INTEGER	STATUS(MPI_STATUS_SIZE), IERROR
-   	INTEGER ERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Status_set_error(status, error, ierror)
-   	TYPE(MPI_Status), INTENT(INOUT) :: status
-   	INTEGER, INTENT(IN) :: error
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_status_set_error.rst
 
 INPUT/OUTPUT PARAMETER
 ----------------------

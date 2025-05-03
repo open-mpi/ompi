@@ -8,20 +8,8 @@ MPI_T_event_get_index
 
 :ref:`MPI_T_event_get_index` |mdash| Query the index of an event type identified by a known event type name
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_T_event_get_index(const char *name, int *event_index)
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_t_event_get_index.rst
 
 INPUT PARAMETERS
 -----------------

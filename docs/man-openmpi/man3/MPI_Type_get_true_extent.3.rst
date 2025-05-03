@@ -10,54 +10,12 @@ MPI_Type_get_true_extent
 the true lower bound and extent of a data type's corresponding typemap,
 ignoring MPI_UB and MPI_LB markers.
 
+.. The following directive tells the man page generation script to
+   generate multiple bindings for this file.
+.. mpi-bindings: MPI_Type_get_true_extent, MPI_Type_get_true_extent_x
 
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Type_get_true_extent(MPI_Datatype datatype,
-   	MPI_Aint *true_lb, MPI_Aint *true_extent)
-   int MPI_Type_get_true_extent_x(MPI_Datatype datatype,
-   	MPI_Count *true_lb, MPI_Count *true_extent)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_TYPE_GET_TRUE_EXTENT(DATATYPE, TRUE_LB, TRUE_EXTENT, IERROR)
-   	INTEGER	DATATYPE, IERROR
-   	INTEGER(KIND=MPI_ADDRESS_KIND) TRUE_LB, TRUE_EXTENT
-   MPI_TYPE_GET_TRUE_EXTENT_X(DATATYPE, TRUE_LB, TRUE_EXTENT, IERROR)
-   	INTEGER	DATATYPE, IERROR
-   	INTEGER(KIND=MPI_COUNT_KIND) TRUE_LB, TRUE_EXTENT
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Type_get_true_extent(datatype, true_lb, true_extent, ierror)
-   	TYPE(MPI_Datatype), INTENT(IN) :: datatype
-   	INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(OUT) :: true_lb, true_extent
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-   MPI_Type_get_true_extent_x(datatype, true_lb, true_extent, ierror)
-   	TYPE(MPI_Datatype), INTENT(IN) :: datatype
-   	INTEGER(KIND = MPI_COUNT_KIND), INTENT(OUT) :: true_lb, true_extent
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_type_get_true_extent.rst
 
 INPUT PARAMETER
 ---------------

@@ -8,42 +8,8 @@ MPI_Query_thread
 
 :ref:`MPI_Query_thread` |mdash| Returns the current level of thread support
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Query_thread(int *provided)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_QUERY_THREAD(PROVIDED, IERROR)
-   	INTEGER	PROVIDED, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Query_thread(provided, ierror)
-   	INTEGER, INTENT(OUT) :: provided
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_query_thread.rst
 
 OUTPUT PARAMETERS
 -----------------

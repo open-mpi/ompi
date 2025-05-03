@@ -8,43 +8,8 @@ MPI_Group_size
 
 :ref:`MPI_Group_size` |mdash| Returns the size of a group.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Group_size(MPI_Group group, int *size)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_GROUP_SIZE(GROUP, SIZE, IERROR)
-   	INTEGER	GROUP, SIZE, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Group_size(group, size, ierror)
-   	TYPE(MPI_Group), INTENT(IN) :: group
-   	INTEGER, INTENT(OUT) :: size
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_group_size.rst
 
 INPUT PARAMETERS
 ----------------

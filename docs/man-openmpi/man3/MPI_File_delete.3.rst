@@ -8,45 +8,8 @@ MPI_File_delete
 
 :ref:`MPI_File_delete` |mdash| Deletes a file.
 
-
-SYNTAX
-------
-
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_File_delete(const char *filename, MPI_Info info)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_FILE_DELETE(FILENAME, INFO, IERROR)
-   	CHARACTER*(*)	FILENAME
-   	INTEGER	INFO, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_File_delete(filename, info, ierror)
-   	CHARACTER(LEN=*), INTENT(IN) :: filename
-   	TYPE(MPI_Info), INTENT(IN) :: info
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_file_delete.rst
 
 INPUT PARAMETERS
 ----------------

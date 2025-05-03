@@ -9,86 +9,12 @@ MPI_Scan
 :ref:`MPI_Scan`, :ref:`MPI_Iscan`, :ref:`MPI_Scan_init` - Computes an inclusive scan
 (partial reduction)
 
+.. The following directive tells the man page generation script to
+   generate multiple bindings for this file.
+.. mpi-bindings: MPI_Scan, MPI_Iscan, MPI_Scan_init
 
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Scan(const void *sendbuf, void *recvbuf, int count,
-                MPI_Datatype datatype, MPI_Op op, MPI_Comm comm)
-
-   int MPI_Iscan(const void *sendbuf, void *recvbuf, int count,
-                 MPI_Datatype datatype, MPI_Op op, MPI_Comm comm,
-                 MPI_Request *request)
-
-   int MPI_Scan_init(const void *sendbuf, void *recvbuf, int count,
-                 MPI_Datatype datatype, MPI_Op op, MPI_Comm comm,
-                 MPI_Info info, MPI_Request *request)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_SCAN(SENDBUF, RECVBUF, COUNT, DATATYPE, OP, COMM, IERROR)
-   	<type>	SENDBUF(*), RECVBUF(*)
-   	INTEGER	COUNT, DATATYPE, OP, COMM, IERROR
-
-   MPI_ISCAN(SENDBUF, RECVBUF, COUNT, DATATYPE, OP, COMM, REQUEST, IERROR)
-   	<type>	SENDBUF(*), RECVBUF(*)
-   	INTEGER	COUNT, DATATYPE, OP, COMM, REQUEST, IERROR
-
-   MPI_SCAN_INIT(SENDBUF, RECVBUF, COUNT, DATATYPE, OP, COMM, INFO, REQUEST, IERROR)
-   	<type>	SENDBUF(*), RECVBUF(*)
-   	INTEGER	COUNT, DATATYPE, OP, COMM, INFO, REQUEST, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Scan(sendbuf, recvbuf, count, datatype, op, comm, ierror)
-   	TYPE(*), DIMENSION(..), INTENT(IN) :: sendbuf
-   	TYPE(*), DIMENSION(..) :: recvbuf
-   	INTEGER, INTENT(IN) :: count
-   	TYPE(MPI_Datatype), INTENT(IN) :: datatype
-   	TYPE(MPI_Op), INTENT(IN) :: op
-   	TYPE(MPI_Comm), INTENT(IN) :: comm
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
-   MPI_Iscan(sendbuf, recvbuf, count, datatype, op, comm, request, ierror)
-   	TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: sendbuf
-   	TYPE(*), DIMENSION(..), ASYNCHRONOUS :: recvbuf
-   	INTEGER, INTENT(IN) :: count
-   	TYPE(MPI_Datatype), INTENT(IN) :: datatype
-   	TYPE(MPI_Op), INTENT(IN) :: op
-   	TYPE(MPI_Comm), INTENT(IN) :: comm
-   	TYPE(MPI_Request), INTENT(OUT) :: request
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
-   MPI_Scan_init(sendbuf, recvbuf, count, datatype, op, comm, info, request, ierror)
-   	TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: sendbuf
-   	TYPE(*), DIMENSION(..), ASYNCHRONOUS :: recvbuf
-   	INTEGER, INTENT(IN) :: count
-   	TYPE(MPI_Datatype), INTENT(IN) :: datatype
-   	TYPE(MPI_Op), INTENT(IN) :: op
-   	TYPE(MPI_Comm), INTENT(IN) :: comm
-   	TYPE(MPI_Info), INTENT(IN) :: info
-   	TYPE(MPI_Request), INTENT(OUT) :: request
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_scan.rst
 
 INPUT PARAMETERS
 ----------------

@@ -7,73 +7,12 @@ MPI_Get
 
 :ref:`MPI_Get`, :ref:`MPI_Rget` - Copies data from the target memory to the origin.
 
-SYNTAX
-------
+.. The following directive tells the man page generation script to
+   generate multiple bindings for this file.
+.. mpi-bindings: MPI_Get, MPI_Rget
 
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   MPI_Get(void *origin_addr, int origin_count, MPI_Datatype
-       origin_datatype, int target_rank, MPI_Aint target_disp,
-       int target_count, MPI_Datatype target_datatype, MPI_Win win)
-
-   MPI_Rget(void *origin_addr, int origin_count, MPI_Datatype
-        origin_datatype, int target_rank, MPI_Aint target_disp,
-        int target_count, MPI_Datatype target_datatype, MPI_Win win,
-            MPI_Request *request)
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-
-   MPI_GET(ORIGIN_ADDR, ORIGIN_COUNT, ORIGIN_DATATYPE, TARGET_RANK,
-       TARGET_DISP, TARGET_COUNT, TARGET_DATATYPE, WIN, IERROR)
-       <type> ORIGIN_ADDR(*)
-       INTEGER(KIND=MPI_ADDRESS_KIND) TARGET_DISP
-       INTEGER ORIGIN_COUNT, ORIGIN_DATATYPE, TARGET_RANK,
-       TARGET_COUNT, TARGET_DATATYPE, WIN, IERROR
-
-   MPI_RGET(ORIGIN_ADDR, ORIGIN_COUNT, ORIGIN_DATATYPE, TARGET_RANK,
-        TARGET_DISP, TARGET_COUNT, TARGET_DATATYPE, WIN, REQUEST, IERROR)
-        <type> ORIGIN_ADDR(*)
-        INTEGER(KIND=MPI_ADDRESS_KIND) TARGET_DISP
-        INTEGER ORIGIN_COUNT, ORIGIN_DATATYPE, TARGET_RANK,
-        TARGET_COUNT, TARGET_DATATYPE, WIN, REQUEST, IERROR
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-
-   MPI_Get(origin_addr, origin_count, origin_datatype, target_rank,
-           target_disp, target_count, target_datatype, win, ierror)
-       TYPE(*), DIMENSION(..), ASYNCHRONOUS :: origin_addr
-       INTEGER, INTENT(IN) :: origin_count, target_rank, target_count
-       TYPE(MPI_Datatype), INTENT(IN) :: origin_datatype, target_datatype
-       INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(IN) :: target_disp
-       TYPE(MPI_Win), INTENT(IN) :: win
-       INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
-   MPI_Rget(origin_addr, origin_count, origin_datatype, target_rank,
-       target_disp, target_count, target_datatype, win, request,
-           ierror)
-       TYPE(*), DIMENSION(..), ASYNCHRONOUS :: origin_addr
-       INTEGER, INTENT(IN) :: origin_count, target_rank, target_count
-       TYPE(MPI_Datatype), INTENT(IN) :: origin_datatype, target_datatype
-       INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(IN) :: target_disp
-       TYPE(MPI_Win), INTENT(IN) :: win
-       TYPE(MPI_Request), INTENT(OUT) :: request
-       INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_get.rst
 
 INPUT PARAMETERS
 ----------------

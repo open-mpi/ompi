@@ -8,42 +8,8 @@ MPI_Info_free
 
 :ref:`MPI_Info_free` |mdash| Frees an info object.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Info_free(MPI_Info *info)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_INFO_FREE(INFO, IERROR)
-   	INTEGER		INFO, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Info_free(info, ierror)
-   	TYPE(MPI_Info), INTENT(INOUT) :: info
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_info_free.rst
 
 INPUT/OUTPUT PARAMETER
 ----------------------

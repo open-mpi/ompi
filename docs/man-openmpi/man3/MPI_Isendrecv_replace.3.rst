@@ -9,53 +9,8 @@ MPI_Isendrecv_replace
 :ref:`MPI_Isendrecv_replace` |mdash| Sends and receives a message using a single
 buffer.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Isendrecv_replace(void *buf, int count, MPI_Datatype datatype,
-       int dest, int sendtag, int source, int recvtag, MPI_Comm comm,
-       MPI_Request *request)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_ISENDRECV_REPLACE(BUF, COUNT, DATATYPE, DEST, SENDTAG, SOURCE,
-           RECVTAG, COMM, REQUEST, IERROR)
-       <type>    BUF(*)
-       INTEGER    COUNT, DATATYPE, DEST, SENDTAG
-       INTEGER    SOURCE, RECVTAG, COMM
-       INTEGER    REQUEST, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Isendrecv_replace(buf, count, datatype, dest, sendtag, source, recvtag,
-           comm, request, ierror)
-       TYPE(*), DIMENSION(..) :: buf
-       INTEGER, INTENT(IN) :: count, dest, sendtag, source, recvtag
-       TYPE(MPI_Datatype), INTENT(IN) :: datatype
-       TYPE(MPI_Comm), INTENT(IN) :: comm
-       TYPE(MPI_Request) :: request
-       INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_isendrecv_replace.rst
 
 INPUT/OUTPUT PARAMETER
 ----------------------

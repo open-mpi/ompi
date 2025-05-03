@@ -516,6 +516,7 @@ docs/_build
 docs/_static
 docs/_static/css/custom.css
 docs/_templates
+docs/man-openmpi/man3/bindings
 
 # Common Python virtual environment and cache directory names
 venv

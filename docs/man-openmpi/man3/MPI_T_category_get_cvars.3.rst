@@ -9,20 +9,8 @@ MPI_T_category_get_cvars
 :ref:`MPI_T_category_get_cvars` |mdash| Query which control variables are in a
 category
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_T_category_get_cvars(int cat_index, int len, int indices[])
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_t_category_get_cvars.rst
 
 INPUT PARAMETERS
 ----------------

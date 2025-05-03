@@ -9,45 +9,8 @@ MPI_Group_range_incl
 :ref:`MPI_Group_range_incl` |mdash| Creates a new group from ranges of ranks in
 an existing group.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Group_range_incl(MPI_Group group, int n, int ranges[][3],
-   	MPI_Group *newgroup)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_GROUP_RANGE_INCL(GROUP, N, RANGES, NEWGROUP, IERROR)
-   	INTEGER	GROUP, N, RANGES(3,*), NEWGROUP, IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Group_range_incl(group, n, ranges, newgroup, ierror)
-   	TYPE(MPI_Group), INTENT(IN) :: group
-   	INTEGER, INTENT(IN) :: n, ranges(3,n)
-   	TYPE(MPI_Group), INTENT(OUT) :: newgroup
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_group_range_incl.rst
 
 INPUT PARAMETERS
 ----------------

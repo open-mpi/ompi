@@ -9,49 +9,8 @@ MPI_Testany
 :ref:`MPI_Testany` |mdash| Tests for completion of any one previously initiated
 communication in a list.
 
-
-SYNTAX
-------
-
-
-C Syntax
-^^^^^^^^
-
-.. code-block:: c
-
-   #include <mpi.h>
-
-   int MPI_Testany(int count, MPI_Request array_of_requests[],
-   	int *index, int *flag, MPI_Status *status)
-
-
-Fortran Syntax
-^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE MPI
-   ! or the older form: INCLUDE 'mpif.h'
-   MPI_TESTANY(COUNT, ARRAY_OF_REQUESTS, INDEX, FLAG, STATUS, IERROR)
-   	LOGICAL	FLAG
-   	INTEGER	COUNT, ARRAY_OF_REQUESTS(*), INDEX
-   	INTEGER	STATUS(MPI_STATUS_SIZE), IERROR
-
-
-Fortran 2008 Syntax
-^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: fortran
-
-   USE mpi_f08
-   MPI_Testany(count, array_of_requests, index, flag, status, ierror)
-   	INTEGER, INTENT(IN) :: count
-   	TYPE(MPI_Request), INTENT(INOUT) :: array_of_requests(count)
-   	INTEGER, INTENT(OUT) :: index
-   	LOGICAL, INTENT(OUT) :: flag
-   	TYPE(MPI_Status) :: status
-   	INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-
+.. The following file was automatically generated
+.. include:: ./bindings/mpi_testany.rst
 
 INPUT PARAMETERS
 ----------------
