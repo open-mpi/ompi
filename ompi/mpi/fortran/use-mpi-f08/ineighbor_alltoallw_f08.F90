@@ -16,12 +16,12 @@ subroutine MPI_Ineighbor_alltoallw_f08(sendbuf,sendcounts,sdispls,sendtypes,&
    use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request, MPI_ADDRESS_KIND
    use :: ompi_mpifh_bindings, only : ompi_ineighbor_alltoallw_f
    implicit none
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf
-   OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
-   INTEGER, INTENT(IN) :: sendcounts(*), recvcounts(*)
-   INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: sdispls(*), rdispls(*)
-   TYPE(MPI_Datatype), INTENT(IN) :: sendtypes(*)
-   TYPE(MPI_Datatype), INTENT(IN) :: recvtypes(*)
+   OMPI_FORTRAN_IGNORE_TKR_TYPE OMPI_ASYNCHRONOUS, INTENT(IN) :: sendbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE OMPI_ASYNCHRONOUS :: recvbuf
+   INTEGER OMPI_ASYNCHRONOUS, INTENT(IN) :: sendcounts(*), recvcounts(*)
+   INTEGER(MPI_ADDRESS_KIND) OMPI_ASYNCHRONOUS, INTENT(IN) :: sdispls(*), rdispls(*)
+   TYPE(MPI_Datatype) OMPI_ASYNCHRONOUS, INTENT(IN) :: sendtypes(*)
+   TYPE(MPI_Datatype) OMPI_ASYNCHRONOUS, INTENT(IN) :: recvtypes(*)
    TYPE(MPI_Comm), INTENT(IN) :: comm
    TYPE(MPI_Request), INTENT(OUT) :: request
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
