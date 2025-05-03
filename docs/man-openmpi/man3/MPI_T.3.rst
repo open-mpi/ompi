@@ -121,6 +121,11 @@ Open MPI's MPI_T categories are organized hierarchically:
    -  For example, the tcp component can be found under the opal
       framework in the opal layer.
 
+MPI_T Events
+^^^^^^^^^^^^
+
+Open MPI provides a set of stub interfaces for MPI_T events. More complete
+support for MPI_T events will be provided in a future release of Open MPI.
 
 .. seealso::
    * :ref:`MPI_T_category_changed`
