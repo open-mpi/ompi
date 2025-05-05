@@ -20,6 +20,7 @@
 # Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
 # Copyright (c) 2021-2022 Triad National Security, LLC. All rights
 #                         reserved.
+# Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
 #
 # $COPYRIGHT$
 #
@@ -115,12 +116,12 @@ nodist_libmpi_mpifh_sizeof_la_SOURCES = sizeof_f.f90
 lib@OMPI_LIBMPI_NAME@_mpifh_la_LIBADD += libmpi_mpifh_sizeof.la
 endif
 
-sizeof_pl = $(top_srcdir)/ompi/mpi/fortran/base/gen-mpi-sizeof.pl
+sizeof_py = $(top_srcdir)/ompi/mpi/fortran/base/gen-mpi-sizeof.py
 
 sizeof_f.f90: $(top_builddir)/config.status
-sizeof_f.f90: $(sizeof_pl)
+sizeof_f.f90: $(sizeof_py)
 sizeof_f.f90:
-	$(OMPI_V_GEN) $(sizeof_pl) \
+	$(OMPI_V_GEN) $(python) $(sizeof_py) \
 	    --impl=$@ --ierror=mandatory --mpi \
 	    --maxrank=$(OMPI_FORTRAN_MAX_ARRAY_RANK) \
 	    --generate=$(OMPI_FORTRAN_BUILD_SIZEOF) \

@@ -12,6 +12,7 @@
 # Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2015-2017 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -24,8 +25,8 @@ noinst_LTLIBRARIES =
 EXTRA_DIST = \
      attr-fn-int-callback-interfaces.h \
      conversion-fn-null-int-interface.h \
-     gen-mpi-sizeof.pl \
-     gen-mpi-mangling.pl
+     gen-mpi-sizeof.py \
+     gen-mpi-mangling.py
 
 #-----------------------------------------------------------------------------
 

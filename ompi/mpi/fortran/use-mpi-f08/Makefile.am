@@ -15,6 +15,7 @@
 #                         reserved.
 # Copyright (c) 2020      Sandia National Laboratories. All rights reserved.
 # Copyright (c) 2022      IBM Corporation.  All rights reserved.
+# Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
 #
 # $COPYRIGHT$
 #
@@ -79,12 +80,12 @@ mpi-f08.lo: sizeof_f08.h
 # configure tests.
 #
 
-sizeof_pl=$(top_srcdir)/ompi/mpi/fortran/base/gen-mpi-sizeof.pl
+sizeof_py=$(top_srcdir)/ompi/mpi/fortran/base/gen-mpi-sizeof.py
 
 sizeof_f08.h: $(top_builddir)/config.status
-sizeof_f08.h: $(sizeof_pl)
+sizeof_f08.h: $(sizeof_py)
 sizeof_f08.h:
-	$(OMPI_V_GEN) $(sizeof_pl) \
+	$(OMPI_V_GEN) $(python) $(sizeof_py) \
 	    --header=$@ --ierror=optional \
 	    --maxrank=$(OMPI_FORTRAN_MAX_ARRAY_RANK) \
 	    --generate=$(OMPI_FORTRAN_BUILD_SIZEOF) \
@@ -97,9 +98,9 @@ sizeof_f08.h:
 	    --request_deprecate=$(OMPI_FORTRAN_HAVE_ATTR_DEPRECATED)
 
 sizeof_f08.f90: $(top_builddir)/config.status
-sizeof_f08.f90: $(sizeof_pl)
+sizeof_f08.f90: $(sizeof_py)
 sizeof_f08.f90:
-	$(OMPI_V_GEN) $(sizeof_pl) \
+	$(OMPI_V_GEN) $(python) $(sizeof_py) \
 	    --impl=$@ --ierror=optional --mpi \
 	    --maxrank=$(OMPI_FORTRAN_MAX_ARRAY_RANK) \
 	    --generate=$(OMPI_FORTRAN_BUILD_SIZEOF) \
@@ -110,9 +111,9 @@ sizeof_f08.f90:
 	    --complex32=$(OMPI_HAVE_FORTRAN_COMPLEX32)
 
 psizeof_f08.f90: $(top_builddir)/config.status
-psizeof_f08.f90: $(sizeof_pl)
+psizeof_f08.f90: $(sizeof_py)
 psizeof_f08.f90:
-	$(OMPI_V_GEN) $(sizeof_pl) \
+	$(OMPI_V_GEN) $(python) $(sizeof_py) \
 	    --impl=$@ --ierror=optional --pmpi \
 	    --maxrank=$(OMPI_FORTRAN_MAX_ARRAY_RANK) \
 	    --generate=$(OMPI_FORTRAN_BUILD_SIZEOF) \

@@ -10,8 +10,8 @@
 # Copyright (c) 2015-2022 IBM Corporation.  All rights reserved.
 # Copyright (c) 2020      Amazon.com, Inc. or its affiliates.
 #                         All Rights reserved.
-#
 # Copyright (c) 2025      Nanook Consulting  All rights reserved.
+# Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -1609,7 +1609,7 @@ verbose "\n$step. Running template-generating scripts\n\n";
 # sync).
 
 my @scripts;
-push(@scripts, "ompi/include/mpif-values.pl");
+push(@scripts, "ompi/include/mpif-values.py");
 
 foreach my $s (@scripts) {
     verbose "=== $s\n";

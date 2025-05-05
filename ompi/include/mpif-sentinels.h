@@ -12,6 +12,7 @@
 !                         All rights reserved.
 ! Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+! Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
 ! $COPYRIGHT$
 !
 ! Additional copyrights may follow
@@ -26,7 +27,7 @@
 !
 !     - the "mpi" module bindings
 !     - the "mpi_f08" module bindings
-!     - ompi/mpi/fortran/base/gen-mpi-mangling.pl
+!     - ompi/mpi/fortran/base/gen-mpi-mangling.py
 !
 
 !     MPI_BOTTOM is only used where choice buffers can be used (meaning

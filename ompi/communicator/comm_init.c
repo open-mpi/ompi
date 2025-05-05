@@ -27,6 +27,7 @@
  *                         reserved.
  * Copyright (c) 2023-2024 Advanced Micro Devices, Inc. All rights reserved.
  * Copyright (c) 2023      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -453,7 +454,7 @@ static void ompi_comm_construct(ompi_communicator_t* comm)
     comm->c_index_vec    = NULL;
 
     /*
-     * magic numerology - see TOPDIR/ompi/include/mpif-values.pl
+     * magic numerology - see TOPDIR/ompi/include/mpif-values.py
      */
     idx = (comm == (ompi_communicator_t*)ompi_mpi_comm_world_addr) ? 0 :
               (comm == (ompi_communicator_t*)ompi_mpi_comm_self_addr) ? 1 :

@@ -15,6 +15,7 @@
 #                         and Technology (RIST).  All rights reserved.
 # Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
 # Copyright (c) 2022      IBM Corporation.  All rights reserved.
+# Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -66,7 +67,7 @@ endif
 
 include ompi/Makefile.am
 
-# This is complicated, but mpif-values.pl generates several
+# This is complicated, but mpif-values.py generates several
 # mpif-*.h files in this directory (during autogen.pl).
 # Hence, if any of those files change, it's safer to just force the
 # user to re-autogen.
@@ -75,17 +76,17 @@ include ompi/Makefile.am
 #	@ echo "ERROR: you must re-run autogen.pl (sorry!)"
 #	@ exit 1
 
-EXTRA_DIST = $(headers) mpif-values.pl
+EXTRA_DIST = $(headers) mpif-values.py
 
 #
 # mpif-sizeof.h is generated based on some results from configure tests.
 #
 
-sizeof_pl=$(top_srcdir)/ompi/mpi/fortran/base/gen-mpi-sizeof.pl
+sizeof_py=$(top_srcdir)/ompi/mpi/fortran/base/gen-mpi-sizeof.py
 mpif-sizeof.h: $(top_builddir)/config.status
-mpif-sizeof.h: $(sizeof_pl)
+mpif-sizeof.h: $(sizeof_py)
 mpif-sizeof.h:
-	$(OMPI_V_GEN) $(sizeof_pl) \
+	$(OMPI_V_GEN) $(python) $(sizeof_py) \
 	    --header=$@ --ierror=mandatory \
 	    --maxrank=$(OMPI_FORTRAN_MAX_ARRAY_RANK) \
 	    --generate=$(OMPI_FORTRAN_BUILD_SIZEOF) \
@@ -102,11 +103,11 @@ mpif-sizeof.h:
 # results from configure tests.
 #
 
-mpif_mangling_pl=$(top_srcdir)/ompi/mpi/fortran/base/gen-mpi-mangling.pl
+mpif_mangling_py=$(top_srcdir)/ompi/mpi/fortran/base/gen-mpi-mangling.py
 mpif-c-constants-decl.h: $(top_builddir)/config.status
-mpif-c-constants-decl.h: $(mpif_mangling_pl)
+mpif-c-constants-decl.h: $(mpif_mangling_py)
 mpif-c-constants-decl.h:
-	$(OMPI_V_GEN) $(mpif_mangling_pl) \
+	$(OMPI_V_GEN) $(python) $(mpif_mangling_py) \
 	    --caps $(OMPI_FORTRAN_CAPS) \
 	    --plain $(OMPI_FORTRAN_PLAIN) \
 	    --single $(OMPI_FORTRAN_SINGLE_UNDERSCORE) \
