@@ -18,21 +18,35 @@ ucc_status_t mca_coll_ucc_scatter_init(const void *sbuf, size_t scount,
                                        ucc_coll_req_h *req,
                                        mca_coll_ucc_req_t *coll_req)
 {
-    ucc_datatype_t ucc_sdt, ucc_rdt;
+    ucc_datatype_t ucc_sdt = UCC_DT_INT8, ucc_rdt = UCC_DT_INT8;
+    bool is_inplace = (MPI_IN_PLACE == rbuf);
     int comm_rank = ompi_comm_rank(ucc_module->comm);
     int comm_size = ompi_comm_size(ucc_module->comm);
 
-    ucc_rdt = ompi_dtype_to_ucc_dtype(rdtype);
     if (comm_rank == root) {
+        if (!(is_inplace || ompi_datatype_is_contiguous_memory_layout(rdtype, rcount)) ||
+            !ompi_datatype_is_contiguous_memory_layout(sdtype, scount * comm_size)) {
+            goto fallback;
+        }
+
         ucc_sdt = ompi_dtype_to_ucc_dtype(sdtype);
+        if (!is_inplace) {
+            ucc_rdt = ompi_dtype_to_ucc_dtype(rdtype);
+        }
+
         if ((COLL_UCC_DT_UNSUPPORTED == ucc_sdt) ||
-            (MPI_IN_PLACE != rbuf && COLL_UCC_DT_UNSUPPORTED == ucc_rdt)) {
+            (COLL_UCC_DT_UNSUPPORTED == ucc_rdt)) {
             UCC_VERBOSE(5, "ompi_datatype is not supported: dtype = %s",
                         (COLL_UCC_DT_UNSUPPORTED == ucc_sdt) ?
                         sdtype->super.name : rdtype->super.name);
             goto fallback;
         }
     } else {
+        if (!ompi_datatype_is_contiguous_memory_layout(rdtype, rcount)) {
+            goto fallback;
+        }
+
+        ucc_rdt = ompi_dtype_to_ucc_dtype(rdtype);
         if (COLL_UCC_DT_UNSUPPORTED == ucc_rdt) {
             UCC_VERBOSE(5, "ompi_datatype is not supported: dtype = %s",
                         rdtype->super.name);
@@ -59,7 +73,7 @@ ucc_status_t mca_coll_ucc_scatter_init(const void *sbuf, size_t scount,
         },
     };
 
-    if (MPI_IN_PLACE == rbuf) {
+    if (is_inplace) {
         coll.mask |= UCC_COLL_ARGS_FIELD_FLAGS;
         coll.flags = UCC_COLL_ARGS_FLAG_IN_PLACE;
     }

@@ -17,27 +17,35 @@ ucc_status_t mca_coll_ucc_gather_init(const void *sbuf, size_t scount, struct om
                                       ucc_coll_req_h *req,
                                       mca_coll_ucc_req_t *coll_req)
 {
-    ucc_datatype_t ucc_sdt, ucc_rdt;
+    ucc_datatype_t ucc_sdt = UCC_DT_INT8, ucc_rdt = UCC_DT_INT8;
+    bool is_inplace = (MPI_IN_PLACE == sbuf);
     int comm_rank = ompi_comm_rank(ucc_module->comm);
     int comm_size = ompi_comm_size(ucc_module->comm);
 
-    if (!ompi_datatype_is_contiguous_memory_layout(sdtype, scount)) {
-        goto fallback;
-    }
-    ucc_sdt = ompi_dtype_to_ucc_dtype(sdtype);
     if (comm_rank == root) {
-        if (!ompi_datatype_is_contiguous_memory_layout(rdtype, rcount * comm_size)) {
+        if (!(is_inplace || ompi_datatype_is_contiguous_memory_layout(sdtype, scount)) ||
+            !ompi_datatype_is_contiguous_memory_layout(rdtype, rcount * comm_size)) {
             goto fallback;
         }
+
         ucc_rdt = ompi_dtype_to_ucc_dtype(rdtype);
-        if ((COLL_UCC_DT_UNSUPPORTED == ucc_rdt) ||
-            (MPI_IN_PLACE != sbuf && COLL_UCC_DT_UNSUPPORTED == ucc_sdt)) {
+        if (!is_inplace) {
+            ucc_sdt = ompi_dtype_to_ucc_dtype(sdtype);
+        }
+
+        if ((COLL_UCC_DT_UNSUPPORTED == ucc_sdt) ||
+            (COLL_UCC_DT_UNSUPPORTED == ucc_rdt)) {
             UCC_VERBOSE(5, "ompi_datatype is not supported: dtype = %s",
-                        (COLL_UCC_DT_UNSUPPORTED == ucc_rdt) ?
-                        rdtype->super.name : sdtype->super.name);
+                        (COLL_UCC_DT_UNSUPPORTED == ucc_sdt) ?
+                        sdtype->super.name : rdtype->super.name);
             goto fallback;
         }
     } else {
+        if (!ompi_datatype_is_contiguous_memory_layout(sdtype, scount)) {
+            goto fallback;
+        }
+
+        ucc_sdt = ompi_dtype_to_ucc_dtype(sdtype);
         if (COLL_UCC_DT_UNSUPPORTED == ucc_sdt) {
             UCC_VERBOSE(5, "ompi_datatype is not supported: dtype = %s",
                         sdtype->super.name);
@@ -64,7 +72,7 @@ ucc_status_t mca_coll_ucc_gather_init(const void *sbuf, size_t scount, struct om
         },
     };
 
-    if (MPI_IN_PLACE == sbuf) {
+    if (is_inplace) {
         coll.mask |= UCC_COLL_ARGS_FIELD_FLAGS;
         coll.flags = UCC_COLL_ARGS_FLAG_IN_PLACE;
     }
