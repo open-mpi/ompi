@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# Copyright (c) 2015      Research Organization for Information Science
+# Copyright (c) 2015-2025 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2015-2020 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
@@ -22,7 +22,7 @@ file_f08_types = "mpif-f08-types.h"
 
 # Header comment block
 header_comment = """/*
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2025 Research Organization for Information Science
  * and Technology (RIST). All rights reserved.
  * Copyright (c) 2015-2020 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
@@ -32,7 +32,7 @@ header_comment = """/*
 """
 
 fortran_header_comment = """!
-! Copyright (c) 2015      Research Organization for Information Science
+! Copyright (c) 2015-2025 Research Organization for Information Science
 !                         and Technology (RIST). All rights reserved.
 ! Copyright (c) 2015-2020 Cisco Systems, Inc.  All rights reserved.
 ! $COPYRIGHT$
@@ -43,25 +43,25 @@ fortran_header_comment = """!
 def get_fortran_constants(args):
     return {
         'bottom': {
-            'c_type': "int",
+            'c_type': "MPI_Fint",
             'c_name': "mpi_fortran_bottom",
             'f_type': "integer",
             'f_name': "MPI_BOTTOM",
         },
         'in_place': {
-            'c_type': "int",
+            'c_type': "MPI_Fint",
             'c_name': "mpi_fortran_in_place",
             'f_type': "integer",
             'f_name': "MPI_IN_PLACE",
         },
         'unweighted': {
-            'c_type': "int",
+            'c_type': "MPI_Fint",
             'c_name': "mpi_fortran_unweighted",
             'f_type': "integer, dimension(1)",
             'f_name': "MPI_UNWEIGHTED",
         },
         'weights_empty': {
-            'c_type': "int",
+            'c_type': "MPI_Fint",
             'c_name': "mpi_fortran_weights_empty",
             'f_type': "integer, dimension(1)",
             'f_name': "MPI_WEIGHTS_EMPTY",
@@ -79,19 +79,21 @@ def get_fortran_constants(args):
             'f_name': "MPI_ARGVS_NULL",
         },
         'errcodes_ignore': {
-            'c_type': "int",
+            'c_type': "MPI_Fint",
             'c_name': "mpi_fortran_errcodes_ignore",
             'f_type': "integer, dimension(1)",
             'f_name': "MPI_ERRCODES_IGNORE",
         },
         'status_ignore': {
-            'c_type': "int",
+            'c_type': "MPI_Fint",
+            'c_dim' : f"[{args.status_size}]",
             'c_name': "mpi_fortran_status_ignore",
             'f_type': "type(MPI_STATUS)",
             'f_name': "MPI_STATUS_IGNORE",
         },
         'statuses_ignore': {
-            'c_type': "int",
+            'c_type': "MPI_Fint",
+            'c_dim' : f"[{args.status_size}]",
             'c_name': "mpi_fortran_statuses_ignore",
             'f_type': "type(MPI_STATUS)",
             'f_name': "MPI_STATUSES_IGNORE(1)",
@@ -111,7 +113,7 @@ def mangle(name, mangling_type):
     else:
         raise ValueError("Unknown name mangling type")
 
-def gen_c_constants_decl(mangling_type, fortran_constants):
+def gen_c_constants_decl(mangling_type, fortran_constants, args):
     # Generates the mpif-c-constants-decl.h file
     with open(file_c_constants_decl, "w") as f:
         f.write("/* WARNING: This is a generated file!  Edits will be lost! */\n")
@@ -124,11 +126,12 @@ def gen_c_constants_decl(mangling_type, fortran_constants):
         for key in sorted(fortran_constants.keys()):
             const = fortran_constants[key]
             mangled_name = mangle(const['c_name'], mangling_type)
-            f.write(f"extern {const['c_type']} {mangled_name};\n")
+            dim = const.get('c_dim', '')
+            f.write(f"extern {const['c_type']} {mangled_name}{dim};\n")
             f.write(f"#define OMPI_IS_FORTRAN_{key.upper()}(addr) \\\n")
             f.write(f"        (addr == (void*) &{mangled_name})\n\n")
 
-def gen_c_constants(mangling_type, fortran_constants):
+def gen_c_constants(mangling_type, fortran_constants, args):
     # Generates the mpif-c-constants.h file
     with open(file_c_constants, "w") as f:
         f.write("/* WARNING: This is a generated file!  Edits will be lost! */\n")
@@ -137,8 +140,10 @@ def gen_c_constants(mangling_type, fortran_constants):
 
         for key in sorted(fortran_constants.keys()):
             const = fortran_constants[key]
+            align = f" __opal_attribute_aligned__({args.align}) " if args.align else ' '
+            dim = const.get('c_dim', '')
             mangled_name = mangle(const['c_name'], mangling_type)
-            f.write(f"{const['c_type']} {mangled_name};\n")
+            f.write(f"{const['c_type']}{align}{mangled_name}{dim};\n")
 
 def gen_f08_types(mangling_type, fortran_constants):
     # Generates the mpif-f08-types.h file
@@ -163,6 +168,10 @@ def main():
                         help='Use single underscore suffix mangling')
     parser.add_argument('--double', type=int, default=0,
                         help='Use double underscore suffix mangling')
+    parser.add_argument('--status-size', type=int, default=0,
+                        help='Length of the Fortran MPI_Status array')
+    parser.add_argument('--align', type=int, default=0,
+                        help='Alignment of Fortran intengers')
 
     args = parser.parse_args()
 
@@ -190,9 +199,9 @@ def main():
 
     # Generate the files based on the selected mangling type
     try:
-        fortran_constants = get_fortran_constants()
-        gen_c_constants_decl(mangling_type, fortran_constants)
-        gen_c_constants(mangling_type, fortran_constants)
+        fortran_constants = get_fortran_constants(args)
+        gen_c_constants_decl(mangling_type, fortran_constants, args)
+        gen_c_constants(mangling_type, fortran_constants, args)
         gen_f08_types(mangling_type, fortran_constants)
         print(f"Generated files with '{mangling_type}' mangling.")
         sys.exit(0)
