@@ -20,8 +20,8 @@ above categories that can be used with ``configure``:
 
 * ``--with-ft=TYPE``:
   Specify the type of fault tolerance to enable.  The only allowed
-  values are ``ulfm`` and ``none``.  See :ref:`the ULFM section
-  <ulfm-label>` for more details.
+  values are ``ulfm`` and ``no`` (the default value is ``no``).  See
+  :ref:`the ULFM section <ulfm-label>` for more details.
 
 * ``--enable-peruse``:
   Enable the PERUSE MPI data analysis interface.
