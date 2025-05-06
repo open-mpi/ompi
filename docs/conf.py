@@ -233,6 +233,8 @@ html_theme = 'sphinx_rtd_theme'
 # so a file named "default.css" will overwrite the builtin "default.css".
 #html_static_path = ['_static']
 
+# Put a "Last updated on:" timestamp at the bottom of each page.
+html_last_updated_fmt = '%Y-%m-%d %H:%M:%S %Z'
 
 # Short hand external links
 # Allows smoother transitioning for commonly used articles and sites
