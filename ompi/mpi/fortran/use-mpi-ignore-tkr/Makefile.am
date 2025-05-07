@@ -7,6 +7,7 @@
 #
 # Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
 # Copyright (c) 2022      IBM Corporation.  All rights reserved.
+# Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -93,12 +94,12 @@ lib@OMPI_LIBMPI_NAME@_usempi_ignore_tkr_la_LDFLAGS = \
 # configure tests.
 #
 
-sizeof_pl=$(top_srcdir)/ompi/mpi/fortran/base/gen-mpi-sizeof.pl
+sizeof_py=$(top_srcdir)/ompi/mpi/fortran/base/gen-mpi-sizeof.py
 
 mpi-ignore-tkr-sizeof.h: $(top_builddir)/config.status
-mpi-ignore-tkr-sizeof.h: $(sizeof_pl)
+mpi-ignore-tkr-sizeof.h: $(sizeof_py)
 mpi-ignore-tkr-sizeof.h:
-	$(OMPI_V_GEN) $(sizeof_pl) \
+	$(OMPI_V_GEN) $(python) $(sizeof_py) \
 	    --header=$@ --ierror=mandatory \
 	    --maxrank=$(OMPI_FORTRAN_MAX_ARRAY_RANK) \
 	    --generate=$(OMPI_FORTRAN_BUILD_SIZEOF) \
@@ -111,9 +112,9 @@ mpi-ignore-tkr-sizeof.h:
 	    --request_deprecate=$(OMPI_FORTRAN_HAVE_ATTR_DEPRECATED)
 
 mpi-ignore-tkr-sizeof.f90: $(top_builddir)/config.status
-mpi-ignore-tkr-sizeof.f90: $(sizeof_pl)
+mpi-ignore-tkr-sizeof.f90: $(sizeof_py)
 mpi-ignore-tkr-sizeof.f90:
-	$(OMPI_V_GEN) $(sizeof_pl) \
+	$(OMPI_V_GEN) $(python) $(sizeof_py) \
 	    --impl=$@ --ierror=mandatory --mpi --pmpi \
 	    --maxrank=$(OMPI_FORTRAN_MAX_ARRAY_RANK) \
 	    --generate=$(OMPI_FORTRAN_BUILD_SIZEOF) \

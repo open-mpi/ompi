@@ -20,6 +20,7 @@
  * Copyright (c) 2016-2018 FUJITSU LIMITED.  All rights reserved.
  * Copyright (c) 2018-2021 Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -566,7 +567,7 @@ int32_t ompi_datatype_init( void )
     } while(0)
 
     /*
-     * This MUST match the order of ompi/include/mpif-values.pl
+     * This MUST match the order of ompi/include/mpif-values.py
      * Any change will break binary compatibility of Fortran programs.
      */
     MOOG(datatype_null, 0);
