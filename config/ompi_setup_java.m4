@@ -83,7 +83,7 @@ AC_DEFUN([_OMPI_SETUP_JAVA],[
                  [ompi_java_dir=`/usr/libexec/java_home`],
                  [ompi_java_dir=/System/Library/Frameworks/JavaVM.framework/Versions/Current])
            AC_MSG_CHECKING([for Java in OS X/macOS locations])
-           AS_IF([test -d $ompi_java_dir],
+           AS_IF([test -d "$ompi_java_dir"],
                  [AC_MSG_RESULT([found ($ompi_java_dir)])
                   ompi_java_found=1
                   if test -d "$ompi_java_dir/Headers" && test -d "$ompi_java_dir/Commands"; then
