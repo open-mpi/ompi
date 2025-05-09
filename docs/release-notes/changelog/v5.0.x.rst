@@ -4,6 +4,27 @@ Open MPI v5.0.x series
 This file contains all the NEWS updates for the Open MPI v5.0.x
 series, in reverse chronological order.
 
+Open MPI Version v5.0.8rc1
+------------------------------
+:Date: 9 May 2024
+
+- Internal PMIx and PRRTe versions:
+  - PMIx (v5.0.7). Repo: ``https://github.com/openpmix/openpmix``. Commit hash: ``bc3680a178f0fc17f787cff4f417551a08497394``.
+  - PRRTE (v3.0.9). Repo: ``https://github.com/openpmix/prrte``. Commit hash: ``c4f6f78db4f38c8fa7be3589a96ed904bfc4b998``.
+
+- Functionality Enhancements
+  - UCC collective operations: Improved handling of MPI_IN_PLACE in allgather, allgatherv, alltoall, alltoallv, gather, gatherv, scatter, and scatterv operations
+  - UCX OSC: Added support for "no_locks" info key to disable lock table usage
+  - OFI MTL: Enhanced CXI provider support for better compatibility
+
+- Bug Fixes and Minor Enhancements
+  - Hugepage Mpool: Fixed sizing of hugepages for better memory management
+  - Configure: Fixed --with-prrte=internal option handling
+  - Documentation: Updated shared memory and networking documentation
+  - Build system: Fixed support for flang on OSX
+  - Removed unused spread contrib sample scripts
+  - Various documentation updates and improvements
+
 Open MPI Version v5.0.7
 ------------------------------
 :Date: 14 February January 2025
