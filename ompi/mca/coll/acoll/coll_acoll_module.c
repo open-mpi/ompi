@@ -134,6 +134,7 @@ mca_coll_base_module_t *mca_coll_acoll_comm_query(struct ompi_communicator_t *co
 
     acoll_module->force_numa = mca_coll_acoll_force_numa;
     acoll_module->use_dyn_rules = mca_coll_acoll_use_dynamic_rules;
+    acoll_module->disable_shmbcast = mca_coll_acoll_disable_shmbcast;
     acoll_module->use_mnode = mca_coll_acoll_mnode_enable;
     /* Value of 0 is currently unsupported for mnode_enable */
     acoll_module->use_mnode = 1;

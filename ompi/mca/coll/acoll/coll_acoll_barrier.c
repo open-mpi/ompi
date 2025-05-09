@@ -22,6 +22,13 @@
 #include "coll_acoll.h"
 #include "coll_acoll_utils.h"
 
+
+
+#define PROGRESS_COUNT 10000
+
+int mca_coll_acoll_barrier_shm_h(struct ompi_communicator_t *comm, mca_coll_base_module_t *module, coll_acoll_subcomms_t *subc);
+int mca_coll_acoll_barrier_shm_f(struct ompi_communicator_t *comm, mca_coll_base_module_t *module, coll_acoll_subcomms_t *subc);
+
 static int mca_coll_acoll_barrier_recv_subc(struct ompi_communicator_t *comm,
                                             mca_coll_base_module_t *module, ompi_request_t **reqs,
                                             int *nreqs, int root)
@@ -106,6 +113,170 @@ static int mca_coll_acoll_barrier_send_subc(struct ompi_communicator_t *comm,
     return err;
 }
 
+int mca_coll_acoll_barrier_shm_h(struct ompi_communicator_t *comm, mca_coll_base_module_t *module,  coll_acoll_subcomms_t *subc)
+{
+    int err = MPI_SUCCESS;
+    int root = 0;
+    int rank = ompi_comm_rank(comm);
+    int size = ompi_comm_size(comm);
+    mca_coll_acoll_module_t *acoll_module = (mca_coll_acoll_module_t *) module;
+    coll_acoll_init(module, comm, subc->data, subc, root);
+    coll_acoll_data_t *data = subc->data;
+
+    if (NULL == data) {
+        return -1;
+    }
+
+    int l1_gp_size = data->l1_gp_size;
+    int *l1_gp = data->l1_gp;
+    int *l2_gp = data->l2_gp;
+    int l2_gp_size = data->l2_gp_size;
+    /* 16 * 1024 + 2 * 64 * size + 8 * 1024 * size */
+    int offset_barrier = LEADER_SHM_SIZE + 2 * CACHE_LINE_SIZE * size + PER_RANK_SHM_SIZE * size
+                         + CACHE_LINE_SIZE * size;
+
+    volatile int *root_rank_offset = (int *) ((char *) data->allshmmmap_sbuf[root] + offset_barrier
+                                              + CACHE_LINE_SIZE * rank);
+    volatile int *l1_rank_offset = (int *) ((char *) data->allshmmmap_sbuf[l1_gp[0]]
+                                            + offset_barrier + CACHE_LINE_SIZE * rank);
+
+    volatile int *leader_shm;
+    volatile int *my_leader_shm;
+    leader_shm = (int *) ((char *) data->allshmmmap_sbuf[root] + offset_barrier
+                              + CACHE_LINE_SIZE * root);
+    my_leader_shm = (int *) ((char *) data->allshmmmap_sbuf[l1_gp[0]] + offset_barrier
+                                 + CACHE_LINE_SIZE * l1_gp[0]);
+    int ready;
+    int count = 0;
+    if (rank == root) {
+        ready = *leader_shm;
+        for (int i = 0; i < l2_gp_size; i++) {
+            if (l2_gp[i] == root)
+                continue;
+            volatile int *val = (int *) ((char *) data->allshmmmap_sbuf[root] + offset_barrier
+                                         + CACHE_LINE_SIZE * l2_gp[i]);
+            while (*val != ready + 1) {
+                count++;
+                if (count == PROGRESS_COUNT) {
+                    count = 0;
+                    opal_progress();
+                }
+            }
+        }
+        ready++;
+        for (int i = 0; i < l1_gp_size; i++) {
+            if (l1_gp[i] == root)
+                continue;
+            volatile int *val = (int *) ((char *) data->allshmmmap_sbuf[root] + offset_barrier
+                                         + CACHE_LINE_SIZE * l1_gp[i]);
+            while (*val != ready) {
+                count++;
+                if (count == PROGRESS_COUNT) {
+                    count = 0;
+                    opal_progress();
+                }
+            }
+        }
+        *leader_shm = ready;
+    } else if (rank == l1_gp[0]) {
+        int val = *l1_rank_offset;
+        for (int i = 0; i < l1_gp_size; i++) {
+            if (l1_gp[i] == l1_gp[0])
+                continue;
+            volatile int *vali = (int *) ((char *) data->allshmmmap_sbuf[l1_gp[0]] + offset_barrier
+                                          + CACHE_LINE_SIZE
+                                                * l1_gp[i]); // do we need atomic_load here?
+            while (*vali != val + 1) {
+                count++;
+                if (PROGRESS_COUNT == count) {
+                    count = 0;
+                    opal_progress();
+                }
+            }
+        }
+        val++;
+        *root_rank_offset = val;
+        while (*leader_shm != val) {
+            count++;
+            if (PROGRESS_COUNT == count) {
+                count = 0;
+                opal_progress();
+            }
+        }
+        *l1_rank_offset = val;
+    } else {
+
+        int done = *l1_rank_offset;
+        done++;
+        *l1_rank_offset = done;
+        while (done != *my_leader_shm) {
+            count++;
+            if (10000 == count) {
+                count = 0;
+                opal_progress();
+            }
+        }
+    }
+    return err;
+}
+
+
+int mca_coll_acoll_barrier_shm_f(struct ompi_communicator_t *comm, mca_coll_base_module_t *module, coll_acoll_subcomms_t *subc)
+{
+    int err = MPI_SUCCESS;
+    int root = 0;
+    int rank = ompi_comm_rank(comm);
+    int size = ompi_comm_size(comm);
+    mca_coll_acoll_module_t *acoll_module = (mca_coll_acoll_module_t *) module;
+
+    coll_acoll_init(module, comm, subc->data, subc, root);
+    coll_acoll_data_t *data = subc->data;
+
+    if (NULL == data) {
+        return -1;
+    }
+
+    /* 16 * 1024 + 2 * 64 * size + 8 * 1024 * size */
+    int offset_barrier = LEADER_SHM_SIZE + 2 * CACHE_LINE_SIZE * size + PER_RANK_SHM_SIZE * size
+                         + CACHE_LINE_SIZE * size;
+
+    volatile int *root_rank_offset = (int *) ((char *) data->allshmmmap_sbuf[root] + offset_barrier
+                                              + CACHE_LINE_SIZE * rank);
+
+    volatile int *leader_shm;
+    leader_shm = (int *) ((char *) data->allshmmmap_sbuf[root] + offset_barrier
+                          + CACHE_LINE_SIZE * root);
+
+    int ready = *leader_shm;
+    int count = 0;
+    if (rank == root) {
+        for (int i = 0; i < size; i++) {
+            if (i == root)
+                continue;
+            volatile int *val = (int *) ((char *) data->allshmmmap_sbuf[root] + offset_barrier
+                                         + CACHE_LINE_SIZE * i);
+            while (*val != ready + 1) {
+                count++;
+                if (count == PROGRESS_COUNT) {
+                    count = 0;
+                    opal_progress();
+                }
+            }
+        }
+        (*leader_shm)++;
+    } else {
+        int val = ++(*root_rank_offset);
+        while (*leader_shm != val) {
+            count++;
+            if (PROGRESS_COUNT == count) {
+                count = 0;
+                opal_progress();
+            }
+        }
+    }
+    return err;
+}
+
 /*
  * mca_coll_acoll_barrier_intra
  *
@@ -151,6 +322,16 @@ int mca_coll_acoll_barrier_intra(struct ompi_communicator_t *comm, mca_coll_base
         }
     }
     num_nodes = size > 1 ? subc->num_nodes : 1;
+
+    /* Default barrier for intra-node case - shared memory hierarchical */
+    /* ToDo: Need to check how this works with inter-case */
+    if (1 == num_nodes) {
+        if (0 == subc->barrier_algo) {
+            return mca_coll_acoll_barrier_shm_h(comm, module, subc);
+        } else if (1 == subc->barrier_algo) {
+            return mca_coll_acoll_barrier_shm_f(comm, module, subc);
+        }
+    }
 
     reqs = ompi_coll_base_comm_get_reqs(module->base_data, size);
     if (NULL == reqs) {

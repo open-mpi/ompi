@@ -24,6 +24,8 @@
 typedef int (*bcast_subc_func)(void *buff, size_t count, struct ompi_datatype_t *datatype, int root,
                                struct ompi_communicator_t *comm, ompi_request_t **preq, int *nreqs,
                                int world_rank);
+int mca_coll_acoll_bcast_shm(void *buff, size_t count, struct ompi_datatype_t *dtype, int root,
+                             struct ompi_communicator_t *comm, mca_coll_base_module_t *module);
 
 /*
  * bcast_binomial
@@ -127,7 +129,7 @@ static int bcast_flat_tree(void *buff, size_t count, struct ompi_datatype_t *dat
 
 static inline void coll_bcast_decision_fixed(int size, size_t total_dsize, int node_size,
                                              int *sg_cnt, int *use_0, int *use_numa,
-                                             int *use_socket, int *lin_0,
+                                             int *use_socket, int *use_shm, int *lin_0,
                                              int *lin_1, int *lin_2, int num_nodes,
                                              mca_coll_acoll_module_t *acoll_module,
                                              coll_acoll_subcomms_t *subc)
@@ -137,7 +139,12 @@ static inline void coll_bcast_decision_fixed(int size, size_t total_dsize, int n
     *lin_0 = 0;
     *use_numa = 0;
     *use_socket = 0;
+    *use_shm = 0;
     if (size <= node_size) {
+        if (total_dsize <= 8192 && size >= 16 && !acoll_module->disable_shmbcast) {
+            *use_shm = 1;
+            return;
+        }
         if (acoll_module->use_dyn_rules) {
             *sg_cnt = (acoll_module->mnode_sg_size == acoll_module->sg_cnt) ? acoll_module->sg_cnt : node_size;
             *use_0 = 0;
@@ -237,11 +244,18 @@ static inline void coll_bcast_decision_fixed(int size, size_t total_dsize, int n
             *sg_cnt = sg_size;
             if (2 == num_nodes) {
                 SET_BCAST_PARAMS(1, 1, 1)
-                *use_socket = 1;
-                *use_numa = (total_dsize <= 2097152) ? 0 : 1;
-            } else if (num_nodes <= 4) {
-                if (total_dsize <= 512) {
+                if (total_dsize <= 8192) {
+                    *use_shm = 1;
+                } else {
                     *use_socket = 1;
+                    *use_numa = (total_dsize <= 2097152) ? 0 : 1;
+                }
+            } else if (num_nodes <= 4) {
+                if (total_dsize <= 64) {
+                    *use_socket = 1;
+                    SET_BCAST_PARAMS(1, 1, 0)
+                } else if (total_dsize <= 512) {
+                    *use_shm = 1;
                     SET_BCAST_PARAMS(1, 1, 0)
                 } else if (total_dsize <= 2097152) {
                     *use_socket = 1;
@@ -253,7 +267,9 @@ static inline void coll_bcast_decision_fixed(int size, size_t total_dsize, int n
                 }
             } else if (num_nodes <= 6) {
                 SET_BCAST_PARAMS(1, 1, 1)
-                if (total_dsize <= 524288) {
+                if (total_dsize <= 4096) {
+                    *use_shm = 1;
+                } else if (total_dsize <= 524288) {
                     *use_socket = 1;
                 } else {
                     *use_numa = 1;
@@ -261,7 +277,7 @@ static inline void coll_bcast_decision_fixed(int size, size_t total_dsize, int n
             } else if (num_nodes <= 8) {
                 SET_BCAST_PARAMS(1, 1, 1)
                 if (total_dsize <= 8192) {
-                    *use_numa = 0;
+                    *use_shm = 1;
                 } else {
                     *use_numa = 1;
                 }
@@ -293,6 +309,9 @@ static inline void coll_bcast_decision_fixed(int size, size_t total_dsize, int n
     }
     if (-1 != acoll_module->use_socket) {
         *use_socket = acoll_module->use_socket;
+    }
+    if (1 == acoll_module->disable_shmbcast) {
+        *use_shm = 0;
     }
 }
 
@@ -353,7 +372,7 @@ static int mca_coll_acoll_bcast_intra_node(void *buff, size_t count, struct ompi
                                            coll_acoll_subcomms_t *subc,
                                            struct ompi_communicator_t **subcomms, int *subc_roots,
                                            int lin_1, int lin_2, int no_sg, int use_numa,
-                                           int use_socket, int world_rank)
+                                           int use_socket, int use_shm, int world_rank)
 {
     int size;
     int rank;
@@ -368,6 +387,9 @@ static int mca_coll_acoll_bcast_intra_node(void *buff, size_t count, struct ompi
     rank = ompi_comm_rank(comm);
     size = ompi_comm_size(comm);
 
+    if (use_shm && subc_roots[MCA_COLL_ACOLL_INTRA] == 0 && !use_socket) {
+        return mca_coll_acoll_bcast_shm(buff, count, datatype, 0, comm, module);
+    }
     reqs = ompi_coll_base_comm_get_reqs(module->base_data, size);
     if (NULL == reqs) {
         return OMPI_ERR_OUT_OF_RESOURCE;
@@ -428,6 +450,152 @@ static int mca_coll_acoll_bcast_intra_node(void *buff, size_t count, struct ompi
 }
 
 /*
+ * mca_coll_acoll_bcast_shm
+ *
+ * Function:    Broadcast operation for small messages ( <= 8K) using shared memory
+ * Accepts:     Same arguments as MPI_Bcast()
+ * Returns:     MPI_SUCCESS or error code
+ *
+ * Description: Broadcast is performed across and within subgroups.
+ *
+ * Memory:      Additional memory is allocated for group leaders
+ *              (around 2MB for comm size of 256).
+ */
+// 0) all flags are initialized to 0 and increment with each bcast call
+// 1) root sets the ready flag and waits for
+//  - all "done" from l2 members
+//  - all "done" from its l1 members
+// 2) l2 members wait on root's ready flag
+// 3) l1 members wait on l1 leader's ready flag
+
+int mca_coll_acoll_bcast_shm(void *buff, size_t count, struct ompi_datatype_t *dtype, int root,
+                             struct ompi_communicator_t *comm, mca_coll_base_module_t *module)
+{
+    size_t dsize;
+    int err = MPI_SUCCESS;
+    int rank = ompi_comm_rank(comm);
+    int size = ompi_comm_size(comm);
+    mca_coll_acoll_module_t *acoll_module = (mca_coll_acoll_module_t *) module;
+    coll_acoll_subcomms_t *subc = NULL;
+
+    err = check_and_create_subc(comm, acoll_module, &subc);
+    if (!subc->initialized) {
+       err = mca_coll_acoll_comm_split_init(comm, acoll_module, subc, root);
+        if (MPI_SUCCESS != err) {
+            return err;
+        }
+    }
+    coll_acoll_init(module, comm, subc->data, subc, root);
+    coll_acoll_data_t *data = subc->data;
+
+    if (NULL == data) {
+        return -1;
+    }
+    ompi_datatype_type_size(dtype, &dsize);
+
+    int l1_gp_size = data->l1_gp_size;
+    int *l1_gp = data->l1_gp;
+    int *l2_gp = data->l2_gp;
+    int l2_gp_size = data->l2_gp_size;
+    /* 16 * 1024 + 2 * 64 * size + 8 * 1024 * size */
+    int offset_bcast = LEADER_SHM_SIZE + 2*CACHE_LINE_SIZE*size + PER_RANK_SHM_SIZE*size; 
+
+    volatile int *leader_shm;
+    if (rank == l1_gp[0]) {
+        leader_shm = (int *) ((char *) data->allshmmmap_sbuf[root] + offset_bcast + CACHE_LINE_SIZE * root);
+    } else {
+        leader_shm = (int *) ((char *) data->allshmmmap_sbuf[l1_gp[0]] + offset_bcast
+                              + CACHE_LINE_SIZE * l1_gp[0]);
+    }
+
+    /*
+     * 0) all flags are initialized to 0 and increment with each bcast call
+     * 1) root sets the ready flag and waits for
+     *  - all "done" from l2 members
+     *  - all "done" from its l1 members
+     * 2) l2 members wait on root's ready flag
+     *  - copy data from root to its buffer
+     *  - increment its ready flag
+     *  - wait for all l1 members to finish
+     * 3) l1 members wait on l1 leader's ready flag
+     *  - copy data from l1 leader's buffer to its buffer
+     *  - increment its ready flag
+     */
+    int ready;
+    if (rank == root) {
+        memcpy((char *) data->allshmmmap_sbuf[root], buff, count * dsize);
+        ready = __atomic_load_n(leader_shm, __ATOMIC_RELAXED); // we don't need atomic hear!
+        ready++;
+        __atomic_store_n(leader_shm, ready, __ATOMIC_RELAXED);
+        for (int i = 0; i < l2_gp_size; i++) {
+            if (l2_gp[i] == root)
+                continue;
+            volatile int *val = (int *) ((char *) data->allshmmmap_sbuf[root] + offset_bcast
+                                         + CACHE_LINE_SIZE * l2_gp[i]);
+            while (*val != ready) {
+                ;
+            }
+        }
+        for (int i = 0; i < l1_gp_size; i++) {
+            if (l1_gp[i] == root)
+                continue;
+            volatile int *val = (int *) ((char *) data->allshmmmap_sbuf[root] + offset_bcast
+                                         + CACHE_LINE_SIZE * l1_gp[i]);
+            while (*val != ready) {
+                ;
+            }
+        }
+    } else if (rank == l1_gp[0]) {
+        volatile int leader_ready = __atomic_load_n(leader_shm, __ATOMIC_RELAXED);
+        int done = __atomic_load_n((int *) ((char *) data->allshmmmap_sbuf[root] + offset_bcast
+                                            + CACHE_LINE_SIZE * rank),
+                                   __ATOMIC_RELAXED);
+        while (done == leader_ready) {
+            leader_ready = __atomic_load_n(leader_shm, __ATOMIC_RELAXED);
+        }
+        memcpy(buff, (char *) data->allshmmmap_sbuf[root], count * dsize);
+        memcpy((char *) data->allshmmmap_sbuf[rank], (char *) data->allshmmmap_sbuf[root],
+               count * dsize);
+        int val = __atomic_load_n((int *) ((char *) data->allshmmmap_sbuf[rank] + offset_bcast
+                                           + CACHE_LINE_SIZE * rank),
+                                  __ATOMIC_RELAXED); // do we need atomic load?
+        val++;
+        int local_val = val;
+        __atomic_store_n((int *) ((char *) data->allshmmmap_sbuf[root] + offset_bcast + CACHE_LINE_SIZE * rank),
+                         val, __ATOMIC_RELAXED); // do we need atomic store?
+        __atomic_store_n((int *) ((char *) data->allshmmmap_sbuf[rank] + offset_bcast + CACHE_LINE_SIZE * rank),
+                         val, __ATOMIC_RELAXED); // do we need atomic store?
+        // do we need wmb() here?
+        for (int i = 0; i < l1_gp_size; i++) {
+            if (l1_gp[i] == l1_gp[0])
+                continue;
+            volatile int *vali = (int *) ((char *) data->allshmmmap_sbuf[l1_gp[0]] + offset_bcast
+                                          + CACHE_LINE_SIZE * l1_gp[i]); // do we need atomic_load here?
+            while (*vali != local_val) {
+                ; // can we use a more specific condition than "!=" ?
+            }
+        }
+    } else {
+        int done = __atomic_load_n((int *) ((char *) data->allshmmmap_sbuf[l1_gp[0]] + offset_bcast
+                                            + CACHE_LINE_SIZE * rank),
+                                   __ATOMIC_RELAXED);
+        while (done == *leader_shm) {
+            ;
+        }
+        memcpy(buff, (char *) data->allshmmmap_sbuf[l1_gp[0]], count * dsize);
+        int val = __atomic_load_n((int *) ((char *) data->allshmmmap_sbuf[l1_gp[0]] + offset_bcast
+                                           + CACHE_LINE_SIZE * rank),
+                                  __ATOMIC_RELAXED); // do we need atomic load?
+        val++;
+        __atomic_store_n((int *) ((char *) data->allshmmmap_sbuf[l1_gp[0]] + offset_bcast
+                                  + CACHE_LINE_SIZE * rank),
+                         val, __ATOMIC_RELAXED); // do we need atomic store?
+        // do we need wmb() here?
+    }
+    return err;
+}
+
+/*
  * mca_coll_acoll_bcast
  *
  * Function:    Broadcast operation using subgroup based algorithm
@@ -455,7 +623,7 @@ int mca_coll_acoll_bcast(void *buff, size_t count, struct ompi_datatype_t *datat
     int num_nodes;
     int use_0 = 0;
     int lin_0 = 0, lin_1 = 0, lin_2 = 0;
-    int use_numa = 0, use_socket = 0;
+    int use_numa = 0, use_socket = 0, use_shm = 0;
     int no_sg;
     size_t total_dsize, dsize;
     mca_coll_acoll_module_t *acoll_module = (mca_coll_acoll_module_t *) module;
@@ -511,11 +679,24 @@ int mca_coll_acoll_bcast(void *buff, size_t count, struct ompi_datatype_t *datat
     /* sg_cnt determines subgroup based communication */
     /* lin_1 and lin_2 indicate whether to use linear or log based
      sends/receives across and within subgroups respectively. */
-    coll_bcast_decision_fixed(size, total_dsize, node_size, &sg_cnt, &use_0, &use_numa, &use_socket, &lin_0,
+    coll_bcast_decision_fixed(size, total_dsize, node_size, &sg_cnt, &use_0,
+                              &use_numa, &use_socket, &use_shm, &lin_0,
                               &lin_1, &lin_2, num_nodes, acoll_module, subc);
     no_sg = (sg_cnt == node_size) ? 1 : 0;
     if (size <= 2)
         no_sg = 1;
+
+    /* Disable shm based bcast if: */
+    /* - datatype is not a predefined type */
+    /* - it's a gpu buffer */
+    uint64_t flags = 0;
+    int dev_id;
+    if (!OMPI_COMM_CHECK_ASSERT_NO_ACCEL_BUF(comm)) {
+        if (!ompi_datatype_is_predefined(datatype)
+            || (0 < opal_accelerator.check_addr(buff, &dev_id, &flags))) {
+            use_shm = 0;
+        }
+    }
 
     coll_acoll_bcast_subcomms(comm, subc, subcomms, subc_roots, root, num_nodes, use_0, no_sg,
                               use_numa, use_socket);
@@ -549,7 +730,7 @@ int mca_coll_acoll_bcast(void *buff, size_t count, struct ompi_datatype_t *datat
     }
 
     err = mca_coll_acoll_bcast_intra_node(buff, count, datatype, module, subc, subcomms, subc_roots,
-                                          lin_1, lin_2, no_sg, use_numa, use_socket, rank);
+                                          lin_1, lin_2, no_sg, use_numa, use_socket, use_shm, rank);
 
     if (MPI_SUCCESS != err) {
         ompi_coll_base_free_reqs(reqs, nreqs);

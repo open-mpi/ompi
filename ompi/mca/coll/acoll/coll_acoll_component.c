@@ -31,6 +31,7 @@ int mca_coll_acoll_sg_scale = 1;
 int mca_coll_acoll_node_size = 128;
 int mca_coll_acoll_force_numa = -1;
 int mca_coll_acoll_use_dynamic_rules = 0;
+int mca_coll_acoll_disable_shmbcast = 0;
 int mca_coll_acoll_mnode_enable = 1;
 int mca_coll_acoll_bcast_lin0 = 0;
 int mca_coll_acoll_bcast_lin1 = 0;
@@ -49,6 +50,9 @@ size_t mca_coll_acoll_alltoall_xpmem_msg_thres = 0;
 /* By default utilize xpmem based algorithms applicable when built with xpmem. */
 int mca_coll_acoll_without_xpmem = 0;
 int mca_coll_acoll_xpmem_use_sr_buf = 1;
+/* Default barrier algorithm - hierarchical algorithm using shared memory */
+/* ToDo: check how this works with inter-node*/
+int mca_coll_acoll_barrier_algo = 0;
 
 /*
  * Local function
@@ -128,6 +132,11 @@ static int acoll_register(void)
                                         MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_9,
                                         MCA_BASE_VAR_SCOPE_READONLY,
                                         &mca_coll_acoll_use_dynamic_rules);
+    (void) mca_base_component_var_register(&mca_coll_acoll_component.collm_version, "disable_shmbcast",
+                                           "Disable shared memory bcast for multinode cases",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_coll_acoll_disable_shmbcast);
     (void) mca_base_component_var_register(&mca_coll_acoll_component.collm_version, "mnode_enable",
                                            "Enable separate algorithm for multinode cases",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_9,
@@ -176,6 +185,11 @@ static int acoll_register(void)
         "memory inside collective algorithms.",
         MCA_BASE_VAR_TYPE_UINT64_T, NULL, 0, 0, OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
         &mca_coll_acoll_reserve_memory_size_for_algo);
+    (void) mca_base_component_var_register(
+        &mca_coll_acoll_component.collm_version, "barrier_algo",
+        "Selection of different barrier algorithms ",
+        MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+        &mca_coll_acoll_barrier_algo);
     (void) mca_base_component_var_register(
         &mca_coll_acoll_component.collm_version, "without_xpmem",
         "By default, xpmem-based algorithms are used when applicable. "
