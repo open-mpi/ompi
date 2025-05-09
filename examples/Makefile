@@ -60,6 +60,7 @@ EXAMPLES = \
 	 ring_oshmemfh \
 	 Ring.class \
 	 connectivity_c \
+	 Connectivity.class \
 	 oshmem_shmalloc \
 	 oshmem_circular_shift \
 	 oshmem_max_reduction \
