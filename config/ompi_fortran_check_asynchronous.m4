@@ -11,6 +11,8 @@ dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2024      Research Organization for Information Science
+dnl                         and Technology (RIST).  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -35,6 +37,10 @@ SUBROUTINE binky(buf)
  REAL, DIMENSION(*), ASYNCHRONOUS :: buf
 END SUBROUTINE
 END INTERFACE
+CONTAINS
+SUBROUTINE wookie(buf)
+ REAL, DIMENSION(*), ASYNCHRONOUS :: buf
+END SUBROUTINE
 END MODULE asynch_mod]])],
              [AS_VAR_SET(asynchronous_var, yes)],
              [AS_VAR_SET(asynchronous_var, no)])
