@@ -40,7 +40,7 @@
 PROTOTYPE ERROR_CLASS type_create_struct(COUNT count,
                                          COUNT_ARRAY array_of_blocklengths,
                                          AINT_COUNT_ARRAY array_of_displacements,
-                                         DATATYPE_ARRAY array_of_types,
+                                         DATATYPE_ARRAY array_of_types:count,
                                          DATATYPE_OUT newtype)
 {
     int i, rc, icount = (int)count;

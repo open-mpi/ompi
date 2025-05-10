@@ -6,6 +6,9 @@
 # Additional copyrights may follow
 #
 # $HEADER$
+
+import os
+
 """Source parsing code."""
 
 class Parameter:
