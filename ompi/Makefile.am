@@ -126,7 +126,7 @@ DIST_SUBDIRS = \
         $(MCA_ompi_FRAMEWORKS_SUBDIRS) \
         $(MCA_ompi_FRAMEWORK_COMPONENT_ALL_SUBDIRS)
 
-noinst_LTLIBRARIES = libopen-mpi.la
+noinst_LTLIBRARIES = libopen_mpi.la
 lib_LTLIBRARIES = lib@OMPI_LIBMPI_NAME@.la
 if OMPI_STANDARD_ABI
 lib_LTLIBRARIES += libmpi_abi.la
@@ -142,14 +142,14 @@ endif
 # +----------------------+----------------------+
 # |     libmpi_abi.la    |        libmpi.la     |
 # +----------------------+----------------------+
-# |              libopen-mpi.la                 |
+# |              libopen_mpi.la                 |
 # +----------------------+----------------------+
 #
-# This includes a new library, libopen-mpi.la, that links in all backend code
+# This includes a new library, libopen_mpi.la, that links in all backend code
 # built in this directory or SUBDIRs of this directory. Previously everything
 # was just linked directly into libmpi.la (lib@OMPI_LIBMPI_NAME@.la).
 #
-# libmpi_abi.la and libmpi.la both now link in libopen-mpi.la, the only
+# libmpi_abi.la and libmpi.la both now link in libopen_mpi.la, the only
 # difference between them being that one includes the standard ABI functions
 # and the other the ompi-specific versions of those.
 #
@@ -167,7 +167,7 @@ libopen_mpi_la_DEPENDENCIES = $(libopen_mpi_la_LIBADD)
 # Build the main MPI library
 lib@OMPI_LIBMPI_NAME@_la_SOURCES =
 lib@OMPI_LIBMPI_NAME@_la_LIBADD = \
-	libopen-mpi.la \
+	libopen_mpi.la \
         mpi/c/libmpi_c.la \
         mpi/tool/libmpi_mpit.la \
         $(c_mpi_lib) \
@@ -182,16 +182,16 @@ lib@OMPI_LIBMPI_NAME@_la_LDFLAGS = \
 # The MPI Standard ABI library
 libmpi_abi_la_SOURCES =
 libmpi_abi_la_LIBADD = \
-        libopen-mpi.la \
+        libopen_mpi.la \
 	mpi/c/libmpi_c_abi.la
 
 # included subdirectory Makefile.am's and appended-to variables
 headers =
-noinst_LTLIBRARIES =
 include_HEADERS =
 EXTRA_DIST =
 lib@OMPI_LIBMPI_NAME@_la_SOURCES += $(headers)
 dist_ompidata_DATA =
+libopen_mpi_la_SOURCES += $(headers)
 
 # Conditionally install the header files
 

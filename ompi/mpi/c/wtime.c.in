@@ -45,7 +45,7 @@
  * and accuracy of the user visible timer.
  * More info: https://github.com/mpi-forum/mpi-issues/issues/77#issuecomment-369663119
  */
-extern struct timespec ompi_wtime_time_origin = {.tv_sec = 0};
+extern struct timespec ompi_wtime_time_origin;
 
 PROTOTYPE DOUBLE wtime()
 {
