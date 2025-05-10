@@ -32,7 +32,7 @@
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/memchecker.h"
 
-PROTOTYPE ERROR_CLASS status_set_elements_x(STATUS_OUT status, DATATYPE datatype, PARTITIONED_COUNT count)
+PROTOTYPE ERROR_CLASS status_set_elements_x(STATUS_INOUT status, DATATYPE datatype, PARTITIONED_COUNT count)
 {
     int rc = MPI_SUCCESS;
     size_t size;

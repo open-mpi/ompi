@@ -35,7 +35,7 @@ PROTOTYPE ERROR_CLASS win_create_keyval(WIN_COPY_ATTR_FUNCTION win_copy_attr_fn,
                                         WIN_DELETE_ATTR_FUNCTION win_delete_attr_fn,
                                         INT_OUT win_keyval, BUFFER_OUT extra_state)
 {
-    int ret;
+    int ret, flags = 0;
     ompi_attribute_fn_ptr_union_t copy_fn;
     ompi_attribute_fn_ptr_union_t del_fn;
 
@@ -48,10 +48,15 @@ PROTOTYPE ERROR_CLASS win_create_keyval(WIN_COPY_ATTR_FUNCTION win_copy_attr_fn,
         }
     }
 
+#if OMPI_ABI_SRC
+    copy_fn.attr_win_copy_fn = ompi_abi_copy_attr_fn;
+    del_fn.attr_win_delete_fn = ompi_abi_delete_attr_fn;
+#else
     copy_fn.attr_win_copy_fn = win_copy_attr_fn;
     del_fn.attr_win_delete_fn = win_delete_attr_fn;
+#endif
 
     ret = ompi_attr_create_keyval(WIN_ATTR, copy_fn, del_fn,
-                                  win_keyval, extra_state, 0, NULL);
+                                  win_keyval, extra_state, flags, NULL);
     OMPI_ERRHANDLER_NOHANDLE_RETURN(ret, MPI_ERR_OTHER, FUNC_NAME);
 }

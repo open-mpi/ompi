@@ -116,6 +116,11 @@ BEGIN_C_DECLS
     } while (0)
 
 
+int ompi_sendrecv(const void * sendbuf, size_t sendcount, MPI_Datatype sendtype, int dest, int sendtag, 
+                  void * recvbuf, size_t recvcount, MPI_Datatype recvtype, int source, int recvtag, MPI_Comm comm, MPI_Status *status);
+int ompi_isendrecv(const void * sendbuf, size_t sendcount, MPI_Datatype sendtype, int dest, int sendtag, 
+                   void * recvbuf, size_t recvcount, MPI_Datatype recvtype, int source, int recvtag, MPI_Comm comm, MPI_Request * request);
+
 END_C_DECLS
 
 #endif /* OMPI_C_BINDINGS_H */
