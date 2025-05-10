@@ -128,8 +128,12 @@ libopalutil_core_la_SOURCES = \
         uri.c
 
 show_help_content.c: convert-help-files-to-c-code.py
-	$(OMPI_V_GEN) $(PYTHON) $(abs_srcdir)/convert-help-files-to-c-code.py \
-	    --root $(abs_top_srcdir) \
+	$(OMPI_V_GEN) subdirs=""; \
+	for dir in $(MCA_PROJECT_SUBDIRS); do \
+	    subdirs="$(abs_top_srcdir)/$$dir $$subdirs"; \
+	done; \
+	$(PYTHON) $(abs_srcdir)/convert-help-files-to-c-code.py \
+	    --roots $$subdirs \
 	    --out show_help_content.c
 
 if OPAL_COMPILE_TIMING
