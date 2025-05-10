@@ -548,7 +548,6 @@ docs/code-of-conduct.rst
 
 # Generated C Bindings
 ompi/mpi/c/*_generated*.c
-ompi/mpi/c/ompi_*.c
 ompi/mpi/c/standard_*.c
 ompi/mpi/c/abi.h
 ompi/mpi/c/standard_abi

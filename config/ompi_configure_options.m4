@@ -256,6 +256,12 @@ AM_CONDITIONAL(OMPI_OMPIO_SUPPORT, test "$ompi_want_ompio" = "1")
 AC_ARG_ENABLE([deprecate-mpif-h],
               [AS_HELP_STRING([--enable-deprecate-mpif-h],
                               [Mark the mpif.h bindings as deprecated (default: enabled)])])
+# If the binding source files don't exist, then we need Python to generate them
+AM_PATH_PYTHON([3.6],,[:])
+binding_file="${srcdir}/ompi/mpi/c/ompi_send_generated.c"
+AS_IF([! test -e "$binding_file" && test "$PYTHON" = ":"],
+      [AC_MSG_ERROR([Open MPI requires Python >=3.6 for generating the bindings. Aborting])])
+AM_CONDITIONAL(OMPI_GENERATE_BINDINGS,[test "$PYTHON" != ":"])
 
 AC_MSG_CHECKING([if want to enable standard ABI library])
 AC_ARG_ENABLE([standard-abi],
