@@ -77,6 +77,7 @@ OPAL_MAKEDIST_DISABLE=""
 # Start it up
 #
 
+. $srcdir/VERSION
 OPAL_CONFIGURE_SETUP
 opal_show_title "Configuring project_name_long"
 opal_show_subtitle "Prerequisites"
@@ -85,7 +86,10 @@ AC_PROG_SED
 
 AC_CHECK_PROG([PERL],[perl],[perl],[no])
 AS_IF([test "X$PERL" = "Xno"],
-      [AC_MSG_ERROR(["Open MPI requires perl. Aborting"])])
+      [AC_MSG_ERROR([Open MPI requires perl to build. Aborting.])])
+
+AM_PATH_PYTHON([$python_min_version],[],
+               [AC_MSG_ERROR([Open MPI requires Python >=$python_min_version to build. Aborting.])])
 
 #
 # Setup some things that must be done before AM-INIT-AUTOMAKE
@@ -153,7 +157,6 @@ OPAL_SAVE_VERSION([OPAL], [Open Portable Access Layer], [$srcdir/VERSION],
 
 # Get shared library version numbers
 
-. $srcdir/VERSION
 m4_ifdef([project_ompi],
          [AC_SUBST(libmpi_so_version)
           AC_SUBST(libmpi_mpifh_so_version)

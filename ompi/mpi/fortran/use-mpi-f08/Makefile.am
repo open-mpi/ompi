@@ -431,8 +431,6 @@ lib@OMPI_LIBMPI_NAME@_usempif08_profile_la_FCFLAGS = \
 # *.in template.
 #
 
-if OMPI_GENERATE_BINDINGS
-
 include Makefile.prototype_files
 template_files =${prototype_files:%=$(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/%}
 
@@ -452,8 +450,6 @@ api_f08_generated.F90: $(template_files)
 	    --prototype-files $(template_files)
 
 EXTRA_DIST = $(prototype_files)
-
-endif
 
 # Delete generated file on maintainer-clean
 MAINTAINERCLEANFILES = api_f08_generated.F90
