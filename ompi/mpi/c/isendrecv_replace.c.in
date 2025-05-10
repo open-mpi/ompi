@@ -34,6 +34,10 @@
 #include "ompi/proc/proc.h"
 #include "ompi/memchecker.h"
 #include "ompi/runtime/ompi_spc.h"
+#include "opal/mca/mpool/mpool.h"
+#ifdef OMPI_NO_MPI_PROTOTYPES
+#include "ompi/mpi/c/abi.h"
+#endif
 
 struct ompi_isendrecv_replace_context_t {
     opal_object_t super;
@@ -58,7 +62,7 @@ static void ompi_isendrecv_context_constructor(ompi_isendrecv_replace_context_t 
 static void ompi_isendrecv_context_destructor(ompi_isendrecv_replace_context_t *context)
 {
     if (context->packed_size > sizeof(context->packed_data)) {
-        PMPI_Free_mem(context->iov.iov_base);
+        mca_mpool_base_free(context->iov.iov_base);
     }
     OBJ_DESTRUCT(&context->convertor);
 }
@@ -181,8 +185,8 @@ PROTOTYPE ERROR_CLASS isendrecv_replace(BUFFER_OUT buf, COUNT count, DATATYPE da
     /* setup a buffer for recv */
     opal_convertor_get_packed_size( &context->convertor, &context->packed_size );
     if( context->packed_size > sizeof(context->packed_data) ) {
-        rc = PMPI_Alloc_mem(context->packed_size, MPI_INFO_NULL, &context->iov.iov_base);
-        if(OMPI_SUCCESS != rc) {
+        context->iov.iov_base = (void *)mca_mpool_base_alloc ((size_t)context->packed_size, NULL, NULL);
+        if(NULL == context->iov.iov_base) {
             OBJ_RELEASE(context);
             ompi_comm_request_return (crequest);
             OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME);
