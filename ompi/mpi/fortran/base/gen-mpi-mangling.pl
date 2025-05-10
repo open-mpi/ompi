@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 #
-# Copyright (c) 2015      Research Organization for Information Science
+# Copyright (c) 2015-2025 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2015-2020 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
@@ -16,6 +16,8 @@ my $caps_arg;
 my $plain_arg;
 my $single_underscore_arg;
 my $double_underscore_arg;
+my $status_size_arg;
+my $align_arg;
 my $help_arg = 0;
 
 &Getopt::Long::Configure("bundling");
@@ -23,10 +25,12 @@ my $ok = Getopt::Long::GetOptions("caps=i" => \$caps_arg,
                                   "plain=i" => \$plain_arg,
                                   "single=i" => \$single_underscore_arg,
                                   "double=i" => \$double_underscore_arg,
+                                  "status-size=i" => \$status_size_arg,
+                                  "align=i" => \$align_arg,
                                   "help|h" => \$help_arg);
 
 if ($help_arg || !$ok) {
-    print "Usage: $0 [--caps|--plain|--single|--double] [--help]\n";
+    print "Usage: $0 [--caps|--plain|--single|--double] --status-size=<MPI_STATUS_SIZE> [--align=<alignment>] [--help]\n";
     exit(1 - $ok);
 }
 
@@ -50,25 +54,25 @@ if ($caps_arg + $plain_arg + $single_underscore_arg +
 my $fortran;
 
 $fortran->{bottom} = {
-    c_type => "int",
+    c_type => "MPI_Fint",
     c_name => "mpi_fortran_bottom",
     f_type => "integer",
     f_name => "MPI_BOTTOM",
 };
 $fortran->{in_place} = {
-    c_type => "int",
+    c_type => "MPI_Fint",
     c_name => "mpi_fortran_in_place",
     f_type => "integer",
     f_name => "MPI_IN_PLACE",
 };
 $fortran->{unweighted} = {
-    c_type => "int",
+    c_type => "MPI_Fint",
     c_name => "mpi_fortran_unweighted",
     f_type => "integer, dimension(1)",
     f_name => "MPI_UNWEIGHTED",
 };
 $fortran->{weights_empty} = {
-    c_type => "int",
+    c_type => "MPI_Fint",
     c_name => "mpi_fortran_weights_empty",
     f_type => "integer, dimension(1)",
     f_name => "MPI_WEIGHTS_EMPTY",
@@ -88,19 +92,21 @@ $fortran->{argvs_null} = {
 };
 
 $fortran->{errcodes_ignore} = {
-    c_type => "int",
+    c_type => "MPI_Fint",
     c_name => "mpi_fortran_errcodes_ignore",
     f_type => "integer, dimension(1)",
     f_name => "MPI_ERRCODES_IGNORE",
 };
 $fortran->{status_ignore} = {
-    c_type => "int *",
+    c_type => "MPI_Fint",
+    c_dim  => "[$status_size_arg]",
     c_name => "mpi_fortran_status_ignore",
     f_type => "type(MPI_STATUS)",
     f_name => "MPI_STATUS_IGNORE",
 };
 $fortran->{statuses_ignore} = {
-    c_type => "int *",
+    c_type => "MPI_Fint",
+    c_dim  => "[$status_size_arg]",
     c_name => "mpi_fortran_statuses_ignore",
     f_type => "type(MPI_STATUS)",
     f_name => "MPI_STATUSES_IGNORE(1)",
@@ -130,7 +136,7 @@ sub gen_c_constants_decl {
 
     print OUT "/* WARNING: This is a generated file!  Edits will be lost! */
 /*
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2025 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
  * \$COPYRIGHT\$
@@ -146,7 +152,7 @@ sub gen_c_constants_decl {
     foreach my $key (sort(keys(%{$fortran}))) {
         my $f = $fortran->{$key};
         my $m = mangle($f->{c_name});
-        print OUT "extern $f->{c_type} $m;
+        print OUT "extern $f->{c_type} $m $f->{c_dim};
 #define OMPI_IS_FORTRAN_" . uc($key) . "(addr) \\
         (addr == (void*) &$m)\n\n";
     }
@@ -160,7 +166,7 @@ sub gen_c_constants {
 
     print OUT "/* WARNING: This is a generated file!  Edits will be lost! */
 /*
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2025 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
  * \$COPYRIGHT\$
@@ -171,7 +177,9 @@ sub gen_c_constants {
     foreach my $key (sort(keys(%{$fortran}))) {
         my $f = $fortran->{$key};
         my $m = mangle($f->{c_name});
-        print OUT "$f->{c_type} $m;\n";
+	my $align = "";
+	$align = "__opal_attribute_aligned__($align_arg)" if ($align_arg > 0);
+        print OUT "$f->{c_type} $align $m $f->{c_dim};\n";
     }
 
     close (OUT);

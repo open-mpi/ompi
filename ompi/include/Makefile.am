@@ -11,7 +11,7 @@
 #                         All rights reserved.
 # Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2009-2011 Oak Ridge National Labs.  All rights reserved.
-# Copyright (c) 2014-2021 Research Organization for Information Science
+# Copyright (c) 2014-2025 Research Organization for Information Science
 #                         and Technology (RIST).  All rights reserved.
 # Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
 # Copyright (c) 2022      IBM Corporation.  All rights reserved.
@@ -110,7 +110,10 @@ mpif-c-constants-decl.h:
 	    --caps $(OMPI_FORTRAN_CAPS) \
 	    --plain $(OMPI_FORTRAN_PLAIN) \
 	    --single $(OMPI_FORTRAN_SINGLE_UNDERSCORE) \
-	    --double $(OMPI_FORTRAN_DOUBLE_UNDERSCORE)
+	    --double $(OMPI_FORTRAN_DOUBLE_UNDERSCORE) \
+	    --status-size $(OMPI_FORTRAN_STATUS_SIZE) \
+	    --align $(OMPI_FORTRAN_COMMON_ALIGNMENT)
+
 
 if WANT_INSTALL_HEADERS
 ompidir = $(ompiincludedir)

@@ -10,6 +10,8 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
+dnl Copyright (c) 2025      Research Organization for Information Science
+dnl                         and Technology (RIST).  All rights reserved.
 dnl Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl
@@ -177,4 +179,42 @@ end program]])],
 
     AS_VAR_COPY([$2], [type_var])
     AS_VAR_POPDEF([type_var])dnl
+])dnl
+
+# OMPI_FORTRAN_GET_COMMON_ALIGNMENT(variable to set)
+# ------------------------------------------
+AC_DEFUN([OMPI_FORTRAN_GET_COMMON_ALIGNMENT],[
+    AS_IF([test $OMPI_TRY_FORTRAN_BINDINGS -gt $OMPI_FORTRAN_NO_BINDINGS],
+          [AC_CACHE_CHECK([alignment of Fortran common], ompi_cv_fortran_common_alignment,
+              [AC_LANG_PUSH([Fortran])
+               AC_LINK_IFELSE([AC_LANG_SOURCE([[ program falignment
+   CHARACTER A,B
+   COMMON /AA/A
+   COMMON /BB/B
+   OPEN(UNIT=10, FILE="conftestval")
+   if (LOC(A) > LOC(B)) then
+      write (10,'(I5)') LOC(A)-LOC(B)
+   else
+      write (10,'(I5)') LOC(B)-LOC(A)
+   endif
+   CLOSE(10)
+
+end program]])],
+                          [AS_IF([test "$cross_compiling" = "yes"],
+                                 [AC_MSG_ERROR([Can not determine common alignment when cross-compiling])],
+                                 [OPAL_LOG_COMMAND([./conftest],
+                                                   [AS_VAR_SET(ompi_cv_fortran_common_alignment, [`cat conftestval`])],
+                                                   [AC_MSG_ERROR([Could not determine common alignment])])])],
+
+                          [AC_MSG_WARN([Could not determine common alignment])
+                           AC_MSG_WARN([See config.log for details])
+                           AC_MSG_ERROR([Cannot continue])])
+               rm -rf conftest* *.mod 2> /dev/null
+               AC_LANG_POP([Fortran])])
+
+           AS_VAR_COPY([$1], [ompi_cv_fortran_common_alignment])],
+          [AC_MSG_CHECKING([Fortran common alignment])
+           $1=0
+           AC_MSG_RESULT([skipped])])
+
 ])dnl
