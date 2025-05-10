@@ -43,12 +43,12 @@ specialized_op_libs =
 if MCA_BUILD_ompi_op_has_neon_support
 specialized_op_libs += liblocal_ops_neon.la
 liblocal_ops_neon_la_SOURCES = op_aarch64_functions.c
-liblocal_ops_neon_la_CPPFLAGS = -DGENERATE_NEON_CODE
+liblocal_ops_neon_la_CPPFLAGS = -DGENERATE_NEON_CODE=1 -DGENERATE_SVE_CODE=0
 endif
 if MCA_BUILD_ompi_op_has_sve_support
 specialized_op_libs += liblocal_ops_sve.la
 liblocal_ops_sve_la_SOURCES = op_aarch64_functions.c
-liblocal_ops_sve_la_CPPFLAGS = -DGENERATE_SVE_CODE
+liblocal_ops_sve_la_CPPFLAGS = -DGENERATE_NEON_CODE=0 -DGENERATE_SVE_CODE=1
 endif
 
 component_noinst  = $(specialized_op_libs)

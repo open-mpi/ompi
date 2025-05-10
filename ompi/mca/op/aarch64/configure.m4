@@ -49,29 +49,6 @@ AC_DEFUN([MCA_ompi_op_aarch64_CONFIG],[
                       [op_cv_neon_support=no])])
 
            #
-           # Check for NEON FP support
-           #
-           AC_CACHE_CHECK([for NEON FP support], op_cv_neon_fp_support,
-                [AS_IF([test "$op_cv_neon_support" = "yes"],
-                        [
-                          AC_LINK_IFELSE(
-                              [AC_LANG_PROGRAM([[
-#if defined(__aarch64__) && defined(__ARM_NEON) && (defined(__ARM_NEON_FP) || defined(__ARM_FP))
-#include <arm_neon.h>
-#else
-#error "No support for __aarch64__ or NEON FP"
-#endif
-                                             ]],
-                                             [[
-#if defined(__aarch64__) && defined(__ARM_NEON) && (defined(__ARM_NEON_FP) || defined(__ARM_FP))
-    float32x4_t vA;
-    vA = vmovq_n_f32(0)
-#endif
-                                             ]])],
-                            [op_cv_neon_fp_support=yes],
-                            [op_cv_neon_fp_support=no])])])
-
-           #
            # Check for SVE support
            #
           AC_CACHE_CHECK([for SVE support], [op_cv_sve_support], [
@@ -133,21 +110,18 @@ int main(void) {
 ])
     AM_CONDITIONAL([MCA_BUILD_ompi_op_has_neon_support],
                    [test "$op_cv_neon_support" = "yes"])
-    AM_CONDITIONAL([MCA_BUILD_ompi_op_has_neon_fp_support],
-                   [test "$op_cv_neon_fp_support" = "yes"])
     AM_CONDITIONAL([MCA_BUILD_ompi_op_has_sve_support],
                    [test "$op_cv_sve_support" = "yes"])
 
     AC_SUBST(MCA_BUILD_ompi_op_has_neon_support)
-    AC_SUBST(MCA_BUILD_ompi_op_has_neon_fp_support)
     AC_SUBST(MCA_BUILD_ompi_op_has_sve_support)
 
     AS_IF([test "$op_cv_neon_support" = "yes"],
-          [AC_DEFINE([OMPI_MCA_OP_HAVE_NEON], [1],[NEON supported in the current build])])
-    AS_IF([test "$op_cv_neon_fp_support" = "yes"],
-          [AC_DEFINE([OMPI_MCA_OP_HAVE_NEON_FP], [1],[NEON FP supported in the current build])])
+          [AC_DEFINE([OMPI_MCA_OP_HAVE_NEON], [1],[NEON supported in the current build])],
+          [AC_DEFINE([OMPI_MCA_OP_HAVE_NEON], [0],[NEON not supported in the current build])])
     AS_IF([test "$op_cv_sve_support" = "yes"],
-          [AC_DEFINE([OMPI_MCA_OP_HAVE_SVE], [1],[SVE supported in the current build])])
+          [AC_DEFINE([OMPI_MCA_OP_HAVE_SVE], [1],[SVE supported in the current build])],
+          [AC_DEFINE([OMPI_MCA_OP_HAVE_SVE], [0],[SVE not supported in the current build])])
     AS_IF([test "$op_cv_sve_add_flags" = "yes"],
           [AC_DEFINE([OMPI_MCA_OP_SVE_EXTRA_FLAGS], [1],[SVE supported with additional compile attributes])],
           [AC_DEFINE([OMPI_MCA_OP_SVE_EXTRA_FLAGS], [0],[SVE not supported])])
