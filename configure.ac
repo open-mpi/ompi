@@ -1513,6 +1513,7 @@ AC_CONFIG_FILES([
     test/asm/Makefile
     test/datatype/Makefile
     test/class/Makefile
+    test/mca/Makefile
     test/mpool/Makefile
     test/support/Makefile
     test/threads/Makefile
