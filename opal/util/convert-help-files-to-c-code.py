@@ -17,9 +17,25 @@ def find_help_files(root, verbose=False):
     # some directories (e.g., 3rd-party)
     help_files = []
     skip_dirs = ['.git', '3rd-party']
+    include_top_dirs = ['ompi', 'opal', 'oshmem']
     for root_dir, dirs, files in os.walk(root):
+        # If we're in the top-level directory, only traverse into
+        # specific subdirectories.  Look for a bunch of sentinel files
+        # to know that we're in the top-level directory.
+        if 'HACKING.md' in files and 'LICENSE' in files and \
+           'README.md' in files and 'VERSION' in files and \
+           '.readthedocs.yaml' in files and '.mailmap' in files:
+            for dir in list(dirs):
+                if dir not in include_top_dirs:
+                    print(f"Skipping top-level dir: {dir}")
+                    dirs.remove(dir)
+
+        # We probably won't run into these directories anywhere except
+        # in the top-level directory, but we might as well make sure
+        # to skip them everywhere, too.
         for sd in skip_dirs:
             if sd in dirs:
+                print(f"Skipping additional dir: {root_dir}/{sd}")
                 dirs.remove(sd)
 
         for file in files:
