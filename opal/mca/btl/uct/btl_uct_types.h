@@ -90,6 +90,8 @@ struct mca_btl_uct_conn_req_t {
     /** transport index that should be connected */
     int tl_index;
 
+    char module_name[16];
+
     /** endpoint address data */
     uint8_t ep_addr[];
 };
@@ -346,5 +348,18 @@ struct mca_btl_uct_pending_connection_request_t {
 
 typedef struct mca_btl_uct_pending_connection_request_t mca_btl_uct_pending_connection_request_t;
 OBJ_CLASS_DECLARATION(mca_btl_uct_pending_connection_request_t);
+
+/**
+ * @brief parsed include/exclude list
+ *
+ */
+struct mca_btl_uct_include_list_t {
+    /** argv-style (NULL terminated) array of strings */
+    char **list;
+    /** is an inclusive list (vs exclusive) */
+    bool include;
+};
+typedef struct mca_btl_uct_include_list_t mca_btl_uct_include_list_t;
+
 
 #endif /* !defined(BTL_UCT_TYPES_H) */
