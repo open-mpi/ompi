@@ -65,6 +65,7 @@ const opal_memchecker_base_component_2_0_0_t mca_memchecker_valgrind_component =
                      .mca_register_component_params = valgrind_register},
     .base_data = {/* Valgrind does not offer functionality to save the state  */
                   MCA_BASE_METADATA_PARAM_CHECKPOINT}};
+MCA_BASE_COMPONENT_INIT(opal, memchecker, valgrind)
 
 static int valgrind_register(void)
 {

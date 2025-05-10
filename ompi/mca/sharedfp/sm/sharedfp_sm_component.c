@@ -71,6 +71,7 @@ mca_sharedfp_base_component_3_0_0_t mca_sharedfp_sm_component = {
     .sharedfpm_file_query = mca_sharedfp_sm_component_file_query,      /* get priority and actions */
     .sharedfpm_file_unquery =mca_sharedfp_sm_component_file_unquery,   /* undo what was done by previous function */
 };
+MCA_BASE_COMPONENT_INIT(ompi, sharedfp, sm)
 
 static int sm_register(void)
 {

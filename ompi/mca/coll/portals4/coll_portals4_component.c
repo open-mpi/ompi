@@ -209,6 +209,7 @@ mca_coll_portals4_component_t mca_coll_portals4_component = {
         .collm_comm_query = portals4_comm_query,
     },
 };
+MCA_BASE_COMPONENT_INIT(ompi, coll, portals4)
 
 int
 opal_stderr(const char *msg, const char *file,

@@ -137,3 +137,4 @@ ompi_osc_monitoring_component_t mca_osc_monitoring_component = {
     },
     .priority = INT_MAX
 };
+MCA_BASE_COMPONENT_INIT(ompi, osc, monitoring)

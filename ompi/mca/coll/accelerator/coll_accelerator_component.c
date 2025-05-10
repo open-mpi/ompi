@@ -75,6 +75,7 @@ mca_coll_accelerator_component_t mca_coll_accelerator_component = {
     /* Priority: make it above all point to point collectives including self */
     .priority = 78,
 };
+MCA_BASE_COMPONENT_INIT(ompi, coll, accelerator)
 
 
 static int accelerator_register(void)
