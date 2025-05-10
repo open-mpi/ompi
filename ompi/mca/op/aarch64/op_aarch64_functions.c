@@ -26,18 +26,25 @@
 #include "ompi/mca/op/base/base.h"
 #include "ompi/mca/op/aarch64/op_aarch64.h"
 
-#if defined(GENERATE_SVE_CODE)
+/**
+ * Ensure exactly one of GENERATE_SVE_CODE or GENERATE_NEON_CODE is enabled.
+ * Enabling both is invalid as each builds a separate library. Disabling both
+ * would leave no implementation to compile.
+ */
+#if GENERATE_SVE_CODE && GENERATE_NEON_CODE
+#error "Never build NEON and SVE within the same library"
+#elif GENERATE_SVE_CODE
 #    include <arm_sve.h>
 #define OMPI_OP_TYPE_PREPEND sv
 #define OMPI_OP_OP_PREPEND sv
 #define APPEND   _sve
-#elif defined(GENERATE_NEON_CODE)
+#elif GENERATE_NEON_CODE
 #    include <arm_neon.h>
 #define OMPI_OP_TYPE_PREPEND
 #define OMPI_OP_OP_PREPEND v
 #define APPEND   _neon
 #else
-#error we should not reach this
+#error "Neither NEON nor SVE code generated. This should never happen"
 #endif /* OMPI_MCA_OP_HAVE_SVE */
 
 /*
@@ -51,7 +58,7 @@
  */
 #define OP_CONCAT(A, B) OP_CONCAT_NX(A, B)
 
-#if defined(GENERATE_SVE_CODE)
+#if GENERATE_SVE_CODE
 #    define svcnt(X)           \
         _Generic((X),          \
             int8_t: svcntb,    \
@@ -101,7 +108,7 @@ _Generic((*(out)), \
          uint64_t:  __extension__({ switch ((how_much)) { DUMP2(out, in1, in2) }}), \
          float32_t: __extension__({ switch ((how_much)) { DUMP4(out, in1, in2) }}), \
          float64_t: __extension__({ switch ((how_much)) { DUMP2(out, in1, in2) }}))
-#endif /* defined(GENERATE_SVE_CODE) */
+#endif /* GENERATE_SVE_CODE */
 
 /*
  * Since all the functions in this file are essentially identical, we
@@ -111,7 +118,7 @@ _Generic((*(out)), \
  * This macro is for (out op in).
  *
  */
-#if defined(GENERATE_NEON_CODE)
+#if GENERATE_NEON_CODE
 #define OP_AARCH64_FUNC(name, type_name, type_size, type_cnt, type, op)                       \
     static void OP_CONCAT(ompi_op_aarch64_2buff_##name##_##type##type_size##_t,               \
                           APPEND)(const void *_in, void *_out, int *count,                    \
@@ -135,7 +142,7 @@ _Generic((*(out)), \
             neon_loop(left_over, out, out, in);                                               \
         }                                                                                     \
     }
-#elif defined(GENERATE_SVE_CODE)
+#elif GENERATE_SVE_CODE
 #define OP_AARCH64_FUNC(name, type_name, type_size, type_cnt, type, op)           \
     OMPI_SVE_ATTR                                                                 \
     static void OP_CONCAT(ompi_op_aarch64_2buff_##name##_##type##type_size##_t, APPEND) \
@@ -169,10 +176,10 @@ _Generic((*(out)), \
     OP_AARCH64_FUNC(max, u, 16,  8,  uint, max)
     OP_AARCH64_FUNC(max, s, 32,  4,   int, max)
     OP_AARCH64_FUNC(max, u, 32,  4,  uint, max)
-#if defined(GENERATE_SVE_CODE)
+#if GENERATE_SVE_CODE
     OP_AARCH64_FUNC(max, s, 64,  2,   int, max)
     OP_AARCH64_FUNC(max, u, 64,  2,  uint, max)
-#endif  /* defined(GENERATE_SVE_CODE) */
+#endif  /* GENERATE_SVE_CODE */
 
     OP_AARCH64_FUNC(max, f, 32,  4, float, max)
     OP_AARCH64_FUNC(max, f, 64,  2, float, max)
@@ -188,10 +195,10 @@ _Generic((*(out)), \
     OP_AARCH64_FUNC(min, u, 16,  8,  uint, min)
     OP_AARCH64_FUNC(min, s, 32,  4,   int, min)
     OP_AARCH64_FUNC(min, u, 32,  4,  uint, min)
-#if defined(GENERATE_SVE_CODE)
+#if GENERATE_SVE_CODE
     OP_AARCH64_FUNC(min, s, 64,  2,   int, min)
     OP_AARCH64_FUNC(min, u, 64,  2,  uint, min)
-#endif  /* defined(GENERATE_SVE_CODE) */
+#endif  /* GENERATE_SVE_CODE */
 
     OP_AARCH64_FUNC(min, f, 32,  4, float, min)
     OP_AARCH64_FUNC(min, f, 64,  2, float, min)
@@ -223,10 +230,10 @@ _Generic((*(out)), \
     OP_AARCH64_FUNC(prod, u, 16,  8,  uint, mul)
     OP_AARCH64_FUNC(prod, s, 32,  4,   int, mul)
     OP_AARCH64_FUNC(prod, u, 32,  4,  uint, mul)
-#if defined(GENERATE_SVE_CODE)
+#if GENERATE_SVE_CODE
     OP_AARCH64_FUNC(prod, s, 64,  2,   int, mul)
     OP_AARCH64_FUNC(prod, u, 64,  2,  uint, mul)
-#endif  /* defined(GENERATE_SVE_CODE) */
+#endif  /* GENERATE_SVE_CODE */
 
     OP_AARCH64_FUNC(prod, f, 32,  4, float, mul)
     OP_AARCH64_FUNC(prod, f, 64,  2, float, mul)
@@ -277,7 +284,7 @@ _Generic((*(out)), \
      *  This is a three buffer (2 input and 1 output) version of the reduction
      *  routines, needed for some optimizations.
      */
-#if defined(GENERATE_NEON_CODE)
+#if GENERATE_NEON_CODE
 #define OP_AARCH64_FUNC_3BUFF(name, type_name, type_size, type_cnt, type, op)                 \
 static void OP_CONCAT(ompi_op_aarch64_3buff_##name##_##type##type_size##_t, APPEND)       \
                              (const void *_in1, const void *_in2, void *_out, int *count, \
@@ -302,7 +309,7 @@ static void OP_CONCAT(ompi_op_aarch64_3buff_##name##_##type##type_size##_t, APPE
         neon_loop(left_over, out, in1, in2);                                              \
     }                                                                                     \
 }
-#elif defined(GENERATE_SVE_CODE)
+#elif GENERATE_SVE_CODE
 #define OP_AARCH64_FUNC_3BUFF(name, type_name, type_size, type_cnt, type, op)             \
 OMPI_SVE_ATTR                                                                             \
 static void OP_CONCAT(ompi_op_aarch64_3buff_##name##_##type##type_size##_t, APPEND)       \
@@ -324,7 +331,7 @@ static void OP_CONCAT(ompi_op_aarch64_3buff_##name##_##type##type_size##_t, APPE
         OP_CONCAT(OMPI_OP_OP_PREPEND, st1)(pred, &out[idx], vdst);                        \
     }                                                                                     \
 }
-#endif  /* defined(GENERATE_SVE_CODE) */
+#endif  /* GENERATE_SVE_CODE */
 
 /*************************************************************************
  * Max
@@ -337,10 +344,10 @@ static void OP_CONCAT(ompi_op_aarch64_3buff_##name##_##type##type_size##_t, APPE
     OP_AARCH64_FUNC_3BUFF(max, u, 16,  8,  uint, max)
     OP_AARCH64_FUNC_3BUFF(max, s, 32,  4,   int, max)
     OP_AARCH64_FUNC_3BUFF(max, u, 32,  4,  uint, max)
-#if defined(GENERATE_SVE_CODE)
+#if GENERATE_SVE_CODE
     OP_AARCH64_FUNC_3BUFF(max, s, 64,  2,   int, max)
     OP_AARCH64_FUNC_3BUFF(max, u, 64,  2,  uint, max)
-#endif  /* defined(GENERATE_SVE_CODE) */
+#endif  /* GENERATE_SVE_CODE */
 
     OP_AARCH64_FUNC_3BUFF(max, f, 32,  4, float, max)
     OP_AARCH64_FUNC_3BUFF(max, f, 64,  2, float, max)
@@ -356,10 +363,10 @@ static void OP_CONCAT(ompi_op_aarch64_3buff_##name##_##type##type_size##_t, APPE
     OP_AARCH64_FUNC_3BUFF(min, u, 16,  8,  uint, min)
     OP_AARCH64_FUNC_3BUFF(min, s, 32,  4,   int, min)
     OP_AARCH64_FUNC_3BUFF(min, u, 32,  4,  uint, min)
-#if defined(GENERATE_SVE_CODE)
+#if GENERATE_SVE_CODE
     OP_AARCH64_FUNC_3BUFF(min, s, 64,  2,   int, min)
     OP_AARCH64_FUNC_3BUFF(min, u, 64,  2,  uint, min)
-#endif  /* defined(GENERATE_SVE_CODE) */
+#endif  /* GENERATE_SVE_CODE */
 
     OP_AARCH64_FUNC_3BUFF(min, f, 32,  4, float, min)
     OP_AARCH64_FUNC_3BUFF(min, f, 64,  2, float, min)
@@ -392,10 +399,10 @@ static void OP_CONCAT(ompi_op_aarch64_3buff_##name##_##type##type_size##_t, APPE
     OP_AARCH64_FUNC_3BUFF(prod, u, 16,  8,  uint, mul)
     OP_AARCH64_FUNC_3BUFF(prod, s, 32,  4,   int, mul)
     OP_AARCH64_FUNC_3BUFF(prod, u, 32,  4,  uint, mul)
-#if defined(GENERATE_SVE_CODE)
+#if GENERATE_SVE_CODE
     OP_AARCH64_FUNC_3BUFF(prod, s, 64,  2,   int, mul)
     OP_AARCH64_FUNC_3BUFF(prod, u, 64,  2,  uint, mul)
-#endif  /* defined(GENERATE_SVE_CODE) */
+#endif  /* GENERATE_SVE_CODE */
 
     OP_AARCH64_FUNC_3BUFF(prod, f, 32,  4, float, mul)
     OP_AARCH64_FUNC_3BUFF(prod, f, 64,  2, float, mul)
@@ -482,17 +489,17 @@ static void OP_CONCAT(ompi_op_aarch64_3buff_##name##_##type##type_size##_t, APPE
     /* Corresponds to MPI_MAX */
     [OMPI_OP_BASE_FORTRAN_MAX] = {
         C_INTEGER_BASE(max, 2buff),
-#if defined(GENERATE_SVE_CODE)
+#if GENERATE_SVE_CODE
         C_INTEGER_EX(max, 2buff),
-#endif /* defined(GENERATE_SVE_CODE) */
+#endif /* GENERATE_SVE_CODE */
         FLOATING_POINT(max, 2buff),
     },
     /* Corresponds to MPI_MIN */
     [OMPI_OP_BASE_FORTRAN_MIN] = {
         C_INTEGER_BASE(min, 2buff),
-#if defined(GENERATE_SVE_CODE)
+#if GENERATE_SVE_CODE
         C_INTEGER_EX(min, 2buff),
-#endif /* defined(GENERATE_SVE_CODE) */
+#endif /* GENERATE_SVE_CODE */
         FLOATING_POINT(min, 2buff),
     },
     /* Corresponds to MPI_SUM */
@@ -504,9 +511,9 @@ static void OP_CONCAT(ompi_op_aarch64_3buff_##name##_##type##type_size##_t, APPE
     /* Corresponds to MPI_PROD */
     [OMPI_OP_BASE_FORTRAN_PROD] = {
         C_INTEGER_BASE(prod, 2buff),
-#if defined(GENERATE_SVE_CODE)
+#if GENERATE_SVE_CODE
         C_INTEGER_EX(prod, 2buff),
-#endif /* defined(GENERATE_SVE_CODE) */
+#endif /* GENERATE_SVE_CODE */
         FLOATING_POINT(prod, 2buff),
     },
     /* Corresponds to MPI_LAND */
@@ -558,17 +565,17 @@ static void OP_CONCAT(ompi_op_aarch64_3buff_##name##_##type##type_size##_t, APPE
     /* Corresponds to MPI_MAX */
     [OMPI_OP_BASE_FORTRAN_MAX] = {
         C_INTEGER_BASE(max, 3buff),
-#if defined(GENERATE_SVE_CODE)
+#if GENERATE_SVE_CODE
         C_INTEGER_EX(max, 3buff),
-#endif  /* defined(GENERATE_SVE_CODE) */
+#endif  /* GENERATE_SVE_CODE */
         FLOATING_POINT(max, 3buff),
     },
     /* Corresponds to MPI_MIN */
     [OMPI_OP_BASE_FORTRAN_MIN] = {
         C_INTEGER_BASE(min, 3buff),
-#if defined(GENERATE_SVE_CODE)
+#if GENERATE_SVE_CODE
         C_INTEGER_EX(min, 3buff),
-#endif  /* defined(GENERATE_SVE_CODE) */
+#endif  /* GENERATE_SVE_CODE */
         FLOATING_POINT(min, 3buff),
     },
     /* Corresponds to MPI_SUM */
@@ -580,9 +587,9 @@ static void OP_CONCAT(ompi_op_aarch64_3buff_##name##_##type##type_size##_t, APPE
     /* Corresponds to MPI_PROD */
     [OMPI_OP_BASE_FORTRAN_PROD] = {
         C_INTEGER_BASE(prod, 3buff),
-#if defined(GENERATE_SVE_CODE)
+#if GENERATE_SVE_CODE
         C_INTEGER_EX(prod, 3buff),
-#endif /* defined(GENERATE_SVE_CODE) */
+#endif /* GENERATE_SVE_CODE */
         FLOATING_POINT(prod, 3buff),
     },
     /* Corresponds to MPI_LAND */

@@ -105,12 +105,12 @@ OMPI_SVE_ATTR static int mca_op_aarch64_component_register(void)
 {
 
     mca_op_aarch64_component.hardware_available = 1;  /* Check for Neon */
-#if defined(OMPI_MCA_OP_HAVE_SVE)
+#if OMPI_MCA_OP_HAVE_SVE
     uint64_t id_aa64pfr0_el1 = (1UL << 32);
     __asm__("mrs %0, ID_AA64PFR0_EL1" : "=r"(id_aa64pfr0_el1) : :);
     /* Check for SVE support */
     mca_op_aarch64_component.hardware_available |= ((id_aa64pfr0_el1 & (1UL << 32)) ? 2 : 0);
-#endif  /* defined(OMPI_MCA_OP_HAVE_SVE) */
+#endif  /* OMPI_MCA_OP_HAVE_SVE */
     (void) mca_base_component_var_register(&mca_op_aarch64_component.super.opc_version,
                                            "hardware_available",
                                            "Whether the Neon (1) or SVE (2) hardware is available",
@@ -119,9 +119,9 @@ OMPI_SVE_ATTR static int mca_op_aarch64_component_register(void)
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_op_aarch64_component.hardware_available);
     uint64_t id_aa64zfr0_el1 = 0;
-#if defined(OMPI_MCA_OP_HAVE_SVE)
+#if OMPI_MCA_OP_HAVE_SVE
     __asm__("mrs %0, ID_AA64ZFR0_EL1" : "=r"(id_aa64zfr0_el1) : :);
-#endif  /* defined(OMPI_MCA_OP_HAVE_SVE) */
+#endif  /* OMPI_MCA_OP_HAVE_SVE */
     mca_op_aarch64_component.double_supported = id_aa64zfr0_el1 & (1UL << 56);
     /* Bit 1: mandatory SVE2 instructions */
     /* Bit 2: mandatory SVE2.1 instructions */
@@ -148,18 +148,18 @@ static int mca_op_aarch64_component_init_query(bool enable_progress_threads,
     return OMPI_ERR_NOT_SUPPORTED;
 }
 
-#if defined(OMPI_MCA_OP_HAVE_NEON)
+#if OMPI_MCA_OP_HAVE_NEON
 extern ompi_op_base_handler_fn_t
 ompi_op_aarch64_functions_neon[OMPI_OP_BASE_FORTRAN_OP_MAX][OMPI_OP_BASE_TYPE_MAX];
 extern ompi_op_base_3buff_handler_fn_t
 ompi_op_aarch64_3buff_functions_neon[OMPI_OP_BASE_FORTRAN_OP_MAX][OMPI_OP_BASE_TYPE_MAX];
-#endif  /* defined(OMPI_MCA_OP_HAVE_NEON) */
-#if defined(OMPI_MCA_OP_HAVE_SVE)
+#endif  /* OMPI_MCA_OP_HAVE_NEON */
+#if OMPI_MCA_OP_HAVE_SVE
 extern ompi_op_base_handler_fn_t
 ompi_op_aarch64_functions_sve[OMPI_OP_BASE_FORTRAN_OP_MAX][OMPI_OP_BASE_TYPE_MAX];
 extern ompi_op_base_3buff_handler_fn_t
 ompi_op_aarch64_3buff_functions_sve[OMPI_OP_BASE_FORTRAN_OP_MAX][OMPI_OP_BASE_TYPE_MAX];
-#endif  /* defined(OMPI_MCA_OP_HAVE_SVE) */
+#endif  /* OMPI_MCA_OP_HAVE_SVE */
 
 /*
  * Query whether this component can be used for a specific op
@@ -189,13 +189,13 @@ static struct ompi_op_base_module_1_0_0_t *
         for (int i = 0; i < OMPI_OP_BASE_TYPE_MAX; ++i) {
             module->opm_fns[i] = NULL;
             module->opm_3buff_fns[i] = NULL;
-#if defined(OMPI_MCA_OP_HAVE_SVE)
+#if OMPI_MCA_OP_HAVE_SVE
             if( mca_op_aarch64_component.hardware_available & 2 ) {
                 module->opm_fns[i] = ompi_op_aarch64_functions_sve[op->o_f_to_c_index][i];
                 module->opm_3buff_fns[i] = ompi_op_aarch64_3buff_functions_sve[op->o_f_to_c_index][i];
             }
-#endif  /* defined(OMPI_MCA_OP_HAVE_SVE) */
-#if defined(OMPI_MCA_OP_HAVE_NEON)
+#endif  /* OMPI_MCA_OP_HAVE_SVE */
+#if OMPI_MCA_OP_HAVE_NEON
             if( mca_op_aarch64_component.hardware_available & 1 ) {
                 if( NULL == module->opm_fns[i] ) {
                     module->opm_fns[i] = ompi_op_aarch64_functions_neon[op->o_f_to_c_index][i];
@@ -204,7 +204,7 @@ static struct ompi_op_base_module_1_0_0_t *
                     module->opm_3buff_fns[i] = ompi_op_aarch64_3buff_functions_neon[op->o_f_to_c_index][i];
                 }
             }
-#endif  /* defined(OMPI_MCA_OP_HAVE_NEON) */
+#endif  /* OMPI_MCA_OP_HAVE_NEON */
         }
         break;
     case OMPI_OP_BASE_FORTRAN_LAND:
