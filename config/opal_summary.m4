@@ -49,7 +49,11 @@ EOF
         elif test $OMPI_BUILD_FORTRAN_BINDINGS = $OMPI_FORTRAN_USEMPI_BINDINGS ; then
             echo "Build MPI Fortran bindings: mpif.h, use mpi" >&AS_MESSAGE_FD
         elif test $OMPI_BUILD_FORTRAN_BINDINGS = $OMPI_FORTRAN_USEMPIF08_BINDINGS ; then
-            echo "Build MPI Fortran bindings: mpif.h, use mpi, use mpi_f08" >&AS_MESSAGE_FD
+            if test $OMPI_FORTRAN_HAVE_TS -eq 1; then
+                echo "Build MPI Fortran bindings: mpif.h, use mpi, use mpi_f08(including TS 29113 support)" >&AS_MESSAGE_FD
+            else
+                echo "Build MPI Fortran bindings: mpif.h, use mpi, use mpi_f08(NOT including TS 29113 support)" >&AS_MESSAGE_FD
+            fi
         else
             echo "Build MPI Fortran bindings: no" >&AS_MESSAGE_FD
         fi
