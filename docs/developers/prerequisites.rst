@@ -50,11 +50,25 @@ more detail.
 Python
 ------
 
-Python >= v3.6 is required for generating the Fortran bindings, which
-is necessary if you build Open MPI from a Git clone.
+Python >= |python_min_version| is required for several tasks during
+the Open MPI build, such as (but not limited to):
 
-Python is also required for running Sphinx to generate the docs, too
-(:ref:`see below <developers-requirements-sphinx-label>`).
+* Generating the Fortran bindings
+
+* Generating Fortran constants and compiler-specific symbols
+
+* Generating the "show help" messages
+
+* Generating bindings in the MPI man pages (from the pympistandrd
+  module)
+
+* Building the Open MPI documentation and man pages
+
+All of these are necessary are necessary when building from a Git
+clone.  Most of these can be accomplished with core Python; only
+building the full Open MPI documentation and man pages requires
+additional packages (:ref:`see below
+<developers-requirements-sphinx-label>`).
 
 Perl
 ----

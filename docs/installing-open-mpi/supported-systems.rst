@@ -23,6 +23,15 @@ Open MPI to compile and run properly.  The biggest obstacle is
 typically the assembly language, but that's fairly modular and we're
 happy to provide information about how to port it to new platforms.
 
+Open MPI uses both Perl and Python >= |python_min_version| while
+building.  You will need to have both of these available to build Open
+MPI from a source tarball.
+
+.. note:: The Open MPI community is slowly converting its Perl scripts
+          to Python; it is expected (hoped) that we'll someday have no
+          more Perl in the build process for official distribution
+          tarballs or Git clones.
+
 It should be noted that we are quite open to accepting patches for
 operating systems that we do not currently support.  If we do not have
 systems to test these on, we probably will only claim to

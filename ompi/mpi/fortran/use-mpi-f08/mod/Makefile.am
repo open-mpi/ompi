@@ -77,7 +77,6 @@ config_h = \
     $(top_srcdir)/ompi/mpi/fortran/configure-fortran-output-bottom.h
 
 # Generate the Fortran interfaces
-if OMPI_GENERATE_BINDINGS
 
 include ../Makefile.prototype_files
 template_files =${prototype_files:%=$(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/%}
@@ -96,8 +95,6 @@ mpi-f08-interfaces-generated.h: $(template_files)
 	    $(gen_ts) \
 	    interface \
 	    --prototype-files $(template_files)
-
-endif
 
 # Delete generated file on maintainer-clean
 MAINTAINERCLEANFILES = mpi-f08-interfaces-generated.h
