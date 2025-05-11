@@ -28,6 +28,18 @@ operating systems that we do not currently support.  If we do not have
 systems to test these on, we probably will only claim to
 "unofficially" support those systems.
 
+Perl and Python
+^^^^^^^^^^^^^^^
+
+Open MPI requires Perl while building.  If you are building the
+Fortran MPI bindings, or if you are building from a Git clone, Open
+MPI also requires Python >= |python_min_version| while building.
+
+.. note:: The Open MPI community is slowly converting its Perl scripts
+          to Python; it is expected (hoped) that we'll someday have no
+          more Perl in the build process for official distribution
+          tarballs or Git clones.
+
 Supported Hardware Platforms
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

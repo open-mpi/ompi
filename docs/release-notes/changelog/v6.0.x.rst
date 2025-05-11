@@ -9,5 +9,13 @@ Open MPI version v6.0.0
 :Date: ...fill me in...
 
 - Open MPI now requires a C11-compliant compiler to build.
+
+- Open MPI now requires Python >= |python_min_version| to build the
+  Fortran MPI bindings (or when building from a Git clone).
+
+  - Open MPI has always required Perl to build; our Perl scripts are
+    slowly being converted to Python.
+
 - Removed ROMIO package.
+
 - Added MPI-4.1 ``MPI_Status_*`` functions.

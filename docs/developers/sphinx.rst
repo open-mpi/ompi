@@ -13,8 +13,8 @@ Installing Python
 -----------------
 
 The `Sphinx tool <https://www.sphinx-doc.org/>`_ is written in Python,
-and therefore needs to have Python available.  As of late 2022, Sphinx
-requires Python >= v3.7.
+and therefore needs to have Python available.  As of May 2025, Sphinx
+|mdash| and Open MPI |mdash| requires Python >= v3.7.
 
 This documentation does not contain detailed instructions for
 installing a Python version sufficient for using Sphinx.  Consult your
