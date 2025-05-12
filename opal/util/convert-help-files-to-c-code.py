@@ -12,22 +12,24 @@ import os
 import sys
 import argparse
 
-def find_help_files(root, verbose=False):
+def find_help_files(roots, skip_dirs, verbose=False):
     # Search for help-*.txt files across the source tree, skipping
     # some directories (e.g., 3rd-party)
     help_files = []
-    skip_dirs = ['.git', '3rd-party']
-    for root_dir, dirs, files in os.walk(root):
-        for sd in skip_dirs:
-            if sd in dirs:
-                dirs.remove(sd)
+    for root in roots:
+        for root_dir, dirs, files in os.walk(root):
+            for sd in skip_dirs:
+                if sd in dirs:
+                    print(f"Skipping additional dir: {root_dir}/{sd}")
+                    dirs.remove(sd)
 
-        for file in files:
-            if file.startswith("help-") and file.endswith(".txt"):
-                full_path = os.path.join(root_dir, file)
-                help_files.append(full_path)
-                if verbose:
-                    print(f"Found: {full_path}")
+            for file in files:
+                if file.startswith("help-") and file.endswith(".txt"):
+                    full_path = os.path.join(root_dir, file)
+                    help_files.append(full_path)
+                    if verbose:
+                        print(f"Found: {full_path}")
+
     return help_files
 
 def parse_ini_files(file_paths, verbose=False):
@@ -162,9 +164,14 @@ void opal_show_help_content_free(void)
 
 def main():
     parser = argparse.ArgumentParser(description="Generate C code from help text INI files.")
-    parser.add_argument("--root",
+    parser.add_argument("--roots",
+                        nargs='+',
                         required=True,
-                        help="Root directory to search for help-*.txt files")
+                        help="Space-delimited list of directories to search for help-*.txt files")
+    parser.add_argument("--skip-dirs",
+                        nargs='*',
+                        default=['.git', '3rd-party'],
+                        help="Space-delimited list of directories to skip traversing")
     parser.add_argument("--out",
                         required=True,
                         help="Output C file")
@@ -176,7 +183,7 @@ def main():
     if args.verbose:
         print(f"Searching in: {args.root}")
 
-    file_paths = find_help_files(args.root, args.verbose)
+    file_paths = find_help_files(args.roots, args.skip_dirs, args.verbose)
     parsed_data = parse_ini_files(file_paths, args.verbose)
     c_code = generate_c_code(parsed_data)
 
