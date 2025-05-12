@@ -99,7 +99,7 @@ static int mca_op_aarch64_component_close(void)
 /*
  * Register MCA params.
  */
-static int mca_op_aarch64_component_register(void)
+OMPI_SVE_ATTR static int mca_op_aarch64_component_register(void)
 {
 
     mca_op_aarch64_component.hardware_available = 1;  /* Check for Neon */
