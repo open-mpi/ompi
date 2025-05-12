@@ -4,9 +4,17 @@ Open MPI v5.0.x series
 This file contains all the NEWS updates for the Open MPI v5.0.x
 series, in reverse chronological order.
 
+Open MPI Version v5.0.8rc2
+------------------------------
+:Date: 12 May 2025
+
+- Internal PMIx and PRRTe versions:
+  - PMIx (v5.0.8). Repo: ``https://github.com/openpmix/openpmix``. Commit hash: ``907b1ccaeec61a1197f0ee5264d4fef20b257b84``.
+  - PRRTE (v3.0.10). Repo: ``https://github.com/openpmix/prrte``. Commit hash: ``0ff51bd532e0a95483cafdc290d22a6cb55a9aef``.
+
 Open MPI Version v5.0.8rc1
 ------------------------------
-:Date: 9 May 2024
+:Date: 9 May 2025
 
 - Internal PMIx and PRRTe versions:
   - PMIx (v5.0.7). Repo: ``https://github.com/openpmix/openpmix``. Commit hash: ``bc3680a178f0fc17f787cff4f417551a08497394``.
