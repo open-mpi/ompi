@@ -62,7 +62,9 @@ Download the Open MPI source code from `the main Open MPI web site
              They are **not** official Open MPI releases.
 
 Open MPI uses a traditional ``configure`` script paired with ``make``
-to build.  Typical installs can be of the pattern:
+to build.  Open MPI requires Perl, and may require Python >=
+|python_min_version|, as part of its build process.  Typical installs
+can be of the pattern:
 
 .. code-block:: sh
 

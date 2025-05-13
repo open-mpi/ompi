@@ -101,6 +101,7 @@ automake_min_version = f"{ompi_data['automake_min_version']}"
 autoconf_min_version = f"{ompi_data['autoconf_min_version']}"
 libtool_min_version = f"{ompi_data['libtool_min_version']}"
 flex_min_version = f"{ompi_data['flex_min_version']}"
+python_min_version = f"{ompi_data['python_min_version']}"
 mpi_standard_major_version = f"{ompi_data['mpi_standard_version']}"
 mpi_standard_minor_version = f"{ompi_data['mpi_standard_subversion']}"
 
@@ -304,6 +305,7 @@ rst_prolog = f"""
 .. |autoconf_min_version| replace:: {autoconf_min_version}
 .. |libtool_min_version| replace:: {libtool_min_version}
 .. |flex_min_version| replace:: {flex_min_version}
+.. |python_min_version| replace:: {python_min_version}
 .. |mpi_standard_version| replace:: {mpi_standard_major_version}.{mpi_standard_minor_version}
 .. |mpi_standard_major_version| replace:: {mpi_standard_major_version}
 .. |mpi_standard_minor_version| replace:: {mpi_standard_minor_version}

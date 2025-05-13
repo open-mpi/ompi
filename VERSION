@@ -33,6 +33,7 @@ automake_min_version=1.13.4
 autoconf_min_version=2.69.0
 libtool_min_version=2.4.2
 flex_min_version=2.5.4
+python_min_version=3.7
 
 # greek is generally used for alpha or beta release tags.  If it is
 # non-empty, it will be appended to the version number.  It does not

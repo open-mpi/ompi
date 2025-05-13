@@ -77,15 +77,40 @@ OPAL_MAKEDIST_DISABLE=""
 # Start it up
 #
 
+. $srcdir/VERSION
 OPAL_CONFIGURE_SETUP
 opal_show_title "Configuring project_name_long"
 opal_show_subtitle "Prerequisites"
+
+OMPI_TOP_BUILDDIR="`pwd`"
+AC_SUBST(OMPI_TOP_BUILDDIR)
+cd "$srcdir"
+OMPI_TOP_SRCDIR="`pwd`"
+AC_SUBST(OMPI_TOP_SRCDIR)
+cd "$OMPI_TOP_BUILDDIR"
 
 AC_PROG_SED
 
 AC_CHECK_PROG([PERL],[perl],[perl],[no])
 AS_IF([test "X$PERL" = "Xno"],
-      [AC_MSG_ERROR(["Open MPI requires perl. Aborting"])])
+      [AC_MSG_ERROR([Open MPI requires perl to build. Aborting.])])
+
+# We need Python if any of these are true:
+# - you're building the MPI Fortran bindings
+# - you're in a git clone (i.e., not a distribution tarball that has
+#   already been bootstrapped)
+AC_MSG_CHECKING([if we need Python])
+AS_IF([test "$enable_mpi_fortran" = "yes"], [need_python=yes],
+      [test -d "${OMPI_TOP_SRCDIR}/.git"], [need_python=yes],
+      [need_python=no])
+AC_MSG_RESULT([$need_python])
+
+AS_IF([test "$need_python" = "yes"],
+      [AM_PATH_PYTHON([$python_min_version],
+                      [have_good_python=1],
+                      [AC_MSG_ERROR([Open MPI requires Python >=$python_min_version to build. Aborting.])])],
+      [have_good_python=0])
+AM_CONDITIONAL(OMPI_GENERATE_BINDINGS, [test $have_good_python -eq 1])
 
 #
 # Setup some things that must be done before AM-INIT-AUTOMAKE
@@ -153,7 +178,6 @@ OPAL_SAVE_VERSION([OPAL], [Open Portable Access Layer], [$srcdir/VERSION],
 
 # Get shared library version numbers
 
-. $srcdir/VERSION
 m4_ifdef([project_ompi],
          [AC_SUBST(libmpi_so_version)
           AC_SUBST(libmpi_mpifh_so_version)
@@ -205,13 +229,6 @@ m4_ifdef([project_oshmem],
          [AC_CONFIG_HEADERS([oshmem/include/shmem.h])])
 
 opal_show_subtitle "Initialization, setup"
-
-OMPI_TOP_BUILDDIR="`pwd`"
-AC_SUBST(OMPI_TOP_BUILDDIR)
-cd "$srcdir"
-OMPI_TOP_SRCDIR="`pwd`"
-AC_SUBST(OMPI_TOP_SRCDIR)
-cd "$OMPI_TOP_BUILDDIR"
 
 AC_MSG_NOTICE([builddir: $OMPI_TOP_BUILDDIR])
 AC_MSG_NOTICE([srcdir: $OMPI_TOP_SRCDIR])
