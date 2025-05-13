@@ -116,6 +116,7 @@ mca_mtl_ofi_component_t mca_mtl_ofi_component = {
         .mtl_init = ompi_mtl_ofi_component_init,
     }
 };
+MCA_BASE_COMPONENT_INIT(ompi, mtl, ofi)
 
 static int
 ompi_mtl_ofi_component_register(void)

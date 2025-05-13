@@ -71,6 +71,7 @@ opal_dl_libltdl_component_t mca_dl_libltdl_component = {
 
     /* Now fill in the libltdl component-specific members */
 };
+MCA_BASE_COMPONENT_INIT(opal, dl, libltdl)
 
 static int libltdl_component_register(void)
 {

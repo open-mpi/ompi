@@ -49,6 +49,7 @@ const opal_timer_base_component_2_0_0_t mca_timer_darwin_component = {
         {/* The component is checkpoint ready */
          MCA_BASE_METADATA_PARAM_CHECKPOINT},
 };
+MCA_BASE_COMPONENT_INIT(opal, timer, darwin)
 
 /* mach_timebase_info() returns a fraction that can be multiplied
    by the difference between two calls to mach_absolute_time() to

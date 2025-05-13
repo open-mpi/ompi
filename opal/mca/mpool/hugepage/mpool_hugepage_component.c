@@ -107,6 +107,7 @@ mca_mpool_hugepage_component_t mca_mpool_hugepage_component = {
         .mpool_query = mca_mpool_hugepage_query,
     },
 };
+MCA_BASE_COMPONENT_INIT(opal, mpool, hugepage)
 
 /**
  * component open/close/init function

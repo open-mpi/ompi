@@ -61,6 +61,7 @@ mca_pml_base_component_2_1_0_t mca_pml_v_component =
     .pmlm_init = mca_pml_v_component_init,
     .pmlm_finalize = mca_pml_v_component_finalize,
 };
+MCA_BASE_COMPONENT_INIT(ompi, pml, v)
 
 static char *ompi_pml_vprotocol_include_list;
 static char *ompi_pml_v_output;

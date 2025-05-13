@@ -66,6 +66,7 @@ mca_btl_portals4_component_t mca_btl_portals4_component = {{
     .btl_init = mca_btl_portals4_component_init,
     .btl_progress = mca_btl_portals4_component_progress,
 }};
+MCA_BASE_COMPONENT_INIT(opal, btl, portals4)
 
 static int mca_btl_portals4_component_register(void)
 {

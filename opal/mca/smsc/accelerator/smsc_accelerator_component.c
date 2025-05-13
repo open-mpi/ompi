@@ -36,6 +36,7 @@ mca_smsc_accelerator_component_t mca_smsc_accelerator_component = {
         .enable = mca_smsc_accelerator_component_enable,
     },
 };
+MCA_BASE_COMPONENT_INIT(opal, smsc, accelerator)
 
 static int mca_smsc_accelerator_component_register(void)
 {

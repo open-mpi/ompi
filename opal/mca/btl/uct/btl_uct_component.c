@@ -706,6 +706,7 @@ mca_btl_uct_component_t mca_btl_uct_component = {
         .btl_init = mca_btl_uct_component_init,
         .btl_progress = mca_btl_uct_component_progress,
     }};
+MCA_BASE_COMPONENT_INIT(opal, btl, uct)
 
 static void safety_valve(void) __opal_attribute_destructor__;
 void safety_valve(void) {

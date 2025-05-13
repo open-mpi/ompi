@@ -46,6 +46,7 @@ mca_pml_base_component_2_1_0_t mca_pml_ucx_component = {
      .pmlm_init                         = mca_pml_ucx_component_init,
      .pmlm_finalize                     = mca_pml_ucx_component_fini
 };
+MCA_BASE_COMPONENT_INIT(ompi, pml, ucx)
 
 static int mca_pml_ucx_component_register(void)
 {

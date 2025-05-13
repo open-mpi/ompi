@@ -68,6 +68,7 @@ opal_dl_dlopen_component_t mca_dl_dlopen_component = {
             /* The dl framework members */
             .priority = 80},
 };
+MCA_BASE_COMPONENT_INIT(opal, dl, dlopen)
 
 static int dlopen_component_register(void)
 {

@@ -232,6 +232,7 @@ mca_coll_monitoring_component_t mca_coll_monitoring_component = {
     },
     .priority = INT_MAX
 };
+MCA_BASE_COMPONENT_INIT(ompi, coll, monitoring)
 
 OBJ_CLASS_INSTANCE(mca_coll_monitoring_module_t,
                    mca_coll_base_module_t,

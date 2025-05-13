@@ -91,6 +91,7 @@ opal_shmem_sysv_component_t mca_shmem_sysv_component = {
             .runtime_query = sysv_runtime_query,
         },
 };
+MCA_BASE_COMPONENT_INIT(opal, shmem, sysv)
 
 /* ////////////////////////////////////////////////////////////////////////// */
 static int sysv_register(void)

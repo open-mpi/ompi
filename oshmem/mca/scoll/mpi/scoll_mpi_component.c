@@ -60,6 +60,7 @@ mca_scoll_mpi_component_t mca_scoll_mpi_component = {
     1,   /* mpi_enable */
     2   /*mpi_np */
 };
+MCA_BASE_COMPONENT_INIT(oshmem, scoll, mpi)
 
 /*
  *  * Local flags

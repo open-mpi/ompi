@@ -820,3 +820,4 @@ mca_btl_ofi_component_t mca_btl_ofi_component = {
             .btl_progress = mca_btl_ofi_component_progress,
         },
 };
+MCA_BASE_COMPONENT_INIT(opal, btl, ofi)

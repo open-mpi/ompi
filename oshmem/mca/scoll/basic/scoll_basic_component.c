@@ -74,6 +74,7 @@ mca_scoll_base_component_t mca_scoll_basic_component = {
     .scoll_init = mca_scoll_basic_init,
     .scoll_query = mca_scoll_basic_query,
 };
+MCA_BASE_COMPONENT_INIT(oshmem, scoll, basic)
 
 static int basic_register(void)
 {

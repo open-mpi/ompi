@@ -76,6 +76,7 @@ opal_reachable_weighted_component_t mca_reachable_weighted_component = {{
         {/* The component is checkpoint ready */
          MCA_BASE_METADATA_PARAM_CHECKPOINT},
 }};
+MCA_BASE_COMPONENT_INIT(opal, reachable, weighted)
 
 static int reachable_weighted_open(void)
 {

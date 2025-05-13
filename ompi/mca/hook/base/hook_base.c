@@ -49,9 +49,9 @@ static int ompi_hook_base_register( mca_base_register_flag_t flags )
 static int ompi_hook_base_open( mca_base_open_flag_t flags )
 {
     int ret;
-    const mca_base_component_t **static_components = ompi_hook_base_framework.framework_static_components;
+    const mca_base_component_t ***static_components = ompi_hook_base_framework.framework_static_components;
     mca_base_component_list_item_t *cli = NULL;
-    mca_base_component_t *component = NULL;
+    const mca_base_component_t *component = NULL;
     bool found = false;
 
     additional_callback_components = OBJ_NEW(opal_list_t);
@@ -68,13 +68,14 @@ static int ompi_hook_base_open( mca_base_open_flag_t flags )
      */
     if( NULL != static_components ) {
         for (int i = 0 ; NULL != static_components[i]; ++i) {
-            if( static_components[i]->mca_component_flags & MCA_BASE_COMPONENT_FLAG_REQUIRED ) {
+            const mca_base_component_t *static_component = *(static_components[i]);
+            if( static_component->mca_component_flags & MCA_BASE_COMPONENT_FLAG_REQUIRED ) {
                 // Make sure that this component is in the list of components that
                 // were included in the earlier framework_components_open() call.
                 found = false;
                 OPAL_LIST_FOREACH(cli, &ompi_hook_base_framework.framework_components, mca_base_component_list_item_t) {
-                    component = (mca_base_component_t*)cli->cli_component;
-                    if( component == static_components[i] ) {
+                    component = cli->cli_component;
+                    if( component == static_component ) {
                         found = true;
                         break;
                     }
@@ -82,7 +83,7 @@ static int ompi_hook_base_open( mca_base_open_flag_t flags )
                 if( !found ) {
                     opal_show_help("help-mca-hook-base.txt", "hook:missing-required-component", true,
                                    ompi_hook_base_framework.framework_name,
-                                   static_components[i]->mca_component_name);
+                                   static_component->mca_component_name);
                     return OPAL_ERR_NOT_SUPPORTED;
                 }
             }
@@ -180,18 +181,20 @@ MCA_BASE_FRAMEWORK_DECLARE(ompi, hook, "hook hooks",
  * Otherwise we would need to initialize opal outside of ompi_mpi_init and possibly
  * after ompi_mpi_finalize which gets messy (especially when trying to cleanup).
  */
-#define HOOK_CALL_COMMON_HOOK_NOT_INITIALIZED(fn_name, ...)             \
-    do {                                                                \
-        ompi_hook_base_component_t *component;                          \
-        int idx;                                                        \
-                                                                        \
-        for(idx = 0; NULL != mca_hook_base_static_components[idx]; ++idx ) { \
-            component = (ompi_hook_base_component_t*)mca_hook_base_static_components[idx]; \
-            if( NULL != component->hookm_ ## fn_name &&                 \
-                ompi_hook_base_ ## fn_name != component->hookm_ ## fn_name ) { \
-                component->hookm_ ## fn_name ( __VA_ARGS__ );           \
-            }                                                           \
-        }                                                               \
+#define HOOK_CALL_COMMON_HOOK_NOT_INITIALIZED(fn_name, ...)                             \
+    do {                                                                                \
+        const mca_base_component_t ***static_components = ompi_hook_base_framework.framework_static_components; \
+                                                                                        \
+        if( NULL != static_components ) {                                               \
+            for (int i = 0 ; NULL != static_components[i]; ++i) {                       \
+                const mca_base_component_t *base_component = *(static_components[i]);   \
+                const ompi_hook_base_component_t *component = (const ompi_hook_base_component_t*)base_component; \
+                if( NULL != component->hookm_ ## fn_name &&                             \
+                    ompi_hook_base_ ## fn_name != component->hookm_ ## fn_name ) {      \
+                    component->hookm_ ## fn_name ( __VA_ARGS__ );                       \
+                }                                                                       \
+            }                                                                           \
+        }                                                                               \
     } while(0)
 
 /*
@@ -204,10 +207,10 @@ MCA_BASE_FRAMEWORK_DECLARE(ompi, hook, "hook hooks",
 #define HOOK_CALL_COMMON_HOOK_INITIALIZED(fn_name, ...)                 \
     do {                                                                \
         mca_base_component_list_item_t *cli;                            \
-        ompi_hook_base_component_t *component;                          \
                                                                         \
         OPAL_LIST_FOREACH(cli, &ompi_hook_base_framework.framework_components, mca_base_component_list_item_t) { \
-            component = (ompi_hook_base_component_t*)cli->cli_component; \
+            const mca_base_component_t *base_component = cli->cli_component;  \
+            const ompi_hook_base_component_t *component = (const ompi_hook_base_component_t*)base_component; \
             if( NULL != component->hookm_ ## fn_name &&                 \
                 ompi_hook_base_ ## fn_name != component->hookm_ ## fn_name ) { \
                 component->hookm_ ## fn_name ( __VA_ARGS__ );           \
@@ -215,7 +218,8 @@ MCA_BASE_FRAMEWORK_DECLARE(ompi, hook, "hook hooks",
         }                                                               \
                                                                         \
         OPAL_LIST_FOREACH(cli, additional_callback_components, mca_base_component_list_item_t) { \
-            component = (ompi_hook_base_component_t*)cli->cli_component; \
+            const mca_base_component_t *base_component = cli->cli_component;  \
+            const ompi_hook_base_component_t *component = (const ompi_hook_base_component_t*)base_component; \
             if( NULL != component->hookm_ ## fn_name &&                 \
                 ompi_hook_base_ ## fn_name != component->hookm_ ## fn_name ) { \
                 component->hookm_ ## fn_name ( __VA_ARGS__ );           \

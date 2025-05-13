@@ -145,6 +145,7 @@ opal_btl_usnic_component_t mca_btl_usnic_component = {
         .btl_init = usnic_component_init,
         .btl_progress = usnic_component_progress,
     }};
+MCA_BASE_COMPONENT_INIT(opal, btl, usnic)
 
 /*
  *  Called by MCA framework to open the component

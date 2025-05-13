@@ -87,6 +87,7 @@ mca_sshmem_sysv_component_t mca_sshmem_sysv_component = {
     /* sysv component-specific information */
     /* see: shmem_sysv.h for more information */
 };
+MCA_BASE_COMPONENT_INIT(oshmem, sshmem, sysv)
 
 /* ////////////////////////////////////////////////////////////////////////// */
 static int

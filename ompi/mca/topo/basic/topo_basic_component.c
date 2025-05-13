@@ -53,6 +53,7 @@ mca_topo_basic_component_t mca_topo_basic_component =
     .topoc_init_query = init_query,
     .topoc_query = mca_topo_basic_query,
 };
+MCA_BASE_COMPONENT_INIT(ompi, topo, basic)
 
 
 static int init_query(bool enable_progress_threads, bool enable_mpi_threads)

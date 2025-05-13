@@ -142,6 +142,7 @@ ompi_coll_libnbc_component_t mca_coll_libnbc_component = {
         .collm_comm_query = libnbc_comm_query,
     }
 };
+MCA_BASE_COMPONENT_INIT(ompi, coll, libnbc)
 
 
 static int

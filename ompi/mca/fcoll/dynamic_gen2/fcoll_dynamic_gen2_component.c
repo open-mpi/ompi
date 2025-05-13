@@ -77,6 +77,7 @@ mca_fcoll_base_component_3_0_0_t mca_fcoll_dynamic_gen2_component = {
     .fcollm_file_query = mca_fcoll_dynamic_gen2_component_file_query,
     .fcollm_file_unquery = mca_fcoll_dynamic_gen2_component_file_unquery,
 };
+MCA_BASE_COMPONENT_INIT(ompi, fcoll, dynamic_gen2)
 
 
 static int

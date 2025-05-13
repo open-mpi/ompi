@@ -66,6 +66,7 @@ mca_btl_self_component_t mca_btl_self_component = {
             .btl_init = mca_btl_self_component_init,
         } /* end super */
 };
+MCA_BASE_COMPONENT_INIT(opal, btl, self)
 
 /*
  *  Called by MCA framework to open the component, registers

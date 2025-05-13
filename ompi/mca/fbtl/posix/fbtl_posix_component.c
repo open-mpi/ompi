@@ -73,6 +73,7 @@ mca_fbtl_base_component_2_0_0_t mca_fbtl_posix_component = {
     .fbtlm_file_query = mca_fbtl_posix_component_file_query,      /* get priority and actions */
     .fbtlm_file_unquery = mca_fbtl_posix_component_file_unquery,  /* undo what was done by previous function */
 };
+MCA_BASE_COMPONENT_INIT(ompi, fbtl, posix)
 
 static int register_component(void)
 {

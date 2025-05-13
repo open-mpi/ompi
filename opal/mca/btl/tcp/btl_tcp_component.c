@@ -126,6 +126,7 @@ mca_btl_tcp_component_t mca_btl_tcp_component = {
         .btl_init = mca_btl_tcp_component_init,
         .btl_progress = NULL,
     }};
+MCA_BASE_COMPONENT_INIT(opal, btl, tcp)
 
 /*
  * utility routines for parameter registration

@@ -65,6 +65,7 @@ mca_fs_base_component_2_0_0_t mca_fs_gpfs_component = {
     .fsm_file_query = mca_fs_gpfs_component_file_query,      /* get priority and actions */
     .fsm_file_unquery = mca_fs_gpfs_component_file_unquery,  /* undo what was done by previous function */
 };
+MCA_BASE_COMPONENT_INIT(ompi, fs, gpfs)
 
 static int gpfs_register(void)
 {

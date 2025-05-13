@@ -70,6 +70,7 @@ mca_coll_sync_component_t mca_coll_sync_component = {
         .collm_comm_query = mca_coll_sync_comm_query
     },
 };
+MCA_BASE_COMPONENT_INIT(ompi, coll, sync)
 
 
 static int sync_register(void)

@@ -59,6 +59,7 @@ mca_spml_base_component_2_0_0_t mca_spml_ucx_component = {
     .spmlm_init                        = mca_spml_ucx_component_init,
     .spmlm_finalize                    = mca_spml_ucx_component_fini
 };
+MCA_BASE_COMPONENT_INIT(oshmem, spml, ucx)
 
 static inline void mca_spml_ucx_param_register_ulong(const char* param_name,
                                                     unsigned long default_value,
