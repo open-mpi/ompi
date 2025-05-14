@@ -138,7 +138,9 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
     AC_DEFINE([ompi_fortran_bogus_type_t], [int],
               [A bogus type that allows us to have sentinel type values that are still valid])
 
-    OMPI_FORTRAN_GET_COMMON_ALIGNMENT([OMPI_FORTRAN_COMMON_ALIGNMENT])
+    AS_IF([test $ompi_fortran_happy -eq 1],
+          [OMPI_FORTRAN_GET_COMMON_ALIGNMENT([OMPI_FORTRAN_COMMON_ALIGNMENT])],
+          [OMPI_FORTRAN_COMMON_ALIGNMENT=0])
     AC_SUBST([OMPI_FORTRAN_COMMON_ALIGNMENT])
 
     # We want to set the #define's for all of these, so invoke the macros
