@@ -85,7 +85,7 @@ sizeof_py=$(top_srcdir)/ompi/mpi/fortran/base/gen-mpi-sizeof.py
 sizeof_f08.h: $(top_builddir)/config.status
 sizeof_f08.h: $(sizeof_py)
 sizeof_f08.h:
-	$(OMPI_V_GEN) $(python) $(sizeof_py) \
+	$(OMPI_V_GEN) $(PYTHON) $(sizeof_py) \
 	    --header=$@ --ierror=optional \
 	    --maxrank=$(OMPI_FORTRAN_MAX_ARRAY_RANK) \
 	    --generate=$(OMPI_FORTRAN_BUILD_SIZEOF) \
@@ -100,7 +100,7 @@ sizeof_f08.h:
 sizeof_f08.f90: $(top_builddir)/config.status
 sizeof_f08.f90: $(sizeof_py)
 sizeof_f08.f90:
-	$(OMPI_V_GEN) $(python) $(sizeof_py) \
+	$(OMPI_V_GEN) $(PYTHON) $(sizeof_py) \
 	    --impl=$@ --ierror=optional --mpi \
 	    --maxrank=$(OMPI_FORTRAN_MAX_ARRAY_RANK) \
 	    --generate=$(OMPI_FORTRAN_BUILD_SIZEOF) \
@@ -113,7 +113,7 @@ sizeof_f08.f90:
 psizeof_f08.f90: $(top_builddir)/config.status
 psizeof_f08.f90: $(sizeof_py)
 psizeof_f08.f90:
-	$(OMPI_V_GEN) $(python) $(sizeof_py) \
+	$(OMPI_V_GEN) $(PYTHON) $(sizeof_py) \
 	    --impl=$@ --ierror=optional --pmpi \
 	    --maxrank=$(OMPI_FORTRAN_MAX_ARRAY_RANK) \
 	    --generate=$(OMPI_FORTRAN_BUILD_SIZEOF) \
@@ -431,8 +431,6 @@ lib@OMPI_LIBMPI_NAME@_usempif08_profile_la_FCFLAGS = \
 # *.in template.
 #
 
-if OMPI_GENERATE_BINDINGS
-
 include Makefile.prototype_files
 template_files =${prototype_files:%=$(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/%}
 
@@ -452,8 +450,6 @@ api_f08_generated.F90: $(template_files)
 	    --prototype-files $(template_files)
 
 EXTRA_DIST = $(prototype_files)
-
-endif
 
 # Delete generated file on maintainer-clean
 MAINTAINERCLEANFILES = api_f08_generated.F90

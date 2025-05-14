@@ -539,7 +539,6 @@ libmpi_c_noprofile_la_SOURCES = $(interface_profile_sources)
 libmpi_c_noprofile_la_CPPFLAGS = -DOMPI_BUILD_MPI_PROFILING=0
 
 # ABI generation rules
-if OMPI_GENERATE_BINDINGS
 %_generated.c: %.c.in
 	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
 	    --builddir $(abs_top_builddir) \
@@ -550,6 +549,5 @@ if OMPI_GENERATE_BINDINGS
 	    ompi \
 	    $<
 
-endif
 # Delete generated files on maintainer-clean
 MAINTAINERCLEANFILES = *_generated.c
