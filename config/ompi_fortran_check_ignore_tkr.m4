@@ -224,7 +224,8 @@ AC_DEFUN([OMPI_FORTRAN_CHECK_IGNORE_TKR_SUB], [
                     [msg=no
                      $5])
   AC_MSG_RESULT($msg)
+  # Make sure to clean up any generated *.mod files
+  rm -rf *.mod 2>/dev/null
   AC_LANG_POP([Fortran])
   OPAL_VAR_SCOPE_POP
 ])
-
