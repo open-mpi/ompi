@@ -99,7 +99,7 @@ sizeof_py=$(top_srcdir)/ompi/mpi/fortran/base/gen-mpi-sizeof.py
 mpi-ignore-tkr-sizeof.h: $(top_builddir)/config.status
 mpi-ignore-tkr-sizeof.h: $(sizeof_py)
 mpi-ignore-tkr-sizeof.h:
-	$(OMPI_V_GEN) $(python) $(sizeof_py) \
+	$(OMPI_V_GEN) $(PYTHON) $(sizeof_py) \
 	    --header=$@ --ierror=mandatory \
 	    --maxrank=$(OMPI_FORTRAN_MAX_ARRAY_RANK) \
 	    --generate=$(OMPI_FORTRAN_BUILD_SIZEOF) \
@@ -114,7 +114,7 @@ mpi-ignore-tkr-sizeof.h:
 mpi-ignore-tkr-sizeof.f90: $(top_builddir)/config.status
 mpi-ignore-tkr-sizeof.f90: $(sizeof_py)
 mpi-ignore-tkr-sizeof.f90:
-	$(OMPI_V_GEN) $(python) $(sizeof_py) \
+	$(OMPI_V_GEN) $(PYTHON) $(sizeof_py) \
 	    --impl=$@ --ierror=mandatory --mpi --pmpi \
 	    --maxrank=$(OMPI_FORTRAN_MAX_ARRAY_RANK) \
 	    --generate=$(OMPI_FORTRAN_BUILD_SIZEOF) \

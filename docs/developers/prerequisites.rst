@@ -82,6 +82,11 @@ Open MPI still uses Perl for a few of its build scripts (most notably,
 Generally speaking, any recent-ish release of Perl 5 should be
 sufficient to correctly execute Open MPI's Perl scripts.
 
+.. note:: The Open MPI community is slowly converting its Perl scripts
+          to Python; it is expected (hoped) that we'll someday have no
+          more Perl in the build process for official distribution
+          tarballs or Git clones.
+
 Flex
 ----
 

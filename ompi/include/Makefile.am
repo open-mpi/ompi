@@ -86,7 +86,7 @@ sizeof_py=$(top_srcdir)/ompi/mpi/fortran/base/gen-mpi-sizeof.py
 mpif-sizeof.h: $(top_builddir)/config.status
 mpif-sizeof.h: $(sizeof_py)
 mpif-sizeof.h:
-	$(OMPI_V_GEN) $(python) $(sizeof_py) \
+	$(OMPI_V_GEN) $(PYTHON) $(sizeof_py) \
 	    --header=$@ --ierror=mandatory \
 	    --maxrank=$(OMPI_FORTRAN_MAX_ARRAY_RANK) \
 	    --generate=$(OMPI_FORTRAN_BUILD_SIZEOF) \
@@ -107,7 +107,7 @@ mpif_mangling_py=$(top_srcdir)/ompi/mpi/fortran/base/gen-mpi-mangling.py
 mpif-c-constants-decl.h: $(top_builddir)/config.status
 mpif-c-constants-decl.h: $(mpif_mangling_py)
 mpif-c-constants-decl.h:
-	$(OMPI_V_GEN) $(python) $(mpif_mangling_py) \
+	$(OMPI_V_GEN) $(PYTHON) $(mpif_mangling_py) \
 	    --caps $(OMPI_FORTRAN_CAPS) \
 	    --plain $(OMPI_FORTRAN_PLAIN) \
 	    --single $(OMPI_FORTRAN_SINGLE_UNDERSCORE) \

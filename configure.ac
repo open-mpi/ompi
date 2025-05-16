@@ -66,6 +66,11 @@ OAC_PUSH_PREFIX([OPAL])
 
 OPAL_CAPTURE_CONFIGURE_CLI([OPAL_CONFIGURE_CLI])
 
+#
+# Init automake
+#
+AM_INIT_AUTOMAKE([foreign dist-bzip2 subdir-objects no-define 1.13.4 tar-pax])
+
 # Get our platform support file.  This has to be done very, very early
 # because it twiddles random bits of autoconf
 OPAL_LOAD_PLATFORM
@@ -93,24 +98,12 @@ AC_PROG_SED
 
 AC_CHECK_PROG([PERL],[perl],[perl],[no])
 AS_IF([test "X$PERL" = "Xno"],
-      [AC_MSG_ERROR([Open MPI requires perl to build. Aborting.])])
+      [AC_MSG_ERROR([Open MPI requires Perl 5 to build. Aborting.])])
 
-# We need Python if any of these are true:
-# - you're building the MPI Fortran bindings
-# - you're in a git clone (i.e., not a distribution tarball that has
-#   already been bootstrapped)
-AC_MSG_CHECKING([if we need Python])
-AS_IF([test "$enable_mpi_fortran" = "yes"], [need_python=yes],
-      [test -d "${OMPI_TOP_SRCDIR}/.git"], [need_python=yes],
-      [need_python=no])
-AC_MSG_RESULT([$need_python])
-
-AS_IF([test "$need_python" = "yes"],
-      [AM_PATH_PYTHON([$python_min_version],
-                      [have_good_python=1],
-                      [AC_MSG_ERROR([Open MPI requires Python >=$python_min_version to build. Aborting.])])],
-      [have_good_python=0])
-AM_CONDITIONAL(OMPI_GENERATE_BINDINGS, [test $have_good_python -eq 1])
+# Check to see that we have a "good" version of Python (i.e., >= the
+# version specified in the top-level VERSION file)
+AM_PATH_PYTHON([$python_min_version], [],
+               [AC_MSG_ERROR([Open MPI requires Python >= v$python_min_version to build. Aborting.])])
 
 #
 # Setup some things that must be done before AM-INIT-AUTOMAKE
@@ -125,11 +118,6 @@ AS_IF([test "$host" != "$target"],
        AC_MSG_WARN([Cross-compiling is only partially supported])
        AC_MSG_WARN([Proceed at your own risk!])])
 
-
-#
-# Init automake
-#
-AM_INIT_AUTOMAKE([foreign dist-bzip2 subdir-objects no-define 1.13.4 tar-pax])
 
 # SILENT_RULES is new in AM 1.11, but we require 1.11 or higher via
 # autogen.  Limited testing shows that calling SILENT_RULES directly

@@ -121,7 +121,7 @@ sizeof_py = $(top_srcdir)/ompi/mpi/fortran/base/gen-mpi-sizeof.py
 sizeof_f.f90: $(top_builddir)/config.status
 sizeof_f.f90: $(sizeof_py)
 sizeof_f.f90:
-	$(OMPI_V_GEN) $(python) $(sizeof_py) \
+	$(OMPI_V_GEN) $(PYTHON) $(sizeof_py) \
 	    --impl=$@ --ierror=mandatory --mpi \
 	    --maxrank=$(OMPI_FORTRAN_MAX_ARRAY_RANK) \
 	    --generate=$(OMPI_FORTRAN_BUILD_SIZEOF) \

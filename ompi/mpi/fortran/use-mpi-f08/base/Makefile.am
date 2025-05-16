@@ -46,7 +46,6 @@ endif
 # api_f08_generated.c should work with all compilers, supporting CFI or TS 29113 support
 # through macros in ts.h and ts.c.
 #
-if OMPI_GENERATE_BINDINGS
 
 include ../Makefile.prototype_files
 template_files =${prototype_files:%=$(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/%}
@@ -60,8 +59,6 @@ api_f08_generated.c: $(template_files)
 	    code \
 	    --lang c \
 	    --prototype-files $(template_files)
-
-endif
 
 # Delete generated files on maintainer-clean
 MAINTAINERCLEANFILES = api_f08_generated.c

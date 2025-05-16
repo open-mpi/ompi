@@ -31,9 +31,12 @@ systems to test these on, we probably will only claim to
 Perl and Python
 ^^^^^^^^^^^^^^^
 
-Open MPI requires Perl while building.  If you are building the
-Fortran MPI bindings, or if you are building from a Git clone, Open
-MPI also requires Python >= |python_min_version| while building.
+Open MPI requires Perl 5 and Python >= |python_min_version| while
+building.
+
+.. note:: Note that these requirements are only for *building* Open
+          MPI itself.  Open MPI does not require Perl or Python to
+          build or run MPI or OSHMEM applications.
 
 .. note:: The Open MPI community is slowly converting its Perl scripts
           to Python; it is expected (hoped) that we'll someday have no
