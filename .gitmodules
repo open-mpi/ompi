@@ -1,6 +1,6 @@
 [submodule "prrte"]
 	path = 3rd-party/prrte
-	url = ../../open-mpi/prrte
+	url = ../../openpmix/prrte.git
 	branch = master
 [submodule "openpmix"]
 	path = 3rd-party/openpmix
