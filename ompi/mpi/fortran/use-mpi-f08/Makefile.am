@@ -46,7 +46,7 @@ AM_CPPFLAGS =
 # involves a user supplied buffer(s), and hence the need to generate
 # either assumed rank or assumed shape arrays with possible async
 # attributes, the *.c.in method needs to be used. Otherwise a *.F90
-# file can be used.   In addition, the mod/mpi-f08-rename.h file 
+# file can be used.   In addition, the mod/mpi-f08-rename.h file
 # will need to be updated to include a rename line for the new method.
 #
 if OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS
