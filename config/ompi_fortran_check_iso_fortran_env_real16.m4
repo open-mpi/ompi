@@ -28,6 +28,22 @@ end program]])],
              [AS_VAR_SET(iso_fortran_env_var_real16, no)])
         AC_LANG_POP([Fortran])
        ])
+    AS_VAR_IF(iso_fortran_env_var_real16, [yes],
+          [AC_MSG_CHECKING([if Fortran compiler supports complex(ISO_FORTRAN_ENV:REAL16)])
+           AC_LANG_PUSH([Fortran])
+           AC_COMPILE_IFELSE([AC_LANG_SOURCE([[program check_for_iso_fortran_env_real16
+   use, intrinsic :: iso_fortran_env
+   complex(REAL16) :: var
+   var = 12.34
+end program]])],
+             [AC_MSG_RESULT([yes])],
+             [AC_MSG_RESULT([no])
+              AC_MSG_WARN([*** Fortran compiler supports real(REAL16) but])
+              AC_MSG_WARN([*** does *not* support complex(REAL16)])
+              AC_MSG_WARN([*** Disabling support for ISO_FORTRAN_ENV:REAL16])
+              AS_VAR_SET(iso_fortran_env_var_real16, no)])
+           AC_LANG_POP([Fortran])],
+          [])
 
     AS_VAR_IF(iso_fortran_env_var_real16, [yes], [$1], [$2])
     AS_VAR_POPDEF([iso_fortran_env_var_real16])
