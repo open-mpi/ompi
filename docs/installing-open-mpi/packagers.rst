@@ -17,6 +17,14 @@ binary Open MPI packages should limit themselves solely to Open MPI
 artifacts.  Specifically: ensure to configure and build Open MPI
 against external installations of these required packages.
 
+.. note:: It should be noted that Open MPI |ompi_series| may include
+          an Open MPI-specific version of the PRRTE software package.
+          This may include post-release commits from the upstream
+          PRRTE repository, and/or include Open MPI-specific commits.
+          Care will need to be taken to ensure that downstream Open
+          MPI packages include functionality and bug fixes that are
+          included in the Open MPI distribution tarballs.
+
 Packagers may therefore wish to configure Open MPI with something like
 the following:
 

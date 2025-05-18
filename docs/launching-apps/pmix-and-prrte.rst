@@ -66,3 +66,11 @@ nodes.
 Open MPI uses PRRTE to deal with the practical issues of the back-end
 run-time environment such as launching, monitoring, killing, and
 reaping remote processes.
+
+.. note:: The version of PRRTE bundled in the Open MPI |ompi_series|
+          may not be an official release of the upstream PRRTE
+          software project.  Instead, it may include commits from the
+          upstream PRRTE repository that were created after an
+          official release, and/or may contain Open MPI-specific
+          commits that were never included in any official upstream
+          PRRTE release.
