@@ -8,14 +8,25 @@ Open MPI version v6.0.0
 --------------------------
 :Date: ...fill me in...
 
+- Added support for the MPI-4.0 embiggened APIs (i.e., functions with
+  ``MPI_Count`` parameters).
+
+- Fix build system and some internal code to support compiler
+  link-time optimization (LTO).
+
 - Open MPI now requires a C11-compliant compiler to build.
 
-- Open MPI now requires Python >= |python_min_version| to build the
-  Fortran MPI bindings (or when building from a Git clone).
+- Open MPI now requires Python >= |python_min_version| to build.
 
-  - Open MPI has always required Perl to build; our Perl scripts are
-    slowly being converted to Python.
+  - Open MPI has always required Perl 5 to build (and still does); our
+    Perl scripts are slowly being converted to Python.
 
-- Removed ROMIO package.
+  .. note:: Open MPI only requires Python >= |python_min_version| and
+            Perl 5 to build itself.  It does *not* require Python or
+            Perl to build or run Open MPI or OSHMEM applications.
+
+- Removed the ROMIO package.  All MPI-IO functionality is now
+  delivered through the Open MPI internal "OMPIO" implementation
+  (which has been the default for quite a while, anyway).
 
 - Added MPI-4.1 ``MPI_Status_*`` functions.
