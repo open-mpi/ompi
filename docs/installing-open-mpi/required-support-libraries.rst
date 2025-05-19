@@ -108,14 +108,26 @@ system.
   * This library is optional in some environments. See below.
   * **Minimum version required:** |prte_min_version|
 
-    .. note:: While the minimum version of PRRTE will *work*, it may
-              still have bugs and/or have less functionality as
-              compared to later versions.  For example, if you build
-              and run with |prte_min_version|, you will not get a
-              fully-populated ``mpirun(1)`` man page.
+    .. important:: It should be noted that Open MPI |ompi_series| may
+                   include an Open MPI-specific version of the PRRTE
+                   software package.  This may include post-release
+                   commits from the upstream PRRTE repository, and/or
+                   include Open MPI-specific commits.  As such, the
+                   PRRTE minimum version |prte_min_version| may not
+                   actually include all bug fixes and functionality
+                   that is included in the PRRTE that is embedded in
+                   official Open MPI distributions.
+
+    .. note:: Additionally, while the minimum version of PRRTE will
+              *work*, it may still have bugs and/or have less
+              functionality as compared to later versions.  For
+              example, if you build and run with |prte_min_version|,
+              you will not get a fully-populated ``mpirun(1)`` man
+              page.
 
               The Open MPI community generally recomends using the
-              latest available version of PRRTE unless there is a
+              latest available version of PRRTE and/or the PRRTE
+              bundled in Open MPI distributions unless there is a
               specific reason not to.
 
   * **Version embedded in Open MPI distribution:**
