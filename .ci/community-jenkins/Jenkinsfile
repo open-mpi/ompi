@@ -56,8 +56,8 @@ println('Tests Completed')
 // build stage is a map of different configurations to test.
 def prepare_check_stages() {
     def configure_options = ["--disable-dlopen", "--disable-oshmem", "--enable-builtin-atomic", "--enable-ipv6"]
-    def compilers = ["clang10", "gcc5", "gcc6", "gcc7", "gcc8", "gcc9", "gcc10"]
-    def platforms = ["amazon_linux_2", "amazon_linux_2-arm64", "rhel7", "rhel8", "ubuntu_18.04"]
+    def compilers = ["clang10", "gcc7", "gcc8", "gcc9", "gcc10"]
+    def platforms = ["amazon_linux_2", "amazon_linux_2-arm64", "rhel8"]
     def check_stages_list = []
 
     // Build everything stage
