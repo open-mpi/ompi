@@ -48,8 +48,8 @@ be explicit.
 Supported MR mode bits (will work with or without):
 
 * enum:
-  * `FI_MR_BASIC`
-  * `FI_MR_SCALABLE`
+  * `FI_MR_BASIC` (deprecated since libfabric 1.5)
+  * `FI_MR_SCALABLE` (deprecated since libfabric 1.5)
 * mode bits:
   * `FI_MR_VIRT_ADDR`
   * `FI_MR_ALLOCATED`
