@@ -897,17 +897,6 @@ select_prov:
         goto error;
     }
 
-    /**
-     * Unfortunately the attempt to implement FI_MR_SCALABLE in the GNI provider
-     * doesn't work, at least not well.  Since we're asking for the 1.5 libfabric
-     * API now, we have to tell GNI we want to use Mr. Basic.  Using FI_MR_BASIC
-     * rather than FI_MR_VIRT_ADDR | FI_MR_ALLOCATED | FI_MR_PROV_KEY to stay
-     * compatible with older libfabrics.
-     */
-    if (!strncmp(prov->fabric_attr->prov_name,"gni",3)) {
-         prov->domain_attr->mr_mode = FI_MR_BASIC;
-    }
-
 #if OPAL_CUDA_SUPPORT
     /**
      * Some providers do not require the use of the CUDA convertor
