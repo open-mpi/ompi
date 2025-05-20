@@ -47,6 +47,16 @@
 
 #define MCA_BTL_OFI_REQUESTED_MR_MODE   (FI_MR_ALLOCATED | FI_MR_PROV_KEY | FI_MR_VIRT_ADDR)
 
+/**
+ * FI_MR_BASIC (1<<0) and FI_MR_SCALABLE (1<<1) are deprecated
+ * since Libfabric 1.5 and the symbols will get removed in
+ * future Libfabric 2.x versions. Use the internal mode bits
+ * for backward compatibilities without breaking compilation
+ * with newer libfabric.
+ */
+#define MCA_BTL_OFI_MR_BASIC    (1 << 0)
+#define MCA_BTL_OFI_MR_SCALABLE (1 << 1)
+
 static char *ofi_progress_mode;
 static bool disable_sep;
 static int mca_btl_ofi_init_device(struct fi_info *info);
@@ -107,7 +117,7 @@ static int validate_info(struct fi_info *info, uint64_t required_caps,
 
     mr_mode = info->domain_attr->mr_mode;
 
-    if (!(mr_mode == FI_MR_BASIC || mr_mode == FI_MR_SCALABLE ||
+    if (!(mr_mode == MCA_BTL_OFI_MR_BASIC || mr_mode == MCA_BTL_OFI_MR_SCALABLE ||
          (mr_mode & ~(FI_MR_VIRT_ADDR | FI_MR_ALLOCATED | FI_MR_PROV_KEY)) == 0)) {
         BTL_VERBOSE(("unsupported MR mode"));
         return OPAL_ERROR;
@@ -609,7 +619,7 @@ static int mca_btl_ofi_init_device(struct fi_info *info)
     module->outstanding_rdma = 0;
     module->use_virt_addr = false;
 
-    if (ofi_info->domain_attr->mr_mode == FI_MR_BASIC ||
+    if (ofi_info->domain_attr->mr_mode == MCA_BTL_OFI_MR_BASIC ||
         ofi_info->domain_attr->mr_mode & FI_MR_VIRT_ADDR) {
         module->use_virt_addr = true;
     }
