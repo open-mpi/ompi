@@ -2,3 +2,11 @@ sphinx>=4.2.0
 recommonmark
 docutils
 sphinx-rtd-theme
+
+# These modules are needed for the pympistandard module when you are
+# running Python 3.6 (they became part of core Python in 3.7).  We
+# specifically use "==" (vs. "<=") because the top-level Open MPI
+# VERSION file lists Python 3.6 as the minimum required version of
+# Python -- we will never be using < 3.6 to build the Open MPI docs.
+importlib_resources; python_version == "3.6"
+dataclasses; python_version == "3.6"
