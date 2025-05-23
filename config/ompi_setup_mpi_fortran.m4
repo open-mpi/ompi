@@ -21,6 +21,7 @@ dnl Copyright (c) 2016-2022 IBM Corporation.  All rights reserved.
 dnl Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
 dnl Copyright (c) 2022      Triad National Security, LLC. All rights
 dnl                         reserved.
+dnl Copyright (c) 2025      Stony Brook University.  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -380,6 +381,20 @@ end program]])],
           [OMPI_FORTRAN_BUILD_SIZEOF=1],
           [OMPI_FORTRAN_BUILD_SIZEOF=0])
     AC_SUBST(OMPI_FORTRAN_BUILD_SIZEOF)
+
+    OMPI_FORTRAN_SUPPORTS_WARNING="no"
+    AS_IF([! test x"$enable_deprecate_mpif_h" = "xno"],
+            [OMPI_FORTRAN_CHECK_WARNING([OMPI_FORTRAN_SUPPORTS_WARNING="yes"],
+                                        [OMPI_FORTRAN_SUPPORTS_WARNING="no"])])
+    AC_MSG_CHECKING([if we mark mpif.h bindings as deprecated])
+    AS_IF([test "x$enable_deprecate_mpif_h" = "xyes" && test "$OMPI_FORTRAN_SUPPORTS_WARNING" = "no"],
+          [AC_MSG_ERROR([Request to mark mpif.h as deprecated but Fortran compiler does not support warning preprocessor directive.])])
+    AS_IF([test "x$enable_deprecate_mpif_h" != "xno" && test "$OMPI_FORTRAN_SUPPORTS_WARNING" = "yes"],
+            [OMPI_FORTRAN_DEPRECATE_MPIF_H="#warning mpif.h has been deprecated since MPI 4.1. See MPI-4.1:19.1.4 for details."
+             AC_MSG_RESULT([yes])],
+            [OMPI_FORTRAN_DEPRECATE_MPIF_H=""
+             AC_MSG_RESULT([no])])
+    AC_SUBST(OMPI_FORTRAN_DEPRECATE_MPIF_H)
 
     #--------------------------------------------
     # Fortran use mpi or use mpi_f08 MPI bindings
