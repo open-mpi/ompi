@@ -8,6 +8,7 @@
  * Copyright (c) 2020      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2024      Google, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -56,6 +57,7 @@ static MPI_Datatype mca_to_mpi_datatypes[MCA_BASE_VAR_TYPE_MAX] = {
     [MCA_BASE_VAR_TYPE_UINT32_T] = MPI_UINT32_T,
     [MCA_BASE_VAR_TYPE_INT64_T] = MPI_INT64_T,
     [MCA_BASE_VAR_TYPE_UINT64_T] = MPI_UINT64_T,
+    [MCA_BASE_VAR_TYPE_SERIALIZABLE] = MPI_CHAR,
 };
 
 int ompit_var_type_to_datatype (mca_base_var_type_t type, MPI_Datatype *datatype)
