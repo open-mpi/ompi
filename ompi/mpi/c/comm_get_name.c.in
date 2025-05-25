@@ -14,6 +14,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2024      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2025      Advanced Micro Devices, Inc. All rights reserverd.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -44,7 +45,9 @@ PROTOTYPE ERROR_CLASS comm_get_name(COMM comm, STRING_OUT name, INT_OUT length)
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
-        if ( ompi_comm_invalid ( comm ) )
+        /* Note that MPI 4.1. explicitely allows to invoke comm_get_name
+           on MPI_COMM_NULL  */
+        if (ompi_comm_invalid(comm) && MPI_COMM_NULL != comm)
             return OMPI_ERRHANDLER_INVOKE ( MPI_COMM_WORLD, MPI_ERR_COMM,
                                             FUNC_NAME);
 
