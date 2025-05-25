@@ -66,11 +66,6 @@ OAC_PUSH_PREFIX([OPAL])
 
 OPAL_CAPTURE_CONFIGURE_CLI([OPAL_CONFIGURE_CLI])
 
-#
-# Init automake
-#
-AM_INIT_AUTOMAKE([foreign dist-bzip2 subdir-objects no-define 1.13.4 tar-pax])
-
 # Get our platform support file.  This has to be done very, very early
 # because it twiddles random bits of autoconf
 OPAL_LOAD_PLATFORM
@@ -85,6 +80,23 @@ OPAL_MAKEDIST_DISABLE=""
 . $srcdir/VERSION
 OPAL_CONFIGURE_SETUP
 opal_show_title "Configuring project_name_long"
+
+opal_show_subtitle "Startup tests"
+
+# These have to be invoked before AM INIT_AUTOMAKE
+AC_CANONICAL_HOST
+AC_CANONICAL_TARGET
+AC_DEFINE_UNQUOTED(OPAL_ARCH, "$target", [OMPI architecture string])
+AS_IF([test "$host" != "$target"],
+      [AC_MSG_WARN([Cross-compile detected])
+       AC_MSG_WARN([Cross-compiling is only partially supported])
+       AC_MSG_WARN([Proceed at your own risk!])])
+
+#
+# Init automake
+#
+AM_INIT_AUTOMAKE([foreign dist-bzip2 subdir-objects no-define 1.13.4 tar-pax])
+
 opal_show_subtitle "Prerequisites"
 
 OMPI_TOP_BUILDDIR="`pwd`"
@@ -105,20 +117,6 @@ AS_IF([test "X$PERL" = "Xno"],
 AM_PATH_PYTHON([$python_min_version], [],
                [AC_MSG_ERROR([Open MPI requires Python >= v$python_min_version to build. Aborting.])])
 
-#
-# Setup some things that must be done before AM-INIT-AUTOMAKE
-#
-
-opal_show_subtitle "Startup tests"
-AC_CANONICAL_HOST
-AC_CANONICAL_TARGET
-AC_DEFINE_UNQUOTED(OPAL_ARCH, "$target", [OMPI architecture string])
-AS_IF([test "$host" != "$target"],
-      [AC_MSG_WARN([Cross-compile detected])
-       AC_MSG_WARN([Cross-compiling is only partially supported])
-       AC_MSG_WARN([Proceed at your own risk!])])
-
-
 # SILENT_RULES is new in AM 1.11, but we require 1.11 or higher via
 # autogen.  Limited testing shows that calling SILENT_RULES directly
 # works in more cases than adding "silent-rules" to INIT_AUTOMAKE
@@ -127,25 +125,6 @@ AM_SILENT_RULES([yes])
 
 # Make configure depend on the VERSION file, since it's used in AC_INIT
 AC_SUBST([CONFIGURE_DEPENDENCIES], ['$(top_srcdir)/VERSION'])
-
-# Sanity checks
-AC_DEFUN([OMPI_CHECK_DIR_FOR_SPACES],[
-    dir="$1"
-    article="$2"
-    label="$3"
-
-    AC_MSG_CHECKING([directory of $label])
-    AC_MSG_RESULT([$dir])
-    AS_IF([test -n "`echo $dir | grep ' '`"],
-          [AC_MSG_WARN([This version of Open MPI does not support $article $label])
-           AC_MSG_WARN([with a path that contains spaces])
-           AC_MSG_ERROR([Cannot continue.])])
-])
-
-ompi_dir=`pwd`
-OMPI_CHECK_DIR_FOR_SPACES([$ompi_dir], [a], [build tree])
-OMPI_CHECK_DIR_FOR_SPACES([$srcdir], [a], [source tree])
-OMPI_CHECK_DIR_FOR_SPACES([$prefix], [a], [prefix])
 
 opal_show_subtitle "Checking versions"
 
@@ -223,6 +202,25 @@ AC_MSG_NOTICE([srcdir: $OMPI_TOP_SRCDIR])
 if test "$OMPI_TOP_BUILDDIR" != "$OMPI_TOP_SRCDIR"; then
     AC_MSG_NOTICE([Detected VPATH build])
 fi
+
+# Sanity checks
+AC_DEFUN([OMPI_CHECK_DIR_FOR_SPACES],[
+    dir="$1"
+    article="$2"
+    label="$3"
+
+    AC_MSG_CHECKING([directory of $label])
+    AC_MSG_RESULT([$dir])
+    AS_IF([test -n "`echo $dir | grep ' '`"],
+          [AC_MSG_WARN([This version of Open MPI does not support $article $label])
+           AC_MSG_WARN([with a path that contains spaces])
+           AC_MSG_ERROR([Cannot continue.])])
+])
+
+ompi_dir=`pwd`
+OMPI_CHECK_DIR_FOR_SPACES([$ompi_dir], [a], [build tree])
+OMPI_CHECK_DIR_FOR_SPACES([$srcdir], [a], [source tree])
+OMPI_CHECK_DIR_FOR_SPACES([$prefix], [a], [prefix])
 
 # Check for deprecated/deleted options
 OMPI_CHECK_DELETED_OPTIONS
