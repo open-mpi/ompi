@@ -37,7 +37,8 @@ occurs, :ref:`MPI_Comm_get_name` will return an empty string (all spaces in
 Fortran, "" in C). The three predefined communicators will have
 predefined names associated with them. Thus, the names of
 MPI_COMM_WORLD, MPI_COMM_SELF, and MPI_COMM_PARENT will have the default
-of MPI_COMM_WORLD, MPI_COMM_SELF, and MPI_COMM_PARENT. The fact that the
+of MPI_COMM_WORLD, MPI_COMM_SELF, and MPI_COMM_PARENT (if not MPI_COMM_NULL).
+Passing MPI_COMM_NULL as ``comm`` will return the string MPI_COMM_NULL. The fact that the
 system may have chosen to give a default name to a communicator does not
 prevent the user from setting a name on the same communicator; doing
 this removes the old name and assigns the new one.
