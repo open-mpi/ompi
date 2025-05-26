@@ -2226,6 +2226,15 @@ OMPI_DECLSPEC  MPI_Request MPI_Request_f2c(MPI_Fint request);
 OMPI_DECLSPEC  int MPI_Request_free(MPI_Request *request);
 OMPI_DECLSPEC  int MPI_Request_get_status(MPI_Request request, int *flag,
                                           MPI_Status *status);
+/* should be 'const MPI_Request array_of_requests[]' */
+OMPI_DECLSPEC int MPI_Request_get_status_all(int count, MPI_Request array_of_requests[], int *flag,
+                                             MPI_Status array_of_statuses[]);
+/* should be 'const MPI_Request array_of_requests[]' */
+OMPI_DECLSPEC int MPI_Request_get_status_any(int count, MPI_Request array_of_requests[], int *index,
+                                             int *flag, MPI_Status *status);
+/* should be 'const MPI_Request array_of_requests[]' */
+OMPI_DECLSPEC int MPI_Request_get_status_some(int incount, MPI_Request array_of_requests[], int *outcount,
+                                              int array_of_indices[], MPI_Status array_of_statuses[]);
 OMPI_DECLSPEC  int MPI_Rget(void *origin_addr, int origin_count, MPI_Datatype origin_datatype,
                             int target_rank, MPI_Aint target_disp, int target_count, MPI_Datatype target_datatype,
                             MPI_Win win, MPI_Request *request);
@@ -3385,6 +3394,15 @@ OMPI_DECLSPEC  MPI_Request PMPI_Request_f2c(MPI_Fint request);
 OMPI_DECLSPEC  int PMPI_Request_free(MPI_Request *request);
 OMPI_DECLSPEC  int PMPI_Request_get_status(MPI_Request request, int *flag,
                                            MPI_Status *status);
+/* should be 'const MPI_Request array_of_requests[]' */
+OMPI_DECLSPEC int PMPI_Request_get_status_all(int count, MPI_Request array_of_requests[], int *flag,
+                                              MPI_Status array_of_statuses[]);
+/* should be 'const MPI_Request array_of_requests[]' */
+OMPI_DECLSPEC int PMPI_Request_get_status_any(int count, MPI_Request array_of_requests[], int *index,
+                                              int *flag, MPI_Status *status);
+/* should be 'const MPI_Request array_of_requests[]' */
+OMPI_DECLSPEC int PMPI_Request_get_status_some(int incount, MPI_Request array_of_requests[], int *outcount,
+                                               int array_of_indices[], MPI_Status array_of_statuses[]);
 OMPI_DECLSPEC  int PMPI_Rget(void *origin_addr, int origin_count, MPI_Datatype origin_datatype,
                              int target_rank, MPI_Aint target_disp, int target_count, MPI_Datatype target_datatype,
                              MPI_Win win, MPI_Request *request);
