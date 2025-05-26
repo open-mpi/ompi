@@ -33,6 +33,8 @@ def main():
     parser_fortran = subparsers.add_parser('fortran', help='subcommand for generating Fortran code')
     parser_fortran.add_argument('--generate-ts-suffix', action="store_true",
                                 help='generate ts suffixes for appropriate routines')
+    parser_fortran.add_argument('--fort-std', choices=('f90', 'f08'),
+                             help='fortran standard to use for fortran module and code generation')
     # Handler for generating actual code
     subparsers_fortran = parser_fortran.add_subparsers()
     parser_code = subparsers_fortran.add_parser('code', help='generate binding code')

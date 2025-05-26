@@ -345,6 +345,9 @@ prototype_sources = \
         request_f2c.c.in \
 	request_free.c.in \
 	request_get_status.c.in \
+	request_get_status_all.c.in \
+	request_get_status_any.c.in \
+	request_get_status_some.c.in \
 	rget_accumulate.c.in \
 	rget.c.in \
 	rput.c.in \
