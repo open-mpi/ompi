@@ -309,6 +309,9 @@ MPI API manual pages (section 3)
    MPI_Request_f2c.3.rst
    MPI_Request_free.3.rst
    MPI_Request_get_status.3.rst
+   MPI_Request_get_status_all.3.rst
+   MPI_Request_get_status_any.3.rst
+   MPI_Request_get_status_some.3.rst
    MPI_Rget.3.rst
    MPI_Rget_accumulate.3.rst
    MPI_Rput.3.rst
