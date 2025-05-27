@@ -544,8 +544,8 @@ const char *ompi_info_memkind_cb (opal_infosubscriber_t *obj, const char *key, c
 int ompi_info_memkind_copy_or_set (opal_infosubscriber_t *parent, opal_infosubscriber_t *child,
                                    opal_info_t *info, ompi_info_memkind_assert_type *type)
 {
-    opal_cstring_t *parent_val;
-    opal_cstring_t *assert_val;
+    opal_cstring_t *parent_val = NULL;
+    opal_cstring_t *assert_val = NULL;
     ompi_info_memkind_assert_type assert_type = OMPI_INFO_MEMKIND_ASSERT_UNDEFINED;
     char *final_str = NULL;
     int flag;
@@ -569,7 +569,6 @@ int ompi_info_memkind_copy_or_set (opal_infosubscriber_t *parent, opal_infosubsc
         if (ret) {
             final_str = (char*) assert_val->string;
         }
-        OBJ_RELEASE(assert_val);
 
         opal_infosubscribe_subscribe (child, "mpi_assert_memory_alloc_kinds", final_str,
                                       ompi_info_memkind_cb);
@@ -578,10 +577,16 @@ int ompi_info_memkind_copy_or_set (opal_infosubscriber_t *parent, opal_infosubsc
  exit:
     opal_infosubscribe_subscribe (child, "mpi_memory_alloc_kinds", final_str,
                                   ompi_info_memkind_cb);
-    OBJ_RELEASE(parent_val);
 
     if (ompi_info_memkind_check_no_accel_from_string(final_str)) {
         assert_type = OMPI_INFO_MEMKIND_ASSERT_NO_ACCEL;
+    }
+
+    if (NULL != assert_val) {
+        OBJ_RELEASE(assert_val);
+    }
+    if (NULL != parent_val) {
+        OBJ_RELEASE(parent_val);
     }
 
     *type = assert_type;
