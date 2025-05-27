@@ -37,7 +37,7 @@
  * not be freed (unlike the test function). A subsequent call to test, wait
  * or free should be executed on the request.
  */
-PROTOTYPE ERROR_CLASS request_get_status_any(INT count, REQUEST_INOUT requests:count, INT_OUT indx,
+PROTOTYPE ERROR_CLASS request_get_status_any(INT count, REQUEST_CONST requests:count, INT_OUT indx,
                                              INT_OUT flag,  STATUS_OUT status)
 {
 
@@ -55,7 +55,7 @@ PROTOTYPE ERROR_CLASS request_get_status_any(INT count, REQUEST_INOUT requests:c
         if (NULL == requests) {
             rc = MPI_ERR_REQUEST;
         } else {
-            if(!ompi_request_check_same_instance(requests, count) ) {
+            if(!ompi_request_check_same_instance((MPI_Request *)requests, count) ) {
                 rc = MPI_ERR_REQUEST;
             }
         }
