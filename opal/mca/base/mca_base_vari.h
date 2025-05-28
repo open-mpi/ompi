@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012-2013 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2012-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -48,6 +48,8 @@
 #include "opal/class/opal_value_array.h"
 #include "opal/mca/base/mca_base_pvar.h"
 #include "opal/mca/base/mca_base_var.h"
+#include "opal/mca/base/mca_base_source.h"
+#include "opal/mca/base/mca_base_event.h"
 
 BEGIN_C_DECLS
 
@@ -146,6 +148,13 @@ OPAL_DECLSPEC int mca_base_var_group_add_pvar(const int group_index, const int p
  * Add an enum to a group
  */
 OPAL_DECLSPEC int mca_base_var_group_add_enum(const int group_index, const void *storage);
+
+/**
+ * \internal
+ *
+ * Add an event to a group
+ */
+OPAL_DECLSPEC int mca_base_var_group_add_event (const int group_index, const int event_index);
 
 /**
  * \internal
