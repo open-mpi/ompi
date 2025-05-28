@@ -1,0 +1,94 @@
+#
+# Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+#                         University Research and Technology
+#                         Corporation.  All rights reserved.
+# Copyright (c) 2004-2013 The University of Tennessee and The University
+#                         of Tennessee Research Foundation.  All rights
+#                         reserved.
+# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+#                         University of Stuttgart.  All rights reserved.
+# Copyright (c) 2004-2005 The Regents of the University of California.
+#                         All rights reserved.
+# Copyright (c) 2009-2021 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
+# Copyright (c) 2012      Oak Rigde National Laboratory. All rights reserved.
+# Copyright (c) 2012-2013 Inria.  All rights reserved.
+# Copyright (c) 2013-2018 Los Alamos National Security, LLC. All rights
+#                         reserved.
+# Copyright (c) 2015-2020 Research Organization for Information Science
+#                         and Technology (RIST).  All rights reserved.
+# Copyright (c) 2021      Amazon.com, Inc. or its affiliates.  All Rights
+#                         reserved.
+# Copyright (c) 2025      Advanced Micro Devices, Inc. All Rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+
+# ABI specific make components
+
+noinst_LTLIBRARIES += libmpi_c_abi.la libmpi_c_abi_profile.la
+if BUILD_MPI_BINDINGS_LAYER
+noinst_LTLIBRARIES += libmpi_c_abi_noprofile.la
+endif
+
+BUILT_SOURCES = abi.h standard_abi/mpi.h
+
+
+libmpi_c_abi_la_SOURCES = \
+        attr_fn.c \
+        abi_details.c \
+        abi_supported.c \
+        abi_version.c
+
+libmpi_c_abi_la_CPPFLAGS = -DOMPI_NO_MPI_PROTOTYPES
+libmpi_c_abi_la_LIBADD = libmpi_c_abi_profile.la
+if BUILD_MPI_BINDINGS_LAYER
+libmpi_c_abi_la_LIBADD += libmpi_c_abi_noprofile.la
+endif
+
+abi_interface_profile_sources = $(prototype_sources:.c.in=_abi_generated.c)
+
+libmpi_c_abi_profile_la_SOURCES = $(abi_interface_profile_sources)
+libmpi_c_abi_profile_la_CPPFLAGS = -DOMPI_NO_MPI_PROTOTYPES -DOMPI_BUILD_MPI_PROFILING=1
+
+libmpi_c_abi_noprofile_la_SOURCES = $(abi_interface_profile_sources)
+libmpi_c_abi_noprofile_la_CPPFLAGS = -DOMPI_NO_MPI_PROTOTYPES -DOMPI_BUILD_MPI_PROFILING=0
+
+nobase_include_HEADERS = abi.h standard_abi/mpi.h
+
+if OMPI_GENERATE_BINDINGS
+%_abi_generated.c: %.c.in
+	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
+	    --builddir $(abs_top_builddir) \
+	    --srcdir $(abs_top_srcdir) \
+	    --output $@ \
+	    c \
+	    source \
+	    standard \
+            $<
+abi.h: $(prototype_sources)
+	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
+	    --builddir $(abs_top_builddir) \
+	    --srcdir $(abs_top_srcdir) \
+	    --output $@ \
+	    c \
+	    header \
+            --srcdir $(srcdir) \
+            $(prototype_sources)
+standard_abi/mpi.h: $(prototype_sources)
+	mkdir -p standard_abi
+	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
+	    --builddir $(abs_top_builddir) \
+	    --srcdir $(abs_top_srcdir) \
+	    --output $@ \
+	    c \
+	    header \
+            --srcdir $(srcdir) \
+	    --external \
+            $(prototype_sources)
+endif
+# Delete generated files on maintainer-clean
+MAINTAINERCLEANFILES = *_generated.c abi.h standard_abi/
