@@ -500,6 +500,8 @@ if BUILD_MPI_BINDINGS_LAYER
 libmpi_c_la_LIBADD += libmpi_c_noprofile.la
 endif
 
+nobase_include_HEADERS = abi.h standard_abi/mpi.h
+
 #
 # List of all C files that have profile versions (*_generated.c files were
 # generated from prototype_sources above).
@@ -557,8 +559,38 @@ if OMPI_GENERATE_BINDINGS
 	    source \
 	    ompi \
 	    $<
+abi.h: $(prototype_sources)
+	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
+	    --builddir $(abs_top_builddir) \
+	    --srcdir $(abs_top_srcdir) \
+	    --output $@ \
+	    c \
+	    header \
+	    --srcdir $(srcdir) \
+	    $(prototype_sources)
+standard_abi/mpi.h: $(prototype_sources)
+	mkdir -p standard_abi
+	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
+	    --builddir $(abs_top_builddir) \
+	    --srcdir $(abs_top_srcdir) \
+	    --output $@ \
+	    c \
+	    header \
+            --srcdir $(srcdir) \
+	    --external \
+            $(prototype_sources)
+%_abi_generated.c: %.c.in
+	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
+	    --builddir $(abs_top_builddir) \
+	    --srcdir $(abs_top_srcdir) \
+	    --output $@ \
+	    c \
+	    source \
+	    standard \
+	    $<
 endif
 
+MAINTAINERCLEANFILES = *_generated.c abi.h
 if OMPI_STANDARD_ABI
 include Makefile_abi.include
 endif
