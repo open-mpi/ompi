@@ -34,18 +34,18 @@ headers += \
         request/grequestx.h
 endif
 
-lib@OMPI_LIBMPI_NAME@_la_SOURCES += \
+libopen_mpi_la_SOURCES += \
         request/grequest.c \
         request/request.c \
         request/req_test.c \
         request/req_wait.c
 
 if WANT_FT_MPI
-lib@OMPI_LIBMPI_NAME@_la_SOURCES += \
+libopen_mpi_la_SOURCES += \
 	request/req_ft.c
 endif # WANT_FT_MPI
 
 if OMPI_ENABLE_GREQUEST_EXTENSIONS
-lib@OMPI_LIBMPI_NAME@_la_SOURCES += \
+libopen_mpi_la_SOURCES += \
         request/grequestx.c
 endif
