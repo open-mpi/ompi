@@ -4,34 +4,20 @@ Open MPI v5.0.x series
 This file contains all the NEWS updates for the Open MPI v5.0.x
 series, in reverse chronological order.
 
-Open MPI Version v5.0.8rc3
+Open MPI Version v5.0.8
 ------------------------------
-:Date: 19 May 2025
+:Date: 30 May 2025
 
 - Internal PMIx and PRRTe versions:
   - PMIx (v5.0.8). Repo: ``https://github.com/openpmix/openpmix``. Commit hash: ``907b1ccaeec61a1197f0ee5264d4fef20b257b84``.
   - PRRTE (v3.0.11). Repo: ``https://github.com/openpmix/prrte``. Commit hash: ``222f03fbb98b71abd293aa205b38fa9a38e57965``.
 
-Open MPI Version v5.0.8rc2
-------------------------------
-:Date: 12 May 2025
-
-- Internal PMIx and PRRTe versions:
-  - PMIx (v5.0.8). Repo: ``https://github.com/openpmix/openpmix``. Commit hash: ``907b1ccaeec61a1197f0ee5264d4fef20b257b84``.
-  - PRRTE (v3.0.10). Repo: ``https://github.com/openpmix/prrte``. Commit hash: ``0ff51bd532e0a95483cafdc290d22a6cb55a9aef``.
-
-Open MPI Version v5.0.8rc1
-------------------------------
-:Date: 9 May 2025
-
-- Internal PMIx and PRRTe versions:
-  - PMIx (v5.0.7). Repo: ``https://github.com/openpmix/openpmix``. Commit hash: ``bc3680a178f0fc17f787cff4f417551a08497394``.
-  - PRRTE (v3.0.9). Repo: ``https://github.com/openpmix/prrte``. Commit hash: ``c4f6f78db4f38c8fa7be3589a96ed904bfc4b998``.
-
 - Functionality Enhancements
   - UCC collective operations: Improved handling of MPI_IN_PLACE in allgather, allgatherv, alltoall, alltoallv, gather, gatherv, scatter, and scatterv operations
   - UCX OSC: Added support for "no_locks" info key to disable lock table usage
   - OFI MTL: Enhanced CXI provider support for better compatibility
+  - AARCH64: Added SVE detection alongside NEON in aarch64 op component
+  - Fortran: Fixed common symbol sizes and alignments for better compatibility
 
 - Bug Fixes and Minor Enhancements
   - Hugepage Mpool: Fixed sizing of hugepages for better memory management
@@ -40,6 +26,10 @@ Open MPI Version v5.0.8rc1
   - Build system: Fixed support for flang on OSX
   - Removed unused spread contrib sample scripts
   - Various documentation updates and improvements
+  - CI: Removed Ubuntu 18 and RHEL 7 from test matrix
+  - Fixed type mismatch errors in shared memory components
+  - Updated Java configuration for latest Fedora releases
+  - Fixed memory zone reference counting in UCX dynamic windows
 
 Open MPI Version v5.0.7
 ------------------------------

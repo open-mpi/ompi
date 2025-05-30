@@ -62,7 +62,7 @@ tarball_version=gitclone
 
 # The date when this release was created
 
-date="Unreleased developer copy"
+date="30 May 2025"
 
 # The shared library version of each of Open MPI's public libraries.
 # These versions are maintained in accordance with the "Library
