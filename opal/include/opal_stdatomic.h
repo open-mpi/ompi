@@ -72,7 +72,7 @@ typedef _Atomic opal_int128_t opal_atomic_int128_t;
 
 #        else
 
-typedef volatile opal_int128_t opal_atomic_int128_t;
+typedef volatile opal_int128_t opal_atomic_int128_t __opal_attribute_aligned__(16);
 
 #        endif
 
