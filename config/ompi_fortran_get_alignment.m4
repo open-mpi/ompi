@@ -203,7 +203,7 @@ end program]])],
                           [AS_IF([test "$cross_compiling" = "yes"],
                                  [AC_MSG_ERROR([Can not determine common alignment when cross-compiling])],
                                  [OPAL_LOG_COMMAND([./conftest],
-                                                   [AS_VAR_SET(ompi_cv_fortran_common_alignment, [`cat conftestval`])],
+                                                   [AS_VAR_SET(ompi_cv_fortran_common_alignment, [`cat conftestval | xargs`])],
                                                    [AC_MSG_ERROR([Could not determine common alignment])])])],
 
                           [AC_MSG_WARN([Could not determine common alignment])
