@@ -79,7 +79,7 @@ EOF
          AS_IF([test "$cross_compiling" = "yes"],
              [AC_MSG_ERROR([Can not determine size of $2 when cross-compiling])],
              [OPAL_LOG_COMMAND([./conftest],
-                 [AS_VAR_SET(type_var, [`cat conftestval`])],
+                 [AS_VAR_SET(type_var, [`cat conftestval | xargs`])],
                  [AC_MSG_ERROR([Could not determine size of $2])])])
 
         unset happy ompi_conftest_h

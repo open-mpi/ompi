@@ -141,7 +141,7 @@ EOF
              [AC_MSG_RESULT([Error!])
               AC_MSG_ERROR([Can not determine if REAL*16 bit-matches C if cross compiling])],
              [OPAL_LOG_COMMAND([./conftest],
-                 [fortran_real16_happy=`cat conftestval`],
+                 [fortran_real16_happy=`cat conftestval | xargs`],
                  [AC_MSG_RESULT([Error!])
                   AC_MSG_ERROR([Could not determine if REAL*16 bit-matches C type])
                  ])
