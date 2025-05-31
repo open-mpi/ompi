@@ -216,5 +216,4 @@ end program]])],
           [AC_MSG_CHECKING([Fortran common alignment])
            $1=0
            AC_MSG_RESULT([skipped])])
-
 ])dnl
