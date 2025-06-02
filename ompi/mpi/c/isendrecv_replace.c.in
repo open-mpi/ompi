@@ -148,7 +148,7 @@ PROTOTYPE ERROR_CLASS isendrecv_replace(BUFFER_OUT buf, COUNT count, DATATYPE da
 
     /* simple case */
     if ( source == MPI_PROC_NULL || dest == MPI_PROC_NULL || count == 0 ) {
-        rc = PMPI_Isendrecv(buf, count, datatype, dest, sendtag, buf, count, datatype, source, recvtag, comm, request);
+        rc = ompi_isendrecv(buf, count, datatype, dest, sendtag, buf, count, datatype, source, recvtag, comm, request);
         return rc;
     }
 
