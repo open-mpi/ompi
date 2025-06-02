@@ -37,60 +37,12 @@
 #include "ompi/runtime/ompi_spc.h"
 
 
-struct ompi_isendrecv_context_t {
-    opal_object_t super;
-    int nreqs;
-    int source;
-    ompi_request_t *subreq[2];
-};
-
-typedef struct ompi_isendrecv_context_t ompi_isendrecv_context_t;
-#if OMPI_BUILD_MPI_PROFILING
-OBJ_CLASS_INSTANCE(ompi_isendrecv_context_t, opal_object_t, NULL, NULL);
-#else
-OBJ_CLASS_DECLARATION(ompi_isendrecv_context_t);
-#endif  /* OMPI_BUILD_MPI_PROFILING */
-
-static int ompi_isendrecv_complete_func (ompi_comm_request_t *request)
-{
-    ompi_isendrecv_context_t *context =
-        (ompi_isendrecv_context_t *) request->context;
-
-    /*
-     * Copy the status from the receive side of the sendrecv request?
-     * But what if the send failed?
-     *
-     * Probably need to bring up in the MPI forum.  
-     */
-
-    if (MPI_PROC_NULL != context->source) {
-        OMPI_COPY_STATUS(&request->super.req_status, 
-                         context->subreq[0]->req_status, false);
-    } else {
-        OMPI_COPY_STATUS(&request->super.req_status, 
-                         ompi_request_empty.req_status, false);
-    }
-
-    if(NULL != context->subreq[0]) {
-        ompi_request_free(&context->subreq[0]);
-    }
-    if(NULL != context->subreq[1]) {
-        ompi_request_free(&context->subreq[1]);
-    }
-
-    return OMPI_SUCCESS;
-}
-
 PROTOTYPE ERROR_CLASS isendrecv(BUFFER sendbuf, COUNT sendcount, DATATYPE sendtype,
                                 INT dest, INT sendtag, BUFFER_OUT recvbuf, COUNT recvcount,
                                 DATATYPE recvtype, INT source, INT recvtag,
                                 COMM comm,  REQUEST_INOUT request)
 {
-    ompi_isendrecv_context_t *context = NULL;
-    ompi_comm_request_t *crequest;
     int rc = MPI_SUCCESS;
-    int nreqs = 0;
-    uint32_t flags;
 
     SPC_RECORD(OMPI_SPC_ISENDRECV, 1);
 
@@ -125,64 +77,9 @@ PROTOTYPE ERROR_CLASS isendrecv(BUFFER sendbuf, COUNT sendcount, DATATYPE sendty
         OMPI_ERRHANDLER_CHECK(rc, comm, rc, FUNC_NAME);
     }
 
-    crequest = ompi_comm_request_get ();
-    if (NULL == crequest) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-
-    context = OBJ_NEW(ompi_isendrecv_context_t);
-    if (NULL == context) {
-        ompi_comm_request_return (crequest);
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-
-    crequest->context = &context->super;
-    context->subreq[0] = MPI_REQUEST_NULL;
-    context->subreq[1] = MPI_REQUEST_NULL;
-    context->source = source;
-
-    if (source != MPI_PROC_NULL) { /* post recv */
-        rc = MCA_PML_CALL(irecv(recvbuf, recvcount, recvtype,
-                                source, recvtag, comm, &context->subreq[nreqs++]));
-        if (MPI_SUCCESS != rc) {
-            OBJ_RELEASE(context);
-            ompi_comm_request_return (crequest);
-        }
-        OMPI_ERRHANDLER_CHECK(rc, comm, rc, FUNC_NAME);
-    }
-
-    if (dest != MPI_PROC_NULL) { /* send */
-        rc = MCA_PML_CALL(isend(sendbuf, sendcount, sendtype, dest,
-                                sendtag, MCA_PML_BASE_SEND_STANDARD, comm, &context->subreq[nreqs++]));
-        if (MPI_SUCCESS != rc) {
-            OBJ_RELEASE(context);
-            ompi_comm_request_return (crequest);
-        }
-        OMPI_ERRHANDLER_CHECK(rc, comm, rc, FUNC_NAME);
-    }
-
-    /*
-     *  schedule the operation
-     */
-
-    context->nreqs = nreqs;
-    assert(nreqs <= 2);
-
-    flags = OMPI_COMM_REQ_FLAG_RETAIN_SUBREQ;
-
-    rc = ompi_comm_request_schedule_append_w_flags(crequest, ompi_isendrecv_complete_func, 
-                                                   context->subreq, nreqs, flags);
-    if (MPI_SUCCESS != rc) {
-        OBJ_RELEASE(context);
-        ompi_comm_request_return (crequest);
-    }
+    rc = ompi_isendrecv(sendbuf, sendcount, sendtype, dest, sendtag, recvbuf, recvcount, recvtype, source, recvtag, comm, request);
 
     OMPI_ERRHANDLER_CHECK(rc, comm, rc, FUNC_NAME);
-
-    /* kick off the request */
-
-    ompi_comm_request_start (crequest);
-    *request = &crequest->super;
 
     return rc;
 }
