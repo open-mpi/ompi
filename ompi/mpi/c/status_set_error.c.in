@@ -17,7 +17,7 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/memchecker.h"
 
-PROTOTYPE ERROR_CLASS status_set_error(STATUS_OUT status, INT error)
+PROTOTYPE ERROR_CLASS status_set_error(STATUS_INOUT status, INT error)
 {
     MEMCHECKER(
         if(status != MPI_STATUSES_IGNORE) {
