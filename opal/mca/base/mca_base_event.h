@@ -4,6 +4,8 @@
  *                         reserved.
  * Copyright (c) 2018-2019 Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2025      High Performance Computing Center Stuttgart,
+ *                         University of Stuttgart.  All rights reserved.
  *
  * Additional copyrights may follow
  *
@@ -174,11 +176,6 @@ OPAL_DECLSPEC int mca_base_event_register (const char *project, const char *fram
                                            const char *description, mca_base_var_info_lvl_t verbosity, opal_datatype_t **datatypes,
                                            unsigned long *offsets, size_t num_datatypes, mca_base_var_enum_t *enumerator, int bind,
                                            int source, uint32_t flags, mca_base_notify_fn_t notify, void *ctx, mca_base_event_t **event_out);
-
-OPAL_DECLSPEC int mca_base_component_event_register (const mca_base_component_t *component, const char *name,
-                                                     const char *description, mca_base_var_info_lvl_t verbosity, opal_datatype_t **datatypes,
-                                                     unsigned long *offsets, size_t num_datatypes, mca_base_var_enum_t *enumerator, int bind,
-                                                     int source, uint32_t flags, mca_base_notify_fn_t notify, void *ctx, mca_base_event_t **event_out);
 
 OPAL_DECLSPEC int mca_base_component_event_register_list (const mca_base_component_t *component, mca_base_event_list_item_t *list, int count);
 

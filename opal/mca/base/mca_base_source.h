@@ -2,6 +2,8 @@
 /*
  * Copyright (c) 2018      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2025      High Performance Computing Center Stuttgart,
+ *                         University of Stuttgart.  All rights reserved.
  *
  * Additional copyrights may follow
  *
@@ -57,11 +59,6 @@ OPAL_DECLSPEC int mca_base_source_dump(int index, char ***out, mca_base_var_dump
 
 OPAL_DECLSPEC int mca_base_source_register (const char *project, const char *framework, const char *component, const char *name,
                                             const char *description, bool ordered, mca_base_source_time_fn_t source_time, uint64_t source_ticks);
-
-OPAL_DECLSPEC int mca_base_component_source_register (const mca_base_component_t *component, const char *name, const char *description,
-                                                      bool ordered, mca_base_source_time_fn_t source_time, uint64_t source_ticks);
-
-OPAL_DECLSPEC int mca_base_source_set_time_source (int source_index, mca_base_source_time_fn_t time_source, uint64_t time_ticks);
 
 OPAL_DECLSPEC mca_base_source_t *mca_base_source_get (int source_index);
 

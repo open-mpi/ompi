@@ -8,6 +8,8 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
+ * Copyright (c) 2025      High Performance Computing Center Stuttgart,
+ *                         University of Stuttgart.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -123,6 +125,10 @@ mca_base_source_t *mca_base_source_get (int source_index)
     return ret;
 }
 
+#if 0
+/* Due to perceived possiblity of timer-source change runtime,
+ * keeping the code, but disabling it.
+ */
 int mca_base_source_set_time_source (int source_index, mca_base_source_time_fn_t time_source, uint64_t time_ticks)
 {
     /* Uses source lock/unlock */
@@ -146,6 +152,7 @@ int mca_base_source_set_time_source (int source_index, mca_base_source_time_fn_t
 
     return OPAL_SUCCESS;
 }
+#endif
 
 /***************************************************************************************************/
 
@@ -250,13 +257,6 @@ int mca_base_source_register (const char *project, const char *framework, const 
     OPAL_THREAD_UNLOCK(&mca_base_source_lock);
 
     return OPAL_SUCCESS;
-}
-int mca_base_component_source_register (const mca_base_component_t *component, const char *name, const char *description, bool ordered,
-                                        mca_base_source_time_fn_t source_time, uint64_t source_ticks)
-{
-    /* invalidate this variable if the component's group is deregistered */
-    return mca_base_source_register (component->mca_project_name, component->mca_type_name, component->mca_component_name,
-                                     name, description, ordered, source_time, source_ticks);
 }
 
 /* mca_base_source_t class */

@@ -10,6 +10,8 @@
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * Copyright (c) 2018-2019 Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2025      High Performance Computing Center Stuttgart,
+ *                         University of Stuttgart.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -288,17 +290,6 @@ int mca_base_event_register (const char *project, const char *framework, const c
     }
 
     return OPAL_SUCCESS;
-}
-
-int mca_base_component_event_register (const mca_base_component_t *component, const char *name,
-                                       const char *description, mca_base_var_info_lvl_t verbosity, opal_datatype_t **datatypes,
-                                       unsigned long *offsets, size_t num_datatypes, mca_base_var_enum_t *enumerator, int bind,
-                                       int source, uint32_t flags, mca_base_notify_fn_t notify, void *ctx, mca_base_event_t **event_out)
-{
-    /* invalidate this variable if the component's group is deregistered */
-    return mca_base_event_register (component->mca_project_name, component->mca_type_name, component->mca_component_name,
-                                    name, description, verbosity, datatypes, offsets, num_datatypes, enumerator, bind,
-                                    source, flags | MCA_BASE_EVENT_FLAG_IWG, notify, ctx, event_out);
 }
 
 int mca_base_component_event_register_list (const mca_base_component_t *component, mca_base_event_list_item_t *list, int count)
