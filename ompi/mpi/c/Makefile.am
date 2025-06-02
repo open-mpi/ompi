@@ -293,8 +293,6 @@ prototype_sources = \
 	isendrecv_replace.c.in \
 	issend.c.in \
 	is_thread_main.c.in \
-	keyval_create.c.in \
-	keyval_free.c.in \
 	lookup_name.c.in \
         message_c2f.c.in \
         message_f2c.c.in \
@@ -490,7 +488,9 @@ libmpi_c_la_SOURCES = \
 libmpi_c_la_SOURCES += \
          abi_details.c \
          abi_supported.c \
-         abi_version.c
+         abi_version.c \
+	 ompi_isendrecv.c \
+	 ompi_sendrecv.c
 
 libmpi_c_la_LIBADD = libmpi_c_profile.la
 if BUILD_MPI_BINDINGS_LAYER
@@ -533,6 +533,8 @@ deprecated_interface_profile_sources = \
         errhandler_create.c \
         errhandler_get.c \
         errhandler_set.c \
+	keyval_create.c \
+	keyval_free.c \
         type_extent.c \
         type_hindexed.c \
         type_hvector.c \

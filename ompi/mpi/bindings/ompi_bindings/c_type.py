@@ -757,6 +757,66 @@ class TypeStausOutStandard(StandardABIType):
         else:
             return f'{type_name} {self.name}[]'
 
+@Type.add_type('STATUS_INOUT', abi_type=['ompi'])
+class TypeStatusInOut(Type):
+
+    def type_text(self, enable_count=False):
+        return 'MPI_Status *'
+
+    def parameter(self, enable_count=False, **kwargs):
+        if self.count_param is None:
+            return f'MPI_Status *{self.name}'
+        else:
+            return f'MPI_Status {self.name}[]'
+
+#
+# so far there are no vectors of statuses for inout in the the standard
+#
+@Type.add_type('STATUS_INOUT', abi_type=['standard'])
+class TypeStausInOutStandard(StandardABIType):
+
+    def if_should_set_status(self):
+        """Generate the condition to check if the status(es) should be set."""
+        condition = ' && '.join(f'{self.mangle_name(const)} != {self.name}'
+                                for const in IGNORED_STATUS_HANDLES)
+        return 'if (%s) {' % (condition,)
+
+    @property
+    def status_argument(self):
+        return f'{self.name}_arg'
+
+    @property
+    def init_code(self):
+        mangle_type = self.mangle_name('MPI_Status')
+        code = [f'MPI_Status *{self.status_argument} = NULL;']
+        code.append(f'MPI_Status {self.tmpname};')
+        code.append(f'{ConvertFuncs.STATUS}(&{self.tmpname}, ({mangle_type} *){self.name});')
+        code.append(self.if_should_set_status())
+        code.append(f'{self.status_argument} = &{self.tmpname};')
+        code.append('} else {')
+        code.append(f'{self.status_argument} = MPI_STATUS_IGNORE;')
+        code.append('}')
+        return code
+
+    @property
+    def final_code(self):
+        code = [self.if_should_set_status()]
+        code.append(f'{ConvertOMPIToStandard.STATUS}({self.name}, &{self.tmpname});')
+        code.append('}')
+        return code
+
+    @property
+    def argument(self):
+        return self.status_argument
+
+    def type_text(self, enable_count=False):
+        type_name = self.mangle_name('MPI_Status')
+        return f'{type_name} *'
+
+    def parameter(self, enable_count=False, **kwargs):
+        type_name = self.mangle_name('MPI_Status')
+        return f'{type_name} *{self.name}'
+
 
 @Type.add_type('F08_STATUS')
 class TypeF08Status(Type):
