@@ -218,8 +218,11 @@ class ABIHeaderBuilder:
         abi_type = self.mangle_name(type_)
         self.dump(f'{consts.INLINE_ATTRS} void {ConvertFuncs.STATUS}({type_} *out, {abi_type} *inp)')
         self.dump('{')
+        self.dump('    void *ptr = &out->_ucount;')
         self.dump('    out->MPI_SOURCE = inp->MPI_SOURCE;')
         self.dump('    out->MPI_TAG = inp->MPI_TAG;')
+        self.dump('    out->_cancelled = inp->MPI_Internal[0];')
+        self.dump('    memcpy(ptr, &inp->MPI_Internal[1],sizeof(out->_ucount));')
         self.dump(f'    out->MPI_ERROR = {ConvertFuncs.ERROR_CLASS}(inp->MPI_ERROR);')
         # Ignoring the private fields for now
         self.dump('}')
@@ -229,8 +232,11 @@ class ABIHeaderBuilder:
         abi_type = self.mangle_name(type_)
         self.dump(f'{consts.INLINE_ATTRS} void {ConvertOMPIToStandard.STATUS}({abi_type} *out, {type_} *inp)')
         self.dump('{')
+        self.dump('    void *ptr = &out->MPI_Internal[1];')
         self.dump('    out->MPI_SOURCE = inp->MPI_SOURCE;')
         self.dump('    out->MPI_TAG = inp->MPI_TAG;')
+        self.dump('    out->MPI_Internal[0] =inp->_cancelled;')
+        self.dump('    memcpy(ptr, &inp->_ucount,sizeof(inp->_ucount));')
 #       self.dump(f'    out->MPI_ERROR = {ConvertOMPIToStandard.ERROR_CLASS}(inp->MPI_ERROR);')
         # Ignoring the private fields for now
         self.dump('}')
@@ -309,7 +315,7 @@ struct MPI_Status_ABI {
     int MPI_SOURCE;
     int MPI_TAG;
     int MPI_ERROR;
-    int mpi_abi_private[5];
+    int MPI_Internal[5];
 };""")
         self.dump(f'typedef struct MPI_Status_ABI {self.mangle_name("MPI_Status")};')
         self.dump()
