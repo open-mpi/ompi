@@ -13,7 +13,7 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
- * Copyright (c) 2024      Triad National Security, LLC. All rights
+ * Copyright (c) 2024-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -60,16 +60,6 @@ PROTOTYPE ERROR_CLASS win_create(BUFFER_OUT base, AINT size, DISP disp_unit,
         } else if ( disp_unit <= 0 ) {
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_DISP, FUNC_NAME);
         }
-/*
- * TODO:BIGCOUNT remove this check once ompi-rma supports bigcount
- */
-#if OMPI_BIGCOUNT_SRC
-        OMPI_CHECK_MPI_COUNT_INT_CONVERSION_OVERFLOW(ret, disp_unit);
-        if (OMPI_SUCCESS != ret) {
-            *win = MPI_WIN_NULL;
-            return OMPI_ERRHANDLER_INVOKE(comm, ret, FUNC_NAME);
-        }
-#endif
     }
 
     /* communicator must be an intracommunicator */
@@ -77,11 +67,8 @@ PROTOTYPE ERROR_CLASS win_create(BUFFER_OUT base, AINT size, DISP disp_unit,
         return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COMM, FUNC_NAME);
     }
 
-/*
- * TODO:BIGCOUNT remove (int) before disp_unit once ompi-rma supports bigcount
- */
     /* create window and return */
-    ret = ompi_win_create(base, (size_t)size, (int)disp_unit, comm,
+    ret = ompi_win_create(base, (size_t)size, (ptrdiff_t)disp_unit, comm,
                           &(info->super), win);
     if (OMPI_SUCCESS != ret) {
         *win = MPI_WIN_NULL;
