@@ -17,7 +17,7 @@
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
- * Copyright (c) 2018-2019 Triad National Security, LLC. All rights
+ * Copyright (c) 2018-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2024      Advanced Micro Devices, Inc. All rights reserved.
  * $COPYRIGHT$
@@ -206,7 +206,7 @@ static int alloc_window(struct ompi_communicator_t *comm, opal_info_t *info, int
 }
 
 static int
-config_window(void *base, size_t size, int disp_unit,
+config_window(void *base, size_t size, ptrdiff_t disp_unit,
               int flavor, int model, ompi_win_t *win)
 {
     int ret;
@@ -220,9 +220,15 @@ config_window(void *base, size_t size, int disp_unit,
                              MPI_WIN_SIZE, size, true);
     if (OMPI_SUCCESS != ret) return ret;
 
+    /* 
+     * No this isn't really right but the MPI Forum RMA WG was spleeping during
+     * Big count proposal reading and didn't put in something for Table 12.1 of the 
+     * MPI 5.0 standard for embiggened disp_unit, so here we go with int * in accordance
+     * with that table.
+     */
     ret = ompi_attr_set_int(WIN_ATTR, win,
                             &win->w_keyhash,
-                            MPI_WIN_DISP_UNIT, disp_unit,
+                            MPI_WIN_DISP_UNIT, (int)disp_unit,
                             true);
     if (OMPI_SUCCESS != ret) return ret;
 
@@ -244,7 +250,7 @@ config_window(void *base, size_t size, int disp_unit,
 
 int
 ompi_win_create(void *base, size_t size,
-                int disp_unit, ompi_communicator_t *comm,
+                ptrdiff_t disp_unit, ompi_communicator_t *comm,
                 opal_info_t *info,
                 ompi_win_t** newwin)
 {
@@ -275,7 +281,7 @@ ompi_win_create(void *base, size_t size,
 }
 
 int
-ompi_win_allocate(size_t size, int disp_unit, opal_info_t *info,
+ompi_win_allocate(size_t size, ptrdiff_t disp_unit, opal_info_t *info,
                   ompi_communicator_t *comm, void *baseptr, ompi_win_t **newwin)
 {
     ompi_win_t *win;
@@ -307,7 +313,7 @@ ompi_win_allocate(size_t size, int disp_unit, opal_info_t *info,
 }
 
 int
-ompi_win_allocate_shared(size_t size, int disp_unit, opal_info_t *info,
+ompi_win_allocate_shared(size_t size, ptrdiff_t disp_unit, opal_info_t *info,
                          ompi_communicator_t *comm, void *baseptr, ompi_win_t **newwin)
 {
     ompi_win_t *win;
