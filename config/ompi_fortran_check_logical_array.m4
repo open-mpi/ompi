@@ -101,7 +101,7 @@ EOF
                  [ # assume we're ok
                   value=yes],
                  [OPAL_LOG_COMMAND([./conftest],
-                      [if test "`cat conftestval`" = "1" ; then
+                      [if test "`cat conftestval | xargs`" = "1" ; then
                            value=yes
                        else
                            value=no
