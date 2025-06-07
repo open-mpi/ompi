@@ -159,6 +159,10 @@ COMMUNICATOR_SPLIT_TYPES = [
     'MPI_COMM_TYPE_HW_GUIDED',
 ]
 
+RESERVED_GROUPS = [
+    'MPI_GROUP_NULL',
+]
+
 RESERVED_WINDOWS = [
     'MPI_WIN_NULL',
 ]
@@ -174,6 +178,23 @@ RESERVED_INFOS = [
 
 RESERVED_FILES = [
     'MPI_FILE_NULL',
+]
+
+RESERVED_OPS = [
+    'MPI_OP_NULL',
+]
+
+RESERVED_MESSAGES = [
+     'MPI_MESSAGE_NULL',
+     'MPI_MESSAGE_NO_PROC',
+]
+
+RESERVED_SESSIONS = [
+    'MPI_SESSION_NULL',
+]
+
+RESERVED_ERRHANDLERS = [
+    'MPI_ERRHANDLER_NULL',
 ]
 
 IGNORED_STATUS_HANDLES = [
@@ -232,12 +253,16 @@ C_HANDLES = [
 class ConvertFuncs:
     """Names of conversion functions (between standard ABI and OMPI ABI)."""
 
-    ERROR_CLASS = 'ompi_convert_intern_error_abi_error'
+    ERROR_CLASS = 'ompi_convert_abi_error_intern_error'
+    ERRHANDLER = 'ompi_convert_abi_errorhandler_intern_errorhandler'
     COMM = 'ompi_convert_abi_comm_intern_comm'
     DATATYPE = 'ompi_convert_abi_datatype_intern_datatype'
+    GROUP = 'ompi_convert_abi_group_intern_group'
     REQUEST = 'ompi_convert_abi_request_intern_request'
-    STATUS = 'ompi_convert_intern_status_abi_status'
+    STATUS = 'ompi_convert_abi_status_intern_status'
+    MESSAGE = 'ompi_convert_abi_message_intern_message'
     OP = 'ompi_convert_abi_op_intern_op'
+    SESSION = 'ompi_convert_abi_session_intern_win'
     WIN = 'ompi_convert_abi_win_intern_win'
     INFO = 'ompi_convert_abi_info_intern_info'
     FILE = 'ompi_convert_abi_file_intern_file'
@@ -247,6 +272,18 @@ class ConvertOMPIToStandard:
     """Generated function for converting from OMPI to standard ABI."""
 
     COMM = 'ompi_convert_comm_ompi_to_standard'
+    ERROR_CLASS = 'ompi_convert_intern_error_abi_error'
+    ERRHANDLER = 'ompi_convert_intern_errorhandler_abi_errorhandler'
+    GROUP = 'ompi_convert_group_ompi_to_standard'
+    DATATYPE = 'ompi_convert_datatype_ompi_to_standard'
+    FILE = 'ompi_convert_file_ompi_to_standard'
+    MESSAGE = 'ompi_convert_message_ompi_to_standard'
+    OP = 'ompi_convert_op_ompi_to_standard'
+    SESSION = 'ompi_convert_session_ompi_to_standard'
+    STATUS = 'ompi_convert_intern_status_abi_status'
+    WIN = 'ompi_convert_win_ompi_to_standard'
+    REQUEST = 'ompi_convert_ompi_request_abi_request'
+    INFO = 'ompi_convert_info_ompi_to_standard'
 
 
 # Inline function attributes
