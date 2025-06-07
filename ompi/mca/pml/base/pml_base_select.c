@@ -17,6 +17,7 @@
  * Copyright (c) 2020-2022 Amazon.com, Inc. or its affiliates.  All Rights
  * Copyright (c) 2018-2020 Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2024      Nanook Consulting  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -239,17 +240,6 @@ int mca_pml_base_select(bool enable_progress_threads,
     return ret;
 }
 
-/* need a "commonly" named PML structure so everything ends up in the
-   same modex field */
-static mca_base_component_t pml_base_component = {
-    OMPI_MCA_BASE_VERSION_2_1_0("pml", 2, 0, 0),
-    .mca_component_name = "base",
-    .mca_component_major_version = 2,
-    .mca_component_minor_version = 0,
-    .mca_component_release_version = 0,
-};
-
-
 /*
  * If direct modex, then publish PML for all procs. If full modex then
  * publish PML for rank 0 only. This information is used during add_procs
@@ -268,11 +258,19 @@ static mca_base_component_t pml_base_component = {
 int
 mca_pml_base_pml_selected(const char *name)
 {
-    int rc = 0;
+    int rc = OMPI_SUCCESS;
+    pmix_value_t val;
 
+    /* if we were told not to perform the check, then no point
+     * in unnecessarily adding to the modex payload
+     */
+    if (!ompi_pml_base_check_pml) {
+        return OMPI_SUCCESS;
+    }
     if (!opal_pmix_collect_all_data || 0 == OMPI_PROC_MY_NAME->vpid) {
-        OPAL_MODEX_SEND(rc, PMIX_GLOBAL, &pml_base_component, name,
-                        strlen(name) + 1);
+        PMIX_VALUE_LOAD(&val, name, PMIX_STRING);
+        rc = PMIx_Put(PMIX_GLOBAL, "OMPI_PML_BASE", &val);
+        PMIX_VALUE_DESTRUCT(&val);
     }
     return rc;
 }
@@ -281,9 +279,11 @@ static int
 mca_pml_base_pml_check_selected_impl(const char *my_pml,
                                      opal_process_name_t proc_name)
 {
-    size_t size;
     int ret = 0;
     char *remote_pml;
+    pmix_proc_t proc;
+    pmix_value_t *val = NULL;
+    pmix_info_t optional;
 
     /* if we are proc_name=OMPI_PROC_MY_NAME, then we can also assume success */
     if (0 == opal_compare_proc(ompi_proc_local()->super.proc_name, proc_name)) {
@@ -291,9 +291,13 @@ mca_pml_base_pml_check_selected_impl(const char *my_pml,
                             "check:select: PML check not necessary on self");
         return OMPI_SUCCESS;
     }
-    OPAL_MODEX_RECV_STRING(ret,
-                           mca_base_component_to_string(&pml_base_component),
-                           &proc_name, (void**) &remote_pml, &size);
+
+    /* Note that we cannot tell PMIx to just check our local modex info
+     * because we might have requested a direct modex
+     */
+    OPAL_PMIX_CONVERT_NAME(&proc, &proc_name);
+    ret = PMIx_Get(&proc, "OMPI_PML_BASE", NULL, 0, &val);
+
     if (PMIX_ERR_NOT_FOUND == ret) {
         opal_output_verbose( 10, ompi_pml_base_framework.framework_output,
                             "check:select: PML modex for process %s not found",
@@ -305,12 +309,22 @@ mca_pml_base_pml_check_selected_impl(const char *my_pml,
      * wasn't returned, but just to be safe, and since the check
      * is fast...let's be sure
      */
-    if (NULL == remote_pml) {
+    if (NULL == val) {
         opal_output_verbose( 10, ompi_pml_base_framework.framework_output,
                             "check:select: got a NULL pml from process %s",
                             OMPI_NAME_PRINT(&proc_name));
         return OMPI_ERR_UNREACH;
     }
+    if (PMIX_STRING != val->type) {
+        opal_output_verbose( 10, ompi_pml_base_framework.framework_output,
+                            "check:select: got a non-string (%s) pml from process %s",
+                            PMIx_Data_type_string(val->type), OMPI_NAME_PRINT(&proc_name));
+        PMIX_VALUE_RELEASE(val);
+        return OMPI_ERR_UNREACH;
+    }
+    remote_pml = val->data.string;
+    val->data.string = NULL;  // protect data
+    PMIX_VALUE_RELEASE(val);
 
     opal_output_verbose( 10, ompi_pml_base_framework.framework_output,
                         "check:select: checking my pml %s against process %s"
@@ -318,18 +332,24 @@ mca_pml_base_pml_check_selected_impl(const char *my_pml,
                         remote_pml);
 
     /* if that module doesn't match my own, return an error */
-    if ((size != strlen(my_pml) + 1) ||
-        (0 != strcmp(my_pml, remote_pml))) {
+    if (0 != strcmp(my_pml, remote_pml)) {
         char *errhost = NULL;
-        OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, PMIX_HOSTNAME, &proc_name,
-                                       &(errhost), PMIX_STRING);
+        PMIX_INFO_LOAD(&optional, PMIX_OPTIONAL, NULL, PMIX_BOOL);
+        ret = PMIx_Get(&proc, PMIX_HOSTNAME, &optional, 1, &val);
+        if (PMIX_SUCCESS == ret && NULL != val && PMIX_STRING == val->type) {
+            errhost = val->data.string;
+            val->data.string = NULL;   // protect data
+            PMIX_VALUE_RELEASE(val);
+        }
         opal_output(0, "%s selected pml %s, but peer %s on %s selected pml %s",
                     OMPI_NAME_PRINT(&ompi_proc_local()->super.proc_name),
                     my_pml, OMPI_NAME_PRINT(&proc_name),
                     (NULL == errhost) ? "unknown" : errhost,
                     remote_pml);
         free(remote_pml);
-        free(errhost);
+        if (NULL != errhost) {
+            free(errhost);
+        }
          /* cleanup before returning */
         return OMPI_ERR_UNREACH;
     }
