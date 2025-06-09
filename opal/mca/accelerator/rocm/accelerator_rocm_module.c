@@ -13,6 +13,7 @@
 #include "opal/mca/accelerator/base/base.h"
 #include "opal/constants.h"
 #include "opal/util/output.h"
+#include <string.h>
 
 /* Accelerator API's */
 static int mca_accelerator_rocm_check_addr(const void *addr, int *dev_id, uint64_t *flags);
