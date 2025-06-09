@@ -1137,7 +1137,7 @@ int mca_spml_ucx_ctx_create(long options, shmem_ctx_t *ctx)
     /* Check if we have an idle context to reuse */
     SHMEM_MUTEX_LOCK(mca_spml_ucx.internal_mutex);
     for (i = 0; i < idle_array->ctxs_count; i++) {
-        if (idle_array->ctxs[i]->options & options) {
+        if (idle_array->ctxs[i]->options == options) {
             ucx_ctx = idle_array->ctxs[i];
             _ctx_remove(idle_array, ucx_ctx, i);
             break;
