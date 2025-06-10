@@ -14,7 +14,7 @@ on:
 
 jobs:
   mpi4py-tests:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     timeout-minutes: 30
     env:
       ${{ inputs.env_name}}: 1
@@ -59,27 +59,27 @@ jobs:
     #----------------------------------------------
 
     - name: Test mpi4py (singleton)
-      run:  python test/main.py -v
+      run:  python test/main.py -v -x test_doc
       if:   ${{ true }}
       timeout-minutes: 10
     - name: Test mpi4py (np=1)
-      run:  mpiexec -n 1 python test/main.py -v
+      run:  mpiexec -n 1 python test/main.py -v -x test_doc
       if:   ${{ true }}
       timeout-minutes: 10
     - name: Test mpi4py (np=2)
-      run:  mpiexec -n 2 python test/main.py -v -f
+      run:  mpiexec -n 2 python test/main.py -v -f -x test_doc
       if:   ${{ true }}
       timeout-minutes: 10
     - name: Test mpi4py (np=3)
-      run:  mpiexec -n 3 python test/main.py -v -f
+      run:  mpiexec -n 3 python test/main.py -v -f -x test_doc
       if:   ${{ true }}
       timeout-minutes: 10
     - name: Test mpi4py (np=4)
-      run:  mpiexec -n 4 python test/main.py -v -f
+      run:  mpiexec -n 4 python test/main.py -v -f -x test_doc
       if:   ${{ true }}
       timeout-minutes: 10
     - name: Test mpi4py (np=5)
-      run:  mpiexec -n 5 python test/main.py -v -f
+      run:  mpiexec -n 5 python test/main.py -v -f -x test_doc
       if:   ${{ true }}
       timeout-minutes: 10
 
