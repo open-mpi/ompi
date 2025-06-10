@@ -34,7 +34,7 @@ endif
 ompi_monitoring_prof_la_LDFLAGS= \
     -module -avoid-version -shared $(WRAPPER_EXTRA_LDFLAGS)
 ompi_monitoring_prof_la_LIBADD = \
-    $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
+    $(top_builddir)/ompi/libopen-mpi.la \
     $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
 
 if OPAL_INSTALL_BINARIES

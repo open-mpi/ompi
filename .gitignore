@@ -271,6 +271,7 @@ ompi/tools/ompi_info/ompi_info
 
 ompi/tools/wrappers/mpic++-wrapper-data.txt
 ompi/tools/wrappers/mpicc-wrapper-data.txt
+ompi/tools/wrappers/mpicc_abi-wrapper-data.txt
 ompi/tools/wrappers/mpifort-wrapper-data.txt
 ompi/tools/wrappers/ompi_wrapper_script
 ompi/tools/wrappers/ompi.pc
@@ -534,6 +535,9 @@ docs/man
 
 # Generated C Bindings
 ompi/mpi/c/*_generated*.c
+ompi/mpi/c/standard_*.c
+ompi/mpi/c/abi.h
+ompi/mpi/c/standard_abi
 
 # Generated Fortran Bindings
 ompi/mpi/fortran/use-mpi-f08/*_generated.F90
