@@ -387,6 +387,9 @@ OMPI_MAN3 = \
         MPI_Request_f2c.3 \
         MPI_Request_free.3 \
         MPI_Request_get_status.3 \
+        MPI_Request_get_status_all.3 \
+        MPI_Request_get_status_any.3 \
+        MPI_Request_get_status_some.3 \
         MPI_Rget.3 \
         MPI_Rget_accumulate.3 \
         MPI_Rput.3 \
