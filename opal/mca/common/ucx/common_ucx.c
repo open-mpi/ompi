@@ -73,6 +73,7 @@ OPAL_DECLSPEC void opal_common_ucx_mca_var_register(const mca_base_component_t *
 {
     char *default_tls = "rc_verbs,ud_verbs,rc_mlx5,dc_mlx5,ud_mlx5,cuda_ipc,rocm_ipc";
     char *default_devices = "mlx*";
+    char *old_str = NULL;
     int hook_index;
     int verbose_index;
     int progress_index;
@@ -102,17 +103,9 @@ OPAL_DECLSPEC void opal_common_ucx_mca_var_register(const mca_base_component_t *
                                        &opal_common_ucx.opal_mem_hooks);
 
     if (NULL == opal_common_ucx.tls) {
-        // Extra level of string indirection needed to make ompi_info
-        // happy since it will unload this library before the MCA base
-        // cleans up the MCA vars. This will cause the string to go
-        // out of scope unless we place the pointer to it on the heap.
-        opal_common_ucx.tls = (char **) malloc(sizeof(char *));
-        *opal_common_ucx.tls = NULL;
+        opal_common_ucx.tls = strdup(default_tls);
     }
-
-    if (NULL == *opal_common_ucx.tls) {
-        *opal_common_ucx.tls = strdup(default_tls);
-    }
+    old_str = opal_common_ucx.tls;
 
     tls_index = mca_base_var_register(
         "opal", "opal_common", "ucx", "tls",
@@ -122,23 +115,21 @@ OPAL_DECLSPEC void opal_common_ucx_mca_var_register(const mca_base_component_t *
         "For example, in order to exclude on shared memory and TCP transports, "
         "please set to '^posix,sysv,self,tcp,cma,knem,xpmem'.",
         MCA_BASE_VAR_TYPE_STRING, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE | MCA_BASE_VAR_FLAG_DWG,
-        OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_LOCAL, opal_common_ucx.tls);
+        OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_LOCAL, &opal_common_ucx.tls);
+    free(old_str);
 
     if (NULL == opal_common_ucx.devices) {
-        opal_common_ucx.devices = (char**) malloc(sizeof(char*));
-        *opal_common_ucx.devices = NULL;
+        opal_common_ucx.devices = strdup(default_devices);
     }
-
-    if (NULL == *opal_common_ucx.devices) {
-        *opal_common_ucx.devices = strdup(default_devices);
-    }
+    old_str = opal_common_ucx.tls;
 
     devices_index = mca_base_var_register(
         "opal", "opal_common", "ucx", "devices",
         "List of device driver pattern names, which, if supported by UCX, will "
         "bump its priority above ob1. Special values: any (any available)",
         MCA_BASE_VAR_TYPE_STRING, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE | MCA_BASE_VAR_FLAG_DWG,
-        OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_LOCAL, opal_common_ucx.devices);
+        OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_LOCAL, &opal_common_ucx.devices);
+    free(old_str);
 
     if (component) {
         mca_base_var_register_synonym(verbose_index, component->mca_project_name,
@@ -270,12 +261,12 @@ OPAL_DECLSPEC opal_common_ucx_support_level_t opal_common_ucx_support_level(ucp_
     int ret;
 #endif
 
-    if ((*opal_common_ucx.tls == NULL) || (*opal_common_ucx.devices == NULL)) {
+    if ((opal_common_ucx.tls == NULL) || (opal_common_ucx.devices == NULL)) {
         opal_common_ucx_mca_var_register(NULL);
     }
 
-    is_any_tl = !strcmp(*opal_common_ucx.tls, "any");
-    is_any_device = !strcmp(*opal_common_ucx.devices, "any");
+    is_any_tl = !strcmp(opal_common_ucx.tls, "any");
+    is_any_device = !strcmp(opal_common_ucx.devices, "any");
 
     /* Check for special value "any" */
     if (is_any_tl && is_any_device) {
@@ -286,19 +277,19 @@ OPAL_DECLSPEC opal_common_ucx_support_level_t opal_common_ucx_support_level(ucp_
 
 #if HAVE_DECL_OPEN_MEMSTREAM
     /* Split transports list */
-    negate = ('^' == (*opal_common_ucx.tls)[0]);
-    tl_list = opal_argv_split(*opal_common_ucx.tls + (negate ? 1 : 0), ',');
+    negate = ('^' == (opal_common_ucx.tls)[0]);
+    tl_list = opal_argv_split(opal_common_ucx.tls + (negate ? 1 : 0), ',');
     if (tl_list == NULL) {
         MCA_COMMON_UCX_VERBOSE(1, "failed to split tl list '%s', ucx is disabled",
-                               *opal_common_ucx.tls);
+                               opal_common_ucx.tls);
         goto out;
     }
 
     /* Split devices list */
-    device_list = opal_argv_split(*opal_common_ucx.devices, ',');
+    device_list = opal_argv_split(opal_common_ucx.devices, ',');
     if (device_list == NULL) {
         MCA_COMMON_UCX_VERBOSE(1, "failed to split devices list '%s', ucx is disabled",
-                               *opal_common_ucx.devices);
+                               opal_common_ucx.devices);
         goto out_free_tl_list;
     }
 

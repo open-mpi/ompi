@@ -90,7 +90,7 @@ static int opal_patcher_base_close(void)
         return opal_patcher->patch_fini();
     }
 
-    return OPAL_SUCCESS;
+    return mca_base_framework_components_close(&opal_patcher_base_framework, NULL);
 }
 
 /* Use default register/open functions */
