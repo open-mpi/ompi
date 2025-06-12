@@ -14,6 +14,12 @@
 
 if OMPI_WANT_PRRTE
 
+#
+# to help VPATH'd builds find prrte_version.h
+#
+AM_CFLAGS = \
+	-I$(top_builddir)/3rd-party/prrte/include
+
 bin_PROGRAMS = mpirun
 
 EXTRA_DIST = help-mpirun.txt
