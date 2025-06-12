@@ -29,8 +29,42 @@ Open MPI version v6.0.0
   delivered through the Open MPI internal "OMPIO" implementation
   (which has been the default for quite a while, anyway).
 
-- Added MPI-4.1 ``MPI_Status_*`` functions.
+- Added support for MPI-4.1 functions to access and update ``MPI_Status``
+  fields.
 
 - MPI-4.1 has deprecated the use of the Fortran ``mpif.h`` include
   file.  Open MPI will now issue a warning when the file is included
   and the Fortran compiler supports the ``#warning`` directive.
+
+- Added support for the MPI-4.1 memory allocation kind info object and
+  values introduced in the MPI Memory Allocation Kinds side-document.
+
+- Added support for Intel Ponte Vecchio GPUs.
+
+- Extended the functionality of the accelerator framework to support
+  intra-node device-to-device transfers for AMD and NVIDIA GPUs
+  (independent of UCX or Libfabric).
+
+- Added support for MPI sessions when using UCX.
+
+- Added support for MPI-4.1 ``MPI_REQUEST_GET_STATUS_[ALL|ANY_SOME]`` functions.
+
+- Improvements to collective operations:
+  
+  - Added new ``xhc`` collective component to optimize shared memory collective
+    operations using XPMEM.
+
+  - Added new ``acoll`` collective component optimizing single-node
+    collective operations on AMD Zen-based processors.
+
+  - Added new algorithms to optimize Alltoall and Alltoallv in the
+    ``han`` component when XPMEM is available.
+
+  - Introduced new algorithms and parameterizations for Reduce, Allgather,
+    and Allreduce in the base collective component, and adjusted the ``tuned``
+    component to better utilize these collectives.
+
+  - Added new JSON file format to tune the ``tuned`` collective component.
+
+  - Extended the ``accelerator`` collective component to support
+    more collective operations on device buffers.
