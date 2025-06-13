@@ -211,6 +211,9 @@ OPAL_DECLSPEC void opal_common_ucx_mca_deregister(void)
     }
     opal_mem_hooks_unregister_release(opal_common_ucx_mem_release_cb);
     opal_output_close(opal_common_ucx.output);
+    if (opal_common_ucx.opal_mem_hooks) {
+        mca_base_framework_close(&opal_memory_base_framework);
+    }
 }
 
 #if HAVE_DECL_OPEN_MEMSTREAM
