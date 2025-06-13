@@ -101,17 +101,26 @@ void *mca_smsc_xpmem_map_peer_region(mca_smsc_endpoint_t *endpoint, uint64_t fla
          * does not fully cover it, we destroy it and make in its place a new one
          * that covers both the existing and the new range. */
 
-        /* The search settings below will also match areas that would be right next to
-         * the new one (technically not overlapping, but uniteable under a single area).
-         * Whether we want this is debatable (re-establishing an XPMEM attachment can
-         * incur significant overhead). The current choice matches legacy behaviour. */
+        /* The search settings below will also match areas that would be right next to the
+         * new one, which aren't technically overlapping, but are uniteable under a single
+         * area. Whether we want this is debatable, as re-establishing an XPMEM attachment
+         * can incur significant overhead. The current choice matches legacy behaviour. */
 
-        // Ideally, we would want a find() method capable of partial matching
-        uintptr_t search_base[] = {base, bound, base - 1, bound + 1};
-        for (size_t i = 0; i < sizeof(search_base)/sizeof(search_base[0]); i++) {
+        /* Ideally, we would want a find() method capable of partial matching */
+
+        uintptr_t find_base[4] = {base, bound};
+        int n_find_bases = 2;
+        if(base > 0) {
+            find_base[n_find_bases++] = base - 1;
+        }
+        if(bound < (uintptr_t) -1) {
+            find_base[n_find_bases++] = bound + 1;
+        }
+
+        for (int i = 0; i < n_find_bases; i++) {
             mca_rcache_base_registration_t *ov_reg = NULL;
 
-            rc = mca_rcache_base_vma_find(vma_module, (void *) search_base[i], 1, &ov_reg);
+            rc = mca_rcache_base_vma_find(vma_module, (void *) find_base[i], 1, &ov_reg);
             assert(OPAL_SUCCESS == rc);
 
             if (ov_reg) {
