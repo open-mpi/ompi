@@ -46,23 +46,13 @@ int MPI_Init(int *argc, char ***argv)
 {
     int err;
     int provided;
-    char *env;
     int required = MPI_THREAD_SINGLE;
 
     /* check for environment overrides for required thread level.  If
        there is, check to see that it is a valid/supported thread level.
        If not, default to MPI_THREAD_MULTIPLE. */
-
-    if (NULL != (env = getenv("OMPI_MPI_THREAD_LEVEL"))) {
-        required = atoi(env);
-        /* In the future we may have to contend with non-sequential (MPI ABI) values
-         * If you are implementing MPI ABI changes please refer to
-         * https://github.com/open-mpi/ompi/pull/13211#discussion_r2085086844
-         */
-        if (required != MPI_THREAD_SINGLE && required != MPI_THREAD_FUNNELED &&
-            required != MPI_THREAD_SERIALIZED && required != MPI_THREAD_MULTIPLE) {
-            required = MPI_THREAD_MULTIPLE;
-        }
+    if (OMPI_SUCCESS > ompi_getenv_mpi_thread_level(&required)) {
+        required = MPI_THREAD_MULTIPLE;
     }
 
     /* Call the back-end initialization function (we need to put as
