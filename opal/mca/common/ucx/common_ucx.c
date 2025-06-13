@@ -73,6 +73,7 @@ OPAL_DECLSPEC void opal_common_ucx_mca_var_register(const mca_base_component_t *
 {
     char *default_tls = "rc_verbs,ud_verbs,rc_mlx5,dc_mlx5,ud_mlx5,cuda_ipc,rocm_ipc";
     char *default_devices = "mlx*";
+    char *old_str = NULL;
     int hook_index;
     int verbose_index;
     int progress_index;
@@ -113,6 +114,7 @@ OPAL_DECLSPEC void opal_common_ucx_mca_var_register(const mca_base_component_t *
     if (NULL == *opal_common_ucx.tls) {
         *opal_common_ucx.tls = strdup(default_tls);
     }
+    old_str = *opal_common_ucx.tls;
 
     tls_index = mca_base_var_register(
         "opal", "opal_common", "ucx", "tls",
@@ -123,6 +125,7 @@ OPAL_DECLSPEC void opal_common_ucx_mca_var_register(const mca_base_component_t *
         "please set to '^posix,sysv,self,tcp,cma,knem,xpmem'.",
         MCA_BASE_VAR_TYPE_STRING, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE | MCA_BASE_VAR_FLAG_DWG,
         OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_LOCAL, opal_common_ucx.tls);
+    free(old_str);
 
     if (NULL == opal_common_ucx.devices) {
         opal_common_ucx.devices = (char**) malloc(sizeof(char*));
@@ -132,6 +135,7 @@ OPAL_DECLSPEC void opal_common_ucx_mca_var_register(const mca_base_component_t *
     if (NULL == *opal_common_ucx.devices) {
         *opal_common_ucx.devices = strdup(default_devices);
     }
+    old_str = *opal_common_ucx.devices;
 
     devices_index = mca_base_var_register(
         "opal", "opal_common", "ucx", "devices",
@@ -139,6 +143,7 @@ OPAL_DECLSPEC void opal_common_ucx_mca_var_register(const mca_base_component_t *
         "bump its priority above ob1. Special values: any (any available)",
         MCA_BASE_VAR_TYPE_STRING, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE | MCA_BASE_VAR_FLAG_DWG,
         OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_LOCAL, opal_common_ucx.devices);
+    free(old_str);
 
     if (component) {
         mca_base_var_register_synonym(verbose_index, component->mca_project_name,
@@ -206,6 +211,9 @@ OPAL_DECLSPEC void opal_common_ucx_mca_deregister(void)
     }
     opal_mem_hooks_unregister_release(opal_common_ucx_mem_release_cb);
     opal_output_close(opal_common_ucx.output);
+    if (opal_common_ucx.opal_mem_hooks) {
+        mca_base_framework_close(&opal_memory_base_framework);
+    }
 }
 
 #if HAVE_DECL_OPEN_MEMSTREAM
