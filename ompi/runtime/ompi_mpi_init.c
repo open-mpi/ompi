@@ -29,6 +29,7 @@
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * Copyright (c) 2021-2022 Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2025      Advanced Micro Devices, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -267,6 +268,42 @@ MPI_Fint *MPI_F08_STATUSES_IGNORE = NULL;
  */
 
 #include "mpif-c-constants.h"
+
+int ompi_getenv_mpi_thread_level(int *requested)
+{
+    char* env;
+    if (NULL != (env = getenv("OMPI_MPI_THREAD_LEVEL"))) {
+        /* deal with string values, int values (no atoi, it doesn't error check) */
+        /* In the future integer MPI_ABI values for MPI_THREAD_SINGLE-MULTIPLE
+         * may be non-sequential (but ordered) integer values.
+         * If you are implementing MPI ABI changes please refer to
+         * https://github.com/open-mpi/ompi/pull/13211#discussion_r2085086844
+         */
+        if (0 == strcasecmp(env, "multiple") ||
+            0 == strcasecmp(env, "MPI_THREAD_MULTIPLE") ||
+            0 == strcmp(env, "3")) {
+            return *requested = MPI_THREAD_MULTIPLE;
+        }
+        if (0 == strcasecmp(env, "serialized") ||
+            0 == strcasecmp(env, "MPI_THREAD_SERIALIZED") ||
+            0 == strcmp(env, "2")) {
+            return *requested = MPI_THREAD_SERIALIZED;
+        }
+        if (0 == strcasecmp(env, "funneled") ||
+            0 == strcasecmp(env, "MPI_THREAD_FUNNELED") ||
+            0 == strcmp(env, "1")) {
+            return *requested = MPI_THREAD_FUNNELED;
+        }
+        if (0 == strcasecmp(env, "single") ||
+            0 == strcasecmp(env, "MPI_THREAD_SINGLE") ||
+            0 == strcmp(env, "0")) {
+            return *requested = MPI_THREAD_SINGLE;
+        }
+        /* the env value is invalid... */
+        return OMPI_ERR_BAD_PARAM;
+    }
+    return OMPI_SUCCESS;
+}
 
 void ompi_mpi_thread_level(int requested, int *provided)
 {
