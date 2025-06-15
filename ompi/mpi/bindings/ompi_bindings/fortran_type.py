@@ -1,4 +1,4 @@
-# Copyright (c) 2024      Triad National Security, LLC. All rights
+# Copyright (c) 2024-2025 Triad National Security, LLC. All rights
 #                         reserved.
 #
 # $COPYRIGHT$
@@ -93,6 +93,10 @@ class FortranType(ABC):
 
     def post(self):
         """Return post-processing code to be run after the call."""
+        return ''
+
+    def pre_c_call(self):
+        """Return pre-processing code to be run before the call the c interface."""
         return ''
 
     @abstractmethod
@@ -265,23 +269,20 @@ class DatatypeType(FortranType):
         return f'MPI_Fint *{self.name}'
 
 @FortranType.add('DATATYPE_OUT')
-class DatatypeTypeOut(FortranType):
+class DatatypeTypeOut(DatatypeType):
     def declare(self):
         return f'TYPE(MPI_Datatype), INTENT(OUT) :: {self.name}'
 
     def declare_cbinding_fortran(self):
         return f'INTEGER, INTENT(OUT) :: {self.name}'
 
-    def argument(self):
-        return f'{self.name}%MPI_VAL'
+@FortranType.add('DATATYPE_INOUT')
+class DatatypeTypeInOut(DatatypeType):
+    def declare(self):
+        return f'TYPE(MPI_Datatype), INTENT(INOUT) :: {self.name}'
 
-    def use(self):
-        return [('mpi_f08_types', 'MPI_Datatype')]
-
-    def c_parameter(self):
-        return f'MPI_Fint *{self.name}'
-
-
+    def declare_cbinding_fortran(self):
+        return f'INTEGER, INTENT(INOUT) :: {self.name}'
 
 @FortranType.add('DATATYPE_ARRAY')
 class DatatypeArrayType(FortranType):
@@ -303,11 +304,29 @@ class IntType(FortranType):
     def c_parameter(self):
         return f'MPI_Fint *{self.name}'
 
+@FortranType.add('INT_OUT')
+class IntOutType(FortranType):
+    def declare(self):
+        return f'INTEGER, INTENT(OUT) :: {self.name}'
+
+    def c_parameter(self):
+        return f'MPI_Fint *{self.name}'
+
+@FortranType.add('INT_INOUT')
+class IntOutType(FortranType):
+    def declare(self):
+        return f'INTEGER, INTENT(INOUT) :: {self.name}'
+
+    def c_parameter(self):
+        return f'MPI_Fint *{self.name}'
 
 @FortranType.add('RANK')
 class RankType(IntType):
     pass
 
+@FortranType.add('RANK_OUT')
+class RankType(IntOutType):
+    pass
 
 @FortranType.add('TAG')
 class TagType(IntType):
@@ -319,6 +338,61 @@ class IndexOutType(IntType):
     def declare(self):
         return f'INTEGER, INTENT(OUT) :: {self.name}'
 
+
+@FortranType.add('LOGICAL')
+class LogicalType(IntType):
+    """Logical type.
+
+    NOTE: Since the logical type causes difficulties when passed to C code,
+    this code uses a temporary integer in Fortran to pass to the C code. The 
+    logical type is set based on C's true/false rules prior.
+    """ 
+        
+    def declare(self):
+        return f'LOGICAL, INTENT(IN) :: {self.name}'
+            
+    def declare_tmp(self):
+        return f'INTEGER :: {self.tmp_name} = 0'
+    
+    def declare_cbinding_fortran(self):
+        return f'INTEGER, INTENT(IN) :: {self.name}'
+
+    def argument(self):
+        return self.tmp_name
+        
+    def pre_c_call(self):
+        return f'{self.tmp_name} = merge(1,0,{self.name})'
+    
+    def c_parameter(self):
+        return f'MPI_Fint *{self.name}'
+
+@FortranType.add('LOGICAL_ARRAY')
+class LogicalArrayType(IntType):
+    """Logical array type.
+
+    NOTE: Since the logical type causes difficulties when passed to C code,
+    this code uses a temporary integer array in Fortran to pass to the C code. The 
+    logical type is set based on C's true/false rules prior using fortran merge intrinsic
+    procedure.
+    """ 
+        
+    def declare(self):
+        return f'LOGICAL, INTENT(IN) :: {self.name}({self.count_param})'
+            
+    def declare_tmp(self):
+        return f'INTEGER :: {self.tmp_name}({self.count_param})'
+
+    def declare_cbinding_fortran(self):
+        return f'INTEGER, INTENT(IN) :: {self.name}({self.count_param})'
+
+    def argument(self):
+        return self.tmp_name
+
+    def pre_c_call(self):
+        return f'{self.tmp_name} = merge(1,0,{self.name})'
+    
+    def c_parameter(self):
+        return f'MPI_Fint *{self.name}'
 
 @FortranType.add('LOGICAL_OUT')
 class LogicalOutType(IntType):
@@ -347,7 +421,34 @@ class LogicalOutType(IntType):
     def c_parameter(self):
         return f'MPI_Fint *{self.name}'
 
+@FortranType.add('LOGICAL_ARRAY_OUT')
+class LogicalArrayType(IntType):
+    """Logical array type.
 
+    NOTE: Since the logical type causes difficulties when passed to C code,
+    this code uses a temporary integer array in Fortran to pass to the C code. The
+    logical type is set based on C's true/false rules prior using fortran merge intrinsic
+    procedure.
+    """
+
+    def declare(self):
+        return f'LOGICAL, INTENT(OUT) :: {self.name}({self.count_param})'
+
+    def declare_tmp(self):
+        return f'INTEGER :: {self.tmp_name}({self.count_param})'
+    
+    def declare_cbinding_fortran(self):
+        return f'INTEGER, INTENT(OUT) :: {self.name}({self.count_param})'
+        
+    def argument(self):
+        return self.tmp_name
+
+    def pre_c_call(self):
+        return f'{self.tmp_name} = merge(1,0,{self.name})'
+   
+    def c_parameter(self):
+        return f'MPI_Fint *{self.name}'
+        
 @FortranType.add('COMM')
 class CommType(FortranType):
     def declare(self):
@@ -365,7 +466,106 @@ class CommType(FortranType):
     def c_parameter(self):
         return f'MPI_Fint *{self.name}'
 
+@FortranType.add('COMM_OUT')
+class CommOutType(FortranType):
+    def declare(self):
+        return f'TYPE(MPI_Comm), INTENT(OUT) :: {self.name}'
+    
+    def declare_cbinding_fortran(self):
+        return f'INTEGER, INTENT(OUT) :: {self.name}'
+        
+    def argument(self):
+        return f'{self.name}%MPI_VAL'
+    
+    def use(self):
+        return [('mpi_f08_types', 'MPI_Comm')]
 
+    def c_parameter(self):
+        return f'MPI_Fint *{self.name}'
+
+@FortranType.add('COMM_INOUT')
+class CommInOutType(FortranType):
+    def declare(self):
+        return f'TYPE(MPI_Comm), INTENT(INOUT) :: {self.name}'
+    
+    def declare_cbinding_fortran(self):
+        return f'INTEGER, INTENT(INOUT) :: {self.name}'
+            
+    def argument(self):
+        return f'{self.name}%MPI_VAL'
+
+    def use(self):
+        return [('mpi_f08_types', 'MPI_Comm')]
+        
+    def c_parameter(self):
+        return f'MPI_Fint *{self.name}'
+    
+@FortranType.add('GROUP')
+class GroupType(FortranType):
+    def declare(self):
+        return f'TYPE(MPI_Group), INTENT(IN) :: {self.name}'
+    
+    def declare_cbinding_fortran(self):
+        return f'INTEGER, INTENT(IN) :: {self.name}'
+            
+    def argument(self):
+        return f'{self.name}%MPI_VAL'
+
+    def use(self):
+        return [('mpi_f08_types', 'MPI_Group')]
+        
+    def c_parameter(self):
+        return f'MPI_Fint *{self.name}'
+    
+@FortranType.add('GROUP_OUT')
+class GroupOutType(GroupType):
+    def declare(self):
+        return f'TYPE(MPI_Group), INTENT(OUT) :: {self.name}'
+    
+    def declare_cbinding_fortran(self):
+        return f'INTEGER, INTENT(OUT) :: {self.name}'
+            
+@FortranType.add('GROUP_INOUT')
+class GroupInOutType(GroupType):
+    def declare(self):
+        return f'TYPE(MPI_Group), INTENT(INOUT) :: {self.name}'
+    
+    def declare_cbinding_fortran(self):
+        return f'INTEGER, INTENT(INOUT) :: {self.name}'
+
+@FortranType.add('SESSION')
+class SessionType(FortranType):
+    def declare(self):
+        return f'TYPE(MPI_Session), INTENT(IN) :: {self.name}'
+        
+    def declare_cbinding_fortran(self):
+        return f'INTEGER, INTENT(IN) :: {self.name}'
+    
+    def argument(self):
+        return f'{self.name}%MPI_VAL'
+        
+    def use(self):
+        return [('mpi_f08_types', 'MPI_Session')]
+            
+    def c_parameter(self):
+        return f'MPI_Fint *{self.name}'
+
+@FortranType.add('SESSION_OUT')
+class SessionOutType(SessionType):
+    def declare(self):
+        return f'TYPE(MPI_Session), INTENT(OUT) :: {self.name}'
+        
+    def declare_cbinding_fortran(self):
+        return f'INTEGER, INTENT(OUT) :: {self.name}'
+    
+@FortranType.add('SESSION_INOUT')
+class SessionInOutType(SessionType):
+    def declare(self):
+        return f'TYPE(MPI_Session), INTENT(INOUT) :: {self.name}'
+        
+    def declare_cbinding_fortran(self):
+        return f'INTEGER, INTENT(INOUT) :: {self.name}'
+    
 @FortranType.add('STATUS')
 class StatusType(FortranType):
     def declare(self):
@@ -379,20 +579,42 @@ class StatusType(FortranType):
 
 
 @FortranType.add('STATUS_OUT')
-class StatusOutType(FortranType):
+class StatusOutType(StatusType):
     def declare(self):
         return f'TYPE(MPI_Status), INTENT(OUT) :: {self.name}'
-
-    def use(self):
-        return [('mpi_f08_types', 'MPI_Status')]
 
     def c_parameter(self):
         # TODO: Is this correct? (I've listed it as TYPE(MPI_Status) in the binding)
         return f'MPI_Fint *{self.name}'
 
+@FortranType.add('STATUS_INOUT')
+class StatusInOutType(StatusType):
+    def declare(self):
+        return f'TYPE(MPI_Status), INTENT(INOUT) :: {self.name}'
+
+    def c_parameter(self):
+        # TODO: Is this correct? (I've listed it as TYPE(MPI_Status) in the binding)
+        return f'MPI_Fint *{self.name}'
+
+@FortranType.add('REQUEST')
+class RequestType(FortranType):
+    def declare(self):
+        return f'TYPE(MPI_Request), INTENT(IN) :: {self.name}'
+
+    def declare_cbinding_fortran(self):
+        return f'INTEGER, INTENT(IN) :: {self.name}'
+
+    def argument(self):
+        return f'{self.name}%MPI_VAL'
+
+    def use(self):
+        return [('mpi_f08_types', 'MPI_Request')]
+
+    def c_parameter(self):
+        return f'MPI_Fint *{self.name}'
 
 @FortranType.add('REQUEST_OUT')
-class RequestType(FortranType):
+class RequestTypeOut(FortranType):
     def declare(self):
         return f'TYPE(MPI_Request), INTENT(OUT) :: {self.name}'
 
@@ -408,9 +630,17 @@ class RequestType(FortranType):
     def c_parameter(self):
         return f'MPI_Fint *{self.name}'
 
+@FortranType.add('REQUEST_INOUT')
+class RequestTypeInOut(RequestType):
+    def declare(self):
+        return f'TYPE(MPI_Request), INTENT(INOUT) :: {self.name}'
+        
+    def declare_cbinding_fortran(self):
+        return f'INTEGER, INTENT(INOUT) :: {self.name}'
 
-@FortranType.add('REQUEST_ARRAY')
-class RequestArrayType(FortranType):
+
+@FortranType.add('REQUEST_ARRAY_INOUT')
+class RequestArrayTypeInOut(FortranType):
     def declare(self):
         return f'TYPE(MPI_Request), INTENT(INOUT) :: {self.name}({self.count_param})'
 
@@ -423,6 +653,23 @@ class RequestArrayType(FortranType):
     def use(self):
         return [('mpi_f08_types', 'MPI_Request')]
 
+    def c_parameter(self):
+        return f'MPI_Fint *{self.name}'
+
+@FortranType.add('REQUEST_ARRAY')
+class RequestArrayType(FortranType):
+    def declare(self):
+        return f'TYPE(MPI_Request), INTENT(IN) :: {self.name}({self.count_param})'
+            
+    def declare_cbinding_fortran(self):
+        return f'INTEGER, INTENT(IN) :: {self.name}({self.count_param})'
+    
+    def argument(self):
+        return f'{self.name}(:)%MPI_VAL'
+
+    def use(self):
+        return [('mpi_f08_types', 'MPI_Request')]
+        
     def c_parameter(self):
         return f'MPI_Fint *{self.name}'
 
@@ -444,19 +691,46 @@ class IntArray(FortranType):
     """Integer array as used for MPI_*v() variable length functions."""
 
     def declare(self):
-        return f'INTEGER, INTENT(IN) :: {self.name}(*)'
+        size = '*' if self.count_param == None else self.count_param
+        return f'INTEGER, INTENT(IN) :: {self.name}({size})'
+
+    def use(self):
+        if self.count_param == 'MPI_STATUS_SIZE':
+            return [('mpi_f08_types', 'MPI_STATUS_SIZE')]
+        else:
+            return []
 
     def c_parameter(self):
         return f'MPI_Fint *{self.name}'
 
+@FortranType.add('INT_ARRAY_OUT')
+class IntArrayOut(IntArray):
+    """Integer out array as used for MPI_*v() variable length functions."""
 
+    def declare(self):
+        size = '*' if self.count_param == None else self.count_param
+        return f'INTEGER, INTENT(OUT) :: {self.name}({size})'
+        
+    def c_parameter(self):
+        return f'MPI_Fint *{self.name}'
+
+@FortranType.add('INT_ARRAY_INOUT')
+class IntArrayInOut(IntArray):
+    """Integer out array as used for MPI_*v() variable length functions."""
+        
+    def declare(self):
+        size = '*' if self.count_param == None else self.count_param
+        return f'INTEGER, INTENT(INOUT) :: {self.name}({size})'
+        
 @FortranType.add('COUNT_ARRAY')
 class CountArray(IntArray):
     """Array of MPI_Count or int."""
 
     def declare(self):
         kind = '(KIND=MPI_COUNT_KIND)' if self.bigcount else ''
-        return f'INTEGER{kind}, INTENT(IN) :: {self.name}(*)'
+        size = '*' if self.count_param == None else self.count_param
+#       print("size " + size + "count_param" + str(self.count_param))
+        return f'INTEGER{kind}, INTENT(IN) :: {self.name}({size})'
 
     def use(self):
         if self.bigcount:
@@ -473,7 +747,8 @@ class CountArray(IntArray):
 
     def declare(self):
         kind = '(KIND=MPI_COUNT_KIND)' if self.bigcount else '(KIND=MPI_ADDRESS_KIND)'
-        return f'INTEGER{kind}, INTENT(IN) :: {self.name}(*)'
+        size = '*' if self.count_param == None else self.count_param
+        return f'INTEGER{kind}, INTENT(IN) :: {self.name}({size})'
 
     def use(self):
         if self.bigcount:
@@ -581,7 +856,8 @@ class AintArrayType(FortranType):
 
     def declare(self):
         # TODO: Should there be a separate ASYNC version here, when the OMPI_ASYNCHRONOUS attr is required?
-        return f'INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(IN) OMPI_ASYNCHRONOUS :: {self.name}(*)'
+        size = '*' if self.count_param == None else self.count_param
+        return f'INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(IN) OMPI_ASYNCHRONOUS :: {self.name}({size})'
 
     def use(self):
         return [('mpi_f08_types', 'MPI_ADDRESS_KIND')]
@@ -631,7 +907,8 @@ class DispArray(IntArray):
 
     def declare(self):
         kind = '(KIND=MPI_ADDRESS_KIND)' if self.bigcount else ''
-        return f'INTEGER{kind}, INTENT(IN) :: {self.name}(*)'
+        size = '*' if self.count_param == None else self.count_param
+        return f'INTEGER{kind}, INTENT(IN) :: {self.name}({size})'
 
     def use(self):
         if self.bigcount:
@@ -650,13 +927,25 @@ class Op(FortranType):
     def declare(self):
         return f'TYPE(MPI_Op), INTENT(IN) :: {self.name}'
 
+    def declare_cbinding_fortran(self):
+        return f'INTEGER, INTENT(IN) :: {self.name}'
+
     def use(self):
         return [('mpi_f08_types', 'MPI_Op')]
+
+    def argument(self):
+        return f'{self.name}%MPI_VAL'
 
     def c_parameter(self):
         return f'MPI_Fint *{self.name}'
 
-
+@FortranType.add('OP_INOUT')
+class OpInOut(Op):
+    """MPI_Op INOUT type."""
+    
+    def declare(self):
+        return f'TYPE(MPI_Op), INTENT(INOUT) :: {self.name}'
+    
 @FortranType.add('WIN')
 class Win(FortranType):
     """MPI_Win type."""
@@ -664,8 +953,14 @@ class Win(FortranType):
     def declare(self):
         return f'TYPE(MPI_Win), INTENT(IN) :: {self.name}'
 
+    def declare_cbinding_fortran(self):
+        return f'INTEGER, INTENT(IN) :: {self.name}'
+
     def use(self):
         return [('mpi_f08_types', 'MPI_Win')]
+
+    def argument(self):
+        return f'{self.name}%MPI_VAL'
 
     def c_parameter(self):
         return f'MPI_Fint *{self.name}'
@@ -689,6 +984,15 @@ class WinOut(FortranType):
     def c_parameter(self):
         return f'MPI_Fint *{self.name}'
 
+@FortranType.add('WIN_INOUT')
+class WinInOut(Win):
+    """MPI_Win inout type."""
+
+    def declare(self):
+        return f'TYPE(MPI_Win), INTENT(INOUT) :: {self.name}'
+
+    def declare_cbinding_fortran(self):
+        return f'INTEGER, INTENT(INOUT) :: {self.name}'
 
 @FortranType.add('FILE')
 class File(FortranType):
@@ -703,6 +1007,13 @@ class File(FortranType):
     def c_parameter(self):
         return f'MPI_Fint *{self.name}'
 
+@FortranType.add('FILE_OUT')
+class FileOut(File):
+    """MPI_File OUT type."""
+        
+    def declare(self):
+        return f'TYPE(MPI_File), INTENT(OUT) :: {self.name}'
+
 @FortranType.add('INFO')
 class Info(FortranType):
     """MPI_Info type."""
@@ -715,6 +1026,26 @@ class Info(FortranType):
 
     def c_parameter(self):
         return f'MPI_Fint *{self.name}'
+
+@FortranType.add('INFO_OUT')
+class InfoOut(FortranType):
+    """MPI_Info out type."""
+
+    def declare(self):
+        return f'TYPE(MPI_Info), INTENT(OUT) :: {self.name}'
+
+    def use(self):
+        return [('mpi_f08_types', 'MPI_Info')]
+
+    def c_parameter(self):
+        return f'MPI_Fint *{self.name}'
+
+@FortranType.add('INFO_INOUT')
+class InfoInOut(InfoOut):
+    """MPI_Info inout type."""
+
+    def declare(self):
+        return f'TYPE(MPI_Info), INTENT(INOUT) :: {self.name}'
 
 @FortranType.add('OFFSET')
 class Offset(FortranType):
@@ -729,6 +1060,13 @@ class Offset(FortranType):
     def c_parameter(self):
         return f'MPI_Offset *{self.name}'
 
+@FortranType.add('OFFSET_OUT')
+class OffsetOut(Offset):
+    """MPI_Offset OUT type."""
+    
+    def declare(self):
+        return f'INTEGER(MPI_OFFSET_KIND), INTENT(OUT) :: {self.name}'
+        
 
 @FortranType.add('CHAR_ARRAY')
 class CharArray(FortranType):
@@ -738,24 +1076,294 @@ class CharArray(FortranType):
         return f'CHARACTER(LEN=*), INTENT(IN) :: {self.name}'
 
     def use(self):
-        return [('iso_c_binding', 'c_char')]
+        return [('iso_c_binding', 'c_char'), ('iso_c_binding', 'c_null_char')]
 
     def declare_cbinding_fortran(self):
         return f'CHARACTER(KIND=C_CHAR), INTENT(IN) :: {self.name}(*)'
 
+    def argument(self):
+        return f'{self.name}//c_null_char'
+
+    def c_parameter(self):
+        return f'char *{self.name}'
+
+@FortranType.add('CHAR_ARRAY_OUT')
+class CharArrayOut(FortranType):
+    """Fortran CHAR OUT type."""
+            
+    def declare(self):
+        size = '*' if self.count_param == None else self.count_param
+        return f'CHARACTER(LEN={size}), INTENT(OUT) :: {self.name}'
+    
+    def use(self):
+#       print("self COUNT count_param" + str(self.count_param))
+        if self.count_param == 'MPI_MAX_OBJECT_NAME':
+            return [('iso_c_binding', 'c_char'), ('mpi_f08_types', 'MPI_MAX_OBJECT_NAME')]
+        elif self.count_param == 'MPI_MAX_PORT_NAME':
+            return [('iso_c_binding', 'c_char'), ('mpi_f08_types', 'MPI_MAX_PORT_NAME')]
+        elif self.count_param == 'MPI_MAX_ERROR_STRING':
+            return [('iso_c_binding', 'c_char'), ('mpi_f08_types', 'MPI_MAX_ERROR_STRING')]
+        elif self.count_param == 'MPI_MAX_PROCESSOR_NAME':
+            return [('iso_c_binding', 'c_char'), ('mpi_f08_types', 'MPI_MAX_PROCESSOR_NAME')]
+        elif self.count_param == 'MPI_MAX_LIBRARY_VERSION_STRING':
+            return [('iso_c_binding', 'c_char'), ('mpi_f08_types', 'MPI_MAX_LIBRARY_VERSION_STRING')]
+        elif self.count_param == 'MPI_STATUS_SIZE':
+            return [('iso_c_binding', 'c_char'), ('mpi_f08_types', 'MPI_STATUS_SIZE')]
+        else:
+            return [('iso_c_binding', 'c_char')]
+
+    def declare_cbinding_fortran(self):
+        return f'CHARACTER(KIND=C_CHAR), INTENT(OUT) :: {self.name}(*)'
+        
     def c_parameter(self):
         return f'char *{self.name}'
 
 
-@FortranType.add('MESSAGE_INOUT')
-class MessageInOut(FortranType):
-    """MPI_Message INOUT type."""
+@FortranType.add('MESSAGE_OUT')
+class MessageOut(FortranType):
+    """MPI_Message OUT type."""
 
     def declare(self):
-        return f'TYPE(MPI_Message), INTENT(INOUT) :: {self.name}'
+        return f'TYPE(MPI_Message), INTENT(OUT) :: {self.name}'
 
     def use(self):
         return [('mpi_f08_types', 'MPI_Message')]
 
     def c_parameter(self):
         return f'MPI_Fint *{self.name}'
+    
+
+@FortranType.add('MESSAGE_INOUT')
+class MessageInOut(MessageOut):
+    """MPI_Message INOUT type."""
+
+    def declare(self):
+        return f'TYPE(MPI_Message), INTENT(INOUT) :: {self.name}'
+
+
+@FortranType.add('ERRHANDLER')
+class ErrhandlerType(FortranType):
+    def declare(self):
+        return f'TYPE(MPI_Errhandler), INTENT(IN) :: {self.name}'
+        
+    def declare_cbinding_fortran(self):
+        return f'INTEGER, INTENT(IN) :: {self.name}'
+
+    def argument(self):
+        return f'{self.name}%MPI_VAL'
+
+    def use(self):
+        return [('mpi_f08_types', 'MPI_Errhandler')]
+
+    def c_parameter(self):
+        return f'MPI_Fint *{self.name}'
+
+@FortranType.add('ERRHANDLER_OUT')
+class ErrhandlerOutType(FortranType):
+    def declare(self):
+        return f'TYPE(MPI_Errhandler), INTENT(OUT) :: {self.name}'
+        
+    def declare_cbinding_fortran(self):
+        return f'INTEGER, INTENT(OUT) :: {self.name}'
+    
+    def argument(self):
+        return f'{self.name}%MPI_VAL'
+        
+    def use(self):
+        return [('mpi_f08_types', 'MPI_Errhandler')]
+        
+    def c_parameter(self):
+        return f'MPI_Fint *{self.name}'
+
+@FortranType.add('ERRHANDLER_INOUT')
+class ErrhandlerOutType(ErrhandlerOutType):
+    def declare(self):
+        return f'TYPE(MPI_Errhandler), INTENT(INOUT) :: {self.name}'
+        
+    def declare_cbinding_fortran(self):
+        return f'INTEGER, INTENT(INOUT) :: {self.name}'
+   
+@FortranType.add('COMM_ERRHANDLER_FN')
+class CommErrhandlerFnType(FortranType):
+    def declare(self):
+        return f'PROCEDURE(MPI_Comm_copy_errhandler_function) :: {self.name}'
+
+    def declare_cbinding_fortran(self):
+        return f'INTEGER, INTENT(IN) :: {self.name}'
+
+    def argument(self):
+        return f'{self.name}%MPI_VAL'
+
+    def use(self):
+        return [('mpi_f08_interfaces_callbacks', 'MPI_Comm_errhandler_function'), ('iso_c_binding', 'c_funloc'), ('iso_c_binding', 'c_funptr')]
+
+    def declare_tmp(self):
+        return f'type(c_funptr) :: {self.tmp_name}'
+
+    def c_parameter(self):
+        return f'type(c_funptr) :: {self.tmp_name}'
+
+    def pre_c_call(self): 
+        return f'{self.tmp_name} = c_funloc({self.name})'
+
+@FortranType.add('COMM_COPY_ATTR_FN')
+class CommCopyAttrFnType(FortranType):
+    def declare(self):
+        return f'PROCEDURE(MPI_Comm_copy_attr_function) :: {self.name}'
+        
+    def declare_cbinding_fortran(self):
+        return f'type(c_funptr) :: {self.name}'
+    
+    def argument(self):
+        return f'{self.tmp_name}'
+    
+    def declare_tmp(self):
+        return f'type(c_funptr)::{self.tmp_name}'
+
+    def use(self):
+        return [('mpi_f08_interfaces_callbacks', 'MPI_Comm_copy_attr_function'), ('iso_c_binding', 'c_funloc'), ('iso_c_binding', 'c_funptr')]
+        
+    def c_parameter(self):
+        return f'ompi_aint_copy_attr_function {self.name}'
+    
+    def pre_c_call(self): 
+        return f'{self.tmp_name} = c_funloc({self.name})'
+
+@FortranType.add('TYPE_COPY_ATTR_FN')
+class TypeCopyAttrFnType(CommCopyAttrFnType):
+    def declare(self):
+        return f'PROCEDURE(MPI_Type_copy_attr_function) :: {self.name}'
+        
+    def use(self):
+        return [('mpi_f08_interfaces_callbacks', 'MPI_Type_copy_attr_function'), ('iso_c_binding', 'c_funloc'), ('iso_c_binding', 'c_funptr')]
+
+@FortranType.add('WIN_COPY_ATTR_FN')
+class WinCopyAttrFnType(CommCopyAttrFnType):
+    def declare(self):
+        return f'PROCEDURE(MPI_Win_copy_attr_function) :: {self.name}'
+
+    def use(self):
+        return [('mpi_f08_interfaces_callbacks', 'MPI_Win_copy_attr_function'), ('iso_c_binding', 'c_funloc'), ('iso_c_binding', 'c_funptr')]
+
+@FortranType.add('COMM_DELETE_ATTR_FN')
+class CommDeleteAttrFnType(FortranType):
+    def declare(self):
+        return f'PROCEDURE(MPI_Comm_delete_attr_function) :: {self.name}'
+
+    def declare_cbinding_fortran(self):
+        return f'type(c_funptr) :: {self.name}'
+
+    def argument(self):
+        return f'{self.tmp_name}'
+
+    def declare_tmp(self):
+        return f'type(c_funptr) :: {self.tmp_name}'
+
+    def use(self):
+        return [('mpi_f08_interfaces_callbacks', 'MPI_Comm_delete_attr_function'), ('iso_c_binding', 'c_funloc'), ('iso_c_binding', 'c_funptr')]
+
+    def c_parameter(self):
+        return f'ompi_aint_delete_attr_function {self.name}'
+
+    def pre_c_call(self):
+        return f'{self.tmp_name} = c_funloc({self.name})'
+
+@FortranType.add('TYPE_DELETE_ATTR_FN')
+class TypeDeleteAttrFnType(CommDeleteAttrFnType):
+    def declare(self):
+        return f'PROCEDURE(MPI_Type_delete_attr_function) :: {self.name}'
+
+    def use(self):
+        return [('mpi_f08_interfaces_callbacks', 'MPI_Type_delete_attr_function'), ('iso_c_binding', 'c_funloc'), ('iso_c_binding', 'c_funptr')]
+
+@FortranType.add('WIN_DELETE_ATTR_FN')
+class WinDeleteAttrFnType(CommDeleteAttrFnType):
+    def declare(self):
+        return f'PROCEDURE(MPI_Win_delete_attr_function) :: {self.name}'
+
+    def use(self):
+        return [('mpi_f08_interfaces_callbacks', 'MPI_Win_delete_attr_function'), ('iso_c_binding', 'c_funloc'), ('iso_c_binding', 'c_funptr')]
+
+
+@FortranType.add('COMM_ERRHANDLER_FN')
+class CommErrhandlerFnType(FortranType):
+    def declare(self): 
+        return f'PROCEDURE(MPI_Comm_errhandler_function) :: {self.name}'
+        
+    def declare_cbinding_fortran(self):
+        return f'type(c_funptr) :: {self.name}'
+
+    def argument(self):
+        return f'{self.tmp_name}'
+    
+    def declare_tmp(self):
+        return f'type(c_funptr) :: {self.tmp_name}'
+        
+    def use(self):
+        return [('mpi_f08_interfaces_callbacks', 'MPI_Comm_errhandler_function'), ('iso_c_binding', 'c_funloc'), ('iso_c_binding', 'c_funptr')]
+        
+    def c_parameter(self):
+        return f'ompi_errhandler_fortran_handler_fn_t {self.name}'
+    
+    def pre_c_call(self):
+        return f'{self.tmp_name} = c_funloc({self.name})'
+
+
+@FortranType.add('FILE_ERRHANDLER_FN')
+class FileErrhandlerFnType(CommErrhandlerFnType):
+    def declare(self):
+        return f'PROCEDURE(MPI_File_errhandler_function) :: {self.name}'
+
+    def use(self):
+        return [('mpi_f08_interfaces_callbacks', 'MPI_File_errhandler_function'), ('iso_c_binding', 'c_funloc'), ('iso_c_binding', 'c_funptr')]
+
+@FortranType.add('SESSION_ERRHANDLER_FN')
+class SessionErrhandlerFnType(CommErrhandlerFnType):
+    def declare(self):
+        return f'PROCEDURE(MPI_Session_errhandler_function) :: {self.name}'
+
+    def use(self):
+        return [('mpi_f08_interfaces_callbacks', 'MPI_Session_errhandler_function'), ('iso_c_binding', 'c_funloc'), ('iso_c_binding', 'c_funptr')]
+
+@FortranType.add('WIN_ERRHANDLER_FN')
+class WinErrhandlerFnType(CommErrhandlerFnType):
+    def declare(self):
+        return f'PROCEDURE(MPI_Win_errhandler_function) :: {self.name}'
+
+    def use(self):
+        return [('mpi_f08_interfaces_callbacks', 'MPI_Win_errhandler_function'), ('iso_c_binding', 'c_funloc'), ('iso_c_binding', 'c_funptr')]
+
+
+@FortranType.add('DATAREP_CONVERSION_FN')
+class DataRepConversionFnType(FortranType):
+    def declare(self):
+        return f'PROCEDURE(MPI_Datarep_conversion_function) :: {self.name}'
+
+    def declare_cbinding_fortran(self):
+        return f'type(c_funptr) :: {self.name}'
+
+    def argument(self):
+        return f'{self.tmp_name}'
+
+    def declare_tmp(self):
+        return f'type(c_funptr) :: {self.tmp_name}'
+
+    def use(self):
+        return [('mpi_f08_interfaces_callbacks', 'MPI_Datarep_conversion_function'), ('iso_c_binding', 'c_funloc'), ('iso_c_binding', 'c_funptr')]
+
+    def c_parameter(self):
+        return f'ompi_mpi2_fortran_datarep_conversion_fn_t  {self.name}'
+
+    def pre_c_call(self):
+        return f'{self.tmp_name} = c_funloc({self.name})'
+
+@FortranType.add('DATAREP_EXTENT_FN')
+class DataRepExtentFnType(DataRepConversionFnType):
+    def declare(self):
+        return f'PROCEDURE(MPI_Datarep_extent_function) :: {self.name}'
+
+    def use(self):
+        return [('mpi_f08_interfaces_callbacks', 'MPI_Datarep_extent_function'), ('iso_c_binding', 'c_funloc'), ('iso_c_binding', 'c_funptr')]
+
+    def c_parameter(self):
+        return f'ompi_mpi2_fortran_datarep_extent_fn_t  {self.name}'

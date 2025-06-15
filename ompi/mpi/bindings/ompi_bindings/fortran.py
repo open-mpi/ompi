@@ -151,6 +151,11 @@ class FortranBinding:
         self._print_fortran_interface()
         self.dump()
 
+        # Output in pre C function call methods
+
+        for param in self.parameters:
+            self.dump_lines(param.pre_c_call())
+
         # Call into the C function
         call_start = f'    call {self.c_func_name}('
         params = [param.argument() for param in self.parameters]
@@ -184,7 +189,8 @@ class FortranBinding:
                                  replacements={'INNER_CALL': self.inner_call,
                                                'COUNT_TYPE': count_type,
                                                'COUNT_FINT_TYPE': count_fint_type,
-                                               'DISP_TYPE': disp_type})
+                                               'DISP_TYPE': disp_type,
+                                               'LOGICAL_TYPE': 'int'})
 
     def print_interface(self):
         """Output just the Fortran interface for this binding."""
@@ -234,6 +240,7 @@ def print_c_source_header(out):
     out.dump('#include "ompi/file/file.h"')
     out.dump('#include "ompi/errhandler/errhandler.h"')
     out.dump('#include "ompi/datatype/ompi_datatype.h"')
+    out.dump('#include "ompi/attribute/attribute.h"')
     out.dump('#include "ompi/mca/coll/base/coll_base_util.h"')
     out.dump('#include "ts.h"')
     out.dump('#include "bigcount.h"')
