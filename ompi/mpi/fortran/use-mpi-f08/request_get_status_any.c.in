@@ -12,8 +12,6 @@
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2024-2025 Triad National Security, LLC. All rights
- *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -21,18 +19,18 @@
  * $HEADER$
  */
 
-PROTOTYPE VOID testany(INT count, REQUEST_ARRAY_INOUT array_of_requests:count, INT indx,
-                       LOGICAL_OUT flag, STATUS_OUT status)
+PROTOTYPE VOID request_get_status_any(INT count, REQUEST_ARRAY array_of_requests:count,
+    		                      INT_OUT indx, LOGICAL_OUT flag, STATUS status)
 {
     MPI_Request *c_req;
     MPI_Status c_status;
-    int i, c_ierr, c_flag;
-    int tmp_indx;
+    int i, c_ierr;
+    int c_indx;
+    int c_flag;
 
     /* Shortcut to avoid malloc(0) if *count==0.  We're intentionally
        skipping other parameter error checks. */
     if (OPAL_UNLIKELY(0 == OMPI_FINT_2_INT(*count))) {
-        *flag = OMPI_FORTRAN_VALUE_TRUE;
         *indx = OMPI_INT_2_FINT(MPI_UNDEFINED);
         PMPI_Status_c2f(&ompi_status_empty, status);
         *ierr = OMPI_INT_2_FINT(MPI_SUCCESS);
@@ -40,9 +38,8 @@ PROTOTYPE VOID testany(INT count, REQUEST_ARRAY_INOUT array_of_requests:count, I
     }
 
     c_req = (MPI_Request *) malloc(OMPI_FINT_2_INT(*count) * sizeof(MPI_Request));
-    if (c_req == NULL) {
-        c_ierr = OMPI_ERRHANDLER_NOHANDLE_INVOKE(
-                                        MPI_ERR_NO_MEM,
+    if (NULL == c_req) {
+        c_ierr = OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_NO_MEM,
                                         FUNC_NAME);
         if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
         return;
@@ -52,24 +49,24 @@ PROTOTYPE VOID testany(INT count, REQUEST_ARRAY_INOUT array_of_requests:count, I
         c_req[i] = PMPI_Request_f2c(array_of_requests[i]);
     }
 
-    c_ierr = PMPI_Testany(OMPI_FINT_2_INT(*count), c_req,
-                          &tmp_indx,
+    c_ierr = @INNER_CALL@(OMPI_FINT_2_INT(*count), c_req,
+                          &c_indx,
                           &c_flag,
-                         &c_status);
+                          &c_status);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
 
-        /* Increment index by one for fortran conventions.  Note that
-           all Fortran compilers have FALSE==0; we just need to check
-           for any nonzero value (because TRUE is not always 1) */
+        *indx = OMPI_INT_2_FINT(c_indx);
+        *flag = OMPI_INT_2_FINT(c_flag);
 
-        if (c_flag &&
-            MPI_UNDEFINED != tmp_indx) {
-            array_of_requests[tmp_indx] =
-                c_req[tmp_indx]->req_f_to_c_index;
-            *indx = OMPI_INT_2_FINT(tmp_indx+1);
-            *flag = OMPI_INT_2_FINT(c_flag);
+        /* Increment index by one for fortran conventions */
+
+        OMPI_SINGLE_INT_2_FINT(indx);
+        if (MPI_UNDEFINED != *(OMPI_SINGLE_NAME_CONVERT(indx))) {
+            array_of_requests[OMPI_INT_2_FINT(*indx)] =
+                c_req[OMPI_INT_2_FINT(*indx)]->req_f_to_c_index;
+            ++(*indx);
         }
         if (!OMPI_IS_FORTRAN_STATUS_IGNORE(status)) {
             PMPI_Status_c2f(&c_status, status);
