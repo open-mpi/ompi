@@ -269,37 +269,45 @@ MPI_Fint *MPI_F08_STATUSES_IGNORE = NULL;
 
 #include "mpif-c-constants.h"
 
+static const char *ompi_thread_level_keywords[] = {"single", "serialized", "funneled", "multiple"};
+static const char *ompi_thread_level_prepositions[] = {"mpi_thread_", "thread_", NULL};
+/* In the future integer MPI_ABI values for MPI_THREAD_SINGLE-MULTIPLE may be
+ * non-sequential (but ordered) integer values. If you are implementing MPI
+ * ABI changes please refer to
+ * https://github.com/open-mpi/ompi/pull/13211#discussion_r2085086844
+ */
+static const int ompi_thread_level_values[] = {MPI_THREAD_SINGLE, MPI_THREAD_SERIALIZED,
+                                               MPI_THREAD_FUNNELED, MPI_THREAD_MULTIPLE};
+
 int ompi_getenv_mpi_thread_level(int *requested)
 {
     char* env;
     if (NULL != (env = getenv("OMPI_MPI_THREAD_LEVEL"))) {
-        /* deal with string values, int values (no atoi, it doesn't error check) */
-        /* In the future integer MPI_ABI values for MPI_THREAD_SINGLE-MULTIPLE
-         * may be non-sequential (but ordered) integer values.
-         * If you are implementing MPI ABI changes please refer to
-         * https://github.com/open-mpi/ompi/pull/13211#discussion_r2085086844
-         */
-        if (0 == strcasecmp(env, "multiple") ||
-            0 == strcasecmp(env, "MPI_THREAD_MULTIPLE") ||
-            0 == strcmp(env, "3")) {
-            return *requested = MPI_THREAD_MULTIPLE;
+        char *prep = NULL, *token = (char *) env /* full match */;
+        int pidx = 0, found = strtol(env, &prep, 10);
+
+        if (prep == env) {  /* no digits found */
+            found = -1;
+            while (NULL != (prep = (char *) ompi_thread_level_prepositions[pidx])) {
+                if (0 == strncasecmp(prep, env, strlen(prep))) {
+                    token = env + strlen(prep);
+                    break; /* got a token let's find a match */
+                }
+                pidx++;
+            }
+            const int nb_keywords = sizeof(ompi_thread_level_keywords)/sizeof(ompi_thread_level_keywords[0]);
+            for (int i = 0; i < nb_keywords; i++) {
+                if (0 == strncasecmp(ompi_thread_level_keywords[i], token, strlen(token))) {
+                    if (-1 != found) { /* not the first match, bail out */
+                        return OMPI_ERR_BAD_PARAM;
+                    }
+                    found = i;
+                }
+            }
         }
-        if (0 == strcasecmp(env, "serialized") ||
-            0 == strcasecmp(env, "MPI_THREAD_SERIALIZED") ||
-            0 == strcmp(env, "2")) {
-            return *requested = MPI_THREAD_SERIALIZED;
+        if (-1 != found) {
+            return *requested = ompi_thread_level_values[found];
         }
-        if (0 == strcasecmp(env, "funneled") ||
-            0 == strcasecmp(env, "MPI_THREAD_FUNNELED") ||
-            0 == strcmp(env, "1")) {
-            return *requested = MPI_THREAD_FUNNELED;
-        }
-        if (0 == strcasecmp(env, "single") ||
-            0 == strcasecmp(env, "MPI_THREAD_SINGLE") ||
-            0 == strcmp(env, "0")) {
-            return *requested = MPI_THREAD_SINGLE;
-        }
-        /* the env value is invalid... */
         return OMPI_ERR_BAD_PARAM;
     }
     return OMPI_SUCCESS;
