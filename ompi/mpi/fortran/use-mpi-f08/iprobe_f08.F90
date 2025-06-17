@@ -16,7 +16,7 @@ subroutine MPI_Iprobe_f08(source,tag,comm,flag,status,ierror)
    INTEGER, INTENT(IN) :: source, tag
    TYPE(MPI_Comm), INTENT(IN) :: comm
    LOGICAL, INTENT(OUT) :: flag
-   TYPE(MPI_Status), INTENT(OUT) :: status
+   TYPE(MPI_Status) :: status
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
    integer :: c_ierror
 
@@ -29,7 +29,7 @@ subroutine MPI_Iprobe_f08(source,tag,comm,flag,status,ierror)
         integer, intent(in) :: tag
         integer, intent(in) :: comm
         logical, intent(out) :: flag
-        TYPE(MPI_Status), intent(out) :: status
+        TYPE(MPI_Status) :: status
         integer, intent(out) :: ierror
       end subroutine PMPI_Iprobe
    end interface
