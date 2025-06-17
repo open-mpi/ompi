@@ -27,7 +27,7 @@
 PROTOTYPE VOID get_accumulate(BUFFER_ASYNC x1, COUNT origin_count,
                               DATATYPE origin_datatype, BUFFER_ASYNC_OUT x2,
                               COUNT result_count, DATATYPE result_datatype,
-                              RANK target_rank, DISP target_disp,
+                              RANK target_rank, AINT target_disp,
                               COUNT target_count, DATATYPE target_datatype,
                               OP op, WIN win)
 {
