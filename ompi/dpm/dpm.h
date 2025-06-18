@@ -15,6 +15,7 @@
  *                         reserved.
  * Copyright (c) 2018      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2025      Nanook Consulting  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -97,6 +98,11 @@ int ompi_dpm_open_port(char *port_name);
  * Unpublish the rendezvous point
  */
 int ompi_dpm_close_port(const char *port_name);
+
+/*
+ * Compute locality for array of procs
+ */
+int ompi_dpm_set_locality(ompi_proc_t **procs, int rsize);
 
 END_C_DECLS
 
