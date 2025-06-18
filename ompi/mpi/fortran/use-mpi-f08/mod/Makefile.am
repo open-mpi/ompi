@@ -94,6 +94,7 @@ mpi-f08-interfaces-generated.h: $(template_files)
 	    fortran \
 	    $(gen_ts) \
 	    interface \
+	    --fort-std f08 \
 	    --prototype-files $(template_files)
 
 # Delete generated file on maintainer-clean
