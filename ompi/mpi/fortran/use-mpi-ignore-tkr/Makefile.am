@@ -8,6 +8,8 @@
 # Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
 # Copyright (c) 2022      IBM Corporation.  All rights reserved.
 # Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
+# Copyright (c) 2025      Triad National Security, LLC. All rights
+#                         reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -45,6 +47,7 @@ mpi-ignore-tkr.lo: $(top_srcdir)/ompi/mpi/fortran/base/attr-fn-int-callback-inte
 mpi-ignore-tkr.lo: $(top_srcdir)/ompi/mpi/fortran/base/conversion-fn-null-int-interface.h
 mpi-ignore-tkr.lo: mpi-ignore-tkr-interfaces.h
 mpi-ignore-tkr.lo: mpi-ignore-tkr-status.h
+mpi-ignore-tkr.lo: mpi-ignore-tkr-interfaces-generated.h
 mpi-ignore-tkr.lo: pmpi-ignore-tkr-interfaces.h
 mpi-ignore-tkr.lo: mpi-ignore-tkr-file-interfaces.h
 mpi-ignore-tkr.lo: pmpi-ignore-tkr-file-interfaces.h
@@ -59,7 +62,8 @@ lib@OMPI_LIBMPI_NAME@_usempi_ignore_tkr_la_SOURCES = \
         mpi-ignore-tkr-status.h \
         pmpi-ignore-tkr-interfaces.h \
         pmpi-ignore-tkr-file-interfaces.h \
-        pmpi-ignore-tkr-removed-interfaces.h
+        pmpi-ignore-tkr-removed-interfaces.h \
+        mpi-ignore-tkr-interfaces-generated.h
 
 nodist_lib@OMPI_LIBMPI_NAME@_usempi_ignore_tkr_la_SOURCES = \
         mpi-ignore-tkr-interfaces.h \
@@ -125,12 +129,37 @@ mpi-ignore-tkr-sizeof.f90:
 	    --complex32=$(OMPI_HAVE_FORTRAN_COMPLEX32)
 
 #
+# Generate the Fortran bindings and C wrapper functions for bindings with a
+# *.in template.  Eventually the template files will be moved to a
+# shared location for all three fortran variants -  mpif/mpi/mpi_f08.
+# 
+
+include Makefile.prototype_files
+template_files =${prototype_files:%=$(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/%}
+
+if OMPI_FORTRAN_HAVE_TS 
+gen_ts = --generate-ts-suffix
+endif
+
+mpi-ignore-tkr-interfaces-generated.h: $(template_files)
+	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
+	    --builddir $(abs_top_builddir) \
+	    --srcdir $(abs_top_srcdir) \
+	    --output $(abs_builddir)/$@ \
+	    fortran \
+	    $(gen_ts) \
+	    interface \
+	    --fort-std f90 \
+	    --prototype-files $(template_files)
+
+#
 # Clean up generated and module files
 #
 
 CLEANFILES += mpi-ignore-tkr-sizeof.h mpi-ignore-tkr-sizeof.f90
 MOSTLYCLEANFILES = *.mod
 CLEANFILES += *.i90
+MAINTAINERCLEANFILES = mpi-ignore-tkr-interfaces-generated.h
 
 # Install the generated .mod files.  Unfortunately, each F90 compiler
 # may generate different filenames, so we have to use a glob.  :-(
