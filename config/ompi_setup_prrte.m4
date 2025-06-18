@@ -39,7 +39,7 @@ dnl results of the build.
 AC_DEFUN([OMPI_SETUP_PRRTE],[
     AC_REQUIRE([AC_PROG_LN_S])
 
-OPAL_VAR_SCOPE_PUSH([prrte_setup_internal_happy prrte_setup_external_happy target_rst_dir])
+OPAL_VAR_SCOPE_PUSH([prrte_setup_internal_happy target_rst_dir])
 
     opal_show_subtitle "Configuring PRRTE"
 
@@ -56,16 +56,44 @@ OPAL_VAR_SCOPE_PUSH([prrte_setup_internal_happy prrte_setup_external_happy targe
     rm -rf "$target_rst_dir/prrte-rst-content"
     rm -rf "$target_rst_dir/schizo-ompi-rst-content"
 
-    OPAL_3RDPARTY_WITH([prrte], [prrte], [package_prrte], [1])
+    AC_ARG_WITH([prrte],
+       [AS_HELP_STRING([--with-prrte],
+           [Enable/disable building with PRRTE. Supports 'yes', 'internal',  and 'no', defaulting to 'yes'])])
+    
+    AC_ARG_WITH([rte],
+       [AS_HELP_STRING([--with-rte],
+           [Enable/disable building with RTE. Supports 'yes' and 'no', defaulting to 'yes'])])
+    
+    # Checking if --with-prrte and --with-rte values differ. 
+    AS_IF([test -n "$with_prrte" -a -n "$with_rte" -a "$with_prrte" != "$with_rte"],
+         AC_MSG_ERROR(['--with-prrte' and '--with-rte' are both defined but have differing values. Please specify one or the other.]))
 
-    AC_ARG_WITH([prrte-bindir],
-       [AS_HELP_STRING([--with-prrte-bindir=DIR],
-           [Search for PRRTE binaries in DIR.  Defaults to PRRTE_DIR/bin if not specified])])
+    # Setting --with-prrte to --with-rte's value to avoid duplicate code
+    AS_IF([test -z "$with_prrte"],
+          [with_prrte="$with_rte"])
 
+    # We only want to accept 'yes' or 'no' as args for --with-prrte. 
+    # If user does not specify, it defaults to 'yes'.
+    # We no longer support external prrte builds.
     prrte_setup_internal_happy=0
+    AS_IF([test "$with_prrte" != "yes" -a "$with_prrte" != "no" -a "$with_prrte" != "" -a "$with_prrte" != "internal"],
+         AC_MSG_ERROR(['--with-prrte' option defaults to 'yes' and supports 'yes', 'internal',  or 'no'. Internal is equivalent to yes. External PRRTE builds are no longer supported.]))
+    
+    # Determines if user wants to build with PRRTE. 
+    # Defaults to building with PRRTE if unspecified.
+    AS_CASE([$with_prrte],
+            ["yes"],      [prrte_setup_internal_happy=1
+                           opal_prrte_mode="internal"],
+            ["internal"], [prrte_setup_internal_happy=1
+                           opal_prrte_mode="internal"],
+            ["no"],       [prrte_setup_internal_happy=0
+                           opal_prrte_mode="disabled"],
+            [""],         [prrte_setup_internal_happy=1
+                           opal_prrte_mode="internal"])
+
     m4_ifdef([package_prrte],
         [OMPI_PRRTE_ADD_ARGS
-         AS_IF([test "$opal_prrte_mode" = "unspecified" -o "$opal_prrte_mode" = "internal"],
+         AS_IF([test "$opal_prrte_mode" = "internal"],
                [# Run PRRTE's configure script unless the user
                 # explicitly asked us to use an external PMIX, so that
                 # "make dist" includes PRRTE in the dist tarball.  This
@@ -78,37 +106,26 @@ OPAL_VAR_SCOPE_PUSH([prrte_setup_internal_happy prrte_setup_external_happy targe
                 _OMPI_SETUP_PRRTE_INTERNAL([prrte_setup_internal_happy=1],
                                            [prrte_setup_internal_happy=0])])
 
-         # if we have a pmix package and configure did not complete
-         # successfully (or wasn't started), then disable make dist.
-         AS_IF([test $prrte_setup_internal_happy != 1],
-               [OPAL_MAKEDIST_DISABLE="$OPAL_MAKEDIST_DISABLE PRRTE"])])
-
-    # unless internal specifically requested by the user, try to find
-    # an external that works.
-    prrte_setup_external_happy=0
-    AS_IF([test "$opal_prrte_mode" != "internal" -a "$opal_prrte_mode" != "disabled"],
-          [_OMPI_SETUP_PRRTE_EXTERNAL(
-              [prrte_setup_external_happy=1
-               opal_prrte_mode="external"],
-              [AS_IF([test "$opal_prrte_mode" = "external"],
-                     [AC_MSG_ERROR([External PRRTE requested but not found.])])])])
-
-    # external did not work out and customer did not specify external,
-    # so try the internal version.
-    AS_IF([test "$prrte_setup_external_happy" = "0" -a "$prrte_setup_internal_happy" = "1"],
-          [opal_prrte_mode="internal"
-           OMPI_USING_INTERNAL_PRRTE=1
-           _OMPI_SETUP_PRRTE_INTERNAL_POST()],
-          [OMPI_USING_INTERNAL_PRRTE=0])
-
-    AS_IF([test "$opal_prrte_mode" != "disabled"],
-          [AS_IF([test "$prrte_setup_external_happy" = "0" -a "$prrte_setup_internal_happy" = "0"],
-                 [AC_MSG_ERROR([Could not find viable prrte build.])])
-           OMPI_HAVE_PRRTE=1],
-          [OMPI_HAVE_PRRTE=0])
+    # if we have a pmix package and configure did not complete
+    # successfully (or wasn't started), then disable make dist.
+    AS_IF([test $prrte_setup_internal_happy != 1],
+          [OPAL_MAKEDIST_DISABLE="$OPAL_MAKEDIST_DISABLE PRRTE"])])
+    
+    AS_IF([test "$opal_prrte_mode" = "disabled"],
+          [OMPI_WANT_PRRTE=0
+           OMPI_HAVE_PRRTE=0
+           OMPI_USING_INTERNAL_PRRTE=0
+           OMPI_HAVE_PRRTE_RST=0],
+          [AS_IF([test "$prrte_setup_internal_happy" = "1"],
+                 [OMPI_WANT_PRRTE=1
+                  OMPI_HAVE_PRRTE=1
+                  OMPI_USING_INTERNAL_PRRTE=1
+                  _OMPI_SETUP_PRRTE_INTERNAL_POST()],
+                 [OMPI_HAVE_PRRTE=0
+                  OMPI_USING_INTERNAL_PRRTE=0])])
 
     AM_CONDITIONAL([OMPI_WANT_PRRTE],
-           [test "$prrte_setup_internal_happy" = "1" -o "$prrte_setup_external_happy" = "1"])
+           [test "$prrte_setup_internal_happy" = "1"])
 
     AC_DEFINE_UNQUOTED([OMPI_HAVE_PRRTE],
                        [$OMPI_HAVE_PRRTE],
@@ -264,78 +281,4 @@ dnl caller configured libprrte configure, and the configure script
 dnl succeeded.
 AC_DEFUN([_OMPI_SETUP_PRRTE_INTERNAL_POST], [
     OPAL_3RDPARTY_SUBDIRS="$OPAL_3RDPARTY_SUBDIRS prrte"
-])
-
-
-dnl _OMPI_SETUP_PRRTE_EXTERNAL([action if success], [action if not success])
-dnl
-dnl Try to find an external prrte with sufficient version.
-AC_DEFUN([_OMPI_SETUP_PRRTE_EXTERNAL], [
-    OPAL_VAR_SCOPE_PUSH([ompi_prte_min_version ompi_prte_min_num_version setup_prrte_external_happy opal_prrte_CPPFLAGS_save])
-
-    opal_prrte_CPPFLAGS_save=$CPPFLAGS
-
-    AS_IF([test -n "${with_prrte}" -a "${with_prrte}" != "yes" -a "${with_prrte}" != "no"],
-          [OPAL_FLAGS_APPEND_UNIQ([CPPFLAGS], ["-I${with_prrte}/include"])])
-
-    AC_CHECK_HEADER([prte.h], [setup_prrte_external_happy=yes],
-                    [setup_prrte_external_happy=no])
-
-    ompi_prte_min_version=OMPI_PRTE_MIN_VERSION
-    ompi_prte_min_num_version=OMPI_PRTE_NUMERIC_MIN_VERSION
-    AS_IF([test "${setup_prrte_external_happy}" = "yes"],
-          [AC_CACHE_CHECK([if external PRRTE version is OMPI_PRTE_MIN_VERSION or greater],
-              [ompi_setup_prrte_cv_version_happy],
-              [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <prte_version.h>
-                 ]], [[
-#if PRTE_NUMERIC_VERSION < $ompi_prte_min_num_version
-#error "prrte API version is less than $ompi_prte_min_version"
-#endif
-                 ]])],
-                 [ompi_setup_prrte_cv_version_happy="yes"],
-                 [ompi_setup_prrte_cv_version_happy="no"])])
-           AS_IF([test "${ompi_setup_prrte_cv_version_happy}" = "no"],
-                 [setup_prrte_external_happy="no"])])
-
-    CPPFLAGS="$opal_prrte_CPPFLAGS_save"
-
-    # If an external build and the user told us where to find PRRTE,
-    # find prterun and save that path.
-    prterun_path=
-    AS_IF([test "$setup_prrte_external_happy" = "yes"],
-          [AS_IF([test "${with_prrte_bindir}" = "yes" -o "${with_prrte_bindir}" = "no"],
-                 [AC_MSG_ERROR(["yes" and "no" are not valid arguments for --with-prrte-bindir])])
-           AS_IF([test -z "${with_prrte_bindir}" -a -n "${with_prrte}"],
-                 [with_prrte_bindir="${with_prrte}/bin"])
-           AS_IF([test -n "${with_prrte_bindir}"],
-                 [AS_IF([test -x ${with_prrte_bindir}/prterun],
-                        [prterun_path="${with_prrte_bindir}/prterun"],
-                        [AC_MSG_ERROR([Could not find executable prterun: ${with_prrte_bindir}/prterun])])])])
-    AS_IF([test -n "${prterun_path}"],
-          [AC_DEFINE_UNQUOTED([OMPI_PRTERUN_PATH], ["${prterun_path}"], [Path to prterun])])
-
-    OMPI_HAVE_PRRTE_RST=0
-    AS_IF([test "$setup_prrte_external_happy" = "yes"],
-          [ # Determine if this external PRRTE has installed the RST
-            # directories that we care about
-
-           AC_MSG_CHECKING([for external PRRTE RST files])
-           prrte_install_dir=${with_prrte}/share/prte/rst
-           AS_IF([test -n "$SPHINX_BUILD"],
-                 [AS_IF([test -d "$prrte_install_dir/prrte-rst-content" && \
-                         test -d "$prrte_install_dir/schizo-ompi-rst-content"],
-                        [OMPI_HAVE_PRRTE_RST=1
-                         OMPI_PRRTE_RST_CONTENT_DIR="$prrte_install_dir/prrte-rst-content"
-                         OMPI_SCHIZO_OMPI_RST_CONTENT_DIR="$prrte_install_dir/schizo-ompi-rst-content"
-                         AC_MSG_RESULT([found])
-                         ],
-                        [ # This version of PRRTE doesn't have installed RST
-                          # files.
-                          AC_MSG_RESULT([not found])
-                        ])
-                 ])
-           $1],
-	  [$2])
-
-    OPAL_VAR_SCOPE_POP
 ])
