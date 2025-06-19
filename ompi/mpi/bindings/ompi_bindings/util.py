@@ -67,11 +67,17 @@ def ext_api_func_name_profile(fn_name, bigcount=False):
     return f'P{ext_api_func_name(fn_name, bigcount)}'
 
 
-def fortran_f08_name(fn_name, bigcount=False, needs_ts=False):
+def fortran_name(fn_name, bigcount=False, needs_ts=False, gen_f90=False):
     """Produce the final f08 name from base_name. See section 19.2 of MPI 4.1 standard."""
-    suffix = '_c' if bigcount else ''
-    ts = 'ts' if needs_ts else ''
-    return f'MPI_{fn_name.capitalize()}{suffix}_f08{ts}'
+    name = ''
+    if gen_f90 == False:
+        suffix = '_c' if bigcount else ''
+        ts = 'ts' if needs_ts else ''
+        name = f'MPI_{fn_name.capitalize()}{suffix}_f08{ts}'
+    else:
+        ts = '_FTS' if needs_ts else ''
+        name = f'MPI_{fn_name.capitalize()}{ts}'
+    return name
 
 def fortran_f08_generic_interface_name(fn_name):
     """Produce the generic interface name from the base_name."""
@@ -83,7 +89,13 @@ def break_param_lines_fortran(start, params, end):
     This is often necessary to avoid going over the max line length of 132
     characters.
     """
-    assert len(params) > 1, 'expected more than one parameter'
+    assert len(params) > 0, 'expected at least one parameter'
+#
+#   handle special case of just one parameter and return
+#
+    if len(params) == 1:
+        result_lines = [f'{start}{params[0]}{end}']
+        return result_lines    
     indent = len(start) * ' '
     lines = [f'{start}{params[0]},']
     for param in params[1:-1]:

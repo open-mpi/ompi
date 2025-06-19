@@ -279,7 +279,6 @@ mpi_api_files = \
         query_thread_f08.F90 \
         register_datarep_f08.F90 \
         request_free_f08.F90 \
-        request_get_status_f08.F90 \
         session_call_errhandler_f08.F90\
         session_create_errhandler_f08.F90\
         session_get_errhandler_f08.F90\
