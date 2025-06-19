@@ -34,6 +34,18 @@ above categories that can be used with ``configure``:
   .. danger:: The heterogeneous functionality is currently broken |mdash|
               do not use.
 
+* ``--enable-progress-threads``
+* ``--disable-progress-threads``:
+  Enable or disable (default = ``enabled``) software-based progress thread
+  for each MPI process to execute the internal communication progression
+  engine. When enabled at build time, the thread can be activated (default =
+  deactivated) at runtime by setting environment variable
+  ``OMPI_ASYNC_PROGRESS`` or ``OPAL_ASYNC_PROGRESS`` to a non-zero value.
+
+  .. warning:: Be aware of performance degradation. Please read
+               :ref:`this section <async-progress-thread-label>` for
+               more documentation.
+
 .. _install-wrapper-flags-label:
 
 * ``--with-wrapper-cflags=CFLAGS``
