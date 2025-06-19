@@ -39,6 +39,7 @@ same command).
    prerequisites
    pmix-and-prrte
    scheduling
+   progress_thread
 
    localhost
    ssh
