@@ -25,7 +25,7 @@ DESCRIPTION
 
 :ref:`MPI_Session_finalize` releases all MPI state associated with the supplied
 session. Every instantiated session must be finalized using
-:ref:`MPI_Session_finalize`. The handle session is set to MPI_SESSION_NULL by
+:ref:`MPI_Session_finalize`. The handle session is set to ``MPI_SESSION_NULL`` by
 the call.
 
 NOTES
@@ -52,4 +52,5 @@ ERRORS
 
 .. include:: ./ERRORS.rst
 
-.. seealso:: :ref:`MPI_Session_init`
+.. seealso::
+   * :ref:`MPI_Session_init`
