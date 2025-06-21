@@ -46,4 +46,19 @@ ERRORS
 
 .. include:: ./ERRORS.rst
 
-.. seealso:: :ref:`MPI_Session_get_num_psets` MPI_Session_group_from_pset
+.. seealso::
+   * :ref:`MPI_Group_from_session_pset`
+   * :ref:`MPI_Session_c2f`
+   * :ref:`MPI_Session_call_errhandler`
+   * :ref:`MPI_Session_create_errhandler`
+   * :ref:`MPI_Session_f2c`
+   * :ref:`MPI_Session_finalize`
+   * :ref:`MPI_Session_get_errhandler`
+   * :ref:`MPI_Session_get_info`
+   * :ref:`MPI_Session_get_nth_pset`
+   * :ref:`MPI_Session_get_num_psets`
+   * :ref:`MPI_Session_get_pset_info`
+   * :ref:`MPI_Session_init`
+   * :ref:`MPI_Session_set_errhandler`
+   * :ref:`MPI_T_pvar_session_create`
+   * :ref:`MPI_T_pvar_session_free`

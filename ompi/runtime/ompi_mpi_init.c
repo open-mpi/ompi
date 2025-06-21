@@ -29,6 +29,7 @@
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * Copyright (c) 2021-2022 Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2025      Advanced Micro Devices, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -267,6 +268,50 @@ MPI_Fint *MPI_F08_STATUSES_IGNORE = NULL;
  */
 
 #include "mpif-c-constants.h"
+
+static const char *ompi_thread_level_keywords[] = {"single", "serialized", "funneled", "multiple"};
+static const char *ompi_thread_level_prepositions[] = {"mpi_thread_", "thread_", NULL};
+/* In the future integer MPI_ABI values for MPI_THREAD_SINGLE-MULTIPLE may be
+ * non-sequential (but ordered) integer values. If you are implementing MPI
+ * ABI changes please refer to
+ * https://github.com/open-mpi/ompi/pull/13211#discussion_r2085086844
+ */
+static const int ompi_thread_level_values[] = {MPI_THREAD_SINGLE, MPI_THREAD_SERIALIZED,
+                                               MPI_THREAD_FUNNELED, MPI_THREAD_MULTIPLE};
+
+int ompi_getenv_mpi_thread_level(int *requested)
+{
+    char* env;
+    if (NULL != (env = getenv("OMPI_MPI_THREAD_LEVEL"))) {
+        char *prep = NULL, *token = (char *) env /* full match */;
+        int pidx = 0, found = strtol(env, &prep, 10);
+
+        if (prep == env) {  /* no digits found */
+            found = -1;
+            while (NULL != (prep = (char *) ompi_thread_level_prepositions[pidx])) {
+                if (0 == strncasecmp(prep, env, strlen(prep))) {
+                    token = env + strlen(prep);
+                    break; /* got a token let's find a match */
+                }
+                pidx++;
+            }
+            const int nb_keywords = sizeof(ompi_thread_level_keywords)/sizeof(ompi_thread_level_keywords[0]);
+            for (int i = 0; i < nb_keywords; i++) {
+                if (0 == strncasecmp(ompi_thread_level_keywords[i], token, strlen(token))) {
+                    if (-1 != found) { /* not the first match, bail out */
+                        return OMPI_ERR_BAD_PARAM;
+                    }
+                    found = i;
+                }
+            }
+        }
+        if (-1 != found) {
+            return *requested = ompi_thread_level_values[found];
+        }
+        return OMPI_ERR_BAD_PARAM;
+    }
+    return OMPI_SUCCESS;
+}
 
 void ompi_mpi_thread_level(int requested, int *provided)
 {
