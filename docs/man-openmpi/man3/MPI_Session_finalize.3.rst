@@ -25,8 +25,14 @@ DESCRIPTION
 
 :ref:`MPI_Session_finalize` releases all MPI state associated with the supplied
 session. Every instantiated session must be finalized using
-:ref:`MPI_Session_finalize`. The handle session is set to MPI_SESSION_NULL by
+:ref:`MPI_Session_finalize`. The handle session is set to ``MPI_SESSION_NULL`` by
 the call.
+
+Multiple sessions can be created and destroyed during the lifetime of
+an MPI process.  This is different than MPI world model, which can be
+initialized at most exactly once (and then subsequently finalized)
+during the lifetime of an MPI process.
+
 
 NOTES
 -----
@@ -52,4 +58,10 @@ ERRORS
 
 .. include:: ./ERRORS.rst
 
-.. seealso:: :ref:`MPI_Session_init`
+.. seealso::
+   * :ref:`MPI_Init`
+   * :ref:`MPI_Initialized`
+   * :ref:`MPI_Init_thread`
+   * :ref:`MPI_Finalize`
+   * :ref:`MPI_Finalized`
+   * :ref:`MPI_Session_init`
