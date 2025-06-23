@@ -536,6 +536,10 @@ static int ompi_mpi_instance_init_common (int argc, char **argv)
         return ompi_instance_print_error ("mca_pml_base_select() failed", ret);
     }
 
+    if (OMPI_SUCCESS != (ret = ompi_osc_base_find_available (OPAL_ENABLE_PROGRESS_THREADS, ompi_mpi_thread_multiple))) {
+        return ompi_instance_print_error ("ompi_osc_base_find_available() failed", ret);
+    }
+
     OMPI_TIMING_IMPORT_OPAL("orte_init");
     OMPI_TIMING_NEXT("rte_init-commit");
 
@@ -617,10 +621,6 @@ static int ompi_mpi_instance_init_common (int argc, char **argv)
         return ompi_instance_print_error ("mca_coll_base_find_available() failed", ret);
     }
 
-    if (OMPI_SUCCESS != (ret = ompi_osc_base_find_available (OPAL_ENABLE_PROGRESS_THREADS, ompi_mpi_thread_multiple))) {
-        return ompi_instance_print_error ("ompi_osc_base_find_available() failed", ret);
-    }
-
     /* io and topo components are not selected here -- see comment
        above about the io and topo frameworks being loaded lazily */
 
@@ -654,7 +654,8 @@ static int ompi_mpi_instance_init_common (int argc, char **argv)
         return ompi_instance_print_error ("ompi_attr_create_predefined_keyvals() failed", ret);
     }
 
-    if (mca_pml_base_requires_world ()) {
+    if (mca_pml_base_requires_world() ||
+        mca_osc_base_requires_world()) {
         /* need to set up comm world for this instance -- XXX -- FIXME -- probably won't always
          * be the case. */
         if (OMPI_SUCCESS != (ret = ompi_comm_init_mpi3 ())) {
@@ -699,7 +700,8 @@ static int ompi_mpi_instance_init_common (int argc, char **argv)
     /* some btls/mtls require we call add_procs with all procs in the job.
      * since the btls/mtls have no visibility here it is up to the pml to
      * convey this requirement */
-    if (mca_pml_base_requires_world ()) {
+    if (mca_pml_base_requires_world() ||
+        mca_osc_base_requires_world()) {
         if (NULL == (procs = ompi_proc_world (&nprocs))) {
             return ompi_instance_print_error ("ompi_proc_get_allocated () failed", ret);
         }
