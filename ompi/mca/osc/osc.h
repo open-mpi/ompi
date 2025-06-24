@@ -53,6 +53,9 @@ struct ompi_datatype_t;
 struct ompi_op_t;
 struct ompi_request_t;
 
+
+extern bool ompi_osc_base_requires_world;
+
 /* ******************************************************************** */
 
 
@@ -418,6 +421,11 @@ typedef ompi_osc_base_module_4_0_0_t ompi_osc_base_module_t;
 
 
 /* ******************************************************************** */
+
+static inline bool mca_osc_base_requires_world (void)
+{
+    return ompi_osc_base_requires_world;
+}
 
 
 END_C_DECLS

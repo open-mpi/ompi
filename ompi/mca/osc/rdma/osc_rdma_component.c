@@ -345,6 +345,27 @@ static int ompi_osc_rdma_component_init (bool enable_progress_threads,
                             __FILE__, __LINE__, ret);
     }
 
+    ret = mca_bml_base_init(enable_progress_threads, enable_mpi_threads);
+    if (OPAL_SUCCESS != ret) {
+        opal_output_verbose(1, ompi_osc_base_framework.framework_output,
+                            "%s:%d: bml_base_init() failed: %d",
+                            __FILE__, __LINE__, ret);
+        return ret;
+    }
+
+    /* check if any btls do not support dynamic add_procs */
+    mca_btl_base_selected_module_t* selected_btl;
+    OPAL_LIST_FOREACH(selected_btl, &mca_btl_base_modules_initialized,
+                      mca_btl_base_selected_module_t) {
+        mca_btl_base_module_t *btl = selected_btl->btl_module;
+
+        if (btl->btl_flags & MCA_BTL_FLAGS_SINGLE_ADD_PROCS) {
+            ompi_osc_base_requires_world = true;
+            break;
+        }
+
+    }
+
     return ret;
 }
 

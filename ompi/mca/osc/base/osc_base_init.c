@@ -30,6 +30,8 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/win/win.h"
 
+bool ompi_osc_base_requires_world = false;
+
 int
 ompi_osc_base_select(ompi_win_t *win,
                      void **base,
