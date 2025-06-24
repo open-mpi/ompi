@@ -2528,7 +2528,7 @@ int ompi_comm_determine_first_auto ( ompi_communicator_t* intercomm )
 /********************************************************************************/
 int ompi_comm_dump ( ompi_communicator_t *comm )
 {
-    opal_output(0, "Dumping information for comm_cid %s\n", ompi_comm_print_cid (comm));
+    opal_output(0, "Dumping information for comm_cid %s : %d\n", ompi_comm_print_cid (comm), ompi_comm_get_local_cid(comm));
     opal_output(0,"  f2c index:%d cube_dim: %d\n", comm->c_f_to_c_index,
                 comm->c_cube_dim);
     opal_output(0,"  Local group: size = %d my_rank = %d\n",
@@ -2539,13 +2539,17 @@ int ompi_comm_dump ( ompi_communicator_t *comm )
     /* Display flags */
     if ( OMPI_COMM_IS_INTER(comm) )
         opal_output(0," inter-comm,");
+    else
+        opal_output(0," intra-comm,");
     if ( OMPI_COMM_IS_CART(comm))
         opal_output(0," topo-cart");
     else if ( OMPI_COMM_IS_GRAPH(comm))
         opal_output(0," topo-graph");
     else if ( OMPI_COMM_IS_DIST_GRAPH(comm))
         opal_output(0," topo-dist-graph");
-     opal_output(0,"\n");
+    else
+        opal_output(0, " no topo");
+    opal_output(0,"\n");
 
     if (OMPI_COMM_IS_INTER(comm)) {
         opal_output(0,"  Remote group size:%d\n", comm->c_remote_group->grp_proc_count);
