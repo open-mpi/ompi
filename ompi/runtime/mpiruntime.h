@@ -16,6 +16,7 @@
  * Copyright (c) 2009      University of Houston.  All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2025      Advanced Micro Devices, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -162,6 +163,27 @@ extern opal_hash_table_t ompi_mpi_f90_complex_hashtable;
 
 /** version string of ompi */
 OMPI_DECLSPEC extern const char ompi_version_string[];
+
+/**
+ * Obtain the required thread level from environment (if any)
+ *
+ * @param requested Thread support that is requested (OUT)
+ *
+ * @returns Error code if environment exist but has an invalid value
+ *
+ * The function reads the environment variable OMPI_MPI_THREAD_LEVEL
+ * and set parameter requested accordingly. If the environment is not
+ * set, or has an invalid value, requested is left unchanged.
+ */
+int ompi_getenv_mpi_thread_level(int *requested);
+
+/**
+ * Determine the thread level
+ *
+ * @param requested Thread support that is requested (IN)
+ * @param provided Thread support that is provided (OUT)
+ */
+void ompi_mpi_thread_level(int requested, int *provided);
 
 /**
  * Determine the thread level
