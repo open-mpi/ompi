@@ -1437,6 +1437,12 @@ OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_ub;
 #define MPI_TYPECLASS_REAL       2
 #define MPI_TYPECLASS_COMPLEX    3
 
+/*
+ * Predefined info keys
+ */
+#define MPI_INFO_KEY_SESSION_PSET_SIZE  "mpi_size"
+
+#ifndef OMPI_NO_MPI_PROTOTYPES
 /* Aint helper macros (MPI-3.1) */
 #define MPI_Aint_add(base, disp) ((MPI_Aint) ((char *) (base) + (disp)))
 #define MPI_Aint_diff(addr1, addr2) ((MPI_Aint) ((char *) (addr1) - (char *) (addr2)))
@@ -1444,14 +1450,8 @@ OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_ub;
 #define PMPI_Aint_diff(addr1, addr2) MPI_Aint_diff(addr1, addr2)
 
 /*
- * Predefined info keys
- */
-#define MPI_INFO_KEY_SESSION_PSET_SIZE  "mpi_size"
-
-/*
  * MPI API
  */
-#ifndef OMPI_NO_MPI_PROTOTYPES
 OMPI_DECLSPEC  int MPI_Abi_supported(int *flag);
 OMPI_DECLSPEC  int MPI_Abi_version(int *abi_major, int *abi_minor);
 OMPI_DECLSPEC  int MPI_Abi_details(int *buflen, char *details, MPI_Info *info);
