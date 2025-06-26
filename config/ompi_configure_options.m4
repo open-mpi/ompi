@@ -263,19 +263,22 @@ AS_IF([! test -e "$binding_file" && test "$PYTHON" = ":"],
       [AC_MSG_ERROR([Open MPI requires Python >=3.6 for generating the bindings. Aborting])])
 AM_CONDITIONAL(OMPI_GENERATE_BINDINGS,[test "$PYTHON" != ":"])
 
-AC_MSG_CHECKING([if want to enable standard ABI library])
+AC_MSG_CHECKING([if want to enable MPI Forum ABI library])
 AC_ARG_ENABLE([standard-abi],
     [AS_HELP_STRING([--enable-standard-abi],
-                    [Enable building the standard ABI library (default: disabled)])])
-if test "$enable_standard_abi" = "yes"; then
-    AC_MSG_RESULT([yes])
-    ompi_standard_abi=1
-else
+                    [Enable building the MPI Forum ABI library (default: enabled)])])
+if test "$enable_standard_abi" = "no"; then
     AC_MSG_RESULT([no])
     ompi_standard_abi=0
+else
+    AC_MSG_RESULT([yes])
+    ompi_standard_abi=1
 fi
 AC_DEFINE_UNQUOTED([OMPI_STANDARD_ABI],[$ompi_standard_abi],
-                   [Whether we want to build the standard ABI library])
-AM_CONDITIONAL(OMPI_STANDARD_ABI,[test "$enable_standard_abi" = "yes"])
-
+                   [Whether we want to build the MPI Forum ABI library])
+AM_CONDITIONAL(OMPI_STANDARD_ABI,[test $ompi_standard_abi = 1])
+AS_IF([test $ompi_standard_abi -eq 1],
+      [gen_abi="yes"],
+      [gen_abi="no"])
+OPAL_SUMMARY_ADD([Miscellaneous], [MPI Forum ABI support], [], [$gen_abi])
 ])dnl
