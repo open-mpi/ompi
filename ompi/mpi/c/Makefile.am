@@ -1034,26 +1034,25 @@ if OMPI_GENERATE_BINDINGS
 	    source \
 	    ompi \
 	    $<
-abi.h: $(prototype_sources)
-	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
-	    --builddir $(abs_top_builddir) \
-	    --srcdir $(abs_top_srcdir) \
-	    --output $@ \
-	    c \
-	    header \
-	    --srcdir $(srcdir) \
-	    $(prototype_sources)
-standard_abi/mpi.h: $(prototype_sources)
+
+# Non-mangled version
+standard_abi/mpi.h: $(top_srcdir)/docs/mpi-standard-apis.json $(top_srcdir)/ompi/mpi/bindings/c_header.py
 	mkdir -p standard_abi
-	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
-	    --builddir $(abs_top_builddir) \
-	    --srcdir $(abs_top_srcdir) \
-	    --output $@ \
-	    c \
-	    header \
-            --srcdir $(srcdir) \
-	    --external \
-            $(prototype_sources)
+	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/c_header.py \
+	--input $(top_srcdir)/ompi/mpi/c/abi.h.in \
+	--abi-json $(top_srcdir)/docs/mpi-standard-abi.json \
+	--pympistd $(top_srcdir)/3rd-party/pympistandard \
+	--output $(top_srcdir)/ompi/mpi/c/standard_abi/mpi.h
+
+# Mangled version
+abi.h: $(top_srcdir)/docs/mpi-standard-apis.json $(top_srcdir)/ompi/mpi/bindings/c_header.py
+	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/c_header.py \
+	--input $(top_srcdir)/ompi/mpi/c/abi.h.in \
+	--output $(top_srcdir)/ompi/mpi/c/abi.h \
+	--abi-json $(top_srcdir)/docs/mpi-standard-abi.json \
+	--pympistd-dir $(top_srcdir)/3rd-party/pympistandard \
+	--mangle-names
+
 %_abi_generated.c: %.c.in
 	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
 	    --builddir $(abs_top_builddir) \
@@ -1065,7 +1064,7 @@ standard_abi/mpi.h: $(prototype_sources)
 	    $<
 endif
 
-MAINTAINERCLEANFILES = *_generated.c abi.h
+MAINTAINERCLEANFILES = *_generated.c $(nobase_include_HEADERS)
 if OMPI_STANDARD_ABI
 include Makefile_abi.include
 endif
