@@ -330,6 +330,13 @@ void ompi_info_do_config(bool want_all)
     /* The Java bindings were removed in Open MPI v6.0.0. */
     opal_info_out("Java bindings", "bindings:java", "no");
 
+    /* Open MPI can provide two different ABIs: its own (libmpi), which
+       is always built, and the MPI Forum ABI (libmpi_abi), which is
+       built by default but can be disabled via --disable-standard-abi. */
+    opal_info_out("Open MPI ABI", "bindings:abi:ompi", "yes");
+    opal_info_out("MPI Forum ABI", "bindings:abi:mpi_forum",
+                  OMPI_STANDARD_ABI ? "yes" : "no");
+
     opal_info_out("Wrapper compiler rpath", "compiler:all:rpath",
                   WRAPPER_RPATH_SUPPORT);
     opal_info_out("C compiler", "compiler:c:command", OPAL_CC);
