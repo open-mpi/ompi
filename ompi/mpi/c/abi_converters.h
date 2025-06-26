@@ -547,16 +547,16 @@ __opal_attribute_always_inline__ static inline void ompi_convert_abi_status_inte
     void *ptr = &out->_ucount;
     out->MPI_SOURCE = inp->MPI_SOURCE;
     out->MPI_TAG = inp->MPI_TAG;
-    out->_cancelled = inp->MPI_Internal[0];
-    memcpy(ptr, &inp->MPI_Internal[1],sizeof(out->_ucount));
+    out->_cancelled = inp->MPI_internal[0];
+    memcpy(ptr, &inp->MPI_internal[1],sizeof(out->_ucount));
     out->MPI_ERROR = ompi_convert_abi_error_intern_error(inp->MPI_ERROR);
 }
 __opal_attribute_always_inline__ static inline void ompi_convert_intern_status_abi_status(MPI_Status_ABI_INTERNAL *out, MPI_Status *inp)
 {
-    void *ptr = &out->MPI_Internal[1];
+    void *ptr = &out->MPI_internal[1];
     out->MPI_SOURCE = inp->MPI_SOURCE;
     out->MPI_TAG = inp->MPI_TAG;
-    out->MPI_Internal[0] =inp->_cancelled;
+    out->MPI_internal[0] =inp->_cancelled;
     memcpy(ptr, &inp->_ucount,sizeof(inp->_ucount));
 }
 

@@ -8,7 +8,6 @@
 # $HEADER$
 #
 """Constants used for generating bindings."""
-import re
 
 FORTRAN_ERROR_NAME = 'ierror'
 C_ERROR_NAME = 'ierr'
