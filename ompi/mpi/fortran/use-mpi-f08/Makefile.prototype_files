@@ -145,6 +145,7 @@ prototype_files = \
         send_ts.c.in \
         ssend_init_ts.c.in \
         ssend_ts.c.in \
+        status_set_elements.c.in \
         testany.c.in \
         type_contiguous.c.in \
         type_create_darray.c.in \
