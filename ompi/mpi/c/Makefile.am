@@ -20,6 +20,7 @@
 # Copyright (c) 2021      Amazon.com, Inc. or its affiliates.  All Rights
 #                         reserved.
 # Copyright (c) 2025      Advanced Micro Devices, Inc. All Rights reserved.
+# Copyright (c) 2025      UT-Battelle, LLC.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -343,6 +344,9 @@ prototype_sources = \
 	register_datarep.c.in \
         request_c2f.c.in \
         request_f2c.c.in \
+	remove_error_class.c.in \
+	remove_error_code.c.in \
+	remove_error_string.c.in \
 	request_free.c.in \
 	request_get_status.c.in \
 	request_get_status_all.c.in \
