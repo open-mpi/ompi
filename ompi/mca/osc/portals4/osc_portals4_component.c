@@ -348,6 +348,8 @@ component_init(bool enable_progress_threads, bool enable_mpi_threads)
         return ret;
     }
 
+    ompi_osc_base_requires_world = true;
+
     return OMPI_SUCCESS;
 }
 
