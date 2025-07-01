@@ -25,6 +25,13 @@ typedef struct {
   int MPI_internal[5];
 } MPI_Status;
 
+/*
+ * The following categories and values are taken, in order, from Section A.1
+ * ("Defined Values and Handles") of the MPI Standard, v5.0. Each category
+ * (header comment followed by block of assignments) corresponds to a table
+ * within Section A.1.
+ */
+
 /* Error classes */
 $CATEGORY:ERROR_CLASSES$
 
