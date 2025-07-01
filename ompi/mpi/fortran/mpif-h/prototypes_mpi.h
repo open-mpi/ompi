@@ -19,6 +19,7 @@
  * Copyright (c) 2019-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2021      Bull S.A.S. All rights reserved.
+ * Copyright (c) 2025      UT-Battelle, LLC.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -378,6 +379,9 @@ PN2(void, MPI_Reduce_scatter_init, mpi_reduce_scatter_init, MPI_REDUCE_SCATTER_I
 PN2(void, MPI_Reduce_scatter_block, mpi_reduce_scatter_block, MPI_REDUCE_SCATTER_BLOCK, (char *sendbuf, char *recvbuf, MPI_Fint *recvcount, MPI_Fint *datatype, MPI_Fint *op, MPI_Fint *comm, MPI_Fint *ierr));
 PN2(void, MPI_Reduce_scatter_block_init, mpi_reduce_scatter_block_init, MPI_REDUCE_SCATTER_BLOCK_INIT, (char *sendbuf, char *recvbuf, MPI_Fint *recvcount, MPI_Fint *datatype, MPI_Fint *op, MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, MPI_Fint *ierr));
 PN2(void, MPI_Register_datarep, mpi_register_datarep, MPI_REGISTER_DATAREP, (char *datarep, ompi_mpi2_fortran_datarep_conversion_fn_t *read_conversion_fn, ompi_mpi2_fortran_datarep_conversion_fn_t *write_conversion_fn, ompi_mpi2_fortran_datarep_extent_fn_t *dtype_file_extent_fn, MPI_Aint *extra_state, MPI_Fint *ierr, int datarep_len));
+PN2(void, MPI_Remove_error_class, mpi_remove_error_class, MPI_REMOVE_ERROR_CLASS, (MPI_Fint *errorclass, MPI_Fint *ierr));
+PN2(void, MPI_Remove_error_code, mpi_remove_error_code, MPI_REMOVE_ERROR_CODE, (MPI_Fint *errorcode, MPI_Fint *ierr));
+PN2(void, MPI_Remove_error_string, mpi_remove_error_string, MPI_REMOVE_ERROR_STRING, (MPI_Fint *errorcode, MPI_Fint *ierr));
 PN2(void, MPI_Request_free, mpi_request_free, MPI_REQUEST_FREE, (MPI_Fint *request, MPI_Fint *ierr));
 PN2(void, MPI_Request_get_status, mpi_request_get_status, MPI_REQUEST_GET_STATUS, (MPI_Fint *request, ompi_fortran_logical_t *flag, MPI_Fint *status, MPI_Fint *ierr));
 PN2(void, MPI_Request_get_status_all, mpi_request_get_status_all, MPI_REQUEST_GET_STATUS_ALL, (MPI_Fint *count, MPI_Fint *array_of_requests, ompi_fortran_logical_t *flag, MPI_Fint *array_of_statuses, MPI_Fint *ierr));

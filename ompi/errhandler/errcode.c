@@ -19,6 +19,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2022      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2025      UT-Battelle, LLC.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -416,6 +417,90 @@ int ompi_mpi_errnum_add_string(int errnum, const char *errstring, int len)
     }
 
     opal_string_copy( errcodep->errstring, errstring, len );
+    return OMPI_SUCCESS;
+}
+
+int ompi_mpi_errcode_remove(int errnum)
+{
+    int ret = OMPI_ERROR;
+    ompi_mpi_errcode_t *errcodep = NULL;
+
+    opal_mutex_lock(&errcode_lock);
+
+    errcodep = (ompi_mpi_errcode_t *)opal_pointer_array_get_item(&ompi_mpi_errcodes, errnum);
+    if ( NULL == errcodep ) {
+        opal_mutex_unlock(&errcode_lock);
+        return OMPI_ERROR;
+    }
+
+    /* Must have already removed estring before remove error code */
+    if (errcodep->errstring[0] == '\0') {
+        if (MPI_UNDEFINED != errcodep->code) {
+            ret = opal_pointer_array_set_item(&ompi_mpi_errcodes, errnum, NULL);
+            if (OPAL_SUCCESS == ret) {
+                if (errnum == ompi_mpi_errcode_lastused) {
+                    ompi_mpi_errcode_lastused--;
+                }
+            }
+        }
+    }
+
+    opal_mutex_unlock(&errcode_lock);
+
+    return ret;
+}
+
+int ompi_mpi_errclass_remove(int errclass)
+{
+    int ret = OMPI_ERROR;
+    ompi_mpi_errcode_t *errcodep = NULL;
+
+    opal_mutex_lock(&errcode_lock);
+
+    errcodep = (ompi_mpi_errcode_t *)opal_pointer_array_get_item(&ompi_mpi_errcodes, errclass);
+    if ( NULL == errcodep ) {
+        opal_mutex_unlock(&errcode_lock);
+        return OMPI_ERROR;
+    }
+
+    /* Must have already removed estring before remove error class */
+    if (errcodep->errstring[0] == '\0') {
+        /* Must have already removed ecode before remove error class */
+        if (MPI_UNDEFINED == errcodep->code) {
+            if (MPI_UNDEFINED != errcodep->cls) {
+                ret = opal_pointer_array_set_item(&ompi_mpi_errcodes, errcodep->cls, NULL);
+                if (OPAL_SUCCESS == ret) {
+                    if (errclass == ompi_mpi_errcode_lastused) {
+                        ompi_mpi_errcode_lastused--;
+                    }
+                }
+            }
+        }
+    }
+
+    opal_mutex_unlock(&errcode_lock);
+
+    return ret;
+}
+
+int ompi_mpi_errnum_remove_string(int errnum)
+{
+    ompi_mpi_errcode_t *errcodep = NULL;
+
+    opal_mutex_lock(&errcode_lock);
+
+    errcodep = (ompi_mpi_errcode_t *)opal_pointer_array_get_item(&ompi_mpi_errcodes, errnum);
+    if ( NULL == errcodep ) {
+        opal_mutex_unlock(&errcode_lock);
+        return OMPI_ERROR;
+    }
+
+    if (errcodep->errstring[0] != '\0') {
+        memset ( errcodep->errstring, 0, MPI_MAX_ERROR_STRING);
+    }
+
+    opal_mutex_unlock(&errcode_lock);
+
     return OMPI_SUCCESS;
 }
 

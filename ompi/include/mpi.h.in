@@ -29,6 +29,7 @@
  *                         reserved.
  * Copyright (c) 2025      Advanced Micro Devices, Inc. All rights reserved
  * Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
+ * Copyright (c) 2025      UT-Battelle, LLC.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -2246,6 +2247,9 @@ OMPI_DECLSPEC  int MPI_Register_datarep_c(const char *datarep,
                                           MPI_Datarep_conversion_function_c *write_conversion_fn,
                                           MPI_Datarep_extent_function *dtype_file_extent_fn,
                                           void *extra_state);
+OMPI_DECLSPEC  int MPI_Remove_error_class(int errorclass);
+OMPI_DECLSPEC  int MPI_Remove_error_code(int errorcode);
+OMPI_DECLSPEC  int MPI_Remove_error_string(int errorcode);
 OMPI_DECLSPEC  MPI_Fint MPI_Request_c2f(MPI_Request request);
 OMPI_DECLSPEC  MPI_Request MPI_Request_f2c(MPI_Fint request);
 OMPI_DECLSPEC  int MPI_Request_free(MPI_Request *request);
@@ -3419,6 +3423,9 @@ OMPI_DECLSPEC  int PMPI_Register_datarep_c(const char *datarep,
                                            MPI_Datarep_conversion_function_c *write_conversion_fn,
                                            MPI_Datarep_extent_function *dtype_file_extent_fn,
                                            void *extra_state);
+OMPI_DECLSPEC  int PMPI_Remove_error_class(int errorclass);
+OMPI_DECLSPEC  int PMPI_Remove_error_code(int errorcode);
+OMPI_DECLSPEC  int PMPI_Remove_error_string(int errorcode);
 OMPI_DECLSPEC  MPI_Fint PMPI_Request_c2f(MPI_Request request);
 OMPI_DECLSPEC  MPI_Request PMPI_Request_f2c(MPI_Fint request);
 OMPI_DECLSPEC  int PMPI_Request_free(MPI_Request *request);

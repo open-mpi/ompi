@@ -392,6 +392,9 @@ OMPI_MAN3 = \
         MPI_Reduce_scatter_block_init.3 \
         MPI_Reduce_scatter_init.3 \
         MPI_Register_datarep.3 \
+        MPI_Remove_error_class.3 \
+        MPI_Remove_error_code.3 \
+        MPI_Remove_error_string.3 \
         MPI_Request_c2f.3 \
         MPI_Request_f2c.3 \
         MPI_Request_free.3 \
