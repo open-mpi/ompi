@@ -43,15 +43,17 @@ for category in consts.categories.values():
         if value["category"] == name:
             categories[name].append(value)
 
-def output_constant(const):
-    # TODO: Use enums for ints? (ask Howard)
+def output_constant(const, use_enum):
     name = const["name"]
     abi_value = const["abi_value"]
     c_type = const["handle_types"]["c"]["type"]
     if c_type is None:
         return None
     def_name = f"#define {name}"
-    if c_type == "int":
+    if use_enum:
+        def_name = f"    {name}"
+        value = f"= {abi_value},"
+    elif c_type == "int":
         value = f"{abi_value}"
     else:
         value = f"(({c_type}) {abi_value})"
@@ -73,10 +75,19 @@ for line in lines:
     # line as-is.
     if category:
         category = category.group(1)
+        use_enum = False
+        # Only some values should be in `enums`, otherwise just use `#define`s
+        if category in consts.ENUM_CATEGORIES:
+            use_enum = True
+        if use_enum:
+            output.append("enum {\n")
+        # Print out each `#define` / assignment for the constants
         for constant in categories[category]:
-            line = output_constant(constant)
+            line = output_constant(constant, use_enum)
             if line is not None:
                 output.append(line)
+        if use_enum:
+            output.append("};\n")
     else:
         output.append(line)
 
