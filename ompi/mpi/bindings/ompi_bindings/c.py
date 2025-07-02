@@ -322,13 +322,35 @@ struct MPI_Status_ABI {
         # user functions
         self.dump('typedef int (MPI_Copy_function)(MPI_Comm_ABI_INTERNAL, int, void *, void *, void *, int *);')
         self.dump('typedef int (MPI_Delete_function)(MPI_Comm_ABI_INTERNAL, int, void *, void *);')
+#
+#       generate prototypes for user call back functions
+#
+        for handle in consts.C_ATTRIBUTE_OBJS:
+            prefix, suffix = handle.split('_')
+            copy_callback_func_name = f'{handle}_copy_attr_function'
+            copy_callback_func_name = f'{self.mangle_name(copy_callback_func_name)}'
+            delete_callback_func_name = f'{handle}_delete_attr_function'
+            delete_callback_func_name = f'{self.mangle_name(delete_callback_func_name)}'
+            #
+            # stupid MPI standard naming consistency
+            #
+            if handle == 'MPI_Type':
+                obj_arg_type = f'{self.mangle_name("MPI_Datatype")}'
+            else:
+                obj_arg_type = f'{self.mangle_name(handle)}'
+            obj_arg_name = f'old{suffix}'.lower()
+            obj_arg = f'{obj_arg_type} {obj_arg_name}'
+            keyval_arg = f'int {suffix}_keyval'.lower()
+            self.dump(f'typedef int ({copy_callback_func_name})({obj_arg}, {keyval_arg}, void *, void *, void *,int *);')
+            self.dump(f'typedef int ({delete_callback_func_name})({obj_arg}, {keyval_arg}, void *, void *);')
+
         # Function signatures
         for sig in self.signatures:
             self.dump(f'{sig};')
-#           print("Working on signature " + str(sig))
         self.dump('int MPI_Abi_details(int *buflen, char *details, MPI_Info *info);')
         self.dump('int MPI_Abi_supported(int *flag);')
         self.dump('int MPI_Abi_version(int *abi_major, int *abi_minor);')
+
         if not self.external:
             # Now generate the conversion code
             self.generate_error_convert_fn()
@@ -383,11 +405,20 @@ def print_cdefs_for_bigcount(out, enable_count=False):
         out.dump('#undef OMPI_BIGCOUNT_SRC')
         out.dump('#define OMPI_BIGCOUNT_SRC 0')
 
+def print_cdefs_for_abi(out, abi_type='ompi'):
+    if abi_type == 'ompi':
+        out.dump('#undef OMPI_ABI_SRC')
+        out.dump('#define OMPI_ABI_SRC 0')
+    else:
+        out.dump('#undef OMPI_ABI_SRC')
+        out.dump('#define OMPI_ABI_SRC 1')
+
 def ompi_abi(base_name, template, out):
     """Generate the OMPI ABI functions."""
     template.print_header(out)
     print_profiling_header(base_name, out)
     print_cdefs_for_bigcount(out)
+    print_cdefs_for_abi(out)
     out.dump(template.prototype.signature(base_name, abi_type='ompi'))
     template.print_body(func_name=base_name, out=out)
     # Check if we need to generate the bigcount interface
@@ -395,6 +426,7 @@ def ompi_abi(base_name, template, out):
         base_name_c = f'{base_name}_c'
         print_profiling_header(base_name_c, out)
         print_cdefs_for_bigcount(out, enable_count=True)
+        print_cdefs_for_abi(out)
         out.dump(template.prototype.signature(base_name_c, abi_type='ompi', enable_count=True))
         template.print_body(func_name=base_name_c, out=out)
 
@@ -406,10 +438,18 @@ def standard_abi(base_name, template, out):
     """Generate the standard ABI functions."""
     template.print_header(out)
     out.dump(f'#include "{ABI_INTERNAL_HEADER}"')
+    print_cdefs_for_abi(out,abi_type='standard')
+
+    # If any parameters are pointers to user callback functions, generate code
+    # for callback wrappers
+#   if util.prototype_needs_callback_wrappers(template.prototype):
+#       for param in prototype.params:
+#           if param.callback_wrapper_code:
 
     # Static internal function (add a random component to avoid conflicts)
     internal_name = f'ompi_abi_{template.prototype.name}'
     print_cdefs_for_bigcount(out)
+    print_cdefs_for_abi(out, abi_type='standard')
     internal_sig = template.prototype.signature(internal_name, abi_type='ompi',
                                                 enable_count=False)
     out.dump(consts.INLINE_ATTRS, internal_sig)
@@ -417,6 +457,7 @@ def standard_abi(base_name, template, out):
     if util.prototype_has_bigcount(template.prototype):
         internal_name = f'ompi_abi_{template.prototype.name}_c'
         print_cdefs_for_bigcount(out, enable_count=True)
+        print_cdefs_for_abi(out, abi_type='standard')
         internal_sig = template.prototype.signature(internal_name, abi_type='ompi',
                                                     enable_count=True)
         out.dump(consts.INLINE_ATTRS, internal_sig)
