@@ -298,12 +298,6 @@ avx_component_op_query(struct ompi_op_t *op, int *priority)
                 }
             }
 #endif
-            if( NULL != module->opm_fns[i] ) {
-                OBJ_RETAIN(module);
-            }
-            if( NULL != module->opm_3buff_fns[i] ) {
-                OBJ_RETAIN(module);
-            }
         }
         break;
     case OMPI_OP_BASE_FORTRAN_LAND:
