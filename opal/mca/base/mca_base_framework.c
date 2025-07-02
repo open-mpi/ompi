@@ -8,6 +8,8 @@
  * Copyright (c) 2018      Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
+ * Copyright (c) 2024      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -129,9 +131,11 @@ int mca_base_framework_register(struct mca_base_framework_t *framework,
         }
 
         /* register components variables */
-        ret = mca_base_framework_components_register(framework, flags);
-        if (OPAL_SUCCESS != ret) {
-            return ret;
+        if (!(MCA_BASE_FRAMEWORK_FLAG_NOCOMPONENT & framework->framework_flags)) {
+            ret = mca_base_framework_components_register(framework, flags);
+            if (OPAL_SUCCESS != ret) {
+                return ret;
+            }
         }
     }
 
