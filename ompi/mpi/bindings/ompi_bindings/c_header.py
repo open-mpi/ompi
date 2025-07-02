@@ -3,6 +3,8 @@ import textwrap
 import consts
 from consts import Lang
 
+import pympistandard as std
+
 categories = {}
 
 def comment(message, lang=Lang.C, indentation=0):
@@ -59,6 +61,7 @@ def output_constant(const, use_enum):
         value = f"(({c_type}) {abi_value})"
     return def_name + " " * (45 - len(def_name)) + value + "\n"
 
+# ========================= Manipulate Template Header =========================
 lines = []
 with open(consts.DIR / "abi.h.in", 'r') as header_in:
     lines = header_in.readlines()
@@ -91,5 +94,19 @@ for line in lines:
     else:
         output.append(line)
 
+# ============================= Function Prototypes ============================
+std.use_api_version()
+
+output.append("\n")
+output.append("/* MPI API */\n")
+for proc in std.all_iso_c_procedures():
+    output.append(f"{proc.express.iso_c}\n")
+
+output.append("\n")
+output.append("/* Profiling MPI API */\n")
+for proc in std.all_iso_c_procedures():
+     output.append(f"{proc.express.profile.iso_c}\n")
+
+# ================================ Final Output ================================
 with open(consts.DIR / "abi.h", 'tw') as header_out:
     header_out.writelines(output)
