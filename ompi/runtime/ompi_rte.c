@@ -68,6 +68,7 @@ opal_process_name_t pmix_name_invalid = {UINT32_MAX, UINT32_MAX};
  * infrastructure that manages its structure (e.g., OpenPMIx). If we setup this
  * session directory structure, then we shall cleanup after ourselves.
  */
+static bool destroy_top_session_dir = false;
 static bool destroy_job_session_dir = false;
 static bool destroy_proc_session_dir = false;
 
@@ -888,8 +889,13 @@ int ompi_rte_init(int *pargc, char ***pargv)
     if (0 == opal_process_info.num_local_peers) {
         if (NULL != peers) {
             opal_process_info.num_local_peers = opal_argv_count(peers) - 1;
+        } else if (opal_process_info.is_singleton) {
+            /* if we are a singleton, then we have no local peers */
+            opal_process_info.num_local_peers = 0;
         } else {
-            opal_process_info.num_local_peers = 1;
+            ret = OPAL_ERR_BAD_PARAM;
+            error = "local peers";
+            goto error;
         }
     }
     /* if my local rank if too high, then that's an error */
@@ -983,25 +989,28 @@ int ompi_rte_finalize(void)
 {
 
     /* cleanup the session directory we created */
+    if (NULL != opal_process_info.proc_session_dir && destroy_proc_session_dir) {
+        opal_os_dirpath_destroy(opal_process_info.proc_session_dir,
+                                true, check_file);
+        free(opal_process_info.proc_session_dir);
+        opal_process_info.proc_session_dir = NULL;
+        destroy_proc_session_dir = false;
+    }
+
     if (NULL != opal_process_info.job_session_dir && destroy_job_session_dir) {
         opal_os_dirpath_destroy(opal_process_info.job_session_dir,
-                                false, check_file);
+                                true, check_file);
         free(opal_process_info.job_session_dir);
         opal_process_info.job_session_dir = NULL;
         destroy_job_session_dir = false;
     }
-
-    if (NULL != opal_process_info.top_session_dir) {
+    
+    if (NULL != opal_process_info.top_session_dir && destroy_top_session_dir) {
+        opal_os_dirpath_destroy(opal_process_info.top_session_dir,
+                                true, check_file);
         free(opal_process_info.top_session_dir);
         opal_process_info.top_session_dir = NULL;
-    }
-
-    if (NULL != opal_process_info.proc_session_dir && destroy_proc_session_dir) {
-        opal_os_dirpath_destroy(opal_process_info.proc_session_dir,
-                                false, check_file);
-        free(opal_process_info.proc_session_dir);
-        opal_process_info.proc_session_dir = NULL;
-        destroy_proc_session_dir = false;
+        destroy_top_session_dir = false;
     }
 
     if (NULL != opal_process_info.app_sizes) {
@@ -1165,27 +1174,45 @@ void ompi_rte_wait_for_debugger(void)
 
 static int _setup_top_session_dir(char **sdir)
 {
+    /*
+     * Use a session directory structure similar to prrte (create only one
+     * directory for the top session) so that it can be cleaned up correctly
+     * when terminated.
+     */
     char *tmpdir;
+    int rc;
+    uid_t uid = geteuid();
+    pid_t pid = getpid();
 
     if( NULL == (tmpdir = getenv("TMPDIR")) )
         if( NULL == (tmpdir = getenv("TEMP")) )
             if( NULL == (tmpdir = getenv("TMP")) )
                 tmpdir = "/tmp";
 
-    *sdir = strdup(tmpdir);
+    if (0 > opal_asprintf(sdir, "%s/%s.%s.%lu.%lu",
+                              tmpdir, "ompi",
+                              opal_process_info.nodename,
+                              (unsigned long)pid, (unsigned long) uid)) {
+        opal_process_info.top_session_dir = NULL;
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+    rc = opal_os_dirpath_create(opal_process_info.top_session_dir, 0755);
+    if (OPAL_SUCCESS != rc) {
+        // could not create top session dir
+        free(opal_process_info.top_session_dir);
+        opal_process_info.top_session_dir = NULL;
+        return rc;
+    }
+    destroy_top_session_dir = true;
     return OPAL_SUCCESS;
 }
 
 static int _setup_job_session_dir(char **sdir)
 {
     int rc;
-    /* get the effective uid */
-    uid_t uid = geteuid();
 
-    if (0 > opal_asprintf(sdir, "%s/ompi.%s.%lu/jf.0/%u",
+    if (0 > opal_asprintf(sdir, "%s/%u",
                           opal_process_info.top_session_dir,
-                          opal_process_info.nodename,
-                          (unsigned long)uid,
                           opal_process_info.my_name.jobid)) {
         opal_process_info.job_session_dir = NULL;
         return OPAL_ERR_OUT_OF_RESOURCE;
