@@ -1152,7 +1152,23 @@ class TypeCommCopyAttrFunctionStandard(Type):
 #    pass
 
     def type_text(self, enable_count=False):
-        return 'MPI_Comm_copy_attr_function *'
+        type_name = self.mangle_name('MPI_Comm_copy_attr_function')
+        return f'{type_name} *'
+
+    @property
+    def argument(self):
+        return f'(MPI_Comm_copy_attr_function *) {self.name}'
+
+#   @property
+#   def init_code(self):
+#       code = []
+#       code = ['ompi_abi_wrapper_helper_t *helper = NULL;']
+#       code.append('helper = ( ompi_abi_wrapper_helper_t *)malloc(sizeof(ompi_abi_wrapper_helper_t));')
+#       code.append('if (NULL == helper)  return MPI_ERR_NO_MEM;')
+#       code.append('helper->user_extra_state = extra_state;')
+#       code.append('helper->user_copy_fn = comm_copy_attr_fn;')
+#       code.append('helper->user_delete_fn = comm_delete_attr_fn;')
+#       return code
 
 @Type.add_type('COMM_DELETE_ATTR_FUNCTION', abi_type=['ompi'])
 class TypeCommDeleteAttrFunction(Type):
@@ -1167,7 +1183,12 @@ class TypeCommDeleteAttrFunctionStandard(Type):
 #    pass
 
     def type_text(self, enable_count=False):
-        return 'MPI_Comm_delete_attr_function *'
+        type_name = self.mangle_name('MPI_Comm_delete_attr_function')
+        return f'{type_name} *'
+
+    @property
+    def argument(self):
+        return f'(MPI_Comm_delete_attr_function *) {self.name}'
 
 @Type.add_type('GREQUEST_QUERY_FUNCTION', abi_type=['ompi'])
 class TypeGrequestQueryFunction(Type):
@@ -1279,7 +1300,12 @@ class TypeTypeCopyAttrFunctionStandard(Type):
 #    pass
 
     def type_text(self, enable_count=False):
-        return 'MPI_Type_copy_attr_function *'
+        type_name = self.mangle_name('MPI_Type_copy_attr_function')
+        return f'{type_name} *'
+
+    @property
+    def argument(self):
+        return f'(MPI_Type_copy_attr_function *) {self.name}'
 
 @Type.add_type('TYPE_DELETE_ATTR_FUNCTION', abi_type=['ompi'])
 class TypeTypeDeleteAttrFunction(Type):
@@ -1294,9 +1320,15 @@ class TypeTypeDeleteAttrFunctionStandard(Type):
 #    pass
 
     def type_text(self, enable_count=False):
-        return 'MPI_Type_delete_attr_function *'
+        type_name = self.mangle_name('MPI_Type_delete_attr_function')
+        return f'{type_name} *'
+
+    @property
+    def argument(self):
+        return f'(MPI_Type_delete_attr_function *) {self.name}'
 
 @Type.add_type('WIN_ERRHANDLER_FUNCTION', abi_type=['ompi'])
+
 class TypeWinErrhandlerFunction(Type):
 
     def type_text(self, enable_count=False):
@@ -1324,7 +1356,12 @@ class TypeWinCopyAttrFunctionStandard(Type):
 #    pass
 
     def type_text(self, enable_count=False):
-        return 'MPI_Win_copy_attr_function *'
+        type_name = self.mangle_name('MPI_Win_copy_attr_function')
+        return f'{type_name} *'
+
+    @property
+    def argument(self):
+        return f'(MPI_Win_copy_attr_function *) {self.name}'
 
 @Type.add_type('WIN_DELETE_ATTR_FUNCTION', abi_type=['ompi'])
 class TypeWinDeleteAttrFunction(Type):
@@ -1339,7 +1376,12 @@ class TypeWinDeleteAttrFunctionStandard(Type):
 #    pass
 
     def type_text(self, enable_count=False):
-        return 'MPI_Win_delete_attr_function *'
+        type_name = self.mangle_name('MPI_Win_delete_attr_function')
+        return f'{type_name} *'
+
+    @property
+    def argument(self):
+        return f'(MPI_Win_delete_attr_function *) {self.name}'
 
 @Type.add_type('ERRHANDLER', abi_type=['ompi'])
 class TypeErrhandler(Type):
@@ -1448,15 +1490,15 @@ class TypeSessionOut(Type):
 
 
 @Type.add_type('SESSION_INOUT', abi_type=['standard'])
-class TypeSessionOutStandard(StandardABIType):
+class TypeSessionInOutStandard(StandardABIType):
 
-#   @property
-#   def init_code(self):
-#       return [f'MPI_Session {self.tmpname} = {ConvertFuncs.SESSION}(*{self.name});']
+    @property
+    def init_code(self):
+        return [f'MPI_Session {self.tmpname} = {ConvertFuncs.SESSION}(*{self.name});']
 
     @property
     def final_code(self):
-        return [f'*{self.name} = {ConvertOMPIToStandard.SESSION}((MPI_Session) *{self.name});']
+        return [f'*{self.name} = {ConvertOMPIToStandard.SESSION}({self.tmpname});']
 
     def type_text(self, enable_count=False):
         type_name = self.mangle_name('MPI_Session')
@@ -1464,7 +1506,7 @@ class TypeSessionOutStandard(StandardABIType):
 
     @property
     def argument(self):
-        return f'(MPI_Session *) {self.name}'
+        return f'&{self.tmpname}'
 
 
 @Type.add_type('SESSION_OUT', abi_type=['standard'])

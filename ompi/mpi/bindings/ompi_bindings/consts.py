@@ -250,6 +250,15 @@ C_HANDLES = [
     'MPI_Win',
 ]
 
+#
+# C objects that can have attributes cached on them
+#
+C_ATTRIBUTE_OBJS = [
+    'MPI_Comm',
+    'MPI_Type',
+    'MPI_Win',
+]
+
 class ConvertFuncs:
     """Names of conversion functions (between standard ABI and OMPI ABI)."""
 
@@ -262,7 +271,7 @@ class ConvertFuncs:
     STATUS = 'ompi_convert_abi_status_intern_status'
     MESSAGE = 'ompi_convert_abi_message_intern_message'
     OP = 'ompi_convert_abi_op_intern_op'
-    SESSION = 'ompi_convert_abi_session_intern_win'
+    SESSION = 'ompi_convert_abi_session_intern_session'
     WIN = 'ompi_convert_abi_win_intern_win'
     INFO = 'ompi_convert_abi_info_intern_info'
     FILE = 'ompi_convert_abi_file_intern_file'
