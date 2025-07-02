@@ -3356,19 +3356,6 @@ end interface
 
 interface
 
-subroutine MPI_Request_get_status(request, flag, status, ierror)
-  include 'mpif-config.h'
-  integer, intent(in) :: request
-  logical, intent(out) :: flag
-  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status
-  integer, intent(out) :: ierror
-end subroutine MPI_Request_get_status
-
-end interface
-
-
-interface
-
 subroutine MPI_Rget(origin_addr, origin_count, origin_datatype, &
                     target_rank, target_disp, target_count, &
                     target_datatype, win, request, ierror)
