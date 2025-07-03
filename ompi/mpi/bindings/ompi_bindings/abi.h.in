@@ -6,6 +6,12 @@
  * $HEADER$
  */
 
+#define MPI_VERSION    5
+#define MPI_SUBVERSION 0
+
+#define MPI_ABI_VERSION    1
+#define MPI_ABI_SUBVERSION 0
+
 typedef struct MPI_ABI_Comm * MPI_Comm;
 typedef struct MPI_ABI_Datatype * MPI_Datatype;
 typedef struct MPI_ABI_Errhandler * MPI_Errhandler;
