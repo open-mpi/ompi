@@ -14,7 +14,7 @@
  *                         reserved.
  * Copyright (c) 2018      Intel, Inc, All rights reserved
  *
- * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2018-2025 Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2020      Google, LLC. All rights reserved.
  * Copyright (c) 2022-2024 Triad National Security, LLC. All rights
  *                         reserved.
@@ -198,9 +198,6 @@ mca_btl_ofi_register_mem(struct mca_btl_base_module_t *btl,
     int access_flags = flags & MCA_BTL_REG_FLAG_ACCESS_ANY;
     int rc;
     uint32_t cache_flags = 0;
-    if (ofi_module->bypass_cache) {
-	   cache_flags |= MCA_RCACHE_FLAGS_CACHE_BYPASS;
-    }
 
     rc = ofi_module->rcache->rcache_register(ofi_module->rcache, base, size, cache_flags, access_flags,
                                              (mca_rcache_base_registration_t **) &reg);

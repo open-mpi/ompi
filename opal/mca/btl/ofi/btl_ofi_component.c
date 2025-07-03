@@ -14,7 +14,7 @@
  *                         reserved.
  * Copyright (c) 2018-2019 Intel, Inc.  All rights reserved.
  *
- * Copyright (c) 2018-2021 Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2018-2025 Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2020-2023 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -657,7 +657,6 @@ static int mca_btl_ofi_init_device(struct fi_info *info)
     module->outstanding_rdma = 0;
     module->use_virt_addr = false;
     module->use_fi_mr_bind = false;
-    module->bypass_cache = false;
 
 #if defined(FI_HMEM)
     if (ofi_info->caps & FI_HMEM) {
@@ -672,13 +671,6 @@ static int mca_btl_ofi_init_device(struct fi_info *info)
 
     if (ofi_info->domain_attr->mr_mode & FI_MR_ENDPOINT) {
         module->use_fi_mr_bind = true;
-    }
-
-    /* Currently there is no API to query whether the libfabric provider
-     * uses an underlying registration cache. For now, just check for known
-     * providers that use registration caching. */
-    if (!strncasecmp(info->fabric_attr->prov_name, "efa", 3)) {
-        module->bypass_cache = true;
     }
 
     /* create endpoint list */
