@@ -841,6 +841,10 @@ select_prov:
                         __FILE__, __LINE__);
 #endif
 
+    if (ompi_mtl_ofi.hmem_needs_reg) {
+        ompi_mtl_ofi_rcache_init();
+    }
+
     /**
      * Select the format of the OFI tag
      */
@@ -1173,6 +1177,11 @@ int
 ompi_mtl_ofi_finalize(struct mca_mtl_base_module_t *mtl)
 {
     ssize_t ret;
+
+    if (NULL != ompi_mtl_ofi.rcache) {
+        mca_rcache_base_module_destroy(ompi_mtl_ofi.rcache);
+        ompi_mtl_ofi.rcache = NULL;
+    }
 
     opal_progress_unregister(ompi_mtl_ofi_progress_no_inline);
 
