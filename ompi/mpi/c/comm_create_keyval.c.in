@@ -49,12 +49,14 @@ PROTOTYPE ERROR_CLASS comm_create_keyval(COMM_COPY_ATTR_FUNCTION comm_copy_attr_
         }
     }
 
-    copy_fn.attr_communicator_copy_fn = (MPI_Comm_copy_attr_function *)comm_copy_attr_fn;
-    del_fn.attr_communicator_delete_fn = (MPI_Comm_delete_attr_function *)comm_delete_attr_fn;
-
 #if OMPI_ABI_SRC
-    flags |= OMPI_KEYVAL_ABI;
+    copy_fn.attr_communicator_copy_fn = ompi_abi_copy_attr_fn;
+    del_fn.attr_communicator_delete_fn = ompi_abi_delete_attr_fn;
+#else
+    copy_fn.attr_communicator_copy_fn = comm_copy_attr_fn;
+    del_fn.attr_communicator_delete_fn = comm_delete_attr_fn;
 #endif
+
     ret = ompi_attr_create_keyval(COMM_ATTR, copy_fn, del_fn,
                                   comm_keyval, extra_state, flags, NULL);
 
