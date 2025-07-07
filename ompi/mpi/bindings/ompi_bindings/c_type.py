@@ -84,6 +84,10 @@ class Type(ABC):
     def parameter(self, enable_count=False, **kwargs):
         return f'{self.type_text(enable_count=enable_count)} {self.name}'
 
+    @property
+    def callback_wrapper_code(self):
+        """Return True if this parameter has callback wrapper code to generate."""
+        return False
 
 @Type.add_type('ERROR_CLASS')
 class TypeErrorClass(Type):
@@ -1148,8 +1152,6 @@ class TypeCommCopyAttrFunction(Type):
 
 @Type.add_type('COMM_COPY_ATTR_FUNCTION', abi_type=['standard'])
 class TypeCommCopyAttrFunctionStandard(Type):
-    # TODO: This may require a special function to wrap the callback
-#    pass
 
     def type_text(self, enable_count=False):
         type_name = self.mangle_name('MPI_Comm_copy_attr_function')
@@ -1159,16 +1161,40 @@ class TypeCommCopyAttrFunctionStandard(Type):
     def argument(self):
         return f'(MPI_Comm_copy_attr_function *) {self.name}'
 
-#   @property
-#   def init_code(self):
-#       code = []
-#       code = ['ompi_abi_wrapper_helper_t *helper = NULL;']
-#       code.append('helper = ( ompi_abi_wrapper_helper_t *)malloc(sizeof(ompi_abi_wrapper_helper_t));')
-#       code.append('if (NULL == helper)  return MPI_ERR_NO_MEM;')
-#       code.append('helper->user_extra_state = extra_state;')
-#       code.append('helper->user_copy_fn = comm_copy_attr_fn;')
-#       code.append('helper->user_delete_fn = comm_delete_attr_fn;')
-#       return code
+    @property
+    def init_code(self):
+        code = []
+        code = ['ompi_abi_wrapper_helper_t *helper = NULL;']
+        code.append('helper = ( ompi_abi_wrapper_helper_t *)malloc(sizeof(ompi_abi_wrapper_helper_t));')
+        code.append('if (NULL == helper)  return MPI_ERR_NO_MEM;')
+        code.append('helper->user_extra_state = extra_state;')
+        code.append('helper->user_copy_fn = comm_copy_attr_fn;')
+        code.append('helper->user_delete_fn = comm_delete_attr_fn;')
+        return code
+
+    # TODO: This should be generalized to be reused with type and win
+    @property
+    def callback_wrapper_code(self):
+        code = []
+        code = ['typedef struct {']
+        code.append('    MPI_Comm_copy_attr_function_ABI_INTERNAL *user_copy_fn;')
+        code.append('    MPI_Comm_delete_attr_function_ABI_INTERNAL *user_delete_fn;')
+        code.append('    void *user_extra_state;')
+        code.append('} ompi_abi_wrapper_helper_t;')
+        code.append('static int ompi_abi_copy_attr_fn(MPI_Comm oldcomm, int comm_keyval, void *extra_state, void *attribute_val_in, void *attribute_val_out, int *flag)')
+        code.append('{')
+        code.append('    ompi_abi_wrapper_helper_t *helper = (ompi_abi_wrapper_helper_t *)extra_state;')
+        code.append('    MPI_Comm_ABI_INTERNAL comm_tmp = ompi_convert_comm_ompi_to_standard(oldcomm);')
+        code.append('    return helper->user_copy_fn((MPI_Comm_ABI_INTERNAL)comm_tmp, comm_keyval, helper->user_extra_state, attribute_val_in, attribute_val_out, flag);')
+        code.append('}')
+        code.append('static int ompi_abi_delete_attr_fn(MPI_Comm oldcomm, int comm_keyval, void *attribute_val, void *extra_state)')
+        code.append('{')
+        code.append('    ompi_abi_wrapper_helper_t *helper = (ompi_abi_wrapper_helper_t *)extra_state;')
+        code.append('    MPI_Comm_ABI_INTERNAL comm_tmp = ompi_convert_comm_ompi_to_standard(oldcomm);')
+        code.append('    return helper->user_delete_fn((MPI_Comm_ABI_INTERNAL)comm_tmp, comm_keyval, attribute_val, helper->user_extra_state);')
+        code.append('    free(helper);')
+        code.append('}')
+        return code
 
 @Type.add_type('COMM_DELETE_ATTR_FUNCTION', abi_type=['ompi'])
 class TypeCommDeleteAttrFunction(Type):
@@ -1179,8 +1205,6 @@ class TypeCommDeleteAttrFunction(Type):
 
 @Type.add_type('COMM_DELETE_ATTR_FUNCTION', abi_type=['standard'])
 class TypeCommDeleteAttrFunctionStandard(Type):
-    # TODO: This may require a special function to wrap the callback
-#    pass
 
     def type_text(self, enable_count=False):
         type_name = self.mangle_name('MPI_Comm_delete_attr_function')
@@ -1293,11 +1317,8 @@ class TypeTypeCopyAttrFunction(Type):
     def type_text(self, enable_count=False):
         return 'MPI_Type_copy_attr_function *'
 
-
 @Type.add_type('TYPE_COPY_ATTR_FUNCTION', abi_type=['standard'])
 class TypeTypeCopyAttrFunctionStandard(Type):
-    # TODO: This may require a special function to wrap the callback
-#    pass
 
     def type_text(self, enable_count=False):
         type_name = self.mangle_name('MPI_Type_copy_attr_function')
@@ -1306,6 +1327,41 @@ class TypeTypeCopyAttrFunctionStandard(Type):
     @property
     def argument(self):
         return f'(MPI_Type_copy_attr_function *) {self.name}'
+
+    @property
+    def init_code(self):
+        code = []
+        code = ['ompi_abi_wrapper_helper_t *helper = NULL;']
+        code.append('helper = ( ompi_abi_wrapper_helper_t *)malloc(sizeof(ompi_abi_wrapper_helper_t));')
+        code.append('if (NULL == helper)  return MPI_ERR_NO_MEM;')
+        code.append('helper->user_extra_state = extra_state;')
+        code.append('helper->user_copy_fn = type_copy_attr_fn;')
+        code.append('helper->user_delete_fn = type_delete_attr_fn;')
+        return code
+
+    # TODO: This should be generalized to be reused with type and win
+    @property
+    def callback_wrapper_code(self):
+        code = []
+        code = ['typedef struct {']
+        code.append('    MPI_Type_copy_attr_function_ABI_INTERNAL *user_copy_fn;')
+        code.append('    MPI_Type_delete_attr_function_ABI_INTERNAL *user_delete_fn;')
+        code.append('    void *user_extra_state;')
+        code.append('} ompi_abi_wrapper_helper_t;')
+        code.append('static int ompi_abi_copy_attr_fn(MPI_Datatype oldtype, int type_keyval, void *extra_state, void *attribute_val_in, void *attribute_val_out, int *flag)')
+        code.append('{')
+        code.append('    ompi_abi_wrapper_helper_t *helper = (ompi_abi_wrapper_helper_t *)extra_state;')
+        code.append('    MPI_Datatype_ABI_INTERNAL type_tmp = ompi_convert_datatype_ompi_to_standard(oldtype);')
+        code.append('    return helper->user_copy_fn((MPI_Datatype_ABI_INTERNAL)type_tmp, type_keyval, helper->user_extra_state, attribute_val_in, attribute_val_out, flag);')
+        code.append('}')
+        code.append('static int ompi_abi_delete_attr_fn(MPI_Datatype oldtype, int type_keyval, void *attribute_val, void *extra_state)')
+        code.append('{')
+        code.append('    ompi_abi_wrapper_helper_t *helper = (ompi_abi_wrapper_helper_t *)extra_state;')
+        code.append('    MPI_Datatype_ABI_INTERNAL type_tmp = ompi_convert_datatype_ompi_to_standard(oldtype);')
+        code.append('    return helper->user_delete_fn((MPI_Datatype_ABI_INTERNAL)type_tmp, type_keyval, attribute_val, helper->user_extra_state);')
+        code.append('    free(helper);')
+        code.append('}')
+        return code
 
 @Type.add_type('TYPE_DELETE_ATTR_FUNCTION', abi_type=['ompi'])
 class TypeTypeDeleteAttrFunction(Type):
@@ -1316,8 +1372,6 @@ class TypeTypeDeleteAttrFunction(Type):
 
 @Type.add_type('TYPE_DELETE_ATTR_FUNCTION', abi_type=['standard'])
 class TypeTypeDeleteAttrFunctionStandard(Type):
-    # TODO: This may require a special function to wrap the callback
-#    pass
 
     def type_text(self, enable_count=False):
         type_name = self.mangle_name('MPI_Type_delete_attr_function')
@@ -1352,8 +1406,6 @@ class TypeWinCopyAttrFunction(Type):
 
 @Type.add_type('WIN_COPY_ATTR_FUNCTION', abi_type=['standard'])
 class TypeWinCopyAttrFunctionStandard(Type):
-    # TODO: This may require a special function to wrap the callback
-#    pass
 
     def type_text(self, enable_count=False):
         type_name = self.mangle_name('MPI_Win_copy_attr_function')
@@ -1362,6 +1414,41 @@ class TypeWinCopyAttrFunctionStandard(Type):
     @property
     def argument(self):
         return f'(MPI_Win_copy_attr_function *) {self.name}'
+
+    @property
+    def init_code(self):
+        code = [] 
+        code = ['ompi_abi_wrapper_helper_t *helper = NULL;']
+        code.append('helper = ( ompi_abi_wrapper_helper_t *)malloc(sizeof(ompi_abi_wrapper_helper_t));')
+        code.append('if (NULL == helper)  return MPI_ERR_NO_MEM;')
+        code.append('helper->user_extra_state = extra_state;')
+        code.append('helper->user_copy_fn = win_copy_attr_fn;')
+        code.append('helper->user_delete_fn = win_delete_attr_fn;')
+        return code
+
+    @property
+    def callback_wrapper_code(self):
+        code = []
+        code = ['typedef struct {']
+        code.append('    MPI_Win_copy_attr_function_ABI_INTERNAL *user_copy_fn;')
+        code.append('    MPI_Win_delete_attr_function_ABI_INTERNAL *user_delete_fn;')
+        code.append('    void *user_extra_state;')
+        code.append('} ompi_abi_wrapper_helper_t;')
+        code.append('static int ompi_abi_copy_attr_fn(MPI_Win oldwin, int win_keyval, void *extra_state, void *attribute_val_in, void *attribute_val_out, int *flag)')
+        code.append('{')
+        code.append('    ompi_abi_wrapper_helper_t *helper = (ompi_abi_wrapper_helper_t *)extra_state;')
+        code.append('    MPI_Win_ABI_INTERNAL win_tmp = ompi_convert_win_ompi_to_standard(oldwin);')
+        code.append('    return helper->user_copy_fn((MPI_Win_ABI_INTERNAL)win_tmp, win_keyval, helper->user_extra_state, attribute_val_in, attribute_val_out, flag);')
+        code.append('}')
+        code.append('static int ompi_abi_delete_attr_fn(MPI_Win oldwin, int win_keyval, void *attribute_val, void *extra_state)')
+        code.append('{')
+        code.append('    ompi_abi_wrapper_helper_t *helper = (ompi_abi_wrapper_helper_t *)extra_state;')
+        code.append('    MPI_Win_ABI_INTERNAL win_tmp = ompi_convert_win_ompi_to_standard(oldwin);')
+        code.append('    return helper->user_delete_fn((MPI_Win_ABI_INTERNAL)win_tmp, win_keyval, attribute_val, helper->user_extra_state);')
+        code.append('    free(helper);')
+        code.append('}')
+        return code
+
 
 @Type.add_type('WIN_DELETE_ATTR_FUNCTION', abi_type=['ompi'])
 class TypeWinDeleteAttrFunction(Type):
@@ -1372,8 +1459,6 @@ class TypeWinDeleteAttrFunction(Type):
 
 @Type.add_type('WIN_DELETE_ATTR_FUNCTION', abi_type=['standard'])
 class TypeWinDeleteAttrFunctionStandard(Type):
-    # TODO: This may require a special function to wrap the callback
-#    pass
 
     def type_text(self, enable_count=False):
         type_name = self.mangle_name('MPI_Win_delete_attr_function')
