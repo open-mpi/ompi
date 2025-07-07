@@ -442,9 +442,14 @@ def standard_abi(base_name, template, out):
 
     # If any parameters are pointers to user callback functions, generate code
     # for callback wrappers
-#   if util.prototype_needs_callback_wrappers(template.prototype):
-#       for param in prototype.params:
-#           if param.callback_wrapper_code:
+    if util.prototype_needs_callback_wrappers(template.prototype):
+        params = [param.construct(abi_type='standard') for param in template.prototype.params]
+        for param in params:
+            if param.callback_wrapper_code:
+                lines = []
+                lines.extend(param.callback_wrapper_code)
+                for line in lines:
+                    out.dump(line)
 
     # Static internal function (add a random component to avoid conflicts)
     internal_name = f'ompi_abi_{template.prototype.name}'
