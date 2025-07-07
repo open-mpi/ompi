@@ -48,11 +48,12 @@ PROTOTYPE ERROR_CLASS win_create_keyval(WIN_COPY_ATTR_FUNCTION win_copy_attr_fn,
         }
     }
 
-    copy_fn.attr_win_copy_fn = (MPI_Win_copy_attr_function *)win_copy_attr_fn;
-    del_fn.attr_win_delete_fn = (MPI_Win_delete_attr_function *)win_delete_attr_fn;
-
 #if OMPI_ABI_SRC
-    flags |= OMPI_KEYVAL_ABI;
+    copy_fn.attr_win_copy_fn = ompi_abi_copy_attr_fn;
+    del_fn.attr_win_delete_fn = ompi_abi_delete_attr_fn;
+#else
+    copy_fn.attr_win_copy_fn = win_copy_attr_fn;
+    del_fn.attr_win_delete_fn = win_delete_attr_fn;
 #endif
 
     ret = ompi_attr_create_keyval(WIN_ATTR, copy_fn, del_fn,
