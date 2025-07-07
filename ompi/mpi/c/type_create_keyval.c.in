@@ -50,11 +50,12 @@ PROTOTYPE ERROR_CLASS type_create_keyval(TYPE_COPY_ATTR_FUNCTION type_copy_attr_
         }
     }
 
+#if OMPI_ABI_SRC
+    copy_fn.attr_datatype_copy_fn = ompi_abi_copy_attr_fn;
+    del_fn.attr_datatype_delete_fn = ompi_abi_delete_attr_fn;
+#else
     copy_fn.attr_datatype_copy_fn = type_copy_attr_fn;
     del_fn.attr_datatype_delete_fn = type_delete_attr_fn;
-
-#if OMPI_ABI_SRC
-    flags |= OMPI_KEYVAL_ABI;
 #endif
 
     ret = ompi_attr_create_keyval(TYPE_ATTR, copy_fn, del_fn,
