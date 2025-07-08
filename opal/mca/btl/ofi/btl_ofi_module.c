@@ -148,6 +148,20 @@ void mca_btl_ofi_rcache_init(mca_btl_ofi_module_t *module)
     if (!module->initialized) {
         mca_rcache_base_resources_t rcache_resources;
         char *tmp;
+        int ret;
+
+        /* this must be called during single threaded part of the code and
+         * before Libfabric configures its memory monitors.  Easiest to do
+         * that before domain open.  Silently ignore not-supported errors,
+         * as they are not critical to program correctness, but only
+         * indicate that LIbfabric will have to pick a different, possibly
+         * less optimal, monitor. */
+        ret = opal_common_ofi_export_memory_monitor();
+        if (0 != ret && -FI_ENOSYS != ret) {
+            opal_output_verbose(1, opal_common_ofi.output,
+                                "Failed to inject Libfabric memory monitor: %s",
+                                fi_strerror(-ret));
+        }
 
         (void) opal_asprintf(&tmp, "ofi.%s", module->linux_device_name);
 
