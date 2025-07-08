@@ -5,7 +5,7 @@
  * Copyright (c) 2014-2021 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2015-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2018-2022 Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2018-2025 Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2020-2023 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -823,20 +823,17 @@ select_prov:
         }
     } else {
         *accelerator_support = true;
-        ompi_mtl_ofi.hmem_needs_reg = true;
-        /*
-         * Workaround for the fact that the CXI provider actually doesn't need for accelerator memory to be registered
-         * for local buffers, but if one does do so using fi_mr_regattr, one actually needs to manage the
-         * requested_key field in the fi_mr_attr attr argument, and the OFI MTL doesn't track which requested_keys
-         * have already been registered. So just set a flag to disable local registration.  Note the OFI BTL doesn't
-         * have a problem here since it uses fi_mr_regattr only within the context of an rcache, and manages the
-         * requested_key field in this way.
-         */
-         if ((NULL != strstr(prov->fabric_attr->prov_name, "cxi")) ||
-             (NULL != strstr(prov->fabric_attr->prov_name, "CXI")) ) {
-             ompi_mtl_ofi.hmem_needs_reg = false;
-         }
 
+        /* Only explicitly register domain buffers if the provider requires it.
+           For example, CXI does not require it but EFA does require it. */
+        if ((prov->domain_attr->mr_mode & FI_MR_HMEM) != 0) {
+            ompi_mtl_ofi.hmem_needs_reg = true;
+            opal_output_verbose(50, opal_common_ofi.output,
+                                "Support for device buffers enabled with explicit registration");
+        } else {
+            opal_output_verbose(50, opal_common_ofi.output,
+                                "Support for device buffers enabled with implicit registration");
+        }
     }
 #else
     opal_output_verbose(50, opal_common_ofi.output,
