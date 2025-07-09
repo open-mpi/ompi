@@ -118,6 +118,8 @@ OPAL_VAR_SCOPE_PUSH([prrte_setup_internal_happy prrte_setup_external_happy targe
                        [$OMPI_USING_INTERNAL_PRRTE],
                        [Whether or not we are using the internal PRRTE])
 
+    AM_CONDITIONAL(OMPI_USING_INTERNAL_PRRTE, [test $OMPI_USING_INTERNAL_PRRTE -eq 1])
+
     AC_SUBST(OMPI_PRRTE_RST_CONTENT_DIR)
     AC_SUBST(OMPI_SCHIZO_OMPI_RST_CONTENT_DIR)
     AM_CONDITIONAL(OMPI_HAVE_PRRTE_RST, [test $OMPI_HAVE_PRRTE_RST -eq 1])

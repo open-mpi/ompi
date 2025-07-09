@@ -28,7 +28,9 @@
 #include "opal/util/printf.h"
 #include "opal/util/show_help.h"
 #include "ompi/constants.h"
+#if OMPI_USING_INTERNAL_PRRTE
 #include "3rd-party/prrte/include/prte.h"
+#endif
 
 
 static void append_prefixes(char ***out, const char *in)
@@ -78,6 +80,10 @@ static void setup_mca_prefixes(void)
 }
 
 
+#if OMPI_USING_INTERNAL_PRRTE
+
+/* we can use prte_launch */
+
 int main(int argc, char *argv[])
 {
     char *opal_prefix = getenv("OPAL_PREFIX");
@@ -105,9 +111,7 @@ int main(int argc, char *argv[])
     /* as a special case, if OPAL_PREFIX was set and either PRRTE or
      * PMIx are internal builds, set their prefix variables as well */
     if (NULL != opal_prefix) {
-#if OMPI_USING_INTERNAL_PRRTE
         setenv("PRTE_PREFIX", opal_prefix, 1);
-#endif
 #if OPAL_USING_INTERNAL_PMIX
         setenv("PMIX_PREFIX", opal_prefix, 1);
 #endif
@@ -134,27 +138,110 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-/*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
- *                         University Research and Technology
- *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
- *                         of Tennessee Research Foundation.  All rights
- *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
- *                         University of Stuttgart.  All rights reserved.
- * Copyright (c) 2004-2005 The Regents of the University of California.
- *                         All rights reserved.
- * Copyright (c) 2017-2020 Intel, Inc.  All rights reserved.
- * Copyright (c) 2020-2022 Cisco Systems, Inc.  All rights reserved
- * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
- * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
- * Copyright (c) 2022      Triad National Security, LLC. All rights
- *                         reserved.
+#else
 
- * $COPYRIGHT$
- *
- * Additional copyrights may follow
- *
- * $HEADER$
- */
+/* using external prrte so cannot assume there's a prte_launch */
+
+static char *find_prterun(void)
+{
+    char *filename = NULL;
+    char *prrte_prefix = NULL;
+
+    /* 1) Did the user tell us exactly where to find prterun? */
+    filename = getenv("OMPI_PRTERUN");
+    if (NULL != filename) {
+        return filename;
+    }
+
+    /* 2) Look in ${PRTE_PREFIX}/bin */
+    prrte_prefix = getenv("PRTE_PREFIX");
+    if (NULL != prrte_prefix) {
+        opal_asprintf(&filename, "%s%sbin%sprterun", prrte_prefix, OPAL_PATH_SEP, OPAL_PATH_SEP);
+        return filename;
+    }
+
+    /* 4) See if configure told us where to look, if set */
+#if defined(OMPI_PRTERUN_PATH)
+    return strdup(OMPI_PRTERUN_PATH);
+#else
+
+    /* 5) Use path search */
+    filename = opal_find_absolute_path("prterun");
+
+    return filename;
+#endif
+}
+
+int main(int argc, char *argv[])
+{
+    char *opal_prefix = getenv("OPAL_PREFIX");
+    char *full_prterun_path = NULL;
+    char **prterun_args = NULL;
+    int ret;
+    size_t i;
+
+    ret = opal_init_util(&argc, &argv);
+    if (OMPI_SUCCESS != ret) {
+        fprintf(stderr, "Failed initializing opal: %d\n", ret);
+        exit(1);
+    }
+
+    /* note that we just modify our environment rather than create a
+     * child environment because it is easier and we're not going to
+     * be around long enough for it to matter (since we exec prterun
+     * asap */
+    setenv("PRTE_MCA_schizo_proxy", "ompi", 1);
+    setenv("OMPI_VERSION", OMPI_VERSION, 1);
+    char *base_tool_name = opal_basename(argv[0]);
+    setenv("OMPI_TOOL_NAME", base_tool_name, 1);
+    free(base_tool_name);
+
+    /* TODO: look for --prefix and compare with OPAL_PREFIX and pick
+     * one */
+
+    /* as a special case, if OPAL_PREFIX was set and either PRRTE or
+     * PMIx are internal builds, set their prefix variables as well */
+    if (NULL != opal_prefix) {
+#if OPAL_USING_INTERNAL_PMIX
+        setenv("PMIX_PREFIX", opal_prefix, 1);
+#endif
+    }
+
+    full_prterun_path = find_prterun();
+    if (NULL == full_prterun_path) {
+        opal_show_help("help-mpirun.txt", "no-prterun-found", 1);
+        exit(1);
+    }
+
+    /*
+     * set environment variable for our install location
+     * used within the OMPI prrte schizo component
+     */
+
+    setenv("OMPI_LIBDIR_LOC", opal_install_dirs.libdir, 1);
+
+    // Set environment variable to tell PRTE what MCA prefixes belong
+    // to Open MPI.
+    setup_mca_prefixes();
+
+    /* calling mpirun (and now prterun) with a full path has a special
+     * meaning in terms of -prefix behavior, so copy that behavior
+     * into prterun */
+    if (opal_path_is_absolute(argv[0])) {
+        opal_argv_append_nosize(&prterun_args, full_prterun_path);
+    } else {
+        opal_argv_append_nosize(&prterun_args, "prterun");
+    }
+
+    /* Copy all the mpirun arguments to prterun.
+     * TODO: Need to handle --prefix rationally here. */
+    for (i = 1; NULL != argv[i]; i++) {
+        opal_argv_append_nosize(&prterun_args, argv[i]);
+    }   
+    ret = execv(full_prterun_path, prterun_args);
+    opal_show_help("help-mpirun.txt", "prterun-exec-failed",
+                   1, full_prterun_path, strerror(errno));
+    exit(1);       
+}   
+#endif /*  OMPI_USING_INTERNAL_PRRTE */
+
