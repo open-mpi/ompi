@@ -100,12 +100,19 @@ std.use_api_version()
 output.append("\n")
 output.append("/* MPI API */\n")
 for proc in std.all_iso_c_procedures():
-    output.append(f"{proc.express.iso_c}\n")
+    output.append(f"{proc.express.iso_c};\n")
+    if proc.has_embiggenment():
+        output.append(f"{proc.express.embiggen.iso_c};\n")
 
 output.append("\n")
 output.append("/* Profiling MPI API */\n")
 for proc in std.all_iso_c_procedures():
-     output.append(f"{proc.express.profile.iso_c}\n")
+     output.append(f"{proc.express.profile.iso_c};\n")
+     # TODO: this is a hack and we need to add/fix/figure out the pympistandard
+     # module to natively print out an embiggened version
+     if proc.has_embiggenment():
+         binding = proc.express.embiggen.iso_c.__str__().split()
+         output.append(f"{binding[0]} P{' '.join(binding[1:])};\n")
 
 # ================================ Final Output ================================
 with open(consts.DIR / "abi.h", 'tw') as header_out:
