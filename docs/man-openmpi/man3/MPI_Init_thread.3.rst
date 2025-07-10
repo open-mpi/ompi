@@ -173,14 +173,12 @@ of the values listed below.
    * - ``MPI_THREAD_MULTIPLE``
      - ``MPI_THREAD_MULTIPLE``, ``MULTIPLE``, 3
 
-.. note:: Prior to Open MPI v6.0.0, only the integer values 0 through
+.. note:: In Open MPI v5.0.8 and prior, only the integer values 0 through
           3 were acceptable values for the ``OMPI_MPI_THREAD_LEVEL``
           environment variable.
 
-          Starting with Open MPI v6.0.0, the Open MPI community
-          recomends using one of the string name variants so that it
-          can be correctly mapped to the corresponding Open MPI ABI
-          value or the MPI Standard ABI value, as relevant.
+          Starting with Open MPI v5.0.9, the Open MPI community
+          recomends using one of the string name variants.
 
 NOTES
 -----
