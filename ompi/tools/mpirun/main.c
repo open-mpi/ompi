@@ -80,7 +80,7 @@ static void setup_mca_prefixes(void)
 }
 
 
-#if OMPI_USING_INTERNAL_PRRTE
+#if OMPI_HAVE_PRTE_LAUNCH
 
 /* we can use prte_launch */
 
@@ -111,7 +111,9 @@ int main(int argc, char *argv[])
     /* as a special case, if OPAL_PREFIX was set and either PRRTE or
      * PMIx are internal builds, set their prefix variables as well */
     if (NULL != opal_prefix) {
+#if OMPI_USING_INTERNAL_PRRTE
         setenv("PRTE_PREFIX", opal_prefix, 1);
+#endif
 #if OPAL_USING_INTERNAL_PMIX
         setenv("PMIX_PREFIX", opal_prefix, 1);
 #endif
@@ -139,8 +141,6 @@ int main(int argc, char *argv[])
 }
 
 #else
-
-/* using external prrte so cannot assume there's a prte_launch */
 
 static char *find_prterun(void)
 {
@@ -202,6 +202,9 @@ int main(int argc, char *argv[])
     /* as a special case, if OPAL_PREFIX was set and either PRRTE or
      * PMIx are internal builds, set their prefix variables as well */
     if (NULL != opal_prefix) {
+#if OMPI_USING_INTERNAL_PRRTE
+        setenv("PRTE_PREFIX", opal_prefix, 1);
+#endif
 #if OPAL_USING_INTERNAL_PMIX
         setenv("PMIX_PREFIX", opal_prefix, 1);
 #endif
@@ -237,11 +240,11 @@ int main(int argc, char *argv[])
      * TODO: Need to handle --prefix rationally here. */
     for (i = 1; NULL != argv[i]; i++) {
         opal_argv_append_nosize(&prterun_args, argv[i]);
-    }   
+    }
     ret = execv(full_prterun_path, prterun_args);
     opal_show_help("help-mpirun.txt", "prterun-exec-failed",
                    1, full_prterun_path, strerror(errno));
     exit(1);       
 }   
-#endif /*  OMPI_USING_INTERNAL_PRRTE */
+#endif /* OMPI_HAVE_PRTE_LAUNCH */
 
