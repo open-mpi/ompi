@@ -556,13 +556,37 @@ class TypeRequestStandard(Type):
     def argument(self):
         return f'(MPI_Request) {self.name}'
 
+@Type.add_type('REQUEST_CONST', abi_type=['ompi'])
+class TypeConstRequest(TypeRequest):
+
+    def type_text(self, enable_count=False):
+        return f'const MPI_Request *'
+
+    def parameter(self, enable_count=False, **kwargs):
+        if self.count_param is None:
+            return f'const MPI_Request {self.name}'
+        else:
+            return f'const MPI_Request {self.name}[]'
+
+#
+# TODO ABI NEEDS WORK
+#
+@Type.add_type('REQUEST_CONST', abi_type=['standard'])
+class TypeConstRequestStandard(TypeRequestStandard):
+
+    def type_text(self, enable_count=False):
+        name = self.mangle_name('MPI_Request')
+        return f'const {name}'
+
+    @property
+    def argument(self):
+        return f'(MPI_Request) {self.name}'
 
 @Type.add_type('REQUEST_INOUT', abi_type=['ompi'])
 class TypeRequestInOut(Type):
 
     def type_text(self, enable_count=False):
         return 'MPI_Request *'
-
 
 @Type.add_type('REQUEST_INOUT', abi_type=['standard'])
 class TypeRequestInOutStandard(Type):
@@ -592,7 +616,6 @@ class TypeRequestInOutStandard(Type):
             return f'{type_name} *{self.name}'
         else:
             return f'{type_name} {self.name}[]'
-
 
 @Type.add_type('STATUS', abi_type=['ompi'])
 class TypeStatus(Type):
