@@ -2,6 +2,7 @@
  * Copyright (c) 2013-2016 Intel, Inc. All rights reserved
  * Copyright (c) 2017      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2025      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -25,6 +26,7 @@ typedef enum {
     OMPI_MTL_OFI_PROBE
 } ompi_mtl_ofi_request_type_t;
 
+struct ompi_mtl_ofi_reg_t;
 struct ompi_mtl_ofi_request_t;
 
 struct ompi_mtl_ofi_request_t {
@@ -89,8 +91,9 @@ struct ompi_mtl_ofi_request_t {
     struct mca_mtl_request_t *mrecv_req;
 
     /** Stores reference to memory region from registration */
-    /*  Set to NULL if memory not registered or if non accelerator buffer */
-    struct fid_mr *mr;
+
+    /*  Set to NULL if memory not registered */
+    struct ompi_mtl_ofi_reg_t *mr;
 };
 typedef struct ompi_mtl_ofi_request_t ompi_mtl_ofi_request_t;
 

@@ -4,6 +4,7 @@
  * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2022-2023 Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2025      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -15,6 +16,9 @@
 #define MTL_OFI_TYPES_H_HAS_BEEN_INCLUDED
 
 #include "mtl_ofi.h"
+
+#include "opal/mca/rcache/base/base.h"
+
 
 BEGIN_C_DECLS
 
@@ -102,6 +106,8 @@ typedef struct mca_mtl_ofi_module_t {
     bool has_posted_initial_buffer;
     bool hmem_needs_reg;
 
+    /** registration cache */
+    mca_rcache_base_module_t *rcache;
 } mca_mtl_ofi_module_t;
 
 extern mca_mtl_ofi_module_t ompi_mtl_ofi;
@@ -115,6 +121,14 @@ typedef enum {
     OFI_REGULAR_EP  = 0,
     OFI_SCALABLE_EP,
 } mca_mtl_ofi_ep_type;
+
+struct ompi_mtl_ofi_reg_t {
+    mca_rcache_base_registration_t base;
+    struct fid_mr *ofi_mr;
+    void *mem_desc;
+};
+typedef struct ompi_mtl_ofi_reg_t ompi_mtl_ofi_reg_t;
+
 
 /*
  * Define upper limit for number of events read from a CQ.
