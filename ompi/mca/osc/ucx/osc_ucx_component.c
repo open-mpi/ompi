@@ -468,17 +468,60 @@ static const char* ompi_osc_ucx_set_no_lock_info(opal_infosubscriber_t *obj, con
     return module->no_locks ? "true" : "false";
 }
 
+static int ompi_osc_ucx_shared_query_peer(ompi_osc_ucx_module_t *module, int peer, size_t *size,
+    ptrdiff_t *disp_unit, void *baseptr) {
+
+    int rc;
+    ucp_ep_h *dflt_ep;
+    ucp_ep_h ep; // ignored
+    ucp_rkey_h rkey;
+    OSC_UCX_GET_DEFAULT_EP(dflt_ep, module, peer);
+    ucs_status_t status;
+    opal_common_ucx_winfo_t *winfo; // ignored
+    rc = opal_common_ucx_tlocal_fetch(module->mem, peer, &ep, &rkey, &winfo, dflt_ep);
+    if (OMPI_SUCCESS != rc) {
+        return rc;
+    }
+    uint64_t raddr;
+    void *addr_p;
+    if (UCS_OK != ucp_rkey_ptr(rkey, module->addrs[peer], &addr_p)) {
+        return OMPI_ERR_NOT_AVAILABLE;
+    }
+    *size = module->sizes[peer];
+    *((void**) baseptr) = (void *)module->shmem_addrs[peer];
+    *disp_unit = module->disp_units[peer];
+
+    return OMPI_SUCCESS;
+}
+
 int ompi_osc_ucx_shared_query(struct ompi_win_t *win, int rank, size_t *size,
         ptrdiff_t *disp_unit, void *baseptr)
 {
     ompi_osc_ucx_module_t *module =
         (ompi_osc_ucx_module_t*) win->w_osc_module;
 
-    if (module->flavor != MPI_WIN_FLAVOR_SHARED) {
-        return MPI_ERR_WIN;
-    }
+    *size = 0;
+    *((void**) baseptr) = NULL;
+    *disp_unit = 0;
 
-    if (MPI_PROC_NULL != rank) {
+    if (module->flavor != MPI_WIN_FLAVOR_SHARED) {
+
+        if (MPI_PROC_NULL == rank) {
+            for (int i = 0 ; i < ompi_comm_size(module->comm) ; ++i) {
+                if (0 != module->sizes[i]) {
+                    if (OMPI_SUCCESS == ompi_osc_ucx_shared_query_peer(module, i, size, disp_unit, baseptr)) {
+                        return OMPI_SUCCESS;
+                    }
+                }
+            }
+        } else {
+            if (0 != module->sizes[rank]) {
+                return ompi_osc_ucx_shared_query_peer(module, rank, size, disp_unit, baseptr);
+            }
+        }
+        return OMPI_ERR_NOT_SUPPORTED;
+
+    } else if (MPI_PROC_NULL != rank) { // shared memory window with given rank
         *size = module->sizes[rank];
         *((void**) baseptr) = (void *)module->shmem_addrs[rank];
         if (module->disp_unit == -1) {
@@ -486,12 +529,9 @@ int ompi_osc_ucx_shared_query(struct ompi_win_t *win, int rank, size_t *size,
         } else {
             *disp_unit = module->disp_unit;
         }
-    } else {
+    } else { // shared memory window with MPI_PROC_NULL
         int i = 0;
 
-        *size = 0;
-        *((void**) baseptr) = NULL;
-        *disp_unit = 0;
         for (i = 0 ; i < ompi_comm_size(module->comm) ; ++i) {
             if (0 != module->sizes[i]) {
                 *size = module->sizes[i];
@@ -638,6 +678,13 @@ select_unlock:
     module->no_locks = check_config_value_bool ("no_locks", info);
     module->acc_single_intrinsic = check_config_value_bool ("acc_single_intrinsic", info);
     module->skip_sync_check = false;
+
+    /**
+     * TODO: we need to collect the shared memory information from all processes
+     *       on the same node. This includes the size and base address, which needs
+     *       to be passed to ucp_rkey_ptr().
+     */
+    module->shmem_info = NULL;
 
     /* share everyone's displacement units. Only do an allgather if
        strictly necessary, since it requires O(p) state. */
@@ -807,6 +854,18 @@ select_unlock:
 
         module->size = module->sizes[ompi_comm_rank(module->comm)];
         *base = (void *)module->shmem_addrs[ompi_comm_rank(module->comm)];
+    } else {
+        /* non-shared memory: exchange sizes and addresses so they can be queried for shared memory */
+        for (i = 0; i < comm_size; i++) {
+            ompi_proc_t *peer = ompi_comm_peer_lookup(module->comm, i);
+            peer->
+            if (ompi_comm_peer_lookup(module->comm, i) == NULL) {
+                OSC_UCX_ERROR("Failed to lookup peer %d in communicator %s", i, ompi_comm_print_cid(module->comm));
+                ret = OMPI_ERR_COMM_FAILURE;
+                goto error;
+            }
+        }
+
     }
 
     void **mem_base = base;

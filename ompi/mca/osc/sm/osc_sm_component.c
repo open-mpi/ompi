@@ -481,10 +481,6 @@ ompi_osc_sm_shared_query(struct ompi_win_t *win, int rank, size_t *size, ptrdiff
     ompi_osc_sm_module_t *module =
         (ompi_osc_sm_module_t*) win->w_osc_module;
 
-    if (module->flavor != MPI_WIN_FLAVOR_SHARED) {
-        return MPI_ERR_WIN;
-    }
-
     if (MPI_PROC_NULL != rank) {
         *size = module->sizes[rank];
         *((void**) baseptr) = module->bases[rank];
