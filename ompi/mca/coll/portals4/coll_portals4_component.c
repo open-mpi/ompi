@@ -58,7 +58,7 @@ ptl_op_t ompi_coll_portals4_atomic_op [OMPI_OP_NUM_OF_TYPES] =
 
 ptl_datatype_t ompi_coll_portals4_atomic_datatype [OMPI_DATATYPE_MPI_MAX_PREDEFINED] =
 {
-        [OMPI_DATATYPE_MPI_EMPTY] = COLL_PORTALS4_NO_DTYPE,
+        [OMPI_DATATYPE_MPI_NULL] = COLL_PORTALS4_NO_DTYPE,
         [OMPI_DATATYPE_MPI_UINT8_T] = PTL_UINT8_T,
         [OMPI_DATATYPE_MPI_INT16_T] = PTL_INT16_T,
         [OMPI_DATATYPE_MPI_UINT16_T] = PTL_UINT16_T,

@@ -35,7 +35,7 @@
  * This is the OMPI-layered numbering of ALL supported MPI types
  * (derived from the old DT_ names).
  */
-#define OMPI_DATATYPE_MPI_EMPTY                   0x00
+#define OMPI_DATATYPE_MPI_NULL                    0x00
 #define OMPI_DATATYPE_MPI_INT8_T                  0x01
 #define OMPI_DATATYPE_MPI_UINT8_T                 0x02
 #define OMPI_DATATYPE_MPI_INT16_T                 0x03
