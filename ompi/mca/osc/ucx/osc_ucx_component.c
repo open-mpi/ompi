@@ -468,12 +468,14 @@ static const char* ompi_osc_ucx_set_no_lock_info(opal_infosubscriber_t *obj, con
     return module->no_locks ? "true" : "false";
 }
 
-static int ompi_osc_ucx_shared_query_peer(ompi_osc_ucx_module_t *module, int rank, size_t *size,
+static int ompi_osc_ucx_shared_query_peer(ompi_osc_ucx_module_t *module, int peer, size_t *size,
     ptrdiff_t *disp_unit, void *baseptr) {
 
+    int rc;
     ucp_ep_h *dflt_ep;
     ucp_ep_h ep; // ignored
-    OSC_UCX_GET_DEFAULT_EP(dflt_ep, module, peer); // TODO: needed?
+    ucp_rkey_h rkey;
+    OSC_UCX_GET_DEFAULT_EP(dflt_ep, module, peer);
     ucs_status_t status;
     opal_common_ucx_winfo_t *winfo; // ignored
     rc = opal_common_ucx_tlocal_fetch(module->mem, peer, &ep, &rkey, &winfo, dflt_ep);
@@ -485,9 +487,9 @@ static int ompi_osc_ucx_shared_query_peer(ompi_osc_ucx_module_t *module, int ran
     if (UCS_OK != ucp_rkey_ptr(rkey, module->addrs[peer], &addr_p)) {
         return OMPI_ERR_NOT_AVAILABLE;
     }
-    *size = module->sizes[i];
-    *((void**) baseptr) = (void *)module->shmem_addrs[i];
-    *disp_unit = module->disp_units[i];
+    *size = module->sizes[peer];
+    *((void**) baseptr) = (void *)module->shmem_addrs[peer];
+    *disp_unit = module->disp_units[peer];
 
     return OMPI_SUCCESS;
 }
@@ -513,10 +515,8 @@ int ompi_osc_ucx_shared_query(struct ompi_win_t *win, int rank, size_t *size,
                 }
             }
         } else {
-            if (0 != module->sizes[i]) {
-                if (OMPI_SUCCESS == ompi_osc_ucx_shared_query_peer(module, i, size, disp_unit, baseptr)) {
-                    return OMPI_SUCCESS;
-                }
+            if (0 != module->sizes[rank]) {
+                return ompi_osc_ucx_shared_query_peer(module, rank, size, disp_unit, baseptr);
             }
         }
         return OMPI_ERR_NOT_SUPPORTED;
