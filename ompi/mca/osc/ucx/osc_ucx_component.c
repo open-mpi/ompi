@@ -679,6 +679,13 @@ select_unlock:
     module->acc_single_intrinsic = check_config_value_bool ("acc_single_intrinsic", info);
     module->skip_sync_check = false;
 
+    /**
+     * TODO: we need to collect the shared memory information from all processes
+     *       on the same node. This includes the size and base address, which needs
+     *       to be passed to ucp_rkey_ptr().
+     */
+    module->shmem_info = NULL;
+
     /* share everyone's displacement units. Only do an allgather if
        strictly necessary, since it requires O(p) state. */
     values[0] = disp_unit;
@@ -847,6 +854,18 @@ select_unlock:
 
         module->size = module->sizes[ompi_comm_rank(module->comm)];
         *base = (void *)module->shmem_addrs[ompi_comm_rank(module->comm)];
+    } else {
+        /* non-shared memory: exchange sizes and addresses so they can be queried for shared memory */
+        for (i = 0; i < comm_size; i++) {
+            ompi_proc_t *peer = ompi_comm_peer_lookup(module->comm, i);
+            peer->
+            if (ompi_comm_peer_lookup(module->comm, i) == NULL) {
+                OSC_UCX_ERROR("Failed to lookup peer %d in communicator %s", i, ompi_comm_print_cid(module->comm));
+                ret = OMPI_ERR_COMM_FAILURE;
+                goto error;
+            }
+        }
+
     }
 
     void **mem_base = base;
