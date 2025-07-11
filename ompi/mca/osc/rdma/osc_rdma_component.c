@@ -1640,6 +1640,7 @@ int ompi_osc_rdma_shared_query(
     struct ompi_win_t *win, int rank, size_t *size,
     ptrdiff_t *disp_unit, void *baseptr)
 {
+    int rc = OMPI_ERR_NOT_SUPPORTED;
     ompi_osc_rdma_peer_t *peer;
     int actual_rank = rank;
     ompi_osc_rdma_module_t *module = GET_MODULE(win);
@@ -1678,6 +1679,7 @@ int ompi_osc_rdma_shared_query(
         *disp_unit = module->disp_unit;
         ompi_osc_rdma_peer_basic_t *ex_peer = (ompi_osc_rdma_peer_basic_t *) peer;
         *((void**) baseptr) = (void *) (intptr_t)ex_peer->base;
+        rc = OMPI_SUCCESS;
     } else {
         ompi_osc_rdma_peer_extended_t *ex_peer = (ompi_osc_rdma_peer_extended_t *) peer;
         if (ex_peer->super.base != 0) {
@@ -1685,8 +1687,8 @@ int ompi_osc_rdma_shared_query(
             *((void**) baseptr) = (void *) (intptr_t)ex_peer->super.base;
             *size = ex_peer->size;
             *disp_unit = ex_peer->disp_unit;
-            return OMPI_SUCCESS;
+            rc = OMPI_SUCCESS;
         }
     }
-    return OMPI_ERR_NOT_SUPPORTED;
+    return rc;
 }
