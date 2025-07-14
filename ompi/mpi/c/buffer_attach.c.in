@@ -40,7 +40,7 @@ PROTOTYPE ERROR_CLASS buffer_attach(BUFFER_OUT buffer, COUNT size)
         }
     }
 
-    ret = mca_pml_base_bsend_attach(buffer, size);
+    ret = mca_pml_base_bsend_attach(BASE_BSEND_BUF, NULL, buffer, size);
 
     return ret;
 }
