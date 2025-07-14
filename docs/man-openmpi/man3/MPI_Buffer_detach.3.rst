@@ -15,7 +15,7 @@ OUTPUT PARAMETERS
 -----------------
 
 * ``buf`` : Initial buffer address (choice).
-* ``size`` : Buffer size, in bytes (integer).
+* ``size`` : Buffer size, in bytes (integer). Undefined if MPI_BUFFER_AUTOMATIC was used when attaching.
 * ``ierror`` : Fortran only: Error status (integer).
 
 DESCRIPTION
@@ -67,7 +67,7 @@ usages).
 For Fortran: The Fortran binding for this routine is different. Because
 Fortran does not have pointers, it is impossible to provide a way to use
 the output of this routine to exchange buffers. In this case, only the
-size field is set.
+size field is set.  Note this does not apply when using the mpi_f08 bindings.
 
 For C: Even though the buf argument is declared as void, it is really
 the address of a void pointer. See Rationale, below, for more details.

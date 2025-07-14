@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2024      Triad National Security, LLC. All rights
+ * Copyright (c) 2024-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -40,7 +40,7 @@ PROTOTYPE ERROR_CLASS buffer_attach(BUFFER_OUT buffer, COUNT size)
         }
     }
 
-    ret = mca_pml_base_bsend_attach(buffer, size);
+    ret = mca_pml_base_bsend_attach(BASE_BSEND_BUF, NULL, buffer, size);
 
     return ret;
 }

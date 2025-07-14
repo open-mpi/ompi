@@ -79,6 +79,8 @@ prototype_sources = \
         bsend_init.c.in \
         buffer_attach.c.in \
         buffer_detach.c.in \
+        buffer_flush.c.in \
+        buffer_iflush.c.in \
         cancel.c.in \
         cart_coords.c.in \
         cart_create.c.in \
@@ -90,6 +92,7 @@ prototype_sources = \
         cart_sub.c.in \
         close_port.c.in \
         comm_accept.c.in \
+        comm_attach_buffer.c.in \
         comm_c2f.c.in \
         comm_call_errhandler.c.in \
 	comm_compare.c.in \
@@ -100,10 +103,12 @@ prototype_sources = \
 	comm_create_from_group.c.in \
 	comm_create_keyval.c.in \
         comm_delete_attr.c.in \
+        comm_detach_buffer.c.in \
         comm_disconnect.c.in \
         comm_dup.c.in \
         comm_dup_with_info.c.in \
         comm_f2c.c.in \
+        comm_flush_buffer.c.in \
         comm_free.c.in \
         comm_free_keyval.c.in \
         comm_get_attr.c.in \
@@ -114,6 +119,7 @@ prototype_sources = \
 	comm_group.c.in \
         comm_idup.c.in \
         comm_idup_with_info.c.in \
+        comm_iflush_buffer.c.in \
 	comm_join.c.in \
         comm_rank.c.in \
 	comm_remote_group.c.in \
@@ -365,16 +371,20 @@ prototype_sources = \
 	send_init.c.in \
 	sendrecv.c.in \
 	sendrecv_replace.c.in \
+	session_attach_buffer.c.in \
 	session_c2f.c.in \
 	session_call_errhandler.c.in \
 	session_create_errhandler.c.in \
+	session_detach_buffer.c.in \
 	session_f2c.c.in \
 	session_finalize.c.in \
+	session_flush_buffer.c.in \
 	session_get_errhandler.c.in \
 	session_get_info.c.in \
 	session_get_nth_pset.c.in \
 	session_get_num_psets.c.in \
 	session_get_pset_info.c.in \
+	session_iflush_buffer.c.in \
 	session_init.c.in \
 	session_set_errhandler.c.in \
 	ssend.c.in \
