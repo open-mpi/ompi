@@ -148,8 +148,8 @@ mpi-ignore-tkr-interfaces-generated.h: $(template_files)
 	    --output $(abs_builddir)/$@ \
 	    fortran \
 	    $(gen_ts) \
-	    interface \
 	    --fort-std f90 \
+	    interface \
 	    --prototype-files $(template_files)
 
 #
