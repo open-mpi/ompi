@@ -150,7 +150,7 @@ static int mca_btl_ofi_component_register(void)
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
-    mca_btl_ofi_component.mode = MCA_BTL_OFI_MODE_ONE_SIDED;
+    mca_btl_ofi_component.mode = MCA_BTL_OFI_MODE_FULL_SUPPORT;
     (void) mca_base_component_var_register(&mca_btl_ofi_component.super.btl_version, "mode", msg,
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_5,
                                            MCA_BASE_VAR_SCOPE_READONLY,
