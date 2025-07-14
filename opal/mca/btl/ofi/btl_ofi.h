@@ -13,8 +13,7 @@
  * Copyright (c) 2015-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2018-2019 Intel, Inc.  All rights reserved.
- * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.
- *                         All Rights reserved.
+ * Copyright (c) 2020-2025 Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2022      Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -140,9 +139,6 @@ struct mca_btl_ofi_module_t {
 
     /** registration cache */
     mca_rcache_base_module_t *rcache;
-    /* If the underlying OFI provider has its own cache, we want to bypass
-     * rcache registration */
-    bool bypass_cache;
 };
 typedef struct mca_btl_ofi_module_t mca_btl_ofi_module_t;
 

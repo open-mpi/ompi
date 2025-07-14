@@ -4,8 +4,7 @@
  *                         reserved.
  * Copyright (c) 2019-2024 Triad National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2018-2023 Amazon.com, Inc. or its affiliates.  All Rights reserved.
- *                         reserved.
+ * Copyright (c) 2018-2025 Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2021      Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2021      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
@@ -72,6 +71,8 @@ extern int ompi_mtl_ofi_del_comm(struct mca_mtl_base_module_t *mtl,
                                  struct ompi_communicator_t *comm);
 
 int ompi_mtl_ofi_progress_no_inline(void);
+
+int ompi_mtl_ofi_rcache_init(void);
 
 #if OPAL_HAVE_THREAD_LOCAL
 extern opal_thread_local int ompi_mtl_ofi_per_thread_ctx;
@@ -291,73 +292,37 @@ ompi_mtl_ofi_set_mr_null(ompi_mtl_ofi_request_t *ofi_req) {
 static
 int ompi_mtl_ofi_register_buffer(struct opal_convertor_t *convertor,
                                  ompi_mtl_ofi_request_t *ofi_req,
-                                 void* buffer) {
+                                 void* buffer)
+{
+    int ret;
+    uint32_t cache_flags = 0;
+
     ofi_req->mr = NULL;
     if (ofi_req->length <= 0 || NULL == buffer) {
         return OMPI_SUCCESS;
     }
 
-#if OPAL_OFI_HAVE_FI_MR_IFACE
-
-    if ((convertor->flags & CONVERTOR_ACCELERATOR) && ompi_mtl_ofi.hmem_needs_reg) {
-        /* Register buffer */
-        int ret;
-        struct fi_mr_attr attr = {0};
-        struct iovec iov = {0};
-
-        iov.iov_base = buffer;
-        iov.iov_len = ofi_req->length;
-        attr.mr_iov = &iov;
-        attr.iov_count = 1;
-        attr.access = FI_SEND | FI_RECV;
-        attr.offset = 0;
-        attr.context = NULL;
-        if (false == ompi_mtl_base_selected_component->accelerator_support) {
-            goto reg;
-        } else if (0 == strcmp(opal_accelerator_base_selected_component.base_version.mca_component_name, "cuda")) {
-            attr.iface = FI_HMEM_CUDA;
-            opal_accelerator.get_device(&attr.device.cuda);
-#if OPAL_OFI_HAVE_FI_HMEM_ROCR
-        } else if (0 == strcmp(opal_accelerator_base_selected_component.base_version.mca_component_name, "rocm")) {
-            attr.iface = FI_HMEM_ROCR;
-            opal_accelerator.get_device(&attr.device.cuda);
-#endif
-        } else {
-            return OPAL_ERROR;
-        }
-reg:
-        ret = fi_mr_regattr(ompi_mtl_ofi.domain, &attr, 0, &ofi_req->mr);
-
-        if (ret) {
-            opal_show_help("help-mtl-ofi.txt", "Buffer Memory Registration Failed", true,
-                           opal_accelerator_base_selected_component.base_version.mca_component_name,
-                           buffer, ofi_req->length,
-                           fi_strerror(-ret), ret);
-            ofi_req->mr = NULL;
-            return OMPI_ERROR;
-        }
+    if (! ((convertor->flags & CONVERTOR_ACCELERATOR) && ompi_mtl_ofi.hmem_needs_reg)) {
+        return OMPI_SUCCESS;
     }
 
-#endif
-
-    return OMPI_SUCCESS;
+    /* note - the cache access flags are a little broken, because rcache doesn't
+     * understand send/recv requirements.  Since this rcache is only used in the
+     * MTL, that isn't a problem and we fix it in the underlying register call.
+     */
+    ret = ompi_mtl_ofi.rcache->rcache_register(ompi_mtl_ofi.rcache, buffer, ofi_req->length,
+                                               cache_flags, MCA_RCACHE_ACCESS_ANY,
+                                               (mca_rcache_base_registration_t **) &ofi_req->mr);
+    return ret;
 }
 
 /** Deregister buffer */
 __opal_attribute_always_inline__ static inline int
 ompi_mtl_ofi_deregister_buffer(ompi_mtl_ofi_request_t *ofi_req) {
     if (ofi_req->mr) {
-        int ret;
-        ret = fi_close(&ofi_req->mr->fid);
-        if (ret) {
-            opal_show_help("help-mtl-ofi.txt", "OFI call fail", true,
-                           "fi_close",
-                           ompi_process_info.nodename, __FILE__, __LINE__,
-                           fi_strerror(-ret), ofi_req->mr->fid);
-            return OMPI_ERROR;
-        }
-        ofi_req->mr = NULL;
+        (void)ompi_mtl_ofi.rcache->rcache_deregister(ompi_mtl_ofi.rcache, &ofi_req->mr->base);
     }
+
     return OMPI_SUCCESS;
 }
 
