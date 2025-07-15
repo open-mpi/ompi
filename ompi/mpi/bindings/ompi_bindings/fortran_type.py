@@ -225,7 +225,7 @@ class CountTypeInOut(FortranType):
         if self.bigcount:
             return f'INTEGER(KIND=MPI_COUNT_KIND), INTENT(OUT) :: {self.name}'
         else:
-            return f'INTEGER, INTENT(IN) :: {self.name}'
+            return f'INTEGER, INTENT(OUT) :: {self.name}'
 
     def use(self):
         return [('mpi_f08_types', 'MPI_COUNT_KIND')]
