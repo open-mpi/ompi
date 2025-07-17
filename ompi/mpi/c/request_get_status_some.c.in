@@ -73,7 +73,7 @@ PROTOTYPE ERROR_CLASS request_get_status_some(INT incount, REQUEST_CONST request
     bool all_inactive;
 
 #if OPAL_ENABLE_PROGRESS_THREADS == 0
-    int do_it_once = 0;
+    bool do_it_once = true;
  recheck_request_status:
 #endif
 
@@ -112,12 +112,12 @@ PROTOTYPE ERROR_CLASS request_get_status_some(INT incount, REQUEST_CONST request
     }
 
 #if OPAL_ENABLE_PROGRESS_THREADS == 0
-    if( 0 == do_it_once ) {
+    if(do_it_once) {
         /* If we run the opal_progress then check the status of the
            request before leaving. We will call the opal_progress only
            once per call. */
         opal_progress();
-        do_it_once++;
+        do_it_once = false;
         goto recheck_request_status;
     }
 #endif

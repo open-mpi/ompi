@@ -31,8 +31,8 @@ DESCRIPTION
 of the operations associated with active handles has completed. In
 this case it returns in ``index`` the index of this request in the
 array and the status of the operation in ``status``.  It does not
-deallocate or deactivate the request; a subsequent call to test, wait,
-or free should be executed with that request.
+deallocate or deactivate the request; a subsequent call to any of the MPI
+test, wait, or free routines should be executed with that request.
 
 If no operation completed, it returns ``flag = false`` and a value of
 ``MPI_UNDEFINED`` in ``index``. ``status`` is undefined in this

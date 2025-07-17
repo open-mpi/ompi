@@ -34,15 +34,15 @@ first ``outcount`` locations of the array ``array_of_indices`` and
 within the array ``array_of_requests`` and the status of these
 operations respectively. The array is indexed from zero in C and from
 one in Fortran. It does not deallocate or deactivate the request; a
-subsequent call to test, wait, or free should be executed with each completed
-request.
+subsequent call to any of the MPI test, wait, or free routines should be
+executed with each completed request.
 
 If no operation in ``array_of_requests`` is complete, it returns
 ``outcount = 0``. If all operations in ``array_of_requests`` are either
 ``MPI_REQUEST_NULL`` or inactive, ``outcount`` will be set to ``MPI_UNDEFINED``.
 
 If your application does not need to examine the *status* field, you can
-save resources by using the predefined constant ``MPI_STATUS_IGNORE`` as a
+save resources by using the predefined constant ``MPI_STATUSES_IGNORE`` as a
 special value for the ``array_of_statuses`` argument.
 
 

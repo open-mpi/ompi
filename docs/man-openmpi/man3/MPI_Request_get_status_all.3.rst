@@ -31,14 +31,15 @@ operations associated with *active* handles in the array have completed.
 In this case, each status entry that corresponds to an active request
 is set to the status of the corresponding operation. It
 does not deallocate or deactivate the request; a subsequent call to
-test, wait, or free should be executed with each of those requests.
+any of the MPI test, wait, or free routines should be executed with each
+of those requests.
 
 Each status entry that corresponds to a null or inactive handle is set
 to empty.  Otherwise, ``flag = false`` is returned and the values of the
 status entries are undefined.
 
 If your application does not need to examine the *status* field, you can
-save resources by using the predefined constant ``MPI_STATUS_IGNORE`` as a
+save resources by using the predefined constant ``MPI_STATUSES_IGNORE`` as a
 special value for the ``array_of_statuses`` argument.
 
 
