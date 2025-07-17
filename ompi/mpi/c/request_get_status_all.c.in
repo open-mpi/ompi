@@ -70,10 +70,9 @@ PROTOTYPE ERROR_CLASS request_get_status_all(INT count, REQUEST_CONST requests:c
     }
 
     bool all_done;
-    bool one_done;
 
 #if OPAL_ENABLE_PROGRESS_THREADS == 0
-    int do_it_once = 0;
+    bool do_it_once = true;
  recheck_request_status:
 #endif
 
@@ -81,25 +80,22 @@ PROTOTYPE ERROR_CLASS request_get_status_all(INT count, REQUEST_CONST requests:c
     int i;
     all_done = true;
     for (i = 0; i < count; i++) {
-        one_done = false;
         if( (requests[i] == MPI_REQUEST_NULL) || (requests[i]->req_state == OMPI_REQUEST_INACTIVE) ||
             (requests[i]->req_complete) ) {
             continue;
         }
-        if (!one_done) {
-            all_done = false;
-            break;
-        }
+	all_done = false;
+	break;
     }
 
     if (!all_done) {
 #if OPAL_ENABLE_PROGRESS_THREADS == 0
-        if( 0 == do_it_once ) {
+        if(do_it_once) {
             /* If we run the opal_progress then check the status of the
                request before leaving. We will call the opal_progress only
                once per call. */
             opal_progress();
-            do_it_once++;
+            do_it_once = false;
             goto recheck_request_status;
         }
 #endif
