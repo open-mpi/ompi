@@ -64,7 +64,22 @@ for line in lines:
         output.append(line)
 
 # ============================= Function Prototypes ============================
+# TODO: we need to add/fix/figure out the pympistandard's way for properly
+# defining callback functions
+def cb_declaration(proc_expression):
+    func_str = str(proc_expression).replace(r"\ldots", "...")
+    func_str_list = func_str.split()
+    func_name, arg_1 = func_str_list[2].split("(")
+    return f"{' '.join(func_str_list[:2])} ({func_name})({arg_1} {' '.join(func_str_list[3:])};\n"
+
 std.use_api_version()
+
+output.append("\n")
+output.append("/* Callback functions */\n")
+for proc in std.CALLBACKS.values():
+    output.append(cb_declaration(proc.express.iso_c))
+    if proc.has_embiggenment():
+        output.append(cb_declaration(proc.express.embiggen.iso_c))
 
 output.append("\n")
 output.append("/* MPI API */\n")
