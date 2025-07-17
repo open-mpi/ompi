@@ -7,37 +7,6 @@ import pympistandard as std
 
 categories = {}
 
-def comment(message, lang=Lang.C, indentation=0):
-    """
-    Take in a message and return a commented version of it.
-    """
-    comment_lines = []
-    width = 80
-    #words = message.split()
-    prefix = ""
-    spaces = (indentation + 1) * ' '
-    if lang == Lang.C or lang == Lang.CPP:
-        comment_lines.append(spaces = "/*")
-        prefix = " *"
-    elif lang == Lang.FORTRAN:
-        prefix ="!"
-
-    prefix = spaces + prefix + ' '
-    comment_lines.append(textwrap.wrap(message,
-                                       width=width,
-                                       initial_indent=prefix,
-                                       subsequent_indent=prefix))
-    # for word in words:
-    #     line = [prefix]
-    #     cols_left = width - len(prefix)
-    #     len(word) <= cols_left:
-    #         line.append(word)
-    #     comment_lines.append()
-
-    if lang == Lang.C or lang == Lang.CPP:
-        comment_lines.append(spaces + "*/")
-    return '\n'.join(comment_lines)
-
 for category in consts.categories.values():
     name = category["name"]
     categories[name] = []
