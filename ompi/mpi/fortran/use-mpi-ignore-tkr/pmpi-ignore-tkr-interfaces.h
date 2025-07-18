@@ -228,7 +228,6 @@
 #define MPI_Reduce_scatter_block_init PMPI_Reduce_scatter_block_init
 #define MPI_Register_datarep PMPI_Register_datarep
 #define MPI_Request_free PMPI_Request_free
-#define MPI_Request_get_status PMPI_Request_get_status
 #define MPI_Rget PMPI_Rget
 #define MPI_Rget_accumulate PMPI_Rget_accumulate
 #define MPI_Rput PMPI_Rput

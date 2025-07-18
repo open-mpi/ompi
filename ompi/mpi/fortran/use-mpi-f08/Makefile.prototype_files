@@ -128,6 +128,10 @@ prototype_files = \
         reduce_scatter_init_ts.c.in \
         reduce_scatter_ts.c.in \
         reduce_ts.c.in \
+	request_get_status.c.in \
+        request_get_status_all.c.in \
+        request_get_status_any.c.in \
+        request_get_status_some.c.in \
         rget_accumulate_ts.c.in \
         rget_ts.c.in \
         rput_ts.c.in \

@@ -18,7 +18,7 @@
 #                         and Technology (RIST).  All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
-# Copyright (c) 2021-2022 Triad National Security, LLC. All rights
+# Copyright (c) 2021-2025 Triad National Security, LLC. All rights
 #                         reserved.
 # Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
 #
@@ -410,6 +410,9 @@ lib@OMPI_LIBMPI_NAME@_mpifh_la_SOURCES += \
         register_datarep_f.c \
         request_free_f.c \
         request_get_status_f.c \
+        request_get_status_all_f.c \
+        request_get_status_any_f.c \
+        request_get_status_some_f.c \
         rsend_f.c \
         rsend_init_f.c \
         scan_f.c \
