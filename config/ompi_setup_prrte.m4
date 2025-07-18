@@ -21,6 +21,8 @@ dnl Copyright (c) 2021      Nanook Consulting.  All rights reserved.
 dnl Copyright (c) 2021-2022 IBM Corporation.  All rights reserved.
 dnl Copyright (c) 2023-2024 Jeffrey M. Squyres.  All rights reserved.
 dnl Copyright (c) 2025      Advanced Micro Devices, Inc. All rights reserved.
+dnl Copyright (c) 2025      Triad National Security, LLC. All rights
+dnl                         reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -98,6 +100,7 @@ OPAL_VAR_SCOPE_PUSH([prrte_setup_internal_happy prrte_setup_external_happy targe
     AS_IF([test "$prrte_setup_external_happy" = "0" -a "$prrte_setup_internal_happy" = "1"],
           [opal_prrte_mode="internal"
            OMPI_USING_INTERNAL_PRRTE=1
+           OMPI_HAVE_PRTE_LAUNCH=1
            _OMPI_SETUP_PRRTE_INTERNAL_POST()],
           [OMPI_USING_INTERNAL_PRRTE=0])
 
@@ -118,9 +121,14 @@ OPAL_VAR_SCOPE_PUSH([prrte_setup_internal_happy prrte_setup_external_happy targe
                        [$OMPI_USING_INTERNAL_PRRTE],
                        [Whether or not we are using the internal PRRTE])
 
+    AM_CONDITIONAL(OMPI_USING_INTERNAL_PRRTE, [test $OMPI_USING_INTERNAL_PRRTE -eq 1])
+
     AC_SUBST(OMPI_PRRTE_RST_CONTENT_DIR)
     AC_SUBST(OMPI_SCHIZO_OMPI_RST_CONTENT_DIR)
     AM_CONDITIONAL(OMPI_HAVE_PRRTE_RST, [test $OMPI_HAVE_PRRTE_RST -eq 1])
+
+    AC_DEFINE_UNQUOTED([OMPI_HAVE_PRTE_LAUNCH], $OMPI_HAVE_PRTE_LAUNCH,
+                       [Whether prte_launch support available])
 
     OPAL_SUMMARY_ADD([Miscellaneous], [PRRTE], [], [$opal_prrte_mode])
 
@@ -194,6 +202,9 @@ AC_DEFUN([_OMPI_SETUP_PRRTE_INTERNAL], [
 
     opal_prrte_CPPFLAGS_save="${CPPFLAGS}"
     OPAL_FLAGS_APPEND_UNIQ([CPPFLAGS], [${opal_pmix_CPPFLAGS}])
+
+    AC_DEFINE_UNQUOTED([OMPI_HAVE_PRTE_LAUNCH], [1],
+                     [prte_launch support available in ompi (aka internal) prrte])
 
     AC_MSG_CHECKING([if PMIx version is 4.0.0 or greater])
     AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <pmix_version.h>]],
@@ -296,6 +307,11 @@ AC_DEFUN([_OMPI_SETUP_PRRTE_EXTERNAL], [
                  [ompi_setup_prrte_cv_version_happy="no"])])
            AS_IF([test "${ompi_setup_prrte_cv_version_happy}" = "no"],
                  [setup_prrte_external_happy="no"])])
+
+    AS_IF([test "${setup_prrte_external_happy}" = "yes"],
+          [AC_CHECK_DECL([prte_launch],
+                  [OMPI_HAVE_PRTE_LAUNCH=1], [OMPI_HAVE_PRTE_LAUNCH=0],
+                  [#include "prte.h"])],[])
 
     CPPFLAGS="$opal_prrte_CPPFLAGS_save"
 
