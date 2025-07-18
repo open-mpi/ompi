@@ -42,7 +42,7 @@
 #include "ompi/memchecker.h"
 
 PROTOTYPE ERROR_CLASS comm_spawn_multiple(INT count, STRING_ARRAY array_of_commands, ARGV array_of_argv,
-                                          INT_ARRAY array_of_maxprocs, INFO_ARRAY array_of_info,
+                                          INT_ARRAY array_of_maxprocs, INFO_ARRAY array_of_info:count,
                                           INT root, COMM comm, COMM_OUT intercomm,
                                           INT_OUT array_of_errcodes)
 {

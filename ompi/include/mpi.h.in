@@ -1433,6 +1433,10 @@ OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_ub;
 /*
  * MPI API
  */
+#ifndef OMPI_NO_MPI_PROTOTYPES
+OMPI_DECLSPEC  int MPI_Abi_supported(int *flag);
+OMPI_DECLSPEC  int MPI_Abi_version(int *abi_major, int *abi_minor);
+OMPI_DECLSPEC  int MPI_Abi_details(int *buflen, char *details, MPI_Info *info);
 OMPI_DECLSPEC  int MPI_Abort(MPI_Comm comm, int errorcode);
 OMPI_DECLSPEC  int MPI_Accumulate(const void *origin_addr, int origin_count, MPI_Datatype origin_datatype,
                                   int target_rank, MPI_Aint target_disp, int target_count,
@@ -2167,8 +2171,6 @@ OMPI_DECLSPEC  int MPI_Recv_init_c(void *buf, MPI_Count count, MPI_Datatype data
                                    int tag, MPI_Comm comm, MPI_Request *request);
 OMPI_DECLSPEC  int MPI_Recv(void *buf, int count, MPI_Datatype datatype, int source,
                             int tag, MPI_Comm comm, MPI_Status *status);
-OMPI_DECLSPEC  int MPI_Recv_c(void *buf, MPI_Count count, MPI_Datatype datatype, int source,
-                              int tag, MPI_Comm comm, MPI_Status *status);
 OMPI_DECLSPEC  int MPI_Recv_c(void *buf, MPI_Count count, MPI_Datatype datatype, int source,
                               int tag, MPI_Comm comm, MPI_Status *status);
 OMPI_DECLSPEC  int MPI_Reduce(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
@@ -3328,8 +3330,6 @@ OMPI_DECLSPEC  int PMPI_Recv(void *buf, int count, MPI_Datatype datatype, int so
                              int tag, MPI_Comm comm, MPI_Status *status);
 OMPI_DECLSPEC  int PMPI_Recv_c(void *buf, MPI_Count count, MPI_Datatype datatype, int source,
                                int tag, MPI_Comm comm, MPI_Status *status);
-OMPI_DECLSPEC  int PMPI_Recv_c(void *buf, MPI_Count count, MPI_Datatype datatype, int source,
-                               int tag, MPI_Comm comm, MPI_Status *status);
 OMPI_DECLSPEC  int PMPI_Reduce(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
                                MPI_Op op, int root, MPI_Comm comm);
 OMPI_DECLSPEC  int PMPI_Reduce_c(const void *sendbuf, void *recvbuf, MPI_Count count, MPI_Datatype datatype,
@@ -4091,6 +4091,9 @@ OMPI_DECLSPEC  int PMPI_Type_ub(MPI_Datatype mtype, MPI_Aint *ub)
 #define MPI_Type_struct(...)  THIS_FUNCTION_WAS_REMOVED_IN_MPI30(MPI_Type_struct, MPI_Type_create_struct)
 #define MPI_Type_ub(...)  THIS_FUNCTION_WAS_REMOVED_IN_MPI30(MPI_Type_ub, MPI_Type_get_extent)
 #endif
+
+#endif /* OMPI_NO_MPI_PROTOTYPES */
+
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
