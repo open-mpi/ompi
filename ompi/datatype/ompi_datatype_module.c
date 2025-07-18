@@ -65,14 +65,21 @@ int32_t ompi_datatype_number_of_predefined_data = 0;
  *   Additionally to OMPI_DATATYPE_INIT_PREDEFINED_BASIC_TYPE, we have a OMPI_DATATYPE_INIT_PREDEFINED,
  *   for all available types (getting rid of duplication of the name.
  */
-ompi_predefined_datatype_t ompi_mpi_datatype_null =
+ompi_predefined_datatype_t ompi_mpi_datatype_null = {
     {
-        {
-            OPAL_DATATYPE_INITIALIZER_EMPTY(OMPI_DATATYPE_FLAG_PREDEFINED|OPAL_DATATYPE_FLAG_CONTIGUOUS),
-            OMPI_DATATYPE_EMPTY_DATA(EMPTY),
-        },
-        {0, } /* padding */
-    };
+        OPAL_DATATYPE_INITIALIZER_EMPTY(OMPI_DATATYPE_FLAG_PREDEFINED
+                                        | OPAL_DATATYPE_FLAG_CONTIGUOUS),
+        .id = OMPI_DATATYPE_MPI_NULL,
+        .d_f_to_c_index = -1,
+        .d_keyhash = NULL,
+        .args = NULL,
+        .packed_description = 0,
+        .name = "MPI_DATATYPE_NULL",
+    },
+    {
+        0,
+    } /* padding */
+};
 
 ompi_predefined_datatype_t ompi_mpi_unavailable =    OMPI_DATATYPE_INIT_PREDEFINED (UNAVAILABLE, 0);
 
@@ -317,7 +324,7 @@ ompi_predefined_datatype_t ompi_mpi_count = OMPI_DATATYPE_INIT_UNAVAILABLE_BASIC
  * Everything referring to types/ids should be ORDERED as in ompi_datatype_basicDatatypes array.
  */
 const ompi_datatype_t* ompi_datatype_basicDatatypes[OMPI_DATATYPE_MPI_MAX_PREDEFINED] = {
-    [OMPI_DATATYPE_MPI_EMPTY] = &ompi_mpi_datatype_null.dt,
+    [OMPI_DATATYPE_MPI_NULL] = &ompi_mpi_datatype_null.dt,
     [OMPI_DATATYPE_MPI_INT8_T] = &ompi_mpi_int8_t.dt,
     [OMPI_DATATYPE_MPI_UINT8_T] = &ompi_mpi_uint8_t.dt,
     [OMPI_DATATYPE_MPI_INT16_T] = &ompi_mpi_int16_t.dt,
