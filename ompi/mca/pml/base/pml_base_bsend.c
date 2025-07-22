@@ -46,7 +46,6 @@
 static void mca_pml_bsend_buffer_construct(mca_pml_bsend_buffer_t *buffer);
 static void mca_pml_bsend_buffer_construct(mca_pml_bsend_buffer_t *buffer)
 {
-    fprintf(stderr, "inside buffer construct %p\n", (void *)buffer);
     buffer->bsend_allocator = NULL;
     buffer->bsend_userbase = NULL;
     buffer->bsend_base = NULL;
@@ -54,22 +53,15 @@ static void mca_pml_bsend_buffer_construct(mca_pml_bsend_buffer_t *buffer)
     buffer->bsend_size = 0UL;
     buffer->bsend_count = 0UL;
     buffer->bsend_pagebits = 0;
-#if 1
-    fprintf(stderr, "constructing mutext at %p \n", &buffer->bsend_mutex);
     OBJ_CONSTRUCT(&buffer->bsend_mutex, opal_mutex_t);
     OBJ_CONSTRUCT(&buffer->bsend_condition, opal_condition_t);
-#endif
 }
 
 static void mca_pml_bsend_buffer_destruct(mca_pml_bsend_buffer_t *buffer);
 static void mca_pml_bsend_buffer_destruct(mca_pml_bsend_buffer_t *buffer)
 {
-    fprintf(stderr, "inside buffer destruct %p\n", (void *)buffer);
-#if 1
-    fprintf(stderr, "destrucint mutext at %p \n", &buffer->bsend_mutex);
     OBJ_DESTRUCT(&buffer->bsend_mutex);
     OBJ_DESTRUCT(&buffer->bsend_condition);
-#endif
 }
 
 OBJ_CLASS_INSTANCE (mca_pml_bsend_buffer_t,  opal_object_t,
@@ -346,7 +338,6 @@ int mca_pml_base_bsend_detach(ompi_bsend_buffer_type_t type, void *obj, void* ad
     ompi_communicator_t *comm = NULL;
     ompi_instance_t *instance = NULL;
 
-    fprintf(stderr, "inside mca_pml_base_bsend_detach addr %p size %p\n", addr, size);
     switch (type) {
         case BASE_BSEND_BUF:
             buf_instance = mca_pml_bsend_buffer;
@@ -380,7 +371,6 @@ int mca_pml_base_bsend_detach(ompi_bsend_buffer_type_t type, void *obj, void* ad
             break;
     }
 
-    fprintf(stderr, "buf_instance->bsend_count %d\n", buf_instance->bsend_count);
     while(buf_instance->bsend_count != 0) {
         opal_condition_wait(&buf_instance->bsend_condition, &buf_instance->bsend_mutex);
         opal_progress();
@@ -423,7 +413,6 @@ int mca_pml_base_bsend_detach(ompi_bsend_buffer_type_t type, void *obj, void* ad
             break;
     }
 
-    fprintf(stderr, "about to destruct %p\n", (void *)buf_instance);
     OBJ_DESTRUCT(buf_instance);
 
 fn_exit:
