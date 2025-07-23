@@ -10,7 +10,7 @@ the the MPI process specific buffer of the calling MPI process have been transmi
 
 .. The following directive tells the man page generation script to
    generate multiple bindings for this file.
-.. mpi-bindings: MPI_Comm_flush_buffer, MPI_Comm_iflush_buffer
+.. mpi-bindings: MPI_Buffer_flush, MPI_Buffer_iflush
 
 .. The following file was automatically generated
 .. include:: ./bindings/mpi_buffer_flush.rst
