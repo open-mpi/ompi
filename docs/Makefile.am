@@ -179,6 +179,7 @@ OMPI_MAN3 = \
         MPI_Errhandler_set.3 \
         MPI_Error_class.3 \
         MPI_Error_string.3 \
+        MPI_Errors.3 \
         MPI_Exscan.3 \
         MPI_Exscan_init.3 \
         MPI_Fetch_and_op.3 \
