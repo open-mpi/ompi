@@ -5,8 +5,28 @@ from consts import Lang
 
 import pympistandard as std
 
-categories = {}
+# ============================= Constants / Globals ============================
 
+ABI_INTERNAL = "_ABI_INTERNAL"
+
+categories = {}
+mangle_names = True
+
+internal_datatypes = [
+    "MPI_Comm",
+    "MPI_Datatype",
+    "MPI_Errhandler",
+    "MPI_File",
+    "MPI_Group",
+    "MPI_Info",
+    "MPI_Message",
+    "MPI_Op",
+    "MPI_Request",
+    "MPI_Session",
+    "MPI_Win",
+]
+
+# Populating the `categories` dictionary
 for category in consts.categories.values():
     name = category["name"]
     categories[name] = []
@@ -14,12 +34,17 @@ for category in consts.categories.values():
         if value["category"] == name:
             categories[name].append(value)
 
-def output_constant(const, use_enum):
+# ================================== Functions =================================
+
+def output_constant(const, use_enum: bool, mangle_name: bool):
     name = const["name"]
     abi_value = const["abi_value"]
     c_type = const["handle_types"]["c"]["type"]
     if c_type is None:
         return None
+    if mangle_name:
+        name = f"{name}{ABI_INTERNAL}"
+        c_type = f"{c_type}{ABI_INTERNAL}"
     def_name = f"#define {name}"
     if use_enum:
         def_name = f"    {name}"
@@ -55,7 +80,7 @@ for line in lines:
             output.append("enum {\n")
         # Print out each `#define` / assignment for the constants
         for constant in categories[category]:
-            line = output_constant(constant, use_enum)
+            line = output_constant(constant, use_enum, mangle_names)
             if line is not None:
                 output.append(line)
         if use_enum:
@@ -70,7 +95,8 @@ def cb_declaration(proc_expression):
     func_str = str(proc_expression).replace(r"\ldots", "...")
     func_str_list = func_str.split()
     func_name, arg_1 = func_str_list[2].split("(")
-    return f"{' '.join(func_str_list[:2])} ({func_name})({arg_1} {' '.join(func_str_list[3:])};\n"
+    decl_string = f"{' '.join(func_str_list[:2])} ({func_name})({arg_1} {' '.join(func_str_list[3:])};\n"
+    return decl_string
 
 std.use_api_version()
 
@@ -99,5 +125,21 @@ for proc in std.all_iso_c_procedures():
          output.append(f"{binding[0]} P{' '.join(binding[1:])};\n")
 
 # ================================ Final Output ================================
+output.append("""#ifndef _ABI_INTERNAL_
+#define _ABI_INTERNAL_
+#include "stddef.h"
+#include "stdint.h"
+""")
+output.append("#endif /* _ABI_INTERNAL_ */")
+
+# Iterate through all lines and replace datatypes with their internal ABI
+# counterparts
+if mangle_names:
+    for i, line in enumerate(output):
+        mangled_line = line
+        for datatype in internal_datatypes:
+            mangled_line = mangled_line.replace(datatype, f"{datatype}{ABI_INTERNAL}")
+        output[i] = mangled_line
+
 with open(consts.DIR / "abi.h", 'tw') as header_out:
     header_out.writelines(output)
