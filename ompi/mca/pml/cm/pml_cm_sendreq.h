@@ -368,7 +368,8 @@ do {                                                                    \
                                                                         \
     if(sendreq->req_count > 0) {                                        \
         sendreq->req_buff =                                             \
-            mca_pml_base_bsend_request_alloc_buf(sendreq->req_count);   \
+            mca_pml_base_bsend_request_alloc_buf(sendreq->req_send.req_base.req_comm, \
+                                                 sendreq->req_count);   \
         if (NULL == sendreq->req_buff) {                                \
             ret = MPI_ERR_BUFFER;                                       \
         } else {                                                        \
@@ -431,7 +432,9 @@ do {                                                                            
                                                                                    \
     if (sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED &&           \
         sendreq->req_count > 0 ) {                                                 \
-        mca_pml_base_bsend_request_free(sendreq->req_buff);                        \
+        ompi_communicator_t *comm;                                                 \
+        comm = (ompi_communicator_t *)sendreq->req_send.req_base.req_comm;         \
+        mca_pml_base_bsend_request_free(comm, sendreq->req_buff);                  \
     }                                                                              \
                                                                                    \
     if( !REQUEST_COMPLETE(&sendreq->req_send.req_base.req_ompi)) {                 \
