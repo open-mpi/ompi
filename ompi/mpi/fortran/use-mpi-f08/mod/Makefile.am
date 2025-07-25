@@ -93,6 +93,7 @@ mpi-f08-interfaces-generated.h: $(template_files)
 	    --output $(abs_builddir)/$@ \
 	    fortran \
 	    $(gen_ts) \
+	    --fort-std f08 \
 	    interface \
 	    --prototype-files $(template_files)
 
