@@ -19,6 +19,7 @@
  *                         reserved.
  * Copyright (c) 2022      Computer Architecture and VLSI Systems (CARV)
  *                         Laboratory, ICS Forth. All rights reserved.
+ * Copyright (c) 2024      Google, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -67,6 +68,7 @@
 
 #include "opal_config.h"
 
+#include "opal/class/opal_serializable.h"
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_value_array.h"
 #include "opal/mca/base/mca_base_framework.h"
@@ -106,6 +108,9 @@ typedef enum {
     MCA_BASE_VAR_TYPE_INT64_T,
     /** The variable is of type uint64_t */
     MCA_BASE_VAR_TYPE_UINT64_T,
+    /** The variable is of type opal_serializable_t or
+     * a derivative class. */
+    MCA_BASE_VAR_TYPE_SERIALIZABLE,
 
     /** Maximum variable type. */
     MCA_BASE_VAR_TYPE_MAX
@@ -242,6 +247,8 @@ typedef union {
     size_t sizetval;
     /** double value */
     double lfval;
+    /** serializable object */
+    opal_serializable_t serializable;
 } mca_base_var_storage_t;
 
 /**
@@ -717,6 +724,16 @@ typedef enum {
  * and the array must be freed by the caller.
  */
 OPAL_DECLSPEC int mca_base_var_dump(int vari, char ***out, mca_base_var_dump_type_t output_type);
+
+/**
+ * Get a string representation of a variable.
+ *
+ * @param[in]  vari        Variable index
+ *
+ * This function returns the string representation of the variable or NULL if an
+ * error occurs. It is the caller's responsibility to free the string.
+ */
+OPAL_DECLSPEC char *mca_base_var_string_value(int vari);
 
 #define MCA_COMPILETIME_VER "print_compiletime_version"
 #define MCA_RUNTIME_VER     "print_runtime_version"
