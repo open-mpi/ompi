@@ -45,6 +45,8 @@ address of the server. It must be the same as the name returned by
 ERRORS
 ------
 
+.. include:: ./MPIRUN-ONLY.rst
+
 .. include:: ./ERRORS.rst
 
 .. seealso::
