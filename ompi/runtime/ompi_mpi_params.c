@@ -351,6 +351,13 @@ int ompi_mpi_register_params(void)
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &ompi_async_mpi_finalize);
 
+#if OPAL_ENABLE_PROGRESS_THREADS == 1
+    value = mca_base_var_find ("opal", "opal", NULL, "async_progress");
+    if (0 <= value) {
+        (void) mca_base_var_register_synonym(value, "ompi", "mpi", NULL, "async_progress", 0);
+    }
+#endif
+
     value = mca_base_var_find ("opal", "opal", NULL, "abort_delay");
     if (0 <= value) {
         (void) mca_base_var_register_synonym(value, "ompi", "mpi", NULL, "abort_delay",
