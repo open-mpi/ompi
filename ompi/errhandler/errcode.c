@@ -127,6 +127,7 @@ static ompi_mpi_errcode_t ompi_err_revoked;
 #endif
 static ompi_mpi_errcode_t ompi_err_session;
 static ompi_mpi_errcode_t ompi_err_value_too_large;
+static ompi_mpi_errcode_t ompi_err_errhandler;
 
 static void ompi_mpi_errcode_construct(ompi_mpi_errcode_t* errcode);
 static void ompi_mpi_errcode_destruct(ompi_mpi_errcode_t* errcode);
@@ -245,6 +246,7 @@ int ompi_mpi_errcode_init (void)
 #endif
     CONSTRUCT_ERRCODE( ompi_err_session,  MPI_ERR_SESSION,  "MPI_ERR_SESSION: Invalid session handle" );
     CONSTRUCT_ERRCODE( ompi_err_value_too_large,  MPI_ERR_VALUE_TOO_LARGE,  "MPI_ERR_VALUE_TOO_LARGE: Value is too large to store" );
+    CONSTRUCT_ERRCODE( ompi_err_errhandler,  MPI_ERR_ERRHANDLER,  "MPI_ERR_ERRHANDLER: Invalid error handler handle" );
 
     /* Per MPI-3 p353:27-32, MPI_LASTUSEDCODE must be >=
        MPI_ERR_LASTCODE.  So just start it as == MPI_ERR_LASTCODE. */
@@ -362,6 +364,7 @@ int ompi_mpi_errcode_finalize (void)
 #endif
     OBJ_DESTRUCT(&ompi_err_session);
     OBJ_DESTRUCT(&ompi_err_value_too_large);
+    OBJ_DESTRUCT(&ompi_err_errhandler);
     OBJ_DESTRUCT(&ompi_mpi_errcodes);
     ompi_mpi_errcode_lastpredefined = 0;
     opal_mutex_unlock(&errcode_lock);

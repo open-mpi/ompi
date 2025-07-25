@@ -295,6 +295,7 @@ constants = {
     'MPI_T_ERR_INVALID': 72,
     'MPI_ERR_SESSION': 78,
     'MPI_ERR_VALUE_TOO_LARGE': 79,
+    'MPI_ERR_ERRHANDLER': 80,
     'MPI_ERR_LASTCODE': 92,
     'MPI_IDENT': 0,
     'MPI_CONGRUENT': 1,
