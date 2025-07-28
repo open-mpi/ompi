@@ -6,14 +6,14 @@ MPI_Request_get_status_all
 
 .. include_body
 
-:ref:`MPI_Request_get_status_all` |mdash| Access information associated with a
-request without freeing the request.
+:ref:`MPI_Request_get_status_all` |mdash| Access information associated with an
+array of requests without freeing the requests.
 
 .. The following file was automatically generated
 .. include:: ./bindings/mpi_request_get_status_all.rst
 
-INPUT PARAMETER
----------------
+INPUT PARAMETERS
+----------------
 * ``count``: List length (non-negative integer)
 * ``array_of_requests``: Array of requests (array of handles).
 

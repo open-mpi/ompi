@@ -55,6 +55,10 @@ PROTOTYPE ERROR_CLASS request_get_status_any(INT count, REQUEST_CONST requests:c
         if (NULL == requests) {
             rc = MPI_ERR_REQUEST;
         } else {
+            /* Need to cast the const away, since the request argument for most
+            ** MPI functions invoking this functionality does not have the const
+            ** argument
+            */
             if(!ompi_request_check_same_instance((MPI_Request *)requests, count) ) {
                 rc = MPI_ERR_REQUEST;
             }
