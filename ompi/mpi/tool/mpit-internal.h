@@ -5,6 +5,8 @@
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * Copyright (c) 2018      Cisco Systems, Inc.  All rights reserved
+ * Copyright (c) 2025      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -22,8 +24,12 @@
 #include "ompi/include/ompi_config.h"
 #include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/win/win.h"
 #include "ompi/constants.h"
 #include "ompi/datatype/ompi_datatype.h"
+#include "ompi/file/file.h"
+#include "ompi/op/op.h"
+#include "ompi/message/message.h"
 
 #include "mpi.h"
 
@@ -42,6 +48,7 @@ extern volatile uint32_t ompi_mpit_init_count;
 
 int ompit_var_type_to_datatype (mca_base_var_type_t type, MPI_Datatype *datatype);
 int ompit_opal_to_mpit_error (int rc);
+bool ompit_obj_invalid(void *obj_handle);
 
 static inline int mpit_is_initialized (void)
 {
