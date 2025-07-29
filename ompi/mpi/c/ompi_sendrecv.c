@@ -94,4 +94,5 @@ int ompi_sendrecv(const void * sendbuf, size_t sendcount, MPI_Datatype sendtype,
     if( OPAL_UNLIKELY(MPI_SUCCESS != rcs && MPI_SUCCESS == rc) ) {
         rc = rcs;
     }
+    return rc;
 }
