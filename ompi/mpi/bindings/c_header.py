@@ -17,6 +17,7 @@ import pympistandard as std
 # ============================= Constants / Globals ============================
 DIR = Path(".")
 OUTPUT = DIR / "mpi.h"
+INPUT = DIR / "abi.h.in"
 JSON_PATH = DIR / "abi.json"
 
 ABI_INTERNAL = "_ABI_INTERNAL"
@@ -69,7 +70,8 @@ ENUM_CATEGORIES = [
 # ============================== Argument Parsing ==============================
 parser = argparse.ArgumentParser()
 parser.add_argument("--abi-json", type=str, help=f"path to ABI JSON file [{DIR}/]")
-parser.add_argument("-o", "--output", type=str, help="output directory for the header file")
+parser.add_argument("-i", "--input", type=str, help="input path for the .h.in file")
+parser.add_argument("-o", "--output", type=str, help="output path for the header file")
 parser.add_argument("--mangle-names", help="enable name mangling for constants and datatypes", action="store_true")
 parser.add_argument("--no-mangle", help="disable name mangling (default)", action="store_true")
 
@@ -83,6 +85,8 @@ if args.no_mangle:
     MANGLE_NAMES = False
 if args.output:
     OUTPUT = Path(args.output)
+if args.input:
+    INPUT = Path(args.input)
 
 # ================================== Load JSON =================================
 with open(JSON_PATH) as f:
@@ -132,7 +136,7 @@ def output_constant(const, use_enum: bool, mangle_name: bool):
 
 # ========================= Manipulate Template Header =========================
 lines = []
-with open(DIR / "abi.h.in", 'r') as header_in:
+with open(INPUT, 'r') as header_in:
     lines = header_in.readlines()
 
 # Match lines that start with `$CATEGORY:`. Any amount of whitespace is allowed
