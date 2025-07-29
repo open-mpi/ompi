@@ -8,62 +8,16 @@
 # $HEADER$
 #
 """Constants used for generating bindings."""
-import re
-import json
-from enum import Enum
-
-# TODO: remove?
-from pathlib import Path
-
 
 FORTRAN_ERROR_NAME = 'ierror'
 C_ERROR_NAME = 'ierr'
 C_ERROR_TMP_NAME = 'c_ierr'
 GENERATED_MESSAGE = 'THIS FILE WAS AUTOMATICALLY GENERATED. DO NOT EDIT BY HAND.'
 
-DIR = Path("/mnt/")
-
-with open(DIR / "abi.json") as f:
-    abi = json.load(f)
-    consts = abi["constants"]
-    categories = abi["categories"]
-
-class Lang(Enum):
-    C = 1
-    CPP = 2
-    FORTRAN = 3
 #
 # C and ABI constants
 #
 # C type: const int
-
-ENUM_CATEGORIES = [
-    "ERROR_CLASSES",
-    "MODE_CONSTANTS",
-    "ASSORTED_CONSTANTS",
-    "THREADS_CONSTANTS",
-    "FILE_OPERATIONS_CONSTANTS",
-    "DATATYPE_DECODING_CONSTANTS",
-    "F90_DATATYPE_MATCHING_CONSTANTS",
-    "COMMUNICATOR_GROUP_COMP_RESULTS",
-    "TOPOLOGIES",
-    "COMMUNICATOR_SPLIT_TYPE",
-    "WINDOW_LOCK_TYPE_CONSTANTS",
-    "WINDOW_CREATE_FLAVORS",
-    "WINDOW_MODELS",
-    "FILE_POS_CONSTANTS",
-    "FILE_OP_CONSTANTS",
-    "ENV_INQ_AND_ATTR_KEYS",
-    "FORTRAN_STATUS_ARRAY_SIZE_AND_INDEX_C",
-    "C_PREPROCESSOR_CONSTANTS_FORTRAN_PARAMETERS",
-    "TOOL_INFO_IFACE_VERBOSITY_LEVELS",
-    "TOOL_INFO_IFACE_VAR_ASSOCIATIONS",
-    "TOOL_INFO_IFACE_VAR_SCOPES",
-    "TOOL_INFO_IFACE_PVAR_CLASSES",
-    "TOOL_INFO_IFACE_SOURCE_ORDERINGS",
-    "TOOL_INFO_IFACE_CB_SAFETY_REQ_LEVELS",
-]
-
 
 C_OPAQUE_TYPES = {
     'MPI_Aint': 'intptr_t',
