@@ -1,18 +1,30 @@
+# Copyright (c) 2025      Joe Downs. All rights reserved.
+#
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+
+import argparse
 import re
-import textwrap
-import consts
-from consts import Lang
+import json
+from pathlib import Path
 
 import pympistandard as std
 
 # ============================= Constants / Globals ============================
+DIR = Path(".")
+OUTPUT = DIR / "mpi.h"
+JSON_PATH = DIR / "abi.json"
 
 ABI_INTERNAL = "_ABI_INTERNAL"
 
-categories = {}
-mangle_names = True
+categories_dict = {}
+MANGLE_NAMES = False
 
-internal_datatypes = [
+INTERNAL_DATATYPES = [
     "MPI_Comm",
     "MPI_Datatype",
     "MPI_Errhandler",
@@ -26,15 +38,78 @@ internal_datatypes = [
     "MPI_Win",
 ]
 
+ENUM_CATEGORIES = [
+    "ERROR_CLASSES",
+    "MODE_CONSTANTS",
+    "ASSORTED_CONSTANTS",
+    "THREADS_CONSTANTS",
+    "FILE_OPERATIONS_CONSTANTS",
+    "DATATYPE_DECODING_CONSTANTS",
+    "F90_DATATYPE_MATCHING_CONSTANTS",
+    "COMMUNICATOR_GROUP_COMP_RESULTS",
+    "TOPOLOGIES",
+    "COMMUNICATOR_SPLIT_TYPE",
+    "WINDOW_LOCK_TYPE_CONSTANTS",
+    "WINDOW_CREATE_FLAVORS",
+    "WINDOW_MODELS",
+    "FILE_POS_CONSTANTS",
+    "FILE_OP_CONSTANTS",
+    "ENV_INQ_AND_ATTR_KEYS",
+    "FORTRAN_STATUS_ARRAY_SIZE_AND_INDEX_C",
+    "C_PREPROCESSOR_CONSTANTS_FORTRAN_PARAMETERS",
+    "TOOL_INFO_IFACE_VERBOSITY_LEVELS",
+    "TOOL_INFO_IFACE_VAR_ASSOCIATIONS",
+    "TOOL_INFO_IFACE_VAR_SCOPES",
+    "TOOL_INFO_IFACE_PVAR_CLASSES",
+    "TOOL_INFO_IFACE_SOURCE_ORDERINGS",
+    "TOOL_INFO_IFACE_CB_SAFETY_REQ_LEVELS",
+]
+
+
+# ============================== Argument Parsing ==============================
+parser = argparse.ArgumentParser()
+parser.add_argument("--abi-json", type=str, help=f"path to ABI JSON file [{DIR}/]")
+parser.add_argument("-o", "--output", type=str, help="output directory for the header file")
+parser.add_argument("--mangle-names", help="enable name mangling for constants and datatypes", action="store_true")
+parser.add_argument("--no-mangle", help="disable name mangling (default)", action="store_true")
+
+args = parser.parse_args()
+
+if args.abi_json:
+    JSON_PATH = Path(args.abi_json)
+if args.mangle_names:
+    MANGLE_NAMES = True
+if args.no_mangle:
+    MANGLE_NAMES = False
+if args.output:
+    OUTPUT = Path(args.output)
+
+# ================================== Load JSON =================================
+with open(JSON_PATH) as f:
+    abi = json.load(f)
+
+CONSTS = abi["constants"]
+CATEGORIES = abi["categories"]
+
+# ==============================================================================
+
 # Populating the `categories` dictionary
-for category in consts.categories.values():
+for category in CATEGORIES.values():
     name = category["name"]
-    categories[name] = []
-    for value in consts.consts.values():
+    categories_dict[name] = []
+    for value in CONSTS.values():
         if value["category"] == name:
-            categories[name].append(value)
+            categories_dict[name].append(value)
 
 # ================================== Functions =================================
+# TODO: we need to add/fix/figure out the pympistandard's way for properly
+# defining callback functions
+def cb_declaration(proc_expression):
+    func_str = str(proc_expression).replace(r"\ldots", "...")
+    func_str_list = func_str.split()
+    func_name, arg_1 = func_str_list[2].split("(")
+    decl_string = f"{' '.join(func_str_list[:2])} ({func_name})({arg_1} {' '.join(func_str_list[3:])};\n"
+    return decl_string
 
 def output_constant(const, use_enum: bool, mangle_name: bool):
     name = const["name"]
@@ -57,7 +132,7 @@ def output_constant(const, use_enum: bool, mangle_name: bool):
 
 # ========================= Manipulate Template Header =========================
 lines = []
-with open(consts.DIR / "abi.h.in", 'r') as header_in:
+with open(DIR / "abi.h.in", 'r') as header_in:
     lines = header_in.readlines()
 
 # Match lines that start with `$CATEGORY:`. Any amount of whitespace is allowed
@@ -74,13 +149,13 @@ for line in lines:
         category = category.group(1)
         use_enum = False
         # Only some values should be in `enums`, otherwise just use `#define`s
-        if category in consts.ENUM_CATEGORIES:
+        if category in ENUM_CATEGORIES:
             use_enum = True
         if use_enum:
             output.append("enum {\n")
         # Print out each `#define` / assignment for the constants
-        for constant in categories[category]:
-            line = output_constant(constant, use_enum, mangle_names)
+        for constant in categories_dict[category]:
+            line = output_constant(constant, use_enum, MANGLE_NAMES)
             if line is not None:
                 output.append(line)
         if use_enum:
@@ -89,15 +164,6 @@ for line in lines:
         output.append(line)
 
 # ============================= Function Prototypes ============================
-# TODO: we need to add/fix/figure out the pympistandard's way for properly
-# defining callback functions
-def cb_declaration(proc_expression):
-    func_str = str(proc_expression).replace(r"\ldots", "...")
-    func_str_list = func_str.split()
-    func_name, arg_1 = func_str_list[2].split("(")
-    decl_string = f"{' '.join(func_str_list[:2])} ({func_name})({arg_1} {' '.join(func_str_list[3:])};\n"
-    return decl_string
-
 std.use_api_version()
 
 output.append("\n")
@@ -134,12 +200,15 @@ output.append("#endif /* _ABI_INTERNAL_ */")
 
 # Iterate through all lines and replace datatypes with their internal ABI
 # counterparts
-if mangle_names:
+if MANGLE_NAMES:
     for i, line in enumerate(output):
         mangled_line = line
-        for datatype in internal_datatypes:
-            mangled_line = mangled_line.replace(datatype, f"{datatype}{ABI_INTERNAL}")
+        for datatype in INTERNAL_DATATYPES:
+            # Need to include the extra space here or else we'll edit functions
+            # like "MPI_Group_difference"
+            datatype_pattern = r"([\( ]?)(" + datatype + r")([; \*]{1})"
+            mangled_line = re.sub(datatype_pattern, f"\\g<1>\\g<2>{ABI_INTERNAL}\\g<3>", mangled_line)
         output[i] = mangled_line
 
-with open(consts.DIR / "abi.h", 'tw') as header_out:
+with open(OUTPUT, 'tw') as header_out:
     header_out.writelines(output)
