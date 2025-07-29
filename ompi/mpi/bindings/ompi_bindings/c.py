@@ -351,33 +351,36 @@ struct MPI_Status_ABI {
         self.dump('int MPI_Abi_supported(int *flag);')
         self.dump('int MPI_Abi_version(int *abi_major, int *abi_minor);')
 
-        if not self.external:
-            # Now generate the conversion code
-            self.generate_error_convert_fn()
-            self.generate_comm_convert_fn()
-            self.generate_comm_convert_fn_intern_to_abi()
-            self.generate_info_convert_fn()
-            self.generate_info_convert_fn_intern_to_abi()
-            self.generate_file_convert_fn()
-            self.generate_file_convert_fn_intern_to_abi()
-            self.generate_group_convert_fn()
-            self.generate_group_convert_fn_intern_to_abi()
-            self.generate_datatype_convert_fn()
-            self.generate_datatype_convert_fn_intern_to_abi()
-            self.generate_errhandler_convert_fn()
-            self.generate_errhandler_convert_fn_intern_to_abi()
-            self.generate_message_convert_fn()
-            self.generate_message_convert_fn_intern_to_abi()
-            self.generate_op_convert_fn()
-            self.generate_op_convert_fn_intern_to_abi()
-            self.generate_session_convert_fn()
-            self.generate_session_convert_fn_intern_to_abi()
-            self.generate_win_convert_fn()
-            self.generate_win_convert_fn_intern_to_abi()
-            self.generate_request_convert_fn()
-            self.generate_request_convert_fn_intern_to_abi()
-            self.generate_status_convert_fn()
-            self.generate_status_convert_fn_intern_to_abi()
+#
+# the converters are no longer generated
+#
+#       if not self.external:
+#           # Now generate the conversion code
+#           self.generate_error_convert_fn()
+#           self.generate_comm_convert_fn()
+#           self.generate_comm_convert_fn_intern_to_abi()
+#           self.generate_info_convert_fn()
+#           self.generate_info_convert_fn_intern_to_abi()
+#           self.generate_file_convert_fn()
+#           self.generate_file_convert_fn_intern_to_abi()
+#           self.generate_group_convert_fn()
+#           self.generate_group_convert_fn_intern_to_abi()
+#           self.generate_datatype_convert_fn()
+#           self.generate_datatype_convert_fn_intern_to_abi()
+#           self.generate_errhandler_convert_fn()
+#           self.generate_errhandler_convert_fn_intern_to_abi()
+#           self.generate_message_convert_fn()
+#           self.generate_message_convert_fn_intern_to_abi()
+#           self.generate_op_convert_fn()
+#           self.generate_op_convert_fn_intern_to_abi()
+#           self.generate_session_convert_fn()
+#           self.generate_session_convert_fn_intern_to_abi()
+#           self.generate_win_convert_fn()
+#           self.generate_win_convert_fn_intern_to_abi()
+#           self.generate_request_convert_fn()
+#           self.generate_request_convert_fn_intern_to_abi()
+#           self.generate_status_convert_fn()
+#           self.generate_status_convert_fn_intern_to_abi()
 
         self.dump("""
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -432,12 +435,14 @@ def ompi_abi(base_name, template, out):
 
 
 ABI_INTERNAL_HEADER = 'ompi/mpi/c/abi.h'
+ABI_INTERNAL_CONVERTOR = 'ompi/mpi/c/abi_converters.h'
 
 
 def standard_abi(base_name, template, out):
     """Generate the standard ABI functions."""
     template.print_header(out)
     out.dump(f'#include "{ABI_INTERNAL_HEADER}"')
+    out.dump(f'#include "{ABI_INTERNAL_CONVERTOR}"')
     print_cdefs_for_abi(out,abi_type='standard')
 
     # If any parameters are pointers to user callback functions, generate code
