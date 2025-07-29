@@ -12,7 +12,7 @@ jobs:
     - name: Install depencencies
       run: |
         sudo apt update 
-        sudo apt install -y --no-install-recommends qemu-user wget   
+        sudo apt install -y --no-install-recommends qemu-user qemu-user-static binfmt-support wget   
         wget ${riscv_gnu_toolchain_download_path}
         tar -xvf riscv64-glibc-ubuntu-24.04-gcc-nightly-2025.07.03-nightly.tar.xz -C /opt
         sed -i "s|libdir='/mnt/riscv/riscv64-unknown-linux-gnu/lib'|libdir='/opt/riscv/riscv64-unknown-linux-gnu/lib'|g" /opt/riscv/riscv64-unknown-linux-gnu/lib/libatomic.la
@@ -46,3 +46,14 @@ jobs:
         export PATH="/opt/riscv/bin:$PATH"
         export LD_LIBRARY_PATH="/opt/riscv/lib:$LD_LIBRARY_PATH"
         make check
+
+    - name: Run Opal Timer
+      run: |
+        export QEMU_LD_PREFIX=/opt/riscv/sysroot
+        export PATH="/opt/riscv/bin:$PATH"
+        export LD_LIBRARY_PATH="/opt/riscv/lib:$LD_LIBRARY_PATH"
+        mkdir -p /opt/riscv/sysroot/proc/device-tree/cpus/
+        touch  /opt/riscv/sysroot/proc/device-tree/cpus/timebase-frequency
+        grep "bogomips" /proc/cpuinfo | head -n 1 | awk '{printf("%d", $3*500000)}' | perl -e 'print pack("N", <STDIN>)' > /opt/riscv/sysroot/proc/device-tree/cpus/timebase-frequency
+        cd test/util
+        qemu-riscv64 -cpu rv64,v=true,vext_spec=v1.0,vlen=128 /opt/riscv/bin/mpirun -n 1 ./opal_timer
