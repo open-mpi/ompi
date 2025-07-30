@@ -9,6 +9,8 @@
  *                         reserved.
  * Copyright (c) 2021      Amazon.com, Inc. or its affiliates.  All Rights
  *                         reserved.
+ * Copyright (c) 2025      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -39,6 +41,12 @@ int MPI_T_cvar_handle_alloc (int cvar_index, void *obj_handle,
 
     if (MPI_PARAM_CHECK && (NULL == handle || NULL == count)) {
         return MPI_T_ERR_INVALID;
+    }
+
+    if (NULL != obj_handle) {
+        if (ompit_obj_invalid(obj_handle)) {
+            return MPI_T_ERR_INVALID_HANDLE;
+        }
     }
 
     ompi_mpit_lock ();
