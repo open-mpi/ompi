@@ -14,7 +14,7 @@
  *                         reserved.
  * Copyright (c) 2018      Intel, Inc, All rights reserved
  *
- * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2018-2025 Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2020      Google, LLC. All rights reserved.
  * Copyright (c) 2022-2024 Triad National Security, LLC. All rights
  *                         reserved.
@@ -148,6 +148,20 @@ void mca_btl_ofi_rcache_init(mca_btl_ofi_module_t *module)
     if (!module->initialized) {
         mca_rcache_base_resources_t rcache_resources;
         char *tmp;
+        int ret;
+
+        /* this must be called during single threaded part of the code and
+         * before Libfabric configures its memory monitors.  Easiest to do
+         * that before domain open.  Silently ignore not-supported errors,
+         * as they are not critical to program correctness, but only
+         * indicate that LIbfabric will have to pick a different, possibly
+         * less optimal, monitor. */
+        ret = opal_common_ofi_export_memory_monitor();
+        if (0 != ret && -FI_ENOSYS != ret) {
+            opal_output_verbose(1, opal_common_ofi.output,
+                                "Failed to inject Libfabric memory monitor: %s",
+                                fi_strerror(-ret));
+        }
 
         (void) opal_asprintf(&tmp, "ofi.%s", module->linux_device_name);
 
@@ -198,9 +212,6 @@ mca_btl_ofi_register_mem(struct mca_btl_base_module_t *btl,
     int access_flags = flags & MCA_BTL_REG_FLAG_ACCESS_ANY;
     int rc;
     uint32_t cache_flags = 0;
-    if (ofi_module->bypass_cache) {
-	   cache_flags |= MCA_RCACHE_FLAGS_CACHE_BYPASS;
-    }
 
     rc = ofi_module->rcache->rcache_register(ofi_module->rcache, base, size, cache_flags, access_flags,
                                              (mca_rcache_base_registration_t **) &reg);
