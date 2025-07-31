@@ -1,0 +1,9 @@
+#
+# Shared list of prototype files to avoid listing dependencies multiple times.
+#
+
+prototype_files = \
+	request_get_status.c.in \
+        request_get_status_all.c.in \
+        request_get_status_any.c.in \
+        request_get_status_some.c.in
