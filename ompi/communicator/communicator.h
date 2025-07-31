@@ -22,7 +22,7 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
- * Copyright (c) 2018-2024 Triad National Security, LLC. All rights
+ * Copyright (c) 2018-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2023      Advanced Micro Devices, Inc. All rights reserved.
  * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
@@ -344,6 +344,9 @@ struct ompi_communicator_t {
 
     /* instance that this comm belongs to */
     ompi_instance_t* instance;
+
+    /* pointer to buffer object used for buffered sends */
+    void *bsend_buffer;
 
 #if OPAL_ENABLE_FT_MPI
     /** agreement caching info for topology and previous returned decisions */
@@ -773,6 +776,18 @@ static inline bool ompi_comm_iface_coll_check(ompi_communicator_t *comm, int *er
 static inline bool ompi_comm_iface_create_check(ompi_communicator_t *comm, int *err)
 {
     return ompi_comm_iface_coll_check(comm, err);
+}
+
+static inline void *ompi_comm_bsend_buffer_get(ompi_communicator_t *comm)
+{
+    assert(NULL != comm);
+    return comm->bsend_buffer;
+}
+
+static inline int ompi_comm_bsend_buffer_set(ompi_communicator_t *comm, void *buffer)
+{
+    comm->bsend_buffer = buffer;
+    return OMPI_SUCCESS;
 }
 
 /*
