@@ -25,7 +25,7 @@
  * Copyright (c) 2021-2022 Amazon.com, Inc. or its affiliates.  All Rights
  *                         reserved.
  * Copyright (c) 2021      Bull S.A.S. All rights reserved.
- * Copyright (c) 2018-2022 Triad National Security, LLC. All rights
+ * Copyright (c) 2018-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2025      Advanced Micro Devices, Inc. All rights reserved
  * Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
@@ -385,9 +385,15 @@
 
 #if MPI_VERSION >= 4
 #    define __mpi_interface_deprecated_in_mpi40__(msg) __mpi_interface_deprecated__(msg)
+#if MPI_SUBVERSION == 1 || MPI_VERSION > 4
+#    define __mpi_interface_deprecated_in_mpi41__(msg) __mpi_interface_deprecated__(msg)
+#endif
 #else
 #    define __mpi_interface_deprecated_in_mpi40__(msg)
+#    define __mpi_interface_deprecated_in_mpi41__(msg)
 #endif
+
+
 
 #if !defined(OMPI_REMOVED_USE_STATIC_ASSERT)
 #    define OMPI_REMOVED_USE_STATIC_ASSERT 0
@@ -1883,7 +1889,6 @@ OMPI_DECLSPEC  int MPI_Get_count(const MPI_Status *status, MPI_Datatype datatype
 OMPI_DECLSPEC  int MPI_Get_count_c(const MPI_Status *status, MPI_Datatype datatype, MPI_Count *count);
 OMPI_DECLSPEC  int MPI_Get_elements(const MPI_Status *status, MPI_Datatype datatype, int *count);
 OMPI_DECLSPEC  int MPI_Get_elements_c(const MPI_Status *status, MPI_Datatype datatype, MPI_Count *count);
-OMPI_DECLSPEC  int MPI_Get_elements_x(const MPI_Status *status, MPI_Datatype datatype, MPI_Count *count);
 OMPI_DECLSPEC  int MPI_Get(void *origin_addr, int origin_count,
                            MPI_Datatype origin_datatype, int target_rank,
                            MPI_Aint target_disp, int target_count,
@@ -2375,8 +2380,6 @@ OMPI_DECLSPEC  int MPI_Status_set_elements(MPI_Status *status, MPI_Datatype data
                                            int count);
 OMPI_DECLSPEC  int MPI_Status_set_elements_c(MPI_Status *status, MPI_Datatype datatype,
                                              MPI_Count count);
-OMPI_DECLSPEC  int MPI_Status_set_elements_x(MPI_Status *status, MPI_Datatype datatype,
-                                             MPI_Count count);
 OMPI_DECLSPEC  int MPI_Testall(int count, MPI_Request array_of_requests[], int *flag,
                                MPI_Status array_of_statuses[]);
 OMPI_DECLSPEC  int MPI_Testany(int count, MPI_Request array_of_requests[], int *index,
@@ -2486,16 +2489,12 @@ OMPI_DECLSPEC  int MPI_Type_get_extent(MPI_Datatype type, MPI_Aint *lb,
                                        MPI_Aint *extent);
 OMPI_DECLSPEC  int MPI_Type_get_extent_c(MPI_Datatype type, MPI_Count *lb,
                                          MPI_Count *extent);
-OMPI_DECLSPEC  int MPI_Type_get_extent_x(MPI_Datatype type, MPI_Count *lb,
-                                         MPI_Count *extent);
 OMPI_DECLSPEC  int MPI_Type_get_name(MPI_Datatype type, char *type_name,
                                      int *resultlen);
 OMPI_DECLSPEC  int MPI_Type_get_true_extent(MPI_Datatype datatype, MPI_Aint *true_lb,
                                             MPI_Aint *true_extent);
 OMPI_DECLSPEC  int MPI_Type_get_true_extent_c(MPI_Datatype datatype, MPI_Count *true_lb,
                                              MPI_Count *true_extent);
-OMPI_DECLSPEC  int MPI_Type_get_true_extent_x(MPI_Datatype datatype, MPI_Count *true_lb,
-                                              MPI_Count *true_extent);
 OMPI_DECLSPEC  int MPI_Type_indexed(int count, const int array_of_blocklengths[],
                                     const int array_of_displacements[],
                                     MPI_Datatype oldtype, MPI_Datatype *newtype);
@@ -2508,7 +2507,6 @@ OMPI_DECLSPEC  int MPI_Type_set_attr(MPI_Datatype type, int type_keyval,
 OMPI_DECLSPEC  int MPI_Type_set_name(MPI_Datatype type, const char *type_name);
 OMPI_DECLSPEC  int MPI_Type_size(MPI_Datatype type, int *size);
 OMPI_DECLSPEC  int MPI_Type_size_c(MPI_Datatype type, MPI_Count *size);
-OMPI_DECLSPEC  int MPI_Type_size_x(MPI_Datatype type, MPI_Count *size);
 OMPI_DECLSPEC  int MPI_Type_vector(int count, int blocklength, int stride,
                                    MPI_Datatype oldtype, MPI_Datatype *newtype);
 OMPI_DECLSPEC  int MPI_Type_vector_c(MPI_Count count, MPI_Count blocklength, MPI_Count stride,
@@ -3042,7 +3040,6 @@ OMPI_DECLSPEC  int PMPI_Get_count(const MPI_Status *status, MPI_Datatype datatyp
 OMPI_DECLSPEC  int PMPI_Get_count_c(const MPI_Status *status, MPI_Datatype datatype, MPI_Count *count);
 OMPI_DECLSPEC  int PMPI_Get_elements(const MPI_Status *status, MPI_Datatype datatype, int *count);
 OMPI_DECLSPEC  int PMPI_Get_elements_c(const MPI_Status *status, MPI_Datatype datatype, MPI_Count *count);
-OMPI_DECLSPEC  int PMPI_Get_elements_x(const MPI_Status *status, MPI_Datatype datatype, MPI_Count *count);
 OMPI_DECLSPEC  int PMPI_Get(void *origin_addr, int origin_count,
                             MPI_Datatype origin_datatype, int target_rank,
                             MPI_Aint target_disp, int target_count,
@@ -3534,8 +3531,6 @@ OMPI_DECLSPEC  int PMPI_Status_set_elements(MPI_Status *status, MPI_Datatype dat
                                             int count);
 OMPI_DECLSPEC  int PMPI_Status_set_elements_c(MPI_Status *status, MPI_Datatype datatype,
                                               MPI_Count count);
-OMPI_DECLSPEC  int PMPI_Status_set_elements_x(MPI_Status *status, MPI_Datatype datatype,
-                                              MPI_Count count);
 OMPI_DECLSPEC  int PMPI_Testall(int count, MPI_Request array_of_requests[], int *flag,
                                 MPI_Status array_of_statuses[]);
 OMPI_DECLSPEC  int PMPI_Testany(int count, MPI_Request array_of_requests[], int *index,
@@ -3645,16 +3640,12 @@ OMPI_DECLSPEC  int PMPI_Type_get_extent(MPI_Datatype type, MPI_Aint *lb,
                                         MPI_Aint *extent);
 OMPI_DECLSPEC  int PMPI_Type_get_extent_c(MPI_Datatype type, MPI_Count *lb,
                                           MPI_Count *extent);
-OMPI_DECLSPEC  int PMPI_Type_get_extent_x(MPI_Datatype type, MPI_Count *lb,
-                                          MPI_Count *extent);
 OMPI_DECLSPEC  int PMPI_Type_get_name(MPI_Datatype type, char *type_name,
                                       int *resultlen);
 OMPI_DECLSPEC  int PMPI_Type_get_true_extent(MPI_Datatype datatype, MPI_Aint *true_lb,
                                              MPI_Aint *true_extent);
 OMPI_DECLSPEC  int PMPI_Type_get_true_extent_c(MPI_Datatype datatype, MPI_Count *true_lb,
                                               MPI_Count *true_extent);
-OMPI_DECLSPEC  int PMPI_Type_get_true_extent_x(MPI_Datatype datatype, MPI_Count *true_lb,
-                                               MPI_Count *true_extent);
 OMPI_DECLSPEC  int PMPI_Type_indexed(int count, const int array_of_blocklengths[],
                                      const int array_of_displacements[],
                                      MPI_Datatype oldtype, MPI_Datatype *newtype);
@@ -3667,7 +3658,6 @@ OMPI_DECLSPEC  int PMPI_Type_set_attr(MPI_Datatype type, int type_keyval,
 OMPI_DECLSPEC  int PMPI_Type_set_name(MPI_Datatype type, const char *type_name);
 OMPI_DECLSPEC  int PMPI_Type_size(MPI_Datatype type, int *size);
 OMPI_DECLSPEC  int PMPI_Type_size_c(MPI_Datatype type, MPI_Count *size);
-OMPI_DECLSPEC  int PMPI_Type_size_x(MPI_Datatype type, MPI_Count *size);
 OMPI_DECLSPEC  int PMPI_Type_vector(int count, int blocklength, int stride,
                                     MPI_Datatype oldtype, MPI_Datatype *newtype);
 OMPI_DECLSPEC  int PMPI_Type_vector_c(MPI_Count count, MPI_Count blocklength, MPI_Count stride,
@@ -3912,6 +3902,33 @@ OMPI_DECLSPEC  int MPI_Info_get_valuelen(MPI_Info info, const char *key, int *va
 OMPI_DECLSPEC  int PMPI_Info_get_valuelen(MPI_Info info, const char *key, int *valuelen,
                                           int *flag)
             __mpi_interface_deprecated_in_mpi40__("PMPI_Info_get_valuelen was deprecated in MPI-4.0; use PMPI_Info_get_string instead");
+OMPI_DECLSPEC  int MPI_Get_elements_x(const MPI_Status *status, MPI_Datatype datatype, MPI_Count *count)
+            __mpi_interface_deprecated_in_mpi41__("MPI_Get_elements_x was deprecated in MPI-4.1; use MPI_Get_elements_c instead");
+OMPI_DECLSPEC  int PMPI_Get_elements_x(const MPI_Status *status, MPI_Datatype datatype, MPI_Count *count)
+            __mpi_interface_deprecated_in_mpi41__("PMPI_Get_elements_x was deprecated in MPI-4.1; use PMPI_Get_elements_c instead");
+OMPI_DECLSPEC  int MPI_Status_set_elements_x(MPI_Status *status, MPI_Datatype datatype,
+                                             MPI_Count count)
+            __mpi_interface_deprecated_in_mpi41__("MPI_Status_set_elements_x was deprecated in MPI-4.1; use MPI_Status_set_elements_c instead");
+OMPI_DECLSPEC  int PMPI_Status_set_elements_x(MPI_Status *status, MPI_Datatype datatype,
+                                              MPI_Count count)
+            __mpi_interface_deprecated_in_mpi41__("PMPI_Status_set_elements_x was deprecated in MPI-4.1; use PMPI_Status_set_elements_c instead");
+OMPI_DECLSPEC  int MPI_Type_get_extent_x(MPI_Datatype type, MPI_Count *lb,
+                                         MPI_Count *extent)
+            __mpi_interface_deprecated_in_mpi41__("MPI_Type_get_extent_x was deprecated in MPI-4.1; use MPI_Type_get_extent_c instead");
+OMPI_DECLSPEC  int PMPI_Type_get_extent_x(MPI_Datatype type, MPI_Count *lb,
+                                          MPI_Count *extent)
+            __mpi_interface_deprecated_in_mpi41__("PMPI_Type_get_extent_x was deprecated in MPI-4.1; use PMPI_Type_get_extent_c instead");
+OMPI_DECLSPEC  int MPI_Type_get_true_extent_x(MPI_Datatype datatype, MPI_Count *true_lb,
+                                              MPI_Count *true_extent)
+            __mpi_interface_deprecated_in_mpi41__("MPI_Type_get_true_extent_x was deprecated in MPI-4.1; use MPI_Type_get_true_extent_c instead");
+OMPI_DECLSPEC  int PMPI_Type_get_true_extent_x(MPI_Datatype datatype, MPI_Count *true_lb,
+                                               MPI_Count *true_extent)
+            __mpi_interface_deprecated_in_mpi41__("PMPI_Type_get_true_extent_x was deprecated in MPI-4.1; use PMPI_Type_get_true_extent_c instead");
+OMPI_DECLSPEC  int MPI_Type_size_x(MPI_Datatype type, MPI_Count *size)
+            __mpi_interface_deprecated_in_mpi41__("MPI_Type_size_x was deprecated in MPI-4.1; use MPI_Type_size_c instead");
+OMPI_DECLSPEC  int PMPI_Type_size_x(MPI_Datatype type, MPI_Count *size)
+            __mpi_interface_deprecated_in_mpi41__("MPI_Type_size_x was deprecated in MPI-4.1; use MPI_Type_size_c instead");
+
 
 OMPI_DECLSPEC  int MPI_T_event_get_num (int *num_events);
 OMPI_DECLSPEC  int MPI_T_event_get_info (int event_index, char *name, int *name_len,
