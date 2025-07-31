@@ -47,7 +47,7 @@ AC_DEFUN([MCA_opal_timer_linux_CONFIG],[
                  [timer_linux_happy="no"])])
 
    case "${host}" in
-   i?86-*linux*|x86_64*linux*|ia64-*linux*|powerpc-*linux*|powerpc64-*linux*|powerpc64le-*linux*|powerpcle-*linux*|sparc*-*linux*|aarch64-*linux*)
+   i?86-*linux*|x86_64*linux*|ia64-*linux*|powerpc-*linux*|powerpc64-*linux*|powerpc64le-*linux*|powerpcle-*linux*|sparc*-*linux*|aarch64-*linux*|riscv64-*linux*)
         AS_IF([test "$timer_linux_happy" = "yes"],
               [AS_IF([test -r "/proc/cpuinfo"],
                      [timer_linux_happy="yes"],

@@ -18,6 +18,8 @@
  * Copyright (c) 2016 Broadcom Limited. All rights reserved.
  * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
+ * Copyright (c) 2025      Software System Team, SANECHIPS.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,6 +31,7 @@
 
 #include <string.h>
 #include <time.h>
+#include <arpa/inet.h>
 
 #include "opal/constants.h"
 #include "opal/mca/timer/base/base.h"
@@ -176,6 +179,20 @@ static int opal_timer_linux_find_freq(void)
             }
         }
     }
+
+#if defined(PLATFORM_ARCH_RISCV)
+    if (0 == opal_timer_linux_freq) {
+        /* read timebase-frequency in device-tree */
+        FILE *fp_rv = fopen("/proc/device-tree/cpus/timebase-frequency", "rb");
+        if (NULL == fp_rv) {
+            return OPAL_ERR_IN_ERRNO;
+        }
+        if (1 == fread(&opal_timer_linux_freq, 4, 1, fp_rv)){
+            opal_timer_linux_freq = ntohl(opal_timer_linux_freq);
+        }
+        fclose(fp_rv);
+    }
+#endif
 
     fclose(fp);
 

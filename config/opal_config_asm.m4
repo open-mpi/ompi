@@ -538,6 +538,9 @@ AC_DEFUN([OPAL_CHECK_INLINE_C_GCC],[
             powerpc-*|powerpc64-*|powerpcle-*|powerpc64le-*|rs6000-*|ppc-*)
                 opal_gcc_inline_assign='"1: li %0,0" : "=&r"(ret)'
                 ;;
+            riscv64*)
+                opal_gcc_inline_assign='"li %0, 0" : "=&r"(ret)'
+                ;;
         esac
 
         AS_IF([test  "$opal_gcc_inline_assign" != ""],

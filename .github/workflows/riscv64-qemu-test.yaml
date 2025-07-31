@@ -1,0 +1,59 @@
+name: riscv64-qemu-test
+
+on: [pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env: 
+      riscv_gnu_toolchain_download_path: https://github.com/riscv-collab/riscv-gnu-toolchain/releases/download/2025.07.03/riscv64-glibc-ubuntu-24.04-gcc-nightly-2025.07.03-nightly.tar.xz
+      
+    steps:
+    - name: Install depencencies
+      run: |
+        sudo apt update 
+        sudo apt install -y --no-install-recommends qemu-user qemu-user-static binfmt-support wget   
+        wget ${riscv_gnu_toolchain_download_path}
+        tar -xvf riscv64-glibc-ubuntu-24.04-gcc-nightly-2025.07.03-nightly.tar.xz -C /opt
+        sed -i "s|libdir='/mnt/riscv/riscv64-unknown-linux-gnu/lib'|libdir='/opt/riscv/riscv64-unknown-linux-gnu/lib'|g" /opt/riscv/riscv64-unknown-linux-gnu/lib/libatomic.la
+
+    - name: Checkout Open MPI
+      uses: actions/checkout@v4
+      with:
+       submodules: recursive
+    
+    - name: Bootstrap Open MPI
+      run: |
+        ./autogen.pl
+        sed -i '/^func_exec_program_core ()/,/^}/ s/\<exec\>/exec qemu-riscv64 -cpu rv64,v=true,vext_spec=v1.0,vlen=128 -L \/opt\/riscv\/sysroot/g' config/ltmain.sh
+
+    - name: Config Open MPI
+      run: |
+        export PATH="/opt/riscv/bin:$PATH"
+        export LD_LIBRARY_PATH="/opt/riscv/lib:$LD_LIBRARY_PATH"
+        ./configure --prefix=/opt/riscv --host=riscv64-unknown-linux-gnu SYSROOT=/opt/riscv/sysroot CC=riscv64-unknown-linux-gnu-gcc LD=riscv64-unknown-linux-gnu-ld --disable-mpi-fortran --disable-sphinx LDFLAGS=-Wl,-rpath-link,/opt/riscv/lib CFLAGS="-march=rv64gcv"
+    
+    - name: Build Open MPI
+      run: |  
+        export PATH="/opt/riscv/bin:$PATH"
+        export LD_LIBRARY_PATH="/opt/riscv/lib:$LD_LIBRARY_PATH"
+        sed -i 's/#define OPAL_HAVE_GCC_BUILTIN_CSWAP_INT128 1/#define OPAL_HAVE_GCC_BUILTIN_CSWAP_INT128 0/' ./opal/include/opal_config.h
+        make -j 8
+        make install
+    
+    - name: Run testsuite
+      run: |
+        export PATH="/opt/riscv/bin:$PATH"
+        export LD_LIBRARY_PATH="/opt/riscv/lib:$LD_LIBRARY_PATH"
+        make check
+
+    - name: Run Opal Timer
+      run: |
+        export QEMU_LD_PREFIX=/opt/riscv/sysroot
+        export PATH="/opt/riscv/bin:$PATH"
+        export LD_LIBRARY_PATH="/opt/riscv/lib:$LD_LIBRARY_PATH"
+        mkdir -p /opt/riscv/sysroot/proc/device-tree/cpus/
+        touch  /opt/riscv/sysroot/proc/device-tree/cpus/timebase-frequency
+        grep "bogomips" /proc/cpuinfo | head -n 1 | awk '{printf("%d", $3*500000)}' | perl -e 'print pack("N", <STDIN>)' > /opt/riscv/sysroot/proc/device-tree/cpus/timebase-frequency
+        cd test/util
+        qemu-riscv64 -cpu rv64,v=true,vext_spec=v1.0,vlen=128 /opt/riscv/bin/mpirun -n 1 ./opal_timer
