@@ -46,6 +46,11 @@ hold a data type, uncompressed.
 See section 4.1.8 of the MPI-3 standard for more detailed definitions of these
 parameters in relation to the typemap.
 
+NOTE
+----
+
+Note that :ref:`MPI_Type_get_true_extent_x` is  *deprecated* as of MPI-4.1. Please use
+the big count version of :ref:`MPI_Type_get_true_extent` instead.
 
 ERRORS
 ------

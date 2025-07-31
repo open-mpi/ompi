@@ -36,11 +36,14 @@ parameter is too small to hold the output value), it is set to
 MPI_UNDEFINED.
 
 
-NOTE
-----
+NOTES
+-----
 
 Use of :ref:`MPI_Type_get_extent` is strongly recommended over the legacy MPI-1
 functions :ref:`MPI_Type_extent` and :ref:`MPI_Type_lb`.
+
+Note that :ref:`MPI_Type_get_extent_x` is  *deprecated* as of MPI-4.1. Please use
+the big count version of :ref:`MPI_Type_get_extent` instead.
 
 
 ERRORS

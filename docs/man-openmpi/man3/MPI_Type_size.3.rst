@@ -36,6 +36,12 @@ multiplicity. For either function, if the *size* parameter cannot
 express the value to be returned (e.g., if the parameter is too small to
 hold the output value), it is set to MPI_UNDEFINED.
 
+NOTE
+----
+
+Note that :ref:`MPI_Type_size_x` is  *deprecated* as of MPI-4.1. Please use
+the big count version of :ref:`MPI_Type_size` instead.
+
 
 ERRORS
 ------

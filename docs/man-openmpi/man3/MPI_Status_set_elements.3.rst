@@ -56,6 +56,8 @@ that does not logically belong in status. Furthermore, modifying the
 values in a status set internally by MPI, such as :ref:`MPI_Recv`, may lead to
 unpredictable results and is strongly discouraged.
 
+Note that :ref:`MPI_Status_set_elements_x` is  *deprecated* as of MPI-4.1. Please use
+the big count version of :ref:`MPI_Status_set_elements` instead.
 
 ERRORS
 ------

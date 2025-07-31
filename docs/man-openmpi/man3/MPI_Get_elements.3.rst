@@ -68,6 +68,12 @@ number of elements in the probed message. Note that the two functions
 :ref:`MPI_Get_count` and :ref:`MPI_Get_elements` return the same values when they are
 used with primitive data types.
 
+NOTES
+-----
+
+Note that :ref:`MPI_Get_elements_x` is  *deprecated* as of MPI-4.1. Please use
+the big count version of :ref:`MPI_Get_elements` instead.
+
 
 ERRORS
 ------
