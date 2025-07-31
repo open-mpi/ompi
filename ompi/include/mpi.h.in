@@ -652,7 +652,7 @@ typedef MPI_Win_errhandler_function MPI_Win_errhandler_fn
 enum {
     /* MPI-1 */
     MPI_TAG_UB,
-    MPI_HOST,
+    MPI_HOST __mpi_interface_deprecated_in_mpi41__("MPI_HOST is deprecated since MPI 4.1"), 
     MPI_IO,
     MPI_WTIME_IS_GLOBAL,
 
