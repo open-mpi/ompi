@@ -36,7 +36,13 @@ INTERNAL_DATATYPES = [
     "MPI_Op",
     "MPI_Request",
     "MPI_Session",
+    "MPI_Status",
     "MPI_Win",
+    "MPI_Comm_copy_attr_function",
+    "MPI_Comm_delete_attr_function",
+    # TODO: these two are deprecated, get rid of them
+    "MPI_Copy_function",
+    "MPI_Delete_function",
 ]
 
 ENUM_CATEGORIES = [
