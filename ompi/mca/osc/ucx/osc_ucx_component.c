@@ -487,7 +487,7 @@ static int ompi_osc_ucx_shared_query_peer(ompi_osc_ucx_module_t *module, int pee
     if (UCS_OK != ucp_rkey_ptr(rkey, module->addrs[peer], &addr_p)) {
         return OMPI_ERR_NOT_AVAILABLE;
     }
-    *size = module->same_size ? module->size : module->sizes[peer];
+    *size = ompi_osc_ucx_get_size(module, peer);
     *((void**) baseptr) = addr_p;
     *disp_unit = (module->disp_unit < 0) ? module->disp_units[peer] : module->disp_unit;
 
@@ -508,39 +508,30 @@ int ompi_osc_ucx_shared_query(struct ompi_win_t *win, int rank, size_t *size,
 
         if (MPI_PROC_NULL == rank) {
             for (int i = 0 ; i < ompi_comm_size(module->comm) ; ++i) {
-                if (0 != module->sizes[i]) {
+                if (0 != ompi_osc_ucx_get_size(module, i)) {
                     if (OMPI_SUCCESS == ompi_osc_ucx_shared_query_peer(module, i, size, disp_unit, baseptr)) {
                         return OMPI_SUCCESS;
                     }
                 }
             }
         } else {
-            if (0 != module->sizes[rank]) {
+            if (0 != ompi_osc_ucx_get_size(module, rank)) {
                 return ompi_osc_ucx_shared_query_peer(module, rank, size, disp_unit, baseptr);
             }
         }
         return OMPI_ERR_NOT_SUPPORTED;
 
     } else if (MPI_PROC_NULL != rank) { // shared memory window with given rank
-        *size = module->sizes[rank];
+        *size = ompi_osc_ucx_get_size(module, rank);
         *((void**) baseptr) = (void *)module->shmem_addrs[rank];
-        if (module->disp_unit == -1) {
-            *disp_unit = module->disp_units[rank];
-        } else {
-            *disp_unit = module->disp_unit;
-        }
+        *disp_unit = ompi_osc_ucx_get_disp_unit(module, rank);
     } else { // shared memory window with MPI_PROC_NULL
-        int i = 0;
-
-        for (i = 0 ; i < ompi_comm_size(module->comm) ; ++i) {
-            if (0 != module->sizes[i]) {
-                *size = module->sizes[i];
+        for (int i = 0 ; i < ompi_comm_size(module->comm) ; ++i) {
+            size_t peer_size = ompi_osc_ucx_get_size(module, i);
+            if (0 != size) {
+                *size = peer_size;
                 *((void**) baseptr) = (void *)module->shmem_addrs[i];
-                if (module->disp_unit == -1) {
-                    *disp_unit = module->disp_units[rank];
-                } else {
-                    *disp_unit = module->disp_unit;
-                }
+                *disp_unit = ompi_osc_ucx_get_disp_unit(module, rank);
                 break;
             }
         }
@@ -566,7 +557,7 @@ static int component_select(struct ompi_win_t *win, void **base, size_t size, pt
     uint64_t my_info[3] = {0};
     char *recv_buf = NULL;
     void *dynamic_base = NULL;
-    unsigned long total, *rbuf;
+    unsigned long adjusted_size = size;
     int flag;
     size_t pagesize;
     bool unlink_needed = false;
@@ -680,12 +671,42 @@ select_unlock:
     module->acc_single_intrinsic = check_config_value_bool ("acc_single_intrinsic", info);
     module->skip_sync_check = false;
 
+    if (flavor == MPI_WIN_FLAVOR_SHARED) {
+        opal_output_verbose(MCA_BASE_VERBOSE_DEBUG, ompi_osc_base_framework.framework_output,
+                            "allocating shared memory region of size %ld\n", (long) size);
+        /* get the pagesize */
+        pagesize = opal_getpagesize();
+
+        /* Note that the alloc_shared_noncontig info key only has
+         * meaning during window creation.  Once the window is
+         * created, we can't move memory around without making
+         * everything miserable.  So we intentionally do not subscribe
+         * to updates on the info key, because there's no useful
+         * update to occur. */
+        module->noncontig_shared_win = false;
+        if (OMPI_SUCCESS != opal_info_get_bool(info, "alloc_shared_noncontig",
+                                               &module->noncontig_shared_win, &flag)) {
+            err = OMPI_ERR_BAD_PARAM;
+            goto error;
+        }
+
+        if (module->noncontig_shared_win) {
+            opal_output_verbose(MCA_BASE_VERBOSE_DEBUG, ompi_osc_base_framework.framework_output,
+                                "allocating window using non-contiguous strategy");
+            adjusted_size = ((size - 1) / pagesize + 1) * pagesize;
+        } else {
+            opal_output_verbose(MCA_BASE_VERBOSE_DEBUG, ompi_osc_base_framework.framework_output,
+                                "allocating window using contiguous strategy");
+            adjusted_size = size;
+        }
+    }
+
     /* share everyone's displacement units. Only do an allgather if
        strictly necessary, since it requires O(p) state. */
     values[0] = disp_unit;
     values[1] = -disp_unit;
-    values[2] = size;
-    values[3] = -(int64_t)size;
+    values[2] = adjusted_size;
+    values[3] = -(long)adjusted_size;
 
     ret = module->comm->c_coll->coll_allreduce(MPI_IN_PLACE, values, 4, MPI_LONG,
                                                MPI_MIN, module->comm,
@@ -710,7 +731,6 @@ select_unlock:
     }
 
     if (!same_disp_unit || !same_size) {
-
         ret = module->comm->c_coll->coll_allgather(values, val_count * sizeof(long), MPI_BYTE,
                                                     (void *)my_info, sizeof(long) * val_count, MPI_BYTE,
                                                     module->comm,
@@ -743,7 +763,6 @@ select_unlock:
                 module->sizes[i] = (size_t)values[i*val_count + val_count-1];
             }
         }
-
     }
 
     ret = opal_common_ucx_wpctx_create(mca_osc_ucx_component.wpool, comm_size,
@@ -755,50 +774,14 @@ select_unlock:
 
     if (flavor == MPI_WIN_FLAVOR_SHARED) {
         /* create the segment */
-        opal_output_verbose(MCA_BASE_VERBOSE_DEBUG, ompi_osc_base_framework.framework_output,
-                            "allocating shared memory region of size %ld\n", (long) size);
-        /* get the pagesize */
-        pagesize = opal_getpagesize();
 
-        rbuf = malloc(sizeof(unsigned long) * comm_size);
-        if (NULL == rbuf) return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
-
-        /* Note that the alloc_shared_noncontig info key only has
-         * meaning during window creation.  Once the window is
-         * created, we can't move memory around without making
-         * everything miserable.  So we intentionally do not subscribe
-         * to updates on the info key, because there's no useful
-         * update to occur. */
-        module->noncontig_shared_win = false;
-        if (OMPI_SUCCESS != opal_info_get_bool(info, "alloc_shared_noncontig",
-                                               &module->noncontig_shared_win, &flag)) {
-            free(rbuf);
-            goto error;
-        }
-
-        if (module->noncontig_shared_win) {
-            opal_output_verbose(MCA_BASE_VERBOSE_DEBUG, ompi_osc_base_framework.framework_output,
-                                "allocating window using non-contiguous strategy");
-            total = ((size - 1) / pagesize + 1) * pagesize;
-        } else {
-            opal_output_verbose(MCA_BASE_VERBOSE_DEBUG, ompi_osc_base_framework.framework_output,
-                                "allocating window using contiguous strategy");
-            total = size;
-        }
-        ret = module->comm->c_coll->coll_allgather(&total, 1, MPI_UNSIGNED_LONG,
-                                                  rbuf, 1, MPI_UNSIGNED_LONG,
-                                                  module->comm,
-                                                  module->comm->c_coll->coll_allgather_module);
-        if (OMPI_SUCCESS != ret) return ret;
-
-        total = 0;
+        unsigned long total = 0;
         for (i = 0 ; i < comm_size ; ++i) {
-            total += rbuf[i];
+            total += ompi_osc_ucx_get_size(module, i);
         }
 
         module->segment_base = NULL;
         module->shmem_addrs = NULL;
-        module->sizes = NULL;
 
         if (total != 0) {
             /* user opal/shmem directly to create a shared memory segment */
@@ -809,14 +792,12 @@ select_unlock:
                                      OMPI_PROC_MY_NAME->jobid, (int) OMPI_PROC_MY_NAME->vpid,
                                      ompi_comm_print_cid(module->comm));
                 if (ret < 0) {
-                    free(rbuf);
                     return OMPI_ERR_OUT_OF_RESOURCE;
                 }
 
                 ret = opal_shmem_segment_create (&module->seg_ds, data_file, total);
                 free(data_file);
                 if (OPAL_SUCCESS != ret) {
-                    free(rbuf);
                     goto error;
                 }
 
@@ -826,20 +807,18 @@ select_unlock:
             ret = module->comm->c_coll->coll_bcast (&module->seg_ds, sizeof (module->seg_ds), MPI_BYTE, 0,
                                                     module->comm, module->comm->c_coll->coll_bcast_module);
             if (OMPI_SUCCESS != ret) {
-                free(rbuf);
                 goto error;
             }
 
             module->segment_base = opal_shmem_segment_attach (&module->seg_ds);
             if (NULL == module->segment_base) {
-                free(rbuf);
+                ret = OMPI_ERR_OUT_OF_RESOURCE;
                 goto error;
             }
 
             /* wait for all processes to attach */
             ret = module->comm->c_coll->coll_barrier (module->comm, module->comm->c_coll->coll_barrier_module);
             if (OMPI_SUCCESS != ret) {
-                free(rbuf);
                 goto error;
             }
 
@@ -854,47 +833,26 @@ select_unlock:
          * different between different processes. To use direct load/store,
          * shmem_addrs can be used, however, for RDMA, virtual address of
          * remote process that will be stored in module->addrs should be used */
-        module->sizes = malloc(sizeof(size_t) * comm_size);
-        if (NULL == module->sizes) {
-            free(rbuf);
-            ret = OMPI_ERR_TEMP_OUT_OF_RESOURCE;
-            goto error;
-        }
         module->shmem_addrs = malloc(sizeof(uint64_t) * comm_size);
         if (NULL == module->shmem_addrs) {
             free(module->sizes);
-            free(rbuf);
             ret =  OMPI_ERR_TEMP_OUT_OF_RESOURCE;
             goto error;
         }
 
 
         for (i = 0, total = 0; i < comm_size ; ++i) {
-            module->sizes[i] = rbuf[i];
-            if (module->sizes[i] || !module->noncontig_shared_win) {
+            size_t size = ompi_osc_ucx_get_size(module, i);
+            if (size || !module->noncontig_shared_win) {
                 module->shmem_addrs[i] = ((uint64_t) module->segment_base) + total;
-                total += rbuf[i];
+                total += size;
             } else {
                 module->shmem_addrs[i] = (uint64_t)NULL;
             }
         }
 
-        free(rbuf);
-
-        module->size = module->sizes[ompi_comm_rank(module->comm)];
+        module->size = ompi_osc_ucx_get_size(module, ompi_comm_rank(module->comm));
         *base = (void *)module->shmem_addrs[ompi_comm_rank(module->comm)];
-    } else {
-        /* non-shared memory: exchange sizes and addresses so they can be queried for shared memory */
-        for (i = 0; i < comm_size; i++) {
-            ompi_proc_t *peer = ompi_comm_peer_lookup(module->comm, i);
-            peer->
-            if (ompi_comm_peer_lookup(module->comm, i) == NULL) {
-                OSC_UCX_ERROR("Failed to lookup peer %d in communicator %s", i, ompi_comm_print_cid(module->comm));
-                ret = OMPI_ERR_COMM_FAILURE;
-                goto error;
-            }
-        }
-
     }
 
     void **mem_base = base;
@@ -1030,6 +988,7 @@ select_unlock:
 error:
     if (module->disp_units) free(module->disp_units);
     if (module->comm) ompi_comm_free(&module->comm);
+    if (module->sizes) ompi_comm_free(&module->sizes);
     free(module);
     module = NULL;
 
@@ -1256,8 +1215,6 @@ int ompi_osc_ucx_free(struct ompi_win_t *win) {
             opal_shmem_segment_detach(&module->seg_ds);
         if (module->shmem_addrs != NULL)
             free(module->shmem_addrs);
-        if (module->sizes != NULL)
-            free(module->sizes);
     }
 
     if (module->flavor == MPI_WIN_FLAVOR_DYNAMIC) {

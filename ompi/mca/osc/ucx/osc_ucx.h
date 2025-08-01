@@ -121,7 +121,7 @@ typedef struct ompi_osc_ucx_module {
     struct ompi_communicator_t *comm;
     int flavor;
     size_t    size;
-    size_t   *sizes; /* used if !same_size*/
+    size_t   *sizes; /* used if not every process has the same size */
     uint64_t *addrs;
     uint64_t *state_addrs;
     uint64_t *comm_world_ranks;
@@ -173,7 +173,7 @@ typedef struct ompi_osc_ucx_lock {
 } ompi_osc_ucx_lock_t;
 
 #define OSC_UCX_GET_EP(_module, rank_) (mca_osc_ucx_component.endpoints[_module->comm_world_ranks[rank_]])
-#define OSC_UCX_GET_DISP(module_, rank_) ((module_->disp_unit < 0) ? module_->disp_units[rank_] : module_->disp_unit)
+#define OSC_UCX_GET_DISP(module_, rank_) ompi_osc_ucx_get_disp_unit((module_), (rank_))
 
 #define OSC_UCX_GET_DEFAULT_EP(_ep_ptr, _module, _target)                   \
     if (opal_common_ucx_thread_enabled) {                  \
@@ -276,5 +276,25 @@ int ompi_osc_find_attached_region_position(ompi_osc_dynamic_win_info_t *dynamic_
                                            uint64_t base, size_t len, int *insert);
 int ompi_osc_ucx_dynamic_lock(ompi_osc_ucx_module_t *module, int target);
 int ompi_osc_ucx_dynamic_unlock(ompi_osc_ucx_module_t *module, int target);
+
+/* returns the size at the peer */
+static inline int ompi_osc_ucx_get_size(ompi_osc_ucx_module_t *module, int rank)
+{
+    if (module->sizes) {
+        return module->sizes[rank];
+    } else {
+        return module->size;
+    }
+}
+
+/* returns the displacement unit for the given peer */
+static inline int ompi_osc_ucx_get_disp_unit(ompi_osc_ucx_module_t *module, int rank)
+{
+    if (module->disp_units) {
+        return module->disp_units[rank];
+    } else {
+        return module->disp_unit;
+    }
+}
 
 #endif /* OMPI_OSC_UCX_H */
