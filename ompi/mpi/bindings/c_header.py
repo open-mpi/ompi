@@ -115,13 +115,16 @@ for category in CATEGORIES.values():
 # TODO: we need to add/fix/figure out the pympistandard's way for properly
 # defining callback functions
 def cb_declaration(proc_expression):
-    func_str = str(proc_expression).replace(r"\ldots", "...")
+    func_str = str(proc_expression)
     func_str_list = func_str.split()
     func_name, arg_1 = func_str_list[2].split("(")
+    if MANGLE_NAMES:
+        func_name = f"{func_name}{ABI_INTERNAL}"
     decl_string = f"{' '.join(func_str_list[:2])} ({func_name})({arg_1} {' '.join(func_str_list[3:])};\n"
     return decl_string
 
 def output_constant(const, use_enum: bool, mangle_name: bool):
+    spacing = 45
     name = const["name"]
     abi_value = const["abi_value"]
     c_type = const["handle_types"]["c"]["type"]
@@ -129,7 +132,8 @@ def output_constant(const, use_enum: bool, mangle_name: bool):
         return None
     if mangle_name:
         name = f"{name}{ABI_INTERNAL}"
-        c_type = f"{c_type}{ABI_INTERNAL}"
+        spacing = 55
+        #c_type = f"{c_type}{ABI_INTERNAL}"
     def_name = f"#define {name}"
     if use_enum:
         def_name = f"    {name}"
@@ -138,7 +142,7 @@ def output_constant(const, use_enum: bool, mangle_name: bool):
         value = f"{abi_value}"
     else:
         value = f"(({c_type}) {abi_value})"
-    return def_name + " " * (45 - len(def_name)) + value + "\n"
+    return def_name + " " * (spacing - len(def_name) + 1) + value + "\n"
 
 # ========================= Manipulate Template Header =========================
 lines = []
@@ -208,17 +212,16 @@ output.append("""#ifndef _ABI_INTERNAL_
 """)
 output.append("#endif /* _ABI_INTERNAL_ */")
 
-# Iterate through all lines and replace datatypes with their internal ABI
-# counterparts
-if MANGLE_NAMES:
-    for i, line in enumerate(output):
-        mangled_line = line
+for i, line in enumerate(output):
+    line = line.replace(r"\ldots", "...")
+    if MANGLE_NAMES:
+        # Replace datatypes with their internal ABI counterparts
         for datatype in INTERNAL_DATATYPES:
             # Need to include the extra space here or else we'll edit functions
             # like "MPI_Group_difference"
-            datatype_pattern = r"([\( ]?)(" + datatype + r")([; \*]{1})"
-            mangled_line = re.sub(datatype_pattern, f"\\g<1>\\g<2>{ABI_INTERNAL}\\g<3>", mangled_line)
-        output[i] = mangled_line
+            datatype_pattern = r"([\( ]?)(" + datatype + r")([; \*\)]{1})"
+            line = re.sub(datatype_pattern, f"\\g<1>\\g<2>{ABI_INTERNAL}\\g<3>", line)
+    output[i] = line
 
 with open(OUTPUT, 'tw') as header_out:
     header_out.writelines(output)
