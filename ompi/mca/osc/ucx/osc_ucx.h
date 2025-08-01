@@ -116,24 +116,12 @@ typedef struct ompi_osc_ucx_mem_ranges {
     uint64_t tail;
 } ompi_osc_ucx_mem_ranges_t;
 
-/**
- * Structure to hold information about shared memory regions.
- * We store the rank, it's address, and the size of the window region.
- * We don't store the disp_unit here, as that is stored elsewhere already.
- */
-struct ompi_osc_ucx_shmem_info_s {
-    int peer; /* rank of the peer this information belongs to */
-    char *addr; /* address of the shared memory region */
-    size_t size; /* size of the shared memory region */
-};
-
-typedef struct ompi_osc_ucx_shmem_info_s ompi_osc_ucx_shmem_info_t;
-
 typedef struct ompi_osc_ucx_module {
     ompi_osc_base_module_t super;
     struct ompi_communicator_t *comm;
     int flavor;
-    size_t size;
+    size_t    size;
+    size_t   *sizes; /* used if !same_size*/
     uint64_t *addrs;
     uint64_t *state_addrs;
     uint64_t *comm_world_ranks;
@@ -141,7 +129,6 @@ typedef struct ompi_osc_ucx_module {
                           * disp unit size; if disp_unit == -1, then we
                           * need to look at disp_units */
     ptrdiff_t *disp_units;
-    ompi_osc_ucx_shmem_info_t *shmem_info; /* shared memory info */
 
     ompi_osc_ucx_state_t state; /* remote accessible flags */
     ompi_osc_local_dynamic_win_info_t local_dynamic_win_info[OMPI_OSC_UCX_ATTACH_MAX];
@@ -157,6 +144,7 @@ typedef struct ompi_osc_ucx_module {
     bool lock_all_is_nocheck;
     bool no_locks;
     bool acc_single_intrinsic;
+    bool same_size;
     opal_common_ucx_ctx_t *ctx;
     opal_common_ucx_wpmem_t *mem;
     opal_common_ucx_wpmem_t *state_mem;

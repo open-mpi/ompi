@@ -487,9 +487,9 @@ static int ompi_osc_ucx_shared_query_peer(ompi_osc_ucx_module_t *module, int pee
     if (UCS_OK != ucp_rkey_ptr(rkey, module->addrs[peer], &addr_p)) {
         return OMPI_ERR_NOT_AVAILABLE;
     }
-    *size = module->sizes[peer];
-    *((void**) baseptr) = (void *)module->shmem_addrs[peer];
-    *disp_unit = module->disp_units[peer];
+    *size = module->same_size ? module->size : module->sizes[peer];
+    *((void**) baseptr) = addr_p;
+    *disp_unit = (module->disp_unit < 0) ? module->disp_units[peer] : module->disp_unit;
 
     return OMPI_SUCCESS;
 }
@@ -554,8 +554,9 @@ static int component_select(struct ompi_win_t *win, void **base, size_t size, pt
                             int flavor, int *model) {
     ompi_osc_ucx_module_t *module = NULL;
     char *name = NULL;
-    long values[2];
+    long values[4];
     int ret = OMPI_SUCCESS;
+    int val_count = 0;
     int i, comm_size = ompi_comm_size(comm);
     bool env_initialized = false;
     void *state_base = NULL;
@@ -679,42 +680,70 @@ select_unlock:
     module->acc_single_intrinsic = check_config_value_bool ("acc_single_intrinsic", info);
     module->skip_sync_check = false;
 
-    /**
-     * TODO: we need to collect the shared memory information from all processes
-     *       on the same node. This includes the size and base address, which needs
-     *       to be passed to ucp_rkey_ptr().
-     */
-    module->shmem_info = NULL;
-
     /* share everyone's displacement units. Only do an allgather if
        strictly necessary, since it requires O(p) state. */
     values[0] = disp_unit;
     values[1] = -disp_unit;
+    values[2] = size;
+    values[3] = -(int64_t)size;
 
-    ret = module->comm->c_coll->coll_allreduce(MPI_IN_PLACE, values, 2, MPI_LONG,
+    ret = module->comm->c_coll->coll_allreduce(MPI_IN_PLACE, values, 4, MPI_LONG,
                                                MPI_MIN, module->comm,
                                                module->comm->c_coll->coll_allreduce_module);
     if (OMPI_SUCCESS != ret) {
         goto error;
     }
 
-    if (values[0] == -values[1]) { /* everyone has the same disp_unit, we do not need O(p) space */
-        module->disp_unit = disp_unit;
-    } else { /* different disp_unit sizes, allocate O(p) space to store them */
-        module->disp_unit = -1;
-        module->disp_units = calloc(comm_size, sizeof(ptrdiff_t));
-        if (module->disp_units == NULL) {
-            ret = OMPI_ERR_TEMP_OUT_OF_RESOURCE;
-            goto error;
-        }
+    bool same_disp_unit = (values[0] == -values[1]);
+    bool same_size = (values[2] == -values[3]);
 
-        ret = module->comm->c_coll->coll_allgather(&disp_unit, sizeof(ptrdiff_t), MPI_BYTE,
-                                                   module->disp_units, sizeof(ptrdiff_t), MPI_BYTE,
-                                                   module->comm,
-                                                   module->comm->c_coll->coll_allgather_module);
+    if (same_disp_unit) { /* everyone has the same disp_unit, we do not need O(p) space */
+        module->disp_unit = disp_unit;
+        module->disp_units = NULL;
+        values[val_count++] = disp_unit;
+    }
+
+    if (same_size) {
+        module->same_size = true;
+        module->sizes = NULL;
+        values[val_count++] = size;
+    }
+
+    if (!same_disp_unit || !same_size) {
+
+        ret = module->comm->c_coll->coll_allgather(values, val_count * sizeof(long), MPI_BYTE,
+                                                    (void *)my_info, sizeof(long) * val_count, MPI_BYTE,
+                                                    module->comm,
+                                                    module->comm->c_coll->coll_allgather_module);
         if (OMPI_SUCCESS != ret) {
             goto error;
         }
+
+        if (!same_disp_unit) { /* everyone has a different disp_unit */
+            module->disp_unit = -1;
+            module->disp_units = calloc(comm_size, sizeof(ptrdiff_t));
+            if (module->disp_units == NULL) {
+                ret = OMPI_ERR_TEMP_OUT_OF_RESOURCE;
+                goto error;
+            }
+            for (i = 0; i < comm_size; i++) {
+                module->disp_units[i] = (ptrdiff_t)values[i*val_count];
+            }
+        }
+
+        if (!same_size) { /* everyone has the same disp_unit, we do not need O(p) space */
+            module->same_size = false;
+            module->sizes = calloc(comm_size, sizeof(size_t));
+            if (module->sizes == NULL) {
+                ret = OMPI_ERR_TEMP_OUT_OF_RESOURCE;
+                goto error;
+            }
+
+            for (i = 0; i < comm_size; i++) {
+                module->sizes[i] = (size_t)values[i*val_count + val_count-1];
+            }
+        }
+
     }
 
     ret = opal_common_ucx_wpctx_create(mca_osc_ucx_component.wpool, comm_size,
@@ -1260,6 +1289,9 @@ int ompi_osc_ucx_free(struct ompi_win_t *win) {
 
     if (module->disp_units) {
         free(module->disp_units);
+    }
+    if (module->sizes) {
+        free(module->sizes);
     }
     ompi_comm_free(&module->comm);
 
