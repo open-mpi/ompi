@@ -290,7 +290,7 @@ static int component_init(bool enable_progress_threads, bool enable_mpi_threads)
     return OMPI_SUCCESS;
 }
 
-static int component_set_priority() {
+static int component_set_priority(void) {
     int param, ret;
     opal_common_ucx_support_level_t support_level = OPAL_COMMON_UCX_SUPPORT_NONE;
     mca_base_var_source_t param_source = MCA_BASE_VAR_SOURCE_DEFAULT;
@@ -686,7 +686,7 @@ select_unlock:
         module->noncontig_shared_win = false;
         if (OMPI_SUCCESS != opal_info_get_bool(info, "alloc_shared_noncontig",
                                                &module->noncontig_shared_win, &flag)) {
-            err = OMPI_ERR_BAD_PARAM;
+            ret = OMPI_ERR_BAD_PARAM;
             goto error;
         }
 
@@ -842,10 +842,10 @@ select_unlock:
 
 
         for (i = 0, total = 0; i < comm_size ; ++i) {
-            size_t size = ompi_osc_ucx_get_size(module, i);
-            if (size || !module->noncontig_shared_win) {
+            size_t peer_size = ompi_osc_ucx_get_size(module, i);
+            if (peer_size || !module->noncontig_shared_win) {
                 module->shmem_addrs[i] = ((uint64_t) module->segment_base) + total;
-                total += size;
+                total += peer_size;
             } else {
                 module->shmem_addrs[i] = (uint64_t)NULL;
             }
@@ -988,7 +988,7 @@ select_unlock:
 error:
     if (module->disp_units) free(module->disp_units);
     if (module->comm) ompi_comm_free(&module->comm);
-    if (module->sizes) ompi_comm_free(&module->sizes);
+    if (module->sizes) free(module->sizes);
     free(module);
     module = NULL;
 

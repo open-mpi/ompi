@@ -151,7 +151,6 @@ typedef struct ompi_osc_ucx_module {
     ompi_osc_ucx_mem_ranges_t *epoc_outstanding_ops_mems;
     bool skip_sync_check;
     bool noncontig_shared_win;
-    size_t *sizes;
     /* in shared windows, shmem_addrs can be used for direct load store to
      * remote windows */
     uint64_t *shmem_addrs;
