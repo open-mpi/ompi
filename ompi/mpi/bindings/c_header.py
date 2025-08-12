@@ -40,6 +40,10 @@ INTERNAL_DATATYPES = [
     "MPI_Win",
     "MPI_Comm_copy_attr_function",
     "MPI_Comm_delete_attr_function",
+    "MPI_Type_copy_attr_function",
+    "MPI_Type_delete_attr_function",
+    "MPI_Win_delete_attr_function",
+    "MPI_Win_copy_attr_function",
     # TODO: these two are deprecated, get rid of them
     "MPI_Copy_function",
     "MPI_Delete_function",
