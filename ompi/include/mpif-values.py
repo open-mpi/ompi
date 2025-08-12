@@ -9,6 +9,8 @@
 #                         reserved.
 # Copyright (c) 2022      IBM Corporation.  All rights reserved.
 # Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
+# Copyright (c) 2025      Triad National Security, LLC. All rights
+#                         reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -320,6 +322,7 @@ constants = {
     'MPI_COMBINER_F90_INTEGER': 16,
     'MPI_COMBINER_RESIZED': 17,
     'MPI_COMBINER_HINDEXED_BLOCK': 18,
+    'MPI_COMBINER_VALUE_INDEX': 19,
     'MPI_COMM_TYPE_SHARED': 0,
     'OMPI_COMM_TYPE_HWTHREAD': 1,
     'OMPI_COMM_TYPE_CORE': 2,

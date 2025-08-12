@@ -427,6 +427,7 @@ prototype_sources = \
 	type_get_name.c.in \
 	type_get_true_extent.c.in \
 	type_get_true_extent_x.c.in \
+	type_get_value_index.c.in \
 	type_indexed.c.in \
 	type_match_size.c.in \
 	type_set_attr.c.in \

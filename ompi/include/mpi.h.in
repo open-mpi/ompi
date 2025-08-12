@@ -826,7 +826,8 @@ enum {
   MPI_COMBINER_F90_COMPLEX,
   MPI_COMBINER_F90_INTEGER,
   MPI_COMBINER_RESIZED,
-  MPI_COMBINER_HINDEXED_BLOCK
+  MPI_COMBINER_HINDEXED_BLOCK,
+  MPI_COMBINER_VALUE_INDEX
 };
 
 #if (OMPI_OMIT_MPI1_COMPAT_DECLS)
@@ -2501,6 +2502,8 @@ OMPI_DECLSPEC  int MPI_Type_get_true_extent(MPI_Datatype datatype, MPI_Aint *tru
                                             MPI_Aint *true_extent);
 OMPI_DECLSPEC  int MPI_Type_get_true_extent_c(MPI_Datatype datatype, MPI_Count *true_lb,
                                              MPI_Count *true_extent);
+OMPI_DECLSPEC  int MPI_Type_get_value_index(MPI_Datatype value_type, MPI_Datatype index_type,
+                                             MPI_Datatype *pair_type);
 OMPI_DECLSPEC  int MPI_Type_indexed(int count, const int array_of_blocklengths[],
                                     const int array_of_displacements[],
                                     MPI_Datatype oldtype, MPI_Datatype *newtype);
@@ -3658,6 +3661,8 @@ OMPI_DECLSPEC  int PMPI_Type_get_true_extent(MPI_Datatype datatype, MPI_Aint *tr
                                              MPI_Aint *true_extent);
 OMPI_DECLSPEC  int PMPI_Type_get_true_extent_c(MPI_Datatype datatype, MPI_Count *true_lb,
                                               MPI_Count *true_extent);
+OMPI_DECLSPEC  int PMPI_Type_get_value_index(MPI_Datatype value_type, MPI_Datatype index_type,
+                                             MPI_Datatype *pair_type);
 OMPI_DECLSPEC  int PMPI_Type_indexed(int count, const int array_of_blocklengths[],
                                      const int array_of_displacements[],
                                      MPI_Datatype oldtype, MPI_Datatype *newtype);

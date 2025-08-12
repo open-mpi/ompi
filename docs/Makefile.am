@@ -518,6 +518,7 @@ OMPI_MAN3 = \
         MPI_Type_get_name.3 \
         MPI_Type_get_true_extent.3 \
         MPI_Type_get_true_extent_x.3 \
+        MPI_Type_get_value_index.3 \
         MPI_Type_hindexed.3 \
         MPI_Type_hvector.3 \
         MPI_Type_indexed.3 \

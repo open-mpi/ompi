@@ -389,6 +389,10 @@ OMPI_DECLSPEC int ompi_datatype_unpack_external( const char datarep[], const voi
 OMPI_DECLSPEC int ompi_datatype_pack_external_size( const char datarep[], size_t incount,
                                                     ompi_datatype_t *datatype, MPI_Aint *size);
 
+OMPI_DECLSPEC int ompi_datatype_get_value_index(const ompi_datatype_t *value_type,
+                                                const ompi_datatype_t *index_type,
+                                                ompi_datatype_t **pair_type);
+
 #define OMPI_DATATYPE_RETAIN(ddt)                                       \
     {                                                                   \
         if( !ompi_datatype_is_predefined((ddt)) ) {                     \
