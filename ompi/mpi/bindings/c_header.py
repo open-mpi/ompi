@@ -230,6 +230,15 @@ for i, line in enumerate(output):
             # like "MPI_Group_difference"
             datatype_pattern = r"([\( ]?)(" + datatype + r")([; \*\)]{1})"
             line = re.sub(datatype_pattern, f"\\g<1>\\g<2>{ABI_INTERNAL}\\g<3>", line)
+    if "MPI_Fint" in line:
+        # Comment out a line if it has references to MPI_Fint, we don't need
+        # that for the ABI
+        line = f"/* {line} */"
+    # TODO: pympistandard creates `MPI_Info_create_env` with its `argv`
+    # parameter being of type `char *` instead of `char **` --- as defined in
+    # the standard.
+    if "MPI_Info_create_env" in line:
+        line = line.replace("char argv[]", "char *argv[]")
     output[i] = line
 
 with open(OUTPUT, 'tw') as header_out:
