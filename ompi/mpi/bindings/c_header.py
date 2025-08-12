@@ -10,9 +10,9 @@
 import argparse
 import re
 import json
+import sys
+import os
 from pathlib import Path
-
-import pympistandard as std
 
 # ============================= Constants / Globals ============================
 DIR = Path(".")
@@ -80,6 +80,7 @@ parser.add_argument("-i", "--input", type=str, help="input path for the .h.in fi
 parser.add_argument("-o", "--output", type=str, help="output path for the header file")
 parser.add_argument("--mangle-names", help="enable name mangling for constants and datatypes", action="store_true")
 parser.add_argument("--no-mangle", help="disable name mangling (default)", action="store_true")
+parser.add_argument("--pympistd-dir", type=str, help="directory for the pympistandard library")
 
 args = parser.parse_args()
 
@@ -93,6 +94,15 @@ if args.output:
     OUTPUT = Path(args.output)
 if args.input:
     INPUT = Path(args.input)
+if args.pympistd_dir:
+    PYMPISTANDARD_DIR = Path(args.pympistd_dir)
+
+# A bit of a hack to load the pympistandard module, which is in
+# the Open MPI '3rd-party" tree in the source dir.
+pympi_dir = PYMPISTANDARD_DIR / "src"
+sys.path.insert(0, str(pympi_dir.resolve()))
+
+import pympistandard as std
 
 # ================================== Load JSON =================================
 with open(JSON_PATH) as f:
