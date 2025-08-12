@@ -12,6 +12,8 @@
  *                         reserved.
  * Copyright (c) 2017      Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
+ * Copyright (c) 2025      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -446,6 +448,7 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
 
                     if (OMPI_SUCCESS != ( err = ompi_request_wait_all(num_nodes - 1,
                                                                       reqs, MPI_STATUSES_IGNORE))) {
+                        free(obj_to_rank_in_comm);
                         free(objs_per_node);
                         goto release_and_return;
                     }
