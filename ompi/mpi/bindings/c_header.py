@@ -215,11 +215,6 @@ for proc in std.all_iso_c_procedures():
          output.append(f"{binding[0]} P{' '.join(binding[1:])};\n")
 
 # ================================ Final Output ================================
-output.append("""#ifndef _ABI_INTERNAL_
-#define _ABI_INTERNAL_
-#include "stddef.h"
-#include "stdint.h"
-""")
 output.append("#endif /* _ABI_INTERNAL_ */")
 
 for i, line in enumerate(output):
