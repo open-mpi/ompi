@@ -2,6 +2,7 @@
  * Copyright (c) 2024      Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
  * Copyright (c) 2025      Barcelona Supercomputing Center (BSC-CNS). All Rights Reserved.
+ * Copyright (c) 2025      Triad National Security, LLC. All rights
  *
  * Additional copyrights may follow
  *
@@ -136,6 +137,7 @@ int mca_coll_han_alltoall_using_smsc(
                              "han cannot handle alltoall with this communicator. Fall back on another component\n");
         /* HAN cannot work with this communicator so fallback on all collectives */
         HAN_LOAD_FALLBACK_COLLECTIVES(comm, han_module);
+        OBJ_DESTRUCT(&convertor);
         return han_module->previous_alltoall(sbuf, scount, sdtype, rbuf, rcount, rdtype,
                                           comm, han_module->previous_alltoall_module);
     }
@@ -151,6 +153,7 @@ int mca_coll_han_alltoall_using_smsc(
          * future calls will then be automatically redirected.
          */
         HAN_UNINSTALL_COLL_API(comm, han_module, alltoall);
+        OBJ_DESTRUCT(&convertor);
         return han_module->previous_alltoall(sbuf, scount, sdtype, rbuf, rcount, rdtype,
                                              comm, han_module->previous_alltoall_module);
     }
