@@ -16,6 +16,7 @@
  * Copyright (c) 2015-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2025      Advanced Micro Devices, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -48,23 +49,28 @@ int MPI_Init_thread(int *argc, char ***argv, int required,
                     int *provided)
 {
     int err, safe_required = MPI_THREAD_SERIALIZED;
-    char *env;
+    bool err_arg_required = false;
 
     ompi_hook_base_mpi_init_thread_top(argc, argv, required, provided);
 
     /* Detect an incorrect thread support level, but dont report until we have the minimum
      * infrastructure setup.
+     * In the future integer MPI_ABI values for MPI_THREAD_SINGLE-MULTIPLE
+     * may have gaps between them, so just checking the range is not enough.
      */
-    if( (MPI_THREAD_SINGLE == required) || (MPI_THREAD_SERIALIZED == required) ||
-        (MPI_THREAD_FUNNELED == required) || (MPI_THREAD_MULTIPLE == required) ) {
-
-        if (NULL != (env = getenv("OMPI_MPI_THREAD_LEVEL")))  {
-            safe_required = atoi(env);
-        }
-        else {
-            safe_required = required;
-        }
+    err_arg_required = (required != MPI_THREAD_SINGLE && required != MPI_THREAD_FUNNELED &&
+                        required != MPI_THREAD_SERIALIZED && required != MPI_THREAD_MULTIPLE);
+    if (!err_arg_required) {
+        safe_required = required;
     }
+
+    /* check for environment overrides for required thread level. If
+     * there is, check to see that it is a valid/supported thread level.
+     * If valid, the environment variable always override the provided thread
+     * level (even if lower than argument `required`). A user program can
+     * check `provided != required` to check if `required` has been overruled.
+     */
+    err_arg_required |= (OMPI_SUCCESS > ompi_getenv_mpi_thread_level(&safe_required));
 
     *provided = safe_required;
 
@@ -78,7 +84,7 @@ int MPI_Init_thread(int *argc, char ***argv, int required,
         err = ompi_mpi_init(0, NULL, safe_required, provided, false);
     }
 
-    if( safe_required != required ) {
+    if (err_arg_required) {
         /* Trigger the error handler for the incorrect argument. Keep it separate from the
          * check on the ompi_mpi_init return and report a nice, meaningful error message to
          * the user. */

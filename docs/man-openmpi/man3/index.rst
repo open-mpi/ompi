@@ -324,6 +324,7 @@ MPI API manual pages (section 3)
    MPI_Sendrecv_replace.3.rst
    MPI_Session_call_errhandler.3.rst
    MPI_Session_create_errhandler.3.rst
+   MPI_Session_c2f.3.rst
    MPI_Session_f2c.3.rst
    MPI_Session_finalize.3.rst
    MPI_Session_get_errhandler.3.rst
