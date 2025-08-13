@@ -313,7 +313,12 @@ int mca_fs_gpfs_file_set_info(ompio_file_t *fh, struct ompi_info_t *info)
         gpfs_hint_SetReplication.gpfsSetReplication.maxMetadataReplicas = atoi(token);
         gpfs_hint_SetReplication.gpfsSetReplication.dataReplicas = atoi(token);
         gpfs_hint_SetReplication.gpfsSetReplication.maxDataReplicas = atoi(token);
+#ifdef GPFS_FCNTL_SET_REPLICATIONX /* GPFS >= 5.2.3-0, see #13313 */
+        gpfs_hint_SetReplication.gpfsSetReplication.perfReplicas = 0;
+#else
         gpfs_hint_SetReplication.gpfsSetReplication.reserved = 0;
+#endif
+
         free(info_str_dup);
 
         rc = gpfs_fcntl(gpfs_file_handle, &gpfs_hint_SetReplication);
