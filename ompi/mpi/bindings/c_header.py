@@ -127,7 +127,8 @@ for category in CATEGORIES.values():
 
 # ================================== Functions =================================
 # TODO: we need to add/fix/figure out the pympistandard's way for properly
-# defining callback functions
+# defining callback functions. pympistandard just prints out the regular
+# prototype instead of `(function_name)(arguments)`
 def cb_declaration(proc_expression):
     func_str = str(proc_expression)
     func_str_list = func_str.split()

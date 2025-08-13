@@ -565,7 +565,7 @@ standard_abi/mpi.h: $(top_srcdir)/docs/mpi-standard-apis.json $(top_srcdir)/ompi
 	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/c_header.py \
 	--input $(top_srcdir)/ompi/mpi/c/abi.h.in \
 	--abi-json $(top_srcdir)/docs/mpi-standard-abi.json \
-	--pympistd $(top_srcdir)/3rd-party/pympistandard/src \
+	--pympistd $(top_srcdir)/3rd-party/pympistandard \
 	--output $(top_srcdir)/ompi/mpi/c/standard_abi/mpi.h
 
 # Mangled version

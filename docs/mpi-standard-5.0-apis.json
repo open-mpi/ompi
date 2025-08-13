@@ -123,7 +123,7 @@
             "f90_use_colons": false,
             "index_upper": false,
             "lis_expressible": true,
-            "not_with_mpif": false,x
+            "not_with_mpif": false,
             "predefined_function": null,
             "proxy_render": false,
             "render_main": true
@@ -28242,7 +28242,7 @@
             "proxy_render": false,
             "render_main": true
         },
-        "name": "MPI_Info_get", 
+        "name": "MPI_Info_get",
         "name_f90": null,
         "parameters": [
             {
@@ -36421,7 +36421,7 @@
                 "constant": false,
                 "desc": "number of elements received per partition",
                 "func_type": "",
-                "kind": "POLYXFER_NUM_ELEM_NNI",
+                "kind": "XFER_NUM_ELEM_NNI",
                 "large_only": false,
                 "length": null,
                 "lis_direction": "in",
@@ -36726,7 +36726,7 @@
                 "constant": false,
                 "desc": "number of elements sent per partition",
                 "func_type": "",
-                "kind": "POLYXFER_NUM_ELEM_NNI",
+                "kind": "XFER_NUM_ELEM_NNI",
                 "large_only": false,
                 "length": null,
                 "lis_direction": "in",
