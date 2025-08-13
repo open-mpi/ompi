@@ -210,8 +210,13 @@ mca_btl_ofi_register_mem(struct mca_btl_base_module_t *btl,
     mca_btl_ofi_module_t *ofi_module = (mca_btl_ofi_module_t *) btl;
     mca_btl_ofi_reg_t *reg;
     int access_flags = flags & MCA_BTL_REG_FLAG_ACCESS_ANY;
-    int rc;
+    int rc, dev_id;
     uint32_t cache_flags = 0;
+    uint64_t check_addr_flags;
+
+    if (opal_accelerator.check_addr(base, &dev_id, &check_addr_flags) > 0) {
+        cache_flags |= MCA_RCACHE_FLAGS_ACCELERATOR_MEM;
+    }
 
     rc = ofi_module->rcache->rcache_register(ofi_module->rcache, base, size, cache_flags, access_flags,
                                              (mca_rcache_base_registration_t **) &reg);
