@@ -117,7 +117,7 @@ void ompi_request_get_status_some_f(MPI_Fint *incount, MPI_Fint *array_of_reques
 
     if (MPI_SUCCESS == c_ierr) {
         OMPI_SINGLE_INT_2_FINT(*outcount);
-        OMPI_ARRAY_INT_2_FINT(array_of_indices, *incount);
+        OMPI_ARRAY_INT_2_FINT(array_of_indices, *outcount);
 
         /* Increment indexes by one for fortran conventions */
 
