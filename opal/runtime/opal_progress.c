@@ -50,6 +50,36 @@ bool opal_progress_debug = false;
 static int opal_progress_event_flag = OPAL_EVLOOP_ONCE | OPAL_EVLOOP_NONBLOCK;
 int opal_progress_spin_count = 10000;
 
+#if OPAL_ENABLE_PROGRESS_THREADS == 1
+/* MCA OPAL parameter */
+extern bool opal_async_progress;
+
+/* Track whether the async progress thread was successfully spawned.
+ * This boolean is set at init, and read at finalize to join the
+ * progress thread */
+bool opal_async_progress_thread_spawned = false;
+
+/* async progress thread info & args */
+typedef struct thread_args_s {
+    /* number of events reported.
+     * This is updated by the async progress thread, to be read and resetted
+     * by the application threads */
+    opal_atomic_int64_t nb_events_reported;
+
+    /* should continue running ? */
+    volatile bool running;
+} thread_args_t;
+
+/* async progress thread routine */
+static void *opal_progress_async_thread_engine(opal_object_t *obj);
+
+static opal_thread_t opal_progress_async_thread;
+static thread_args_t thread_arg = {
+    .nb_events_reported = 0,
+    .running = false
+};
+#endif
+
 /*
  * Local variables
  */
@@ -119,9 +149,29 @@ static void opal_progress_finalize(void)
     opal_atomic_unlock(&progress_lock);
 }
 
+void opal_progress_shutdown_async_progress_thread(void)
+{
+#if OPAL_ENABLE_PROGRESS_THREADS == 1
+    if (opal_async_progress_thread_spawned) {
+        /* shutdown the async thread */
+        thread_arg.running = false;
+        int err = opal_thread_join(&opal_progress_async_thread, NULL);
+        if (OPAL_SUCCESS == err) {
+            opal_set_using_threads(false);
+            opal_async_progress_thread_spawned = false;
+        } else {
+            OPAL_OUTPUT(
+                (debug_output, "progress: Failed to join async progress thread: err=%d", err));
+        }
+    }
+#endif
+}
+
 /* init the progress engine - called from orte_init */
 int opal_progress_init(void)
 {
+    int err = OPAL_SUCCESS;
+
     /* reentrant issues */
     opal_atomic_lock_init(&progress_lock, OPAL_ATOMIC_LOCK_UNLOCKED);
 
@@ -155,6 +205,32 @@ int opal_progress_init(void)
         callbacks_lp[i] = fake_cb;
     }
 
+#if OPAL_ENABLE_PROGRESS_THREADS == 1
+    if (opal_async_progress && !opal_async_progress_thread_spawned) {
+        /* prepare the thread */
+        thread_arg.nb_events_reported = 0;
+        thread_arg.running = true;
+        OBJ_CONSTRUCT(&opal_progress_async_thread, opal_thread_t);
+        opal_progress_async_thread.t_run = opal_progress_async_thread_engine;
+        opal_progress_async_thread.t_arg = &thread_arg;
+
+        /* optimistic setting for asynchronism here, but we know that these might
+        still be changed by other *init() routines :( */
+        opal_progress_set_yield_when_idle(true);
+        opal_progress_set_event_flag(opal_progress_event_flag | OPAL_EVLOOP_NONBLOCK);
+
+        err = opal_thread_start(&opal_progress_async_thread);
+        if (OPAL_SUCCESS == err) {
+            opal_set_using_threads(true);
+            opal_async_progress_thread_spawned = true;
+        } else {
+            thread_arg.running = false;
+            OPAL_OUTPUT(
+                (debug_output, "progress: Failed to start async progress thread: err=%d", err));
+        }
+    }
+#endif
+
     OPAL_OUTPUT(
         (debug_output, "progress: initialized event flag to: %x", opal_progress_event_flag));
     OPAL_OUTPUT((debug_output, "progress: initialized yield_when_idle to: %s",
@@ -165,7 +241,7 @@ int opal_progress_init(void)
 
     opal_finalize_register_cleanup(opal_progress_finalize);
 
-    return OPAL_SUCCESS;
+    return err;
 }
 
 static int opal_progress_events(void)
@@ -213,7 +289,7 @@ static int opal_progress_events(void)
  * care, as the cost of that happening is far outweighed by the cost
  * of the if checks (they were resulting in bad pipe stalling behavior)
  */
-int opal_progress(void)
+static int _opal_progress(void)
 {
     static uint32_t num_calls = 0;
     size_t i;
@@ -224,13 +300,17 @@ int opal_progress(void)
         events += (callbacks[i])();
     }
 
-    /* Run low priority callbacks and events once every 8 calls to opal_progress().
+    /* Run low priority callbacks and events once every <N> calls to opal_progress().
      * Even though "num_calls" can be modified by multiple threads, we do not use
      * atomic operations here, for performance reasons. In case of a race, the
      * number of calls may be inaccurate, but since it will eventually be incremented,
      * it's not a problem.
+     * If opal_async_progress_thread_spawned == false, then N = 8
+     * otherwise let's pick N = 256 for the moment (George's recommendation) and
+     * adapt it later if it takes too many resources.
      */
-    if (((num_calls++) & 0x7) == 0) {
+    const uint32_t mod = opal_async_progress_thread_spawned ? 0xFF : 0x7;
+    if (((num_calls++) & mod) == 0) {
         for (i = 0; i < callbacks_lp_len; ++i) {
             events += (callbacks_lp[i])();
         }
@@ -252,6 +332,48 @@ int opal_progress(void)
     }
 
     return events;
+}
+
+#if OPAL_ENABLE_PROGRESS_THREADS == 1
+static void *opal_progress_async_thread_engine(opal_object_t *obj)
+{
+    opal_thread_t *current_thread = (opal_thread_t *) obj;
+    thread_args_t *p_thread_arg = (thread_args_t *) current_thread->t_arg;
+
+    while (p_thread_arg->running) {
+        const int64_t new_events = _opal_progress();
+        if (new_events > 0) {
+            opal_atomic_add_fetch_64(&p_thread_arg->nb_events_reported, new_events);
+        }
+    }
+
+    return OPAL_THREAD_CANCELLED;
+}
+#endif
+
+int opal_progress(void)
+{
+#if OPAL_ENABLE_PROGRESS_THREADS == 1
+    if (opal_async_progress_thread_spawned) {
+        /* async progress thread alongside may has processed new events,
+         * atomically read and reset nb_events_reported to zero.
+         */
+        const int64_t new_events = opal_atomic_swap_64(&thread_arg.nb_events_reported, 0);
+
+        /* if no new event, then application thread may yield here */
+        if (opal_progress_yield_when_idle && new_events <= 0) {
+            opal_thread_yield();
+        }
+        return new_events;
+    } else {
+#endif
+
+    /* no async progress thread, call the normal progress routine like before */
+    return _opal_progress();
+
+#if OPAL_ENABLE_PROGRESS_THREADS == 1
+    }
+#endif
 }
 
 int opal_progress_set_event_flag(int flag)
