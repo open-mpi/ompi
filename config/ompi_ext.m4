@@ -11,6 +11,7 @@ dnl Copyright (c) 2017      The University of Tennessee and The University
 dnl                         of Tennessee Research Foundation.  All rights
 dnl                         reserved.
 dnl Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
+dnl Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -111,6 +112,8 @@ AC_DEFUN([EXT_CONFIGURE],[
 
 #ifndef OMPI_MPI_EXT_H
 #define OMPI_MPI_EXT_H 1
+
+#include <mpi.h>
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
