@@ -14,7 +14,7 @@ INPUT PARAMETERS
 ----------------
 
 * ``buf`` : Initial buffer address (choice).
-* ``size`` : Buffer size, in bytes (integer).
+* ``size`` : Buffer size, in bytes (integer).  Ignored when buf is MPI_BUFFER_AUTOMATIC.
 
 OUTPUT PARAMETER
 ----------------
@@ -31,9 +31,15 @@ mode. Only one buffer can be attached to a process at a time.
 NOTES
 -----
 
-The size given should be the sum of the sizes of all outstanding Bsends
-that you intend to have, plus MPI_BSEND_OVERHEAD bytes for each Bsend
-that you do. For the purposes of calculating size, you should use
+This buffer is to be used for buffering outgoing messages sent when using a
+communicator to which no communicator specific buffer is attached or which
+is derived from a session to which no session-specific buffer is attached
+at the time the buffered mode send is started.
+
+When not using MPI_BUFFER_AUTOMATIC, the size given should be the sum
+of the sizes of all outstanding Bsends that you intend to have, plus
+MPI_BSEND_OVERHEAD bytes for each Bsend that you do. For the purposes
+of calculating size, you should use
 :ref:`MPI_Pack_size`. In other words, in the code
 
 .. code-block:: c
