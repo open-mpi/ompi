@@ -1,6 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2025      Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (c) 2025      Triad National Security, LLC.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -338,6 +339,7 @@ static int ompi_info_memkind_remove_unsupported (int num_requested, ompi_memkind
 
     *num_provided = total_len;
     *provided_memkinds = final;
+    free(apos);
     return OMPI_SUCCESS;
 }
 
