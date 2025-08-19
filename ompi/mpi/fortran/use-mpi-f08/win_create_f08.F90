@@ -16,7 +16,7 @@ subroutine MPI_Win_create_f08(base,size,disp_unit,info,comm,win,ierror)
    use :: mpi_f08_types, only : MPI_Info, MPI_Comm, MPI_Win, MPI_ADDRESS_KIND
    use :: ompi_mpifh_bindings, only : ompi_win_create_f
    implicit none
-   OMPI_FORTRAN_IGNORE_TKR_TYPE :: base
+   OMPI_FORTRAN_IGNORE_TKR_TYPE OMPI_ASYNCHRONOUS:: base
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: size
    INTEGER, INTENT(IN) :: disp_unit
    TYPE(MPI_Info), INTENT(IN) :: info
