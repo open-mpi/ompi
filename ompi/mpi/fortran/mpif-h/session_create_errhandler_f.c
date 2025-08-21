@@ -78,7 +78,7 @@ void ompi_session_create_errhandler_f(ompi_errhandler_fortran_handler_fn_t *func
 
     c_errhandler = ompi_errhandler_create(OMPI_ERRHANDLER_TYPE_INSTANCE,
                                (ompi_errhandler_generic_handler_fn_t*) function,
-                               OMPI_ERRHANDLER_LANG_FORTRAN);
+                               OMPI_ERRHANDLER_LANG_FORTRAN, NULL);
     if (MPI_ERRHANDLER_NULL != c_errhandler) {
         *errhandler = PMPI_Errhandler_c2f(c_errhandler);
         c_ierr = MPI_SUCCESS;

@@ -28,7 +28,7 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/attribute/attribute.h"
 
-PROTOTYPE ERROR_CLASS comm_free_keyval(INT_OUT comm_keyval)
+PROTOTYPE ERROR_CLASS comm_free_keyval(ATTR_KEY_INOUT comm_keyval)
 {
     int ret;
 

@@ -36,7 +36,7 @@
 #include "ompi/runtime/ompi_spc.h"
 
 PROTOTYPE ERROR_CLASS sendrecv_replace(BUFFER_OUT buf, COUNT count, DATATYPE datatype,
-                                       INT dest, INT sendtag, INT source, INT recvtag,
+                                       SOURCE dest, INT sendtag, SOURCE source, TAG recvtag,
                                        COMM comm, STATUS_OUT status)
 {
     ompi_request_t* req;

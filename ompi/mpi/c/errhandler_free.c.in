@@ -27,7 +27,7 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
 
-PROTOTYPE ERROR_CLASS errhandler_free(ERRHANDLER_OUT errhandler)
+PROTOTYPE ERROR_CLASS errhandler_free(ERRHANDLER_INOUT errhandler)
 {
   /* Error checking */
 
@@ -36,7 +36,8 @@ PROTOTYPE ERROR_CLASS errhandler_free(ERRHANDLER_OUT errhandler)
        *and* the reference count is 1 (meaning that this FREE would
        actually free the underlying intrinsic object).  This is ugly
        but necessary -- see below. */
-    if (NULL == errhandler ||
+    if (NULL == errhandler || NULL == *errhandler ||
+        MPI_ERRHANDLER_NULL == *errhandler ||
         (ompi_errhandler_is_intrinsic(*errhandler) &&
          1 == (*errhandler)->super.obj_reference_count)) {
       return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ERRHANDLER,

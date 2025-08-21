@@ -77,7 +77,7 @@ void ompi_win_create_errhandler_f(ompi_errhandler_fortran_handler_fn_t* function
 
     c_errhandler = ompi_errhandler_create(OMPI_ERRHANDLER_TYPE_WIN,
                                (ompi_errhandler_generic_handler_fn_t*) function,
-                               OMPI_ERRHANDLER_LANG_FORTRAN);
+                               OMPI_ERRHANDLER_LANG_FORTRAN, NULL);
     if (MPI_ERRHANDLER_NULL != c_errhandler) {
         *errhandler = PMPI_Errhandler_c2f(c_errhandler);
         if (NULL != ierr) *ierr = OMPI_INT_2_FINT(MPI_SUCCESS);

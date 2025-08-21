@@ -15,7 +15,7 @@
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2021-2024 Triad National Security, LLC. All rights
+ * Copyright (c) 2021-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
@@ -35,9 +35,9 @@
 #include "ompi/memchecker.h"
 #include "ompi/runtime/ompi_spc.h"
 
-PROTOTYPE ERROR_CLASS testsome(INT incount, REQUEST_INOUT requests,
+PROTOTYPE ERROR_CLASS testsome(INT incount, REQUEST_INOUT requests:incount,
                                INT_OUT outcount, INT_OUT indices,
-                               STATUS_OUT statuses)
+                               STATUS_OUT statuses:incount)
 {
     SPC_RECORD(OMPI_SPC_TESTSOME, 1);
 

@@ -20,6 +20,7 @@
 # Copyright (c) 2021      Amazon.com, Inc. or its affiliates.  All Rights
 #                         reserved.
 # Copyright (c) 2025      Advanced Micro Devices, Inc. All Rights reserved.
+# Copyright (c) 2025      Triad National Security, LLC.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -36,26 +37,56 @@ if BUILD_MPI_BINDINGS_LAYER
 noinst_LTLIBRARIES += libmpi_c_abi_noprofile.la
 endif
 
-BUILT_SOURCES = abi.h standard_abi/mpi.h
+BUILT_SOURCES = abi.h abi_converters.h standard_abi/mpi.h
 
 libmpi_c_abi_la_SOURCES = \
-        attr_fn.c \
-        abi_details.c \
-        abi_supported.c \
-        abi_version.c
+        abi_converters.c \
+        attr_fn_abi.c \
+        ompi_isendrecv.c \
+        ompi_sendrecv.c \
+        ompi_abi_fortran.c
 
-libmpi_c_abi_la_CPPFLAGS = -DOMPI_NO_MPI_PROTOTYPES
+extra_abi_fns = \
+        aint_add_abi.c \
+        aint_diff_abi.c \
+        comm_fromint_abi.c \
+        comm_toint_abi.c \
+        errhandler_fromint_abi.c \
+        errhandler_toint_abi.c \
+        file_fromint_abi.c \
+        file_toint_abi.c \
+        group_fromint_abi.c \
+        group_toint_abi.c \
+        info_fromint_abi.c \
+        info_toint_abi.c \
+        message_fromint_abi.c \
+        message_toint_abi.c \
+        op_fromint_abi.c \
+        op_toint_abi.c \
+        pcontrol.c \
+        request_fromint_abi.c \
+        request_toint_abi.c \
+        session_fromint_abi.c \
+        session_toint_abi.c \
+        type_fromint_abi.c \
+        type_toint_abi.c \
+        win_fromint_abi.c \
+        win_toint_abi.c
+
+libmpi_c_abi_la_CPPFLAGS = -DOMPI_NO_MPI_PROTOTYPES -DOMPI_BUILD_MPI_PROFILING=0 -DOMPI_BUILD_STANDARD_ABI
 libmpi_c_abi_la_LIBADD = libmpi_c_abi_profile.la
 if BUILD_MPI_BINDINGS_LAYER
 libmpi_c_abi_la_LIBADD += libmpi_c_abi_noprofile.la
 endif
 
 abi_interface_profile_sources = $(prototype_sources:.c.in=_abi_generated.c)
+abi_interface_profile_sources_nbc = $(prototype_sources_nbc:.c.in_nbc=_abi_generated.c)
+abi_interface_profile_sources_obc = $(prototype_sources_obc:.c.in_obc=_abi_generated.c)
 
-libmpi_c_abi_profile_la_SOURCES = $(abi_interface_profile_sources)
+libmpi_c_abi_profile_la_SOURCES = $(abi_interface_profile_sources) $(abi_interface_profile_sources_nbc) $(abi_interface_profile_sources_obc) $(extra_abi_fns)
 libmpi_c_abi_profile_la_CPPFLAGS = -DOMPI_NO_MPI_PROTOTYPES -DOMPI_BUILD_MPI_PROFILING=1
 
-libmpi_c_abi_noprofile_la_SOURCES = $(abi_interface_profile_sources)
+libmpi_c_abi_noprofile_la_SOURCES = $(abi_interface_profile_sources) $(abi_interface_profile_sources_nbc) $(abi_interface_profile_sources_obc) $(extra_abi_fns)
 libmpi_c_abi_noprofile_la_CPPFLAGS = -DOMPI_NO_MPI_PROTOTYPES -DOMPI_BUILD_MPI_PROFILING=0
 
 endif

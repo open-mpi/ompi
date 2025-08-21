@@ -63,6 +63,11 @@ PROTOTYPE ERROR_CLASS file_set_view(FILE fh, OFFSET disp, DATATYPE etype,
         OMPI_ERRHANDLER_CHECK(rc, fh, rc, FUNC_NAME);
     }
 
+#if OMPI_ABI_SRC
+    if (MPI_DISPLACEMENT_CURRENT_ABI_INTERNAL == disp) {
+        disp = MPI_DISPLACEMENT_CURRENT;
+    }
+#endif
     /* Call the back-end io component function */
 
     switch (fh->f_io_version) {

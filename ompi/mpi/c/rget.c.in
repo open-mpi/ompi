@@ -35,7 +35,7 @@
 #include "ompi/runtime/ompi_spc.h"
 
 PROTOTYPE ERROR_CLASS rget(BUFFER_OUT origin_addr, COUNT origin_count,
-                           DATATYPE origin_datatype, INT target_rank,
+                           DATATYPE origin_datatype, SOURCE target_rank,
                            AINT target_disp, COUNT target_count,
                            DATATYPE target_datatype, WIN win, REQUEST_INOUT request)
 {

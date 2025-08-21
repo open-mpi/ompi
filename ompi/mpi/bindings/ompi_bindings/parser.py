@@ -1,4 +1,4 @@
-# Copyright (c) 2024      Triad National Security, LLC. All rights
+# Copyright (c) 2024-2025 Triad National Security, LLC. All rights
 #                         reserved.
 # Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
 #
@@ -9,6 +9,8 @@
 # $HEADER$
 
 import os
+import sys
+from ompi_bindings import util
 
 """Source parsing code."""
 
@@ -18,21 +20,33 @@ class Parameter:
 
     def __init__(self, text, type_constructor):
         """Parse a parameter."""
-        # parameter in the form "TYPE NAME" or "TYPE NAME:COUNT_VAR"
-        type_name, namecount = text.split()
+        # parameter in the form "TYPE NAME" or "TYPE NAME:COUNT_VAR" or "TYPE NAME:COUNT_VAR:OUTCOUNT_VAR"
+        # some methods allocate more space for an array that what is needed in the final code, for example
+        # with MPI_Waitsome, etc.
+        try:
+            type_name, namecount = text.split()
+        except Exception as e:
+            print(f"Error: could not split '{text}' got error {e}")
+            sys.exit(-1)
         if ':' in namecount:
-            name, count_param = namecount.split(':')
+            if (namecount.count(':') == 2):
+                name, count_param, outcount_param = namecount.split(':')
+            else:
+                name, count_param = namecount.split(':')
+                outcount_param = count_param
         else:
-            name, count_param = namecount, None
+            name, count_param, outcount_param = namecount, None, None
         self.type_name = type_name
         self.name = name
         self.count_param = count_param
+        self.outcount_param = outcount_param
         self.type_constructor = type_constructor
 
     def construct(self, **kwargs):
         """Construct the type parameter for the given ABI."""
         return self.type_constructor(type_name=self.type_name, name=self.name,
-                                     count_param=self.count_param, **kwargs)
+                                     count_param=self.count_param, 
+                                     outcount_param=self.outcount_param, **kwargs)
 
 
 class ReturnType:
@@ -65,7 +79,7 @@ class Prototype:
         return f'{return_type_text} {fn_name}({params})'
 
 
-def validate_body(body):
+def validate_body(fname, body):
     """Validate the body of a template."""
     # Just do a simple bracket balance test to determine the bounds of the
     # function body. All lines after the function body should be blank. There
@@ -76,7 +90,7 @@ def validate_body(body):
     for line in body:
         line = line.strip()
         if bracket_balance == 0 and line_count > 0 and line:
-            raise util.BindingError('Extra code found in template; only one function body is allowed')
+            raise util.BindingError('Extra code found in template %s; only one function body is allowed' % str(fname))
 
         update = line.count('{') - line.count('}')
         bracket_balance += update
@@ -84,7 +98,7 @@ def validate_body(body):
             line_count += 1
 
     if bracket_balance != 0:
-        raise util.BindingError('Mismatched brackets found in template')
+        raise util.BindingError('Mismatched brackets found in template ' + str(fname))
 
 
 class SourceTemplate:
@@ -131,7 +145,7 @@ class SourceTemplate:
             params = [Parameter(param, type_constructor=type_constructor) for param in params]
             prototype = Prototype(name, return_type, params)
             # Ensure the body contains only one function
-            validate_body(body)
+            validate_body(fname, body)
             return SourceTemplate(prototype, header, body)
 
     def print_header(self, out):

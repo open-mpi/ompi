@@ -4,7 +4,7 @@
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2024      Triad National Security, LLC. All rights
+ * Copyright (c) 2024-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -23,7 +23,7 @@
 #include "ompi/message/message.h"
 
 PROTOTYPE ERROR_CLASS imrecv(BUFFER_OUT buf, COUNT count, DATATYPE type,
-                             MESSAGE_OUT message, REQUEST_INOUT request)
+                             MESSAGE_INOUT message, REQUEST_INOUT request)
 {
     int rc = MPI_SUCCESS;
     ompi_communicator_t *comm;

@@ -7,7 +7,7 @@
  * Copyright (c) 2020-2021 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2024      Triad National Security, LLC. All rights
+ * Copyright (c) 2024-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -25,8 +25,12 @@
 #include "ompi/request/request.h"
 #include "ompi/message/message.h"
 
-PROTOTYPE ERROR_CLASS improbe(INT source, INT tag, COMM comm, INT_OUT flag,
-                              MESSAGE_OUT message, STATUS_OUT status)
+/*
+ * use STATUS_INOUT for the case where no message was found and the
+ * application expects the status to not be changed.
+ */
+PROTOTYPE ERROR_CLASS improbe(SOURCE source, TAG tag, COMM comm, INT_OUT flag,
+                              MESSAGE_OUT message, STATUS_INOUT status)
 {
     int rc;
 

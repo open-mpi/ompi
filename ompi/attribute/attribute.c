@@ -322,7 +322,6 @@ do { \
     /* C style */ \
     else { \
         void *attr_val = translate_to_c(attribute); \
-        /* TODO: NEED SUPPORT FOR ABI */ \
         err = (*((keyval_obj->delete_attr_fn).attr_##type##_delete_fn)) \
             ((ompi_##type##_t *)object,                                 \
              key, attr_val,                                             \
@@ -382,7 +381,6 @@ do { \
     else { \
         void *in, *out; \
         in = translate_to_c(in_attr); \
-        /* TODO: NEED SUPPORT FOR ABI */ \
         if ((err = (*((keyval_obj->copy_attr_fn).attr_##type##_copy_fn)) \
               ((ompi_##type##_t *)old_object, key, keyval_obj->extra_state.c_ptr, \
                in, &out, &flag)) == MPI_SUCCESS) { \

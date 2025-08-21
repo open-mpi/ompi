@@ -31,7 +31,7 @@
 #include "ompi/attribute/attribute.h"
 #include "ompi/memchecker.h"
 
-PROTOTYPE ERROR_CLASS attr_delete(COMM comm, INT keyval)
+PROTOTYPE ERROR_CLASS attr_delete(COMM comm, ATTR_KEY keyval)
 {
     int ret;
 

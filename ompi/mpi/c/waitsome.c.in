@@ -39,7 +39,7 @@
 
 PROTOTYPE ERROR_CLASS waitsome(INT incount, REQUEST_INOUT requests:incount,
                                INT_OUT outcount, INT_OUT indices:incount,
-                               STATUS_OUT statuses:incount)
+                               STATUS_OUT statuses:incount:*outcount)
 {
     SPC_RECORD(OMPI_SPC_WAITSOME, 1);
 

@@ -16,7 +16,7 @@
  * Copyright (c) 2014-2019 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
- * Copyright (c) 2024      Triad National Security, LLC. All rights
+ * Copyright (c) 2024-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -38,10 +38,10 @@
 #include "ompi/mca/topo/base/base.h"
 #include "ompi/runtime/ompi_spc.h"
 
-PROTOTYPE ERROR_CLASS neighbor_alltoallw(BUFFER sendbuf, COUNT_ARRAY sendcounts, AINT_ARRAY sdispls,
-                                         DATATYPE_ARRAY sendtypes, BUFFER_OUT recvbuf,
+PROTOTYPE ERROR_CLASS neighbor_alltoallw(BUFFER_CONST sendbuf, COUNT_ARRAY sendcounts, AINT_ARRAY sdispls,
+                                         NEIGHBOR_DATATYPE_ARRAY sendtypes, BUFFER_OUT recvbuf,
                                          COUNT_ARRAY recvcounts, AINT_ARRAY rdispls,
-                                         DATATYPE_ARRAY recvtypes, COMM comm)
+                                         NEIGHBOR_DATATYPE_ARRAY recvtypes, COMM comm)
 {
     int i, err;
     int indegree, outdegree;
