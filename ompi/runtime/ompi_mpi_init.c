@@ -148,6 +148,15 @@ bool ompi_mpi_thread_multiple = false;
 int ompi_mpi_thread_requested = MPI_THREAD_SINGLE;
 int ompi_mpi_thread_provided = MPI_THREAD_SINGLE;
 
+/* MPI_T process-wide thread state.  These live here in the lower
+   libopen_mpi layer (rather than in ompi/mpi/tool/mpit_common.c, which
+   is part of the upper libmpi layer) because the instance and
+   world-model init paths read them and cannot reference symbols in the
+   layer above.  MPI_T_init_thread()/MPI_T_finalize() in libmpi write
+   them under the instance lock. */
+volatile uint32_t ompi_mpit_init_count = 0;
+int ompi_mpit_thread_level = MPI_THREAD_SINGLE;
+
 opal_thread_t *ompi_mpi_main_thread = NULL;
 
 /*

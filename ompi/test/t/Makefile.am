@@ -50,6 +50,7 @@ TESTS = $(check_PROGRAMS)
 
 test_ldadd = \
         $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
+        $(top_builddir)/ompi/libopen_mpi.la \
         $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
 
 mpi_t_category_get_events_SOURCES = mpi_t_category_get_events.c
