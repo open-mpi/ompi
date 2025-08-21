@@ -1,6 +1,7 @@
 
 /**
  * Copyright (c) 2021 Mellanox Technologies. All rights reserved.
+ * Copyright (c) 2025      Fujitsu Limited. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -9,7 +10,7 @@
 
 #include "coll_ucc_common.h"
 
-static inline ucc_status_t mca_coll_ucc_allgatherv_init(const void *sbuf, size_t scount,
+static inline ucc_status_t mca_coll_ucc_allgatherv_iniz(const void *sbuf, size_t scount,
                                                         struct ompi_datatype_t *sdtype,
                                                         void* rbuf, ompi_count_array_t rcounts, ompi_disp_array_t rdisps,
                                                         struct ompi_datatype_t *rdtype,
@@ -75,7 +76,7 @@ int mca_coll_ucc_allgatherv(const void *sbuf, size_t scount,
 
     UCC_VERBOSE(3, "running ucc allgatherv");
 
-    COLL_UCC_CHECK(mca_coll_ucc_allgatherv_init(sbuf, scount, sdtype,
+    COLL_UCC_CHECK(mca_coll_ucc_allgatherv_iniz(sbuf, scount, sdtype,
                                                 rbuf, rcounts, rdisps, rdtype,
                                                 ucc_module, &req, NULL));
     COLL_UCC_POST_AND_CHECK(req);
@@ -102,7 +103,7 @@ int mca_coll_ucc_iallgatherv(const void *sbuf, size_t scount,
 
     UCC_VERBOSE(3, "running ucc iallgatherv");
     COLL_UCC_GET_REQ(coll_req);
-    COLL_UCC_CHECK(mca_coll_ucc_allgatherv_init(sbuf, scount, sdtype,
+    COLL_UCC_CHECK(mca_coll_ucc_allgatherv_iniz(sbuf, scount, sdtype,
                                                 rbuf, rcounts, rdisps, rdtype,
                                                 ucc_module, &req, coll_req));
     COLL_UCC_POST_AND_CHECK(req);

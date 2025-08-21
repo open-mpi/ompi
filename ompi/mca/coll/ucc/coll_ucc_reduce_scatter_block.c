@@ -1,6 +1,7 @@
 /**
  * Copyright (c) 2021 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2022 NVIDIA Corporation. All rights reserved.
+ * Copyright (c) 2025      Fujitsu Limited. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -10,7 +11,7 @@
 #include "coll_ucc_common.h"
 
 static inline
-ucc_status_t mca_coll_ucc_reduce_scatter_block_init(const void *sbuf, void *rbuf,
+ucc_status_t mca_coll_ucc_reduce_scatter_block_iniz(const void *sbuf, void *rbuf,
                                                     size_t rcount,
                                                     struct ompi_datatype_t *dtype,
                                                     struct ompi_op_t *op,
@@ -74,7 +75,7 @@ int mca_coll_ucc_reduce_scatter_block(const void *sbuf, void *rbuf, size_t rcoun
     ucc_coll_req_h         req;
 
     UCC_VERBOSE(3, "running ucc reduce scatter block");
-    COLL_UCC_CHECK(mca_coll_ucc_reduce_scatter_block_init(sbuf, rbuf, rcount,
+    COLL_UCC_CHECK(mca_coll_ucc_reduce_scatter_block_iniz(sbuf, rbuf, rcount,
                                                           dtype, op, ucc_module,
                                                           &req, NULL));
     COLL_UCC_POST_AND_CHECK(req);
@@ -100,7 +101,7 @@ int mca_coll_ucc_ireduce_scatter_block(const void *sbuf, void *rbuf, size_t rcou
 
     UCC_VERBOSE(3, "running ucc ireduce_scatter_block");
     COLL_UCC_GET_REQ(coll_req);
-    COLL_UCC_CHECK(mca_coll_ucc_reduce_scatter_block_init(sbuf, rbuf, rcount,
+    COLL_UCC_CHECK(mca_coll_ucc_reduce_scatter_block_iniz(sbuf, rbuf, rcount,
                                                           dtype, op, ucc_module,
                                                           &req, coll_req));
     COLL_UCC_POST_AND_CHECK(req);

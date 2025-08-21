@@ -1,5 +1,6 @@
 /**
  * Copyright (c) 2021 Mellanox Technologies. All rights reserved.
+ * Copyright (c) 2025      Fujitsu Limited. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -8,7 +9,7 @@
 
 #include "coll_ucc_common.h"
 
-static inline ucc_status_t mca_coll_ucc_reduce_init(const void *sbuf, void *rbuf, size_t count,
+static inline ucc_status_t mca_coll_ucc_reduce_iniz(const void *sbuf, void *rbuf, size_t count,
                                                     struct ompi_datatype_t *dtype,
                                                     struct ompi_op_t *op, int root,
                                                     mca_coll_ucc_module_t *ucc_module,
@@ -69,7 +70,7 @@ int mca_coll_ucc_reduce(const void *sbuf, void* rbuf, size_t count,
     ucc_coll_req_h         req;
 
     UCC_VERBOSE(3, "running ucc reduce");
-    COLL_UCC_CHECK(mca_coll_ucc_reduce_init(sbuf, rbuf, count, dtype, op,
+    COLL_UCC_CHECK(mca_coll_ucc_reduce_iniz(sbuf, rbuf, count, dtype, op,
                                             root, ucc_module, &req, NULL));
     COLL_UCC_POST_AND_CHECK(req);
     COLL_UCC_CHECK(coll_ucc_req_wait(req));
@@ -93,7 +94,7 @@ int mca_coll_ucc_ireduce(const void *sbuf, void* rbuf, size_t count,
 
     UCC_VERBOSE(3, "running ucc ireduce");
     COLL_UCC_GET_REQ(coll_req);
-    COLL_UCC_CHECK(mca_coll_ucc_reduce_init(sbuf, rbuf, count, dtype, op, root,
+    COLL_UCC_CHECK(mca_coll_ucc_reduce_iniz(sbuf, rbuf, count, dtype, op, root,
                                             ucc_module, &req, coll_req));
     COLL_UCC_POST_AND_CHECK(req);
     *request = &coll_req->super;
