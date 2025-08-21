@@ -13,9 +13,9 @@
 #include "stddef.h"
 #include "stdint.h"
 
-/* #include <stdint.h> */
-
+#undef MPI_VERSION
 #define MPI_VERSION    5
+#undef MPI_SUBVERSION
 #define MPI_SUBVERSION 0
 
 #define MPI_ABI_VERSION    1
@@ -34,29 +34,29 @@ typedef struct MPI_ABI_Request * MPI_Request;
 typedef struct MPI_ABI_Session * MPI_Session;
 typedef struct MPI_ABI_Win * MPI_Win;
 
-/* /\* MPI_Aint is defined to be intptr_t (or equivalent to it, if compiler support is absent). */
-/*  * The only acceptable alternative to intptr_t is the C89 type equivalent to it. *\/ */
-/* #if !defined(MPI_ABI_Aint) */
-/* #define MPI_ABI_Aint intptr_t */
-/* #endif */
-/* typedef MPI_ABI_Aint MPI_Aint; */
-/* #undef  MPI_ABI_Aint */
+/* MPI_Aint is defined to be intptr_t (or equivalent to it, if compiler support is absent).
+ * The only acceptable alternative to intptr_t is the C89 type equivalent to it. */
+#if !defined(MPI_ABI_Aint)
+#define MPI_ABI_Aint intptr_t
+#endif
+typedef MPI_ABI_Aint MPI_Aint;
+#undef  MPI_ABI_Aint
 
-/* /\* MPI_Offset will be 64b on all relevant systems. */
-/*  * We allow for MPI implementations supporting for 128b filesystems. *\/ */
-/* #if !defined(MPI_ABI_Offset) */
-/* #define MPI_ABI_Offset int64_t */
-/* #endif */
-/* typedef MPI_ABI_Offset MPI_Offset; */
-/* #undef  MPI_ABI_Offset */
+/* MPI_Offset will be 64b on all relevant systems.
+ * We allow for MPI implementations supporting for 128b filesystems. */
+#if !defined(MPI_ABI_Offset)
+#define MPI_ABI_Offset int64_t
+#endif
+typedef MPI_ABI_Offset MPI_Offset;
+#undef  MPI_ABI_Offset
 
-/* /\* MPI_Count must be large enough to hold the larger of MPI_Aint and MPI_Offset. */
-/*  * Platforms where MPI_Aint is larger than MPI_Offset are extremely rare. *\/ */
-/* #if !defined(MPI_ABI_Count) */
-/* #define MPI_ABI_Count MPI_Offset */
-/* #endif */
-/* typedef MPI_ABI_Count MPI_Count; */
-/* #undef  MPI_ABI_Count */
+/* MPI_Count must be large enough to hold the larger of MPI_Aint and MPI_Offset.
+ * Platforms where MPI_Aint is larger than MPI_Offset are extremely rare. */
+#if !defined(MPI_ABI_Count)
+#define MPI_ABI_Count MPI_Offset
+#endif
+typedef MPI_ABI_Count MPI_Count;
+#undef  MPI_ABI_Count
 
 typedef struct {
   int MPI_SOURCE;
@@ -211,3 +211,4 @@ $CATEGORY:TOOL_INFO_IFACE_SOURCE_ORDERINGS$
  * Callback safety requirement levels used in the MPI tool information interface
  */
 $CATEGORY:TOOL_INFO_IFACE_CB_SAFETY_REQ_LEVELS$
+
