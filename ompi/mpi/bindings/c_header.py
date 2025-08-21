@@ -221,6 +221,8 @@ for proc in std.all_iso_c_procedures():
 
 # ================================ Final Output ================================
 output.append("#endif /* _ABI_INTERNAL_ */")
+# === some compilers are finicky about not having empy line at end of include file =====
+output.append("\n")
 
 for i, line in enumerate(output):
     line = line.replace(r"\ldots", "...")
