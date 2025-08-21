@@ -39,7 +39,7 @@
 #include "ompi/dpm/dpm.h"
 #include "ompi/memchecker.h"
 
-PROTOTYPE ERROR_CLASS comm_accept(STRING port_name, INFO info, INT root,
+PROTOTYPE ERROR_CLASS comm_accept(STRING port_name, INFO info, ROOT root,
                                   COMM comm, COMM_OUT newcomm)
 {
     int rank, rc;

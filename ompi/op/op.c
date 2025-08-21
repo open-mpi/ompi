@@ -464,6 +464,7 @@ static void ompi_op_construct(ompi_op_t *new_op)
     new_op->op_type = OMPI_OP_NUM_OF_TYPES;
     new_op->o_flags = 0;
     new_op->o_name[0] = '\0';
+    new_op->datatype_converter = NULL;
 
     /* assign entry in fortran <-> c translation array */
 

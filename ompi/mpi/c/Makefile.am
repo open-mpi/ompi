@@ -47,13 +47,21 @@ if BUILD_MPI_BINDINGS_LAYER
 noinst_LTLIBRARIES += libmpi_c_noprofile.la
 endif
 
-headers = bindings.h
+headers = bindings.h \
+          abi.h \
+          abi_converters.h
 
 #
 # Template/prototype source files used for generating MPI functions
 #
 
 prototype_sources = \
+        abi_get_fortran_info.c.in \
+        abi_set_fortran_info.c.in \
+        abi_get_fortran_booleans.c.in \
+        abi_set_fortran_booleans.c.in \
+        abi_get_info.c.in \
+        abi_get_version.c.in \
         abort.c.in \
         accumulate.c.in \
         add_error_class.c.in \
@@ -72,9 +80,6 @@ prototype_sources = \
         alltoallv_init.c.in \
         alltoallw.c.in \
         alltoallw_init.c.in \
-        attr_delete.c.in \
-        attr_get.c.in \
-        attr_put.c.in \
         barrier.c.in \
         barrier_init.c.in \
         bcast.c.in \
@@ -97,7 +102,6 @@ prototype_sources = \
         close_port.c.in \
         comm_accept.c.in \
         comm_attach_buffer.c.in \
-        comm_c2f.c.in \
         comm_call_errhandler.c.in \
 	comm_compare.c.in \
         comm_connect.c.in \
@@ -111,7 +115,6 @@ prototype_sources = \
         comm_disconnect.c.in \
         comm_dup.c.in \
         comm_dup_with_info.c.in \
-        comm_f2c.c.in \
         comm_flush_buffer.c.in \
         comm_free.c.in \
         comm_free_keyval.c.in \
@@ -144,20 +147,16 @@ prototype_sources = \
 	dist_graph_create.c.in \
 	dist_graph_neighbors.c.in \
 	dist_graph_neighbors_count.c.in \
-        errhandler_c2f.c.in \
-        errhandler_f2c.c.in \
 	errhandler_free.c.in \
 	error_class.c.in \
 	error_string.c.in \
 	exscan.c.in \
 	exscan_init.c.in \
 	fetch_and_op.c.in \
-	file_c2f.c.in \
 	file_call_errhandler.c.in \
 	file_close.c.in \
 	file_create_errhandler.c.in \
 	file_delete.c.in \
-	file_f2c.c.in \
 	file_get_amode.c.in \
 	file_get_atomicity.c.in \
 	file_get_byte_offset.c.in \
@@ -238,11 +237,9 @@ prototype_sources = \
 	graph_neighbors_count.c.in \
 	grequest_complete.c.in \
 	grequest_start.c.in \
-	group_c2f.c.in \
 	group_compare.c.in \
 	group_difference.c.in \
 	group_excl.c.in \
-	group_f2c.c.in \
 	group_free.c.in \
 	group_from_session_pset.c.in \
 	group_incl.c.in \
@@ -271,12 +268,10 @@ prototype_sources = \
         ineighbor_alltoall.c.in \
 	ineighbor_alltoallv.c.in \
 	ineighbor_alltoallw.c.in \
-	info_c2f.c.in \
 	info_create.c.in \
 	info_create_env.c.in \
 	info_delete.c.in \
 	info_dup.c.in \
-	info_f2c.c.in \
 	info_free.c.in \
 	info_get.c.in \
 	info_get_nkeys.c.in \
@@ -306,8 +301,6 @@ prototype_sources = \
 	issend.c.in \
 	is_thread_main.c.in \
 	lookup_name.c.in \
-        message_c2f.c.in \
-        message_f2c.c.in \
 	mprobe.c.in \
 	mrecv.c.in \
 	neighbor_allgather.c.in \
@@ -321,11 +314,9 @@ prototype_sources = \
 	neighbor_alltoallw.c.in \
 	neighbor_alltoallw_init.c.in \
         open_port.c.in \
-	op_c2f.c.in \
 	op_commutative.c.in \
 	op_create.c.in \
 	op_free.c.in \
-	op_f2c.c.in \
 	pack.c.in \
 	pack_external.c.in \
 	pack_external_size.c.in \
@@ -351,8 +342,6 @@ prototype_sources = \
 	reduce_scatter.c.in \
 	reduce_scatter_init.c.in \
 	register_datarep.c.in \
-        request_c2f.c.in \
-        request_f2c.c.in \
 	remove_error_class.c.in \
 	remove_error_code.c.in \
 	remove_error_string.c.in \
@@ -377,11 +366,9 @@ prototype_sources = \
 	sendrecv.c.in \
 	sendrecv_replace.c.in \
 	session_attach_buffer.c.in \
-	session_c2f.c.in \
 	session_call_errhandler.c.in \
 	session_create_errhandler.c.in \
 	session_detach_buffer.c.in \
-	session_f2c.c.in \
 	session_finalize.c.in \
 	session_flush_buffer.c.in \
 	session_get_errhandler.c.in \
@@ -396,12 +383,6 @@ prototype_sources = \
 	ssend_init.c.in \
 	startall.c.in \
 	start.c.in \
-	status_c2f08.c.in \
-	status_c2f.c.in \
-	status_f082c.c.in \
-	status_f082f.c.in \
-	status_f2c.c.in \
-	status_f2f08.c.in \
         status_get_error.c.in \
         status_get_source.c.in \
         status_get_tag.c.in \
@@ -417,7 +398,6 @@ prototype_sources = \
 	test_cancelled.c.in \
 	testsome.c.in \
 	topo_test.c.in \
-	type_c2f.c.in \
 	type_commit.c.in \
 	type_contiguous.c.in \
 	type_create_darray.c.in \
@@ -434,7 +414,6 @@ prototype_sources = \
 	type_create_subarray.c.in \
 	type_delete_attr.c.in \
 	type_dup.c.in \
-	type_f2c.c.in \
 	type_free.c.in \
 	type_free_keyval.c.in \
 	type_get_attr.c.in \
@@ -461,7 +440,6 @@ prototype_sources = \
 	win_allocate.c.in \
 	win_allocate_shared.c.in \
         win_attach.c.in \
-        win_c2f.c.in \
         win_call_errhandler.c.in \
         win_complete.c.in  \
 	win_create.c.in \
@@ -477,7 +455,6 @@ prototype_sources = \
         win_flush_local.c.in \
 	win_free.c.in \
         win_free_keyval.c.in \
-	win_f2c.c.in \
 	win_get_attr.c.in \
 	win_get_errhandler.c.in \
 	win_get_group.c.in \
@@ -497,37 +474,82 @@ prototype_sources = \
 	win_unlock_all.c.in \
 	win_unlock.c.in \
 	win_wait.c.in \
+        wtick.c.in \
         wtime.c.in
 
-EXTRA_DIST = $(prototype_sources)
+prototype_sources_nbc = \
+	type_get_contents.c.in_nbc \
+	type_get_envelope.c.in_nbc
 
-# attr_fn.c contains attribute manipulation functions which do not
-# profiling implications, and so are always built.
+prototype_sources_obc = \
+	type_get_contents_c.c.in_obc \
+	type_get_envelope_c.c.in_obc
+
+# See MPI-5 standard Chapter 20 sections 2 and 4
+prototype_sources_not_in_abi = \
+        attr_delete.c.in \
+        attr_get.c.in \
+        attr_put.c.in \
+        comm_c2f.c.in \
+        errhandler_c2f.c.in \
+        file_c2f.c.in \
+        group_c2f.c.in \
+        info_c2f.c.in \
+        message_c2f.c.in \
+        op_c2f.c.in \
+        request_c2f.c.in \
+        session_c2f.c.in \
+        status_c2f08.c.in \
+        status_c2f.c.in \
+        status_f082c.c.in \
+        status_f082f.c.in \
+        status_f2f08.c.in \
+        type_c2f.c.in \
+        win_c2f.c.in \
+        comm_f2c.c.in \
+        errhandler_f2c.c.in \
+        file_f2c.c.in \
+        group_f2c.c.in \
+        info_f2c.c.in \
+        message_f2c.c.in \
+        op_f2c.c.in \
+        request_f2c.c.in \
+        session_f2c.c.in \
+        status_f2c.c.in \
+        type_f2c.c.in \
+        win_f2c.c.in
+
+EXTRA_DIST = $(prototype_sources) \
+	$(prototype_sources_nbc) \
+	$(prototype_sources_obc) \
+	$(prototype_sources_not_in_abi) \
+	abi_converters.h \
+	abi_converters.c \
+	abi_get_info.c.in \
+        abi.h.in
+
+# functions that do not require profiling implementations.
 libmpi_c_la_SOURCES = \
-        attr_fn.c
-
-# The MPI_Abi_* functions do not require profiling implementations.
-libmpi_c_la_SOURCES += \
-         abi_details.c \
-         abi_supported.c \
-         abi_version.c \
-	 ompi_isendrecv.c \
-	 ompi_sendrecv.c
+        ompi_isendrecv.c \
+        ompi_sendrecv.c \
+        ompi_abi_fortran.c
 
 libmpi_c_la_LIBADD = libmpi_c_profile.la
 if BUILD_MPI_BINDINGS_LAYER
 libmpi_c_la_LIBADD += libmpi_c_noprofile.la
 endif
 
-nobase_include_HEADERS = abi.h standard_abi/mpi.h
+nobase_include_HEADERS = standard_abi/mpi.h
 
 #
 # List of all C files that have profile versions (*_generated.c files were
 # generated from prototype_sources above).
 #
 #
-interface_profile_sources = $(prototype_sources:.c.in=_ompi_generated.c)
-
+interface_profile_sources = $(prototype_sources:.c.in=_ompi_generated.c) \
+	$(prototype_sources_not_in_abi:.c.in=_ompi_generated.c) \
+        $(prototype_sources_nbc:.c.in_nbc=_ompi_generated.c) \
+        $(prototype_sources_obc:.c.in_obc=_ompi_generated.c)
 
 # Conditionally install the header files
 if WANT_INSTALL_HEADERS
@@ -993,12 +1015,29 @@ abi_interface_profile_sources =${interface_profile_sources:%=standard_%}
 # have to deal manually
 #
 extra_interface_profile_sources = \
+        comm_fromint_ompi.c \
+        comm_toint_ompi.c \
+        errhandler_fromint_ompi.c \
+        errhandler_toint_ompi.c \
+        file_fromint_ompi.c \
+        file_toint_ompi.c \
+        group_fromint_ompi.c \
+        group_toint_ompi.c \
+        info_fromint_ompi.c \
+        info_toint_ompi.c \
+        message_fromint_ompi.c \
+        message_toint_ompi.c \
+        op_fromint_ompi.c \
+        op_toint_ompi.c \
         pcontrol.c \
-	type_get_contents.c \
-	type_get_contents_c.c \
-        type_get_envelope.c \
-        type_get_envelope_c.c \
-        wtick.c
+        request_fromint_ompi.c \
+        request_toint_ompi.c \
+        session_fromint_ompi.c \
+        session_toint_ompi.c \
+        type_fromint_ompi.c \
+        type_toint_ompi.c \
+        win_fromint_ompi.c \
+        win_toint_ompi.c
 
 # The following functions were removed from the MPI standard, but are
 # retained for ABI compliance reasons.  They are listed independently
@@ -1009,8 +1048,8 @@ deprecated_interface_profile_sources = \
         errhandler_create.c \
         errhandler_get.c \
         errhandler_set.c \
-	keyval_create.c \
-	keyval_free.c \
+        keyval_create.c \
+        keyval_free.c \
         type_extent.c \
         type_hindexed.c \
         type_hvector.c \
@@ -1035,23 +1074,86 @@ if OMPI_GENERATE_BINDINGS
 	    ompi \
 	    $<
 
-# Non-mangled version
+# Deal with oddballs wrt big count
+type_get_contents_ompi_generated.c: type_get_contents.c.in_nbc
+	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
+	    --builddir $(abs_top_builddir) \
+	    --srcdir $(abs_top_srcdir) \
+	    --output $@ \
+	    c \
+	    source \
+	    ompi \
+	    --suppress_bc \
+	    $<
+
+type_get_envelope_ompi_generated.c: type_get_envelope.c.in_nbc
+	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
+	    --builddir $(abs_top_builddir) \
+	    --srcdir $(abs_top_srcdir) \
+	    --output $@ \
+	    c \
+	    source \
+	    ompi \
+	    --suppress_bc \
+	    $<
+
+type_get_contents_c_ompi_generated.c: type_get_contents_c.c.in_obc
+	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
+	    --builddir $(abs_top_builddir) \
+	    --srcdir $(abs_top_srcdir) \
+	    --output $@ \
+	    c \
+	    source \
+	    ompi \
+	    --suppress_nbc \
+	    $<
+
+type_get_envelope_c_ompi_generated.c: type_get_envelope_c.c.in_obc
+	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
+	    --builddir $(abs_top_builddir) \
+	    --srcdir $(abs_top_srcdir) \
+	    --output $@ \
+	    c \
+	    source \
+	    ompi \
+	    --suppress_nbc \
+	    $<
+
+# Non-mangled version of mpi.h
 standard_abi/mpi.h: $(top_srcdir)/docs/mpi-standard-apis.json $(top_srcdir)/ompi/mpi/bindings/c_header.py
 	mkdir -p standard_abi
 	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/c_header.py \
 	--input $(top_srcdir)/ompi/mpi/c/abi.h.in \
 	--abi-json $(top_srcdir)/docs/mpi-standard-abi.json \
 	--pympistd $(top_srcdir)/3rd-party/pympistandard \
-	--output $(top_srcdir)/ompi/mpi/c/standard_abi/mpi.h
+	--output $@
 
-# Mangled version
-abi.h: $(top_srcdir)/docs/mpi-standard-apis.json $(top_srcdir)/ompi/mpi/bindings/c_header.py
+# Mangled version of mpi.h (abi.h)
+abi.h: $(top_srcdir)/docs/mpi-standard-apis.json $(top_srcdir)/ompi/mpi/bindings/c_header.py abi.h.in
 	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/c_header.py \
 	--input $(top_srcdir)/ompi/mpi/c/abi.h.in \
-	--output $(top_srcdir)/ompi/mpi/c/abi.h \
+	--output $@ \
 	--abi-json $(top_srcdir)/docs/mpi-standard-abi.json \
 	--pympistd-dir $(top_srcdir)/3rd-party/pympistandard \
 	--mangle-names
+
+abi_converters.h: abi.h
+	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
+	    --builddir $(abs_top_builddir) \
+	    --srcdir $(abs_top_srcdir) \
+	    --output $@ \
+	    c \
+	    converters \
+            --type include_file
+
+abi_converters.c: abi.h abi_converters.h
+	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
+	    --builddir $(abs_top_builddir) \
+	    --srcdir $(abs_top_srcdir) \
+	    --output $@ \
+	    c \
+	    converters \
+            --type source_file
 
 %_abi_generated.c: %.c.in
 	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
@@ -1062,9 +1164,54 @@ abi.h: $(top_srcdir)/docs/mpi-standard-apis.json $(top_srcdir)/ompi/mpi/bindings
 	    source \
 	    standard \
 	    $<
+
+# Deal with oddballs wrt big count
+type_get_contents_abi_generated.c: type_get_contents.c.in_nbc
+	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
+	    --builddir $(abs_top_builddir) \
+	    --srcdir $(abs_top_srcdir) \
+	    --output $@ \
+	    c \
+	    source \
+	    standard \
+	    --suppress_bc \
+	    $<
+
+type_get_envelope_abi_generated.c: type_get_envelope.c.in_nbc
+	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
+	    --builddir $(abs_top_builddir) \
+	    --srcdir $(abs_top_srcdir) \
+	    --output $@ \
+	    c \
+	    source \
+	    standard \
+	    --suppress_bc \
+	    $<
+
+type_get_contents_c_abi_generated.c: type_get_contents_c.c.in_obc
+	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
+	    --builddir $(abs_top_builddir) \
+	    --srcdir $(abs_top_srcdir) \
+	    --output $@ \
+	    c \
+	    source \
+	    standard \
+	    --suppress_nbc \
+	    $<
+
+type_get_envelope_c_abi_generated.c: type_get_envelope_c.c.in_obc
+	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
+	    --builddir $(abs_top_builddir) \
+	    --srcdir $(abs_top_srcdir) \
+	    --output $@ \
+	    c \
+	    source \
+	    standard \
+	    --suppress_nbc \
+	    $<
 endif
 
-MAINTAINERCLEANFILES = *_generated.c $(nobase_include_HEADERS)
+MAINTAINERCLEANFILES = *_generated.c abi_get_info.c abi_converters.c $(nobase_include_HEADERS)
 if OMPI_STANDARD_ABI
 include Makefile_abi.include
 endif
