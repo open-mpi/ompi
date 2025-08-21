@@ -1,0 +1,28 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
+/*
+ * Copyright (c) 2012-2018 Los Alamos National Security, LLC. All rights
+ *                         reserved.
+ * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2025      Triad National Security, LLC. All rights
+ *                         reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+#include "ompi_config.h"
+
+#include "ompi/mpi/tool/mpit-internal.h"
+
+PROTOTYPE ERROR_CLASS source_get_info (INT source_index, STRING_OUT name, INT_OUT name_len, STRING_OUT desc, INT_OUT desc_len, 
+                                       SOURCE_ORDER_OUT ordering, ELEMENT_COUNT ticks_per_second, ELEMENT_COUNT max_ticks,
+                                       INFO_OUT info)
+{
+    if (!mpit_is_initialized ()) {
+        return MPI_T_ERR_NOT_INITIALIZED;
+    }
+
+    return MPI_T_ERR_INVALID_INDEX;
+}

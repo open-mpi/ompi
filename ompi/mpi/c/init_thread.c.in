@@ -16,7 +16,7 @@
  * Copyright (c) 2015-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2024      Triad National Security, LLC. All rights
+ * Copyright (c) 2024-2026 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2025      Advanced Micro Devices, Inc. All rights reserved.
  * $COPYRIGHT$
@@ -36,9 +36,12 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/constants.h"
 #include "ompi/mca/hook/base/base.h"
+#include "ompi/instance/instance.h"
+#include "ompi/mpiext/mpiext.h"
 
-PROTOTYPE ERROR_CLASS init_thread(INT_OUT argc, ARGV argv, INT required,
-                                  INT_OUT provided)
+
+PROTOTYPE ERROR_CLASS init_thread(INT_OUT argc, ARGV argv, TS_LEVEL required,
+                                  TS_LEVEL_OUT provided)
 {
     int err, safe_required = MPI_THREAD_SERIALIZED;
     bool err_arg_required = false;
@@ -65,6 +68,14 @@ PROTOTYPE ERROR_CLASS init_thread(INT_OUT argc, ARGV argv, INT required,
     err_arg_required |= (OMPI_SUCCESS > ompi_getenv_mpi_thread_level(&safe_required));
 
     *provided = safe_required;
+
+#if !OMPI_ABI_SRC
+    /* Register the mpiext initialization function with libopen_mpi.
+     * This breaks the circular dependency: libopen_mpi calls ompi_mpiext_init indirectly
+     * through the registered function pointer, avoiding a direct symbol dependency on libmpi.
+     * MPI extensions are only supported in the OMPI ABI, not the MPI Forum ABI. */
+    ompi_mpi_instance_register_mpiext_init(ompi_mpiext_init);
+#endif
 
     /* Call the back-end initialization function (we need to put as
        little in this function as possible so that if it's profiled, we

@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2018-2024 Triad National Security, LLC. All rights
+ * Copyright (c) 2018-2026 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -16,6 +16,7 @@
 #include "ompi/info/info.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/instance/instance.h"
+#include "ompi/mpiext/mpiext.h"
 
 PROTOTYPE ERROR_CLASS session_init (INFO info, ERRHANDLER errhandler, SESSION_OUT session)
 {
@@ -50,6 +51,14 @@ PROTOTYPE ERROR_CLASS session_init (INFO info, ERRHANDLER errhandler, SESSION_OU
             OBJ_RELEASE(info_value);
         }
     }
+
+#if !OMPI_ABI_SRC
+    /* Register the mpiext initialization function with libopen_mpi.
+     * This breaks the circular dependency: libopen_mpi calls ompi_mpiext_init indirectly
+     * through the registered function pointer, avoiding a direct symbol dependency on libmpi.
+     * MPI extensions are only supported in the OMPI ABI, not the MPI Forum ABI. */
+    ompi_mpi_instance_register_mpiext_init(ompi_mpiext_init);
+#endif
 
     rc = ompi_mpi_instance_init (ts_level, &info->super, errhandler, session, 0, NULL);
     /* if an error occurred raise it on the null session */

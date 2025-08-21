@@ -9,7 +9,7 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
- * Copyright (c) 2024      Triad National Security, LLC. All rights
+ * Copyright (c) 2024-2026 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -27,8 +27,10 @@
 #include "ompi/mca/topo/topo.h"
 #include "ompi/mca/topo/base/base.h"
 
-PROTOTYPE ERROR_CLASS dist_graph_create(COMM comm_old, INT n, INT_ARRAY sources,
-                                        INT_ARRAY degrees, INT_ARRAY destinations, INT_ARRAY weights,
+// sources and desintations are INT (not SOURCE) because MPI_Dist_graph_create 
+// does not accept MPI_PROC_NULL/MPI_ANY_SOURCE for these arguments
+PROTOTYPE ERROR_CLASS dist_graph_create(COMM comm_old, INT n, INT_ARRAY sources:n,
+                                        INT_ARRAY degrees, INT_ARRAY destinations, WEIGHTS weights,
                                         INFO info, INT reorder, COMM_OUT newcomm)
 {
     mca_topo_base_module_t* topo;

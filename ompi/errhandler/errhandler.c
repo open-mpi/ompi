@@ -17,7 +17,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
- * Copyright (c) 2018-2021 Triad National Security, LLC. All rights
+ * Copyright (c) 2018-2026 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -208,12 +208,6 @@ int ompi_errhandler_init(void)
                    "MPI_ERRORS_ABORT",
                    sizeof(ompi_mpi_errors_abort.eh.eh_name));
 
-  /* Lets initialize the initial error handler if not already done */
-  char *env = getenv("OMPI_MCA_mpi_initial_errhandler");
-  if( NULL != env ) {
-    ompi_process_info.initial_errhandler = strndup(env, MPI_MAX_INFO_VAL);
-  }
-
   ompi_initial_errhandler_init();
   ompi_mpi_instance_append_finalize (ompi_errhandler_finalize);
 
@@ -256,7 +250,8 @@ void ompi_errhandler_free (ompi_errhandler_t *errhandler)
 
 ompi_errhandler_t *ompi_errhandler_create(ompi_errhandler_type_t object_type,
                                           ompi_errhandler_generic_handler_fn_t *func,
-                                          ompi_errhandler_lang_t lang)
+                                          ompi_errhandler_lang_t lang,
+                                          ompi_errhandler_converter_fn_t *converter)
 {
     ompi_errhandler_t *new_errhandler;
     int ret;
@@ -299,6 +294,7 @@ ompi_errhandler_t *ompi_errhandler_create(ompi_errhandler_type_t object_type,
             default:
                 break;
             }
+            new_errhandler->eh_converter_fn = converter;
         }
 
         if (NULL != new_errhandler) {
@@ -614,6 +610,7 @@ static void ompi_errhandler_construct(ompi_errhandler_t *new_errhandler)
   new_errhandler->eh_win_fn       = NULL;
   new_errhandler->eh_file_fn      = NULL;
   new_errhandler->eh_fort_fn      = NULL;
+  new_errhandler->eh_converter_fn = NULL;
 
   memset (new_errhandler->eh_name, 0, MPI_MAX_OBJECT_NAME);
 }
@@ -627,9 +624,9 @@ static void ompi_errhandler_destruct(ompi_errhandler_t *errhandler)
   /* reset the ompi_errhandler_f_to_c_table entry - make sure that the
      entry is in the table */
 
-  if (NULL!= opal_pointer_array_get_item(&ompi_errhandler_f_to_c_table,
+    if (NULL!= opal_pointer_array_get_item(&ompi_errhandler_f_to_c_table,
                                         errhandler->eh_f_to_c_index)) {
-    opal_pointer_array_set_item(&ompi_errhandler_f_to_c_table,
-                                errhandler->eh_f_to_c_index, NULL);
-  }
+        opal_pointer_array_set_item(&ompi_errhandler_f_to_c_table,
+                                    errhandler->eh_f_to_c_index, NULL);
+    }
 }
