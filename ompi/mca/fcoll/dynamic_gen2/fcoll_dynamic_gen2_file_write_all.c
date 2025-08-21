@@ -26,6 +26,7 @@
  */
 
 #include "ompi_config.h"
+#include "ompi/runtime/mpiruntime.h"
 #include "fcoll_dynamic_gen2.h"
 
 #include "mpi.h"
@@ -255,7 +256,7 @@ int mca_fcoll_dynamic_gen2_file_write_all (struct ompio_file_t *fh,
      ** 3. Determine the total amount of data to be written and no. of cycles
      **************************************************************************/
 #if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
-    start_comm_time = MPI_Wtime();
+    start_comm_time = ompi_wtime();
 #endif
     if ( 1 == mca_fcoll_dynamic_gen2_num_groups ) {
         ret = fh->f_comm->c_coll->coll_allreduce (MPI_IN_PLACE,
@@ -303,7 +304,7 @@ int mca_fcoll_dynamic_gen2_file_write_all (struct ompio_file_t *fh,
         }
     }
 #if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
-    end_comm_time = MPI_Wtime();
+    end_comm_time = ompi_wtime();
     comm_time += (end_comm_time - start_comm_time);
 #endif
 
@@ -325,7 +326,7 @@ int mca_fcoll_dynamic_gen2_file_write_all (struct ompio_file_t *fh,
     }
 
 #if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
-    start_comm_time = MPI_Wtime();
+    start_comm_time = ompi_wtime();
 #endif
     if ( 1 == mca_fcoll_dynamic_gen2_num_groups ) {
         ret = fh->f_comm->c_coll->coll_allgather(broken_counts,
@@ -353,7 +354,7 @@ int mca_fcoll_dynamic_gen2_file_write_all (struct ompio_file_t *fh,
         goto exit;
     }
 #if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
-    end_comm_time = MPI_Wtime();
+    end_comm_time = ompi_wtime();
     comm_time += (end_comm_time - start_comm_time);
 #endif
 
@@ -411,7 +412,7 @@ int mca_fcoll_dynamic_gen2_file_write_all (struct ompio_file_t *fh,
         }
     
 #if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
-        start_comm_time = MPI_Wtime();
+        start_comm_time = ompi_wtime();
 #endif
         if ( 1 == mca_fcoll_dynamic_gen2_num_groups ) {
             OMPI_COUNT_ARRAY_INIT(&fview_count_desc, aggr_data[i]->fview_count);
@@ -443,7 +444,7 @@ int mca_fcoll_dynamic_gen2_file_write_all (struct ompio_file_t *fh,
             goto exit;
         }
 #if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
-        end_comm_time = MPI_Wtime();
+        end_comm_time = ompi_wtime();
         comm_time += (end_comm_time - start_comm_time);
 #endif
         
@@ -548,7 +549,7 @@ int mca_fcoll_dynamic_gen2_file_write_all (struct ompio_file_t *fh,
         }
     
 #if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
-        start_exch = MPI_Wtime();
+        start_exch = ompi_wtime();
 #endif
     }    
 
@@ -606,14 +607,14 @@ int mca_fcoll_dynamic_gen2_file_write_all (struct ompio_file_t *fh,
         /* Write data for iteration i-1 */
         for ( i=0; i<dynamic_gen2_num_io_procs; i++ ) {
 #if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
-            start_write_time = MPI_Wtime();
+            start_write_time = ompi_wtime();
 #endif
             ret = write_init (fh, aggregators[i], aggr_data[i] );
             if (OMPI_SUCCESS != ret){
                 goto exit;
             }            
 #if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
-            end_write_time = MPI_Wtime();
+            end_write_time = ompi_wtime();
             write_time += end_write_time - start_write_time;
 #endif
         }
@@ -635,14 +636,14 @@ int mca_fcoll_dynamic_gen2_file_write_all (struct ompio_file_t *fh,
         /* Write data for iteration i=cycles-1 */
         for ( i=0; i<dynamic_gen2_num_io_procs; i++ ) {
 #if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
-            start_write_time = MPI_Wtime();
+            start_write_time = ompi_wtime();
 #endif
             ret = write_init (fh, aggregators[i], aggr_data[i] );
             if (OMPI_SUCCESS != ret){
                 goto exit;
             }                    
 #if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
-            end_write_time = MPI_Wtime();
+            end_write_time = ompi_wtime();
             write_time += end_write_time - start_write_time;
 #endif
         }
@@ -650,7 +651,7 @@ int mca_fcoll_dynamic_gen2_file_write_all (struct ompio_file_t *fh,
 
         
 #if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
-    end_exch = MPI_Wtime();
+    end_exch = ompi_wtime();
     exch_write += end_exch - start_exch;
     nentry.time[0] = write_time;
     nentry.time[1] = comm_time;
@@ -1151,7 +1152,7 @@ static int shuffle_init ( int index, int cycles, int aggregator, int rank, mca_i
                    rank,global_count, bytes_sent);
 #endif
 //#if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
-//            start_comm_time = MPI_Wtime();
+//            start_comm_time = ompi_wtime();
 //#endif
             /*************************************************************************
              *** 7e. Perform the actual communication
@@ -1275,7 +1276,7 @@ static int shuffle_init ( int index, int cycles, int aggregator, int rank, mca_i
 #endif
     
 //#if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
-//    end_comm_time = MPI_Wtime();
+//    end_comm_time = ompi_wtime();
 //    comm_time += (end_comm_time - start_comm_time);
 //#endif
     /**********************************************************

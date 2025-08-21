@@ -18,6 +18,7 @@
 #include "opal/mca/threads/threads.h"
 
 #include "ompi/runtime/params.h"
+#include "ompi/runtime/mpiruntime.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/bml/bml.h"
@@ -261,7 +262,7 @@ int ompi_comm_start_detector(ompi_communicator_t* comm) {
     comm_detector_t* detector = &comm_world_detector;
 
     int rank, np;
-    startdate = PMPI_Wtime();
+    startdate = ompi_wtime();
     detector->comm = comm;
     np = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
@@ -274,7 +275,7 @@ int ompi_comm_start_detector(ompi_communicator_t* comm) {
     }
     detector->hb_lastpeek = startdate;
     detector->hb_sstamp = 0.;
-    detector->hb_rstamp = PMPI_Wtime()+comm_heartbeat_timeout+1.+log((double)np); /* give some slack for MPI_Init */
+    detector->hb_rstamp = ompi_wtime()+comm_heartbeat_timeout+1.+log((double)np); /* give some slack for MPI_Init */
 
     detector->hb_rdma_bml_btl_observer = NULL;
     detector->hb_rdma_bml_btl_observing = NULL;
@@ -396,7 +397,7 @@ static int fd_heartbeat_request(comm_detector_t* detector) {
         free(msg);
         break;
     }
-    detector->hb_rstamp = PMPI_Wtime()+detector->hb_timeout; /* we add one timeout slack to account for the send time */
+    detector->hb_rstamp = ompi_wtime()+detector->hb_timeout; /* we add one timeout slack to account for the send time */
     return ret;
 }
 
@@ -463,7 +464,7 @@ static int fd_heartbeat_request_cb(ompi_communicator_t* comm, ompi_comm_heartbea
 static void fd_event_cb(int fd, short flags, void* pdetector)
 {
     comm_detector_t* detector = pdetector;
-    double stamp = PMPI_Wtime();
+    double stamp = ompi_wtime();
     double lastpeek = detector->hb_lastpeek;
     detector->hb_lastpeek = stamp;
 
@@ -661,7 +662,7 @@ static int fd_heartbeat_send(comm_detector_t* detector) {
     if( OPAL_PROC_ON_LOCAL_NODE(ompi_comm_peer_lookup(comm, detector->hb_observer)->super.proc_flags) ) return OMPI_SUCCESS;
 #endif
 
-    double now = PMPI_Wtime();
+    double now = ompi_wtime();
     if( 0. != detector->hb_sstamp
      && (now - detector->hb_sstamp) >= 2.*detector->hb_period ) {
         opal_output_verbose(1, ompi_ftmpi_output_handle, "%s %s: MISSED my SEND %d deadline by %.1e, this could trigger a false suspicion for me.",
@@ -708,7 +709,7 @@ static int fd_heartbeat_recv_cb(ompi_communicator_t* comm, ompi_comm_heartbeat_m
                              OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), __func__, msg->from, ompi_comm_print_cid(comm), comm->c_epoch, detector->hb_observing ));
     }
     else {
-        double stamp = PMPI_Wtime();
+        double stamp = ompi_wtime();
         double grace = detector->hb_timeout - (stamp - detector->hb_rstamp);
         OPAL_OUTPUT_VERBOSE((9, ompi_ftmpi_output_handle,
                              "%s %s: Received heartbeat from %d on communicator %s:%d at timestamp %g (remained %.1e of %.1e before suspecting)",

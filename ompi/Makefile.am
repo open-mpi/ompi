@@ -164,8 +164,14 @@ libopen_mpi_la_LIBADD = \
         $(OMPI_LIBMPI_EXTRA_LIBS)
 libopen_mpi_la_DEPENDENCIES = $(libopen_mpi_la_LIBADD)
 
+# $(OMPI_NO_UNDEFINED_LDFLAGS) makes an unresolved symbol in libopen_mpi a
+# hard link error.  libmpi is deliberately not on libopen_mpi's link line,
+# so back-end code that calls a public MPI_* entry point fails to link
+# here -- which is exactly what we want, because that dependency runs the
+# wrong way.  See config/ompi_setup_layering_checks.m4.
 libopen_mpi_la_LDFLAGS = \
        -version-info $(libopen_mpi_so_version) \
+        $(OMPI_NO_UNDEFINED_LDFLAGS) \
         $(OMPI_LIBMPI_EXTRA_LDFLAGS)
 
 # Build the main MPI library
@@ -233,6 +239,26 @@ include mpiext/Makefile.am
 include mca/Makefile.am
 include util/Makefile.am
 include instance/Makefile.am
+
+# Enforce Open MPI's library layering rule: libopen_mpi is the lower layer,
+# and libmpi / libmpi_abi are the thin front-ends above it.  libopen_mpi
+# must therefore never reference the public MPI_* / PMPI_* / MPIX_* /
+# PMPIX_* entry points or the OMPI_* extensions, all of which are defined
+# in the layer above.  Doing so creates a circular library dependency.
+#
+# $(OMPI_NO_UNDEFINED_LDFLAGS) already catches this at link time on
+# platforms whose linker can reject undefined symbols in a shared library.
+# This check is the authoritative one, though, because it also covers
+# static (--disable-shared) builds -- which have no link step at all -- and
+# because it still fires if someone "fixes" a link error by putting libmpi
+# on libopen_mpi's link line, which is precisely the regression we are
+# guarding against.
+all-local: check-ompi-layering
+
+.PHONY: check-ompi-layering
+check-ompi-layering: libopen_mpi.la
+	$(AM_V_at)$(SHELL) $(top_srcdir)/config/ompi_check_layering.sh "$(NM)" \
+	    `echo .libs/libopen_mpi.a .libs/libopen_mpi*.so* .libs/libopen_mpi*.dylib`
 
 distclean-local:
 	rm -f mpiext/static-components.h

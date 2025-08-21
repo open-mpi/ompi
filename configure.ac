@@ -1358,6 +1358,12 @@ m4_ifdef([project_ompi],[CXXCPPFLAGS="$CXX_INCLUDES $CXXCPPFLAGS"])
 # versions without optimization for debugger modules).
 
 m4_ifdef([project_ompi], [OMPI_SETUP_DEBUGGER_FLAGS])
+
+# Find the linker flag (if any) that makes an unresolved symbol in a
+# shared library a hard error, so that a layering violation in
+# libopen_mpi fails at link time.
+m4_ifdef([project_ompi], [OMPI_SETUP_LAYERING_CHECKS])
+
 #
 # Delayed the substitution of CFLAGS and friends until now because
 # they may have been modified throughout the course of this script.

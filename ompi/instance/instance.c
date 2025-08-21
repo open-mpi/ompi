@@ -28,6 +28,7 @@
 
 #include "ompi/mca/pml/pml.h"
 #include "ompi/runtime/params.h"
+#include "ompi/runtime/mpiruntime.h"
 
 #include "ompi/interlib/interlib.h"
 #include "ompi/communicator/communicator.h"
@@ -40,8 +41,6 @@
 #include "ompi/op/op.h"
 #include "ompi/dpm/dpm.h"
 #include "ompi/file/file.h"
-#include "ompi/mpiext/mpiext.h"
-
 #include "ompi/mca/hook/base/base.h"
 #include "ompi/mca/op/base/base.h"
 #include "opal/mca/allocator/base/base.h"
@@ -86,6 +85,20 @@ ompi_instance_t *ompi_mpi_instance_default = NULL;
  *         the MPI initialization.
  */
 struct timespec ompi_wtime_time_origin = {.tv_sec = 0};
+
+double ompi_wtime(void)
+{
+    double wtime;
+
+    // We intentionally don't use the OPAL timer framework here.  See
+    // https://github.com/open-mpi/ompi/issues/3003 for more details.
+    struct timespec tp;
+    (void) opal_clock_gettime(&tp);
+    wtime  = (double)(tp.tv_nsec - ompi_wtime_time_origin.tv_nsec)/1.0e+9;
+    wtime += (tp.tv_sec - ompi_wtime_time_origin.tv_sec);
+
+    return wtime;
+}
 
 enum {
     OMPI_INSTANCE_INITIALIZING = -1,
@@ -168,6 +181,17 @@ opal_pointer_array_t ompi_instance_f_to_c_table = {{0}};
 
 static size_t ompi_default_pmix_err_handler = 0;
 static size_t ompi_ulfm_pmix_err_handler = 0;
+
+/*
+ * MPI extensions initialization function pointer
+ * This is registered by libmpi to avoid circular dependency
+ */
+static ompi_mpiext_init_fn_t ompi_registered_mpiext_init_fn = NULL;
+
+void ompi_mpi_instance_register_mpiext_init(ompi_mpiext_init_fn_t init_fn)
+{
+    ompi_registered_mpiext_init_fn = init_fn;
+}
 
 static int ompi_instance_print_error (const char *error, int ret)
 {
@@ -834,8 +858,13 @@ static int ompi_mpi_instance_init_common (int argc, char **argv)
        the user's code.  Setup the connections between procs and warm
        them up with simple sends, if requested */
 
-    if (OMPI_SUCCESS != (ret = ompi_mpiext_init())) {
-        return ompi_instance_print_error ("ompi_mpiext_init", ret);
+    /* Call the registered mpiext init function if available.
+     * MPI extensions are only supported in the OMPI ABI, not the MPI Forum ABI.
+     * The function is registered by libmpi at load time via a library constructor. */
+    if (ompi_registered_mpiext_init_fn != NULL) {
+        if (OMPI_SUCCESS != (ret = ompi_registered_mpiext_init_fn())) {
+            return ompi_instance_print_error ("ompi_mpiext_init", ret);
+        }
     }
 
     /* Initialize the registered datarep list to be empty */
