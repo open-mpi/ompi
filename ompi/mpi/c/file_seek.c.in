@@ -12,7 +12,7 @@
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2024      Triad National Security, LLC. All rights
+ * Copyright (c) 2024-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -28,7 +28,7 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/file/file.h"
 
-PROTOTYPE ERROR_CLASS file_seek(FILE fh, OFFSET offset, INT whence)
+PROTOTYPE ERROR_CLASS file_seek(FILE fh, OFFSET offset, WHENCE whence)
 {
     int rc;
 

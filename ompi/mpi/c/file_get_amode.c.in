@@ -12,7 +12,7 @@
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2024      Triad National Security, LLC. All rights
+ * Copyright (c) 2024-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -28,7 +28,7 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/file/file.h"
 
-PROTOTYPE ERROR_CLASS file_get_amode(FILE fh, INT_OUT amode)
+PROTOTYPE ERROR_CLASS file_get_amode(FILE fh, MODE_BITS_OUT amode)
 {
     int rc;
 

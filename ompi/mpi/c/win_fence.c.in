@@ -32,7 +32,7 @@
 #include "ompi/win/win.h"
 #include "ompi/mca/osc/osc.h"
 
-PROTOTYPE ERROR_CLASS win_fence(INT mpi_assert, WIN win)
+PROTOTYPE ERROR_CLASS win_fence(RMA_MODE_BITS mpi_assert, WIN win)
 {
     int rc;
 

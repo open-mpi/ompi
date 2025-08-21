@@ -304,6 +304,7 @@ constants = {
     'MPI_ERR_ERRHANDLER': 80,
     'MPI_T_ERR_NOT_ACCESSIBLE': 81,
     'MPI_T_ERR_NOT_SUPPORTED': 82,
+    'MPI_ERR_ABI': 83,
     'MPI_ERR_LASTCODE': 92,
     'MPI_IDENT': 0,
     'MPI_CONGRUENT': 1,

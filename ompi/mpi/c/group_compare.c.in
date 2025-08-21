@@ -32,7 +32,7 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/proc/proc.h"
 
-PROTOTYPE ERROR_CLASS group_compare(GROUP group1, GROUP group2, INT_OUT result)
+PROTOTYPE ERROR_CLASS group_compare(GROUP group1, GROUP group2, COMM_CMP_OUT result)
 {
     int return_value = MPI_SUCCESS;
 

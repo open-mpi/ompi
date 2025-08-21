@@ -26,7 +26,7 @@
 #include "ompi/runtime/ompi_spc.h"
 
 PROTOTYPE ERROR_CLASS ibcast(BUFFER_OUT buffer, COUNT count, DATATYPE datatype,
-                             INT root, COMM comm,  REQUEST_INOUT request)
+                             ROOT root, COMM comm,  REQUEST_INOUT request)
 {
     int err;
 
