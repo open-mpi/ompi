@@ -3,6 +3,7 @@
  * Copyright (c) 2021 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2022 NVIDIA Corporation. All rights reserved.
  * Copyright (c) 2024 NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2025      Fujitsu Limited. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -143,6 +144,63 @@ static ucc_coll_type_t mca_coll_ucc_str_to_type(const char *str)
     return UCC_COLL_TYPE_LAST;
 }
 
+/* is a persistent collective */
+static inline int mca_coll_ucc_init_cts_is_p(const char *cp, char *bp, size_t bz)
+{
+    size_t len = strlen(cp), len_suffix = sizeof("_init") - 1;
+
+    if ((bz > 0) && (bp != 0)) {
+        bp[0] = '\0';
+    }
+    /* check if it is a persistent collective */
+    if (len > len_suffix) {
+        size_t blen = len - len_suffix;
+        const char *cp_suffix = &cp[blen];
+
+        if (0 == strcmp(cp_suffix, "_init")) {
+            if ((bz > 0) && (bp != 0)) {
+                if (blen >= bz) {
+                    return 0 /* XXX internal error */;
+                }
+                strncpy(bp, cp, blen);
+                bp[blen] = '\0';
+            }
+            return 1 /* true */;
+        }
+    }
+    return 0 /* false */;
+}
+
+/* is an alias (special) name */
+static inline int mca_coll_ucc_init_cts_is_a(const char *cp, bool disable,
+                                             mca_coll_ucc_component_t *cm)
+{
+    if (0 == strcmp(cp, "colls_b")) { /* all blocking colls */
+        if (disable) {
+            cm->cts_requested &= ~COLL_UCC_CTS;
+        } else {
+            cm->cts_requested |= COLL_UCC_CTS;
+        }
+        return 1 /* true */;
+    } else if ((0 == strcmp(cp, "colls_i")) || (0 == strcmp(cp, "colls_nb"))) {
+        /* all non-blocking colls */
+        if (disable) {
+            cm->nb_cts_requested &= ~COLL_UCC_CTS;
+        } else {
+            cm->nb_cts_requested |= COLL_UCC_CTS;
+        }
+        return 1 /* true */;
+    } else if (0 == strcmp(cp, "colls_p")) { /* all persistent colls */
+        if (disable) {
+            cm->pc_cts_requested &= ~COLL_UCC_CTS;
+        } else {
+            cm->pc_cts_requested |= COLL_UCC_CTS;
+        }
+        return 1 /* true */;
+    }
+    return 0 /* false */;
+}
+
 static void mca_coll_ucc_init_default_cts(void)
 {
     mca_coll_ucc_component_t *cm = &mca_coll_ucc_component;
@@ -157,18 +215,33 @@ static void mca_coll_ucc_init_default_cts(void)
     n_cts                = opal_argv_count(cts);
     cm->cts_requested    = disable ? COLL_UCC_CTS : 0;
     cm->nb_cts_requested = disable ? COLL_UCC_CTS : 0;
+    cm->pc_cts_requested = 0; /* XXX PC currently disabled by default */
     for (i = 0; i < n_cts; i++) {
+        char l_str[64]; /* XXX sizeof("reduce_scatter_block") */
+        size_t l_stz = sizeof(l_str);
+
+        if (0 < mca_coll_ucc_init_cts_is_a(cts[i], disable, cm)) {
+            continue;
+        }
         if (('i' == cts[i][0]) || ('I' == cts[i][0])) {
             /* non blocking collective setting */
             str = cts[i] + 1;
             ct  = &cm->nb_cts_requested;
+        } else if (0 < mca_coll_ucc_init_cts_is_p(cts[i], l_str, l_stz)) {
+            /* persistent collective setting */
+            str = l_str;
+            ct = &cm->pc_cts_requested;
         } else {
             str = cts[i];
             ct  = &cm->cts_requested;
         }
         c = mca_coll_ucc_str_to_type(str);
         if (UCC_COLL_TYPE_LAST == c) {
-            *ct = COLL_UCC_CTS;
+            if (&cm->pc_cts_requested != ct) {
+                *ct = COLL_UCC_CTS;
+            } else {
+                *ct = 0; /* XXX PC currently disabled by default */
+            }
             break;
         }
         if (disable) {

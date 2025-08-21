@@ -425,6 +425,12 @@ static inline ucc_ep_map_t get_rank_map(struct ompi_communicator_t *comm)
                 MCA_COLL_INSTALL_API(__comm, i##__api, mca_coll_ucc_i##__api, &__ucc_module->super, "ucc");                                \
                 (__ucc_module)->super.coll_i##__api = mca_coll_ucc_i##__api;                                                               \
             }                                                                                                                              \
+            if (mca_coll_ucc_component.pc_cts_requested & UCC_COLL_TYPE_##__COLL)                                                          \
+            {                                                                                                                              \
+                MCA_COLL_SAVE_API(__comm, __api##_init, (__ucc_module)->previous_##__api##_init, (__ucc_module)->previous_##__api##_init_module, "ucc"); \
+                MCA_COLL_INSTALL_API(__comm, __api##_init, mca_coll_ucc_##__api##_init, &__ucc_module->super, "ucc");                      \
+                (__ucc_module)->super.coll_##__api##_init = mca_coll_ucc_##__api##_init;                                                   \
+            }                                                                                                                              \
         }                                                                                                                                  \
     } while (0)
 
@@ -559,11 +565,32 @@ mca_coll_ucc_module_disable(mca_coll_base_module_t *module,
     UCC_UNINSTALL_COLL_API(comm, ucc_module, reduce);
     UCC_UNINSTALL_COLL_API(comm, ucc_module, ireduce);
     UCC_UNINSTALL_COLL_API(comm, ucc_module, gather);
+    /* UCC_UNINSTALL_COLL_API(comm, ucc_module, igather); */
     UCC_UNINSTALL_COLL_API(comm, ucc_module, gatherv);
+    /* UCC_UNINSTALL_COLL_API(comm, ucc_module, igatherv); */
     UCC_UNINSTALL_COLL_API(comm, ucc_module, reduce_scatter_block);
+    /* UCC_UNINSTALL_COLL_API(comm, ucc_module, ireduce_scatter_block); */
     UCC_UNINSTALL_COLL_API(comm, ucc_module, reduce_scatter);
+    /* UCC_UNINSTALL_COLL_API(comm, ucc_module, ireduce_scatter); */
     UCC_UNINSTALL_COLL_API(comm, ucc_module, scatter);
+    /* UCC_UNINSTALL_COLL_API(comm, ucc_module, iscatter); */
     UCC_UNINSTALL_COLL_API(comm, ucc_module, scatterv);
+    /* UCC_UNINSTALL_COLL_API(comm, ucc_module, iscatterv); */
+
+    UCC_UNINSTALL_COLL_API(comm, ucc_module, allreduce_init);
+    UCC_UNINSTALL_COLL_API(comm, ucc_module, barrier_init);
+    UCC_UNINSTALL_COLL_API(comm, ucc_module, bcast_init);
+    UCC_UNINSTALL_COLL_API(comm, ucc_module, alltoall_init);
+    UCC_UNINSTALL_COLL_API(comm, ucc_module, alltoallv_init);
+    UCC_UNINSTALL_COLL_API(comm, ucc_module, allgather_init);
+    UCC_UNINSTALL_COLL_API(comm, ucc_module, allgatherv_init);
+    UCC_UNINSTALL_COLL_API(comm, ucc_module, reduce_init);
+    UCC_UNINSTALL_COLL_API(comm, ucc_module, gather_init);
+    UCC_UNINSTALL_COLL_API(comm, ucc_module, gatherv_init);
+    UCC_UNINSTALL_COLL_API(comm, ucc_module, reduce_scatter_block_init);
+    UCC_UNINSTALL_COLL_API(comm, ucc_module, reduce_scatter_init);
+    UCC_UNINSTALL_COLL_API(comm, ucc_module, scatter_init);
+    UCC_UNINSTALL_COLL_API(comm, ucc_module, scatterv_init);
 
     return OMPI_SUCCESS;
 }

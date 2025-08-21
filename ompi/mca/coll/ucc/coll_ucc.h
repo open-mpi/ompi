@@ -62,6 +62,7 @@ struct mca_coll_ucc_component_t {
     ucc_lib_attr_t                  ucc_lib_attr;
     ucc_coll_type_t                 cts_requested;
     ucc_coll_type_t                 nb_cts_requested;
+    ucc_coll_type_t                 pc_cts_requested;
     ucc_context_h                   ucc_context;
     opal_free_list_t                requests;
 };
