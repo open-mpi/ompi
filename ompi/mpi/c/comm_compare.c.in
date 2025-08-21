@@ -29,7 +29,7 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/memchecker.h"
 
-PROTOTYPE ERROR_CLASS comm_compare(COMM comm1, COMM comm2, INT_OUT result)
+PROTOTYPE ERROR_CLASS comm_compare(COMM comm1, COMM comm2, COMM_CMP_OUT result)
 {
     int rc;
 

@@ -256,7 +256,8 @@ void ompi_errhandler_free (ompi_errhandler_t *errhandler)
 
 ompi_errhandler_t *ompi_errhandler_create(ompi_errhandler_type_t object_type,
                                           ompi_errhandler_generic_handler_fn_t *func,
-                                          ompi_errhandler_lang_t lang)
+                                          ompi_errhandler_lang_t lang,
+                                          ompi_errhandler_converter_fn_t *converter)
 {
     ompi_errhandler_t *new_errhandler;
     int ret;
@@ -298,6 +299,11 @@ ompi_errhandler_t *ompi_errhandler_create(ompi_errhandler_type_t object_type,
                 break;
             default:
                 break;
+            }
+            if (NULL != converter) {
+                new_errhandler->eh_converter_fn = converter;
+            } else {
+                new_errhandler->eh_converter_fn = NULL;
             }
         }
 
@@ -627,9 +633,9 @@ static void ompi_errhandler_destruct(ompi_errhandler_t *errhandler)
   /* reset the ompi_errhandler_f_to_c_table entry - make sure that the
      entry is in the table */
 
-  if (NULL!= opal_pointer_array_get_item(&ompi_errhandler_f_to_c_table,
+    if (NULL!= opal_pointer_array_get_item(&ompi_errhandler_f_to_c_table,
                                         errhandler->eh_f_to_c_index)) {
-    opal_pointer_array_set_item(&ompi_errhandler_f_to_c_table,
-                                errhandler->eh_f_to_c_index, NULL);
-  }
+        opal_pointer_array_set_item(&ompi_errhandler_f_to_c_table,
+                                    errhandler->eh_f_to_c_index, NULL);
+    }
 }

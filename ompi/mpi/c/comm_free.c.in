@@ -28,7 +28,7 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/memchecker.h"
 
-PROTOTYPE ERROR_CLASS comm_free(COMM_OUT comm)
+PROTOTYPE ERROR_CLASS comm_free(COMM_INOUT comm)
 {
     int ret;
 

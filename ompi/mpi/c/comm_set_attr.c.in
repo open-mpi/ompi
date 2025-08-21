@@ -30,7 +30,11 @@
 #include "ompi/attribute/attribute.h"
 #include "ompi/memchecker.h"
 
-PROTOTYPE ERROR_CLASS comm_set_attr(COMM comm, INT comm_keyval,
+/*
+ * we use BUFFER type here because for some reason the
+ * standard uses void * for attribute_val rather than const void *.
+ */
+PROTOTYPE ERROR_CLASS comm_set_attr(COMM comm, ATTR_KEY comm_keyval,
                                     BUFFER_OUT attribute_val)
 {
     int ret;

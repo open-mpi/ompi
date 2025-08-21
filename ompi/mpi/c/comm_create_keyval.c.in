@@ -14,7 +14,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
- * Copyright (c) 2024      Triad National Security, LLC. All rights
+ * Copyright (c) 2024-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -33,7 +33,7 @@
 
 PROTOTYPE ERROR_CLASS comm_create_keyval(COMM_COPY_ATTR_FUNCTION comm_copy_attr_fn,
                                          COMM_DELETE_ATTR_FUNCTION comm_delete_attr_fn,
-                                         INT_OUT comm_keyval, BUFFER_OUT extra_state)
+                                         ATTR_KEY_OUT comm_keyval, BUFFER_OUT extra_state)
 {
     int ret;
     int flags = 0;
@@ -52,13 +52,14 @@ PROTOTYPE ERROR_CLASS comm_create_keyval(COMM_COPY_ATTR_FUNCTION comm_copy_attr_
 #if OMPI_ABI_SRC
     copy_fn.attr_communicator_copy_fn = ompi_abi_copy_attr_fn;
     del_fn.attr_communicator_delete_fn = ompi_abi_delete_attr_fn;
+    ret = ompi_attr_create_keyval(COMM_ATTR, copy_fn, del_fn,
+                                  comm_keyval, extra_state, flags, extra_state);
 #else
     copy_fn.attr_communicator_copy_fn = comm_copy_attr_fn;
     del_fn.attr_communicator_delete_fn = comm_delete_attr_fn;
-#endif
-
     ret = ompi_attr_create_keyval(COMM_ATTR, copy_fn, del_fn,
                                   comm_keyval, extra_state, flags, NULL);
+#endif
 
     OMPI_ERRHANDLER_NOHANDLE_RETURN(ret, MPI_ERR_OTHER, FUNC_NAME);
 }

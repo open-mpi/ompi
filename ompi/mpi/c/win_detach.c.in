@@ -12,7 +12,7 @@
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2024      Triad National Security, LLC. All rights
+ * Copyright (c) 2024-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -32,7 +32,7 @@
 #include "ompi/win/win.h"
 #include "ompi/memchecker.h"
 
-PROTOTYPE ERROR_CLASS win_detach(WIN win, BUFFER base)
+PROTOTYPE ERROR_CLASS win_detach(WIN win, BUFFER_CONST base)
 {
     int ret = MPI_SUCCESS;
 

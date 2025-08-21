@@ -1,0 +1,31 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
+/*
+ * Copyright (c) 2012-2018 Los Alamos National Security, LLC. All rights
+ *                         reserved.
+ * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2017      IBM Corporation. All rights reserved.
+ * Copyright (c) 2018-2025 Triad National Security, LLC. All rights
+ *                         reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+#include "ompi_config.h"
+
+#include "ompi/mpi/tool/mpit-internal.h"
+
+PROTOTYPE ERROR_CLASS event_get_info (INT event_index, STRING_OUT name, INT_OUT name_len,
+                                      INT_OUT verbosity, DATATYPE_OUT array_of_datatypes,
+                                      AINT_OUT array_of_displacements, INT_OUT num_elements,
+                                      T_ENUM_OUT enumtype, INFO_OUT info,
+                                      STRING_OUT desc, INT_OUT desc_len, BIND_OUT bind)
+{
+    if (!mpit_is_initialized ()) {
+        return MPI_T_ERR_NOT_INITIALIZED;
+    }
+
+    return MPI_T_ERR_INVALID_INDEX;
+}

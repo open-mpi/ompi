@@ -32,7 +32,7 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/errhandler/errcode.h"
 
-PROTOTYPE ERROR_CLASS error_string(INT errorcode, STRING_OUT string,
+PROTOTYPE ERROR_CLASS error_string(ERROR_CLASS errorcode, STRING_OUT string,
                                    INT_OUT resultlen)
 {
     int ret;
@@ -53,7 +53,7 @@ PROTOTYPE ERROR_CLASS error_string(INT errorcode, STRING_OUT string,
     }
 
     tmpstring = ompi_mpi_errnum_get_string (errorcode);
-    opal_string_copy(string, tmpstring, MPI_MAX_ERROR_STRING);
+    opal_string_copy(string, tmpstring, @MPI_MAX_ERROR_STRING@);
     *resultlen = (int)strlen(string);
 
     ompi_mpi_instance_release();

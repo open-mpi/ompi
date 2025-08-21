@@ -106,7 +106,7 @@ static int ompi_isendrecv_replace_complete_func (ompi_comm_request_t *request)
 }
 
 PROTOTYPE ERROR_CLASS isendrecv_replace(BUFFER_OUT buf, COUNT count, DATATYPE datatype,
-                                        INT dest, INT sendtag, INT source, INT recvtag,
+                                        SOURCE dest, TAG sendtag, SOURCE source, TAG recvtag,
                                         COMM comm, REQUEST_INOUT request)
 {
     int rc = MPI_SUCCESS;

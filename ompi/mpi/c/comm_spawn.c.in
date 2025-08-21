@@ -42,13 +42,13 @@
 #include "ompi/memchecker.h"
 
 PROTOTYPE ERROR_CLASS comm_spawn(STRING command, STRING_ARRAY argv, INT maxprocs, INFO info,
-                                 INT root, COMM comm, COMM_OUT intercomm,
+                                 ROOT root, COMM comm, COMM_OUT intercomm,
                                  INT_OUT array_of_errcodes)
 {
     int rank, rc=OMPI_SUCCESS, i, flag;
     bool send_first = false; /* we wait to be contacted */
     ompi_communicator_t *newcomp=MPI_COMM_NULL;
-    char port_name[MPI_MAX_PORT_NAME]; char *port_string = NULL;
+    char port_name[@MPI_MAX_PORT_NAME@]; char *port_string = NULL;
     bool non_mpi = false;
 
     MEMCHECKER(
@@ -105,7 +105,7 @@ PROTOTYPE ERROR_CLASS comm_spawn(STRING command, STRING_ARRAY argv, INT maxprocs
     }
 
     /* initialize the port name to avoid problems */
-    memset(port_name, 0, MPI_MAX_PORT_NAME);
+    memset(port_name, 0, @MPI_MAX_PORT_NAME@);
 
     /* See if the info key "ompi_non_mpi" was set to true */
     if (rank == root) {
