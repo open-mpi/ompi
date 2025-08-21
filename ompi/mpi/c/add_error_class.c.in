@@ -31,7 +31,7 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/attribute/attribute.h"
 
-PROTOTYPE ERROR_CLASS add_error_class(INT_OUT errorclass)
+PROTOTYPE ERROR_CLASS add_error_class(ERROR_CLASS_OUT errorclass)
 {
     int eclass;
     int rc;

@@ -210,6 +210,13 @@
 #undef MPI_VERSION
 #undef MPI_SUBVERSION
 
+/*
+ * MPI ABI version - hardwired to -1 for OMPI ABI
+ */
+
+#define MPI_ABI_VERSION    -1
+#define MPI_ABI_SUBVERSION -1
+
 /* A  type that allows us to have sentinel type values that are still
    valid */
 #undef ompi_fortran_bogus_type_t
@@ -764,6 +771,7 @@ enum {
 #define MPI_ERR_SESSION               78
 #define MPI_ERR_VALUE_TOO_LARGE       79
 #define MPI_ERR_ERRHANDLER            80
+#define MPI_ERR_ABI                   81
 
 /* Per MPI-3 p349 47, MPI_ERR_LASTCODE must be >= the last predefined
    MPI_ERR_<foo> code. Set the last code to allow some room for adding
@@ -1452,9 +1460,12 @@ OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_ub;
 /*
  * MPI API
  */
-OMPI_DECLSPEC  int MPI_Abi_supported(int *flag);
-OMPI_DECLSPEC  int MPI_Abi_version(int *abi_major, int *abi_minor);
-OMPI_DECLSPEC  int MPI_Abi_details(int *buflen, char *details, MPI_Info *info);
+OMPI_DECLSPEC  int MPI_Abi_get_version(int *abi_major, int *abi_minor);
+OMPI_DECLSPEC  int MPI_Abi_get_info(MPI_Info *info);
+OMPI_DECLSPEC  int MPI_Abi_get_fortran_info(MPI_Info *info);
+OMPI_DECLSPEC  int MPI_Abi_set_fortran_info(MPI_Info info);
+OMPI_DECLSPEC  int MPI_Abi_get_fortran_booleans(int logical_size, void *logical_true, void *logical_false, int *is_set);
+OMPI_DECLSPEC  int MPI_Abi_set_fortran_booleans(int logical_size, void *logical_true, void *logical_false);
 OMPI_DECLSPEC  int MPI_Abort(MPI_Comm comm, int errorcode);
 OMPI_DECLSPEC  int MPI_Accumulate(const void *origin_addr, int origin_count, MPI_Datatype origin_datatype,
                                   int target_rank, MPI_Aint target_disp, int target_count,
@@ -1638,6 +1649,7 @@ OMPI_DECLSPEC  int MPI_Comm_idup_with_info(MPI_Comm comm, MPI_Info info, MPI_Com
 OMPI_DECLSPEC  MPI_Comm MPI_Comm_f2c(MPI_Fint comm);
 OMPI_DECLSPEC  int MPI_Comm_free_keyval(int *comm_keyval);
 OMPI_DECLSPEC  int MPI_Comm_free(MPI_Comm *comm);
+OMPI_DECLSPEC  MPI_Comm MPI_Comm_fromint(int comm);
 OMPI_DECLSPEC  int MPI_Comm_get_attr(MPI_Comm comm, int comm_keyval,
                                      void *attribute_val, int *flag);
 OMPI_DECLSPEC  int MPI_Dist_graph_create(MPI_Comm comm_old, int n, const int nodes[],
@@ -1691,6 +1703,7 @@ OMPI_DECLSPEC  int MPI_Comm_spawn_multiple(int count, char *array_of_commands[],
 OMPI_DECLSPEC  int MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm);
 OMPI_DECLSPEC  int MPI_Comm_split_type(MPI_Comm comm, int split_type, int key, MPI_Info info, MPI_Comm *newcomm);
 OMPI_DECLSPEC  int MPI_Comm_test_inter(MPI_Comm comm, int *flag);
+OMPI_DECLSPEC  int MPI_Comm_toint(MPI_Comm comm);
 OMPI_DECLSPEC  int MPI_Compare_and_swap(const void *origin_addr, const void *compare_addr,
                                         void *result_addr, MPI_Datatype datatype, int target_rank,
                                         MPI_Aint target_disp, MPI_Win win);
@@ -1698,6 +1711,8 @@ OMPI_DECLSPEC  int MPI_Dims_create(int nnodes, int ndims, int dims[]);
 OMPI_DECLSPEC  MPI_Fint MPI_Errhandler_c2f(MPI_Errhandler errhandler);
 OMPI_DECLSPEC  MPI_Errhandler MPI_Errhandler_f2c(MPI_Fint errhandler);
 OMPI_DECLSPEC  int MPI_Errhandler_free(MPI_Errhandler *errhandler);
+OMPI_DECLSPEC  MPI_Errhandler MPI_Errhandler_fromint(int errhandler);
+OMPI_DECLSPEC  int MPI_Errhandler_toint(MPI_Errhandler errhandler);
 OMPI_DECLSPEC  int MPI_Error_class(int errorcode, int *errorclass);
 OMPI_DECLSPEC  int MPI_Error_string(int errorcode, char *string, int *resultlen);
 OMPI_DECLSPEC  int MPI_Exscan(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
@@ -1719,6 +1734,7 @@ OMPI_DECLSPEC  MPI_File MPI_File_f2c(MPI_Fint file);
 OMPI_DECLSPEC  int MPI_File_call_errhandler(MPI_File fh, int errorcode);
 OMPI_DECLSPEC  int MPI_File_create_errhandler(MPI_File_errhandler_function *function,
                                               MPI_Errhandler *errhandler);
+OMPI_DECLSPEC  MPI_File MPI_File_fromint(int file);
 OMPI_DECLSPEC  int MPI_File_set_errhandler( MPI_File file, MPI_Errhandler errhandler);
 OMPI_DECLSPEC  int MPI_File_get_errhandler( MPI_File file, MPI_Errhandler *errhandler);
 OMPI_DECLSPEC  int MPI_File_open(MPI_Comm comm, const char *filename, int amode,
@@ -1777,6 +1793,7 @@ OMPI_DECLSPEC  int MPI_File_read_all(MPI_File fh, void *buf, int count,
                                      MPI_Datatype datatype, MPI_Status *status);
 OMPI_DECLSPEC  int MPI_File_read_all_c(MPI_File fh, void *buf, MPI_Count count,
                                        MPI_Datatype datatype, MPI_Status *status);
+OMPI_DECLSPEC  int MPI_File_toint(MPI_File file);
 OMPI_DECLSPEC  int MPI_File_write(MPI_File fh, const void *buf, int count,
                                   MPI_Datatype datatype, MPI_Status *status);
 OMPI_DECLSPEC  int MPI_File_write_c(MPI_File fh, const void *buf, MPI_Count count,
@@ -1956,6 +1973,7 @@ OMPI_DECLSPEC  int MPI_Group_excl(MPI_Group group, int n, const int ranks[],
 OMPI_DECLSPEC  MPI_Group MPI_Group_f2c(MPI_Fint group);
 OMPI_DECLSPEC  int MPI_Group_free(MPI_Group *group);
 OMPI_DECLSPEC  int MPI_Group_from_session_pset (MPI_Session session, const char *pset_name, MPI_Group *newgroup);
+OMPI_DECLSPEC  MPI_Group MPI_Group_fromint(int group);
 OMPI_DECLSPEC  int MPI_Group_incl(MPI_Group group, int n, const int ranks[],
                                   MPI_Group *newgroup);
 OMPI_DECLSPEC  int MPI_Group_intersection(MPI_Group group1, MPI_Group group2,
@@ -1966,6 +1984,7 @@ OMPI_DECLSPEC  int MPI_Group_range_incl(MPI_Group group, int n, int ranges[][3],
                                         MPI_Group *newgroup);
 OMPI_DECLSPEC  int MPI_Group_rank(MPI_Group group, int *rank);
 OMPI_DECLSPEC  int MPI_Group_size(MPI_Group group, int *size);
+OMPI_DECLSPEC  int MPI_Group_toint(MPI_Group group);
 OMPI_DECLSPEC  int MPI_Group_translate_ranks(MPI_Group group1, int n, const int ranks1[],
                                              MPI_Group group2, int ranks2[]);
 OMPI_DECLSPEC  int MPI_Group_union(MPI_Group group1, MPI_Group group2,
@@ -1988,11 +2007,13 @@ OMPI_DECLSPEC  int MPI_Info_delete(MPI_Info info, const char *key);
 OMPI_DECLSPEC  int MPI_Info_dup(MPI_Info info, MPI_Info *newinfo);
 OMPI_DECLSPEC  MPI_Info MPI_Info_f2c(MPI_Fint info);
 OMPI_DECLSPEC  int MPI_Info_free(MPI_Info *info);
+OMPI_DECLSPEC  MPI_Info MPI_Info_fromint(int info);
 OMPI_DECLSPEC  int MPI_Info_get_nkeys(MPI_Info info, int *nkeys);
 OMPI_DECLSPEC  int MPI_Info_get_nthkey(MPI_Info info, int n, char *key);
 OMPI_DECLSPEC  int MPI_Info_get_string(MPI_Info info, const char *key, int *buflen,
                                        char *value, int *flag);
 OMPI_DECLSPEC  int MPI_Info_set(MPI_Info info, const char *key, const char *value);
+OMPI_DECLSPEC  int MPI_Info_toint(MPI_Info info);
 OMPI_DECLSPEC  int MPI_Init(int *argc, char ***argv);
 OMPI_DECLSPEC  int MPI_Initialized(int *flag);
 OMPI_DECLSPEC  int MPI_Init_thread(int *argc, char ***argv, int required,
@@ -2041,6 +2062,8 @@ OMPI_DECLSPEC  int MPI_Is_thread_main(int *flag);
 OMPI_DECLSPEC  int MPI_Lookup_name(const char *service_name, MPI_Info info, char *port_name);
 OMPI_DECLSPEC  MPI_Fint MPI_Message_c2f(MPI_Message message);
 OMPI_DECLSPEC  MPI_Message MPI_Message_f2c(MPI_Fint message);
+OMPI_DECLSPEC  MPI_Message MPI_Message_fromint(int message);
+OMPI_DECLSPEC  int MPI_Message_toint(MPI_Message message);
 OMPI_DECLSPEC  int MPI_Mprobe(int source, int tag, MPI_Comm comm,
                                MPI_Message *message,
                                MPI_Status *status);
@@ -2145,6 +2168,8 @@ OMPI_DECLSPEC  int MPI_Op_create_c(MPI_User_function_c *function, int commute, M
 OMPI_DECLSPEC  int MPI_Open_port(MPI_Info info, char *port_name);
 OMPI_DECLSPEC  MPI_Op MPI_Op_f2c(MPI_Fint op);
 OMPI_DECLSPEC  int MPI_Op_free(MPI_Op *op);
+OMPI_DECLSPEC  MPI_Op MPI_Op_fromint(int op);
+OMPI_DECLSPEC  int MPI_Op_toint(MPI_Op op);
 OMPI_DECLSPEC  int MPI_Pack_external(const char datarep[], const void *inbuf, int incount,
                                      MPI_Datatype datatype, void *outbuf,
                                      MPI_Aint outsize, MPI_Aint *position);
@@ -2255,6 +2280,7 @@ OMPI_DECLSPEC  int MPI_Remove_error_string(int errorcode);
 OMPI_DECLSPEC  MPI_Fint MPI_Request_c2f(MPI_Request request);
 OMPI_DECLSPEC  MPI_Request MPI_Request_f2c(MPI_Fint request);
 OMPI_DECLSPEC  int MPI_Request_free(MPI_Request *request);
+OMPI_DECLSPEC  MPI_Request MPI_Request_fromint(int request);
 OMPI_DECLSPEC  int MPI_Request_get_status(MPI_Request request, int *flag,
                                           MPI_Status *status);
 OMPI_DECLSPEC int MPI_Request_get_status_all(int count, const MPI_Request array_of_requests[], int *flag,
@@ -2263,6 +2289,7 @@ OMPI_DECLSPEC int MPI_Request_get_status_any(int count, const MPI_Request array_
                                              int *flag, MPI_Status *status);
 OMPI_DECLSPEC int MPI_Request_get_status_some(int incount, const MPI_Request array_of_requests[], int *outcount,
                                               int array_of_indices[], MPI_Status array_of_statuses[]);
+OMPI_DECLSPEC  int MPI_Request_toint(MPI_Request request);
 OMPI_DECLSPEC  int MPI_Rget(void *origin_addr, int origin_count, MPI_Datatype origin_datatype,
                             int target_rank, MPI_Aint target_disp, int target_count, MPI_Datatype target_datatype,
                             MPI_Win win, MPI_Request *request);
@@ -2377,6 +2404,7 @@ OMPI_DECLSPEC  int MPI_Session_detach_buffer(MPI_Session session, void *buffer_a
 OMPI_DECLSPEC  int MPI_Session_detach_buffer_c(MPI_Session session, void *buffer_addr, MPI_Count *size);
 OMPI_DECLSPEC  int MPI_Session_finalize (MPI_Session *session);
 OMPI_DECLSPEC  int MPI_Session_flush_buffer(MPI_Session session);
+OMPI_DECLSPEC  MPI_Session MPI_Session_fromint(int session);
 OMPI_DECLSPEC  int MPI_Session_get_errhandler(MPI_Session session, MPI_Errhandler *erhandler);
 OMPI_DECLSPEC  int MPI_Session_get_info (MPI_Session session, MPI_Info *info_used);
 OMPI_DECLSPEC  int MPI_Session_get_num_psets (MPI_Session session, MPI_Info info, int *npset_names);
@@ -2387,6 +2415,7 @@ OMPI_DECLSPEC  int MPI_Session_init (MPI_Info info, MPI_Errhandler errhandler,
                                      MPI_Session *session);
 OMPI_DECLSPEC  MPI_Session MPI_Session_f2c (MPI_Fint session);
 OMPI_DECLSPEC  int MPI_Session_set_errhandler(MPI_Session session, MPI_Errhandler errhandler);
+OMPI_DECLSPEC  int MPI_Session_toint(MPI_Session session);
 OMPI_DECLSPEC  int MPI_Ssend_init(const void *buf, int count, MPI_Datatype datatype,
                                   int dest, int tag, MPI_Comm comm,
                                   MPI_Request *request);
@@ -2500,6 +2529,7 @@ OMPI_DECLSPEC  int MPI_Type_delete_attr(MPI_Datatype type, int type_keyval);
 OMPI_DECLSPEC  int MPI_Type_dup(MPI_Datatype type, MPI_Datatype *newtype);
 OMPI_DECLSPEC  int MPI_Type_free(MPI_Datatype *type);
 OMPI_DECLSPEC  int MPI_Type_free_keyval(int *type_keyval);
+OMPI_DECLSPEC  MPI_Datatype MPI_Type_fromint(int datatype);
 OMPI_DECLSPEC  MPI_Datatype MPI_Type_f2c(MPI_Fint datatype);
 OMPI_DECLSPEC  int MPI_Type_get_attr(MPI_Datatype type, int type_keyval,
                                      void *attribute_val, int *flag);
@@ -2545,6 +2575,7 @@ OMPI_DECLSPEC  int MPI_Type_set_attr(MPI_Datatype type, int type_keyval,
 OMPI_DECLSPEC  int MPI_Type_set_name(MPI_Datatype type, const char *type_name);
 OMPI_DECLSPEC  int MPI_Type_size(MPI_Datatype type, int *size);
 OMPI_DECLSPEC  int MPI_Type_size_c(MPI_Datatype type, MPI_Count *size);
+OMPI_DECLSPEC  int MPI_Type_toint(MPI_Datatype type);
 OMPI_DECLSPEC  int MPI_Type_vector(int count, int blocklength, int stride,
                                    MPI_Datatype oldtype, MPI_Datatype *newtype);
 OMPI_DECLSPEC  int MPI_Type_vector_c(MPI_Count count, MPI_Count blocklength, MPI_Count stride,
@@ -2602,6 +2633,7 @@ OMPI_DECLSPEC  int MPI_Win_flush_local(int rank, MPI_Win win);
 OMPI_DECLSPEC  int MPI_Win_flush_local_all(MPI_Win win);
 OMPI_DECLSPEC  int MPI_Win_free(MPI_Win *win);
 OMPI_DECLSPEC  int MPI_Win_free_keyval(int *win_keyval);
+OMPI_DECLSPEC  MPI_Win MPI_Win_fromint(int win);
 OMPI_DECLSPEC  int MPI_Win_get_attr(MPI_Win win, int win_keyval,
                                     void *attribute_val, int *flag);
 OMPI_DECLSPEC  int MPI_Win_get_errhandler(MPI_Win win, MPI_Errhandler *errhandler);
@@ -2620,6 +2652,7 @@ OMPI_DECLSPEC  int MPI_Win_shared_query_c(MPI_Win win, int rank, MPI_Aint *size,
 OMPI_DECLSPEC  int MPI_Win_start(MPI_Group group, int mpi_assert, MPI_Win win);
 OMPI_DECLSPEC  int MPI_Win_sync(MPI_Win win);
 OMPI_DECLSPEC  int MPI_Win_test(MPI_Win win, int *flag);
+OMPI_DECLSPEC  int MPI_Win_toint(MPI_Win win);
 OMPI_DECLSPEC  int MPI_Win_unlock(int rank, MPI_Win win);
 OMPI_DECLSPEC  int MPI_Win_unlock_all(MPI_Win win);
 OMPI_DECLSPEC  int MPI_Win_wait(MPI_Win win);
@@ -2629,6 +2662,12 @@ OMPI_DECLSPEC  double MPI_Wtime(void);
   /*
    * Profiling MPI API
    */
+OMPI_DECLSPEC  int PMPI_Abi_get_version(int *abi_major, int *abi_minor);
+OMPI_DECLSPEC  int PMPI_Abi_get_info(MPI_Info *info);
+OMPI_DECLSPEC  int PMPI_Abi_get_fortran_info(MPI_Info *info);
+OMPI_DECLSPEC  int PMPI_Abi_set_fortran_info(MPI_Info info);
+OMPI_DECLSPEC  int PMPI_Abi_get_fortran_booleans(int logical_size, void *logical_true, void *logical_false, int *is_set);
+OMPI_DECLSPEC  int PMPI_Abi_set_fortran_booleans(int logical_size, void *logical_true, void *logical_false);
 OMPI_DECLSPEC  int PMPI_Abort(MPI_Comm comm, int errorcode);
 OMPI_DECLSPEC  int PMPI_Accumulate(const void *origin_addr, int origin_count, MPI_Datatype origin_datatype,
                                    int target_rank, MPI_Aint target_disp, int target_count,
@@ -2812,6 +2851,7 @@ OMPI_DECLSPEC  int PMPI_Comm_idup_with_info(MPI_Comm comm, MPI_Info info, MPI_Co
 OMPI_DECLSPEC  MPI_Comm PMPI_Comm_f2c(MPI_Fint comm);
 OMPI_DECLSPEC  int PMPI_Comm_free_keyval(int *comm_keyval);
 OMPI_DECLSPEC  int PMPI_Comm_free(MPI_Comm *comm);
+OMPI_DECLSPEC  MPI_Comm PMPI_Comm_fromint(int comm);
 OMPI_DECLSPEC  int PMPI_Comm_get_attr(MPI_Comm comm, int comm_keyval,
                                       void *attribute_val, int *flag);
 OMPI_DECLSPEC  int PMPI_Dist_graph_create(MPI_Comm comm_old, int n, const int nodes[],
@@ -2865,6 +2905,7 @@ OMPI_DECLSPEC  int PMPI_Comm_spawn_multiple(int count, char *array_of_commands[]
 OMPI_DECLSPEC  int PMPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm);
 OMPI_DECLSPEC  int PMPI_Comm_split_type(MPI_Comm comm, int split_type, int key, MPI_Info info, MPI_Comm *newcomm);
 OMPI_DECLSPEC  int PMPI_Comm_test_inter(MPI_Comm comm, int *flag);
+OMPI_DECLSPEC  int PMPI_Comm_toint(MPI_Comm comm);
 OMPI_DECLSPEC  int PMPI_Compare_and_swap(const void *origin_addr, const void *compare_addr,
                                          void *result_addr, MPI_Datatype datatype, int target_rank,
                                          MPI_Aint target_disp, MPI_Win win);
@@ -2872,6 +2913,8 @@ OMPI_DECLSPEC  int PMPI_Dims_create(int nnodes, int ndims, int dims[]);
 OMPI_DECLSPEC  MPI_Fint PMPI_Errhandler_c2f(MPI_Errhandler errhandler);
 OMPI_DECLSPEC  MPI_Errhandler PMPI_Errhandler_f2c(MPI_Fint errhandler);
 OMPI_DECLSPEC  int PMPI_Errhandler_free(MPI_Errhandler *errhandler);
+OMPI_DECLSPEC  MPI_Errhandler PMPI_Errhandler_fromint(int errhandler);
+OMPI_DECLSPEC  int PMPI_Errhandler_toint(MPI_Errhandler errhandler);
 OMPI_DECLSPEC  int PMPI_Error_class(int errorcode, int *errorclass);
 OMPI_DECLSPEC  int PMPI_Error_string(int errorcode, char *string, int *resultlen);
 OMPI_DECLSPEC  int PMPI_Exscan(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
@@ -2893,6 +2936,7 @@ OMPI_DECLSPEC  MPI_File PMPI_File_f2c(MPI_Fint file);
 OMPI_DECLSPEC  int PMPI_File_call_errhandler(MPI_File fh, int errorcode);
 OMPI_DECLSPEC  int PMPI_File_create_errhandler(MPI_File_errhandler_function *function,
                                                MPI_Errhandler *errhandler);
+OMPI_DECLSPEC  MPI_File PMPI_File_fromint(int file);
 OMPI_DECLSPEC  int PMPI_File_set_errhandler( MPI_File file, MPI_Errhandler errhandler);
 OMPI_DECLSPEC  int PMPI_File_get_errhandler( MPI_File file, MPI_Errhandler *errhandler);
 OMPI_DECLSPEC  int PMPI_File_open(MPI_Comm comm, const char *filename, int amode,
@@ -2951,6 +2995,7 @@ OMPI_DECLSPEC  int PMPI_File_read_all(MPI_File fh, void *buf, int count,
                                       MPI_Datatype datatype, MPI_Status *status);
 OMPI_DECLSPEC  int PMPI_File_read_all_c(MPI_File fh, void *buf, MPI_Count count,
                                         MPI_Datatype datatype, MPI_Status *status);
+OMPI_DECLSPEC  int PMPI_File_toint(MPI_File file);
 OMPI_DECLSPEC  int PMPI_File_write(MPI_File fh, const void *buf, int count,
                                    MPI_Datatype datatype, MPI_Status *status);
 OMPI_DECLSPEC  int PMPI_File_write_c(MPI_File fh, const void *buf, MPI_Count count,
@@ -3130,6 +3175,7 @@ OMPI_DECLSPEC  int PMPI_Group_excl(MPI_Group group, int n, const int ranks[],
 OMPI_DECLSPEC  MPI_Group PMPI_Group_f2c(MPI_Fint group);
 OMPI_DECLSPEC  int PMPI_Group_free(MPI_Group *group);
 OMPI_DECLSPEC  int PMPI_Group_from_session_pset (MPI_Session session, const char *pset_name, MPI_Group *newgroup);
+OMPI_DECLSPEC  MPI_Group PMPI_Group_fromint(int group);
 OMPI_DECLSPEC  int PMPI_Group_incl(MPI_Group group, int n, const int ranks[],
                                    MPI_Group *newgroup);
 OMPI_DECLSPEC  int PMPI_Group_intersection(MPI_Group group1, MPI_Group group2,
@@ -3140,6 +3186,7 @@ OMPI_DECLSPEC  int PMPI_Group_range_incl(MPI_Group group, int n, int ranges[][3]
                                          MPI_Group *newgroup);
 OMPI_DECLSPEC  int PMPI_Group_rank(MPI_Group group, int *rank);
 OMPI_DECLSPEC  int PMPI_Group_size(MPI_Group group, int *size);
+OMPI_DECLSPEC  int PMPI_Group_toint(MPI_Group group);
 OMPI_DECLSPEC  int PMPI_Group_translate_ranks(MPI_Group group1, int n, const int ranks1[],
                                               MPI_Group group2, int ranks2[]);
 OMPI_DECLSPEC  int PMPI_Group_union(MPI_Group group1, MPI_Group group2,
@@ -3162,11 +3209,13 @@ OMPI_DECLSPEC  int PMPI_Info_delete(MPI_Info info, const char *key);
 OMPI_DECLSPEC  int PMPI_Info_dup(MPI_Info info, MPI_Info *newinfo);
 OMPI_DECLSPEC  MPI_Info PMPI_Info_f2c(MPI_Fint info);
 OMPI_DECLSPEC  int PMPI_Info_free(MPI_Info *info);
+OMPI_DECLSPEC  MPI_Info PMPI_Info_fromint(int info);
 OMPI_DECLSPEC  int PMPI_Info_get_nkeys(MPI_Info info, int *nkeys);
 OMPI_DECLSPEC  int PMPI_Info_get_nthkey(MPI_Info info, int n, char *key);
 OMPI_DECLSPEC  int PMPI_Info_get_string(MPI_Info info, const char *key, int *buflen,
                                         char *value, int *flag);
 OMPI_DECLSPEC  int PMPI_Info_set(MPI_Info info, const char *key, const char *value);
+OMPI_DECLSPEC  int PMPI_Info_toint(MPI_Info info);
 OMPI_DECLSPEC  int PMPI_Init(int *argc, char ***argv);
 OMPI_DECLSPEC  int PMPI_Initialized(int *flag);
 OMPI_DECLSPEC  int PMPI_Init_thread(int *argc, char ***argv, int required,
@@ -3215,6 +3264,8 @@ OMPI_DECLSPEC  int PMPI_Is_thread_main(int *flag);
 OMPI_DECLSPEC  int PMPI_Lookup_name(const char *service_name, MPI_Info info, char *port_name);
 OMPI_DECLSPEC  MPI_Fint PMPI_Message_c2f(MPI_Message message);
 OMPI_DECLSPEC  MPI_Message PMPI_Message_f2c(MPI_Fint message);
+OMPI_DECLSPEC  MPI_Message PMPI_Message_fromint(int message);
+OMPI_DECLSPEC  int PMPI_Message_toint(MPI_Message message);
 OMPI_DECLSPEC  int PMPI_Mprobe(int source, int tag, MPI_Comm comm,
                                 MPI_Message *message,
                                 MPI_Status *status);
@@ -3319,6 +3370,8 @@ OMPI_DECLSPEC  int PMPI_Op_create_c(MPI_User_function_c *function, int commute, 
 OMPI_DECLSPEC  int PMPI_Open_port(MPI_Info info, char *port_name);
 OMPI_DECLSPEC  MPI_Op PMPI_Op_f2c(MPI_Fint op);
 OMPI_DECLSPEC  int PMPI_Op_free(MPI_Op *op);
+OMPI_DECLSPEC  MPI_Op PMPI_Op_fromint(int op);
+OMPI_DECLSPEC  int PMPI_Op_toint(MPI_Op op);
 OMPI_DECLSPEC  int PMPI_Pack_external(const char datarep[], const void *inbuf, int incount,
                                       MPI_Datatype datatype, void *outbuf,
                                       MPI_Aint outsize, MPI_Aint *position);
@@ -3429,6 +3482,7 @@ OMPI_DECLSPEC  int PMPI_Remove_error_string(int errorcode);
 OMPI_DECLSPEC  MPI_Fint PMPI_Request_c2f(MPI_Request request);
 OMPI_DECLSPEC  MPI_Request PMPI_Request_f2c(MPI_Fint request);
 OMPI_DECLSPEC  int PMPI_Request_free(MPI_Request *request);
+OMPI_DECLSPEC  MPI_Request PMPI_Request_fromint(int request);
 OMPI_DECLSPEC  int PMPI_Request_get_status(MPI_Request request, int *flag,
                                            MPI_Status *status);
 OMPI_DECLSPEC int PMPI_Request_get_status_all(int count, const MPI_Request array_of_requests[], int *flag,
@@ -3437,6 +3491,7 @@ OMPI_DECLSPEC int PMPI_Request_get_status_any(int count, const MPI_Request array
                                               int *flag, MPI_Status *status);
 OMPI_DECLSPEC int PMPI_Request_get_status_some(int incount, const MPI_Request array_of_requests[], int *outcount,
                                                int array_of_indices[], MPI_Status array_of_statuses[]);
+OMPI_DECLSPEC  int PMPI_Request_toint(MPI_Request request);
 OMPI_DECLSPEC  int PMPI_Rget(void *origin_addr, int origin_count, MPI_Datatype origin_datatype,
                              int target_rank, MPI_Aint target_disp, int target_count, MPI_Datatype target_datatype,
                              MPI_Win win, MPI_Request *request);
@@ -3551,6 +3606,7 @@ OMPI_DECLSPEC  int PMPI_Session_detach_buffer(MPI_Session session, void *buffer_
 OMPI_DECLSPEC  int PMPI_Session_detach_buffer_c(MPI_Session session, void *buffer_addr, MPI_Count *size);
 OMPI_DECLSPEC  int PMPI_Session_finalize (MPI_Session *session);
 OMPI_DECLSPEC  int PMPI_Session_flush_buffer(MPI_Session session);
+OMPI_DECLSPEC  MPI_Session PMPI_Session_fromint(int session);
 OMPI_DECLSPEC  int PMPI_Session_get_errhandler(MPI_Session session, MPI_Errhandler *erhandler);
 OMPI_DECLSPEC  int PMPI_Session_get_info (MPI_Session session, MPI_Info *info_used);
 OMPI_DECLSPEC  int PMPI_Session_get_num_psets (MPI_Session session, MPI_Info info, int *npset_names);
@@ -3561,6 +3617,7 @@ OMPI_DECLSPEC  int PMPI_Session_init (MPI_Info info, MPI_Errhandler errhandler,
                                       MPI_Session *session);
 OMPI_DECLSPEC  MPI_Session PMPI_Session_f2c (MPI_Fint session);
 OMPI_DECLSPEC  int PMPI_Session_set_errhandler(MPI_Session session, MPI_Errhandler errhandler);
+OMPI_DECLSPEC  int PMPI_Session_toint(MPI_Session session);
 OMPI_DECLSPEC  int PMPI_Ssend_init(const void *buf, int count, MPI_Datatype datatype,
                                    int dest, int tag, MPI_Comm comm,
                                    MPI_Request *request);
@@ -3674,6 +3731,7 @@ OMPI_DECLSPEC  int PMPI_Type_delete_attr(MPI_Datatype type, int type_keyval);
 OMPI_DECLSPEC  int PMPI_Type_dup(MPI_Datatype type, MPI_Datatype *newtype);
 OMPI_DECLSPEC  int PMPI_Type_free(MPI_Datatype *type);
 OMPI_DECLSPEC  int PMPI_Type_free_keyval(int *type_keyval);
+OMPI_DECLSPEC  MPI_Datatype PMPI_Type_fromint(int datatype);
 OMPI_DECLSPEC  MPI_Datatype PMPI_Type_f2c(MPI_Fint datatype);
 OMPI_DECLSPEC  int PMPI_Type_get_attr(MPI_Datatype type, int type_keyval,
                                       void *attribute_val, int *flag);
@@ -3719,6 +3777,7 @@ OMPI_DECLSPEC  int PMPI_Type_set_attr(MPI_Datatype type, int type_keyval,
 OMPI_DECLSPEC  int PMPI_Type_set_name(MPI_Datatype type, const char *type_name);
 OMPI_DECLSPEC  int PMPI_Type_size(MPI_Datatype type, int *size);
 OMPI_DECLSPEC  int PMPI_Type_size_c(MPI_Datatype type, MPI_Count *size);
+OMPI_DECLSPEC  int PMPI_Type_toint(MPI_Datatype type);
 OMPI_DECLSPEC  int PMPI_Type_vector(int count, int blocklength, int stride,
                                     MPI_Datatype oldtype, MPI_Datatype *newtype);
 OMPI_DECLSPEC  int PMPI_Type_vector_c(MPI_Count count, MPI_Count blocklength, MPI_Count stride,
@@ -3776,6 +3835,7 @@ OMPI_DECLSPEC  int PMPI_Win_flush_local(int rank, MPI_Win win);
 OMPI_DECLSPEC  int PMPI_Win_flush_local_all(MPI_Win win);
 OMPI_DECLSPEC  int PMPI_Win_free(MPI_Win *win);
 OMPI_DECLSPEC  int PMPI_Win_free_keyval(int *win_keyval);
+OMPI_DECLSPEC  MPI_Win PMPI_Win_fromint(int win);
 OMPI_DECLSPEC  int PMPI_Win_get_attr(MPI_Win win, int win_keyval,
                                      void *attribute_val, int *flag);
 OMPI_DECLSPEC  int PMPI_Win_get_errhandler(MPI_Win win, MPI_Errhandler *errhandler);
@@ -3794,6 +3854,7 @@ OMPI_DECLSPEC  int PMPI_Win_shared_query_c(MPI_Win win, int rank, MPI_Aint *size
 OMPI_DECLSPEC  int PMPI_Win_start(MPI_Group group, int mpi_assert, MPI_Win win);
 OMPI_DECLSPEC  int PMPI_Win_sync(MPI_Win win);
 OMPI_DECLSPEC  int PMPI_Win_test(MPI_Win win, int *flag);
+OMPI_DECLSPEC  int PMPI_Win_toint(MPI_Win win);
 OMPI_DECLSPEC  int PMPI_Win_unlock(int rank, MPI_Win win);
 OMPI_DECLSPEC  int PMPI_Win_unlock_all(MPI_Win win);
 OMPI_DECLSPEC  int PMPI_Win_wait(MPI_Win win);

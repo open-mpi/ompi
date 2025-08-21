@@ -1,27 +1,23 @@
-/*
- * $COPYRIGHT$
- *
- * Additional copyrights may follow
- *
- * $HEADER$
- */
+#ifndef MPI_H_ABI
+#define MPI_H_ABI
 
-#ifndef _ABI_INTERNAL_
-#define _ABI_INTERNAL_
+#include <stddef.h>
+#include <stdint.h>
 
-/* TODO: figure out which includes we need, change to <> instead of "" */
-#include "stddef.h"
-#include "stdint.h"
+#if defined(__cplusplus)
+extern "C" {
+#endif
 
-/* #include <stdint.h> */
-
+#undef MPI_VERSION
 #define MPI_VERSION    5
+#undef MPI_SUBVERSION
 #define MPI_SUBVERSION 0
 
+#undef MPI_ABI_VERSION
 #define MPI_ABI_VERSION    1
+#undef MPI_ABI_SUBVERSION
 #define MPI_ABI_SUBVERSION 0
 
-/* TODO: add comment why this is hardcoded to avoid extra generation logic */
 typedef struct MPI_ABI_Comm * MPI_Comm;
 typedef struct MPI_ABI_Datatype * MPI_Datatype;
 typedef struct MPI_ABI_Errhandler * MPI_Errhandler;
@@ -34,29 +30,29 @@ typedef struct MPI_ABI_Request * MPI_Request;
 typedef struct MPI_ABI_Session * MPI_Session;
 typedef struct MPI_ABI_Win * MPI_Win;
 
-/* /\* MPI_Aint is defined to be intptr_t (or equivalent to it, if compiler support is absent). */
-/*  * The only acceptable alternative to intptr_t is the C89 type equivalent to it. *\/ */
-/* #if !defined(MPI_ABI_Aint) */
-/* #define MPI_ABI_Aint intptr_t */
-/* #endif */
-/* typedef MPI_ABI_Aint MPI_Aint; */
-/* #undef  MPI_ABI_Aint */
+/* MPI_Aint is defined to be intptr_t (or equivalent to it, if compiler support is absent).
+ * The only acceptable alternative to intptr_t is the C89 type equivalent to it. */
+#if !defined(MPI_ABI_Aint)
+#define MPI_ABI_Aint intptr_t
+#endif
+typedef MPI_ABI_Aint @MPI_AINT@;
+#undef  MPI_ABI_Aint
 
-/* /\* MPI_Offset will be 64b on all relevant systems. */
-/*  * We allow for MPI implementations supporting for 128b filesystems. *\/ */
-/* #if !defined(MPI_ABI_Offset) */
-/* #define MPI_ABI_Offset int64_t */
-/* #endif */
-/* typedef MPI_ABI_Offset MPI_Offset; */
-/* #undef  MPI_ABI_Offset */
+/* MPI_Offset will be 64b on all relevant systems.
+ * We allow for MPI implementations supporting for 128b filesystems. */
+#if !defined(MPI_ABI_Offset)
+#define MPI_ABI_Offset int64_t
+#endif
+typedef MPI_ABI_Offset @MPI_OFFSET@;
+#undef  MPI_ABI_Offset
 
-/* /\* MPI_Count must be large enough to hold the larger of MPI_Aint and MPI_Offset. */
-/*  * Platforms where MPI_Aint is larger than MPI_Offset are extremely rare. *\/ */
-/* #if !defined(MPI_ABI_Count) */
-/* #define MPI_ABI_Count MPI_Offset */
-/* #endif */
-/* typedef MPI_ABI_Count MPI_Count; */
-/* #undef  MPI_ABI_Count */
+/* MPI_Count must be large enough to hold the larger of MPI_Aint and MPI_Offset.
+ * Platforms where MPI_Aint is larger than MPI_Offset are extremely rare. */
+#if !defined(MPI_ABI_Count)
+#define MPI_ABI_Count MPI_Offset
+#endif
+typedef MPI_ABI_Count @MPI_COUNT@;
+#undef  MPI_ABI_Count
 
 typedef struct {
   int MPI_SOURCE;
@@ -65,6 +61,15 @@ typedef struct {
   int MPI_internal[5];
 } MPI_Status;
 
+/* MPI_T types */
+    
+typedef struct MPI_ABI_T_enum* MPI_T_enum;
+typedef struct MPI_ABI_T_cvar_handle* MPI_T_cvar_handle;
+typedef struct MPI_ABI_T_pvar_handle* MPI_T_pvar_handle;
+typedef struct MPI_ABI_T_pvar_session* MPI_T_pvar_session;
+typedef struct MPI_ABI_T_event_registration* MPI_T_event_registration;
+typedef struct MPI_ABI_T_event_instance* MPI_T_event_instance;
+    
 /*****************************************************************************/
 /* The following categories and values are taken, in order, from Section A.1 */
 /* ("Defined Values and Handles") of the MPI Standard, v5.0. Each category   */
@@ -211,3 +216,4 @@ $CATEGORY:TOOL_INFO_IFACE_SOURCE_ORDERINGS$
  * Callback safety requirement levels used in the MPI tool information interface
  */
 $CATEGORY:TOOL_INFO_IFACE_CB_SAFETY_REQ_LEVELS$
+

@@ -50,7 +50,6 @@
 #define OMPI_KEYVAL_PREDEFINED     0x0001
 #define OMPI_KEYVAL_F77            0x0002
 #define OMPI_KEYVAL_F77_INT        0x0004
-#define OMPI_KEYVAL_ABI            0x0008
 
 
 BEGIN_C_DECLS
@@ -137,7 +136,7 @@ struct ompi_attribute_keyval_t {
                                        copy/delete attribute functions
                                        properly and error checking */
     int attr_flag; /**< flag field: contains "OMPI_KEYVAL_PREDEFINED",
-                      "OMPI_KEYVAL_F77", "OMPI_KEYVAL_ABI", etc.  */
+                      "OMPI_KEYVAL_F77"  */
     ompi_attribute_fn_ptr_union_t copy_attr_fn; /**< Copy function for the
                                              attribute */
     ompi_attribute_fn_ptr_union_t delete_attr_fn; /**< Delete function for the

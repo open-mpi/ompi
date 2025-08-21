@@ -133,6 +133,12 @@ sizeof_f.f90:
 
 if BUILD_MPI_FORTRAN_MPIFH_BINDINGS_LAYER
 lib@OMPI_LIBMPI_NAME@_mpifh_la_SOURCES += \
+        abi_get_fortran_booleans_f.c \
+        abi_get_fortran_info_f.c \
+        abi_get_info_f.c \
+        abi_get_version_f.c \
+        abi_set_fortran_booleans_f.c \
+        abi_set_fortran_info_f.c \
         abort_f.c \
         add_error_class_f.c \
         add_error_code_f.c \
