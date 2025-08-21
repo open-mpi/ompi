@@ -172,12 +172,12 @@ extern int opal_class_init_epoch;
 #    define OPAL_OBJ_STATIC_INIT(BASE_CLASS)                                                       \
         {                                                                                          \
             .obj_magic_id = OPAL_OBJ_MAGIC_ID, .obj_class = OBJ_CLASS(BASE_CLASS),                 \
-            .obj_reference_count = 1, .cls_init_file_name = __FILE__, .cls_init_lineno = __LINE__, \
+            .obj_reference_count = { .value = 1 }, .cls_init_file_name = __FILE__, .cls_init_lineno = __LINE__, \
         }
 #else
 #    define OPAL_OBJ_STATIC_INIT(BASE_CLASS)                              \
         {                                                                 \
-            .obj_class = OBJ_CLASS(BASE_CLASS), .obj_reference_count = 1, \
+            .obj_class = OBJ_CLASS(BASE_CLASS), .obj_reference_count = { .value = 1 }, \
         }
 #endif
 
@@ -275,7 +275,7 @@ static inline opal_object_t *opal_obj_new_debug(opal_class_t *type, const char *
             assert(NULL != ((opal_object_t *) (object))->obj_class);                 \
             assert(OPAL_OBJ_MAGIC_ID == ((opal_object_t *) (object))->obj_magic_id); \
             opal_obj_update((opal_object_t *) (object), 1);                          \
-            assert(((opal_object_t *) (object))->obj_reference_count >= 0);          \
+            assert(opal_atomic_load_32_relaxed(&((opal_object_t *) (object))->obj_reference_count) >= 0);          \
         } while (0)
 #else
 #    define OBJ_RETAIN(object) opal_obj_update((opal_object_t *) (object), 1);
@@ -377,7 +377,7 @@ static inline opal_object_t *opal_obj_new_debug(opal_class_t *type, const char *
             opal_class_initialize((type));                        \
         }                                                         \
         ((opal_object_t *) (object))->obj_class = (type);         \
-        ((opal_object_t *) (object))->obj_reference_count = 1;    \
+        opal_atomic_store_32_relaxed(&((opal_object_t *) (object))->obj_reference_count, 1);    \
         opal_obj_run_constructors((opal_object_t *) (object));    \
         OBJ_REMEMBER_FILE_AND_LINENO(object, __FILE__, __LINE__); \
     } while (0)
@@ -499,7 +499,7 @@ static inline opal_object_t *opal_obj_new(opal_class_t *cls)
     }
     if (NULL != object) {
         object->obj_class = cls;
-        object->obj_reference_count = 1;
+        opal_atomic_store_32_relaxed(&object->obj_reference_count, 1);
         opal_obj_run_constructors(object);
     }
     return object;

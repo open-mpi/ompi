@@ -101,8 +101,8 @@ static inline bool opal_set_using_threads(bool have)
             return opal_atomic_##name##_fetch_##suffix(addr, delta);                             \
         }                                                                                        \
                                                                                                  \
-        *addr = *addr operator delta;                                                            \
-        return *addr;                                                                            \
+        opal_atomic_store_##suffix##_relaxed(addr, opal_atomic_load_##suffix##_relaxed(addr) operator delta); \
+        return opal_atomic_load_##suffix##_relaxed(addr);                                                                            \
     }                                                                                            \
                                                                                                  \
     static inline type opal_thread_fetch_##name##_##suffix(opal_atomic_##type *addr, type delta) \
@@ -111,8 +111,8 @@ static inline bool opal_set_using_threads(bool have)
             return opal_atomic_fetch_##name##_##suffix(addr, delta);                             \
         }                                                                                        \
                                                                                                  \
-        type old = *addr;                                                                        \
-        *addr = old operator delta;                                                              \
+        type old = opal_atomic_load_##suffix##_relaxed(addr);                                \
+        opal_atomic_store_##suffix##_relaxed(addr, old operator delta);                                                              \
         return old;                                                                              \
     }
 
@@ -125,12 +125,12 @@ static inline bool opal_set_using_threads(bool have)
                                                                 (addr_type) value);                \
         }                                                                                          \
                                                                                                    \
-        if ((type) *addr == *compare) {                                                            \
-            ((type *) addr)[0] = value;                                                            \
+        if ((type) opal_atomic_load_##suffix##_relaxed(addr) == *compare) {                   \
+            opal_atomic_store_##suffix##_relaxed(addr, value);                                     \
             return true;                                                                           \
         }                                                                                          \
                                                                                                    \
-        *compare = ((type *) addr)[0];                                                             \
+        *compare = opal_atomic_load_##suffix##_relaxed(addr);                                                             \
                                                                                                    \
         return false;                                                                              \
     }
@@ -142,8 +142,8 @@ static inline bool opal_set_using_threads(bool have)
             return (type) opal_atomic_swap_##suffix(ptr, (addr_type) newvalue);               \
         }                                                                                     \
                                                                                               \
-        type old = ((type *) ptr)[0];                                                         \
-        ((type *) ptr)[0] = newvalue;                                                         \
+        type old = opal_atomic_load_##suffix##_relaxed(ptr);                                  \
+        opal_atomic_store_##suffix##_relaxed(ptr, newvalue);                                                         \
                                                                                               \
         return old;                                                                           \
     }

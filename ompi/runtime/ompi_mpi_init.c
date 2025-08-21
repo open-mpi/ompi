@@ -125,7 +125,7 @@ const char ompi_version_string[] = OMPI_IDENT_STRING;
  * Global variables and symbols for the MPI layer
  */
 
-opal_atomic_int32_t ompi_mpi_state = OMPI_MPI_STATE_NOT_INITIALIZED;
+opal_atomic_int32_t ompi_mpi_state = { .value = OMPI_MPI_STATE_NOT_INITIALIZED };
 volatile bool ompi_rte_initialized = false;
 
 bool ompi_mpi_thread_multiple = false;
@@ -371,7 +371,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
             // silently return successfully once the initializing
             // thread has completed.
             if (reinit_ok) {
-                while (ompi_mpi_state < OMPI_MPI_STATE_INIT_COMPLETED) {
+                while (opal_atomic_load_32_relaxed(&ompi_mpi_state) < OMPI_MPI_STATE_INIT_COMPLETED) {
                     usleep(1);
                 }
                 return MPI_SUCCESS;

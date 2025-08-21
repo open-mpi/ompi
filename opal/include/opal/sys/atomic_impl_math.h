@@ -32,7 +32,7 @@
         {                                                                                          \
             type oldval;                                                                           \
             do {                                                                                   \
-                oldval = *addr;                                                                    \
+                oldval = opal_atomic_load_##bits##_relaxed(addr);                                  \
             } while (!opal_atomic_compare_exchange_strong_##bits(addr, &oldval,                    \
                                                                  oldval operation value));         \
                                                                                                    \
@@ -43,9 +43,9 @@
         {                                                                                          \
             type oldval, newval;                                                                   \
             do {                                                                                   \
-                oldval = *addr;                                                                    \
+                oldval = opal_atomic_load_##bits##_relaxed(addr);                                  \
                 newval = oldval operation value;                                                   \
-            } while (!opal_atomic_compare_exchange_strong_##bits(addr, &oldval, newval);           \
+            } while (!opal_atomic_compare_exchange_strong_##bits(addr, &oldval, newval));           \
                                                                                                    \
             return newval;                                                                         \
         }

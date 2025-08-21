@@ -71,40 +71,56 @@ static inline void opal_atomic_rmb(void)
  *
  *********************************************************************/
 
-#    define opal_atomic_compare_exchange_strong_32(addr, compare, value)                    \
-        atomic_compare_exchange_strong_explicit(addr, compare, value, memory_order_relaxed, \
-                                                memory_order_relaxed)
-#    define opal_atomic_compare_exchange_strong_acq_32(addr, compare, value)                \
-        atomic_compare_exchange_strong_explicit(addr, compare, value, memory_order_acquire, \
-                                                memory_order_relaxed)
-#    define opal_atomic_compare_exchange_strong_rel_32(addr, compare, value)                \
-        atomic_compare_exchange_strong_explicit(addr, compare, value, memory_order_release, \
-                                                memory_order_relaxed)
+static inline bool opal_atomic_compare_exchange_strong_32(opal_atomic_int32_t *addr, int32_t *compare, int32_t value)
+{
+    return atomic_compare_exchange_strong_explicit(&(addr->value), compare, value, memory_order_relaxed, memory_order_relaxed);
+}
 
-#    define opal_atomic_compare_exchange_strong_64(addr, compare, value)                    \
-        atomic_compare_exchange_strong_explicit(addr, compare, value, memory_order_relaxed, \
-                                                memory_order_relaxed)
-#    define opal_atomic_compare_exchange_strong_acq_64(addr, compare, value)                \
-        atomic_compare_exchange_strong_explicit(addr, compare, value, memory_order_acquire, \
-                                                memory_order_relaxed)
-#    define opal_atomic_compare_exchange_strong_rel_64(addr, compare, value)                \
-        atomic_compare_exchange_strong_explicit(addr, compare, value, memory_order_release, \
-                                                memory_order_relaxed)
+static inline bool opal_atomic_compare_exchange_strong_acq_32(opal_atomic_int32_t *addr, int32_t *compare, int32_t value)
+{
+    return atomic_compare_exchange_strong_explicit(&(addr->value), compare, value, memory_order_acquire, memory_order_relaxed);
+}
 
-#    define opal_atomic_compare_exchange_strong_ptr(addr, compare, value)                   \
-        atomic_compare_exchange_strong_explicit(addr, compare, value, memory_order_relaxed, \
-                                                memory_order_relaxed)
-#    define opal_atomic_compare_exchange_strong_acq_ptr(addr, compare, value)               \
-        atomic_compare_exchange_strong_explicit(addr, compare, value, memory_order_acquire, \
-                                                memory_order_relaxed)
-#    define opal_atomic_compare_exchange_strong_rel_ptr(addr, compare, value)               \
-        atomic_compare_exchange_strong_explicit(addr, compare, value, memory_order_release, \
-                                                memory_order_relaxed)
+static inline bool opal_atomic_compare_exchange_strong_rel_32(opal_atomic_int32_t *addr, int32_t *compare, int32_t value)
+{
+    return atomic_compare_exchange_strong_explicit(&(addr->value), compare, value, memory_order_release, memory_order_relaxed);
+}
+
+static inline bool opal_atomic_compare_exchange_strong_64(opal_atomic_int64_t *addr, int64_t *compare, int64_t value)
+{
+    return atomic_compare_exchange_strong_explicit(&(addr->value), compare, value, memory_order_relaxed, memory_order_relaxed);
+}
+
+static inline bool opal_atomic_compare_exchange_strong_acq_64(opal_atomic_int64_t *addr, int64_t *compare, int64_t value)
+{
+    return atomic_compare_exchange_strong_explicit(&(addr->value), compare, value, memory_order_acquire, memory_order_relaxed);
+}
+
+static inline bool opal_atomic_compare_exchange_strong_rel_64(opal_atomic_int64_t *addr, int64_t *compare, int64_t value)
+{
+    return atomic_compare_exchange_strong_explicit(&(addr->value), compare, value, memory_order_release, memory_order_relaxed);
+}
+
+static inline bool opal_atomic_compare_exchange_strong_ptr(opal_atomic_intptr_t *addr, intptr_t *compare, intptr_t value)
+{
+    return atomic_compare_exchange_strong_explicit(&(addr->value), compare, value, memory_order_relaxed, memory_order_relaxed);
+}
+
+static inline bool opal_atomic_compare_exchange_strong_acq_ptr(opal_atomic_intptr_t *addr, intptr_t *compare, intptr_t value)
+{
+    return atomic_compare_exchange_strong_explicit(&(addr->value), compare, value, memory_order_acquire, memory_order_relaxed);
+}
+
+static inline bool opal_atomic_compare_exchange_strong_rel_ptr(opal_atomic_intptr_t *addr, intptr_t *compare, intptr_t value)
+{
+    return atomic_compare_exchange_strong_explicit(&(addr->value), compare, value, memory_order_release, memory_order_relaxed);
+}
 
 #    if OPAL_HAVE_C11_CSWAP_INT128
 
 /* the C11 atomic compare-exchange is lock free so use it */
-#        define opal_atomic_compare_exchange_strong_128 atomic_compare_exchange_strong
+#        define opal_atomic_compare_exchange_strong_128(addr, oldval, newval) \
+            atomic_compare_exchange_strong(&((addr)->value), oldval, newval)
 
 #        define OPAL_HAVE_ATOMIC_COMPARE_EXCHANGE_128 1
 
@@ -137,12 +153,20 @@ opal_atomic_compare_exchange_strong_128(opal_atomic_int128_t *addr, opal_int128_
  *
  *********************************************************************/
 
-#    define opal_atomic_swap_32(addr, value) \
-        atomic_exchange_explicit((_Atomic unsigned int *) addr, value, memory_order_relaxed)
-#    define opal_atomic_swap_64(addr, value) \
-        atomic_exchange_explicit((_Atomic unsigned long *) addr, value, memory_order_relaxed)
-#    define opal_atomic_swap_ptr(addr, value) \
-        atomic_exchange_explicit((_Atomic unsigned long *) addr, value, memory_order_relaxed)
+static inline int32_t opal_atomic_swap_32(opal_atomic_int32_t *addr, int32_t value)
+{
+    return atomic_exchange_explicit(&(addr->value), value, memory_order_relaxed);
+}
+
+static inline int64_t opal_atomic_swap_64(opal_atomic_int64_t *addr, int64_t value)
+{
+    return atomic_exchange_explicit(&(addr->value), value, memory_order_relaxed);
+}
+
+static inline intptr_t opal_atomic_swap_ptr(opal_atomic_intptr_t *addr, intptr_t value)
+{
+    return atomic_exchange_explicit(&(addr->value), value, memory_order_relaxed);
+}
 
 
 /**********************************************************************
@@ -184,12 +208,12 @@ static inline void opal_atomic_unlock(opal_atomic_lock_t *lock)
 #    define OPAL_ATOMIC_STDC_DEFINE_FETCH_OP(op, bits, type, operator)                             \
         static inline type opal_atomic_fetch_##op##_##bits(opal_atomic_##type *addr, type value)   \
         {                                                                                          \
-            return atomic_fetch_##op##_explicit(addr, value, memory_order_relaxed);                \
+            return atomic_fetch_##op##_explicit(&((addr)->value), value, memory_order_relaxed);    \
         }                                                                                          \
                                                                                                    \
         static inline type opal_atomic_##op##_fetch_##bits(opal_atomic_##type *addr, type value)   \
         {                                                                                          \
-            return atomic_fetch_##op##_explicit(addr, value, memory_order_relaxed) operator value; \
+            return atomic_fetch_##op##_explicit(&((addr)->value), value, memory_order_relaxed) operator value; \
         }
 
 OPAL_ATOMIC_STDC_DEFINE_FETCH_OP(add, 32, int32_t, +)
@@ -208,7 +232,7 @@ OPAL_ATOMIC_STDC_DEFINE_FETCH_OP(add, size_t, size_t, +)
 OPAL_ATOMIC_STDC_DEFINE_FETCH_OP(sub, size_t, size_t, -)
 
 #    define opal_atomic_add(addr, value) \
-        (void) atomic_fetch_add_explicit(addr, value, memory_order_relaxed)
+        (void) atomic_fetch_add_explicit(&((addr)->value), value, memory_order_relaxed)
 
 #include "opal/sys/atomic_impl_minmax_math.h"
 

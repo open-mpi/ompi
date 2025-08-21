@@ -31,7 +31,7 @@
 
 static inline int32_t opal_atomic_fetch_min_32(opal_atomic_int32_t *addr, int32_t value)
 {
-    int32_t old = *addr;
+    int32_t old = opal_atomic_load_32_relaxed(addr);
     do {
         if (old <= value) {
             break;
@@ -49,7 +49,7 @@ static inline int32_t opal_atomic_min_fetch_32(opal_atomic_int32_t *addr, int32_
 
 static inline int32_t opal_atomic_fetch_max_32(opal_atomic_int32_t *addr, int32_t value)
 {
-    int32_t old = *addr;
+    int32_t old = opal_atomic_load_32_relaxed(addr);
     do {
         if (old >= value) {
             break;
@@ -67,7 +67,7 @@ static inline int32_t opal_atomic_max_fetch_32(opal_atomic_int32_t *addr, int32_
 
 static inline int64_t opal_atomic_fetch_min_64(opal_atomic_int64_t *addr, int64_t value)
 {
-    int64_t old = *addr;
+    int64_t old = opal_atomic_load_64_relaxed(addr);
     do {
         if (old <= value) {
             break;
@@ -79,7 +79,7 @@ static inline int64_t opal_atomic_fetch_min_64(opal_atomic_int64_t *addr, int64_
 
 static inline int64_t opal_atomic_fetch_max_64(opal_atomic_int64_t *addr, int64_t value)
 {
-    int64_t old = *addr;
+    int64_t old = opal_atomic_load_64_relaxed(addr);
     do {
         if (old >= value) {
             break;

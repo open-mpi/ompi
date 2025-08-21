@@ -168,7 +168,7 @@ typedef struct opal_list_t opal_list_t;
 #define OPAL_LIST_DESTRUCT(list)                                    \
     do {                                                            \
         opal_list_item_t *it;                                       \
-        if (1 == ((opal_object_t *) (list))->obj_reference_count) { \
+        if (1 == opal_atomic_load_32_relaxed(&((opal_object_t *) (list))->obj_reference_count)) { \
             while (NULL != (it = opal_list_remove_first(list))) {   \
                 OBJ_RELEASE(it);                                    \
             }                                                       \
@@ -179,7 +179,7 @@ typedef struct opal_list_t opal_list_t;
 #define OPAL_LIST_RELEASE(list)                                     \
     do {                                                            \
         opal_list_item_t *it;                                       \
-        if (1 == ((opal_object_t *) (list))->obj_reference_count) { \
+        if (1 == opal_atomic_load_32_relaxed(&((opal_object_t *) (list))->obj_reference_count)) { \
             while (NULL != (it = opal_list_remove_first(list))) {   \
                 OBJ_RELEASE(it);                                    \
             }                                                       \
