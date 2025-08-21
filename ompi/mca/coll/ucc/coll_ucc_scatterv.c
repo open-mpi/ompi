@@ -10,14 +10,12 @@
 
 #include "coll_ucc_common.h"
 
-static inline
-ucc_status_t mca_coll_ucc_scatterv_iniz(const void *sbuf, ompi_count_array_t scounts,
-                                        ompi_disp_array_t disps, struct ompi_datatype_t *sdtype,
-                                        void *rbuf, size_t rcount,
-                                        struct ompi_datatype_t *rdtype, int root,
-                                        mca_coll_ucc_module_t *ucc_module,
-                                        ucc_coll_req_h *req,
-                                        mca_coll_ucc_req_t *coll_req)
+static inline ucc_status_t
+mca_coll_ucc_scatterv_iniz(const void *sbuf, ompi_count_array_t scounts, ompi_disp_array_t disps,
+                           struct ompi_datatype_t *sdtype, void *rbuf, size_t rcount,
+                           struct ompi_datatype_t *rdtype, int root, bool persistent,
+                           mca_coll_ucc_module_t *ucc_module, ucc_coll_req_h *req,
+                           mca_coll_ucc_req_t *coll_req)
 {
     ucc_datatype_t ucc_sdt = UCC_DT_INT8, ucc_rdt = UCC_DT_INT8;
     bool is_inplace = (MPI_IN_PLACE == rbuf);
@@ -69,6 +67,10 @@ ucc_status_t mca_coll_ucc_scatterv_iniz(const void *sbuf, ompi_count_array_t sco
         },
     };
 
+    if (true == persistent) {
+        coll.mask |= UCC_COLL_ARGS_FIELD_FLAGS;
+        coll.flags |= UCC_COLL_ARGS_FLAG_PERSISTENT;
+    }
     COLL_UCC_REQ_INIT(coll_req, req, coll, ucc_module);
     return UCC_OK;
 fallback:
@@ -86,9 +88,8 @@ int mca_coll_ucc_scatterv(const void *sbuf, ompi_count_array_t scounts,
     ucc_coll_req_h         req;
 
     UCC_VERBOSE(3, "running ucc scatterv");
-    COLL_UCC_CHECK(mca_coll_ucc_scatterv_iniz(sbuf, scounts, disps, sdtype,
-                                              rbuf, rcount, rdtype, root,
-                                              ucc_module, &req, NULL));
+    COLL_UCC_CHECK(mca_coll_ucc_scatterv_iniz(sbuf, scounts, disps, sdtype, rbuf, rcount, rdtype,
+                                              root, false, ucc_module, &req, NULL));
     COLL_UCC_POST_AND_CHECK(req);
     COLL_UCC_CHECK(coll_ucc_req_wait(req));
     return OMPI_SUCCESS;
@@ -113,9 +114,8 @@ int mca_coll_ucc_iscatterv(const void *sbuf, ompi_count_array_t scounts,
 
     UCC_VERBOSE(3, "running ucc iscatterv");
     COLL_UCC_GET_REQ(coll_req);
-    COLL_UCC_CHECK(mca_coll_ucc_scatterv_iniz(sbuf, scounts, disps, sdtype,
-                                              rbuf, rcount, rdtype, root,
-                                              ucc_module, &req, coll_req));
+    COLL_UCC_CHECK(mca_coll_ucc_scatterv_iniz(sbuf, scounts, disps, sdtype, rbuf, rcount, rdtype,
+                                              root, false, ucc_module, &req, coll_req));
     COLL_UCC_POST_AND_CHECK(req);
     *request = &coll_req->super;
     return OMPI_SUCCESS;
@@ -127,4 +127,30 @@ fallback:
     return ucc_module->previous_iscatterv(sbuf, scounts, disps, sdtype, rbuf,
                                           rcount, rdtype, root, comm, request,
                                           ucc_module->previous_iscatterv_module);
+}
+
+int mca_coll_ucc_scatterv_init(const void *sbuf, ompi_count_array_t scounts,
+                               ompi_disp_array_t disps, struct ompi_datatype_t *sdtype, void *rbuf,
+                               size_t rcount, struct ompi_datatype_t *rdtype, int root,
+                               struct ompi_communicator_t *comm, struct ompi_info_t *info,
+                               ompi_request_t **request, mca_coll_base_module_t *module)
+{
+    mca_coll_ucc_module_t *ucc_module = (mca_coll_ucc_module_t *) module;
+    ucc_coll_req_h req;
+    mca_coll_ucc_req_t *coll_req = NULL;
+
+    COLL_UCC_GET_REQ_PC(coll_req);
+    UCC_VERBOSE(3, "scatterv_init init %p", coll_req);
+    COLL_UCC_CHECK(mca_coll_ucc_scatterv_iniz(sbuf, scounts, disps, sdtype, rbuf, rcount, rdtype,
+                                              root, true, ucc_module, &req, coll_req));
+    *request = &coll_req->super;
+    return OMPI_SUCCESS;
+fallback:
+    UCC_VERBOSE(3, "running fallback scatterv_init");
+    if (coll_req) {
+        mca_coll_ucc_req_free((ompi_request_t **) &coll_req);
+    }
+    return ucc_module->previous_scatterv_init(sbuf, scounts, disps, sdtype, rbuf, rcount, rdtype,
+                                              root, comm, info, request,
+                                              ucc_module->previous_scatterv_init_module);
 }
