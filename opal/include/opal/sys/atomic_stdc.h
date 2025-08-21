@@ -106,6 +106,11 @@ static inline bool opal_atomic_compare_exchange_strong_ptr(opal_atomic_intptr_t 
     return atomic_compare_exchange_strong_explicit(&(addr->value), compare, value, memory_order_relaxed, memory_order_relaxed);
 }
 
+static inline bool opal_atomic_compare_exchange_strong_ptr_volatile(volatile opal_atomic_intptr_t *addr, intptr_t *compare, intptr_t value)
+{
+    return atomic_compare_exchange_strong_explicit(&(addr->value), compare, value, memory_order_relaxed, memory_order_relaxed);
+}
+
 static inline bool opal_atomic_compare_exchange_strong_acq_ptr(opal_atomic_intptr_t *addr, intptr_t *compare, intptr_t value)
 {
     return atomic_compare_exchange_strong_explicit(&(addr->value), compare, value, memory_order_acquire, memory_order_relaxed);

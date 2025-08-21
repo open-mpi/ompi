@@ -549,7 +549,7 @@ static void mca_btl_sm_progress_endpoints(void)
 
 static int mca_btl_sm_component_progress(void)
 {
-    static opal_atomic_int32_t lock = 0;
+    static opal_atomic_int32_t lock = { .value = 0 };
     int count = 0;
 
     if (opal_using_threads()) {
@@ -565,14 +565,14 @@ static int mca_btl_sm_component_progress(void)
 
     mca_btl_sm_progress_endpoints();
 
-    if (SM_FIFO_FREE == mca_btl_sm_component.my_fifo->fifo_head) {
-        lock = 0;
+    if (SM_FIFO_FREE == opal_atomic_load_ptr_relaxed(&mca_btl_sm_component.my_fifo->fifo_head)) {
+        opal_atomic_store_32_relaxed(&lock, 0);
         return count;
     }
 
     count += mca_btl_sm_poll_fifo();
     opal_atomic_mb();
-    lock = 0;
+    opal_atomic_store_32_relaxed(&lock, 0);
 
     return count;
 }

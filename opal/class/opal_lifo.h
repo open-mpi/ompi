@@ -83,7 +83,7 @@ opal_read_counted_pointer(volatile opal_counted_pointer_t *volatile addr,
      * specific order */
     value->data.counter = addr->data.counter;
     opal_atomic_rmb();
-    opal_atomic_store_ptr_relaxed(&value->data.item, opal_atomic_load_ptr_relaxed(&addr->data.item));
+    opal_atomic_store_ptr_volatile_relaxed(&value->data.item, opal_atomic_load_ptr_volatile_relaxed(&addr->data.item));
 }
 
 #endif
@@ -140,7 +140,7 @@ static inline opal_list_item_t *opal_lifo_push_atomic(opal_lifo_t *lifo, opal_li
         opal_atomic_wmb();
 
         /* to protect against ABA issues it is sufficient to only update the counter in pop */
-        if (opal_atomic_compare_exchange_strong_ptr(&lifo->opal_lifo_head.data.item,
+        if (opal_atomic_compare_exchange_strong_ptr_volatile(&lifo->opal_lifo_head.data.item,
                                                     (intptr_t *) &next, (intptr_t) item)) {
             return next;
         }
@@ -159,7 +159,7 @@ static inline opal_list_item_t *opal_lifo_pop_atomic(opal_lifo_t *lifo)
     opal_read_counted_pointer(&lifo->opal_lifo_head, &old_head);
 
     do {
-        item = (opal_list_item_t *) opal_atomic_load_ptr_relaxed(&old_head.data.item);
+        item = (opal_list_item_t *) opal_atomic_load_ptr_volatile_relaxed(&old_head.data.item);
         if (item == &lifo->opal_lifo_ghost) {
             return NULL;
         }
@@ -189,7 +189,7 @@ static inline opal_list_item_t *opal_lifo_push_atomic(opal_lifo_t *lifo, opal_li
     do {
         item->opal_list_next = next;
         opal_atomic_wmb();
-        if (opal_atomic_compare_exchange_strong_ptr(&lifo->opal_lifo_head.data.item,
+        if (opal_atomic_compare_exchange_strong_ptr_volatile(&lifo->opal_lifo_head.data.item,
                                                     (intptr_t *) &next, (intptr_t) item)) {
             opal_atomic_wmb();
             /* now safe to pop this item */
@@ -252,7 +252,7 @@ static inline opal_list_item_t *opal_lifo_pop_atomic(opal_lifo_t *lifo)
 
         head = item;
         /* try to swap out the head pointer */
-        if (opal_atomic_compare_exchange_strong_ptr(&lifo->opal_lifo_head.data.item,
+        if (opal_atomic_compare_exchange_strong_ptr_volatile(&lifo->opal_lifo_head.data.item,
                                                     (intptr_t *) &head,
                                                     (intptr_t) item->opal_list_next)) {
             break;

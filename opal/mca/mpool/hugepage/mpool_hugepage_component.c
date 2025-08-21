@@ -131,7 +131,7 @@ static int mca_mpool_hugepage_register(void)
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_LOCAL, &mca_mpool_hugepage_page_size);
 
-    mca_mpool_hugepage_component.bytes_allocated = 0;
+    opal_atomic_store_size_t_relaxed(&mca_mpool_hugepage_component.bytes_allocated, 0);
     (void) mca_base_component_pvar_register(&mca_mpool_hugepage_component.super.mpool_version,
                                             "bytes_allocated",
                                             "Number of bytes currently allocated in the mpool "

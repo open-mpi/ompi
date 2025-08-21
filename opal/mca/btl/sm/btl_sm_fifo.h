@@ -112,8 +112,8 @@ static inline void sm_fifo_init(sm_fifo_t *fifo)
      * ideal but oh well. See #5814 */
     /* fifo->fifo_head = fifo->fifo_tail = SM_FIFO_FREE; */
     opal_atomic_store_ptr_relaxed(&fifo->fifo_head, SM_FIFO_FREE);
-    fifo->fifo_tail = SM_FIFO_FREE;
-    fifo->fbox_available = mca_btl_sm_component.fbox_max;
+    opal_atomic_store_ptr_relaxed(&fifo->fifo_tail, SM_FIFO_FREE);
+    opal_atomic_store_32_relaxed(&fifo->fbox_available, mca_btl_sm_component.fbox_max);
     mca_btl_sm_component.my_fifo = fifo;
 }
 
