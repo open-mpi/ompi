@@ -56,10 +56,17 @@ def main():
     # C set up code
     parser_c = subparsers.add_parser('c', help='subcommand for generating C code')
     subparsers_c = parser_c.add_subparsers()
+    parser_converters = subparsers_c.add_parser('converters', help='generate converter header file or source file')
+    parser_converters.add_argument('--type', choices=('include_file', 'source_file'),
+                            help='generate the converter function include file or source file')
+    parser_converters.set_defaults(handler=lambda args, out: c.generate_converters(args, out))
     parser_gen = subparsers_c.add_parser('source', help='generate source file from template file')
     # parser = argparse.ArgumentParser(description='C ABI binding generation code')
     parser_gen.add_argument('type', choices=('ompi', 'standard'),
                             help='generate the OMPI ABI functions or the standard ABI functions')
+    parser_gen.add_argument('--mpit', action='store_true', help='generate MPI T code')
+    parser_gen.add_argument('--suppress_bc', action='store_true', help='do not generate  big count variant')
+    parser_gen.add_argument('--suppress_nbc', action='store_true', help='do not generate int count variant')
     parser_gen.add_argument('source_file', help='template file to use for C code generation')
     parser_gen.set_defaults(handler=lambda args, out: c.generate_source(args, out))
     args = parser.parse_args()

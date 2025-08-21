@@ -33,7 +33,7 @@
 #include "ompi/runtime/ompi_spc.h"
 
 PROTOTYPE ERROR_CLASS irecv(BUFFER_OUT buf, COUNT count, DATATYPE type,
-                            INT source, INT tag, COMM comm, REQUEST_INOUT request)
+                            SOURCE source, TAG tag, COMM comm, REQUEST_INOUT request)
 {
     int rc = MPI_SUCCESS;
 

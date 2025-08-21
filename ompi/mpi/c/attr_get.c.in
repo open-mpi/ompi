@@ -30,7 +30,7 @@
 #include "ompi/attribute/attribute.h"
 #include "ompi/memchecker.h"
 
-PROTOTYPE ERROR_CLASS attr_get(COMM comm, INT keyval, BUFFER_OUT attribute_val, INT_OUT flag)
+PROTOTYPE ERROR_CLASS attr_get(COMM comm, ATTR_KEY keyval, BUFFER_OUT attribute_val, INT_OUT flag)
 {
     int ret;
 

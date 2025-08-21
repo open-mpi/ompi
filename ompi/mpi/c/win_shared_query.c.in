@@ -25,7 +25,7 @@
 #include "ompi/win/win.h"
 #include "ompi/mca/osc/osc.h"
 
-PROTOTYPE ERROR_CLASS win_shared_query(WIN win, INT rank, AINT_OUT size, INT_AINT_OUT disp_unit, BUFFER_OUT baseptr)
+PROTOTYPE ERROR_CLASS win_shared_query(WIN win, SOURCE rank, AINT_OUT size, INT_AINT_OUT disp_unit, BUFFER_OUT baseptr)
 {
     size_t tsize;
     ptrdiff_t du;

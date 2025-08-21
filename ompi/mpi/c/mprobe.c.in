@@ -27,7 +27,7 @@
 #include "ompi/request/request.h"
 #include "ompi/message/message.h"
 
-PROTOTYPE ERROR_CLASS mprobe(INT source, INT tag, COMM comm,
+PROTOTYPE ERROR_CLASS mprobe(SOURCE source, TAG tag, COMM comm,
                              MESSAGE_OUT message, STATUS_OUT status)
 {
     int rc;

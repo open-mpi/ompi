@@ -29,7 +29,7 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/group/group.h"
 
-PROTOTYPE ERROR_CLASS group_free(GROUP_OUT group)
+PROTOTYPE ERROR_CLASS group_free(GROUP_INOUT group)
 {
     int ret;
 
@@ -50,8 +50,8 @@ PROTOTYPE ERROR_CLASS group_free(GROUP_OUT group)
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
-        if ((NULL == group) ||
-            (MPI_GROUP_NULL == *group) || (NULL == *group) ) {
+        if (NULL == group || NULL == *group ||
+            MPI_GROUP_NULL == *group) {
             return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_GROUP,
                                           FUNC_NAME);
         }

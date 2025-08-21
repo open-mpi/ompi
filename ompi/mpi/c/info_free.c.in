@@ -40,7 +40,7 @@
  *
  *   Upon successful completion, 'info' will be set to 'MPI_INFO_NULL'.
  */
-PROTOTYPE ERROR_CLASS info_free(INFO_OUT info)
+PROTOTYPE ERROR_CLASS info_free(INFO_INOUT info)
 {
     int err;
 
@@ -50,7 +50,8 @@ PROTOTYPE ERROR_CLASS info_free(INFO_OUT info)
      * fashion so that there are no dangling pointers.
      */
     if (MPI_PARAM_CHECK) {
-        if (NULL == info || MPI_INFO_NULL == *info ||
+        if (NULL == info || NULL == *info ||
+            MPI_INFO_NULL == *info || MPI_INFO_ENV == *info ||
             ompi_info_is_freed(*info)) {
             return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_INFO,
                                           FUNC_NAME);

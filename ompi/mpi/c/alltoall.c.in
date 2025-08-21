@@ -17,7 +17,7 @@
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies. All rights reserved.
- * Copyright (c) 2024      Triad National Security, LLC. All rights
+ * Copyright (c) 2024-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -37,7 +37,7 @@
 #include "ompi/memchecker.h"
 #include "ompi/runtime/ompi_spc.h"
 
-PROTOTYPE ERROR_CLASS alltoall(BUFFER sendbuf, COUNT sendcount, DATATYPE sendtype,
+PROTOTYPE ERROR_CLASS alltoall(BUFFER_CONST sendbuf, COUNT sendcount, DATATYPE sendtype,
                                BUFFER_OUT recvbuf, COUNT recvcount, DATATYPE recvtype,
                                COMM comm)
 {

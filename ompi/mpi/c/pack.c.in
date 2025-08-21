@@ -16,7 +16,7 @@
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2021      IBM Corporation. All rights reserved.
- * Copyright (c) 2024      Triad National Security, LLC. All rights
+ * Copyright (c) 2024-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -35,7 +35,7 @@
 #include "opal/datatype/opal_convertor.h"
 #include "ompi/memchecker.h"
 
-PROTOTYPE ERROR_CLASS pack(BUFFER inbuf, COUNT incount, DATATYPE datatype,
+PROTOTYPE ERROR_CLASS pack(BUFFER_CONST inbuf, COUNT incount, DATATYPE datatype,
                            BUFFER_OUT outbuf, COUNT outsize, COUNT_OUT position, COMM comm)
 {
     int rc = MPI_SUCCESS, ret;

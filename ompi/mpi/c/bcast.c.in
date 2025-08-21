@@ -32,7 +32,7 @@
 #include "ompi/runtime/ompi_spc.h"
 
 PROTOTYPE ERROR_CLASS bcast(BUFFER_OUT buffer, COUNT count, DATATYPE datatype,
-                            INT root, COMM comm)
+                            ROOT root, COMM comm)
 {
     int err;
 
