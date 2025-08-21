@@ -62,8 +62,9 @@ endif
 mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_op_riscv64_la_SOURCES = $(sources)
-mca_op_riscv64_la_LIBADD = $(specialized_op_libs)
-mca_op_riscv64_la_LDFLAGS = -module -avoid-version $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la
+mca_op_riscv64_la_LIBADD = $(specialized_op_libs) \
+                           $(top_builddir)/ompi/libopen_mpi.la
+mca_op_riscv64_la_LDFLAGS = -module -avoid-version
 
 
 # Specific information for static builds.
