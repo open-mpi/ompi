@@ -71,7 +71,7 @@ mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component)
 mca_op_example_la_SOURCES = $(component_sources)
 mca_op_example_la_LDFLAGS = -module -avoid-version
-mca_op_example_la_LIBADD = $(top_builddir)/ompi/libopen-mpi.la
+mca_op_example_la_LIBADD = $(top_builddir)/ompi/libopen_mpi.la
 
 # Specific information for static builds.
 #

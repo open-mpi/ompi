@@ -52,7 +52,7 @@ PROTOTYPE ERROR_CLASS type_set_name (DATATYPE type, STRING type_name)
         }
     }
 
-    memset(type->name, 0, MPI_MAX_OBJECT_NAME);
-    opal_string_copy( type->name, type_name, MPI_MAX_OBJECT_NAME);
+    memset(type->name, 0, @MPI_MAX_OBJECT_NAME@);
+    opal_string_copy( type->name, type_name, @MPI_MAX_OBJECT_NAME@);
     return MPI_SUCCESS;
 }

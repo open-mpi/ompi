@@ -17,7 +17,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
- * Copyright (c) 2024      Triad National Security, LLC. All rights
+ * Copyright (c) 2024-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -36,9 +36,9 @@
 #include "ompi/memchecker.h"
 #include "ompi/runtime/ompi_spc.h"
 
-PROTOTYPE ERROR_CLASS sendrecv(BUFFER sendbuf, COUNT sendcount, DATATYPE sendtype,
-                               INT dest, INT sendtag, BUFFER_OUT recvbuf, COUNT recvcount,
-                               DATATYPE recvtype, INT source, INT recvtag,
+PROTOTYPE ERROR_CLASS sendrecv(BUFFER_CONST sendbuf, COUNT sendcount, DATATYPE sendtype,
+                               SOURCE dest, INT sendtag, BUFFER_OUT recvbuf, COUNT recvcount,
+                               DATATYPE recvtype, SOURCE source, TAG recvtag,
                                COMM comm, STATUS_OUT status)
 {
     int rc = MPI_SUCCESS;

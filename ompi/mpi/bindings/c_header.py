@@ -40,13 +40,51 @@ INTERNAL_DATATYPES = [
     "MPI_Win",
     "MPI_Comm_copy_attr_function",
     "MPI_Comm_delete_attr_function",
+    "MPI_Comm_errhandler_function",
+    "MPI_File_errhandler_function",
+    "MPI_Session_errhandler_function",
     "MPI_Type_copy_attr_function",
     "MPI_Type_delete_attr_function",
     "MPI_Win_delete_attr_function",
     "MPI_Win_copy_attr_function",
+    "MPI_Win_errhandler_function",
+    "MPI_T_enum",
+    "MPI_T_cvar_handle",
+    "MPI_T_pvar_handle",
+    "MPI_T_pvar_session",
+    "MPI_T_event_instance",
+    "MPI_T_event_registration",
+    "MPI_T_cb_safety",
+    "MPI_T_source_order",
     # TODO: these two are deprecated, get rid of them
     "MPI_Copy_function",
     "MPI_Delete_function",
+]
+
+DEPRECATED_FUNCTIONS = [
+    "MPI_Address",
+    "MPI_Type_hindexed",
+    "MPI_Type_hvector",
+    "MPI_Type_struct",
+    "MPI_Type_extent",
+    "MPI_Type_lb",
+    "MPI_Type_lb",
+    "MPI_LB",
+    "MPI_UB",
+    "MPI_Errhandler_create",
+    "MPI_Errhandler_get",
+    "MPI_Errhandler_set",
+    "MPI_Keyval_create",
+    "MPI_Keyval_free",
+    "MPI_DUP_FN"
+    "MPI_NULL_COPY_FN"
+    "MPI_NULL_DELETE_FN"
+    "MPI_Attr_delete",
+    "MPI_Attr_get",
+    "MPI_Attr_put",
+    "MPI_COMBINER_HVECTOR_INTEGER",
+    "MPI_COMBINER_HINDEXED_INTEGER",
+    "MPI_COMBINER_STRUCT_INTEGER",
 ]
 
 ENUM_CATEGORIES = [
@@ -169,6 +207,7 @@ with open(INPUT, 'r') as header_in:
 # that commented-out lines are NOT included.
 category_pattern = re.compile(r"^[\s]*\$CATEGORY:([A-Z_0-9]+)\$$")
 output = []
+c_type = str()
 
 for line in lines:
     category = category_pattern.search(line)
@@ -181,14 +220,33 @@ for line in lines:
         if category in ENUM_CATEGORIES:
             use_enum = True
         if use_enum:
-            output.append("enum {\n")
+            for constant in categories_dict[category]:
+                c_type = constant["handle_types"]["c"]["type"]
+                if c_type == "int":
+                    output.append("enum {\n")
+                else:
+                    if MANGLE_NAMES:
+                        line = f'typedef enum {c_type}{ABI_INTERNAL}'
+                    else:
+                        line = f'typedef enum {c_type}'
+                    line = line + " {\n"
+                    output.append(line)
+                break
         # Print out each `#define` / assignment for the constants
         for constant in categories_dict[category]:
             line = output_constant(constant, use_enum, MANGLE_NAMES)
             if line is not None:
                 output.append(line)
         if use_enum:
-            output.append("};\n")
+            if c_type == "int":
+                output.append("};\n")
+            else:
+                if MANGLE_NAMES:
+                    line = f'{c_type}{ABI_INTERNAL};'
+                else:
+                    line = f'{c_type};'
+                line = "} " + line + "\n"
+                output.append(line)
     else:
         output.append(line)
 
@@ -219,22 +277,78 @@ for proc in std.all_iso_c_procedures():
          binding = proc.express.embiggen.iso_c.__str__().split()
          output.append(f"{binding[0]} P{' '.join(binding[1:])};\n")
 
+# ================================ Odds and ends for mangle case ===============
+if MANGLE_NAMES:
+    output.append("\n")
+    output.append("/*\n")
+    output.append(" * define externs to help with attributes\n")
+    output.append(" */\n")
+    output.append("extern int ompi_abi_mpi_proc_null_val;\n")
+    output.append("extern int ompi_abi_mpi_any_source_val;\n")
+    output.append("extern int ompi_abi_mpi_win_flavor_create;\n")
+    output.append("extern int ompi_abi_mpi_win_flavor_allocate;\n")
+    output.append("extern int ompi_abi_mpi_win_flavor_shared;\n")
+    output.append("extern int ompi_abi_mpi_win_flavor_dynamic;\n")
+    output.append("extern int ompi_abi_mpi_win_model_unified;\n")
+    output.append("extern int ompi_abi_mpi_win_model_separate;\n")
+    output.append("extern int ompi_abi_mpi_lastusedcode;\n")
+    output.append("\n")
+    output.append("int ABI_C_MPI_COMM_NULL_DELETE_FN( MPI_Comm_ABI_INTERNAL comm, int comm_keyval, void* attribute_val_out, void* extra_state );\n")
+    output.append("int ABI_C_MPI_COMM_NULL_COPY_FN( MPI_Comm_ABI_INTERNAL  comm, int comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag );\n")
+    output.append("int ABI_C_MPI_COMM_DUP_FN( MPI_Comm_ABI_INTERNAL comm, int comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag );\n")
+    output.append("int ABI_C_MPI_TYPE_NULL_DELETE_FN( MPI_Datatype_ABI_INTERNAL datatype, int type_keyval, void* attribute_val_out, void* extra_state );\n")
+    output.append("int ABI_C_MPI_TYPE_NULL_COPY_FN( MPI_Datatype_ABI_INTERNAL datatype, int type_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag );\n")
+    output.append("int ABI_C_MPI_TYPE_DUP_FN( MPI_Datatype_ABI_INTERNAL datatype, int type_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag );\n")
+    output.append("int ABI_C_MPI_WIN_NULL_DELETE_FN( MPI_Win_ABI_INTERNAL window, int win_keyval, void* attribute_val_out, void* extra_state );\n")
+    output.append("int ABI_C_MPI_WIN_NULL_COPY_FN( MPI_Win_ABI_INTERNAL window, int win_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag );\n")
+    output.append("int ABI_C_MPI_WIN_DUP_FN( MPI_Win_ABI_INTERNAL window, int win_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag );\n")
+    output.append("\n")
+
 # ================================ Final Output ================================
-output.append("#endif /* _ABI_INTERNAL_ */")
+output.append("#if defined(__cplusplus)\n")
+output.append("}\n")
+output.append("#endif\n")
+output.append("#endif /* MPI_H_ABI */")
+# === some compilers are finicky about not having empy line at end of include file =====
+output.append("\n")
+
+#replacements = {'MPI_COUNT':'MPI_Count_ABI_INTERNAL',
+#                'MPI_AINT':'MPI_Aint_ABI_INTERNAL',
+#                'MPI_OFFSET':'MPI_Offset_ABI_INTERNAL'}
+replacements = {'MPI_COUNT':'MPI_Count',
+                'MPI_AINT':'MPI_Aint',
+                'MPI_OFFSET':'MPI_Offset'}
 
 for i, line in enumerate(output):
     line = line.replace(r"\ldots", "...")
+    for key, value in replacements.items():
+        if MANGLE_NAMES:
+            value = value+'_ABI_INTERNAL'
+        line = line.replace(f'@{key}@', value)
     if MANGLE_NAMES:
+
         # Replace datatypes with their internal ABI counterparts
         for datatype in INTERNAL_DATATYPES:
             # Need to include the extra space here or else we'll edit functions
             # like "MPI_Group_difference"
             datatype_pattern = r"([\( ]?)(" + datatype + r")([; \*\)]{1})"
             line = re.sub(datatype_pattern, f"\\g<1>\\g<2>{ABI_INTERNAL}\\g<3>", line)
-    if "MPI_Fint" in line:
-        # Comment out a line if it has references to MPI_Fint, we don't need
-        # that for the ABI
-        line = f"/* {line} */"
+    # TODO: need to enhance pympistandard to be able to prune out deprecated functions
+    # This stands in as a workaround
+    comment_out = False
+    comment_out = any(i in line for i in DEPRECATED_FUNCTIONS)
+
+    # function is not in the ABI standard (things in MPI 5.1 chapter 19 sections 19.3.4 and 19.3.5
+    # TODO: need to enhance pympistandard to have field in json to indicate a 
+    # function is not in the ABI standard (things in MPI 5.1 chapter 19 sections 19.3.4 and 19.3.5
+    if "MPI_Fint" in line or "MPI_F08_status" in line:
+        comment_out = True
+
+    if comment_out == True:
+        # Comment out a line if it has references to MPI_Fint or MPI_F08_status, since
+        # functions with these argument types are not in the ABI
+        line = line[:-1]
+        line = f"/* {line} */" + "\n"
     # TODO: pympistandard creates `MPI_Info_create_env` with its `argv`
     # parameter being of type `char *` instead of `char **` --- as defined in
     # the standard.

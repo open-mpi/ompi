@@ -86,7 +86,7 @@ mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_op_avx_la_SOURCES = $(sources)
 mca_op_avx_la_LIBADD = $(specialized_op_libs)
-mca_op_avx_la_LDFLAGS = -module -avoid-version $(top_builddir)/ompi/libopen-mpi.la
+mca_op_avx_la_LDFLAGS = -module -avoid-version $(top_builddir)/ompi/libopen_mpi.la
 
 
 # Specific information for static builds.

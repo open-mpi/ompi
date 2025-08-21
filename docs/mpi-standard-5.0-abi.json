@@ -6889,8 +6889,8 @@
     "mpi_comm_null_copy_fn": {
       "handle_types": {
         "c": {
-          "type": "MPI_Comm_copy_attr_function",
-          "description": "\\ctype{MPI_Comm_copy_attr_function}"
+          "type": "MPI_Comm_copy_attr_function *",
+          "description": "\\ctype{MPI_Comm_copy_attr_function *}"
         },
         "f90": {
           "type": "COMM_COPY_ATTR_FUNCTION",
@@ -6910,7 +6910,7 @@
     "mpi_comm_dup_fn": {
       "handle_types": {
         "c": {
-          "type": "MPI_Comm_copy_attr_function",
+          "type": "MPI_Comm_copy_attr_function *",
           "description": "\\ctype{MPI_Comm_copy_attr_function}"
         },
         "f90": {
@@ -6931,8 +6931,8 @@
     "mpi_comm_null_delete_fn": {
       "handle_types": {
         "c": {
-          "type": "MPI_Comm_delete_attr_function",
-          "description": "\\ctype{MPI_Comm_delete_attr_function}"
+          "type": "MPI_Comm_delete_attr_function *",
+          "description": "\\ctype{MPI_Comm_delete_attr_function *}"
         },
         "f90": {
           "type": "COMM_DELETE_ATTR_FUNCTION",
@@ -6952,8 +6952,8 @@
     "mpi_win_null_copy_fn": {
       "handle_types": {
         "c": {
-          "type": "MPI_Win_copy_attr_function",
-          "description": "\\ctype{MPI_Win_copy_attr_function}"
+          "type": "MPI_Win_copy_attr_function *",
+          "description": "\\ctype{MPI_Win_copy_attr_function *}"
         },
         "f90": {
           "type": "WIN_COPY_ATTR_FUNCTION",
@@ -6973,8 +6973,8 @@
     "mpi_win_dup_fn": {
       "handle_types": {
         "c": {
-          "type": "MPI_Win_copy_attr_function",
-          "description": "\\ctype{MPI_Win_copy_attr_function}"
+          "type": "MPI_Win_copy_attr_function *",
+          "description": "\\ctype{MPI_Win_copy_attr_function *}"
         },
         "f90": {
           "type": "WIN_COPY_ATTR_FUNCTION",
@@ -6994,8 +6994,8 @@
     "mpi_win_null_delete_fn": {
       "handle_types": {
         "c": {
-          "type": "MPI_Win_delete_attr_function",
-          "description": "\\ctype{MPI_Win_delete_attr_function}"
+          "type": "MPI_Win_delete_attr_function *",
+          "description": "\\ctype{MPI_Win_delete_attr_function *}"
         },
         "f90": {
           "type": "WIN_DELETE_ATTR_FUNCTION",
@@ -7015,8 +7015,8 @@
     "mpi_type_null_copy_fn": {
       "handle_types": {
         "c": {
-          "type": "MPI_Type_copy_attr_function",
-          "description": "\\ctype{MPI_Type_copy_attr_function}"
+          "type": "MPI_Type_copy_attr_function *",
+          "description": "\\ctype{MPI_Type_copy_attr_function *}"
         },
         "f90": {
           "type": "TYPE_COPY_ATTR_FUNCTION",
@@ -7036,8 +7036,8 @@
     "mpi_type_dup_fn": {
       "handle_types": {
         "c": {
-          "type": "MPI_Type_copy_attr_function",
-          "description": "\\ctype{MPI_Type_copy_attr_function}"
+          "type": "MPI_Type_copy_attr_function *",
+          "description": "\\ctype{MPI_Type_copy_attr_function *}"
         },
         "f90": {
           "type": "TYPE_COPY_ATTR_FUNCTION",
@@ -7057,8 +7057,8 @@
     "mpi_type_null_delete_fn": {
       "handle_types": {
         "c": {
-          "type": "MPI_Type_delete_attr_function",
-          "description": "\\ctype{MPI_Type_delete_attr_function}"
+          "type": "MPI_Type_delete_attr_function *",
+          "description": "\\ctype{MPI_Type_delete_attr_function *}"
         },
         "f90": {
           "type": "TYPE_DELETE_ATTR_FUNCTION",
@@ -7078,8 +7078,8 @@
     "mpi_conversion_fn_null": {
       "handle_types": {
         "c": {
-          "type": "MPI_Datarep_conversion_function",
-          "description": "\\ctype{MPI_Datarep_conversion_function}"
+          "type": "MPI_Datarep_conversion_function *",
+          "description": "\\ctype{MPI_Datarep_conversion_function *}"
         },
         "f90": {
           "type": "DATAREP_CONVERSION_FUNCTION",
@@ -7099,8 +7099,8 @@
     "mpi_conversion_fn_null_c": {
       "handle_types": {
         "c": {
-          "type": "MPI_Datarep_conversion_function_c",
-          "description": "\\ctype{MPI_Datarep_conversion_function_c}"
+          "type": "MPI_Datarep_conversion_function_c *",
+          "description": "\\ctype{MPI_Datarep_conversion_function_c *}"
         },
         "f90": {
           "type": null,
@@ -7120,8 +7120,8 @@
     "mpi_null_copy_fn": {
       "handle_types": {
         "c": {
-          "type": "MPI_Copy_function",
-          "description": "\\ctype{MPI_Copy_function}"
+          "type": "MPI_Copy_function *",
+          "description": "\\ctype{MPI_Copy_function *}"
         },
         "f90": {
           "type": "COPY_FUNCTION",
@@ -7141,8 +7141,8 @@
     "mpi_dup_fn": {
       "handle_types": {
         "c": {
-          "type": "MPI_Copy_function",
-          "description": "\\ctype{MPI_Copy_function}"
+          "type": "MPI_Copy_function *",
+          "description": "\\ctype{MPI_Copy_function *}"
         },
         "f90": {
           "type": "COPY_FUNCTION",
@@ -7162,8 +7162,8 @@
     "mpi_null_delete_fn": {
       "handle_types": {
         "c": {
-          "type": "MPI_Delete_function",
-          "description": "\\ctype{MPI_Delete_function}"
+          "type": "MPI_Delete_function *",
+          "description": "\\ctype{MPI_Delete_function *}"
         },
         "f90": {
           "type": "DELETE_FUNCTION",
@@ -8170,8 +8170,8 @@
     "mpi_t_source_ordered": {
       "handle_types": {
         "c": {
-          "type": "int",
-          "description": "integer constant expression of type \\ctype{int}"
+          "type": "MPI_T_source_order",
+          "description": "integer constant expression of type \\ctype{MPI_T_source_order}"
         },
         "f90": {
           "type": null,
@@ -8191,8 +8191,8 @@
     "mpi_t_source_unordered": {
       "handle_types": {
         "c": {
-          "type": "int",
-          "description": "integer constant expression of type \\ctype{int}"
+          "type": "MPI_T_source_order",
+          "description": "integer constant expression of type \\ctype{MPI_T_source_order}"
         },
         "f90": {
           "type": null,
@@ -8212,8 +8212,8 @@
     "mpi_t_cb_require_none": {
       "handle_types": {
         "c": {
-          "type": "int",
-          "description": "integer constant expression of type \\ctype{int}"
+          "type": "MPI_T_cb_safety",
+          "description": "integer constant expression of type \\ctype{MPI_T_cb_safety}"
         },
         "f90": {
           "type": null,
@@ -8233,8 +8233,8 @@
     "mpi_t_cb_require_mpi_restricted": {
       "handle_types": {
         "c": {
-          "type": "int",
-          "description": "integer constant expression of type \\ctype{int}"
+          "type": "MPI_T_cb_safety",
+          "description": "integer constant expression of type \\ctype{MPI_T_cb_safety}"
         },
         "f90": {
           "type": null,
@@ -8254,8 +8254,8 @@
     "mpi_t_cb_require_thread_safe": {
       "handle_types": {
         "c": {
-          "type": "int",
-          "description": "integer constant expression of type \\ctype{int}"
+          "type": "MPI_T_cb_safety",
+          "description": "integer constant expression of type \\ctype{MPI_T_cb_safety}"
         },
         "f90": {
           "type": null,
@@ -8275,8 +8275,8 @@
     "mpi_t_cb_require_async_signal_safe": {
       "handle_types": {
         "c": {
-          "type": "int",
-          "description": "integer constant expression of type \\ctype{int}"
+          "type": "MPI_T_cb_safety",
+          "description": "integer constant expression of type \\ctype{MPI_T_cb_safety}"
         },
         "f90": {
           "type": null,

@@ -37,8 +37,8 @@
 #include "ompi/datatype/ompi_datatype_internal.h"
 #include "ompi/memchecker.h"
 
-PROTOTYPE ERROR_CLASS accumulate(BUFFER origin_addr, COUNT origin_count, DATATYPE origin_datatype,
-                                 INT target_rank, AINT target_disp, COUNT target_count,
+PROTOTYPE ERROR_CLASS accumulate(BUFFER_CONST origin_addr, COUNT origin_count, DATATYPE origin_datatype,
+                                 SOURCE target_rank, AINT target_disp, COUNT target_count,
                                  DATATYPE target_datatype, OP op, WIN win)
 {
     int rc;

@@ -31,3 +31,14 @@ EXTRA_DIST += \
         mpi/bindings/ompi_bindings/fortran.py \
         mpi/bindings/ompi_bindings/fortran_type.py \
         mpi/bindings/ompi_bindings/util.py
+
+#
+# attr_fn.c needs to be slurped into libopen_mpi
+# as it defines the OMPI native variants of
+# built-in copy/del attribute functions and these
+# are used in some component plugins
+#
+
+libopen_mpi_la_SOURCES += \
+        mpi/c/attr_fn.c
+
