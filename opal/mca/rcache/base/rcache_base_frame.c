@@ -57,8 +57,8 @@ static void mca_rcache_base_registration_constructor(mca_rcache_base_registratio
     reg->rcache = NULL;
     reg->base = NULL;
     reg->bound = NULL;
-    reg->ref_count = 0;
-    reg->flags = 0;
+    opal_atomic_store_32_relaxed(&reg->ref_count, 0);
+    opal_atomic_store_uint32_relaxed(&reg->flags, 0);
 }
 
 OBJ_CLASS_INSTANCE(mca_rcache_base_registration_t, opal_free_list_item_t,

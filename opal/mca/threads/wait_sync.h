@@ -100,7 +100,7 @@ static inline int sync_wait_st(ompi_wait_sync_t *sync)
     assert(NULL == sync->next);
     opal_threads_base_wait_sync_list = sync;
 
-    while (sync->count > 0) {
+    while (opal_atomic_load_32_relaxed(&sync->count) > 0) {
         opal_progress();
     }
     opal_threads_base_wait_sync_list = NULL;

@@ -113,6 +113,11 @@ static inline intptr_t opal_atomic_load_ptr(const opal_atomic_intptr_t *addr, me
     return atomic_load_explicit(&addr->value, order);
 }
 
+static inline intptr_t opal_atomic_load_ptr_volatile(const volatile opal_atomic_intptr_t *addr, memory_order order)
+{
+    return atomic_load_explicit(&addr->value, order);
+}
+
 static inline uintptr_t opal_atomic_load_uptr(const opal_atomic_uintptr_t *addr, memory_order order)
 {
     return atomic_load_explicit(&addr->value, order);
@@ -164,6 +169,11 @@ static inline void opal_atomic_store_ptr(opal_atomic_intptr_t *addr, intptr_t va
     atomic_store_explicit(&addr->value, value, order);
 }
 
+static inline void opal_atomic_store_ptr_volatile(volatile opal_atomic_intptr_t *addr, intptr_t value, memory_order order)
+{
+    atomic_store_explicit(&addr->value, value, order);
+}
+
 static inline void opal_atomic_store_uptr(opal_atomic_uintptr_t *addr, uintptr_t value, memory_order order)
 {
     atomic_store_explicit(&addr->value, value, order);
@@ -185,6 +195,11 @@ static inline intptr_t opal_atomic_load_ptr_relaxed(const opal_atomic_intptr_t *
     return opal_atomic_load_ptr(addr, memory_order_relaxed);
 }
 
+static inline intptr_t opal_atomic_load_ptr_volatile_relaxed(const volatile opal_atomic_intptr_t *addr)
+{
+    return opal_atomic_load_ptr_volatile(addr, memory_order_relaxed);
+}
+
 static inline void opal_atomic_store_32_relaxed(opal_atomic_int32_t *addr, int32_t value)
 {
     opal_atomic_store_32(addr, value, memory_order_relaxed);
@@ -200,6 +215,11 @@ static inline void opal_atomic_store_ptr_relaxed(opal_atomic_intptr_t *addr, int
     opal_atomic_store_ptr(addr, value, memory_order_relaxed);
 }
 
+static inline void opal_atomic_store_ptr_volatile_relaxed(volatile opal_atomic_intptr_t *addr, intptr_t value)
+{
+    opal_atomic_store_ptr_volatile(addr, value, memory_order_relaxed);
+}
+
 static inline size_t opal_atomic_load_size_t_relaxed(const opal_atomic_size_t *addr)
 {
     return opal_atomic_load_size_t(addr, memory_order_relaxed);
@@ -208,6 +228,16 @@ static inline size_t opal_atomic_load_size_t_relaxed(const opal_atomic_size_t *a
 static inline void opal_atomic_store_size_t_relaxed(opal_atomic_size_t *addr, size_t value)
 {
     opal_atomic_store_size_t(addr, value, memory_order_relaxed);
+}
+
+static inline uint32_t opal_atomic_load_uint32_relaxed(const opal_atomic_uint32_t *addr)
+{
+    return opal_atomic_load_uint32(addr, memory_order_relaxed);
+}
+
+static inline void opal_atomic_store_uint32_relaxed(opal_atomic_uint32_t *addr, uint32_t value)
+{
+    opal_atomic_store_uint32(addr, value, memory_order_relaxed);
 }
 
 #    endif /* OPAL_USE_C11_ATOMICS == 0 */

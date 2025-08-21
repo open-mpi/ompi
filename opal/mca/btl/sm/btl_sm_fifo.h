@@ -73,18 +73,18 @@ static inline mca_btl_sm_hdr_t *sm_fifo_read(sm_fifo_t *fifo, struct mca_btl_bas
     mca_btl_sm_hdr_t *hdr;
     fifo_value_t value;
 
-    if (SM_FIFO_FREE == fifo->fifo_head) {
+    if (SM_FIFO_FREE == opal_atomic_load_ptr_relaxed(&fifo->fifo_head)) {
         return NULL;
     }
 
     opal_atomic_rmb();
 
-    value = fifo->fifo_head;
+    value = opal_atomic_load_ptr_relaxed(&fifo->fifo_head);
 
     *ep = &mca_btl_sm_component.endpoints[value >> MCA_BTL_SM_OFFSET_BITS];
     hdr = (mca_btl_sm_hdr_t *) relative2virtual(value);
 
-    fifo->fifo_head = SM_FIFO_FREE;
+    opal_atomic_store_ptr_relaxed(&fifo->fifo_head, SM_FIFO_FREE);
 
     assert(hdr->next != value);
 
@@ -96,10 +96,10 @@ static inline mca_btl_sm_hdr_t *sm_fifo_read(sm_fifo_t *fifo, struct mca_btl_bas
                 opal_atomic_rmb();
             }
 
-            fifo->fifo_head = hdr->next;
+            opal_atomic_store_ptr_relaxed(&fifo->fifo_head, hdr->next);
         }
     } else {
-        fifo->fifo_head = hdr->next;
+        opal_atomic_store_ptr_relaxed(&fifo->fifo_head, hdr->next);
     }
 
     opal_atomic_wmb();
@@ -111,7 +111,7 @@ static inline void sm_fifo_init(sm_fifo_t *fifo)
     /* due to a compiler bug in Oracle C 5.15 the following line was broken into two. Not
      * ideal but oh well. See #5814 */
     /* fifo->fifo_head = fifo->fifo_tail = SM_FIFO_FREE; */
-    fifo->fifo_head = SM_FIFO_FREE;
+    opal_atomic_store_ptr_relaxed(&fifo->fifo_head, SM_FIFO_FREE);
     fifo->fifo_tail = SM_FIFO_FREE;
     fifo->fbox_available = mca_btl_sm_component.fbox_max;
     mca_btl_sm_component.my_fifo = fifo;
@@ -131,7 +131,7 @@ static inline void sm_fifo_write(sm_fifo_t *fifo, fifo_value_t value)
         mca_btl_sm_hdr_t *hdr = (mca_btl_sm_hdr_t *) relative2virtual(prev);
         hdr->next = value;
     } else {
-        fifo->fifo_head = value;
+        opal_atomic_store_ptr_relaxed(&fifo->fifo_head, value);
     }
 
     opal_atomic_wmb();
