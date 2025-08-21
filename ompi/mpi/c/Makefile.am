@@ -496,18 +496,17 @@ prototype_sources = \
 	win_wait.c.in \
         wtime.c.in
 
-EXTRA_DIST = $(prototype_sources)
+EXTRA_DIST = $(prototype_sources) \
+	abi_converters.h \
+	abi_get_info.c.in
 
 # attr_fn.c contains attribute manipulation functions which do not
 # profiling implications, and so are always built.
 libmpi_c_la_SOURCES = \
         attr_fn.c
 
-# The MPI_Abi_* functions do not require profiling implementations.
+# functions that do not require profiling implementations.
 libmpi_c_la_SOURCES += \
-         abi_details.c \
-         abi_supported.c \
-         abi_version.c \
 	 ompi_isendrecv.c \
 	 ompi_sendrecv.c
 
