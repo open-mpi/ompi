@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Triad National Security, LLC. All rights reserved.
+ * Copyright (c) 2023-2025 Triad National Security, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -21,7 +21,7 @@
 #include "ompi/mpi/c/abi.h"
 #endif
 
-int MPI_Abi_version(int *abi_major, int *abi_minor)
+int MPI_Abi_get_version(int *abi_major, int *abi_minor)
 {
     /* 0.1 */
     *abi_major = 0;
