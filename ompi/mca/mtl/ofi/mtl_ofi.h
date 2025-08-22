@@ -310,6 +310,7 @@ int ompi_mtl_ofi_register_buffer(struct opal_convertor_t *convertor,
      * understand send/recv requirements.  Since this rcache is only used in the
      * MTL, that isn't a problem and we fix it in the underlying register call.
      */
+    cache_flags |= MCA_RCACHE_FLAGS_ACCELERATOR_MEM;
     ret = ompi_mtl_ofi.rcache->rcache_register(ompi_mtl_ofi.rcache, buffer, ofi_req->length,
                                                cache_flags, MCA_RCACHE_ACCESS_ANY,
                                                (mca_rcache_base_registration_t **) &ofi_req->mr);
