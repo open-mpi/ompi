@@ -89,7 +89,6 @@ prototype_sources = \
         cart_sub.c.in \
         close_port.c.in \
         comm_accept.c.in \
-        comm_c2f.c.in \
         comm_call_errhandler.c.in \
 	comm_compare.c.in \
         comm_connect.c.in \
@@ -102,7 +101,6 @@ prototype_sources = \
         comm_disconnect.c.in \
         comm_dup.c.in \
         comm_dup_with_info.c.in \
-        comm_f2c.c.in \
         comm_free.c.in \
         comm_free_keyval.c.in \
         comm_get_attr.c.in \
@@ -133,20 +131,16 @@ prototype_sources = \
 	dist_graph_create.c.in \
 	dist_graph_neighbors.c.in \
 	dist_graph_neighbors_count.c.in \
-        errhandler_c2f.c.in \
-        errhandler_f2c.c.in \
 	errhandler_free.c.in \
 	error_class.c.in \
 	error_string.c.in \
 	exscan.c.in \
 	exscan_init.c.in \
 	fetch_and_op.c.in \
-	file_c2f.c.in \
 	file_call_errhandler.c.in \
 	file_close.c.in \
 	file_create_errhandler.c.in \
 	file_delete.c.in \
-	file_f2c.c.in \
 	file_get_amode.c.in \
 	file_get_atomicity.c.in \
 	file_get_byte_offset.c.in \
@@ -226,11 +220,9 @@ prototype_sources = \
 	graph_neighbors_count.c.in \
 	grequest_complete.c.in \
 	grequest_start.c.in \
-	group_c2f.c.in \
 	group_compare.c.in \
 	group_difference.c.in \
 	group_excl.c.in \
-	group_f2c.c.in \
 	group_free.c.in \
 	group_from_session_pset.c.in \
 	group_incl.c.in \
@@ -259,12 +251,10 @@ prototype_sources = \
         ineighbor_alltoall.c.in \
 	ineighbor_alltoallv.c.in \
 	ineighbor_alltoallw.c.in \
-	info_c2f.c.in \
 	info_create.c.in \
 	info_create_env.c.in \
 	info_delete.c.in \
 	info_dup.c.in \
-	info_f2c.c.in \
 	info_free.c.in \
 	info_get.c.in \
 	info_get_nkeys.c.in \
@@ -294,8 +284,6 @@ prototype_sources = \
 	issend.c.in \
 	is_thread_main.c.in \
 	lookup_name.c.in \
-        message_c2f.c.in \
-        message_f2c.c.in \
 	mprobe.c.in \
 	mrecv.c.in \
 	neighbor_allgather.c.in \
@@ -309,11 +297,9 @@ prototype_sources = \
 	neighbor_alltoallw.c.in \
 	neighbor_alltoallw_init.c.in \
         open_port.c.in \
-	op_c2f.c.in \
 	op_commutative.c.in \
 	op_create.c.in \
 	op_free.c.in \
-	op_f2c.c.in \
 	pack.c.in \
 	pack_external.c.in \
 	pack_external_size.c.in \
@@ -339,8 +325,6 @@ prototype_sources = \
 	reduce_scatter.c.in \
 	reduce_scatter_init.c.in \
 	register_datarep.c.in \
-        request_c2f.c.in \
-        request_f2c.c.in \
 	request_free.c.in \
 	request_get_status.c.in \
 	request_get_status_all.c.in \
@@ -361,10 +345,8 @@ prototype_sources = \
 	send_init.c.in \
 	sendrecv.c.in \
 	sendrecv_replace.c.in \
-	session_c2f.c.in \
 	session_call_errhandler.c.in \
 	session_create_errhandler.c.in \
-	session_f2c.c.in \
 	session_finalize.c.in \
 	session_get_errhandler.c.in \
 	session_get_info.c.in \
@@ -373,17 +355,10 @@ prototype_sources = \
 	session_get_pset_info.c.in \
 	session_init.c.in \
 	session_set_errhandler.c.in \
-	session_set_info.c.in \
 	ssend.c.in \
 	ssend_init.c.in \
 	startall.c.in \
 	start.c.in \
-	status_c2f08.c.in \
-	status_c2f.c.in \
-	status_f082c.c.in \
-	status_f082f.c.in \
-	status_f2c.c.in \
-	status_f2f08.c.in \
         status_get_error.c.in \
         status_get_source.c.in \
         status_get_tag.c.in \
@@ -399,7 +374,6 @@ prototype_sources = \
 	test_cancelled.c.in \
 	testsome.c.in \
 	topo_test.c.in \
-	type_c2f.c.in \
 	type_commit.c.in \
 	type_contiguous.c.in \
 	type_create_darray.c.in \
@@ -416,7 +390,6 @@ prototype_sources = \
 	type_create_subarray.c.in \
 	type_delete_attr.c.in \
 	type_dup.c.in \
-	type_f2c.c.in \
 	type_free.c.in \
 	type_free_keyval.c.in \
 	type_get_attr.c.in \
@@ -442,7 +415,6 @@ prototype_sources = \
 	win_allocate.c.in \
 	win_allocate_shared.c.in \
         win_attach.c.in \
-        win_c2f.c.in \
         win_call_errhandler.c.in \
         win_complete.c.in  \
 	win_create.c.in \
@@ -458,7 +430,6 @@ prototype_sources = \
         win_flush_local.c.in \
 	win_free.c.in \
         win_free_keyval.c.in \
-	win_f2c.c.in \
 	win_get_attr.c.in \
 	win_get_errhandler.c.in \
 	win_get_group.c.in \
@@ -480,7 +451,39 @@ prototype_sources = \
 	win_wait.c.in \
         wtime.c.in
 
+# See MPI-5 standard Chapter 20 section 4
+prototype_sources_not_in_abi = \
+        comm_c2f.c.in \
+        errhandler_c2f.c.in \
+        file_c2f.c.in \
+        group_c2f.c.in \
+        info_c2f.c.in \
+        message_c2f.c.in \
+        op_c2f.c.in \
+        request_c2f.c.in \
+        session_c2f.c.in \
+        status_c2f08.c.in \
+        status_c2f.c.in \
+	status_f082c.c.in \
+	status_f082f.c.in \
+	status_f2f08.c.in \
+        type_c2f.c.in \
+        win_c2f.c.in \
+        comm_f2c.c.in \
+        errhandler_f2c.c.in \
+        file_f2c.c.in \
+        group_f2c.c.in \
+        info_f2c.c.in \
+        message_f2c.c.in \
+        op_f2c.c.in \
+        request_f2c.c.in \
+        session_f2c.c.in \
+        status_f2c.c.in \
+        type_f2c.c.in \
+        win_f2c.c.in
+
 EXTRA_DIST = $(prototype_sources) \
+	$(prototype_sources_not_in_abi) \
 	abi_converters.h \
 	abi_get_info.c.in
 
@@ -506,7 +509,8 @@ nobase_include_HEADERS = abi.h standard_abi/mpi.h
 # generated from prototype_sources above).
 #
 #
-interface_profile_sources = $(prototype_sources:.c.in=_ompi_generated.c)
+interface_profile_sources = $(prototype_sources:.c.in=_ompi_generated.c) \
+	$(prototype_sources_not_in_abi:.c.in=_ompi_generated.c)
 
 
 # Conditionally install the header files
@@ -590,7 +594,7 @@ abi.h: $(top_srcdir)/docs/mpi-standard-apis.json $(top_srcdir)/ompi/mpi/bindings
 	    $<
 endif
 
-MAINTAINERCLEANFILES = *_generated.c $(nobase_include_HEADERS)
+MAINTAINERCLEANFILES = *_generated.c abi_get_info.c abi_get_version.c $(nobase_include_HEADERS)
 if OMPI_STANDARD_ABI
 include Makefile_abi.include
 endif
