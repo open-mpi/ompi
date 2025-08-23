@@ -537,6 +537,7 @@ docs/man
 ompi/mpi/c/*_generated*.c
 ompi/mpi/c/standard_*.c
 ompi/mpi/c/abi.h
+ompi/mpi/c/abi_get_info.c
 ompi/mpi/c/standard_abi
 
 # Generated Fortran Bindings
