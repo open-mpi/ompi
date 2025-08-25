@@ -372,7 +372,6 @@ prototype_sources = \
 	session_get_pset_info.c.in \
 	session_init.c.in \
 	session_set_errhandler.c.in \
-	session_set_info.c.in \
 	ssend.c.in \
 	ssend_init.c.in \
 	startall.c.in \
