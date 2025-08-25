@@ -220,13 +220,28 @@ for proc in std.all_iso_c_procedures():
          output.append(f"{binding[0]} P{' '.join(binding[1:])};\n")
 
 # ================================ Final Output ================================
-output.append("#endif /* _ABI_INTERNAL_ */")
+output.append("#if defined(__cplusplus)\n")
+output.append("}\n")
+output.append("#endif\n")
+output.append("#endif /* MPI_H_ABI */")
 # === some compilers are finicky about not having empy line at end of include file =====
 output.append("\n")
 
+#replacements = {'MPI_COUNT':'MPI_Count_ABI_INTERNAL',
+#                'MPI_AINT':'MPI_Aint_ABI_INTERNAL',
+#                'MPI_OFFSET':'MPI_Offset_ABI_INTERNAL'}
+replacements = {'MPI_COUNT':'MPI_Count',
+                'MPI_AINT':'MPI_Aint',
+                'MPI_OFFSET':'MPI_Offset'}
+
 for i, line in enumerate(output):
     line = line.replace(r"\ldots", "...")
+    for key, value in replacements.items():
+        if MANGLE_NAMES:
+            value = value+'_ABI_INTERNAL'
+        line = line.replace(f'@{key}@', value)
     if MANGLE_NAMES:
+
         # Replace datatypes with their internal ABI counterparts
         for datatype in INTERNAL_DATATYPES:
             # Need to include the extra space here or else we'll edit functions
