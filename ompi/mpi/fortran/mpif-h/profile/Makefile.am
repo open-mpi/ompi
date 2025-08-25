@@ -321,6 +321,9 @@ linked_files = \
         preduce_scatter_block_init_f.c \
         prequest_free_f.c \
         prequest_get_status_f.c \
+        prequest_get_status_all_f.c \
+        prequest_get_status_any_f.c \
+        prequest_get_status_some_f.c \
         prsend_f.c \
         prsend_init_f.c \
         pscan_f.c \

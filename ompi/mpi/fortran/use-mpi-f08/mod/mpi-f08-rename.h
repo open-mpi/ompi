@@ -562,8 +562,6 @@
 #define MPI_Register_datarep PMPI_Register_datarep
 #define MPI_Request_free_f08 PMPI_Request_free_f08
 #define MPI_Request_free PMPI_Request_free
-#define MPI_Request_get_status_f08 PMPI_Request_get_status_f08
-#define MPI_Request_get_status PMPI_Request_get_status
 #define MPI_Rget_accumulate_f08 PMPI_Rget_accumulate_f08
 #define MPI_Rget_accumulate PMPI_Rget_accumulate
 #define MPI_Rget_f08 PMPI_Rget_f08
