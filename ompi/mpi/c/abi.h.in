@@ -1,17 +1,12 @@
-/*
- * $COPYRIGHT$
- *
- * Additional copyrights may follow
- *
- * $HEADER$
- */
+#ifndef MPI_H_ABI
+#define MPI_H_ABI
 
-#ifndef _ABI_INTERNAL_
-#define _ABI_INTERNAL_
+#include <stddef.h>
+#include <stdint.h>
 
-/* TODO: figure out which includes we need, change to <> instead of "" */
-#include "stddef.h"
-#include "stdint.h"
+#if defined(__cplusplus)
+extern "C" {
+#endif
 
 #undef MPI_VERSION
 #define MPI_VERSION    5
@@ -39,7 +34,7 @@ typedef struct MPI_ABI_Win * MPI_Win;
 #if !defined(MPI_ABI_Aint)
 #define MPI_ABI_Aint intptr_t
 #endif
-typedef MPI_ABI_Aint MPI_Aint;
+typedef MPI_ABI_Aint @MPI_AINT@;
 #undef  MPI_ABI_Aint
 
 /* MPI_Offset will be 64b on all relevant systems.
@@ -47,7 +42,7 @@ typedef MPI_ABI_Aint MPI_Aint;
 #if !defined(MPI_ABI_Offset)
 #define MPI_ABI_Offset int64_t
 #endif
-typedef MPI_ABI_Offset MPI_Offset;
+typedef MPI_ABI_Offset @MPI_OFFSET@;
 #undef  MPI_ABI_Offset
 
 /* MPI_Count must be large enough to hold the larger of MPI_Aint and MPI_Offset.
@@ -55,7 +50,7 @@ typedef MPI_ABI_Offset MPI_Offset;
 #if !defined(MPI_ABI_Count)
 #define MPI_ABI_Count MPI_Offset
 #endif
-typedef MPI_ABI_Count MPI_Count;
+typedef MPI_ABI_Count @MPI_COUNT@;
 #undef  MPI_ABI_Count
 
 typedef struct {
