@@ -632,19 +632,45 @@ class TypeConstRequest(TypeRequest):
 @Type.add_type('REQUEST_CONST', abi_type=['standard'])
 class TypeConstRequestStandard(TypeRequestStandard):
 
+    @property
+    def init_code(self):
+        if self.count_param is None:
+            code = [f'MPI_Request {self.tmpname} = {ConvertFuncs.REQUEST}({self.name});']
+        else:
+            code = [f'int size_{self.tmpname} = {self.count_param};']
+        code.append(f'MPI_Request *{self.tmpname} = (MPI_Request *)malloc(sizeof(MPI_Request) * size_{self.tmpname});')
+        code.append(f'for(int i=0;i<size_{self.tmpname};i++){{')
+        code.append(f'{self.tmpname}[i] = {ConvertFuncs.REQUEST}({self.name}[i]);')
+        code.append(f'}}')
+        return code
+
+    @property
+    def final_code(self):
+        if self.count_param is not None:
+            code = [f'free({self.tmpname});']
+        return code
+
     def type_text(self, enable_count=False):
         name = self.mangle_name('MPI_Request')
-        return f'const {name}'
+        return f'const {name} *'
 
     @property
     def argument(self):
-        return f'(MPI_Request) {self.name}'
+        return f'(MPI_Request *) {self.tmpname}'
 
     def tmp_type_text(self, enable_count=False):
         return 'MPI_Request'
 
     def return_code(self, name):
         return [f'return {ConvertOMPIToStandard.REQUEST}({name});']
+
+    def parameter(self, enable_count=False, **kwargs):
+        type_name = self.mangle_name('MPI_Request')
+        if self.count_param is None:
+            return f'const {type_name} *{self.name}'
+        else:
+            return f'const {type_name} {self.name}[]'
+
         
 @Type.add_type('REQUEST_INOUT', abi_type=['ompi'])
 class TypeRequestInOut(Type):
