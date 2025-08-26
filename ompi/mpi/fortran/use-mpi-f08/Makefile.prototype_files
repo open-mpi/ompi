@@ -160,6 +160,7 @@ prototype_files = \
         type_create_struct.c.in \
         type_create_subarray.c.in \
         type_get_true_extent.c.in \
+        type_get_value_index.c.in \
         type_indexed.c.in \
         type_size.c.in \
         type_vector.c.in \
