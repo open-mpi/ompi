@@ -529,11 +529,12 @@ __opal_attribute_always_inline__ static inline MPI_Win_ABI_INTERNAL ompi_convert
     }
     return (MPI_Win_ABI_INTERNAL) win;
 }
-__opal_attribute_always_inline__ static inline void ompi_convert_abi_request_intern_request(MPI_Request_ABI_INTERNAL *ptr)
+__opal_attribute_always_inline__ static inline MPI_Request ompi_convert_abi_request_intern_request(MPI_Request_ABI_INTERNAL request)
 {
-    if (MPI_REQUEST_NULL == (MPI_Request) *ptr) {
-        *ptr = MPI_REQUEST_NULL_ABI_INTERNAL;
+    if (MPI_REQUEST_NULL_ABI_INTERNAL == request) {
+        return MPI_REQUEST_NULL;
     }
+    return (MPI_Request) request;
 }
 __opal_attribute_always_inline__ static inline MPI_Request_ABI_INTERNAL ompi_convert_ompi_request_abi_request(MPI_Request request)
 {
