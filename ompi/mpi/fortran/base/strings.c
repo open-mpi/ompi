@@ -12,6 +12,7 @@
  * Copyright (c) 2010-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -95,8 +96,19 @@ int ompi_fortran_string_c2f(const char *cstr, char *fstr, int len)
     int i;
 
     opal_string_copy(fstr, cstr, len);
-    for (i = strlen(cstr); i < len; ++i) {
-        fstr[i] = ' ';
+
+    // If len < len(cstr), then opal_string_copy() will have copied a
+    // trailing \0 into the last position in fstr.  This is not what
+    // Fortran wants; overwrite that \0 with the actual last character
+    // that will fit into fstr.
+    if (len < strlen(cstr)) {
+        fstr[len - 1] = cstr[len - 1];
+    } else {
+        // Otherwise, pad the end of the resulting Fortran string with
+        // spaces.
+        for (i = strlen(cstr); i < len; ++i) {
+            fstr[i] = ' ';
+        }
     }
 
     return OMPI_SUCCESS;
