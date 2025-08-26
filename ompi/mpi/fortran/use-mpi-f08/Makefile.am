@@ -364,13 +364,11 @@ lib@OMPI_LIBMPI_NAME@_usempif08_la_SOURCES = \
         $(mpi_api_files) \
         mpi-f08.F90
 
-if BUILD_FORTRAN_SIZEOF
 SIZEOF_H = sizeof_f08.h
 nodist_lib@OMPI_LIBMPI_NAME@_usempif08_la_SOURCES = \
         sizeof_f08.h \
         sizeof_f08.f90 \
         psizeof_f08.f90
-endif
 
 lib@OMPI_LIBMPI_NAME@_usempif08_la_FCFLAGS = \
         $(AM_FCFLAGS) \
