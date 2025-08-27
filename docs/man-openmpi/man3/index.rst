@@ -312,6 +312,9 @@ MPI API manual pages (section 3)
    MPI_Reduce_scatter_block_init.3.rst
    MPI_Reduce_scatter_init.3.rst
    MPI_Register_datarep.3.rst
+   MPI_Remove_error_class.3.rst
+   MPI_Remove_error_code.3.rst
+   MPI_Remove_error_string.3.rst
    MPI_Request_c2f.3.rst
    MPI_Request_f2c.3.rst
    MPI_Request_free.3.rst
