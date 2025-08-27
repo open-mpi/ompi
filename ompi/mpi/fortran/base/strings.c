@@ -101,7 +101,7 @@ int ompi_fortran_string_c2f(const char *cstr, char *fstr, int len)
     // trailing \0 into the last position in fstr.  This is not what
     // Fortran wants; overwrite that \0 with the actual last character
     // that will fit into fstr.
-    if (len < strlen(cstr)) {
+    if (len <= strlen(cstr)) {
         fstr[len - 1] = cstr[len - 1];
     } else {
         // Otherwise, pad the end of the resulting Fortran string with
