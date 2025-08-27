@@ -429,6 +429,7 @@ int ompi_mpi_errcode_remove(int errnum)
 
     errcodep = (ompi_mpi_errcode_t *)opal_pointer_array_get_item(&ompi_mpi_errcodes, errnum);
     if ( NULL == errcodep ) {
+        opal_mutex_unlock(&errcode_lock);
         return OMPI_ERROR;
     }
 
@@ -442,9 +443,6 @@ int ompi_mpi_errcode_remove(int errnum)
                 }
             }
         }
-    } else {
-        opal_output(0, "Error: must clear errstring before delete error code %d", errnum);
-        ret = OMPI_ERROR;
     }
 
     opal_mutex_unlock(&errcode_lock);
@@ -461,6 +459,7 @@ int ompi_mpi_errclass_remove(int errclass)
 
     errcodep = (ompi_mpi_errcode_t *)opal_pointer_array_get_item(&ompi_mpi_errcodes, errclass);
     if ( NULL == errcodep ) {
+        opal_mutex_unlock(&errcode_lock);
         return OMPI_ERROR;
     }
 
@@ -477,9 +476,6 @@ int ompi_mpi_errclass_remove(int errclass)
                 }
             }
         }
-    } else {
-        opal_output(0, "Error: must clear errstring before delete error class %d", errclass);
-        ret = OMPI_ERROR;
     }
 
     opal_mutex_unlock(&errcode_lock);
@@ -489,13 +485,13 @@ int ompi_mpi_errclass_remove(int errclass)
 
 int ompi_mpi_errnum_remove_string(int errnum)
 {
-    int ret = OMPI_SUCCESS;
     ompi_mpi_errcode_t *errcodep = NULL;
 
     opal_mutex_lock(&errcode_lock);
 
     errcodep = (ompi_mpi_errcode_t *)opal_pointer_array_get_item(&ompi_mpi_errcodes, errnum);
     if ( NULL == errcodep ) {
+        opal_mutex_unlock(&errcode_lock);
         return OMPI_ERROR;
     }
 
@@ -505,7 +501,7 @@ int ompi_mpi_errnum_remove_string(int errnum)
 
     opal_mutex_unlock(&errcode_lock);
 
-    return ret;
+    return OMPI_SUCCESS;
 }
 
 static void ompi_mpi_errcode_construct(ompi_mpi_errcode_t *errcode)
