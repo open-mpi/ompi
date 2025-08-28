@@ -13,7 +13,7 @@
 subroutine MPI_Remove_error_class_f08(errorclass,ierror)
    use :: ompi_mpifh_bindings, only : ompi_remove_error_class_f
    implicit none
-   INTEGER, INTENT(OUT) :: errorclass
+   INTEGER, INTENT(IN) :: errorclass
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
    integer :: c_ierror
 

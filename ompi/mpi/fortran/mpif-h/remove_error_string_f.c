@@ -23,9 +23,6 @@
 #include "ompi_config.h"
 
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
-#include "ompi/mpi/fortran/base/constants.h"
-#include "ompi/mpi/fortran/base/fortran_base_strings.h"
-#include "ompi/communicator/communicator.h"
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
