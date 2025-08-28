@@ -253,13 +253,13 @@ shells):
              When setting PMIx- and PRRTE-specific MCA parameters via
              environment variables, use a different prefix:
 
-             +----------+----------------+
-             | Open MPI | ``OMPI_MCA_``  |
-             +----------+----------------+
-             | PMIx     | ``PMIX_MCA_``  |
-             +----------+----------------+
-             | PRRTE    | ``PRRTE_MCA_`` |
-             +----------+----------------+
+             +----------+-----------------------------------+
+             | Open MPI | ``OMPI_MCA_``                     |
+             +----------+-----------------------------------+
+             | PMIx     | ``PMIX_MCA_``                     |
+             +----------+-----------------------------------+
+             | PRRTE    | ``PRTE_MCA_`` (with a single "R") |
+             +----------+-----------------------------------+
 
 Tuning MCA parameter files
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
