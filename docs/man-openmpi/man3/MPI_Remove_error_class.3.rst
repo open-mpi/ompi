@@ -6,7 +6,7 @@ MPI_Remove_error_class
 
 .. include_body
 
-:ref:`MPI_Remove_error_class` |mdash| Removes an error class.
+:ref:`MPI_Remove_error_class` |mdash| Removes a user-created error class.
 
 .. The following file was automatically generated
 .. include:: ./bindings/mpi_remove_error_class.rst
@@ -22,7 +22,11 @@ OUTPUT PARAMETERS
 DESCRIPTION
 -----------
 
-The function :ref:`MPI_Remove_error_class` removes a local error class.
+The function :ref:`MPI_Remove_error_class` removes a user-created error class.
+It is erroneous to call :ref:`MPI_Remove_error_class` with a value for
+*errorclass* that was not added by a call to :ref:`MPI_Add_error_class`.
+It is erroneous to remove an error class when its associated error codes
+have not been removed before.
 
 ERRORS
 ------
@@ -30,6 +34,7 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
+   * :ref:`MPI_Add_error_class`
    * :ref:`MPI_Remove_error_code`
    * :ref:`MPI_Remove_error_string`
    * :ref:`MPI_Error_class`

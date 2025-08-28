@@ -7,7 +7,7 @@ MPI_Remove_error_string
 .. include_body
 
 :ref:`MPI_Remove_error_string` |mdash| Removes the error string associated with
-an error code.
+a user-created error code.
 
 .. The following file was automatically generated
 .. include:: ./bindings/mpi_remove_error_string.rst
@@ -23,11 +23,9 @@ OUTPUT PARAMETER
 DESCRIPTION
 -----------
 
-This routine removes an error string associated with an error code.
-It is erroneous to call :ref:`MPI_Remove_error_string` for an error value not
-generated via :ref:`MPI_Remove_error_code` (e.g., an error
-code with a value not greater than MPI_LAST_ERRCODE).
-
+This routine removes an error string associated with a user-created error code.
+It is erroneous to call :ref:`MPI_Remove_error_string` with a value for *errorcode*
+that does not have an error string added by a call to :ref:`MPI_Add_error_string`.
 
 ERRORS
 ------
@@ -35,6 +33,7 @@ ERRORS
 .. include:: ./ERRORS.rst
 
 .. seealso::
+   * :ref:`MPI_Add_error_string`
    * :ref:`MPI_Remove_error_class`
    * :ref:`MPI_Remove_error_code`
    * :ref:`MPI_Error_class`
