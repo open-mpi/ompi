@@ -11,10 +11,11 @@
 #include "coll_ucc_common.h"
 
 static inline ucc_status_t
-mca_coll_ucc_allgather_iniz(const void *sbuf, size_t scount, struct ompi_datatype_t *sdtype,
-                            void *rbuf, size_t rcount, struct ompi_datatype_t *rdtype,
-                            bool persistent, mca_coll_ucc_module_t *ucc_module, ucc_coll_req_h *req,
-                            mca_coll_ucc_req_t *coll_req)
+mca_coll_ucc_allgather_init_common(const void *sbuf, size_t scount, struct ompi_datatype_t *sdtype,
+                                   void* rbuf, size_t rcount, struct ompi_datatype_t *rdtype,
+                                   bool persistent, mca_coll_ucc_module_t *ucc_module,
+                                   ucc_coll_req_h *req,
+                                   mca_coll_ucc_req_t *coll_req)
 {
     ucc_datatype_t ucc_sdt = UCC_DT_INT8, ucc_rdt = UCC_DT_INT8;
     bool is_inplace = (MPI_IN_PLACE == sbuf);
@@ -79,8 +80,9 @@ int mca_coll_ucc_allgather(const void *sbuf, size_t scount, struct ompi_datatype
     ucc_coll_req_h         req;
 
     UCC_VERBOSE(3, "running ucc allgather");
-    COLL_UCC_CHECK(mca_coll_ucc_allgather_iniz(sbuf, scount, sdtype, rbuf, rcount, rdtype, false,
-                                               ucc_module, &req, NULL));
+    COLL_UCC_CHECK(mca_coll_ucc_allgather_init_common(sbuf, scount, sdtype,
+                                                      rbuf, rcount, rdtype,
+                                                      false, ucc_module, &req, NULL));
     COLL_UCC_POST_AND_CHECK(req);
     COLL_UCC_CHECK(coll_ucc_req_wait(req));
     return OMPI_SUCCESS;
@@ -102,8 +104,9 @@ int mca_coll_ucc_iallgather(const void *sbuf, size_t scount, struct ompi_datatyp
 
     UCC_VERBOSE(3, "running ucc iallgather");
     COLL_UCC_GET_REQ(coll_req);
-    COLL_UCC_CHECK(mca_coll_ucc_allgather_iniz(sbuf, scount, sdtype, rbuf, rcount, rdtype, false,
-                                               ucc_module, &req, coll_req));
+    COLL_UCC_CHECK(mca_coll_ucc_allgather_init_common(sbuf, scount, sdtype,
+                                                      rbuf, rcount, rdtype,
+                                                      false, ucc_module, &req, coll_req));
     COLL_UCC_POST_AND_CHECK(req);
     *request = &coll_req->super;
     return OMPI_SUCCESS;
@@ -125,10 +128,11 @@ int mca_coll_ucc_allgather_init(const void *sbuf, size_t scount, struct ompi_dat
     ucc_coll_req_h req;
     mca_coll_ucc_req_t *coll_req = NULL;
 
-    COLL_UCC_GET_REQ_PC(coll_req);
+    COLL_UCC_GET_REQ_PERSISTENT(coll_req);
     UCC_VERBOSE(3, "allgather_init init %p", coll_req);
-    COLL_UCC_CHECK(mca_coll_ucc_allgather_iniz(sbuf, scount, sdtype, rbuf, rcount, rdtype, true,
-                                               ucc_module, &req, coll_req));
+    COLL_UCC_CHECK(mca_coll_ucc_allgather_init_common(sbuf, scount, sdtype,
+                                                      rbuf, rcount, rdtype,
+                                                      true, ucc_module, &req, coll_req));
     *request = &coll_req->super;
     return OMPI_SUCCESS;
 fallback:

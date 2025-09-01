@@ -11,10 +11,13 @@
 #include "coll_ucc_common.h"
 
 static inline ucc_status_t
-mca_coll_ucc_scatter_iniz(const void *sbuf, size_t scount, struct ompi_datatype_t *sdtype,
-                          void *rbuf, size_t rcount, struct ompi_datatype_t *rdtype, int root,
-                          bool persistent, mca_coll_ucc_module_t *ucc_module, ucc_coll_req_h *req,
-                          mca_coll_ucc_req_t *coll_req)
+mca_coll_ucc_scatter_init_common(const void *sbuf, size_t scount,
+                                 struct ompi_datatype_t *sdtype,
+                                 void *rbuf, size_t rcount,
+                                 struct ompi_datatype_t *rdtype, int root,
+                                 bool persistent, mca_coll_ucc_module_t *ucc_module,
+                                 ucc_coll_req_h *req,
+                                 mca_coll_ucc_req_t *coll_req)
 {
     ucc_datatype_t ucc_sdt = UCC_DT_INT8, ucc_rdt = UCC_DT_INT8;
     bool is_inplace = (MPI_IN_PLACE == rbuf);
@@ -95,8 +98,9 @@ int mca_coll_ucc_scatter(const void *sbuf, size_t scount,
     ucc_coll_req_h         req;
 
     UCC_VERBOSE(3, "running ucc scatter");
-    COLL_UCC_CHECK(mca_coll_ucc_scatter_iniz(sbuf, scount, sdtype, rbuf, rcount, rdtype, root,
-                                             false, ucc_module, &req, NULL));
+    COLL_UCC_CHECK(mca_coll_ucc_scatter_init_common(sbuf, scount, sdtype, rbuf, rcount,
+                                                    rdtype, root, false, ucc_module, &req,
+                                                    NULL));
     COLL_UCC_POST_AND_CHECK(req);
     COLL_UCC_CHECK(coll_ucc_req_wait(req));
     return OMPI_SUCCESS;
@@ -121,8 +125,9 @@ int mca_coll_ucc_iscatter(const void *sbuf, size_t scount,
 
     UCC_VERBOSE(3, "running ucc iscatter");
     COLL_UCC_GET_REQ(coll_req);
-    COLL_UCC_CHECK(mca_coll_ucc_scatter_iniz(sbuf, scount, sdtype, rbuf, rcount, rdtype, root,
-                                             false, ucc_module, &req, coll_req));
+    COLL_UCC_CHECK(mca_coll_ucc_scatter_init_common(sbuf, scount, sdtype, rbuf, rcount,
+                                                    rdtype, root, false, ucc_module, &req,
+                                                    coll_req));
     COLL_UCC_POST_AND_CHECK(req);
     *request = &coll_req->super;
     return OMPI_SUCCESS;
@@ -145,10 +150,11 @@ int mca_coll_ucc_scatter_init(const void *sbuf, size_t scount, struct ompi_datat
     ucc_coll_req_h req;
     mca_coll_ucc_req_t *coll_req = NULL;
 
-    COLL_UCC_GET_REQ_PC(coll_req);
+    COLL_UCC_GET_REQ_PERSISTENT(coll_req);
     UCC_VERBOSE(3, "scatter_init init %p", coll_req);
-    COLL_UCC_CHECK(mca_coll_ucc_scatter_iniz(sbuf, scount, sdtype, rbuf, rcount, rdtype, root, true,
-                                             ucc_module, &req, coll_req));
+    COLL_UCC_CHECK(mca_coll_ucc_scatter_init_common(sbuf, scount, sdtype, rbuf, rcount,
+                                                    rdtype, root, true, ucc_module, &req,
+                                                    coll_req));
     *request = &coll_req->super;
     return OMPI_SUCCESS;
 fallback:

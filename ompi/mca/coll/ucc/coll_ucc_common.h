@@ -43,7 +43,7 @@
         _coll_req->super.req_type             = OMPI_REQUEST_COLL;      \
     } while(0)
 
-#define COLL_UCC_GET_REQ_PC(_coll_req)                                  \
+#define COLL_UCC_GET_REQ_PERSISTENT(_coll_req)                          \
     do {                                                                \
         opal_free_list_item_t *item;                                    \
         item = opal_free_list_wait(&mca_coll_ucc_component.requests);   \

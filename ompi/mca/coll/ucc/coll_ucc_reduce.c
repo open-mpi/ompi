@@ -9,12 +9,12 @@
 
 #include "coll_ucc_common.h"
 
-static inline ucc_status_t mca_coll_ucc_reduce_iniz(const void *sbuf, void *rbuf, size_t count,
-                                                    struct ompi_datatype_t *dtype,
-                                                    struct ompi_op_t *op, int root, bool persistent,
-                                                    mca_coll_ucc_module_t *ucc_module,
-                                                    ucc_coll_req_h *req,
-                                                    mca_coll_ucc_req_t *coll_req)
+static inline ucc_status_t mca_coll_ucc_reduce_init_common(const void *sbuf, void *rbuf, size_t count,
+                                                           struct ompi_datatype_t *dtype,
+                                                           struct ompi_op_t *op, int root,
+                                                           bool persistent, mca_coll_ucc_module_t *ucc_module,
+                                                           ucc_coll_req_h *req,
+                                                           mca_coll_ucc_req_t *coll_req)
 {
     ucc_datatype_t         ucc_dt;
     ucc_reduction_op_t     ucc_op;
@@ -74,8 +74,8 @@ int mca_coll_ucc_reduce(const void *sbuf, void* rbuf, size_t count,
     ucc_coll_req_h         req;
 
     UCC_VERBOSE(3, "running ucc reduce");
-    COLL_UCC_CHECK(mca_coll_ucc_reduce_iniz(sbuf, rbuf, count, dtype, op, root, false, ucc_module,
-                                            &req, NULL));
+    COLL_UCC_CHECK(mca_coll_ucc_reduce_init_common(sbuf, rbuf, count, dtype, op,
+                                                   root, false, ucc_module, &req, NULL));
     COLL_UCC_POST_AND_CHECK(req);
     COLL_UCC_CHECK(coll_ucc_req_wait(req));
     return OMPI_SUCCESS;
@@ -98,8 +98,8 @@ int mca_coll_ucc_ireduce(const void *sbuf, void* rbuf, size_t count,
 
     UCC_VERBOSE(3, "running ucc ireduce");
     COLL_UCC_GET_REQ(coll_req);
-    COLL_UCC_CHECK(mca_coll_ucc_reduce_iniz(sbuf, rbuf, count, dtype, op, root, false, ucc_module,
-                                            &req, coll_req));
+    COLL_UCC_CHECK(mca_coll_ucc_reduce_init_common(sbuf, rbuf, count, dtype, op, root,
+                                                   false, ucc_module, &req, coll_req));
     COLL_UCC_POST_AND_CHECK(req);
     *request = &coll_req->super;
     return OMPI_SUCCESS;
@@ -121,10 +121,10 @@ int mca_coll_ucc_reduce_init(const void *sbuf, void *rbuf, size_t count,
     ucc_coll_req_h req;
     mca_coll_ucc_req_t *coll_req = NULL;
 
-    COLL_UCC_GET_REQ_PC(coll_req);
+    COLL_UCC_GET_REQ_PERSISTENT(coll_req);
     UCC_VERBOSE(3, "reduce_init init %p", coll_req);
-    COLL_UCC_CHECK(mca_coll_ucc_reduce_iniz(sbuf, rbuf, count, dtype, op, root, true, ucc_module,
-                                            &req, coll_req));
+    COLL_UCC_CHECK(mca_coll_ucc_reduce_init_common(sbuf, rbuf, count, dtype, op, root,
+                                                   true, ucc_module, &req, coll_req));
     *request = &coll_req->super;
     return OMPI_SUCCESS;
 fallback:

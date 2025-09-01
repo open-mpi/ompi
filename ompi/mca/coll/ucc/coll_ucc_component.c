@@ -145,25 +145,20 @@ static ucc_coll_type_t mca_coll_ucc_str_to_type(const char *str)
 }
 
 /* is a persistent collective */
-static inline int mca_coll_ucc_init_cts_is_p(const char *cp, char *bp, size_t bz)
+static inline int mca_coll_ucc_init_cts_is_persistent(const char *cp, char *bp, size_t bz)
 {
     size_t len = strlen(cp), len_suffix = sizeof("_init") - 1;
 
-    if ((bz > 0) && (bp != 0)) {
-        bp[0] = '\0';
-    }
+    assert((bz > 0) && (bp != 0));
     /* check if it is a persistent collective */
     if (len > len_suffix) {
         size_t blen = len - len_suffix;
         const char *cp_suffix = &cp[blen];
 
         if (0 == strcmp(cp_suffix, "_init")) {
-            if ((bz > 0) && (bp != 0)) {
-                if (blen >= bz) {
-                    return 0 /* XXX internal error */;
-                }
-                strncpy(bp, cp, blen);
-                bp[blen] = '\0';
+            int wc = snprintf(bp, bz, "%*.*s", (int)blen, (int)blen, cp);
+            if ((wc < 0) || ((size_t)wc >= bz)) {
+                return -1 /* XXX internal error */;
             }
             return 1 /* true */;
         }
@@ -172,8 +167,8 @@ static inline int mca_coll_ucc_init_cts_is_p(const char *cp, char *bp, size_t bz
 }
 
 /* is an alias (special) name */
-static inline int mca_coll_ucc_init_cts_is_a(const char *cp, bool disable,
-                                             mca_coll_ucc_component_t *cm)
+static inline int mca_coll_ucc_init_cts_is_alias(const char *cp, bool disable,
+                                                 mca_coll_ucc_component_t *cm)
 {
     if (0 == strcmp(cp, "colls_b")) { /* all blocking colls */
         if (disable) {
@@ -192,9 +187,9 @@ static inline int mca_coll_ucc_init_cts_is_a(const char *cp, bool disable,
         return 1 /* true */;
     } else if (0 == strcmp(cp, "colls_p")) { /* all persistent colls */
         if (disable) {
-            cm->pc_cts_requested &= ~COLL_UCC_CTS;
+            cm->ps_cts_requested &= ~COLL_UCC_CTS;
         } else {
-            cm->pc_cts_requested |= COLL_UCC_CTS;
+            cm->ps_cts_requested |= COLL_UCC_CTS;
         }
         return 1 /* true */;
     }
@@ -215,33 +210,29 @@ static void mca_coll_ucc_init_default_cts(void)
     n_cts                = opal_argv_count(cts);
     cm->cts_requested    = disable ? COLL_UCC_CTS : 0;
     cm->nb_cts_requested = disable ? COLL_UCC_CTS : 0;
-    cm->pc_cts_requested = 0; /* XXX PC currently disabled by default */
+    cm->ps_cts_requested = disable ? COLL_UCC_CTS : 0;
     for (i = 0; i < n_cts; i++) {
         char l_str[64]; /* XXX sizeof("reduce_scatter_block") */
         size_t l_stz = sizeof(l_str);
 
-        if (0 < mca_coll_ucc_init_cts_is_a(cts[i], disable, cm)) {
+        if (0 < mca_coll_ucc_init_cts_is_alias(cts[i], disable, cm)) {
             continue;
         }
         if (('i' == cts[i][0]) || ('I' == cts[i][0])) {
             /* non blocking collective setting */
             str = cts[i] + 1;
             ct  = &cm->nb_cts_requested;
-        } else if (0 < mca_coll_ucc_init_cts_is_p(cts[i], l_str, l_stz)) {
+        } else if (0 < mca_coll_ucc_init_cts_is_persistent(cts[i], l_str, l_stz)) {
             /* persistent collective setting */
             str = l_str;
-            ct = &cm->pc_cts_requested;
+            ct = &cm->ps_cts_requested;
         } else {
             str = cts[i];
             ct  = &cm->cts_requested;
         }
         c = mca_coll_ucc_str_to_type(str);
         if (UCC_COLL_TYPE_LAST == c) {
-            if (&cm->pc_cts_requested != ct) {
-                *ct = COLL_UCC_CTS;
-            } else {
-                *ct = 0; /* XXX PC currently disabled by default */
-            }
+            *ct = COLL_UCC_CTS;
             break;
         }
         if (disable) {

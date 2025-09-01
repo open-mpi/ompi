@@ -11,10 +11,11 @@
 #include "coll_ucc_common.h"
 
 static inline ucc_status_t
-mca_coll_ucc_alltoall_iniz(const void *sbuf, size_t scount, struct ompi_datatype_t *sdtype,
-                           void *rbuf, size_t rcount, struct ompi_datatype_t *rdtype,
-                           bool persistent, mca_coll_ucc_module_t *ucc_module, ucc_coll_req_h *req,
-                           mca_coll_ucc_req_t *coll_req)
+mca_coll_ucc_alltoall_init_common(const void *sbuf, size_t scount, struct ompi_datatype_t *sdtype,
+                                  void* rbuf, size_t rcount, struct ompi_datatype_t *rdtype,
+                                  bool persistent, mca_coll_ucc_module_t *ucc_module,
+                                  ucc_coll_req_h *req,
+                                  mca_coll_ucc_req_t *coll_req)
 {
     ucc_datatype_t ucc_sdt = UCC_DT_INT8, ucc_rdt = UCC_DT_INT8;
     bool is_inplace = (MPI_IN_PLACE == sbuf);
@@ -79,15 +80,16 @@ int mca_coll_ucc_alltoall(const void *sbuf, size_t scount, struct ompi_datatype_
     ucc_coll_req_h         req;
 
     UCC_VERBOSE(3, "running ucc alltoall");
-    COLL_UCC_CHECK(mca_coll_ucc_alltoall_iniz(sbuf, scount, sdtype, rbuf, rcount, rdtype, false,
-                                              ucc_module, &req, NULL));
+    COLL_UCC_CHECK(mca_coll_ucc_alltoall_init_common(sbuf, scount, sdtype,
+                                                     rbuf, rcount, rdtype,
+                                                     false, ucc_module, &req, NULL));
     COLL_UCC_POST_AND_CHECK(req);
     COLL_UCC_CHECK(coll_ucc_req_wait(req));
     return OMPI_SUCCESS;
 fallback:
     UCC_VERBOSE(3, "running fallback alltoall");
     return ucc_module->previous_alltoall(sbuf, scount, sdtype, rbuf, rcount, rdtype,
-                                          comm, ucc_module->previous_alltoall_module);
+                                         comm, ucc_module->previous_alltoall_module);
 }
 
 int mca_coll_ucc_ialltoall(const void *sbuf, size_t scount, struct ompi_datatype_t *sdtype,
@@ -102,8 +104,9 @@ int mca_coll_ucc_ialltoall(const void *sbuf, size_t scount, struct ompi_datatype
 
     UCC_VERBOSE(3, "running ucc ialltoall");
     COLL_UCC_GET_REQ(coll_req);
-    COLL_UCC_CHECK(mca_coll_ucc_alltoall_iniz(sbuf, scount, sdtype, rbuf, rcount, rdtype, false,
-                                              ucc_module, &req, coll_req));
+    COLL_UCC_CHECK(mca_coll_ucc_alltoall_init_common(sbuf, scount, sdtype,
+                                                     rbuf, rcount, rdtype,
+                                                     false, ucc_module, &req, coll_req));
     COLL_UCC_POST_AND_CHECK(req);
     *request = &coll_req->super;
     return OMPI_SUCCESS;
@@ -125,10 +128,11 @@ int mca_coll_ucc_alltoall_init(const void *sbuf, size_t scount, struct ompi_data
     ucc_coll_req_h req;
     mca_coll_ucc_req_t *coll_req = NULL;
 
-    COLL_UCC_GET_REQ_PC(coll_req);
+    COLL_UCC_GET_REQ_PERSISTENT(coll_req);
     UCC_VERBOSE(3, "alltoall_init init %p", coll_req);
-    COLL_UCC_CHECK(mca_coll_ucc_alltoall_iniz(sbuf, scount, sdtype, rbuf, rcount, rdtype, true,
-                                              ucc_module, &req, coll_req));
+    COLL_UCC_CHECK(mca_coll_ucc_alltoall_init_common(sbuf, scount, sdtype,
+                                                     rbuf, rcount, rdtype,
+                                                     true, ucc_module, &req, coll_req));
     *request = &coll_req->super;
     return OMPI_SUCCESS;
 fallback:
