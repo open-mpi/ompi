@@ -17,15 +17,8 @@
 
 #include "ompi/mpi/tool/mpit-internal.h"
 
-#if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_T_pvar_write = PMPI_T_pvar_write
-#endif
-#define MPI_T_pvar_write PMPI_T_pvar_write
-#endif
-
-int MPI_T_pvar_write(MPI_T_pvar_session session, MPI_T_pvar_handle handle,
-                     const void* buf)
+PROTOTYPE ERROR_CLASS pvar_write(PVAR_SESSION session, PVAR_HANDLE handle,
+                                 VOID_CONST buf)
 {
     int ret;
 

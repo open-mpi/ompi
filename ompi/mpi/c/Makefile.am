@@ -591,13 +591,13 @@ standard_abi/mpi.h: $(top_srcdir)/docs/mpi-standard-apis.json $(top_srcdir)/ompi
 	--input $(top_srcdir)/ompi/mpi/c/abi.h.in \
 	--abi-json $(top_srcdir)/docs/mpi-standard-abi.json \
 	--pympistd $(top_srcdir)/3rd-party/pympistandard \
-	--output $(top_srcdir)/ompi/mpi/c/standard_abi/mpi.h
+	--output $@
 
 # Mangled version
 abi.h: $(top_srcdir)/docs/mpi-standard-apis.json $(top_srcdir)/ompi/mpi/bindings/c_header.py
 	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/c_header.py \
 	--input $(top_srcdir)/ompi/mpi/c/abi.h.in \
-	--output $(top_srcdir)/ompi/mpi/c/abi.h \
+	--output $@ \
 	--abi-json $(top_srcdir)/docs/mpi-standard-abi.json \
 	--pympistd-dir $(top_srcdir)/3rd-party/pympistandard \
 	--mangle-names

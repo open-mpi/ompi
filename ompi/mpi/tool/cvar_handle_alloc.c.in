@@ -22,15 +22,8 @@
 
 #include "ompi/mpi/tool/mpit-internal.h"
 
-#if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_T_cvar_handle_alloc = PMPI_T_cvar_handle_alloc
-#endif
-#define MPI_T_cvar_handle_alloc PMPI_T_cvar_handle_alloc
-#endif
-
-int MPI_T_cvar_handle_alloc (int cvar_index, void *obj_handle,
-                             MPI_T_cvar_handle *handle, int *count)
+PROTOTYPE ERROR_CLASS cvar_handle_alloc (INT cvar_index, VOID obj_handle,
+                              CVAR_HANDLE_OUT handle, INT_OUT count)
 {
     ompi_mpit_cvar_handle_t *new_handle;
     int rc = MPI_SUCCESS;;
