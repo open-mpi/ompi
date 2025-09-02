@@ -4,9 +4,6 @@
  *                         reserved.
  * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
- * Copyright (c) 2020      The University of Tennessee and The University
- *                         of Tennessee Research Foundation.  All rights
- *                         reserved.
  * Copyright (c) 2021      Amazon.com, Inc. or its affiliates.  All Rights
  *                         reserved.
  * $COPYRIGHT$
@@ -20,29 +17,24 @@
 
 #include "ompi/mpi/tool/mpit-internal.h"
 
-#if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_T_pvar_session_create = PMPI_T_pvar_session_create
-#endif
-#define MPI_T_pvar_session_create PMPI_T_pvar_session_create
-#endif
-
-int MPI_T_pvar_session_create(MPI_T_pvar_session *session)
+PROTOTYPE ERROR_CLASS pvar_read(PVAR_SESSION session, PVAR_HANDLE handle,
+                                VOID buf)
 {
-    int ret = MPI_SUCCESS;
+    int ret;
 
     if (!mpit_is_initialized ()) {
         return MPI_T_ERR_NOT_INITIALIZED;
     }
 
+    if (MPI_T_PVAR_ALL_HANDLES == handle || session != handle->session) {
+        return MPI_T_ERR_INVALID_HANDLE;
+    }
+
     ompi_mpit_lock ();
 
-    *session = OBJ_NEW(mca_base_pvar_session_t);
-    if (NULL == *session) {
-        ret = MPI_T_ERR_MEMORY;
-    }
+    ret = mca_base_pvar_handle_read_value (handle, buf);
 
     ompi_mpit_unlock ();
 
-    return ret;
+    return ompit_opal_to_mpit_error (ret);
 }
