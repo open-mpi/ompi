@@ -16,21 +16,21 @@
 
 #include "ompi/mpi/tool/mpit-internal.h"
 
-#if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_T_cvar_handle_free = PMPI_T_cvar_handle_free
-#endif
-#define MPI_T_cvar_handle_free PMPI_T_cvar_handle_free
-#endif
-
-int MPI_T_cvar_handle_free (MPI_T_cvar_handle *handle)
+PROTOTYPE ERROR_CLASS pvar_session_free(PVAR_SESSION_OUT session)
 {
+    int ret = MPI_SUCCESS;
+
     if (!mpit_is_initialized ()) {
         return MPI_T_ERR_NOT_INITIALIZED;
     }
 
-    free (*handle);
-    *handle = NULL;
+    /* Check that this is a valid session */
+    if (MPI_T_PVAR_SESSION_NULL == *session) {
+        ret = MPI_T_ERR_INVALID_SESSION;
+    } else {
+        OBJ_RELEASE(*session);
+        *session = MPI_T_PVAR_SESSION_NULL;
+    }
 
-    return MPI_SUCCESS;
+    return ret;
 }

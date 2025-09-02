@@ -16,20 +16,14 @@
 
 #include "ompi/mpi/tool/mpit-internal.h"
 
-#if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_T_pvar_readreset = PMPI_T_pvar_readreset
-#endif
-#define MPI_T_pvar_readreset PMPI_T_pvar_readreset
-#endif
-
-int MPI_T_pvar_readreset(MPI_T_pvar_session session, MPI_T_pvar_handle handle,
-                         void *buf)
+PROTOTYPE ERROR_CLASS cvar_handle_free (CVAR_HANDLE_INOUT handle)
 {
     if (!mpit_is_initialized ()) {
         return MPI_T_ERR_NOT_INITIALIZED;
     }
 
-    /* XXX -- TODO -- Implement me */
-    return MPI_T_ERR_INVALID_HANDLE;
+    free (*handle);
+    *handle = NULL;
+
+    return MPI_SUCCESS;
 }

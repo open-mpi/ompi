@@ -20,16 +20,9 @@
 
 #include "ompi/mpi/tool/mpit-internal.h"
 
-#if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_T_pvar_handle_free = PMPI_T_pvar_handle_free
-#endif
-#define MPI_T_pvar_handle_free PMPI_T_pvar_handle_free
-#endif
-
-int MPI_T_pvar_handle_free(MPI_T_pvar_session session, MPI_T_pvar_handle *handle)
+PROTOTYPE ERROR_CLASS enum_get_info(T_ENUM enumtype, INT_OUT num, STRING_OUT name, INT_OUT name_len)
 {
-    int ret = MPI_SUCCESS;
+    int rc = MPI_SUCCESS;
 
     if (!mpit_is_initialized ()) {
         return MPI_T_ERR_NOT_INITIALIZED;
@@ -38,24 +31,18 @@ int MPI_T_pvar_handle_free(MPI_T_pvar_session session, MPI_T_pvar_handle *handle
     ompi_mpit_lock ();
 
     do {
-        /* Check that this is a valid handle */
-        if (MPI_T_PVAR_HANDLE_NULL == *handle ||
-            MPI_T_PVAR_ALL_HANDLES == *handle) {
-            /* As of MPI 3.0 MPI_T_PVAR_ALL_HANDLES is not a valid handle for
-               MPI_T_pvar_handle_free */
-            ret = MPI_T_ERR_INVALID_HANDLE;
-            break;
+        if (num) {
+            rc = enumtype->get_count (enumtype, num);
+            if (OPAL_SUCCESS != rc) {
+                rc = MPI_T_ERR_INVALID;
+                break;
+            }
         }
 
-        ret = mca_base_pvar_handle_free (*handle);
-        if (OPAL_SUCCESS != ret) {
-            ret = MPI_T_ERR_INVALID;
-        }
-
-        *handle = MPI_T_PVAR_HANDLE_NULL;
+        mpit_copy_string (name, name_len, enumtype->enum_name);
     } while (0);
 
     ompi_mpit_unlock ();
 
-    return ret;
+    return rc;
 }

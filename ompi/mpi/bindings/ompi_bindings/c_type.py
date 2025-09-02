@@ -19,12 +19,12 @@ class Type(ABC):
     PARAMS_STANDARD_ABI = {}
 
     def __init__(self, type_name, name=None,
-                 mangle_name=lambda name: abi_internal_name(name),
+                 mangle_name=lambda name: util.abi_internal_name(name),
                  count_param=None, **kwargs):
         self.type = type_name
         self.name = name
         self.count_param = count_param
-        self.mangle_name = util.abi_internal_name
+        self.mangle_name = mangle_name
 
     @staticmethod
     def construct(abi_type, type_name, **kwargs):
@@ -32,7 +32,6 @@ class Type(ABC):
         if abi_type == 'ompi':
             return Type.PARAMS_OMPI_ABI[type_name](type_name, **kwargs)
         elif abi_type == 'standard':
-#           print("Checkint oug type " + str(type_name))
             return Type.PARAMS_STANDARD_ABI[type_name](type_name, **kwargs)
         else:
             raise RuntimeError(f'invalid ABI type {abi_type}')
@@ -82,6 +81,7 @@ class Type(ABC):
         return self.type_text(enable_count=enable_count)
 
     def parameter(self, enable_count=False, **kwargs):
+        """Peturn the text to be used for this parameter  in the prototype declaration."""
         return f'{self.type_text(enable_count=enable_count)} {self.name}'
 
     @property
@@ -1686,5 +1686,176 @@ class TypeSessionStandard(StandardABIType):
 
     def return_code(self, name):
         return [f'return {ConvertOMPIToStandard.SESSION}({name});']
+
+
+@Type.add_type('T_ENUM', abi_type=['ompi'])
+class TypeTEnum(Type):
+
+    def type_text(self, enable_count=False):
+        return 'MPI_T_enum'
+
+@Type.add_type('T_ENUM_OUT', abi_type=['ompi'])
+class TypeTEnumOut(Type):
+
+    def type_text(self, enable_count=False):
+        return 'MPI_T_enum *'
+
+@Type.add_type('CVAR_HANDLE', abi_type=['ompi'])
+class TypeCvarHandle(Type):
+
+    def type_text(self, enable_count=False):
+        return 'MPI_T_cvar_handle'
+
+@Type.add_type('CVAR_HANDLE_OUT', abi_type=['ompi'])
+class TypeCvarHandle(Type):
+
+    def type_text(self, enable_count=False):
+        return 'MPI_T_cvar_handle *'
+
+@Type.add_type('CVAR_HANDLE_INOUT', abi_type=['ompi'])
+class TypeCvarHandleInOut(Type):
+
+    def type_text(self, enable_count=False):
+        return 'MPI_T_cvar_handle *'
+
+@Type.add_type('BIND', abi_type=['ompi'])
+class TypeBind(Type):
+
+    def type_text(self, enable_count=False):
+        return 'int'
+
+@Type.add_type('BIND_OUT', abi_type=['ompi'])
+class TypeBindOut(Type):
+
+    def type_text(self, enable_count=False):
+        return 'int *'
+
+@Type.add_type('EVENT_REGISTRATION', abi_type=['ompi'])
+class TypeEventRegistration(Type):
+
+    def type_text(self, enable_count=False):
+        return 'MPI_T_event_registration'
+
+@Type.add_type('EVENT_REGISTRATION_OUT', abi_type=['ompi'])
+class TypeEventRegistrationOut(Type):
+
+    def type_text(self, enable_count=False):
+        return 'MPI_T_event_registration *'
+
+@Type.add_type('PVAR_HANDLE', abi_type=['ompi'])
+class TypePvarHandle(Type):
+
+    def type_text(self, enable_count=False):
+        return 'MPI_T_pvar_handle'
+
+@Type.add_type('PVAR_HANDLE_OUT', abi_type=['ompi'])
+class TypePvarHandleOut(Type):
+
+    def type_text(self, enable_count=False):
+        return 'MPI_T_pvar_handle *'
+
+@Type.add_type('PVAR_HANDLE_INOUT', abi_type=['ompi'])
+class TypePvarHandleInout(Type):
+
+    def type_text(self, enable_count=False):
+        return 'MPI_T_pvar_handle *'
+
+@Type.add_type('PVAR_SESSION', abi_type=['ompi'])
+class TypePvarSession(Type):
+
+    def type_text(self, enable_count=False):
+        return 'MPI_T_pvar_session'
+
+@Type.add_type('PVAR_SESSION_OUT', abi_type=['ompi'])
+class TypePvarSessionOut(Type):
+
+    def type_text(self, enable_count=False):
+        return 'MPI_T_pvar_session *'
+
+@Type.add_type('T_VERBOSITY', abi_type=['ompi'])
+class TypeTVerbosity(Type):
+
+    def type_text(self, enable_count=False):
+        return 'int'
+
+@Type.add_type('T_VERBOSITY_OUT', abi_type=['ompi'])
+class TypeTVerbosityOut(Type):
+
+    def type_text(self, enable_count=False):
+        return 'int *'
+
+@Type.add_type('PVAR_CLASS', abi_type=['ompi'])
+class TypePvarClass(Type):
+
+    def type_text(self, enable_count=False):
+        return 'int'
+
+@Type.add_type('PVAR_CLASS_OUT', abi_type=['ompi'])
+class TypePvarClassOut(Type):
+
+    def type_text(self, enable_count=False):
+        return 'int *'
+
+@Type.add_type('CB_SAFETY', abi_type=['ompi'])
+class TypeCbSafety(Type):
+
+    def type_text(self, enable_count=False):
+        return 'MPI_T_cb_safety'
+
+@Type.add_type('SOURCE_ORDER', abi_type=['ompi'])
+class TypeSourceOrder(Type):
+
+    def type_text(self, enable_count=False):
+        return 'MPI_T_source_order'
+
+@Type.add_type('SOURCE_ORDER_OUT', abi_type=['ompi'])
+class TypeSourceOrderOut(Type):
+
+    def type_text(self, enable_count=False):
+        return 'MPI_T_source_order *'
+
+@Type.add_type('EVENT_FREE_CB_FUNCTION', abi_type=['ompi'])
+class TypeEventFreeCBFunction(Type):
+
+    def type_text(self, enable_count=False):
+        return 'MPI_T_event_free_cb_function'
+
+
+@Type.add_type('EVENT_DROPPED_CB_FUNCTION', abi_type=['ompi'])
+class TypeEventDroppedCBFunction(Type):
+
+    def type_text(self, enable_count=False):
+        return 'MPI_T_event_dropped_cb_function'
+
+@Type.add_type('EVENT_CB_FUNCTION', abi_type=['ompi'])
+class TypeEventCBFunction(Type):
+
+    def type_text(self, enable_count=False):
+        return 'MPI_T_event_cb_function'
+
+@Type.add_type('VOID', abi_type=['ompi'])
+class TypeVoid(Type):
+
+    def type_text(self, enable_count=False):
+        return 'void *'
+
+@Type.add_type('VOID', abi_type=['standard'])
+class TypeVoidStandard(StandardABIType):
+
+    def type_text(self, enable_count=False):
+        return 'void *'
+
+@Type.add_type('VOID_CONST', abi_type=['ompi'])
+class TypeVoidConst(Type):
+
+    def type_text(self, enable_count=False):
+        return 'const void *'
+
+@Type.add_type('VOID_CONST', abi_type=['standard'])
+class TypeVoidConst(StandardABIType):
+
+    def type_text(self, enable_count=False):
+        return 'const void *'
+
 
 
