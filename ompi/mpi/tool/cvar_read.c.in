@@ -21,14 +21,7 @@
 
 #include "ompi/mpi/tool/mpit-internal.h"
 
-#if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_T_cvar_read = PMPI_T_cvar_read
-#endif
-#define MPI_T_cvar_read PMPI_T_cvar_read
-#endif
-
-int MPI_T_cvar_read (MPI_T_cvar_handle handle, void *buf)
+PROTOTYPE ERROR_CLASS  cvar_read (CVAR_HANDLE handle, VOID buf)
 {
     const mca_base_var_storage_t *value = NULL;
     int rc = MPI_SUCCESS;
