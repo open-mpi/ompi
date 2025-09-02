@@ -133,6 +133,9 @@ def mpi_fn_name_from_base_fn_name(name):
     """Convert from a base name to the standard 'MPI_*' name."""
     return f'MPI_{name.capitalize()}'
 
+def mpit_fn_name_from_base_fn_name(name):
+    """Convert from a base name to the standard 'MPI_T_*' name."""
+    return f'MPI_T_{name}'
 
 def abi_internal_name(extname):
     """Convert from the ABI external name to an internal name.

@@ -16,15 +16,9 @@
 
 #include "ompi/mpi/tool/mpit-internal.h"
 
-#if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_T_source_get_info = PMPI_T_source_get_info
-#endif
-#define MPI_T_source_get_info PMPI_T_source_get_info
-#endif
-
-int MPI_T_source_get_info (int source_index, char *name, int *name_len, char *desc, int *desc_len, MPI_T_source_order *ordering,
-                           MPI_Count *ticks_per_second, MPI_Count *max_timestamp, MPI_Info *info)
+PROTOTYPE ERROR_CLASS source_get_info (INT source_index, STRING_OUT name, INT_OUT name_len, STRING_OUT desc, INT_OUT desc_len, 
+                                       SOURCE_ORDER_OUT ordering, ELEMENT_COUNT ticks_per_second, ELEMENT_COUNT max_timestamp, 
+                                       INFO_OUT info)
 {
     if (!mpit_is_initialized ()) {
         return MPI_T_ERR_NOT_INITIALIZED;

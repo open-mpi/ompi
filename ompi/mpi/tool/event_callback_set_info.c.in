@@ -14,20 +14,12 @@
  * $HEADER$
  */
 
-
 #include "ompi_config.h"
+
 #include "ompi/mpi/tool/mpit-internal.h"
 
-#if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_T_event_callback_get_info = PMPI_T_event_callback_get_info
-#endif
-#define MPI_T_event_callback_get_info PMPI_T_event_callback_get_info
-#endif
-
-
-int MPI_T_event_callback_get_info (MPI_T_event_registration event_registration,
-                                   MPI_T_cb_safety cb_safety, MPI_Info *info_used)
+PROTOTYPE ERROR_CLASS event_callback_set_info (EVENT_REGISTRATION event_registration,
+                                               CB_SAFETY cb_safety, INFO info)
 {
     if (!mpit_is_initialized ()) {
         return MPI_T_ERR_NOT_INITIALIZED;
@@ -35,4 +27,3 @@ int MPI_T_event_callback_get_info (MPI_T_event_registration event_registration,
 
     return MPI_T_ERR_INVALID_HANDLE;
 }
-

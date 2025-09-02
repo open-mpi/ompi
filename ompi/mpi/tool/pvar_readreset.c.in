@@ -16,28 +16,13 @@
 
 #include "ompi/mpi/tool/mpit-internal.h"
 
-#if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_T_pvar_session_free = PMPI_T_pvar_session_free
-#endif
-#define MPI_T_pvar_session_free PMPI_T_pvar_session_free
-#endif
-
-int MPI_T_pvar_session_free(MPI_T_pvar_session *session)
+PROTOTYPE ERROR_CLASS pvar_readreset(PVAR_SESSION session, PVAR_HANDLE handle,
+                                     VOID buf)
 {
-    int ret = MPI_SUCCESS;
-
     if (!mpit_is_initialized ()) {
         return MPI_T_ERR_NOT_INITIALIZED;
     }
 
-    /* Check that this is a valid session */
-    if (MPI_T_PVAR_SESSION_NULL == *session) {
-        ret = MPI_T_ERR_INVALID_SESSION;
-    } else {
-        OBJ_RELEASE(*session);
-        *session = MPI_T_PVAR_SESSION_NULL;
-    }
-
-    return ret;
+    /* XXX -- TODO -- Implement me */
+    return MPI_T_ERR_INVALID_HANDLE;
 }
