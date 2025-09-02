@@ -20,14 +20,7 @@
 
 #include "ompi/mpi/tool/mpit-internal.h"
 
-#if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_T_cvar_write = PMPI_T_cvar_write
-#endif
-#define MPI_T_cvar_write PMPI_T_cvar_write
-#endif
-
-int MPI_T_cvar_write (MPI_T_cvar_handle handle, const void *buf)
+PROTOTYPE ERROR_CLASS cvar_write (CVAR_HANDLE handle, VOID_CONST buf)
 {
     int rc = MPI_SUCCESS;
 

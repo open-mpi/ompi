@@ -22,15 +22,8 @@
 
 #include "ompi/mpi/tool/mpit-internal.h"
 
-#if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_T_pvar_handle_alloc = PMPI_T_pvar_handle_alloc
-#endif
-#define MPI_T_pvar_handle_alloc PMPI_T_pvar_handle_alloc
-#endif
-
-int MPI_T_pvar_handle_alloc(MPI_T_pvar_session session, int pvar_index,
-                            void *obj_handle, MPI_T_pvar_handle *handle, int *count)
+PROTOTYPE ERROR_CLASS pvar_handle_alloc(PVAR_SESSION session, INT pvar_index,
+                                        VOID obj_handle, PVAR_HANDLE_OUT handle, INT_OUT count)
 {
     const mca_base_pvar_t *pvar;
     int ret;
