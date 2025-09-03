@@ -44,6 +44,13 @@ INTERNAL_DATATYPES = [
     "MPI_Type_delete_attr_function",
     "MPI_Win_delete_attr_function",
     "MPI_Win_copy_attr_function",
+    "MPI_T_enum",
+    "MPI_T_cvar_handle",
+    "MPI_T_pvar_handle",
+    "MPI_T_pvar_session",
+    "MPI_T_event_instance",
+    "MPI_T_event_registration",
+    "MPI_T_cb_safety",
     # TODO: these two are deprecated, get rid of them
     "MPI_Copy_function",
     "MPI_Delete_function",
@@ -169,6 +176,7 @@ with open(INPUT, 'r') as header_in:
 # that commented-out lines are NOT included.
 category_pattern = re.compile(r"^[\s]*\$CATEGORY:([A-Z_0-9]+)\$$")
 output = []
+c_type = str()
 
 for line in lines:
     category = category_pattern.search(line)
@@ -181,14 +189,33 @@ for line in lines:
         if category in ENUM_CATEGORIES:
             use_enum = True
         if use_enum:
-            output.append("enum {\n")
+            for constant in categories_dict[category]:
+                c_type = constant["handle_types"]["c"]["type"]
+                if c_type == "int":
+                    output.append("enum {\n")
+                else:
+                    if MANGLE_NAMES:
+                        line = f'typedef enum {c_type}{ABI_INTERNAL}'
+                    else:
+                        line = f'typedef enum {c_type}'
+                    line = line + " {\n"
+                    output.append(line)
+                break
         # Print out each `#define` / assignment for the constants
         for constant in categories_dict[category]:
             line = output_constant(constant, use_enum, MANGLE_NAMES)
             if line is not None:
                 output.append(line)
         if use_enum:
-            output.append("};\n")
+            if c_type == "int":
+                output.append("};\n")
+            else:
+                if MANGLE_NAMES:
+                    line = f'{c_type}{ABI_INTERNAL};'
+                else:
+                    line = f'{c_type};'
+                line = "} " + line + "\n"
+                output.append(line)
     else:
         output.append(line)
 
@@ -248,10 +275,13 @@ for i, line in enumerate(output):
             # like "MPI_Group_difference"
             datatype_pattern = r"([\( ]?)(" + datatype + r")([; \*\)]{1})"
             line = re.sub(datatype_pattern, f"\\g<1>\\g<2>{ABI_INTERNAL}\\g<3>", line)
-    if "MPI_Fint" in line:
-        # Comment out a line if it has references to MPI_Fint, we don't need
-        # that for the ABI
-        line = f"/* {line} */"
+    # TODO: need to enhance pympistandard to have field in json to indicate a 
+    # function is not in the ABI standard (things in MPI 5.1 chapter 19 sections 19.3.4 and 19.3.5
+    if "MPI_Fint" in line or "MPI_F08_status" in line:
+        # Comment out a line if it has references to MPI_Fint or MPI_F08_status, since
+        # functions with these argument types are not in the ABI
+        line = line[:-1]
+        line = f"/* {line} */" + "\n"
     # TODO: pympistandard creates `MPI_Info_create_env` with its `argv`
     # parameter being of type `char *` instead of `char **` --- as defined in
     # the standard.
