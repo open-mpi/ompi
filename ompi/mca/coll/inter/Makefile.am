@@ -34,7 +34,7 @@ mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_coll_inter_la_SOURCES = $(sources)
 mca_coll_inter_la_LDFLAGS = -module -avoid-version
-mca_coll_inter_la_LIBADD = $(top_builddir)/ompi/libopen-mpi.la
+mca_coll_inter_la_LIBADD = $(top_builddir)/ompi/libopen_mpi.la
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_coll_inter_la_SOURCES = $(sources)
