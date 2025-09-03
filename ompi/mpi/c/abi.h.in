@@ -60,6 +60,15 @@ typedef struct {
   int MPI_internal[5];
 } MPI_Status;
 
+/* MPI_T types */
+    
+typedef struct MPI_ABI_T_enum* MPI_T_enum;
+typedef struct MPI_ABI_T_cvar_handle* MPI_T_cvar_handle;
+typedef struct MPI_ABI_T_pvar_handle* MPI_T_pvar_handle;
+typedef struct MPI_ABI_T_pvar_session* MPI_T_pvar_session;
+typedef struct MPI_ABI_T_event_registration* MPI_T_event_registration;
+typedef struct MPI_ABI_T_event_instance* MPI_T_event_instance;
+    
 /*****************************************************************************/
 /* The following categories and values are taken, in order, from Section A.1 */
 /* ("Defined Values and Handles") of the MPI Standard, v5.0. Each category   */
