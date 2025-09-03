@@ -275,6 +275,7 @@ class ConvertFuncs:
     WIN = 'ompi_convert_abi_win_intern_win'
     INFO = 'ompi_convert_abi_info_intern_info'
     FILE = 'ompi_convert_abi_file_intern_file'
+    TS_LEVEL = 'ompi_convert_abi_ts_level_intern_ts_level'
 
 
 class ConvertOMPIToStandard:
@@ -293,6 +294,7 @@ class ConvertOMPIToStandard:
     WIN = 'ompi_convert_win_ompi_to_standard'
     REQUEST = 'ompi_convert_ompi_request_abi_request'
     INFO = 'ompi_convert_info_ompi_to_standard'
+    TS_LEVEL = 'ompi_convert_ts_level_ompi_to_standard'
 
 
 # Inline function attributes
