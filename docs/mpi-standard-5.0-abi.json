@@ -8170,8 +8170,8 @@
     "mpi_t_source_ordered": {
       "handle_types": {
         "c": {
-          "type": "int",
-          "description": "integer constant expression of type \\ctype{int}"
+          "type": "MPI_T_source_order",
+          "description": "integer constant expression of type \\ctype{MPI_T_source_order}"
         },
         "f90": {
           "type": null,
@@ -8191,8 +8191,8 @@
     "mpi_t_source_unordered": {
       "handle_types": {
         "c": {
-          "type": "int",
-          "description": "integer constant expression of type \\ctype{int}"
+          "type": "MPI_T_source_order",
+          "description": "integer constant expression of type \\ctype{MPI_T_source_order}"
         },
         "f90": {
           "type": null,
@@ -8212,8 +8212,8 @@
     "mpi_t_cb_require_none": {
       "handle_types": {
         "c": {
-          "type": "int",
-          "description": "integer constant expression of type \\ctype{int}"
+          "type": "MPI_T_cb_safety",
+          "description": "integer constant expression of type \\ctype{MPI_T_cb_safety}"
         },
         "f90": {
           "type": null,
@@ -8233,8 +8233,8 @@
     "mpi_t_cb_require_mpi_restricted": {
       "handle_types": {
         "c": {
-          "type": "int",
-          "description": "integer constant expression of type \\ctype{int}"
+          "type": "MPI_T_cb_safety",
+          "description": "integer constant expression of type \\ctype{MPI_T_cb_safety}"
         },
         "f90": {
           "type": null,
@@ -8254,8 +8254,8 @@
     "mpi_t_cb_require_thread_safe": {
       "handle_types": {
         "c": {
-          "type": "int",
-          "description": "integer constant expression of type \\ctype{int}"
+          "type": "MPI_T_cb_safety",
+          "description": "integer constant expression of type \\ctype{MPI_T_cb_safety}"
         },
         "f90": {
           "type": null,
@@ -8275,8 +8275,8 @@
     "mpi_t_cb_require_async_signal_safe": {
       "handle_types": {
         "c": {
-          "type": "int",
-          "description": "integer constant expression of type \\ctype{int}"
+          "type": "MPI_T_cb_safety",
+          "description": "integer constant expression of type \\ctype{MPI_T_cb_safety}"
         },
         "f90": {
           "type": null,
