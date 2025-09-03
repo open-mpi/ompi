@@ -387,7 +387,7 @@ linked_files = \
         ptype_get_name_f.c \
         ptype_get_true_extent_f.c \
         ptype_get_true_extent_x_f.c \
-	ptype_get_value_index_f.c \
+        ptype_get_value_index_f.c \
         ptype_indexed_f.c \
         ptype_match_size_f.c \
         ptype_set_attr_f.c \

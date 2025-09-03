@@ -132,6 +132,8 @@ ompi_datatype_duplicate( const ompi_datatype_t* oldType, ompi_datatype_t** newTy
 int
 ompi_datatype_get_value_index(const ompi_datatype_t *value_type, const ompi_datatype_t *index_type, ompi_datatype_t **pair_type)
 {
+    *pair_type = (ompi_datatype_t *)&ompi_mpi_datatype_null;
+
     /* C predefined data types */
     if (index_type->id == OMPI_DATATYPE_MPI_INT) {
         if (value_type->id == OMPI_DATATYPE_MPI_FLOAT) {
@@ -146,8 +148,6 @@ ompi_datatype_get_value_index(const ompi_datatype_t *value_type, const ompi_data
             *pair_type = (ompi_datatype_t *)&ompi_mpi_2int;
         } else if (value_type->id == OMPI_DATATYPE_MPI_LONG_DOUBLE) {
             *pair_type = (ompi_datatype_t *)&ompi_mpi_longdbl_int;
-        } else {
-            *pair_type = (ompi_datatype_t *)&ompi_mpi_datatype_null;
         }
     /* Fortran predefined data types */
     } else if ((index_type->id == OMPI_DATATYPE_MPI_INTEGER) &&
@@ -169,8 +169,6 @@ ompi_datatype_get_value_index(const ompi_datatype_t *value_type, const ompi_data
         (value_type->id == OMPI_DATATYPE_MPI_DOUBLE_COMPLEX)) {
             *pair_type = (ompi_datatype_t *)&ompi_mpi_2dblcplex;
 #endif
-    } else {
-        *pair_type = (ompi_datatype_t *)&ompi_mpi_datatype_null;
     }
 
     return OMPI_SUCCESS;
