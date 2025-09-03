@@ -561,6 +561,34 @@ __opal_attribute_always_inline__ static inline void ompi_convert_intern_status_a
     memcpy(ptr, &inp->_ucount,sizeof(inp->_ucount));
 }
 
+__opal_attribute_always_inline__ static inline int ompi_convert_abi_ts_level_intern_ts_level(int ts_level)
+{
+    if (MPI_THREAD_SINGLE_ABI_INTERNAL == ts_level) {
+        return MPI_THREAD_SINGLE;
+    } else if (MPI_THREAD_FUNNELED_ABI_INTERNAL == ts_level) {
+        return MPI_THREAD_FUNNELED;
+    } else if (MPI_THREAD_SERIALIZED_ABI_INTERNAL == ts_level) {
+        return MPI_THREAD_SERIALIZED;
+    } else if (MPI_THREAD_MULTIPLE_ABI_INTERNAL  == ts_level) {
+        return MPI_THREAD_MULTIPLE;
+    }
+    return ts_level;
+}
+
+__opal_attribute_always_inline__ static inline int ompi_convert_ts_level_ompi_to_standard(int ts_level)
+{
+    if (MPI_THREAD_SINGLE == ts_level) {
+        return MPI_THREAD_SINGLE_ABI_INTERNAL;
+    } else if (MPI_THREAD_FUNNELED == ts_level) {
+        return MPI_THREAD_FUNNELED_ABI_INTERNAL;
+    } else if (MPI_THREAD_SERIALIZED == ts_level) {
+        return MPI_THREAD_SERIALIZED_ABI_INTERNAL;
+    } else if (MPI_THREAD_MULTIPLE  == ts_level) {
+        return MPI_THREAD_MULTIPLE_ABI_INTERNAL;
+    }
+    return ts_level;
+}
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

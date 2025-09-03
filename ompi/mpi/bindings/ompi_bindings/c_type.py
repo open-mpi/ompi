@@ -1111,6 +1111,50 @@ class TypeMessageOutStandard(Type):
         type_name = self.mangle_name('MPI_Message')
         return f'{type_name} *'
 
+@Type.add_type('TS_LEVEL', abi_type=['ompi'])
+class TypeTSLevel(Type):
+
+    def type_text(self, enable_count=False):
+        return 'int'
+
+
+@Type.add_type('TS_LEVEL', abi_type=['standard'])
+class TypeTSLevelStandard(StandardABIType):
+
+    @property
+    def init_code(self):
+        return [f'int {self.tmpname} = {ConvertFuncs.TS_LEVEL}({self.name});']
+
+    def tmp_type_text(self, enable_count=False):
+        return 'int'
+
+    def return_code(self, name):
+        return [f'return {ConvertOMPIToStandard.TS_LEVEL}({name});']
+
+    def type_text(self, enable_count=False):
+        return 'int'
+
+
+@Type.add_type('TS_LEVEL_OUT', abi_type=['ompi'])
+class TypeTSLevelOut(Type):
+
+    def type_text(self, enable_count=False):
+        return 'int *'
+
+
+@Type.add_type('TS_LEVEL_OUT', abi_type=['standard'])
+class TypeTSLevelOutStandard(StandardABIType):
+
+    @property
+    def final_code(self):
+        return [f'*{self.name} = {ConvertOMPIToStandard.TS_LEVEL}((int) *{self.name});']
+
+    def type_text(self, enable_count=False):
+        return f'int *'
+
+    @property
+    def argument(self):
+        return f'{self.name}'
 
 @Type.add_type('COMM_ERRHANDLER_FUNCTION', abi_type=['ompi'])
 class TypeCommErrhandlerFunction(Type):
