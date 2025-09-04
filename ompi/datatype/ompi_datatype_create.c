@@ -11,6 +11,8 @@
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2010-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2025      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,6 +29,7 @@
 #include "opal/util/printf.h"
 #include "opal/util/string_copy.h"
 #include "ompi/datatype/ompi_datatype.h"
+#include "ompi/datatype/ompi_datatype_internal.h"
 #include "ompi/attribute/attribute.h"
 
 static void __ompi_datatype_allocate( ompi_datatype_t* datatype )
@@ -121,3 +124,52 @@ ompi_datatype_duplicate( const ompi_datatype_t* oldType, ompi_datatype_t** newTy
     return OMPI_SUCCESS;
 }
 
+/*
+ * Note this is not a complete implementation for the MPI_Type_get_value_index function described in
+ * MPI 4.1 and newer as it doesn't support possible unnamed datatypes returned for other value_type/index_type
+ * pairs.
+ */
+int
+ompi_datatype_get_value_index(const ompi_datatype_t *value_type, const ompi_datatype_t *index_type, ompi_datatype_t **pair_type)
+{
+    *pair_type = (ompi_datatype_t *)&ompi_mpi_datatype_null;
+
+    /* C predefined data types */
+    if (index_type->id == OMPI_DATATYPE_MPI_INT) {
+        if (value_type->id == OMPI_DATATYPE_MPI_FLOAT) {
+            *pair_type = (ompi_datatype_t *)&ompi_mpi_float_int;
+        } else if (value_type->id == OMPI_DATATYPE_MPI_DOUBLE) {
+            *pair_type = (ompi_datatype_t *)&ompi_mpi_double_int;
+        } else if (value_type->id == OMPI_DATATYPE_MPI_LONG) {
+            *pair_type = (ompi_datatype_t *)&ompi_mpi_long_int;
+        } else if (value_type->id == OMPI_DATATYPE_MPI_SHORT) {
+            *pair_type = (ompi_datatype_t *)&ompi_mpi_short_int;
+        } else if (value_type->id == OMPI_DATATYPE_MPI_INT) {
+            *pair_type = (ompi_datatype_t *)&ompi_mpi_2int;
+        } else if (value_type->id == OMPI_DATATYPE_MPI_LONG_DOUBLE) {
+            *pair_type = (ompi_datatype_t *)&ompi_mpi_longdbl_int;
+        }
+    /* Fortran predefined data types */
+    } else if ((index_type->id == OMPI_DATATYPE_MPI_INTEGER) &&
+        (value_type->id == OMPI_DATATYPE_MPI_INTEGER)) {
+            *pair_type = (ompi_datatype_t *)&ompi_mpi_2integer;
+    } else if ((index_type->id == OMPI_DATATYPE_MPI_FLOAT) &&
+        (value_type->id == OMPI_DATATYPE_MPI_FLOAT)) {
+            *pair_type = (ompi_datatype_t *)&ompi_mpi_2real;
+    } else if ((index_type->id == OMPI_DATATYPE_MPI_DOUBLE) &&
+        (value_type->id == OMPI_DATATYPE_MPI_DOUBLE)) {
+            *pair_type = (ompi_datatype_t *)&ompi_mpi_2dblprec;
+#if OMPI_HAVE_FORTRAN_COMPLEX
+    } else if ((index_type->id == OMPI_DATATYPE_MPI_COMPLEX) &&
+        (value_type->id == OMPI_DATATYPE_MPI_COMPLEX)) {
+            *pair_type = (ompi_datatype_t *)&ompi_mpi_2cplex;
+#endif
+#if OMPI_HAVE_FORTRAN_DOUBLE_COMPLEX
+    } else if ((index_type->id == OMPI_DATATYPE_MPI_DOUBLE_COMPLEX) &&
+        (value_type->id == OMPI_DATATYPE_MPI_DOUBLE_COMPLEX)) {
+            *pair_type = (ompi_datatype_t *)&ompi_mpi_2dblcplex;
+#endif
+    }
+
+    return OMPI_SUCCESS;
+}

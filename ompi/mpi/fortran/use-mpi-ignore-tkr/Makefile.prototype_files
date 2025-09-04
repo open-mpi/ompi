@@ -4,6 +4,7 @@
 
 prototype_files = \
 	request_get_status.c.in \
-        request_get_status_all.c.in \
-        request_get_status_any.c.in \
-        request_get_status_some.c.in
+	request_get_status_all.c.in \
+	request_get_status_any.c.in \
+	request_get_status_some.c.in \
+	type_get_value_index.c.in

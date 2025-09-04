@@ -443,6 +443,7 @@ MPI API manual pages (section 3)
    MPI_Type_get_name.3.rst
    MPI_Type_get_true_extent.3.rst
    MPI_Type_get_true_extent_x.3.rst
+   MPI_Type_get_value_index.3.rst
    MPI_Type_hindexed.3.rst
    MPI_Type_hvector.3.rst
    MPI_Type_indexed.3.rst

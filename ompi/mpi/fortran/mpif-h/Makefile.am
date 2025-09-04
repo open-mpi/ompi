@@ -476,6 +476,7 @@ lib@OMPI_LIBMPI_NAME@_mpifh_la_SOURCES += \
         type_get_name_f.c \
         type_get_true_extent_f.c \
         type_get_true_extent_x_f.c \
+        type_get_value_index_f.c \
         type_indexed_f.c \
         type_match_size_f.c \
         type_set_attr_f.c \
