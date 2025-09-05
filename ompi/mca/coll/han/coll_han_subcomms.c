@@ -206,6 +206,17 @@ int mca_coll_han_comm_create_new(struct ompi_communicator_t *comm,
     HAN_SUBCOM_RESTORE_COLLECTIVE(fallbacks, comm, han_module, scatterv);
 
     OBJ_DESTRUCT(&comm_info);
+   
+    /* Ensure these communicators aren't released before the parent comm */
+    if(!OMPI_COMM_IS_EXTRA_RETAIN(*low_comm)){
+        OMPI_COMM_SET_EXTRA_RETAIN(*low_comm);
+        OBJ_RETAIN(*low_comm);
+    }
+    if(!OMPI_COMM_IS_EXTRA_RETAIN(*up_comm)){
+        OMPI_COMM_SET_EXTRA_RETAIN(*up_comm);
+        OBJ_RETAIN(*up_comm);
+    }
+
     return OMPI_SUCCESS;
 
 return_with_error:
