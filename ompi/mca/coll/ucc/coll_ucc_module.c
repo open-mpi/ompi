@@ -4,6 +4,7 @@
  *                         All Rights reserved.
  * Copyright (c) 2022-2025 NVIDIA Corporation. All rights reserved.
  * Copyright (c) 2024      Triad National Security, LLC. All rights reserved.
+ * Copyright (c) 2025      Fujitsu Limited. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -87,6 +88,34 @@ static void mca_coll_ucc_module_clear(mca_coll_ucc_module_t *ucc_module)
     ucc_module->previous_scatter_module               = NULL;
     ucc_module->previous_iscatter                     = NULL;
     ucc_module->previous_iscatter_module              = NULL;
+    ucc_module->previous_allreduce_init               = NULL;
+    ucc_module->previous_allreduce_init_module        = NULL;
+    ucc_module->previous_barrier_init                 = NULL;
+    ucc_module->previous_barrier_init_module          = NULL;
+    ucc_module->previous_bcast_init                   = NULL;
+    ucc_module->previous_bcast_init_module            = NULL;
+    ucc_module->previous_alltoall_init                = NULL;
+    ucc_module->previous_alltoall_init_module         = NULL;
+    ucc_module->previous_alltoallv_init               = NULL;
+    ucc_module->previous_alltoallv_init_module        = NULL;
+    ucc_module->previous_allgather_init               = NULL;
+    ucc_module->previous_allgather_init_module        = NULL;
+    ucc_module->previous_allgatherv_init              = NULL;
+    ucc_module->previous_allgatherv_init_module       = NULL;
+    ucc_module->previous_reduce_init                  = NULL;
+    ucc_module->previous_reduce_init_module           = NULL;
+    ucc_module->previous_gather_init                  = NULL;
+    ucc_module->previous_gather_init_module           = NULL;
+    ucc_module->previous_gatherv_init                 = NULL;
+    ucc_module->previous_gatherv_init_module          = NULL;
+    ucc_module->previous_reduce_scatter_block_init    = NULL;
+    ucc_module->previous_reduce_scatter_block_init_module = NULL;
+    ucc_module->previous_reduce_scatter_init          = NULL;
+    ucc_module->previous_reduce_scatter_init_module   = NULL;
+    ucc_module->previous_scatterv_init                = NULL;
+    ucc_module->previous_scatterv_init_module         = NULL;
+    ucc_module->previous_scatter_init                 = NULL;
+    ucc_module->previous_scatter_init_module          = NULL;
 }
 
 static void mca_coll_ucc_module_construct(mca_coll_ucc_module_t *ucc_module)
@@ -396,6 +425,12 @@ static inline ucc_ep_map_t get_rank_map(struct ompi_communicator_t *comm)
                 MCA_COLL_INSTALL_API(__comm, i##__api, mca_coll_ucc_i##__api, &__ucc_module->super, "ucc");                                \
                 (__ucc_module)->super.coll_i##__api = mca_coll_ucc_i##__api;                                                               \
             }                                                                                                                              \
+            if (mca_coll_ucc_component.ps_cts_requested & UCC_COLL_TYPE_##__COLL)                                                          \
+            {                                                                                                                              \
+                MCA_COLL_SAVE_API(__comm, __api##_init, (__ucc_module)->previous_##__api##_init, (__ucc_module)->previous_##__api##_init_module, "ucc"); \
+                MCA_COLL_INSTALL_API(__comm, __api##_init, mca_coll_ucc_##__api##_init, &__ucc_module->super, "ucc");                      \
+                (__ucc_module)->super.coll_##__api##_init = mca_coll_ucc_##__api##_init;                                                   \
+            }                                                                                                                              \
         }                                                                                                                                  \
     } while (0)
 
@@ -530,11 +565,32 @@ mca_coll_ucc_module_disable(mca_coll_base_module_t *module,
     UCC_UNINSTALL_COLL_API(comm, ucc_module, reduce);
     UCC_UNINSTALL_COLL_API(comm, ucc_module, ireduce);
     UCC_UNINSTALL_COLL_API(comm, ucc_module, gather);
+    UCC_UNINSTALL_COLL_API(comm, ucc_module, igather);
     UCC_UNINSTALL_COLL_API(comm, ucc_module, gatherv);
+    UCC_UNINSTALL_COLL_API(comm, ucc_module, igatherv);
     UCC_UNINSTALL_COLL_API(comm, ucc_module, reduce_scatter_block);
+    UCC_UNINSTALL_COLL_API(comm, ucc_module, ireduce_scatter_block);
     UCC_UNINSTALL_COLL_API(comm, ucc_module, reduce_scatter);
+    UCC_UNINSTALL_COLL_API(comm, ucc_module, ireduce_scatter);
     UCC_UNINSTALL_COLL_API(comm, ucc_module, scatter);
+    UCC_UNINSTALL_COLL_API(comm, ucc_module, iscatter);
     UCC_UNINSTALL_COLL_API(comm, ucc_module, scatterv);
+    UCC_UNINSTALL_COLL_API(comm, ucc_module, iscatterv);
+
+    UCC_UNINSTALL_COLL_API(comm, ucc_module, allreduce_init);
+    UCC_UNINSTALL_COLL_API(comm, ucc_module, barrier_init);
+    UCC_UNINSTALL_COLL_API(comm, ucc_module, bcast_init);
+    UCC_UNINSTALL_COLL_API(comm, ucc_module, alltoall_init);
+    UCC_UNINSTALL_COLL_API(comm, ucc_module, alltoallv_init);
+    UCC_UNINSTALL_COLL_API(comm, ucc_module, allgather_init);
+    UCC_UNINSTALL_COLL_API(comm, ucc_module, allgatherv_init);
+    UCC_UNINSTALL_COLL_API(comm, ucc_module, reduce_init);
+    UCC_UNINSTALL_COLL_API(comm, ucc_module, gather_init);
+    UCC_UNINSTALL_COLL_API(comm, ucc_module, gatherv_init);
+    UCC_UNINSTALL_COLL_API(comm, ucc_module, reduce_scatter_block_init);
+    UCC_UNINSTALL_COLL_API(comm, ucc_module, reduce_scatter_init);
+    UCC_UNINSTALL_COLL_API(comm, ucc_module, scatter_init);
+    UCC_UNINSTALL_COLL_API(comm, ucc_module, scatterv_init);
 
     return OMPI_SUCCESS;
 }
@@ -592,6 +648,19 @@ OBJ_CLASS_INSTANCE(mca_coll_ucc_req_t, ompi_request_t,
 
 int mca_coll_ucc_req_free(struct ompi_request_t **ompi_req)
 {
+    {
+        mca_coll_ucc_req_t *coll_req = (mca_coll_ucc_req_t *) ompi_req[0];
+        if (true == coll_req->super.req_persistent) {
+            UCC_VERBOSE(5, "%s free %p", "<coll>_init", coll_req);
+            if (NULL != coll_req->ucc_req) {
+                ucc_status_t rc_ucc;
+                rc_ucc = ucc_collective_finalize(coll_req->ucc_req);
+                if (UCC_OK != rc_ucc) {
+                    UCC_ERROR("ucc_collective_finalize failed: %s", ucc_status_string(rc_ucc));
+                }
+            }
+        }
+    }
     opal_free_list_return (&mca_coll_ucc_component.requests,
                            (opal_free_list_item_t *)(*ompi_req));
     *ompi_req = MPI_REQUEST_NULL;
@@ -602,6 +671,56 @@ int mca_coll_ucc_req_free(struct ompi_request_t **ompi_req)
 void mca_coll_ucc_completion(void *data, ucc_status_t status)
 {
     mca_coll_ucc_req_t *coll_req = (mca_coll_ucc_req_t*)data;
-    ucc_collective_finalize(coll_req->ucc_req);
+    if (false == coll_req->super.req_persistent) {
+        ucc_collective_finalize(coll_req->ucc_req);
+    } else {
+        UCC_VERBOSE(5, "%s done %p", "<coll>_init", coll_req);
+        assert(!REQUEST_COMPLETE(&coll_req->super));
+    }
     ompi_request_complete(&coll_req->super, true);
+}
+
+/* req_start() : ompi_request_start_fn_t */
+int mca_coll_ucc_req_start(size_t count, struct ompi_request_t **requests)
+{
+    size_t ii;
+    int rc = OMPI_SUCCESS;
+
+    for (ii = 0; ii < count; ++ii) {
+        mca_coll_ucc_req_t *coll_req = (mca_coll_ucc_req_t *) requests[ii];
+        ucc_status_t rc_ucc;
+
+        if ((NULL == coll_req) || (OMPI_REQUEST_COLL != coll_req->super.req_type)) {
+            continue;
+        }
+        if (true != coll_req->super.req_persistent) {
+            coll_req->super.req_status.MPI_ERROR = MPI_ERR_REQUEST;
+            if (OMPI_SUCCESS == rc) {
+                rc = OMPI_ERROR;
+            }
+            continue;
+        }
+        UCC_VERBOSE(5, "%s post %p", "<coll>_init", coll_req);
+        assert(REQUEST_COMPLETE(&coll_req->super));
+        assert(OMPI_REQUEST_INACTIVE == coll_req->super.req_state);
+
+        coll_req->super.req_status.MPI_TAG = MPI_ANY_TAG;
+        coll_req->super.req_status.MPI_ERROR = OMPI_SUCCESS;
+        coll_req->super.req_status._cancelled = 0;
+        coll_req->super.req_complete = REQUEST_PENDING;
+        coll_req->super.req_state = OMPI_REQUEST_ACTIVE;
+
+        rc_ucc = ucc_collective_post(coll_req->ucc_req);
+        if (UCC_OK != rc_ucc) {
+            UCC_ERROR("ucc_collective_post failed: %s", ucc_status_string(rc_ucc));
+            coll_req->super.req_complete = REQUEST_COMPLETED;
+            coll_req->super.req_status.MPI_ERROR = MPI_ERR_INTERN;
+            if (OMPI_SUCCESS == rc) {
+                rc = OMPI_ERROR;
+            }
+            continue;
+        }
+    }
+
+    return rc;
 }
