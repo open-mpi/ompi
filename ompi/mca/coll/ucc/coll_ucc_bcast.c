@@ -16,14 +16,18 @@ mca_coll_ucc_bcast_init_common(void *buf, size_t count, struct ompi_datatype_t *
                                mca_coll_ucc_req_t *coll_req)
 {
     ucc_datatype_t         ucc_dt     = ompi_dtype_to_ucc_dtype(dtype);
+    uint64_t flags = 0;
+
     if (COLL_UCC_DT_UNSUPPORTED == ucc_dt) {
         UCC_VERBOSE(5, "ompi_datatype is not supported: dtype = %s", dtype->super.name);
         goto fallback;
     }
 
+    flags = (persistent ? UCC_COLL_ARGS_FLAG_PERSISTENT : 0);
+
     ucc_coll_args_t coll = {
-        .mask      = 0,
-        .flags     = 0,
+        .mask      = flags ? UCC_COLL_ARGS_FIELD_FLAGS : 0,
+        .flags     = flags,
         .coll_type = UCC_COLL_TYPE_BCAST,
         .root = root,
         .src.info = {
@@ -34,10 +38,6 @@ mca_coll_ucc_bcast_init_common(void *buf, size_t count, struct ompi_datatype_t *
         }
     };
 
-    if (true == persistent) {
-        coll.mask |= UCC_COLL_ARGS_FIELD_FLAGS;
-        coll.flags |= UCC_COLL_ARGS_FLAG_PERSISTENT;
-    }
     COLL_UCC_REQ_INIT(coll_req, req, coll, ucc_module);
     return UCC_OK;
 fallback:

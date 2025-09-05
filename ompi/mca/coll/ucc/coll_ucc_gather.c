@@ -22,6 +22,7 @@ mca_coll_ucc_gather_init_common(const void *sbuf, size_t scount, struct ompi_dat
     bool is_inplace = (MPI_IN_PLACE == sbuf);
     int comm_rank = ompi_comm_rank(ucc_module->comm);
     int comm_size = ompi_comm_size(ucc_module->comm);
+    uint64_t flags = 0;
 
     if (comm_rank == root) {
         if (!(is_inplace || ompi_datatype_is_contiguous_memory_layout(sdtype, scount)) ||
@@ -54,9 +55,12 @@ mca_coll_ucc_gather_init_common(const void *sbuf, size_t scount, struct ompi_dat
         }
     }
 
+    flags = (is_inplace ? UCC_COLL_ARGS_FLAG_IN_PLACE : 0) |
+            (persistent ? UCC_COLL_ARGS_FLAG_PERSISTENT : 0);
+
     ucc_coll_args_t coll = {
-        .mask      = 0,
-        .flags     = 0,
+        .mask      = flags ? UCC_COLL_ARGS_FIELD_FLAGS : 0,
+        .flags     = flags,
         .coll_type = UCC_COLL_TYPE_GATHER,
         .root      = root,
         .src.info = {
@@ -73,14 +77,6 @@ mca_coll_ucc_gather_init_common(const void *sbuf, size_t scount, struct ompi_dat
         },
     };
 
-    if (is_inplace) {
-        coll.mask |= UCC_COLL_ARGS_FIELD_FLAGS;
-        coll.flags = UCC_COLL_ARGS_FLAG_IN_PLACE;
-    }
-    if (true == persistent) {
-        coll.mask |= UCC_COLL_ARGS_FIELD_FLAGS;
-        coll.flags |= UCC_COLL_ARGS_FLAG_PERSISTENT;
-    }
     COLL_UCC_REQ_INIT(coll_req, req, coll, ucc_module);
     return UCC_OK;
 fallback:
