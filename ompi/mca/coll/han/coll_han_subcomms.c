@@ -46,6 +46,15 @@
         (COMM)->c_coll->coll_##COLL##_module = (FALLBACKS).COLL.module;      \
     } while (0)
 
+#define HAN_SUBCOM_EXTRA_RETAIN(COMM, PARENT_COMM)                           \
+    do                                                                       \
+    {                                                                        \
+        if (OMPI_COMM_CID_IS_LOWER(COMM, PARENT_COMM)) {                     \
+            OMPI_COMM_SET_EXTRA_RETAIN(COMM);                                \
+            OBJ_RETAIN(COMM);                                                \
+        }                                                                    \
+    } while (0)
+
 /*
  * Routine that creates the local hierarchical sub-communicators
  * Called each time a collective is called.
@@ -206,6 +215,11 @@ int mca_coll_han_comm_create_new(struct ompi_communicator_t *comm,
     HAN_SUBCOM_RESTORE_COLLECTIVE(fallbacks, comm, han_module, scatterv);
 
     OBJ_DESTRUCT(&comm_info);
+   
+    /* Ensure these communicators aren't released before the parent comm */
+    HAN_SUBCOM_EXTRA_RETAIN(*low_comm, comm);
+    HAN_SUBCOM_EXTRA_RETAIN(*up_comm, comm);
+
     return OMPI_SUCCESS;
 
 return_with_error:
@@ -375,6 +389,14 @@ int mca_coll_han_comm_create(struct ompi_communicator_t *comm,
     han_module->cached_low_comms = low_comms;
     han_module->cached_up_comms = up_comms;
     han_module->cached_vranks = vranks;
+
+    /* Ensure these communicators aren't released before the parent comm */
+    for(int i = 0; i < COLL_HAN_LOW_MODULES; i++) {
+        HAN_SUBCOM_EXTRA_RETAIN(low_comms[i], comm);
+    }
+    for(int i = 0; i < COLL_HAN_UP_MODULES; i++) {
+        HAN_SUBCOM_EXTRA_RETAIN(up_comms[i], comm);
+    }
 
     /* Reset the saved collectives to point back to HAN */
     HAN_SUBCOM_RESTORE_COLLECTIVE(fallbacks, comm, han_module, alltoall);
