@@ -144,7 +144,7 @@ static int mca_rcache_base_tree_dump_range_helper(uint64_t low, uint64_t high, v
     mca_rcache_base_registration_t *reg = (mca_rcache_base_registration_t *) data;
 
     opal_output(0, "    reg: base=%p, bound=%p, ref_count=%d, flags=0x%x", (void *) reg->base,
-                (void *) reg->bound, reg->ref_count, reg->flags);
+                (void *) reg->bound, opal_atomic_load_32_relaxed(&reg->ref_count), opal_atomic_load_uint32_relaxed(&reg->flags));
 
     return OPAL_SUCCESS;
 }
