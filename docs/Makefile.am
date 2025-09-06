@@ -118,6 +118,8 @@ OMPI_MAN3 = \
         MPI_Bsend_init.3 \
         MPI_Buffer_attach.3 \
         MPI_Buffer_detach.3 \
+        MPI_Buffer_flush.3 \
+        MPI_Buffer_iflush.3 \
         MPI_Cancel.3 \
         MPI_Cart_coords.3 \
         MPI_Cart_create.3 \
@@ -129,6 +131,7 @@ OMPI_MAN3 = \
         MPI_Cart_sub.3 \
         MPI_Close_port.3 \
         MPI_Comm_accept.3 \
+        MPI_Comm_attach_buffer.3 \
         MPI_Comm_c2f.3 \
         MPI_Comm_call_errhandler.3 \
         MPI_Comm_compare.3 \
@@ -139,10 +142,12 @@ OMPI_MAN3 = \
         MPI_Comm_create_group.3 \
         MPI_Comm_create_keyval.3 \
         MPI_Comm_delete_attr.3 \
+        MPI_Comm_detach_buffer.3 \
         MPI_Comm_disconnect.3 \
         MPI_Comm_dup.3 \
         MPI_Comm_dup_with_info.3 \
         MPI_Comm_f2c.3 \
+        MPI_Comm_flush_buffer.3 \
         MPI_Comm_free.3 \
         MPI_Comm_free_keyval.3 \
         MPI_Comm_get_attr.3 \
@@ -153,6 +158,7 @@ OMPI_MAN3 = \
         MPI_Comm_group.3 \
         MPI_Comm_idup.3 \
         MPI_Comm_idup_with_info.3 \
+        MPI_Comm_iflush_buffer.3 \
         MPI_Comm_join.3 \
         MPI_Comm_rank.3 \
         MPI_Comm_remote_group.3 \
@@ -406,13 +412,17 @@ OMPI_MAN3 = \
         MPI_Send_init.3 \
         MPI_Sendrecv.3 \
         MPI_Sendrecv_replace.3 \
+        MPI_Session_attach_buffer.3 \
         MPI_Session_create_errhandler.3 \
+        MPI_Session_detach_buffer.3 \
         MPI_Session_f2c.3 \
         MPI_Session_finalize.3 \
+        MPI_Session_flush_buffer.3 \
         MPI_Session_get_info.3 \
         MPI_Session_get_nth_pset.3 \
         MPI_Session_get_num_psets.3 \
         MPI_Session_get_pset_info.3 \
+        MPI_Session_iflush_buffer.3 \
         MPI_Session_init.3 \
         MPI_Sizeof.3 \
         MPI_Ssend.3 \
