@@ -15,7 +15,7 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017-2022 IBM Corporation.  All rights reserved.
- * Copyright (c) 2024      Triad National Security, LLC. All rights
+ * Copyright (c) 2024-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -59,6 +59,7 @@ PROTOTYPE ERROR_CLASS comm_split_type(COMM comm, INT split_type, INT key,
         if ( MPI_COMM_TYPE_SHARED != split_type && // Same as OMPI_COMM_TYPE_NODE
              MPI_COMM_TYPE_HW_UNGUIDED != split_type &&
              MPI_COMM_TYPE_HW_GUIDED != split_type &&
+             MPI_COMM_TYPE_RESOURCE_GUIDED != split_type &&
 	     OMPI_COMM_TYPE_CLUSTER != split_type &&
 	     OMPI_COMM_TYPE_CU != split_type &&
 	     OMPI_COMM_TYPE_HOST != split_type &&
@@ -93,8 +94,9 @@ PROTOTYPE ERROR_CLASS comm_split_type(COMM comm, INT split_type, INT key,
     }
 #endif
 
-    if ( MPI_COMM_TYPE_HW_GUIDED == split_type ) {
-        int flag;
+    if (( MPI_COMM_TYPE_HW_GUIDED == split_type )  ||
+       ( MPI_COMM_TYPE_RESOURCE_GUIDED == split_type)) {
+        int flag_hw, flag_res;
         opal_cstring_t *value = NULL;
 
         /* MPI_Info is required for this split_type.
@@ -106,14 +108,24 @@ PROTOTYPE ERROR_CLASS comm_split_type(COMM comm, INT split_type, INT key,
             OMPI_ERRHANDLER_RETURN ( rc, comm, rc, FUNC_NAME);
         }
 
-        /* MPI_Info with key "mpi_hw_resource_type" is required for this split_type.
+        /* MPI_Info with key "mpi_hw_resource_type" or "mpi_pset_name",
+         * in the case of MPI_COMM_TYPE_RESOURCED_GUIDED, is required for
+         * these split_types.
          * Not an error condition, per MPI 4.0.
          */
-        ompi_info_get(info, "mpi_hw_resource_type", &value, &flag);
-        if ( !flag ) {
+        ompi_info_get(info, "mpi_hw_resource_type", &value, &flag_hw);
+        if ( !flag_hw  && (MPI_COMM_TYPE_HW_GUIDED == split_type)) {
             *newcomm = MPI_COMM_NULL;
             rc = MPI_SUCCESS;
             OMPI_ERRHANDLER_RETURN ( rc, comm, rc, FUNC_NAME);
+        }
+        if( !flag_hw && (MPI_COMM_TYPE_RESOURCE_GUIDED == split_type)) {
+            ompi_info_get(info, "mpi_pset_name", &value, &flag_res);
+            if ( !flag_res ) {
+                *newcomm = MPI_COMM_NULL;
+                rc = MPI_SUCCESS;
+                OMPI_ERRHANDLER_RETURN ( rc, comm, rc, FUNC_NAME);
+            }
         }
     }
 
