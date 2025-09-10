@@ -18,7 +18,7 @@
 # Copyright (c) 2015-2021 Research Organization for Information Science
 #                         and Technology (RIST).  All rights reserved.
 # Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
-# Copyright (c) 2019-2022 Triad National Security, LLC. All rights
+# Copyright (c) 2019-2025 Triad National Security, LLC. All rights
 #                         reserved.
 # Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
@@ -203,6 +203,7 @@ linked_files = \
         pget_count_f.c \
         pget_elements_f.c \
         pget_elements_x_f.c \
+        pget_hw_resource_info_f.c \
         pget_library_version_f.c \
         pget_processor_name_f.c \
         pget_version_f.c \

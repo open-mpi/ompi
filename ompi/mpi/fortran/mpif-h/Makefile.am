@@ -291,6 +291,7 @@ lib@OMPI_LIBMPI_NAME@_mpifh_la_SOURCES += \
         get_count_f.c \
         get_elements_f.c \
         get_elements_x_f.c \
+        get_hw_resource_info_f.c \
         get_library_version_f.c \
         get_processor_name_f.c \
         get_version_f.c \

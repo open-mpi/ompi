@@ -1890,6 +1890,7 @@ OMPI_DECLSPEC  int MPI_Get_count(const MPI_Status *status, MPI_Datatype datatype
 OMPI_DECLSPEC  int MPI_Get_count_c(const MPI_Status *status, MPI_Datatype datatype, MPI_Count *count);
 OMPI_DECLSPEC  int MPI_Get_elements(const MPI_Status *status, MPI_Datatype datatype, int *count);
 OMPI_DECLSPEC  int MPI_Get_elements_c(const MPI_Status *status, MPI_Datatype datatype, MPI_Count *count);
+OMPI_DECLSPEC  int MPI_Get_hw_resource_info(MPI_Info *hw_info);
 OMPI_DECLSPEC  int MPI_Get(void *origin_addr, int origin_count,
                            MPI_Datatype origin_datatype, int target_rank,
                            MPI_Aint target_disp, int target_count,
@@ -3048,6 +3049,7 @@ OMPI_DECLSPEC  int PMPI_Get_count(const MPI_Status *status, MPI_Datatype datatyp
 OMPI_DECLSPEC  int PMPI_Get_count_c(const MPI_Status *status, MPI_Datatype datatype, MPI_Count *count);
 OMPI_DECLSPEC  int PMPI_Get_elements(const MPI_Status *status, MPI_Datatype datatype, int *count);
 OMPI_DECLSPEC  int PMPI_Get_elements_c(const MPI_Status *status, MPI_Datatype datatype, MPI_Count *count);
+OMPI_DECLSPEC  int PMPI_Get_hw_resource_info(MPI_Info *hw_info);
 OMPI_DECLSPEC  int PMPI_Get(void *origin_addr, int origin_count,
                             MPI_Datatype origin_datatype, int target_rank,
                             MPI_Aint target_disp, int target_count,

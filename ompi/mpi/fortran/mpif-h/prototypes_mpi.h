@@ -16,7 +16,7 @@
  *                         reserved.
  * Copyright (c) 2016-2023 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
- * Copyright (c) 2019-2023 Triad National Security, LLC. All rights
+ * Copyright (c) 2019-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2021      Bull S.A.S. All rights reserved.
  * $COPYRIGHT$
@@ -252,6 +252,7 @@ PN2(void, MPI_Get_address, mpi_get_address, MPI_GET_ADDRESS, (char *location, MP
 PN2(void, MPI_Get_count, mpi_get_count, MPI_GET_COUNT, (MPI_Fint *status, MPI_Fint *datatype, MPI_Fint *count, MPI_Fint *ierr));
 PN2(void, MPI_Get_elements, mpi_get_elements, MPI_GET_ELEMENTS, (MPI_Fint *status, MPI_Fint *datatype, MPI_Fint *count, MPI_Fint *ierr));
 PN2(void, MPI_Get_elements_x, mpi_get_elements_x, MPI_GET_ELEMENTS_X, (MPI_Fint *status, MPI_Fint *datatype, MPI_Count *count, MPI_Fint *ierr));
+PN2(void, MPI_Get_hw_resource_info, mpi_get_hw_resource_info, MPI_GET_HW_RESOURCE_INFO, (MPI_Fint *info, MPI_Fint *ierr));
 PN2(void, MPI_Get, mpi_get, MPI_GET, (char *origin_addr, MPI_Fint *origin_count, MPI_Fint *origin_datatype, MPI_Fint *target_rank, MPI_Aint *target_disp, MPI_Fint *target_count, MPI_Fint *target_datatype, MPI_Fint *win, MPI_Fint *ierr));
 PN2(void, MPI_Get_library_version, mpi_get_library_version, MPI_GET_LIBRARY_VERSION, (char *version, MPI_Fint *resultlen, MPI_Fint *ierr, MPI_Fint version_len));
 PN2(void, MPI_Get_processor_name, mpi_get_processor_name, MPI_GET_PROCESSOR_NAME, (char *name, MPI_Fint *resultlen, MPI_Fint *ierr, int name_len));

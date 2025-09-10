@@ -20,6 +20,7 @@
 # Copyright (c) 2021      Amazon.com, Inc. or its affiliates.  All Rights
 #                         reserved.
 # Copyright (c) 2025      Advanced Micro Devices, Inc. All Rights reserved.
+# Copyright (c) 2025      Triad National Security, LLC.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -215,8 +216,9 @@ prototype_sources = \
 	get_count.c.in \
 	get_elements.c.in \
 	get_elements_x.c.in \
-        get_library_version.c.in \
-        get_processor_name.c.in \
+	get_hw_resource_info.c.in \
+	get_library_version.c.in \
+	get_processor_name.c.in \
 	get_version.c.in \
 	graph_create.c.in \
 	graphdims_get.c.in \

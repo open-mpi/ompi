@@ -1,6 +1,7 @@
 #
 # Copyright (c) 2022 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2023-2025 Jeffrey M. Squyres.  All rights reserved.
+# Copyright (c) 2025      Triad National Security, LLC.  All rights reserved.
 #
 # $COPYRIGHT$
 #
@@ -257,6 +258,7 @@ OMPI_MAN3 = \
         MPI_Get_count.3 \
         MPI_Get_elements.3 \
         MPI_Get_elements_x.3 \
+        MPI_Get_hw_resource_info.3 \
         MPI_Get_library_version.3 \
         MPI_Get_processor_name.3 \
         MPI_Get_version.3 \
