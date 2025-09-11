@@ -177,6 +177,7 @@ MPI API manual pages (section 3)
    MPI_Get_count.3.rst
    MPI_Get_elements.3.rst
    MPI_Get_elements_x.3.rst
+   MPI_Get_hw_resource_info.3.rst
    MPI_Get_library_version.3.rst
    MPI_Get_processor_name.3.rst
    MPI_Get_version.3.rst

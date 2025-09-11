@@ -3,6 +3,7 @@
 #
 
 prototype_files = \
+	get_hw_resource_info.c.in \
 	request_get_status.c.in \
 	request_get_status_all.c.in \
 	request_get_status_any.c.in \

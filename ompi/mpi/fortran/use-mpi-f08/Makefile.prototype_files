@@ -70,6 +70,7 @@ prototype_files = \
         get_address_ts.c.in \
         get_count.c.in \
         get_elements.c.in \
+        get_hw_resource_info.c.in \
         get_ts.c.in \
         iallgather_ts.c.in \
         iallgatherv_ts.c.in \
