@@ -36,6 +36,8 @@ MPI API manual pages (section 3)
    MPI_Bsend_init.3.rst
    MPI_Buffer_attach.3.rst
    MPI_Buffer_detach.3.rst
+   MPI_Buffer_flush.3.rst
+   MPI_Buffer_iflush.3.rst
    MPI_Cancel.3.rst
    MPI_Cart_coords.3.rst
    MPI_Cart_create.3.rst
@@ -47,6 +49,7 @@ MPI API manual pages (section 3)
    MPI_Cartdim_get.3.rst
    MPI_Close_port.3.rst
    MPI_Comm_accept.3.rst
+   MPI_Comm_attach_buffer.3.rst
    MPI_Comm_c2f.3.rst
    MPI_Comm_call_errhandler.3.rst
    MPI_Comm_compare.3.rst
@@ -57,10 +60,12 @@ MPI API manual pages (section 3)
    MPI_Comm_create_group.3.rst
    MPI_Comm_create_keyval.3.rst
    MPI_Comm_delete_attr.3.rst
+   MPI_Comm_detach_buffer.3.rst
    MPI_Comm_disconnect.3.rst
    MPI_Comm_dup.3.rst
    MPI_Comm_dup_with_info.3.rst
    MPI_Comm_f2c.3.rst
+   MPI_Comm_flush_buffer.3.rst
    MPI_Comm_free.3.rst
    MPI_Comm_free_keyval.3.rst
    MPI_Comm_get_attr.3.rst
@@ -71,6 +76,7 @@ MPI API manual pages (section 3)
    MPI_Comm_group.3.rst
    MPI_Comm_idup.3.rst
    MPI_Comm_idup_with_info.3.rst
+   MPI_Comm_iflush_buffer.3.rst
    MPI_Comm_join.3.rst
    MPI_Comm_rank.3.rst
    MPI_Comm_remote_group.3.rst
@@ -328,16 +334,20 @@ MPI API manual pages (section 3)
    MPI_Send_init.3.rst
    MPI_Sendrecv.3.rst
    MPI_Sendrecv_replace.3.rst
+   MPI_Session_attach_buffer.3.rst
    MPI_Session_c2f.3.rst
    MPI_Session_call_errhandler.3.rst
    MPI_Session_create_errhandler.3.rst
+   MPI_Session_detach_buffer.3.rst
    MPI_Session_f2c.3.rst
    MPI_Session_finalize.3.rst
+   MPI_Session_flush_buffer.3.rst
    MPI_Session_get_errhandler.3.rst
    MPI_Session_get_info.3.rst
    MPI_Session_get_nth_pset.3.rst
    MPI_Session_get_num_psets.3.rst
    MPI_Session_get_pset_info.3.rst
+   MPI_Session_iflush_buffer.3.rst
    MPI_Session_init.3.rst
    MPI_Session_set_errhandler.3.rst
    MPI_Sizeof.3.rst

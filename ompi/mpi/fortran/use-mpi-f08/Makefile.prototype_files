@@ -22,6 +22,12 @@ prototype_files = \
         bsend_ts.c.in \
         buffer_attach_ts.c.in \
         buffer_detach.c.in \
+        buffer_flush.c.in \
+        buffer_iflush.c.in \
+        comm_attach_buffer_ts.c.in \
+        comm_detach_buffer.c.in \
+        comm_flush_buffer.c.in \
+        comm_iflush_buffer.c.in \
         compare_and_swap_ts.c.in \
         exscan_init_ts.c.in \
         exscan_ts.c.in \
@@ -148,6 +154,10 @@ prototype_files = \
         sendrecv_replace_ts.c.in \
         sendrecv_ts.c.in \
         send_ts.c.in \
+        session_attach_buffer_ts.c.in \
+        session_detach_buffer.c.in \
+        session_flush_buffer.c.in \
+        session_iflush_buffer.c.in \
         ssend_init_ts.c.in \
         ssend_ts.c.in \
         status_set_elements.c.in \

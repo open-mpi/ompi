@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2018-2024 Triad National Security, LLC. All rights
+ * Copyright (c) 2018-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2022      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2022      The University of Tennessee and The University
@@ -896,7 +896,7 @@ static int ompi_mpi_instance_finalize_common (void)
     /* As finalize is the last legal MPI call, we are allowed to force the release
      * of the user buffer used for bsend, before going anywhere further.
      */
-    (void) mca_pml_base_bsend_detach (NULL, NULL);
+    (void) mca_pml_base_bsend_detach(BASE_BSEND_BUF, NULL, NULL, NULL);
 
     /* Shut down any bindings-specific issues: C++, F77, F90 */
 

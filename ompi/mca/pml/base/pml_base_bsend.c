@@ -16,7 +16,7 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
- * Copyright (c) 2018      Triad National Security, LLC. All rights
+ * Copyright (c) 2018-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -29,6 +29,7 @@
 #include "opal/mca/threads/mutex.h"
 #include "opal/mca/threads/condition.h"
 #include "ompi/datatype/ompi_datatype.h"
+#include "ompi/communicator/communicator.h"
 #include "opal/mca/allocator/base/base.h"
 #include "opal/mca/allocator/allocator.h"
 #include "ompi/mca/pml/pml.h"
@@ -42,16 +43,31 @@
 #include <unistd.h>
 #endif  /* HAVE_UNISTD_H */
 
-static opal_mutex_t     mca_pml_bsend_mutex;      /* lock for thread safety */
-static opal_condition_t mca_pml_bsend_condition;  /* condition variable to block on detach */
-static mca_allocator_base_component_t* mca_pml_bsend_allocator_component;
-static mca_allocator_base_module_t* mca_pml_bsend_allocator;  /* sub-allocator to manage users buffer */
-static size_t           mca_pml_bsend_usersize;   /* user provided buffer size */
-unsigned char          *mca_pml_bsend_userbase=NULL;/* user provided buffer base */
-unsigned char          *mca_pml_bsend_base = NULL;/* adjusted base of user buffer */
-unsigned char          *mca_pml_bsend_addr = NULL;/* current offset into user buffer */
-static size_t           mca_pml_bsend_size;       /* adjusted size of user buffer */
-static size_t           mca_pml_bsend_count;      /* number of outstanding requests */
+static void mca_pml_bsend_buffer_construct(mca_pml_bsend_buffer_t *buffer);
+static void mca_pml_bsend_buffer_construct(mca_pml_bsend_buffer_t *buffer)
+{
+    buffer->bsend_allocator = NULL;
+    buffer->bsend_userbase = NULL;
+    buffer->bsend_base = NULL;
+    buffer->bsend_addr = NULL;
+    buffer->bsend_size = 0UL;
+    buffer->bsend_count = 0UL;
+    buffer->bsend_pagebits = 0;
+    OBJ_CONSTRUCT(&buffer->bsend_mutex, opal_mutex_t);
+    OBJ_CONSTRUCT(&buffer->bsend_condition, opal_condition_t);
+}
+
+static void mca_pml_bsend_buffer_destruct(mca_pml_bsend_buffer_t *buffer);
+static void mca_pml_bsend_buffer_destruct(mca_pml_bsend_buffer_t *buffer)
+{
+    OBJ_DESTRUCT(&buffer->bsend_mutex);
+    OBJ_DESTRUCT(&buffer->bsend_condition);
+}
+
+OBJ_CLASS_INSTANCE (mca_pml_bsend_buffer_t,  opal_object_t,
+                    mca_pml_bsend_buffer_construct,
+                    mca_pml_bsend_buffer_destruct);
+
 static size_t           mca_pml_bsend_pagesz;     /* mmap page size */
 static int              mca_pml_bsend_pagebits;   /* number of bits in pagesz */
 static opal_atomic_int32_t          mca_pml_bsend_init = 0;
@@ -59,7 +75,49 @@ static opal_atomic_int32_t          mca_pml_bsend_init = 0;
 /* defined in pml_base_open.c */
 extern char *ompi_pml_base_bsend_allocator_name;
 
+static mca_pml_bsend_buffer_t *mca_pml_bsend_buffer=NULL;
+static mca_allocator_base_component_t* mca_pml_bsend_allocator_component;
+
 static int mca_pml_base_bsend_fini (void);
+
+/*
+ * Routine to select which buffer to used based on section 3.6 of the MPI 5 standard
+ */
+
+static mca_pml_bsend_buffer_t *mca_pml_bsend_buffer_get(ompi_communicator_t *comm)
+{
+    mca_pml_bsend_buffer_t *buffer = NULL;
+
+    /* 
+     * first see if a buffer has been attached to the communicator
+     */
+
+    buffer = ompi_comm_bsend_buffer_get(comm);
+    if (NULL != buffer) {
+        return buffer;
+    }
+
+    /*
+     * maybe the instance (aka session) has a buffer associated with it.
+     */
+
+    if (MPI_SESSION_NULL != comm->instance) {
+        buffer = ompi_instance_bsend_buffer_get(comm->instance);
+        if (NULL != buffer) {
+            return buffer;
+        }
+    }
+
+    /*
+     * okay see if the old MPI-1 style buffer is available
+     */
+
+    if (NULL != mca_pml_bsend_buffer) {
+        return mca_pml_bsend_buffer;
+    }
+
+    return NULL;
+}
 
 /*
  * Routine to return pages to sub-allocator as needed
@@ -68,15 +126,38 @@ static void* mca_pml_bsend_alloc_segment(void *ctx, size_t *size_inout)
 {
     void *addr;
     size_t size = *size_inout;
-    if(mca_pml_bsend_addr + size > mca_pml_bsend_base + mca_pml_bsend_size) {
+    mca_pml_bsend_buffer_t *buf_instance = (mca_pml_bsend_buffer_t *)ctx;
+
+    if(buf_instance->bsend_addr + size > buf_instance->bsend_base + buf_instance->bsend_size) {
         return NULL;
     }
     /* allocate all that is left */
-    size = mca_pml_bsend_size - (mca_pml_bsend_addr - mca_pml_bsend_base);
-    addr = mca_pml_bsend_addr;
-    mca_pml_bsend_addr += size;
+    size = buf_instance->bsend_size - (buf_instance->bsend_addr - buf_instance->bsend_base);
+    addr = buf_instance->bsend_addr;
+    buf_instance->bsend_addr += size;
     *size_inout = size;
     return addr;
+}
+
+/*
+ * Routines to implement MPI_BUFFER_AUTOMATIC (MPI 4.0)
+ */
+
+static void* mca_pml_bsend_alloc_seg_auto(void *ctx, size_t *size_inout)
+{
+    void *addr;
+    const uint64_t seg_size = (1024UL * 1024UL);
+    
+    addr = malloc(seg_size);
+    if (NULL != addr);
+
+    *size_inout += seg_size;
+    return addr;
+}
+
+static void mca_pml_bsend_dealloc_seg_auto(void *ctx, void *segment)
+{
+    free(segment);
 }
 
 /*
@@ -89,12 +170,8 @@ int mca_pml_base_bsend_init (void)
     if(OPAL_THREAD_ADD_FETCH32(&mca_pml_bsend_init, 1) > 1)
         return OMPI_SUCCESS;
 
-    /* initialize static objects */
-    OBJ_CONSTRUCT(&mca_pml_bsend_mutex, opal_mutex_t);
-    OBJ_CONSTRUCT(&mca_pml_bsend_condition, opal_condition_t);
-
     /* lookup name of the allocator to use for buffered sends */
-    if(NULL == (mca_pml_bsend_allocator_component = mca_allocator_component_lookup(ompi_pml_base_bsend_allocator_name))) {
+    if(NULL == ( mca_pml_bsend_allocator_component = mca_allocator_component_lookup(ompi_pml_base_bsend_allocator_name))) {
         return OMPI_ERR_BUFFER;
     }
 
@@ -120,38 +197,89 @@ static int mca_pml_base_bsend_fini (void)
     if(OPAL_THREAD_ADD_FETCH32(&mca_pml_bsend_init,-1) > 0)
         return OMPI_SUCCESS;
 
-    if(NULL != mca_pml_bsend_allocator)
-        mca_pml_bsend_allocator->alc_finalize(mca_pml_bsend_allocator);
-    mca_pml_bsend_allocator = NULL;
+    mca_pml_bsend_allocator_component = NULL;
+    mca_pml_bsend_buffer = NULL;
 
-    OBJ_DESTRUCT(&mca_pml_bsend_condition);
-    OBJ_DESTRUCT(&mca_pml_bsend_mutex);
+    mca_pml_bsend_pagebits = 0;
+
     return OMPI_SUCCESS;
 }
 
 
 /*
- * User-level call to attach buffer.
+ * User-level call to attach buffer
  */
-int mca_pml_base_bsend_attach(void* addr, size_t size)
+int mca_pml_base_bsend_attach(ompi_bsend_buffer_type_t type, void *obj, void* addr, size_t size)
 {
     int align;
+    int ret = MPI_SUCCESS;
+    mca_pml_bsend_buffer_t *buf_instance;
+    ompi_communicator_t *comm;
+    ompi_instance_t *instance;
 
-    if(NULL == addr || size <= 0) {
+    if(NULL == addr || ((MPI_BUFFER_AUTOMATIC != addr) && size <= 0)) {
         return OMPI_ERR_BUFFER;
     }
 
-    /* check for buffer already attached */
-    OPAL_THREAD_LOCK(&mca_pml_bsend_mutex);
-    if(NULL != mca_pml_bsend_allocator) {
-        OPAL_THREAD_UNLOCK(&mca_pml_bsend_mutex);
-        return OMPI_ERR_BUFFER;
+    /*
+     * check if object already has a buffer associated with it
+     */
+
+    switch (type) {
+        case BASE_BSEND_BUF:
+            if (NULL != mca_pml_bsend_buffer) {
+                ret = OMPI_ERR_BUFFER;
+                goto fn_exit;
+            }
+            break;
+
+        case COMM_BSEND_BUF:
+            comm = (ompi_communicator_t *)obj;
+            if (NULL != ompi_comm_bsend_buffer_get(comm)) {
+                ret = OMPI_ERR_BUFFER;
+                goto fn_exit;
+            }
+            break;
+
+        case SESSION_BSEND_BUF:
+            instance = (ompi_instance_t *)obj;
+            if (NULL != ompi_instance_bsend_buffer_get(instance)) {
+                ret = OMPI_ERR_BUFFER;
+                goto fn_exit;
+            }
+            break;
+
+        default:
+            /* This should not happen */
+            assert(0);
+            ret = OMPI_ERR_BAD_PARAM;
+            goto fn_exit;
+            break;
     }
+
+
+    buf_instance = OBJ_NEW(mca_pml_bsend_buffer_t);
+    OBJ_CONSTRUCT(&buf_instance->bsend_mutex, opal_mutex_t);
+    OBJ_CONSTRUCT(&buf_instance->bsend_condition, opal_condition_t);
 
     /* try to create an instance of the allocator - to determine thread safety level */
-    mca_pml_bsend_allocator = mca_pml_bsend_allocator_component->allocator_init(ompi_mpi_thread_multiple, mca_pml_bsend_alloc_segment, NULL, NULL);
-    if(NULL == mca_pml_bsend_allocator) {
-        OPAL_THREAD_UNLOCK(&mca_pml_bsend_mutex);
+    if (MPI_BUFFER_AUTOMATIC != addr) {
+        buf_instance->bsend_allocator = mca_pml_bsend_allocator_component->allocator_init(ompi_mpi_thread_multiple, 
+                                                                                          mca_pml_bsend_alloc_segment, 
+                                                                                          NULL, 
+                                                                                          buf_instance);
+   } else {
+        /*
+         * TODO: this is where we might want to enhance the allocator type based off of, perhaps
+         * presence of certain keys in the info object bound to the communicator in the case of COMM_BSEND_BUF
+         * buffering.
+         */
+        buf_instance->bsend_allocator = mca_pml_bsend_allocator_component->allocator_init(ompi_mpi_thread_multiple, 
+                                                                                          mca_pml_bsend_alloc_seg_auto, 
+                                                                                          mca_pml_bsend_dealloc_seg_auto, 
+                                                                                          buf_instance);
+    }
+    if(NULL == buf_instance->bsend_allocator) {
         return OMPI_ERR_BUFFER;
     }
 
@@ -159,8 +287,8 @@ int mca_pml_base_bsend_attach(void* addr, size_t size)
      * Save away what the user handed in.  This is done in case the
      * base and size are modified for alignment issues.
      */
-    mca_pml_bsend_userbase = (unsigned char*)addr;
-    mca_pml_bsend_usersize = size;
+    buf_instance->bsend_userbase = (unsigned char*)addr;
+    buf_instance->bsend_usersize = size;
     /*
      * Align to pointer boundaries. The bsend overhead is large enough
      * to account for this.  Compute any alignment that needs to be done.
@@ -168,50 +296,241 @@ int mca_pml_base_bsend_attach(void* addr, size_t size)
     align = sizeof(void *) - ((size_t)addr & (sizeof(void *) - 1));
 
     /* setup local variables */
-    mca_pml_bsend_base = (unsigned char *)addr + align;
-    mca_pml_bsend_addr = (unsigned char *)addr + align;
-    mca_pml_bsend_size = size - align;
-    mca_pml_bsend_count = 0;
-    OPAL_THREAD_UNLOCK(&mca_pml_bsend_mutex);
-    return OMPI_SUCCESS;
+    buf_instance->bsend_base = (unsigned char *)addr + align;
+    buf_instance->bsend_addr = (unsigned char *)addr + align;
+    buf_instance->bsend_size = size - align;
+    buf_instance->bsend_count = 0;
+    buf_instance->bsend_pagebits = mca_pml_bsend_pagebits;
+
+    switch (type) {
+        case BASE_BSEND_BUF:
+            mca_pml_bsend_buffer = buf_instance;
+            break;
+
+        case COMM_BSEND_BUF:
+            ret = ompi_comm_bsend_buffer_set(comm, buf_instance);
+            if(OMPI_SUCCESS != ret) {
+                goto fn_exit;
+            }
+            OBJ_RETAIN(comm);
+            break;
+
+        case SESSION_BSEND_BUF:
+            ret = ompi_instance_bsend_buffer_set(instance, buf_instance);
+            if(OMPI_SUCCESS != ret) {
+                goto fn_exit;
+            }
+            OBJ_RETAIN(instance);
+            break;
+
+        default:
+            /* This should not happen */
+            assert(0);
+            break;
+    }
+
+fn_exit:
+    return ret;
 }
 
 /*
  * User-level call to detach buffer
  */
-int mca_pml_base_bsend_detach(void* addr, size_t* size)
+int mca_pml_base_bsend_detach(ompi_bsend_buffer_type_t type, void *obj, void* addr, size_t* size)
 {
-    OPAL_THREAD_LOCK(&mca_pml_bsend_mutex);
+    int ret = OMPI_SUCCESS;
+    mca_pml_bsend_buffer_t *buf_instance = NULL;
+    ompi_communicator_t *comm = NULL;
+    ompi_instance_t *instance = NULL;
 
-    /* is buffer attached */
-    if(NULL == mca_pml_bsend_allocator) {
-        OPAL_THREAD_UNLOCK(&mca_pml_bsend_mutex);
-        return OMPI_ERR_BUFFER;
+    switch (type) {
+        case BASE_BSEND_BUF:
+            buf_instance = mca_pml_bsend_buffer;
+            if (NULL == buf_instance) {
+                ret = OMPI_ERR_BUFFER;
+                goto fn_exit;
+            }
+            break;
+
+        case COMM_BSEND_BUF:
+            comm = (ompi_communicator_t *)obj;
+            buf_instance = ompi_comm_bsend_buffer_get(comm);
+            if (NULL == buf_instance) {
+                ret = OMPI_ERR_BUFFER;
+                goto fn_exit;
+            }
+            break;
+
+        case SESSION_BSEND_BUF:
+            instance = (ompi_instance_t *)obj;
+            buf_instance = ompi_instance_bsend_buffer_get(instance);
+            if (NULL == buf_instance) {
+                ret = OMPI_ERR_BUFFER;
+                goto fn_exit;
+            }
+            break;
+
+        default:
+            /* This should not happen */
+            assert(0);
+            break;
     }
 
-    /* wait on any pending requests */
-    while(mca_pml_bsend_count != 0)
-        opal_condition_wait(&mca_pml_bsend_condition, &mca_pml_bsend_mutex);
+    while(buf_instance->bsend_count != 0) {
+        opal_condition_wait(&buf_instance->bsend_condition, &buf_instance->bsend_mutex);
+        opal_progress();
+    }
 
     /* free resources associated with the allocator */
-    mca_pml_bsend_allocator->alc_finalize(mca_pml_bsend_allocator);
-    mca_pml_bsend_allocator = NULL;
+    buf_instance->bsend_allocator->alc_finalize(buf_instance->bsend_allocator);
+    buf_instance->bsend_allocator = NULL;
 
     /* return current settings */
-    if(NULL != addr)
-        *((void**)addr) = mca_pml_bsend_userbase;
-    if(NULL != size)
-        *size = mca_pml_bsend_usersize;
+    if(NULL != addr) {
+        *((void**)addr) = buf_instance->bsend_userbase;
+    }
 
-    /* reset local variables */
-    mca_pml_bsend_userbase = NULL;
-    mca_pml_bsend_usersize = 0;
-    mca_pml_bsend_base = NULL;
-    mca_pml_bsend_addr = NULL;
-    mca_pml_bsend_size = 0;
-    mca_pml_bsend_count = 0;
-    OPAL_THREAD_UNLOCK(&mca_pml_bsend_mutex);
-    return OMPI_SUCCESS;
+    if ((NULL != size) && (buf_instance->bsend_userbase != MPI_BUFFER_AUTOMATIC)) {
+        *size = buf_instance->bsend_usersize;
+    }
+
+    switch (type) {
+        case BASE_BSEND_BUF:
+            mca_pml_bsend_buffer= NULL;
+            break;
+
+        case COMM_BSEND_BUF:
+            ret = ompi_comm_bsend_buffer_set(comm, NULL);
+            if (OMPI_SUCCESS != ret) {
+                goto fn_exit;
+            }
+            OBJ_RELEASE(comm);
+            break;
+        
+        case SESSION_BSEND_BUF:
+            ret = ompi_instance_bsend_buffer_set(instance, NULL);
+            if (OMPI_SUCCESS != ret) {
+                goto fn_exit;
+            }
+            OBJ_RELEASE(instance);
+            break;
+        
+        default:
+            /* This should not happen */
+            assert(0);
+            break;
+    }
+
+    OBJ_DESTRUCT(buf_instance);
+
+fn_exit:
+    return ret;
+}
+
+int mca_pml_base_bsend_flush(ompi_bsend_buffer_type_t type, void *obj)
+{
+    int ret = OMPI_SUCCESS;
+    mca_pml_bsend_buffer_t *buf_instance = NULL;
+    ompi_communicator_t *comm = NULL;
+    ompi_instance_t *instance = NULL;
+
+    switch (type) {
+        case BASE_BSEND_BUF:
+            buf_instance = mca_pml_bsend_buffer;
+            if (NULL == buf_instance) {
+                ret = OMPI_ERR_BUFFER;
+                goto fn_exit;
+            }
+            break;
+    
+        case COMM_BSEND_BUF:
+            comm = (ompi_communicator_t *)obj;
+            buf_instance = ompi_comm_bsend_buffer_get(comm);
+            if (NULL == buf_instance) {
+                ret = OMPI_ERR_BUFFER;
+                goto fn_exit;
+            }
+            break;
+            
+        case SESSION_BSEND_BUF:
+            instance = (ompi_instance_t *)obj;
+            buf_instance = ompi_instance_bsend_buffer_get(instance);
+            if (NULL == buf_instance) {
+                ret = OMPI_ERR_BUFFER;
+                goto fn_exit;
+            }
+            break;
+
+        default:
+            /* This should not happen */
+            assert(0);
+            break;
+    }
+
+    while(buf_instance->bsend_count != 0) {
+        opal_condition_wait(&buf_instance->bsend_condition, &buf_instance->bsend_mutex);
+        opal_progress();
+    }
+
+fn_exit:
+    return ret;
+}
+
+/*
+ * TODO:  right now treating this as blocking
+ */
+int mca_pml_base_bsend_iflush(ompi_bsend_buffer_type_t type, void *obj, ompi_request_t **req)
+{
+    int ret = OMPI_SUCCESS;
+    mca_pml_bsend_buffer_t *buf_instance = NULL;
+    ompi_communicator_t *comm = NULL;
+    ompi_instance_t *instance = NULL;
+#if 0
+    ompi_request_t *flush_request = NULL;
+#endif
+
+    switch (type) {
+        case BASE_BSEND_BUF:
+            buf_instance = mca_pml_bsend_buffer;
+            if (NULL == buf_instance) {
+                ret = OMPI_ERR_BUFFER;
+                goto fn_exit;
+            }
+            break;
+   
+        case COMM_BSEND_BUF:
+            comm = (ompi_communicator_t *)obj;
+            buf_instance = ompi_comm_bsend_buffer_get(comm);
+            if (NULL == buf_instance) {
+                ret = OMPI_ERR_BUFFER;
+                goto fn_exit;
+            }
+            break;
+
+        case SESSION_BSEND_BUF:
+            instance = (ompi_instance_t *)obj;
+            buf_instance = ompi_instance_bsend_buffer_get(instance);
+            if (NULL == buf_instance) {
+                ret = OMPI_ERR_BUFFER;
+                goto fn_exit;
+            }
+            break;
+
+        default:
+            /* This should not happen */
+            assert(0);
+            break;
+    }
+
+
+    while(buf_instance->bsend_count != 0) {
+        opal_condition_wait(&buf_instance->bsend_condition, &buf_instance->bsend_mutex);
+        opal_progress();
+    }
+
+fn_exit:
+    *req = MPI_REQUEST_NULL;
+    return ret;
 }
 
 
@@ -222,6 +541,7 @@ int mca_pml_base_bsend_detach(void* addr, size_t* size)
 int mca_pml_base_bsend_request_start(ompi_request_t* request)
 {
     mca_pml_base_send_request_t* sendreq = (mca_pml_base_send_request_t*)request;
+    mca_pml_bsend_buffer_t *buffer = NULL;
     struct iovec iov;
     unsigned int iov_count;
     size_t max_data;
@@ -230,24 +550,22 @@ int mca_pml_base_bsend_request_start(ompi_request_t* request)
     if(sendreq->req_bytes_packed > 0) {
 
         /* has a buffer been provided */
-        OPAL_THREAD_LOCK(&mca_pml_bsend_mutex);
-        if(NULL == mca_pml_bsend_addr) {
+        buffer = mca_pml_bsend_buffer_get(request->req_mpi_object.comm);
+        if (NULL == buffer) {
             sendreq->req_addr = NULL;
-            OPAL_THREAD_UNLOCK(&mca_pml_bsend_mutex);
             return OMPI_ERR_BUFFER;
         }
 
         /* allocate a buffer to hold packed message */
-        sendreq->req_addr = mca_pml_bsend_allocator->alc_alloc(
-            mca_pml_bsend_allocator, sendreq->req_bytes_packed, 0);
+        OPAL_THREAD_LOCK(&buffer->bsend_mutex);
+        sendreq->req_addr = buffer->bsend_allocator->alc_alloc(
+                                buffer->bsend_allocator, sendreq->req_bytes_packed, 0);
         if(NULL == sendreq->req_addr) {
             /* release resources when request is freed */
             sendreq->req_base.req_pml_complete = true;
-            OPAL_THREAD_UNLOCK(&mca_pml_bsend_mutex);
+            OPAL_THREAD_UNLOCK(&buffer->bsend_mutex);
             return OMPI_ERR_BUFFER;
         }
-
-        OPAL_THREAD_UNLOCK(&mca_pml_bsend_mutex);
 
         /* The convertor is already initialized in the beginning so we just have to
          * pack the data in the newly allocated buffer.
@@ -260,6 +578,7 @@ int mca_pml_base_bsend_request_start(ompi_request_t* request)
                                       &iov,
                                       &iov_count,
                                       &max_data )) < 0) {
+            OPAL_THREAD_UNLOCK(&buffer->bsend_mutex);
             return OMPI_ERROR;
         }
 
@@ -267,9 +586,11 @@ int mca_pml_base_bsend_request_start(ompi_request_t* request)
         opal_convertor_prepare_for_send( &sendreq->req_base.req_convertor, &(ompi_mpi_packed.dt.super),
                                          max_data, sendreq->req_addr );
         /* increment count of pending requests */
-        mca_pml_bsend_count++;
-    }
+        buffer->bsend_count++;
 
+        OPAL_THREAD_UNLOCK(&buffer->bsend_mutex);
+
+    }
     return OMPI_SUCCESS;
 }
 
@@ -281,24 +602,26 @@ int mca_pml_base_bsend_request_start(ompi_request_t* request)
 int mca_pml_base_bsend_request_alloc(ompi_request_t* request)
 {
     mca_pml_base_send_request_t* sendreq = (mca_pml_base_send_request_t*)request;
+    mca_pml_bsend_buffer_t *buffer = NULL;
 
     assert( sendreq->req_bytes_packed > 0 );
 
     /* has a buffer been provided */
-    OPAL_THREAD_LOCK(&mca_pml_bsend_mutex);
-    if(NULL == mca_pml_bsend_addr) {
+    buffer = mca_pml_bsend_buffer_get(request->req_mpi_object.comm);
+    if (NULL == buffer) {
         sendreq->req_addr = NULL;
-        OPAL_THREAD_UNLOCK(&mca_pml_bsend_mutex);
         return OMPI_ERR_BUFFER;
     }
 
+    OPAL_THREAD_LOCK(&buffer->bsend_mutex);
+
     /* allocate a buffer to hold packed message */
-    sendreq->req_addr = mca_pml_bsend_allocator->alc_alloc(
-        mca_pml_bsend_allocator, sendreq->req_bytes_packed, 0);
+    sendreq->req_addr = buffer->bsend_allocator->alc_alloc(
+        buffer->bsend_allocator, sendreq->req_bytes_packed, 0);
     if(NULL == sendreq->req_addr) {
         /* release resources when request is freed */
         sendreq->req_base.req_pml_complete = true;
-        OPAL_THREAD_UNLOCK(&mca_pml_bsend_mutex);
+        OPAL_THREAD_UNLOCK(&buffer->bsend_mutex);
         /* progress communications, with the hope that more resources
          *   will be freed */
         opal_progress();
@@ -306,8 +629,8 @@ int mca_pml_base_bsend_request_alloc(ompi_request_t* request)
     }
 
     /* increment count of pending requests */
-    mca_pml_bsend_count++;
-    OPAL_THREAD_UNLOCK(&mca_pml_bsend_mutex);
+    buffer->bsend_count++;
+    OPAL_THREAD_UNLOCK(&buffer->bsend_mutex);
 
     return OMPI_SUCCESS;
 }
@@ -316,22 +639,24 @@ int mca_pml_base_bsend_request_alloc(ompi_request_t* request)
  * allocate buffer
  */
 
-void*  mca_pml_base_bsend_request_alloc_buf( size_t length )
+void*  mca_pml_base_bsend_request_alloc_buf(ompi_communicator_t *comm,  size_t length )
 {
     void* buf = NULL;
+    mca_pml_bsend_buffer_t *ompi_buffer = NULL;
+
     /* has a buffer been provided */
-    OPAL_THREAD_LOCK(&mca_pml_bsend_mutex);
-    if(NULL == mca_pml_bsend_addr) {
-        OPAL_THREAD_UNLOCK(&mca_pml_bsend_mutex);
+    ompi_buffer = mca_pml_bsend_buffer_get(comm);
+    if (NULL == ompi_buffer) {
         return NULL;
     }
 
+    OPAL_THREAD_LOCK(&ompi_buffer->bsend_mutex);
     /* allocate a buffer to hold packed message */
-    buf = mca_pml_bsend_allocator->alc_alloc(
-        mca_pml_bsend_allocator, length, 0);
+    buf = ompi_buffer->bsend_allocator->alc_alloc(
+                           ompi_buffer->bsend_allocator, length, 0);
     if(NULL == buf) {
         /* release resources when request is freed */
-        OPAL_THREAD_UNLOCK(&mca_pml_bsend_mutex);
+        OPAL_THREAD_UNLOCK(&ompi_buffer->bsend_mutex);
         /* progress communications, with the hope that more resources
          *   will be freed */
         opal_progress();
@@ -339,8 +664,8 @@ void*  mca_pml_base_bsend_request_alloc_buf( size_t length )
     }
 
     /* increment count of pending requests */
-    mca_pml_bsend_count++;
-    OPAL_THREAD_UNLOCK(&mca_pml_bsend_mutex);
+    ompi_buffer->bsend_count++;
+    OPAL_THREAD_UNLOCK(&ompi_buffer->bsend_mutex);
 
     return buf;
 }
@@ -349,19 +674,26 @@ void*  mca_pml_base_bsend_request_alloc_buf( size_t length )
 /*
  *  Request completed - free buffer and decrement pending count
  */
-int mca_pml_base_bsend_request_free(void* addr)
+int mca_pml_base_bsend_request_free(ompi_communicator_t *comm, void* addr)
 {
-    /* remove from list of pending requests */
-    OPAL_THREAD_LOCK(&mca_pml_bsend_mutex);
+    mca_pml_bsend_buffer_t *buffer = NULL;
+
+    buffer = mca_pml_bsend_buffer_get(comm);
+    assert(NULL != buffer);
+    if (NULL == buffer) {
+        return OMPI_ERR_BUFFER;
+    }
+
+    OPAL_THREAD_LOCK(&buffer->bsend_mutex);
 
     /* free buffer */
-    mca_pml_bsend_allocator->alc_free(mca_pml_bsend_allocator, addr);
+    buffer->bsend_allocator->alc_free(buffer->bsend_allocator, addr);
 
-    /* decrement count of buffered requests */
-    if(--mca_pml_bsend_count == 0)
-        opal_condition_signal(&mca_pml_bsend_condition);
+    /* decrement count of buffered requests for this buffer pool */
+    if(--buffer->bsend_count == 0)
+        opal_condition_signal(&buffer->bsend_condition);
 
-    OPAL_THREAD_UNLOCK(&mca_pml_bsend_mutex);
+    OPAL_THREAD_UNLOCK(&buffer->bsend_mutex);
     return OMPI_SUCCESS;
 }
 
@@ -372,6 +704,8 @@ int mca_pml_base_bsend_request_free(void* addr)
  */
 int mca_pml_base_bsend_request_fini(ompi_request_t* request)
 {
+    mca_pml_bsend_buffer_t *buffer = mca_pml_bsend_buffer_get(request->req_mpi_object.comm);
+
     mca_pml_base_send_request_t* sendreq = (mca_pml_base_send_request_t*)request;
     if(sendreq->req_bytes_packed == 0 ||
        sendreq->req_addr == NULL ||
@@ -379,17 +713,17 @@ int mca_pml_base_bsend_request_fini(ompi_request_t* request)
         return OMPI_SUCCESS;
 
     /* remove from list of pending requests */
-    OPAL_THREAD_LOCK(&mca_pml_bsend_mutex);
+    OPAL_THREAD_LOCK(&buffer->bsend_mutex);
 
     /* free buffer */
-    mca_pml_bsend_allocator->alc_free(mca_pml_bsend_allocator, (void *)sendreq->req_addr);
+    buffer->bsend_allocator->alc_free(buffer->bsend_allocator, (void *)sendreq->req_addr);
     sendreq->req_addr = sendreq->req_base.req_addr;
 
     /* decrement count of buffered requests */
-    if(--mca_pml_bsend_count == 0)
-        opal_condition_signal(&mca_pml_bsend_condition);
+    if(--buffer->bsend_count == 0)
+        opal_condition_signal(&buffer->bsend_condition);
 
-    OPAL_THREAD_UNLOCK(&mca_pml_bsend_mutex);
+    OPAL_THREAD_UNLOCK(&buffer->bsend_mutex);
     return OMPI_SUCCESS;
 }
 

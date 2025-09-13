@@ -174,6 +174,7 @@ lib@OMPI_LIBMPI_NAME@_mpifh_la_SOURCES += \
         cart_sub_f.c \
         close_port_f.c \
         comm_accept_f.c \
+        comm_attach_buffer_f.c \
         comm_call_errhandler_f.c \
         comm_compare_f.c \
         comm_connect_f.c \
@@ -183,11 +184,13 @@ lib@OMPI_LIBMPI_NAME@_mpifh_la_SOURCES += \
         comm_create_group_f.c \
         comm_create_keyval_f.c \
         comm_delete_attr_f.c \
+        comm_detach_buffer_f.c \
         comm_disconnect_f.c \
         comm_dup_f.c \
         comm_dup_with_info_f.c \
         comm_idup_f.c \
         comm_idup_with_info_f.c \
+        comm_flush_buffer_f.c \
         comm_free_f.c \
         comm_free_keyval_f.c \
         comm_get_attr_f.c \
@@ -196,6 +199,7 @@ lib@OMPI_LIBMPI_NAME@_mpifh_la_SOURCES += \
         comm_get_name_f.c \
         comm_get_parent_f.c \
         comm_group_f.c \
+        comm_iflush_buffer_f.c \
         comm_join_f.c \
         comm_rank_f.c \
         comm_remote_group_f.c \
@@ -426,13 +430,17 @@ lib@OMPI_LIBMPI_NAME@_mpifh_la_SOURCES += \
         send_init_f.c \
         sendrecv_f.c \
         sendrecv_replace_f.c \
+        session_attach_buffer_f.c \
         session_call_errhandler_f.c \
         session_create_errhandler_f.c \
+        session_detach_buffer_f.c \
+        session_flush_buffer_f.c \
         session_get_errhandler_f.c \
         session_get_info_f.c \
         session_get_nth_pset_f.c \
         session_get_num_psets_f.c \
         session_get_pset_info_f.c \
+        session_iflush_buffer_f.c \
         session_init_f.c \
         session_finalize_f.c \
         session_set_errhandler_f.c \

@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2018      Triad National Security, LLC.  All rights reserved.
+ * Copyright (c) 2018-2025  Triad National Security, LLC.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -41,6 +41,10 @@ struct ompi_instance_t {
 
     ompi_errhandler_t     *error_handler;
     ompi_errhandler_type_t errhandler_type;
+
+    /* pointer to buffer object used for buffered sends */
+    void *bsend_buffer;
+
 };
 
 typedef struct ompi_instance_t ompi_instance_t;
@@ -162,6 +166,18 @@ static inline int ompi_instance_invalid (const ompi_instance_t* instance)
         return true;
     else
         return false;
+}
+
+static inline void *ompi_instance_bsend_buffer_get(ompi_instance_t *instance)
+{
+    assert(NULL != instance);
+    return instance->bsend_buffer;
+}
+
+static inline int ompi_instance_bsend_buffer_set(ompi_instance_t *instance, void *buffer)
+{
+    instance->bsend_buffer = buffer;
+    return OMPI_SUCCESS;
 }
 
 #endif /* !defined(OMPI_INSTANCE_H) */

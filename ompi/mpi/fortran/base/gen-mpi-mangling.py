@@ -98,6 +98,12 @@ def get_fortran_constants(args):
             'f_type': "type(MPI_STATUS)",
             'f_name': "MPI_STATUSES_IGNORE(1)",
         },
+        'buffer_automatic': {
+            'c_type': "MPI_Fint",
+            'c_name': "mpi_fortran_buffer_automatic",
+            'f_type': "integer",
+            'f_name': "MPI_BUFFER_AUTOMATIC",
+        },
     }
 
 def mangle(name, mangling_type):
@@ -129,7 +135,9 @@ def gen_c_constants_decl(mangling_type, fortran_constants, args):
             dim = const.get('c_dim', '')
             f.write(f"extern {const['c_type']} {mangled_name}{dim};\n")
             f.write(f"#define OMPI_IS_FORTRAN_{key.upper()}(addr) \\\n")
-            f.write(f"        (addr == (void*) &{mangled_name})\n\n")
+            f.write(f"        (addr == (void*) &{mangled_name})\n")
+            f.write(f"#define OMPI_FORTRAN_{key.upper()}_ADDR() \\\n")
+            f.write(f"        (void*) &{mangled_name}\n\n")
 
 def gen_c_constants(mangling_type, fortran_constants, args):
     # Generates the mpif-c-constants.h file

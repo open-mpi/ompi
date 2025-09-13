@@ -4,6 +4,8 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2022      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2025      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -62,10 +64,12 @@ __opal_attribute_always_inline__ static inline void
 mca_pml_ucx_bsend_completion_internal(void *request, ucs_status_t status)
 {
     ompi_request_t *req = request;
+    ompi_communicator_t *comm;
 
     PML_UCX_VERBOSE(8, "bsend request %p buffer %p completed with status %s", (void*)req,
                     req->req_complete_cb_data, ucs_status_string(status));
-    mca_pml_base_bsend_request_free(req->req_complete_cb_data);
+    comm = req->req_mpi_object.comm;
+    mca_pml_base_bsend_request_free(comm, req->req_complete_cb_data);
     req->req_complete_cb_data = NULL;
     mca_pml_ucx_set_send_status(&req->req_status, status);
     PML_UCX_ASSERT( !(REQUEST_COMPLETE(req)));

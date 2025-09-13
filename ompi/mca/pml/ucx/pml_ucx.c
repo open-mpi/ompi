@@ -9,6 +9,7 @@
  * Copyright (c) 2019      Intel, Inc.  All rights reserved.
  * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
+ * Copyright (c) 2025 Triad National Security, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -785,7 +786,7 @@ int mca_pml_ucx_isend_init(const void *buf, size_t count, ompi_datatype_t *datat
 
 static ucs_status_ptr_t
 mca_pml_ucx_bsend(ucp_ep_h ep, const void *buf, size_t count,
-                  ompi_datatype_t *datatype, uint64_t pml_tag)
+                  ompi_datatype_t *datatype, uint64_t pml_tag, ompi_communicator_t *comm)
 {
     ompi_request_t *req;
     void *packed_data;
@@ -801,7 +802,7 @@ mca_pml_ucx_bsend(ucp_ep_h ep, const void *buf, size_t count,
                                              &opal_conv);
     opal_convertor_get_packed_size(&opal_conv, &packed_length);
 
-    packed_data = mca_pml_base_bsend_request_alloc_buf(packed_length);
+    packed_data = mca_pml_base_bsend_request_alloc_buf(comm, packed_length);
     if (OPAL_UNLIKELY(NULL == packed_data)) {
         OBJ_DESTRUCT(&opal_conv);
         PML_UCX_ERROR("bsend: failed to allocate buffer");
@@ -816,7 +817,7 @@ mca_pml_ucx_bsend(ucp_ep_h ep, const void *buf, size_t count,
     offset = 0;
     opal_convertor_set_position(&opal_conv, &offset);
     if (0 > opal_convertor_pack(&opal_conv, &iov, &iov_count, &packed_length)) {
-        mca_pml_base_bsend_request_free(packed_data);
+        mca_pml_base_bsend_request_free(comm, packed_data);
         OBJ_DESTRUCT(&opal_conv);
         PML_UCX_ERROR("bsend: failed to pack user datatype");
         return UCS_STATUS_PTR(OMPI_ERROR);
@@ -829,17 +830,18 @@ mca_pml_ucx_bsend(ucp_ep_h ep, const void *buf, size_t count,
                                            mca_pml_ucx_bsend_completion);
     if (NULL == req) {
         /* request was completed in place */
-        mca_pml_base_bsend_request_free(packed_data);
+        mca_pml_base_bsend_request_free(comm, packed_data);
         return NULL;
     }
 
     if (OPAL_UNLIKELY(UCS_PTR_IS_ERR(req))) {
-        mca_pml_base_bsend_request_free(packed_data);
+        mca_pml_base_bsend_request_free(comm, packed_data);
         PML_UCX_ERROR("ucx bsend failed: %s", ucs_status_string(UCS_PTR_STATUS(req)));
         return UCS_STATUS_PTR(OMPI_ERROR);
     }
 
     req->req_complete_cb_data = packed_data;
+    req->req_mpi_object.comm = comm;
     return NULL;
 }
 
@@ -850,10 +852,11 @@ static inline ucs_status_ptr_t mca_pml_ucx_common_send(ucp_ep_h ep, const void *
                                                        ucp_datatype_t ucx_datatype,
                                                        ucp_tag_t tag,
                                                        mca_pml_base_send_mode_t mode,
+                                                       ompi_communicator_t *comm,
                                                        ucp_send_callback_t cb)
 {
     if (OPAL_UNLIKELY(MCA_PML_BASE_SEND_BUFFERED == mode)) {
-        return mca_pml_ucx_bsend(ep, buf, count, datatype, tag);
+        return mca_pml_ucx_bsend(ep, buf, count, datatype, tag, comm);
     } else if (OPAL_UNLIKELY(MCA_PML_BASE_SEND_SYNCHRONOUS == mode)) {
         return ucp_tag_send_sync_nb(ep, buf, count, ucx_datatype, tag, cb);
     } else {
@@ -869,12 +872,13 @@ mca_pml_ucx_common_send_nbx(ucp_ep_h ep, const void *buf,
                             ompi_datatype_t *datatype,
                             ucp_tag_t tag,
                             mca_pml_base_send_mode_t mode,
+                            ompi_communicator_t *comm,
                             ucp_request_param_t *param)
 {
     pml_ucx_datatype_t *op_data = mca_pml_ucx_get_op_data(datatype);
 
     if (OPAL_UNLIKELY(MCA_PML_BASE_SEND_BUFFERED == mode)) {
-        return mca_pml_ucx_bsend(ep, buf, count, datatype, tag);
+        return mca_pml_ucx_bsend(ep, buf, count, datatype, tag, comm);
     } else if (OPAL_UNLIKELY(MCA_PML_BASE_SEND_SYNCHRONOUS == mode)) {
         return ucp_tag_send_sync_nb(ep, buf, count,
                                     mca_pml_ucx_get_datatype(datatype), tag,
@@ -913,11 +917,11 @@ int mca_pml_ucx_isend(const void *buf, size_t count, ompi_datatype_t *datatype,
 #if HAVE_DECL_UCP_TAG_SEND_NBX
     req = (ompi_request_t*)mca_pml_ucx_common_send_nbx(ep, buf, count, datatype,
                                                        PML_UCX_MAKE_SEND_TAG(tag, comm, cid), mode,
-                                                       &mca_pml_ucx_get_op_data(datatype)->op_param.isend);
+                                                       comm, &mca_pml_ucx_get_op_data(datatype)->op_param.isend);
 #else
     req = (ompi_request_t*)mca_pml_ucx_common_send(ep, buf, count, datatype,
                                                    mca_pml_ucx_get_datatype(datatype),
-                                                   PML_UCX_MAKE_SEND_TAG(tag, comm, cid), mode,
+                                                   PML_UCX_MAKE_SEND_TAG(tag, comm, cid), mode, comm,
                                                    mca_pml_ucx_send_completion);
 #endif
 
@@ -951,13 +955,13 @@ int mca_pml_ucx_isend(const void *buf, size_t count, ompi_datatype_t *datatype,
 static inline __opal_attribute_always_inline__ int
 mca_pml_ucx_send_nb(ucp_ep_h ep, const void *buf, size_t count,
                     ompi_datatype_t *datatype, ucp_datatype_t ucx_datatype,
-                    ucp_tag_t tag, mca_pml_base_send_mode_t mode)
+                    ucp_tag_t tag, mca_pml_base_send_mode_t mode, ompi_communicator_t *comm)
 {
     ompi_request_t *req;
 
     req = (ompi_request_t*)mca_pml_ucx_common_send(ep, buf, count, datatype,
                                                    mca_pml_ucx_get_datatype(datatype),
-                                                   tag, mode,
+                                                   tag, mode, comm,
                                                    mca_pml_ucx_send_completion_empty);
     if (OPAL_LIKELY(req == NULL)) {
         return OMPI_SUCCESS;
@@ -1048,7 +1052,7 @@ int mca_pml_ucx_send(const void *buf, size_t count, ompi_datatype_t *datatype, i
 
     return mca_pml_ucx_send_nb(ep, buf, count, datatype,
                                mca_pml_ucx_get_datatype(datatype),
-                               PML_UCX_MAKE_SEND_TAG(tag, comm, cid), mode);
+                               PML_UCX_MAKE_SEND_TAG(tag, comm, cid), mode, comm);
 }
 
 int mca_pml_ucx_iprobe(int src, int tag, struct ompi_communicator_t* comm,
@@ -1219,6 +1223,7 @@ int mca_pml_ucx_start(size_t count, ompi_request_t** requests)
                                                                preq->datatype,
                                                                preq->tag,
                                                                preq->send.mode,
+                                                               preq->ompi.req_mpi_object.comm,
                                                                mca_pml_ucx_psend_completion);
         } else {
             PML_UCX_VERBOSE(8, "start recv request %p", (void*)preq);
