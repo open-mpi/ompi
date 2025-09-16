@@ -39,11 +39,16 @@ endif
 BUILT_SOURCES = abi.h standard_abi/mpi.h
 
 libmpi_c_abi_la_SOURCES = \
-        attr_fn.c \
+        attr_fn.c
+
+extra_abi_fns = \
         abi_get_info.c \
         abi_get_version.c \
-	ompi_isendrecv.c \
-	ompi_sendrecv.c
+        ompi_isendrecv.c \
+        ompi_sendrecv.c \
+        pcontrol.c \
+        wtick.c
+
 
 abi_get_info.c: abi_get_info.c.in
 	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
@@ -63,10 +68,10 @@ endif
 
 abi_interface_profile_sources = $(prototype_sources:.c.in=_abi_generated.c)
 
-libmpi_c_abi_profile_la_SOURCES = $(abi_interface_profile_sources)
+libmpi_c_abi_profile_la_SOURCES = $(abi_interface_profile_sources) $(extra_abi_fns)
 libmpi_c_abi_profile_la_CPPFLAGS = -DOMPI_NO_MPI_PROTOTYPES -DOMPI_BUILD_MPI_PROFILING=1
 
-libmpi_c_abi_noprofile_la_SOURCES = $(abi_interface_profile_sources)
+libmpi_c_abi_noprofile_la_SOURCES = $(abi_interface_profile_sources) $(extra_abi_fns)
 libmpi_c_abi_noprofile_la_CPPFLAGS = -DOMPI_NO_MPI_PROTOTYPES -DOMPI_BUILD_MPI_PROFILING=0
 
 endif
