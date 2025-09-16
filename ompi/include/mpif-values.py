@@ -338,6 +338,7 @@ constants = {
     'OMPI_COMM_TYPE_CLUSTER': 11,
     'MPI_COMM_TYPE_HW_UNGUIDED': 12,
     'MPI_COMM_TYPE_HW_GUIDED': 13,
+    'MPI_COMM_TYPE_RESOURCE_GUIDED': 14,
 }
 
 # IO Constants

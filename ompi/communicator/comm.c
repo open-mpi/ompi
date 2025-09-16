@@ -24,7 +24,7 @@
  * Copyright (c) 2015      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2017-2022 IBM Corporation.  All rights reserved.
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
- * Copyright (c) 2018-2024 Triad National Security, LLC. All rights
+ * Copyright (c) 2018-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2023-2025 Advanced Micro Devices, Inc. All rights reserved.
  * $COPYRIGHT$
@@ -98,6 +98,9 @@ static const char * ompi_comm_split_type_to_str(int split_type) {
     }
     else if (MPI_COMM_TYPE_HW_UNGUIDED == split_type) {
         return "MPI_COMM_TYPE_HW_UNGUIDED";
+    }
+    else if (MPI_COMM_TYPE_RESOURCE_GUIDED == split_type) {
+        return "MPI_COMM_TYPE_RESOURCE_GUIDED";
     }
     return "Unknown";
 }
@@ -830,9 +833,10 @@ static int ompi_comm_split_type_get_part (ompi_group_t *group, const int split_t
             break;
         case MPI_COMM_TYPE_HW_GUIDED:
         case MPI_COMM_TYPE_HW_UNGUIDED:
+        case MPI_COMM_TYPE_RESOURCE_GUIDED:
             /*
-             * MPI_COMM_TYPE_HW_(UN)GUIDED handled in calling function.
-             * We should not get here as the split type will be changed
+             * MPI_COMM_TYPE_HW_(UN)GUIDED and MPI_COMM_TYPE_RESOURCE_GUIDED handled 
+             * in calling function. We should not get here as the split type will be changed
              * at a higher level.
              */
             opal_show_help("help-comm.txt",
@@ -1186,7 +1190,8 @@ int ompi_comm_split_type (ompi_communicator_t *comm, int split_type, int key,
     inter = OMPI_COMM_IS_INTER(comm);
 
     /* Step 0: Convert MPI_COMM_TYPE_HW_GUIDED to the internal type */
-    if (MPI_COMM_TYPE_HW_GUIDED == split_type) {
+    if ((MPI_COMM_TYPE_HW_GUIDED == split_type) ||
+        (MPI_COMM_TYPE_RESOURCE_GUIDED == split_type)) {
         opal_info_get(info, "mpi_hw_resource_type", &value, &flag);
         /* If key is not in the 'info', then return MPI_COMM_NULL.
          * This is caught at the MPI interface level, but it doesn't hurt to
