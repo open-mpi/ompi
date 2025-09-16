@@ -146,12 +146,12 @@ static void* mca_pml_bsend_alloc_segment(void *ctx, size_t *size_inout)
 static void* mca_pml_bsend_alloc_seg_auto(void *ctx, size_t *size_inout)
 {
     void *addr;
-    const uint64_t seg_size = (1024UL * 1024UL);
+    size_t size = *size_inout;
     
-    addr = malloc(seg_size);
-    if (NULL != addr);
-
-    *size_inout += seg_size;
+    addr = malloc(size);
+    if (NULL != addr) {
+        *size_inout = size;
+    }
     return addr;
 }
 
@@ -705,6 +705,9 @@ int mca_pml_base_bsend_request_free(ompi_communicator_t *comm, void* addr)
 int mca_pml_base_bsend_request_fini(ompi_request_t* request)
 {
     mca_pml_bsend_buffer_t *buffer = mca_pml_bsend_buffer_get(request->req_mpi_object.comm);
+    if(NULL == buffer) {
+        return OMPI_ERR_BUFFER;
+    }
 
     mca_pml_base_send_request_t* sendreq = (mca_pml_base_send_request_t*)request;
     if(sendreq->req_bytes_packed == 0 ||
@@ -715,7 +718,7 @@ int mca_pml_base_bsend_request_fini(ompi_request_t* request)
     /* remove from list of pending requests */
     OPAL_THREAD_LOCK(&buffer->bsend_mutex);
 
-    /* free buffer */
+    /* free the buffer memory associated with this request */
     buffer->bsend_allocator->alc_free(buffer->bsend_allocator, (void *)sendreq->req_addr);
     sendreq->req_addr = sendreq->req_base.req_addr;
 
