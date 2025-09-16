@@ -613,7 +613,7 @@ abi.h: $(top_srcdir)/docs/mpi-standard-apis.json $(top_srcdir)/ompi/mpi/bindings
 	    $<
 endif
 
-MAINTAINERCLEANFILES = *_generated.c abi_get_info.c abi_get_version.c $(nobase_include_HEADERS)
+MAINTAINERCLEANFILES = *_generated.c abi_get_info.c $(nobase_include_HEADERS)
 if OMPI_STANDARD_ABI
 include Makefile_abi.include
 endif
