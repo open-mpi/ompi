@@ -7,7 +7,7 @@
  *                         reserved.
  * Copyright (c) 2020-2021 Google, LLC. All rights reserved.
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
- * Copyright (c) 2022-2023 Computer Architecture and VLSI Systems (CARV)
+ * Copyright (c) 2022-2025 Computer Architecture and VLSI Systems (CARV)
  *                         Laboratory, ICS Forth. All rights reserved.
  * $COPYRIGHT$
  *
@@ -245,26 +245,46 @@ void mca_smsc_xpmem_unmap_peer_region(void *ctx)
 
 static int mca_smsc_xpmem_endpoint_rcache_entry_cleanup(mca_rcache_base_registration_t *reg, void *ctx)
 {
-    // See respective comment in mca_smsc_xpmem_map_peer_region
-    if (!(MCA_RCACHE_FLAGS_PERSIST & reg->flags))
-        opal_atomic_add(&reg->ref_count, 1);
-
-    mca_smsc_xpmem_unmap_peer_region(reg);
+    /* We aren't allowed to delete registrations inside iterate's
+     * callback. Add them to a list to delete right after. */
+    opal_list_append((opal_list_t *) ctx, &reg->super.super);
     return OPAL_SUCCESS;
 }
 
 static void mca_smsc_xpmem_cleanup_endpoint(mca_smsc_xpmem_endpoint_t *endpoint)
 {
+    mca_rcache_base_registration_t *reg;
+    opal_list_t registrations;
+
     opal_output_verbose(MCA_BASE_VERBOSE_INFO, opal_smsc_base_framework.framework_output,
                         "mca_smsc_xpmem_cleanup_endpoint: cleaning up endpoint %p", (void *) endpoint);
 
-    opal_output_verbose(MCA_BASE_VERBOSE_INFO, opal_smsc_base_framework.framework_output,
-                        "mca_smsc_xpmem_cleanup_endpoint: deleting %" PRIsize_t " region mappings",
-                        endpoint->vma_module->tree.tree_size);
+    OBJ_CONSTRUCT(&registrations, opal_list_t);
 
     /* clean out the registration cache */
     (void) mca_rcache_base_vma_iterate(endpoint->vma_module, NULL, (size_t) -1, true,
-                                       mca_smsc_xpmem_endpoint_rcache_entry_cleanup, NULL);
+                                       mca_smsc_xpmem_endpoint_rcache_entry_cleanup,
+                                       &registrations);
+
+    opal_output_verbose(MCA_BASE_VERBOSE_INFO, opal_smsc_base_framework.framework_output,
+                        "mca_smsc_xpmem_cleanup_endpoint: deleting %" PRIsize_t " region mappings",
+                        opal_list_get_size(&registrations));
+
+    while (NULL != (reg = (mca_rcache_base_registration_t *)
+            opal_list_remove_first(&registrations))) {
+
+        /* We shouldn't find any non-persistent regs during cleanup. Assuming correct
+         * usage, they should have already been unmapped and therefore removed from
+         * the tree. Nevertheless, keep with the custom (see respective comments in
+         * map_peer_region()) and add an extra reference before calling unmap? */
+        if (!(MCA_RCACHE_FLAGS_PERSIST & reg->flags)) {
+            opal_atomic_add(&reg->ref_count, 1);
+        }
+
+        mca_smsc_xpmem_unmap_peer_region(reg);
+    }
+
+    OBJ_DESTRUCT(&registrations);
 
     OBJ_RELEASE(endpoint->vma_module);
     xpmem_release(endpoint->apid);
