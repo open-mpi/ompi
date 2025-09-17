@@ -39,13 +39,13 @@ endif
 BUILT_SOURCES = abi.h standard_abi/mpi.h
 
 libmpi_c_abi_la_SOURCES = \
-        attr_fn.c
+        attr_fn.c \
+        ompi_isendrecv.c \
+        ompi_sendrecv.c
 
 extra_abi_fns = \
         abi_get_info.c \
         abi_get_version.c \
-        ompi_isendrecv.c \
-        ompi_sendrecv.c \
         pcontrol.c \
         wtick.c
 
