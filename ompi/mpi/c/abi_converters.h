@@ -433,6 +433,12 @@ __opal_attribute_always_inline__ static inline MPI_Errhandler ompi_convert_abi_e
 {
     if (MPI_ERRHANDLER_NULL_ABI_INTERNAL == errorhandler) {
         return MPI_ERRHANDLER_NULL;
+    } else if (MPI_ERRORS_ARE_FATAL_ABI_INTERNAL == errorhandler) {
+        return MPI_ERRORS_ARE_FATAL;
+    } else if (MPI_ERRORS_ABORT_ABI_INTERNAL == errorhandler) {
+        return MPI_ERRORS_ABORT;
+    } else  if (MPI_ERRORS_RETURN_ABI_INTERNAL == errorhandler) {
+        return MPI_ERRORS_RETURN;
     }
     return (MPI_Errhandler) errorhandler;
 }
@@ -440,6 +446,12 @@ __opal_attribute_always_inline__ static inline MPI_Errhandler_ABI_INTERNAL ompi_
 {
     if (MPI_ERRHANDLER_NULL == errorhandler) {
         return MPI_ERRHANDLER_NULL_ABI_INTERNAL;
+    } else if (MPI_ERRORS_ARE_FATAL == errorhandler) {
+        return MPI_ERRORS_ARE_FATAL_ABI_INTERNAL;
+    } else if (MPI_ERRORS_ABORT == errorhandler) {
+        return MPI_ERRORS_ABORT_ABI_INTERNAL;
+    } else  if (MPI_ERRORS_RETURN == errorhandler) {
+        return MPI_ERRORS_RETURN_ABI_INTERNAL;
     }
     return (MPI_Errhandler_ABI_INTERNAL) errorhandler;
 }
