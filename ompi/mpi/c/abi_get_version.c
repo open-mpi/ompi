@@ -21,6 +21,13 @@
 #include "ompi/mpi/c/abi.h"
 #endif
 
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
+#pragma weak MPI_Abi_get_version = PMPI_Abi_get_version
+#endif
+#define MPI_Abi_get_version PMPI_Abi_get_version
+#endif
+
 int MPI_Abi_get_version(int *abi_major, int *abi_minor)
 {
     /* 0.1 */
