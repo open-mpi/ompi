@@ -67,11 +67,13 @@ libmpi_c_abi_la_LIBADD += libmpi_c_abi_noprofile.la
 endif
 
 abi_interface_profile_sources = $(prototype_sources:.c.in=_abi_generated.c)
+abi_interface_profile_sources_nbc = $(prototype_sources_nbc:.c.in_nbc=_abi_generated.c)
+abi_interface_profile_sources_obc = $(prototype_sources_obc:.c.in_obc=_abi_generated.c)
 
-libmpi_c_abi_profile_la_SOURCES = $(abi_interface_profile_sources) $(extra_abi_fns)
+libmpi_c_abi_profile_la_SOURCES = $(abi_interface_profile_sources) $(abi_interface_profile_sources_nbc) $(abi_interface_profile_sources_obc) $(extra_abi_fns)
 libmpi_c_abi_profile_la_CPPFLAGS = -DOMPI_NO_MPI_PROTOTYPES -DOMPI_BUILD_MPI_PROFILING=1
 
-libmpi_c_abi_noprofile_la_SOURCES = $(abi_interface_profile_sources) $(extra_abi_fns)
+libmpi_c_abi_noprofile_la_SOURCES = $(abi_interface_profile_sources) $(abi_interface_profile_sources_nbc) $(abi_interface_profile_sources_obc) $(extra_abi_fns)
 libmpi_c_abi_noprofile_la_CPPFLAGS = -DOMPI_NO_MPI_PROTOTYPES -DOMPI_BUILD_MPI_PROFILING=0
 
 endif

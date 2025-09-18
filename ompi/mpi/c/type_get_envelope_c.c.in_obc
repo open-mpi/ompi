@@ -27,21 +27,12 @@
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/memchecker.h"
 
-#if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Type_get_envelope_c = PMPI_Type_get_envelope_c
-#endif
-#define MPI_Type_get_envelope_c PMPI_Type_get_envelope_c
-#endif
-
-static const char FUNC_NAME[] = "MPI_Type_get_envelope_c";
-
-int MPI_Type_get_envelope_c(MPI_Datatype type,
-                            MPI_Count *num_integers,
-                            MPI_Count *num_addresses,
-                            MPI_Count *num_large_counts,
-                            MPI_Count *num_datatypes,
-                            int *combiner)
+PROTOTYPE ERROR_CLASS type_get_envelope_c(DATATYPE type,
+                                          COUNT_OUT num_integers,
+                                          COUNT_OUT num_addresses,
+                                          COUNT_OUT num_large_counts,
+                                          COUNT_OUT num_datatypes,
+                                          INT_OUT combiner)
 {
    int rc;
 

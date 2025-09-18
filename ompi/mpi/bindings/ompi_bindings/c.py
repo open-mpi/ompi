@@ -416,17 +416,22 @@ def print_cdefs_for_abi(out, abi_type='ompi'):
         out.dump('#undef OMPI_ABI_SRC')
         out.dump('#define OMPI_ABI_SRC 1')
 
-def ompi_abi(base_name, template, out):
+def ompi_abi(base_name, template, out, suppress_bc=False, suppress_nbc=False):
     """Generate the OMPI ABI functions."""
     template.print_header(out)
-    print_profiling_header(base_name, out)
-    print_cdefs_for_bigcount(out)
-    print_cdefs_for_abi(out)
-    out.dump(template.prototype.signature(base_name, abi_type='ompi'))
-    template.print_body(func_name=base_name, out=out)
+    if suppress_nbc == False:
+        print_profiling_header(base_name, out)
+        print_cdefs_for_bigcount(out)
+        print_cdefs_for_abi(out)
+        out.dump(template.prototype.signature(base_name, abi_type='ompi'))
+        template.print_body(func_name=base_name, out=out)
     # Check if we need to generate the bigcount interface
-    if util.prototype_has_bigcount(template.prototype):
-        base_name_c = f'{base_name}_c'
+    if util.prototype_has_bigcount(template.prototype) and suppress_bc == False:
+        # there are some special cases where we need to explicitly define the bigcount functions in the template file
+        if base_name[-2:] == "_c":
+            base_name_c = f'{base_name}'
+        else:
+            base_name_c = f'{base_name}_c'
         print_profiling_header(base_name_c, out)
         print_cdefs_for_bigcount(out, enable_count=True)
         print_cdefs_for_abi(out)
@@ -438,7 +443,7 @@ ABI_INTERNAL_HEADER = 'ompi/mpi/c/abi.h'
 ABI_INTERNAL_CONVERTOR = 'ompi/mpi/c/abi_converters.h'
 
 
-def standard_abi(base_name, template, out):
+def standard_abi(base_name, template, out, suppress_bc=False, suppress_nbc=False):
     """Generate the standard ABI functions."""
     template.print_header(out)
     out.dump(f'#include "{ABI_INTERNAL_HEADER}"')
@@ -457,14 +462,15 @@ def standard_abi(base_name, template, out):
                     out.dump(line)
 
     # Static internal function (add a random component to avoid conflicts)
-    internal_name = f'ompi_abi_{template.prototype.name}'
-    print_cdefs_for_bigcount(out)
-    print_cdefs_for_abi(out, abi_type='standard')
-    internal_sig = template.prototype.signature(internal_name, abi_type='ompi',
-                                                enable_count=False)
-    out.dump(consts.INLINE_ATTRS, internal_sig)
-    template.print_body(func_name=base_name, out=out)
-    if util.prototype_has_bigcount(template.prototype):
+    if suppress_nbc == False:
+        internal_name = f'ompi_abi_{template.prototype.name}'
+        print_cdefs_for_bigcount(out)
+        print_cdefs_for_abi(out, abi_type='standard')
+        internal_sig = template.prototype.signature(internal_name, abi_type='ompi',
+                                                    enable_count=False)
+        out.dump(consts.INLINE_ATTRS, internal_sig)
+        template.print_body(func_name=base_name, out=out)
+    if util.prototype_has_bigcount(template.prototype) and suppress_bc == False:
         internal_name = f'ompi_abi_{template.prototype.name}_c'
         print_cdefs_for_bigcount(out, enable_count=True)
         print_cdefs_for_abi(out, abi_type='standard')
@@ -502,10 +508,14 @@ def standard_abi(base_name, template, out):
             out.dump(line)
         out.dump('}')
 
-    internal_name = f'ompi_abi_{template.prototype.name}'
-    generate_function(template.prototype, base_name, internal_name, out)
-    if util.prototype_has_bigcount(template.prototype):
-        base_name_c = f'{base_name}_c'
+    if suppress_nbc == False:
+        internal_name = f'ompi_abi_{template.prototype.name}'
+        generate_function(template.prototype, base_name, internal_name, out)
+    if util.prototype_has_bigcount(template.prototype) and suppress_bc == False:
+        if base_name[-2:] == "_c":
+            base_name_c = f'{base_name}'
+        else:
+            base_name_c = f'{base_name}_c'
         internal_name = f'ompi_abi_{template.prototype.name}_c'
         generate_function(template.prototype, base_name_c, internal_name, out,
                           enable_count=True)
@@ -529,6 +539,6 @@ def generate_source(args, out):
     else:
         base_name = util.mpi_fn_name_from_base_fn_name(template.prototype.name)
     if args.type == 'ompi':
-        ompi_abi(base_name, template, out)
+        ompi_abi(base_name, template, out, args.suppress_bc, args.suppress_nbc)
     else:
-        standard_abi(base_name, template, out)
+        standard_abi(base_name, template, out, args.suppress_bc, args.suppress_nbc)
