@@ -139,6 +139,14 @@ class TypeCountArray(Type):
         count_type = 'MPI_Count' if enable_count else 'int'
         return f'const {count_type} {self.name}[]'
 
+@Type.add_type('COUNT_ARRAY_OUT')
+class TypeCountArrayOut(TypeCountArray):
+    """Array of counts out (either int or MPI_Count)."""
+
+    def parameter(self, enable_count=False, **kwargs):
+        count_type = 'MPI_Count' if enable_count else 'int'
+        return f'{count_type} {self.name}[]'
+
 @Type.add_type('AINT_COUNT_ARRAY')
 class TypeAintCountArray(Type):
     """Array of counts (either MPI_Aint or MPI_Count)."""
@@ -153,6 +161,14 @@ class TypeAintCountArray(Type):
     def parameter(self, enable_count=False, **kwargs):
         count_type = 'MPI_Count' if enable_count else 'MPI_Aint'
         return f'const {count_type} {self.name}[]'
+
+@Type.add_type('AINT_COUNT_ARRAY_OUT')
+class TypeAintCountArrayOut(TypeAintCountArray):
+    """Array of counts (either MPI_Aint or MPI_Count)."""
+
+    def parameter(self, enable_count=False, **kwargs):
+        count_type = 'MPI_Count' if enable_count else 'MPI_Aint'
+        return f'{count_type} {self.name}[]'
 
 @Type.add_type('ELEMENT_COUNT')
 class ElementCountType(Type):
@@ -226,6 +242,11 @@ class TypeAintArray(Type):
     def parameter(self, enable_count=False, **kwargs):
         return f'const MPI_Aint {self.name}[]'
 
+@Type.add_type('AINT_ARRAY_OUT')
+class TypeAintArrayOut(TypeAintArray):
+
+    def parameter(self, enable_count=False, **kwargs):
+        return f'MPI_Aint {self.name}[]'
 
 @Type.add_type('INT_OUT')
 class TypeIntOut(Type):
@@ -281,6 +302,15 @@ class TypeIntArray(Type):
 
     def parameter(self, enable_count=False, **kwargs):
         return f'const int {self.name}[]'
+
+@Type.add_type('INT_ARRAY_OUT')
+class TypeIntArrayOut(TypeIntArray):
+
+    def type_text(self, enable_count=False):
+        return 'int *'
+
+    def parameter(self, enable_count=False, **kwargs):
+        return f'int {self.name}[]'
 
 @Type.add_type('INT_AINT_OUT')
 class TypeIntAintOut(Type):
@@ -362,6 +392,14 @@ class TypeDatatypeArray(Type):
     def parameter(self, enable_count=False, **kwargs):
         return f'const {self.type_text(enable_count=enable_count)} {self.name}[]'
 
+@Type.add_type('DATATYPE_ARRAY_OUT', abi_type=['ompi'])
+class TypeDatatypeArrayOut(Type):
+
+    def type_text(self, enable_count=False):
+        return 'MPI_Datatype'
+
+    def parameter(self, enable_count=False, **kwargs):
+        return f'{self.type_text(enable_count=enable_count)} {self.name}[]'
 
 class StandardABIType(Type):
 
@@ -406,9 +444,6 @@ class TypeDatatypeOutStandard(StandardABIType):
     def argument(self):
         return f'(MPI_Datatype *) {self.name}'
 
-#
-# TODO THIS IS NOT COMPLETE
-#
 @Type.add_type('DATATYPE_ARRAY', abi_type=['standard'])
 class TypeDatatypeArrayStandard(StandardABIType):
 
@@ -443,6 +478,38 @@ class TypeDatatypeArrayStandard(StandardABIType):
     @property
     def argument(self):
         return f'(MPI_Datatype *) {self.tmpname}'
+
+@Type.add_type('DATATYPE_ARRAY_OUT', abi_type=['standard'])
+class TypeDatatypeArrayOutStandard(StandardABIType):
+
+    @property
+    def init_code(self):
+        code = [f'int size_{self.tmpname} = {self.count_param};']
+        code.append(f'MPI_Datatype *{self.tmpname} = (MPI_Datatype *)malloc({self.count_param} * sizeof(MPI_Datatype));')
+        return code
+
+    @property
+    def final_code(self):
+        code = [f'for(int i=0;i<size_{self.tmpname};i++){{']
+        code.append(f'{self.name}[i] = {ConvertOMPIToStandard.DATATYPE}({self.tmpname}[i]);')
+        code.append(f'}}')
+        code.append(f'free({self.tmpname});')
+        return code
+
+    @property
+    def tmpname(self):
+        return f'{self.name}_tmp'
+
+    def type_text(self, enable_count=False):
+        return self.mangle_name('MPI_Datatype')
+
+    def parameter(self, enable_count=False, **kwargs):
+        return f'{self.type_text(enable_count=enable_count)} {self.name}[]'
+
+    @property
+    def argument(self):
+        return f'(MPI_Datatype *) {self.tmpname}'
+
 
 @Type.add_type('OP', abi_type=['ompi'])
 class TypeDatatype(Type):
