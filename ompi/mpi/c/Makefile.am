@@ -466,6 +466,14 @@ prototype_sources = \
 	win_wait.c.in \
         wtime.c.in
 
+prototype_sources_nbc = \
+	type_get_contents.c.in_nbc \
+	type_get_envelope.c.in_nbc
+
+prototype_sources_obc = \
+	type_get_contents_c.c.in_obc \
+	type_get_envelope_c.c.in_obc
+
 # See MPI-5 standard Chapter 20 section 4
 prototype_sources_not_in_abi = \
         comm_c2f.c.in \
@@ -498,6 +506,8 @@ prototype_sources_not_in_abi = \
         win_f2c.c.in
 
 EXTRA_DIST = $(prototype_sources) \
+	$(prototype_sources_nbc) \
+	$(prototype_sources_obc) \
 	$(prototype_sources_not_in_abi) \
 	abi_converters.h \
 	abi_get_info.c.in
@@ -525,8 +535,9 @@ nobase_include_HEADERS = abi.h standard_abi/mpi.h
 #
 #
 interface_profile_sources = $(prototype_sources:.c.in=_ompi_generated.c) \
-	$(prototype_sources_not_in_abi:.c.in=_ompi_generated.c)
-
+	$(prototype_sources_not_in_abi:.c.in=_ompi_generated.c) \
+        $(prototype_sources_nbc:.c.in_nbc=_ompi_generated.c) \
+        $(prototype_sources_obc:.c.in_obc=_ompi_generated.c)
 
 # Conditionally install the header files
 if WANT_INSTALL_HEADERS
@@ -539,10 +550,6 @@ endif
 #
 extra_interface_profile_sources = \
         pcontrol.c \
-	type_get_contents.c \
-	type_get_contents_c.c \
-        type_get_envelope.c \
-        type_get_envelope_c.c \
         wtick.c
 
 # The following functions were removed from the MPI standard, but are
@@ -580,6 +587,51 @@ if OMPI_GENERATE_BINDINGS
 	    ompi \
 	    $<
 
+# Deal with oddballs wrt big count
+type_get_contents_ompi_generated.c: type_get_contents.c.in_nbc
+	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
+	    --builddir $(abs_top_builddir) \
+	    --srcdir $(abs_top_srcdir) \
+	    --output $@ \
+	    c \
+	    source \
+	    ompi \
+	    --suppress_bc \
+	    $<
+
+type_get_envelope_ompi_generated.c: type_get_envelope.c.in_nbc
+	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
+	    --builddir $(abs_top_builddir) \
+	    --srcdir $(abs_top_srcdir) \
+	    --output $@ \
+	    c \
+	    source \
+	    ompi \
+	    --suppress_bc \
+	    $<
+
+type_get_contents_c_ompi_generated.c: type_get_contents_c.c.in_obc
+	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
+	    --builddir $(abs_top_builddir) \
+	    --srcdir $(abs_top_srcdir) \
+	    --output $@ \
+	    c \
+	    source \
+	    ompi \
+	    --suppress_nbc \
+	    $<
+
+type_get_envelope_c_ompi_generated.c: type_get_envelope_c.c.in_obc
+	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
+	    --builddir $(abs_top_builddir) \
+	    --srcdir $(abs_top_srcdir) \
+	    --output $@ \
+	    c \
+	    source \
+	    ompi \
+	    --suppress_nbc \
+	    $<
+
 # Non-mangled version
 standard_abi/mpi.h: $(top_srcdir)/docs/mpi-standard-apis.json $(top_srcdir)/ompi/mpi/bindings/c_header.py
 	mkdir -p standard_abi
@@ -606,6 +658,51 @@ abi.h: $(top_srcdir)/docs/mpi-standard-apis.json $(top_srcdir)/ompi/mpi/bindings
 	    c \
 	    source \
 	    standard \
+	    $<
+
+# Deal with oddballs wrt big count
+type_get_contents_abi_generated.c: type_get_contents.c.in_nbc
+	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
+	    --builddir $(abs_top_builddir) \
+	    --srcdir $(abs_top_srcdir) \
+	    --output $@ \
+	    c \
+	    source \
+	    standard \
+	    --suppress_bc \
+	    $<
+
+type_get_envelope_abi_generated.c: type_get_envelope.c.in_nbc
+	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
+	    --builddir $(abs_top_builddir) \
+	    --srcdir $(abs_top_srcdir) \
+	    --output $@ \
+	    c \
+	    source \
+	    standard \
+	    --suppress_bc \
+	    $<
+
+type_get_contents_c_abi_generated.c: type_get_contents_c.c.in_obc
+	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
+	    --builddir $(abs_top_builddir) \
+	    --srcdir $(abs_top_srcdir) \
+	    --output $@ \
+	    c \
+	    source \
+	    standard \
+	    --suppress_nbc \
+	    $<
+
+type_get_envelope_c_abi_generated.c: type_get_envelope_c.c.in_obc
+	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
+	    --builddir $(abs_top_builddir) \
+	    --srcdir $(abs_top_srcdir) \
+	    --output $@ \
+	    c \
+	    source \
+	    standard \
+	    --suppress_nbc \
 	    $<
 endif
 
