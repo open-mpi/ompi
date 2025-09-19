@@ -50,6 +50,8 @@ headers = bindings.h
 #
 
 prototype_sources = \
+        abi_get_fortran_info.c.in \
+        abi_set_fortran_info.c.in \
         abort.c.in \
         accumulate.c.in \
         add_error_class.c.in \
