@@ -407,23 +407,21 @@ static inline void mca_pml_ob1_recv_request_schedule(
     (void)mca_pml_ob1_recv_request_schedule_exclusive(req, start_bml_btl);
 }
 
-#define MCA_PML_OB1_ADD_ACK_TO_PENDING(P, S, D, O, Sz)                  \
-    do {                                                                \
-        mca_pml_ob1_pckt_pending_t *_pckt;                              \
-                                                                        \
-        MCA_PML_OB1_PCKT_PENDING_ALLOC(_pckt);                          \
-        _pckt->hdr.hdr_common.hdr_type = MCA_PML_OB1_HDR_TYPE_ACK;      \
-        _pckt->hdr.hdr_ack.hdr_src_req.lval = (S);                      \
-        _pckt->hdr.hdr_ack.hdr_dst_req.pval = (D);                      \
-        _pckt->hdr.hdr_ack.hdr_send_offset = (O);                       \
-        _pckt->hdr.hdr_ack.hdr_send_size = (Sz);                        \
-        _pckt->proc = (P);                                              \
-        _pckt->bml_btl = NULL;                                          \
-        OPAL_THREAD_LOCK(&mca_pml_ob1.lock);                            \
-        opal_list_append(&mca_pml_ob1.pckt_pending,                     \
-                         (opal_list_item_t*)_pckt);                     \
-        OPAL_THREAD_UNLOCK(&mca_pml_ob1.lock);                          \
-    } while(0)
+static inline void mca_pml_ob1_add_ack_to_pending(ompi_proc_t *proc, uintptr_t src_req, void *dst_req,
+                                                  uint64_t send_offset, uint64_t send_size) {
+    mca_pml_ob1_hdr_t hdr = {
+        .hdr_ack = {
+            .hdr_common = { .hdr_type = MCA_PML_OB1_HDR_TYPE_ACK },
+            .hdr_src_req = { .lval = src_req },
+            .hdr_dst_req = { .pval = dst_req },
+            .hdr_send_offset = send_offset,
+            .hdr_send_size = send_size,
+        },
+    };
+
+    mca_pml_ob1_add_to_pending(proc, /*bml_btl=*/NULL, /*order=*/0,
+                               &hdr, sizeof(hdr.hdr_ack));
+}
 
 int mca_pml_ob1_recv_request_ack_send_btl(ompi_proc_t* proc,
         mca_bml_base_btl_t* bml_btl, uint64_t hdr_src_req, void *hdr_dst_req,
@@ -455,7 +453,7 @@ mca_pml_ob1_recv_request_ack_send(mca_btl_base_module_t* btl,
         }
     }
 
-    MCA_PML_OB1_ADD_ACK_TO_PENDING(proc, hdr_src_req, hdr_dst_req,
+    mca_pml_ob1_add_ack_to_pending(proc, hdr_src_req, hdr_dst_req,
                                    hdr_send_offset, size);
 
     return OMPI_ERR_OUT_OF_RESOURCE;
