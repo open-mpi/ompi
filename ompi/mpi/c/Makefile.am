@@ -357,8 +357,6 @@ prototype_sources = \
 	session_call_errhandler.c.in \
 	session_create_errhandler.c.in \
 	session_detach_buffer.c.in \
-	session_call_errhandler.c.in \
-	session_create_errhandler.c.in \
 	session_finalize.c.in \
 	session_flush_buffer.c.in \
 	session_get_errhandler.c.in \
