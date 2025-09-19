@@ -133,6 +133,9 @@ def mpi_fn_name_from_base_fn_name(name):
     """Convert from a base name to the standard 'MPI_*' name."""
     return f'MPI_{name.capitalize()}'
 
+def mpit_fn_name_from_base_fn_name(name):
+    """Convert from a base name to the standard 'MPI_T_*' name."""
+    return f'MPI_T_{name}'
 
 def abi_internal_name(extname):
     """Convert from the ABI external name to an internal name.
@@ -159,7 +162,6 @@ BIGCOUNT_TYPE_NAMES = [
     'DATAREP_CONVERSION_FUNCTION',
 ]
 
-
 def prototype_has_bigcount(prototype):
     """Should this prototype have a bigcount version?"""
     return any(param.type_name in BIGCOUNT_TYPE_NAMES for param in prototype.params)
@@ -177,3 +179,17 @@ def prototype_has_buffers(prototype):
         return True
     else:
         return False
+
+USER_CALLBACK_NAMES = [
+    'COMM_COPY_ATTR_FUNCTION',
+    'COMM_DELETE_ATTR_FUNCTION',
+    'TYPE_COPY_ATTR_FUNCTION',
+    'TYPE_DELETE_ATTR_FUNCTION',
+    'WIN_COPY_ATTR_FUNCTION',
+    'WIN_DELETE_ATTR_FUNCTION',
+]   
+
+def prototype_needs_callback_wrappers(prototype):
+    """Should this prototype need a callback wrappers"""
+    return any(param.type_name in USER_CALLBACK_NAMES for param in prototype.params)
+
