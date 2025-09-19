@@ -18,12 +18,7 @@
 #include "btl_uct_device_context.h"
 #include "opal/util/argv.h"
 #include "opal/util/bit_ops.h"
-
-#if HAVE_DECL_UCT_CB_FLAG_SYNC
-#    define MCA_BTL_UCT_CB_FLAG_SYNC UCT_CB_FLAG_SYNC
-#else
-#    define MCA_BTL_UCT_CB_FLAG_SYNC 0
-#endif
+#include "opal/util/minmax.h"
 
 /**
  * @brief Convert UCT capabilities to BTL flags
@@ -70,13 +65,14 @@ static uint64_t mca_btl_uct_cap_to_btl_atomic_flag[][2] = {
     },
 };
 
-static void mca_btl_uct_module_set_atomic_flags(mca_btl_uct_module_t *module, mca_btl_uct_tl_t *tl)
+static void mca_btl_uct_module_set_atomic_flags(mca_btl_uct_module_t *module)
 {
-    uint64_t cap_flags = MCA_BTL_UCT_TL_ATTR(tl, 0).cap.flags;
+    mca_btl_uct_tl_t *tl = module->rdma_tl;
+    uint64_t cap_flags = tl->uct_iface_attr.cap.flags;
 
     /* NTH: only use the fetching atomics for now */
-    uint64_t atomic_flags32 = MCA_BTL_UCT_TL_ATTR(tl, 0).cap.atomic32.fop_flags;
-    uint64_t atomic_flags64 = MCA_BTL_UCT_TL_ATTR(tl, 0).cap.atomic64.fop_flags;
+    uint64_t atomic_flags32 = tl->uct_iface_attr.cap.atomic32.fop_flags;
+    uint64_t atomic_flags64 = tl->uct_iface_attr.cap.atomic64.fop_flags;
 
     uint64_t all_flags = atomic_flags64 | atomic_flags32;
 
@@ -120,9 +116,10 @@ static uint64_t mca_btl_uct_cap_to_btl_atomic_flag[][2] = {
  *
  * @returns equivalent BTL atomic flags
  */
-static void mca_btl_uct_module_set_atomic_flags(mca_btl_uct_module_t *module, mca_btl_uct_tl_t *tl)
+static void mca_btl_uct_module_set_atomic_flags(mca_btl_uct_module_t *module)
 {
-    uint64_t cap_flags = MCA_BTL_UCT_TL_ATTR(tl, 0).cap.flags;
+    mca_btl_uct_tl_t *tl = module->rdma_tl;
+    uint64_t cap_flags = tl->uct_iface_attr.cap.flags;
 
     module->super.btl_atomic_flags = 0;
 
@@ -144,6 +141,7 @@ static void mca_btl_uct_tl_constructor(mca_btl_uct_tl_t *tl)
 {
     memset((void *) ((uintptr_t) tl + sizeof(tl->super)), 0, sizeof(*tl) - sizeof(tl->super));
     OBJ_CONSTRUCT(&tl->tl_lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&tl->pending_connection_reqs, opal_fifo_t);
 }
 
 static void mca_btl_uct_tl_destructor(mca_btl_uct_tl_t *tl)
@@ -156,11 +154,10 @@ static void mca_btl_uct_tl_destructor(mca_btl_uct_tl_t *tl)
         }
     }
 
-    if (tl->uct_md) {
-        OBJ_RELEASE(tl->uct_md);
+    if (tl->ucs_async) {
+        ucs_async_context_destroy(tl->ucs_async);
     }
 
-    free(tl->uct_dev_contexts);
     free(tl->uct_tl_name);
     free(tl->uct_dev_name);
 
@@ -169,6 +166,7 @@ static void mca_btl_uct_tl_destructor(mca_btl_uct_tl_t *tl)
     }
 
     OBJ_DESTRUCT(&tl->tl_lock);
+    OBJ_DESTRUCT(&tl->pending_connection_reqs);
 }
 
 OBJ_CLASS_INSTANCE(mca_btl_uct_tl_t, opal_list_item_t, mca_btl_uct_tl_constructor,
@@ -176,14 +174,14 @@ OBJ_CLASS_INSTANCE(mca_btl_uct_tl_t, opal_list_item_t, mca_btl_uct_tl_constructo
 
 static ucs_status_t mca_btl_uct_conn_req_cb(void *arg, void *data, size_t length, unsigned flags)
 {
-    mca_btl_uct_module_t *module = (mca_btl_uct_module_t *) arg;
+    mca_btl_uct_tl_t *tl = (mca_btl_uct_tl_t *) arg;
     mca_btl_uct_pending_connection_request_t *request = calloc(1, length + sizeof(request->super));
 
     /* it is not safe to process the connection request from the callback so just save it for
      * later processing */
     OBJ_CONSTRUCT(request, mca_btl_uct_pending_connection_request_t);
     memcpy(&request->request_data, (void *) ((intptr_t) data + 8), length);
-    opal_fifo_push_atomic(&module->pending_connection_reqs, &request->super);
+    opal_fifo_push_atomic(&tl->pending_connection_reqs, &request->super);
 
     return UCS_OK;
 }
@@ -238,17 +236,21 @@ int mca_btl_uct_process_connection_request(mca_btl_uct_module_t *module,
     return OPAL_SUCCESS;
 }
 
-static int mca_btl_uct_setup_connection_tl(mca_btl_uct_module_t *module)
+static int mca_btl_uct_setup_connection_tl(mca_btl_uct_tl_t *tl)
 {
     ucs_status_t ucs_status;
 
-    if (NULL == module->conn_tl) {
+    if (NULL == tl) {
         return OPAL_ERR_NOT_SUPPORTED;
     }
 
-    ucs_status = uct_iface_set_am_handler(module->conn_tl->uct_dev_contexts[0]->uct_iface,
-                                          MCA_BTL_UCT_CONNECT_RDMA, mca_btl_uct_conn_req_cb, module,
-                                          UCT_CB_FLAG_ASYNC);
+    mca_btl_uct_device_context_t *context =
+        mca_btl_uct_module_get_tl_context_specific(/*module=*/NULL, tl,
+                                                   /*context_id=*/0);
+
+    ucs_status = uct_iface_set_am_handler(context->uct_iface,
+                                          MCA_BTL_UCT_CONNECT_RDMA, mca_btl_uct_conn_req_cb,
+                                          tl, UCT_CB_FLAG_ASYNC);
     if (UCS_OK != ucs_status) {
         BTL_ERROR(("could not set active message handler for uct tl"));
     }
@@ -256,23 +258,7 @@ static int mca_btl_uct_setup_connection_tl(mca_btl_uct_module_t *module)
     return UCS_OK == ucs_status ? OPAL_SUCCESS : OPAL_ERROR;
 }
 
-static void mca_btl_uct_context_enable_progress(mca_btl_uct_device_context_t *context)
-{
-    if (!context->progress_enabled) {
-#if HAVE_DECL_UCT_PROGRESS_THREAD_SAFE
-        uct_iface_progress_enable(context->uct_iface,
-                                  UCT_PROGRESS_THREAD_SAFE | UCT_PROGRESS_SEND | UCT_PROGRESS_RECV);
-#else
-        uct_iface_progress_enable(context->uct_iface, UCT_PROGRESS_SEND | UCT_PROGRESS_RECV);
-#endif
-        context->progress_enabled = true;
-    }
-}
-
-mca_btl_uct_device_context_t *mca_btl_uct_context_create(mca_btl_uct_module_t *module,
-                                                         mca_btl_uct_tl_t *tl, int context_id,
-                                                         bool enable_progress)
-{
+static int mca_btl_uct_populate_tl_attr(mca_btl_uct_tl_t *tl) {
 #if UCT_API >= UCT_VERSION(1, 6)
     uct_iface_params_t iface_params = {.field_mask = UCT_IFACE_PARAM_FIELD_OPEN_MODE
                                                      | UCT_IFACE_PARAM_FIELD_DEVICE,
@@ -288,96 +274,38 @@ mca_btl_uct_device_context_t *mca_btl_uct_context_create(mca_btl_uct_module_t *m
                                        .mode = {.device = {.tl_name = tl->uct_tl_name,
                                                            .dev_name = tl->uct_dev_name}}};
 #endif
-    mca_btl_uct_device_context_t *context;
     ucs_status_t ucs_status;
-    int rc;
 
-    context = calloc(1, sizeof(*context));
-    if (OPAL_UNLIKELY(NULL == context)) {
-        return NULL;
-    }
-
-    context->context_id = context_id;
-    context->uct_btl = module;
-    OBJ_CONSTRUCT(&context->completion_fifo, opal_fifo_t);
-    OBJ_CONSTRUCT(&context->mutex, opal_recursive_mutex_t);
-    OBJ_CONSTRUCT(&context->rdma_completions, opal_free_list_t);
-
-    rc = opal_free_list_init(&context->rdma_completions, sizeof(mca_btl_uct_uct_completion_t),
-                             opal_cache_line_size, OBJ_CLASS(mca_btl_uct_uct_completion_t), 0,
-                             opal_cache_line_size, 0, 4096, 128, NULL, 0, NULL, NULL, NULL);
-    if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
-        mca_btl_uct_context_destroy(context);
-        return NULL;
-    }
-
-    /* apparently (in contradiction to the spec) UCT is *not* thread safe. because we have to
-     * use our own locks just go ahead and use UCS_THREAD_MODE_SINGLE. if they ever fix their
-     * api then change this back to UCS_THREAD_MODE_MULTI and remove the locks around the
-     * various UCT calls. */
-    ucs_status = uct_worker_create(module->ucs_async, UCS_THREAD_MODE_SINGLE, &context->uct_worker);
+    /* do the bare minimum to get tl attributes */
+    uct_worker_h uct_worker;
+    ucs_status = uct_worker_create(tl->ucs_async, UCS_THREAD_MODE_SINGLE, &uct_worker);
     if (OPAL_UNLIKELY(UCS_OK != ucs_status)) {
         BTL_VERBOSE(("could not create a UCT worker"));
-        mca_btl_uct_context_destroy(context);
-        return NULL;
+        return OPAL_ERROR;
     }
 
-    ucs_status = uct_iface_open(tl->uct_md->uct_md, context->uct_worker, &iface_params,
-                                tl->uct_tl_config, &context->uct_iface);
+    uct_iface_h uct_iface;
+    ucs_status = uct_iface_open(tl->uct_md->uct_md, uct_worker, &iface_params,
+                                tl->uct_tl_config, &uct_iface);
     if (OPAL_UNLIKELY(UCS_OK != ucs_status)) {
         BTL_VERBOSE(("could not open UCT interface. error code: %d", ucs_status));
-        mca_btl_uct_context_destroy(context);
-        return NULL;
+        uct_worker_destroy(uct_worker);
+        return OPAL_ERROR;
     }
 
-    /* only need to query one of the interfaces to get the attributes */
-    ucs_status = uct_iface_query(context->uct_iface, &context->uct_iface_attr);
+    int rc = OPAL_SUCCESS;
+    ucs_status = uct_iface_query(uct_iface, &tl->uct_iface_attr);
     if (UCS_OK != ucs_status) {
         BTL_VERBOSE(("Error querying UCT interface"));
-        mca_btl_uct_context_destroy(context);
-        return NULL;
+        rc = OPAL_ERROR;
     }
 
-    if (context_id > 0 && tl == module->am_tl) {
-        BTL_VERBOSE(("installing AM handler for tl %p context id %d", (void *) tl, context_id));
-        uct_iface_set_am_handler(context->uct_iface, MCA_BTL_UCT_FRAG, mca_btl_uct_am_handler,
-                                 context, MCA_BTL_UCT_CB_FLAG_SYNC);
-    }
-
-    if (enable_progress) {
-        BTL_VERBOSE(("enabling progress for tl %p context id %d", (void *) tl, context_id));
-        mca_btl_uct_context_enable_progress(context);
-    }
-
-    return context;
+    uct_iface_close(uct_iface);
+    uct_worker_destroy(uct_worker);
+    return rc;
 }
 
-void mca_btl_uct_context_destroy(mca_btl_uct_device_context_t *context)
-{
-    if (context->uct_iface) {
-        uct_iface_close(context->uct_iface);
-        context->uct_iface = NULL;
-    }
-
-    if (context->uct_worker) {
-        uct_worker_destroy(context->uct_worker);
-        context->uct_worker = NULL;
-    }
-
-    OBJ_DESTRUCT(&context->completion_fifo);
-    OBJ_DESTRUCT(&context->rdma_completions);
-    free(context);
-}
-
-static int tl_compare(opal_list_item_t **a, opal_list_item_t **b)
-{
-    mca_btl_uct_tl_t *tl_a = (mca_btl_uct_tl_t *) *a;
-    mca_btl_uct_tl_t *tl_b = (mca_btl_uct_tl_t *) *b;
-
-    return tl_a->priority - tl_b->priority;
-}
-
-static mca_btl_uct_tl_t *mca_btl_uct_create_tl(mca_btl_uct_module_t *module, mca_btl_uct_md_t *md,
+static mca_btl_uct_tl_t *mca_btl_uct_create_tl(mca_btl_uct_md_t *md,
                                                uct_tl_resource_desc_t *tl_desc, int priority)
 {
     mca_btl_uct_tl_t *tl = OBJ_NEW(mca_btl_uct_tl_t);
@@ -388,30 +316,29 @@ static mca_btl_uct_tl_t *mca_btl_uct_create_tl(mca_btl_uct_module_t *module, mca
 
     /* initialize btl tl structure */
     tl->uct_md = md;
-    OBJ_RETAIN(md);
 
     tl->uct_tl_name = strdup(tl_desc->tl_name);
     tl->uct_dev_name = strdup(tl_desc->dev_name);
+    tl->dev_type = tl_desc->dev_type;
     tl->priority = priority;
-
-    tl->uct_dev_contexts = calloc(MCA_BTL_UCT_MAX_WORKERS, sizeof(tl->uct_dev_contexts[0]));
-    if (NULL == tl->uct_dev_contexts) {
-        OBJ_RELEASE(tl);
-        return NULL;
-    }
 
     (void) uct_md_iface_config_read(md->uct_md, tl_desc->tl_name, NULL, NULL, &tl->uct_tl_config);
 
-    /* always create a 0 context (needed to query) */
-    tl->uct_dev_contexts[0] = mca_btl_uct_context_create(module, tl, 0, false);
-    if (NULL == tl->uct_dev_contexts[0]) {
-        BTL_VERBOSE(("could not create a uct device context"));
+    ucs_status_t ucs_status = ucs_async_context_create(UCS_ASYNC_MODE_THREAD, &tl->ucs_async);
+    if (UCS_OK != ucs_status) {
+        BTL_VERBOSE(("Could not create a UCT async context"));
         OBJ_RELEASE(tl);
         return NULL;
     }
 
-    BTL_VERBOSE(("Interface CAPS for tl %s::%s: 0x%lx", module->md_name, tl_desc->tl_name,
-                 (unsigned long) MCA_BTL_UCT_TL_ATTR(tl, 0).cap.flags));
+    int rc = mca_btl_uct_populate_tl_attr(tl);
+    if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
+        OBJ_RELEASE(tl);
+        return NULL;
+    }
+
+    BTL_VERBOSE(("Interface CAPS for tl %s::%s::%s 0x%lx", md->md_name, tl_desc->tl_name,
+                 tl_desc->dev_name, (unsigned long) tl->uct_iface_attr.cap.flags));
 
     return tl;
 }
@@ -420,32 +347,32 @@ static void mca_btl_uct_set_tl_rdma(mca_btl_uct_module_t *module, mca_btl_uct_tl
 {
     BTL_VERBOSE(("tl %s is suitable for RDMA", tl->uct_tl_name));
 
-    mca_btl_uct_module_set_atomic_flags(module, tl);
+    module->rdma_tl = tl;
 
-    module->super.btl_get_limit = MCA_BTL_UCT_TL_ATTR(tl, 0).cap.get.max_zcopy;
-    if (MCA_BTL_UCT_TL_ATTR(tl, 0).cap.get.max_bcopy) {
+    mca_btl_uct_module_set_atomic_flags(module);
+
+    module->super.btl_get_limit = opal_min(tl->uct_iface_attr.cap.get.max_zcopy,
+                                           module->super.btl_get_limit);
+    if (tl->uct_iface_attr.cap.get.max_bcopy) {
         module->super.btl_get_alignment = 0;
-        module->super.btl_get_local_registration_threshold = MCA_BTL_UCT_TL_ATTR(tl, 0)
+        module->super.btl_get_local_registration_threshold = tl->uct_iface_attr
                                                                  .cap.get.max_bcopy;
     } else {
         /* this is overkill in terms of alignment but we have no way to enforce a minimum get size
          */
         module->super.btl_get_alignment = opal_next_poweroftwo_inclusive(
-            MCA_BTL_UCT_TL_ATTR(tl, 0).cap.get.min_zcopy);
+            tl->uct_iface_attr.cap.get.min_zcopy);
     }
 
-    module->super.btl_put_limit = MCA_BTL_UCT_TL_ATTR(tl, 0).cap.put.max_zcopy;
+    module->super.btl_put_limit = opal_min(tl->uct_iface_attr.cap.put.max_zcopy,
+                                           module->super.btl_put_limit);
     module->super.btl_put_alignment = 0;
 
     /* no registration needed when using short/bcopy put */
-    module->super.btl_put_local_registration_threshold = MCA_BTL_UCT_TL_ATTR(tl, 0)
+    module->super.btl_put_local_registration_threshold = tl->uct_iface_attr
                                                              .cap.put.max_bcopy;
 
-    module->rdma_tl = tl;
-    OBJ_RETAIN(tl);
-
     tl->tl_index = (module->am_tl && tl != module->am_tl) ? 1 : 0;
-    module->comm_tls[tl->tl_index] = tl;
     if (tl->max_device_contexts <= 1) {
         tl->max_device_contexts = mca_btl_uct_component.num_contexts_per_module;
     }
@@ -454,45 +381,36 @@ static void mca_btl_uct_set_tl_rdma(mca_btl_uct_module_t *module, mca_btl_uct_tl
 static void mca_btl_uct_set_tl_am(mca_btl_uct_module_t *module, mca_btl_uct_tl_t *tl)
 {
     BTL_VERBOSE(("tl %s is suitable for active-messaging", tl->uct_tl_name));
-
-    if (module->rdma_tl == tl) {
-        module->shared_endpoints = true;
-    }
     module->am_tl = tl;
-    OBJ_RETAIN(tl);
-
-    uct_iface_set_am_handler(tl->uct_dev_contexts[0]->uct_iface, MCA_BTL_UCT_FRAG,
-                             mca_btl_uct_am_handler, tl->uct_dev_contexts[0], UCT_CB_FLAG_ASYNC);
 
     tl->tl_index = (module->rdma_tl && tl != module->rdma_tl) ? 1 : 0;
-    module->comm_tls[tl->tl_index] = tl;
     if (tl->max_device_contexts <= 1) {
         tl->max_device_contexts = mca_btl_uct_component.num_contexts_per_module;
     }
 
-    module->super.btl_eager_limit = MCA_BTL_UCT_TL_ATTR(tl, 0).cap.am.max_bcopy
-                                    - sizeof(mca_btl_uct_am_header_t);
-    if (MCA_BTL_UCT_TL_ATTR(tl, 0).cap.flags & UCT_IFACE_FLAG_AM_ZCOPY) {
-        module->super.btl_max_send_size = MCA_BTL_UCT_TL_ATTR(tl, 0).cap.am.max_zcopy
-                                          - sizeof(mca_btl_uct_am_header_t);
-    } else {
-        module->super.btl_max_send_size = module->super.btl_eager_limit;
+    size_t max_eager_limit = tl->uct_iface_attr.cap.am.max_bcopy
+        - sizeof(mca_btl_uct_am_header_t);
+    size_t max_send_size = max_eager_limit;
+
+    if (tl->uct_iface_attr.cap.flags & UCT_IFACE_FLAG_AM_ZCOPY) {
+        max_send_size = opal_max(max_send_size, tl->uct_iface_attr.cap.am.max_zcopy
+                                 - sizeof(mca_btl_uct_am_header_t));
     }
+
+    module->super.btl_eager_limit = opal_min(module->super.btl_eager_limit, max_eager_limit);
+    module->super.btl_max_send_size = opal_min(module->super.btl_max_send_size, max_send_size);
 }
 
-static int mca_btl_uct_set_tl_conn(mca_btl_uct_module_t *module, mca_btl_uct_tl_t *tl)
+int mca_btl_uct_enable_tl_conn(mca_btl_uct_tl_t *tl)
 {
     int rc;
 
     BTL_VERBOSE(("tl %s is suitable for making connections", tl->uct_tl_name));
 
-    module->conn_tl = tl;
-    rc = mca_btl_uct_setup_connection_tl(module);
+    rc = mca_btl_uct_setup_connection_tl(tl);
     if (OPAL_SUCCESS != rc) {
         return rc;
     }
-
-    OBJ_RETAIN(tl);
 
     if (!tl->max_device_contexts) {
         /* if a tl is only being used to create connections do not bother with multiple
@@ -503,11 +421,9 @@ static int mca_btl_uct_set_tl_conn(mca_btl_uct_module_t *module, mca_btl_uct_tl_
     return OPAL_SUCCESS;
 }
 
-static int mca_btl_uct_evaluate_tl(mca_btl_uct_module_t *module, mca_btl_uct_tl_t *tl)
+int mca_btl_uct_evaluate_tl(mca_btl_uct_module_t *module, mca_btl_uct_tl_t *tl)
 {
-    int rc;
-
-    BTL_VERBOSE(("evaluating tl %s", tl->uct_tl_name));
+    BTL_VERBOSE(("evaluating tl %s::%s", tl->uct_md->md_name, tl->uct_tl_name));
     if (NULL == module->rdma_tl && mca_btl_uct_tl_supports_rdma(tl)) {
         mca_btl_uct_set_tl_rdma(module, tl);
     }
@@ -516,164 +432,47 @@ static int mca_btl_uct_evaluate_tl(mca_btl_uct_module_t *module, mca_btl_uct_tl_
         mca_btl_uct_set_tl_am(module, tl);
     }
 
-    if (NULL == module->conn_tl && mca_btl_uct_tl_supports_conn(tl)) {
-        rc = mca_btl_uct_set_tl_conn(module, tl);
-        if (OPAL_SUCCESS != rc) {
-            return rc;
-        }
-    }
-
     if (tl == module->rdma_tl || tl == module->am_tl) {
-        BTL_VERBOSE(("tl has flags 0x%" PRIx64, MCA_BTL_UCT_TL_ATTR(tl, 0).cap.flags));
-        module->super.btl_flags |= mca_btl_uct_module_flags(MCA_BTL_UCT_TL_ATTR(tl, 0).cap.flags);
+        BTL_VERBOSE(("tl has flags 0x%" PRIx64, tl->uct_iface_attr.cap.flags));
+        module->super.btl_flags |= mca_btl_uct_module_flags(tl->uct_iface_attr.cap.flags);
+        module->super.btl_flags |= MCA_BTL_FLAGS_RDMA_REMOTE_COMPLETION;
 
         /* the bandwidth and latency numbers relate to both rdma and active messages. need to
          * come up with a better estimate. */
 
         /* UCT bandwidth is in bytes/sec, BTL is in MB/sec */
 #if UCT_API >= UCT_VERSION(1, 7)
-        module->super.btl_bandwidth = (uint32_t)((MCA_BTL_UCT_TL_ATTR(tl, 0).bandwidth.dedicated
-                                                  + MCA_BTL_UCT_TL_ATTR(tl, 0).bandwidth.shared
+        module->super.btl_bandwidth = (uint32_t)((tl->uct_iface_attr.bandwidth.dedicated
+                                                  + tl->uct_iface_attr.bandwidth.shared
                                                         / (opal_process_info.num_local_peers + 1))
                                                  / 1048576.0);
 #else
-        module->super.btl_bandwidth = (uint32_t)(MCA_BTL_UCT_TL_ATTR(tl, 0).bandwidth / 1048576.0);
+        module->super.btl_bandwidth = (uint32_t)(tl->uct_iface_attr.bandwidth / 1048576.0);
 #endif
         /* TODO -- figure out how to translate UCT latency to us */
         module->super.btl_latency = 1;
     }
 
-    if (tl == module->rdma_tl || tl == module->am_tl || tl == module->conn_tl) {
-        /* make sure progress is enabled on the default context now that we know this TL will be
-         * used */
-        mca_btl_uct_context_enable_progress(tl->uct_dev_contexts[0]);
-    }
-
     return OPAL_SUCCESS;
 }
 
-int mca_btl_uct_query_tls(mca_btl_uct_module_t *module, mca_btl_uct_md_t *md,
-                          uct_tl_resource_desc_t *tl_descs, unsigned tl_count)
+int mca_btl_uct_populate_tls(mca_btl_uct_md_t *md, uct_tl_resource_desc_t *tl_descs, unsigned tl_count)
 {
-    bool include = true, any = false;
-    mca_btl_uct_tl_t *tl;
-    opal_list_t tl_list;
-    char **tl_filter;
-    int any_priority = 0;
-
-    OBJ_CONSTRUCT(&tl_list, opal_list_t);
-
-    tl_filter = opal_argv_split(mca_btl_uct_component.allowed_transports, ',');
-
-    if ('^' == tl_filter[0][0]) {
-        /* user has negated the include list */
-        char *tmp = strdup(tl_filter[0] + 1);
-
-        free(tl_filter[0]);
-        tl_filter[0] = tmp;
-        include = false;
-    }
-
-    /* check for the any keyword */
-    for (unsigned j = 0; tl_filter[j]; ++j) {
-        if (0 == strcmp(tl_filter[j], "any")) {
-            any_priority = j;
-            any = true;
-            break;
-        }
-    }
-
-    if (any && !include) {
-        opal_argv_free(tl_filter);
-        return OPAL_ERR_NOT_AVAILABLE;
-    }
+    BTL_VERBOSE(("processing %u tls in memory domain %s", tl_count, md->md_name));
 
     for (unsigned i = 0; i < tl_count; ++i) {
-        bool try_tl = any;
-        int priority = any_priority;
+        BTL_VERBOSE(("processing tl %s::%s::%s", md->md_name, tl_descs[i].tl_name, tl_descs[i].dev_name));
 
-        for (unsigned j = 0; tl_filter[j]; ++j) {
-            if (0 == strcmp(tl_filter[j], tl_descs[i].tl_name)) {
-                try_tl = include;
-                priority = j;
-                break;
-            }
-        }
-
-        BTL_VERBOSE(("tl filter: tl_name = %s, use = %d, priority = %d", tl_descs[i].tl_name,
-                     try_tl, priority));
-
-        if (!try_tl) {
-            continue;
-        }
-
-        if (0 == strcmp(tl_descs[i].tl_name, "ud")) {
-            /* ud looks like any normal transport but we do not want to use it for anything other
-             * than connection management so ensure it gets evaluated last */
-            priority = INT_MAX;
-        }
-
-        tl = mca_btl_uct_create_tl(module, md, tl_descs + i, priority);
-
+        /* the priority will be set during module creation */
+        mca_btl_uct_tl_t *tl = mca_btl_uct_create_tl(md, tl_descs + i, /*priority=*/0);
         if (tl) {
-            opal_list_append(&tl_list, &tl->super);
+            opal_list_append(&md->tls, &tl->super);
         }
     }
 
-    opal_argv_free(tl_filter);
-
-    if (0 == opal_list_get_size(&tl_list)) {
+    if (0 == opal_list_get_size(&md->tls)) {
         BTL_VERBOSE(("no suitable tls match filter: %s", mca_btl_uct_component.allowed_transports));
-        OBJ_DESTRUCT(&tl_list);
         return OPAL_ERR_NOT_AVAILABLE;
-    }
-
-    opal_list_sort(&tl_list, tl_compare);
-
-    OPAL_LIST_FOREACH (tl, &tl_list, mca_btl_uct_tl_t) {
-        mca_btl_uct_evaluate_tl(module, tl);
-        if (NULL != module->am_tl && NULL != module->rdma_tl
-            && (NULL != module->conn_tl
-                || !(mca_btl_uct_tl_requires_connection_tl(module->am_tl)
-                     || mca_btl_uct_tl_requires_connection_tl(module->rdma_tl)))) {
-            /* all done */
-            break;
-        }
-    }
-
-    if (NULL == module->rdma_tl) {
-        /* no rdma tls */
-        BTL_VERBOSE(("no rdma tl matched supplied filter. disabling RDMA support"));
-
-        module->super.btl_flags &= ~MCA_BTL_FLAGS_RDMA;
-        module->super.btl_put = NULL;
-        module->super.btl_get = NULL;
-        module->super.btl_atomic_fop = NULL;
-        module->super.btl_atomic_op = NULL;
-    }
-
-    if (NULL == module->am_tl) {
-        /* no active message tls == no send/recv */
-        BTL_VERBOSE(("no active message tl matched supplied filter. disabling send/recv support"));
-
-        module->super.btl_send = NULL;
-        module->super.btl_sendi = NULL;
-        module->super.btl_alloc = NULL;
-        module->super.btl_free = NULL;
-    }
-
-    OPAL_LIST_DESTRUCT(&tl_list);
-
-    if (!(NULL != module->am_tl && mca_btl_uct_tl_requires_connection_tl(module->am_tl))
-        && !(NULL != module->rdma_tl && mca_btl_uct_tl_requires_connection_tl(module->rdma_tl))
-        && module->conn_tl) {
-        /* no connection tl needed for selected transports */
-        OBJ_RELEASE(module->conn_tl);
-        module->conn_tl = NULL;
-    } else if (NULL == module->conn_tl) {
-        BTL_VERBOSE(("a connection tl is required but no tls match the filter %s",
-                     mca_btl_uct_component.allowed_transports));
-        return OPAL_ERROR;
     }
 
     return OPAL_SUCCESS;
