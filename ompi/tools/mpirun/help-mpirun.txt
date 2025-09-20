@@ -10,6 +10,12 @@
 # This is the US/English help file for Open MPI wrapper compiler error
 # messages.
 #
+[prte-launch-failed]
+Open MPI's mpirun command was unable to launch the user's application. 
+This may indicate an issue with the environment or incorrect configuration.
+
+Error Message: %s
+#
 [no-prterun-found]
 Open MPI's mpirun command was unable to find an underlying prterun
 command to execute.  Consider setting the OMPI_PRTERUN environment
