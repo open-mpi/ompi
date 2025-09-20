@@ -134,8 +134,8 @@ typedef struct am_rdma_context_t am_rdma_context_t;
 
 static void am_rdma_context_init(am_rdma_context_t *context)
 {
-    context->sent = 0;
-    context->acknowledged = 0;
+    opal_atomic_store_64_relaxed(&context->sent, 0);
+    opal_atomic_store_64_relaxed(&context->acknowledged, 0);
     context->descriptor = NULL;
 }
 

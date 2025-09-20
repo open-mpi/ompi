@@ -168,7 +168,7 @@ static inline int64_t opal_atomic_swap_64(opal_atomic_int64_t *addr, int64_t new
 static inline int32_t opal_atomic_fetch_add_32(opal_atomic_int32_t *v, int i)
 {
     int ret = i;
-    __asm__ __volatile__(SMPLOCK "xaddl %1,%0" : "+m"(*v), "+r"(ret) : : "memory", "cc");
+    __asm__ __volatile__(SMPLOCK "xaddl %1,%0" : "+m"(v->value), "+r"(ret) : : "memory", "cc");
     return ret;
 }
 
@@ -180,7 +180,7 @@ static inline int32_t opal_atomic_add_fetch_32(opal_atomic_int32_t *v, int i)
 static inline int64_t opal_atomic_fetch_add_64(opal_atomic_int64_t *v, int64_t i)
 {
     int64_t ret = i;
-    __asm__ __volatile__(SMPLOCK "xaddq %1,%0" : "+m"(*v), "+r"(ret) : : "memory", "cc");
+    __asm__ __volatile__(SMPLOCK "xaddq %1,%0" : "+m"(v->value), "+r"(ret) : : "memory", "cc");
     return ret;
 }
 
@@ -192,7 +192,7 @@ static inline int64_t opal_atomic_add_fetch_64(opal_atomic_int64_t *v, int64_t i
 static inline int32_t opal_atomic_fetch_sub_32(opal_atomic_int32_t *v, int i)
 {
     int ret = -i;
-    __asm__ __volatile__(SMPLOCK "xaddl %1,%0" : "+m"(*v), "+r"(ret) : : "memory", "cc");
+    __asm__ __volatile__(SMPLOCK "xaddl %1,%0" : "+m"(v->value), "+r"(ret) : : "memory", "cc");
     return ret;
 }
 
@@ -204,7 +204,7 @@ static inline int32_t opal_atomic_sub_fetch_32(opal_atomic_int32_t *v, int i)
 static inline int64_t opal_atomic_fetch_sub_64(opal_atomic_int64_t *v, int64_t i)
 {
     int64_t ret = -i;
-    __asm__ __volatile__(SMPLOCK "xaddq %1,%0" : "+m"(*v), "+r"(ret) : : "memory", "cc");
+    __asm__ __volatile__(SMPLOCK "xaddq %1,%0" : "+m"(v->value), "+r"(ret) : : "memory", "cc");
     return ret;
 }
 
@@ -218,7 +218,7 @@ static inline int64_t opal_atomic_sub_fetch_64(opal_atomic_int64_t *v, int64_t i
         {                                                                                          \
             type oldval;                                                                           \
             do {                                                                                   \
-                oldval = *addr;                                                                    \
+                oldval = opal_atomic_load_##bits##_relaxed(addr);                                  \
             } while (!opal_atomic_compare_exchange_strong_##bits(addr, &oldval,                    \
                                                                  oldval operation value));         \
                                                                                                    \
@@ -229,7 +229,7 @@ static inline int64_t opal_atomic_sub_fetch_64(opal_atomic_int64_t *v, int64_t i
         {                                                                                          \
             type oldval, newval;                                                                   \
             do {                                                                                   \
-                oldval = *addr;                                                                    \
+                oldval = opal_atomic_load_##bits##_relaxed(addr);                                  \
                 newval = oldval operation value;                                                   \
             } while (!opal_atomic_compare_exchange_strong_##bits(addr, &oldval, newval));          \
                                                                                                    \
