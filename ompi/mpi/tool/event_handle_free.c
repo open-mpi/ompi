@@ -28,9 +28,23 @@ int MPI_T_event_handle_free (MPI_T_event_registration event_registration,
                              void *user_data,
                              MPI_T_event_free_cb_function free_cb_function)
 {
+    int ret = MPI_SUCCESS;
+
     if (!mpit_is_initialized ()) {
         return MPI_T_ERR_NOT_INITIALIZED;
     }
 
-    return MPI_T_ERR_INVALID_HANDLE;
+    ompi_mpit_lock ();
+
+    /* Check that this is a valid handle */
+    if (MPI_T_EVENT_REGISTRATION_NULL == event_registration) {
+        ret = MPI_T_ERR_INVALID_HANDLE;
+    } else {
+        mca_base_event_registration_free (event_registration, 
+                                          (mca_base_event_registration_free_cb_fn_t) free_cb_function);
+    }
+
+    ompi_mpit_unlock ();
+
+    return ret;
 }
