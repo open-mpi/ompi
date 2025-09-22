@@ -151,14 +151,16 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
 
     OMPI_FORTRAN_CHECK([LOGICAL], [yes],
                    [char, int32_t, int, int64_t, long long, long], [-1], [yes])
-    OMPI_FORTRAN_CHECK([LOGICAL*1], [yes],
+    OMPI_FORTRAN_CHECK([LOGICAL*1], [no],
                    [char, int8_t, short, int32_t, int, int64_t, long long, long], [1], [yes])
-    OMPI_FORTRAN_CHECK([LOGICAL*2], [yes],
+    OMPI_FORTRAN_CHECK([LOGICAL*2], [no],
                    [short, int16_t, int32_t, int, int64_t, long long, long], [2], [yes])
-    OMPI_FORTRAN_CHECK([LOGICAL*4], [yes],
+    OMPI_FORTRAN_CHECK([LOGICAL*4], [no],
                    [int32_t, int, int64_t, long long, long], [4], [yes])
-    OMPI_FORTRAN_CHECK([LOGICAL*8], [yes],
+    OMPI_FORTRAN_CHECK([LOGICAL*8], [no],
                    [int, int64_t, long long, long], [8], [yes])
+    OMPI_FORTRAN_CHECK([LOGICAL*16], [no],
+                   [int, int64_t, long long, long], [16], [yes])
 
     OMPI_FORTRAN_CHECK([INTEGER], [yes],
                    [int32_t, int, int64_t, long long, long], [-1], [yes])

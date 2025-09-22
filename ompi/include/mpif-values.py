@@ -150,6 +150,9 @@ handles = {
     'MPI_C_LONG_DOUBLE_COMPLEX': 71,
     'MPI_COUNT': 72,
     'MPI_COMPLEX4': 73,
+    # Leave room for 16bit datatypes
+    # See https://github.com/mpi-forum/mpi-issues/issues/65
+    'MPI_LOGICAL16': 77,
     'MPI_MESSAGE_NO_PROC': 1,
     'MPI_INFO_ENV': 1,
 }

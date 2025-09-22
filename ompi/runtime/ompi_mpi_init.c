@@ -146,6 +146,7 @@ ompi_predefined_datatype_t *ompi_mpi_logical1_addr  = &ompi_mpi_logical1;
 ompi_predefined_datatype_t *ompi_mpi_logical2_addr  = &ompi_mpi_logical2;
 ompi_predefined_datatype_t *ompi_mpi_logical4_addr  = &ompi_mpi_logical4;
 ompi_predefined_datatype_t *ompi_mpi_logical8_addr  = &ompi_mpi_logical8;
+ompi_predefined_datatype_t *ompi_mpi_logical16_addr = &ompi_mpi_logical16;
 ompi_predefined_datatype_t *ompi_mpi_integer_addr   = &ompi_mpi_integer;
 ompi_predefined_datatype_t *ompi_mpi_integer1_addr  = &ompi_mpi_integer1;
 ompi_predefined_datatype_t *ompi_mpi_integer2_addr  = &ompi_mpi_integer2;
