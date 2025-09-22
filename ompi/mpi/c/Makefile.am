@@ -519,8 +519,9 @@ libmpi_c_la_SOURCES = \
 
 # functions that do not require profiling implementations.
 libmpi_c_la_SOURCES += \
-	 ompi_isendrecv.c \
-	 ompi_sendrecv.c
+        ompi_isendrecv.c \
+        ompi_sendrecv.c \
+        ompi_abi_fortran.c
 
 libmpi_c_la_LIBADD = libmpi_c_profile.la
 if BUILD_MPI_BINDINGS_LAYER
