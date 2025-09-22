@@ -25,6 +25,7 @@
 #include "ompi_config.h"
 #include "mpi.h"
 #include "ompi/datatype/ompi_datatype.h"
+#include "ompi/info/info.h"
 
 BEGIN_C_DECLS
 
@@ -120,6 +121,8 @@ int ompi_sendrecv(const void * sendbuf, size_t sendcount, MPI_Datatype sendtype,
                   void * recvbuf, size_t recvcount, MPI_Datatype recvtype, int source, int recvtag, MPI_Comm comm, MPI_Status *status);
 int ompi_isendrecv(const void * sendbuf, size_t sendcount, MPI_Datatype sendtype, int dest, int sendtag, 
                    void * recvbuf, size_t recvcount, MPI_Datatype recvtype, int source, int recvtag, MPI_Comm comm, MPI_Request * request);
+int ompi_abi_get_fortran_info(ompi_info_t **info);
+int ompi_abi_set_fortran_info(ompi_info_t *info);
 
 END_C_DECLS
 
