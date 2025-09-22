@@ -333,6 +333,75 @@ __opal_attribute_always_inline__ static inline MPI_Datatype ompi_convert_abi_dat
         return MPI_SHORT_INT;
     } else if (MPI_LONG_DOUBLE_INT_ABI_INTERNAL == datatype) {
         return MPI_LONG_DOUBLE_INT;
+    } else if (MPI_LOGICAL_ABI_INTERNAL == datatype) {
+        return MPI_LOGICAL;
+    } else if (MPI_INTEGER_ABI_INTERNAL == datatype) {
+        return MPI_INTEGER;
+    } else if (MPI_REAL_ABI_INTERNAL == datatype) {
+        return MPI_REAL;
+    } else if (MPI_COMPLEX_ABI_INTERNAL == datatype) {
+        return MPI_COMPLEX;
+    } else if (MPI_DOUBLE_PRECISION_ABI_INTERNAL == datatype) {
+        return MPI_DOUBLE_PRECISION;
+    } else if (MPI_CHARACTER_ABI_INTERNAL == datatype) {
+        return MPI_CHARACTER;
+    } else if (MPI_DOUBLE_COMPLEX_ABI_INTERNAL == datatype) {
+        return MPI_DOUBLE_COMPLEX;
+#if OMPI_BUILD_FORTRAN_BINDINGS
+    } else if (MPI_LOGICAL1_ABI_INTERNAL == datatype) {
+        return MPI_LOGICAL1;
+    } else if (MPI_LOGICAL2_ABI_INTERNAL == datatype) {
+        return MPI_LOGICAL2;
+    } else if (MPI_LOGICAL4_ABI_INTERNAL == datatype) {
+        return MPI_LOGICAL4;
+    } else if (MPI_LOGICAL8_ABI_INTERNAL == datatype) {
+        return MPI_LOGICAL8;
+#if 0
+/* TODO: need to add in a LOGICAL16 test */
+#if OMPI_HAVE_FORTRAN_LOGICAL16
+    } else if (MPI_LOGICAL16 == datatype) {
+        return MPI_LOGICAL16_ABI_INTERNAL;
+#endif
+#endif
+    } else if (MPI_INTEGER1_ABI_INTERNAL == datatype) {
+        return MPI_INTEGER1;
+    } else if (MPI_INTEGER2_ABI_INTERNAL == datatype) {
+        return MPI_INTEGER2;
+    } else if (MPI_INTEGER4_ABI_INTERNAL == datatype) {
+        return MPI_INTEGER4;
+    } else if (MPI_INTEGER8_ABI_INTERNAL == datatype) {
+        return MPI_INTEGER8;
+    } else if (MPI_INTEGER16_ABI_INTERNAL == datatype) {
+#if OMPI_HAVE_FORTRAN_INTEGER16
+        return MPI_INTEGER16;
+#else 
+        return MPI_DATATYPE_NULL;
+#endif
+    } else if (MPI_REAL2_ABI_INTERNAL == datatype) {
+#if OMPI_HAVE_FORTRAN_REAL2
+        return MPI_REAL2;
+#else
+        return MPI_DATATYPE_NULL;
+#endif
+    } else if (MPI_REAL4_ABI_INTERNAL == datatype) {
+        return MPI_REAL4;
+    } else if (MPI_REAL8_ABI_INTERNAL == datatype) {
+        return MPI_REAL8;
+    } else if (MPI_REAL16_ABI_INTERNAL == datatype) {
+        return MPI_REAL16;
+    } else if (MPI_COMPLEX4_ABI_INTERNAL == datatype) {
+#if OMPI_HAVE_FORTRAN_COMPLEX4
+        return MPI_COMPLEX4;
+#else
+        return MPI_DATATYPE_NULL;
+#endif
+    } else if (MPI_COMPLEX8_ABI_INTERNAL == datatype) {
+        return MPI_COMPLEX8;
+    } else if (MPI_COMPLEX16_ABI_INTERNAL == datatype) {
+        return MPI_COMPLEX16;
+    } else if (MPI_COMPLEX32_ABI_INTERNAL == datatype) {
+        return MPI_COMPLEX32;
+#endif /* OMPI_BUILD_FORTRAN_BINDINGS */
     }
     return (MPI_Datatype) datatype;
 }
@@ -426,6 +495,69 @@ __opal_attribute_always_inline__ static inline MPI_Datatype_ABI_INTERNAL ompi_co
         return MPI_SHORT_INT_ABI_INTERNAL;
     } else if (MPI_LONG_DOUBLE_INT == datatype) {
         return MPI_LONG_DOUBLE_INT_ABI_INTERNAL;
+    } else if (MPI_LOGICAL == datatype) {
+        return MPI_LOGICAL_ABI_INTERNAL;
+    } else if (MPI_INTEGER == datatype) {
+        return MPI_INTEGER_ABI_INTERNAL;
+    } else if (MPI_REAL == datatype) {
+        return MPI_REAL_ABI_INTERNAL;
+    } else if (MPI_COMPLEX == datatype) {
+        return MPI_COMPLEX_ABI_INTERNAL;
+    } else if (MPI_DOUBLE_PRECISION == datatype) {
+        return MPI_DOUBLE_PRECISION_ABI_INTERNAL;
+    } else if (MPI_CHARACTER == datatype) {
+        return MPI_CHARACTER_ABI_INTERNAL;
+    } else if (MPI_DOUBLE_COMPLEX == datatype) {
+        return MPI_DOUBLE_COMPLEX_ABI_INTERNAL;
+#if OMPI_BUILD_FORTRAN_BINDINGS
+    } else if (MPI_LOGICAL1 == datatype) {
+        return MPI_LOGICAL1_ABI_INTERNAL;
+    } else if (MPI_LOGICAL2 == datatype) {
+        return MPI_LOGICAL2_ABI_INTERNAL;
+    } else if (MPI_LOGICAL4 == datatype) {
+        return MPI_LOGICAL4_ABI_INTERNAL;
+    } else if (MPI_LOGICAL8 == datatype) {
+        return MPI_LOGICAL8_ABI_INTERNAL;
+#if 0
+/* TODO: need to add in a LOGICAL16 test */
+#if OMPI_HAVE_FORTRAN_LOGICAL16
+    } else if (MPI_LOGICAL16 == datatype) {
+        return MPI_LOGICAL16_ABI_INTERNAL;
+#endif
+#endif
+    } else if (MPI_INTEGER1 == datatype) {
+        return MPI_INTEGER1_ABI_INTERNAL;
+    } else if (MPI_INTEGER2 == datatype) {
+        return MPI_INTEGER2_ABI_INTERNAL;
+    } else if (MPI_INTEGER4 == datatype) {
+        return MPI_INTEGER4_ABI_INTERNAL;
+    } else if (MPI_INTEGER8 == datatype) {
+        return MPI_INTEGER8_ABI_INTERNAL;
+#if OMPI_HAVE_FORTRAN_INTEGER16
+    } else if (MPI_INTEGER16 == datatype) {
+        return MPI_INTEGER16_ABI_INTERNAL;
+#endif
+#if OMPI_HAVE_FORTRAN_REAL2
+    } else if (MPI_REAL2 == datatype) {
+        return MPI_REAL2_ABI_INTERNAL;
+#endif
+    } else if (MPI_REAL4 == datatype) {
+        return MPI_REAL4_ABI_INTERNAL;
+    } else if (MPI_REAL8 == datatype) {
+        return MPI_REAL8_ABI_INTERNAL;
+    } else if (MPI_REAL16 == datatype) {
+        return MPI_REAL16_ABI_INTERNAL;
+#if OMPI_HAVE_FORTRAN_COMPLEX4
+    } else if (MPI_COMPLEX4 == datatype) {
+        return MPI_COMPLEX4_ABI_INTERNAL;
+#endif
+    } else if (MPI_COMPLEX8 == datatype) {
+        return MPI_COMPLEX8_ABI_INTERNAL;
+    } else if (MPI_COMPLEX16 == datatype) {
+        return MPI_COMPLEX16_ABI_INTERNAL;
+    } else if (MPI_COMPLEX32 == datatype) {
+        return MPI_COMPLEX32_ABI_INTERNAL;
+#endif /* OMPI_BUILD_FORTRAN_BINDINGS */
     }
     return (MPI_Datatype_ABI_INTERNAL) datatype;
 }
