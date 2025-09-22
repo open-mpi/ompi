@@ -31,6 +31,7 @@
 
 PROTOTYPE ERROR_CLASS abi_set_fortran_info(INFO info)
 {
+    int ret = MPI_SUCCESS;
     static bool already_called = false;
 
     if (MPI_PARAM_CHECK) {
@@ -50,10 +51,6 @@ PROTOTYPE ERROR_CLASS abi_set_fortran_info(INFO info)
     return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ABI, FUNC_NAME);
 #endif
 
-    /*
-     * Nothing implemented yet so raise MPI_ERR_UNSUPPORTED_OPERATION
-     */
-
-    return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_UNSUPPORTED_OPERATION, 
-                                           FUNC_NAME);
+    ret = ompi_abi_set_fortran_info(info);
+    OMPI_ERRHANDLER_NOHANDLE_RETURN( ret, ret, FUNC_NAME );
 }

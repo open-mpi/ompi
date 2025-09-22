@@ -41,7 +41,8 @@ BUILT_SOURCES = abi.h standard_abi/mpi.h
 libmpi_c_abi_la_SOURCES = \
         attr_fn.c \
         ompi_isendrecv.c \
-        ompi_sendrecv.c
+        ompi_sendrecv.c \
+        ompi_abi_fortran.c
 
 extra_abi_fns = \
         abi_get_info.c \
