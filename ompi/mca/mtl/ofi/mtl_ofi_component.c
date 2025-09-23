@@ -1124,6 +1124,9 @@ select_prov:
     
     ompi_mtl_ofi.base.mtl_flags |= MCA_MTL_BASE_FLAG_SUPPORTS_EXT_CID;
 
+    ompi_mtl_ofi.sharing_fabric = false;
+    ompi_mtl_ofi.sharing_domain = false;
+
     return &ompi_mtl_ofi.base;
 
 error:
@@ -1206,11 +1209,12 @@ ompi_mtl_ofi_finalize(struct mca_mtl_base_module_t *mtl)
         }
     }
 
-    if ((ret = fi_close((fid_t)ompi_mtl_ofi.domain))) {
+    /* BTL will close the shared domain and fabric */
+    if (!ompi_mtl_ofi.sharing_domain && (ret = fi_close((fid_t)ompi_mtl_ofi.domain))) {
         goto finalize_err;
     }
 
-    if ((ret = fi_close((fid_t)ompi_mtl_ofi.fabric))) {
+    if (!ompi_mtl_ofi.sharing_fabric && (ret = fi_close((fid_t)ompi_mtl_ofi.fabric))) {
         goto finalize_err;
     }
 

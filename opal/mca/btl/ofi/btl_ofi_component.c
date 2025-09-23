@@ -536,6 +536,7 @@ static int mca_btl_ofi_init_device(struct fi_info *info)
     struct fid_av *av = NULL;
 
     mca_btl_ofi_module_t *module;
+    mca_mtl_ofi_module_t *mtl_ofi;
 
     module = mca_btl_ofi_module_alloc(mca_btl_ofi_component.mode);
     if (NULL == module) {
@@ -575,10 +576,17 @@ static int mca_btl_ofi_init_device(struct fi_info *info)
     BTL_VERBOSE(
         ("initializing dev:%s provider:%s", linux_device_name, info->fabric_attr->prov_name));
 
+    if (ompi_mtl && ompi_mtl_base_selected_component && 
+        strcmp(ompi_mtl_base_selected_component->mtl_version.mca_component_name, "ofi") == 0) {
+        mtl_ofi = (mca_mtl_ofi_module_t *) ompi_mtl;
+    }
+
     /* fabric */
     if (info->fabric_attr->fabric) {
         BTL_VERBOSE(("Reusing existing fabric: %s", info->fabric_attr->name));
         fabric = info->fabric_attr->fabric;
+        if (mtl_ofi)
+            mtl_ofi->sharing_fabric = true;
     } else {
         rc = fi_fabric(ofi_info->fabric_attr, &fabric, NULL);
         if (0 != rc) {
@@ -591,6 +599,8 @@ static int mca_btl_ofi_init_device(struct fi_info *info)
     if (info->domain_attr->domain) {
         BTL_VERBOSE(("Reusing existing domain: %s", info->domain_attr->name));
         domain = info->domain_attr->domain;
+        if (mtl_ofi)
+            mtl_ofi->sharing_domain = true;
     } else {
         rc = fi_domain(fabric, ofi_info, &domain, NULL);
         if (0 != rc) {
@@ -775,11 +785,11 @@ fail:
         fi_close(&av->fid);
     }
 
-    if (NULL != domain) {
+    if (NULL != domain && (NULL == mtl_ofi || !mtl_ofi->sharing_domain)) {
         fi_close(&domain->fid);
     }
 
-    if (NULL != fabric) {
+    if (NULL != fabric && (NULL == mtl_ofi || !mtl_ofi->sharing_fabric)) {
         fi_close(&fabric->fid);
     }
     free(module);
