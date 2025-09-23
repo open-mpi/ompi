@@ -4,6 +4,33 @@ Open MPI v5.0.x series
 This file contains all the NEWS updates for the Open MPI v5.0.x
 series, in reverse chronological order.
 
+Open MPI Version v5.0.9rc1
+------------------------------
+:Date: 23 September 2025
+
+- Internal PMIx and PRRTe versions:
+  - PMIx (v5.0.9). Repo: ``https://github.com/openpmix/openpmix``. Commit hash: ``b357357c09915779eabd362f6857f61b41680329``.
+  - PRRTE (v3.0.12). Repo: ``https://github.com/openpmix/prrte``. Commit hash: ``b357357c09915779eabd362f6857f61b41680329``.
+
+- Functionality Enhancements
+  - GPFS: Added support for GPFS 5.2.3-0 and newer versions
+  - OFI: Enhanced accelerator memory support with proper rcache flag handling
+  - OFI: Added memory monitor export for better memory management
+  - ROCm: Added missing header for memcpy operations in accelerator component
+
+- Bug Fixes and Minor Enhancements
+  - PML OB1: Fixed critical bug in MCA_PML_OB1_ADD_ACK_TO_PENDING that could cause memory overruns or allocation failures
+  - Fortran: Fixed off-by-one string copy error in C2F string conversion
+  - Fortran: Fixed ompi string c2f conversion when Fortran string length is less than C string length
+  - Threading: Fixed OMPI_MPI_THREAD_LEVEL environment variable handling to allow useful overrides in threaded library use cases
+  - Threading: Enhanced OMPI_MPI_THREAD_LEVEL to accept both numeric (0-3) and string ('multiple', 'MPI_THREAD_MULTIPLE', etc.) values
+  - OSC: Fixed rdma component when not using ob1 PML
+  - S390x: Fixed alignment of opal_atomic_int128_t to be 16-byte aligned
+  - Configury: Improved Fortran complex(real16) testing and module file cleanup
+  - Documentation: Fixed MCA environment variable prefix documentation for PRRTE
+  - Documentation: Updated MPI_Init*/MPI_Finalize*/MPI_Session_* man pages with numerous improvements
+  - Build system: Removed whitespace from conftestval-style tests and cleaned up configuration
+
 Open MPI Version v5.0.8
 ------------------------------
 :Date: 30 May 2025
