@@ -43,7 +43,8 @@ AC_DEFUN([OMPI_FORTRAN_GET_VALUE_TRUE],[
         [if test "$1" = "none" || \
             test $OMPI_TRY_FORTRAN_BINDINGS -eq $OMPI_FORTRAN_NO_BINDINGS || \
             test $ompi_fortran_happy -eq 0 ; then
-             value=77
+             tvalue=77
+             fvalue=77
          else
              #
              # C module
