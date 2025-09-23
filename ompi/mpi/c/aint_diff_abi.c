@@ -36,6 +36,6 @@
 
 MPI_Aint MPI_Aint_diff(MPI_Aint addr1, MPI_Aint addr2)
 {
-    return (addr1 - addr2);
+    return (MPI_Aint)((char *)(addr1) - (char *)(addr2));
 }
 
