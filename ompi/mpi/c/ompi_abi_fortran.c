@@ -321,8 +321,8 @@ int ompi_abi_set_fortran_info(ompi_info_t *info)
      * no to any of this setting fortran info stuff.
      */
 #if OMPI_BUILD_FORTRAN_BINDINGS
-    return MPI_ERR_ABI;
-#endif
+    ret = MPI_ERR_ABI;
+#else
 
     /*
      * dup user supplied fortran info.  For now just to
@@ -336,6 +336,121 @@ int ompi_abi_set_fortran_info(ompi_info_t *info)
     if (MPI_SUCCESS == ret) {
         ompi_mpi_instance_append_finalize (ompi_abi_fortran_finalize);
     }
+#endif
     return ret;
 
+}
+
+int ompi_abi_get_fortran_booleans(int logical_size, void *logical_true, void *logical_false, int *is_set)
+{
+#if  OMPI_HAVE_FORTRAN_LOGICAL
+    bool unavailable = false;
+    bool use_int8_t = false, use_int16_t = false, use_int32_t = false, use_int64_t = false;
+    switch (logical_size) {
+    case OMPI_SIZEOF_FORTRAN_LOGICAL1:
+        switch (OMPI_DATATYPE_MPI_LOGICAL1) {
+        case OMPI_DATATYPE_MPI_INT8_T:
+            use_int8_t = true;
+            break;
+        case OMPI_DATATYPE_MPI_INT16_T:
+            use_int16_t = true;
+            break;
+        case OMPI_DATATYPE_MPI_INT32_T:
+            use_int32_t = true;
+            break;
+        case OMPI_DATATYPE_MPI_INT64_T:
+            use_int64_t = true;
+            break;
+        default:
+            unavailable = true;
+            break;
+         }
+    case OMPI_SIZEOF_FORTRAN_LOGICAL2:
+        switch (OMPI_DATATYPE_MPI_LOGICAL2) {
+        case OMPI_DATATYPE_MPI_INT8_T:
+            use_int8_t = true;
+            break;
+        case OMPI_DATATYPE_MPI_INT16_T:
+            use_int16_t = true;
+            break;
+        case OMPI_DATATYPE_MPI_INT32_T:
+            use_int32_t = true;
+            break;
+        case OMPI_DATATYPE_MPI_INT64_T:
+            use_int64_t = true;
+            break;
+        default:
+            unavailable = true;
+            break;
+        }
+    case OMPI_SIZEOF_FORTRAN_LOGICAL4:
+        switch (OMPI_DATATYPE_MPI_LOGICAL4) {
+        case OMPI_DATATYPE_MPI_INT8_T:
+            use_int8_t = true;
+            break;
+        case OMPI_DATATYPE_MPI_INT16_T:
+            use_int16_t = true;
+            break;
+        case OMPI_DATATYPE_MPI_INT32_T:
+            use_int32_t = true;
+            break;
+        case OMPI_DATATYPE_MPI_INT64_T:
+            use_int64_t = true;
+            break;
+        default:
+            unavailable = true;
+            break;
+        }
+    case OMPI_SIZEOF_FORTRAN_LOGICAL8:
+        switch (OMPI_DATATYPE_MPI_LOGICAL8) {
+        case OMPI_DATATYPE_MPI_INT8_T:
+            use_int8_t = true;
+            break;
+        case OMPI_DATATYPE_MPI_INT16_T:
+            use_int16_t = true;
+            break;
+        case OMPI_DATATYPE_MPI_INT32_T:
+            use_int32_t = true;
+            break;
+        case OMPI_DATATYPE_MPI_INT64_T:
+            use_int64_t = true;
+            break;
+        default:
+            unavailable = true;
+            break;
+        }
+    default:
+        unavailable = true;
+    }
+
+    if (true == unavailable) {
+        *is_set = 0;
+    } else {
+        *is_set = 1;
+        if (true == use_int8_t) {
+            int8_t *true_ptr = (int8_t *)logical_true;
+            int8_t *false_ptr = (int8_t *)logical_false;
+            *true_ptr = (int8_t)OMPI_FORTRAN_VALUE_TRUE;
+            *false_ptr = (int8_t)OMPI_FORTRAN_VALUE_FALSE;
+        } else if (true == use_int16_t) {
+            int16_t *true_ptr = (int16_t *)logical_true;
+            int16_t *false_ptr = (int16_t *)logical_false;
+            *true_ptr = (int16_t)OMPI_FORTRAN_VALUE_TRUE;
+            *false_ptr = (int16_t)OMPI_FORTRAN_VALUE_FALSE;
+        } else if (true == use_int32_t) {
+            int32_t *true_ptr = (int32_t *)logical_true;
+            int32_t *false_ptr = (int32_t *)logical_false;
+            *true_ptr = (int32_t)OMPI_FORTRAN_VALUE_TRUE;
+            *false_ptr = (int32_t)OMPI_FORTRAN_VALUE_FALSE;
+        } else if (true == use_int64_t) {
+            int64_t *true_ptr = (int64_t *)logical_true;
+            int64_t *false_ptr = (int64_t *)logical_false;
+            *true_ptr = (int64_t)OMPI_FORTRAN_VALUE_TRUE;
+            *false_ptr = (int64_t)OMPI_FORTRAN_VALUE_FALSE;
+        }
+    }
+#else
+    *is_set = 0;
+#endif  /* OMPI_HAVE_FORTRAN_LOGICAL */
+    return MPI_SUCCESS;
 }
