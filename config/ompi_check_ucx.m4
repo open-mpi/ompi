@@ -141,7 +141,8 @@ AC_DEFUN([OMPI_CHECK_UCX],[
                                          UCP_WORKER_FLAG_IGNORE_REQUEST_LEAK,
                                          UCP_OP_ATTR_FLAG_MULTI_SEND,
                                          UCS_MEMORY_TYPE_RDMA,
-                                         UCP_MEM_MAP_SYMMETRIC_RKEY],
+                                         UCP_MEM_MAP_SYMMETRIC_RKEY,
+                                         UCP_PARAM_FIELD_NODE_LOCAL_ID],
                                         [], [],
                                         [#include <ucp/api/ucp.h>])
                          AC_CHECK_DECLS([UCP_WORKER_ATTR_FIELD_ADDRESS_FLAGS],
