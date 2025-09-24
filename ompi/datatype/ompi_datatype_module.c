@@ -231,6 +231,11 @@ ompi_predefined_datatype_t ompi_mpi_logical8 =       OMPI_DATATYPE_INIT_PREDEFIN
 #else
 ompi_predefined_datatype_t ompi_mpi_logical8 =       OMPI_DATATYPE_INIT_UNAVAILABLE (LOGICAL8, OMPI_DATATYPE_FLAG_DATA_FORTRAN );
 #endif
+#if OMPI_HAVE_FORTRAN_LOGICAL16
+ompi_predefined_datatype_t ompi_mpi_logical16 =       OMPI_DATATYPE_INIT_PREDEFINED_BASIC_TYPE_FORTRAN (INT, LOGICAL16, OMPI_SIZEOF_FORTRAN_LOGICAL16, OMPI_ALIGNMENT_FORTRAN_LOGICAL16, 0);
+#else
+ompi_predefined_datatype_t ompi_mpi_logical16 =       OMPI_DATATYPE_INIT_UNAVAILABLE (LOGICAL16, OMPI_DATATYPE_FLAG_DATA_FORTRAN );
+#endif
 #if OMPI_HAVE_FORTRAN_REAL2
 ompi_predefined_datatype_t ompi_mpi_real2 =          OMPI_DATATYPE_INIT_PREDEFINED_BASIC_TYPE_FORTRAN (FLOAT, REAL2, OMPI_SIZEOF_FORTRAN_REAL2, OMPI_ALIGNMENT_FORTRAN_REAL2, OMPI_DATATYPE_FLAG_DATA_FLOAT);
 #else
@@ -672,6 +677,9 @@ int32_t ompi_datatype_init( void )
     MOOG(short_float, 74);
     MOOG(c_short_float_complex, 75);
     MOOG(cxx_sfltcplex, 76);
+
+    /* Datatype added in MPI 5.0 */
+    MOOG(logical16, 77);
 
     /**
      * Now make sure all non-contiguous types are marked as such.
