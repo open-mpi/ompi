@@ -271,6 +271,11 @@ static int ucp_context_init(bool enable_mt, int proc_world_size) {
     context_params.field_mask |= UCP_PARAM_FIELD_ESTIMATED_NUM_PPN;
 #endif
 
+#if HAVE_DECL_UCP_PARAM_FIELD_NODE_LOCAL_ID
+    context_params.node_local_id = opal_process_info.my_local_rank;
+    context_params.field_mask |= UCP_PARAM_FIELD_NODE_LOCAL_ID;
+#endif
+
     status = ucp_init(&context_params, config, &mca_osc_ucx_component.wpool->ucp_ctx);
     if (UCS_OK != status) {
         OSC_UCX_VERBOSE(1, "ucp_init failed: %d", status);
