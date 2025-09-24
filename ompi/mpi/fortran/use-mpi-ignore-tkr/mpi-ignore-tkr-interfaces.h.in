@@ -3358,7 +3358,7 @@ end interface
 interface
 
 subroutine MPI_Remove_error_class(errorclass, ierror)
-  integer, intent(out) :: errorclass
+  integer, intent(in) :: errorclass
   integer, intent(out) :: ierror
 end subroutine MPI_Remove_error_class
 
@@ -3368,7 +3368,7 @@ end interface
 interface
 
 subroutine MPI_Remove_error_code(errorcode, ierror)
-  integer, intent(out) :: errorcode
+  integer, intent(in) :: errorcode
   integer, intent(out) :: ierror
 end subroutine MPI_Remove_error_code
 

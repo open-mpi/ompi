@@ -2349,7 +2349,7 @@ end interface  MPI_Register_datarep
 interface  MPI_Remove_error_class
 subroutine MPI_Remove_error_class_f08(errorclass,ierror)
    implicit none
-   INTEGER, INTENT(OUT) :: errorclass
+   INTEGER, INTENT(IN) :: errorclass
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine MPI_Remove_error_class_f08
 end interface  MPI_Remove_error_class
@@ -2357,7 +2357,7 @@ end interface  MPI_Remove_error_class
 interface  MPI_Remove_error_code
 subroutine MPI_Remove_error_code_f08(errorcode,ierror)
    implicit none
-   INTEGER, INTENT(OUT) :: errorcode
+   INTEGER, INTENT(IN) :: errorcode
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine MPI_Remove_error_code_f08
 end interface  MPI_Remove_error_code
