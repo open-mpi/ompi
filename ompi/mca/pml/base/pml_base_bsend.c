@@ -214,8 +214,8 @@ int mca_pml_base_bsend_attach(ompi_bsend_buffer_type_t type, void *obj, void* ad
     int align;
     int ret = MPI_SUCCESS;
     mca_pml_bsend_buffer_t *buf_instance;
-    ompi_communicator_t *comm;
-    ompi_instance_t *instance;
+    ompi_communicator_t *comm = NULL;
+    ompi_instance_t *instance = NULL;
 
     if(NULL == addr || ((MPI_BUFFER_AUTOMATIC != addr) && size <= 0)) {
         return OMPI_ERR_BUFFER;
