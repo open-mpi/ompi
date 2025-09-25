@@ -158,13 +158,10 @@ int ompi_abi_get_fortran_info(ompi_info_t **info)
         goto err_cleanup;
     }
 
-#if 0
-/* TODO need to bolt in fortran logical16 data type */
 #if OMPI_SIZEOF_FORTRAN_LOGICAL16
     cptr = true_str;
 #else
     cptr = false_str;
-#endif
 #endif
     ret = opal_info_set(&newinfo->super, "mpi_logical16_supported", "false");
     if (OPAL_SUCCESS != ret) {
@@ -443,6 +440,24 @@ int ompi_abi_get_fortran_booleans(int logical_size, void *logical_true, void *lo
         }
     case OMPI_SIZEOF_FORTRAN_LOGICAL8:
         switch (OMPI_DATATYPE_MPI_LOGICAL8) {
+        case OMPI_DATATYPE_MPI_INT8_T:
+            use_int8_t = true;
+            break;
+        case OMPI_DATATYPE_MPI_INT16_T:
+            use_int16_t = true;
+            break;
+        case OMPI_DATATYPE_MPI_INT32_T:
+            use_int32_t = true;
+            break;
+        case OMPI_DATATYPE_MPI_INT64_T:
+            use_int64_t = true;
+            break;
+        default:
+            unavailable = true;
+            break;
+        }
+    case OMPI_SIZEOF_FORTRAN_LOGICAL16:
+        switch (OMPI_DATATYPE_MPI_LOGICAL16) {
         case OMPI_DATATYPE_MPI_INT8_T:
             use_int8_t = true;
             break;
