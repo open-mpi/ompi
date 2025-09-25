@@ -236,6 +236,9 @@ static int mca_coll_ucc_init_ctx() {
     ucc_thread_mode_t             tm_requested;
     ucc_lib_params_t              lib_params;
     ucc_context_params_t          ctx_params;
+    unsigned                      ucc_api_major, ucc_api_minor, ucc_api_patch;
+
+    ucc_get_version(&ucc_api_major, &ucc_api_minor, &ucc_api_patch);
 
     tm_requested           = ompi_mpi_thread_multiple ? UCC_THREAD_MULTIPLE :
                                                         UCC_THREAD_SINGLE;
@@ -297,6 +300,15 @@ static int mca_coll_ucc_init_ctx() {
                                             str_buf)) {
         UCC_ERROR("UCC context config modify failed for estimated_num_eps");
         goto cleanup_lib;
+    }
+
+    if (ucc_api_major > 1 || (ucc_api_major == 1 && ucc_api_minor >= 6)) {
+        sprintf(str_buf, "%u", opal_process_info.my_local_rank);
+        if (UCC_OK != ucc_context_config_modify(ctx_config, NULL, "NODE_LOCAL_ID",
+                                                str_buf)) {
+            UCC_ERROR("UCC context config modify failed for node_local_id");
+            goto cleanup_lib;
+        }
     }
 
     if (UCC_OK != ucc_context_create(cm->ucc_lib, &ctx_params,
