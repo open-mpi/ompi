@@ -178,6 +178,16 @@ static int ucp_context_init(void) {
     context_params.request_init = internal_req_init;
     context_params.request_size = sizeof(ompi_osc_ucx_internal_request_t);
 
+#if HAVE_DECL_UCP_PARAM_FIELD_ESTIMATED_NUM_PPN
+    context_params.estimated_num_ppn = opal_process_info.num_local_peers + 1;
+    context_params.field_mask |= UCP_PARAM_FIELD_ESTIMATED_NUM_PPN;
+#endif
+
+#if HAVE_DECL_UCP_PARAM_FIELD_NODE_LOCAL_ID
+    context_params.node_local_id = opal_process_info.my_local_rank;
+    context_params.field_mask |= UCP_PARAM_FIELD_NODE_LOCAL_ID;
+#endif
+
     status = ucp_init(&context_params, config, &mca_osc_ucx_component.ucp_context);
     ucp_config_release(config);
     if (UCS_OK != status) {

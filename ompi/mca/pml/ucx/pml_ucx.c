@@ -232,6 +232,11 @@ int mca_pml_ucx_open(void)
     params.field_mask       |= UCP_PARAM_FIELD_ESTIMATED_NUM_PPN;
 #endif
 
+#if HAVE_DECL_UCP_PARAM_FIELD_NODE_LOCAL_ID
+    params.node_local_id = opal_process_info.my_local_rank;
+    params.field_mask   |= UCP_PARAM_FIELD_NODE_LOCAL_ID;
+#endif
+
     status = ucp_init(&params, config, &ompi_pml_ucx.ucp_context);
     ucp_config_release(config);
 
