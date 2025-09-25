@@ -33,9 +33,35 @@
 #include "ompi/info/info.h"
 #include "ompi/instance/instance.h"
 #include "ompi/mpi/c/bindings.h"
+#include "opal/util/bit_ops.h"
+#include "opal/include/opal_stdint.h"
 
 static ompi_info_t *abi_fortran_info_from_user = NULL;
 
+typedef struct {
+    int64_t true_value;
+    int64_t false_value;
+#ifdef HAVE_INT128_T
+    int128_t true_value128;
+    int128_t false_value128;
+#else
+    int64_t true_value128;
+    int64_t false_value128;
+#endif
+    bool is_set;
+    bool using_int128;
+} ompi_abi_fortran_user_bool_info_t;
+
+static ompi_abi_fortran_user_bool_info_t user_logicals[5];
+
+static int countbits32(unsigned int n) {
+    int count = 0;
+    while (n) {
+        n &= (n - 1); // Clear the least significant bit set
+        count++;
+    }
+    return count;
+}
 static int ompi_abi_fortran_finalize(void) 
 {
     if (NULL != abi_fortran_info_from_user) {
@@ -314,7 +340,17 @@ err_cleanup:
 
 int ompi_abi_set_fortran_info(ompi_info_t *info)
 {
-    int ret;
+    int ret = MPI_SUCCESS;
+    static bool already_called = false;   
+        
+    /*
+     * according to MPI 5.0 standard this function can only be called once.
+     */
+    if (true == already_called) {         
+        return MPI_ERR_ABI;
+    }
+
+    already_called = true;
 
     /* 
      * If OMPI was built with fortran enabled, just tell the app
@@ -322,27 +358,31 @@ int ompi_abi_set_fortran_info(ompi_info_t *info)
      */
 #if OMPI_BUILD_FORTRAN_BINDINGS
     ret = MPI_ERR_ABI;
-#else
+#endif
 
     /*
-     * dup user supplied fortran info.  For now just to
+     * If no fortran bindings, dup user supplied fortran info.  For now just to
      * be able to return whatever the user provided to
      * subsequent calls to MPI_Abi_get_fortran_info.
      * Perhaps someday this info can be used to handle
      * Fortran MPI datatypes even when OMPI is not configured
      * with Fortran support,but that will be a heavily lift.
      */
-    ret = ompi_info_dup(info, &abi_fortran_info_from_user);
     if (MPI_SUCCESS == ret) {
-        ompi_mpi_instance_append_finalize (ompi_abi_fortran_finalize);
+        ret = ompi_info_dup(info, &abi_fortran_info_from_user);
+        if (MPI_SUCCESS == ret) {
+            ompi_mpi_instance_append_finalize (ompi_abi_fortran_finalize);
+        }
     }
-#endif
+
     return ret;
 
 }
 
 int ompi_abi_get_fortran_booleans(int logical_size, void *logical_true, void *logical_false, int *is_set)
 {
+    int ret = MPI_SUCCESS;
+
 #if  OMPI_HAVE_FORTRAN_LOGICAL
     bool unavailable = false;
     bool use_int8_t = false, use_int16_t = false, use_int32_t = false, use_int64_t = false;
@@ -428,29 +468,159 @@ int ompi_abi_get_fortran_booleans(int logical_size, void *logical_true, void *lo
     } else {
         *is_set = 1;
         if (true == use_int8_t) {
-            int8_t *true_ptr = (int8_t *)logical_true;
-            int8_t *false_ptr = (int8_t *)logical_false;
-            *true_ptr = (int8_t)OMPI_FORTRAN_VALUE_TRUE;
-            *false_ptr = (int8_t)OMPI_FORTRAN_VALUE_FALSE;
+            *(int8_t *)logical_true = (int8_t)OMPI_FORTRAN_VALUE_TRUE;
+            *(int8_t *)logical_false = (int8_t)OMPI_FORTRAN_VALUE_FALSE;
         } else if (true == use_int16_t) {
-            int16_t *true_ptr = (int16_t *)logical_true;
-            int16_t *false_ptr = (int16_t *)logical_false;
-            *true_ptr = (int16_t)OMPI_FORTRAN_VALUE_TRUE;
-            *false_ptr = (int16_t)OMPI_FORTRAN_VALUE_FALSE;
+            *(int16_t *)logical_true = (int16_t)OMPI_FORTRAN_VALUE_TRUE;
+            *(int16_t *)logical_false = (int16_t)OMPI_FORTRAN_VALUE_FALSE;
         } else if (true == use_int32_t) {
-            int32_t *true_ptr = (int32_t *)logical_true;
-            int32_t *false_ptr = (int32_t *)logical_false;
-            *true_ptr = (int32_t)OMPI_FORTRAN_VALUE_TRUE;
-            *false_ptr = (int32_t)OMPI_FORTRAN_VALUE_FALSE;
+            *(int32_t *)logical_true = (int32_t)OMPI_FORTRAN_VALUE_TRUE;
+            *(int32_t *)logical_false = (int32_t)OMPI_FORTRAN_VALUE_FALSE;
         } else if (true == use_int64_t) {
-            int64_t *true_ptr = (int64_t *)logical_true;
-            int64_t *false_ptr = (int64_t *)logical_false;
-            *true_ptr = (int64_t)OMPI_FORTRAN_VALUE_TRUE;
-            *false_ptr = (int64_t)OMPI_FORTRAN_VALUE_FALSE;
+            *(int64_t *)logical_true = (int64_t)OMPI_FORTRAN_VALUE_TRUE;
+            *(int64_t *)logical_false = (int64_t)OMPI_FORTRAN_VALUE_FALSE;
         }
     }
+
 #else
-    *is_set = 0;
+
+/*
+ * OMPI wasn't built with fortran bindings support so 
+ * see if the user set something with MPI_ABI_set_fortran_boleans
+ */
+    int logical_size_pow2;
+
+    /* check logical size to be pow2 */
+    
+    if(countbits32((unsigned int)logical_size) > 1) {
+        return MPI_ERR_ARG;
+    }
+
+    logical_size_pow2 = opal_hibit(logical_size, 0);
+
+    if (4 > logical_size_pow2) {
+        return MPI_ERR_ARG;
+    }
+
+    if (false == user_logicals[logical_size_pow2].is_set) {
+        *is_set = 0;
+    } else { 
+        switch(logical_size_pow2) {
+        case 0:
+            *(int8_t *)logical_true = (int8_t)user_logicals[logical_size_pow2].true_value;
+            *(int8_t *)logical_false = (int8_t)user_logicals[logical_size_pow2].false_value;
+            *is_set = 1;
+            break;
+        case 1:
+            *(int16_t *)logical_true = (int16_t)user_logicals[logical_size_pow2].true_value;
+            *(int16_t *)logical_false = (int16_t)user_logicals[logical_size_pow2].false_value;
+            *is_set = 1;
+            break;
+        case 2:
+            *(int32_t *)logical_true = (int32_t)user_logicals[logical_size_pow2].true_value;
+            *(int32_t *)logical_false = (int32_t)user_logicals[logical_size_pow2].false_value;
+            *is_set = 1;
+            break;
+        case 3:
+            *(int64_t *)logical_true = (int64_t)user_logicals[logical_size_pow2].true_value;
+            *(int64_t *)logical_false = (int64_t)user_logicals[logical_size_pow2].false_value;
+            *is_set = 1;
+            break;
+#ifdef HAVE_INT128_T
+        case 4:
+            *(int128_t *)logical_true = (int128_t)user_logicals[logical_size_pow2].true_value128;
+            *(int128_t *)logical_false = (int128_t)user_logicals[logical_size_pow2].false_value128;
+            *is_set = 1;
+            break;
+#endif
+        default:
+            ret = MPI_ERR_ARG;
+            break;
+        }
+    }
+
 #endif  /* OMPI_HAVE_FORTRAN_LOGICAL */
-    return MPI_SUCCESS;
+    return ret;
 }
+
+int ompi_abi_set_fortran_booleans(int logical_size, void *logical_true, void *logical_false)
+{
+    int ret=MPI_SUCCESS;
+    static bool already_called = false;
+
+    /*
+     * according to MPI 5.0 standard this function can only be called once.
+     */
+    if (true == already_called) {
+        return MPI_ERR_ABI;
+    }
+
+    already_called = true;
+
+    int logical_size_pow2;
+    int64_t logical_true64 = 0;
+    int64_t logical_false64 = 0;
+#ifdef HAVING_INT128_T
+    int128_t logical_true128 = 0;
+    int128_t logical_false128 = 0;
+#else
+    int64_t logical_true128 = 0;
+    int64_t logical_false128 = 0;
+#endif
+    bool using128 = false;
+
+    /* check logical size to be pow2 */
+
+    if(countbits32((unsigned int)logical_size) > 1) {
+        return MPI_ERR_ARG;
+    }
+
+    logical_size_pow2 = opal_hibit(logical_size, 0);
+
+    switch(logical_size_pow2) {
+    case 0:
+        logical_true64 = (int64_t)*(int8_t *)logical_true;
+        logical_false64 = (int64_t)*(int8_t *)logical_false;
+        break;
+    case 1:
+        logical_true64 = (int64_t)*(int16_t *)logical_true;
+        logical_false64 = (int64_t)*(int16_t *)logical_false;
+        break;
+    case 2:
+        logical_true64 = (int64_t)*(int32_t *)logical_true;
+        logical_false64 = (int64_t)*(int32_t *)logical_false;
+        break;
+    case 3:
+        logical_true64 = (int64_t)*(int64_t *)logical_true;
+        logical_false64 = (int64_t)*(int64_t *)logical_false;
+        break;
+#ifdef HAVE_INT128_T
+    case 4:
+        logical_true128 = (int128_t)*(int128_t *)logical_true;
+        logical_false128 = (int128_t)*(int128_t *)logical_false;
+        using128 = true;
+        break;
+#endif
+    default:
+        ret = MPI_ERR_ARG;
+        break;
+    }
+
+#ifndef HAVE_INT128_T
+    assert(false == using128);
+#endif
+
+    if (true == using128) {
+        user_logicals[logical_size_pow2].true_value128 = logical_true128;
+        user_logicals[logical_size_pow2].false_value128 = logical_false128;
+        user_logicals[logical_size_pow2].is_set = true;
+        user_logicals[logical_size_pow2].using_int128 = true;
+    } else { 
+        user_logicals[logical_size_pow2].true_value = logical_true64;
+        user_logicals[logical_size_pow2].false_value = logical_false64;
+        user_logicals[logical_size_pow2].is_set = true;
+    }
+
+    return ret;
+}
+
