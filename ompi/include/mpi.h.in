@@ -1457,6 +1457,8 @@ OMPI_DECLSPEC  int MPI_Abi_version(int *abi_major, int *abi_minor);
 OMPI_DECLSPEC  int MPI_Abi_details(int *buflen, char *details, MPI_Info *info);
 OMPI_DECLSPEC  int MPI_Abi_get_fortran_info(MPI_Info *info);
 OMPI_DECLSPEC  int MPI_Abi_set_fortran_info(MPI_Info info);
+OMPI_DECLSPEC  int MPI_Abi_get_fortran_booleans(int logical_size, void *logical_true, void *logical_false, int *is_set);
+OMPI_DECLSPEC  int MPI_Abi_set_fortran_booleans(int logical_size, void *logical_true, void *logical_false);
 OMPI_DECLSPEC  int MPI_Abort(MPI_Comm comm, int errorcode);
 OMPI_DECLSPEC  int MPI_Accumulate(const void *origin_addr, int origin_count, MPI_Datatype origin_datatype,
                                   int target_rank, MPI_Aint target_disp, int target_count,
@@ -2633,6 +2635,8 @@ OMPI_DECLSPEC  int PMPI_Abi_version(int *abi_major, int *abi_minor);
 OMPI_DECLSPEC  int PMPI_Abi_details(int *buflen, char *details, MPI_Info *info);
 OMPI_DECLSPEC  int PMPI_Abi_get_fortran_info(MPI_Info *info);
 OMPI_DECLSPEC  int PMPI_Abi_set_fortran_info(MPI_Info info);
+OMPI_DECLSPEC  int PMPI_Abi_get_fortran_booleans(int logical_size, void *logical_true, void *logical_false, int *is_set);
+OMPI_DECLSPEC  int PMPI_Abi_set_fortran_booleans(int logical_size, void *logical_true, void *logical_false);
 OMPI_DECLSPEC  int PMPI_Abort(MPI_Comm comm, int errorcode);
 OMPI_DECLSPEC  int PMPI_Accumulate(const void *origin_addr, int origin_count, MPI_Datatype origin_datatype,
                                    int target_rank, MPI_Aint target_disp, int target_count,

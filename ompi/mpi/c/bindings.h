@@ -125,6 +125,7 @@ int ompi_isendrecv(const void * sendbuf, size_t sendcount, MPI_Datatype sendtype
 int ompi_abi_get_fortran_info(ompi_info_t **info);
 int ompi_abi_set_fortran_info(ompi_info_t *info);
 int ompi_abi_get_fortran_booleans(int logical_size, void *logical_true, void *logical_false, int *is_set);
+int ompi_abi_set_fortran_booleans(int logical_size, void *logical_true, void *logical_false);
 
 END_C_DECLS
 
