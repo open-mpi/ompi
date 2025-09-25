@@ -28,18 +28,20 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/info/info.h"
+#include "ompi/mpi/c/bindings.h"
 
-PROTOTYPE ERROR_CLASS abi_set_fortran_info(INFO info)
+PROTOTYPE ERROR_CLASS abi_set_fortran_booleans(INT logical_size, VOID logical_true, 
+                                               VOID logical_false)
 {
     int ret = MPI_SUCCESS;
 
     if (MPI_PARAM_CHECK) {
-        if (NULL == info) {
-            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_INFO,
+        if ((NULL == logical_true) || (NULL == logical_false)) {
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG,
                                           FUNC_NAME);
         }
     }
 
-    ret = ompi_abi_set_fortran_info(info);
+    ret = ompi_abi_set_fortran_booleans(logical_size, logical_true, logical_false);
     OMPI_ERRHANDLER_NOHANDLE_RETURN( ret, ret, FUNC_NAME );
 }

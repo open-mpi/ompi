@@ -1944,29 +1944,14 @@ class TypeEventCBFunction(Type):
     def type_text(self, enable_count=False):
         return 'MPI_T_event_cb_function'
 
-@Type.add_type('VOID', abi_type=['ompi'])
+@Type.add_type('VOID')
 class TypeVoid(Type):
 
     def type_text(self, enable_count=False):
         return 'void *'
 
-@Type.add_type('VOID', abi_type=['standard'])
-class TypeVoidStandard(StandardABIType):
-
-    def type_text(self, enable_count=False):
-        return 'void *'
-
-@Type.add_type('VOID_CONST', abi_type=['ompi'])
+@Type.add_type('VOID_CONST')
 class TypeVoidConst(Type):
 
     def type_text(self, enable_count=False):
         return 'const void *'
-
-@Type.add_type('VOID_CONST', abi_type=['standard'])
-class TypeVoidConst(StandardABIType):
-
-    def type_text(self, enable_count=False):
-        return 'const void *'
-
-
-
