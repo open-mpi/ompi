@@ -97,6 +97,9 @@
 #ifdef MPI_OFFSET_IS_INT
    typedef int ADIO_Offset;
 #  define ADIO_OFFSET MPI_INT
+#elif __SIZEOF_SIZE_T__ == 4
+   typedef long ADIO_Offset;
+#  define ADIO_OFFSET MPI_LONG
 #elif defined(HAVE_LONG_LONG_64)
    typedef long long ADIO_Offset;
 #  ifdef HAVE_MPI_LONG_LONG_INT
