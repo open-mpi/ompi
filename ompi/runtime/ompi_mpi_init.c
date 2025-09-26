@@ -560,16 +560,16 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
        time if so, then start the clock again */
     OMPI_TIMING_NEXT("barrier");
 
-#if OPAL_ENABLE_PROGRESS_THREADS == 0
     /* Start setting up the event engine for MPI operations.  Don't
        block in the event library, so that communications don't take
        forever between procs in the dynamic code.  This will increase
        CPU utilization for the remainder of MPI_INIT when we are
        blocking on RTE-level events, but may greatly reduce non-TCP
        latency. */
-    int old_event_flags = opal_progress_set_event_flag(0);
-    opal_progress_set_event_flag(old_event_flags | OPAL_EVLOOP_NONBLOCK);
-#endif
+    if (!opal_async_progress_thread_spawned) {
+        int old_event_flags = opal_progress_set_event_flag(0);
+        opal_progress_set_event_flag(old_event_flags | OPAL_EVLOOP_NONBLOCK);
+    }
 
     /* wire up the mpi interface, if requested.  Do this after the
        non-block switch for non-TCP performance.  Do before the
