@@ -72,12 +72,26 @@ int mca_pml_base_select(bool enable_progress_threads,
 {
     int i, priority = 0, best_priority = -1, ret = 0;
     opal_list_item_t *item = NULL;
-    mca_base_component_list_item_t *cli = NULL;
+    mca_base_component_list_item_t *cli = NULL, *cm_cli = NULL, *ob1_cli = NULL;
     mca_pml_base_component_t *component = NULL, *best_component = NULL;
     mca_pml_base_module_t *module = NULL, *best_module = NULL;
     opal_list_t opened;
     opened_component_t *om = NULL;
     bool found_pml;
+
+    /* Move cm before ob1 so MTL initializes before BTL */
+    OPAL_LIST_FOREACH(cli, &ompi_pml_base_framework.framework_components, mca_base_component_list_item_t) {
+        mca_pml_base_component_t *comp = (mca_pml_base_component_t *) cli->cli_component;
+        if (0 == strcmp(comp->pmlm_version.mca_component_name, "cm")) {
+            cm_cli = cli;
+        } else if (0 == strcmp(comp->pmlm_version.mca_component_name, "ob1")) {
+            ob1_cli = cli;
+        }
+    }
+    if (cm_cli && ob1_cli) {
+        opal_list_remove_item(&ompi_pml_base_framework.framework_components, &cm_cli->super);
+        opal_list_prepend(&ompi_pml_base_framework.framework_components, &cm_cli->super);
+    }
 
     /* Traverse the list of available components; call their init
        functions. */
