@@ -278,6 +278,9 @@ mpi_api_files = \
         publish_name_f08.F90 \
         query_thread_f08.F90 \
         register_datarep_f08.F90 \
+        remove_error_class_f08.F90 \
+        remove_error_code_f08.F90 \
+        remove_error_string_f08.F90 \
         request_free_f08.F90 \
         session_call_errhandler_f08.F90\
         session_create_errhandler_f08.F90\

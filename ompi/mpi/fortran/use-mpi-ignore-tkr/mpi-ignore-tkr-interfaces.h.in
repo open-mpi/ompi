@@ -15,6 +15,7 @@
 !                         reserved.
 ! Copyright (c) 2021      Bull S.A.S. All rights reserved.
 ! Copyright (c) 2021      IBM Corporation.  All rights reserved.
+! Copyright (c) 2025      UT-Battelle, LLC.  All rights reserved.
 ! $COPYRIGHT$
 !
 ! Additional copyrights may follow
@@ -3350,6 +3351,36 @@ subroutine MPI_Request_free(request, ierror)
   integer, intent(inout) :: request
   integer, intent(out) :: ierror
 end subroutine MPI_Request_free
+
+end interface
+
+
+interface
+
+subroutine MPI_Remove_error_class(errorclass, ierror)
+  integer, intent(in) :: errorclass
+  integer, intent(out) :: ierror
+end subroutine MPI_Remove_error_class
+
+end interface
+
+
+interface
+
+subroutine MPI_Remove_error_code(errorcode, ierror)
+  integer, intent(in) :: errorcode
+  integer, intent(out) :: ierror
+end subroutine MPI_Remove_error_code
+
+end interface
+
+
+interface
+
+subroutine MPI_Remove_error_string(errorcode, ierror)
+  integer, intent(in) :: errorcode
+  integer, intent(out) :: ierror
+end subroutine MPI_Remove_error_string
 
 end interface
 

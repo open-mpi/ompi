@@ -137,6 +137,9 @@ lib@OMPI_LIBMPI_NAME@_mpifh_la_SOURCES += \
         add_error_class_f.c \
         add_error_code_f.c \
         add_error_string_f.c \
+        remove_error_class_f.c \
+        remove_error_code_f.c \
+        remove_error_string_f.c \
         aint_add_f.c \
         aint_diff_f.c \
         allgather_f.c \

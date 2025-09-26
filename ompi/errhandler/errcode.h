@@ -111,6 +111,38 @@ int ompi_mpi_errclass_add (void);
 int ompi_mpi_errnum_add_string (int errnum, const char* string, int len);
 
 /**
+ * Remove an error code
+ *
+ * @param: error code to be removed
+ *
+ * @returns OMPI_SUCCESS on success
+ * @returns OMPI_ERROR otherwise
+ *
+ */
+int ompi_mpi_errcode_remove (int errcode);
+
+/**
+ * Remove an error class
+ *
+ * @param: none
+ *
+ * @returns OMPI_SUCCESS on success
+ * @returns OMPI_ERROR otherwise
+ *
+ */
+int ompi_mpi_errclass_remove (int errclass);
+
+/**
+ * Remove an error string to an error code
+ *
+ * @param: error code for which the string is defined
+ *
+ * @returns OMPI_SUCCESS on success
+ * @returns OMPI_ERROR on error
+ */
+int ompi_mpi_errnum_remove_string (int errnum);
+
+/**
  * Check for a valid error code
  */
 static inline bool ompi_mpi_errcode_is_invalid(int errcode)
@@ -217,49 +249,6 @@ static inline char* ompi_mpi_errnum_get_string (int errnum)
 }
 
 
-/**
- * Initialize the error codes
- *
- * @returns OMPI_SUCCESS Upon success
- * @returns OMPI_ERROR Otherwise
- *
- * Invoked from ompi_mpi_init(); sets up all static MPI error codes,
- */
-int ompi_mpi_errcode_init(void);
-
-/**
- * Add an error code
- *
- * @param: error class to which this new error code belongs to
- *
- * @returns the new error code on SUCCESS (>0)
- * @returns OMPI_ERROR otherwise
- *
- */
-int ompi_mpi_errcode_add (int errclass);
-
-/**
- * Add an error class
- *
- * @param: none
- *
- * @returns the new error class on SUCCESS (>0)
- * @returns OMPI_ERROR otherwise
- *
- */
-int ompi_mpi_errclass_add (void);
-
-/**
- * Add an error string to an error code
- *
- * @param: error code for which the string is defined
- * @param: error string to add
- * @param: length of the string
- *
- * @returns OMPI_SUCCESS on success
- * @returns OMPI_ERROR on error
- */
-int ompi_mpi_errnum_add_string (int errnum, const char* string, int len);
 
 END_C_DECLS
 
