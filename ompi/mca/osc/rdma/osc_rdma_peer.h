@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2014-2018 Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2025      Stony Brook University.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -142,6 +143,8 @@ enum {
     OMPI_OSC_RDMA_PEER_BASE_FREE            = 0x40,
     /** peer was demand locked as part of lock-all (when in demand locking mode) */
     OMPI_OSC_RDMA_PEER_DEMAND_LOCKED        = 0x80,
+    /** we can use CPU atomics on that peer */
+    OMPI_OSC_RDMA_PEER_CPU_ATOMICS          = 0x100,
 };
 
 /**
@@ -222,6 +225,11 @@ static inline void ompi_osc_rdma_peer_clear_flag (ompi_osc_rdma_peer_t *peer, in
 static inline bool ompi_osc_rdma_peer_local_base (ompi_osc_rdma_peer_t *peer)
 {
     return !!(peer->flags & OMPI_OSC_RDMA_PEER_LOCAL_BASE);
+}
+
+static inline bool ompi_osc_rdma_peer_cpu_atomics (ompi_osc_rdma_peer_t *peer)
+{
+    return ompi_osc_rdma_peer_local_base(peer) && !!(peer->flags & OMPI_OSC_RDMA_PEER_CPU_ATOMICS);
 }
 
 /**
