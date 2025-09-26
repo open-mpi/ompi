@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2014-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2020      Google, LLC. All rights reserved.
+ * Copyright (c) 2020-2025 Google, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -90,7 +90,7 @@ static int mca_btl_uct_add_procs(mca_btl_base_module_t *btl, size_t nprocs,
         if (am_tl) {
             rc = opal_free_list_init(&uct_module->short_frags, sizeof(mca_btl_uct_base_frag_t),
                                      opal_cache_line_size, OBJ_CLASS(mca_btl_uct_base_frag_t),
-                                     MCA_BTL_UCT_TL_ATTR(am_tl, 0).cap.am.max_short,
+                                     am_tl->uct_iface_attr.cap.am.max_short,
                                      opal_cache_line_size, 0, 1024, 64, NULL, 0, NULL, NULL, NULL);
 
             rc = opal_free_list_init(&uct_module->eager_frags, sizeof(mca_btl_uct_base_frag_t),
@@ -264,6 +264,35 @@ int mca_btl_uct_dereg_mem(void *reg_data, mca_rcache_base_registration_t *reg)
     return OPAL_SUCCESS;
 }
 
+mca_btl_uct_module_t *mca_btl_uct_alloc_module(mca_btl_uct_md_t *md,
+                                               size_t registration_size)
+{
+    mca_btl_uct_module_t *module;
+
+    module = malloc(sizeof(*module));
+    if (NULL == module) {
+        return NULL;
+    }
+
+    /* copy the module template */
+    *module = mca_btl_uct_module_template;
+
+    OBJ_CONSTRUCT(&module->id_to_endpoint, opal_hash_table_t);
+    OBJ_CONSTRUCT(&module->endpoint_lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&module->short_frags, opal_free_list_t);
+    OBJ_CONSTRUCT(&module->eager_frags, opal_free_list_t);
+    OBJ_CONSTRUCT(&module->max_frags, opal_free_list_t);
+    OBJ_CONSTRUCT(&module->pending_frags, opal_list_t);
+    OBJ_CONSTRUCT(&module->lock, opal_recursive_mutex_t);
+    OBJ_CONSTRUCT(&module->allowed_transport_list, mca_btl_uct_include_list_t);
+
+    module->md = md;
+    OBJ_RETAIN(md);
+    module->super.btl_registration_handle_size = registration_size;
+
+    return module;
+}
+
 /*
  * Cleanup/release module resources.
  */
@@ -284,30 +313,31 @@ int mca_btl_uct_finalize(mca_btl_base_module_t *btl)
     OBJ_DESTRUCT(&uct_module->max_frags);
     OBJ_DESTRUCT(&uct_module->pending_frags);
     OBJ_DESTRUCT(&uct_module->lock);
-    OBJ_DESTRUCT(&uct_module->pending_connection_reqs);
+    OBJ_DESTRUCT(&uct_module->allowed_transport_list);
 
     if (uct_module->rcache) {
         mca_rcache_base_module_destroy(uct_module->rcache);
     }
 
-    if (NULL != uct_module->am_tl) {
-        OBJ_RELEASE(uct_module->am_tl);
-    }
-
-    if (NULL != uct_module->conn_tl) {
-        OBJ_RELEASE(uct_module->conn_tl);
-    }
-
-    if (NULL != uct_module->rdma_tl) {
-        OBJ_RELEASE(uct_module->rdma_tl);
-    }
-
-    ucs_async_context_destroy(uct_module->ucs_async);
-
     OBJ_DESTRUCT(&uct_module->endpoint_lock);
 
-    free(uct_module->md_name);
+    char *tmp;
+    asprintf(&tmp, "uct_%s", uct_module->md->md_name);
+    int rc = mca_base_var_group_find("opal", "btl", tmp);
+    free(tmp);
+    if (rc >= 0) {
+        mca_base_var_group_deregister(rc);
+    }
+
+    OBJ_RELEASE(uct_module->md);
     free(uct_module);
+
+    for (int i = 0 ; i < MCA_BTL_UCT_MAX_MODULES ; ++i) {
+        if (mca_btl_uct_component.modules[i] == uct_module) {
+            mca_btl_uct_component.modules[i] = NULL;
+            break;
+        }
+    }
 
     return OPAL_SUCCESS;
 }
@@ -338,9 +368,11 @@ mca_btl_uct_module_t mca_btl_uct_module_template = {
         /* set the default flags for this btl. uct provides us with rdma and both
          * fetching and non-fetching atomics (though limited to add and cswap) */
         .btl_flags = MCA_BTL_FLAGS_RDMA | MCA_BTL_FLAGS_ATOMIC_FOPS | MCA_BTL_FLAGS_ATOMIC_OPS
-                     | MCA_BTL_FLAGS_RDMA_REMOTE_COMPLETION,
-        .btl_atomic_flags = MCA_BTL_ATOMIC_SUPPORTS_ADD | MCA_BTL_ATOMIC_SUPPORTS_CSWAP
-                            | MCA_BTL_ATOMIC_SUPPORTS_SWAP | MCA_BTL_ATOMIC_SUPPORTS_32BIT,
+                     | MCA_BTL_FLAGS_RDMA_REMOTE_COMPLETION | MCA_BTL_FLAGS_SEND,
+        .btl_atomic_flags = MCA_BTL_ATOMIC_SUPPORTS_ADD | MCA_BTL_ATOMIC_SUPPORTS_AND
+                            | MCA_BTL_ATOMIC_SUPPORTS_OR | MCA_BTL_ATOMIC_SUPPORTS_XOR
+                            | MCA_BTL_ATOMIC_SUPPORTS_CSWAP | MCA_BTL_ATOMIC_SUPPORTS_SWAP
+                            | MCA_BTL_ATOMIC_SUPPORTS_32BIT,
 
         /* set the default limits on put and get */
         .btl_put_limit = 1 << 23,
@@ -353,22 +385,30 @@ mca_btl_uct_module_t mca_btl_uct_module_template = {
         .btl_rdma_pipeline_send_length = 8192,
         .btl_eager_limit = 8192,
         .btl_max_send_size = 65536,
+        /* for now we want this component to lose to btl/ugni and btl/vader */
+        .btl_exclusivity = MCA_BTL_EXCLUSIVITY_HIGH - 1,
     }};
 
 OBJ_CLASS_INSTANCE(mca_btl_uct_reg_t, opal_free_list_item_t, NULL, NULL);
 
 static void mca_btl_uct_md_construct(mca_btl_uct_md_t *md)
 {
+    md->uct_component = NULL;
     md->uct_md = NULL;
+    md->md_name = NULL;
+    OBJ_CONSTRUCT(&md->tls, opal_list_t);
 }
 
 static void mca_btl_uct_md_destruct(mca_btl_uct_md_t *md)
 {
+    OPAL_LIST_DESTRUCT(&md->tls);
+
+    free(md->md_name);
     if (md->uct_md) {
         uct_md_close(md->uct_md);
         md->uct_md = NULL;
     }
 }
 
-OBJ_CLASS_INSTANCE(mca_btl_uct_md_t, opal_object_t, mca_btl_uct_md_construct,
+OBJ_CLASS_INSTANCE(mca_btl_uct_md_t, opal_list_item_t, mca_btl_uct_md_construct,
                    mca_btl_uct_md_destruct);
