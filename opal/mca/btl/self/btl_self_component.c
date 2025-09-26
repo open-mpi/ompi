@@ -150,7 +150,7 @@ mca_btl_self_component_init(int *num_btls, bool enable_progress_threads, bool en
 
     /* initialize free lists */
     ret = opal_free_list_init(&mca_btl_self_component.self_frags_eager,
-                              sizeof(mca_btl_self_frag_eager_t) + mca_btl_self.btl_eager_limit,
+                              mca_btl_self.btl_eager_limit,
                               opal_cache_line_size, OBJ_CLASS(mca_btl_self_frag_eager_t), 0,
                               opal_cache_line_size, mca_btl_self_component.free_list_num,
                               mca_btl_self_component.free_list_max,
@@ -160,7 +160,7 @@ mca_btl_self_component_init(int *num_btls, bool enable_progress_threads, bool en
     }
 
     ret = opal_free_list_init(&mca_btl_self_component.self_frags_send,
-                              sizeof(mca_btl_self_frag_send_t) + mca_btl_self.btl_max_send_size,
+                              mca_btl_self.btl_max_send_size,
                               opal_cache_line_size, OBJ_CLASS(mca_btl_self_frag_send_t), 0,
                               opal_cache_line_size, mca_btl_self_component.free_list_num,
                               mca_btl_self_component.free_list_max,
@@ -170,7 +170,7 @@ mca_btl_self_component_init(int *num_btls, bool enable_progress_threads, bool en
     }
 
     ret = opal_free_list_init(&mca_btl_self_component.self_frags_rdma,
-                              sizeof(mca_btl_self_frag_rdma_t) + MCA_BTL_SELF_MAX_INLINE_SIZE,
+                              MCA_BTL_SELF_MAX_INLINE_SIZE,
                               opal_cache_line_size, OBJ_CLASS(mca_btl_self_frag_rdma_t), 0,
                               opal_cache_line_size, mca_btl_self_component.free_list_num,
                               mca_btl_self_component.free_list_max,
