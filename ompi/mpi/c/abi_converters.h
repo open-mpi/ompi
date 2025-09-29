@@ -372,14 +372,11 @@ __opal_attribute_always_inline__ static inline MPI_Datatype ompi_convert_abi_dat
 #else
         return MPI_DATATYPE_NULL;
 #endif
-#if 0
-/* TODO: need to add in a LOGICAL16 test */
     } else if (MPI_LOGICAL16_ABI_INTERNAL == datatype) {
 #if OMPI_HAVE_FORTRAN_LOGICAL16
         return MPI_LOGICAL16;
 #else
         return MPI_DATATYPE_NULL;
-#endif
 #endif
     } else if (MPI_INTEGER1_ABI_INTERNAL == datatype) {
 #if OMPI_HAVE_FORTRAN_INTEGER1
@@ -584,12 +581,9 @@ __opal_attribute_always_inline__ static inline MPI_Datatype_ABI_INTERNAL ompi_co
     } else if (MPI_LOGICAL8 == datatype) {
         return MPI_LOGICAL8_ABI_INTERNAL;
 #endif
-#if 0
-/* TODO: need to add in a LOGICAL16 test */
 #if OMPI_HAVE_FORTRAN_LOGICAL16
     } else if (MPI_LOGICAL16 == datatype) {
         return MPI_LOGICAL16_ABI_INTERNAL;
-#endif
 #endif
 #if OMPI_HAVE_FORTRAN_INTEGER1
     } else if (MPI_INTEGER1 == datatype) {
