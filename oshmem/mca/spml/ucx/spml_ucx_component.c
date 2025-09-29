@@ -292,6 +292,11 @@ static int spml_ucx_init(void)
     params.field_mask       |= UCP_PARAM_FIELD_ESTIMATED_NUM_PPN;
 #endif
 
+#if HAVE_DECL_UCP_PARAM_FIELD_NODE_LOCAL_ID
+    params.node_local_id = opal_process_info.my_local_rank;
+    params.field_mask   |= UCP_PARAM_FIELD_NODE_LOCAL_ID;
+#endif
+
     err = ucp_init(&params, ucp_config, &mca_spml_ucx.ucp_context);
     ucp_config_release(ucp_config);
     if (UCS_OK != err) {
