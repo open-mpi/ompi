@@ -556,6 +556,8 @@ endif
 # have to deal manually
 #
 extra_interface_profile_sources = \
+        comm_fromint_ompi.c \
+        comm_toint_ompi.c \
         pcontrol.c \
         wtick.c
 

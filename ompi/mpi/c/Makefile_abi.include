@@ -49,6 +49,8 @@ extra_abi_fns = \
         abi_get_version.c \
         aint_add_abi.c \
         aint_diff_abi.c \
+        comm_fromint_abi.c \
+        comm_toint_abi.c \
         pcontrol.c \
         wtick.c
 

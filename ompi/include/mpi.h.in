@@ -1643,6 +1643,7 @@ OMPI_DECLSPEC  int MPI_Comm_idup_with_info(MPI_Comm comm, MPI_Info info, MPI_Com
 OMPI_DECLSPEC  MPI_Comm MPI_Comm_f2c(MPI_Fint comm);
 OMPI_DECLSPEC  int MPI_Comm_free_keyval(int *comm_keyval);
 OMPI_DECLSPEC  int MPI_Comm_free(MPI_Comm *comm);
+OMPI_DECLSPEC  MPI_Comm MPI_Comm_fromint(int comm);
 OMPI_DECLSPEC  int MPI_Comm_get_attr(MPI_Comm comm, int comm_keyval,
                                      void *attribute_val, int *flag);
 OMPI_DECLSPEC  int MPI_Dist_graph_create(MPI_Comm comm_old, int n, const int nodes[],
@@ -1696,6 +1697,7 @@ OMPI_DECLSPEC  int MPI_Comm_spawn_multiple(int count, char *array_of_commands[],
 OMPI_DECLSPEC  int MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm);
 OMPI_DECLSPEC  int MPI_Comm_split_type(MPI_Comm comm, int split_type, int key, MPI_Info info, MPI_Comm *newcomm);
 OMPI_DECLSPEC  int MPI_Comm_test_inter(MPI_Comm comm, int *flag);
+OMPI_DECLSPEC  int MPI_Comm_toint(MPI_Comm comm);
 OMPI_DECLSPEC  int MPI_Compare_and_swap(const void *origin_addr, const void *compare_addr,
                                         void *result_addr, MPI_Datatype datatype, int target_rank,
                                         MPI_Aint target_disp, MPI_Win win);
@@ -2824,6 +2826,7 @@ OMPI_DECLSPEC  int PMPI_Comm_idup_with_info(MPI_Comm comm, MPI_Info info, MPI_Co
 OMPI_DECLSPEC  MPI_Comm PMPI_Comm_f2c(MPI_Fint comm);
 OMPI_DECLSPEC  int PMPI_Comm_free_keyval(int *comm_keyval);
 OMPI_DECLSPEC  int PMPI_Comm_free(MPI_Comm *comm);
+OMPI_DECLSPEC  MPI_Comm PMPI_Comm_fromint(int comm);
 OMPI_DECLSPEC  int PMPI_Comm_get_attr(MPI_Comm comm, int comm_keyval,
                                       void *attribute_val, int *flag);
 OMPI_DECLSPEC  int PMPI_Dist_graph_create(MPI_Comm comm_old, int n, const int nodes[],
@@ -2877,6 +2880,7 @@ OMPI_DECLSPEC  int PMPI_Comm_spawn_multiple(int count, char *array_of_commands[]
 OMPI_DECLSPEC  int PMPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm);
 OMPI_DECLSPEC  int PMPI_Comm_split_type(MPI_Comm comm, int split_type, int key, MPI_Info info, MPI_Comm *newcomm);
 OMPI_DECLSPEC  int PMPI_Comm_test_inter(MPI_Comm comm, int *flag);
+OMPI_DECLSPEC  int PMPI_Comm_toint(MPI_Comm comm);
 OMPI_DECLSPEC  int PMPI_Compare_and_swap(const void *origin_addr, const void *compare_addr,
                                          void *result_addr, MPI_Datatype datatype, int target_rank,
                                          MPI_Aint target_disp, MPI_Win win);
