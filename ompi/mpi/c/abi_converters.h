@@ -14,6 +14,11 @@
 extern "C" {
 #endif
 
+/*
+ * see section 20.3.4 of the MPI 5.0 standard
+ */
+#define OMPI_ABI_HANDLE_BASE_OFFSET 16384
+
 __opal_attribute_always_inline__ static inline int ompi_convert_abi_error_intern_error(int error_class)
 {
     switch (error_class) {
