@@ -67,7 +67,7 @@ orte_rtc_base_module_t orte_rtc_hwloc_module = {
 
 #if HWLOC_API_VERSION >= 0x20000
 static size_t shmemsize = 0;
-static size_t shmemaddr;
+static uintptr_t shmemaddr;
 static char *shmemfile = NULL;
 static int shmemfd = -1;
 
@@ -77,10 +77,10 @@ static int parse_map_line(const char *line,
                           orte_rtc_hwloc_vm_map_kind_t *kindp);
 static int use_hole(unsigned long holebegin,
                     unsigned long holesize,
-                    unsigned long *addrp,
+                    uintptr_t *addrp,
                     unsigned long size);
 static int find_hole(orte_rtc_hwloc_vm_hole_kind_t hkind,
-                     size_t *addrp,
+                     uintptr_t *addrp,
                      size_t size);
 static int enough_space(const char *filename,
                         size_t space_req,
@@ -524,7 +524,7 @@ static int parse_map_line(const char *line,
 
 static int use_hole(unsigned long holebegin,
                     unsigned long holesize,
-                    unsigned long *addrp,
+                    uintptr_t *addrp,
                     unsigned long size)
 {
     unsigned long aligned;
@@ -576,7 +576,7 @@ static int use_hole(unsigned long holebegin,
 }
 
 static int find_hole(orte_rtc_hwloc_vm_hole_kind_t hkind,
-                     size_t *addrp, size_t size)
+                     uintptr_t *addrp, size_t size)
 {
     unsigned long biggestbegin = 0;
     unsigned long biggestsize = 0;
