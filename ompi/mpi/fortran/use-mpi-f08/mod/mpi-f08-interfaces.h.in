@@ -12,6 +12,7 @@
 ! Copyright (c) 2017-2018 FUJITSU LIMITED.  All rights reserved.
 ! Copyright (c) 2021-2023 Triad National Security, LLC. All rights
 !                         reserved.
+! Copyright (c) 2025      UT-Battelle, LLC.  All rights reserved.
 ! $COPYRIGHT$
 !
 ! This file provides the interface specifications for the MPI Fortran
@@ -2344,6 +2345,30 @@ subroutine MPI_Register_datarep_f08(datarep,read_conversion_fn,write_conversion_
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine MPI_Register_datarep_f08
 end interface  MPI_Register_datarep
+
+interface  MPI_Remove_error_class
+subroutine MPI_Remove_error_class_f08(errorclass,ierror)
+   implicit none
+   INTEGER, INTENT(IN) :: errorclass
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine MPI_Remove_error_class_f08
+end interface  MPI_Remove_error_class
+
+interface  MPI_Remove_error_code
+subroutine MPI_Remove_error_code_f08(errorcode,ierror)
+   implicit none
+   INTEGER, INTENT(IN) :: errorcode
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine MPI_Remove_error_code_f08
+end interface  MPI_Remove_error_code
+
+interface  MPI_Remove_error_string
+subroutine MPI_Remove_error_string_f08(errorcode,ierror)
+   implicit none
+   integer, intent(in) :: errorcode
+   integer, optional, intent(out) :: ierror
+end subroutine MPI_Remove_error_string_f08
+end interface  MPI_Remove_error_string
 
 !
 ! MPI_Sizeof is generic for numeric types.  This ignore TKR interface

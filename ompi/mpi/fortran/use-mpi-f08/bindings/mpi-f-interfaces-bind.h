@@ -14,6 +14,7 @@
 ! Copyright (c) 2021      Bull S.A.S. All rights reserved.
 ! Copyright (c) 2021-2022 Triad National Security, LLC. All rights
 !                         reserved.
+! Copyright (c) 2025      UT-Battelle, LLC.  All rights reserved.
 ! $COPYRIGHT$
 !
 ! This file provides the interface specifications for the MPI Fortran
@@ -393,6 +394,27 @@ subroutine ompi_recv_init_f(buf,count,datatype,source,tag,comm,request,ierror) &
    INTEGER, INTENT(OUT) :: request
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_recv_init_f
+
+subroutine ompi_remove_error_class_f(errorclass,ierror) &
+   BIND(C, name="ompi_remove_error_class_f")
+   implicit none
+   INTEGER, INTENT(IN) :: errorclass
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine ompi_remove_error_class_f
+
+subroutine ompi_remove_error_code_f(errorcode,ierror) &
+   BIND(C, name="ompi_remove_error_code_f")
+   implicit none
+   INTEGER, INTENT(IN) :: errorcode
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine ompi_remove_error_code_f
+
+subroutine ompi_remove_error_string_f(errorcode,ierror) &
+   BIND(C, name="ompi_remove_error_string_f")
+   implicit none
+   INTEGER, INTENT(IN) :: errorcode
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine ompi_remove_error_string_f
 
 subroutine ompi_request_free_f(request,ierror) &
    BIND(C, name="ompi_request_free_f")

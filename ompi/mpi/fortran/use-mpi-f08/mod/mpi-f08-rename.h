@@ -2,6 +2,7 @@
 !
 ! Copyright (c) 2019-2020 Research Organization for Information Science
 !                         and Technology (RIST).  All rights reserved.
+! Copyright (c) 2025      UT-Battelle, LLC.  All rights reserved.
 
 #if OMPI_BUILD_MPI_PROFILING
 
@@ -560,6 +561,12 @@
 #define MPI_Reduce_scatter PMPI_Reduce_scatter
 #define MPI_Register_datarep_f08 PMPI_Register_datarep_f08
 #define MPI_Register_datarep PMPI_Register_datarep
+#define MPI_Remove_error_class_f08 PMPI_Remove_error_class_f08
+#define MPI_Remove_error_class PMPI_Remove_error_class
+#define MPI_Remove_error_code_f08 PMPI_Remove_error_code_f08
+#define MPI_Remove_error_code PMPI_Remove_error_code
+#define MPI_Remove_error_string_f08 PMPI_Remove_error_string_f08
+#define MPI_Remove_error_string PMPI_Remove_error_string
 #define MPI_Request_free_f08 PMPI_Request_free_f08
 #define MPI_Request_free PMPI_Request_free
 #define MPI_Rget_accumulate_f08 PMPI_Rget_accumulate_f08
