@@ -30,6 +30,7 @@ libmca_coll_la_SOURCES += \
         base/coll_base_comm_unselect.c \
         base/coll_base_find_available.c \
         base/coll_base_frame.c \
+        base/coll_base_revoke_local.c \
         base/coll_base_bcast.c \
         base/coll_base_scatter.c \
         base/coll_base_topo.c \

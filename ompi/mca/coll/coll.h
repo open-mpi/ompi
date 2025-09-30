@@ -472,6 +472,19 @@ typedef int (*mca_coll_base_module_reduce_local_fn_t)
     struct ompi_datatype_t * dtype, struct ompi_op_t * op,
     struct mca_coll_base_module_2_4_0_t *module);
 
+/*
+ * revoke_local
+ * Even though this is not a collective operation, it is related to the
+ * collectives. Adding to the framework allows a collective component the
+ * option of intercepting it to, e.g., also revoke sub-communicators
+ */
+typedef int (*mca_coll_base_module_revoke_local_fn_t)
+  (struct ompi_communicator_t* comm,
+   struct mca_coll_base_module_2_4_0_t *module);
+/* revoke applies to all coll modules, so the comm's function differs */
+typedef int (*mca_coll_base_comm_revoke_local_fn_t)
+  (struct ompi_communicator_t* comm);
+
 
 /* ******************************************************************** */
 
@@ -614,6 +627,8 @@ struct mca_coll_base_module_2_4_0_t {
     mca_coll_base_module_disable_1_2_0_fn_t coll_module_disable;
 
     mca_coll_base_module_reduce_local_fn_t coll_reduce_local;
+
+    mca_coll_base_module_revoke_local_fn_t coll_revoke_local;
 
     /** Data storage for all the algorithms defined in the base. Should
         not be used by other modules */
@@ -789,6 +804,8 @@ struct mca_coll_base_comm_coll_t {
     mca_coll_base_module_2_4_0_t *coll_agree_module;
     mca_coll_base_module_iagree_fn_t coll_iagree;
     mca_coll_base_module_2_4_0_t *coll_iagree_module;
+
+    mca_coll_base_comm_revoke_local_fn_t coll_revoke_local;
 
     /* List of modules initialized, queried and enabled */
     opal_list_t *module_list;

@@ -303,6 +303,8 @@ int mca_coll_base_reduce_local(const void *inbuf, void *inoutbuf, int count,
                                struct ompi_datatype_t * dtype, struct ompi_op_t * op,
                                mca_coll_base_module_t *module);
 
+int mca_coll_base_revoke_local(struct ompi_communicator_t *comm);
+
 #if OPAL_ENABLE_FT_MPI
 /* Agreement */
 int ompi_coll_base_agree_noft(void *contrib,

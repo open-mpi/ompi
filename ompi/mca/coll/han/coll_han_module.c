@@ -86,6 +86,8 @@ static void mca_coll_han_module_construct(mca_coll_han_module_t * module)
     module->dynamic_errors = 0;
 
     han_module_clear(module);
+
+    module->super.coll_revoke_local = mca_coll_han_revoke_local;
 }
 
 
@@ -269,6 +271,7 @@ mca_coll_han_comm_query(struct ompi_communicator_t * comm, int *priority)
         /* We are on a topologic sub-communicator, return only the selector */
         han_module->super.coll_allgatherv = mca_coll_han_allgatherv_intra_dynamic;
     }
+    han_module->super.coll_revoke_local = mca_coll_han_revoke_local;
 
     opal_output_verbose(10, ompi_coll_base_framework.framework_output,
                         "coll:han:comm_query (%s/%s): pick me! pick me!",
