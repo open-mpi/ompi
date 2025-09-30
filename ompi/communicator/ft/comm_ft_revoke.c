@@ -91,6 +91,8 @@ static int ompi_comm_revoke_local(ompi_communicator_t* comm, ompi_comm_rbcast_me
     comm->any_source_enabled = false;
     /* purge the communicator unexpected fragments and matching logic */
     MCA_PML_CALL(revoke_comm(comm, false));
+    /* revoke any subcomms created by coll */
+    comm->c_coll->coll_revoke_local(comm);
     /* Signal the point-to-point stack to recheck requests */
     wait_sync_global_wakeup(MPI_ERR_REVOKED);
     return true;
