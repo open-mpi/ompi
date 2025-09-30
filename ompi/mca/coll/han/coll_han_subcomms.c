@@ -414,3 +414,26 @@ int mca_coll_han_comm_create(struct ompi_communicator_t *comm,
     OBJ_DESTRUCT(&comm_info);
     return OMPI_SUCCESS;
 }
+
+int mca_coll_han_revoke_local(ompi_communicator_t *comm,
+                              mca_coll_base_module_t *module)
+{
+    mca_coll_han_module_t *han_module = (mca_coll_han_module_t*) module;
+    for(int i = 0; i < NB_TOPO_LVL; i++){
+        if(NULL == han_module->sub_comm[i]) continue;
+        ompi_comm_revoke_internal(han_module->sub_comm[i]);
+    }
+    if(han_module->cached_low_comms != NULL){
+        for(int i = 0; i < COLL_HAN_LOW_MODULES; i++){
+            if(NULL == han_module->cached_low_comms[i]) continue;
+            ompi_comm_revoke_internal(han_module->cached_low_comms[i]);
+        }
+    }
+    if(han_module->cached_up_comms != NULL){
+        for(int i = 0; i < COLL_HAN_LOW_MODULES; i++){
+            if(NULL == han_module->cached_low_comms[i]) continue;
+            ompi_comm_revoke_internal(han_module->cached_low_comms[i]);
+        }
+    }
+    return MPI_SUCCESS;
+}
