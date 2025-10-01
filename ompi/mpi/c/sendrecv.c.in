@@ -38,7 +38,7 @@
 
 PROTOTYPE ERROR_CLASS sendrecv(BUFFER sendbuf, COUNT sendcount, DATATYPE sendtype,
                                INT dest, INT sendtag, BUFFER_OUT recvbuf, COUNT recvcount,
-                               DATATYPE recvtype, INT source, INT recvtag,
+                               DATATYPE recvtype, INT source, TAG recvtag,
                                COMM comm, STATUS_OUT status)
 {
     int rc = MPI_SUCCESS;

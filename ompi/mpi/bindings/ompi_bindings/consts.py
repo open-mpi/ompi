@@ -279,6 +279,7 @@ class ConvertFuncs:
     INFO = 'ompi_convert_abi_info_intern_info'
     FILE = 'ompi_convert_abi_file_intern_file'
     TS_LEVEL = 'ompi_convert_abi_ts_level_intern_ts_level'
+    TAG = 'ompi_convert_abi_tag_intern_tag'
 
 
 class ConvertOMPIToStandard:

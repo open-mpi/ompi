@@ -573,12 +573,21 @@ class TypeRank(Type):
         return 'int'
 
 
-@Type.add_type('TAG')
+@Type.add_type('TAG', abi_type=['ompi'])
 class TypeRank(Type):
 
     def type_text(self, enable_count=False):
         return 'int'
 
+@Type.add_type('TAG', abi_type=['standard'])
+class TypeRank(StandardABIType):
+
+    @property
+    def init_code(self):
+        return [f'int {self.tmpname} = {ConvertFuncs.TAG}({self.name});']
+
+    def type_text(self, enable_count=False):
+        return 'int'
 
 @Type.add_type('COMM', abi_type=['ompi'])
 class TypeCommunicator(Type):
