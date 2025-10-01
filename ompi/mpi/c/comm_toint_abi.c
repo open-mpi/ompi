@@ -1,4 +1,3 @@
-/* THIS FILE WAS AUTOMATICALLY GENERATED. DO NOT EDIT BY HAND. */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -49,14 +48,14 @@ int MPI_Comm_toint(MPI_Comm_ABI_INTERNAL comm)
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         comm_tmp = ompi_convert_abi_comm_intern_comm(comm);
-        if (ompi_comm_invalid(comm_tmp)) {
+        if ((comm_tmp != MPI_COMM_NULL) && ompi_comm_invalid(comm_tmp)) {
             return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_COMM, FUNC_NAME);
         }
     }
 
-    if (MPI_COMM_SELF_ABI_INTERNAL >= (MPI_Comm_ABI_INTERNAL)comm) {
+    if (OMPI_ABI_HANDLE_BASE_OFFSET > (intptr_t)comm) {
         intptr_t comm_int = (intptr_t)comm;
-        return (int)(comm_int & (OMPI_ABI_HANDLE_BASE_OFFSET-1));
+        return (int)comm_int;
     }
 
     comm_ptr = (ompi_communicator_t *)comm;

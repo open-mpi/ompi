@@ -23,27 +23,39 @@
  */
 #include "ompi_config.h"
 
+#include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
-#include "ompi/communicator/communicator.h"
+#include "ompi/file/file.h"
 #include "ompi/errhandler/errhandler.h"
+
+#include "ompi/mpi/c/abi.h"
+#include "ompi/mpi/c/abi_converters.h"
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Comm_fromint = PMPI_Comm_fromint
+#pragma weak MPI_Request_fromint = PMPI_Request_fromint
 #endif
-#define MPI_Comm_fromint PMPI_Comm_fromint
+#define MPI_Request_fromint PMPI_Request_fromint
 #endif
 
-static const char FUNC_NAME[] = "MPI_Comm_fromint";
+static const char FUNC_NAME[] = "MPI_Request_fromint";
 
-MPI_Comm MPI_Comm_fromint(int comm)
+MPI_Request_ABI_INTERNAL MPI_Request_fromint(int request)
 {
     int o_index;
+    intptr_t request_tmp;
+
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
     }
 
-    o_index = comm;
+    if (OMPI_ABI_HANDLE_BASE_OFFSET > (intptr_t)request) {
+        request_tmp = (intptr_t)request;
+        return (MPI_Request_ABI_INTERNAL)request_tmp;
+    }
 
-    return (MPI_Comm)opal_pointer_array_get_item(&ompi_comm_f_to_c_table, o_index);
+    o_index = request - OMPI_ABI_HANDLE_BASE_OFFSET;
+    assert(o_index >= 0);
+
+    return (MPI_Request_ABI_INTERNAL)opal_pointer_array_get_item(&ompi_request_f_to_c_table, o_index);
 }
