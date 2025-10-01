@@ -17,7 +17,7 @@ extern "C" {
 /*
  * see section 20.3.4 of the MPI 5.0 standard
  */
-#define OMPI_ABI_HANDLE_BASE_OFFSET 16384
+#define OMPI_ABI_HANDLE_BASE_OFFSET 16385
 
 __opal_attribute_always_inline__ static inline int ompi_convert_abi_error_intern_error(int error_class)
 {
@@ -180,6 +180,169 @@ __opal_attribute_always_inline__ static inline int ompi_convert_abi_error_intern
         return error_class;
     }
 }
+
+__opal_attribute_always_inline__ static inline int ompi_convert_intern_error_abi_error(int error_class)
+{
+    switch (error_class) {
+        case MPI_SUCCESS:
+        return MPI_SUCCESS_ABI_INTERNAL;
+        case MPI_ERR_BUFFER:
+        return MPI_ERR_BUFFER_ABI_INTERNAL;
+        case MPI_ERR_COUNT:
+        return MPI_ERR_COUNT_ABI_INTERNAL;
+        case MPI_ERR_TYPE:
+        return MPI_ERR_TYPE_ABI_INTERNAL;
+        case MPI_ERR_TAG:
+        return MPI_ERR_TAG_ABI_INTERNAL;
+        case MPI_ERR_COMM:
+        return MPI_ERR_COMM_ABI_INTERNAL;
+        case MPI_ERR_RANK:
+        return MPI_ERR_RANK_ABI_INTERNAL;
+        case MPI_ERR_REQUEST:
+        return MPI_ERR_REQUEST_ABI_INTERNAL;
+        case MPI_ERR_ROOT:
+        return MPI_ERR_ROOT_ABI_INTERNAL;
+        case MPI_ERR_GROUP:
+        return MPI_ERR_GROUP_ABI_INTERNAL;
+        case MPI_ERR_OP:
+        return MPI_ERR_OP_ABI_INTERNAL;
+        case MPI_ERR_TOPOLOGY:
+        return MPI_ERR_TOPOLOGY_ABI_INTERNAL;
+        case MPI_ERR_DIMS:
+        return MPI_ERR_DIMS_ABI_INTERNAL;
+        case MPI_ERR_ARG:
+        return MPI_ERR_ARG_ABI_INTERNAL;
+        case MPI_ERR_UNKNOWN:
+        return MPI_ERR_UNKNOWN_ABI_INTERNAL;
+        case MPI_ERR_TRUNCATE:
+        return MPI_ERR_TRUNCATE_ABI_INTERNAL;
+        case MPI_ERR_OTHER:
+        return MPI_ERR_OTHER_ABI_INTERNAL;
+        case MPI_ERR_INTERN:
+        return MPI_ERR_INTERN_ABI_INTERNAL;
+        case MPI_ERR_PENDING:
+        return MPI_ERR_PENDING_ABI_INTERNAL;
+        case MPI_ERR_IN_STATUS:
+        return MPI_ERR_IN_STATUS_ABI_INTERNAL;
+        case MPI_ERR_ACCESS:
+        return MPI_ERR_ACCESS_ABI_INTERNAL;
+        case MPI_ERR_AMODE:
+        return MPI_ERR_AMODE_ABI_INTERNAL;
+        case MPI_ERR_ASSERT:
+        return MPI_ERR_ASSERT_ABI_INTERNAL;
+        case MPI_ERR_BAD_FILE:
+        return MPI_ERR_BAD_FILE_ABI_INTERNAL;
+        case MPI_ERR_BASE:
+        return MPI_ERR_BASE_ABI_INTERNAL;
+        case MPI_ERR_CONVERSION:
+        return MPI_ERR_CONVERSION_ABI_INTERNAL;
+        case MPI_ERR_DISP:
+        return MPI_ERR_DISP_ABI_INTERNAL;
+        case MPI_ERR_DUP_DATAREP:
+        return MPI_ERR_DUP_DATAREP_ABI_INTERNAL;
+        case MPI_ERR_FILE_EXISTS:
+        return MPI_ERR_FILE_EXISTS_ABI_INTERNAL;
+        case MPI_ERR_FILE_IN_USE:
+        return MPI_ERR_FILE_IN_USE_ABI_INTERNAL;
+        case MPI_ERR_FILE:
+        return MPI_ERR_FILE_ABI_INTERNAL;
+        case MPI_ERR_INFO_KEY:
+        return MPI_ERR_INFO_KEY_ABI_INTERNAL;
+        case MPI_ERR_INFO_NOKEY:
+        return MPI_ERR_INFO_NOKEY_ABI_INTERNAL;
+        case MPI_ERR_INFO_VALUE:
+        return MPI_ERR_INFO_VALUE_ABI_INTERNAL;
+        case MPI_ERR_INFO:
+        return MPI_ERR_INFO_ABI_INTERNAL;
+        case MPI_ERR_IO:
+        return MPI_ERR_IO_ABI_INTERNAL;
+        case MPI_ERR_KEYVAL:
+        return MPI_ERR_KEYVAL_ABI_INTERNAL;
+        case MPI_ERR_LOCKTYPE:
+        return MPI_ERR_LOCKTYPE_ABI_INTERNAL;
+        case MPI_ERR_NAME:
+        return MPI_ERR_NAME_ABI_INTERNAL;
+        case MPI_ERR_NO_MEM:
+        return MPI_ERR_NO_MEM_ABI_INTERNAL;
+        case MPI_ERR_NOT_SAME:
+        return MPI_ERR_NOT_SAME_ABI_INTERNAL;
+        case MPI_ERR_NO_SPACE:
+        return MPI_ERR_NO_SPACE_ABI_INTERNAL;
+        case MPI_ERR_NO_SUCH_FILE:
+        return MPI_ERR_NO_SUCH_FILE_ABI_INTERNAL;
+        case MPI_ERR_PORT:
+        return MPI_ERR_PORT_ABI_INTERNAL;
+        case MPI_ERR_PROC_ABORTED:
+        return MPI_ERR_PROC_ABORTED_ABI_INTERNAL;
+        case MPI_ERR_QUOTA:
+        return MPI_ERR_QUOTA_ABI_INTERNAL;
+        case MPI_ERR_READ_ONLY:
+        return MPI_ERR_READ_ONLY_ABI_INTERNAL;
+        case MPI_ERR_RMA_ATTACH:
+        return MPI_ERR_RMA_ATTACH_ABI_INTERNAL;
+        case MPI_ERR_RMA_CONFLICT:
+        return MPI_ERR_RMA_CONFLICT_ABI_INTERNAL;
+        case MPI_ERR_RMA_RANGE:
+        return MPI_ERR_RMA_RANGE_ABI_INTERNAL;
+        case MPI_ERR_RMA_SHARED:
+        return MPI_ERR_RMA_SHARED_ABI_INTERNAL;
+        case MPI_ERR_RMA_SYNC:
+        return MPI_ERR_RMA_SYNC_ABI_INTERNAL;
+        case MPI_ERR_RMA_FLAVOR:
+        return MPI_ERR_RMA_FLAVOR_ABI_INTERNAL;
+        case MPI_ERR_SERVICE:
+        return MPI_ERR_SERVICE_ABI_INTERNAL;
+        case MPI_ERR_SESSION:
+        return MPI_ERR_SESSION_ABI_INTERNAL;
+        case MPI_ERR_SIZE:
+        return MPI_ERR_SIZE_ABI_INTERNAL;
+        case MPI_ERR_SPAWN:
+        return MPI_ERR_SPAWN_ABI_INTERNAL;
+        case MPI_ERR_UNSUPPORTED_DATAREP:
+        return MPI_ERR_UNSUPPORTED_DATAREP_ABI_INTERNAL;
+        case MPI_ERR_UNSUPPORTED_OPERATION:
+        return MPI_ERR_UNSUPPORTED_OPERATION_ABI_INTERNAL;
+        case MPI_ERR_WIN:
+        return MPI_ERR_WIN_ABI_INTERNAL;
+        case MPI_T_ERR_CANNOT_INIT:
+        return MPI_T_ERR_CANNOT_INIT_ABI_INTERNAL;
+        case MPI_T_ERR_NOT_INITIALIZED:
+        return MPI_T_ERR_NOT_INITIALIZED_ABI_INTERNAL;
+        case MPI_T_ERR_MEMORY:
+        return MPI_T_ERR_MEMORY_ABI_INTERNAL;
+        case MPI_T_ERR_INVALID:
+        return MPI_T_ERR_INVALID_ABI_INTERNAL;
+        case MPI_T_ERR_INVALID_INDEX:
+        return MPI_T_ERR_INVALID_INDEX_ABI_INTERNAL;
+        case MPI_T_ERR_INVALID_ITEM:
+        return MPI_T_ERR_INVALID_ITEM_ABI_INTERNAL;
+        case MPI_T_ERR_INVALID_SESSION:
+        return MPI_T_ERR_INVALID_SESSION_ABI_INTERNAL;
+        case MPI_T_ERR_INVALID_HANDLE:
+        return MPI_T_ERR_INVALID_HANDLE_ABI_INTERNAL;
+        case MPI_T_ERR_INVALID_NAME:
+        return MPI_T_ERR_INVALID_NAME_ABI_INTERNAL;
+        case MPI_T_ERR_OUT_OF_HANDLES:
+        return MPI_T_ERR_OUT_OF_HANDLES_ABI_INTERNAL;
+        case MPI_T_ERR_OUT_OF_SESSIONS:
+        return MPI_T_ERR_OUT_OF_SESSIONS_ABI_INTERNAL;
+        case MPI_T_ERR_CVAR_SET_NOT_NOW:
+        return MPI_T_ERR_CVAR_SET_NOT_NOW_ABI_INTERNAL;
+        case MPI_T_ERR_CVAR_SET_NEVER:
+        return MPI_T_ERR_CVAR_SET_NEVER_ABI_INTERNAL;
+        case MPI_T_ERR_PVAR_NO_WRITE:
+        return MPI_T_ERR_PVAR_NO_WRITE_ABI_INTERNAL;
+        case MPI_T_ERR_PVAR_NO_STARTSTOP:
+        return MPI_T_ERR_PVAR_NO_STARTSTOP_ABI_INTERNAL;
+        case MPI_T_ERR_PVAR_NO_ATOMIC:
+        return MPI_T_ERR_PVAR_NO_ATOMIC_ABI_INTERNAL;
+        case MPI_ERR_LASTCODE:
+        return MPI_ERR_LASTCODE_ABI_INTERNAL;
+        default:
+        return error_class;
+    }
+}
+
 __opal_attribute_always_inline__ static inline MPI_Comm ompi_convert_abi_comm_intern_comm(MPI_Comm_ABI_INTERNAL comm)
 {
     if (MPI_COMM_NULL_ABI_INTERNAL == comm) {
