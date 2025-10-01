@@ -3477,7 +3477,7 @@ OMPI_DECLSPEC  int PMPI_Remove_error_string(int errorcode);
 OMPI_DECLSPEC  MPI_Fint PMPI_Request_c2f(MPI_Request request);
 OMPI_DECLSPEC  MPI_Request PMPI_Request_f2c(MPI_Fint request);
 OMPI_DECLSPEC  int PMPI_Request_free(MPI_Request *request);
-OMPI_DECLSPEC  MPI_Request MPI_Request_fromint(int request);
+OMPI_DECLSPEC  MPI_Request PMPI_Request_fromint(int request);
 OMPI_DECLSPEC  int PMPI_Request_get_status(MPI_Request request, int *flag,
                                            MPI_Status *status);
 OMPI_DECLSPEC int PMPI_Request_get_status_all(int count, const MPI_Request array_of_requests[], int *flag,
