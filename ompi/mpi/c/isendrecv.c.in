@@ -39,7 +39,7 @@
 
 PROTOTYPE ERROR_CLASS isendrecv(BUFFER sendbuf, COUNT sendcount, DATATYPE sendtype,
                                 INT dest, INT sendtag, BUFFER_OUT recvbuf, COUNT recvcount,
-                                DATATYPE recvtype, INT source, TAG recvtag,
+                                DATATYPE recvtype, SOURCE source, TAG recvtag,
                                 COMM comm,  REQUEST_INOUT request)
 {
     int rc = MPI_SUCCESS;
