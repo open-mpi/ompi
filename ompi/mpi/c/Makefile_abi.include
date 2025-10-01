@@ -51,7 +51,27 @@ extra_abi_fns = \
         aint_diff_abi.c \
         comm_fromint_abi.c \
         comm_toint_abi.c \
+        errhandler_fromint_abi.c \
+        errhandler_toint_abi.c \
+        file_fromint_abi.c \
+        file_toint_abi.c \
+        group_fromint_abi.c \
+        group_toint_abi.c \
+        info_fromint_abi.c \
+        info_toint_abi.c \
+        message_fromint_abi.c \
+        message_toint_abi.c \
+        op_fromint_abi.c \
+        op_toint_abi.c \
         pcontrol.c \
+        request_fromint_abi.c \
+        request_toint_abi.c \
+        session_fromint_abi.c \
+        session_toint_abi.c \
+        type_fromint_abi.c \
+        type_toint_abi.c \
+        win_fromint_abi.c \
+        win_toint_abi.c \
         wtick.c
 
 
