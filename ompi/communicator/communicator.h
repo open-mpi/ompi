@@ -715,6 +715,11 @@ OMPI_DECLSPEC bool ompi_comm_is_proc_active(ompi_communicator_t *comm, int peer_
 OMPI_DECLSPEC int ompi_comm_set_rank_failed(ompi_communicator_t *comm, int peer_id, bool remote);
 
 /*
+ * Locally revoke a communicator
+ */
+OMPI_DECLSPEC bool ompi_comm_revoke_local(ompi_communicator_t* comm, bool coll_only);
+
+/*
  * Returns true if point-to-point communications with the target process
  * are supported (this means if the process is a valid peer, if the
  * communicator is not revoked and if the peer is not already marked as
