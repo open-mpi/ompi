@@ -299,6 +299,7 @@ class ConvertOMPIToStandard:
     REQUEST = 'ompi_convert_ompi_request_abi_request'
     INFO = 'ompi_convert_info_ompi_to_standard'
     TS_LEVEL = 'ompi_convert_ts_level_ompi_to_standard'
+    TAG = 'ompi_convert_tag_ompi_to_starndard'
 
 
 # Inline function attributes
