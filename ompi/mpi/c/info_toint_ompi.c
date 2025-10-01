@@ -1,19 +1,18 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2024-2025 Triad National Security, LLC. All rights
+ * Copyright (c) 2024      Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -23,27 +22,33 @@
  */
 #include "ompi_config.h"
 
+#include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
-#include "ompi/communicator/communicator.h"
+#include "ompi/info/info.h"
 #include "ompi/errhandler/errhandler.h"
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Comm_fromint = PMPI_Comm_fromint
+#pragma weak MPI_Info_toint = PMPI_Info_toint
 #endif
-#define MPI_Comm_fromint PMPI_Comm_fromint
+#define MPI_Info_toint PMPI_Info_toint
 #endif
 
-static const char FUNC_NAME[] = "MPI_Comm_fromint";
+static const char FUNC_NAME[] = "MPI_Info_toint";
 
-MPI_Comm MPI_Comm_fromint(int comm)
+int MPI_Info_toint(MPI_Info info)
 {
     int o_index;
+
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+        if (NULL == info || ompi_info_is_freed(info)) {
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_INFO, FUNC_NAME);
+        }
     }
 
-    o_index = comm;
+    o_index = info->i_f_to_c_index;
 
-    return (MPI_Comm)opal_pointer_array_get_item(&ompi_comm_f_to_c_table, o_index);
+    return o_index;
+
 }

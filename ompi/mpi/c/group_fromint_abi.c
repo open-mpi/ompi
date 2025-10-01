@@ -23,27 +23,38 @@
  */
 #include "ompi_config.h"
 
+#include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
-#include "ompi/communicator/communicator.h"
+#include "ompi/group/group.h"
 #include "ompi/errhandler/errhandler.h"
+
+#include "ompi/mpi/c/abi.h"
+#include "ompi/mpi/c/abi_converters.h"
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Comm_fromint = PMPI_Comm_fromint
+#pragma weak MPI_Group_fromint = PMPI_Group_fromint
 #endif
-#define MPI_Comm_fromint PMPI_Comm_fromint
+#define MPI_Group_fromint PMPI_Group_fromint
 #endif
 
-static const char FUNC_NAME[] = "MPI_Comm_fromint";
+static const char FUNC_NAME[] = "MPI_Group_fromint";
 
-MPI_Comm MPI_Comm_fromint(int comm)
+MPI_Group_ABI_INTERNAL MPI_Group_fromint(int group)
 {
     int o_index;
+    intptr_t group_tmp;
+
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
     }
 
-    o_index = comm;
+    if (OMPI_ABI_HANDLE_BASE_OFFSET > (intptr_t)group) {
+        group_tmp = (intptr_t)group;
+        return (MPI_Group_ABI_INTERNAL)group_tmp;
+    }
 
-    return (MPI_Comm)opal_pointer_array_get_item(&ompi_comm_f_to_c_table, o_index);
+    o_index = group - OMPI_ABI_HANDLE_BASE_OFFSET;
+
+    return (MPI_Group_ABI_INTERNAL)opal_pointer_array_get_item(&ompi_group_f_to_c_table, o_index);
 }

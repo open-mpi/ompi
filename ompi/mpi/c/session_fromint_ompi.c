@@ -24,26 +24,26 @@
 #include "ompi_config.h"
 
 #include "ompi/runtime/params.h"
-#include "ompi/communicator/communicator.h"
+#include "ompi/instance/instance.h"
 #include "ompi/errhandler/errhandler.h"
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Comm_fromint = PMPI_Comm_fromint
+#pragma weak MPI_Session_fromint = PMPI_Session_fromint
 #endif
-#define MPI_Comm_fromint PMPI_Comm_fromint
+#define MPI_Session_fromint PMPI_Session_fromint
 #endif
 
-static const char FUNC_NAME[] = "MPI_Comm_fromint";
+static const char FUNC_NAME[] = "MPI_Session_fromint";
 
-MPI_Comm MPI_Comm_fromint(int comm)
+MPI_Session MPI_Session_fromint(int session)
 {
     int o_index;
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
     }
 
-    o_index = comm;
+    o_index = session;
 
-    return (MPI_Comm)opal_pointer_array_get_item(&ompi_comm_f_to_c_table, o_index);
+    return (MPI_Session)opal_pointer_array_get_item(&ompi_instance_f_to_c_table, o_index);
 }

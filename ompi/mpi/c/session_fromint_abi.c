@@ -23,27 +23,39 @@
  */
 #include "ompi_config.h"
 
+#include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
-#include "ompi/communicator/communicator.h"
+#include "ompi/instance/instance.h"
 #include "ompi/errhandler/errhandler.h"
+
+#include "ompi/mpi/c/abi.h"
+#include "ompi/mpi/c/abi_converters.h"
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Comm_fromint = PMPI_Comm_fromint
+#pragma weak MPI_Session_fromint = PMPI_Session_fromint
 #endif
-#define MPI_Comm_fromint PMPI_Comm_fromint
+#define MPI_Session_fromint PMPI_Session_fromint
 #endif
 
-static const char FUNC_NAME[] = "MPI_Comm_fromint";
+static const char FUNC_NAME[] = "MPI_Session_fromint";
 
-MPI_Comm MPI_Comm_fromint(int comm)
+MPI_Session_ABI_INTERNAL MPI_Session_fromint(int session)
 {
     int o_index;
+    intptr_t session_tmp;
+
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
     }
 
-    o_index = comm;
+    if (OMPI_ABI_HANDLE_BASE_OFFSET > (intptr_t)session) {
+        session_tmp = (intptr_t)session;
+        return (MPI_Session_ABI_INTERNAL)session_tmp;
+    }
 
-    return (MPI_Comm)opal_pointer_array_get_item(&ompi_comm_f_to_c_table, o_index);
+    o_index = session - OMPI_ABI_HANDLE_BASE_OFFSET;
+    assert(o_index >= 0);
+
+    return (MPI_Session_ABI_INTERNAL)opal_pointer_array_get_item(&ompi_instance_f_to_c_table, o_index);
 }

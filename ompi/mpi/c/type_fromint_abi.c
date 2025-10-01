@@ -24,26 +24,37 @@
 #include "ompi_config.h"
 
 #include "ompi/runtime/params.h"
-#include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
+#include "ompi/datatype/ompi_datatype.h"
+#include "ompi/datatype/ompi_datatype_internal.h"
+
+#include "ompi/mpi/c/abi.h"
+#include "ompi/mpi/c/abi_converters.h"
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Comm_fromint = PMPI_Comm_fromint
+#pragma weak MPI_Type_fromint = PMPI_Type_fromint
 #endif
-#define MPI_Comm_fromint PMPI_Comm_fromint
+#define MPI_Type_fromint PMPI_Type_fromint
 #endif
 
-static const char FUNC_NAME[] = "MPI_Comm_fromint";
+static const char FUNC_NAME[] = "MPI_Type_fromint";
 
-MPI_Comm MPI_Comm_fromint(int comm)
+MPI_Datatype_ABI_INTERNAL MPI_Type_fromint(int type)
 {
     int o_index;
+    intptr_t type_tmp;
+
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
     }
 
-    o_index = comm;
+    if (OMPI_ABI_HANDLE_BASE_OFFSET > (intptr_t)type) {
+        type_tmp = (intptr_t)type;
+        return (MPI_Datatype_ABI_INTERNAL)type_tmp;
+    }
 
-    return (MPI_Comm)opal_pointer_array_get_item(&ompi_comm_f_to_c_table, o_index);
+    o_index = type - OMPI_ABI_HANDLE_BASE_OFFSET;
+
+    return (MPI_Datatype_ABI_INTERNAL)opal_pointer_array_get_item(&ompi_datatype_f_to_c_table, o_index);
 }

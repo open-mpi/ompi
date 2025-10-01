@@ -1,4 +1,3 @@
-/* THIS FILE WAS AUTOMATICALLY GENERATED. DO NOT EDIT BY HAND. */
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
@@ -50,8 +49,8 @@ MPI_Comm_ABI_INTERNAL MPI_Comm_fromint(int comm)
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
     }
 
-    comm_tmp = (intptr_t)comm;
-    if (MPI_COMM_SELF_ABI_INTERNAL >= (MPI_Comm_ABI_INTERNAL)comm_tmp) {
+    if (OMPI_ABI_HANDLE_BASE_OFFSET > (intptr_t)comm) {
+        comm_tmp = (intptr_t)comm;
         return (MPI_Comm_ABI_INTERNAL)comm_tmp;
     }
 
