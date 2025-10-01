@@ -990,6 +990,15 @@ __opal_attribute_always_inline__ static inline int ompi_convert_abi_tag_intern_t
     }
 }
 
+__opal_attribute_always_inline__ static inline int ompi_convert_tag_ompi_to_starndard(int tag)
+{
+    if (MPI_ANY_TAG == tag) {
+        return MPI_ANY_TAG_ABI_INTERNAL;
+    } else {
+        return tag;
+    }
+}
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
