@@ -595,22 +595,6 @@ deprecated_interface_profile_sources = \
         type_extent.c \
         type_hindexed.c \
         type_hvector.c \
-        wtick.c
-
-# The following functions were removed from the MPI standard, but are
-# retained for ABI compliance reasons.  They are listed independently
-# of the other MPI functions in case we one day change behavior around
-# ABI compliance.
-deprecated_interface_profile_sources = \
-        address.c \
-        errhandler_create.c \
-        errhandler_get.c \
-        errhandler_set.c \
-	keyval_create.c \
-	keyval_free.c \
-        type_extent.c \
-        type_hindexed.c \
-        type_hvector.c \
         type_lb.c \
         type_struct.c \
         type_ub.c
