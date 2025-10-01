@@ -981,6 +981,15 @@ __opal_attribute_always_inline__ static inline int ompi_convert_ts_level_ompi_to
     return ts_level;
 }
 
+__opal_attribute_always_inline__ static inline int ompi_convert_abi_tag_intern_tag(int tag)
+{
+    if (MPI_ANY_TAG_ABI_INTERNAL == tag) {
+        return MPI_ANY_TAG;
+    } else {
+        return tag;
+    }
+}
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
