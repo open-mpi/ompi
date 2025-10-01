@@ -89,14 +89,23 @@ class Type(ABC):
         """Return True if this parameter has callback wrapper code to generate."""
         return False
 
-@Type.add_type('ERROR_CLASS')
+@Type.add_type('ERROR_CLASS', abi_type=['ompi'])
 class TypeErrorClass(Type):
 
     def type_text(self, enable_count=False):
         return 'int'
 
     def return_code(self, name):
-        return [f'return {ConvertFuncs.ERROR_CLASS}({name});']
+        return [f'return {name};']
+
+@Type.add_type('ERROR_CLASS', abi_type=['standard'])
+class TypeErrorClass(Type):
+
+    def type_text(self, enable_count=False):
+        return 'int'
+
+    def return_code(self, name):
+        return [f'return {ConvertOMPIToStandard.ERROR_CLASS}({name});']
 
 
 @Type.add_type('BUFFER')
