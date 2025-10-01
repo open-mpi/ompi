@@ -60,8 +60,8 @@ AC_ARG_WITH([cuda-libdir],
                             [Search for CUDA libraries in DIR])],
             [],
             [AS_IF([test -d "$with_cuda"],
-             [with_cuda_libdir=$(dirname $(find -H $with_cuda -name libcuda.so 2> /dev/null) 2> /dev/null)],
-             [with_cuda_libdir=$(dirname $(find -H /usr/local/cuda -name libcuda.so 2> /dev/null) 2> /dev/null)])
+             [with_cuda_libdir=$(dirname $(find -H $with_cuda -name libcuda.so 2> /dev/null | head -n 1) 2> /dev/null)],
+             [with_cuda_libdir=$(dirname $(find -H /usr/local/cuda -name libcuda.so 2> /dev/null) 2> /dev/null | head -n 1)])
             ])
 
 # Note that CUDA support is off by default.  To turn it on, the user has to
