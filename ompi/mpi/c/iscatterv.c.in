@@ -37,7 +37,7 @@
 
 PROTOTYPE ERROR_CLASS iscatterv(BUFFER sendbuf, COUNT_ARRAY sendcounts, DISP_ARRAY displs,
                                 DATATYPE sendtype, BUFFER_OUT recvbuf, COUNT recvcount,
-                                DATATYPE recvtype, INT root, COMM comm, REQUEST_INOUT request)
+                                DATATYPE recvtype, ROOT root, COMM comm, REQUEST_INOUT request)
 {
     int i, size, err;
     ompi_count_array_t sendcounts_desc;

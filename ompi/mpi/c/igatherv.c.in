@@ -37,7 +37,7 @@
 
 PROTOTYPE ERROR_CLASS igatherv(BUFFER sendbuf, COUNT sendcount, DATATYPE sendtype,
                                BUFFER_OUT recvbuf, COUNT_ARRAY recvcounts, DISP_ARRAY displs,
-                               DATATYPE recvtype, INT root, COMM comm, REQUEST_INOUT request)
+                               DATATYPE recvtype, ROOT root, COMM comm, REQUEST_INOUT request)
 {
     int i, size, err;
     ompi_count_array_t recvcounts_desc;
