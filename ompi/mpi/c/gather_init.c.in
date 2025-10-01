@@ -39,7 +39,7 @@
 
 PROTOTYPE ERROR_CLASS gather_init(BUFFER sendbuf, COUNT sendcount, DATATYPE sendtype,
                                   BUFFER_OUT recvbuf, COUNT recvcount, DATATYPE recvtype,
-                                  INT root, COMM comm, INFO info, REQUEST_INOUT request)
+                                  ROOT root, COMM comm, INFO info, REQUEST_INOUT request)
 {
     int err;
 

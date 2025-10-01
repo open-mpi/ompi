@@ -1,4 +1,4 @@
-# Copyright (c) 2024      Triad National Security, LLC. All rights
+# Copyright (c) 2024-2025 Triad National Security, LLC. All rights
 #                         reserved.
 #
 # $COPYRIGHT$
@@ -580,11 +580,43 @@ class TypeRank(Type):
         return 'int'
 
 @Type.add_type('TAG', abi_type=['standard'])
-class TypeRank(StandardABIType):
+class TypeRankStandard(StandardABIType):
 
     @property
     def init_code(self):
         return [f'int {self.tmpname} = {ConvertFuncs.TAG}({self.name});']
+
+    def type_text(self, enable_count=False):
+        return 'int'
+
+@Type.add_type('ROOT', abi_type=['ompi'])
+class TypeRoot(Type):
+
+    def type_text(self, enable_count=False):
+        return 'int'
+
+@Type.add_type('ROOT', abi_type=['standard'])
+class TypeRootStandard(StandardABIType):
+
+    @property
+    def init_code(self):
+        return [f'int {self.tmpname} = {ConvertFuncs.ROOT}({self.name});']
+
+    def type_text(self, enable_count=False):
+        return 'int'
+
+@Type.add_type('SOURCE', abi_type=['ompi'])
+class TypeSource(Type):
+
+    def type_text(self, enable_count=False):
+        return 'int'
+
+@Type.add_type('SOURCE', abi_type=['standard'])
+class TypeSourceStandard(StandardABIType):
+
+    @property
+    def init_code(self):
+        return [f'int {self.tmpname} = {ConvertFuncs.SOURCE}({self.name});']
 
     def type_text(self, enable_count=False):
         return 'int'

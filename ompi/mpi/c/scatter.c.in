@@ -39,7 +39,7 @@
 
 PROTOTYPE ERROR_CLASS scatter(BUFFER sendbuf, COUNT sendcount, DATATYPE sendtype,
                               BUFFER_OUT recvbuf, COUNT recvcount, DATATYPE recvtype,
-                              INT root, COMM comm)
+                              ROOT root, COMM comm)
 {
     int err;
 

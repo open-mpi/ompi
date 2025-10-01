@@ -40,7 +40,7 @@
 
 PROTOTYPE ERROR_CLASS igather(BUFFER sendbuf, COUNT sendcount, DATATYPE sendtype,
                               BUFFER_OUT recvbuf, COUNT recvcount, DATATYPE recvtype,
-                              INT root, COMM comm, REQUEST_INOUT request)
+                              ROOT root, COMM comm, REQUEST_INOUT request)
 {
     int err;
 

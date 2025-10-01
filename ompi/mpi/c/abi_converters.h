@@ -999,6 +999,24 @@ __opal_attribute_always_inline__ static inline int ompi_convert_tag_ompi_to_star
     }
 }
 
+__opal_attribute_always_inline__ static inline int ompi_convert_abi_root_intern_root(int root)
+{
+    if (MPI_ROOT_ABI_INTERNAL == root) {
+        return MPI_ROOT;
+    } else {
+        return root;
+    }
+}
+
+__opal_attribute_always_inline__ static inline int ompi_convert_abi_source_intern_source(int source)
+{
+    if (MPI_ANY_SOURCE_ABI_INTERNAL == source) {
+        return MPI_ANY_SOURCE;
+    } else {
+        return source;
+    }
+}
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

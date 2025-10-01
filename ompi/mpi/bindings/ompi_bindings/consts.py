@@ -280,6 +280,8 @@ class ConvertFuncs:
     FILE = 'ompi_convert_abi_file_intern_file'
     TS_LEVEL = 'ompi_convert_abi_ts_level_intern_ts_level'
     TAG = 'ompi_convert_abi_tag_intern_tag'
+    ROOT = 'ompi_convert_abi_root_intern_root'
+    SOURCE = 'ompi_convert_abi_source_intern_source'
 
 
 class ConvertOMPIToStandard:
