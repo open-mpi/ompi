@@ -805,7 +805,7 @@ int ompi_comm_set_rank_failed(ompi_communicator_t *comm, int peer_id, bool remot
     opal_atomic_wmb(); /* non-locked update needs a memory barrier to propagate */
 
     /* Disable collectives */
-    MCA_PML_CALL(revoke_comm(comm, true));
+    ompi_comm_revoke_local(comm, true);
 
     if( NULL != ompi_rank_failure_cbfunc ) {
         (*ompi_rank_failure_cbfunc)(comm, peer_id, remote);
