@@ -43,7 +43,6 @@ int MPI_Group_toint(MPI_Group_ABI_INTERNAL group)
 {
     int o_index;
     ompi_group_t *group_ptr;
-    MPI_Group group_tmp;
 
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
