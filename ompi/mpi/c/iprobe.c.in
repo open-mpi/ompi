@@ -31,7 +31,7 @@
 #include "ompi/request/request.h"
 #include "ompi/runtime/ompi_spc.h"
 
-PROTOTYPE ERROR_CLASS iprobe(INT source, INT tag, COMM comm, INT_OUT flag, STATUS_OUT status)
+PROTOTYPE ERROR_CLASS iprobe(INT source, TAG tag, COMM comm, INT_OUT flag, STATUS_OUT status)
 {
     int rc;
 
