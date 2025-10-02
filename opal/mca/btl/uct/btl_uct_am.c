@@ -55,7 +55,6 @@ static inline void _mca_btl_uct_send_pack(void *data, void *header, size_t heade
 {
     uint32_t iov_count = 1;
     struct iovec iov;
-    size_t length;
 
     if (header_size > 0) {
         assert(NULL != header);
