@@ -7,6 +7,7 @@
  *                         reserved.
  * Copyright (c) 2024      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2025      Stony Brook University.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -26,9 +27,9 @@
 
 PROTOTYPE ERROR_CLASS win_shared_query(WIN win, INT rank, AINT_OUT size, INT_AINT_OUT disp_unit, BUFFER_OUT baseptr)
 {
-    int rc;
     size_t tsize;
     ptrdiff_t du;
+    int rc = OMPI_SUCCESS;
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -40,12 +41,27 @@ PROTOTYPE ERROR_CLASS win_shared_query(WIN win, INT rank, AINT_OUT size, INT_AIN
          }
     }
 
+    if (MPI_WIN_FLAVOR_DYNAMIC == win->w_flavor) {
+        rc = MPI_ERR_RMA_FLAVOR;
+    } else {
+        rc = OMPI_ERR_NOT_SUPPORTED;
+    }
+
     if (NULL != win->w_osc_module->osc_win_shared_query) {
         rc = win->w_osc_module->osc_win_shared_query(win, rank, &tsize, &du, baseptr);
-        *size = tsize;
-        *disp_unit = du;
-    } else {
-        rc = MPI_ERR_RMA_FLAVOR;
+        if (OMPI_SUCCESS == rc) {
+            *size = tsize;
+            *disp_unit = du;
+        }
     }
+
+    if (OMPI_ERR_NOT_SUPPORTED == rc) {
+        /* gracefully bail out */
+        *size = 0;
+        *disp_unit = 0;
+        *(void**) baseptr = NULL;
+        rc = MPI_SUCCESS; // don't raise an error if the function is not supported
+    }
+
     OMPI_ERRHANDLER_RETURN(rc, win, rc, FUNC_NAME);
 }
