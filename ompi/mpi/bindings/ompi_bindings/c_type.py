@@ -881,7 +881,7 @@ class TypeStausOutStandard(StandardABIType):
     def init_code(self):
         code = [f'MPI_Status *{self.status_argument} = NULL;']
         if self.count_param is None:
-            code.append(f'MPI_Status {self.tmpname};')
+            code.append(f'MPI_Status {self.tmpname} = {{0}};')
         else:
             code.append(f'MPI_Status *{self.tmpname} = NULL;')
         code.append(self.if_should_set_status())
