@@ -108,6 +108,11 @@ typedef struct mca_mtl_ofi_module_t {
 
     /** registration cache */
     mca_rcache_base_module_t *rcache;
+
+    /** Whether fabric is shared with BTL */
+    bool sharing_fabric;
+    /** Whether domain is shared with BTL */
+    bool sharing_domain;
 } mca_mtl_ofi_module_t;
 
 extern mca_mtl_ofi_module_t ompi_mtl_ofi;

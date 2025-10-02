@@ -33,6 +33,12 @@
 #include "opal/mca/btl/btl.h"
 #include "opal/mca/common/ofi/common_ofi.h"
 #include "opal/mca/hwloc/base/base.h"
+#include "ompi/mca/mtl/base/base.h"
+#include "ompi/mca/mtl/ofi/mtl_ofi.h"
+#include "ompi/mca/mtl/ofi/mtl_ofi_types.h"
+
+extern mca_mtl_base_module_t *ompi_mtl;
+
 
 #include <string.h>
 
@@ -293,6 +299,7 @@ static mca_btl_base_module_t **mca_btl_ofi_component_init(int *num_btl_modules,
     struct fi_fabric_attr fabric_attr = {0};
     struct fi_domain_attr domain_attr = {0};
     uint64_t required_caps;
+    mca_mtl_ofi_module_t *mtl_ofi = NULL;
 
     switch (mca_btl_ofi_component.mode) {
 
@@ -313,6 +320,17 @@ static mca_btl_base_module_t **mca_btl_ofi_component_init(int *num_btl_modules,
     }
 
     fabric_attr.prov_name = NULL;
+
+    /* Check if MTL OFI is loaded and try to reuse its fabric and domain */
+    if (ompi_mtl && ompi_mtl_base_selected_component && 
+        strcmp(ompi_mtl_base_selected_component->mtl_version.mca_component_name, "ofi") == 0) {
+        mtl_ofi = (mca_mtl_ofi_module_t *) ompi_mtl;
+    }
+
+    if (mtl_ofi) {
+        BTL_VERBOSE(("Reusing MTL ofi fabric"));
+        fabric_attr.fabric = mtl_ofi->fabric;
+    }
 
     opal_output_verbose(1, opal_common_ofi.output, "%s:%d: btl:ofi:provider_include = \"%s\"\n",
                         __FILE__, __LINE__, *opal_common_ofi.prov_include);
@@ -338,6 +356,11 @@ static mca_btl_base_module_t **mca_btl_ofi_component_init(int *num_btl_modules,
 
     domain_attr.control_progress = progress_mode;
     domain_attr.data_progress = progress_mode;
+
+    if (mtl_ofi) {
+        BTL_VERBOSE(("Reusing MTL ofi domain"));
+        domain_attr.domain = mtl_ofi->domain;
+    }
 
     /* select endpoint type */
     ep_attr.type = FI_EP_RDM;
@@ -513,6 +536,7 @@ static int mca_btl_ofi_init_device(struct fi_info *info)
     struct fid_av *av = NULL;
 
     mca_btl_ofi_module_t *module;
+    mca_mtl_ofi_module_t *mtl_ofi;
 
     module = mca_btl_ofi_module_alloc(mca_btl_ofi_component.mode);
     if (NULL == module) {
@@ -552,18 +576,37 @@ static int mca_btl_ofi_init_device(struct fi_info *info)
     BTL_VERBOSE(
         ("initializing dev:%s provider:%s", linux_device_name, info->fabric_attr->prov_name));
 
+    if (ompi_mtl && ompi_mtl_base_selected_component && 
+        strcmp(ompi_mtl_base_selected_component->mtl_version.mca_component_name, "ofi") == 0) {
+        mtl_ofi = (mca_mtl_ofi_module_t *) ompi_mtl;
+    }
+
     /* fabric */
-    rc = fi_fabric(ofi_info->fabric_attr, &fabric, NULL);
-    if (0 != rc) {
-        BTL_VERBOSE(("%s failed fi_fabric with err=%s", linux_device_name, fi_strerror(-rc)));
-        goto fail;
+    if (info->fabric_attr->fabric) {
+        BTL_VERBOSE(("Reusing existing fabric: %s", info->fabric_attr->name));
+        fabric = info->fabric_attr->fabric;
+        if (mtl_ofi)
+            mtl_ofi->sharing_fabric = true;
+    } else {
+        rc = fi_fabric(ofi_info->fabric_attr, &fabric, NULL);
+        if (0 != rc) {
+            BTL_VERBOSE(("%s failed fi_fabric with err=%s", linux_device_name, fi_strerror(-rc)));
+            goto fail;
+        }
     }
 
     /* domain */
-    rc = fi_domain(fabric, ofi_info, &domain, NULL);
-    if (0 != rc) {
-        BTL_VERBOSE(("%s failed fi_domain with err=%s", linux_device_name, fi_strerror(-rc)));
-        goto fail;
+    if (info->domain_attr->domain) {
+        BTL_VERBOSE(("Reusing existing domain: %s", info->domain_attr->name));
+        domain = info->domain_attr->domain;
+        if (mtl_ofi)
+            mtl_ofi->sharing_domain = true;
+    } else {
+        rc = fi_domain(fabric, ofi_info, &domain, NULL);
+        if (0 != rc) {
+            BTL_VERBOSE(("%s failed fi_domain with err=%s", linux_device_name, fi_strerror(-rc)));
+            goto fail;
+        }
     }
 
     /**
@@ -742,11 +785,11 @@ fail:
         fi_close(&av->fid);
     }
 
-    if (NULL != domain) {
+    if (NULL != domain && (NULL == mtl_ofi || !mtl_ofi->sharing_domain)) {
         fi_close(&domain->fid);
     }
 
-    if (NULL != fabric) {
+    if (NULL != fabric && (NULL == mtl_ofi || !mtl_ofi->sharing_fabric)) {
         fi_close(&fabric->fid);
     }
     free(module);
