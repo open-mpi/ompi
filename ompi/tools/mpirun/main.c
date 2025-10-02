@@ -28,46 +28,9 @@
 #include "opal/util/printf.h"
 #include "opal/util/show_help.h"
 #include "ompi/constants.h"
-
-static char *find_prterun(void)
-{
-    char *filename = NULL;
-#if !OMPI_USING_INTERNAL_PRRTE
-    char *prrte_prefix = NULL;
+#if OMPI_HAVE_PRTE_LAUNCH
+#include "prte.h"
 #endif
-
-    /* 1) Did the user tell us exactly where to find prterun? */
-    filename = getenv("OMPI_PRTERUN");
-    if (NULL != filename) {
-        return filename;
-    }
-
-#if OMPI_USING_INTERNAL_PRRTE
-    /* 2) If using internal PRRTE, use our bindir.  Note that this
-     * will obey OPAL_PREFIX and OPAL_DESTDIR */
-    opal_asprintf(&filename, "%s%sprterun", opal_install_dirs.bindir, OPAL_PATH_SEP);
-    return filename;
-#else
-
-    /* 3) Look in ${PRTE_PREFIX}/bin */
-    prrte_prefix = getenv("PRTE_PREFIX");
-    if (NULL != prrte_prefix) {
-        opal_asprintf(&filename, "%s%sbin%sprterun", prrte_prefix, OPAL_PATH_SEP, OPAL_PATH_SEP);
-        return filename;
-    }
-
-    /* 4) See if configure told us where to look, if set */
-#if defined(OMPI_PRTERUN_PATH)
-    return strdup(OMPI_PRTERUN_PATH);
-#else
-
-    /* 5) Use path search */
-    filename = opal_find_absolute_path("prterun");
-
-    return filename;
-#endif
-#endif
-}
 
 static void append_prefixes(char ***out, const char *in)
 {
@@ -115,14 +78,43 @@ static void setup_mca_prefixes(void)
     opal_argv_free(tmp);
 }
 
+__opal_attribute_unused__
+static char *find_prterun(void)
+{
+    char *filename = NULL;
+    char *prrte_prefix = NULL;
+
+    /* 1) Did the user tell us exactly where to find prterun? */
+    filename = getenv("OMPI_PRTERUN");
+    if (NULL != filename) {
+        return filename;
+    }
+
+    /* 2) Look in ${PRTE_PREFIX}/bin */
+    prrte_prefix = getenv("PRTE_PREFIX");
+    if (NULL != prrte_prefix) {
+        opal_asprintf(&filename, "%s%sbin%sprterun", prrte_prefix, OPAL_PATH_SEP, OPAL_PATH_SEP);
+        return filename;
+    }
+
+    /* 4) See if configure told us where to look, if set */
+#if defined(OMPI_PRTERUN_PATH)
+    return strdup(OMPI_PRTERUN_PATH);
+#else
+
+    /* 5) Use path search */
+    filename = opal_find_absolute_path("prterun");
+
+    return filename;
+#endif
+}
 
 int main(int argc, char *argv[])
 {
     char *opal_prefix = getenv("OPAL_PREFIX");
-    char *full_prterun_path = NULL;
-    char **prterun_args = NULL;
+    char __opal_attribute_unused__ *full_prterun_path = NULL;
+    char __opal_attribute_unused__ **prterun_args = NULL;
     int ret;
-    size_t i;
 
     ret = opal_init_util(&argc, &argv);
     if (OMPI_SUCCESS != ret) {
@@ -154,22 +146,32 @@ int main(int argc, char *argv[])
 #endif
     }
 
-    full_prterun_path = find_prterun();
-    if (NULL == full_prterun_path) {
-        opal_show_help("help-mpirun.txt", "no-prterun-found", 1);
-        exit(1);
-    }
-
     /*
      * set environment variable for our install location
      * used within the OMPI prrte schizo component
      */
-
     setenv("OMPI_LIBDIR_LOC", opal_install_dirs.libdir, 1);
 
     // Set environment variable to tell PRTE what MCA prefixes belong
     // to Open MPI.
     setup_mca_prefixes();
+
+#if OMPI_HAVE_PRTE_LAUNCH
+
+    ret = prte_launch(argc, argv);
+    if (OMPI_SUCCESS != ret) {
+        opal_show_help("help-mpirun.txt", "prte-launch-failed", 1, strerror(errno));
+        exit(1);
+    }
+
+    return 0;
+#else
+
+    full_prterun_path = find_prterun();
+    if (NULL == full_prterun_path) {
+        opal_show_help("help-mpirun.txt", "no-prterun-found", 1);
+        exit(1);
+    }
 
     /* calling mpirun (and now prterun) with a full path has a special
      * meaning in terms of -prefix behavior, so copy that behavior
@@ -182,16 +184,16 @@ int main(int argc, char *argv[])
 
     /* Copy all the mpirun arguments to prterun.
      * TODO: Need to handle --prefix rationally here. */
-    for (i = 1; NULL != argv[i]; i++) {
+    for (size_t i = 1; NULL != argv[i]; i++) {
         opal_argv_append_nosize(&prterun_args, argv[i]);
     }
     ret = execv(full_prterun_path, prterun_args);
     opal_show_help("help-mpirun.txt", "prterun-exec-failed",
                    1, full_prterun_path, strerror(errno));
-    exit(1);
-}
-
-/*
+    exit(1);       
+#endif /* OMPI_HAVE_PRTE_LAUNCH*/
+}   
+/*  
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
@@ -206,9 +208,9 @@ int main(int argc, char *argv[])
  * Copyright (c) 2020-2022 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
- * Copyright (c) 2022      Triad National Security, LLC. All rights
+ * Copyright (c) 2022-2025 Triad National Security, LLC. All rights
  *                         reserved.
-
+        
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
