@@ -518,13 +518,8 @@ EXTRA_DIST = $(prototype_sources) \
 	abi_converters.h \
 	abi_get_info.c.in
 
-# attr_fn.c contains attribute manipulation functions which do not
-# profiling implications, and so are always built.
-libmpi_c_la_SOURCES = \
-        attr_fn.c
-
 # functions that do not require profiling implementations.
-libmpi_c_la_SOURCES += \
+libmpi_c_la_SOURCES = \
         ompi_isendrecv.c \
         ompi_sendrecv.c \
         ompi_abi_fortran.c
