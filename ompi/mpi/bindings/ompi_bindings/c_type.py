@@ -1389,7 +1389,7 @@ class TypeCommCopyAttrFunctionStandard(Type):
         code.append('}')
         code.append('helper->user_copy_fn = copy_fn;')
         code.append('helper->user_extra_state = extra_state;')
-        code.append('extra_state = helper->user_extra_state;')
+        code.append('extra_state = helper;')
         return code
 
     # TODO: This should be generalized to be reused with type and win
