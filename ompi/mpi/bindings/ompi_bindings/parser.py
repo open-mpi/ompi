@@ -6,6 +6,10 @@
 # Additional copyrights may follow
 #
 # $HEADER$
+
+import os
+import sys
+
 """Source parsing code."""
 
 class Parameter:
@@ -13,7 +17,11 @@ class Parameter:
     def __init__(self, text, type_constructor):
         """Parse a parameter."""
         # parameter in the form "TYPE NAME" or "TYPE NAME:COUNT_VAR"
-        type_name, namecount = text.split()
+        try:
+            type_name, namecount = text.split()
+        except Exception as e:
+            print(f"Error: could not split '{text}' got error {e}")
+            sys.exit(-1)
         if ':' in namecount:
             name, count_param = namecount.split(':')
         else:

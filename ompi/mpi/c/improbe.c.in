@@ -25,7 +25,7 @@
 #include "ompi/request/request.h"
 #include "ompi/message/message.h"
 
-PROTOTYPE ERROR_CLASS improbe(INT source, INT tag, COMM comm, INT_OUT flag,
+PROTOTYPE ERROR_CLASS improbe(SOURCE source, TAG tag, COMM comm, INT_OUT flag,
                               MESSAGE_OUT message, STATUS_OUT status)
 {
     int rc;
