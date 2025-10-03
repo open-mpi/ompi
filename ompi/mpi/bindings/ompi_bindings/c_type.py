@@ -1376,11 +1376,20 @@ class TypeCommCopyAttrFunctionStandard(Type):
     def init_code(self):
         code = []
         code = ['ompi_abi_wrapper_helper_t *helper = NULL;']
+        code.append('MPI_Comm_copy_attr_function_ABI_INTERNAL *copy_fn;')
         code.append('helper = ( ompi_abi_wrapper_helper_t *)malloc(sizeof(ompi_abi_wrapper_helper_t));')
         code.append('if (NULL == helper)  return MPI_ERR_NO_MEM;')
         code.append('helper->user_extra_state = extra_state;')
-        code.append('helper->user_copy_fn = comm_copy_attr_fn;')
-        code.append('helper->user_delete_fn = comm_delete_attr_fn;')
+        code.append(f'if ({self.name} == MPI_COMM_NULL_COPY_FN_ABI_INTERNAL)'  + '{')
+        code.append('copy_fn = ABI_C_MPI_COMM_NULL_COPY_FN;')
+        code.append('} else if (' + f'{self.name}' + ' == MPI_COMM_DUP_FN_ABI_INTERNAL) {')
+        code.append('copy_fn = ABI_C_MPI_COMM_DUP_FN;')
+        code.append('} else {')
+        code.append(f'copy_fn = {self.name};')
+        code.append('}')
+        code.append('helper->user_copy_fn = copy_fn;')
+        code.append('helper->user_extra_state = extra_state;')
+        code.append('extra_state = helper->user_extra_state;')
         return code
 
     # TODO: This should be generalized to be reused with type and win
@@ -1424,6 +1433,22 @@ class TypeCommDeleteAttrFunctionStandard(Type):
     @property
     def argument(self):
         return f'(MPI_Comm_delete_attr_function *) {self.name}'
+
+#
+# note the code generated here relies on that generated for
+# COMM_COPY_ATTR_FUNCTION above
+#
+    @property
+    def init_code(self):
+        code = []
+        code.append('MPI_Comm_delete_attr_function_ABI_INTERNAL *delete_fn;')
+        code.append(f'if ({self.name} == MPI_COMM_NULL_DELETE_FN_ABI_INTERNAL)'  + '{')
+        code.append('delete_fn = ABI_C_MPI_COMM_NULL_DELETE_FN;')
+        code.append('} else {')
+        code.append(f'delete_fn = {self.name};')
+        code.append('}')
+        code.append('helper->user_delete_fn = delete_fn;')
+        return code
 
 @Type.add_type('GREQUEST_QUERY_FUNCTION', abi_type=['ompi'])
 class TypeGrequestQueryFunction(Type):

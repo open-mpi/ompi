@@ -1017,6 +1017,26 @@ __opal_attribute_always_inline__ static inline int ompi_convert_abi_source_inter
     }
 }
 
+/*
+ * prototypes for ABI built-in attribute callback functions
+ */
+
+OMPI_DECLSPEC int ABI_C_MPI_COMM_NULL_DELETE_FN( MPI_Comm_ABI_INTERNAL comm,
+                                                  int comm_keyval,
+                                                  void* attribute_val_out,
+                                                  void* extra_state );
+OMPI_DECLSPEC int ABI_C_MPI_COMM_NULL_COPY_FN( MPI_Comm_ABI_INTERNAL  comm,
+                                                int comm_keyval,
+                                                void* extra_state,
+                                                void* attribute_val_in,
+                                                void* attribute_val_out,
+                                                int* flag );
+OMPI_DECLSPEC int ABI_C_MPI_COMM_DUP_FN( MPI_Comm_ABI_INTERNAL comm, int comm_keyval,
+                                          void* extra_state,
+                                          void* attribute_val_in,
+                                          void* attribute_val_out,
+                                          int* flag );
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
