@@ -954,8 +954,8 @@ typedef enum {
  * MPIT source ordering
  */
 enum ompi_mpi_t_source_order_t {
-  MPI_T_ORDERED,
-  MPI_T_UNORDERED,
+  MPI_T_SOURCE_ORDERED,
+  MPI_T_SOURCE_UNORDERED,
 };
 
 typedef enum ompi_mpi_t_source_order_t MPI_T_source_order;
