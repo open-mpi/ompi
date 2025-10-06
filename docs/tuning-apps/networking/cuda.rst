@@ -669,17 +669,23 @@ Tuning Guide*, which can be found in the `Cornelis Networks Customer Center
 When do I need to select a CUDA device?
 ---------------------------------------
 
-"mpi-cuda-dev-selection"
+Open MPI requires CUDA resources allocated for internal use. When possible,
+these resources are allocated lazily when they are first needed, e.g. CUDA
+IPC mem handles are created when a communication routine first requires them
+during a transfer.  MPI_Init and most communicator related operations do not
+create any CUDA resources (guaranteed at least for MPI_Comm_rank,
+MPI_Comm_size on ``MPI_COMM_WORLD``).
 
-OpenMPI requires CUDA resources allocated for internal use.  These
-are allocated lazily when they are first needed, e.g. CUDA IPC mem handles
-are created when a communication routine first requires them during a
-transfer.  So, the CUDA device needs to be selected before the first MPI
-call requiring a CUDA resource. MPI_Init and most communicator related
-operations do not create any CUDA resources (guaranteed for MPI_Init,
-MPI_Comm_rank, MPI_Comm_size, MPI_Comm_split_type and MPI_Comm_free).  It
-is thus possible to use those routines to query rank information and use
-those to select a GPU, e.g. using
+However, this is not always the case. In certain instances, such as when
+using PSM2 or the ``smcuda`` BTL (with the OB1 PML), it is not feasible to
+delay the CUDA resources allocation. Consequently, these resources will need
+to be allocated during ``MPI_Init()``.
+
+Regardless of the situation, the CUDA device must be selected before the first
+MPI call that requires a CUDA resource. When CUDA resources can be initialized
+lazily, it is possible to use the aforementioned communicator-related operations
+to query rank information and utilize that to select a GPU.
+
 
 .. code-block:: c
 
