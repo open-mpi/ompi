@@ -22,7 +22,7 @@
 
 PROTOTYPE ERROR_CLASS cvar_get_info(INT cvar_index, STRING_OUT name, INT_OUT name_len, INT_OUT verbosity,
 			DATATYPE_OUT datatype, T_ENUM_OUT enumtype, STRING_OUT desc,
-			INT_OUT desc_len, INT_OUT bind, INT_OUT scope)
+			INT_OUT desc_len, BIND_OUT bind, INT_OUT scope)
 {
     const mca_base_var_t *var;
     int rc = MPI_SUCCESS;

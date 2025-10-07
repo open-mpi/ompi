@@ -25,6 +25,9 @@
 #include "ompi/mpi/c/abi.h"
 #include "ompi/mpi/c/abi_converters.h"
 
+int ompi_abi_mpi_proc_null_val = MPI_PROC_NULL_ABI_INTERNAL;
+int ompi_abi_mpi_any_source_val = MPI_ANY_SOURCE_ABI_INTERNAL;
+
 /*
  * Comment to circumvent error-msg of weak-check:
  *   We do not need #pragma weak in here, as these functions
@@ -55,8 +58,7 @@
  *   MPI_WIN_DUP_FN -> ABI_C_MPI_WIN_DUP_FN
  */
 
-#if 0
-int ABI_C_MPI_TYPE_NULL_DELETE_FN( MPI_Datataype_ABI_INTERNAL datatype, int type_keyval,
+int ABI_C_MPI_TYPE_NULL_DELETE_FN( MPI_Datatype_ABI_INTERNAL datatype, int type_keyval,
                                     void* attribute_val_out,
                                     void* extra_state )
 {
@@ -64,7 +66,7 @@ int ABI_C_MPI_TYPE_NULL_DELETE_FN( MPI_Datataype_ABI_INTERNAL datatype, int type
    return MPI_SUCCESS;
 }
 
-int ABI_C_MPI_TYPE_NULL_COPY_FN( MPI_Datataype_ABI_INTERNAL datatype, int type_keyval,
+int ABI_C_MPI_TYPE_NULL_COPY_FN( MPI_Datatype_ABI_INTERNAL datatype, int type_keyval,
                                   void* extra_state,
                                   void* attribute_val_in,
                                   void* attribute_val_out,
@@ -74,7 +76,7 @@ int ABI_C_MPI_TYPE_NULL_COPY_FN( MPI_Datataype_ABI_INTERNAL datatype, int type_k
    return MPI_SUCCESS;
 }
 
-int ABI_C_MPI_TYPE_DUP_FN( MPI_Datataype_ABI_INTERNAL datatype, int type_keyval,
+int ABI_C_MPI_TYPE_DUP_FN( MPI_Datatype_ABI_INTERNAL datatype, int type_keyval,
                             void* extra_state,
                             void* attribute_val_in, void* attribute_val_out,
                             int* flag )
@@ -109,12 +111,11 @@ int ABI_C_MPI_WIN_DUP_FN( MPI_Win_ABI_INTERNAL window, int win_keyval, void* ext
    return MPI_SUCCESS;
 }
 
-#endif
-
 int ABI_C_MPI_COMM_NULL_DELETE_FN( MPI_Comm_ABI_INTERNAL comm, int comm_keyval,
                                     void* attribute_val_out,
                                     void* extra_state )
 {
+   fprintf(stderr,"inside ABI_C_MPI_COMM_NULL_DELETE_FN\n");
    return MPI_SUCCESS;
 }
 
@@ -124,6 +125,7 @@ int ABI_C_MPI_COMM_NULL_COPY_FN( MPI_Comm_ABI_INTERNAL comm, int comm_keyval,
                                   void* attribute_val_out, int* flag )
 {
    *flag= 0;
+   fprintf(stderr,"inside ABI_C_MPI_COMM_NULL_COPY_FN\n");
    return MPI_SUCCESS;
 }
 
@@ -133,5 +135,6 @@ int ABI_C_MPI_COMM_DUP_FN( MPI_Comm_ABI_INTERNAL comm, int comm_keyval, void* ex
 {
    *flag = 1;
    *(void**)attribute_val_out = attribute_val_in;
+   fprintf(stderr,"inside ABI_C_MPI_COMM_DUP_FN\n");
    return MPI_SUCCESS;
 }
