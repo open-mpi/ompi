@@ -385,11 +385,11 @@ int mca_btl_ofi_finalize(mca_btl_base_module_t *btl)
     }
 
     if (NULL != ofi_btl->domain) {
-        fi_close(&ofi_btl->domain->fid);
+        opal_common_ofi_domain_release(ofi_btl->domain);
     }
 
     if (NULL != ofi_btl->fabric) {
-        fi_close(&ofi_btl->fabric->fid);
+        opal_common_ofi_fabric_release(ofi_btl->fabric);
     }
 
     if (NULL != ofi_btl->fabric_info) {
