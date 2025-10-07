@@ -17,7 +17,7 @@
 #include "ompi/mpi/tool/mpit-internal.h"
 
 PROTOTYPE ERROR_CLASS source_get_info (INT source_index, STRING_OUT name, INT_OUT name_len, STRING_OUT desc, INT_OUT desc_len, 
-                                       SOURCE_ORDER_OUT ordering, ELEMENT_COUNT ticks_per_second, ELEMENT_COUNT max_timestamp, 
+                                       SOURCE_ORDER_OUT ordering, ELEMENT_COUNT ticks_per_second, ELEMENT_COUNT max_ticks,
                                        INFO_OUT info)
 {
     if (!mpit_is_initialized ()) {

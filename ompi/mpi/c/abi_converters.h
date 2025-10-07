@@ -990,7 +990,7 @@ __opal_attribute_always_inline__ static inline int ompi_convert_abi_tag_intern_t
     }
 }
 
-__opal_attribute_always_inline__ static inline int ompi_convert_tag_ompi_to_starndard(int tag)
+__opal_attribute_always_inline__ static inline int ompi_convert_tag_ompi_to_standard(int tag)
 {
     if (MPI_ANY_TAG == tag) {
         return MPI_ANY_TAG_ABI_INTERNAL;
@@ -1017,6 +1017,378 @@ __opal_attribute_always_inline__ static inline int ompi_convert_abi_source_inter
     }
 }
 
+__opal_attribute_always_inline__ static inline MPI_T_pvar_session 
+               ompi_convert_abi_pvar_session_intern_pvar_session(MPI_T_pvar_session_ABI_INTERNAL pe_session)
+{
+    if (MPI_T_PVAR_SESSION_NULL_ABI_INTERNAL == pe_session) {
+        return MPI_T_PVAR_SESSION_NULL;
+    } else {
+        return (MPI_T_pvar_session)pe_session;
+    }
+}
+    
+__opal_attribute_always_inline__ static inline MPI_T_pvar_session_ABI_INTERNAL 
+              ompi_convert_pvar_session_ompi_to_standard(MPI_T_pvar_session pe_session)
+{
+    if (MPI_T_PVAR_SESSION_NULL == pe_session) {
+        return MPI_T_PVAR_SESSION_NULL_ABI_INTERNAL;
+    } else {
+        return (MPI_T_pvar_session_ABI_INTERNAL)pe_session;
+    }
+}
+
+__opal_attribute_always_inline__ static inline MPI_T_cvar_handle
+               ompi_convert_abi_cvar_handle_intern_cvar_handle(MPI_T_cvar_handle_ABI_INTERNAL cvar_handle)
+{
+    if (MPI_T_CVAR_HANDLE_NULL_ABI_INTERNAL == cvar_handle) {
+        return MPI_T_CVAR_HANDLE_NULL;
+    } else {
+        return (MPI_T_cvar_handle)cvar_handle;
+    }
+}
+
+__opal_attribute_always_inline__ static inline MPI_T_cvar_handle_ABI_INTERNAL
+               ompi_convert_cvar_handle_ompi_to_standard(MPI_T_cvar_handle cvar_handle)
+{
+    if (MPI_T_CVAR_HANDLE_NULL == cvar_handle) {
+        return MPI_T_CVAR_HANDLE_NULL_ABI_INTERNAL;
+    } else {
+        return (MPI_T_cvar_handle_ABI_INTERNAL)cvar_handle;
+    }
+}
+
+__opal_attribute_always_inline__ static inline MPI_T_pvar_handle
+               ompi_convert_abi_pvar_handle_intern_pvar_handle(MPI_T_pvar_handle_ABI_INTERNAL pvar_handle)
+{
+    if (MPI_T_PVAR_HANDLE_NULL_ABI_INTERNAL == pvar_handle) {
+        return MPI_T_PVAR_HANDLE_NULL;
+    } else {
+        return (MPI_T_pvar_handle)pvar_handle;
+    }
+}
+
+__opal_attribute_always_inline__ static inline MPI_T_pvar_handle_ABI_INTERNAL
+               ompi_convert_pvar_handle_ompi_to_standard(MPI_T_pvar_handle pvar_handle)
+{
+    if (MPI_T_PVAR_HANDLE_NULL == pvar_handle) {
+        return MPI_T_PVAR_HANDLE_NULL_ABI_INTERNAL;
+    } else {
+        return (MPI_T_pvar_handle_ABI_INTERNAL)pvar_handle;
+    }
+}
+
+__opal_attribute_always_inline__ static inline MPI_T_enum
+               ompi_convert_abi_t_enum_intern_t_enum(MPI_T_enum_ABI_INTERNAL t_enum)
+{
+    if (MPI_T_ENUM_NULL_ABI_INTERNAL == t_enum) {
+        return MPI_T_ENUM_NULL;
+    } else {
+        return (MPI_T_enum)t_enum;
+    }
+}
+
+__opal_attribute_always_inline__ static inline MPI_T_enum_ABI_INTERNAL
+               ompi_convert_t_enum_ompi_to_standard(MPI_T_enum t_enum)
+{
+    if (MPI_T_ENUM_NULL == t_enum) {
+        return MPI_T_ENUM_NULL_ABI_INTERNAL;
+    } else {
+        return (MPI_T_enum_ABI_INTERNAL)t_enum;
+    }
+}
+
+__opal_attribute_always_inline__ static inline int
+               ompi_convert_abi_t_bind_intern_t_bind(int bind)
+{
+    if (MPI_T_BIND_NO_OBJECT_ABI_INTERNAL == bind) {
+        return MPI_T_BIND_NO_OBJECT;
+    } else if (MPI_T_BIND_MPI_COMM_ABI_INTERNAL == bind) {
+        return MPI_T_BIND_MPI_COMM;
+    } else if (MPI_T_BIND_MPI_DATATYPE_ABI_INTERNAL == bind) {
+        return MPI_T_BIND_MPI_DATATYPE;
+    } else if (MPI_T_BIND_MPI_ERRHANDLER_ABI_INTERNAL == bind) {
+        return MPI_T_BIND_MPI_ERRHANDLER;
+    } else if (MPI_T_BIND_MPI_FILE_ABI_INTERNAL == bind) {
+        return MPI_T_BIND_MPI_FILE;
+    } else if (MPI_T_BIND_MPI_GROUP_ABI_INTERNAL == bind) {
+        return MPI_T_BIND_MPI_GROUP;
+    } else if (MPI_T_BIND_MPI_OP_ABI_INTERNAL == bind) {
+        return MPI_T_BIND_MPI_OP;
+    } else if (MPI_T_BIND_MPI_REQUEST_ABI_INTERNAL == bind) {
+        return MPI_T_BIND_MPI_REQUEST;
+    } else if (MPI_T_BIND_MPI_WIN_ABI_INTERNAL == bind) {
+        return MPI_T_BIND_MPI_WIN;                    
+    } else if (MPI_T_BIND_MPI_MESSAGE_ABI_INTERNAL == bind) {
+        return MPI_T_BIND_MPI_MESSAGE;                
+    } else if (MPI_T_BIND_MPI_INFO_ABI_INTERNAL ==  bind) {
+        return MPI_T_BIND_MPI_INFO;                   
+    } else if (MPI_T_BIND_MPI_SESSION_ABI_INTERNAL == bind) {
+        return MPI_T_BIND_MPI_SESSION;
+    } else {
+        return bind;
+    }
+}
+
+__opal_attribute_always_inline__ static inline int
+               ompi_convert_t_bind_ompi_to_standard(int bind)
+{
+
+    if (MPI_T_BIND_NO_OBJECT == bind) {
+        return MPI_T_BIND_NO_OBJECT_ABI_INTERNAL;
+    } else if (MPI_T_BIND_MPI_COMM == bind) {
+        return MPI_T_BIND_MPI_COMM_ABI_INTERNAL;
+    } else if (MPI_T_BIND_MPI_DATATYPE == bind) {
+        return MPI_T_BIND_MPI_DATATYPE_ABI_INTERNAL;
+    } else if (MPI_T_BIND_MPI_ERRHANDLER == bind) {
+        return MPI_T_BIND_MPI_ERRHANDLER_ABI_INTERNAL;
+    } else if (MPI_T_BIND_MPI_FILE == bind) {
+        return MPI_T_BIND_MPI_FILE_ABI_INTERNAL;
+    } else if (MPI_T_BIND_MPI_GROUP == bind) {
+        return MPI_T_BIND_MPI_GROUP_ABI_INTERNAL;
+    } else if (MPI_T_BIND_MPI_OP == bind) {
+        return MPI_T_BIND_MPI_OP_ABI_INTERNAL;                     
+    } else if (MPI_T_BIND_MPI_REQUEST == bind) {
+        return MPI_T_BIND_MPI_REQUEST_ABI_INTERNAL;                
+    } else if (MPI_T_BIND_MPI_WIN == bind) {
+        return MPI_T_BIND_MPI_WIN_ABI_INTERNAL;                    
+    } else if (MPI_T_BIND_MPI_MESSAGE == bind) {
+        return MPI_T_BIND_MPI_MESSAGE_ABI_INTERNAL;                
+    } else if (MPI_T_BIND_MPI_INFO ==  bind) {
+        return MPI_T_BIND_MPI_INFO_ABI_INTERNAL;                   
+    } else if (MPI_T_BIND_MPI_SESSION == bind) {
+        return MPI_T_BIND_MPI_SESSION_ABI_INTERNAL;
+    } else {
+        return bind;
+    }
+}
+
+__opal_attribute_always_inline__ static inline int
+               ompi_convert_abi_t_verbosity_intern_t_verbosity(int verbosity)
+{
+    if (MPI_T_VERBOSITY_USER_BASIC_ABI_INTERNAL == verbosity) {
+        return MPI_T_VERBOSITY_USER_BASIC;
+    } else if (MPI_T_VERBOSITY_USER_DETAIL_ABI_INTERNAL == verbosity){
+        return MPI_T_VERBOSITY_USER_DETAIL;
+    } else if (MPI_T_VERBOSITY_USER_ALL_ABI_INTERNAL == verbosity) {
+        return MPI_T_VERBOSITY_USER_ALL;
+    } else if (MPI_T_VERBOSITY_TUNER_BASIC_ABI_INTERNAL == verbosity) {
+        return MPI_T_VERBOSITY_TUNER_BASIC;
+    } else if (MPI_T_VERBOSITY_TUNER_DETAIL_ABI_INTERNAL == verbosity) {
+        return MPI_T_VERBOSITY_TUNER_DETAIL;
+    } else if (MPI_T_VERBOSITY_TUNER_ALL_ABI_INTERNAL == verbosity) {
+        return MPI_T_VERBOSITY_TUNER_ALL;
+    } else if (MPI_T_VERBOSITY_MPIDEV_BASIC_ABI_INTERNAL == verbosity) {
+        return MPI_T_VERBOSITY_MPIDEV_BASIC;
+    } else if (MPI_T_VERBOSITY_MPIDEV_DETAIL_ABI_INTERNAL == verbosity) {
+        return MPI_T_VERBOSITY_MPIDEV_DETAIL;
+    } else if (MPI_T_VERBOSITY_MPIDEV_ALL_ABI_INTERNAL == verbosity) {
+        return MPI_T_VERBOSITY_MPIDEV_ALL;
+    } else {
+        return verbosity;
+    } 
+}
+    
+__opal_attribute_always_inline__ static inline int
+                ompi_convert_t_verbosity_ompi_to_standard(int verbosity)
+{
+    if (MPI_T_VERBOSITY_USER_BASIC == verbosity) {
+        return MPI_T_VERBOSITY_USER_BASIC_ABI_INTERNAL;
+    } else if (MPI_T_VERBOSITY_USER_DETAIL == verbosity){
+        return MPI_T_VERBOSITY_USER_DETAIL_ABI_INTERNAL;
+    } else if (MPI_T_VERBOSITY_USER_ALL == verbosity) {
+        return MPI_T_VERBOSITY_USER_ALL_ABI_INTERNAL;
+    } else if (MPI_T_VERBOSITY_TUNER_BASIC == verbosity) {
+        return MPI_T_VERBOSITY_TUNER_BASIC_ABI_INTERNAL;
+    } else if (MPI_T_VERBOSITY_TUNER_DETAIL == verbosity) {
+        return MPI_T_VERBOSITY_TUNER_DETAIL_ABI_INTERNAL;
+    } else if (MPI_T_VERBOSITY_TUNER_ALL == verbosity) {
+        return MPI_T_VERBOSITY_TUNER_ALL_ABI_INTERNAL;
+    } else if (MPI_T_VERBOSITY_MPIDEV_BASIC == verbosity) {
+        return MPI_T_VERBOSITY_MPIDEV_BASIC_ABI_INTERNAL;
+    } else if (MPI_T_VERBOSITY_MPIDEV_DETAIL == verbosity) {
+        return MPI_T_VERBOSITY_MPIDEV_DETAIL_ABI_INTERNAL;
+    } else if (MPI_T_VERBOSITY_MPIDEV_ALL == verbosity) {
+        return MPI_T_VERBOSITY_MPIDEV_ALL_ABI_INTERNAL;
+    } else {
+        return verbosity;
+    } 
+}
+
+__opal_attribute_always_inline__ static inline MPI_T_cb_safety
+                ompi_convert_abi_cb_safety_intern_cb_safety(MPI_T_cb_safety_ABI_INTERNAL safety)
+{
+    if (MPI_T_CB_REQUIRE_NONE_ABI_INTERNAL == safety) {
+        return MPI_T_CB_REQUIRE_NONE;
+    } else if (MPI_T_CB_REQUIRE_MPI_RESTRICTED_ABI_INTERNAL == safety) {
+        return MPI_T_CB_REQUIRE_MPI_RESTRICTED;
+    }else if (MPI_T_CB_REQUIRE_THREAD_SAFE_ABI_INTERNAL == safety) {
+        return MPI_T_CB_REQUIRE_THREAD_SAFE;
+    } else if (MPI_T_CB_REQUIRE_ASYNC_SIGNAL_SAFE_ABI_INTERNAL == safety) {
+        return MPI_T_CB_REQUIRE_ASYNC_SIGNAL_SAFE;
+    } else {
+        return safety;
+    }
+}
+
+__opal_attribute_always_inline__ static inline MPI_T_source_order
+                ompi_convert_abi_source_order_intern_source_order(MPI_T_source_order_ABI_INTERNAL order)
+{
+    if (MPI_T_SOURCE_ORDERED_ABI_INTERNAL == order) {
+        return MPI_T_SOURCE_ORDERED;
+    } else if (MPI_T_SOURCE_UNORDERED_ABI_INTERNAL == order) {
+        return MPI_T_SOURCE_UNORDERED;
+    } else {
+        return order;
+    }
+}
+
+__opal_attribute_always_inline__ static inline MPI_T_source_order_ABI_INTERNAL
+                ompi_convert_source_order_ompi_to_standard(MPI_T_source_order order)
+{
+    if (MPI_T_SOURCE_ORDERED == order) {
+        return MPI_T_SOURCE_ORDERED_ABI_INTERNAL;
+    } else if (MPI_T_SOURCE_UNORDERED == order) {
+        return MPI_T_SOURCE_UNORDERED_ABI_INTERNAL;
+    } else {
+        return order;
+    }
+}
+
+__opal_attribute_always_inline__ static inline int
+                ompi_convert_abi_pvar_class_intern_pvar_class(int pvar_class)
+{
+    if (MPI_T_PVAR_CLASS_STATE_ABI_INTERNAL == pvar_class) {
+        return MPI_T_PVAR_CLASS_STATE;
+    } else if (MPI_T_PVAR_CLASS_LEVEL_ABI_INTERNAL == pvar_class) {
+        return MPI_T_PVAR_CLASS_LEVEL;
+    } else if (MPI_T_PVAR_CLASS_SIZE_ABI_INTERNAL == pvar_class) {
+        return MPI_T_PVAR_CLASS_SIZE;
+    } else if (MPI_T_PVAR_CLASS_PERCENTAGE_ABI_INTERNAL == pvar_class) {
+        return MPI_T_PVAR_CLASS_PERCENTAGE;
+    } else if (MPI_T_PVAR_CLASS_HIGHWATERMARK_ABI_INTERNAL == pvar_class) {
+        return MPI_T_PVAR_CLASS_HIGHWATERMARK;
+    } else if (MPI_T_PVAR_CLASS_LOWWATERMARK_ABI_INTERNAL == pvar_class) {
+        return MPI_T_PVAR_CLASS_LOWWATERMARK;
+    } else if (MPI_T_PVAR_CLASS_COUNTER_ABI_INTERNAL == pvar_class) {
+        return MPI_T_PVAR_CLASS_COUNTER;
+    } else if (MPI_T_PVAR_CLASS_AGGREGATE_ABI_INTERNAL == pvar_class) {
+        return MPI_T_PVAR_CLASS_AGGREGATE;
+    } else if (MPI_T_PVAR_CLASS_TIMER_ABI_INTERNAL == pvar_class) {
+        return MPI_T_PVAR_CLASS_TIMER;
+    } else if (MPI_T_PVAR_CLASS_GENERIC_ABI_INTERNAL == pvar_class) {
+        return MPI_T_PVAR_CLASS_GENERIC;
+    } else {
+        return pvar_class;
+    }
+}
+
+__opal_attribute_always_inline__ static inline int
+                ompi_convert_pvar_class_ompi_to_standard(int pvar_class)
+{
+    if (MPI_T_PVAR_CLASS_STATE == pvar_class) {
+        return MPI_T_PVAR_CLASS_STATE_ABI_INTERNAL;
+    } else if (MPI_T_PVAR_CLASS_LEVEL == pvar_class) {
+        return MPI_T_PVAR_CLASS_LEVEL_ABI_INTERNAL;
+    } else if (MPI_T_PVAR_CLASS_SIZE == pvar_class) {
+        return MPI_T_PVAR_CLASS_SIZE_ABI_INTERNAL;
+    } else if (MPI_T_PVAR_CLASS_PERCENTAGE == pvar_class) {
+        return MPI_T_PVAR_CLASS_PERCENTAGE_ABI_INTERNAL;
+    } else if (MPI_T_PVAR_CLASS_HIGHWATERMARK == pvar_class) {
+        return MPI_T_PVAR_CLASS_HIGHWATERMARK_ABI_INTERNAL;
+    } else if (MPI_T_PVAR_CLASS_LOWWATERMARK == pvar_class) {
+        return MPI_T_PVAR_CLASS_LOWWATERMARK_ABI_INTERNAL;
+    } else if (MPI_T_PVAR_CLASS_COUNTER == pvar_class) {
+        return MPI_T_PVAR_CLASS_COUNTER_ABI_INTERNAL;
+    } else if (MPI_T_PVAR_CLASS_AGGREGATE == pvar_class) {
+        return MPI_T_PVAR_CLASS_AGGREGATE_ABI_INTERNAL;
+    } else if (MPI_T_PVAR_CLASS_TIMER == pvar_class) {
+        return MPI_T_PVAR_CLASS_TIMER_ABI_INTERNAL;
+    } else if (MPI_T_PVAR_CLASS_GENERIC == pvar_class) {
+        return MPI_T_PVAR_CLASS_GENERIC_ABI_INTERNAL;
+    } else {
+        return pvar_class;
+    }
+}
+
+__opal_attribute_always_inline__ static inline int
+                ompi_convert_abi_attr_key_intern_attr_key(int key)
+{
+    /*
+     * if the key is equal to or greater than OMPI_ABI_HANDLE_BASE_OFFSEGT
+     * then its a user created key.  subtract this base and return.
+ *   */
+    if (OMPI_ABI_HANDLE_BASE_OFFSET <= key) {
+        return (key - OMPI_ABI_HANDLE_BASE_OFFSET);
+    }
+    if (MPI_KEYVAL_INVALID_ABI_INTERNAL == key) {
+        return MPI_KEYVAL_INVALID;
+    } else if (MPI_TAG_UB_ABI_INTERNAL == key) {
+        return MPI_TAG_UB;
+    } else if (MPI_IO_ABI_INTERNAL == key) {
+        return MPI_IO;
+    } else if (MPI_HOST_ABI_INTERNAL == key) {
+        return MPI_HOST;
+    } else if  (MPI_WTIME_IS_GLOBAL_ABI_INTERNAL ==  key) {
+        return MPI_WTIME_IS_GLOBAL;
+    } else if (MPI_APPNUM_ABI_INTERNAL == key) {
+        return MPI_APPNUM;
+    } else if (MPI_LASTUSEDCODE_ABI_INTERNAL == key) {
+        return MPI_LASTUSEDCODE;
+    } else if (MPI_UNIVERSE_SIZE_ABI_INTERNAL == key) {
+        return MPI_UNIVERSE_SIZE;
+    } else if (MPI_WIN_BASE_ABI_INTERNAL == key) {
+        return MPI_WIN_BASE;
+    } else if (MPI_WIN_DISP_UNIT_ABI_INTERNAL == key) {
+        return MPI_WIN_DISP_UNIT;
+    } else if (MPI_WIN_SIZE_ABI_INTERNAL == key) {
+        return MPI_WIN_SIZE;
+    } else if (MPI_WIN_CREATE_FLAVOR_ABI_INTERNAL == key) {
+        return MPI_WIN_CREATE_FLAVOR;
+    } else if (MPI_WIN_MODEL_ABI_INTERNAL == key) {
+        return MPI_WIN_MODEL;
+    } else {
+        return MPI_KEYVAL_INVALID;
+    }
+}
+
+__opal_attribute_always_inline__ static inline int
+                ompi_convert_attr_key_ompi_to_standard(int key)
+{
+    if (MPI_KEYVAL_INVALID == key) {
+        return MPI_KEYVAL_INVALID_ABI_INTERNAL;
+    } else if (MPI_TAG_UB == key) {
+        return MPI_TAG_UB_ABI_INTERNAL;
+    } else if (MPI_IO == key) {                       
+        return MPI_IO_ABI_INTERNAL;
+    } else if (MPI_HOST == key) {
+        return MPI_HOST_ABI_INTERNAL;
+    } else if  (MPI_WTIME_IS_GLOBAL ==  key) {
+        return MPI_WTIME_IS_GLOBAL_ABI_INTERNAL;
+    } else if (MPI_APPNUM == key) {
+        return MPI_APPNUM_ABI_INTERNAL;
+    } else if (MPI_LASTUSEDCODE == key) {
+        return MPI_LASTUSEDCODE_ABI_INTERNAL;
+    } else if (MPI_UNIVERSE_SIZE == key) {
+        return MPI_UNIVERSE_SIZE_ABI_INTERNAL;
+    } else if (MPI_WIN_BASE == key) {
+        return MPI_WIN_BASE_ABI_INTERNAL;
+    } else if (MPI_WIN_DISP_UNIT == key) {
+        return MPI_WIN_DISP_UNIT_ABI_INTERNAL;
+    } else if (MPI_WIN_SIZE == key) {                           
+        return MPI_WIN_SIZE_ABI_INTERNAL;
+    } else if (MPI_WIN_CREATE_FLAVOR == key) {
+        return MPI_WIN_CREATE_FLAVOR_ABI_INTERNAL;
+    } else if (MPI_WIN_MODEL == key) {
+        return MPI_WIN_MODEL_ABI_INTERNAL;
+    } else {
+        /*
+         * assume if we get here that's its a user created key so add the adjustor in
+         */
+        return (key + OMPI_ABI_HANDLE_BASE_OFFSET);
+    }
+}
+
+
 /*
  * prototypes for ABI built-in attribute callback functions
  */
@@ -1036,6 +1408,34 @@ OMPI_DECLSPEC int ABI_C_MPI_COMM_DUP_FN( MPI_Comm_ABI_INTERNAL comm, int comm_ke
                                           void* attribute_val_in,
                                           void* attribute_val_out,
                                           int* flag );
+
+int ABI_C_MPI_TYPE_NULL_DELETE_FN( MPI_Datatype_ABI_INTERNAL datatype, int type_keyval,
+                                    void* attribute_val_out,
+                                    void* extra_state );
+
+int ABI_C_MPI_TYPE_NULL_COPY_FN( MPI_Datatype_ABI_INTERNAL datatype, int type_keyval,
+                                  void* extra_state,
+                                  void* attribute_val_in,
+                                  void* attribute_val_out,
+                                  int* flag );
+
+int ABI_C_MPI_TYPE_DUP_FN( MPI_Datatype_ABI_INTERNAL datatype, int type_keyval,
+                            void* extra_state,
+                            void* attribute_val_in, void* attribute_val_out,
+                            int* flag );
+
+int ABI_C_MPI_WIN_NULL_DELETE_FN( MPI_Win_ABI_INTERNAL window, int win_keyval,
+                                   void* attribute_val_out,
+                                   void* extra_state );
+
+int ABI_C_MPI_WIN_NULL_COPY_FN( MPI_Win_ABI_INTERNAL window, int win_keyval,
+                                 void* extra_state,
+                                 void* attribute_val_in,
+                                 void* attribute_val_out, int* flag );
+
+int ABI_C_MPI_WIN_DUP_FN( MPI_Win_ABI_INTERNAL window, int win_keyval, void* extra_state,
+                           void* attribute_val_in, void* attribute_val_out,
+                           int* flag );
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

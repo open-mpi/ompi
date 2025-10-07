@@ -282,6 +282,16 @@ class ConvertFuncs:
     TAG = 'ompi_convert_abi_tag_intern_tag'
     ROOT = 'ompi_convert_abi_root_intern_root'
     SOURCE = 'ompi_convert_abi_source_intern_source'
+    PVAR_SESSION = 'ompi_convert_abi_pvar_session_intern_pvar_session'
+    PVAR_CLASS = 'ompi_convert_abi_pvar_class_intern_pvar_class'
+    PVAR_HANDLE = 'ompi_convert_abi_pvar_handle_intern_pvar_handle'
+    T_VERBOSITY = 'ompi_convert_abi_t_verbosity_intern_t_verbosity'
+    CVAR_HANDLE = 'ompi_convert_abi_cvar_handle_intern_cvar_handle'
+    T_ENUM = 'ompi_convert_abi_t_enum_intern_t_enum'
+    T_BIND = 'ompi_convert_abi_t_bind_intern_t_bind'
+    CB_SAFETY = 'ompi_convert_abi_cb_safety_intern_cb_safety'
+    SOURCE_ORDER = 'ompi_convert_abi_source_order_intern_source_order'
+    ATTR_KEY = 'ompi_convert_abi_attr_key_intern_attr_key'
 
 
 class ConvertOMPIToStandard:
@@ -301,7 +311,16 @@ class ConvertOMPIToStandard:
     REQUEST = 'ompi_convert_ompi_request_abi_request'
     INFO = 'ompi_convert_info_ompi_to_standard'
     TS_LEVEL = 'ompi_convert_ts_level_ompi_to_standard'
-    TAG = 'ompi_convert_tag_ompi_to_starndard'
+    TAG = 'ompi_convert_tag_ompi_to_standard'
+    PVAR_SESSION = 'ompi_convert_pvar_session_ompi_to_standard'
+    PVAR_CLASS = 'ompi_convert_pvar_class_ompi_to_standard'
+    PVAR_HANDLE = 'ompi_convert_pvar_handle_ompi_to_standard'
+    T_VERBOSITY = 'ompi_convert_t_verbosity_ompi_to_standard'
+    CVAR_HANDLE = 'ompi_convert_cvar_handle_ompi_to_standard'
+    T_ENUM = 'ompi_convert_t_enum_ompi_to_standard'
+    T_BIND = 'ompi_convert_t_bind_ompi_to_standard'
+    SOURCE_ORDER = 'ompi_convert_source_order_ompi_to_standard'
+    ATTR_KEY = 'ompi_convert_attr_key_ompi_to_standard'
 
 
 # Inline function attributes
