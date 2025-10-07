@@ -25,7 +25,7 @@
 static inline void mca_btl_self_frag_constructor(mca_btl_self_frag_t *frag)
 {
     frag->base.des_flags = 0;
-    frag->segments[0].seg_addr.pval = (void *) frag->data;
+    frag->segments[0].seg_addr.pval = (void *) frag->base.super.ptr;
     frag->segments[0].seg_len = (uint32_t) frag->size;
     frag->base.des_segments = frag->segments;
     frag->base.des_segment_count = 1;
