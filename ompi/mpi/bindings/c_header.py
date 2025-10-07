@@ -51,6 +51,7 @@ INTERNAL_DATATYPES = [
     "MPI_T_event_instance",
     "MPI_T_event_registration",
     "MPI_T_cb_safety",
+    "MPI_T_source_order",
     # TODO: these two are deprecated, get rid of them
     "MPI_Copy_function",
     "MPI_Delete_function",
@@ -245,6 +246,16 @@ for proc in std.all_iso_c_procedures():
      if proc.has_embiggenment():
          binding = proc.express.embiggen.iso_c.__str__().split()
          output.append(f"{binding[0]} P{' '.join(binding[1:])};\n")
+
+# ================================ Odds and ends for mangle case ===============
+if MANGLE_NAMES:
+    output.append("\n")
+    output.append("/*\n")
+    output.append(" * define externs to help with attributes\n")
+    output.append(" */\n")
+    output.append("extern int ompi_abi_mpi_proc_null_val;\n")
+    output.append("extern int ompi_abi_mpi_any_source_val;\n")
+    output.append("\n")
 
 # ================================ Final Output ================================
 output.append("#if defined(__cplusplus)\n")

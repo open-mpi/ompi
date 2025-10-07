@@ -131,6 +131,17 @@ if OMPI_GENERATE_BINDINGS
 	    ompi \
 	    --mpit \
 	    $<
+
+%_abi_generated.c: %.c.in
+	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
+	    --builddir $(abs_top_builddir) \
+	    --srcdir $(abs_top_srcdir) \
+	    --output $@ \
+	    c \
+	    source \
+	    standard \
+	    --mpit \
+	    $<
 endif
 
 libmpi_mpit_profile_la_SOURCES = $(interface_profile_sources)
@@ -142,3 +153,8 @@ libmpi_mpit_noprofile_la_CPPFLAGS = -DOMPI_BUILD_MPI_PROFILING=0
 EXTRA_DIST = $(prototype_sources)
 
 MAINTAINERCLEANFILES = *_generated.c 
+
+if OMPI_STANDARD_ABI
+include Makefile_abi.include
+endif
+
