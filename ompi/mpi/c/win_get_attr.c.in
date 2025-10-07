@@ -32,7 +32,7 @@
 #include "ompi/attribute/attribute.h"
 #include "ompi/win/win.h"
 
-PROTOTYPE ERROR_CLASS win_get_attr(WIN win, INT win_keyval,
+PROTOTYPE ERROR_CLASS win_get_attr(WIN win, ATTR_KEY win_keyval,
                                    BUFFER_OUT attribute_val, INT_OUT flag)
 {
     int ret;

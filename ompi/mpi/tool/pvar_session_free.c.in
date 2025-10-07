@@ -16,7 +16,7 @@
 
 #include "ompi/mpi/tool/mpit-internal.h"
 
-PROTOTYPE ERROR_CLASS pvar_session_free(PVAR_SESSION_OUT session)
+PROTOTYPE ERROR_CLASS pvar_session_free(PVAR_SESSION_INOUT session)
 {
     int ret = MPI_SUCCESS;
 
