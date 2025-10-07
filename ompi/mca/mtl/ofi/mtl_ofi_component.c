@@ -694,6 +694,8 @@ no_hmem:
     }
 
     hints->domain_attr->resource_mgmt    = FI_RM_ENABLED;
+    hints->domain_attr->domain = opal_common_ofi.domain;
+    hints->fabric_attr->fabric = opal_common_ofi.fabric;
 
     /**
      * The EFA provider in Libfabric versions prior to 1.10 contains a bug
@@ -715,10 +717,16 @@ no_hmem:
         hints_dup->fabric_attr->prov_name = strdup("efa");
 
         ret = fi_getinfo(fi_primary_version, NULL, NULL, 0ULL, hints_dup, &providers);
+        if (FI_ENODATA == -ret && (hints_dup->fabric_attr->fabric || hints_dup->domain_attr->domain)) {
+            /* Retry without fabric and domain */
+            hints_dup->fabric_attr->fabric = NULL;
+            hints_dup->domain_attr->domain = NULL;
+            ret = fi_getinfo(fi_primary_version, NULL, NULL, 0ULL, hints_dup, &providers);
+        }
         if (FI_ENOSYS == -ret) {
             /* libfabric is not new enough, fallback to use older version of API */
            ret = fi_getinfo(fi_alternate_version, NULL, NULL, 0ULL, hints_dup, &providers);
-	}
+        }
 
         opal_output_verbose(1, opal_common_ofi.output,
                             "%s:%d: EFA specific fi_getinfo(): %s\n",
@@ -756,6 +764,11 @@ no_hmem:
                      0ULL,          /* Optional flag                            */
                      hints,         /* In: Hints to filter providers            */
                      &providers);   /* Out: List of matching providers          */
+    if (FI_ENODATA == -ret && (hints->fabric_attr->fabric || hints->domain_attr->domain)) {
+        hints->fabric_attr->fabric = NULL;
+        hints->domain_attr->domain = NULL;
+        ret = fi_getinfo(fi_primary_version, NULL, NULL, 0ULL, hints, &providers);
+    }
     if (FI_ENOSYS == -ret) {
         ret = fi_getinfo(fi_alternate_version, NULL, NULL, 0ULL, hints, &providers);
     }
@@ -972,9 +985,8 @@ select_prov:
      * instantiate the virtual or physical network. This opens a "fabric
      * provider". See man fi_fabric for details.
      */
-    ret = fi_fabric(prov->fabric_attr,    /* In:  Fabric attributes             */
-                    &ompi_mtl_ofi.fabric, /* Out: Fabric handle                 */
-                    NULL);                /* Optional context for fabric events */
+    ret = opal_common_ofi_fi_fabric(prov->fabric_attr,     /* In:  Fabric attributes             */
+                                    &ompi_mtl_ofi.fabric); /* Out: Fabric handle                 */
     if (0 != ret) {
         opal_show_help("help-mtl-ofi.txt", "OFI call fail", true,
                        "fi_fabric",
@@ -988,10 +1000,9 @@ select_prov:
      * hardware port/collection of ports.  Returns a domain object that can be
      * used to create endpoints.  See man fi_domain for details.
      */
-    ret = fi_domain(ompi_mtl_ofi.fabric,  /* In:  Fabric object                 */
-                    prov,                 /* In:  Provider                      */
-                    &ompi_mtl_ofi.domain, /* Out: Domain object                 */
-                    NULL);                /* Optional context for domain events */
+    ret = opal_common_ofi_fi_domain(ompi_mtl_ofi.fabric,   /* In:  Fabric object                 */
+                                    prov,                  /* In:  Provider                      */
+                                    &ompi_mtl_ofi.domain); /* Out: Domain object                 */
     if (0 != ret) {
         opal_show_help("help-mtl-ofi.txt", "OFI call fail", true,
                        "fi_domain",
@@ -1158,10 +1169,10 @@ error:
         (void) fi_close((fid_t)ompi_mtl_ofi.ofi_ctxt[0].cq);
     }
     if (ompi_mtl_ofi.domain) {
-        (void) fi_close((fid_t)ompi_mtl_ofi.domain);
+        (void) opal_common_ofi_domain_release(ompi_mtl_ofi.domain);
     }
     if (ompi_mtl_ofi.fabric) {
-        (void) fi_close((fid_t)ompi_mtl_ofi.fabric);
+        (void) opal_common_ofi_fabric_release(ompi_mtl_ofi.fabric);
     }
     if (ompi_mtl_ofi.comm_to_context) {
         free(ompi_mtl_ofi.comm_to_context);
@@ -1209,11 +1220,11 @@ ompi_mtl_ofi_finalize(struct mca_mtl_base_module_t *mtl)
         }
     }
 
-    if ((ret = fi_close((fid_t)ompi_mtl_ofi.domain))) {
+    if ((ret = opal_common_ofi_domain_release(ompi_mtl_ofi.domain))) {
         goto finalize_err;
     }
 
-    if ((ret = fi_close((fid_t)ompi_mtl_ofi.fabric))) {
+    if ((ret = opal_common_ofi_fabric_release(ompi_mtl_ofi.fabric))) {
         goto finalize_err;
     }
 
