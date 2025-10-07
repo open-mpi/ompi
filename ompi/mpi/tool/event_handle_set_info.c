@@ -28,9 +28,13 @@
 int MPI_T_event_handle_set_info (MPI_T_event_registration event_registration,
                                  MPI_Info info)
 {
+    int ret;
+
     if (!mpit_is_initialized ()) {
         return MPI_T_ERR_NOT_INITIALIZED;
     }
 
-    return MPI_T_ERR_INVALID_HANDLE;
+    ret = mca_base_event_handle_set_info (event_registration, &info->super);
+
+    return ompit_opal_to_mpit_error(ret);
 }
