@@ -153,8 +153,7 @@ static inline int coll_acoll_reduce_topo(const void *sbuf, void *rbuf, size_t co
     return ret;
 }
 
-#ifdef HAVE_XPMEM_H
-static inline int mca_coll_acoll_reduce_xpmem(const void *sbuf, void *rbuf, size_t count,
+static inline int mca_coll_acoll_reduce_smsc(const void *sbuf, void *rbuf, size_t count,
                                               struct ompi_datatype_t *dtype, struct ompi_op_t *op,
                                               int root, struct ompi_communicator_t *comm,
                                               mca_coll_base_module_t *module,
@@ -168,7 +167,7 @@ static inline int mca_coll_acoll_reduce_xpmem(const void *sbuf, void *rbuf, size
 
     coll_acoll_init(module, comm, subc->data, subc, 0);
     coll_acoll_reserve_mem_t *reserve_mem_rbuf_reduce = NULL;
-    if (subc->xpmem_use_sr_buf != 0) {
+    if (subc->smsc_use_sr_buf != 0) {
         reserve_mem_rbuf_reduce = &(acoll_module->reserve_mem_s);
     }
     coll_acoll_data_t *data = subc->data;
@@ -192,9 +191,9 @@ static inline int mca_coll_acoll_reduce_xpmem(const void *sbuf, void *rbuf, size
     char *tmp_sbuf = NULL;
     char *tmp_rbuf = NULL;
 
-    if (0 == subc->xpmem_use_sr_buf) {
+    if (0 == subc->smsc_use_sr_buf) {
         tmp_rbuf = (char *) data->scratch;
-        tmp_sbuf = (char *) data->scratch + (subc->xpmem_buf_size) / 2;
+        tmp_sbuf = (char *) data->scratch + (subc->smsc_buf_size) / 2;
         if ((MPI_IN_PLACE == sbuf) && (rank == root)) {
             memcpy(tmp_sbuf, rbuf, total_dsize);
         } else {
@@ -234,7 +233,10 @@ static inline int mca_coll_acoll_reduce_xpmem(const void *sbuf, void *rbuf, size
         return ret;
     }
 
-    register_and_cache(size, total_dsize, rank, data);
+    ret = register_mem_with_smsc(rank, size, total_dsize, data, comm);
+    if (ret != MPI_SUCCESS) {
+        return ret;
+    }
 
     /* reduce to the group leader */
     size_t chunk = count / l1_gp_size;
@@ -244,21 +246,21 @@ static inline int mca_coll_acoll_reduce_xpmem(const void *sbuf, void *rbuf, size
         if (sbuf != MPI_IN_PLACE)
             memcpy(tmp_rbuf, sbuf, my_count_size * dsize);
         for (int i = 1; i < l1_gp_size; i++) {
-            ompi_op_reduce(op, (char *) data->xpmem_saddr[l1_gp[i]] + chunk * l1_local_rank * dsize,
+            ompi_op_reduce(op, (char *) data->smsc_saddr[l1_gp[i]] + chunk * l1_local_rank * dsize,
                            (char *) tmp_rbuf + chunk * l1_local_rank * dsize, my_count_size, dtype);
         }
     } else {
         ompi_3buff_op_reduce(op,
-                             (char *) data->xpmem_saddr[l1_gp[0]] + chunk * l1_local_rank * dsize,
+                             (char *) data->smsc_saddr[l1_gp[0]] + chunk * l1_local_rank * dsize,
                              (char *) tmp_sbuf + chunk * l1_local_rank * dsize,
-                             (char *) data->xpmem_raddr[l1_gp[0]] + chunk * l1_local_rank * dsize,
+                             (char *) data->smsc_raddr[l1_gp[0]] + chunk * l1_local_rank * dsize,
                              my_count_size, dtype);
         for (int i = 1; i < l1_gp_size; i++) {
             if (i == l1_local_rank) {
                 continue;
             }
-            ompi_op_reduce(op, (char *) data->xpmem_saddr[l1_gp[i]] + chunk * l1_local_rank * dsize,
-                           (char *) data->xpmem_raddr[l1_gp[0]] + chunk * l1_local_rank * dsize,
+            ompi_op_reduce(op, (char *) data->smsc_saddr[l1_gp[i]] + chunk * l1_local_rank * dsize,
+                           (char *) data->smsc_raddr[l1_gp[0]] + chunk * l1_local_rank * dsize,
                            my_count_size, dtype);
         }
     }
@@ -272,7 +274,7 @@ static inline int mca_coll_acoll_reduce_xpmem(const void *sbuf, void *rbuf, size
 
         if (0 == l2_local_rank) {
             for (int i = 1; i < local_size; i++) {
-                ompi_op_reduce(op, (char *) data->xpmem_raddr[l2_gp[i]], (char *) tmp_rbuf,
+                ompi_op_reduce(op, (char *) data->smsc_raddr[l2_gp[i]], (char *) tmp_rbuf,
                                my_count_size, dtype);
             }
         } else {
@@ -281,29 +283,28 @@ static inline int mca_coll_acoll_reduce_xpmem(const void *sbuf, void *rbuf, size
                     continue;
                 }
                 ompi_op_reduce(op,
-                               (char *) data->xpmem_raddr[l2_gp[i]] + chunk * l2_local_rank * dsize,
-                               (char *) data->xpmem_raddr[0] + chunk * l2_local_rank * dsize,
+                               (char *) data->smsc_raddr[l2_gp[i]] + chunk * l2_local_rank * dsize,
+                               (char *) data->smsc_raddr[0] + chunk * l2_local_rank * dsize,
                                my_count_size, dtype);
             }
             ompi_op_reduce(op, (char *) tmp_rbuf + chunk * l2_local_rank * dsize,
-                           (char *) data->xpmem_raddr[0] + chunk * l2_local_rank * dsize,
+                           (char *) data->smsc_raddr[0] + chunk * l2_local_rank * dsize,
                            my_count_size, dtype);
         }
     }
     ompi_coll_base_barrier_intra_tree(comm, module);
-    if (0 == subc->xpmem_use_sr_buf) {
+    if (0 == subc->smsc_use_sr_buf) {
         if (rank == root) {
             memcpy(rbuf, tmp_rbuf, total_dsize);
         }
     } else {
-        if ((rank != root) && (subc->xpmem_use_sr_buf != 0)) {
+        if ((rank != root) && (subc->smsc_use_sr_buf != 0)) {
             coll_acoll_buf_free(reserve_mem_rbuf_reduce, tmp_rbuf);
         }
     }
-
+    unmap_mem_with_smsc(rank, size, data);
     return MPI_SUCCESS;
 }
-#endif
 
 int mca_coll_acoll_reduce_intra(const void *sbuf, void *rbuf, size_t count,
                                 struct ompi_datatype_t *dtype, struct ompi_op_t *op, int root,
@@ -383,22 +384,17 @@ int mca_coll_acoll_reduce_intra(const void *sbuf, void *rbuf, size_t count,
                                                                    root, comm, module, 0, 0);
             }
         } else {
-#ifdef HAVE_XPMEM_H
-            if ((((subc->xpmem_use_sr_buf != 0)
+            if ((((subc->smsc_use_sr_buf != 0)
                   && (acoll_module->reserve_mem_s).reserve_mem_allocate
                   && ((acoll_module->reserve_mem_s).reserve_mem_size >= total_dsize))
-                 || ((0 == subc->xpmem_use_sr_buf) && (subc->xpmem_buf_size > 2 * total_dsize)))
-                && (subc->without_xpmem != 1) && is_opt) {
-                return mca_coll_acoll_reduce_xpmem(sbuf, rbuf, count, dtype, op, root, comm,
+                 || ((0 == subc->smsc_use_sr_buf) && (subc->smsc_buf_size > 2 * total_dsize)))
+                && (subc->without_smsc != 1) && is_opt) {
+                return mca_coll_acoll_reduce_smsc(sbuf, rbuf, count, dtype, op, root, comm,
                                                    module, subc);
             } else {
                 return ompi_coll_base_reduce_intra_binomial(sbuf, rbuf, count, dtype, op,
                                                                    root, comm, module, 0, 0);
             }
-#else
-            return ompi_coll_base_reduce_intra_binomial(sbuf, rbuf, count, dtype, op, root,
-                                                               comm, module, 0, 0);
-#endif
         }
     } else {
         return ompi_coll_base_reduce_intra_binomial(sbuf, rbuf, count, dtype, op, root, comm,

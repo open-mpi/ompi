@@ -26,6 +26,7 @@ const char *mca_coll_acoll_component_version_string
  */
 int mca_coll_acoll_priority = 0;
 int mca_coll_acoll_max_comms = 10;
+int mca_coll_acoll_comm_size_thresh = 16;
 int mca_coll_acoll_sg_size = 8;
 int mca_coll_acoll_sg_scale = 1;
 int mca_coll_acoll_node_size = 128;
@@ -42,14 +43,13 @@ int mca_coll_acoll_allgather_lin = 0;
 int mca_coll_acoll_allgather_ring_1 = 0;
 int mca_coll_acoll_reserve_memory_for_algo = 0;
 uint64_t mca_coll_acoll_reserve_memory_size_for_algo = 128 * 32768; // 4 MB
-uint64_t mca_coll_acoll_xpmem_buffer_size = 128 * 32768;
+uint64_t mca_coll_acoll_smsc_buffer_size = 128 * 32768;
 int mca_coll_acoll_alltoall_split_factor = 0;
 size_t mca_coll_acoll_alltoall_psplit_msg_thres = 0;
-size_t mca_coll_acoll_alltoall_xpmem_msg_thres = 0;
 
-/* By default utilize xpmem based algorithms applicable when built with xpmem. */
-int mca_coll_acoll_without_xpmem = 0;
-int mca_coll_acoll_xpmem_use_sr_buf = 1;
+/* By default utilize smsc based algorithms applicable when built with smsc. */
+int mca_coll_acoll_without_smsc = 0;
+int mca_coll_acoll_smsc_use_sr_buf = 1;
 /* Default barrier algorithm - hierarchical algorithm using shared memory */
 /* ToDo: check how this works with inter-node*/
 int mca_coll_acoll_barrier_algo = 0;
@@ -102,6 +102,12 @@ static int acoll_register(void)
                                            MCA_BASE_VAR_SCOPE_READONLY, &mca_coll_acoll_priority);
 
     /* Defaults on topology */
+    (void)
+        mca_base_component_var_register(&mca_coll_acoll_component.collm_version, "comm_size_thresh",
+                                        "Disable acoll below this communicator size threshold",
+                                        MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_9,
+                                        MCA_BASE_VAR_SCOPE_READONLY, &mca_coll_acoll_comm_size_thresh);
+
     (void)
         mca_base_component_var_register(&mca_coll_acoll_component.collm_version, "max_comms",
                                         "Maximum no. of communicators using subgroup based algorithms",
@@ -192,25 +198,25 @@ static int acoll_register(void)
         MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
         &mca_coll_acoll_barrier_algo);
     (void) mca_base_component_var_register(
-        &mca_coll_acoll_component.collm_version, "without_xpmem",
-        "By default, xpmem-based algorithms are used when applicable. "
-        "When this flag is set to 1, xpmem-based algorithms are disabled.",
+        &mca_coll_acoll_component.collm_version, "without_smsc",
+        "By default, smsc (xpmem)-based algorithms are used when applicable. "
+        "When this flag is set to 1, smsc-based algorithms are disabled.",
         MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
-        &mca_coll_acoll_without_xpmem);
+        &mca_coll_acoll_without_smsc);
     (void) mca_base_component_var_register(
-        &mca_coll_acoll_component.collm_version, "xpmem_buffer_size",
+        &mca_coll_acoll_component.collm_version, "smsc_buffer_size",
         "Maximum size of memory that can be used for temporary buffers for "
-        "xpmem-based algorithms. By default these buffers are not created or "
-        "used unless xpmem_use_sr_buf is set to 0.",
+        "smsc-based algorithms. By default these buffers are not created or "
+        "used unless smsc_use_sr_buf is set to 0.",
         MCA_BASE_VAR_TYPE_UINT64_T, NULL, 0, 0, OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
-        &mca_coll_acoll_xpmem_buffer_size);
+        &mca_coll_acoll_smsc_buffer_size);
     (void) mca_base_component_var_register(
-        &mca_coll_acoll_component.collm_version, "xpmem_use_sr_buf",
-        "Uses application provided send/recv buffers during xpmem registration "
+        &mca_coll_acoll_component.collm_version, "smsc_use_sr_buf",
+        "Uses application provided send/recv buffers during smsc registration "
         "when set to 1 instead of temporary buffers. The send/recv buffers are "
         "assumed to persist for the duration of the application.",
         MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
-        &mca_coll_acoll_xpmem_use_sr_buf);
+        &mca_coll_acoll_smsc_use_sr_buf);
     (void) mca_base_component_var_register(
         &mca_coll_acoll_component.collm_version, "alltoall_split_factor",
         "Split factor value to be used in alltoall parallel split algorithm,"
@@ -223,12 +229,6 @@ static int acoll_register(void)
         "should not be used.",
         MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0, 0, OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
         &mca_coll_acoll_alltoall_psplit_msg_thres);
-    (void) mca_base_component_var_register(
-        &mca_coll_acoll_component.collm_version, "alltoall_xpmem_msg_thresh",
-        "Message threshold above which xpmem based linear alltoall algorithm "
-        "should be used for intra node cases.",
-        MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0, 0, OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
-        &mca_coll_acoll_alltoall_xpmem_msg_thres);
 
     return OMPI_SUCCESS;
 }
@@ -275,12 +275,6 @@ static void mca_coll_acoll_module_construct(mca_coll_acoll_module_t *module)
         (module->alltoall_attr).psplit_msg_thresh =
             mca_coll_acoll_alltoall_psplit_msg_thres;
     }
-
-    (module->alltoall_attr).xpmem_msg_thresh = 0;
-    if (0 < mca_coll_acoll_alltoall_xpmem_msg_thres) {
-        (module->alltoall_attr).xpmem_msg_thresh =
-            mca_coll_acoll_alltoall_xpmem_msg_thres;
-    }
 }
 
 /*
@@ -301,51 +295,20 @@ static void mca_coll_acoll_module_destruct(mca_coll_acoll_module_t *module)
             }
             coll_acoll_data_t *data = subc->data;
             if (NULL != data) {
-#ifdef HAVE_XPMEM_H
-                for (int j = 0; j < data->comm_size; j++) {
-                    if (ompi_comm_rank(subc->orig_comm) == j) {
-                        continue;
-                    }
-                    // Dereg all rcache regs.
-                    uint64_t key = 0;
-                    uint64_t value = 0;
-                    uint64_t zero_value = 0;
-                    OPAL_HASH_TABLE_FOREACH(key,uint64,value,(data->xpmem_reg_tracker_ht[j])) {
-                        mca_rcache_base_registration_t* reg =
-                            (mca_rcache_base_registration_t*) key;
-
-                        for (uint64_t d_i = 0; d_i < value; ++d_i) {
-                            (data->rcache[j])->rcache_deregister(data->rcache[j], reg);
-                        }
-                        opal_hash_table_set_value_uint64(data->xpmem_reg_tracker_ht[j],
-                                 key, (void*)(zero_value));
-                    }
-                    xpmem_release(data->all_apid[j]);
-                    mca_rcache_base_module_destroy(data->rcache[j]);
-                    opal_hash_table_remove_all(data->xpmem_reg_tracker_ht[j]);
-                    OBJ_RELEASE(data->xpmem_reg_tracker_ht[j]);
-                }
-                xpmem_remove(data->allseg_id[ompi_comm_rank(subc->orig_comm)]);
-
-                free(data->allseg_id);
-                data->allseg_id = NULL;
-                free(data->all_apid);
-                data->all_apid = NULL;
+                free(data->smsc_info.sreg);
+                data->smsc_info.sreg = NULL;
+                free(data->smsc_info.rreg);
+                data->smsc_info.rreg = NULL;
+                free(data->smsc_saddr);
+                data->smsc_saddr = NULL;
+                free(data->smsc_raddr);
+                data->smsc_raddr = NULL;
                 free(data->allshm_sbuf);
                 data->allshm_sbuf = NULL;
                 free(data->allshm_rbuf);
                 data->allshm_rbuf = NULL;
-                free(data->xpmem_saddr);
-                data->xpmem_saddr = NULL;
-                free(data->xpmem_raddr);
-                data->xpmem_raddr = NULL;
                 free(data->scratch);
                 data->scratch = NULL;
-                free(data->xpmem_reg_tracker_ht);
-                data->xpmem_reg_tracker_ht = NULL;
-                free(data->rcache);
-                data->rcache = NULL;
-#endif
                 free(data->allshmseg_id);
                 data->allshmseg_id = NULL;
                 free(data->allshmmmap_sbuf);
@@ -418,7 +381,6 @@ static void mca_coll_acoll_module_destruct(mca_coll_acoll_module_t *module)
 
     (module->alltoall_attr).split_factor = 0;
     (module->alltoall_attr).psplit_msg_thresh = 0;
-    (module->alltoall_attr).xpmem_msg_thresh = 0;
 }
 
 OBJ_CLASS_INSTANCE(mca_coll_acoll_module_t, mca_coll_base_module_t, mca_coll_acoll_module_construct,
