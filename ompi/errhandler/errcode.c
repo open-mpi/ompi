@@ -280,7 +280,8 @@ int ompi_mpi_errcode_finalize (void)
          * we have to free.
          */
         errc = (ompi_mpi_errcode_t *)opal_pointer_array_get_item(&ompi_mpi_errcodes, i);
-        OBJ_RELEASE (errc);
+        if (NULL != errc)
+            OBJ_RELEASE (errc);
     }
 
     OBJ_DESTRUCT(&ompi_success);
@@ -440,6 +441,7 @@ int ompi_mpi_errcode_remove(int errnum)
             if (OPAL_SUCCESS == ret) {
                 if (errnum == ompi_mpi_errcode_lastused) {
                     ompi_mpi_errcode_lastused--;
+                    ret = ompi_mpi_errcode_lastused;
                 }
             }
         }
@@ -447,6 +449,16 @@ int ompi_mpi_errcode_remove(int errnum)
 
     opal_mutex_unlock(&errcode_lock);
 
+    /* Release the object on success */
+    if (ret >= 0) {
+        OBJ_RELEASE(errcodep);
+    }
+
+    /*
+     * Return lastused value captured under lock so caller has
+     * consistent value to set MPI_LASTUSEDCODE attribute.
+     * On error, we return less than zero (e.g., OMPI_ERROR).
+     */
     return ret;
 }
 
@@ -472,6 +484,7 @@ int ompi_mpi_errclass_remove(int errclass)
                 if (OPAL_SUCCESS == ret) {
                     if (errclass == ompi_mpi_errcode_lastused) {
                         ompi_mpi_errcode_lastused--;
+                        ret = ompi_mpi_errcode_lastused;
                     }
                 }
             }
@@ -480,6 +493,16 @@ int ompi_mpi_errclass_remove(int errclass)
 
     opal_mutex_unlock(&errcode_lock);
 
+    /* Release the object on success */
+    if (ret >= 0) {
+        OBJ_RELEASE(errcodep);
+    }
+
+    /*
+     * Return lastused value captured under lock so caller has
+     * consistent value to set MPI_LASTUSEDCODE attribute.
+     * On error, we return less than zero (e.g., OMPI_ERROR).
+     */
     return ret;
 }
 

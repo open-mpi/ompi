@@ -33,7 +33,7 @@
 
 PROTOTYPE ERROR_CLASS add_error_code(INT errorclass, INT_OUT errorcode)
 {
-    int code;
+    int ecode;
     int rc;
 
     if ( MPI_PARAM_CHECK ) {
@@ -41,22 +41,22 @@ PROTOTYPE ERROR_CLASS add_error_code(INT errorclass, INT_OUT errorcode)
 
         if ( ompi_mpi_errcode_is_invalid(errorclass) )
             return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG,
-                                          FUNC_NAME);
+                                                   FUNC_NAME);
 
-	if ( !ompi_mpi_errnum_is_class ( errorclass) )
-	    return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG,
-					  FUNC_NAME);
+        if ( !ompi_mpi_errnum_is_class ( errorclass) )
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG,
+                                                   FUNC_NAME);
 
         if (NULL == errorcode) {
-            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(
-                                          MPI_ERR_ARG, FUNC_NAME);
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG,
+                                                   FUNC_NAME);
         }
     }
 
-    code = ompi_mpi_errcode_add ( errorclass);
-    if ( 0 > code ) {
+    ecode = ompi_mpi_errcode_add ( errorclass);
+    if ( 0 > ecode ) {
         return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_INTERN,
-                                      FUNC_NAME);
+                                               FUNC_NAME);
     }
 
     /*
@@ -68,12 +68,13 @@ PROTOTYPE ERROR_CLASS add_error_code(INT errorclass, INT_OUT errorcode)
                               MPI_COMM_WORLD,
                               &MPI_COMM_WORLD->c_keyhash,
                               MPI_LASTUSEDCODE,
-                              ompi_mpi_errcode_lastused,
+                              ecode,    /* lastused */
                               true);
     if ( MPI_SUCCESS != rc ) {
-	return OMPI_ERRHANDLER_NOHANDLE_INVOKE(rc, FUNC_NAME);
+        return OMPI_ERRHANDLER_NOHANDLE_INVOKE(rc, FUNC_NAME);
     }
 
-    *errorcode = code;
+    *errorcode = ecode;
+
     return MPI_SUCCESS;
 }
