@@ -27,6 +27,7 @@
  * Copyright (c) 2018-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2023-2025 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (c) 2025      BULL S.A.S. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -1674,11 +1675,11 @@ int ompi_intercomm_create (ompi_communicator_t *local_comm, int local_leader, om
         /* remember that the remote_leader and bridge_comm arguments
            just have to be valid at the local_leader */
         if ( local_rank == local_leader ) {
-            if (ompi_comm_invalid (bridge_comm) || (bridge_comm->c_flags & OMPI_COMM_INTER)) {
+            if (ompi_comm_invalid (bridge_comm) ) {
                 return MPI_ERR_COMM;
             }
 
-            if ((remote_leader < 0) || (remote_leader >= ompi_comm_size(bridge_comm))) {
+            if ( ompi_comm_peer_invalid( bridge_comm, remote_leader) ) {
                 return OMPI_ERR_BAD_PARAM;
             }
         } /* if ( local_rank == local_leader ) */
