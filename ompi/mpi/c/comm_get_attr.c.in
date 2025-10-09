@@ -35,9 +35,6 @@ PROTOTYPE ERROR_CLASS comm_get_attr(COMM comm, ATTR_KEY comm_keyval,
                                     BUFFER_OUT attribute_val, INT_OUT flag)
 {
     int ret;
-#if OMPI_ABI_SRC
-static int mpi_abi_proc_null_val = MPI_PROC_NULL_ABI_INTERNAL;
-#endif
 
     MEMCHECKER(
         memchecker_comm(comm);

@@ -67,11 +67,14 @@ prototype_sources = \
 	enum_get_item.c.in \
 	event_callback_get_info.c.in \
 	event_callback_set_info.c.in \
+	event_copy.c.in \
 	event_handle_get_info.c.in \
 	event_handle_set_info.c.in \
 	event_get_info.c.in \
+	event_get_source.c.in \
 	event_handle_alloc.c.in \
 	event_handle_free.c.in \
+	event_read.c.in \
 	event_register_callback.c.in \
 	event_set_dropped_handler.c.in \
 	pvar_get_info.c.in \
@@ -104,12 +107,8 @@ interface_profile_sources_np = \
 	category_get_pvars.c \
 	cvar_get_index.c \
 	cvar_get_num.c \
-	event_copy.c \
 	event_get_index.c \
 	event_get_num.c \
-	event_get_source.c \
-	event_get_timestamp.c \
-	event_read.c \
 	finalize.c \
 	init_thread.c \
 	pvar_get_index.c \
