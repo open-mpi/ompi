@@ -296,11 +296,9 @@ class ABIConverterBuilder:
         for i,value_name in enumerate(consts.PREDEFINED_OPTIONAL_FORTRAN_DATATYPES):
             intern_name = self.mangle_name(value_name)
             base_type = value_name[4:]
-            lines.append('} else if (%s == datatype) {' % (value_name))
             lines.append(f'#if OMPI_HAVE_FORTRAN_{base_type}')
+            lines.append('} else if (%s == datatype) {' % (value_name))
             lines.append(f'return {intern_name};')
-            lines.append('#else')
-            lines.append(f'return {mangle_null_name};')
             lines.append('#endif')
         lines.append('#endif  /* OMPI_BUILD_FORTRAN_BINDINGS */')
         lines.append('}')
