@@ -143,6 +143,34 @@ PREDEFINED_DATATYPES = [
     'MPI_2INT',
     'MPI_SHORT_INT',
     'MPI_LONG_DOUBLE_INT',
+    'MPI_LOGICAL',
+    'MPI_INTEGER',
+    'MPI_REAL',
+    'MPI_COMPLEX',
+    'MPI_DOUBLE_PRECISION',
+    'MPI_CHARACTER',
+    'MPI_DOUBLE_COMPLEX',
+]
+
+PREDEFINED_OPTIONAL_FORTRAN_DATATYPES = [
+    'MPI_LOGICAL1',
+    'MPI_LOGICAL2',
+    'MPI_LOGICAL4',
+    'MPI_LOGICAL8',
+    'MPI_LOGICAL16',
+    'MPI_INTEGER1',
+    'MPI_INTEGER2',
+    'MPI_INTEGER4',
+    'MPI_INTEGER8',
+    'MPI_INTEGER16',
+    'MPI_REAL2',
+    'MPI_REAL4',
+    'MPI_REAL8',
+    'MPI_REAL16',
+    'MPI_COMPLEX4',
+    'MPI_COMPLEX8',
+    'MPI_COMPLEX16',
+    'MPI_COMPLEX32',
 ]
 
 # C type: MPI_Comm
@@ -195,9 +223,18 @@ RESERVED_SESSIONS = [
 
 RESERVED_ERRHANDLERS = [
     'MPI_ERRHANDLER_NULL',
-    'MPI_ERRHANDLER_ARE_FATAL',
-    'MPI_ERRHANDLER_ABORT',
-    'MPI_ERRHANDLER_RETURN',
+    'MPI_ERRORS_ARE_FATAL',
+    'MPI_ERRORS_ABORT',
+    'MPI_ERRORS_RETURN',
+]
+
+RESERVED_COMM_COPY_ATTR_FNS = [
+    'MPI_COMM_NULL_COPY_FN',
+    'MPI_COMM_DUP_FN',
+]
+
+RESERVED_COMM_DEL_ATTR_FNS = [
+    'MPI_COMM_NULL_DELETE_FN'
 ]
 
 IGNORED_STATUS_HANDLES = [
@@ -220,6 +257,127 @@ COLLECTIVE_OPERATIONS = [
     'MPI_LXOR',
     'MPI_REPLACE',
     'MPI_NO_OP',
+]
+
+COMM_GROUP_COMPARE_VALS = [
+    'MPI_IDENT',
+    'MPI_CONGRUENT',
+    'MPI_SIMILAR',
+    'MPI_UNEQUAL',
+]
+
+RESERVED_ATTR_KEYS = [
+    'MPI_KEYVAL_INVALID',
+    'MPI_TAG_UB',
+    'MPI_IO',
+    'MPI_HOST',
+    'MPI_WTIME_IS_GLOBAL',
+    'MPI_APPNUM',
+    'MPI_LASTUSEDCODE',
+    'MPI_UNIVERSE_SIZE',
+    'MPI_WIN_BASE',
+    'MPI_WIN_DISP_UNIT',
+    'MPI_WIN_SIZE',
+    'MPI_WIN_CREATE_FLAVOR',
+    'MPI_WIN_MODEL',
+]
+
+TS_LEVEL_VALUES = [
+    'MPI_THREAD_SINGLE',
+    'MPI_THREAD_FUNNELED',
+    'MPI_THREAD_SERIALIZED',
+    'MPI_THREAD_MULTIPLE',
+]
+
+
+T_SCOPE_VALUES = [
+    'MPI_T_SCOPE_CONSTANT',
+    'MPI_T_SCOPE_READONLY',
+    'MPI_T_SCOPE_LOCAL',
+    'MPI_T_SCOPE_GROUP',
+    'MPI_T_SCOPE_GROUP_EQ',
+    'MPI_T_SCOPE_ALL',
+    'MPI_T_SCOPE_ALL_EQ',
+]
+
+RESERVED_TAGS = [
+    'MPI_ANY_TAG',
+]
+
+RESERVED_SOURCE = [
+    'MPI_ANY_SOURCE',
+]
+
+RESERVED_ROOT = [
+    'MPI_ROOT',
+]
+
+RESERVED_PVAR_SESSIONS = [
+    'MPI_T_PVAR_SESSION_NULL',
+]
+
+RESERVED_CVAR_HANDLES = [
+    'MPI_T_CVAR_HANDLE_NULL',
+]
+    
+RESERVED_PVAR_HANDLES = [
+    'MPI_T_PVAR_HANDLE_NULL',
+]
+
+RESERVED_T_ENUMS = [
+    'MPI_T_ENUM_NULL',
+]
+
+T_BIND_VALUES = [
+    'MPI_T_BIND_NO_OBJECT',
+    'MPI_T_BIND_MPI_COMM',
+    'MPI_T_BIND_MPI_DATATYPE',
+    'MPI_T_BIND_MPI_ERRHANDLER',
+    'MPI_T_BIND_MPI_FILE',
+    'MPI_T_BIND_MPI_GROUP',
+    'MPI_T_BIND_MPI_OP',
+    'MPI_T_BIND_MPI_REQUEST',
+    'MPI_T_BIND_MPI_WIN',
+    'MPI_T_BIND_MPI_MESSAGE',
+    'MPI_T_BIND_MPI_INFO',
+    'MPI_T_BIND_MPI_SESSION',
+]
+
+T_VERBOSITY_VALUES = [
+    'MPI_T_VERBOSITY_USER_BASIC',
+    'MPI_T_VERBOSITY_USER_DETAIL',
+    'MPI_T_VERBOSITY_USER_ALL',
+    'MPI_T_VERBOSITY_TUNER_BASIC',
+    'MPI_T_VERBOSITY_TUNER_DETAIL',
+    'MPI_T_VERBOSITY_TUNER_ALL',
+    'MPI_T_VERBOSITY_MPIDEV_BASIC',
+    'MPI_T_VERBOSITY_MPIDEV_DETAIL',
+    'MPI_T_VERBOSITY_MPIDEV_ALL',
+]
+
+T_CB_SAFETY_VALUES = [
+    'MPI_T_CB_REQUIRE_NONE',
+    'MPI_T_CB_REQUIRE_MPI_RESTRICTED',
+    'MPI_T_CB_REQUIRE_THREAD_SAFE',
+    'MPI_T_CB_REQUIRE_ASYNC_SIGNAL_SAFE',
+]
+
+T_SOURCE_ORDER_VALUES = [
+    'MPI_T_SOURCE_ORDERED',
+    'MPI_T_SOURCE_UNORDERED',
+]
+
+T_PVAR_CLASS_VALUES = [
+    'MPI_T_PVAR_CLASS_STATE',
+    'MPI_T_PVAR_CLASS_LEVEL',
+    'MPI_T_PVAR_CLASS_SIZE',
+    'MPI_T_PVAR_CLASS_PERCENTAGE',
+    'MPI_T_PVAR_CLASS_HIGHWATERMARK',
+    'MPI_T_PVAR_CLASS_LOWWATERMARK',
+    'MPI_T_PVAR_CLASS_COUNTER',
+    'MPI_T_PVAR_CLASS_AGGREGATE',
+    'MPI_T_PVAR_CLASS_TIMER',
+    'MPI_T_PVAR_CLASS_GENERIC',
 ]
 
 VARIOUS_CONSTANTS = {
@@ -289,9 +447,12 @@ class ConvertFuncs:
     CVAR_HANDLE = 'ompi_convert_abi_cvar_handle_intern_cvar_handle'
     T_ENUM = 'ompi_convert_abi_t_enum_intern_t_enum'
     T_BIND = 'ompi_convert_abi_t_bind_intern_t_bind'
-    CB_SAFETY = 'ompi_convert_abi_cb_safety_intern_cb_safety'
-    SOURCE_ORDER = 'ompi_convert_abi_source_order_intern_source_order'
+    T_CB_SAFETY = 'ompi_convert_abi_cb_safety_intern_cb_safety'
+    T_SOURCE_ORDER = 'ompi_convert_abi_source_order_intern_source_order'
     ATTR_KEY = 'ompi_convert_abi_attr_key_intern_attr_key'
+    COMM_COPY_ATTR_FUNCTION = 'ompi_convert_comm_copy_attr_fn_intern_comm_copy_attr_fn'
+    COMM_DELETE_ATTR_FUNCTION = 'ompi_convert_comm_delete_attr_fn_intern_comm_delete_attr_fn'
+    SPLIT_TYPE = 'ompi_convert_split_type_intern_type'
 
 
 class ConvertOMPIToStandard:
@@ -319,8 +480,9 @@ class ConvertOMPIToStandard:
     CVAR_HANDLE = 'ompi_convert_cvar_handle_ompi_to_standard'
     T_ENUM = 'ompi_convert_t_enum_ompi_to_standard'
     T_BIND = 'ompi_convert_t_bind_ompi_to_standard'
-    SOURCE_ORDER = 'ompi_convert_source_order_ompi_to_standard'
+    T_SOURCE_ORDER = 'ompi_convert_source_order_ompi_to_standard'
     ATTR_KEY = 'ompi_convert_attr_key_ompi_to_standard'
+    COMM_CMP = 'ompi_convert_comm_cmp_ompi_to_standard'
 
 
 # Inline function attributes

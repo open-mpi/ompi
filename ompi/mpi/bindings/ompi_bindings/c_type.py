@@ -1387,20 +1387,21 @@ class TypeCommCopyAttrFunction(Type):
 
 
 @Type.add_type('COMM_COPY_ATTR_FUNCTION', abi_type=['standard'])
-class TypeCommCopyAttrFunctionStandard(Type):
+class TypeCommCopyAttrFunctionStandard(StandardABIType):
 
     def type_text(self, enable_count=False):
         type_name = self.mangle_name('MPI_Comm_copy_attr_function')
         return f'{type_name} *'
 
-    @property
-    def argument(self):
-        return f'(MPI_Comm_copy_attr_function *) {self.name}'
+#    @property
+#    def argument(self):
+#        return f'(MPI_Comm_copy_attr_function *) {self.name}'
 
     @property
     def init_code(self):
         code = []
-        code = ['ompi_abi_wrapper_helper_t *helper = NULL;']
+        code = [f'MPI_Comm_copy_attr_function *{self.tmpname} = {ConvertFuncs.COMM_COPY_ATTR_FUNCTION}({self.name});']
+        code.append('ompi_abi_wrapper_helper_t *helper = NULL;')
         code.append('MPI_Comm_copy_attr_function_ABI_INTERNAL *copy_fn;')
         code.append('helper = ( ompi_abi_wrapper_helper_t *)malloc(sizeof(ompi_abi_wrapper_helper_t));')
         code.append('if (NULL == helper)  return MPI_ERR_NO_MEM;')
@@ -1436,7 +1437,6 @@ class TypeCommCopyAttrFunctionStandard(Type):
         code.append('    ompi_abi_wrapper_helper_t *helper = (ompi_abi_wrapper_helper_t *)extra_state;')
         code.append('    MPI_Comm_ABI_INTERNAL comm_tmp = ompi_convert_comm_ompi_to_standard(oldcomm);')
         code.append('    return helper->user_delete_fn((MPI_Comm_ABI_INTERNAL)comm_tmp, comm_keyval, attribute_val, helper->user_extra_state);')
-        code.append('    free(helper);')
         code.append('}')
         return code
 
@@ -1448,15 +1448,15 @@ class TypeCommDeleteAttrFunction(Type):
 
 
 @Type.add_type('COMM_DELETE_ATTR_FUNCTION', abi_type=['standard'])
-class TypeCommDeleteAttrFunctionStandard(Type):
+class TypeCommDeleteAttrFunctionStandard(StandardABIType):
 
     def type_text(self, enable_count=False):
         type_name = self.mangle_name('MPI_Comm_delete_attr_function')
         return f'{type_name} *'
 
-    @property
-    def argument(self):
-        return f'(MPI_Comm_delete_attr_function *) {self.name}'
+#    @property
+#    def argument(self):
+#        return f'(MPI_Comm_delete_attr_function *) {self.name}'
 
 #
 # note the code generated here relies on that generated for
@@ -1465,6 +1465,7 @@ class TypeCommDeleteAttrFunctionStandard(Type):
     @property
     def init_code(self):
         code = []
+        code = [f'MPI_Comm_delete_attr_function *{self.tmpname} = {ConvertFuncs.COMM_DELETE_ATTR_FUNCTION}({self.name});']
         code.append('MPI_Comm_delete_attr_function_ABI_INTERNAL *delete_fn;')
         code.append(f'if ({self.name} == MPI_COMM_NULL_DELETE_FN_ABI_INTERNAL)'  + '{')
         code.append('delete_fn = ABI_C_MPI_COMM_NULL_DELETE_FN;')
@@ -2336,7 +2337,7 @@ class TypeCbSafetyStandard(StandardABIType):
 
     @property
     def init_code(self):
-        return [f'MPI_T_cb_safety {self.tmpname} = {ConvertFuncs.CB_SAFETY}({self.name});']
+        return [f'MPI_T_cb_safety {self.tmpname} = {ConvertFuncs.T_CB_SAFETY}({self.name});']
 
     def type_text(self, enable_count=False):
         return self.mangle_name('MPI_T_cb_safety')
@@ -2355,7 +2356,7 @@ class TypeSourceOrderStandard(StandardABIType):
 
     @property
     def init_code(self):
-        return [f'MPI_T_source_order {self.tmpname} = {ConvertFuncs.SOURCE_ORDER}({self.name});']
+        return [f'MPI_T_source_order {self.tmpname} = {ConvertFuncs.T_SOURCE_ORDER}({self.name});']
 
     def type_text(self, enable_count=False):
         return self.mangle_name('MPI_T_source_order')
@@ -2375,7 +2376,7 @@ class TypeSourceOrderOutStandard(StandardABIType):
 
     @property
     def final_code(self):
-        return [f'*{self.name} = {ConvertOMPIToStandard.SOURCE_ORDER}((MPI_T_source_order) {self.name});']
+        return [f'*{self.name} = {ConvertOMPIToStandard.T_SOURCE_ORDER}((MPI_T_source_order) {self.name});']
 
     def type_text(self, enable_count=False):
         type_name = self.mangle_name('MPI_T_source_order')
@@ -2505,3 +2506,58 @@ class TypeAttrKeyINOutStandard(StandardABIType):
     def argument(self):
         return f'&{self.tmpname}'
 
+@Type.add_type('SPLIT_TYPE', abi_type=['ompi'])
+class TypeSplitType(Type):
+
+    def type_text(self, enable_count=False):
+        return 'int'
+
+@Type.add_type('SPLIT_TYPE', abi_type=['standard'])
+class TyperSplitTypeStandard(StandardABIType):
+
+    @property
+    def init_code(self):
+        return [f'int {self.tmpname} = {ConvertFuncs.SPLIT_TYPE}({self.name});']
+
+    def type_text(self, enable_count=False):
+        return 'int'
+
+@Type.add_type('COMM_CMP_OUT', abi_type=['ompi'])
+class TypeCommCmpOut(Type):
+
+    def type_text(self, enable_count=False):
+        return 'int *'
+
+@Type.add_type('COMM_CMP_OUT', abi_type=['standard'])
+class TyperCommCmpOutStandard(StandardABIType):
+
+    @property
+    def final_code(self):
+        return [f'*{self.name} = {ConvertOMPIToStandard.COMM_CMP}(*{self.name});']
+
+    def type_text(self, enable_count=False):
+        return 'int *'
+
+    @property
+    def argument(self):
+        return f'{self.name}'
+
+@Type.add_type('EVENT_INSTANCE', abi_type=['ompi'])
+class TypeEventInstance(Type):
+
+    def type_text(self, enable_count=False):
+        return 'MPI_T_event_instance'
+
+
+@Type.add_type('EVENT_INSTANCE', abi_type=['standard'])
+class TypeEventInstanceStandard(StandardABIType):
+
+    def return_code(self, name):
+        return [f'return {ConvertOMPIToStandard.COMM}({name});']
+
+    def type_text(self, enable_count=False):
+        return self.mangle_name('MPI_T_event_instance')
+
+    @property
+    def argument(self):
+        return f'{self.name}'

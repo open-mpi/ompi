@@ -256,6 +256,16 @@ if MANGLE_NAMES:
     output.append("extern int ompi_abi_mpi_proc_null_val;\n")
     output.append("extern int ompi_abi_mpi_any_source_val;\n")
     output.append("\n")
+    output.append("int ABI_C_MPI_COMM_NULL_DELETE_FN( MPI_Comm_ABI_INTERNAL comm, int comm_keyval, void* attribute_val_out, void* extra_state );\n")
+    output.append("int ABI_C_MPI_COMM_NULL_COPY_FN( MPI_Comm_ABI_INTERNAL  comm, int comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag );\n")
+    output.append("int ABI_C_MPI_COMM_DUP_FN( MPI_Comm_ABI_INTERNAL comm, int comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag );\n")
+    output.append("int ABI_C_MPI_TYPE_NULL_DELETE_FN( MPI_Datatype_ABI_INTERNAL datatype, int type_keyval, void* attribute_val_out, void* extra_state );\n")
+    output.append("int ABI_C_MPI_TYPE_NULL_COPY_FN( MPI_Datatype_ABI_INTERNAL datatype, int type_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag );\n")
+    output.append("int ABI_C_MPI_TYPE_DUP_FN( MPI_Datatype_ABI_INTERNAL datatype, int type_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag );\n")
+    output.append("int ABI_C_MPI_WIN_NULL_DELETE_FN( MPI_Win_ABI_INTERNAL window, int win_keyval, void* attribute_val_out, void* extra_state );\n")
+    output.append("int ABI_C_MPI_WIN_NULL_COPY_FN( MPI_Win_ABI_INTERNAL window, int win_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag );\n")
+    output.append("int ABI_C_MPI_WIN_DUP_FN( MPI_Win_ABI_INTERNAL window, int win_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag );\n")
+    output.append("\n")
 
 # ================================ Final Output ================================
 output.append("#if defined(__cplusplus)\n")
