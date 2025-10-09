@@ -516,8 +516,8 @@ EXTRA_DIST = $(prototype_sources) \
 	$(prototype_sources_obc) \
 	$(prototype_sources_not_in_abi) \
 	abi_converters.h \
-	abi_converters2.h \
-	abi_get_info.c.in
+	abi_get_info.c.in \
+        abi.h.in
 
 # functions that do not require profiling implementations.
 libmpi_c_la_SOURCES = \
