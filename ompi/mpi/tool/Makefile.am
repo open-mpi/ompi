@@ -72,6 +72,7 @@ prototype_sources = \
 	event_handle_set_info.c.in \
 	event_get_info.c.in \
 	event_get_source.c.in \
+	event_get_timestamp.c.in \
 	event_handle_alloc.c.in \
 	event_handle_free.c.in \
 	event_read.c.in \
