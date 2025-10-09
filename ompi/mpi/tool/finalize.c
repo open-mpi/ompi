@@ -16,6 +16,9 @@
 #include "ompi_config.h"
 
 #include "ompi/mpi/tool/mpit-internal.h"
+#ifdef OMPI_NO_MPI_PROTOTYPES
+#include "ompi/mpi/c/abi.h"
+#endif
 
 #include "ompi/runtime/ompi_info_support.h"
 #include "opal/include/opal/sys/atomic.h"

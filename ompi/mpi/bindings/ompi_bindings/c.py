@@ -34,6 +34,8 @@ from ompi_bindings.consts import ConvertFuncs, ConvertOMPIToStandard
 from ompi_bindings.c_type import Type
 from ompi_bindings.parser import SourceTemplate
 
+c_intrinsic_types = ['char', 'int', 'long int']
+#OMPI_ABI_HANDLE_BASE_OFFSET = '16385'
 
 class ABIHeaderBuilder:
     """ABI header builder code."""
@@ -79,167 +81,6 @@ class ABIHeaderBuilder:
         lines = util.indent_lines(lines, 4 * ' ', start=1)
         for line in lines:
             self.dump(line)
-
-    def generate_error_convert_fn(self):
-        self.dump(f'{consts.INLINE_ATTRS} int {ConvertFuncs.ERROR_CLASS}(int error_class)')
-        self.dump('{')
-        lines = []
-        lines.append('switch (error_class) {')
-        for error in consts.ERROR_CLASSES:
-            lines.append(f'case {self.mangle_name(error)}:')
-            lines.append(f'return {error};')
-        lines.append('default:')
-        lines.append('return error_class;')
-        lines.append('}')
-        self.dump_lines(lines)
-        self.dump('}')
-
-    def generic_convert(self, fn_name, param_name, type_, value_names):
-        intern_type = self.mangle_name(type_)
-        self.dump(f'{consts.INLINE_ATTRS} {type_} {fn_name}({intern_type} {param_name})')
-        self.dump('{')
-        lines = []
-        for i, value_name in enumerate(value_names):
-            intern_name = self.mangle_name(value_name)
-            if i == 0:
-                lines.append('if (%s == %s) {' % (intern_name, param_name))
-            else:
-                lines.append('} else if (%s == %s) {' % (intern_name, param_name))
-            lines.append(f'return {value_name};')
-        lines.append('}')
-        lines.append(f'return ({type_}) {param_name};')
-        self.dump_lines(lines)
-        self.dump('}')
-
-    def generic_convert_reverse(self, fn_name, param_name, type_, value_names):
-        intern_type = self.mangle_name(type_)
-        self.dump(f'{consts.INLINE_ATTRS} {intern_type} {fn_name}({type_} {param_name})')
-        self.dump('{')
-        lines = []
-        for i, value_name in enumerate(value_names):
-            intern_name = self.mangle_name(value_name)
-            if i == 0:
-                lines.append('if (%s == %s) {' % (value_name, param_name))
-            else:
-                lines.append('} else if (%s == %s) {' % (value_name, param_name))
-            lines.append(f'return {intern_name};')
-        lines.append('}')
-        lines.append(f'return ({intern_type}) {param_name};')
-        self.dump_lines(lines)
-        self.dump('}')
-
-    def generate_comm_convert_fn(self):
-        self.generic_convert(ConvertFuncs.COMM, 'comm', 'MPI_Comm', consts.RESERVED_COMMUNICATORS)
-
-    def generate_comm_convert_fn_intern_to_abi(self):
-        self.generic_convert_reverse(ConvertOMPIToStandard.COMM, 'comm', 'MPI_Comm', consts.RESERVED_COMMUNICATORS)
-
-    def generate_info_convert_fn(self):
-        self.generic_convert(ConvertFuncs.INFO, 'info', 'MPI_Info', consts.RESERVED_INFOS)
-
-    def generate_info_convert_fn_intern_to_abi(self):
-        self.generic_convert_reverse(ConvertOMPIToStandard.INFO, 'info', 'MPI_Info', consts.RESERVED_INFOS)
-
-    def generate_file_convert_fn(self):
-        self.generic_convert(ConvertFuncs.FILE, 'file', 'MPI_File', consts.RESERVED_FILES)
-
-    def generate_file_convert_fn_intern_to_abi(self):
-        self.generic_convert_reverse(ConvertOMPIToStandard.FILE, 'file', 'MPI_File', consts.RESERVED_FILES)
-
-    def generate_datatype_convert_fn(self):
-        self.generic_convert(ConvertFuncs.DATATYPE, 'datatype', 'MPI_Datatype', consts.PREDEFINED_DATATYPES)
-
-    def generate_datatype_convert_fn_intern_to_abi(self):
-        self.generic_convert_reverse(ConvertOMPIToStandard.DATATYPE, 'datatype', 'MPI_Datatype', consts.PREDEFINED_DATATYPES)
-
-    def generate_errhandler_convert_fn(self):
-        self.generic_convert(ConvertFuncs.ERRHANDLER, 'errorhandler', 'MPI_Errhandler', consts.RESERVED_ERRHANDLERS)
-
-    def generate_errhandler_convert_fn_intern_to_abi(self):
-        self.generic_convert_reverse(ConvertOMPIToStandard.ERRHANDLER, 'errorhandler', 'MPI_Errhandler', consts.RESERVED_ERRHANDLERS)
-
-    def generate_group_convert_fn(self):
-        self.generic_convert(ConvertFuncs.GROUP, 'group', 'MPI_Group', consts.RESERVED_GROUPS)
-
-    def generate_group_convert_fn_intern_to_abi(self):
-        self.generic_convert_reverse(ConvertOMPIToStandard.GROUP, 'group', 'MPI_Group', consts.RESERVED_GROUPS)
-
-    def generate_message_convert_fn(self):
-        self.generic_convert(ConvertFuncs.MESSAGE, 'message', 'MPI_Message', consts.RESERVED_MESSAGES)
-
-    def generate_message_convert_fn_intern_to_abi(self):
-        self.generic_convert_reverse(ConvertOMPIToStandard.MESSAGE, 'message', 'MPI_Message', consts.RESERVED_MESSAGES)
-
-    def generate_op_convert_fn(self):
-        self.generic_convert(ConvertFuncs.OP, 'op', 'MPI_Op', consts.COLLECTIVE_OPERATIONS)
-
-    def generate_op_convert_fn_intern_to_abi(self):
-        self.generic_convert_reverse(ConvertOMPIToStandard.OP, 'op', 'MPI_Op', consts.RESERVED_OPS)
-
-    def generate_session_convert_fn(self):
-        self.generic_convert(ConvertFuncs.SESSION, 'session', 'MPI_Session', consts.RESERVED_SESSIONS)
-
-    def generate_session_convert_fn_intern_to_abi(self):
-        self.generic_convert_reverse(ConvertOMPIToStandard.SESSION, 'session', 'MPI_Session', consts.RESERVED_SESSIONS)
-
-    def generate_win_convert_fn(self):
-        self.generic_convert(ConvertFuncs.WIN, 'win', 'MPI_Win', consts.RESERVED_WINDOWS)
-
-    def generate_win_convert_fn_intern_to_abi(self):
-        self.generic_convert_reverse(ConvertOMPIToStandard.WIN, 'win', 'MPI_Win', consts.RESERVED_WINDOWS)
-
-    def generate_pointer_convert_fn(self, type_, fn_name, constants):
-        abi_type = self.mangle_name(type_)
-        self.dump(f'{consts.INLINE_ATTRS} void {fn_name}({abi_type} *ptr)')
-        self.dump('{')
-        lines = []
-        for i, ompi_name in enumerate(constants):
-            abi_name = self.mangle_name(ompi_name)
-            if i == 0:
-                lines.append('if (%s == (%s) *ptr) {' % (ompi_name, type_))
-            else:
-                lines.append('} else if (%s == (%s) *ptr) {' % (ompi_name, type_))
-            lines.append(f'*ptr = {abi_name};')
-        lines.append('}')
-        self.dump_lines(lines)
-        self.dump('}')
-
-    def generate_request_convert_fn(self):
-        self.generate_pointer_convert_fn('MPI_Request', ConvertFuncs.REQUEST, consts.RESERVED_REQUESTS)
-
-    def generate_request_convert_fn_intern_to_abi(self):
-        self.generic_convert_reverse(ConvertOMPIToStandard.REQUEST, 'request', 'MPI_Request', consts.RESERVED_REQUESTS)
-
-#   def generate_file_convert_fn(self):
-#       self.generate_pointer_convert_fn('MPI_File', ConvertFuncs.FILE, consts.RESERVED_FILES)
-
-    def generate_status_convert_fn(self):
-        type_ = 'MPI_Status'
-        abi_type = self.mangle_name(type_)
-        self.dump(f'{consts.INLINE_ATTRS} void {ConvertFuncs.STATUS}({type_} *out, {abi_type} *inp)')
-        self.dump('{')
-        self.dump('    void *ptr = &out->_ucount;')
-        self.dump('    out->MPI_SOURCE = inp->MPI_SOURCE;')
-        self.dump('    out->MPI_TAG = inp->MPI_TAG;')
-        self.dump('    out->_cancelled = inp->MPI_Internal[0];')
-        self.dump('    memcpy(ptr, &inp->MPI_Internal[1],sizeof(out->_ucount));')
-        self.dump(f'    out->MPI_ERROR = {ConvertFuncs.ERROR_CLASS}(inp->MPI_ERROR);')
-        # Ignoring the private fields for now
-        self.dump('}')
-
-    def generate_status_convert_fn_intern_to_abi(self):
-        type_ = 'MPI_Status'
-        abi_type = self.mangle_name(type_)
-        self.dump(f'{consts.INLINE_ATTRS} void {ConvertOMPIToStandard.STATUS}({abi_type} *out, {type_} *inp)')
-        self.dump('{')
-        self.dump('    void *ptr = &out->MPI_Internal[1];')
-        self.dump('    out->MPI_SOURCE = inp->MPI_SOURCE;')
-        self.dump('    out->MPI_TAG = inp->MPI_TAG;')
-        self.dump('    out->MPI_Internal[0] =inp->_cancelled;')
-        self.dump('    memcpy(ptr, &inp->_ucount,sizeof(inp->_ucount));')
-#       self.dump(f'    out->MPI_ERROR = {ConvertOMPIToStandard.ERROR_CLASS}(inp->MPI_ERROR);')
-        # Ignoring the private fields for now
-        self.dump('}')
 
     def define(self, type_, name, value):
         self.dump(f'#define {name} OMPI_CAST_CONSTANT({type_}, {value})')
@@ -351,37 +192,6 @@ struct MPI_Status_ABI {
         self.dump('int MPI_Abi_supported(int *flag);')
         self.dump('int MPI_Abi_version(int *abi_major, int *abi_minor);')
 
-#
-# the converters are no longer generated
-#
-#       if not self.external:
-#           # Now generate the conversion code
-#           self.generate_error_convert_fn()
-#           self.generate_comm_convert_fn()
-#           self.generate_comm_convert_fn_intern_to_abi()
-#           self.generate_info_convert_fn()
-#           self.generate_info_convert_fn_intern_to_abi()
-#           self.generate_file_convert_fn()
-#           self.generate_file_convert_fn_intern_to_abi()
-#           self.generate_group_convert_fn()
-#           self.generate_group_convert_fn_intern_to_abi()
-#           self.generate_datatype_convert_fn()
-#           self.generate_datatype_convert_fn_intern_to_abi()
-#           self.generate_errhandler_convert_fn()
-#           self.generate_errhandler_convert_fn_intern_to_abi()
-#           self.generate_message_convert_fn()
-#           self.generate_message_convert_fn_intern_to_abi()
-#           self.generate_op_convert_fn()
-#           self.generate_op_convert_fn_intern_to_abi()
-#           self.generate_session_convert_fn()
-#           self.generate_session_convert_fn_intern_to_abi()
-#           self.generate_win_convert_fn()
-#           self.generate_win_convert_fn_intern_to_abi()
-#           self.generate_request_convert_fn()
-#           self.generate_request_convert_fn_intern_to_abi()
-#           self.generate_status_convert_fn()
-#           self.generate_status_convert_fn_intern_to_abi()
-
         self.dump("""
 #if defined(c_plusplus) || defined(__cplusplus)
 }
@@ -389,6 +199,467 @@ struct MPI_Status_ABI {
 """)
         self.dump(f'#endif /* {header_guard} */')
 
+class ABIConverterBuilder:
+    """ABI converter builder code."""
+
+    def __init__(self, out):
+        self.out = out
+
+    def mangle_name(self, extname):
+        """Mangle names"""
+        return util.abi_internal_name(extname)
+
+    def dump(self, *pargs, **kwargs):
+        self.out.dump(*pargs, **kwargs)
+
+    def dump_lines(self, lines):
+        lines = util.indent_lines(lines, 4 * ' ', start=1)
+        for line in lines:
+            self.dump(line)
+
+    def generate_error_convert_fn(self):
+        self.dump(f'{consts.INLINE_ATTRS} int {ConvertFuncs.ERROR_CLASS}(int error_class)')
+        self.dump('{')
+        lines = []
+        lines.append('switch (error_class) {')
+        for error in consts.ERROR_CLASSES:
+            lines.append(f'case {self.mangle_name(error)}:')
+            lines.append(f'return {error};')
+        lines.append('default:')
+        lines.append('return error_class;')
+        lines.append('}')
+        self.dump_lines(lines)
+        self.dump('}')
+
+    def generate_error_convert_fn_intern_to_abi(self):
+        self.dump(f'{consts.INLINE_ATTRS} int {ConvertOMPIToStandard.ERROR_CLASS}(int error_class)')
+        self.dump('{')
+        lines = []
+        lines.append('switch (error_class) {')
+        for error in consts.ERROR_CLASSES:
+            lines.append(f'case {error}:')
+            lines.append(f'return {self.mangle_name(error)};')
+        lines.append('default:')
+        lines.append('return error_class;')
+        lines.append('}')
+        self.dump_lines(lines)
+        self.dump('}')
+
+    def generate_new_datatype_convert_fn(self):
+        arg_type = self.mangle_name('MPI_Datatype')
+        self.dump(f'{consts.INLINE_ATTRS} MPI_Datatype {ConvertFuncs.DATATYPE}({arg_type} datatype)')
+        self.dump('{')
+        lines = []
+        for i, value_name in enumerate(consts.PREDEFINED_DATATYPES):
+            intern_name = self.mangle_name(value_name)
+            if i == 0:
+                lines.append('if (%s == datatype) {' % (intern_name))
+            else:
+                lines.append('} else if (%s == datatype) {' % (intern_name))
+            lines.append(f'return {value_name};')
+        #
+        # now shoe-horn in optional fortran predefined types
+        #
+        lines.append('#if OMPI_BUILD_FORTRAN_BINDINGS')
+        for i,value_name in enumerate(consts.PREDEFINED_OPTIONAL_FORTRAN_DATATYPES):
+            intern_name = self.mangle_name(value_name)
+            base_type = value_name[4:]
+            lines.append('} else if (%s == datatype) {' % (intern_name))
+            lines.append(f'#if OMPI_HAVE_FORTRAN_{base_type}')
+            lines.append(f'return {value_name};')
+            lines.append('#else')
+            lines.append('return MPI_DATATYPE_NULL;')
+            lines.append('#endif')
+        lines.append('#endif  /* OMPI_BUILD_FORTRAN_BINDINGS */')
+        lines.append('}')
+        lines.append(f'return (MPI_Datatype) datatype;')
+        self.dump_lines(lines)
+        self.dump('}')
+
+    def generate_new_datatype_convert_fn_intern_to_abi(self):
+        return_type = self.mangle_name('MPI_Datatype')
+        self.dump(f'{consts.INLINE_ATTRS} {return_type} {ConvertOMPIToStandard.DATATYPE}(MPI_Datatype datatype)')
+        self.dump('{')
+        lines = []
+        for i, value_name in enumerate(consts.PREDEFINED_DATATYPES):
+            intern_name = self.mangle_name(value_name)
+            if i == 0:
+                lines.append('if (%s == datatype) {' % (value_name))
+            else:
+                lines.append('} else if (%s == datatype) {' % (value_name))
+            lines.append(f'return {intern_name};')
+        #
+        # now shoe-horn in optional fortran predefined types
+        #
+        mangle_null_name = self.mangle_name('MPI_DATATYPE_NULL')
+        lines.append('#if OMPI_BUILD_FORTRAN_BINDINGS')
+        for i,value_name in enumerate(consts.PREDEFINED_OPTIONAL_FORTRAN_DATATYPES):
+            intern_name = self.mangle_name(value_name)
+            base_type = value_name[4:]
+            lines.append('} else if (%s == datatype) {' % (value_name))
+            lines.append(f'#if OMPI_HAVE_FORTRAN_{base_type}')
+            lines.append(f'return {intern_name};')
+            lines.append('#else')
+            lines.append(f'return {mangle_null_name};')
+            lines.append('#endif')
+        lines.append('#endif  /* OMPI_BUILD_FORTRAN_BINDINGS */')
+        lines.append('}')
+        lines.append(f'return ({return_type}) datatype;')
+        self.dump_lines(lines)
+        self.dump('}')
+
+    def generic_convert(self, fn_name, param_name, type_, value_names, offset=None):
+        if type_ not in c_intrinsic_types:
+            if (type_[-1] == '*'):
+                intern_type = self.mangle_name(type_[:-1].strip())
+                intern_type = intern_type + ' *'
+            else:
+                intern_type = self.mangle_name(type_)
+        else:
+            intern_type = type_
+        self.dump(f'{consts.INLINE_ATTRS} {type_} {fn_name}({intern_type} {param_name})')
+        self.dump('{')
+        lines = []
+        if (offset != None):
+            lines.append('if (%s <= %s) {' % (offset, param_name))
+            lines.append('return (%s - %s);' % (param_name, offset))
+            lines.append('}')
+        for i, value_name in enumerate(value_names):
+            intern_name = self.mangle_name(value_name)
+            if i == 0:
+                lines.append('if (%s == %s) {' % (intern_name, param_name))
+            else:
+                lines.append('} else if (%s == %s) {' % (intern_name, param_name))
+            lines.append(f'return {value_name};')
+        lines.append('}')
+        lines.append(f'return ({type_}) {param_name};')
+        self.dump_lines(lines)
+        self.dump('}')
+
+    def generic_convert_reverse(self, fn_name, param_name, type_, value_names, offset=None):
+        if type_ not in c_intrinsic_types:
+            intern_type = self.mangle_name(type_)
+        else:
+            intern_type = type_
+        self.dump(f'{consts.INLINE_ATTRS} {intern_type} {fn_name}({type_} {param_name})')
+        self.dump('{')
+        lines = []
+        for i, value_name in enumerate(value_names):
+            intern_name = self.mangle_name(value_name)
+            if i == 0:
+                lines.append('if (%s == %s) {' % (value_name, param_name))
+            else:
+                lines.append('} else if (%s == %s) {' % (value_name, param_name))
+            lines.append(f'return {intern_name};')
+        lines.append('}')
+        if (offset == None):
+            lines.append(f'return ({intern_type}) {param_name};')
+        else:
+            lines.append(f'return ({intern_type}) ({param_name} + {offset});')
+        self.dump_lines(lines)
+        self.dump('}')
+
+    def generate_comm_convert_fn(self):
+        self.generic_convert(ConvertFuncs.COMM, 'comm', 'MPI_Comm', consts.RESERVED_COMMUNICATORS)
+
+    def generate_comm_convert_fn_intern_to_abi(self):
+        self.generic_convert_reverse(ConvertOMPIToStandard.COMM, 'comm', 'MPI_Comm', consts.RESERVED_COMMUNICATORS)
+
+    def generate_info_convert_fn(self):
+        self.generic_convert(ConvertFuncs.INFO, 'info', 'MPI_Info', consts.RESERVED_INFOS)
+
+    def generate_info_convert_fn_intern_to_abi(self):
+        self.generic_convert_reverse(ConvertOMPIToStandard.INFO, 'info', 'MPI_Info', consts.RESERVED_INFOS)
+
+    def generate_file_convert_fn(self):
+        self.generic_convert(ConvertFuncs.FILE, 'file', 'MPI_File', consts.RESERVED_FILES)
+
+    def generate_file_convert_fn_intern_to_abi(self):
+        self.generic_convert_reverse(ConvertOMPIToStandard.FILE, 'file', 'MPI_File', consts.RESERVED_FILES)
+
+    def generate_datatype_convert_fn(self):
+        self.generic_convert(ConvertFuncs.DATATYPE, 'datatype', 'MPI_Datatype', consts.PREDEFINED_DATATYPES)
+
+    def generate_datatype_convert_fn_intern_to_abi(self):
+        self.generic_convert_reverse(ConvertOMPIToStandard.DATATYPE, 'datatype', 'MPI_Datatype', consts.PREDEFINED_DATATYPES)
+
+    def generate_errhandler_convert_fn(self):
+        self.generic_convert(ConvertFuncs.ERRHANDLER, 'errorhandler', 'MPI_Errhandler', consts.RESERVED_ERRHANDLERS)
+
+    def generate_errhandler_convert_fn_intern_to_abi(self):
+        self.generic_convert_reverse(ConvertOMPIToStandard.ERRHANDLER, 'errorhandler', 'MPI_Errhandler', consts.RESERVED_ERRHANDLERS)
+
+    def generate_comm_copy_attr_convert_fn(self):
+        self.generic_convert(ConvertFuncs.COMM_COPY_ATTR_FUNCTION, 'comm_copy_attr_fn', 'MPI_Comm_copy_attr_function *', consts.RESERVED_COMM_COPY_ATTR_FNS)
+
+    def generate_comm_delete_attr_convert_fn(self):
+        self.generic_convert(ConvertFuncs.COMM_DELETE_ATTR_FUNCTION, 'comm_delete_attr_fn', 'MPI_Comm_delete_attr_function *', consts.RESERVED_COMM_DEL_ATTR_FNS)
+
+    def generate_group_convert_fn(self):
+        self.generic_convert(ConvertFuncs.GROUP, 'group', 'MPI_Group', consts.RESERVED_GROUPS)
+
+    def generate_group_convert_fn_intern_to_abi(self):
+        self.generic_convert_reverse(ConvertOMPIToStandard.GROUP, 'group', 'MPI_Group', consts.RESERVED_GROUPS)
+
+    def generate_message_convert_fn(self):
+        self.generic_convert(ConvertFuncs.MESSAGE, 'message', 'MPI_Message', consts.RESERVED_MESSAGES)
+
+    def generate_message_convert_fn_intern_to_abi(self):
+        self.generic_convert_reverse(ConvertOMPIToStandard.MESSAGE, 'message', 'MPI_Message', consts.RESERVED_MESSAGES)
+
+    def generate_op_convert_fn(self):
+        self.generic_convert(ConvertFuncs.OP, 'op', 'MPI_Op', consts.COLLECTIVE_OPERATIONS)
+
+    def generate_op_convert_fn_intern_to_abi(self):
+        self.generic_convert_reverse(ConvertOMPIToStandard.OP, 'op', 'MPI_Op', consts.RESERVED_OPS)
+
+    def generate_session_convert_fn(self):
+        self.generic_convert(ConvertFuncs.SESSION, 'session', 'MPI_Session', consts.RESERVED_SESSIONS)
+
+    def generate_session_convert_fn_intern_to_abi(self):
+        self.generic_convert_reverse(ConvertOMPIToStandard.SESSION, 'session', 'MPI_Session', consts.RESERVED_SESSIONS)
+
+    def generate_win_convert_fn(self):
+        self.generic_convert(ConvertFuncs.WIN, 'win', 'MPI_Win', consts.RESERVED_WINDOWS)
+
+    def generate_win_convert_fn_intern_to_abi(self):
+        self.generic_convert_reverse(ConvertOMPIToStandard.WIN, 'win', 'MPI_Win', consts.RESERVED_WINDOWS)
+
+    def generate_attr_key_convert_fn(self):
+        self.generic_convert(ConvertFuncs.ATTR_KEY, 'key', 'int', consts.RESERVED_ATTR_KEYS, 'OMPI_ABI_HANDLE_BASE_OFFSET')
+
+    def generate_attr_key_convert_fn_intern_to_abi(self):
+        self.generic_convert_reverse(ConvertOMPIToStandard.ATTR_KEY, 'key', 'int', consts.RESERVED_ATTR_KEYS, 'OMPI_ABI_HANDLE_BASE_OFFSET')
+
+    def generate_comm_cmp_convert_fn_intern_to_abi(self):
+        self.generic_convert_reverse(ConvertOMPIToStandard.COMM_CMP, 'result', 'int', consts.COMM_GROUP_COMPARE_VALS)
+
+    def generate_ts_level_convert_fn(self):
+        self.generic_convert(ConvertFuncs.TS_LEVEL, 'level', 'int', consts.TS_LEVEL_VALUES)
+
+    def generate_ts_level_convert_fn_intern_to_abi(self):
+        self.generic_convert_reverse(ConvertOMPIToStandard.TS_LEVEL, 'level', 'int', consts.TS_LEVEL_VALUES)
+
+    def generate_tag_convert_fn(self):
+        self.generic_convert(ConvertFuncs.TAG, 'tag', 'int', consts.RESERVED_TAGS)
+
+    def generate_tag_convert_fn_intern_to_abi(self):
+        self.generic_convert_reverse(ConvertOMPIToStandard.TAG, 'tag', 'int', consts.RESERVED_TAGS)
+
+    def generate_source_convert_fn(self):
+        self.generic_convert(ConvertFuncs.SOURCE, 'source', 'int', consts.RESERVED_SOURCE)
+
+    def generate_root_convert_fn(self):
+        self.generic_convert(ConvertFuncs.ROOT, 'root', 'int', consts.RESERVED_ROOT)
+
+    def generate_pvar_session_convert_fn(self):
+        self.generic_convert(ConvertFuncs.PVAR_SESSION, 'pe_session', 'MPI_T_pvar_session', consts.RESERVED_PVAR_SESSIONS)
+
+    def generate_pvar_session_convert_fn_intern_to_abi(self):
+        self.generic_convert_reverse(ConvertOMPIToStandard.PVAR_SESSION, 'pe_session', 'MPI_T_pvar_session', consts.RESERVED_PVAR_SESSIONS)
+
+    def generate_cvar_handle_convert_fn(self):
+        self.generic_convert(ConvertFuncs.CVAR_HANDLE, 'cvar_handle', 'MPI_T_cvar_handle', consts.RESERVED_CVAR_HANDLES)
+
+    def generate_cvar_handle_convert_fn_intern_to_abi(self):
+        self.generic_convert_reverse(ConvertOMPIToStandard.CVAR_HANDLE, 'cvar_handle', 'MPI_T_cvar_handle', consts.RESERVED_CVAR_HANDLES)
+
+    def generate_pvar_handle_convert_fn(self):
+        self.generic_convert(ConvertFuncs.PVAR_HANDLE, 'pvar_handle', 'MPI_T_pvar_handle', consts.RESERVED_PVAR_HANDLES)
+
+    def generate_pvar_handle_convert_fn_intern_to_abi(self):
+        self.generic_convert_reverse(ConvertOMPIToStandard.PVAR_HANDLE, 'pvar_handle', 'MPI_T_pvar_handle', consts.RESERVED_PVAR_HANDLES)
+
+    def generate_t_enum_convert_fn(self):
+        self.generic_convert(ConvertFuncs.T_ENUM, 't_enum', 'MPI_T_enum', consts.RESERVED_T_ENUMS)
+
+    def generate_t_enum_convert_fn_intern_to_abi(self):
+        self.generic_convert_reverse(ConvertOMPIToStandard.T_ENUM, 'pvar_handle', 'MPI_T_enum', consts.RESERVED_T_ENUMS)
+
+    def generate_t_bind_convert_fn(self):
+        self.generic_convert(ConvertFuncs.T_BIND, 'bind', 'int', consts.T_BIND_VALUES)
+
+    def generate_t_bind_convert_fn_intern_to_abi(self):
+        self.generic_convert_reverse(ConvertOMPIToStandard.T_BIND, 'bind', 'int', consts.T_BIND_VALUES)
+
+    def generate_t_verbosity_convert_fn(self):
+        self.generic_convert(ConvertFuncs.T_VERBOSITY, 'verbosity', 'int', consts.T_VERBOSITY_VALUES)
+
+    def generate_t_verbosity_convert_fn_intern_to_abi(self):
+        self.generic_convert_reverse(ConvertOMPIToStandard.T_VERBOSITY, 'verbosity', 'int', consts.T_VERBOSITY_VALUES)
+
+    def generate_t_source_order_convert_fn(self):
+        self.generic_convert(ConvertFuncs.T_SOURCE_ORDER, 'order', 'MPI_T_source_order', consts.T_SOURCE_ORDER_VALUES)
+
+    def generate_t_source_order_convert_fn_intern_to_abi(self):
+        self.generic_convert_reverse(ConvertOMPIToStandard.T_SOURCE_ORDER, 'order', 'MPI_T_source_order', consts.T_SOURCE_ORDER_VALUES)
+
+    def generate_pvar_class_convert_fn(self):
+        self.generic_convert(ConvertFuncs.PVAR_CLASS, 'pvar_class', 'int', consts.T_PVAR_CLASS_VALUES)
+
+    def generate_pvar_class_convert_fn_intern_to_abi(self):
+        self.generic_convert_reverse(ConvertOMPIToStandard.PVAR_CLASS, 'order', 'int', consts.T_PVAR_CLASS_VALUES)
+
+    def generate_t_cb_safety_convert_fn(self):
+        self.generic_convert(ConvertFuncs.T_CB_SAFETY, 'safety', 'MPI_T_cb_safety', consts.T_CB_SAFETY_VALUES)
+
+    def generate_comm_split_type_convert_fn(self):
+        self.generic_convert(ConvertFuncs.SPLIT_TYPE, 'split_type', 'int', consts.COMMUNICATOR_SPLIT_TYPES)
+
+    def generate_pointer_convert_fn(self, type_, fn_name, constants):
+        abi_type = self.mangle_name(type_)
+        self.dump(f'{consts.INLINE_ATTRS} void {fn_name}({abi_type} *ptr)')
+        self.dump('{')
+        lines = []
+        for i, ompi_name in enumerate(constants):
+            abi_name = self.mangle_name(ompi_name)
+            if i == 0:
+                lines.append('if (%s == (%s) *ptr) {' % (ompi_name, type_))
+            else:
+                lines.append('} else if (%s == (%s) *ptr) {' % (ompi_name, type_))
+            lines.append(f'*ptr = {abi_name};')
+        lines.append('}')
+        self.dump_lines(lines)
+        self.dump('}')
+
+    def generate_request_convert_fn(self):
+#       self.generate_pointer_convert_fn('MPI_Request', ConvertFuncs.REQUEST, consts.RESERVED_REQUESTS)
+        self.generic_convert(ConvertFuncs.REQUEST, 'request', 'MPI_Request', consts.RESERVED_REQUESTS)
+
+    def generate_request_convert_fn_intern_to_abi(self):
+        self.generic_convert_reverse(ConvertOMPIToStandard.REQUEST, 'request', 'MPI_Request', consts.RESERVED_REQUESTS)
+
+#   def generate_file_convert_fn(self):
+#       self.generate_pointer_convert_fn('MPI_File', ConvertFuncs.FILE, consts.RESERVED_FILES)
+
+    def generate_status_convert_fn(self):
+        type_ = 'MPI_Status'
+        abi_type = self.mangle_name(type_)
+        self.dump(f'{consts.INLINE_ATTRS} void {ConvertFuncs.STATUS}({type_} *out, {abi_type} *inp)')
+        self.dump('{')
+        self.dump('    void *ptr = &out->_ucount;')
+        self.dump('    out->MPI_SOURCE = inp->MPI_SOURCE;')
+        self.dump('    out->MPI_TAG = inp->MPI_TAG;')
+        self.dump('    out->_cancelled = inp->MPI_internal[0];')
+        self.dump('    memcpy(ptr, &inp->MPI_internal[1],sizeof(out->_ucount));')
+        self.dump(f'    out->MPI_ERROR = {ConvertFuncs.ERROR_CLASS}(inp->MPI_ERROR);')
+        # Ignoring the private fields for now
+        self.dump('}')
+
+    def generate_status_convert_fn_intern_to_abi(self):
+        type_ = 'MPI_Status'
+        abi_type = self.mangle_name(type_)
+        self.dump(f'{consts.INLINE_ATTRS} void {ConvertOMPIToStandard.STATUS}({abi_type} *out, {type_} *inp)')
+        self.dump('{')
+        self.dump('    void *ptr = &out->MPI_internal[1];')
+        self.dump('    out->MPI_SOURCE = inp->MPI_SOURCE;')
+        self.dump('    out->MPI_TAG = inp->MPI_TAG;')
+        self.dump('    out->MPI_internal[0] =inp->_cancelled;')
+        self.dump('    memcpy(ptr, &inp->_ucount,sizeof(inp->_ucount));')
+#       self.dump(f'    out->MPI_ERROR = {ConvertOMPIToStandard.ERROR_CLASS}(inp->MPI_ERROR);')
+        # Ignoring the private fields for now
+        self.dump('}')
+
+    def define(self, type_, name, value):
+        self.dump(f'#define {name} OMPI_CAST_CONSTANT({type_}, {value})')
+
+    def define_all(self, type_, constants):
+        for i, const in enumerate(constants):
+            self.define(self.mangle_name(type_), self.mangle_name(const), i + 1)
+        self.dump()
+
+    def dump_code(self):
+        header_guard = '_ABI_CONVERTERS_'
+        self.dump(f'#ifndef {header_guard}')
+        self.dump(f'#define {header_guard}')
+
+        self.dump('#include "stddef.h"')
+        self.dump('#include "stdint.h"')
+
+        self.dump("""
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
+""")
+        self.dump('/*')
+        self.dump(' * see section 20.3.4 of the MPI 5.0 standard')
+        self.dump(' */')
+        self.dump('#define OMPI_ABI_HANDLE_BASE_OFFSET 16385')
+        self.dump('\n')
+
+        # Now generate the conversion code
+        self.generate_error_convert_fn()
+        self.generate_error_convert_fn_intern_to_abi()
+        self.generate_comm_convert_fn()
+        self.generate_comm_convert_fn_intern_to_abi()
+        self.generate_info_convert_fn()
+        self.generate_info_convert_fn_intern_to_abi()
+        self.generate_file_convert_fn()
+        self.generate_file_convert_fn_intern_to_abi()
+        self.generate_group_convert_fn()
+        self.generate_group_convert_fn_intern_to_abi()
+#       self.generate_datatype_convert_fn()
+#       self.generate_datatype_convert_fn_intern_to_abi()
+        self.generate_new_datatype_convert_fn()
+        self.generate_new_datatype_convert_fn_intern_to_abi()
+        self.generate_errhandler_convert_fn()
+        self.generate_errhandler_convert_fn_intern_to_abi()
+        self.generate_message_convert_fn()
+        self.generate_message_convert_fn_intern_to_abi()
+        self.generate_op_convert_fn()
+        self.generate_op_convert_fn_intern_to_abi()
+        self.generate_session_convert_fn()
+        self.generate_session_convert_fn_intern_to_abi()
+        self.generate_win_convert_fn()
+        self.generate_win_convert_fn_intern_to_abi()
+        self.generate_request_convert_fn()
+        self.generate_request_convert_fn_intern_to_abi()
+        self.generate_status_convert_fn()
+        self.generate_status_convert_fn_intern_to_abi()
+        self.generate_attr_key_convert_fn()
+        self.generate_attr_key_convert_fn_intern_to_abi()
+        self.generate_tag_convert_fn()
+        self.generate_tag_convert_fn_intern_to_abi()
+        self.generate_ts_level_convert_fn()
+        self.generate_ts_level_convert_fn_intern_to_abi()
+        self.generate_pvar_session_convert_fn()
+        self.generate_pvar_session_convert_fn_intern_to_abi()
+        self.generate_cvar_handle_convert_fn()
+        self.generate_cvar_handle_convert_fn_intern_to_abi()
+        self.generate_pvar_handle_convert_fn()
+        self.generate_pvar_handle_convert_fn_intern_to_abi()
+        self.generate_t_enum_convert_fn()
+        self.generate_t_enum_convert_fn_intern_to_abi()
+        self.generate_t_bind_convert_fn()
+        self.generate_t_bind_convert_fn_intern_to_abi()
+        self.generate_t_verbosity_convert_fn()
+        self.generate_t_verbosity_convert_fn_intern_to_abi()
+        self.generate_t_source_order_convert_fn()
+        self.generate_t_source_order_convert_fn_intern_to_abi()
+        self.generate_pvar_class_convert_fn()
+        self.generate_pvar_class_convert_fn_intern_to_abi()
+
+        #
+        # the following only need abi to intern converters
+        #
+        self.generate_comm_copy_attr_convert_fn()
+        self.generate_comm_delete_attr_convert_fn()
+        self.generate_comm_split_type_convert_fn()
+
+        #
+        # the following only need intern to abi converters
+        #
+        self.generate_comm_cmp_convert_fn_intern_to_abi()
+        self.generate_source_convert_fn()
+        self.generate_root_convert_fn()
+        self.generate_t_cb_safety_convert_fn()
+
+        self.dump("""
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
+""")
+        self.dump(f'#endif /* {header_guard} */')
 
 def print_profiling_header(fn_name, out):
     """Print the profiling header code."""
@@ -520,6 +791,12 @@ def standard_abi(base_name, template, out, suppress_bc=False, suppress_nbc=False
         generate_function(template.prototype, base_name_c, internal_name, out,
                           enable_count=True)
 
+
+def generate_converters(args, out):
+    """Generate ABI conversion methods. """
+    out.dump(f'/* {consts.GENERATED_MESSAGE} */')
+    builder = ABIConverterBuilder(out)
+    builder.dump_code()
 
 def generate_header(args, out):
     """Generate an ABI header and conversion code."""

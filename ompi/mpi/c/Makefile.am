@@ -516,6 +516,7 @@ EXTRA_DIST = $(prototype_sources) \
 	$(prototype_sources_obc) \
 	$(prototype_sources_not_in_abi) \
 	abi_converters.h \
+	abi_converters2.h \
 	abi_get_info.c.in
 
 # functions that do not require profiling implementations.
@@ -529,7 +530,7 @@ if BUILD_MPI_BINDINGS_LAYER
 libmpi_c_la_LIBADD += libmpi_c_noprofile.la
 endif
 
-nobase_include_HEADERS = abi.h standard_abi/mpi.h
+nobase_include_HEADERS = abi.h abi_converters.h standard_abi/mpi.h
 
 #
 # List of all C files that have profile versions (*_generated.c files were
@@ -666,13 +667,21 @@ standard_abi/mpi.h: $(top_srcdir)/docs/mpi-standard-apis.json $(top_srcdir)/ompi
 	--output $@
 
 # Mangled version
-abi.h: $(top_srcdir)/docs/mpi-standard-apis.json $(top_srcdir)/ompi/mpi/bindings/c_header.py
+abi.h: $(top_srcdir)/docs/mpi-standard-apis.json $(top_srcdir)/ompi/mpi/bindings/c_header.py abi.h.in
 	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/c_header.py \
 	--input $(top_srcdir)/ompi/mpi/c/abi.h.in \
 	--output $@ \
 	--abi-json $(top_srcdir)/docs/mpi-standard-abi.json \
 	--pympistd-dir $(top_srcdir)/3rd-party/pympistandard \
 	--mangle-names
+
+abi_converters.h: abi.h
+	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
+	    --builddir $(abs_top_builddir) \
+	    --srcdir $(abs_top_srcdir) \
+	    --output $@ \
+	    c \
+	    converters
 
 %_abi_generated.c: %.c.in
 	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \

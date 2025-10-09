@@ -116,16 +116,20 @@ def indent_lines(lines, tab, start=0):
     new_lines = []
     indent_count = start
     for line in lines:
-        # Closing bracket
-        if '}' in line:
-            indent_count -= 1
+        # is this a pragma line, if so do not indent
+        if (line[0] =='#'):
+            new_lines.append(f'{line}')
+        else:
+            # Closing bracket
+            if '}' in line:
+                indent_count -= 1
 
-        prefix = indent_count * tab
-        new_lines.append(f'{prefix}{line}')
+            prefix = indent_count * tab
+            new_lines.append(f'{prefix}{line}')
 
-        # Opening bracket
-        if '{' in line:
-            indent_count += 1
+            # Opening bracket
+            if '{' in line:
+                indent_count += 1
     return new_lines
 
 

@@ -14,17 +14,9 @@
  */
 
 #include "ompi_config.h"
-
 #include "ompi/mpi/tool/mpit-internal.h"
 
-#if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_T_event_get_source = PMPI_T_event_get_source
-#endif
-#define MPI_T_event_get_source PMPI_T_event_get_source
-#endif
-
-int MPI_T_event_get_source (MPI_T_event_instance event, int *source_index)
+PROTOTYPE ERROR_CLASS event_read (EVENT_INSTANCE event, INT element_index, BUFFER_OUT buffer)
 {
     if (!mpit_is_initialized ()) {
         return MPI_T_ERR_NOT_INITIALIZED;

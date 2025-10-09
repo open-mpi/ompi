@@ -34,7 +34,7 @@
 #include "ompi/info/info.h"
 #include "ompi/memchecker.h"
 
-PROTOTYPE ERROR_CLASS comm_split_type(COMM comm, INT split_type, INT key,
+PROTOTYPE ERROR_CLASS comm_split_type(COMM comm, SPLIT_TYPE split_type, INT key,
                                       INFO info, COMM_OUT newcomm)
 {
     int rc;
