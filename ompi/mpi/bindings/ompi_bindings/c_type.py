@@ -2560,4 +2560,4 @@ class TypeEventInstanceStandard(StandardABIType):
 
     @property
     def argument(self):
-        return f'{self.name}'
+        return f'(MPI_T_event_instance){self.name}'
