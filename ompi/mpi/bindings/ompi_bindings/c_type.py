@@ -626,12 +626,31 @@ class TypeSourceStandard(StandardABIType):
     def type_text(self, enable_count=False):
         return 'int'
 
-@Type.add_type('COMM', abi_type=['ompi'])
-class TypeCommunicator(Type):
+@Type.add_type('SOURCE_OUT', abi_type=['ompi'])
+class TypeSourceOut(Type):
 
     def type_text(self, enable_count=False):
-        return 'MPI_Comm'
+        return 'int *'
 
+@Type.add_type('SOURCE_OUT', abi_type=['standard'])
+class TypeSourceOutStandard(StandardABIType):
+
+    @property
+    def final_code(self):
+        return [f'*{self.name} = {ConvertOMPIToStandard.SOURCE}(*{self.name});']
+ 
+    def type_text(self, enable_count=False):
+        return f'int *'
+
+    @property
+    def argument(self):
+        return f'(int *) {self.name}'
+
+@Type.add_type('COMM', abi_type=['ompi'])
+class TypeCommunicator(Type):
+ 
+     def type_text(self, enable_count=False):
+         return 'MPI_Comm'
 
 @Type.add_type('COMM', abi_type=['standard'])
 class TypeCommunicatorStandard(StandardABIType):
@@ -2521,6 +2540,36 @@ class TyperSplitTypeStandard(StandardABIType):
 
     def type_text(self, enable_count=False):
         return 'int'
+
+@Type.add_type('WEIGHTS', abi_type=['ompi'])
+class TypeWeightType(Type):
+
+    def type_text(self, enable_count=False):
+        return 'const int *'
+    
+    def parameter(self, enable_count=False, **kwargs):
+        return f'const int {self.name}[]'
+
+#
+# TODO this can be made better if we could handle "const int" 
+# better as arg to the converter code.
+#
+@Type.add_type('WEIGHTS', abi_type=['standard'])
+class TyperWeightStandard(StandardABIType):
+
+    @property
+    def init_code(self):
+        return [f'int *{self.tmpname} = (int *){ConvertFuncs.WEIGHTS}((int *){self.name});']
+
+    def type_text(self, enable_count=False):
+        return 'const int *'
+
+    def parameter(self, enable_count=False, **kwargs):
+        return f'const int * {self.name}'
+
+    @property
+    def argument(self):
+        return f'(int *){self.tmpname}'
 
 @Type.add_type('COMM_CMP_OUT', abi_type=['ompi'])
 class TypeCommCmpOut(Type):
