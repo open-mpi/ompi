@@ -306,11 +306,17 @@ RESERVED_TAGS = [
 
 RESERVED_SOURCE = [
     'MPI_ANY_SOURCE',
+    'MPI_PROC_NULL',
 ]
 
 RESERVED_ROOT = [
     'MPI_ROOT',
     'MPI_PROC_NULL',
+]
+
+RESERVED_WEIGHTS = [
+    'MPI_UNWEIGHTED',
+    'MPI_WEIGHTS_EMPTY'
 ]
 
 RESERVED_PVAR_SESSIONS = [
@@ -454,6 +460,7 @@ class ConvertFuncs:
     COMM_COPY_ATTR_FUNCTION = 'ompi_convert_comm_copy_attr_fn_intern_comm_copy_attr_fn'
     COMM_DELETE_ATTR_FUNCTION = 'ompi_convert_comm_delete_attr_fn_intern_comm_delete_attr_fn'
     SPLIT_TYPE = 'ompi_convert_split_type_intern_type'
+    WEIGHTS = 'ompi_convert_weight_intern_weight'
 
 
 class ConvertOMPIToStandard:
@@ -484,6 +491,7 @@ class ConvertOMPIToStandard:
     T_SOURCE_ORDER = 'ompi_convert_source_order_ompi_to_standard'
     ATTR_KEY = 'ompi_convert_attr_key_ompi_to_standard'
     COMM_CMP = 'ompi_convert_comm_cmp_ompi_to_standard'
+    SOURCE = 'ompi_convert_source_ompi_to_standard'
 
 
 # Inline function attributes
