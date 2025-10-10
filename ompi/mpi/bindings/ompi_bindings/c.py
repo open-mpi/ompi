@@ -307,14 +307,17 @@ class ABIConverterBuilder:
         self.dump('}')
 
     def generic_convert(self, fn_name, param_name, type_, value_names, offset=None):
-        if type_ not in c_intrinsic_types:
-            if (type_[-1] == '*'):
-                intern_type = self.mangle_name(type_[:-1].strip())
-                intern_type = intern_type + ' *'
-            else:
-                intern_type = self.mangle_name(type_)
+        is_ptr_arg = False
+        tmp_type = type_
+        if (tmp_type[-1] == '*'):
+            is_ptr_arg = True
+            tmp_type = tmp_type[:-1].strip()
+        if tmp_type not in c_intrinsic_types:
+            intern_type = self.mangle_name(tmp_type)
         else:
-            intern_type = type_
+            intern_type = tmp_type
+        if (is_ptr_arg == True):
+            intern_type = intern_type + ' *'
         self.dump(f'{consts.INLINE_ATTRS} {type_} {fn_name}({intern_type} {param_name})')
         self.dump('{')
         lines = []
@@ -447,6 +450,9 @@ class ABIConverterBuilder:
     def generate_source_convert_fn(self):
         self.generic_convert(ConvertFuncs.SOURCE, 'source', 'int', consts.RESERVED_SOURCE)
 
+    def generate_source_convert_fn_intern_to_abi(self):
+        self.generic_convert_reverse(ConvertOMPIToStandard.SOURCE, 'tag', 'int', consts.RESERVED_SOURCE)
+
     def generate_root_convert_fn(self):
         self.generic_convert(ConvertFuncs.ROOT, 'root', 'int', consts.RESERVED_ROOT)
 
@@ -503,6 +509,9 @@ class ABIConverterBuilder:
 
     def generate_comm_split_type_convert_fn(self):
         self.generic_convert(ConvertFuncs.SPLIT_TYPE, 'split_type', 'int', consts.COMMUNICATOR_SPLIT_TYPES)
+
+    def generate_weight_convert_fn(self):
+        self.generic_convert(ConvertFuncs.WEIGHTS, 'weights', 'int *', consts.RESERVED_WEIGHTS)
 
     def generate_pointer_convert_fn(self, type_, fn_name, constants):
         abi_type = self.mangle_name(type_)
@@ -636,6 +645,8 @@ extern "C" {
         self.generate_t_source_order_convert_fn_intern_to_abi()
         self.generate_pvar_class_convert_fn()
         self.generate_pvar_class_convert_fn_intern_to_abi()
+        self.generate_source_convert_fn()
+        self.generate_source_convert_fn_intern_to_abi()
 
         #
         # the following only need abi to intern converters
@@ -643,12 +654,12 @@ extern "C" {
         self.generate_comm_copy_attr_convert_fn()
         self.generate_comm_delete_attr_convert_fn()
         self.generate_comm_split_type_convert_fn()
+        self.generate_weight_convert_fn()
 
         #
         # the following only need intern to abi converters
         #
         self.generate_comm_cmp_convert_fn_intern_to_abi()
-        self.generate_source_convert_fn()
         self.generate_root_convert_fn()
         self.generate_t_cb_safety_convert_fn()
 
