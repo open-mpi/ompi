@@ -18,7 +18,7 @@
  * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * Copyright (c) 2018      Cisco Systems, Inc.  All rights reserved
- * Copyright (c) 2018-2022 Amazon.com, Inc. or its affiliates.
+ * Copyright (c) 2018-2025 Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
  * Copyright (c) 2019      Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
@@ -866,6 +866,8 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
                 peer->flags |= OMPI_OSC_RDMA_PEER_LOCAL_BASE;
                 if (use_cpu_atomics) {
                     peer->flags |= OMPI_OSC_RDMA_PEER_CPU_ATOMICS;
+                } else if (module->use_memory_registration) {
+                    ex_peer->super.base_handle = (mca_btl_base_registration_handle_t *) peer_region->btl_handle_data;
                 }
                 offset += temp[i].size;
                 offset += OPAL_ALIGN_PAD_AMOUNT(offset, memory_alignment);
