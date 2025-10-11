@@ -39,7 +39,7 @@
 #include "ompi/runtime/ompi_spc.h"
 
 PROTOTYPE ERROR_CLASS reduce_init(BUFFER sendbuf, BUFFER_OUT recvbuf, COUNT count,
-                                  DATATYPE datatype, OP op, INT root, COMM comm,
+                                  DATATYPE datatype, OP op, ROOT root, COMM comm,
                                   INFO info, REQUEST_INOUT request)
 {
     int err;

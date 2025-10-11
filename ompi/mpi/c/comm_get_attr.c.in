@@ -30,7 +30,8 @@
 #include "ompi/attribute/attribute.h"
 #include "ompi/memchecker.h"
 
-PROTOTYPE ERROR_CLASS comm_get_attr(COMM comm, INT comm_keyval,
+
+PROTOTYPE ERROR_CLASS comm_get_attr(COMM comm, ATTR_KEY comm_keyval,
                                     BUFFER_OUT attribute_val, INT_OUT flag)
 {
     int ret;
@@ -57,5 +58,19 @@ PROTOTYPE ERROR_CLASS comm_get_attr(COMM comm, INT comm_keyval,
 
     ret = ompi_attr_get_c(comm->c_keyhash, comm_keyval,
                           (void**)attribute_val, flag);
+#if OMPI_ABI_SRC
+    /* 
+     * special cases for attributes attached to MPI_COMM_WORLD
+     * TODO: eventually come up with a better way to intercept.
+     * These ompi/attribute/attribute_predefined.
+     */
+    if (MPI_COMM_WORLD == comm) {
+        if (MPI_HOST == comm_keyval) {
+            *(int **)attribute_val = &ompi_abi_mpi_proc_null_val;
+        } else if (MPI_IO == comm_keyval) {
+            *(int **)attribute_val = &ompi_abi_mpi_any_source_val;
+        }
+    }
+#endif
     OMPI_ERRHANDLER_RETURN(ret, comm, MPI_ERR_OTHER, FUNC_NAME);
 }
