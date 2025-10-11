@@ -27,7 +27,7 @@
 #include "ompi/runtime/ompi_spc.h"
 
 PROTOTYPE ERROR_CLASS mrecv(BUFFER_OUT buf, COUNT count, DATATYPE type,
-                            MESSAGE_OUT message, STATUS_OUT status)
+                            MESSAGE_INOUT message, STATUS_OUT status)
 {
     int rc = MPI_SUCCESS;
     ompi_communicator_t *comm;
