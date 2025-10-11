@@ -237,6 +237,24 @@ RESERVED_COMM_DEL_ATTR_FNS = [
     'MPI_COMM_NULL_DELETE_FN'
 ]
 
+RESERVED_TYPE_COPY_ATTR_FNS = [
+    'MPI_TYPE_NULL_COPY_FN',
+    'MPI_TYPE_DUP_FN',
+]
+
+RESERVED_TYPE_DEL_ATTR_FNS = [
+    'MPI_TYPE_NULL_DELETE_FN'
+]
+
+RESERVED_WIN_COPY_ATTR_FNS = [
+    'MPI_WIN_NULL_COPY_FN',
+    'MPI_WIN_DUP_FN',
+]
+
+RESERVED_WIN_DEL_ATTR_FNS = [
+    'MPI_WIN_NULL_DELETE_FN'
+]
+
 IGNORED_STATUS_HANDLES = [
     'MPI_STATUSES_IGNORE',
     'MPI_STATUS_IGNORE',
@@ -459,6 +477,10 @@ class ConvertFuncs:
     ATTR_KEY = 'ompi_convert_abi_attr_key_intern_attr_key'
     COMM_COPY_ATTR_FUNCTION = 'ompi_convert_comm_copy_attr_fn_intern_comm_copy_attr_fn'
     COMM_DELETE_ATTR_FUNCTION = 'ompi_convert_comm_delete_attr_fn_intern_comm_delete_attr_fn'
+    TYPE_COPY_ATTR_FUNCTION = 'ompi_convert_type_copy_attr_fn_intern_type_copy_attr_fn'
+    TYPE_DELETE_ATTR_FUNCTION = 'ompi_convert_type_delete_attr_fn_intern_type_delete_attr_fn'
+    WIN_COPY_ATTR_FUNCTION = 'ompi_convert_win_copy_attr_fn_intern_win_copy_attr_fn'
+    WIN_DELETE_ATTR_FUNCTION = 'ompi_convert_win_delete_attr_fn_intern_win_delete_attr_fn'
     SPLIT_TYPE = 'ompi_convert_split_type_intern_type'
     WEIGHTS = 'ompi_convert_weight_intern_weight'
 
