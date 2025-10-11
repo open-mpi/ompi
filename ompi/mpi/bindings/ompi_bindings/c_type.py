@@ -1587,7 +1587,7 @@ class TypeDatarepConversionFunction(Type):
 
 @Type.add_type('DATAREP_CONVERSION_FUNCTION', abi_type=['standard'])
 class TypeDatarepConversionFunctionStandard(Type):
-    # TODO: This may require a special function to wrap the callback
+# TODO: This may require a special function to wrap the callback
 #    pass
 
     @property
@@ -1640,15 +1640,15 @@ class TypeTypeCopyAttrFunctionStandard(StandardABIType):
         type_name = self.mangle_name('MPI_Type_copy_attr_function')
         return f'{type_name} *'
 
-    @property
-    def argument(self):
-        return f'(MPI_Type_copy_attr_function *) {self.name}'
+#    @property
+#    def argument(self):
+#        return f'(MPI_Type_copy_attr_function *) {self.name}'
 
     @property
     def init_code(self):
         code = []
         code = [f'MPI_Type_copy_attr_function *{self.tmpname} = {ConvertFuncs.TYPE_COPY_ATTR_FUNCTION}({self.name});']
-        code = ['ompi_abi_wrapper_helper_t *helper = NULL;']
+        code.append('ompi_abi_wrapper_helper_t *helper = NULL;')
         code.append('MPI_Type_copy_attr_function_ABI_INTERNAL *copy_fn;')
         code.append('helper = ( ompi_abi_wrapper_helper_t *)malloc(sizeof(ompi_abi_wrapper_helper_t));')
         code.append('if (NULL == helper)  return MPI_ERR_NO_MEM;')
