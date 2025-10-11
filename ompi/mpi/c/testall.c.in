@@ -36,7 +36,7 @@
 #include "ompi/runtime/ompi_spc.h"
 
 PROTOTYPE ERROR_CLASS testall(INT count, REQUEST_INOUT requests:count, INT_OUT flag,
-                              STATUS_OUT statuses)
+                              STATUS_OUT statuses:count)
 {
     SPC_RECORD(OMPI_SPC_TESTALL, 1);
 

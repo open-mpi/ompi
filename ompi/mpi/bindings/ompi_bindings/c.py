@@ -396,6 +396,18 @@ class ABIConverterBuilder:
     def generate_comm_delete_attr_convert_fn(self):
         self.generic_convert(ConvertFuncs.COMM_DELETE_ATTR_FUNCTION, 'comm_delete_attr_fn', 'MPI_Comm_delete_attr_function *', consts.RESERVED_COMM_DEL_ATTR_FNS)
 
+    def generate_type_copy_attr_convert_fn(self):
+        self.generic_convert(ConvertFuncs.TYPE_COPY_ATTR_FUNCTION, 'type_copy_attr_fn', 'MPI_Type_copy_attr_function *', consts.RESERVED_TYPE_COPY_ATTR_FNS)
+
+    def generate_type_delete_attr_convert_fn(self):
+        self.generic_convert(ConvertFuncs.TYPE_DELETE_ATTR_FUNCTION, 'type_delete_attr_fn', 'MPI_Type_delete_attr_function *', consts.RESERVED_TYPE_DEL_ATTR_FNS)
+
+    def generate_win_copy_attr_convert_fn(self):
+        self.generic_convert(ConvertFuncs.WIN_COPY_ATTR_FUNCTION, 'win_copy_attr_fn', 'MPI_Win_copy_attr_function *', consts.RESERVED_WIN_COPY_ATTR_FNS)
+
+    def generate_win_delete_attr_convert_fn(self):
+        self.generic_convert(ConvertFuncs.WIN_DELETE_ATTR_FUNCTION, 'win_delete_attr_fn', 'MPI_Win_delete_attr_function *', consts.RESERVED_WIN_DEL_ATTR_FNS)
+
     def generate_group_convert_fn(self):
         self.generic_convert(ConvertFuncs.GROUP, 'group', 'MPI_Group', consts.RESERVED_GROUPS)
 
@@ -545,11 +557,15 @@ class ABIConverterBuilder:
         self.dump(f'{consts.INLINE_ATTRS} void {ConvertFuncs.STATUS}({type_} *out, {abi_type} *inp)')
         self.dump('{')
         self.dump('    void *ptr = &out->_ucount;')
-        self.dump('    out->MPI_SOURCE = inp->MPI_SOURCE;')
-        self.dump('    out->MPI_TAG = inp->MPI_TAG;')
+        self.dump('    if(inp->MPI_SOURCE == MPI_ANY_SOURCE_ABI_INTERNAL) {')
+        self.dump('        out->MPI_SOURCE = MPI_ANY_SOURCE;')
+        self.dump('    } else {')
+        self.dump('        out->MPI_SOURCE = inp->MPI_SOURCE;')
+        self.dump('    }')
+        self.dump(f'    out->MPI_TAG = {ConvertFuncs.TAG}(inp->MPI_TAG);')
         self.dump('    out->_cancelled = inp->MPI_internal[0];')
         self.dump('    memcpy(ptr, &inp->MPI_internal[1],sizeof(out->_ucount));')
-        self.dump(f'    out->MPI_ERROR = {ConvertFuncs.ERROR_CLASS}(inp->MPI_ERROR);')
+        self.dump(f'   out->MPI_ERROR = {ConvertFuncs.ERROR_CLASS}(inp->MPI_ERROR);')
         # Ignoring the private fields for now
         self.dump('}')
 
@@ -559,11 +575,11 @@ class ABIConverterBuilder:
         self.dump(f'{consts.INLINE_ATTRS} void {ConvertOMPIToStandard.STATUS}({abi_type} *out, {type_} *inp)')
         self.dump('{')
         self.dump('    void *ptr = &out->MPI_internal[1];')
-        self.dump('    out->MPI_SOURCE = inp->MPI_SOURCE;')
-        self.dump('    out->MPI_TAG = inp->MPI_TAG;')
+        self.dump(f'    out->MPI_SOURCE = {ConvertOMPIToStandard.SOURCE}(inp->MPI_SOURCE);')
+        self.dump(f'    out->MPI_TAG = {ConvertOMPIToStandard.TAG}(inp->MPI_TAG);')
         self.dump('    out->MPI_internal[0] =inp->_cancelled;')
         self.dump('    memcpy(ptr, &inp->_ucount,sizeof(inp->_ucount));')
-#       self.dump(f'    out->MPI_ERROR = {ConvertOMPIToStandard.ERROR_CLASS}(inp->MPI_ERROR);')
+        self.dump(f'    out->MPI_ERROR = {ConvertOMPIToStandard.ERROR_CLASS}(inp->MPI_ERROR);')
         # Ignoring the private fields for now
         self.dump('}')
 
@@ -594,7 +610,9 @@ extern "C" {
         self.dump('#define OMPI_ABI_HANDLE_BASE_OFFSET 16385')
         self.dump('\n')
 
-        # Now generate the conversion code
+        # Now generate the conversion code - there's a reason for the order here
+        # some converters depend on others being declared earlier in the include
+        # file
         self.generate_error_convert_fn()
         self.generate_error_convert_fn_intern_to_abi()
         self.generate_comm_convert_fn()
@@ -621,12 +639,14 @@ extern "C" {
         self.generate_win_convert_fn_intern_to_abi()
         self.generate_request_convert_fn()
         self.generate_request_convert_fn_intern_to_abi()
+        self.generate_tag_convert_fn()
+        self.generate_tag_convert_fn_intern_to_abi()
+        self.generate_source_convert_fn()
+        self.generate_source_convert_fn_intern_to_abi()
         self.generate_status_convert_fn()
         self.generate_status_convert_fn_intern_to_abi()
         self.generate_attr_key_convert_fn()
         self.generate_attr_key_convert_fn_intern_to_abi()
-        self.generate_tag_convert_fn()
-        self.generate_tag_convert_fn_intern_to_abi()
         self.generate_ts_level_convert_fn()
         self.generate_ts_level_convert_fn_intern_to_abi()
         self.generate_pvar_session_convert_fn()
@@ -645,14 +665,16 @@ extern "C" {
         self.generate_t_source_order_convert_fn_intern_to_abi()
         self.generate_pvar_class_convert_fn()
         self.generate_pvar_class_convert_fn_intern_to_abi()
-        self.generate_source_convert_fn()
-        self.generate_source_convert_fn_intern_to_abi()
 
         #
         # the following only need abi to intern converters
         #
         self.generate_comm_copy_attr_convert_fn()
         self.generate_comm_delete_attr_convert_fn()
+        self.generate_type_copy_attr_convert_fn()
+        self.generate_type_delete_attr_convert_fn()
+        self.generate_win_copy_attr_convert_fn()
+        self.generate_win_delete_attr_convert_fn()
         self.generate_comm_split_type_convert_fn()
         self.generate_weight_convert_fn()
 
