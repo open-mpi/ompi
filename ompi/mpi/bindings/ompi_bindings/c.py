@@ -545,6 +545,21 @@ class ABIConverterBuilder:
         self.dump_lines(lines)
         self.dump('}')
 
+    def generate_mode_bits_convert_fn_intern_to_abi(self):
+        self.dump(f'{consts.INLINE_ATTRS} int {ConvertOMPIToStandard.MODE_BITS}(int mode_bits)')
+        self.dump('{')
+        lines = []
+        lines.append('int ret_value = 0;')
+        for value_name in consts.MODE_BITS:
+            intern_name = self.mangle_name(value_name)
+            lines.append('if (%s & mode_bits ) {' % (value_name))
+            lines.append('ret_value |= %s;' % (intern_name))
+            lines.append('}')
+        lines.append('return ret_value;')
+        self.dump_lines(lines)
+        self.dump('}')
+
+
     def generate_pointer_convert_fn(self, type_, fn_name, constants):
         abi_type = self.mangle_name(type_)
         self.dump(f'{consts.INLINE_ATTRS} void {fn_name}({abi_type} *ptr)')
@@ -685,6 +700,9 @@ extern "C" {
         self.generate_t_source_order_convert_fn_intern_to_abi()
         self.generate_pvar_class_convert_fn()
         self.generate_pvar_class_convert_fn_intern_to_abi()
+        self.generate_mode_bits_convert_fn()
+        self.generate_mode_bits_convert_fn_intern_to_abi()
+
 
         #
         # the following only need abi to intern converters
@@ -699,7 +717,6 @@ extern "C" {
         self.generate_weight_convert_fn()
         self.generate_subarray_order_convert_fn()
         self.generate_subarray_distrib_types_convert_fn()
-        self.generate_mode_bits_convert_fn()
 
         #
         # the following only need intern to abi converters
