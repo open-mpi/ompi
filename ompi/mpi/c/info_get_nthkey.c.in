@@ -83,7 +83,7 @@ PROTOTYPE ERROR_CLASS info_get_nthkey(INFO info, INT n, STRING_OUT key)
     opal_cstring_t *key_str = NULL;
     err = ompi_info_get_nthkey (info, n, &key_str);
     if (NULL != key_str) {
-        opal_string_copy(key, key_str->string, MPI_MAX_INFO_KEY);
+        opal_string_copy(key, key_str->string, @MPI_MAX_INFO_KEY@);
         OBJ_RELEASE(key_str);
     }
 

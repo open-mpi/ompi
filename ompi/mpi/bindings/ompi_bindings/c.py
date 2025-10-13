@@ -718,6 +718,16 @@ def print_cdefs_for_abi(out, abi_type='ompi'):
         out.dump('#undef OMPI_ABI_SRC')
         out.dump('#define OMPI_ABI_SRC 1')
 
+def generate_replacements(mangle_names=False):
+    replacements = {}
+    for key in consts.MAX_STRING_LEN_CONSTANTS:
+        if mangle_names == True:
+            val = util.abi_internal_name(key)
+        else:
+            val = key
+        replacements[key] = val
+    return replacements
+
 def ompi_abi(base_name, template, out, suppress_bc=False, suppress_nbc=False):
     """Generate the OMPI ABI functions."""
     template.print_header(out)
@@ -726,7 +736,8 @@ def ompi_abi(base_name, template, out, suppress_bc=False, suppress_nbc=False):
         print_cdefs_for_bigcount(out)
         print_cdefs_for_abi(out)
         out.dump(template.prototype.signature(base_name, abi_type='ompi'))
-        template.print_body(func_name=base_name, out=out)
+        template.print_body(func_name=base_name, out=out,
+                            replacements=generate_replacements(mangle_names=False))
     # Check if we need to generate the bigcount interface
     if util.prototype_has_bigcount(template.prototype) and suppress_bc == False:
         # there are some special cases where we need to explicitly define the bigcount functions in the template file
@@ -738,8 +749,8 @@ def ompi_abi(base_name, template, out, suppress_bc=False, suppress_nbc=False):
         print_cdefs_for_bigcount(out, enable_count=True)
         print_cdefs_for_abi(out)
         out.dump(template.prototype.signature(base_name_c, abi_type='ompi', enable_count=True))
-        template.print_body(func_name=base_name_c, out=out)
-
+        template.print_body(func_name=base_name_c, out=out,
+                            replacements=generate_replacements(mangle_names=False))
 
 ABI_INTERNAL_HEADER = 'ompi/mpi/c/abi.h'
 ABI_INTERNAL_CONVERTOR = 'ompi/mpi/c/abi_converters.h'
@@ -771,7 +782,7 @@ def standard_abi(base_name, template, out, suppress_bc=False, suppress_nbc=False
         internal_sig = template.prototype.signature(internal_name, abi_type='ompi',
                                                     enable_count=False)
         out.dump(consts.INLINE_ATTRS, internal_sig)
-        template.print_body(func_name=base_name, out=out)
+        template.print_body(func_name=base_name, out=out, replacements=generate_replacements(mangle_names=True))
     if util.prototype_has_bigcount(template.prototype) and suppress_bc == False:
         internal_name = f'ompi_abi_{template.prototype.name}_c'
         print_cdefs_for_bigcount(out, enable_count=True)
@@ -779,7 +790,7 @@ def standard_abi(base_name, template, out, suppress_bc=False, suppress_nbc=False
         internal_sig = template.prototype.signature(internal_name, abi_type='ompi',
                                                     enable_count=True)
         out.dump(consts.INLINE_ATTRS, internal_sig)
-        template.print_body(func_name=base_name, out=out)
+        template.print_body(func_name=base_name, out=out, replacements=generate_replacements(mangle_names=True))
 
     def generate_function(prototype, fn_name, internal_fn, out, enable_count=False):
         """Generate a function for the standard ABI."""
