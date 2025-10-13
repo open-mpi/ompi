@@ -525,6 +525,12 @@ class ABIConverterBuilder:
     def generate_weight_convert_fn(self):
         self.generic_convert(ConvertFuncs.WEIGHTS, 'weights', 'int *', consts.RESERVED_WEIGHTS)
 
+    def generate_subarray_order_convert_fn(self):
+        self.generic_convert(ConvertFuncs.SUBARRAY_ORDER, 'order', 'int', consts.SUBARRAY_ORDER_TYPES)
+
+    def generate_subarray_distrib_types_convert_fn(self):
+        self.generic_convert(ConvertFuncs.SUBARRAY_DISTRIB_TYPES, 'dist', 'int', consts.SUBARRAY_DISTRIB_TYPES)
+
     def generate_pointer_convert_fn(self, type_, fn_name, constants):
         abi_type = self.mangle_name(type_)
         self.dump(f'{consts.INLINE_ATTRS} void {fn_name}({abi_type} *ptr)')
@@ -677,6 +683,8 @@ extern "C" {
         self.generate_win_delete_attr_convert_fn()
         self.generate_comm_split_type_convert_fn()
         self.generate_weight_convert_fn()
+        self.generate_subarray_order_convert_fn()
+        self.generate_subarray_distrib_types_convert_fn()
 
         #
         # the following only need intern to abi converters
