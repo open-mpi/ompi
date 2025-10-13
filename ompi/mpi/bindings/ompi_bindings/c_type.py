@@ -2578,6 +2578,22 @@ class TyperSplitTypeStandard(StandardABIType):
     def type_text(self, enable_count=False):
         return 'int'
 
+@Type.add_type('SUBARRAY_ORDER', abi_type=['ompi'])
+class TypeSubarrayOrderType(Type):
+
+    def type_text(self, enable_count=False):
+        return 'int'
+
+@Type.add_type('SUBARRAY_ORDER', abi_type=['standard'])
+class TyperSubArraOrderStandard(StandardABIType):
+
+    @property
+    def init_code(self):
+        return [f'int {self.tmpname} = {ConvertFuncs.SUBARRAY_ORDER}({self.name});']
+
+    def type_text(self, enable_count=False):
+        return 'int'
+
 @Type.add_type('WEIGHTS', abi_type=['ompi'])
 class TypeWeightType(Type):
 
@@ -2647,3 +2663,42 @@ class TypeEventInstanceStandard(StandardABIType):
     @property
     def argument(self):
         return f'(MPI_T_event_instance){self.name}'
+
+@Type.add_type('DISTRIB_ARRAY', abi_type=['ompi'])
+class TypeDistributionArray(Type):
+
+    def type_text(self, enable_count=False):
+        return 'const int *'
+
+    def parameter(self, enable_count=False, **kwargs):
+        return f'const int {self.name}[]'
+
+@Type.add_type('DISTRIB_ARRAY', abi_type=['standard'])
+class TypeDistributioneArrayStandard(StandardABIType):
+
+    @property
+    def init_code(self):
+        code = [f'int size_{self.tmpname} = {self.count_param};']
+        code.append(f'int *{self.tmpname} = NULL;')
+        code.append('if('+f'{self.name}' + '!= NULL)' + '{')
+        code.append(f'{self.tmpname} = (int *)malloc(sizeof(int) * size_{self.tmpname});')
+        code.append(f'for(int i=0;i<size_{self.tmpname};i++){{')
+        code.append(f'{self.tmpname}[i] = {ConvertFuncs.SUBARRAY_DISTRIB_TYPES}({self.name}[i]);')
+        code.append(f'}}')
+        code.append(f'}}')
+        return code
+
+    @property
+    def final_code(self):
+        code = [f'if({self.tmpname} != NULL){{']
+        code.append(f'free({self.tmpname});')
+        code.append('}')
+        return code
+
+    def type_text(self, enable_count=False):
+        return 'const int *'
+
+    def parameter(self, enable_count=False, **kwargs):
+        return f'const int {self.name}[]'
+
+
