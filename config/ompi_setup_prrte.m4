@@ -122,7 +122,9 @@ OPAL_VAR_SCOPE_PUSH([prrte_setup_internal_happy prrte_setup_external_happy targe
     AC_SUBST(OMPI_SCHIZO_OMPI_RST_CONTENT_DIR)
     AM_CONDITIONAL(OMPI_HAVE_PRRTE_RST, [test $OMPI_HAVE_PRRTE_RST -eq 1])
 
-    OPAL_SUMMARY_ADD([Miscellaneous], [PRRTE], [], [$opal_prrte_mode])
+    AS_IF([test "$OMPI_USING_INTERNAL_PRRTE" = "1"],
+          [OPAL_SUMMARY_ADD([Miscellaneous], [OMPI-RTE], [], ["yes"])],
+          [OPAL_SUMMARY_ADD([Miscellaneous], [PRRTE], [], [$opal_prrte_mode])])
 
     OPAL_VAR_SCOPE_POP
 ])
