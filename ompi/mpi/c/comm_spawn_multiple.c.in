@@ -49,7 +49,7 @@ PROTOTYPE ERROR_CLASS comm_spawn_multiple(INT count, STRING_ARRAY array_of_comma
     int i=0, rc=0, rank=0, size=0, flag;
     ompi_communicator_t *newcomp=MPI_COMM_NULL;
     bool send_first=false; /* they are contacting us first */
-    char port_name[MPI_MAX_PORT_NAME]; char *port_string = NULL;
+    char port_name[@MPI_MAX_PORT_NAME@]; char *port_string = NULL;
     bool non_mpi = false, cumulative = false;
 
     MEMCHECKER(
@@ -150,7 +150,7 @@ PROTOTYPE ERROR_CLASS comm_spawn_multiple(INT count, STRING_ARRAY array_of_comma
 #endif
 
     /* initialize the port name to avoid problems */
-    memset(port_name, 0, MPI_MAX_PORT_NAME);
+    memset(port_name, 0, @MPI_MAX_PORT_NAME@);
 
 
     if ( rank == root ) {
