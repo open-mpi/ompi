@@ -2701,4 +2701,20 @@ class TypeDistributioneArrayStandard(StandardABIType):
     def parameter(self, enable_count=False, **kwargs):
         return f'const int {self.name}[]'
 
+@Type.add_type('MODE_BITS', abi_type=['ompi'])
+class TypeModeBits(Type):
+
+    def type_text(self, enable_count=False):
+        return 'int'
+
+@Type.add_type('MODE_BITS', abi_type=['standard'])
+class TyperModeBitsStandard(StandardABIType):
+
+    @property
+    def init_code(self):
+        return [f'int {self.tmpname} = {ConvertFuncs.MODE_BITS}({self.name});']
+
+    def type_text(self, enable_count=False):
+        return 'int'
+
 

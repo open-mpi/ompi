@@ -438,6 +438,24 @@ MAX_STRING_LEN_CONSTANTS = [
     'MPI_MAX_PSET_NAME_LEN',
 ]
 
+MODE_BITS = [
+    'MPI_MODE_APPEND',
+    'MPI_MODE_CREATE',
+    'MPI_MODE_DELETE_ON_CLOSE',
+    'MPI_MODE_EXCL',
+    'MPI_MODE_RDONLY',
+    'MPI_MODE_RDWR',
+    'MPI_MODE_SEQUENTIAL',
+    'MPI_MODE_UNIQUE_OPEN',
+    'MPI_MODE_WRONLY',
+    'MPI_MODE_NOCHECK',
+    'MPI_MODE_NOPRECEDE',
+    'MPI_MODE_NOPUT',
+    'MPI_MODE_NOSTORE',
+    'MPI_MODE_NOSUCCEED',
+]
+
+
 # Types
 
 C_OPAQUE_TYPES = {
@@ -511,6 +529,7 @@ class ConvertFuncs:
     WEIGHTS = 'ompi_convert_weight_intern_weight'
     SUBARRAY_ORDER = 'ompi_convert_subarray_order_intern_subarray_order'
     SUBARRAY_DISTRIB_TYPES = 'ompi_convert_subarray_distrib_type_intern_distrib_type'
+    MODE_BITS = 'ompi_convert_mode_bits_intern_mode_bits'
 
 class ConvertOMPIToStandard:
     """Generated function for converting from OMPI to standard ABI."""
