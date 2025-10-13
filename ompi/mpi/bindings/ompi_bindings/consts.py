@@ -188,6 +188,18 @@ COMMUNICATOR_SPLIT_TYPES = [
     'MPI_COMM_TYPE_RESOURCE_GUIDED',
 ]
 
+SUBARRAY_ORDER_TYPES = [
+    'MPI_ORDER_C',
+    'MPI_ORDER_FORTRAN',
+]
+
+SUBARRAY_DISTRIB_TYPES = [
+    'MPI_DISTRIBUTE_NONE',
+    'MPI_DISTRIBUTE_BLOCK',
+    'MPI_DISTRIBUTE_CYCLIC',
+    'MPI_DISTRIBUTE_DFLT_DARG',
+]
+
 RESERVED_GROUPS = [
     'MPI_GROUP_NULL',
 ]
@@ -497,7 +509,8 @@ class ConvertFuncs:
     WIN_DELETE_ATTR_FUNCTION = 'ompi_convert_win_delete_attr_fn_intern_win_delete_attr_fn'
     SPLIT_TYPE = 'ompi_convert_split_type_intern_type'
     WEIGHTS = 'ompi_convert_weight_intern_weight'
-
+    SUBARRAY_ORDER = 'ompi_convert_subarray_order_intern_subarray_order'
+    SUBARRAY_DISTRIB_TYPES = 'ompi_convert_subarray_distrib_type_intern_distrib_type'
 
 class ConvertOMPIToStandard:
     """Generated function for converting from OMPI to standard ABI."""
@@ -528,6 +541,7 @@ class ConvertOMPIToStandard:
     ATTR_KEY = 'ompi_convert_attr_key_ompi_to_standard'
     COMM_CMP = 'ompi_convert_comm_cmp_ompi_to_standard'
     SOURCE = 'ompi_convert_source_ompi_to_standard'
+    SUBARRAY_ORDER = 'ompi_convert_subarray_order_ompi_to_standard'
 
 
 # Inline function attributes
