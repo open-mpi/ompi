@@ -2707,6 +2707,12 @@ class TypeModeBits(Type):
     def type_text(self, enable_count=False):
         return 'int'
 
+@Type.add_type('MODE_BITS_OUT', abi_type=['ompi'])
+class TypeModeBitsOut(Type):
+
+    def type_text(self, enable_count=False):
+        return 'int *'
+
 @Type.add_type('MODE_BITS', abi_type=['standard'])
 class TyperModeBitsStandard(StandardABIType):
 
@@ -2717,4 +2723,16 @@ class TyperModeBitsStandard(StandardABIType):
     def type_text(self, enable_count=False):
         return 'int'
 
+@Type.add_type('MODE_BITS_OUT', abi_type=['standard'])
+class TyperModeBitsOutStandard(StandardABIType):
 
+    @property
+    def final_code(self):
+        return [f'*{self.name} = {ConvertOMPIToStandard.MODE_BITS}(*{self.name});']
+
+    def type_text(self, enable_count=False):
+        return 'int *'
+
+    @property
+    def argument(self):
+        return f'{self.name}'
