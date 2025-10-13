@@ -561,6 +561,7 @@ class ConvertOMPIToStandard:
     COMM_CMP = 'ompi_convert_comm_cmp_ompi_to_standard'
     SOURCE = 'ompi_convert_source_ompi_to_standard'
     SUBARRAY_ORDER = 'ompi_convert_subarray_order_ompi_to_standard'
+    MODE_BITS = 'ompi_convert_mode_bits_to_standard'
 
 
 # Inline function attributes
