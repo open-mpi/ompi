@@ -531,6 +531,20 @@ class ABIConverterBuilder:
     def generate_subarray_distrib_types_convert_fn(self):
         self.generic_convert(ConvertFuncs.SUBARRAY_DISTRIB_TYPES, 'dist', 'int', consts.SUBARRAY_DISTRIB_TYPES)
 
+    def generate_mode_bits_convert_fn(self):
+        self.dump(f'{consts.INLINE_ATTRS} int {ConvertFuncs.MODE_BITS}(int mode_bits)')
+        self.dump('{')
+        lines = []
+        lines.append('int ret_value = 0;')
+        for value_name in consts.MODE_BITS:
+            intern_name = self.mangle_name(value_name)
+            lines.append('if (%s & mode_bits ) {' % (intern_name))
+            lines.append('ret_value |= %s;' % (value_name))
+            lines.append('}')
+        lines.append('return ret_value;')
+        self.dump_lines(lines)
+        self.dump('}')
+
     def generate_pointer_convert_fn(self, type_, fn_name, constants):
         abi_type = self.mangle_name(type_)
         self.dump(f'{consts.INLINE_ATTRS} void {fn_name}({abi_type} *ptr)')
@@ -685,6 +699,7 @@ extern "C" {
         self.generate_weight_convert_fn()
         self.generate_subarray_order_convert_fn()
         self.generate_subarray_distrib_types_convert_fn()
+        self.generate_mode_bits_convert_fn()
 
         #
         # the following only need intern to abi converters
