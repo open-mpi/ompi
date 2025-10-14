@@ -461,6 +461,37 @@ WHENCE_VALUES = [
     'MPI_SEEK_SET',
 ]
 
+COMBINER_VALUES = [
+    'MPI_COMBINER_NAMED',
+    'MPI_COMBINER_DUP',
+    'MPI_COMBINER_CONTIGUOUS',
+    'MPI_COMBINER_VECTOR',
+    'MPI_COMBINER_HVECTOR',
+    'MPI_COMBINER_INDEXED',
+    'MPI_COMBINER_HINDEXED',
+    'MPI_COMBINER_INDEXED_BLOCK',
+    'MPI_COMBINER_HINDEXED_BLOCK',
+    'MPI_COMBINER_STRUCT',
+    'MPI_COMBINER_SUBARRAY',
+    'MPI_COMBINER_DARRAY',
+    'MPI_COMBINER_F90_REAL',
+    'MPI_COMBINER_F90_COMPLEX',
+    'MPI_COMBINER_F90_INTEGER',
+    'MPI_COMBINER_RESIZED',
+    'MPI_COMBINER_VALUE_INDEX',
+]
+
+TYPECLASS_VALUES = [
+    'MPI_TYPECLASS_INTEGER',
+    'MPI_TYPECLASS_REAL',
+    'MPI_TYPECLASS_COMPLEX',
+]
+
+WIN_LOCK_VALUES = [
+    'MPI_LOCK_EXCLUSIVE',
+    'MPI_LOCK_SHARED',
+]
+ 
 # Types
 
 C_OPAQUE_TYPES = {
@@ -536,6 +567,8 @@ class ConvertFuncs:
     SUBARRAY_DISTRIB_TYPES = 'ompi_convert_subarray_distrib_type_intern_distrib_type'
     MODE_BITS = 'ompi_convert_mode_bits_intern_mode_bits'
     WHENCE = 'ompi_convert_whence_intern_whence'
+    TYPECLASS = 'ompi_convert_typeclass_intern_typeclass'
+    WIN_LOCK = 'ompi_convert_lock_assert_intern_lock_assert'
 
 class ConvertOMPIToStandard:
     """Generated function for converting from OMPI to standard ABI."""
@@ -568,6 +601,7 @@ class ConvertOMPIToStandard:
     SOURCE = 'ompi_convert_source_ompi_to_standard'
     SUBARRAY_ORDER = 'ompi_convert_subarray_order_ompi_to_standard'
     MODE_BITS = 'ompi_convert_mode_bits_to_standard'
+    COMBINER = 'ompi_convert_combiner_to_standard'
 
 
 # Inline function attributes

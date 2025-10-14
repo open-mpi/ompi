@@ -534,6 +534,18 @@ class ABIConverterBuilder:
     def generate_whence_convert_fn(self):
         self.generic_convert(ConvertFuncs.WHENCE, 'whence', 'int', consts.WHENCE_VALUES)
 
+    def generate_combiner_convert_fn_intern_to_abi(self):
+        self.generic_convert_reverse(ConvertOMPIToStandard.COMBINER, 'combiner', 'int', consts.COMBINER_VALUES)
+
+    def generate_typeclass_convert_fn(self):
+        self.generic_convert(ConvertFuncs.TYPECLASS, 'typeclass', 'int', consts.TYPECLASS_VALUES)
+
+    def generate_typeclass_convert_fn(self):
+        self.generic_convert(ConvertFuncs.TYPECLASS, 'typeclass', 'int', consts.TYPECLASS_VALUES)
+
+    def generate_win_lock_convert_fn(self):
+        self.generic_convert(ConvertFuncs.WIN_LOCK, 'lock_assert', 'int', consts.WIN_LOCK_VALUES)
+
     def generate_mode_bits_convert_fn(self):
         self.dump(f'{consts.INLINE_ATTRS} int {ConvertFuncs.MODE_BITS}(int mode_bits)')
         self.dump('{')
@@ -706,6 +718,7 @@ extern "C" {
         self.generate_mode_bits_convert_fn()
         self.generate_mode_bits_convert_fn_intern_to_abi()
         self.generate_whence_convert_fn()
+        self.generate_win_lock_convert_fn()
 
         #
         # the following only need abi to intern converters
@@ -720,13 +733,14 @@ extern "C" {
         self.generate_weight_convert_fn()
         self.generate_subarray_order_convert_fn()
         self.generate_subarray_distrib_types_convert_fn()
+        self.generate_root_convert_fn()
+        self.generate_t_cb_safety_convert_fn()
 
         #
         # the following only need intern to abi converters
         #
         self.generate_comm_cmp_convert_fn_intern_to_abi()
-        self.generate_root_convert_fn()
-        self.generate_t_cb_safety_convert_fn()
+        self.generate_combiner_convert_fn_intern_to_abi()
 
         self.dump("""
 #if defined(c_plusplus) || defined(__cplusplus)
