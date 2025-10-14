@@ -339,6 +339,12 @@ static mca_btl_base_module_t **mca_btl_ofi_component_init(int *num_btl_modules,
     domain_attr.control_progress = progress_mode;
     domain_attr.data_progress = progress_mode;
 
+    if (enable_mpi_threads) {
+        domain_attr.threading = FI_THREAD_SAFE;
+    } else {
+        domain_attr.threading = FI_THREAD_DOMAIN;
+    }
+
     /* select endpoint type */
     ep_attr.type = FI_EP_RDM;
 
