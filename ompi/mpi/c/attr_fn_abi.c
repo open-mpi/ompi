@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2018      Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
+ * Copyright (c) 2025      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -25,39 +27,27 @@
 #include "ompi/mpi/c/abi.h"
 #include "ompi/mpi/c/abi_converters.h"
 
+/*
+ * variables used for certain predefined attributes,
+ * e.g. MPI_IO, MPI_HOST
+ */
 int ompi_abi_mpi_proc_null_val = MPI_PROC_NULL_ABI_INTERNAL;
 int ompi_abi_mpi_any_source_val = MPI_ANY_SOURCE_ABI_INTERNAL;
 
 /*
- * Comment to circumvent error-msg of weak-check:
- *   We do not need #pragma weak in here, as these functions
- *   do not have a function for the profiling interface.
+ * variables used for certain predefined attributes
+ * for windows
  */
+int ompi_abi_mpi_win_flavor_create = MPI_WIN_FLAVOR_CREATE_ABI_INTERNAL;
+int ompi_abi_mpi_win_flavor_allocate = MPI_WIN_FLAVOR_ALLOCATE_ABI_INTERNAL;
+int ompi_abi_mpi_win_flavor_shared = MPI_WIN_FLAVOR_SHARED_ABI_INTERNAL;
+int ompi_abi_mpi_win_flavor_dynamic = MPI_WIN_FLAVOR_DYNAMIC_ABI_INTERNAL;
+int ompi_abi_mpi_win_model_unified = MPI_WIN_UNIFIED_ABI_INTERNAL;
+int ompi_abi_mpi_win_model_separate = MPI_WIN_SEPARATE_ABI_INTERNAL;
 
 /*
- * Note that these are the back-end functions for MPI_DUP_FN (and
- * friends).  They have an ABI_C_* prefix because of weird reasons
- * listed in a lengthy comment in mpi.h.
- *
- * Specifically:
- *
- *   MPI_NULL_DELETE_FN -> ABI_C_MPI_NULL_DELETE_FN
- *   MPI_NULL_COPY_FN -> ABI_C_MPI_NULL_COPY_FN
- *   MPI_DUP_FN -> ABI_C_MPI_DUP_FN
- *
- *   MPI_TYPE_NULL_DELETE_FN -> ABI_C_MPI_TYPE_NULL_DELETE_FN
- *   MPI_TYPE_NULL_COPY_FN -> ABI_C_MPI_TYPE_NULL_COPY_FN
- *   MPI_TYPE_DUP_FN -> ABI_C_MPI_TYPE_DUP_FN
- *
- *   MPI_COMM_NULL_DELETE_FN -> ABI_C_MPI_COMM_NULL_DELETE_FN
- *   MPI_COMM_NULL_COPY_FN -> ABI_C_MPI_COMM_NULL_COPY_FN
- *   MPI_COMM_DUP_FN -> ABI_C_MPI_COMM_DUP_FN
- *
- *   MPI_WIN_NULL_DELETE_FN -> ABI_C_MPI_WIN_NULL_DELETE_FN
- *   MPI_WIN_NULL_COPY_FN -> ABI_C_MPI_WIN_NULL_COPY_FN
- *   MPI_WIN_DUP_FN -> ABI_C_MPI_WIN_DUP_FN
+ * predefined callbacks for win, comm, type attributes
  */
-
 int ABI_C_MPI_TYPE_NULL_DELETE_FN( MPI_Datatype_ABI_INTERNAL datatype, int type_keyval,
                                     void* attribute_val_out,
                                     void* extra_state )

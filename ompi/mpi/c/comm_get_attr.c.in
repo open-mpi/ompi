@@ -61,8 +61,9 @@ PROTOTYPE ERROR_CLASS comm_get_attr(COMM comm, ATTR_KEY comm_keyval,
 #if OMPI_ABI_SRC
     /* 
      * special cases for attributes attached to MPI_COMM_WORLD
-     * TODO: eventually come up with a better way to intercept.
-     * These ompi/attribute/attribute_predefined.
+     * that are set to MPI_PROC_NULL, MPI_ANY_SOURCE, etc.
+     * where the value stored internally in ompi use the ompi
+     * values and we need to return ABI values to the app.
      */
     if (MPI_COMM_WORLD == comm) {
         if (MPI_HOST == comm_keyval) {
