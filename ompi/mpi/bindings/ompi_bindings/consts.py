@@ -455,6 +455,11 @@ MODE_BITS = [
     'MPI_MODE_NOSUCCEED',
 ]
 
+WHENCE_VALUES = [
+    'MPI_SEEK_CUR',
+    'MPI_SEEK_END',
+    'MPI_SEEK_SET',
+]
 
 # Types
 
@@ -530,6 +535,7 @@ class ConvertFuncs:
     SUBARRAY_ORDER = 'ompi_convert_subarray_order_intern_subarray_order'
     SUBARRAY_DISTRIB_TYPES = 'ompi_convert_subarray_distrib_type_intern_distrib_type'
     MODE_BITS = 'ompi_convert_mode_bits_intern_mode_bits'
+    WHENCE = 'ompi_convert_whence_intern_whence'
 
 class ConvertOMPIToStandard:
     """Generated function for converting from OMPI to standard ABI."""
