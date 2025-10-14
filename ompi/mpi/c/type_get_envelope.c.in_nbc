@@ -33,7 +33,7 @@ PROTOTYPE ERROR_CLASS type_get_envelope(DATATYPE type,
                                         INT_OUT num_integers,
                                         INT_OUT num_addresses,
                                         INT_OUT num_datatypes,
-                                        INT_OUT combiner)
+                                        COMBINER_OUT combiner)
 {
    int rc;
 
