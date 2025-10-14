@@ -2714,7 +2714,7 @@ class TypeModeBitsOut(Type):
         return 'int *'
 
 @Type.add_type('MODE_BITS', abi_type=['standard'])
-class TyperModeBitsStandard(StandardABIType):
+class TypeModeBitsStandard(StandardABIType):
 
     @property
     def init_code(self):
@@ -2724,7 +2724,7 @@ class TyperModeBitsStandard(StandardABIType):
         return 'int'
 
 @Type.add_type('MODE_BITS_OUT', abi_type=['standard'])
-class TyperModeBitsOutStandard(StandardABIType):
+class TypeModeBitsOutStandard(StandardABIType):
 
     @property
     def final_code(self):
@@ -2744,7 +2744,7 @@ class TypeWhence(Type):
         return 'int'
 
 @Type.add_type('WHENCE', abi_type=['standard'])
-class TyperWhenceStandard(StandardABIType):
+class TypeWhenceStandard(StandardABIType):
 
     @property
     def init_code(self):
@@ -2752,3 +2752,40 @@ class TyperWhenceStandard(StandardABIType):
 
     def type_text(self, enable_count=False):
         return 'int'
+
+@Type.add_type('COMBINER_OUT', abi_type=['ompi'])
+class TypeCombinerOut(Type):
+
+    def type_text(self, enable_count=False):
+        return 'int *'
+
+@Type.add_type('COMBINER_OUT', abi_type=['standard'])
+class TyperCombinerOutStandard(StandardABIType):
+
+    @property
+    def final_code(self):
+        return [f'*{self.name} = {ConvertOMPIToStandard.COMBINER}(*{self.name});']
+
+    def type_text(self, enable_count=False):
+        return 'int *'
+
+    @property
+    def argument(self):
+        return f'{self.name}'
+
+@Type.add_type('WIN_LOCK', abi_type=['ompi'])
+class TypeWhence(Type):
+
+    def type_text(self, enable_count=False):
+        return 'int'
+
+@Type.add_type('WIN_LOCK', abi_type=['standard'])
+class TypeWhenceStandard(StandardABIType):
+
+    @property
+    def init_code(self):
+        return [f'int {self.tmpname} = {ConvertFuncs.WIN_LOCK}({self.name});']
+
+    def type_text(self, enable_count=False):
+        return 'int'
+

@@ -32,7 +32,7 @@
 #include "ompi/win/win.h"
 #include "ompi/mca/osc/osc.h"
 
-PROTOTYPE ERROR_CLASS win_lock(INT lock_type, INT rank, MODE_BITS mpi_assert, WIN win)
+PROTOTYPE ERROR_CLASS win_lock(WIN_LOCK lock_type, INT rank, MODE_BITS mpi_assert, WIN win)
 {
     int rc;
 
