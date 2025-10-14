@@ -32,7 +32,7 @@ PROTOTYPE ERROR_CLASS type_get_envelope_c(DATATYPE type,
                                           COUNT_OUT num_addresses,
                                           COUNT_OUT num_large_counts,
                                           COUNT_OUT num_datatypes,
-                                          INT_OUT combiner)
+                                          COMBINER_OUT combiner)
 {
    int rc;
 
