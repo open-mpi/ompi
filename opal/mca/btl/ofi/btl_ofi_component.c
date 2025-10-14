@@ -365,7 +365,8 @@ static mca_btl_base_module_t **mca_btl_ofi_component_init(int *num_btl_modules,
     tx_attr.iov_limit = 1;
     rx_attr.iov_limit = 1;
 
-    tx_attr.op_flags = FI_DELIVERY_COMPLETE;
+    tx_attr.op_flags = FI_DELIVERY_COMPLETE | FI_COMPLETION;
+    rx_attr.op_flags = FI_COMPLETION;
 
     mca_btl_ofi_component.module_count = 0;
 
