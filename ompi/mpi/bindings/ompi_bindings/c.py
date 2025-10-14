@@ -531,6 +531,9 @@ class ABIConverterBuilder:
     def generate_subarray_distrib_types_convert_fn(self):
         self.generic_convert(ConvertFuncs.SUBARRAY_DISTRIB_TYPES, 'dist', 'int', consts.SUBARRAY_DISTRIB_TYPES)
 
+    def generate_whence_convert_fn(self):
+        self.generic_convert(ConvertFuncs.WHENCE, 'whence', 'int', consts.WHENCE_VALUES)
+
     def generate_mode_bits_convert_fn(self):
         self.dump(f'{consts.INLINE_ATTRS} int {ConvertFuncs.MODE_BITS}(int mode_bits)')
         self.dump('{')
@@ -702,7 +705,7 @@ extern "C" {
         self.generate_pvar_class_convert_fn_intern_to_abi()
         self.generate_mode_bits_convert_fn()
         self.generate_mode_bits_convert_fn_intern_to_abi()
-
+        self.generate_whence_convert_fn()
 
         #
         # the following only need abi to intern converters

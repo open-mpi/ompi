@@ -2736,3 +2736,19 @@ class TyperModeBitsOutStandard(StandardABIType):
     @property
     def argument(self):
         return f'{self.name}'
+
+@Type.add_type('WHENCE', abi_type=['ompi'])
+class TypeWhence(Type):
+
+    def type_text(self, enable_count=False):
+        return 'int'
+
+@Type.add_type('WHENCE', abi_type=['standard'])
+class TyperWhenceStandard(StandardABIType):
+
+    @property
+    def init_code(self):
+        return [f'int {self.tmpname} = {ConvertFuncs.WHENCE}({self.name});']
+
+    def type_text(self, enable_count=False):
+        return 'int'
