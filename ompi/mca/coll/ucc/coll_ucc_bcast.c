@@ -72,7 +72,7 @@ int mca_coll_ucc_ibcast(void *buf, size_t count, struct ompi_datatype_t *dtype,
     mca_coll_ucc_req_t    *coll_req = NULL;
 
     UCC_VERBOSE(3, "running ucc ibcast");
-    COLL_UCC_GET_REQ(coll_req);
+    COLL_UCC_GET_REQ(coll_req, comm);
     COLL_UCC_CHECK(mca_coll_ucc_bcast_init_common(buf, count, dtype, root,
                                                   false, ucc_module, &req, coll_req));
     COLL_UCC_POST_AND_CHECK(req);
@@ -95,7 +95,7 @@ int mca_coll_ucc_bcast_init(void *buf, size_t count, struct ompi_datatype_t *dty
     ucc_coll_req_h req;
     mca_coll_ucc_req_t *coll_req = NULL;
 
-    COLL_UCC_GET_REQ_PERSISTENT(coll_req);
+    COLL_UCC_GET_REQ_PERSISTENT(coll_req, comm);
     UCC_VERBOSE(3, "bcast_init init %p", coll_req);
     COLL_UCC_CHECK(mca_coll_ucc_bcast_init_common(buf, count, dtype, root,
                                                   true, ucc_module, &req, coll_req));

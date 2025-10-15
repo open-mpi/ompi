@@ -104,7 +104,7 @@ int mca_coll_ucc_iallgatherv(const void *sbuf, size_t scount,
     mca_coll_ucc_req_t    *coll_req = NULL;
 
     UCC_VERBOSE(3, "running ucc iallgatherv");
-    COLL_UCC_GET_REQ(coll_req);
+    COLL_UCC_GET_REQ(coll_req, comm);
     COLL_UCC_CHECK(mca_coll_ucc_allgatherv_init_common(sbuf, scount, sdtype,
                                                        rbuf, rcounts, rdisps, rdtype,
                                                        false, ucc_module, &req, coll_req));
@@ -131,7 +131,7 @@ int mca_coll_ucc_allgatherv_init(const void *sbuf, size_t scount, struct ompi_da
     ucc_coll_req_h req;
     mca_coll_ucc_req_t *coll_req = NULL;
 
-    COLL_UCC_GET_REQ_PERSISTENT(coll_req);
+    COLL_UCC_GET_REQ_PERSISTENT(coll_req, comm);
     UCC_VERBOSE(3, "allgatherv_init init %p", coll_req);
     COLL_UCC_CHECK(mca_coll_ucc_allgatherv_init_common(sbuf, scount, sdtype,
                                                        rbuf, rcounts, rdisps, rdtype,
