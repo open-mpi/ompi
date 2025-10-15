@@ -62,8 +62,8 @@ PROTOTYPE ERROR_CLASS win_get_attr(WIN win, ATTR_KEY win_keyval,
      */
 
     if (MPI_WIN_CREATE_FLAVOR == win_keyval) {
-        int win_flavor = *(int *)attribute_val;
-        switch(win_flavor) {
+        int *win_flavor = *(int **)attribute_val;
+        switch(*win_flavor) {
         case MPI_WIN_FLAVOR_CREATE:
             *(int **)attribute_val = &ompi_abi_mpi_win_flavor_create;
             break;
@@ -81,8 +81,8 @@ PROTOTYPE ERROR_CLASS win_get_attr(WIN win, ATTR_KEY win_keyval,
             break;
         }
     } else if (MPI_WIN_MODEL == win_keyval) {
-        int win_model = *(int *)attribute_val;
-        switch(win_model) {
+        int *win_model = *(int **)attribute_val;
+        switch(*win_model) {
         case MPI_WIN_UNIFIED:
             *(int **)attribute_val = &ompi_abi_mpi_win_model_unified;
             break;
