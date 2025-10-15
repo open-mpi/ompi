@@ -2,7 +2,7 @@ name: ompi_NVIDIA CI
 on: [pull_request]
 jobs:
 
-  deployment:
+  nvidia_deployment:
     if: github.repository == 'open-mpi/ompi'
     runs-on: [self-hosted, linux, x64, nvidia]
     steps:
@@ -17,25 +17,25 @@ jobs:
         path: ompi_ci
     - name: Deployment infrastructure
       run: /start deploy
-  build:
-    needs: [deployment]
+  nvidia_build:
+    needs: [nvidia_deployment]
     runs-on: [self-hosted, linux, x64, nvidia]
     steps:
     - name: Building OMPI,UCX and tests
       run: /start build
-  test:
-    needs: [deployment, build]
+  nvidia_test:
+    needs: [nvidia_deployment, nvidia_build]
     runs-on: [self-hosted, linux, x64, nvidia]
     steps:
     - name: Running tests
       run: /start test
-  clean:
-# always() should be used to run "clean" even when the workflow was canceled 
+  nvidia_clean:
+# always() should be used to run "clean" even when the workflow was canceled
 #  ( in case of the right repository name)
 # The second condition doesn't work when the workflow was canceled
 
     if: always() && (github.repository == 'open-mpi/ompi')
-    needs: [deployment, build, test]
+    needs: [nvidia_deployment, nvidia_build, nvidia_test]
     runs-on: [self-hosted, linux, x64, nvidia]
     steps:
     - name: Cleaning
