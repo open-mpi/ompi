@@ -1,5 +1,6 @@
 /**
   Copyright (c) 2021      Mellanox Technologies. All rights reserved.
+  Copyright (c) 2025      Fujitsu Limited. All rights reserved.
   $COPYRIGHT$
   Additional copyrights may follow
   $HEADER$
@@ -25,7 +26,7 @@
         }                                            \
     } while(0)
 
-#define COLL_UCC_GET_REQ(_coll_req) do {                                \
+#define COLL_UCC_GET_REQ(_coll_req, _comm) do {                         \
         opal_free_list_item_t *item;                                    \
         item = opal_free_list_wait (&mca_coll_ucc_component.requests);  \
         if (OPAL_UNLIKELY(NULL == item)) {                              \
@@ -40,6 +41,7 @@
         _coll_req->super.req_state            = OMPI_REQUEST_ACTIVE;    \
         _coll_req->super.req_free             = mca_coll_ucc_req_free;  \
         _coll_req->super.req_type             = OMPI_REQUEST_COLL;      \
+        _coll_req->super.req_mpi_object.comm  = _comm;                  \
     } while(0)
 
 #define COLL_UCC_REQ_INIT(_coll_req, _req, _coll, _module) do{          \
