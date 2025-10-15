@@ -57,6 +57,24 @@ INTERNAL_DATATYPES = [
     "MPI_Delete_function",
 ]
 
+DEPRECATED_FUNCTIONS = [
+    "MPI_Keyval_create",
+    "MPI_Keyval_free",
+    "MPI_Attr_put",
+    "MPI_Attr_get",
+    "MPI_Attr_delete",
+    "MPI_Address",
+    "MPI_Errhandler_create",
+    "MPI_Errhandler_get",
+    "MPI_Errhandler_set",
+    "MPI_Type_extent",
+    "MPI_Type_hindexed",
+    "MPI_Type_hvector",
+    "MPI_Type_lb",
+    "MPI_Type_struct",
+    "MPI_Type_ub",
+]
+
 ENUM_CATEGORIES = [
     "ERROR_CLASSES",
     "MODE_CONSTANTS",
@@ -302,9 +320,17 @@ for i, line in enumerate(output):
             # like "MPI_Group_difference"
             datatype_pattern = r"([\( ]?)(" + datatype + r")([; \*\)]{1})"
             line = re.sub(datatype_pattern, f"\\g<1>\\g<2>{ABI_INTERNAL}\\g<3>", line)
+    # TODO: need to enhance pympistandard to be able to prune out deprecated functions
+    # This stands in as a workaround
+    comment_out = any(i in line for i in DEPRECATED_FUNCTIONS)
+
+    # function is not in the ABI standard (things in MPI 5.1 chapter 19 sections 19.3.4 and 19.3.5
     # TODO: need to enhance pympistandard to have field in json to indicate a 
     # function is not in the ABI standard (things in MPI 5.1 chapter 19 sections 19.3.4 and 19.3.5
     if "MPI_Fint" in line or "MPI_F08_status" in line:
+        comment_out = True
+
+    if comment_out == True:
         # Comment out a line if it has references to MPI_Fint or MPI_F08_status, since
         # functions with these argument types are not in the ABI
         line = line[:-1]
