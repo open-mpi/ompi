@@ -90,6 +90,17 @@ class Type(ABC):
         """Return True if this parameter has callback wrapper code to generate."""
         return False
 
+class StandardABIType(Type):
+
+    @property
+    def tmpname(self):
+        return f'{self.name}_tmp'
+
+    @property
+    def argument(self):
+        return self.tmpname
+
+
 @Type.add_type('ERROR_CLASS', abi_type=['ompi'])
 class TypeErrorClass(Type):
 
@@ -100,13 +111,88 @@ class TypeErrorClass(Type):
         return [f'return {name};']
 
 @Type.add_type('ERROR_CLASS', abi_type=['standard'])
-class TypeErrorClass(Type):
+class TypeErrorClassStandard(StandardABIType):
+
+    def type_text(self, enable_count=False):
+        return 'int'
+
+    @property
+    def init_code(self):
+        return [f'int {self.tmpname} = {ConvertFuncs.ERROR_CLASS}({self.name});']
+
+    def return_code(self, name):
+        return [f'return {ConvertOMPIToStandard.ERROR_CLASS}({name});']
+
+
+@Type.add_type('ERROR_CLASS_OUT', abi_type=['ompi'])
+class TypeErrorClassOut(Type):
+
+    def type_text(self, enable_count=False):
+        return 'int *'
+
+@Type.add_type('ERROR_CLASS_OUT', abi_type=['standard'])
+class TypeErrorClassOutStandard(StandardABIType):
+
+    def type_text(self, enable_count=False):
+        return 'int *'
+
+    @property
+    def final_code(self): 
+        return [f'*{self.name} = {ConvertOMPIToStandard.ERROR_CLASS}(*{self.name});']
+
+    @property
+    def argument(self):
+        return f'{self.name}'
+
+#
+# types below seem duplicative of ERROR_CLASS but
+# are provided for clarity in the template files
+# to distinguish between classes and codes which can
+# have different values (in theory) if they are not
+# predeinfed by MPI
+#
+@Type.add_type('ERROR_CODE', abi_type=['ompi'])
+class TypeErrorCode(Type):
 
     def type_text(self, enable_count=False):
         return 'int'
 
     def return_code(self, name):
+        return [f'return {name};']
+
+@Type.add_type('ERROR_CODE', abi_type=['standard'])
+class TypeErrorCodeStandard(StandardABIType):
+
+    def type_text(self, enable_count=False):
+        return 'int'
+
+    @property
+    def init_code(self):
+        return [f'int {self.tmpname} = {ConvertFuncs.ERROR_CLASS}({self.name});']
+
+    def return_code(self, name):
         return [f'return {ConvertOMPIToStandard.ERROR_CLASS}({name});']
+
+
+@Type.add_type('ERROR_CODE_OUT', abi_type=['ompi'])
+class TypeErrorCodeOut(Type):
+
+    def type_text(self, enable_count=False):
+        return 'int *'
+
+@Type.add_type('ERROR_CODE_OUT', abi_type=['standard'])
+class TypeErrorCodeOutStandard(StandardABIType):
+
+    def type_text(self, enable_count=False):
+        return 'int *'
+
+    @property
+    def final_code(self):
+        return [f'*{self.name} = {ConvertOMPIToStandard.ERROR_CLASS}(*{self.name});']
+
+    @property
+    def argument(self):
+        return f'{self.name}'
 
 
 @Type.add_type('BUFFER')
@@ -410,16 +496,6 @@ class TypeDatatypeArrayOut(Type):
 
     def parameter(self, enable_count=False, **kwargs):
         return f'{self.type_text(enable_count=enable_count)} {self.name}[]'
-
-class StandardABIType(Type):
-
-    @property
-    def tmpname(self):
-        return f'{self.name}_tmp'
-
-    @property
-    def argument(self):
-        return self.tmpname
 
 
 @Type.add_type('DATATYPE', abi_type=['standard'])

@@ -28,7 +28,7 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/memchecker.h"
 
-PROTOTYPE ERROR_CLASS session_call_errhandler(SESSION session, INT errorcode)
+PROTOTYPE ERROR_CLASS session_call_errhandler(SESSION session, ERROR_CODE errorcode)
 {
   /* Error checking */
 
