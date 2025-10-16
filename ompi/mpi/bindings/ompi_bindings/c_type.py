@@ -1752,14 +1752,15 @@ class TypeWinCopyAttrFunctionStandard(StandardABIType):
         type_name = self.mangle_name('MPI_Win_copy_attr_function')
         return f'{type_name} *'
 
-    @property
-    def argument(self):
-        return f'(MPI_Win_copy_attr_function *) {self.name}'
+#   @property
+#   def argument(self):
+#       return f'(MPI_Win_copy_attr_function *) {self.name}'
 
     @property
     def init_code(self):
         code = []
-        code = ['ompi_abi_wrapper_helper_t *helper = NULL;']
+        code = [f'MPI_Win_copy_attr_function *{self.tmpname} = {ConvertFuncs.WIN_COPY_ATTR_FUNCTION}({self.name});']
+        code.append('ompi_abi_wrapper_helper_t *helper = NULL;')
         code.append('MPI_Win_copy_attr_function_ABI_INTERNAL *copy_fn;')
         code.append('helper = ( ompi_abi_wrapper_helper_t *)malloc(sizeof(ompi_abi_wrapper_helper_t));')
         code.append('if (NULL == helper)  return MPI_ERR_NO_MEM;')
@@ -1813,9 +1814,9 @@ class TypeWinDeleteAttrFunctionStandard(StandardABIType):
         type_name = self.mangle_name('MPI_Win_delete_attr_function')
         return f'{type_name} *'
 
-    @property
-    def argument(self):
-        return f'(MPI_Win_delete_attr_function *) {self.name}'
+#   @property
+#   def argument(self):
+#       return f'(MPI_Win_delete_attr_function *) {self.name}'
 
 #
 # note the code generated here relies on that generated for
@@ -1823,7 +1824,7 @@ class TypeWinDeleteAttrFunctionStandard(StandardABIType):
 #
     @property
     def init_code(self):
-        code = []
+        code = [f'MPI_Win_delete_attr_function *{self.tmpname} = {ConvertFuncs.WIN_DELETE_ATTR_FUNCTION}({self.name});']
         code.append('MPI_Win_delete_attr_function_ABI_INTERNAL *delete_fn;')
         code.append(f'if ({self.name} == MPI_WIN_NULL_DELETE_FN_ABI_INTERNAL)'  + '{')
         code.append('delete_fn = ABI_C_MPI_WIN_NULL_DELETE_FN;')
