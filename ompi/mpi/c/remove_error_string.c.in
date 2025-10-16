@@ -31,7 +31,7 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/errhandler/errcode.h"
 
-PROTOTYPE ERROR_CLASS remove_error_string(INT errorcode)
+PROTOTYPE ERROR_CLASS remove_error_string(ERROR_CODE errorcode)
 {
     int rc;
 
