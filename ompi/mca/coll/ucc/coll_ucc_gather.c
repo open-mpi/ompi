@@ -116,7 +116,7 @@ int mca_coll_ucc_igather(const void *sbuf, size_t scount, struct ompi_datatype_t
     mca_coll_ucc_req_t    *coll_req = NULL;
 
     UCC_VERBOSE(3, "running ucc igather");
-    COLL_UCC_GET_REQ(coll_req);
+    COLL_UCC_GET_REQ(coll_req, comm);
     COLL_UCC_CHECK(mca_coll_ucc_gather_init_common(sbuf, scount, sdtype, rbuf, rcount,
                                                    rdtype, root, false, ucc_module,
                                                    &req, coll_req));
@@ -142,7 +142,7 @@ int mca_coll_ucc_gather_init(const void *sbuf, size_t scount, struct ompi_dataty
     ucc_coll_req_h req;
     mca_coll_ucc_req_t *coll_req = NULL;
 
-    COLL_UCC_GET_REQ_PERSISTENT(coll_req);
+    COLL_UCC_GET_REQ_PERSISTENT(coll_req, comm);
     UCC_VERBOSE(3, "gather_init init %p", coll_req);
     COLL_UCC_CHECK(mca_coll_ucc_gather_init_common(sbuf, scount, sdtype, rbuf, rcount,
                                                    rdtype, root, true, ucc_module,

@@ -54,7 +54,7 @@ int mca_coll_ucc_ibarrier(struct ompi_communicator_t *comm,
     mca_coll_ucc_req_t    *coll_req = NULL;
 
     UCC_VERBOSE(3, "running ucc ibarrier");
-    COLL_UCC_GET_REQ(coll_req);
+    COLL_UCC_GET_REQ(coll_req, comm);
     COLL_UCC_CHECK(mca_coll_ucc_barrier_init_common(false, ucc_module, &req, coll_req));
     COLL_UCC_POST_AND_CHECK(req);
     *request = &coll_req->super;
@@ -75,7 +75,7 @@ int mca_coll_ucc_barrier_init(struct ompi_communicator_t *comm, struct ompi_info
     ucc_coll_req_h req;
     mca_coll_ucc_req_t *coll_req = NULL;
 
-    COLL_UCC_GET_REQ_PERSISTENT(coll_req);
+    COLL_UCC_GET_REQ_PERSISTENT(coll_req, comm);
     UCC_VERBOSE(3, "barrier_init init %p", coll_req);
     COLL_UCC_CHECK(mca_coll_ucc_barrier_init_common(true, ucc_module, &req, coll_req));
     *request = &coll_req->super;

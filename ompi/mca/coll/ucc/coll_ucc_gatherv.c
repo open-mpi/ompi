@@ -111,7 +111,7 @@ int mca_coll_ucc_igatherv(const void *sbuf, size_t scount, struct ompi_datatype_
     mca_coll_ucc_req_t    *coll_req = NULL;
 
     UCC_VERBOSE(3, "running ucc igatherv");
-    COLL_UCC_GET_REQ(coll_req);
+    COLL_UCC_GET_REQ(coll_req, comm);
     COLL_UCC_CHECK(mca_coll_ucc_gatherv_init_common(sbuf, scount, sdtype, rbuf, rcounts,
                                                     disps, rdtype, root, false, ucc_module,
                                                     &req, coll_req));
@@ -138,7 +138,7 @@ int mca_coll_ucc_gatherv_init(const void *sbuf, size_t scount, struct ompi_datat
     ucc_coll_req_h req;
     mca_coll_ucc_req_t *coll_req = NULL;
 
-    COLL_UCC_GET_REQ_PERSISTENT(coll_req);
+    COLL_UCC_GET_REQ_PERSISTENT(coll_req, comm);
     UCC_VERBOSE(3, "gatherv_init init %p", coll_req);
     COLL_UCC_CHECK(mca_coll_ucc_gatherv_init_common(sbuf, scount, sdtype, rbuf, rcounts,
                                                     disps, rdtype, root, true, ucc_module,

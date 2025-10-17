@@ -105,7 +105,7 @@ int mca_coll_ucc_ireduce_scatter_block(const void *sbuf, void *rbuf, size_t rcou
     mca_coll_ucc_req_t    *coll_req = NULL;
 
     UCC_VERBOSE(3, "running ucc ireduce_scatter_block");
-    COLL_UCC_GET_REQ(coll_req);
+    COLL_UCC_GET_REQ(coll_req, comm);
     COLL_UCC_CHECK(mca_coll_ucc_reduce_scatter_block_init_common(sbuf, rbuf, rcount,
                                                                  dtype, op, false, ucc_module,
                                                                  &req, coll_req));
@@ -132,7 +132,7 @@ int mca_coll_ucc_reduce_scatter_block_init(const void *sbuf, void *rbuf, size_t 
     ucc_coll_req_h req;
     mca_coll_ucc_req_t *coll_req = NULL;
 
-    COLL_UCC_GET_REQ_PERSISTENT(coll_req);
+    COLL_UCC_GET_REQ_PERSISTENT(coll_req, comm);
     UCC_VERBOSE(3, "reduce_scatter_block_init init %p", coll_req);
     COLL_UCC_CHECK(mca_coll_ucc_reduce_scatter_block_init_common(sbuf, rbuf, rcount,
                                                                  dtype, op, true, ucc_module,
