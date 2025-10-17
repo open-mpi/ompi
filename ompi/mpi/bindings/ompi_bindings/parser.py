@@ -6,27 +6,43 @@
 # Additional copyrights may follow
 #
 # $HEADER$
+
+import os
+import sys
+
 """Source parsing code."""
 
 class Parameter:
 
     def __init__(self, text, type_constructor):
         """Parse a parameter."""
-        # parameter in the form "TYPE NAME" or "TYPE NAME:COUNT_VAR"
-        type_name, namecount = text.split()
+        # parameter in the form "TYPE NAME" or "TYPE NAME:COUNT_VAR" or "TYPE NAME:COUNT_VAR:OUTCOUNT_VAR"
+        # some methods allocate more space for an array that what is needed in the final code, for example
+        # with MPI_Waitsome, etc.
+        try:
+            type_name, namecount = text.split()
+        except Exception as e:
+            print(f"Error: could not split '{text}' got error {e}")
+            sys.exit(-1)
         if ':' in namecount:
-            name, count_param = namecount.split(':')
+            if (namecount.count(':') == 2):
+                name, count_param, outcount_param = namecount.split(':')
+            else:
+                name, count_param = namecount.split(':')
+                outcount_param = count_param
         else:
-            name, count_param = namecount, None
+            name, count_param, outcount_param = namecount, None, None
         self.type_name = type_name
         self.name = name
         self.count_param = count_param
+        self.outcount_param = outcount_param
         self.type_constructor = type_constructor
 
     def construct(self, **kwargs):
         """Construct the type parameter for the given ABI."""
         return self.type_constructor(type_name=self.type_name, name=self.name,
-                                     count_param=self.count_param, **kwargs)
+                                     count_param=self.count_param, 
+                                     outcount_param=self.outcount_param, **kwargs)
 
 
 class ReturnType:
