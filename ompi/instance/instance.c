@@ -8,6 +8,7 @@
  *                         reserved.
  * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
  * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2025      Bull SAS.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -184,8 +185,13 @@ static int ompi_mpi_instance_cleanup_pml (void)
     size_t nprocs = 0;
     ompi_proc_t **procs;
 
-    procs = ompi_proc_get_allocated (&nprocs);
+    /* MPI_Comm_spawn calls PML add_procs on procs that have different jobid,
+     * ompi_proc_get_allocated cannot be used here */
+    procs = ompi_proc_all (&nprocs);
     MCA_PML_CALL(del_procs(procs, nprocs));
+    for (int proc_idx = 0; proc_idx < nprocs; ++proc_idx) {
+        OBJ_RELEASE(procs[proc_idx]);
+    }
     free(procs);
 
     return OMPI_SUCCESS;
