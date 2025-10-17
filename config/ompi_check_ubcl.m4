@@ -32,6 +32,18 @@ AC_DEFUN([OMPI_CHECK_UBCL],[
 
     # UBCL is dlopen'd to avoid direct link to libubcl.so.
     # OAC_CHECK_PACKAGE would add this explicit link, so it cannot be used.
+
+    # No option means no dso and with-ubcl=""
+    AS_IF([test "$with_ubcl" = "yes" || test "x$with_ubcl" = "x"],
+          [AC_MSG_NOTICE([Unspecified UBCL path])
+           guessed_path="`find /opt/ubcl -name ubcl_api.h 2>/dev/null \
+                          | sort | tail -n1                          \
+                          | cut -d "/" -f1-4`"
+           AS_IF([test "x$guessed_path" != "x"],
+                 [with_ubcl=$guessed_path
+                 AC_MSG_NOTICE([Guessed that UBCL is $guessed_path])])
+           ])
+
     # OPAL_CHECK_WITHDIR prints an error if the given path is invalid
     OPAL_CHECK_WITHDIR([ubcl], [$with_ubcl], [include/ubcl_api.h])
 
