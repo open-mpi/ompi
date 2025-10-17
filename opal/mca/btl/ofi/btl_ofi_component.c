@@ -339,6 +339,12 @@ static mca_btl_base_module_t **mca_btl_ofi_component_init(int *num_btl_modules,
     domain_attr.control_progress = progress_mode;
     domain_attr.data_progress = progress_mode;
 
+    if (enable_mpi_threads) {
+        domain_attr.threading = FI_THREAD_SAFE;
+    } else {
+        domain_attr.threading = FI_THREAD_DOMAIN;
+    }
+
     /* select endpoint type */
     ep_attr.type = FI_EP_RDM;
 
@@ -359,7 +365,8 @@ static mca_btl_base_module_t **mca_btl_ofi_component_init(int *num_btl_modules,
     tx_attr.iov_limit = 1;
     rx_attr.iov_limit = 1;
 
-    tx_attr.op_flags = FI_DELIVERY_COMPLETE;
+    tx_attr.op_flags = FI_DELIVERY_COMPLETE | FI_COMPLETION;
+    rx_attr.op_flags = FI_COMPLETION;
 
     mca_btl_ofi_component.module_count = 0;
 
@@ -372,9 +379,18 @@ static mca_btl_base_module_t **mca_btl_ofi_component_init(int *num_btl_modules,
 no_hmem:
 #endif
 
+    hints.fabric_attr->fabric = opal_common_ofi.fabric;
+    hints.domain_attr->domain = opal_common_ofi.domain;
+
     /* Do the query. The earliest version that supports FI_HMEM hints is 1.9.
      * The earliest version the explictly allow provider to call CUDA API is 1.18  */
     rc = fi_getinfo(FI_VERSION(1, 18), NULL, NULL, 0, &hints, &info_list);
+    if (FI_ENODATA == -rc && (hints.fabric_attr->fabric || hints.domain_attr->domain)) {
+        /* Retry without fabric and domain */
+        hints.fabric_attr->fabric = NULL;
+        hints.domain_attr->domain = NULL;
+        rc = fi_getinfo(FI_VERSION(1, 18), NULL, NULL, 0, &hints, &info_list);
+    }
     if (FI_ENOSYS == -rc) {
         rc = fi_getinfo(FI_VERSION(1, 9), NULL, NULL, 0, &hints, &info_list);
     }
@@ -553,14 +569,14 @@ static int mca_btl_ofi_init_device(struct fi_info *info)
         ("initializing dev:%s provider:%s", linux_device_name, info->fabric_attr->prov_name));
 
     /* fabric */
-    rc = fi_fabric(ofi_info->fabric_attr, &fabric, NULL);
+    rc = opal_common_ofi_fi_fabric(ofi_info->fabric_attr, &fabric);
     if (0 != rc) {
         BTL_VERBOSE(("%s failed fi_fabric with err=%s", linux_device_name, fi_strerror(-rc)));
         goto fail;
     }
 
     /* domain */
-    rc = fi_domain(fabric, ofi_info, &domain, NULL);
+    rc = opal_common_ofi_fi_domain(fabric, ofi_info, &domain);
     if (0 != rc) {
         BTL_VERBOSE(("%s failed fi_domain with err=%s", linux_device_name, fi_strerror(-rc)));
         goto fail;
@@ -743,11 +759,11 @@ fail:
     }
 
     if (NULL != domain) {
-        fi_close(&domain->fid);
+        opal_common_ofi_domain_release(domain);
     }
 
     if (NULL != fabric) {
-        fi_close(&fabric->fid);
+        opal_common_ofi_fabric_release(fabric);
     }
     free(module);
 
