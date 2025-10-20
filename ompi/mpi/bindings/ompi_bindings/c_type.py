@@ -478,6 +478,11 @@ class TypeDatatypeOut(Type):
     def type_text(self, enable_count=False):
         return 'MPI_Datatype *'
 
+@Type.add_type('DATATYPE_INOUT', abi_type=['ompi'])
+class TypeDatatypeOut(Type):
+
+    def type_text(self, enable_count=False):
+        return 'MPI_Datatype *'
 
 @Type.add_type('DATATYPE_ARRAY', abi_type=['ompi'])
 class TypeDatatypeArray(Type):
@@ -528,7 +533,7 @@ class TypeDatatypeOutStandard(StandardABIType):
 
     @property
     def final_code(self):
-        return [f'*{self.name} = {ConvertOMPIToStandard.DATATYPE}((MPI_Datatype) *{self.name});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.DATATYPE}((MPI_Datatype) *{self.name});']
 
     def type_text(self, enable_count=False):
         type_name = self.mangle_name('MPI_Datatype')
@@ -537,6 +542,25 @@ class TypeDatatypeOutStandard(StandardABIType):
     @property
     def argument(self):
         return f'(MPI_Datatype *) {self.name}'
+
+@Type.add_type('DATATYPE_INOUT', abi_type=['standard'])
+class TypeDatatypeInoutStandard(StandardABIType):
+
+    @property
+    def init_code(self):
+        return [f'MPI_Datatype {self.tmpname} = (NULL != {self.name}) ? {ConvertFuncs.DATATYPE}(*{self.name}) : MPI_DATATYPE_NULL;']
+
+    @property
+    def final_code(self):
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.DATATYPE}((MPI_Datatype) {self.tmpname});']
+
+    def type_text(self, enable_count=False):
+        type_name = self.mangle_name('MPI_Datatype')
+        return f'{type_name} *'
+
+    @property
+    def argument(self):
+        return f'(MPI_Datatype *) (NULL != {self.name} ? &{self.tmpname} : NULL)'
 
 @Type.add_type('DATATYPE_ARRAY', abi_type=['standard'])
 class TypeDatatypeArrayStandard(StandardABIType):
@@ -787,6 +811,33 @@ class TypeCommunicatorOutStandard(StandardABIType):
         return f'(MPI_Comm *) {self.name}'
 
 
+@Type.add_type('COMM_INOUT', abi_type=['ompi'])
+class TypeCommInOut(Type):
+
+    def type_text(self, enable_count=False):
+        return 'MPI_Comm *'
+
+
+@Type.add_type('COMM_INOUT', abi_type=['standard'])
+class TypeCommInOutStandard(StandardABIType):
+
+    @property
+    def init_code(self):
+        return [f'MPI_Comm {self.tmpname} = (NULL != {self.name}) ? {ConvertFuncs.COMM}(*{self.name}) : MPI_COMM_NULL;']
+
+    @property
+    def final_code(self):
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.COMM}({self.tmpname});']
+
+    def type_text(self, enable_count=False):
+        type_name = self.mangle_name('MPI_Comm')
+        return f'{type_name} *'
+
+    @property
+    def argument(self):
+        return f'(MPI_Comm *) (NULL != {self.name} ? &{self.tmpname} : NULL)'
+
+
 @Type.add_type('WIN', abi_type=['ompi'])
 class TypeWindow(Type):
 
@@ -832,6 +883,31 @@ class TypeWindowOutStandard(StandardABIType):
     def argument(self):
         return f'(MPI_Win *) {self.name}'
 
+@Type.add_type('WIN_INOUT', abi_type=['ompi'])
+class TypeWinInOut(Type):
+
+    def type_text(self, enable_count=False):
+        return 'MPI_Win *'
+
+
+@Type.add_type('WIN_INOUT', abi_type=['standard'])
+class TypeWinInOutStandard(StandardABIType):
+
+    @property
+    def init_code(self):
+        return [f'MPI_Win {self.tmpname} = (NULL != {self.name}) ? {ConvertFuncs.WIN}(*{self.name}) : MPI_WIN_NULL;']
+
+    @property
+    def final_code(self):
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.WIN}({self.tmpname});']
+
+    def type_text(self, enable_count=False):
+        type_name = self.mangle_name('MPI_Win')
+        return f'{type_name} *'
+
+    @property
+    def argument(self):
+        return f'(MPI_Win *) (NULL != {self.name} ? &{self.tmpname} : NULL)'
 
 @Type.add_type('REQUEST', abi_type=['ompi'])
 class TypeRequest(Type):
@@ -1324,7 +1400,7 @@ class TypeFileInOutStandard(TypeFileOutStandard):
 
     @property
     def argument(self):
-        return f'&{self.tmpname}'
+        return f'(MPI_File *) (NULL != {self.name} ? &{self.tmpname} : NULL)'
 
 @Type.add_type('MESSAGE', abi_type=['ompi'])
 class TypeMessage(Type):
@@ -1395,7 +1471,7 @@ class TypeMessageInOutStandard(StandardABIType):
 
     @property
     def argument(self):
-        return f'&{self.tmpname}'
+        return f'(MPI_Message *) (NULL != {self.name} ? &{self.tmpname} : NULL)'
 
     def type_text(self, enable_count=False):
         type_name = self.mangle_name('MPI_Message')
@@ -2010,7 +2086,7 @@ class TypeGroupOutStandard(StandardABIType):
 
     @property
     def final_code(self):
-        return [f'*{self.name} = {ConvertOMPIToStandard.GROUP}((MPI_Group) *{self.name});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.GROUP}((MPI_Group) *{self.name});']
 
     def type_text(self, enable_count=False):
         type_name = self.mangle_name('MPI_Group')
@@ -2020,6 +2096,32 @@ class TypeGroupOutStandard(StandardABIType):
     def argument(self):
         return f'(MPI_Group *) {self.name}'
 
+
+@Type.add_type('GROUP_INOUT', abi_type=['ompi'])
+class TypeGroupInOut(Type):
+
+    def type_text(self, enable_count=False):
+        return 'MPI_Group *'
+
+
+@Type.add_type('GROUP_INOUT', abi_type=['standard'])
+class TypeGroupInOutStandard(StandardABIType):
+
+    @property
+    def init_code(self):
+        return [f'MPI_Group {self.tmpname} = (NULL != {self.name}) ? {ConvertFuncs.GROUP}(*{self.name}) : MPI_GROUP_NULL;']
+
+    @property
+    def final_code(self):
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.GROUP}({self.tmpname});']
+
+    def type_text(self, enable_count=False):
+        type_name = self.mangle_name('MPI_Group')
+        return f'{type_name} *'
+
+    @property
+    def argument(self):
+        return f'(MPI_Group *) (NULL != {self.name} ? &{self.tmpname} : NULL)'
 
 @Type.add_type('SESSION_INOUT', abi_type=['ompi'])
 class TypeSessionOut(Type):
@@ -2039,11 +2141,11 @@ class TypeSessionInOutStandard(StandardABIType):
 
     @property
     def init_code(self):
-        return [f'MPI_Session {self.tmpname} = {ConvertFuncs.SESSION}(*{self.name});']
+        return [f'MPI_Session {self.tmpname} = (NULL != {self.name}) ? {ConvertFuncs.SESSION}(*{self.name}) : MPI_SESSION_NULL;']
 
     @property
     def final_code(self):
-        return [f'*{self.name} = {ConvertOMPIToStandard.SESSION}({self.tmpname});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.SESSION}({self.tmpname});']
 
     def type_text(self, enable_count=False):
         type_name = self.mangle_name('MPI_Session')
@@ -2051,7 +2153,7 @@ class TypeSessionInOutStandard(StandardABIType):
 
     @property
     def argument(self):
-        return f'&{self.tmpname}'
+        return f'(MPI_Session *) (NULL != {self.name} ? &{self.tmpname} : NULL)'
 
 
 @Type.add_type('SESSION_OUT', abi_type=['standard'])
@@ -2855,7 +2957,7 @@ class TypeCombinerOut(Type):
         return 'int *'
 
 @Type.add_type('COMBINER_OUT', abi_type=['standard'])
-class TyperCombinerOutStandard(StandardABIType):
+class TypeCombinerOutStandard(StandardABIType):
 
     @property
     def final_code(self):
