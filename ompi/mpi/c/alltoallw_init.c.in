@@ -37,8 +37,8 @@
 #include "ompi/runtime/ompi_spc.h"
 
 PROTOTYPE ERROR_CLASS alltoallw_init(BUFFER sendbuf, COUNT_ARRAY sendcounts, DISP_ARRAY sdispls,
-                                     DATATYPE_ARRAY sendtypes, BUFFER_OUT recvbuf, COUNT_ARRAY recvcounts,
-                                     DISP_ARRAY rdispls, DATATYPE_ARRAY recvtypes, COMM comm,
+                                     DATATYPE_ARRAY_ASYNC sendtypes, BUFFER_OUT recvbuf, COUNT_ARRAY recvcounts,
+                                     DISP_ARRAY rdispls, DATATYPE_ARRAY_ASYNC recvtypes, COMM comm,
                                      INFO info, REQUEST_INOUT request)
 {
     int i, size, err;
