@@ -40,8 +40,8 @@
 #include "ompi/runtime/ompi_spc.h"
 
 PROTOTYPE ERROR_CLASS ineighbor_alltoallw(BUFFER sendbuf, COUNT_ARRAY sendcounts, AINT_ARRAY sdispls,
-                                          DATATYPE_ARRAY sendtypes, BUFFER_OUT recvbuf, COUNT_ARRAY recvcounts,
-                                          AINT_ARRAY rdispls, DATATYPE_ARRAY recvtypes, COMM comm,
+                                          DATATYPE_ARRAY_ASYNC sendtypes, BUFFER_OUT recvbuf, COUNT_ARRAY recvcounts,
+                                          AINT_ARRAY rdispls, DATATYPE_ARRAY_ASYNC recvtypes, COMM comm,
                                           REQUEST_INOUT request)
 {
     int i, err;

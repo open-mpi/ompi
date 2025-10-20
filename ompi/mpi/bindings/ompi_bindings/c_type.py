@@ -497,6 +497,14 @@ class TypeDatatypeArrayOut(Type):
     def parameter(self, enable_count=False, **kwargs):
         return f'{self.type_text(enable_count=enable_count)} {self.name}[]'
 
+@Type.add_type('DATATYPE_ARRAY_ASYNC', abi_type=['ompi'])
+class TypeDatatypeArray(Type):
+
+    def type_text(self, enable_count=False):
+        return 'MPI_Datatype'
+
+    def parameter(self, enable_count=False, **kwargs):
+        return f'const {self.type_text(enable_count=enable_count)} {self.name}[]'
 
 @Type.add_type('DATATYPE', abi_type=['standard'])
 class TypeDatatypeStandard(StandardABIType):
@@ -569,6 +577,16 @@ class TypeDatatypeArrayStandard(StandardABIType):
     @property
     def argument(self):
         return f'(MPI_Datatype *) {self.tmpname}'
+
+@Type.add_type('DATATYPE_ARRAY_ASYNC', abi_type=['standard'])
+class TypeDatatypeArrayAsyncStandard(TypeDatatypeArrayStandard):
+
+    @property
+    def final_code(self):
+        code = ['{']
+        code.append('}')
+        return code
+
 
 @Type.add_type('DATATYPE_ARRAY_OUT', abi_type=['standard'])
 class TypeDatatypeArrayOutStandard(StandardABIType):
