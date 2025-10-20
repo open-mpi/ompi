@@ -2884,3 +2884,24 @@ class TypeWhenceStandard(StandardABIType):
     def type_text(self, enable_count=False):
         return 'int'
 
+@Type.add_type('TOPO_OUT', abi_type=['ompi'])
+class TopoOut(Type):
+
+    def type_text(self, enable_count=False):
+        return 'int *'
+
+@Type.add_type('TOPO_OUT', abi_type=['standard'])
+class TopoOutStandard(StandardABIType):
+
+    @property
+    def final_code(self):
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.TOPO}(*{self.name});']
+
+    def type_text(self, enable_count=False):
+        return 'int *'
+
+    @property
+    def argument(self):
+        return f'{self.name}'
+
+
