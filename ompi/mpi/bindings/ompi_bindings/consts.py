@@ -493,6 +493,12 @@ WIN_LOCK_VALUES = [
     'MPI_LOCK_SHARED',
 ]
  
+TOPO_VALUES = [
+    'MPI_CART',
+    'MPI_GRAPH',
+    'MPI_DIST_GRAPH',
+]
+
 # Types
 
 C_OPAQUE_TYPES = {
@@ -603,6 +609,7 @@ class ConvertOMPIToStandard:
     SUBARRAY_ORDER = 'ompi_convert_subarray_order_ompi_to_standard'
     MODE_BITS = 'ompi_convert_mode_bits_to_standard'
     COMBINER = 'ompi_convert_combiner_to_standard'
+    TOPO = 'ompi_convert_topo_to_standard'
 
 
 # Inline function attributes

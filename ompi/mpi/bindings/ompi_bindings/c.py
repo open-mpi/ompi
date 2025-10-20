@@ -546,6 +546,9 @@ class ABIConverterBuilder:
     def generate_win_lock_convert_fn(self):
         self.generic_convert(ConvertFuncs.WIN_LOCK, 'lock_assert', 'int', consts.WIN_LOCK_VALUES)
 
+    def generate_topo_convert_fn_intern_to_abi(self):
+        self.generic_convert_reverse(ConvertOMPIToStandard.TOPO, 'status', 'int', consts.TOPO_VALUES)
+
     def generate_mode_bits_convert_fn(self):
         self.dump(f'{consts.INLINE_ATTRS} int {ConvertFuncs.MODE_BITS}(int mode_bits)')
         self.dump('{')
@@ -741,6 +744,7 @@ extern "C" {
         #
         self.generate_comm_cmp_convert_fn_intern_to_abi()
         self.generate_combiner_convert_fn_intern_to_abi()
+        self.generate_topo_convert_fn_intern_to_abi()
 
         self.dump("""
 #if defined(c_plusplus) || defined(__cplusplus)
