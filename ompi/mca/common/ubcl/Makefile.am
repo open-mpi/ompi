@@ -1,4 +1,4 @@
-# Copyright (c) 2025      Bull SAS.  All rights reserved.
+# Copyright (c) 2025-2026 Bull SAS.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -35,6 +35,7 @@ libmca_common_ubcl_la_LIBADD = $(common_ubcl_LIBS) \
 	$(OPAL_TOP_BUILDDIR)/opal/mca/common/ubcl/lib@OPAL_LIB_NAME@mca_common_ubcl.la
 
 libmca_common_ubcl_noinst_la_SOURCES = $(common_ubcl_sources)
+libmca_common_ubcl_noinst_la_CPPFLAGS = $(common_ubcl_CPPFLAGS)
 
 # Conditionally install the header files
 
