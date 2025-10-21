@@ -113,7 +113,7 @@ int ABI_C_MPI_COMM_NULL_COPY_FN( MPI_Comm_ABI_INTERNAL comm, int comm_keyval,
                                   void* attribute_val_in,
                                   void* attribute_val_out, int* flag )
 {
-   *flag= 0;
+   *flag = 0;
    return MPI_SUCCESS;
 }
 
