@@ -112,6 +112,7 @@ static void ompi_instance_construct (ompi_instance_t *instance)
     instance->i_keyhash = NULL;
     OBJ_CONSTRUCT(&instance->s_lock, opal_mutex_t);
     instance->errhandler_type = OMPI_ERRHANDLER_TYPE_INSTANCE;
+    instance->bsend_buffer = NULL;
 }
 
 static void ompi_instance_destruct(ompi_instance_t *instance)

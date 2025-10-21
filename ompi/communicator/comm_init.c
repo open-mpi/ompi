@@ -447,6 +447,7 @@ static void ompi_comm_construct(ompi_communicator_t* comm)
     comm->c_remote_group = NULL;
     comm->error_handler  = NULL;
     comm->c_pml_comm     = NULL;
+    comm->bsend_buffer   = NULL;
     comm->c_topo         = NULL;
     comm->c_coll         = NULL;
     comm->c_nbc_tag      = MCA_COLL_BASE_TAG_NONBLOCKING_BASE;
