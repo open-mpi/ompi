@@ -34,7 +34,7 @@
 
 PROTOTYPE ERROR_CLASS remove_error_code(INT errorcode)
 {
-    int code;
+    int lastused;
     int rc;
 
     if ( MPI_PARAM_CHECK ) {
@@ -47,10 +47,10 @@ PROTOTYPE ERROR_CLASS remove_error_code(INT errorcode)
 
     }
 
-    code = ompi_mpi_errcode_remove ( errorcode );
-    if ( 0 > code ) {
+    lastused = ompi_mpi_errcode_remove ( errorcode );
+    if ( 0 > lastused ) {
         return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_INTERN,
-                                      FUNC_NAME);
+                                               FUNC_NAME);
     }
 
     /*
@@ -62,7 +62,7 @@ PROTOTYPE ERROR_CLASS remove_error_code(INT errorcode)
                               MPI_COMM_WORLD,
                               &MPI_COMM_WORLD->c_keyhash,
                               MPI_LASTUSEDCODE,
-                              ompi_mpi_errcode_lastused,
+                              lastused,
                               true);
     if ( MPI_SUCCESS != rc ) {
         return OMPI_ERRHANDLER_NOHANDLE_INVOKE(rc, FUNC_NAME);
