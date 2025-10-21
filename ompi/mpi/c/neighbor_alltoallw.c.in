@@ -39,9 +39,9 @@
 #include "ompi/runtime/ompi_spc.h"
 
 PROTOTYPE ERROR_CLASS neighbor_alltoallw(BUFFER_CONST sendbuf, COUNT_ARRAY sendcounts, AINT_ARRAY sdispls,
-                                         DATATYPE_ARRAY sendtypes, BUFFER_OUT recvbuf,
+                                         NEIGHBOR_DATATYPE_ARRAY sendtypes, BUFFER_OUT recvbuf,
                                          COUNT_ARRAY recvcounts, AINT_ARRAY rdispls,
-                                         DATATYPE_ARRAY recvtypes, COMM comm)
+                                         NEIGHBOR_DATATYPE_ARRAY recvtypes, COMM comm)
 {
     int i, err;
     int indegree, outdegree;

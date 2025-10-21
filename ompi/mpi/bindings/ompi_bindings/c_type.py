@@ -540,6 +540,14 @@ class TypeDatatypeArray(Type):
     def parameter(self, enable_count=False, **kwargs):
         return f'const {self.type_text(enable_count=enable_count)} {self.name}[]'
 
+@Type.add_type('NEIGHBOR_DATATYPE_ARRAY', abi_type=['ompi'])
+class NeighborDatatypeArray(TypeDatatypeArray):
+    pass
+
+@Type.add_type('NEIGHBOR_DATATYPE_ARRAY_ASYNC', abi_type=['ompi'])
+class NeighborDatatypeArrayAsync(TypeDatatypeArray):
+    pass
+
 @Type.add_type('DATATYPE_ARRAY_OUT', abi_type=['ompi'])
 class TypeDatatypeArrayOut(Type):
 
@@ -690,16 +698,45 @@ class TypeDatatypeArrayOutStandard(StandardABIType):
     def argument(self):
         return f'(MPI_Datatype *) {self.tmpname}'
 
+@Type.add_type('NEIGHBOR_DATATYPE_ARRAY', abi_type=['standard'])
+class NeighborDatatypeArrayStandard(TypeDatatypeArrayStandard):
+
+    @property
+    def init_code(self):
+        code = [f'MPI_Comm comm_{self.tmpname} = {ConvertFuncs.COMM}(comm);']
+        code.append(f'int indegree_{self.tmpname}, outdegree_{self.tmpname}, size_{self.tmpname};')
+        code.append(f'mca_topo_base_neighbor_count(comm_{self.tmpname}, &indegree_{self.tmpname}, &outdegree_{self.tmpname});')
+        code.append(f'MPI_Datatype *{self.tmpname} = NULL;')
+        if self.name == "sendtypes":
+            code.append(f'size_{self.tmpname} = outdegree_{self.tmpname};')
+        if self.name == "recvtypes":
+            code.append(f'size_{self.tmpname} = indegree_{self.tmpname};')
+        code.append('if('+f'{self.name}' + '!= NULL)' + '{')
+        code.append(f'{self.tmpname} = (MPI_Datatype *)malloc(sizeof(MPI_Datatype) * size_{self.tmpname});')
+        code.append(f'for(int i=0;i<size_{self.tmpname};i++){{')
+        code.append(f'{self.tmpname}[i] = {ConvertFuncs.DATATYPE}({self.name}[i]);')
+        code.append(f'}}')
+        code.append(f'}}')
+        return code
+
+@Type.add_type('NEIGHBOR_DATATYPE_ARRAY_ASYNC', abi_type=['standard'])
+class NeighborDatatypeArrayAsyncStandard(NeighborDatatypeArrayStandard):
+
+    @property
+    def final_code(self):
+        code = ['{']
+        code.append('}')
+        return code
 
 @Type.add_type('OP', abi_type=['ompi'])
-class TypeDatatype(Type):
+class TypeOp(Type):
 
     def type_text(self, enable_count=False):
         return 'MPI_Op'
 
 
 @Type.add_type('OP', abi_type=['standard'])
-class TypeDatatype(StandardABIType):
+class TypeOpStandard(StandardABIType):
 
     @property
     def init_code(self):
