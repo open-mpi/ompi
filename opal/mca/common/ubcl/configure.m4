@@ -1,6 +1,6 @@
 # -*- shell-script -*-
 #
-# Copyright (c) 2024      Bull S.A.S. All rights reserved.
+# Copyright (c) 2024-2026 Bull S.A.S. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -15,6 +15,7 @@ AC_DEFUN([MCA_opal_common_ubcl_CONFIG],[
                     [common_ubcl_happy="yes"],
                     [common_ubcl_happy="no"])
 
+    common_ubcl_LDFLAGS=""
 
     AS_IF([test "$common_ubcl_happy" = "yes"],
           [$1],

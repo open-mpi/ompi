@@ -1,4 +1,4 @@
-# Copyright (c) 2025 Bull SAS.  All rights reserved.
+# Copyright (c) 2025-2026 Bull SAS.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -20,6 +20,10 @@ AC_DEFUN([MCA_ompi_osc_ubcl_CONFIG], [
     OMPI_CHECK_UBCL([osc_ubcl],
         [osc_ubcl_happy="yes"],
         [osc_ubcl_happy="no"])
+
+    AS_IF([test "$compile_mode" = "dso"],
+          [osc_ubcl_LDFLAGS=""],
+          [AC_MSG_WARN([Only DSO mode of osc/ubcl is tested (see --enable-mca-dso)])])
 
     AS_IF([test "$osc_ubcl_happy" = "yes"],
         [$1],

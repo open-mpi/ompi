@@ -8,7 +8,7 @@
 #                         reserved.
 # Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
-# Copyright (c) 2024-2025 Bull S.A.S.  All rights reserved.
+# Copyright (c) 2024-2026 Bull S.A.S.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -43,7 +43,9 @@ AC_DEFUN([OMPI_CHECK_UBCL],[
 
           [ompi_check_ubcl_happy="yes"
            $1_CPPFLAGS="${$1_CPPFLAGS} -I$with_ubcl/include/"
-           AC_MSG_NOTICE([$1_CPPFLAGS is set to: ${$1_CPPFLAGS}])])
+           AC_MSG_NOTICE([$1_CPPFLAGS is set to: ${$1_CPPFLAGS}])
+           $1_LDFLAGS="${$1_LDFLAGS} -lubcl -L$with_ubcl/lib/"
+           AC_MSG_NOTICE([$1_LDFLAGS is set to: ${$1_LDFLAGS}])])
 
 
     OPAL_SUMMARY_ADD([Transports],[UBCL],[],[$ompi_check_ubcl_happy])
