@@ -14,7 +14,7 @@
  *                         reserved.
  * Copyright (c) 2015-2019 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
- * Copyright (c) 2024      Triad National Security, LLC. All rights
+ * Copyright (c) 2024-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -35,7 +35,7 @@
 #include "ompi/memchecker.h"
 #include "ompi/runtime/ompi_spc.h"
 
-PROTOTYPE ERROR_CLASS exscan_init(BUFFER sendbuf, BUFFER_OUT recvbuf, COUNT count,
+PROTOTYPE ERROR_CLASS exscan_init(BUFFER_CONST sendbuf, BUFFER_OUT recvbuf, COUNT count,
                                   DATATYPE datatype, OP op, COMM comm,
                                   INFO info, REQUEST_INOUT request)
 {

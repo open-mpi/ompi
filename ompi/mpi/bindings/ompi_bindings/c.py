@@ -34,7 +34,7 @@ from ompi_bindings.consts import ConvertFuncs, ConvertOMPIToStandard
 from ompi_bindings.c_type import Type
 from ompi_bindings.parser import SourceTemplate
 
-c_intrinsic_types = ['char', 'int', 'long int']
+c_intrinsic_types = ['char', 'int', 'long int', 'void']
 #OMPI_ABI_HANDLE_BASE_OFFSET = '16385'
 
 class ABIHeaderBuilder:
@@ -338,10 +338,17 @@ class ABIConverterBuilder:
         self.dump('}')
 
     def generic_convert_reverse(self, fn_name, param_name, type_, value_names, offset=None):
-        if type_ not in c_intrinsic_types:
-            intern_type = self.mangle_name(type_)
+        is_ptr_arg = False
+        tmp_type = type_
+        if (tmp_type[-1] == '*'):
+            is_ptr_arg = True
+            tmp_type = tmp_type[:-1].strip()
+        if tmp_type not in c_intrinsic_types:
+            intern_type = self.mangle_name(tmp_type)
         else:
-            intern_type = type_
+            intern_type = tmp_type
+        if (is_ptr_arg == True):
+            intern_type = intern_type + ' *'
         self.dump(f'{consts.INLINE_ATTRS} {intern_type} {fn_name}({type_} {param_name})')
         self.dump('{')
         lines = []
@@ -549,6 +556,12 @@ class ABIConverterBuilder:
     def generate_topo_convert_fn_intern_to_abi(self):
         self.generic_convert_reverse(ConvertOMPIToStandard.TOPO, 'status', 'int', consts.TOPO_VALUES)
 
+    def generate_buffer_convert_fn(self):
+        self.generic_convert(ConvertFuncs.BUFFER, 'buffer', 'void *', consts.BUFFER_VALUES)
+
+    def generate_buffer_convert_fn_intern_to_abi(self):
+        self.generic_convert_reverse(ConvertOMPIToStandard.BUFFER, 'buffer', 'void *', consts.BUFFER_VALUES)
+
     def generate_mode_bits_convert_fn(self):
         self.dump(f'{consts.INLINE_ATTRS} int {ConvertFuncs.MODE_BITS}(int mode_bits)')
         self.dump('{')
@@ -720,8 +733,8 @@ extern "C" {
         self.generate_pvar_class_convert_fn_intern_to_abi()
         self.generate_mode_bits_convert_fn()
         self.generate_mode_bits_convert_fn_intern_to_abi()
-        self.generate_whence_convert_fn()
-        self.generate_win_lock_convert_fn()
+        self.generate_buffer_convert_fn()
+        self.generate_buffer_convert_fn_intern_to_abi()
 
         #
         # the following only need abi to intern converters
@@ -738,6 +751,8 @@ extern "C" {
         self.generate_subarray_distrib_types_convert_fn()
         self.generate_root_convert_fn()
         self.generate_t_cb_safety_convert_fn()
+        self.generate_win_lock_convert_fn()
+        self.generate_whence_convert_fn()
 
         #
         # the following only need intern to abi converters
