@@ -44,7 +44,7 @@ PROTOTYPE ERROR_CLASS comm_iflush_buffer(COMM comm, REQUEST_INOUT request)
         OMPI_ERRHANDLER_CHECK(ret, comm, ret, FUNC_NAME);
     }
 
-    ret = mca_pml_base_bsend_iflush(COMM_BSEND_BUF, NULL, request);
+    ret = mca_pml_base_bsend_iflush(COMM_BSEND_BUF, comm, request);
 
     return ret;
 }
