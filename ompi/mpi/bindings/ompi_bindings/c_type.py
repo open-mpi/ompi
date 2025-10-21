@@ -194,8 +194,13 @@ class TypeErrorCodeOutStandard(StandardABIType):
     def argument(self):
         return f'{self.name}'
 
+@Type.add_type('BUFFER', abi_type=['ompi'])
+class TypeBuffer(Type):
 
-@Type.add_type('BUFFER')
+    def type_text(self, enable_count=False):
+        return 'void *'
+
+@Type.add_type('BUFFER_CONST', abi_type=['ompi'])
 class TypeBuffer(Type):
 
     def type_text(self, enable_count=False):
@@ -208,6 +213,26 @@ class TypeBufferOut(Type):
     def type_text(self, enable_count=False):
         return f'void *'
 
+
+@Type.add_type('BUFFER', abi_type=['standard'])
+class TypeBuffer(StandardABIType):
+
+    @property
+    def init_code(self):
+        return [f'void *{self.tmpname} = (int *){ConvertFuncs.BUFFER}((void *){self.name});']
+
+    def type_text(self, enable_count=False):
+        return 'void *'
+
+@Type.add_type('BUFFER_CONST', abi_type=['standard'])
+class TypeBuffer(StandardABIType):
+
+    @property
+    def init_code(self):
+        return [f'void *{self.tmpname} = (int *){ConvertFuncs.BUFFER}((void *){self.name});']
+
+    def type_text(self, enable_count=False):
+        return 'const void *'
 
 @Type.add_type('COUNT')
 class TypeCount(Type):

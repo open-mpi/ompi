@@ -499,6 +499,12 @@ TOPO_VALUES = [
     'MPI_DIST_GRAPH',
 ]
 
+BUFFER_VALUES = [
+    'MPI_BOTTOM',
+    'MPI_BUFFER_AUTOMATIC',
+    'MPI_IN_PLACE',
+]
+
 # Types
 
 C_OPAQUE_TYPES = {
@@ -576,6 +582,7 @@ class ConvertFuncs:
     WHENCE = 'ompi_convert_whence_intern_whence'
     TYPECLASS = 'ompi_convert_typeclass_intern_typeclass'
     WIN_LOCK = 'ompi_convert_lock_assert_intern_lock_assert'
+    BUFFER = 'ompi_convert_abi_buffer_intern_buffer'
 
 class ConvertOMPIToStandard:
     """Generated function for converting from OMPI to standard ABI."""
@@ -610,6 +617,7 @@ class ConvertOMPIToStandard:
     MODE_BITS = 'ompi_convert_mode_bits_to_standard'
     COMBINER = 'ompi_convert_combiner_to_standard'
     TOPO = 'ompi_convert_topo_to_standard'
+    BUFFER = 'ompi_convert_buffer_to_standard'
 
 
 # Inline function attributes
