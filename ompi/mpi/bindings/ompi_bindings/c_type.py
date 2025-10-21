@@ -214,6 +214,28 @@ class TypeBufferOut(Type):
         return f'void *'
 
 
+@Type.add_type('BUFFER_ADDR_OUT', abi_type=['ompi'])
+class TypeBufferOut(Type):
+
+    def type_text(self, enable_count=False):
+        return f'void *'
+
+
+@Type.add_type('BUFFER_ADDR_OUT', abi_type=['standard'])
+class TypeBufferOutStandard(StandardABIType):
+
+    @property
+    def final_code(self):
+        return [f'if (NULL != {self.name}) *(void **){self.name} = {ConvertOMPIToStandard.BUFFER}(*(void **){self.name});']
+
+    def type_text(self, enable_count=False):
+        return f'void *'
+
+    @property
+    def argument(self):
+        return f'{self.name}'
+
+
 @Type.add_type('BUFFER', abi_type=['standard'])
 class TypeBuffer(StandardABIType):
 
