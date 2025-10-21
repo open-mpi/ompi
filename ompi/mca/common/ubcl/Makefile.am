@@ -36,6 +36,7 @@ libmca_common_ubcl_la_LIBADD = $(common_ubcl_LIBS) \
 
 libmca_common_ubcl_noinst_la_SOURCES = $(common_ubcl_sources)
 libmca_common_ubcl_noinst_la_CPPFLAGS = $(common_ubcl_CPPFLAGS)
+libmca_common_ubcl_noinst_la_LDFLAGS = $(common_ubcl_LDFLAGS)
 
 # Conditionally install the header files
 
