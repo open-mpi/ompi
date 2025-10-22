@@ -40,7 +40,7 @@
  *
  *   Upon successful completion, 'info' will be set to 'MPI_INFO_NULL'.
  */
-PROTOTYPE ERROR_CLASS info_free(INFO_OUT info)
+PROTOTYPE ERROR_CLASS info_free(INFO_INOUT info)
 {
     int err;
 

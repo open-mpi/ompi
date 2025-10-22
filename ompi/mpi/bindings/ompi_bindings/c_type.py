@@ -757,7 +757,6 @@ class TypeOpOut(Type):
     def type_text(self, enable_count=False):
         return 'MPI_Op *'
 
-
 @Type.add_type('OP_OUT', abi_type=['standard'])
 class TypeOpOutStandard(StandardABIType):
 
@@ -773,6 +772,28 @@ class TypeOpOutStandard(StandardABIType):
     def argument(self):
         return f'(MPI_Op *) {self.name}'
 
+@Type.add_type('OP_INOUT', abi_type=['ompi'])
+class TypeOpInOut(TypeOpOut):
+    pass
+
+@Type.add_type('OP_INOUT', abi_type=['standard'])
+class TypeOpOutStandard(StandardABIType):
+
+    @property
+    def init_code(self):
+        return [f'MPI_Op {self.tmpname} = (NULL != {self.name}) ? {ConvertFuncs.OP}(*{self.name}) : MPI_OP_NULL;']
+
+    @property
+    def final_code(self):
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.OP}((MPI_Op) {self.tmpname});']
+        
+    def type_text(self, enable_count=False):
+        type_name = self.mangle_name('MPI_Op')
+        return f'{type_name} *'
+
+    @property
+    def argument(self):
+        return f'(MPI_Op *) (NULL != {self.name} ? &{self.tmpname} : NULL)'
 
 @Type.add_type('RANK')
 class TypeRank(Type):
@@ -1380,7 +1401,34 @@ class TypeInfoOutStandard(Type):
         type_name = self.mangle_name('MPI_Info')
         return f'{type_name} *'
 
+@Type.add_type('INFO_INOUT', abi_type=['ompi'])
+class TypeInfoInOut(TypeInfoOut):
+    pass
 
+@Type.add_type('INFO_INOUT', abi_type=['standard'])
+class TypeInfoInOutStandard(StandardABIType):
+
+    @property
+    def init_code(self):
+        return [f'MPI_Info {self.tmpname} = (NULL != {self.name}) ? {ConvertFuncs.INFO}(*{self.name}) : MPI_INFO_NULL;']
+
+    @property
+    def final_code(self):
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.INFO}((MPI_Info) {self.tmpname});']
+
+    @property
+    def argument(self):
+        return f'(MPI_Info *) (NULL != {self.name} ? &{self.tmpname} : NULL)'
+
+    def type_text(self, enable_count=False):
+        type_name = self.mangle_name('MPI_Info')
+        return f'{type_name} *'
+
+    @property
+    def argument(self):
+        return f'(MPI_Info *) (NULL != {self.name} ? &{self.tmpname} : NULL)'
+
+        
 @Type.add_type('INFO_ARRAY', abi_type=['ompi'])
 class TypeInfoArray(Type):
 
@@ -2135,6 +2183,28 @@ class TypeErrhandlerOutStandard(Type):
         type_name = self.mangle_name('MPI_Errhandler')
         return f'{type_name} *'
 
+@Type.add_type('ERRHANDLER_INOUT', abi_type=['ompi'])
+class TypeErrhandlerInOut(TypeErrhandlerOut):
+    pass
+
+@Type.add_type('ERRHANDLER_INOUT', abi_type=['standard'])
+class TypeErrhandlerInOutStandard(StandardABIType):
+
+    @property
+    def init_code(self):
+        return [f'MPI_Errhandler {self.tmpname} = (NULL != {self.name}) ? {ConvertFuncs.ERRHANDLER}(*{self.name}) : MPI_ERRHANDLER_NULL;']
+
+    @property
+    def final_code(self):
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.ERRHANDLER}((MPI_Errhandler) {self.tmpname});']
+        
+    def type_text(self, enable_count=False):
+        type_name = self.mangle_name('MPI_Errhandler')
+        return f'{type_name} *'
+    
+    @property
+    def argument(self):
+        return f'(MPI_Errhandler *) (NULL != {self.name} ? &{self.tmpname} : NULL)'
 
 @Type.add_type('GROUP', abi_type=['ompi'])
 class TypeGroup(Type):

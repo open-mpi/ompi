@@ -27,7 +27,7 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
 
-PROTOTYPE ERROR_CLASS errhandler_free(ERRHANDLER_OUT errhandler)
+PROTOTYPE ERROR_CLASS errhandler_free(ERRHANDLER_INOUT errhandler)
 {
   /* Error checking */
 
