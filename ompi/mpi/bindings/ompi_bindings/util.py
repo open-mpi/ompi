@@ -197,3 +197,6 @@ def prototype_needs_callback_wrappers(prototype):
     """Should this prototype need a callback wrappers"""
     return any(param.type_name in USER_CALLBACK_NAMES for param in prototype.params)
 
+def abi_tmp_name(name):
+    """Generate standardized tmp name for a supplied name"""
+    return f'{name}_tmp'
