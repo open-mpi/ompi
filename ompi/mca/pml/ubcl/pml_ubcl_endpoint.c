@@ -111,7 +111,7 @@ static int mca_pml_ubcl_export_local_endpoint_handle(const int type)
 
     err = ubcl_export_local_endpoint_handle(type, endpoint_h, &remote_rank_u64);
     if (UBCL_SUCCESS != err) {
-        return OMPI_ERROR;
+        return ubcl_error_to_ompi(err);
     }
 
     mca_pml_ubcl_endpoint_modex_put(type, (void *) endpoint_h, size);
@@ -120,10 +120,10 @@ static int mca_pml_ubcl_export_local_endpoint_handle(const int type)
      * The actual recv rank will be allocated during add_procs calls */
     err = ubcl_close_local_endpoint_channel(type, remote_rank_u64);
     if (UBCL_SUCCESS != err) {
-        mca_pml_ubcl_warn(OMPI_ERROR,
+        mca_pml_ubcl_warn(ubcl_error_to_ompi(err),
                           "PML/UBCL failed to clean local endpoint (very unlikely error)."
                           " For safety reason PML will be disabled.");
-        return OMPI_ERROR;
+        return ubcl_error_to_ompi(err);
     }
 
     return OMPI_SUCCESS;
@@ -133,35 +133,31 @@ int mca_pml_ubcl_create_local_endpoint(void)
 {
     int type;
     ubcl_error_t err;
-    int ompi_error;
 
     type = UBCL_ENDPOINT_TYPE_SELF;
     err = ubcl_create_local_endpoint(type);
     if (UBCL_SUCCESS != err) {
-        mca_pml_ubcl_error(OMPI_ERROR, "Failed ubcl_create_local_endpoint %d (%d)", type, err);
+        mca_pml_ubcl_warn(ubcl_error_to_ompi(err), "Failed ubcl_create_local_endpoint %d (%d)", type, err);
     }
 
-    /* UBCL_ENDPOINT_SHM */
     if (!mca_pml_ubcl_component.force_intranode_bxi) {
         type = UBCL_ENDPOINT_TYPE_SHMEM;
         err = ubcl_create_local_endpoint(type);
-        if (UBCL_SUCCESS != err) {
-            mca_pml_ubcl_error(OMPI_ERROR, "Failed ubcl_create_local_endpoint %d (%d)", type, err);
+        if (UBCL_SUCCESS == err) {
+            err = mca_pml_ubcl_export_local_endpoint_handle(type);
         }
-        ompi_error = mca_pml_ubcl_export_local_endpoint_handle(type);
-        if (OMPI_SUCCESS != ompi_error) {
-            return ompi_error;
+        if (UBCL_SUCCESS != err) {
+            mca_pml_ubcl_warn(ubcl_error_to_ompi(err), "Failed ubcl_create_local_endpoint %d (%d)", type, err);
         }
     }
 
     type = UBCL_ENDPOINT_TYPE_BXI;
     err = ubcl_create_local_endpoint(type);
-    if (UBCL_SUCCESS != err) {
-        mca_pml_ubcl_error(OMPI_ERROR, "Failed ubcl_create_local_endpoint %d (%d)", type, err);
+    if (UBCL_SUCCESS == err) {
+        err = mca_pml_ubcl_export_local_endpoint_handle(type);
     }
-    ompi_error = mca_pml_ubcl_export_local_endpoint_handle(type);
-    if (OMPI_SUCCESS != ompi_error) {
-        return ompi_error;
+    if (UBCL_SUCCESS != err) {
+        mca_pml_ubcl_warn(ubcl_error_to_ompi(err), "Failed ubcl_create_local_endpoint %d (%d)", type, err);
     }
 
     return OMPI_SUCCESS;
@@ -170,20 +166,23 @@ int mca_pml_ubcl_create_local_endpoint(void)
 int mca_pml_ubcl_free_local_endpoints()
 {
     int ret;
-    /* Finalize BXI */
     ret = ubcl_free_local_endpoint(UBCL_ENDPOINT_TYPE_BXI);
-    if (UBCL_SUCCESS != ret) {
-        return OMPI_ERROR;
+    if (UBCL_SUCCESS != ret && UBCL_ERR_NOT_AVAILABLE != ret) {
+        /* If the transport was unavailable we silence the error,
+         * we're closing it anyway */
+        return ubcl_error_to_ompi(ret);
     }
+
     if (!mca_pml_ubcl_component.force_intranode_bxi) {
         ret = ubcl_free_local_endpoint(UBCL_ENDPOINT_TYPE_SHMEM);
-        if (UBCL_SUCCESS != ret) {
-            return OMPI_ERROR;
+        if (UBCL_SUCCESS != ret && UBCL_ERR_NOT_AVAILABLE != ret) {
+            return ubcl_error_to_ompi(ret);
         }
     }
+
     ret = ubcl_free_local_endpoint(UBCL_ENDPOINT_TYPE_SELF);
-    if (UBCL_SUCCESS != ret) {
-        return OMPI_ERROR;
+    if (UBCL_SUCCESS != ret && UBCL_ERR_NOT_AVAILABLE != ret) {
+        return ubcl_error_to_ompi(ret);
     }
 
     return OMPI_SUCCESS;
@@ -331,14 +330,16 @@ static int mca_pml_ubcl_create_endpoints(ompi_proc_t *proc)
 
     err = mca_pml_ubcl_create_recv_endpoint(new_endpoint->rank, new_endpoint->type);
     if (OMPI_SUCCESS != err) {
-        mca_pml_ubcl_error(err, "Failed to create recv endpoint for rank %zu\n",
-                           new_endpoint->rank);
+        mca_pml_ubcl_warn(err, "Failed to create recv endpoint for rank %zu\n",
+                          new_endpoint->rank);
+        return err;
     }
 
     err = mca_pml_ubcl_create_send_endpoint(proc, new_endpoint->rank, new_endpoint->type);
     if (OMPI_SUCCESS != err) {
-        mca_pml_ubcl_error(err, "Failed to create send endpoint for rank %zu\n",
-                           new_endpoint->rank);
+        mca_pml_ubcl_warn(err, "Failed to create send endpoint for rank %zu\n",
+                         new_endpoint->rank);
+        return err;
     }
 
 end:
