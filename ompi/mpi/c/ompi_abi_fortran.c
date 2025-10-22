@@ -1,4 +1,3 @@
-/* THIS FILE WAS AUTOMATICALLY GENERATED. DO NOT EDIT BY HAND. */
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
@@ -163,7 +162,7 @@ int ompi_abi_get_fortran_info(ompi_info_t **info)
 #else
     cptr = false_str;
 #endif
-    ret = opal_info_set(&newinfo->super, "mpi_logical16_supported", "false");
+    ret = opal_info_set(&newinfo->super, "mpi_logical16_supported", cptr);
     if (OPAL_SUCCESS != ret) {
         goto err_cleanup;
     }
