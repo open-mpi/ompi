@@ -20,15 +20,12 @@
 #include "ompi/mca/mca.h"
 #include "ompi/request/request.h"
 
-#ifdef HAVE_XPMEM_H
-#include "opal/mca/rcache/base/base.h"
-#include "opal/class/opal_hash_table.h"
-#include <xpmem.h>
-#endif
-
 #include "opal/mca/accelerator/accelerator.h"
 #include "opal/mca/shmem/base/base.h"
 #include "opal/mca/shmem/shmem.h"
+
+// For smsc
+#include "opal/mca/smsc/smsc.h"
 
 BEGIN_C_DECLS
 
@@ -36,6 +33,7 @@ BEGIN_C_DECLS
 OMPI_DECLSPEC extern const mca_coll_base_component_3_0_0_t mca_coll_acoll_component;
 extern int mca_coll_acoll_priority;
 extern int mca_coll_acoll_max_comms;
+extern int mca_coll_acoll_comm_size_thresh;
 extern int mca_coll_acoll_sg_size;
 extern int mca_coll_acoll_sg_scale;
 extern int mca_coll_acoll_node_size;
@@ -127,20 +125,22 @@ typedef enum MCA_COLL_ACOLL_BASE_LYRS {
     MCA_COLL_ACOLL_NUM_BASE_LYRS
 } MCA_COLL_ACOLL_BASE_LYRS;
 
+typedef struct coll_acoll_smsc_info {
+    mca_smsc_endpoint_t **ep;
+    void **rreg;
+    void **sreg;
+} coll_acoll_smsc_info_t;
+
 typedef struct coll_acoll_data {
-#ifdef HAVE_XPMEM_H
-    xpmem_segid_t *allseg_id;
-    xpmem_apid_t *all_apid;
     void **allshm_sbuf;
     void **allshm_rbuf;
-    void **xpmem_saddr;
-    void **xpmem_raddr;
-    mca_rcache_base_module_t **rcache;
     void *scratch;
-    opal_hash_table_t **xpmem_reg_tracker_ht;
-#endif
+    void **smsc_saddr;
+    void **smsc_raddr;
+
     opal_shmem_ds_t *allshmseg_id;
     void **allshmmmap_sbuf;
+    coll_acoll_smsc_info_t smsc_info;
 
     int comm_size;
     int l1_local_rank;
@@ -204,11 +204,9 @@ typedef struct coll_acoll_subcomms {
     bool initialized_data;
     bool initialized_shm_data;
     int barrier_algo;
-#ifdef HAVE_XPMEM_H
-    uint64_t xpmem_buf_size;
-    int without_xpmem;
-    int xpmem_use_sr_buf;
-#endif
+    uint64_t smsc_buf_size;
+    int without_smsc;
+    int smsc_use_sr_buf;
 
 } coll_acoll_subcomms_t;
 
@@ -222,7 +220,6 @@ typedef struct coll_acoll_reserve_mem {
 typedef struct {
     int split_factor;
     size_t psplit_msg_thresh;
-    size_t xpmem_msg_thresh;
 } coll_acoll_alltoall_attr_t;
 
 struct mca_coll_acoll_module_t {
@@ -252,14 +249,9 @@ struct mca_coll_acoll_module_t {
     coll_acoll_reserve_mem_t reserve_mem_s;
     int num_subc;
     coll_acoll_alltoall_attr_t alltoall_attr;
+    // 1 if SMSC, in particular xpmem is available, 0 otherwise
+    int has_smsc;
 };
-
-#ifdef HAVE_XPMEM_H
-struct acoll_xpmem_rcache_reg_t {
-    mca_rcache_base_registration_t base;
-    void *xpmem_vaddr;
-};
-#endif
 
 typedef struct mca_coll_acoll_module_t mca_coll_acoll_module_t;
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_coll_acoll_module_t);
