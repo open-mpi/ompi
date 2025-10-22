@@ -881,6 +881,10 @@ def standard_abi(base_name, template, out, suppress_bc=False, suppress_nbc=False
         return_type = prototype.return_type.construct(abi_type='standard')
         lines.append(f'{return_type.tmp_type_text()} ret_value;')
         for param in params:
+            if param.need_async_cleanup == True:
+                lines.append('int idx  = 0;')
+                break
+        for param in params:
 #           print("param = " + str(param) + " " + str(param.argument))
             if param.init_code:
                 lines.extend(param.init_code)
