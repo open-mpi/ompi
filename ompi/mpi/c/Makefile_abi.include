@@ -45,8 +45,6 @@ libmpi_c_abi_la_SOURCES = \
         ompi_abi_fortran.c
 
 extra_abi_fns = \
-        abi_get_info.c \
-        abi_get_version.c \
         aint_add_abi.c \
         aint_diff_abi.c \
         comm_fromint_abi.c \
@@ -74,16 +72,6 @@ extra_abi_fns = \
         win_toint_abi.c \
         wtick.c
 
-
-abi_get_info.c: abi_get_info.c.in
-	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
-	    --builddir $(abs_top_builddir) \
-	    --srcdir $(abs_top_srcdir) \
-	    --output $@ \
-	    c \
-	    source \
-	    standard \
-	    $<
 
 libmpi_c_abi_la_CPPFLAGS = -DOMPI_NO_MPI_PROTOTYPES -DOMPI_BUILD_MPI_PROFILING=0 -DOMPI_BUILD_STANDARD_ABI
 libmpi_c_abi_la_LIBADD = libmpi_c_abi_profile.la
