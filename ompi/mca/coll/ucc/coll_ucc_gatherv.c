@@ -2,6 +2,7 @@
 /**
  * Copyright (c) 2021 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2022 NVIDIA Corporation. All rights reserved.
+ * Copyright (c) 2025      Fujitsu Limited. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -106,7 +107,7 @@ int mca_coll_ucc_igatherv(const void *sbuf, int scount, struct ompi_datatype_t *
     mca_coll_ucc_req_t    *coll_req = NULL;
 
     UCC_VERBOSE(3, "running ucc igatherv");
-    COLL_UCC_GET_REQ(coll_req);
+    COLL_UCC_GET_REQ(coll_req, comm);
     COLL_UCC_CHECK(mca_coll_ucc_gatherv_init(sbuf, scount, sdtype, rbuf, rcounts,
                                              disps, rdtype, root, ucc_module,
                                              &req, coll_req));

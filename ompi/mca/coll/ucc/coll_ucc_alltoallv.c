@@ -1,6 +1,7 @@
 
 /**
  * Copyright (c) 2021 Mellanox Technologies. All rights reserved.
+ * Copyright (c) 2025      Fujitsu Limited. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -100,7 +101,7 @@ int mca_coll_ucc_ialltoallv(const void *sbuf, const int *scounts,
     mca_coll_ucc_req_t    *coll_req = NULL;
 
     UCC_VERBOSE(3, "running ucc ialltoallv");
-    COLL_UCC_GET_REQ(coll_req);
+    COLL_UCC_GET_REQ(coll_req, comm);
     COLL_UCC_CHECK(mca_coll_ucc_alltoallv_init(sbuf, scounts, sdisps, sdtype,
                                                rbuf, rcounts, rdisps, rdtype,
                                                ucc_module, &req, coll_req));

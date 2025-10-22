@@ -1,6 +1,7 @@
 
 /**
  * Copyright (c) 2021 Mellanox Technologies. All rights reserved.
+ * Copyright (c) 2025      Fujitsu Limited. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -98,7 +99,7 @@ int mca_coll_ucc_iallgather(const void *sbuf, int scount, struct ompi_datatype_t
     mca_coll_ucc_req_t    *coll_req = NULL;
 
     UCC_VERBOSE(3, "running ucc iallgather");
-    COLL_UCC_GET_REQ(coll_req);
+    COLL_UCC_GET_REQ(coll_req, comm);
     COLL_UCC_CHECK(mca_coll_ucc_allgather_init(sbuf, scount, sdtype,
                                                rbuf, rcount, rdtype,
                                                ucc_module, &req, coll_req));
