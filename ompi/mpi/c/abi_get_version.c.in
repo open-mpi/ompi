@@ -17,21 +17,19 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/constants.h"
-#ifdef OMPI_NO_MPI_PROTOTYPES
-#include "ompi/mpi/c/abi.h"
-#endif
 
-#if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_Abi_get_version = PMPI_Abi_get_version
-#endif
-#define MPI_Abi_get_version PMPI_Abi_get_version
-#endif
-
-int MPI_Abi_get_version(int *abi_major, int *abi_minor)
+PROTOTYPE ERROR_CLASS abi_get_version(INT_OUT abi_major, INT_OUT abi_minor)
 {
+/*
+ * For the curious see Chapter 20 section 2 of the MPI 5 standard
+ */
+#if OMPI_ABI_SRC
     /* 0.1 */
-    *abi_major = 0;
-    *abi_minor = 1;
+    *abi_major = 1;
+    *abi_minor = 0;
+#else
+    *abi_major = -1;
+    *abi_minor = -1;
+#endif
     return MPI_SUCCESS;
 }

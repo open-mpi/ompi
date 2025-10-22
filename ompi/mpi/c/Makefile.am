@@ -55,6 +55,8 @@ prototype_sources = \
         abi_set_fortran_info.c.in \
         abi_get_fortran_booleans.c.in \
         abi_set_fortran_booleans.c.in \
+        abi_get_info.c.in \
+        abi_get_version.c.in \
         abort.c.in \
         accumulate.c.in \
         add_error_class.c.in \
