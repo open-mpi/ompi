@@ -1453,9 +1453,8 @@ OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_ub;
 /*
  * MPI API
  */
-OMPI_DECLSPEC  int MPI_Abi_supported(int *flag);
-OMPI_DECLSPEC  int MPI_Abi_version(int *abi_major, int *abi_minor);
-OMPI_DECLSPEC  int MPI_Abi_details(int *buflen, char *details, MPI_Info *info);
+OMPI_DECLSPEC  int MPI_Abi_get_version(int *abi_major, int *abi_minor);
+OMPI_DECLSPEC  int MPI_Abi_get_info(MPI_Info *info);
 OMPI_DECLSPEC  int MPI_Abi_get_fortran_info(MPI_Info *info);
 OMPI_DECLSPEC  int MPI_Abi_set_fortran_info(MPI_Info info);
 OMPI_DECLSPEC  int MPI_Abi_get_fortran_booleans(int logical_size, void *logical_true, void *logical_false, int *is_set);
@@ -2656,9 +2655,8 @@ OMPI_DECLSPEC  double MPI_Wtime(void);
   /*
    * Profiling MPI API
    */
-OMPI_DECLSPEC  int PMPI_Abi_supported(int *flag);
-OMPI_DECLSPEC  int PMPI_Abi_version(int *abi_major, int *abi_minor);
-OMPI_DECLSPEC  int PMPI_Abi_details(int *buflen, char *details, MPI_Info *info);
+OMPI_DECLSPEC  int PMPI_Abi_get_version(int *abi_major, int *abi_minor);
+OMPI_DECLSPEC  int PMPI_Abi_get_info(MPI_Info *info);
 OMPI_DECLSPEC  int PMPI_Abi_get_fortran_info(MPI_Info *info);
 OMPI_DECLSPEC  int PMPI_Abi_set_fortran_info(MPI_Info info);
 OMPI_DECLSPEC  int PMPI_Abi_get_fortran_booleans(int logical_size, void *logical_true, void *logical_false, int *is_set);

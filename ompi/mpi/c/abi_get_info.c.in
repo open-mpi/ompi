@@ -17,16 +17,14 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/constants.h"
-#ifdef OMPI_NO_MPI_PROTOTYPES
-#include "ompi/mpi/c/abi.h"
-#endif
 
 PROTOTYPE ERROR_CLASS abi_get_info(INFO_OUT info)
 {
     int ret = OMPI_SUCCESS;
+
+#if OMPI_ABI_SRC
     ompi_info_t *newinfo = NULL;
     char tmp[16];
-
     newinfo = ompi_info_allocate();
     if (NULL == newinfo) {
         return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_NO_MEM,
@@ -52,10 +50,12 @@ PROTOTYPE ERROR_CLASS abi_get_info(INFO_OUT info)
     }
 
     *info = newinfo;
-    return ret;
-
 err_cleanup:
     ompi_info_free(&newinfo);
     return ret;
-    
+
+#else
+    *info = MPI_INFO_NULL;
+#endif
+    return ret;
 }
