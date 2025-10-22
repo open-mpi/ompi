@@ -28,7 +28,7 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/op/op.h"
 
-PROTOTYPE ERROR_CLASS op_free(OP_OUT op)
+PROTOTYPE ERROR_CLASS op_free(OP_INOUT op)
 {
   /* Error checking */
 
