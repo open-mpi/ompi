@@ -41,6 +41,7 @@
 #include "ompi/constants.h"
 #include "opal/datatype/opal_convertor.h"
 #include "opal/util/output.h"
+#include "ompi/util/count_disp_array.h"
 #include "mpi.h"
 
 BEGIN_C_DECLS
@@ -125,7 +126,7 @@ OMPI_DECLSPEC int32_t ompi_datatype_default_convertors_init( void );
 OMPI_DECLSPEC int32_t ompi_datatype_default_convertors_fini( void );
 
 OMPI_DECLSPEC void ompi_datatype_dump (const ompi_datatype_t* pData);
-OMPI_DECLSPEC ompi_datatype_t* ompi_datatype_create( int32_t expectedSize );
+OMPI_DECLSPEC ompi_datatype_t* ompi_datatype_create( size_t expectedSize );
 
 static inline int32_t
 ompi_datatype_is_committed( const ompi_datatype_t* type )
@@ -152,7 +153,7 @@ ompi_datatype_is_predefined( const ompi_datatype_t* type )
 }
 
 static inline int32_t
-ompi_datatype_is_contiguous_memory_layout( const ompi_datatype_t* type, int32_t count )
+ompi_datatype_is_contiguous_memory_layout( const ompi_datatype_t* type, size_t count )
 {
     return opal_datatype_is_contiguous_memory_layout(&type->super, count);
 }
@@ -190,27 +191,27 @@ ompi_datatype_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd, size
 OMPI_DECLSPEC int32_t
 ompi_datatype_duplicate( const ompi_datatype_t* oldType, ompi_datatype_t** newType );
 
-OMPI_DECLSPEC int32_t ompi_datatype_create_contiguous( int count, const ompi_datatype_t* oldType, ompi_datatype_t** newType );
-OMPI_DECLSPEC int32_t ompi_datatype_create_vector( int count, int bLength, int stride,
+OMPI_DECLSPEC int32_t ompi_datatype_create_contiguous( size_t count, const ompi_datatype_t* oldType, ompi_datatype_t** newType );
+OMPI_DECLSPEC int32_t ompi_datatype_create_vector( size_t count, size_t bLength, ptrdiff_t stride,
                                                    const ompi_datatype_t* oldType, ompi_datatype_t** newType );
-OMPI_DECLSPEC int32_t ompi_datatype_create_hvector( int count, int bLength, ptrdiff_t stride,
+OMPI_DECLSPEC int32_t ompi_datatype_create_hvector( size_t count, size_t bLength, ptrdiff_t stride,
                                                     const ompi_datatype_t* oldType, ompi_datatype_t** newType );
-OMPI_DECLSPEC int32_t ompi_datatype_create_indexed( int count, const int* pBlockLength, const int* pDisp,
+OMPI_DECLSPEC int32_t ompi_datatype_create_indexed( size_t count, const ompi_count_array_t pBlockLength, const ompi_disp_array_t pDisp,
                                                     const ompi_datatype_t* oldType, ompi_datatype_t** newType );
-OMPI_DECLSPEC int32_t ompi_datatype_create_hindexed( int count, const int* pBlockLength, const ptrdiff_t* pDisp,
+OMPI_DECLSPEC int32_t ompi_datatype_create_hindexed( size_t count, const ompi_count_array_t pBlockLength, const ompi_disp_array_t pDisp,
                                                      const ompi_datatype_t* oldType, ompi_datatype_t** newType );
-OMPI_DECLSPEC int32_t ompi_datatype_create_indexed_block( int count, int bLength, const int* pDisp,
+OMPI_DECLSPEC int32_t ompi_datatype_create_indexed_block( size_t count, size_t bLength, const ompi_disp_array_t pDisp,
                                                           const ompi_datatype_t* oldType, ompi_datatype_t** newType );
-OMPI_DECLSPEC int32_t ompi_datatype_create_hindexed_block( int count, int bLength, const ptrdiff_t* pDisp,
+OMPI_DECLSPEC int32_t ompi_datatype_create_hindexed_block( size_t count, size_t bLength, const ompi_disp_array_t pDisp,
                                                            const ompi_datatype_t* oldType, ompi_datatype_t** newType );
-OMPI_DECLSPEC int32_t ompi_datatype_create_struct( int count, const int* pBlockLength, const ptrdiff_t* pDisp,
+OMPI_DECLSPEC int32_t ompi_datatype_create_struct( size_t count, const ompi_count_array_t pBlockLength, const ompi_disp_array_t pDisp,
                                                    ompi_datatype_t* const* pTypes, ompi_datatype_t** newType );
-OMPI_DECLSPEC int32_t ompi_datatype_create_darray( int size, int rank, int ndims, int const* gsize_array,
-                                                   int const* distrib_array, int const* darg_array,
-                                                   int const* psize_array, int order, const ompi_datatype_t* oldtype,
+OMPI_DECLSPEC int32_t ompi_datatype_create_darray( int size, int rank, int ndims, const ompi_count_array_t gsize_array,
+                                                   const int* distrib_array, const int* darg_array,
+                                                   const int* psize_array, int order, const ompi_datatype_t* oldtype,
                                                    ompi_datatype_t** newtype);
-OMPI_DECLSPEC int32_t ompi_datatype_create_subarray(int ndims, int const* size_array, int const* subsize_array,
-                                                    int const* start_array, int order,
+OMPI_DECLSPEC int32_t ompi_datatype_create_subarray(int ndims, const ompi_count_array_t size_array, const ompi_count_array_t subsize_array,
+                                                    const ompi_count_array_t start_array, int order,
                                                     const ompi_datatype_t* oldtype, ompi_datatype_t** newtype);
 static inline int32_t
 ompi_datatype_create_resized( const ompi_datatype_t* oldType,
@@ -297,25 +298,26 @@ ompi_datatype_copy_content_same_ddt( const ompi_datatype_t* type, size_t count,
     return 0;
 }
 
-OMPI_DECLSPEC const ompi_datatype_t* ompi_datatype_match_size( int size, uint16_t datakind, uint16_t datalang );
+OMPI_DECLSPEC const ompi_datatype_t* ompi_datatype_match_size( size_t size, uint16_t datakind, uint16_t datalang );
 
 /*
  *
  */
-OMPI_DECLSPEC int32_t ompi_datatype_sndrcv( const void *sbuf, int32_t scount, const ompi_datatype_t* sdtype,
-                                            void *rbuf, int32_t rcount, const ompi_datatype_t* rdtype);
+OMPI_DECLSPEC int32_t ompi_datatype_sndrcv( const void *sbuf, size_t scount, const ompi_datatype_t* sdtype,
+                                            void *rbuf, size_t rcount, const ompi_datatype_t* rdtype);
 
 /*
  *
  */
 OMPI_DECLSPEC int32_t ompi_datatype_get_args( const ompi_datatype_t* pData, int32_t which,
-                                              int32_t * ci, int32_t * i,
-                                              int32_t * ca, ptrdiff_t* a,
-                                              int32_t * cd, ompi_datatype_t** d, int32_t * type);
+                                              size_t * ci, int* i,
+                                              size_t * cl, MPI_Count* l,
+                                              size_t * ca, ptrdiff_t* a,
+                                              size_t * cd, ompi_datatype_t** d, int32_t * type);
 OMPI_DECLSPEC int32_t ompi_datatype_set_args( ompi_datatype_t* pData,
-                                              int32_t ci, const int32_t ** i,
-                                              int32_t ca, const ptrdiff_t* a,
-                                              int32_t cd, ompi_datatype_t* const * d,int32_t type);
+                                              size_t ci, size_t cl, const ompi_count_array_t *counts,
+                                              size_t ca, const ompi_disp_array_t a,
+                                              size_t cd, ompi_datatype_t* const * d,int32_t type);
 OMPI_DECLSPEC int32_t ompi_datatype_copy_args( const ompi_datatype_t* source_data,
                                                ompi_datatype_t* dest_data );
 OMPI_DECLSPEC int32_t ompi_datatype_release_args( ompi_datatype_t* pData );
