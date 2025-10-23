@@ -56,10 +56,8 @@ PROTOTYPE ERROR_CLASS type_create_resized(DATATYPE oldtype,
    }
 
    {
-      MPI_Aint a_a[2];
-      a_a[0] = lb;
-      a_a[1] = extent;
-      ompi_datatype_set_args( *newtype, 0, NULL, 2, a_a, 1, &oldtype, MPI_COMBINER_RESIZED );
+      MPI_Count a_a[2] = {lb, extent};
+      ompi_datatype_set_args( *newtype, 0, 0, NULL, 2, OMPI_DISP_ARRAY_CREATE(a_a), 1, &oldtype, MPI_COMBINER_RESIZED );
    }
 
    return MPI_SUCCESS;

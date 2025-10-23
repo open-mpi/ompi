@@ -67,10 +67,11 @@ int MPI_Type_get_contents_c(MPI_Datatype mtype,
         }
     }
 
-/* TODO:BIGCOUNT: Need to embiggen ompi_datatype_get_args */
-    rc = ompi_datatype_get_args( mtype, 1, (int *)&max_integers, array_of_integers,
-                            (int *)&max_addresses, array_of_addresses,
-                            (int *)&max_datatypes, array_of_datatypes, NULL );
+    size_t ci = max_integers, cl = max_large_counts, ca = max_addresses, cd = max_datatypes;
+    rc = ompi_datatype_get_args( mtype, 1, &ci, array_of_integers,
+                                 &cl, array_of_large_counts,
+                                 &ca, array_of_addresses,
+                                 &cd, array_of_datatypes, NULL );
     if( rc != MPI_SUCCESS ) {
         OMPI_ERRHANDLER_NOHANDLE_RETURN( MPI_ERR_INTERN, 
                                 MPI_ERR_INTERN, FUNC_NAME );
