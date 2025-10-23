@@ -43,10 +43,12 @@ int MPI_File_toint(MPI_File_ABI_INTERNAL file)
 {
     int o_index;
     ompi_file_t *file_ptr;
+    MPI_File file_tmp;
 
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-        if (NULL == file) {
+        file_tmp = ompi_convert_abi_file_intern_file(file);
+        if ((file_tmp != MPI_FILE_NULL) && ompi_file_invalid(file_tmp)) {
             return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_FILE, FUNC_NAME);
         }
     }
