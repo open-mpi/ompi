@@ -6,7 +6,7 @@
  *                         reserved.
  * Copyright (c) 2020-2021 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2021-2023 Nanook Consulting.  All rights reserved.
- * Copyright (c) 2021      Amazon.com, Inc. or its affiliates. All rights
+ * Copyright (c) 2021-2025 Amazon.com, Inc. or its affiliates. All rights
  *                         reserved.
  * Copyright (c) 2023      UT-Battelle, LLC.  All rights reserved.
  * $COPYRIGHT$
@@ -40,7 +40,11 @@
 
 opal_common_ofi_module_t opal_common_ofi = {.prov_include = NULL,
                                             .prov_exclude = NULL,
-                                            .output = -1};
+                                            .output = -1,
+                                            .fabric = NULL,
+                                            .domain = NULL,
+                                            .fabric_ref_count = 0,
+                                            .domain_ref_count = 0};
 static const char default_prov_exclude_list[] = "shm,sockets,tcp,udp,rstream,usnic,net";
 static opal_mutex_t opal_common_ofi_mutex = OPAL_MUTEX_STATIC_INIT;
 static int opal_common_ofi_verbose_level = 0;
@@ -1035,5 +1039,158 @@ error:
     if (NULL != ep_name) {
        free(ep_name); 
     }
+    return ret;
+}
+
+/**
+ * Get or create fabric object
+ *
+ * Reuses existing fabric from fabric_attr->fabric if available,
+ * otherwise creates new fabric using fi_fabric().
+ *
+ * @param fabric_attr (IN) Fabric attributes
+ * @param fabric (OUT)     Fabric object (new or existing)
+ *
+ * @return                 OPAL_SUCCESS or error code
+ */
+int opal_common_ofi_fi_fabric(struct fi_fabric_attr *fabric_attr,
+                              struct fid_fabric **fabric)
+{
+    int ret;
+
+    OPAL_THREAD_LOCK(&opal_common_ofi_mutex);
+    
+    if (fabric_attr->fabric) {
+        *fabric = fabric_attr->fabric;
+        opal_common_ofi.fabric_ref_count++;
+        opal_output_verbose(1, opal_common_ofi.output, "Reusing existing fabric: %s",
+                            fabric_attr->name);
+    } else {
+        ret = fi_fabric(fabric_attr, fabric, NULL);
+        if (0 != ret) {
+            OPAL_THREAD_UNLOCK(&opal_common_ofi_mutex);
+            return ret;
+        }
+        opal_common_ofi.fabric = *fabric;
+        opal_common_ofi.fabric_ref_count = 1;
+    }
+
+    OPAL_THREAD_UNLOCK(&opal_common_ofi_mutex);
+    return OPAL_SUCCESS;
+}
+
+/**
+ * Get or create domain object
+ *
+ * Reuses existing domain from info->domain_attr->domain if available,
+ * otherwise creates new domain using fi_domain().
+ *
+ * @param fabric (IN)      Fabric object
+ * @param info (IN)        Provider info
+ * @param domain (OUT)     Domain object (new or existing)
+ *
+ * @return                 OPAL_SUCCESS or OPAL error code
+ */
+int opal_common_ofi_fi_domain(struct fid_fabric *fabric, struct fi_info *info,
+                              struct fid_domain **domain)
+{
+    int ret;
+
+    OPAL_THREAD_LOCK(&opal_common_ofi_mutex);
+
+    if (info->domain_attr->domain) {
+        *domain = info->domain_attr->domain;
+        opal_common_ofi.domain_ref_count++;
+        opal_output_verbose(1, opal_common_ofi.output, "Reusing existing domain: %s",
+                            info->domain_attr->name);
+    } else {
+        ret = fi_domain(fabric, info, domain, NULL);
+        if (0 != ret) {
+            OPAL_THREAD_UNLOCK(&opal_common_ofi_mutex);
+            return ret;
+        }
+        opal_common_ofi.domain = *domain;
+        opal_common_ofi.domain_ref_count = 1;
+    }
+
+    OPAL_THREAD_UNLOCK(&opal_common_ofi_mutex);
+    return OPAL_SUCCESS;
+}
+
+/**
+ * Release fabric reference
+ *
+ * Decrements fabric reference count and closes fabric if count reaches zero.
+ *
+ * @param fabric (IN)      Fabric object to release
+ *
+ * @return                 OPAL_SUCCESS or error code
+ */
+int opal_common_ofi_fabric_release(struct fid_fabric *fabric)
+{
+    int ret = OPAL_SUCCESS;
+
+    OPAL_THREAD_LOCK(&opal_common_ofi_mutex);
+    
+    if (fabric == opal_common_ofi.fabric && opal_common_ofi.fabric_ref_count > 0) {
+        opal_common_ofi.fabric_ref_count--;
+        if (opal_common_ofi.fabric_ref_count == 0) {
+            ret = fi_close(&fabric->fid);
+            if (0 != ret) {
+                opal_output_verbose(1, opal_common_ofi.output,
+                                    "%s:%d: fi_close failed for fabric: %s (%d)",
+                                    __FILE__, __LINE__, fi_strerror(-ret), ret);
+            }
+            opal_common_ofi.fabric = NULL;
+        }
+    } else {
+        ret = fi_close(&fabric->fid);
+        if (0 != ret) {
+            opal_output_verbose(1, opal_common_ofi.output,
+                                "%s:%d: fi_close failed for fabric: %s (%d)",
+                                __FILE__, __LINE__, fi_strerror(-ret), ret);
+        }
+    }
+    
+    OPAL_THREAD_UNLOCK(&opal_common_ofi_mutex);
+    return ret;
+}
+
+/**
+ * Release domain reference
+ *
+ * Decrements domain reference count and closes domain if count reaches zero.
+ *
+ * @param domain (IN)      Domain object to release
+ *
+ * @return                 OPAL_SUCCESS or error code
+ */
+int opal_common_ofi_domain_release(struct fid_domain *domain)
+{
+    int ret = OPAL_SUCCESS;
+
+    OPAL_THREAD_LOCK(&opal_common_ofi_mutex);
+    
+    if (domain == opal_common_ofi.domain && opal_common_ofi.domain_ref_count > 0) {
+        opal_common_ofi.domain_ref_count--;
+        if (opal_common_ofi.domain_ref_count == 0) {
+            ret = fi_close(&domain->fid);
+            if (0 != ret) {
+                opal_output_verbose(1, opal_common_ofi.output,
+                                    "%s:%d: fi_close failed for domain: %s (%d)",
+                                    __FILE__, __LINE__, fi_strerror(-ret), ret);
+            }
+            opal_common_ofi.domain = NULL;
+        }
+    } else {
+        ret = fi_close(&domain->fid);
+        if (0 != ret) {
+            opal_output_verbose(1, opal_common_ofi.output,
+                                "%s:%d: fi_close failed for domain: %s (%d)",
+                                __FILE__, __LINE__, fi_strerror(-ret), ret);
+        }
+    }
+    
+    OPAL_THREAD_UNLOCK(&opal_common_ofi_mutex);
     return ret;
 }
