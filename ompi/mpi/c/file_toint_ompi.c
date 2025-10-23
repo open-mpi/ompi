@@ -42,7 +42,7 @@ int MPI_File_toint(MPI_File file)
 
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-       if (NULL == file) {
+        if ((file != MPI_FILE_NULL) && ompi_file_invalid(file)) {
             return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_FILE, FUNC_NAME);
        }
     }

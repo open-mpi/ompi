@@ -42,8 +42,8 @@ int MPI_Win_toint(MPI_Win win)
 
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-        if (ompi_win_invalid(win) && MPI_WIN_NULL != win) {
-            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_WIN, FUNC_NAME);
+        if ((MPI_WIN_NULL != win) && ompi_win_invalid(win)) {
+          return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_WIN, FUNC_NAME);
         }
     }
 
