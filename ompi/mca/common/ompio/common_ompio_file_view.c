@@ -47,8 +47,8 @@ static int datatype_duplicate  (ompi_datatype_t *oldtype, ompi_datatype_t **newt
         ompi_datatype_destroy (&type);
         return MPI_ERR_INTERN;
     }
-    
-    ompi_datatype_set_args( type, 0, NULL, 0, NULL, 1, &oldtype, MPI_COMBINER_DUP );
+
+    ompi_datatype_set_args( type, 0, 0, NULL, 0, OMPI_DISP_ARRAY_NULL, 1, &oldtype, MPI_COMBINER_DUP );
 
     *newtype = type;
     return OMPI_SUCCESS;
@@ -92,7 +92,7 @@ int mca_common_ompio_set_view (ompio_file_t *fh,
         }
         shared_fp_base_module->sharedfp_get_position(fh, &disp);
     }
-    
+
     fview_clear(&(fh->f_fview));
     if (NULL != fh->f_etype) {
         ompi_datatype_destroy (&fh->f_etype);
@@ -129,7 +129,7 @@ int mca_common_ompio_set_view (ompio_file_t *fh,
         fh->f_file_convertor = opal_convertor_create (opal_local_arch, 0);
         fh->f_flags |= OMPIO_DATAREP_NATIVE;
     }
-    
+
     datatype_duplicate       (filetype, &(fh->f_orig_filetype));
     opal_datatype_get_extent (&filetype->super, &lb, &ftype_extent);
     opal_datatype_type_size  (&filetype->super, &ftype_size);
@@ -176,7 +176,7 @@ int mca_common_ompio_set_view (ompio_file_t *fh,
         // File view is not a multiple of the etype.
         return MPI_ERR_ARG;
     }
-    
+
     // make sure that displacement is not negative, which could
     // lead to an illegal access.
     if ( 0 < fh->f_fview.f_iov_count && 0 > (off_t)fh->f_fview.f_decoded_iov[0].iov_base ) {
@@ -186,7 +186,7 @@ int mca_common_ompio_set_view (ompio_file_t *fh,
         return MPI_ERR_IO;
     }
 
-    
+
     if( SIMPLE_PLUS == OMPIO_MCA_GET(fh, grouping_option) ) {
         fh->f_cc_size = get_contiguous_chunk_size (fh, 1);
     }
@@ -238,11 +238,11 @@ int mca_common_ompio_set_view (ompio_file_t *fh,
             OBJ_RELEASE(stripe_str);
         }
     }
-        
+
 
     if ( -1 != OMPIO_MCA_GET(fh, num_aggregators) || -1 != num_cb_nodes) {
         /* The user requested a particular number of aggregators */
-        num_groups = OMPIO_MCA_GET(fh, num_aggregators);                                       
+        num_groups = OMPIO_MCA_GET(fh, num_aggregators);
         if ( -1 != num_cb_nodes ) {
             /* A hint through an  MPI Info object trumps an mca parameter value */
             num_groups = num_cb_nodes;
@@ -253,7 +253,7 @@ int mca_common_ompio_set_view (ompio_file_t *fh,
         mca_common_ompio_forced_grouping ( fh, num_groups, contg_groups);
     }
     else {
-        if ( SIMPLE != OMPIO_MCA_GET(fh, grouping_option) && 
+        if ( SIMPLE != OMPIO_MCA_GET(fh, grouping_option) &&
              SIMPLE_PLUS != OMPIO_MCA_GET(fh, grouping_option) ) {
             ret = mca_common_ompio_fview_based_grouping(fh,
                                                         &num_groups,
@@ -266,15 +266,15 @@ int mca_common_ompio_set_view (ompio_file_t *fh,
         else {
             int done=0;
             int ndims;
-            
+
             if ( fh->f_comm->c_flags & OMPI_COMM_CART ){
                 ret = fh->f_comm->c_topo->topo.cart.cartdim_get( fh->f_comm, &ndims);
                 if ( OMPI_SUCCESS != ret ){
                     goto exit;
                 }
-                if ( ndims > 1 ) { 
-                    ret = mca_common_ompio_cart_based_grouping( fh, 
-                                                                &num_groups, 
+                if ( ndims > 1 ) {
+                    ret = mca_common_ompio_cart_based_grouping( fh,
+                                                                &num_groups,
                                                                 contg_groups);
                     if (OMPI_SUCCESS != ret ) {
                         opal_output(1, "mca_common_ompio_set_view: mca_io_ompio_cart_based_grouping failed\n");
@@ -283,7 +283,7 @@ int mca_common_ompio_set_view (ompio_file_t *fh,
                     done=1;
                 }
             }
-            
+
             if ( !done ) {
                 ret = mca_common_ompio_simple_grouping(fh,
                                                        &num_groups,
@@ -300,7 +300,7 @@ int mca_common_ompio_set_view (ompio_file_t *fh,
         int ii, jj;
         printf("BEFORE finalize_init: comm size = %d num_groups = %d\n", fh->f_size, num_groups);
         for ( ii=0; ii< num_groups; ii++ ) {
-            printf("contg_groups[%d].procs_per_contg_group=%d\n", ii, contg_groups[ii].procs_per_contg_group); 
+            printf("contg_groups[%d].procs_per_contg_group=%d\n", ii, contg_groups[ii].procs_per_contg_group);
             printf("contg_groups[%d].procs_in_contg_group.[", ii);
 
             for ( jj=0; jj< contg_groups[ii].procs_per_contg_group; jj++ ) {
@@ -399,7 +399,7 @@ OMPI_MPI_OFFSET_TYPE get_contiguous_chunk_size (ompio_file_t *fh, int flag)
         }
         avg[1] = (OMPI_MPI_OFFSET_TYPE) fh->f_fview.f_iov_count;
         avg[2] = (OMPI_MPI_OFFSET_TYPE) fh->f_fview.f_view_size;
-        
+
         fh->f_comm->c_coll->coll_allreduce (avg,
                                             global_avg,
                                             3,

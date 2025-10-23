@@ -71,7 +71,7 @@ static void __ompi_datatype_release(ompi_datatype_t * datatype)
 
 OBJ_CLASS_INSTANCE(ompi_datatype_t, opal_datatype_t, __ompi_datatype_allocate, __ompi_datatype_release);
 
-ompi_datatype_t * ompi_datatype_create( int32_t expectedSize )
+ompi_datatype_t * ompi_datatype_create( size_t expectedSize )
 {
     int ret;
     ompi_datatype_t * datatype = (ompi_datatype_t*)OBJ_NEW(ompi_datatype_t);

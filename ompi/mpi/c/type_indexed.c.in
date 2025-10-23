@@ -16,6 +16,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2024      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2025      Stony Brook University. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -32,11 +33,6 @@
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/memchecker.h"
 
-/*
- * TODO:BIGCOUNT this file will need to be updated once
- * the datatype framework supports bigcount 
- */
-
 
 PROTOTYPE ERROR_CLASS type_indexed(COUNT count,
                                    COUNT_ARRAY array_of_blocklengths,
@@ -45,8 +41,6 @@ PROTOTYPE ERROR_CLASS type_indexed(COUNT count,
                                    DATATYPE_OUT newtype)
 {
     int rc, i;
-    int *iarray_of_blocklengths;
-    int *iarray_of_displacements;
 
     MEMCHECKER(
         memchecker_datatype(oldtype);
@@ -66,12 +60,6 @@ PROTOTYPE ERROR_CLASS type_indexed(COUNT count,
             return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG,
                                           FUNC_NAME);
         }
-#if OMPI_BIGCOUNT_SRC
-        OMPI_CHECK_MPI_COUNT_INT_CONVERSION_OVERFLOW(rc, count);
-        if (OMPI_SUCCESS != rc) {
-            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(rc, FUNC_NAME);
-        }
-#endif
         for( i = 0; i < count; i++ ) {
             if( array_of_blocklengths[i] < 0 ) {
                 return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG,
@@ -80,44 +68,26 @@ PROTOTYPE ERROR_CLASS type_indexed(COUNT count,
         }
     }
 
-#if OMPI_BIGCOUNT_SRC
-    iarray_of_blocklengths = (int *)malloc(count * sizeof(int));
-    if (NULL == iarray_of_blocklengths) {
-        return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_NO_MEM, FUNC_NAME);
-    }
-    iarray_of_displacements = (int *)malloc(count * sizeof(int));
-    if (NULL == iarray_of_displacements) {
-        free(iarray_of_blocklengths);
-        return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_NO_MEM, FUNC_NAME);
-    }
-
-    for (int ii = 0; ii < (int)count; ii++) {
-        iarray_of_blocklengths[ii] = (int)array_of_blocklengths[ii];
-        iarray_of_displacements[ii] = (int)array_of_displacements[ii];
-    }
-#else
-    iarray_of_blocklengths = (int *)array_of_blocklengths;
-    iarray_of_displacements = (int *)array_of_displacements;
-#endif
-    rc = ompi_datatype_create_indexed ( count, iarray_of_blocklengths,
-                                        iarray_of_displacements,
+    rc = ompi_datatype_create_indexed ( count, OMPI_COUNT_ARRAY_CREATE(array_of_blocklengths),
+                                        OMPI_DISP_ARRAY_CREATE(array_of_displacements),
                                         oldtype, newtype );
     if( rc != MPI_SUCCESS ) {
         ompi_datatype_destroy( newtype );
-        OMPI_ERRHANDLER_NOHANDLE_RETURN( rc, 
+        OMPI_ERRHANDLER_NOHANDLE_RETURN( rc,
                                 rc, FUNC_NAME );
     }
 
     {
-        const int* a_i[3] = {(int *)&count, iarray_of_blocklengths, iarray_of_displacements};
+        const ompi_count_array_t a_i[3] = {OMPI_COUNT_ARRAY_CREATE(&count),
+                                            OMPI_COUNT_ARRAY_CREATE(array_of_blocklengths),
+                                            OMPI_DISP_ARRAY_CREATE(array_of_displacements)};
 
-        ompi_datatype_set_args( *newtype, 2 * count + 1, a_i, 0, NULL, 1, &oldtype,
+        ompi_datatype_set_args( *newtype,
+                                (sizeof(count) != 8) ? 2 * count + 1 : 0,
+                                (sizeof(count) == 8) ? 2 * count + 1 : 0,
+                                a_i, 0, OMPI_DISP_ARRAY_NULL, 1, &oldtype,
                                 MPI_COMBINER_INDEXED );
     }
-#if OMPI_BIGCOUNT_SRC
-    free(iarray_of_blocklengths);
-    free(iarray_of_displacements);
-#endif
 
     return MPI_SUCCESS;
 }

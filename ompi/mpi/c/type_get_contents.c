@@ -65,9 +65,11 @@ int MPI_Type_get_contents(MPI_Datatype mtype,
         }
     }
 
-    rc = ompi_datatype_get_args( mtype, 1, &max_integers, array_of_integers,
-                            &max_addresses, array_of_addresses,
-                            &max_datatypes, array_of_datatypes, NULL );
+    size_t ci, cl, ca, cd;
+    rc = ompi_datatype_get_args( mtype, 1, &ci, array_of_integers,
+                                &cl, NULL,
+                                &ca, array_of_addresses,
+                                &cd, array_of_datatypes, NULL );
     if( rc != MPI_SUCCESS ) {
         OMPI_ERRHANDLER_NOHANDLE_RETURN( MPI_ERR_INTERN, 
                                 MPI_ERR_INTERN, FUNC_NAME );

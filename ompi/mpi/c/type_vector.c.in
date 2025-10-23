@@ -32,10 +32,6 @@
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/memchecker.h"
 
-/*
- * TODO:BIGCOUNT this file will need to be updated once
- * the datatype framework supports bigcount 
- */
 
 PROTOTYPE ERROR_CLASS type_vector(COUNT count,
                                   COUNT blocklength,
@@ -62,21 +58,20 @@ PROTOTYPE ERROR_CLASS type_vector(COUNT count,
             OMPI_ERRHANDLER_NOHANDLE_RETURN( MPI_ERR_ARG, 
                                     MPI_ERR_ARG, FUNC_NAME );
         }
-#if OMPI_BIGCOUNT_SRC
-        OMPI_CHECK_MPI_COUNT_INT_CONVERSION_OVERFLOW(rc, count);
-        if (OMPI_SUCCESS != rc) {
-            OMPI_ERRHANDLER_NOHANDLE_RETURN(rc, rc, FUNC_NAME);
-        }
-#endif
     }
 
     rc = ompi_datatype_create_vector ( count, blocklength, stride, oldtype, newtype );
     OMPI_ERRHANDLER_NOHANDLE_CHECK(rc, rc, FUNC_NAME );
 
     {
-        const int* a_i[3] = {(int *)&count, (int *)&blocklength, (int *)&stride};
+        const ompi_count_array_t a_i[3] = {OMPI_COUNT_ARRAY_CREATE(&count),
+                                           OMPI_COUNT_ARRAY_CREATE(&blocklength),
+                                           OMPI_COUNT_ARRAY_CREATE(&stride)};
 
-        ompi_datatype_set_args( *newtype, 3, a_i, 0, NULL, 1, &oldtype, MPI_COMBINER_VECTOR );
+        ompi_datatype_set_args( *newtype,
+                                (sizeof(count) != 8) ? 3 : 0,
+                                (sizeof(count) == 8) ? 3 : 0,
+                                a_i, 0, OMPI_DISP_ARRAY_NULL, 1, &oldtype, MPI_COMBINER_VECTOR );
     }
 
     return MPI_SUCCESS;

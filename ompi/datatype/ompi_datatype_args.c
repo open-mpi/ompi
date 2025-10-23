@@ -16,6 +16,7 @@
  * Copyright (c) 2015-2019 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
+ * Copyright (c) 2025      Stony Brook University. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -41,19 +42,22 @@ static inline int
 __ompi_datatype_pack_description( ompi_datatype_t* datatype,
                                   void** packed_buffer, int* next_index );
 static ompi_datatype_t*
-__ompi_datatype_create_from_args( int32_t* i, ptrdiff_t * a,
+__ompi_datatype_create_from_args( const int* i, const size_t *l, const ptrdiff_t * a,
                                   ompi_datatype_t** d, int32_t type );
 
 typedef struct __dt_args {
     opal_atomic_int32_t ref_count;
     int32_t            create_type;
     size_t             total_pack_size;
-    int32_t            ci;
-    int32_t            ca;
-    int32_t            cd;
-    int*               i;
-    ptrdiff_t* a;
-    ompi_datatype_t**  d;
+    /* TODO: should they be size_t? */
+    size_t             ci;
+    size_t             ca;
+    size_t             cd;
+    size_t             cl;
+    ptrdiff_t*          a;
+    ompi_datatype_t**   d;
+    size_t*             l; // array of size_t counts
+    int*                i; // array of integer counts
 } ompi_datatype_args_t;
 
 /**
@@ -71,30 +75,44 @@ typedef struct __dt_args {
 #define OMPI_DATATYPE_ALIGN_PTR(PTR, TYPE)
 #endif  /* OPAL_ALIGN_WORD_SIZE_INTEGERS */
 
+/**
+ * Copies count elements from the given count array into either
+ * the integer or size_t destination depending on whether the
+ * count array is 32 or 64 bit. Advances the destination pointer.
+ */
+static inline void copy_count_array(size_t count, int**__restrict__ desti, size_t**__restrict__ destc, ompi_count_array_t array) {
+    size_t elem_size = opal_count_array_is_64bit(array) ? sizeof(size_t) : sizeof(int);
+    void *dest = opal_count_array_is_64bit(array) ? (void*)*destc : (void*)*desti;
+    memcpy(dest, opal_count_array_ptr(array), count * elem_size);
+    if (opal_count_array_is_64bit(array)) {
+        *destc += count;
+    } else {
+        *desti += count;
+    }
+}
+
 int32_t ompi_datatype_set_args( ompi_datatype_t* pData,
-                                int32_t ci, const int32_t** i,
-                                int32_t ca, const ptrdiff_t* a,
-                                int32_t cd, ompi_datatype_t* const * d, int32_t type)
+                                size_t ci, size_t cl, const ompi_count_array_t *counts,
+                                size_t ca, const opal_disp_array_t a,
+                                size_t cd, ompi_datatype_t* const * d, int32_t type)
 {
-    int pos;
+    size_t pos;
 
     assert( NULL == pData->args );
-    int length = sizeof(ompi_datatype_args_t) + ci * sizeof(int) +
-                 ca * sizeof(ptrdiff_t) + cd * sizeof(MPI_Datatype);
+
+    size_t length = sizeof(ompi_datatype_args_t) + ci * sizeof(int) +
+                    cl * sizeof(size_t) + ca * sizeof(ptrdiff_t) +
+                    cd * sizeof(MPI_Datatype);
     char* buf = (char*)malloc( length );
     ompi_datatype_args_t* pArgs = (ompi_datatype_args_t*)buf;
+    size_t *pl = NULL;
+    int *pi = NULL;
     pArgs->ci = ci; pArgs->i = NULL;
+    pArgs->cl = cl; pArgs->l = NULL;
     pArgs->ca = ca; pArgs->a = NULL;
     pArgs->cd = cd; pArgs->d = NULL;
     pArgs->create_type = type;
 
-    /**
-     * Some architectures require 64 bits pointers (to pointers) to
-     * be 64 bits aligned. As in the ompi_datatype_args_t structure we have
-     * 2 such array of pointers and one to an array of ints, if we start by
-     * setting the 64 bits aligned one we will not have any trouble. Problem
-     * originally reported on SPARC 64.
-     */
     buf += sizeof(ompi_datatype_args_t);
     if( 0 != pArgs->ca ) {
         pArgs->a = (ptrdiff_t*)buf;
@@ -104,10 +122,18 @@ int32_t ompi_datatype_set_args( ompi_datatype_t* pData,
         pArgs->d = (ompi_datatype_t**)buf;
         buf += pArgs->cd * sizeof(MPI_Datatype);
     }
-    if( 0 != pArgs->ci ) pArgs->i = (int*)buf;
+    if (0 != pArgs->cl ) {
+        pArgs->l = pl = (size_t*)buf;
+        buf += pArgs->cl * sizeof(size_t);
+    }
+    if( 0 != pArgs->ci ) {
+        pArgs->i = pi = (int*)buf;
+        buf += pArgs->ci * sizeof(int);
+    }
 
     pArgs->ref_count = 1;
-    pArgs->total_pack_size = (4 + ci) * sizeof(int) +
+    pArgs->total_pack_size = 5 * sizeof(size_t) + ci * sizeof(int) +
+                             cl * sizeof(size_t) +
                              cd * sizeof(MPI_Datatype) +
                              ca * sizeof(ptrdiff_t);
     switch(type) {
@@ -117,92 +143,113 @@ int32_t ompi_datatype_set_args( ompi_datatype_t* pData,
         break;
 
     case MPI_COMBINER_CONTIGUOUS:
-        pArgs->i[0] = i[0][0];
+        copy_count_array(1, &pi, &pl, counts[0]);
         break;
 
     case MPI_COMBINER_VECTOR:
-        pArgs->i[0] = i[0][0];
-        pArgs->i[1] = i[1][0];
-        pArgs->i[2] = i[2][0];
+        copy_count_array(1, &pi, &pl, counts[0]);
+        copy_count_array(1, &pi, &pl, counts[1]);
+        copy_count_array(1, &pi, &pl, counts[2]);
         break;
 
     case MPI_COMBINER_HVECTOR_INTEGER:
     case MPI_COMBINER_HVECTOR:
-        pArgs->i[0] = i[0][0];
-        pArgs->i[1] = i[1][0];
+        copy_count_array(1, &pi, &pl, counts[0]);
+        copy_count_array(1, &pi, &pl, counts[1]);
+        if (cl > 0) {
+            // copy the stride
+            memcpy(pl, opal_count_array_ptr(counts[2]), sizeof(MPI_Count));
+            pl++;
+        }
         break;
 
-    case MPI_COMBINER_INDEXED:
-        pos = 1;
-        pArgs->i[0] = i[0][0];
-        memcpy( pArgs->i + pos, i[1], i[0][0] * sizeof(int) );
-        pos += i[0][0];
-        memcpy( pArgs->i + pos, i[2], i[0][0] * sizeof(int) );
+    case MPI_COMBINER_INDEXED: {
+        size_t count = opal_count_array_get(counts[0], 0);
+        copy_count_array(1, &pi, &pl, counts[0]);
+        copy_count_array(count, &pi, &pl, counts[1]);
+        copy_count_array(count, &pi, &pl, counts[2]);
         break;
+    }
 
     case MPI_COMBINER_HINDEXED_INTEGER:
-    case MPI_COMBINER_HINDEXED:
-        pArgs->i[0] = i[0][0];
-        memcpy( pArgs->i + 1, i[1], i[0][0] * sizeof(int) );
+    case MPI_COMBINER_HINDEXED: {
+        size_t count = opal_count_array_get(counts[0], 0);
+        copy_count_array(1, &pi, &pl, counts[0]);
+        copy_count_array(count, &pi, &pl, counts[1]);
+        if (cl > 0) {
+            // copy the displacements
+            memcpy(pl, opal_count_array_ptr(counts[2]), count * sizeof(MPI_Count));
+            pl += count;
+        }
         break;
+    }
 
-    case MPI_COMBINER_INDEXED_BLOCK:
-        pArgs->i[0] = i[0][0];
-        pArgs->i[1] = i[1][0];
-        memcpy( pArgs->i + 2, i[2], i[0][0] * sizeof(int) );
+    case MPI_COMBINER_INDEXED_BLOCK: {
+        size_t count = opal_count_array_get(counts[0], 0);
+        copy_count_array(1, &pi, &pl, counts[0]);
+        copy_count_array(1, &pi, &pl, counts[1]);
+        copy_count_array(count, &pi, &pl, counts[2]);
         break;
+    }
 
     case MPI_COMBINER_STRUCT_INTEGER:
-    case MPI_COMBINER_STRUCT:
-        pArgs->i[0] = i[0][0];
-        memcpy( pArgs->i + 1, i[1], i[0][0] * sizeof(int) );
+    case MPI_COMBINER_STRUCT: {
+        size_t count = opal_count_array_get(counts[0], 0);
+        copy_count_array(1, &pi, &pl, counts[0]);
+        copy_count_array(count, &pi, &pl, counts[1]);
+        if (cl > 0) {
+            // copy the displacements
+            memcpy(pl, opal_count_array_ptr(counts[2]), count * sizeof(MPI_Count));
+            pl += count;
+        }
         break;
+    }
 
-    case MPI_COMBINER_SUBARRAY:
-        pos = 1;
-        pArgs->i[0] = i[0][0];
-        memcpy( pArgs->i + pos, i[1], pArgs->i[0] * sizeof(int) );
-        pos += pArgs->i[0];
-        memcpy( pArgs->i + pos, i[2], pArgs->i[0] * sizeof(int) );
-        pos += pArgs->i[0];
-        memcpy( pArgs->i + pos, i[3], pArgs->i[0] * sizeof(int) );
-        pos += pArgs->i[0];
-        pArgs->i[pos] = i[4][0];
+    case MPI_COMBINER_SUBARRAY: {
+        size_t count = opal_count_array_get(counts[0], 0);
+        copy_count_array(1, &pi, &pl, counts[0]);
+        copy_count_array(count, &pi, &pl, counts[1]);
+        copy_count_array(count, &pi, &pl, counts[2]);
+        copy_count_array(count, &pi, &pl, counts[3]);
+        copy_count_array(1, &pi, &pl, counts[4]);
         break;
+    }
 
-    case MPI_COMBINER_DARRAY:
-        pos = 3;
-        pArgs->i[0] = i[0][0];
-        pArgs->i[1] = i[1][0];
-        pArgs->i[2] = i[2][0];
-
-        memcpy( pArgs->i + pos, i[3], i[2][0] * sizeof(int) );
-        pos += i[2][0];
-        memcpy( pArgs->i + pos, i[4], i[2][0] * sizeof(int) );
-        pos += i[2][0];
-        memcpy( pArgs->i + pos, i[5], i[2][0] * sizeof(int) );
-        pos += i[2][0];
-        memcpy( pArgs->i + pos, i[6], i[2][0] * sizeof(int) );
-        pos += i[2][0];
-        pArgs->i[pos] = i[7][0];
+    case MPI_COMBINER_DARRAY: {
+        size_t ndim = opal_count_array_get(counts[2], 0);
+        copy_count_array(1, &pi, &pl, counts[0]);
+        copy_count_array(1, &pi, &pl, counts[1]);
+        copy_count_array(1, &pi, &pl, counts[2]);
+        copy_count_array(ndim, &pi, &pl, counts[3]);
+        copy_count_array(ndim, &pi, &pl, counts[4]);
+        copy_count_array(ndim, &pi, &pl, counts[5]);
+        copy_count_array(ndim, &pi, &pl, counts[6]);
+        copy_count_array(1, &pi, &pl, counts[7]);
         break;
+    }
 
     case MPI_COMBINER_F90_REAL:
     case MPI_COMBINER_F90_COMPLEX:
-        pArgs->i[0] = i[0][0];
-        pArgs->i[1] = i[1][0];
+        copy_count_array(1, &pi, &pl, counts[0]);
+        copy_count_array(1, &pi, &pl, counts[1]);
         break;
 
     case MPI_COMBINER_F90_INTEGER:
-        pArgs->i[0] = i[0][0];
+        copy_count_array(1, &pi, &pl, counts[0]);
         break;
 
     case MPI_COMBINER_RESIZED:
         break;
 
     case MPI_COMBINER_HINDEXED_BLOCK:
-        pArgs->i[0] = i[0][0];
-        pArgs->i[1] = i[1][0];
+        copy_count_array(1, &pi, &pl, counts[0]);
+        copy_count_array(1, &pi, &pl, counts[1]);
+        if (cl > 0) {
+            // copy the displacements
+            size_t count = opal_count_array_get(counts[0], 0);
+            memcpy(pl, opal_count_array_ptr(counts[2]), count * sizeof(MPI_Count));
+            pl += count;
+        }
         break;
 
     default:
@@ -211,7 +258,7 @@ int32_t ompi_datatype_set_args( ompi_datatype_t* pData,
 
     /* copy the array of MPI_Aint, aka ptrdiff_t */
     if( pArgs->a != NULL )
-        memcpy( pArgs->a, a, ca * sizeof(ptrdiff_t) );
+        memcpy( pArgs->a, ompi_disp_array_ptr(a), ca * sizeof(ptrdiff_t) );
 
     for( pos = 0; pos < cd; pos++ ) {
         pArgs->d[pos] = d[pos];
@@ -239,7 +286,7 @@ int32_t ompi_datatype_set_args( ompi_datatype_t* pData,
 
 int32_t ompi_datatype_print_args( const ompi_datatype_t* pData )
 {
-    int32_t i;
+    size_t i;
     ompi_datatype_args_t* pArgs = (ompi_datatype_args_t*)pData->args;
 
     if( ompi_datatype_is_predefined(pData) ) {
@@ -249,12 +296,19 @@ int32_t ompi_datatype_print_args( const ompi_datatype_t* pData )
 
     if( pArgs == NULL ) return MPI_ERR_INTERN;
 
-    printf( "type %d count ints %d count disp %d count datatype %d\n",
-            pArgs->create_type, pArgs->ci, pArgs->ca, pArgs->cd );
+    printf( "type %d count ints %zu count counts %zu count disp %zu count datatype %zu\n",
+            pArgs->create_type, pArgs->ci, pArgs->cl, pArgs->ca, pArgs->cd );
     if( pArgs->i != NULL ) {
-        printf( "ints:     " );
+        printf( "ints:     ");
         for( i = 0; i < pArgs->ci; i++ ) {
             printf( "%d ", pArgs->i[i] );
+        }
+        printf( "\n" );
+    }
+    if( pArgs->l != NULL ) {
+        printf( "counts:     ");
+        for( i = 0; i < pArgs->cl; i++ ) {
+            printf( "%zu ", pArgs->l[i] );
         }
         printf( "\n" );
     }
@@ -309,9 +363,10 @@ int32_t ompi_datatype_print_args( const ompi_datatype_t* pData )
 
 
 int32_t ompi_datatype_get_args( const ompi_datatype_t* pData, int32_t which,
-                                int32_t* ci, int32_t* i,
-                                int32_t* ca, ptrdiff_t* a,
-                                int32_t* cd, ompi_datatype_t** d, int32_t* type)
+                                size_t* ci, int* i,
+                                size_t* cl, MPI_Count* l,
+                                size_t* ca, ptrdiff_t* a,
+                                size_t* cd, ompi_datatype_t** d, int32_t* type)
 {
     ompi_datatype_args_t* pArgs = (ompi_datatype_args_t*)pData->args;
 
@@ -320,6 +375,7 @@ int32_t ompi_datatype_get_args( const ompi_datatype_t* pData, int32_t which,
             switch(which){
             case 0:
                 *ci = 0;
+                *cl = 0;
                 *ca = 0;
                 *cd = 0;
                 *type = MPI_COMBINER_NAMED;
@@ -335,16 +391,17 @@ int32_t ompi_datatype_get_args( const ompi_datatype_t* pData, int32_t which,
     switch(which){
     case 0:     /* GET THE LENGTHS */
         *ci = pArgs->ci;
+        *cl = pArgs->cl;
         *ca = pArgs->ca;
         *cd = pArgs->cd;
         *type = pArgs->create_type;
         break;
     case 1:     /* GET THE ARGUMENTS */
-        if(*ci < pArgs->ci || *ca < pArgs->ca || *cd < pArgs->cd) {
-            return MPI_ERR_ARG;
-        }
         if( (NULL != i) && (NULL != pArgs->i) ) {
             memcpy( i, pArgs->i, pArgs->ci * sizeof(int) );
+        }
+        if( (NULL != l) && (NULL != pArgs->l) ) {
+            memcpy( l, pArgs->l, pArgs->cl * sizeof(size_t) );
         }
         if( (NULL != a) && (NULL != pArgs->a) ) {
             memcpy( a, pArgs->a, pArgs->ca * sizeof(ptrdiff_t) );
@@ -384,7 +441,7 @@ int32_t ompi_datatype_copy_args( const ompi_datatype_t* source_data,
  */
 int32_t ompi_datatype_release_args( ompi_datatype_t* pData )
 {
-    int i;
+    size_t i;
     ompi_datatype_args_t* pArgs = (ompi_datatype_args_t*)pData->args;
 
     assert( 0 < pArgs->ref_count );
@@ -409,13 +466,14 @@ int32_t ompi_datatype_release_args( ompi_datatype_t* pData )
 static inline int __ompi_datatype_pack_description( ompi_datatype_t* datatype,
                                                     void** packed_buffer, int* next_index )
 {
-    int i, *position = (int*)*packed_buffer;
+    size_t i;
+    int *iposition = NULL;
     ompi_datatype_args_t* args = (ompi_datatype_args_t*)datatype->args;
     char* next_packed = (char*)*packed_buffer;
 
     if( ompi_datatype_is_predefined(datatype) ) {
-        position[0] = MPI_COMBINER_NAMED;
-        position[1] = datatype->id;   /* On the OMPI - layer, copy the ompi_datatype.id */
+        iposition[0] = MPI_COMBINER_NAMED;
+        iposition[1] = datatype->id;   /* On the OMPI - layer, copy the ompi_datatype.id */
         next_packed += (2 * sizeof(int));
         *packed_buffer = next_packed;
         return OMPI_SUCCESS;
@@ -427,28 +485,30 @@ static inline int __ompi_datatype_pack_description( ompi_datatype_t* datatype,
                                                 packed_buffer,
                                                 next_index );
     }
-    position[0] = args->create_type;
-    position[1] = args->ci;
-    position[2] = args->ca;
-    position[3] = args->cd;
-    next_packed += (4 * sizeof(int));
-    /* Spoiler: We will access the data in this storage structure, and thus we
-     * need to align it to the expected boundaries (special thanks to Sparc64).
-     * The simplest way is to ensure that prior to each type that must be 64
-     * bits aligned, we have a pointer that is 64 bits aligned. That will minimize
-     * the memory requirements in all cases where no displacements are stored.
-     */
+    iposition[0] = args->create_type;
+    next_packed += sizeof(int);
+    /* align pointer to 64 bits */
+    OMPI_DATATYPE_ALIGN_PTR(next_packed, char*);
+    size_t *cposition = ((size_t*)next_packed);
+    cposition[0] = args->ci;
+    cposition[1] = args->cl;
+    cposition[2] = args->ca;
+    cposition[3] = args->cd;
+    next_packed += (4 * sizeof(size_t));
     if( 0 < args->ca ) {
-        /* description of the displacements must be 64 bits aligned */
-        OMPI_DATATYPE_ALIGN_PTR(next_packed, char*);
-
         memcpy( next_packed, args->a, sizeof(ptrdiff_t) * args->ca );
         next_packed += sizeof(ptrdiff_t) * args->ca;
     }
-    position = (int*)next_packed;
+    if ( 0 < args->cl ) {
+        memcpy( next_packed, args->l, sizeof(size_t) * args->cl );
+        next_packed += sizeof(size_t) * args->cl;
+    }
+    iposition = (int*)next_packed;
+
+    /* skip the datatypes */
     next_packed += sizeof(int) * args->cd;
 
-    /* copy the array of counts (32 bits aligned) */
+    /* copy the array of 32bit counts at the end */
     memcpy( next_packed, args->i, sizeof(int) * args->ci );
     next_packed += args->ci * sizeof(int);
 
@@ -456,9 +516,9 @@ static inline int __ompi_datatype_pack_description( ompi_datatype_t* datatype,
     for( i = 0; i < args->cd; i++ ) {
         ompi_datatype_t* temp_data = args->d[i];
         if( ompi_datatype_is_predefined(temp_data) ) {
-            position[i] = temp_data->id;  /* On the OMPI - layer, copy the ompi_datatype.id */
+            iposition[i] = temp_data->id;  /* On the OMPI - layer, copy the ompi_datatype.id */
         } else {
-            position[i] = *next_index;
+            iposition[i] = *next_index;
             (*next_index)++;
             __ompi_datatype_pack_description( temp_data,
                                               (void**)&next_packed,
@@ -548,13 +608,16 @@ size_t ompi_datatype_pack_description_length( ompi_datatype_t* datatype )
 static ompi_datatype_t* __ompi_datatype_create_from_packed_description( void** packed_buffer,
                                                                         const struct ompi_proc_t* remote_processor )
 {
-    int* position;
+    int* iposition;
+    size_t *cposition;
     ompi_datatype_t* datatype = NULL;
     ompi_datatype_t** array_of_datatype;
     ptrdiff_t* array_of_disp;
-    int* array_of_length;
-    int number_of_length, number_of_disp, number_of_datatype, data_id;
-    int create_type, i;
+    int* array_of_ints;
+    size_t *array_of_counts = NULL;
+    size_t number_of_ints, number_of_counts, number_of_disp, number_of_datatype, data_id;
+    int create_type;
+    size_t i;
     char* next_buffer;
 
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
@@ -567,9 +630,14 @@ static ompi_datatype_t* __ompi_datatype_create_from_packed_description( void** p
 #endif
 
     next_buffer = (char*)*packed_buffer;
-    position = (int*)next_buffer;
+    cposition = (size_t*)next_buffer;
+    iposition = (int*)next_buffer;
 
-    create_type = position[0];
+    create_type = (int)iposition[0];
+    next_buffer += sizeof(int);
+    /* align pointer to 64 bits */
+    OMPI_DATATYPE_ALIGN_PTR(next_buffer, char*);
+    cposition = (size_t*)next_buffer;
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     if (need_swap) {
         create_type = opal_swap_bytes4(create_type);
@@ -577,48 +645,50 @@ static ompi_datatype_t* __ompi_datatype_create_from_packed_description( void** p
 #endif
     if( MPI_COMBINER_NAMED == create_type ) {
         /* there we have a simple predefined datatype */
-        data_id = position[1];
+        data_id = iposition[1];
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
         if (need_swap) {
             data_id = opal_swap_bytes4(data_id);
         }
 #endif
         assert( data_id < OMPI_DATATYPE_MAX_PREDEFINED );
-        *packed_buffer = position + 2;
+        *packed_buffer = iposition + 2;
         return (ompi_datatype_t*)ompi_datatype_basicDatatypes[data_id];
     }
 
-    number_of_length   = position[1];
-    number_of_disp     = position[2];
-    number_of_datatype = position[3];
+    number_of_ints     = cposition[0];
+    number_of_counts   = cposition[1];
+    number_of_disp     = cposition[2];
+    number_of_datatype = cposition[3];
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     if (need_swap) {
-        number_of_length   = opal_swap_bytes4(number_of_length);
-        number_of_disp     = opal_swap_bytes4(number_of_disp);
-        number_of_datatype = opal_swap_bytes4(number_of_datatype);
+        number_of_ints     = opal_swap_bytes8(number_of_ints);
+        number_of_counts   = opal_swap_bytes8(number_of_counts);
+        number_of_disp     = opal_swap_bytes8(number_of_disp);
+        number_of_datatype = opal_swap_bytes8(number_of_datatype);
     }
 #endif
     array_of_datatype = (ompi_datatype_t**)malloc( sizeof(ompi_datatype_t*) *
                                                    number_of_datatype );
-    next_buffer += (4 * sizeof(int));  /* move after the header */
-
-    /* description of the displacements (if ANY !)  should always be aligned
-       on MPI_Aint, aka ptrdiff_t */
-    if (number_of_disp > 0) {
-        OMPI_DATATYPE_ALIGN_PTR(next_buffer, char*);
-    }
-
+    next_buffer += (4 * sizeof(size_t));  /* move after the header */
+    /* the array of displacements */
     array_of_disp   = (ptrdiff_t*)next_buffer;
     next_buffer    += number_of_disp * sizeof(ptrdiff_t);
+    if (number_of_counts > 0) {
+        array_of_counts = (size_t*)next_buffer;
+        next_buffer    += number_of_counts * sizeof(size_t);
+    }
     /* the other datatypes */
-    position        = (int*)next_buffer;
+    iposition        = (int*)next_buffer;
     next_buffer    += number_of_datatype * sizeof(int);
     /* the array of lengths (32 bits aligned) */
-    array_of_length = (int*)next_buffer;
-    next_buffer    += (number_of_length * sizeof(int));
+    if (number_of_ints > 0) {
+        array_of_ints = (int*)next_buffer;
+        next_buffer += number_of_ints * sizeof(int);
+    }
 
     for( i = 0; i < number_of_datatype; i++ ) {
-        data_id = position[i];
+        data_id = iposition[i];
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
         if (need_swap) {
             data_id = opal_swap_bytes4(data_id);
@@ -644,8 +714,11 @@ static ompi_datatype_t* __ompi_datatype_create_from_packed_description( void** p
 
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     if (need_swap) {
-        for (i = 0 ; i < number_of_length ; ++i) {
-            array_of_length[i] = opal_swap_bytes4(array_of_length[i]);
+        for (i = 0 ; i < number_of_ints ; ++i) {
+            number_of_ints[i] = opal_swap_bytes8(number_of_ints[i]);
+        }
+        for (i = 0 ; i < number_of_counts ; ++i) {
+            array_of_counts[i] = opal_swap_bytes4(array_of_counts[i]);
         }
         for (i = 0 ; i < number_of_disp ; ++i) {
 #if SIZEOF_PTRDIFF_T == 4
@@ -658,7 +731,7 @@ static ompi_datatype_t* __ompi_datatype_create_from_packed_description( void** p
         }
     }
 #endif
-    datatype = __ompi_datatype_create_from_args( array_of_length, array_of_disp,
+    datatype = __ompi_datatype_create_from_args( array_of_ints, array_of_counts, array_of_disp,
                                                  array_of_datatype, create_type );
     *packed_buffer = next_buffer;
  cleanup_and_exit:
@@ -671,10 +744,13 @@ static ompi_datatype_t* __ompi_datatype_create_from_packed_description( void** p
     return datatype;
 }
 
-static ompi_datatype_t* __ompi_datatype_create_from_args( int32_t* i, MPI_Aint* a,
+static ompi_datatype_t* __ompi_datatype_create_from_args( const int* i, const size_t *l, const ptrdiff_t* a,
                                                           ompi_datatype_t** d, int32_t type )
 {
+    size_t count, ci = 0, cl = 0;
     ompi_datatype_t* datatype = NULL;
+
+    ompi_disp_array_t disp_array = OMPI_DISP_ARRAY_CREATE(a);
 
     switch(type){
         /******************************************************************/
@@ -684,81 +760,219 @@ static ompi_datatype_t* __ompi_datatype_create_from_args( int32_t* i, MPI_Aint* 
         assert(0);  /* shouldn't happen */
         break;
         /******************************************************************/
-    case MPI_COMBINER_CONTIGUOUS:
-        ompi_datatype_create_contiguous( i[0], d[0], &datatype );
-        ompi_datatype_set_args( datatype, 1, (const int **) &i, 0, NULL, 1, d, MPI_COMBINER_CONTIGUOUS );
-        break;
-        /******************************************************************/
-    case MPI_COMBINER_VECTOR:
-        ompi_datatype_create_vector( i[0], i[1], i[2], d[0], &datatype );
-        {
-            const int* a_i[3] = {&i[0], &i[1], &i[2]};
-            ompi_datatype_set_args( datatype, 3, a_i, 0, NULL, 1, d, MPI_COMBINER_VECTOR );
+    case MPI_COMBINER_CONTIGUOUS: {
+        ompi_count_array_t a_i[1];
+        if (l == NULL) {
+            count = i[0];
+            a_i[0] = OMPI_COUNT_ARRAY_CREATE(i);
+            ci = 1;
+        } else { // large count variant
+            count = l[0];
+            a_i[0] = OMPI_COUNT_ARRAY_CREATE(l);
+            cl = 1;
         }
+        ompi_datatype_create_contiguous( count, d[0], &datatype );
+        ompi_datatype_set_args( datatype, ci, cl, a_i, 0, OMPI_DISP_ARRAY_NULL, 1, d, MPI_COMBINER_CONTIGUOUS );
         break;
+    }
+        /******************************************************************/
+    case MPI_COMBINER_VECTOR: {
+        size_t blocklength, stride;
+        opal_count_array_t a_i[3];
+        if (l == NULL) {
+            count      = i[0];
+            blocklength= i[1];
+            stride     = i[2];
+            a_i[0] = OMPI_COUNT_ARRAY_CREATE(i);
+            a_i[1] = OMPI_COUNT_ARRAY_CREATE(i + 1);
+            a_i[2] = OMPI_COUNT_ARRAY_CREATE(i + 2);
+            ci = 3;
+        } else { // large count variant
+            count      = l[0];
+            blocklength= l[1];
+            stride     = l[2];
+            a_i[0] = OMPI_COUNT_ARRAY_CREATE(l);
+            a_i[1] = OMPI_COUNT_ARRAY_CREATE(l + 1);
+            a_i[2] = OMPI_COUNT_ARRAY_CREATE(l + 2);
+            cl = 3;
+        }
+        ompi_datatype_create_vector( count, blocklength, stride, d[0], &datatype );
+        ompi_datatype_set_args( datatype, ci, cl, a_i, 0, OMPI_DISP_ARRAY_NULL, 1, d, MPI_COMBINER_VECTOR );
+        break;
+    }
         /******************************************************************/
     case MPI_COMBINER_HVECTOR_INTEGER:
     case MPI_COMBINER_HVECTOR:
-        ompi_datatype_create_hvector( i[0], i[1], a[0], d[0], &datatype );
         {
-            const int* a_i[2] = {&i[0], &i[1]};
-            ompi_datatype_set_args( datatype, 2, a_i, 1, a, 1, d, MPI_COMBINER_HVECTOR );
+            size_t blocklength;
+            opal_count_array_t a_i[2];
+            if (l == NULL) {
+                count          = i[0];
+                blocklength    = i[1];
+                a_i[0] = OMPI_COUNT_ARRAY_CREATE(i);
+                a_i[1] = OMPI_COUNT_ARRAY_CREATE(i + 1);
+                ci = 2;
+            } else { // large count variant
+                count          = l[0];
+                blocklength    = l[1];
+                a_i[0] = OMPI_COUNT_ARRAY_CREATE(l);
+                a_i[1] = OMPI_COUNT_ARRAY_CREATE(l + 1);
+                cl = 2;
+            }
+            ompi_datatype_create_hvector( count, blocklength, a[0], d[0], &datatype );
+            ompi_datatype_set_args( datatype, ci, cl, a_i, 1, disp_array, 1, d, MPI_COMBINER_HVECTOR );
         }
         break;
         /******************************************************************/
     case MPI_COMBINER_INDEXED:  /* TO CHECK */
-        ompi_datatype_create_indexed( i[0], &(i[1]), &(i[1+i[0]]), d[0], &datatype );
         {
-            const int* a_i[3] = {&i[0], &i[1], &(i[1+i[0]])};
-            ompi_datatype_set_args( datatype, 2 * i[0] + 1, a_i, 0, NULL, 1, d, MPI_COMBINER_INDEXED );
+            opal_count_array_t a_i[3];
+            if (l == NULL) {
+                count = i[0];
+                a_i[0] = OMPI_COUNT_ARRAY_CREATE(i);
+                a_i[1] = OMPI_COUNT_ARRAY_CREATE(i + 1);
+                a_i[2] = OMPI_COUNT_ARRAY_CREATE(i + 1 + count);
+                ci = 2 * count + 1;
+            } else {
+                count = l[0];
+                a_i[0] = OMPI_COUNT_ARRAY_CREATE(l);
+                a_i[1] = OMPI_COUNT_ARRAY_CREATE(l + 1);
+                a_i[2] = OMPI_COUNT_ARRAY_CREATE(l + 1 + count);
+                cl = 2 * count + 1;
+            }
+            ompi_datatype_create_indexed( count, a_i[1], a_i[2], d[0], &datatype );
+            ompi_datatype_set_args( datatype, ci, cl, a_i, 0, OMPI_DISP_ARRAY_NULL, 1, d, MPI_COMBINER_INDEXED );
         }
         break;
         /******************************************************************/
     case MPI_COMBINER_HINDEXED_INTEGER:
     case MPI_COMBINER_HINDEXED:
-        ompi_datatype_create_hindexed( i[0], &(i[1]), a, d[0], &datatype );
         {
-            const int* a_i[2] = {&i[0], &i[1]};
-            ompi_datatype_set_args( datatype, i[0] + 1, a_i, i[0], a, 1, d, MPI_COMBINER_HINDEXED );
+            opal_count_array_t a_i[2];
+            if (l == NULL) {
+                count = i[0];
+                a_i[0] = OMPI_COUNT_ARRAY_CREATE(i);
+                a_i[1] = OMPI_COUNT_ARRAY_CREATE(i + 1);
+                ci = count+1;
+            } else {
+                count = l[0];
+                a_i[0] = OMPI_COUNT_ARRAY_CREATE(l);
+                a_i[1] = OMPI_COUNT_ARRAY_CREATE(l + 1);
+                cl = count+1;
+            }
+            ompi_datatype_create_hindexed( count, a_i[1], disp_array, d[0], &datatype );
+            ompi_datatype_set_args( datatype, ci, cl, a_i, count, disp_array, 1, d, MPI_COMBINER_HINDEXED );
         }
         break;
         /******************************************************************/
     case MPI_COMBINER_INDEXED_BLOCK:
-        ompi_datatype_create_indexed_block( i[0], i[1], &(i[2]), d[0], &datatype );
         {
-            const int* a_i[3] = {&i[0], &i[1], &i[2]};
-            ompi_datatype_set_args( datatype, i[0] + 2, a_i, 0, NULL, 1, d, MPI_COMBINER_INDEXED_BLOCK );
+            opal_count_array_t a_i[3];
+            size_t blocklength;
+            if (l == NULL) {
+                count        = i[0];
+                blocklength  = i[1];
+                a_i[0] = OMPI_COUNT_ARRAY_CREATE(i);
+                a_i[1] = OMPI_COUNT_ARRAY_CREATE(i + 1);
+                a_i[2] = OMPI_COUNT_ARRAY_CREATE(i + 2);
+                ci = 2 + count;
+            } else {
+                count        = l[0];
+                blocklength  = l[1];
+                a_i[0] = OMPI_COUNT_ARRAY_CREATE(l);
+                a_i[1] = OMPI_COUNT_ARRAY_CREATE(l + 1);
+                a_i[2] = OMPI_COUNT_ARRAY_CREATE(l + 2);
+                cl = 2 + count;
+            }
+            ompi_datatype_create_indexed_block( count, blocklength, a_i[2], d[0], &datatype );
+            ompi_datatype_set_args( datatype, ci, cl, a_i, 0, OMPI_DISP_ARRAY_NULL, 1, d, MPI_COMBINER_INDEXED_BLOCK );
         }
         break;
         /******************************************************************/
     case MPI_COMBINER_STRUCT_INTEGER:
     case MPI_COMBINER_STRUCT:
-        ompi_datatype_create_struct( i[0], &(i[1]), a, d, &datatype );
         {
-            const int* a_i[2] = {&i[0], &i[1]};
-            ompi_datatype_set_args( datatype, i[0] + 1, a_i, i[0], a, i[0], d, MPI_COMBINER_STRUCT );
+            opal_count_array_t a_i[2];
+            if (l == NULL) {
+                count = i[0];
+                a_i[0] = OMPI_COUNT_ARRAY_CREATE(i);
+                a_i[1] = OMPI_COUNT_ARRAY_CREATE(i + 1);
+                ci = 2 * count + 1;
+            } else {
+                count = l[0];
+                a_i[0] = OMPI_COUNT_ARRAY_CREATE(l);
+                a_i[1] = OMPI_COUNT_ARRAY_CREATE(l + 1);
+                cl = count + 1;
+            }
+            ompi_datatype_create_struct( count, a_i[1], disp_array, d, &datatype );
+            ompi_datatype_set_args( datatype, ci, cl, a_i, count, disp_array, count, d, MPI_COMBINER_STRUCT );
         }
         break;
         /******************************************************************/
     case MPI_COMBINER_SUBARRAY:
-        ompi_datatype_create_subarray( i[0], &i[1 + 0 * i[0]], &i[1 + 1 * i[0]],
-                                       &i[1 + 2 * i[0]], i[1 + 3 * i[0]],
-                                       d[0], &datatype );
         {
-            const int* a_i[5] = {&i[0], &i[1 + 0 * i[0]], &i[1 + 1 * i[0]], &i[1 + 2 * i[0]], &i[1 + 3 * i[0]]};
-            ompi_datatype_set_args( datatype, 3 * i[0] + 2, a_i, 0, NULL, 1, d, MPI_COMBINER_SUBARRAY);
+            count = i[0]; // first element in int array
+            int order;
+            opal_count_array_t a_i[5];
+            if (l == NULL) {
+                a_i[0] = OMPI_COUNT_ARRAY_CREATE(i);
+                a_i[1] = OMPI_COUNT_ARRAY_CREATE(i + 1);
+                a_i[2] = OMPI_COUNT_ARRAY_CREATE(i + 1 + count);
+                a_i[3] = OMPI_COUNT_ARRAY_CREATE(i + 1 + 2*count);
+                a_i[4] = OMPI_COUNT_ARRAY_CREATE(i + 1 + 3*count);
+                order = i[3*count+1]; // last element in int array
+                ci = 3 * count + 2;
+            } else {
+                a_i[0] = OMPI_COUNT_ARRAY_CREATE(i);            // ndim
+                a_i[1] = OMPI_COUNT_ARRAY_CREATE(l);            // sizes
+                a_i[2] = OMPI_COUNT_ARRAY_CREATE(l + count);    // subsizes
+                a_i[3] = OMPI_COUNT_ARRAY_CREATE(l + 2*count);  // starts
+                a_i[4] = OMPI_COUNT_ARRAY_CREATE(i+1);          // order
+                order = i[1]; // second (and last) element in int array
+                cl = 3 * count;
+                ci = 2;
+            }
+            ompi_datatype_create_subarray( count, a_i[1], a_i[2], a_i[3], order, d[0], &datatype );
+            ompi_datatype_set_args( datatype, ci, cl, a_i, 0, OMPI_DISP_ARRAY_NULL, 1, d, MPI_COMBINER_SUBARRAY );
         }
         break;
         /******************************************************************/
     case MPI_COMBINER_DARRAY:
-        ompi_datatype_create_darray( i[0] /* size */, i[1] /* rank */, i[2] /* ndims */,
-                                     &i[3 + 0 * i[2]], &i[3 + 1 * i[2]],
-                                     &i[3 + 2 * i[2]], &i[3 + 3 * i[2]],
-                                     i[3 + 4 * i[2]], d[0], &datatype );
         {
-            const int* a_i[8] = {&i[0], &i[1], &i[2], &i[3 + 0 * i[2]], &i[3 + 1 * i[2]], &i[3 + 2 * i[2]],
-                                 &i[3 + 3 * i[2]], &i[3 + 4 * i[2]]};
-            ompi_datatype_set_args( datatype, 4 * i[2] + 4, a_i, 0, NULL, 1, d, MPI_COMBINER_DARRAY);
+            int size  = i[0];
+            int rank  = i[1];
+            int ndims = i[2];
+            ompi_count_array_t gsize_array;
+            const int *distrib_array;
+            const int *darg_array;
+            const int *psize_array;
+            int order;
+            if (l == NULL) {
+                gsize_array   = OMPI_COUNT_ARRAY_CREATE(i + 3);
+                distrib_array = &i[3 + 1*ndims];
+                darg_array    = &i[3 + 2*ndims];
+                psize_array   = &i[3 + 3*ndims];
+                order         =  i[3 + 4*ndims];
+                ci = 4 + 4 * ndims;
+            } else {
+                gsize_array   = OMPI_COUNT_ARRAY_CREATE(l);
+                distrib_array = &i[3 + 0*ndims];
+                darg_array    = &i[3 + 1*ndims];
+                psize_array   = &i[3 + 2*ndims];
+                order         =  i[3 + 3*ndims];
+                ci = 4 + 3 * ndims;
+                cl = ndims;
+            }
+            opal_count_array_t a_i[8] = {OMPI_COUNT_ARRAY_CREATE(&size),
+                                         OMPI_COUNT_ARRAY_CREATE(&rank),
+                                         OMPI_COUNT_ARRAY_CREATE(&ndims),
+                                         gsize_array,
+                                         OMPI_COUNT_ARRAY_CREATE(distrib_array),
+                                         OMPI_COUNT_ARRAY_CREATE(darg_array),
+                                         OMPI_COUNT_ARRAY_CREATE(psize_array),
+                                         OMPI_COUNT_ARRAY_CREATE(&order)};
+            ompi_datatype_create_darray( size, rank, ndims, gsize_array, distrib_array, darg_array, psize_array, order, d[0], &datatype );
+            ompi_datatype_set_args( datatype, ci, cl, a_i, 0, OMPI_DISP_ARRAY_NULL, 1, d, MPI_COMBINER_DARRAY);
         }
         break;
         /******************************************************************/
@@ -775,14 +989,24 @@ static ompi_datatype_t* __ompi_datatype_create_from_args( int32_t* i, MPI_Aint* 
         /******************************************************************/
     case MPI_COMBINER_RESIZED:
         ompi_datatype_create_resized(d[0], a[0], a[1], &datatype);
-        ompi_datatype_set_args( datatype, 0, NULL, 2, a, 1, d, MPI_COMBINER_RESIZED );
+        ompi_datatype_set_args( datatype, 0, 0, NULL, 2, disp_array, 1, d, MPI_COMBINER_RESIZED );
         break;
         /******************************************************************/
     case MPI_COMBINER_HINDEXED_BLOCK:
-        ompi_datatype_create_hindexed_block( i[0], i[1], a, d[0], &datatype );
         {
-            const int* a_i[2] = {&i[0], &i[1]};
-            ompi_datatype_set_args( datatype, 2, a_i, i[0], a, 1, d, MPI_COMBINER_HINDEXED_BLOCK );
+            size_t bLength = 0;
+            if (l == NULL) {
+                count = i[0];
+                bLength = i[1];
+                ci = 2;
+            } else {
+                count = l[0];
+                bLength = l[1];
+                cl = 2;
+            }
+            ompi_datatype_create_hindexed_block( count, bLength, disp_array, d[0], &datatype );
+            opal_count_array_t a_i[2] = {OMPI_COUNT_ARRAY_CREATE(&count), OMPI_COUNT_ARRAY_CREATE(&bLength)};
+            ompi_datatype_set_args( datatype, ci, cl, a_i, count, disp_array, 1, d, MPI_COMBINER_HINDEXED_BLOCK );
         }
         break;
         /******************************************************************/
@@ -816,7 +1040,7 @@ ompi_datatype_t* ompi_datatype_get_single_predefined_type_from_args( ompi_dataty
 {
     ompi_datatype_t *predef = NULL, *current_type, *current_predef;
     ompi_datatype_args_t* args = (ompi_datatype_args_t*)type->args;
-    int i;
+    size_t i;
 
     if( ompi_datatype_is_predefined(type) )
         return type;

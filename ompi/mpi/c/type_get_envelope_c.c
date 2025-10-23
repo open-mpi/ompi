@@ -61,9 +61,15 @@ int MPI_Type_get_envelope_c(MPI_Datatype type,
       }
    }
 
-/* TODO:BIGCOUNT: Need to embiggen ompi_datatype_get_args */
-   rc = ompi_datatype_get_args( type, 0, (int *)num_integers, NULL, (int *)num_addresses, NULL,
-                           (int *)num_datatypes, NULL, combiner );
+   size_t ci, cl, ca, cd;
+   rc = ompi_datatype_get_args( type, 0, &ci, NULL, &cl, NULL, &ca, NULL,
+                           &cd, NULL, combiner );
+   if( rc == MPI_SUCCESS ) {
+      *num_integers = (MPI_Count)ci;
+      *num_addresses = (MPI_Count)ca;
+      *num_large_counts = (MPI_Count)cl;
+      *num_datatypes = (MPI_Count)cd;
+   }
    OMPI_ERRHANDLER_NOHANDLE_RETURN( rc, rc, FUNC_NAME );
 }
 

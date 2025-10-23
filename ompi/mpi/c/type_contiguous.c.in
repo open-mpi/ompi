@@ -32,11 +32,6 @@
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/memchecker.h"
 
-/*
- * TODO:BIGCOUNT this file will need to be updated once
- * the datatype framework supports bigcount 
- */
-
 
 PROTOTYPE ERROR_CLASS type_contiguous(COUNT count,
                                       DATATYPE oldtype,
@@ -56,12 +51,6 @@ PROTOTYPE ERROR_CLASS type_contiguous(COUNT count,
         } else if( count < 0 ) {
             return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_COUNT, FUNC_NAME);
         }
-#if OMPI_BIGCOUNT_SRC
-        OMPI_CHECK_MPI_COUNT_INT_CONVERSION_OVERFLOW(rc, count);
-        if (OMPI_SUCCESS != rc) {
-            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(rc, FUNC_NAME);
-        }
-#endif
     }
 
     rc = ompi_datatype_create_contiguous( count, oldtype, newtype );
@@ -69,13 +58,11 @@ PROTOTYPE ERROR_CLASS type_contiguous(COUNT count,
 
     /* data description */
     {
-#if OMPI_BIGCOUNT_SRC
-        int icount = (int)count;
-        const int* a_i[1] = {&icount};
-#else
-        const int* a_i[1] = {&count};
-#endif
-        ompi_datatype_set_args( *newtype, 1, a_i, 0, NULL, 1, &oldtype, MPI_COMBINER_CONTIGUOUS );
+        ompi_count_array_t a_i[1] = {OMPI_COUNT_ARRAY_CREATE(&count)};
+        ompi_datatype_set_args( *newtype,
+                                (sizeof(count) == sizeof(size_t)) ? 0 : 1,
+                                (sizeof(count) == sizeof(size_t)) ? 1 : 0,
+                                a_i, 0, OMPI_DISP_ARRAY_NULL, 1, &oldtype, MPI_COMBINER_CONTIGUOUS );
     }
 
     OMPI_ERRHANDLER_NOHANDLE_RETURN(rc, rc, FUNC_NAME );

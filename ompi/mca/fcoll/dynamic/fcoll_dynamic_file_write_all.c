@@ -138,7 +138,7 @@ mca_fcoll_dynamic_file_write_all (struct ompio_file_t *fh,
                                                   count,
                                                   buf,
                                                   &max_data,
-                                                  fh->f_mem_convertor, 
+                                                  fh->f_mem_convertor,
                                                   &decoded_iov,
                                                   &iov_count);
         if (OMPI_SUCCESS != ret ){
@@ -190,7 +190,7 @@ mca_fcoll_dynamic_file_write_all (struct ompio_file_t *fh,
                                            fh->f_procs_in_group,
                                            fh->f_procs_per_group,
                                            fh->f_comm);
-    
+
     if( OMPI_SUCCESS != ret){
 	goto exit;
     }
@@ -254,7 +254,7 @@ mca_fcoll_dynamic_file_write_all (struct ompio_file_t *fh,
                                            fh->f_procs_in_group,
                                            fh->f_procs_per_group,
                                            fh->f_comm);
-    
+
     if( OMPI_SUCCESS != ret){
 	goto exit;
     }
@@ -784,8 +784,8 @@ mca_fcoll_dynamic_file_write_all (struct ompio_file_t *fh,
                 recv_req[i] = MPI_REQUEST_NULL;
                 if ( 0 < disp_index[i] ) {
                     ompi_datatype_create_hindexed(disp_index[i],
-                                                  blocklen_per_process[i],
-                                                  displs_per_process[i],
+                                                  OMPI_COUNT_ARRAY_CREATE(blocklen_per_process[i]),
+                                                  OMPI_DISP_ARRAY_CREATE(displs_per_process[i]),
                                                   MPI_BYTE,
                                                   &recvtype[i]);
                     ompi_datatype_commit(&recvtype[i]);

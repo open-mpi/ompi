@@ -202,7 +202,8 @@ ompi_coll_base_reduce_scatter_block_intra_recursivedoubling(
     struct ompi_datatype_t *dtypesend = NULL, *dtyperecv = NULL;
     char *tmprecv_raw = NULL, *tmpbuf_raw = NULL, *tmprecv, *tmpbuf;
     ptrdiff_t span, gap, totalcount, extent;
-    int blocklens[2], displs[2];
+    size_t blocklens[2];
+    ptrdiff_t displs[2];
     int err = MPI_SUCCESS;
     int comm_size = ompi_comm_size(comm);
     int rank = ompi_comm_rank(comm);
@@ -270,7 +271,8 @@ ompi_coll_base_reduce_scatter_block_intra_recursivedoubling(
                        rcount * (comm_size - cur_tree_root - mask) : 0;
         displs[0] = 0;
         displs[1] = comm_size * rcount - blocklens[1];
-        err = ompi_datatype_create_indexed(2, blocklens, displs, dtype, &dtypesend);
+        err = ompi_datatype_create_indexed(2, OMPI_COUNT_ARRAY_CREATE(blocklens),
+                                           OMPI_DISP_ARRAY_CREATE(displs), dtype, &dtypesend);
         if (MPI_SUCCESS != err) { goto cleanup_and_return; }
         err = ompi_datatype_commit(&dtypesend);
         if (MPI_SUCCESS != err) { goto cleanup_and_return; }
@@ -281,7 +283,8 @@ ompi_coll_base_reduce_scatter_block_intra_recursivedoubling(
                        rcount * (comm_size - remote_tree_root - mask) : 0;
         displs[0] = 0;
         displs[1] = comm_size * rcount - blocklens[1];
-        err = ompi_datatype_create_indexed(2, blocklens, displs, dtype, &dtyperecv);
+        err = ompi_datatype_create_indexed(2, OMPI_COUNT_ARRAY_CREATE(blocklens),
+                                           OMPI_DISP_ARRAY_CREATE(displs), dtype, &dtyperecv);
         if (MPI_SUCCESS != err) { goto cleanup_and_return; }
         err = ompi_datatype_commit(&dtyperecv);
         if (MPI_SUCCESS != err) { goto cleanup_and_return; }

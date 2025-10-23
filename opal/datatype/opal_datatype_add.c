@@ -127,7 +127,7 @@ static inline int IMAX(int a, int b)
 int32_t opal_datatype_add(opal_datatype_t *pdtBase, const opal_datatype_t *pdtAdd, size_t count,
                           ptrdiff_t disp, ptrdiff_t extent)
 {
-    uint32_t newLength, place_needed = 0, i;
+    opal_datatype_count_t newLength, place_needed = 0, i;
     short localFlags = 0; /* no specific options yet */
     dt_elem_desc_t *pLast, *pLoop = NULL;
     ptrdiff_t lb, ub, true_lb, true_ub, epsilon, old_true_ub;

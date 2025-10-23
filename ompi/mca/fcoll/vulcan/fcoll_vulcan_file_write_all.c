@@ -72,11 +72,11 @@ int mca_fcoll_vulcan_file_write_all (struct ompio_file_t *fh,
     ompi_request_t **reqs = NULL;
     ompi_request_t *req_iwrite = MPI_REQUEST_NULL;
     mca_io_ompio_aggregator_data **aggr_data=NULL;
-    
+
     ptrdiff_t *displs = NULL;
     int vulcan_num_io_procs;
     size_t max_data = 0;
-    
+
     struct iovec **broken_iov_arrays=NULL;
     struct iovec **broken_decoded_iovs=NULL;
     int *broken_counts=NULL;
@@ -98,8 +98,8 @@ int mca_fcoll_vulcan_file_write_all (struct ompio_file_t *fh,
     double exch_write = 0.0, start_exch = 0.0, end_exch = 0.0;
     mca_common_ompio_print_entry nentry;
 #endif
-    
-    
+
+
     /**************************************************************************
      ** 1.  In case the data is not contiguous in memory, decode it into an iovec
      **************************************************************************/
@@ -124,7 +124,7 @@ int mca_fcoll_vulcan_file_write_all (struct ompio_file_t *fh,
     /* since we want to overlap 2 iterations, define the bytes_per_cycle to be half of what
        the user requested */
     bytes_per_cycle =bytes_per_cycle/2;
-    
+
     ret =   mca_common_ompio_decode_datatype ((struct ompio_file_t *) fh,
                                               datatype,
                                               count,
@@ -136,11 +136,11 @@ int mca_fcoll_vulcan_file_write_all (struct ompio_file_t *fh,
     if (OMPI_SUCCESS != ret ){
         goto exit;
     }
-    
+
     if ( MPI_STATUS_IGNORE != status ) {
         status->_ucount = max_data;
     }
-    
+
     ret = mca_fcoll_vulcan_get_configuration (fh, vulcan_num_io_procs, max_data);
     if (OMPI_SUCCESS != ret){
         goto exit;
@@ -148,9 +148,9 @@ int mca_fcoll_vulcan_file_write_all (struct ompio_file_t *fh,
     opal_output_verbose(10, ompi_fcoll_base_framework.framework_output,
         "Using %d aggregators for the write_all operation \n", fh->f_num_aggrs);
 
-    aggr_data = (mca_io_ompio_aggregator_data **) malloc ( fh->f_num_aggrs * 
+    aggr_data = (mca_io_ompio_aggregator_data **) malloc ( fh->f_num_aggrs *
                                                            sizeof(mca_io_ompio_aggregator_data*));
-    
+
     for ( i=0; i< fh->f_num_aggrs; i++ ) {
         // At this point we know the number of aggregators. If there is a correlation between
         // number of aggregators and number of IO nodes, we know how many aggr_data arrays we need
@@ -165,7 +165,7 @@ int mca_fcoll_vulcan_file_write_all (struct ompio_file_t *fh,
             aggr_index = i;
         }
     }
-    
+
     /*********************************************************************
      *** 2. Generate the local offsets/lengths array corresponding to
      ***    this write operation
@@ -177,22 +177,22 @@ int mca_fcoll_vulcan_file_write_all (struct ompio_file_t *fh,
     if (ret != OMPI_SUCCESS){
         goto exit;
     }
-    
+
     /*************************************************************************
      ** 2b. Separate the local_iov_array entries based on the number of aggregators
      *************************************************************************/
     // Modifications for the even distribution:
     long domain_size;
     ret = mca_fcoll_vulcan_minmax ( fh, local_iov_array, local_count,  fh->f_num_aggrs, &domain_size);
-    
+
     // broken_iov_arrays[0] contains broken_counts[0] entries to aggregator 0,
     // broken_iov_arrays[1] contains broken_counts[1] entries to aggregator 1, etc.
-    ret = mca_fcoll_vulcan_break_file_view ( decoded_iov, iov_count, 
-                                              local_iov_array, local_count, 
+    ret = mca_fcoll_vulcan_break_file_view ( decoded_iov, iov_count,
+                                              local_iov_array, local_count,
                                               &broken_decoded_iovs, &broken_iov_counts,
-                                              &broken_iov_arrays, &broken_counts, 
+                                              &broken_iov_arrays, &broken_counts,
                                               &broken_total_lengths,
-                                              fh->f_num_aggrs, domain_size); 
+                                              fh->f_num_aggrs, domain_size);
 
 
     /**************************************************************************
@@ -211,12 +211,12 @@ int mca_fcoll_vulcan_file_write_all (struct ompio_file_t *fh,
     if( OMPI_SUCCESS != ret){
       goto exit;
     }
-    
+
 #if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
     end_comm_time = MPI_Wtime();
     comm_time += (end_comm_time - start_comm_time);
 #endif
-    
+
     cycles=0;
     for ( i=0; i<fh->f_num_aggrs; i++ ) {
 #if DEBUG_ON
@@ -226,13 +226,13 @@ int mca_fcoll_vulcan_file_write_all (struct ompio_file_t *fh,
             cycles = ceil((double)broken_total_lengths[i]/bytes_per_cycle);
         }
     }
-    
+
     result_counts = (int *) malloc ( fh->f_num_aggrs * fh->f_procs_per_group * sizeof(int) );
     if ( NULL == result_counts ) {
         ret = OMPI_ERR_OUT_OF_RESOURCE;
         goto exit;
     }
-    
+
 #if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
     start_comm_time = MPI_Wtime();
 #endif
@@ -251,7 +251,7 @@ int mca_fcoll_vulcan_file_write_all (struct ompio_file_t *fh,
     end_comm_time = MPI_Wtime();
     comm_time += (end_comm_time - start_comm_time);
 #endif
-    
+
     /*************************************************************
      *** 4. Allgather the offset/lengths array from all processes
      *************************************************************/
@@ -273,14 +273,14 @@ int mca_fcoll_vulcan_file_write_all (struct ompio_file_t *fh,
             ret = OMPI_ERR_OUT_OF_RESOURCE;
             goto exit;
         }
-        
+
         displs[0] = 0;
         total_fview_count = (uint32_t) aggr_data[i]->fview_count[0];
         for (j=1 ; j<fh->f_procs_per_group ; j++) {
             total_fview_count += aggr_data[i]->fview_count[j];
             displs[j] = displs[j-1] + aggr_data[i]->fview_count[j-1];
         }
-        
+
 #if DEBUG_ON
         printf("total_fview_count : %d\n", total_fview_count);
         if (fh->f_aggr_list[i] == fh->f_rank) {
@@ -293,7 +293,7 @@ int mca_fcoll_vulcan_file_write_all (struct ompio_file_t *fh,
             }
         }
 #endif
-    
+
         /* allocate the global iovec  */
         if (0 != total_fview_count) {
             aggr_data[i]->global_iov_array = (struct iovec*) malloc (total_fview_count *
@@ -302,9 +302,9 @@ int mca_fcoll_vulcan_file_write_all (struct ompio_file_t *fh,
                 opal_output(1, "OUT OF MEMORY\n");
                 ret = OMPI_ERR_OUT_OF_RESOURCE;
                 goto exit;
-            }            
+            }
         }
-    
+
 #if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
         start_comm_time = MPI_Wtime();
 #endif
@@ -326,7 +326,7 @@ int mca_fcoll_vulcan_file_write_all (struct ompio_file_t *fh,
         end_comm_time = MPI_Wtime();
         comm_time += (end_comm_time - start_comm_time);
 #endif
-        
+
         /****************************************************************************************
          *** 5. Sort the global offset/lengths list based on the offsets.
          *** The result of the sort operation is the 'sorted', an integer array,
@@ -344,18 +344,18 @@ int mca_fcoll_vulcan_file_write_all (struct ompio_file_t *fh,
             }
             ompi_fcoll_base_sort_iovec (aggr_data[i]->global_iov_array, total_fview_count, aggr_data[i]->sorted);
         }
-        
+
         if (NULL != local_iov_array){
             free(local_iov_array);
             local_iov_array = NULL;
         }
-        
+
         if (NULL != displs){
             free(displs);
             displs=NULL;
         }
-    
-    
+
+
 #if DEBUG_ON
         if (fh->f_aggr_list[i] == fh->f_rank) {
             uint32_t tv=0;
@@ -371,9 +371,9 @@ int mca_fcoll_vulcan_file_write_all (struct ompio_file_t *fh,
          *** 6. Determine the number of cycles required to execute this
          ***    operation
          *************************************************************/
-        
+
         aggr_data[i]->bytes_per_cycle = bytes_per_cycle;
-    
+
         if (fh->f_aggr_list[i] == fh->f_rank) {
             aggr_data[i]->disp_index = (int *)malloc (fh->f_procs_per_group * sizeof (int));
             if (NULL == aggr_data[i]->disp_index) {
@@ -388,21 +388,21 @@ int mca_fcoll_vulcan_file_write_all (struct ompio_file_t *fh,
                 ret = OMPI_ERR_OUT_OF_RESOURCE;
                 goto exit;
             }
-        
+
             aggr_data[i]->blocklen_per_process = (int **)calloc (fh->f_procs_per_group, sizeof (int*));
             if (NULL == aggr_data[i]->blocklen_per_process) {
                 opal_output (1, "OUT OF MEMORY\n");
                 ret = OMPI_ERR_OUT_OF_RESOURCE;
                 goto exit;
             }
-        
+
             aggr_data[i]->displs_per_process = (MPI_Aint **)calloc (fh->f_procs_per_group, sizeof (MPI_Aint*));
             if (NULL == aggr_data[i]->displs_per_process) {
                 opal_output (1, "OUT OF MEMORY\n");
                 ret = OMPI_ERR_OUT_OF_RESOURCE;
                 goto exit;
             }
-        
+
             if (use_accelerator_buffer) {
                 opal_output_verbose(10, ompi_fcoll_base_framework.framework_output,
                                     "Allocating GPU device buffer for aggregation\n");
@@ -429,10 +429,10 @@ int mca_fcoll_vulcan_file_write_all (struct ompio_file_t *fh,
                     goto exit;
                 }
             }
-        
-            aggr_data[i]->recvtype = (ompi_datatype_t **) malloc (fh->f_procs_per_group  * 
+
+            aggr_data[i]->recvtype = (ompi_datatype_t **) malloc (fh->f_procs_per_group  *
                                                                   sizeof(ompi_datatype_t *));
-            aggr_data[i]->prev_recvtype = (ompi_datatype_t **) malloc (fh->f_procs_per_group  * 
+            aggr_data[i]->prev_recvtype = (ompi_datatype_t **) malloc (fh->f_procs_per_group  *
                                                                        sizeof(ompi_datatype_t *));
             if (NULL == aggr_data[i]->recvtype || NULL == aggr_data[i]->prev_recvtype) {
                 opal_output (1, "OUT OF MEMORY\n");
@@ -444,7 +444,7 @@ int mca_fcoll_vulcan_file_write_all (struct ompio_file_t *fh,
                 aggr_data[i]->prev_recvtype[l] = MPI_DATATYPE_NULL;
             }
         }
-    
+
 #if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
         start_exch = MPI_Wtime();
 #endif
@@ -553,7 +553,7 @@ int mca_fcoll_vulcan_file_write_all (struct ompio_file_t *fh,
             }
         }
     }
-        
+
 #if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
     end_exch = MPI_Wtime();
     exch_write += end_exch - start_exch;
@@ -790,7 +790,7 @@ static int shuffle_init (int index, int num_cycles, int aggregator, int rank,
      ***     by each process
      *****************************************************************/
     mca_fcoll_vulcan_calc_blocklen_disps (data, aggregator, rank, &bytes_sent);
-        
+
     /*************************************************************************
      *** 7d. Calculate the displacement on where to put the data
      *************************************************************************/
@@ -833,13 +833,13 @@ static int shuffle_init (int index, int num_cycles, int aggregator, int rank,
                 reqs[i] = MPI_REQUEST_NULL;
                 if (0 < data->disp_index[i]) {
                     ompi_datatype_create_hindexed(data->disp_index[i],
-                                                  data->blocklen_per_process[i],
-                                                  data->displs_per_process[i],
+                                                  OMPI_COUNT_ARRAY_CREATE(data->blocklen_per_process[i]),
+                                                  OMPI_DISP_ARRAY_CREATE(data->displs_per_process[i]),
                                                   MPI_BYTE,
                                                   &data->recvtype[i]);
                     ompi_datatype_commit(&data->recvtype[i]);
                     opal_datatype_type_size(&data->recvtype[i]->super, &datatype_size);
-                    
+
                     if (datatype_size) {
                         ret = MCA_PML_CALL(irecv(data->global_buf,
                                                  1,
@@ -909,8 +909,8 @@ static int shuffle_init (int index, int num_cycles, int aggregator, int rank,
 
         if ( 0 <= block_index ) {
             ompi_datatype_create_hindexed(block_index+1,
-                                          blocklength_proc,
-                                          displs_proc,
+                                          OMPI_COUNT_ARRAY_CREATE(blocklength_proc),
+                                          OMPI_DISP_ARRAY_CREATE(displs_proc),
                                           MPI_BYTE,
                                           &newType);
             ompi_datatype_commit(&newType);
@@ -958,7 +958,7 @@ exit:
 
     return ret;
 }
-    
+
 int mca_fcoll_vulcan_minmax (ompio_file_t *fh, struct iovec *iov, int iov_count,  int num_aggregators, long *new_stripe_size)
 {
     long min, max, globalmin, globalmax;
@@ -974,7 +974,7 @@ int mca_fcoll_vulcan_minmax (ompio_file_t *fh, struct iovec *iov, int iov_count,
     }
     fh->f_comm->c_coll->coll_allreduce ( &min, &globalmin, 1, MPI_LONG, MPI_MIN,
                                          fh->f_comm, fh->f_comm->c_coll->coll_allreduce_module);
-    
+
     fh->f_comm->c_coll->coll_allreduce ( &max, &globalmax, 1, MPI_LONG, MPI_MAX,
                                          fh->f_comm, fh->f_comm->c_coll->coll_allreduce_module);
 
@@ -988,23 +988,23 @@ int mca_fcoll_vulcan_minmax (ompio_file_t *fh, struct iovec *iov, int iov_count,
     return OMPI_SUCCESS;
 }
 
-int mca_fcoll_vulcan_break_file_view ( struct iovec *mem_iov, int mem_count, 
-                                        struct iovec *file_iov, int file_count, 
+int mca_fcoll_vulcan_break_file_view ( struct iovec *mem_iov, int mem_count,
+                                        struct iovec *file_iov, int file_count,
                                         struct iovec ***ret_broken_mem_iovs, int **ret_broken_mem_counts,
-                                        struct iovec ***ret_broken_file_iovs, int **ret_broken_file_counts, 
+                                        struct iovec ***ret_broken_file_iovs, int **ret_broken_file_counts,
                                         MPI_Aint **ret_broken_total_lengths,
                                         int stripe_count, size_t stripe_size)
 {
     int i, j, ret=OMPI_SUCCESS;
-    struct iovec **broken_mem_iovs=NULL; 
+    struct iovec **broken_mem_iovs=NULL;
     int *broken_mem_counts=NULL;
-    struct iovec **broken_file_iovs=NULL; 
+    struct iovec **broken_file_iovs=NULL;
     int *broken_file_counts=NULL;
     MPI_Aint *broken_total_lengths=NULL;
     int **block=NULL, **max_lengths=NULL;
-    
-    broken_mem_iovs  = (struct iovec **) malloc ( stripe_count * sizeof(struct iovec *)); 
-    broken_file_iovs = (struct iovec **) malloc ( stripe_count * sizeof(struct iovec *)); 
+
+    broken_mem_iovs  = (struct iovec **) malloc ( stripe_count * sizeof(struct iovec *));
+    broken_file_iovs = (struct iovec **) malloc ( stripe_count * sizeof(struct iovec *));
     if ( NULL == broken_mem_iovs || NULL == broken_file_iovs ) {
         ret = OMPI_ERR_OUT_OF_RESOURCE;
         goto exit;
@@ -1013,7 +1013,7 @@ int mca_fcoll_vulcan_break_file_view ( struct iovec *mem_iov, int mem_count,
         broken_mem_iovs[i]  = (struct iovec*) calloc (1, sizeof(struct iovec ));
         broken_file_iovs[i] = (struct iovec*) calloc (1, sizeof(struct iovec ));
     }
-    
+
     broken_mem_counts    = (int *) calloc ( stripe_count, sizeof(int));
     broken_file_counts   = (int *) calloc ( stripe_count, sizeof(int));
     broken_total_lengths = (MPI_Aint *) calloc ( stripe_count, sizeof(MPI_Aint));
@@ -1029,7 +1029,7 @@ int mca_fcoll_vulcan_break_file_view ( struct iovec *mem_iov, int mem_count,
         ret = OMPI_ERR_OUT_OF_RESOURCE;
         goto exit;
     }
-    
+
     for ( i=0; i<stripe_count; i++ ){
         block[i]       = (int *) malloc ( 5 * sizeof(int));
         max_lengths[i] = (int *) malloc ( 2 * sizeof(int));
@@ -1039,12 +1039,12 @@ int mca_fcoll_vulcan_break_file_view ( struct iovec *mem_iov, int mem_count,
         }
         max_lengths[i][0] = 1;
         max_lengths[i][1] = 1;
-        
+
         for ( j=0; j<5; j++ ) {
             block[i][j]=2;
         }
     }
-    
+
     /* Step 1: separate the local_iov_array per aggregator */
     int owner;
     size_t rest, len, temp_len, blocklen, memlen=0;
@@ -1062,7 +1062,7 @@ int mca_fcoll_vulcan_break_file_view ( struct iovec *mem_iov, int mem_count,
 
 
 #if DEBUG_ON
-        printf("%d:file_iov[%d].base=%ld .len=%d\n", rank, i, 
+        printf("%d:file_iov[%d].base=%ld .len=%d\n", rank, i,
                file_iov[i].iov_base, file_iov[i].iov_len);
 #endif
         do {
@@ -1080,13 +1080,13 @@ int mca_fcoll_vulcan_break_file_view ( struct iovec *mem_iov, int mem_count,
                 temp_offset = 0;
                 temp_len    = 0;
             }
-            
+
             broken_file_iovs[owner][broken_file_counts[owner]].iov_base = (void *)offset;
             broken_file_iovs[owner][broken_file_counts[owner]].iov_len  = blocklen;
 #if DEBUG_ON
-            printf("%d: owner=%d b_file_iovs[%d].base=%ld .len=%d \n", rank, owner, 
-                   broken_file_counts[owner], 
-                   broken_file_iovs[owner][broken_file_counts[owner]].iov_base, 
+            printf("%d: owner=%d b_file_iovs[%d].base=%ld .len=%d \n", rank, owner,
+                   broken_file_counts[owner],
+                   broken_file_iovs[owner][broken_file_counts[owner]].iov_base,
                    broken_file_iovs[owner][broken_file_counts[owner]].iov_len );
 #endif
             do {
@@ -1106,18 +1106,18 @@ int mca_fcoll_vulcan_break_file_view ( struct iovec *mem_iov, int mem_count,
                         else
                             break;
                     }
-                }                
+                }
                 else {
                     broken_mem_iovs[owner][broken_mem_counts[owner]].iov_base = (void *) memoffset;
                     broken_mem_iovs[owner][broken_mem_counts[owner]].iov_len  = memlen;
                     blocklen -= memlen;
-                    
+
                     j++;
                     if ( j < mem_count ) {
                         memoffset = (off_t) mem_iov[j].iov_base;
                         memlen    = mem_iov[j].iov_len;
                     }
-                    else 
+                    else
                         break;
                 }
 #if DEBUG_ON
@@ -1130,7 +1130,7 @@ int mca_fcoll_vulcan_break_file_view ( struct iovec *mem_iov, int mem_count,
                 broken_mem_counts[owner]++;
                 if ( broken_mem_counts[owner] >= max_lengths[owner][0] ) {
                     broken_mem_iovs[owner] = (struct iovec*) realloc ( broken_mem_iovs[owner],
-                                                                       mem_count * block[owner][0] * 
+                                                                       mem_count * block[owner][0] *
                                                                        sizeof(struct iovec ));
                     max_lengths[owner][0] = mem_count * block[owner][0];
                     block[owner][0]++;
@@ -1141,7 +1141,7 @@ int mca_fcoll_vulcan_break_file_view ( struct iovec *mem_iov, int mem_count,
             broken_file_counts[owner]++;
             if ( broken_file_counts[owner] >= max_lengths[owner][1] ) {
                 broken_file_iovs[owner] = (struct iovec*) realloc ( broken_file_iovs[owner],
-                                                                    file_count * block[owner][1] * 
+                                                                    file_count * block[owner][1] *
                                                                     sizeof(struct iovec ));
                 max_lengths[owner][1] = file_count * block[owner][1];
                 block[owner][1]++;
@@ -1152,9 +1152,9 @@ int mca_fcoll_vulcan_break_file_view ( struct iovec *mem_iov, int mem_count,
         } while( temp_len > 0 );
 
         i++;
-    } 
+    }
 
-    
+
     /* Step 2: recalculating the total lengths per aggregator */
     for ( i=0; i< stripe_count; i++ ) {
         for ( j=0; j<broken_file_counts[i]; j++ ) {
@@ -1169,7 +1169,7 @@ int mca_fcoll_vulcan_break_file_view ( struct iovec *mem_iov, int mem_count,
     *ret_broken_mem_counts    = broken_mem_counts;
     *ret_broken_file_iovs     = broken_file_iovs;
     *ret_broken_file_counts   = broken_file_counts;
-    *ret_broken_total_lengths = broken_total_lengths;    
+    *ret_broken_total_lengths = broken_total_lengths;
 
     if ( NULL != block) {
         for ( i=0; i<stripe_count; i++ ){
@@ -1187,7 +1187,7 @@ int mca_fcoll_vulcan_break_file_view ( struct iovec *mem_iov, int mem_count,
     return ret;
 
 exit:
-    free ( broken_mem_iovs);    
+    free ( broken_mem_iovs);
     free ( broken_mem_counts);
     free ( broken_file_iovs );
     free ( broken_file_counts);
@@ -1232,9 +1232,9 @@ int mca_fcoll_vulcan_get_configuration (ompio_file_t *fh, int num_io_procs, size
     for (i=0; i<fh->f_size; i++ ) {
         fh->f_procs_in_group[i]=i;
     }
-    
+
     return ret;
-}    
+}
 
 void mca_fcoll_vulcan_calc_blocklen_disps (mca_io_ompio_aggregator_data *data, int aggregator,
                                            int rank, size_t *bytes_comm)
