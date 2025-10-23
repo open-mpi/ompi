@@ -17,6 +17,7 @@
  * Copyright (c) 2017      Intel, Inc. All rights reserved
  * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2022      Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (c) 2026      Stony Brook University.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -253,7 +254,7 @@ int32_t opal_convertor_pack(opal_convertor_t *pConv, struct iovec *iov, uint32_t
          * environment. The convertor contain minimal information, we only
          * use the bConverted to manage the conversion.
          */
-        uint32_t i;
+        size_t i;
         unsigned char *base_pointer;
         size_t pending_length = pConv->local_size - pConv->bConverted;
 
@@ -303,7 +304,7 @@ int32_t opal_convertor_unpack(opal_convertor_t *pConv, struct iovec *iov, uint32
          * environment. The convertor contain minimal information, we only
          * use the bConverted to manage the conversion.
          */
-        uint32_t i;
+        size_t i;
         unsigned char *base_pointer;
         size_t pending_length = pConv->local_size - pConv->bConverted;
 

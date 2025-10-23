@@ -17,6 +17,7 @@
  * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
  * Copyright (c) 2024      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      Stony Brook University.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -1160,13 +1161,13 @@ static int shuffle_init ( int index, int cycles, int aggregator, int rank, mca_i
                 reqs[i] = MPI_REQUEST_NULL;
                 if ( 0 < data->disp_index[i] ) {
                     ompi_datatype_create_hindexed(data->disp_index[i],
-                                                  data->blocklen_per_process[i],
-                                                  data->displs_per_process[i],
+                                                  OMPI_COUNT_ARRAY_CREATE(data->blocklen_per_process[i]),
+                                                  OMPI_DISP_ARRAY_CREATE(data->displs_per_process[i]),
                                                   MPI_BYTE,
                                                   &data->recvtype[i]);
                     ompi_datatype_commit(&data->recvtype[i]);
                     opal_datatype_type_size(&data->recvtype[i]->super, &datatype_size);
-                    
+
                     if (datatype_size){
                         ret = MCA_PML_CALL(irecv(data->global_buf,
                                                  1,
@@ -1240,8 +1241,8 @@ static int shuffle_init ( int index, int cycles, int aggregator, int rank, mca_i
 
         if ( 0 <= block_index ) {
             ompi_datatype_create_hindexed(block_index+1,
-                                          blocklength_proc,
-                                          displs_proc,
+                                          OMPI_COUNT_ARRAY_CREATE(blocklength_proc),
+                                          OMPI_DISP_ARRAY_CREATE(displs_proc),
                                           MPI_BYTE,
                                           &newType);
             ompi_datatype_commit(&newType);

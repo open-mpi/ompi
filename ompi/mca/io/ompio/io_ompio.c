@@ -16,6 +16,7 @@
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (c) 2026      Stony Brook University.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -183,8 +184,8 @@ int ompi_io_ompio_generate_current_file_view (struct ompio_file_t *fh,
             d[i] -= base;
         }
         ompi_datatype_create_struct (3,
-                                     blocklen,
-                                     d,
+                                     OMPI_COUNT_ARRAY_CREATE(blocklen),
+                                     OMPI_DISP_ARRAY_CREATE(d),
                                      types,
                                      &io_array_type);
         ompi_datatype_commit (&io_array_type);

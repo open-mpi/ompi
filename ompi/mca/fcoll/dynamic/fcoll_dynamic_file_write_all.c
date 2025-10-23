@@ -16,6 +16,7 @@
  * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
  * Copyright (c) 2024      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      Stony Brook University.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -784,8 +785,8 @@ mca_fcoll_dynamic_file_write_all (struct ompio_file_t *fh,
                 recv_req[i] = MPI_REQUEST_NULL;
                 if ( 0 < disp_index[i] ) {
                     ompi_datatype_create_hindexed(disp_index[i],
-                                                  blocklen_per_process[i],
-                                                  displs_per_process[i],
+                                                  OMPI_COUNT_ARRAY_CREATE(blocklen_per_process[i]),
+                                                  OMPI_DISP_ARRAY_CREATE(displs_per_process[i]),
                                                   MPI_BYTE,
                                                   &recvtype[i]);
                     ompi_datatype_commit(&recvtype[i]);

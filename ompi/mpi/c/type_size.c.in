@@ -17,6 +17,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2024      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      Stony Brook University.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -51,7 +52,11 @@ PROTOTYPE ERROR_CLASS type_size(DATATYPE type, COUNT_OUT size)
 
     opal_datatype_type_size ( &type->super, &type_size);
 
-    *size = (type_size > (size_t) INT_MAX) ? MPI_UNDEFINED : (int) type_size;
+    if (sizeof(*size) == sizeof(int) && type_size > (size_t) INT_MAX) {
+        *size = MPI_UNDEFINED;
+    } else {
+        *size = (MPI_Count) type_size;
+    }
 
     return MPI_SUCCESS;
 }

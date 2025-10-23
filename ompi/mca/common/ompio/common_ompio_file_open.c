@@ -17,6 +17,7 @@
  * Copyright (c) 2018      DataDirect Networks. All rights reserved.
  * Copyright (c) 2024      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      Stony Brook University.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -502,8 +503,8 @@ int mca_common_ompio_set_file_defaults (ompio_file_t *fh)
        }
        
        ompi_datatype_create_struct (2,
-                                    blocklen,
-                                    d,
+                                    OMPI_COUNT_ARRAY_CREATE(blocklen),
+                                    OMPI_DISP_ARRAY_CREATE(d),
                                     types,
                                     &fh->f_iov_type);
        ompi_datatype_commit (&fh->f_iov_type);
