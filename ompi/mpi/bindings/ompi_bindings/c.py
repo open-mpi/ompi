@@ -117,7 +117,6 @@ extern "C" {
         self.dump()
 
         self.define_all('MPI_Datatype', consts.PREDEFINED_DATATYPES)
-        self.define_all('MPI_Op', consts.COLLECTIVE_OPERATIONS)
         self.define_all('MPI_Op', consts.RESERVED_OPS)
         self.define_all('MPI_Comm', consts.RESERVED_COMMUNICATORS)
         self.define_all('MPI_Errhandler', consts.RESERVED_ERRHANDLERS)
@@ -428,10 +427,11 @@ class ABIConverterBuilder:
         self.generic_convert_reverse(ConvertOMPIToStandard.MESSAGE, 'message', 'MPI_Message', consts.RESERVED_MESSAGES)
 
     def generate_op_convert_fn(self):
-        self.generic_convert(ConvertFuncs.OP, 'op', 'MPI_Op', consts.COLLECTIVE_OPERATIONS)
+        self.generic_convert(ConvertFuncs.OP, 'op', 'MPI_Op', consts.RESERVED_OPS)
 
     def generate_op_convert_fn_intern_to_abi(self):
-        self.generic_convert_reverse(ConvertOMPIToStandard.OP, 'op', 'MPI_Op', consts.RESERVED_OPS)
+        # Only need to convert MPI_OP_NULL (fist item in consts.RESERVED_OPS)
+        self.generic_convert_reverse(ConvertOMPIToStandard.OP, 'op', 'MPI_Op', consts.RESERVED_OPS[:1])
 
     def generate_session_convert_fn(self):
         self.generic_convert(ConvertFuncs.SESSION, 'session', 'MPI_Session', consts.RESERVED_SESSIONS)
