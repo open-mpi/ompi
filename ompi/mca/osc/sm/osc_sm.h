@@ -79,6 +79,8 @@ struct ompi_osc_sm_module_t {
     size_t *sizes;
     void **bases;
     ptrdiff_t *disp_units;
+    uint64_t **notify_counters;
+
 
     ompi_group_t *start_group;
     ompi_group_t *post_group;
@@ -104,6 +106,8 @@ int ompi_osc_sm_attach(struct ompi_win_t *win, void *base, size_t len);
 int ompi_osc_sm_detach(struct ompi_win_t *win, const void *base);
 
 int ompi_osc_sm_free(struct ompi_win_t *win);
+
+// TODO: add put/get_with_notify prototypes
 
 int ompi_osc_sm_put(const void *origin_addr,
                           size_t origin_count,

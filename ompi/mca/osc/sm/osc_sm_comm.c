@@ -268,6 +268,41 @@ ompi_osc_sm_get(void *origin_addr,
 
 
 int
+ompi_osc_sm_get_with_notify(void *origin_addr,
+                size_t origin_count,
+                struct ompi_datatype_t *origin_dt,
+                int target,
+                ptrdiff_t target_disp,
+                size_t target_count,
+                struct ompi_datatype_t *target_dt,
+                int notify,
+                struct ompi_win_t *win)
+{
+    int ret;
+    ompi_osc_sm_module_t *module =
+        (ompi_osc_sm_module_t*) win->w_osc_module;
+    void *remote_address;
+
+    OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
+                         "get: 0x%lx, %zu, %s, %d, %d, %zu, %s, 0x%lx",
+                         (unsigned long) origin_addr, origin_count,
+                         origin_dt->name, target, (int) target_disp,
+                         target_count, target_dt->name,
+                         (unsigned long) win));
+
+    remote_address = ((char*) (module->bases[target])) + module->disp_units[target] * target_disp;
+
+    ret = ompi_datatype_sndrcv(remote_address, target_count, target_dt,
+                               origin_addr, origin_count, origin_dt);
+    // TODO: do the same for put_with_notify
+    opal_atomic_rmb();
+    opal_atomic_add(&module->notify_counters[target][notify], 1);
+
+    return ret;
+}
+
+
+int
 ompi_osc_sm_accumulate(const void *origin_addr,
                        size_t origin_count,
                        struct ompi_datatype_t *origin_dt,
