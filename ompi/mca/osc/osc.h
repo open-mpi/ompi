@@ -370,6 +370,8 @@ typedef int (*ompi_osc_base_module_flush_local_all_fn_t)(struct ompi_win_t *win)
  * free to create a structure that inherits this one for use as the
  * module structure.
  */
+
+ // TODO: extend the struct and add pointers to put/get_with_notify functions
 struct ompi_osc_base_module_4_0_0_t {
     ompi_osc_base_module_win_shared_query_fn_t osc_win_shared_query;
 

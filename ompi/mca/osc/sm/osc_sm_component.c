@@ -70,6 +70,8 @@ ompi_osc_sm_component_t mca_osc_sm_component = {
 MCA_BASE_COMPONENT_INIT(ompi, osc, sm)
 
 
+// TODO: extend the struct and add pointers to put/get_with_notify functions
+// TODO: extend it to rput/rget_with_notify as well
 ompi_osc_sm_module_t ompi_osc_sm_module_template = {
     {
         .osc_win_shared_query = ompi_osc_sm_shared_query,
