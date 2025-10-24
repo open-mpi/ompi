@@ -677,7 +677,7 @@ class TypeDatatypeArrayAsyncStandard(TypeDatatypeArrayStandard):
         request_tmp_name = util.abi_tmp_name('request')
         code = []
         code.append('if((MPI_SUCCESS == ret_value) && (MPI_REQUEST_NULL != request_tmp)){')
-        code.append(f'ompi_coll_base_nbc_request_t* nb_request = (ompi_coll_base_nbc_request_t*)&{request_tmp_name};')
+        code.append(f'ompi_coll_base_nbc_request_t* nb_request = (ompi_coll_base_nbc_request_t*){request_tmp_name};')
         code.append(f'nb_request->data.release_arrays[idx++] = (void *){self.tmpname};')
         code.append('nb_request->data.release_arrays[idx] = NULL;')
         code.append('} else {')
@@ -749,7 +749,7 @@ class NeighborDatatypeArrayAsyncStandard(NeighborDatatypeArrayStandard):
         request_tmp_name = util.abi_tmp_name('request')
         code = []
         code.append('if((MPI_SUCCESS == ret_value) && (MPI_REQUEST_NULL != request_tmp)){')
-        code.append(f'ompi_coll_base_nbc_request_t* nb_request = (ompi_coll_base_nbc_request_t*)&{request_tmp_name};')
+        code.append(f'ompi_coll_base_nbc_request_t* nb_request = (ompi_coll_base_nbc_request_t*){request_tmp_name};')
         code.append(f'nb_request->data.release_arrays[idx++] = (void *){self.tmpname};')
         code.append('nb_request->data.release_arrays[idx] = NULL;')
         code.append('} else {')
