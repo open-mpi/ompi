@@ -31,7 +31,7 @@
 #include "ompi/memchecker.h"
 #include "ompi/dpm/dpm.h"
 
-PROTOTYPE ERROR_CLASS comm_disconnect(COMM_OUT comm)
+PROTOTYPE ERROR_CLASS comm_disconnect(COMM_INOUT comm)
 {
     int ret = MPI_SUCCESS;
 

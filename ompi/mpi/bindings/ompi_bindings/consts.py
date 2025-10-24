@@ -217,8 +217,8 @@ RESERVED_REQUESTS = [
 ]
 
 RESERVED_INFOS = [
-    'MPI_INFO_ENV',
     'MPI_INFO_NULL',
+    'MPI_INFO_ENV',
 ]
 
 RESERVED_FILES = [
@@ -227,6 +227,20 @@ RESERVED_FILES = [
 
 RESERVED_OPS = [
     'MPI_OP_NULL',
+    'MPI_MAX',
+    'MPI_MIN',
+    'MPI_SUM',
+    'MPI_PROD',
+    'MPI_MAXLOC',
+    'MPI_MINLOC',
+    'MPI_BAND',
+    'MPI_BOR',
+    'MPI_BXOR',
+    'MPI_LAND',
+    'MPI_LOR',
+    'MPI_LXOR',
+    'MPI_REPLACE',
+    'MPI_NO_OP',
 ]
 
 RESERVED_MESSAGES = [
@@ -275,23 +289,6 @@ RESERVED_WIN_DEL_ATTR_FNS = [
 IGNORED_STATUS_HANDLES = [
     'MPI_STATUSES_IGNORE',
     'MPI_STATUS_IGNORE',
-]
-
-COLLECTIVE_OPERATIONS = [
-    'MPI_MAX',
-    'MPI_MIN',
-    'MPI_SUM',
-    'MPI_PROD',
-    'MPI_MAXLOC',
-    'MPI_MINLOC',
-    'MPI_BAND',
-    'MPI_BOR',
-    'MPI_BXOR',
-    'MPI_LAND',
-    'MPI_LOR',
-    'MPI_LXOR',
-    'MPI_REPLACE',
-    'MPI_NO_OP',
 ]
 
 COMM_GROUP_COMPARE_VALS = [
