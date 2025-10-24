@@ -333,7 +333,7 @@ correctly after a failure.
   * ``cuda``, ``inter``, ``sync``, ``sm``: **untested** (they have not
     been modified to handle faults, but we expect correct post-fault
     behavior)
-  * ``hcoll``, ``portals4`` **disabled** (they have not been modified
+  * ``portals4`` **disabled** (it has not been modified
     to handle faults, and we expect unspecified post-fault behavior)
 
 * ``osc``: MPI one-sided communications

@@ -155,7 +155,6 @@ CUDA-aware support is available in:
 * The OFI (``ofi``) MTL with the CM (``cm``) PML.
 * Both CUDA-ized shared memory (``smcuda``) and TCP (``tcp``) BTLs
   with the OB1 (``ob1``) PML.
-* The HCOLL (``hcoll``) COLL
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -702,30 +701,3 @@ to query rank information and utilize that to select a GPU.
 
 MPI internal CUDA resources are released during MPI_Finalize. Thus it is an
 application error to call cudaDeviceReset before MPI_Finalize is called.
-
-
-/////////////////////////////////////////////////////////////////////////
-
-How do I enable CUDA support in HCOLL collective component
-----------------------------------------------------------
-
-HCOLL component supports CUDA GPU buffers for the following
-collectives:
-
-MPI_Allreduce
-MPI_Bcast
-MPI_Allgather
-MPI_Ibarrier
-MPI_Ibcast
-MPI_Iallgather
-MPI_Iallreduce
-
-To enable CUDA GPU buffer support in these collectives pass the
-following environment variables via mpirun:
-
-.. code-block::
-
-   shell$ mpirun -x HCOLL_GPU_ENABLE=1 -x HCOLL_ENABLE_NBC=1 ..
-
-See `nVidia HCOLL documentation <https://docs.nvidia.com/networking/display/HPCXv29/HCOLL>`_
-for more information.
