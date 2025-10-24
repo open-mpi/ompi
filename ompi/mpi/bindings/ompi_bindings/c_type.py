@@ -146,7 +146,7 @@ class TypeErrorClassOutStandard(StandardABIType):
 
     @property
     def final_code(self): 
-        return [f'*{self.name} = {ConvertOMPIToStandard.ERROR_CLASS}(*{self.name});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.ERROR_CLASS}(*{self.name});']
 
     @property
     def argument(self):
@@ -196,7 +196,7 @@ class TypeErrorCodeOutStandard(StandardABIType):
 
     @property
     def final_code(self):
-        return [f'*{self.name} = {ConvertOMPIToStandard.ERROR_CLASS}(*{self.name});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.ERROR_CLASS}(*{self.name});']
 
     @property
     def argument(self):
@@ -791,7 +791,7 @@ class TypeOpOutStandard(StandardABIType):
 
     @property
     def final_code(self):
-        return [f'*{self.name} = {ConvertOMPIToStandard.OP}((MPI_Op) *{self.name});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.OP}((MPI_Op) *{self.name});']
 
     def type_text(self, enable_count=False):
         type_name = self.mangle_name('MPI_Op')
@@ -890,7 +890,7 @@ class TypeSourceOutStandard(StandardABIType):
 
     @property
     def final_code(self):
-        return [f'*{self.name} = {ConvertOMPIToStandard.SOURCE}(*{self.name});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.SOURCE}(*{self.name});']
  
     def type_text(self, enable_count=False):
         return f'int *'
@@ -934,7 +934,7 @@ class TypeCommunicatorOutStandard(StandardABIType):
 
     @property
     def final_code(self):
-        return [f'*{self.name} = {ConvertOMPIToStandard.COMM}((MPI_Comm) *{self.name});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.COMM}((MPI_Comm) *{self.name});']
  
     def type_text(self, enable_count=False):
         type_name = self.mangle_name('MPI_Comm')
@@ -1007,7 +1007,7 @@ class TypeWindowOutStandard(StandardABIType):
 
     @property
     def final_code(self):
-        return [f'*{self.name} = {ConvertOMPIToStandard.WIN}((MPI_Win) *{self.name});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.WIN}((MPI_Win) *{self.name});']
 
     def type_text(self, enable_count=False):
         type_name = self.mangle_name('MPI_Win')
@@ -1146,10 +1146,10 @@ class TypeRequestInOutStandard(StandardABIType):
     @property
     def final_code(self):
         if self.count_param is None:
-            return [f'*{self.name} = {ConvertOMPIToStandard.REQUEST}({self.tmpname});']
+            return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.REQUEST}({self.tmpname});']
         else:
             return [
-                'for (int i = 0; i < %s; ++i) {' % (self.count_param,),
+                f'if (NULL != {self.name}) ' 'for (int i = 0; i < %s; ++i) {' % (self.count_param,),
                 f'{self.name}[i] = {ConvertOMPIToStandard.REQUEST}({self.tmpname}[i]);',
                 '}',
             ]
@@ -1540,7 +1540,7 @@ class TypeFileOutStandard(StandardABIType):
 
     @property
     def final_code(self):
-        return [f'*{self.name} = {ConvertOMPIToStandard.FILE}((MPI_File) *{self.name});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.FILE}((MPI_File) *{self.name});']
 
     def type_text(self, enable_count=False):
         type_name = self.mangle_name('MPI_File')
@@ -1602,7 +1602,7 @@ class TypeMessageOutStandard(StandardABIType):
 
     @property
     def final_code(self):
-        return [f'*{self.name} = {ConvertOMPIToStandard.MESSAGE}((MPI_Message) *{self.name});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.MESSAGE}((MPI_Message) *{self.name});']
 
     @property
     def argument(self):
@@ -1628,7 +1628,7 @@ class TypeMessageInOutStandard(StandardABIType):
 
     @property
     def final_code(self):
-        return [f'*{self.name} = {ConvertOMPIToStandard.MESSAGE}({self.tmpname});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.MESSAGE}({self.tmpname});']
 
     @property
     def argument(self):
@@ -1675,7 +1675,7 @@ class TypeTSLevelOutStandard(StandardABIType):
 
     @property
     def final_code(self):
-        return [f'*{self.name} = {ConvertOMPIToStandard.TS_LEVEL}((int) *{self.name});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.TS_LEVEL}((int) *{self.name});']
 
     def type_text(self, enable_count=False):
         return f'int *'
@@ -2205,12 +2205,16 @@ class TypeErrhandlerOut(Type):
 class TypeErrhandlerOutStandard(Type):
 
     @property
-    def argument(self):
-        return f'(MPI_Errhandler *) {self.name}'
+    def final_code(self):
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.ERRHANDLER}((MPI_Errhandler) *{self.name});']
 
     def type_text(self, enable_count=False):
         type_name = self.mangle_name('MPI_Errhandler')
         return f'{type_name} *'
+
+    @property
+    def argument(self):
+        return f'(MPI_Errhandler *) {self.name}'
 
 @Type.add_type('ERRHANDLER_INOUT', abi_type=['ompi'])
 class TypeErrhandlerInOut(TypeErrhandlerOut):
@@ -2350,7 +2354,7 @@ class TypeSessionOutStandard(StandardABIType):
 
     @property
     def final_code(self):
-        return [f'*{self.name} = {ConvertOMPIToStandard.SESSION}((MPI_Session) *{self.name});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.SESSION}((MPI_Session) *{self.name});']
 
     def type_text(self, enable_count=False):
         type_name = self.mangle_name('MPI_Session')
@@ -2419,7 +2423,7 @@ class TypeTEnumOutStandard(StandardABIType):
 
     @property
     def final_code(self):
-        return [f'*{self.name} = {ConvertOMPIToStandard.T_ENUM}((MPI_T_enum) *{self.name});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.T_ENUM}((MPI_T_enum) *{self.name});']
 
     def type_text(self, enable_count=False):
         type_name = self.mangle_name('MPI_T_enum')
@@ -2459,7 +2463,7 @@ class TypeCvarHandleStandard(StandardABIType):
 
     @property
     def final_code(self):
-        return [f'*{self.name} = {ConvertOMPIToStandard.CVAR_HANDLE}((MPI_T_cvar_handle) *{self.name});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.CVAR_HANDLE}((MPI_T_cvar_handle) *{self.name});']
 
     def type_text(self, enable_count=False):
         type_name = self.mangle_name('MPI_T_cvar_handle')
@@ -2484,7 +2488,7 @@ class TypeCvarHandleInOutStandard(StandardABIType):
 
     @property
     def final_code(self):
-        return [f'*{self.name} = {ConvertOMPIToStandard.CVAR_HANDLE}((MPI_T_cvar_handle) {self.tmpname});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.CVAR_HANDLE}((MPI_T_cvar_handle) {self.tmpname});']
 
     def type_text(self, enable_count=False):
         type_name = self.mangle_name('MPI_T_cvar_handle')
@@ -2514,7 +2518,7 @@ class TypeBindOutStandard(StandardABIType):
 
     @property
     def final_code(self):
-        return [f'*{self.name} = {ConvertOMPIToStandard.T_BIND}(*{self.name});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.T_BIND}(*{self.name});']
 
     def type_text(self, enable_count=False):
         return 'int *'
@@ -2586,7 +2590,7 @@ class TypePvarHandleOutStandard(StandardABIType):
 
     @property
     def final_code(self):
-        return [f'*{self.name} = {ConvertOMPIToStandard.PVAR_HANDLE}((MPI_T_pvar_handle) *{self.name});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.PVAR_HANDLE}((MPI_T_pvar_handle) *{self.name});']
 
     def type_text(self, enable_count=False):
         type_name = self.mangle_name('MPI_T_pvar_handle')
@@ -2611,7 +2615,7 @@ class TypePvarHandleInoutStandard(StandardABIType):
 
     @property
     def final_code(self):
-        return [f'*{self.name} = {ConvertOMPIToStandard.PVAR_HANDLE}((MPI_T_pvar_handle){self.tmpname});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.PVAR_HANDLE}((MPI_T_pvar_handle){self.tmpname});']
 
     def type_text(self, enable_count=False):
         type_name = self.mangle_name('MPI_T_pvar_handle')
@@ -2652,7 +2656,7 @@ class TypePvarSessionOutStandard(StandardABIType):
 
     @property
     def final_code(self):
-        return [f'*{self.name} = {ConvertOMPIToStandard.PVAR_SESSION}((MPI_T_pvar_session)*{self.name});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.PVAR_SESSION}((MPI_T_pvar_session)*{self.name});']
 
     def type_text(self, enable_count=False):
         type_name = self.mangle_name('MPI_T_pvar_session')
@@ -2678,7 +2682,7 @@ class TypePvarSessionInOutStandard(StandardABIType):
 
     @property
     def final_code(self):
-        return [f'*{self.name} = {ConvertOMPIToStandard.PVAR_SESSION}((MPI_T_pvar_session){self.tmpname});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.PVAR_SESSION}((MPI_T_pvar_session){self.tmpname});']
 
     def type_text(self, enable_count=False):
         type_name = self.mangle_name('MPI_T_pvar_session')
@@ -2719,7 +2723,7 @@ class TypeTVerbosityOutStandard(StandardABIType):
 
     @property
     def final_code(self):
-        return [f'*{self.name} = {ConvertOMPIToStandard.T_VERBOSITY}(*{self.name});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.T_VERBOSITY}(*{self.name});']
 
     def type_text(self, enable_count=False):
         return 'int *'
@@ -2759,7 +2763,7 @@ class TypePvarClassOutStandard(StandardABIType):
 
     @property
     def final_code(self):
-        return [f'*{self.name} = {ConvertOMPIToStandard.PVAR_CLASS}(*{self.name});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.PVAR_CLASS}(*{self.name});']
 
     def type_text(self, enable_count=False):
         return f'int *'
@@ -2818,7 +2822,7 @@ class TypeSourceOrderOutStandard(StandardABIType):
 
     @property
     def final_code(self):
-        return [f'*{self.name} = {ConvertOMPIToStandard.T_SOURCE_ORDER}((MPI_T_source_order) {self.name});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.T_SOURCE_ORDER}((MPI_T_source_order) {self.name});']
 
     def type_text(self, enable_count=False):
         type_name = self.mangle_name('MPI_T_source_order')
@@ -2915,7 +2919,7 @@ class TypeAttrKeyOutStandard(StandardABIType):
 
     @property
     def final_code(self):
-        return [f'*{self.name} = {ConvertOMPIToStandard.ATTR_KEY}(*{self.name});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.ATTR_KEY}(*{self.name});']
 
     def type_text(self, enable_count=False):
         return f'int *'
@@ -2939,7 +2943,7 @@ class TypeAttrKeyINOutStandard(StandardABIType):
 
     @property
     def final_code(self):
-        return [f'*{self.name} = {ConvertOMPIToStandard.ATTR_KEY}({self.tmpname});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.ATTR_KEY}({self.tmpname});']
 
     def type_text(self, enable_count=False):
         return f'int *'
@@ -3021,7 +3025,7 @@ class TyperCommCmpOutStandard(StandardABIType):
 
     @property
     def final_code(self):
-        return [f'*{self.name} = {ConvertOMPIToStandard.COMM_CMP}(*{self.name});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.COMM_CMP}(*{self.name});']
 
     def type_text(self, enable_count=False):
         return 'int *'
@@ -3114,7 +3118,7 @@ class TypeModeBitsOutStandard(StandardABIType):
 
     @property
     def final_code(self):
-        return [f'*{self.name} = {ConvertOMPIToStandard.MODE_BITS}(*{self.name});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.MODE_BITS}(*{self.name});']
 
     def type_text(self, enable_count=False):
         return 'int *'
@@ -3150,7 +3154,7 @@ class TypeCombinerOutStandard(StandardABIType):
 
     @property
     def final_code(self):
-        return [f'*{self.name} = {ConvertOMPIToStandard.COMBINER}(*{self.name});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.COMBINER}(*{self.name});']
 
     def type_text(self, enable_count=False):
         return 'int *'
