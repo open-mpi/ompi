@@ -279,6 +279,7 @@ if MANGLE_NAMES:
     output.append("extern int ompi_abi_mpi_win_flavor_dynamic;\n")
     output.append("extern int ompi_abi_mpi_win_model_unified;\n")
     output.append("extern int ompi_abi_mpi_win_model_separate;\n")
+    output.append("extern int ompi_abi_mpi_lastusedcode;\n")
     output.append("\n")
     output.append("int ABI_C_MPI_COMM_NULL_DELETE_FN( MPI_Comm_ABI_INTERNAL comm, int comm_keyval, void* attribute_val_out, void* extra_state );\n")
     output.append("int ABI_C_MPI_COMM_NULL_COPY_FN( MPI_Comm_ABI_INTERNAL  comm, int comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag );\n")
