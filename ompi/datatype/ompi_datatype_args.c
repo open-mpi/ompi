@@ -198,14 +198,14 @@ int32_t ompi_datatype_set_args( ompi_datatype_t* pData,
     }
 
     case MPI_COMBINER_DARRAY: {
-        size_t count = opal_count_array_get(counts[0], 0);
+        size_t ndim = opal_count_array_get(counts[2], 0);
         copy_count_array(1, &pArgs->i, &pArgs->l, counts[0]);
         copy_count_array(1, &pArgs->i, &pArgs->l, counts[1]);
         copy_count_array(1, &pArgs->i, &pArgs->l, counts[2]);
-        copy_count_array(count, &pArgs->i, &pArgs->l, counts[3]);
-        copy_count_array(count, &pArgs->i, &pArgs->l, counts[4]);
-        copy_count_array(count, &pArgs->i, &pArgs->l, counts[5]);
-        copy_count_array(count, &pArgs->i, &pArgs->l, counts[6]);
+        copy_count_array(ndim, &pArgs->i, &pArgs->l, counts[3]);
+        copy_count_array(ndim, &pArgs->i, &pArgs->l, counts[4]);
+        copy_count_array(ndim, &pArgs->i, &pArgs->l, counts[5]);
+        copy_count_array(ndim, &pArgs->i, &pArgs->l, counts[6]);
         copy_count_array(1, &pArgs->i, &pArgs->l, counts[7]);
         break;
     }
