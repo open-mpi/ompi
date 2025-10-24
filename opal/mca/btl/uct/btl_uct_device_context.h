@@ -94,14 +94,14 @@ mca_btl_uct_module_get_tl_context_specific(mca_btl_uct_module_t *module, mca_btl
     mca_btl_uct_device_context_t *context = tl->uct_dev_contexts[context_id];
 
     if (OPAL_UNLIKELY(NULL == context)) {
-        OPAL_THREAD_LOCK(&module->lock);
+        OPAL_THREAD_LOCK(&tl->tl_lock);
         context = tl->uct_dev_contexts[context_id];
         if (OPAL_UNLIKELY(NULL == context)) {
             context = tl->uct_dev_contexts[context_id] = mca_btl_uct_context_create(module, tl,
                                                                                     context_id,
                                                                                     true);
         }
-        OPAL_THREAD_UNLOCK(&module->lock);
+        OPAL_THREAD_UNLOCK(&tl->tl_lock);
     }
 
     return context;
