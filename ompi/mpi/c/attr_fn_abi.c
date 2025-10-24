@@ -33,6 +33,7 @@
  */
 int ompi_abi_mpi_proc_null_val = MPI_PROC_NULL_ABI_INTERNAL;
 int ompi_abi_mpi_any_source_val = MPI_ANY_SOURCE_ABI_INTERNAL;
+int ompi_abi_mpi_lastusedcode = 0;
 
 /*
  * variables used for certain predefined attributes

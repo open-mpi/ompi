@@ -70,6 +70,14 @@ PROTOTYPE ERROR_CLASS comm_get_attr(COMM comm, ATTR_KEY comm_keyval,
             *(int **)attribute_val = &ompi_abi_mpi_proc_null_val;
         } else if (MPI_IO == comm_keyval) {
             *(int **)attribute_val = &ompi_abi_mpi_any_source_val;
+        } else if (MPI_LASTUSEDCODE == comm_keyval) {
+          /*
+           * TODO: is this locking good enough?
+           */
+          OPAL_THREAD_LOCK(&comm->c_lock);
+          ompi_abi_mpi_lastusedcode = ompi_convert_intern_error_abi_error(*(int *)*(void**)attribute_val);
+          OPAL_THREAD_UNLOCK(&comm->c_lock);
+          *(int **)attribute_val = &ompi_abi_mpi_lastusedcode;
         }
     }
 #endif
