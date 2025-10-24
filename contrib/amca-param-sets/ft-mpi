@@ -63,7 +63,7 @@ btl=^usnic
 # The following frameworks/components are UNTESTED, and probably won't work.
 # They should run without faults, and will probably crash/deadlock after a fault.
 # You may try at your own risk.
-#   coll    hcoll, portals4
+#   coll    portals4
 #   topo    (all)
 #   osc     (all)
 #   io      (all)
@@ -72,7 +72,7 @@ btl=^usnic
 # We will disable only the components for which good components are known to exist.
 # Other untested components are selectable but will issue a runtime warning at
 # initiation if FT is enabled.
-coll=^hcoll,portals4
+coll=^portals4
 
 #
 # The following frameworks/components are NOT WORKING. Do not enable these with FT.
