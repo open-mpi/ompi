@@ -43,7 +43,6 @@ created.
       (change S to X; make sure numbers match those for the same entry in
       contrib/platform/lanl/toss/optimized-mlx.conf)
     - addition: pml = ob1 (disable MXM)
-    - addition: coll = ^hcoll (disable MXM)
 - toss3-hfi-optimized
   - copy of toss2-qib-optimized
 - toss3-hfi-optimized.conf

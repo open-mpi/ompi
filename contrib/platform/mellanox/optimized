@@ -22,11 +22,6 @@ if [ "$mellanox_autodetect" == "yes" ]; then
         with_ucx=$ucx_dir
     fi
 
-    hcoll_dir=${hcoll_dir:="$(pkg-config --variable=prefix hcoll)"}
-    if [ -d $hcoll_dir ]; then
-        with_hcoll=$hcoll_dir
-    fi
-
     slurm_dir=${slurm_dir:="/usr"}
     if [ -f $slurm_dir/include/slurm/slurm.h ]; then
         with_slurm=$slurm_dir
