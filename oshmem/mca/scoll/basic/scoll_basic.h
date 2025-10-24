@@ -23,7 +23,7 @@ BEGIN_C_DECLS
  * In case of shmem, the implementation of broadcast doesn't require
  * each process to know message size ( just root should know).
  * It differs from other implementations, so it may cause problems if
- * BCAST_FUNC is a callback to another implementation (e.g, fca, hcoll).
+ * BCAST_FUNC is a callback to another implementation (e.g, fca).
  * So we replace a callback (group->g_scoll.scoll_[func])
  * with a corresponding basic function. */
 
