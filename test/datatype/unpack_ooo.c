@@ -264,7 +264,8 @@ static int unpack_ooo(void)
     len[0] = 1;
     len[1] = 1;
 
-    rc = ompi_datatype_create_struct(2, len, disp, type, &newtype);
+    rc = ompi_datatype_create_struct(2, OMPI_COUNT_ARRAY_CREATE(len),
+                                     OMPI_DISP_ARRAY_CREATE(disp), type, &newtype);
     if (OMPI_SUCCESS != rc) {
         fprintf(stderr, "could not create struct\n");
         return 1;

@@ -52,7 +52,7 @@ PROTOTYPE ERROR_CLASS type_dup (DATATYPE type, DATATYPE_OUT newtype)
        OMPI_ERRHANDLER_NOHANDLE_RETURN( ret, ret, FUNC_NAME );
    }
 
-   ompi_datatype_set_args( *newtype, 0, NULL, 0, NULL, 1, &type, MPI_COMBINER_DUP );
+   ompi_datatype_set_args( *newtype, 0, 0, NULL, 0, OMPI_DISP_ARRAY_NULL, 1, &type, MPI_COMBINER_DUP );
 
    /* Copy all the old attributes, if there were any.  This is done
       here (vs. ompi_datatype_duplicate()) because MPI_TYPE_DUP is the

@@ -253,7 +253,7 @@ int32_t opal_convertor_pack(opal_convertor_t *pConv, struct iovec *iov, uint32_t
          * environment. The convertor contain minimal information, we only
          * use the bConverted to manage the conversion.
          */
-        uint32_t i;
+        size_t i;
         unsigned char *base_pointer;
         size_t pending_length = pConv->local_size - pConv->bConverted;
 
@@ -303,7 +303,7 @@ int32_t opal_convertor_unpack(opal_convertor_t *pConv, struct iovec *iov, uint32
          * environment. The convertor contain minimal information, we only
          * use the bConverted to manage the conversion.
          */
-        uint32_t i;
+        size_t i;
         unsigned char *base_pointer;
         size_t pending_length = pConv->local_size - pConv->bConverted;
 
