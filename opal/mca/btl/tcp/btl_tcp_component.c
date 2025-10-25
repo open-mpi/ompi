@@ -562,12 +562,12 @@ static int mca_btl_tcp_create(const int if_kindex, const char *if_name)
         btl->tcp_ifmask = selected_interface->if_mask;
 
         /* allow user to specify interface bandwidth */
-        sprintf(param, "bandwidth_%s", if_name);
+        snprintf(param, sizeof(param), "bandwidth_%s", if_name);
         mca_btl_tcp_param_register_uint(param, NULL, btl->super.btl_bandwidth, OPAL_INFO_LVL_5,
                                         &btl->super.btl_bandwidth);
 
         /* allow user to override/specify latency ranking */
-        sprintf(param, "latency_%s", if_name);
+        snprintf(param, sizeof(param), "latency_%s", if_name);
         mca_btl_tcp_param_register_uint(param, NULL, btl->super.btl_latency, OPAL_INFO_LVL_5,
                                         &btl->super.btl_latency);
         if (i > 0) {
@@ -576,12 +576,12 @@ static int mca_btl_tcp_create(const int if_kindex, const char *if_name)
         }
 
         /* allow user to specify interface bandwidth */
-        sprintf(param, "bandwidth_%s:%d", if_name, i);
+        snprintf(param, sizeof(param), "bandwidth_%s:%d", if_name, i);
         mca_btl_tcp_param_register_uint(param, NULL, btl->super.btl_bandwidth, OPAL_INFO_LVL_5,
                                         &btl->super.btl_bandwidth);
 
         /* allow user to override/specify latency ranking */
-        sprintf(param, "latency_%s:%d", if_name, i);
+        snprintf(param, sizeof(param), "latency_%s:%d", if_name, i);
         mca_btl_tcp_param_register_uint(param, NULL, btl->super.btl_latency, OPAL_INFO_LVL_5,
                                         &btl->super.btl_latency);
 

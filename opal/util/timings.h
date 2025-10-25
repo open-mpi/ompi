@@ -60,7 +60,8 @@ void opal_timing_disable_native_timers(void);
             if (n > OPAL_TIMING_STR_LEN) {                                        \
                 (_nm)->error = 1;                                                 \
             }                                                                     \
-            n = sprintf((_nm)->cntr_env, "OMPI_TIMING_%s_CNT", (_nm)->id);        \
+            n = snprintf((_nm)->cntr_env, OPAL_TIMING_STR_LEN,                    \
+                         "OMPI_TIMING_%s_CNT", (_nm)->id);                        \
             if (n > OPAL_TIMING_STR_LEN) {                                        \
                 (_nm)->error = 1;                                                 \
             }                                                                     \
@@ -135,7 +136,7 @@ void opal_timing_disable_native_timers(void);
                 }                                                                                  \
                 setenv(buf1, buf2, 1);                                                             \
                 h->cntr++;                                                                         \
-                sprintf(buf1, "%d", h->cntr);                                                      \
+                snprintf(buf1, OPAL_TIMING_STR_LEN, "%d", h->cntr);                                \
                 setenv(h->cntr_env, buf1, 1);                                                      \
                 /* We don't include env operations into the consideration.                         \
                  * Hopefully this will help to make measurements more accurate.                    \
@@ -187,19 +188,19 @@ void opal_timing_disable_native_timers(void);
             }                                                                                     \
         } while (0)
 
-#    define OPAL_TIMING_ENV_GETDESC_PREFIX(prefix, filename, func, i, desc, _t) \
-        do {                                                                    \
-            char vname[OPAL_TIMING_STR_LEN];                                    \
-            (_t) = 0.0;                                                         \
-            sprintf(vname, "OMPI_TIMING_%s_%s_FILE_%d", prefix, func, i);       \
-            *filename = getenv(vname);                                          \
-            sprintf(vname, "OMPI_TIMING_%s_%s_DESC_%d", prefix, func, i);       \
-            *desc = getenv(vname);                                              \
-            sprintf(vname, "OMPI_TIMING_%s_%s_VAL_%d", prefix, func, i);        \
-            char *ptr = getenv(vname);                                          \
-            if (NULL != ptr) {                                                  \
-                sscanf(ptr, "%lf", &(_t));                                      \
-            }                                                                   \
+#    define OPAL_TIMING_ENV_GETDESC_PREFIX(prefix, filename, func, i, desc, _t)                   \
+        do {                                                                                      \
+            char vname[OPAL_TIMING_STR_LEN];                                                      \
+            (_t) = 0.0;                                                                           \
+            snprintf(vname, OPAL_TIMING_STR_LEN, "OMPI_TIMING_%s_%s_FILE_%d", prefix, func, i);   \
+            *filename = getenv(vname);                                                            \
+            snprintf(vname, OPAL_TIMING_STR_LEN, "OMPI_TIMING_%s_%s_DESC_%d", prefix, func, i);   \
+            *desc = getenv(vname);                                                                \
+            snprintf(vname, OPAL_TIMING_STR_LEN, "OMPI_TIMING_%s_%s_VAL_%d", prefix, func, i);    \
+            char *ptr = getenv(vname);                                                            \
+            if (NULL != ptr) {                                                                    \
+                sscanf(ptr, "%lf", &(_t));                                                        \
+            }                                                                                     \
         } while (0)
 
 #    define OPAL_TIMING_ENV_GETDESC(file, func, index, desc) \
