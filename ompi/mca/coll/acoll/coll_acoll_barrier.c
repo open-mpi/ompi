@@ -119,7 +119,6 @@ int mca_coll_acoll_barrier_shm_h(struct ompi_communicator_t *comm, mca_coll_base
     int root = 0;
     int rank = ompi_comm_rank(comm);
     int size = ompi_comm_size(comm);
-    mca_coll_acoll_module_t *acoll_module = (mca_coll_acoll_module_t *) module;
     coll_acoll_init(module, comm, subc->data, subc, root);
     coll_acoll_data_t *data = subc->data;
 
@@ -227,7 +226,6 @@ int mca_coll_acoll_barrier_shm_f(struct ompi_communicator_t *comm, mca_coll_base
     int root = 0;
     int rank = ompi_comm_rank(comm);
     int size = ompi_comm_size(comm);
-    mca_coll_acoll_module_t *acoll_module = (mca_coll_acoll_module_t *) module;
 
     coll_acoll_init(module, comm, subc->data, subc, root);
     coll_acoll_data_t *data = subc->data;

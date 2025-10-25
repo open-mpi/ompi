@@ -312,14 +312,14 @@ static int mca_coll_ucc_init_ctx(ompi_communicator_t* comm)
         goto cleanup_lib;
     }
 
-    sprintf(str_buf, "%u", ompi_proc_world_size());
+    snprintf(str_buf, sizeof(str_buf), "%u", ompi_proc_world_size());
     if (UCC_OK != ucc_context_config_modify(ctx_config, NULL, "ESTIMATED_NUM_EPS",
                                             str_buf)) {
         UCC_ERROR("UCC context config modify failed for estimated_num_eps");
         goto cleanup_lib;
     }
 
-    sprintf(str_buf, "%u", opal_process_info.num_local_peers + 1);
+    snprintf(str_buf, sizeof(str_buf), "%u", opal_process_info.num_local_peers + 1);
     if (UCC_OK != ucc_context_config_modify(ctx_config, NULL, "ESTIMATED_NUM_PPN",
                                             str_buf)) {
         UCC_ERROR("UCC context config modify failed for estimated_num_eps");
@@ -327,7 +327,7 @@ static int mca_coll_ucc_init_ctx(ompi_communicator_t* comm)
     }
 
     if (ucc_api_major > 1 || (ucc_api_major == 1 && ucc_api_minor >= 6)) {
-        sprintf(str_buf, "%u", opal_process_info.my_local_rank);
+        snprintf(str_buf, sizeof(str_buf), "%u", opal_process_info.my_local_rank);
         if (UCC_OK != ucc_context_config_modify(ctx_config, NULL, "NODE_LOCAL_ID",
                                                 str_buf)) {
             UCC_ERROR("UCC context config modify failed for node_local_id");

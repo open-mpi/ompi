@@ -78,7 +78,7 @@ int main(int argc, char *argv[])
         }
     }
     if (MPI_Get_processor_name(process_name, &count) != MPI_SUCCESS) {
-        sprintf(process_name, "%s", rr_empty);
+        snprintf(process_name, sizeof(process_name), "%s", rr_empty);
     } else {
         if (count < MAX_RR_NAME)
             strncat(&process_name[count], rr_blank, MAX_RR_NAME - count);

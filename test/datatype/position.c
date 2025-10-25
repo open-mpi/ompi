@@ -201,9 +201,9 @@ static char *bytes_dump(void *src, size_t cnt)
     static char text[1024];
     int index, i;
 
-    index = sprintf(text, "0x");
+    index = snprintf(text, sizeof(text), "0x");
     for (i = 0; i < (int) cnt; i++)
-        index += sprintf(text + index, "%x", (int) (((char *) src)[i]));
+        index += snprintf(text + index, sizeof(text) - index, "%x", (int) (((char *) src)[i]));
     *(text + index) = '\0';
     return text;
 }

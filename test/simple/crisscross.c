@@ -92,7 +92,7 @@ int main(int argc, char *argv[])
     mpierr = MPI_Get_processor_name(process_name, &count);
     if (mpierr != MPI_SUCCESS) {
         fprintf(stderr, "MPI Error %d (MPI_Get_processor_name) [%d]\n", mpierr, rank);
-        sprintf(process_name, "%s", rr_empty);
+        snprintf(process_name, sizeof(process_name), "%s", rr_empty);
     } else {
         if (count < MAX_RR_NAME)
             strncat(&process_name[count], rr_blank, MAX_RR_NAME - count);
