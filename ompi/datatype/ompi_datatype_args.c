@@ -105,6 +105,8 @@ int32_t ompi_datatype_set_args( ompi_datatype_t* pData,
                     cd * sizeof(MPI_Datatype);
     char* buf = (char*)malloc( length );
     ompi_datatype_args_t* pArgs = (ompi_datatype_args_t*)buf;
+    size_t *pl = NULL;
+    int *pi = NULL;
     pArgs->ci = ci; pArgs->i = NULL;
     pArgs->cl = cl; pArgs->l = NULL;
     pArgs->ca = ca; pArgs->a = NULL;
@@ -121,11 +123,11 @@ int32_t ompi_datatype_set_args( ompi_datatype_t* pData,
         buf += pArgs->cd * sizeof(MPI_Datatype);
     }
     if (0 != pArgs->cl ) {
-        pArgs->l = (size_t*)buf;
+        pArgs->l = pl = (size_t*)buf;
         buf += pArgs->cl * sizeof(size_t);
     }
     if( 0 != pArgs->ci ) {
-        pArgs->i = (int*)buf;
+        pArgs->i = pi = (int*)buf;
         buf += pArgs->ci * sizeof(int);
     }
 
@@ -141,91 +143,92 @@ int32_t ompi_datatype_set_args( ompi_datatype_t* pData,
         break;
 
     case MPI_COMBINER_CONTIGUOUS:
-        copy_count_array(1, &pArgs->i, &pArgs->l, counts[0]);
+        copy_count_array(1, &pi, &pl, counts[0]);
         break;
 
     case MPI_COMBINER_VECTOR:
-        copy_count_array(1, &pArgs->i, &pArgs->l, counts[0]);
-        copy_count_array(1, &pArgs->i, &pArgs->l, counts[1]);
-        copy_count_array(1, &pArgs->i, &pArgs->l, counts[2]);
+        copy_count_array(1, &pi, &pl, counts[0]);
+        copy_count_array(1, &pi, &pl, counts[1]);
+        copy_count_array(1, &pi, &pl, counts[2]);
         break;
 
     case MPI_COMBINER_HVECTOR_INTEGER:
     case MPI_COMBINER_HVECTOR:
-        copy_count_array(1, &pArgs->i, &pArgs->l, counts[0]);
-        copy_count_array(1, &pArgs->i, &pArgs->l, counts[1]);
+        copy_count_array(1, &pi, &pl, counts[0]);
+        copy_count_array(1, &pi, &pl, counts[1]);
         break;
 
     case MPI_COMBINER_INDEXED: {
         size_t count = opal_count_array_get(counts[0], 0);
-        copy_count_array(1, &pArgs->i, &pArgs->l, counts[0]);
-        copy_count_array(count, &pArgs->i, &pArgs->l, counts[1]);
-        copy_count_array(count, &pArgs->i, &pArgs->l, counts[2]);
+        copy_count_array(1, &pi, &pl, counts[0]);
+        copy_count_array(count, &pi, &pl, counts[1]);
+        copy_count_array(count, &pi, &pl, counts[2]);
         break;
     }
 
     case MPI_COMBINER_HINDEXED_INTEGER:
     case MPI_COMBINER_HINDEXED: {
         size_t count = opal_count_array_get(counts[0], 0);
-        copy_count_array(1, &pArgs->i, &pArgs->l, counts[0]);
-        copy_count_array(count, &pArgs->i, &pArgs->l, counts[1]);
+        copy_count_array(1, &pi, &pl, counts[0]);
+        copy_count_array(count, &pi, &pl, counts[1]);
         break;
     }
 
     case MPI_COMBINER_INDEXED_BLOCK: {
         size_t count = opal_count_array_get(counts[0], 0);
-        copy_count_array(1, &pArgs->i, &pArgs->l, counts[0]);
-        copy_count_array(count, &pArgs->i, &pArgs->l, counts[1]);
+        copy_count_array(1, &pi, &pl, counts[0]);
+        copy_count_array(1, &pi, &pl, counts[1]);
+        copy_count_array(count, &pi, &pl, counts[2]);
         break;
     }
 
     case MPI_COMBINER_STRUCT_INTEGER:
     case MPI_COMBINER_STRUCT: {
         size_t count = opal_count_array_get(counts[0], 0);
-        copy_count_array(1, &pArgs->i, &pArgs->l, counts[0]);
-        copy_count_array(count, &pArgs->i, &pArgs->l, counts[1]);
+        copy_count_array(1, &pi, &pl, counts[0]);
+        copy_count_array(count, &pi, &pl, counts[1]);
         break;
     }
 
     case MPI_COMBINER_SUBARRAY: {
         size_t count = opal_count_array_get(counts[0], 0);
-        copy_count_array(1, &pArgs->i, &pArgs->l, counts[0]);
-        copy_count_array(count, &pArgs->i, &pArgs->l, counts[1]);
-        copy_count_array(count, &pArgs->i, &pArgs->l, counts[2]);
-        copy_count_array(count, &pArgs->i, &pArgs->l, counts[3]);
-        copy_count_array(1, &pArgs->i, &pArgs->l, counts[4]);
+        copy_count_array(1, &pi, &pl, counts[0]);
+        copy_count_array(count, &pi, &pl, counts[1]);
+        copy_count_array(count, &pi, &pl, counts[2]);
+        copy_count_array(count, &pi, &pl, counts[3]);
+        copy_count_array(1, &pi, &pl, counts[4]);
         break;
     }
 
     case MPI_COMBINER_DARRAY: {
         size_t ndim = opal_count_array_get(counts[2], 0);
-        copy_count_array(1, &pArgs->i, &pArgs->l, counts[0]);
-        copy_count_array(1, &pArgs->i, &pArgs->l, counts[1]);
-        copy_count_array(1, &pArgs->i, &pArgs->l, counts[2]);
-        copy_count_array(ndim, &pArgs->i, &pArgs->l, counts[3]);
-        copy_count_array(ndim, &pArgs->i, &pArgs->l, counts[4]);
-        copy_count_array(ndim, &pArgs->i, &pArgs->l, counts[5]);
-        copy_count_array(ndim, &pArgs->i, &pArgs->l, counts[6]);
-        copy_count_array(1, &pArgs->i, &pArgs->l, counts[7]);
+        copy_count_array(1, &pi, &pl, counts[0]);
+        copy_count_array(1, &pi, &pl, counts[1]);
+        copy_count_array(1, &pi, &pl, counts[2]);
+        copy_count_array(ndim, &pi, &pl, counts[3]);
+        copy_count_array(ndim, &pi, &pl, counts[4]);
+        copy_count_array(ndim, &pi, &pl, counts[5]);
+        copy_count_array(ndim, &pi, &pl, counts[6]);
+        copy_count_array(1, &pi, &pl, counts[7]);
         break;
     }
 
     case MPI_COMBINER_F90_REAL:
     case MPI_COMBINER_F90_COMPLEX:
-        copy_count_array(1, &pArgs->i, &pArgs->l, counts[0]);
-        copy_count_array(1, &pArgs->i, &pArgs->l, counts[1]);
+        copy_count_array(1, &pi, &pl, counts[0]);
+        copy_count_array(1, &pi, &pl, counts[1]);
         break;
 
     case MPI_COMBINER_F90_INTEGER:
-        copy_count_array(1, &pArgs->i, &pArgs->l, counts[0]);
+        copy_count_array(1, &pi, &pl, counts[0]);
         break;
 
     case MPI_COMBINER_RESIZED:
         break;
 
     case MPI_COMBINER_HINDEXED_BLOCK:
-        copy_count_array(1, &pArgs->i, &pArgs->l, counts[0]);
-        copy_count_array(1, &pArgs->i, &pArgs->l, counts[1]);
+        copy_count_array(1, &pi, &pl, counts[0]);
+        copy_count_array(1, &pi, &pl, counts[1]);
         break;
 
     default:
