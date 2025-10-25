@@ -37,7 +37,7 @@
 #include "ompi/runtime/ompi_spc.h"
 
 PROTOTYPE ERROR_CLASS Irsend(BUFFER_CONST buf, COUNT count, DATATYPE type, INT dest,
-               TAG tag, COMM comm, REQUEST_INOUT request)
+               INT tag, COMM comm, REQUEST_INOUT request)
 {
     int rc;
 
