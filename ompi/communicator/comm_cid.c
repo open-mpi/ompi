@@ -1082,7 +1082,7 @@ int ompi_comm_get_remote_cid_from_pmix (ompi_communicator_t *comm, int dest, uin
     PMIX_INFO_LOAD(&tinfo[1], PMIX_GROUP_CONTEXT_ID, &excid.cid_base, PMIX_SIZE);
     PMIX_INFO_SET_QUALIFIER(&tinfo[1]);
     if (PMIX_SUCCESS != (rc = PMIx_Get(&pmix_proc, PMIX_GROUP_LOCAL_CID, tinfo, 2, &val))) {
-        OPAL_OUTPUT_VERBOSE((10, ompi_comm_output, "PMIx_Get failed for PMIX_GROUP_LOCAL_CID cid_base %ld %s", excid.cid_base, PMIx_Error_string(rc)));
+        OPAL_OUTPUT_VERBOSE((10, ompi_comm_output, "PMIx_Get failed for PMIX_GROUP_LOCAL_CID cid_base %"PRIu64" %s", excid.cid_base, PMIx_Error_string(rc)));
         rc = OMPI_ERR_NOT_FOUND;
         goto done;
     }
@@ -1103,7 +1103,7 @@ int ompi_comm_get_remote_cid_from_pmix (ompi_communicator_t *comm, int dest, uin
     rc = OMPI_SUCCESS;
     *remote_cid = (uint32_t)remote_cid64;
     comm->c_index_vec[dest] = (uint32_t)remote_cid64;
-    OPAL_OUTPUT_VERBOSE((10, ompi_comm_output, "PMIx_Get PMIX_GROUP_LOCAL_CID %d for cid_base %ld", *remote_cid, excid.cid_base));
+    OPAL_OUTPUT_VERBOSE((10, ompi_comm_output, "PMIx_Get PMIX_GROUP_LOCAL_CID %d for cid_base %"PRIu64, *remote_cid, excid.cid_base));
 
 done:
     if (NULL != val) {
