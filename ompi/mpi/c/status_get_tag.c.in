@@ -20,7 +20,7 @@
 #include "ompi/memchecker.h"
 
 
-PROTOTYPE ERROR_CLASS status_get_tag(STATUS status, INT_OUT tag)
+PROTOTYPE ERROR_CLASS status_get_tag(STATUS status, TAG_OUT tag)
 {
     int rc      = MPI_SUCCESS;
 

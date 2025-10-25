@@ -824,21 +824,14 @@ class TypeOpOutStandard(StandardABIType):
     def argument(self):
         return f'(MPI_Op *) (NULL != {self.name} ? &{self.tmpname} : NULL)'
 
-@Type.add_type('RANK')
-class TypeRank(Type):
-
-    def type_text(self, enable_count=False):
-        return 'int'
-
-
 @Type.add_type('TAG', abi_type=['ompi'])
-class TypeRank(Type):
+class TypeTag(Type):
 
     def type_text(self, enable_count=False):
         return 'int'
 
 @Type.add_type('TAG', abi_type=['standard'])
-class TypeRankStandard(StandardABIType):
+class TypeTagStandard(StandardABIType):
 
     @property
     def init_code(self):
@@ -846,6 +839,26 @@ class TypeRankStandard(StandardABIType):
 
     def type_text(self, enable_count=False):
         return 'int'
+
+@Type.add_type('TAG_OUT', abi_type=['ompi'])
+class TypeTagOut(Type):
+
+    def type_text(self, enable_count=False):
+        return 'int *'
+
+@Type.add_type('TAG_OUT', abi_type=['standard'])
+class TypeTagOutStandard(StandardABIType):
+
+    @property
+    def final_code(self):
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.TAG}(*{self.name});']
+
+    def type_text(self, enable_count=False):
+        return f'int *'
+
+    @property
+    def argument(self):
+        return f'(int *) {self.name}'
 
 @Type.add_type('ROOT', abi_type=['ompi'])
 class TypeRoot(Type):
@@ -1310,8 +1323,8 @@ class TypeStausInOutStandard(StandardABIType):
         mangle_type = self.mangle_name('MPI_Status')
         code = [f'MPI_Status *{self.status_argument} = NULL;']
         code.append(f'MPI_Status {self.tmpname};')
-        code.append(f'{ConvertFuncs.STATUS}(&{self.tmpname}, ({mangle_type} *){self.name});')
         code.append(self.if_should_set_status())
+        code.append(f'{ConvertFuncs.STATUS}(&{self.tmpname}, ({mangle_type} *){self.name});')
         code.append(f'{self.status_argument} = &{self.tmpname};')
         code.append('} else {')
         code.append(f'{self.status_argument} = MPI_STATUS_IGNORE;')
