@@ -117,7 +117,7 @@ struct mca_sharedfp_base_module_2_0_0_t * mca_sharedfp_lockedfile_component_file
 
     /* Set the filename. */
     /*data filename created by appending .locktest.$rank to the original filename*/
-    sprintf(filename,"%s%s%d",fh->f_filename,".locktest.",rank);
+    snprintf(filename, sizeof(filename), "%s%s%d",fh->f_filename,".locktest.",rank);
 
     lock.l_type   = F_WRLCK;
     lock.l_start  = 0;

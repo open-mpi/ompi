@@ -417,7 +417,7 @@ static int ompi_comm_ext_cid_new_block (ompi_communicator_t *newcomm, ompi_commu
        char msg_string[1024];
         switch (rc) {
         case PMIX_ERR_UNREACH:
-            sprintf(msg_string,"PMIx server unreachable");
+            snprintf(msg_string, sizeof(msg_string), "PMIx server unreachable");
             opal_show_help("help-comm.txt",
                            "MPI function not supported",
                            true,
@@ -427,7 +427,7 @@ static int ompi_comm_ext_cid_new_block (ompi_communicator_t *newcomm, ompi_commu
             rc = MPI_ERR_UNSUPPORTED_OPERATION;
             break;
         case PMIX_ERR_NOT_SUPPORTED:
-            sprintf(msg_string,"PMIx server does not support PMIx Group operations");
+            snprintf(msg_string, sizeof(msg_string), "PMIx server does not support PMIx Group operations");
             opal_show_help("help-comm.txt",
                            "MPI function not supported",
                            true,
@@ -577,7 +577,7 @@ int ompi_comm_nextcid_nb (ompi_communicator_t *newcomm, ompi_communicator_t *com
        functions but the pml does not support these functions so return not supported */
     if (NULL == comm) {
        char msg_string[1024];
-       sprintf(msg_string,"The PML being used - %s - does not support MPI sessions related features",
+       snprintf(msg_string, sizeof(msg_string), "The PML being used - %s - does not support MPI sessions related features",
                mca_pml_base_selected_component.pmlm_version.mca_component_name);
        opal_show_help("help-comm.txt",
                       "MPI function not supported",
