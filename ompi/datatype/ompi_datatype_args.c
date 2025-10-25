@@ -132,7 +132,7 @@ int32_t ompi_datatype_set_args( ompi_datatype_t* pData,
     }
 
     pArgs->ref_count = 1;
-    pArgs->total_pack_size = 4 * sizeof(int) + ci * sizeof(int) +
+    pArgs->total_pack_size = 5 * sizeof(size_t) + ci * sizeof(int) +
                              cl * sizeof(size_t) +
                              cd * sizeof(MPI_Datatype) +
                              ca * sizeof(ptrdiff_t);
@@ -666,6 +666,7 @@ static ompi_datatype_t* __ompi_datatype_create_from_packed_description( void** p
     /* the array of lengths (32 bits aligned) */
     if (number_of_ints > 0) {
         array_of_ints = (int*)next_buffer;
+        next_buffer += number_of_ints * sizeof(int);
     }
 
     for( i = 0; i < number_of_datatype; i++ ) {
@@ -847,7 +848,7 @@ static ompi_datatype_t* __ompi_datatype_create_from_args( const int* i, const si
                 cl = count+1;
             }
             ompi_datatype_create_hindexed( count, a_i[1], disp_array, d[0], &datatype );
-            ompi_datatype_set_args( datatype, cl, ci, a_i, count, disp_array, 1, d, MPI_COMBINER_HINDEXED );
+            ompi_datatype_set_args( datatype, ci, cl, a_i, count, disp_array, 1, d, MPI_COMBINER_HINDEXED );
         }
         break;
         /******************************************************************/
