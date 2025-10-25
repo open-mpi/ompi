@@ -1066,7 +1066,7 @@ int ompi_comm_get_remote_cid_from_pmix (ompi_communicator_t *comm, int dest, uin
     pmix_value_t *val = NULL;
     ompi_comm_extended_cid_t excid;
     int rc = OMPI_SUCCESS;
-    size_t remote_cid64;
+    size_t remote_cid64 = 0;
 
     assert(NULL != remote_cid);
 
