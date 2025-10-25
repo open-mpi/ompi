@@ -471,6 +471,8 @@ static inline int __ompi_datatype_pack_description( ompi_datatype_t* datatype,
     ompi_datatype_args_t* args = (ompi_datatype_args_t*)datatype->args;
     char* next_packed = (char*)*packed_buffer;
 
+    iposition = (int*)next_packed;
+
     if( ompi_datatype_is_predefined(datatype) ) {
         iposition[0] = MPI_COMBINER_NAMED;
         iposition[1] = datatype->id;   /* On the OMPI - layer, copy the ompi_datatype.id */
@@ -503,6 +505,7 @@ static inline int __ompi_datatype_pack_description( ompi_datatype_t* datatype,
         memcpy( next_packed, args->l, sizeof(size_t) * args->cl );
         next_packed += sizeof(size_t) * args->cl;
     }
+    /* advance int pointer */
     iposition = (int*)next_packed;
 
     /* skip the datatypes */
