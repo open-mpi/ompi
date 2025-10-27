@@ -449,6 +449,9 @@ MODE_BITS = [
     'MPI_MODE_SEQUENTIAL',
     'MPI_MODE_UNIQUE_OPEN',
     'MPI_MODE_WRONLY',
+]
+
+RMA_MODE_BITS = [
     'MPI_MODE_NOCHECK',
     'MPI_MODE_NOPRECEDE',
     'MPI_MODE_NOPUT',
@@ -579,6 +582,7 @@ class ConvertFuncs:
     SUBARRAY_ORDER = 'ompi_convert_subarray_order_intern_subarray_order'
     SUBARRAY_DISTRIB_TYPES = 'ompi_convert_subarray_distrib_type_intern_distrib_type'
     MODE_BITS = 'ompi_convert_mode_bits_intern_mode_bits'
+    RMA_MODE_BITS = 'ompi_convert_rma_mode_bits_intern_mode_bits'
     WHENCE = 'ompi_convert_whence_intern_whence'
     TYPECLASS = 'ompi_convert_typeclass_intern_typeclass'
     WIN_LOCK = 'ompi_convert_lock_assert_intern_lock_assert'
@@ -615,6 +619,7 @@ class ConvertOMPIToStandard:
     SOURCE = 'ompi_convert_source_ompi_to_standard'
     SUBARRAY_ORDER = 'ompi_convert_subarray_order_ompi_to_standard'
     MODE_BITS = 'ompi_convert_mode_bits_to_standard'
+    RMA_MODE_BITS = 'ompi_convert_rma_mode_bits_to_standard'
     COMBINER = 'ompi_convert_combiner_to_standard'
     TOPO = 'ompi_convert_topo_to_standard'
     BUFFER = 'ompi_convert_buffer_to_standard'
