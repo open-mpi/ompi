@@ -3212,4 +3212,21 @@ class TopoOutStandard(StandardABIType):
     def argument(self):
         return f'{self.name}'
 
+@Type.add_type('TYPECLASS', abi_type=['ompi'])
+class TypeClass(Type):
+
+    def type_text(self, enable_count=False):
+        return 'int'
+
+@Type.add_type('TYPECLASS', abi_type=['standard'])
+class TypeClassStandard(StandardABIType):
+
+    @property
+    def init_code(self):
+        return [f'int {self.tmpname} = {ConvertFuncs.TYPECLASS}({self.name});']
+
+    def type_text(self, enable_count=False):
+        return 'int'
+
+
 
