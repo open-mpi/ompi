@@ -3140,6 +3140,42 @@ class TypeModeBitsOutStandard(StandardABIType):
     def argument(self):
         return f'{self.name}'
 
+@Type.add_type('RMA_MODE_BITS', abi_type=['ompi'])
+class TypeRmaModeBits(Type):
+
+    def type_text(self, enable_count=False):
+        return 'int'
+
+@Type.add_type('RMA_MODE_BITS_OUT', abi_type=['ompi'])
+class TypeRmaModeBitsOut(Type):
+
+    def type_text(self, enable_count=False):
+        return 'int *'
+
+@Type.add_type('RMA_MODE_BITS', abi_type=['standard'])
+class TypeRmaModeBitsStandard(StandardABIType):
+
+    @property
+    def init_code(self):
+        return [f'int {self.tmpname} = {ConvertFuncs.RMA_MODE_BITS}({self.name});']
+
+    def type_text(self, enable_count=False):
+        return 'int'
+
+@Type.add_type('RMA_MODE_BITS_OUT', abi_type=['standard'])
+class TypeRmaModeBitsOutStandard(StandardABIType):
+
+    @property
+    def final_code(self):
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.RMA_MODE_BITS}(*{self.name});']
+
+    def type_text(self, enable_count=False):
+        return 'int *'
+
+    @property
+    def argument(self):
+        return f'{self.name}'
+
 @Type.add_type('WHENCE', abi_type=['ompi'])
 class TypeWhence(Type):
 

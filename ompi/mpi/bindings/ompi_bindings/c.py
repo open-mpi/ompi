@@ -587,6 +587,34 @@ class ABIConverterBuilder:
         self.dump_lines(lines)
         self.dump('}')
 
+    def generate_rma_mode_bits_convert_fn(self):
+        self.dump(f'{consts.INLINE_ATTRS} int {ConvertFuncs.RMA_MODE_BITS}(int mode_bits)')
+        self.dump('{')
+        lines = []
+        lines.append('int ret_value = 0;')
+        for value_name in consts.RMA_MODE_BITS:
+            intern_name = self.mangle_name(value_name)
+            lines.append('if (%s & mode_bits ) {' % (intern_name))
+            lines.append('ret_value |= %s;' % (value_name))
+            lines.append('}')
+        lines.append('return ret_value;')
+        self.dump_lines(lines)
+        self.dump('}')
+
+    def generate_rma_mode_bits_convert_fn_intern_to_abi(self):
+        self.dump(f'{consts.INLINE_ATTRS} int {ConvertOMPIToStandard.RMA_MODE_BITS}(int mode_bits)')
+        self.dump('{')
+        lines = []
+        lines.append('int ret_value = 0;')
+        for value_name in consts.RMA_MODE_BITS:
+            intern_name = self.mangle_name(value_name)
+            lines.append('if (%s & mode_bits ) {' % (value_name))
+            lines.append('ret_value |= %s;' % (intern_name))
+            lines.append('}')
+        lines.append('return ret_value;')
+        self.dump_lines(lines)
+        self.dump('}')
+
 
     def generate_pointer_convert_fn(self, type_, fn_name, constants):
         abi_type = self.mangle_name(type_)
@@ -726,6 +754,8 @@ extern "C" {
         self.generate_pvar_class_convert_fn_intern_to_abi()
         self.generate_mode_bits_convert_fn()
         self.generate_mode_bits_convert_fn_intern_to_abi()
+        self.generate_rma_mode_bits_convert_fn()
+        self.generate_rma_mode_bits_convert_fn_intern_to_abi()
         self.generate_buffer_convert_fn()
         self.generate_buffer_convert_fn_intern_to_abi()
 
