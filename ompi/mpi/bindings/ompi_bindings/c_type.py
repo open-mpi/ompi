@@ -892,6 +892,42 @@ class TypeSourceStandard(StandardABIType):
     def type_text(self, enable_count=False):
         return 'int'
 
+@Type.add_type('SOURCE_ARRAY', abi_type=['ompi'])
+class TypeSourceArray(Type):
+
+    def type_text(self, enable_count=False):
+        return 'const int*'
+
+    def parameter(self, enable_count=False, **kwargs):
+        return f'const int {self.name}[]'
+
+@Type.add_type('SOURCE_ARRAY', abi_type=['standard'])
+class TypeSourceArrayStandard(StandardABIType):
+
+    @property
+    def init_code(self):
+        code = [(f'int *{self.tmpname} = NULL;')]
+        code.append('if('+f'{self.name}' + '!= NULL)' + '{')
+        code.append(f'{self.tmpname} = (int *)malloc(sizeof(int) * {self.count_param});')
+        code.append(f'for(int i=0;i<{self.count_param};i++){{')
+        code.append(f'{self.tmpname}[i] = {ConvertFuncs.SOURCE}({self.name}[i]);')
+        code.append('}')
+        code.append('}')
+        return code
+
+    @property
+    def final_code(self):
+        code = [f'if({self.tmpname} != NULL){{']
+        code.append(f'free({self.tmpname});')
+        code.append('}')
+        return code
+
+    def type_text(self, enable_count=False):
+        return 'int *'
+
+    def parameter(self, enable_count=False, **kwargs):
+        return f'const int {self.name}[]'
+
 @Type.add_type('SOURCE_OUT', abi_type=['ompi'])
 class TypeSourceOut(Type):
 
@@ -911,6 +947,39 @@ class TypeSourceOutStandard(StandardABIType):
     @property
     def argument(self):
         return f'(int *) {self.name}'
+
+@Type.add_type('SOURCE_ARRAY_OUT', abi_type=['ompi'])
+class TypeSourceArrayOut(Type):
+
+    def type_text(self, enable_count=False):
+        return 'int *'
+
+    def parameter(self, enable_count=False, **kwargs):
+        return f'int {self.name}[]'
+
+@Type.add_type('SOURCE_ARRAY_OUT', abi_type=['standard'])
+class TypeSourceArrayOutStandard(StandardABIType):
+        
+    @property
+    def init_code(self):
+        code = [f'int *{self.tmpname} = (int*)malloc({self.count_param} * sizeof(int));']
+        return code
+    
+    @property
+    def final_code(self):
+        code = [f'if (NULL != {self.name}){{']
+        code.append(f'for(int i=0;i<{self.count_param};i++){{')
+        code.append(f'{self.name}[i] = {ConvertOMPIToStandard.SOURCE}({self.tmpname}[i]);')
+        code.append('}')
+        code.append('}')
+        code.append(f'free({self.tmpname});')
+        return code
+        
+    def type_text(self, enable_count=False):
+        return 'int *'
+
+    def parameter(self, enable_count=False, **kwargs):
+        return f'int {self.name}[]'
 
 @Type.add_type('COMM', abi_type=['ompi'])
 class TypeCommunicator(Type):
