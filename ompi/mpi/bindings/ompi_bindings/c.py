@@ -547,9 +547,6 @@ class ABIConverterBuilder:
     def generate_typeclass_convert_fn(self):
         self.generic_convert(ConvertFuncs.TYPECLASS, 'typeclass', 'int', consts.TYPECLASS_VALUES)
 
-    def generate_typeclass_convert_fn(self):
-        self.generic_convert(ConvertFuncs.TYPECLASS, 'typeclass', 'int', consts.TYPECLASS_VALUES)
-
     def generate_win_lock_convert_fn(self):
         self.generic_convert(ConvertFuncs.WIN_LOCK, 'lock_assert', 'int', consts.WIN_LOCK_VALUES)
 
@@ -749,6 +746,7 @@ extern "C" {
         self.generate_t_cb_safety_convert_fn()
         self.generate_win_lock_convert_fn()
         self.generate_whence_convert_fn()
+        self.generate_typeclass_convert_fn()
 
         #
         # the following only need intern to abi converters
