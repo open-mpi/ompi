@@ -75,9 +75,6 @@ prototype_sources = \
         alltoallv_init.c.in \
         alltoallw.c.in \
         alltoallw_init.c.in \
-        attr_delete.c.in \
-        attr_get.c.in \
-        attr_put.c.in \
         barrier.c.in \
         barrier_init.c.in \
         bcast.c.in \
@@ -482,8 +479,11 @@ prototype_sources_obc = \
 	type_get_contents_c.c.in_obc \
 	type_get_envelope_c.c.in_obc
 
-# See MPI-5 standard Chapter 20 section 4
+# See MPI-5 standard Chapter 20 sections 2 and 4
 prototype_sources_not_in_abi = \
+        attr_delete.c.in \
+        attr_get.c.in \
+        attr_put.c.in \
         comm_c2f.c.in \
         errhandler_c2f.c.in \
         file_c2f.c.in \
