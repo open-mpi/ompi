@@ -133,42 +133,46 @@ int
 ompi_datatype_get_value_index(const ompi_datatype_t *value_type, const ompi_datatype_t *index_type, ompi_datatype_t **pair_type)
 {
     *pair_type = (ompi_datatype_t *)&ompi_mpi_datatype_null;
+    bool is_fortran = ((index_type->super.flags & OMPI_DATATYPE_FLAG_DATA_FORTRAN) == OMPI_DATATYPE_FLAG_DATA_FORTRAN) ? true : false;
 
-    /* C predefined data types */
-    if (index_type->id == OMPI_DATATYPE_MPI_INT) {
-        if (value_type->id == OMPI_DATATYPE_MPI_FLOAT) {
-            *pair_type = (ompi_datatype_t *)&ompi_mpi_float_int;
-        } else if (value_type->id == OMPI_DATATYPE_MPI_DOUBLE) {
-            *pair_type = (ompi_datatype_t *)&ompi_mpi_double_int;
-        } else if (value_type->id == OMPI_DATATYPE_MPI_LONG) {
-            *pair_type = (ompi_datatype_t *)&ompi_mpi_long_int;
-        } else if (value_type->id == OMPI_DATATYPE_MPI_SHORT) {
-            *pair_type = (ompi_datatype_t *)&ompi_mpi_short_int;
-        } else if (value_type->id == OMPI_DATATYPE_MPI_INT) {
-            *pair_type = (ompi_datatype_t *)&ompi_mpi_2int;
-        } else if (value_type->id == OMPI_DATATYPE_MPI_LONG_DOUBLE) {
-            *pair_type = (ompi_datatype_t *)&ompi_mpi_longdbl_int;
+    if (false == is_fortran) {
+        if (index_type->id == OMPI_DATATYPE_MPI_INT) {
+            if (value_type->id == OMPI_DATATYPE_MPI_FLOAT) {
+                *pair_type = (ompi_datatype_t *)&ompi_mpi_float_int;
+            } else if (value_type->id == OMPI_DATATYPE_MPI_DOUBLE) {
+                *pair_type = (ompi_datatype_t *)&ompi_mpi_double_int;
+            } else if (value_type->id == OMPI_DATATYPE_MPI_LONG) {
+                *pair_type = (ompi_datatype_t *)&ompi_mpi_long_int;
+            } else if (value_type->id == OMPI_DATATYPE_MPI_SHORT) {
+                *pair_type = (ompi_datatype_t *)&ompi_mpi_short_int;
+            } else if (value_type->id == OMPI_DATATYPE_MPI_INT) {
+                *pair_type = (ompi_datatype_t *)&ompi_mpi_2int;
+            } else if (value_type->id == OMPI_DATATYPE_MPI_LONG_DOUBLE) {
+                *pair_type = (ompi_datatype_t *)&ompi_mpi_longdbl_int;
+            }
         }
     /* Fortran predefined data types */
-    } else if ((index_type->id == OMPI_DATATYPE_MPI_INTEGER) &&
-        (value_type->id == OMPI_DATATYPE_MPI_INTEGER)) {
-            *pair_type = (ompi_datatype_t *)&ompi_mpi_2integer;
-    } else if ((index_type->id == OMPI_DATATYPE_MPI_FLOAT) &&
-        (value_type->id == OMPI_DATATYPE_MPI_FLOAT)) {
-            *pair_type = (ompi_datatype_t *)&ompi_mpi_2real;
-    } else if ((index_type->id == OMPI_DATATYPE_MPI_DOUBLE) &&
-        (value_type->id == OMPI_DATATYPE_MPI_DOUBLE)) {
-            *pair_type = (ompi_datatype_t *)&ompi_mpi_2dblprec;
+    } else {
+        if ((index_type->id == OMPI_DATATYPE_MPI_INTEGER) &&
+            (value_type->id == OMPI_DATATYPE_MPI_INTEGER)) {
+               *pair_type = (ompi_datatype_t *)&ompi_mpi_2integer;
+        } else if ((index_type->id == OMPI_DATATYPE_MPI_FLOAT) &&
+            (value_type->id == OMPI_DATATYPE_MPI_FLOAT)) {
+                *pair_type = (ompi_datatype_t *)&ompi_mpi_2real;
+        } else if ((index_type->id == OMPI_DATATYPE_MPI_DOUBLE) &&
+            (value_type->id == OMPI_DATATYPE_MPI_DOUBLE)) {
+                *pair_type = (ompi_datatype_t *)&ompi_mpi_2dblprec;
 #if OMPI_HAVE_FORTRAN_COMPLEX
-    } else if ((index_type->id == OMPI_DATATYPE_MPI_COMPLEX) &&
-        (value_type->id == OMPI_DATATYPE_MPI_COMPLEX)) {
-            *pair_type = (ompi_datatype_t *)&ompi_mpi_2cplex;
+        } else if ((index_type->id == OMPI_DATATYPE_MPI_COMPLEX) &&
+            (value_type->id == OMPI_DATATYPE_MPI_COMPLEX)) {
+                *pair_type = (ompi_datatype_t *)&ompi_mpi_2cplex;
 #endif
 #if OMPI_HAVE_FORTRAN_DOUBLE_COMPLEX
-    } else if ((index_type->id == OMPI_DATATYPE_MPI_DOUBLE_COMPLEX) &&
-        (value_type->id == OMPI_DATATYPE_MPI_DOUBLE_COMPLEX)) {
-            *pair_type = (ompi_datatype_t *)&ompi_mpi_2dblcplex;
+        } else if ((index_type->id == OMPI_DATATYPE_MPI_DOUBLE_COMPLEX) &&
+            (value_type->id == OMPI_DATATYPE_MPI_DOUBLE_COMPLEX)) {
+                *pair_type = (ompi_datatype_t *)&ompi_mpi_2dblcplex;
 #endif
+        }
     }
 
     return OMPI_SUCCESS;
