@@ -18,7 +18,7 @@
  * Copyright (c) 2021-2024 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2024      Triad National Security, LLC. All rights
+ * Copyright (c) 2024-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -68,7 +68,7 @@ PROTOTYPE ERROR_CLASS waitany(INT count, REQUEST_INOUT requests, INT_OUT indx, S
     if (OPAL_UNLIKELY(0 == count)) {
         *indx = MPI_UNDEFINED;
         if (MPI_STATUS_IGNORE != status) {
-            OMPI_COPY_STATUS(status, ompi_status_empty, false);
+            OMPI_COPY_STATUS(status, ompi_status_empty, true);
         }
         return MPI_SUCCESS;
     }

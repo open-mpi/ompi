@@ -12,7 +12,7 @@
  * Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2024      Triad National Security, LLC. All rights
+ * Copyright (c) 2024-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2025      Advanced Micro Devices, Inc. All rights reserved
  *
@@ -73,7 +73,7 @@ PROTOTYPE ERROR_CLASS request_get_status_any(INT count, REQUEST_CONST requests:c
         *flag = true;
         *indx = MPI_UNDEFINED;
         if (MPI_STATUS_IGNORE != status) {
-            OMPI_COPY_STATUS(status, ompi_status_empty, false);
+            OMPI_COPY_STATUS(status, ompi_status_empty, true);
         }
         return MPI_SUCCESS;
     }
@@ -115,7 +115,7 @@ PROTOTYPE ERROR_CLASS request_get_status_any(INT count, REQUEST_CONST requests:c
         *flag = true;
         *indx = MPI_UNDEFINED;
         if (MPI_STATUS_IGNORE != status) {
-            OMPI_COPY_STATUS(status, ompi_status_empty, false);
+            OMPI_COPY_STATUS(status, ompi_status_empty, true);
         }
         return MPI_SUCCESS;
     }
