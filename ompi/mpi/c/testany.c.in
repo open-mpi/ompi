@@ -15,7 +15,7 @@
  *                         reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2021-2024 Triad National Security, LLC. All rights
+ * Copyright (c) 2021-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
@@ -67,7 +67,7 @@ PROTOTYPE ERROR_CLASS testany(INT count, REQUEST_INOUT requests, INT_OUT indx, I
         *completed = true;
         *indx = MPI_UNDEFINED;
         if (MPI_STATUS_IGNORE != status) {
-            OMPI_COPY_STATUS(status, ompi_status_empty, false);
+            OMPI_COPY_STATUS(status, ompi_status_empty, true);
         }
         return MPI_SUCCESS;
     }

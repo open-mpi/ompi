@@ -12,7 +12,7 @@
  * Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2024      Triad National Security, LLC. All rights
+ * Copyright (c) 2024-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2025      Advanced Micro Devices, Inc. All rights reserved
  *
@@ -110,7 +110,7 @@ PROTOTYPE ERROR_CLASS request_get_status_all(INT count, REQUEST_CONST requests:c
     for (i = 0; i < count; i++) {
         if( (requests[i] == MPI_REQUEST_NULL) || (requests[i]->req_state == OMPI_REQUEST_INACTIVE) ) {
             if (MPI_STATUS_IGNORE != statuses) {
-                OMPI_COPY_STATUS(&statuses[i], ompi_status_empty, false);
+                OMPI_COPY_STATUS(&statuses[i], ompi_status_empty, true);
             }
         }
         /* If this is a generalized request, we *always* have to call

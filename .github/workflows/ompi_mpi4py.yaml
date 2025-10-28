@@ -113,27 +113,27 @@ jobs:
         CFLAGS: "-O0"
 
     - name: Test mpi4py (singleton)
-      run:  python test/main.py -v -x TestExcErrhandlerNull
+      run:  python test/main.py -v -x testContiguousBigMPI
       if:   ${{ true }}
       timeout-minutes: 10
     - name: Test mpi4py (np=1)
-      run:  mpiexec -n 1 python test/main.py -v -x TestExcErrhandlerNull
+      run:  mpiexec -n 1 python test/main.py -v  -x testContiguousBigMPI
       if:   ${{ true }}
       timeout-minutes: 10
     - name: Test mpi4py (np=2)
-      run:  mpiexec -n 2 python test/main.py -v -f -x TestExcErrhandlerNull
+      run:  mpiexec -n 2 python test/main.py -v -f  -x testContiguousBigMPI
       if:   ${{ true }}
       timeout-minutes: 10
     - name: Test mpi4py (np=3)
-      run:  mpiexec -n 3 python test/main.py -v -f -x TestExcErrhandlerNull
+      run:  mpiexec -n 3 python test/main.py -v -f  -x testContiguousBigMPI
       if:   ${{ true }}
       timeout-minutes: 10
     - name: Test mpi4py (np=4)
-      run:  mpiexec -n 4 python test/main.py -v -f -x TestExcErrhandlerNull
+      run:  mpiexec -n 4 python test/main.py -v -f  -x testContiguousBigMPI
       if:   ${{ true }}
       timeout-minutes: 10
     - name: Test mpi4py (np=5)
-      run:  mpiexec -n 5 python test/main.py -v -f -x TestExcErrhandlerNull
+      run:  mpiexec -n 5 python test/main.py -v -f  -x testContiguousBigMPI
       if:   ${{ true }}
       timeout-minutes: 10
 
@@ -151,7 +151,7 @@ jobs:
         echo LD_LIBRARY_PATH=/opt/ompi/lib >> $GITHUB_ENV
 
     - name: Test mpi4py (singleton)
-      run:  python test/main.py -v -x TestExcErrhandlerNull
+      run:  python test/main.py -v -x testContiguousBigMPI
       if:   ${{ true }}
       timeout-minutes: 10
 
