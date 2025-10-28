@@ -117,7 +117,8 @@ int ompi_abi_get_fortran_info(ompi_info_t **info)
     }
 #endif
 
-#if OMPI_SIZEOF_FORTRAN_LOGICAL1
+#if OMPI_DATATYPE_MPI_LOGICAL1
+    cptr = (OMPI_DATATYPE_MPI_LOGICAL1 != OMPI_DATATYPE_MPI_UNAVAILABLE) ? true_str : false_str;
     cptr = true_str;
 #else
     cptr = false_str;
@@ -127,8 +128,8 @@ int ompi_abi_get_fortran_info(ompi_info_t **info)
         goto err_cleanup;
     }
 
-#if OMPI_SIZEOF_FORTRAN_LOGICAL2
-    cptr = true_str;
+#if OMPI_DATATYPE_MPI_LOGICAL2
+    cptr = (OMPI_DATATYPE_MPI_LOGICAL2 != OMPI_DATATYPE_MPI_UNAVAILABLE) ? true_str : false_str;
 #else
     cptr = false_str;
 #endif
@@ -137,8 +138,8 @@ int ompi_abi_get_fortran_info(ompi_info_t **info)
         goto err_cleanup;
     }
 
-#if OMPI_SIZEOF_FORTRAN_LOGICAL4
-    cptr = true_str;
+#if OMPI_DATATYPE_MPI_LOGICAL4
+    cptr = (OMPI_DATATYPE_MPI_LOGICAL4 != OMPI_DATATYPE_MPI_UNAVAILABLE) ? true_str : false_str;
 #else
     cptr = false_str;
 #endif
@@ -147,8 +148,8 @@ int ompi_abi_get_fortran_info(ompi_info_t **info)
         goto err_cleanup;
     }
 
-#if OMPI_SIZEOF_FORTRAN_LOGICAL8
-    cptr = true_str;
+#if OMPI_DATATYPE_MPI_LOGICAL8
+    cptr = (OMPI_DATATYPE_MPI_LOGICAL8 != OMPI_DATATYPE_MPI_UNAVAILABLE) ? true_str : false_str;
 #else
     cptr = false_str;
 #endif
@@ -157,11 +158,13 @@ int ompi_abi_get_fortran_info(ompi_info_t **info)
         goto err_cleanup;
     }
 
-#if OMPI_SIZEOF_FORTRAN_LOGICAL16
-    cptr = true_str;
+#if OMPI_DATATYPE_MPI_LOGICAL16
+    cptr = (OMPI_DATATYPE_MPI_LOGICAL16 != OMPI_DATATYPE_MPI_UNAVAILABLE) ? true_str : false_str;
+    fprintf(stderr, "cptr = %s\n", cptr);
 #else
     cptr = false_str;
 #endif
+    fprintf(stderr ,"setting mpi_logical16_supported to %s\n", cptr);
     ret = opal_info_set(&newinfo->super, "mpi_logical16_supported", cptr);
     if (OPAL_SUCCESS != ret) {
         goto err_cleanup;
