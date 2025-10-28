@@ -332,12 +332,12 @@ int ompi_coll_base_allgatherv_intra_sparbit(const void *sbuf, size_t scount,
            if(ompi_count_array_get(rcounts, send_disp) > 0)
                MCA_PML_CALL(isend(tmpsend + ompi_disp_array_get(rdispls, send_disp) * rext,
                                   ompi_count_array_get(rcounts, send_disp), rdtype, sendto,
-                                  MCA_COLL_BASE_TAG_HCOLL_BASE - send_disp,
+                                  MCA_COLL_BASE_TAG_NEIGHBOR_BASE - send_disp,
                                   MCA_PML_BASE_SEND_STANDARD, comm, requests + step_requests++));
            if(ompi_count_array_get(rcounts, recv_disp) > 0)
                MCA_PML_CALL(irecv(tmprecv + ompi_disp_array_get(rdispls, recv_disp) * rext,
                                   ompi_count_array_get(rcounts, recv_disp), rdtype, recvfrom,
-                                  MCA_COLL_BASE_TAG_HCOLL_BASE - recv_disp, comm,
+                                  MCA_COLL_BASE_TAG_NEIGHBOR_BASE - recv_disp, comm,
                                   requests + step_requests++));
        }
        ompi_request_wait_all(step_requests, requests, MPI_STATUSES_IGNORE);
