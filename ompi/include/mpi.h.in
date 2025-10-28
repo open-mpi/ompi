@@ -2195,8 +2195,6 @@ OMPI_DECLSPEC  int MPI_Recv(void *buf, int count, MPI_Datatype datatype, int sou
                             int tag, MPI_Comm comm, MPI_Status *status);
 OMPI_DECLSPEC  int MPI_Recv_c(void *buf, MPI_Count count, MPI_Datatype datatype, int source,
                               int tag, MPI_Comm comm, MPI_Status *status);
-OMPI_DECLSPEC  int MPI_Recv_c(void *buf, MPI_Count count, MPI_Datatype datatype, int source,
-                              int tag, MPI_Comm comm, MPI_Status *status);
 OMPI_DECLSPEC  int MPI_Reduce(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
                               MPI_Op op, int root, MPI_Comm comm);
 OMPI_DECLSPEC  int MPI_Reduce_c(const void *sendbuf, void *recvbuf, MPI_Count count, MPI_Datatype datatype,
@@ -3369,8 +3367,6 @@ OMPI_DECLSPEC  int PMPI_Recv_init_c(void *buf, MPI_Count count, MPI_Datatype dat
                                     int tag, MPI_Comm comm, MPI_Request *request);
 OMPI_DECLSPEC  int PMPI_Recv(void *buf, int count, MPI_Datatype datatype, int source,
                              int tag, MPI_Comm comm, MPI_Status *status);
-OMPI_DECLSPEC  int PMPI_Recv_c(void *buf, MPI_Count count, MPI_Datatype datatype, int source,
-                               int tag, MPI_Comm comm, MPI_Status *status);
 OMPI_DECLSPEC  int PMPI_Recv_c(void *buf, MPI_Count count, MPI_Datatype datatype, int source,
                                int tag, MPI_Comm comm, MPI_Status *status);
 OMPI_DECLSPEC  int PMPI_Reduce(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
