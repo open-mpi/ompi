@@ -1642,6 +1642,10 @@ class TypeFileInOutStandard(TypeFileOutStandard):
         return [f'MPI_File {self.tmpname} = {ConvertFuncs.FILE}(*{self.name});']
 
     @property
+    def final_code(self):
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.FILE}({self.tmpname});']
+
+    @property
     def argument(self):
         return f'(MPI_File *) (NULL != {self.name} ? &{self.tmpname} : NULL)'
 
