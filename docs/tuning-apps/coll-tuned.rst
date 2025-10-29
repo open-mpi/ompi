@@ -3,7 +3,7 @@ Tuning Collectives
 
 Open MPI's ``coll`` framework provides a number of components implementing
 collective communication, including: ``han``, ``libnbc``, ``self``, ``ucc`` ``base``,
-``hcoll``, ``sync``, ``xhc``, ``accelerator``, ``basic``, ``ftagree``, ``inter``, ``portals4``,
+``sync``, ``xhc``, ``accelerator``, ``basic``, ``ftagree``, ``inter``, ``portals4``,
 and ``tuned``.  Some of these components may not be available depending on how
 Open MPI was compiled and what hardware is available on the system.  A run-time
 decision based on each component's self reported priority, selects which
