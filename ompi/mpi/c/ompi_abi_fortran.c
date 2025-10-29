@@ -117,199 +117,37 @@ int ompi_abi_get_fortran_info(ompi_info_t **info)
     }
 #endif
 
-#if OMPI_DATATYPE_MPI_LOGICAL1
-    cptr = (OMPI_DATATYPE_MPI_LOGICAL1 != OMPI_DATATYPE_MPI_UNAVAILABLE) ? true_str : false_str;
-    cptr = true_str;
-#else
-    cptr = false_str;
-#endif
-    ret = opal_info_set(&newinfo->super, "mpi_logical1_supported", cptr);
-    if (OPAL_SUCCESS != ret) {
-        goto err_cleanup;
-    }
+#define OMPI_DATATYPE_SET_SUPPORTED(type, TYPE) do { \
+    cptr = (OMPI_DATATYPE_##TYPE != OMPI_DATATYPE_MPI_UNAVAILABLE) ? true_str : false_str; \
+    ret = opal_info_set(&newinfo->super, #type "_supported", cptr); \
+    if (OPAL_SUCCESS != ret) goto err_cleanup; } while (0)
 
-#if OMPI_DATATYPE_MPI_LOGICAL2
-    cptr = (OMPI_DATATYPE_MPI_LOGICAL2 != OMPI_DATATYPE_MPI_UNAVAILABLE) ? true_str : false_str;
-#else
-    cptr = false_str;
-#endif
-    ret = opal_info_set(&newinfo->super, "mpi_logical2_supported", cptr);
-    if (OPAL_SUCCESS != ret) {
-        goto err_cleanup;
-    }
+    OMPI_DATATYPE_SET_SUPPORTED(mpi_logical1, MPI_LOGICAL1);
+    OMPI_DATATYPE_SET_SUPPORTED(mpi_logical2, MPI_LOGICAL2);
+    OMPI_DATATYPE_SET_SUPPORTED(mpi_logical4, MPI_LOGICAL4);
+    OMPI_DATATYPE_SET_SUPPORTED(mpi_logical8, MPI_LOGICAL8);
+    OMPI_DATATYPE_SET_SUPPORTED(mpi_logical16, MPI_LOGICAL16);
 
-#if OMPI_DATATYPE_MPI_LOGICAL4
-    cptr = (OMPI_DATATYPE_MPI_LOGICAL4 != OMPI_DATATYPE_MPI_UNAVAILABLE) ? true_str : false_str;
-#else
-    cptr = false_str;
-#endif
-    ret = opal_info_set(&newinfo->super, "mpi_logical4_supported", cptr);
-    if (OPAL_SUCCESS != ret) {
-        goto err_cleanup;
-    }
+    OMPI_DATATYPE_SET_SUPPORTED(mpi_integer1, MPI_INTEGER1);
+    OMPI_DATATYPE_SET_SUPPORTED(mpi_integer2, MPI_INTEGER2);
+    OMPI_DATATYPE_SET_SUPPORTED(mpi_integer4, MPI_INTEGER4);
+    OMPI_DATATYPE_SET_SUPPORTED(mpi_integer8, MPI_INTEGER8);
+    OMPI_DATATYPE_SET_SUPPORTED(mpi_integer16, MPI_INTEGER16);
 
-#if OMPI_DATATYPE_MPI_LOGICAL8
-    cptr = (OMPI_DATATYPE_MPI_LOGICAL8 != OMPI_DATATYPE_MPI_UNAVAILABLE) ? true_str : false_str;
-#else
-    cptr = false_str;
-#endif
-    ret = opal_info_set(&newinfo->super, "mpi_logical8_supported", cptr);
-    if (OPAL_SUCCESS != ret) {
-        goto err_cleanup;
-    }
+    OMPI_DATATYPE_SET_SUPPORTED(mpi_real2, MPI_REAL2);
+    OMPI_DATATYPE_SET_SUPPORTED(mpi_real4, MPI_REAL4);
+    OMPI_DATATYPE_SET_SUPPORTED(mpi_real8, MPI_REAL8);
+    OMPI_DATATYPE_SET_SUPPORTED(mpi_real16, MPI_REAL16);
 
-#if OMPI_DATATYPE_MPI_LOGICAL16
-    cptr = (OMPI_DATATYPE_MPI_LOGICAL16 != OMPI_DATATYPE_MPI_UNAVAILABLE) ? true_str : false_str;
-    fprintf(stderr, "cptr = %s\n", cptr);
-#else
-    cptr = false_str;
-#endif
-    fprintf(stderr ,"setting mpi_logical16_supported to %s\n", cptr);
-    ret = opal_info_set(&newinfo->super, "mpi_logical16_supported", cptr);
-    if (OPAL_SUCCESS != ret) {
-        goto err_cleanup;
-    }
+    OMPI_DATATYPE_SET_SUPPORTED(mpi_complex4, MPI_COMPLEX4);
+    OMPI_DATATYPE_SET_SUPPORTED(mpi_complex8, MPI_COMPLEX8);
+    OMPI_DATATYPE_SET_SUPPORTED(mpi_complex16, MPI_COMPLEX16);
+    OMPI_DATATYPE_SET_SUPPORTED(mpi_complex32, MPI_COMPLEX32);
 
-#if OMPI_SIZEOF_FORTRAN_INTEGER1
-    cptr = true_str;
-#else
-    cptr = false_str;
-#endif
-    ret = opal_info_set(&newinfo->super, "mpi_integer1_supported", cptr);
-    if (OPAL_SUCCESS != ret) {
-        goto err_cleanup;
-    }
+    OMPI_DATATYPE_SET_SUPPORTED(mpi_double_complex, MPI_DOUBLE_COMPLEX);
+
+#undef OMPI_DATATYPE_SET_SUPPORTED
     
-#if OMPI_SIZEOF_FORTRAN_INTEGER2
-    cptr = true_str;
-#else
-    cptr = false_str;
-#endif
-    ret = opal_info_set(&newinfo->super, "mpi_integer2_supported", cptr);
-    if (OPAL_SUCCESS != ret) {
-        goto err_cleanup;
-    }
-    
-#if OMPI_SIZEOF_FORTRAN_INTEGER4
-    cptr = true_str;
-#else
-    cptr = false_str;
-#endif
-    ret = opal_info_set(&newinfo->super, "mpi_integer4_supported", cptr);
-    if (OPAL_SUCCESS != ret) {
-        goto err_cleanup;
-    }
-    
-#if OMPI_SIZEOF_FORTRAN_INTEGER8
-    cptr = true_str;
-#else
-    cptr = false_str;
-#endif
-    ret = opal_info_set(&newinfo->super, "mpi_integer8_supported", cptr);
-    if (OPAL_SUCCESS != ret) {
-        goto err_cleanup;
-    }
-    
-#if OMPI_SIZEOF_FORTRAN_INTEGER16
-    cptr = true_str;
-#else
-    cptr = false_str;
-#endif
-    ret = opal_info_set(&newinfo->super, "mpi_integer16_supported", cptr);
-    if (OPAL_SUCCESS != ret) {
-        goto err_cleanup;
-    }
-
-#if OMPI_SIZEOF_FORTRAN_REAL4
-    cptr = true_str;
-#else
-    cptr = false_str;
-#endif
-    ret = opal_info_set(&newinfo->super, "mpi_real2_supported", cptr);
-    if (OPAL_SUCCESS != ret) {
-        goto err_cleanup;
-    }
-    
-#if OMPI_SIZEOF_FORTRAN_REAL4
-    cptr = true_str;
-#else
-    cptr = false_str;
-#endif
-    ret = opal_info_set(&newinfo->super, "mpi_real4_supported", cptr);
-    if (OPAL_SUCCESS != ret) {
-        goto err_cleanup;
-    }
-    
-#if OMPI_SIZEOF_FORTRAN_REAL8
-    cptr = true_str;
-#else
-    cptr = false_str;
-#endif
-    ret = opal_info_set(&newinfo->super, "mpi_real8_supported", cptr);
-    if (OPAL_SUCCESS != ret) {
-        goto err_cleanup;
-    }
-    
-#if OMPI_SIZEOF_FORTRAN_REAL16
-    cptr = true_str;
-#else
-    cptr = false_str;
-#endif
-    ret = opal_info_set(&newinfo->super, "mpi_real16_supported", cptr);
-    if (OPAL_SUCCESS != ret) {
-        goto err_cleanup;
-    }
-
-#if OMPI_SIZEOF_FORTRAN_COMPLEX4
-    cptr = true_str;
-#else
-    cptr = false_str;
-#endif
-    ret = opal_info_set(&newinfo->super, "mpi_complex4_supported", cptr);
-    if (OPAL_SUCCESS != ret) {
-        goto err_cleanup;
-    }
-    
-#if OMPI_SIZEOF_FORTRAN_COMPLEX8
-    cptr = true_str;
-#else
-    cptr = false_str;
-#endif
-    ret = opal_info_set(&newinfo->super, "mpi_complex8_supported", cptr);
-    if (OPAL_SUCCESS != ret) {
-        goto err_cleanup;
-    }
-    
-#if OMPI_SIZEOF_FORTRAN_COMPLEX16
-    cptr = true_str;
-#else
-    cptr = false_str;
-#endif
-    ret = opal_info_set(&newinfo->super, "mpi_complex16_supported", cptr);
-    if (OPAL_SUCCESS != ret) {
-        goto err_cleanup;
-    }
-
-#if OMPI_SIZEOF_FORTRAN_COMPLEX32
-    cptr = true_str;
-#else
-    cptr = false_str;
-#endif
-    ret = opal_info_set(&newinfo->super, "mpi_complex32_supported", cptr);
-    if (OPAL_SUCCESS != ret) {
-        goto err_cleanup;
-    }
-
-#if OMPI_SIZEOF_FORTRAN_DOUBLE_COMPLEX
-    cptr = true_str;
-#else
-    cptr = false_str;
-#endif
-    ret = opal_info_set(&newinfo->super, "mpi_double_complex_supported", cptr);
-    if (OPAL_SUCCESS != ret) {
-        goto err_cleanup;
-    }
-
     *info = newinfo;
 
 #else
