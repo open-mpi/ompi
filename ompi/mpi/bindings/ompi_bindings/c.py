@@ -430,8 +430,7 @@ class ABIConverterBuilder:
         self.generic_convert(ConvertFuncs.OP, 'op', 'MPI_Op', consts.RESERVED_OPS)
 
     def generate_op_convert_fn_intern_to_abi(self):
-        # Only need to convert MPI_OP_NULL (fist item in consts.RESERVED_OPS)
-        self.generic_convert_reverse(ConvertOMPIToStandard.OP, 'op', 'MPI_Op', consts.RESERVED_OPS[:1])
+        self.generic_convert_reverse(ConvertOMPIToStandard.OP, 'op', 'MPI_Op', consts.RESERVED_OPS)
 
     def generate_session_convert_fn(self):
         self.generic_convert(ConvertFuncs.SESSION, 'session', 'MPI_Session', consts.RESERVED_SESSIONS)
