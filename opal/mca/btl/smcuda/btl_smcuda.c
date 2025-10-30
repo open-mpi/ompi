@@ -487,7 +487,7 @@ static struct mca_btl_base_endpoint_t *create_sm_endpoint(int local_proc, struct
     OBJ_CONSTRUCT(&ep->endpoint_lock, opal_mutex_t);
 #if OPAL_ENABLE_PROGRESS_THREADS == 1
     sprintf(path, "%s" OPAL_PATH_SEP "sm_fifo.%lu", opal_process_info.job_session_dir,
-            (unsigned long) proc->proc_name);
+            (unsigned long) proc->proc_name.vpid);
     ep->fifo_fd = open(path, O_WRONLY);
     if (ep->fifo_fd < 0) {
         opal_output(0, "mca_btl_smcuda_add_procs: open(%s) failed with errno=%d\n", path, errno);

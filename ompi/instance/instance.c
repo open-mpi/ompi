@@ -513,7 +513,7 @@ static int ompi_mpi_instance_init_common (int argc, char **argv)
        ddt_init, but before mca_coll_base_open, since some collective
        modules (e.g., the hierarchical coll component) may need ops in
        their query function. */
-    if (OMPI_SUCCESS != (ret = ompi_op_base_find_available (OPAL_ENABLE_PROGRESS_THREADS, ompi_mpi_thread_multiple))) {
+    if (OMPI_SUCCESS != (ret = ompi_op_base_find_available (opal_async_progress_thread_spawned, ompi_mpi_thread_multiple))) {
         return ompi_instance_print_error ("ompi_op_base_find_available() failed", ret);
     }
 
@@ -533,7 +533,7 @@ static int ompi_mpi_instance_init_common (int argc, char **argv)
         return ompi_instance_print_error ("mca_smsc_base_select() failed", ret);
     }
 
-    if (OMPI_SUCCESS != (ret = mca_pml_base_select (OPAL_ENABLE_PROGRESS_THREADS, ompi_mpi_thread_multiple))) {
+    if (OMPI_SUCCESS != (ret = mca_pml_base_select (opal_async_progress_thread_spawned, ompi_mpi_thread_multiple))) {
         return ompi_instance_print_error ("mca_pml_base_select() failed", ret);
     }
 
@@ -618,7 +618,7 @@ static int ompi_mpi_instance_init_common (int argc, char **argv)
         return ompi_instance_print_error ("mca_pml_base_bsend_init() failed", ret);
     }
 
-    if (OMPI_SUCCESS != (ret = mca_coll_base_find_available (OPAL_ENABLE_PROGRESS_THREADS, ompi_mpi_thread_multiple))) {
+    if (OMPI_SUCCESS != (ret = mca_coll_base_find_available (opal_async_progress_thread_spawned, ompi_mpi_thread_multiple))) {
         return ompi_instance_print_error ("mca_coll_base_find_available() failed", ret);
     }
 

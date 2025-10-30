@@ -544,9 +544,21 @@ fi
 AC_DEFINE_UNQUOTED([OPAL_ENABLE_GETPWUID], [$opal_want_getpwuid],
                    [Disable getpwuid support (default: enabled)])
 
-dnl We no longer support the old OPAL_ENABLE_PROGRESS_THREADS.  At
-dnl some point, this should die.
-AC_DEFINE([OPAL_ENABLE_PROGRESS_THREADS],
-          [0],
-          [Whether we want BTL progress threads enabled])
+#
+# Disable progress threads
+#
+AC_MSG_CHECKING([if want asynchronous progress threads])
+AC_ARG_ENABLE([progress_threads],
+    [AS_HELP_STRING([--disable-progress-threads],
+                   [Disable asynchronous progress threads. Note that when enabled, for performance-related reasons, the progress thread is still not spawned by default. User must enable MCA variables 'opal_async_progress' or 'mpi_async_progress' to have the progress thread spawned at runtime. (default: enabled)])])
+if test "$enable_progress_threads" = "no"; then
+    AC_MSG_RESULT([no])
+    opal_want_progress_threads=0
+else
+    AC_MSG_RESULT([yes])
+    opal_want_progress_threads=1
+fi
+AC_DEFINE_UNQUOTED([OPAL_ENABLE_PROGRESS_THREADS], [$opal_want_progress_threads],
+    [Disable BTL asynchronous progress threads (default: enabled)])
+
 ])dnl
