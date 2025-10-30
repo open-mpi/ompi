@@ -143,7 +143,7 @@ int ompi_coll_base_allgatherv_intra_bruck(const void *sbuf, size_t scount,
     blockcount = 1;
     tmpsend = (char*) rbuf;
 
-    new_rcounts = (size_t*) calloc(2*size, sizeof(size_t));
+    new_rcounts = (size_t*) calloc(4*size, sizeof(size_t));
     if (NULL == new_rcounts) { err = -1; line = __LINE__; goto err_hndl; }
     new_scounts = new_rcounts + size;
     new_rdispls = (ptrdiff_t*) (new_scounts + size);
