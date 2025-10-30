@@ -62,7 +62,7 @@ PROTOTYPE ERROR_CLASS type_contiguous(COUNT count,
         ompi_datatype_set_args( *newtype,
                                 (sizeof(count) == sizeof(size_t)) ? 0 : 1,
                                 (sizeof(count) == sizeof(size_t)) ? 1 : 0,
-                                a_i, 0, OMPI_COUNT_ARRAY_NULL, 1, &oldtype, MPI_COMBINER_CONTIGUOUS );
+                                a_i, 0, OMPI_DISP_ARRAY_NULL, 1, &oldtype, MPI_COMBINER_CONTIGUOUS );
     }
 
     OMPI_ERRHANDLER_NOHANDLE_RETURN(rc, rc, FUNC_NAME );
