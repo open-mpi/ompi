@@ -37,7 +37,7 @@
 
 PROTOTYPE ERROR_CLASS testsome(INT incount, REQUEST_INOUT requests:incount,
                                INT_OUT outcount, INT_OUT indices,
-                               STATUS_OUT statuses)
+                               STATUS_OUT statuses:incount)
 {
     SPC_RECORD(OMPI_SPC_TESTSOME, 1);
 
