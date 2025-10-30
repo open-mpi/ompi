@@ -39,7 +39,7 @@
 
 PROTOTYPE ERROR_CLASS get_accumulate(BUFFER_CONST origin_addr, COUNT origin_count, DATATYPE origin_datatype,
                                      BUFFER_OUT result_addr, COUNT result_count, DATATYPE result_datatype,
-                                     INT target_rank, AINT target_disp, COUNT target_count,
+                                     SOURCE target_rank, AINT target_disp, COUNT target_count,
                                      DATATYPE target_datatype, OP op, WIN win)
 {
     int rc;
