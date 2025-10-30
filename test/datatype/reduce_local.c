@@ -59,9 +59,9 @@ static int do_ops[12] = {
 static int verbose = 0;
 static int total_errors = 0;
 
-#define max(a, b) (a) > (b) ? (a) : (b)
+#define max(a, b) ((a) > (b) ? (a) : (b))
 
-#define min(a, b) (a) < (b) ? (a) : (b)
+#define min(a, b) ((a) < (b) ? (a) : (b))
 
 static void print_status(char *op, char *type, int type_size, int count, int max_shift,
                          double *duration, int repeats, int correct)
