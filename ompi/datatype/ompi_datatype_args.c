@@ -712,16 +712,11 @@ static ompi_datatype_t* __ompi_datatype_create_from_packed_description( void** p
 
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     if (need_swap) {
-        if (i_size == 8) {
-            size_t* arr = (size_t*)opal_count_array_ptr(array_of_length);
-            for (i = 0 ; i < number_of_length ; ++i) {
-                arr[i] = opal_swap_bytes8(arr[i]);
-            }
-        } else {
-            int* arr = (int*)opal_count_array_ptr(array_of_length);
-            for (i = 0 ; i < number_of_length ; ++i) {
-                arr[i] = opal_swap_bytes4(arr[i]);
-            }
+        for (i = 0 ; i < number_of_ints ; ++i) {
+            number_of_ints[i] = opal_swap_bytes8(number_of_ints[i]);
+        }
+        for (i = 0 ; i < number_of_counts ; ++i) {
+            array_of_counts[i] = opal_swap_bytes4(array_of_counts[i]);
         }
         for (i = 0 ; i < number_of_disp ; ++i) {
 #if SIZEOF_PTRDIFF_T == 4
