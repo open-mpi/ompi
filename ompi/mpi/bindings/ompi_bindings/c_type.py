@@ -637,11 +637,13 @@ class TypeDatatypeArrayStandard(StandardABIType):
             code = [f'int size_{self.tmpname} = {self.count_param};']
         code.append(f'MPI_Datatype *{self.tmpname} = NULL;')
         code.append('if('+f'{self.name}' + '!= NULL)' + '{')
-        code.append(f'{self.tmpname} = (MPI_Datatype *)malloc(sizeof(MPI_Datatype) * size_{self.tmpname});')
-        code.append(f'for(int i=0;i<size_{self.tmpname};i++){{')
+        code.append(f'{self.tmpname} = (MPI_Datatype *)ompi_abi_malloc(size_{self.tmpname}, sizeof(MPI_Datatype));')
+        code.append(f'if(NULL != {self.tmpname})' + '{')
+        code.append(f'for(int i=0;i<size_{self.tmpname};i++)' + '{')
         code.append(f'{self.tmpname}[i] = {ConvertFuncs.DATATYPE}({self.name}[i]);')
-        code.append(f'}}')
-        code.append(f'}}')
+        code.append('}')
+        code.append('}')
+        code.append('}')
         return code
 
     @property
@@ -681,7 +683,7 @@ class TypeDatatypeArrayAsyncStandard(TypeDatatypeArrayStandard):
         code.append(f'nb_request->data.release_arrays[idx++] = (void *){self.tmpname};')
         code.append('nb_request->data.release_arrays[idx] = NULL;')
         code.append('} else {')
-        code.append(f'free({self.tmpname});')
+        code.append(f'if (NULL != {self.tmpname}) free({self.tmpname});')
         code.append('}')
         return code
 
@@ -691,15 +693,17 @@ class TypeDatatypeArrayOutStandard(StandardABIType):
     @property
     def init_code(self):
         code = [f'int size_{self.tmpname} = {self.count_param};']
-        code.append(f'MPI_Datatype *{self.tmpname} = (MPI_Datatype *)malloc({self.count_param} * sizeof(MPI_Datatype));')
+        code.append(f'MPI_Datatype *{self.tmpname} = (MPI_Datatype *)ompi_abi_malloc({self.count_param},sizeof(MPI_Datatype));')
         return code
 
     @property
     def final_code(self):
-        code = [f'for(int i=0;i<size_{self.tmpname};i++){{']
+        code = [f'if(NULL != {self.tmpname})' + '{'] 
+        code.append(f'for(int i=0;i<size_{self.tmpname};i++)' + '{')
         code.append(f'{self.name}[i] = {ConvertOMPIToStandard.DATATYPE}({self.tmpname}[i]);')
-        code.append(f'}}')
+        code.append('}')
         code.append(f'free({self.tmpname});')
+        code.append('}')
         return code
 
     @property
@@ -730,11 +734,13 @@ class NeighborDatatypeArrayStandard(TypeDatatypeArrayStandard):
         if self.name == "recvtypes":
             code.append(f'size_{self.tmpname} = indegree_{self.tmpname};')
         code.append('if('+f'{self.name}' + '!= NULL)' + '{')
-        code.append(f'{self.tmpname} = (MPI_Datatype *)malloc(sizeof(MPI_Datatype) * size_{self.tmpname});')
+        code.append(f'{self.tmpname} = (MPI_Datatype *)ompi_abi_malloc(size_{self.tmpname}, sizeof(MPI_Datatype));')
+        code.append('if('+f'{self.tmpname}' + '!= NULL)' + '{')
         code.append(f'for(int i=0;i<size_{self.tmpname};i++){{')
         code.append(f'{self.tmpname}[i] = {ConvertFuncs.DATATYPE}({self.name}[i]);')
-        code.append(f'}}')
-        code.append(f'}}')
+        code.append('}')
+        code.append('}')
+        code.append('}')
         return code
 
 @Type.add_type('NEIGHBOR_DATATYPE_ARRAY_ASYNC', abi_type=['standard'])
@@ -753,7 +759,7 @@ class NeighborDatatypeArrayAsyncStandard(NeighborDatatypeArrayStandard):
         code.append(f'nb_request->data.release_arrays[idx++] = (void *){self.tmpname};')
         code.append('nb_request->data.release_arrays[idx] = NULL;')
         code.append('} else {')
-        code.append(f'free({self.tmpname});')
+        code.append(f'if (NULL != {self.tmpname}) free({self.tmpname});')
         code.append('}')
         return code
 
@@ -908,9 +914,11 @@ class TypeSourceArrayStandard(StandardABIType):
     def init_code(self):
         code = [(f'int *{self.tmpname} = NULL;')]
         code.append('if('+f'{self.name}' + '!= NULL)' + '{')
-        code.append(f'{self.tmpname} = (int *)malloc(sizeof(int) * {self.count_param});')
+        code.append(f'{self.tmpname} = (int *)ompi_abi_malloc({self.count_param}, sizeof(int));')
+        code.append(f'if (NULL != {self.tmpname})' + '{')
         code.append(f'for(int i=0;i<{self.count_param};i++){{')
         code.append(f'{self.tmpname}[i] = {ConvertFuncs.SOURCE}({self.name}[i]);')
+        code.append('}')
         code.append('}')
         code.append('}')
         return code
@@ -962,17 +970,19 @@ class TypeSourceArrayOutStandard(StandardABIType):
         
     @property
     def init_code(self):
-        code = [f'int *{self.tmpname} = (int*)malloc({self.count_param} * sizeof(int));']
+        code = [f'int *{self.tmpname} = (int*)ompi_abi_malloc({self.count_param}, sizeof(int));']
         return code
     
     @property
     def final_code(self):
         code = [f'if (NULL != {self.name}){{']
+        code.append(f'if (NULL != {self.tmpname}){{')
         code.append(f'for(int i=0;i<{self.count_param};i++){{')
         code.append(f'{self.name}[i] = {ConvertOMPIToStandard.SOURCE}({self.tmpname}[i]);')
         code.append('}')
         code.append('}')
-        code.append(f'free({self.tmpname});')
+        code.append('}')
+        code.append(f'if (NULL != {self.tmpname}) free({self.tmpname});')
         return code
         
     def type_text(self, enable_count=False):
@@ -1158,9 +1168,6 @@ class TypeConstRequest(TypeRequest):
         else:
             return f'const MPI_Request {self.name}[]'
 
-#
-# TODO ABI NEEDS WORK
-#
 @Type.add_type('REQUEST_CONST', abi_type=['standard'])
 class TypeConstRequestStandard(TypeRequestStandard):
 
@@ -1170,16 +1177,18 @@ class TypeConstRequestStandard(TypeRequestStandard):
             code = [f'MPI_Request {self.tmpname} = {ConvertFuncs.REQUEST}({self.name});']
         else:
             code = [f'int size_{self.tmpname} = {self.count_param};']
-        code.append(f'MPI_Request *{self.tmpname} = (MPI_Request *)malloc(sizeof(MPI_Request) * size_{self.tmpname});')
+        code.append(f'MPI_Request *{self.tmpname} = (MPI_Request *)ompi_abi_malloc(size_{self.tmpname}, sizeof(MPI_Request));')
+        code.append(f'if(NULL !={self.tmpname})' + '{')
         code.append(f'for(int i=0;i<size_{self.tmpname};i++){{')
         code.append(f'{self.tmpname}[i] = {ConvertFuncs.REQUEST}({self.name}[i]);')
-        code.append(f'}}')
+        code.append('}')
+        code.append('}')
         return code
 
     @property
     def final_code(self):
         if self.count_param is not None:
-            code = [f'free({self.tmpname});']
+            code = [f'if(NULL != {self.tmpname}) free({self.tmpname});']
         return code
 
     def type_text(self, enable_count=False):
@@ -1219,12 +1228,15 @@ class TypeRequestInOutStandard(StandardABIType):
             code = [f'MPI_Request {self.tmpname} = {ConvertFuncs.REQUEST}(*{self.name});']
         else:
             code = [f'int size_{self.tmpname} = {self.count_param};']
-            code.append(f'MPI_Request *{self.tmpname} = (MPI_Request *)malloc(sizeof(MPI_Request) * size_{self.tmpname});')
+            code.append(f'MPI_Request *{self.tmpname} = (MPI_Request *)ompi_abi_malloc(size_{self.tmpname}, sizeof(MPI_Request));')
+            code.append(f'if (NULL != {self.tmpname})' + '{')
             code.append(f'for(int i=0;i<size_{self.tmpname};i++){{')
             code.append(f'{self.tmpname}[i] = {ConvertFuncs.REQUEST}({self.name}[i]);')
-            code.append(f'}}')
+            code.append('}')
+            code.append('}')
         return code
 
+# TODO: need to free up array
     @property
     def final_code(self):
         if self.count_param is None:
@@ -1317,7 +1329,7 @@ class TypeStausOutStandard(StandardABIType):
             code.append(f'MPI_Status *{self.tmpname} = NULL;')
         code.append(self.if_should_set_status())
         if self.count_param is not None:
-            code.append(f'{self.tmpname} = malloc({self.count_param} * sizeof(MPI_Status));')
+            code.append(f'{self.tmpname} = ompi_abi_malloc({self.count_param}, sizeof(MPI_Status));')
             code.append(f'{self.status_argument} = {self.tmpname};')
         else:
             code.append(f'{self.status_argument} = &{self.tmpname};')
@@ -1559,10 +1571,12 @@ class TypeInfoArray(StandardABIType):
     @property
     def init_code(self):
         code = [f'int size_{self.tmpname} = {self.count_param};']
-        code.append(f'MPI_Info *{self.tmpname} = (MPI_Info *)malloc(sizeof(MPI_Info) * size_{self.tmpname});')
+        code.append(f'MPI_Info *{self.tmpname} = (MPI_Info *)ompi_abi_malloc(size_{self.tmpname}, sizeof(MPI_Info));')
+        code.append(f'if (NULL != {self.tmpname}){{')
         code.append(f'for(int i=0;i<size_{self.tmpname};i++){{')
         code.append(f'{self.tmpname}[i] = {ConvertFuncs.INFO}({self.name}[i]);')
-        code.append(f'}}')
+        code.append('}')
+        code.append('}')
         return code
 
     @property
@@ -1875,7 +1889,7 @@ class TypeCommCopyAttrFunctionStandard(StandardABIType):
         code = [f'MPI_Comm_copy_attr_function *{self.tmpname} = {ConvertFuncs.COMM_COPY_ATTR_FUNCTION}({self.name});']
         code.append('ompi_abi_wrapper_helper_t *helper = NULL;')
         code.append('MPI_Comm_copy_attr_function_ABI_INTERNAL *copy_fn;')
-        code.append('helper = ( ompi_abi_wrapper_helper_t *)malloc(sizeof(ompi_abi_wrapper_helper_t));')
+        code.append('helper = ( ompi_abi_wrapper_helper_t *)ompi_abi_malloc(1, sizeof(ompi_abi_wrapper_helper_t));')
         code.append('if (NULL == helper)  return MPI_ERR_NO_MEM;')
         code.append(f'if ({self.name} == MPI_COMM_NULL_COPY_FN_ABI_INTERNAL)'  + '{')
         code.append('copy_fn = ABI_C_MPI_COMM_NULL_COPY_FN;')
@@ -2069,7 +2083,7 @@ class TypeTypeCopyAttrFunctionStandard(StandardABIType):
         code = [f'MPI_Type_copy_attr_function *{self.tmpname} = {ConvertFuncs.TYPE_COPY_ATTR_FUNCTION}({self.name});']
         code.append('ompi_abi_wrapper_helper_t *helper = NULL;')
         code.append('MPI_Type_copy_attr_function_ABI_INTERNAL *copy_fn;')
-        code.append('helper = ( ompi_abi_wrapper_helper_t *)malloc(sizeof(ompi_abi_wrapper_helper_t));')
+        code.append('helper = ( ompi_abi_wrapper_helper_t *)ompi_abi_malloc(1, sizeof(ompi_abi_wrapper_helper_t));')
         code.append('if (NULL == helper)  return MPI_ERR_NO_MEM;')
         code.append(f'if ({self.name} == MPI_TYPE_NULL_COPY_FN_ABI_INTERNAL)'  + '{')
         code.append('copy_fn = ABI_C_MPI_TYPE_NULL_COPY_FN;')
@@ -2183,7 +2197,7 @@ class TypeWinCopyAttrFunctionStandard(StandardABIType):
         code = [f'MPI_Win_copy_attr_function *{self.tmpname} = {ConvertFuncs.WIN_COPY_ATTR_FUNCTION}({self.name});']
         code.append('ompi_abi_wrapper_helper_t *helper = NULL;')
         code.append('MPI_Win_copy_attr_function_ABI_INTERNAL *copy_fn;')
-        code.append('helper = ( ompi_abi_wrapper_helper_t *)malloc(sizeof(ompi_abi_wrapper_helper_t));')
+        code.append('helper = ( ompi_abi_wrapper_helper_t *)ompi_abi_malloc(1,sizeof(ompi_abi_wrapper_helper_t));')
         code.append('if (NULL == helper)  return MPI_ERR_NO_MEM;')
         code.append(f'if ({self.name} == MPI_WIN_NULL_COPY_FN_ABI_INTERNAL)'  + '{')
         code.append('copy_fn = ABI_C_MPI_WIN_NULL_COPY_FN;')
@@ -3157,11 +3171,13 @@ class TypeDistributioneArrayStandard(StandardABIType):
         code = [f'int size_{self.tmpname} = {self.count_param};']
         code.append(f'int *{self.tmpname} = NULL;')
         code.append('if('+f'{self.name}' + '!= NULL)' + '{')
-        code.append(f'{self.tmpname} = (int *)malloc(sizeof(int) * size_{self.tmpname});')
+        code.append(f'{self.tmpname} = (int *)ompi_abi_malloc(size_{self.tmpname}, sizeof(int));')
+        code.append(f'if (NULL != {self.tmpname}){{')
         code.append(f'for(int i=0;i<size_{self.tmpname};i++){{')
         code.append(f'{self.tmpname}[i] = {ConvertFuncs.SUBARRAY_DISTRIB_TYPES}({self.name}[i]);')
-        code.append(f'}}')
-        code.append(f'}}')
+        code.append('}')
+        code.append('}')
+        code.append('}')
         return code
 
     @property
