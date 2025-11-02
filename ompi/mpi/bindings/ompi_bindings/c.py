@@ -695,6 +695,21 @@ extern "C" {
         self.dump(' */')
         self.dump('#define OMPI_ABI_HANDLE_BASE_OFFSET 16385')
         self.dump('\n')
+        self.dump('/*')
+        self.dump(' * helper functions for abi generated routines ')
+        self.dump(' */')
+        self.dump(f'{consts.INLINE_ATTRS} void *ompi_abi_malloc(MPI_Count count, size_t elsize)')
+        self.dump('{')
+        lines = []
+        lines.append('void *aptr = NULL;')
+        lines.append('if (count > 0) {')
+        lines.append('aptr = (void *)malloc(count * elsize);')
+        lines.append('assert(NULL != aptr);')
+        lines.append('}')
+        lines.append('return aptr;')
+        lines.append('}')
+        lines.append('\n')
+        self.dump_lines(lines)
 
         # Now generate the conversion code - there's a reason for the order here
         # some converters depend on others being declared earlier in the include
