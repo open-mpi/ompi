@@ -1236,17 +1236,20 @@ class TypeRequestInOutStandard(StandardABIType):
             code.append('}')
         return code
 
-# TODO: need to free up array
     @property
     def final_code(self):
         if self.count_param is None:
-            return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.REQUEST}({self.tmpname});']
+            code = [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.REQUEST}({self.tmpname});']
         else:
-            return [
-                f'if (NULL != {self.name}) ' 'for (int i = 0; i < %s; ++i) {' % (self.count_param,),
-                f'{self.name}[i] = {ConvertOMPIToStandard.REQUEST}({self.tmpname}[i]);',
-                '}',
-            ]
+            code = [f'if (NULL != {self.name})' + '{']
+            code.append(f'if (NULL != {self.tmpname})' + '{')
+            code.append('for (int i = 0; i < %s; ++i) {' % (self.count_param,))
+            code.append(f'{self.name}[i] = {ConvertOMPIToStandard.REQUEST}({self.tmpname}[i]);')
+            code.append('}')
+            code.append('}')
+            code.append('}')
+            code.append(f'if (NULL != {self.tmpname}) free({self.tmpname});')
+        return code
 
     @property
     def argument(self):
