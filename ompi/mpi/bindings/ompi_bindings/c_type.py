@@ -1327,14 +1327,20 @@ class TypeStausOutStandard(StandardABIType):
     def init_code(self):
         code = [f'MPI_Status *{self.status_argument} = NULL;']
         if self.count_param is None:
-            code.append(f'MPI_Status {self.tmpname} = {{0}};')
+            code.append(f'MPI_Status {self.tmpname} = ' + '{0};')
         else:
             code.append(f'MPI_Status *{self.tmpname} = NULL;')
         code.append(self.if_should_set_status())
         if self.count_param is not None:
-            code.append(f'{self.tmpname} = ompi_abi_malloc({self.count_param}, sizeof(MPI_Status));')
+            code.append(f'{self.tmpname} = (MPI_Status *)ompi_abi_malloc({self.count_param}, sizeof(MPI_Status));')
+            code.extend([
+                'for (int i = 0; i < %s; ++i) {' % (self.count_param,),
+                f'{ConvertFuncs.STATUS}(&{self.tmpname}[i], &{self.name}[i]);',
+                '}',
+            ])
             code.append(f'{self.status_argument} = {self.tmpname};')
         else:
+            code.append(f'{ConvertFuncs.STATUS}(&{self.tmpname}, {self.name});')
             code.append(f'{self.status_argument} = &{self.tmpname};')
         code.append('} else {')
         if self.count_param is not None:
