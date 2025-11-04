@@ -216,6 +216,15 @@ typedef int (*ompi_osc_base_module_put_fn_t)(const void *origin_addr,
                                             struct ompi_datatype_t *target_dt,
                                             struct ompi_win_t *win);
 
+typedef int (*ompi_osc_base_module_put_with_notify_fn_t)(const void *origin_addr,
+                                            size_t origin_count,
+                                            struct ompi_datatype_t *origin_dt,
+                                            int target,
+                                            ptrdiff_t target_disp,
+                                            size_t target_count,
+                                            struct ompi_datatype_t *target_dt,
+                                            int notify,
+                                            struct ompi_win_t *win);
 
 typedef int (*ompi_osc_base_module_get_fn_t)(void *origin_addr,
                                             size_t origin_count,
@@ -226,6 +235,15 @@ typedef int (*ompi_osc_base_module_get_fn_t)(void *origin_addr,
                                             struct ompi_datatype_t *target_dt,
                                             struct ompi_win_t *win);
 
+typedef int (*ompi_osc_base_module_get_with_notify_fn_t)(void *origin_addr,
+                                            size_t origin_count,
+                                            struct ompi_datatype_t *origin_dt,
+                                            int target,
+                                            ptrdiff_t target_disp,
+                                            size_t target_count,
+                                            struct ompi_datatype_t *target_dt,
+                                            int notify,
+                                            struct ompi_win_t *win);
 
 typedef int (*ompi_osc_base_module_accumulate_fn_t)(const void *origin_addr,
                                                    size_t origin_count,
@@ -276,6 +294,17 @@ typedef int (*ompi_osc_base_module_rput_fn_t)(const void *origin_addr,
                                               struct ompi_win_t *win,
                                               struct ompi_request_t **request);
 
+typedef int (*ompi_osc_base_module_rput_with_notify_fn_t)(const void *origin_addr,
+                                              size_t origin_count,
+                                              struct ompi_datatype_t *origin_dt,
+                                              int target,
+                                              ptrdiff_t target_disp,
+                                              size_t target_count,
+                                              struct ompi_datatype_t *target_dt,
+                                              int notify,
+                                              struct ompi_win_t *win,
+                                              struct ompi_request_t **request); 
+
 typedef int (*ompi_osc_base_module_rget_fn_t)(void *origin_addr,
                                               size_t origin_count,
                                               struct ompi_datatype_t *origin_dt,
@@ -286,6 +315,16 @@ typedef int (*ompi_osc_base_module_rget_fn_t)(void *origin_addr,
                                               struct ompi_win_t *win,
                                               struct ompi_request_t **request);
 
+typedef int (*ompi_osc_base_module_rget_with_notify_fn_t)(void *origin_addr,
+                                              size_t origin_count,
+                                              struct ompi_datatype_t *origin_dt,
+                                              int target,
+                                              ptrdiff_t target_disp,
+                                              size_t target_count,
+                                              struct ompi_datatype_t *target_dt,
+                                              int notify,
+                                              struct ompi_win_t *win,
+                                              struct ompi_request_t **request);
 
 typedef int (*ompi_osc_base_module_raccumulate_fn_t)(const void *origin_addr,
                                                      size_t origin_count,
@@ -371,7 +410,6 @@ typedef int (*ompi_osc_base_module_flush_local_all_fn_t)(struct ompi_win_t *win)
  * module structure.
  */
 
- // TODO: extend the struct and add pointers to put/get_with_notify functions
 struct ompi_osc_base_module_4_0_0_t {
     ompi_osc_base_module_win_shared_query_fn_t osc_win_shared_query;
 
@@ -380,14 +418,18 @@ struct ompi_osc_base_module_4_0_0_t {
     ompi_osc_base_module_free_fn_t osc_free;
 
     ompi_osc_base_module_put_fn_t osc_put;
+    ompi_osc_base_module_put_with_notify_fn_t osc_put_with_notify;
     ompi_osc_base_module_get_fn_t osc_get;
+    ompi_osc_base_module_get_with_notify_fn_t osc_get_with_notify;
     ompi_osc_base_module_accumulate_fn_t osc_accumulate;
     ompi_osc_base_module_compare_and_swap_fn_t osc_compare_and_swap;
     ompi_osc_base_module_fetch_and_op_fn_t osc_fetch_and_op;
     ompi_osc_base_module_get_accumulate_fn_t osc_get_accumulate;
 
     ompi_osc_base_module_rput_fn_t osc_rput;
+    ompi_osc_base_module_rput_with_notify_fn_t osc_rput_with_notify;
     ompi_osc_base_module_rget_fn_t osc_rget;
+    ompi_osc_base_module_rget_with_notify_fn_t osc_rget_with_notify;
     ompi_osc_base_module_raccumulate_fn_t osc_raccumulate;
     ompi_osc_base_module_rget_accumulate_fn_t osc_rget_accumulate;
 
