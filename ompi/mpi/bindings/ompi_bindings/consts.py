@@ -200,6 +200,9 @@ SUBARRAY_DISTRIB_TYPES = [
     'MPI_DISTRIBUTE_NONE',
     'MPI_DISTRIBUTE_BLOCK',
     'MPI_DISTRIBUTE_CYCLIC',
+]
+
+SUBARRAY_DARGS_TYPES = [
     'MPI_DISTRIBUTE_DFLT_DARG',
 ]
 
@@ -581,6 +584,7 @@ class ConvertFuncs:
     WEIGHTS = 'ompi_convert_weight_intern_weight'
     SUBARRAY_ORDER = 'ompi_convert_subarray_order_intern_subarray_order'
     SUBARRAY_DISTRIB_TYPES = 'ompi_convert_subarray_distrib_type_intern_distrib_type'
+    SUBARRAY_DARGS_TYPES = 'ompi_convert_subarray_dargs_type_intern_dargs_type'
     MODE_BITS = 'ompi_convert_mode_bits_intern_mode_bits'
     RMA_MODE_BITS = 'ompi_convert_rma_mode_bits_intern_mode_bits'
     WHENCE = 'ompi_convert_whence_intern_whence'

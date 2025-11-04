@@ -537,6 +537,9 @@ class ABIConverterBuilder:
     def generate_subarray_distrib_types_convert_fn(self):
         self.generic_convert(ConvertFuncs.SUBARRAY_DISTRIB_TYPES, 'dist', 'int', consts.SUBARRAY_DISTRIB_TYPES)
 
+    def generate_subarray_dargs_types_convert_fn(self):
+        self.generic_convert(ConvertFuncs.SUBARRAY_DARGS_TYPES, 'darg', 'int', consts.SUBARRAY_DARGS_TYPES)
+
     def generate_whence_convert_fn(self):
         self.generic_convert(ConvertFuncs.WHENCE, 'whence', 'int', consts.WHENCE_VALUES)
 
@@ -786,6 +789,7 @@ extern "C" {
         self.generate_weight_convert_fn()
         self.generate_subarray_order_convert_fn()
         self.generate_subarray_distrib_types_convert_fn()
+        self.generate_subarray_dargs_types_convert_fn()
         self.generate_root_convert_fn()
         self.generate_t_cb_safety_convert_fn()
         self.generate_win_lock_convert_fn()

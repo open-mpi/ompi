@@ -3202,6 +3202,46 @@ class TypeDistributioneArrayStandard(StandardABIType):
     def parameter(self, enable_count=False, **kwargs):
         return f'const int {self.name}[]'
 
+@Type.add_type('DARGS_ARRAY', abi_type=['ompi'])
+class TypeDargsArray(Type):
+
+    def type_text(self, enable_count=False):
+        return 'const int *'
+
+    def parameter(self, enable_count=False, **kwargs):
+        return f'const int {self.name}[]'
+
+@Type.add_type('DARGS_ARRAY', abi_type=['standard'])
+class TypeDargsArrayStandard(StandardABIType):
+
+    @property
+    def init_code(self):
+        code = [f'int size_{self.tmpname} = {self.count_param};']
+        code.append(f'int *{self.tmpname} = NULL;')
+        code.append('if('+f'{self.name}' + '!= NULL)' + '{')
+        code.append(f'{self.tmpname} = (int *)ompi_abi_malloc(size_{self.tmpname}, sizeof(int));')
+        code.append(f'if (NULL != {self.tmpname}){{')
+        code.append(f'for(int i=0;i<size_{self.tmpname};i++){{')
+        code.append(f'{self.tmpname}[i] = {ConvertFuncs.SUBARRAY_DARGS_TYPES}({self.name}[i]);')
+        code.append('}')
+        code.append('}')
+        code.append('}')
+        return code
+
+  
+    @property
+    def final_code(self):
+        code = [f'if({self.tmpname} != NULL){{']
+        code.append(f'free({self.tmpname});')
+        code.append('}')
+        return code
+
+    def type_text(self, enable_count=False):
+        return 'const int *'
+
+    def parameter(self, enable_count=False, **kwargs):
+        return f'const int {self.name}[]'
+
 @Type.add_type('MODE_BITS', abi_type=['ompi'])
 class TypeModeBits(Type):
 
