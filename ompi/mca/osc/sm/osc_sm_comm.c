@@ -333,31 +333,31 @@ ompi_osc_sm_put_with_notify(const void *origin_addr,
                 int notify,
                 struct ompi_win_t *win)
 {
-int ret;
-ompi_osc_sm_module_t *module =
-    (ompi_osc_sm_module_t*) win->w_osc_module;
-void *remote_address;
+    int ret;
+    ompi_osc_sm_module_t *module =
+        (ompi_osc_sm_module_t*) win->w_osc_module;
+    void *remote_address;
 
-OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                        "put_notify: 0x%lx, %zu, %s, %d, %d, %zu, %s, %d, 0x%lx",
-                        (unsigned long) origin_addr, origin_count,
-                        origin_dt->name, target, (int) target_disp,
-                        target_count, target_dt->name,
-                        notify,
-                        (unsigned long) win));
+    OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
+                            "put_notify: 0x%lx, %zu, %s, %d, %d, %zu, %s, %d, 0x%lx",
+                            (unsigned long) origin_addr, origin_count,
+                            origin_dt->name, target, (int) target_disp,
+                            target_count, target_dt->name,
+                            notify,
+                            (unsigned long) win));
 
-remote_address = ((char*) (module->bases[target])) + module->disp_units[target] * target_disp;
+    remote_address = ((char*) (module->bases[target])) + module->disp_units[target] * target_disp;
 
-ret = ompi_datatype_sndrcv((void *)origin_addr, origin_count, origin_dt,
-                            remote_address, target_count, target_dt);
-if (OMPI_SUCCESS != ret) {
+    ret = ompi_datatype_sndrcv((void *)origin_addr, origin_count, origin_dt,
+                                remote_address, target_count, target_dt);
+    if (OMPI_SUCCESS != ret) {
+        return ret;
+    }
+
+    opal_atomic_wmb();
+    opal_atomic_add(&module->notify_counters[target][notify], 1);
+
     return ret;
-}
-
-opal_atomic_wmb();
-opal_atomic_add(&module->notify_counters[target][notify], 1);
-
-return ret;
 }
 
 int
@@ -419,7 +419,7 @@ ompi_osc_sm_get_with_notify(void *origin_addr,
     ret = ompi_datatype_sndrcv(remote_address, target_count, target_dt,
                                origin_addr, origin_count, origin_dt);
     if (OMPI_SUCCESS != ret) {
-    return ret;
+        return ret;
     }
     opal_atomic_rmb();
     opal_atomic_add(&module->notify_counters[target][notify], 1);
@@ -598,5 +598,5 @@ ompi_osc_sm_fetch_and_op(const void *origin_addr,
  done:
     opal_atomic_unlock(&module->node_states[target].accumulate_lock);
 
-    return OMPI_SUCCESS;;
+    return OMPI_SUCCESS;
 }
