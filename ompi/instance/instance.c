@@ -1292,7 +1292,7 @@ fn_try_again:
             ret = MPI_ERR_ARG; /* pset_name not valid */
             break;
         case PMIX_ERR_UNREACH:
-            sprintf(msg_string,"PMIx server unreachable");
+            snprintf(msg_string, sizeof(msg_string), "PMIx server unreachable");
             opal_show_help("help-comm.txt",
                            "MPI function not supported",
                            true,
@@ -1301,7 +1301,7 @@ fn_try_again:
             ret = MPI_ERR_UNSUPPORTED_OPERATION;
             break;
         case PMIX_ERR_NOT_SUPPORTED:
-            sprintf(msg_string,"PMIx server does not support PMIX_QUERY_PSET_MEMBERSHIP operation");
+            snprintf(msg_string, sizeof(msg_string), "PMIx server does not support PMIX_QUERY_PSET_MEMBERSHIP operation");
             opal_show_help("help-comm.txt",
                            "MPI function not supported",
                            true,

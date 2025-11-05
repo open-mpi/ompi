@@ -497,7 +497,7 @@ static void era_debug_print_group(int lvl, ompi_group_t *group, ompi_communicato
     }
     s = 128 + n * 16;
     str = (char*)malloc(s);
-    sprintf(str, "Group of size %d. Ranks in %d.%d: (", n, comm->c_index, comm->c_epoch);
+    snprintf(str, s, "Group of size %d. Ranks in %d.%d: (", n, comm->c_index, comm->c_epoch);
     p = strlen(str);
     for(i = 0; i < n; i++) {
         snprintf(str + p, s - p, "%d%s", gra[i], i==n-1 ? "" : ", ");
@@ -2283,7 +2283,7 @@ static void send_msg(ompi_communicator_t *comm,
                     b++;
                 } while(w < 256);
                 if( strlen(strbytes) >= 252 ) {
-                    sprintf(strbytes + 252, "...");
+                    snprintf(strbytes + 252, 256 - 252, "...");
                 }
 
                 OPAL_OUTPUT_VERBOSE((30, ompi_ftmpi_output_handle,
