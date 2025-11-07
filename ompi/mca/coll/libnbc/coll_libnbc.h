@@ -139,6 +139,9 @@ OBJ_CLASS_DECLARATION(ompi_coll_libnbc_request_t);
 typedef ompi_coll_libnbc_request_t NBC_Handle;
 
 
+/*
+ * TODO: want to do something better about release arrays at some point
+ */
 #define OMPI_COLL_LIBNBC_REQUEST_ALLOC(comm, persistent, req)           \
     do {                                                                \
         opal_free_list_item_t *item;                                    \
@@ -146,11 +149,27 @@ typedef ompi_coll_libnbc_request_t NBC_Handle;
         req = (ompi_coll_libnbc_request_t*) item;                       \
         OMPI_REQUEST_INIT(&req->super.super, persistent);               \
         req->super.super.req_mpi_object.comm = comm;                    \
+        ompi_coll_base_nbc_request_t *nbc_req =                         \
+                (ompi_coll_base_nbc_request_t *)req;                    \
+        for(int i = 0; i < OMPI_REQ_NB_RELEASE_ARRAYS; i++ ) {          \
+                nbc_req->data.release_arrays[i] = NULL;                 \
+        }                                                               \
     } while (0)
 
+/*
+ * TODO: want to do something better about release arrays at some point
+ */
 #define OMPI_COLL_LIBNBC_REQUEST_RETURN(req)                            \
     do {                                                                \
         OMPI_REQUEST_FINI(&(req)->super.super);                         \
+        ompi_coll_base_nbc_request_t *nbc_req =                         \
+                (ompi_coll_base_nbc_request_t *)(req);                  \
+        for(int i = 0; i < OMPI_REQ_NB_RELEASE_ARRAYS; i++ ) {          \
+            if (NULL != nbc_req->data.release_arrays[i]) {                  \
+                free(nbc_req->data.release_arrays[i]);                      \
+                nbc_req->data.release_arrays[i] = NULL;                     \
+            }                                                              \
+        } \
         opal_free_list_return (&mca_coll_libnbc_component.requests,     \
                                (opal_free_list_item_t*) (req));         \
     } while (0)
