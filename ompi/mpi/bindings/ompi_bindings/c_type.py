@@ -674,22 +674,19 @@ class TypeDatatypeArrayAsyncStandard(TypeDatatypeArrayStandard):
     def need_async_cleanup(self):
         return True
 
-#
-# TODO: this code is deactivated till we fix the NBC cleanup callback methods
-#
     @property
     def final_code(self):
-        return []
-#       request_tmp_name = util.abi_tmp_name('request')
-#       code = []
-#       code.append('if((MPI_SUCCESS == ret_value) && (MPI_REQUEST_NULL != request_tmp)){')
-#       code.append(f'ompi_coll_base_nbc_request_t* nb_request = (ompi_coll_base_nbc_request_t*){request_tmp_name};')
-#       code.append(f'nb_request->data.release_arrays[idx++] = (void *){self.tmpname};')
-#       code.append('nb_request->data.release_arrays[idx] = NULL;')
-#       code.append('} else {')
-#       code.append(f'if (NULL != {self.tmpname}) free({self.tmpname});')
-#       code.append('}')
-#       return code
+        request_tmp_name = util.abi_tmp_name('request')
+        code = []
+        code.append(f'if((MPI_SUCCESS == ret_value) && (MPI_REQUEST_NULL != {request_tmp_name}) && (!REQUEST_COMPLETE({request_tmp_name})))' + '{')
+        code.append(f'ompi_coll_base_nbc_request_t* nb_request = (ompi_coll_base_nbc_request_t*){request_tmp_name};')
+        code.append('assert(nb_request->data.release_arrays[idx] == NULL);')
+        code.append(f'nb_request->data.release_arrays[idx++] = (void *){self.tmpname};')
+        code.append('nb_request->data.release_arrays[idx] = NULL;')
+        code.append('} else {')
+        code.append(f'if (NULL != {self.tmpname}) free({self.tmpname});')
+        code.append('}')
+        return code
 
 @Type.add_type('DATATYPE_ARRAY_OUT', abi_type=['standard'])
 class TypeDatatypeArrayOutStandard(StandardABIType):
@@ -754,22 +751,19 @@ class NeighborDatatypeArrayAsyncStandard(NeighborDatatypeArrayStandard):
     def need_async_cleanup(self):
         return True
 
-#
-# TODO: this code is deactivated till we fix the NBC cleanup callback methods
-#
     @property
     def final_code(self):
-        return []
-#       request_tmp_name = util.abi_tmp_name('request')
-#       code = []
-#       code.append('if((MPI_SUCCESS == ret_value) && (MPI_REQUEST_NULL != request_tmp)){')
-#       code.append(f'ompi_coll_base_nbc_request_t* nb_request = (ompi_coll_base_nbc_request_t*){request_tmp_name};')
-#       code.append(f'nb_request->data.release_arrays[idx++] = (void *){self.tmpname};')
-#       code.append('nb_request->data.release_arrays[idx] = NULL;')
-#       code.append('} else {')
-#       code.append(f'if (NULL != {self.tmpname}) free({self.tmpname});')
-#       code.append('}')
-#       return code
+       request_tmp_name = util.abi_tmp_name('request')
+       code = []
+       code.append(f'if((MPI_SUCCESS == ret_value) && (MPI_REQUEST_NULL != {request_tmp_name}) && (!REQUEST_COMPLETE({request_tmp_name})))' + '{')
+       code.append(f'ompi_coll_base_nbc_request_t* nb_request = (ompi_coll_base_nbc_request_t*){request_tmp_name};')
+       code.append('assert(nb_request->data.release_arrays[idx] == NULL);')
+       code.append(f'nb_request->data.release_arrays[idx++] = (void *){self.tmpname};')
+       code.append('nb_request->data.release_arrays[idx] = NULL;')
+       code.append('} else {')
+       code.append(f'if (NULL != {self.tmpname}) free({self.tmpname});')
+       code.append('}')
+       return code
 
 @Type.add_type('OP', abi_type=['ompi'])
 class TypeOp(Type):
