@@ -681,7 +681,7 @@ class TypeDatatypeArrayAsyncStandard(TypeDatatypeArrayStandard):
         code.append(f'if((MPI_SUCCESS == ret_value) && (MPI_REQUEST_NULL != {request_tmp_name}) && (!REQUEST_COMPLETE({request_tmp_name})))' + '{')
         code.append(f'ompi_coll_base_nbc_request_t* nb_request = (ompi_coll_base_nbc_request_t*){request_tmp_name};')
         code.append('assert(nb_request->data.release_arrays[idx] == NULL);')
-        code.append(f'nb_request->data.release_arrays[idx++] = (void *){self.tmpname};')
+        code.append(f'if (NULL != {self.tmpname}) nb_request->data.release_arrays[idx++] = (void *){self.tmpname};')
         code.append('nb_request->data.release_arrays[idx] = NULL;')
         code.append('} else {')
         code.append(f'if (NULL != {self.tmpname}) free({self.tmpname});')
