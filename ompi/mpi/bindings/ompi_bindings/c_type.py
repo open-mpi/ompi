@@ -1583,7 +1583,7 @@ class TypeInfoArray(StandardABIType):
     def init_code(self):
         code = [f'int size_{self.tmpname} = {self.count_param};']
         code.append(f'MPI_Info *{self.tmpname} = (MPI_Info *)ompi_abi_malloc(size_{self.tmpname}, sizeof(MPI_Info));')
-        code.append(f'if ((NULL != {self.tmpname}) && (NULL != {self.name}) && (MPI_INFO_NULL_ABI_INTERNAL != {self.name})){{')
+        code.append(f'if ((NULL != {self.tmpname}) && (NULL != {self.name})){{')
         code.append(f'for(int i=0;i<size_{self.tmpname};i++){{')
         code.append(f'{self.tmpname}[i] = {ConvertFuncs.INFO}({self.name}[i]);')
         code.append('}')
