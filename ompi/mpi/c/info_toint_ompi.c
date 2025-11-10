@@ -41,7 +41,6 @@ int MPI_Info_toint(MPI_Info info)
     int o_index;
 
     if ( MPI_PARAM_CHECK ) {
-        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (NULL == info || ompi_info_is_freed(info)) {
             return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_INFO, FUNC_NAME);
         }

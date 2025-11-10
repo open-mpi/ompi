@@ -34,14 +34,11 @@
 #define MPI_Info_fromint PMPI_Info_fromint
 #endif
 
-static const char FUNC_NAME[] = "MPI_Info_fromint";
+static const char __opal_attribute_unused__ FUNC_NAME[] = "MPI_Info_fromint";
 
 MPI_Info MPI_Info_fromint(int info)
 {
     int o_index;
-    if ( MPI_PARAM_CHECK ) {
-        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-    }
 
     if (info == 0) {
         return MPI_INFO_NULL;
