@@ -397,7 +397,11 @@ int mca_btl_ofi_context_progress(mca_btl_ofi_context_t *context)
                 mca_btl_ofi_module_t *ofi_btl =
                     (mca_btl_ofi_module_t*) comp->btl;
                 if(ofi_btl->ofi_error_cb){
-                    ofi_btl->ofi_error_cb(comp->btl, 0, comp->endpoint->ep_proc,
+                    opal_proc_t *ep_proc = NULL;
+                    if(comp->endpoint){
+                        ep_proc = comp->endpoint->ep_proc;
+                    }
+                    ofi_btl->ofi_error_cb(comp->btl, 0, ep_proc,
                         "IO error reported by libfabric");
                 }
 
