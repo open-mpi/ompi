@@ -46,7 +46,6 @@ int MPI_Info_toint(MPI_Info_ABI_INTERNAL info)
     MPI_Info info_tmp;
 
     if ( MPI_PARAM_CHECK ) {
-        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         info_tmp = ompi_convert_abi_info_intern_info(info);
         if ((NULL != info) && ompi_info_is_freed(info_tmp)) {
             return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_INFO, FUNC_NAME);
