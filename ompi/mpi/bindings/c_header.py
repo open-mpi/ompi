@@ -40,10 +40,14 @@ INTERNAL_DATATYPES = [
     "MPI_Win",
     "MPI_Comm_copy_attr_function",
     "MPI_Comm_delete_attr_function",
+    "MPI_Comm_errhandler_function",
+    "MPI_File_errhandler_function",
+    "MPI_Session_errhandler_function",
     "MPI_Type_copy_attr_function",
     "MPI_Type_delete_attr_function",
     "MPI_Win_delete_attr_function",
     "MPI_Win_copy_attr_function",
+    "MPI_Win_errhandler_function",
     "MPI_T_enum",
     "MPI_T_cvar_handle",
     "MPI_T_pvar_handle",
@@ -58,21 +62,29 @@ INTERNAL_DATATYPES = [
 ]
 
 DEPRECATED_FUNCTIONS = [
-    "MPI_Keyval_create",
-    "MPI_Keyval_free",
-    "MPI_Attr_put",
-    "MPI_Attr_get",
-    "MPI_Attr_delete",
     "MPI_Address",
+    "MPI_Type_hindexed",
+    "MPI_Type_hvector",
+    "MPI_Type_struct",
+    "MPI_Type_extent",
+    "MPI_Type_lb",
+    "MPI_Type_lb",
+    "MPI_LB",
+    "MPI_UB",
     "MPI_Errhandler_create",
     "MPI_Errhandler_get",
     "MPI_Errhandler_set",
-    "MPI_Type_extent",
-    "MPI_Type_hindexed",
-    "MPI_Type_hvector",
-    "MPI_Type_lb",
-    "MPI_Type_struct",
-    "MPI_Type_ub",
+    "MPI_Keyval_create",
+    "MPI_Keyval_free",
+    "MPI_DUP_FN"
+    "MPI_NULL_COPY_FN"
+    "MPI_NULL_DELETE_FN"
+    "MPI_Attr_delete",
+    "MPI_Attr_get",
+    "MPI_Attr_put",
+    "MPI_COMBINER_HVECTOR_INTEGER",
+    "MPI_COMBINER_HINDEXED_INTEGER",
+    "MPI_COMBINER_STRUCT_INTEGER",
 ]
 
 ENUM_CATEGORIES = [
@@ -323,6 +335,7 @@ for i, line in enumerate(output):
             line = re.sub(datatype_pattern, f"\\g<1>\\g<2>{ABI_INTERNAL}\\g<3>", line)
     # TODO: need to enhance pympistandard to be able to prune out deprecated functions
     # This stands in as a workaround
+    comment_out = False
     comment_out = any(i in line for i in DEPRECATED_FUNCTIONS)
 
     # function is not in the ABI standard (things in MPI 5.1 chapter 19 sections 19.3.4 and 19.3.5

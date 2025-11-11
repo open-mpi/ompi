@@ -1803,13 +1803,15 @@ class TypeCommErrhandlerFunction(Type):
 
 
 @Type.add_type('COMM_ERRHANDLER_FUNCTION', abi_type=['standard'])
-class TypeCommErrhandlerFunctionStandard(Type):
-    # TODO: This may require a special function to wrap the calllback
-    # pass
+class TypeCommErrhandlerFunctionStandard(StandardABIType):
 
     def type_text(self, enable_count=False):
-        return 'MPI_Comm_errhandler_function *'
+        type_name = self.mangle_name('MPI_Comm_errhandler_function')
+        return f'{type_name} *'
 
+    @property
+    def argument(self):
+        return f'(MPI_Comm_errhandler_function *) {self.name}'
 
 @Type.add_type('FILE_ERRHANDLER_FUNCTION', abi_type=['ompi'])
 class TypeFileErrhandlerFunction(Type):
@@ -1819,13 +1821,15 @@ class TypeFileErrhandlerFunction(Type):
 
 
 @Type.add_type('FILE_ERRHANDLER_FUNCTION', abi_type=['standard'])
-class TypeFileErrhandlerFunction(Type):
-    # TODO: This may require a special function to wrap the callback
-    # pass
+class TypeFileErrhandlerFunctionStandard(StandardABIType):
 
     def type_text(self, enable_count=False):
-        return 'MPI_File_errhandler_function *'
-
+        type_name = self.mangle_name('MPI_File_errhandler_function')
+        return f'{type_name} *'
+    
+    @property
+    def argument(self):
+        return f'(MPI_File_errhandler_function *) {self.name}'
 
 @Type.add_type('COPY_FUNCTION', abi_type=['ompi'])
 class TypeCopyFunction(Type):
@@ -1835,7 +1839,7 @@ class TypeCopyFunction(Type):
 
 
 @Type.add_type('COPY_FUNCTION', abi_type=['standard'])
-class TypeCopyFunctionStandard(Type):
+class TypeCopyFunctionStandard(StandardABIType):
     # TODO: This may require a special function to wrap the callback
 #    pass
 
@@ -1850,7 +1854,7 @@ class TypeDeleteFunction(Type):
 
 
 @Type.add_type('DELETE_FUNCTION', abi_type=['standard'])
-class TypeDeleteFunctionStandard(Type):
+class TypeDeleteFunctionStandard(StandardABIType):
     # TODO: This may require a special function to wrap the callback
 #    pass
     def type_text(self, enable_count=False):
@@ -2064,12 +2068,15 @@ class TypeSessionErrhandlerFunction(Type):
 
 
 @Type.add_type('SESSION_ERRHANDLER_FUNCTION', abi_type=['standard'])
-class TypeSessionErrhandlerFunctionStandard(Type):
-    # TODO: This may require a special function to wrap the callback
-#    pass
+class TypeSessionErrhandlerFunctionStandard(StandardABIType):
 
     def type_text(self, enable_count=False):
-        return 'MPI_Session_errhandler_function *'
+        type_name = self.mangle_name('MPI_Session_errhandler_function')
+        return f'{type_name} *'
+    
+    @property
+    def argument(self):
+        return f'(MPI_Session_errhandler_function *) {self.name}'
 
 @Type.add_type('TYPE_COPY_ATTR_FUNCTION', abi_type=['ompi'])
 class TypeTypeCopyAttrFunction(Type):
@@ -2169,7 +2176,6 @@ class TypeTypeDeleteAttrFunctionStandard(StandardABIType):
         return code
 
 @Type.add_type('WIN_ERRHANDLER_FUNCTION', abi_type=['ompi'])
-
 class TypeWinErrhandlerFunction(Type):
 
     def type_text(self, enable_count=False):
@@ -2177,12 +2183,15 @@ class TypeWinErrhandlerFunction(Type):
 
 
 @Type.add_type('WIN_ERRHANDLER_FUNCTION', abi_type=['standard'])
-class TypeWinErrhandlerFunctionStandard(Type):
-    # TODO: This may require a special function to wrap the callback
-#    pass
-
+class TypeWinErrhandlerFunctionStandard(StandardABIType):
+                
     def type_text(self, enable_count=False):
-        return 'MPI_Win_errhandler_function *'
+        type_name = self.mangle_name('MPI_Win_errhandler_function')
+        return f'{type_name} *'
+    
+    @property
+    def argument(self):
+        return f'(MPI_Win_errhandler_function *) {self.name}'
 
 @Type.add_type('WIN_COPY_ATTR_FUNCTION', abi_type=['ompi'])
 class TypeWinCopyAttrFunction(Type):

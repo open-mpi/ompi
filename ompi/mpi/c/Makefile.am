@@ -518,6 +518,7 @@ EXTRA_DIST = $(prototype_sources) \
 	$(prototype_sources_obc) \
 	$(prototype_sources_not_in_abi) \
 	abi_converters.h \
+	abi_converters.c \
 	abi_get_info.c.in \
         abi.h.in
 
@@ -684,6 +685,14 @@ abi_converters.h: abi.h
 	    --output $@ \
 	    c \
 	    converters
+
+abi_converters.c: abi.h abi_converters.h
+	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
+	    --builddir $(abs_top_builddir) \
+	    --srcdir $(abs_top_srcdir) \
+	    --output $@ \
+	    c \
+	    converter_aux_functions
 
 %_abi_generated.c: %.c.in
 	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \

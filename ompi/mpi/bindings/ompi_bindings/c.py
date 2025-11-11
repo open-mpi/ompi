@@ -672,6 +672,36 @@ class ABIConverterBuilder:
         # Ignoring the private fields for now
         self.dump('}')
 
+    def generate_errhandler_args_convert_fn_intern_to_abi(self):
+        self.dump(f'{consts.INLINE_ATTRS} void ompi_convert_errhandler_args_intern_to_abi(void *object, int object_type, int *err_code)')
+        self.dump('{')
+        lines = []
+        lines.append('ompi_communicator_t **comm;')
+        lines.append('ompi_file_t **file;')
+        lines.append('ompi_instance_t **instance;')
+        lines.append('ompi_win_t **win;')
+        lines.append(f'*err_code = {ConvertOMPIToStandard.ERROR_CLASS}(*err_code);')
+        lines.append('switch(object_type) {')
+        lines.append('case OMPI_ERRHANDLER_TYPE_COMM:')
+        lines.append('comm = (ompi_communicator_t **)object;')
+        lines.append(f'*comm = (MPI_Comm *){ConvertOMPIToStandard.COMM}(*comm);')
+        lines.append('break;')
+        lines.append('case OMPI_ERRHANDLER_TYPE_WIN:')
+        lines.append('win = (ompi_win_t **)object;')
+        lines.append(f'*win = (MPI_Win *){ConvertOMPIToStandard.WIN}(*win);')
+        lines.append('break;')
+        lines.append('case OMPI_ERRHANDLER_TYPE_FILE:')
+        lines.append('file = (ompi_file_t **)object;')
+        lines.append(f'*file = (MPI_File *){ConvertOMPIToStandard.FILE}(*file);')
+        lines.append('break;')
+        lines.append('case OMPI_ERRHANDLER_TYPE_INSTANCE:')
+        lines.append('instance = (ompi_instance_t **)object;')
+        lines.append(f'*instance = (MPI_Session *){ConvertOMPIToStandard.SESSION}(*instance);')
+        lines.append('break;')
+        lines.append('};')
+        self.dump_lines(lines);
+        self.dump('}')
+
     def define(self, type_, name, value):
         self.dump(f'#define {name} OMPI_CAST_CONSTANT({type_}, {value})')
 
@@ -713,6 +743,12 @@ extern "C" {
         lines.append('}')
         lines.append('\n')
         self.dump_lines(lines)
+#
+# TODO: need to do something smarter
+#
+        self.dump('\n')
+        self.dump(f'void ompi_convert_errhandler_args_intern_to_abi(void *object, int object_type, int *err_code);')
+        self.dump('\n')
 
         # Now generate the conversion code - there's a reason for the order here
         # some converters depend on others being declared earlier in the include
@@ -809,6 +845,55 @@ extern "C" {
 #endif
 """)
         self.dump(f'#endif /* {header_guard} */')
+
+class ABIConverterGlobalBuilder(ABIConverterBuilder):
+
+    def generate_errhandler_args_convert_fn_intern_to_abi(self):
+        self.dump(f'void ompi_convert_errhandler_args_intern_to_abi(void *object, int object_type, int *err_code)')
+        self.dump('{')
+        lines = []
+        lines.append('ompi_communicator_t **comm;')
+        lines.append('ompi_file_t **file;')
+        lines.append('ompi_instance_t **instance;')
+        lines.append('ompi_win_t **win;')
+        lines.append(f'*err_code = {ConvertOMPIToStandard.ERROR_CLASS}(*err_code);')
+        lines.append('switch(object_type) {')
+        lines.append('case OMPI_ERRHANDLER_TYPE_COMM:')
+        lines.append('comm = (ompi_communicator_t **)object;')
+        lines.append(f'*comm = (ompi_communicator_t *){ConvertOMPIToStandard.COMM}(*comm);')
+        lines.append('break;')
+        lines.append('case OMPI_ERRHANDLER_TYPE_WIN:')
+        lines.append('win = (ompi_win_t **)object;')
+        lines.append(f'*win = (ompi_win_t *){ConvertOMPIToStandard.WIN}(*win);')
+        lines.append('break;')
+        lines.append('case OMPI_ERRHANDLER_TYPE_FILE:')
+        lines.append('file = (ompi_file_t **)object;')
+        lines.append(f'*file = (ompi_file_t *){ConvertOMPIToStandard.FILE}(*file);')
+        lines.append('break;')
+        lines.append('case OMPI_ERRHANDLER_TYPE_INSTANCE:')
+        lines.append('instance = (ompi_instance_t **)object;')
+        lines.append(f'*instance = (ompi_instance_t *){ConvertOMPIToStandard.SESSION}(*instance);')
+        lines.append('break;')
+        lines.append('};')
+        self.dump_lines(lines);
+        self.dump('}')
+
+    def dump_code(self):
+        self.dump('#include "stddef.h"')
+        self.dump('#include "stdint.h"')
+        self.dump('#include "ompi/communicator/communicator.h"')
+        self.dump('#include "ompi/win/win.h"')
+        self.dump('#include "ompi/file/file.h"')
+        self.dump('#include "ompi/instance/instance.h"')
+        self.dump('#include "ompi/errhandler/errhandler.h"')
+        self.dump('#include "ompi/mpi/c/abi.h"')
+        self.dump('#include "ompi/mpi/c/abi_converters.h"')
+
+        #
+        # special case converters:
+        #    - errhandler functions convert
+        #
+        self.generate_errhandler_args_convert_fn_intern_to_abi()
 
 def print_profiling_header(fn_name, out):
     """Print the profiling header code."""
@@ -955,6 +1040,12 @@ def standard_abi(base_name, template, out, suppress_bc=False, suppress_nbc=False
         generate_function(template.prototype, base_name_c, internal_name, out,
                           enable_count=True)
 
+
+def generate_converter_auxiliary_funcs(args, out):
+    """Generate ABI auxiliary files. """
+    out.dump(f'/* {consts.GENERATED_MESSAGE} */')
+    builder = ABIConverterGlobalBuilder(out)
+    builder.dump_code()
 
 def generate_converters(args, out):
     """Generate ABI conversion methods. """
