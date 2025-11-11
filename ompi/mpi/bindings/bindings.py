@@ -59,6 +59,8 @@ def main():
     parser_header.set_defaults(handler=lambda args, out: c.generate_header(args, out))
     parser_header = subparsers_c.add_parser('converters', help='generate converter header file')
     parser_header.set_defaults(handler=lambda args, out: c.generate_converters(args, out))
+    parser_header = subparsers_c.add_parser('converter_aux_functions', help='generate converter auxiliary functions')
+    parser_header.set_defaults(handler=lambda args, out: c.generate_converter_auxiliary_funcs(args, out))
     parser_gen = subparsers_c.add_parser('source', help='generate source file from template file')
     # parser = argparse.ArgumentParser(description='C ABI binding generation code')
     parser_gen.add_argument('type', choices=('ompi', 'standard'),

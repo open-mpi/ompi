@@ -39,6 +39,7 @@ endif
 BUILT_SOURCES = abi.h abi_converters.h standard_abi/mpi.h
 
 libmpi_c_abi_la_SOURCES = \
+        abi_converters.c \
         attr_fn_abi.c \
         ompi_isendrecv.c \
         ompi_sendrecv.c \
