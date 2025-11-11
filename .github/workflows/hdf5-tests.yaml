@@ -20,9 +20,9 @@ jobs:
         make -j 8 && make install
     - name: Install HDF5
       run: |
-         wget --progress=dot:giga https://github.com/HDFGroup/hdf5/releases/latest/download/hdf5.tar.gz
-         tar -xzf hdf5.tar.gz
-         mv hdf5-1* hdf5
+         wget --progress=dot:giga https://github.com/HDFGroup/hdf5/releases/download/hdf5_1.14.6/hdf5-1.14.6.tar.gz
+         tar -xzf hdf5-1.14.6.tar.gz
+         mv hdf5-1.14.6 hdf5
          cd hdf5
          export PATH=/opt/openmpi/bin:${PATH}
          export LD_LIBRARY_PATH=/opt/openmpi/lib:${LD_LIBRARY_PATH}
