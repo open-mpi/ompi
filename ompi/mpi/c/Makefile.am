@@ -684,7 +684,8 @@ abi_converters.h: abi.h
 	    --srcdir $(abs_top_srcdir) \
 	    --output $@ \
 	    c \
-	    converters
+	    converters \
+            --type include_file
 
 abi_converters.c: abi.h abi_converters.h
 	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
@@ -692,7 +693,8 @@ abi_converters.c: abi.h abi_converters.h
 	    --srcdir $(abs_top_srcdir) \
 	    --output $@ \
 	    c \
-	    converter_aux_functions
+	    converters \
+            --type source_file
 
 %_abi_generated.c: %.c.in
 	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
@@ -750,7 +752,7 @@ type_get_envelope_c_abi_generated.c: type_get_envelope_c.c.in_obc
 	    $<
 endif
 
-MAINTAINERCLEANFILES = *_generated.c abi_get_info.c $(nobase_include_HEADERS)
+MAINTAINERCLEANFILES = *_generated.c abi_get_info.c abi_converters.c $(nobase_include_HEADERS)
 if OMPI_STANDARD_ABI
 include Makefile_abi.include
 endif
