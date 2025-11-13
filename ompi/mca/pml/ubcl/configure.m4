@@ -21,8 +21,6 @@ AC_DEFUN([MCA_ompi_pml_ubcl_CONFIG], [
 
     AC_REQUIRE([MCA_ompi_common_ubcl_CONFIG])
     AC_REQUIRE([MCA_opal_common_ubcl_CONFIG])
-    AC_REQUIRE([OPAL_CHECK_CUDA])
-    AC_REQUIRE([OPAL_CHECK_CUDART])
 
     AS_IF([test "$pml_ubcl_happy" = "yes"],
           [$1],
