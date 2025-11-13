@@ -43,6 +43,7 @@
 #include "pml_ob1_rdmafrag.h"
 #include "pml_ob1_recvreq.h"
 #include "ompi/mca/bml/base/base.h"
+#include "opal/util/minmax.h"
 
 OBJ_CLASS_INSTANCE(mca_pml_ob1_send_range_t, opal_free_list_item_t,
         NULL, NULL);
@@ -87,6 +88,24 @@ void mca_pml_ob1_send_request_process_pending(mca_bml_base_btl_t *bml_btl)
                 }
             }
             break;
+        case MCA_PML_OB1_SEND_PENDING_MULTI_EAGER: {
+            send_dst = mca_bml_base_btl_array_find(
+                    &sendreq->req_endpoint->btl_eager, bml_btl->btl);
+            if (NULL == send_dst) {
+                /* Put request back onto pending list and try next one. */
+                add_request_to_send_pending(sendreq,
+                                            MCA_PML_OB1_SEND_PENDING_MULTI_EAGER, /*append=*/true);
+                break;
+            }
+
+            rc = mca_pml_ob1_send_request_progess_multi_eager(sendreq, bml_btl);
+            if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
+                add_request_to_send_pending(sendreq,
+                                            MCA_PML_OB1_SEND_PENDING_MULTI_EAGER, /*append=*/false);
+                return;
+            }
+            break;
+        }
         default:
             opal_output(0, "[%s:%d] wrong send request type\n",
                     __FILE__, __LINE__);
@@ -737,6 +756,155 @@ int mca_pml_ob1_send_request_start_copy( mca_pml_ob1_send_request_t* sendreq,
     mca_bml_base_free (bml_btl, des);
 
     return rc;
+}
+
+/*
+ *  Completion of the first fragment of a long message that
+ *  requires an acknowledgement
+ */
+static void
+mca_pml_ob1_send_multi_eager_fragment_complete(mca_btl_base_module_t *btl,
+                                               struct mca_btl_base_endpoint_t *ep,
+                                               struct mca_btl_base_descriptor_t *des,
+                                               int status)
+{
+    mca_pml_ob1_send_request_t* sendreq = (mca_pml_ob1_send_request_t*)des->des_cbdata;
+
+    /* check completion status */
+    if( OPAL_UNLIKELY(OMPI_SUCCESS != status) ) {
+        opal_output_verbose(mca_pml_ob1_output, 1, "pml:ob1: %s: operation failed with code %d", __func__, status);
+        sendreq->req_send.req_base.req_ompi.req_status.MPI_ERROR =
+#if OPAL_ENABLE_FT_MPI
+            (OMPI_ERR_UNREACH == status ? MPI_ERR_PROC_FAILED : status);
+#else
+            status;
+#endif
+        mca_bml_base_btl_array_remove(&sendreq->req_endpoint->btl_eager, btl);
+        /**
+         * Ideally we should release the BTL at this point. Unfortunately as we don't
+         * know if other operations are pending on it we can't release it yet (or we
+         * will prevent any further callbacks triggering).
+         */
+    }
+
+    OPAL_THREAD_ADD_FETCH32(&sendreq->req_state, -1);
+    send_request_pml_complete_check(sendreq);
+}
+
+static inline mca_btl_base_descriptor_t *mca_pml_ob1_alloc_and_pack(mca_pml_ob1_send_request_t *sendreq,
+                                                                    mca_bml_base_btl_t* bml_btl,
+                                                                    size_t hdr_size, size_t *size)
+{
+    mca_btl_base_descriptor_t *des;
+
+    if (bml_btl->btl_flags & MCA_BTL_FLAGS_SEND_INPLACE) {
+        /* prepare descriptor */
+        mca_bml_base_prepare_src (bml_btl, &sendreq->req_send.req_base.req_convertor,
+                                  MCA_BTL_NO_ORDER, hdr_size, size,
+                                  MCA_BTL_DES_FLAGS_PRIORITY | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP,
+                                  &des);
+        return des;
+    }
+
+    mca_bml_base_alloc(bml_btl, &des, MCA_BTL_NO_ORDER, hdr_size + *size,
+                       MCA_BTL_DES_FLAGS_PRIORITY | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP |
+                       MCA_BTL_DES_FLAGS_SIGNAL);
+    if (OPAL_UNLIKELY(NULL == des)) {
+        return NULL;
+    }
+    struct iovec iov = {
+        .iov_base = (IOVBASE_TYPE*)((uintptr_t)des->des_segments->seg_addr.pval + hdr_size),
+        .iov_len = *size,
+    };
+    unsigned int iov_count = 1;
+    opal_convertor_pack(&sendreq->req_send.req_base.req_convertor, &iov, &iov_count,
+                        size);
+    return des;
+}
+
+static inline int mca_pml_ob1_send_helper(mca_pml_ob1_send_request_t *sendreq, mca_bml_base_btl_t *bml_btl, void *hdr, size_t hdr_size, size_t *size,
+                                          mca_btl_base_completion_fn_t comp_fn)
+{
+    int rc = mca_bml_base_sendi (bml_btl, &sendreq->req_send.req_base.req_convertor, hdr, hdr_size,
+                                 *size, MCA_BTL_NO_ORDER, MCA_BTL_DES_FLAGS_PRIORITY | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP,
+                                 MCA_PML_OB1_HDR_TYPE_MULTI_EAGER, /*des=*/NULL);
+    if (OPAL_LIKELY(OPAL_SUCCESS == rc)) {
+        return OPAL_SUCCESS;
+    }
+
+    mca_btl_base_descriptor_t *des = mca_pml_ob1_alloc_and_pack(sendreq, bml_btl, hdr_size, size);
+    if (OPAL_UNLIKELY(NULL == des)) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+    memcpy(des->des_segments->seg_addr.pval, hdr, hdr_size);
+    if (comp_fn) {
+        des->des_cbfunc = comp_fn;
+        des->des_cbdata = sendreq;
+    }
+
+    OPAL_THREAD_ADD_FETCH32(&sendreq->req_state, 1);
+
+    rc = mca_bml_base_send(bml_btl, des, MCA_PML_OB1_HDR_TYPE_MULTI_EAGER);
+    if (1 == rc) {
+        OPAL_THREAD_ADD_FETCH32(&sendreq->req_state, -1);
+        rc = OMPI_SUCCESS;
+    } else if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
+        OPAL_THREAD_ADD_FETCH32(&sendreq->req_state, 1);
+        mca_bml_base_free(bml_btl, des);
+    }
+
+    return rc;
+}
+
+static inline int mca_pml_ob1_send_multi_eager_fragment(mca_pml_ob1_send_request_t *sendreq,
+                                                        mca_bml_base_btl_t *bml_btl)
+{
+    mca_pml_ob1_multi_eager_hdr_t send_hdr;
+    size_t offset = sendreq->req_bytes_delivered;
+    size_t size = opal_min(sendreq->req_send.req_bytes_packed - offset, bml_btl->btl->btl_eager_limit - sizeof(send_hdr));
+
+    mca_pml_ob1_multi_eager_hdr_prepare(&send_hdr, /*hdr_flags=*/0,
+                                           sendreq->ob1_proc->comm_index, sendreq->req_send.req_base.req_comm->c_my_rank,
+                                           sendreq->req_send.req_base.req_tag, (uint16_t)sendreq->req_send.req_base.req_sequence,
+                                           sendreq->req_send.req_bytes_packed, sendreq->req_bytes_delivered);
+    ob1_hdr_hton(&send_hdr, MCA_PML_OB1_HDR_TYPE_MULTI_EAGER, sendreq->req_send.req_base.req_proc);
+
+    int rc = mca_pml_ob1_send_helper(sendreq, bml_btl, &send_hdr, sizeof(send_hdr), &size,
+                                     mca_pml_ob1_send_multi_eager_fragment_complete);
+    if (OPAL_LIKELY(OMPI_SUCCESS == rc)) {
+        opal_convertor_set_position(&sendreq->req_send.req_base.req_convertor,
+                                    &offset);
+        sendreq->req_bytes_delivered += size;
+    }
+
+    return rc;
+}
+
+int mca_pml_ob1_send_request_progess_multi_eager (mca_pml_ob1_send_request_t *sendreq,
+                                                       mca_bml_base_btl_t *bml_btl)
+{
+    while (sendreq->req_bytes_delivered < sendreq->req_send.req_bytes_packed) {
+        int ret = mca_pml_ob1_send_multi_eager_fragment(sendreq, bml_btl);
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
+            return ret;
+        }
+    }
+    /* all fragments have been sent/scheduled */
+    send_request_pml_complete_check(sendreq);
+
+    return OMPI_SUCCESS;
+}
+
+int mca_pml_ob1_send_request_start_multi_eager( mca_pml_ob1_send_request_t* sendreq,
+                                              mca_bml_base_btl_t* bml_btl )
+{
+    int ret = mca_pml_ob1_send_request_progess_multi_eager(sendreq, bml_btl);
+    if (OPAL_UNLIKELY(OPAL_ERR_OUT_OF_RESOURCE == ret && sendreq->req_bytes_delivered > 0)) {
+        /* continue on this request with this btl later */
+        add_request_to_send_pending(sendreq, MCA_PML_OB1_SEND_PENDING_MULTI_EAGER, /*append=*/true);
+        ret = OMPI_SUCCESS;
+    }
+    return ret;
 }
 
 /**
