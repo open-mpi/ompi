@@ -186,6 +186,10 @@ libmpi_abi_la_LIBADD = \
 	mpi/c/libmpi_c_abi.la \
 	mpi/tool/libmpi_mpit_abi.la
 
+libmpi_abi_la_LDFLAGS = \
+       -version-info $(libmpi_abi_so_version) \
+        $(OMPI_LIBMPI_EXTRA_LDFLAGS)
+
 # included subdirectory Makefile.am's and appended-to variables
 headers =
 include_HEADERS =
