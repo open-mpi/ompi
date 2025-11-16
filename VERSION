@@ -92,6 +92,12 @@ date="Unreleased developer copy"
 # but they are "public" within the OMPI code base and select 3rd party
 # software packages.
 
+# The current and age values of the libmpi_abi shared library are defined by the
+# specification of the ABI for the version of the MPI standard supported
+# by this Open MPI release.  One would hope that these always move in
+# sync.  We assume we have flexibility with the revision number as
+# bugs are fixed, etc.
+
 # Version numbers are described in the Libtool current:revision:age
 # format.
 
@@ -100,6 +106,7 @@ libmpi_mpifh_so_version=0:0:0
 libmpi_usempi_tkr_so_version=0:0:0
 libmpi_usempi_ignore_tkr_so_version=0:0:0
 libmpi_usempif08_so_version=0:0:0
+libmpi_abi_so_version=0:0:0
 libopen_pal_so_version=0:0:0
 libmpi_java_so_version=0:0:0
 liboshmem_so_version=0:0:0
