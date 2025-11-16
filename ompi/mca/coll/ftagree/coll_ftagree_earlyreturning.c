@@ -1930,6 +1930,7 @@ static void *era_error_event_cb(int fd, int flags, void *context) {
     ompi_coll_ftagree_era_agreement_info_t* ci = event->ci;
     free(event);
     era_mark_process_failed(ci, r);
+    OBJ_RELEASE(ci);
     return NULL;
 }
 
@@ -1948,6 +1949,7 @@ static void era_mark_process_failed(ompi_coll_ftagree_era_agreement_info_t *ci, 
         event->rank = rank;
         opal_event_evtimer_set(opal_sync_event_base, &event->ev, era_error_event_cb, event);
         opal_event_add(&event->ev, &now);
+        OBJ_RETAIN(ci);
         return;
     }
 
