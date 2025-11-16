@@ -70,9 +70,7 @@ extra_abi_fns = \
         type_fromint_abi.c \
         type_toint_abi.c \
         win_fromint_abi.c \
-        win_toint_abi.c \
-        wtick.c
-
+        win_toint_abi.c
 
 libmpi_c_abi_la_CPPFLAGS = -DOMPI_NO_MPI_PROTOTYPES -DOMPI_BUILD_MPI_PROFILING=0 -DOMPI_BUILD_STANDARD_ABI
 libmpi_c_abi_la_LIBADD = libmpi_c_abi_profile.la

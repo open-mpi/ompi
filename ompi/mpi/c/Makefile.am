@@ -469,6 +469,7 @@ prototype_sources = \
 	win_unlock_all.c.in \
 	win_unlock.c.in \
 	win_wait.c.in \
+        wtick.c.in \
         wtime.c.in
 
 prototype_sources_nbc = \
@@ -577,8 +578,7 @@ extra_interface_profile_sources = \
 	type_fromint_ompi.c \
         type_toint_ompi.c \
 	win_fromint_ompi.c \
-        win_toint_ompi.c \
-        wtick.c
+        win_toint_ompi.c
 
 # The following functions were removed from the MPI standard, but are
 # retained for ABI compliance reasons.  They are listed independently
