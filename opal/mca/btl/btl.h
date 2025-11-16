@@ -273,6 +273,9 @@ typedef uint8_t mca_btl_base_tag_t;
  */
 #define MCA_BTL_FLAGS_RDMA_REMOTE_COMPLETION 0x800000
 
+/* End of btl flags. if additional flags are added please update
+ * mca_btl_base_flag_enum_flags in btl_base_frame.c */
+
 /* Default exclusivity levels */
 #define MCA_BTL_EXCLUSIVITY_HIGH    (64 * 1024) /* internal loopback */
 #define MCA_BTL_EXCLUSIVITY_DEFAULT 1024 /* GM/IB/etc. */
