@@ -792,13 +792,12 @@ bool ompi_comm_is_proc_active(ompi_communicator_t *comm, int peer_id, bool remot
 
 int ompi_comm_set_rank_failed(ompi_communicator_t *comm, int peer_id, bool remote)
 {
-#if OPAL_ENABLE_DEBUG
     /* populate the proc in the comm's group array so that it is not a
        sentinel and can be read as failed */
-    ompi_proc_t *ompi_proc = ompi_group_get_proc_ptr((remote ? comm->c_remote_group : comm->c_local_group),
-                                                     peer_id, true);
+    ompi_proc_t *ompi_proc __opal_attribute_unused__;
+    ompi_proc = ompi_group_get_proc_ptr((remote ? comm->c_remote_group : comm->c_local_group),
+                                        peer_id, true);
     assert(NULL != ompi_proc);
-#endif
 
     /* Disable ANY_SOURCE */
     comm->any_source_enabled = false;
