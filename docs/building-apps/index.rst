@@ -14,6 +14,7 @@ Open MPI "wrapper" compilers.
    removed-mpi-constructs
    deprecation-warnings
    building-static-apps
+   mpi-abi
 
 .. warning:: Open MPI does not attempt to interoperate with other MPI
              implementations, nor executables that were compiled for
