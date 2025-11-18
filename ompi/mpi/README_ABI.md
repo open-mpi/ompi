@@ -4,12 +4,10 @@ Last updated: November 2025
 
 This README describes the current approach to supporting the MPI-5 
 Application Binary Interface (ABI).  The MPI ABI is described in 
-Chapter 21 of the MPI-5 standard.  The standardizes values for
+Chapter 20 of the MPI-5 standard.  The standardized values for
 constants, etc. are presented in Appendix A of that document.
 
-At this time, Open MPI is only supporting the 'c' ABI functionality
-although the Fortran related query methods presented in Chapter 21
-are supported.
+Open MPI supports the 'c' ABI functionality described in that chapter.
 
 ## What does having a defined ABI mean to applications?
 
@@ -21,10 +19,14 @@ This only applies to dynamically linked applications.
 In principle a single mpi.h include file can be used, for example
 the one provided at https://github.com/mpi-forum/mpi-abi-stubs.
 
-Chapter 21 specifies the shared library name (soname) of the ABI MPI
-library and its file name (libmpi\_abi).  The major and minor versions
-of the library are specified in this chapter as well.  The name of
-the compiler wrapper - mpicc\_abi - is also specified.
+The MPI ABI specifies the file name of the ABI MPI
+library (libmpi_abi). It does not explicitly specify the shared library
+name(SONAME),  but it presumably is libmpi_abi.0. Note we need for this to
+by the same name as that used by the MPICH implementation of the MPI ABI.
+The major and minor versions of the library are specified in this chapter as well.  
+See the top level VERSION file for adjusting the SONAME.
+
+The name of the compiler wrapper - mpicc_abi - is also specified.
 
 ## Refactor of Open MPI to support the MPI ABI
 
@@ -39,14 +41,14 @@ libraries are linked.  The structure is depicted below:
 
          MPI ABI                 OMPI ABI
   +----------------------+----------------------+
-  |     libmpi\_abi.la    |       libmpi.la     |
+  |     libmpi_abi.la    |       libmpi.la      |
   +----------------------+----------------------+
-  |              libopen\_mpi.la                |
+  |              libopen_mpi.la                 |
   +----------------------+----------------------+
  
 Note the ability to change the name of the OMPI ABI library (libmpi.la)
 is still supported, so in the code base Makefiles this library actually
-appears as lib@OMPI\_LIBMPI\_NAME@.la).
+appears as lib@OMPI_LIBMPI_NAME@.la).
 
 Since the Fortran ABI is not currently supported, the Fortran libraries
 are only linked against libmpi.so.0.
@@ -56,9 +58,9 @@ are only linked against libmpi.so.0.
 The MPI and OMPI libraries are installed in the same <install-path>/lib
 folder.  They have different file names so this presents no problems.
 The OMPI ABI include files are installed in <install-path>/include as usual.
-The MPI ABI include file is installed in <install-path>/include/standard\_abi.
-The mpicc\_abi compiler wrapper points the c compiler to the correct mpi.h and
-links the the executable/shared library against libmpi\_abi.
+The MPI ABI include file is installed in <install-path>/include/standard_abi.
+The mpicc_abi compiler wrapper points the c compiler to the correct mpi.h and
+links the executable/shared library against libmpi_abi.
 
 ## Generating the ABI compliant mpi.h
 
@@ -77,21 +79,23 @@ components:
 2. two json files: mpi-standard-apis.json and mpi-standard-abi.json.
    The former is generated as part of the build process for the MPI standard.
    The later is generated via a tool (not yet incorporated in the upstream 
-   mpi-standard code base).  The tool converts the values embedded in the
+   MPI standard code base).  The tool converts the values embedded in the
    appendix A latex file into a json file specifying the values for MPI
-   constants, e.g. value of MPI\_COMM\_WORLD. These json files reside in
+   constants, e.g. value of MPI_COMM_WORLD. These json files reside in
    the top level docs folder.  Note the first json file is also used to
    generate makefile content.
 
-3. A tool - c\_header.py was written to parse the two json files 
+3. A tool - c_header.py was written to parse the two json files 
    described above and generate the MPI ABI compliant mpi.h and a name mangled
    version - abi.h.  Eventually this tool will be incorporated into the
    binding infrastructure.  More on the binding infrastructure below.
    The tool uses methods from pympistandard.
 
-4. The c\_header.py tool uses a template file - abi.h.in located in
+4. The c_header.py tool uses a template file - abi.h.in located in
    the ompi/mpi/c folder to generate the MPI ABI mpi.h and the name
-   mangled version - abi.h.  The tool uses methods from pympistandard.
+   mangled version - abi.h. The template is just used to structure how the
+   various blocks of the resulting mpi.h are placed, not the actual content.
+   The tool uses methods from pympistandard.
 
 ## Generating the MPI ABI compliant c bindings
 
@@ -103,7 +107,7 @@ This infrastructure uses templates (*.c.in) files to generate up to four
 variants:  OMPI ABI int count, OMPI ABI big count, MPI ABI int count, 
 MPI ABI big count.  There are a small set of functions which have
 only int count or big count.  The templates for these files have
-suffixes of (*.c.in\_obc for big count only and *.c.in\_nbc for int
+suffixes of (*.c.in_obc for big count only and *.c.in_nbc for int
 count only).
 
 Note a number of procedures (e.g. all the _f2c/_c2f) are not present in 
@@ -120,9 +124,9 @@ generated include both the OMPI ABI mpi.h and the name
 mangled MPI ABI abi.h include files.  Thus the generated source files 
 have two definitions of MPI predefined constants.  As an example
 in a MPI ABI source file there are two world communicator values defined:
-MPI\_COMM\_WORLD, and MPI\_COMM\_WORLD\_ABI\_INTERNAL.  The former
+MPI_COMM_WORLD, and MPI_COMM_WORLD_ABI_INTERNAL.  The former
 is the OMPI ABI defintion of the world communicator(address of a
-global variable) , the later the MPI ABI value for this constant (an integer).   
+global variable) , the later being the MPI ABI value for this constant (an integer).   
 
 The bindings framework parses the input argument types to the function
 and generates calls to appropriate converter methods to convert any MPI ABI
@@ -132,8 +136,8 @@ are converted from the OMPI ABI values back to MPI ABI ones.
 This includes fields in MPI_Status objects which require conversion 
 (in particular error values) and error return values from the wrapped code.
 
-The bindings framework also generates two helper files - abi\_converter.h
-and abi\_converter.c in addition to the generatedd OMPI and MPI ABI
+The bindings framework also generates two helper files - abi_converter.h
+and abi_converter.c in addition to the generatedd OMPI and MPI ABI
 source files.
 
 There are several implications of this approach.  
@@ -142,7 +146,7 @@ First very few changes have to made to the internal Open MPI source code.
 
 A second is that top level MPI ABI c entry points are expecting
 argument values using MPI ABI constants.  Thus calling top 
-level MPI functions from within libompi\_mpi will not work 
+level MPI functions from within libompi_mpi will not work 
 properly.
 
 A third is there are a few places in non-blocking/persistent 
@@ -171,12 +175,12 @@ ops functions to allow for invocation of a translation routine to
 convert the datatype argument from the OMPI ABI to MPI ABI values
 as appropriate.  A similar approach is taken for errhandlers.
 
-Generalized requests don't need speial support as the MPI Status
+Generalized requests don't need special support as the MPI Status
 structure for both MPI and OMPI ABIs are similar enough as to not
 require conversion.
 
 OMPI doesn't really support datarep functions so currently there
-is no need for any argument conversion operations.
+is no need for any argument conversion operations for these functions.
 
 The MPI_T event implementation is just a set of stubs so there's
 no need for special support for MPI_T_event callback functions.
