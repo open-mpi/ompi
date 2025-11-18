@@ -103,7 +103,7 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
     /* initialize free list for small send and inline fragments */
     rc = opal_free_list_init(&component->sm_frags_user, sizeof(mca_btl_sm_frag_t),
                              opal_cache_line_size, OBJ_CLASS(mca_btl_sm_frag_t),
-                             mca_btl_sm_component.max_inline_send + sizeof(mca_btl_sm_frag_t),
+                             mca_btl_sm_component.max_inline_send + sizeof(mca_btl_sm_hdr_t),
                              opal_cache_line_size, component->sm_free_list_num,
                              component->sm_free_list_max, component->sm_free_list_inc,
                              component->mpool, 0, NULL, mca_btl_sm_frag_init,
@@ -115,7 +115,7 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
     /* initialize free list for buffered send fragments */
     rc = opal_free_list_init(&component->sm_frags_eager, sizeof(mca_btl_sm_frag_t),
                              opal_cache_line_size, OBJ_CLASS(mca_btl_sm_frag_t),
-                             mca_btl_sm.super.btl_eager_limit + sizeof(mca_btl_sm_frag_t),
+                             mca_btl_sm.super.btl_eager_limit + sizeof(mca_btl_sm_hdr_t),
                              opal_cache_line_size, component->sm_free_list_num,
                              component->sm_free_list_max, component->sm_free_list_inc,
                              component->mpool, 0, NULL, mca_btl_sm_frag_init,
@@ -128,7 +128,7 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
         /* initialize free list for buffered send fragments */
         rc = opal_free_list_init(&component->sm_frags_max_send, sizeof(mca_btl_sm_frag_t),
                                  opal_cache_line_size, OBJ_CLASS(mca_btl_sm_frag_t),
-                                 mca_btl_sm.super.btl_max_send_size + sizeof(mca_btl_sm_frag_t),
+                                 mca_btl_sm.super.btl_max_send_size + sizeof(mca_btl_sm_hdr_t),
                                  opal_cache_line_size, component->sm_free_list_num,
                                  component->sm_free_list_max, component->sm_free_list_inc,
                                  component->mpool, 0, NULL, mca_btl_sm_frag_init,
