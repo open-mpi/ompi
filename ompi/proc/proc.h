@@ -17,6 +17,7 @@
  * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
+ * Copyright (c) 2025      BULL S.A.S. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -191,6 +192,24 @@ OMPI_DECLSPEC ompi_proc_t** ompi_proc_world(size_t* size);
  */
 
 OMPI_DECLSPEC int ompi_proc_world_size (void);
+
+/**
+ * Returns the list of proc with the given name
+ * Returns the list of proc associated with the jobid of the given
+ * name. If at least one proc with the jobid, then the name is known and we
+ * return the procs.
+ *
+ * @note The reference count of each process in the array is
+ * NOT incremented.
+ *
+ * @param[in] name     Name containing the jobid of wanted processes
+ * @param[in] size     Number of processes in the ompi_proc_t array
+ *
+ * @return Array of pointers to proc instances under the same name in the current
+ * MPI_COMM_WORLD, or NULL if there is an internal failure.
+ */
+OMPI_DECLSPEC ompi_proc_t **ompi_proc_get_by_name(const ompi_process_name_t *name,
+                                                  size_t *size);
 
 /**
  * Returns the list of proc instances associated with this job.

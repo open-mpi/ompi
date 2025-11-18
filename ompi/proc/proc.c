@@ -20,6 +20,7 @@
  * Copyright (c) 2015-2017 Mellanox Technologies. All rights reserved.
  *
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
+ * Copyright (c) 2025      Bull SAS.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -417,25 +418,19 @@ int ompi_proc_world_size (void)
     return ompi_process_info.num_procs;
 }
 
-ompi_proc_t **ompi_proc_get_allocated (size_t *size)
+ompi_proc_t **ompi_proc_get_by_name(const ompi_process_name_t *name, size_t *size)
 {
     ompi_proc_t **procs;
     ompi_proc_t *proc;
     size_t count = 0;
     ompi_rte_cmp_bitmask_t mask;
-    ompi_process_name_t my_name;
 
-    /* check bozo case */
-    if (NULL == ompi_proc_local_proc) {
-        return NULL;
-    }
     mask = OMPI_RTE_CMP_JOBID;
-    my_name = *OMPI_CAST_RTE_NAME(&ompi_proc_local_proc->super.proc_name);
 
     /* First count how many match this jobid */
     opal_mutex_lock (&ompi_proc_lock);
     OPAL_LIST_FOREACH(proc, &ompi_proc_list, ompi_proc_t) {
-        if (OPAL_EQUAL == ompi_rte_compare_name_fields(mask, OMPI_CAST_RTE_NAME(&proc->super.proc_name), &my_name)) {
+        if (OPAL_EQUAL == ompi_rte_compare_name_fields(mask, OMPI_CAST_RTE_NAME(&proc->super.proc_name), name)) {
             ++count;
         }
     }
@@ -450,7 +445,7 @@ ompi_proc_t **ompi_proc_get_allocated (size_t *size)
     /* now save only the procs that match this jobid */
     count = 0;
     OPAL_LIST_FOREACH(proc, &ompi_proc_list, ompi_proc_t) {
-        if (OPAL_EQUAL == ompi_rte_compare_name_fields(mask, &proc->super.proc_name, &my_name)) {
+        if (OPAL_EQUAL == ompi_rte_compare_name_fields(mask, &proc->super.proc_name, name)) {
             /* DO NOT RETAIN THIS OBJECT - the reference count on this
              * object will be adjusted by external callers. The intent
              * here is to allow the reference count to drop to zero if
@@ -472,6 +467,19 @@ ompi_proc_t **ompi_proc_get_allocated (size_t *size)
 
     *size = count;
     return procs;
+}
+
+ompi_proc_t **ompi_proc_get_allocated (size_t *size)
+{
+    ompi_process_name_t my_name;
+
+    /* check bozo case */
+    if (NULL == ompi_proc_local_proc) {
+        return NULL;
+    }
+    my_name = *OMPI_CAST_RTE_NAME(&ompi_proc_local_proc->super.proc_name);
+
+    return ompi_proc_get_by_name(&my_name, size);
 }
 
 ompi_proc_t **ompi_proc_world (size_t *size)

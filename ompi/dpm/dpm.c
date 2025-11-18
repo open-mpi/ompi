@@ -25,6 +25,7 @@
  *                         reserved.
  * Copyright (c) 2022      IBM Corporation.  All rights reserved.
  * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
+ * Copyright (c) 2025      BULL S.A.S. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -473,7 +474,10 @@ bcast_rportlen:
         } while (!opal_list_is_empty(&ilist));
 
         /* call add_procs on the new ones */
-        rc = MCA_PML_CALL(add_procs(new_proc_list, opal_list_get_size(&ilist)));
+        rc = MCA_PML_CALL(add_procs(new_proc_list, i));
+        /* Register spawned procs names to clean them up after */
+        ompi_proc_retain_spawned_jobids(new_proc_list, i);
+
         free(new_proc_list);
         new_proc_list = NULL;
         if (OMPI_SUCCESS != rc) {
