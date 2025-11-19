@@ -107,7 +107,7 @@ int ompi_osc_sm_detach(struct ompi_win_t *win, const void *base);
 
 int ompi_osc_sm_free(struct ompi_win_t *win);
 
-// TODO: add put/get_with_notify prototypes
+// TODO: add put/get_notify prototypes
 
 int ompi_osc_sm_put(const void *origin_addr,
                           size_t origin_count,
@@ -118,7 +118,7 @@ int ompi_osc_sm_put(const void *origin_addr,
                           struct ompi_datatype_t *target_dt,
                           struct ompi_win_t *win);
 
- int ompi_osc_sm_put_with_notify(const void *origin_addr,
+ int ompi_osc_sm_put_notify(const void *origin_addr,
                            size_t origin_count,
                            struct ompi_datatype_t *origin_dt,
                            int target,
@@ -137,7 +137,7 @@ int ompi_osc_sm_get(void *origin_addr,
                           struct ompi_datatype_t *target_dt,
                           struct ompi_win_t *win);
 
-int ompi_osc_sm_get_with_notify(void *origin_addr,
+int ompi_osc_sm_get_notify(void *origin_addr,
                           size_t origin_count,
                           struct ompi_datatype_t *origin_dt,
                           int target,
@@ -196,7 +196,7 @@ int ompi_osc_sm_rput(const void *origin_addr,
                            struct ompi_win_t *win,
                            struct ompi_request_t **request);
 
-int ompi_osc_sm_rput_with_notify(const void *origin_addr,
+int ompi_osc_sm_rput_notify(const void *origin_addr,
                           size_t origin_count,
                           struct ompi_datatype_t *origin_dt,
                           int target,
@@ -217,7 +217,7 @@ int ompi_osc_sm_rget(void *origin_addr,
                            struct ompi_win_t *win,
                            struct ompi_request_t **request);
 
-int ompi_osc_sm_rget_with_notify(void *origin_addr,
+int ompi_osc_sm_rget_notify(void *origin_addr,
                           size_t origin_count,
                           struct ompi_datatype_t *origin_dt,
                           int target,

@@ -79,18 +79,18 @@ ompi_osc_sm_module_t ompi_osc_sm_module_template = {
         .osc_free = ompi_osc_sm_free,
 
         .osc_put = ompi_osc_sm_put,
-        .osc_put_with_notify = ompi_osc_sm_put_with_notify,
+        .osc_put_notify = ompi_osc_sm_put_notify,
         .osc_get = ompi_osc_sm_get,
-        .osc_get_with_notify = ompi_osc_sm_get_with_notify,
+        .osc_get_notify = ompi_osc_sm_get_notify,
         .osc_accumulate = ompi_osc_sm_accumulate,
         .osc_compare_and_swap = ompi_osc_sm_compare_and_swap,
         .osc_fetch_and_op = ompi_osc_sm_fetch_and_op,
         .osc_get_accumulate = ompi_osc_sm_get_accumulate,
 
         .osc_rput = ompi_osc_sm_rput,
-        .osc_rput_with_notify = ompi_osc_sm_rput_with_notify,
+        .osc_rput_notify = ompi_osc_sm_rput_notify,
         .osc_rget = ompi_osc_sm_rget,
-        .osc_rget_with_notify = ompi_osc_sm_rget_with_notify,
+        .osc_rget_notify = ompi_osc_sm_rget_notify,
         .osc_raccumulate = ompi_osc_sm_raccumulate,
         .osc_rget_accumulate = ompi_osc_sm_rget_accumulate,
 

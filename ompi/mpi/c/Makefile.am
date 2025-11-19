@@ -220,6 +220,7 @@ prototype_sources = \
 	get_accumulate.c.in \
 	get_address.c.in \
 	get.c.in \
+	get_notify.c.in \
 	get_count.c.in \
 	get_elements.c.in \
 	get_elements_x.c.in \
@@ -338,6 +339,7 @@ prototype_sources = \
 	psend_init.c.in \
 	publish_name.c.in \
 	put.c.in \
+	put_notify.c.in \
 	query_thread.c.in \
 	raccumulate.c.in \
         recv.c.in \
