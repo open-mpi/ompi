@@ -60,7 +60,7 @@ ompi_osc_sm_rput(const void *origin_addr,
 }
 
 int
-ompi_osc_sm_rput_with_notify(const void *origin_addr,
+ompi_osc_sm_rput_notify(const void *origin_addr,
                  size_t origin_count,
                  struct ompi_datatype_t *origin_dt,
                  int target,
@@ -143,7 +143,7 @@ ompi_osc_sm_rget(void *origin_addr,
 }
 
 int
-ompi_osc_sm_rget_with_notify(void *origin_addr,
+ompi_osc_sm_rget_notify(void *origin_addr,
                  size_t origin_count,
                  struct ompi_datatype_t *origin_dt,
                  int target,
@@ -323,7 +323,7 @@ ompi_osc_sm_put(const void *origin_addr,
 
 
 int
-ompi_osc_sm_put_with_notify(const void *origin_addr,
+ompi_osc_sm_put_notify(const void *origin_addr,
                 size_t origin_count,
                 struct ompi_datatype_t *origin_dt,
                 int target,
@@ -392,7 +392,7 @@ ompi_osc_sm_get(void *origin_addr,
 
 
 int
-ompi_osc_sm_get_with_notify(void *origin_addr,
+ompi_osc_sm_get_notify(void *origin_addr,
                 size_t origin_count,
                 struct ompi_datatype_t *origin_dt,
                 int target,
