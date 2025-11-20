@@ -12,6 +12,8 @@
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2025      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -100,8 +102,7 @@ void ompi_ireduce_scatter_f(char *sendbuf, char *recvbuf,
     if ( REQUEST_COMPLETE(c_request)) {
         OMPI_ARRAY_FINT_2_INT_CLEANUP(recvcounts);
     } else {
-        ompi_coll_base_nbc_request_t* nb_request = (ompi_coll_base_nbc_request_t*)c_request;
-        nb_request->data.release_arrays[0] = recvcounts;
-        nb_request->data.release_arrays[1] = NULL;
+        ompi_coll_base_append_array_to_release(c_request, recvcounts);
+        ompi_coll_base_add_release_arrays_cb(c_request);
     }
 }
