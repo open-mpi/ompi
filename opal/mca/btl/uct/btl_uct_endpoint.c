@@ -256,49 +256,56 @@ static int mca_btl_uct_endpoint_send_conn_req(mca_btl_uct_module_t *uct_btl,
     return OPAL_SUCCESS;
 }
 
-static int mca_btl_uct_endpoint_send_connection_data(
-    mca_btl_uct_module_t *uct_btl, mca_btl_base_endpoint_t *endpoint, mca_btl_uct_tl_t *tl,
-    mca_btl_uct_device_context_t *tl_context, mca_btl_uct_tl_endpoint_t *tl_endpoint,
-    uint8_t *conn_tl_data, int request_type)
+static int mca_btl_uct_endpoint_get_helper_endpoint(mca_btl_uct_module_t *uct_btl, mca_btl_base_endpoint_t *endpoint,
+                                                     mca_btl_uct_tl_t *conn_tl, uint8_t *conn_tl_data)
 {
-    mca_btl_uct_tl_t *conn_tl = uct_btl->conn_tl;
+    if (NULL != endpoint->conn_ep) {
+        BTL_VERBOSE(("re-using existing connection endpoint"));
+        OBJ_RETAIN(endpoint->conn_ep);
+        return OPAL_SUCCESS;
+    }
+
+    BTL_VERBOSE(("creating a temporary endpoint for handling connections to %p",
+                 opal_process_name_print(endpoint->ep_proc->proc_name)));
+
+    uct_iface_addr_t *iface_addr = (uct_iface_addr_t *) conn_tl_data;
+    uct_device_addr_t *device_addr = (uct_device_addr_t *) ((uintptr_t) conn_tl_data
+                                                            + MCA_BTL_UCT_TL_ATTR(conn_tl, 0).iface_addr_len);
+
+    endpoint->conn_ep = OBJ_NEW(mca_btl_uct_connection_ep_t);
+    if (OPAL_UNLIKELY(NULL == endpoint->conn_ep)) {
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+
+    ucs_status_t ucs_status;
     mca_btl_uct_device_context_t *conn_tl_context = conn_tl->uct_dev_contexts[0];
-    uct_device_addr_t *device_addr = NULL;
-    uct_iface_addr_t *iface_addr;
+    /* create a temporary endpoint for setting up the rdma endpoint */
+    MCA_BTL_UCT_CONTEXT_SERIALIZE(conn_tl_context, {
+            ucs_status = mca_btl_uct_ep_create_connected_compat(conn_tl_context->uct_iface,
+                                                                device_addr, iface_addr,
+                                                                &endpoint->conn_ep->uct_ep);
+        });
+    if (UCS_OK != ucs_status) {
+        BTL_VERBOSE(
+                    ("could not create an endpoint for forming connection to remote peer. code = %d",
+                     ucs_status));
+        return OPAL_ERROR;
+    }
+
+    return OPAL_SUCCESS;
+}
+
+static int mca_btl_uct_endpoint_send_connection_data(
+    mca_btl_uct_module_t *uct_btl, mca_btl_uct_tl_t *conn_tl, mca_btl_base_endpoint_t *endpoint,
+    mca_btl_uct_tl_t *tl, mca_btl_uct_device_context_t *tl_context,
+    mca_btl_uct_tl_endpoint_t *tl_endpoint, int request_type)
+{
+    mca_btl_uct_device_context_t *conn_tl_context = conn_tl->uct_dev_contexts[0];
     ucs_status_t ucs_status;
 
     assert(NULL != conn_tl);
 
     BTL_VERBOSE(("connecting endpoint to remote endpoint"));
-
-    if (NULL == endpoint->conn_ep) {
-        BTL_VERBOSE(("creating a temporary endpoint for handling connections to %p",
-                     opal_process_name_print(endpoint->ep_proc->proc_name)));
-
-        iface_addr = (uct_iface_addr_t *) conn_tl_data;
-        device_addr = (uct_device_addr_t *) ((uintptr_t) conn_tl_data
-                                             + MCA_BTL_UCT_TL_ATTR(conn_tl, 0).iface_addr_len);
-
-        endpoint->conn_ep = OBJ_NEW(mca_btl_uct_connection_ep_t);
-        if (OPAL_UNLIKELY(NULL == endpoint->conn_ep)) {
-            return OPAL_ERR_OUT_OF_RESOURCE;
-        }
-
-        /* create a temporary endpoint for setting up the rdma endpoint */
-        MCA_BTL_UCT_CONTEXT_SERIALIZE(conn_tl_context, {
-            ucs_status = mca_btl_uct_ep_create_connected_compat(conn_tl_context->uct_iface,
-                                                                device_addr, iface_addr,
-                                                                &endpoint->conn_ep->uct_ep);
-        });
-        if (UCS_OK != ucs_status) {
-            BTL_VERBOSE(
-                ("could not create an endpoint for forming connection to remote peer. code = %d",
-                 ucs_status));
-            return OPAL_ERROR;
-        }
-    } else {
-        OBJ_RETAIN(endpoint->conn_ep);
-    }
 
     size_t request_length = sizeof(mca_btl_uct_conn_req_t)
                             + MCA_BTL_UCT_TL_ATTR(tl, tl_context->context_id).ep_addr_len;
@@ -309,6 +316,7 @@ static int mca_btl_uct_endpoint_send_connection_data(
     request->context_id = tl_context->context_id;
     request->tl_index = tl->tl_index;
     request->type = request_type;
+    strncpy(request->module_name, uct_btl->md_name, sizeof(request->module_name) - 1);
 
     /* fill in connection request */
     ucs_status = uct_ep_get_address(tl_endpoint->uct_ep, (uct_ep_addr_t *) request->ep_addr);
@@ -337,9 +345,9 @@ static int mca_btl_uct_endpoint_send_connection_data(
 }
 
 static int mca_btl_uct_endpoint_connect_endpoint(
-    mca_btl_uct_module_t *uct_btl, mca_btl_base_endpoint_t *endpoint, mca_btl_uct_tl_t *tl,
-    mca_btl_uct_device_context_t *tl_context, mca_btl_uct_tl_endpoint_t *tl_endpoint,
-    uint8_t *tl_data, uint8_t *conn_tl_data, void *ep_addr)
+    mca_btl_uct_module_t *uct_btl, mca_btl_uct_tl_t *conn_tl, mca_btl_base_endpoint_t *endpoint,
+    mca_btl_uct_tl_t *tl, mca_btl_uct_device_context_t *tl_context,
+    mca_btl_uct_tl_endpoint_t *tl_endpoint, uint8_t *tl_data, void *ep_addr)
 {
     ucs_status_t ucs_status;
 
@@ -378,10 +386,43 @@ static int mca_btl_uct_endpoint_connect_endpoint(
             : OPAL_ERR_OUT_OF_RESOURCE;
     }
 
-    int rc = mca_btl_uct_endpoint_send_connection_data(uct_btl, endpoint, tl, tl_context, tl_endpoint,
-                                                       conn_tl_data, /*request_type=*/!!ep_addr);
+    int rc = mca_btl_uct_endpoint_send_connection_data(uct_btl, conn_tl, endpoint, tl, tl_context, tl_endpoint,
+                                                       /*request_type=*/!!ep_addr);
     return (OPAL_SUCCESS == rc) ? OPAL_ERR_OUT_OF_RESOURCE : rc;
 }
+
+static int mca_btl_uct_find_modex(mca_btl_uct_module_t *uct_btl, mca_btl_uct_modex_t *modex,
+                                  uint8_t **rdma_tl_data, uint8_t **am_tl_data, uint8_t **conn_tl_data) {
+    uint8_t *modex_data = modex->data;
+
+    /* look for matching transport in the modex */
+    for (int i = 0; i < modex->module_count; ++i) {
+        uint32_t modex_size = *((uint32_t *) modex_data);
+
+        BTL_VERBOSE(("found modex for md %s, searching for %s", modex_data + 4, uct_btl->md_name));
+
+        modex_data += 4;
+
+        if (0 != strcmp((char *) modex_data, uct_btl->md_name)) {
+            /* modex belongs to a different module, skip it and continue */
+            modex_data += modex_size - 4;
+            continue;
+        }
+
+        modex_data += strlen((char *) modex_data) + 1;
+
+        mca_btl_uct_process_modex(uct_btl, modex_data, rdma_tl_data, am_tl_data, conn_tl_data);
+
+        BTL_VERBOSE(("finished processing modex for %s", uct_btl->md_name));
+
+        return OPAL_SUCCESS;
+    }
+
+    BTL_ERROR(("could not find modex for %s", uct_btl->md_name));
+
+    return OPAL_ERR_NOT_FOUND;
+}
+
 
 int mca_btl_uct_endpoint_connect(mca_btl_uct_module_t *uct_btl, mca_btl_uct_endpoint_t *endpoint,
                                  int context_id, void *ep_addr, int tl_index)
@@ -394,7 +435,6 @@ int mca_btl_uct_endpoint_connect(mca_btl_uct_module_t *uct_btl, mca_btl_uct_endp
         = mca_btl_uct_module_get_tl_context_specific(uct_btl, tl, context_id);
     uint8_t *rdma_tl_data = NULL, *conn_tl_data = NULL, *am_tl_data = NULL, *tl_data;
     mca_btl_uct_modex_t *modex;
-    uint8_t *modex_data;
     size_t msg_size;
     int rc;
 
@@ -410,19 +450,20 @@ int mca_btl_uct_endpoint_connect(mca_btl_uct_module_t *uct_btl, mca_btl_uct_endp
                  !!(MCA_BTL_UCT_ENDPOINT_FLAG_CONN_READY & tl_endpoint->flags)));
 
     opal_mutex_lock(&endpoint->ep_lock);
-    if (MCA_BTL_UCT_ENDPOINT_FLAG_CONN_READY & tl_endpoint->flags) {
-        opal_mutex_unlock(&endpoint->ep_lock);
-        /* nothing more to do. someone else completed the connection */
-        return OPAL_SUCCESS;
-    }
-
-    /* dumpicate connection request. nothing to do until the endpoint data is received */
-    if (NULL != tl_endpoint->uct_ep && NULL == ep_addr) {
-        opal_mutex_unlock(&endpoint->ep_lock);
-        return OPAL_ERR_OUT_OF_RESOURCE;
-    }
 
     do {
+        if (MCA_BTL_UCT_ENDPOINT_FLAG_CONN_READY & tl_endpoint->flags) {
+            /* nothing more to do. someone else completed the connection */
+            rc = OPAL_SUCCESS;
+            break;
+        }
+
+        /* dumpicate connection request. nothing to do until the endpoint data is received */
+        if (NULL != tl_endpoint->uct_ep && NULL == ep_addr) {
+            rc = OPAL_ERR_OUT_OF_RESOURCE;
+            break;
+        }
+
         /* read the modex. this is done both to start the connection and to process endpoint data */
         OPAL_MODEX_RECV(rc, &mca_btl_uct_component.super.btl_version, &endpoint->ep_proc->proc_name,
                         (void **) &modex, &msg_size);
@@ -434,45 +475,50 @@ int mca_btl_uct_endpoint_connect(mca_btl_uct_module_t *uct_btl, mca_btl_uct_endp
         BTL_VERBOSE(("received modex of size %lu for proc %s. module count %d",
                      (unsigned long) msg_size, OPAL_NAME_PRINT(endpoint->ep_proc->proc_name),
                      modex->module_count));
-        modex_data = modex->data;
 
-        /* look for matching transport in the modex */
-        for (int i = 0; i < modex->module_count; ++i) {
-            uint32_t modex_size = *((uint32_t *) modex_data);
-
-            BTL_VERBOSE(
-                ("found modex for md %s, searching for %s", modex_data + 4, uct_btl->md_name));
-
-            modex_data += 4;
-
-            if (0 != strcmp((char *) modex_data, uct_btl->md_name)) {
-                /* modex belongs to a different module, skip it and continue */
-                modex_data += modex_size - 4;
-                continue;
-            }
-
-            modex_data += strlen((char *) modex_data) + 1;
-
-            mca_btl_uct_process_modex(uct_btl, modex_data, &rdma_tl_data, &am_tl_data,
-                                      &conn_tl_data);
+        rc = mca_btl_uct_find_modex (uct_btl, modex, &rdma_tl_data, &am_tl_data, &conn_tl_data);
+        if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
             break;
         }
 
         tl_data = (tl == uct_btl->rdma_tl) ? rdma_tl_data : am_tl_data;
 
-        if (NULL == tl_data) {
-            opal_mutex_unlock(&endpoint->ep_lock);
-            return OPAL_ERR_UNREACH;
+        if (OPAL_UNLIKELY(NULL == tl_data)) {
+            BTL_ERROR(("could not find modex data for this transport"));
+            rc = OPAL_ERR_UNREACH;
+            break;
         }
 
         /* connect the endpoint */
-        if (!mca_btl_uct_tl_requires_connection_tl(tl)) {
-            rc = mca_btl_uct_endpoint_connect_iface(uct_btl, tl, tl_context, tl_endpoint, tl_data);
-        } else {
-            rc = mca_btl_uct_endpoint_connect_endpoint(uct_btl, endpoint, tl, tl_context,
-                                                       tl_endpoint, tl_data, conn_tl_data, ep_addr);
-        }
+        if (mca_btl_uct_tl_requires_connection_tl(tl)) {
+            mca_btl_uct_tl_t *conn_tl = uct_btl->conn_tl;
+            if (NULL == conn_tl) {
+                rc = mca_btl_uct_find_modex (mca_btl_uct_component.conn_module, modex,
+                                             /*rdma_tl_data=*/NULL, /*am_tl_data=*/NULL,
+                                             &conn_tl_data);
+                if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
+                    BTL_ERROR(("could not find modex for connection module"));
+                    break;
+                }
 
+                BTL_VERBOSE(("using separate connection module for tl"));
+                conn_tl = mca_btl_uct_component.conn_module->conn_tl;
+            }
+
+            if (NULL == tl_endpoint->uct_ep) {
+                /* allocate or retain a connection endpoint */
+                rc = mca_btl_uct_endpoint_get_helper_endpoint(uct_btl, endpoint, conn_tl,
+                                                              conn_tl_data);
+                if (OPAL_SUCCESS != rc) {
+                    break;
+                }
+            }
+
+            rc = mca_btl_uct_endpoint_connect_endpoint(uct_btl, conn_tl, endpoint, tl,
+                                                       tl_context, tl_endpoint, tl_data, ep_addr);
+        } else {
+            rc = mca_btl_uct_endpoint_connect_iface(uct_btl, tl, tl_context, tl_endpoint, tl_data);
+        }
     } while (0);
 
     opal_mutex_unlock(&endpoint->ep_lock);
