@@ -322,11 +322,15 @@ int mca_btl_uct_finalize(mca_btl_base_module_t *btl)
     OBJ_DESTRUCT(&uct_module->endpoint_lock);
 
     char *tmp;
-    asprintf(&tmp, "uct_%s", uct_module->md->md_name);
-    int rc = mca_base_var_group_find("opal", "btl", tmp);
-    free(tmp);
-    if (rc >= 0) {
-        mca_base_var_group_deregister(rc);
+    int rc = asprintf(&tmp, "uct_%s", uct_module->md->md_name);
+    if (rc > 0) {
+        rc = mca_base_var_group_find("opal", "btl", tmp);
+        free(tmp);
+        if (rc >= 0) {
+            mca_base_var_group_deregister(rc);
+        }
+    } else {
+        BTL_ERROR(("could not deregister var group for UCT module %s", uct_module->md->md_name));
     }
 
     OBJ_RELEASE(uct_module->md);
