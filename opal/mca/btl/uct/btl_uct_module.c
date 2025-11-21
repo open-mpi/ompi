@@ -374,18 +374,20 @@ mca_btl_uct_module_t mca_btl_uct_module_template = {
                             | MCA_BTL_ATOMIC_SUPPORTS_CSWAP | MCA_BTL_ATOMIC_SUPPORTS_SWAP
                             | MCA_BTL_ATOMIC_SUPPORTS_32BIT,
 
-        /* set the default limits on put and get */
-        .btl_put_limit = 1 << 23,
+        /* set the default limits on put and get. these can be overridden by what is
+         * supported by the transport or what the user specified. */
+        .btl_put_limit = SIZE_T_MAX,
         .btl_put_alignment = 0,
-        .btl_get_limit = 1 << 23,
+        .btl_get_limit = SIZE_T_MAX,
         .btl_get_alignment = 0,
 
-        .btl_rndv_eager_limit = 8192,
+        .btl_rndv_eager_limit = 131072,
         .btl_rdma_pipeline_frag_size = 4 * 1024 * 1024,
-        .btl_rdma_pipeline_send_length = 8192,
-        .btl_eager_limit = 8192,
-        .btl_max_send_size = 65536,
-        /* for now we want this component to lose to btl/ugni and btl/vader */
+        .btl_rdma_pipeline_send_length = 131072,
+        .btl_eager_limit = 131072,
+        .btl_max_send_size = 131072,
+
+        /* for now we want this component to lose to btl/vader */
         .btl_exclusivity = MCA_BTL_EXCLUSIVITY_HIGH - 1,
     }};
 
