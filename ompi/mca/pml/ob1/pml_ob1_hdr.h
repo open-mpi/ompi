@@ -15,6 +15,7 @@
  *                         reserved.
  * Copyright (c) 2018      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2025      Google, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -40,16 +41,19 @@
 #include "opal/mca/btl/btl.h"
 #include "ompi/proc/proc.h"
 
-#define MCA_PML_OB1_HDR_TYPE_MATCH     (MCA_BTL_TAG_PML + 1)
-#define MCA_PML_OB1_HDR_TYPE_RNDV      (MCA_BTL_TAG_PML + 2)
-#define MCA_PML_OB1_HDR_TYPE_RGET      (MCA_BTL_TAG_PML + 3)
-#define MCA_PML_OB1_HDR_TYPE_ACK       (MCA_BTL_TAG_PML + 4)
-#define MCA_PML_OB1_HDR_TYPE_NACK      (MCA_BTL_TAG_PML + 5)
-#define MCA_PML_OB1_HDR_TYPE_FRAG      (MCA_BTL_TAG_PML + 6)
-#define MCA_PML_OB1_HDR_TYPE_GET       (MCA_BTL_TAG_PML + 7)
-#define MCA_PML_OB1_HDR_TYPE_PUT       (MCA_BTL_TAG_PML + 8)
-#define MCA_PML_OB1_HDR_TYPE_FIN       (MCA_BTL_TAG_PML + 9)
-#define MCA_PML_OB1_HDR_TYPE_CID       (MCA_BTL_TAG_PML + 10)
+enum {
+    MCA_PML_OB1_HDR_TYPE_MATCH = MCA_BTL_TAG_PML + 1,
+    MCA_PML_OB1_HDR_TYPE_RNDV = MCA_BTL_TAG_PML + 2,
+    MCA_PML_OB1_HDR_TYPE_RGET = MCA_BTL_TAG_PML + 3,
+    MCA_PML_OB1_HDR_TYPE_ACK = MCA_BTL_TAG_PML + 4,
+    MCA_PML_OB1_HDR_TYPE_NACK = MCA_BTL_TAG_PML + 5,
+    MCA_PML_OB1_HDR_TYPE_FRAG = MCA_BTL_TAG_PML + 6,
+    MCA_PML_OB1_HDR_TYPE_GET = MCA_BTL_TAG_PML + 7,
+    MCA_PML_OB1_HDR_TYPE_PUT = MCA_BTL_TAG_PML + 8,
+    MCA_PML_OB1_HDR_TYPE_FIN = MCA_BTL_TAG_PML + 9,
+    MCA_PML_OB1_HDR_TYPE_CID = MCA_BTL_TAG_PML + 10,
+    MCA_PML_OB1_HDR_TYPE_MULTI_EAGER = MCA_BTL_TAG_PML + 11,
+};
 
 #define MCA_PML_OB1_HDR_FLAGS_ACK     0x01  /* is an ack required */
 #define MCA_PML_OB1_HDR_FLAGS_NBO     0x02  /* is the hdr in network byte order */
@@ -177,6 +181,39 @@ struct mca_pml_ob1_ext_match_hdr_t {
 };
 
 typedef struct mca_pml_ob1_ext_match_hdr_t mca_pml_ob1_ext_match_hdr_t;
+
+
+struct mca_pml_ob1_multi_eager_hdr_t {
+    mca_pml_ob1_match_hdr_t hdr_match;  /**< match header */
+    int32_t hdr_total_size;             /**< total size of all fragments (including this one) */
+    int32_t hdr_fragment_offset;        /**< offset of this fragment */
+};
+
+typedef struct mca_pml_ob1_multi_eager_hdr_t mca_pml_ob1_multi_eager_hdr_t;
+
+static inline void mca_pml_ob1_multi_eager_hdr_prepare(mca_pml_ob1_multi_eager_hdr_t *hdr, uint8_t hdr_flags,
+                                                       uint16_t hdr_ctx, int32_t hdr_src, int32_t hdr_tag, uint16_t hdr_seq,
+                                                       int32_t hdr_total_size, int32_t hdr_fragment_offset)
+{
+    mca_pml_ob1_match_hdr_prepare(&hdr->hdr_match, MCA_PML_OB1_HDR_TYPE_MULTI_EAGER, hdr_flags, hdr_ctx,
+                                  hdr_src, hdr_tag, hdr_seq);
+    hdr->hdr_total_size = hdr_total_size;
+    hdr->hdr_fragment_offset = hdr_fragment_offset;
+}
+
+#define MCA_PML_OB1_MULTI_EAGER_HDR_HTON(h)                          \
+    do {                                                             \
+        MCA_PML_OB1_MATCH_HDR_HTON((h).hdr_match);                   \
+        (h).hdr_total_size = htonl((h).hdr_total_size);              \
+        (h).hdr_fragment_offset = htonl((h).hdr_fragment_offset);    \
+    } while (0)
+
+#define MCA_PML_OB1_MULTI_EAGER_HDR_NTOH(h)                          \
+    do {                                                             \
+        MCA_PML_OB1_MATCH_HDR_NTOH((h).hdr_match);                   \
+        (h).hdr_total_size = ntohl((h).hdr_total_size);              \
+        (h).hdr_fragment_offset = ntohl((h).hdr_fragment_offset);    \
+    } while (0)
 
 /*
 *
@@ -491,6 +528,7 @@ union mca_pml_ob1_hdr_t {
     mca_pml_ob1_ack_hdr_t hdr_ack;
     mca_pml_ob1_rdma_hdr_t hdr_rdma;
     mca_pml_ob1_fin_hdr_t hdr_fin;
+    mca_pml_ob1_multi_eager_hdr_t hdr_multi_eager;
     /* extended CID support */
     mca_pml_ob1_cid_hdr_t hdr_cid;
     mca_pml_ob1_ext_match_hdr_t hdr_ext_match;
@@ -537,6 +575,9 @@ ob1_hdr_ntoh(mca_pml_ob1_hdr_t *hdr, const uint8_t hdr_type)
 	    ob1_hdr_ntoh (next_hdr, next_hdr->hdr_common.hdr_type);
 	    break;
 	}
+        case MCA_PML_OB1_HDR_TYPE_MULTI_EAGER:
+            MCA_PML_OB1_MULTI_EAGER_HDR_NTOH(hdr->hdr_multi_eager);
+            break;
         default:
             assert(0);
             break;
@@ -592,6 +633,9 @@ ob1_hdr_hton_intr(mca_pml_ob1_hdr_t *hdr, const uint8_t hdr_type,
 	    ob1_hdr_hton (next_hdr, next_hdr->hdr_common.hdr_type, proc);
 	    break;
 	}
+        case MCA_PML_OB1_HDR_TYPE_MULTI_EAGER:
+            MCA_PML_OB1_MULTI_EAGER_HDR_HTON(hdr->hdr_multi_eager);
+            break;
         default:
             assert(0);
             break;
@@ -639,6 +683,9 @@ ob1_hdr_copy(mca_pml_ob1_hdr_t *src, mca_pml_ob1_hdr_t *dst)
             dst = next_dst;
             continue;
 	}
+        case MCA_PML_OB1_HDR_TYPE_MULTI_EAGER:
+            memcpy( &(dst->hdr_multi_eager), &(src->hdr_multi_eager), sizeof(src->hdr_multi_eager));
+            break;
         default:
             memcpy( &(dst->hdr_common), &(src->hdr_common), sizeof(mca_pml_ob1_common_hdr_t) );
             break;
