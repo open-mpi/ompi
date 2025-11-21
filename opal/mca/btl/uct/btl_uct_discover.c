@@ -419,12 +419,11 @@ int mca_btl_uct_component_maybe_setup_conn_tl(void)
 
     mca_btl_uct_md_t *md;
     OPAL_LIST_FOREACH(md, &mca_btl_uct_component.md_list, mca_btl_uct_md_t) {
-        mca_btl_uct_tl_t *tl, *next;
-        OPAL_LIST_FOREACH_SAFE(tl, next, &md->tls, mca_btl_uct_tl_t) {
+        mca_btl_uct_tl_t *tl;
+        OPAL_LIST_FOREACH(tl, &md->tls, mca_btl_uct_tl_t) {
             if (mca_btl_uct_tl_supports_conn(tl)) {
                 break;
             }
-            tl = NULL;
         }
 
         if ((opal_list_item_t *) tl == &md->tls.opal_list_sentinel) {
@@ -432,11 +431,7 @@ int mca_btl_uct_component_maybe_setup_conn_tl(void)
             continue;
         }
 
-        if (NULL == mca_btl_uct_component.conn_tl) {
-            mca_btl_uct_component.conn_tl = tl;
-        }
-
-        if (tl != NULL && (md->connection_only_domain || NULL == mca_btl_uct_component.conn_tl)) {
+        if (md->connection_only_domain || NULL == mca_btl_uct_component.conn_tl) {
             mca_btl_uct_component.conn_tl = tl;
             if (md->connection_only_domain) {
                 /* not going do to better */
