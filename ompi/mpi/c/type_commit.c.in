@@ -30,7 +30,7 @@
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/memchecker.h"
 
-PROTOTYPE ERROR_CLASS type_commit(DATATYPE_OUT type)
+PROTOTYPE ERROR_CLASS type_commit(DATATYPE_INOUT type)
 {
     int rc;
 
