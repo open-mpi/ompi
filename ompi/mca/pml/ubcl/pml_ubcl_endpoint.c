@@ -352,7 +352,7 @@ static int mca_pml_ubcl_create_endpoints(ompi_proc_t *proc)
         if (OMPI_SUCCESS == err) {
             goto end;
         } else if (OMPI_ERR_NOT_AVAILABLE != err) {
-            return err;
+            goto error;
         }
     }
 
@@ -366,12 +366,12 @@ static int mca_pml_ubcl_create_endpoints(ompi_proc_t *proc)
             if (UBCL_ENDPOINT_TYPE_NONE == type) {
                 mca_pml_ubcl_warn(err, "Failed to create recv endpoint for rank %zu\n",
                                   new_endpoint->rank);
-                return err;
+                goto error;
             }
         } else if (OMPI_SUCCESS != err) {
             mca_pml_ubcl_warn(err, "Failed to create recv endpoint for rank %zu\n",
                               new_endpoint->rank);
-            return err;
+            goto error;
         }
     } while (OMPI_SUCCESS != err);
 
@@ -381,7 +381,7 @@ static int mca_pml_ubcl_create_endpoints(ompi_proc_t *proc)
     if (OMPI_SUCCESS != err) {
         mca_pml_ubcl_warn(err, "Failed to create send endpoint for rank %zu\n",
                          new_endpoint->rank);
-        return err;
+        goto error;
     }
 
 end:
@@ -390,6 +390,10 @@ end:
     mca_pml_ubcl_endpoint_retain(proc);
 
     return UBCL_SUCCESS;
+
+error:
+    free(new_endpoint);
+    return err;
 }
 
 int mca_pml_ubcl_add_procs(ompi_proc_t **procs, size_t nprocs)
