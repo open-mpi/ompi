@@ -109,7 +109,7 @@ static OBJ_CLASS_INSTANCE(module_bxor_t,
 /**
  * Bxor function for C int
  */
-static void bxor_int(void *in, void *out, int *count,
+static void bxor_int(const void *in, void *out, int *count,
                     ompi_datatype_t **type, ompi_op_base_module_t *module)
 {
     module_bxor_t *m = (module_bxor_t*) module;
@@ -143,7 +143,7 @@ static void bxor_int(void *in, void *out, int *count,
 /**
  * Bxor function for C long
  */
-static void bxor_long(void *in, void *out, int *count,
+static void bxor_long(const void *in, void *out, int *count,
                      ompi_datatype_t **type, ompi_op_base_module_t *module)
 {
     module_bxor_t *m = (module_bxor_t*) module;
@@ -157,7 +157,7 @@ static void bxor_long(void *in, void *out, int *count,
 /**
  * Bxor function for Fortran INTEGER
  */
-static void bxor_integer(void *in, void *out, int *count,
+static void bxor_integer(const void *in, void *out, int *count,
                         ompi_datatype_t **type, ompi_op_base_module_t *module)
 {
     module_bxor_t *m = (module_bxor_t*) module;
@@ -191,10 +191,10 @@ ompi_op_base_module_t *ompi_op_example_setup_bxor(ompi_op_t *op)
        (i.e., they're already assigned on the op). */
 
     /* C int */
-    module->super.opm_fns[OMPI_OP_BASE_TYPE_INT] = bxor_int;
-    module->fallback_int = op->o_func.intrinsic.fns[OMPI_OP_BASE_TYPE_INT];
+    module->super.opm_fns[OMPI_OP_BASE_TYPE_INT32_T] = bxor_int;
+    module->fallback_int = op->o_func.intrinsic.fns[OMPI_OP_BASE_TYPE_INT32_T];
     module->fallback_int_module =
-        op->o_func.intrinsic.modules[OMPI_OP_BASE_TYPE_INT];
+        op->o_func.intrinsic.modules[OMPI_OP_BASE_TYPE_INT32_T];
     /* If you cache a fallback function, you *must* RETAIN (i.e.,
        increase the refcount) its module so that the module knows that
        it is being used and won't be freed/destructed. */
