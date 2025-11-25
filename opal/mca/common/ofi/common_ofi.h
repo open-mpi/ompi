@@ -5,7 +5,7 @@
  *                         reserved.
  * Copyright (c) 2020-2024 Triad National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2021      Amazon.com, Inc. or its affiliates. All rights
+ * Copyright (c) 2021-2025 Amazon.com, Inc. or its affiliates. All rights
  *                         reserved.
  *
  * $COPYRIGHT$
@@ -30,6 +30,10 @@ typedef struct opal_common_ofi_module {
     char **prov_include;
     char **prov_exclude;
     int output;
+    struct fid_fabric *fabric;
+    struct fid_domain *domain;
+    int fabric_ref_count;
+    int domain_ref_count;
 } opal_common_ofi_module_t;
 
 /**
@@ -222,6 +226,57 @@ OPAL_DECLSPEC struct fi_info *opal_common_ofi_select_provider(struct fi_info *pr
  *
  */
 OPAL_DECLSPEC int opal_common_ofi_fi_getname(fid_t fid, void **addr, size_t *addrlen);
+
+/**
+ * Get or create fabric object
+ *
+ * Reuses existing fabric from fabric_attr->fabric if available,
+ * otherwise creates new fabric using fi_fabric().
+ *
+ * @param fabric_attr (IN) Fabric attributes
+ * @param fabric (OUT)     Fabric object (new or existing)
+ *
+ * @return                 OPAL_SUCCESS or error code
+ */
+OPAL_DECLSPEC int opal_common_ofi_fi_fabric(struct fi_fabric_attr *fabric_attr,
+                                            struct fid_fabric **fabric);
+
+/**
+ * Get or create domain object
+ *
+ * Reuses existing domain from info->domain_attr->domain if available,
+ * otherwise creates new domain using fi_domain().
+ *
+ * @param fabric (IN)      Fabric object
+ * @param info (IN)        Provider info
+ * @param domain (OUT)     Domain object (new or existing)
+ *
+ * @return                 OPAL_SUCCESS or error code
+ */
+OPAL_DECLSPEC int opal_common_ofi_fi_domain(struct fid_fabric *fabric, struct fi_info *info,
+                                            struct fid_domain **domain);
+
+/**
+ * Release fabric reference
+ *
+ * Decrements fabric reference count and closes fabric if count reaches zero.
+ *
+ * @param fabric (IN)      Fabric object to release
+ *
+ * @return                 OPAL_SUCCESS or error code
+ */
+OPAL_DECLSPEC int opal_common_ofi_fabric_release(struct fid_fabric *fabric);
+
+/**
+ * Release domain reference
+ *
+ * Decrements domain reference count and closes domain if count reaches zero.
+ *
+ * @param domain (IN)      Domain object to release
+ *
+ * @return                 OPAL_SUCCESS or error code
+ */
+OPAL_DECLSPEC int opal_common_ofi_domain_release(struct fid_domain *domain);
 
 END_C_DECLS
 

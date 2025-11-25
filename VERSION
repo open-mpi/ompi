@@ -17,7 +17,7 @@
 
 major=5
 minor=0
-release=8
+release=9
 
 # MPI Standard Compliance Level
 mpi_standard_version=3
@@ -62,7 +62,7 @@ tarball_version=gitclone
 
 # The date when this release was created
 
-date="30 May 2025"
+date="15 October 2025"
 
 # The shared library version of each of Open MPI's public libraries.
 # These versions are maintained in accordance with the "Library
