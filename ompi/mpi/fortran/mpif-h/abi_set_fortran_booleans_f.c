@@ -40,8 +40,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_ABI_SET_FOTRAN_BOOLEANS,
                            pmpi_abi_set_fortran_booleans_,
                            pmpi_abi_set_fortran_booleans__,
                            pompi_abi_set_fortran_booleans_f,
-                           (MPI_Fint *comm, MPI_Fint *keyval, MPI_Fint *attribute_val, ompi_fortran_logical_t *flag, MPI_Fint *ierr),
-                           (comm, keyval, attribute_val, flag, ierr) )
+                           (MPI_Fint *logical_size, ompi_fortran_logical_t *logical_true,  ompi_fortran_logical_t *logical_false, MPI_Fint *ierr),
+                           (logical_size, logical_true, logical_false, ierr) )
 #endif
 #endif
 
@@ -60,8 +60,8 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ABI_SET_FOTRAN_BOOLEANS,
                            mpi_abi_set_fortran_booleans_,
                            mpi_abi_set_fortran_booleans__,
                            ompi_abi_set_fortran_booleans_f,
-                           (MPI_Fint *comm, MPI_Fint *keyval, MPI_Fint *attribute_val, ompi_fortran_logical_t *flag, MPI_Fint *ierr),
-                           (comm, keyval, attribute_val, flag, ierr) )
+                           (MPI_Fint *logical_size, ompi_fortran_logical_t *logical_true,  ompi_fortran_logical_t *logical_false, MPI_Fint *ierr),
+                           (logical_size, logical_true, logical_false, ierr) )
 #else
 #define ompi_abi_set_fortran_booleans_f pompi_abi_set_fortran_booleans_f
 #endif
