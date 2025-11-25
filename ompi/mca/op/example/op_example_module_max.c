@@ -118,7 +118,7 @@ static OBJ_CLASS_INSTANCE(module_max_t,
 /**
  * Max function for C float
  */
-static void max_float(void *in, void *out, int *count,
+static void max_float(const void *in, void *out, int *count,
                       ompi_datatype_t **type, ompi_op_base_module_t *module)
 {
     module_max_t *m = (module_max_t*) module;
@@ -152,7 +152,7 @@ static void max_float(void *in, void *out, int *count,
 /**
  * Max function for C double
  */
-static void max_double(void *in, void *out, int *count,
+static void max_double(const void *in, void *out, int *count,
                        ompi_datatype_t **type, ompi_op_base_module_t *module)
 {
     module_max_t *m = (module_max_t*) module;
@@ -166,7 +166,7 @@ static void max_double(void *in, void *out, int *count,
 /**
  * Max function for Fortran REAL
  */
-static void max_real(void *in, void *out, int *count,
+static void max_real(const void *in, void *out, int *count,
                      ompi_datatype_t **type, ompi_op_base_module_t *module)
 {
     module_max_t *m = (module_max_t*) module;
@@ -180,7 +180,7 @@ static void max_real(void *in, void *out, int *count,
 /**
  * Max function for Fortran DOUBLE PRECISION
  */
-static void max_double_precision(void *in, void *out, int *count,
+static void max_double_precision(const void *in, void *out, int *count,
                                  ompi_datatype_t **type,
                                  ompi_op_base_module_t *module)
 {
