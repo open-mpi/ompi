@@ -116,7 +116,7 @@ void ompi_request_get_status_some_f(MPI_Fint *incount, MPI_Fint *array_of_reques
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
-        OMPI_SINGLE_INT_2_FINT(*outcount);
+        OMPI_SINGLE_INT_2_FINT(outcount);
 
         if (MPI_UNDEFINED != OMPI_FINT_2_INT(*outcount)) {
             OMPI_ARRAY_INT_2_FINT(array_of_indices, *outcount);
