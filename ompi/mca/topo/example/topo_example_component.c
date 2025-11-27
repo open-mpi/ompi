@@ -34,8 +34,7 @@ const char *mca_topo_example_component_version_string =
  * Local functions
  */
 static int init_query(bool enable_progress_threads, bool enable_mpi_threads);
-static struct mca_topo_base_module_t *
-comm_query(const ompi_communicator_t *comm, int *priority, uint32_t type);
+static struct mca_topo_base_module_t *query(const ompi_communicator_t *comm, const ompi_group_t *group, int *priority, uint32_t type);
 
 /*
  * Public component structure
@@ -57,7 +56,7 @@ mca_topo_base_component_2_2_0_t mca_topo_example_component =
     },
 
     .topoc_init_query = init_query,
-    .topoc_comm_query = comm_query,
+    .topoc_query = query,
 };
 MCA_BASE_COMPONENT_INIT(ompi, topo, example)
 
@@ -71,7 +70,7 @@ static int init_query(bool enable_progress_threads, bool enable_mpi_threads)
 
 
 static struct mca_topo_base_module_t *
-comm_query(const ompi_communicator_t *comm, int *priority, uint32_t type)
+query(const ompi_communicator_t *comm, const ompi_group_t *group, int *priority, uint32_t type)
 {
     mca_topo_example_module_t *example = OBJ_NEW(mca_topo_example_module_t);
     if (NULL == example) {
@@ -88,5 +87,3 @@ comm_query(const ompi_communicator_t *comm, int *priority, uint32_t type)
     example->super.type = type;
     return &(example->super);
 }
-
-

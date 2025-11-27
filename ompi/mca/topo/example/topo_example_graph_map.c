@@ -40,8 +40,8 @@
 
 int mca_topo_example_graph_map (ompi_communicator_t* comm,
                               int nnodes,
-                              int *index,
-                              int *edges,
+                              const int *index,
+                              const int *edges,
                               int *newrank)
 {
     int myrank;
