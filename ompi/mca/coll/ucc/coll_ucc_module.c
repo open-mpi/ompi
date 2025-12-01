@@ -194,9 +194,9 @@ static ucc_status_t oob_allgather_test(void *req)
         tmpsend = (char*)oob_req->rbuf + (ptrdiff_t)senddatafrom * (ptrdiff_t)msglen;
         rc = MCA_PML_CALL(isend(tmpsend, msglen, MPI_BYTE, sendto, MCA_COLL_BASE_TAG_UCC,
                            MCA_PML_BASE_SEND_STANDARD, comm, &oob_req->reqs[0]));
-	if (OMPI_SUCCESS != rc) {
+        if (OMPI_SUCCESS != rc) {
             return UCC_ERR_NO_MESSAGE;
-	}
+        }
         rc = MCA_PML_CALL(irecv(tmprecv, msglen, MPI_BYTE, recvfrom,
                            MCA_COLL_BASE_TAG_UCC, comm, &oob_req->reqs[1]));
 	if (OMPI_SUCCESS != rc) {
