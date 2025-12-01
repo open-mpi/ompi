@@ -70,12 +70,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_REMOVE_ERROR_CLASS,
 void ompi_remove_error_class_f(MPI_Fint *errorclass, MPI_Fint *ierr)
 {
     int ierr_c;
-    OMPI_SINGLE_NAME_DECL(errorclass);
 
     ierr_c = PMPI_Remove_error_class(OMPI_FINT_2_INT(*errorclass));
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(ierr_c);
-
-    if (MPI_SUCCESS == ierr_c) {
-        OMPI_SINGLE_INT_2_FINT(errorclass);
-    }
 }
