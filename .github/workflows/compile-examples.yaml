@@ -1,0 +1,19 @@
+name: Compile ignored components
+
+on: [pull_request]
+
+jobs:
+  compile-ignored:
+    runs-on: ubuntu-24.04
+    steps:
+    - uses: actions/checkout@v4
+      with:
+            submodules: recursive
+    - name: Remove .opal_ignore files so that we build all examples
+      run: |
+        find . -name .opal_ignore -exec rm -f {} \; -print
+    - name: Build Open MPI
+      run: |
+        ./autogen.pl
+        ./configure --prefix=${PWD}/install --disable-silent-rules
+        make -j
