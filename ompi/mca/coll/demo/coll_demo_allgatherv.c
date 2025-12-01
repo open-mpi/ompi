@@ -34,7 +34,7 @@
  *	Accepts:	- same as MPI_Allgatherv()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int mca_coll_demo_allgatherv_intra(const void *sbuf, int scount,
+int mca_coll_demo_allgatherv_intra(const void *sbuf, size_t scount,
                                    struct ompi_datatype_t *sdtype,
                                    void * rbuf, ompi_count_array_t rcounts, ompi_disp_array_t disps,
                                    struct ompi_datatype_t *rdtype,
@@ -57,7 +57,7 @@ int mca_coll_demo_allgatherv_intra(const void *sbuf, int scount,
  *	Accepts:	- same as MPI_Allgatherv()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int mca_coll_demo_allgatherv_inter(const void *sbuf, int scount,
+int mca_coll_demo_allgatherv_inter(const void *sbuf, size_t scount,
                                    struct ompi_datatype_t *sdtype,
                                    void * rbuf, ompi_count_array_t rcounts, ompi_disp_array_t disps,
                                    struct ompi_datatype_t *rdtype,
