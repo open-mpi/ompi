@@ -56,7 +56,7 @@ do:
 - `op_example_component.c`: The main "component" source file.
 - `op_example_module.c`: The main "module" source file.
 - `op_example.h`: information that is shared between the `.c` files.
-- `.ompi_ignore`: the presence of this file causes OMPI's `autogen.pl`
+- `.opal_ignore`: the presence of this file causes OMPI's `autogen.pl`
   to skip this component in the configure/build/install process (see
   below).
 
@@ -69,18 +69,18 @@ shell$ cp -r example foo
 shell$ cd foo
 ```
 
-Remove the `.ompi_ignore` file (which makes the component "visible" to
-all developers) *OR* add an `.ompi_unignore` file with one username per
+Remove the `.opal_ignore` file (which makes the component "visible" to
+all developers) *OR* add an `.opal_unignore` file with one username per
 line (as reported by `whoami`).  OMPI's `autogen.pl` will skip any
-component with a `.ompi_ignore` file *unless* there is also an
-.ompi_unignore file containing your user ID in it.  This is a handy
+component with a `.opal_ignore` file *unless* there is also an
+`.opal_unignore` file containing your user ID in it.  This is a handy
 mechanism to have a component in the tree but have it not built / used
 by most other developers:
 
 ```
-shell$ rm .ompi_ignore
+shell$ rm .opal_ignore
 *OR*
-shell$ whoami > .ompi_unignore
+shell$ whoami > .opal_unignore
 ```
 
 Now rename any file that contains `example` in the filename to have
