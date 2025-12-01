@@ -74,7 +74,6 @@ void ompi_get_elements_x_f(MPI_Fint *status, MPI_Fint *datatype, MPI_Count *coun
     int c_ierr;
     MPI_Datatype c_type = PMPI_Type_f2c(*datatype);
     MPI_Status   c_status;
-    OMPI_SINGLE_NAME_DECL(count);
 
     if (OMPI_IS_FORTRAN_STATUS_IGNORE(status)) {
         *count = OMPI_INT_2_FINT(0);
