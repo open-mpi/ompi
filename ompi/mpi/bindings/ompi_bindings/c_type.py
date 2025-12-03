@@ -2942,7 +2942,7 @@ class TypeSourceOrderOutStandard(StandardABIType):
 
     @property
     def final_code(self):
-        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.T_SOURCE_ORDER}((MPI_T_source_order) {self.name});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.T_SOURCE_ORDER}((MPI_T_source_order) *{self.name});']
 
     def type_text(self, enable_count=False):
         type_name = self.mangle_name('MPI_T_source_order')
