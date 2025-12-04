@@ -133,6 +133,12 @@ int OMPI_C_MPI_COMM_DUP_FN( MPI_Comm comm, int comm_keyval, void* extra_state,
    return MPI_SUCCESS;
 }
 
+/*
+ * Following are not part of the standard ABI
+ */
+
+#ifndef OMPI_BUILD_STANDARD_ABI
+
 int OMPI_C_MPI_NULL_DELETE_FN( MPI_Comm comm, int comm_keyval,
                                void* attribute_val_out,
                                void* extra_state )
@@ -156,3 +162,4 @@ int OMPI_C_MPI_DUP_FN( MPI_Comm comm, int comm_keyval, void* extra_state,
    *(void**)attribute_val_out = attribute_val_in;
    return MPI_SUCCESS;
 }
+#endif
