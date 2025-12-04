@@ -184,7 +184,8 @@ int ompi_osc_ubcl_lock(int lock_type, int target, int assert, struct ompi_win_t 
     mca_osc_ubcl_module_t *module = (mca_osc_ubcl_module_t *) win->w_osc_module;
 
     if (module->no_locks) {
-        mca_osc_ubcl_error(OMPI_ERR_RMA_SYNC, "MPI_Win_lock : window %d is no_locks=true", module->wid);
+        mca_osc_ubcl_warn(OMPI_ERR_RMA_SYNC, "MPI_Win_lock : window %d is no_locks=true", module->wid);
+        return OMPI_ERR_RMA_SYNC;
     }
 
     OPAL_THREAD_LOCK(&module->sync_lock);
@@ -262,7 +263,8 @@ int ompi_osc_ubcl_unlock(int target, struct ompi_win_t *win)
     mca_osc_ubcl_module_t *module = (mca_osc_ubcl_module_t *) win->w_osc_module;
 
     if (module->no_locks) {
-        mca_osc_ubcl_error(OMPI_ERR_RMA_SYNC, "MPI_Win_unlock : window %d is no_locks=true", module->wid);
+        mca_osc_ubcl_warn(OMPI_ERR_RMA_SYNC, "MPI_Win_unlock : window %d is no_locks=true", module->wid);
+        return OMPI_ERR_RMA_SYNC;
     }
 
     OPAL_THREAD_LOCK(&module->sync_lock);
@@ -354,7 +356,8 @@ int ompi_osc_ubcl_lock_all(int assert, struct ompi_win_t *win)
     mca_osc_ubcl_module_t *module = (mca_osc_ubcl_module_t *) win->w_osc_module;
 
     if (module->no_locks) {
-        mca_osc_ubcl_error(OMPI_ERR_RMA_SYNC, "MPI_Win_lockall : window %d is no_locks=true", module->wid);
+        mca_osc_ubcl_warn(OMPI_ERR_RMA_SYNC, "MPI_Win_lockall : window %d is no_locks=true", module->wid);
+        return OMPI_ERR_RMA_SYNC;
     }
 
     /* check access epoch */
@@ -401,7 +404,8 @@ int ompi_osc_ubcl_unlock_all(struct ompi_win_t *win)
     mca_osc_ubcl_module_t *module = (mca_osc_ubcl_module_t *) win->w_osc_module;
 
     if (module->no_locks) {
-        mca_osc_ubcl_error(OMPI_ERR_RMA_SYNC, "MPI_Win_unlockall : window %d is no_locks=true", module->wid);
+        mca_osc_ubcl_warn(OMPI_ERR_RMA_SYNC, "MPI_Win_unlockall : window %d is no_locks=true", module->wid);
+        return OMPI_ERR_RMA_SYNC;
     }
 
     if (UBCL_WIN_SYNC_LOCK_ALL_NO_CHECK == module->sync_type) {
