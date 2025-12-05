@@ -346,7 +346,7 @@ int mca_pml_ob1_revoke_comm( struct ompi_communicator_t* ompi_comm, bool coll_on
 
     /* For intercomm, also work with the local_comm */
     if( OMPI_COMM_IS_INTER(ompi_comm) ) {
-        mca_pml_ob1_revoke_comm(ompi_comm->c_local_comm, coll_only);
+        ompi_comm_revoke_local(ompi_comm->c_local_comm, coll_only);
     }
 
     OBJ_CONSTRUCT(&nack_list, opal_list_t);
