@@ -27,7 +27,7 @@ AC_DEFUN([OMPI_CHECK_UBCL],[
     m4_ifblank([$1], [m4_fatal([First argument to OMPI_CHECK_UBCL cannot be blank])])
 
     AC_ARG_WITH([ubcl],
-        [AC_HELP_STRING([--with-ubcl(=DIR)],
+        [AS_HELP_STRING([--with-ubcl(=DIR)],
             [Build with UBCL support])])
 
     # UBCL is dlopen'd to avoid direct link to libubcl.so.
