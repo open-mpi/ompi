@@ -15,7 +15,7 @@
  *                         reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2020      Google, LLC. All rights reserved.
+ * Copyright (c) 2020-2025 Google, LLC. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -465,6 +465,11 @@ int mca_pml_ob1_recv_request_get_frag(mca_pml_ob1_rdma_frag_t* frag);
  * unavailability. Recvreq is added to recv_pending list if scheduling of put
  * operation cannot be accomplished for some reason. */
 void mca_pml_ob1_recv_request_process_pending(void);
+
+size_t mca_pml_ob1_recv_request_unpack_frag(mca_pml_ob1_recv_request_t* recvreq,
+                                            const mca_btl_base_segment_t* segments,
+                                            size_t num_segments, size_t data_offset,
+                                            size_t hdr_size);
 
 END_C_DECLS
 
