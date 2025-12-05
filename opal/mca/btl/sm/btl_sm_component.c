@@ -298,6 +298,11 @@ static int mca_btl_sm_deregister_mem_knem(struct mca_btl_base_module_t *btl,
     return OPAL_SUCCESS;
 }
 
+static void mca_btl_sm_component_finalize(void *data /*data unused*/) {
+    opal_shmem_unlink(&mca_btl_sm_component.seg_ds);
+    opal_shmem_segment_detach(&mca_btl_sm_component.seg_ds);
+}
+
 /*
  *  SM component initialization
  */
@@ -418,6 +423,12 @@ mca_btl_sm_component_init(int *num_btls, bool enable_progress_threads, bool enab
 
     /* set flag indicating btl not inited */
     mca_btl_sm.btl_inited = false;
+
+    /*
+     * Use a method similar to `mca_btl_smcuda_component_init` to register segment finalize
+     * to opal and release it before shmem is closed.
+     */
+    opal_finalize_register_cleanup(mca_btl_sm_component_finalize);
 
     return btls;
 failed:
