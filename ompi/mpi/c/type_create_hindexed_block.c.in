@@ -25,10 +25,6 @@
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/memchecker.h"
 
-/*
- * TODO:BIGCOUNT this file will need to be updated once
- * the datatype framework supports bigcount 
- */
 
 PROTOTYPE ERROR_CLASS type_create_hindexed_block(COUNT count,
                                                  COUNT blocklength,
@@ -37,7 +33,6 @@ PROTOTYPE ERROR_CLASS type_create_hindexed_block(COUNT count,
                                                  DATATYPE_OUT newtype)
 {
     int rc;
-    MPI_Aint *iarray_of_displacements = NULL;
 
     MEMCHECKER(
         memchecker_datatype(oldtype);
@@ -56,40 +51,32 @@ PROTOTYPE ERROR_CLASS type_create_hindexed_block(COUNT count,
             return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_TYPE,
                                           FUNC_NAME );
         }
-#if OMPI_BIGCOUNT_SRC
-        OMPI_CHECK_MPI_COUNT_INT_CONVERSION_OVERFLOW(rc, count);
-        if (OMPI_SUCCESS != rc) {
-            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(rc, FUNC_NAME);
-        }
-#endif
     }
 
-#if OMPI_BIGCOUNT_SRC
-    iarray_of_displacements = (MPI_Aint *)malloc(count * sizeof(MPI_Aint));
-    if (NULL == iarray_of_displacements) {
-        return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_NO_MEM, FUNC_NAME);
-    }
-    for (int ii = 0; ii < (int)count; ii++) {
-        iarray_of_displacements[ii] = (MPI_Aint)array_of_displacements[ii];
-    }
-#else
-    iarray_of_displacements = (MPI_Aint *)array_of_displacements;
-#endif
-
-    rc = ompi_datatype_create_hindexed_block( count, blocklength, iarray_of_displacements,
+    rc = ompi_datatype_create_hindexed_block( count, blocklength, OMPI_DISP_ARRAY_CREATE(array_of_displacements),
                                               oldtype, newtype );
     if( rc != MPI_SUCCESS ) {
         ompi_datatype_destroy( newtype );
         OMPI_ERRHANDLER_NOHANDLE_RETURN( rc, rc, FUNC_NAME );
     }
     {
-        const int* a_i[2] = {(int *)&count, (int *)&blocklength};
-        ompi_datatype_set_args( *newtype, 2, a_i, count, iarray_of_displacements, 1, &oldtype,
-                                MPI_COMBINER_HINDEXED_BLOCK );
-    }
 #if OMPI_BIGCOUNT_SRC
-    free(iarray_of_displacements);
+        ompi_count_array_t a_i[3] = {
+                    OMPI_COUNT_ARRAY_CREATE(&count),
+                    OMPI_COUNT_ARRAY_CREATE(&blocklength),
+                    OMPI_COUNT_ARRAY_CREATE(array_of_displacements)};
+        ompi_datatype_set_args( *newtype, 0, count + 2,
+                                a_i, 0, OMPI_DISP_ARRAY_NULL,
+                                1, &oldtype,
+                                MPI_COMBINER_HINDEXED_BLOCK );
+#else
+        ompi_count_array_t a_i[2] = {OMPI_COUNT_ARRAY_CREATE(&count), OMPI_COUNT_ARRAY_CREATE(&blocklength)};
+
+        ompi_datatype_set_args( *newtype, 2, 0,
+                                a_i, count, OMPI_DISP_ARRAY_CREATE(array_of_displacements), 1, &oldtype,
+                                MPI_COMBINER_HINDEXED_BLOCK );
 #endif
+    }
 
     return MPI_SUCCESS;
 }

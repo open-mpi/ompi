@@ -62,20 +62,8 @@ mca_coll_inter_gatherv_inter(const void *sbuf, size_t scount,
     size_local = ompi_comm_size(comm);
 
     if (MPI_ROOT == root) { /* I am the root, receiving the data from zero. */
-        /* TODO:BIGCOUNT: Remove these temporaries once ompi_datatype is updated for bigcount */
-        int *tmp_rcounts = malloc(sizeof(int) * size);
-        int *tmp_disps = malloc(sizeof(int) * size);
-        if (NULL == tmp_rcounts || NULL == tmp_disps) {
-            return OMPI_ERR_OUT_OF_RESOURCE;
-        }
-        for (i = 0; i < size; ++i) {
-            tmp_rcounts[i] = ompi_count_array_get(rcounts, i);
-            tmp_disps[i] = ompi_disp_array_get(disps, i);
-        }
-        ompi_datatype_create_indexed(size, tmp_rcounts, tmp_disps, rdtype, &ndtype);
+        ompi_datatype_create_indexed(size, rcounts, disps, rdtype, &ndtype);
         ompi_datatype_commit(&ndtype);
-        free(tmp_rcounts);
-        free(tmp_disps);
 
         err = MCA_PML_CALL(recv(rbuf, 1, ndtype, 0,
                                 MCA_COLL_BASE_TAG_GATHERV,

@@ -230,10 +230,12 @@ int main(int argc, char *argv[])
 
         ompi_datatype_create_vector(count, blocklength, stride, &ompi_mpi_int.dt, &ddt);
         {
-            const int *a_i[3] = {&count, &blocklength, &stride};
+            const ompi_count_array_t a_i[3] = {OMPI_COUNT_ARRAY_CREATE(&count),
+                                               OMPI_COUNT_ARRAY_CREATE(&blocklength),
+                                               OMPI_COUNT_ARRAY_CREATE(&stride)};
             ompi_datatype_t *type = &ompi_mpi_int.dt;
 
-            ompi_datatype_set_args(ddt, 3, a_i, 0, NULL, 1, &type, MPI_COMBINER_VECTOR);
+            ompi_datatype_set_args(ddt, 3, 0, a_i, 0, OMPI_DISP_ARRAY_NULL, 1, &type, MPI_COMBINER_VECTOR);
         }
         ompi_datatype_commit(&ddt);
 
