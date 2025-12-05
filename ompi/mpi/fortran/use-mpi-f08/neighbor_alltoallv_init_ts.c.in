@@ -89,4 +89,7 @@ PROTOTYPE VOID neighbor_alltoallv_init(BUFFER x1, COUNT_ARRAY sendcounts, DISP_A
     OMPI_FORTRAN_BIGCOUNT_ARRAY_CLEANUP_NONBLOCKING(sendcounts, tmp_sendcounts, c_request, c_ierr, idx);
     OMPI_FORTRAN_BIGCOUNT_ARRAY_CLEANUP_NONBLOCKING(rdispls, tmp_rdispls, c_request, c_ierr, idx);
     OMPI_FORTRAN_BIGCOUNT_ARRAY_CLEANUP_NONBLOCKING(sdispls, tmp_sdispls, c_request, c_ierr, idx);
+    if (idx > 0) {
+        ompi_coll_base_add_release_arrays_cb(c_request);
+    }
 }
