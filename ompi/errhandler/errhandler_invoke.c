@@ -18,6 +18,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2023      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2025      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -180,6 +181,7 @@ int ompi_errhandler_request_invoke(int count,
        that had an error. */
     for (; i < count; ++i) {
         if (MPI_REQUEST_NULL != requests[i] &&
+            !requests[i]->req_persistent &&
             MPI_SUCCESS != requests[i]->req_status.MPI_ERROR) {
 #if OPAL_ENABLE_FT_MPI
             /* Special case for MPI_ANY_SOURCE when marked as
