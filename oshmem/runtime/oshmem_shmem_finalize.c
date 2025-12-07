@@ -90,8 +90,18 @@ int oshmem_shmem_finalize(void)
 static int _shmem_finalize(void)
 {
     int ret = OSHMEM_SUCCESS;
+    mca_spml_base_team_t *world_team, *shared_team;
 
     shmem_barrier_all();
+
+    /* Free pSync and pWrk for predefined teams */
+    world_team = (mca_spml_base_team_t *)oshmem_team_world;
+    shared_team = (mca_spml_base_team_t *)oshmem_team_shared;
+
+    mca_spml_base_free_sync_array(&world_team->pSync);
+    mca_spml_base_free_sync_array(&world_team->pWrk);
+    mca_spml_base_free_sync_array(&shared_team->pSync);
+    mca_spml_base_free_sync_array(&shared_team->pWrk);
 
     shmem_lock_finalize();
 

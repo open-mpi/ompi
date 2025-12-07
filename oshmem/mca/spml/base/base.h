@@ -29,6 +29,15 @@
 
 BEGIN_C_DECLS
 
+/**
+ * Base team structure - common fields for all SPML team implementations
+ */
+struct mca_spml_base_team_t {
+    long *pSync;  /* Synchronization work array */
+    long *pWrk;   /* Reduction work array */
+};
+typedef struct mca_spml_base_team_t mca_spml_base_team_t;
+
 /*
  * This is the base priority for a SPML wrapper component
  * If there exists more than one then it is undefined
@@ -96,6 +105,20 @@ OSHMEM_DECLSPEC void mca_spml_base_memuse_hook(void *addr, size_t length);
 
 OSHMEM_DECLSPEC int mca_spml_base_put_all_nb(void *target, const void *source,
                                              size_t size, long *counter);
+
+/**
+ * Helper function to allocate and initialize a sync array using private_alloc
+ * @param count Number of long elements to allocate
+ * @param array Pointer to store the allocated array address
+ * @return OSHMEM_SUCCESS or OSHMEM_ERROR
+ */
+OSHMEM_DECLSPEC int mca_spml_base_alloc_sync_array(size_t count, long **array);
+
+/**
+ * Helper function to free a sync array using private_free
+ * @param array Pointer to the array pointer (will be set to NULL)
+ */
+OSHMEM_DECLSPEC void mca_spml_base_free_sync_array(long **array);
 
 /*
  * MCA framework

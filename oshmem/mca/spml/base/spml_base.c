@@ -16,6 +16,9 @@
 #include "opal/datatype/opal_convertor.h"
 #include "oshmem/proc/proc.h"
 #include "oshmem/mca/spml/base/base.h"
+#include "oshmem/mca/memheap/memheap.h"
+#include "oshmem/mca/memheap/base/base.h"
+#include "oshmem/include/shmem.h"
 #include "opal/mca/btl/btl.h"
 
 #define SPML_BASE_DO_CMP(_res, _addr, _op, _val) \
@@ -175,4 +178,25 @@ int mca_spml_base_put_all_nb(void *target, const void *source,
                              size_t size, long *counter)
 {
     return OSHMEM_ERR_NOT_IMPLEMENTED;
+}
+
+/* Helper function to allocate and initialize a single sync array */
+int mca_spml_base_alloc_sync_array(size_t count, long **array)
+{
+    MCA_MEMHEAP_CALL(private_alloc(count * sizeof(long), (void **)array));
+    if (*array == NULL) {
+        SPML_ERROR("Failed to allocate sync array");
+        return OSHMEM_ERROR;
+    }
+    memset(*array, 0, count * sizeof(long));
+    return OSHMEM_SUCCESS;
+}
+
+/* Helper function to free a single sync array */
+void mca_spml_base_free_sync_array(long **array)
+{
+    if (*array != NULL) {
+        MCA_MEMHEAP_CALL(private_free(*array));
+        *array = NULL;
+    }
 }

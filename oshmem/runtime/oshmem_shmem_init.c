@@ -95,10 +95,53 @@ shmem_internal_mutex_t shmem_internal_mutex_alloc = {{0}};
 
 shmem_ctx_t oshmem_ctx_default = NULL;
 
-shmem_team_t oshmem_team_shared = NULL;
-shmem_team_t oshmem_team_world  = NULL;
+/* Predefined teams - statically allocated base team structures */
+mca_spml_base_team_t oshmem_team_world_instance = {.pSync = NULL, .pWrk = NULL};
+mca_spml_base_team_t oshmem_team_shared_instance = {.pSync = NULL, .pWrk = NULL};
+
+/* Pointers to predefined teams */
+shmem_team_t oshmem_team_world = (shmem_team_t)&oshmem_team_world_instance;
+shmem_team_t oshmem_team_shared = (shmem_team_t)&oshmem_team_shared_instance;
 
 static int _shmem_init(int argc, char **argv, int requested, int *provided);
+
+/* Helper function to allocate pSync and pWrk for predefined teams */
+static int world_and_shared_teams_alloc(void)
+{
+    int ret;
+
+    /* Allocate pSync for SHMEM_TEAM_WORLD */
+    ret = mca_spml_base_alloc_sync_array(SHMEM_SYNC_SIZE, &oshmem_team_world_instance.pSync);
+    if (OSHMEM_SUCCESS != ret) {
+        return ret;
+    }
+
+    /* Allocate pWrk for SHMEM_TEAM_WORLD */
+    ret = mca_spml_base_alloc_sync_array(SHMEM_REDUCE_MIN_WRKDATA_SIZE, &oshmem_team_world_instance.pWrk);
+    if (OSHMEM_SUCCESS != ret) {
+        mca_spml_base_free_sync_array(&oshmem_team_world_instance.pSync);
+        return ret;
+    }
+
+    /* Allocate pSync for SHMEM_TEAM_SHARED */
+    ret = mca_spml_base_alloc_sync_array(SHMEM_SYNC_SIZE, &oshmem_team_shared_instance.pSync);
+    if (OSHMEM_SUCCESS != ret) {
+        mca_spml_base_free_sync_array(&oshmem_team_world_instance.pWrk);
+        mca_spml_base_free_sync_array(&oshmem_team_world_instance.pSync);
+        return ret;
+    }
+
+    /* Allocate pWrk for SHMEM_TEAM_SHARED */
+    ret = mca_spml_base_alloc_sync_array(SHMEM_REDUCE_MIN_WRKDATA_SIZE, &oshmem_team_shared_instance.pWrk);
+    if (OSHMEM_SUCCESS != ret) {
+        mca_spml_base_free_sync_array(&oshmem_team_shared_instance.pSync);
+        mca_spml_base_free_sync_array(&oshmem_team_world_instance.pWrk);
+        mca_spml_base_free_sync_array(&oshmem_team_world_instance.pSync);
+        return ret;
+    }
+
+    return OSHMEM_SUCCESS;
+}
 
 #if OSHMEM_OPAL_THREAD_ENABLE
 static void* shmem_opal_thread(void* argc)
@@ -402,6 +445,13 @@ static int _shmem_init(int argc, char **argv, int requested, int *provided)
     }
 
     OPAL_TIMING_ENV_NEXT(timing, "mca_scoll_enable()");
+
+    /* Initialize pSync and pWrk for SHMEM_TEAM_WORLD and SHMEM_TEAM_SHARED teams */
+    if (OSHMEM_SUCCESS != (ret = world_and_shared_teams_alloc())) {
+        error = "Failed to allocate sync arrays for predefined teams";
+        goto error;
+    }
+    OPAL_TIMING_ENV_NEXT(timing, "world_and_shared_teams_alloc()");
 
     (*provided) = oshmem_mpi_thread_provided;
 

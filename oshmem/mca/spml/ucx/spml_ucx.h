@@ -130,14 +130,13 @@ typedef struct mca_spml_ucx_team_config {
 } mca_spml_ucx_team_config_t;
 
 typedef struct mca_spml_ucx_team {
+    mca_spml_base_team_t        super;
     int                         n_pes;
     int                         my_pe;
     int                         stride;
     int                         start;
     mca_spml_ucx_team_config_t  *config;
     struct mca_spml_ucx_team    *parent_team;
-    long                        *pSync;
-    long                        *pWrk;
 } mca_spml_ucx_team_t;
 
 struct mca_spml_ucx {
