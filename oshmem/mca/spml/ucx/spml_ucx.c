@@ -1820,6 +1820,27 @@ int mca_spml_ucx_team_translate_pe(shmem_team_t src_team, int src_pe,
     return (global_pe - ucx_dest_team->start) / ucx_dest_team->stride;
 }
 
+/* Helper function to allocate and initialize a single sync array */
+static int mca_spml_ucx_alloc_sync_array(size_t count, long **array)
+{
+    MCA_MEMHEAP_CALL(private_alloc(count * sizeof(long), (void **)array));
+    if (*array == NULL) {
+        SPML_UCX_ERROR("Failed to allocate sync array");
+        return OSHMEM_ERROR;
+    }
+    memset(*array, 0, count * sizeof(long));
+    return OSHMEM_SUCCESS;
+}
+
+/* Helper function to free a single sync array */
+static void mca_spml_ucx_free_sync_array(long **array)
+{
+    if (*array != NULL) {
+        MCA_MEMHEAP_CALL(private_free(*array));
+        *array = NULL;
+    }
+}
+
 int mca_spml_ucx_team_split_strided(shmem_team_t parent_team, int start, int
         stride, int size, const shmem_team_config_t *config, long config_mask,
         shmem_team_t *new_team)
@@ -1870,9 +1891,25 @@ int mca_spml_ucx_team_split_strided(shmem_team_t parent_team, int start, int
 
     ucx_new_team->parent_team = (mca_spml_ucx_team_t*)parent_team;
 
-    *new_team = (shmem_team_t)ucx_new_team;
+    /* Allocate pSync array */
+    if (mca_spml_ucx_alloc_sync_array(SHMEM_SYNC_SIZE, &ucx_new_team->pSync) != OSHMEM_SUCCESS) {
+        goto cleanup_config;
+    }
 
+    /* Allocate pWrk array */
+    if (mca_spml_ucx_alloc_sync_array(SHMEM_REDUCE_MIN_WRKDATA_SIZE, &ucx_new_team->pWrk) != OSHMEM_SUCCESS) {
+        goto cleanup_psync;
+    }
+
+    *new_team = (shmem_team_t)ucx_new_team;
     return OSHMEM_SUCCESS;
+
+cleanup_psync:
+    mca_spml_ucx_free_sync_array(&ucx_new_team->pSync);
+cleanup_config:
+    free(ucx_new_team->config);
+    free(ucx_new_team);
+    return OSHMEM_ERROR;
 }
 
 int mca_spml_ucx_team_split_2d(shmem_team_t parent_team, int xrange, const
@@ -1922,6 +1959,10 @@ int mca_spml_ucx_team_destroy(shmem_team_t team)
     mca_spml_ucx_team_t *ucx_team = (mca_spml_ucx_team_t *)team;
 
     SPML_UCX_VALIDATE_TEAM(team);
+
+    /* Free pSync and pWrk using private_free */
+    mca_spml_ucx_free_sync_array(&ucx_team->pSync);
+    mca_spml_ucx_free_sync_array(&ucx_team->pWrk);
 
     free(ucx_team->config);
     free(team);
