@@ -309,7 +309,7 @@ void mca_pml_ubcl_endpoint_retain(ompi_proc_t *proc)
     OBJ_RETAIN(proc);
 }
 
-int mca_pml_ubcl_create_endpoints(ompi_proc_t *proc)
+static int mca_pml_ubcl_create_endpoints(ompi_proc_t *proc)
 {
     int err = OMPI_SUCCESS;
     mca_common_ubcl_endpoint_t *new_endpoint;

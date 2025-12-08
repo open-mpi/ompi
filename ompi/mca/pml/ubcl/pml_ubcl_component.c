@@ -191,7 +191,7 @@ int mca_pml_ubcl_component_register(void)
     return OMPI_SUCCESS;
 }
 
-static void mca_pml_ubcl_check_cuda_accelerator()
+static void mca_pml_ubcl_check_cuda_accelerator(void)
 {
     const char* cuda_component_name = "cuda";
     const char* selected_component_name = opal_accelerator_base_selected_component.base_version.mca_component_name;
