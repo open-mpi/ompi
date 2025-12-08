@@ -139,7 +139,6 @@ int ompi_osc_ubcl_rget(void *origin_addr, size_t origin_count,
         target_iov[0].iov_base = (char *) target_addr + gap;
         target_iov[0].iov_len = span;
     } else {
-        int ret = OMPI_SUCCESS;
         ret = osc_ubcl_build_ddt_iov(target_addr, proc, target_count, target_dt, &target_iov,
                                      &target_iov_count);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {

@@ -100,7 +100,7 @@ static inline void mca_pml_ubcl_isend_prepare(const void *buf, size_t count,
 void mca_pml_ubcl_isend_start(struct ompi_request_t **request)
 {
     OPAL_OUTPUT_VERBOSE(
-        (50, mca_pml_ubcl_component.output, "UBCL_MODULE_ISEND_START %p\n", *request));
+        (50, mca_pml_ubcl_component.output, "UBCL_MODULE_ISEND_START %p\n", *(void **)request));
 
     mca_pml_ubcl_request_t *req = container_of((*request), mca_pml_ubcl_request_t, ompi_req);
 
@@ -167,7 +167,7 @@ void mca_pml_ubcl_isend_start(struct ompi_request_t **request)
     OPAL_OUTPUT_VERBOSE((50, mca_pml_ubcl_component.output,
                          "PML/UBCL ISEND: send mpi_tag=%x comm_id=%zu\n", tag, ubcl_cid.bits));
     OPAL_OUTPUT_VERBOSE(
-        (50, mca_pml_ubcl_component.output, "PML/UBCL ISEND: ompi_req=%p\n", *request));
+        (50, mca_pml_ubcl_component.output, "PML/UBCL ISEND: ompi_req=%p\n", *(void **)request));
     OPAL_OUTPUT_VERBOSE(
         (50, mca_pml_ubcl_component.output, "PML/UBCL ISEND: sending to rank=%zu\n", endpoint->rank));
 
