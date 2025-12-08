@@ -2,7 +2,8 @@
  * Copyright (c) 2021 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
- * Copyright (c) 2022 NVIDIA Corporation. All rights reserved.
+ * Copyright (c) 2022-2025 NVIDIA Corporation. All rights reserved.
+ * Copyright (c) 2024      Triad National Security, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -220,7 +221,7 @@ static ucc_status_t oob_allgather_test(void *req)
     size_t               msglen  = oob_req->msglen;
     int                  probe_count = 5;
     int rank, size, sendto, recvfrom, recvdatafrom,
-        senddatafrom, completed, probe;
+        senddatafrom, completed, probe, rc;
 
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
@@ -245,10 +246,16 @@ static ucc_status_t oob_allgather_test(void *req)
         senddatafrom = (rank - oob_req->iter + size) % size;
         tmprecv = (char*)oob_req->rbuf + (ptrdiff_t)recvdatafrom * (ptrdiff_t)msglen;
         tmpsend = (char*)oob_req->rbuf + (ptrdiff_t)senddatafrom * (ptrdiff_t)msglen;
-        MCA_PML_CALL(isend(tmpsend, msglen, MPI_BYTE, sendto, MCA_COLL_BASE_TAG_UCC,
+        rc = MCA_PML_CALL(isend(tmpsend, msglen, MPI_BYTE, sendto, MCA_COLL_BASE_TAG_UCC,
                            MCA_PML_BASE_SEND_STANDARD, comm, &oob_req->reqs[0]));
-        MCA_PML_CALL(irecv(tmprecv, msglen, MPI_BYTE, recvfrom,
+        if (OMPI_SUCCESS != rc) {
+            return UCC_ERR_NO_MESSAGE;
+        }
+        rc = MCA_PML_CALL(irecv(tmprecv, msglen, MPI_BYTE, recvfrom,
                            MCA_COLL_BASE_TAG_UCC, comm, &oob_req->reqs[1]));
+        if (OMPI_SUCCESS != rc) {
+            return UCC_ERR_NO_MESSAGE;
+        }
     }
     probe = 0;
     do {
@@ -276,6 +283,8 @@ static ucc_status_t oob_allgather(void *sbuf, void *rbuf, size_t msglen,
     oob_req->msglen              = msglen;
     oob_req->oob_coll_ctx        = oob_coll_ctx;
     oob_req->iter                = 0;
+    oob_req->reqs[0]             = MPI_REQUEST_NULL;
+    oob_req->reqs[1]             = MPI_REQUEST_NULL;
     *req                         = oob_req;
     return UCC_OK;
 }
