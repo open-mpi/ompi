@@ -177,7 +177,7 @@ mca_pml_ubcl_request_cancel(struct ompi_request_t *request, int complete)
     return OMPI_SUCCESS;
 }
 
-int mca_pml_ubcl_request_complete(struct ompi_request_t *request)
+static int mca_pml_ubcl_request_complete(struct ompi_request_t *request)
 {
     /* Null check */
     if (MPI_REQUEST_NULL == request) {
@@ -248,7 +248,7 @@ void ubcl_request_send_complete_cb(ubcl_status_t status, void *cb_data)
     }
 
     OPAL_OUTPUT_VERBOSE((50, mca_pml_ubcl_component.output,
-                         "PML/UBCL SEND_COMPLETE pml_req=%p mpi_tag=%x\n", req, req->tag));
+                         "PML/UBCL SEND_COMPLETE pml_req=%p mpi_tag=%x\n", (void *)req, req->tag));
 
     /** mca_pml_ubcl_request_complete((ompi_request_t *) cb_data); */
 }
@@ -284,7 +284,7 @@ void ubcl_request_recv_complete_cb(ubcl_status_t status, void *cb_data)
     ompi_request_complete(&(req->ompi_req), true);
 
     OPAL_OUTPUT_VERBOSE((50, mca_pml_ubcl_component.output,
-                         "PML/UBCL RECV_COMPLETE pml_req=%p mpi_tag=%d\n", req, req->tag));
+                         "PML/UBCL RECV_COMPLETE pml_req=%p mpi_tag=%d\n", (void *)req, req->tag));
 
     /** mca_pml_ubcl_request_complete((ompi_request_t *) cb_data); */
 }
@@ -296,7 +296,7 @@ void ubcl_request_recv_complete_cb(ubcl_status_t status, void *cb_data)
 void mca_pml_ubcl_request_finalize(mca_pml_ubcl_request_t *req)
 {
     OPAL_OUTPUT_VERBOSE((50, mca_pml_ubcl_component.output,
-                         "PML/UBCL REQUEST_FINALIZE BEGIN pml_req=%p mpi_tag=%x\n", req, req->tag));
+                         "PML/UBCL REQUEST_FINALIZE BEGIN pml_req=%p mpi_tag=%x\n", (void *)req, req->tag));
 
     opal_convertor_cleanup(&req->convertor);
     OBJ_DESTRUCT(&req->convertor);
@@ -308,7 +308,7 @@ void mca_pml_ubcl_request_finalize(mca_pml_ubcl_request_t *req)
     opal_free_list_return(&mca_pml_ubcl_component.pml_req_free_list, (opal_free_list_item_t *) req);
 
     OPAL_OUTPUT_VERBOSE(
-        (50, mca_pml_ubcl_component.output, "PML/UBCL REQUEST_FINALIZED %p\n", req));
+        (50, mca_pml_ubcl_component.output, "PML/UBCL REQUEST_FINALIZED %p\n", (void *)req));
 }
 
 

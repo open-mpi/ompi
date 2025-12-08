@@ -26,7 +26,7 @@
 #include "ompi/mca/osc/ubcl/osc_ubcl_request.h"
 #include "ompi/mca/common/ubcl/common_ubcl.h"
 
-int get_ubcl_int_type(size_t size, bool is_signed, ubcl_win_atomic_datatype_t *ubcl_type)
+static int get_ubcl_int_type(size_t size, bool is_signed, ubcl_win_atomic_datatype_t *ubcl_type)
 {
     int ret = OMPI_SUCCESS;
 
@@ -51,7 +51,7 @@ int get_ubcl_int_type(size_t size, bool is_signed, ubcl_win_atomic_datatype_t *u
     return ret;
 }
 
-int get_ubcl_fp_type(size_t size, ubcl_win_atomic_datatype_t *ubcl_type)
+static int get_ubcl_fp_type(size_t size, ubcl_win_atomic_datatype_t *ubcl_type)
 {
     int ret = OMPI_SUCCESS;
 
