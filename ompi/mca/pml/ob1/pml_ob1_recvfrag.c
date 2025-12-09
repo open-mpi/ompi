@@ -471,7 +471,7 @@ void mca_pml_ob1_recv_frag_callback_match (mca_btl_base_module_t *btl,
 
     /* communicator pointer */
     comm_ptr = ompi_comm_lookup(hdr->hdr_ctx);
-    if(OPAL_UNLIKELY(NULL == comm_ptr)) {
+    if(OPAL_UNLIKELY(NULL == comm_ptr || NULL == comm_ptr->c_pml_comm)) {
         /* This is a special case. A message for a not yet existing
          * communicator can happens. Instead of doing a matching we
          * will temporarily add it the a pending queue in the PML.
