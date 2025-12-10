@@ -9,6 +9,7 @@ components that can be tuned to affect behavior at run time.
 
    environment-var
    networking/index
+   accelerators/index
    multithreaded
    dynamic-loading
    fork-system-popen
