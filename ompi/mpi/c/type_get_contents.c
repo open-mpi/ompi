@@ -66,6 +66,25 @@ int MPI_Type_get_contents(MPI_Datatype mtype,
     }
 
     size_t ci, cl, ca, cd;
+    int32_t type;
+    rc = ompi_datatype_get_args( mtype, 0, &ci, NULL,
+                                &cl, NULL,
+                                &ca, NULL,
+                                &cd, NULL, &type );
+    if( rc != MPI_SUCCESS ) {
+        OMPI_ERRHANDLER_NOHANDLE_RETURN( MPI_ERR_INTERN,
+                                MPI_ERR_INTERN, FUNC_NAME );
+    }
+    // check that we have enough space and no large counts
+    if (cl > 0 ||
+        ci > (size_t)max_integers ||
+        ca > (size_t)max_addresses ||
+        cd > (size_t)max_datatypes) {
+        OMPI_ERRHANDLER_NOHANDLE_RETURN( MPI_ERR_TYPE,
+                                MPI_ERR_TYPE, FUNC_NAME );
+    }
+    // now get the contents
+    ci = max_integers, cl = 0, ca = max_addresses, cd = max_datatypes;
     rc = ompi_datatype_get_args( mtype, 1, &ci, array_of_integers,
                                 &cl, NULL,
                                 &ca, array_of_addresses,
