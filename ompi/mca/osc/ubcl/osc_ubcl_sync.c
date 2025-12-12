@@ -184,7 +184,8 @@ int ompi_osc_ubcl_lock(int lock_type, int target, int assert, struct ompi_win_t 
     mca_osc_ubcl_module_t *module = (mca_osc_ubcl_module_t *) win->w_osc_module;
 
     if (module->no_locks) {
-        mca_osc_ubcl_error(OMPI_ERR_RMA_SYNC, "MPI_Win_lock : window %d is no_locks=true", module->wid);
+        mca_osc_ubcl_warn(OMPI_ERR_RMA_SYNC, "MPI_Win_lock : window %d is no_locks=true", module->wid);
+        return OMPI_ERR_RMA_SYNC;
     }
 
     OPAL_THREAD_LOCK(&module->sync_lock);
@@ -192,7 +193,7 @@ int ompi_osc_ubcl_lock(int lock_type, int target, int assert, struct ompi_win_t 
     /* check synchronization type */
     if (UBCL_WIN_SYNC_NONE != module->sync_type && UBCL_WIN_SYNC_LOCK != module->sync_type
             && UBCL_WIN_SYNC_FENCE != module->sync_type) {
-        ret = OMPI_ERR_RMA_CONFLICT;
+        ret = OMPI_ERR_RMA_SYNC;
         mca_osc_ubcl_warn(ret, "Failed to lock window %s already in sync type %s",
                           win->w_name, osc_ubcl_sync_name(module->sync_type));
         goto return_locked;
@@ -219,7 +220,7 @@ int ompi_osc_ubcl_lock(int lock_type, int target, int assert, struct ompi_win_t 
 
     /* check access epoch */
     if (UBCL_WIN_SYNC_NONE != module->procs_sync_type[target]) {
-        ret = OMPI_ERR_RMA_CONFLICT;
+        ret = OMPI_ERR_RMA_SYNC;
         mca_osc_ubcl_warn(ret, "Target %d is already locked on window %s",
                           target, win->w_name);
         goto return_locked;
@@ -262,7 +263,8 @@ int ompi_osc_ubcl_unlock(int target, struct ompi_win_t *win)
     mca_osc_ubcl_module_t *module = (mca_osc_ubcl_module_t *) win->w_osc_module;
 
     if (module->no_locks) {
-        mca_osc_ubcl_error(OMPI_ERR_RMA_SYNC, "MPI_Win_unlock : window %d is no_locks=true", module->wid);
+        mca_osc_ubcl_warn(OMPI_ERR_RMA_SYNC, "MPI_Win_unlock : window %d is no_locks=true", module->wid);
+        return OMPI_ERR_RMA_SYNC;
     }
 
     OPAL_THREAD_LOCK(&module->sync_lock);
@@ -271,7 +273,7 @@ int ompi_osc_ubcl_unlock(int target, struct ompi_win_t *win)
     if (UBCL_WIN_SYNC_LOCK != module->sync_type
         || (UBCL_WIN_SYNC_LOCK != module->procs_sync_type[target]
             && UBCL_WIN_SYNC_LOCK_NO_CHECK != module->procs_sync_type[target])) {
-        ret = OMPI_ERR_RMA_CONFLICT;
+        ret = OMPI_ERR_RMA_SYNC;
         mca_osc_ubcl_warn(ret, "Target %d is not locked so it cannot be unlocked "
                           "window %s (sync type %s)",
                           target, win->w_name, osc_ubcl_sync_name(module->sync_type));
@@ -344,7 +346,7 @@ static int get_all_ubcl_ranks(struct ompi_win_t *win, ubcl_rank_t *all_ranks)
 
 /* lock_all doesn't need to check the exposure epoch because if there was another
  * one started (individual lock or lock_all) then module->sync_type would be
- * different from UBCL_WIN_SYNC_NONE therefore returning OMPI_ERR_RMA_CONFLICT.
+ * different from UBCL_WIN_SYNC_NONE therefore returning OMPI_ERR_RMA_SYNC.
  * Stemming from this, unlock_all doesn't need to check the epoch either
  */
 int ompi_osc_ubcl_lock_all(int assert, struct ompi_win_t *win)
@@ -354,12 +356,13 @@ int ompi_osc_ubcl_lock_all(int assert, struct ompi_win_t *win)
     mca_osc_ubcl_module_t *module = (mca_osc_ubcl_module_t *) win->w_osc_module;
 
     if (module->no_locks) {
-        mca_osc_ubcl_error(OMPI_ERR_RMA_SYNC, "MPI_Win_lockall : window %d is no_locks=true", module->wid);
+        mca_osc_ubcl_warn(OMPI_ERR_RMA_SYNC, "MPI_Win_lockall : window %d is no_locks=true", module->wid);
+        return OMPI_ERR_RMA_SYNC;
     }
 
     /* check access epoch */
     if (UBCL_WIN_SYNC_NONE != module->sync_type && UBCL_WIN_SYNC_FENCE != module->sync_type) {
-        ret = OMPI_ERR_RMA_CONFLICT;
+        ret = OMPI_ERR_RMA_SYNC;
         mca_osc_ubcl_warn(ret, "Failed to lock_all window %s already in sync type %s",
                           win->w_name, osc_ubcl_sync_name(module->sync_type));
         return ret;
@@ -401,7 +404,8 @@ int ompi_osc_ubcl_unlock_all(struct ompi_win_t *win)
     mca_osc_ubcl_module_t *module = (mca_osc_ubcl_module_t *) win->w_osc_module;
 
     if (module->no_locks) {
-        mca_osc_ubcl_error(OMPI_ERR_RMA_SYNC, "MPI_Win_unlockall : window %d is no_locks=true", module->wid);
+        mca_osc_ubcl_warn(OMPI_ERR_RMA_SYNC, "MPI_Win_unlockall : window %d is no_locks=true", module->wid);
+        return OMPI_ERR_RMA_SYNC;
     }
 
     if (UBCL_WIN_SYNC_LOCK_ALL_NO_CHECK == module->sync_type) {
@@ -413,7 +417,7 @@ int ompi_osc_ubcl_unlock_all(struct ompi_win_t *win)
 
     /* check access epoch */
     if (UBCL_WIN_SYNC_LOCK_ALL != module->sync_type) {
-        return OMPI_ERR_RMA_CONFLICT;
+        return OMPI_ERR_RMA_SYNC;
     }
 
     group_size = ompi_group_size(win->w_group);
@@ -513,7 +517,7 @@ int ompi_osc_ubcl_complete(struct ompi_win_t *win)
     OPAL_THREAD_LOCK(&module->sync_lock);
 
     if (UBCL_WIN_SYNC_PSCW != module->sync_type) {
-        ret = OMPI_ERR_RMA_CONFLICT;
+        ret = OMPI_ERR_RMA_SYNC;
         mca_osc_ubcl_warn(ret, "Failed to complete window %s in sync type %s",
                           win->w_name, osc_ubcl_sync_name(module->sync_type));
         goto return_locked;
@@ -596,7 +600,7 @@ int ompi_osc_ubcl_post(struct ompi_group_t *group, int assert, struct ompi_win_t
             || ( UBCL_WIN_SYNC_NONE != module->sync_type
                  && UBCL_WIN_SYNC_FENCE != module->sync_type
                  && UBCL_WIN_SYNC_PSCW != module->sync_type )) {
-        ret = OMPI_ERR_RMA_CONFLICT;
+        ret = OMPI_ERR_RMA_SYNC;
         mca_osc_ubcl_warn(ret, "Failed to post window %s already in sync type %s",
                           win->w_name, osc_ubcl_sync_name(module->sync_type));
         goto return_locked;
@@ -662,7 +666,7 @@ int ompi_osc_ubcl_test(struct ompi_win_t *win, int *flag)
     }
 
     if (UBCL_WIN_SYNC_PSCW != module->sync_type) {
-        ret = OMPI_ERR_RMA_CONFLICT;
+        ret = OMPI_ERR_RMA_SYNC;
         mca_osc_ubcl_warn(ret, "Failed to test window %s in sync type %s",
                           win->w_name, osc_ubcl_sync_name(module->sync_type));
         goto return_locked;
@@ -742,7 +746,7 @@ int ompi_osc_ubcl_fence(int assert, struct ompi_win_t *win)
     if (UBCL_WIN_SYNC_FENCE != module->sync_type
         && UBCL_WIN_SYNC_FENCE_EPOCH != module->sync_type
         && UBCL_WIN_SYNC_NONE != module->sync_type) {
-        ret = OMPI_ERR_RMA_CONFLICT;
+        ret = OMPI_ERR_RMA_SYNC;
         mca_osc_ubcl_warn(ret, "Failed to fence window %s in sync type %s",
                           win->w_name, osc_ubcl_sync_name(module->sync_type));
         return ret;
