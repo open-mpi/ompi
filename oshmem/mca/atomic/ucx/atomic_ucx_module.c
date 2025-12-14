@@ -73,8 +73,7 @@ int mca_atomic_ucx_op(shmem_ctx_t ctx,
     status_ptr = ucp_atomic_op_nbx(ucx_ctx->ucp_peers[pe].ucp_conn,
                                    op, &value, 1, rva, ucx_mkey->rkey,
                                    &mca_spml_ucp_request_params[size >> 3]);
-    res = opal_common_ucx_wait_request(status_ptr, ucx_ctx->ucp_worker[0],
-                                       "ucp_atomic_op_nbx post");
+    res = UCS_PTR_IS_ERR(status_ptr) ? OSHMEM_ERROR : OSHMEM_SUCCESS;
 #else
     status = ucp_atomic_post(ucx_ctx->ucp_peers[pe].ucp_conn,
                              op, value, size, rva,
@@ -336,9 +335,18 @@ static int mca_atomic_ucx_cswap_nb(shmem_ctx_t ctx,
     return OSHMEM_ERR_NOT_IMPLEMENTED;
 }
 
-
-
-
+static int mca_atomic_ucx_set(shmem_ctx_t ctx,
+                              void *target,
+                              uint64_t value,
+                              size_t size,
+                              int pe)
+{
+#if HAVE_DECL_UCP_ATOMIC_OP_NBX
+    return mca_atomic_ucx_op(ctx, target, value, size, pe, UCP_ATOMIC_OP_SWAP);
+#else
+    return OSHMEM_ERR_NOT_IMPLEMENTED;
+#endif
+}
 
 mca_atomic_base_module_t *
 mca_atomic_ucx_query(int *priority)
@@ -365,6 +373,7 @@ mca_atomic_ucx_query(int *priority)
         module->super.atomic_fxor_nb  = mca_atomic_ucx_fxor_nb;
         module->super.atomic_swap_nb  = mca_atomic_ucx_swap_nb;
         module->super.atomic_cswap_nb = mca_atomic_ucx_cswap_nb;
+        module->super.atomic_set      = mca_atomic_ucx_set;
         return &(module->super);
     }
 
