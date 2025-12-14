@@ -1644,19 +1644,77 @@ int mca_spml_ucx_put_all_nb(void *dest, const void *source, size_t size, long *c
     return OSHMEM_SUCCESS;
 }
 
-/* This routine is not implemented */
-int mca_spml_ucx_put_signal(shmem_ctx_t ctx, void* dst_addr, size_t size, void*
-        src_addr, uint64_t *sig_addr, uint64_t signal, int sig_op, int dst)
+
+static inline int mca_spml_ucx_signal(shmem_ctx_t ctx,
+                                      uint64_t *sig_addr,
+                                      uint64_t signal,
+                                      int sig_op,
+                                      int dst)
 {
+    uint64_t dummy_prev;
+
+    if (sig_op == SHMEM_SIGNAL_SET) {
+        return MCA_ATOMIC_CALL(swap(ctx, (void*)sig_addr, (void*)&dummy_prev,
+                                   signal, sizeof(uint64_t), dst));
+    } else if (sig_op == SHMEM_SIGNAL_ADD) {
+        return MCA_ATOMIC_CALL(add(ctx, (void*)sig_addr, signal,
+                                   sizeof(uint64_t), dst));
+    }
+
+    SPML_UCX_ERROR("Invalid signal operation: %d", sig_op);
     return OSHMEM_ERR_NOT_IMPLEMENTED;
 }
 
-/* This routine is not implemented */
+static inline int mca_spml_ucx_signal_nb(shmem_ctx_t ctx,
+                                         uint64_t *sig_addr,
+                                         uint64_t signal,
+                                         int sig_op,
+                                         int dst)
+{
+    uint64_t dummy_prev, dummy_fetch;
+
+    if (sig_op == SHMEM_SIGNAL_SET) {
+        return MCA_ATOMIC_CALL(swap_nb(ctx, &dummy_fetch, (void*)sig_addr, (void*)&dummy_prev,
+                                    signal, sizeof(uint64_t), dst));
+    } else if (sig_op == SHMEM_SIGNAL_ADD) {
+        return MCA_ATOMIC_CALL(fadd_nb(ctx, &dummy_fetch, (void*)sig_addr, (void*)&dummy_prev,
+                                   signal, sizeof(uint64_t), dst));
+    }
+
+    SPML_UCX_ERROR("Invalid signal operation: %d", sig_op);
+    return OSHMEM_ERR_NOT_IMPLEMENTED;
+}
+
+int mca_spml_ucx_put_signal(shmem_ctx_t ctx, void* dst_addr, size_t size, void*
+        src_addr, uint64_t *sig_addr, uint64_t signal, int sig_op, int dst)
+{
+    int res;
+
+    res = mca_spml_ucx_put(ctx, dst_addr, size, src_addr, dst);
+    if (OPAL_UNLIKELY(OSHMEM_SUCCESS != res)) {
+        return res;
+    }
+
+    return mca_spml_ucx_signal(ctx, sig_addr, signal, sig_op, dst);
+}
+
 int mca_spml_ucx_put_signal_nb(shmem_ctx_t ctx, void* dst_addr, size_t size,
         void* src_addr, uint64_t *sig_addr, uint64_t signal, int sig_op, int
         dst)
 {
-    return OSHMEM_ERR_NOT_IMPLEMENTED;
+    int res;
+
+    res = mca_spml_ucx_put_nb(ctx, dst_addr, size, src_addr, dst, NULL);
+    if (OPAL_UNLIKELY(OSHMEM_SUCCESS != res)) {
+        return res;
+    }
+
+    res = mca_spml_ucx_fence(ctx);
+    if (OPAL_UNLIKELY(OSHMEM_SUCCESS != res)) {
+        return res;
+    }
+
+    return mca_spml_ucx_signal_nb(ctx, sig_addr, signal, sig_op, dst);
 }
 
 /* This routine is not implemented */
