@@ -10,7 +10,7 @@
  *
  */
 
-#include "part_persist_aggregated_scheme_simple.h"
+#include "part_persist_aggregated_scheme_regular.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -21,7 +21,7 @@ static int internal_partition(struct part_persist_aggregation_state *state, int 
     return public_part / state->aggregation_count;
 }
 
-void part_persist_aggregate_simple_init(struct part_persist_aggregation_state *state,
+void part_persist_aggregate_regular_init(struct part_persist_aggregation_state *state,
                                         int internal_partition_count, int factor, int last_internal_partition_size)
 {
     state->public_partition_count = (internal_partition_count - 1) * factor + last_internal_partition_size;
@@ -37,7 +37,7 @@ void part_persist_aggregate_simple_init(struct part_persist_aggregation_state *s
                                                                  sizeof(opal_atomic_uint32_t));
 }
 
-void part_persist_aggregate_simple_reset(struct part_persist_aggregation_state *state)
+void part_persist_aggregate_regular_reset(struct part_persist_aggregation_state *state)
 {
     // reset flags
     if (NULL != state->public_parts_ready) {
@@ -53,7 +53,7 @@ static inline int num_public_parts(struct part_persist_aggregation_state *state,
     return is_last_partition(state, partition) ? state->last_internal_partition_size : state->aggregation_count;
 }
 
-void part_persist_aggregate_simple_pready(struct part_persist_aggregation_state *state, int partition, int* available_partition)
+void part_persist_aggregate_regular_pready(struct part_persist_aggregation_state *state, int partition, int* available_partition)
 {
     int internal_part = internal_partition(state, partition);
 
@@ -68,7 +68,7 @@ void part_persist_aggregate_simple_pready(struct part_persist_aggregation_state 
     }
 }
 
-void part_persist_aggregate_simple_free(struct part_persist_aggregation_state *state)
+void part_persist_aggregate_regular_free(struct part_persist_aggregation_state *state)
 {
     if (state->public_parts_ready != NULL)
         free((void*)state->public_parts_ready);

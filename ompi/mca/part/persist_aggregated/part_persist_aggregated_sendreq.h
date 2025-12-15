@@ -28,7 +28,7 @@
 #ifndef PART_PERSIST_AGGREGATED_PSENDREQ_H
 #define PART_PERSIST_AGGREGATED_PSENDREQ_H
 
-#include "ompi/mca/part/persist_aggregated/schemes/part_persist_aggregated_scheme_simple.h"
+#include "ompi/mca/part/persist_aggregated/schemes/part_persist_aggregated_scheme_regular.h"
 
 #include "ompi/mca/part/persist_aggregated/part_persist_aggregated_request.h"
 #include "ompi/mca/part/base/part_base_psendreq.h"

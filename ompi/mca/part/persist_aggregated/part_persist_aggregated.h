@@ -161,7 +161,7 @@ mca_part_persist_aggregated_free_req(struct mca_part_persist_aggregated_request_
     // if on sender side, free aggregation state
     if (MCA_PART_PERSIST_AGGREGATED_REQUEST_PSEND == req->req_type) {
         mca_part_persist_aggregated_psend_request_t *sendreq = (mca_part_persist_aggregated_psend_request_t *) req;
-        part_persist_aggregate_simple_free(&sendreq->aggregation_state);
+        part_persist_aggregate_regular_free(&sendreq->aggregation_state);
     }
 
     for(i = 0; i < req->real_parts; i++) {
@@ -532,7 +532,7 @@ mca_part_persist_aggregated_psend_init(const void* buf,
     opal_output_verbose(5, ompi_part_base_framework.framework_output, "mapped given %lu*%lu partitioning to internal partitioning of %lu*%lu + %lu\n", parts, count, req->real_parts - 1, req->real_count, req->real_remainder);
 
     // init aggregation state
-    part_persist_aggregate_simple_init(&sendreq->aggregation_state, req->real_parts, factor, remaining_partitions);
+    part_persist_aggregate_regular_init(&sendreq->aggregation_state, req->real_parts, factor, remaining_partitions);
 
     /* non-blocking send set-up data */
     req->setup_info[0].dt_size = dt_size;
@@ -590,7 +590,7 @@ mca_part_persist_aggregated_start(size_t count, ompi_request_t** requests)
         // reset aggregation state here
         if (MCA_PART_PERSIST_AGGREGATED_REQUEST_PSEND == req->req_type) {
             mca_part_persist_aggregated_psend_request_t *sendreq = (mca_part_persist_aggregated_psend_request_t *)(req);
-            part_persist_aggregate_simple_reset(&sendreq->aggregation_state);
+            part_persist_aggregate_regular_reset(&sendreq->aggregation_state);
         }
 
         /* First use is a special case, to support lazy initialization */
@@ -648,7 +648,7 @@ mca_part_persist_aggregated_pready(size_t min_part,
     mca_part_persist_aggregated_psend_request_t *sendreq = (mca_part_persist_aggregated_psend_request_t *)(req);
     int internal_part_ready;
     for(i = min_part; i <= max_part && OMPI_SUCCESS == err; i++) {
-        part_persist_aggregate_simple_pready(&sendreq->aggregation_state, i, &internal_part_ready);
+        part_persist_aggregate_regular_pready(&sendreq->aggregation_state, i, &internal_part_ready);
 
         if (-1 != internal_part_ready) {
             if(true == req->initialized)
