@@ -148,7 +148,7 @@ mca_part_persist_aggregated_component_init(int* priority,
                             bool enable_progress_threads,
                             bool enable_mpi_threads)
 {
-    *priority = 1;
+    *priority = 0;
 
     opal_output_verbose( 10, 0,
                          "in persist_aggregated part priority is %d\n", *priority);
