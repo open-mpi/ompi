@@ -18,8 +18,8 @@
  * where k can be selected to optimize internal partition size.
  */
 
-#ifndef PART_persist_aggregated_scheme_simple_H
-#define PART_persist_aggregated_scheme_simple_H
+#ifndef PART_PERSIST_AGGREGATED_SCHEME_SIMPLE_H
+#define PART_PERSIST_AGGREGATED_SCHEME_SIMPLE_H
 
 #include "ompi_config.h"
 

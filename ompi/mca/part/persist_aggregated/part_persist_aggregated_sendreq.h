@@ -26,6 +26,8 @@
 #ifndef PART_PERSIST_AGGREGATED_PSENDREQ_H
 #define PART_PERSIST_AGGREGATED_PSENDREQ_H
 
+#include "ompi/mca/part/persist_aggregated/schemes/part_persist_aggregated_scheme_simple.h"
+
 #include "ompi/mca/part/persist_aggregated/part_persist_aggregated_request.h"
 #include "ompi/mca/part/base/part_base_psendreq.h"
 #include "ompi/mca/part/part.h"
@@ -33,6 +35,8 @@
 
 struct mca_part_persist_aggregated_psend_request_t {
     mca_part_persist_aggregated_request_t req_base;
+
+    struct part_persist_aggregation_state aggregation_state;
 };
 typedef struct mca_part_persist_aggregated_psend_request_t mca_part_persist_aggregated_psend_request_t;
 OBJ_CLASS_DECLARATION(mca_part_persist_aggregated_psend_request_t);
