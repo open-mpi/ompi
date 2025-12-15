@@ -22,6 +22,10 @@
 #include "ompi/mca/part/persist/part_persist.h"
 #include "ompi/mca/part/persist/part_persist_request.h"
 
+/**
+ */
+opal_free_list_t mca_part_persist_psend_requests = {{{0}}};
+opal_free_list_t mca_part_persist_precv_requests = {{{0}}};
 
 static void mca_part_persist_request_construct( mca_part_persist_request_t* req) {
     OBJ_CONSTRUCT(&req->req_convertor, opal_convertor_t);

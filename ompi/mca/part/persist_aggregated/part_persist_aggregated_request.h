@@ -46,6 +46,13 @@ struct ompi_mca_persist_aggregated_setup_t {
 
 
 /**
+ * External list for the partitioned requests. 
+ */
+OMPI_DECLSPEC extern opal_free_list_t mca_part_persist_aggregated_psend_requests;
+OMPI_DECLSPEC extern opal_free_list_t mca_part_persist_aggregated_precv_requests;
+
+
+/**
  *  Base type for PART persist_aggregated requests
  */
 struct mca_part_persist_aggregated_request_t {

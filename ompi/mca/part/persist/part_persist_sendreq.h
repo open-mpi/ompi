@@ -42,7 +42,7 @@ OBJ_CLASS_DECLARATION(mca_part_persist_psend_request_t);
                                            ompi_proc)                 \
 do {                                                                  \
     sendreq = (mca_part_persist_psend_request_t*)                         \
-        opal_free_list_wait (&mca_part_base_psend_requests);          \
+        opal_free_list_wait (&mca_part_persist_psend_requests);          \
     sendreq->req_base.req_type = MCA_PART_PERSIST_REQUEST_PSEND;          \
 } while(0)
 
@@ -87,7 +87,7 @@ do {                                                                  \
         OBJ_RELEASE(sendreq->req_comm);               \
         OMPI_REQUEST_FINI(&sendreq->req_ompi);        \
         opal_convertor_cleanup( &(sendreq->req_convertor) ); \
-        opal_free_list_return ( &mca_part_base_psend_requests,            \
+        opal_free_list_return ( &mca_part_persist_psend_requests,            \
                                (opal_free_list_item_t*)sendreq);        \
     }
 

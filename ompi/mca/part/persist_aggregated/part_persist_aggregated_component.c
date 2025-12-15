@@ -22,6 +22,7 @@
 #include "ompi_config.h"
 
 #include "ompi/mca/part/persist_aggregated/part_persist_aggregated.h"
+#include "ompi/mca/part/persist_aggregated/part_persist_aggregated_request.h"
 
 #include "ompi/mca/part/persist_aggregated/part_persist_aggregated_sendreq.h"
 #include "ompi/mca/part/persist_aggregated/part_persist_aggregated_recvreq.h"
@@ -96,6 +97,9 @@ mca_part_persist_aggregated_component_open(void)
     ompi_part_persist_aggregated.next_send_tag = 0;                /**< This is a counter for send tags for the actual data transfer. */
     ompi_part_persist_aggregated.next_recv_tag = 0; 
 
+    OBJ_CONSTRUCT(&mca_part_persist_aggregated_psend_requests, opal_free_list_t);
+    OBJ_CONSTRUCT(&mca_part_persist_aggregated_precv_requests, opal_free_list_t);
+
     mca_part_persist_aggregated_init_lists(); 
 
     ompi_part_persist_aggregated.init_comms = 0;
@@ -112,6 +116,9 @@ mca_part_persist_aggregated_component_open(void)
 static int
 mca_part_persist_aggregated_component_close(void)
 {
+    OBJ_DESTRUCT(&mca_part_persist_aggregated_psend_requests);
+    OBJ_DESTRUCT(&mca_part_persist_aggregated_precv_requests);
+
     OBJ_DESTRUCT(&ompi_part_persist_aggregated.lock);
     return OMPI_SUCCESS; 
 }

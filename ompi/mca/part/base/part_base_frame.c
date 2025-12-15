@@ -107,9 +107,6 @@ static int mca_part_base_close(void)
     }
     OBJ_DESTRUCT(&mca_part_base_part);
 
-    OBJ_DESTRUCT(&mca_part_base_psend_requests);
-    OBJ_DESTRUCT(&mca_part_base_precv_requests);
-
     /* Close all remaining available components */
     return mca_base_framework_components_close(&ompi_part_base_framework, NULL);
 }
@@ -122,9 +119,6 @@ static int mca_part_base_open(mca_base_open_flag_t flags)
 {
     OBJ_CONSTRUCT(&mca_part_base_part, opal_pointer_array_t);
 
-    
-    OBJ_CONSTRUCT(&mca_part_base_psend_requests, opal_free_list_t);
-    OBJ_CONSTRUCT(&mca_part_base_precv_requests, opal_free_list_t);
     /* Open up all available components */
 
     if (OPAL_SUCCESS !=
