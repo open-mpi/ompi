@@ -21,8 +21,8 @@
  * $HEADER$
  */
 
-#ifndef PART_persist_aggregated_RECVREQ_H
-#define PART_persist_aggregated_RECVREQ_H
+#ifndef PART_PERSIST_AGGREGATED_RECVREQ_H
+#define PART_PERSIST_AGGREGATED_RECVREQ_H
 
 #include "ompi/mca/part/persist_aggregated/part_persist_aggregated_request.h"
 #include "ompi/mca/part/base/part_base_precvreq.h"
@@ -39,11 +39,11 @@ OBJ_CLASS_DECLARATION(mca_part_persist_aggregated_precv_request_t);
  *  @param rc (OUT)  OMPI_SUCCESS or error status on failure.
  *  @return          Receive request.
  */
-#define MCA_PART_persist_aggregated_PRECV_REQUEST_ALLOC(precvreq)                           \
+#define MCA_PART_PERSIST_AGGREGATED_PRECV_REQUEST_ALLOC(precvreq)                           \
 do {                                                                         \
     precvreq = (mca_part_persist_aggregated_precv_request_t*)                               \
       opal_free_list_get (&mca_part_base_precv_requests);                    \
-    precvreq->req_base.req_type = MCA_PART_persist_aggregated_REQUEST_PRECV;            \
+    precvreq->req_base.req_type = MCA_PART_PERSIST_AGGREGATED_REQUEST_PRECV;            \
  } while (0)
 
 /**
@@ -55,9 +55,9 @@ do {                                                                         \
  * @param datatype (IN)      User defined datatype.
  * @param src (IN)           Source rank w/in the communicator.
  * @param comm (IN)          Communicator.
- * @param persistent (IN)    Is this a persistent request.
+ * @param persistent (IN)    Is this a ersistent request.
  */
-#define MCA_PART_persist_aggregated_PRECV_REQUEST_INIT( request,                     \
+#define MCA_PART_PERSIST_AGGREGATED_PRECV_REQUEST_INIT( request,                     \
                                          ompi_proc,                   \
                                          comm,                        \
                                          tag,                         \
@@ -88,7 +88,7 @@ do {                                                                  \
 /**
  *  Free the PART receive request
  */
-#define MCA_PART_persist_aggregated_PRECV_REQUEST_RETURN(recvreq)                      \
+#define MCA_PART_PERSIST_AGGREGATED_PRECV_REQUEST_RETURN(recvreq)                      \
 {                                                                       \
     OBJ_RELEASE((recvreq)->req_comm);                          \
     OMPI_DATATYPE_RELEASE((recvreq)->req_datatype);            \

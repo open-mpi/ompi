@@ -21,8 +21,8 @@
  * $HEADER$
  */
 
-#ifndef PART_persist_aggregated_H
-#define PART_persist_aggregated_H
+#ifndef PART_PERSIST_AGGREGATED_H
+#define PART_PERSIST_AGGREGATED_H
 
 #ifdef HAVE_ALLOCA_H
 #include <alloca.h>
@@ -97,15 +97,15 @@ mca_part_persist_aggregated_free_req(struct mca_part_persist_aggregated_request_
     OBJ_RELEASE(req->progress_elem);
 
     for(i = 0; i < req->real_parts; i++) {
-        ompi_request_free(&(req->persist_aggregated_reqs[i]));
+        ompi_request_free(&(req->persist_reqs[i]));
     }
-    free(req->persist_aggregated_reqs);
+    free(req->persist_reqs);
     free(req->flags);
 
-    if( MCA_PART_persist_aggregated_REQUEST_PRECV == req->req_type ) {
-        MCA_PART_persist_aggregated_PRECV_REQUEST_RETURN(req);
+    if( MCA_PART_PERSIST_AGGREGATED_REQUEST_PRECV == req->req_type ) {
+        MCA_PART_PERSIST_AGGREGATED_PRECV_REQUEST_RETURN(req);
     } else {
-        MCA_PART_persist_aggregated_PSEND_REQUEST_RETURN(req);
+        MCA_PART_PERSIST_AGGREGATED_PSEND_REQUEST_RETURN(req);
     }
     return err;
 }
@@ -137,7 +137,7 @@ __opal_attribute_always_inline__ static inline void mca_part_persist_aggregated_
 __opal_attribute_always_inline__ static inline void
 mca_part_persist_aggregated_complete(struct mca_part_persist_aggregated_request_t* request)
 {
-    if(MCA_PART_persist_aggregated_REQUEST_PRECV == request->req_type) {
+    if(MCA_PART_PERSIST_AGGREGATED_REQUEST_PRECV == request->req_type) {
         request->req_ompi.req_status.MPI_SOURCE = request->req_peer; 
     } else {
         request->req_ompi.req_status.MPI_SOURCE = request->req_comm->c_my_rank;
@@ -236,7 +236,7 @@ mca_part_persist_aggregated_progress(void)
                 size_t dt_size_;
                 int32_t dt_size;
 
-                if(MCA_PART_persist_aggregated_REQUEST_PSEND == req->req_type) {
+                if(MCA_PART_PERSIST_AGGREGATED_REQUEST_PSEND == req->req_type) {
                     /* parse message */
                     req->world_peer  = req->setup_info[1].world_rank; 
 
@@ -246,10 +246,10 @@ mca_part_persist_aggregated_progress(void)
                     int32_t bytes = req->real_count * dt_size;
 
                     /* Set up persistent sends */
-                    req->persist_aggregated_reqs = (ompi_request_t**) malloc(sizeof(ompi_request_t*)*(req->real_parts));
+                    req->persist_reqs = (ompi_request_t**) malloc(sizeof(ompi_request_t*)*(req->real_parts));
                     for(i = 0; i < req->real_parts; i++) {
                          void *buf = ((void*) (((char*)req->req_addr) + (bytes * i)));
-                         err = MCA_PML_CALL(isend_init(buf, req->real_count, req->req_datatype, req->world_peer, req->my_send_tag+i, MCA_PML_BASE_SEND_STANDARD, ompi_part_persist_aggregated.part_comm, &(req->persist_aggregated_reqs[i])));
+                         err = MCA_PML_CALL(isend_init(buf, req->real_count, req->req_datatype, req->world_peer, req->my_send_tag+i, MCA_PML_BASE_SEND_STANDARD, ompi_part_persist_aggregated.part_comm, &(req->persist_reqs[i])));
                     }    
                 } else {
                     /* parse message */
@@ -269,22 +269,22 @@ mca_part_persist_aggregated_progress(void)
 
 
 		            /* Set up persistent sends */
-                    req->persist_aggregated_reqs = (ompi_request_t**) malloc(sizeof(ompi_request_t*)*(req->real_parts));
+                    req->persist_reqs = (ompi_request_t**) malloc(sizeof(ompi_request_t*)*(req->real_parts));
                     req->flags = (int*) calloc(req->real_parts,sizeof(int));
 
                     if(req->real_dt_size == dt_size) {
 
      	                for(i = 0; i < req->real_parts; i++) {
                             void *buf = ((void*) (((char*)req->req_addr) + (bytes * i)));
-                            err = MCA_PML_CALL(irecv_init(buf, req->real_count, req->req_datatype, req->world_peer, req->my_send_tag+i, ompi_part_persist_aggregated.part_comm, &(req->persist_aggregated_reqs[i])));
+                            err = MCA_PML_CALL(irecv_init(buf, req->real_count, req->req_datatype, req->world_peer, req->my_send_tag+i, ompi_part_persist_aggregated.part_comm, &(req->persist_reqs[i])));
                         }
                     } else {
                         for(i = 0; i < req->real_parts; i++) {
                             void *buf = ((void*) (((char*)req->req_addr) + (req->real_count * req->real_dt_size * i)));
-                            err = MCA_PML_CALL(irecv_init(buf, req->real_count * req->real_dt_size, MPI_BYTE, req->world_peer, req->my_send_tag+i, ompi_part_persist_aggregated.part_comm, &(req->persist_aggregated_reqs[i])));
+                            err = MCA_PML_CALL(irecv_init(buf, req->real_count * req->real_dt_size, MPI_BYTE, req->world_peer, req->my_send_tag+i, ompi_part_persist_aggregated.part_comm, &(req->persist_reqs[i])));
                         }
 		    }
-                    err = req->persist_aggregated_reqs[0]->req_start(req->real_parts, (&(req->persist_aggregated_reqs[0])));                     
+                    err = req->persist_reqs[0]->req_start(req->real_parts, (&(req->persist_reqs[0])));                     
 
                     /* Send back a message */
                     req->setup_info[0].world_rank = ompi_part_persist_aggregated.my_world_rank;
@@ -300,13 +300,13 @@ mca_part_persist_aggregated_progress(void)
 
                     /* Check to see if partition is queued for being started. Only applicable to sends. */ 
                     if(-2 ==  req->flags[i]) {
-                        err = req->persist_aggregated_reqs[i]->req_start(1, (&(req->persist_aggregated_reqs[i])));
+                        err = req->persist_reqs[i]->req_start(1, (&(req->persist_reqs[i])));
                         req->flags[i] = 0;
                     }
 
                     if(0 == req->flags[i])
                     {
-                        ompi_request_test(&(req->persist_aggregated_reqs[i]), &(req->flags[i]), MPI_STATUS_IGNORE);
+                        ompi_request_test(&(req->persist_reqs[i]), &(req->flags[i]), MPI_STATUS_IGNORE);
                         if(0 != req->flags[i]) req->done_count++;
                     }
                 }
@@ -362,10 +362,10 @@ mca_part_persist_aggregated_precv_init(void *buf,
     }
 
     /* Allocate a new request */
-    MCA_PART_persist_aggregated_PRECV_REQUEST_ALLOC(recvreq);
+    MCA_PART_PERSIST_AGGREGATED_PRECV_REQUEST_ALLOC(recvreq);
     if (OPAL_UNLIKELY(NULL == recvreq)) return OMPI_ERR_OUT_OF_RESOURCE;
 
-    MCA_PART_persist_aggregated_PRECV_REQUEST_INIT(recvreq, ompi_proc, comm, tag, src,
+    MCA_PART_PERSIST_AGGREGATED_PRECV_REQUEST_INIT(recvreq, ompi_proc, comm, tag, src,
                                      datatype, buf, parts, count, flags);
 
     mca_part_persist_aggregated_request_t *req = (mca_part_persist_aggregated_request_t *) recvreq;
@@ -428,9 +428,9 @@ mca_part_persist_aggregated_psend_init(const void* buf,
     }
 
     /* Create new request object */
-    MCA_PART_persist_aggregated_PSEND_REQUEST_ALLOC(sendreq, comm, dst, ompi_proc);
+    MCA_PART_PERSIST_AGGREGATED_PSEND_REQUEST_ALLOC(sendreq, comm, dst, ompi_proc);
     if (OPAL_UNLIKELY(NULL == sendreq)) return OMPI_ERR_OUT_OF_RESOURCE;
-    MCA_PART_persist_aggregated_PSEND_REQUEST_INIT(sendreq, ompi_proc, comm, tag, dst,
+    MCA_PART_PERSIST_AGGREGATED_PSEND_REQUEST_INIT(sendreq, ompi_proc, comm, tag, dst,
                                     datatype, buf, parts, count, flags);
     mca_part_persist_aggregated_request_t *req = (mca_part_persist_aggregated_request_t *) sendreq;
 
@@ -502,16 +502,16 @@ mca_part_persist_aggregated_start(size_t count, ompi_request_t** requests)
         /* First use is a special case, to support lazy initialization */
         if(false == req->first_send)
         {
-            if(MCA_PART_persist_aggregated_REQUEST_PSEND == req->req_type) {
+            if(MCA_PART_PERSIST_AGGREGATED_REQUEST_PSEND == req->req_type) {
                 req->done_count = 0;
                 memset((void*)req->flags,0,sizeof(int32_t)*req->real_parts);
             } else {
                 req->done_count = 0;
-                err = req->persist_aggregated_reqs[0]->req_start(req->real_parts, req->persist_aggregated_reqs);
+                err = req->persist_reqs[0]->req_start(req->real_parts, req->persist_reqs);
                 memset((void*)req->flags,0,sizeof(int32_t)*req->real_parts);
             } 
         } else {
-            if(MCA_PART_persist_aggregated_REQUEST_PSEND == req->req_type) {
+            if(MCA_PART_PERSIST_AGGREGATED_REQUEST_PSEND == req->req_type) {
                 req->done_count = 0;
                 for(i = 0; i < req->real_parts && OMPI_SUCCESS == err; i++) {
                     req->flags[i] = -1;
@@ -543,7 +543,7 @@ mca_part_persist_aggregated_pready(size_t min_part,
     mca_part_persist_aggregated_request_t *req = (mca_part_persist_aggregated_request_t *)(request);
     if(true == req->initialized)
     {
-        err = req->persist_aggregated_reqs[min_part]->req_start(max_part-min_part+1, (&(req->persist_aggregated_reqs[min_part])));
+        err = req->persist_reqs[min_part]->req_start(max_part-min_part+1, (&(req->persist_reqs[min_part])));
         for(i = min_part; i <= max_part && OMPI_SUCCESS == err; i++) {
             req->flags[i] = 0; /* Mark partition as ready for testing */
         }
@@ -610,4 +610,4 @@ mca_part_persist_aggregated_free(ompi_request_t** request)
 
 END_C_DECLS
 
-#endif  /* PART_persist_aggregated_H_HAS_BEEN_INCLUDED */
+#endif  /* PART_PERSIST_AGGREGATED_H_HAS_BEEN_INCLUDED */

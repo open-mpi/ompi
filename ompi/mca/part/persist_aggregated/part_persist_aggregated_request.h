@@ -18,8 +18,8 @@
  * $HEADER$
  */
 
-#ifndef PART_persist_aggregated_REQUEST_H
-#define PART_persist_aggregated_REQUEST_H
+#ifndef PART_PERSIST_AGGREGATED_REQUEST_H
+#define PART_PERSIST_AGGREGATED_REQUEST_H
 
 #include "ompi/mca/part/base/part_base_psendreq.h"
 #include "ompi/mca/part/part.h"
@@ -28,9 +28,9 @@
  * Type of request.
  */
 typedef enum {
-    MCA_PART_persist_aggregated_REQUEST_PSEND,
-    MCA_PART_persist_aggregated_REQUEST_PRECV,
-    MCA_PART_persist_aggregated_REQUEST_NULL
+    MCA_PART_PERSIST_AGGREGATED_REQUEST_PSEND,
+    MCA_PART_PERSIST_AGGREGATED_REQUEST_PRECV,
+    MCA_PART_PERSIST_AGGREGATED_REQUEST_NULL
 } mca_part_persist_aggregated_request_type_t;
 
 struct mca_part_persist_aggregated_list_t;
@@ -75,7 +75,7 @@ struct mca_part_persist_aggregated_request_t {
     size_t real_dt_size;                 /**< receiver needs to know how large the sender's datatype is. */
     size_t part_size; 
 
-    ompi_request_t** persist_aggregated_reqs;            /**< requests for persistent sends/recvs */
+    ompi_request_t** persist_reqs;            /**< requests for persistent sends/recvs */
     ompi_request_t* setup_req [2];                /**< Request structure for setup messages */
 
 
