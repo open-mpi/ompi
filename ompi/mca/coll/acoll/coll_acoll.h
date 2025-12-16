@@ -89,6 +89,13 @@ END_C_DECLS
 #define MCA_COLL_ACOLL_ROOT_CHANGE_THRESH 10
 #define MCA_COLL_ACOLL_SPLIT_FACTOR_LIST_LEN 6
 #define MCA_COLL_ACOLL_SPLIT_FACTOR_LIST {2, 4, 8, 16, 32, 64}
+#define MCA_COLL_ACOLL_PROGRESS_COUNT 10000
+
+/* Hybrid backoff spin-wait thresholds for intra-node synchronization */
+#define MCA_COLL_ACOLL_SPIN_FAST_PATH_ITERS 200    /* Pure spinning iterations */
+#define MCA_COLL_ACOLL_SPIN_MEDIUM_PATH_ITERS 300  /* Moderate progress iterations */
+#define MCA_COLL_ACOLL_SPIN_MEDIUM_PATH_FREQ 20    /* Progress call frequency in medium path */
+#define MCA_COLL_ACOLL_SPIN_SLOW_PATH_MAX_FREQ 3   /* Max progress call frequency in slow path */
 
 typedef enum MCA_COLL_ACOLL_SG_SIZES {
     MCA_COLL_ACOLL_SG_SIZE_1 = 8,
@@ -234,6 +241,8 @@ struct mca_coll_acoll_module_t {
     int force_numa;
     int use_dyn_rules;
     int disable_shmbcast;
+    int disable_fallback;
+    int red_algo;
     // Todo: Use substructure for every API related ones
     int use_mnode;
     int use_lin0;

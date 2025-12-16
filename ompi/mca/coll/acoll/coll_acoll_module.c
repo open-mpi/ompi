@@ -163,6 +163,9 @@ mca_coll_base_module_t *mca_coll_acoll_comm_query(struct ompi_communicator_t *co
     acoll_module->allg_lin = mca_coll_acoll_allgather_lin;
     acoll_module->allg_ring = mca_coll_acoll_allgather_ring_1;
 
+    acoll_module->disable_fallback = 0;
+    acoll_module->red_algo = -1;
+
     /* Choose whether to use [intra|inter], and [subgroup|normal]-based
      * algorithms. */
     acoll_module->super.coll_module_enable = acoll_module_enable;

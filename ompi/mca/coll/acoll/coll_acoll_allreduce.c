@@ -509,7 +509,94 @@ int mca_coll_acoll_allreduce_intra(const void *sbuf, void *rbuf, size_t count,
 
     alg = coll_allreduce_decision_fixed(size, total_dsize);
 
-    if (1 == num_nodes) {
+    /* Try with socket/node based split */
+    if (num_nodes > 1) {
+        if (total_dsize > 16384) {
+            return ompi_coll_base_allreduce_intra_redscat_allgather(sbuf, rbuf, count, dtype, op,
+                                                                    comm, module);
+        }
+        int use_socket = acoll_module->use_socket != -1 ? acoll_module->use_socket : 0;
+        coll_acoll_subcomms_t *soc_subc = NULL;
+        ompi_communicator_t *soc_comm = use_socket ? subc->socket_comm : subc->local_comm;
+        ompi_communicator_t *ldr_comm = use_socket ? subc->socket_ldr_comm : subc->leader_comm;
+        int ldr_root = use_socket ? subc->socket_ldr_root : subc->outer_grp_root;
+        int soc_root = use_socket ? subc->local_root[MCA_COLL_ACOLL_LYR_SOCKET] : subc->local_root[MCA_COLL_ACOLL_LYR_NODE];
+
+        /* Validate communicator hierarchy before proceeding */
+        if (NULL == soc_comm || NULL == ldr_comm) {
+            return ompi_coll_base_allreduce_intra_redscat_allgather(sbuf, rbuf, count, dtype, op,
+                                                                    comm, module);
+        }
+
+        err = check_and_create_subc(soc_comm, acoll_module, &soc_subc);
+        if (NULL != soc_subc) {
+            if (!soc_subc->initialized || (soc_root != soc_subc->prev_init_root)) {
+                err = mca_coll_acoll_comm_split_init(soc_comm, acoll_module, soc_subc, soc_root);
+                if (MPI_SUCCESS != err)
+                    return err;
+            }
+            char *inplacebuf_free = NULL, *inplacebuf = NULL;
+            void *tmp_rbuf = rbuf;
+            void *tmp_sbuf = (void *)sbuf;
+            /* Socket level reduce */
+            if (ompi_comm_size(soc_comm) > 1) {
+                ptrdiff_t span, gap = 0;
+                span = opal_datatype_span(&dtype->super, count, &gap);
+                if (ompi_comm_rank(soc_comm) == soc_root) {
+                    inplacebuf_free = (char*) malloc(span);
+                    if (NULL == inplacebuf_free) { err = -1; return err; }
+                    inplacebuf = inplacebuf_free - gap;
+                    tmp_rbuf = (void *)inplacebuf;
+                    tmp_sbuf = tmp_rbuf;
+                }
+
+                if((total_dsize > 8192) &&
+                    ((subc->smsc_use_sr_buf != 0) || (subc->smsc_buf_size > 2 * total_dsize)) &&
+                    (subc->without_smsc != 1) && is_opt) {
+                    err = mca_coll_acoll_reduce_smsc_h(sbuf, tmp_rbuf, count, dtype, op,
+                                                       soc_comm, module, soc_subc);
+                } else {
+                    acoll_module->red_algo = total_dsize <= 8192 ? 0 : 1;
+                    err = mca_coll_acoll_reduce_intra(sbuf, tmp_rbuf, count, dtype, op,
+                                                      soc_root, soc_comm, module);
+                    acoll_module->red_algo = -1;
+                }
+
+                if (MPI_SUCCESS != err) {
+                    if (NULL != inplacebuf_free) { free(inplacebuf_free); }
+                    return err;
+                }
+            }
+            /* Allreduce across socket leaders */
+            if (ompi_comm_size(ldr_comm) > 1 &&  ldr_root != -1) {
+                if ((MPI_IN_PLACE == sbuf)) {
+                    err = ompi_coll_base_allreduce_intra_recursivedoubling(MPI_IN_PLACE, rbuf, count, dtype, op,
+                                                                           ldr_comm, module);
+                } else {
+                    err = ompi_coll_base_allreduce_intra_recursivedoubling(tmp_sbuf, rbuf, count, dtype, op,
+                                                                           ldr_comm, module);
+                }
+                if (MPI_SUCCESS != err) {
+                    if (NULL != inplacebuf_free) { free(inplacebuf_free); }
+                    return err;
+                }
+            }
+            if (ompi_comm_size(soc_comm) > 1) {
+                acoll_module->disable_fallback = 1;
+                err = mca_coll_acoll_bcast(rbuf, count, dtype, soc_root,
+                                           soc_comm, module);
+                acoll_module->disable_fallback = 0;
+                if (MPI_SUCCESS != err) {
+                    if (NULL != inplacebuf_free) { free(inplacebuf_free); }
+                    return err;
+                }
+            }
+            if (NULL != inplacebuf_free) { free(inplacebuf_free); }
+            return err;
+        }
+    }
+
+    if (num_nodes == 1) {
         if (total_dsize < 32) {
             return ompi_coll_base_allreduce_intra_recursivedoubling(sbuf, rbuf, count, dtype, op,
                                                                     comm, module);
