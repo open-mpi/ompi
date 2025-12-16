@@ -87,7 +87,7 @@ non-blocking) use an optimized implementation on top of  ``ob1``.
 - Loopback (send-to-self)
 - TCP
 - UCT (InfiniBand)
-- uGNI (Cray Gemini, Aries)
+- OFI/libfabric
 - Shared Memory (FT supported with CMA and XPMEM; KNEM is untested)
 - Tuned and non-blocking collective communications
 
@@ -159,7 +159,7 @@ Running under a batch scheduler
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ULFM can operate under a job/batch scheduler, and is tested routinely
-with ALPS, PBS, and Slurm. One difficulty comes from the fact that
+with PBS and Slurm. One difficulty comes from the fact that
 many job schedulers handle failures by triggering an immediate "cleanup"
 of the application as soon as any process fails. In addition, failure
 detection subsystems integrated into PRTE are not active in direct launch
