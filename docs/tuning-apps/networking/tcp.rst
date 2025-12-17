@@ -247,20 +247,15 @@ not use specific IP networks |mdash| or not use any IP networks at all
 .. warning:: If you use the ``btl_tcp_if_include`` and
              ``btl_tcp_if_exclude`` MCA parameters to shape the
              behavior of the TCP BTL for MPI communications, you may
-             also need/want to investigate the corresponding MCA
-             parameters ``oob_tcp_if_include`` and
-             ``oob_tcp_if_exclude``, which are used to shape non-MPI
-             TCP-based communication (e.g., communications setup and
-             coordination during ``MPI_INIT`` and ``MPI_FINALIZE``).
+             also need/want to investigate the corresponding PRRTE
+             parameters that control use of network interfaces by the runtime
+             (e.g., communications setup and coordination during
+             ``MPI_INIT`` and ``MPI_FINALIZE``) using the :ref:`prte_info <prrte:man1-ompi-prte_info>`
+             and :ref:`pmix_info <pmix:man1-pmix_info>` commands.
 
-.. error:: TODO do corresponding OOB TCP params still exist in PMIx?
-
-Note that Open MPI will still use TCP for control messages, such as
-data between ``mpirun`` and the MPI processes, rendezvous information
-during ``MPI_INIT``, etc.  To disable TCP altogether, you also need to
-disable the ``tcp`` component from the OOB framework.
-
-.. error:: TODO Is this possible in PMIx?  I doubt it...?
+Note that the Open MPI runtime uses TCP for control messages, such as
+for data exchange between ``mpirun`` and the MPI processes, rendezvous information
+during ``MPI_INIT``, etc. even if the ``tcp`` BTL component is disabled.
 
 /////////////////////////////////////////////////////////////////////////
 

@@ -31,6 +31,12 @@ author = 'The Open MPI Community'
 ompi_top_srcdir = '..'
 if 'OMPI_TOP_SRCDIR' in os.environ:
     ompi_top_srcdir = os.environ['OMPI_TOP_SRCDIR']
+ompi_prefix = ''
+if 'OMPI_PREFIX' in os.environ:
+    ompi_prefix = os.environ['OMPI_PREFIX']
+else:
+    print(f"ERROR: Unable to find install path")
+    exit(1)
 
 # Read an Open MPI-style VERSION file
 def read_version_file(path):
@@ -178,7 +184,23 @@ extensions = [
     'recommonmark',
     "sphinx_rtd_theme",
     "sphinx.ext.extlinks",
+    "sphinx.ext.intersphinx",
 ]
+
+# conf.py file
+
+intersphinx_mapping = {
+    "prrte": (f"{ompi_prefix}/share/doc/prrte/html", None),
+    "pmix": (f"{ompi_prefix}/share/doc/pmix/html", None),
+}
+
+# We recommend adding the following config value.
+# Sphinx defaults to automatically resolve *unresolved* labels using all your Intersphinx mappings.
+# This behavior has unintended side-effects, namely that documentations local references can
+# suddenly resolve to an external location.
+# See also:
+# https://www.sphinx-doc.org/en/master/usage/extensions/intersphinx.html#confval-intersphinx_disabled_reftypes
+intersphinx_disabled_reftypes = ["*"]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

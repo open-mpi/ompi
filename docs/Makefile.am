@@ -1095,8 +1095,8 @@ $(ALL_MAN_BUILT):
 	cp -rpf "$(OMPI_PRRTE_RST_CONTENT_DIR)" "$(builddir)"; \
 	copied_dir=`basename $(OMPI_PRRTE_RST_CONTENT_DIR)`; \
 	chmod -R u+w "$(builddir)/$$copied_dir"
-	$(OMPI_V_SPHINX_HTML) OMPI_TOP_SRCDIR=$(top_srcdir) $(SPHINX_BUILD) -M html "$(builddir)" "$(OUTDIR)" $(SPHINX_OPTS)
-	$(OMPI_V_SPHINX_MAN) OMPI_TOP_SRCDIR=$(top_srcdir) $(SPHINX_BUILD) -M man "$(builddir)" "$(OUTDIR)" $(SPHINX_OPTS)
+	$(OMPI_V_SPHINX_HTML) OMPI_TOP_SRCDIR=$(top_srcdir) OMPI_PREFIX=$(prefix) $(SPHINX_BUILD) -M html "$(builddir)" "$(OUTDIR)" $(SPHINX_OPTS)
+	$(OMPI_V_SPHINX_MAN) OMPI_TOP_SRCDIR=$(top_srcdir) OMPI_PREFIX=$(prefix) $(SPHINX_BUILD) -M man "$(builddir)" "$(OUTDIR)" $(SPHINX_OPTS)
 
 # A useful rule to invoke manually to ensure that all of the external
 # HTML links we have are valid.  Running this rule requires
