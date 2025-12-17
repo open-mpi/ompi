@@ -59,6 +59,7 @@ mca_part_base_component_4_0_0_t mca_part_persist_aggregated_component = {
     .partm_init = mca_part_persist_aggregated_component_init,
     .partm_finalize = mca_part_persist_aggregated_component_fini,
 };
+MCA_BASE_COMPONENT_INIT(ompi, part, persist_aggregated)
 
 static int
 mca_part_persist_aggregated_component_register(void)
