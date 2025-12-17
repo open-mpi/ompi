@@ -661,8 +661,8 @@ presented here so that they can easily be found via internet searches:
 
 .. _label-mca-backward-compat:
 
-MCA Parameter Changes Between Open MPI 4.x and 5.x
---------------------------------------------------
+MCA Parameter Changes Between Open MPI 4.x and newer releases
+-------------------------------------------------------------
 
 When Open MPI :ref:`switched from using ORTE to PRRTE as its run-time
 environment, <label-running-role-of-pmix-and-prte>` some MCA
