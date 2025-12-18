@@ -1644,11 +1644,11 @@ int mca_spml_ucx_put_all_nb(void *dest, const void *source, size_t size, long *c
     return OSHMEM_SUCCESS;
 }
 
-static inline int mca_spml_ucx_signal_common(shmem_ctx_t ctx, 
-                                              uint64_t *sig_addr, 
-                                              uint64_t signal, 
-                                              int sig_op, 
-                                              int dst)
+static inline int mca_spml_ucx_signal_common(shmem_ctx_t ctx,
+                                             uint64_t *sig_addr,
+                                             uint64_t signal,
+                                             int sig_op,
+                                             int dst)
 {
     int res;
     uint64_t dummy_prev;
