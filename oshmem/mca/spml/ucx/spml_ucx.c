@@ -1685,11 +1685,6 @@ int mca_spml_ucx_put_signal(shmem_ctx_t ctx, void* dst_addr, size_t size, void*
         return res;
     }
 
-    res = mca_spml_ucx_fence(ctx);
-    if (OPAL_UNLIKELY(OSHMEM_SUCCESS != res)) {
-        return res;
-    }
-
     return mca_spml_ucx_signal_common(ctx, sig_addr, signal, sig_op, dst, 1);
 }
 
