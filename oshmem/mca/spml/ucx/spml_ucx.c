@@ -1648,25 +1648,31 @@ static inline int mca_spml_ucx_signal_common(shmem_ctx_t ctx,
                                              uint64_t *sig_addr,
                                              uint64_t signal,
                                              int sig_op,
-                                             int dst)
+                                             int dst,
+                                             int blocking)
 {
-    int res;
-    uint64_t dummy_prev;
+    uint64_t dummy_prev, dummy_fetch;
 
     if (sig_op == SHMEM_SIGNAL_SET) {
         /* Use atomic swap to set the signal value */
-        res = MCA_ATOMIC_CALL(swap(ctx, (void*)sig_addr, (void*)&dummy_prev, 
+        if (blocking) {
+            return MCA_ATOMIC_CALL(swap(ctx, (void*)sig_addr, (void*)&dummy_prev,
+                                   signal, sizeof(uint64_t), dst));
+        }
+        return MCA_ATOMIC_CALL(swap_nb(ctx, &dummy_fetch, (void*)sig_addr, (void*)&dummy_prev,
                                     signal, sizeof(uint64_t), dst));
     } else if (sig_op == SHMEM_SIGNAL_ADD) {
         /* Use atomic add to add the signal value */
-        res = MCA_ATOMIC_CALL(add(ctx, (void*)sig_addr, signal, 
+        if (blocking) {
+            return MCA_ATOMIC_CALL(add(ctx, (void*)sig_addr, signal,
                                    sizeof(uint64_t), dst));
-    } else {
-        SPML_UCX_ERROR("Invalid signal operation: %d", sig_op);
-        return OSHMEM_ERROR;
+        }
+        return MCA_ATOMIC_CALL(fadd_nb(ctx, &dummy_fetch, (void*)sig_addr, (void*)&dummy_prev,
+                                   signal, sizeof(uint64_t), dst));
     }
 
-    return res;
+    SPML_UCX_ERROR("Invalid signal operation: %d", sig_op);
+    return OSHMEM_ERR_NOT_IMPLEMENTED;
 }
 
 int mca_spml_ucx_put_signal(shmem_ctx_t ctx, void* dst_addr, size_t size, void*
@@ -1679,7 +1685,12 @@ int mca_spml_ucx_put_signal(shmem_ctx_t ctx, void* dst_addr, size_t size, void*
         return res;
     }
 
-    return mca_spml_ucx_signal_common(ctx, sig_addr, signal, sig_op, dst);
+    res = mca_spml_ucx_fence(ctx);
+    if (OPAL_UNLIKELY(OSHMEM_SUCCESS != res)) {
+        return res;
+    }
+
+    return mca_spml_ucx_signal_common(ctx, sig_addr, signal, sig_op, dst, 1);
 }
 
 int mca_spml_ucx_put_signal_nb(shmem_ctx_t ctx, void* dst_addr, size_t size,
@@ -1693,7 +1704,12 @@ int mca_spml_ucx_put_signal_nb(shmem_ctx_t ctx, void* dst_addr, size_t size,
         return res;
     }
 
-    return mca_spml_ucx_signal_common(ctx, sig_addr, signal, sig_op, dst);
+    res = mca_spml_ucx_fence(ctx);
+    if (OPAL_UNLIKELY(OSHMEM_SUCCESS != res)) {
+        return res;
+    }
+
+    return mca_spml_ucx_signal_common(ctx, sig_addr, signal, sig_op, dst, 0);
 }
 
 /* This routine is not implemented */
