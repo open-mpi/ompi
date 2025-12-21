@@ -225,6 +225,6 @@ SHMEM_TYPE_PUTMEM_SIGNAL(_put128_signal, 16, shmem)
 
 uint64_t shmem_signal_fetch(const uint64_t *sig_addr)
 {
-    return OSHMEM_ERR_NOT_IMPLEMENTED;
+    return shmem_uint64_atomic_fetch(sig_addr, pshmem_my_pe());
 }
 
