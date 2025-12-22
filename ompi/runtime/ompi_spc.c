@@ -74,7 +74,7 @@ static const ompi_spc_event_t ompi_spc_events_desc[OMPI_SPC_NUM_COUNTERS] = {
     SET_COUNTER_ARRAY(OMPI_SPC_PUT_NOTIFY, "The number of times MPI_Put_notify was called.", false, false),
     SET_COUNTER_ARRAY(OMPI_SPC_RPUT, "The number of times MPI_Rput was called.", false, false),
     SET_COUNTER_ARRAY(OMPI_SPC_GET, "The number of times MPI_Get was called.", false, false),
-    SET_COUNTER_ARRAY(OMPI_SPC_GET_NOTIFY, "The number of times MPI_Get was called.", false, false),
+    SET_COUNTER_ARRAY(OMPI_SPC_GET_NOTIFY, "The number of times MPI_Get_notify was called.", false, false),
     SET_COUNTER_ARRAY(OMPI_SPC_RGET, "The number of times MPI_Rget was called.", false, false),
     SET_COUNTER_ARRAY(OMPI_SPC_PROBE, "The number of times MPI_Probe was called.", false, false),
     SET_COUNTER_ARRAY(OMPI_SPC_IPROBE, "The number of times MPI_Iprobe was called.", false, false),
