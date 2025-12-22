@@ -130,6 +130,14 @@ compatible, meaning that object files created by one compiler must be
 able to be linked with object files from the other compilers and
 produce correctly functioning executables.
 
+.. note:: Starting with Open MPI 6.0.0, the MPI 4.0 large count
+   C and Fortran ``mpi_f08`` interfaces are supported.  A consequence
+   of this is that users may specify Fortran compiler
+   options that conflict with the support for F08 interfaces that have
+   both default ``INTEGER`` and ``INTEGER(KIND=MPI_COUNT_KIND)`` 
+   procedures.  The Open MPI ``configure`` script will detect this condition 
+   and fail with an appropriate error message.
+
 Statically linking to the libraries of Intel compiler suite
 -----------------------------------------------------------
 

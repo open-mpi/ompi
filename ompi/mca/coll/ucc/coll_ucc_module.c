@@ -207,14 +207,14 @@ static ucc_status_t oob_allgather_test(void *req)
         tmpsend = (char*)oob_req->rbuf + (ptrdiff_t)senddatafrom * (ptrdiff_t)msglen;
         rc = MCA_PML_CALL(isend(tmpsend, msglen, MPI_BYTE, sendto, MCA_COLL_BASE_TAG_UCC,
                            MCA_PML_BASE_SEND_STANDARD, comm, &oob_req->reqs[0]));
-	if (OMPI_SUCCESS != rc) {
+        if (OMPI_SUCCESS != rc) {
             return UCC_ERR_NO_MESSAGE;
-	}
+        }
         rc = MCA_PML_CALL(irecv(tmprecv, msglen, MPI_BYTE, recvfrom,
                            MCA_COLL_BASE_TAG_UCC, comm, &oob_req->reqs[1]));
-	if (OMPI_SUCCESS != rc) {
+        if (OMPI_SUCCESS != rc) {
             return UCC_ERR_NO_MESSAGE;
-	}
+        }
     }
     probe = 0;
     do {
@@ -312,14 +312,14 @@ static int mca_coll_ucc_init_ctx(ompi_communicator_t* comm)
         goto cleanup_lib;
     }
 
-    sprintf(str_buf, "%u", ompi_proc_world_size());
+    snprintf(str_buf, sizeof(str_buf), "%u", ompi_proc_world_size());
     if (UCC_OK != ucc_context_config_modify(ctx_config, NULL, "ESTIMATED_NUM_EPS",
                                             str_buf)) {
         UCC_ERROR("UCC context config modify failed for estimated_num_eps");
         goto cleanup_lib;
     }
 
-    sprintf(str_buf, "%u", opal_process_info.num_local_peers + 1);
+    snprintf(str_buf, sizeof(str_buf), "%u", opal_process_info.num_local_peers + 1);
     if (UCC_OK != ucc_context_config_modify(ctx_config, NULL, "ESTIMATED_NUM_PPN",
                                             str_buf)) {
         UCC_ERROR("UCC context config modify failed for estimated_num_eps");
@@ -327,7 +327,7 @@ static int mca_coll_ucc_init_ctx(ompi_communicator_t* comm)
     }
 
     if (ucc_api_major > 1 || (ucc_api_major == 1 && ucc_api_minor >= 6)) {
-        sprintf(str_buf, "%u", opal_process_info.my_local_rank);
+        snprintf(str_buf, sizeof(str_buf), "%u", opal_process_info.my_local_rank);
         if (UCC_OK != ucc_context_config_modify(ctx_config, NULL, "NODE_LOCAL_ID",
                                                 str_buf)) {
             UCC_ERROR("UCC context config modify failed for node_local_id");

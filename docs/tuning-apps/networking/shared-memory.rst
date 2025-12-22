@@ -13,7 +13,7 @@ can only be used between processes executing on the same node.
           BTL was named ``vader``.  As of Open MPI version 5.0.0, the
           BTL has been renamed ``sm``.
 
-.. warning:: In Open MPI version 5.0.x, the name ``vader`` is simply
+.. warning:: In Open MPI version 6.0.x, the name ``vader`` is simply
              an alias for the ``sm`` BTL.  Similarly, all
              ``vader_``-prefixed MCA parameters are automatically
              aliased to their corresponding ``sm_``-prefixed MCA
@@ -90,7 +90,7 @@ The ``sm`` BTL supports two modes of shared memory communication:
 #. **Single copy:** In this mode, the sender or receiver makes a
    single copy of the message data from the source buffer in one
    process to the destination buffer in another process.  Open MPI
-   supports three flavors of shared memory single-copy transfers:
+   supports four flavors of shared memory single-copy transfers:
 
    * `Linux KNEM <https://knem.gitlabpages.inria.fr/>`_.  This is a
      standalone Linux kernel module, made specifically for HPC and MPI
@@ -117,6 +117,18 @@ The ``sm`` BTL supports two modes of shared memory communication:
 
      Open MPI must be built on a Linux system with a recent enough
      Glibc and kernel version in order to build support for Linux CMA.
+
+   * Accelerator IPC mechanism: some accelerator devices support
+     direct GPU-to-GPU data transfers that can take advantage of
+     high-speed interconnects between the accelerators. This component
+     is based on IPC abstractions introduced in the accelerator
+     framework, which allows the sm btl component to use this
+     mechanism if requested by the user. For host memory this
+     component will pass through the operation to another single-copy
+     component.
+
+     The component is disabled by default. To use this component, the
+     application has to increase the priority of the component.
 
 Which mechanism is used at run time depends both on how Open MPI was
 built and how your system is configured.  You can check to see which

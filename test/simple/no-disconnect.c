@@ -162,7 +162,7 @@ int main(int argc, char **argv)
         printf("level = %d\n", level);
 
         /* prepare send buffer */
-        sprintf(bufs, "level %d (pid:%d)", level, getpid());
+        snprintf(bufs, sizeof(bufs), "level %d (pid:%d)", level, getpid());
 
         /* spawn */
         if (level < max_depth) {

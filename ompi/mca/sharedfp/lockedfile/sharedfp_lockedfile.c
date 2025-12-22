@@ -79,8 +79,7 @@ int mca_sharedfp_lockedfile_component_init_query(bool enable_progress_threads,
 struct mca_sharedfp_base_module_2_0_0_t * mca_sharedfp_lockedfile_component_file_query(ompio_file_t *fh, int *priority) {
     struct flock lock;
     int fd, err;
-    /*char *filename;*/
-    char filename[256];
+    char *filename;
     int rank;
     bool has_file_lock_support=false;
 
@@ -117,7 +116,7 @@ struct mca_sharedfp_base_module_2_0_0_t * mca_sharedfp_lockedfile_component_file
 
     /* Set the filename. */
     /*data filename created by appending .locktest.$rank to the original filename*/
-    sprintf(filename,"%s%s%d",fh->f_filename,".locktest.",rank);
+    opal_asprintf(&filename, "%s.locktest.%d",fh->f_filename, rank);
 
     lock.l_type   = F_WRLCK;
     lock.l_start  = 0;
@@ -160,6 +159,7 @@ struct mca_sharedfp_base_module_2_0_0_t * mca_sharedfp_lockedfile_component_file
         close(fd);
         unlink( filename );
     }
+    free(filename);
     /**priority=100;*/
     if(has_file_lock_support){
         return &lockedfile;

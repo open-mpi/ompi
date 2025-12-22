@@ -1,5 +1,5 @@
-Open MPI IO ("OMPIO")
-=====================
+MPI IO
+======
 
 OMPIO is an Open MPI-native implementation of the MPI I/O functions
 defined in the MPI specification.
@@ -23,7 +23,7 @@ OMPIO is fundamentally a component of the ``io`` framework in Open
 MPI.  Upon opening a file, the OMPIO component initializes a number of
 sub-frameworks and their components, namely:
 
-*  ``fs``: responsible for all file management operations
+* ``fs``: responsible for all file management operations
 * ``fbtl``: support for blocking and non-blocking individual
   I/O operations
 * ``fcoll``: support for blocking and non-blocking collective I/O
@@ -70,8 +70,7 @@ mechanism available in Open MPI to influence a parameter value, e.g.:
    shell$ mpirun --mca fcoll dynamic -n 64 ./a.out
 
 ``fs`` and ``fbtl`` components are typically chosen based on the file
-system type utilized (e.g. the ``pvfs2`` component is chosen when the
-file is located on an PVFS2/OrangeFS file system, the ``lustre``
+system type utilized (e.g. the ``lustre``
 component is chosen for Lustre file systems, etc.). The ``ufs`` ``fs``
 component is used if no file system specific component is availabe
 (e.g. local file systems, NFS, BeefFS, etc.), and the ``posix``
@@ -154,20 +153,10 @@ operation are listed below:
 Setting stripe size and stripe width on parallel file systems
 -------------------------------------------------------------
 
-Many ``fs`` components allow you to manipulate the layout of a new
+Some ``fs`` components allow you to manipulate the layout of a new
 file on a parallel file system.  Note, that many file systems only
 allow changing these setting upon file creation, i.e. modifying these
 values for an already existing file might not be possible.
-
-#. ``fs_pvfs2_stripe_size``: Sets the number of storage servers for a
-   new file on a PVFS2/OrangeFS  file system. If not set, system default will be
-   used. Note that this parameter can also be set through the
-   ``stripe_size`` MPI Info value.
-
-#. ``fs_pvfs2_stripe_width``: Sets the size of an individual block for
-   a new file on a PVFS2 file system. If not set, system default will
-   be used. Note that this parameter can also be set through the
-   ``stripe_width`` MPI Info value.
 
 #. ``fs_lustre_stripe_size``: Sets the number of storage servers for a
    new file on a Lustre file system. If not set, system default will
@@ -192,6 +181,12 @@ read/write operation. The chunk-size used by OMPIO can have a
 significant influence on the performance of the file I/O operation
 from device buffers, and can be controlled using the
 ``io_ompio_pipeline_buffer_size`` MCA parameter.
+
+Furthermore, some collective file I/O components such as
+``fcoll/vulcan`` allow the user to influence whether the buffer used
+for collective aggregation is located in host or device memory through
+the ``io_ompio_use_accelerator_buffers`` MCA parameter.
+
 
 .. _label-ompio-individual-sharedfp:
 

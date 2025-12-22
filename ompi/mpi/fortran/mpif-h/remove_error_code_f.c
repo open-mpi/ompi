@@ -70,12 +70,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_REMOVE_ERROR_CODE,
 void ompi_remove_error_code_f(MPI_Fint *errorcode, MPI_Fint *ierr)
 {
     int ierr_c;
-    OMPI_SINGLE_NAME_DECL(errorcode);
 
     ierr_c = PMPI_Remove_error_code(OMPI_FINT_2_INT(*errorcode));
-
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(ierr_c);
-    if (MPI_SUCCESS == ierr_c) {
-        OMPI_SINGLE_INT_2_FINT(errorcode);
-    }
 }

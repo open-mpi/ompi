@@ -47,15 +47,15 @@ void test_fail_stop(const char *msg, int status);
  * test_verify: Non-fatal assertion macro.
  */
 
-#define test_verify(MESSAGE, EXPR)                                             \
-    do {                                                                       \
-        if (!(EXPR)) {                                                         \
-            char s[256];                                                       \
-            sprintf(s, "%s:%d: %s: %s\n", __FILE__, __LINE__, MESSAGE, #EXPR); \
-            test_failure(s);                                                   \
-        } else {                                                               \
-            test_success();                                                    \
-        }                                                                      \
+#define test_verify(MESSAGE, EXPR)                                                         \
+    do {                                                                                   \
+        if (!(EXPR)) {                                                                     \
+            char s[256];                                                                   \
+            snprintf(s, sizeof(s), "%s:%d: %s: %s\n", __FILE__, __LINE__, MESSAGE, #EXPR); \
+            test_failure(s);                                                               \
+        } else {                                                                           \
+            test_success();                                                                \
+        }                                                                                  \
     } while (0)
 
 #endif /* OMPI_SUPPORT_H */
