@@ -107,7 +107,6 @@ int ompi_osc_sm_detach(struct ompi_win_t *win, const void *base);
 
 int ompi_osc_sm_free(struct ompi_win_t *win);
 
-// TODO: add put/get_notify prototypes
 
 int ompi_osc_sm_put(const void *origin_addr,
                           size_t origin_count,
