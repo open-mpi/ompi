@@ -896,6 +896,14 @@ AC_CHECK_MEMBERS([struct timespec.tv_nsec],
 #
 m4_ifdef([project_ompi], [OMPI_FIND_MPI_AINT_COUNT_OFFSET])
 
+#
+# now that we have MPI_COUNT_KIND set, try building
+# MPI F08 bindings if that level of fortran support is requested
+#
+m4_ifdef([project_ompi], [AS_IF([test $OMPI_BUILD_FORTRAN_BINDINGS -ge $OMPI_FORTRAN_USEMPIF08_BINDINGS],
+                                [OMPI_FORTRAN_CHECK_BIG_COUNT([],
+                                     [AC_MSG_ERROR([The mpi_f08 module cannot be compiled using the current set of Fortran compiler options ($FCFLAGS).  Either change compiler options or use --enable-mpi-fortran=usempi])])
+                                ])])
 # checkpoint results
 AC_CACHE_SAVE
 
