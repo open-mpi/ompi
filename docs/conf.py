@@ -186,10 +186,13 @@ extensions = [
 
 # conf.py file
 
+prrte_inter_sphinx="('https://docs.openpmix.org/en/latest/',('" + str(ompi_prefix) + "/share/doc/pmix/html/objects.inv', None))"
+print("prrte_inter_sphinx = " + str(prrte_inter_sphinx))
 intersphinx_mapping = {
-    "prrte": ('https://docs.prrte.org/en/latest/',('/Users/hpp/ompi3/install_main/share/doc/prrte/html/objects.inv', None)),
-    "pmix": ('https://docs.openpmix.org/en/latest/',('/Users/hpp/ompi3/install_main/share/doc/pmix/html/objects.inv', None)),
+    'prrte': (f"{ompi_prefix}/share/doc/prrte/html", None),
+    'pmix': (f"{ompi_prefix}/share/doc/pmix/html", None),
 }
+#    "prrte": f"('https://docs.prrte.org/en/latest/',('{ompi_prefix}/share/doc/prrte/html/objects.inv', None))",
 #   "pmix": f"('https://docs.openpmix.org/en/latest/',('{ompi_prefix}/share/doc/pmix/html/objects.inv'", None)),
 
 # We recommend adding the following config value.
