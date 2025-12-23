@@ -34,9 +34,6 @@ if 'OMPI_TOP_SRCDIR' in os.environ:
 ompi_prefix = ''
 if 'OMPI_PREFIX' in os.environ:
     ompi_prefix = os.environ['OMPI_PREFIX']
-else:
-    print(f"ERROR: Unable to find install path")
-    exit(1)
 
 # Read an Open MPI-style VERSION file
 def read_version_file(path):
