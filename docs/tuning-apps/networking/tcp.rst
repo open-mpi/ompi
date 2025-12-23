@@ -77,12 +77,21 @@ the operating system IP loopback interface could be used:
 #. Sending a message from one process to another process on the same
    machine
 
-The TCP BTL does not handle "send-to-self" scenarios in Open MPI;
-indeed, it is not even capable of doing so.  Instead, the ``self`` BTL
-component is used for all send-to-self MPI communications.  Not only
-does this allow all Open MPI BTL components to avoid special case code
-for send-to-self scenarios, it also allows avoiding using inefficient
-loopback network stacks (such as the IP loopback device).
+The TCP BTL does not handle "send-to-self" scenarios in Open MPI.
+Instead, the ``self`` BTL is used for all send-to-self MPI communications.
+This allows all Open MPI BTL components to avoid special case code
+for send-to-self scenarios, and also avoids using less efficient
+loopback network stacks (such as the IP loopback device). However,
+in cases where there is a need to use the IP loopback device, the ``tcp``
+BTL can be configured to use it by setting the ``btl_tcp_if_include``
+MCA parameter to ``lo`` or ``127.0.0.0/32`` (or whatever is the local
+naming scheme on your system). For example:
+
+.. code-block:: sh
+
+   shell$ mpirun --mca btl_tcp_if_include lo ...
+   shell$ mpirun --mca btl_tcp_if_exclude 127.0.0.0/32 ...
+
 
 Specifically: the ``self`` component uses its own mechanisms for
 send-to-self scenarios; it does not use operating system network
@@ -454,12 +463,17 @@ code, you can find the background story in `this IEEE paper
 Does Open MPI ever close TCP sockets?
 -------------------------------------
 
-In general, no.
+In general, no. However, there are some exceptions.
 
 Although TCP sockets are opened "lazily" (meaning that MPI
 connections / TCP sockets are only opened upon demand |mdash| as opposed to
 opening all possible sockets between MPI peer processes during
-``MPI_INIT``), they are never closed.
+``MPI_INIT``), they are never closed unless the MPI world or MPI sessions
+are explicitly finalized or disconnected. For example, if the MPI world is
+finalized, all TCP sockets will be closed. If a spawned MPI process is
+disconnected, all TCP sockets to any parent MPI process will be closed.
+Similarly, if the MPI session is disconnected, all TCP sockets to any child
+MPI processes will be closed.
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -519,3 +533,38 @@ to the MPI implementation.
 However, for highly multi-threaded applications, where there are only
 one or two MPI processes per host, the ``btl_tcp_links`` option may
 improve TCP throughput considerably.
+
+/////////////////////////////////////////////////////////////////////////
+
+Can I limit the time spent on establishing TCP connections?
+-----------------------------------------------------------
+
+Yes. You can set the ``tcp_recv_timeout`` and ``tcp_handshake_timeout``
+MCA parameters to limit the time spent on establishing TCP connections.
+The difference between the two is subtle, but important: the
+``tcp_recv_timeout`` is the timeout for one receive operation
+while the ``tcp_handshake_timeout`` is the timeout for the entire handshake
+(i.e., the exchange of the correct magic string and process GUID). These two
+parameters can be used to avoid deadlocks in adversarial situations where
+external processes (e.g., not MPI processes part of any job) are trying to
+connect to the Open MPI process, and are holding the connection socket open
+without sending the proper handshake information.
+
+The default values are 250,000 usec for ``tcp_recv_timeout`` and 1,000,000
+usec for ``tcp_handshake_timeout``.
+
+For example:
+
+.. code-block:: sh
+
+   shell$ mpirun --mca tcp_recv_timeout 1000000 ...
+   shell$ mpirun --mca tcp_handshake_timeout 1000000 ...
+
+/////////////////////////////////////////////////////////////////////////
+
+Can I use TCP_NODELAY to improve latency?
+-----------------------------------------
+
+If your application is driven by waves of small messages, you may be able
+to improve latency by enabling TCP_NODELAY. You can set the ``btl_tcp_use_nagle``
+MCA parameter to 1 to enable TCP_NODELAY.
