@@ -187,9 +187,10 @@ extensions = [
 # conf.py file
 
 intersphinx_mapping = {
-    "prrte": (f"{ompi_prefix}/share/doc/prrte/html", None),
-    "pmix": (f"{ompi_prefix}/share/doc/pmix/html", None),
+    "prrte": ('https://docs.prrte.org/en/latest/',('/Users/hpp/ompi3/install_main/share/doc/prrte/html/objects.inv', None)),
+    "pmix": ('https://docs.openpmix.org/en/latest/',('/Users/hpp/ompi3/install_main/share/doc/pmix/html/objects.inv', None)),
 }
+#   "pmix": f"('https://docs.openpmix.org/en/latest/',('{ompi_prefix}/share/doc/pmix/html/objects.inv'", None)),
 
 # We recommend adding the following config value.
 # Sphinx defaults to automatically resolve *unresolved* labels using all your Intersphinx mappings.
