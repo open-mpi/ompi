@@ -46,6 +46,7 @@ same command).
    lsf
    tm
    gridengine
+   pals
 
    unusual
    troubleshooting
