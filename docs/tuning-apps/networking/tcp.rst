@@ -67,13 +67,20 @@ in which the IP loopback interface could be used:
 #. Sending a message from one process to another process on the same
    machine.
 
-The ``tcp`` BTL does not handle send-to-self scenarios; instead, the
-``self`` BTL is used for all send-to-self MPI communication.  This lets
-all Open MPI BTL components avoid special-case code for send-to-self
-and also avoids using less efficient loopback network stacks (such as
-the IP loopback device).  The ``self`` component uses its own
-mechanisms and does not use operating system network interfaces such as
-the IP loopback interface.
+The TCP BTL does not handle "send-to-self" scenarios in Open MPI.
+Instead, the ``self`` BTL is used for all send-to-self MPI communications.
+This allows all Open MPI BTL components to avoid special case code
+for send-to-self scenarios, and also avoids using less efficient
+loopback network stacks (such as the IP loopback device). However,
+in cases where there is a need to use the IP loopback device, the ``tcp``
+BTL can be configured to use it by setting the ``btl_tcp_if_include``
+MCA parameter to ``lo`` or ``127.0.0.0/32`` (or whatever is the local
+naming scheme on your system). For example:
+
+.. code-block:: sh
+
+   shell$ mpirun --mca btl_tcp_if_include lo ...
+   shell$ mpirun --mca btl_tcp_if_exclude 127.0.0.0/32 ...
 
 When sending to other processes on the same machine, Open MPI defaults
 to using a shared-memory BTL (``sm``).  If the shared-memory BTL has
