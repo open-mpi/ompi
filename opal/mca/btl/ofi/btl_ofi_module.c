@@ -254,7 +254,7 @@ int mca_btl_ofi_reg_mem(void *reg_data, void *base, size_t size,
                         mca_rcache_base_registration_t *reg)
 {
     int rc, dev_id;
-    uint64_t flags;
+    uint64_t flags, mr_flags = 0;
     static uint64_t access_flags = FI_REMOTE_WRITE | FI_REMOTE_READ | FI_READ | FI_WRITE;
     struct fi_mr_attr attr = {0};
     struct iovec iov = {0};
@@ -281,7 +281,7 @@ int mca_btl_ofi_reg_mem(void *reg_data, void *base, size_t size,
                 attr.iface = FI_HMEM_CUDA;
                 opal_accelerator.get_device(&attr.device.cuda);
 #if OPAL_OFI_HAVE_FI_HMEM_ROCR
-	    } else if (0 == strcmp(opal_accelerator_base_selected_component.base_version.mca_component_name, "rocm")) {
+            } else if (0 == strcmp(opal_accelerator_base_selected_component.base_version.mca_component_name, "rocm")) {
                 attr.iface = FI_HMEM_ROCR;
                 opal_accelerator.get_device(&attr.device.cuda);
 #endif
@@ -293,11 +293,15 @@ int mca_btl_ofi_reg_mem(void *reg_data, void *base, size_t size,
             } else {
                 return OPAL_ERROR;
             }
+#if OPAL_OFI_HAVE_FI_HMEM_DEVICE_ONLY
+            mr_flags = flags & MCA_ACCELERATOR_FLAGS_UNIFIED_MEMORY ? 0 :
+                        FI_HMEM_DEVICE_ONLY;
+#endif
         }
     }
 #endif
 
-    rc = fi_mr_regattr(btl->domain, &attr, 0, &ur->ur_mr);
+    rc = fi_mr_regattr(btl->domain, &attr, mr_flags, &ur->ur_mr);
     if (0 != rc) {
         ur->ur_mr = NULL;
         return OPAL_ERR_OUT_OF_RESOURCE;
