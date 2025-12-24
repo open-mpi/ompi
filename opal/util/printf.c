@@ -285,12 +285,12 @@ int opal_vsnprintf(char *str, size_t size, const char *fmt, va_list ap)
     }
 
     /* return the length when given a null buffer (C99) */
-    if (str) {
+    if (str && size > 0) {
         if ((size_t) length < size) {
             strcpy(str, buf);
         } else {
             memcpy(str, buf, size - 1);
-            str[size] = '\0';
+            str[size - 1] = '\0';
         }
     }
 
