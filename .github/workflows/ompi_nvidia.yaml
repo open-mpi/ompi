@@ -1,5 +1,7 @@
 name: ompi_NVIDIA CI
 on: [pull_request]
+permissions:
+  contents: read
 jobs:
 
   nvidia_deployment:
