@@ -8,6 +8,7 @@
  *                         reserved.
  * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
  * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2025      Bull SAS.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -19,6 +20,7 @@
 #include "instance.h"
 
 #include "opal/util/arch.h"
+#include "opal/util/proc.h"
 
 #include "opal/util/show_help.h"
 #include "opal/util/argv.h"
@@ -39,6 +41,7 @@
 #include "ompi/dpm/dpm.h"
 #include "ompi/file/file.h"
 #include "ompi/mpiext/mpiext.h"
+#include "ompi/runtime/ompi_rte.h"
 
 #include "ompi/mca/hook/base/base.h"
 #include "ompi/mca/op/base/base.h"
@@ -110,6 +113,8 @@ static void ompi_instance_construct (ompi_instance_t *instance)
     instance->i_name[0] = '\0';
     instance->i_flags = 0;
     instance->i_keyhash = NULL;
+    OBJ_CONSTRUCT(&instance->i_spawned_proc_namelists, opal_list_t);
+    OBJ_CONSTRUCT(&instance->i_spawned_proc_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&instance->s_lock, opal_mutex_t);
     instance->errhandler_type = OMPI_ERRHANDLER_TYPE_INSTANCE;
     instance->bsend_buffer = NULL;
@@ -117,6 +122,8 @@ static void ompi_instance_construct (ompi_instance_t *instance)
 
 static void ompi_instance_destruct(ompi_instance_t *instance)
 {
+    OBJ_DESTRUCT(&instance->i_spawned_proc_namelists);
+    OBJ_DESTRUCT(&instance->i_spawned_proc_lock);
     OBJ_DESTRUCT(&instance->s_lock);
 }
 
@@ -177,6 +184,61 @@ static int ompi_instance_print_error (const char *error, int ret)
     return ret;
 }
 
+/* This function is only needed for the world paradigm because it's the only one
+ * we can spawn processes in it for now */
+void ompi_proc_retain_spawned_jobids(ompi_proc_t **spawned_procs, size_t list_size) {
+    const ompi_proc_t *spawned_proc;
+    opal_namelist_t *registered_proc;
+    ompi_process_name_t name;
+    ompi_rte_cmp_bitmask_t mask;
+
+    /* NULL if session paradigm, not NULL if world paradigm */
+    if (ompi_mpi_instance_default == NULL) {
+        return;
+    }
+
+    /* return the proc-struct which matches this jobid */
+    mask = OMPI_RTE_CMP_JOBID;
+
+    for (size_t i = 0; i < list_size; i++) {
+        /* The idea is to filter the procs that have the same jobid,
+         * aka the jobs in the same instance.
+         * After that we lookup if the jobid is already present, meaning this
+         * instance is already registered via the jobid of its procs.
+         * If the jobid is not present we add it */
+
+        int found = 0;
+        spawned_proc = spawned_procs[i];
+        if (OMPI_PROC_MY_NAME->jobid == spawned_proc->super.proc_name.jobid) {
+            continue;
+        }
+
+        name.jobid = spawned_proc->super.proc_name.jobid;
+        name.vpid  = spawned_proc->super.proc_name.vpid;
+
+        opal_mutex_lock(&ompi_mpi_instance_default->i_spawned_proc_lock);
+        OPAL_LIST_FOREACH(registered_proc,
+                          &ompi_mpi_instance_default->i_spawned_proc_namelists,
+                          opal_namelist_t) {
+            if (OPAL_EQUAL == ompi_rte_compare_name_fields(mask,
+                                   &registered_proc->name, &name)) {
+                found = 1;
+                break;
+            }
+        }
+
+        if (0 == found) {
+            opal_namelist_t *namelist = OBJ_NEW(opal_namelist_t);
+            namelist->name.jobid = name.jobid;
+            namelist->name.vpid  = 0;   /* not needed for lookup */
+            opal_list_append(&ompi_mpi_instance_default->i_spawned_proc_namelists,
+                             &namelist->super);
+        }
+        opal_mutex_unlock(&ompi_mpi_instance_default->i_spawned_proc_lock);
+    }
+    return;
+}
+
 static int ompi_mpi_instance_cleanup_pml (void)
 {
     /* call del_procs on all allocated procs even though some may not be known
@@ -184,10 +246,27 @@ static int ompi_mpi_instance_cleanup_pml (void)
      * any unknown procs. */
     size_t nprocs = 0;
     ompi_proc_t **procs;
+    opal_namelist_t *registered_name;
+    opal_namelist_t *next;
 
     procs = ompi_proc_get_allocated (&nprocs);
     MCA_PML_CALL(del_procs(procs, nprocs));
     free(procs);
+
+    /* If we are in a world paradigm and spawned processes we need to clean */
+    if (ompi_mpi_instance_default != NULL) {
+
+        /* Let's loop on all spawned jobids and del_proc the concerned procs */
+        OPAL_LIST_FOREACH_SAFE(registered_name, next,
+                               &ompi_mpi_instance_default->i_spawned_proc_namelists,
+                               opal_namelist_t) {
+
+            procs = ompi_proc_get_by_name(&registered_name->name, &nprocs);
+            MCA_PML_CALL(del_procs(procs, nprocs));
+            opal_list_remove_item(&ompi_mpi_instance_default->i_spawned_proc_namelists,
+                                  &registered_name->super);
+        }
+    }
 
     return OMPI_SUCCESS;
 }
@@ -989,13 +1068,13 @@ int ompi_mpi_instance_finalize (ompi_instance_t **instance)
 {
     int ret = OMPI_SUCCESS;
 
-    OBJ_RELEASE(*instance);
-
     opal_mutex_lock (&instance_lock);
     if (0 == opal_atomic_add_fetch_32 (&ompi_instance_count, -1)) {
         ret = ompi_mpi_instance_finalize_common ();
     }
     opal_mutex_unlock (&instance_lock);
+
+    OBJ_RELEASE(*instance);
 
     *instance = &ompi_mpi_instance_null.instance;
 
