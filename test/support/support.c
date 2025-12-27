@@ -12,6 +12,7 @@
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2024      Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
+ * Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -45,7 +46,7 @@
     }
 
 test_verify_number(int, "%d")
-test_verify_number(int64_t, "%ld")
+test_verify_number(int64_t, "%" PRId64)
 test_verify_number(size_t, "%lu")
 test_verify_number(double, "%lf")
 
