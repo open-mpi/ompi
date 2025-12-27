@@ -306,17 +306,19 @@ For rankfiles:
 
 To manage standard I/O:
 
-* ``--output-filename <filename>``: Redirect the stdout, stderr, and
-  stddiag of all processes to a process-unique version of the
-  specified filename. Any directories in the filename will
-  automatically be created.  Each output file will consist of
-  ``filename.id``, where the ``id`` will be the processes' rank in
-  ``MPI_COMM_WORLD``, left-filled with zero's for correct ordering in
-  listings. A relative path value will be converted to an absolute
-  path based on the cwd where mpirun is executed. Note that this will
-  not work on environments where the file system on compute nodes
-  differs from that where :ref:`mpirun(1) <man1-mpirun>` is
-  executed.
+* ``--output-filename <filename>``: Redirect output from application
+  processes into ``{filename}.prterun-{hostname}-{pid}@{jobid}.{rank}.(out|err|diag)``,
+  where ``{hostname}`` is the hostname, ``{pid}`` is the process ID of
+  ``mpirun``, ``{jobid}`` is the local job ID, and ``{rank}`` is the
+  processes' rank in ``MPI_COMM_WORLD``, left-filled with zero's for
+  correct ordering in file listings. A file is not created if the
+  corresponding stream is empty. Any intermediate directories in the
+  resulting output files will automatically be created if necessary. If
+  ``filename`` is a relative path, it will be converted to an absolute
+  path based on the directory where :ref:`mpirun(1) <man1-mpirun>` is
+  executed. Note that this will not work in environments where the file
+  system on compute nodes differs from that where :ref:`mpirun(1)
+  <man1-mpirun>` is executed.
 
 * ``--stdin <rank>``: The ``MPI_COMM_WORLD`` rank of the process that is
   to receive stdin.  The default is to forward stdin to ``MPI_COMM_WORLD``
