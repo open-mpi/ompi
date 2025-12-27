@@ -1,0 +1,16 @@
+#
+# Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+# CodeQL configuration for Open MPI, referenced by both analysis jobs
+# in .github/workflows/codeql.yml via their `config-file:` input.
+
+name: "Open MPI CodeQL config"
+
+paths-ignore:
+  - '3rd-party'
+  - '**/test'

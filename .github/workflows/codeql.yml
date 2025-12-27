@@ -1,0 +1,290 @@
+#
+# Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+# CodeQL (GitHub code scanning / static analysis) configuration for
+# Open MPI.
+#
+# What this workflow does:
+#
+#   1. Runs CodeQL analysis on every pull request and on every push
+#      (i.e., merge) to main and the supported release branches.  This
+#      catches newly-introduced problems at the moment code changes.
+#
+#   2. Runs a periodic (weekly, Monday morning UTC) CodeQL scan of main
+#      *and* the active release branches.
+#
+# Why run periodic scans in addition to the per-PR / per-merge scans?
+#
+#   The PR/merge scans only ever examine code at the moment it changes.
+#   But CodeQL's query packs and analysis engine are continually
+#   updated as new classes of vulnerabilities (and new CVEs) are
+#   discovered.  The weekly scan re-analyzes the *existing* code base
+#   with the latest queries, so a vulnerability pattern that was
+#   unknown when a piece of code was merged can still be found later --
+#   even though that code has not changed and therefore would never be
+#   re-examined by a push/PR scan.  Release branches in particular tend
+#   to go quiet between point releases, so the periodic scan is often
+#   the only thing that keeps their results current.
+#
+# A note on branches and where this file must live:
+#
+#   - push and pull_request workflows always run from the copy of this
+#     file on the branch receiving the push / targeted by the PR (not
+#     from main).  So to get PR and merge analysis on a release branch
+#     (e.g., v5.0.x, v6.0.x), this file must also be committed on that
+#     branch.
+#
+#   - The schedule (cron) event is special: it only ever fires from the
+#     default branch (main).  To periodically scan the release branches
+#     as well, the scheduled job below explicitly checks out each
+#     branch and tells the analyze action which ref/sha to attribute
+#     the results to.  The scheduled job is therefore inert on the
+#     release branches (it never fires there); only the copy on main
+#     drives the weekly scans.
+#
+# Why inline (and not a composite action or reusable workflow): the two
+# jobs below intentionally duplicate the init / build / analyze steps.
+# Because per-branch CI requires this file to be cherry-picked onto each
+# release branch anyway, a single self-contained file (one file per
+# branch, with nothing else to keep in sync) is simpler than factoring
+# the shared steps out. Sharing them would not buy a cross-branch single
+# source of truth, and a local composite action would actually break the
+# weekly scan, since `uses: ./...` resolves from the checked-out branch
+# rather than from main.
+#
+# We started running CodeQL on the main, v5.0.x, and v6.0.x branches in
+# June 2026.  Subsequent release branches are matched by the branch
+# globs below (for PR/merge scans) and should be added to the scheduled
+# job's branch list on main (for the weekly scans).
+
+name: "CodeQL Advanced"
+
+on:
+  push:
+    # Defined once here (&scan_branches) and reused by pull_request
+    # below via a YAML alias, so the two trigger lists cannot drift.
+    branches: &scan_branches
+      - main
+      - 'v[5-9].*.x'       # Matches v5.0.x through v9.9.x
+      - 'v[1-9][0-9]+.*.x' # Matches v10.0.x and higher (double digits+)
+  pull_request:
+    branches: *scan_branches
+  schedule:
+    # Monday morning (UTC).  The off-the-hour minute avoids GitHub's
+    # top-of-the-hour scheduling congestion.
+    - cron: '32 5 * * 1'
+
+permissions:
+  # required for all workflows
+  security-events: write
+  # required to fetch internal or private CodeQL packs
+  packages: read
+  # only required for workflows in private repositories
+  actions: read
+  contents: read
+
+# Cancel a superseded in-progress run when a newer commit is pushed to
+# the same pull request, to avoid stacking up expensive C/C++ builds.
+# The group includes the event name so push/schedule runs live in
+# separate groups, and cancellation is enabled only for pull_request
+# runs -- never the weekly scheduled scan or pushes to a branch.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  # -------------------------------------------------------------------
+  # Event-driven analysis: scans the ref that triggered the push / PR.
+  # -------------------------------------------------------------------
+  analyze:
+    if: github.event_name != 'schedule' && github.repository == 'open-mpi/ompi'
+    name: Analyze ${{ matrix.language }} (${{ github.ref_name }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - language: actions
+            build-mode: none
+          - language: c-cpp
+            build-mode: manual
+          - language: python
+            build-mode: none
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+          persist-credentials: false
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
+          config-file: ./.github/codeql/codeql-config.yml
+
+      - name: Run manual build steps
+        if: matrix.build-mode == 'manual'
+        shell: bash
+        run: |
+          ./autogen.pl
+          ./configure
+          make -j $(nproc)
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: "/language:${{ matrix.language }}"
+
+  # -------------------------------------------------------------------
+  # Scheduled analysis: explicitly scans main and each release branch.
+  # Only fires from the default branch (main); see the header comment.
+  # -------------------------------------------------------------------
+  analyze-scheduled:
+    if: github.event_name == 'schedule' && github.repository == 'open-mpi/ompi'
+    name: Analyze ${{ matrix.language }} (${{ matrix.branch }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Concrete branch names only: this matrix drives
+        # 'actions/checkout', so (unlike the on.push.branches globs)
+        # these cannot be globs or regexes. New release branches must be
+        # added here, too; the check-scheduled-coverage job enforces it.
+        branch:
+          - main
+          - v5.0.x
+          - v6.0.x
+        language:
+          - actions
+          - c-cpp
+          - python
+        include:
+          - language: actions
+            build-mode: none
+          - language: c-cpp
+            build-mode: manual
+          - language: python
+            build-mode: none
+    steps:
+      - name: Checkout ${{ matrix.branch }}
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ matrix.branch }}
+          submodules: recursive
+          persist-credentials: false
+
+      - name: Resolve commit SHA
+        id: commit
+        shell: bash
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
+          config-file: ./.github/codeql/codeql-config.yml
+
+      - name: Run manual build steps
+        if: matrix.build-mode == 'manual'
+        shell: bash
+        run: |
+          ./autogen.pl
+          ./configure
+          make -j $(nproc)
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: "/language:${{ matrix.language }}"
+          # Attribute results to the checked-out branch rather than to
+          # main (which is what a schedule event would otherwise report
+          # against).  The category is keyed on language only -- NOT on
+          # branch -- so each branch's results update in place and the
+          # weekly main scan stays consistent with its push/PR scans.
+          ref: refs/heads/${{ matrix.branch }}
+          sha: ${{ steps.commit.outputs.sha }}
+
+  # -------------------------------------------------------------------
+  # Guard: fail if a release branch that the push/pull_request globs
+  # cover is missing from the analyze-scheduled 'branch:' list, so new
+  # release branches don't silently drop out of the weekly scan.
+  #
+  # Runs only in the default-branch (main) context, where the scheduled
+  # matrix is authoritative. On a release branch the matrix is inert
+  # (the schedule fires only from the default branch) and its copy can
+  # lag main's, so running there would block CI for drift it can't fix.
+  # -------------------------------------------------------------------
+  check-scheduled-coverage:
+    if: >-
+      github.event_name != 'schedule' &&
+      github.ref_name == github.event.repository.default_branch &&
+      github.repository == 'open-mpi/ompi'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Verify periodic-scan branch coverage
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          # The push/PR trigger globs in on.push.branches (above) are the
+          # single definition of which branches get scanned. This guard
+          # reads them from this file and converts each GitHub filter-glob
+          # to a regex (. -> \., * -> .*; +, ?, and [..] mean the same in
+          # both), so it matches exactly what the triggers match -- there
+          # is no second copy of the pattern to keep in sync. It then
+          # checks that every such branch is also listed in the
+          # analyze-scheduled matrix. python3 is always present on the
+          # runner, so (unlike yq) a runner image change cannot break it.
+          gh api --paginate "repos/${{ github.repository }}/branches" \
+            -q '.[].name' > "$RUNNER_TEMP/branches.txt"
+
+          python3 - .github/workflows/codeql.yml "$RUNNER_TEMP/branches.txt" <<'PY'
+          import sys, re
+
+          wf = open(sys.argv[1]).read()
+          branches = [b.strip() for b in open(sys.argv[2]) if b.strip()]
+
+          # on.push.branches globs -> anchored ERE regexes. Capture the
+          # whole push block (tolerates comments and the &scan_branches
+          # anchor on the branches: line) and pull out its list items.
+          push = re.search(r"(?ms)^  push:\n(.*?)^  \S", wf)
+          raw = re.findall(r"(?m)^      - (\S.*?) *(?:#.*)?$", push.group(1)) if push else []
+          globs = [x.strip().strip("'") for x in raw]
+          triggers = [re.compile("^" + g.replace(".", r"\.").replace("*", ".*") + "$")
+                      for g in globs]
+          if not triggers:
+              sys.exit("::error::could not parse on.push.branches; "
+                       "coverage guard cannot run")
+
+          # analyze-scheduled matrix branch list.
+          sched = re.search(r"(?ms)^        branch:\n(.*?)^        \S", wf)
+          scheduled = set(re.findall(r"^          - (\S+)", sched.group(1), re.M)) if sched else set()
+
+          missing = [b for b in branches
+                     if any(rx.match(b) for rx in triggers) and b not in scheduled]
+
+          if missing:
+              print("::error::Branch(es) get push/PR CodeQL scans but are missing "
+                    "from the weekly scan list: " + " ".join(missing))
+              print("Add them to jobs.analyze-scheduled.strategy.matrix.branch "
+                    "in .github/workflows/codeql.yml.")
+              sys.exit(1)
+          print("OK: every push/PR-scanned branch is covered by the weekly scan.")
+          PY
