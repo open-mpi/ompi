@@ -15,6 +15,9 @@ on:
         required: false
         type: string
 
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-22.04

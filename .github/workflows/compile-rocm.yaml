@@ -2,6 +2,9 @@ name: ROCM
 
 on: [pull_request]
 
+permissions:
+  contents: read
+
 env:
   ROCM_VER: 6.2.2
 jobs:
