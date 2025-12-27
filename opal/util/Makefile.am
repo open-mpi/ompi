@@ -55,6 +55,7 @@ headers = \
         bit_ops.h \
         clock_gettime.h \
         cmd_line.h \
+        count_disp_array.h \
         crc.h \
 	ethtool.h \
         error.h \

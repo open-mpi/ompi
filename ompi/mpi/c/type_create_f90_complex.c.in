@@ -84,7 +84,6 @@ PROTOTYPE ERROR_CLASS Type_create_f90_complex(INT p, INT r, DATATYPE_OUT newtype
 
     if( *newtype != &ompi_mpi_datatype_null.dt ) {
         ompi_datatype_t* datatype;
-        const int* a_i[2];
         int rc;
 
         key = (((uint64_t)p_key) << 32) | ((uint64_t)r_key);
@@ -107,9 +106,8 @@ PROTOTYPE ERROR_CLASS Type_create_f90_complex(INT p, INT r, DATATYPE_OUT newtype
         snprintf(datatype->name, sizeof(datatype->name),
                  "COMBINER %s", (*newtype)->name);
 
-        a_i[0] = &p;
-        a_i[1] = &r;
-        ompi_datatype_set_args( datatype, 2, a_i, 0, NULL, 0, NULL, MPI_COMBINER_F90_COMPLEX );
+        ompi_count_array_t a_i[2] = {OMPI_COUNT_ARRAY_CREATE(&p), OMPI_COUNT_ARRAY_CREATE(&r)};
+        ompi_datatype_set_args( datatype, 2, 0, a_i, 0, OMPI_DISP_ARRAY_NULL, 0, NULL, MPI_COMBINER_F90_COMPLEX );
 
         rc = opal_hash_table_set_value_uint64( &ompi_mpi_f90_complex_hashtable, key, datatype );
         if (OMPI_SUCCESS != rc) {

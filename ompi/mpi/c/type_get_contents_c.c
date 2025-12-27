@@ -67,10 +67,29 @@ int MPI_Type_get_contents_c(MPI_Datatype mtype,
         }
     }
 
-/* TODO:BIGCOUNT: Need to embiggen ompi_datatype_get_args */
-    rc = ompi_datatype_get_args( mtype, 1, (int *)&max_integers, array_of_integers,
-                            (int *)&max_addresses, array_of_addresses,
-                            (int *)&max_datatypes, array_of_datatypes, NULL );
+    size_t ci, cl, ca, cd;
+    int32_t type;
+    rc = ompi_datatype_get_args( mtype, 0, &ci, NULL,
+                                &cl, NULL,
+                                &ca, NULL,
+                                &cd, NULL, &type );
+    if( rc != MPI_SUCCESS ) {
+        OMPI_ERRHANDLER_NOHANDLE_RETURN( MPI_ERR_INTERN,
+                                MPI_ERR_INTERN, FUNC_NAME );
+    }
+    // check that we have enough space
+    if (cl > (size_t)max_large_counts ||
+        ci > (size_t)max_integers ||
+        ca > (size_t)max_addresses ||
+        cd > (size_t)max_datatypes) {
+        OMPI_ERRHANDLER_NOHANDLE_RETURN( MPI_ERR_TYPE,
+                                MPI_ERR_TYPE, FUNC_NAME );
+    }
+
+    rc = ompi_datatype_get_args( mtype, 1, &ci, array_of_integers,
+                                 &cl, array_of_large_counts,
+                                 &ca, array_of_addresses,
+                                 &cd, array_of_datatypes, NULL );
     if( rc != MPI_SUCCESS ) {
         OMPI_ERRHANDLER_NOHANDLE_RETURN( MPI_ERR_INTERN, 
                                 MPI_ERR_INTERN, FUNC_NAME );
