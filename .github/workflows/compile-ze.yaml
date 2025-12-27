@@ -2,6 +2,9 @@ name: OneAPI ZE
 
 on: [pull_request]
 
+permissions:
+  contents: read
+
 jobs:
   compile-ze:
     runs-on: ubuntu-22.04
