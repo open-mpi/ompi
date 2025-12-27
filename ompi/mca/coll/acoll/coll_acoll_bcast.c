@@ -143,7 +143,21 @@ static inline void coll_bcast_decision_fixed(int size, size_t total_dsize, int n
     if (size <= node_size) {
         if (total_dsize <= 8192 && size >= 16 && !acoll_module->disable_shmbcast) {
             *use_shm = 1;
+            if (-1 != acoll_module->use_socket) {
+                *use_socket = acoll_module->use_socket;
+            }
             return;
+        }
+        if (size >= 256 && total_dsize <= 8192) {
+            if (total_dsize <= 64) {
+                *sg_cnt = size;
+                SET_BCAST_PARAMS(0, 0, 0)
+                return;
+            } else if (!acoll_module->disable_shmbcast) {
+                *use_shm = 1;
+                *use_socket = (-1 != acoll_module->use_socket) ? acoll_module->use_socket : 0;
+                return;
+            }
         }
         if (acoll_module->use_dyn_rules) {
             *sg_cnt = (acoll_module->mnode_sg_size == acoll_module->sg_cnt) ? acoll_module->sg_cnt : node_size;
@@ -254,9 +268,11 @@ static inline void coll_bcast_decision_fixed(int size, size_t total_dsize, int n
                 if (total_dsize <= 64) {
                     *use_socket = 1;
                     SET_BCAST_PARAMS(1, 1, 0)
-                } else if (total_dsize <= 512) {
+                } else if (total_dsize <= 2048) {
                     *use_shm = 1;
                     SET_BCAST_PARAMS(1, 1, 0)
+                } else if (total_dsize <= 131072) {
+                    SET_BCAST_PARAMS(1, 1, 1)
                 } else if (total_dsize <= 2097152) {
                     *use_socket = 1;
                     SET_BCAST_PARAMS(1, 1, 1)
@@ -479,7 +495,7 @@ int mca_coll_acoll_bcast_shm(void *buff, size_t count, struct ompi_datatype_t *d
     coll_acoll_subcomms_t *subc = NULL;
 
     err = check_and_create_subc(comm, acoll_module, &subc);
-    if (!subc->initialized) {
+    if (!subc->initialized || (root != subc->prev_init_root)) {
        err = mca_coll_acoll_comm_split_init(comm, acoll_module, subc, root);
         if (MPI_SUCCESS != err) {
             return err;
@@ -498,7 +514,7 @@ int mca_coll_acoll_bcast_shm(void *buff, size_t count, struct ompi_datatype_t *d
     int *l2_gp = data->l2_gp;
     int l2_gp_size = data->l2_gp_size;
     /* 16 * 1024 + 2 * 64 * size + 8 * 1024 * size */
-    int offset_bcast = LEADER_SHM_SIZE + 2*CACHE_LINE_SIZE*size + PER_RANK_SHM_SIZE*size; 
+    int offset_bcast = LEADER_SHM_SIZE + 2*CACHE_LINE_SIZE*size + PER_RANK_SHM_SIZE*size;
 
     volatile int *leader_shm;
     if (rank == l1_gp[0]) {
@@ -524,73 +540,96 @@ int mca_coll_acoll_bcast_shm(void *buff, size_t count, struct ompi_datatype_t *d
     int ready;
     if (rank == root) {
         memcpy((char *) data->allshmmmap_sbuf[root], buff, count * dsize);
-        ready = __atomic_load_n(leader_shm, __ATOMIC_RELAXED); // we don't need atomic hear!
+        /* Ensure data copy completes before setting ready flag */
+        opal_atomic_wmb();
+
+        ready = __atomic_load_n(leader_shm, __ATOMIC_ACQUIRE);
         ready++;
-        __atomic_store_n(leader_shm, ready, __ATOMIC_RELAXED);
+        /* Use RELEASE to ensure data is visible before flag update */
+        __atomic_store_n(leader_shm, ready, __ATOMIC_RELEASE);
+
+        /* Memory barrier to ensure flag store is visible before checking responses */
+        opal_atomic_mb();
+
         for (int i = 0; i < l2_gp_size; i++) {
             if (l2_gp[i] == root)
                 continue;
             volatile int *val = (int *) ((char *) data->allshmmmap_sbuf[root] + offset_bcast
                                          + CACHE_LINE_SIZE * l2_gp[i]);
-            while (*val != ready) {
-                ;
-            }
+            spin_wait_with_progress(val, ready);
         }
         for (int i = 0; i < l1_gp_size; i++) {
             if (l1_gp[i] == root)
                 continue;
             volatile int *val = (int *) ((char *) data->allshmmmap_sbuf[root] + offset_bcast
                                          + CACHE_LINE_SIZE * l1_gp[i]);
-            while (*val != ready) {
-                ;
-            }
+            spin_wait_with_progress(val, ready);
         }
     } else if (rank == l1_gp[0]) {
-        volatile int leader_ready = __atomic_load_n(leader_shm, __ATOMIC_RELAXED);
         int done = __atomic_load_n((int *) ((char *) data->allshmmmap_sbuf[root] + offset_bcast
                                             + CACHE_LINE_SIZE * rank),
-                                   __ATOMIC_RELAXED);
-        while (done == leader_ready) {
-            leader_ready = __atomic_load_n(leader_shm, __ATOMIC_RELAXED);
-        }
+                                   __ATOMIC_ACQUIRE);
+        /* Use ACQUIRE to ensure we see root's data writes */
+        done++;
+        spin_wait_with_progress((volatile int *)leader_shm, done);
+
+        /* Memory barrier to ensure flag read completes before data copy */
+        opal_atomic_rmb();
+
         memcpy(buff, (char *) data->allshmmmap_sbuf[root], count * dsize);
         memcpy((char *) data->allshmmmap_sbuf[rank], (char *) data->allshmmmap_sbuf[root],
                count * dsize);
+
+        /* Ensure data copies complete before updating flags */
+        opal_atomic_wmb();
+
         int val = __atomic_load_n((int *) ((char *) data->allshmmmap_sbuf[rank] + offset_bcast
                                            + CACHE_LINE_SIZE * rank),
-                                  __ATOMIC_RELAXED); // do we need atomic load?
+                                  __ATOMIC_ACQUIRE);
         val++;
         int local_val = val;
+
+        /* Use RELEASE to ensure data is visible before flag updates */
         __atomic_store_n((int *) ((char *) data->allshmmmap_sbuf[root] + offset_bcast + CACHE_LINE_SIZE * rank),
-                         val, __ATOMIC_RELAXED); // do we need atomic store?
+                         val, __ATOMIC_RELEASE);
         __atomic_store_n((int *) ((char *) data->allshmmmap_sbuf[rank] + offset_bcast + CACHE_LINE_SIZE * rank),
-                         val, __ATOMIC_RELAXED); // do we need atomic store?
-        // do we need wmb() here?
+                         val, __ATOMIC_RELEASE);
+
+        /* Memory barrier to ensure flag stores are visible */
+        opal_atomic_mb();
+
         for (int i = 0; i < l1_gp_size; i++) {
             if (l1_gp[i] == l1_gp[0])
                 continue;
             volatile int *vali = (int *) ((char *) data->allshmmmap_sbuf[l1_gp[0]] + offset_bcast
-                                          + CACHE_LINE_SIZE * l1_gp[i]); // do we need atomic_load here?
-            while (*vali != local_val) {
-                ; // can we use a more specific condition than "!=" ?
-            }
+                                          + CACHE_LINE_SIZE * l1_gp[i]);
+            spin_wait_with_progress(vali, local_val);
         }
     } else {
         int done = __atomic_load_n((int *) ((char *) data->allshmmmap_sbuf[l1_gp[0]] + offset_bcast
                                             + CACHE_LINE_SIZE * rank),
-                                   __ATOMIC_RELAXED);
-        while (done == *leader_shm) {
-            ;
-        }
+                                   __ATOMIC_ACQUIRE);
+        /* Use ACQUIRE to ensure we see leader's data writes */
+        done++;
+        spin_wait_with_progress((volatile int *)leader_shm, done);
+
+        /* Memory barrier to ensure flag read completes before data copy */
+        opal_atomic_rmb();
+
         memcpy(buff, (char *) data->allshmmmap_sbuf[l1_gp[0]], count * dsize);
+
+        /* Ensure data copy completes before updating flag */
+        opal_atomic_wmb();
+
         int val = __atomic_load_n((int *) ((char *) data->allshmmmap_sbuf[l1_gp[0]] + offset_bcast
                                            + CACHE_LINE_SIZE * rank),
-                                  __ATOMIC_RELAXED); // do we need atomic load?
+                                  __ATOMIC_ACQUIRE);
         val++;
+
+        /* Use RELEASE to ensure data is visible before flag update */
         __atomic_store_n((int *) ((char *) data->allshmmmap_sbuf[l1_gp[0]] + offset_bcast
                                   + CACHE_LINE_SIZE * rank),
-                         val, __ATOMIC_RELAXED); // do we need atomic store?
-        // do we need wmb() here?
+                         val, __ATOMIC_RELEASE);
     }
     return err;
 }
@@ -648,7 +687,11 @@ int mca_coll_acoll_bcast(void *buff, size_t count, struct ompi_datatype_t *datat
     /* Fallback to knomial if no. of root changes is beyond a threshold */
     if ((subc->num_root_change > MCA_COLL_ACOLL_ROOT_CHANGE_THRESH)
         && (root != subc->prev_init_root)) {
-        return ompi_coll_base_bcast_intra_knomial(buff, count, datatype, root, comm, module, 0, 4);
+        if (acoll_module->disable_fallback) {
+            return ompi_coll_base_bcast_intra_basic_linear(buff, count, datatype, root, comm, module);
+        } else {
+            return ompi_coll_base_bcast_intra_knomial(buff, count, datatype, root, comm, module, 0, 4);
+        }
     }
     if ((!subc->initialized || (root != subc->prev_init_root)) && size > 2) {
         err = mca_coll_acoll_comm_split_init(comm, acoll_module, subc, root);
@@ -670,8 +713,9 @@ int mca_coll_acoll_bcast(void *buff, size_t count, struct ompi_datatype_t *datat
     }
 
     /* Use knomial for nodes 8 and above and non-large messages */
-    if ((num_nodes >= 8 && total_dsize <= 65536)
-        || (1 == num_nodes && size >= 256 && total_dsize < 16384)) {
+    if (((num_nodes >= 8 && total_dsize <= 65536)
+        || (1 == num_nodes && size >= 256 && total_dsize < 16384)) &&
+        !acoll_module->disable_fallback) {
         return ompi_coll_base_bcast_intra_knomial(buff, count, datatype, root, comm, module, 0, 4);
     }
 
@@ -683,8 +727,9 @@ int mca_coll_acoll_bcast(void *buff, size_t count, struct ompi_datatype_t *datat
                               &use_numa, &use_socket, &use_shm, &lin_0,
                               &lin_1, &lin_2, num_nodes, acoll_module, subc);
     no_sg = (sg_cnt == node_size) ? 1 : 0;
-    if (size <= 2)
+    if (size <= 2) {
         no_sg = 1;
+    }
 
     /* Disable shm based bcast if: */
     /* - datatype is not a predefined type */
