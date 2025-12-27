@@ -24,13 +24,6 @@
 #include "ompi/mca/part/part.h"
 #include "ompi/mca/part/base/part_base_prequest.h"
 
-/**
- * If you wonder why these 2 freelists are declared here read the comment
- * in the part_base_request.h file.
- */
-opal_free_list_t mca_part_base_psend_requests = {{{0}}};
-opal_free_list_t mca_part_base_precv_requests = {{{0}}};
-
 static void mca_part_base_prequest_construct(mca_part_base_prequest_t* req)
 {
     req->req_ompi.req_type = OMPI_REQUEST_PART;

@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2025 High Performance Computing Center Stuttgart,
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2020-2021 Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2024      High Performance Computing Center Stuttgart,
@@ -28,7 +28,7 @@ BEGIN_C_DECLS
 /*
  * PART module functions.
  */
-OMPI_DECLSPEC extern mca_part_base_component_4_0_0_t mca_part_persist_component;
+OMPI_DECLSPEC extern mca_part_base_component_4_0_0_t mca_part_persist_aggregated_component;
 
 END_C_DECLS
 
