@@ -10,7 +10,7 @@
 
 #include "opal_config.h"
 
-#include "opal/mca/installdirs/config/install_dirs.h"
+#include "opal/mca/installdirs/install_dirs.h"
 #include "opal/mca/installdirs/installdirs.h"
 
 const opal_installdirs_base_component_t mca_installdirs_config_component = {
