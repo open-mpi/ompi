@@ -251,7 +251,8 @@ not use specific IP networks |mdash| or not use any IP networks at all
              parameters that control use of network interfaces by the
              runtime (e.g., communications setup and coordination
              during :ref:`MPI_Init` and :ref:`MPI_Finalize`) using the
-             ``prte_info(1)`` and ``pmix_info(1)`` commands.
+             :ref:`prte_info(1) <prrte:man1-prte_info>`
+             and :ref:`pmix_info(1) <pmix:man1-pmix_info>` commands.
 
 Note that the Open MPI runtime uses TCP for control messages, such as
 for data exchange between ``mpirun(1)`` and the MPI processes,
