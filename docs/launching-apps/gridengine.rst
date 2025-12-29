@@ -17,7 +17,7 @@ Verify Grid Engine support
    command line switch to Open MPI's ``configure`` script.
 
 To verify if support for Grid Engine is configured into your Open MPI
-installation, run ``prte_info`` as shown below and look for
+installation, run :ref:`prte_info(1) <prrte:man1-prte_info>` as shown below and look for
 ``gridengine``.
 
 .. code-block::
@@ -30,8 +30,8 @@ installation, run ``prte_info`` as shown below and look for
    PMIx and PRRTE details from the end user, but this is one place
    that Open MPI is unable to hide the fact that PRRTE provides this
    functionality, not Open MPI.  Hence, users need to use the
-   ``prte_info`` command to check for Grid Engine support (not
-   ``ompi_info``).
+   :ref:`prte_info(1) <prrte:man1-prte_info>` command to check for Grid Engine support (not
+   :ref:`ompi_info(1) <man1-ompi_info>`).
 
 Launching
 ---------
@@ -40,7 +40,7 @@ When Grid Engine support is included, Open MPI will automatically
 detect when it is running inside SGE and will just "do the Right
 Thing."
 
-Specifically, if you execute an ``mpirun`` command in a Grid Engine
+Specifically, if you execute an :ref:`mpirun(1) <man1-mpirun>` command in a Grid Engine
 job, it will automatically use the Grid Engine mechanisms to launch
 and kill processes.  There is no need to specify what nodes to run on
 |mdash| Open MPI will obtain this information directly from Grid
@@ -231,13 +231,13 @@ Grid Engine job suspend / resume support
 ----------------------------------------
 
 To suspend the job, you send a SIGTSTP (not SIGSTOP) signal to
-``mpirun``.  ``mpirun`` will catch this signal and forward it to the
+:ref:`mpirun(1) <man1-mpirun>`.  :ref:`mpirun(1) <man1-mpirun>` will catch this signal and forward it to the
 ``mpi-hello-world`` as a SIGSTOP signal.  To resume the job, you send
-a SIGCONT signal to ``mpirun`` which will be caught and forwarded to
+a SIGCONT signal to :ref:`mpirun(1) <man1-mpirun>` which will be caught and forwarded to
 the ``mpi-hello-world``.
 
 By default, this feature is not enabled.  This means that both the
-SIGTSTP and SIGCONT signals will simply be consumed by the ``mpirun``
+SIGTSTP and SIGCONT signals will simply be consumed by the :ref:`mpirun(1) <man1-mpirun>`
 process.  To have them forwarded, you have to run the job with ``--mca
 orte_forward_job_control 1``.  Here is an example on Solaris:
 
