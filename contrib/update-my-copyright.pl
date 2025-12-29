@@ -128,31 +128,13 @@ quiet_print "==> This year: $year\n";
 
 # Find the top-level source tree dir in a git repo
 my $start = cwd();
-my $top = $start;
-while (! -d "$top/.git") {
-    chdir("..");
-    $top = cwd();
-    die "Can't find top-level repository directory"
-        if ($top eq "/");
-}
-chdir($start);
+my $top = `git rev-parse --show-toplevel`;
+chomp($top);
 
 quiet_print "==> Top-level repository dir: $top\n";
 quiet_print "==> Current directory: $start\n";
 
-# Select VCS used to obtain modification info.  Choose in increasing priority
-# order (last hit wins).
-my $vcs;
-$vcs = "git"
-    if (-d "$top/.git");
-$vcs = "hg"
-    if (-d "$top/.hg");
-$vcs = "svn"
-    if (-d "$top/.svn");
-$vcs = "manual"
-    if ("$my_manual_list" ne "");
-
-my @files = find_modified_files($vcs);
+my @files = find_modified_files();
 
 if ($#files < 0) {
     quiet_print "No added / changed files -- nothing to do\n";
@@ -284,98 +266,65 @@ if ($CHECK_ONLY and $would_replace) {
 
 #-------------------------------------------------------------------------------
 
-# Takes two arguments, the top level directory and the VCS method.  Returns a
-# list of file names (relative to pwd) which the VCS considers to be modified.
+# Returns a list of file names (relative to pwd) which git considers
+# to be modified.
 sub find_modified_files {
-    my $vcs = shift;
     my @files = ();
 
-    if ($vcs eq "git") {
-        # Number of path entries to remove from ${top}-relative paths.
-        # (--show-cdup either returns the empty string or sequence of "../"
-        # entries, always ending in a "/")
-        my $n_strip = scalar(split(m!/!, scalar(`git rev-parse --show-cdup`))) - 1;
+    # Number of path entries to remove from ${top}-relative paths.
+    # (--show-cdup either returns the empty string or sequence of "../"
+    # entries, always ending in a "/")
+    my $n_strip = scalar(split(m!/!, scalar(`git rev-parse --show-cdup`))) - 1;
 
-        # "." restricts scope, but does not get us relative path names
-        my $cmd = "git status -z --porcelain --untracked-files=no .";
-        quiet_print "==> Running: \"$cmd\"\n";
-        my $lines = `$cmd`;
+    # "." restricts scope, but does not get us relative path names
+    my $cmd = "git status -z --porcelain --untracked-files=no .";
+    quiet_print "==> Running: \"$cmd\"\n";
+    my $lines = `$cmd`;
 
-        # From git-status(1):
-        # X          Y     Meaning
-        # -------------------------------------------------
-        #           [MD]   not updated
-        # M        [ MD]   updated in index
-        # A        [ MD]   added to index
-        # D         [ M]   deleted from index
-        # R        [ MD]   renamed in index
-        # C        [ MD]   copied in index
-        # [MARC]           index and work tree matches
-        # [ MARC]     M    work tree changed since index
-        # [ MARC]     D    deleted in work tree
-        # -------------------------------------------------
-        # D           D    unmerged, both deleted
-        # A           U    unmerged, added by us
-        # U           D    unmerged, deleted by them
-        # U           A    unmerged, added by them
-        # D           U    unmerged, deleted by us
-        # A           A    unmerged, both added
-        # U           U    unmerged, both modified
-        # -------------------------------------------------
-        # ?           ?    untracked
-        # -------------------------------------------------
-        foreach my $line (split /\x{00}/, $lines) {
-            my $keep = 0;
-            my ($s1, $s2, $fullname) = $line =~ m/^(.)(.) (.*)$/;
+    # From git-status(1):
+    # X          Y     Meaning
+    # -------------------------------------------------
+    #           [MD]   not updated
+    # M        [ MD]   updated in index
+    # A        [ MD]   added to index
+    # D         [ M]   deleted from index
+    # R        [ MD]   renamed in index
+    # C        [ MD]   copied in index
+    # [MARC]           index and work tree matches
+    # [ MARC]     M    work tree changed since index
+    # [ MARC]     D    deleted in work tree
+    # -------------------------------------------------
+    # D           D    unmerged, both deleted
+    # A           U    unmerged, added by us
+    # U           D    unmerged, deleted by them
+    # U           A    unmerged, added by them
+    # D           U    unmerged, deleted by us
+    # A           A    unmerged, both added
+    # U           U    unmerged, both modified
+    # -------------------------------------------------
+    # ?           ?    untracked
+    # -------------------------------------------------
+    foreach my $line (split /\x{00}/, $lines) {
+        my $keep = 0;
+        my ($s1, $s2, $fullname) = $line =~ m/^(.)(.) (.*)$/;
 
-            # ignore all merge cases
-            next if ($s1 eq "D" and $s2 eq "D");
-            next if ($s1 eq "A" and $s2 eq "A");
-            next if ($s1 eq "U" or $s2 eq "U");
+        # ignore all merge cases
+        next if ($s1 eq "D" and $s2 eq "D");
+        next if ($s1 eq "A" and $s2 eq "A");
+        next if ($s1 eq "U" or $s2 eq "U");
 
-            # only update for actually added/modified cases, no copies,
-            # renames, etc.
-            $keep = 1 if ($s1 eq "M" or $s2 eq "M");
-            $keep = 1 if ($s1 eq "A");
+        # only update for actually added/modified cases, no copies,
+        # renames, etc.
+        $keep = 1 if ($s1 eq "M" or $s2 eq "M");
+        $keep = 1 if ($s1 eq "A");
 
-            if ($keep) {
-                my $relname = $fullname;
-                $relname =~ s!^([^/]*/){$n_strip}!!g;
+        if ($keep) {
+            my $relname = $fullname;
+            $relname =~ s!^([^/]*/){$n_strip}!!g;
 
-                push @files, $relname
-                    if (-f $relname);
-            }
+            push @files, $relname
+                if (-f $relname);
         }
-    }
-    elsif ($vcs eq "hg" or $vcs eq "svn") {
-        my $cmd = "$vcs st .";
-
-        # Run the command, parsing the output.  Make a list of files that are
-        # added or modified.
-        quiet_print "==> Running: \"$cmd\"\n";
-        open(CMD, "$cmd|") || die "Can't run command";
-        while (<CMD>) {
-            chomp;
-            if ($_ =~ /^M/ || $_ =~ /^A/) {
-                my @tokens = split(/\s+/, $_);
-                # Handle output of both forms:
-                # M       filenameA
-                # A  +    filenameB
-                my $filename = $tokens[1];
-                $filename = $tokens[2]
-                if ($tokens[1] =~ /\+/);
-                # Don't bother saving directory names
-                push(@files, $filename)
-                    if (-f $filename);
-            }
-        }
-        close(CMD);
-    }
-    elsif ($vcs eq "manual") {
-        @files = split(/\n/, `cat $my_manual_list`);
-    }
-    else {
-        die "unknown VCS '$vcs', stopped";
     }
 
     return @files;
