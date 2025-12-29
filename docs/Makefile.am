@@ -1095,8 +1095,22 @@ $(ALL_MAN_BUILT):
 	cp -rpf "$(OMPI_PRRTE_RST_CONTENT_DIR)" "$(builddir)"; \
 	copied_dir=`basename $(OMPI_PRRTE_RST_CONTENT_DIR)`; \
 	chmod -R u+w "$(builddir)/$$copied_dir"
-	$(OMPI_V_SPHINX_HTML) OMPI_TOP_SRCDIR=$(top_srcdir) $(SPHINX_BUILD) -M html "$(builddir)" "$(OUTDIR)" $(SPHINX_OPTS)
-	$(OMPI_V_SPHINX_MAN) OMPI_TOP_SRCDIR=$(top_srcdir) $(SPHINX_BUILD) -M man "$(builddir)" "$(OUTDIR)" $(SPHINX_OPTS)
+	$(OMPI_V_SPHINX_HTML) \
+	    OMPI_TOP_SRCDIR="$(top_srcdir)" \
+	    OMPI_DOCDIR="$(docdir)" \
+	    OPAL_PMIX_DOCS_URL_BASE="$(OPAL_PMIX_DOCS_URL_BASE)" \
+	    OPAL_USING_INTERNAL_PMIX="$(OPAL_USING_INTERNAL_PMIX)" \
+	    OMPI_PRRTE_DOCS_URL_BASE="$(OMPI_PRRTE_DOCS_URL_BASE)" \
+	    OMPI_USING_INTERNAL_PRRTE="$(OMPI_USING_INTERNAL_PRRTE)" \
+	    $(SPHINX_BUILD) -M html "$(builddir)" "$(OUTDIR)" $(SPHINX_OPTS)
+	$(OMPI_V_SPHINX_HTML) \
+	    OMPI_TOP_SRCDIR="$(top_srcdir)" \
+	    OMPI_DOCDIR="$(docdir)" \
+	    OPAL_PMIX_DOCS_URL_BASE="$(OPAL_PMIX_DOCS_URL_BASE)" \
+	    OPAL_USING_INTERNAL_PMIX="$(OPAL_USING_INTERNAL_PMIX)" \
+	    OMPI_PRRTE_DOCS_URL_BASE="$(OMPI_PRRTE_DOCS_URL_BASE)" \
+	    OMPI_USING_INTERNAL_PRRTE="$(OMPI_USING_INTERNAL_PRRTE)" \
+	    $(SPHINX_BUILD) -M man "$(builddir)" "$(OUTDIR)" $(SPHINX_OPTS)
 
 # A useful rule to invoke manually to ensure that all of the external
 # HTML links we have are valid.  Running this rule requires
@@ -1117,6 +1131,7 @@ linkcheck:
 clean-local:
 	rm -rf $(OUTDIR)
 	rm -rf prrte-rst-content schizo-ompi-rst-content
+	rm -rf ompi-prrte-objects.inv opal-pmix-objects.inv
 	if test "$(srcdir)" != "$(builddir)"; then \
 	    len=`echo "$(srcdir)/" | wc -c`; \
 	    for file in $(RST_SOURCE_FILES) $(IMAGE_SOURCE_FILES) $(TEXT_SOURCE_FILES) $(SPHINX_CONFIG); do \
