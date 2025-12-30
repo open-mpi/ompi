@@ -43,7 +43,7 @@ work easily with multiple functions.
 
 At this point, the template should look like the example above, with a "header"
 section, with simple includes or macros, maybe a static global, and the
-function defintion and nothing else.
+function definition and nothing else.
 
 The next step is to convert the signature line into the prototype format that
 the script expects. For ``MPI_Send``, this should look something like this:
