@@ -73,7 +73,7 @@ mechanism available in Open MPI to influence a parameter value, e.g.:
 system type utilized (e.g. the ``pvfs2`` component is chosen when the
 file is located on an PVFS2/OrangeFS file system, the ``lustre``
 component is chosen for Lustre file systems, etc.). The ``ufs`` ``fs``
-component is used if no file system specific component is availabe
+component is used if no file system specific component is available
 (e.g. local file systems, NFS, BeefFS, etc.), and the ``posix``
 ``fbtl`` component is used as the default component for read/write
 operations.
@@ -86,7 +86,7 @@ important ``fcoll`` components are:
 
 * ``dynamic_gen2``: the default component used on lustre file
   system. This component is based on the two-phase I/O algorithm with
-  a static file partioning strategy, i.e. an aggregator processes will
+  a static file partitioning strategy, i.e. an aggregator processes will
   by default only write data to a single storage server.
 
 * ``vulcan``: the default component used on all other file
@@ -142,7 +142,7 @@ operation are listed below:
    regular 2-D or 3-D data decomposition can try changing this
    parameter to 4 (hybrid) algorithm.
 
-#. ``fs_ufs_lock_algorithm``: Parameter used to determing what part of
+#. ``fs_ufs_lock_algorithm``: Parameter used to determine what part of
    a file needs to be locked for a file operation. Since the ``ufs``
    ``fs`` component is used on multiple file systems, OMPIO
    automatically chooses the value required for correctness on all

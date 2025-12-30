@@ -93,7 +93,7 @@ Except where noted, these concepts and command line argument are all
 applicable to Open MPI as well.  Open MPI extends the available PRRTE
 command line options, and also slightly modifies the PRRTE's default
 behaviors in a few cases.  These will be specifically described in the
-docuemtnation below.
+documentation below.
 
 COMMAND LINE OPTIONS
 --------------------
@@ -193,7 +193,7 @@ processes will be bound to the package.
   context. If no value is provided for the number of copies to execute
   (i.e., neither the ``-n`` nor its synonyms are provided on the
   command line), Open MPI will automatically execute a copy of the
-  program on each process slot (see PRRTE's `defintion of "slot"
+  program on each process slot (see PRRTE's `definition of "slot"
   <https://docs.prrte.org/en/latest/placement/overview.html#definition-of-slot>`_
   for description of a "process slot"). This feature, however, can
   only be used in the SPMD model and will return an error (without
@@ -428,7 +428,7 @@ Setting MCA parameters:
             parameters passed via ``--mca`` and handle them
             appropriately, but it may not always guess correctly.  It
             is best to use ``--pmixmca`` and ``--prtemca`` when
-            passing MCA parammeters to PMIx and PRRTE, respectively.
+            passing MCA parameters to PMIx and PRRTE, respectively.
 
 * ``--pmixmca <key> <value>``: Send arguments to MCA modules in the
   PMIx subsystem.  See the :ref:`Setting MCA Parameters
@@ -520,14 +520,14 @@ There are also other options:
   via the ``slots`` keyword in a hostfile or from a resource manager
   such as Slurm), the use of this option changes the default
   calculation of number of slots on a node.  See the PRRTE's
-  `defintion of "slot"
+  `definition of "slot"
   <https://docs.prrte.org/en/latest/placement/overview.html#definition-of-slot>`_
   for more details.
 
   Also note that the use of this option changes the Open MPI's
   definition of a "processor element" from a processor core to a
   hardware thread.  See
-  PRRTE's `defintion of a "processor element"
+  PRRTE's `definition of a "processor element"
   <https://docs.prrte.org/en/latest/placement/overview.html#definition-of-pe>`_
   for more details.
 
@@ -1206,7 +1206,7 @@ Means that:
 * Rank 1 runs on node bb, bound to logical package 0, cores 0 and 1.
 * Rank 2 runs on node cc, bound to logical cores 2 and 3.
 
-Note that only logicical processor locations are supported. By default, the values specifed are assumed to be cores. If you intend to specify specific hardware threads then you must add the ``:hwtcpus`` qualifier to the ``--map-by`` command line option (e.g., ``--map-by rankfile:file=myrankfile:hwtcpus``).
+Note that only logicical processor locations are supported. By default, the values specified are assumed to be cores. If you intend to specify specific hardware threads then you must add the ``:hwtcpus`` qualifier to the ``--map-by`` command line option (e.g., ``--map-by rankfile:file=myrankfile:hwtcpus``).
 
 If the binding specification overlaps between any two ranks then an error occurs. If you intend to allow processes to share the same logical processing unit then you must pass the ``--bind-to :overload-allowed`` command line option to tell the runtime to ignore this check.
 
