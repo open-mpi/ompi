@@ -39,7 +39,7 @@ There are three mechanisms for specifying the hosts that an MPI job will run on:
    If you are running in a scheduled environment (e.g., in a Slurm,
    Torque, or LSF job), Open MPI will automatically get the lists of
    hosts from the scheduler.  See the next subsections for details about
-   launching MPI jobs in supported scheduled environements.
+   launching MPI jobs in supported scheduled environments.
 
 .. important:: The specification of hosts using any of the above
                methods has nothing to do with the network interfaces
