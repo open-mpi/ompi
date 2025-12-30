@@ -216,8 +216,8 @@ There are two mechanism for using libfabric and Open MPI with ROCm support.
    mpirun --mca pml ob1 --mca btl ofi,sm,tcp,self   \
           --mca smsc_accelerator_priority 80        \
           -n 64 ./<my_executable>
-  
-  
+
+
 /////////////////////////////////////////////////////////////////////////
 
 Collective component supporting ROCm device memory
@@ -253,9 +253,9 @@ An example for configure UCC and Open MPI with ROCm is shown below:
    shell$ cd ompi
    shell$ ./configure --with-rocm=/opt/rocm                \
                       --with-ucx=/path/to/ucx-rocm-install \
-                      --with-ucc=/path/to/ucc-rocm-install 
-   
-To use the UCC component in an applicatin requires setting some
+                      --with-ucc=/path/to/ucc-rocm-install
+
+To use the UCC component in an application requires setting some
 additional parameters:
 
 .. code-block::
