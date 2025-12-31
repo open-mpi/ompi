@@ -19,7 +19,7 @@ dnl Copyright (c) 2019-2020 Intel, Inc.  All rights reserved.
 dnl Copyright (c) 2020-2022 Amazon.com, Inc. or its affiliates.  All Rights reserved.
 dnl Copyright (c) 2021      Nanook Consulting.  All rights reserved.
 dnl Copyright (c) 2021-2022 IBM Corporation.  All rights reserved.
-dnl Copyright (c) 2023-2024 Jeffrey M. Squyres.  All rights reserved.
+dnl Copyright (c) 2023-2025 Jeffrey M. Squyres.  All rights reserved.
 dnl Copyright (c) 2025      Advanced Micro Devices, Inc. All rights reserved.
 dnl $COPYRIGHT$
 dnl
@@ -39,7 +39,8 @@ dnl results of the build.
 AC_DEFUN([OMPI_SETUP_PRRTE],[
     AC_REQUIRE([AC_PROG_LN_S])
 
-OPAL_VAR_SCOPE_PUSH([prrte_setup_internal_happy prrte_setup_external_happy target_rst_dir])
+    OPAL_VAR_SCOPE_PUSH([prrte_setup_internal_happy prrte_setup_external_happy target_rst_dir ompi_external_prrte_docs_url])
+    ompi_external_prrte_docs_url="https://docs.prrte.org/en/latest/"
 
     opal_show_subtitle "Configuring PRRTE"
 
@@ -120,6 +121,8 @@ OPAL_VAR_SCOPE_PUSH([prrte_setup_internal_happy prrte_setup_external_happy targe
 
     AC_SUBST(OMPI_PRRTE_RST_CONTENT_DIR)
     AC_SUBST(OMPI_SCHIZO_OMPI_RST_CONTENT_DIR)
+    AC_SUBST(OMPI_PRRTE_DOCS_URL_BASE)
+    AC_SUBST(OMPI_USING_INTERNAL_PRRTE)
     AM_CONDITIONAL(OMPI_HAVE_PRRTE_RST, [test $OMPI_HAVE_PRRTE_RST -eq 1])
 
     AS_IF([test "$OMPI_USING_INTERNAL_PRRTE" = "1"],
@@ -250,8 +253,30 @@ AC_DEFUN([_OMPI_SETUP_PRRTE_INTERNAL], [
                  [OMPI_HAVE_PRRTE_RST=1
                   OMPI_PRRTE_RST_CONTENT_DIR="$OMPI_TOP_SRCDIR/3rd-party/prrte/src/docs/prrte-rst-content"
                   OMPI_SCHIZO_OMPI_RST_CONTENT_DIR="$OMPI_TOP_SRCDIR/3rd-party/prrte/src/mca/schizo/ompi"
+
+                  # If we're building the OMPI Sphinx docs, and also
+                  # building the internal PRRTE, then we're *also*
+                  # building the internal PRRTE docs.
+                  #
+                  # In this case, the OMPI docs/conf.py will do a
+                  # bunch of processing that is a lot easier to do in
+                  # Python than Bourne shell (e.g., use the convenient
+                  # os.path.relpath() to compute the relative path
+                  # that we need, as well as dynamically create a
+                  # Sphinx link inventory file).  Hence, we skip doing
+                  # all that work here and just set a sentinel value
+                  OMPI_PRRTE_DOCS_URL_BASE="../../prrte/html"
                   AC_MSG_RESULT([found])],
-		 [AC_MSG_RESULT([not found])])
+                 [ # If we are not building the Sphinx docs, default
+                   # to using the external PRRTE docs URL.  This is
+                   # actually moot because we won't be building the
+                   # docs, but we might as well be complete in the
+                   # logic / cases.
+                  OMPI_PRRTE_DOCS_URL_BASE=$ompi_external_prrte_docs_url
+                  AC_MSG_RESULT([not found])])
+
+           AC_MSG_CHECKING([for internal PRRTE docs link URL base])
+           AC_MSG_RESULT([$OMPI_PRRTE_DOCS_URL_BASE])
            $1],
 	  [$2])
 
@@ -273,7 +298,7 @@ dnl _OMPI_SETUP_PRRTE_EXTERNAL([action if success], [action if not success])
 dnl
 dnl Try to find an external prrte with sufficient version.
 AC_DEFUN([_OMPI_SETUP_PRRTE_EXTERNAL], [
-    OPAL_VAR_SCOPE_PUSH([ompi_prte_min_version ompi_prte_min_num_version setup_prrte_external_happy opal_prrte_CPPFLAGS_save])
+    OPAL_VAR_SCOPE_PUSH([ompi_prte_min_version ompi_prte_min_num_version setup_prrte_external_happy opal_prrte_CPPFLAGS_save ompi_prrte_docdir])
 
     opal_prrte_CPPFLAGS_save=$CPPFLAGS
 
@@ -321,6 +346,10 @@ AC_DEFUN([_OMPI_SETUP_PRRTE_EXTERNAL], [
           [ # Determine if this external PRRTE has installed the RST
             # directories that we care about
 
+           # In the external case, initially assume we'll use the
+           # web-based docs
+           OMPI_PRRTE_DOCS_URL_BASE=$ompi_external_prrte_docs_url
+
            AC_MSG_CHECKING([for external PRRTE RST files])
            prrte_install_dir=${with_prrte}/share/prte/rst
            AS_IF([test -n "$SPHINX_BUILD"],
@@ -329,6 +358,17 @@ AC_DEFUN([_OMPI_SETUP_PRRTE_EXTERNAL], [
                         [OMPI_HAVE_PRRTE_RST=1
                          OMPI_PRRTE_RST_CONTENT_DIR="$prrte_install_dir/prrte-rst-content"
                          OMPI_SCHIZO_OMPI_RST_CONTENT_DIR="$prrte_install_dir/schizo-ompi-rst-content"
+                         # If the external PRTE docs dir exists where
+                         # a simple heuristic thinks it should be
+                         # (i.e., the default docdir location), use
+                         # it.  This will be an absolute path, which
+                         # is fine (because we're building against an
+                         # external PRRTE).  If we don't find it,
+                         # we'll fall back to the above-set HTTPS
+                         # internet PRRTE docs URL.
+                         ompi_prrte_docdir="$with_prrte/share/doc/prrte/html"
+                         AS_IF([test -d "$ompi_prrte_docdir"],
+                                [OMPI_PRRTE_DOCS_URL_BASE="$ompi_prrte_docdir"])
                          AC_MSG_RESULT([found])
                          ],
                         [ # This version of PRRTE doesn't have installed RST
@@ -336,6 +376,9 @@ AC_DEFUN([_OMPI_SETUP_PRRTE_EXTERNAL], [
                           AC_MSG_RESULT([not found])
                         ])
                  ])
+
+           AC_MSG_CHECKING([for external PRRTE docs link URL base])
+           AC_MSG_RESULT([$OMPI_PRRTE_DOCS_URL_BASE])
            $1],
 	  [$2])
 

@@ -6,7 +6,8 @@ Open MPI supports the LSF resource manager.
 Verify LSF support
 ------------------
 
-The ``prte_info`` command can be used to determine whether or not an
+The :ref:`prte_info(1) <prrte:man1-prte_info>`
+command can be used to determine whether or not an
 installed Open MPI includes LSF support:
 
 .. code-block::
@@ -27,8 +28,9 @@ installed.
    PMIx and PRRTE details from the end user, but this is one place
    that Open MPI is unable to hide the fact that PRRTE provides this
    functionality, not Open MPI.  Hence, users need to use the
-   ``prte_info`` command to check for LSF support (not
-   ``ompi_info``).
+   :ref:`prte_info(1) <prrte:man1-prte_info>`
+   command to check for LSF support (not
+   :ref:`ompi_info(1) <man1-ompi_info>`).
 
 Launching
 ---------
