@@ -25,6 +25,7 @@ static void test_bitmap_is_set(opal_bitmap_t *bm);
 static void test_bitmap_clear_all(opal_bitmap_t *bm);
 static void test_bitmap_set_all(opal_bitmap_t *bm);
 static void test_bitmap_find_and_set(opal_bitmap_t *bm);
+static void test_bitmap_num_set_bits(opal_bitmap_t *bm);
 
 
 static int set_bit(opal_bitmap_t *bm, int bit);
@@ -92,6 +93,9 @@ int main(int argc, char *argv[])
 
     fprintf(error_out, "\nTesting bitmap find_and_set... \n");
     test_bitmap_find_and_set(&bm);
+
+    fprintf(error_out, "\nTesting bitmap num_set_bits... \n");
+    test_bitmap_num_set_bits(&bm);
 
     fprintf(error_out, "\n~~~~~~     Testing complete     ~~~~~~ \n\n");
 
@@ -218,6 +222,99 @@ void test_bitmap_set_all(opal_bitmap_t *bm)
 {
     int result = set_all(bm);
     TEST_AND_REPORT(result, 0, " error in opal_bitmap_set_ala_bitsl");
+}
+
+void test_bitmap_num_set_bits(opal_bitmap_t *bm)
+{
+    int result, expected;
+
+    /* Test 1: Clear all bits and count - should be 0 */
+    opal_bitmap_clear_all_bits(bm);
+    result = opal_bitmap_num_set_bits(bm, 64);
+    expected = 0;
+    TEST_AND_REPORT(result, expected, "opal_bitmap_num_set_bits: cleared bitmap");
+
+    /* Test 2: Set specific bits and count within first 64 bits */
+    opal_bitmap_set_bit(bm, 0);
+    opal_bitmap_set_bit(bm, 1);
+    opal_bitmap_set_bit(bm, 5);
+    opal_bitmap_set_bit(bm, 63);
+    result = opal_bitmap_num_set_bits(bm, 64);
+    expected = 4;
+    TEST_AND_REPORT(result, expected, "opal_bitmap_num_set_bits: 4 bits in first 64");
+
+    /* Test 3: Count partial element (len not a multiple of 64) */
+    /* Count only first 10 bits - should be 3 (bits 0, 1, 5) */
+    result = opal_bitmap_num_set_bits(bm, 10);
+    expected = 3;
+    TEST_AND_REPORT(result, expected, "opal_bitmap_num_set_bits: partial element (10 bits)");
+
+    /* Test 4: Count up to bit 63 - should include bit 63 */
+    result = opal_bitmap_num_set_bits(bm, 64);
+    expected = 4;
+    TEST_AND_REPORT(result, expected, "opal_bitmap_num_set_bits: up to bit 63");
+
+    /* Test 5: Set bits across multiple array elements */
+    opal_bitmap_set_bit(bm, 64);
+    opal_bitmap_set_bit(bm, 65);
+    opal_bitmap_set_bit(bm, 100);
+    opal_bitmap_set_bit(bm, 127);
+
+    /* Count across 128 bits (2 full elements) */
+    result = opal_bitmap_num_set_bits(bm, 128);
+    expected = 8; /* 4 from first element + 4 from second element */
+    TEST_AND_REPORT(result, expected, "opal_bitmap_num_set_bits: across 2 elements (128 bits)");
+
+    /* Test 6: Count partial second element (130 bits = 2 elements + 2 bits) */
+    result = opal_bitmap_num_set_bits(bm, 130);
+    expected = 8; /* Should still be 8, as bits 128-129 are not set */
+    TEST_AND_REPORT(result, expected,
+                    "opal_bitmap_num_set_bits: partial second element (130 bits)");
+
+    /* Test 7: Verify len is treated as bits, not array indices
+     * Set bit 200 and count up to 201 bits (not 201 array elements) */
+    opal_bitmap_clear_all_bits(bm);
+    opal_bitmap_set_bit(bm, 200);
+    result = opal_bitmap_num_set_bits(bm, 201);
+    expected = 1;
+    TEST_AND_REPORT(result, expected,
+                    "opal_bitmap_num_set_bits: len treated as bits (201 bits)");
+
+    /* Test 8: Count up to 200 should not include bit 200 */
+    result = opal_bitmap_num_set_bits(bm, 200);
+    expected = 0;
+    TEST_AND_REPORT(result, expected,
+                    "opal_bitmap_num_set_bits: len boundary not included (200 bits)");
+
+    /* Test 9: Set all bits in first element and count partial */
+    opal_bitmap_clear_all_bits(bm);
+    for (int i = 0; i < 64; ++i) {
+        opal_bitmap_set_bit(bm, i);
+    }
+    /* Count only first 50 bits - should be 50 */
+    result = opal_bitmap_num_set_bits(bm, 50);
+    expected = 50;
+    TEST_AND_REPORT(result, expected,
+                    "opal_bitmap_num_set_bits: partial full element (50 of 64 bits)");
+
+    /* Test 10: Edge case - count exactly one full element */
+    result = opal_bitmap_num_set_bits(bm, 64);
+    expected = 64;
+    TEST_AND_REPORT(result, expected,
+                    "opal_bitmap_num_set_bits: exactly one element (64 bits)");
+
+    /* Test 11: Test opal_bitmap_num_unset_bits consistency */
+    opal_bitmap_clear_all_bits(bm);
+    opal_bitmap_set_bit(bm, 5);
+    opal_bitmap_set_bit(bm, 10);
+    opal_bitmap_set_bit(bm, 15);
+    result = opal_bitmap_num_set_bits(bm, 64);
+    expected = 3;
+    TEST_AND_REPORT(result, expected, "opal_bitmap_num_set_bits: 3 set bits in 64");
+
+    result = opal_bitmap_num_unset_bits(bm, 64);
+    expected = 61; /* 64 - 3 = 61 */
+    TEST_AND_REPORT(result, expected, "opal_bitmap_num_unset_bits: 61 unset bits in 64");
 }
 
 int set_bit(opal_bitmap_t *bm, int bit)
