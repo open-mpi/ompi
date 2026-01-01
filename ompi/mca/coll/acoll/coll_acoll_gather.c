@@ -128,7 +128,7 @@ int mca_coll_acoll_gather_intra(const void *sbuf, size_t scount, struct ompi_dat
     if (endr > size) {
         endr = size;
     }
-    inc = (rank == root) ? ((root != 0) ? 0 : 1) : 1;
+    inc = (rank == root) ? ((0 != root) ? 0 : 1) : 1;
     if (is_base || (rank == root)) {
         for (i = startr + inc; i < endr; i++) {
             char *tmprecv = NULL;
