@@ -17,7 +17,7 @@
 
 #include "ompi/memchecker.h"
 
-PROTOTYPE ERROR_CLASS session_finalize (SESSION_OUT session)
+PROTOTYPE ERROR_CLASS session_finalize (SESSION_INOUT session)
 {
     int rc;
 

@@ -16,7 +16,7 @@
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2024      Triad National Security, LLC. All rights
+ * Copyright (c) 2024-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -35,7 +35,7 @@
 #include "ompi/memchecker.h"
 #include "ompi/runtime/ompi_spc.h"
 
-PROTOTYPE ERROR_CLASS rsend(BUFFER buf, COUNT count, DATATYPE type, INT dest, INT tag, COMM comm)
+PROTOTYPE ERROR_CLASS rsend(BUFFER_CONST buf, COUNT count, DATATYPE type, SOURCE dest, TAG tag, COMM comm)
 {
     int rc = MPI_SUCCESS;
 

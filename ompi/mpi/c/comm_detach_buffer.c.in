@@ -29,14 +29,14 @@
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/pml_base_bsend.h"
 
-PROTOTYPE ERROR_CLASS comm_detach_buffer(COMM comm, BUFFER_OUT buffer, COUNT_OUT size)
+PROTOTYPE ERROR_CLASS comm_detach_buffer(COMM comm, BUFFER_ADDR_OUT buffer_addr, COUNT_OUT size)
 {
     size_t size_arg;
     int ret = OMPI_SUCCESS;
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-        if (NULL == buffer || NULL == size) {
+        if (NULL == buffer_addr || NULL == size) {
             return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, FUNC_NAME);
         }
         if (ompi_comm_invalid(comm)) {
@@ -44,7 +44,7 @@ PROTOTYPE ERROR_CLASS comm_detach_buffer(COMM comm, BUFFER_OUT buffer, COUNT_OUT
         }
     }
 
-    ret = mca_pml_base_bsend_detach(COMM_BSEND_BUF, comm, buffer, &size_arg);
+    ret = mca_pml_base_bsend_detach(COMM_BSEND_BUF, comm, buffer_addr, &size_arg);
     if (MPI_SUCCESS == ret) {
 #if OMPI_BIGCOUNT_SRC
         *size = size_arg;

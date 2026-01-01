@@ -85,6 +85,13 @@ BEGIN_C_DECLS
     OMPI_DECLSPEC ret P##mixed_name##_f08 args;            \
     OMPI_DECLSPEC ret P##mixed_name##_f args
 
+PN2(void, MPI_Abi_get_fortran_booleans, mpi_abi_get_fortran_booleans, MPI_ABI_GET_FORTRAN_BOOLEANS , (MPI_Fint *logical_size, ompi_fortran_logical_t *logical_true, ompi_fortran_logical_t *logical_false, ompi_fortran_logical_t *is_set, MPI_Fint *ierr));
+PN2(void, MPI_Abi_get_fortran_info, mpi_abi_get_fortran_info, MPI_ABI_GET_FORTRAN_INFO , (MPI_Fint *info, MPI_Fint *ierr));
+PN2(void, MPI_Abi_get_info, mpi_abi_get_info, MPI_ABI_GET_INFO , (MPI_Fint *info, MPI_Fint *ierr));
+PN2(void, MPI_Abi_get_version, mpi_abi_get_version, MPI_ABI_GET_VERSION , (MPI_Fint *abi_major, MPI_Fint *abi_minor, MPI_Fint *ierr));
+PN2(void, MPI_Abi_set_fortran_booleans, mpi_abi_set_fortran_booleans, MPI_ABI_SET_FORTRAN_BOOLEANS , (MPI_Fint *logical_size, ompi_fortran_logical_t *logical_true, ompi_fortran_logical_t *logical_false, MPI_Fint *ierr));
+PN2(void, MPI_Abi_set_fortran_info, mpi_abi_set_fortran_info, MPI_ABI_SET_FORTRAN_INFO , (MPI_Fint *info, MPI_Fint *ierr));
+PN2(void, MPI_Abi_get_info, mpi_abi_get_info, MPI_ABI_GET_INFO , (MPI_Fint *info, MPI_Fint *ierr));
 PN2(void, MPI_Abort, mpi_abort, MPI_ABORT, (MPI_Fint *comm, MPI_Fint *errorcode, MPI_Fint *ierr));
 PN2(void, MPI_Accumulate, mpi_accumulate, MPI_ACCUMULATE, (char *origin_addr, MPI_Fint *origin_count, MPI_Fint *origin_datatype, MPI_Fint *target_rank, MPI_Aint *target_disp, MPI_Fint *target_count, MPI_Fint *target_datatype, MPI_Fint *op, MPI_Fint *win, MPI_Fint *ierr));
 PN2(void, MPI_Add_error_class, mpi_add_error_class, MPI_ADD_ERROR_CLASS, (MPI_Fint *errorclass, MPI_Fint *ierr));
