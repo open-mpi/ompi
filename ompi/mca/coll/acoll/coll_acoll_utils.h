@@ -54,7 +54,7 @@ static inline void spin_wait_with_progress(volatile int *flag, int expected_valu
             continue;
         } else if (pcount < MCA_COLL_ACOLL_SPIN_MEDIUM_PATH_ITERS) {
             /* Medium path: moderate progress for NUMA delays or contention */
-            if (pcount % MCA_COLL_ACOLL_SPIN_MEDIUM_PATH_FREQ == 0) {
+            if (0 == pcount % MCA_COLL_ACOLL_SPIN_MEDIUM_PATH_FREQ) {
                 opal_progress();
             }
         } else {
