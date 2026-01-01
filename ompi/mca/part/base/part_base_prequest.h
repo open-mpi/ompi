@@ -35,12 +35,6 @@
 #include "opal/datatype/opal_convertor.h"
 BEGIN_C_DECLS
 
-/**
- * External list for the partitioned requests. 
- */
-OMPI_DECLSPEC extern opal_free_list_t mca_part_base_psend_requests;
-OMPI_DECLSPEC extern opal_free_list_t mca_part_base_precv_requests;
-
 typedef enum {
     MCA_PART_REQUEST_NULL,
     MCA_PART_REQUEST_PSEND,
