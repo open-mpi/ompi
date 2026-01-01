@@ -522,9 +522,15 @@ OPAL_DECLSPEC int opal_common_ucx_del_procs(opal_common_ucx_del_proc_t *procs, s
                                             size_t my_rank, size_t max_disconnect,
                                             ucp_worker_h worker)
 {
-    opal_common_ucx_del_procs_nofence(procs, count, my_rank, max_disconnect, worker);
+    /* fence while we are still connected to our peers */
+    int rc = opal_common_ucx_mca_pmix_fence(worker);
+    if (OPAL_SUCCESS != rc) {
+        MCA_COMMON_UCX_ERROR("pmix fence failed during ucx proc disconnection: %d", rc);
+        return rc;
+    }
 
-    return opal_common_ucx_mca_pmix_fence(worker);
+    /* now that everyone is at the barrier, they are free to go their separate ways */
+    return opal_common_ucx_del_procs_nofence(procs, count, my_rank, max_disconnect, worker);
 }
 
 static void safety_valve(void) __opal_attribute_destructor__;
