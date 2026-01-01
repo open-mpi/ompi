@@ -125,7 +125,7 @@ static inline int coll_acoll_reduce_topo(const void *sbuf, void *rbuf, size_t co
                                     subc->base_comm[ind1][ind2]));
             if (MPI_SUCCESS != ret) {
                 free(free_buffer);
-                if (NULL != tmp_rbuf) {
+                if (NULL != tmp_rbuf && tmp_rbuf != rbuf) {
                     coll_acoll_buf_free(reserve_mem_rbuf_reduce, tmp_rbuf);
                 }
                 return ret;
@@ -156,7 +156,7 @@ static inline int coll_acoll_reduce_topo(const void *sbuf, void *rbuf, size_t co
                                         subc->socket_ldr_comm));
                 if (MPI_SUCCESS != ret) {
                     free(free_buffer);
-                    if (NULL != tmp_rbuf) {
+                    if (NULL != tmp_rbuf && tmp_rbuf != rbuf) {
                         coll_acoll_buf_free(reserve_mem_rbuf_reduce, tmp_rbuf);
                     }
                     return ret;
