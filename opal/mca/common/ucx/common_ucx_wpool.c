@@ -3,6 +3,8 @@
 #include "common_ucx.h"
 #include "common_ucx_wpool.h"
 #include "common_ucx_wpool_int.h"
+#include "mpi.h"
+#include "ompi/runtime/mpiruntime.h"
 #include "opal/mca/base/mca_base_framework.h"
 #include "opal/mca/base/mca_base_var.h"
 #include "opal/mca/pmix/pmix-internal.h"
@@ -55,7 +57,7 @@ static opal_common_ucx_winfo_t *_winfo_create(opal_common_ucx_wpool_t *wpool)
     if (opal_common_ucx_thread_enabled || wpool->dflt_winfo == NULL) {
         memset(&worker_params, 0, sizeof(worker_params));
         worker_params.field_mask = UCP_WORKER_PARAM_FIELD_THREAD_MODE;
-        worker_params.thread_mode = UCS_THREAD_MODE_SINGLE;
+        worker_params.thread_mode = ompi_mpi_thread_provided == MPI_THREAD_SINGLE ? UCS_THREAD_MODE_SINGLE : UCS_THREAD_MODE_SERIALIZED;
         status = ucp_worker_create(wpool->ucp_ctx, &worker_params, &worker);
         if (UCS_OK != status) {
             MCA_COMMON_UCX_ERROR("ucp_worker_create failed: %d", status);
