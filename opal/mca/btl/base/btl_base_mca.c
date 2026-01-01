@@ -16,6 +16,7 @@
  * Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2016-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2025      Google, LLC. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -68,6 +69,14 @@ int mca_btl_base_param_register(mca_base_component_t *version, mca_btl_base_modu
         "Maximum size (in bytes, including header) of \"short\" messages (must be >= 1).",
         MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0, 0, OPAL_INFO_LVL_4, MCA_BASE_VAR_SCOPE_READONLY,
         &module->btl_eager_limit);
+
+    (void) mca_base_component_var_register(
+        version, "multi_eager_limit",
+        "Size (in bytes, including header) when to switch from a mult-send eager to rendezvous. "
+        "If set smaller than the eager limit the protocol is effectively disabled. This is a hint "
+        "to the ob1 pml only.",
+        MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0, 0, OPAL_INFO_LVL_4, MCA_BASE_VAR_SCOPE_READONLY,
+        &module->btl_multi_eager_limit);
 
     if ((module->btl_flags & MCA_BTL_FLAGS_GET) && module->btl_get) {
         if (0 == module->btl_get_limit) {
