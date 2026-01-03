@@ -738,7 +738,7 @@ but may be removed in future releases.
         / rank / stdout / stderr / stdddiag.
       - ``orte_output_filename``
 
-        Value: ``<filenname>``
+        Value: ``<filename>``
       - ``output``
 
         Value: ``file=<filename>``
@@ -1146,4 +1146,3 @@ Multiple suffixes may be appended to a mapping value:
 
    # New environment variable: (suffix on value)
    export PRTE_MCA_rmaps_default_mapping_policy=ppr:4:package:hwtcpus:oversubscribe
-

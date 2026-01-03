@@ -42,7 +42,7 @@ the target display, perhaps something like this:
    shell$ xhost +
    shell$ mpirun -n 4 -x DISPLAY=my_desktop.secure-cluster.example.com a.out
 
-However, this technique is not generally suitable for unsecure
+However, this technique is not generally suitable for insecure
 environments (because it allows anyone to read and write to your
 display).  A slightly more secure way is to only allow X connections
 from the nodes where your application will be running:
