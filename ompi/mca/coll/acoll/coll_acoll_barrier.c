@@ -23,9 +23,6 @@
 #include "coll_acoll_utils.h"
 
 
-
-#define PROGRESS_COUNT 10000
-
 int mca_coll_acoll_barrier_shm_h(struct ompi_communicator_t *comm, mca_coll_base_module_t *module, coll_acoll_subcomms_t *subc);
 int mca_coll_acoll_barrier_shm_f(struct ompi_communicator_t *comm, mca_coll_base_module_t *module, coll_acoll_subcomms_t *subc);
 
@@ -146,7 +143,6 @@ int mca_coll_acoll_barrier_shm_h(struct ompi_communicator_t *comm, mca_coll_base
     my_leader_shm = (int *) ((char *) data->allshmmmap_sbuf[l1_gp[0]] + offset_barrier
                                  + CACHE_LINE_SIZE * l1_gp[0]);
     int ready;
-    int count = 0;
     if (rank == root) {
         ready = *leader_shm;
         for (int i = 0; i < l2_gp_size; i++) {
@@ -154,13 +150,7 @@ int mca_coll_acoll_barrier_shm_h(struct ompi_communicator_t *comm, mca_coll_base
                 continue;
             volatile int *val = (int *) ((char *) data->allshmmmap_sbuf[root] + offset_barrier
                                          + CACHE_LINE_SIZE * l2_gp[i]);
-            while (*val != ready + 1) {
-                count++;
-                if (count == PROGRESS_COUNT) {
-                    count = 0;
-                    opal_progress();
-                }
-            }
+            spin_wait_with_progress(val, ready + 1);
         }
         ready++;
         for (int i = 0; i < l1_gp_size; i++) {
@@ -168,13 +158,7 @@ int mca_coll_acoll_barrier_shm_h(struct ompi_communicator_t *comm, mca_coll_base
                 continue;
             volatile int *val = (int *) ((char *) data->allshmmmap_sbuf[root] + offset_barrier
                                          + CACHE_LINE_SIZE * l1_gp[i]);
-            while (*val != ready) {
-                count++;
-                if (count == PROGRESS_COUNT) {
-                    count = 0;
-                    opal_progress();
-                }
-            }
+            spin_wait_with_progress(val, ready);
         }
         *leader_shm = ready;
     } else if (rank == l1_gp[0]) {
@@ -183,38 +167,18 @@ int mca_coll_acoll_barrier_shm_h(struct ompi_communicator_t *comm, mca_coll_base
             if (l1_gp[i] == l1_gp[0])
                 continue;
             volatile int *vali = (int *) ((char *) data->allshmmmap_sbuf[l1_gp[0]] + offset_barrier
-                                          + CACHE_LINE_SIZE
-                                                * l1_gp[i]); // do we need atomic_load here?
-            while (*vali != val + 1) {
-                count++;
-                if (PROGRESS_COUNT == count) {
-                    count = 0;
-                    opal_progress();
-                }
-            }
+                                          + CACHE_LINE_SIZE * l1_gp[i]);
+            spin_wait_with_progress(vali, val + 1);
         }
         val++;
         *root_rank_offset = val;
-        while (*leader_shm != val) {
-            count++;
-            if (PROGRESS_COUNT == count) {
-                count = 0;
-                opal_progress();
-            }
-        }
+        spin_wait_with_progress((volatile int *)leader_shm, val);
         *l1_rank_offset = val;
     } else {
-
         int done = *l1_rank_offset;
         done++;
         *l1_rank_offset = done;
-        while (done != *my_leader_shm) {
-            count++;
-            if (10000 == count) {
-                count = 0;
-                opal_progress();
-            }
-        }
+        spin_wait_with_progress((volatile int *)my_leader_shm, done);
     }
     return err;
 }
@@ -246,31 +210,18 @@ int mca_coll_acoll_barrier_shm_f(struct ompi_communicator_t *comm, mca_coll_base
                           + CACHE_LINE_SIZE * root);
 
     int ready = *leader_shm;
-    int count = 0;
     if (rank == root) {
         for (int i = 0; i < size; i++) {
             if (i == root)
                 continue;
             volatile int *val = (int *) ((char *) data->allshmmmap_sbuf[root] + offset_barrier
                                          + CACHE_LINE_SIZE * i);
-            while (*val != ready + 1) {
-                count++;
-                if (count == PROGRESS_COUNT) {
-                    count = 0;
-                    opal_progress();
-                }
-            }
+            spin_wait_with_progress(val, ready + 1);
         }
         (*leader_shm)++;
     } else {
         int val = ++(*root_rank_offset);
-        while (*leader_shm != val) {
-            count++;
-            if (PROGRESS_COUNT == count) {
-                count = 0;
-                opal_progress();
-            }
-        }
+        spin_wait_with_progress((volatile int *)leader_shm, val);
     }
     return err;
 }
