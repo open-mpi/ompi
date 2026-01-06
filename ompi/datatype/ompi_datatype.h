@@ -12,6 +12,7 @@
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * Copyright (c) 2021      IBM Corporation. All rights reserved.
  * Copyright (c) 2025      Triad National Security, LLC. All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -60,7 +61,7 @@ BEGIN_C_DECLS
 #define OMPI_DATATYPE_FLAG_DATA_FORTRAN  0xC000
 #define OMPI_DATATYPE_FLAG_DATA_LANGUAGE 0xC000
 
-#define OMPI_DATATYPE_MAX_PREDEFINED 52
+#define OMPI_DATATYPE_MAX_PREDEFINED 53
 
 #if OMPI_DATATYPE_MAX_PREDEFINED > OPAL_DATATYPE_MAX_SUPPORTED
 #error Need to increase the number of supported dataypes by OPAL (value OPAL_DATATYPE_MAX_SUPPORTED).
