@@ -14,6 +14,7 @@ dnl Copyright (c) 2008-2016 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
 dnl Copyright (c) 2015      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
+dnl Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -43,8 +44,16 @@ AC_DEFUN([OMPI_FORTRAN_CHECK_REAL16_C_EQUIV],[
                 # type that might work
                 AS_IF([test "$fortran_real16_happy" = "no"],
                       [AC_MSG_RESULT([$fortran_real16_happy])
-                       # Intel compiler has a special type that should work
-                       AS_IF([test "$opal_cv_c_compiler_vendor" = "intel"],
+                       AS_IF([test "$ac_cv_type__Float128" = "yes"],
+                            [AC_MSG_CHECKING([if the compiler _Float128 == REAL*16])
+                             OMPI_FORTRAN_CHECK_REAL16_EQUIV_TYPE([_Float128], [q])
+                             AS_IF([test "$fortran_real16_happy" = "yes"],
+                                   [OMPI_FORTRAN_REAL16_C_TYPE="_Float128"
+                                    AC_MSG_RESULT([works!])],
+                                   [AC_MSG_RESULT([does not work])])
+                            ])
+                       AS_IF([test "$fortran_real16_happy" = "no" && "$opal_cv_c_compiler_vendor" = "intel"],
+                             # Intel compiler has a special type that should work
                              [AC_MSG_CHECKING([if intel compiler _Quad == REAL*16])
                               CFLAGS_save="$CFLAGS"
                               OPAL_FLAGS_APPEND_UNIQ([CFLAGS], ["-Qoption,cpp,--extended_float_types"])
@@ -55,8 +64,8 @@ AC_DEFUN([OMPI_FORTRAN_CHECK_REAL16_C_EQUIV],[
                                     [CFLAGS="$CFLAGS_save"
                                      AC_MSG_RESULT([does not work])])
                              ])
-                       AS_IF([test "$opal_cv_c_compiler_vendor" = "gnu" && test "$ac_cv_type___float128" = "yes"],
-                             [AC_MSG_CHECKING([if gnu compiler __float128 == REAL*16])
+                       AS_IF([test "$fortran_real16_happy" = "no" && test "$ac_cv_type___float128" = "yes"],
+                             [AC_MSG_CHECKING([if the compiler __float128 == REAL*16])
                               OMPI_FORTRAN_CHECK_REAL16_EQUIV_TYPE([__float128], [q])
                               AS_IF([test "$fortran_real16_happy" = "yes"],
                                     [OMPI_FORTRAN_REAL16_C_TYPE="__float128"

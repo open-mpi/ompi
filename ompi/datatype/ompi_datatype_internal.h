@@ -10,6 +10,7 @@
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2018 FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -115,8 +116,13 @@
 #define OMPI_DATATYPE_MPI_LONG                    0x32
 #define OMPI_DATATYPE_MPI_UNSIGNED_LONG           0x33
 
+/*
+ * Datatypes with different representations between C and Fortran
+ */
+#define OMPI_DATATYPE_MPI_FLOAT128                0x34
+
 /* This should __ALWAYS__ stay last  */
-#define OMPI_DATATYPE_MPI_UNAVAILABLE             0x34
+#define OMPI_DATATYPE_MPI_UNAVAILABLE             0x35
 
 
 #define OMPI_DATATYPE_MPI_MAX_PREDEFINED          (OMPI_DATATYPE_MPI_UNAVAILABLE+1)
@@ -389,8 +395,10 @@
 #  define OMPI_DATATYPE_MPI_REAL16                OMPI_DATATYPE_MPI_DOUBLE
 #elif OMPI_SIZEOF_FORTRAN_REAL16 == SIZEOF_LONG_DOUBLE
 #  define OMPI_DATATYPE_MPI_REAL16                OMPI_DATATYPE_MPI_LONG_DOUBLE
+#elif defined(HAVE__FLOAT128) && OMPI_SIZEOF_FORTRAN_REAL16 == SIZEOF__FLOAT128
+#    define OMPI_DATATYPE_MPI_REAL16 OMPI_DATATYPE_MPI_FLOAT128
 #else
-#  define OMPI_DATATYPE_MPI_REAL16                OMPI_DATATYPE_MPI_UNAVAILABLE
+#    define OMPI_DATATYPE_MPI_REAL16 OMPI_DATATYPE_MPI_UNAVAILABLE
 #endif
 
 /*

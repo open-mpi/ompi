@@ -8,6 +8,7 @@
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -207,7 +208,11 @@ COPY_TYPE(float_12, opal_short_float_t, 1)
 #    define copy_float_12 NULL
 #endif
 
-#if defined(HAVE_SHORT_FLOAT) && SIZEOF_SHORT_FLOAT == 16
+#if defined(HAVE__FLOAT128) && SIZEOF__FLOAT128 == 16
+COPY_TYPE(float_16, _Float128, 1)
+#elif defined(HAVE___FLOAT128) && SIZEOF___FLOAT128 == 16
+COPY_TYPE(float_16, __float128, 1)
+#elif defined(HAVE_SHORT_FLOAT) && SIZEOF_SHORT_FLOAT == 16
 COPY_TYPE(float_16, short float, 1)
 #elif SIZEOF_FLOAT == 16
 COPY_TYPE(float_16, float, 1)
@@ -236,6 +241,15 @@ COPY_TYPE(float_complex, float _Complex, 1)
 COPY_TYPE(double_complex, double _Complex, 1)
 
 COPY_TYPE(long_double_complex, long double _Complex, 1)
+
+#if defined(HAVE__FLOAT128) && defined(HAVE__FLOAT128__COMPLEX)
+COPY_TYPE(float128_complex, _Float128 _Complex, 1)
+#elif defined(HAVE___FLOAT128) && defined(HAVE___FLOAT128__COMPLEX)
+COPY_TYPE(float128_complex, __float128 _Complex, 1)
+#else
+/* #error No _Float128 _Complex support available */
+#    define copy_float128_complex NULL
+#endif
 
 #if SIZEOF__BOOL == SIZEOF_CHAR
 COPY_TYPE(bool, char, 1)
@@ -286,5 +300,6 @@ conversion_fct_t opal_datatype_copy_functions[OPAL_DATATYPE_MAX_PREDEFINED] = {
     [OPAL_DATATYPE_LONG]                =     (conversion_fct_t)copy_bytes_8,
     [OPAL_DATATYPE_UNSIGNED_LONG]       =     (conversion_fct_t)copy_bytes_8,
 #endif
+    [OPAL_DATATYPE_FLOAT128_COMPLEX]    =     (conversion_fct_t) copy_float128_complex,
     [OPAL_DATATYPE_UNAVAILABLE]         =     NULL,
 };

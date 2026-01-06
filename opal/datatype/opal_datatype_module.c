@@ -20,6 +20,7 @@
  * Copyright (c) 2018      Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -84,6 +85,8 @@ OPAL_DECLSPEC const opal_datatype_t opal_datatype_double_complex
     = OPAL_DATATYPE_INITIALIZER_DOUBLE_COMPLEX(0);
 OPAL_DECLSPEC const opal_datatype_t opal_datatype_long_double_complex
     = OPAL_DATATYPE_INITIALIZER_LONG_DOUBLE_COMPLEX(0);
+OPAL_DECLSPEC const opal_datatype_t opal_datatype_float128_complex
+    = OPAL_DATATYPE_INITIALIZER_FLOAT128_COMPLEX(0);
 OPAL_DECLSPEC const opal_datatype_t opal_datatype_bool = OPAL_DATATYPE_INITIALIZER_BOOL(0);
 OPAL_DECLSPEC const opal_datatype_t opal_datatype_wchar = OPAL_DATATYPE_INITIALIZER_WCHAR(0);
 OPAL_DECLSPEC const opal_datatype_t opal_datatype_long =  OPAL_DATATYPE_INITIALIZER_LONG(0);
@@ -128,6 +131,13 @@ OPAL_DECLSPEC const size_t opal_datatype_local_sizes[OPAL_DATATYPE_MAX_PREDEFINE
     [OPAL_DATATYPE_WCHAR] = sizeof(wchar_t),
     [OPAL_DATATYPE_LONG] = sizeof(long),
     [OPAL_DATATYPE_UNSIGNED_LONG] = sizeof(unsigned long),
+#if defined(HAVE__FLOAT128) && defined(HAVE__FLOAT128__COMPLEX)
+    [OPAL_DATATYPE_FLOAT128_COMPLEX] = sizeof(_Float128 _Complex),
+#elif defined(HAVE___FLOAT128) && defined(HAVE___FLOAT128__COMPLEX)
+    [OPAL_DATATYPE_FLOAT128_COMPLEX] = sizeof(__float128 _Complex),
+#else
+    [OPAL_DATATYPE_FLOAT128_COMPLEX] = 32, /* typical sizeof(_Float128 _Complex) */
+#endif
 };
 
 /*
@@ -164,6 +174,7 @@ OPAL_DECLSPEC const opal_datatype_t *opal_datatype_basicDatatypes[OPAL_DATATYPE_
     [OPAL_DATATYPE_WCHAR] = &opal_datatype_wchar,
     [OPAL_DATATYPE_LONG] = &opal_datatype_long,
     [OPAL_DATATYPE_UNSIGNED_LONG] = &opal_datatype_unsigned_long,
+    [OPAL_DATATYPE_FLOAT128_COMPLEX] = &opal_datatype_float128_complex,
     [OPAL_DATATYPE_UNAVAILABLE] = &opal_datatype_unavailable,
 };
 

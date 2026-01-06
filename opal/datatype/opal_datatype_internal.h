@@ -18,6 +18,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * Copyright (c) 2021      IBM Corporation. All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -96,7 +97,8 @@ extern int opal_datatype_dfd;
 #define OPAL_DATATYPE_WCHAR               24
 #define OPAL_DATATYPE_LONG                25
 #define OPAL_DATATYPE_UNSIGNED_LONG       26
-#define OPAL_DATATYPE_UNAVAILABLE         27
+#define OPAL_DATATYPE_FLOAT128_COMPLEX    27
+#define OPAL_DATATYPE_UNAVAILABLE         28
 
 #ifndef OPAL_DATATYPE_MAX_PREDEFINED
 #    define OPAL_DATATYPE_MAX_PREDEFINED (OPAL_DATATYPE_UNAVAILABLE + 1)
@@ -213,7 +215,7 @@ struct opal_datatype_t;
 /* Other fields starting after bdt_used (index of OPAL_DATATYPE_LOOP should be ONE) */
 /*
  * NOTE: The order of initialization *MUST* match the order of the OPAL_DATATYPE_-numbers.
- * Unfortunateley, I don't get the preprocessor to replace
+ * Unfortunately, I don't get the preprocessor to replace
  *     OPAL_DATATYPE_INIT_BTYPES_ARRAY_ ## OPAL_DATATYPE ## NAME
  * into
  *     OPAL_DATATYPE_INIT_BTYPES_ARRAY_[0-21], then order and naming would _not_ matter....
@@ -346,6 +348,9 @@ struct opal_datatype_t;
 #define OPAL_DATATYPE_INITIALIZER_LONG_DOUBLE_COMPLEX(FLAGS)                    \
     OPAL_DATATYPE_HANDLE_LONG_DOUBLE_COMPLEX(OPAL_DATATYPE_INIT_BASIC_DATATYPE, \
                                              OPAL_DATATYPE_INITIALIZER_UNAVAILABLE_NAMED, FLAGS)
+#define OPAL_DATATYPE_INITIALIZER_FLOAT128_COMPLEX(FLAGS)                    \
+    OPAL_DATATYPE_HANDLE_FLOAT128_COMPLEX(OPAL_DATATYPE_INIT_BASIC_DATATYPE, \
+                                          OPAL_DATATYPE_INITIALIZER_UNAVAILABLE_NAMED, FLAGS)
 #define OPAL_DATATYPE_INITIALIZER_BOOL(FLAGS)                    \
     OPAL_DATATYPE_HANDLE_BOOL(OPAL_DATATYPE_INIT_BASIC_DATATYPE, \
                               OPAL_DATATYPE_INITIALIZER_UNAVAILABLE_NAMED, FLAGS)
@@ -467,19 +472,25 @@ struct opal_datatype_t;
 #    define OPAL_DATATYPE_HANDLE_FLOAT12(AV, NOTAV, FLAGS) NOTAV(FLOAT12, FLAGS)
 #endif
 
-#if defined(HAVE_SHORT_FLOAT) && SIZEOF_SHORT_FLOAT == 16
+#if defined(HAVE__FLOAT128) &&  SIZEOF__FLOAT128 == OMPI_SIZEOF_FORTRAN_REAL16
+#    define OPAL_DATATYPE_HANDLE_FLOAT16(AV, NOTAV, FLAGS) \
+        AV(_Float128, OPAL_ALIGNMENT__FLOAT128, FLOAT16, FLAGS)
+#elif defined(HAVE___FLOAT128) &&  SIZEOF___FLOAT128 == OMPI_SIZEOF_FORTRAN_REAL16
+#    define OPAL_DATATYPE_HANDLE_FLOAT16(AV, NOTAV, FLAGS) \
+        AV(__float128, OPAL_ALIGNMENT___FLOAT128, FLOAT16, FLAGS)
+#elif defined(HAVE_SHORT_FLOAT) && SIZEOF_SHORT_FLOAT == OMPI_SIZEOF_FORTRAN_REAL16
 #    define OPAL_DATATYPE_HANDLE_FLOAT16(AV, NOTAV, FLAGS) \
         AV(short float, OPAL_ALIGNMENT_SHORT_FLOAT, FLOAT16, FLAGS)
-#elif SIZEOF_FLOAT == 16
+#elif SIZEOF_FLOAT == OMPI_SIZEOF_FORTRAN_REAL16
 #    define OPAL_DATATYPE_HANDLE_FLOAT16(AV, NOTAV, FLAGS) \
         AV(float, OPAL_ALIGNMENT_FLOAT, FLOAT16, FLAGS)
-#elif SIZEOF_DOUBLE == 16
+#elif SIZEOF_DOUBLE == OMPI_SIZEOF_FORTRAN_REAL16
 #    define OPAL_DATATYPE_HANDLE_FLOAT16(AV, NOTAV, FLAGS) \
         AV(double, OPAL_ALIGNMENT_DOUBLE, FLOAT16, FLAGS)
-#elif SIZEOF_LONG_DOUBLE == 16
+#elif SIZEOF_LONG_DOUBLE == OMPI_SIZEOF_FORTRAN_REAL16
 #    define OPAL_DATATYPE_HANDLE_FLOAT16(AV, NOTAV, FLAGS) \
         AV(long double, OPAL_ALIGNMENT_LONG_DOUBLE, FLOAT16, FLAGS)
-#elif defined(HAVE_OPAL_SHORT_FLOAT_T) && SIZEOF_OPAL_SHORT_FLOAT_T == 16
+#elif defined(HAVE_OPAL_SHORT_FLOAT_T) && SIZEOF_OPAL_SHORT_FLOAT_T == OMPI_SIZEOF_FORTRAN_REAL16
 #    define OPAL_DATATYPE_HANDLE_FLOAT16(AV, NOTAV, FLAGS) \
         AV(opal_short_float_t, OPAL_ALIGNMENT_OPAL_SHORT_FLOAT_T, FLOAT16, FLAGS)
 #else
@@ -506,6 +517,17 @@ struct opal_datatype_t;
 
 #define OPAL_DATATYPE_HANDLE_LONG_DOUBLE_COMPLEX(AV, NOTAV, FLAGS) \
     AV(long double _Complex, OPAL_ALIGNMENT_LONG_DOUBLE_COMPLEX, LONG_DOUBLE_COMPLEX, FLAGS)
+
+#if defined(HAVE__FLOAT128) && defined(HAVE__FLOAT128__COMPLEX)
+#    define OPAL_DATATYPE_HANDLE_FLOAT128_COMPLEX(AV, NOTAV, FLAGS) \
+        AV(_Float128 _Complex, OPAL_ALIGNMENT__FLOAT128_COMPLEX, FLOAT128_COMPLEX, FLAGS)
+#elif defined(HAVE___FLOAT128) && defined(HAVE___FLOAT128__COMPLEX)
+#    define OPAL_DATATYPE_HANDLE_FLOAT128_COMPLEX(AV, NOTAV, FLAGS) \
+        AV(__float128 _Complex, OPAL_ALIGNMENT___FLOAT128_COMPLEX, FLOAT128_COMPLEX, FLAGS)
+#else
+#    define OPAL_DATATYPE_HANDLE_FLOAT128_COMPLEX(AV, NOTAV, FLAGS) \
+        NOTAV(FLOAT128_COMPLEX, FLAGS)
+#endif
 
 #define OPAL_DATATYPE_HANDLE_BOOL(AV, NOTAV, FLAGS) \
     AV(_Bool, OPAL_ALIGNMENT_BOOL, BOOL, FLAGS)
