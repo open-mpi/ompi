@@ -19,6 +19,7 @@
  * Copyright (c) 2018      Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -52,7 +53,7 @@ BEGIN_C_DECLS
  * This must match the same definition as in opal_datatype_internal.h
  */
 #if !defined(OPAL_DATATYPE_MAX_PREDEFINED)
-#    define OPAL_DATATYPE_MAX_PREDEFINED 28
+#    define OPAL_DATATYPE_MAX_PREDEFINED 29
 #endif
 /*
  * Upper limit of the number of _Basic_ datatypes supported (in order to
@@ -184,6 +185,7 @@ OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_short_float_complex;
 OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_float_complex;
 OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_double_complex;
 OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_long_double_complex;
+OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_float128_complex;
 OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_bool;
 OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_wchar;
 OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_long;
