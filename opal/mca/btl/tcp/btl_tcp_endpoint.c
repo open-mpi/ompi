@@ -651,6 +651,7 @@ static int mca_btl_tcp_endpoint_recv_connect_ack(mca_btl_base_endpoint_t *btl_en
         return OPAL_ERR_BAD_PARAM;
     }
     if (0 != strncmp(hs_msg.magic_id, mca_btl_tcp_magic_id_string, len)) {
+        mca_btl_tcp_endpoint_close(btl_endpoint);
         opal_show_help("help-mpi-btl-tcp.txt", "server did not receive magic string", true,
                        opal_process_info.nodename, getpid(), "client", hs_msg.magic_id,
                        "string value");
@@ -985,7 +986,7 @@ static void mca_btl_tcp_endpoint_recv_handler(int sd, short flags, void *user)
                the magic string ID failed). recv_connect_ack already cleaned
                up the socket. */
             /* If we get OPAL_ERROR, the other end closed the connection
-             * because it has initiated a symmetrical connexion on its end.
+             * because it has initiated a symmetrical connection on its end.
              * recv_connect_ack already cleaned up the socket. */
         } else {
             /* Otherwise, it probably *was* an OMPI peer process on
