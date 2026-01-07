@@ -803,32 +803,64 @@ int ompi_coll_tuned_bcast_intra_singlenode_dec_fixed(void *buff, size_t count,
      *  {9, "scatter_allgather_ring"},
      */
     if (communicator_size < 4) {
-        alg = 1;
-    } else if (communicator_size < 8) {
-        if (total_dsize < 256) {
+        if (total_dsize < 65536) {
             alg = 1;
-        } else if (total_dsize < 16384) {
-            alg = 7;
         } else {
-            alg = 1;
+            alg = 9;
+        }
+    } else if (communicator_size < 8) {
+        if (total_dsize < 8192) {
+            alg = 5;
+        } else if (total_dsize < 131072) {
+            alg = 2;
+        } else {
+            alg = 7;
         }
     } else if (communicator_size < 16) {
-        if (total_dsize < 32768) {
-            alg = 7;
+        if (total_dsize < 131072) {
+            alg = 5;
         } else {
-            alg = 1;
+            alg = 8;
         }
     } else if (communicator_size < 32) {
-        if (total_dsize < 16384) {
+        if (total_dsize < 64) {
+            alg = 7;
+        } else if (total_dsize < 65536) {
+            alg = 6;
+        } else {
+            alg = 8;
+        }
+    } else if (communicator_size < 64) {
+        if (total_dsize < 8192) {
+            alg = 6;
+        } else if (total_dsize < 262144) {
+            alg = 5;
+        } else { 
+            alg = 8;
+        }
+    } else if (communicator_size < 128) {
+        if (total_dsize < 8192) {
+            alg = 6;
+        } else if (total_dsize < 32768) {
+            alg = 7;
+        } else if (total_dsize < 131072) {
+            alg = 5;
+        } else {
+            alg = 8;
+        }
+    } else if (communicator_size < 192) {
+        if (total_dsize < 8192) {
+            alg = 6;
+        } else if (total_dsize < 32768) {
             alg = 7;
         } else {
-            alg = 1;
+            alg = 8;
         }
     } else {
         if (total_dsize < 131072) {
-            alg = 7;
+            alg = 6;
         } else {
-            alg = 1;
+            alg = 8;
         }
     }
 
