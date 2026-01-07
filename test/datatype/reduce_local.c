@@ -127,7 +127,8 @@ do { \
     const TYPE *_p1 = ((TYPE*)(INBUF)), *_p3 = ((TYPE*)(CHECK_BUF)); \
     TYPE *_p2 = ((TYPE*)(INOUT_BUF)); \
     skip_op_type = 0; \
-    for(int _k = 0; _k < min((COUNT), max_shift); +_k++ ) { \
+    int min_count = min((COUNT), max_shift); \
+    for(int _k = 0; _k < min_count; +_k++ ) { \
         duration[_k] = 0.0; \
         for(int _r = repeats; _r > 0; _r--) { \
             memcpy(_p2, _p3, sizeof(TYPE) * (COUNT)); \
@@ -155,7 +156,8 @@ do { \
     const TYPE *_p1 = ((TYPE*)(INBUF)), *_p3 = ((TYPE*)(CHECK_BUF)); \
     TYPE *_p2 = ((TYPE*)(INOUT_BUF)); \
     skip_op_type = 0; \
-    for(int _k = 0; _k < min((COUNT), max_shift); +_k++ ) { \
+    int min_count = min((COUNT), max_shift); \
+    for(int _k = 0; _k < min_count; +_k++ ) { \
         duration[_k] = 0.0; \
         for(int _r = repeats; _r > 0; _r--) { \
             memcpy(_p2, _p3, sizeof(TYPE) * (COUNT)); \
