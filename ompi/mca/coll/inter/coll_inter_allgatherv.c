@@ -107,21 +107,8 @@ mca_coll_inter_allgatherv_inter(const void *sbuf, size_t scount,
         goto exit;
     }
 
-    /* TODO:BIGCOUNT: Remove tehese temporaries once ompi_datatype is updated for bigcount */
-    int *tmp_rcounts = malloc(sizeof(int) * size);
-    int *tmp_disps = malloc(sizeof(int) * size);
-    if (NULL == tmp_rcounts || NULL == tmp_disps) {
-        err = OMPI_ERR_OUT_OF_RESOURCE;
-        goto exit;
-    }
-    for (i = 0; i < size; ++i) {
-        tmp_rcounts[i] = (int) ompi_count_array_get(rcounts, i);
-        tmp_disps[i] = (int) ompi_disp_array_get(disps, i);
-    }
-    ompi_datatype_create_indexed(size,tmp_rcounts,tmp_disps,rdtype,&ndtype);
+    ompi_datatype_create_indexed(size,rcounts,disps,rdtype,&ndtype);
     ompi_datatype_commit(&ndtype);
-    free(tmp_rcounts);
-    free(tmp_disps);
 
     if (0 == rank) {
 	/* Exchange data between roots */
