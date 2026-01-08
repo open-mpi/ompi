@@ -1,0 +1,30 @@
+/*
+ * Copyright (c) 2025      Triad National Security, LLC. All rights
+ *                         reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+PROTOTYPE VOID abi_get_fortran_booleans(INT logical_size, LOGICAL_OUT logical_true,
+                                        LOGICAL_OUT logical_false,
+                                        LOGICAL_OUT is_set)
+{
+    int c_ierr, c_logical_true, c_logical_false, c_is_set;
+
+    c_ierr = @INNER_CALL@(OMPI_FINT_2_INT(*logical_size), 
+                          &c_logical_true,
+                          &c_logical_false,
+                          &c_is_set);
+    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+
+    if (MPI_SUCCESS == c_ierr) {
+        *logical_true = OMPI_INT_2_FINT(c_logical_true);
+        *logical_false = OMPI_INT_2_FINT(c_logical_false);
+        *is_set = OMPI_INT_2_FINT(c_is_set);
+    }
+}
+
+

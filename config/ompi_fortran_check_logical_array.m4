@@ -11,6 +11,8 @@ dnl                         All rights reserved.
 dnl Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2015      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
+dnl Copyright (c) 2025      Triad National Security, LLC. All rights
+dnl                         reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -64,7 +66,7 @@ void ompi_check_f(ompi_fortran_logical_t * logical)
     FILE *f=fopen("conftestval", "w");
     if (!f) exit(1);
 
-    if (logical[[0]] == 0 &&
+    if (logical[[0]] == $ompi_cv_fortran_false_value &&
         logical[[1]] == $ompi_cv_fortran_true_value)
       result = 1;
     fprintf(f, "%d\n", result);
