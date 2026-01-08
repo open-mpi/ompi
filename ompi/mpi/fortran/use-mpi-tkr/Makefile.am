@@ -167,6 +167,7 @@ DISTCLEANFILES = $(nodist_lib@OMPI_LIBMPI_NAME@_usempi_la_SOURCES)
 #
 
 install-exec-hook:
+	@ $(INSTALL) -d $(DESTDIR)$(OMPI_FORTRAN_MODULEDIR)
 	@ for file in `ls *.mod`; do \
 	  echo $(INSTALL) $$file $(DESTDIR)$(OMPI_FORTRAN_MODULEDIR); \
 	  $(INSTALL) $$file $(DESTDIR)$(OMPI_FORTRAN_MODULEDIR); \
