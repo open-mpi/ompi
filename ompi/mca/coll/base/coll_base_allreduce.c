@@ -371,9 +371,22 @@ ompi_coll_base_allreduce_intra_ring(const void *sbuf, void *rbuf, size_t count,
         return MPI_SUCCESS;
     }
 
+    /* Special case for non-commutative ops - use recursive doubling */
+    if (!ompi_op_is_commute(op)) {
+        OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                     "coll:base:allreduce_ring rank %d/%d, non-commutative, switching to recursive doubling",
+                     rank, size));
+        return (ompi_coll_base_allreduce_intra_recursivedoubling(sbuf, rbuf,
+                                                                  count,
+                                                                  dtype, op,
+                                                                  comm, module));
+    }
+
     /* Special case for count less than size - use recursive doubling */
-    if (count < (size_t) size) {
-        OPAL_OUTPUT((ompi_coll_base_framework.framework_output, "coll:base:allreduce_ring rank %d/%d, count %zu, switching to recursive doubling", rank, size, count));
+    if (count < (size_t)size) {
+        OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                     "coll:base:allreduce_ring rank %d/%d, count %d, switching to recursive doubling",
+                     rank, size, count));
         return (ompi_coll_base_allreduce_intra_recursivedoubling(sbuf, rbuf,
                                                                   count,
                                                                   dtype, op,
@@ -650,18 +663,28 @@ ompi_coll_base_allreduce_intra_ring_segmented(const void *sbuf, void *rbuf, size
         return MPI_SUCCESS;
     }
 
+    if (!ompi_op_is_commute(op)) {
+        OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                     "coll:base:allreduce_ring_segmented rank %d/%d, non-commutative, switching to recursive doubling",
+                     rank, size));
+        return (ompi_coll_base_allreduce_intra_recursivedoubling(sbuf, rbuf, count, dtype, op,
+                                                                 comm, module));
+    }
+
     /* Determine segment count based on the suggested segment size */
     ret = ompi_datatype_type_size( dtype, &typelng);
     if (MPI_SUCCESS != ret) { line = __LINE__; goto error_hndl; }
     segcount = count;
     COLL_BASE_COMPUTED_SEGCOUNT(segsize, typelng, segcount)
 
-        /* Special case for count less than size * segcount - use regular ring */
-        if (count < (size_t) (size * segcount)) {
-            OPAL_OUTPUT((ompi_coll_base_framework.framework_output, "coll:base:allreduce_ring_segmented rank %d/%d, count %zu, switching to regular ring", rank, size, count));
-            return (ompi_coll_base_allreduce_intra_ring(sbuf, rbuf, count, dtype, op,
-                                                         comm, module));
-        }
+    /* Special case for count less than size * segcount - use regular ring */
+    if (count < (size_t)(size * segcount)) {
+        OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                     "coll:base:allreduce_ring_segmented rank %d/%d, count %d, switching to regular ring",
+                     rank, size, count));
+        return (ompi_coll_base_allreduce_intra_ring(sbuf, rbuf, count, dtype, op,
+                                                      comm, module));
+    }
 
     /* Determine the number of phases of the algorithm */
     num_phases = count / (size * segcount);
