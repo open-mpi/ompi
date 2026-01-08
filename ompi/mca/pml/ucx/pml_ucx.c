@@ -9,6 +9,7 @@
  * Copyright (c) 2019      Intel, Inc.  All rights reserved.
  * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
+ * Copyright (c) 2026      Triad National Security, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -1152,6 +1153,7 @@ int mca_pml_ucx_imrecv(void *buf, size_t count, ompi_datatype_t *datatype,
     }
 
     PML_UCX_VERBOSE(8, "got request %p", (void*)req);
+    req->req_mpi_object.comm = (*message)->comm;
     PML_UCX_MESSAGE_RELEASE(message);
     *request = req;
     return OMPI_SUCCESS;
@@ -1174,6 +1176,7 @@ int mca_pml_ucx_mrecv(void *buf, size_t count, ompi_datatype_t *datatype,
         return OMPI_ERROR;
     }
 
+    req->req_mpi_object.comm = (*message)->comm;
     PML_UCX_MESSAGE_RELEASE(message);
 
     return ompi_request_wait(&req, status);
