@@ -74,7 +74,7 @@ int mca_coll_acoll_gather_intra(const void *sbuf, size_t scount, struct ompi_dat
         ompi_datatype_type_extent(rdtype, &rextent);
         /* Just use the recv buffer */
         wkg = (char *) rbuf;
-        if (sbuf != MPI_IN_PLACE) {
+        if (MPI_IN_PLACE != sbuf) {
             MPI_Aint root_ofst = rextent * (ptrdiff_t) (rcount * root);
             err = ompi_datatype_sndrcv((void *) sbuf, scount, sdtype, wkg + (ptrdiff_t) root_ofst,
                                        rcount, rdtype);
@@ -128,7 +128,7 @@ int mca_coll_acoll_gather_intra(const void *sbuf, size_t scount, struct ompi_dat
     if (endr > size) {
         endr = size;
     }
-    inc = (rank == root) ? ((root != 0) ? 0 : 1) : 1;
+    inc = (rank == root) ? ((0 != root) ? 0 : 1) : 1;
     if (is_base || (rank == root)) {
         for (i = startr + inc; i < endr; i++) {
             char *tmprecv = NULL;
@@ -160,6 +160,7 @@ int mca_coll_acoll_gather_intra(const void *sbuf, size_t scount, struct ompi_dat
         int local_root = (root_node == cur_node) ? root : startn;
         for (i = startn; i < endn; i += sg_cnt) {
             int i_sg = i / sg_cnt;
+            int i_node = i / node_cnt;
             if ((rank != local_root) && (rank == i) && is_base) {
                 err = MCA_PML_CALL(send(workbuf - sgap, total_recv, sdtype, local_root,
                                         MCA_COLL_BASE_TAG_GATHER, MCA_PML_BASE_SEND_STANDARD,
@@ -167,7 +168,12 @@ int mca_coll_acoll_gather_intra(const void *sbuf, size_t scount, struct ompi_dat
             }
             if ((rank == local_root) && (rank != i) && (i_sg != root_sg)) {
                 size_t recv_amt = (i + sg_cnt > size) ? rcount * (size - i) : rcount * sg_cnt;
-                MPI_Aint rcv_ofst = rextent * (ptrdiff_t) (rcount * (i - startn));
+                MPI_Aint rcv_ofst;
+                if (rank == root) {
+                    rcv_ofst = rextent * (ptrdiff_t) (rcount * (i_node * node_cnt + i - startn));
+                } else {
+                    rcv_ofst = rextent * (ptrdiff_t) (rcount * (i - startn));
+                }
 
                 err = MCA_PML_CALL(recv(wkg + (ptrdiff_t) rcv_ofst, recv_amt, rdtype, i,
                                         MCA_COLL_BASE_TAG_GATHER, comm, &status));
@@ -182,11 +188,11 @@ int mca_coll_acoll_gather_intra(const void *sbuf, size_t scount, struct ompi_dat
         }
     }
 
-    /* All local roots ranks send to root */
+    /* All local roots send to root */
     if (node_cnt < size && num_nodes > 1) {
         for (i = 0; i < size; i += node_cnt) {
             int i_node = i / node_cnt;
-            if ((rank != root) && (rank == i) && is_base) {
+            if ((rank != root) && (rank == i) && is_local_root) {
                 err = MCA_PML_CALL(send(workbuf - sgap, total_recv, sdtype, root,
                                         MCA_COLL_BASE_TAG_GATHER, MCA_PML_BASE_SEND_STANDARD,
                                         comm));

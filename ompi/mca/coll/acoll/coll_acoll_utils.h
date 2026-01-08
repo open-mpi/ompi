@@ -32,6 +32,41 @@ extern int mca_coll_acoll_without_smsc;
 extern int mca_coll_acoll_smsc_use_sr_buf;
 extern int mca_coll_acoll_barrier_algo;
 
+/*
+ * Hybrid backoff spin-wait with adaptive progress calls.
+ * Optimized for intra-node shared memory synchronization.
+ *
+ * Three-phase strategy:
+ * - Fast path (0-MCA_COLL_ACOLL_SPIN_FAST_PATH_ITERS): Pure spinning for typical shared memory case
+ * - Medium path (FAST_PATH-MCA_COLL_ACOLL_SPIN_MEDIUM_PATH_ITERS): Moderate progress for NUMA delays
+ * - Slow path (MEDIUM_PATH+): Aggressive progress for unexpected contention
+ */
+static inline void spin_wait_with_progress(volatile int *flag, int expected_value)
+{
+    int pcount = 0;
+    int progress_freq = 1;
+    int observed;
+
+    while ((observed = __atomic_load_n(flag, __ATOMIC_ACQUIRE)) != expected_value) {
+        pcount++;
+        if (pcount < MCA_COLL_ACOLL_SPIN_FAST_PATH_ITERS) {
+            /* Fast path: pure spinning for intra-node shared memory (typical case) */
+            continue;
+        } else if (pcount < MCA_COLL_ACOLL_SPIN_MEDIUM_PATH_ITERS) {
+            /* Medium path: moderate progress for NUMA delays or contention */
+            if (0 == pcount % MCA_COLL_ACOLL_SPIN_MEDIUM_PATH_FREQ) {
+                opal_progress();
+            }
+        } else {
+            /* Slow path: aggressive progress for unexpected delays */
+            for (int j = 0; j < progress_freq; j++) {
+                opal_progress();
+            }
+            if (progress_freq < MCA_COLL_ACOLL_SPIN_SLOW_PATH_MAX_FREQ) progress_freq++;
+        }
+    }
+}
+
 
 /* Function to allocate scratch buffer */
 static inline void *coll_acoll_buf_alloc(coll_acoll_reserve_mem_t *reserve_mem_ptr, uint64_t size)
