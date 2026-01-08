@@ -21,6 +21,7 @@ dnl Copyright (c) 2020      Triad National Security, LLC. All rights
 dnl                         reserved.
 dnl Copyright (c) 2020-2022 Amazon.com, Inc. or its affiliates.  All Rights reserved.
 dnl Copyright (c) 2021      Nanook Consulting.  All rights reserved.
+dnl Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -57,7 +58,8 @@ dnl         other execution tests later in configure (there are sadly
 dnl         some) would fail if the path in LDFLAGS was not added to
 dnl         LD_LIBRARY_PATH.
 AC_DEFUN([OPAL_CONFIG_PMIX], [
-    OPAL_VAR_SCOPE_PUSH([external_pmix_happy internal_pmix_happy internal_pmix_args internal_pmix_wrapper_libs internal_pmix_CPPFLAGS opal_pmix_STATIC_LDFLAGS opal_pmix_LIBS opal_pmix_STATIC_LIBS])
+    OPAL_VAR_SCOPE_PUSH([external_pmix_happy internal_pmix_happy internal_pmix_args internal_pmix_wrapper_libs internal_pmix_CPPFLAGS opal_pmix_STATIC_LDFLAGS opal_pmix_LIBS opal_pmix_STATIC_LIBS opal_external_pmix_docs_url])
+    opal_external_pmix_docs_url="https://docs.openpmix.org/en/latest/"
 
     opal_show_subtitle "Configuring PMIx"
 
@@ -154,6 +156,8 @@ AC_DEFUN([OPAL_CONFIG_PMIX], [
     AC_DEFINE_UNQUOTED([OPAL_USING_INTERNAL_PMIX],
                        [$OPAL_USING_INTERNAL_PMIX],
                        [Whether or not we are using the internal PMIx])
+    AC_SUBST(OPAL_PMIX_DOCS_URL_BASE)
+    AC_SUBST(OPAL_USING_INTERNAL_PMIX)
 
     OPAL_SUMMARY_ADD([Miscellaneous], [pmix], [], [$opal_pmix_mode])
 
@@ -216,8 +220,22 @@ AC_DEFUN([_OPAL_CONFIG_PMIX_EXTERNAL], [
                   dnl it will screw up other tests (like the pthread tests)
                   opal_pmix_BUILD_LIBS="${opal_pmix_LIBS}"
 
+                  # If the external PMIx docs dir exists where
+                  # a simple heuristic thinks it should be
+                  # (i.e., the default docdir location), use
+                  # it.  This will be an absolute path, which
+                  # is fine (because we're building against an
+                  # external PMIx).  If we don't find it,
+                  # we'll fall back to the HTTPS internet PMIx
+                  # docs URL.
+                  opal_pmix_docdir="$with_pmix/share/doc/pmix/html"
+                  AS_IF([test -d "$opal_pmix_docdir"],
+                        [OPAL_PMIX_DOCS_URL_BASE="$opal_pmix_docdir"],
+                        [OPAL_PMIX_DOCS_URL_BASE=$opal_external_pmix_docs_url])
+
                   $1],
-                 [$2])])
+                 [$2])
+     ])
 
     OPAL_VAR_SCOPE_POP
 ])
@@ -238,7 +256,7 @@ AC_DEFUN([_OPAL_CONFIG_PMIX_INTERNAL_POST], [
 
     pmix_internal_happy=1
 
-    dnl Don't pull LDFLAGS, because we don't have a good way to avoid
+    dnl Do not pull LDFLAGS, because we don't have a good way to avoid
     dnl a -L to our install directory, which can cause some weirdness
     dnl if there's an old OMPI install there.  And it makes filtering
     dnl redundant flags easier.
@@ -278,6 +296,31 @@ AC_DEFUN([_OPAL_CONFIG_PMIX_INTERNAL_POST], [
     opal_pmix_BUILD_CPPFLAGS="${opal_pmix_CPPFLAGS}"
 
     opal_pmix_BUILD_LIBS="$OMPI_TOP_BUILDDIR/3rd-party/openpmix/src/libpmix.la"
+
+    AS_IF([test -n "$SPHINX_BUILD"],
+          [ # If we're building the OMPI Sphinx docs, and also
+            # building the internal PMIx, then we're *also*
+            # building the internal PMIx docs.
+            #
+            # In this case, the OMPI docs/conf.py will do a
+            # bunch of processing that is a lot easier to do in
+            # Python than Bourne shell (e.g., use the convenient
+            # os.path.relpath() to compute the relative path
+            # that we need, as well as dynamically create a
+            # Sphinx link inventory file).  Hence, we skip doing
+            # all that work here and just set a sentinel value
+            OPAL_PMIX_DOCS_URL_BASE="../../pmix/html"
+            AC_MSG_RESULT([found])],
+          [ # If we are not building the Sphinx docs, default
+            # to using the external PMIx docs URL.  This is
+            # actually moot because we won't be building the
+            # docs, but we might as well be complete in the
+            # logic / cases.
+            OPAL_PMIX_DOCS_URL_BASE=$opal_external_pmix_docs_url
+            AC_MSG_RESULT([not found])])
+
+    AC_MSG_CHECKING([for internal PMIx docs link URL base])
+    AC_MSG_RESULT([$OPAL_PMIX_DOCS_URL_BASE])
 
     OPAL_3RDPARTY_SUBDIRS="$OPAL_3RDPARTY_SUBDIRS openpmix"
 ])

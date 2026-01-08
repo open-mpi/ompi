@@ -111,6 +111,17 @@ echo "--> version: $VERSION_ID"
 #
 case ${PLATFORM_ID} in
     rhel)
+        # JMS HACK
+        case "$VERSION_ID" in
+            8.*)
+                PACKAGE_MANAGER="yum"
+                sudo ${PACKAGE_MANAGER} install -y python3-pip
+                ;;
+            *)
+                PACKAGE_MANAGER="yum"
+                sudo ${PACKAGE_MANAGER} install -y python3-pip
+        esac
+
         case "$COMPILER" in
             gcc48|"")
                 echo "--> Using default compilers"
@@ -122,6 +133,18 @@ case ${PLATFORM_ID} in
         esac
         ;;
     amzn)
+        # JMS HACK
+        case "$VERSION_ID" in
+            2023.*)
+                PACKAGE_MANAGER="dnf"
+                sudo ${PACKAGE_MANAGER} install -y python3-pip
+                ;;
+            *)
+                PACKAGE_MANAGER="yum"
+                sudo ${PACKAGE_MANAGER} install -y python3-pip
+                ;;
+        esac
+
         case "$COMPILER" in
             "")
                 echo "--> Using default compilers"
@@ -142,6 +165,10 @@ case ${PLATFORM_ID} in
         esac
         ;;
     ubuntu)
+        # JMS HACK
+        PACKAGE_MANAGER="apt-get"
+        sudo ${PACKAGE_MANAGER} update && sudo ${PACKAGE_MANAGER} install -y python3-pip
+
         case "$COMPILER" in
             "")
                 echo "--> Using default compilers"
@@ -169,6 +196,10 @@ case ${PLATFORM_ID} in
         esac
         ;;
     sles)
+        # JMS HACK
+        PACKAGE_MANAGER="zypper"
+        sudo ${PACKAGE_MANAGER} install -y python3-pip
+
         case "$COMPILER" in
             "")
                 echo "--> Using default compilers"
@@ -189,6 +220,10 @@ case ${PLATFORM_ID} in
         esac
         ;;
     FreeBSD)
+        # JMS HACK
+        PACKAGE_MANAGER="pkg"
+        sudo ${PACKAGE_MANAGER} install -y py39-pip
+
         CONFIGURE_ARGS="$CONFIGURE_ARGS LDFLAGS=-Wl,-rpath,/usr/local/lib/gcc5 --with-wrapper-ldflags=-Wl,-rpath,/usr/local/lib/gcc5"
         ;;
 esac
@@ -209,6 +244,14 @@ fi
 
 echo "--> Autogen arguments: $AUTOGEN_ARGS"
 echo "--> Configure arguments: $CONFIGURE_ARGS"
+
+# JMS HACK
+echo "==> JMS HACK -- just testing to see if this works"
+u=`umask`
+umask 2
+sudo python3 -m pip install sphobjinv
+umask $u
+echo "==> JMS HACK -- just testing to see if this works"
 
 # Build
 sha1=`git rev-parse HEAD`
