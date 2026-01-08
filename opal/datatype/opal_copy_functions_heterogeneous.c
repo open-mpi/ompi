@@ -481,31 +481,6 @@ f128_to_f80(unsigned char *f80_buf_to, const unsigned char *f128_buf_from, ssize
   )
 #define LDBL_INFO_MASK (OPAL_ARCH_LDMANTDIGISxx | OPAL_ARCH_LDEXPSIZEISxx)
 
-#ifdef HAVE___FLOAT128
-/*
- *  I'm not sure about the portability of alignof() so I'm handling things
- *  like the possibility of sizeof(long double) == 12 in a slower way.  The
- *  alignment requirement in that case would be 4 (largest power of 2 that
- *  divides into the sizeof).
- *
- *  And saving it static to just compute it once without running a loop
- *  every call.
- */
-static inline
-size_t
-alignment_of_long_double(void) {
-    static size_t val = 0;
-
-    if (val == 0) {
-        val = 1;
-        while (sizeof(long double) % (val*2) == 0) {
-            val *= 2;
-        }
-    }
-    return val;
-}
-#endif
-
 // ldbl_to_f128 (copies a long double(from_arch format) to a float128(local_endian))
 static inline
 void
@@ -515,7 +490,7 @@ ldbl_to_f128(unsigned char *f128_buf_to, const unsigned char *ldbl_buf_from, ssi
     int ldbl_is_aligned;
 
     ldbl_is_aligned = 1;
-    int alignment_mask = alignment_of_long_double() - 1;
+    int alignment_mask = _Alignof(long double) - 1;
     if ((uintptr_t)ldbl_buf_from & alignment_mask) {
         ldbl_is_aligned = 0;
     }
@@ -576,7 +551,7 @@ f128_to_ldbl(unsigned char *ldbl_buf_to, const unsigned char *f128_buf_from, ssi
     int ldbl_is_aligned;
 
     ldbl_is_aligned = 1;
-    int alignment_mask = alignment_of_long_double() - 1;
+    int alignment_mask = _Alignof(long double) - 1;
     if ((uintptr_t)ldbl_buf_to & alignment_mask) {
         ldbl_is_aligned = 0;
     }
