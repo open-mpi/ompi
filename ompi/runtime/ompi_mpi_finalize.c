@@ -24,6 +24,7 @@
  *                         reserved.
  * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
+ * Copyright (c) 2026      Nanook Consulting  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -281,14 +282,25 @@ int ompi_mpi_finalize(void)
          * communications/actions to complete.  See
          * https://github.com/open-mpi/ompi/issues/1576 for the
          * original bug report. */
-        if (PMIX_SUCCESS != (rc = PMIx_Fence_nb(NULL, 0, NULL, 0, fence_cbfunc, (void*)&active))) {
-            ret = opal_pmix_convert_status(rc);
-            OMPI_ERROR_LOG(ret);
+        rc = PMIx_Fence_nb(NULL, 0, NULL, 0, fence_cbfunc, (void*)&active);
+        if (PMIX_SUCCESS != rc) {
             /* Reset the active flag to false, to avoid waiting for
              * completion when the fence was failed. */
             active = false;
+            // can return operation_succeeded if atomically completed
+            if (PMIX_OPERATION_SUCCEEDED == rc) {
+                ret = MPI_SUCCESS;
+            } else {
+                ret = opal_pmix_convert_status(rc);
+                OMPI_ERROR_LOG(ret);
+            }
+        } else {
+            OMPI_LAZY_WAIT_FOR_COMPLETION(active);
+            /* NOTE: we lose the fence return status here. This can be
+             * a problem as the fence CAN fail. Might consider retrieving
+             * the returned status so you can respond if it doesn't 
+             * successfully complete? */
         }
-        OMPI_LAZY_WAIT_FOR_COMPLETION(active);
     }
 
     ompi_mpi_instance_finalize (&ompi_mpi_instance_default);
