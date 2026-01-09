@@ -1,7 +1,7 @@
 dnl -*- autoconf -*-
 dnl
 dnl Copyright (c) 2009-2017 Cisco Systems, Inc.  All rights reserved
-dnl Copyright (c) 2014-2018 Research Organization for Information Science
+dnl Copyright (c) 2014-2024 Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl Copyright (c) 2020-2022 Amazon.com, Inc. or its affiliates.  All Rights reserved.
 dnl Copyright (c) 2020      Intel, Inc.  All rights reserved.
@@ -270,5 +270,6 @@ dnl configure, to avoid pulling it into other configure tests.
 AC_DEFUN([OPAL_CONFIG_HWLOC_INTERNAL_LIBS_HANDLER], [
     OPAL_FLAGS_APPEND_UNIQ([CPPFLAGS], [${opal_hwloc_CPPFLAGS}])
     OPAL_FLAGS_APPEND_UNIQ([LDFLAGS], [$opal_hwloc_LDFLAGS])
-    OPAL_FLAGS_APPEND_MOVE([LIBS], [${opal_hwloc_BUILD_LIBS}])
+    opal_hwloc_LIBS=${opal_hwloc_BUILD_LIBS}
+    AC_SUBST([opal_hwloc_LIBS])
 ])
