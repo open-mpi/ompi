@@ -12,6 +12,9 @@ on:
         required: true
         type: string
 
+permissions:
+  contents: read
+
 jobs:
   mpi4py-tests:
     runs-on: ubuntu-latest
