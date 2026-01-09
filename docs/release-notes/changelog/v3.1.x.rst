@@ -218,7 +218,7 @@ Open MPI version 3.1.0
   absolute path before being passed to other nodes.
 - Add monitoring component for PML, OSC, and COLL to track data
   movement of MPI applications.  See
-  ompi/mca/commmon/monitoring/HowTo_pml_monitoring.tex for more
+  ompi/mca/common/monitoring/HowTo_pml_monitoring.tex for more
   information about the monitoring framework.
 - Add support for communicator assertions: ``mpi_assert_no_any_tag``,
   ``mpi_assert_no_any_source``, ``mpi_assert_exact_length``, and
