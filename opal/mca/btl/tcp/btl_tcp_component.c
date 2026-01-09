@@ -15,7 +15,7 @@
  * Copyright (c) 2009      Oak Ridge National Laboratory
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2013-2015 NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2013-2024 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -59,7 +59,7 @@
 #ifdef HAVE_SYS_TIME_H
 #    include <sys/time.h>
 #endif
-#if HAVE_SYS_UCRED_H
+#ifdef HAVE_SYS_UCRED_H
 #    include <sys/ucred.h>
 #endif /* HAVE_SYS_UCRED_H */
 #ifdef HAVE_UNISTD_H
@@ -1576,9 +1576,32 @@ static void mca_btl_tcp_component_recv_handler(int sd, short flags, void *user)
     /* lookup the corresponding process */
     btl_proc = mca_btl_tcp_proc_lookup(&guid);
     if (NULL == btl_proc) {
-        opal_show_help("help-mpi-btl-tcp.txt", "server accept cannot find guid", true,
-                       opal_process_info.nodename, getpid());
+        const char *peer = opal_fd_get_peer_name(sd);
+        if( 0 == opal_compare_proc(opal_process_info.my_name, guid) ) {
+            opal_show_help("help-mpi-btl-tcp.txt", "server cannot accept connection from self", true,
+                           peer, OPAL_NAME_PRINT(guid),
+                           opal_process_info.nodename, getpid());
+            /**
+             * Special case: we used an interface to send data to a remote peer
+             * but that interface is only local, and we received our own message.
+             * If we just close the socket this will confuse the connection, as
+             * it will not be able to know that the interface should not be
+             * used. Instead, we can identify ourselves by sending our guid
+             * back to ourselves, marking the interface as improper for future
+             * communications.
+             */
+            if (sizeof(hs_msg) != mca_btl_tcp_send_blocking(sd, &hs_msg, sizeof(hs_msg))) {
+                opal_show_help("help-mpi-btl-tcp.txt", "client handshake fail", true,
+                               opal_process_info.nodename, sizeof(hs_msg),
+                               "connect ACK failed to send magic-id and guid");
+            }
+        } else {
+            opal_show_help("help-mpi-btl-tcp.txt", "server accept cannot find guid", true,
+                           OPAL_NAME_PRINT(opal_process_info.my_name), opal_process_info.nodename,
+                           getpid(), OPAL_NAME_PRINT(guid), peer);
+        }
         CLOSE_THE_SOCKET(sd);
+        free((char*)peer);
         return;
     }
 
