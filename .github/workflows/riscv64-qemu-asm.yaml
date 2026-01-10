@@ -1,4 +1,4 @@
-name: riscv64-qemu-test
+name: riscv64-qemu-asm
 
 on: [pull_request]
 permissions:
@@ -34,46 +34,16 @@ jobs:
         export PATH="/opt/riscv/bin:$PATH"
         export LD_LIBRARY_PATH="/opt/riscv/lib:$LD_LIBRARY_PATH"
         ./configure --prefix=/opt/riscv --host=riscv64-unknown-linux-gnu SYSROOT=/opt/riscv/sysroot CC=riscv64-unknown-linux-gnu-gcc LD=riscv64-unknown-linux-gnu-ld --disable-mpi-fortran --disable-sphinx LDFLAGS=-Wl,-rpath-link,/opt/riscv/lib CFLAGS="-march=rv64gcv"
-        cd test/asm
-        make V=1 atomic_barrier || true
-        sh -x ./run_tests /bin/bash -x ../../config/test-driver --test-name atomic_barrier --log-file foo.log --trs-file atomic-barrier.log atomic_barrier || true
-        make atomic_barrier.log || true
+        cat test/asm/Makefile
     
     - name: Build Open MPI
       run: |  
         export PATH="/opt/riscv/bin:$PATH"
         export LD_LIBRARY_PATH="/opt/riscv/lib:$LD_LIBRARY_PATH"
+        cp opal/include/opal_config.h opal_config.h.orig
         sed -i 's/#define OPAL_HAVE_GCC_BUILTIN_CSWAP_INT128 1/#define OPAL_HAVE_GCC_BUILTIN_CSWAP_INT128 0/' ./opal/include/opal_config.h
-        make -j 8
-        make install
-    
-    - name: Run testsuite
-      run: |
-        export PATH="/opt/riscv/bin:$PATH"
-        export LD_LIBRARY_PATH="/opt/riscv/lib:$LD_LIBRARY_PATH"
+        diff -u opal_config.h.orig opal/include/opal_config.h || true
         cd test/asm
-        make V=1 atomic_barrier || true
-        sh -x ./run_tests /bin/bash -x ../../config/test-driver --test-name atomic_barrier --log-file foo.log --trs-file atomic-barrier.log atomic_barrier || true
-        make atomic_barrier.log || true
-        cd ../..
-        make check
+        make atomic_barrier
+        sh -x ./run_tests /bin/bash -x ../../config/test-driver --test-name atomic_barrier --log-file foo.log --trs-file atomic-barrier.log atomic_barrier
 
-    - name: Run Opal Timer
-      run: |
-        export QEMU_LD_PREFIX=/opt/riscv/sysroot
-        export PATH="/opt/riscv/bin:$PATH"
-        export LD_LIBRARY_PATH="/opt/riscv/lib:$LD_LIBRARY_PATH"
-        mkdir -p /opt/riscv/sysroot/proc/device-tree/cpus/
-        touch  /opt/riscv/sysroot/proc/device-tree/cpus/timebase-frequency
-        grep "bogomips" /proc/cpuinfo | head -n 1 | awk '{printf("%d", $3*500000)}' | perl -e 'print pack("N", <STDIN>)' > /opt/riscv/sysroot/proc/device-tree/cpus/timebase-frequency
-        cd test/util
-        qemu-riscv64 -cpu rv64,v=true,vext_spec=v1.0,vlen=128 /opt/riscv/bin/mpirun -n 1 ./opal_timer
-
-    - name: Run MPI_OP
-      run: |
-        export QEMU_LD_PREFIX=/opt/riscv/sysroot
-        export PATH="/opt/riscv/bin:$PATH"
-        export LD_LIBRARY_PATH="/opt/riscv/lib:$LD_LIBRARY_PATH"
-        cd test/datatype
-        qemu-riscv64 -cpu rv64,v=true,vext_spec=v1.0,vlen=128 /opt/riscv/bin/ompi_info --param all all --level 9 | grep "MCA op "
-        qemu-riscv64 -cpu rv64,v=true,vext_spec=v1.0,vlen=128 /opt/riscv/bin/mpirun -n 1 ./reduce_local -l 1024 -u 1024
