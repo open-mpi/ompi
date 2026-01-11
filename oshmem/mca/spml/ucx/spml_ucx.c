@@ -1651,8 +1651,7 @@ static inline int mca_spml_ucx_signal(shmem_ctx_t ctx,
                                       int sig_op,
                                       int dst)
 {
-
-    uint64_t dummy_prev, dummy_fetch;
+    uint64_t dummy_prev;
 
     if (sig_op == SHMEM_SIGNAL_SET) {
         return MCA_ATOMIC_CALL(swap(ctx, (void*)sig_addr, (void*)&dummy_prev,
@@ -1672,7 +1671,6 @@ static inline int mca_spml_ucx_signal_nb(shmem_ctx_t ctx,
                                       int sig_op,
                                       int dst)
 {
-
     uint64_t dummy_prev, dummy_fetch;
 
     if (sig_op == SHMEM_SIGNAL_SET) {
