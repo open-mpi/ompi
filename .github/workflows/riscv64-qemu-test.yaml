@@ -18,6 +18,14 @@ jobs:
         wget ${riscv_gnu_toolchain_download_path}
         tar -xvf riscv64-glibc-ubuntu-24.04-gcc-nightly-2025.07.03-nightly.tar.xz -C /opt
         sed -i "s|libdir='/mnt/riscv/riscv64-unknown-linux-gnu/lib'|libdir='/opt/riscv/riscv64-unknown-linux-gnu/lib'|g" /opt/riscv/riscv64-unknown-linux-gnu/lib/libatomic.la
+        echo "Bootstrap: docker" > rockylinux.def
+        echo "From: rockylinux:9" >> rockylinux.def
+        echo "" >> rockylinux.def
+        echo "%post" >> rockylinux.def
+        echo "dnf install -y libtool autoconf automake git python3" >> rockylinux.def
+        sudo apt install -y singularity-container
+        sudo -E singularity build rockylinux.sif rockylinux.def
+        sudo mv rockylinux.sif /opt
 
     - name: Checkout Open MPI
       uses: actions/checkout@v4
@@ -26,7 +34,7 @@ jobs:
     
     - name: Bootstrap Open MPI
       run: |
-        ./autogen.pl
+        singularity exec /opt/rockylinux.sif ./autogen.pl
         sed -i '/^func_exec_program_core ()/,/^}/ s/\<exec\>/exec qemu-riscv64 -cpu rv64,v=true,vext_spec=v1.0,vlen=128 -L \/opt\/riscv\/sysroot/g' config/ltmain.sh
 
     - name: Config Open MPI

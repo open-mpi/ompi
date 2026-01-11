@@ -9,6 +9,8 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2026      Research Organization for Information Science
+#                         and Technology (RIST).  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -39,47 +41,49 @@ AM_CFLAGS = $(THREAD_CFLAGS)
 ######################################################################
 
 atomic_barrier_SOURCES = atomic_barrier.c
+atomic_barrier_LDADD = $(top_builddir)/opal/libopen-pal.la
 
 atomic_barrier_noinline.c:
 	ln -s $(top_srcdir)/test/asm/atomic_barrier.c atomic_barrier_noinline.c
 atomic_barrier_noinline_SOURCES = atomic_barrier_noinline.c
 atomic_barrier_noinline_CFLAGS = $(AM_CFLAGS) -DOMPI_DISABLE_INLINE_ASM
+atomic_barrier_noinline_LDADD = $(top_builddir)/opal/libopen-pal.la
 
 ######################################################################
 
 atomic_spinlock_SOURCES = atomic_spinlock.c
 atomic_spinlock_CFLAGS = $(AM_CFLAGS)
-atomic_spinlock_LDADD = $(libs)
+atomic_spinlock_LDADD = $(top_builddir)/opal/libopen-pal.la $(libs)
 
 atomic_spinlock_noinline.c:
 	ln -s $(top_srcdir)/test/asm/atomic_spinlock.c atomic_spinlock_noinline.c
 atomic_spinlock_noinline_SOURCES = atomic_spinlock_noinline.c
 atomic_spinlock_noinline_CFLAGS = $(AM_CFLAGS) -DOMPI_DISABLE_INLINE_ASM
-atomic_spinlock_noinline_LDADD = $(THREAD_LDFLAGS) $(THREAD_LIBS) $(libs)
+atomic_spinlock_noinline_LDADD = $(top_builddir)/opal/libopen-pal.la $(THREAD_LDFLAGS) $(THREAD_LIBS) $(libs)
 
 ######################################################################
 
 atomic_math_SOURCES = atomic_math.c
 atomic_math_CFLAGS = $(AM_CFLAGS)
-atomic_math_LDADD = $(THREAD_LDFLAGS) $(THREAD_LIBS) $(libs)
+atomic_math_LDADD = $(top_builddir)/opal/libopen-pal.la $(THREAD_LDFLAGS) $(THREAD_LIBS) $(libs)
 
 atomic_math_noinline.c:
 	ln -s $(top_srcdir)/test/asm/atomic_math.c atomic_math_noinline.c
 atomic_math_noinline_SOURCES = atomic_math_noinline.c
 atomic_math_noinline_CFLAGS = $(AM_CFLAGS) -DOMPI_DISABLE_INLINE_ASM
-atomic_math_noinline_LDADD = $(THREAD_LDFLAGS) $(THREAD_LIBS) $(libs)
+atomic_math_noinline_LDADD = $(top_builddir)/opal/libopen-pal.la $(THREAD_LDFLAGS) $(THREAD_LIBS) $(libs)
 
 ######################################################################
 
 atomic_cmpset_SOURCES = atomic_cmpset.c
 atomic_cmpset_CFLAGS = $(AM_CFLAGS)
-atomic_cmpset_LDADD = $(THREAD_LDFLAGS) $(THREAD_LIBS) $(libs)
+atomic_cmpset_LDADD = $(top_builddir)/opal/libopen-pal.la $(THREAD_LDFLAGS) $(THREAD_LIBS) $(libs)
 
 atomic_cmpset_noinline.c:
 	ln -s $(top_srcdir)/test/asm/atomic_cmpset.c atomic_cmpset_noinline.c
 atomic_cmpset_noinline_SOURCES = atomic_cmpset_noinline.c
 atomic_cmpset_noinline_CFLAGS = $(AM_CFLAGS) -DOMPI_DISABLE_INLINE_ASM
-atomic_cmpset_noinline_LDADD = $(THREAD_LDFLAGS) $(THREAD_LIBS) $(libs)
+atomic_cmpset_noinline_LDADD = $(top_builddir)/opal/libopen-pal.la $(THREAD_LDFLAGS) $(THREAD_LIBS) $(libs)
 
 ######################################################################
 
