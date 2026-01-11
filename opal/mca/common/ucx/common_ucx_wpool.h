@@ -59,6 +59,7 @@ typedef struct {
 } opal_common_ucx_wpool_t;
 
 extern bool opal_common_ucx_thread_enabled;
+extern bool opal_common_ucx_single_threaded;
 extern opal_atomic_int64_t opal_common_ucx_ep_counts;
 extern opal_atomic_int64_t opal_common_ucx_unpacked_rkey_counts;
 
