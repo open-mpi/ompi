@@ -236,6 +236,7 @@ static int mca_pml_ucx_persistent_request_free(ompi_request_t **rptr)
         ucp_request_free(tmp_req);
     }
     OMPI_DATATYPE_RELEASE(preq->ompi_datatype);
+    OMPI_REQUEST_FINI(&preq->ompi);
     PML_UCX_FREELIST_RETURN(&ompi_pml_ucx.persistent_reqs, &preq->ompi.super);
     *rptr = MPI_REQUEST_NULL;
     return OMPI_SUCCESS;
