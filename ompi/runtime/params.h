@@ -178,6 +178,38 @@ OMPI_DECLSPEC extern char * ompi_mpi_spc_attach_string;
 OMPI_DECLSPEC extern bool ompi_mpi_spc_dump_enabled;
 
 /**
+ * Specifies an absolute filepath to a file containing a comma-delimited list of 
+ * hardware-based performance counters (HWPCs) and counter groups to enable for HPE's Cassini devices.
+ */
+OMPI_DECLSPEC extern char * ompi_mpi_hwpc_cxi_counter_file;
+
+/**
+ * An integer value between 0 and 5 to enable and control the level of reporting of 
+ * hardware performance counters (HWPCs) for HPE's Cassini (CXI) devices.
+ */
+OMPI_DECLSPEC extern int ompi_mpi_hwpc_cxi_counter_report;
+
+/**
+ * Specifies an optional output filename prefix for the detailed hardware-based performance counters 
+ * (HWPCs) counter reports for HPE's Cassini devices to be written. The suffix of the output filename
+ * will be the hostname of the node where the counters are being collected.
+ */
+OMPI_DECLSPEC extern char * ompi_mpi_hwpc_cxi_counter_report_file;
+
+/**
+ * A boolean value that indicates the verbosity output setting for the detailed hardware performance counters
+ * (HWPC)s HPE's Cassini (CXI) devices that are being collected. Set to true for logging and debugging messages.
+ */
+OMPI_DECLSPEC extern bool ompi_mpi_hwpc_cxi_counter_verbose;
+
+/**
+ * A boolean value that indicates the user wishes for all tracked hardware performance counter (HWPCs) delta 
+ * statistics for HPE's Cassini (CXI) devices to be reported in the summary despite being zero-valued. 
+ * Set to true to silence out zero-valued deltas.
+ */
+OMPI_DECLSPEC extern bool ompi_mpi_hwpc_cxi_counter_report_filter_zeros;
+
+/**
  * Timeout for calls to PMIx_Connect(default 0, no timeout)
  */
 OMPI_DECLSPEC extern uint32_t ompi_pmix_connect_timeout;

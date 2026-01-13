@@ -27,10 +27,12 @@ EXTRA_DIST += runtime/help-mpi-runtime.txt
 headers += \
         runtime/mpiruntime.h \
         runtime/params.h \
-	runtime/ompi_info_support.h \
-	runtime/ompi_spc.h \
-	runtime/ompi_rte.h \
-	runtime/ompi_mpit_events.h
+		runtime/ompi_info_support.h \
+		runtime/ompi_spc.h \
+		runtime/ompi_rte.h \
+		runtime/ompi_mpit_events.h \
+        runtime/ompi_hwpc_cxi_constants.h \
+        runtime/ompi_hwpc_cxi_counters.h
 
 libopen_mpi_la_SOURCES += \
         runtime/ompi_mpi_init.c \
@@ -39,7 +41,10 @@ libopen_mpi_la_SOURCES += \
         runtime/ompi_mpi_finalize.c \
         runtime/ompi_mpi_params.c \
         runtime/ompi_mpi_preconnect.c \
-	runtime/ompi_info_support.c \
-	runtime/ompi_spc.c \
-	runtime/ompi_rte.c \
-	runtime/ompi_mpit_register_events.c
+		runtime/ompi_info_support.c \
+		runtime/ompi_spc.c \
+		runtime/ompi_rte.c \
+		runtime/ompi_mpit_register_events.c \
+        runtime/ompi_hwpc_cxi_constants.c \
+        runtime/ompi_hwpc_cxi_counters.c
+
