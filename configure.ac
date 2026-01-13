@@ -303,6 +303,25 @@ AM_CONDITIONAL(SPC_ENABLE, test "$SPC_ENABLE" = "1")
 
 AS_IF([test "$enable_spc" != "no"], [project_spc_amc=true], [project_spc_amc=false])
 
+# Enable/Disable Hardware-Based Performance Counters Capability for HPE's Cassini (CXI) Devices
+AC_MSG_CHECKING([if want hardware-based performance counters for Cassini (HWPC_CXI)])
+AC_ARG_ENABLE([hwpc_cxi],
+    [AS_HELP_STRING([--enable-hwpc-cxi],
+                   [Enable hardware-based performance counters capability for HPE's Cassini devices (default: disabled)])])
+if test "$enable_hwpc_cxi" = "yes"; then
+    AC_MSG_RESULT([yes])
+    HWPC_CXI_ENABLE=1
+else
+    AC_MSG_RESULT([no])
+    HWPC_CXI_ENABLE=0
+fi
+AC_DEFINE_UNQUOTED([HWPC_CXI_ENABLE],
+                   [$HWPC_CXI_ENABLE],
+                   [If the hardware-based performance counters capability for HPE's Cassini devices should be enabled.])
+AM_CONDITIONAL(HWPC_CXI_ENABLE, test "$HWPC_CXI_ENABLE" = "1")
+
+AS_IF([test "$enable_hwpc_cxi" != "no"], [project_hwpc_cxi_amc=true], [project_hwpc_cxi_amc=false])
+
 if test "$enable_binaries" = "no" && test "$enable_dist" = "yes"; then
     AC_MSG_WARN([--disable-binaries is incompatible with --enable dist])
     AC_MSG_ERROR([Cannot continue])

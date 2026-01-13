@@ -87,6 +87,13 @@ bool ompi_mpi_compat_mpi3 = true;
 
 char *ompi_mpi_spc_attach_string = NULL;
 bool ompi_mpi_spc_dump_enabled = false;
+
+char *ompi_mpi_hwpc_cxi_counter_file = NULL;
+int ompi_mpi_hwpc_cxi_counter_report = 0;
+char *ompi_mpi_hwpc_cxi_counter_report_file = NULL;
+bool ompi_mpi_hwpc_cxi_counter_verbose = false;
+bool ompi_mpi_hwpc_cxi_counter_report_filter_zeros = true;
+
 uint32_t ompi_pmix_connect_timeout = 0;
 
 bool ompi_enable_timing = false;
@@ -374,7 +381,7 @@ int ompi_mpi_register_params(void)
 #if SPC_ENABLE == 1
     ompi_mpi_spc_attach_string = NULL;
     (void) mca_base_var_register("ompi", "mpi", NULL, "spc_attach",
-                                 "A comma-delimeted list of software-based performance counters (SPCs) to enable (\"all\" enables all counters).",
+                                 "A comma-delimited list of software-based performance counters (SPCs) to enable (\"all\" enables all counters).",
                                  MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
                                  OPAL_INFO_LVL_4,
                                  MCA_BASE_VAR_SCOPE_READONLY,
@@ -388,6 +395,48 @@ int ompi_mpi_register_params(void)
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &ompi_mpi_spc_dump_enabled);
 #endif // SPC_ENABLE
+
+#if HWPC_CXI_ENABLE == 1
+    ompi_mpi_hwpc_cxi_counter_file = NULL;
+    (void) mca_base_var_register("ompi", "mpi", NULL, "hwpc_cxi_counter_file",
+                                 "Specifies an absolute filepath to a file containing a comma-delimited list of hardware-based performance counters (HWPCs) and counter groups to enable for HPE's Cassini devices.",
+                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                 OPAL_INFO_LVL_4,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &ompi_mpi_hwpc_cxi_counter_file);
+
+    ompi_mpi_hwpc_cxi_counter_report = 1;
+    (void) mca_base_var_register("ompi", "mpi", NULL, "hwpc_cxi_counter_report",
+                                 "An integer value between 0 and 5 to enable and control the level of reporting of HWPC counters for HPE's Cassini devices.",
+                                 MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                 OPAL_INFO_LVL_4,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &ompi_mpi_hwpc_cxi_counter_report);
+
+    ompi_mpi_hwpc_cxi_counter_report_file = NULL;
+    (void) mca_base_var_register("ompi", "mpi", NULL, "hwpc_cxi_counter_report_file",
+                                 "Specifies an optional output filename prefix for the HWPC counter reports for HPE's Cassini devices to be written.",
+                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                 OPAL_INFO_LVL_4,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &ompi_mpi_hwpc_cxi_counter_report_file);
+
+    ompi_mpi_hwpc_cxi_counter_verbose = false;
+    (void) mca_base_var_register("ompi", "mpi", NULL, "hwpc_cxi_counter_verbose",
+                                 "A boolean value indicates the verbosity output setting about the HWPC counters for HPE's Cassini devices that are being collected.",
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                 OPAL_INFO_LVL_4,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &ompi_mpi_hwpc_cxi_counter_verbose);
+
+    ompi_mpi_hwpc_cxi_counter_report_filter_zeros = true;
+    (void) mca_base_var_register("ompi", "mpi", NULL, "hwpc_cxi_counter_report_filter_zeros",
+                                 "A boolean value for whether (true) or not (false) to filter out zero-valued deltas for HWPC counter reports for HPE's Cassini devices.",
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                 OPAL_INFO_LVL_4,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &ompi_mpi_hwpc_cxi_counter_report_filter_zeros);
+#endif // HWPC_CXI_ENABLE
 
     ompi_pmix_connect_timeout = 0; /* infinite timeout - see PMIx standard */
     (void) mca_base_var_register ("ompi", "mpi", NULL, "pmix_connect_timeout",
