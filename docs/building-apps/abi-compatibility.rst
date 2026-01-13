@@ -11,7 +11,7 @@ application compiled with Open MPI v4.x can be executed with Open MPI
 .. important:: ABI is maintained for *most* of the Fortran MPI bindings, too |mdash| see below for additional information.
 
 There are however a few scenarios where an application compiled with
-Open MPI v4.x might not execute correctly with Open MPI 5.0.
+Open MPI v4.x might not execute correctly with Open MPI |ompi_series|.
 
 - Fortran compilers provide varying degrees of ABI guarantees between
   their releases.  As such, Open MPI can only provide ABI guarantees

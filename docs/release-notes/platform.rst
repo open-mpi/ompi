@@ -51,5 +51,5 @@ that a release of Open MPI supports.
   * PBS Pro, Torque
   * Platform LSF (tested with v9.1.1 and later)
   * Slurm
-  * Cray XE, XC, and XK
+  * HPE/Cray PALS
   * Oracle Grid Engine (OGE) 6.1, 6.2 and open source Grid Engine

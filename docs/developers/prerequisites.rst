@@ -59,7 +59,7 @@ the Open MPI build, such as (but not limited to):
 
 * When building from a Git clone:
 
-  * Generating the Fortran bindings
+  * Generating the C and Fortran bindings
 
   * Generating the "show help" messages
 
