@@ -55,7 +55,7 @@ int ompi_comm_revoke_internal(ompi_communicator_t* comm)
                          OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), __func__, ompi_comm_print_cid(comm), comm->c_epoch ));
 
     /* Mark locally revoked */
-    if( ompi_comm_revoke_local(comm, NULL) ) {
+    if( ompi_comm_revoke_local(comm, false) ) {
         /* Broadcast the 'revoke' signal to all other processes. */
         ompi_comm_rbcast_message_t msg;
         msg.cid   = ompi_comm_get_local_cid(comm);
@@ -73,15 +73,15 @@ bool ompi_comm_revoke_local(ompi_communicator_t* comm, bool coll_only)
 {
     if( comm->comm_revoked || (coll_only && comm->coll_revoked) ) {
         OPAL_OUTPUT_VERBOSE((9, ompi_ftmpi_output_handle,
-                             "%s %s: comm %s:%d is already %srevoked, nothing to do",
+                             "%s %s: comm %s:%d is already %s revoked, nothing to do",
                              OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), __func__, ompi_comm_print_cid(comm), comm->c_epoch,
-                             coll_only ? "coll " : ""));
+                             coll_only ? "coll" : "fully"));
         return false;
     }
     OPAL_OUTPUT_VERBOSE((9, ompi_ftmpi_output_handle,
-                         "%s %s: comm %s:%d is marked %srevoked locally",
+                         "%s %s: comm %s:%d is marked %s revoked locally",
                          OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), __func__, ompi_comm_print_cid(comm), comm->c_epoch,
-                         coll_only ? "coll " : ""));
+                         coll_only ? "coll" : "fully"));
     /*
      * Locally revoke the communicator
      *
