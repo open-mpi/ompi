@@ -693,7 +693,7 @@ int mca_coll_acoll_bcast(void *buff, size_t count, struct ompi_datatype_t *datat
             return ompi_coll_base_bcast_intra_knomial(buff, count, datatype, root, comm, module, 0, 4);
         }
     }
-    if ((!subc->initialized || (root != subc->prev_init_root)) && size > 2) {
+    if (!subc->initialized || (root != subc->prev_init_root)) {
         err = mca_coll_acoll_comm_split_init(comm, acoll_module, subc, root);
         if (MPI_SUCCESS != err) {
             return err;
@@ -704,13 +704,8 @@ int mca_coll_acoll_bcast(void *buff, size_t count, struct ompi_datatype_t *datat
     total_dsize = dsize * count;
     rank = ompi_comm_rank(comm);
     sg_cnt = acoll_module->sg_cnt;
-    if (size > 2) {
-        num_nodes = subc->num_nodes;
-        node_size = ompi_comm_size(subc->local_comm);
-    } else {
-        num_nodes = 1;
-        node_size = size;
-    }
+    num_nodes = subc->num_nodes;
+    node_size = ompi_comm_size(subc->local_comm);
 
     /* Use knomial for nodes 8 and above and non-large messages */
     if (((num_nodes >= 8 && total_dsize <= 65536)
@@ -727,9 +722,6 @@ int mca_coll_acoll_bcast(void *buff, size_t count, struct ompi_datatype_t *datat
                               &use_numa, &use_socket, &use_shm, &lin_0,
                               &lin_1, &lin_2, num_nodes, acoll_module, subc);
     no_sg = (sg_cnt == node_size) ? 1 : 0;
-    if (size <= 2) {
-        no_sg = 1;
-    }
 
     /* Disable shm based bcast if: */
     /* - datatype is not a predefined type */
