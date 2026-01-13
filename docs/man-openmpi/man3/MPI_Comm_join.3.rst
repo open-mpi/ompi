@@ -91,6 +91,8 @@ mechanisms.
 ERRORS
 ------
 
+.. include:: ./MPIRUN-ONLY.rst
+
 .. include:: ./ERRORS.rst
 
 .. seealso::

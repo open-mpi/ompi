@@ -270,6 +270,8 @@ of calling :ref:`MPI_Comm_spawn` several times.
 ERRORS
 ------
 
+.. include:: ./MPIRUN-ONLY.rst
+
 .. include:: ./ERRORS.rst
 
 .. seealso::
