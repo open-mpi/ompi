@@ -278,15 +278,14 @@ send_request_pml_complete(mca_pml_ob1_send_request_t *sendreq)
             if( !REQUEST_COMPLETE( &((sendreq->req_send).req_base.req_ompi)) ) {
                 /* Should only be called for long messages (maybe synchronous) */
                 MCA_PML_OB1_SEND_REQUEST_MPI_COMPLETE(sendreq, true);
-            } else {
-                if( MPI_SUCCESS != sendreq->req_send.req_base.req_ompi.req_status.MPI_ERROR ) {
-                    /* An error after freeing the request MUST be fatal
-                     * MPI3 ch3.7: MPI_REQUEST_FREE */
-                    int err = MPI_ERR_REQUEST;
-                    ompi_mpi_errors_are_fatal_comm_handler(NULL, &err, "Send error after request freed");
-                }
             }
         } else {
+            if( MPI_SUCCESS != sendreq->req_send.req_base.req_ompi.req_status.MPI_ERROR ) {
+                /* An error after freeing the request MUST be fatal
+                 * MPI3 ch3.7: MPI_REQUEST_FREE */
+                int err = MPI_ERR_REQUEST;
+                ompi_mpi_errors_are_fatal_comm_handler(NULL, &err, "Send error after request freed");
+            }
             MCA_PML_OB1_SEND_REQUEST_RETURN(sendreq);
         }
     }
