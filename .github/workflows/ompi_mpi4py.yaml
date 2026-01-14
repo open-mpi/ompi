@@ -37,15 +37,15 @@ jobs:
       run:  echo 127.0.0.1 `hostname` | sudo tee -a /etc/hosts > /dev/null
       if:   ${{ runner.os == 'Linux' || runner.os == 'macOS' }}
 
-    - name: Print kernel version
-      run: uname -a
-
-    - name: Disable ASLR
-      run: sudo sysctl -w kernel.randomize_va_space=0
-      if:   ${{ runner.os == 'Linux' }}
+#    - name: Print kernel version
+#      run: uname -a
+#
+#    - name: Disable ASLR
+#      run: sudo sysctl -w kernel.randomize_va_space=0
+#      if:   ${{ runner.os == 'Linux' }}
 
     - name: Install depencencies
-      run:  sudo apt update && sudo apt-get install -y -q
+      run:  sudo apt-get install -y -q
               libnuma-dev libasan8
       if:   ${{ runner.os == 'Linux' }}
 
