@@ -59,7 +59,7 @@
 #ifdef HAVE_SYS_TIME_H
 #    include <sys/time.h>
 #endif
-#if HAVE_SYS_UCRED_H
+#ifdef HAVE_SYS_UCRED_H
 #    include <sys/ucred.h>
 #endif /* HAVE_SYS_UCRED_H */
 #ifdef HAVE_UNISTD_H
