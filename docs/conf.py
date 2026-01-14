@@ -17,6 +17,7 @@ import os
 import os
 import re
 import datetime
+import sphobjinv as soi
 
 year = datetime.datetime.now().year
 
@@ -28,9 +29,7 @@ author = 'The Open MPI Community'
 
 # The docs/Makefile.am will set the env var OMPI_TOP_SRCDIR, because
 # we might be doing a VPATH build.
-ompi_top_srcdir = '..'
-if 'OMPI_TOP_SRCDIR' in os.environ:
-    ompi_top_srcdir = os.environ['OMPI_TOP_SRCDIR']
+ompi_top_srcdir = os.environ.get('OMPI_TOP_SRCDIR', '..')
 
 # Read an Open MPI-style VERSION file
 def read_version_file(path):
@@ -126,8 +125,7 @@ release = ompi_ver[1:]
 # If we're building in an RTD environment for a tag or external (i.e.,
 # PR), use the RTD version -- not what we just read from the VERSIONS
 # file.
-key = 'READTHEDOCS'
-if key in os.environ and os.environ[key] == 'True':
+if os.environ.get('READTHEDOCS') == 'True':
     print("OMPI: found ReadTheDocs build environment")
 
     # Tell Jinja2 templates the build is running on Read the Docs
@@ -178,7 +176,109 @@ extensions = [
     'recommonmark',
     "sphinx_rtd_theme",
     "sphinx.ext.extlinks",
+    "sphinx.ext.intersphinx",
 ]
+
+##########################################################################
+
+# Map to external documentation: PMIx and PRRTE
+
+def _make_intersphinx_mapping(project, name, fallback_base, entries):
+    # If there is no PROJECT_NAME_DOCS_URL_BASE (e.g., in a ReadTheDocs
+    # build), then use the fallback_base.
+    key = f'{project}_{name}_DOCS_URL_BASE'.upper()
+    docs_url_base = os.environ.get(key, fallback_base).strip()
+    key = f'{project}_USING_INTERNAL_{name}'.upper()
+    using_internal = os.environ.get(key, '0').strip()
+
+    if using_internal == '0':
+        # In this case, we're using some external URL base -- either on the
+        # filesystem or via https.  Just use that directly.
+        inv_filename = None
+    else:
+        # In this case, we're using the internal (embedded) version of
+        # the project (e.g., PMIX or PRRTE).  Two things:
+        #
+        # 1. The internal PMIX / PRRTE docs have not yet been installed.
+        #    Hence, we have to build our own objects.inv file to use during
+        #    this Sphinx build.
+        # 2. We have to use relative links because these links must work
+        #    - in the installed tree
+        #    - in a pre-built tarball of the docs (where we don't know
+        #      the install prefix before building)
+        #    NOTE: We specifically realize that these relative links won't
+        #          work in the build tree (because the install tree and build
+        #          tree will likely have different relative paths).  We have
+        #          decided that this is acceptable -- the installed tree is
+        #          the more important case to get right.
+
+        # Use the official Sphinx Object Inventory library to build
+        # an objects.inv file on the fly.  We know we only need a few specific
+        # labels from the internal PMIX / PRRTE docs, so we will just
+        # build those specific entries.
+        #
+        # 1. Initialize an empty inventory.  Since this is a fake inventory,
+        # the name/version values don't matter.
+        inv = soi.Inventory()
+        inv.project = f'Open MPI {project}-{name} documentation'
+        inv.version = '1.2.3'
+
+        # 2. Make the single link that we need
+        # - name: the unique ID for the link
+        # - domain: either 'py' or 'std'; we want "std" for a label
+        # - role: 'class', 'func', 'doc', 'label', etc.
+        # - uri: the relative path to the HTML page
+        # - dispname: what shows up in the link text ('-' means same as name)
+        for label, uri in entries.items():
+            inv.objects.append(soi.DataObjStr(
+                name=label,
+                domain='std',
+                role='label',
+                priority='-1',
+                uri=uri,
+                dispname='-'
+            ))
+
+        # 3. Export to a compressed objects.inv file
+        text_data = inv.data_file(contract=True)
+        zlib_data = soi.compress(text_data)
+        inv_filename = f'{project}-{name}-objects.inv'
+        soi.writebytes(inv_filename, zlib_data)
+
+        # 4. Finally, figure out:
+        #    - the docdir/html for where OMPI html docs will be installed
+        #    - the docdir/html for where this project_name HTML docs will be installed
+        #    Then compute the relative path between them.  This will be
+        #    the URL base that we will use for intersphinx mapping.
+
+        # OMPI HTML docdir
+        docdir = os.environ.get('OMPI_DOCDIR', '.')
+        docdir_html = os.path.join(docdir, 'html')
+
+        # This project_name's HTML docdir
+        docdir_parent = os.path.dirname(docdir)
+        docdir_name_html = os.path.join(docdir_parent, name, 'html')
+
+        # Compute the relative path between them
+        docs_url_base = os.path.relpath(docdir_name_html, start=docdir_html)
+
+    global intersphinx_mapping
+    intersphinx_mapping[name] = (docs_url_base, inv_filename)
+
+intersphinx_mapping = {}
+_make_intersphinx_mapping("opal", "pmix", "https://docs.openpmix.org/en/latest/", {
+    'man1-pmix_info' : 'man/man1/pmix_info.1.html#pmix-info',
+    })
+_make_intersphinx_mapping("ompi", "prrte", "https://docs.prrte.org/en/latest/", {
+    'man1-prte_info' : 'man/man1/ompi-prte_info.1.html#man1-prte-info',
+    })
+
+# Sphinx defaults to automatically resolve *unresolved* labels using all your Intersphinx mappings.
+# This behavior has unintended side-effects, namely that documentations local references can
+# suddenly resolve to an external location.
+# See also:
+# https://www.sphinx-doc.org/en/master/usage/extensions/intersphinx.html#confval-intersphinx_disabled_reftypes
+intersphinx_disabled_reftypes = ["*"]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
