@@ -125,14 +125,16 @@ jobs:
 
     - name: Setting up ASAN environment
       # LD_PRELOAD is needed to make sure ASAN is the first thing loaded
-      # as it will otherwise complain
+      # as it will otherwise complain.
       # Leak detection is currently disabled because of the size of the report.
       # The patcher is disabled because ASAN fails if code mmaps data at fixed
-      # memory addresses, see https://github.com/open-mpi/ompi/issues/12819
+      # memory addresses, see https://github.com/open-mpi/ompi/issues/12819.
       # ODR violation detection is disabled until #13469 is fixed
+      # Disabling stack use after return detection to reduce slowdown, per
+      # https://github.com/llvm/llvm-project/issues/64190.
       run: |
         echo LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libasan.so.8 >> $GITHUB_ENV
-        echo ASAN_OPTIONS=detect_odr_violation=0,abort_on_error=1 >> $GITHUB_ENV
+        echo ASAN_OPTIONS=detect_odr_violation=0,abort_on_error=1,detect_stack_use_after_return=0 >> $GITHUB_ENV
         echo LSAN_OPTIONS=detect_leaks=0,exitcode=0 >> $GITHUB_ENV
         echo OMPI_MCA_memory=^patcher >> $GITHUB_ENV
 
