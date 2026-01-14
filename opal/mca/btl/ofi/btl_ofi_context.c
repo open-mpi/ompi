@@ -310,6 +310,56 @@ mca_btl_ofi_context_t *get_ofi_context_rr(mca_btl_ofi_module_t *btl)
     return &btl->contexts[rr_num++ % btl->num_contexts];
 }
 
+static void inline complete_op_context(mca_btl_ofi_context_t* context,
+                                       void *op_context, int rc)
+{
+    mca_btl_ofi_completion_context_t *c_ctx =
+        (mca_btl_ofi_completion_context_t*) op_context;
+    /* We are casting to every type  here just for simplicity. */
+    mca_btl_ofi_base_completion_t *comp =
+        (mca_btl_ofi_base_completion_t *) c_ctx->comp;
+    mca_btl_ofi_frag_completion_t *frag_comp =
+        (mca_btl_ofi_frag_completion_t *) c_ctx->comp;
+    mca_btl_ofi_rdma_completion_t *rdma_comp
+        = (mca_btl_ofi_rdma_completion_t *) c_ctx->comp;
+
+    switch (comp->type) {
+    case MCA_BTL_OFI_TYPE_GET:
+    case MCA_BTL_OFI_TYPE_PUT:
+    case MCA_BTL_OFI_TYPE_AOP:
+    case MCA_BTL_OFI_TYPE_AFOP:
+    case MCA_BTL_OFI_TYPE_CSWAP:
+        /* call the callback */
+        if (rdma_comp->cbfunc) {
+            rdma_comp->cbfunc(comp->btl, comp->endpoint, rdma_comp->local_address,
+                              rdma_comp->local_handle, rdma_comp->cbcontext,
+                              rdma_comp->cbdata, rc);
+        }
+
+        MCA_BTL_OFI_NUM_RDMA_DEC((mca_btl_ofi_module_t *) comp->btl);
+        break;
+
+    case MCA_BTL_OFI_TYPE_RECV:
+        mca_btl_ofi_recv_frag((mca_btl_ofi_module_t *) comp->btl,
+                              (mca_btl_ofi_endpoint_t *) comp->endpoint, context,
+                              frag_comp->frag, rc);
+        break;
+
+    case MCA_BTL_OFI_TYPE_SEND:
+        MCA_BTL_OFI_NUM_SEND_DEC((mca_btl_ofi_module_t *) comp->btl);
+        mca_btl_ofi_frag_complete(frag_comp->frag, rc);
+        break;
+
+    default:
+        /* catasthrophic */
+        BTL_ERROR(("unknown completion type"));
+        MCA_BTL_OFI_ABORT();
+    }
+
+    /* return the completion handler */
+    opal_free_list_return(comp->my_list, (opal_free_list_item_t *) comp);
+}
+
 int mca_btl_ofi_context_progress(mca_btl_ofi_context_t *context)
 {
 
@@ -319,11 +369,6 @@ int mca_btl_ofi_context_progress(mca_btl_ofi_context_t *context)
     struct fi_cq_entry cq_entry[MCA_BTL_OFI_DEFAULT_MAX_CQE];
     struct fi_cq_err_entry cqerr = {0};
 
-    mca_btl_ofi_completion_context_t *c_ctx;
-    mca_btl_ofi_base_completion_t *comp;
-    mca_btl_ofi_rdma_completion_t *rdma_comp;
-    mca_btl_ofi_frag_completion_t *frag_comp;
-
     ret = fi_cq_read(context->cq, &cq_entry, mca_btl_ofi_component.num_cqe_read);
 
     if (0 < ret) {
@@ -331,49 +376,7 @@ int mca_btl_ofi_context_progress(mca_btl_ofi_context_t *context)
         for (int i = 0; i < events_read; i++) {
             if (NULL != cq_entry[i].op_context) {
                 ++events;
-
-                c_ctx = (mca_btl_ofi_completion_context_t *) cq_entry[i].op_context;
-
-                /* We are casting to every type  here just for simplicity. */
-                comp = (mca_btl_ofi_base_completion_t *) c_ctx->comp;
-                frag_comp = (mca_btl_ofi_frag_completion_t *) c_ctx->comp;
-                rdma_comp = (mca_btl_ofi_rdma_completion_t *) c_ctx->comp;
-
-                switch (comp->type) {
-                case MCA_BTL_OFI_TYPE_GET:
-                case MCA_BTL_OFI_TYPE_PUT:
-                case MCA_BTL_OFI_TYPE_AOP:
-                case MCA_BTL_OFI_TYPE_AFOP:
-                case MCA_BTL_OFI_TYPE_CSWAP:
-                    /* call the callback */
-                    if (rdma_comp->cbfunc) {
-                        rdma_comp->cbfunc(comp->btl, comp->endpoint, rdma_comp->local_address,
-                                          rdma_comp->local_handle, rdma_comp->cbcontext,
-                                          rdma_comp->cbdata, OPAL_SUCCESS);
-                    }
-
-                    MCA_BTL_OFI_NUM_RDMA_DEC((mca_btl_ofi_module_t *) comp->btl);
-                    break;
-
-                case MCA_BTL_OFI_TYPE_RECV:
-                    mca_btl_ofi_recv_frag((mca_btl_ofi_module_t *) comp->btl,
-                                          (mca_btl_ofi_endpoint_t *) comp->endpoint, context,
-                                          frag_comp->frag);
-                    break;
-
-                case MCA_BTL_OFI_TYPE_SEND:
-                    MCA_BTL_OFI_NUM_SEND_DEC((mca_btl_ofi_module_t *) comp->btl);
-                    mca_btl_ofi_frag_complete(frag_comp->frag, OPAL_SUCCESS);
-                    break;
-
-                default:
-                    /* catasthrophic */
-                    BTL_ERROR(("unknown completion type"));
-                    MCA_BTL_OFI_ABORT();
-                }
-
-                /* return the completion handler */
-                opal_free_list_return(comp->my_list, (opal_free_list_item_t *) comp);
+                complete_op_context(context, cq_entry[i].op_context, OPAL_SUCCESS);
             }
         }
     } else if (OPAL_UNLIKELY(ret == -FI_EAVAIL)) {
@@ -383,10 +386,35 @@ int mca_btl_ofi_context_progress(mca_btl_ofi_context_t *context)
         if (0 > ret) {
             BTL_ERROR(("%s:%d: Error returned from fi_cq_readerr: %s(%d)", __FILE__, __LINE__,
                        fi_strerror(-ret), ret));
-        } else {
-            BTL_ERROR(("fi_cq_readerr: (provider err_code = %d)\n", cqerr.prov_errno));
+            MCA_BTL_OFI_ABORT();
+        } else if(NULL != cqerr.op_context){
+            switch(cqerr.err) {
+            case -FI_EIO: {
+                mca_btl_ofi_completion_context_t *c_ctx =
+                    (mca_btl_ofi_completion_context_t*) cqerr.op_context;
+                mca_btl_ofi_base_completion_t *comp =
+                    (mca_btl_ofi_base_completion_t*) c_ctx->comp;
+                mca_btl_ofi_module_t *ofi_btl =
+                    (mca_btl_ofi_module_t*) comp->btl;
+                if(ofi_btl->ofi_error_cb){
+                    opal_proc_t *ep_proc = NULL;
+                    if(comp->endpoint){
+                        ep_proc = comp->endpoint->ep_proc;
+                    }
+                    ofi_btl->ofi_error_cb(comp->btl, 0, ep_proc,
+                        "IO error reported by libfabric");
+                }
+
+                ++events;
+                complete_op_context(context, cqerr.op_context, OPAL_ERR_UNREACH);
+                break;
+            }
+            default:
+                BTL_ERROR(("fi_cq_readerr: %s(%d) (provider err_code = %d)\n",
+                           fi_strerror(-cqerr.err), cqerr.err, cqerr.prov_errno));
+                MCA_BTL_OFI_ABORT();
+            }
         }
-        MCA_BTL_OFI_ABORT();
     }
 #ifdef FI_EINTR
     /* sometimes, sockets provider complain about interrupt. We do nothing. */
