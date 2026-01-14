@@ -373,4 +373,30 @@ int mca_coll_han_comm_create(struct ompi_communicator_t *comm,
     return OMPI_SUCCESS;
 }
 
-
+int mca_coll_han_revoke_local(ompi_communicator_t *comm,
+                              mca_coll_base_module_t *module)
+{
+    // Note that this "coll" revokes the subcomms regardless of whether the
+    // parent comm is "coll" revoked or "fully" revoked, so it is important
+    // to only use collective tags on communication in these subcomms. Else,
+    // one should check the impact to the overall revocation process before
+    // changing these to "fully" revoking the subcomms.
+    mca_coll_han_module_t *han_module = (mca_coll_han_module_t*) module;
+    for(int i = 0; i < NB_TOPO_LVL; i++){
+        if(NULL == han_module->sub_comm[i]) continue;
+        ompi_comm_revoke_local(han_module->sub_comm[i], true);
+    }
+    if(han_module->cached_low_comms != NULL){
+        for(int i = 0; i < COLL_HAN_LOW_MODULES; i++){
+            if(NULL == han_module->cached_low_comms[i]) continue;
+            ompi_comm_revoke_local(han_module->cached_low_comms[i], true);
+        }
+    }
+    if(han_module->cached_up_comms != NULL){
+        for(int i = 0; i < COLL_HAN_UP_MODULES; i++){
+            if(NULL == han_module->cached_up_comms[i]) continue;
+            ompi_comm_revoke_local(han_module->cached_up_comms[i], true);
+        }
+    }
+    return MPI_SUCCESS;
+}

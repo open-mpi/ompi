@@ -47,6 +47,7 @@
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/base.h"
 #include "ompi/mca/coll/base/coll_base_util.h"
+#include "ompi/mca/coll/base/coll_base_functions.h"
 
 /*
  * Stuff for the OBJ interface
@@ -108,6 +109,7 @@ int mca_coll_base_comm_select(ompi_communicator_t * comm)
     /* Initialize all the relevant pointers, since they're used as
      * sentinel values */
     comm->c_coll = (mca_coll_base_comm_coll_t*)calloc(1, sizeof(mca_coll_base_comm_coll_t));
+    comm->c_coll->coll_revoke_local = mca_coll_base_revoke_local;
 
     opal_output_verbose(10, ompi_coll_base_framework.framework_output,
                         "coll:base:comm_select: Checking all available modules");

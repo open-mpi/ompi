@@ -474,6 +474,9 @@ mca_coll_han_reduce_intra_dynamic(REDUCE_BASE_ARGS,
 int
 mca_coll_han_scatter_intra_dynamic(SCATTER_BASE_ARGS,
                                    mca_coll_base_module_t *module);
+int
+mca_coll_han_revoke_local(struct ompi_communicator_t *comm,
+                          mca_coll_base_module_t *module);
 
 int mca_coll_han_barrier_intra_simple(struct ompi_communicator_t *comm,
                                       mca_coll_base_module_t *module);
