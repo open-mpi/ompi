@@ -559,6 +559,9 @@ int ompi_group_compare(ompi_group_t *group1,
 
 bool ompi_group_have_remote_peers (ompi_group_t *group)
 {
+    if (group->grp_flags & (OMPI_GROUP_LOCAL | OMPI_GROUP_NON_LOCAL) ) {
+        return group->grp_flags & OMPI_GROUP_NON_LOCAL;
+    }
     for (int i = 0 ; i < group->grp_proc_count ; ++i) {
         ompi_proc_t *proc = NULL;
 #if OMPI_GROUP_SPARSE
@@ -569,14 +572,17 @@ bool ompi_group_have_remote_peers (ompi_group_t *group)
             /* the proc must be stored in the group or cached in the proc
              * hash table if the process resides in the local node
              * (see ompi_proc_complete_init) */
+            group->grp_flags |= OMPI_GROUP_NON_LOCAL;
             return true;
         }
 #endif
         if (!OPAL_PROC_ON_LOCAL_NODE(proc->super.proc_flags)) {
+            group->grp_flags |= OMPI_GROUP_NON_LOCAL;
             return true;
         }
     }
 
+    group->grp_flags |= OMPI_GROUP_LOCAL;
     return false;
 }
 
