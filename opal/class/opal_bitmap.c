@@ -14,6 +14,7 @@
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2025      Jeffrey M. Squyres. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -361,20 +362,36 @@ int opal_bitmap_num_unset_bits(opal_bitmap_t *bm, int len)
 int opal_bitmap_num_set_bits(opal_bitmap_t *bm, int len)
 {
     int i, cnt = 0;
+    int num_elements, remaining_bits;
     uint64_t val;
 
 #if OPAL_ENABLE_DEBUG
-    if ((len < 0) || NULL == bm || (len >= (bm->array_size * SIZE_OF_BASE_TYPE))) {
+    if ((len < 0) || NULL == bm || (len > (bm->array_size * SIZE_OF_BASE_TYPE))) {
         return 0;
     }
 #endif
 
-    for (i = 0; i < len; ++i) {
+    /* Calculate how many full array elements to process */
+    num_elements = len / SIZE_OF_BASE_TYPE;
+    remaining_bits = len % SIZE_OF_BASE_TYPE;
+
+    /* Count bits in full elements */
+    for (i = 0; i < num_elements; ++i) {
         if (0 == (val = bm->bitmap[i])) {
             continue;
         }
         /*  Peter Wegner in CACM 3 (1960), 322. This method goes through as many
          *  iterations as there are set bits. */
+        for (; val; cnt++) {
+            val &= val - 1; /* clear the least significant bit set */
+        }
+    }
+
+    /* Handle the last partial element if there are remaining bits */
+    if (remaining_bits > 0) {
+        val = bm->bitmap[num_elements];
+        /* Mask off bits beyond len */
+        val &= ((1UL << remaining_bits) - 1);
         for (; val; cnt++) {
             val &= val - 1; /* clear the least significant bit set */
         }
