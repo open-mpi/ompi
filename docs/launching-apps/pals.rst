@@ -27,7 +27,8 @@ documentation :doc:`tm`.
 Verify PALS support
 -------------------
 
-The ``prte_info`` command can be used to determine whether or not an
+The :ref:`prte_info(1) <prrte:man1-prte_info>`
+command can be used to determine whether or not an
 installed Open MPI includes PALS support:
 
 .. code-block::
@@ -49,11 +50,12 @@ Using ``mpirun``
 
 This section assumes there is PALS support in the PRRTE being used for the Open MPI installation.
 
-When ``mpirun`` is launched in a PBS job, ``mpirun`` will
+When :ref:`mpirun(1) <man1-mpirun>` is launched in a PBS job,
+:ref:`mpirun(1) <man1-mpirun>` will
 automatically utilize the PALS infrastructure for launching and
 controlling the individual MPI processes.
 
-.. note:: Using ``mpirun`` is the recommended method for launching Open
+.. note:: Using :ref:`mpirun(1) <man1-mpirun>` is the recommended method for launching Open
    MPI jobs on HPE systems where PALS is available. This is primarily due to limitations in the
    PMIx server provided in PALS.
 
@@ -75,7 +77,7 @@ Using PALS "direct launch" functionality
 ----------------------------------------
 
 The HPE PALS 1.5.0 documentation states that it comes pre-built with PMIx support.
-By default the PALS ``aprun`` launcher does not use PMIx.  To use the launcher's
+By default the PALS ``aprun(1)`` launcher does not use PMIx.  To use the launcher's
 PMIx capabilities either the command line option ``--pmix=pmix`` needs to be set
 or the ``ALPS_PMI`` environment variable needs to be set to ``pmix``.
 
@@ -89,4 +91,4 @@ or the ``ALPS_PMI`` environment variable needs to be set to ``pmix``.
 
 In these examples, four instances of the application are started, two instances per node.
 
-See the PALS ``aprun`` man page for documentation on how to this command.
+See the PALS ``aprun(1)`` man page for documentation on how to this command.
