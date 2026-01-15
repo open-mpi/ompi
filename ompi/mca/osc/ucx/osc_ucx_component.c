@@ -188,6 +188,7 @@ static int component_register(void) {
     free(description_str);
 
     opal_common_ucx_thread_enabled = opal_using_threads();
+    opal_common_ucx_single_threaded = opal_single_threaded;
     mca_osc_ucx_component.acc_single_intrinsic = false;
 
     opal_asprintf(&description_str, "Enable optimizations for MPI_Fetch_and_op, MPI_Accumulate, etc for codes "
