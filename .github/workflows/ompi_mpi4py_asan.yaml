@@ -64,7 +64,7 @@ jobs:
               --disable-oshmem
               --disable-silent-rules
               --prefix=/opt/openmpi
-              CFLAGS="-O2 -fno-omit-frame-pointer -g -fsanitize=address"
+              CFLAGS="-O1 -fno-omit-frame-pointer -g -fsanitize=address"
               LDFLAGS="-Wl,-rpath,/opt/openmpi/lib -fsanitize=address"
       working-directory: mpi-build
 
@@ -90,12 +90,6 @@ jobs:
         mkdir -p "$(dirname "$mca_params")"
         echo rmaps_default_mapping_policy = :oversubscribe >> "$mca_params"
 
-    - name: Show MPI
-      run:  ompi_info
-
-    - name: Show MPICC
-      run:  mpicc -show
-
     - name: Use Python
       uses: actions/setup-python@v5
       with:
@@ -116,11 +110,6 @@ jobs:
         repository: ${{ inputs.repository || 'mpi4py/mpi4py' }}
         ref: ${{ inputs.ref }}
 
-    - name: Install mpi4py
-      run:  python -m pip install .
-      env:
-        CFLAGS: "-O0"
-
     - name: Setting up ASAN environment
       # LD_PRELOAD is needed to make sure ASAN is the first thing loaded
       # as it will otherwise complain.
@@ -136,6 +125,14 @@ jobs:
         echo LSAN_OPTIONS=detect_leaks=0,exitcode=0 >> $GITHUB_ENV
         echo OMPI_MCA_memory=^patcher >> $GITHUB_ENV
 
+    - name: Show MPI
+      run:  ompi_info
+
+    - name: Install mpi4py
+      run:  python -m pip install .
+      env:
+        CFLAGS: "-O0"
+
     - name: Test mpi4py (singleton)
       run:  python test/main.py -v -x TestExcErrhandlerNull
       if:   ${{ true }}
@@ -150,10 +147,3 @@ jobs:
       run:  mpiexec -n 4 python test/main.py -v -f -x TestExcErrhandlerNull
       if:   ${{ true }}
       timeout-minutes: 10
-
-    - name: Show MPI (ASAN)
-      run:  ompi_info
-
-    - name: Show MPICC (ASAN)
-      run:  mpicc -show
-
