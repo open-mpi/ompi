@@ -122,7 +122,7 @@ jobs:
       run: |
         echo LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libasan.so.8 >> $GITHUB_ENV
         echo ASAN_OPTIONS=detect_odr_violation=0,abort_on_error=1,detect_stack_use_after_return=0 >> $GITHUB_ENV
-        echo LSAN_OPTIONS=detect_leaks=0,exitcode=0 >> $GITHUB_ENV
+        echo LSAN_OPTIONS=detect_leaks=1,exitcode=0 >> $GITHUB_ENV
         echo OMPI_MCA_memory=^patcher >> $GITHUB_ENV
 
     - name: Show MPI
