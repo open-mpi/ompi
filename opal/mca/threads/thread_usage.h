@@ -33,6 +33,7 @@
 #include "opal/sys/atomic.h"
 
 OPAL_DECLSPEC extern bool opal_uses_threads;
+OPAL_DECLSPEC extern bool opal_single_threaded;
 
 /**
  * Check and see if the process is using multiple threads.

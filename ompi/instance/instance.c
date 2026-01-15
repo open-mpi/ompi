@@ -837,6 +837,9 @@ int ompi_mpi_instance_init (int ts_level,  opal_info_t *info, ompi_errhandler_t 
         opal_set_using_threads(true);
     }
 
+    /* Set single-threaded flag for optimization purposes */
+    opal_single_threaded = (ts_level == MPI_THREAD_SINGLE);
+
     opal_mutex_lock (&instance_lock);
     if (0 == opal_atomic_fetch_add_32 (&ompi_instance_count, 1)) {
         ret = ompi_mpi_instance_init_common (argc, argv);
