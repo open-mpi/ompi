@@ -25,19 +25,16 @@
  */
 #define DO_SHMEM_TYPE_ATOMIC_SET(ctx, type, target, value, pe) do { \
         int rc = OSHMEM_SUCCESS;                                    \
-        size_t size = 0;                                            \
-        type out_value;                                             \
+        size_t size = sizeof(type);                                 \
         uint64_t value_tmp;                                         \
         RUNTIME_CHECK_INIT();                                       \
         RUNTIME_CHECK_PE(pe);                                       \
         RUNTIME_CHECK_ADDR(target);                                 \
                                                                     \
-        size = sizeof(out_value);                                   \
         memcpy(&value_tmp, &value, size);                           \
-        rc = MCA_ATOMIC_CALL(swap(                                  \
+        rc = MCA_ATOMIC_CALL(set(                                   \
             ctx,                                                    \
             (void*)target,                                          \
-            (void*)&out_value,                                      \
             value_tmp,                                              \
             size,                                                   \
             pe));                                                   \
