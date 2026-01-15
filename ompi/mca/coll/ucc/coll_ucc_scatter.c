@@ -25,6 +25,27 @@ mca_coll_ucc_scatter_init_common(const void *sbuf, size_t scount,
     int comm_size = ompi_comm_size(ucc_module->comm);
     uint64_t flags = 0;
 
+#if UCC_API_VERSION >= UCC_VERSION(1, 8)
+    if (comm_rank == root) {
+        if ((is_inplace || ompi_datatype_is_contiguous_memory_layout(rdtype, rcount)) &&
+            ompi_datatype_is_contiguous_memory_layout(sdtype, scount * comm_size)) {
+            ucc_sdt = ompi_dtype_to_ucc_dtype(sdtype);
+            if (!is_inplace) {
+                ucc_rdt = ompi_dtype_to_ucc_dtype(rdtype);
+            }
+        } else {
+            ucc_sdt = COLL_UCC_DT_UNSUPPORTED;
+            ucc_rdt = COLL_UCC_DT_UNSUPPORTED;
+        }
+    } else {
+        if (ompi_datatype_is_contiguous_memory_layout(rdtype, rcount)) {
+            ucc_rdt = ompi_dtype_to_ucc_dtype(rdtype);
+        } else {
+            ucc_sdt = COLL_UCC_DT_UNSUPPORTED;
+            ucc_rdt = COLL_UCC_DT_UNSUPPORTED;
+        }
+    }
+#else
     if (comm_rank == root) {
         if (!(is_inplace || ompi_datatype_is_contiguous_memory_layout(rdtype, rcount)) ||
             !ompi_datatype_is_contiguous_memory_layout(sdtype, scount * comm_size)) {
@@ -55,6 +76,7 @@ mca_coll_ucc_scatter_init_common(const void *sbuf, size_t scount,
             goto fallback;
         }
     }
+#endif
 
     flags = (is_inplace ? UCC_COLL_ARGS_FLAG_IN_PLACE : 0) |
             (persistent ? UCC_COLL_ARGS_FLAG_PERSISTENT : 0);
