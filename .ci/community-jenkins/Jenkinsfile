@@ -14,7 +14,6 @@
 //
 //
 // WORKSPACE Layout:
-//   autotools-install/    Autotools install for the builder
 //   ompi/                 Open MPI source tree
 
 // We if we push changes to a PR, we don't need to keep old jobs running, so
