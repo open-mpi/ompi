@@ -55,9 +55,26 @@ println('Tests Completed')
 // although currently we only support the one stage of "everything", where each
 // build stage is a map of different configurations to test.
 def prepare_check_stages() {
-    def configure_options = ["--disable-dlopen", "--disable-oshmem", "--enable-builtin-atomic", "--enable-ipv6"]
-    def compilers = ["clang10", "gcc7", "gcc8", "gcc9", "gcc10"]
-    def platforms = ["amazon_linux_2", "amazon_linux_2-arm64", "rhel8"]
+    def configure_options = [
+	"--disable-dlopen",
+	"--disable-oshmem",
+	"--enable-builtin-atomic",
+	"--enable-ipv6"
+    ]
+    def compilers = [
+	"gcc14",
+	"clang18"
+    ]
+    def platforms = [
+	"amazon_linux_2",
+	"amazon_linux_2-arm64",
+	"rhel8",
+	"amazon_linux_2023-arm64",
+	"amazon_linux_2023-x86_64",
+	"ubuntu_20.04",
+	"ubuntu_24.04-arm64",
+	"ubuntu_24.04-x86_64"
+    ]
     def check_stages_list = []
 
     // Build everything stage
