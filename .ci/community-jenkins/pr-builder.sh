@@ -154,6 +154,14 @@ echo "--> Configure arguments: $CONFIGURE_ARGS"
 sha1=`git rev-parse HEAD`
 echo "--> Building commit ${sha1}"
 
+if test "${HOME}/ompi-setup-python.sh" ; then
+    echo "--> Initializing Python environment"
+    . ${HOME}/ompi-setup-python.sh
+    find . -name "requirements.txt" -exec ${PIP_CMD} install -r {} \;
+else
+    echo "--> No Python environment found, hoping for the best."
+fi
+
 if test -f autogen.pl; then
     echo "--> running ./autogen.pl ${AUTOGEN_ARGS}"
     ./autogen.pl ${AUTOGEN_ARGS}
