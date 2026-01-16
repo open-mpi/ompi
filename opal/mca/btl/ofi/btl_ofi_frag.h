@@ -38,7 +38,8 @@ int mca_btl_ofi_send(mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoi
                      mca_btl_base_descriptor_t *descriptor, mca_btl_base_tag_t tag);
 
 int mca_btl_ofi_recv_frag(mca_btl_ofi_module_t *ofi_btl, mca_btl_base_endpoint_t *endpoint,
-                          mca_btl_ofi_context_t *context, mca_btl_ofi_base_frag_t *frag);
+                          mca_btl_ofi_context_t *context, mca_btl_ofi_base_frag_t *frag,
+                          int rc);
 
 struct mca_btl_base_descriptor_t *mca_btl_ofi_prepare_src(mca_btl_base_module_t *btl,
                                                           mca_btl_base_endpoint_t *endpoint,
