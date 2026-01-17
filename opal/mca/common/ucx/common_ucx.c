@@ -26,6 +26,7 @@
 #include "opal/memoryhooks/memory.h"
 #include "opal/util/argv.h"
 #include "opal/util/printf.h"
+#include "opal/util/proc.h"
 
 #include "mpi.h"
 
@@ -416,6 +417,12 @@ OPAL_DECLSPEC int opal_common_ucx_mca_pmix_fence_nb(int *fenced)
 {
     int ret;
     
+    /* Singleton processes don't need PMIx fence */
+    if (opal_process_info.is_singleton) {
+        *fenced = 1;
+        return OPAL_SUCCESS;
+    }
+    
     ret = PMIx_Fence_nb(NULL, 0, NULL, 0, opal_common_ucx_mca_fence_complete_cb, (void *) fenced);
     
     if (PMIX_OPERATION_SUCCEEDED == ret) {
@@ -432,6 +439,11 @@ OPAL_DECLSPEC int opal_common_ucx_mca_pmix_fence(ucp_worker_h worker)
 {
     volatile int fenced = 0;
     int ret;
+
+    /* Singleton processes don't need PMIx fence */
+    if (opal_process_info.is_singleton) {
+        return OPAL_SUCCESS;
+    }
 
     ret = PMIx_Fence_nb(NULL, 0, NULL, 0, opal_common_ucx_mca_fence_complete_cb,
                         (void *) &fenced);
