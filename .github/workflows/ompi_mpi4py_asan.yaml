@@ -58,6 +58,7 @@ jobs:
     # and we don't need to include that in our artifact.
     - name: Configure Open MPI
       run:  ./configure
+              --enable-debug
               --disable-dependency-tracking
               --disable-sphinx
               --disable-mpi-fortran
@@ -121,7 +122,7 @@ jobs:
       # https://github.com/llvm/llvm-project/issues/64190.
       run: |
         echo LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libasan.so.8 >> $GITHUB_ENV
-        echo ASAN_OPTIONS=detect_odr_violation=0,abort_on_error=1 >> $GITHUB_ENV
+        echo ASAN_OPTIONS=detect_odr_violation=0,abort_on_error=1,detect_stack_use_after_return=1 >> $GITHUB_ENV
         echo LSAN_OPTIONS=detect_leaks=0,exitcode=0 >> $GITHUB_ENV
         echo OMPI_MCA_memory=^patcher >> $GITHUB_ENV
 
