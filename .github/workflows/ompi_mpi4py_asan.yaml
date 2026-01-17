@@ -127,7 +127,7 @@ jobs:
         echo OMPI_MCA_memory=^patcher >> $GITHUB_ENV
 
     - name: Show MPI
-      run:  ompi_info
+      run:  ompi_info --all --all
 
     - name: Install mpi4py
       run:  python -m pip install .
