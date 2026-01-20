@@ -8,7 +8,7 @@
 # Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
 # Copyright (c) 2022      IBM Corporation.  All rights reserved.
 # Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
-# Copyright (c) 2025      Triad National Security, LLC. All rights
+# Copyright (c) 2025-2026 Triad National Security, LLC. All rights
 #                         reserved.
 # $COPYRIGHT$
 #
@@ -160,6 +160,9 @@ CLEANFILES += mpi-ignore-tkr-sizeof.h mpi-ignore-tkr-sizeof.f90
 MOSTLYCLEANFILES = *.mod
 CLEANFILES += *.i90
 MAINTAINERCLEANFILES = mpi-ignore-tkr-interfaces-generated.h
+if OPAL_DEVEL_BUILD
+CLEANFILES += mpi-ignore-tkr-interfaces-generated.h
+endif
 
 # Install the generated .mod files.  Unfortunately, each F90 compiler
 # may generate different filenames, so we have to use a glob.  :-(

@@ -11,7 +11,7 @@
 #                         and Technology (RIST).  All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # Copyright (c) 2017-2018 FUJITSU LIMITED.  All rights reserved.
-# Copyright (c) 2019-2022 Triad National Security, LLC. All rights
+# Copyright (c) 2019-2026 Triad National Security, LLC. All rights
 #                         reserved.
 # Copyright (c) 2020      Sandia National Laboratories. All rights reserved.
 # Copyright (c) 2022      IBM Corporation.  All rights reserved.
@@ -453,6 +453,9 @@ EXTRA_DIST = $(prototype_files)
 
 # Delete generated file on maintainer-clean
 MAINTAINERCLEANFILES = api_f08_generated.F90
+if OPAL_DEVEL_BUILD
+CLEANFILES += api_f08_generated.F90
+endif
 
 ###########################################################################
 

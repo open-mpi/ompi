@@ -21,7 +21,7 @@ dnl Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
 dnl Copyright (c) 2015      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl Copyright (c) 2020      Amazon.com, Inc. or its affiliates.  All Rights
-dnl Copyright (c) 2019-2021 Triad National Security, LLC. All rights
+dnl Copyright (c) 2019-2026 Triad National Security, LLC. All rights
 dnl                         reserved.
 dnl
 dnl $COPYRIGHT$
@@ -39,13 +39,18 @@ opal_show_subtitle "General configuration options"
 # Is this a developer copy?
 #
 
+AC_MSG_CHECKING([Checking if this is a developer copy])
 if test -d ${OPAL_TOP_SRCDIR}/.git; then
     OPAL_DEVEL=1
+    AC_MSG_RESULT([yes])
 else
     OPAL_DEVEL=0
+    AC_MSG_RESULT([no])
 fi
-
-
+AM_CONDITIONAL([OPAL_DEVEL_BUILD], [test "$OPAL_DEVEL" = "1"])
+AS_IF([test "$OPAL_DEVEL" = "1"],
+          [OPAL_SUMMARY_ADD([Miscellaneous], [Developer build], [], ["yes"])],
+          [OPAL_SUMMARY_ADD([Miscellaneous], [Developer build], [], ["no"])])
 #
 # Code coverage options
 #
