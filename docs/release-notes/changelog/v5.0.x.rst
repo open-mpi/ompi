@@ -4,6 +4,51 @@ Open MPI v5.0.x series
 This file contains all the NEWS updates for the Open MPI v5.0.x
 series, in reverse chronological order.
 
+Open MPI Version v5.0.10rc1
+------------------------------
+:Date: 20 January 2026
+
+- Internal PMIx and PRRTe versions:
+  - PMIx (v5.0.10). Repo: ``https://github.com/openpmix/openpmix``. Commit hash: ``d8b5823ebbce7edf819570ea30c77ce2f66c4b79``.
+  - PRRTE (v3.0.13). Repo: ``https://github.com/openpmix/prrte``. Commit hash: ``912c62c67f7f2ce84fbe8f7e6a71c1773d1b63d2``.
+
+- OSHMEM Enhancements
+  - OSHMEM/SPML/UCX: Implemented put_signal and put_signal_nbi operations for OpenSHMEM 1.5 compliance
+  - OSHMEM/SHMEM/C: Added shmem_signal_fetch implementation
+  - OSHMEM/ATOMIC/UCX: Added UCX version check for non-blocking atomics value packing
+
+- OFI (libfabric) Improvements
+  - BTL/OFI: Added fault tolerance support
+  - BTL/OFI: Set domain threading model based on MPI thread support level
+  - BTL/OFI: Added FI_COMPLETION flag to tx and rx attributes
+  - BTL/OFI: Check for valid pointer in error handler to prevent crashes
+  - OFI: Share domain between MTL and BTL components for better resource utilization
+
+- Fault Tolerance (ULFM) Enhancements
+  - Revoke: Fixed null dereference and improved debug prints
+  - Revoke: Centralized entrypoint for locally revoking a communicator
+  - Revoke: Fixed coll/han subcomms revocation
+  - Communicators: Prevent subcomms from being freed before user's communicator
+  - Communicators: Always populate failed procs in comms' groups
+  - Communicators: Retain coll info when adding a callback to the event queue
+
+- Bug Fixes and Minor Enhancements
+  - PML/UCX: Fixed problem with MPI_Mrecv and MPI_Imrecv operations
+  - PML/OB1: Moved sendreq 'error after freed' check to correct location
+  - BTL: Fixed ompi_info display for btl_flags enumeration
+  - BTL/SM: Fixed wrong payload_buffer size during freelist initialization
+  - COLL/UCC: Fixed indentation issues and prevented SEGV on error handling
+  - SHAREDFP/LOCKEDFILE: Removed filename length limitation
+  - OPAL/COMMON/UCX: Fixed assert - changed thread mode sent to UCX API
+  - OPAL: Fixed logic error in opal_bitmap.c array length calculation
+  - Fortran: Create Fortran module directory if it doesn't exist
+  - Documentation: Updated TCP tuning page
+  - Documentation: Added notes that some functions currently require mpirun
+  - Build system: Fixed code scanning alerts (security issues 1-7, 12, 17-19, 21-22)
+  - Build system: Fixed typos throughout the codebase
+  - Build system: Properly support git workspaces in update-my-copyright.py script
+  - GitHub Actions: Updated permissions for better security
+
 Open MPI Version v5.0.9
 ------------------------------
 :Date: 30 October 2025
