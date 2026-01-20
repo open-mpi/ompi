@@ -34,6 +34,8 @@ struct ompi_instance_t {
 
     /* Attributes */
     opal_hash_table_t     *i_keyhash;
+    opal_mutex_t           i_spawned_proc_lock;
+    opal_list_t            i_spawned_proc_namelists;
 
     /* index in Fortran <-> C translation array (for when I get around
      * to implementing fortran support-- UGH) */
@@ -88,7 +90,7 @@ OBJ_CLASS_DECLARATION(ompi_instance_t);
  * the PREDEFINED_COMMUNICATOR_PAD macro?
  * A: Most likely not, but it would be good to check.
  */
-#define PREDEFINED_INSTANCE_PAD 512
+#define PREDEFINED_INSTANCE_PAD 1024
 
 struct ompi_predefined_instance_t {
     ompi_instance_t instance;
@@ -119,6 +121,14 @@ int ompi_mpi_instance_retain (void);
  * @brief Release (and possibly teardown) pre-session_init infrastructure.
  */
 void ompi_mpi_instance_release (void);
+
+/**
+ * @brief Saves jobid of spawned procs to cleanup upon finalize
+ *
+ * @param[in]    spawned_proc_list  list of procs that were spawned
+ * @param[in]    list_size  size of the list of procs that were spawned
+ */
+void ompi_proc_retain_spawned_jobids(ompi_proc_t **spawned_proc_list, size_t list_size);
 
 /**
  * @brief Create a new MPI instance
