@@ -26,6 +26,7 @@
 #include "opal/memoryhooks/memory.h"
 #include "opal/util/argv.h"
 #include "opal/util/printf.h"
+#include "opal/util/proc.h"
 
 #include "mpi.h"
 
@@ -414,27 +415,58 @@ void opal_common_ucx_mca_proc_added(void)
 
 OPAL_DECLSPEC int opal_common_ucx_mca_pmix_fence_nb(int *fenced)
 {
-    return PMIx_Fence_nb(NULL, 0, NULL, 0, opal_common_ucx_mca_fence_complete_cb, (void *) fenced);
+    int ret;
+    
+    /* Singleton processes don't need PMIx fence */
+    if (opal_process_info.is_singleton) {
+        *fenced = 1;
+        return OPAL_SUCCESS;
+    }
+    
+    ret = PMIx_Fence_nb(NULL, 0, NULL, 0, opal_common_ucx_mca_fence_complete_cb, (void *) fenced);
+    
+    if (PMIX_OPERATION_SUCCEEDED == ret) {
+        /* Fence completed immediately, callback will not be invoked by PMIx.
+         * We need to call it explicitly */
+        opal_common_ucx_mca_fence_complete_cb(PMIX_SUCCESS, (void *) fenced);
+        return OPAL_SUCCESS;
+    }
+    
+    return ret;
 }
 
 OPAL_DECLSPEC int opal_common_ucx_mca_pmix_fence(ucp_worker_h worker)
 {
     volatile int fenced = 0;
-    int ret = OPAL_SUCCESS;
+    int ret;
 
-    if (OPAL_SUCCESS
-        != (ret = PMIx_Fence_nb(NULL, 0, NULL, 0, opal_common_ucx_mca_fence_complete_cb,
-                                (void *) &fenced))) {
+    /* Singleton processes don't need PMIx fence */
+    if (opal_process_info.is_singleton) {
+        return OPAL_SUCCESS;
+    }
+
+    ret = PMIx_Fence_nb(NULL, 0, NULL, 0, opal_common_ucx_mca_fence_complete_cb,
+                        (void *) &fenced);
+    
+    if (PMIX_OPERATION_SUCCEEDED == ret) {
+        /* Fence completed immediately, callback will not be invoked by PMIx.
+         * We need to call it explicitly to maintain the contract. */
+        opal_common_ucx_mca_fence_complete_cb(PMIX_SUCCESS, (void *) &fenced);
+        return OPAL_SUCCESS;
+    }
+    
+    if (PMIX_SUCCESS != ret) {
         return ret;
     }
 
+    /* PMIX_SUCCESS means operation is in progress, callback will be invoked */
     MCA_COMMON_UCX_PROGRESS_LOOP(worker) {
         if(fenced) {
             break;
         }
     }
 
-    return ret;
+    return OPAL_SUCCESS;
 }
 
 static void opal_common_ucx_wait_all_requests(void **reqs, int count, ucp_worker_h worker)
