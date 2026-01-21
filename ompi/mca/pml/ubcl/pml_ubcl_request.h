@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2019-2025 Bull SAS.  All rights reserved.
+ * Copyright (c) 2019-2026 Bull SAS.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -85,6 +85,7 @@ struct mca_pml_ubcl_request_t {
     struct ompi_communicator_t *comm; /**< Communicator */
     struct ompi_proc_t *proc;         /**< Remote ompi proc */
     opal_convertor_t convertor;       /**< Data convertor */
+    ubcl_memory_descriptor_t md;
     ompi_request_complete_fn_t saved_complete_cb; /**< Saved callback from another component (e.g OSC pt2pt) */
     void *saved_complete_cb_data; /**< Saved callback data from another component (e.g OSC pt2pt) */
 
