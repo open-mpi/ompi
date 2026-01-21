@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2019-2025 Bull SAS.  All rights reserved.
+ * Copyright (c) 2019-2026 Bull SAS.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -216,7 +216,6 @@ int mca_pml_ubcl_request_complete_cb(struct ompi_request_t *request)
     return mca_pml_ubcl_request_complete(request);
 }
 
-/* TODO: Get a pointer to status and not a cpy ? */
 void ubcl_request_send_complete_cb(ubcl_status_t status, void *cb_data)
 {
     if (UBCL_SUCCESS != status.status) {
@@ -232,7 +231,9 @@ void ubcl_request_send_complete_cb(ubcl_status_t status, void *cb_data)
     /* This lock cannot be removed, even in thread single mode */
     opal_atomic_lock(&req->req_lock);
     req->completed = 1;
+    ubcl_memory_descriptor_destruct(&req->md);
     opal_atomic_unlock(&req->req_lock);
+
     if (req->is_buffered) {
         mca_pml_base_bsend_request_free(req->comm, (void*)req->buf);
         /* Bsend started completed, but could not be freed, now that UBCL is
@@ -280,6 +281,7 @@ void ubcl_request_recv_complete_cb(ubcl_status_t status, void *cb_data)
     /* This lock cannot be removed, even in thread single mode */
     opal_atomic_lock(&req->req_lock);
     req->completed = 1;
+    ubcl_memory_descriptor_destruct(&req->md);
     opal_atomic_unlock(&req->req_lock);
     ompi_request_complete(&(req->ompi_req), true);
 
