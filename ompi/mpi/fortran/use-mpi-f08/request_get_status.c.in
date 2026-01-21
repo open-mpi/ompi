@@ -12,6 +12,8 @@
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2026      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,15 +29,9 @@ PROTOTYPE VOID request_get_status(REQUEST request, LOGICAL_OUT flag,
     MPI_Request c_req = PMPI_Request_f2c( *request );
     int c_flag = 0;
 
-    /* This seems silly, but someone will do it */
-
-    if (OMPI_IS_FORTRAN_STATUS_IGNORE(status)) {
-        c_ierr = MPI_SUCCESS;
-    } else {
-        c_ierr = @INNER_CALL@(c_req,
-                              &c_flag,
-                              &c_status);
-    }
+    c_ierr = @INNER_CALL@(c_req,
+                          &c_flag,
+                          &c_status);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if(MPI_SUCCESS == c_ierr) {
