@@ -113,7 +113,7 @@ Open MPI provides wrapper compilers for several languages:
 * ``oshfort``, ``shmemfort``: Fortran
 
 The wrapper compilers for each of the languages are identical; they
-can be use interchangeably.  The different names are provided solely
+can be used interchangeably.  The different names are provided solely
 for backwards compatibility.
 
 
