@@ -83,12 +83,17 @@ OPTIONS
   output is displayed in a machine-parsable format ``--parseable``
   Synonym for ``--parsable``.
 
+* ``--color <hue>``: Control color coding: auto (default), never, always
+
 * ``--path <type>``: Show paths that Open MPI was configured
   with. Accepts the following parameters: ``prefix``, ``bindir``,
   ``libdir``, ``incdir``, ``pkglibdir``, ``sysconfdir``.
 
-* ``--pretty``: When used in conjunction with other parameters, the output is
-  displayed in "prettyprint" format (default)
+* ``--pretty-print``: When used in conjunction with other parameters, the output is
+  displayed in "prettyprint" format (default).
+
+* ``--show-failed``: Show the components that failed to load along with
+  the reason why they failed.
 
 * ``--selected-only``: Show only variables from selected components.
 
