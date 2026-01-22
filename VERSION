@@ -20,8 +20,8 @@ minor=1
 release=0
 
 # MPI Standard Compliance Level
-mpi_standard_version=3
-mpi_standard_subversion=1
+mpi_standard_version=5
+mpi_standard_subversion=0
 
 # OMPI required dependency versions.
 # List in x.y.z format.
@@ -92,6 +92,14 @@ date="Unreleased developer copy"
 # but they are "public" within the OMPI code base and select 3rd party
 # software packages.
 
+# The current and age values of the libmpi_abi shared library are
+# implicitly determined by the MPI ABI definition of the
+# version of the MPI specification supported by this Open MPI release.
+# The MPI ABI is intended not to break backward compatibility,
+# so presumably the current and age values will move in lock step.
+# We assume we have flexibility with the revision number as
+# bugs are fixed, etc.
+
 # Version numbers are described in the Libtool current:revision:age
 # format.
 
@@ -100,6 +108,7 @@ libmpi_mpifh_so_version=0:0:0
 libmpi_usempi_tkr_so_version=0:0:0
 libmpi_usempi_ignore_tkr_so_version=0:0:0
 libmpi_usempif08_so_version=0:0:0
+libmpi_abi_so_version=0:0:0
 libopen_pal_so_version=0:0:0
 libmpi_java_so_version=0:0:0
 liboshmem_so_version=0:0:0
