@@ -109,89 +109,29 @@ echo "--> version: $VERSION_ID"
 # See if builder provided a compiler we should use, and translate it to
 # CONFIGURE_ARGS.
 #
-case ${PLATFORM_ID} in
-    rhel)
-        case "$COMPILER" in
-            gcc48|"")
-                echo "--> Using default compilers"
-                ;;
-            *)
-                echo "Unsupported compiler ${COMPILER}.  Aborting"
-                exit 1
-                ;;
-        esac
-        ;;
-    amzn)
-        case "$COMPILER" in
-            "")
-                echo "--> Using default compilers"
-                ;;
-            gcc44)
-                CONFIGURE_ARGS="$CONFIGURE_ARGS CC=gcc44 CXX=g++44 FC=gfortran44"
-                ;;
-            gcc48)
-                CONFIGURE_ARGS="$CONFIGURE_ARGS CC=gcc48 CXX=g++48 FC=gfortran48"
-                ;;
-            clang36)
-                CONFIGURE_ARGS="$CONFIGURE_ARGS CC=clang CXX=clang++ --disable-mpi-fortran"
-                ;;
-            *)
-                echo "Unsupported compiler ${COMPILER}.  Aborting"
-                exit 1
-                ;;
-        esac
-        ;;
-    ubuntu)
-        case "$COMPILER" in
-            "")
-                echo "--> Using default compilers"
-                ;;
-            gcc4*)
-                version=`echo "$COMPILER" | sed -e 's/gcc4\([0-9]*\)/4.\1/'`
-                CONFIGURE_ARGS="CC=gcc-${version} CXX=g++-${version} FC=gfortran-${version}"
-                ;;
-            gcc*)
-                version=`echo "$COMPILER" | sed -e 's/gcc\([0-9]*\)/\1/'`
-                CONFIGURE_ARGS="CC=gcc-${version} CXX=g++-${version} FC=gfortran-${version}"
-                ;;
-            clang3*|clang4*|clang5*|clang6*)
-                version=`echo "$COMPILER" |  sed -e 's/clang\([0-9]\)\([0-9]*\)/\1.\2/'`
-                CONFIGURE_ARGS="CC=clang-${version} CXX=clang++-${version} --disable-mpi-fortran"
-                ;;
+if test "${COMPILER}" != "" ; then
+    if test ! -r ${HOME}/ompi-compiler-setup.sh ; then
+        echo "Could not find compiler setup script ompi-compiler-setup.sh.  Aborting."
+        exit 1
+    fi
+
+    . ${HOME}/ompi-compiler-setup.sh
+    activate_compiler ${COMPILER}
+
+    CONFIGURE_ARGS="${CONFIGURE_ARGS} CC=${CC} CPP=${CPP} CXX=${CXX} FC=${FC}"
+    if test "$FC" = "" ; then
+        CONFIGURE_ARGS="${CONFIGURE_ARGS} --disable-mpi-fortran"
+    else
+        # Flang doesn't seem good enough (yet) to compile our Fortran bindings,
+        # so skip for now.
+        case "${COMPILER}" in
             clang*)
-                version=`echo "$COMPILER" | sed -e 's/clang\([0-9]*\)/\1/'`
-                CONFIGURE_ARGS="CC=clang-${version} CXX=clang++-${version} --disable-mpi-fortran"
-                ;;
-            *)
-                echo "Unsupported compiler ${COMPILER}.  Aborting"
-                exit 1
+                CONFIGURE_ARGS="${CONFIGURE_ARGS} --disable-mpi-fortran"
                 ;;
         esac
-        ;;
-    sles)
-        case "$COMPILER" in
-            "")
-                echo "--> Using default compilers"
-                ;;
-            gcc48)
-                CONFIGURE_ARGS="$CONFIGURE_ARGS CC=gcc-48 CXX=g++-48 FC=gfortran-48"
-                ;;
-            gcc5)
-                CONFIGURE_ARGS="$CONFIGURE_ARGS CC=gcc-5 CXX=g++-5 FC=gfortran-5"
-                ;;
-            gcc6)
-                CONFIGURE_ARGS="$CONFIGURE_ARGS CC=gcc-6 CXX=g++-6 FC=gfortran-6"
-                ;;
-            *)
-                echo "Unsupported compiler ${COMPILER}.  Aborting"
-                exit 1
-                ;;
-        esac
-        ;;
-    FreeBSD)
-        CONFIGURE_ARGS="$CONFIGURE_ARGS LDFLAGS=-Wl,-rpath,/usr/local/lib/gcc5 --with-wrapper-ldflags=-Wl,-rpath,/usr/local/lib/gcc5"
-        ;;
-esac
+    fi
+fi
+
 CONFIGURE_ARGS="$CONFIGURE_ARGS --disable-silent-rules"
 
 echo "--> Compiler setup: $CONFIGURE_ARGS"
