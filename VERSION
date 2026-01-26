@@ -7,6 +7,7 @@
 # Copyright (c) 2017      Los Alamos National Security, LLC.  All rights
 #                         reserved.
 
+
 # This is the VERSION file for Open MPI, describing the precise
 # version of Open MPI in this distribution.  The various components of
 # the version number below are combined to form a single version
