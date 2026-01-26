@@ -12,6 +12,9 @@
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2026      Triad National Security, LLC. All rights
+ *                         reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -75,17 +78,18 @@ void ompi_request_get_status_f(MPI_Fint *request, ompi_fortran_logical_t *flag,
     MPI_Request c_req = PMPI_Request_f2c( *request );
     OMPI_LOGICAL_NAME_DECL(flag);
 
-    /* This seems silly, but someone will do it */
+    /* BUGFIX: removed invalid fast check for MPI_STATUS_IGNORE.
+     * Must always call PMPI_Request_get_status to get the correct flag value.
+     * See issue #13671 */
 
-    if (OMPI_IS_FORTRAN_STATUS_IGNORE(status)) {
-        *flag = OMPI_INT_2_LOGICAL(0);
-        c_ierr = MPI_SUCCESS;
-    } else {
-        c_ierr = PMPI_Request_get_status(c_req,
-                                        OMPI_LOGICAL_SINGLE_NAME_CONVERT(flag),
-                                        &c_status);
-        OMPI_SINGLE_INT_2_LOGICAL(flag);
+    c_ierr = PMPI_Request_get_status(c_req,
+                                    OMPI_LOGICAL_SINGLE_NAME_CONVERT(flag),
+                                    &c_status);
+    OMPI_SINGLE_INT_2_LOGICAL(flag);
+    
+    if (!OMPI_IS_FORTRAN_STATUS_IGNORE(status)) {
         PMPI_Status_c2f( &c_status, status );
     }
+    
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 }
