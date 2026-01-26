@@ -10,6 +10,7 @@ components that can be tuned to affect behavior at run time.
    environment-var
    networking/index
    accelerators/index
+   collectives/index
    multithreaded
    dynamic-loading
    fork-system-popen
@@ -17,6 +18,5 @@ components that can be tuned to affect behavior at run time.
    large-clusters/index
    affinity
    mpi-io
-   coll-tuned
    benchmarking
    heterogeneity
