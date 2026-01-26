@@ -5,7 +5,7 @@
  * Copyright (c) 2020-2022 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2020-2021 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2021-2023 Nanook Consulting.  All rights reserved.
+ * Copyright (c) 2021-2026 Nanook Consulting  All rights reserved.
  * Copyright (c) 2021-2025 Amazon.com, Inc. or its affiliates. All rights
  *                         reserved.
  * Copyright (c) 2023      UT-Battelle, LLC.  All rights reserved.
@@ -576,7 +576,6 @@ static int compute_dev_distances(pmix_device_distance_t **distances,
     size_t ninfo;
     pmix_info_t *info;
     pmix_cpuset_t cpuset;
-    pmix_topology_t pmix_topo = PMIX_TOPOLOGY_STATIC_INIT;
     pmix_device_type_t type = PMIX_DEVTYPE_OPENFABRICS |
       PMIX_DEVTYPE_NETWORK;
 
@@ -590,25 +589,21 @@ static int compute_dev_distances(pmix_device_distance_t **distances,
     /* if we are not bound, then we cannot compute distances */
     if (hwloc_bitmap_iszero(cpuset.bitmap) ||
         hwloc_bitmap_isfull(cpuset.bitmap)) {
+        PMIX_CPUSET_DESTRUCT(&cpuset);
         return OPAL_ERR_NOT_BOUND;
-    }
-
-    /* load the PMIX topology - this just loads a pointer to
-     * the local topology held in PMIx, so you must not
-     * free it */
-    ret = PMIx_Load_topology(&pmix_topo);
-    if (PMIX_SUCCESS != ret) {
-        goto out;
     }
 
     ninfo = 1;
     info = PMIx_Info_create(ninfo);
     PMIx_Info_load(&info[0], PMIX_DEVICE_TYPE, &type, PMIX_DEVTYPE);
-    ret = PMIx_Compute_distances(&pmix_topo, &cpuset, info, ninfo, distances,
+    /* pass NULL as the topology input to the API to tell it to
+     * use our local topology */
+    ret = PMIx_Compute_distances(NULL, &cpuset, info, ninfo, distances,
                                  ndist);
     PMIx_Info_free(info, ninfo);
 
 out:
+    PMIX_CPUSET_DESTRUCT(&cpuset);
     return ret;
 }
 
@@ -794,7 +789,7 @@ find_nearest:
 
     ret = OPAL_ERROR;
     if (0 >= num_nearest) {
-        return ret;
+        goto out;
     }
 
     provider_rank = rank % num_nearest;
@@ -809,8 +804,9 @@ find_nearest:
         }
     }
 out:
-    if (val)
+    if (val) {
         PMIx_Value_free(val, 1);
+    }
 
     return ret;
 }
