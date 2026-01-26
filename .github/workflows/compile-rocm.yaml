@@ -5,8 +5,6 @@ on: [pull_request]
 permissions:
   contents: read
 
-env:
-  ROCM_VER: 6.2.2
 jobs:
   compile-rocm:
     runs-on: ubuntu-22.04
@@ -15,15 +13,12 @@ jobs:
       run: |
         sudo apt update
         sudo apt install -y --no-install-recommends wget lsb-core software-properties-common gpg curl
+        sudo apt install -y python3-setuptools python3-wheel
     - name: Install extra dependencies
       run: |
-        sudo mkdir --parents --mode=0755 /etc/apt/keyrings
-        wget https://repo.radeon.com/rocm/rocm.gpg.key -O - | gpg --dearmor | sudo tee /etc/apt/keyrings/rocm.gpg > /dev/null
-        echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/rocm.gpg] https://repo.radeon.com/amdgpu/${ROCM_VER}/ubuntu jammy main" | sudo tee /etc/apt/sources.list.d/amdgpu.list
-        echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/rocm.gpg] https://repo.radeon.com/rocm/apt/${ROCM_VER} jammy main" | sudo tee --append /etc/apt/sources.list.d/rocm.list
-        echo -e 'Package: *\nPin: release o=repo.radeon.com\nPin-Priority: 600' | sudo tee /etc/apt/preferences.d/rocm-pin-600
-        sudo apt update
-        sudo apt install -y rocm-hip-runtime hip-dev
+        wget https://repo.radeon.com/amdgpu-install/7.2/ubuntu/jammy/amdgpu-install_7.2.70200-1_all.deb
+        sudo apt install -y ./amdgpu-install_7.2.70200-1_all.deb
+        sudo amdgpu-install --usecase=rocmdev
     - uses: actions/checkout@v4
       with:
             submodules: recursive
