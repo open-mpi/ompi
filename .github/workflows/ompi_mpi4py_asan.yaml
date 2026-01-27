@@ -20,7 +20,7 @@ permissions:
 
 jobs:
   test:
-    # We need Unbuntu 24.04 (over 22.04) due to a kernel bug,
+    # We need Ubuntu 24.04 (over 22.04) due to a kernel bug,
     # see https://github.com/google/sanitizers/issues/856.
     runs-on: ubuntu-24.04
     timeout-minutes: 30
@@ -36,7 +36,7 @@ jobs:
       run:  echo 127.0.0.1 `hostname` | sudo tee -a /etc/hosts > /dev/null
       if:   ${{ runner.os == 'Linux' || runner.os == 'macOS' }}
 
-    - name: Install depencencies
+    - name: Install dependencies
       run:  sudo apt-get install -y -q
               libnuma-dev libasan8
       if:   ${{ runner.os == 'Linux' }}
@@ -117,9 +117,7 @@ jobs:
       # Leak detection is currently disabled because of the size of the report.
       # The patcher is disabled because ASAN fails if code mmaps data at fixed
       # memory addresses, see https://github.com/open-mpi/ompi/issues/12819.
-      # ODR violation detection is disabled until #13469 is fixed
-      # Disabling stack use after return detection to reduce slowdown, per
-      # https://github.com/llvm/llvm-project/issues/64190.
+      # ODR violation detection is disabled until #13469 is fixed.
       run: |
         echo LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libasan.so.8 >> $GITHUB_ENV
         echo ASAN_OPTIONS=detect_odr_violation=0,abort_on_error=1,detect_stack_use_after_return=1 >> $GITHUB_ENV
