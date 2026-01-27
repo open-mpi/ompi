@@ -186,6 +186,36 @@ ompi_coll_base_sendrecv( void* sendbuf, size_t scount, ompi_datatype_t* sdatatyp
 }
 
 /**
+ * Convert binary to negabinary (base -2) without loops.
+ * Based on: https://stackoverflow.com/questions/37637781/
+ * Returns -1 if input > 0x55555555 (max representable).
+ */
+static inline uint32_t ompi_coll_binary_to_negabinary(int32_t bin) {
+    if(OPAL_UNLIKELY(bin > 0x55555555)) return -1;
+    const uint32_t mask = 0xAAAAAAAA;
+    return (mask + bin) ^ mask;
+}
+
+/**
+ * Convert negabinary back to binary.
+ * Inverse of ompi_coll_binary_to_negabinary.
+ */
+static inline int32_t ompi_coll_negabinary_to_binary(uint32_t neg) {
+    const uint32_t mask = 0xAAAAAAAA;
+    return (mask ^ neg) - mask;
+}
+
+/**
+ * Mathematical modulo (always non-negative).
+ * C's % can return negative values.
+ */
+static inline int ompi_coll_mod(int a, int b){
+    int r = a % b;
+    return r < 0 ? r + b : r;
+}
+
+
+/**
  * ompi_mirror_perm: Returns mirror permutation of nbits low-order bits
  *                   of x [*].
  * [*] Warren Jr., Henry S. Hacker's Delight (2ed). 2013.

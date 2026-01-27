@@ -264,6 +264,7 @@ int ompi_coll_base_exscan_intra_recursivedoubling(EXSCAN_ARGS);
 int ompi_coll_base_gather_intra_basic_linear(GATHER_ARGS);
 int ompi_coll_base_gather_intra_binomial(GATHER_ARGS);
 int ompi_coll_base_gather_intra_linear_sync(GATHER_ARGS, int first_segment_size);
+int ompi_coll_base_gather_intra_bine(GATHER_ARGS);
 
 /* GatherV */
 
