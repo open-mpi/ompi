@@ -717,7 +717,7 @@ static ompi_datatype_t* __ompi_datatype_create_from_packed_description( void** p
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     if (need_swap) {
         for (i = 0 ; i < number_of_ints ; ++i) {
-            number_of_ints[i] = opal_swap_bytes8(number_of_ints[i]);
+            array_of_ints[i] = opal_swap_bytes8(array_of_ints[i]);
         }
         for (i = 0 ; i < number_of_counts ; ++i) {
             array_of_counts[i] = opal_swap_bytes4(array_of_counts[i]);
