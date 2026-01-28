@@ -22,6 +22,7 @@
 # Copyright (c) 2025      Advanced Micro Devices, Inc. All Rights reserved.
 # Copyright (c) 2025-2026 Triad National Security, LLC.  All rights reserved.
 # Copyright (c) 2025      UT-Battelle, LLC.  All rights reserved.
+# Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -1008,8 +1009,8 @@ mpi_bindings_generated.stamp: $(prototype_sources)
 	    base=`echo "$$src" | sed 's/\\.c\\.in$$//'`; \
 	    out="$$base"_generated.c; \
 	    $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
-	        --builddir $(abs_top_builddir) \
-	        --srcdir $(abs_top_srcdir) \
+	        --builddir $(abs_builddir) \
+	        --srcdir $(abs_srcdir) \
 	        --output "$$out" \
 	        c \
 	        source \
