@@ -300,6 +300,7 @@ int ompi_coll_base_scan_intra_recursivedoubling(SCAN_ARGS);
 int ompi_coll_base_scatter_intra_basic_linear(SCATTER_ARGS);
 int ompi_coll_base_scatter_intra_binomial(SCATTER_ARGS);
 int ompi_coll_base_scatter_intra_linear_nb(SCATTER_ARGS, int max_reqs);
+int ompi_coll_base_scatter_intra_bine(SCATTER_ARGS);
 
 /* ScatterV */
 

@@ -41,6 +41,7 @@ static const mca_base_var_enum_value_t scatter_algorithms[] = {
     {1, "basic_linear"},
     {2, "binomial"},
     {3, "linear_nb"},
+    {4, "bine"},
     {0, NULL}
 };
 
@@ -188,6 +189,10 @@ ompi_coll_tuned_scatter_intra_do_this(const void *sbuf, size_t scount,
                                                       rbuf, rcount, rdtype,
                                                       root, comm, module,
                                                       ompi_coll_tuned_scatter_blocking_send_ratio);
+    case (4):
+        return ompi_coll_base_scatter_intra_bine(sbuf, scount, sdtype,
+                                                 rbuf, rcount, rdtype,
+                                                 root, comm, module);
     } /* switch */
     OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
                  "coll:tuned:scatter_intra_do_this attempt to select algorithm %d when only 0-%d is valid?",
