@@ -27,5 +27,7 @@ jobs:
     - name: Build Open MPI
       run: |
         ./autogen.pl
-        ./configure --prefix=${PWD}/install --disable-mpi-fortran  --disable-oshmem --with-ze --disable-silent-rules
-        make -j
+        mkdir build
+        cd build
+        ../configure --prefix=${PWD}/install --disable-mpi-fortran  --disable-oshmem --with-ze --disable-silent-rules
+        make -j install
