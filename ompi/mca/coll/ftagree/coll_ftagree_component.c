@@ -38,6 +38,8 @@ int mca_coll_ftagree_era_rebuild = 0;
 double mca_coll_ftagree_debug_inject_proba = 0.0;
 #endif
 
+static int mca_coll_ft_agreement;
+
 /*
  * Local function
  */
@@ -92,8 +94,6 @@ ftagree_close(void)
 static int
 ftagree_register(void)
 {
-    int value;
-
     /* Use a low priority, but allow other components to be lower */
     mca_coll_ftagree_priority = 30;
     (void) mca_base_component_var_register(&mca_coll_ftagree_component.collm_version,
@@ -103,15 +103,15 @@ ftagree_register(void)
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_coll_ftagree_priority);
 
-    if( ompi_ftmpi_enabled ) value = 1;
-    else value = 0; /* NOFT: do not initialize ERA */
+    if( ompi_ftmpi_enabled ) mca_coll_ft_agreement = 1;
+    else mca_coll_ft_agreement = 0; /* NOFT: do not initialize ERA */
     (void) mca_base_component_var_register(&mca_coll_ftagree_component.collm_version,
                                            "agreement", "Agreement algorithm 0: Allreduce (NOT FAULT TOLERANT); 1: Early Returning Consensus (era); 2: Early Terminating Consensus (eta)",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                            OPAL_INFO_LVL_6,
                                            MCA_BASE_VAR_SCOPE_READONLY,
-                                           &value);
-    switch(value) {
+                                           &mca_coll_ft_agreement);
+    switch(mca_coll_ft_agreement) {
     case 0:
         mca_coll_ftagree_algorithm = COLL_FTAGREE_NOFT;
         opal_output_verbose(6, ompi_ftmpi_output_handle,
