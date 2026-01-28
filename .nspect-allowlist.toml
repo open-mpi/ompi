@@ -1,0 +1,9 @@
+version = "1.0.0"
+
+# Allowlist for test private key in libevent library
+[[pulse-trufflehog.files]]
+file = "3rd-party/libevent-2.1.12-stable.tar.gz"
+
+[[pulse-trufflehog.files.secrets]]
+type = "PrivateKey"
+values = [ "-----BEGIN RSA PRIVATE KEY-----\nMIIEogIBAAKCAQEAtK07Ili0dkJb79m/" ]
