@@ -24,7 +24,7 @@ jobs:
     - uses: actions/checkout@v4
       with:
             submodules: recursive
-    - name: Build Open MPI
+    - name: Build Open MPI (VPATH)
       run: |
         ./autogen.pl
         mkdir build
