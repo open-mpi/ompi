@@ -49,7 +49,6 @@ typedef struct __dt_args {
     opal_atomic_int32_t ref_count;
     int32_t            create_type;
     size_t             total_pack_size;
-    /* TODO: should they be size_t? */
     size_t             ci;
     size_t             ca;
     size_t             cd;
