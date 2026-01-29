@@ -40,6 +40,8 @@
 
 include $(top_srcdir)/Makefile.ompi-rules
 
+SUFFIXES= _generated.c .c.in
+
 noinst_LTLIBRARIES = libmpi_c.la libmpi_c_profile.la
 if BUILD_MPI_BINDINGS_LAYER
 noinst_LTLIBRARIES += libmpi_c_noprofile.la
@@ -499,7 +501,7 @@ prototype_sources = \
         wtime.c.in
 
 # Include template files in case someone wants to update them
-EXTRA_DIST = $(prototype_sources) mpi_bindings_generated.stamp
+EXTRA_DIST = $(prototype_sources)
 
 # attr_fn.c contains attribute manipulation functions which do not
 # profiling implications, and so are always built.
@@ -1003,23 +1005,18 @@ libmpi_c_noprofile_la_SOURCES = $(interface_profile_sources)
 libmpi_c_noprofile_la_CPPFLAGS = -DOMPI_BUILD_MPI_PROFILING=0
 
 # ABI generation rules
-mpi_bindings_generated.stamp: $(prototype_sources)
-	@set -e; \
-	for src in $(prototype_sources); do \
-	    base=`echo "$$src" | sed 's/\\.c\\.in$$//'`; \
-	    out="$$base"_generated.c; \
-	    $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
-	        --builddir $(abs_builddir) \
-	        --srcdir $(abs_srcdir) \
-	        --output "$$out" \
-	        c \
-	        source \
-	        ompi \
-	        "$$src"; \
-	done; \
-	touch $@
-
-$(interface_profile_sources): mpi_bindings_generated.stamp
+.c.in_generated.c:
+	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
+	    --builddir $(abs_top_builddir) \
+	    --srcdir $(abs_top_srcdir) \
+	    --output $@ \
+	    c \
+	    source \
+	    ompi \
+	    $<
 
 # Delete generated files on maintainer-clean
-MAINTAINERCLEANFILES = *_generated.c mpi_bindings_generated.stamp
+MAINTAINERCLEANFILES = *_generated.c
+if OPAL_DEVEL_BUILD
+CLEANFILES += *_generated.c
+endif

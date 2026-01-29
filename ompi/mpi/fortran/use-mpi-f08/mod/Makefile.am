@@ -10,7 +10,7 @@
 # Copyright (c) 2015-2024 Research Organization for Information Science
 #                         and Technology (RIST).  All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
-# Copyright (C) 2024      Triad National Security, LLC. All rights
+# Copyright (C) 2024-2026 Triad National Security, LLC. All rights
 #                         reserved.
 #
 # $COPYRIGHT$
@@ -99,6 +99,9 @@ mpi-f08-interfaces-generated.h: $(template_files)
 
 # Delete generated file on maintainer-clean
 MAINTAINERCLEANFILES = mpi-f08-interfaces-generated.h
+if OPAL_DEVEL_BUILD
+CLEANFILES += mpi-f08-interfaces-generated.h
+endif
 
 #
 # Automake doesn't do Fortran dependency analysis, so must list them

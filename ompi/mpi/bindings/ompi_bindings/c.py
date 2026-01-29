@@ -379,7 +379,7 @@ def generate_header(args, out):
 def generate_source(args, out):
     """Generate source file."""
     out.dump(f'/* {consts.GENERATED_MESSAGE} */')
-    template = SourceTemplate.load(args.source_file, args.srcdir, type_constructor=Type.construct)
+    template = SourceTemplate.load(args.source_file, type_constructor=Type.construct)
     base_name = util.mpi_fn_name_from_base_fn_name(template.prototype.name)
     if args.type == 'ompi':
         ompi_abi(base_name, template, out)
