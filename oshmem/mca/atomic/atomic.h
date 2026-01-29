@@ -296,6 +296,11 @@ struct mca_atomic_base_module_1_0_0_t {
                        uint64_t value,
                        size_t size,
                        int pe);
+    int (*atomic_set)(shmem_ctx_t ctx,
+                      void *target,
+                      uint64_t value,
+                      size_t size,
+                      int pe);
 };
 typedef struct mca_atomic_base_module_1_0_0_t mca_atomic_base_module_1_0_0_t;
 
