@@ -1,5 +1,10 @@
 name: ompi_NVIDIA CI
 on: [pull_request]
+
+concurrency:
+  group: ompi-ci-nvidia
+  cancel-in-progress: false
+
 jobs:
 
   nvidia_deployment:
