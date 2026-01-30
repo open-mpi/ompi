@@ -389,7 +389,15 @@ int mca_btl_ofi_context_progress(mca_btl_ofi_context_t *context)
             MCA_BTL_OFI_ABORT();
         } else if(NULL != cqerr.op_context){
             switch(cqerr.err) {
-            case -FI_EIO: {
+            case FI_EREMOTEIO:
+            case FI_EHOSTUNREACH:
+            case FI_ECONNABORTED:
+            case FI_ECONNRESET:
+#ifdef FI_EHOSTDOWN
+            // FI_EHOSTDOWN added in libfabric 1.6.0
+            case FI_EHOSTDOWN:
+#endif
+            case FI_EIO: {
                 mca_btl_ofi_completion_context_t *c_ctx =
                     (mca_btl_ofi_completion_context_t*) cqerr.op_context;
                 mca_btl_ofi_base_completion_t *comp =
