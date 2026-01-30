@@ -3,6 +3,8 @@
 # Copyright (c) 2019      Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2020      Research Organization for Information Science
 #                         and Technology (RIST).  All rights reserved.
+# Copyright (C) 2026      Triad National Security, LLC. All rights
+#                         reserved.
 #
 # $COPYRIGHT$
 #
@@ -62,5 +64,8 @@ api_f08_generated.c: $(template_files)
 
 # Delete generated files on maintainer-clean
 MAINTAINERCLEANFILES = api_f08_generated.c
+if OPAL_DEVEL_BUILD
+CLEANFILES += api_f08_generated.c
+endif
 
 endif
