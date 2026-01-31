@@ -16,6 +16,8 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      Intel, Inc. All rights reserved
  * Copyright (c) 2020-2021 Sandia National Laboratories. All rights reserved.
+ * Copyright (c) 2024      High Performance Computing Center Stuttgart,
+ *                         University of Stuttgart.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -23,30 +25,34 @@
  * $HEADER$
  */
 
-#ifndef PART_PERSIST_PSENDREQ_H
-#define PART_PERSIST_PSENDREQ_H
+#ifndef PART_PERSIST_AGGREGATED_PSENDREQ_H
+#define PART_PERSIST_AGGREGATED_PSENDREQ_H
 
-#include "ompi/mca/part/persist/part_persist_request.h"
+#include "ompi/mca/part/persist_aggregated/schemes/part_persist_aggregated_scheme_regular.h"
+
+#include "ompi/mca/part/persist_aggregated/part_persist_aggregated_request.h"
 #include "ompi/mca/part/base/part_base_psendreq.h"
 #include "ompi/mca/part/part.h"
 #include "opal/prefetch.h"
 
-struct mca_part_persist_psend_request_t {
-    mca_part_persist_request_t req_base;
+struct mca_part_persist_aggregated_psend_request_t {
+    mca_part_persist_aggregated_request_t req_base;
+
+    struct part_persist_aggregation_state aggregation_state;
 };
-typedef struct mca_part_persist_psend_request_t mca_part_persist_psend_request_t;
-OBJ_CLASS_DECLARATION(mca_part_persist_psend_request_t);
+typedef struct mca_part_persist_aggregated_psend_request_t mca_part_persist_aggregated_psend_request_t;
+OBJ_CLASS_DECLARATION(mca_part_persist_aggregated_psend_request_t);
 
 
-#define MCA_PART_PERSIST_PSEND_REQUEST_ALLOC(sendreq, comm, dst,          \
+#define MCA_PART_PERSIST_AGGREGATED_PSEND_REQUEST_ALLOC(sendreq, comm, dst,          \
                                            ompi_proc)                 \
 do {                                                                  \
-    sendreq = (mca_part_persist_psend_request_t*)                         \
-        opal_free_list_wait (&mca_part_persist_psend_requests);          \
-    sendreq->req_base.req_type = MCA_PART_PERSIST_REQUEST_PSEND;          \
+    sendreq = (mca_part_persist_aggregated_psend_request_t*)                         \
+        opal_free_list_wait (&mca_part_persist_aggregated_psend_requests);          \
+    sendreq->req_base.req_type = MCA_PART_PERSIST_AGGREGATED_REQUEST_PSEND;          \
 } while(0)
 
-#define MCA_PART_PERSIST_PSEND_REQUEST_INIT( req_send,                    \
+#define MCA_PART_PERSIST_AGGREGATED_PSEND_REQUEST_INIT( req_send,                    \
                                          ompi_proc,                   \
                                          comm,                        \
                                          tag,                         \
@@ -80,14 +86,14 @@ do {                                                                  \
 /*
  * Release resources associated with a request
  */
-#define MCA_PART_PERSIST_PSEND_REQUEST_RETURN(sendreq)                      \
+#define MCA_PART_PERSIST_AGGREGATED_PSEND_REQUEST_RETURN(sendreq)                      \
     {                                                                   \
         /*  Let the base handle the reference counts */                 \
-        OMPI_DATATYPE_RELEASE(sendreq->req_datatype);  \
+        OMPI_DATATYPE_RETAIN(sendreq->req_datatype);  \
         OBJ_RELEASE(sendreq->req_comm);               \
         OMPI_REQUEST_FINI(&sendreq->req_ompi);        \
         opal_convertor_cleanup( &(sendreq->req_convertor) ); \
-        opal_free_list_return ( &mca_part_persist_psend_requests,            \
+        opal_free_list_return ( &mca_part_persist_aggregated_psend_requests,            \
                                (opal_free_list_item_t*)sendreq);        \
     }
 
