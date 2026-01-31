@@ -5,7 +5,7 @@
 # Copyright (c) 2011-2015 INRIA.  All rights reserved.
 # Copyright (c) 2011-2015 Université Bordeaux 1
 # Copyright (c) 2017      IBM Corporation.  All rights reserved.
-# Copyright (c) 2019      Research Organization for Information Science
+# Copyright (c) 2019-2024 Research Organization for Information Science
 #                         and Technology (RIST).  All rights reserved.
 # Copyright (c) 2021      Google, LLC. All rights reserved.
 # $COPYRIGHT$
@@ -43,11 +43,16 @@ mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component)
 mca_topo_treematch_la_SOURCES = $(component_sources)
 mca_topo_treematch_la_LDFLAGS = -module -avoid-version $(topo_treematch_LDFLAGS)
-mca_topo_treematch_la_LIBADD = $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la $(topo_treematch_LIBS)
+mca_topo_treematch_la_LIBADD = \
+    $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
+    $(topo_treematch_LIBS) \
+    $(opal_hwloc_LIBS)
 
 noinst_LTLIBRARIES = $(lib)
 libmca_topo_treematch_la_SOURCES = $(lib_sources)
-libmca_topo_treematch_la_LIBADD = $(topo_treematch_LIBS)
+libmca_topo_treematch_la_LIBADD = \
+    $(topo_treematch_LIBS) \
+    $(opal_hwloc_LIBS)
 libmca_topo_treematch_la_LDFLAGS = -module -avoid-version $(topo_treematch_LDFLAGS)
 
 distclean-local:
