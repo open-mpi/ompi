@@ -22,6 +22,7 @@ dnl Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
 dnl Copyright (c) 2022      Triad National Security, LLC. All rights
 dnl                         reserved.
 dnl Copyright (c) 2025      Stony Brook University.  All rights reserved.
+dnl Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -182,13 +183,13 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
                    [short float, float, double, long double, opal_short_float_t],
                    [2], [yes])
     OMPI_FORTRAN_CHECK([REAL*4], [no],
-                   [short float, float, double, long double, opal_short_float_t],
+                   [long double, double, float, short float, opal_short_float_t],
                    [4], [yes])
     OMPI_FORTRAN_CHECK([REAL*8], [no],
-                   [short float, float, double, long double, opal_short_float_t],
+                   [long double, double, float, short float, opal_short_float_t],
                    [8], [yes])
     OMPI_FORTRAN_CHECK([REAL*16], [no],
-                   [short float, float, double, long double, opal_short_float_t],
+                   [_Float128, __float128, long double, double, float, short float, opal_short_float_t],
                    [16], [yes])
 
     # In some compilers, the bit representation of REAL*16 is not the same
@@ -197,7 +198,7 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
     OMPI_FORTRAN_CHECK_REAL16_C_EQUIV
 
     OMPI_FORTRAN_CHECK([DOUBLE PRECISION], [yes],
-                   [short float, float, double, long double, opal_short_float_t],
+                   [long double, double, float, short float, opal_short_float_t],
                    [-1], [yes])
 
     OMPI_FORTRAN_CHECK([COMPLEX], [yes],
@@ -219,19 +220,19 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
                    [short float _Complex, float _Complex, double _Complex, long double _Complex, opal_short_float_complex_t],
                    [4], [no])
     OMPI_FORTRAN_CHECK([COMPLEX*8], [no],
-                   [short float _Complex, float _Complex, double _Complex, long double _Complex, opal_short_float_complex_t],
+                   [long double _Complex, double _Complex, float _Complex, short float _Complex, opal_short_float_complex_t],
                    [8], [no])
     OMPI_FORTRAN_CHECK([COMPLEX*16], [no],
-                   [short float _Complex, float _Complex, double _Complex, long double _Complex, opal_short_float_complex_t],
+                   [long double _Complex, double _Complex, float _Complex, short float _Complex, opal_short_float_complex_t],
                    [16], [no])
     OMPI_FORTRAN_CHECK([COMPLEX*32], [no],
-                   [short float _Complex, float _Complex, double _Complex, long double _Complex, opal_short_float_complex_t],
+                   [_Float128 _Complex, long double _Complex, double _Complex, float _Complex, short float _Complex, opal_short_float_complex_t],
                    [32], [no])
     # Double precision complex types are not standard, but many
     # compilers support it.  Code should be wrapped with #ifdef
     # OMPI_HAVE_FORTRAN_DOUBLE_COMPLEX
     OMPI_FORTRAN_CHECK([DOUBLE COMPLEX], [no],
-                   [short float _Complex, float _Complex, double _Complex, long double _Complex, opal_short_float_complex_t],
+                   [long double _Complex, double _Complex, float _Complex, short float _Complex, opal_short_float_complex_t],
                    [-1], [no])
 
     # Regardless of whether we have fortran bindings, or even a

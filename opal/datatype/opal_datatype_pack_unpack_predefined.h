@@ -3,6 +3,7 @@
  * Copyright (c) 2002      University of Chicago
  * Copyright (c) 2001      Argonne National Laboratory
  * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -56,7 +57,7 @@
 
 #include "opal_config.h"
 #include <stdint.h>
-
+#include "opal/datatype/opal_datatype_constructors.h"
 /*  Improve predefined pack/unpack performance using mpich methods.
  *
  *   For reference implementation, see:
@@ -356,6 +357,9 @@ static inline int opal_datatype_unpack_predefined_element(unsigned char **rtn_sr
     case OPAL_DATATYPE_LONG_DOUBLE_COMPLEX:
         OPAL_DATATYPE_MYUNPACK(LONG_DOUBLE_COMPLEX);
         break;
+    case OPAL_DATATYPE_FLOAT128_COMPLEX:
+        OPAL_DATATYPE_MYUNPACK(FLOAT128_COMPLEX);
+        break;
     case OPAL_DATATYPE_BOOL:
         OPAL_DATATYPE_MYUNPACK(BOOL);
         break;
@@ -466,6 +470,9 @@ static inline int opal_datatype_pack_predefined_element(unsigned char **rtn_src,
         break;
     case OPAL_DATATYPE_LONG_DOUBLE_COMPLEX:
         OPAL_DATATYPE_MYPACK(LONG_DOUBLE_COMPLEX);
+        break;
+    case OPAL_DATATYPE_FLOAT128_COMPLEX:
+        OPAL_DATATYPE_MYPACK(FLOAT128_COMPLEX);
         break;
     case OPAL_DATATYPE_BOOL:
         OPAL_DATATYPE_MYPACK(BOOL);
