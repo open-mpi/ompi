@@ -34,6 +34,8 @@ static int coll_tuned_alltoall_segment_size = 0;
 static int coll_tuned_alltoall_tree_fanout;
 static int coll_tuned_alltoall_chain_fanout;
 
+static int deprecated_mca_params = -1;
+
 /* valid values for coll_tuned_alltoall_forced_algorithm */
 static const mca_base_var_enum_value_t alltoall_algorithms[] = {
     {0, "ignore"},
@@ -119,7 +121,6 @@ int ompi_coll_tuned_alltoall_intra_check_forced_init (coll_tuned_force_algorithm
                                       MCA_BASE_VAR_SCOPE_ALL,
                                       &coll_tuned_alltoall_chain_fanout);
 
-    int deprecated_mca_params = -1;
     (void) mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
                                            "alltoall_large_msg",
                                            "use pairwise exchange algorithm for messages larger than this value",

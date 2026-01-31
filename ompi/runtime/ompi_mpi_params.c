@@ -104,11 +104,12 @@ bool ompi_ftmpi_enabled = false;
 #endif /* OPAL_ENABLE_FT_MPI */
 
 static int ompi_stream_buffering_mode = -1;
+static int ompi_mpi_ft_verbose = 0;
 int ompi_comm_verbose_level = 0;
 
 int ompi_mpi_register_params(void)
 {
-    int value;
+    int value = 0;
 
 #if OPAL_ENABLE_FT_MPI
     mca_base_var_scope_t ftscope = MCA_BASE_VAR_SCOPE_READONLY;
@@ -121,15 +122,14 @@ int ompi_mpi_register_params(void)
                                   "Enable UFLM MPI Fault Tolerance framework",
                                   MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
                                   OPAL_INFO_LVL_4, ftscope, &ompi_ftmpi_enabled);
-    value = 0;
     (void) mca_base_var_register ("ompi", "mpi", "ft", "verbose",
                                   "Verbosity level of the ULFM MPI Fault Tolerance framework",
                                   MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
-                                  OPAL_INFO_LVL_8, MCA_BASE_VAR_SCOPE_LOCAL, &value);
+                                  OPAL_INFO_LVL_8, MCA_BASE_VAR_SCOPE_LOCAL, &ompi_mpi_ft_verbose);
 #if OPAL_ENABLE_FT_MPI
-    if( 0 < value ) {
+    if( 0 < ompi_mpi_ft_verbose ) {
         ompi_ftmpi_output_handle = opal_output_open(NULL);
-        opal_output_set_verbosity(ompi_ftmpi_output_handle, value);
+        opal_output_set_verbosity(ompi_ftmpi_output_handle, ompi_mpi_ft_verbose);
     }
 
     (void) ompi_comm_rbcast_register_params();

@@ -1,0 +1,148 @@
+name: mpi4py (ASAN)
+
+on:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      repository:
+        description: 'mpi4py repository'
+        default: 'mpi4py/mpi4py'
+        required: false
+        type: string
+      ref:
+        description: 'mpi4py branch/tag/SHA'
+        default: 'master'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    # We need Ubuntu 24.04 (over 22.04) due to a kernel bug,
+    # see https://github.com/google/sanitizers/issues/856.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      MPI4PY_TEST_SPAWN: true
+      # disable ASAN while building
+      ASAN_OPTIONS: verify_asan_link_order=0,detect_odr_violation=0,abort_on_error=0
+      # disable leak detection
+      LSAN_OPTIONS: detect_leaks=0,exitcode=0
+
+    steps:
+    - name: Configure hostname
+      run:  echo 127.0.0.1 `hostname` | sudo tee -a /etc/hosts > /dev/null
+      if:   ${{ runner.os == 'Linux' || runner.os == 'macOS' }}
+
+    - name: Install dependencies
+      run:  sudo apt-get install -y -q
+              libnuma-dev libasan8
+      if:   ${{ runner.os == 'Linux' }}
+
+    - name: Checkout Open MPI
+      uses: actions/checkout@v4
+      with:
+       path: mpi-build
+       submodules: recursive
+
+    - name: Bootstrap Open MPI
+      run:  ./autogen.pl
+      working-directory: mpi-build
+
+    # Install into a separate directory (/opt/openmpi) so that we can
+    # bundle up that tree into an artifact to share with other jobs in
+    # this github action.  Specifically don't use /usr/local, because
+    # there's a bunch of other stuff already installed in /usr/local,
+    # and we don't need to include that in our artifact.
+    - name: Configure Open MPI
+      run:  ./configure
+              --enable-debug
+              --disable-dependency-tracking
+              --disable-sphinx
+              --disable-mpi-fortran
+              --disable-oshmem
+              --disable-silent-rules
+              --prefix=/opt/openmpi
+              CFLAGS="-O1 -fno-omit-frame-pointer -g -fsanitize=address"
+              LDFLAGS="-Wl,-rpath,/opt/openmpi/lib -fsanitize=address"
+      working-directory: mpi-build
+
+    - name: Build MPI
+      run:  make -j $(nproc)
+      working-directory: mpi-build
+
+    - name: Install MPI
+      run:  sudo make install
+      working-directory: mpi-build
+
+    - name: Add Open MPI to PATH
+      run: echo /opt/openmpi/bin >> $GITHUB_PATH
+
+    - name: Tweak MPI
+      run:  |
+        # Tweak MPI
+        mca_params="$HOME/.openmpi/mca-params.conf"
+        mkdir -p "$(dirname "$mca_params")"
+        echo mpi_param_check = true >> "$mca_params"
+        echo mpi_show_handle_leaks = true >> "$mca_params"
+        mca_params="$HOME/.prte/mca-params.conf"
+        mkdir -p "$(dirname "$mca_params")"
+        echo rmaps_default_mapping_policy = :oversubscribe >> "$mca_params"
+
+    - name: Use Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: 3
+        architecture: x64
+
+    - name: Install Python packages (build)
+      run:  python -m pip install --upgrade
+              setuptools pip wheel
+
+    - name: Install Python packages (test)
+      run:  python -m pip install --upgrade
+              numpy cffi pyyaml
+
+    - name: Checkout mpi4py
+      uses: actions/checkout@v4
+      with:
+        repository: ${{ inputs.repository || 'mpi4py/mpi4py' }}
+        ref: ${{ inputs.ref }}
+
+    - name: Setting up ASAN environment
+      # LD_PRELOAD is needed to make sure ASAN is the first thing loaded
+      # as it will otherwise complain.
+      # Leak detection is currently disabled because of the size of the report.
+      # The patcher is disabled because ASAN fails if code mmaps data at fixed
+      # memory addresses, see https://github.com/open-mpi/ompi/issues/12819.
+      # ODR violation detection is disabled until #13469 is fixed.
+      run: |
+        echo LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libasan.so.8 >> $GITHUB_ENV
+        echo ASAN_OPTIONS=detect_odr_violation=0,abort_on_error=1,detect_stack_use_after_return=1 >> $GITHUB_ENV
+        echo LSAN_OPTIONS=detect_leaks=0,exitcode=0 >> $GITHUB_ENV
+        echo OMPI_MCA_memory=^patcher >> $GITHUB_ENV
+
+    - name: Show MPI
+      run:  ompi_info --all --all
+
+    - name: Install mpi4py
+      run:  python -m pip install .
+      env:
+        CFLAGS: "-O0"
+
+    - name: Test mpi4py (singleton)
+      run:  python test/main.py -v -x TestExcErrhandlerNull
+      if:   ${{ true }}
+      timeout-minutes: 10
+
+    - name: Test mpi4py (np=1)
+      run:  mpiexec -n 1 python test/main.py -v -x TestExcErrhandlerNull
+      if:   ${{ true }}
+      timeout-minutes: 10
+
+    - name: Test mpi4py (np=4)
+      run:  mpiexec -n 4 python test/main.py -v -f -x TestExcErrhandlerNull
+      if:   ${{ true }}
+      timeout-minutes: 10
