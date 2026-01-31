@@ -20,7 +20,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018      Sandia National Laboratories
  *                         All rights reserved.
- * Copyright (c) 2020      Google, LLC. All rights reserved.
+ * Copyright (c) 2020-2025 Google, LLC. All rights reserved.
  * Copyright (c) 2021      Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
@@ -193,7 +193,6 @@ OBJ_CLASS_INSTANCE(
     mca_pml_base_recv_request_t,
     mca_pml_ob1_recv_request_construct,
     mca_pml_ob1_recv_request_destruct);
-
 
 /*
  * Release resources.
@@ -548,24 +547,14 @@ int mca_pml_ob1_recv_request_get_frag (mca_pml_ob1_rdma_frag_t *frag)
 
 
 
-
-/*
- * Update the recv request status to reflect the number of bytes
- * received and actually delivered to the application.
- */
-
-void mca_pml_ob1_recv_request_progress_frag( mca_pml_ob1_recv_request_t* recvreq,
-                                             mca_btl_base_module_t* btl,
-                                             const mca_btl_base_segment_t* segments,
-                                             size_t num_segments )
+size_t mca_pml_ob1_recv_request_unpack_frag(mca_pml_ob1_recv_request_t* recvreq,
+                                            const mca_btl_base_segment_t* segments,
+                                            size_t num_segments, size_t data_offset, size_t hdr_size)
 {
-    size_t bytes_received, data_offset = 0;
+    size_t bytes_received;
     size_t bytes_delivered __opal_attribute_unused__; /* is being set to zero in MCA_PML_OB1_RECV_REQUEST_UNPACK */
-    mca_pml_ob1_hdr_t* hdr = (mca_pml_ob1_hdr_t*)segments->seg_addr.pval;
 
-    bytes_received = mca_pml_ob1_compute_segment_length_base (segments, num_segments,
-                                                              sizeof(mca_pml_ob1_frag_hdr_t));
-    data_offset     = hdr->hdr_frag.hdr_frag_offset;
+    bytes_received = mca_pml_ob1_compute_segment_length_base (segments, num_segments, hdr_size);
 
     /*
      *  Make user buffer accessible(defined) before unpacking.
@@ -579,7 +568,7 @@ void mca_pml_ob1_recv_request_progress_frag( mca_pml_ob1_recv_request_t* recvreq
     MCA_PML_OB1_RECV_REQUEST_UNPACK( recvreq,
                                      segments,
                                      num_segments,
-                                     sizeof(mca_pml_ob1_frag_hdr_t),
+                                     hdr_size,
                                      data_offset,
                                      bytes_received,
                                      bytes_delivered );
@@ -596,6 +585,24 @@ void mca_pml_ob1_recv_request_progress_frag( mca_pml_ob1_recv_request_t* recvreq
     OPAL_THREAD_ADD_FETCH_SIZE_T(&recvreq->req_bytes_received, bytes_received);
     SPC_USER_OR_MPI(recvreq->req_recv.req_base.req_ompi.req_status.MPI_TAG, (ompi_spc_value_t)bytes_received,
                     OMPI_SPC_BYTES_RECEIVED_USER, OMPI_SPC_BYTES_RECEIVED_MPI);
+    return bytes_received;
+}
+
+/*
+ * Update the recv request status to reflect the number of bytes
+ * received and actually delivered to the application.
+ */
+
+void mca_pml_ob1_recv_request_progress_frag( mca_pml_ob1_recv_request_t* recvreq,
+                                             mca_btl_base_module_t* btl,
+                                             const mca_btl_base_segment_t* segments,
+                                             size_t num_segments )
+{
+    mca_pml_ob1_hdr_t* hdr = (mca_pml_ob1_hdr_t*)segments->seg_addr.pval;
+
+    (void) mca_pml_ob1_recv_request_unpack_frag(recvreq, segments, num_segments, hdr->hdr_frag.hdr_frag_offset,
+                                                sizeof(mca_pml_ob1_frag_hdr_t));
+
     /* check completion status */
     if(recv_request_pml_complete_check(recvreq) == false &&
             recvreq->req_rdma_offset < recvreq->req_send_offset) {

@@ -27,6 +27,7 @@
  *                         reserved.
  * Copyright (c) 2022      IBM Corporation. All rights reserved
  * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
+ * Copyright (c) 2025      Google, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -161,6 +162,24 @@ int mca_pml_ob1_enable(bool enable)
                           mca_pml_ob1.free_list_max,
                           mca_pml_ob1.free_list_inc,
                           NULL, 0, NULL, NULL, NULL);
+
+
+    OBJ_CONSTRUCT(&mca_pml_ob1.multi_send_recv_frags, opal_free_list_t);
+    opal_free_list_init(&mca_pml_ob1.multi_send_recv_frags,
+                        sizeof(mca_pml_ob1_multi_eager_recv_frag_t),
+                        opal_cache_line_size,
+                        OBJ_CLASS(mca_pml_ob1_multi_eager_recv_frag_t),
+                        0, opal_cache_line_size,
+                        mca_pml_ob1.free_list_num,
+                        mca_pml_ob1.free_list_max,
+                        mca_pml_ob1.free_list_inc,
+                        NULL, 0, NULL, NULL, NULL);
+
+
+    OBJ_CONSTRUCT(&mca_pml_ob1.in_progress_multi_recv_frags_lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&mca_pml_ob1.in_progress_multi_recv_frags, opal_hash_table_t);
+    opal_hash_table_init(&mca_pml_ob1.in_progress_multi_recv_frags, /*table_size=*/32);
+
 
     /* pending operations */
     OBJ_CONSTRUCT(&mca_pml_ob1.send_pending, opal_list_t);
@@ -529,6 +548,10 @@ int mca_pml_ob1_add_procs(ompi_proc_t** procs, size_t nprocs)
     if (OMPI_SUCCESS != rc) {
         return rc;
     }
+
+    rc = mca_bml.bml_register (MCA_PML_OB1_HDR_TYPE_MULTI_EAGER,
+                               mca_pml_ob1_recv_frag_callback_multi_eager_send,
+                               NULL);
 
     /* register error handlers */
     return  mca_bml.bml_register_error(mca_pml_ob1_error_handler);
