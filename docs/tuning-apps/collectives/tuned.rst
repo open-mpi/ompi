@@ -1,22 +1,7 @@
-Tuning Collectives
-==================
+The ``tuned`` Component
+=======================
 
-Open MPI's ``coll`` framework provides a number of components implementing
-collective communication, including: ``han``, ``libnbc``, ``self``, ``ucc`` ``base``,
-``sync``, ``xhc``, ``accelerator``, ``basic``, ``ftagree``, ``inter``, ``portals4``, ``acoll``,
-and ``tuned``.  Some of these components may not be available depending on how
-Open MPI was compiled and what hardware is available on the system.  A run-time
-decision based on each component's self reported priority, selects which
-component will be used.  These priorities may be adjusted on the command line
-or with any of the other usual ways of setting MCA variables, giving us a way
-to influence or override component selection.  In the end, which of the
-available components is selected depends on a number of factors such as the
-underlying hardware and the whether or not a specific collective is provided by
-the component as not all components implement all collectives.  However, there
-is always a fallback ``base`` component that steps in and takes over when another
-component fails to provide an implementation.
-
-The remainder of this section describes the tuning options available in the
+This section describes the tuning options available in the
 ``tuned`` collective component.
 
 Fixed, Forced, and Dynamic Decisions
