@@ -73,10 +73,8 @@ static int ompi_grequest_free(ompi_request_t** req)
     if( REQUEST_COMPLETE(*req) ) {
         rc = ompi_grequest_internal_free(greq);
     }
-    if (OMPI_SUCCESS == rc ) {
-        OBJ_RELEASE(*req);
-        *req = MPI_REQUEST_NULL;
-    }
+    OBJ_RELEASE(greq);
+    *req = MPI_REQUEST_NULL;
     return rc;
 }
 
@@ -117,7 +115,7 @@ static void ompi_grequest_construct(ompi_grequest_t* greq)
  * MPI has some weird semantics with respect to generalized requests
  * -- different than all other MPI object types.  So we move some
  * cleanup stuff here to the destructor rather than in
- * greqeust_request_free -- mainly because the cleanup may be required
+ * grequest_request_free -- mainly because the cleanup may be required
  * in two different places.
  *
  * Specifically, generalized requests can be completed (and therefore
