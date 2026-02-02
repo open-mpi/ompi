@@ -12,6 +12,7 @@
 
 #include "oshmem/constants.h"
 #include "oshmem/include/shmem.h"
+#include "oshmem/include/shmemx.h"
 
 #include "oshmem/runtime/runtime.h"
 
