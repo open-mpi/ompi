@@ -9,6 +9,7 @@
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * Copyright (c) 2021      IBM Corporation.  All rights reserved.
  * Copyright (c) 2024      Jeffrey M. Squyres.  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -31,7 +32,7 @@
 #include "opal/datatype/opal_convertor_internal.h"
 #include "opal/datatype/opal_datatype.h"
 #include "opal/datatype/opal_datatype_checksum.h"
-#include "opal/datatype/opal_datatype_internal.h"
+#include "opal/datatype/opal_datatype_constructors.h"
 #include "opal/types.h"
 
 /*
@@ -207,7 +208,7 @@ union fp_float80
 
 union fp_float128
 {
-  /*__float128 value;*/
+  /*_Float128 value;*/
   struct {
 #if defined(WORDS_BIGENDIAN)
     unsigned sign  :  1;
@@ -486,7 +487,7 @@ static inline
 void
 ldbl_to_f128(unsigned char *f128_buf_to, const unsigned char *ldbl_buf_from, ssize_t count, int from_arch, ptrdiff_t from_extent)
 {
-#ifdef HAVE___FLOAT128
+#if defined(HAVE__FLOAT128) || defined(HAVE___FLOAT128)
     int ldbl_is_aligned;
 
     ldbl_is_aligned = 1;
@@ -504,11 +505,20 @@ ldbl_to_f128(unsigned char *f128_buf_to, const unsigned char *ldbl_buf_from, ssi
         f128_is_aligned = 0;
     }
 
+#if defined(HAVE__FLOAT128)
+    _Float128 f128;
+#elif defined(HAVE___FLOAT128)
+    __float128 f128;
+#endif
+
     do {
         if (ldbl_is_aligned && f128_is_aligned) {
+#if defined(HAVE__FLOAT128)
+            *(_Float128*)f128_buf_to = *(long double*)ldbl_buf_from;
+#elif defined(HAVE___FLOAT128)
             *(__float128*)f128_buf_to = *(long double*)ldbl_buf_from;
+#endif
         } else {
-            __float128 f128;
             long double ldbl;
             memcpy(&ldbl, ldbl_buf_from, sizeof(ldbl));
             f128 = ldbl;
@@ -516,10 +526,10 @@ ldbl_to_f128(unsigned char *f128_buf_to, const unsigned char *ldbl_buf_from, ssi
         }
 
         ldbl_buf_from += from_extent;
-        f128_buf_to += sizeof(__float128);
+        f128_buf_to += sizeof(f128);
         count--;
     } while (count > 0);
-#else
+#else  /* defined(HAVE__FLOAT128) || defined(HAVE___FLOAT128) */
     if (LDBL_IS_F64(from_arch)) {
         f64_to_f128(f128_buf_to, ldbl_buf_from, count, from_extent);
     } else if (LDBL_IS_F80(from_arch)) {
@@ -539,7 +549,7 @@ ldbl_to_f128(unsigned char *f128_buf_to, const unsigned char *ldbl_buf_from, ssi
             count--;
         } while (count > 0);
     }
-#endif
+#endif  /* defined(HAVE__FLOAT128) || defined(HAVE___FLOAT128) */
 }
 
 // f128_to_ldbl (copies a float128(local_endian) to a long double(to_arch format))
@@ -547,7 +557,7 @@ static inline
 void
 f128_to_ldbl(unsigned char *ldbl_buf_to, const unsigned char *f128_buf_from, ssize_t count, int to_arch, ptrdiff_t to_extent)
 {
-#ifdef HAVE___FLOAT128
+#if defined(HAVE__FLOAT128) || defined(HAVE___FLOAT128) 
     int ldbl_is_aligned;
 
     ldbl_is_aligned = 1;
@@ -565,11 +575,20 @@ f128_to_ldbl(unsigned char *ldbl_buf_to, const unsigned char *f128_buf_from, ssi
         f128_is_aligned = 0;
     }
 
+#if defined(HAVE__FLOAT128)
+    _Float128 f128;
+#elif defined(HAVE___FLOAT128) 
+    __float128 f128;
+#endif
+
     do {
         if (ldbl_is_aligned && f128_is_aligned) {
+#if defined(HAVE__FLOAT128)
+            *(long double*)ldbl_buf_to = *(_Float128*)f128_buf_from;
+#elif defined(HAVE___FLOAT128) 
             *(long double*)ldbl_buf_to = *(__float128*)f128_buf_from;
+#endif
         } else {
-            __float128 f128;
             long double ldbl;
             memcpy(&f128, f128_buf_from, sizeof(f128));
             ldbl = f128;
@@ -577,10 +596,10 @@ f128_to_ldbl(unsigned char *ldbl_buf_to, const unsigned char *f128_buf_from, ssi
         }
 
         ldbl_buf_to += to_extent;
-        f128_buf_from += sizeof(__float128);
+        f128_buf_from += sizeof(f128);
         count--;
     } while (count > 0);
-#else
+#else  /* defined(HAVE__FLOAT128) || defined(HAVE___FLOAT128) */
     if (LDBL_IS_F64(to_arch)) {
         f128_to_f64(ldbl_buf_to, f128_buf_from, count, to_extent);
     } else if (LDBL_IS_F80(to_arch)) {
@@ -600,7 +619,7 @@ f128_to_ldbl(unsigned char *ldbl_buf_to, const unsigned char *f128_buf_from, ssi
             count--;
         } while (count > 0);
     }
-#endif
+#endif  /* defined(HAVE__FLOAT128) || defined(HAVE___FLOAT128) */
 }
 
 /**
@@ -612,24 +631,24 @@ f128_to_ldbl(unsigned char *ldbl_buf_to, const unsigned char *f128_buf_from, ssi
 #define COPY_TYPE_HETEROGENEOUS(TYPENAME, TYPE) COPY_TYPE_HETEROGENEOUS_INTERNAL(TYPENAME, TYPE, 0)
 
 /*
- *  Summaryizing the logic of the pFunc copy functions
+ *  Summarizing the logic of the pFunc copy functions
  *  with regard to long doubles:
  *
  *  For terminology I'll use
  *  f64 : float64 which some architectures use as their long double
  *  f80 : x86 double extended format that uses 80 bytes, commonly used for long double
- *  f128 : ieee quad precision, sometimes available as __float128
+ *  f128 : ieee quad precision, sometimes available as _Float128 or the non-standard __float128
  *
  *    if !LONG_DOUBLE or both architecture have the same long double format:
  *      byte swap based on local/remote endianness differing
  *    else:
  *      if from_arch is not local endianness: byte swap to local endianness
  *      if from_arch isn't f128 : ldbl_to_f128
- *        if we have __float128         : convert to __float128
+ *        if we have _Float128      : convert to _Float128
  *        else if from_arch LDBL is f80 : f80_to_f128
  *        else if from_arch LDBL is f64 : f64_to_f128
  *      if to_arch isn't f128 : f128_to_ldbl
- *        if we have __float128         : convert from __float128 to
+ *        if we have _Float128      : convert from _Float128 to
  *        if to_arch LDBL is f80   : f128_to_f80
  *        if to_arch LDBL is f64   : f128_to_f64
  *      if to_arch is not local endianness : byte swap
@@ -975,22 +994,26 @@ COPY_TYPE_HETEROGENEOUS(float8, opal_short_float_t)
 #    define copy_float8_heterogeneous NULL
 #endif
 
-#if defined(HAVE_SHORT_FLOAT) && SIZEOF_SHORT_FLOAT == 12
-COPY_TYPE_HETEROGENEOUS(float12, short float)
-#elif SIZEOF_FLOAT == 12
-COPY_TYPE_HETEROGENEOUS(float12, float)
-#elif SIZEOF_DOUBLE == 12
-COPY_TYPE_HETEROGENEOUS(float12, double)
-#elif SIZEOF_LONG_DOUBLE == 12
+#if SIZEOF_LONG_DOUBLE == OPAL_SIZEOF_FLOAT12
 COPY_TYPE_HETEROGENEOUS(float12, long double)
-#elif defined(HAVE_OPAL_SHORT_FLOAT_T) && SIZEOF_OPAL_SHORT_FLOAT_T == 12
+#elif SIZEOF_DOUBLE == OPAL_SIZEOF_FLOAT12
+COPY_TYPE_HETEROGENEOUS(float12, double)
+#elif SIZEOF_FLOAT == OPAL_SIZEOF_FLOAT12
+COPY_TYPE_HETEROGENEOUS(float12, float)
+#elif defined(HAVE_SHORT_FLOAT) && SIZEOF_SHORT_FLOAT == OPAL_SIZEOF_FLOAT12
+COPY_TYPE_HETEROGENEOUS(float12, short float)
+#elif defined(HAVE_OPAL_SHORT_FLOAT_T) && SIZEOF_OPAL_SHORT_FLOAT_T == OPAL_SIZEOF_FLOAT12
 COPY_TYPE_HETEROGENEOUS(float12, opal_short_float_t)
 #else
 /* #error No basic type for copy function for opal_datatype_float12 found */
 #    define copy_float12_heterogeneous NULL
 #endif
 
-#if defined(HAVE_SHORT_FLOAT) && SIZEOF_SHORT_FLOAT == 16
+#if defined(HAVE__FLOAT128) && SIZEOF__FLOAT128 == 16
+COPY_TYPE_HETEROGENEOUS(float16, _Float128)
+#elif defined(HAVE___FLOAT128) && SIZEOF___FLOAT128 == 16
+COPY_TYPE_HETEROGENEOUS(float16, __float128)
+#elif defined(HAVE_SHORT_FLOAT) && SIZEOF_SHORT_FLOAT == 16
 COPY_TYPE_HETEROGENEOUS(float16, short float)
 #elif SIZEOF_FLOAT == 16
 COPY_TYPE_HETEROGENEOUS(float16, float)
@@ -1019,6 +1042,15 @@ COPY_2SAMETYPE_HETEROGENEOUS(float_complex, float)
 COPY_2SAMETYPE_HETEROGENEOUS(double_complex, double)
 
 COPY_2SAMETYPE_HETEROGENEOUS_INTERNAL(long_double_complex, long double, 1)
+
+#if defined(HAVE__FLOAT128) && defined(HAVE__FLOAT128__COMPLEX)
+COPY_2SAMETYPE_HETEROGENEOUS_INTERNAL(float128_complex, _Float128, 1)
+#elif defined(HAVE___FLOAT128) && defined(HAVE___FLOAT128__COMPLEX)
+COPY_2SAMETYPE_HETEROGENEOUS_INTERNAL(float128_complex, __float128, 1)
+#else
+/* #error No _Float128 _Complex support available */
+#    define copy_float128_complex_heterogeneous NULL
+#endif
 
 COPY_TYPE_HETEROGENEOUS(wchar, wchar_t)
 
@@ -1272,5 +1304,6 @@ conversion_fct_t opal_datatype_heterogeneous_copy_functions[OPAL_DATATYPE_MAX_PR
     [OPAL_DATATYPE_LONG]                = (conversion_fct_t) copy_long_heterogeneous,
     [OPAL_DATATYPE_UNSIGNED_LONG]       = (conversion_fct_t) copy_unsigned_long_heterogeneous,
 #endif
+    [OPAL_DATATYPE_FLOAT128_COMPLEX]    = (conversion_fct_t) copy_float128_complex_heterogeneous,
     [OPAL_DATATYPE_UNAVAILABLE]         = NULL,
 };

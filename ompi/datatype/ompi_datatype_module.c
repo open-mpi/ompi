@@ -21,6 +21,7 @@
  * Copyright (c) 2018-2021 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -396,6 +397,8 @@ const ompi_datatype_t* ompi_datatype_basicDatatypes[OMPI_DATATYPE_MPI_MAX_PREDEF
      * See https://github.com/mpi-forum/mpi-issues/issues/65 */
     [OMPI_DATATYPE_MPI_SHORT_FLOAT] = &ompi_mpi_short_float.dt,
     [OMPI_DATATYPE_MPI_C_SHORT_FLOAT_COMPLEX] = &ompi_mpi_c_short_float_complex.dt,
+
+    [OMPI_DATATYPE_MPI_FLOAT128] = &ompi_mpi_real16.dt,
 
     [OMPI_DATATYPE_MPI_UNAVAILABLE] = &ompi_mpi_unavailable.dt,
 };
