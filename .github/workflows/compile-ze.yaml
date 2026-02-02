@@ -14,13 +14,15 @@ jobs:
         sudo apt update
         sudo apt install -y --no-install-recommends wget lsb-core software-properties-common gpg curl cmake git
     - name: Build OneAPI ZE  
+      # for some reason the build of the level-zero stuff can take a long time
+      timeout-minutes: 20
       run: |
         git clone https://github.com/oneapi-src/level-zero.git
         cd level-zero
         mkdir build
         cd build
         cmake ../ -DCMAKE_INSTALL_PREFIX=/opt/ze
-        sudo make -j install
+        sudo make -j1 install
     - uses: actions/checkout@v4
       with:
             submodules: recursive
