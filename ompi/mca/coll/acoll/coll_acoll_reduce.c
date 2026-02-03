@@ -63,6 +63,8 @@ static inline int coll_acoll_reduce_topo(const void *sbuf, void *rbuf, size_t co
 
     rank = ompi_comm_rank(comm);
 
+    int use_socket = (0 == acoll_module->use_socket) ? 1 : acoll_module->use_socket;
+    
     tmp_sbuf = (char *) sbuf;
     if ((MPI_IN_PLACE == sbuf) && (rank == root)) {
         tmp_sbuf = (char *) rbuf;
@@ -70,8 +72,9 @@ static inline int coll_acoll_reduce_topo(const void *sbuf, void *rbuf, size_t co
 
     int i;
     int ind1 = MCA_COLL_ACOLL_L3CACHE;
-    int ind2 = MCA_COLL_ACOLL_LYR_NODE;
-    int is_base = rank == subc->base_rank[ind1][ind2] ? 1 : 0;
+    int ind2 = use_socket ? MCA_COLL_ACOLL_LYR_SOCKET : MCA_COLL_ACOLL_LYR_NODE;
+    int cur_rank = use_socket ? ompi_comm_rank(subc->socket_comm) : rank;
+    int is_base = cur_rank == subc->base_rank[ind1][ind2] ? 1 : 0;
     int bound = subc->subgrp_size;
 
     sz = ompi_comm_size(subc->base_comm[ind1][ind2]);
@@ -114,35 +117,69 @@ static inline int coll_acoll_reduce_topo(const void *sbuf, void *rbuf, size_t co
     }
     /* perform reduction at root */
     if (is_base && (sz > 1)) {
-        if (rank != root) {
+        int ldr_root = use_socket ? subc->socket_rank : root;
+        int local_rank = (use_socket && subc->num_nodes > 1) ? ompi_comm_rank(subc->local_comm) : rank;
+        if (local_rank != ldr_root) {
             ret = MCA_PML_CALL(send(tmp_rbuf, count, dtype, subc->base_root[ind1][ind2],
                                     MCA_COLL_BASE_TAG_REDUCE, MCA_PML_BASE_SEND_STANDARD,
                                     subc->base_comm[ind1][ind2]));
-            if (ret != MPI_SUCCESS) {
+            if (MPI_SUCCESS != ret) {
                 free(free_buffer);
-                if (NULL != tmp_rbuf) {
+                if (NULL != tmp_rbuf && tmp_rbuf != rbuf) {
                     coll_acoll_buf_free(reserve_mem_rbuf_reduce, tmp_rbuf);
                 }
                 return ret;
             }
         }
-        if (rank == root) {
+        if (local_rank == ldr_root) {
             for (i = 0; i < sz; i++) {
                 if (i == subc->base_root[ind1][ind2]) {
                     continue;
                 }
                 ret = MCA_PML_CALL(recv(pml_buffer, count, dtype, i, MCA_COLL_BASE_TAG_REDUCE,
                                         subc->base_comm[ind1][ind2], MPI_STATUS_IGNORE));
-                if (ret != MPI_SUCCESS) {
+                if (MPI_SUCCESS != ret) {
                     free(free_buffer);
                     return ret;
                 }
-                ompi_op_reduce(op, pml_buffer, rbuf, count, dtype);
+                ompi_op_reduce(op, pml_buffer, tmp_rbuf, count, dtype);
             }
         }
     }
 
-    /* if local root, reduce at root */
+    if (use_socket) {
+        int soc_sz = ompi_comm_size(subc->socket_ldr_comm);
+        if (soc_sz > 1 && -1 != subc->socket_ldr_root) {
+            if (rank != root) {
+                ret = MCA_PML_CALL(send(tmp_rbuf, count, dtype, subc->socket_ldr_root,
+                                        MCA_COLL_BASE_TAG_REDUCE, MCA_PML_BASE_SEND_STANDARD,
+                                        subc->socket_ldr_comm));
+                if (MPI_SUCCESS != ret) {
+                    free(free_buffer);
+                    if (NULL != tmp_rbuf && tmp_rbuf != rbuf) {
+                        coll_acoll_buf_free(reserve_mem_rbuf_reduce, tmp_rbuf);
+                    }
+                    return ret;
+                }
+            }
+            if (rank == root) {
+                for (i = 0; i < soc_sz; i++) {
+                    if (i == subc->socket_ldr_root) {
+                        continue;
+                    }
+                    ret = MCA_PML_CALL(recv(pml_buffer, count, dtype, i, MCA_COLL_BASE_TAG_REDUCE,
+                                            subc->socket_ldr_comm, MPI_STATUS_IGNORE));
+                    if (MPI_SUCCESS != ret) {
+                        free(free_buffer);
+                        return ret;
+                    }
+                    ompi_op_reduce(op, pml_buffer, rbuf, count, dtype);
+                }
+            }
+        }
+    }
+
+    /* if local root, free the scratch buffers */
     if (is_base) {
         free(free_buffer);
         if (rank != root && NULL != tmp_rbuf) {
@@ -222,19 +259,19 @@ static inline int mca_coll_acoll_reduce_smsc(const void *sbuf, void *rbuf, size_
     ret = comm->c_coll->coll_allgather(sbuf_vaddr, sizeof(void *), MPI_BYTE, data->allshm_sbuf,
                                        sizeof(void *), MPI_BYTE, comm,
                                        comm->c_coll->coll_allgather_module);
-    if (ret != MPI_SUCCESS) {
+    if (MPI_SUCCESS != ret) {
         return ret;
     }
     ret = comm->c_coll->coll_allgather(rbuf_vaddr, sizeof(void *), MPI_BYTE, data->allshm_rbuf,
                                        sizeof(void *), MPI_BYTE, comm,
                                        comm->c_coll->coll_allgather_module);
 
-    if (ret != MPI_SUCCESS) {
+    if (MPI_SUCCESS != ret) {
         return ret;
     }
 
     ret = register_mem_with_smsc(rank, size, total_dsize, data, comm);
-    if (ret != MPI_SUCCESS) {
+    if (MPI_SUCCESS != ret) {
         return ret;
     }
 
@@ -243,7 +280,7 @@ static inline int mca_coll_acoll_reduce_smsc(const void *sbuf, void *rbuf, size_
     size_t my_count_size = (l1_local_rank == (l1_gp_size - 1)) ? chunk + count % l1_gp_size : chunk;
 
     if (rank == l1_gp[0]) {
-        if (sbuf != MPI_IN_PLACE)
+        if (MPI_IN_PLACE != sbuf)
             memcpy(tmp_rbuf, sbuf, my_count_size * dsize);
         for (int i = 1; i < l1_gp_size; i++) {
             ompi_op_reduce(op, (char *) data->smsc_saddr[l1_gp[i]] + chunk * l1_local_rank * dsize,
@@ -298,7 +335,7 @@ static inline int mca_coll_acoll_reduce_smsc(const void *sbuf, void *rbuf, size_
             memcpy(rbuf, tmp_rbuf, total_dsize);
         }
     } else {
-        if ((rank != root) && (subc->smsc_use_sr_buf != 0)) {
+        if ((rank != root) && (0 != subc->smsc_use_sr_buf)) {
             coll_acoll_buf_free(reserve_mem_rbuf_reduce, tmp_rbuf);
         }
     }
@@ -325,7 +362,7 @@ int mca_coll_acoll_reduce_intra(const void *sbuf, void *rbuf, size_t count,
         return ompi_coll_base_reduce_intra_in_order_binary(sbuf, rbuf, count, dtype, op, root, comm,
                                                            module, 0, 0);
     }
-    if (root != 0) { // ToDo: support non-zero root
+    if (0 != root) { // ToDo: support non-zero root
         return ompi_coll_base_reduce_intra_binomial(sbuf, rbuf, count, dtype, op, root, comm,
                                                     module, 0, 0);
     }
@@ -346,8 +383,11 @@ int mca_coll_acoll_reduce_intra(const void *sbuf, void *rbuf, size_t count,
 
     ompi_datatype_type_size(dtype, &dsize);
     total_dsize = dsize * count;
-
-    alg = coll_reduce_decision_fixed(size, total_dsize);
+    if (-1 == acoll_module->red_algo) {
+        alg = coll_reduce_decision_fixed(size, total_dsize);
+    } else {
+        alg = acoll_module->red_algo;
+    }
 
     /* Obtain the subcomms structure */
     coll_acoll_subcomms_t *subc = NULL;
@@ -367,10 +407,14 @@ int mca_coll_acoll_reduce_intra(const void *sbuf, void *rbuf, size_t count,
     }
 
     num_nodes = subc->num_nodes;
-
     if (1 == num_nodes) {
-        if (total_dsize < 262144) {
-            if (-1 == alg /* interaction with xpmem implementation causing issues 0*/) {
+        int is_dsize_lt_thresh = total_dsize < 262144 ? 1 : 0;
+        if (-1 != acoll_module->red_algo) {
+            is_dsize_lt_thresh = 1;
+            alg = acoll_module->red_algo;
+        }
+        if (is_dsize_lt_thresh) {
+            if (0 == alg) {
                 return coll_acoll_reduce_topo(sbuf, rbuf, count, dtype, op, root, comm, module,
                                               subc);
             } else if (1 == alg) {
@@ -379,12 +423,12 @@ int mca_coll_acoll_reduce_intra(const void *sbuf, void *rbuf, size_t count,
             } else if (2 == alg) {
                 return ompi_coll_base_reduce_intra_binomial(sbuf, rbuf, count, dtype, op, root,
                                                             comm, module, 0, 0);
-            } else { /*(alg == 3)*/
+            } else { /* either 3 == alg or acoll_module->red_algo is not 0, 1, 2*/
                 return ompi_coll_base_reduce_intra_in_order_binary(sbuf, rbuf, count, dtype, op,
                                                                    root, comm, module, 0, 0);
             }
         } else {
-            if ((((subc->smsc_use_sr_buf != 0)
+            if ((((0 != subc->smsc_use_sr_buf)
                   && (acoll_module->reserve_mem_s).reserve_mem_allocate
                   && ((acoll_module->reserve_mem_s).reserve_mem_size >= total_dsize))
                  || ((0 == subc->smsc_use_sr_buf) && (subc->smsc_buf_size > 2 * total_dsize)))
@@ -397,8 +441,13 @@ int mca_coll_acoll_reduce_intra(const void *sbuf, void *rbuf, size_t count,
             }
         }
     } else {
-        return ompi_coll_base_reduce_intra_binomial(sbuf, rbuf, count, dtype, op, root, comm,
-                                                    module, 0, 0);
+        if (total_dsize <= 4096) {
+            return coll_acoll_reduce_topo(sbuf, rbuf, count, dtype, op, root, comm, module,
+                                          subc);
+        } else {
+            return ompi_coll_base_reduce_intra_binomial(sbuf, rbuf, count, dtype, op, root, comm,
+                                                        module, 0, 0);
+        }
     }
     return MPI_SUCCESS;
 }

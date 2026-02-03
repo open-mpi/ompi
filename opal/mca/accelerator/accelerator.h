@@ -91,6 +91,7 @@ BEGIN_C_DECLS
  */
 /* Unified memory buffers */
 #define MCA_ACCELERATOR_FLAGS_UNIFIED_MEMORY 0x00000001
+#define MCA_ACCELERATOR_FLAGS_DEVICE_ONLY_MEMORY 0x00000002
 
 /**
  * Transfer types.

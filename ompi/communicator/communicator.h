@@ -22,7 +22,7 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
- * Copyright (c) 2018-2025 Triad National Security, LLC. All rights
+ * Copyright (c) 2018-2026 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2023      Advanced Micro Devices, Inc. All rights reserved.
  * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
@@ -729,6 +729,11 @@ OMPI_DECLSPEC bool ompi_comm_is_proc_active(ompi_communicator_t *comm, int peer_
 OMPI_DECLSPEC int ompi_comm_set_rank_failed(ompi_communicator_t *comm, int peer_id, bool remote);
 
 /*
+ * Locally revoke a communicator
+ */
+OMPI_DECLSPEC bool ompi_comm_revoke_local(ompi_communicator_t* comm, bool coll_only);
+
+/*
  * Returns true if point-to-point communications with the target process
  * are supported (this means if the process is a valid peer, if the
  * communicator is not revoked and if the peer is not already marked as
@@ -776,18 +781,6 @@ static inline bool ompi_comm_iface_coll_check(ompi_communicator_t *comm, int *er
 static inline bool ompi_comm_iface_create_check(ompi_communicator_t *comm, int *err)
 {
     return ompi_comm_iface_coll_check(comm, err);
-}
-
-static inline void *ompi_comm_bsend_buffer_get(ompi_communicator_t *comm)
-{
-    assert(NULL != comm);
-    return comm->bsend_buffer;
-}
-
-static inline int ompi_comm_bsend_buffer_set(ompi_communicator_t *comm, void *buffer)
-{
-    comm->bsend_buffer = buffer;
-    return OMPI_SUCCESS;
 }
 
 /*
@@ -863,6 +856,18 @@ OMPI_DECLSPEC int ompi_comm_revoke_init(void);
 OMPI_DECLSPEC int ompi_comm_revoke_finalize(void);
 
 #endif /* OPAL_ENABLE_FT_MPI */
+
+static inline void *ompi_comm_bsend_buffer_get(ompi_communicator_t *comm)
+{
+    assert(NULL != comm);
+    return comm->bsend_buffer;
+}
+
+static inline int ompi_comm_bsend_buffer_set(ompi_communicator_t *comm, void *buffer)
+{
+    comm->bsend_buffer = buffer;
+    return OMPI_SUCCESS;
+}
 
 static inline bool ompi_comm_peer_invalid (const ompi_communicator_t* comm, const int peer_id)
 {

@@ -139,6 +139,8 @@ struct mca_btl_ofi_module_t {
 
     /** registration cache */
     mca_rcache_base_module_t *rcache;
+
+    mca_btl_base_module_error_cb_fn_t ofi_error_cb;
 };
 typedef struct mca_btl_ofi_module_t mca_btl_ofi_module_t;
 

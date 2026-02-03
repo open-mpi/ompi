@@ -2,6 +2,9 @@ name: Compile ignored components
 
 on: [pull_request]
 
+permissions:
+  contents: read
+
 jobs:
   compile-ignored:
     runs-on: ubuntu-24.04

@@ -18,7 +18,7 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/pml/pml.h"
 
-static int ompi_comm_revoke_local(ompi_communicator_t* comm,
+static int ompi_comm_revoke_msg_cb(ompi_communicator_t* comm,
                                   ompi_comm_rbcast_message_t* msg);
 
 static int comm_revoke_cb_type = -1;
@@ -27,7 +27,7 @@ int ompi_comm_revoke_init(void)
 {
     int ret;
 
-    ret = ompi_comm_rbcast_register_cb_type(ompi_comm_revoke_local);
+    ret = ompi_comm_rbcast_register_cb_type(ompi_comm_revoke_msg_cb);
     if( 0 <= ret ) {
         comm_revoke_cb_type = ret;
         return OMPI_SUCCESS;
@@ -55,7 +55,7 @@ int ompi_comm_revoke_internal(ompi_communicator_t* comm)
                          OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), __func__, ompi_comm_print_cid(comm), comm->c_epoch ));
 
     /* Mark locally revoked */
-    if( ompi_comm_revoke_local(comm, NULL) ) {
+    if( ompi_comm_revoke_local(comm, false) ) {
         /* Broadcast the 'revoke' signal to all other processes. */
         ompi_comm_rbcast_message_t msg;
         msg.cid   = ompi_comm_get_local_cid(comm);
@@ -66,20 +66,22 @@ int ompi_comm_revoke_internal(ompi_communicator_t* comm)
     return ret;
 }
 
-
-/* internal code to revoke the communicator structure. Can be called from the
- * API or from receiving a revoke message */
-static int ompi_comm_revoke_local(ompi_communicator_t* comm, ompi_comm_rbcast_message_t* msg)
+/*
+ * Internal code to locally revoke a comm and update all necessary state
+ */
+bool ompi_comm_revoke_local(ompi_communicator_t* comm, bool coll_only)
 {
-    if( comm->comm_revoked ) {
+    if( comm->comm_revoked || (coll_only && comm->coll_revoked) ) {
         OPAL_OUTPUT_VERBOSE((9, ompi_ftmpi_output_handle,
-                             "%s %s: comm %s:%d is already revoked, nothing to do",
-                             OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), __func__, ompi_comm_print_cid(comm), comm->c_epoch));
+                             "%s %s: comm %s:%d is already %s revoked, nothing to do",
+                             OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), __func__, ompi_comm_print_cid(comm), comm->c_epoch,
+                             coll_only ? "coll" : "fully"));
         return false;
     }
     OPAL_OUTPUT_VERBOSE((9, ompi_ftmpi_output_handle,
-                         "%s %s: comm %s:%d is marked revoked locally",
-                         OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), __func__, ompi_comm_print_cid(comm), comm->c_epoch));
+                         "%s %s: comm %s:%d is marked %s revoked locally",
+                         OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), __func__, ompi_comm_print_cid(comm), comm->c_epoch,
+                         coll_only ? "coll" : "fully"));
     /*
      * Locally revoke the communicator
      *
@@ -90,9 +92,17 @@ static int ompi_comm_revoke_local(ompi_communicator_t* comm, ompi_comm_rbcast_me
      */
     comm->any_source_enabled = false;
     /* purge the communicator unexpected fragments and matching logic */
-    MCA_PML_CALL(revoke_comm(comm, false));
+    MCA_PML_CALL(revoke_comm(comm, coll_only));
+    /* revoke any subcomms created by coll */
+    comm->c_coll->coll_revoke_local(comm);
     /* Signal the point-to-point stack to recheck requests */
     wait_sync_global_wakeup(MPI_ERR_REVOKED);
     return true;
 }
 
+/* internal code to revoke the communicator structure. Can be called from the
+ * API or from receiving a revoke message */
+static int ompi_comm_revoke_msg_cb(ompi_communicator_t* comm, ompi_comm_rbcast_message_t* msg)
+{
+    return ompi_comm_revoke_local(comm, false);
+}

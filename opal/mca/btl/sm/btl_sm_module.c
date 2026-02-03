@@ -347,9 +347,6 @@ static int sm_finalize(struct mca_btl_base_module_t *btl)
     free(component->fbox_in_endpoints);
     component->fbox_in_endpoints = NULL;
 
-    opal_shmem_unlink(&mca_btl_sm_component.seg_ds);
-    opal_shmem_segment_detach(&mca_btl_sm_component.seg_ds);
-
     return OPAL_SUCCESS;
 }
 

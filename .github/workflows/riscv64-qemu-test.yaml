@@ -1,6 +1,8 @@
 name: riscv64-qemu-test
 
 on: [pull_request]
+permissions:
+  contents: read
 
 jobs:
   test:
@@ -57,3 +59,12 @@ jobs:
         grep "bogomips" /proc/cpuinfo | head -n 1 | awk '{printf("%d", $3*500000)}' | perl -e 'print pack("N", <STDIN>)' > /opt/riscv/sysroot/proc/device-tree/cpus/timebase-frequency
         cd test/util
         qemu-riscv64 -cpu rv64,v=true,vext_spec=v1.0,vlen=128 /opt/riscv/bin/mpirun -n 1 ./opal_timer
+
+    - name: Run MPI_OP
+      run: |
+        export QEMU_LD_PREFIX=/opt/riscv/sysroot
+        export PATH="/opt/riscv/bin:$PATH"
+        export LD_LIBRARY_PATH="/opt/riscv/lib:$LD_LIBRARY_PATH"
+        cd test/datatype
+        qemu-riscv64 -cpu rv64,v=true,vext_spec=v1.0,vlen=128 /opt/riscv/bin/ompi_info --param all all --level 9 | grep "MCA op "
+        qemu-riscv64 -cpu rv64,v=true,vext_spec=v1.0,vlen=128 /opt/riscv/bin/mpirun -n 1 ./reduce_local -l 1024 -u 1024

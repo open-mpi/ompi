@@ -530,8 +530,8 @@ Open MPI has a *large* number of MCA parameters available.  Users can
 use the :ref:`ompi_info(1) <man1-ompi_info>` command to see *all*
 available MCA parameters.
 
-.. note:: Similarly, you can use the ``pmix_info(1)`` and
-          ``prte_info(1)`` commands to see all the MCA parameters
+.. note:: Similarly, you can use the :ref:`pmix_info(1) <pmix:man1-pmix_info>` and
+          :ref:`prte_info(1) <prrte:man1-prte_info>` commands to see all the MCA parameters
           available for the PMIx and PRRTE projects, respectively.
 
           The documentation for these commands are not included in the
@@ -738,7 +738,7 @@ but may be removed in future releases.
         / rank / stdout / stderr / stdddiag.
       - ``orte_output_filename``
 
-        Value: ``<filenname>``
+        Value: ``<filename>``
       - ``output``
 
         Value: ``file=<filename>``
@@ -1146,4 +1146,3 @@ Multiple suffixes may be appended to a mapping value:
 
    # New environment variable: (suffix on value)
    export PRTE_MCA_rmaps_default_mapping_policy=ppr:4:package:hwtcpus:oversubscribe
-

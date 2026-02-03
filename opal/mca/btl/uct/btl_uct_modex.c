@@ -69,7 +69,7 @@ static uint8_t *mca_btl_uct_tl_modex_pack(mca_btl_uct_module_t *module, mca_btl_
     tl_modex->size = mca_btl_uct_tl_modex_size(tl);
 
     memset(tl_modex->tl_name, 0, sizeof(tl_modex->tl_name));
-    strncpy(tl_modex->tl_name, tl->uct_tl_name, sizeof(tl_modex->tl_name));
+    strncpy(tl_modex->tl_name, tl->uct_tl_name, sizeof(tl_modex->tl_name) - 1);
 
     uint8_t *tl_modex_data = (uint8_t *) tl_modex->data;
 
@@ -107,7 +107,7 @@ static uint8_t *mca_btl_uct_modex_pack(mca_btl_uct_md_t *md, uint8_t *modex_data
     md_modex->module_index = module ? module->module_index : (uint16_t) -1;
 
     memset(md_modex->md_name, 0, sizeof(md_modex->md_name));
-    strncpy(md_modex->md_name, md->md_name, sizeof(md_modex->md_name));
+    strncpy(md_modex->md_name, md->md_name, sizeof(md_modex->md_name) - 1);
 
     mca_btl_uct_tl_t *tl;
     OPAL_LIST_FOREACH(tl, &md->tls, mca_btl_uct_tl_t) {

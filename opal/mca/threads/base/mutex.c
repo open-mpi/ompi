@@ -35,6 +35,12 @@
  */
 bool opal_uses_threads = false;
 
+/*
+ * Track if MPI is running in single-threaded mode (MPI_THREAD_SINGLE).
+ * Default is true until MPI_Init/MPI_Init_thread determines otherwise.
+ */
+bool opal_single_threaded = true;
+
 static void mca_threads_mutex_constructor(opal_mutex_t *p_mutex)
 {
 #if OPAL_ENABLE_DEBUG
