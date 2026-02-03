@@ -22,6 +22,7 @@ typedef uint64_t osc_sm_post_type_t;
 typedef opal_atomic_uint64_t osc_sm_post_atomic_type_t;
 #define OSC_SM_POST_BITS 6
 #define OSC_SM_POST_MASK 0x3f
+#define OSC_SM_MAX_NOTIFY_COUNTERS 16
 
 /* data shared across all peers */
 struct ompi_osc_sm_global_state_t {
@@ -79,7 +80,7 @@ struct ompi_osc_sm_module_t {
     size_t *sizes;
     void **bases;
     ptrdiff_t *disp_units;
-    uint64_t **notify_counters;
+    uint64_t *notify_counters;
 
 
     ompi_group_t *start_group;
