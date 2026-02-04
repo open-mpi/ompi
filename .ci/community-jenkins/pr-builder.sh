@@ -21,6 +21,8 @@ MAKE_ARGS=
 MAKE_J="-j 8"
 PREFIX="${WORKSPACE}/install"
 MPIRUN_MODE=${MPIRUN_MODE:-runall}
+SOURCE_DIR=
+BUILD_DIR=
 
 #
 # Options Parsing
@@ -77,6 +79,24 @@ while (( "$#" )); do
                 exit 1
             fi
             ;;
+	--source-dir)
+            if [ -n "$2" ] && [ ${2:0:1} != "-" ]; then
+                SOURCE_DIR=$2
+                shift 2
+            else
+                echo "Error: Argument for $1 is missing" >&2
+                exit 1
+            fi
+            ;;
+	--build-dir)
+            if [ -n "$2" ] && [ ${2:0:1} != "-" ]; then
+                BUILD_DIR=$2
+                shift 2
+            else
+                echo "Error: Argument for $1 is missing" >&2
+                exit 1
+            fi
+            ;;
         -*|--*=) # Unsupported flags
             echo "Error: Unsupported flag $1" >&2
             exit 1
@@ -104,6 +124,16 @@ fi
 
 echo "--> platform: $PLATFORM_ID"
 echo "--> version: $VERSION_ID"
+
+if test "${SOURCE_DIR}" = "" ; then
+    echo "SOURCED_DIR is unset.  Cannot continue."
+    exit 1
+fi
+
+echo "--> Workspace: ${WORKSPACE}"
+echo "--> Source Dir: ${SOURCE_DIR}"
+echo "--> Build Dir: ${BUILD_DIR}"
+echo "--> Install Dir: ${PREFIX}"
 
 #
 # See if builder provided a compiler we should use, and translate it to
@@ -150,6 +180,8 @@ fi
 echo "--> Autogen arguments: $AUTOGEN_ARGS"
 echo "--> Configure arguments: $CONFIGURE_ARGS"
 
+cd "${WORKSPACE}/${SOURCE_DIR}"
+
 # Build
 sha1=`git rev-parse HEAD`
 echo "--> Building commit ${sha1}"
@@ -175,9 +207,20 @@ else
     fi
 fi
 
-echo "--> running ./configure --prefix=\"${PREFIX}\" ${CONFIGURE_ARGS}"
-if ! ./configure --prefix="${PREFIX}" ${CONFIGURE_ARGS}; then
-    echo "./configure --prefix=\"${PREFIX}\" ${CONFIGURE_ARGS} failed, ABORTING !"
+if test "${BUILD_DIR}" != "" ; then
+    cd "${WORKSPACE}"
+    rm -rf "${BUILD_DIR}"
+    mkdir "${BUILD_DIR}"
+    cd "${WORKSPACE}/${BUILD_DIR}"
+    CONFIGURE=../${SOURCE_DIR}/configure
+else
+    # already in ${WORKSPACE}/${SOURCE_DIR}
+    CONFIGURE=./configure
+fi
+
+echo "--> running ${CONFIGURE} --prefix=\"${PREFIX}\" ${CONFIGURE_ARGS}"
+if ! ${CONFIGURE} --prefix="${PREFIX}" ${CONFIGURE_ARGS}; then
+    echo "${CONFIGURE} --prefix=\"${PREFIX}\" ${CONFIGURE_ARGS} failed, ABORTING !"
     if test -f config.log; then
         echo "config.log content :"
         cat config.log
@@ -216,7 +259,7 @@ echo "--> running ompi_info"
 ompi_info
 
 echo "--> running make all in examples"
-cd "examples"
+cd "${WORKSPACE}/${SOURCE_DIR}/examples"
 make ${MAKE_ARGS} all
 cd ..
 
