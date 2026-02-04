@@ -98,7 +98,7 @@ ompi_osc_sm_rput_notify(const void *origin_addr,
     *ompi_req = &ompi_request_empty;
 
     opal_atomic_wmb();
-    opal_atomic_add(&module->notify_counters[target][notify], 1);
+    opal_atomic_add(&module->notify_counters[notify], 1);
 
     return OMPI_SUCCESS;
 }
@@ -181,7 +181,7 @@ ompi_osc_sm_rget_notify(void *origin_addr,
     *ompi_req = &ompi_request_empty;
 
     opal_atomic_rmb();
-    opal_atomic_add(&module->notify_counters[target][notify], 1);
+    opal_atomic_add(&module->notify_counters[notify], 1);
 
     return OMPI_SUCCESS;
 }
@@ -355,7 +355,7 @@ ompi_osc_sm_put_notify(const void *origin_addr,
     }
 
     opal_atomic_wmb();
-    opal_atomic_add(&module->notify_counters[target][notify], 1);
+    opal_atomic_add(&module->notify_counters[notify], 1);
 
     return ret;
 }
@@ -422,7 +422,7 @@ ompi_osc_sm_get_notify(void *origin_addr,
         return ret;
     }
     opal_atomic_rmb();
-    opal_atomic_add(&module->notify_counters[target][notify], 1);
+    opal_atomic_add(&module->notify_counters[notify], 1);
 
     return ret;
 }
