@@ -38,7 +38,8 @@ TEXT_SOURCE_FILES  = \
         $(srcdir)/license/*.txt
 IMAGE_SOURCE_FILES = \
         $(srcdir)/openmpi_logo.png \
-        $(srcdir)/installing-open-mpi/required-support-libraries-dependency-graph.png
+        $(srcdir)/installing-open-mpi/required-support-libraries-dependency-graph.png \
+        $(srcdir)/tuning-apps/collectives/images/xhc-hierarchy.svg
 RST_SOURCE_FILES   = \
         $(srcdir)/*.rst \
         $(srcdir)/release-notes/*.rst \
