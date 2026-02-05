@@ -14,7 +14,6 @@
 //
 //
 // WORKSPACE Layout:
-//   autotools-install/    Autotools install for the builder
 //   ompi/                 Open MPI source tree
 
 // We if we push changes to a PR, we don't need to keep old jobs running, so
@@ -56,9 +55,26 @@ println('Tests Completed')
 // although currently we only support the one stage of "everything", where each
 // build stage is a map of different configurations to test.
 def prepare_check_stages() {
-    def configure_options = ["--disable-dlopen", "--disable-oshmem", "--enable-builtin-atomic", "--enable-ipv6"]
-    def compilers = ["clang10", "gcc7", "gcc8", "gcc9", "gcc10"]
-    def platforms = ["amazon_linux_2", "amazon_linux_2-arm64", "rhel8"]
+    def configure_options = [
+	"--disable-dlopen",
+	"--disable-oshmem",
+	"--enable-builtin-atomic",
+	"--enable-ipv6"
+    ]
+    def compilers = [
+	"gcc14",
+	"clang18"
+    ]
+    def platforms = [
+	"amazon_linux_2",
+	"amazon_linux_2-arm64",
+	"rhel8",
+	"amazon_linux_2023-arm64",
+	"amazon_linux_2023-x86_64",
+	"ubuntu_20.04",
+	"ubuntu_24.04-arm64",
+	"ubuntu_24.04-x86_64"
+    ]
     def check_stages_list = []
 
     // Build everything stage
@@ -79,6 +95,7 @@ def prepare_check_stages() {
     }
 
     build_parallel_map.put("distcheck", prepare_build("distcheck", "tarball_build", "--distcheck"))
+    build_parallel_map.put("vpath", prepare_build("vpath", "", "--build-dir ompi-build"))
 
     check_stages_list.add(build_parallel_map)
 
@@ -89,14 +106,20 @@ def prepare_build(build_name, label, build_arg) {
     return {
         stage("${build_name}") {
             node(label) {
-                checkout(changelog: false, poll: false, scm: scm)
+                // Checkout into ompi-source instead of the top of the
+                // workspace, so that we have room in the workspace to setup a
+                // vpath build.
+                dir ('ompi-source') {
+                    checkout(changelog: false, poll: false, scm: scm)
+                }
+
                 // If pr-builder.sh fails, the sh step will throw an exception,
                 // which we catch so that the job doesn't abort and continues on
                 // to other steps - such as cleanup. Because we catch the
                 // exception, we need to tell Jenkins the overall job has
                 // failed.
                 try {
-                    sh "/bin/bash -x .ci/community-jenkins/pr-builder.sh ${build_arg} ompi"
+                    sh "/bin/bash -x ompi-source/.ci/community-jenkins/pr-builder.sh ${build_arg} --source-dir ompi-source"
                 } catch (Exception e) {
                     currentBuild.result = "FAILURE"
                 }

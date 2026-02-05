@@ -21,6 +21,8 @@ MAKE_ARGS=
 MAKE_J="-j 8"
 PREFIX="${WORKSPACE}/install"
 MPIRUN_MODE=${MPIRUN_MODE:-runall}
+SOURCE_DIR=
+BUILD_DIR=
 
 #
 # Options Parsing
@@ -77,6 +79,24 @@ while (( "$#" )); do
                 exit 1
             fi
             ;;
+	--source-dir)
+            if [ -n "$2" ] && [ ${2:0:1} != "-" ]; then
+                SOURCE_DIR=$2
+                shift 2
+            else
+                echo "Error: Argument for $1 is missing" >&2
+                exit 1
+            fi
+            ;;
+	--build-dir)
+            if [ -n "$2" ] && [ ${2:0:1} != "-" ]; then
+                BUILD_DIR=$2
+                shift 2
+            else
+                echo "Error: Argument for $1 is missing" >&2
+                exit 1
+            fi
+            ;;
         -*|--*=) # Unsupported flags
             echo "Error: Unsupported flag $1" >&2
             exit 1
@@ -105,93 +125,43 @@ fi
 echo "--> platform: $PLATFORM_ID"
 echo "--> version: $VERSION_ID"
 
+if test "${SOURCE_DIR}" = "" ; then
+    echo "SOURCED_DIR is unset.  Cannot continue."
+    exit 1
+fi
+
+echo "--> Workspace: ${WORKSPACE}"
+echo "--> Source Dir: ${SOURCE_DIR}"
+echo "--> Build Dir: ${BUILD_DIR}"
+echo "--> Install Dir: ${PREFIX}"
+
 #
 # See if builder provided a compiler we should use, and translate it to
 # CONFIGURE_ARGS.
 #
-case ${PLATFORM_ID} in
-    rhel)
-        case "$COMPILER" in
-            gcc48|"")
-                echo "--> Using default compilers"
-                ;;
-            *)
-                echo "Unsupported compiler ${COMPILER}.  Aborting"
-                exit 1
-                ;;
-        esac
-        ;;
-    amzn)
-        case "$COMPILER" in
-            "")
-                echo "--> Using default compilers"
-                ;;
-            gcc44)
-                CONFIGURE_ARGS="$CONFIGURE_ARGS CC=gcc44 CXX=g++44 FC=gfortran44"
-                ;;
-            gcc48)
-                CONFIGURE_ARGS="$CONFIGURE_ARGS CC=gcc48 CXX=g++48 FC=gfortran48"
-                ;;
-            clang36)
-                CONFIGURE_ARGS="$CONFIGURE_ARGS CC=clang CXX=clang++ --disable-mpi-fortran"
-                ;;
-            *)
-                echo "Unsupported compiler ${COMPILER}.  Aborting"
-                exit 1
-                ;;
-        esac
-        ;;
-    ubuntu)
-        case "$COMPILER" in
-            "")
-                echo "--> Using default compilers"
-                ;;
-            gcc4*)
-                version=`echo "$COMPILER" | sed -e 's/gcc4\([0-9]*\)/4.\1/'`
-                CONFIGURE_ARGS="CC=gcc-${version} CXX=g++-${version} FC=gfortran-${version}"
-                ;;
-            gcc*)
-                version=`echo "$COMPILER" | sed -e 's/gcc\([0-9]*\)/\1/'`
-                CONFIGURE_ARGS="CC=gcc-${version} CXX=g++-${version} FC=gfortran-${version}"
-                ;;
-            clang3*|clang4*|clang5*|clang6*)
-                version=`echo "$COMPILER" |  sed -e 's/clang\([0-9]\)\([0-9]*\)/\1.\2/'`
-                CONFIGURE_ARGS="CC=clang-${version} CXX=clang++-${version} --disable-mpi-fortran"
-                ;;
+if test "${COMPILER}" != "" ; then
+    if test ! -r ${HOME}/ompi-compiler-setup.sh ; then
+        echo "Could not find compiler setup script ompi-compiler-setup.sh.  Aborting."
+        exit 1
+    fi
+
+    . ${HOME}/ompi-compiler-setup.sh
+    activate_compiler ${COMPILER}
+
+    CONFIGURE_ARGS="${CONFIGURE_ARGS} CC=${CC} CPP=${CPP} CXX=${CXX} FC=${FC}"
+    if test "$FC" = "" ; then
+        CONFIGURE_ARGS="${CONFIGURE_ARGS} --disable-mpi-fortran"
+    else
+        # Flang doesn't seem good enough (yet) to compile our Fortran bindings,
+        # so skip for now.
+        case "${COMPILER}" in
             clang*)
-                version=`echo "$COMPILER" | sed -e 's/clang\([0-9]*\)/\1/'`
-                CONFIGURE_ARGS="CC=clang-${version} CXX=clang++-${version} --disable-mpi-fortran"
-                ;;
-            *)
-                echo "Unsupported compiler ${COMPILER}.  Aborting"
-                exit 1
+                CONFIGURE_ARGS="${CONFIGURE_ARGS} --disable-mpi-fortran"
                 ;;
         esac
-        ;;
-    sles)
-        case "$COMPILER" in
-            "")
-                echo "--> Using default compilers"
-                ;;
-            gcc48)
-                CONFIGURE_ARGS="$CONFIGURE_ARGS CC=gcc-48 CXX=g++-48 FC=gfortran-48"
-                ;;
-            gcc5)
-                CONFIGURE_ARGS="$CONFIGURE_ARGS CC=gcc-5 CXX=g++-5 FC=gfortran-5"
-                ;;
-            gcc6)
-                CONFIGURE_ARGS="$CONFIGURE_ARGS CC=gcc-6 CXX=g++-6 FC=gfortran-6"
-                ;;
-            *)
-                echo "Unsupported compiler ${COMPILER}.  Aborting"
-                exit 1
-                ;;
-        esac
-        ;;
-    FreeBSD)
-        CONFIGURE_ARGS="$CONFIGURE_ARGS LDFLAGS=-Wl,-rpath,/usr/local/lib/gcc5 --with-wrapper-ldflags=-Wl,-rpath,/usr/local/lib/gcc5"
-        ;;
-esac
+    fi
+fi
+
 CONFIGURE_ARGS="$CONFIGURE_ARGS --disable-silent-rules"
 
 echo "--> Compiler setup: $CONFIGURE_ARGS"
@@ -210,9 +180,19 @@ fi
 echo "--> Autogen arguments: $AUTOGEN_ARGS"
 echo "--> Configure arguments: $CONFIGURE_ARGS"
 
+cd "${WORKSPACE}/${SOURCE_DIR}"
+
 # Build
 sha1=`git rev-parse HEAD`
 echo "--> Building commit ${sha1}"
+
+if test "${HOME}/ompi-setup-python.sh" ; then
+    echo "--> Initializing Python environment"
+    . ${HOME}/ompi-setup-python.sh
+    find . -name "requirements.txt" -exec ${PIP_CMD} install -r {} \;
+else
+    echo "--> No Python environment found, hoping for the best."
+fi
 
 if test -f autogen.pl; then
     echo "--> running ./autogen.pl ${AUTOGEN_ARGS}"
@@ -227,9 +207,20 @@ else
     fi
 fi
 
-echo "--> running ./configure --prefix=\"${PREFIX}\" ${CONFIGURE_ARGS}"
-if ! ./configure --prefix="${PREFIX}" ${CONFIGURE_ARGS}; then
-    echo "./configure --prefix=\"${PREFIX}\" ${CONFIGURE_ARGS} failed, ABORTING !"
+if test "${BUILD_DIR}" != "" ; then
+    cd "${WORKSPACE}"
+    rm -rf "${BUILD_DIR}"
+    mkdir "${BUILD_DIR}"
+    cd "${WORKSPACE}/${BUILD_DIR}"
+    CONFIGURE=../${SOURCE_DIR}/configure
+else
+    # already in ${WORKSPACE}/${SOURCE_DIR}
+    CONFIGURE=./configure
+fi
+
+echo "--> running ${CONFIGURE} --prefix=\"${PREFIX}\" ${CONFIGURE_ARGS}"
+if ! ${CONFIGURE} --prefix="${PREFIX}" ${CONFIGURE_ARGS}; then
+    echo "${CONFIGURE} --prefix=\"${PREFIX}\" ${CONFIGURE_ARGS} failed, ABORTING !"
     if test -f config.log; then
         echo "config.log content :"
         cat config.log
@@ -268,7 +259,7 @@ echo "--> running ompi_info"
 ompi_info
 
 echo "--> running make all in examples"
-cd "examples"
+cd "${WORKSPACE}/${SOURCE_DIR}/examples"
 make ${MAKE_ARGS} all
 cd ..
 
