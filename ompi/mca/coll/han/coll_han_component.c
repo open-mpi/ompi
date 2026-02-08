@@ -301,7 +301,7 @@ static int han_register(void)
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_ALL, &cs->han_output_verbose);
 
-    cs->han_bcast_segsize = 65536;
+    cs->han_bcast_segsize = 524288;
     (void) mca_base_component_var_register(c, "bcast_segsize",
                                            "segment size for bcast",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
@@ -321,7 +321,7 @@ static int han_register(void)
                                               &cs->han_bcast_low_module,
                                               &cs->han_op_module_name.bcast.han_op_low_module_name);
 
-    cs->han_reduce_segsize = 65536;
+    cs->han_reduce_segsize = 524288;
     (void) mca_base_component_var_register(c, "reduce_segsize",
                                            "segment size for reduce",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
@@ -340,7 +340,7 @@ static int han_register(void)
                                               OPAL_INFO_LVL_9, &cs->han_reduce_low_module,
                                               &cs->han_op_module_name.reduce.han_op_low_module_name);
 
-    cs->han_allreduce_segsize = 65536;
+    cs->han_allreduce_segsize = 524288;
     (void) mca_base_component_var_register(c, "allreduce_segsize",
                                            "segment size for allreduce",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
