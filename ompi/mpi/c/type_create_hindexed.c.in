@@ -72,7 +72,7 @@ PROTOTYPE ERROR_CLASS type_create_hindexed(COUNT count,
      *       The call below takes a ompi_disp_array_t which maps to MPI_Aint.
      */
     rc = ompi_datatype_create_hindexed( count, OMPI_COUNT_ARRAY_CREATE(array_of_blocklengths),
-                                        OMPI_COUNT_ARRAY_CREATE(array_of_displacements),
+                                        OMPI_DISP_ARRAY_CREATE(array_of_displacements),
                                         oldtype, newtype );
     if( rc != MPI_SUCCESS ) {
         ompi_datatype_destroy( newtype );
