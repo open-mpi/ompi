@@ -329,7 +329,7 @@ int mca_common_ompio_set_view (ompio_file_t *fh,
     bool info_is_set=false;
     opal_info_get (info, "collective_buffering", &stripe_str, &flag);
     if ( flag ) {
-        if ( strncmp ( stripe_str->string, "false", sizeof("true") )){
+        if ( 0 == strncasecmp(stripe_str->string, "false", 5) ){
             info_is_set = true;
             OMPIO_MCA_PRINT_INFO(fh, "collective_buffering", stripe_str->string, "enforcing using individual fcoll component");
         } else {
@@ -341,7 +341,7 @@ int mca_common_ompio_set_view (ompio_file_t *fh,
     } else {
         opal_info_get (fh->f_info, "collective_buffering", &stripe_str, &flag);
         if ( flag ) {
-            if ( strncmp ( stripe_str->string, "false", sizeof("true") )){
+            if ( 0 == strncasecmp(stripe_str->string, "false", 5) ){
                 info_is_set = true;
                 OMPIO_MCA_PRINT_INFO(fh, "collective_buffering", stripe_str->string, "enforcing using individual fcoll component");
             } else {
