@@ -28,7 +28,9 @@ The following provides a list of components and their primary target scenario:
    more details.
  - ``ucc``: component using the `UCC library <https://github.com/openucx/ucc/>`_
    for collective operations.
- - ``xhc``: shared memory collective component using XPMEM for data transfers.
+ - ``xhc``: shared memory collective component, employing hierarchical &
+   topology-aware algorithms, with XPMEM for data transfers. See :doc:`xhc` for
+   more details.
  - ``acoll``: collective component tuned for AMD Zen architectures. See :doc:`acoll` for
    more details.
  - ``accelerator``: component providing host-proxy algorithms for some
