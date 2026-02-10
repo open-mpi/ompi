@@ -807,22 +807,28 @@ static ompi_datatype_t* __ompi_datatype_create_from_args( const int* i, const si
     case MPI_COMBINER_HVECTOR:
         {
             size_t blocklength;
-            opal_count_array_t a_i[2];
+            ptrdiff_t stride;
+            opal_count_array_t a_i[3];
+            size_t ca = 0;
             if (l == NULL) {
                 count          = i[0];
                 blocklength    = i[1];
+                stride         = a[0];
                 a_i[0] = OMPI_COUNT_ARRAY_CREATE(i);
                 a_i[1] = OMPI_COUNT_ARRAY_CREATE(i + 1);
                 ci = 2;
+                ca = 1; // stride stored in disp_array
             } else { // large count variant
                 count          = l[0];
                 blocklength    = l[1];
+                stride         = l[2];
                 a_i[0] = OMPI_COUNT_ARRAY_CREATE(l);
                 a_i[1] = OMPI_COUNT_ARRAY_CREATE(l + 1);
-                cl = 2;
+                a_i[2] = OMPI_COUNT_ARRAY_CREATE(l + 2);
+                cl = 3;
             }
-            ompi_datatype_create_hvector( count, blocklength, a[0], d[0], &datatype );
-            ompi_datatype_set_args( datatype, ci, cl, a_i, 1, disp_array, 1, d, MPI_COMBINER_HVECTOR );
+            ompi_datatype_create_hvector( count, blocklength, stride, d[0], &datatype );
+            ompi_datatype_set_args( datatype, ci, cl, a_i, ca, disp_array, 1, d, MPI_COMBINER_HVECTOR );
         }
         break;
         /******************************************************************/
@@ -850,20 +856,29 @@ static ompi_datatype_t* __ompi_datatype_create_from_args( const int* i, const si
     case MPI_COMBINER_HINDEXED_INTEGER:
     case MPI_COMBINER_HINDEXED:
         {
-            opal_count_array_t a_i[2];
+            opal_count_array_t a_i[3];
+            size_t ca = 0;
+            opal_disp_array_t disp_args; // for set_args
+            opal_disp_array_t displacements; // for create_hindexed
             if (l == NULL) {
                 count = i[0];
                 a_i[0] = OMPI_COUNT_ARRAY_CREATE(i);
                 a_i[1] = OMPI_COUNT_ARRAY_CREATE(i + 1);
                 ci = count+1;
+                ca = count;
+                disp_args = disp_array;
+                displacements = disp_array;
             } else {
                 count = l[0];
                 a_i[0] = OMPI_COUNT_ARRAY_CREATE(l);
                 a_i[1] = OMPI_COUNT_ARRAY_CREATE(l + 1);
-                cl = count+1;
+                a_i[2] = OMPI_COUNT_ARRAY_CREATE(l + 1 + count); // displacements are MPI_Count
+                cl = 2*count+1;
+                disp_args = OMPI_DISP_ARRAY_NULL;
+                displacements = OMPI_DISP_ARRAY_CREATE(l + 1 + count);
             }
-            ompi_datatype_create_hindexed( count, a_i[1], disp_array, d[0], &datatype );
-            ompi_datatype_set_args( datatype, ci, cl, a_i, count, disp_array, 1, d, MPI_COMBINER_HINDEXED );
+            ompi_datatype_create_hindexed( count, a_i[1], displacements, d[0], &datatype );
+            ompi_datatype_set_args( datatype, ci, cl, a_i, ca, disp_args, 1, d, MPI_COMBINER_HINDEXED );
         }
         break;
         /******************************************************************/
@@ -894,20 +909,29 @@ static ompi_datatype_t* __ompi_datatype_create_from_args( const int* i, const si
     case MPI_COMBINER_STRUCT_INTEGER:
     case MPI_COMBINER_STRUCT:
         {
-            opal_count_array_t a_i[2];
+            opal_count_array_t a_i[3];
+            opal_disp_array_t displacements;
+            opal_disp_array_t disp_args;
+            size_t ca = 0;
             if (l == NULL) {
                 count = i[0];
                 a_i[0] = OMPI_COUNT_ARRAY_CREATE(i);
                 a_i[1] = OMPI_COUNT_ARRAY_CREATE(i + 1);
                 ci = 2 * count + 1;
+                displacements = disp_array;
+                disp_args = disp_array;
+                ca = count;
             } else {
                 count = l[0];
                 a_i[0] = OMPI_COUNT_ARRAY_CREATE(l);
                 a_i[1] = OMPI_COUNT_ARRAY_CREATE(l + 1);
-                cl = count + 1;
+                a_i[2] = OMPI_COUNT_ARRAY_CREATE(l + 1 + count);
+                displacements = OMPI_DISP_ARRAY_CREATE(l + 1 + count);
+                disp_args = OMPI_DISP_ARRAY_NULL;
+                cl = 2*count + 1;
             }
-            ompi_datatype_create_struct( count, a_i[1], disp_array, d, &datatype );
-            ompi_datatype_set_args( datatype, ci, cl, a_i, count, disp_array, count, d, MPI_COMBINER_STRUCT );
+            ompi_datatype_create_struct( count, a_i[1], displacements, d, &datatype );
+            ompi_datatype_set_args( datatype, ci, cl, a_i, ca, disp_args, count, d, MPI_COMBINER_STRUCT );
         }
         break;
         /******************************************************************/
@@ -997,18 +1021,33 @@ static ompi_datatype_t* __ompi_datatype_create_from_args( const int* i, const si
     case MPI_COMBINER_HINDEXED_BLOCK:
         {
             size_t bLength = 0;
+            size_t ca;
+            opal_disp_array_t displacements; // for create_hindexed_block
+            opal_disp_array_t disp_args; // for set_args
+            opal_count_array_t a_i[3];// = {OMPI_COUNT_ARRAY_CREATE(&count), OMPI_COUNT_ARRAY_CREATE(&bLength)};
             if (l == NULL) {
                 count = i[0];
                 bLength = i[1];
+                a_i[0] = OMPI_COUNT_ARRAY_CREATE(i);
+                a_i[1] = OMPI_COUNT_ARRAY_CREATE(i + 1);
                 ci = 2;
+                displacements = disp_array;
+                disp_args = disp_array;
+                ca = count; // displacements stored in disp_array
             } else {
                 count = l[0];
                 bLength = l[1];
-                cl = 2;
+                a_i[0] = OMPI_COUNT_ARRAY_CREATE(l);
+                a_i[1] = OMPI_COUNT_ARRAY_CREATE(l + 1);
+                a_i[2] = OMPI_COUNT_ARRAY_CREATE(l + 2);
+                cl = 3;
+                displacements = OMPI_DISP_ARRAY_CREATE(l + 2); // displacements are MPI_Count
+                disp_args = OMPI_DISP_ARRAY_NULL;
+                ca = 0;
             }
-            ompi_datatype_create_hindexed_block( count, bLength, disp_array, d[0], &datatype );
-            opal_count_array_t a_i[2] = {OMPI_COUNT_ARRAY_CREATE(&count), OMPI_COUNT_ARRAY_CREATE(&bLength)};
-            ompi_datatype_set_args( datatype, ci, cl, a_i, count, disp_array, 1, d, MPI_COMBINER_HINDEXED_BLOCK );
+            ompi_datatype_create_hindexed_block( count, bLength, displacements, d[0], &datatype );
+
+            ompi_datatype_set_args( datatype, ci, cl, a_i, ca, disp_args, 1, d, MPI_COMBINER_HINDEXED_BLOCK );
         }
         break;
         /******************************************************************/

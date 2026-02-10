@@ -23,11 +23,22 @@
  */
 typedef intptr_t opal_count_array_t;
 
+/**
+ * Sanity check to make sure the compiler respects the alignment assumptions
+ * that allow us to use the least significant bit as a flag.
+ */
+_Static_assert(_Alignof(int) >= 2, "int alignment assumption violated");
+_Static_assert(_Alignof(size_t) >= 2, "size_t alignment assumption violated");
+
 #define OPAL_COUNT_ARRAY_NULL ((opal_count_array_t)0)
 
-/* Initialize an int variant of the count array */
+/**
+ * Initialize an int variant of the count array.
+ * Assumes is aligned to at least 2 bytes (i.e., least significant bit is 0).
+ */
 static inline void opal_count_array_init(opal_count_array_t *array, const int *data)
 {
+    assert(((intptr_t)data & 0x1L) == 0);
     *array = (intptr_t)data | 0x1L;
 }
 
