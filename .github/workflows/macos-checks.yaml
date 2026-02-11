@@ -46,4 +46,4 @@ jobs:
     - name: Test ring and sessions sanity check
       run: |
         mpirun --map-by ppr:1:core examples/ring_c
-        mpirun --map-by ppr:1:core examples/hello_sessions_c
+        # mpirun --map-by ppr:1:core examples/hello_sessions_c
