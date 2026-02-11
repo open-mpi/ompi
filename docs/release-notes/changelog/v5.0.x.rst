@@ -4,13 +4,13 @@ Open MPI v5.0.x series
 This file contains all the NEWS updates for the Open MPI v5.0.x
 series, in reverse chronological order.
 
-Open MPI Version v5.0.10rc1
+Open MPI Version v5.0.10rc2
 ------------------------------
-:Date: 20 January 2026
+:Date: 11 February 2026
 
 - Internal PMIx and PRRTe versions:
-  - PMIx (v5.0.10). Repo: ``https://github.com/openpmix/openpmix``. Commit hash: ``d8b5823ebbce7edf819570ea30c77ce2f66c4b79``.
-  - PRRTE (v3.0.13). Repo: ``https://github.com/openpmix/prrte``. Commit hash: ``912c62c67f7f2ce84fbe8f7e6a71c1773d1b63d2``.
+  - PMIx (v5.0.10). Repo: ``https://github.com/openpmix/openpmix``. Commit hash: ``52275072f255ce0b94bd714e0e83f6a34d471c51``.
+  - PRRTE (v3.0.13). Repo: ``https://github.com/openpmix/prrte``. Commit hash: ``643db1bd3d53bb44bd5afc1dc40e3786f7da9009``.
 
 - OSHMEM Enhancements
   - OSHMEM/SPML/UCX: Implemented put_signal and put_signal_nbi operations for OpenSHMEM 1.5 compliance
@@ -28,6 +28,7 @@ Open MPI Version v5.0.10rc1
   - Revoke: Fixed null dereference and improved debug prints
   - Revoke: Centralized entrypoint for locally revoking a communicator
   - Revoke: Fixed coll/han subcomms revocation
+  - Removed era_comm_free function and documented reasoning (prevents use-after-free with revoke)
   - Communicators: Prevent subcomms from being freed before user's communicator
   - Communicators: Always populate failed procs in comms' groups
   - Communicators: Retain coll info when adding a callback to the event queue
@@ -42,12 +43,18 @@ Open MPI Version v5.0.10rc1
   - OPAL/COMMON/UCX: Fixed assert - changed thread mode sent to UCX API
   - OPAL: Fixed logic error in opal_bitmap.c array length calculation
   - Fortran: Create Fortran module directory if it doesn't exist
+  - Fortran: mpi_f08/request_get_status: removed invalid fast-path that returned flag=false for MPI_STATUS_IGNORE when operation was completed (fixes #13671)
+  - I/O: Fixed inverted collective_buffering hint logic (strncmp misuse: 'true' was disabling, 'false' enabling)
   - Documentation: Updated TCP tuning page
   - Documentation: Added notes that some functions currently require mpirun
+  - Documentation: Fixed typo in mpicc manpage
   - Build system: Fixed code scanning alerts (security issues 1-7, 12, 17-19, 21-22)
   - Build system: Fixed typos throughout the codebase
   - Build system: Properly support git workspaces in update-my-copyright.py script
   - GitHub Actions: Updated permissions for better security
+  - CI: Commented out hello_sessions_c test in macOS workflow
+  - CI: ompi_nvidia – add concurrency queue to serialize PR runs and avoid pod collisions
+  - CI: Trufflehog – add allowlist for libevent test private key false positive
 
 Open MPI Version v5.0.9
 ------------------------------
