@@ -1649,21 +1649,11 @@ int ompi_osc_rdma_shared_query(
     ptrdiff_t *disp_unit, void *baseptr)
 {
     int rc = OMPI_ERR_NOT_SUPPORTED;
-    ompi_osc_rdma_peer_t *peer;
-    int actual_rank = rank;
+    ompi_osc_rdma_peer_t *peer = NULL;
     ompi_osc_rdma_module_t *module = GET_MODULE(win);
-
-    peer = ompi_osc_module_get_peer (module, actual_rank);
-    if (NULL == peer) {
-        return OMPI_ERR_NOT_SUPPORTED;
-    }
 
     /* currently only supported for allocated windows */
     if (MPI_WIN_FLAVOR_ALLOCATE != module->flavor) {
-        return OMPI_ERR_NOT_SUPPORTED;
-    }
-
-    if (!ompi_osc_rdma_peer_local_base(peer)) {
         return OMPI_ERR_NOT_SUPPORTED;
     }
 
@@ -1671,15 +1661,27 @@ int ompi_osc_rdma_shared_query(
         /* iterate until we find a rank that has a non-zero size */
         for (int i = 0 ; i < ompi_comm_size(module->comm) ; ++i) {
             peer = ompi_osc_module_get_peer (module, i);
-            ompi_osc_rdma_peer_extended_t *ex_peer = (ompi_osc_rdma_peer_extended_t *) peer;
-            if (!ompi_osc_rdma_peer_local_base(peer)) {
+            if (NULL == peer) {
+                /* peer object not cached yet (typically non-local here since local peers are added eagerly) */
                 continue;
-            } else if (module->same_size && ex_peer->super.base) {
-                break;
-            } else if (ex_peer->size > 0) {
-                break;
             }
+            ompi_osc_rdma_peer_extended_t *ex_peer = (ompi_osc_rdma_peer_extended_t *) peer;
+            if (ompi_osc_rdma_peer_local_base(peer)) {
+                if (module->same_size && ex_peer->super.base) {
+                    break;
+                } else if (ex_peer->size > 0) {
+                    break;
+                }
+            }
+            // reset so we don't mistakenly use a peer without memory
+            peer = NULL;
         }
+    } else {
+        peer = ompi_osc_module_get_peer (module, rank);
+    }
+
+    if (NULL == peer || !ompi_osc_rdma_peer_local_base(peer)) {
+        return OMPI_ERR_NOT_SUPPORTED;
     }
 
     if (module->same_size && module->same_disp_unit) {
