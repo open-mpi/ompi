@@ -14,6 +14,7 @@ dnl Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2015      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
+dnl Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -115,7 +116,7 @@ AC_DEFUN([OMPI_FORTRAN_CHECK], [
             # the same format -- so the compiler is allowed to define
             # C_LONG_DOUBLE to -1).
 
-            AC_MSG_CHECKING([for corresponding KIND value of $1])
+            AC_MSG_CHECKING([for corresponding KIND value of $1 (C type $ofc_c_type)])
             case "$ofc_c_type" in
             char)                 ofc_type_kind=C_SIGNED_CHAR         ;;
             double)               ofc_type_kind=C_DOUBLE              ;;
@@ -136,6 +137,8 @@ AC_DEFUN([OMPI_FORTRAN_CHECK], [
             long*double*_Complex) ofc_type_kind=C_LONG_DOUBLE_COMPLEX ;;
             opal_short_float_t)   ofc_type_kind=C_SHORT_FLOAT         ;;
             opal_short_float_complex_t) ofc_type_kind=C_SHORT_FLOAT_COMPLEX ;;
+            _Float128)            ofc_type_kind=C__FLOAT128           ;;
+            __float128)           ofc_type_kind=C___FLOAT128          ;;
             *)
                 # Skip types like "DOUBLE PRECISION"
                 ;;
@@ -182,7 +185,7 @@ AC_DEFUN([OMPI_FORTRAN_CHECK], [
                        [Alignment of Fortran $1])
     AC_DEFINE_UNQUOTED([OMPI_KIND_FORTRAN_]m4_translit(m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_]), [a-z], [A-Z]),
                        [$ofc_type_kind],
-                       [Fortrn KIND number for $1])
+                       [Fortran KIND number for $1])
     if test "$3" != "" && test "$ofc_define_type" = "yes"; then
         AC_DEFINE_UNQUOTED([ompi_fortran_]m4_translit(m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_]), [A-Z], [a-z])[_t],
                            [$ofc_c_type],

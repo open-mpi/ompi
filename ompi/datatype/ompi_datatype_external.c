@@ -15,6 +15,7 @@
  *                         reserved.
  * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2025      Triad National Security, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,7 +30,7 @@
 #include "ompi/datatype/ompi_datatype.h"
 #include "opal/datatype/opal_convertor.h"
 
-int ompi_datatype_pack_external(const char datarep[], const void *inbuf, int incount,
+int ompi_datatype_pack_external(const char datarep[], const void *inbuf, size_t incount,
                                 ompi_datatype_t *datatype, void *outbuf,
                                 MPI_Aint outsize, MPI_Aint *position)
 {
@@ -73,7 +74,7 @@ int ompi_datatype_pack_external(const char datarep[], const void *inbuf, int inc
 }
 
 int ompi_datatype_unpack_external (const char datarep[], const void *inbuf, MPI_Aint insize,
-                                   MPI_Aint *position, void *outbuf, int outcount,
+                                   MPI_Aint *position, void *outbuf, size_t outcount,
                                    ompi_datatype_t *datatype)
 {
     int rc = MPI_SUCCESS;
@@ -92,7 +93,7 @@ int ompi_datatype_unpack_external (const char datarep[], const void *inbuf, MPI_
 
     /* Check for truncation */
     opal_convertor_get_packed_size( &local_convertor, &size );
-    if( (*position + size) > (unsigned int)insize ) {
+    if( (*position + (MPI_Aint)size) > insize ) {
         OBJ_DESTRUCT( &local_convertor );
         return MPI_ERR_TRUNCATE;
     }
@@ -112,7 +113,7 @@ int ompi_datatype_unpack_external (const char datarep[], const void *inbuf, MPI_
     return (rc == 1) ? OMPI_SUCCESS : MPI_ERR_UNKNOWN;
 }
 
-int ompi_datatype_pack_external_size(const char datarep[], int incount,
+int ompi_datatype_pack_external_size(const char datarep[], size_t incount,
                                      ompi_datatype_t *datatype, MPI_Aint *size)
 {
     opal_convertor_t local_convertor;
