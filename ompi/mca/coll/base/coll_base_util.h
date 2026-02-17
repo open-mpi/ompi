@@ -12,6 +12,8 @@
  * Copyright (c) 2014-2020 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2024      NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2025      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -93,6 +95,43 @@ ompi_coll_base_nbc_reserve_tags(ompi_communicator_t* comm, int32_t reserve)
         goto reread_tag;
     }
     return tag;
+}
+
+/**
+ * Append an array to a request object to be freed upon completion
+ * of the associated operation.
+ * The request object must be of type ompi_coll_base_nbc_request_t.
+ */
+__opal_attribute_always_inline__ static inline int
+ompi_coll_base_append_array_to_release(struct ompi_request_t *req, void *array_ptr)
+{
+    int i, ret = OMPI_SUCCESS;
+    struct ompi_coll_base_nbc_request_t *request = (struct ompi_coll_base_nbc_request_t *)req;
+
+    /*
+     * important sanity check - doing steps below on a non-libnbc request can lead
+     * to difficult to debug memory corruption problems
+     */
+    assert(request->super.req_type == OMPI_REQUEST_COLL);
+
+    for(i = 0; i < OMPI_REQ_NB_RELEASE_ARRAYS; i++ ) {
+        if (NULL == request->data.release_arrays[i]) {
+            break;
+        }
+    }
+
+    if (OMPI_REQ_NB_RELEASE_ARRAYS > i) {
+        request->data.release_arrays[i] = array_ptr;
+        ++i;
+        if (OMPI_REQ_NB_RELEASE_ARRAYS > i) {
+            request->data.release_arrays[i] = NULL;
+        }
+    } else {
+        ret = OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    assert(OMPI_SUCCESS == ret);
+    return ret;
 }
 
 typedef struct ompi_coll_base_nbc_request_t ompi_coll_base_nbc_request_t;
@@ -187,6 +226,13 @@ int ompi_coll_base_retain_datatypes_w( ompi_request_t *request,
                                        ompi_datatype_t * const stypes[],
                                        ompi_datatype_t * const rtypes[],
                                        bool use_topo);
+
+/**
+ * If necessary, set callback to free extra memory regions
+ * set in release_arrays.  Not set if a callback is already
+ * associated with the request.
+ */
+int ompi_coll_base_add_release_arrays_cb(ompi_request_t *request);
 
 /* File reading function */
 int ompi_coll_base_file_getnext_long(FILE *fptr, int *fileline, long* val);
