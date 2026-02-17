@@ -61,7 +61,16 @@ int MPI_Type_get_envelope(MPI_Datatype type,
       }
    }
 
-   rc = ompi_datatype_get_args( type, 0, num_integers, NULL, num_addresses, NULL,
-                           num_datatypes, NULL, combiner );
+   size_t ci, cl, ca, cd;
+   rc = ompi_datatype_get_args( type, 0, &ci, NULL, &cl, NULL, &ca, NULL,
+                           &cd, NULL, combiner );
+   /* error out if we have large counts or any of the parameters don't fit */
+   if (OMPI_SUCCESS == rc && (ci > INT_MAX || cl > 0 || ca > INT_MAX || cd > INT_MAX)) {
+      return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_TYPE,
+                                      FUNC_NAME );
+   }
+   *num_integers  = (int)ci;
+   *num_addresses = (int)ca;
+   *num_datatypes = (int)cd;
    OMPI_ERRHANDLER_NOHANDLE_RETURN( rc, rc, FUNC_NAME );
 }

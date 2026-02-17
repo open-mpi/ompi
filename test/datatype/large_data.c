@@ -105,7 +105,7 @@ int main(int argc, char *argv[])
     /*
      * Large sparse datatype: indexed contiguous
      */
-    ompi_datatype_create_indexed(2, scounts, sdispls, ddt, &stype);
+    ompi_datatype_create_indexed(2, OMPI_COUNT_ARRAY_CREATE(scounts), OMPI_DISP_ARRAY_CREATE(sdispls), ddt, &stype);
     ompi_datatype_commit(&stype);
 
     packed = count_length_via_convertor_raw("1. INDEX", stype, 1);
@@ -121,7 +121,7 @@ int main(int argc, char *argv[])
     /*
      * Large contiguous datatype: indexed contiguous
      */
-    ompi_datatype_create_indexed(2, rcounts, rdispls, ddt, &rtype);
+    ompi_datatype_create_indexed(2, OMPI_COUNT_ARRAY_CREATE(rcounts), OMPI_DISP_ARRAY_CREATE(rdispls), ddt, &rtype);
     ompi_datatype_commit(&rtype);
 
     packed = count_length_via_convertor_raw("2. INDEX", rtype, 1);

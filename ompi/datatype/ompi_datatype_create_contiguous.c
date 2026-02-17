@@ -24,7 +24,7 @@
 #include "ompi/datatype/ompi_datatype_internal.h"
 #include "mpi.h"
 
-int32_t ompi_datatype_create_contiguous( int count, const ompi_datatype_t* oldType,
+int32_t ompi_datatype_create_contiguous( size_t count, const ompi_datatype_t* oldType,
                                          ompi_datatype_t** newType )
 {
     ompi_datatype_t* pdt;
