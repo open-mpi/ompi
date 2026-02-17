@@ -3,7 +3,8 @@ Launching with Grid Engine
 
 Open MPI supports the family of run-time schedulers including the Sun
 Grid Engine (SGE), Oracle Grid Engine (OGE), Grid Engine (GE), Son of
-Grid Engine, and others.
+Grid Engine, Open Cluster Scheduler (OCS), Gridware Cluster Scheduler (GCS)
+and others.
 
 This documentation will collectively refer to all of them as "Grid
 Engine", unless a referring to a specific flavor of the Grid Engine
@@ -102,6 +103,10 @@ look like:
 .. note:: For very old versions of Sun Grid Engine, omit
    ``accounting_summary`` too.
 
+.. note:: For Open Cluster Scheduler / Gridware Cluster Scheduler it is
+    necessary to set ``ign_sreq_on_mhost`` (ignoring slave resource requests
+    on the master node) to ``FALSE``.
+
 You may want to alter other parameters, but the important one is
 ``control_slaves``, specifying that the environment has "tight
 integration".  Note also the lack of a start or stop procedure.  The
@@ -142,6 +147,13 @@ at `the Son of GridEngine site <http://arc.liv.ac.uk/sge/>`_, and
 configuration instructions can be found at `the Son of GridEngine
 configuration how-to site
 <http://arc.liv.ac.uk/SGE/howto/sge-configs.html>`_.
+
+An actively developed (2024, 2025) open source successor of Sun Grid Engine is
+`Open Cluster Scheduler <https://github.com/hpc-gridware/clusterscheduler>`_.
+It maintains backward compatibility with SGE and provides many new features.
+An MPI parallel environment setup for OpenMPI is available in
+`the Open Cluster Scheduler GitHub repository
+<https://github.com/hpc-gridware/clusterscheduler/tree/master/source/dist/mpi/openmpi>`_.
 
 Grid Engine tight integration support of the ``qsub -notify`` flag
 ------------------------------------------------------------------
