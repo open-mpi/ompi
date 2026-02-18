@@ -20,6 +20,7 @@
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2018-2021 Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      BULL S.A.S.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
