@@ -48,6 +48,9 @@ struct ompi_osc_sm_node_state_t {
     opal_atomic_int32_t complete_count;
     ompi_osc_sm_lock_t lock;
     opal_atomic_lock_t accumulate_lock;
+    uint32_t notify_counter_count;
+    uint64_t notify_counter_offset; /* offset from segment_base, not raw pointer */
+
 };
 typedef struct ompi_osc_sm_node_state_t ompi_osc_sm_node_state_t;
 

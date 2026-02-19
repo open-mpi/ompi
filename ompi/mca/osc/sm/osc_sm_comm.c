@@ -20,6 +20,17 @@
 
 #include "osc_sm.h"
 
+static inline uint64_t *osc_sm_target_notify_base(ompi_osc_sm_module_t *module, int target)
+{
+    if (NULL == module->segment_base) {
+        /* single-rank path: notify_counters is a regular local allocation */
+        return module->notify_counters;
+    }
+
+    return (uint64_t *) ((char *) module->segment_base +
+                         module->node_states[target].notify_counter_offset);
+}
+
 int
 ompi_osc_sm_rput(const void *origin_addr,
                  size_t origin_count,
@@ -97,8 +108,12 @@ ompi_osc_sm_rput_notify(const void *origin_addr,
      * complete. */
     *ompi_req = &ompi_request_empty;
 
+    if (notify < 0 || (uint32_t) notify >= module->node_states[target].notify_counter_count) {
+        return OMPI_ERR_BAD_PARAM;
+    }
+
     opal_atomic_wmb();
-    opal_atomic_add(&module->notify_counters[notify], 1);
+    opal_atomic_add(&osc_sm_target_notify_base(module, target)[notify], 1);
 
     return OMPI_SUCCESS;
 }
@@ -180,8 +195,12 @@ ompi_osc_sm_rget_notify(void *origin_addr,
      * complete. */
     *ompi_req = &ompi_request_empty;
 
+    if (notify < 0 || (uint32_t) notify >= module->node_states[target].notify_counter_count) {
+        return OMPI_ERR_BAD_PARAM;
+    }
+
     opal_atomic_rmb();
-    opal_atomic_add(&module->notify_counters[notify], 1);
+    opal_atomic_add(&osc_sm_target_notify_base(module, target)[notify], 1);
 
     return OMPI_SUCCESS;
 }
@@ -354,8 +373,12 @@ ompi_osc_sm_put_notify(const void *origin_addr,
         return ret;
     }
 
+    if (notify < 0 || (uint32_t) notify >= module->node_states[target].notify_counter_count) {
+        return OMPI_ERR_BAD_PARAM;
+    }
+
     opal_atomic_wmb();
-    opal_atomic_add(&module->notify_counters[notify], 1);
+    opal_atomic_add(&osc_sm_target_notify_base(module, target)[notify], 1);
 
     return ret;
 }
@@ -421,8 +444,12 @@ ompi_osc_sm_get_notify(void *origin_addr,
     if (OMPI_SUCCESS != ret) {
         return ret;
     }
+    if (notify < 0 || (uint32_t) notify >= module->node_states[target].notify_counter_count) {
+        return OMPI_ERR_BAD_PARAM;
+    }
+
     opal_atomic_rmb();
-    opal_atomic_add(&module->notify_counters[notify], 1);
+    opal_atomic_add(&osc_sm_target_notify_base(module, target)[notify], 1);
 
     return ret;
 }
