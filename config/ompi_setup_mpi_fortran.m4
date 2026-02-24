@@ -226,7 +226,7 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
                    [long double _Complex, double _Complex, float _Complex, short float _Complex, opal_short_float_complex_t],
                    [16], [no])
     OMPI_FORTRAN_CHECK([COMPLEX*32], [no],
-                   [_Float128 _Complex, long double _Complex, double _Complex, float _Complex, short float _Complex, opal_short_float_complex_t],
+                   [_Float128 _Complex, __float128 _Complex, long double _Complex, double _Complex, float _Complex, short float _Complex, opal_short_float_complex_t],
                    [32], [no])
     # Double precision complex types are not standard, but many
     # compilers support it.  Code should be wrapped with #ifdef

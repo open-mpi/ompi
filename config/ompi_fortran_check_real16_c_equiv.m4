@@ -61,19 +61,26 @@ AC_DEFUN([OMPI_FORTRAN_CHECK_REAL16_C_EQUIV],[
                                      AC_MSG_RESULT([works!])],
                                     [AC_MSG_RESULT([does not work])])
                              ])
-                       # As recent Intel compilers identify as GNU we will always test for Quad support if no other tests were succesfull
+                       # As recent Intel compilers identify as GNU we will always test for Quad
+                       # support if no other tests were succesfull
                        AS_IF([test "$fortran_real16_happy" = "no"],
-                             [AC_CHECK_TYPES(_Quad)
-                              AS_IF([test "$ac_cv_type__Quad" = "yes"],
-                                    [AC_MSG_CHECKING([if the compiler _Quad == REAL*16])
-                                     CFLAGS_save="$CFLAGS"
+                             [AC_CHECK_TYPES([_Quad])
+                              AS_IF([test "$ac_cv_type__Quad" != "yes"],
+                                    [CFLAGS_save="$CFLAGS"
                                      OPAL_FLAGS_APPEND_UNIQ([CFLAGS], ["-Qoption,cpp,--extended_float_types"])
+                                     # force the check as we have updated CFLAGS
+                                     unset ac_cv_type__Quad
+                                     AC_CHECK_TYPES([_Quad])
+                                     AS_IF([test "$ac_cv_type__Quad" != "yes"],
+                                           [CFLAGS="$CFLAGS_save"])
+                                     ])
+                              AS_IF([test "$ac_cv_type__Quad" != "yes"],
+                                    [AC_MSG_CHECKING([if the compiler _Quad == REAL*16])
                                      OMPI_FORTRAN_CHECK_REAL16_EQUIV_TYPE([_Quad], [q])
                                      AS_IF([test "$fortran_real16_happy" = "yes"],
                                            [OMPI_FORTRAN_REAL16_C_TYPE="_Quad"
                                             AC_MSG_RESULT([works!])],
-                                           [CFLAGS="$CFLAGS_save"
-                                            AC_MSG_RESULT([does not work])])
+                                           [AC_MSG_RESULT([does not work])])
                                     ])
                              ])
                        # We have to [re-]print a new message here, because
