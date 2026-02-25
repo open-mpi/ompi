@@ -1334,64 +1334,28 @@ OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_ub;
 /* Fortran datatype bindings */
 #define MPI_CHARACTER OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_character)
 #define MPI_LOGICAL OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_logical)
-#if OMPI_HAVE_FORTRAN_LOGICAL1
 #define MPI_LOGICAL1 OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_logical1)
-#endif
-#if OMPI_HAVE_FORTRAN_LOGICAL2
 #define MPI_LOGICAL2 OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_logical2)
-#endif
-#if OMPI_HAVE_FORTRAN_LOGICAL4
 #define MPI_LOGICAL4 OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_logical4)
-#endif
-#if OMPI_HAVE_FORTRAN_LOGICAL8
 #define MPI_LOGICAL8 OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_logical8)
-#endif
-#if OMPI_HAVE_FORTRAN_LOGICAL16
 #define MPI_LOGICAL16 OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_logical16)
-#endif
 #define MPI_INTEGER OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_integer)
-#if OMPI_HAVE_FORTRAN_INTEGER1
 #define MPI_INTEGER1 OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_integer1)
-#endif
-#if OMPI_HAVE_FORTRAN_INTEGER2
 #define MPI_INTEGER2 OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_integer2)
-#endif
-#if OMPI_HAVE_FORTRAN_INTEGER4
 #define MPI_INTEGER4 OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_integer4)
-#endif
-#if OMPI_HAVE_FORTRAN_INTEGER8
 #define MPI_INTEGER8 OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_integer8)
-#endif
-#if OMPI_HAVE_FORTRAN_INTEGER16
 #define MPI_INTEGER16 OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_integer16)
-#endif
 #define MPI_REAL OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_real)
-#if OMPI_HAVE_FORTRAN_REAL2
 #define MPI_REAL2 OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_real2)
-#endif
-#if OMPI_HAVE_FORTRAN_REAL4
 #define MPI_REAL4 OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_real4)
-#endif
-#if OMPI_HAVE_FORTRAN_REAL8
 #define MPI_REAL8 OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_real8)
-#endif
-#if OMPI_HAVE_FORTRAN_REAL16
 #define MPI_REAL16 OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_real16)
-#endif
 #define MPI_DOUBLE_PRECISION OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_dblprec)
 #define MPI_COMPLEX OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_cplex)
-#if OMPI_HAVE_FORTRAN_REAL2
 #define MPI_COMPLEX4 OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_complex4)
-#endif
-#if OMPI_HAVE_FORTRAN_REAL4
 #define MPI_COMPLEX8 OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_complex8)
-#endif
-#if OMPI_HAVE_FORTRAN_REAL8
 #define MPI_COMPLEX16 OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_complex16)
-#endif
-#if OMPI_HAVE_FORTRAN_REAL16
 #define MPI_COMPLEX32 OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_complex32)
-#endif
 #define MPI_DOUBLE_COMPLEX OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_dblcplex)
 #define MPI_2REAL OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_2real)
 #define MPI_2DOUBLE_PRECISION OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_2dblprec)
