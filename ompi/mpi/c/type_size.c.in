@@ -52,7 +52,9 @@ PROTOTYPE ERROR_CLASS type_size(DATATYPE type, COUNT_OUT size)
 
     opal_datatype_type_size ( &type->super, &type_size);
 
-    if (sizeof(*size) == sizeof(int) && type_size > (size_t) INT_MAX) {
+    if (!opal_datatype_is_valid(&type->super)) {
+        *size = MPI_UNDEFINED;
+    } else if (sizeof(*size) == sizeof(int) && type_size > (size_t) INT_MAX) {
         *size = MPI_UNDEFINED;
     } else {
         *size = (MPI_Count) type_size;
