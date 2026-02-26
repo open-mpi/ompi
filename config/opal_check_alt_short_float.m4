@@ -1,7 +1,9 @@
 dnl -*- shell-script -*-
 dnl
 dnl Copyright (c) 2018-2021 FUJITSU LIMITED.  All rights reserved.
-dnl Copyright (c) 2020 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2020      Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2025      Research Organization for Information Science
+dnl                         and Technology (RIST).  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -50,8 +52,12 @@ AC_DEFUN([OPAL_CHECK_ALT_SHORT_FLOAT], [
         AS_IF([test $opal_alt_short_float_exists -eq 1],
               [AC_MSG_CHECKING([if compiler supports arithmetic operations on $opal_short_float_type])
                AC_LINK_IFELSE([AC_LANG_PROGRAM([], [[
-static $opal_short_float_type a = 2.5, b = 3.8;
-a += b;]])],
+    static $opal_short_float_type a = 2.5, b = 3.8;
+    a += b;
+}
+
+float extend ($opal_short_float_type v) {
+    return (float)v;]])],
                                  [AC_MSG_RESULT([yes])
                                   opal_enable_short_float=1],
                                  [AC_MSG_RESULT([no])
