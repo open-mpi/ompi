@@ -44,6 +44,11 @@ struct ompi_mca_persist_setup_t {
    size_t count;
 };
 
+typedef enum {
+    MCA_PART_PERSIST_PARTITION_STARTED = 0,   /* partition request started. The default after initialization, or after MPI_Start for receive requests */
+    MCA_PART_PERSIST_PARTITION_COMPLETE = 1,  /* partition request complete */
+    MCA_PART_PERSIST_PARTITION_QUEUED = 2     /* next progress loop will start the partition request (send only) */
+} mca_part_persist_partition_state_t;
 
 /**
  *  Base type for PART PERSIST requests
@@ -89,10 +94,10 @@ struct mca_part_persist_request_t {
 
     int32_t initialized;                  /**< flag for initialized state */
     int32_t first_send;                   /**< flag for whether the first send has happened */
-    int32_t flag_post_setup_recv;  
-    size_t done_count;             /**< counter for the number of partitions marked ready */
+    int32_t flag_post_setup_recv;
 
-    int32_t *flags;               /**< array of flags to determine whether a partition has arrived */
+    mca_part_persist_partition_state_t* flags;  /**< the state of each partition */
+    int32_t *part_ready;                        /**< readiness flag of each partition, NULL for receive requests */
 
     struct ompi_mca_persist_setup_t setup_info[2]; /**< Setup info to send during initialization. */
   
