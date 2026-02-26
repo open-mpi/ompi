@@ -9,6 +9,7 @@
  * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
  * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2026      Nanook Consulting  All rights reserved.
+ * Copyright (c) 2026      BUL S.A.S.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -108,8 +109,12 @@ static opal_finalize_domain_t ompi_instance_common_domain;
 static void ompi_instance_construct (ompi_instance_t *instance)
 {
     instance->i_f_to_c_index = opal_pointer_array_add (&ompi_instance_f_to_c_table, instance);
+    instance->i_name = (char*) malloc (OPAL_MAX_OBJECT_NAME);
+    if (NULL == instance->i_name) {
+        return;
+    }
     instance->i_name[0] = '\0';
-    instance->i_flags = 0;
+    instance->i_flags   = 0;
     instance->i_keyhash = NULL;
     OBJ_CONSTRUCT(&instance->s_lock, opal_mutex_t);
     instance->errhandler_type = OMPI_ERRHANDLER_TYPE_INSTANCE;
@@ -118,6 +123,8 @@ static void ompi_instance_construct (ompi_instance_t *instance)
 
 static void ompi_instance_destruct(ompi_instance_t *instance)
 {
+    free(instance->i_name);
+    instance->i_name = NULL;
     OBJ_DESTRUCT(&instance->s_lock);
 }
 
