@@ -279,6 +279,16 @@ int mca_base_var_init(void)
             cwd = strdup(".");
         }
 
+        ret = mca_base_source_init ();
+        if (OPAL_SUCCESS != ret) {
+            return ret;
+        }
+
+        ret = mca_base_event_init ();
+        if (OPAL_SUCCESS != ret) {
+            return ret;
+        }
+
         /* Set this before we register the parameter, below */
 
         mca_base_var_initialized = true;

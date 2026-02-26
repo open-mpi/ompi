@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2013 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2012-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -42,6 +42,10 @@
 #include "opal/mca/base/mca_base_pvar.h"
 #include "opal/mca/base/mca_base_vari.h"
 #include "opal/mca/mca.h"
+#include "opal/mca/base/mca_base_event.h"
+#include "opal/constants.h"
+#include "opal/util/output.h"
+#include "opal/util/opal_environ.h"
 #include "opal/runtime/opal.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/output.h"
@@ -57,6 +61,8 @@ static void mca_base_var_group_constructor(mca_base_var_group_t *group);
 static void mca_base_var_group_destructor(mca_base_var_group_t *group);
 OBJ_CLASS_INSTANCE(mca_base_var_group_t, opal_object_t, mca_base_var_group_constructor,
                    mca_base_var_group_destructor);
+
+static opal_mutex_t mca_base_var_group_lock = OPAL_MUTEX_STATIC_INIT;
 
 int mca_base_var_group_init(void)
 {
@@ -78,7 +84,9 @@ int mca_base_var_group_init(void)
         }
 
         mca_base_var_group_initialized = true;
+        OPAL_THREAD_LOCK(&mca_base_var_group_lock);
         mca_base_var_group_count = 0;
+        OPAL_THREAD_UNLOCK(&mca_base_var_group_lock);
     }
 
     return OPAL_SUCCESS;
@@ -99,7 +107,9 @@ int mca_base_var_group_finalize(void)
         }
         OBJ_DESTRUCT(&mca_base_var_groups);
         OBJ_DESTRUCT(&mca_base_var_group_index_hash);
+        OPAL_THREAD_LOCK(&mca_base_var_group_lock);
         mca_base_var_group_count = 0;
+        OPAL_THREAD_UNLOCK(&mca_base_var_group_lock);
         mca_base_var_group_initialized = false;
     }
 
@@ -164,6 +174,7 @@ static bool compare_strings(const char *str1, const char *str2)
 static int group_find_linear(const char *project_name, const char *framework_name,
                              const char *component_name, bool invalidok)
 {
+    OPAL_THREAD_LOCK(&mca_base_var_group_lock);
     for (int i = 0; i < mca_base_var_group_count; ++i) {
         mca_base_var_group_t *group;
 
@@ -175,9 +186,11 @@ static int group_find_linear(const char *project_name, const char *framework_nam
         if (compare_strings(project_name, group->group_project)
             && compare_strings(framework_name, group->group_framework)
             && compare_strings(component_name, group->group_component)) {
+            OPAL_THREAD_UNLOCK(&mca_base_var_group_lock);
             return i;
         }
     }
+    OPAL_THREAD_UNLOCK(&mca_base_var_group_lock);
 
     return OPAL_ERR_NOT_FOUND;
 }
@@ -237,7 +250,9 @@ static int group_register(const char *project_name, const char *framework_name,
             return ret;
         }
         group->group_isvalid = true;
+        OPAL_THREAD_LOCK(&mca_base_var_group_lock);
         mca_base_var_groups_timestamp++;
+        OPAL_THREAD_UNLOCK(&mca_base_var_group_lock);
 
         /* group already exists. return it's index */
         return group_id;
@@ -301,8 +316,10 @@ static int group_register(const char *project_name, const char *framework_name,
     opal_hash_table_set_value_ptr(&mca_base_var_group_index_hash, group->group_full_name,
                                   strlen(group->group_full_name), (void *) (uintptr_t) group_id);
 
+    OPAL_THREAD_LOCK(&mca_base_var_group_lock);
     mca_base_var_group_count++;
     mca_base_var_groups_timestamp++;
+    OPAL_THREAD_UNLOCK(&mca_base_var_group_lock);
 
     if (0 <= parent_id) {
         mca_base_var_group_t *parent_group;
@@ -379,6 +396,21 @@ int mca_base_var_group_deregister(int group_index)
     opal_value_array_set_size(&group->group_enums, 0);
 
 
+    /* deregister all events */
+    size = opal_value_array_get_size(&group->group_events);
+    params = OPAL_VALUE_ARRAY_GET_BASE(&group->group_events, int);
+
+    for (int i = 0 ; i < size ; ++i) {
+        mca_base_event_t *event;
+
+        ret = mca_base_event_get_by_index (params[i], &event);
+        if (OPAL_SUCCESS != ret || !(event->event_flags & MCA_BASE_EVENT_FLAG_IWG)) {
+            continue;
+        }
+
+        (void) mca_base_event_mark_invalid (event);
+    }
+
     size = opal_value_array_get_size(&group->group_subgroups);
     subgroups = OPAL_VALUE_ARRAY_GET_BASE(&group->group_subgroups, int);
     for (int i = 0; i < size; ++i) {
@@ -387,7 +419,9 @@ int mca_base_var_group_deregister(int group_index)
     /* ordering of variables and subgroups must be the same if the
      * group is re-registered */
 
+    OPAL_THREAD_LOCK(&mca_base_var_group_lock);
     mca_base_var_groups_timestamp++;
+    OPAL_THREAD_UNLOCK(&mca_base_var_group_lock);
 
     return OPAL_SUCCESS;
 }
@@ -426,7 +460,9 @@ int mca_base_var_group_add_var(const int group_index, const int param_index)
         return ret;
     }
 
+    OPAL_THREAD_LOCK(&mca_base_var_group_lock);
     mca_base_var_groups_timestamp++;
+    OPAL_THREAD_UNLOCK(&mca_base_var_group_lock);
 
     /* return the group index */
     return (int) opal_value_array_get_size(&group->group_vars) - 1;
@@ -455,7 +491,9 @@ int mca_base_var_group_add_pvar(const int group_index, const int param_index)
         return ret;
     }
 
+    OPAL_THREAD_LOCK(&mca_base_var_group_lock);
     mca_base_var_groups_timestamp++;
+    OPAL_THREAD_UNLOCK(&mca_base_var_group_lock);
 
     /* return the group index */
     return (int) opal_value_array_get_size(&group->group_pvars) - 1;
@@ -488,7 +526,39 @@ int mca_base_var_group_add_enum(const int group_index, const void *storage)
     return (int) opal_value_array_get_size(&group->group_enums) - 1;
 }
 
-int mca_base_var_group_get(const int group_index, const mca_base_var_group_t **group)
+int mca_base_var_group_add_event (const int group_index, const int event_index)
+{
+    mca_base_var_group_t *group;
+    int size, i, ret;
+    int *params;
+
+    ret = mca_base_var_group_get_internal (group_index, &group, false);
+    if (OPAL_SUCCESS != ret) {
+        return ret;
+    }
+
+    size = opal_value_array_get_size(&group->group_events);
+    params = OPAL_VALUE_ARRAY_GET_BASE(&group->group_events, int);
+    for (i = 0 ; i < size ; ++i) {
+        if (params[i] == event_index) {
+            return i;
+        }
+    }
+
+    if (OPAL_SUCCESS !=
+        (ret = opal_value_array_append_item (&group->group_events, &event_index))) {
+        return ret;
+    }
+
+    OPAL_THREAD_LOCK(&mca_base_var_group_lock);
+    mca_base_var_groups_timestamp++;
+    OPAL_THREAD_UNLOCK(&mca_base_var_group_lock);
+
+    /* return the group index */
+    return (int) opal_value_array_get_size (&group->group_events) - 1;
+}
+
+int mca_base_var_group_get (const int group_index, const mca_base_var_group_t **group)
 {
     return mca_base_var_group_get_internal(group_index, (mca_base_var_group_t **) group, false);
 }
@@ -531,7 +601,10 @@ static void mca_base_var_group_constructor(mca_base_var_group_t *group)
     opal_value_array_init(&group->group_pvars, sizeof(int));
 
     OBJ_CONSTRUCT(&group->group_enums, opal_value_array_t);
-    opal_value_array_init(&group->group_enums, sizeof(void *));
+    opal_value_array_init (&group->group_enums, sizeof(void *));
+
+    OBJ_CONSTRUCT(&group->group_events, opal_value_array_t);
+    opal_value_array_init (&group->group_events, sizeof(int));
 }
 
 static void mca_base_var_group_destructor(mca_base_var_group_t *group)
@@ -555,14 +628,25 @@ static void mca_base_var_group_destructor(mca_base_var_group_t *group)
     OBJ_DESTRUCT(&group->group_vars);
     OBJ_DESTRUCT(&group->group_pvars);
     OBJ_DESTRUCT(&group->group_enums);
+    OBJ_DESTRUCT(&group->group_events);
 }
 
 int mca_base_var_group_get_count(void)
 {
-    return mca_base_var_group_count;
+    int ret;
+
+    OPAL_THREAD_LOCK(&mca_base_var_group_lock);
+    ret = mca_base_var_group_count;
+    OPAL_THREAD_UNLOCK(&mca_base_var_group_lock);
+    return ret;
 }
 
 int mca_base_var_group_get_stamp(void)
 {
-    return mca_base_var_groups_timestamp;
+    int ret;
+
+    OPAL_THREAD_LOCK(&mca_base_var_group_lock);
+    ret = mca_base_var_groups_timestamp;
+    OPAL_THREAD_UNLOCK(&mca_base_var_group_lock);
+    return ret;
 }

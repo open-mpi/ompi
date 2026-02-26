@@ -23,8 +23,9 @@
 #define MPI_T_source_get_timestamp PMPI_T_source_get_timestamp
 #endif
 
-int MPI_T_source_get_timestamp (int source_index, MPI_Count *timestamp)
+int MPI_T_source_get_timestamp (int source_id, MPI_Count *timestamp)
 {
+    mca_base_source_t *source;
     if (!mpit_is_initialized ()) {
         return MPI_T_ERR_NOT_INITIALIZED;
     }
@@ -33,5 +34,14 @@ int MPI_T_source_get_timestamp (int source_index, MPI_Count *timestamp)
         return MPI_ERR_ARG;
     }
 
-    return MPI_T_ERR_INVALID_INDEX;
+    ompi_mpit_lock ();
+    source = mca_base_source_get (source_id);
+    ompi_mpit_unlock ();
+    if (OPAL_UNLIKELY(NULL == source)) {
+        return MPI_T_ERR_INVALID_INDEX;
+    }
+
+    *timestamp = (MPI_Count)source->source_time ();
+
+    return MPI_SUCCESS;
 }

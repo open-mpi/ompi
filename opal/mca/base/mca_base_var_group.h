@@ -57,6 +57,9 @@ struct mca_base_var_group_t {
 
     /** Pointer array of group enums */
     opal_value_array_t group_enums;
+
+    /** Pointer array of group events */
+    opal_value_array_t group_events;
 };
 
 typedef struct mca_base_var_group_t mca_base_var_group_t;

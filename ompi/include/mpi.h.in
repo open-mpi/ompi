@@ -465,8 +465,8 @@ typedef struct ompi_mpit_cvar_handle_t *MPI_T_cvar_handle;
 typedef struct mca_base_pvar_handle_t *MPI_T_pvar_handle;
 typedef struct mca_base_pvar_session_t *MPI_T_pvar_session;
 typedef struct ompi_instance_t *MPI_Session;
-typedef unsigned long *MPI_T_event_instance;
-typedef unsigned long *MPI_T_event_registration;
+typedef struct mca_base_raised_event_t *MPI_T_event_instance;
+typedef struct mca_base_event_registration_t *MPI_T_event_registration;
 
 /*
  * MPI_Status

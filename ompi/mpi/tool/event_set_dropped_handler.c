@@ -31,5 +31,16 @@ int MPI_T_event_set_dropped_handler (MPI_T_event_registration handle, MPI_T_even
         return MPI_T_ERR_NOT_INITIALIZED;
     }
 
-    return MPI_T_ERR_INVALID_HANDLE;
+    /* Check that this is a valid handle */
+    if (MPI_T_EVENT_REGISTRATION_NULL == handle) {
+        return MPI_T_ERR_INVALID_HANDLE;
+    }
+
+    ompi_mpit_lock ();
+
+    mca_base_event_registration_set_dropped_handler (handle, (mca_base_event_dropped_cb_fn_t) dropped_cb_function);
+
+    ompi_mpit_unlock ();
+
+    return MPI_SUCCESS;
 }

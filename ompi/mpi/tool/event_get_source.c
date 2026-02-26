@@ -30,5 +30,6 @@ int MPI_T_event_get_source (MPI_T_event_instance event, int *source_index)
         return MPI_T_ERR_NOT_INITIALIZED;
     }
 
-    return MPI_T_ERR_INVALID_HANDLE;
+    mca_base_event_get_source (event, source_index);
+    return MPI_SUCCESS;
 }

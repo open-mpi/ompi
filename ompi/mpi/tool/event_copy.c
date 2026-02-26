@@ -31,5 +31,6 @@ int MPI_T_event_copy (MPI_T_event_instance event, void *buffer)
         return MPI_T_ERR_NOT_INITIALIZED;
     }
 
-    return MPI_T_ERR_INVALID_HANDLE;
+    mca_base_event_copy (event, buffer);
+    return MPI_SUCCESS;
 }
