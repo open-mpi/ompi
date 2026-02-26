@@ -12,6 +12,8 @@
  * Copyright (c) 2013-2021 Sandia National Laboratories.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2024      High Performance Computing Center Stuttgart,
+ *                         University of Stuttgart.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -22,6 +24,7 @@
 #include "ompi_config.h"
 
 #include "ompi/mca/part/persist/part_persist.h"
+#include "ompi/mca/part/persist/part_persist_request.h"
 
 #include "ompi/mca/part/persist/part_persist_sendreq.h"
 #include "ompi/mca/part/persist/part_persist_recvreq.h"
@@ -96,6 +99,9 @@ mca_part_persist_component_open(void)
 
     ompi_part_persist.next_send_tag = 0;                /**< This is a counter for send tags for the actual data transfer. */
     ompi_part_persist.next_recv_tag = 0; 
+    
+    OBJ_CONSTRUCT(&mca_part_persist_psend_requests, opal_free_list_t);
+    OBJ_CONSTRUCT(&mca_part_persist_precv_requests, opal_free_list_t);
 
     mca_part_persist_init_lists(); 
 
@@ -113,6 +119,9 @@ mca_part_persist_component_open(void)
 static int
 mca_part_persist_component_close(void)
 {
+    OBJ_DESTRUCT(&mca_part_persist_psend_requests);
+    OBJ_DESTRUCT(&mca_part_persist_precv_requests);
+
     OBJ_DESTRUCT(&ompi_part_persist.lock);
     return OMPI_SUCCESS; 
 }
