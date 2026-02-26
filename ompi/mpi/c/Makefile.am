@@ -1007,6 +1007,7 @@ interface_profile_sources = \
         session_f2c_ompi_generated.c \
         status_f2c_ompi_generated.c \
         type_f2c_ompi_generated.c \
+        win_f2c_ompi_generated.c \
         type_get_contents_ompi_generated.c \
         type_get_envelope_ompi_generated.c \
         type_get_contents_c_ompi_generated.c \
