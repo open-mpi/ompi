@@ -1180,6 +1180,7 @@ struct mca_btl_base_module_t {
     size_t btl_rndv_eager_limit; /**< the size of a data sent in a first fragment of rendezvous
                                     protocol */
     size_t btl_max_send_size;    /**< maximum send fragment size supported by the BTL */
+    size_t btl_multi_eager_limit;  /**< limit for doing fragmented sends without rendevous */
     size_t btl_rdma_pipeline_send_length; /**< amount of bytes that should be send by pipeline
                                              protocol */
     size_t btl_rdma_pipeline_frag_size;   /**< maximum rdma fragment size supported by the BTL */

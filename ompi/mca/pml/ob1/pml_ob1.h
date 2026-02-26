@@ -18,6 +18,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018-2019 Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2025      Google, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -33,6 +34,7 @@
 
 #include "ompi_config.h"
 #include "opal/class/opal_free_list.h"
+#include "opal/class/opal_hash_table.h"
 #include "ompi/request/request.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/pml_base_request.h"
@@ -74,6 +76,7 @@ struct mca_pml_ob1_t {
     opal_free_list_t pending_pckts;
     opal_free_list_t buffers;
     opal_free_list_t send_ranges;
+    opal_free_list_t multi_send_recv_frags;
 
     /* list of pending operations */
     opal_list_t pckt_pending;
@@ -82,6 +85,11 @@ struct mca_pml_ob1_t {
     opal_list_t rdma_pending;
     /* List of pending fragments without a matching communicator */
     opal_list_t non_existing_communicator_pending;
+
+    /* Multi-eager frags awaiting completion */
+    opal_mutex_t in_progress_multi_recv_frags_lock;
+    opal_hash_table_t in_progress_multi_recv_frags;
+
     bool enabled;
     char* allocator_name;
     mca_allocator_base_module_t* allocator;

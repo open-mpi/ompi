@@ -15,6 +15,7 @@
  * Copyright (c) 2011-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2025      Google, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -40,7 +41,8 @@ BEGIN_C_DECLS
 typedef enum {
     MCA_PML_OB1_SEND_PENDING_NONE,
     MCA_PML_OB1_SEND_PENDING_SCHEDULE,
-    MCA_PML_OB1_SEND_PENDING_START
+    MCA_PML_OB1_SEND_PENDING_START,
+    MCA_PML_OB1_SEND_PENDING_MULTI_EAGER,
 } mca_pml_ob1_send_pending_t;
 
 struct mca_pml_ob1_send_request_t {
@@ -385,76 +387,116 @@ int mca_pml_ob1_send_request_start_rndv(
     size_t size,
     int flags);
 
+int mca_pml_ob1_send_request_start_multi_eager(
+    mca_pml_ob1_send_request_t *sendreq,
+    mca_bml_base_btl_t *bml_btl);
+
+static inline bool
+mca_pml_ob1_convertor_can_use_rget(const opal_convertor_t *convertor)
+{
+    return opal_convertor_need_buffers(convertor) == false &&
+        !(convertor->flags & CONVERTOR_ACCELERATOR) &&
+        !(convertor->flags & CONVERTOR_ACCELERATOR_UNIFIED);
+}
+
+static inline int
+mca_pml_ob1_send_request_start_eager_btl( mca_pml_ob1_send_request_t* sendreq,
+                                          mca_bml_base_btl_t* bml_btl )
+{
+    size_t size = sendreq->req_send.req_bytes_packed;
+
+    switch(sendreq->req_send.req_send_mode) {
+    case MCA_PML_BASE_SEND_SYNCHRONOUS:
+        return mca_pml_ob1_send_request_start_rndv(sendreq, bml_btl, size, 0);
+    case MCA_PML_BASE_SEND_BUFFERED:
+        return mca_pml_ob1_send_request_start_copy(sendreq, bml_btl, size);
+    case MCA_PML_BASE_SEND_COMPLETE:
+        return mca_pml_ob1_send_request_start_prepare(sendreq, bml_btl, size);
+        break;
+    default:
+        if (size != 0 && bml_btl->btl_flags & MCA_BTL_FLAGS_SEND_INPLACE) {
+            return mca_pml_ob1_send_request_start_prepare(sendreq, bml_btl, size);
+        } else {
+            return mca_pml_ob1_send_request_start_copy(sendreq, bml_btl, size);
+        }
+    }
+}
+
 static inline int
 mca_pml_ob1_send_request_start_btl( mca_pml_ob1_send_request_t* sendreq,
                                     mca_bml_base_btl_t* bml_btl )
 {
     size_t size = sendreq->req_send.req_bytes_packed;
+    const bool need_ext_match = MCA_PML_OB1_SEND_REQUEST_REQUIRES_EXT_MATCH(sendreq);
     mca_btl_base_module_t* btl = bml_btl->btl;
-    size_t eager_limit = btl->btl_eager_limit - sizeof(mca_pml_ob1_hdr_t);
-    int rc;
+    size_t eager_header_size;
+
+    if (sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_SYNCHRONOUS) {
+        eager_header_size = need_ext_match ? sizeof(mca_pml_ob1_ext_rendezvous_hdr_t) : sizeof(mca_pml_ob1_rendezvous_hdr_t);
+    } else {
+        eager_header_size = need_ext_match ? sizeof(mca_pml_ob1_ext_match_hdr_t) : sizeof(mca_pml_ob1_match_hdr_t);
+    }
+    
+    size_t eager_limit = btl->btl_eager_limit - eager_header_size;
 
 #if OPAL_CUDA_GDR_SUPPORT
     if (btl->btl_accelerator_eager_limit && (sendreq->req_send.req_base.req_convertor.flags & CONVERTOR_ACCELERATOR)) {
-        eager_limit = btl->btl_accelerator_eager_limit - sizeof(mca_pml_ob1_hdr_t);
+        eager_limit = btl->btl_accelerator_eager_limit - eager_header_size;
     }
 #endif /* OPAL_CUDA_GDR_SUPPORT */
 
     if( OPAL_LIKELY(size <= eager_limit) ) {
-        switch(sendreq->req_send.req_send_mode) {
-        case MCA_PML_BASE_SEND_SYNCHRONOUS:
-            rc = mca_pml_ob1_send_request_start_rndv(sendreq, bml_btl, size, 0);
-            break;
-        case MCA_PML_BASE_SEND_BUFFERED:
-            rc = mca_pml_ob1_send_request_start_copy(sendreq, bml_btl, size);
-            break;
-        case MCA_PML_BASE_SEND_COMPLETE:
-            rc = mca_pml_ob1_send_request_start_prepare(sendreq, bml_btl, size);
-            break;
-        default:
-            if (size != 0 && bml_btl->btl_flags & MCA_BTL_FLAGS_SEND_INPLACE) {
-                rc = mca_pml_ob1_send_request_start_prepare(sendreq, bml_btl, size);
-            } else {
-                rc = mca_pml_ob1_send_request_start_copy(sendreq, bml_btl, size);
-            }
-            break;
-        }
-    } else {
-        size = eager_limit;
-        if(OPAL_UNLIKELY(btl->btl_rndv_eager_limit < eager_limit))
-            size = btl->btl_rndv_eager_limit;
-        if(sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED) {
-            rc = mca_pml_ob1_send_request_start_buffered(sendreq, bml_btl, size);
-        } else if
-                (opal_convertor_need_buffers(&sendreq->req_send.req_base.req_convertor) == false &&
-                !(sendreq->req_send.req_base.req_convertor.flags & CONVERTOR_ACCELERATOR) &&
-                !(sendreq->req_send.req_base.req_convertor.flags & CONVERTOR_ACCELERATOR_UNIFIED)) {
-            unsigned char *base;
-            opal_convertor_get_current_pointer( &sendreq->req_send.req_base.req_convertor, (void**)&base );
-
-            if( 0 != (sendreq->req_rdma_cnt = (uint32_t)mca_pml_ob1_rdma_btls(
-                                                                              sendreq->req_endpoint,
-                                                                              base,
-                                                                              sendreq->req_send.req_bytes_packed,
-                                                                              sendreq->req_rdma))) {
-                rc = mca_pml_ob1_send_request_start_rdma(sendreq, bml_btl,
-                                                         sendreq->req_send.req_bytes_packed);
-                if( OPAL_UNLIKELY(OMPI_SUCCESS != rc) ) {
-                    mca_pml_ob1_free_rdma_resources(sendreq);
-                }
-            } else {
-                rc = mca_pml_ob1_send_request_start_rndv(sendreq, bml_btl, size,
-                                                         MCA_PML_OB1_HDR_FLAGS_CONTIG);
-            }
-        } else {
-            if (sendreq->req_send.req_base.req_convertor.flags & CONVERTOR_ACCELERATOR) {
-                return mca_pml_ob1_send_request_start_accelerator(sendreq, bml_btl, size);
-            }
-            rc = mca_pml_ob1_send_request_start_rndv(sendreq, bml_btl, size, 0);
-        }
+        return mca_pml_ob1_send_request_start_eager_btl(sendreq, bml_btl);
     }
 
-    return rc;
+    if (OPAL_LIKELY(size <= btl->btl_multi_eager_limit && !need_ext_match)) {
+        return mca_pml_ob1_send_request_start_multi_eager(sendreq, bml_btl);
+    }
+
+    /* In this path it will either be a rendezvous (put/send) or rget. The
+     * larger of these two headers is the rget header. Use that to
+     * determine the amount of data to eagerly send. */
+    eager_header_size = need_ext_match ?
+        sizeof(mca_pml_ob1_ext_rget_hdr_t) :
+        sizeof(mca_pml_ob1_rget_hdr_t);
+
+    size = btl->btl_eager_limit - eager_header_size;
+    if(OPAL_UNLIKELY(btl->btl_rndv_eager_limit < eager_limit)) {
+        size = btl->btl_rndv_eager_limit - eager_header_size;
+    }
+ 
+    if(sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED) {
+        return mca_pml_ob1_send_request_start_buffered(sendreq, bml_btl, size);
+    }
+
+    if (mca_pml_ob1_convertor_can_use_rget(&sendreq->req_send.req_base.req_convertor)) {
+        unsigned char *base;
+        opal_convertor_get_current_pointer( &sendreq->req_send.req_base.req_convertor, (void**)&base );
+
+        if( 0 != (sendreq->req_rdma_cnt = (uint32_t)mca_pml_ob1_rdma_btls(sendreq->req_endpoint,
+                                                                          base,
+                                                                          sendreq->req_send.req_bytes_packed,
+                                                                          sendreq->req_rdma))) {
+            /* Start the RDMA Get protocol. This may fall back to using put or send. */
+            int rc = mca_pml_ob1_send_request_start_rdma(sendreq, bml_btl,
+                                                         sendreq->req_send.req_bytes_packed);
+            if( OPAL_UNLIKELY(OMPI_SUCCESS != rc) ) {
+                mca_pml_ob1_free_rdma_resources(sendreq);
+            }
+
+            return rc;
+        }
+
+        return mca_pml_ob1_send_request_start_rndv(sendreq, bml_btl, size,
+                                                   MCA_PML_OB1_HDR_FLAGS_CONTIG);
+    }
+
+
+    if (sendreq->req_send.req_base.req_convertor.flags & CONVERTOR_ACCELERATOR) {
+        return mca_pml_ob1_send_request_start_accelerator(sendreq, bml_btl, size);
+    }
+
+    return mca_pml_ob1_send_request_start_rndv(sendreq, bml_btl, size, 0);
 }
 
 static inline int
@@ -551,6 +593,27 @@ void mca_pml_ob1_send_request_process_pending(mca_bml_base_btl_t *bml_btl);
 
 void mca_pml_ob1_send_request_copy_in_out(mca_pml_ob1_send_request_t *sendreq,
                 uint64_t send_offset, uint64_t send_length);
+
+/**
+ * Progress multi-eager sends for a send request with the request btl.
+ *
+ * @param(in) sendreq   Send request to progress.
+ * @param(in) bml_btl   BTL to use for fragments.
+ *
+ * The multi-eager protocol splits the user data into multiple eager-sized
+ * messages that are sent in parallel to the receiver. The receiver will
+ * first attempt to match it to a posted receive if one exists. If there is
+ * a posted received the fragments are copied directly into the receive buffer
+ * otherwise the entire send is buffered until all fragments have arrived. At
+ * that point it is treated as a single large eager send and matched. Usage of
+ * this protocol is controlled by the btl selected when the send was first
+ * started.
+ *
+ * This protocol may provide lower latency than a rendezvous but it will likely
+ * come at a cost of higher memory usage.
+ */
+int mca_pml_ob1_send_request_progess_multi_eager (mca_pml_ob1_send_request_t *sendreq,
+                                                  mca_bml_base_btl_t *bml_btl);
 
 END_C_DECLS
 
