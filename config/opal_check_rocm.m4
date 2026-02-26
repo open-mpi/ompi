@@ -57,7 +57,8 @@ AC_DEFUN([OPAL_CHECK_ROCM],[
      AS_IF([ test "$opal_check_rocm_happy" = "yes" ],
            [ OPAL_APPEND([$1_CPPFLAGS], [$rocm_CPPFLAGS])
 	     AC_DEFINE_UNQUOTED([OPAL_ROCM_SUPPORT], [1], [Enable ROCm support])
-             ROCM_SUPPORT=1 ],
+             ROCM_SUPPORT=1
+             OMPI_HAVE_ACCELERATOR_SUPPORT=1 ],
            [ AC_DEFINE_UNQUOTED([OPAL_ROCM_SUPPORT], [0], [Disable ROCm support])
              ROCM_SUPPORT=0 ])
 
