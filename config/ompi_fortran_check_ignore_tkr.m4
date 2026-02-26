@@ -214,7 +214,7 @@ AC_DEFUN([OMPI_FORTRAN_CHECK_IGNORE_TKR_SUB], [
     implicit none
     real, intent(inout) :: var(:, :, :)
 
-    call foobar(var(1,1,1), 1)
+    call foobar(var, 1)
 ! Autoconf puts "end" after the last line
 ]]),
                     [msg=yes
