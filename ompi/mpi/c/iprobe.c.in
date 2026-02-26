@@ -31,7 +31,11 @@
 #include "ompi/request/request.h"
 #include "ompi/runtime/ompi_spc.h"
 
-PROTOTYPE ERROR_CLASS iprobe(INT source, INT tag, COMM comm, INT_OUT flag, STATUS_OUT status)
+/*
+ * use STATUS_INOUT for the case where no message was found and the
+ * application expects the status to not be changed.
+ */
+PROTOTYPE ERROR_CLASS iprobe(SOURCE source, TAG tag, COMM comm, INT_OUT flag, STATUS_INOUT status)
 {
     int rc;
 

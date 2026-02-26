@@ -40,20 +40,28 @@
 
 include $(top_srcdir)/Makefile.ompi-rules
 
-SUFFIXES= _generated.c .c.in
+SUFFIXES= _ompi_generated.c _abi_generated.c .c.in
 
 noinst_LTLIBRARIES = libmpi_c.la libmpi_c_profile.la
 if BUILD_MPI_BINDINGS_LAYER
 noinst_LTLIBRARIES += libmpi_c_noprofile.la
 endif
 
-headers = bindings.h
+headers = bindings.h \
+          abi.h \
+          abi_converters.h
 
 #
 # Template/prototype source files used for generating MPI functions
 #
 
 prototype_sources = \
+        abi_get_fortran_info.c.in \
+        abi_set_fortran_info.c.in \
+        abi_get_fortran_booleans.c.in \
+        abi_set_fortran_booleans.c.in \
+        abi_get_info.c.in \
+        abi_get_version.c.in \
         abort.c.in \
         accumulate.c.in \
         add_error_class.c.in \
@@ -72,9 +80,6 @@ prototype_sources = \
         alltoallv_init.c.in \
         alltoallw.c.in \
         alltoallw_init.c.in \
-        attr_delete.c.in \
-        attr_get.c.in \
-        attr_put.c.in \
         barrier.c.in \
         barrier_init.c.in \
         bcast.c.in \
@@ -97,7 +102,6 @@ prototype_sources = \
         close_port.c.in \
         comm_accept.c.in \
         comm_attach_buffer.c.in \
-        comm_c2f.c.in \
         comm_call_errhandler.c.in \
 	comm_compare.c.in \
         comm_connect.c.in \
@@ -111,7 +115,6 @@ prototype_sources = \
         comm_disconnect.c.in \
         comm_dup.c.in \
         comm_dup_with_info.c.in \
-        comm_f2c.c.in \
         comm_flush_buffer.c.in \
         comm_free.c.in \
         comm_free_keyval.c.in \
@@ -144,20 +147,16 @@ prototype_sources = \
 	dist_graph_create.c.in \
 	dist_graph_neighbors.c.in \
 	dist_graph_neighbors_count.c.in \
-        errhandler_c2f.c.in \
-        errhandler_f2c.c.in \
 	errhandler_free.c.in \
 	error_class.c.in \
 	error_string.c.in \
 	exscan.c.in \
 	exscan_init.c.in \
 	fetch_and_op.c.in \
-	file_c2f.c.in \
 	file_call_errhandler.c.in \
 	file_close.c.in \
 	file_create_errhandler.c.in \
 	file_delete.c.in \
-	file_f2c.c.in \
 	file_get_amode.c.in \
 	file_get_atomicity.c.in \
 	file_get_byte_offset.c.in \
@@ -238,11 +237,9 @@ prototype_sources = \
 	graph_neighbors_count.c.in \
 	grequest_complete.c.in \
 	grequest_start.c.in \
-	group_c2f.c.in \
 	group_compare.c.in \
 	group_difference.c.in \
 	group_excl.c.in \
-	group_f2c.c.in \
 	group_free.c.in \
 	group_from_session_pset.c.in \
 	group_incl.c.in \
@@ -271,12 +268,10 @@ prototype_sources = \
         ineighbor_alltoall.c.in \
 	ineighbor_alltoallv.c.in \
 	ineighbor_alltoallw.c.in \
-	info_c2f.c.in \
 	info_create.c.in \
 	info_create_env.c.in \
 	info_delete.c.in \
 	info_dup.c.in \
-	info_f2c.c.in \
 	info_free.c.in \
 	info_get.c.in \
 	info_get_nkeys.c.in \
@@ -305,11 +300,7 @@ prototype_sources = \
 	isendrecv_replace.c.in \
 	issend.c.in \
 	is_thread_main.c.in \
-	keyval_create.c.in \
-	keyval_free.c.in \
 	lookup_name.c.in \
-        message_c2f.c.in \
-        message_f2c.c.in \
 	mprobe.c.in \
 	mrecv.c.in \
 	neighbor_allgather.c.in \
@@ -323,11 +314,9 @@ prototype_sources = \
 	neighbor_alltoallw.c.in \
 	neighbor_alltoallw_init.c.in \
         open_port.c.in \
-	op_c2f.c.in \
 	op_commutative.c.in \
 	op_create.c.in \
 	op_free.c.in \
-	op_f2c.c.in \
 	pack.c.in \
 	pack_external.c.in \
 	pack_external_size.c.in \
@@ -353,8 +342,6 @@ prototype_sources = \
 	reduce_scatter.c.in \
 	reduce_scatter_init.c.in \
 	register_datarep.c.in \
-        request_c2f.c.in \
-        request_f2c.c.in \
 	remove_error_class.c.in \
 	remove_error_code.c.in \
 	remove_error_string.c.in \
@@ -379,11 +366,9 @@ prototype_sources = \
 	sendrecv.c.in \
 	sendrecv_replace.c.in \
 	session_attach_buffer.c.in \
-	session_c2f.c.in \
 	session_call_errhandler.c.in \
 	session_create_errhandler.c.in \
 	session_detach_buffer.c.in \
-	session_f2c.c.in \
 	session_finalize.c.in \
 	session_flush_buffer.c.in \
 	session_get_errhandler.c.in \
@@ -398,12 +383,6 @@ prototype_sources = \
 	ssend_init.c.in \
 	startall.c.in \
 	start.c.in \
-	status_c2f08.c.in \
-	status_c2f.c.in \
-	status_f082c.c.in \
-	status_f082f.c.in \
-	status_f2c.c.in \
-	status_f2f08.c.in \
         status_get_error.c.in \
         status_get_source.c.in \
         status_get_tag.c.in \
@@ -419,7 +398,6 @@ prototype_sources = \
 	test_cancelled.c.in \
 	testsome.c.in \
 	topo_test.c.in \
-	type_c2f.c.in \
 	type_commit.c.in \
 	type_contiguous.c.in \
 	type_create_darray.c.in \
@@ -436,7 +414,6 @@ prototype_sources = \
 	type_create_subarray.c.in \
 	type_delete_attr.c.in \
 	type_dup.c.in \
-	type_f2c.c.in \
 	type_free.c.in \
 	type_free_keyval.c.in \
 	type_get_attr.c.in \
@@ -463,7 +440,6 @@ prototype_sources = \
 	win_allocate.c.in \
 	win_allocate_shared.c.in \
         win_attach.c.in \
-        win_c2f.c.in \
         win_call_errhandler.c.in \
         win_complete.c.in  \
 	win_create.c.in \
@@ -498,25 +474,82 @@ prototype_sources = \
 	win_unlock_all.c.in \
 	win_unlock.c.in \
 	win_wait.c.in \
+        wtick.c.in \
         wtime.c.in
 
-# Include template files in case someone wants to update them
-EXTRA_DIST = $(prototype_sources)
+prototype_sources_nbc = \
+	type_get_contents.c.in_nbc \
+	type_get_envelope.c.in_nbc
 
-# attr_fn.c contains attribute manipulation functions which do not
-# profiling implications, and so are always built.
+prototype_sources_obc = \
+	type_get_contents_c.c.in_obc \
+	type_get_envelope_c.c.in_obc
+
+# See MPI-5 standard Chapter 20 sections 2 and 4
+prototype_sources_not_in_abi = \
+        attr_delete.c.in \
+        attr_get.c.in \
+        attr_put.c.in \
+        comm_c2f.c.in \
+        errhandler_c2f.c.in \
+        file_c2f.c.in \
+        group_c2f.c.in \
+        info_c2f.c.in \
+        message_c2f.c.in \
+        op_c2f.c.in \
+        request_c2f.c.in \
+        session_c2f.c.in \
+        status_c2f08.c.in \
+        status_c2f.c.in \
+        status_f082c.c.in \
+        status_f082f.c.in \
+        status_f2f08.c.in \
+        type_c2f.c.in \
+        win_c2f.c.in \
+        comm_f2c.c.in \
+        errhandler_f2c.c.in \
+        file_f2c.c.in \
+        group_f2c.c.in \
+        info_f2c.c.in \
+        message_f2c.c.in \
+        op_f2c.c.in \
+        request_f2c.c.in \
+        session_f2c.c.in \
+        status_f2c.c.in \
+        type_f2c.c.in \
+        win_f2c.c.in
+
+EXTRA_DIST = $(prototype_sources) \
+	$(prototype_sources_nbc) \
+	$(prototype_sources_obc) \
+	$(prototype_sources_not_in_abi) \
+	abi_converters.h \
+	abi_converters.c \
+	abi_get_info.c.in \
+        abi.h.in
+
+# functions that do not require profiling implementations.
 libmpi_c_la_SOURCES = \
-        attr_fn.c
+        ompi_isendrecv.c \
+        ompi_sendrecv.c \
+        ompi_abi_fortran.c
+
 libmpi_c_la_LIBADD = libmpi_c_profile.la
 if BUILD_MPI_BINDINGS_LAYER
 libmpi_c_la_LIBADD += libmpi_c_noprofile.la
 endif
 
-# Conditionally install the header files
-if WANT_INSTALL_HEADERS
-ompidir = $(ompiincludedir)/$(subdir)
-ompi_HEADERS = $(headers)
-endif
+nobase_include_HEADERS = standard_abi/mpi.h
+
+#
+# List of all C files that have profile versions (*_generated.c files were
+# generated from prototype_sources above).
+#
+#
+#interface_profile_sources = $(prototype_sources:.c.in=_ompi_generated.c) \
+#	$(prototype_sources_not_in_abi:.c.in=_ompi_generated.c) \
+#        $(prototype_sources_nbc:.c.in_nbc=_ompi_generated.c) \
+#        $(prototype_sources_obc:.c.in_obc=_ompi_generated.c)
 
 #
 # List of all C files that have profile versions (generated_*.c files were
@@ -524,473 +557,508 @@ endif
 #
 #
 interface_profile_sources = \
-	abort_generated.c \
-	accumulate_generated.c \
-	add_error_class_generated.c \
-	add_error_code_generated.c \
-	add_error_string_generated.c \
-	allgather_generated.c \
-	allgather_init_generated.c \
-	allgatherv_generated.c \
-	allgatherv_init_generated.c \
-	alloc_mem_generated.c \
-	allreduce_generated.c \
-	allreduce_init_generated.c \
-	alltoall_generated.c \
-	alltoall_init_generated.c \
-	alltoallv_generated.c \
-	alltoallv_init_generated.c \
-	alltoallw_generated.c \
-	alltoallw_init_generated.c \
-	attr_delete_generated.c \
-	attr_get_generated.c \
-	attr_put_generated.c \
-	barrier_generated.c \
-	barrier_init_generated.c \
-	bcast_generated.c \
-	bcast_init_generated.c \
-	bsend_generated.c \
-	bsend_init_generated.c \
-	buffer_attach_generated.c \
-	buffer_detach_generated.c \
-	buffer_flush_generated.c \
-	buffer_iflush_generated.c \
-	cancel_generated.c \
-	cart_coords_generated.c \
-	cart_create_generated.c \
-	cartdim_get_generated.c \
-	cart_get_generated.c \
-	cart_map_generated.c \
-	cart_rank_generated.c \
-	cart_shift_generated.c \
-	cart_sub_generated.c \
-	close_port_generated.c \
-	comm_accept_generated.c \
-	comm_attach_buffer_generated.c \
-	comm_c2f_generated.c \
-	comm_call_errhandler_generated.c \
-	comm_compare_generated.c \
-	comm_connect_generated.c \
-	comm_create_generated.c \
-	comm_create_errhandler_generated.c \
-	comm_create_group_generated.c \
-	comm_create_from_group_generated.c \
-	comm_create_keyval_generated.c \
-	comm_delete_attr_generated.c \
-	comm_detach_buffer_generated.c \
-	comm_disconnect_generated.c \
-	comm_dup_generated.c \
-	comm_dup_with_info_generated.c \
-	comm_f2c_generated.c \
-	comm_flush_buffer_generated.c \
-	comm_free_generated.c \
-	comm_free_keyval_generated.c \
-	comm_get_attr_generated.c \
-	comm_get_errhandler_generated.c \
-	comm_get_info_generated.c \
-	comm_get_name_generated.c \
-	comm_get_parent_generated.c \
-	comm_group_generated.c \
-	comm_idup_generated.c \
-	comm_idup_with_info_generated.c \
-	comm_iflush_buffer_generated.c \
-	comm_join_generated.c \
-	comm_rank_generated.c \
-	comm_remote_group_generated.c \
-	comm_remote_size_generated.c \
-	comm_set_attr_generated.c \
-	comm_set_errhandler_generated.c \
-	comm_set_info_generated.c \
-	comm_set_name_generated.c \
-	comm_size_generated.c \
-	comm_spawn_generated.c \
-	comm_spawn_multiple_generated.c \
-	comm_split_generated.c \
-	comm_split_type_generated.c \
-	comm_test_inter_generated.c \
-	compare_and_swap_generated.c \
-	dims_create_generated.c \
-	dist_graph_create_adjacent_generated.c \
-	dist_graph_create_generated.c \
-	dist_graph_neighbors_generated.c \
-	dist_graph_neighbors_count_generated.c \
-	errhandler_c2f_generated.c \
-	errhandler_f2c_generated.c \
-	errhandler_free_generated.c \
-	error_class_generated.c \
-	error_string_generated.c \
-	exscan_generated.c \
-	exscan_init_generated.c \
-	fetch_and_op_generated.c \
-	file_c2f_generated.c \
-	file_call_errhandler_generated.c \
-	file_close_generated.c \
-	file_create_errhandler_generated.c \
-	file_delete_generated.c \
-	file_f2c_generated.c \
-	file_get_amode_generated.c \
-	file_get_atomicity_generated.c \
-	file_get_byte_offset_generated.c \
-	file_get_errhandler_generated.c \
-	file_get_group_generated.c \
-	file_get_info_generated.c \
-	file_get_position_generated.c \
-	file_get_position_shared_generated.c \
-	file_get_size_generated.c \
-	file_get_type_extent_generated.c \
-	file_get_view_generated.c \
-	file_iread_all_generated.c \
-	file_iread_at_all_generated.c \
-	file_iread_at_generated.c \
-	file_iread_generated.c \
-	file_iread_shared_generated.c \
-	file_iwrite_all_generated.c \
-	file_iwrite_at_all_generated.c \
-	file_iwrite_at_generated.c \
-	file_iwrite_generated.c \
-	file_iwrite_shared_generated.c \
-	file_open_generated.c \
-	file_preallocate_generated.c \
-	file_read_all_begin_generated.c \
-	file_read_all_generated.c \
-	file_read_all_end_generated.c \
-	file_read_at_all_begin_generated.c \
-	file_read_at_all_generated.c \
-	file_read_at_all_end_generated.c \
-	file_read_at_generated.c \
-	file_read_generated.c \
-	file_read_ordered_begin_generated.c \
-	file_read_ordered_generated.c \
-	file_read_ordered_end_generated.c \
-	file_read_shared_generated.c \
-	file_seek_generated.c \
-	file_seek_shared_generated.c \
-	file_set_atomicity_generated.c \
-	file_set_errhandler_generated.c \
-	file_set_info_generated.c \
-	file_set_size_generated.c \
-	file_set_view_generated.c \
-	file_sync_generated.c \
-	file_write_all_begin_generated.c \
-	file_write_all_generated.c \
-	file_write_all_end_generated.c \
-	file_write_at_all_begin_generated.c \
-	file_write_at_all_generated.c \
-	file_write_at_all_end_generated.c \
-	file_write_at_generated.c \
-	file_write_generated.c \
-	file_write_ordered_begin_generated.c \
-	file_write_ordered_generated.c \
-	file_write_ordered_end_generated.c \
-	file_write_shared_generated.c \
-	finalize_generated.c \
-	finalized_generated.c \
-	free_mem_generated.c \
-	gather_generated.c \
-	gather_init_generated.c \
-	gatherv_generated.c \
-	gatherv_init_generated.c \
-	get_accumulate_generated.c \
-	get_address_generated.c \
-	get_generated.c \
-	get_count_generated.c \
-	get_elements_generated.c \
-	get_elements_x_generated.c \
-	get_hw_resource_info_generated.c \
-	get_library_version_generated.c \
-	get_processor_name_generated.c \
-	get_version_generated.c \
-	graph_create_generated.c \
-	graphdims_get_generated.c \
-	graph_get_generated.c \
-	graph_map_generated.c \
-	graph_neighbors_generated.c \
-	graph_neighbors_count_generated.c \
-	grequest_complete_generated.c \
-	grequest_start_generated.c \
-	group_c2f_generated.c \
-	group_compare_generated.c \
-	group_difference_generated.c \
-	group_excl_generated.c \
-	group_f2c_generated.c \
-	group_free_generated.c \
-	group_from_session_pset_generated.c \
-	group_incl_generated.c \
-	group_intersection_generated.c \
-	group_range_excl_generated.c \
-	group_range_incl_generated.c \
-	group_rank_generated.c \
-	group_size_generated.c \
-	group_translate_ranks_generated.c \
-	group_union_generated.c \
-	iallgather_generated.c \
-	iallgatherv_generated.c \
-	ialltoall_generated.c \
-	ialltoallv_generated.c \
-	ialltoallw_generated.c \
-	ibarrier_generated.c \
-	ibcast_generated.c \
-	ibsend_generated.c \
-	iexscan_generated.c \
-	igather_generated.c \
-	igatherv_generated.c \
-	improbe_generated.c \
-	imrecv_generated.c \
-	ineighbor_allgather_generated.c \
-	ineighbor_allgatherv_generated.c \
-	ineighbor_alltoall_generated.c \
-	ineighbor_alltoallv_generated.c \
-	ineighbor_alltoallw_generated.c \
-	info_c2f_generated.c \
-	info_create_generated.c \
-	info_create_env_generated.c \
-	info_delete_generated.c \
-	info_dup_generated.c \
-	info_f2c_generated.c \
-	info_free_generated.c \
-	info_get_generated.c \
-	info_get_nkeys_generated.c \
-	info_get_nthkey_generated.c \
-	info_get_string_generated.c \
-	info_get_valuelen_generated.c \
-	info_set_generated.c \
-	init_generated.c \
-	initialized_generated.c \
-	init_thread_generated.c \
-	intercomm_create_generated.c \
-	intercomm_create_from_groups_generated.c \
-	intercomm_merge_generated.c \
-	iprobe_generated.c \
-	iallreduce_generated.c \
-	irecv_generated.c \
-	ireduce_generated.c \
-	ireduce_scatter_block_generated.c \
-	ireduce_scatter_generated.c \
-	irsend_generated.c \
-	iscan_generated.c \
-	iscatter_generated.c \
-	iscatterv_generated.c \
-	isend_generated.c \
-	isendrecv_generated.c \
-	isendrecv_replace_generated.c \
-	issend_generated.c \
-	is_thread_main_generated.c \
-	keyval_create_generated.c \
-	keyval_free_generated.c \
-	lookup_name_generated.c \
-	message_c2f_generated.c \
-	message_f2c_generated.c \
-	mprobe_generated.c \
-	mrecv_generated.c \
-	neighbor_allgather_generated.c \
-	neighbor_allgather_init_generated.c \
-	neighbor_allgatherv_generated.c \
-	neighbor_allgatherv_init_generated.c \
-	neighbor_alltoall_generated.c \
-	neighbor_alltoall_init_generated.c \
-	neighbor_alltoallv_generated.c \
-	neighbor_alltoallv_init_generated.c\
-	neighbor_alltoallw_generated.c \
-	neighbor_alltoallw_init_generated.c \
-	open_port_generated.c \
-	op_c2f_generated.c \
-	op_commutative_generated.c \
-	op_create_generated.c \
-	op_free_generated.c \
-	op_f2c_generated.c \
-	pack_generated.c \
-	pack_external_generated.c \
-	pack_external_size_generated.c \
-	pack_size_generated.c \
-	parrived_generated.c \
-	pready_generated.c \
-	pready_list_generated.c \
-	pready_range_generated.c \
-	precv_init_generated.c \
-	probe_generated.c \
-	psend_init_generated.c \
-	publish_name_generated.c \
-	put_generated.c \
-	query_thread_generated.c \
-	raccumulate_generated.c \
-	recv_generated.c \
-	recv_init_generated.c \
-	reduce_generated.c \
-	reduce_init_generated.c \
-	reduce_local_generated.c \
-	reduce_scatter_block_generated.c \
-	reduce_scatter_block_init_generated.c \
-	reduce_scatter_generated.c \
-	reduce_scatter_init_generated.c \
-	register_datarep_generated.c \
-	request_c2f_generated.c \
-	request_f2c_generated.c \
-	remove_error_class_generated.c \
-	remove_error_code_generated.c \
-	remove_error_string_generated.c \
-	request_free_generated.c \
-	request_get_status_generated.c \
-	request_get_status_all_generated.c \
-	request_get_status_any_generated.c \
-	request_get_status_some_generated.c \
-	rget_accumulate_generated.c \
-	rget_generated.c \
-	rput_generated.c \
-	rsend_generated.c \
-	rsend_init_generated.c \
-	scan_generated.c \
-	scan_init_generated.c \
-	scatter_generated.c \
-	scatter_init_generated.c \
-	scatterv_generated.c \
-	scatterv_init_generated.c \
-	send_generated.c \
-	send_init_generated.c \
-	sendrecv_generated.c \
-	sendrecv_replace_generated.c \
-	session_attach_buffer_generated.c \
-	session_c2f_generated.c \
-	session_call_errhandler_generated.c \
-	session_create_errhandler_generated.c \
-	session_detach_buffer_generated.c \
-	session_f2c_generated.c \
-	session_finalize_generated.c \
-	session_flush_buffer_generated.c \
-	session_get_errhandler_generated.c \
-	session_get_info_generated.c \
-	session_get_nth_pset_generated.c \
-	session_get_num_psets_generated.c \
-	session_get_pset_info_generated.c \
-	session_iflush_buffer_generated.c \
-	session_init_generated.c \
-	session_set_errhandler_generated.c \
-	ssend_generated.c \
-	ssend_init_generated.c \
-	startall_generated.c \
-	start_generated.c \
-	status_c2f08_generated.c \
-	status_c2f_generated.c \
-	status_f082c_generated.c \
-	status_f082f_generated.c \
-	status_f2c_generated.c \
-	status_f2f08_generated.c \
-	status_get_error_generated.c \
-	status_get_source_generated.c \
-	status_get_tag_generated.c \
-	status_set_cancelled_generated.c \
-	status_set_elements_generated.c \
-	status_set_elements_x_generated.c \
-	status_set_error_generated.c \
-	status_set_source_generated.c \
-	status_set_tag_generated.c \
-	testall_generated.c \
-	testany_generated.c \
-	test_generated.c \
-	test_cancelled_generated.c \
-	testsome_generated.c \
-	topo_test_generated.c \
-	type_c2f_generated.c \
-	type_commit_generated.c \
-	type_contiguous_generated.c \
-	type_create_darray_generated.c \
-	type_create_f90_complex_generated.c \
-	type_create_f90_integer_generated.c \
-	type_create_f90_real_generated.c \
-	type_create_hindexed_generated.c \
-	type_create_hindexed_block_generated.c \
-	type_create_hvector_generated.c \
-	type_create_indexed_block_generated.c \
-	type_create_keyval_generated.c \
-	type_create_resized_generated.c \
-	type_create_struct_generated.c \
-	type_create_subarray_generated.c \
-	type_delete_attr_generated.c \
-	type_dup_generated.c \
-	type_f2c_generated.c \
-	type_free_generated.c \
-	type_free_keyval_generated.c \
-	type_get_attr_generated.c \
-	type_get_extent_generated.c \
-	type_get_extent_x_generated.c \
-	type_get_name_generated.c \
-	type_get_true_extent_generated.c \
-	type_get_true_extent_x_generated.c \
-	type_get_value_index_generated.c \
-	type_indexed_generated.c \
-	type_match_size_generated.c \
-	type_set_attr_generated.c \
-	type_set_name_generated.c \
-	type_size_generated.c \
-	type_size_x_generated.c \
-	type_vector_generated.c \
-	unpack_generated.c \
-	unpack_external_generated.c \
-	unpublish_name_generated.c \
-	waitall_generated.c \
-	waitany_generated.c \
-	wait_generated.c \
-	waitsome_generated.c \
-	win_allocate_generated.c \
-	win_allocate_shared_generated.c \
-	win_attach_generated.c \
-	win_c2f_generated.c \
-	win_call_errhandler_generated.c \
-	win_complete_generated.c  \
-	win_create_generated.c \
-	win_create_dynamic_generated.c \
-	win_create_errhandler_generated.c \
-	win_create_keyval_generated.c \
-	win_delete_attr_generated.c \
-	win_detach_generated.c \
-	win_fence_generated.c \
-	win_flush_all_generated.c \
-	win_flush_generated.c \
-	win_flush_local_all_generated.c \
-	win_flush_local_generated.c \
-	win_free_generated.c \
-	win_free_keyval_generated.c \
-	win_get_attr_generated.c \
-	win_get_errhandler_generated.c \
-	win_get_group_generated.c \
-	win_get_info_generated.c \
-	win_get_name_generated.c \
-	win_lock_all_generated.c \
-	win_lock_generated.c \
-	win_post_generated.c \
-	win_set_attr_generated.c \
-	win_set_errhandler_generated.c \
-	win_set_info_generated.c \
-	win_set_name_generated.c \
-	win_shared_query_generated.c \
-	win_start_generated.c \
-	win_sync_generated.c \
-	win_test_generated.c \
-	win_unlock_all_generated.c \
-	win_unlock_generated.c \
-	win_wait_generated.c \
-	wtime_generated.c
+        abi_get_fortran_info_ompi_generated.c \
+        abi_set_fortran_info_ompi_generated.c \
+        abi_get_fortran_booleans_ompi_generated.c \
+        abi_set_fortran_booleans_ompi_generated.c \
+        abi_get_info_ompi_generated.c \
+        abi_get_version_ompi_generated.c \
+	abort_ompi_generated.c \
+	accumulate_ompi_generated.c \
+	add_error_class_ompi_generated.c \
+	add_error_code_ompi_generated.c \
+	add_error_string_ompi_generated.c \
+	allgather_ompi_generated.c \
+	allgather_init_ompi_generated.c \
+	allgatherv_ompi_generated.c \
+	allgatherv_init_ompi_generated.c \
+	alloc_mem_ompi_generated.c \
+	allreduce_ompi_generated.c \
+	allreduce_init_ompi_generated.c \
+	alltoall_ompi_generated.c \
+	alltoall_init_ompi_generated.c \
+	alltoallv_ompi_generated.c \
+	alltoallv_init_ompi_generated.c \
+	alltoallw_ompi_generated.c \
+	alltoallw_init_ompi_generated.c \
+	barrier_ompi_generated.c \
+	barrier_init_ompi_generated.c \
+	bcast_ompi_generated.c \
+	bcast_init_ompi_generated.c \
+	bsend_ompi_generated.c \
+	bsend_init_ompi_generated.c \
+	buffer_attach_ompi_generated.c \
+	buffer_detach_ompi_generated.c \
+	buffer_flush_ompi_generated.c \
+	buffer_iflush_ompi_generated.c \
+	cancel_ompi_generated.c \
+	cart_coords_ompi_generated.c \
+	cart_create_ompi_generated.c \
+	cartdim_get_ompi_generated.c \
+	cart_get_ompi_generated.c \
+	cart_map_ompi_generated.c \
+	cart_rank_ompi_generated.c \
+	cart_shift_ompi_generated.c \
+	cart_sub_ompi_generated.c \
+	close_port_ompi_generated.c \
+	comm_accept_ompi_generated.c \
+	comm_attach_buffer_ompi_generated.c \
+	comm_call_errhandler_ompi_generated.c \
+	comm_compare_ompi_generated.c \
+	comm_connect_ompi_generated.c \
+	comm_create_ompi_generated.c \
+	comm_create_errhandler_ompi_generated.c \
+	comm_create_group_ompi_generated.c \
+	comm_create_from_group_ompi_generated.c \
+	comm_create_keyval_ompi_generated.c \
+	comm_delete_attr_ompi_generated.c \
+	comm_detach_buffer_ompi_generated.c \
+	comm_disconnect_ompi_generated.c \
+	comm_dup_ompi_generated.c \
+	comm_dup_with_info_ompi_generated.c \
+	comm_flush_buffer_ompi_generated.c \
+	comm_free_ompi_generated.c \
+	comm_free_keyval_ompi_generated.c \
+	comm_get_attr_ompi_generated.c \
+	comm_get_errhandler_ompi_generated.c \
+	comm_get_info_ompi_generated.c \
+	comm_get_name_ompi_generated.c \
+	comm_get_parent_ompi_generated.c \
+	comm_group_ompi_generated.c \
+	comm_idup_ompi_generated.c \
+	comm_idup_with_info_ompi_generated.c \
+	comm_iflush_buffer_ompi_generated.c \
+	comm_join_ompi_generated.c \
+	comm_rank_ompi_generated.c \
+	comm_remote_group_ompi_generated.c \
+	comm_remote_size_ompi_generated.c \
+	comm_set_attr_ompi_generated.c \
+	comm_set_errhandler_ompi_generated.c \
+	comm_set_info_ompi_generated.c \
+	comm_set_name_ompi_generated.c \
+	comm_size_ompi_generated.c \
+	comm_spawn_ompi_generated.c \
+	comm_spawn_multiple_ompi_generated.c \
+	comm_split_ompi_generated.c \
+	comm_split_type_ompi_generated.c \
+	comm_test_inter_ompi_generated.c \
+	compare_and_swap_ompi_generated.c \
+	dims_create_ompi_generated.c \
+	dist_graph_create_adjacent_ompi_generated.c \
+	dist_graph_create_ompi_generated.c \
+	dist_graph_neighbors_ompi_generated.c \
+	dist_graph_neighbors_count_ompi_generated.c \
+	errhandler_free_ompi_generated.c \
+	error_class_ompi_generated.c \
+	error_string_ompi_generated.c \
+	exscan_ompi_generated.c \
+	exscan_init_ompi_generated.c \
+	fetch_and_op_ompi_generated.c \
+	file_call_errhandler_ompi_generated.c \
+	file_close_ompi_generated.c \
+	file_create_errhandler_ompi_generated.c \
+	file_delete_ompi_generated.c \
+	file_get_amode_ompi_generated.c \
+	file_get_atomicity_ompi_generated.c \
+	file_get_byte_offset_ompi_generated.c \
+	file_get_errhandler_ompi_generated.c \
+	file_get_group_ompi_generated.c \
+	file_get_info_ompi_generated.c \
+	file_get_position_ompi_generated.c \
+	file_get_position_shared_ompi_generated.c \
+	file_get_size_ompi_generated.c \
+	file_get_type_extent_ompi_generated.c \
+	file_get_view_ompi_generated.c \
+	file_iread_all_ompi_generated.c \
+	file_iread_at_all_ompi_generated.c \
+	file_iread_at_ompi_generated.c \
+	file_iread_ompi_generated.c \
+	file_iread_shared_ompi_generated.c \
+	file_iwrite_all_ompi_generated.c \
+	file_iwrite_at_all_ompi_generated.c \
+	file_iwrite_at_ompi_generated.c \
+	file_iwrite_ompi_generated.c \
+	file_iwrite_shared_ompi_generated.c \
+	file_open_ompi_generated.c \
+	file_preallocate_ompi_generated.c \
+	file_read_all_begin_ompi_generated.c \
+	file_read_all_ompi_generated.c \
+	file_read_all_end_ompi_generated.c \
+	file_read_at_all_begin_ompi_generated.c \
+	file_read_at_all_ompi_generated.c \
+	file_read_at_all_end_ompi_generated.c \
+	file_read_at_ompi_generated.c \
+	file_read_ompi_generated.c \
+	file_read_ordered_begin_ompi_generated.c \
+	file_read_ordered_ompi_generated.c \
+	file_read_ordered_end_ompi_generated.c \
+	file_read_shared_ompi_generated.c \
+	file_seek_ompi_generated.c \
+	file_seek_shared_ompi_generated.c \
+	file_set_atomicity_ompi_generated.c \
+	file_set_errhandler_ompi_generated.c \
+	file_set_info_ompi_generated.c \
+	file_set_size_ompi_generated.c \
+	file_set_view_ompi_generated.c \
+	file_sync_ompi_generated.c \
+	file_write_all_begin_ompi_generated.c \
+	file_write_all_ompi_generated.c \
+	file_write_all_end_ompi_generated.c \
+	file_write_at_all_begin_ompi_generated.c \
+	file_write_at_all_ompi_generated.c \
+	file_write_at_all_end_ompi_generated.c \
+	file_write_at_ompi_generated.c \
+	file_write_ompi_generated.c \
+	file_write_ordered_begin_ompi_generated.c \
+	file_write_ordered_ompi_generated.c \
+	file_write_ordered_end_ompi_generated.c \
+	file_write_shared_ompi_generated.c \
+	finalize_ompi_generated.c \
+	finalized_ompi_generated.c \
+	free_mem_ompi_generated.c \
+	gather_ompi_generated.c \
+	gather_init_ompi_generated.c \
+	gatherv_ompi_generated.c \
+	gatherv_init_ompi_generated.c \
+	get_accumulate_ompi_generated.c \
+	get_address_ompi_generated.c \
+	get_ompi_generated.c \
+	get_count_ompi_generated.c \
+	get_elements_ompi_generated.c \
+	get_elements_x_ompi_generated.c \
+	get_hw_resource_info_ompi_generated.c \
+	get_library_version_ompi_generated.c \
+	get_processor_name_ompi_generated.c \
+	get_version_ompi_generated.c \
+	graph_create_ompi_generated.c \
+	graphdims_get_ompi_generated.c \
+	graph_get_ompi_generated.c \
+	graph_map_ompi_generated.c \
+	graph_neighbors_ompi_generated.c \
+	graph_neighbors_count_ompi_generated.c \
+	grequest_complete_ompi_generated.c \
+	grequest_start_ompi_generated.c \
+	group_compare_ompi_generated.c \
+	group_difference_ompi_generated.c \
+	group_excl_ompi_generated.c \
+	group_free_ompi_generated.c \
+	group_from_session_pset_ompi_generated.c \
+	group_incl_ompi_generated.c \
+	group_intersection_ompi_generated.c \
+	group_range_excl_ompi_generated.c \
+	group_range_incl_ompi_generated.c \
+	group_rank_ompi_generated.c \
+	group_size_ompi_generated.c \
+	group_translate_ranks_ompi_generated.c \
+	group_union_ompi_generated.c \
+	iallgather_ompi_generated.c \
+	iallgatherv_ompi_generated.c \
+	ialltoall_ompi_generated.c \
+	ialltoallv_ompi_generated.c \
+	ialltoallw_ompi_generated.c \
+	ibarrier_ompi_generated.c \
+	ibcast_ompi_generated.c \
+	ibsend_ompi_generated.c \
+	iexscan_ompi_generated.c \
+	igather_ompi_generated.c \
+	igatherv_ompi_generated.c \
+	improbe_ompi_generated.c \
+	imrecv_ompi_generated.c \
+	ineighbor_allgather_ompi_generated.c \
+	ineighbor_allgatherv_ompi_generated.c \
+	ineighbor_alltoall_ompi_generated.c \
+	ineighbor_alltoallv_ompi_generated.c \
+	ineighbor_alltoallw_ompi_generated.c \
+	info_create_ompi_generated.c \
+	info_create_env_ompi_generated.c \
+	info_delete_ompi_generated.c \
+	info_dup_ompi_generated.c \
+	info_free_ompi_generated.c \
+	info_get_ompi_generated.c \
+	info_get_nkeys_ompi_generated.c \
+	info_get_nthkey_ompi_generated.c \
+	info_get_string_ompi_generated.c \
+	info_get_valuelen_ompi_generated.c \
+	info_set_ompi_generated.c \
+	init_ompi_generated.c \
+	initialized_ompi_generated.c \
+	init_thread_ompi_generated.c \
+	intercomm_create_ompi_generated.c \
+	intercomm_create_from_groups_ompi_generated.c \
+	intercomm_merge_ompi_generated.c \
+	iprobe_ompi_generated.c \
+	iallreduce_ompi_generated.c \
+	irecv_ompi_generated.c \
+	ireduce_ompi_generated.c \
+	ireduce_scatter_block_ompi_generated.c \
+	ireduce_scatter_ompi_generated.c \
+	irsend_ompi_generated.c \
+	iscan_ompi_generated.c \
+	iscatter_ompi_generated.c \
+	iscatterv_ompi_generated.c \
+	isend_ompi_generated.c \
+	isendrecv_ompi_generated.c \
+	isendrecv_replace_ompi_generated.c \
+	issend_ompi_generated.c \
+	is_thread_main_ompi_generated.c \
+	lookup_name_ompi_generated.c \
+	mprobe_ompi_generated.c \
+	mrecv_ompi_generated.c \
+	neighbor_allgather_ompi_generated.c \
+	neighbor_allgather_init_ompi_generated.c \
+	neighbor_allgatherv_ompi_generated.c \
+	neighbor_allgatherv_init_ompi_generated.c \
+	neighbor_alltoall_ompi_generated.c \
+	neighbor_alltoall_init_ompi_generated.c \
+	neighbor_alltoallv_ompi_generated.c \
+	neighbor_alltoallv_init_ompi_generated.c\
+	neighbor_alltoallw_ompi_generated.c \
+	neighbor_alltoallw_init_ompi_generated.c \
+	open_port_ompi_generated.c \
+	op_commutative_ompi_generated.c \
+	op_create_ompi_generated.c \
+	op_free_ompi_generated.c \
+	pack_ompi_generated.c \
+	pack_external_ompi_generated.c \
+	pack_external_size_ompi_generated.c \
+	pack_size_ompi_generated.c \
+	parrived_ompi_generated.c \
+	pready_ompi_generated.c \
+	pready_list_ompi_generated.c \
+	pready_range_ompi_generated.c \
+	precv_init_ompi_generated.c \
+	probe_ompi_generated.c \
+	psend_init_ompi_generated.c \
+	publish_name_ompi_generated.c \
+	put_ompi_generated.c \
+	query_thread_ompi_generated.c \
+	raccumulate_ompi_generated.c \
+	recv_ompi_generated.c \
+	recv_init_ompi_generated.c \
+	reduce_ompi_generated.c \
+	reduce_init_ompi_generated.c \
+	reduce_local_ompi_generated.c \
+	reduce_scatter_block_ompi_generated.c \
+	reduce_scatter_block_init_ompi_generated.c \
+	reduce_scatter_ompi_generated.c \
+	reduce_scatter_init_ompi_generated.c \
+	register_datarep_ompi_generated.c \
+	remove_error_class_ompi_generated.c \
+	remove_error_code_ompi_generated.c \
+	remove_error_string_ompi_generated.c \
+	request_free_ompi_generated.c \
+	request_get_status_ompi_generated.c \
+	request_get_status_all_ompi_generated.c \
+	request_get_status_any_ompi_generated.c \
+	request_get_status_some_ompi_generated.c \
+	rget_accumulate_ompi_generated.c \
+	rget_ompi_generated.c \
+	rput_ompi_generated.c \
+	rsend_ompi_generated.c \
+	rsend_init_ompi_generated.c \
+	scan_ompi_generated.c \
+	scan_init_ompi_generated.c \
+	scatter_ompi_generated.c \
+	scatter_init_ompi_generated.c \
+	scatterv_ompi_generated.c \
+	scatterv_init_ompi_generated.c \
+	send_ompi_generated.c \
+	send_init_ompi_generated.c \
+	sendrecv_ompi_generated.c \
+	sendrecv_replace_ompi_generated.c \
+	session_attach_buffer_ompi_generated.c \
+	session_call_errhandler_ompi_generated.c \
+	session_create_errhandler_ompi_generated.c \
+	session_detach_buffer_ompi_generated.c \
+	session_finalize_ompi_generated.c \
+	session_flush_buffer_ompi_generated.c \
+	session_get_errhandler_ompi_generated.c \
+	session_get_info_ompi_generated.c \
+	session_get_nth_pset_ompi_generated.c \
+	session_get_num_psets_ompi_generated.c \
+	session_get_pset_info_ompi_generated.c \
+	session_iflush_buffer_ompi_generated.c \
+	session_init_ompi_generated.c \
+	session_set_errhandler_ompi_generated.c \
+	ssend_ompi_generated.c \
+	ssend_init_ompi_generated.c \
+	startall_ompi_generated.c \
+	start_ompi_generated.c \
+	status_get_error_ompi_generated.c \
+	status_get_source_ompi_generated.c \
+	status_get_tag_ompi_generated.c \
+	status_set_cancelled_ompi_generated.c \
+	status_set_elements_ompi_generated.c \
+	status_set_elements_x_ompi_generated.c \
+	status_set_error_ompi_generated.c \
+	status_set_source_ompi_generated.c \
+	status_set_tag_ompi_generated.c \
+	testall_ompi_generated.c \
+	testany_ompi_generated.c \
+	test_ompi_generated.c \
+	test_cancelled_ompi_generated.c \
+	testsome_ompi_generated.c \
+	topo_test_ompi_generated.c \
+	type_commit_ompi_generated.c \
+	type_contiguous_ompi_generated.c \
+	type_create_darray_ompi_generated.c \
+	type_create_f90_complex_ompi_generated.c \
+	type_create_f90_integer_ompi_generated.c \
+	type_create_f90_real_ompi_generated.c \
+	type_create_hindexed_ompi_generated.c \
+	type_create_hindexed_block_ompi_generated.c \
+	type_create_hvector_ompi_generated.c \
+	type_create_indexed_block_ompi_generated.c \
+	type_create_keyval_ompi_generated.c \
+	type_create_resized_ompi_generated.c \
+	type_create_struct_ompi_generated.c \
+	type_create_subarray_ompi_generated.c \
+	type_delete_attr_ompi_generated.c \
+	type_dup_ompi_generated.c \
+	type_free_ompi_generated.c \
+	type_free_keyval_ompi_generated.c \
+	type_get_attr_ompi_generated.c \
+	type_get_extent_ompi_generated.c \
+	type_get_extent_x_ompi_generated.c \
+	type_get_name_ompi_generated.c \
+	type_get_true_extent_ompi_generated.c \
+	type_get_true_extent_x_ompi_generated.c \
+	type_get_value_index_ompi_generated.c \
+	type_indexed_ompi_generated.c \
+	type_match_size_ompi_generated.c \
+	type_set_attr_ompi_generated.c \
+	type_set_name_ompi_generated.c \
+	type_size_ompi_generated.c \
+	type_size_x_ompi_generated.c \
+	type_vector_ompi_generated.c \
+	unpack_ompi_generated.c \
+	unpack_external_ompi_generated.c \
+	unpublish_name_ompi_generated.c \
+	waitall_ompi_generated.c \
+	waitany_ompi_generated.c \
+	wait_ompi_generated.c \
+	waitsome_ompi_generated.c \
+	win_allocate_ompi_generated.c \
+	win_allocate_shared_ompi_generated.c \
+	win_attach_ompi_generated.c \
+	win_call_errhandler_ompi_generated.c \
+	win_complete_ompi_generated.c  \
+	win_create_ompi_generated.c \
+	win_create_dynamic_ompi_generated.c \
+	win_create_errhandler_ompi_generated.c \
+	win_create_keyval_ompi_generated.c \
+	win_delete_attr_ompi_generated.c \
+	win_detach_ompi_generated.c \
+	win_fence_ompi_generated.c \
+	win_flush_all_ompi_generated.c \
+	win_flush_ompi_generated.c \
+	win_flush_local_all_ompi_generated.c \
+	win_flush_local_ompi_generated.c \
+	win_free_ompi_generated.c \
+	win_free_keyval_ompi_generated.c \
+	win_get_attr_ompi_generated.c \
+	win_get_errhandler_ompi_generated.c \
+	win_get_group_ompi_generated.c \
+	win_get_info_ompi_generated.c \
+	win_get_name_ompi_generated.c \
+	win_lock_all_ompi_generated.c \
+	win_lock_ompi_generated.c \
+	win_post_ompi_generated.c \
+	win_set_attr_ompi_generated.c \
+	win_set_errhandler_ompi_generated.c \
+	win_set_info_ompi_generated.c \
+	win_set_name_ompi_generated.c \
+	win_shared_query_ompi_generated.c \
+	win_start_ompi_generated.c \
+	win_sync_ompi_generated.c \
+	win_test_ompi_generated.c \
+	win_unlock_all_ompi_generated.c \
+	win_unlock_ompi_generated.c \
+	win_wait_ompi_generated.c \
+        wtick_ompi_generated.c  \
+	wtime_ompi_generated.c \
+        attr_delete_ompi_generated.c \
+        attr_get_ompi_generated.c \
+        attr_put_ompi_generated.c \
+        comm_c2f_ompi_generated.c \
+        errhandler_c2f_ompi_generated.c \
+        file_c2f_ompi_generated.c \
+        group_c2f_ompi_generated.c \
+        info_c2f_ompi_generated.c \
+        message_c2f_ompi_generated.c \
+        op_c2f_ompi_generated.c \
+        request_c2f_ompi_generated.c \
+        session_c2f_ompi_generated.c \
+        status_c2f08_ompi_generated.c \
+        status_c2f_ompi_generated.c \
+        status_f082c_ompi_generated.c \
+        status_f082f_ompi_generated.c \
+        status_f2f08_ompi_generated.c \
+        type_c2f_ompi_generated.c \
+        win_c2f_ompi_generated.c \
+        comm_f2c_ompi_generated.c \
+        errhandler_f2c_ompi_generated.c \
+        file_f2c_ompi_generated.c \
+        group_f2c_ompi_generated.c \
+        info_f2c_ompi_generated.c \
+        message_f2c_ompi_generated.c \
+        op_f2c_ompi_generated.c \
+        request_f2c_ompi_generated.c \
+        session_f2c_ompi_generated.c \
+        status_f2c_ompi_generated.c \
+        type_f2c_ompi_generated.c \
+        win_f2c_ompi_generated.c \
+        type_get_contents_ompi_generated.c \
+        type_get_envelope_ompi_generated.c \
+        type_get_contents_c_ompi_generated.c \
+        type_get_envelope_c_ompi_generated.c
+
+
+# Conditionally install the header files
+if WANT_INSTALL_HEADERS
+ompidir = $(ompiincludedir)/$(subdir)
+ompi_HEADERS = $(headers)
+endif
 
 # The following are special case functions where we
 # have to deal manually
 #
-interface_profile_sources += \
+extra_interface_profile_sources = \
+        comm_fromint_ompi.c \
+        comm_toint_ompi.c \
+        errhandler_fromint_ompi.c \
+        errhandler_toint_ompi.c \
+        file_fromint_ompi.c \
+        file_toint_ompi.c \
+        group_fromint_ompi.c \
+        group_toint_ompi.c \
+        info_fromint_ompi.c \
+        info_toint_ompi.c \
+        message_fromint_ompi.c \
+        message_toint_ompi.c \
+        op_fromint_ompi.c \
+        op_toint_ompi.c \
         pcontrol.c \
-	type_get_contents.c \
-	type_get_contents_c.c \
-        type_get_envelope.c \
-        type_get_envelope_c.c \
-        win_f2c.c \
-        wtick.c
+        request_fromint_ompi.c \
+        request_toint_ompi.c \
+        session_fromint_ompi.c \
+        session_toint_ompi.c \
+        type_fromint_ompi.c \
+        type_toint_ompi.c \
+        win_fromint_ompi.c \
+        win_toint_ompi.c
 
 # The following functions were removed from the MPI standard, but are
 # retained for ABI compliance reasons.  They are listed independently
 # of the other MPI functions in case we one day change behavior around
 # ABI compliance.
-interface_profile_sources += \
+deprecated_interface_profile_sources = \
         address.c \
         errhandler_create.c \
         errhandler_get.c \
         errhandler_set.c \
+        keyval_create.c \
+        keyval_free.c \
         type_extent.c \
         type_hindexed.c \
         type_hvector.c \
@@ -998,14 +1066,14 @@ interface_profile_sources += \
         type_struct.c \
         type_ub.c
 
-libmpi_c_profile_la_SOURCES = $(interface_profile_sources)
+libmpi_c_profile_la_SOURCES = $(interface_profile_sources) $(extra_interface_profile_sources) $(deprecated_interface_profile_sources)
 libmpi_c_profile_la_CPPFLAGS = -DOMPI_BUILD_MPI_PROFILING=1
 
-libmpi_c_noprofile_la_SOURCES = $(interface_profile_sources)
+libmpi_c_noprofile_la_SOURCES = $(interface_profile_sources) $(extra_interface_profile_sources)  $(deprecated_interface_profile_sources)
 libmpi_c_noprofile_la_CPPFLAGS = -DOMPI_BUILD_MPI_PROFILING=0
 
-# ABI generation rules
-.c.in_generated.c:
+if OMPI_GENERATE_BINDINGS
+.c.in_ompi_generated.c:
 	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
 	    --builddir $(abs_top_builddir) \
 	    --srcdir $(abs_top_srcdir) \
@@ -1015,8 +1083,148 @@ libmpi_c_noprofile_la_CPPFLAGS = -DOMPI_BUILD_MPI_PROFILING=0
 	    ompi \
 	    $<
 
-# Delete generated files on maintainer-clean
-MAINTAINERCLEANFILES = *_generated.c
+# Deal with oddballs wrt big count
+type_get_contents_ompi_generated.c: type_get_contents.c.in_nbc
+	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
+	    --builddir $(abs_top_builddir) \
+	    --srcdir $(abs_top_srcdir) \
+	    --output $@ \
+	    c \
+	    source \
+	    ompi \
+	    --suppress_bc \
+	    $<
+
+type_get_envelope_ompi_generated.c: type_get_envelope.c.in_nbc
+	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
+	    --builddir $(abs_top_builddir) \
+	    --srcdir $(abs_top_srcdir) \
+	    --output $@ \
+	    c \
+	    source \
+	    ompi \
+	    --suppress_bc \
+	    $<
+
+type_get_contents_c_ompi_generated.c: type_get_contents_c.c.in_obc
+	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
+	    --builddir $(abs_top_builddir) \
+	    --srcdir $(abs_top_srcdir) \
+	    --output $@ \
+	    c \
+	    source \
+	    ompi \
+	    --suppress_nbc \
+	    $<
+
+type_get_envelope_c_ompi_generated.c: type_get_envelope_c.c.in_obc
+	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
+	    --builddir $(abs_top_builddir) \
+	    --srcdir $(abs_top_srcdir) \
+	    --output $@ \
+	    c \
+	    source \
+	    ompi \
+	    --suppress_nbc \
+	    $<
+
+# Non-mangled version of mpi.h
+standard_abi/mpi.h: $(top_srcdir)/docs/mpi-standard-apis.json $(top_srcdir)/ompi/mpi/bindings/c_header.py
+	mkdir -p standard_abi
+	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/c_header.py \
+	--input $(top_srcdir)/ompi/mpi/c/abi.h.in \
+	--abi-json $(top_srcdir)/docs/mpi-standard-abi.json \
+	--pympistd $(top_srcdir)/3rd-party/pympistandard \
+	--output $@
+
+# Mangled version of mpi.h (abi.h)
+abi.h: $(top_srcdir)/docs/mpi-standard-apis.json $(top_srcdir)/ompi/mpi/bindings/c_header.py abi.h.in
+	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/c_header.py \
+	--input $(top_srcdir)/ompi/mpi/c/abi.h.in \
+	--output $@ \
+	--abi-json $(top_srcdir)/docs/mpi-standard-abi.json \
+	--pympistd-dir $(top_srcdir)/3rd-party/pympistandard \
+	--mangle-names
+
+abi_converters.h: abi.h
+	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
+	    --builddir $(abs_top_builddir) \
+	    --srcdir $(abs_top_srcdir) \
+	    --output $@ \
+	    c \
+	    converters \
+            --type include_file
+
+abi_converters.c: abi.h abi_converters.h
+	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
+	    --builddir $(abs_top_builddir) \
+	    --srcdir $(abs_top_srcdir) \
+	    --output $@ \
+	    c \
+	    converters \
+            --type source_file
+
+.c.in_abi_generated.c:
+	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
+	    --builddir $(abs_top_builddir) \
+	    --srcdir $(abs_top_srcdir) \
+	    --output $@ \
+	    c \
+	    source \
+	    standard \
+	    $<
+
+# Deal with oddballs wrt big count
+type_get_contents_abi_generated.c: type_get_contents.c.in_nbc
+	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
+	    --builddir $(abs_top_builddir) \
+	    --srcdir $(abs_top_srcdir) \
+	    --output $@ \
+	    c \
+	    source \
+	    standard \
+	    --suppress_bc \
+	    $<
+
+type_get_envelope_abi_generated.c: type_get_envelope.c.in_nbc
+	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
+	    --builddir $(abs_top_builddir) \
+	    --srcdir $(abs_top_srcdir) \
+	    --output $@ \
+	    c \
+	    source \
+	    standard \
+	    --suppress_bc \
+	    $<
+
+type_get_contents_c_abi_generated.c: type_get_contents_c.c.in_obc
+	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
+	    --builddir $(abs_top_builddir) \
+	    --srcdir $(abs_top_srcdir) \
+	    --output $@ \
+	    c \
+	    source \
+	    standard \
+	    --suppress_nbc \
+	    $<
+
+type_get_envelope_c_abi_generated.c: type_get_envelope_c.c.in_obc
+	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
+	    --builddir $(abs_top_builddir) \
+	    --srcdir $(abs_top_srcdir) \
+	    --output $@ \
+	    c \
+	    source \
+	    standard \
+	    --suppress_nbc \
+	    $<
+endif
+
+
+MAINTAINERCLEANFILES = *_generated.c abi_get_info.c abi_converters.c $(nobase_include_HEADERS)
 if OPAL_DEVEL_BUILD
-CLEANFILES += *_generated.c
+CLEANFILES += *_generated.c abi_get_info.c abi_converters.c $(nobase_include_HEADERS)
+endif
+if OMPI_STANDARD_ABI
+include Makefile_abi.include
 endif

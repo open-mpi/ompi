@@ -32,7 +32,7 @@
 #include "ompi/attribute/attribute.h"
 #include "ompi/win/win.h"
 
-PROTOTYPE ERROR_CLASS win_get_attr(WIN win, INT win_keyval,
+PROTOTYPE ERROR_CLASS win_get_attr(WIN win, ATTR_KEY win_keyval,
                                    BUFFER_OUT attribute_val, INT_OUT flag)
 {
     int ret;
@@ -55,6 +55,46 @@ PROTOTYPE ERROR_CLASS win_get_attr(WIN win, INT win_keyval,
 
     ret = ompi_attr_get_c(win->w_keyhash, win_keyval,
                           (void**)attribute_val, flag);
+#if OMPI_ABI_SRC
+    /*
+     * cases for attributes attached to window that
+     * need to get special treatment
+     */
+
+    if (MPI_WIN_CREATE_FLAVOR == win_keyval) {
+        int *win_flavor = *(int **)attribute_val;
+        switch(*win_flavor) {
+        case MPI_WIN_FLAVOR_CREATE:
+            *(int **)attribute_val = &ompi_abi_mpi_win_flavor_create;
+            break;
+        case MPI_WIN_FLAVOR_ALLOCATE:
+            *(int **)attribute_val = &ompi_abi_mpi_win_flavor_allocate;
+            break;
+        case MPI_WIN_FLAVOR_SHARED:
+            *(int **)attribute_val = &ompi_abi_mpi_win_flavor_shared;
+            break;
+        case MPI_WIN_FLAVOR_DYNAMIC:
+            *(int **)attribute_val = &ompi_abi_mpi_win_flavor_dynamic;
+            break;
+        default:
+           /* just leave it be */
+            break;
+        }
+    } else if (MPI_WIN_MODEL == win_keyval) {
+        int *win_model = *(int **)attribute_val;
+        switch(*win_model) {
+        case MPI_WIN_UNIFIED:
+            *(int **)attribute_val = &ompi_abi_mpi_win_model_unified;
+            break;
+        case MPI_WIN_SEPARATE:
+            *(int **)attribute_val = &ompi_abi_mpi_win_model_separate;
+            break;
+        default:
+           /* just leave it be */
+            break;
+        }
+    }
+#endif
 
     OMPI_ERRHANDLER_RETURN(ret, win, MPI_ERR_OTHER, FUNC_NAME);
 }

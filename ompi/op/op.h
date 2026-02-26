@@ -82,6 +82,14 @@ typedef void (ompi_op_java_handler_fn_t)(const void *, void *, int *,
                                          void *jnienv, void *object);
 
 /*
+ * MPI-5 ABI: Typedef for MPI-5 ABI datatype converter function to use
+ * to convert from the OMPI internal datatype to the MPI-5
+ * variant when invoking a user defined op.
+ */
+
+typedef ompi_datatype_t * (*ompi_op_type_convert_to_abi_fn_t)(ompi_datatype_t *);
+
+/*
  * Flags for MPI_Op
  */
 /** Set if the MPI_Op is a built-in operation */
@@ -175,6 +183,7 @@ struct ompi_op_t {
     /** 3-buffer functions, which is only for intrinsic ops.  No need
         for the C/C++/Fortran user-defined functions. */
     ompi_op_base_op_3buff_fns_t o_3buff_intrinsic;
+    ompi_op_type_convert_to_abi_fn_t datatype_converter;
 };
 
 /**
@@ -600,6 +609,12 @@ static inline void ompi_op_reduce(ompi_op_t * op, const void *source,
                                           op->o_func.java_data.jnienv,
                                           op->o_func.java_data.object);
         return;
+    }
+    /*
+     * MPI-5 ABI: see if we need to translate the datatype
+     */
+    if(NULL != op->datatype_converter){
+        dtype = op->datatype_converter(dtype);
     }
     if (0 == (op->o_flags & OMPI_OP_FLAGS_BIGCOUNT)) {
         op->o_func.c_fn(source, target, &count, &dtype);

@@ -42,11 +42,11 @@
 PROTOTYPE ERROR_CLASS type_create_darray(INT size,
                                          INT rank,
                                          INT ndims,
-                                         COUNT_ARRAY gsize_array,
-                                         INT_ARRAY distrib_array,
-                                         INT_ARRAY darg_array,
-                                         INT_ARRAY psize_array,
-                                         INT order,
+                                         COUNT_ARRAY gsize_array:ndims,
+                                         DISTRIB_ARRAY distrib_array:ndims,
+                                         DARGS_ARRAY darg_array:ndims,
+                                         INT_ARRAY psize_array:ndims,
+                                         SUBARRAY_ORDER order,
                                          DATATYPE oldtype,
                                          DATATYPE_OUT newtype)
 {

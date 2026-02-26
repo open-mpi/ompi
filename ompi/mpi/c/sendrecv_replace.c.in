@@ -29,13 +29,14 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "opal/datatype/opal_convertor.h"
+#include "opal/mca/mpool/mpool.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/proc/proc.h"
 #include "ompi/memchecker.h"
 #include "ompi/runtime/ompi_spc.h"
 
 PROTOTYPE ERROR_CLASS sendrecv_replace(BUFFER_OUT buf, COUNT count, DATATYPE datatype,
-                                       INT dest, INT sendtag, INT source, INT recvtag,
+                                       SOURCE dest, INT sendtag, SOURCE source, TAG recvtag,
                                        COMM comm, STATUS_OUT status)
 {
     ompi_request_t* req;
@@ -80,7 +81,7 @@ PROTOTYPE ERROR_CLASS sendrecv_replace(BUFFER_OUT buf, COUNT count, DATATYPE dat
 
     /* simple case */
     if ( source == MPI_PROC_NULL || dest == MPI_PROC_NULL || count == 0 ) {
-        rc = PMPI_Sendrecv(buf, count, datatype, dest, sendtag, buf, count, datatype, source, recvtag, comm, status);
+        rc = ompi_sendrecv(buf, count, datatype, dest, sendtag, buf, count, datatype, source, recvtag, comm, status);
 
         return rc;
     }
@@ -113,8 +114,8 @@ PROTOTYPE ERROR_CLASS sendrecv_replace(BUFFER_OUT buf, COUNT count, DATATYPE dat
     /* setup a temporary buffer to send */
     opal_convertor_get_packed_size( &convertor, &packed_size );
     if( packed_size > sizeof(packed_data) ) {
-        rc = PMPI_Alloc_mem(packed_size, MPI_INFO_NULL, &iov.iov_base);
-        if(OMPI_SUCCESS != rc) {
+        iov.iov_base = (void *)mca_mpool_base_alloc (packed_size, NULL, NULL);
+        if(NULL == iov.iov_base) {
             rc = OMPI_ERR_OUT_OF_RESOURCE;
             goto cleanup_and_return;
         }
@@ -166,7 +167,7 @@ PROTOTYPE ERROR_CLASS sendrecv_replace(BUFFER_OUT buf, COUNT count, DATATYPE dat
 
     /* release resources */
     if(packed_size > sizeof(packed_data)) {
-        PMPI_Free_mem(iov.iov_base);
+        mca_mpool_base_free(iov.iov_base);
     }
     OBJ_DESTRUCT(&convertor);
 

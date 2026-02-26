@@ -14,7 +14,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
- * Copyright (c) 2024      Triad National Security, LLC. All rights
+ * Copyright (c) 2024-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -33,10 +33,10 @@
 
 PROTOTYPE ERROR_CLASS type_create_keyval(TYPE_COPY_ATTR_FUNCTION type_copy_attr_fn,
                                          TYPE_DELETE_ATTR_FUNCTION type_delete_attr_fn,
-                                         INT_OUT type_keyval,
+                                         ATTR_KEY_OUT type_keyval,
                                          BUFFER_OUT extra_state)
 {
-    int ret;
+    int ret, flags = 0;
     ompi_attribute_fn_ptr_union_t copy_fn;
     ompi_attribute_fn_ptr_union_t del_fn;
 
@@ -50,11 +50,18 @@ PROTOTYPE ERROR_CLASS type_create_keyval(TYPE_COPY_ATTR_FUNCTION type_copy_attr_
         }
     }
 
+#if OMPI_ABI_SRC
+    copy_fn.attr_datatype_copy_fn = ompi_abi_copy_attr_fn;
+    del_fn.attr_datatype_delete_fn = ompi_abi_delete_attr_fn;
+    ret = ompi_attr_create_keyval(TYPE_ATTR, copy_fn, del_fn,
+                                  type_keyval, extra_state, flags, extra_state);
+#else
     copy_fn.attr_datatype_copy_fn = type_copy_attr_fn;
     del_fn.attr_datatype_delete_fn = type_delete_attr_fn;
-
     ret = ompi_attr_create_keyval(TYPE_ATTR, copy_fn, del_fn,
-                                  type_keyval, extra_state, 0, NULL);
+                                  type_keyval, extra_state, flags, NULL);
+#endif
+
     OMPI_ERRHANDLER_NOHANDLE_RETURN(ret, ret, FUNC_NAME);
 }
 

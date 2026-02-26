@@ -1,0 +1,57 @@
+/*
+ * Copyright (c) 2023-2025 Triad National Security, LLC. All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+#include "ompi_config.h"
+
+#include <stdlib.h>
+
+#include "opal/util/show_help.h"
+#include "ompi/runtime/ompi_spc.h"
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/communicator/communicator.h"
+#include "ompi/errhandler/errhandler.h"
+#include "ompi/constants.h"
+
+PROTOTYPE ERROR_CLASS abi_get_info(INFO_OUT info)
+{
+    int ret = OPAL_SUCCESS;
+    ompi_info_t *newinfo = NULL;
+    char tmp[16];
+
+    newinfo = ompi_info_allocate();
+    if (NULL == newinfo) {
+        return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_NO_MEM,
+                                      "MPI_Info_dup");
+    }
+
+    snprintf(tmp, 16, "%" PRIsize_t, sizeof(MPI_Aint));
+    ret = opal_info_set(&newinfo->super, "mpi_aint_size", tmp);
+    if (OPAL_SUCCESS != ret) {
+        goto err_cleanup;
+    }
+    snprintf(tmp, 16, "%" PRIsize_t, sizeof(MPI_Count));
+    ret = opal_info_set(&newinfo->super, "mpi_count_size", tmp);
+    if (OPAL_SUCCESS != ret) {
+        goto err_cleanup;
+    }
+    snprintf(tmp, 16, "%" PRIsize_t, sizeof(MPI_Offset));
+    ret = opal_info_set(&newinfo->super, "mpi_offset_size", tmp);
+    if (OPAL_SUCCESS != ret) {
+        goto err_cleanup;
+    }
+
+    *info = newinfo;
+
+exit:
+    OMPI_ERRHANDLER_NOHANDLE_RETURN( ret, ret, FUNC_NAME );
+
+err_cleanup:
+    ompi_info_free(&newinfo);
+    goto exit;
+}

@@ -17,7 +17,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2020      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2021      Bull S.A.S. All rights reserved.
- * Copyright (c) 2024      Triad National Security, LLC. All rights
+ * Copyright (c) 2024-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -36,7 +36,7 @@
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/runtime/ompi_spc.h"
 
-PROTOTYPE ERROR_CLASS psend_init(BUFFER buf, INT partitions, PARTITIONED_COUNT count,
+PROTOTYPE ERROR_CLASS psend_init(BUFFER_CONST buf, INT partitions, PARTITIONED_COUNT count,
                                  DATATYPE datatype, INT dest, INT tag, COMM comm,
                                  INFO info, REQUEST_INOUT request)
 {

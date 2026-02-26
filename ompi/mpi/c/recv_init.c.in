@@ -32,8 +32,8 @@
 #include "ompi/request/request.h"
 #include "ompi/memchecker.h"
 
-PROTOTYPE ERROR_CLASS recv_init(BUFFER_OUT buf, COUNT count, DATATYPE type, INT source,
-                                INT tag, COMM comm, REQUEST_INOUT request)
+PROTOTYPE ERROR_CLASS recv_init(BUFFER_OUT buf, COUNT count, DATATYPE type, SOURCE source,
+                                TAG tag, COMM comm, REQUEST_INOUT request)
 {
     int rc = MPI_SUCCESS;
 

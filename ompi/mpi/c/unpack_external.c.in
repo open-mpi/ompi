@@ -15,7 +15,7 @@
  *                         reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2024      Triad National Security, LLC. All rights
+ * Copyright (c) 2024-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -33,7 +33,7 @@
 #include "opal/datatype/opal_convertor.h"
 #include "ompi/memchecker.h"
 
-PROTOTYPE ERROR_CLASS unpack_external (STRING datarep, BUFFER inbuf, AINT_COUNT insize,
+PROTOTYPE ERROR_CLASS unpack_external (STRING datarep, BUFFER_CONST inbuf, AINT_COUNT insize,
                                        AINT_COUNT_OUT position, BUFFER_OUT outbuf, COUNT outcount,
                                        DATATYPE datatype)
 {

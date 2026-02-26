@@ -15,7 +15,7 @@
  *                         reserved.
  * Copyright (c) 2014-2020 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
- * Copyright (c) 2024      Triad National Security, LLC. All rights
+ * Copyright (c) 2024-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -36,9 +36,9 @@
 #include "ompi/memchecker.h"
 #include "ompi/runtime/ompi_spc.h"
 
-PROTOTYPE ERROR_CLASS ialltoallw(BUFFER sendbuf, COUNT_ARRAY sendcounts, DISP_ARRAY sdispls,
-                                 DATATYPE_ARRAY sendtypes, BUFFER_OUT recvbuf, COUNT_ARRAY recvcounts,
-                                 DISP_ARRAY rdispls, DATATYPE_ARRAY recvtypes, COMM comm,
+PROTOTYPE ERROR_CLASS ialltoallw(BUFFER_CONST sendbuf, COUNT_ARRAY sendcounts, DISP_ARRAY sdispls,
+                                 DATATYPE_ARRAY_ASYNC sendtypes, BUFFER_OUT recvbuf, COUNT_ARRAY recvcounts,
+                                 DISP_ARRAY rdispls, DATATYPE_ARRAY_ASYNC recvtypes, COMM comm,
                                  REQUEST_INOUT request)
 {
     int i, size, err;
@@ -121,6 +121,7 @@ PROTOTYPE ERROR_CLASS ialltoallw(BUFFER sendbuf, COUNT_ARRAY sendcounts, DISP_AR
     if (OPAL_LIKELY(OMPI_SUCCESS == err)) {
         ompi_coll_base_retain_datatypes_w(*request, (MPI_IN_PLACE==sendbuf)?NULL:sendtypes, recvtypes, false);
     }
+
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }
 

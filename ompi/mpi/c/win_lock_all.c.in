@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2024      Triad National Security, LLC. All rights
+ * Copyright (c) 2024-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -29,7 +29,7 @@
 #include "ompi/win/win.h"
 #include "ompi/mca/osc/osc.h"
 
-PROTOTYPE ERROR_CLASS win_lock_all(INT mpi_assert, WIN win)
+PROTOTYPE ERROR_CLASS win_lock_all(RMA_MODE_BITS mpi_assert, WIN win)
 {
     int rc;
 
