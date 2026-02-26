@@ -48,8 +48,8 @@ static int datatype_duplicate  (ompi_datatype_t *oldtype, ompi_datatype_t **newt
         ompi_datatype_destroy (&type);
         return MPI_ERR_INTERN;
     }
-    
-    ompi_datatype_set_args( type, 0, NULL, 0, NULL, 1, &oldtype, MPI_COMBINER_DUP );
+
+    ompi_datatype_set_args( type, 0, 0, NULL, 0, OMPI_DISP_ARRAY_NULL, 1, &oldtype, MPI_COMBINER_DUP );
 
     *newtype = type;
     return OMPI_SUCCESS;
@@ -83,8 +83,8 @@ int mca_io_ompio_file_set_view (ompi_file_t *fp,
         // MPI_DISPLACEMENT_CURRENT is only valid if amode is MPI_MODE_SEQUENTIAL
         return MPI_ERR_DISP;
     }
-        
-    
+
+
     OPAL_THREAD_LOCK(&fp->f_lock);
     ret = mca_common_ompio_set_view(fh, disp, etype, filetype, datarep, info);
     OPAL_THREAD_UNLOCK(&fp->f_lock);

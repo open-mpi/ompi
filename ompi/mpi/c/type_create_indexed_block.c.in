@@ -32,11 +32,6 @@
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/memchecker.h"
 
-/*
- * TODO:BIGCOUNT this file will need to be updated once
- * the datatype framework supports bigcount 
- */
-
 
 PROTOTYPE ERROR_CLASS type_create_indexed_block(COUNT count,
                                                 COUNT blocklength,
@@ -45,7 +40,6 @@ PROTOTYPE ERROR_CLASS type_create_indexed_block(COUNT count,
                                                 DATATYPE_OUT newtype)
 {
     int rc;
-    int *iarray_of_displacements = NULL;
 
     MEMCHECKER(
         memchecker_datatype(oldtype);
@@ -66,32 +60,23 @@ PROTOTYPE ERROR_CLASS type_create_indexed_block(COUNT count,
         }
     }
 
-#if OMPI_BIGCOUNT_SRC
-    iarray_of_displacements = (int *)malloc(count * sizeof(int));
-    if (NULL == iarray_of_displacements) {
-        return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_NO_MEM, FUNC_NAME);
-    }
-    for (int ii = 0; ii < (int)count; ii++) {
-        iarray_of_displacements[ii] = (int)array_of_displacements[ii];
-    }
-#else
-    iarray_of_displacements = (int *)array_of_displacements;
-#endif
-    rc = ompi_datatype_create_indexed_block( count, blocklength, iarray_of_displacements,
+    rc = ompi_datatype_create_indexed_block( count, blocklength, OMPI_COUNT_ARRAY_CREATE(array_of_displacements),
                                              oldtype, newtype );
     if( rc != MPI_SUCCESS ) {
         ompi_datatype_destroy( newtype );
         OMPI_ERRHANDLER_NOHANDLE_RETURN( rc, rc, FUNC_NAME );
     }
     {
-        const int* a_i[3] = {(int *)&count, (int *)&blocklength, iarray_of_displacements};
+        ompi_count_array_t a_i[3] = {OMPI_COUNT_ARRAY_CREATE(&count),
+                                     OMPI_COUNT_ARRAY_CREATE(&blocklength),
+                                     OMPI_COUNT_ARRAY_CREATE(array_of_displacements)};
 
-        ompi_datatype_set_args( *newtype, 2 + count, a_i, 0, NULL, 1, &oldtype,
+        ompi_datatype_set_args( *newtype,
+                                (sizeof(count) != sizeof(size_t)) ? count + 2 : 0,
+                                (sizeof(count) == sizeof(size_t)) ? count + 2 : 0,
+                                a_i, 0, OMPI_DISP_ARRAY_NULL, 1, &oldtype,
                                 MPI_COMBINER_INDEXED_BLOCK );
     }
 
-#if OMPI_BIGCOUNT_SRC
-    free(iarray_of_displacements);
-#endif
     return MPI_SUCCESS;
 }

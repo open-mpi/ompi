@@ -118,14 +118,14 @@ int main(int argc, char *argv[])
     types[1] = &ompi_mpi_int.dt;
     types[2] = &ompi_mpi_int.dt;
     types[3] = &ompi_mpi_int.dt;
-    ret = ompi_datatype_create_struct(4, blen, disp, types, &struct_type);
+    ret = ompi_datatype_create_struct(4, OMPI_COUNT_ARRAY_CREATE(blen), OMPI_DISP_ARRAY_CREATE(disp), types, &struct_type);
     if (ret != 0)
         goto cleanup;
 
     {
         int count = 4;
-        const int *a_i[2] = {&count, blen};
-        ret = ompi_datatype_set_args(struct_type, count + 1, a_i, count, disp, count, types,
+        const ompi_count_array_t a_i[2] = {OMPI_COUNT_ARRAY_CREATE(&count), OMPI_COUNT_ARRAY_CREATE(blen)};
+        ret = ompi_datatype_set_args(struct_type, count + 1, 0, a_i, count, OMPI_DISP_ARRAY_CREATE(disp), count, types,
                                      MPI_COMBINER_STRUCT);
         if (ret != 0)
             goto cleanup;
@@ -190,9 +190,11 @@ int main(int argc, char *argv[])
         int count = 2;
         int blocklength = 1;
         int stride = 1;
-        const int *a_i[3] = {&count, &blocklength, &stride};
+        const ompi_count_array_t a_i[3] = {OMPI_COUNT_ARRAY_CREATE(&count),
+                                           OMPI_COUNT_ARRAY_CREATE(&blocklength),
+                                           OMPI_COUNT_ARRAY_CREATE(&stride)};
         ompi_datatype_t *type = &ompi_mpi_int.dt;
-        ret = ompi_datatype_set_args(vec_type, 3, a_i, 0, NULL, 1, &type, MPI_COMBINER_VECTOR);
+        ret = ompi_datatype_set_args(vec_type, 3, 0, a_i, 0, OMPI_DISP_ARRAY_NULL, 1, &type, MPI_COMBINER_VECTOR);
         if (ret != 0)
             goto cleanup;
     }
@@ -251,16 +253,18 @@ int main(int argc, char *argv[])
     blen[0] = 0;
     blen[1] = 20 * sizeof(double);
 
-    ret = ompi_datatype_create_indexed_block(2, 10, blen, &ompi_mpi_double.dt, &newType);
+    ret = ompi_datatype_create_indexed_block(2, 10, OMPI_COUNT_ARRAY_CREATE(blen), &ompi_mpi_double.dt, &newType);
     if (ret != 0)
         goto cleanup;
 
     {
         int count = 2;
         int blocklength = 10;
-        const int *a_i[3] = {&count, &blocklength, blen};
+        const ompi_count_array_t a_i[3] = {OMPI_COUNT_ARRAY_CREATE(&count),
+                                           OMPI_COUNT_ARRAY_CREATE(&blocklength),
+                                           OMPI_COUNT_ARRAY_CREATE(blen)};
         ompi_datatype_t *oldtype = &ompi_mpi_double.dt;
-        ompi_datatype_set_args(newType, 2 + count, a_i, 0, NULL, 1, &oldtype,
+        ompi_datatype_set_args(newType, 2 + count, 0, a_i, 0, OMPI_DISP_ARRAY_NULL, 1, &oldtype,
                                MPI_COMBINER_INDEXED_BLOCK);
         if (ret != 0)
             goto cleanup;
@@ -322,15 +326,16 @@ int main(int argc, char *argv[])
     disp[0] = 0;
     disp[1] = 20 * sizeof(double);
 
-    ret = ompi_datatype_create_hindexed(2, blen, disp, &ompi_mpi_double.dt, &newType);
+    ret = ompi_datatype_create_hindexed(2, OMPI_COUNT_ARRAY_CREATE(blen),
+                                        OMPI_DISP_ARRAY_CREATE(disp), &ompi_mpi_double.dt, &newType);
     if (ret != 0)
         goto cleanup;
 
     {
         int count = 2;
-        const int *a_i[2] = {&count, blen};
+        const ompi_count_array_t a_i[2] = {OMPI_COUNT_ARRAY_CREATE(&count), OMPI_COUNT_ARRAY_CREATE(blen)};
         ompi_datatype_t *oldtype = &ompi_mpi_double.dt;
-        ret = ompi_datatype_set_args(newType, count + 1, a_i, count, disp, 1, &oldtype,
+        ret = ompi_datatype_set_args(newType, count + 1, 0, a_i, count, OMPI_DISP_ARRAY_CREATE(disp), 1, &oldtype,
                                      MPI_COMBINER_HINDEXED);
         if (ret != 0)
             goto cleanup;
@@ -388,14 +393,14 @@ int main(int argc, char *argv[])
     disp[1] = 64;
     types[0] = &ompi_mpi_int.dt;
     types[1] = newType;
-    ret = ompi_datatype_create_struct(2, blen, disp, types, &struct_type);
+    ret = ompi_datatype_create_struct(2, OMPI_COUNT_ARRAY_CREATE(blen), OMPI_DISP_ARRAY_CREATE(disp), types, &struct_type);
     if (ret != 0)
         goto cleanup;
 
     {
         int count = 2;
-        const int *a_i[2] = {&count, blen};
-        ret = ompi_datatype_set_args(struct_type, count + 1, a_i, count, disp, count, types,
+        const ompi_count_array_t a_i[2] = {OMPI_COUNT_ARRAY_CREATE(&count), OMPI_COUNT_ARRAY_CREATE(blen)};
+        ret = ompi_datatype_set_args(struct_type, count + 1, 0, a_i, count, OMPI_DISP_ARRAY_CREATE(disp), count, types,
                                      MPI_COMBINER_STRUCT);
         if (ret != 0)
             goto cleanup;
@@ -461,7 +466,7 @@ int main(int argc, char *argv[])
     if (ret != 0)
         goto cleanup;
     ompi_datatype_t *type = &ompi_mpi_int.dt;
-    ret = ompi_datatype_set_args(dup_type, 0, NULL, 0, NULL, 1, &type, MPI_COMBINER_DUP);
+    ret = ompi_datatype_set_args(dup_type, 0, 0, NULL, 0, OMPI_DISP_ARRAY_NULL, 1, &type, MPI_COMBINER_DUP);
     if (ret != 0)
         goto cleanup;
     packed_ddt_len = ompi_datatype_pack_description_length(dup_type);

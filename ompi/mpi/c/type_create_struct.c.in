@@ -32,20 +32,13 @@
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/memchecker.h"
 
-/*
- * TODO:BIGCOUNT this file will need to be updated once
- * the datatype framework supports bigcount 
- */
-
 PROTOTYPE ERROR_CLASS type_create_struct(COUNT count,
                                          COUNT_ARRAY array_of_blocklengths,
                                          AINT_COUNT_ARRAY array_of_displacements,
                                          DATATYPE_ARRAY array_of_types,
                                          DATATYPE_OUT newtype)
 {
-    int i, rc, icount = (int)count;
-    int *iarray_of_blocklengths = NULL;
-    MPI_Aint *iarray_of_displacements = NULL;
+    int i, rc;
 
     if ( count > 0 ) {
         for ( i = 0; i < count; i++ ) {
@@ -77,54 +70,37 @@ PROTOTYPE ERROR_CLASS type_create_struct(COUNT count,
                                               FUNC_NAME);
             }
         }
-#if OMPI_BIGCOUNT_SRC
-        OMPI_CHECK_MPI_COUNT_INT_CONVERSION_OVERFLOW(rc, count);
-        if (OMPI_SUCCESS != rc) {
-            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(rc, FUNC_NAME);
-        }
-#endif
     }
 
-#if OMPI_BIGCOUNT_SRC
-    iarray_of_blocklengths = (int *)malloc(count * sizeof(int));
-    if (NULL == iarray_of_blocklengths) {
-        return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_NO_MEM, FUNC_NAME);
-    }
-    iarray_of_displacements = (MPI_Aint *)malloc(count * sizeof(MPI_Aint));
-    if (NULL == iarray_of_displacements) {
-        free(iarray_of_blocklengths);
-        return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_NO_MEM, FUNC_NAME);
-    }
-    for (int ii = 0; ii < (int)count; ii++) {
-        iarray_of_blocklengths[ii] = (int)array_of_blocklengths[ii];
-        iarray_of_displacements[ii] = (MPI_Aint)array_of_displacements[ii];
-    }
-#else
-    iarray_of_blocklengths = (int *)array_of_blocklengths;
-    iarray_of_displacements = (MPI_Aint *)array_of_displacements;
-#endif
-    rc = ompi_datatype_create_struct( icount, iarray_of_blocklengths, iarray_of_displacements,
+    /**
+     * TODO: The array of displacements can be either MPI_Aint or MPI_Count.
+     *       The call below takes a ompi_disp_array_t which maps to MPI_Aint.
+     */
+    rc = ompi_datatype_create_struct( count, OMPI_COUNT_ARRAY_CREATE(array_of_blocklengths),
+                                      OMPI_DISP_ARRAY_CREATE(array_of_displacements),
                                       array_of_types, newtype );
     if( rc != MPI_SUCCESS ) {
         ompi_datatype_destroy( newtype );
-#if OMPI_BIGCOUNT_SRC
-        free(iarray_of_blocklengths);
-        free(iarray_of_displacements);
-#endif
-        OMPI_ERRHANDLER_NOHANDLE_RETURN( rc, 
+        OMPI_ERRHANDLER_NOHANDLE_RETURN( rc,
                                 rc, FUNC_NAME );
     }
 
     {
-        const int* a_i[2] = {(int *)&icount, iarray_of_blocklengths};
-
-        ompi_datatype_set_args( *newtype, icount + 1, a_i, icount, iarray_of_displacements,
-                                icount, array_of_types, MPI_COMBINER_STRUCT );
-    }
 #if OMPI_BIGCOUNT_SRC
-    free(iarray_of_blocklengths);
-    free(iarray_of_displacements);
+        ompi_count_array_t a_i[3] = {
+                    OMPI_COUNT_ARRAY_CREATE(&count),
+                    OMPI_COUNT_ARRAY_CREATE(array_of_blocklengths),
+                    OMPI_COUNT_ARRAY_CREATE(array_of_displacements)};
+        ompi_datatype_set_args( *newtype, 0, 2*count + 1,
+                                a_i, 0, OMPI_DISP_ARRAY_NULL,
+                                count, array_of_types, MPI_COMBINER_STRUCT );
+#else
+        ompi_count_array_t a_i[2] = {OMPI_COUNT_ARRAY_CREATE(&count), OMPI_COUNT_ARRAY_CREATE(array_of_blocklengths)};
+        ompi_datatype_set_args( *newtype, count + 1, 0,
+                                a_i, count, OMPI_DISP_ARRAY_CREATE(array_of_displacements),
+                                count, array_of_types, MPI_COMBINER_STRUCT );
 #endif
+    }
 
     return MPI_SUCCESS;
 }

@@ -441,7 +441,9 @@ opal_pointer_array_t ompi_datatype_f_to_c_table = {{0}};
         displ[1] = (ptrdiff_t)(&(s[0].v2));                                          \
         displ[1] -= base;                                                            \
                                                                                      \
-        ompi_datatype_create_struct( 2, bLength, displ, types, &ptype );             \
+        ompi_datatype_create_struct( 2, OMPI_COUNT_ARRAY_CREATE(bLength),            \
+                                     OMPI_DISP_ARRAY_CREATE(displ), types,           \
+                                     &ptype );                                       \
         displ[0] = (ptrdiff_t)(&(s[1]));                                             \
         displ[0] -= base;                                                            \
         if( displ[0] != (displ[1] + (ptrdiff_t)sizeof(type2)) )                      \

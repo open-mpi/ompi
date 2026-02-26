@@ -28,16 +28,16 @@
 
 #include "ompi/datatype/ompi_datatype.h"
 
-int32_t ompi_datatype_create_struct( int count, const int* pBlockLength, const ptrdiff_t* pDisp,
+int32_t ompi_datatype_create_struct( size_t count, const ompi_count_array_t pBlockLength, const ompi_disp_array_t pDisp,
                                      ompi_datatype_t* const * pTypes, ompi_datatype_t** newType )
 {
     ptrdiff_t disp = 0, endto, lastExtent, lastDisp;
     ompi_datatype_t *pdt, *lastType;
-    int i, start_from;
+    size_t i, start_from;
     size_t lastBlock;
 
     /* Find first non-zero length element */
-    for( i = 0; (i < count) && (0 == pBlockLength[i]); i++ );
+    for( i = 0; (i < count) && (0 == ompi_count_array_get(pBlockLength, i)); i++ );
     if( i == count ) {  /* either nothing or nothing relevant */
         return ompi_datatype_duplicate( &ompi_mpi_datatype_null.dt, newType);
     }
@@ -46,22 +46,22 @@ int32_t ompi_datatype_create_struct( int count, const int* pBlockLength, const p
      */
     start_from = i;
     lastType = (ompi_datatype_t*)pTypes[start_from];
-    lastBlock = pBlockLength[start_from];
+    lastBlock = ompi_count_array_get(pBlockLength, start_from);
     lastExtent = lastType->super.ub - lastType->super.lb;
-    lastDisp = pDisp[start_from];
-    endto = pDisp[start_from] + lastExtent * lastBlock;
+    lastDisp = ompi_disp_array_get(pDisp, start_from);
+    endto = lastDisp + lastExtent * lastBlock;
 
     for( i = (start_from + 1); i < count; i++ ) {
-        if( (pTypes[i] == lastType) && (pDisp[i] == endto) ) {
-            lastBlock += pBlockLength[i];
+        if( (pTypes[i] == lastType) && (ompi_disp_array_get(pDisp, i) == endto) ) {
+            lastBlock += ompi_count_array_get(pBlockLength, i);
             endto = lastDisp + lastBlock * lastExtent;
         } else {
             disp += lastType->super.desc.used;
             if( lastBlock > 1 ) disp += 2;
             lastType = (ompi_datatype_t*)pTypes[i];
             lastExtent = lastType->super.ub - lastType->super.lb;
-            lastBlock = pBlockLength[i];
-            lastDisp = pDisp[i];
+            lastBlock = ompi_count_array_get(pBlockLength, i);
+            lastDisp = ompi_disp_array_get(pDisp, i);
             endto = lastDisp + lastExtent * lastBlock;
         }
     }
@@ -69,24 +69,24 @@ int32_t ompi_datatype_create_struct( int count, const int* pBlockLength, const p
     if( lastBlock != 1 ) disp += 2;
 
     lastType = (ompi_datatype_t*)pTypes[start_from];
-    lastBlock = pBlockLength[start_from];
+    lastBlock = ompi_count_array_get(pBlockLength, start_from);
     lastExtent = lastType->super.ub - lastType->super.lb;
-    lastDisp = pDisp[start_from];
-    endto = pDisp[start_from] + lastExtent * lastBlock;
+    lastDisp = ompi_disp_array_get(pDisp, start_from);
+    endto = lastDisp + lastExtent * lastBlock;
 
     pdt = ompi_datatype_create( (int32_t)disp );
 
     /* Do again the same loop but now add the elements */
     for( i = (start_from + 1); i < count; i++ ) {
-        if( (pTypes[i] == lastType) && (pDisp[i] == endto) ) {
-            lastBlock += pBlockLength[i];
+        if( (pTypes[i] == lastType) && (ompi_disp_array_get(pDisp, i) == endto) ) {
+            lastBlock += ompi_count_array_get(pBlockLength, i);
             endto = lastDisp + lastBlock * lastExtent;
         } else {
             ompi_datatype_add( pdt, lastType, lastBlock, lastDisp, lastExtent );
             lastType = (ompi_datatype_t*)pTypes[i];
             lastExtent = lastType->super.ub - lastType->super.lb;
-            lastBlock = pBlockLength[i];
-            lastDisp = pDisp[i];
+            lastBlock = ompi_count_array_get(pBlockLength, i);
+            lastDisp = ompi_disp_array_get(pDisp, i);
             endto = lastDisp + lastExtent * lastBlock;
         }
     }

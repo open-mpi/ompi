@@ -465,7 +465,7 @@ int mca_fcoll_vulcan_file_read_all (struct ompio_file_t *fh,
 #if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
 	start_read_time = MPI_Wtime();
 #endif
-        for (i = 0; i < fh->f_num_aggrs; i++) {            
+        for (i = 0; i < fh->f_num_aggrs; i++) {
             ret = read_init (fh, 0, cycles, fh->f_aggr_list[i], fh->f_rank,
                              aggr_data[i], read_sync_type, &req_tmp,
                              use_accelerator_buffer);
@@ -840,8 +840,8 @@ static int shuffle_init (int index, int cycles, int aggregator, int rank, mca_io
             reqs[i] = MPI_REQUEST_NULL;
 	    if (0 < data->disp_index[i]) {
 		ompi_datatype_create_hindexed (data->disp_index[i],
-					       data->blocklen_per_process[i],
-					       data->displs_per_process[i],
+					       OMPI_COUNT_ARRAY_CREATE(data->blocklen_per_process[i]),
+					       OMPI_DISP_ARRAY_CREATE(data->displs_per_process[i]),
 					       MPI_BYTE,
 					       &data->recvtype[i]);
 		ompi_datatype_commit (&data->recvtype[i]);
@@ -918,8 +918,8 @@ static int shuffle_init (int index, int cycles, int aggregator, int rank, mca_io
 
         if (0 <= block_index) {
             ompi_datatype_create_hindexed (block_index+1,
-                                           blocklength_proc,
-                                           displs_proc,
+                                           OMPI_COUNT_ARRAY_CREATE(blocklength_proc),
+                                           OMPI_DISP_ARRAY_CREATE(displs_proc),
                                            MPI_BYTE,
                                            &newType);
             ompi_datatype_commit (&newType);

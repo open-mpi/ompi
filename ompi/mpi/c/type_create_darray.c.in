@@ -33,11 +33,6 @@
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/memchecker.h"
 
-/*
- * TODO:BIGCOUNT this file will need to be updated once
- * the datatype framework supports bigcount 
- */
-
 
 PROTOTYPE ERROR_CLASS type_create_darray(INT size,
                                          INT rank,
@@ -51,7 +46,6 @@ PROTOTYPE ERROR_CLASS type_create_darray(INT size,
                                          DATATYPE_OUT newtype)
 {
     int i, rc;
-    int *igsize_array = NULL;
 
     MEMCHECKER(
         memchecker_datatype(oldtype);
@@ -75,14 +69,6 @@ PROTOTYPE ERROR_CLASS type_create_darray(INT size,
             return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, FUNC_NAME);
         }
         if( ndims > 0 ) {
-#if OMPI_BIGCOUNT_SRC
-            for( i = 0; i < ndims; i++ ) {
-                OMPI_CHECK_MPI_COUNT_INT_CONVERSION_OVERFLOW(rc, gsize_array[i]);
-                if (OMPI_SUCCESS != rc) {
-                    return OMPI_ERRHANDLER_NOHANDLE_INVOKE(rc, FUNC_NAME);
-                }
-            }
-#endif
             for( i = 0; i < ndims; i++ ) {
                 if( (MPI_DISTRIBUTE_BLOCK != distrib_array[i]) &&
                     (MPI_DISTRIBUTE_CYCLIC != distrib_array[i]) &&
@@ -104,30 +90,32 @@ PROTOTYPE ERROR_CLASS type_create_darray(INT size,
         }
     }
 
-#if OMPI_BIGCOUNT_SRC
-    igsize_array = (int *)malloc(ndims * sizeof(int));
-    if (NULL == igsize_array) {
-        return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_NO_MEM, FUNC_NAME);
-    }
-    for (int ii=0;ii<ndims;ii++) {
-        igsize_array[ii] = (int)gsize_array[ii];
-    }
-#else
-    igsize_array = (int *)gsize_array;
-#endif
+    ompi_count_array_t cgsize_array = OMPI_COUNT_ARRAY_CREATE(gsize_array);
     rc = ompi_datatype_create_darray( size, rank, ndims,
-                                      igsize_array, distrib_array, darg_array, psize_array,
+                                      cgsize_array, distrib_array, darg_array, psize_array,
                                       order, oldtype, newtype );
-    if( OMPI_SUCCESS == rc ) {
-        const int* a_i[8] = {&size, &rank, &ndims, igsize_array, distrib_array, darg_array,
-                             psize_array, &order};
 
-        ompi_datatype_set_args( *newtype, 4 * ndims + 4, a_i, 0, NULL, 1, &oldtype,
+    if( OMPI_SUCCESS == rc ) {
+        ompi_count_array_t a_i[8] = {OMPI_COUNT_ARRAY_CREATE(&size),
+                                     OMPI_COUNT_ARRAY_CREATE(&rank),
+                                     OMPI_COUNT_ARRAY_CREATE(&ndims),
+                                     cgsize_array,
+                                     OMPI_COUNT_ARRAY_CREATE(distrib_array),
+                                     OMPI_COUNT_ARRAY_CREATE(darg_array),
+                                     OMPI_COUNT_ARRAY_CREATE(psize_array),
+                                     OMPI_COUNT_ARRAY_CREATE(&order)};
+        size_t ci, cl;
+        if (sizeof(*gsize_array) == 8) {
+            // big count
+            ci = 3 * ndims + 4;
+            cl = ndims;
+        } else {
+            ci = 4*ndims + 4;
+            cl = 0;
+        }
+        ompi_datatype_set_args( *newtype, ci, cl, a_i, 0, OMPI_DISP_ARRAY_NULL, 1, &oldtype,
                                 MPI_COMBINER_DARRAY );
     }
-#if OMPI_BIGCOUNT_SRC
-    free(igsize_array);
-#endif
 
     OMPI_ERRHANDLER_NOHANDLE_RETURN(rc, rc, FUNC_NAME);
 }

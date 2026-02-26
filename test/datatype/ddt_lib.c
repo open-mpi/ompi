@@ -134,7 +134,8 @@ ompi_datatype_t *upper_matrix(unsigned int mat_size)
         blocklen[i] = mat_size - i;
     }
 
-    ompi_datatype_create_indexed(mat_size, blocklen, disp, &ompi_mpi_double.dt, &upper);
+    ompi_datatype_create_indexed(mat_size, OMPI_COUNT_ARRAY_CREATE(blocklen),
+                                 OMPI_DISP_ARRAY_CREATE(disp), &ompi_mpi_double.dt, &upper);
     ompi_datatype_commit(&upper);
     if (outputFlags & DUMP_DATA_AFTER_COMMIT) {
         ompi_datatype_dump(upper);
@@ -158,7 +159,8 @@ ompi_datatype_t *lower_matrix(unsigned int mat_size)
         blocklen[i] = i;
     }
 
-    ompi_datatype_create_indexed(mat_size, blocklen, disp, &ompi_mpi_double.dt, &upper);
+    ompi_datatype_create_indexed(mat_size, OMPI_COUNT_ARRAY_CREATE(blocklen),
+                                 OMPI_DISP_ARRAY_CREATE(disp), &ompi_mpi_double.dt, &upper);
     free(disp);
     free(blocklen);
     return upper;
@@ -175,7 +177,8 @@ ompi_datatype_t *test_matrix_borders(unsigned int size, unsigned int width)
     disp[1] = (size - width) * sizeof(double);
     blocklen[1] = width;
 
-    ompi_datatype_create_indexed(2, blocklen, disp, &ompi_mpi_double.dt, &pdt_line);
+    ompi_datatype_create_indexed(2, OMPI_COUNT_ARRAY_CREATE(blocklen),
+                                 OMPI_DISP_ARRAY_CREATE(disp), &ompi_mpi_double.dt, &pdt_line);
     ompi_datatype_create_contiguous(size, pdt_line, &pdt);
     OBJ_RELEASE(pdt_line); /*assert( pdt_line == NULL );*/
     return pdt;
@@ -224,7 +227,8 @@ ompi_datatype_t *test_struct_char_double(void)
     displ[0] = (char *) &(data.c) - (char *) &(data);
     displ[1] = (char *) &(data.d) - (char *) &(data);
 
-    ompi_datatype_create_struct(2, lengths, displ, types, &pdt);
+    ompi_datatype_create_struct(2, OMPI_COUNT_ARRAY_CREATE(lengths),
+                                OMPI_DISP_ARRAY_CREATE(displ), types, &pdt);
     ompi_datatype_commit(&pdt);
     if (outputFlags & DUMP_DATA_AFTER_COMMIT) {
         ompi_datatype_dump(pdt);
@@ -276,7 +280,8 @@ ompi_datatype_t *test_create_blacs_type(void)
 {
     ompi_datatype_t *pdt;
 
-    ompi_datatype_create_indexed(18, blacs_length, blacs_indices, &ompi_mpi_int.dt, &pdt);
+    ompi_datatype_create_indexed(18, OMPI_COUNT_ARRAY_CREATE(blacs_length),
+                                 OMPI_DISP_ARRAY_CREATE(blacs_indices), &ompi_mpi_int.dt, &pdt);
     ompi_datatype_commit(&pdt);
     if (outputFlags & DUMP_DATA_AFTER_COMMIT) {
         ompi_datatype_dump(pdt);
@@ -327,7 +332,8 @@ ompi_datatype_t *test_struct(void)
 
     types[1] = pdt1;
 
-    ompi_datatype_create_struct(3, lengths, disp, types, &pdt);
+    ompi_datatype_create_struct(3, OMPI_COUNT_ARRAY_CREATE(lengths),
+                                OMPI_DISP_ARRAY_CREATE(disp), types, &pdt);
     OBJ_RELEASE(pdt1); /*assert( pdt1 == NULL );*/
     if (outputFlags & DUMP_DATA_AFTER_COMMIT) {
         ompi_datatype_dump(pdt);
@@ -356,7 +362,8 @@ ompi_datatype_t *create_struct_constant_gap_resized_ddt(ompi_datatype_t *type)
     disps[1] -= disps[2]; /*  8 */
     disps[0] -= disps[2]; /* 16 */
 
-    ompi_datatype_create_struct(2, blocklens, disps, types, &temp_type);
+    ompi_datatype_create_struct(2, OMPI_COUNT_ARRAY_CREATE(blocklens),
+                                OMPI_DISP_ARRAY_CREATE(disps), types, &temp_type);
     ompi_datatype_create_resized(temp_type, 0, sizeof(data[0]), &struct_type);
     ompi_datatype_commit(&struct_type);
     OBJ_RELEASE(temp_type);
@@ -394,7 +401,7 @@ ompi_datatype_t *create_strange_dt(void)
 
     dispi[0] = (int) ((char *) &(v[0].i1) - (char *) &(v[0]));                   /* 0 */
     dispi[1] = (int) (((char *) (&(v[0].i2)) - (char *) &(v[0])) / sizeof(int)); /* 2 */
-    ompi_datatype_create_indexed_block(2, 1, dispi, &ompi_mpi_int.dt, &pdtTemp);
+    ompi_datatype_create_indexed_block(2, 1, OMPI_DISP_ARRAY_CREATE(dispi), &ompi_mpi_int.dt, &pdtTemp);
 #ifdef USE_RESIZED
     /* optional */
     displ[0] = 0;
@@ -411,7 +418,8 @@ ompi_datatype_t *create_strange_dt(void)
     displ[0] = 0;
     displ[1] = (long) ((char *) &(t[0].v[0]) - (char *) &(t[0]));
     displ[2] = (long) ((char *) &(t[0].last) - (char *) &(t[0]));
-    ompi_datatype_create_struct(3, pBlock, displ, types, &pdtTemp);
+    ompi_datatype_create_struct(3, OMPI_COUNT_ARRAY_CREATE(pBlock),
+                                OMPI_DISP_ARRAY_CREATE(displ), types, &pdtTemp);
 #ifdef USE_RESIZED
     /* optional */
     displ[1] = (char *) &(t[1]) - (char *) &(t[0]);

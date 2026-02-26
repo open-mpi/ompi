@@ -33,10 +33,6 @@
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/memchecker.h"
 
-/*
- * TODO:BIGCOUNT this file will need to be updated once
- * the datatype framework supports bigcount 
- */
 
 PROTOTYPE ERROR_CLASS type_create_subarray(INT ndims,
                                            COUNT_ARRAY size_array,
@@ -47,9 +43,6 @@ PROTOTYPE ERROR_CLASS type_create_subarray(INT ndims,
                                            DATATYPE_OUT newtype)
 {
     int32_t i, rc;
-    int *isize_array = NULL;
-    int *isubsize_array = NULL;
-    int *istart_array = NULL;
 
     MEMCHECKER(
         memchecker_datatype(oldtype);
@@ -67,20 +60,6 @@ PROTOTYPE ERROR_CLASS type_create_subarray(INT ndims,
             return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, FUNC_NAME);
         }
         for( i = 0; i < ndims; i++ ) {
-#if OMPI_BIGCOUNT_SRC
-            OMPI_CHECK_MPI_COUNT_INT_CONVERSION_OVERFLOW(rc, size_array[i]);
-            if (OMPI_SUCCESS != rc) {
-                return OMPI_ERRHANDLER_NOHANDLE_INVOKE(rc, FUNC_NAME);
-            }
-            OMPI_CHECK_MPI_COUNT_INT_CONVERSION_OVERFLOW(rc, subsize_array[i]);
-            if (OMPI_SUCCESS != rc) {
-                return OMPI_ERRHANDLER_NOHANDLE_INVOKE(rc, FUNC_NAME);
-            }
-            OMPI_CHECK_MPI_COUNT_INT_CONVERSION_OVERFLOW(rc, start_array[i]);
-            if (OMPI_SUCCESS != rc) {
-                return OMPI_ERRHANDLER_NOHANDLE_INVOKE(rc, FUNC_NAME);
-            }
-#endif
             if( (subsize_array[i] < 1) || (subsize_array[i] > size_array[i]) ) {
                 return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG, FUNC_NAME);
             } else if( (start_array[i] < 0) || (start_array[i] > (size_array[i] - subsize_array[i])) ) {
@@ -89,45 +68,26 @@ PROTOTYPE ERROR_CLASS type_create_subarray(INT ndims,
         }
     }
 
-#if OMPI_BIGCOUNT_SRC
-    isize_array = (int *)malloc(ndims * sizeof(int));
-    if (NULL == isize_array) {
-        return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_NO_MEM, FUNC_NAME);
-    }
-    isubsize_array = (int *)malloc(ndims * sizeof(int));
-    if (NULL == isubsize_array) {
-        free(isize_array);
-        return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_NO_MEM, FUNC_NAME);
-    }
-    istart_array = (int *)malloc(ndims * sizeof(int));
-    if (NULL == istart_array) {
-        free(isize_array);
-        free(isubsize_array);
-        return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_NO_MEM, FUNC_NAME);
-    }
-    for (int ii = 0; ii < ndims; ii++) {
-        isize_array[ii] = (int)size_array[ii];
-        isubsize_array[ii] = (int)subsize_array[ii];
-        istart_array[ii] = (int)start_array[ii];
-    }
-#else
-    isize_array = (int *)size_array;
-    isubsize_array = (int *)subsize_array;
-    istart_array = (int *)start_array;
-#endif
-    rc = ompi_datatype_create_subarray( ndims, isize_array, isubsize_array, istart_array,
+    rc = ompi_datatype_create_subarray( ndims, OMPI_COUNT_ARRAY_CREATE(size_array), OMPI_COUNT_ARRAY_CREATE(subsize_array),
+                                        OMPI_COUNT_ARRAY_CREATE(start_array),
                                         order, oldtype, newtype);
     if( OMPI_SUCCESS == rc ) {
-        const int* a_i[5] = {&ndims, isize_array, isubsize_array, istart_array, &order};
-
-        ompi_datatype_set_args( *newtype, 3 * ndims + 2, a_i, 0, NULL, 1, &oldtype,
+        ompi_count_array_t a_i[5] = {OMPI_COUNT_ARRAY_CREATE(&ndims),
+                                     OMPI_COUNT_ARRAY_CREATE(size_array),
+                                     OMPI_COUNT_ARRAY_CREATE(subsize_array),
+                                     OMPI_COUNT_ARRAY_CREATE(start_array),
+                                     OMPI_COUNT_ARRAY_CREATE(&order)};
+        size_t ci, cl;
+        if (sizeof(size_array[0]) == sizeof(size_t)) {
+            ci = 2;
+            cl = 3*ndims;
+        } else {
+            ci = 3*ndims + 2;
+            cl = 0;
+        }
+        ompi_datatype_set_args( *newtype, ci, cl, a_i, 0, OMPI_DISP_ARRAY_NULL, 1, &oldtype,
                                 MPI_COMBINER_SUBARRAY );
     }
 
-#if OMPI_BIGCOUNT_SRC
-    free(isize_array);
-    free(isubsize_array);
-    free(istart_array);
-#endif
     OMPI_ERRHANDLER_NOHANDLE_RETURN(rc, rc, FUNC_NAME);
 }

@@ -26,7 +26,7 @@
 
 extern int32_t ompi_datatype_number_of_predefined_data;
 
-const ompi_datatype_t* ompi_datatype_match_size( int size, uint16_t datakind, uint16_t datalang )
+const ompi_datatype_t* ompi_datatype_match_size( size_t size, uint16_t datakind, uint16_t datalang )
 {
     int32_t i;
     const ompi_datatype_t* datatype;
@@ -45,7 +45,7 @@ const ompi_datatype_t* ompi_datatype_match_size( int size, uint16_t datakind, ui
             continue;
         if( (datatype->super.flags & OMPI_DATATYPE_FLAG_DATA_TYPE) != datakind )
             continue;
-        if( (size_t)size == datatype->super.size ) {
+        if( size == datatype->super.size ) {
             return datatype;
         }
     }
