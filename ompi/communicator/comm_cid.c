@@ -24,7 +24,7 @@
  * Copyright (c) 2017      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
- * Copyright (c) 2020-2025 Triad National Security, LLC. All rights
+ * Copyright (c) 2020-2026 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -1094,7 +1094,7 @@ int ompi_comm_get_remote_cid_from_pmix (ompi_communicator_t *comm, int dest, uin
     }
 
     if (val->type != PMIX_SIZE) {
-        OPAL_OUTPUT_VERBOSE((10, ompi_comm_output, "PMIx_Get failed for PMIX_GROUP_LOCAL_CID type mismatch"));
+        OPAL_OUTPUT_VERBOSE((10, ompi_comm_output, "PMIx_Get failed for PMIX_GROUP_LOCAL_CID type mismatch - %s", PMIx_Value_string(val)));
         rc = OMPI_ERR_TYPE_MISMATCH;
         goto done;
     }
