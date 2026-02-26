@@ -80,7 +80,7 @@ void ompi_ineighbor_alltoallw_f(char *sendbuf, MPI_Fint *sendcounts,
     MPI_Comm c_comm;
     MPI_Datatype *c_sendtypes, *c_recvtypes;
     MPI_Request c_request;
-    int size, idx = 0, c_ierr;
+    int size, c_ierr;
     OMPI_ARRAY_NAME_DECL(sendcounts);
     OMPI_ARRAY_NAME_DECL(recvcounts);
 
@@ -120,11 +120,10 @@ void ompi_ineighbor_alltoallw_f(char *sendbuf, MPI_Fint *sendcounts,
         free(c_sendtypes);
         free(c_recvtypes);
     } else {
-        ompi_coll_base_nbc_request_t* nb_request = (ompi_coll_base_nbc_request_t*)c_request;
-        nb_request->data.release_arrays[idx++] = OMPI_ARRAY_NAME_CONVERT(sendcounts);
-        nb_request->data.release_arrays[idx++] = OMPI_ARRAY_NAME_CONVERT(recvcounts);
-        nb_request->data.release_arrays[idx++] = c_sendtypes;
-        nb_request->data.release_arrays[idx++] = c_recvtypes;
-        nb_request->data.release_arrays[idx]   = NULL;
+        ompi_coll_base_append_array_to_release(c_request, OMPI_ARRAY_NAME_CONVERT(sendcounts));
+        ompi_coll_base_append_array_to_release(c_request, OMPI_ARRAY_NAME_CONVERT(recvcounts));
+        ompi_coll_base_append_array_to_release(c_request, c_sendtypes);
+        ompi_coll_base_append_array_to_release(c_request, c_recvtypes);
+        ompi_coll_base_add_release_arrays_cb(c_request);
     }
 }

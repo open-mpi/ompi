@@ -13,7 +13,7 @@
  * Copyright (c) 2015-2019 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
- * Copyright (c) 2024      Triad National Security, LLC. All rights
+ * Copyright (c) 2024-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -106,4 +106,7 @@ PROTOTYPE VOID iscatterv(BUFFER_ASYNC x1, COUNT_ARRAY sendcounts,
 
     OMPI_FORTRAN_BIGCOUNT_ARRAY_CLEANUP_NONBLOCKING(sendcounts, tmp_sendcounts, c_request, c_ierr, idx);
     OMPI_FORTRAN_BIGCOUNT_ARRAY_CLEANUP_NONBLOCKING(displs, tmp_displs, c_request, c_ierr, idx);
+    if (idx > 0) {
+        ompi_coll_base_add_release_arrays_cb(c_request);
+    }
 }

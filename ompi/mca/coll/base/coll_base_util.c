@@ -14,6 +14,8 @@
  * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
  *
  * Copyright (c) 2024      NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2025      Triad National Security, LLC. All rights
+ *                         reserved.
  *
  * $COPYRIGHT$
  *
@@ -134,7 +136,7 @@ int ompi_rounddown(int num, int factor)
 /**
  * Release all objects and arrays stored into the nbc_request.
  * The release_arrays are temporary memory to stored the values
- * converted from Fortran, and should disappear in same time as the
+ * converted from Fortran or elsewhere, and should disappear in same time as the
  * request itself.
  */
 static void
@@ -268,6 +270,7 @@ static void release_vecs_callback(ompi_coll_base_nbc_request_t *request)
         }
         request->data.refcounted.vecs.rtypes = NULL;
     }
+    release_objs_callback(request);
 }
 
 static int complete_vecs_callback(struct ompi_request_t *req) {
@@ -342,6 +345,24 @@ int ompi_coll_base_retain_datatypes_w( ompi_request_t *req,
             req->req_complete_cb = complete_vecs_callback;
             req->req_complete_cb_data = request;
         }
+    }
+    return OMPI_SUCCESS;
+}
+
+int ompi_coll_base_add_release_arrays_cb(ompi_request_t *req)
+{
+    ompi_coll_base_nbc_request_t *request = (ompi_coll_base_nbc_request_t *)req;
+
+    assert(NULL != request);
+
+    if (req->req_persistent && (NULL == req->req_free)) {
+        request->cb.req_free = req->req_free;
+        req->req_free = free_objs_callback;
+    } else if (NULL == req->req_complete_cb) {
+        request->cb.req_complete_cb = req->req_complete_cb;
+        request->req_complete_cb_data = req->req_complete_cb_data;
+        req->req_complete_cb = complete_objs_callback;
+        req->req_complete_cb_data = request;
     }
     return OMPI_SUCCESS;
 }
