@@ -66,7 +66,7 @@ static inline int coll_acoll_reduce_topo(const void *sbuf, void *rbuf, size_t co
     int use_socket = (0 == acoll_module->use_socket) ? 1 : acoll_module->use_socket;
     
     tmp_sbuf = (char *) sbuf;
-    if ((MPI_IN_PLACE == sbuf) && (rank == root)) {
+    if (MPI_IN_PLACE == sbuf) {
         tmp_sbuf = (char *) rbuf;
     }
 
