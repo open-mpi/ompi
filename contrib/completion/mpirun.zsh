@@ -179,7 +179,7 @@ _mpirun() {
 	'(-N -npernode --npernode -npersocket --npersocket)'{-N,-npernode,--npernode}'[Launch n processes per node on all allocated nodes]:npernode:_guard "[[\:digit\:]]#" "number"' \
 	'(-npernode --npernode -npersocket --npersocket)'{-npersocket,--npersocket}'[Launch n processes per socket on all allocated nodes]:npersocket:_guard "[[\:digit\:]]#" "number"' \
 	'(-ompi-server --ompi-server)'{-ompi-server,--ompi-server}'[Specify the URI of the Open MPI server, or the name of the file (specified as file:filename) that contains that info]:server uri:' \
-	'(-output-filename --output-filename)'{-output-filename,--output-filename}'[Redirect output from application processes into filename.rank]:filename:' \
+	'(-output-filename --output-filename)'{-output-filename,--output-filename}'[Redirect output from application processes into files under filename]:filename:' \
 	'(-output-proctable --output-proctable)'{-output-proctable,--output-proctable}'[Output the debugger proctable after launch]' \
 	'(-oversubscribe --oversubscribe -nooversubscribe --nooversubscribe)'{-oversubscribe,--oversubscribe}'[Nodes are allowed to be oversubscribed, even on a managed system]' \
 	'(-path --path)'{-path,--path}'[PATH to be used to look for executables to start processes]:path:_files -/' \
