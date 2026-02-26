@@ -32,7 +32,61 @@
 #include "btl_self_frag.h"
 #include "opal/class/opal_bitmap.h"
 #include "opal/datatype/opal_convertor.h"
+#include "opal/mca/accelerator/accelerator.h"
+#include "opal/mca/accelerator/base/base.h"
 #include "opal/util/proc.h"
+
+/**
+ * Accelerator-aware memory copy. Checks whether src and/or dst reside
+ * in accelerator memory and dispatches to opal_accelerator.mem_copy()
+ * accordingly. Falls back to a regular memcpy() when both buffers are in
+ * host memory.
+ *
+ * @param dst (IN) Destination buffer (host or device memory)
+ * @param src (IN) Source buffer (host or device memory)
+ * @param size (IN) Number of bytes to copy
+ * @return     OPAL_SUCCESS or error status on failure.
+ */
+static int mca_btl_self_memcpy(void *dst, const void *src, size_t size)
+{
+    int dst_dev = MCA_ACCELERATOR_NO_DEVICE_ID;
+    int src_dev = MCA_ACCELERATOR_NO_DEVICE_ID;
+    int dst_type, src_type;
+    int copy_type = MCA_ACCELERATOR_TRANSFER_DTOD;
+    uint64_t dst_flags, src_flags;
+    int rc;
+
+    if (NULL == opal_accelerator.check_addr) {
+        memcpy(dst, src, size);
+        return OPAL_SUCCESS;
+    }
+
+    dst_type = opal_accelerator.check_addr(dst, &dst_dev, &dst_flags);
+    src_type = opal_accelerator.check_addr(src, &src_dev, &src_flags);
+
+    if (dst_type < 0 || src_type < 0) {
+        opal_output(0, "mca_btl_self_memcpy: check_addr failed "
+                    "(dst_type=%d, src_type=%d)", dst_type, src_type);
+        return OPAL_ERROR;
+    }
+
+    if (0 == dst_type && 0 == src_type) {
+        memcpy(dst, src, size);
+        return OPAL_SUCCESS;
+    } else if (dst_type == 0 && src_type > 0) {
+        copy_type = MCA_ACCELERATOR_TRANSFER_DTOH;
+        dst_dev = MCA_ACCELERATOR_NO_DEVICE_ID;
+    } else if (dst_type > 0 && src_type == 0) {
+        copy_type = MCA_ACCELERATOR_TRANSFER_HTOD;
+        src_dev = MCA_ACCELERATOR_NO_DEVICE_ID;
+    }
+
+    rc = opal_accelerator.mem_copy(dst_dev, src_dev, dst, src, size, copy_type);
+    if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
+        opal_output(0, "mca_btl_self_memcpy: accelerator mem_copy failed (rc=%d)", rc);
+    }
+    return rc;
+}
 
 /**
  * PML->BTL notification of change in the process list.
@@ -268,7 +322,10 @@ static int mca_btl_self_put(mca_btl_base_module_t *btl, struct mca_btl_base_endp
                             int flags, int order, mca_btl_base_rdma_completion_fn_t cbfunc,
                             void *cbcontext, void *cbdata)
 {
-    memcpy((void *) (intptr_t) remote_address, local_address, size);
+    int rc = mca_btl_self_memcpy((void *) (intptr_t) remote_address, local_address, size);
+    if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
+        return rc;
+    }
 
     cbfunc(btl, endpoint, local_address, NULL, cbcontext, cbdata, OPAL_SUCCESS);
 
@@ -282,7 +339,10 @@ static int mca_btl_self_get(mca_btl_base_module_t *btl, struct mca_btl_base_endp
                             int flags, int order, mca_btl_base_rdma_completion_fn_t cbfunc,
                             void *cbcontext, void *cbdata)
 {
-    memcpy(local_address, (void *) (intptr_t) remote_address, size);
+    int rc = mca_btl_self_memcpy(local_address, (void *) (intptr_t) remote_address, size);
+    if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
+        return rc;
+    }
 
     cbfunc(btl, endpoint, local_address, NULL, cbcontext, cbdata, OPAL_SUCCESS);
 
