@@ -21,7 +21,7 @@ ompi_mtl_ofi_reg_mem(void *reg_data, void *base, size_t size,
     struct iovec iov = {0};
     ompi_mtl_ofi_reg_t *mtl_reg = (ompi_mtl_ofi_reg_t *)reg;
     int dev_id;
-    uint64_t flags;
+    uint64_t flags, mr_flags = 0;
 
     iov.iov_base = base;
     iov.iov_len = size;
@@ -41,7 +41,7 @@ ompi_mtl_ofi_reg_mem(void *reg_data, void *base, size_t size,
                 attr.iface = FI_HMEM_CUDA;
                 opal_accelerator.get_device(&attr.device.cuda);
 #if OPAL_OFI_HAVE_FI_HMEM_ROCR
-	    } else if (0 == strcmp(opal_accelerator_base_selected_component.base_version.mca_component_name, "rocm")) {
+            } else if (0 == strcmp(opal_accelerator_base_selected_component.base_version.mca_component_name, "rocm")) {
                 attr.iface = FI_HMEM_ROCR;
                 opal_accelerator.get_device(&attr.device.cuda);
 #endif
@@ -53,11 +53,16 @@ ompi_mtl_ofi_reg_mem(void *reg_data, void *base, size_t size,
             } else {
                 return OPAL_ERROR;
             }
+#if OPAL_OFI_HAVE_FI_HMEM_DEVICE_ONLY
+            mr_flags = flags & MCA_ACCELERATOR_FLAGS_UNIFIED_MEMORY ? 0 :
+                        FI_HMEM_DEVICE_ONLY;
+#endif
         }
     }
+
 #endif
 
-    ret = fi_mr_regattr(ompi_mtl_ofi.domain, &attr, 0, &mtl_reg->ofi_mr);
+    ret = fi_mr_regattr(ompi_mtl_ofi.domain, &attr, mr_flags, &mtl_reg->ofi_mr);
     if (0 != ret) {
         opal_show_help("help-mtl-ofi.txt", "Buffer Memory Registration Failed", true,
                        opal_accelerator_base_selected_component.base_version.mca_component_name,
