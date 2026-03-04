@@ -247,7 +247,7 @@ typedef int (*ompi_osc_base_module_get_notify_fn_t)(void *origin_addr,
 
 typedef int (*ompi_osc_base_module_win_get_notify_value_fn_t)(struct ompi_win_t *win,
                                                                int notify,
-                                                               MPI_Count *value);
+                                                               OMPI_MPI_COUNT_TYPE *value);
 
 typedef int (*ompi_osc_base_module_accumulate_fn_t)(const void *origin_addr,
                                                    size_t origin_count,

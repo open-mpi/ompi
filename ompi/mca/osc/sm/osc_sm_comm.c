@@ -35,7 +35,7 @@ static inline uint64_t *osc_sm_target_notify_base(ompi_osc_sm_module_t *module, 
 int
 ompi_osc_sm_win_get_notify_value(struct ompi_win_t *win,
                                  int notify,
-                                 MPI_Count *value)
+                                 OMPI_MPI_COUNT_TYPE *value)
 {
     ompi_osc_sm_module_t *module = (ompi_osc_sm_module_t *) win->w_osc_module;
     int rank = ompi_comm_rank(module->comm);
@@ -45,7 +45,7 @@ ompi_osc_sm_win_get_notify_value(struct ompi_win_t *win,
     }
 
     opal_atomic_rmb();
-    *value = (MPI_Count) osc_sm_target_notify_base(module, rank)[notify];
+    *value = (OMPI_MPI_COUNT_TYPE) osc_sm_target_notify_base(module, rank)[notify];
 
     return OMPI_SUCCESS;
 }
