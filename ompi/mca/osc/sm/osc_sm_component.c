@@ -83,6 +83,7 @@ ompi_osc_sm_module_t ompi_osc_sm_module_template = {
         .osc_get = ompi_osc_sm_get,
         .osc_get_notify = ompi_osc_sm_get_notify,
         .osc_win_get_notify_value = ompi_osc_sm_win_get_notify_value,
+        .osc_win_set_notify_value = ompi_osc_sm_win_set_notify_value,
         .osc_accumulate = ompi_osc_sm_accumulate,
         .osc_compare_and_swap = ompi_osc_sm_compare_and_swap,
         .osc_fetch_and_op = ompi_osc_sm_fetch_and_op,
