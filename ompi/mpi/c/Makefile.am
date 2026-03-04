@@ -486,6 +486,7 @@ prototype_sources = \
 	win_get_group.c.in \
 	win_get_info.c.in \
 	win_get_name.c.in \
+	win_get_notify_value.c.in \
 	win_lock_all.c.in \
 	win_lock.c.in \
 	win_post.c.in \
@@ -956,6 +957,7 @@ interface_profile_sources = \
 	win_get_group_generated.c \
 	win_get_info_generated.c \
 	win_get_name_generated.c \
+	win_get_notify_value_generated.c \
 	win_lock_all_generated.c \
 	win_lock_generated.c \
 	win_post_generated.c \

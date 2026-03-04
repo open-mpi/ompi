@@ -149,6 +149,10 @@ int ompi_osc_sm_get_notify(void *origin_addr,
                           struct ompi_datatype_t *target_dt,
                           int notify,
                           struct ompi_win_t *win);
+
+int ompi_osc_sm_win_get_notify_value(struct ompi_win_t *win,
+                                     int notify,
+                                     MPI_Count *value);
  
 int ompi_osc_sm_accumulate(const void *origin_addr,
                                  size_t origin_count,

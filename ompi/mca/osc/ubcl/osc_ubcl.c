@@ -80,14 +80,19 @@ mca_osc_ubcl_module_t mca_osc_ubcl_module_template = {
      win_free,
 
      ompi_osc_ubcl_put,
+     NULL,
      ompi_osc_ubcl_get,
+     NULL,
+     NULL,
      ompi_osc_ubcl_accumulate,
      ompi_osc_ubcl_compare_and_swap,
      ompi_osc_ubcl_fetch_and_op,
      ompi_osc_ubcl_get_accumulate,
 
      ompi_osc_ubcl_rput,
+     NULL,
      ompi_osc_ubcl_rget,
+     NULL,
      ompi_osc_ubcl_raccumulate,
      ompi_osc_ubcl_rget_accumulate,
 

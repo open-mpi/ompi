@@ -17,6 +17,7 @@
 #include "ompi/mca/osc/osc.h"
 #include "ompi/mca/osc/base/base.h"
 #include "ompi/mca/osc/base/osc_base_obj_convert.h"
+#include "ompi/communicator/communicator.h"
 
 #include "osc_sm.h"
 
@@ -29,6 +30,24 @@ static inline uint64_t *osc_sm_target_notify_base(ompi_osc_sm_module_t *module, 
 
     return (uint64_t *) ((char *) module->segment_base +
                          module->node_states[target].notify_counter_offset);
+}
+
+int
+ompi_osc_sm_win_get_notify_value(struct ompi_win_t *win,
+                                 int notify,
+                                 MPI_Count *value)
+{
+    ompi_osc_sm_module_t *module = (ompi_osc_sm_module_t *) win->w_osc_module;
+    int rank = ompi_comm_rank(module->comm);
+
+    if (notify < 0 || (uint32_t) notify >= module->node_states[rank].notify_counter_count) {
+        return OMPI_ERR_BAD_PARAM;
+    }
+
+    opal_atomic_rmb();
+    *value = (MPI_Count) osc_sm_target_notify_base(module, rank)[notify];
+
+    return OMPI_SUCCESS;
 }
 
 int
