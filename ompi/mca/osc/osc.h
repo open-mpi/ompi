@@ -253,6 +253,10 @@ typedef int (*ompi_osc_base_module_win_set_notify_value_fn_t)(struct ompi_win_t 
                                                                int notify,
                                                                OMPI_MPI_COUNT_TYPE value);
 
+typedef int (*ompi_osc_base_module_win_reset_notify_value_fn_t)(struct ompi_win_t *win,
+                                                                int notify,
+                                                                OMPI_MPI_COUNT_TYPE *value);
+
 typedef int (*ompi_osc_base_module_accumulate_fn_t)(const void *origin_addr,
                                                    size_t origin_count,
                                                    struct ompi_datatype_t *origin_dt,
@@ -431,6 +435,7 @@ struct ompi_osc_base_module_4_0_0_t {
     ompi_osc_base_module_get_notify_fn_t osc_get_notify;
     ompi_osc_base_module_win_get_notify_value_fn_t osc_win_get_notify_value;
     ompi_osc_base_module_win_set_notify_value_fn_t osc_win_set_notify_value;
+    ompi_osc_base_module_win_reset_notify_value_fn_t osc_win_reset_notify_value;
     ompi_osc_base_module_accumulate_fn_t osc_accumulate;
     ompi_osc_base_module_compare_and_swap_fn_t osc_compare_and_swap;
     ompi_osc_base_module_fetch_and_op_fn_t osc_fetch_and_op;

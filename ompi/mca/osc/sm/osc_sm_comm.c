@@ -69,6 +69,25 @@ ompi_osc_sm_win_set_notify_value(struct ompi_win_t *win,
 }
 
 int
+ompi_osc_sm_win_reset_notify_value(struct ompi_win_t *win,
+                                   int notify,
+                                   OMPI_MPI_COUNT_TYPE *value)
+{
+    ompi_osc_sm_module_t *module = (ompi_osc_sm_module_t *) win->w_osc_module;
+    int rank = ompi_comm_rank(module->comm);
+
+    if (notify < 0 || (uint32_t) notify >= module->node_states[rank].notify_counter_count) {
+        return OMPI_ERR_BAD_PARAM;
+    }
+
+    /* Atomically swap the counter to 0 and return the previous value */
+    *value = (OMPI_MPI_COUNT_TYPE) opal_atomic_swap_64(
+                 &osc_sm_target_notify_base(module, rank)[notify], 0);
+
+    return OMPI_SUCCESS;
+}
+
+int
 ompi_osc_sm_rput(const void *origin_addr,
                  size_t origin_count,
                  struct ompi_datatype_t *origin_dt,
