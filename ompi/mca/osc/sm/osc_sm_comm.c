@@ -44,8 +44,8 @@ ompi_osc_sm_win_get_notify_value(struct ompi_win_t *win,
         return OMPI_ERR_BAD_PARAM;
     }
 
-    opal_atomic_rmb();
     *value = (OMPI_MPI_COUNT_TYPE) osc_sm_target_notify_base(module, rank)[notify];
+    opal_atomic_rmb();
 
     return OMPI_SUCCESS;
 }
@@ -62,8 +62,8 @@ ompi_osc_sm_win_set_notify_value(struct ompi_win_t *win,
         return OMPI_ERR_BAD_PARAM;
     }
 
-    opal_atomic_wmb();
     osc_sm_target_notify_base(module, rank)[notify] = (uint64_t) value;
+    opal_atomic_wmb();
 
     return OMPI_SUCCESS;
 }
