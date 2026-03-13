@@ -430,21 +430,14 @@ struct ompi_osc_base_module_4_0_0_t {
     ompi_osc_base_module_free_fn_t osc_free;
 
     ompi_osc_base_module_put_fn_t osc_put;
-    ompi_osc_base_module_put_notify_fn_t osc_put_notify;
     ompi_osc_base_module_get_fn_t osc_get;
-    ompi_osc_base_module_get_notify_fn_t osc_get_notify;
-    ompi_osc_base_module_win_get_notify_value_fn_t osc_win_get_notify_value;
-    ompi_osc_base_module_win_set_notify_value_fn_t osc_win_set_notify_value;
-    ompi_osc_base_module_win_reset_notify_value_fn_t osc_win_reset_notify_value;
     ompi_osc_base_module_accumulate_fn_t osc_accumulate;
     ompi_osc_base_module_compare_and_swap_fn_t osc_compare_and_swap;
     ompi_osc_base_module_fetch_and_op_fn_t osc_fetch_and_op;
     ompi_osc_base_module_get_accumulate_fn_t osc_get_accumulate;
 
     ompi_osc_base_module_rput_fn_t osc_rput;
-    ompi_osc_base_module_rput_notify_fn_t osc_rput_notify;
     ompi_osc_base_module_rget_fn_t osc_rget;
-    ompi_osc_base_module_rget_notify_fn_t osc_rget_notify;
     ompi_osc_base_module_raccumulate_fn_t osc_raccumulate;
     ompi_osc_base_module_rget_accumulate_fn_t osc_rget_accumulate;
 
@@ -466,6 +459,13 @@ struct ompi_osc_base_module_4_0_0_t {
     ompi_osc_base_module_flush_all_fn_t osc_flush_all;
     ompi_osc_base_module_flush_local_fn_t osc_flush_local;
     ompi_osc_base_module_flush_local_all_fn_t osc_flush_local_all;
+    ompi_osc_base_module_put_notify_fn_t osc_put_notify;
+    ompi_osc_base_module_get_notify_fn_t osc_get_notify;
+    ompi_osc_base_module_win_get_notify_value_fn_t osc_win_get_notify_value;
+    ompi_osc_base_module_win_set_notify_value_fn_t osc_win_set_notify_value;
+    ompi_osc_base_module_win_reset_notify_value_fn_t osc_win_reset_notify_value;
+    ompi_osc_base_module_rput_notify_fn_t osc_rput_notify;
+    ompi_osc_base_module_rget_notify_fn_t osc_rget_notify;
 };
 typedef struct ompi_osc_base_module_4_0_0_t ompi_osc_base_module_4_0_0_t;
 typedef ompi_osc_base_module_4_0_0_t ompi_osc_base_module_t;

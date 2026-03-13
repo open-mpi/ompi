@@ -41,7 +41,7 @@ ompi_osc_sm_win_get_notify_value(struct ompi_win_t *win,
     int rank = ompi_comm_rank(module->comm);
 
     if (notify < 0 || (uint32_t) notify >= module->node_states[rank].notify_counter_count) {
-        return OMPI_ERR_BAD_PARAM;
+        return MPI_ERR_NOTIFY_IDX;
     }
 
     *value = (OMPI_MPI_COUNT_TYPE) osc_sm_target_notify_base(module, rank)[notify];
@@ -59,7 +59,7 @@ ompi_osc_sm_win_set_notify_value(struct ompi_win_t *win,
     int rank = ompi_comm_rank(module->comm);
 
     if (notify < 0 || (uint32_t) notify >= module->node_states[rank].notify_counter_count) {
-        return OMPI_ERR_BAD_PARAM;
+        return MPI_ERR_NOTIFY_IDX;
     }
 
     osc_sm_target_notify_base(module, rank)[notify] = (uint64_t) value;
@@ -77,7 +77,7 @@ ompi_osc_sm_win_reset_notify_value(struct ompi_win_t *win,
     int rank = ompi_comm_rank(module->comm);
 
     if (notify < 0 || (uint32_t) notify >= module->node_states[rank].notify_counter_count) {
-        return OMPI_ERR_BAD_PARAM;
+        return MPI_ERR_NOTIFY_IDX;
     }
 
     /* Atomically swap the counter to 0 and return the previous value */
@@ -165,7 +165,7 @@ ompi_osc_sm_rput_notify(const void *origin_addr,
     *ompi_req = &ompi_request_empty;
 
     if (notify < 0 || (uint32_t) notify >= module->node_states[target].notify_counter_count) {
-        return OMPI_ERR_BAD_PARAM;
+        return MPI_ERR_NOTIFY_IDX;
     }
 
     opal_atomic_wmb();
@@ -252,7 +252,7 @@ ompi_osc_sm_rget_notify(void *origin_addr,
     *ompi_req = &ompi_request_empty;
 
     if (notify < 0 || (uint32_t) notify >= module->node_states[target].notify_counter_count) {
-        return OMPI_ERR_BAD_PARAM;
+        return MPI_ERR_NOTIFY_IDX;
     }
 
     opal_atomic_rmb();
@@ -430,7 +430,7 @@ ompi_osc_sm_put_notify(const void *origin_addr,
     }
 
     if (notify < 0 || (uint32_t) notify >= module->node_states[target].notify_counter_count) {
-        return OMPI_ERR_BAD_PARAM;
+        return MPI_ERR_NOTIFY_IDX;
     }
 
     opal_atomic_wmb();
