@@ -249,10 +249,6 @@ typedef int (*ompi_osc_base_module_win_get_notify_value_fn_t)(struct ompi_win_t 
                                                                int notify,
                                                                OMPI_MPI_COUNT_TYPE *value);
                                                                
-typedef int (*ompi_osc_base_module_win_set_notify_value_fn_t)(struct ompi_win_t *win,
-                                                               int notify,
-                                                               OMPI_MPI_COUNT_TYPE value);
-
 typedef int (*ompi_osc_base_module_win_reset_notify_value_fn_t)(struct ompi_win_t *win,
                                                                 int notify,
                                                                 OMPI_MPI_COUNT_TYPE *value);
@@ -462,7 +458,6 @@ struct ompi_osc_base_module_4_0_0_t {
     ompi_osc_base_module_put_notify_fn_t osc_put_notify;
     ompi_osc_base_module_get_notify_fn_t osc_get_notify;
     ompi_osc_base_module_win_get_notify_value_fn_t osc_win_get_notify_value;
-    ompi_osc_base_module_win_set_notify_value_fn_t osc_win_set_notify_value;
     ompi_osc_base_module_win_reset_notify_value_fn_t osc_win_reset_notify_value;
     ompi_osc_base_module_rput_notify_fn_t osc_rput_notify;
     ompi_osc_base_module_rget_notify_fn_t osc_rget_notify;

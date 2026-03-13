@@ -154,10 +154,6 @@ int ompi_osc_sm_win_get_notify_value(struct ompi_win_t *win,
                                      int notify,
                                      OMPI_MPI_COUNT_TYPE *value);
                                      
-int ompi_osc_sm_win_set_notify_value(struct ompi_win_t *win,
-                                     int notify,
-                                     OMPI_MPI_COUNT_TYPE value);
-
 int ompi_osc_sm_win_reset_notify_value(struct ompi_win_t *win,
                                        int notify,
                                        OMPI_MPI_COUNT_TYPE *value);

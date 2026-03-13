@@ -487,7 +487,6 @@ prototype_sources = \
 	win_get_info.c.in \
 	win_get_name.c.in \
 	win_get_notify_value.c.in \
-	win_set_notify_value.c.in \
 	win_reset_notify_value.c.in \
 	win_lock_all.c.in \
 	win_lock.c.in \
@@ -960,7 +959,6 @@ interface_profile_sources = \
 	win_get_info_generated.c \
 	win_get_name_generated.c \
 	win_get_notify_value_generated.c \
-	win_set_notify_value_generated.c \
 	win_reset_notify_value_generated.c \
 	win_lock_all_generated.c \
 	win_lock_generated.c \
