@@ -290,6 +290,14 @@ static int accelerator_cuda_check_addr(const void *addr, int *dev_id, uint64_t *
         }
     }
 
+    if (CU_MEMORYTYPE_DEVICE == mem_type && NULL != mem_ctx) {
+        result = cuCtxGetCurrent(&ctx);
+        if (OPAL_UNLIKELY(NULL == ctx)) {
+            cuCtxSetCurrent(mem_ctx);
+        }
+        return 1;
+    }
+
     /* cuPointerGetAttributes returns success with mem_type==0 for pointers
      * CUDA recognizes but cannot classify (plain host allocations when CUDA
      * is initialized).  Return early before the more expensive VMM and
