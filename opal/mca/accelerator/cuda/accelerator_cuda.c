@@ -304,12 +304,6 @@ static int accelerator_cuda_get_primary_context(CUdevice dev_id, CUcontext *pctx
 static int accelerator_cuda_check_addr(const void *addr, int *dev_id, uint64_t *flags)
 {
     CUresult result;
-    int is_vmm = 0;
-    int is_mpool_ptr = 0;
-    int vmm_dev_id = MCA_ACCELERATOR_NO_DEVICE_ID;
-    int mpool_dev_id = MCA_ACCELERATOR_NO_DEVICE_ID;
-    CUmemorytype vmm_mem_type = 0;
-    CUmemorytype mpool_mem_type = 0;
     CUmemorytype mem_type = 0;
     CUdeviceptr dbuf = (CUdeviceptr) addr;
     CUcontext ctx = NULL, mem_ctx = NULL;
@@ -320,9 +314,6 @@ static int accelerator_cuda_check_addr(const void *addr, int *dev_id, uint64_t *
     }
 
     *flags = 0;
-
-    is_vmm = accelerator_cuda_check_vmm(dbuf, &vmm_mem_type, &vmm_dev_id);
-    is_mpool_ptr = accelerator_cuda_check_mpool(dbuf, &mpool_mem_type, &mpool_dev_id);
 
 #if OPAL_CUDA_GET_ATTRIBUTES
     uint32_t is_managed = 0;
@@ -352,7 +343,25 @@ static int accelerator_cuda_check_addr(const void *addr, int *dev_id, uint64_t *
         } else {
             return OPAL_ERROR;
         }
-    } else if (CU_MEMORYTYPE_HOST == mem_type) {
+    }
+
+    if (CU_MEMORYTYPE_DEVICE == mem_type && NULL != mem_ctx) {
+        *dev_id = accelerator_cuda_get_device_id(mem_ctx);
+        opal_accelerator_cuda_delayed_init();
+        return 1;
+    }
+
+    int is_vmm = 0;
+    int is_mpool_ptr = 0;
+    int vmm_dev_id = MCA_ACCELERATOR_NO_DEVICE_ID;
+    int mpool_dev_id = MCA_ACCELERATOR_NO_DEVICE_ID;
+    CUmemorytype vmm_mem_type = 0;
+    CUmemorytype mpool_mem_type = 0;
+
+    is_vmm = accelerator_cuda_check_vmm(dbuf, &vmm_mem_type, &vmm_dev_id);
+    is_mpool_ptr = accelerator_cuda_check_mpool(dbuf, &mpool_mem_type, &mpool_dev_id);
+
+    if (CU_MEMORYTYPE_HOST == mem_type) {
         if (is_vmm && (vmm_mem_type == CU_MEMORYTYPE_DEVICE)) {
             mem_type = CU_MEMORYTYPE_DEVICE;
             *dev_id = vmm_dev_id;
@@ -377,6 +386,16 @@ static int accelerator_cuda_check_addr(const void *addr, int *dev_id, uint64_t *
         }
     }
 #else /* OPAL_CUDA_GET_ATTRIBUTES */
+    int is_vmm = 0;
+    int is_mpool_ptr = 0;
+    int vmm_dev_id = MCA_ACCELERATOR_NO_DEVICE_ID;
+    int mpool_dev_id = MCA_ACCELERATOR_NO_DEVICE_ID;
+    CUmemorytype vmm_mem_type = 0;
+    CUmemorytype mpool_mem_type = 0;
+
+    is_vmm = accelerator_cuda_check_vmm(dbuf, &vmm_mem_type, &vmm_dev_id);
+    is_mpool_ptr = accelerator_cuda_check_mpool(dbuf, &mpool_mem_type, &mpool_dev_id);
+
     result = cuPointerGetAttribute(&mem_type, CU_POINTER_ATTRIBUTE_MEMORY_TYPE, dbuf);
     if (CUDA_SUCCESS != result) {
         /* If cuda is not initialized, assume it is a host buffer. */
