@@ -80,57 +80,19 @@ static int _setup_job_session_dir(char **sdir);
 #define OPAL_PRINT_NAME_ARGS_MAX_SIZE   50
 #define OPAL_PRINT_NAME_ARG_NUM_BUFS    16
 
-static bool fns_init=false;
-static opal_tsd_key_t print_args_tsd_key;
-static char* opal_print_args_null = "NULL";
 typedef struct {
-    char *buffers[OPAL_PRINT_NAME_ARG_NUM_BUFS];
+    char buffers[OPAL_PRINT_NAME_ARG_NUM_BUFS][OPAL_PRINT_NAME_ARGS_MAX_SIZE + 1];
     int cntr;
 } opal_print_args_buffers_t;
-
-static void
-buffer_cleanup(void *value)
-{
-    int i;
-    opal_print_args_buffers_t *ptr;
-
-    if (NULL != value) {
-        ptr = (opal_print_args_buffers_t*)value;
-        for (i=0; i < OPAL_PRINT_NAME_ARG_NUM_BUFS; i++) {
-            free(ptr->buffers[i]);
-        }
-        free (ptr);
-    }
-}
 
 static opal_print_args_buffers_t*
 get_print_name_buffer(void)
 {
-    opal_print_args_buffers_t *ptr;
-    int ret, i;
+    static __thread opal_print_args_buffers_t name_buffer = {
+        .cntr = 0
+    };
 
-    if (!fns_init) {
-        /* setup the print_args function */
-        if (OPAL_SUCCESS != (ret = opal_tsd_key_create(&print_args_tsd_key, buffer_cleanup))) {
-            OPAL_ERROR_LOG(ret);
-            return NULL;
-        }
-        fns_init = true;
-    }
-
-    ret = opal_tsd_getspecific(print_args_tsd_key, (void**)&ptr);
-    if (OPAL_SUCCESS != ret) return NULL;
-
-    if (NULL == ptr) {
-        ptr = (opal_print_args_buffers_t*)malloc(sizeof(opal_print_args_buffers_t));
-        for (i=0; i < OPAL_PRINT_NAME_ARG_NUM_BUFS; i++) {
-            ptr->buffers[i] = (char *) malloc((OPAL_PRINT_NAME_ARGS_MAX_SIZE+1) * sizeof(char));
-        }
-        ptr->cntr = 0;
-        ret = opal_tsd_setspecific(print_args_tsd_key, (void*)ptr);
-    }
-
-    return (opal_print_args_buffers_t*) ptr;
+    return &name_buffer;
 }
 
 static char* ompi_pmix_print_jobids(const opal_jobid_t job)
@@ -139,11 +101,6 @@ static char* ompi_pmix_print_jobids(const opal_jobid_t job)
     unsigned long tmp1, tmp2;
 
     ptr = get_print_name_buffer();
-
-    if (NULL == ptr) {
-        OPAL_ERROR_LOG(OPAL_ERR_OUT_OF_RESOURCE);
-        return opal_print_args_null;
-    }
 
     /* cycle around the ring */
     if (OPAL_PRINT_NAME_ARG_NUM_BUFS == ptr->cntr) {
@@ -169,11 +126,6 @@ static char* ompi_pmix_print_vpids(const opal_vpid_t vpid)
     opal_print_args_buffers_t *ptr;
 
     ptr = get_print_name_buffer();
-
-    if (NULL == ptr) {
-        OPAL_ERROR_LOG(OPAL_ERR_OUT_OF_RESOURCE);
-        return opal_print_args_null;
-    }
 
     /* cycle around the ring */
     if (OPAL_PRINT_NAME_ARG_NUM_BUFS == ptr->cntr) {
@@ -201,10 +153,6 @@ char* ompi_pmix_print_name(const ompi_process_name_t *name)
     if (NULL == name) {
         /* get the next buffer */
         ptr = get_print_name_buffer();
-        if (NULL == ptr) {
-            OPAL_ERROR_LOG(OPAL_ERR_OUT_OF_RESOURCE);
-            return opal_print_args_null;
-        }
         /* cycle around the ring */
         if (OPAL_PRINT_NAME_ARG_NUM_BUFS == ptr->cntr) {
             ptr->cntr = 0;
@@ -223,11 +171,6 @@ char* ompi_pmix_print_name(const ompi_process_name_t *name)
 
     /* get the next buffer */
     ptr = get_print_name_buffer();
-
-    if (NULL == ptr) {
-        OPAL_ERROR_LOG(OPAL_ERR_OUT_OF_RESOURCE);
-        return opal_print_args_null;
-    }
 
     /* cycle around the ring */
     if (OPAL_PRINT_NAME_ARG_NUM_BUFS == ptr->cntr) {

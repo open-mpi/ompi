@@ -60,58 +60,19 @@ OBJ_CLASS_INSTANCE(orte_namelist_t,              /* type name */
                    orte_namelist_construct,      /* constructor */
                    orte_namelist_destructor);    /* destructor */
 
-static bool fns_init=false;
-
-static opal_tsd_key_t print_args_tsd_key;
-char* orte_print_args_null = "NULL";
 typedef struct {
-    char *buffers[ORTE_PRINT_NAME_ARG_NUM_BUFS];
+    char buffers[ORTE_PRINT_NAME_ARG_NUM_BUFS][ORTE_PRINT_NAME_ARGS_MAX_SIZE + 1];
     int cntr;
 } orte_print_args_buffers_t;
-
-static void
-buffer_cleanup(void *value)
-{
-    int i;
-    orte_print_args_buffers_t *ptr;
-
-    if (NULL != value) {
-        ptr = (orte_print_args_buffers_t*)value;
-        for (i=0; i < ORTE_PRINT_NAME_ARG_NUM_BUFS; i++) {
-            free(ptr->buffers[i]);
-        }
-        free (ptr);
-    }
-}
 
 static orte_print_args_buffers_t*
 get_print_name_buffer(void)
 {
-    orte_print_args_buffers_t *ptr;
-    int ret, i;
+    static __thread orte_print_args_buffers_t name_buffer = {
+        .cntr = 0
+    };
 
-    if (!fns_init) {
-        /* setup the print_args function */
-        if (ORTE_SUCCESS != (ret = opal_tsd_key_create(&print_args_tsd_key, buffer_cleanup))) {
-            ORTE_ERROR_LOG(ret);
-            return NULL;
-        }
-        fns_init = true;
-    }
-
-    ret = opal_tsd_getspecific(print_args_tsd_key, (void**)&ptr);
-    if (OPAL_SUCCESS != ret) return NULL;
-
-    if (NULL == ptr) {
-        ptr = (orte_print_args_buffers_t*)malloc(sizeof(orte_print_args_buffers_t));
-        for (i=0; i < ORTE_PRINT_NAME_ARG_NUM_BUFS; i++) {
-            ptr->buffers[i] = (char *) malloc((ORTE_PRINT_NAME_ARGS_MAX_SIZE+1) * sizeof(char));
-        }
-        ptr->cntr = 0;
-        ret = opal_tsd_setspecific(print_args_tsd_key, (void*)ptr);
-    }
-
-    return (orte_print_args_buffers_t*) ptr;
+    return &name_buffer;
 }
 
 char* orte_util_print_name_args(const orte_process_name_t *name)
@@ -123,10 +84,6 @@ char* orte_util_print_name_args(const orte_process_name_t *name)
     if (NULL == name) {
         /* get the next buffer */
         ptr = get_print_name_buffer();
-        if (NULL == ptr) {
-            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-            return orte_print_args_null;
-        }
         /* cycle around the ring */
         if (ORTE_PRINT_NAME_ARG_NUM_BUFS == ptr->cntr) {
             ptr->cntr = 0;
@@ -146,11 +103,6 @@ char* orte_util_print_name_args(const orte_process_name_t *name)
     /* get the next buffer */
     ptr = get_print_name_buffer();
 
-    if (NULL == ptr) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return orte_print_args_null;
-    }
-
     /* cycle around the ring */
     if (ORTE_PRINT_NAME_ARG_NUM_BUFS == ptr->cntr) {
         ptr->cntr = 0;
@@ -169,11 +121,6 @@ char* orte_util_print_jobids(const orte_jobid_t job)
     unsigned long tmp1, tmp2;
 
     ptr = get_print_name_buffer();
-
-    if (NULL == ptr) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return orte_print_args_null;
-    }
 
     /* cycle around the ring */
     if (ORTE_PRINT_NAME_ARG_NUM_BUFS == ptr->cntr) {
@@ -201,11 +148,6 @@ char* orte_util_print_job_family(const orte_jobid_t job)
 
     ptr = get_print_name_buffer();
 
-    if (NULL == ptr) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return orte_print_args_null;
-    }
-
     /* cycle around the ring */
     if (ORTE_PRINT_NAME_ARG_NUM_BUFS == ptr->cntr) {
         ptr->cntr = 0;
@@ -231,11 +173,6 @@ char* orte_util_print_local_jobid(const orte_jobid_t job)
 
     ptr = get_print_name_buffer();
 
-    if (NULL == ptr) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return orte_print_args_null;
-    }
-
     /* cycle around the ring */
     if (ORTE_PRINT_NAME_ARG_NUM_BUFS == ptr->cntr) {
         ptr->cntr = 0;
@@ -259,11 +196,6 @@ char* orte_util_print_vpids(const orte_vpid_t vpid)
     orte_print_args_buffers_t *ptr;
 
     ptr = get_print_name_buffer();
-
-    if (NULL == ptr) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return orte_print_args_null;
-    }
 
     /* cycle around the ring */
     if (ORTE_PRINT_NAME_ARG_NUM_BUFS == ptr->cntr) {
