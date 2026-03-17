@@ -143,6 +143,7 @@ OBJ_CLASS_DECLARATION(mca_coll_ucc_module_t);
 
 int mca_coll_ucc_init_query(bool enable_progress_threads, bool enable_mpi_threads);
 mca_coll_base_module_t *mca_coll_ucc_comm_query(struct ompi_communicator_t *comm, int *priority);
+void mca_coll_ucc_finalize_ctx(void);
 
 int mca_coll_ucc_allreduce(const void *sbuf, void *rbuf, int count,
                            struct ompi_datatype_t *dtype, struct ompi_op_t *op,
