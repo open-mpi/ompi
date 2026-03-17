@@ -16,6 +16,8 @@ int main(int argc, char* argv[])
         exit(1);
     }
 
+    sleep(1);
+
     if (ORTE_SUCCESS != orte_finalize()) {
         fprintf(stderr, "Failed orte_finalize\n");
         exit(1);
