@@ -15,7 +15,6 @@
 #include "opal/util/argv.h"
 
 static int mca_coll_ucc_open(void);
-static int mca_coll_ucc_close(void);
 static int mca_coll_ucc_register(void);
 
 int mca_coll_ucc_output = -1;
@@ -34,7 +33,12 @@ mca_coll_ucc_component_t mca_coll_ucc_component = {
 
             /* Component open and close functions */
             .mca_open_component            = mca_coll_ucc_open,
-            .mca_close_component           = mca_coll_ucc_close,
+            /* No close needed: UCC context/lib teardown is driven by the
+             * MPI_COMM_WORLD coll module destructor (mca_coll_ucc_module_destruct),
+             * which fires during ompi_comm_destruct() while MPI_COMM_WORLD is still
+             * fully functional for the UCC OOB allgather. By the time component
+             * close would run, teardown is already complete. */
+            .mca_close_component           = NULL,
             .mca_register_component_params = mca_coll_ucc_register,
             .mca_query_component           = NULL,
         },
@@ -189,7 +193,3 @@ static int mca_coll_ucc_open(void)
     return OMPI_SUCCESS;
 }
 
-static int mca_coll_ucc_close(void)
-{
-    return OMPI_SUCCESS;
-}
