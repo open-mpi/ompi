@@ -320,6 +320,48 @@ static int ompi_comm_finalize (void)
     /* disconnect all dynamic communicators */
     ompi_dpm_dyn_finalize();
 
+    /* Release any user-created communicators (cid >= 3; cids 0-2 are
+     * MPI_COMM_NULL, MPI_COMM_WORLD, and MPI_COMM_SELF) not freed by the
+     * application before MPI_Finalize.  This must happen before
+     * OBJ_DESTRUCT(&ompi_mpi_comm_world) below because MCA coll components
+     * attached to these communicators may rely on MPI_COMM_WORLD being alive
+     * during their teardown (e.g. to release collective library resources that
+     * were set up with OOB support). */
+    max = ompi_comm_get_num_communicators();
+    for ( i=3; i<max; i++ ) {
+        comm = ompi_comm_lookup(i);
+        if ( NULL != comm ) {
+            /* Communicator has not been freed before finalize */
+            opal_output_verbose(10, ompi_comm_output,
+                                "ompi_comm_finalize: releasing comm %p name \"%s\" size %d cid %d refcnt %d",
+                                (void *)comm, comm->c_name, ompi_comm_size(comm),
+                                comm->c_index,
+                                ((opal_object_t *)comm)->obj_reference_count);
+            OBJ_RELEASE(comm);
+            comm = ompi_comm_lookup(i);
+            if ( NULL != comm ) {
+                /* Still here ? */
+                if ( !OMPI_COMM_IS_EXTRA_RETAIN(comm)) {
+
+                    /* For communicator that have been marked as "extra retain", we do not further
+                     * enforce to decrease the reference counter once more. These "extra retain"
+                     * communicators created e.g. by the hierarch or inter module did increase
+                     * the reference count by one more than other communicators, on order to
+                     * allow for deallocation with the parent communicator. Note, that
+                     * this only occurs if the cid of the local_comm is lower than of its
+                     * parent communicator. Read the comment in comm_activate for
+                     * a full explanation.
+                     */
+                    if ( ompi_debug_show_handle_leaks && !(OMPI_COMM_IS_FREED(comm)) ){
+                        opal_output(0,"WARNING: MPI_Comm still allocated in MPI_Finalize\n");
+                        ompi_comm_dump ( comm);
+                        OBJ_RELEASE(comm);
+                    }
+                }
+            }
+        }
+    }
+
     if (ompi_comm_intrinsic_init) {
         /* tear down MPI-3 predefined communicators (not initialized unless using MPI_Init) */
         OBJ_DESTRUCT( &ompi_mpi_comm_self );
@@ -363,37 +405,6 @@ static int ompi_comm_finalize (void)
 
     /* Shut down MPI_COMM_NULL */
     OBJ_DESTRUCT( &ompi_mpi_comm_null );
-
-    /* Check whether we have some communicators left */
-    max = ompi_comm_get_num_communicators();
-    for ( i=3; i<max; i++ ) {
-        comm = ompi_comm_lookup(i);
-        if ( NULL != comm ) {
-            /* Communicator has not been freed before finalize */
-            OBJ_RELEASE(comm);
-            comm = ompi_comm_lookup(i);
-            if ( NULL != comm ) {
-                /* Still here ? */
-                if ( !OMPI_COMM_IS_EXTRA_RETAIN(comm)) {
-
-                    /* For communicator that have been marked as "extra retain", we do not further
-                     * enforce to decrease the reference counter once more. These "extra retain"
-                     * communicators created e.g. by the hierarch or inter module did increase
-                     * the reference count by one more than other communicators, on order to
-                     * allow for deallocation with the parent communicator. Note, that
-                     * this only occurs if the cid of the local_comm is lower than of its
-                     * parent communicator. Read the comment in comm_activate for
-                     * a full explanation.
-                     */
-                    if ( ompi_debug_show_handle_leaks && !(OMPI_COMM_IS_FREED(comm)) ){
-                        opal_output(0,"WARNING: MPI_Comm still allocated in MPI_Finalize\n");
-                        ompi_comm_dump ( comm);
-                        OBJ_RELEASE(comm);
-                    }
-                }
-            }
-        }
-    }
 
     OBJ_DESTRUCT (&ompi_mpi_communicators);
     OBJ_DESTRUCT (&ompi_comm_hash);
