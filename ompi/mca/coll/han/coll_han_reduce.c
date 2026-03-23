@@ -143,17 +143,26 @@ mca_coll_han_reduce_intra(const void *sbuf,
 
     /* node leaders require a buffer to store intermediate results */
     void *tmp_rbuf = NULL;
-    void *tmp_rbuf_to_free = NULL;
+    bool is_tmp_rbuf = false;
     if (w_rank == root) {
         /* the global root already has one */
         tmp_rbuf = rbuf;
     } else if (low_rank == root_low_rank) {
         /* allocate 2 temporary segments on node leaders that are not the global root */
-        tmp_rbuf = malloc(2*extent*seg_count);
-        if (NULL == tmp_rbuf) {
-            return OMPI_ERR_OUT_OF_RESOURCE;
+        size_t needed = 2*extent*seg_count;
+        if (mca_coll_han_component.han_use_persist_buffers) {
+            if (han_module->reduce_tmp_persist_size < needed) {
+                char *p = realloc(han_module->reduce_tmp_persist, needed);
+                if (NULL == p) return OMPI_ERR_OUT_OF_RESOURCE;
+                han_module->reduce_tmp_persist = p;
+                han_module->reduce_tmp_persist_size = needed;
+            }
+            tmp_rbuf = han_module->reduce_tmp_persist;
+        } else {
+            tmp_rbuf = malloc(needed);
+            if (NULL == tmp_rbuf) return OMPI_ERR_OUT_OF_RESOURCE;
         }
-        tmp_rbuf_to_free = tmp_rbuf;
+        is_tmp_rbuf = true;
     }
 
     /* Create t0 tasks for the first segment */
@@ -163,7 +172,7 @@ mca_coll_han_reduce_intra(const void *sbuf,
     mca_coll_han_set_reduce_args(t, t0, (char *) sbuf, (char *) tmp_rbuf, seg_count, dtype,
                                  op, root_up_rank, root_low_rank, up_comm, low_comm,
                                  num_segments, 0, w_rank, count - (num_segments - 1) * seg_count,
-                                 low_rank != root_low_rank, (NULL != tmp_rbuf_to_free));
+                                 low_rank != root_low_rank, is_tmp_rbuf);
     /* Init the first task */
     init_task(t0, mca_coll_han_reduce_t0_task, (void *) t);
     issue_task(t0);
@@ -195,7 +204,9 @@ mca_coll_han_reduce_intra(const void *sbuf,
     }
 
     free(t);
-    free(tmp_rbuf_to_free);
+    if (!mca_coll_han_component.han_use_persist_buffers && is_tmp_rbuf) {
+        free(tmp_rbuf);
+    }
 
     return OMPI_SUCCESS;
 
@@ -296,7 +307,8 @@ mca_coll_han_reduce_intra_simple(const void *sbuf,
     int ret;
     int *vranks, low_rank, low_size;
     ptrdiff_t rsize, rgap = 0;
-    void * tmp_buf;
+    void * tmp_buf = NULL;
+    opal_free_list_item_t *tmp_fl_item = NULL;
 
     mca_coll_han_module_t *han_module = (mca_coll_han_module_t *)module;
 
@@ -345,11 +357,25 @@ mca_coll_han_reduce_intra_simple(const void *sbuf,
     /* Get root ranks for low and up comms */
     mca_coll_han_get_ranks(vranks, root, low_size, &root_low_rank, &root_up_rank);
 
+    /* Freelist-backed simple reduce: low_comm reduce → up_comm reduce */
     if (root_low_rank == low_rank && w_rank != root) {
         rsize = opal_datatype_span(&dtype->super, (int64_t)count, &rgap);
-        tmp_buf = malloc(rsize);
-        if (NULL == tmp_buf) {
-            return OMPI_ERROR;
+        if (mca_coll_han_component.han_use_persist_buffers) {
+            size_t frag_size = mca_coll_han_component.han_fragment_size;
+            if (frag_size > 0 && (size_t)rsize <= frag_size) {
+                fragment_item_t *fi = (fragment_item_t*)opal_free_list_get(
+                                          &han_module->fragment_freelist);
+                if (fi != NULL) {
+                    tmp_buf = (char *)fi->buffer;
+                    tmp_fl_item = (opal_free_list_item_t*)fi;
+                }
+            }
+        }
+        if (tmp_buf == NULL) {
+            tmp_buf = malloc(rsize);
+            if (NULL == tmp_buf) {
+                return OMPI_ERROR;
+            }
         }
     } else {
         /* global root rbuf is valid, local non-root do not need buffers */
@@ -364,7 +390,11 @@ mca_coll_han_reduce_intra_simple(const void *sbuf,
                 low_comm, low_comm->c_coll->coll_reduce_module);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)){
         if (root_low_rank == low_rank && w_rank != root){
-            free(tmp_buf);
+            if (tmp_fl_item != NULL) {
+                opal_free_list_return(&han_module->fragment_freelist, tmp_fl_item);
+            } else {
+                free(tmp_buf);
+            }
         }
         OPAL_OUTPUT_VERBOSE((30, mca_coll_han_component.han_output,
                              "HAN/REDUCE: low comm reduce failed. "
@@ -378,7 +408,11 @@ mca_coll_han_reduce_intra_simple(const void *sbuf,
             ret = up_comm->c_coll->coll_reduce((char *)tmp_buf, NULL,
                         count, dtype, op, root_up_rank,
                         up_comm, up_comm->c_coll->coll_reduce_module);
-            free(tmp_buf);
+            if (tmp_fl_item != NULL) {
+                opal_free_list_return(&han_module->fragment_freelist, tmp_fl_item);
+            } else {
+                free(tmp_buf);
+            }
         } else {
             /* Take advantage of any optimisation made for IN_PLACE
              * communications */
