@@ -187,6 +187,16 @@ static void mca_coll_han_module_construct(mca_coll_han_module_t * module)
     module->cached_up_comms = NULL;
     module->cached_vranks = NULL;
     module->cached_topo = NULL;
+    module->cached_gather_buf = NULL;
+    module->cached_gather_buf_size = 0;
+    module->scatter_persist = NULL;
+    module->scatter_persist_size = 0;
+    module->scatter_reorder_persist = NULL;
+    module->scatter_reorder_persist_size = 0;
+    module->gather_reorder_persist = NULL;
+    module->gather_reorder_persist_size = 0;
+    module->reduce_tmp_persist = NULL;
+    module->reduce_tmp_persist_size = 0;
     module->is_mapbycore = false;
     module->storage_initialized = false;
     for( i = 0; i < NB_TOPO_LVL; i++ ) {
@@ -247,6 +257,28 @@ mca_coll_han_module_destruct(mca_coll_han_module_t * module)
         free(module->cached_topo);
         module->cached_topo = NULL;
     }
+    if (module->cached_gather_buf != NULL) {
+        free(module->cached_gather_buf);
+        module->cached_gather_buf = NULL;
+        module->cached_gather_buf_size = 0;
+    }
+
+    free(module->scatter_persist);
+    module->scatter_persist = NULL;
+    module->scatter_persist_size = 0;
+
+    free(module->scatter_reorder_persist);
+    module->scatter_reorder_persist = NULL;
+    module->scatter_reorder_persist_size = 0;
+
+    free(module->gather_reorder_persist);
+    module->gather_reorder_persist = NULL;
+    module->gather_reorder_persist_size = 0;
+
+    free(module->reduce_tmp_persist);
+    module->reduce_tmp_persist = NULL;
+    module->reduce_tmp_persist_size = 0;
+
     for(i=0 ; i<NB_TOPO_LVL ; i++) {
         if(NULL != module->sub_comm[i]) {
             ompi_comm_free(&(module->sub_comm[i]));
