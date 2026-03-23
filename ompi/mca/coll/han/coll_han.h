@@ -43,6 +43,7 @@
 #include "ompi/mca/mca.h"
 #include "opal/util/output.h"
 #include "opal/mca/smsc/smsc.h"
+#include "opal/class/opal_free_list.h"
 #include "ompi/mca/coll/base/coll_base_functions.h"
 #include "coll_han_trigger.h"
 #include "ompi/mca/coll/han/coll_han_dynamic.h"
@@ -56,6 +57,34 @@
 
 #define COLL_HAN_LOW_MODULES 3
 #define COLL_HAN_UP_MODULES 2
+
+/**
+ * Fragment item for freelist-based buffer pool
+ * Used to provide stable buffer addresses across collective calls
+ */
+typedef struct fragment_item_s {
+    opal_free_list_item_t super;
+    void *buffer;  /* Fixed-size buffer (han_fragment_size bytes) */
+} fragment_item_t;
+OBJ_CLASS_DECLARATION(fragment_item_t);
+
+/**
+ * Large fragment item for freelist-based buffer pool.
+ * Size controlled by han_large_fragment_size MCA parameter (0 = disabled).
+ */
+typedef struct large_fragment_item_s {
+    opal_free_list_item_t super;
+    void *buffer;
+} large_fragment_item_t;
+OBJ_CLASS_DECLARATION(large_fragment_item_t);
+
+/** Source tag for tiered allocation (used by alloc/free helpers). */
+enum {
+    HAN_ALLOC_MALLOC = 0,
+    HAN_ALLOC_LARGE  = 1,
+    HAN_ALLOC_SMALL  = 2
+};
+
 
 struct mca_coll_han_bcast_args_s {
     mca_coll_task_t *cur_task;
@@ -296,6 +325,13 @@ typedef struct mca_coll_han_component_t {
     opal_free_list_t pack_buffers;
     int64_t han_packbuf_max_count;
     int64_t han_packbuf_bytes;
+
+    /* Persist-buffer optimization (0 = disabled, use malloc/free) */
+    bool han_use_persist_buffers;
+
+    /* Fragment size for buffer reuse optimization (0 = disabled) */
+    size_t han_fragment_size;
+    size_t han_large_fragment_size;
 } mca_coll_han_component_t;
 
 /*
@@ -384,8 +420,18 @@ typedef struct mca_coll_han_module_t {
      */
     int dynamic_errors;
 
+    /* Persistent bounce buffer for alltoall — grows to high-water mark
+       via realloc so the NIC rcache registration stays valid. */
+    char *alltoall_bounce;
+    size_t alltoall_bounce_size;
+
     /* Sub-communicator */
     struct ompi_communicator_t *sub_comm[NB_TOPO_LVL];
+
+    /* Fragment pool for buffer reuse (64KB items) */
+    opal_free_list_t fragment_freelist;
+    /* Large fragment pool for pipeline reorder buffers (1MB items) */
+    opal_free_list_t large_fragment_freelist;
 } mca_coll_han_module_t;
 OBJ_CLASS_DECLARATION(mca_coll_han_module_t);
 
