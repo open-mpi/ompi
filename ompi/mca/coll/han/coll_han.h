@@ -144,6 +144,9 @@ struct mca_coll_han_allreduce_args_s {
 };
 typedef struct mca_coll_han_allreduce_args_s mca_coll_han_allreduce_args_t;
 
+/* Forward declaration needed by scatter and gather arg structs */
+typedef struct mca_coll_han_module_t mca_coll_han_module_t;
+
 struct mca_coll_han_scatter_args_s {
     mca_coll_task_t *cur_task;
     ompi_communicator_t *up_comm;
@@ -203,6 +206,8 @@ struct mca_coll_han_allgather_s {
     bool noop;
     bool is_mapbycore;
     int *topo;
+    mca_coll_han_module_t *han_module;
+    opal_free_list_item_t *inter_frag;  /* Fragment for inter-node buffer */
 };
 typedef struct mca_coll_han_allgather_s mca_coll_han_allgather_t;
 
