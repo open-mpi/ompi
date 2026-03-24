@@ -427,6 +427,8 @@ static inline void opal_atomic_sc_ptr(opal_atomic_intptr_t *addr, intptr_t newva
 #        include "opal/sys/arm64/atomic.h"
 #    elif defined(PLATFORM_ARCH_POWERPC) && defined(PLATFORM_ARCH_64)
 #        include "opal/sys/powerpc/atomic.h"
+#    elif defined(PLATFORM_ARCH_RISCV) && defined(PLATFORM_ARCH_64)
+#        include "opal/sys/riscv64/atomic.h"
 #    else
 #        error "No asm support found."
 #    endif
@@ -438,6 +440,8 @@ static inline void opal_atomic_sc_ptr(opal_atomic_intptr_t *addr, intptr_t newva
 #    include "opal/sys/arm64/atomic_llsc.h"
 #elif defined(PLATFORM_ARCH_POWERPC) && defined(PLATFORM_ARCH_64)
 #    include "opal/sys/powerpc/atomic_llsc.h"
+#elif defined(PLATFORM_ARCH_RISCV) && defined(PLATFORM_ARCH_64)
+#    include "opal/sys/riscv64/atomic_llsc.h"
 #endif
 
 
