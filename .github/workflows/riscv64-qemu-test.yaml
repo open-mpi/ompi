@@ -7,6 +7,8 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      QEMU_VERSION: "9.2.3"
 
     steps:
     - name: Install dependencies
@@ -16,8 +18,25 @@ jobs:
           gcc-riscv64-linux-gnu \
           g++-riscv64-linux-gnu \
           libc6-dev-riscv64-cross \
-          qemu-user-static \
-          binfmt-support
+          binfmt-support \
+          ninja-build \
+          libglib2.0-dev \
+          libpixman-1-dev \
+          wget
+        wget -q https://download.qemu.org/qemu-${QEMU_VERSION}.tar.xz
+        tar xf qemu-${QEMU_VERSION}.tar.xz
+        cd qemu-${QEMU_VERSION}
+        ./configure \
+          --target-list=riscv64-linux-user \
+          --static \
+          --disable-docs \
+          --prefix=/usr/local
+        make -j$(nproc)
+        sudo make install
+        sudo update-binfmts --install qemu-riscv64 /usr/local/bin/qemu-riscv64 \
+          --magic "\x7f\x45\x4c\x46\x02\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\xf3\x00" \
+          --mask  "\xff\xff\xff\xff\xff\xff\xff\x00\xff\xff\xff\xff\xff\xff\xff\xff\xfe\xff\xff\xff" \
+          --offset 0
 
     - name: Checkout Open MPI
       uses: actions/checkout@v4
@@ -27,7 +46,7 @@ jobs:
     - name: Bootstrap Open MPI
       run: |
         ./autogen.pl
-        sed -i '/^func_exec_program_core ()/,/^}/ s/\<exec\>/exec qemu-riscv64-static -cpu rv64,v=true,vext_spec=v1.0,vlen=128 -L \/usr\/riscv64-linux-gnu/g' config/ltmain.sh
+        sed -i '/^func_exec_program_core ()/,/^}/ s/\<exec\>/exec qemu-riscv64 -cpu rv64,v=true,vext_spec=v1.0,vlen=128 -L \/usr\/riscv64-linux-gnu/g' config/ltmain.sh
 
     - name: Configure Open MPI
       run: |
@@ -58,14 +77,14 @@ jobs:
         touch /usr/riscv64-linux-gnu/proc/device-tree/cpus/timebase-frequency
         grep "bogomips" /proc/cpuinfo | head -n 1 | awk '{printf("%d", $3*500000)}' | perl -e 'print pack("N", <STDIN>)' > /usr/riscv64-linux-gnu/proc/device-tree/cpus/timebase-frequency
         cd test/util
-        qemu-riscv64-static -cpu rv64,v=true,vext_spec=v1.0,vlen=128 -L /usr/riscv64-linux-gnu \
+        qemu-riscv64 -cpu rv64,v=true,vext_spec=v1.0,vlen=128 -L /usr/riscv64-linux-gnu \
           /usr/riscv64-linux-gnu/bin/mpirun -n 1 ./opal_timer
 
     - name: Run MPI_OP
       run: |
         export QEMU_LD_PREFIX=/usr/riscv64-linux-gnu
         cd test/datatype
-        qemu-riscv64-static -cpu rv64,v=true,vext_spec=v1.0,vlen=128 -L /usr/riscv64-linux-gnu \
+        qemu-riscv64 -cpu rv64,v=true,vext_spec=v1.0,vlen=128 -L /usr/riscv64-linux-gnu \
           /usr/riscv64-linux-gnu/bin/ompi_info --param all all --level 9 | grep "MCA op "
-        qemu-riscv64-static -cpu rv64,v=true,vext_spec=v1.0,vlen=128 -L /usr/riscv64-linux-gnu \
+        qemu-riscv64 -cpu rv64,v=true,vext_spec=v1.0,vlen=128 -L /usr/riscv64-linux-gnu \
           /usr/riscv64-linux-gnu/bin/mpirun -n 1 ./reduce_local -l 1024 -u 1024
