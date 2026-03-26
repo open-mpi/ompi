@@ -542,3 +542,5 @@ ompi/mpi/fortran/use-mpi-f08/base/*_generated.c
 ompi/mpi/fortran/use-mpi-f08/mod/mpi-f08-interfaces-generated.h
 ompi/mpi/fortran/use-mpi-ignore-tkr/mpi-ignore-tkr-interfaces-generated.h
 ompi/mpi/fortran/use-mpi-ignore-tkr/*_generated.F90
+
+.vscode/
