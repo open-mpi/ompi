@@ -49,10 +49,15 @@
 #define HAN_SUBCOM_EXTRA_RETAIN(COMM, PARENT_COMM)                           \
     do                                                                       \
     {                                                                        \
-        if (OMPI_COMM_CID_IS_LOWER(COMM, PARENT_COMM)) {                     \
-            OMPI_COMM_SET_EXTRA_RETAIN(COMM);                                \
-            OBJ_RETAIN(COMM);                                                \
-        }                                                                    \
+        /* Always extra-retain HAN sub-communicators so that              \
+         * ompi_comm_finalize() does not free them before the parent      \
+         * communicator's destructor can clean them up properly.           \
+         * The conditional on CID ordering is insufficient because         \
+         * ompi_comm_finalize() iterates over all communicators and        \
+         * releases them regardless of parent-child relationships.         \
+         */                                                                  \
+        OMPI_COMM_SET_EXTRA_RETAIN(COMM);                                    \
+        OBJ_RETAIN(COMM);                                                                    \
     } while (0)
 
 /*
