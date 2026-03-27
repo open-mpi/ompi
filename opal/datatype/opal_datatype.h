@@ -196,8 +196,8 @@ OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_unsigned_long;
  */
 int opal_datatype_register_params(void);
 OPAL_DECLSPEC int32_t opal_datatype_init(void);
-OPAL_DECLSPEC opal_datatype_t *opal_datatype_create(int32_t expectedSize);
-OPAL_DECLSPEC int32_t opal_datatype_create_desc(opal_datatype_t *datatype, int32_t expectedSize);
+OPAL_DECLSPEC opal_datatype_t *opal_datatype_create(ssize_t expectedSize);
+OPAL_DECLSPEC int32_t opal_datatype_create_desc(opal_datatype_t *datatype, ssize_t expectedSize);
 OPAL_DECLSPEC int32_t opal_datatype_commit(opal_datatype_t *pData);
 OPAL_DECLSPEC int32_t opal_datatype_destroy(opal_datatype_t **);
 OPAL_DECLSPEC int32_t opal_datatype_is_monotonic(opal_datatype_t *type);

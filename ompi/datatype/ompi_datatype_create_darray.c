@@ -30,7 +30,7 @@
 #include "ompi/datatype/ompi_datatype.h"
 
 static int
-block(const int *gsize_array, int dim, int ndims, int nprocs,
+block(ompi_count_array_t gsize_array, int dim, int ndims, int nprocs,
       int rank, int darg, int order, ptrdiff_t orig_extent,
       ompi_datatype_t *type_old, ompi_datatype_t **type_new,
       ptrdiff_t *st_offset)
@@ -38,7 +38,7 @@ block(const int *gsize_array, int dim, int ndims, int nprocs,
     int blksize, global_size, mysize, i, j, rc, start_loop, step;
     ptrdiff_t stride, disps[2];
 
-    global_size = gsize_array[dim];
+    global_size = ompi_count_array_get(gsize_array, dim);
 
     if (darg == MPI_DISTRIBUTE_DFLT_DARG)
         blksize = (global_size + nprocs - 1) / nprocs;
@@ -62,7 +62,7 @@ block(const int *gsize_array, int dim, int ndims, int nprocs,
         if (OMPI_SUCCESS != rc) return rc;
     } else {
         for (i = start_loop ; i != dim ; i += step) {
-            stride *= gsize_array[i];
+            stride *= ompi_count_array_get(gsize_array, i);
         }
         rc = ompi_datatype_create_hvector(mysize, 1, stride, type_old, type_new);
         if (OMPI_SUCCESS != rc) return rc;
@@ -76,11 +76,11 @@ block(const int *gsize_array, int dim, int ndims, int nprocs,
     disps[0] = 0;         disps[1] = orig_extent;
     if (order == MPI_ORDER_FORTRAN) {
         for(i=0; i<=dim; i++) {
-            disps[1] *= gsize_array[i];
+            disps[1] *= ompi_count_array_get(gsize_array, i);
         }
     } else {
         for(i=ndims-1; i>=dim; i--) {
-            disps[1] *= gsize_array[i];
+            disps[1] *= ompi_count_array_get(gsize_array, i);
         }
     }
     rc = opal_datatype_resize( &(*type_new)->super, disps[0], disps[1] );
@@ -91,7 +91,7 @@ block(const int *gsize_array, int dim, int ndims, int nprocs,
 
 
 static int
-cyclic(const int *gsize_array, int dim, int ndims, int nprocs,
+cyclic(ompi_count_array_t gsize_array, int dim, int ndims, int nprocs,
        int rank, int darg, int order, ptrdiff_t orig_extent,
        ompi_datatype_t* type_old, ompi_datatype_t **type_new,
        ptrdiff_t *st_offset)
@@ -107,7 +107,7 @@ cyclic(const int *gsize_array, int dim, int ndims, int nprocs,
     }
 
     st_index = rank * blksize;
-    end_index = gsize_array[dim] - 1;
+    end_index = ompi_count_array_get(gsize_array, dim) - 1;
 
     if (end_index < st_index) {
         local_size = 0;
@@ -123,11 +123,11 @@ cyclic(const int *gsize_array, int dim, int ndims, int nprocs,
     stride = nprocs*blksize*orig_extent;
     if (order == MPI_ORDER_FORTRAN) {
         for (i=0; i<dim; i++) {
-            stride *= gsize_array[i];
+            stride *= ompi_count_array_get(gsize_array, i);
         }
     } else {
         for (i=ndims-1; i>dim; i--) {
-            stride *= gsize_array[i];
+            stride *= ompi_count_array_get(gsize_array, i);
         }
     }
 
@@ -142,7 +142,7 @@ cyclic(const int *gsize_array, int dim, int ndims, int nprocs,
         disps  [0] = 0;         disps  [1] = count*stride;
         blklens[0] = 1;         blklens[1] = rem;
 
-        rc = ompi_datatype_create_struct(2, blklens, disps, types, &type_tmp);
+        rc = ompi_datatype_create_struct(2, OMPI_COUNT_ARRAY_CREATE(blklens), OMPI_DISP_ARRAY_CREATE(disps), types, &type_tmp);
         ompi_datatype_destroy(type_new);
         /* even in error condition, need to destroy type_new, so check
            for error after destroy. */
@@ -154,11 +154,11 @@ cyclic(const int *gsize_array, int dim, int ndims, int nprocs,
     disps[0] = 0;         disps[1] = orig_extent;
     if (order == MPI_ORDER_FORTRAN) {
         for(i=0; i<=dim; i++) {
-            disps[1] *= gsize_array[i];
+            disps[1] *= ompi_count_array_get(gsize_array, i);
         }
     } else {
         for(i=ndims-1; i>=dim; i--) {
-            disps[1] *= gsize_array[i];
+            disps[1] *= ompi_count_array_get(gsize_array, i);
         }
     }
     rc = opal_datatype_resize( &(*type_new)->super, disps[0], disps[1] );
@@ -174,10 +174,10 @@ cyclic(const int *gsize_array, int dim, int ndims, int nprocs,
 int32_t ompi_datatype_create_darray(int size,
                                     int rank,
                                     int ndims,
-                                    int const* gsize_array,
-                                    int const* distrib_array,
-                                    int const* darg_array,
-                                    int const* psize_array,
+                                    ompi_count_array_t gsize_array,
+                                    const int* distrib_array,
+                                    const int* darg_array,
+                                    const int* psize_array,
                                     int order,
                                     const ompi_datatype_t* oldtype,
                                     ompi_datatype_t** newtype)
@@ -209,7 +209,7 @@ int32_t ompi_datatype_create_darray(int size,
             coords[i] = tmp_rank / procs;
             tmp_rank = tmp_rank % procs;
             /* compute the upper bound of the datatype, including all dimensions */
-            displs[1] *= gsize_array[i];
+            displs[1] *= ompi_count_array_get(gsize_array, i);
         }
     }
 
@@ -275,7 +275,7 @@ int32_t ompi_datatype_create_darray(int size,
      */
     displs[0] = st_offsets[start_loop];
     for (i = start_loop + step; i != end_loop; i += step) {
-        tmp_size *= gsize_array[i - step];
+        tmp_size *= ompi_count_array_get(gsize_array, i - step);
         displs[0] += tmp_size * st_offsets[i];
     }
     displs[0] *= orig_extent;
