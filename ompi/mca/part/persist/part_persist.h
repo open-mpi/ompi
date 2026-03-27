@@ -113,7 +113,7 @@ mca_part_persist_free_req(struct mca_part_persist_request_t* req)
 
 __opal_attribute_always_inline__ static inline void mca_part_persist_init_lists(void)
 {
-    opal_free_list_init (&mca_part_base_precv_requests,
+    opal_free_list_init (&mca_part_persist_precv_requests,
                          sizeof(mca_part_persist_precv_request_t),
                          opal_cache_line_size,
                          OBJ_CLASS(mca_part_persist_precv_request_t),
@@ -122,7 +122,7 @@ __opal_attribute_always_inline__ static inline void mca_part_persist_init_lists(
                          ompi_part_persist.free_list_max,
                          ompi_part_persist.free_list_inc,
                          NULL, 0, NULL, NULL, NULL);
-    opal_free_list_init (&mca_part_base_psend_requests,
+    opal_free_list_init (&mca_part_persist_psend_requests,
                          sizeof(mca_part_persist_psend_request_t),
                          opal_cache_line_size,
                          OBJ_CLASS(mca_part_persist_psend_request_t),
