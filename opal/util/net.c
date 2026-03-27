@@ -406,7 +406,11 @@ char *opal_net_get_hostname(const struct sockaddr *addr)
     }
     return name;
 #    else
-    return inet_ntoa(((struct sockaddr_in *) addr)->sin_addr);
+    {
+        static char ntop_buf[INET_ADDRSTRLEN];
+        inet_ntop(AF_INET, &((struct sockaddr_in *) addr)->sin_addr, ntop_buf, sizeof(ntop_buf));
+        return ntop_buf;
+    }
 #    endif
 }
 
