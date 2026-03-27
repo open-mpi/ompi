@@ -1,0 +1,190 @@
+# Slash-command handler for /backport.
+#
+# Posting a comment on a merged PR with:
+#
+#   /backport v5.0.x v4.1.x
+#
+# is equivalent to manually triggering the "Backport" workflow from the
+# GitHub Actions UI with those branch names.  Multiple branches may be
+# supplied as space- or comma-separated values on the same line.
+#
+# Only users with write, maintain, or admin access to the repository may
+# trigger the command.  If an unauthorized user attempts /backport, the bot
+# replies with an explanatory comment.  For valid commands it acknowledges
+# with a 👀 reaction; invalid or unrecognised commands get a usage hint.
+
+name: Backport slash command
+
+on:
+    issue_comment:
+        types: [created]
+
+permissions: {}
+
+jobs:
+    dispatch:
+        name: Handle /backport comment
+        runs-on: ubuntu-latest
+        # Only act on PR comments (issue_comment fires for both issues and PRs).
+        if: github.event.issue.pull_request != null
+        permissions:
+            actions: write       # trigger workflow_dispatch
+            issues: write        # post reactions and comments
+            pull-requests: read  # read PR merge status
+        steps:
+            - name: Parse command and validate PR
+              id: parse
+              uses: actions/github-script@v7
+              with:
+                  script: |
+                      const body        = context.payload.comment.body;
+                      const commentId   = context.payload.comment.id;
+                      const issueNumber = context.payload.issue.number;
+                      const login       = context.payload.comment.user.login;
+
+                      // Detect a bare /backport with no arguments and reply helpfully.
+                      const bareMatch = /^\/backport\s*$/m.test(body);
+                      // Look for /backport with arguments at the start of any line.
+                      const match = body.match(/^\/backport\s+([^\r\n]+)/m);
+
+                      // If the comment doesn't contain any /backport command at all,
+                      // do nothing — no need to check permissions.
+                      if (!bareMatch && !match) {
+                          core.setOutput('triggered', 'false');
+                          return;
+                      }
+
+                      // Check actual repository permission level rather than
+                      // author_association: MEMBER alone does not imply write
+                      // access on org-owned public repos.
+                      let permission = 'none';
+                      try {
+                          const { data } = await github.rest.repos.getCollaboratorPermissionLevel({
+                              owner:    context.repo.owner,
+                              repo:     context.repo.repo,
+                              username: login,
+                          });
+                          // Use role_name rather than permission: the legacy
+                          // permission field collapses 'maintain' into 'write',
+                          // losing the distinction between the two tiers.
+                          permission = data.role_name; // 'admin' | 'maintain' | 'write' | 'triage' | 'read'
+                      } catch (err) {
+                          if (err.status !== 404) throw err;
+                          // 404 = not a collaborator; permission stays 'none'
+                      }
+                      if (!['admin', 'maintain', 'write'].includes(permission)) {
+                          await github.rest.issues.createComment({
+                              owner:        context.repo.owner,
+                              repo:         context.repo.repo,
+                              issue_number: issueNumber,
+                              body:         `⚠️ @${login} Backports can only be triggered by users with write, maintain, or admin access.`,
+                          });
+                          core.setOutput('triggered', 'false');
+                          return;
+                      }
+
+                      if (bareMatch && !match) {
+                          core.setOutput('triggered', 'false');
+                          await github.rest.issues.createComment({
+                              owner:        context.repo.owner,
+                              repo:         context.repo.repo,
+                              issue_number: issueNumber,
+                              body:         '⚠️ `/backport` requires at least one target branch, e.g. `/backport v5.0.x`.',
+                          });
+                          return;
+                      }
+                      if (!match) {
+                          core.setOutput('triggered', 'false');
+                          return;
+                      }
+
+                      // Parse branch list (space- or comma-separated).
+                      const branches = match[1].trim().split(/[\s,]+/).filter(Boolean);
+                      if (branches.length === 0) {
+                          // e.g. "/backport ,,," — separators only, no real branch names
+                          core.setOutput('triggered', 'false');
+                          await github.rest.issues.createComment({
+                              owner:        context.repo.owner,
+                              repo:         context.repo.repo,
+                              issue_number: issueNumber,
+                              body:         '⚠️ `/backport` requires at least one target branch, e.g. `/backport v5.0.x`.',
+                          });
+                          return;
+                      }
+
+                      // Validate branch names with the same allow-list used in
+                      // backport.yaml so the user gets immediate feedback rather
+                      // than a silent dispatch failure.
+                      const validBranchRe = /^[a-zA-Z0-9][a-zA-Z0-9._\-/]*$/;
+                      const invalidBranches = branches.filter(b => !validBranchRe.test(b));
+                      if (invalidBranches.length > 0) {
+                          core.setOutput('triggered', 'false');
+                          await github.rest.issues.createComment({
+                              owner:        context.repo.owner,
+                              repo:         context.repo.repo,
+                              issue_number: issueNumber,
+                              body:         `⚠️ Invalid branch name(s): ${invalidBranches.map(b => `\`${b}\``).join(', ')}. Branch names may only contain alphanumeric characters, dots, hyphens, underscores, and slashes.`,
+                          });
+                          return;
+                      }
+
+                      // Confirm the PR is actually merged.
+                      const { data: pr } = await github.rest.pulls.get({
+                          owner:       context.repo.owner,
+                          repo:        context.repo.repo,
+                          pull_number: issueNumber,
+                      });
+
+                      if (!pr.merged) {
+                          await github.rest.issues.createComment({
+                              owner:        context.repo.owner,
+                              repo:         context.repo.repo,
+                              issue_number: issueNumber,
+                              body:         '⚠️ Cannot backport: this PR has not been merged yet.',
+                          });
+                          core.setOutput('triggered', 'false');
+                          return;
+                      }
+
+                      // Acknowledge the command with a 👀 reaction.
+                      // Ignore 422 (reaction already exists) so re-runs don't fail.
+                      try {
+                          await github.rest.reactions.createForIssueComment({
+                              owner:      context.repo.owner,
+                              repo:       context.repo.repo,
+                              comment_id: commentId,
+                              content:    'eyes',
+                          });
+                      } catch (err) {
+                          if (err.status !== 422) throw err;
+                      }
+
+                      core.setOutput('triggered', 'true');
+                      core.setOutput('pr_number', String(issueNumber));
+                      core.setOutput('branches',  branches.join(','));
+                      core.notice(`Dispatching backport of PR #${issueNumber} to: ${branches.join(', ')}`);
+
+            - name: Trigger backport workflow
+              if: steps.parse.outputs.triggered == 'true'
+              uses: actions/github-script@v7
+              env:
+                  PR_NUMBER: ${{ steps.parse.outputs.pr_number }}
+                  BRANCHES:  ${{ steps.parse.outputs.branches }}
+              with:
+                  script: |
+                      // workflow_dispatch requires a ref; use the default branch.
+                      const { data: repo } = await github.rest.repos.get({
+                          owner: context.repo.owner,
+                          repo:  context.repo.repo,
+                      });
+
+                      await github.rest.actions.createWorkflowDispatch({
+                          owner:       context.repo.owner,
+                          repo:        context.repo.repo,
+                          workflow_id: 'backport.yaml',
+                          ref:         repo.default_branch,
+                          inputs: {
+                              pr_number: process.env.PR_NUMBER,
+                              branches:  process.env.BRANCHES,
+                          },
+                      });
