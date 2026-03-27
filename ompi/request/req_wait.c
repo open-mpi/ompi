@@ -103,6 +103,7 @@ int ompi_request_default_wait_any(size_t count,
 
 recheck:
     WAIT_SYNC_INIT(&sync, 1);
+    opal_atomic_wmb();  /* release: sync struct init must be visible before CAS publishes &sync */
 
     num_requests_null_inactive = 0;
     for (i = 0; i < count; i++) {
@@ -238,6 +239,7 @@ int ompi_request_default_wait_all( size_t count,
 
 recheck:
     WAIT_SYNC_INIT(&sync, count);
+    opal_atomic_wmb();  /* release: sync struct init must be visible before CAS publishes &sync */
     rptr = requests;
     for (i = 0; i < count; i++) {
         void *_tmp_ptr = REQUEST_PENDING;
@@ -466,6 +468,7 @@ int ompi_request_default_wait_some(size_t count,
 
   recheck:
     WAIT_SYNC_INIT(&sync, 1);
+    opal_atomic_wmb();  /* release: sync struct init must be visible before CAS publishes &sync */
 
     *outcount = 0;
 
