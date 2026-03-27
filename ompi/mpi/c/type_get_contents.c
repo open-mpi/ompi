@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2025      BULL S.A.S. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -45,7 +46,7 @@ int MPI_Type_get_contents(MPI_Datatype mtype,
                           MPI_Aint array_of_addresses[],
                           MPI_Datatype array_of_datatypes[])
 {
-    int rc, i;
+    int rc, i, type_code;
     MPI_Datatype newtype;
 
     MEMCHECKER(
@@ -63,6 +64,13 @@ int MPI_Type_get_contents(MPI_Datatype mtype,
             return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG,
                                           FUNC_NAME );
         }
+    }
+
+    /* Counts may exceed actual ones, we have no choice but to recompute them */
+    rc = ompi_datatype_get_args(mtype, 0, &max_integers, NULL, &max_addresses, NULL, &max_datatypes,
+                                NULL, &type_code);
+    if (rc != MPI_SUCCESS) {
+        OMPI_ERRHANDLER_RETURN(MPI_ERR_INTERN, MPI_COMM_WORLD, MPI_ERR_INTERN, FUNC_NAME);
     }
 
     rc = ompi_datatype_get_args( mtype, 1, &max_integers, array_of_integers,
