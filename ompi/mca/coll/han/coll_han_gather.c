@@ -46,7 +46,8 @@ mca_coll_han_set_gather_args(mca_coll_han_gather_args_t * args,
                              int root_low_rank,
                              struct ompi_communicator_t *up_comm,
                              struct ompi_communicator_t *low_comm,
-                             int w_rank, bool noop, bool is_mapbycore, ompi_request_t * req)
+                             int w_rank, bool noop, bool is_mapbycore, ompi_request_t * req,
+                             mca_coll_han_module_t *han_module)
 {
     args->cur_task = cur_task;
     args->sbuf = sbuf;
@@ -65,6 +66,7 @@ mca_coll_han_set_gather_args(mca_coll_han_gather_args_t * args,
     args->noop = noop;
     args->is_mapbycore = is_mapbycore;
     args->req = req;
+    args->han_module = han_module;
 }
 
 
@@ -156,7 +158,18 @@ mca_coll_han_gather_intra(const void *sbuf, size_t scount,
             rsize = opal_datatype_span(&rdtype->super,
                                        (int64_t)rcount * w_size,
                                        &rgap);
-            reorder_buf = (char *)malloc(rsize);        //TODO:free
+            if (mca_coll_han_component.han_use_persist_buffers) {
+                if (han_module->gather_reorder_persist_size < (size_t)rsize) {
+                    char *p = realloc(han_module->gather_reorder_persist, rsize);
+                    if (NULL == p) return OMPI_ERR_OUT_OF_RESOURCE;
+                    han_module->gather_reorder_persist = p;
+                    han_module->gather_reorder_persist_size = rsize;
+                }
+                reorder_buf = han_module->gather_reorder_persist;
+            } else {
+                reorder_buf = (char *)malloc(rsize);
+                if (NULL == reorder_buf) return OMPI_ERR_OUT_OF_RESOURCE;
+            }
             /* rgap is the size of unused space at the start of the datatype */
             reorder_rbuf = reorder_buf - rgap;
 
@@ -180,7 +193,8 @@ mca_coll_han_gather_intra(const void *sbuf, size_t scount,
     mca_coll_han_gather_args_t *lg_args = malloc(sizeof(mca_coll_han_gather_args_t));
     mca_coll_han_set_gather_args(lg_args, lg, (char *) sbuf, NULL, scount, sdtype, reorder_rbuf,
                                  rcount, rdtype, root, root_up_rank, root_low_rank, up_comm,
-                                 low_comm, w_rank, low_rank != root_low_rank, han_module->is_mapbycore, temp_request);
+                                 low_comm, w_rank, low_rank != root_low_rank, han_module->is_mapbycore, temp_request,
+                                 han_module);
     /* Init lg task */
     init_task(lg, mca_coll_han_gather_lg_task, (void *) (lg_args));
     /* Issure lg task */
@@ -193,7 +207,9 @@ mca_coll_han_gather_intra(const void *sbuf, size_t scount,
         ompi_coll_han_reorder_gather(reorder_buf,
                                      rbuf, rcount, rdtype,
                                      comm, topo);
-        free(reorder_buf);
+        if (!mca_coll_han_component.han_use_persist_buffers) {
+            free(reorder_buf);
+        }
     }
 
     return OMPI_SUCCESS;
@@ -212,15 +228,25 @@ int mca_coll_han_gather_lg_task(void *task_args)
     char *tmp_buf = NULL;
     char *tmp_rbuf = NULL;
     if (!t->noop) {
-        /* if the process is one of the node leader, allocate the intermediary
-         * buffer to gather on the low sub communicator */
+        /* Intra-node gather buffer: persistent realloc-to-HWM or malloc */
         int low_size = ompi_comm_size(t->low_comm);
         int low_rank = ompi_comm_rank(t->low_comm);
         ptrdiff_t rsize, rgap = 0;
         rsize = opal_datatype_span(&dtype->super,
                                    count * low_size,
                                    &rgap);
-        tmp_buf = (char *) malloc(rsize);
+        if (mca_coll_han_component.han_use_persist_buffers) {
+            if (t->han_module->cached_gather_buf_size < (size_t)rsize) {
+                char *p = realloc(t->han_module->cached_gather_buf, rsize);
+                if (NULL == p) return OMPI_ERR_OUT_OF_RESOURCE;
+                t->han_module->cached_gather_buf = p;
+                t->han_module->cached_gather_buf_size = rsize;
+            }
+            tmp_buf = (char *)t->han_module->cached_gather_buf;
+        } else {
+            tmp_buf = (char *)malloc(rsize);
+            if (NULL == tmp_buf) return OMPI_ERR_OUT_OF_RESOURCE;
+        }
         tmp_rbuf = tmp_buf - rgap;
         if (t->w_rank == t->root && MPI_IN_PLACE == t->sbuf) {
             ptrdiff_t rextent;
@@ -286,9 +312,12 @@ int mca_coll_han_gather_ug_task(void *task_args)
                                         t->up_comm,
                                         t->up_comm->c_coll->coll_gather_module);
 
-        if (t->sbuf_inter_free != NULL) {
-            free(t->sbuf_inter_free);
-            t->sbuf_inter_free = NULL;
+        /* Free intra-node buffer when not using persist buffers */
+        if (!mca_coll_han_component.han_use_persist_buffers) {
+            if (t->sbuf_inter_free != NULL) {
+                free(t->sbuf_inter_free);
+                t->sbuf_inter_free = NULL;
+            }
         }
         OPAL_OUTPUT_VERBOSE((30, mca_coll_han_component.han_output,
                              "[%d] Han Gather:  ug gather finish\n", t->w_rank));
@@ -371,23 +400,44 @@ mca_coll_han_gather_intra_simple(const void *sbuf, size_t scount,
             ptrdiff_t rsize = opal_datatype_span(&rdtype->super,
                                                  (int64_t)rcount * w_size,
                                                  &rgap);
-            reorder_buf = (char *)malloc(rsize);
+            if (mca_coll_han_component.han_use_persist_buffers) {
+                if (han_module->gather_reorder_persist_size < (size_t)rsize) {
+                    char *p = realloc(han_module->gather_reorder_persist, rsize);
+                    if (NULL == p) return OMPI_ERR_OUT_OF_RESOURCE;
+                    han_module->gather_reorder_persist = p;
+                    han_module->gather_reorder_persist_size = rsize;
+                }
+                reorder_buf = han_module->gather_reorder_persist;
+            } else {
+                reorder_buf = (char *)malloc(rsize);
+                if (NULL == reorder_buf) return OMPI_ERR_OUT_OF_RESOURCE;
+            }
             /* rgap is the size of unused space at the start of the datatype */
             reorder_buf_start = reorder_buf - rgap;
         }
 
     }
 
-    /* allocate the intermediary buffer
-     * to gather on leaders on the low sub communicator */
-    char *tmp_buf = NULL; // allocated memory
-    char *tmp_buf_start = NULL; // start of the data
+    /* Intra-node gather buffer: persistent realloc-to-HWM or malloc */
+    char *tmp_buf = NULL;
+    char *tmp_buf_start = NULL;
     if (low_rank == root_low_rank) {
         ptrdiff_t rsize, rgap = 0;
         rsize = opal_datatype_span(&dtype->super,
                                    count * low_size,
                                    &rgap);
-        tmp_buf = (char *) malloc(rsize);
+        if (mca_coll_han_component.han_use_persist_buffers) {
+            if (han_module->cached_gather_buf_size < (size_t)rsize) {
+                char *p = realloc(han_module->cached_gather_buf, rsize);
+                if (NULL == p) return OMPI_ERR_OUT_OF_RESOURCE;
+                han_module->cached_gather_buf = p;
+                han_module->cached_gather_buf_size = rsize;
+            }
+            tmp_buf = (char *)han_module->cached_gather_buf;
+        } else {
+            tmp_buf = (char *)malloc(rsize);
+            if (NULL == tmp_buf) return OMPI_ERR_OUT_OF_RESOURCE;
+        }
         tmp_buf_start = tmp_buf - rgap;
     }
 
@@ -414,10 +464,10 @@ mca_coll_han_gather_intra_simple(const void *sbuf, size_t scount,
                                      up_comm,
                                      up_comm->c_coll->coll_gather_module);
 
-        if (tmp_buf != NULL) {
+        /* Free intra-node buffer when not using persist buffers */
+        if (!mca_coll_han_component.han_use_persist_buffers) {
             free(tmp_buf);
             tmp_buf = NULL;
-            tmp_buf_start = NULL;
         }
         OPAL_OUTPUT_VERBOSE((30, mca_coll_han_component.han_output,
                              "[%d] Future Gather:  ug gather finish\n", w_rank));
@@ -431,7 +481,9 @@ mca_coll_han_gather_intra_simple(const void *sbuf, size_t scount,
         ompi_coll_han_reorder_gather(reorder_buf_start,
                                      rbuf, rcount, rdtype,
                                      comm, topo);
-        free(reorder_buf);
+        if (!mca_coll_han_component.han_use_persist_buffers) {
+            free(reorder_buf);
+        }
     }
 
     return OMPI_SUCCESS;
