@@ -14,7 +14,7 @@
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2020      Google, LLC. All rights reserved.
+ * Copyright (c) 2020-2025 Google, LLC. All rights reserved.
  * Copyright (c) 2022      IBM Corporation. All rights reserved
  * $COPYRIGHT$
  *
@@ -55,6 +55,18 @@ typedef struct mca_pml_ob1_recv_frag_t mca_pml_ob1_recv_frag_t;
 
 OBJ_CLASS_DECLARATION(mca_pml_ob1_recv_frag_t);
 
+/* tracking structure for in-progress receives of multi-eager sends */
+struct mca_pml_ob1_recv_request_t;
+struct mca_pml_ob1_multi_eager_recv_frag_t {
+    opal_free_list_item_t super;                 /**< these are kept in a free list */
+    int32_t total_size;                          /**< total size expected */
+    opal_atomic_int32_t received_size;           /**< total bytes received */
+    struct mca_pml_ob1_recv_request_t *recvreq;  /**< matched receive (may be NULL) */
+    void *buffer;                                /**< temporary buffer if not matched */
+};
+typedef struct mca_pml_ob1_multi_eager_recv_frag_t mca_pml_ob1_multi_eager_recv_frag_t;
+
+OBJ_CLASS_DECLARATION(mca_pml_ob1_multi_eager_recv_frag_t);
 
 #define MCA_PML_OB1_RECV_FRAG_ALLOC(frag)                       \
 do {                                                            \
@@ -165,6 +177,12 @@ extern void mca_pml_ob1_recv_frag_callback_fin (mca_btl_base_module_t *btl,
  */
 extern void mca_pml_ob1_recv_frag_callback_cid( mca_btl_base_module_t *btl,
                                                 const mca_btl_base_receive_descriptor_t* descriptor);
+
+/**
+ * Callback from BTL on receipt of a multi_eager send fragment.
+ */
+void mca_pml_ob1_recv_frag_callback_multi_eager_send(mca_btl_base_module_t *btl,
+                                                     const mca_btl_base_receive_descriptor_t* descriptor);
 
 /**
  * Extract the next fragment from the cant_match ordered list. This fragment

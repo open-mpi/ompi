@@ -111,6 +111,29 @@ int mca_pml_ob1_progress(void)
             if( false == send_succeeded ) {
                 add_request_to_send_pending(sendreq, MCA_PML_OB1_SEND_PENDING_START, true);
             }
+            break;
+        case MCA_PML_OB1_SEND_PENDING_MULTI_EAGER: {
+            endpoint = sendreq->req_endpoint;
+            send_succeeded = false;
+            for(j = 0; j < (int)mca_bml_base_btl_array_get_size(&endpoint->btl_eager); j++) {
+                mca_bml_base_btl_t* bml_btl;
+                int rc;
+
+                /* select a btl */
+                bml_btl = mca_bml_base_btl_array_get_next(&endpoint->btl_eager);
+                rc = mca_pml_ob1_send_request_progess_multi_eager(sendreq, bml_btl);
+                if (OPAL_UNLIKELY(OMPI_SUCCESS == rc)) {
+                    send_succeeded = true;
+                    completed_requests++;
+                    break;
+                }
+            }
+            if (!send_succeeded) {
+                add_request_to_send_pending(sendreq,
+                                            MCA_PML_OB1_SEND_PENDING_MULTI_EAGER, /*append=*/true);
+            }
+            break;
+        }
         }
     }
 
