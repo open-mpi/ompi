@@ -18,7 +18,7 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/memchecker.h"
 
-PROTOTYPE ERROR_CLASS status_get_error(STATUS status, INT_OUT error)
+PROTOTYPE ERROR_CLASS status_get_error(STATUS status, ERROR_CODE_OUT error)
 {
     int rc      = MPI_SUCCESS;
 

@@ -28,13 +28,14 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/op/op.h"
 
-PROTOTYPE ERROR_CLASS op_free(OP_OUT op)
+PROTOTYPE ERROR_CLASS op_free(OP_INOUT op)
 {
   /* Error checking */
 
   if (MPI_PARAM_CHECK) {
     OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-    if (NULL == op ||
+    if (NULL == op || NULL == *op ||
+        MPI_OP_NULL == *op ||
         ompi_op_is_intrinsic(*op)) {
       return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_OP,
                                     FUNC_NAME);

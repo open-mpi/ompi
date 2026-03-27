@@ -1,0 +1,516 @@
+#
+# Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+#                         University Research and Technology
+#                         Corporation.  All rights reserved.
+# Copyright (c) 2004-2013 The University of Tennessee and The University
+#                         of Tennessee Research Foundation.  All rights
+#                         reserved.
+# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+#                         University of Stuttgart.  All rights reserved.
+# Copyright (c) 2004-2005 The Regents of the University of California.
+#                         All rights reserved.
+# Copyright (c) 2009-2021 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
+# Copyright (c) 2012      Oak Rigde National Laboratory. All rights reserved.
+# Copyright (c) 2012-2013 Inria.  All rights reserved.
+# Copyright (c) 2013-2018 Los Alamos National Security, LLC. All rights
+#                         reserved.
+# Copyright (c) 2015-2020 Research Organization for Information Science
+#                         and Technology (RIST).  All rights reserved.
+# Copyright (c) 2021      Amazon.com, Inc. or its affiliates.  All Rights
+#                         reserved.
+# Copyright (c) 2025      Advanced Micro Devices, Inc. All Rights reserved.
+# Copyright (c) 2025      Triad National Security, LLC.  All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+
+# ABI specific make components
+
+if OMPI_STANDARD_ABI
+
+noinst_LTLIBRARIES += libmpi_c_abi.la libmpi_c_abi_profile.la
+if BUILD_MPI_BINDINGS_LAYER
+noinst_LTLIBRARIES += libmpi_c_abi_noprofile.la
+endif
+
+BUILT_SOURCES = abi.h abi_converters.h standard_abi/mpi.h
+
+libmpi_c_abi_la_SOURCES = \
+        abi_converters.c \
+        attr_fn_abi.c \
+        ompi_isendrecv.c \
+        ompi_sendrecv.c \
+        ompi_abi_fortran.c
+
+extra_abi_fns = \
+        aint_add_abi.c \
+        aint_diff_abi.c \
+        comm_fromint_abi.c \
+        comm_toint_abi.c \
+        errhandler_fromint_abi.c \
+        errhandler_toint_abi.c \
+        file_fromint_abi.c \
+        file_toint_abi.c \
+        group_fromint_abi.c \
+        group_toint_abi.c \
+        info_fromint_abi.c \
+        info_toint_abi.c \
+        message_fromint_abi.c \
+        message_toint_abi.c \
+        op_fromint_abi.c \
+        op_toint_abi.c \
+        pcontrol.c \
+        request_fromint_abi.c \
+        request_toint_abi.c \
+        session_fromint_abi.c \
+        session_toint_abi.c \
+        type_fromint_abi.c \
+        type_toint_abi.c \
+        win_fromint_abi.c \
+        win_toint_abi.c
+
+libmpi_c_abi_la_CPPFLAGS = -DOMPI_NO_MPI_PROTOTYPES -DOMPI_BUILD_MPI_PROFILING=0 -DOMPI_BUILD_STANDARD_ABI
+libmpi_c_abi_la_LIBADD = libmpi_c_abi_profile.la
+if BUILD_MPI_BINDINGS_LAYER
+libmpi_c_abi_la_LIBADD += libmpi_c_abi_noprofile.la
+endif
+
+abi_interface_profile_sources = \
+        abi_get_fortran_info_abi_generated.c \
+        abi_set_fortran_info_abi_generated.c \
+        abi_get_fortran_booleans_abi_generated.c \
+        abi_set_fortran_booleans_abi_generated.c \
+        abi_get_info_abi_generated.c \
+        abi_get_version_abi_generated.c \
+	abort_abi_generated.c \
+	accumulate_abi_generated.c \
+	add_error_class_abi_generated.c \
+	add_error_code_abi_generated.c \
+	add_error_string_abi_generated.c \
+	allgather_abi_generated.c \
+	allgather_init_abi_generated.c \
+	allgatherv_abi_generated.c \
+	allgatherv_init_abi_generated.c \
+	alloc_mem_abi_generated.c \
+	allreduce_abi_generated.c \
+	allreduce_init_abi_generated.c \
+	alltoall_abi_generated.c \
+	alltoall_init_abi_generated.c \
+	alltoallv_abi_generated.c \
+	alltoallv_init_abi_generated.c \
+	alltoallw_abi_generated.c \
+	alltoallw_init_abi_generated.c \
+	barrier_abi_generated.c \
+	barrier_init_abi_generated.c \
+	bcast_abi_generated.c \
+	bcast_init_abi_generated.c \
+	bsend_abi_generated.c \
+	bsend_init_abi_generated.c \
+	buffer_attach_abi_generated.c \
+	buffer_detach_abi_generated.c \
+	buffer_flush_abi_generated.c \
+	buffer_iflush_abi_generated.c \
+	cancel_abi_generated.c \
+	cart_coords_abi_generated.c \
+	cart_create_abi_generated.c \
+	cartdim_get_abi_generated.c \
+	cart_get_abi_generated.c \
+	cart_map_abi_generated.c \
+	cart_rank_abi_generated.c \
+	cart_shift_abi_generated.c \
+	cart_sub_abi_generated.c \
+	close_port_abi_generated.c \
+	comm_accept_abi_generated.c \
+	comm_attach_buffer_abi_generated.c \
+	comm_call_errhandler_abi_generated.c \
+	comm_compare_abi_generated.c \
+	comm_connect_abi_generated.c \
+	comm_create_abi_generated.c \
+	comm_create_errhandler_abi_generated.c \
+	comm_create_group_abi_generated.c \
+	comm_create_from_group_abi_generated.c \
+	comm_create_keyval_abi_generated.c \
+	comm_delete_attr_abi_generated.c \
+	comm_detach_buffer_abi_generated.c \
+	comm_disconnect_abi_generated.c \
+	comm_dup_abi_generated.c \
+	comm_dup_with_info_abi_generated.c \
+	comm_flush_buffer_abi_generated.c \
+	comm_free_abi_generated.c \
+	comm_free_keyval_abi_generated.c \
+	comm_get_attr_abi_generated.c \
+	comm_get_errhandler_abi_generated.c \
+	comm_get_info_abi_generated.c \
+	comm_get_name_abi_generated.c \
+	comm_get_parent_abi_generated.c \
+	comm_group_abi_generated.c \
+	comm_idup_abi_generated.c \
+	comm_idup_with_info_abi_generated.c \
+	comm_iflush_buffer_abi_generated.c \
+	comm_join_abi_generated.c \
+	comm_rank_abi_generated.c \
+	comm_remote_group_abi_generated.c \
+	comm_remote_size_abi_generated.c \
+	comm_set_attr_abi_generated.c \
+	comm_set_errhandler_abi_generated.c \
+	comm_set_info_abi_generated.c \
+	comm_set_name_abi_generated.c \
+	comm_size_abi_generated.c \
+	comm_spawn_abi_generated.c \
+	comm_spawn_multiple_abi_generated.c \
+	comm_split_abi_generated.c \
+	comm_split_type_abi_generated.c \
+	comm_test_inter_abi_generated.c \
+	compare_and_swap_abi_generated.c \
+	dims_create_abi_generated.c \
+	dist_graph_create_adjacent_abi_generated.c \
+	dist_graph_create_abi_generated.c \
+	dist_graph_neighbors_abi_generated.c \
+	dist_graph_neighbors_count_abi_generated.c \
+	errhandler_free_abi_generated.c \
+	error_class_abi_generated.c \
+	error_string_abi_generated.c \
+	exscan_abi_generated.c \
+	exscan_init_abi_generated.c \
+	fetch_and_op_abi_generated.c \
+	file_call_errhandler_abi_generated.c \
+	file_close_abi_generated.c \
+	file_create_errhandler_abi_generated.c \
+	file_delete_abi_generated.c \
+	file_get_amode_abi_generated.c \
+	file_get_atomicity_abi_generated.c \
+	file_get_byte_offset_abi_generated.c \
+	file_get_errhandler_abi_generated.c \
+	file_get_group_abi_generated.c \
+	file_get_info_abi_generated.c \
+	file_get_position_abi_generated.c \
+	file_get_position_shared_abi_generated.c \
+	file_get_size_abi_generated.c \
+	file_get_type_extent_abi_generated.c \
+	file_get_view_abi_generated.c \
+	file_iread_all_abi_generated.c \
+	file_iread_at_all_abi_generated.c \
+	file_iread_at_abi_generated.c \
+	file_iread_abi_generated.c \
+	file_iread_shared_abi_generated.c \
+	file_iwrite_all_abi_generated.c \
+	file_iwrite_at_all_abi_generated.c \
+	file_iwrite_at_abi_generated.c \
+	file_iwrite_abi_generated.c \
+	file_iwrite_shared_abi_generated.c \
+	file_open_abi_generated.c \
+	file_preallocate_abi_generated.c \
+	file_read_all_begin_abi_generated.c \
+	file_read_all_abi_generated.c \
+	file_read_all_end_abi_generated.c \
+	file_read_at_all_begin_abi_generated.c \
+	file_read_at_all_abi_generated.c \
+	file_read_at_all_end_abi_generated.c \
+	file_read_at_abi_generated.c \
+	file_read_abi_generated.c \
+	file_read_ordered_begin_abi_generated.c \
+	file_read_ordered_abi_generated.c \
+	file_read_ordered_end_abi_generated.c \
+	file_read_shared_abi_generated.c \
+	file_seek_abi_generated.c \
+	file_seek_shared_abi_generated.c \
+	file_set_atomicity_abi_generated.c \
+	file_set_errhandler_abi_generated.c \
+	file_set_info_abi_generated.c \
+	file_set_size_abi_generated.c \
+	file_set_view_abi_generated.c \
+	file_sync_abi_generated.c \
+	file_write_all_begin_abi_generated.c \
+	file_write_all_abi_generated.c \
+	file_write_all_end_abi_generated.c \
+	file_write_at_all_begin_abi_generated.c \
+	file_write_at_all_abi_generated.c \
+	file_write_at_all_end_abi_generated.c \
+	file_write_at_abi_generated.c \
+	file_write_abi_generated.c \
+	file_write_ordered_begin_abi_generated.c \
+	file_write_ordered_abi_generated.c \
+	file_write_ordered_end_abi_generated.c \
+	file_write_shared_abi_generated.c \
+	finalize_abi_generated.c \
+	finalized_abi_generated.c \
+	free_mem_abi_generated.c \
+	gather_abi_generated.c \
+	gather_init_abi_generated.c \
+	gatherv_abi_generated.c \
+	gatherv_init_abi_generated.c \
+	get_accumulate_abi_generated.c \
+	get_address_abi_generated.c \
+	get_abi_generated.c \
+	get_count_abi_generated.c \
+	get_elements_abi_generated.c \
+	get_elements_x_abi_generated.c \
+	get_hw_resource_info_abi_generated.c \
+	get_library_version_abi_generated.c \
+	get_processor_name_abi_generated.c \
+	get_version_abi_generated.c \
+	graph_create_abi_generated.c \
+	graphdims_get_abi_generated.c \
+	graph_get_abi_generated.c \
+	graph_map_abi_generated.c \
+	graph_neighbors_abi_generated.c \
+	graph_neighbors_count_abi_generated.c \
+	grequest_complete_abi_generated.c \
+	grequest_start_abi_generated.c \
+	group_compare_abi_generated.c \
+	group_difference_abi_generated.c \
+	group_excl_abi_generated.c \
+	group_free_abi_generated.c \
+	group_from_session_pset_abi_generated.c \
+	group_incl_abi_generated.c \
+	group_intersection_abi_generated.c \
+	group_range_excl_abi_generated.c \
+	group_range_incl_abi_generated.c \
+	group_rank_abi_generated.c \
+	group_size_abi_generated.c \
+	group_translate_ranks_abi_generated.c \
+	group_union_abi_generated.c \
+	iallgather_abi_generated.c \
+	iallgatherv_abi_generated.c \
+	ialltoall_abi_generated.c \
+	ialltoallv_abi_generated.c \
+	ialltoallw_abi_generated.c \
+	ibarrier_abi_generated.c \
+	ibcast_abi_generated.c \
+	ibsend_abi_generated.c \
+	iexscan_abi_generated.c \
+	igather_abi_generated.c \
+	igatherv_abi_generated.c \
+	improbe_abi_generated.c \
+	imrecv_abi_generated.c \
+	ineighbor_allgather_abi_generated.c \
+	ineighbor_allgatherv_abi_generated.c \
+	ineighbor_alltoall_abi_generated.c \
+	ineighbor_alltoallv_abi_generated.c \
+	ineighbor_alltoallw_abi_generated.c \
+	info_create_abi_generated.c \
+	info_create_env_abi_generated.c \
+	info_delete_abi_generated.c \
+	info_dup_abi_generated.c \
+	info_free_abi_generated.c \
+	info_get_abi_generated.c \
+	info_get_nkeys_abi_generated.c \
+	info_get_nthkey_abi_generated.c \
+	info_get_string_abi_generated.c \
+	info_get_valuelen_abi_generated.c \
+	info_set_abi_generated.c \
+	init_abi_generated.c \
+	initialized_abi_generated.c \
+	init_thread_abi_generated.c \
+	intercomm_create_abi_generated.c \
+	intercomm_create_from_groups_abi_generated.c \
+	intercomm_merge_abi_generated.c \
+	iprobe_abi_generated.c \
+	iallreduce_abi_generated.c \
+	irecv_abi_generated.c \
+	ireduce_abi_generated.c \
+	ireduce_scatter_block_abi_generated.c \
+	ireduce_scatter_abi_generated.c \
+	irsend_abi_generated.c \
+	iscan_abi_generated.c \
+	iscatter_abi_generated.c \
+	iscatterv_abi_generated.c \
+	isend_abi_generated.c \
+	isendrecv_abi_generated.c \
+	isendrecv_replace_abi_generated.c \
+	issend_abi_generated.c \
+	is_thread_main_abi_generated.c \
+	lookup_name_abi_generated.c \
+	mprobe_abi_generated.c \
+	mrecv_abi_generated.c \
+	neighbor_allgather_abi_generated.c \
+	neighbor_allgather_init_abi_generated.c \
+	neighbor_allgatherv_abi_generated.c \
+	neighbor_allgatherv_init_abi_generated.c \
+	neighbor_alltoall_abi_generated.c \
+	neighbor_alltoall_init_abi_generated.c \
+	neighbor_alltoallv_abi_generated.c \
+	neighbor_alltoallv_init_abi_generated.c\
+	neighbor_alltoallw_abi_generated.c \
+	neighbor_alltoallw_init_abi_generated.c \
+	open_port_abi_generated.c \
+	op_commutative_abi_generated.c \
+	op_create_abi_generated.c \
+	op_free_abi_generated.c \
+	pack_abi_generated.c \
+	pack_external_abi_generated.c \
+	pack_external_size_abi_generated.c \
+	pack_size_abi_generated.c \
+	parrived_abi_generated.c \
+	pready_abi_generated.c \
+	pready_list_abi_generated.c \
+	pready_range_abi_generated.c \
+	precv_init_abi_generated.c \
+	probe_abi_generated.c \
+	psend_init_abi_generated.c \
+	publish_name_abi_generated.c \
+	put_abi_generated.c \
+	query_thread_abi_generated.c \
+	raccumulate_abi_generated.c \
+	recv_abi_generated.c \
+	recv_init_abi_generated.c \
+	reduce_abi_generated.c \
+	reduce_init_abi_generated.c \
+	reduce_local_abi_generated.c \
+	reduce_scatter_block_abi_generated.c \
+	reduce_scatter_block_init_abi_generated.c \
+	reduce_scatter_abi_generated.c \
+	reduce_scatter_init_abi_generated.c \
+	register_datarep_abi_generated.c \
+	remove_error_class_abi_generated.c \
+	remove_error_code_abi_generated.c \
+	remove_error_string_abi_generated.c \
+	request_free_abi_generated.c \
+	request_get_status_abi_generated.c \
+	request_get_status_all_abi_generated.c \
+	request_get_status_any_abi_generated.c \
+	request_get_status_some_abi_generated.c \
+	rget_accumulate_abi_generated.c \
+	rget_abi_generated.c \
+	rput_abi_generated.c \
+	rsend_abi_generated.c \
+	rsend_init_abi_generated.c \
+	scan_abi_generated.c \
+	scan_init_abi_generated.c \
+	scatter_abi_generated.c \
+	scatter_init_abi_generated.c \
+	scatterv_abi_generated.c \
+	scatterv_init_abi_generated.c \
+	send_abi_generated.c \
+	send_init_abi_generated.c \
+	sendrecv_abi_generated.c \
+	sendrecv_replace_abi_generated.c \
+	session_attach_buffer_abi_generated.c \
+	session_call_errhandler_abi_generated.c \
+	session_create_errhandler_abi_generated.c \
+	session_detach_buffer_abi_generated.c \
+	session_finalize_abi_generated.c \
+	session_flush_buffer_abi_generated.c \
+	session_get_errhandler_abi_generated.c \
+	session_get_info_abi_generated.c \
+	session_get_nth_pset_abi_generated.c \
+	session_get_num_psets_abi_generated.c \
+	session_get_pset_info_abi_generated.c \
+	session_iflush_buffer_abi_generated.c \
+	session_init_abi_generated.c \
+	session_set_errhandler_abi_generated.c \
+	ssend_abi_generated.c \
+	ssend_init_abi_generated.c \
+	startall_abi_generated.c \
+	start_abi_generated.c \
+	status_get_error_abi_generated.c \
+	status_get_source_abi_generated.c \
+	status_get_tag_abi_generated.c \
+	status_set_cancelled_abi_generated.c \
+	status_set_elements_abi_generated.c \
+	status_set_elements_x_abi_generated.c \
+	status_set_error_abi_generated.c \
+	status_set_source_abi_generated.c \
+	status_set_tag_abi_generated.c \
+	testall_abi_generated.c \
+	testany_abi_generated.c \
+	test_abi_generated.c \
+	test_cancelled_abi_generated.c \
+	testsome_abi_generated.c \
+	topo_test_abi_generated.c \
+	type_c2f_abi_generated.c \
+	type_commit_abi_generated.c \
+	type_contiguous_abi_generated.c \
+	type_create_darray_abi_generated.c \
+	type_create_f90_complex_abi_generated.c \
+	type_create_f90_integer_abi_generated.c \
+	type_create_f90_real_abi_generated.c \
+	type_create_hindexed_abi_generated.c \
+	type_create_hindexed_block_abi_generated.c \
+	type_create_hvector_abi_generated.c \
+	type_create_indexed_block_abi_generated.c \
+	type_create_keyval_abi_generated.c \
+	type_create_resized_abi_generated.c \
+	type_create_struct_abi_generated.c \
+	type_create_subarray_abi_generated.c \
+	type_delete_attr_abi_generated.c \
+	type_dup_abi_generated.c \
+	type_free_abi_generated.c \
+	type_free_keyval_abi_generated.c \
+	type_get_attr_abi_generated.c \
+	type_get_extent_abi_generated.c \
+	type_get_extent_x_abi_generated.c \
+	type_get_name_abi_generated.c \
+	type_get_true_extent_abi_generated.c \
+	type_get_true_extent_x_abi_generated.c \
+	type_get_value_index_abi_generated.c \
+	type_indexed_abi_generated.c \
+	type_match_size_abi_generated.c \
+	type_set_attr_abi_generated.c \
+	type_set_name_abi_generated.c \
+	type_size_abi_generated.c \
+	type_size_x_abi_generated.c \
+	type_vector_abi_generated.c \
+	unpack_abi_generated.c \
+	unpack_external_abi_generated.c \
+	unpublish_name_abi_generated.c \
+	waitall_abi_generated.c \
+	waitany_abi_generated.c \
+	wait_abi_generated.c \
+	waitsome_abi_generated.c \
+	win_allocate_abi_generated.c \
+	win_allocate_shared_abi_generated.c \
+	win_attach_abi_generated.c \
+	win_call_errhandler_abi_generated.c \
+	win_complete_abi_generated.c  \
+	win_create_abi_generated.c \
+	win_create_dynamic_abi_generated.c \
+	win_create_errhandler_abi_generated.c \
+	win_create_keyval_abi_generated.c \
+	win_delete_attr_abi_generated.c \
+	win_detach_abi_generated.c \
+	win_fence_abi_generated.c \
+	win_flush_all_abi_generated.c \
+	win_flush_abi_generated.c \
+	win_flush_local_all_abi_generated.c \
+	win_flush_local_abi_generated.c \
+	win_free_abi_generated.c \
+	win_free_keyval_abi_generated.c \
+	win_get_attr_abi_generated.c \
+	win_get_errhandler_abi_generated.c \
+	win_get_group_abi_generated.c \
+	win_get_info_abi_generated.c \
+	win_get_name_abi_generated.c \
+	win_lock_all_abi_generated.c \
+	win_lock_abi_generated.c \
+	win_post_abi_generated.c \
+	win_set_attr_abi_generated.c \
+	win_set_errhandler_abi_generated.c \
+	win_set_info_abi_generated.c \
+	win_set_name_abi_generated.c \
+	win_shared_query_abi_generated.c \
+	win_start_abi_generated.c \
+	win_sync_abi_generated.c \
+	win_test_abi_generated.c \
+	win_unlock_all_abi_generated.c \
+	win_unlock_abi_generated.c \
+	win_wait_abi_generated.c \
+        wtick_abi_generated.c \
+	wtime_abi_generated.c \
+        type_get_contents_abi_generated.c \
+        type_get_envelope_abi_generated.c \
+        type_get_contents_c_abi_generated.c \
+        type_get_envelope_c_abi_generated.c
+
+
+libmpi_c_abi_profile_la_SOURCES = $(abi_interface_profile_sources) $(extra_abi_fns)
+libmpi_c_abi_profile_la_CPPFLAGS = -DOMPI_NO_MPI_PROTOTYPES -DOMPI_BUILD_MPI_PROFILING=1
+
+libmpi_c_abi_noprofile_la_SOURCES = $(abi_interface_profile_sources) $(extra_abi_fns)
+libmpi_c_abi_noprofile_la_CPPFLAGS = -DOMPI_NO_MPI_PROTOTYPES -DOMPI_BUILD_MPI_PROFILING=0
+
+endif

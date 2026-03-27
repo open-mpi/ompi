@@ -37,8 +37,8 @@
 #include "ompi/constants.h"
 #include "ompi/mca/hook/base/base.h"
 
-PROTOTYPE ERROR_CLASS init_thread(INT_OUT argc, ARGV argv, INT required,
-                                  INT_OUT provided)
+PROTOTYPE ERROR_CLASS init_thread(INT_OUT argc, ARGV argv, TS_LEVEL required,
+                                  TS_LEVEL_OUT provided)
 {
     int err, safe_required = MPI_THREAD_SERIALIZED;
     bool err_arg_required = false;

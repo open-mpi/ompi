@@ -3,6 +3,12 @@
 #
 
 prototype_files = \
+        abi_get_version.c.in \
+        abi_get_fortran_booleans.c.in \
+        abi_get_fortran_info.c.in \
+        abi_get_info.c.in \
+        abi_set_fortran_booleans.c.in \
+        abi_set_fortran_info.c.in \
         buffer_flush.c.in \
         buffer_iflush.c.in \
         comm_attach_buffer_ts.c.in \
