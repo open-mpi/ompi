@@ -2417,6 +2417,11 @@ int ompi_comm_get_rprocs (ompi_communicator_t *local_comm, ompi_communicator_t *
         goto err_exit;
     }
 
+    /* When a process gets spawned, every local_comm process needs to create
+     * an intercomm with the spawnees to communicate. These spawned procs needs
+     * to be remembered for cleaning later on */
+    ompi_proc_retain_spawned_jobids(rprocs, rsize);
+
  err_exit:
     /* rprocs isn't freed unless we have an error,
        since it is used in the communicator */
