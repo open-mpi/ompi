@@ -27,6 +27,7 @@
 #define OMPI_OSC_UCX_POST_PEER_MAX 32
 #define OMPI_OSC_UCX_ATTACH_MAX    48
 #define OMPI_OSC_UCX_MEM_ADDR_MAX_LEN  1024
+#define OMPI_OSC_UCX_MAX_NOTIFY_COUNTERS 16
 
 
 typedef struct ompi_osc_ucx_component {
@@ -276,6 +277,33 @@ int ompi_osc_find_attached_region_position(ompi_osc_dynamic_win_info_t *dynamic_
                                            uint64_t base, size_t len, int *insert);
 int ompi_osc_ucx_dynamic_lock(ompi_osc_ucx_module_t *module, int target);
 int ompi_osc_ucx_dynamic_unlock(ompi_osc_ucx_module_t *module, int target);
+
+int ompi_osc_ucx_put_notify(const void *origin_addr, size_t origin_count,
+                            struct ompi_datatype_t *origin_dt,
+                            int target, ptrdiff_t target_disp, size_t target_count,
+                            struct ompi_datatype_t *target_dt,
+                            int notify, struct ompi_win_t *win);
+int ompi_osc_ucx_get_notify(void *origin_addr, size_t origin_count,
+                            struct ompi_datatype_t *origin_dt,
+                            int target, ptrdiff_t target_disp, size_t target_count,
+                            struct ompi_datatype_t *target_dt,
+                            int notify, struct ompi_win_t *win);
+int ompi_osc_ucx_rput_notify(const void *origin_addr, size_t origin_count,
+                             struct ompi_datatype_t *origin_dt,
+                             int target, ptrdiff_t target_disp, size_t target_count,
+                             struct ompi_datatype_t *target_dt,
+                             int notify, struct ompi_win_t *win,
+                             struct ompi_request_t **request);
+int ompi_osc_ucx_rget_notify(void *origin_addr, size_t origin_count,
+                             struct ompi_datatype_t *origin_dt,
+                             int target, ptrdiff_t target_disp, size_t target_count,
+                             struct ompi_datatype_t *target_dt,
+                             int notify, struct ompi_win_t *win,
+                             struct ompi_request_t **request);
+int ompi_osc_ucx_win_get_notify_value(struct ompi_win_t *win, int notify,
+                                      OMPI_MPI_COUNT_TYPE *value);
+int ompi_osc_ucx_win_reset_notify_value(struct ompi_win_t *win, int notify,
+                                        OMPI_MPI_COUNT_TYPE *value);
 
 /* returns the size at the peer */
 static inline size_t ompi_osc_ucx_get_size(ompi_osc_ucx_module_t *module, int rank)

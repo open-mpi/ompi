@@ -102,6 +102,13 @@ ompi_osc_ucx_module_t ompi_osc_ucx_module_template = {
         .osc_fetch_and_op = ompi_osc_ucx_fetch_and_op,
         .osc_get_accumulate = ompi_osc_ucx_get_accumulate,
 
+        .osc_put_notify = ompi_osc_ucx_put_notify,
+        .osc_get_notify = ompi_osc_ucx_get_notify,
+        .osc_rput_notify = ompi_osc_ucx_rput_notify,
+        .osc_rget_notify = ompi_osc_ucx_rget_notify,
+        .osc_win_get_notify_value = ompi_osc_ucx_win_get_notify_value,
+        .osc_win_reset_notify_value = ompi_osc_ucx_win_reset_notify_value,
+
         .osc_rput = ompi_osc_ucx_rput,
         .osc_rget = ompi_osc_ucx_rget,
         .osc_raccumulate = ompi_osc_ucx_raccumulate,
@@ -785,8 +792,10 @@ select_unlock:
         /* create the segment */
 
         size_t total = 0;
+        size_t notify_size = OMPI_OSC_UCX_MAX_NOTIFY_COUNTERS * sizeof(uint64_t);
         for (i = 0 ; i < comm_size ; ++i) {
-            total += ompi_osc_ucx_get_size(module, i);
+            /* each rank's slot holds its window data plus its notify counters */
+            total += ompi_osc_ucx_get_size(module, i) + notify_size;
         }
 
         module->segment_base = NULL;
@@ -849,14 +858,16 @@ select_unlock:
             goto error;
         }
 
-
+        /* Each rank's window slot is (peer_size + notify_size) bytes; the
+         * notify counters for rank i are at shmem_addrs[i] + peer_size. */
         for (i = 0, total = 0; i < comm_size ; ++i) {
             size_t peer_size = ompi_osc_ucx_get_size(module, i);
             if (peer_size || !module->noncontig_shared_win) {
                 module->shmem_addrs[i] = ((uint64_t) module->segment_base) + total;
-                total += peer_size;
+                total += peer_size + notify_size;
             } else {
                 module->shmem_addrs[i] = (uint64_t)NULL;
+                total += notify_size;
             }
         }
 
@@ -884,7 +895,16 @@ select_unlock:
         ret = OMPI_ERR_BAD_PARAM;
         goto error;
     }
-    ret = opal_common_ucx_wpmem_create(module->ctx, mem_base, module->size,
+    /* Append notify counters after the window data in the same registered
+     * memory region.  For ALLOCATE flavor the UCX allocator will hand back
+     * a buffer of this extended size; for CREATE/SHARED the user buffer is
+     * large enough to hold only the window data, but we still register the
+     * extra bytes so that remote atomic operations on the counters can use
+     * the same rkey as the window data. */
+    size_t notify_reg_size = (flavor == MPI_WIN_FLAVOR_DYNAMIC) ? 0 :
+                             OMPI_OSC_UCX_MAX_NOTIFY_COUNTERS * sizeof(uint64_t);
+    ret = opal_common_ucx_wpmem_create(module->ctx, mem_base,
+                                     module->size + notify_reg_size,
                                      mem_type, &exchange_len_info,
                                      OPAL_COMMON_UCX_WPMEM_ADDR_EXCHANGE_FULL,
                                      (void *)module->comm,
@@ -957,6 +977,12 @@ select_unlock:
     module->state.acc_lock = TARGET_LOCK_UNLOCKED;
     module->state.dynamic_lock = TARGET_LOCK_UNLOCKED;
     module->state.dynamic_win_count = 0;
+
+    /* initialize notify counters to zero; they live at base + size */
+    if (flavor != MPI_WIN_FLAVOR_DYNAMIC && *base != NULL) {
+        memset((char *)*base + module->size, 0,
+               OMPI_OSC_UCX_MAX_NOTIFY_COUNTERS * sizeof(uint64_t));
+    }
     for (i = 0; i < OMPI_OSC_UCX_ATTACH_MAX; i++) {
         module->local_dynamic_win_info[i].refcnt = 0;
     }

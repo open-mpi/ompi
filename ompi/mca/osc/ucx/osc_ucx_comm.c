@@ -603,6 +603,198 @@ int ompi_osc_ucx_get(void *origin_addr, size_t origin_count,
     }
 }
 
+/* Returns the remote address of notify counter[notify] for the given target.
+ * Counters are appended directly after the target's window data in the same
+ * registered memory region (module->mem), so the rkey that covers window data
+ * also covers the counters. */
+static inline uint64_t
+osc_ucx_notify_counter_addr(ompi_osc_ucx_module_t *module, int target, int notify)
+{
+    return module->addrs[target]
+           + ompi_osc_ucx_get_size(module, target)
+           + (uint64_t)notify * sizeof(uint64_t);
+}
+
+#define CHECK_NOTIFY_IDX(notify)                                              \
+    if ((notify) < 0 || (notify) >= OMPI_OSC_UCX_MAX_NOTIFY_COUNTERS) {      \
+        return MPI_ERR_NOTIFY_IDX;                                            \
+    }
+
+int ompi_osc_ucx_win_get_notify_value(struct ompi_win_t *win, int notify,
+                                      OMPI_MPI_COUNT_TYPE *value)
+{
+    ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t *)win->w_osc_module;
+    int my_rank = ompi_comm_rank(module->comm);
+
+    CHECK_NOTIFY_IDX(notify);
+
+    /* Counters are local memory — just read with a barrier to ensure
+     * any preceding remote writes to this counter are visible. */
+    opal_atomic_rmb();
+    volatile uint64_t *counter =
+        (volatile uint64_t *)(module->addrs[my_rank] + module->size) + notify;
+    *value = (OMPI_MPI_COUNT_TYPE)*counter;
+    return OMPI_SUCCESS;
+}
+
+int ompi_osc_ucx_win_reset_notify_value(struct ompi_win_t *win, int notify,
+                                        OMPI_MPI_COUNT_TYPE *value)
+{
+    ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t *)win->w_osc_module;
+    int my_rank = ompi_comm_rank(module->comm);
+
+    CHECK_NOTIFY_IDX(notify);
+
+    volatile uint64_t *counter =
+        (volatile uint64_t *)(module->addrs[my_rank] + module->size) + notify;
+    *value = (OMPI_MPI_COUNT_TYPE)opal_atomic_swap_64((volatile int64_t *)counter, 0);
+    return OMPI_SUCCESS;
+}
+
+int ompi_osc_ucx_put_notify(const void *origin_addr, size_t origin_count,
+                            struct ompi_datatype_t *origin_dt,
+                            int target, ptrdiff_t target_disp, size_t target_count,
+                            struct ompi_datatype_t *target_dt,
+                            int notify, struct ompi_win_t *win)
+{
+    ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t *)win->w_osc_module;
+    ucp_ep_h *ep;
+    int ret;
+
+    CHECK_NOTIFY_IDX(notify);
+
+    OSC_UCX_GET_DEFAULT_EP(ep, module, target);
+
+    ret = ompi_osc_ucx_put(origin_addr, origin_count, origin_dt,
+                           target, target_disp, target_count, target_dt, win);
+    if (OMPI_SUCCESS != ret) {
+        return ret;
+    }
+
+    /* Flush to ensure the PUT is visible at the target before the counter
+     * increment arrives. */
+    ret = opal_common_ucx_wpmem_fence(module->mem);
+    if (OPAL_SUCCESS != ret) {
+        return OMPI_ERROR;
+    }
+
+    /* Atomically increment the target's notify counter in-place using the
+     * same mem handle as the window data. */
+    ret = opal_common_ucx_wpmem_post(module->mem,
+                                     UCP_ATOMIC_POST_OP_ADD, 1,
+                                     target, sizeof(uint64_t),
+                                     osc_ucx_notify_counter_addr(module, target, notify),
+                                     ep);
+    return (OPAL_SUCCESS == ret) ? OMPI_SUCCESS : OMPI_ERROR;
+}
+
+int ompi_osc_ucx_get_notify(void *origin_addr, size_t origin_count,
+                            struct ompi_datatype_t *origin_dt,
+                            int target, ptrdiff_t target_disp, size_t target_count,
+                            struct ompi_datatype_t *target_dt,
+                            int notify, struct ompi_win_t *win)
+{
+    ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t *)win->w_osc_module;
+    ucp_ep_h *ep;
+    int ret;
+
+    CHECK_NOTIFY_IDX(notify);
+
+    OSC_UCX_GET_DEFAULT_EP(ep, module, target);
+
+    ret = ompi_osc_ucx_get(origin_addr, origin_count, origin_dt,
+                           target, target_disp, target_count, target_dt, win);
+    if (OMPI_SUCCESS != ret) {
+        return ret;
+    }
+
+    /* Flush to ensure the GET data is locally available before issuing the
+     * counter increment back to the target. */
+    ret = opal_common_ucx_ctx_flush(module->ctx, OPAL_COMMON_UCX_SCOPE_EP, target);
+    if (OPAL_SUCCESS != ret) {
+        return OMPI_ERROR;
+    }
+
+    ret = opal_common_ucx_wpmem_post(module->mem,
+                                     UCP_ATOMIC_POST_OP_ADD, 1,
+                                     target, sizeof(uint64_t),
+                                     osc_ucx_notify_counter_addr(module, target, notify),
+                                     ep);
+    return (OPAL_SUCCESS == ret) ? OMPI_SUCCESS : OMPI_ERROR;
+}
+
+int ompi_osc_ucx_rput_notify(const void *origin_addr, size_t origin_count,
+                             struct ompi_datatype_t *origin_dt,
+                             int target, ptrdiff_t target_disp, size_t target_count,
+                             struct ompi_datatype_t *target_dt,
+                             int notify, struct ompi_win_t *win,
+                             struct ompi_request_t **request)
+{
+    ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t *)win->w_osc_module;
+    ucp_ep_h *ep;
+    int ret;
+
+    CHECK_NOTIFY_IDX(notify);
+
+    OSC_UCX_GET_DEFAULT_EP(ep, module, target);
+
+    ret = ompi_osc_ucx_rput(origin_addr, origin_count, origin_dt,
+                            target, target_disp, target_count, target_dt,
+                            win, request);
+    if (OMPI_SUCCESS != ret) {
+        return ret;
+    }
+
+    /* Fence to order the PUT before the counter increment. */
+    ret = opal_common_ucx_wpmem_fence(module->mem);
+    if (OPAL_SUCCESS != ret) {
+        return OMPI_ERROR;
+    }
+
+    ret = opal_common_ucx_wpmem_post(module->mem,
+                                     UCP_ATOMIC_POST_OP_ADD, 1,
+                                     target, sizeof(uint64_t),
+                                     osc_ucx_notify_counter_addr(module, target, notify),
+                                     ep);
+    return (OPAL_SUCCESS == ret) ? OMPI_SUCCESS : OMPI_ERROR;
+}
+
+int ompi_osc_ucx_rget_notify(void *origin_addr, size_t origin_count,
+                             struct ompi_datatype_t *origin_dt,
+                             int target, ptrdiff_t target_disp, size_t target_count,
+                             struct ompi_datatype_t *target_dt,
+                             int notify, struct ompi_win_t *win,
+                             struct ompi_request_t **request)
+{
+    ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t *)win->w_osc_module;
+    ucp_ep_h *ep;
+    int ret;
+
+    CHECK_NOTIFY_IDX(notify);
+
+    OSC_UCX_GET_DEFAULT_EP(ep, module, target);
+
+    ret = ompi_osc_ucx_rget(origin_addr, origin_count, origin_dt,
+                            target, target_disp, target_count, target_dt,
+                            win, request);
+    if (OMPI_SUCCESS != ret) {
+        return ret;
+    }
+
+    /* Flush to ensure GET data is locally available before notifying target. */
+    ret = opal_common_ucx_ctx_flush(module->ctx, OPAL_COMMON_UCX_SCOPE_EP, target);
+    if (OPAL_SUCCESS != ret) {
+        return OMPI_ERROR;
+    }
+
+    ret = opal_common_ucx_wpmem_post(module->mem,
+                                     UCP_ATOMIC_POST_OP_ADD, 1,
+                                     target, sizeof(uint64_t),
+                                     osc_ucx_notify_counter_addr(module, target, notify),
+                                     ep);
+    return (OPAL_SUCCESS == ret) ? OMPI_SUCCESS : OMPI_ERROR;
+}
+
 static inline bool ompi_osc_need_acc_lock(ompi_osc_ucx_module_t *module, int target)
 {
     ompi_osc_ucx_lock_t *lock = NULL;
