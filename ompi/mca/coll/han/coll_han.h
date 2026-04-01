@@ -455,6 +455,12 @@ typedef struct mca_coll_han_module_t {
     /* Persistent gather root reorder buffer (realloc-to-HWM) */
     char *gather_reorder_persist;
     size_t gather_reorder_persist_size;
+    /* Persistent allgather reorder buffer for task-based path (realloc-to-HWM) */
+    char *allgather_reorder_persist;
+    size_t allgather_reorder_persist_size;
+    /* Persistent allgather intra-node gather buffer (realloc-to-HWM) */
+    char *allgather_gather_persist;
+    size_t allgather_gather_persist_size;
     /* Persistent reduce task-based tmp buffer (realloc-to-HWM) */
     char *reduce_tmp_persist;
     size_t reduce_tmp_persist_size;

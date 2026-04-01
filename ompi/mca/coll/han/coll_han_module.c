@@ -197,6 +197,10 @@ static void mca_coll_han_module_construct(mca_coll_han_module_t * module)
     module->gather_reorder_persist_size = 0;
     module->reduce_tmp_persist = NULL;
     module->reduce_tmp_persist_size = 0;
+    module->allgather_reorder_persist = NULL;
+    module->allgather_reorder_persist_size = 0;
+    module->allgather_gather_persist = NULL;
+    module->allgather_gather_persist_size = 0;
     module->is_mapbycore = false;
     module->storage_initialized = false;
     for( i = 0; i < NB_TOPO_LVL; i++ ) {
@@ -278,6 +282,14 @@ mca_coll_han_module_destruct(mca_coll_han_module_t * module)
     free(module->reduce_tmp_persist);
     module->reduce_tmp_persist = NULL;
     module->reduce_tmp_persist_size = 0;
+
+    free(module->allgather_reorder_persist);
+    module->allgather_reorder_persist = NULL;
+    module->allgather_reorder_persist_size = 0;
+
+    free(module->allgather_gather_persist);
+    module->allgather_gather_persist = NULL;
+    module->allgather_gather_persist_size = 0;
 
     for(i=0 ; i<NB_TOPO_LVL ; i++) {
         if(NULL != module->sub_comm[i]) {
