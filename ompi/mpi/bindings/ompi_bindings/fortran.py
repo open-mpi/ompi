@@ -1,4 +1,4 @@
-# Copyright (c) 2024-2025 Triad National Security, LLC. All rights
+# Copyright (c) 2024-2026 Triad National Security, LLC. All rights
 #                         reserved.
 #
 # $COPYRIGHT$
@@ -261,6 +261,7 @@ def print_c_source_header(out):
     out.dump('#include "ompi/mpi/fortran/mpif-h/status-conversion.h"')
     out.dump('#include "ompi/mpi/fortran/base/constants.h"')
     out.dump('#include "ompi/mpi/fortran/base/fint_2_int.h"')
+    out.dump('#include "ompi/mpi/fortran/base/fortran_base_topo_neighbors.h"')
     out.dump('#include "ompi/request/request.h"')
     out.dump('#include "ompi/communicator/communicator.h"')
     out.dump('#include "ompi/win/win.h"')
