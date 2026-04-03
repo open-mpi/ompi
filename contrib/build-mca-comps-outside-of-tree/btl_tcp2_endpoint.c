@@ -122,7 +122,7 @@ static void mca_btl_tcp2_endpoint_send_handler(int sd, short flags, void* user);
 
 void mca_btl_tcp_endpoint_dump(mca_btl_base_endpoint_t* btl_endpoint, const char* msg)
 {
-    char src[64], dst[64], *status;
+    char src[INET_ADDRSTRLEN], dst[INET_ADDRSTRLEN], *status;
     int sndbuf, rcvbuf, nodelay, flags = -1;
 #if OPAL_ENABLE_IPV6
     struct sockaddr_storage inaddr;
@@ -144,7 +144,7 @@ void mca_btl_tcp_endpoint_dump(mca_btl_base_endpoint_t* btl_endpoint, const char
             }
         }
 #else
-        sprintf(src, "%s", inet_ntoa(inaddr.sin_addr));
+        inet_ntop(AF_INET, &inaddr.sin_addr, src, sizeof(src));
 #endif
         getpeername(btl_endpoint->endpoint_sd, (struct sockaddr*)&inaddr, &addrlen);
 #if OPAL_ENABLE_IPV6
@@ -156,7 +156,7 @@ void mca_btl_tcp_endpoint_dump(mca_btl_base_endpoint_t* btl_endpoint, const char
             }
         }
 #else
-        sprintf(dst, "%s", inet_ntoa(inaddr.sin_addr));
+        inet_ntop(AF_INET, &inaddr.sin_addr, dst, sizeof(dst));
 #endif
 
         if((flags = fcntl(btl_endpoint->endpoint_sd, F_GETFL, 0)) < 0) {
