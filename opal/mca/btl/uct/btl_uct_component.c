@@ -146,23 +146,6 @@ static int mca_btl_uct_component_register(void)
         MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_4,
         MCA_BASE_VAR_SCOPE_LOCAL, &mca_btl_uct_component.connection_retry_timeout);
 
-    OBJ_CONSTRUCT(&mca_btl_uct_component.md_list, opal_list_t);
-    OBJ_CONSTRUCT(&mca_btl_uct_component.memory_domain_list, mca_btl_uct_include_list_t);
-    OBJ_CONSTRUCT(&mca_btl_uct_component.connection_domain_list, mca_btl_uct_include_list_t);
-
-    int rc = mca_btl_uct_component_discover_mds();
-    if (OPAL_SUCCESS != rc) {
-        return rc;
-    }
-
-    rc = mca_btl_uct_component_generate_modules(&mca_btl_uct_component.md_list);
-    if (OPAL_SUCCESS != rc) {
-        return rc;
-    }
-
-    mca_btl_uct_component.initialized = true;
-    opal_finalize_register_cleanup(mca_btl_uct_cleanup);
-
     return OPAL_SUCCESS;
 }
 
