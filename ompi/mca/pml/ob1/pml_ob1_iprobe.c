@@ -47,6 +47,11 @@ int mca_pml_ob1_iprobe(int src,
         *matched = 1;
     } else {
         *matched = 0;
+#if OPAL_ENABLE_FT_MPI
+        if( ompi_request_is_failed((ompi_request_t*)&recvreq) ) {
+            rc = recvreq.req_recv.req_base.req_ompi.req_status.MPI_ERROR;
+        }
+#endif
         opal_progress();
     }
     MCA_PML_BASE_RECV_REQUEST_FINI( &recvreq.req_recv );
@@ -119,6 +124,11 @@ mca_pml_ob1_improbe(int src,
         (*message)->count = recvreq->req_recv.req_base.req_ompi.req_status._ucount;
     } else {
         *matched = 0;
+#if OPAL_ENABLE_FT_MPI
+        if( ompi_request_is_failed((ompi_request_t*)recvreq) ) {
+            rc = recvreq->req_recv.req_base.req_ompi.req_status.MPI_ERROR;
+        }
+#endif
 
         /* we only free if we didn't match, because we're going to
            translate the request into a receive request later on if it

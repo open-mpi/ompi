@@ -108,16 +108,19 @@ static int mca_pml_ob1_recv_request_cancel(struct ompi_request_t* ompi_request, 
     }
     if( !request->req_match_received ) { /* the match has not been already done */
         assert( OMPI_ANY_TAG == ompi_request->req_status.MPI_TAG ); /* not matched isn't it */
+        if(OPAL_LIKELY(request->req_recv.req_base.req_type != MCA_PML_REQUEST_IPROBE &&
+                       request->req_recv.req_base.req_type != MCA_PML_REQUEST_IMPROBE)) {
 #if MCA_PML_OB1_CUSTOM_MATCH
-        custom_match_prq_cancel(ob1_comm->prq, request);
+            custom_match_prq_cancel(ob1_comm->prq, request);
 #else
-        if( request->req_recv.req_base.req_peer == OMPI_ANY_SOURCE ) {
-            opal_list_remove_item( &ob1_comm->wild_receives, (opal_list_item_t*)request );
-        } else {
-            mca_pml_ob1_comm_proc_t* proc = mca_pml_ob1_peer_lookup (comm, request->req_recv.req_base.req_peer);
-            opal_list_remove_item(&proc->specific_receives, (opal_list_item_t*)request);
-        }
+            if( request->req_recv.req_base.req_peer == OMPI_ANY_SOURCE ) {
+                opal_list_remove_item( &ob1_comm->wild_receives, (opal_list_item_t*)request );
+            } else {
+                mca_pml_ob1_comm_proc_t* proc = mca_pml_ob1_peer_lookup (comm, request->req_recv.req_base.req_peer);
+                opal_list_remove_item(&proc->specific_receives, (opal_list_item_t*)request);
+            }
 #endif
+        }
         PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_REMOVE_FROM_POSTED_Q,
                                 &(request->req_recv.req_base), PERUSE_RECV );
         OB1_MATCHING_UNLOCK(&ob1_comm->matching_lock);
