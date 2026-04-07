@@ -342,7 +342,7 @@ int main(int argc, char *argv[])
     assert(pdt1 == NULL);
 
     /* clean-ups all data allocations */
-    opal_finalize_util();
+    opal_finalize();
 
     return OMPI_SUCCESS;
 }

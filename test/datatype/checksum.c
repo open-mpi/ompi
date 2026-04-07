@@ -151,7 +151,7 @@ int main(int argc, char *argv[])
     free(packed);
 
     /* clean-ups all data allocations */
-    opal_finalize_util();
+    opal_finalize();
 
     return 0;
 }
