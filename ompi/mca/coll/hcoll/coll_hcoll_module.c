@@ -18,7 +18,6 @@
 #include "coll_hcoll.h"
 #include "coll_hcoll_dtypes.h"
 
-int hcoll_comm_attr_keyval;
 int hcoll_type_attr_keyval;
 mca_coll_hcoll_dtype_t zero_dte_mapping;
 /*
@@ -105,14 +104,6 @@ void mca_coll_hcoll_mem_release_cb(void *buf, size_t length,
 
 static void mca_coll_hcoll_module_destruct(mca_coll_hcoll_module_t *hcoll_module)
 {
-    int context_destroyed;
-
-    if (hcoll_module->comm == &ompi_mpi_comm_world.comm){
-        if (OMPI_SUCCESS != ompi_attr_free_keyval(COMM_ATTR, &hcoll_comm_attr_keyval, 0)) {
-            HCOL_VERBOSE(1,"hcoll ompi_attr_free_keyval failed");
-        }
-    }
-
     /* If the hcoll_context is null then we are destroying the hcoll_module
        that didn't initialized fallback colls/modules.
        Then just clear and return. Otherwise release module pointers and
@@ -150,11 +141,16 @@ static void mca_coll_hcoll_module_destruct(mca_coll_hcoll_module_t *hcoll_module
         OBJ_RELEASE(hcoll_module->previous_reduce_scatter_module);
         OBJ_RELEASE(hcoll_module->previous_reduce_module);
         */
-#if !defined(HAVE_HCOLL_CONTEXT_FREE)
-        context_destroyed = 0;
-        hcoll_destroy_context(hcoll_module->hcoll_context,
-                              (rte_grp_handle_t)hcoll_module->comm,
-                              &context_destroyed);
+#ifdef HAVE_HCOLL_CONTEXT_FREE
+        hcoll_context_free(hcoll_module->hcoll_context,
+                           (rte_grp_handle_t)hcoll_module->comm);
+#else
+        {
+            int context_destroyed = 0;
+            hcoll_destroy_context(hcoll_module->hcoll_context,
+                                  (rte_grp_handle_t)hcoll_module->comm,
+                                  &context_destroyed);
+        }
 #endif
     }
     mca_coll_hcoll_module_clear(hcoll_module);
@@ -213,23 +209,6 @@ static int mca_coll_hcoll_save_coll_handlers(mca_coll_hcoll_module_t *hcoll_modu
 
 
 /*
-** Communicator free callback
-*/
-static int hcoll_comm_attr_del_fn(MPI_Comm comm, int keyval, void *attr_val, void *extra)
-{
-
-    mca_coll_hcoll_module_t *hcoll_module;
-    hcoll_module = (mca_coll_hcoll_module_t*) attr_val;
-
-#ifdef HAVE_HCOLL_CONTEXT_FREE
-    hcoll_context_free(hcoll_module->hcoll_context, (rte_grp_handle_t)comm);
-#else
-    hcoll_group_destroy_notify(hcoll_module->hcoll_context);
-#endif
-    return OMPI_SUCCESS;
-
-}
-/*
  * Initialize module on the communicator
  */
 static int mca_coll_hcoll_module_enable(mca_coll_base_module_t *module,
@@ -239,12 +218,6 @@ static int mca_coll_hcoll_module_enable(mca_coll_base_module_t *module,
 
     if (OMPI_SUCCESS != mca_coll_hcoll_save_coll_handlers((mca_coll_hcoll_module_t *)module)){
         HCOL_ERROR("coll_hcol: mca_coll_hcoll_save_coll_handlers failed");
-        return OMPI_ERROR;
-    }
-
-    ret = ompi_attr_set_c(COMM_ATTR, comm, &comm->c_keyhash, hcoll_comm_attr_keyval, (void *)module, false);
-    if (OMPI_SUCCESS != ret) {
-        HCOL_VERBOSE(1,"hcoll ompi_attr_set_c failed");
         return OMPI_ERROR;
     }
 
@@ -334,17 +307,6 @@ mca_coll_hcoll_comm_query(struct ompi_communicator_t *comm, int *priority)
         } else {
             cm->using_mem_hooks = 0;
         }
-        copy_fn.attr_communicator_copy_fn = MPI_COMM_NULL_COPY_FN;
-        del_fn.attr_communicator_delete_fn = hcoll_comm_attr_del_fn;
-        err = ompi_attr_create_keyval(COMM_ATTR, copy_fn, del_fn, &hcoll_comm_attr_keyval, NULL ,0, NULL);
-        if (OMPI_SUCCESS != err) {
-            cm->hcoll_enable = 0;
-            hcoll_finalize();
-            opal_progress_unregister(hcoll_progress_fn);
-            HCOL_ERROR("Hcol comm keyval create failed");
-            return NULL;
-        }
-
         if (mca_coll_hcoll_component.derived_types_support_enabled) {
             zero_dte_mapping.type = DTE_ZERO;
             copy_fn.attr_datatype_copy_fn = MPI_TYPE_NULL_COPY_FN;
