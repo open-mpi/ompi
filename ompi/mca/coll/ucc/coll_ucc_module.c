@@ -124,9 +124,9 @@ static void mca_coll_ucc_module_destruct(mca_coll_ucc_module_t *ucc_module)
         }
     }
     /* ucc_context_destroy needs OOB via MPI_COMM_WORLD; call it while
-     * COMM_WORLD is still alive. ompi_comm_finalize() releases leaked user
-     * communicators (cid >= 3) before OBJ_DESTRUCT(&ompi_mpi_comm_world),
-     * so all UCC teams are destroyed before the context. */
+     * COMM_WORLD is still alive (module destructor fires before c_local_group
+     * is released in ompi_comm_destruct). All remaining teams in active_modules
+     * are destroyed inside mca_coll_ucc_finalize_ctx() before the context. */
     if (ucc_module->comm == &ompi_mpi_comm_world.comm) {
         mca_coll_ucc_finalize_ctx();
     }
