@@ -318,7 +318,7 @@ int main( int argc, char* argv[] )
     OBJ_RELEASE( pdt1 ); assert( pdt1 == NULL );
 
     /* clean-ups all data allocations */
-    opal_finalize_util ();
+    opal_finalize();
 
     return OMPI_SUCCESS;
 }

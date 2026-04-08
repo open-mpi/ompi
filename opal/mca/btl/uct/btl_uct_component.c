@@ -148,6 +148,22 @@ static int mca_btl_uct_component_open(void)
         opal_mem_hooks_register_release(mca_btl_uct_mem_release_cb, NULL);
     }
 
+    OBJ_CONSTRUCT(&mca_btl_uct_component.md_list, opal_list_t);
+    OBJ_CONSTRUCT(&mca_btl_uct_component.memory_domain_list, mca_btl_uct_include_list_t);
+    OBJ_CONSTRUCT(&mca_btl_uct_component.connection_domain_list, mca_btl_uct_include_list_t);
+
+    int rc = mca_btl_uct_component_discover_mds();
+    if (OPAL_SUCCESS != rc) {
+        return rc;
+    }
+
+    rc = mca_btl_uct_component_generate_modules(&mca_btl_uct_component.md_list);
+    if (OPAL_SUCCESS != rc) {
+        return rc;
+    }
+
+    mca_btl_uct_component.initialized = true;
+
     return OPAL_SUCCESS;
 }
 

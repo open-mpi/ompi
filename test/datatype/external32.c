@@ -245,7 +245,7 @@ int main(int argc, char *argv[])
         }
     }
 
-    opal_finalize_util();
+    opal_finalize();
 
     return 0;
 }
