@@ -25,7 +25,7 @@
  * Copyright (c) 2018-2024 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2023      Advanced Micro Devices, Inc. All rights reserved.
- * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2024-2026 NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -67,7 +67,6 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_communicator_t);
 #define OMPI_COMM_GRAPH        0x00000200
 #define OMPI_COMM_DIST_GRAPH   0x00000400
 #define OMPI_COMM_PML_ADDED    0x00001000
-#define OMPI_COMM_EXTRA_RETAIN 0x00004000
 #define OMPI_COMM_MAPBY_NODE   0x00008000
 #define OMPI_COMM_GLOBAL_INDEX 0x00010000
 
@@ -82,7 +81,6 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_communicator_t);
 #define OMPI_COMM_IS_DYNAMIC(comm) ((comm)->c_flags & OMPI_COMM_DYNAMIC)
 #define OMPI_COMM_IS_INVALID(comm) ((comm)->c_flags & OMPI_COMM_INVALID)
 #define OMPI_COMM_IS_PML_ADDED(comm) ((comm)->c_flags & OMPI_COMM_PML_ADDED)
-#define OMPI_COMM_IS_EXTRA_RETAIN(comm) ((comm)->c_flags & OMPI_COMM_EXTRA_RETAIN)
 #define OMPI_COMM_IS_TOPO(comm) (OMPI_COMM_IS_CART((comm)) || \
                                  OMPI_COMM_IS_GRAPH((comm)) || \
                                  OMPI_COMM_IS_DIST_GRAPH((comm)))
@@ -93,7 +91,6 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_communicator_t);
 #define OMPI_COMM_SET_INVALID(comm) ((comm)->c_flags |= OMPI_COMM_INVALID)
 
 #define OMPI_COMM_SET_PML_ADDED(comm) ((comm)->c_flags |= OMPI_COMM_PML_ADDED)
-#define OMPI_COMM_SET_EXTRA_RETAIN(comm) ((comm)->c_flags |= OMPI_COMM_EXTRA_RETAIN)
 #define OMPI_COMM_SET_MAPBY_NODE(comm) ((comm)->c_flags |= OMPI_COMM_MAPBY_NODE)
 
 #define OMPI_COMM_ASSERT_NO_ANY_TAG     0x00000001
@@ -142,8 +139,6 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_communicator_t);
  */
 #define OMPI_COMM_SENTINEL        0x00000001
 
-/* A macro comparing two CIDs */
-#define OMPI_COMM_CID_IS_LOWER(comm1,comm2) ( ((comm1)->c_index < (comm2)->c_index)? 1:0)
 
 OMPI_DECLSPEC extern opal_hash_table_t ompi_comm_hash;
 OMPI_DECLSPEC extern opal_pointer_array_t ompi_mpi_communicators;

@@ -26,6 +26,7 @@
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * Copyright (c) 2020-2024 Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -60,8 +61,6 @@
 /* for use when we don't have a PMIx that supports CID generation */
 opal_atomic_int64_t ompi_comm_next_base_cid = 1;
 
-/* A macro comparing two CIDs */
-#define OMPI_COMM_CID_IS_LOWER(comm1,comm2) ( ((comm1)->c_index < (comm2)->c_index)? 1:0)
 
 struct ompi_comm_cid_context_t;
 
@@ -882,30 +881,6 @@ static int ompi_comm_activate_complete (ompi_communicator_t **newcomm, ompi_comm
         OBJ_RELEASE(*newcomm);
         *newcomm = MPI_COMM_NULL;
         return ret;
-    }
-
-    /* For an inter communicator, we have to deal with the potential
-     * problem of what is happening if the local_comm that we created
-     * has a lower CID than the parent comm. This is not a problem
-     * as long as the user calls MPI_Comm_free on the inter communicator.
-     * However, if the communicators are not freed by the user but released
-     * by Open MPI in MPI_Finalize, we walk through the list of still available
-     * communicators and free them one by one. Thus, local_comm is freed before
-     * the actual inter-communicator. However, the local_comm pointer in the
-     * inter communicator will still contain the 'previous' address of the local_comm
-     * and thus this will lead to a segmentation violation. In order to prevent
-     * that from happening, we increase the reference counter local_comm
-     * by one if its CID is lower than the parent. We cannot increase however
-     *  its reference counter if the CID of local_comm is larger than
-     * the CID of the inter communicators, since a regular MPI_Comm_free would
-     * leave in that the case the local_comm hanging around and thus we would not
-     * recycle CID's properly, which was the reason and the cause for this trouble.
-     */
-    if (OMPI_COMM_IS_INTER(*newcomm)) {
-        if (OMPI_COMM_CID_IS_LOWER(*newcomm, comm)) {
-            OMPI_COMM_SET_EXTRA_RETAIN (*newcomm);
-            OBJ_RETAIN (*newcomm);
-        }
     }
 
     /* done */

@@ -26,7 +26,9 @@
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * Copyright (c) 2018-2024 Triad National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2023      Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (c) 2023-2025 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (c) 2025      BULL S.A.S. All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -273,10 +275,14 @@ int ompi_comm_set_nb (ompi_communicator_t **ncomm, ompi_communicator_t *oldcomm,
             /* NTH: use internal idup function that takes a local group argument */
             ompi_comm_idup_internal (old_localcomm, newcomm->c_local_group, NULL, NULL,
                                      &newcomm->c_local_comm, req);
+            if (NULL != newcomm->c_local_comm
+                && !OMPI_COMM_IS_INTRINSIC(newcomm->c_local_comm)) {
+                OBJ_RETAIN(newcomm->c_local_comm);
+            }
         } else {
-            /* take ownership of the old communicator (it must be an intracommunicator) */
             assert (OMPI_COMM_IS_INTRA(oldcomm));
             newcomm->c_local_comm = oldcomm;
+            OBJ_RETAIN(newcomm->c_local_comm);
         }
     } else {
         newcomm->c_remote_group = newcomm->c_local_group;
@@ -2120,8 +2126,6 @@ static int ompi_comm_allgather_emulate_intra( void *inbuf, int incount,
 int ompi_comm_free( ompi_communicator_t **comm )
 {
     int ret;
-    int cid = (*comm)->c_index;
-    int is_extra_retain = OMPI_COMM_IS_EXTRA_RETAIN(*comm);
 
     /* Release attributes.  We do this now instead of during the
        communicator destructor for 2 reasons:
@@ -2150,7 +2154,9 @@ int ompi_comm_free( ompi_communicator_t **comm )
     }
 
     if ( OMPI_COMM_IS_INTER(*comm) ) {
-        if ( ! OMPI_COMM_IS_INTRINSIC((*comm)->c_local_comm)) {
+        if (NULL != (*comm)->c_local_comm
+            && ! OMPI_COMM_IS_INTRINSIC((*comm)->c_local_comm)) {
+            OBJ_RELEASE((*comm)->c_local_comm);
             ompi_comm_free (&(*comm)->c_local_comm);
         }
     }
@@ -2172,29 +2178,6 @@ int ompi_comm_free( ompi_communicator_t **comm )
         ompi_comm_num_dyncomm --;
     }
     OBJ_RELEASE( (*comm) );
-
-    if ( is_extra_retain) {
-        /* This communicator has been marked as an "extra retain"
-         * communicator. This can happen if a communicator creates
-         * 'dependent' subcommunicators (e.g. for inter
-         * communicators or when using hierarch collective
-         * module *and* the cid of the dependent communicator
-         * turned out to be lower than of the parent one.
-         * In that case, the reference counter has been increased
-         * by one more, in order to handle the scenario,
-         * that the user did not free the communicator.
-         * Note, that if we enter this routine, we can
-         * decrease the counter by one more therefore. However,
-         * in ompi_comm_finalize, we only used OBJ_RELEASE instead
-         * of ompi_comm_free(), and the increased reference counter
-         * makes sure that the pointer to the dependent communicator
-         * still contains a valid object.
-         */
-        ompi_communicator_t *tmpcomm = ompi_comm_lookup(cid);
-        if ( NULL != tmpcomm ){
-            ompi_comm_free(&tmpcomm);
-        }
-    }
 
     *comm = MPI_COMM_NULL;
     return OMPI_SUCCESS;
