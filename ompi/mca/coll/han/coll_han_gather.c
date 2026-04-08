@@ -158,18 +158,11 @@ mca_coll_han_gather_intra(const void *sbuf, size_t scount,
             rsize = opal_datatype_span(&rdtype->super,
                                        (int64_t)rcount * w_size,
                                        &rgap);
-            if (mca_coll_han_component.han_use_persist_buffers) {
-                if (han_module->gather_reorder_persist_size < (size_t)rsize) {
-                    char *p = realloc(han_module->gather_reorder_persist, rsize);
-                    if (NULL == p) return OMPI_ERR_OUT_OF_RESOURCE;
-                    han_module->gather_reorder_persist = p;
-                    han_module->gather_reorder_persist_size = rsize;
-                }
-                reorder_buf = han_module->gather_reorder_persist;
-            } else {
-                reorder_buf = (char *)malloc(rsize);
-                if (NULL == reorder_buf) return OMPI_ERR_OUT_OF_RESOURCE;
-            }
+            reorder_buf = han_scratch_or_malloc(&han_module->scratch_buf[0],
+                                                 &han_module->scratch_buf_size[0],
+                                                 (size_t)rsize,
+                                                 mca_coll_han_component.han_use_persist_buffers);
+            if (NULL == reorder_buf) return OMPI_ERR_OUT_OF_RESOURCE;
             /* rgap is the size of unused space at the start of the datatype */
             reorder_rbuf = reorder_buf - rgap;
 
@@ -235,18 +228,11 @@ int mca_coll_han_gather_lg_task(void *task_args)
         rsize = opal_datatype_span(&dtype->super,
                                    count * low_size,
                                    &rgap);
-        if (mca_coll_han_component.han_use_persist_buffers) {
-            if (t->han_module->cached_gather_buf_size < (size_t)rsize) {
-                char *p = realloc(t->han_module->cached_gather_buf, rsize);
-                if (NULL == p) return OMPI_ERR_OUT_OF_RESOURCE;
-                t->han_module->cached_gather_buf = p;
-                t->han_module->cached_gather_buf_size = rsize;
-            }
-            tmp_buf = (char *)t->han_module->cached_gather_buf;
-        } else {
-            tmp_buf = (char *)malloc(rsize);
-            if (NULL == tmp_buf) return OMPI_ERR_OUT_OF_RESOURCE;
-        }
+        tmp_buf = han_scratch_or_malloc(&t->han_module->scratch_buf[1],
+                                        &t->han_module->scratch_buf_size[1],
+                                        (size_t)rsize,
+                                        mca_coll_han_component.han_use_persist_buffers);
+        if (NULL == tmp_buf) return OMPI_ERR_OUT_OF_RESOURCE;
         tmp_rbuf = tmp_buf - rgap;
         if (t->w_rank == t->root && MPI_IN_PLACE == t->sbuf) {
             ptrdiff_t rextent;
@@ -400,18 +386,11 @@ mca_coll_han_gather_intra_simple(const void *sbuf, size_t scount,
             ptrdiff_t rsize = opal_datatype_span(&rdtype->super,
                                                  (int64_t)rcount * w_size,
                                                  &rgap);
-            if (mca_coll_han_component.han_use_persist_buffers) {
-                if (han_module->gather_reorder_persist_size < (size_t)rsize) {
-                    char *p = realloc(han_module->gather_reorder_persist, rsize);
-                    if (NULL == p) return OMPI_ERR_OUT_OF_RESOURCE;
-                    han_module->gather_reorder_persist = p;
-                    han_module->gather_reorder_persist_size = rsize;
-                }
-                reorder_buf = han_module->gather_reorder_persist;
-            } else {
-                reorder_buf = (char *)malloc(rsize);
-                if (NULL == reorder_buf) return OMPI_ERR_OUT_OF_RESOURCE;
-            }
+            reorder_buf = han_scratch_or_malloc(&han_module->scratch_buf[0],
+                                                 &han_module->scratch_buf_size[0],
+                                                 (size_t)rsize,
+                                                 mca_coll_han_component.han_use_persist_buffers);
+            if (NULL == reorder_buf) return OMPI_ERR_OUT_OF_RESOURCE;
             /* rgap is the size of unused space at the start of the datatype */
             reorder_buf_start = reorder_buf - rgap;
         }
@@ -426,18 +405,11 @@ mca_coll_han_gather_intra_simple(const void *sbuf, size_t scount,
         rsize = opal_datatype_span(&dtype->super,
                                    count * low_size,
                                    &rgap);
-        if (mca_coll_han_component.han_use_persist_buffers) {
-            if (han_module->cached_gather_buf_size < (size_t)rsize) {
-                char *p = realloc(han_module->cached_gather_buf, rsize);
-                if (NULL == p) return OMPI_ERR_OUT_OF_RESOURCE;
-                han_module->cached_gather_buf = p;
-                han_module->cached_gather_buf_size = rsize;
-            }
-            tmp_buf = (char *)han_module->cached_gather_buf;
-        } else {
-            tmp_buf = (char *)malloc(rsize);
-            if (NULL == tmp_buf) return OMPI_ERR_OUT_OF_RESOURCE;
-        }
+        tmp_buf = han_scratch_or_malloc(&han_module->scratch_buf[1],
+                                        &han_module->scratch_buf_size[1],
+                                        (size_t)rsize,
+                                        mca_coll_han_component.han_use_persist_buffers);
+        if (NULL == tmp_buf) return OMPI_ERR_OUT_OF_RESOURCE;
         tmp_buf_start = tmp_buf - rgap;
     }
 
@@ -504,7 +476,7 @@ ompi_coll_han_reorder_gather(const void *sbuf,
                              void *rbuf, size_t count,
                              struct ompi_datatype_t *dtype,
                              struct ompi_communicator_t *comm,
-                             int * topo)
+                             const int * topo)
 {
     int i, topolevel = 2; // always 2 levels in topo
 #if OPAL_ENABLE_DEBUG

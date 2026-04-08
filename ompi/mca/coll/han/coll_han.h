@@ -85,6 +85,34 @@ enum {
     HAN_ALLOC_SMALL  = 2
 };
 
+/**
+ * Grow a shared scratch buffer to at least 'needed' bytes (realloc-to-HWM).
+ * Returns the buffer pointer, or NULL on allocation failure.
+ */
+static inline char *han_scratch_alloc(char **buf, size_t *buf_size, size_t needed)
+{
+    if (*buf_size < needed) {
+        char *p = realloc(*buf, needed);
+        if (NULL == p) return NULL;
+        *buf = p;
+        *buf_size = needed;
+    }
+    return *buf;
+}
+
+/**
+ * Allocate from scratch buffer (persist mode) or malloc (non-persist).
+ * Returns NULL on allocation failure.
+ */
+static inline char *han_scratch_or_malloc(char **scratch, size_t *scratch_size,
+                                          size_t needed, bool persist)
+{
+    if (persist) {
+        return han_scratch_alloc(scratch, scratch_size, needed);
+    }
+    return (char *)malloc(needed);
+}
+
 
 struct mca_coll_han_bcast_args_s {
     mca_coll_task_t *cur_task;
@@ -166,8 +194,6 @@ struct mca_coll_han_scatter_args_s {
     int root_low_rank;
     int w_rank;
     bool noop;
-    opal_free_list_item_t *inter_fl_item;   /* freelist item for inter-node buf */
-    int inter_fl_src;                        /* HAN_ALLOC_{MALLOC,LARGE,SMALL} */
     opal_free_list_item_t *reorder_fl_item; /* freelist item for reorder buf */
     int reorder_fl_src;                      /* HAN_ALLOC_{MALLOC,LARGE,SMALL} */
 };
@@ -431,11 +457,6 @@ typedef struct mca_coll_han_module_t {
      */
     int dynamic_errors;
 
-    /* Persistent bounce buffer for alltoall — grows to high-water mark
-       via realloc so the NIC rcache registration stays valid. */
-    char *alltoall_bounce;
-    size_t alltoall_bounce_size;
-
     /* Sub-communicator */
     struct ompi_communicator_t *sub_comm[NB_TOPO_LVL];
 
@@ -443,27 +464,13 @@ typedef struct mca_coll_han_module_t {
     opal_free_list_t fragment_freelist;
     /* Large fragment pool for pipeline reorder buffers (1MB items) */
     opal_free_list_t large_fragment_freelist;
-    /* Cached gather buffer for three-tier allocation */
-    void *cached_gather_buf;
-    size_t cached_gather_buf_size;
-    /* Persistent buffer for scatter inter-node recv (realloc-to-HWM) */
-    char *scatter_persist;
-    size_t scatter_persist_size;
-    /* Persistent scatter root reorder buffer (realloc-to-HWM) */
-    char *scatter_reorder_persist;
-    size_t scatter_reorder_persist_size;
-    /* Persistent gather root reorder buffer (realloc-to-HWM) */
-    char *gather_reorder_persist;
-    size_t gather_reorder_persist_size;
-    /* Persistent allgather reorder buffer for task-based path (realloc-to-HWM) */
-    char *allgather_reorder_persist;
-    size_t allgather_reorder_persist_size;
-    /* Persistent allgather intra-node gather buffer (realloc-to-HWM) */
-    char *allgather_gather_persist;
-    size_t allgather_gather_persist_size;
-    /* Persistent reduce task-based tmp buffer (realloc-to-HWM) */
-    char *reduce_tmp_persist;
-    size_t reduce_tmp_persist_size;
+    /* Shared scratch buffers for all collectives (realloc-to-HWM).
+     * Since collectives don't run concurrently on the same communicator,
+     * all collectives share these two buffers. Two are needed because
+     * some collectives use two temporary buffers with overlapping lifetimes
+     * (e.g., allgather uses a gather buffer and a reorder buffer). */
+    char *scratch_buf[2];
+    size_t scratch_buf_size[2];
 } mca_coll_han_module_t;
 OBJ_CLASS_DECLARATION(mca_coll_han_module_t);
 
@@ -642,7 +649,7 @@ ompi_coll_han_reorder_gather(const void *sbuf,
                              void *rbuf, size_t rcount,
                              struct ompi_datatype_t *rdtype,
                              struct ompi_communicator_t *comm,
-                             int * topo);
+                             const int * topo);
 
 static inline struct mca_smsc_endpoint_t *mca_coll_han_get_smsc_endpoint (struct ompi_proc_t *proc) {
     extern opal_mutex_t mca_coll_han_lock;

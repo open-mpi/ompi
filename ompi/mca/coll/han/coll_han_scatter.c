@@ -112,8 +112,6 @@ mca_coll_han_set_scatter_args(mca_coll_han_scatter_args_t * args,
     args->noop = noop;
     args->req = req;
     args->han_module = han_module;
-    args->inter_fl_item = NULL;
-    args->inter_fl_src = HAN_ALLOC_MALLOC;
     args->reorder_fl_item = NULL;
     args->reorder_fl_src = HAN_ALLOC_MALLOC;
 }
@@ -214,6 +212,9 @@ mca_coll_han_scatter_intra(const void *sbuf, size_t scount,
             } else {
                 reorder_buf = (char *)malloc(ssize);
             }
+            if (NULL == reorder_buf) {
+                return OMPI_ERR_OUT_OF_RESOURCE;
+            }
             reorder_sbuf = reorder_buf - sgap;
             for (int i = 0; i < up_size; i++) {
                 for (int j = 0; j < low_size; j++) {
@@ -278,18 +279,11 @@ int mca_coll_han_scatter_us_task(void *task_args)
 
         /* Inter-node receive buffer: persistent realloc-to-HWM or malloc */
         char *tmp_buf;
-        if (mca_coll_han_component.han_use_persist_buffers) {
-            if (t->han_module->scatter_persist_size < (size_t)rsize) {
-                char *p = realloc(t->han_module->scatter_persist, rsize);
-                if (NULL == p) return OMPI_ERR_OUT_OF_RESOURCE;
-                t->han_module->scatter_persist = p;
-                t->han_module->scatter_persist_size = rsize;
-            }
-            tmp_buf = t->han_module->scatter_persist;
-        } else {
-            tmp_buf = (char *)malloc(rsize);
-            if (NULL == tmp_buf) return OMPI_ERR_OUT_OF_RESOURCE;
-        }
+        tmp_buf = han_scratch_or_malloc(&t->han_module->scratch_buf[1],
+                                        &t->han_module->scratch_buf_size[1],
+                                        (size_t)rsize,
+                                        mca_coll_han_component.han_use_persist_buffers);
+        if (NULL == tmp_buf) return OMPI_ERR_OUT_OF_RESOURCE;
         char *tmp_rbuf = tmp_buf - rgap;
 
         OPAL_OUTPUT_VERBOSE((30, mca_coll_han_component.han_output,
@@ -438,26 +432,19 @@ mca_coll_han_scatter_intra_simple(const void *sbuf, size_t scount,
                                  "[%d]: Han scatter: needs reordering or compacting: ", w_rank));
 
             size_t reorder_size = (size_t)block_size * w_size;
-            if (mca_coll_han_component.han_use_persist_buffers) {
-                if (han_module->scatter_reorder_persist_size < reorder_size) {
-                    char *p = realloc(han_module->scatter_reorder_persist, reorder_size);
-                    if (NULL == p) return OMPI_ERROR;
-                    han_module->scatter_reorder_persist = p;
-                    han_module->scatter_reorder_persist_size = reorder_size;
-                }
-                reorder_buf = han_module->scatter_reorder_persist;
-            } else {
-                reorder_buf = (char *)malloc(reorder_size);
-                if (NULL == reorder_buf) return OMPI_ERROR;
-            }
+            reorder_buf = han_scratch_or_malloc(&han_module->scratch_buf[0],
+                                                 &han_module->scratch_buf_size[0],
+                                                 reorder_size,
+                                                 mca_coll_han_component.han_use_persist_buffers);
+            if (NULL == reorder_buf) return OMPI_ERROR;
 
             ptrdiff_t extent, block_extent;
             ompi_datatype_type_extent(dtype, &extent);
             block_extent = extent * (ptrdiff_t)count;
 
-            for (int i = 0; i < w_size; ++i) {
-                ompi_datatype_sndrcv((char *)sbuf + block_extent * topo[2 * i + 1], count, dtype,
-                                     reorder_buf + block_size * i, block_size, MPI_BYTE);
+            for(int i = 0 ; i < w_size ; ++i){
+                ompi_datatype_sndrcv((char*)sbuf + block_extent*topo[2*i+1], count, dtype,
+                                     reorder_buf + block_size*i, block_size, MPI_BYTE);
             }
             dtype = MPI_BYTE;
             count = block_size;
@@ -492,13 +479,10 @@ mca_coll_han_scatter_intra_simple(const void *sbuf, size_t scount,
                 tmp_buf = NULL;
             }
             if (tmp_fl_src == HAN_ALLOC_MALLOC) {
-                if (han_module->scatter_persist_size < tmp_total) {
-                    char *p = realloc(han_module->scatter_persist, tmp_total);
-                    if (NULL == p) return OMPI_ERR_OUT_OF_RESOURCE;
-                    han_module->scatter_persist = p;
-                    han_module->scatter_persist_size = tmp_total;
-                }
-                tmp_buf = han_module->scatter_persist;
+                tmp_buf = han_scratch_alloc(&han_module->scratch_buf[1],
+                                                &han_module->scratch_buf_size[1],
+                                                tmp_total);
+                if (NULL == tmp_buf) return OMPI_ERR_OUT_OF_RESOURCE;
             }
         } else {
             tmp_buf = (char *)malloc(tmp_total);

@@ -86,12 +86,13 @@ OBJ_CLASS_INSTANCE(large_fragment_item_t,
 
 static void han_init_freelists(mca_coll_han_module_t *han_module)
 {
+    int rc;
     if (!mca_coll_han_component.han_use_persist_buffers) {
         return;
     }
     if (mca_coll_han_component.han_fragment_size > 0) {
         OBJ_CONSTRUCT(&han_module->fragment_freelist, opal_free_list_t);
-        opal_free_list_init(&han_module->fragment_freelist,
+        rc = opal_free_list_init(&han_module->fragment_freelist,
                             sizeof(fragment_item_t),
                             opal_cache_line_size,
                             OBJ_CLASS(fragment_item_t),
@@ -100,10 +101,17 @@ static void han_init_freelists(mca_coll_han_module_t *han_module)
                             HAN_FRAG_MAX_COUNT,
                             HAN_FRAG_GROWTH_BATCH,
                             NULL, 0, NULL, NULL, NULL);
+        if (OPAL_SUCCESS != rc) {
+            OBJ_DESTRUCT(&han_module->fragment_freelist);
+            opal_output_verbose(0, mca_coll_han_component.han_output,
+                "coll:han: fragment freelist init failed, disabling persist buffers\n");
+            mca_coll_han_component.han_use_persist_buffers = false;
+            return;
+        }
     }
     OBJ_CONSTRUCT(&han_module->large_fragment_freelist, opal_free_list_t);
     if (mca_coll_han_component.han_large_fragment_size > 0) {
-        opal_free_list_init(&han_module->large_fragment_freelist,
+        rc = opal_free_list_init(&han_module->large_fragment_freelist,
                             sizeof(large_fragment_item_t),
                             opal_cache_line_size,
                             OBJ_CLASS(large_fragment_item_t),
@@ -112,6 +120,16 @@ static void han_init_freelists(mca_coll_han_module_t *han_module)
                             HAN_LARGE_FRAG_MAX,
                             HAN_LARGE_FRAG_GROWTH,
                             NULL, 0, NULL, NULL, NULL);
+        if (OPAL_SUCCESS != rc) {
+            OBJ_DESTRUCT(&han_module->large_fragment_freelist);
+            if (mca_coll_han_component.han_fragment_size > 0) {
+                OBJ_DESTRUCT(&han_module->fragment_freelist);
+            }
+            opal_output_verbose(0, mca_coll_han_component.han_output,
+                "coll:han: large fragment freelist init failed, disabling persist buffers\n");
+            mca_coll_han_component.han_use_persist_buffers = false;
+            return;
+        }
     }
 }
 
@@ -187,20 +205,10 @@ static void mca_coll_han_module_construct(mca_coll_han_module_t * module)
     module->cached_up_comms = NULL;
     module->cached_vranks = NULL;
     module->cached_topo = NULL;
-    module->cached_gather_buf = NULL;
-    module->cached_gather_buf_size = 0;
-    module->scatter_persist = NULL;
-    module->scatter_persist_size = 0;
-    module->scatter_reorder_persist = NULL;
-    module->scatter_reorder_persist_size = 0;
-    module->gather_reorder_persist = NULL;
-    module->gather_reorder_persist_size = 0;
-    module->reduce_tmp_persist = NULL;
-    module->reduce_tmp_persist_size = 0;
-    module->allgather_reorder_persist = NULL;
-    module->allgather_reorder_persist_size = 0;
-    module->allgather_gather_persist = NULL;
-    module->allgather_gather_persist_size = 0;
+    module->scratch_buf[0] = NULL;
+    module->scratch_buf_size[0] = 0;
+    module->scratch_buf[1] = NULL;
+    module->scratch_buf_size[1] = 0;
     module->is_mapbycore = false;
     module->storage_initialized = false;
     for( i = 0; i < NB_TOPO_LVL; i++ ) {
@@ -211,8 +219,6 @@ static void mca_coll_han_module_construct(mca_coll_han_module_t * module)
     }
 
     module->dynamic_errors = 0;
-    module->alltoall_bounce = NULL;
-    module->alltoall_bounce_size = 0;
 
     han_module_clear(module);
 
@@ -261,45 +267,18 @@ mca_coll_han_module_destruct(mca_coll_han_module_t * module)
         free(module->cached_topo);
         module->cached_topo = NULL;
     }
-    if (module->cached_gather_buf != NULL) {
-        free(module->cached_gather_buf);
-        module->cached_gather_buf = NULL;
-        module->cached_gather_buf_size = 0;
-    }
-
-    free(module->scatter_persist);
-    module->scatter_persist = NULL;
-    module->scatter_persist_size = 0;
-
-    free(module->scatter_reorder_persist);
-    module->scatter_reorder_persist = NULL;
-    module->scatter_reorder_persist_size = 0;
-
-    free(module->gather_reorder_persist);
-    module->gather_reorder_persist = NULL;
-    module->gather_reorder_persist_size = 0;
-
-    free(module->reduce_tmp_persist);
-    module->reduce_tmp_persist = NULL;
-    module->reduce_tmp_persist_size = 0;
-
-    free(module->allgather_reorder_persist);
-    module->allgather_reorder_persist = NULL;
-    module->allgather_reorder_persist_size = 0;
-
-    free(module->allgather_gather_persist);
-    module->allgather_gather_persist = NULL;
-    module->allgather_gather_persist_size = 0;
+    free(module->scratch_buf[0]);
+    module->scratch_buf[0] = NULL;
+    module->scratch_buf_size[0] = 0;
+    free(module->scratch_buf[1]);
+    module->scratch_buf[1] = NULL;
+    module->scratch_buf_size[1] = 0;
 
     for(i=0 ; i<NB_TOPO_LVL ; i++) {
         if(NULL != module->sub_comm[i]) {
             ompi_comm_free(&(module->sub_comm[i]));
         }
     }
-
-    free(module->alltoall_bounce);
-    module->alltoall_bounce = NULL;
-    module->alltoall_bounce_size = 0;
 
     han_module_clear(module);
 }
