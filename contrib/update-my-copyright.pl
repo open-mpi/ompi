@@ -269,6 +269,7 @@ if ($CHECK_ONLY and $would_replace) {
 # Returns a list of file names (relative to pwd) which git considers
 # to be modified.
 sub find_modified_files {
+    my %seen;
     my @files = ();
 
     # Number of path entries to remove from ${top}-relative paths.
@@ -322,9 +323,72 @@ sub find_modified_files {
             my $relname = $fullname;
             $relname =~ s!^([^/]*/){$n_strip}!!g;
 
-            push @files, $relname
-                if (-f $relname);
+            if (-f $relname && !$seen{$relname}++) {
+                push @files, $relname;
+            }
         }
+    }
+
+    # Also include files changed in commits on this branch that have not
+    # yet been pushed / are not in the base branch.  This covers the common
+    # case of running the script after committing.
+    #
+    # Strategy: find a base ref whose merge-base with HEAD is not HEAD
+    # itself (i.e. there are actual commits on this branch).  Try, in order:
+    #   1. The upstream tracking branch — but only if it is not the current
+    #      branch pushed to a remote (which would give merge-base == HEAD).
+    #   2. origin/HEAD (the remote's default branch).
+    #   3. Well-known names: origin/main, origin/master, main, master.
+    my $head_sha = `git rev-parse HEAD 2>/dev/null`;
+    chomp($head_sha);
+    my $current_branch = `git rev-parse --abbrev-ref HEAD 2>/dev/null`;
+    chomp($current_branch);
+
+    my $base_ref = "";
+    my @candidates;
+
+    # Upstream tracking branch (skip if it tracks the same branch on the remote)
+    my $upstream = `git rev-parse --abbrev-ref \@{upstream} 2>/dev/null`;
+    chomp($upstream);
+    if ($upstream) {
+        # e.g. "origin/bigcount-datatypes" tracks the same branch — skip it
+        my $upstream_branch = $upstream;
+        $upstream_branch =~ s!^[^/]+/!!;   # strip "origin/" prefix
+        push @candidates, $upstream unless ($upstream_branch eq $current_branch);
+    }
+
+    # Remote default branch and common well-known names (avoid origin/HEAD —
+    # it can be a stale symref pointing to the wrong branch)
+    push @candidates, "origin/main", "origin/master", "main", "master";
+
+    for my $candidate (@candidates) {
+        my $sha = `git rev-parse --verify $candidate 2>/dev/null`;
+        chomp($sha);
+        next unless $sha;
+        my $mb = `git merge-base HEAD $candidate 2>/dev/null`;
+        chomp($mb);
+        # Only useful if the merge-base is not HEAD itself
+        next unless ($mb && $mb ne $head_sha);
+        $base_ref = $candidate;
+        last;
+    }
+
+    if ($base_ref) {
+        my $merge_base = `git merge-base HEAD $base_ref 2>/dev/null`;
+        chomp($merge_base);
+        quiet_print "==> Using base ref '$base_ref' (merge-base: $merge_base)\n";
+        my $diff_cmd = "git diff --name-only --diff-filter=ACMR $merge_base HEAD -- .";
+        quiet_print "==> Running: \"$diff_cmd\"\n";
+        my @diff_files = split /\n/, `$diff_cmd`;
+        for my $fullname (@diff_files) {
+            my $relname = $fullname;
+            $relname =~ s!^([^/]*/){$n_strip}!!g;
+            if (-f $relname && !$seen{$relname}++) {
+                push @files, $relname;
+            }
+        }
+    } else {
+        quiet_print "==> WARNING: Could not determine base branch for branch diff\n";
     }
 
     return @files;
