@@ -283,17 +283,15 @@ int mca_coll_han_allgather_lg_task(void *task_args)
                                          mca_coll_han_component.han_fragment_size,
                                          (size_t)rsize, &t->inter_frag);
             } else {
-                /* Too large for freelist — use realloc-to-HWM persist buffer */
-                if (t->han_module->allgather_gather_persist_size < (size_t)rsize) {
-                    char *p = realloc(t->han_module->allgather_gather_persist, rsize);
-                    if (NULL == p) return OMPI_ERR_OUT_OF_RESOURCE;
-                    t->han_module->allgather_gather_persist = p;
-                    t->han_module->allgather_gather_persist_size = rsize;
-                }
-                tmp_buf = t->han_module->allgather_gather_persist;
+                /* Too large for freelist — use shared scratch buffer */
+                tmp_buf = han_scratch_alloc(&t->han_module->scratch_buf[0],
+                                            &t->han_module->scratch_buf_size[0],
+                                            (size_t)rsize);
+                if (NULL == tmp_buf) return OMPI_ERR_OUT_OF_RESOURCE;
             }
         } else {
             tmp_buf = (char *) malloc(rsize);
+            if (NULL == tmp_buf) return OMPI_ERR_OUT_OF_RESOURCE;
         }
         tmp_rbuf = tmp_buf - rgap;
 
@@ -327,7 +325,7 @@ int mca_coll_han_allgather_lg_task(void *task_args)
     /* When using persist gather buffer, don't free it in uag_task */
     if (mca_coll_han_component.han_use_persist_buffers
         && t->inter_frag == NULL && t->han_module != NULL
-        && tmp_buf == t->han_module->allgather_gather_persist) {
+        && tmp_buf == t->han_module->scratch_buf[0]) {
         t->sbuf_inter_free = NULL;
     }
 
@@ -374,13 +372,10 @@ int mca_coll_han_allgather_uag_task(void *task_args)
                                    (int64_t) t->rcount * low_size * up_size,
                                    &rgap);
             if (mca_coll_han_component.han_use_persist_buffers && t->han_module != NULL) {
-                if (t->han_module->allgather_reorder_persist_size < (size_t)rsize) {
-                    char *p = realloc(t->han_module->allgather_reorder_persist, rsize);
-                    if (NULL == p) return OMPI_ERR_OUT_OF_RESOURCE;
-                    t->han_module->allgather_reorder_persist = p;
-                    t->han_module->allgather_reorder_persist_size = rsize;
-                }
-                reorder_buf = t->han_module->allgather_reorder_persist;
+                reorder_buf = han_scratch_alloc(&t->han_module->scratch_buf[1],
+                                                &t->han_module->scratch_buf_size[1],
+                                                (size_t)rsize);
+                if (NULL == reorder_buf) return OMPI_ERR_OUT_OF_RESOURCE;
             } else {
                 reorder_buf = (char *) malloc(rsize);
             }
@@ -433,6 +428,7 @@ int mca_coll_han_allgather_uag_task(void *task_args)
     }
 
 allgather_done:
+    ; /* empty statement required after label before declaration */
     /* Create lb (low level broadcast) task */
     mca_coll_task_t *lb = t->cur_task;
     /* Init and issue lb task */
@@ -567,6 +563,9 @@ han_allgather_single_frag(const void *sbuf, size_t scount,
 
         reorder_buf = han_alloc_frag(&han_module->fragment_freelist,
                                      frag_size, (size_t)rsize, &fl_item);
+        if (NULL == reorder_buf) {
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
         reorder_buf_start = reorder_buf - rgap;
         my_slot = reorder_buf_start
             + rextent * (ptrdiff_t)up_rank * (ptrdiff_t)total_count;
@@ -629,6 +628,12 @@ han_allgather_pipeline(const void *sbuf, size_t scount,
     ompi_datatype_get_extent(rdtype, &rlb, &rext);
     ompi_datatype_type_extent(rdtype, &rextent);
 
+    /* Pipeline requires non-blocking collectives on up_comm */
+    if (NULL == up_comm->c_coll->coll_ibcast
+        || NULL == up_comm->c_coll->coll_igather) {
+        return OMPI_ERR_NOT_SUPPORTED;
+    }
+
     /* Allocate double-buffered reorder buffers */
     char *frag_reorder[2] = {NULL, NULL};
     opal_free_list_item_t *frag_reorder_item[2] = {NULL, NULL};
@@ -642,6 +647,15 @@ han_allgather_pipeline(const void *sbuf, size_t scount,
                 &han_module->fragment_freelist, frag_size,
                 frag_reorder_size, &frag_reorder_item[b],
                 &frag_reorder_src[b]);
+            if (NULL == frag_reorder[b]) {
+                for (int i = 0; i < b; i++) {
+                    han_free_tiered(&han_module->large_fragment_freelist,
+                                    &han_module->fragment_freelist,
+                                    frag_reorder_item[i], frag_reorder[i],
+                                    frag_reorder_src[i]);
+                }
+                return OMPI_ERR_OUT_OF_RESOURCE;
+            }
         }
     }
 
@@ -681,6 +695,19 @@ han_allgather_pipeline(const void *sbuf, size_t scount,
                                         frag_size,
                                         (size_t)this_count * low_size * rextent,
                                         &inter_frag_item);
+            if (NULL == gather_buf) {
+                /* Clean up any outstanding ibcast and double buffers */
+                if (ibcast_req != NULL) {
+                    ompi_request_wait(&ibcast_req, MPI_STATUS_IGNORE);
+                }
+                for (int b = 0; b < 2; b++) {
+                    han_free_tiered(&han_module->large_fragment_freelist,
+                                    &han_module->fragment_freelist,
+                                    frag_reorder_item[b], frag_reorder[b],
+                                    frag_reorder_src[b]);
+                }
+                return OMPI_ERR_OUT_OF_RESOURCE;
+            }
             if (MPI_IN_PLACE == sbuf) {
                 char *my_data = ((char*)rbuf)
                     + ((ptrdiff_t)w_rank * (ptrdiff_t)rcount + (ptrdiff_t)frag_offset) * rext;
@@ -844,6 +871,9 @@ mca_coll_han_allgather_intra_simple(const void *sbuf, size_t scount,
             rsize = opal_datatype_span(&rdtype->super, (int64_t)rcount * low_size, &rgap);
             /* intermediary buffer on node leaders to gather on low comm */
             tmp_buf = (char *) malloc(rsize);
+            if (NULL == tmp_buf) {
+                return OMPI_ERR_OUT_OF_RESOURCE;
+            }
             tmp_buf_start = tmp_buf - rgap;
             if (MPI_IN_PLACE == sbuf) {
                 tmp_send = ((char*)rbuf) + (ptrdiff_t)w_rank * (ptrdiff_t)rcount * rext;
@@ -958,10 +988,17 @@ mca_coll_han_allgather_intra_simple(const void *sbuf, size_t scount,
                 w_rank, low_rank, up_rank, low_size, up_size,
                 root_low_rank, frag_size, topo);
         } else {
-            return han_allgather_pipeline(sbuf, scount, sdtype, rbuf, rcount,
+            int rc = han_allgather_pipeline(sbuf, scount, sdtype, rbuf, rcount,
                 rdtype, han_module, up_comm, low_comm,
                 w_rank, low_rank, low_size, up_size,
                 root_low_rank, frag_size, frag_count, num_frags, topo);
+            if (OMPI_ERR_NOT_SUPPORTED == rc) {
+                return han_allgather_single_frag(sbuf, scount, sdtype, rbuf, rcount,
+                    rdtype, han_module, up_comm, low_comm, comm,
+                    w_rank, low_rank, up_rank, low_size, up_size,
+                    root_low_rank, frag_size, topo);
+            }
+            return rc;
         }
     }
 
