@@ -15,6 +15,7 @@
 #include "opal/util/argv.h"
 
 static int mca_coll_ucc_open(void);
+static int mca_coll_ucc_close(void);
 static int mca_coll_ucc_register(void);
 
 int mca_coll_ucc_output = -1;
@@ -33,12 +34,12 @@ mca_coll_ucc_component_t mca_coll_ucc_component = {
 
             /* Component open and close functions */
             .mca_open_component            = mca_coll_ucc_open,
-            /* No close needed: UCC context/lib teardown is driven by the
-             * MPI_COMM_WORLD coll module destructor (mca_coll_ucc_module_destruct),
-             * which fires during ompi_comm_destruct() while MPI_COMM_WORLD is still
-             * fully functional for the UCC OOB allgather. By the time component
-             * close would run, teardown is already complete. */
-            .mca_close_component           = NULL,
+            /* UCC context/lib teardown is deferred to component close so that
+             * all UCC teams (COMM_WORLD and any sub-communicators freed in the
+             * cid>=3 cleanup loop) are destroyed before the context.
+             * Component close fires via mca_base_framework_close() after
+             * ompi_comm_finalize() has already destroyed every communicator. */
+            .mca_close_component           = mca_coll_ucc_close,
             .mca_register_component_params = mca_coll_ucc_register,
             .mca_query_component           = NULL,
         },
@@ -190,6 +191,20 @@ static int mca_coll_ucc_open(void)
     cm->libucc_initialized       = false;
     opal_output_set_verbosity(mca_coll_ucc_output, cm->ucc_verbose);
     mca_coll_ucc_init_default_cts();
+    OBJ_CONSTRUCT(&cm->active_modules, opal_pointer_array_t);
+    opal_pointer_array_init(&cm->active_modules, 16, OMPI_FORTRAN_HANDLE_MAX, 16);
+    return OMPI_SUCCESS;
+}
+
+static int mca_coll_ucc_close(void)
+{
+    mca_coll_ucc_component_t *cm = &mca_coll_ucc_component;
+    /* mca_coll_ucc_finalize_ctx() is normally called from COMM_WORLD's
+     * module_destruct (while COMM_WORLD is still alive for the UCP OOB
+     * barrier in ucc_context_destroy).  This call is a safety net for
+     * cases where UCC was never initialized. */
+    mca_coll_ucc_finalize_ctx();
+    OBJ_DESTRUCT(&cm->active_modules);
     return OMPI_SUCCESS;
 }
 
