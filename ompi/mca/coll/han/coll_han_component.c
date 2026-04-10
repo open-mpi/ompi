@@ -640,5 +640,32 @@ static int han_register(void)
                                            &(cs->max_dynamic_errors));
 
 
+    cs->han_use_persist_buffers = false;
+    (void) mca_base_component_var_register(&mca_coll_han_component.super.collm_version,
+                                           "use_persist_buffers",
+                                           "Use persistent/freelist buffers to avoid malloc/free in collectives (0 = disabled)",
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                           OPAL_INFO_LVL_6,
+                                           MCA_BASE_VAR_SCOPE_ALL,
+                                           &(cs->han_use_persist_buffers));
+
+    cs->han_fragment_size = 0;
+    (void) mca_base_component_var_register(&mca_coll_han_component.super.collm_version,
+                                           "fragment_size",
+                                           "Size of freelist fragment buffers for collective operations (0 = disabled)",
+                                           MCA_BASE_VAR_TYPE_UNSIGNED_LONG, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                           OPAL_INFO_LVL_6,
+                                           MCA_BASE_VAR_SCOPE_ALL,
+                                           &(cs->han_fragment_size));
+
+    cs->han_large_fragment_size = 0;
+    (void) mca_base_component_var_register(&mca_coll_han_component.super.collm_version,
+                                           "large_fragment_size",
+                                           "Size of large freelist buffers for pipeline reorder (0 = use small fragments or malloc)",
+                                           MCA_BASE_VAR_TYPE_UNSIGNED_LONG, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                           OPAL_INFO_LVL_6,
+                                           MCA_BASE_VAR_SCOPE_ALL,
+                                           &(cs->han_large_fragment_size));
+
     return OMPI_SUCCESS;
 }

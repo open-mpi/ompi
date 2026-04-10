@@ -22,6 +22,131 @@
 #include "coll_han.h"
 #include "coll_han_dynamic.h"
 
+/*
+ * Fragment item class for freelist-based buffer pool (64KB)
+ */
+static void fragment_item_constructor(fragment_item_t *item)
+{
+    item->buffer = NULL;
+    if (mca_coll_han_component.han_fragment_size > 0) {
+        if (posix_memalign(&item->buffer, 4096, mca_coll_han_component.han_fragment_size) != 0) {
+            item->buffer = NULL;
+        }
+    }
+}
+
+static void fragment_item_destructor(fragment_item_t *item)
+{
+    if (item->buffer) {
+        free(item->buffer);
+        item->buffer = NULL;
+    }
+}
+
+OBJ_CLASS_INSTANCE(fragment_item_t,
+                   opal_free_list_item_t,
+                   fragment_item_constructor,
+                   fragment_item_destructor);
+
+/*
+ * Large fragment item class for freelist-based buffer pool (1MB)
+ */
+static void large_fragment_item_constructor(large_fragment_item_t *item)
+{
+    item->buffer = NULL;
+    if (mca_coll_han_component.han_large_fragment_size > 0) {
+        if (posix_memalign(&item->buffer, 4096, mca_coll_han_component.han_large_fragment_size) != 0) {
+            item->buffer = NULL;
+        }
+    }
+}
+
+static void large_fragment_item_destructor(large_fragment_item_t *item)
+{
+    if (item->buffer) {
+        free(item->buffer);
+        item->buffer = NULL;
+    }
+}
+
+OBJ_CLASS_INSTANCE(large_fragment_item_t,
+                   opal_free_list_item_t,
+                   large_fragment_item_constructor,
+                   large_fragment_item_destructor);
+
+/**
+ * Initialize fragment freelists on a HAN module.
+ */
+#define HAN_FRAG_INITIAL_COUNT   32
+#define HAN_FRAG_MAX_COUNT       (-1)  /* unlimited */
+#define HAN_FRAG_GROWTH_BATCH    64
+#define HAN_LARGE_FRAG_INITIAL    4
+#define HAN_LARGE_FRAG_MAX       20
+#define HAN_LARGE_FRAG_GROWTH     4
+
+static void han_init_freelists(mca_coll_han_module_t *han_module)
+{
+    int rc;
+    if (!mca_coll_han_component.han_use_persist_buffers) {
+        return;
+    }
+    if (mca_coll_han_component.han_fragment_size > 0) {
+        OBJ_CONSTRUCT(&han_module->fragment_freelist, opal_free_list_t);
+        rc = opal_free_list_init(&han_module->fragment_freelist,
+                            sizeof(fragment_item_t),
+                            opal_cache_line_size,
+                            OBJ_CLASS(fragment_item_t),
+                            0, opal_cache_line_size,
+                            HAN_FRAG_INITIAL_COUNT,
+                            HAN_FRAG_MAX_COUNT,
+                            HAN_FRAG_GROWTH_BATCH,
+                            NULL, 0, NULL, NULL, NULL);
+        if (OPAL_SUCCESS != rc) {
+            OBJ_DESTRUCT(&han_module->fragment_freelist);
+            opal_output_verbose(0, mca_coll_han_component.han_output,
+                "coll:han: fragment freelist init failed, disabling persist buffers\n");
+            mca_coll_han_component.han_use_persist_buffers = false;
+            return;
+        }
+    }
+    OBJ_CONSTRUCT(&han_module->large_fragment_freelist, opal_free_list_t);
+    if (mca_coll_han_component.han_large_fragment_size > 0) {
+        rc = opal_free_list_init(&han_module->large_fragment_freelist,
+                            sizeof(large_fragment_item_t),
+                            opal_cache_line_size,
+                            OBJ_CLASS(large_fragment_item_t),
+                            0, opal_cache_line_size,
+                            HAN_LARGE_FRAG_INITIAL,
+                            HAN_LARGE_FRAG_MAX,
+                            HAN_LARGE_FRAG_GROWTH,
+                            NULL, 0, NULL, NULL, NULL);
+        if (OPAL_SUCCESS != rc) {
+            OBJ_DESTRUCT(&han_module->large_fragment_freelist);
+            if (mca_coll_han_component.han_fragment_size > 0) {
+                OBJ_DESTRUCT(&han_module->fragment_freelist);
+            }
+            opal_output_verbose(0, mca_coll_han_component.han_output,
+                "coll:han: large fragment freelist init failed, disabling persist buffers\n");
+            mca_coll_han_component.han_use_persist_buffers = false;
+            return;
+        }
+    }
+}
+
+/**
+ * Destroy fragment freelists on a HAN module.
+ */
+static void han_destroy_freelists(mca_coll_han_module_t *han_module)
+{
+    if (!mca_coll_han_component.han_use_persist_buffers) {
+        return;
+    }
+    if (mca_coll_han_component.han_fragment_size > 0) {
+        OBJ_DESTRUCT(&han_module->fragment_freelist);
+    }
+    OBJ_DESTRUCT(&han_module->large_fragment_freelist);
+}
+
 
 /*
  *@file
@@ -80,6 +205,10 @@ static void mca_coll_han_module_construct(mca_coll_han_module_t * module)
     module->cached_up_comms = NULL;
     module->cached_vranks = NULL;
     module->cached_topo = NULL;
+    module->scratch_buf[0] = NULL;
+    module->scratch_buf_size[0] = 0;
+    module->scratch_buf[1] = NULL;
+    module->scratch_buf_size[1] = 0;
     module->is_mapbycore = false;
     module->storage_initialized = false;
     for( i = 0; i < NB_TOPO_LVL; i++ ) {
@@ -148,6 +277,13 @@ mca_coll_han_module_destruct(mca_coll_han_module_t * module)
         free(module->cached_topo);
         module->cached_topo = NULL;
     }
+    free(module->scratch_buf[0]);
+    module->scratch_buf[0] = NULL;
+    module->scratch_buf_size[0] = 0;
+    free(module->scratch_buf[1]);
+    module->scratch_buf[1] = NULL;
+    module->scratch_buf_size[1] = 0;
+
     for(i=0 ; i<NB_TOPO_LVL ; i++) {
         if(NULL != module->sub_comm[i]) {
             int cid = module->sub_comm[i]->c_index;
@@ -315,6 +451,8 @@ mca_coll_han_module_enable(mca_coll_base_module_t * module,
 {
     mca_coll_han_module_t * han_module = (mca_coll_han_module_t*) module;
 
+    han_init_freelists(han_module);
+
     HAN_INSTALL_COLL_API(comm, han_module, alltoall);
     HAN_INSTALL_COLL_API(comm, han_module, alltoallv);
     HAN_INSTALL_COLL_API(comm, han_module, allgather);
@@ -343,6 +481,8 @@ mca_coll_han_module_disable(mca_coll_base_module_t * module,
                             struct ompi_communicator_t *comm)
 {
     mca_coll_han_module_t * han_module = (mca_coll_han_module_t *) module;
+
+    han_destroy_freelists(han_module);
 
     HAN_UNINSTALL_COLL_API(comm, han_module, alltoall);
     HAN_UNINSTALL_COLL_API(comm, han_module, alltoallv);

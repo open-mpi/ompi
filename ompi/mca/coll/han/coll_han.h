@@ -43,6 +43,7 @@
 #include "ompi/mca/mca.h"
 #include "opal/util/output.h"
 #include "opal/mca/smsc/smsc.h"
+#include "opal/class/opal_free_list.h"
 #include "ompi/mca/coll/base/coll_base_functions.h"
 #include "coll_han_trigger.h"
 #include "ompi/mca/coll/han/coll_han_dynamic.h"
@@ -56,6 +57,62 @@
 
 #define COLL_HAN_LOW_MODULES 3
 #define COLL_HAN_UP_MODULES 2
+
+/**
+ * Fragment item for freelist-based buffer pool
+ * Used to provide stable buffer addresses across collective calls
+ */
+typedef struct fragment_item_s {
+    opal_free_list_item_t super;
+    void *buffer;  /* Fixed-size buffer (han_fragment_size bytes) */
+} fragment_item_t;
+OBJ_CLASS_DECLARATION(fragment_item_t);
+
+/**
+ * Large fragment item for freelist-based buffer pool.
+ * Size controlled by han_large_fragment_size MCA parameter (0 = disabled).
+ */
+typedef struct large_fragment_item_s {
+    opal_free_list_item_t super;
+    void *buffer;
+} large_fragment_item_t;
+OBJ_CLASS_DECLARATION(large_fragment_item_t);
+
+/** Source tag for tiered allocation (used by alloc/free helpers). */
+enum {
+    HAN_ALLOC_MALLOC = 0,
+    HAN_ALLOC_LARGE  = 1,
+    HAN_ALLOC_SMALL  = 2
+};
+
+/**
+ * Grow a shared scratch buffer to at least 'needed' bytes (realloc-to-HWM).
+ * Returns the buffer pointer, or NULL on allocation failure.
+ */
+static inline char *han_scratch_alloc(char **buf, size_t *buf_size, size_t needed)
+{
+    if (*buf_size < needed) {
+        char *p = realloc(*buf, needed);
+        if (NULL == p) return NULL;
+        *buf = p;
+        *buf_size = needed;
+    }
+    return *buf;
+}
+
+/**
+ * Allocate from scratch buffer (persist mode) or malloc (non-persist).
+ * Returns NULL on allocation failure.
+ */
+static inline char *han_scratch_or_malloc(char **scratch, size_t *scratch_size,
+                                          size_t needed, bool persist)
+{
+    if (persist) {
+        return han_scratch_alloc(scratch, scratch_size, needed);
+    }
+    return (char *)malloc(needed);
+}
+
 
 struct mca_coll_han_bcast_args_s {
     mca_coll_task_t *cur_task;
@@ -115,11 +172,15 @@ struct mca_coll_han_allreduce_args_s {
 };
 typedef struct mca_coll_han_allreduce_args_s mca_coll_han_allreduce_args_t;
 
+/* Forward declaration needed by scatter and gather arg structs */
+typedef struct mca_coll_han_module_t mca_coll_han_module_t;
+
 struct mca_coll_han_scatter_args_s {
     mca_coll_task_t *cur_task;
     ompi_communicator_t *up_comm;
     ompi_communicator_t *low_comm;
     ompi_request_t *req;
+    mca_coll_han_module_t *han_module;
     void *sbuf;
     void *sbuf_inter_free;
     void *sbuf_reorder_free;
@@ -133,6 +194,8 @@ struct mca_coll_han_scatter_args_s {
     int root_low_rank;
     int w_rank;
     bool noop;
+    opal_free_list_item_t *reorder_fl_item; /* freelist item for reorder buf */
+    int reorder_fl_src;                      /* HAN_ALLOC_{MALLOC,LARGE,SMALL} */
 };
 typedef struct mca_coll_han_scatter_args_s mca_coll_han_scatter_args_t;
 
@@ -141,6 +204,7 @@ struct mca_coll_han_gather_args_s {
     ompi_communicator_t *up_comm;
     ompi_communicator_t *low_comm;
     ompi_request_t *req;
+    mca_coll_han_module_t *han_module;
     void *sbuf;
     void *sbuf_inter_free;
     void *rbuf;
@@ -174,6 +238,8 @@ struct mca_coll_han_allgather_s {
     bool noop;
     bool is_mapbycore;
     int *topo;
+    mca_coll_han_module_t *han_module;
+    opal_free_list_item_t *inter_frag;  /* Fragment for inter-node buffer */
 };
 typedef struct mca_coll_han_allgather_s mca_coll_han_allgather_t;
 
@@ -296,6 +362,13 @@ typedef struct mca_coll_han_component_t {
     opal_free_list_t pack_buffers;
     int64_t han_packbuf_max_count;
     int64_t han_packbuf_bytes;
+
+    /* Persist-buffer optimization (0 = disabled, use malloc/free) */
+    bool han_use_persist_buffers;
+
+    /* Fragment size for buffer reuse optimization (0 = disabled) */
+    size_t han_fragment_size;
+    size_t han_large_fragment_size;
 } mca_coll_han_component_t;
 
 /*
@@ -386,6 +459,18 @@ typedef struct mca_coll_han_module_t {
 
     /* Sub-communicator */
     struct ompi_communicator_t *sub_comm[NB_TOPO_LVL];
+
+    /* Fragment pool for buffer reuse (64KB items) */
+    opal_free_list_t fragment_freelist;
+    /* Large fragment pool for pipeline reorder buffers (1MB items) */
+    opal_free_list_t large_fragment_freelist;
+    /* Shared scratch buffers for all collectives (realloc-to-HWM).
+     * Since collectives don't run concurrently on the same communicator,
+     * all collectives share these two buffers. Two are needed because
+     * some collectives use two temporary buffers with overlapping lifetimes
+     * (e.g., allgather uses a gather buffer and a reorder buffer). */
+    char *scratch_buf[2];
+    size_t scratch_buf_size[2];
 } mca_coll_han_module_t;
 OBJ_CLASS_DECLARATION(mca_coll_han_module_t);
 
@@ -564,7 +649,7 @@ ompi_coll_han_reorder_gather(const void *sbuf,
                              void *rbuf, size_t rcount,
                              struct ompi_datatype_t *rdtype,
                              struct ompi_communicator_t *comm,
-                             int * topo);
+                             const int * topo);
 
 static inline struct mca_smsc_endpoint_t *mca_coll_han_get_smsc_endpoint (struct ompi_proc_t *proc) {
     extern opal_mutex_t mca_coll_han_lock;
