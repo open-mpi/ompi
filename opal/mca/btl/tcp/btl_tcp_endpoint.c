@@ -168,7 +168,11 @@ void mca_btl_tcp_endpoint_dump(int level, const char *fname, int lineno, const c
         }
     }
 #    else
-    used += snprintf(&outmsg[used], DEBUG_LENGTH - used, "%s -", inet_ntoa(inaddr.sin_addr));
+    {
+        char ep_addr[INET_ADDRSTRLEN];
+        inet_ntop(AF_INET, &inaddr.sin_addr, ep_addr, sizeof(ep_addr));
+        used += snprintf(&outmsg[used], DEBUG_LENGTH - used, "%s -", ep_addr);
+    }
     if (used >= DEBUG_LENGTH)
         goto out;
 #    endif
@@ -184,7 +188,11 @@ void mca_btl_tcp_endpoint_dump(int level, const char *fname, int lineno, const c
         }
     }
 #    else
-    used += snprintf(&outmsg[used], DEBUG_LENGTH - used, " %s", inet_ntoa(inaddr.sin_addr));
+    {
+        char ep_addr[INET_ADDRSTRLEN];
+        inet_ntop(AF_INET, &inaddr.sin_addr, ep_addr, sizeof(ep_addr));
+        used += snprintf(&outmsg[used], DEBUG_LENGTH - used, " %s", ep_addr);
+    }
     if (used >= DEBUG_LENGTH)
         goto out;
 #    endif
