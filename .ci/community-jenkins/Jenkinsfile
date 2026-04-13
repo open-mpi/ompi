@@ -59,7 +59,8 @@ def prepare_check_stages() {
 	"--disable-dlopen",
 	"--disable-oshmem",
 	"--enable-builtin-atomic",
-	"--enable-ipv6"
+	"--enable-ipv6",
+	"--enable-mca-dso"
     ]
     def compilers = [
 	"gcc14",
