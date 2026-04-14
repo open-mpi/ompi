@@ -29,7 +29,7 @@ AC_DEFUN([MCA_ompi_common_ubcl_CONFIG],[
           [$2])
 
     # substitute in the things needed to build ubcl
-    AC_SUBST([common_ubcl_CPPFLAGS])
-    AC_SUBST([common_ubcl_LDFLAGS])
-    AC_SUBST([common_ubcl_LIBS])
+    AC_SUBST([ompi_common_ubcl_CPPFLAGS])
+    AC_SUBST([ompi_common_ubcl_LDFLAGS])
+    AC_SUBST([ompi_common_ubcl_LIBS])
 ])dnl
