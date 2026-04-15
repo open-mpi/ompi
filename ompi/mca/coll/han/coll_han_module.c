@@ -7,6 +7,8 @@
  * Copyright (c) 2021      Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2022      IBM Corporation. All rights reserved
+ * Copyright (c) 2024-2026 NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2024      Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -118,7 +120,12 @@ mca_coll_han_module_destruct(mca_coll_han_module_t * module)
 
     if (module->cached_low_comms != NULL) {
         for (i = 0; i < COLL_HAN_LOW_MODULES; i++) {
+            int cid = module->cached_low_comms[i]->c_index;
             ompi_comm_free(&(module->cached_low_comms[i]));
+            ompi_communicator_t *tmp = ompi_comm_lookup(cid);
+            if (NULL != tmp) {
+                OBJ_RELEASE(tmp);
+            }
             module->cached_low_comms[i] = NULL;
         }
         free(module->cached_low_comms);
@@ -126,7 +133,12 @@ mca_coll_han_module_destruct(mca_coll_han_module_t * module)
     }
     if (module->cached_up_comms != NULL) {
         for (i = 0; i < COLL_HAN_UP_MODULES; i++) {
+            int cid = module->cached_up_comms[i]->c_index;
             ompi_comm_free(&(module->cached_up_comms[i]));
+            ompi_communicator_t *tmp = ompi_comm_lookup(cid);
+            if (NULL != tmp) {
+                OBJ_RELEASE(tmp);
+            }
             module->cached_up_comms[i] = NULL;
         }
         free(module->cached_up_comms);
@@ -142,7 +154,12 @@ mca_coll_han_module_destruct(mca_coll_han_module_t * module)
     }
     for(i=0 ; i<NB_TOPO_LVL ; i++) {
         if(NULL != module->sub_comm[i]) {
+            int cid = module->sub_comm[i]->c_index;
             ompi_comm_free(&(module->sub_comm[i]));
+            ompi_communicator_t *tmp = ompi_comm_lookup(cid);
+            if (NULL != tmp) {
+                OBJ_RELEASE(tmp);
+            }
         }
     }
 

@@ -4,6 +4,7 @@
  *                         reserved.
  * Copyright (c) 2020      Bull S.A.S. All rights reserved.
  *
+ * Copyright (c) 2024-2026 NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -39,15 +40,6 @@
         (COMM)->c_coll->coll_ ## COLL = (FALLBACKS).COLL.module_fn.COLL;         \
         (COMM)->c_coll->coll_ ## COLL ## _module = (FALLBACKS).COLL.module;      \
     } while(0)
-
-#define HAN_SUBCOM_EXTRA_RETAIN(COMM, PARENT_COMM)                           \
-    do                                                                       \
-    {                                                                        \
-        if (OMPI_COMM_CID_IS_LOWER(COMM, PARENT_COMM)) {                     \
-            OMPI_COMM_SET_EXTRA_RETAIN(COMM);                                \
-            OBJ_RETAIN(COMM);                                                \
-        }                                                                    \
-    } while (0)
 
 /*
  * Routine that creates the local hierarchical sub-communicators
@@ -194,9 +186,9 @@ int mca_coll_han_comm_create_new(struct ompi_communicator_t *comm,
 
     OBJ_DESTRUCT(&comm_info);
    
-    /* Ensure these communicators aren't released before the parent comm */
-    HAN_SUBCOM_EXTRA_RETAIN(*low_comm, comm);
-    HAN_SUBCOM_EXTRA_RETAIN(*up_comm, comm);
+    /* Retain sub-communicators so they survive finalize ordering */
+    OBJ_RETAIN(*low_comm);
+    OBJ_RETAIN(*up_comm);
 
     return OMPI_SUCCESS;
 
@@ -352,12 +344,12 @@ int mca_coll_han_comm_create(struct ompi_communicator_t *comm,
     han_module->cached_up_comms = up_comms;
     han_module->cached_vranks = vranks;
 
-    /* Ensure these communicators aren't released before the parent comm */
+    /* Retain sub-communicators so they survive finalize ordering */
     for(int i = 0; i < COLL_HAN_LOW_MODULES; i++) {
-        HAN_SUBCOM_EXTRA_RETAIN(low_comms[i], comm);
+        OBJ_RETAIN(low_comms[i]);
     }
     for(int i = 0; i < COLL_HAN_UP_MODULES; i++) {
-        HAN_SUBCOM_EXTRA_RETAIN(up_comms[i], comm);
+        OBJ_RETAIN(up_comms[i]);
     }
 
     /* Reset the saved collectives to point back to HAN */
