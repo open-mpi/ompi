@@ -19,6 +19,8 @@
 
 #define OBJ_RELEASE_IF_NOT_NULL( obj ) if( NULL != (obj) ) OBJ_RELEASE( obj );
 
+static int ucc_self_attr_keyval = MPI_KEYVAL_INVALID;
+
 /*
  * Initial query function that is invoked during MPI_INIT, allowing
  * this module to indicate what level of thread support it provides.
@@ -31,6 +33,7 @@ int mca_coll_ucc_init_query(bool enable_progress_threads, bool enable_mpi_thread
 static void mca_coll_ucc_module_clear(mca_coll_ucc_module_t *ucc_module)
 {
     ucc_module->ucc_team                              = NULL;
+    ucc_module->array_idx                             = -1;
     ucc_module->previous_allreduce                    = NULL;
     ucc_module->previous_allreduce_module             = NULL;
     ucc_module->previous_iallreduce                   = NULL;
@@ -100,6 +103,47 @@ static int mca_coll_ucc_progress(void)
     return OPAL_SUCCESS;
 }
 
+/*
+ * MPI_COMM_SELF attribute delete callback.
+ * Fires at the very start of MPI_Finalize, before any communicator is touched
+ * and before the PMIx barrier.  We only *initiate* the COMM_WORLD team destroy
+ * here — we must not spin waiting for completion because collective transports
+ * (SHARP, NCCL) require all ranks to reach their own destroy call first, and
+ * there is no global ordering guarantee at this point.
+ *
+ * Completion of the destroy and full context teardown is deferred to
+ * mca_coll_ucc_module_destruct (COMM_WORLD case), which fires after the PMIx
+ * barrier when all ranks are in finalize.  That destructor also sweeps any
+ * remaining sub-communicator teams before calling ucc_context_destroy, while
+ * COMM_WORLD's group is still valid for the UCP OOB barrier.
+ */
+static int ucc_self_attr_del_fn(MPI_Comm comm, int keyval,
+                                void *attr_val, void *extra)
+{
+    mca_coll_ucc_component_t *cm = (mca_coll_ucc_component_t *) attr_val;
+    ucc_status_t              status;
+
+    if (!cm->libucc_initialized || cm->ucc_comm_world_team == NULL) {
+        return OMPI_SUCCESS;
+    }
+    /* Initiate the COMM_WORLD team destroy.  If it completes immediately
+     * (e.g. no SHARP/NCCL), record that.  If UCC_INPROGRESS, leave
+     * ucc_comm_world_team non-NULL so mca_coll_ucc_module_destruct can
+     * finish it after the PMIx barrier. */
+    status = ucc_team_destroy(cm->ucc_comm_world_team);
+    if (UCC_OK == status) {
+        cm->ucc_comm_world_team = NULL;
+    } else if (UCC_INPROGRESS != status) {
+        UCC_ERROR("UCC team destroy initiation failed for MPI_COMM_WORLD: %s",
+                  ucc_status_string(status));
+        cm->ucc_comm_world_team = NULL;
+    }
+    /* Do NOT call mca_coll_ucc_finalize_ctx() here: the UCC context must
+     * remain alive so that sub-communicator team destroys (cid>=3 loop in
+     * ompi_comm_finalize) can complete cleanly. */
+    return OMPI_SUCCESS;
+}
+
 void mca_coll_ucc_finalize_ctx(void)
 {
     mca_coll_ucc_component_t *cm = &mca_coll_ucc_component;
@@ -116,19 +160,92 @@ void mca_coll_ucc_finalize_ctx(void)
 
 static void mca_coll_ucc_module_destruct(mca_coll_ucc_module_t *ucc_module)
 {
-    if (ucc_module->ucc_team != NULL) {
-        ucc_status_t status;
-        while (UCC_INPROGRESS == (status = ucc_team_destroy(ucc_module->ucc_team))) {}
-        if (UCC_OK != status) {
-            UCC_ERROR("UCC team destroy failed");
-        }
-    }
-    /* ucc_context_destroy needs OOB via MPI_COMM_WORLD; call it while
-     * COMM_WORLD is still alive. ompi_comm_finalize() releases leaked user
-     * communicators (cid >= 3) before OBJ_DESTRUCT(&ompi_mpi_comm_world),
-     * so all UCC teams are destroyed before the context. */
+    mca_coll_ucc_component_t *cm = &mca_coll_ucc_component;
+
     if (ucc_module->comm == &ompi_mpi_comm_world.comm) {
+        /* Complete the COMM_WORLD team destroy that was initiated in
+         * ucc_self_attr_del_fn.  By the time this destructor fires, the PMIx
+         * barrier in ompi_mpi_finalize() has already passed, so all ranks are
+         * in finalize and collective transports (SHARP, NCCL, ...) can safely
+         * complete their group destroy protocols. */
+        if (cm->libucc_initialized && cm->ucc_comm_world_team != NULL) {
+            ucc_status_t status;
+            while (UCC_INPROGRESS ==
+                   (status = ucc_team_destroy(cm->ucc_comm_world_team))) {
+                opal_progress();
+            }
+            if (UCC_OK != status) {
+                UCC_ERROR("UCC team destroy failed for MPI_COMM_WORLD: %s",
+                          ucc_status_string(status));
+            }
+            cm->ucc_comm_world_team = NULL;
+        }
+        ucc_module->ucc_team = NULL;
+
+        /* Free the COMM_SELF keyval; the callback has already fired. */
+        if (ucc_self_attr_keyval != MPI_KEYVAL_INVALID) {
+            if (OMPI_SUCCESS !=
+                ompi_attr_free_keyval(COMM_ATTR, &ucc_self_attr_keyval, 0)) {
+                UCC_ERROR("ucc ompi_attr_free_keyval for self keyval failed");
+            }
+            ucc_self_attr_keyval = MPI_KEYVAL_INVALID;
+        }
+
+        /* Destroy any remaining sub-communicator UCC teams.  These belong to
+         * communicators that the user never freed (leaked comms), which will be
+         * cleaned up by ompi_comm_finalize's cid>=3 loop AFTER this destructor
+         * returns.  We must destroy their teams NOW because ucc_context_destroy
+         * (called below) uses the UCP OOB allgather which requires COMM_WORLD's
+         * group to still be valid — and COMM_WORLD's group is freed after this
+         * function returns in ompi_comm_destruct. */
+        if (cm->libucc_initialized) {
+            int n = opal_pointer_array_get_size(&cm->active_modules);
+            for (int i = 0; i < n; i++) {
+                mca_coll_ucc_module_t *m =
+                    (mca_coll_ucc_module_t *)opal_pointer_array_get_item(
+                        &cm->active_modules, i);
+                if (NULL == m || NULL == m->ucc_team) {
+                    continue;
+                }
+                ucc_status_t status;
+                while (UCC_INPROGRESS ==
+                       (status = ucc_team_destroy(m->ucc_team))) {
+                    opal_progress();
+                }
+                if (UCC_OK != status) {
+                    UCC_ERROR("UCC team destroy failed for sub-communicator");
+                }
+                m->ucc_team    = NULL;
+                m->array_idx   = -1;
+                opal_pointer_array_set_item(&cm->active_modules, i, NULL);
+            }
+        }
+
+        /* Now safe to destroy the UCC context and library.  COMM_WORLD's
+         * group is still valid at this point (ompi_comm_destruct releases it
+         * after mca_coll_base_comm_unselect returns), so the UCP OOB barrier
+         * inside ucc_context_destroy can complete successfully. */
         mca_coll_ucc_finalize_ctx();
+    } else if (ucc_module->ucc_team != NULL) {
+        /* Normal path: user-created communicator freed before MPI_Finalize or
+         * during the cid>=3 loop.  Remove from the tracking array first so
+         * the COMM_WORLD destructor sweep does not double-free. */
+        if (ucc_module->array_idx >= 0) {
+            opal_pointer_array_set_item(&cm->active_modules,
+                                        ucc_module->array_idx, NULL);
+            ucc_module->array_idx = -1;
+        }
+        if (cm->libucc_initialized) {
+            ucc_status_t status;
+            while (UCC_INPROGRESS ==
+                   (status = ucc_team_destroy(ucc_module->ucc_team))) {
+                opal_progress();
+            }
+            if (UCC_OK != status) {
+                UCC_ERROR("UCC team destroy failed");
+            }
+        }
+        ucc_module->ucc_team = NULL;
     }
     OBJ_RELEASE_IF_NOT_NULL(ucc_module->previous_allreduce_module);
     OBJ_RELEASE_IF_NOT_NULL(ucc_module->previous_iallreduce_module);
@@ -389,8 +506,41 @@ static int mca_coll_ucc_init_ctx() {
 
     opal_progress_register(mca_coll_ucc_progress);
     UCC_VERBOSE(1, "initialized ucc context");
-    cm->libucc_initialized = true;
+    cm->libucc_initialized   = true;
+    cm->ucc_comm_world_team  = NULL;
+
+    /* Register a MPI_COMM_SELF attribute whose del_fn fires at the very start
+     * of MPI_Finalize (ompi_mpi_finalize.c), before any communicator is
+     * touched.  This guarantees ucc_context_destroy is called while
+     * MPI_COMM_WORLD is still alive, even on OMPI 5.x where COMM_WORLD's
+     * own user-attribute del callbacks are intentionally skipped. */
+    {
+        ompi_attribute_fn_ptr_union_t copy_fn, del_fn;
+        copy_fn.attr_communicator_copy_fn  = MPI_COMM_NULL_COPY_FN;
+        del_fn.attr_communicator_delete_fn = ucc_self_attr_del_fn;
+        if (OMPI_SUCCESS != ompi_attr_create_keyval(COMM_ATTR, copy_fn, del_fn,
+                                                    &ucc_self_attr_keyval,
+                                                    NULL, 0, NULL)) {
+            UCC_ERROR("UCC ompi_attr_create_keyval for COMM_SELF failed");
+            goto cleanup_ctx;
+        }
+        if (OMPI_SUCCESS != ompi_attr_set_c(COMM_ATTR,
+                                            &ompi_mpi_comm_self.comm,
+                                            &ompi_mpi_comm_self.comm.c_keyhash,
+                                            ucc_self_attr_keyval,
+                                            (void *)cm, false)) {
+            UCC_ERROR("UCC ompi_attr_set_c on MPI_COMM_SELF failed");
+            ompi_attr_free_keyval(COMM_ATTR, &ucc_self_attr_keyval, 0);
+            ucc_self_attr_keyval = MPI_KEYVAL_INVALID;
+            goto cleanup_ctx;
+        }
+    }
     return OMPI_SUCCESS;
+cleanup_ctx:
+    opal_progress_unregister(mca_coll_ucc_progress);
+    OBJ_DESTRUCT(&cm->requests);
+    ucc_context_destroy(cm->ucc_context);
+    cm->libucc_initialized = false;
 cleanup_lib:
     ucc_finalize(cm->ucc_lib);
     cm->ucc_enable         = 0;
@@ -486,6 +636,17 @@ static int mca_coll_ucc_module_enable(mca_coll_base_module_t *module,
     if (UCC_OK != status) {
         UCC_ERROR("ucc_team_create_test failed");
         goto err;
+    }
+
+    if (comm == &ompi_mpi_comm_world.comm) {
+        /* Track the COMM_WORLD team so ucc_self_attr_del_fn can destroy it
+         * at MPI_Finalize start. */
+        cm->ucc_comm_world_team = ucc_module->ucc_team;
+    } else {
+        /* Track non-WORLD modules so the COMM_WORLD destructor can sweep
+         * any remaining teams before ucc_context_destroy. */
+        ucc_module->array_idx = opal_pointer_array_add(&cm->active_modules,
+                                                        ucc_module);
     }
 
     mca_coll_ucc_save_coll_handlers(ucc_module);

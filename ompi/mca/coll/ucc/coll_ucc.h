@@ -16,6 +16,7 @@
 #include "ompi/mca/mca.h"
 #include "opal/memoryhooks/memory.h"
 #include "opal/mca/memory/base/base.h"
+#include "opal/class/opal_pointer_array.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/attribute/attribute.h"
@@ -68,6 +69,8 @@ struct mca_coll_ucc_component_t {
     ucc_coll_type_t                 nb_cts_requested;
     ucc_context_h                   ucc_context;
     opal_free_list_t                requests;
+    ucc_team_h                      ucc_comm_world_team;
+    opal_pointer_array_t            active_modules;  /* mca_coll_ucc_module_t* for non-WORLD comms */
 };
 typedef struct mca_coll_ucc_component_t mca_coll_ucc_component_t;
 
@@ -81,6 +84,7 @@ struct mca_coll_ucc_module_t {
     ompi_communicator_t*                            comm;
     int                                             rank;
     ucc_team_h                                      ucc_team;
+    int                                             array_idx;  /* index in cm->active_modules, -1 if not registered */
     mca_coll_base_module_allreduce_fn_t             previous_allreduce;
     mca_coll_base_module_t*                         previous_allreduce_module;
     mca_coll_base_module_iallreduce_fn_t            previous_iallreduce;
