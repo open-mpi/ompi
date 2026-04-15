@@ -209,6 +209,8 @@ static void mca_coll_han_module_construct(mca_coll_han_module_t * module)
     module->scratch_buf_size[0] = 0;
     module->scratch_buf[1] = NULL;
     module->scratch_buf_size[1] = 0;
+    memset(&module->a2a_cache, 0, sizeof(module->a2a_cache));
+    memset(&module->a2av_cache, 0, sizeof(module->a2av_cache));
     module->is_mapbycore = false;
     module->storage_initialized = false;
     for( i = 0; i < NB_TOPO_LVL; i++ ) {
@@ -283,6 +285,33 @@ mca_coll_han_module_destruct(mca_coll_han_module_t * module)
     free(module->scratch_buf[1]);
     module->scratch_buf[1] = NULL;
     module->scratch_buf_size[1] = 0;
+
+    /* Alltoall cache cleanup */
+    free(module->a2a_cache.bounce);
+    if (module->a2a_cache.map_ctx) {
+        if (mca_smsc) {
+            for (i = 0; i < module->a2a_cache.cached_low_size; i++) {
+                if (module->a2a_cache.map_ctx[i])
+                    mca_smsc->unmap_peer_region(module->a2a_cache.map_ctx[i]);
+            }
+        }
+        free(module->a2a_cache.map_ctx);
+    }
+    free(module->a2a_cache.low_bufs);
+    free(module->a2a_cache.gather_buf);
+    free(module->a2a_cache.recv_buf);
+
+    /* Alltoallv cache cleanup */
+    free(module->a2av_cache.serial_buf);
+    free(module->a2av_cache.gather_out);
+    free(module->a2av_cache.peers);
+    free(module->a2av_cache.peer_types);
+    free(module->a2av_cache.send_from);
+    free(module->a2av_cache.recv_to);
+    free(module->a2av_cache.send_counts);
+    free(module->a2av_cache.recv_counts);
+    free(module->a2av_cache.send_types);
+    free(module->a2av_cache.recv_types);
 
     for(i=0 ; i<NB_TOPO_LVL ; i++) {
         if(NULL != module->sub_comm[i]) {

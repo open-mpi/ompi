@@ -471,6 +471,38 @@ typedef struct mca_coll_han_module_t {
      * (e.g., allgather uses a gather buffer and a reorder buffer). */
     char *scratch_buf[2];
     size_t scratch_buf_size[2];
+
+    struct han_alltoall_cache {
+        char *bounce;
+        size_t bounce_size;
+        const void *cached_sbuf;
+        size_t cached_scount;
+        int cached_low_size;
+        char **low_bufs;
+        void **map_ctx;
+        void **gather_buf;
+        int cached_send_needs_bounce;
+        int cached_ii_push_data;
+        char *recv_buf;
+        size_t recv_buf_size;
+    } a2a_cache;
+
+    struct han_alltoallv_cache {
+        uint8_t *serial_buf;
+        size_t serial_buf_size;
+        void *gather_out;
+        void *peers;
+        void *peer_types;
+        int low_size;
+        void **send_from;
+        void **recv_to;
+        size_t *send_counts;
+        size_t *recv_counts;
+        void **send_types;
+        void **recv_types;
+        bool smsc_decided;
+        int use_smsc;
+    } a2av_cache;
 } mca_coll_han_module_t;
 OBJ_CLASS_DECLARATION(mca_coll_han_module_t);
 
