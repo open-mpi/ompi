@@ -356,6 +356,7 @@ mca_btl_uct_module_t mca_btl_uct_module_template = {
         .btl_finalize = mca_btl_uct_finalize,
         .btl_put = mca_btl_uct_put,
         .btl_get = mca_btl_uct_get,
+        .btl_dump = mca_btl_base_dump,
         .btl_register_mem = mca_btl_uct_register_mem,
         .btl_deregister_mem = mca_btl_uct_deregister_mem,
         .btl_atomic_op = mca_btl_uct_aop,
