@@ -723,6 +723,8 @@ int mca_pml_ob1_dump(struct ompi_communicator_t* comm, int verbose)
         for( n = 0; n < ep->btl_eager.arr_size; n++ ) {
             mca_bml_base_btl_t* bml_btl = &ep->btl_eager.bml_btls[n];
             if (bml_btl->btl->btl_dump == NULL) {
+                opal_output(0, "BTL %s does not provide dump callback\n",
+                            bml_btl->btl->btl_component->btl_version.mca_component_name);
                 continue;
             }
             bml_btl->btl->btl_dump(bml_btl->btl, bml_btl->btl_endpoint, verbose);
