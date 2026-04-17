@@ -250,9 +250,10 @@ static inline void recv_req_matched(mca_pml_ob1_recv_request_t *req,
 {
     req->req_recv.req_base.req_ompi.req_status.MPI_SOURCE = hdr->hdr_src;
     req->req_recv.req_base.req_ompi.req_status.MPI_TAG = hdr->hdr_tag;
-    req->req_match_received = true;
-
+    /* ensure MPI_SOURCE, MPI_TAG, and req_bytes_packed (set by caller)
+     * are visible before req_match_received signals complete_check */
     opal_atomic_wmb();
+    req->req_match_received = true;
 
     if(req->req_recv.req_bytes_packed > 0) {
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
