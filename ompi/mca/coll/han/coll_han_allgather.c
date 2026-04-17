@@ -870,7 +870,9 @@ mca_coll_han_allgather_intra_simple(const void *sbuf, size_t scount,
             /* Compute the size to receive all the local data, including datatypes empty gaps */
             rsize = opal_datatype_span(&rdtype->super, (int64_t)rcount * low_size, &rgap);
             /* intermediary buffer on node leaders to gather on low comm */
-            tmp_buf = (char *) malloc(rsize);
+            tmp_buf = han_scratch_or_malloc(&han_module->scratch_buf[1],
+                                            &han_module->scratch_buf_size[1],
+                                            rsize, mca_coll_han_component.han_use_persist_buffers);
             if (NULL == tmp_buf) {
                 return OMPI_ERR_OUT_OF_RESOURCE;
             }
@@ -918,7 +920,9 @@ mca_coll_han_allgather_intra_simple(const void *sbuf, size_t scount,
                 }
                 ptrdiff_t rsize, rgap = 0;
                 rsize = opal_datatype_span(&rdtype->super, (int64_t)rcount * low_size * up_size, &rgap);
-                reorder_buf = (char *) malloc(rsize);
+                reorder_buf = han_scratch_or_malloc(&han_module->scratch_buf[0],
+                                                     &han_module->scratch_buf_size[0],
+                                                     rsize, mca_coll_han_component.han_use_persist_buffers);
                 reorder_buf_start = reorder_buf - rgap;
             }
 
@@ -927,7 +931,7 @@ mca_coll_han_allgather_intra_simple(const void *sbuf, size_t scount,
                                             reorder_buf_start, rcount*low_size, rdtype,
                                             up_comm, up_comm->c_coll->coll_allgather_module);
 
-            if (tmp_buf != NULL) {
+            if (tmp_buf != NULL && !mca_coll_han_component.han_use_persist_buffers) {
                 free(tmp_buf);
                 tmp_buf = NULL;
                 tmp_buf_start = NULL;
@@ -941,7 +945,9 @@ mca_coll_han_allgather_intra_simple(const void *sbuf, size_t scount,
                 ompi_coll_han_reorder_gather(reorder_buf_start,
                                              rbuf, rcount, rdtype,
                                              comm, topo);
-                free(reorder_buf);
+                if (!mca_coll_han_component.han_use_persist_buffers) {
+                    free(reorder_buf);
+                }
                 reorder_buf = NULL;
             }
 
