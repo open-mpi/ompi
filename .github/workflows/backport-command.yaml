@@ -29,18 +29,33 @@ jobs:
         if: github.event.issue.pull_request != null
         permissions:
             actions: write       # trigger workflow_dispatch
-            issues: write        # post reactions and comments
-            pull-requests: read  # read PR merge status
+            issues: write        # post comments
         steps:
             - name: Parse command and validate PR
               id: parse
-              uses: actions/github-script@v7
+              uses: actions/github-script@v8
               with:
                   script: |
                       const body        = context.payload.comment.body;
                       const commentId   = context.payload.comment.id;
                       const issueNumber = context.payload.issue.number;
                       const login       = context.payload.comment.user.login;
+
+                      // Best-effort comment helper — if Issues are disabled on
+                      // the repo (common for forks) the call returns 403 and we
+                      // log a warning rather than aborting the workflow.
+                      async function tryComment(text) {
+                          try {
+                              await github.rest.issues.createComment({
+                                  owner:        context.repo.owner,
+                                  repo:         context.repo.repo,
+                                  issue_number: issueNumber,
+                                  body:         text,
+                              });
+                          } catch (err) {
+                              core.warning(`Could not post comment: ${err.message}`);
+                          }
+                      }
 
                       // Detect a bare /backport with no arguments and reply helpfully.
                       const bareMatch = /^\/backport\s*$/m.test(body);
@@ -54,43 +69,20 @@ jobs:
                           return;
                       }
 
-                      // Check actual repository permission level rather than
-                      // author_association: MEMBER alone does not imply write
-                      // access on org-owned public repos.
-                      let permission = 'none';
-                      try {
-                          const { data } = await github.rest.repos.getCollaboratorPermissionLevel({
-                              owner:    context.repo.owner,
-                              repo:     context.repo.repo,
-                              username: login,
-                          });
-                          // Use role_name rather than permission: the legacy
-                          // permission field collapses 'maintain' into 'write',
-                          // losing the distinction between the two tiers.
-                          permission = data.role_name; // 'admin' | 'maintain' | 'write' | 'triage' | 'read'
-                      } catch (err) {
-                          if (err.status !== 404) throw err;
-                          // 404 = not a collaborator; permission stays 'none'
-                      }
-                      if (!['admin', 'maintain', 'write'].includes(permission)) {
-                          await github.rest.issues.createComment({
-                              owner:        context.repo.owner,
-                              repo:         context.repo.repo,
-                              issue_number: issueNumber,
-                              body:         `⚠️ @${login} Backports can only be triggered by users with write, maintain, or admin access.`,
-                          });
+                      // Use author_association from the webhook payload — no extra
+                      // API call required. GITHUB_TOKEN cannot call
+                      // getCollaboratorPermissionLevel on org repos (needs org-level
+                      // "Members" read permission unavailable to GITHUB_TOKEN).
+                      const assoc = context.payload.comment.author_association;
+                      if (!['OWNER', 'MEMBER', 'COLLABORATOR'].includes(assoc)) {
+                          await tryComment(`⚠️ @${login} Backports can only be triggered by repository owners, organization members, or collaborators.`);
                           core.setOutput('triggered', 'false');
                           return;
                       }
 
                       if (bareMatch && !match) {
                           core.setOutput('triggered', 'false');
-                          await github.rest.issues.createComment({
-                              owner:        context.repo.owner,
-                              repo:         context.repo.repo,
-                              issue_number: issueNumber,
-                              body:         '⚠️ `/backport` requires at least one target branch, e.g. `/backport v5.0.x`.',
-                          });
+                          await tryComment('⚠️ `/backport` requires at least one target branch, e.g. `/backport v5.0.x`.');
                           return;
                       }
                       if (!match) {
@@ -103,12 +95,7 @@ jobs:
                       if (branches.length === 0) {
                           // e.g. "/backport ,,," — separators only, no real branch names
                           core.setOutput('triggered', 'false');
-                          await github.rest.issues.createComment({
-                              owner:        context.repo.owner,
-                              repo:         context.repo.repo,
-                              issue_number: issueNumber,
-                              body:         '⚠️ `/backport` requires at least one target branch, e.g. `/backport v5.0.x`.',
-                          });
+                          await tryComment('⚠️ `/backport` requires at least one target branch, e.g. `/backport v5.0.x`.');
                           return;
                       }
 
@@ -119,45 +106,21 @@ jobs:
                       const invalidBranches = branches.filter(b => !validBranchRe.test(b));
                       if (invalidBranches.length > 0) {
                           core.setOutput('triggered', 'false');
-                          await github.rest.issues.createComment({
-                              owner:        context.repo.owner,
-                              repo:         context.repo.repo,
-                              issue_number: issueNumber,
-                              body:         `⚠️ Invalid branch name(s): ${invalidBranches.map(b => `\`${b}\``).join(', ')}. Branch names may only contain alphanumeric characters, dots, hyphens, underscores, and slashes.`,
-                          });
+                          await tryComment(`⚠️ Invalid branch name(s): ${invalidBranches.map(b => `\`${b}\``).join(', ')}. Branch names may only contain alphanumeric characters, dots, hyphens, underscores, and slashes.`);
                           return;
                       }
 
                       // Confirm the PR is actually merged.
-                      const { data: pr } = await github.rest.pulls.get({
-                          owner:       context.repo.owner,
-                          repo:        context.repo.repo,
-                          pull_number: issueNumber,
-                      });
-
-                      if (!pr.merged) {
-                          await github.rest.issues.createComment({
-                              owner:        context.repo.owner,
-                              repo:         context.repo.repo,
-                              issue_number: issueNumber,
-                              body:         '⚠️ Cannot backport: this PR has not been merged yet.',
-                          });
+                      // merged_at is present in the issue_comment webhook payload
+                      // for PRs, so no extra API call is needed.
+                      if (!context.payload.issue.pull_request.merged_at) {
+                          await tryComment('⚠️ Cannot backport: this PR has not been merged yet.');
                           core.setOutput('triggered', 'false');
                           return;
                       }
 
-                      // Acknowledge the command with a 👀 reaction.
-                      // Ignore 422 (reaction already exists) so re-runs don't fail.
-                      try {
-                          await github.rest.reactions.createForIssueComment({
-                              owner:      context.repo.owner,
-                              repo:       context.repo.repo,
-                              comment_id: commentId,
-                              content:    'eyes',
-                          });
-                      } catch (err) {
-                          if (err.status !== 422) throw err;
-                      }
+                      // Acknowledge the command with a comment.
+                      await tryComment(`👀 Dispatching backport of this PR to: ${branches.map(b => `\`${b}\``).join(', ')}.`);
 
                       core.setOutput('triggered', 'true');
                       core.setOutput('pr_number', String(issueNumber));
@@ -166,7 +129,7 @@ jobs:
 
             - name: Trigger backport workflow
               if: steps.parse.outputs.triggered == 'true'
-              uses: actions/github-script@v7
+              uses: actions/github-script@v8
               env:
                   PR_NUMBER: ${{ steps.parse.outputs.pr_number }}
                   BRANCHES:  ${{ steps.parse.outputs.branches }}
