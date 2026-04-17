@@ -63,7 +63,9 @@ static inline int ring_partner(int rank, int round, int comm_size) {
 
 /**
  * Set up or reuse cached SMSC arrays for alltoall.
- * Returns true if cache was valid (allgather + map can be skipped).
+ * Returns 1 if cache was valid (allgather + map can be skipped),
+ * 0 on cache miss (arrays allocated, caller must populate),
+ * or -1 on allocation failure.
  */
 static int alltoall_cache_setup(
     mca_coll_han_module_t *han_module,

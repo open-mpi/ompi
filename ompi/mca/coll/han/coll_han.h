@@ -91,6 +91,12 @@ enum {
  */
 static inline char *han_scratch_alloc(char **buf, size_t *buf_size, size_t needed)
 {
+    if (0 == needed) {
+        /* Return a valid non-NULL pointer for zero-size allocations,
+         * matching malloc(0) behavior that callers rely on. */
+        static char zero_len_sentinel;
+        return &zero_len_sentinel;
+    }
     if (*buf_size < needed) {
         char *p = realloc(*buf, needed);
         if (NULL == p) return NULL;

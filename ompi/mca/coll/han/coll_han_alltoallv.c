@@ -586,7 +586,7 @@ static int alltoallv_sendrecv_w(
 /**
  * Set up persistent allocations for alltoallv.
  * Grows arrays to high-water mark to avoid per-call malloc/free.
- * Returns 0 on success, OMPI_ERR_OUT_OF_RESOURCE on failure.
+ * Returns OMPI_SUCCESS on success, OMPI_ERR_OUT_OF_RESOURCE on failure.
  */
 static int alltoallv_cache_setup(
     struct han_alltoallv_cache *c,
