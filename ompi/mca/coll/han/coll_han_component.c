@@ -640,7 +640,7 @@ static int han_register(void)
                                            &(cs->max_dynamic_errors));
 
 
-    cs->han_use_persist_buffers = false;
+    cs->han_use_persist_buffers = true;
     (void) mca_base_component_var_register(&mca_coll_han_component.super.collm_version,
                                            "use_persist_buffers",
                                            "Use persistent/freelist buffers to avoid malloc/free in collectives (0 = disabled)",
@@ -649,7 +649,7 @@ static int han_register(void)
                                            MCA_BASE_VAR_SCOPE_ALL,
                                            &(cs->han_use_persist_buffers));
 
-    cs->han_fragment_size = 0;
+    cs->han_fragment_size = 65536;
     (void) mca_base_component_var_register(&mca_coll_han_component.super.collm_version,
                                            "fragment_size",
                                            "Size of freelist fragment buffers for collective operations (0 = disabled)",
@@ -658,7 +658,7 @@ static int han_register(void)
                                            MCA_BASE_VAR_SCOPE_ALL,
                                            &(cs->han_fragment_size));
 
-    cs->han_large_fragment_size = 0;
+    cs->han_large_fragment_size = 1048576;
     (void) mca_base_component_var_register(&mca_coll_han_component.super.collm_version,
                                            "large_fragment_size",
                                            "Size of large freelist buffers for pipeline reorder (0 = use small fragments or malloc)",
