@@ -15,7 +15,7 @@
  *                         reserved.
  * Copyright (c) 2015-2019 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
- * Copyright (c) 2024      Triad National Security, LLC. All rights
+ * Copyright (c) 2024-2026 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -33,7 +33,7 @@ PROTOTYPE VOID ineighbor_alltoallw(BUFFER_ASYNC x1, COUNT_ARRAY sendcounts,
     MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
     MPI_Datatype *c_sendtypes, *c_recvtypes;
     MPI_Request c_request;
-    int size, c_ierr;
+    int indegree, outdegree, c_ierr;
     char *sendbuf = OMPI_CFI_BASE_ADDR(x1), *recvbuf = OMPI_CFI_BASE_ADDR(x2);
     @COUNT_TYPE@ *tmp_sendcounts = NULL;
     @COUNT_TYPE@ *tmp_recvcounts = NULL;
@@ -50,18 +50,28 @@ PROTOTYPE VOID ineighbor_alltoallw(BUFFER_ASYNC x1, COUNT_ARRAY sendcounts,
         OMPI_ERRHANDLER_INVOKE(c_comm, c_ierr, FUNC_NAME);
         return;
     }
-    PMPI_Comm_size(c_comm, &size);
 
-    c_sendtypes = (MPI_Datatype *) malloc(size * sizeof(MPI_Datatype));
-    c_recvtypes = (MPI_Datatype *) malloc(size * sizeof(MPI_Datatype));
+    c_ierr = ompi_fortran_neighbor_count(c_comm, &indegree, &outdegree);
+    if (MPI_SUCCESS != c_ierr) {
+        if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+        OMPI_ERRHANDLER_INVOKE(c_comm, c_ierr, FUNC_NAME);
+        return;
+    }
 
-    OMPI_FORTRAN_BIGCOUNT_ARRAY_SET(sendcounts, tmp_sendcounts, size);
-    OMPI_FORTRAN_BIGCOUNT_ARRAY_SET(recvcounts, tmp_recvcounts, size);
+    c_sendtypes = (MPI_Datatype *) malloc(outdegree * sizeof(MPI_Datatype));
+    c_recvtypes = (MPI_Datatype *) malloc(indegree * sizeof(MPI_Datatype));
 
-    while (size > 0) {
-        c_sendtypes[size - 1] = PMPI_Type_f2c(sendtypes[size - 1]);
-        c_recvtypes[size - 1] = PMPI_Type_f2c(recvtypes[size - 1]);
-        --size;
+    OMPI_FORTRAN_BIGCOUNT_ARRAY_SET(sendcounts, tmp_sendcounts, outdegree);
+    OMPI_FORTRAN_BIGCOUNT_ARRAY_SET(recvcounts, tmp_recvcounts, indegree);
+
+    while (outdegree > 0) {
+        c_sendtypes[outdegree - 1] = PMPI_Type_f2c(sendtypes[outdegree - 1]);
+        --outdegree;
+    }
+
+    while (indegree > 0) {
+        c_recvtypes[indegree - 1] = PMPI_Type_f2c(recvtypes[indegree - 1]);
+        --indegree;
     }
 
     /* Ineighbor_alltoallw does not support MPI_IN_PLACE */

@@ -15,7 +15,7 @@
  *                         reserved.
  * Copyright (c) 2015-2021 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
- * Copyright (c) 2024-2025 Triad National Security, LLC. All rights
+ * Copyright (c) 2024-2026 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -36,7 +36,7 @@ PROTOTYPE VOID neighbor_alltoallw_init(BUFFER x1, COUNT_ARRAY sendcounts,
     MPI_Datatype *c_sendtypes, *c_recvtypes;
     MPI_Request c_request;
     MPI_Info c_info;
-    int size, c_ierr, idx = 0;
+    int indegree, outdegree,  c_ierr, idx = 0;
     char *sendbuf = OMPI_CFI_BASE_ADDR(x1), *recvbuf = OMPI_CFI_BASE_ADDR(x2);
     @COUNT_TYPE@ *tmp_sendcounts = NULL;
     @COUNT_TYPE@ *tmp_recvcounts = NULL;
@@ -56,24 +56,34 @@ PROTOTYPE VOID neighbor_alltoallw_init(BUFFER x1, COUNT_ARRAY sendcounts,
         OMPI_ERRHANDLER_INVOKE(c_comm, c_ierr, FUNC_NAME)
         return;
     }
-    PMPI_Comm_size(c_comm, &size);
 
-    c_sendtypes = (MPI_Datatype *) malloc(size * sizeof(MPI_Datatype));
-    c_recvtypes = (MPI_Datatype *) malloc(size * sizeof(MPI_Datatype));
+    c_ierr = ompi_fortran_neighbor_count(c_comm, &indegree, &outdegree);
+    if (MPI_SUCCESS != c_ierr) {
+        if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+        OMPI_ERRHANDLER_INVOKE(c_comm, c_ierr, FUNC_NAME);
+        return;
+    }
 
-    OMPI_FORTRAN_BIGCOUNT_ARRAY_SET(sendcounts, tmp_sendcounts, size);
-    OMPI_FORTRAN_BIGCOUNT_ARRAY_SET(recvcounts, tmp_recvcounts, size);
-    OMPI_FORTRAN_BIGCOUNT_ARRAY_SET(sdispls, tmp_sdispls, size);
-    OMPI_FORTRAN_BIGCOUNT_ARRAY_SET(rdispls, tmp_rdispls, size);
+    c_sendtypes = (MPI_Datatype *) malloc(outdegree * sizeof(MPI_Datatype));
+    c_recvtypes = (MPI_Datatype *) malloc(indegree * sizeof(MPI_Datatype));
+
+    OMPI_FORTRAN_BIGCOUNT_ARRAY_SET(sendcounts, tmp_sendcounts, outdegree);
+    OMPI_FORTRAN_BIGCOUNT_ARRAY_SET(recvcounts, tmp_recvcounts, indegree);
+    OMPI_FORTRAN_BIGCOUNT_ARRAY_SET(sdispls, tmp_sdispls, outdegree);
+    OMPI_FORTRAN_BIGCOUNT_ARRAY_SET(rdispls, tmp_rdispls, indegree);
 
     /* Alltoallw does not support MPI_IN_PLACE */
     sendbuf = (char *) OMPI_F2C_BOTTOM(sendbuf);
     recvbuf = (char *) OMPI_F2C_BOTTOM(recvbuf);
 
-    while (size > 0) {
-        c_sendtypes[size - 1] = PMPI_Type_f2c(sendtypes[size - 1]);
-        c_recvtypes[size - 1] = PMPI_Type_f2c(recvtypes[size - 1]);
-        --size;
+    while (outdegree > 0) {
+        c_sendtypes[outdegree - 1] = PMPI_Type_f2c(sendtypes[outdegree - 1]);
+        --outdegree;
+    }
+
+    while (indegree > 0) {
+        c_recvtypes[indegree - 1] = PMPI_Type_f2c(recvtypes[indegree - 1]);
+        --indegree;
     }
 
     c_ierr = @INNER_CALL@(sendbuf,
