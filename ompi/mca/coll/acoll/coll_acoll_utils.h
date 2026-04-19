@@ -1,6 +1,7 @@
 /* -*- Mode: C; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2024 - 2025 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (c) 2026        NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -286,6 +287,7 @@ static inline int mca_coll_acoll_create_base_comm(ompi_communicator_t **parent_c
         err = ompi_comm_split(parent_comm[i], color, rank[i], &subc->base_comm[base_lyr][i], false);
         if (MPI_SUCCESS != err)
             return err;
+        OBJ_RETAIN(subc->base_comm[base_lyr][i]);
 
         /* Find out local rank of root in base comm */
         err = comm_grp_ranks_local(parent_comm[i], subc->base_comm[base_lyr][i], &is_root_node,
@@ -448,12 +450,14 @@ static inline int mca_coll_acoll_comm_split_init(ompi_communicator_t *comm,
         if (MPI_SUCCESS != err) {
             return err;
         }
+        OBJ_RETAIN(subc->local_comm);
         /* Create socket-level subcommunicator */
         err = ompi_comm_split_type(comm, OMPI_COMM_TYPE_SOCKET, 0, &comm_info,
                                    &(subc->socket_comm));
         if (MPI_SUCCESS != err) {
             return err;
         }
+        OBJ_RETAIN(subc->socket_comm);
         OBJ_DESTRUCT(&comm_info);
         OBJ_CONSTRUCT(&comm_info, opal_info_t);
         opal_info_set(&comm_info, "ompi_comm_coll_preference", "libnbc,basic,^acoll");
@@ -463,10 +467,12 @@ static inline int mca_coll_acoll_comm_split_init(ompi_communicator_t *comm,
         if (MPI_SUCCESS != err) {
             return err;
         }
+        OBJ_RETAIN(subc->subgrp_comm);
         err = ompi_comm_split_type(comm, OMPI_COMM_TYPE_NUMA, 0, &comm_info, &(subc->numa_comm));
         if (MPI_SUCCESS != err) {
             return err;
         }
+        OBJ_RETAIN(subc->numa_comm);
         subc->subgrp_size = ompi_comm_size(subc->subgrp_comm);
         OBJ_DESTRUCT(&comm_info);
 
@@ -514,18 +520,14 @@ static inline int mca_coll_acoll_comm_split_init(ompi_communicator_t *comm,
 
         if (subc->initialized) {
             if (subc->num_nodes > 1) {
-                ompi_comm_free(&(subc->leader_comm));
-                subc->leader_comm = NULL;
+                coll_acoll_subcomm_free(&(subc->leader_comm));
             }
-            ompi_comm_free(&(subc->socket_ldr_comm));
-            subc->socket_ldr_comm = NULL;
+            coll_acoll_subcomm_free(&(subc->socket_ldr_comm));
         }
         for (int i = 0; i < MCA_COLL_ACOLL_NUM_LAYERS; i++) {
             if (subc->initialized) {
-                ompi_comm_free(&(subc->base_comm[MCA_COLL_ACOLL_L3CACHE][i]));
-                subc->base_comm[MCA_COLL_ACOLL_L3CACHE][i] = NULL;
-                ompi_comm_free(&(subc->base_comm[MCA_COLL_ACOLL_NUMA][i]));
-                subc->base_comm[MCA_COLL_ACOLL_NUMA][i] = NULL;
+                coll_acoll_subcomm_free(&(subc->base_comm[MCA_COLL_ACOLL_L3CACHE][i]));
+                coll_acoll_subcomm_free(&(subc->base_comm[MCA_COLL_ACOLL_NUMA][i]));
             }
             subc->base_root[MCA_COLL_ACOLL_L3CACHE][i] = -1;
             subc->base_root[MCA_COLL_ACOLL_NUMA][i] = -1;
@@ -577,6 +579,7 @@ static inline int mca_coll_acoll_comm_split_init(ompi_communicator_t *comm,
         if (MPI_SUCCESS != err) {
             return err;
         }
+        OBJ_RETAIN(subc->leader_comm);
 
         /* Find out local rank of root in leader comm */
         err = comm_grp_ranks_local(comm, subc->leader_comm, &is_root_node, &subc->outer_grp_root,
@@ -596,6 +599,7 @@ static inline int mca_coll_acoll_comm_split_init(ompi_communicator_t *comm,
         err = ompi_comm_split(comm, color, rank, &subc->socket_ldr_comm, false);
         if (MPI_SUCCESS != err)
             return err;
+        OBJ_RETAIN(subc->socket_ldr_comm);
 
         /* Find out local rank of root in socket leader comm */
         err = comm_grp_ranks_local(comm, subc->socket_ldr_comm, &is_root_socket,
@@ -661,6 +665,7 @@ static inline int mca_coll_acoll_comm_split_init(ompi_communicator_t *comm,
         if (MPI_SUCCESS != err) {
             return err;
         }
+        OBJ_RETAIN(subc->socket_ldr_comm);
 
         /* Find out local rank of root in socket leader comm */
         err = comm_grp_ranks_local(comm, subc->socket_ldr_comm, &is_root_socket,
@@ -693,6 +698,10 @@ static inline int mca_coll_acoll_comm_split_init(ompi_communicator_t *comm,
         numa_rank = ompi_comm_rank(subc->numa_comm);
         color = (0 == numa_rank) ? 0 : 1;
         err = ompi_comm_split(subc->local_comm, color, rank, &subc->numa_comm_ldrs, false);
+        if (MPI_SUCCESS != err) {
+            return err;
+        }
+        OBJ_RETAIN(subc->numa_comm_ldrs);
 
         /* Find out local rank of root in numa comm */
         err = comm_grp_ranks_local(comm, subc->numa_comm, &subc->is_root_numa, &subc->numa_root,
@@ -745,6 +754,7 @@ static inline int mca_coll_acoll_comm_split_init(ompi_communicator_t *comm,
             if (MPI_SUCCESS != err) {
                 return err;
             }
+            OBJ_RETAIN(subc->local_r_comm);
         }
 
         err = mca_coll_acoll_derive_r2r_latency(comm, subc, acoll_module);
@@ -770,6 +780,7 @@ static inline int mca_coll_acoll_comm_split_init(ompi_communicator_t *comm,
             if (MPI_SUCCESS != err) {
                 return err;
             }
+            OBJ_RETAIN(subc->split_comm[ii]);
         }
 
         subc->derived_node_size = (size + subc->num_nodes - 1) / subc->num_nodes;

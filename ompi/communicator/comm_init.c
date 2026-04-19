@@ -26,7 +26,7 @@
  * Copyright (c) 2018-2024 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2023-2024 Advanced Micro Devices, Inc. All rights reserved.
- * Copyright (c) 2023      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2023-2026 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -388,31 +388,25 @@ static int ompi_comm_finalize (void)
     for ( i=3; i<max; i++ ) {
         comm = ompi_comm_lookup(i);
         if ( NULL != comm ) {
-            /* Communicator has not been freed before finalize */
+            /* Release the communicator. Sub-communicators retained by
+             * their parent (e.g., c_local_comm of inter-communicators)
+             * will be properly released by the parent's destructor. */
             OBJ_RELEASE(comm);
-            comm = ompi_comm_lookup(i);
-            if ( NULL != comm ) {
-                /* Still here ? */
-                if ( !OMPI_COMM_IS_EXTRA_RETAIN(comm)) {
-
-                    /* For communicator that have been marked as "extra retain", we do not further
-                     * enforce to decrease the reference counter once more. These "extra retain"
-                     * communicators created e.g. by the hierarch or inter module did increase
-                     * the reference count by one more than other communicators, on order to
-                     * allow for deallocation with the parent communicator. Note, that
-                     * this only occurs if the cid of the local_comm is lower than of its
-                     * parent communicator. Read the comment in comm_activate for
-                     * a full explanation.
-                     */
-                    if ( ompi_debug_show_handle_leaks && !(OMPI_COMM_IS_FREED(comm)) ){
-                        opal_output(0,"WARNING: MPI_Comm still allocated in MPI_Finalize\n");
-                        ompi_comm_dump ( comm);
-                        OBJ_RELEASE(comm);
-                    }
-                }
-            }
         }
     }
+
+#if OPAL_ENABLE_DEBUG
+    if ( ompi_debug_show_handle_leaks ) {
+        max = ompi_comm_get_num_communicators();
+        for ( i=3; i<max; i++ ) {
+            comm = ompi_comm_lookup(i);
+            if (NULL == comm) continue;
+            opal_output(0, "WARNING: %d unnamed MPI_Comm handles still allocated at MPI_FINALIZE", comm->c_name);
+            ompi_comm_dump ( comm);
+            OBJ_RELEASE(comm);
+        }
+    }
+#endif  /* OPAL_ENABLE_DEBUG */
 
     OBJ_DESTRUCT (&ompi_mpi_communicators);
     OBJ_DESTRUCT (&ompi_comm_hash);
@@ -525,6 +519,12 @@ static void ompi_comm_destruct(ompi_communicator_t* comm)
     if (NULL != comm->c_topo) {
         OBJ_RELEASE(comm->c_topo);
         comm->c_topo = NULL;
+    }
+
+    if (OMPI_COMM_IS_INTER(comm) && NULL != comm->c_local_comm
+        && !OMPI_COMM_IS_INTRINSIC(comm->c_local_comm)) {
+        OBJ_RELEASE(comm->c_local_comm);
+        comm->c_local_comm = NULL;
     }
 
     if (NULL != comm->c_local_group) {
