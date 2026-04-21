@@ -54,7 +54,7 @@ jobs:
         steps:
             - name: Determine backport targets
               id: targets
-              uses: actions/github-script@v7
+              uses: actions/github-script@v8
               with:
                   script: |
                       let branches = [];
@@ -137,7 +137,7 @@ jobs:
             # Use paginate() so PRs with more than 100 commits are handled correctly.
             - name: Fetch PR metadata
               id: pr_meta
-              uses: actions/github-script@v7
+              uses: actions/github-script@v8
               with:
                   script: |
                       const pr = await github.rest.pulls.get({
@@ -163,7 +163,7 @@ jobs:
             # work.  Post a comment and skip if it does not.
             - name: Validate target branch exists
               id: validate
-              uses: actions/github-script@v7
+              uses: actions/github-script@v8
               with:
                   script: |
                       try {
@@ -264,7 +264,7 @@ jobs:
             # All commits were already present in the target branch — no PR needed.
             - name: Comment when nothing to backport
               if: steps.cherry_pick.outputs.nothing_to_backport == 'true'
-              uses: actions/github-script@v7
+              uses: actions/github-script@v8
               with:
                   script: |
                       await github.rest.issues.createComment({
@@ -280,7 +280,7 @@ jobs:
               if: >-
                   steps.cherry_pick.outputs.cherry_pick_failed == 'false' &&
                   steps.cherry_pick.outputs.nothing_to_backport == 'false'
-              uses: actions/github-script@v7
+              uses: actions/github-script@v8
               env:
                   ORIGINAL_TITLE: ${{ steps.pr_meta.outputs.title }}
                   ORIGINAL_BODY:  ${{ steps.pr_meta.outputs.body }}
@@ -348,7 +348,7 @@ jobs:
             # developer knows to create the backport manually.
             - name: Comment on cherry-pick failure
               if: steps.cherry_pick.outputs.cherry_pick_failed == 'true'
-              uses: actions/github-script@v7
+              uses: actions/github-script@v8
               env:
                   FAILED_SHA: ${{ steps.cherry_pick.outputs.failed_sha }}
               with:
