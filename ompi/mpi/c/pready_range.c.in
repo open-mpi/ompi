@@ -39,7 +39,7 @@ PROTOTYPE ERROR_CLASS pready_range(INT partition_low, INT partition_high, REQUES
 {
     int rc;
 
-    SPC_RECORD(OMPI_SPC_PREADY, 1);
+    SPC_RECORD(OMPI_SPC_PREADY_RANGE, 1);
 
     if (MPI_PARAM_CHECK) {
         rc = OMPI_SUCCESS;

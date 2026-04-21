@@ -156,6 +156,10 @@ typedef enum ompi_spc_counters {
     OMPI_SPC_ISENDRECV_REPLACE,
     OMPI_SPC_PARRIVED,
     OMPI_SPC_PREADY,
+    OMPI_SPC_PREADY_LIST,
+    OMPI_SPC_PREADY_RANGE,
+    OMPI_SPC_PRECV_INIT,
+    OMPI_SPC_PSEND_INIT,
     OMPI_SPC_NUM_COUNTERS /* This serves as the number of counters.  It must be last. */
 } ompi_spc_counters_t;
 

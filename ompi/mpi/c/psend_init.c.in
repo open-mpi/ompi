@@ -42,6 +42,8 @@ PROTOTYPE ERROR_CLASS psend_init(BUFFER buf, INT partitions, PARTITIONED_COUNT c
 {
     int rc;
 
+    SPC_RECORD(OMPI_SPC_PSEND_INIT, 1);
+
     if (MPI_PARAM_CHECK) {
         rc = OMPI_SUCCESS;
 
