@@ -164,6 +164,12 @@ fi
 
 CONFIGURE_ARGS="$CONFIGURE_ARGS --disable-silent-rules"
 
+# Work around the fact that FreeBSD's hwloc package installs Ze and
+# that breaks something in the cudasm path on FreeBSD.
+if test "${PLATFORM_ID}" = "FreeBSD" ; then
+    CONFIGURE_ARGS="${CONFIGURE_ARGS} --without-ze"
+fi
+
 echo "--> Compiler setup: $CONFIGURE_ARGS"
 
 #
