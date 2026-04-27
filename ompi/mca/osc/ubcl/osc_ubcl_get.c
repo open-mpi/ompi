@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2025 Bull SAS.  All rights reserved.
+ * Copyright (c) 2025-2026 Bull SAS.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -112,7 +112,10 @@ int ompi_osc_ubcl_rget(void *origin_addr, size_t origin_count,
 
     if (opal_convertor_on_device(&osc_req->origin_convertor)) {
         opal_free_list_return(&mca_osc_ubcl_component.req_free_list, &(osc_req->super));
-        mca_osc_ubcl_warn(OPAL_ERR_NOT_SUPPORTED, "GPU buffer not supported by osc/ubcl");
+        mca_osc_ubcl_error(
+            OPAL_ERR_NOT_SUPPORTED,
+            "GPU buffer not supported by osc/ubcl: cannot cannot perform MPI_Get of buffer %p",
+            origin_addr);
         ret = OPAL_ERR_NOT_SUPPORTED;
         goto exit;
     }
