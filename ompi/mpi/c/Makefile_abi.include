@@ -422,7 +422,6 @@ abi_interface_profile_sources = \
 	test_cancelled_abi_generated.c \
 	testsome_abi_generated.c \
 	topo_test_abi_generated.c \
-	type_c2f_abi_generated.c \
 	type_commit_abi_generated.c \
 	type_contiguous_abi_generated.c \
 	type_create_darray_abi_generated.c \
