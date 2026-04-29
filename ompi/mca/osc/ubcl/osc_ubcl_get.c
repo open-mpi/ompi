@@ -41,7 +41,7 @@ int ompi_osc_ubcl_rget(void *origin_addr, size_t origin_count,
     size_t target_span;
     size_t target_iov_count;
     struct iovec *target_iov;
-    void *target_addr;
+    char *target_addr;
     mca_common_ubcl_endpoint_t *endpoint;
     ubcl_memory_descriptor_t sbuf_md;
     mca_osc_ubcl_module_t *module;
