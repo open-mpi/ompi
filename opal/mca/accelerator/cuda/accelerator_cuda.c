@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2024-2026 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -359,8 +359,22 @@ static int accelerator_cuda_check_addr(const void *addr, int *dev_id, uint64_t *
         return 1;
     }
 
-    is_vmm = accelerator_cuda_check_vmm(dbuf, &vmm_mem_type, &vmm_dev_id);
-    is_mpool_ptr = accelerator_cuda_check_mpool(dbuf, &mpool_mem_type, &mpool_dev_id);
+    if (0 == mem_type) {
+        /* CUDA is initialized but dbuf is not a valid CUDA pointer.
+         * Return early before paying the VMM/mpool fallback cost. */
+        return 0;
+    }
+
+    /* mem_type is HOST, or DEVICE with no context. Both cases may require
+     * VMM/mpool fallback to either reclassify or to determine the device
+     * id. The fallback paths each issue a CUDA driver call, so they are
+     * gated by tunables for users who do not use those allocators. */
+    if (opal_accelerator_cuda_enable_vmm_check) {
+        is_vmm = accelerator_cuda_check_vmm(dbuf, &vmm_mem_type, &vmm_dev_id);
+    }
+    if (opal_accelerator_cuda_enable_mpool_check) {
+        is_mpool_ptr = accelerator_cuda_check_mpool(dbuf, &mpool_mem_type, &mpool_dev_id);
+    }
 
     if (CU_MEMORYTYPE_HOST == mem_type) {
         if (is_vmm && (vmm_mem_type == CU_MEMORYTYPE_DEVICE)) {
@@ -373,9 +387,6 @@ static int accelerator_cuda_check_addr(const void *addr, int *dev_id, uint64_t *
             /* Host memory, nothing to do here */
             return 0;
         }
-    } else if (0 == mem_type) {
-        /* This can happen when CUDA is initialized but dbuf is not valid CUDA pointer */
-        return 0;
     } else {
         if (is_vmm) {
             *dev_id = vmm_dev_id;
@@ -387,9 +398,6 @@ static int accelerator_cuda_check_addr(const void *addr, int *dev_id, uint64_t *
         }
     }
 #else /* OPAL_CUDA_GET_ATTRIBUTES */
-    is_vmm = accelerator_cuda_check_vmm(dbuf, &vmm_mem_type, &vmm_dev_id);
-    is_mpool_ptr = accelerator_cuda_check_mpool(dbuf, &mpool_mem_type, &mpool_dev_id);
-
     result = cuPointerGetAttribute(&mem_type, CU_POINTER_ATTRIBUTE_MEMORY_TYPE, dbuf);
     if (CUDA_SUCCESS != result) {
         /* If cuda is not initialized, assume it is a host buffer. */
@@ -398,7 +406,18 @@ static int accelerator_cuda_check_addr(const void *addr, int *dev_id, uint64_t *
         } else {
             return OPAL_ERROR;
         }
-    } else if (CU_MEMORYTYPE_HOST == mem_type) {
+    }
+
+    /* Same pattern as above: defer the VMM/mpool fallback until after we
+     * know mem_type, and gate it on the tunables. */
+    if (opal_accelerator_cuda_enable_vmm_check) {
+        is_vmm = accelerator_cuda_check_vmm(dbuf, &vmm_mem_type, &vmm_dev_id);
+    }
+    if (opal_accelerator_cuda_enable_mpool_check) {
+        is_mpool_ptr = accelerator_cuda_check_mpool(dbuf, &mpool_mem_type, &mpool_dev_id);
+    }
+
+    if (CU_MEMORYTYPE_HOST == mem_type) {
         if (is_vmm && (vmm_mem_type == CU_MEMORYTYPE_DEVICE)) {
             mem_type = CU_MEMORYTYPE_DEVICE;
             *dev_id = vmm_dev_id;

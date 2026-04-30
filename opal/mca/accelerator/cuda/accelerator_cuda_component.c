@@ -65,6 +65,8 @@ static opal_accelerator_cuda_nvlink_domain_t accelerator_cuda_nvlink_domain = {
 static char *accelerator_cuda_nvlink_domain_mca_string =
     "cuda_device=-1,cluster_uuid=00000000000000000000000000000000,clique_id=0";
 static bool accelerator_cuda_nvlink_domain_mca_string_owned = false;
+bool opal_accelerator_cuda_enable_vmm_check = true;
+bool opal_accelerator_cuda_enable_mpool_check = true;
 
 #define STRINGIFY2(x) #x
 #define STRINGIFY(x)  STRINGIFY2(x)
@@ -177,6 +179,28 @@ static int accelerator_cuda_component_register(void)
     (void) mca_base_var_register_synonym(ret, "opal", "accelerator", NULL,
                                          "nvlink_domain", 0);
     accelerator_cuda_nvlink_domain_mca_string_owned = true;
+
+    (void) mca_base_component_var_register(&mca_accelerator_cuda_component.super.base_version,
+                                           "enable_vmm_check",
+                                           "Enable fallback classification of pointers via "
+                                           "cuMemRetainAllocationHandle for CUDA Virtual Memory "
+                                           "Management allocations. Disable if the application "
+                                           "does not use cuMemMap-based allocations to avoid the "
+                                           "per-call cost in check_addr.",
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                           OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_READONLY,
+                                           &opal_accelerator_cuda_enable_vmm_check);
+
+    (void) mca_base_component_var_register(&mca_accelerator_cuda_component.super.base_version,
+                                           "enable_mpool_check",
+                                           "Enable fallback classification of pointers via "
+                                           "cuPointerGetAttribute(MEMPOOL_HANDLE) for CUDA "
+                                           "stream-ordered memory pool allocations. Disable if "
+                                           "the application does not use cuMemAllocAsync to avoid "
+                                           "the per-call cost in check_addr.",
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                           OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_READONLY,
+                                           &opal_accelerator_cuda_enable_mpool_check);
 
     return OPAL_SUCCESS;
 }
