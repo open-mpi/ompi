@@ -71,6 +71,7 @@ def prepare_check_stages() {
 	"rhel8",
 	"amazon_linux_2023-arm64",
 	"amazon_linux_2023-x86_64",
+	"freebsd_15",
 	"ubuntu_20.04",
 	"ubuntu_24.04-arm64",
 	"ubuntu_24.04-x86_64"
