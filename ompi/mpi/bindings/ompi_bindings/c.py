@@ -259,17 +259,11 @@ class ABIConverterBuilder:
         #
         # now shoe-horn in optional fortran predefined types
         #
-        lines.append('#if OMPI_BUILD_FORTRAN_BINDINGS')
         for i,value_name in enumerate(consts.PREDEFINED_OPTIONAL_FORTRAN_DATATYPES):
             intern_name = self.mangle_name(value_name)
             base_type = value_name[4:]
             lines.append('} else if (%s == datatype) {' % (intern_name))
-            lines.append(f'#if OMPI_HAVE_FORTRAN_{base_type}')
             lines.append(f'return {value_name};')
-            lines.append('#else')
-            lines.append('return MPI_DATATYPE_NULL;')
-            lines.append('#endif')
-        lines.append('#endif  /* OMPI_BUILD_FORTRAN_BINDINGS */')
         lines.append('}')
         lines.append(f'return (MPI_Datatype) datatype;')
         self.dump_lines(lines)

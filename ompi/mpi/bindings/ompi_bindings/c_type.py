@@ -1521,9 +1521,8 @@ class TypeInfoOut(Type):
     def type_text(self, enable_count=False):
         return 'MPI_Info *'
 
-
 @Type.add_type('INFO_OUT', abi_type=['standard'])
-class TypeInfoOutStandard(Type):
+class TypeInfoOutStandard(StandardABIType):
 
     @property
     def argument(self):
@@ -1532,6 +1531,10 @@ class TypeInfoOutStandard(Type):
     def type_text(self, enable_count=False):
         type_name = self.mangle_name('MPI_Info')
         return f'{type_name} *'
+
+    @property
+    def final_code(self):
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.INFO}((MPI_Info) *{self.name});']
 
 @Type.add_type('INFO_INOUT', abi_type=['ompi'])
 class TypeInfoInOut(TypeInfoOut):
@@ -1555,11 +1558,6 @@ class TypeInfoInOutStandard(StandardABIType):
     def type_text(self, enable_count=False):
         type_name = self.mangle_name('MPI_Info')
         return f'{type_name} *'
-
-    @property
-    def argument(self):
-        return f'(MPI_Info *) (NULL != {self.name} ? &{self.tmpname} : NULL)'
-
         
 @Type.add_type('INFO_ARRAY', abi_type=['ompi'])
 class TypeInfoArray(Type):
