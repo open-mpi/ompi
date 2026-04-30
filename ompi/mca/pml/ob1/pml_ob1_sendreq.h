@@ -79,11 +79,14 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_send_range_t);
 
 static inline bool lock_send_request(mca_pml_ob1_send_request_t *sendreq)
 {
-    return OPAL_THREAD_ADD_FETCH32(&sendreq->req_lock,  1) == 1;
+    bool ret = OPAL_THREAD_ADD_FETCH32(&sendreq->req_lock,  1) == 1;
+    opal_atomic_rmb();
+    return ret;
 }
 
 static inline bool unlock_send_request(mca_pml_ob1_send_request_t *sendreq)
 {
+    opal_atomic_wmb();
     return OPAL_THREAD_ADD_FETCH32(&sendreq->req_lock, -1) == 0;
 }
 
