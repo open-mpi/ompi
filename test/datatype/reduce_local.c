@@ -1,3 +1,4 @@
+
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2019-2020 The University of Tennessee and The University
@@ -16,6 +17,10 @@
 /* needed for strsep() */
 #define _DEFAULT_SOURCE
 #define _BSD_SOURCE
+/* if we set all these flags, we need to also let sys/time.h define
+   gettimeofday() */
+#define __BSD_VISIBLE 1
+#define _XOPEN_SOURCE 700
 
 /* needed for posix_memalign() and getopt() */
 #define _POSIX_C_SOURCE 200809L
