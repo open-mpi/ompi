@@ -65,11 +65,14 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_recv_request_t);
 
 static inline bool lock_recv_request(mca_pml_ob1_recv_request_t *recvreq)
 {
-        return OPAL_THREAD_ADD_FETCH32(&recvreq->req_lock,  1) == 1;
+        bool ret = OPAL_THREAD_ADD_FETCH32(&recvreq->req_lock,  1) == 1;
+        opal_atomic_rmb();
+        return ret;
 }
 
 static inline bool unlock_recv_request(mca_pml_ob1_recv_request_t *recvreq)
 {
+        opal_atomic_wmb();
         return OPAL_THREAD_ADD_FETCH32(&recvreq->req_lock, -1) == 0;
 }
 
