@@ -80,7 +80,9 @@ enum mca_btl_ofi_hdr_type {
     MCA_BTL_OFI_TYPE_TOTAL
 };
 
+struct mca_btl_ofi_module_t;
 struct mca_btl_ofi_context_t {
+    struct mca_btl_ofi_module_t *btl;
     int32_t context_id;
 
     /* transmit context */
