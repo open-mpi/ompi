@@ -247,10 +247,13 @@ fi
 
 echo "--> running make ${MAKE_J} ${MAKE_ARGS} all"
 make ${MAKE_J} ${MAKE_ARGS} all
-echo "--> running make check"
-make ${MAKE_ARGS} check
+# while backwards, it is important to run "make install" before "make check",
+# because many of the tests call opal_init(), which will fail unless it can find
+# components.
 echo "--> running make install"
 make ${MAKE_ARGS} install
+echo "--> running make check"
+make ${MAKE_ARGS} check
 
 export PATH="${PREFIX}/bin":${PATH}
 
