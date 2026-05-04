@@ -25,6 +25,7 @@
  *                         reserved.
  * Copyright (c) 2022      IBM Corporation.  All rights reserved.
  * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
+ * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -106,7 +107,7 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
 {
     int k, size, rsize, rank, rc, rportlen=0;
     char **members = NULL, *nstring, *rport=NULL, *key, *pkey;
-    bool dense, isnew;
+    bool isnew;
     opal_process_name_t pname;
     opal_list_t ilist, mlist, rlist;
     pmix_info_t info, tinfo;
@@ -120,7 +121,7 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
     ompi_communicator_t *newcomp=MPI_COMM_NULL;
     ompi_proc_t *proc;
     ompi_group_t *group=comm->c_local_group;
-    ompi_proc_t **proc_list=NULL, **new_proc_list = NULL;
+    ompi_proc_t **new_proc_list = NULL;
     int32_t i;
     ompi_group_t *new_group_pointer;
     ompi_dpm_proct_caddy_t *cd;
@@ -168,37 +169,26 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
         opal_argv_append_nosize(&members, nstring);
         free(nstring);
     } else {
-        if (OMPI_GROUP_IS_DENSE(group)) {
-            proc_list = group->grp_proc_pointers;
-            dense = true;
-        } else {
-            proc_list = (ompi_proc_t**)calloc(group->grp_proc_count,
-                                              sizeof(ompi_proc_t *));
-            for (i=0 ; i<group->grp_proc_count ; i++) {
-                if (NULL == (proc_list[i] = ompi_group_peer_lookup(group,i))) {
+        for (i = 0; i < size; i++) {
+            if (OMPI_GROUP_IS_DENSE(group)) {
+                proc = group->grp_proc_pointers[i];
+            } else {
+                if( NULL == (proc = ompi_group_peer_lookup(group, i)) ) {
                     OMPI_ERROR_LOG(OMPI_ERR_NOT_FOUND);
                     rc = OMPI_ERR_NOT_FOUND;
-                    free(proc_list);
+                    opal_argv_free(members);
                     goto exit;
                 }
             }
-            dense = false;
-        }
-        for (i=0; i < size; i++) {
-            opal_process_name_t proc_name;
-            if (ompi_proc_is_sentinel (proc_list[i])) {
-                proc_name = ompi_proc_sentinel_to_name ((uintptr_t) proc_list[i]);
+            if (ompi_proc_is_sentinel (proc)) {
+                pname = ompi_proc_sentinel_to_name ((uintptr_t)proc);
             } else {
-                proc_name = proc_list[i]->super.proc_name;
+                pname = proc->super.proc_name;
             }
-            OPAL_PMIX_CONVERT_NAME(&pxproc, &proc_name);
+            OPAL_PMIX_CONVERT_NAME(&pxproc, &pname);
             OPAL_PMIX_CONVERT_PROCT_TO_STRING(&nstring, &pxproc);
             opal_argv_append_nosize(&members, nstring);
             free(nstring);
-        }
-        if (!dense) {
-            free(proc_list);
-            proc_list = NULL;
         }
     }
 
@@ -367,7 +357,7 @@ bcast_rportlen:
     }
     opal_argv_free(members);
 
-    /* convert the list of members to a pmix_proc_t array */
+    /* convert the list of all members to a pmix_proc_t array */
     nprocs = opal_list_get_size(&mlist);
     PMIX_PROC_CREATE(procs, nprocs);
     n = 0;
@@ -433,7 +423,7 @@ bcast_rportlen:
                     continue;  /* not a proc from this jobid */
 
                 new_proc_list[i] = proc;
-                opal_list_remove_item(&ilist, (opal_list_item_t*)cd);  // TODO: do we need to release cd ?
+                opal_list_remove_item(&ilist, (opal_list_item_t*)cd);
                 OBJ_RELEASE(cd);
                 /* ompi_proc_complete_init_single() initializes and optionally retrieves
                  * OPAL_PMIX_LOCALITY and OPAL_PMIX_HOSTNAME. since we can live without
@@ -473,7 +463,7 @@ bcast_rportlen:
         } while (!opal_list_is_empty(&ilist));
 
         /* call add_procs on the new ones */
-        rc = MCA_PML_CALL(add_procs(new_proc_list, opal_list_get_size(&ilist)));
+        rc = MCA_PML_CALL(add_procs(new_proc_list, i));
         free(new_proc_list);
         new_proc_list = NULL;
         if (OMPI_SUCCESS != rc) {
