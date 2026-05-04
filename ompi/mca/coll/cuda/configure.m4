@@ -17,11 +17,12 @@
 AC_DEFUN([MCA_ompi_coll_cuda_CONFIG],[
     AC_CONFIG_FILES([ompi/mca/coll/cuda/Makefile])
 
-    # make sure that CUDA-aware checks have been done
+    # make sure that CUDA-aware and ROCM-aware checks have been done
     AC_REQUIRE([OPAL_CHECK_CUDA])
+    AC_REQUIRE([OPAL_CHECK_ROCM])
 
-    # Only build if CUDA support is available
-    AS_IF([test "x$CUDA_SUPPORT" = "x1"],
+    # Only build if CUDA or ROCM support is available
+    AS_IF([test "x$CUDA_SUPPORT" = "x1" -o "x$ROCM_SUPPORT" = "x1"],
           [$1],
           [$2])
 
