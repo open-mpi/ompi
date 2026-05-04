@@ -21,6 +21,7 @@
  *                         reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -409,7 +410,68 @@ mca_btl_tcp_proc_t *mca_btl_tcp_proc_create(opal_proc_t *proc)
         goto cleanup;
     }
 
-    btl_proc->proc_addr_count = size / sizeof(mca_btl_tcp_modex_addr_t);
+    /**
+     * If the peer is physically located on another node, remove all interfaces
+     * that have an IP address identical to any local interface (this will
+     * remove all the local and virtual interfaces).
+     */
+    size_t count = size / sizeof(mca_btl_tcp_modex_addr_t);
+    if (!OPAL_PROC_ON_LOCAL_NODE(proc->proc_flags)) {
+        opal_list_t *local_ifs = &mca_btl_tcp_component.local_ifs;
+        opal_if_t *local_iter;
+        char tmp[2][OPAL_ENABLE_IPV6 ? INET6_ADDRSTRLEN : INET_ADDRSTRLEN];
+        for (uint32_t i = 0; i < count; /* no automatic progress */) {
+            OPAL_LIST_FOREACH (local_iter, local_ifs, opal_if_t) {
+                if (MCA_BTL_TCP_AF_INET == remote_addrs[i].addr_family &&
+                    AF_INET == local_iter->af_family) {
+                    if (0 == memcmp(&((struct sockaddr_in *)&local_iter->if_addr)->sin_addr,
+                                    remote_addrs[i].addr,
+                                    sizeof(struct in_addr))) {
+                        /* we found a match */
+                        inet_ntop(AF_INET, remote_addrs[i].addr, tmp[0], sizeof(tmp[0]));
+                        inet_ntop(AF_INET, &((struct sockaddr_in *) &local_iter->if_addr)->sin_addr,
+                                  tmp[1], sizeof(tmp[1]));
+                        goto match_found;
+                    }
+                }
+#if OPAL_ENABLE_IPV6
+                else if (MCA_BTL_TCP_AF_INET6 == remote_addrs[i].addr_family &&
+                         AF_INET6 == local_iter->af_family) {
+                    if (0 == memcmp(&((struct sockaddr_in6 *) &local_iter->if_addr)->sin6_addr,
+                                    remote_addrs[i].addr,
+                                    sizeof(struct in6_addr))) {
+                        /* we found a match */
+                        inet_ntop(AF_INET6, remote_addrs[i].addr, tmp[0], sizeof(tmp[0]));
+                        inet_ntop(AF_INET6, &((struct sockaddr_in6 *) &local_iter->if_addr)->sin6_addr,
+                                  tmp[1], sizeof(tmp[1]));
+                        goto match_found;
+                    }
+                }
+#endif /* OPAL_ENABLE_IPV6 */
+            }
+            if (MCA_BTL_TCP_AF_INET == remote_addrs[i].addr_family) {
+                inet_ntop(AF_INET, remote_addrs[i].addr, tmp[0], sizeof(tmp[0]));
+            } else {
+                inet_ntop(AF_INET6, remote_addrs[i].addr, tmp[0], sizeof(tmp[0]));
+            }
+            opal_output_verbose(20, opal_btl_base_framework.framework_output,
+                                "btl: tcp: Accept IP %s from %s\n", tmp[0],
+                                OPAL_NAME_PRINT(proc->proc_name));
+            i++;  /* go to the next remote interface */
+            continue;
+        match_found:
+            opal_output_verbose(20, opal_btl_base_framework.framework_output,
+                                "btl: tcp: Drop IP %s from %s because it matches "
+                                "the local IP %s (%s))!\n",
+                                tmp[0], OPAL_NAME_PRINT(proc->proc_name), tmp[1],
+                                local_iter->if_name);
+            count--;
+            memmove(&remote_addrs[i], &remote_addrs[i + 1],
+                    (count - i) * sizeof(mca_btl_tcp_modex_addr_t));
+            break;
+        }
+    }
+    btl_proc->proc_addr_count = count;
     btl_proc->proc_addrs = malloc(btl_proc->proc_addr_count * sizeof(mca_btl_tcp_addr_t));
     if (NULL == btl_proc->proc_addrs) {
         rc = OPAL_ERR_OUT_OF_RESOURCE;
