@@ -11,5 +11,6 @@ components additional information on how to utilize them.
 
    components
    tuned
+   ucc
    acoll
    xhc

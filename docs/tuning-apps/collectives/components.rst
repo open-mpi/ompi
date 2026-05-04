@@ -27,7 +27,7 @@ The following provides a list of components and their primary target scenario:
    between algorithms for each operation and message size. See :doc:`tuned` for
    more details.
  - ``ucc``: component using the `UCC library <https://github.com/openucx/ucc/>`_
-   for collective operations.
+   for collective operations. See :doc:`ucc` for more details.
  - ``xhc``: shared memory collective component, employing hierarchical &
    topology-aware algorithms, with XPMEM for data transfers. See :doc:`xhc` for
    more details.
