@@ -14,6 +14,8 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2017      Intel, Inc. All rights reserved
+ * Copyright (c) 2024      High Performance Computing Center Stuttgart,
+ *                         University of Stuttgart.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -21,17 +23,17 @@
  * $HEADER$
  */
 
-#ifndef PART_PERSIST_RECVREQ_H
-#define PART_PERSIST_RECVREQ_H
+#ifndef PART_PERSIST_AGGREGATED_RECVREQ_H
+#define PART_PERSIST_AGGREGATED_RECVREQ_H
 
-#include "ompi/mca/part/persist/part_persist_request.h"
+#include "ompi/mca/part/persist_aggregated/part_persist_aggregated_request.h"
 #include "ompi/mca/part/base/part_base_precvreq.h"
 
-struct mca_part_persist_precv_request_t {
-    mca_part_persist_request_t req_base;
+struct mca_part_persist_aggregated_precv_request_t {
+    mca_part_persist_aggregated_request_t req_base;
 };
-typedef struct mca_part_persist_precv_request_t mca_part_persist_precv_request_t;
-OBJ_CLASS_DECLARATION(mca_part_persist_precv_request_t);
+typedef struct mca_part_persist_aggregated_precv_request_t mca_part_persist_aggregated_precv_request_t;
+OBJ_CLASS_DECLARATION(mca_part_persist_aggregated_precv_request_t);
 
 /**
  *  Allocate a recv request from the modules free list.
@@ -39,11 +41,11 @@ OBJ_CLASS_DECLARATION(mca_part_persist_precv_request_t);
  *  @param rc (OUT)  OMPI_SUCCESS or error status on failure.
  *  @return          Receive request.
  */
-#define MCA_PART_PERSIST_PRECV_REQUEST_ALLOC(precvreq)                           \
+#define MCA_PART_PERSIST_AGGREGATED_PRECV_REQUEST_ALLOC(precvreq)                           \
 do {                                                                         \
-    precvreq = (mca_part_persist_precv_request_t*)                               \
-      opal_free_list_get (&mca_part_persist_precv_requests);                    \
-    precvreq->req_base.req_type = MCA_PART_PERSIST_REQUEST_PRECV;            \
+    precvreq = (mca_part_persist_aggregated_precv_request_t*)                               \
+      opal_free_list_get (&mca_part_persist_aggregated_precv_requests);                    \
+    precvreq->req_base.req_type = MCA_PART_PERSIST_AGGREGATED_REQUEST_PRECV;            \
  } while (0)
 
 /**
@@ -57,7 +59,7 @@ do {                                                                         \
  * @param comm (IN)          Communicator.
  * @param persistent (IN)    Is this a ersistent request.
  */
-#define MCA_PART_PERSIST_PRECV_REQUEST_INIT( request,                     \
+#define MCA_PART_PERSIST_AGGREGATED_PRECV_REQUEST_INIT( request,                     \
                                          ompi_proc,                   \
                                          comm,                        \
                                          tag,                         \
@@ -88,13 +90,13 @@ do {                                                                  \
 /**
  *  Free the PART receive request
  */
-#define MCA_PART_PERSIST_PRECV_REQUEST_RETURN(recvreq)                      \
+#define MCA_PART_PERSIST_AGGREGATED_PRECV_REQUEST_RETURN(recvreq)                      \
 {                                                                       \
     OBJ_RELEASE((recvreq)->req_comm);                          \
     OMPI_DATATYPE_RELEASE((recvreq)->req_datatype);            \
     OMPI_REQUEST_FINI(&(recvreq)->req_ompi);                   \
     opal_convertor_cleanup( &((recvreq)->req_convertor) );     \
-    opal_free_list_return ( &mca_part_persist_precv_requests,               \
+    opal_free_list_return ( &mca_part_persist_aggregated_precv_requests,               \
                            (opal_free_list_item_t*)(recvreq));          \
 }
 

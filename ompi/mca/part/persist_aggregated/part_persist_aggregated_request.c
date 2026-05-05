@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2020-2021 Sandia National Laboratories. All rights reserved.
+ * Copyright (c) 2024      High Performance Computing Center Stuttgart,
+ *                         University of Stuttgart.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -19,24 +21,24 @@
 
 #include "ompi_config.h"
 
-#include "ompi/mca/part/persist/part_persist.h"
-#include "ompi/mca/part/persist/part_persist_request.h"
+#include "ompi/mca/part/persist_aggregated/part_persist_aggregated.h"
+#include "ompi/mca/part/persist_aggregated/part_persist_aggregated_request.h"
 
 /**
  */
-opal_free_list_t mca_part_persist_psend_requests = {{{0}}};
-opal_free_list_t mca_part_persist_precv_requests = {{{0}}};
+opal_free_list_t mca_part_persist_aggregated_psend_requests = {{{0}}};
+opal_free_list_t mca_part_persist_aggregated_precv_requests = {{{0}}};
 
-static void mca_part_persist_request_construct( mca_part_persist_request_t* req) {
+static void mca_part_persist_aggregated_request_construct( mca_part_persist_aggregated_request_t* req) {
     OBJ_CONSTRUCT(&req->req_convertor, opal_convertor_t);
     req->req_ompi.req_type = OMPI_REQUEST_PART;
 }
 
-static void mca_part_persist_request_destruct( mca_part_persist_request_t* req) {
+static void mca_part_persist_aggregated_request_destruct( mca_part_persist_aggregated_request_t* req) {
     OBJ_DESTRUCT(&req->req_convertor);
 }
 
-OBJ_CLASS_INSTANCE(mca_part_persist_request_t,
+OBJ_CLASS_INSTANCE(mca_part_persist_aggregated_request_t,
                    ompi_request_t,
-                   mca_part_persist_request_construct,
-                   mca_part_persist_request_destruct);
+                   mca_part_persist_aggregated_request_construct,
+                   mca_part_persist_aggregated_request_destruct);
