@@ -44,6 +44,7 @@ mca_btl_ofi_frag_completion_t *mca_btl_ofi_frag_completion_alloc(mca_btl_base_mo
 
     comp = (mca_btl_ofi_frag_completion_t *) opal_free_list_get(&context->frag_comp_list);
     comp->base.btl = btl;
+    comp->base.endpoint = frag->endpoint;
     comp->base.my_context = context;
     comp->base.my_list = &context->frag_comp_list;
     comp->base.type = type;
@@ -158,8 +159,10 @@ int mca_btl_ofi_recv_frag(mca_btl_ofi_module_t *ofi_btl, mca_btl_base_endpoint_t
                                                    .tag = frag->hdr.tag,
                                                    .cbdata = reg->cbdata};
 
-    /* call the callback */
-    reg->cbfunc(&ofi_btl->super, &recv_desc);
+    if (OPAL_LIKELY(OPAL_SUCCESS == rc)) {
+        /* call the callback */
+        reg->cbfunc(&ofi_btl->super, &recv_desc);
+    }
     mca_btl_ofi_frag_complete(frag, rc);
 
     /* repost the recv */
