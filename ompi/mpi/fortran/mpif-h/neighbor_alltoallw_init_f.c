@@ -15,7 +15,7 @@
  *                         reserved.
  * Copyright (c) 2015-2021 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
- * Copyright (c) 2026      Triad National Security, LLC. All rights
+ * Copyright (c) 2025-2026 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -84,7 +84,7 @@ void ompi_neighbor_alltoallw_init_f(char *sendbuf, MPI_Fint *sendcounts,
     MPI_Datatype *c_sendtypes, *c_recvtypes;
     MPI_Info c_info;
     MPI_Request c_request;
-    int indegree, outdegree, idx = 0, c_ierr;
+    int indegree, outdegree, c_ierr;
     OMPI_ARRAY_NAME_DECL(sendcounts);
     OMPI_ARRAY_NAME_DECL(recvcounts);
 
@@ -128,13 +128,12 @@ void ompi_neighbor_alltoallw_init_f(char *sendbuf, MPI_Fint *sendcounts,
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
     if (MPI_SUCCESS == c_ierr) {
         *request = PMPI_Request_c2f(c_request);
-        ompi_coll_base_nbc_request_t* nb_request = (ompi_coll_base_nbc_request_t*)c_request;
-        nb_request->data.release_arrays[idx++] = c_sendtypes;
-        if (sendcounts != OMPI_ARRAY_NAME_CONVERT(sendcounts)) {
-            nb_request->data.release_arrays[idx++] = OMPI_ARRAY_NAME_CONVERT(sendcounts);
-            nb_request->data.release_arrays[idx++] = OMPI_ARRAY_NAME_CONVERT(recvcounts);
+        ompi_coll_base_append_array_to_release(c_request, c_sendtypes);
+        if ((void *)sendcounts != (void *)OMPI_ARRAY_NAME_CONVERT(sendcounts)) {
+            ompi_coll_base_append_array_to_release(c_request, OMPI_ARRAY_NAME_CONVERT(sendcounts));
+            ompi_coll_base_append_array_to_release(c_request, OMPI_ARRAY_NAME_CONVERT(recvcounts));
         }
-        nb_request->data.release_arrays[idx]   = NULL;
+        ompi_coll_base_add_release_arrays_cb(c_request);
     } else {
         OMPI_ARRAY_FINT_2_INT_CLEANUP(sendcounts);
         OMPI_ARRAY_FINT_2_INT_CLEANUP(recvcounts);
